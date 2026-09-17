@@ -191,3 +191,27 @@ try:
     logger.debug("Included game_routes")
 except ImportError as e:
     logger.warning(f"game_routes not available: {e}")
+
+try:
+    from api.routes.system_routes import router as system_router
+
+    router.include_router(system_router, prefix="/api/v1")
+    logger.debug("Included system_routes")
+except ImportError as e:
+    logger.warning(f"system_routes not available: {e}")
+
+try:
+    from api.routes.llm_routes import router as llm_router
+
+    router.include_router(llm_router, prefix="/api/v1")
+    logger.debug("Included llm_routes")
+except ImportError as e:
+    logger.warning(f"llm_routes not available: {e}")
+
+try:
+    from api.routes.context_routes import router as context_router
+
+    router.include_router(context_router, prefix="/api/v1")
+    logger.debug("Included context_routes")
+except ImportError as e:
+    logger.warning(f"context_routes not available: {e}")

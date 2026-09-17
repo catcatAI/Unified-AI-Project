@@ -319,8 +319,14 @@
             <div class="nav-item" data-section="network" role="button" tabindex="0">
                 <i>🌐</i> Network & Cluster
             </div>
+            <div class="nav-item" data-section="llm" role="button" tabindex="0">
+                <i>🤖</i> LLM & AI
+            </div>
             <div class="nav-item" data-section="advanced" role="button" tabindex="0">
                 <i>🔧</i> Advanced
+            </div>
+            <div class="nav-item" data-section="help" role="button" tabindex="0">
+                <i>❓</i> Help
             </div>
         </div>
 
@@ -852,6 +858,196 @@
                 </div>
             </div>
 
+            <!-- LLM & AI Section -->
+            <div class="section" id="llm">
+                <h2>LLM & AI Settings</h2>
+
+                <div class="setting-group">
+                    <h3>Deployment</h3>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Deployment Mode</label>
+                            <p>Which AI backends are allowed</p>
+                        </div>
+                        <div class="setting-control">
+                            <select id="llm-deployment-mode">
+                                <option value="local">🏠 Local only (Ollama, ED3N)</option>
+                                <option value="local+llm">🔗 Local + Cloud LLM</option>
+                                <option value="llm">☁️ Cloud LLM only</option>
+                                <option value="auto">🤖 Auto-select best</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Backend Selection</label>
+                            <p>How backends are chosen within the allowed set</p>
+                        </div>
+                        <div class="setting-control">
+                            <select id="llm-selection">
+                                <option value="available">Available (health-checked only)</option>
+                                <option value="per-vendor">Per-vendor (register all, fallback on fail)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-group">
+                    <h3>Active Backend</h3>
+                    <div id="llm-backend-status" style="padding: 10px; background: rgba(0,0,0,0.2); border-radius: 5px; margin-bottom: 10px;">
+                        <p style="color: #aaa;">Loading backend status...</p>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Switch Backend</label>
+                            <p>Select which LLM backend to use</p>
+                        </div>
+                        <div class="setting-control">
+                            <select id="llm-backend-select">
+                                <option value="">Loading...</option>
+                            </select>
+                            <button class="secondary" id="llm-switch-btn" style="margin-left: 8px;">Switch</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-group">
+                    <h3>Generation Defaults</h3>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Temperature</label>
+                            <p>Higher = more creative, lower = more focused (0.0–2.0)</p>
+                        </div>
+                        <div class="setting-control">
+                            <input type="range" id="llm-temperature" min="0" max="2" step="0.1" value="0.7">
+                            <span class="value-display" id="temp-value">0.7</span>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Max Tokens</label>
+                            <p>Maximum response length</p>
+                        </div>
+                        <div class="setting-control">
+                            <select id="llm-max-tokens">
+                                <option value="256">256</option>
+                                <option value="512" selected>512</option>
+                                <option value="1024">1024</option>
+                                <option value="2048">2048</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-group">
+                    <h3>Web Search</h3>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Enable Web Search</label>
+                            <p>Factual grounding via DuckDuckGo / Wikipedia (always available)</p>
+                        </div>
+                        <div class="setting-control">
+                            <input type="checkbox" id="llm-web-search" checked>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-group">
+                    <h3>Context & Memory</h3>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Memory Enhancement</label>
+                            <p>Enhance LLM responses with stored memories</p>
+                        </div>
+                        <div class="setting-control">
+                            <input type="checkbox" id="llm-memory-enhance" checked>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Max History</label>
+                            <p>Number of recent messages included in context</p>
+                        </div>
+                        <div class="setting-control">
+                            <select id="llm-max-history">
+                                <option value="5">5</option>
+                                <option value="10" selected>10</option>
+                                <option value="20">20</option>
+                                <option value="50">50</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Help Section -->
+            <div class="section" id="help">
+                <h2>Help & About</h2>
+
+                <div class="setting-group">
+                    <h3>About</h3>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Angela AI</label>
+                            <p>Digital Life Companion — v7.5.0-dev</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-group">
+                    <h3>Documentation</h3>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Usability Guide</label>
+                            <p>Configuration, AI models, context, UI discovery</p>
+                        </div>
+                        <div class="setting-control">
+                            <button class="secondary" onclick="require('electron').shell.openExternal('https://github.com/catcatAI/Unified-AI-Project/blob/main/docs/USABILITY_GUIDE.md')">Open</button>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>API Docs (Swagger)</label>
+                            <p>Auto-generated API reference</p>
+                        </div>
+                        <div class="setting-control">
+                            <button class="secondary" onclick="require('electron').shell.openExternal('http://localhost:8000/docs')">Open</button>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Architecture</label>
+                            <p>System architecture overview</p>
+                        </div>
+                        <div class="setting-control">
+                            <button class="secondary" onclick="require('electron').shell.openExternal('https://github.com/catcatAI/Unified-AI-Project/blob/main/docs/ARCHITECTURE.md')">Open</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-group">
+                    <h3>Keyboard Shortcuts</h3>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Ctrl+Shift+S</label>
+                            <p>Open Settings</p>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Ctrl+`</label>
+                            <p>Toggle Terminal</p>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Ctrl+Q</label>
+                            <p>Quit</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="footer">
                 <button class="secondary" id="cancel">Cancel</button>
                 <button id="save">Save Changes</button>
@@ -864,5 +1060,157 @@
 
     <script src="../../../packages/shared-js/js/settings-manager.js"></script>
     <script src="../../../packages/shared-js/js/settings.js"></script>
+
+    <!-- LLM & AI status polling -->
+    <script>
+    (function() {
+        const API_BASE = 'http://localhost:8000/api/v1';
+
+        async function fetchLLMStatus() {
+            try {
+                const res = await fetch(API_BASE + '/llm/status');
+                if (!res.ok) return;
+                const data = await res.json();
+
+                // Update status display
+                const statusEl = document.getElementById('llm-backend-status');
+                if (statusEl) {
+                    const mode = data.mode || 'unknown';
+                    const active = data.active || '(none)';
+                    const avail = data.available ? '✅' : '❌';
+                    statusEl.innerHTML = '<p>' + avail + ' Mode: <b>' + mode + '</b> | Active: <b>' + active + '</b></p>';
+                }
+
+                // Populate backend select
+                const select = document.getElementById('llm-backend-select');
+                if (select && data.backends && data.backends.length > 0) {
+                    select.innerHTML = '';
+                    data.backends.forEach(function(b) {
+                        const opt = document.createElement('option');
+                        opt.value = b.name;
+                        opt.textContent = b.name + (b.active ? ' ★' : '') + ' (' + b.health + ')';
+                        if (b.active) opt.selected = true;
+                        select.appendChild(opt);
+                    });
+                }
+            } catch (e) {
+                console.log('[Settings] LLM status fetch failed:', e.message);
+            }
+        }
+
+        // Switch backend button
+        var switchBtn = document.getElementById('llm-switch-btn');
+        if (switchBtn) {
+            switchBtn.addEventListener('click', async function() {
+                var select = document.getElementById('llm-backend-select');
+                var backend = select ? select.value : '';
+                if (!backend) return;
+                try {
+                    var res = await fetch(API_BASE + '/llm/switch', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ backend: backend })
+                    });
+                    var data = await res.json();
+                    if (data.ok) {
+                        fetchLLMStatus();
+                    } else {
+                        alert('Switch failed: ' + (data.error || 'unknown'));
+                    }
+                } catch (e) {
+                    alert('Switch error: ' + e.message);
+                }
+            });
+        }
+
+        // Temperature slider
+        var tempSlider = document.getElementById('llm-temperature');
+        var tempDisplay = document.getElementById('temp-value');
+        if (tempSlider && tempDisplay) {
+            tempSlider.addEventListener('input', function() {
+                tempDisplay.textContent = this.value;
+            });
+        }
+
+        // Prefill LLM fields from backend truth (merged config)
+        function setField(id, value) {
+            if (value === undefined || value === null) return;
+            var el = document.getElementById(id);
+            if (!el) return;
+            if (el.type === 'checkbox') { el.checked = !!value; return; }
+            el.value = String(value);
+            if (id === 'llm-temperature' && tempDisplay) tempDisplay.textContent = String(value);
+        }
+        async function loadLLMConfig() {
+            try {
+                var res = await fetch(API_BASE + '/llm/config');
+                if (!res.ok) return;
+                var data = await res.json();
+                var cfg = (data && data.config) || {};
+                setField('llm-deployment-mode', cfg['deployment.mode']);
+                setField('llm-selection', cfg['deployment.selection']);
+                setField('llm-temperature', cfg['settings.defaults.temperature']);
+                setField('llm-max-tokens', cfg['settings.defaults.max_tokens']);
+                setField('llm-web-search', cfg['web_search.enabled']);
+                setField('llm-memory-enhance', cfg['settings.enable_memory_enhancement']);
+                setField('llm-max-history', cfg['settings.memory.max_history']);
+            } catch (e) {
+                console.log('[Settings] LLM config load failed:', e.message);
+            }
+        }
+
+        // Persist LLM fields to backend llm.user.yaml on Save
+        function collectLLMConfig() {
+            var payload = {};
+            function getVal(id) {
+                var el = document.getElementById(id);
+                if (!el) return undefined;
+                return el.type === 'checkbox' ? el.checked : el.value;
+            }
+            var mode = getVal('llm-deployment-mode');
+            if (mode) payload['deployment.mode'] = mode;
+            var selection = getVal('llm-selection');
+            if (selection) payload['deployment.selection'] = selection;
+            var temp = getVal('llm-temperature');
+            if (temp !== undefined && temp !== '') payload['settings.defaults.temperature'] = parseFloat(temp);
+            var tokens = getVal('llm-max-tokens');
+            if (tokens !== undefined && tokens !== '') payload['settings.defaults.max_tokens'] = parseInt(tokens, 10);
+            var ws = getVal('llm-web-search');
+            if (ws !== undefined) payload['web_search.enabled'] = !!ws;
+            var mem = getVal('llm-memory-enhance');
+            if (mem !== undefined) payload['settings.enable_memory_enhancement'] = !!mem;
+            var hist = getVal('llm-max-history');
+            if (hist !== undefined && hist !== '') payload['settings.memory.max_history'] = parseInt(hist, 10);
+            var backendSelect = document.getElementById('llm-backend-select');
+            var backend = backendSelect ? backendSelect.value : '';
+            if (backend && backend !== 'Loading...') payload['settings.preferred_backend'] = backend;
+            return payload;
+        }
+        async function saveLLMConfig() {
+            var payload = collectLLMConfig();
+            if (Object.keys(payload).length === 0) return;
+            try {
+                var res = await fetch(API_BASE + '/llm/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                var data = await res.json();
+                if (!data.ok) {
+                    alert('LLM settings save failed: ' + (data.error || 'unknown') + '\n(Local desktop settings were still saved.)');
+                }
+            } catch (e) {
+                alert('LLM settings save error (backend unreachable?): ' + e.message + '\n(Local desktop settings were still saved.)');
+            }
+        }
+        var saveBtn = document.getElementById('save');
+        if (saveBtn) saveBtn.addEventListener('click', function() { saveLLMConfig(); });
+
+        // Initial fetch + polling
+        fetchLLMStatus();
+        loadLLMConfig();
+        setInterval(fetchLLMStatus, 10000);
+    })();
+    </script>
 </body>
 </html>

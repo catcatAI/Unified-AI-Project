@@ -135,3 +135,239 @@ h2 {
   background: rgba(0,0,0,0.2);
   border-radius: 5px;
 }
+
+/* ── Dashboard layout ── */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.dashboard-header h1 {
+  margin-bottom: 0;
+}
+
+.tab-nav {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid var(--accent);
+  padding-bottom: 0;
+}
+
+.tab-btn {
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.95em;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.2s;
+}
+
+.tab-btn:hover {
+  color: var(--text-primary);
+}
+
+.tab-btn.active {
+  color: var(--highlight);
+  border-bottom-color: var(--highlight);
+}
+
+.panel-container {
+  min-height: 400px;
+}
+
+.panel-loading {
+  padding: 40px;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+/* ── Health badge ── */
+.health-badge {
+  font-size: 0.9em;
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: rgba(0,0,0,0.3);
+}
+
+.health-ok { color: #2ecc71; }
+.health-warn { color: #f1c40f; }
+.health-err { color: #e74c3c; }
+.health-unknown { color: #95a5a6; }
+
+/* ── Config panel ── */
+.config-panel, .model-selector, .context-viewer {
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  padding: 20px;
+}
+
+.config-section {
+  margin-bottom: 20px;
+}
+
+.config-section h3 {
+  color: var(--text-secondary);
+  font-size: 0.85em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.config-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.config-row .label { color: var(--text-secondary); }
+.config-row .value { color: var(--text-primary); font-weight: 500; }
+
+/* ── Model selector ── */
+.model-status {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.9em;
+}
+.status-badge.ok { background: rgba(46,204,113,0.15); color: #2ecc71; }
+.status-badge.err { background: rgba(231,76,60,0.15); color: #e74c3c; }
+
+.active-model { color: var(--text-secondary); }
+
+.model-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.model-table th, .model-table td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.model-table th {
+  color: var(--text-secondary);
+  font-size: 0.85em;
+  text-transform: uppercase;
+}
+
+.active-row { background: rgba(233,69,96,0.08); }
+
+.btn-switch {
+  padding: 4px 12px;
+  border: 1px solid var(--highlight);
+  background: transparent;
+  color: var(--highlight);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85em;
+}
+.btn-switch:hover { background: var(--highlight); color: white; }
+.btn-switch:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.active-label { color: #2ecc71; font-size: 0.85em; }
+
+.health-ok { color: #2ecc71; }
+.health-fail { color: #e74c3c; }
+
+.model-stats { margin-top: 16px; }
+.model-stats h3 { color: var(--text-secondary); font-size: 0.85em; margin-bottom: 8px; }
+
+/* ── Context viewer ── */
+.ctx-section {
+  margin-bottom: 20px;
+}
+
+.ctx-section h3 {
+  color: var(--text-secondary);
+  font-size: 0.85em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.bar-label {
+  width: 100px;
+  font-size: 0.85em;
+  color: var(--text-secondary);
+}
+
+.bar-track {
+  flex: 1;
+  height: 8px;
+  background: rgba(0,0,0,0.3);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s;
+}
+
+.bar-value {
+  width: 40px;
+  font-size: 0.85em;
+  color: var(--text-secondary);
+  text-align: right;
+}
+
+.eta-info {
+  margin-top: 8px;
+  font-size: 0.85em;
+  color: var(--text-secondary);
+}
+
+.ctx-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.ctx-item {
+  background: rgba(0,0,0,0.2);
+  padding: 10px;
+  border-radius: 6px;
+}
+
+.ctx-label {
+  display: block;
+  font-size: 0.8em;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.ctx-value { font-weight: 500; }
+
+.intent-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.intent-tag {
+  padding: 3px 8px;
+  background: rgba(15,52,96,0.5);
+  border-radius: 4px;
+  font-size: 0.8em;
+  color: var(--text-secondary);
+}

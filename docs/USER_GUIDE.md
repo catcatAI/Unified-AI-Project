@@ -139,26 +139,54 @@ ws.onmessage = (event) => {
 
 ## Configuration
 
+> 📖 **For a complete guide** on configuration, AI models, context, UI discovery, and where everything is — see [**USABILITY_GUIDE.md**](USABILITY_GUIDE.md).
+
 ### Environment Variables
 
 Create a `.env` file:
 
 ```bash
-# Database
-DATABASE_URL=postgresql://angela:angela@localhost:5432/angela
+# LLM backend (at least one required for conversation)
+OLLAMA_HOST=http://localhost:11434
+OPENAI_API_KEY=sk-...
 
-# Redis
-REDIS_URL=redis://localhost:6379/0
-
-# API
-API_SECRET_KEY=your-secret-key
+# System
+LOG_LEVEL=INFO
+SECRET_KEY=your-secret-key
 ```
 
 ### Configuration Files
 
-- `configs/angela_config.yaml` - Backend settings
-- `configs/prometheus.yml` - Monitoring configuration
-- `configs/nginx.conf` - Reverse proxy settings
+| File | Purpose |
+|------|---------|
+| `configs/config.yaml` | Main server + AI model config |
+| `configs/system/llm.default.yaml` | LLM backends, deployment mode, web search |
+| `configs/system/llm.user.yaml` | User overrides for LLM config |
+| `configs/system/core.default.yaml` | Core system defaults |
+| `configs/crisis_system_config.json` | Crisis/safety system |
+| `configs/personality_profiles/` | Personality configurations |
+| `configs/formula_configs/` | Formula engine configs |
+
+### Deployment Modes
+
+Set `deployment.mode` in `configs/system/llm.default.yaml`:
+
+- **`local`** — Only local models (no internet needed)
+- **`local+llm`** — Local + cloud LLM (requires API keys)
+- **`llm`** — Only cloud LLM (maximum quality)
+- **`auto`** — Auto-select best backend
+
+### AI Models
+
+Angela supports multiple backends. Enable in `llm.default.yaml`:
+
+- `unified-1g` — Built-in statistical engine (always available)
+- `ollama-llama3` — Local Ollama models
+- `openai-gpt4o` — OpenAI API
+- `anthropic-claude` — Anthropic API
+- `google-gemini` — Google AI API
+
+Use `/model list` in REPL or see [USABILITY_GUIDE.md](USABILITY_GUIDE.md#3-ai-models--backends) for details.
 
 ## Troubleshooting
 

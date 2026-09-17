@@ -935,6 +935,27 @@ class AngelaLLMService:
             return base
 
         ranked = sorted(available, key=_rank)
+        # User-persisted preference (Desktop Settings → llm.user.yaml
+        # settings.preferred_backend) wins when it names an available backend.
+        preferred = str((self.config.get("settings") or {}).get("preferred_backend", "")).strip().lower()
+        if preferred:
+            matched = next(
+                (
+                    bt
+                    for bt in ranked
+                    if preferred in str(getattr(bt, "value", bt)).lower()
+                    or preferred in str(getattr(bt, "name", "")).lower()
+                ),
+                None,
+            )
+            if matched is not None:
+                logger.info(f"[preferred] honoring settings.preferred_backend={preferred!r}")
+                ranked = [matched] + [bt for bt in ranked if bt is not matched]
+            else:
+                logger.warning(
+                    f"[preferred] settings.preferred_backend={preferred!r} not in available "
+                    f"{[getattr(bt, 'value', bt) for bt in ranked]}; falling back to ranking"
+                )
         for backend_type in ranked:
             self.active_backend = self.backends[backend_type]
             self.active_backend_type = backend_type

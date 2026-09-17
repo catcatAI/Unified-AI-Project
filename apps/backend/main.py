@@ -133,6 +133,18 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"正規化引導初始化失敗: {e}")
 
+    # First-run detection: warn loudly when no usable LLM backend exists
+    # (missing API key / Ollama not running) instead of failing silently later.
+    try:
+        from core.system.bootstrap.first_run_detection import (
+            detect_first_run,
+            log_first_run_warnings,
+        )
+
+        log_first_run_warnings(detect_first_run())
+    except Exception as e:  # detection must never block startup
+        logger.debug(f"first-run detection skipped: {e}")
+
     # 初始化实时同步系统
     try:
         from src.core.sync.realtime_sync import sync_manager, SyncEvent

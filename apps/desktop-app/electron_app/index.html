@@ -809,6 +809,7 @@
             <div id="dialogue-messages"></div>
             <div class="toolbar-content">
                 <button class="toolbar-btn" id="btn-toggle-dialogue" title="Toggle Chat">💬</button>
+                <span id="toolbar-health" title="System Health" style="font-size: 14px; padding: 0 6px;">⏳</span>
                 <button class="toolbar-btn" id="btn-settings" title="Settings">⚙️</button>
                 <button class="toolbar-btn" id="btn-terminal" title="Terminal (Ctrl+`)">>_</button>
                 <input type="text" id="dialogue-input" placeholder="與 Angela 對話..." />
@@ -830,6 +831,7 @@
     <!-- System status panel (persistent) -->
     <div id="status-panel">
         <div class="status-item">🖥️ Backend: <span id="stat-backend">Offline</span></div>
+        <div class="status-item">🤖 LLM: <span id="stat-llm">—</span></div>
         <div class="status-item">⚙️ Service: <span id="stat-service">—</span></div>
         <div class="status-item">📊 CPU: <span id="stat-cpu">—</span></div>
         <div class="status-item">🧠 Memory: <span id="stat-memory">—</span></div>
@@ -933,20 +935,34 @@
             const panel = document.getElementById('status-panel');
             if (!panel) return;
 
+            const backendHost = localStorage.getItem('backend_ip') || 'http://localhost:8000';
+
             async function poll() {
-                const backendHost = localStorage.getItem('backend_ip') || 'http://localhost:8000';
                 try {
                     const res = await fetch(`${backendHost}/api/v1/ops/status`);
                     if (!res.ok) throw new Error(`HTTP ${res.status}`);
                     const data = await res.json();
                     const online = data.status === 'ok';
-                    document.getElementById('stat-backend').textContent = online ? 'Online' : `Error ${res.status}`;
+                    document.getElementById('stat-backend').textContent = online ? 'Online' : `Error ${data.status}`;
                     document.getElementById('stat-backend').style.color = online ? 'var(--success-color)' : 'var(--danger-color)';
                     document.getElementById('stat-service').textContent = data.service || '—';
                     const metrics = data.metrics || {};
                     document.getElementById('stat-cpu').textContent = `${metrics.cpu_percent ?? '—'}%`;
                     document.getElementById('stat-memory').textContent = `${metrics.memory_percent ?? '—'}%`;
                     document.getElementById('stat-disk').textContent = `${metrics.disk_percent ?? '—'}%`;
+                    // Update toolbar health badge
+                    const healthEl = document.getElementById('toolbar-health');
+                    if (healthEl) {
+                        const cpu = metrics.cpu_percent || 0;
+                        const mem = metrics.memory_percent || 0;
+                        if (!online || cpu > 90 || mem > 95) {
+                            healthEl.textContent = '🔴';
+                        } else if (cpu > 70 || mem > 85) {
+                            healthEl.textContent = '🟡';
+                        } else {
+                            healthEl.textContent = '🟢';
+                        }
+                    }
                 } catch (err) {
                     document.getElementById('stat-backend').textContent = 'Offline';
                     document.getElementById('stat-backend').style.color = 'var(--danger-color)';
@@ -954,11 +970,37 @@
                     document.getElementById('stat-cpu').textContent = '—';
                     document.getElementById('stat-memory').textContent = '—';
                     document.getElementById('stat-disk').textContent = '—';
+                    const healthEl = document.getElementById('toolbar-health');
+                    if (healthEl) healthEl.textContent = '🔴';
+                }
+            }
+
+            async function pollLLM() {
+                try {
+                    const res = await fetch(`${backendHost}/api/v1/llm/status`);
+                    if (!res.ok) return;
+                    const data = await res.json();
+                    const el = document.getElementById('stat-llm');
+                    if (el) {
+                        if (data.available) {
+                            const active = data.active || '(none)';
+                            el.textContent = `${active} (${data.mode})`;
+                            el.style.color = 'var(--success-color)';
+                        } else {
+                            el.textContent = 'No backend';
+                            el.style.color = 'var(--danger-color)';
+                        }
+                    }
+                } catch (err) {
+                    const el = document.getElementById('stat-llm');
+                    if (el) { el.textContent = '—'; el.style.color = ''; }
                 }
             }
 
             poll();
+            pollLLM();
             setInterval(poll, 5000);
+            setInterval(pollLLM, 8000);
         }
 
         function _initTerminal() {

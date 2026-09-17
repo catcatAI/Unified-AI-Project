@@ -7,6 +7,17 @@ interface Message {
   timestamp: number
 }
 
+function renderMarkdown(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/`(.+?)`/g, '<code style="background:rgba(0,0,0,0.3);padding:2px 4px;border-radius:3px;font-size:0.9em">$1</code>')
+    .replace(/\n/g, '<br/>')
+}
+
 export default function ChatPanel() {
   const MAX_MESSAGES = 200
   const [messages, setMessages] = useState<Message[]>([])
@@ -94,7 +105,7 @@ export default function ChatPanel() {
         {messages.map(msg => (
           <div key={msg.id} className={`message ${msg.role}`}>
             <span className="role">{msg.role === 'user' ? 'You' : 'Angela'}</span>
-            <p>{msg.content}</p>
+            <p dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }} />
           </div>
         ))}
       </div>

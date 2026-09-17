@@ -19,7 +19,11 @@ class TestAuthMiddleware:
         assert instance.algorithm == "HS256"
         assert instance.access_token_expire_minutes == 30
 
-    def test_instantiation_with_config(self):
+    def test_instantiation_with_config(self, monkeypatch):
+        # Config precedence is env > config > generated; ensure no leaked
+        # SECRET_KEY from the ambient environment (e.g. .env loaded by other
+        # tests importing main_api_server) overrides the config dict.
+        monkeypatch.delenv("SECRET_KEY", raising=False)
         from core.security.auth_middleware import AuthMiddleware
         instance = AuthMiddleware(config={"secret_key": "mykey", "algorithm": "HS512"})
         assert instance.secret_key == "mykey"

@@ -24,6 +24,7 @@ class HSPSecurityManager:
         self.auth_enabled = self.config.get("auth_enabled", True)
 
         # 生成或加载密钥
+        self._key_warning_emitted = False
         self._setup_keys()
 
         logger.info("HSP安全管理器初始化完成")
@@ -32,11 +33,17 @@ class HSPSecurityManager:
         """设置加密和签名密钥"""
         # 对称加密密钥(用于消息加密)
         self.encryption_key = os.environ.get("HSP_ENCRYPTION_KEY")
+        if self.encryption_key and not self._is_valid_fernet_key(self.encryption_key):
+            logger.warning(
+                "HSP_ENCRYPTION_KEY 不是合法的 Fernet key (32 url-safe base64 bytes)。"
+                "可能是未替换的 .env 占位符；已自动生成新密钥。"
+                "请用 `python -c \"from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())\"` 生成后写入 .env"
+            )
+            self.encryption_key = None
         if not self.encryption_key:
             self.encryption_key = Fernet.generate_key().decode("utf-8")
-            logger.warning("未找到环境变量HSP_ENCRYPTION_KEY, 生成新的密钥")
-        else:
-            self.encryption_key = self.encryption_key
+            if not self._key_warning_emitted:
+                logger.warning("未找到环境变量HSP_ENCRYPTION_KEY, 生成新的密钥")
 
         self.cipher_suite = Fernet(self.encryption_key.encode("utf-8"))
 
@@ -45,6 +52,17 @@ class HSPSecurityManager:
         self.public_key = self.private_key.public_key()
 
         logger.debug("密钥设置完成")
+
+    @staticmethod
+    def _is_valid_fernet_key(key: str) -> bool:
+        """Check whether *key* is a valid Fernet key (32 url-safe base64 bytes)."""
+        import base64
+
+        try:
+            decoded = base64.urlsafe_b64decode(key)
+            return len(decoded) == 32
+        except Exception:
+            return False
 
     def sign_message(self, message: Dict[str, Any], sender_id: str) -> str:
         """为消息生成数字签名"""

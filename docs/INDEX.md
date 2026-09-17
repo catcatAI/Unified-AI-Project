@@ -16,6 +16,12 @@
 - **`ARCHITECTURE.md`** — System architecture overview (SSOT, 部分過時)
 - **`CHANGELOG.md`** — 版本歷史與變更記錄
 - **[`QUICK_START.md`](QUICK_START.md)** — Getting started guide (2026-06-25 更新，命令已驗證)
+- **[`USABILITY_GUIDE.md`](USABILITY_GUIDE.md)** — **Configuration, AI models, context, UI discovery** — where everything is, what's available, how to use it
+- **[`PRODUCTION_USABILITY_PLAN.md`](PRODUCTION_USABILITY_PLAN.md)** — **Usability audit & implementation plan** — current state vs target for CLI/Web/Desktop/API, gap matrix, phased roadmap
+- **[`STATUS_MATRIX.md`](STATUS_MATRIX.md)** — **功能成熟度唯一總表（R70）** — 五級狀態（claimed/implemented/wired/verified/production）＋驗證指令，衝突時以此為準
+- **[`user_guide/unsupported.md`](user_guide/unsupported.md)** — **正式版明確不支援項** — 與 RELEASE_CRITERIA 同步，每項附替代方案
+- **[`architecture/limitations.md`](architecture/limitations.md)** — **架構邊界與限制** — 單用戶、單機、CPU-only 等設計邊界
+- **[`user_guide/hardware.md`](user_guide/hardware.md)** — **硬體指南** — 需求、CPU-only 推理、規格自適應
 - **`INDEX.md`** — This file
 - **`FRAMEWORK_OVERVIEW.md`** — 框架概述 (雙語，含誠實成熟度審計)
 - **[`IMPROVEMENT_ROADMAP.md`](06-project-management/IMPROVEMENT_ROADMAP.md)** — **改善路線圖 (新 2026-06-28)** — 修正/修復/更新/迭代/訓練/學習/整理完整計畫，含數據驗證矩陣

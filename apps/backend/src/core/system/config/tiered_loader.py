@@ -156,3 +156,45 @@ def get_config(path: str) -> Optional[Dict[str, Any]]:
         logger.debug("No config files found for path '%s'", path)
 
     return config
+
+
+def write_user_config(path: str, patch: Dict[str, Any]) -> "tuple[bool, str]":
+    """Merge *patch* into the user layer (``<name>.user.yaml``) and write back.
+
+    Only the ``user`` layer is ever written — ``default`` stays pristine and
+    ``evolved`` remains Angela's own write area. The in-memory cache for
+    *path* is invalidated so the next :func:`get_config` re-reads from disk.
+
+    Returns ``(True, message)`` on success, ``(False, error)`` otherwise.
+    """
+    if _CONFIGS_ROOT is None:
+        return False, "configs root not resolved"
+    if not isinstance(patch, dict) or not patch:
+        return False, "patch must be a non-empty object"
+
+    parts = path.split("/")
+    base_name = parts[-1]
+    dir_path = _CONFIGS_ROOT / "/".join(parts[:-1])
+    if not dir_path.is_dir():
+        return False, f"unknown config path: {path!r}"
+    target = dir_path / f"{base_name}.user.yaml"
+
+    try:
+        import yaml
+    except ImportError:
+        return False, "PyYAML not installed, cannot write user config"
+
+    try:
+        existing = _read_config_file(target) or {}
+        merged = _deep_merge(existing, patch)
+        target.write_text(
+            yaml.safe_dump(merged, allow_unicode=True, sort_keys=False),
+            encoding="utf-8",
+        )
+    except Exception as exc:
+        logger.warning("Failed to write user config %s: %s", target, exc)
+        return False, f"write failed: {exc}"
+
+    _cache.pop(path, None)
+    logger.info("User config written: %s (%d top-level keys)", target, len(patch))
+    return True, f"saved to {target.name}"

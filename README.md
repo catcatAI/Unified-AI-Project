@@ -21,6 +21,7 @@
 - [English Version](#english-version)
   - [Current Status](#current-status-code-verified-as-of-2026-06-15)
 - [Quick Start](#quick-start) ([Detailed](docs/usage/QUICK_START.md), [Scenarios](docs/usage/SCENARIOS.md))
+- [Usability Guide](docs/USABILITY_GUIDE.md) — Configuration, AI models, context, UI discovery
 - [Text Adventure Game](#text-adventure-game-tui)
 - [Scripts Reference](#scripts-reference)
 - [What Actually Works](#what-actually-works-code-verified-2026-06-15)
@@ -462,6 +463,8 @@ See dedicated docs for full diagrams:
 
 | Document | Contents |
 |----------|----------|
+| [USABILITY_GUIDE](docs/USABILITY_GUIDE.md) | **Configuration, AI models, context, UI discovery** — where everything is, what's available, how to use it |
+| [PRODUCTION_USABILITY_PLAN](docs/PRODUCTION_USABILITY_PLAN.md) | **Usability audit & roadmap** — current vs target for CLI/Web/Desktop/API, gap matrix, phased implementation |
 | [FRAMEWORK_OVERVIEW](docs/FRAMEWORK_OVERVIEW.md) | **Framework positioning, component catalog, extension guide** (bilingual) — how to use Angela AI as a framework |
 | [ANGELA_FULL_ARCHITECTURE](docs/architecture/ANGELA_FULL_ARCHITECTURE.md) | **Full system architecture** — perception, cognition, emotion, execution, memory, alignment, pipeline (1183 lines) |
 | [PROJECT_CHARTER](docs/00-overview/PROJECT_CHARTER.md) | Project mission, scope, principles |

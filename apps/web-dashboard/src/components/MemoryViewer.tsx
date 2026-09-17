@@ -1,31 +1,50 @@
 import { useState, useEffect } from 'react'
 
 interface Memory {
-  id: string
   content: string
+  type: string
   importance: number
-  timestamp: number
-  category: string
+  emotion: string
+  timestamp?: string
+}
+
+interface MemoryResponse {
+  initialized: boolean
+  memories: Memory[]
+  count?: number
+  hint?: string
+  error?: string
 }
 
 export default function MemoryViewer() {
   const [memories, setMemories] = useState<Memory[]>([])
+  const [initialized, setInitialized] = useState(true)
+  const [hint, setHint] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('all')
 
   useEffect(() => {
     const fetchMemories = async () => {
       try {
-        const res = await fetch('/api/memories')
-        if (res.ok) {
-          const data = await res.json()
-          setMemories(data)
+        const res = await fetch('/api/memories?limit=20')
+        const data: MemoryResponse = await res.json()
+        if (!res.ok) {
+          setHint(data.error || `HTTP ${res.status}`)
+          setInitialized(false)
+          return
+        }
+        setInitialized(data.initialized)
+        setHint(data.hint || data.error || null)
+        if (data.initialized) {
+          setMemories(data.memories || [])
         }
       } catch (err) {
         console.error('Failed to fetch memories:', err)
+        setHint('Backend unreachable — is the backend running on :8000?')
+        setInitialized(false)
       }
     }
-    
+
     fetchMemories()
     const interval = setInterval(fetchMemories, 10000)
     return () => clearInterval(interval)
@@ -33,17 +52,21 @@ export default function MemoryViewer() {
 
   const filteredMemories = memories.filter(m => {
     const matchesSearch = m.content.toLowerCase().includes(search.toLowerCase())
-    const matchesCategory = category === 'all' || m.category === category
+    const matchesCategory = category === 'all' || m.type === category
     return matchesSearch && matchesCategory
   })
 
-  const formatDate = (timestamp: number) => {
-    return new Date(timestamp * 1000).toLocaleString()
+  const formatDate = (timestamp?: string) => {
+    if (!timestamp) return ''
+    const d = new Date(timestamp)
+    return isNaN(d.getTime()) ? '' : d.toLocaleString()
   }
 
   return (
     <div className="memory-viewer">
       <h2>Memory Viewer</h2>
+      {!initialized && <div className="error-hint">⚠️ Memory system not initialized. {hint}</div>}
+      {initialized && hint && <div className="error-hint">⚠️ {hint}</div>}
       <div className="filters">
         <input
           type="text"
@@ -60,16 +83,21 @@ export default function MemoryViewer() {
         </select>
       </div>
       <div className="memory-list">
-        {filteredMemories.map(memory => (
-          <div key={memory.id} className="memory-item">
+        {filteredMemories.map((memory, i) => (
+          <div key={i} className="memory-item">
             <div className="memory-header">
-              <span className="category">{memory.category}</span>
+              <span className="category">{memory.type || 'unknown'}</span>
               <span className="importance">Importance: {(memory.importance * 100).toFixed(0)}%</span>
             </div>
             <p className="content">{memory.content}</p>
-            <span className="timestamp">{formatDate(memory.timestamp)}</span>
+            {formatDate(memory.timestamp) && (
+              <span className="timestamp">{formatDate(memory.timestamp)}</span>
+            )}
           </div>
         ))}
+        {initialized && filteredMemories.length === 0 && (
+          <div className="empty-hint">No memories match. Talk to Angela first to build memories.</div>
+        )}
       </div>
     </div>
   )
