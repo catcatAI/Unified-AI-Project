@@ -78,7 +78,8 @@ def _cosine_beta_schedule(timesteps: int, s: float = 0.008) -> np.ndarray:
     alphas_cumprod = np.cos(((x / timesteps) + s) / (1 + s) * math.pi * 0.5) ** 2
     alphas_cumprod = alphas_cumprod / alphas_cumprod[0]
     betas = 1 - (alphas_cumprod[1:] / alphas_cumprod[:-1])
-    return np.clip(betas, 0, 0.999).astype(np.float32)
+    out: np.ndarray = np.clip(betas, 0, 0.999).astype(np.float32)
+    return out
 
 
 def _timestep_embedding(timesteps: np.ndarray, dim: int = 16) -> np.ndarray:
@@ -92,7 +93,7 @@ def _timestep_embedding(timesteps: np.ndarray, dim: int = 16) -> np.ndarray:
     return emb.astype(np.float32)
 
 
-def _segment_mask(dim: int = TOTAL_DIM) -> Dict[str, np.ndarray]:
+def _segment_mask(dim: int = TOTAL_DIM) -> np.ndarray:
     """Per-segment beta scale mask of shape [dim]."""
     mask = np.ones(dim, dtype=np.float32)
     for seg, (s, e) in _SEGMENTS.items():
@@ -139,7 +140,8 @@ class MLPDenoiser:
         h = np.concatenate([x_t, t_emb, cond], axis=1)  # [B, 791]
         h = np.maximum(0, h @ self.W1.T + self.b1)  # ReLU
         h = np.maximum(0, h @ self.W2.T + self.b2)
-        return h @ self.W3.T + self.b3  # [B, 263]
+        out: np.ndarray = h @ self.W3.T + self.b3  # [B, 263]
+        return out
 
     def params_bytes(self) -> int:
         return sum(a.nbytes for a in [self.W1, self.b1, self.W2, self.b2, self.W3, self.b3])
@@ -191,7 +193,8 @@ class PrimitiveDiffusion:
         sqrt_1_acp = self._sqrt_one_minus_acp[t][:, None]
         # segment-wise noise scaling
         scaled_noise = noise * self._seg_mask[None, :]
-        return sqrt_acp * x0 + sqrt_1_acp * scaled_noise
+        out: np.ndarray = sqrt_acp * x0 + sqrt_1_acp * scaled_noise
+        return out
 
     def train_step(self, x0: np.ndarray, cond: np.ndarray) -> Dict[str, float]:
         """One denoising step: sample t/noise, predict x0, compute MSE, SGD.
@@ -200,7 +203,9 @@ class PrimitiveDiffusion:
         Returns {loss, lr}.
         """
         B = x0.shape[0]
-        t = np.random.randint(0, self.timesteps, size=B, dtype=np.int64)
+        # NOTE: numpy stubs type randint() as scalar even with size= given;
+        # at runtime this is an [B] int64 array.
+        t: np.ndarray = np.random.randint(0, self.timesteps, size=B, dtype=np.int64)  # type: ignore[assignment]
         noise = np.random.randn(*x0.shape).astype(np.float32)
         x_t = self.q_sample(x0, t, noise)
         t_emb = _timestep_embedding(t, dim=16)
@@ -231,7 +236,7 @@ class PrimitiveDiffusion:
             cond = cond[None, :]
         B = cond.shape[0]
         rng = np.random.default_rng(seed)
-        x = rng.standard_normal((B, self.vec_dim)).astype(np.float32)
+        x: np.ndarray = rng.standard_normal((B, self.vec_dim)).astype(np.float32)
         # DDIM: evenly spaced timesteps from T-1 down to 0
         ddim_ts = np.linspace(self.timesteps - 1, 0, steps, dtype=np.int64)
         for idx in range(len(ddim_ts)):
@@ -248,17 +253,21 @@ class PrimitiveDiffusion:
                 acp_prev = self._alphas_cumprod[int(ddim_ts[idx + 1])]
                 sqrt_acp_prev = math.sqrt(float(acp_prev))
                 # Re-derive eps from current x and pred
-                eps = (x - math.sqrt(float(acp_t)) * pred_x0) / max(math.sqrt(float(1 - acp_t)), 1e-8)
-                x = sqrt_acp_prev * pred_x0 + math.sqrt(max(1 - float(acp_prev), 0)) * eps
+                _denom = math.sqrt(float(1 - acp_t))
+                denom = _denom if _denom >= 1e-8 else 1e-8
+                eps = (x - math.sqrt(float(acp_t)) * pred_x0) / denom
+                _rest = 1 - float(acp_prev)
+                x = sqrt_acp_prev * pred_x0 + math.sqrt(_rest if _rest > 0 else 0) * eps
         if single:
-            return x[0]
+            row: np.ndarray = x[0]
+            return row
         return x
 
     def save(self, path: str) -> None:
         import os
 
         os.makedirs(os.path.dirname(os.path.abspath(path)) or ".", exist_ok=True)
-        np.savez(path, **self.denoiser.to_dict(), timesteps=np.asarray(self.timesteps))
+        np.savez(path, **self.denoiser.to_dict(), timesteps=np.asarray(self.timesteps))  # type: ignore[arg-type]
 
     def load(self, path: str) -> bool:
         try:

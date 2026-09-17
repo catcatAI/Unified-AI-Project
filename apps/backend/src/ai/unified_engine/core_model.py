@@ -72,7 +72,7 @@ def _vectorised_hash(views: np.ndarray) -> np.ndarray:
     Uses the class default slot count; per-instance slot counts are applied
     by the caller via modulo (see FixedSizeCore._hash_ctx).
     """
-    h = np.full(views.shape[0], 2166136261, dtype=np.uint64)
+    h: np.ndarray = np.full(views.shape[0], 2166136261, dtype=np.uint64)
     for col in range(views.shape[1]):
         h ^= views[:, col].astype(np.uint64)
         h = (h * 16777619) & 0xFFFFFFFF
@@ -111,7 +111,7 @@ class FixedSizeCore:
     def __init__(
         self,
         max_seq: int = MAX_SEQ,
-        slots: int = None,
+        slots: Optional[int] = None,
         use_feat: bool = True,
         use_delta: bool = True,
     ) -> None:
@@ -455,10 +455,11 @@ class FixedSizeCore:
         if not prefix:
             return uniform
 
-        def _norm(cell):
+        def _norm(cell: np.ndarray) -> Optional[np.ndarray]:
             total = cell.sum()
             if total > 0:
-                return cell.astype(np.float64) / total
+                dist: np.ndarray = cell.astype(np.float64) / total
+                return dist
             return None
 
         # 5-gram (4-byte context)
@@ -500,7 +501,8 @@ class FixedSizeCore:
         total = float(cell.sum())
         if total <= 0:
             return None
-        return cell.astype(np.float64) / total
+        dist: np.ndarray = cell.astype(np.float64) / total
+        return dist
 
     def clear_dist_cache(self) -> None:
         """Drop the fused-distribution cache (call after any learn_bytes)."""
