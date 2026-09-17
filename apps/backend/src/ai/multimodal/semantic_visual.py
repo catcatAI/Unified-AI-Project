@@ -73,7 +73,7 @@ def _lazy_init_clip():
         _CLIP_PROCESSOR = CLIPProcessor.from_pretrained(model_name)
         _CLIP_MODEL.eval()
         if torch.cuda.is_available():
-            _CLIP_MODEL = _CLIP_MODEL.cuda()
+            _CLIP_MODEL = _CLIP_MODEL.cuda()  # type: ignore[call-arg]
         _CLIP_AVAILABLE = True
         logger.info("SemanticVisualEncoder: CLIP loaded (%s)", model_name)
     except Exception as e:
@@ -110,7 +110,7 @@ class SemanticVisualEncoder:
         model, _ = self._get_backend()
         return model is not None
 
-    def _get_backend(self) -> Tuple[Optional[object], Optional[object]]:
+    def _get_backend(self) -> Tuple[Any, Any]:
         """Get or lazy-init CLIP backend."""
         if self._model is None:
             self._model, self._processor = _lazy_init_clip()
@@ -145,11 +145,10 @@ class SemanticVisualEncoder:
                     emb = outputs.image_embeds
                 else:
                     emb = outputs
-            vec = emb.cpu().numpy().flatten().astype(np.float32)
+            raw: np.ndarray = emb.cpu().numpy().flatten().astype(np.float32)
             # L2 normalize
-            norm = np.linalg.norm(vec)
-            if norm > 0:
-                vec = vec / norm
+            norm = np.linalg.norm(raw)
+            vec: np.ndarray = raw / norm if norm > 0 else raw
             return vec
         except Exception as e:
             logger.warning("SemanticVisualEncoder encode failed: %s", e, exc_info=True)
@@ -174,10 +173,9 @@ class SemanticVisualEncoder:
                     emb = outputs.image_embeds
                 else:
                     emb = outputs
-            vec = emb.cpu().numpy().flatten().astype(np.float32)
-            norm = np.linalg.norm(vec)
-            if norm > 0:
-                vec = vec / norm
+            raw: np.ndarray = emb.cpu().numpy().flatten().astype(np.float32)
+            norm = np.linalg.norm(raw)
+            vec: np.ndarray = raw / norm if norm > 0 else raw
             return vec
         except Exception as e:
             logger.warning("SemanticVisualEncoder encode_from_pil failed: %s", e, exc_info=True)
@@ -215,10 +213,11 @@ class SemanticVisualEncoder:
                 text_features = outputs.text_embeds
             else:
                 text_features = outputs
-            vecs = text_features.cpu().numpy().astype(np.float32)
-            norms = np.linalg.norm(vecs, axis=1, keepdims=True)
+            arr: np.ndarray = text_features.cpu().numpy().astype(np.float32)
+            norms = np.linalg.norm(arr, axis=1, keepdims=True)
             norms[norms == 0] = 1.0
-            return vecs / norms
+            vecs: np.ndarray = arr / norms
+            return vecs
         except Exception as e:
             logger.warning("SemanticVisualEncoder encode_text failed: %s", e, exc_info=True)
             return None
@@ -253,7 +252,7 @@ class SemanticVisualEncoder:
         exp_scores = np.exp(scores_scaled - scores_scaled.max())
         probs = exp_scores / exp_scores.sum()
 
-        results = []
+        results: List[Dict[str, Any]] = []
         for i, (label, prob) in enumerate(zip(labels, probs)):
             if prob >= confidence_threshold:
                 results.append(
@@ -264,7 +263,7 @@ class SemanticVisualEncoder:
                         "rank": 0,
                     }
                 )
-        results.sort(key=lambda x: x["confidence"], reverse=True)
+        results.sort(key=lambda x: float(x["confidence"]), reverse=True)
         for i, r in enumerate(results):
             r["rank"] = i + 1
         return results

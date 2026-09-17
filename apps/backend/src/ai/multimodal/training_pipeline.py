@@ -2,7 +2,7 @@ import logging
 import os
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 from ai.multimodal.audio_decoder import AudioWaveformDecoder, load_default_audio_decoder_weights
@@ -262,9 +262,12 @@ class TextureTrainer:
         if not real_images:
             return {"final_loss": 0.0, "history": []}
 
+        from PIL import Image as _PILImage
+
         latents = []
         for img in real_images:
-            feats = self._visual_encoder.encode(img)
+            arr = img if img.dtype == np.uint8 else np.clip(img, 0, 255).astype(np.uint8)
+            feats = self._visual_encoder.encode_from_pil(_PILImage.fromarray(arr))
             if hasattr(self._rc._ls, "project"):
                 z = self._rc._ls.project("vision", feats)
             else:
@@ -502,7 +505,7 @@ class LatentReasoningTrainer:
         latent = latent_space.project("text", features)
         if latent is None:
             return 0.0
-        return self._lrn.train_step(latent, response_text, lr=lr)
+        return float(self._lrn.train_step(latent, response_text, lr=lr))
 
 
 class PrimitiveTrainer:
@@ -521,7 +524,7 @@ class PrimitiveTrainer:
     def __init__(self, primitive_encoder, sequence_generator=None):
         self._encoder = primitive_encoder
         self._gen = sequence_generator
-        self._library = None
+        self._library: Optional[Any] = None
 
     def _create_library_shapes(self):
         """Create a library of basic geometric shapes with various colors and positions."""
@@ -708,6 +711,8 @@ class PrimitiveTrainer:
 
     def _train_sequence_generator(self, n_samples: int, epochs: int, lr: float) -> dict:
         """Create synthetic training data from library and train SequenceGenerator."""
+        assert self._library is not None, "library must be populated by train() first"
+        assert self._gen is not None, "sequence_generator required"
         rng = np.random.default_rng(42)
 
         clip_embeddings = []
@@ -731,7 +736,7 @@ class PrimitiveTrainer:
         logger.info(
             "PrimitiveTrainer: training SequenceGenerator on %d pairs", len(clip_embeddings)
         )
-        result = self._gen.train(clip_embeddings, primitive_sequences, epochs=epochs, lr=lr)
+        result: dict = self._gen.train(clip_embeddings, primitive_sequences, epochs=epochs, lr=lr)
         logger.info(
             "PrimitiveTrainer: SequenceGenerator trained — final loss: %.6f", result["final_loss"]
         )
@@ -784,8 +789,8 @@ class FullTrainingPipeline:
         self._contrastive = ContrastiveBatchTrainer(
             self._ls, self._visual_encoder, self._audio_encoder
         )
-        self._primitive_encoder = None  # lazy init in train_primitives
-        self._primitive_library = None  # populated by PrimitiveTrainer
+        self._primitive_encoder: Optional[Any] = None  # lazy init in train_primitives
+        self._primitive_library: Optional[Any] = None  # populated by PrimitiveTrainer
         self._sequence_generator = SequenceGenerator()
 
     def run(
@@ -825,7 +830,7 @@ class FullTrainingPipeline:
 
     def run_on_real(
         self,
-        data_provider: "RealDataProvider",
+        data_provider: Any,  # RealDataProvider (duck-typed + isinstance-checked below)
         contrastive_epochs: int = 5,
         recon_epochs: int = 5,
         pairs_per_modality: int = 30,
@@ -1243,7 +1248,7 @@ class FullTrainingPipeline:
                 save_data["prim_enc_W_decode"] = pe._W_decode.copy()
                 save_data["prim_enc_b_decode"] = pe._b_decode.copy()
             Path(save_path).parent.mkdir(parents=True, exist_ok=True)
-            np.savez(save_path, **save_data)
+            np.savez(save_path, **save_data)  # type: ignore[arg-type]
             logger.info("Trained weights saved to %s", save_path)
             return save_path
         except Exception as e:
@@ -1309,6 +1314,7 @@ class FullTrainingPipeline:
                 self._primitive_encoder = PrimitiveEncoder(
                     embedding_dim=data["prim_enc_W_encode"].shape[0]
                 )
+                assert self._primitive_encoder is not None
                 self._primitive_encoder._W_encode[:] = data["prim_enc_W_encode"]
                 self._primitive_encoder._b_encode[:] = data["prim_enc_b_encode"]
                 self._primitive_encoder._W_decode[:] = data["prim_enc_W_decode"]

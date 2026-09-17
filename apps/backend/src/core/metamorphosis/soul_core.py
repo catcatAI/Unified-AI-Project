@@ -183,10 +183,10 @@ class SoulCoreManager:
         core_purpose: str,
         fundamental_values: List[str],
         personality_foundation: Dict[str, float],
-        key_experiences: List[Dict[str, Any]] = None,
-        learned_lessons: List[str] = None,
-        relationship_memories: List[Dict[str, Any]] = None,
-        emotional_patterns: Dict[str, float] = None,
+        key_experiences: Optional[List[Dict[str, Any]]] = None,
+        learned_lessons: Optional[List[str]] = None,
+        relationship_memories: Optional[List[Dict[str, Any]]] = None,
+        emotional_patterns: Optional[Dict[str, float]] = None,
     ) -> SoulCore:
         """创建新灵魂 / Create new soul"""
         soul_id = self._generate_soul_id(name)
@@ -270,8 +270,8 @@ class SoulCoreManager:
 def create_soul_core(
     name: str = "Angela",
     core_purpose: str = "To assist and collaborate with humans",
-    fundamental_values: List[str] = None,
-    personality_foundation: Dict[str, float] = None,
+    fundamental_values: Optional[List[str]] = None,
+    personality_foundation: Optional[Dict[str, float]] = None,
 ) -> SoulCore:
     """便捷函数：创建灵魂核心"""
     return SoulCoreManager().create_soul(

@@ -31,7 +31,7 @@ understanding, only symbolic evaluation of constrained word problems.
 from __future__ import annotations
 
 import re
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional, TypedDict
 
 # Canonical quantity names.
 MASS = "mass"
@@ -131,9 +131,16 @@ TARGET_HINTS: List[str] = [
 # Standard gravity used by the weight formula (F = m·g).
 GRAVITY = 9.8
 
+from typing import TypedDict
+
+class FormulaSpec(TypedDict, total=False):
+    vars: List[str]
+    solve: Dict[str, str]
+    const: Optional[float]
+
 # Formulas: each is (unknown, [(var1, expr), (var2, expr)], solved-expr-for-unknown).
 # solved-expr uses Python-safe names matching the vars.
-_FORMULAS: Dict[str, Dict[str, object]] = {
+_FORMULAS: Dict[str, FormulaSpec] = {
     FORCE: {
         "vars": [MASS, ACCEL],
         "solve": {FORCE: "m * a", MASS: "F / a", ACCEL: "F / m"},
@@ -229,9 +236,9 @@ def extract_known_quantities(text: str) -> Dict[str, float]:
         if qty in known:
             continue
         pattern = re.escape(kw) + r"\s*(?:=|\sof\s|:|\bof\b|，|,)?\s*(\d+(?:\.\d+)?)"
-        m = re.search(pattern, lowered)
-        if m:
-            known.setdefault(qty, float(m.group(1)))
+        match: Optional[re.Match[str]] = re.search(pattern, lowered)
+        if match:
+            known.setdefault(qty, float(match.group(1)))
     return known
 
 
@@ -307,7 +314,7 @@ def solve(text: str) -> Optional[Dict[str, object]]:
     # Try each formula: exactly one unknown, and the unknown (or the formula's
     # own quantity) must be what was asked when a target is explicit.
     for qty, spec in _FORMULAS.items():
-        vars_ = spec["vars"]  # type: ignore[attr-defined]
+        vars_ = spec["vars"]
         missing = [var for var in vars_ + [qty] if var not in known]
         if len(missing) != 1:
             continue
@@ -315,9 +322,10 @@ def solve(text: str) -> Optional[Dict[str, object]]:
         if target is not None and unknown != target and qty != target:
             continue
         values = {_VAR_NAMES[k]: v for k, v in known.items()}
-        if spec.get("const"):  # type: ignore[attr-defined]
-            values["g"] = float(spec["const"])  # type: ignore[attr-defined]
-        solve_map = spec["solve"]  # type: ignore[attr-defined]
+        const_val = spec.get("const")
+        if const_val is not None:
+            values["g"] = float(const_val)
+        solve_map = spec["solve"]
         expr = solve_map.get(unknown)
         if expr is None:
             continue
@@ -337,8 +345,8 @@ def solve(text: str) -> Optional[Dict[str, object]]:
 
 def _eval_safe(expr: str, values: Dict[str, float]) -> Optional[float]:
     """Evaluate a whitelisted formula expression with the given values."""
-    allowed = {"__builtins__": {}}
-    env = dict(values)
+    allowed: Dict[str, Any] = {"__builtins__": {}}
+    env: Dict[str, Any] = dict(values)
     env.update({"abs": abs, "max": max, "min": min})
     try:
         result = eval(expr, allowed, env)  # noqa: S307 - whitelisted names only

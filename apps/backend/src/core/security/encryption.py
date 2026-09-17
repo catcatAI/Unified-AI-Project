@@ -52,14 +52,13 @@ class EncryptionUtils:
             logger.warning("生成了新的加密密钥, 生产环境应该使用预定义的密钥")
 
         # 设置Fernet加密器
+        self.fernet: Optional[Fernet] = None
         if FERNET_AVAILABLE:
             self.fernet = Fernet(encryption_key)
-        else:
-            self.fernet = None
 
     def encrypt(self, data: Union[str, bytes]) -> bytes:
         """加密数据(使用Fernet)"""
-        if not FERNET_AVAILABLE:
+        if not FERNET_AVAILABLE or self.fernet is None:
             raise ValueError("Fernet not available")
 
         if isinstance(data, str):
@@ -69,7 +68,7 @@ class EncryptionUtils:
 
     def decrypt(self, encrypted_data: bytes) -> bytes:
         """解密数据(使用Fernet)"""
-        if not FERNET_AVAILABLE:
+        if not FERNET_AVAILABLE or self.fernet is None:
             raise ValueError("Fernet not available")
 
         return self.fernet.decrypt(encrypted_data)
@@ -117,7 +116,7 @@ class EncryptionUtils:
         if isinstance(key, str):
             key = key.encode("utf-8")
 
-        hmac_obj = hmac.new(key, data, hashlib.sha256())
+        hmac_obj = hmac.new(key, data, "sha256")
         return hmac_obj.hexdigest()
 
     def verify_hmac(self, data: Union[str, bytes], signature: str, key: Union[str, bytes]) -> bool:
@@ -141,7 +140,7 @@ SECURITY_CONFIG = {
 
 def validate_password_strength(password: str) -> Dict[str, Any]:
     """验证密码强度"""
-    result = {"valid": True, "errors": [], "score": 0}
+    result: Dict[str, Any] = {"valid": True, "errors": [], "score": 0}
 
     # 长度检查
     if len(password) < SECURITY_CONFIG["password_min_length"]:

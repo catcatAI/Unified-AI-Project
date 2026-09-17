@@ -69,7 +69,7 @@ class AudioSpectralEncoder:
                     sampwidth = wf.getsampwidth()
                     nchannels = wf.getnchannels()
             if sampwidth == 2:
-                dtype = np.int16
+                dtype: type = np.int16
             elif sampwidth == 1:
                 dtype = np.uint8
             else:
@@ -174,7 +174,7 @@ class AudioSpectralEncoder:
             for f in range(center, min(right, n_freqs)):
                 mel_matrix[m - 1, f] = (right - f) / (right - center)
         mel_spec = mel_matrix @ magnitude
-        return np.log(np.maximum(mel_spec, 1e-10))
+        return np.log(np.maximum(mel_spec, 1e-10))  # type: ignore[no-any-return]
 
     def _mfcc(self, log_mel_spec: np.ndarray) -> np.ndarray:
         """Compute MFCCs via DCT of log-mel spectrogram. Returns (N_MFCC × n_frames)."""
@@ -184,7 +184,7 @@ class AudioSpectralEncoder:
             dct[k, :] = np.cos(np.pi * k * (np.arange(n_mels) + 0.5) / n_mels)
         dct[:, 0] *= np.sqrt(1.0 / n_mels)
         dct[:, 1:] *= np.sqrt(2.0 / n_mels)
-        return dct @ log_mel_spec
+        return dct @ log_mel_spec  # type: ignore[no-any-return]
 
     def _spectral_centroid(self, magnitude: np.ndarray) -> float:
         """Weighted mean of frequencies."""
@@ -274,9 +274,9 @@ class AudioSpectralEncoder:
             self._projection = rng.normal(
                 0, 1 / np.sqrt(len(raw)), (self._feature_dim, len(raw))
             ).astype(np.float32)
-        return self._projection @ raw
+        return self._projection @ raw  # type: ignore[no-any-return]
 
-    def train_step(self, audio_data: bytes, target_latent: np.ndarray, lr: float = 0.001) -> float:
+    def train_step(self, audio_data: bytes, target_latent: Optional[np.ndarray], lr: float = 0.001) -> float:  # type: ignore[operator]
         """Train the projection matrix to map audio features to target latent.
 
         Uses MSE loss between projected features and target latent vector.
@@ -291,16 +291,26 @@ class AudioSpectralEncoder:
             Training loss (MSE)
         """
         # Extract spectral features
-        features = self._extract_features(audio_data)
+        if not audio_data:
+            return 0.0
+        try:
+            samples = self._decode_audio(audio_data)
+            features = self._encode_samples(samples)
+        except Exception:
+            return 0.0
         if features is None or np.all(features == 0):
             return 0.0
 
-        # Project to feature space
-        projected = self._project(features)
+        # Project to feature space (already done in _encode_samples)
+        projected = features
 
         # Compute loss: MSE between projected and target
-        diff = projected - target_latent[: self._feature_dim]
-        loss = float(np.mean(diff**2))
+        if target_latent is not None:
+            target_trimmed = target_latent[: self._feature_dim]
+        else:
+            target_trimmed = np.zeros(self._feature_dim)
+        diff = projected - target_trimmed
+        loss = float(np.mean(diff**2))  # type: ignore[operator]
 
         # Gradient: d(loss)/d(projection) = 2 * diff @ features.T
         # Update projection: W -= lr * grad

@@ -164,11 +164,11 @@ class BodyAdapter:
 
     def create_snapshot(
         self,
-        state_data: Dict[str, Any] = None,
-        emotional_state: Dict[str, float] = None,
-        cognitive_state: Dict[str, Any] = None,
-        memory_state: Dict[str, Any] = None,
-        skill_states: Dict[str, Dict[str, Any]] = None,
+        state_data: Optional[Dict[str, Any]] = None,
+        emotional_state: Optional[Dict[str, float]] = None,
+        cognitive_state: Optional[Dict[str, Any]] = None,
+        memory_state: Optional[Dict[str, Any]] = None,
+        skill_states: Optional[Dict[str, Dict[str, Any]]] = None,
     ) -> StateSnapshot:
         """创建状态快照 / Create state snapshot"""
         return StateSnapshot(

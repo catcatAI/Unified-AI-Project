@@ -12,7 +12,7 @@ import logging
 import time
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from core.prompt_manager import prompt
 from core.system.config.magic_numbers import (
@@ -106,7 +106,7 @@ class LLMDecisionLoop:
         loop_interval: float = 3.0,  # 決策循環間隔（秒）
         min_loop_interval: float = 2.0,
         max_loop_interval: float = 5.0,
-        broadcast_callback: Optional[callable] = None,
+        broadcast_callback: Optional[Callable[[Dict[str, Any]], Any]] = None,
     ):
         self.llm_service = llm_service
         self.state_manager = state_manager
@@ -126,7 +126,7 @@ class LLMDecisionLoop:
         self.max_history_size = limit_value("ai.llm_decision_loop.max_history", 100)
 
         # 統計信息
-        self.stats = {
+        self.stats: Dict[str, Any] = {
             "total_decisions": 0,
             "executed_decisions": 0,
             "failed_decisions": 0,
@@ -411,7 +411,7 @@ class LLMDecisionLoop:
             else:
                 return self._fallback_decision()
             try:
-                decision = json.loads(response_text)
+                decision: Dict[str, Any] = json.loads(response_text)
                 return decision
             except (
                 Exception

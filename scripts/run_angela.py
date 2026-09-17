@@ -267,7 +267,7 @@ def wait_for_server(port=8000, timeout=360, progress: Optional[ProgressDisplay] 
 
 class Launcher:
     def __init__(self):
-        self.project_root = Path(__file__).parent.parent.resolve()
+        self.project_root = Path(__file__).resolve().parent.parent
         self.backend_dir=self.project_root / "apps" / "backend"
         self.electron_dir=self.project_root / "apps" / "desktop-app" / "electron_app"
         self.mode="user"  # Default mode
@@ -329,9 +329,10 @@ class Launcher:
             return False
 
     
-    def check_dependencies(self) -> Tuple[bool, List[str]]:
+    def check_dependencies(self, quiet: bool = False) -> Tuple[bool, List[str]]:
         """检查核心依赖是否安装"""
-        self.progress.update(5, "检查环境依赖...")
+        if not quiet:
+            self.progress.update(5, "检查环境依赖...")
         
         missing=[]
         required_packages={
@@ -353,17 +354,20 @@ class Launcher:
                 missing.append(name)
         
         if missing:
-            self.progress.error(f"缺失关键组件: {', '.join(missing)}")
+            if not quiet:
+                self.progress.error(f"缺失关键组件: {', '.join(missing)}")
             return False, missing
         
-        self.progress.update(10, "环境依赖检查完成", "success")
+        if not quiet:
+            self.progress.update(10, "环境依赖检查完成", "success")
         return True, []
     
-    def check_python_version(self) -> bool:
+    def check_python_version(self, quiet: bool = False) -> bool:
         """检查 Python 版本"""
         version = sys.version_info
         if version < (3, 10):
-            self.progress.error(f"Python 版本过低: {version.major}.{version.minor}, 需要 >= 3.10")
+            if not quiet:
+                self.progress.error(f"Python 版本过低: {version.major}.{version.minor}, 需要 >= 3.10")
             return False
         return True
     
@@ -596,8 +600,8 @@ class Launcher:
         print("=" * 60)
         
         checks=[
-            ("Python 版本", self.check_python_version, True),
-            ("Python 依赖", lambda: self.check_dependencies()[0], True),
+            ("Python 版本", lambda: self.check_python_version(quiet=True), True),
+            ("Python 依赖", lambda: self.check_dependencies(quiet=True)[0], True),
             ("Node.js 安装", self.check_node_installed, True),
             ("端口 8000 可用", lambda: self.check_port_available(8000), True),
             ("后端目录存在", lambda: self.backend_dir.exists(), True),

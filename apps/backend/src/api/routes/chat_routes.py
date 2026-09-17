@@ -855,7 +855,7 @@ async def _handle_execution_gate(
                         "task_mgr": "task",
                         "vision": "vision",
                     }
-                    expected_ir = handler_to_ir.get(decision.handler)
+                    expected_ir = handler_to_ir.get(decision.handler) if decision.handler else None
                     if expected_ir and ir_name != expected_ir:
                         _ir_confirms = False
             except Exception as e:
@@ -933,7 +933,7 @@ async def _try_agent_routing(
         try:
             from api.lifespan import get_agent_manager as _lifespan_get_agent_manager
         except ImportError:
-            _lifespan_get_agent_manager = None
+            _lifespan_get_agent_manager = None  # type: ignore[assignment]
 
         # Reuse the classification already computed by _handle_execution_gate
         # (stored on context) to avoid classifying the same message twice per
@@ -942,7 +942,7 @@ async def _try_agent_routing(
         cached_conf = context.get("_classify_result_confidence")
         if cached_type is not None:
             primary_type_name = str(cached_type)
-            confidence = float(cached_conf)
+            confidence = float(cached_conf) if cached_conf is not None else 0.0
         else:
             classifier = _get_query_classifier()
             classify_result = classifier.classify(user_message)
@@ -1067,7 +1067,7 @@ def _get_causal_routing_adjustment() -> Dict[str, Any]:
 
         # Shortcut: get average prediction strength for a cause
         def _avg_strength(cause: str) -> float:
-            preds = causal.predict(cause)
+            preds: List[Dict[str, float]] = causal.predict(cause)
             if not preds:
                 return 0.0
             return sum(p["strength"] for p in preds) / len(preds)
@@ -1537,8 +1537,13 @@ async def _handle_chat_request(
         ).get("response_text")
         if session_id in sessions and user_message and response_text:
             try:
-                session = sessions.get(session_id)
-                messages = session.setdefault("messages", [])
+                session_data: Dict[str, Any] = sessions.get(session_id)  # type: ignore[assignment]
+                if session_data is None:
+                    raise HTTPException(status_code=404, detail="Session not found")
+                messages_raw = session_data.get("messages")
+                messages: List[Dict[str, Any]] = messages_raw if isinstance(messages_raw, list) else []
+                if not messages:
+                    session["messages"] = messages
                 messages.append(
                     {
                         "role": "user",
@@ -1957,6 +1962,8 @@ async def send_message(session_id: str, request: Dict[str, Any] = Body(...)) -> 
         raise HTTPException(status_code=404, detail="Session not found")
     user_message = request.get("text", request.get("message", ""))
     session = sessions.get(session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="Session not found")
     user_name = session.get("user_name", "User")
     return await _handle_chat_request(
         user_message, user_name, session.get("messages", []), session_id
@@ -2090,8 +2097,8 @@ async def chat_with_image(
         except Exception as e:
             logger.warning(f"Image analysis failed, continuing with text only: {e}")
 
-    history = []
-    context = {"user_name": user_name}
+    history: List[Dict[str, Any]] = []
+    context: Dict[str, Any] = {"user_name": user_name}
     if image_context:
         context["image_analysis"] = image_context
 

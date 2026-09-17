@@ -93,7 +93,10 @@ class DriveDeduplication:
             return True
         if key not in self._syncs:
             return True
-        return self._syncs[key].get("content_hash") != content_hash
+        stored_hash: Optional[str] = self._syncs[key].get("content_hash")
+        if stored_hash is None:
+            return True
+        return bool(stored_hash != content_hash)
 
     def record_sync(self, metadata: Dict[str, Any], content_hash: str) -> None:
         """Execute the record sync operation."""
@@ -160,7 +163,7 @@ class DocumentParser:
             try:
                 from docx import Document as DocxDocument
 
-                doc = DocxDocument(path)
+                doc = DocxDocument(str(path))
                 return "\n".join(p.text for p in doc.paragraphs)
             except ImportError:
                 return f"[Binary file: {path.name}]"
@@ -170,7 +173,7 @@ class DocumentParser:
 
         if suffix in (".xlsx", ".xls"):
             try:
-                import openpyxl
+                import openpyxl  # type: ignore[import-untyped]
 
                 wb = openpyxl.load_workbook(path, read_only=True)
                 try:
@@ -295,11 +298,11 @@ async def list_files(
 
 
 @router.get("/files/{file_id}/metadata")
-async def get_file_metadata(file_id: str, svc=Depends(get_drive_service)) -> dict:
+async def get_file_metadata(file_id: str, svc=Depends(get_drive_service)) -> Dict[str, Any]:
     """獲取文件元數據"""
     try:
         metadata = svc.get_file_metadata(file_id)
-        return metadata
+        return metadata if isinstance(metadata, dict) else {}
     except PermissionError:
         raise HTTPException(status_code=401, detail="Not authenticated")
     except Exception as e:
@@ -518,7 +521,7 @@ async def upload_file(
         result = svc.upload_file(tmp_path, folder_id)
         if result is None:
             raise HTTPException(status_code=400, detail="Upload failed")
-        return result
+        return result if isinstance(result, dict) else {}
     finally:
         if not _fd_closed:
             try:
@@ -548,4 +551,4 @@ async def create_file(
     result = svc.create_file_from_text(file_name, content, mime_type, folder_id)
     if result is None:
         raise HTTPException(status_code=400, detail="File creation failed")
-    return result
+    return result if isinstance(result, dict) else {}

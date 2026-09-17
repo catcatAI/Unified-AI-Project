@@ -27,7 +27,7 @@ import os
 import subprocess
 import sys
 import time
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -130,11 +130,17 @@ class ThreeLayerVisual:
                 "ThreeLayerVisual: unable to create model_dir=%s", model_dir, exc_info=True
             )
 
-        self._encoder = None  # PCA projection matrix
-        self._decoder = None  # Neural network decoder
-        self._mean = None  # Training set mean
-        self._class_centers = None  # Class center vectors
-        self._class_names = None  # Class names
+        self._encoder: Optional[np.ndarray] = None  # PCA projection matrix
+        self._decoder: Optional[Any] = None  # Neural network decoder
+        self._mean: Optional[np.ndarray] = None  # Training set mean
+        self._class_centers: Optional[np.ndarray] = None  # Class center vectors
+        self._class_names: Optional[List[str]] = None  # Class names
+
+        self._torch: Optional[Any] = None
+        self._nn: Optional[Any] = None
+        self._F: Optional[Any] = None
+        self._pca_explained: float = 0.0
+        self._latent_dim: int = 0
 
         self._torch, self._nn, self._F = _lazy_init_torch()
 
@@ -166,15 +172,17 @@ class ThreeLayerVisual:
         self._class_names = class_names
         return images, labels, class_names
 
-    def _fit_pca_encoder(self, images, verbose):
+    def _fit_pca_encoder(self, images: np.ndarray, verbose: bool):
         if verbose:
             logger.info("Fitting PCA encoder...")
-        self._mean = images.mean(axis=0)
-        centered = images - self._mean
+        mean = images.mean(axis=0)
+        self._mean = mean
+        centered = images - mean
         U, S, Vt = np.linalg.svd(centered, full_matrices=False)
         n_components = min(Vt.shape[0], self.LATENT_DIM)
-        self._encoder = np.zeros((self.LATENT_DIM, self.IMG_DIM), dtype=Vt.dtype)
-        self._encoder[:n_components] = Vt[:n_components]
+        encoder = np.zeros((self.LATENT_DIM, self.IMG_DIM), dtype=Vt.dtype)
+        encoder[:n_components] = Vt[:n_components]
+        self._encoder = encoder
         explained = (S[:n_components] ** 2).sum() / (S**2).sum()
         self._pca_explained = float(explained)
         self._latent_dim = self.LATENT_DIM
@@ -183,15 +191,24 @@ class ThreeLayerVisual:
                 "PCA: %d/%d dims, %.1f%% variance", n_components, self.LATENT_DIM, explained * 100
             )
 
-    def _encode_all(self, images):
+    def _encode_all(self, images: np.ndarray) -> np.ndarray:
+        if self._encoder is None:
+            raise RuntimeError("Encoder not fitted")
+        encoder = self._encoder
         centered = images - self._mean
-        return centered @ self._encoder.T
+        result: np.ndarray = (centered @ encoder.T).astype(np.float32)
+        return result
 
-    def _compute_class_centers(self, latent, labels):
+    def _compute_class_centers(self, latent: np.ndarray, labels: np.ndarray):
+        if self._class_names is None:
+            raise RuntimeError("Class names not set")
+        class_names = self._class_names
+        if class_names is None:
+            raise RuntimeError("Class names not set")
         latent_dim = latent.shape[1]
         self._latent_dim = latent_dim
-        self._class_centers = np.zeros((len(self._class_names), latent_dim), dtype=np.float32)
-        for c in range(len(self._class_names)):
+        self._class_centers = np.zeros((len(class_names), latent_dim), dtype=np.float32)
+        for c in range(len(class_names)):
             mask = labels == c
             if mask.any():
                 self._class_centers[c] = latent[mask].mean(axis=0)
@@ -221,12 +238,14 @@ class ThreeLayerVisual:
         return Decoder()
 
     def _train_decoder(self, latent, images, n_epochs, verbose):
+        if self._torch is None or self._nn is None:
+            raise RuntimeError("torch not available")
         torch = self._torch
         nn = self._nn
 
         latent_dim = latent.shape[1]
 
-        self._decoder = self._build_decoder(nn, latent_dim)
+        self._decoder = self._build_decoder(self._nn, latent_dim)
         optimizer = torch.optim.Adam(self._decoder.parameters(), lr=0.001)
         criterion = nn.MSELoss()
 
@@ -250,7 +269,9 @@ class ThreeLayerVisual:
             if verbose and (epoch + 1) % 25 == 0:
                 logger.info("  Epoch %d: MSE=%.4f", epoch + 1, total_loss / max(n_batches, 1))
 
-    def _build_metrics(self, images, latent, t0, verbose):
+    def _build_metrics(self, images: np.ndarray, latent: np.ndarray, t0: float, verbose: bool) -> Dict[str, Any]:
+        if self._torch is None or self._decoder is None:
+            raise RuntimeError("Model not fully fitted (torch or decoder missing)")
         self._decoder.eval()
         with self._torch.no_grad():
             test_recon = self._decoder(
@@ -258,6 +279,7 @@ class ThreeLayerVisual:
             ).numpy()
         test_mse = float(np.mean((test_recon - images[:10]) ** 2))
         elapsed = time.time() - t0
+        assert self._class_names is not None
         metrics = {
             "pca_variance": self._pca_explained,
             "test_mse": test_mse,
@@ -284,7 +306,10 @@ class ThreeLayerVisual:
         if images.ndim == 4:
             images = images.reshape(len(images), -1)
 
-        return (images - self._mean) @ self._encoder.T
+        mean = self._mean
+        encoder = self._encoder
+        encoded: np.ndarray = (images - mean) @ encoder.T
+        return encoded
 
     def decode(self, latent: np.ndarray) -> np.ndarray:
         """Decode latent vectors to images.
@@ -295,14 +320,15 @@ class ThreeLayerVisual:
         Returns:
             Reconstructed images of shape (N, 3072)
         """
-        if self._decoder is None:
-            raise RuntimeError("Model not fitted")
-
-        torch = self._torch
+        if self._decoder is None or self._torch is None:
+            raise RuntimeError("Model not fitted (decoder or torch missing)")
 
         self._decoder.eval()
-        with torch.no_grad():
-            return self._decoder(torch.tensor(latent, dtype=torch.float32)).numpy()
+        with self._torch.no_grad():
+            tensor = self._torch.tensor(latent, dtype=self._torch.float32)
+            recon = self._decoder(tensor)
+            arr: np.ndarray = recon.numpy()
+            return arr
 
     def reconstruct(self, images: np.ndarray, enhance: bool = True) -> np.ndarray:
         """Reconstruct images through the bottleneck.
@@ -336,7 +362,7 @@ class ThreeLayerVisual:
             raise RuntimeError("Model not fitted")
 
         latent = self._class_centers[class_index : class_index + 1]
-        gen = self.decode(latent)[0]
+        gen: np.ndarray = self.decode(latent)[0]
 
         if enhance:
             gen = self._enhance(gen.reshape(1, -1))[0]
@@ -435,6 +461,9 @@ class ThreeLayerVisual:
         Args:
             path: Path to save directory (default: self.model_dir)
         """
+        if self._encoder is None or self._mean is None or self._class_centers is None:
+            raise RuntimeError("Model not fully fitted, cannot save")
+
         save_dir = path or self.model_dir
         os.makedirs(save_dir, exist_ok=True)
 
@@ -445,7 +474,7 @@ class ThreeLayerVisual:
         if self._class_names is not None:
             np.save(os.path.join(save_dir, "class_names.npy"), self._class_names)
 
-        if self._decoder is not None:
+        if self._decoder is not None and self._torch is not None:
             torch = self._torch
             torch.save(self._decoder.state_dict(), os.path.join(save_dir, "decoder.pt"))
 
@@ -472,13 +501,12 @@ class ThreeLayerVisual:
                 self._class_names = np.load(class_names_path).tolist()
 
             decoder_path = os.path.join(load_dir, "decoder.pt")
-            if os.path.exists(decoder_path) and self._torch is not None:
+            if os.path.exists(decoder_path) and self._torch is not None and self._nn is not None:
                 # Reconstruct decoder architecture
-                nn = self._nn
-
-                self._decoder = self._build_decoder(nn, self.LATENT_DIM)
-                self._decoder.load_state_dict(self._torch.load(decoder_path))
-                self._decoder.eval()
+                self._decoder = self._build_decoder(self._nn, self.LATENT_DIM)
+                if self._torch is not None:
+                    self._decoder.load_state_dict(self._torch.load(decoder_path))
+                    self._decoder.eval()
 
             logger.info("ThreeLayerVisual loaded from %s", load_dir)
             return True

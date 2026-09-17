@@ -99,16 +99,16 @@ class AtlassianCLIBridge:
         exists = shutil.which(self.acli_path) is not None or os.path.exists(self.acli_path)
         return {"acli_available": exists, "configured": self.config is not None}
 
-    async def get_confluence_spaces(self) -> dict:
+    async def get_confluence_spaces(self) -> Dict[str, Any]:
         return await self._run_acli(["confluence", "getSpaceList"])
 
-    async def search_confluence_content(self, query: str) -> str:
+    async def search_confluence_content(self, query: str) -> Dict[str, Any]:
         return await self._run_acli(["confluence", "getContentList", "--search", query])
 
-    async def get_jira_projects(self) -> str:
+    async def get_jira_projects(self) -> Dict[str, Any]:
         return await self._run_acli(["jira", "getProjectList"])
 
-    async def get_jira_issues(self, jql: Optional[str] = None, limit: int = 50) -> str:
+    async def get_jira_issues(self, jql: Optional[str] = None, limit: int = 50) -> Dict[str, Any]:
         """Get jira issues."""
         args = ["jira", "getIssueList"]
         if jql:
@@ -118,7 +118,7 @@ class AtlassianCLIBridge:
 
     async def create_jira_issue(
         self, project_key: str, summary: str, description: str = "", issue_type: str = "Task"
-    ) -> str:
+    ) -> Dict[str, Any]:
         return await self._run_acli(
             [
                 "jira",

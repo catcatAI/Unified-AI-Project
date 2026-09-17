@@ -1,7 +1,7 @@
 """Render drawing instructions to images using PIL."""
 
 import math
-from typing import Tuple
+from typing import Tuple, Any
 
 from PIL import Image, ImageDraw
 
@@ -41,21 +41,21 @@ class PrimitiveRenderer:
 
         return img
 
-    def _draw_point(self, draw: ImageDraw, point: Point):
+    def _draw_point(self, draw: Any, point: Point):
         """Draw a point as a filled circle."""
         x = int(point.x * self._canvas_size[0])
         y = int(point.y * self._canvas_size[1])
         r = max(1, int(point.size * min(self._canvas_size) * 0.1))
         draw.ellipse([x - r, y - r, x + r, y + r], fill=point.color)
 
-    def _draw_line(self, draw: ImageDraw, line: Line):
+    def _draw_line(self, draw: Any, line: Line):
         """Draw a line."""
         start = (int(line.start.x * self._canvas_size[0]), int(line.start.y * self._canvas_size[1]))
         end = (int(line.end.x * self._canvas_size[0]), int(line.end.y * self._canvas_size[1]))
         width = max(1, int(line.width * min(self._canvas_size) * 0.05))
         draw.line([start, end], fill=line.color, width=width)
 
-    def _draw_plane(self, draw: ImageDraw, plane: Plane):
+    def _draw_plane(self, draw: Any, plane: Plane):
         """Draw a filled polygon."""
         if not plane.points:
             return
@@ -64,7 +64,7 @@ class PrimitiveRenderer:
         ]
         draw.polygon(points, fill=plane.fill_color, outline=plane.outline_color)
 
-    def _draw_circle(self, draw: ImageDraw, circle: Circle):
+    def _draw_circle(self, draw: Any, circle: Circle):
         """Draw a filled circle with optional outline."""
         cx = int(circle.cx * self._canvas_size[0])
         cy = int(circle.cy * self._canvas_size[1])
@@ -72,7 +72,7 @@ class PrimitiveRenderer:
         bbox = [cx - r, cy - r, cx + r, cy + r]
         draw.ellipse(bbox, fill=circle.fill_color, outline=circle.outline_color)
 
-    def _draw_arc(self, draw: ImageDraw, arc: Arc):
+    def _draw_arc(self, draw: Any, arc: Arc):
         """Draw an arc."""
         cx = int(arc.cx * self._canvas_size[0])
         cy = int(arc.cy * self._canvas_size[1])

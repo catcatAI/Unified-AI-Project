@@ -293,7 +293,7 @@ def _load_checkpoint(path: str) -> dict:
         elif fmt == "empty":
             state["W"] = None
             state.pop("W_format", None)
-        return state
+        return state  # type: ignore[no-any-return]
 
     # Neither format found
     raise FileNotFoundError(f"No checkpoint found at {path} (tried {npy_path} and torch format)")
@@ -434,7 +434,7 @@ class TensorSNNCore:
         self._idx_to_key: List[str] = []
 
         # Weight matrix (grows dynamically as new keys are registered)
-        self._W: Optional[Any] = None  # [V, V] float32 (torch.Tensor or np.ndarray)
+        self._W: Optional[Any] = None  # [V, V] float32 (torch.Tensor or np.ndarray)  # type: ignore[assignment, index]
 
         # LRU bookkeeping for eviction under the memory budget.
         self._last_used: Dict[int, int] = {}
@@ -626,6 +626,7 @@ class TensorSNNCore:
         """Register a directed (or bidirectional) relation between two concept keys."""
         i = self._register_key(key1)
         j = self._register_key(key2)
+        assert self._W is not None
         self._W[i, j] = min(1.0, self._W[i, j] + weight)
         self._touch(i)
         self._touch(j)
@@ -794,6 +795,9 @@ class TensorSNNCore:
         tgt_idx = [self._key_to_idx[k] for k, _ in tgt_items]
         src_conf = [c for _, c in src_items]
         tgt_conf = [c for _, c in tgt_items]
+
+        # _register_key guarantees _W is initialized
+        assert self._W is not None
 
         # Build the (len(src) × len(tgt)) confidence-gate matrix.
         # gate[i, j] = conf_i * conf_j

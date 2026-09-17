@@ -28,7 +28,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Optional
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional
 
 from core.bio.kinetic_validator import KineticValidator
 from core.system.config.async_io import async_json_dump, async_json_load
@@ -302,7 +302,7 @@ class ActionExecutor:
         self._status_change_callbacks: dict[str, list[Callable[[ActionStatus], None]]] = {}
 
         # Statistics
-        self.execution_stats = {
+        self.execution_stats: Dict[str, Any] = {
             "total_executed": 0,
             "total_failed": 0,
             "total_cancelled": 0,
@@ -351,16 +351,12 @@ class ActionExecutor:
             if action:
                 task = asyncio.create_task(self._execute_with_semaphore(action))
                 self._background_tasks.add(task)
-                task.add_done_callback(
-                    lambda t: (
-                        self._background_tasks.discard(t),
-                        (
-                            logger.warning("Background executor task failed: %s", t.exception())
-                            if not t.cancelled() and t.exception()
-                            else None
-                        ),
-                    )
-                )
+                def _task_done_callback(t: asyncio.Task) -> None:
+                    self._background_tasks.discard(t)
+                    if not t.cancelled() and t.exception():
+                        logger.warning("Background executor task failed: %s", t.exception())
+
+                task.add_done_callback(_task_done_callback)
             else:
                 # Event-driven wait for new actions (was: polling sleep)
                 # Timeout safety net prevents permanent hang if event is corrupted
@@ -501,9 +497,11 @@ class ActionExecutor:
 
             await self._run_and_record_result(action)
 
-            for callback in self._post_execution_callbacks:
+            for callback in self._post_execution_callbacks:  # type: ignore[assignment]
                 try:
-                    callback(action, action.result)
+                    result = action.result
+                    if result is not None:
+                        callback(action, result)  # type: ignore[call-arg]
                 except (
                     Exception
                 ) as e:  # broad exception acceptable: callback errors should not break execution loop
@@ -716,7 +714,7 @@ class ActionExecutor:
         action = self.queue.get_action(action_id)
         return action.status if action else None
 
-    def get_execution_stats(self) -> dict[str, Any]:
+    def get_execution_stats(self) -> Dict[str, Any]:
         """Get execution statistics"""
         stats = self.execution_stats.copy()
         stats["queue_status"] = self.queue.get_queue_status()
@@ -748,7 +746,7 @@ class ActionExecutor:
             return 1.0
 
         if self._dynamic_params_manager and self._dynamic_params_enabled:
-            return self._dynamic_params_manager.get_parameter("action_success_rate", context)
+            return float(self._dynamic_params_manager.get_parameter("action_success_rate", context))
 
         # Primary: native spatial calculation from biological state
         return self._get_action_success_rate_spatial()
@@ -757,7 +755,7 @@ class ActionExecutor:
     # ANGELA-MATRIX: [L5] [α] [A] [L9+]
     # [Task N.22.2] 原生生理張力成功率 / Native Bio-Tension Success Rate
     # =============================================================================
-    def _get_action_success_rate_spatial(self, action: "Action" = None) -> float:
+    def _get_action_success_rate_spatial(self, action: Optional["Action"] = None) -> float:
         """
         [原生 AI] 以 α 維度生理座標計算動作成功率。
         替代 random.random() + 固定常數 0.85。
@@ -766,7 +764,7 @@ class ActionExecutor:
         health_tension = (energy + comfort) / 2 - tension - priority_cost
         """
         if not self._dli:
-            return behavior_executor("success_rate_fallback", 0.85)
+            return float(behavior_executor("success_rate_fallback", 0.85))
 
         try:
             sm = self._dli.state_matrix
@@ -789,9 +787,9 @@ class ActionExecutor:
                     action.priority.level, behavior_executor("priority_cost_default", 0.3)
                 )
 
-            health_tension = sm.evaluate_math_spatially(
+            health_tension = float(sm.evaluate_math_spatially(
                 f"({energy:.4f} + {comfort:.4f}) / 2 - {tension:.4f} - {priority_cost:.4f}"
-            )
+            ))
 
             success_rate_min = behavior_executor("success_rate_min", 0.3)
             success_rate_max = behavior_executor("success_rate_max", 0.99)
@@ -810,7 +808,7 @@ class ActionExecutor:
             logger.warning(
                 f"[ActionExecutor] Spatial success rate failed, fallback: {e}", exc_info=True
             )
-            return behavior_executor("success_rate_fallback", 0.85)
+            return float(behavior_executor("success_rate_fallback", 0.85))
 
     def _record_action_outcome(self, action: Action, success: bool) -> None:
         """Record action outcome to dynamic parameters manager"""
@@ -966,7 +964,7 @@ class ActionExecutor:
         )
 
         if path.exists():
-            return await async_json_load(str(path))
+            return await async_json_load(str(path))  # type: ignore[no-any-return]
         return []
 
     # ========== NEW: Retry Mechanism ==========
@@ -1068,7 +1066,7 @@ if __name__ == "__main__":
             await asyncio.sleep(0.5)
             return f"Hello, {name}!"
 
-        async def sample_action_2(value: int) -> str:
+        async def sample_action_2(value: int) -> int:
             """Execute the sample action 2 operation."""
             await asyncio.sleep(0.3)
             return value * 2
@@ -1115,5 +1113,6 @@ if __name__ == "__main__":
 
         await executor.shutdown()
         logger.info("\n系统已关闭 / System shutdown complete")
+        return "Demo completed"
 
     asyncio.run(demo())

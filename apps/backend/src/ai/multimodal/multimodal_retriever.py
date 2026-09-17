@@ -73,7 +73,8 @@ class MultimodalRetriever:
             return []
 
         q = query_latent.astype(np.float32)
-        q_norm = q / max(np.linalg.norm(q), 1e-8)
+        q_norm_val = float(np.linalg.norm(q))
+        q_norm = q / max(q_norm_val, 1e-8)
 
         stack = np.stack(self._vectors, axis=0)
         norms = np.linalg.norm(stack, axis=1)

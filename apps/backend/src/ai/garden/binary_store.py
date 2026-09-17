@@ -30,9 +30,12 @@ import json
 import logging
 import os
 import struct
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
 
 import numpy as np
+
+if TYPE_CHECKING:
+    import torch
 
 logger = logging.getLogger(__name__)
 
@@ -42,10 +45,10 @@ VERSION = 1
 HEADER_SIZE = 28  # bytes (matches HEADER_FORMAT: 4+4+4+16=28)
 HEADER_FORMAT = "<I2I16s"  # magic (4B) + version (4B) + V (4B) + pad (16B)
 
-_torch = None
+_torch: Any = None
 
 
-def _lazy_torch():
+def _lazy_torch() -> Any:
     global _torch
     if _torch is None:
         from ._import_utils import subprocess_check
@@ -163,7 +166,7 @@ class BinaryStore:
             dtype=np.float32,
             mode=mmap_mode,
             offset=HEADER_SIZE,
-            shape=(V, V),
+            shape=(V, V),  # type: ignore[call-overload]
         )
         logger.debug("BinaryStore: opened %s (V=%d, mode=%s)", self.path, V, mode)
 
@@ -179,7 +182,7 @@ class BinaryStore:
 
     @property
     def V(self) -> int:
-        return self.header["V"]
+        return int(self.header["V"])
 
     @property
     def data(self) -> Optional[np.memmap]:
@@ -206,7 +209,10 @@ class BinaryStore:
     def close(self) -> None:
         if self._mmap is not None:
             self.flush()
-            self._mmap._mmap.close()  # type: ignore[union-attr]
+            # Close the underlying mmap object
+            mmap_obj = getattr(self._mmap, "_mmap", None)
+            if mmap_obj is not None:
+                mmap_obj.close()
             self._mmap = None
             logger.debug("BinaryStore: closed %s", self.path)
 
@@ -221,7 +227,7 @@ class BinaryStore:
     # Import from torch tensor
     # ------------------------------------------------------------------
 
-    def import_from_torch(self, tensor: "torch.Tensor") -> None:
+    def import_from_torch(self, tensor: Any) -> None:
         """
         Copy values from a square PyTorch tensor into the mmap.
 
@@ -237,7 +243,7 @@ class BinaryStore:
         self.flush()
         logger.info("BinaryStore: imported %dx%d tensor", n, n)
 
-    def export_to_torch(self) -> "torch.Tensor":
+    def export_to_torch(self) -> Any:
         """
         Read the full mmap into a PyTorch tensor (CPU).
         Warning: for V=100K this creates a 40GB tensor.

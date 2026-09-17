@@ -106,9 +106,9 @@ def _label_add(a: int, b: int) -> int:
 
         text = evaluate_math(f"{a} + {b}")
         # evaluate_math returns "a + b = SUM" (or numeric). Parse the SUM.
-        if "=" in text:
+        if text and "=" in text:
             text = text.split("=")[-1]
-        value = int(round(float(str(text).replace(",", ""))))
+        value = int(round(float(str(text).replace(",", "")))) if text else a + b
         return value
     except Exception:
         return a + b  # pure numeric fallback; never a learned artifact
@@ -120,9 +120,9 @@ def _label_sub(a: int, b: int) -> int:
         from services.math_verifier import evaluate_math
 
         text = evaluate_math(f"{a} - {b}")
-        if "=" in text:
+        if text and "=" in text:
             text = text.split("=")[-1]
-        return int(round(float(str(text).replace(",", ""))))
+        return int(round(float(str(text).replace(",", "")))) if text else a - b
     except Exception:
         return a - b
 
@@ -133,9 +133,9 @@ def _label_mul(a: int, b: int) -> int:
         from services.math_verifier import evaluate_math
 
         text = evaluate_math(f"{a} * {b}")
-        if "=" in text:
+        if text and "=" in text:
             text = text.split("=")[-1]
-        return int(round(float(str(text).replace(",", ""))))
+        return int(round(float(str(text).replace(",", "")))) if text else a * b
     except Exception:
         return a * b
 
@@ -319,7 +319,8 @@ class _CellMLP:
         cross-entropy across every head (exactly the gradient layout proven in
         the research). Returns the final loss.
         """
-        from scipy.optimize import minimize
+        # scipy.optimize may not have stubs; ignore mypy error for this import
+        from scipy.optimize import minimize  # type: ignore[import-untyped]
 
         N = X.shape[0]
         Xd = X.astype(np.float64)
@@ -806,6 +807,7 @@ class ArithmeticLearner:
         explicit input dimension so no unseen-carry extrapolation is required
         (§B6).
         """
+        # scipy.optimize may not have stubs; ignore mypy error for this import
         from scipy.optimize import minimize
 
         N = X.shape[0]
@@ -885,29 +887,29 @@ class ArithmeticLearner:
     def _ensure_truth_tables(self) -> None:
         """Guarantee the full deterministic truth tables for all op cells."""
         if len(self._samples) < len(self.generate_cell_truth_table()):
-            table = self.generate_cell_truth_table()
-            existing = set(self._samples)
-            for s in table:
-                if s not in existing:
-                    self._samples.append(s)
+            cell_table = self.generate_cell_truth_table()
+            existing_cells: set[CellSample] = set(self._samples)
+            for cell_s in cell_table:
+                if cell_s not in existing_cells:
+                    self._samples.append(cell_s)
         if len(self._sub_samples) < len(self.generate_sub_truth_table()):
-            table = self.generate_sub_truth_table()
-            existing = set(self._sub_samples)
-            for s in table:
-                if s not in existing:
-                    self._sub_samples.append(s)
+            sub_table = self.generate_sub_truth_table()
+            existing_subs: set[SubCellSample] = set(self._sub_samples)
+            for sub_s in sub_table:
+                if sub_s not in existing_subs:
+                    self._sub_samples.append(sub_s)
         if len(self._mul_samples) < len(self.generate_mul_truth_table()):
-            table = self.generate_mul_truth_table()
-            existing = set(self._mul_samples)
-            for s in table:
-                if s not in existing:
-                    self._mul_samples.append(s)
+            mul_table = self.generate_mul_truth_table()
+            existing_muls: set[MulCellSample] = set(self._mul_samples)
+            for mul_s in mul_table:
+                if mul_s not in existing_muls:
+                    self._mul_samples.append(mul_s)
         if len(self._logic_samples) < len(self.generate_logic_truth_table()):
-            table = self.generate_logic_truth_table()
-            existing = set(self._logic_samples)
-            for s in table:
-                if s not in existing:
-                    self._logic_samples.append(s)
+            logic_table = self.generate_logic_truth_table()
+            existing_logics: set[LogicSample] = set(self._logic_samples)
+            for logic_s in logic_table:
+                if logic_s not in existing_logics:
+                    self._logic_samples.append(logic_s)
 
     def evaluate_overall_accuracy(self) -> float:
         """Mean of the four per-op cell accuracies (the loop's global metric)."""
@@ -1052,15 +1054,15 @@ class ArithmeticLearner:
                 col = da + db + carry
                 dig = col % 10
                 co = col // 10
-                sample = CellSample(da, db, carry, dig, co)
-                if sample not in self._samples:
-                    self._samples.append(sample)
+                cell_sample: CellSample = CellSample(da, db, carry, dig, co)
+                if cell_sample not in self._samples:
+                    self._samples.append(cell_sample)
                 carry = co
             # final overflow column (if any)
             if carry > 0 and len(result_digits) > nd:
-                sample = CellSample(0, 0, carry, result_digits[-1], 0)
-                if sample not in self._samples:
-                    self._samples.append(sample)
+                overflow_sample: CellSample = CellSample(0, 0, carry, result_digits[-1], 0)
+                if overflow_sample not in self._samples:
+                    self._samples.append(overflow_sample)
         for a, b in sub_pairs:
             result = _label_sub(a, b)
             if result < 0:
@@ -1078,9 +1080,9 @@ class ArithmeticLearner:
                     borrow_out = 1
                 else:
                     borrow_out = 0
-                sample = SubCellSample(da, db, borrow, diff, borrow_out)
-                if sample not in self._sub_samples:
-                    self._sub_samples.append(sample)
+                sub_sample: SubCellSample = SubCellSample(da, db, borrow, diff, borrow_out)
+                if sub_sample not in self._sub_samples:
+                    self._sub_samples.append(sub_sample)
                 borrow = borrow_out
         for a, b in mul_pairs:
             digits_a = [int(ch) for ch in str(a)]
@@ -1088,9 +1090,9 @@ class ArithmeticLearner:
             for da in digits_a:
                 for db in digits_b:
                     prod = da * db
-                    sample = MulCellSample(da, db, prod % 10, prod // 10)
-                    if sample not in self._mul_samples:
-                        self._mul_samples.append(sample)
+                    mul_sample: MulCellSample = MulCellSample(da, db, prod % 10, prod // 10)
+                    if mul_sample not in self._mul_samples:
+                        self._mul_samples.append(mul_sample)
         if not auto_run:
             return None
         return self.run(max_epochs=20, stall_epochs=5)

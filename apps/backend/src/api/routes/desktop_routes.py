@@ -137,10 +137,12 @@ async def brain_metrics(
 
 
 @router.post("/brain/dividend")
-async def brain_dividend() -> dict:
+async def brain_dividend() -> Dict[str, Any]:
     """Execute the brain dividend operation."""
     digital_life = get_digital_life()
     summary = digital_life.get_formula_metrics()
     if summary and "formula_status" in summary:
-        return summary["formula_status"].get("cdm", {})
+        cdm = summary["formula_status"].get("cdm")
+        if isinstance(cdm, dict):
+            return cdm
     return {"message": "Dividend data not available"}

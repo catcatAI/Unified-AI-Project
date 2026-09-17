@@ -23,7 +23,10 @@ import os
 import zlib
 from pathlib import Path
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import torch
 
 import numpy as np
 from collections import OrderedDict
@@ -92,7 +95,7 @@ class _OnnxEncoder:
     export tool's fidelity gate). Produces L2-normalized float32 [N, D]."""
 
     def __init__(self, onnx_path: str, max_length: int = 32):
-        import onnxruntime as ort
+        import onnxruntime as ort  # type: ignore[import-untyped]
         from transformers import AutoTokenizer
 
         so = ort.SessionOptions()
@@ -123,11 +126,12 @@ class _OnnxEncoder:
             "input_ids": batch["input_ids"].astype(np.int64),
             "attention_mask": batch["attention_mask"].astype(np.int64),
         }
-        out = self._sess.run(None, feed)[0]  # last_hidden_state [B, S, H]
+        out: np.ndarray = self._sess.run(None, feed)[0]  # last_hidden_state [B, S, H]  # type: ignore[return-value]
         m = feed["attention_mask"].astype(np.float32)[:, :, None]
         emb = (out * m).sum(1) / np.clip(m.sum(1), 1e-9, None)
         norms = np.linalg.norm(emb, axis=1, keepdims=True)
-        return (emb / np.clip(norms, 1e-9, None)).astype(np.float32)
+        result_arr: np.ndarray = (emb / np.clip(norms, 1e-9, None)).astype(np.float32)
+        return result_arr
 
 
 def _model_in_hf_cache(model_name: str) -> bool:
@@ -175,7 +179,9 @@ def _model_in_hf_cache(model_name: str) -> bool:
 # Lazy torch import (compatible with Python 3.14 where torch may be absent)
 # ---------------------------------------------------------------------------
 
-_torch = None
+from typing import Tuple, Union, Any as _Any
+
+_torch: Optional[Tuple[_Any, _Any]] = None
 
 
 def _lazy_torch():
@@ -369,6 +375,7 @@ class _STEncoder:
     """
 
     _model_cache: Dict[str, "_STEncoder"] = {}
+    _model: Any  # Can be SentenceTransformer or _OnnxEncoder
 
     def __init__(self, model_name: str):
         # Fast path: return model reference from the cached instance.
@@ -499,8 +506,11 @@ class _ChromaEncoder:
         """No-op: ChromaDB indexes documents automatically on add()."""
         pass
 
-    def encode(self, texts: List[str]) -> torch.Tensor:
+    def encode(self, texts: List[str]) -> Any:
         torch, _ = _lazy_torch()
+        if torch is None:
+            import numpy as np
+            return np.zeros((0, self.EMBEDDING_DIM), dtype=np.float32)
         if not texts:
             return torch.zeros(0, self.EMBEDDING_DIM)
 
@@ -521,11 +531,11 @@ class _ChromaEncoder:
         # Query each text to get its embedding from ChromaDB
         embeddings = []
         for text in texts:
-            doc_id = self._text_to_id.get(text)
-            if doc_id:
+            cached_id: Optional[str] = self._text_to_id.get(text)
+            if cached_id:
                 try:
                     result = self._collection.get(
-                        ids=[doc_id],
+                        ids=[cached_id],
                         include=["embeddings"],
                     )
                     embs = result.get("embeddings") if result else None
@@ -643,12 +653,12 @@ class VectorDictionary:
     # Encoder setup
     # ------------------------------------------------------------------
 
-    def _build_encoder(self, model_name: str):
+    def _build_encoder(self, model_name: str) -> Any:
         if self.compatibility_mode:
             logger.info("GARDEN: using TF-IDF encoder (compatibility mode)")
             return _TfidfEncoder()
         try:
-            enc = _STEncoder(model_name)
+            enc: Any = _STEncoder(model_name)
             logger.info("GARDEN: using SentenceTransformer encoder (semantic mode)")
             return enc
         except Exception as e:
@@ -901,7 +911,7 @@ class VectorDictionary:
             # training).  Buckets are rebuilt lazily whenever entries change.
             if self._prefix_first is None:
                 self._build_prefix_buckets()
-            bucket = self._prefix_first.get(lower[:3])
+            bucket = self._prefix_first.get(lower[:3]) if self._prefix_first else None
             best_key, _best_score = None, 0.0
             if bucket:
                 best_key, _best_score = prefix_dedup(lower, bucket, threshold=0.8)
@@ -1034,7 +1044,7 @@ class VectorDictionary:
 
         def _exact_match(tok: str) -> Optional[str]:
             t = tok.lower().strip()
-            return self._surface_to_key.get(t)
+            return self._surface_to_key.get(t) if self._surface_to_key else None
 
         def _cache_embed(query: str, qvec: Any) -> None:
             if self._embed_cache is None:
@@ -1098,11 +1108,11 @@ class VectorDictionary:
                 for start in range(run_len):
                     for end in range(start + 1, run_len + 1):
                         sub = run[start:end]
-                        key = _exact_match(sub)
-                        if key:
+                        cjk_key: Optional[str] = _exact_match(sub)
+                        if cjk_key:
                             conf = len(sub) / run_len
-                            if key not in result or conf > result[key]:
-                                result[key] = conf
+                            if cjk_key not in result or conf > result[cjk_key]:
+                                result[cjk_key] = conf
             else:
                 i += 1
 
@@ -1113,9 +1123,9 @@ class VectorDictionary:
         while i < len(tokens):
             tok = tokens[i]
             if tok and not _is_cjk(tok[0]) and tok.strip():
-                key = _exact_match(tok)
-                if key:
-                    result[key] = max(result.get(key, 0.0), 1.0)
+                token_key: Optional[str] = _exact_match(tok)
+                if token_key:
+                    result[token_key] = max(result.get(token_key, 0.0), 1.0)
                     matched_tokens.add(tok.lower().strip())
             i += 1
 
@@ -1134,7 +1144,7 @@ class VectorDictionary:
                 best_score = 0.0
                 # _prefix_overlap needs a shared prefix >= min_prefix(3), so any
                 # form scoring >0 must share the first 3 chars — bucket is exact.
-                for form, key in self._prefix_first.get(token_lower[:3], ()):
+                for form, key in (self._prefix_first.get(token_lower[:3], ()) if self._prefix_first else ()):
                     score = self._prefix_overlap(token_lower, form)
                     if score > best_score:
                         best_score = score
@@ -1177,7 +1187,7 @@ class VectorDictionary:
             if hasattr(qvecs_list[0], "norm"):
                 import torch as _torch
 
-                qbatch = _torch.stack(qvecs_list, dim=0)
+                qbatch: Any = _torch.stack(qvecs_list, dim=0)
             else:
                 qbatch = np.stack(qvecs_list)
             all_scores = self._matrix @ qbatch.T  # [V, T]

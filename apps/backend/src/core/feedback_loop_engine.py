@@ -22,9 +22,22 @@ Date: 2026-02-02
 """
 
 from __future__ import annotations
+
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Dict, List, Optional, Callable, Any, Set, Tuple, TYPE_CHECKING
+from typing import Dict, List, Optional, Callable, Any, Set, Tuple, TYPE_CHECKING, Union, TypedDict
+from datetime import datetime, timedelta
+import asyncio
+import uuid
+import json
+import time
+from pathlib import Path
+import logging
+from core.system.config.magic_numbers import loop_sleep, timeout_value
+
+from dataclasses import dataclass, field
+from enum import Enum, auto
+from typing import Dict, List, Optional, Callable, Any, Set, Tuple, TYPE_CHECKING, Union, TypedDict
 from datetime import datetime, timedelta
 import asyncio
 import uuid
@@ -35,6 +48,18 @@ import logging
 from core.system.config.magic_numbers import loop_sleep, timeout_value
 
 logger = logging.getLogger(__name__)
+_LOG_PREFIX = "[FeedbackLoopEngine]"
+
+
+class PerformanceMetrics(TypedDict):
+    cycles_completed: int
+    average_latency_ms: float
+    min_latency_ms: float
+    max_latency_ms: float
+    feedback_processed: int
+    learning_updates: int
+    start_time: Optional[datetime]
+
 
 if TYPE_CHECKING:
     from ..action_execution_bridge import ActionExecutionBridge
@@ -254,7 +279,7 @@ class FeedbackLoopEngine:
         self._main_loop_task: Optional[asyncio.Task] = None
 
         # Performance metrics
-        self.performance_metrics = {
+        self.performance_metrics: PerformanceMetrics = {
             "cycles_completed": 0,
             "average_latency_ms": 0.0,
             "min_latency_ms": float("inf"),
@@ -738,7 +763,7 @@ class FeedbackLoopEngine:
         self.performance_metrics["cycles_completed"] += 1
 
         # Update latency metrics
-        latency = cycle.latency_ms
+        latency = cycle.latency_ms or 0.0
 
         # Update average
         n = self.performance_metrics["cycles_completed"]
@@ -802,20 +827,23 @@ class FeedbackLoopEngine:
         metrics = self.performance_metrics.copy()
 
         # Add current state
-        metrics.update(
+        start_time = metrics.get("start_time")
+        uptime = 0.0
+        if start_time and isinstance(start_time, datetime):
+            uptime = (datetime.now() - start_time).total_seconds()
+
+        # Create a new dict with the additional fields
+        result: Dict[str, Any] = dict(metrics)
+        result.update(
             {
                 "active_cycles": len(self.active_cycles),
                 "completed_cycles_total": len(self.completed_cycles),
                 "is_running": self._running,
-                "uptime_seconds": (
-                    (datetime.now() - metrics["start_time"]).total_seconds()
-                    if metrics["start_time"]
-                    else 0
-                ),
+                "uptime_seconds": uptime,
             }
         )
 
-        return metrics
+        return result
 
     def get_active_cycles(self) -> List[PerceptionActionCycle]:
         """Get list of currently active cycles"""

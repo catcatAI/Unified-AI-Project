@@ -18,7 +18,7 @@ import os
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 from pathlib import Path
-from typing import Dict, Optional, List
+from typing import Any, Dict, Optional, List
 import logging
 
 logger = logging.getLogger(__name__)
@@ -38,15 +38,16 @@ class KeyManagerGUI:
             icon_path = Path(__file__).parent.parent.parent.parent / "resources" / "angela_icon.png"
             if icon_path.exists():
                 from PIL import Image, ImageTk
-                icon = Image.open(icon_path)
+                from typing import Any
+                icon: Any = Image.open(icon_path)
                 icon = icon.resize((32, 32))
                 photo = ImageTk.PhotoImage(icon)
-                self.root.iconphoto(True, photo)
+                self.root.iconphoto(True, photo)  # type: ignore[arg-type]
         except Exception:
             logger.debug("tray icon load failed", exc_info=True)
         
         # Providers configuration
-        self.providers = {
+        self.providers: Dict[str, Dict[str, Any]] = {
             'openai': {
                 'name': 'OpenAI',
                 'env_var': 'OPENAI_API_KEY',
@@ -417,14 +418,14 @@ class KeyManagerGUI:
             tk.Button(
                 btn_frame,
                 text='Edit',
-                command=lambda p=provider_id: self._edit_key_dialog(p),
+                command=lambda p=provider_id: self._edit_key_dialog(p),  # type: ignore[misc]
                 font=('Arial', 9)
             ).pack(side='left', padx=(0, 5))
             
             tk.Button(
                 btn_frame,
                 text='Remove',
-                command=lambda p=provider_id: self._remove_key(p),
+                command=lambda p=provider_id: self._remove_key(p),  # type: ignore[misc]
                 font=('Arial', 9),
                 fg='red'
             ).pack(side='left')
@@ -432,7 +433,7 @@ class KeyManagerGUI:
             tk.Button(
                 btn_frame,
                 text='Add Key',
-                command=lambda p=provider_id: self._edit_key_dialog(p),
+                command=lambda p=provider_id: self._edit_key_dialog(p),  # type: ignore[misc]
                 font=('Arial', 9),
                 bg='#28a745',
                 fg='white'
@@ -515,7 +516,7 @@ class KeyManagerGUI:
                 return
             
             provider_display = provider_var.get()
-            provider_id = None
+            provider_id: Optional[str] = None
             for pid, c in self.providers.items():
                 if provider_display.endswith(c['name']):
                     provider_id = pid
@@ -525,7 +526,7 @@ class KeyManagerGUI:
                 return
             
             storage = storage_var.get()
-            env_var = self.providers[provider_id]['env_var']
+            env_var: str = self.providers[provider_id]['env_var']
             
             try:
                 if storage == 'env':
@@ -636,7 +637,7 @@ class KeyManagerGUI:
             key = key_entry.get().strip()
             if key:
                 # Update key (same logic as add)
-                env_var = config['env_var']
+                env_var: str = config['env_var']
                 os.environ[env_var] = key
                 
                 # Also update .env
@@ -682,7 +683,7 @@ class KeyManagerGUI:
             f"Are you sure you want to remove the {config['name']} key?\n\n"
             f"This will remove it from the current session and .env file."
         ):
-            env_var = config['env_var']
+            env_var: str = config['env_var']
             
             # Remove from environment
             if env_var in os.environ:

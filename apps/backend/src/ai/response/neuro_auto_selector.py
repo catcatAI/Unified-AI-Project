@@ -18,7 +18,7 @@ import logging
 import time
 from dataclasses import asdict, dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from core.system.config.magic_numbers import (
     batch_value,
@@ -113,7 +113,7 @@ DEFAULT_TIME_BUDGET_TABLE = {
     HardwareTier.CRITICAL: 3000,
 }
 
-DEFAULT_LOCAL_MODEL_THRESHOLDS = [
+DEFAULT_LOCAL_MODEL_THRESHOLDS: List[Dict[str, Union[int, str]]] = [
     {"min_ram_gb": 16, "min_vram_gb": 8, "recommend": "deepseek-r1:latest"},
     {"min_ram_gb": 8, "min_vram_gb": 4, "recommend": "qwen2.5-coder:latest"},
     {"min_ram_gb": 4, "min_vram_gb": 0, "recommend": "phi:latest"},
@@ -145,7 +145,7 @@ class HardwareAnalyzer:
     def __init__(self):
         self._probe = None
 
-    def _get_probe(self) -> str:
+    def _get_probe(self) -> Any:
         """Get probe."""
         if self._probe is None:
             from shared.utils.hardware_detector import SystemHardwareProbe
@@ -204,9 +204,9 @@ class BudgetScheduler:
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
-        self._resource_service = None
+        self._resource_service: Any = None
 
-    def _get_resource_service(self) -> str:
+    def _get_resource_service(self) -> Any:
         """Get resource service."""
         if self._resource_service is None:
             from services.resource_awareness_service import ResourceAwarenessService
@@ -248,13 +248,13 @@ class BudgetScheduler:
         load_factor = 1.0
         try:
             svc = self._get_resource_service()
-            load_factor = svc.get_throttling_factor()
+            load_factor = float(svc.get_throttling_factor())
             self._load_factor = load_factor
         except (ConnectionError, TimeoutError, ValueError):
             logger.warning("Failed to get resource throttling factor, using 1.0", exc_info=True)
             self._load_factor = 1.0
 
-        budget = int(raw_budget * load_factor)
+        budget = int(float(raw_budget) * load_factor)
 
         # 8D energy correction
         if energy < threshold_value("ai.neuro_auto_selector.energy_low", 0.3):
@@ -267,15 +267,15 @@ class BudgetScheduler:
             )
 
         # Clamp
-        min_budget = self.config.get("min_time_budget_ms", 5000)
-        max_budget = self.config.get("max_time_budget_ms", 60000)
+        min_budget = int(self.config.get("min_time_budget_ms", 5000))
+        max_budget = int(self.config.get("max_time_budget_ms", 60000))
         budget = max(min_budget, min(budget, max_budget))
 
         logger.debug(
             f"[BudgetScheduler] raw={raw_budget}ms, load={load_factor:.2f}, "
             f"energy={energy:.2f} → budget={budget}ms"
         )
-        return budget
+        return int(budget)
 
 
 # =============================================================================
@@ -449,7 +449,7 @@ class LearnRecorder:
         self._config_loader = None
         self._pending: List[Dict[str, Any]] = []
 
-    def _get_config_loader(self) -> str:
+    def _get_config_loader(self) -> Any:
         """Get config loader."""
         if self._config_loader is None:
             try:
@@ -782,16 +782,19 @@ class NeuroAutoSelector:
             entry.get("reasoning" if needs_reasoning else "general")
             or entry.get("general", "")
         )
-        return os.getenv(f"ANGELA_MODEL_{backend.upper()}", model)
+        return os.getenv(f"ANGELA_MODEL_{backend.upper()}", model) or model
 
     def _is_local_capable(self, hw_details: Dict[str, Any]) -> bool:
         """Check if hardware can run local LLM decently."""
         ram = hw_details.get("ram_total_gb", 0)
         vram = hw_details.get("vram_mb", 0)
         accelerator = hw_details.get("accelerator_type", "none")
-        return ram >= limit_value("ai.neuro_auto_selector.local_ram_min", 4) and (
-            vram >= limit_value("ai.neuro_auto_selector.local_vram_min", 2048)
-            or accelerator != "none"
+        return bool(
+            ram >= limit_value("ai.neuro_auto_selector.local_ram_min", 4)
+            and (
+                vram >= limit_value("ai.neuro_auto_selector.local_vram_min", 2048)
+                or accelerator != "none"
+            )
         )
 
     def _select_local(
@@ -841,8 +844,8 @@ class NeuroAutoSelector:
 
     def _recommend_ollama_model(self, hw_details: Dict[str, Any]) -> str:
         """Recommend Ollama model based on available RAM."""
-        ram = hw_details.get("ram_available_gb", hw_details.get("ram_total_gb", 4))
-        vram_mb = hw_details.get("vram_mb", 0)
+        ram: float = hw_details.get("ram_available_gb", hw_details.get("ram_total_gb", 4))
+        vram_mb: float = hw_details.get("vram_mb", 0)
 
         thresholds = (
             self.config.get("auto_mode", {}).get("local_model_ram_thresholds")
@@ -850,8 +853,11 @@ class NeuroAutoSelector:
         )
 
         for entry in thresholds:
-            if ram >= entry["min_ram_gb"] and vram_mb >= entry["min_vram_gb"] * 1024:
-                return entry["recommend"]
+            min_ram = entry["min_ram_gb"]
+            min_vram = entry["min_vram_gb"]
+            if isinstance(min_ram, (int, float)) and isinstance(min_vram, (int, float)):
+                if ram >= min_ram and vram_mb >= min_vram * 1024:
+                    return str(entry["recommend"])
 
         return "phi:latest"
 
@@ -918,3 +924,4 @@ class NeuroAutoSelector:
     def flush_records(self) -> None:
         """Flush pending learn records."""
         self.recorder.flush_sync()
+        return None

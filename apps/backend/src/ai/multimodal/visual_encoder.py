@@ -127,7 +127,7 @@ class VisualEncoder:
 
     def encode_from_pil(self, img: Image.Image) -> np.ndarray:
         """Encode a PIL Image into a feature vector."""
-        img = img.resize((self.INPUT_SIZE, self.INPUT_SIZE), Image.LANCZOS)
+        img = img.resize((self.INPUT_SIZE, self.INPUT_SIZE), Image.Resampling.LANCZOS)
         arr = np.asarray(img, dtype=np.float32)
 
         features = []
@@ -165,7 +165,7 @@ class VisualEncoder:
             hist = hist / total
         else:
             hist[:] = 1.0 / self.EDGE_BINS
-        return hist.tolist()
+        return hist.tolist()  # type: ignore[no-any-return]
 
     def _texture_stats(self, arr: np.ndarray) -> list:
         """Simple texture statistics from co-occurrence approximation."""
@@ -203,9 +203,9 @@ class VisualEncoder:
             self._projection = rng.normal(
                 0, 1 / np.sqrt(len(raw)), (self._feature_dim, len(raw))
             ).astype(np.float32)
-        return self._projection @ raw
+        return self._projection @ raw  # type: ignore[no-any-return]
 
-    def train_step(self, image_data: bytes, target_latent: np.ndarray, lr: float = 0.001) -> float:
+    def train_step(self, image_data: bytes, target_latent: Optional[np.ndarray], lr: float = 0.001) -> float:  # type: ignore[operator]
         """Train the projection matrix to map image features to target latent.
 
         Uses MSE loss between projected features and target latent vector.
@@ -220,16 +220,24 @@ class VisualEncoder:
             Training loss (MSE)
         """
         # Encode image to get raw features
-        features = self._extract_features(image_data)
+        try:
+            img = Image.open(io.BytesIO(image_data)).convert("RGB")
+            features = self.encode_from_pil(img)
+        except Exception:
+            return 0.0
         if features is None or np.all(features == 0):
             return 0.0
 
-        # Project to feature space
-        projected = self._project(features)
+        # Project to feature space (already done in encode_from_pil)
+        projected = features
 
         # Compute loss: MSE between projected and target
-        diff = projected - target_latent[: self._feature_dim]
-        loss = float(np.mean(diff**2))
+        if target_latent is not None:
+            target_trimmed = target_latent[: self._feature_dim]
+        else:
+            target_trimmed = np.zeros(self._feature_dim)
+        diff = projected - target_trimmed
+        loss = float(np.mean(diff**2))  # type: ignore[operator]
 
         # Gradient: d(loss)/d(projection) = 2 * diff @ features.T
         # Update projection: W -= lr * grad

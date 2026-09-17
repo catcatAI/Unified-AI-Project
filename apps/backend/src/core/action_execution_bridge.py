@@ -25,14 +25,15 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from core.system.config.magic_numbers import batch_value, cache_value, loop_sleep
 from core.utils import safe_error
 
-logger = logging.getLogger(__name__)
+# Type alias for post-execution callback to avoid mypy inference issues
+_PostExecCallback = Callable[["ExecutionContext", "ExecutionResult"], None]
 
-# Module-level constants
+logger = logging.getLogger(__name__)
 _LOG_PREFIX = "[ActionExecutionBridge]"
 _DEFAULT_URGENCY = 0.5
 _DEFAULT_INTENSITY = 0.5
@@ -46,42 +47,74 @@ _MAX_FEEDBACK_HISTORY = 500
 class ActionType(Enum):
     """动作类型 / Action types supported by the system"""
 
-    INITIATE_CONVERSATION = ("initiate_conversation", "发起对话", "主动开始与用户的对话")
-    EXPLORE_TOPIC = ("explore_topic", "探索话题", "自主探索感兴趣的主题")
-    SATISFY_NEED = ("satisfy_need", "满足需求", "满足生理或心理需求")
-    EXPRESS_FEELING = ("express_feeling", "表达情感", "表达当前情感状态")
-    DOWNLOAD_RESOURCE = ("download_resource", "下载资源", "从网络获取资源")
-    CHANGE_APPEARANCE = ("change_appearance", "改变外观", "修改视觉表现")
-    FILE_OPERATION = ("file_operation", "文件操作", "读写或管理文件")
-    WEB_SEARCH = ("web_search", "网络搜索", "搜索网络信息")
-    SYSTEM_QUERY = ("system_query", "系统查询", "查询系统状态或信息")
+    INITIATE_CONVERSATION = "initiate_conversation"
+    EXPLORE_TOPIC = "explore_topic"
+    SATISFY_NEED = "satisfy_need"
+    EXPRESS_FEELING = "express_feeling"
+    DOWNLOAD_RESOURCE = "download_resource"
+    CHANGE_APPEARANCE = "change_appearance"
+    FILE_OPERATION = "file_operation"
+    WEB_SEARCH = "web_search"
+    SYSTEM_QUERY = "system_query"
 
-    def __init__(self, value: str, cn_name: str, description: str):
-        self._value_ = value
-        self.cn_name = cn_name
-        self.description = description
+    @property
+    def cn_name(self) -> str:
+        names = {
+            "initiate_conversation": "发起对话",
+            "explore_topic": "探索话题",
+            "satisfy_need": "满足需求",
+            "express_feeling": "表达情感",
+            "download_resource": "下载资源",
+            "change_appearance": "改变外观",
+            "file_operation": "文件操作",
+            "web_search": "网络搜索",
+            "system_query": "系统查询",
+        }
+        return names.get(self.value, self.value)
+
+    @property
+    def description(self) -> str:
+        descs = {
+            "initiate_conversation": "主动开始与用户的对话",
+            "explore_topic": "自主探索感兴趣的主题",
+            "satisfy_need": "满足生理或心理需求",
+            "express_feeling": "表达当前情感状态",
+            "download_resource": "从网络获取资源",
+            "change_appearance": "修改视觉表现",
+            "file_operation": "读写或管理文件",
+            "web_search": "搜索网络信息",
+            "system_query": "查询系统状态或信息",
+        }
+        return descs.get(self.value, "")
 
     @classmethod
     def from_string(cls, type_str: str) -> Optional[ActionType]:
         """从字符串获取动作类型"""
-        for action_type in cls:
-            if action_type.value == type_str:
-                return action_type
-        return None
+        try:
+            return cls(type_str)
+        except ValueError:
+            return None
 
 
 class ExecutionResultStatus(Enum):
     """执行结果状态 / Execution result status"""
 
-    SUCCESS = ("success", "成功")
-    PARTIAL = ("partial", "部分成功")
-    FAILURE = ("failure", "失败")
-    CANCELLED = ("cancelled", "已取消")
-    TIMEOUT = ("timeout", "超时")
+    SUCCESS = "success"
+    PARTIAL = "partial"
+    FAILURE = "failure"
+    CANCELLED = "cancelled"
+    TIMEOUT = "timeout"
 
-    def __init__(self, value: str, cn_name: str):
-        self._value_ = value
-        self.cn_name = cn_name
+    @property
+    def cn_name(self) -> str:
+        names = {
+            "success": "成功",
+            "partial": "部分成功",
+            "failure": "失败",
+            "cancelled": "已取消",
+            "timeout": "超时",
+        }
+        return names.get(self.value, self.value)
 
 
 @dataclass
@@ -286,7 +319,7 @@ class ActionExecutionBridge:
         )
 
         # Statistics
-        self._stats = {
+        self._stats: dict[str, Any] = {
             "total_executed": 0,
             "total_successful": 0,
             "total_failed": 0,
@@ -296,16 +329,13 @@ class ActionExecutionBridge:
 
         # Callbacks
         self._pre_execution_callbacks: list[Callable[[ExecutionContext], None]] = []
-        self._post_execution_callbacks: list[
-            Callable[[ExecutionContext, ExecutionResult], None]
-        ] = []
+        self._post_execution_callbacks: list[Callable[[ExecutionContext, ExecutionResult], None]] = []
 
     async def initialize(self) -> None:
-        """Initialize the action execution bridge"""
-        self._running = True
-
         # Load execution history
         await self._load_history()
+
+        self._running = True
 
         # Start execution loop
         self._execution_task = asyncio.create_task(self._execution_loop())
@@ -429,16 +459,12 @@ class ActionExecutionBridge:
                     # Execute with semaphore
                     task = asyncio.create_task(self._execute_with_semaphore(action_id, item))
                     self._background_tasks.add(task)
-                    task.add_done_callback(
-                        lambda t: (
-                            self._background_tasks.discard(t),
-                            (
-                                logger.warning("Background action task failed: %s", t.exception())
-                                if not t.cancelled() and t.exception()
-                                else None
-                            ),
-                        )
-                    )
+                    def _task_done_callback(t: asyncio.Task) -> None:
+                        self._background_tasks.discard(t)
+                        if not t.cancelled() and t.exception():
+                            logger.warning("Background action task failed: %s", t.exception())
+
+                    task.add_done_callback(_task_done_callback)
                 else:
                     # No executable actions, wait a bit
                     await asyncio.sleep(loop_sleep("bridge_poll", 0.1))
@@ -546,9 +572,9 @@ class ActionExecutionBridge:
                 self.feedback_collector.collect(result)
                 await self._persist_result(result)
 
-                for callback in self._post_execution_callbacks:
+                for callback in self._post_execution_callbacks:  # type: ignore[assignment]
                     try:
-                        callback(context, result)
+                        callback(context, result)  # type: ignore[call-arg]
                     except (
                         Exception
                     ) as e:  # broad exception acceptable: prevent callback errors from breaking flow
@@ -615,10 +641,11 @@ class ActionExecutionBridge:
         try:
             if await asyncio.to_thread(self._history_file.exists):
 
-                def read_history() -> str:
+                def read_history() -> list[dict[str, Any]]:
                     """Execute the read history operation."""
                     with open(self._history_file, "r", encoding="utf-8") as f:
-                        return json.load(f)
+                        data: list[dict[str, Any]] = json.load(f)
+                        return data
 
                 self._execution_history = await asyncio.to_thread(read_history)
         except (
