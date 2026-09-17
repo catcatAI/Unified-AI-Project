@@ -457,16 +457,11 @@ class DynamicThresholdManager:
         Nothing in the codebase reads self.feedback_aggregator, so the
         default config keeps it off. Wire real dependencies before enabling.
         """
-        try:
-            from ai.lifecycle.llm_decision_loop import LLMDecisionLoop
-
-            self.feedback_aggregator = LLMDecisionLoop()
-            logger.debug("Feedback aggregator initialized")
-
-        except ImportError:
-            logger.warning("LLM DecisionLoop not available, skipping feedback aggregator initialization")
-        except Exception as e:
-            logger.error(f"Error initializing feedback aggregator: {e}", exc_info=True)
+        # Deliberately left unwired: constructing LLMDecisionLoop without its
+        # 4 required args can never succeed; keep the attribute None until a
+        # caller supplies real dependencies.
+        self.feedback_aggregator = None
+        logger.debug("Feedback aggregator left unwired (no dependencies supplied)")
 
     def _initialize_prediction_engine(self) -> None:
         """初始化预测引擎"""
@@ -786,7 +781,7 @@ class DynamicThresholdManager:
     def _collect_system_info(self) -> Dict[str, Any]:
         """收集系统信息"""
         try:
-            system_info = {}
+            system_info: Dict[str, Any] = {}
 
             # 硬件信息
             if self.hardware_profile:
@@ -1128,18 +1123,18 @@ class DynamicThresholdManager:
         context: Dict[str, Any],
     ) -> List[Dict[str, Any]]:
         """应用硬件约束自适应"""
-        adaptations = []
+        adaptations: List[Dict[str, Any]] = []
 
         # 获取当前硬件配置
         profile_name = self.hardware_profile.scenario.value
-        constraints = self.hardware_constraints.get(profile_name, {})
+        constraints = self.hardware_constraints.get(profile_name)
 
         if not constraints:
             return adaptations
 
         # 根据硬件约束调整阈值
-        cpu_limit = constraints.cpu_limit if constraints else 1.0
-        memory_limit = constraints.memory_limit if constraints else 1.0
+        cpu_limit = constraints.cpu_limit
+        memory_limit = constraints.memory_limit
 
         if cpu_limit < 0.8:
             adaptations.append({
@@ -1278,8 +1273,8 @@ class DynamicThresholdManager:
                 }
 
             # 按阈值名称分组
-            threshold_distributions = {}
-            adaptation_frequency = {}
+            threshold_distributions: Dict[str, list] = {}
+            adaptation_frequency: Dict[str, int] = {}
 
             for name, value in thresholds_in_window:
                 if name not in threshold_distributions:

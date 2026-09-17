@@ -10,13 +10,18 @@ import pytest
 
 
 class TestBug7DynamicThresholdImport:
-    """§11.3 #7: dynamic_threshold_manager.py:455 import 路徑錯 → feedback_aggregator=None。"""
+    """§11.3 #7: dynamic_threshold_manager 曾以無參數構造 LLMDecisionLoop
+    （需 4 個必填參數），每次 TypeError 被吞掉 → feedback_aggregator=None。
+
+    R81 根治：不再嘗試不可能成功的構造，顯式保持 None 並註明接線條件；
+    舊的錯誤 import 路徑不得回歸。
+    """
 
     def test_feedback_aggregator_initializes(self):
-        """修正 import 路徑後 `_initialize_feedback_aggregator` 不再因 ImportError 失敗。
+        """`_initialize_feedback_aggregator` 不再吞掉 TypeError，且舊錯誤路徑不回歸。
 
-        驗證 import 路徑指向 `ai.lifecycle.llm_decision_loop`（存在），而非舊的
-        `services.llm.llm_decision_loop`（不存在）。
+        驗證舊的 `services.llm.llm_decision_loop` 路徑不存在於源碼，
+        且方法顯式保持 unwired（None）而非假裝初始化成功。
         """
         import importlib
 
@@ -26,14 +31,14 @@ class TestBug7DynamicThresholdImport:
         assert importlib.util.find_spec("services.llm.llm_decision_loop") is None
         # 確認 `ai.lifecycle.llm_decision_loop` 存在且含 LLMDecisionLoop
         assert hasattr(real, "LLMDecisionLoop")
-        # 修正後模組內的 import 行指向正確路徑
+        # 舊錯誤路徑不得回歸；方法必須顯式保持 None（R81）
         import ai.core.dynamic_threshold_manager as dtm
 
         source = importlib.import_module(dtm.__name__).__file__
         with open(source, encoding="utf-8") as f:
             content = f.read()
-        assert "from ai.lifecycle.llm_decision_loop import LLMDecisionLoop" in content
         assert "from services.llm.llm_decision_loop import" not in content
+        assert "self.feedback_aggregator = None" in content
 
 
 class TestBug8HAMMissingMethods:

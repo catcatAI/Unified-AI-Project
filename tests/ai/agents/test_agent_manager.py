@@ -199,5 +199,8 @@ class TestAgentManagerLifecycle:
         assert isinstance(agents, list)
 
     def test_check_agent_health_not_active(self, agent_manager):
-        """Test check_agent_health returns False when agent not in active_agents."""
-        assert agent_manager.check_agent_health("nonexistent") is False
+        """Test check_agent_health reports unregistered for unknown agent."""
+        result = agent_manager.check_agent_health("nonexistent")
+        assert isinstance(result, dict)
+        assert result["is_registered"] is False
+        assert result["is_active"] is False

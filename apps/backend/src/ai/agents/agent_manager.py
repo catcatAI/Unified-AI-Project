@@ -17,7 +17,7 @@ import tempfile
 import threading
 import time
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
@@ -63,10 +63,10 @@ logger = logging.getLogger(__name__)
 class StateImpact:
     """代理执行结果对状态的影响"""
 
-    alpha: Dict[str, float] = None  # 生理维度影响
-    beta: Dict[str, float] = None  # 认知维度影响
-    gamma: Dict[str, float] = None  # 情感维度影响
-    delta: Dict[str, float] = None  # 社交维度影响
+    alpha: Dict[str, float] = field(default_factory=dict)  # 生理维度影响
+    beta: Dict[str, float] = field(default_factory=dict)  # 认知维度影响
+    gamma: Dict[str, float] = field(default_factory=dict)  # 情感维度影响
+    delta: Dict[str, float] = field(default_factory=dict)  # 社交维度影响
 
     def __post_init__(self) -> None:
         """Execute the   post init   operation."""
@@ -318,7 +318,7 @@ class AgentManager:
 
         # P0-3: 状态管理器和结果评估器
         self.state_manager = state_manager
-        self.result_evaluator = DefaultAgentResultEvaluator()
+        self.result_evaluator: AgentResultEvaluator = DefaultAgentResultEvaluator()
 
         # Start router if enabled
         if self.enable_router:
@@ -413,7 +413,7 @@ class AgentManager:
         """启动代理"""
         agent = self.agents.get(agent_id)
         if agent:
-            return await agent.start()
+            return bool(await agent.start())
         return False
 
     # P0-3: 执行代理并应用状态影响
@@ -547,7 +547,7 @@ class AgentManager:
         """停止代理"""
         agent = self.agents.get(agent_id)
         if agent:
-            return await agent.stop()
+            return bool(await agent.stop())
         return False
 
     async def start_all_agents(self) -> Dict[str, Any]:
@@ -573,7 +573,9 @@ class AgentManager:
         agent = self.agents.get(agent_id)
         if agent:
             if hasattr(agent, "get_status"):
-                return agent.get_status()
+                status = agent.get_status()
+                if isinstance(status, dict):
+                    return status
             return {
                 "status": (
                     "active" if hasattr(agent, "is_running") and agent.is_running else "inactive"
@@ -586,7 +588,7 @@ class AgentManager:
         Discovers available agent scripts in the specified directory.
         Returns a map of agent names to their script paths.
         """
-        agent_map = {}
+        agent_map: Dict[str, str] = {}
         try:
             if not agents_dir:
                 # Primary: specialized subdirectory (where actual agents are)
@@ -682,7 +684,13 @@ class AgentManager:
         Checks if an agent is healthy and returns a structured health report.
         """
         if agent_name not in self.agents:
-            return False
+            return {
+                "agent_name": agent_name,
+                "status": "unknown",
+                "is_registered": False,
+                "is_active": False,
+                "last_heartbeat": None,
+            }
 
         is_registered = agent_name in self.agents
         is_active = (
@@ -878,4 +886,5 @@ class AgentManager:
         if service_discovery is None:
             logger.warning("[AgentManager] Service discovery not available.")
             return []
-        return await service_discovery.get_all_capabilities_async()
+        caps: List[Dict[str, Any]] = await service_discovery.get_all_capabilities_async()
+        return caps
