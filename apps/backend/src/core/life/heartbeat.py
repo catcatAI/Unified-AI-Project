@@ -47,8 +47,9 @@ class MetabolicHeartbeat:
         self.target_x = 200.0
         from core.system.config.tiered_loader import get_config as _gc
 
-        self._beh_cfg = _gc("standard/behavior/behavior")
-        _spatial_cfg = _gc("system/bootstrap").get("hardware_tiers", {}).get("default", {}).get("screen", {})
+        self._beh_cfg: Dict[str, Any] = _gc("standard/behavior/behavior") or {}
+        _bootstrap_cfg: Dict[str, Any] = _gc("system/bootstrap") or {}
+        _spatial_cfg = _bootstrap_cfg.get("hardware_tiers", {}).get("default", {}).get("screen", {})
         self.screen_w = _spatial_cfg.get("width", 1920)
         self.screen_h = _spatial_cfg.get("height", 1080)
         self.velocity = self._beh_cfg.get("movement", {}).get("base_velocity", 0.05)
@@ -76,7 +77,10 @@ class MetabolicHeartbeat:
                 bio_state = self.bio_integrator.get_biological_state()
 
                 # 1.5 [Task N.4.3] L4 Art Learning Sync
-                color_overrides = await self.bio_integrator.art_workflow.update_visual_state()
+                _art_workflow = self.bio_integrator.art_workflow
+                color_overrides = (
+                    await _art_workflow.update_visual_state() if _art_workflow else None
+                )
 
                 # 呼叫小腦：執行指令並獲取細節
                 cerebellum_res = self.cerebellum.execute_command(

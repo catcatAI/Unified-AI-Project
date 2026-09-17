@@ -32,7 +32,7 @@ from core.system.config.async_io import async_read_text, async_write_text
 try:
     from bs4 import BeautifulSoup
 except ImportError:
-    BeautifulSoup = None
+    BeautifulSoup = None  # type: ignore[assignment,misc]
 from core.system.config.magic_numbers import timeout_value
 
 logger = logging.getLogger(__name__)
@@ -281,7 +281,7 @@ class BrowserController:
         [Phase 18.1] 執行真實網路搜尋 (使用 DuckDuckGo HTML 版)
         取代原有的 _perform_mock_search 佔位符。
         """
-        results = []
+        results: List[SearchResult] = []
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
         }
@@ -291,7 +291,9 @@ class BrowserController:
         try:
             async with aiohttp.ClientSession(headers=headers) as session:
                 async with session.post(
-                    url, data=data, timeout=timeout_value("http_post", 10.0)
+                    url,
+                    data=data,
+                    timeout=aiohttp.ClientTimeout(total=timeout_value("http_post", 10.0)),
                 ) as response:
                     if response.status == 200:
                         html = await response.text()
@@ -299,7 +301,7 @@ class BrowserController:
                             logger.warning(
                                 "BeautifulSoup not installed; cannot parse search results"
                             )
-                            return {"results": [], "error": "BeautifulSoup not available"}
+                            return []
                         soup = BeautifulSoup(html, "html.parser")
 
                         # 解析 DuckDuckGo 結果
@@ -312,7 +314,7 @@ class BrowserController:
 
                             if title_a and snippet_a:
                                 title = title_a.get_text(strip=True)
-                                link = title_a.get("href", "")
+                                link = str(title_a.get("href", "") or "")
                                 snippet = snippet_a.get_text(strip=True)
 
                                 results.append(
@@ -367,14 +369,16 @@ class BrowserController:
         }
         try:
             async with aiohttp.ClientSession(headers=headers) as session:
-                async with session.get(url, timeout=timeout_value("http_get", 15.0)) as response:
+                async with session.get(
+                    url, timeout=aiohttp.ClientTimeout(total=timeout_value("http_get", 15.0))
+                ) as response:
                     if response.status == 200:
                         html = await response.text()
                         if BeautifulSoup is None:
                             logger.warning(
                                 "BeautifulSoup not installed; cannot extract page content"
                             )
-                            return {"text": "", "error": "BeautifulSoup not available", "url": url}
+                            return None
                         soup = BeautifulSoup(html, "html.parser")
 
                         # 移除 script 與 style
@@ -388,12 +392,13 @@ class BrowserController:
                         clean_text = "\n".join(chunk for chunk in chunks if chunk)
 
                         # 提取圖片與連結 (前幾個)
-                        images = [img.get("src") for img in soup.find_all("img") if img.get("src")][
+                        images = [str(img.get("src")) for img in soup.find_all("img") if img.get("src")][
                             :5
                         ]
-                        links = [a.get("href") for a in soup.find_all("a", href=True)][:5]
+                        links = [str(a.get("href")) for a in soup.find_all("a", href=True)][:5]
 
-                        title = soup.title.string if soup.title else "Untitled"
+                        _title_raw = soup.title.string if soup.title else None
+                        title = _title_raw.strip() if _title_raw else "Untitled"
 
                         return ExtractedContent(
                             url=url,

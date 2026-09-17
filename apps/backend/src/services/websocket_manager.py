@@ -36,7 +36,7 @@ from services.connection_session import get_session_manager
 logger = logging.getLogger(__name__)
 
 # Per-session conversation history (max 30 messages per session)
-_session_history = {}  # session_id -> list of {"role": str, "content": str}
+_session_history: Dict[str, list] = {}  # session_id -> list of {"role": str, "content": str}
 _MAX_HISTORY = 30
 _session_history_lock = asyncio.Lock()
 
@@ -87,10 +87,9 @@ class ConnectionManager:
         """Establish connection."""
         await websocket.accept()
         session = await self._sm.register(websocket, session_id, metadata, single_device_mode=True)
-        self._sessions_by_ws[id(websocket)] = (
-            session.client_id if hasattr(session, "client_id") else session
-        )
-        return session
+        client_id = session.client_id if hasattr(session, "client_id") else str(session)
+        self._sessions_by_ws[id(websocket)] = client_id
+        return client_id
 
     def disconnect(self, websocket: WebSocket) -> None:
         """Close connection."""
@@ -106,7 +105,7 @@ class ConnectionManager:
                 )
             )
 
-    async def broadcast(self, message: dict) -> str:
+    async def broadcast(self, message: dict) -> int:
         return await self._sm.broadcast(message)
 
     async def send_personal_message(self, message: dict, websocket: WebSocket) -> bool:
@@ -117,13 +116,13 @@ class ConnectionManager:
             return await self._sm.send_to_client(client_id, message)
         return False
 
-    async def send_to_session(self, session_id: str, message: dict) -> str:
+    async def send_to_session(self, session_id: str, message: dict) -> int:
         return await self._sm.send_to_session(session_id, message)
 
-    async def unregister(self, client_id: str) -> str:
-        return await self._sm.unregister(client_id)
+    async def unregister(self, client_id: str) -> None:
+        await self._sm.unregister(client_id)
 
-    def get_all_connections_info(self) -> str:
+    def get_all_connections_info(self) -> "list[dict[str, Any]]":
         return self._sm.get_all_connections_info()
 
     def get_connection_stats(self) -> Dict[str, Any]:
@@ -161,13 +160,13 @@ def is_push_enabled() -> bool:
     return _push_enabled
 
 
-async def push_to_all(message: dict) -> str:
+async def push_to_all(message: dict) -> Any:
     if not _push_enabled:
         return "disabled"
     return await manager.broadcast(message)
 
 
-async def push_to_session(session_id: str, message: dict) -> str:
+async def push_to_session(session_id: str, message: dict) -> Any:
     if not _push_enabled:
         return "disabled"
     return await manager.send_to_session(session_id, message)
@@ -224,7 +223,7 @@ async def broadcast_state_updates() -> None:
                 logger.debug(f"Cerebellum posture read failed: {e}")
 
             # Read StateMatrix4D data from DLI (live instance)
-            _sm_data = {}
+            _sm_data: Dict[str, Any] = {}
             try:
                 from api.lifespan import get_digital_life
 
@@ -584,7 +583,7 @@ async def _handle_multimodal_decode(websocket: WebSocket, data: dict) -> None:
         )
 
 
-async def websocket_handler(websocket: WebSocket) -> str:
+async def websocket_handler(websocket: WebSocket) -> None:
     """
     WebSocket endpoint handler for real-time communication with desktop app.
     Handles handshake, message routing, heartbeat, and chat.

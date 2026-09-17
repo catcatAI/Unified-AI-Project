@@ -27,7 +27,7 @@ determinism classification of this module and the rest of the pipeline.
 from __future__ import annotations
 
 import re
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, TypedDict
 
 # Comparators we understand (transitive). Keyed by canonical direction word.
 _GREATER = {
@@ -594,7 +594,13 @@ _ENTITY_ALIASES: Dict[str, List[str]] = {
 # natural-language word (plain, for detection), the knowledge-base attribute
 # key, and the regex used to extract the TOTAL attribute value R from the
 # prompt. Detection words are literal (no regex metacharacters).
-_ATTR_KINDS: Dict[str, Dict[str, object]] = {
+class _AttrKind(TypedDict):
+    words: Tuple[str, ...]
+    kb: str
+    r_re: str
+
+
+_ATTR_KINDS: Dict[str, _AttrKind] = {
     "legs": {
         "words": ("腳", "脚", "腿", "legs"),
         "kb": "legs",
