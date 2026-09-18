@@ -1,4 +1,4 @@
-from ai.document.chunker import DocumentChunker, ChunkTree, Section, Paragraph
+from ai.document.chunker import ChunkTree, DocumentChunker, Paragraph, Section
 from ai.document.learner import DocumentLearner
 
 __all__ = [

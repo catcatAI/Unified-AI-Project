@@ -133,10 +133,12 @@ GRAVITY = 9.8
 
 from typing import TypedDict
 
+
 class FormulaSpec(TypedDict, total=False):
     vars: List[str]
     solve: Dict[str, str]
     const: Optional[float]
+
 
 # Formulas: each is (unknown, [(var1, expr), (var2, expr)], solved-expr-for-unknown).
 # solved-expr uses Python-safe names matching the vars.

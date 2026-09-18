@@ -6,7 +6,6 @@
 """
 
 
-
 def char_bigrams(text: str) -> set:
     """字元級 bigram（含 edge-case guard）"""
     if len(text) < 2:

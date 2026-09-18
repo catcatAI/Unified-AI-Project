@@ -26,7 +26,9 @@ class TestChainValidator:
         validator = ChainValidator()
         chain = CausalChain(root_id="root")
         chain.add_node(CausalNode(id="root", layer=LayerType.L1, module="m", action="start"))
-        chain.add_node(CausalNode(id="n1", parent_id="root", layer=LayerType.L2, module="m", action="process"))
+        chain.add_node(
+            CausalNode(id="n1", parent_id="root", layer=LayerType.L2, module="m", action="process")
+        )
         result = validator.validate_chain(chain)
         assert result.valid is True
 
@@ -43,14 +45,25 @@ class TestChainValidator:
         validator = ChainValidator()
         chain = CausalChain(root_id="root")
         now = datetime.now()
-        chain.add_node(CausalNode(
-            id="root", layer=LayerType.L1, module="m", action="start",
-            timestamp=now,
-        ))
-        chain.add_node(CausalNode(
-            id="child", parent_id="root", layer=LayerType.L2, module="m", action="process",
-            timestamp=now.replace(year=now.year - 1),
-        ))
+        chain.add_node(
+            CausalNode(
+                id="root",
+                layer=LayerType.L1,
+                module="m",
+                action="start",
+                timestamp=now,
+            )
+        )
+        chain.add_node(
+            CausalNode(
+                id="child",
+                parent_id="root",
+                layer=LayerType.L2,
+                module="m",
+                action="process",
+                timestamp=now.replace(year=now.year - 1),
+            )
+        )
         result = validator.validate_chain(chain)
         assert result.valid is False
         assert any("timestamp" in e.lower() for e in result.errors)
@@ -77,7 +90,9 @@ class TestChainValidator:
         validator = ChainValidator()
         chain = CausalChain(root_id="root")
         chain.add_node(CausalNode(id="root", layer=LayerType.L1, module="m", action="start"))
-        chain.add_node(CausalNode(id="n1", parent_id="root", layer=LayerType.L3, module="m", action="process"))
+        chain.add_node(
+            CausalNode(id="n1", parent_id="root", layer=LayerType.L3, module="m", action="process")
+        )
         result = validator.validate_layer_coverage(chain, [LayerType.L1, LayerType.L3])
         assert result.valid is True
 
@@ -92,7 +107,9 @@ class TestChainValidator:
         validator = ChainValidator()
         chain = CausalChain(root_id="root")
         chain.add_node(CausalNode(id="root", layer=LayerType.L1, module="m", action="start"))
-        chain.add_node(CausalNode(id="n1", parent_id="root", layer=LayerType.L2, module="m", action="process"))
+        chain.add_node(
+            CausalNode(id="n1", parent_id="root", layer=LayerType.L2, module="m", action="process")
+        )
         stats = validator.get_chain_statistics(chain)
         assert stats["total_nodes"] == 2
         assert "layer_counts" in stats
@@ -103,10 +120,15 @@ class TestChainValidator:
         validator = ChainValidator()
         chain = CausalChain(root_id="root")
         chain.add_node(CausalNode(id="root", layer=LayerType.L5, module="m", action="start"))
-        chain.add_node(CausalNode(
-            id="n1", parent_id="root", layer=LayerType.L1,
-            module="m", action="backwards",
-        ))
+        chain.add_node(
+            CausalNode(
+                id="n1",
+                parent_id="root",
+                layer=LayerType.L1,
+                module="m",
+                action="backwards",
+            )
+        )
         result = validator.validate_chain(chain)
         assert result.valid is True
         assert len(result.warnings) > 0

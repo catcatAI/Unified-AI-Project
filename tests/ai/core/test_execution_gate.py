@@ -254,6 +254,7 @@ class TestExecutionGateIntegration:
 
     def setup_method(self):
         from ai.core.query_classifier import QueryClassifier
+
         self.clf = QueryClassifier()
         self.gate = ExecutionGate()
 

@@ -7,6 +7,7 @@ class TestWebSearchHandler:
 
     def setup_method(self):
         from services.handlers.web_search_handler import WebSearchHandler
+
         self.handler = WebSearchHandler()
 
     def test_handler_instantiated(self):

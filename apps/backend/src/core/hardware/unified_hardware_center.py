@@ -104,11 +104,13 @@ class HardwareDetector:
         try:
             # Use backbone as source of truth for actual hardware spec
             from core.backbone.hardware import HardwareProfile as BHw
+
             spec = BHw.detect()
             # Map to this center's dataclass (spec-driven)
             cpu_name = ""
             try:
                 import platform as _plat
+
                 cpu_name = _plat.processor() or _plat.machine()
                 # Try to get detailed CPU name on Linux
                 if _plat.system() == "Linux":
@@ -141,6 +143,7 @@ class HardwareDetector:
             percent = 0.0
             try:
                 import psutil
+
                 vm = psutil.virtual_memory()
                 total_mb = int(vm.total / 1024 / 1024)
                 avail_mb = int(vm.available / 1024 / 1024)

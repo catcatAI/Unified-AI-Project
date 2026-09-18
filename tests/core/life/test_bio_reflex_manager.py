@@ -1,4 +1,5 @@
 """Tests for BiogenicReflexManager."""
+
 import pytest
 from core.life.bio_reflex_manager import BiogenicReflexManager
 
@@ -12,6 +13,7 @@ class TestBiogenicReflexManager:
         class FakeBio:
             def on_trauma(self, body_part, damage):
                 pass
+
         mgr = BiogenicReflexManager(bio_integrator=FakeBio())
         assert mgr.bio_integrator is not None
 
@@ -26,8 +28,10 @@ class TestBiogenicReflexManager:
         class FakeBio:
             def __init__(self):
                 self.called = False
+
             def on_trauma(self, body_part, damage):
                 self.called = True
+
         fake = FakeBio()
         mgr = BiogenicReflexManager(bio_integrator=fake)
         await mgr.trigger_physical_trauma("leg", 0.8)
@@ -37,6 +41,7 @@ class TestBiogenicReflexManager:
     async def test_trigger_trauma_no_on_trauma_method(self):
         class FakeBioWithoutMethod:
             pass
+
         mgr = BiogenicReflexManager(bio_integrator=FakeBioWithoutMethod())
         result = await mgr.trigger_physical_trauma("head", 0.2)
         assert result is None
@@ -46,8 +51,10 @@ class TestBiogenicReflexManager:
         class FakeBio:
             def __init__(self):
                 self.calls = []
+
             def on_trauma(self, body_part, damage):
                 self.calls.append((body_part, damage))
+
         fake = FakeBio()
         mgr = BiogenicReflexManager(bio_integrator=fake)
         await mgr.trigger_physical_trauma("arm", 0.3)

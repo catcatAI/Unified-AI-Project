@@ -7,20 +7,21 @@ Runs Section→Paragraph→Sentence→Token level-by-level.
 Each level: fast pass → emit → slow pass → emit.
 Output buffer fills in progressively: keywords → grammar → exact sentences.
 """
+
 from __future__ import annotations
 
 import logging
 import time
 from typing import List, Tuple
 
-from .token_stream import TokenStream, StreamToken, TokenType
 from .producers import (
-    SectionProducer,
+    BaseLevelProducer,
     ParagraphProducer,
+    SectionProducer,
     SentenceProducer,
     TokenProducer,
-    BaseLevelProducer,
 )
+from .token_stream import StreamToken, TokenStream, TokenType
 
 logger = logging.getLogger(__name__)
 
@@ -41,9 +42,7 @@ class StreamingPipeline:
         """Set fallback function called when all levels produce empty output."""
         self.fallback_fn = fn
 
-    async def stream(
-        self, query: str, stream: TokenStream, timeout: float = 5.0
-    ) -> None:
+    async def stream(self, query: str, stream: TokenStream, timeout: float = 5.0) -> None:
         """Run streaming pipeline, emitting tokens to stream."""
         buffer = ""
 
@@ -93,8 +92,13 @@ class StreamingPipeline:
         await stream.put(StreamToken.create_control("DONE"))
 
     async def _emit(
-        self, stream: TokenStream, text: str, level: str,
-        pass_type: str, confidence: float, latency: float
+        self,
+        stream: TokenStream,
+        text: str,
+        level: str,
+        pass_type: str,
+        confidence: float,
+        latency: float,
     ) -> None:
         token = StreamToken(
             content=text,

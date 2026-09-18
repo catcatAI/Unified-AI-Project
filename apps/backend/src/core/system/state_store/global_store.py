@@ -110,9 +110,7 @@ class GlobalStateStore:
         """Update state for a specific domain."""
         with self._sync_lock:
             if domain not in self._states:
-                logger.warning(
-                    f"[StateStore] Attempted to update unknown domain: {domain}"
-                )
+                logger.warning(f"[StateStore] Attempted to update unknown domain: {domain}")
                 self._states[domain] = {}
                 self._subscribers[domain] = []
 

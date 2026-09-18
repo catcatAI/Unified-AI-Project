@@ -128,9 +128,7 @@ def train_exact_bytes(
     return read
 
 
-def heldout_bpc(
-    core: FixedSizeCore, path: str, offset: int, n: int = 20_000
-) -> float:
+def heldout_bpc(core: FixedSizeCore, path: str, offset: int, n: int = 20_000) -> float:
     """bpc over n bytes starting at *offset* — MUST be > trained boundary."""
     import math
 

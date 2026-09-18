@@ -35,7 +35,6 @@ import os
 from typing import Any, Dict, List, Optional
 
 import numpy as np
-
 from core.system.config.magic_numbers import timeout_value
 
 logger = logging.getLogger(__name__)
@@ -387,7 +386,11 @@ class TensorSNNCore:
         # Use compute config (profile-aware) unless explicit values passed.
         # Falls back to dynamic model sizing config (conservative/extended).
         sizing = model_sizing_config()
-        self.max_vocab = max_vocab if max_vocab > 0 else compute_int("garden_snn", "max_vocab", sizing["max_vocab"])
+        self.max_vocab = (
+            max_vocab
+            if max_vocab > 0
+            else compute_int("garden_snn", "max_vocab", sizing["max_vocab"])
+        )
         self.connection_budget = (
             connection_budget
             if connection_budget > 0
@@ -434,7 +437,9 @@ class TensorSNNCore:
         self._idx_to_key: List[str] = []
 
         # Weight matrix (grows dynamically as new keys are registered)
-        self._W: Optional[Any] = None  # [V, V] float32 (torch.Tensor or np.ndarray)  # type: ignore[assignment, index]
+        self._W: Optional[Any] = (
+            None  # [V, V] float32 (torch.Tensor or np.ndarray)  # type: ignore[assignment, index]
+        )
 
         # LRU bookkeeping for eviction under the memory budget.
         self._last_used: Dict[int, int] = {}
@@ -565,9 +570,7 @@ class TensorSNNCore:
         to_remove = {k for k in removed_keys if k in self._key_to_idx}
         if not to_remove:
             return 0
-        keep_indices = [
-            i for i, key in enumerate(self._idx_to_key) if key not in to_remove
-        ]
+        keep_indices = [i for i, key in enumerate(self._idx_to_key) if key not in to_remove]
         self._compact(keep_indices)
         logger.info(
             "GARDEN SNN: compacted after prune (removed %d keys, V=%d)",
@@ -582,7 +585,11 @@ class TensorSNNCore:
         # before, so a burst window was unbounded).  Evict down to budget
         # before growing when the incoming keys would overshoot.
         new_keys = [k for k in keys if k not in self._key_to_idx]
-        if new_keys and self.max_vocab > 0 and len(self._idx_to_key) + len(new_keys) > self.max_vocab:
+        if (
+            new_keys
+            and self.max_vocab > 0
+            and len(self._idx_to_key) + len(new_keys) > self.max_vocab
+        ):
             self._evict_batch()
         for key in keys:
             if key not in self._key_to_idx:
@@ -705,9 +712,7 @@ class TensorSNNCore:
             active_idx = _nonzero_indices(a)
             n_active = len(active_idx)
             if n_active > 0:
-                _use_torch = hasattr(W[active_idx], "sum") and hasattr(
-                    W[active_idx].sum, "dim"
-                )
+                _use_torch = hasattr(W[active_idx], "sum") and hasattr(W[active_idx].sum, "dim")
                 if _use_torch:
                     incoming = W[active_idx].sum(dim=0)
                 else:
@@ -736,7 +741,7 @@ class TensorSNNCore:
             if len(spike_idx) > 0:
                 potential[spike_idx] = 0.0
 
-            a = spikes * (self.decay ** t)
+            a = spikes * (self.decay**t)
             cumulative += spikes
             total_active += n_active
 
@@ -950,9 +955,7 @@ class TensorSNNCore:
         saved_lru = state.get("last_used_by_key") or {}
         if isinstance(saved_lru, dict) and saved_lru:
             self._last_used = {
-                self._key_to_idx[k]: ts
-                for k, ts in saved_lru.items()
-                if k in self._key_to_idx
+                self._key_to_idx[k]: ts for k, ts in saved_lru.items() if k in self._key_to_idx
             }
             self._clock = int(state.get("clock", max(self._last_used.values(), default=0) + 1))
         logger.info("GARDEN SNN: loaded checkpoint from %s (V=%d)", path, self.vocab_size)
@@ -983,7 +986,9 @@ class TensorSNNCore:
         nnz = int(np.count_nonzero(self._W)) if not is_torch else int((self._W != 0).sum())
         logger.info(
             "GARDEN SNN: reset weights for retrain (V=%d, nnz=%d, density=%.2f%%)",
-            V, nnz, nnz / (V * V) * 100,
+            V,
+            nnz,
+            nnz / (V * V) * 100,
         )
 
     # ------------------------------------------------------------------

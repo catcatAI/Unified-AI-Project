@@ -130,7 +130,7 @@ _AXIS_SCHEMA = {
 # apply_ripple_to_state). Tune the ripple influence strength HERE.
 GAIN_EPSILON_LOGIC = 0.10
 GAIN_EPSILON_COMPLEXITY = 0.05
-GAIN_DELTA_BOND_RATIO = 0.5         # bond moves at half the engagement rate
+GAIN_DELTA_BOND_RATIO = 0.5  # bond moves at half the engagement rate
 
 # Negative-valence trigger magnitudes (confusion / fear / overload)
 TRIGGER_CONFUSION_GAIN = 0.20

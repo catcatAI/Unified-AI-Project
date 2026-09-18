@@ -38,5 +38,3 @@ async def test_state_decoupling() -> None:
     assert store_alpha.get("energy") == 0.9
     assert len(received_updates) > 0
     print("\n✅ State decoupling test passed!")
-
-

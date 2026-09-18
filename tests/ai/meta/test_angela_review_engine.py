@@ -60,6 +60,7 @@ def docs_root():
 # Severity & Data Model Tests
 # =============================================================================
 
+
 class TestSeverity:
     def test_severity_values(self):
         assert Severity.CRITICAL.value == "critical"
@@ -136,6 +137,7 @@ class TestReviewReport:
 # Design Reviewer Tests
 # =============================================================================
 
+
 class TestDesignReviewer:
     def test_reviewer_initialization(self, src_root, docs_root):
         reviewer = DesignReviewer(src_root, docs_root)
@@ -162,6 +164,7 @@ class TestDesignReviewer:
 # =============================================================================
 # Code Reviewer Tests
 # =============================================================================
+
 
 class TestCodeReviewer:
     def test_reviewer_initialization(self, src_root):
@@ -227,6 +230,7 @@ x = 1
 # MD Reviewer Tests
 # =============================================================================
 
+
 class TestMDReviewer:
     def test_reviewer_initialization(self, project_root, src_root):
         reviewer = MDReviewer(project_root, src_root)
@@ -255,6 +259,7 @@ class TestMDReviewer:
 # =============================================================================
 # Consistency Reviewer Tests
 # =============================================================================
+
 
 class TestConsistencyReviewer:
     def test_reviewer_initialization(self, src_root, docs_root, project_root):
@@ -288,6 +293,7 @@ class TestConsistencyReviewer:
 # Training Reviewer Tests
 # =============================================================================
 
+
 class TestTrainingReviewer:
     def test_reviewer_initialization(self, src_root, project_root):
         reviewer = TrainingReviewer(src_root, project_root)
@@ -308,6 +314,7 @@ class TestTrainingReviewer:
 # =============================================================================
 # Angela Review Engine Integration Tests
 # =============================================================================
+
 
 class TestAngelaReviewEngine:
     def test_engine_initialization(self):
@@ -367,6 +374,7 @@ class TestAngelaReviewEngine:
 # Singleton & Convenience Functions Tests
 # =============================================================================
 
+
 class TestSingleton:
     def test_get_review_engine_singleton(self):
         e1 = get_review_engine()
@@ -389,6 +397,7 @@ class TestSingleton:
 # =============================================================================
 # Score Boundary Tests
 # =============================================================================
+
 
 class TestScoreBoundaries:
     def test_perfect_score(self):
@@ -418,6 +427,7 @@ class TestScoreBoundaries:
 # =============================================================================
 # Review Engine Error Handling Tests
 # =============================================================================
+
 
 class TestErrorHandling:
     def test_engine_handles_reviewer_exception(self):
@@ -450,15 +460,18 @@ class TestErrorHandling:
 # WebSocket Push API Tests
 # =============================================================================
 
+
 class TestWebSocketPushAPI:
     def test_push_functions_exist(self):
-        from services.websocket_manager import push_to_all, push_to_session, push_to_client
+        from services.websocket_manager import push_to_all, push_to_client, push_to_session
+
         assert callable(push_to_all)
         assert callable(push_to_session)
         assert callable(push_to_client)
 
     def test_push_enabled_toggle(self):
-        from services.websocket_manager import set_push_enabled, is_push_enabled
+        from services.websocket_manager import is_push_enabled, set_push_enabled
+
         set_push_enabled(False)
         assert is_push_enabled() is False
         set_push_enabled(True)
@@ -469,13 +482,16 @@ class TestWebSocketPushAPI:
 # BehaviorExecutor Feedback Loop Tests
 # =============================================================================
 
+
 class TestBehaviorExecutorFix:
     def test_behavior_executor_import(self):
         from core.autonomous.behavior_executor import BehaviorExecutor
+
         assert BehaviorExecutor is not None
 
     def test_execution_returns_variable_success(self):
         import asyncio
+
         from core.autonomous.behavior_executor import BehaviorExecutor
 
         async def _test():
@@ -492,6 +508,7 @@ class TestBehaviorExecutorFix:
 
     def test_type_stats_tracking(self):
         import asyncio
+
         from core.autonomous.behavior_executor import BehaviorExecutor
 
         async def _test():
@@ -512,13 +529,16 @@ class TestBehaviorExecutorFix:
 # ProactiveInteractionSystem Wiring Tests
 # =============================================================================
 
+
 class TestProactiveWiring:
     def test_proactive_import(self):
         from ai.lifecycle.proactive_interaction_system import ProactiveInteractionSystem
+
         assert ProactiveInteractionSystem is not None
 
     def test_proactive_can_be_instantiated(self):
         import asyncio
+
         from ai.lifecycle.proactive_interaction_system import ProactiveInteractionSystem
         from ai.lifecycle.user_monitor import UserMonitor
 
@@ -538,6 +558,7 @@ class TestProactiveWiring:
 
     def test_push_to_all_with_proactive_message(self):
         import asyncio
+
         from services.websocket_manager import push_to_all
 
         async def _test():

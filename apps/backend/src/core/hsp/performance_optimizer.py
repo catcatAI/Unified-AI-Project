@@ -76,9 +76,8 @@ class HSPPerformanceOptimizer:
             # If still over cap after expiry purge, evict oldest
             if len(self.message_cache) > _MAX_MESSAGE_QUEUE:
                 oldest_keys = sorted(
-                    self.message_cache,
-                    key=lambda k: self.message_cache[k]["expires_at"]
-                )[:len(self.message_cache) - _MAX_MESSAGE_QUEUE]
+                    self.message_cache, key=lambda k: self.message_cache[k]["expires_at"]
+                )[: len(self.message_cache) - _MAX_MESSAGE_QUEUE]
                 for k in oldest_keys:
                     del self.message_cache[k]
         logger.debug(f"消息已缓存: {message_id}")

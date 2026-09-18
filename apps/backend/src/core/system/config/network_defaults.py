@@ -72,6 +72,7 @@ def get_server_bind() -> tuple:
         port = SERVER_PORT
     return host, port
 
+
 # ED3N runs in-process; no external host needed
 ED3N_HOST: str = "http://127.0.0.1:0"
 DEFAULT_ED3N_MODEL: str = "ed3n-v1"

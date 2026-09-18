@@ -67,9 +67,7 @@ class TestGenerateSyntheticCaptions:
     def test_with_library_no_encoder(self):
         gen = TrainingDataGenerator()
         lib = PrimitiveLibrary()
-        instructions = DrawingInstructions(
-            points=[Point(0.5, 0.5, (255, 0, 0), 0.1)]
-        )
+        instructions = DrawingInstructions(points=[Point(0.5, 0.5, (255, 0, 0), 0.1)])
         emb = np.random.randn(128).astype(np.float32)
         emb = emb / (np.linalg.norm(emb) + 1e-8)
         lib.add_primitive("test", instructions, emb)

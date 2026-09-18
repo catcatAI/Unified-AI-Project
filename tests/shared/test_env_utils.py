@@ -1,6 +1,7 @@
 import os
+
 import pytest
-from shared.utils.env_utils import get_env, get_int_env, get_float_env, get_bool_env, load_env_file
+from shared.utils.env_utils import get_bool_env, get_env, get_float_env, get_int_env, load_env_file
 
 
 class TestGetEnv:
@@ -42,11 +43,20 @@ class TestGetFloatEnv:
 
 
 class TestGetBoolEnv:
-    @pytest.mark.parametrize("raw,expected", [
-        ("1", True), ("true", True), ("yes", True), ("on", True),
-        ("0", False), ("false", False), ("no", False), ("off", False),
-        ("anything", False),
-    ])
+    @pytest.mark.parametrize(
+        "raw,expected",
+        [
+            ("1", True),
+            ("true", True),
+            ("yes", True),
+            ("on", True),
+            ("0", False),
+            ("false", False),
+            ("no", False),
+            ("off", False),
+            ("anything", False),
+        ],
+    )
     def test_various_values(self, monkeypatch, raw, expected):
         monkeypatch.setenv("BOOL_KEY", raw)
         assert get_bool_env("BOOL_KEY") == expected

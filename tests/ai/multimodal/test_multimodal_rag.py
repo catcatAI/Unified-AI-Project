@@ -34,6 +34,7 @@ class TestMultimodalRetriever:
     @pytest.fixture
     def ret(self):
         from ai.multimodal.multimodal_retriever import MultimodalRetriever
+
         return MultimodalRetriever()
 
     def test_add_and_count(self, ret):
@@ -82,6 +83,7 @@ class TestMultimodalRetriever:
 
     def test_save_load(self, ret):
         from ai.multimodal.multimodal_retriever import MultimodalRetriever
+
         ret.add("k1", np.ones(64, dtype=np.float32), "vision", {"label": "test"})
         ret.add("k2", np.zeros(64, dtype=np.float32), "audio")
         with tempfile.TemporaryDirectory() as tmp:
@@ -95,6 +97,7 @@ class TestMultimodalRetriever:
 
     def test_save_load_empty(self, ret):
         from ai.multimodal.multimodal_retriever import MultimodalRetriever
+
         with tempfile.TemporaryDirectory() as tmp:
             path = os.path.join(tmp, "empty.npy")
             ret.save(path)
@@ -107,6 +110,7 @@ class TestMultimodalRAGEngine:
     @pytest.fixture
     def engine(self):
         from ai.multimodal.multimodal_rag_engine import MultimodalRAGEngine
+
         return MultimodalRAGEngine()
 
     def test_index_image(self, engine, sample_image_bytes):
@@ -166,6 +170,7 @@ class TestMultimodalRAGEngine:
 
     def test_save_load_index(self, engine, sample_image_bytes):
         from ai.multimodal.multimodal_rag_engine import MultimodalRAGEngine
+
         engine.index_image(sample_image_bytes, "img_001", label="test")
         with tempfile.TemporaryDirectory() as tmp:
             path = os.path.join(tmp, "rag_index.npy")

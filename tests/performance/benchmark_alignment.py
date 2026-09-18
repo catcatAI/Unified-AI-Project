@@ -1,4 +1,5 @@
 """Benchmarks for alignment and knowledge system components."""
+
 import pytest
 
 from tests.conftest import benchmark
@@ -13,10 +14,12 @@ def test_emotion_system_speed():
     def _run():
         system = EmotionSystem()
         for i in range(50):
-            system.analyze_emotional_context({
-                "text": f"This is test input number {i} with some emotional content",
-                "stress_level": (i % 10) / 10.0,
-            })
+            system.analyze_emotional_context(
+                {
+                    "text": f"This is test input number {i} with some emotional content",
+                    "stress_level": (i % 10) / 10.0,
+                }
+            )
         summary = system.get_emotion_summary()
         assert "dominant_emotion" in summary
 

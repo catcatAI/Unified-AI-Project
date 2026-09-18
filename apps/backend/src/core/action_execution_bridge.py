@@ -329,7 +329,9 @@ class ActionExecutionBridge:
 
         # Callbacks
         self._pre_execution_callbacks: list[Callable[[ExecutionContext], None]] = []
-        self._post_execution_callbacks: list[Callable[[ExecutionContext, ExecutionResult], None]] = []
+        self._post_execution_callbacks: list[
+            Callable[[ExecutionContext, ExecutionResult], None]
+        ] = []
 
     async def initialize(self) -> None:
         # Load execution history
@@ -459,6 +461,7 @@ class ActionExecutionBridge:
                     # Execute with semaphore
                     task = asyncio.create_task(self._execute_with_semaphore(action_id, item))
                     self._background_tasks.add(task)
+
                     def _task_done_callback(t: asyncio.Task) -> None:
                         self._background_tasks.discard(t)
                         if not t.cancelled() and t.exception():

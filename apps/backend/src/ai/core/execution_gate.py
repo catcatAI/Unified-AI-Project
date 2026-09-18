@@ -82,15 +82,15 @@ IMPACT_BASE = {
 IMPACT_DEFAULT = 0.5
 
 # Scope / clarity adjustments (named — were bare literals in _estimate_*).
-IMPACT_MAX_SCOPE_PENALTY = 0.3   # 全部/所有 → much bigger blast radius
+IMPACT_MAX_SCOPE_PENALTY = 0.3  # 全部/所有 → much bigger blast radius
 IMPACT_MIN_IMPACT_FLOOR = 0.1
-IMPACT_MIN_SCOPE_BONUS = 0.1     # 单一/一个 → smaller blast radius
-CLARITY_VERB_BONUS = 0.1         # explicit action verb present
+IMPACT_MIN_SCOPE_BONUS = 0.1  # 单一/一个 → smaller blast radius
+CLARITY_VERB_BONUS = 0.1  # explicit action verb present
 CLARITY_OBJECT_PATH_BONUS = 0.1  # file path present
-CLARITY_URL_BONUS = 0.1          # URL present
-CLARITY_VAGUE_PENALTY = 0.2      # vague wording
+CLARITY_URL_BONUS = 0.1  # URL present
+CLARITY_VAGUE_PENALTY = 0.2  # vague wording
 CLARITY_VAGUE_FLOOR = 0.1
-CLARITY_TOO_SHORT = 5            # chars; below = unclear
+CLARITY_TOO_SHORT = 5  # chars; below = unclear
 CLARITY_SHORT_PENALTY = 0.1
 CLARITY_SHORT_FLOOR = 0.2
 

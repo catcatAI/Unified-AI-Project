@@ -89,7 +89,9 @@ def _emotion_threshold_adjustment() -> float:
             import importlib
 
             mod = importlib.import_module("api.lifespan")
-            get_es = getattr(mod, "get_emotion_system", None) or getattr(mod, "_get_emotion_system", None)
+            get_es = getattr(mod, "get_emotion_system", None) or getattr(
+                mod, "_get_emotion_system", None
+            )
             if get_es is not None:
                 try:
                     es = get_es()
@@ -148,7 +150,7 @@ def _get_onnx_encoder():
         return _ONNX_ENCODER
     _ONNX_TRIED = True
     try:
-        from ai.garden.dictionary import _OnnxEncoder, _onnx_model_path
+        from ai.garden.dictionary import _onnx_model_path, _OnnxEncoder
 
         path = _onnx_model_path("sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
         if path is None:

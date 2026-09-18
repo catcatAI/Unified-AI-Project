@@ -262,15 +262,20 @@ class AgentOrchestrator:
                         agent_name, message, context or {}
                     )
                 except Exception as e:
-                    logger.warning(f"ModelBus execution failed for {agent_name}: {e}", exc_info=True)
+                    logger.warning(
+                        f"ModelBus execution failed for {agent_name}: {e}", exc_info=True
+                    )
             # AgentManager fallback only applies to specialized-agent ids (the
             # `_agent`-suffixed ids from register_specialized_agents). ModelBus
             # handler ids (file_ops/code_exec/web_search/vision) must NOT fall
             # back — AgentManager doesn't register them and the attempt only
             # produces a misleading "Agent not found" warning.
             is_specialized_agent = agent_name.endswith("_agent")
-            if (result is None or (isinstance(result, dict) and not result.get("success")))\
-                    and is_specialized_agent and self._agent_manager is not None:
+            if (
+                (result is None or (isinstance(result, dict) and not result.get("success")))
+                and is_specialized_agent
+                and self._agent_manager is not None
+            ):
                 try:
                     # Pass the raw message under every common parameter name so
                     # the adapter's _fill_defaults can satisfy the agent method
@@ -285,9 +290,7 @@ class AgentOrchestrator:
                         "text": message,
                         "content": message,
                     }
-                    agent_result = await self._agent_manager.execute_agent(
-                        agent_name, agent_task
-                    )
+                    agent_result = await self._agent_manager.execute_agent(agent_name, agent_task)
                     result = {
                         "type": agent_name,
                         "success": bool(getattr(agent_result, "success", False)),
@@ -295,7 +298,9 @@ class AgentOrchestrator:
                         "error": getattr(agent_result, "error", None),
                     }
                 except Exception as e:
-                    logger.warning(f"AgentManager execution failed for {agent_name}: {e}", exc_info=True)
+                    logger.warning(
+                        f"AgentManager execution failed for {agent_name}: {e}", exc_info=True
+                    )
 
             results.append(
                 {

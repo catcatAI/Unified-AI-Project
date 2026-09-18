@@ -384,7 +384,9 @@ async def _learn_from_llm_output(
             content = await _read_file_content(f)
             engine.learn_from_interaction(content[:1000], llm_output[:1000], confidence=0.5)
     except Exception as e:
-        logger.warning("GARDEN learn_from_interaction failed in document_router: %s", e, exc_info=True)
+        logger.warning(
+            "GARDEN learn_from_interaction failed in document_router: %s", e, exc_info=True
+        )
 
 
 # ═══════════════════════════════════════════════

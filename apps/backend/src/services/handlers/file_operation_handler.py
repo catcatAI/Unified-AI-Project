@@ -42,7 +42,24 @@ def _looks_like_path(tok: str) -> bool:
     lower = tok.lower()
     if any(
         lower.startswith(k)
-        for k in ("read", "write", "create", "delete", "remove", "copy", "move", "rename", "list", "append", "open", "save", "文件", "檔案", "目錄", "內容")
+        for k in (
+            "read",
+            "write",
+            "create",
+            "delete",
+            "remove",
+            "copy",
+            "move",
+            "rename",
+            "list",
+            "append",
+            "open",
+            "save",
+            "文件",
+            "檔案",
+            "目錄",
+            "內容",
+        )
     ):
         return False
     return (
@@ -166,7 +183,7 @@ class FileOperationHandler:
             if sep in lower:
                 _, after = text.split(sep, 1)
                 if after.strip():
-                    content = after.strip().strip('"\'')
+                    content = after.strip().strip("\"'")
                 break
         if content is not None:
             params["content"] = content

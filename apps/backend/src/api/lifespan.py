@@ -693,9 +693,7 @@ def _try_start_proactive() -> None:
         asyncio.create_task(_proactive_instance.start())
         logger.info("[ProactiveInteractionSystem] Started with WebSocket broadcast")
     except Exception:
-        logger.warning(
-            "[Proactive] Init skipped — will not run proactively", exc_info=True
-        )
+        logger.warning("[Proactive] Init skipped — will not run proactively", exc_info=True)
 
 
 @asynccontextmanager

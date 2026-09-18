@@ -4,15 +4,14 @@
 """Tests for TemplateLearner: inverse matching + L0 placeholder + NL reconstruction."""
 
 import pytest
-
 from ai.garden.garden_engine import (
-    GARDENEngine,
     _TEMPLATES,
+    GARDENEngine,
     _learn_template,
     _output_matches,
     _reconstruct_with_template,
-    record_template_match,
     is_deterministic_match,
+    record_template_match,
 )
 
 
@@ -226,9 +225,7 @@ class TestSNNDictionarySeparation:
     def test_extract_template_pair(self):
         from ai.garden.garden_engine import _extract_template_pair
 
-        pair = _extract_template_pair(
-            "Alice is taller than Bob.", "Bob is shorter than Alice."
-        )
+        pair = _extract_template_pair("Alice is taller than Bob.", "Bob is shorter than Alice.")
         assert pair is not None
         in_tpl, out_tpl, in_vars, out_vars = pair
         assert in_tpl == "[] is taller than []"
@@ -239,9 +236,7 @@ class TestSNNDictionarySeparation:
     def test_extract_template_pair_punctuation_stripped(self):
         from ai.garden.garden_engine import _extract_template_pair
 
-        pair = _extract_template_pair(
-            "Alice won over Bob!", "Bob lost to Alice."
-        )
+        pair = _extract_template_pair("Alice won over Bob!", "Bob lost to Alice.")
         assert pair is not None
         in_tpl, out_tpl, in_vars, out_vars = pair
         # slot fillers come back punctuation-stripped so slot alignment works
@@ -359,12 +354,8 @@ class TestSNNDictionarySeparation:
             confidence=0.9,
         )
         assert len(engine._templates) <= 2
-        live = set(engine._templates) | {
-            v["out_tpl"] for v in engine._templates.values()
-        }
-        snn_tpl = [
-            k for k in engine.snn._idx_to_key if k.startswith("tpl:")
-        ]
+        live = set(engine._templates) | {v["out_tpl"] for v in engine._templates.values()}
+        snn_tpl = [k for k in engine.snn._idx_to_key if k.startswith("tpl:")]
         assert all(k[len("tpl:") :] in live for k in snn_tpl)
 
     def test_bracket_interval_structure_preserved(self, engine: GARDENEngine):

@@ -14,6 +14,7 @@ from ai.garden.kg_import import KGImporter
 # Phase 4.1: ChromaDB Encoder
 # ---------------------------------------------------------------------------
 
+
 class TestChromaEncoder:
     """Tests for _ChromaEncoder semantic encoding."""
 
@@ -72,6 +73,7 @@ class TestChromaEncoderFallback:
 # Phase 4.2: KG Import Integration
 # ---------------------------------------------------------------------------
 
+
 class TestKGImportIntegration:
     """Tests for KGImporter wiring to GARDENEngine."""
 
@@ -107,6 +109,7 @@ class TestKGImportIntegration:
 # ---------------------------------------------------------------------------
 # Phase 4.3: Multi-step Reasoning
 # ---------------------------------------------------------------------------
+
 
 class TestMultiStepReasoning:
     """Tests for multi-step query decomposition."""
@@ -144,6 +147,7 @@ class TestMultiStepReasoning:
 # ---------------------------------------------------------------------------
 # Phase 4.4: Emotion Detection + Hormonal Modulation
 # ---------------------------------------------------------------------------
+
 
 class TestEmotionDetection:
     """Tests for emotion detection and hormonal modulation."""
@@ -201,6 +205,7 @@ class TestEmotionDetection:
 # Phase 4.5: GARDEN Continuous Learning
 # ---------------------------------------------------------------------------
 
+
 class TestGARDENContinuousLearning:
     """Tests for GARDEN learn_from_interaction."""
 
@@ -237,6 +242,7 @@ class TestGARDENContinuousLearning:
 # ---------------------------------------------------------------------------
 # Phase 4.6: End-to-End Quality
 # ---------------------------------------------------------------------------
+
 
 class TestGARDENQuality:
     """Tests for GARDEN response quality."""

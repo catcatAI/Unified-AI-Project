@@ -83,8 +83,9 @@ class TestUnplug:
             status=ModuleStatus.RUNNING,
         )
         consumer = ModuleInstance(
-            descriptor=ModuleDescriptor(name="consumer", version="1.0.0",
-                                        depends_on=DependencySpec(required=["base"])),
+            descriptor=ModuleDescriptor(
+                name="consumer", version="1.0.0", depends_on=DependencySpec(required=["base"])
+            ),
             instance=object(),
             status=ModuleStatus.RUNNING,
         )
@@ -115,15 +116,18 @@ class TestHotplugRollback:
             mod_dir.mkdir()
             yaml_path = mod_dir / "module.yaml"
             with open(yaml_path, "w") as f:
-                yaml.dump({
-                    "name": "failmod",
-                    "version": "1.0.0",
-                    "kind": "service",
-                    "lifecycle": {
-                        "init": "tests.core.module_manager.test_manager._fake_init",
-                        "start": "tests.core.module_manager.test_manager._fake_start_fail",
+                yaml.dump(
+                    {
+                        "name": "failmod",
+                        "version": "1.0.0",
+                        "kind": "service",
+                        "lifecycle": {
+                            "init": "tests.core.module_manager.test_manager._fake_init",
+                            "start": "tests.core.module_manager.test_manager._fake_start_fail",
+                        },
                     },
-                }, f)
+                    f,
+                )
             m = ModuleManager(scan_paths=[Path("non_existent_path_for_testing")])
             await m.start()
             result = await m.hotplug(yaml_path)

@@ -30,9 +30,8 @@ from services.multimodal_service import MultimodalService
 def _sample_image_bytes(size: int = 256) -> bytes:
     """Generate a simple PNG-like image."""
     from PIL import Image
-    img = Image.fromarray(
-        np.random.randint(0, 255, (32, 32, 3), dtype=np.uint8)
-    )
+
+    img = Image.fromarray(np.random.randint(0, 255, (32, 32, 3), dtype=np.uint8))
     buf = io.BytesIO()
     img.save(buf, format="PNG")
     return buf.getvalue()
@@ -45,6 +44,7 @@ def _sample_audio_bytes(duration_ms: int = 500) -> bytes:
     samples = (np.random.randn(n_samples) * 0.3 * 32767).astype(np.int16)
     buf = io.BytesIO()
     import wave
+
     with wave.open(buf, "wb") as wf:
         wf.setnchannels(1)
         wf.setsampwidth(2)

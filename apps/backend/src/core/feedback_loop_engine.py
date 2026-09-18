@@ -23,28 +23,17 @@ Date: 2026-02-02
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from enum import Enum, auto
-from typing import Dict, List, Optional, Callable, Any, Set, Tuple, TYPE_CHECKING, Union, TypedDict
-from datetime import datetime, timedelta
 import asyncio
-import uuid
 import json
-import time
-from pathlib import Path
 import logging
-from core.system.config.magic_numbers import loop_sleep, timeout_value
+import time
+import uuid
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from enum import Enum, auto
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Set, Tuple, TypedDict, Union
 
-from dataclasses import dataclass, field
-from enum import Enum, auto
-from typing import Dict, List, Optional, Callable, Any, Set, Tuple, TYPE_CHECKING, Union, TypedDict
-from datetime import datetime, timedelta
-import asyncio
-import uuid
-import json
-import time
-from pathlib import Path
-import logging
 from core.system.config.magic_numbers import loop_sleep, timeout_value
 
 logger = logging.getLogger(__name__)
@@ -63,13 +52,13 @@ class PerformanceMetrics(TypedDict):
 
 if TYPE_CHECKING:
     from ..action_execution_bridge import ActionExecutionBridge
-    from .autonomous.desktop_presence import DesktopPresence
-    from .autonomous.desktop_interaction import DesktopInteraction
-    from .autonomous.audio_system import AudioSystem
     from .autonomous.action_executor import ActionExecutor
-    from .real_time_monitor import RealTimeMonitor
-    from .feedback_processor import FeedbackProcessor
+    from .autonomous.audio_system import AudioSystem
+    from .autonomous.desktop_interaction import DesktopInteraction
+    from .autonomous.desktop_presence import DesktopPresence
     from .event_loop_system import EventLoopSystem
+    from .feedback_processor import FeedbackProcessor
+    from .real_time_monitor import RealTimeMonitor
 
 
 class FeedbackLayer(Enum):
@@ -446,7 +435,9 @@ class FeedbackLoopEngine:
         for callback in self._cycle_start_callbacks:
             try:
                 callback(cycle)
-            except Exception as e:  # broad exception acceptable: cycle start callbacks should be resilient
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: cycle start callbacks should be resilient
                 logger.error(f"[FeedbackLoopEngine] Cycle start callback error: {e}", exc_info=True)
 
         # Trigger cognitive processing
@@ -474,7 +465,9 @@ class FeedbackLoopEngine:
         if self.hsm and hasattr(self.hsm, "get_relevant_context"):
             try:
                 context = await self.hsm.get_relevant_context(perception_event.data)
-            except Exception as e:  # broad exception acceptable: HSM context retrieval must be resilient
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: HSM context retrieval must be resilient
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
         # Use CDM for decision making if available
@@ -493,7 +486,9 @@ class FeedbackLoopEngine:
                     timestamp=datetime.now(),
                     expected_outcome=decision_data.get("expected_outcome"),
                 )
-            except Exception as e:  # broad exception acceptable: CDM decision generation must be resilient
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: CDM decision generation must be resilient
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
         # Fallback: simple rule-based decision
@@ -544,8 +539,12 @@ class FeedbackLoopEngine:
                     wait_for_completion=False,  # Non-blocking for real-time
                 )
                 return result.action_id if hasattr(result, "action_id") else str(uuid.uuid4())
-            except Exception as e:  # broad exception acceptable: action bridge execution must be resilient
-                logger.error(f"[FeedbackLoopEngine] Action bridge execution error: {e}", exc_info=True)
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: action bridge execution must be resilient
+                logger.error(
+                    f"[FeedbackLoopEngine] Action bridge execution error: {e}", exc_info=True
+                )
 
         # Fallback to action executor
         if self.action_executor and hasattr(self.action_executor, "handle_autonomous_action"):
@@ -554,7 +553,9 @@ class FeedbackLoopEngine:
                     action_type=decision.action_type, parameters=decision.parameters
                 )
                 return result.action_id if hasattr(result, "action_id") else str(uuid.uuid4())
-            except Exception as e:  # broad exception acceptable: action executor fallback must be resilient
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: action executor fallback must be resilient
                 logger.error(f"[FeedbackLoopEngine] Action executor error: {e}", exc_info=True)
 
         return None
@@ -658,7 +659,9 @@ class FeedbackLoopEngine:
         for callback in callbacks:
             try:
                 callback(signal)
-            except Exception as e:  # broad exception acceptable: feedback callbacks should be resilient
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: feedback callbacks should be resilient
                 logger.error(f"[FeedbackLoopEngine] Feedback callback error: {e}", exc_info=True)
 
     async def _update_active_cycles(self) -> None:
@@ -683,8 +686,12 @@ class FeedbackLoopEngine:
                 for callback in self._cycle_end_callbacks:
                     try:
                         callback(cycle)
-                    except Exception as e:  # broad exception acceptable: cycle end callbacks should be resilient
-                        logger.error(f"[FeedbackLoopEngine] Cycle end callback error: {e}", exc_info=True)
+                    except (
+                        Exception
+                    ) as e:  # broad exception acceptable: cycle end callbacks should be resilient
+                        logger.error(
+                            f"[FeedbackLoopEngine] Cycle end callback error: {e}", exc_info=True
+                        )
 
                 # Update metrics
                 self._update_performance_metrics(cycle)
@@ -738,7 +745,9 @@ class FeedbackLoopEngine:
                     }
                 )
                 learning_update.hsm_update = {"status": "updated"}
-            except Exception as e:  # broad exception acceptable: HSM update from feedback must be resilient
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: HSM update from feedback must be resilient
                 logger.error(f"[FeedbackLoopEngine] HSM update error: {e}", exc_info=True)
 
         # Update CDM if available
@@ -753,7 +762,9 @@ class FeedbackLoopEngine:
                     }
                 )
                 learning_update.cdm_update = {"status": "updated"}
-            except Exception as e:  # broad exception acceptable: CDM update from feedback must be resilient
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: CDM update from feedback must be resilient
                 logger.error(f"[FeedbackLoopEngine] CDM update error: {e}", exc_info=True)
 
         self.performance_metrics["learning_updates"] += 1
@@ -807,11 +818,15 @@ class FeedbackLoopEngine:
         await self._start_cycle(event)
         return list(self.active_cycles.keys())[-1] if self.active_cycles else ""
 
-    def register_cycle_start_callback(self, callback: Callable[[PerceptionActionCycle], None]) -> None:
+    def register_cycle_start_callback(
+        self, callback: Callable[[PerceptionActionCycle], None]
+    ) -> None:
         """Register callback for cycle start"""
         self._cycle_start_callbacks.append(callback)
 
-    def register_cycle_end_callback(self, callback: Callable[[PerceptionActionCycle], None]) -> None:
+    def register_cycle_end_callback(
+        self, callback: Callable[[PerceptionActionCycle], None]
+    ) -> None:
         """Register callback for cycle end"""
         self._cycle_end_callbacks.append(callback)
 
@@ -979,7 +994,9 @@ if __name__ == "__main__":
         logger.info(f"   Cycle ID: {cycle_id}")
 
         # Wait for cycle to complete
-        completed = await engine.wait_for_cycle(cycle_id, timeout=timeout_value("feedback_cycle_wait", 2.0))
+        completed = await engine.wait_for_cycle(
+            cycle_id, timeout=timeout_value("feedback_cycle_wait", 2.0)
+        )
         if completed:
             logger.info("   Cycle completed successfully")
 

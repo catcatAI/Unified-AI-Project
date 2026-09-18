@@ -37,7 +37,7 @@ class HSPSecurityManager:
             logger.warning(
                 "HSP_ENCRYPTION_KEY 不是合法的 Fernet key (32 url-safe base64 bytes)。"
                 "可能是未替换的 .env 占位符；已自动生成新密钥。"
-                "请用 `python -c \"from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())\"` 生成后写入 .env"
+                '请用 `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"` 生成后写入 .env'
             )
             self.encryption_key = None
         if not self.encryption_key:
@@ -104,9 +104,7 @@ class HSPSecurityManager:
 
         testing_mode = os.environ.get("TESTING_MODE") == "true"
         if testing_mode:
-            logger.warning(
-                "TESTING_MODE active: signatures will be verified with a test key"
-            )
+            logger.warning("TESTING_MODE active: signatures will be verified with a test key")
 
         try:
             # 解码签名
@@ -198,9 +196,7 @@ class HSPSecurityManager:
         # 注意：这仅用于测试目的, 在生产环境中应该严格要求认证令牌
         testing_mode = os.environ.get("TESTING_MODE") == "true"
         if testing_mode:
-            logger.warning(
-                "TESTING_MODE active: auth token will be verified with a test key"
-            )
+            logger.warning("TESTING_MODE active: auth token will be verified with a test key")
 
         logger.warning(f"发送者身份验证失败: {sender_id} - 无认证令牌")
         return False
@@ -259,9 +255,7 @@ class HSPSecurityContext:
             if signature and not self.security_manager.verify_signature(
                 message, signature, sender_id
             ):
-                logger.warning(
-                    f"消息签名验证失败: {message.get('message_id', 'unknown')}"
-                )
+                logger.warning(f"消息签名验证失败: {message.get('message_id', 'unknown')}")
                 return False, {"error": "Signature verification failed"}
 
             # 3. 解密消息(如果已加密)

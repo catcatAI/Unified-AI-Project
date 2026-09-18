@@ -23,17 +23,20 @@ class TestOpsRoutesImport:
     async def test_module_importable(self):
         """Module imports without error."""
         from api.routes import ops_routes
+
         assert ops_routes is not None
 
     async def test_router_exported(self):
         """Module exports a router with routes."""
         from api.routes.ops_routes import router
+
         assert router is not None
         assert len(router.routes) >= 4
 
     async def test_router_has_expected_paths(self):
         """Router has all expected endpoint paths."""
         from api.routes.ops_routes import router
+
         paths = {r.path for r in router.routes}
         expected = {"/ops/status", "/ops/health", "/ops/maintenance", "/ops/metrics"}
         for ep in expected:
@@ -42,6 +45,7 @@ class TestOpsRoutesImport:
     async def test_router_http_methods(self):
         """Verify HTTP methods on each route."""
         from api.routes.ops_routes import router
+
         route_map = {}
         for r in router.routes:
             methods = set(r.methods) if hasattr(r, "methods") else {"GET"}
@@ -55,6 +59,7 @@ class TestOpsRoutesImport:
     async def test_router_prefix(self):
         """Router has /ops prefix."""
         from api.routes.ops_routes import router
+
         assert router.prefix == "/ops"
         assert router.tags == ["Operations"]
 
@@ -66,6 +71,7 @@ class TestOpsHelpers:
     async def test_get_cpu_percent_with_psutil(self):
         """_get_cpu_percent returns value from psutil when available."""
         from api.routes.ops_routes import _get_cpu_percent
+
         mock_psutil = MagicMock()
         mock_psutil.cpu_percent.return_value = 42.5
         with patch.dict("sys.modules", {"psutil": mock_psutil}):
@@ -73,6 +79,7 @@ class TestOpsHelpers:
             import importlib
 
             from api.routes import ops_routes
+
             importlib.reload(ops_routes)
             result = ops_routes._get_cpu_percent()
             assert result == 42.5
@@ -80,10 +87,12 @@ class TestOpsHelpers:
     async def test_get_cpu_percent_without_psutil(self):
         """_get_cpu_percent returns 0.0 when psutil not available."""
         from api.routes.ops_routes import _get_cpu_percent
+
         with patch.dict("sys.modules", {"psutil": None}):
             import importlib
 
             from api.routes import ops_routes
+
             importlib.reload(ops_routes)
             result = ops_routes._get_cpu_percent()
             assert result == 0.0
@@ -91,6 +100,7 @@ class TestOpsHelpers:
     async def test_get_memory_percent_with_psutil(self):
         """_get_memory_percent returns value from psutil when available."""
         from api.routes.ops_routes import _get_memory_percent
+
         mock_psutil = MagicMock()
         mock_vmem = MagicMock()
         mock_vmem.percent = 65.3
@@ -99,6 +109,7 @@ class TestOpsHelpers:
             import importlib
 
             from api.routes import ops_routes
+
             importlib.reload(ops_routes)
             result = ops_routes._get_memory_percent()
             assert result == 65.3
@@ -106,10 +117,12 @@ class TestOpsHelpers:
     async def test_get_memory_percent_without_psutil(self):
         """_get_memory_percent returns 0.0 when psutil not available."""
         from api.routes.ops_routes import _get_memory_percent
+
         with patch.dict("sys.modules", {"psutil": None}):
             import importlib
 
             from api.routes import ops_routes
+
             importlib.reload(ops_routes)
             result = ops_routes._get_memory_percent()
             assert result == 0.0
@@ -117,6 +130,7 @@ class TestOpsHelpers:
     async def test_get_disk_percent_with_psutil(self):
         """_get_disk_percent returns value from psutil when available."""
         from api.routes.ops_routes import _get_disk_percent
+
         mock_psutil = MagicMock()
         mock_du = MagicMock()
         mock_du.percent = 78.1
@@ -125,6 +139,7 @@ class TestOpsHelpers:
             import importlib
 
             from api.routes import ops_routes
+
             importlib.reload(ops_routes)
             result = ops_routes._get_disk_percent()
             assert result == 78.1
@@ -136,10 +151,13 @@ class TestOpsHelpers:
 
         from api.routes import ops_routes
         from api.routes.ops_routes import _get_all_metrics
+
         importlib.reload(ops_routes)
         result = _get_all_metrics()
         expected_keys = {"cpu_percent", "memory_percent", "disk_percent"}
-        assert expected_keys.issubset(result.keys()), f"Missing keys: {expected_keys - result.keys()}"
+        assert expected_keys.issubset(
+            result.keys()
+        ), f"Missing keys: {expected_keys - result.keys()}"
         for key in expected_keys:
             assert isinstance(result[key], (int, float))
 
@@ -151,12 +169,14 @@ class TestOpsStatus:
     async def test_status_returns_dict(self):
         """GET /ops/status returns a dict."""
         from api.routes.ops_routes import get_ops_status
+
         result = await get_ops_status()
         assert isinstance(result, dict)
 
     async def test_status_has_expected_keys(self):
         """GET /ops/status has expected keys."""
         from api.routes.ops_routes import get_ops_status
+
         result = await get_ops_status()
         expected = {"status", "service", "timestamp", "metrics"}
         assert expected.issubset(result.keys()), f"Missing keys: {expected - result.keys()}"
@@ -172,14 +192,23 @@ class TestOpsHealth:
     async def test_health_returns_dict(self):
         """GET /ops/health returns a dict."""
         from api.routes.ops_routes import health_check
+
         result = await health_check()
         assert isinstance(result, dict)
 
     async def test_health_has_expected_keys(self):
         """GET /ops/health has expected keys."""
         from api.routes.ops_routes import health_check
+
         result = await health_check()
-        expected = {"status", "service", "timestamp", "cpu_percent", "memory_percent", "disk_percent"}
+        expected = {
+            "status",
+            "service",
+            "timestamp",
+            "cpu_percent",
+            "memory_percent",
+            "disk_percent",
+        }
         assert expected.issubset(result.keys()), f"Missing keys: {expected - result.keys()}"
         assert result["service"] == "ops"
 
@@ -188,25 +217,29 @@ class TestOpsHealth:
         from api.routes.ops_routes import health_check
 
         # Mock helpers to return low values
-        with patch("api.routes.ops_routes._get_cpu_percent", return_value=30.0), \
-             patch("api.routes.ops_routes._get_memory_percent", return_value=50.0), \
-             patch("api.routes.ops_routes._get_disk_percent", return_value=40.0):
+        with patch("api.routes.ops_routes._get_cpu_percent", return_value=30.0), patch(
+            "api.routes.ops_routes._get_memory_percent", return_value=50.0
+        ), patch("api.routes.ops_routes._get_disk_percent", return_value=40.0):
             result = await health_check()
             assert result["status"] == "healthy"
 
     async def test_health_degraded_when_high_cpu(self):
         """Health check returns 'degraded' when CPU > 80."""
         from api.routes.ops_routes import health_check
-        with patch("api.routes.ops_routes._get_cpu_percent", return_value=85.0), \
-             patch("api.routes.ops_routes._get_memory_percent", return_value=50.0):
+
+        with patch("api.routes.ops_routes._get_cpu_percent", return_value=85.0), patch(
+            "api.routes.ops_routes._get_memory_percent", return_value=50.0
+        ):
             result = await health_check()
             assert result["status"] == "degraded"
 
     async def test_health_degraded_when_high_memory(self):
         """Health check returns 'degraded' when memory > 90."""
         from api.routes.ops_routes import health_check
-        with patch("api.routes.ops_routes._get_cpu_percent", return_value=30.0), \
-             patch("api.routes.ops_routes._get_memory_percent", return_value=95.0):
+
+        with patch("api.routes.ops_routes._get_cpu_percent", return_value=30.0), patch(
+            "api.routes.ops_routes._get_memory_percent", return_value=95.0
+        ):
             result = await health_check()
             assert result["status"] == "degraded"
 
@@ -218,12 +251,14 @@ class TestOpsMaintenance:
     async def test_maintenance_returns_dict(self):
         """POST /ops/maintenance returns a dict."""
         from api.routes.ops_routes import trigger_maintenance
+
         result = await trigger_maintenance()
         assert isinstance(result, dict)
 
     async def test_maintenance_has_expected_keys(self):
         """POST /ops/maintenance has expected keys."""
         from api.routes.ops_routes import trigger_maintenance
+
         result = await trigger_maintenance()
         expected = {"status", "task", "timestamp"}
         assert expected.issubset(result.keys()), f"Missing keys: {expected - result.keys()}"
@@ -238,12 +273,14 @@ class TestOpsMetrics:
     async def test_metrics_returns_dict(self):
         """GET /ops/metrics returns a dict."""
         from api.routes.ops_routes import get_prometheus_metrics
+
         result = await get_prometheus_metrics()
         assert isinstance(result, dict)
 
     async def test_metrics_has_expected_keys(self):
         """GET /ops/metrics has expected keys."""
         from api.routes.ops_routes import get_prometheus_metrics
+
         result = await get_prometheus_metrics()
         expected = {"cpu_percent", "memory_percent", "disk_percent", "timestamp"}
         assert expected.issubset(result.keys()), f"Missing keys: {expected - result.keys()}"

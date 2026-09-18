@@ -36,7 +36,9 @@ from ai.data_eng.grow import (
 
 
 def _rand_word(min_len=4, max_len=10):
-    return "".join(random.choice(string.ascii_lowercase) for _ in range(random.randint(min_len, max_len)))
+    return "".join(
+        random.choice(string.ascii_lowercase) for _ in range(random.randint(min_len, max_len))
+    )
 
 
 class TestPrefixOverlap:

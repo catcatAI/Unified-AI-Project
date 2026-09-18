@@ -1,7 +1,7 @@
 """
- * =============================================================================
- * ANGELA-MATRIX: [L4-Test] [α-Test] [A-Validation] [L0-L3]
- * =============================================================================
+* =============================================================================
+* ANGELA-MATRIX: [L4-Test] [α-Test] [A-Validation] [L0-L3]
+* =============================================================================
 """
 
 import pytest
@@ -159,25 +159,28 @@ class TestSafeEvaluator:
 
     # --- Allowed functions ---
 
-    @pytest.mark.parametrize("expr,expected", [
-        ("abs(-5)", 5),
-        ("min(3,7)", 3),
-        ("max(3,7)", 7),
-        ("round(3.14159,2)", 3.14),
-        ("pow(2,3)", 8),
-        ("len([1,2,3])", 3),
-        ("sum([1,2,3])", 6),
-        ("sorted([3,1,2])", [1, 2, 3]),
-        ("any([False, True])", True),
-        ("all([True, True])", True),
-        ("int(3.7)", 3),
-        ("float(3)", 3.0),
-        ("str(42)", "42"),
-        ("bool(1)", True),
-        ("list((1,2))", [1, 2]),
-        ("tuple([1,2])", (1, 2)),
-        ("set([1,2,2])", {1, 2}),
-    ])
+    @pytest.mark.parametrize(
+        "expr,expected",
+        [
+            ("abs(-5)", 5),
+            ("min(3,7)", 3),
+            ("max(3,7)", 7),
+            ("round(3.14159,2)", 3.14),
+            ("pow(2,3)", 8),
+            ("len([1,2,3])", 3),
+            ("sum([1,2,3])", 6),
+            ("sorted([3,1,2])", [1, 2, 3]),
+            ("any([False, True])", True),
+            ("all([True, True])", True),
+            ("int(3.7)", 3),
+            ("float(3)", 3.0),
+            ("str(42)", "42"),
+            ("bool(1)", True),
+            ("list((1,2))", [1, 2]),
+            ("tuple([1,2])", (1, 2)),
+            ("set([1,2,2])", {1, 2}),
+        ],
+    )
     def test_allowed_functions(self, expr, expected):
         r = self.e.evaluate(expr)
         assert r.success is True, f"Failed: {expr}, error: {r.error}"
@@ -213,13 +216,16 @@ class TestSafeEvaluator:
 
     # --- Security: dangerous expressions ---
 
-    @pytest.mark.parametrize("expr", [
-        "__import__('os')",
-        "open('test.txt')",
-        "exec('print(1)')",
-        "eval('1+1')",
-        "().__class__",
-    ])
+    @pytest.mark.parametrize(
+        "expr",
+        [
+            "__import__('os')",
+            "open('test.txt')",
+            "exec('print(1)')",
+            "eval('1+1')",
+            "().__class__",
+        ],
+    )
     def test_rejected_dangerous(self, expr):
         r = self.e.evaluate(expr)
         assert r.success is False, f"Should have rejected: {expr}"

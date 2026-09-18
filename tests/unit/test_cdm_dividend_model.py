@@ -1,4 +1,5 @@
 """Smoke tests for core/cdm_dividend_model.py"""
+
 from core.cdm_dividend_model import CDMCognitiveDividendModel, CognitiveActivity
 
 

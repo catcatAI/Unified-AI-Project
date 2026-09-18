@@ -52,7 +52,11 @@ class OSBridgeAdapter:
         cmd = [self.python_exe, self.bridge_path, command] + list(args)
         try:
             result = subprocess.run(
-                cmd, capture_output=True, text=True, encoding="utf-8", timeout=timeout_value("os_bridge.execute", 10)
+                cmd,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                timeout=timeout_value("os_bridge.execute", 10),
             )
             if result.stdout:
                 return json.loads(result.stdout)

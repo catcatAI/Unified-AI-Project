@@ -1,4 +1,5 @@
 """Tests for GoogleDriveHandler — matches actual API"""
+
 import pytest
 
 
@@ -7,10 +8,12 @@ class TestGoogleDriveHandler:
 
     def test_import(self):
         from services.handlers.google_drive_handler import GoogleDriveHandler
+
         assert GoogleDriveHandler is not None
 
     def test_instantiation(self):
         from services.handlers.google_drive_handler import GoogleDriveHandler
+
         instance = GoogleDriveHandler()
         assert instance is not None
         assert instance.drive_service is None  # no underscore prefix
@@ -19,6 +22,7 @@ class TestGoogleDriveHandler:
         import asyncio
 
         from services.handlers.google_drive_handler import GoogleDriveHandler
+
         instance = GoogleDriveHandler()
         # handle() expects params as dict and returns dict, not string
         result = asyncio.run(instance.handle("google_drive_list", {"action": "list"}))
@@ -29,6 +33,7 @@ class TestGoogleDriveHandler:
         import asyncio
 
         from services.handlers.google_drive_handler import GoogleDriveHandler
+
         instance = GoogleDriveHandler()
         result = asyncio.run(instance.handle("google_drive_status", {"action": "status"}))
         assert isinstance(result, dict)

@@ -9,6 +9,7 @@ from ai.memory.vector_store import _NUMPY_EMBED_DIM, VectorMemoryStore, _NumpyBa
 # Numpy backend unit tests
 # =============================================================================
 
+
 class TestNumpyBackendEmbed:
     def test_embed_empty_string(self):
         vec = _NumpyBackend._embed("")
@@ -93,9 +94,9 @@ class TestNumpyBackendCRUD:
         Built-in hash() is salted per process via PYTHONHASHSEED, which made
         persisted vectors incompatible with query vectors after a restart.
         """
+        import os as _os
         import subprocess
         import sys as _sys
-        import os as _os
 
         code = (
             "import sys; sys.path.insert(0, 'apps/backend/src'); "
@@ -118,6 +119,7 @@ class TestNumpyBackendCRUD:
 # =============================================================================
 # VectorMemoryStore integration tests
 # =============================================================================
+
 
 @pytest.fixture
 def mock_chromadb():
@@ -243,7 +245,9 @@ class TestVectorMemoryStoreChromadbBackend:
             with tempfile.TemporaryDirectory() as tmpdir:
                 store = VectorMemoryStore(persist_directory=tmpdir)
                 await store.add_memory("mem1", "hello", {"k": "v"})
-                collection = mock_chromadb.PersistentClient.return_value.get_or_create_collection.return_value
+                collection = (
+                    mock_chromadb.PersistentClient.return_value.get_or_create_collection.return_value
+                )
                 collection.add.assert_called_once_with(
                     documents=["hello"], metadatas=[{"k": "v"}], ids=["mem1"]
                 )
@@ -253,7 +257,9 @@ class TestVectorMemoryStoreChromadbBackend:
         with patch("ai.memory.vector_store._lazy_chromadb", return_value=mock_chromadb):
             with tempfile.TemporaryDirectory() as tmpdir:
                 store = VectorMemoryStore(persist_directory=tmpdir)
-                collection = mock_chromadb.PersistentClient.return_value.get_or_create_collection.return_value
+                collection = (
+                    mock_chromadb.PersistentClient.return_value.get_or_create_collection.return_value
+                )
                 collection.query.return_value = {"ids": [["id1"]]}
                 results = await store.semantic_search("test", limit=5)
                 collection.query.assert_called_once_with(query_texts=["test"], n_results=5)

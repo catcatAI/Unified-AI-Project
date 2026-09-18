@@ -19,7 +19,16 @@ from apps.backend.src.core.config.system_config import (
 class TestGetSystemConfig:
     def test_returns_all_sections(self):
         config = get_system_config()
-        for section in ("environment", "debug", "host", "port", "ai_ops", "hsp", "memory", "training"):
+        for section in (
+            "environment",
+            "debug",
+            "host",
+            "port",
+            "ai_ops",
+            "hsp",
+            "memory",
+            "training",
+        ):
             assert section in config
 
     @patch.dict("os.environ", {"LOG_LEVEL": "INFO"}, clear=True)

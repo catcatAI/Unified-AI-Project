@@ -3,7 +3,6 @@ Tests for cognitive_operations.py — StateMatrix4D spatial reasoning functions
 """
 
 import pytest
-
 from core.engine.cognitive_operations import (
     CognitiveOp,
     apply_intent_gravity,
@@ -176,5 +175,9 @@ def test_apply_inter_dimensional_drag():
     assert dims["a"].coordinate == (10.0, 0.0, 0.0), "trigger dim shouldn't move"
     # Real implementation uses Huber-like potential: force = drag_factor * huber_delta = 0.1 * 0.5 = 0.05
     expected_displacement = 0.05
-    assert abs(dims["b"].coordinate[0] - expected_displacement) < 1e-6, f"b should be dragged: {dims['b'].coordinate}"
-    assert abs(dims["c"].coordinate[0] - expected_displacement) < 1e-6, f"c should be dragged: {dims['c'].coordinate}"
+    assert (
+        abs(dims["b"].coordinate[0] - expected_displacement) < 1e-6
+    ), f"b should be dragged: {dims['b'].coordinate}"
+    assert (
+        abs(dims["c"].coordinate[0] - expected_displacement) < 1e-6
+    ), f"c should be dragged: {dims['c'].coordinate}"

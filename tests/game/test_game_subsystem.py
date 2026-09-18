@@ -7,8 +7,8 @@ from apps.backend.src.game.engine import NPC_LINES
 from apps.backend.src.game.token_effects import (
     TokenEffect,
     apply_token_hp,
-    apply_token_spirit,
     apply_token_skill_bonus,
+    apply_token_spirit,
     compute_token_effects,
     get_combat_dice_bonus,
     get_damage_resistance,
@@ -18,9 +18,7 @@ from apps.backend.src.game.token_effects import (
 
 class TestTokenEffects:
     def test_compute_combat_effect(self):
-        effects = compute_token_effects(
-            [{"category": "combat", "name": "斬擊", "strength": 1.0}]
-        )
+        effects = compute_token_effects([{"category": "combat", "name": "斬擊", "strength": 1.0}])
         assert len(effects) == 1
         assert effects[0].dice_bonus == 10
         assert effects[0].special == "combat_attack"
@@ -50,9 +48,7 @@ class TestTokenEffects:
         assert spirit <= max_spirit
 
     def test_get_combat_dice_bonus(self):
-        bonus = get_combat_dice_bonus(
-            [{"category": "combat", "name": "斬擊", "strength": 1.0}]
-        )
+        bonus = get_combat_dice_bonus([{"category": "combat", "name": "斬擊", "strength": 1.0}])
         assert bonus > 0
 
 

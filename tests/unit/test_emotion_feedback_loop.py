@@ -55,8 +55,10 @@ class TestProcessInteractionFeedback:
         # High engagement should increase valence (joy)
         assert last.valence > 0.3, f"Expected valence > 0.3, got {last.valence}"
         # Emotion should be positive (JOY or TRUST)
-        assert last.primary_emotion.value in ("joy", "trust"), \
-            f"Expected joy/trust, got {last.primary_emotion.value}"
+        assert last.primary_emotion.value in (
+            "joy",
+            "trust",
+        ), f"Expected joy/trust, got {last.primary_emotion.value}"
 
     def test_low_engagement_causes_stress_or_sadness(self, emotion_system):
         """Low engagement (<0.5) should shift emotion toward stress/sadness."""
@@ -121,8 +123,9 @@ class TestProcessInteractionFeedback:
         after_low = es.emotion_history[-1]
 
         # The valence should change (either decrease or stay same - not increase)
-        assert after_low.valence <= initial_valence, \
-            f"Expected no valence increase from {initial_valence}, got {after_low.valence}"
+        assert (
+            after_low.valence <= initial_valence
+        ), f"Expected no valence increase from {initial_valence}, got {after_low.valence}"
 
     def test_consecutive_good_feedback_builds_positive_momentum(self, emotion_system):
         """Multiple consecutive high-engagement interactions should accumulate positive emotion."""
@@ -134,16 +137,17 @@ class TestProcessInteractionFeedback:
         # After 3 good interactions, valence should be clearly positive
         assert last.valence > 0.3, f"Expected strong positive valence, got {last.valence}"
         # Emotion should be clearly positive
-        assert last.primary_emotion.value in ("joy", "trust", "surprise"), \
-            f"Expected positive emotion, got {last.primary_emotion.value}"
+        assert last.primary_emotion.value in (
+            "joy",
+            "trust",
+            "surprise",
+        ), f"Expected positive emotion, got {last.primary_emotion.value}"
 
     def test_consecutive_bad_feedback_builds_negative_momentum(self, emotion_system):
         """Multiple consecutive error interactions should accumulate negative emotion."""
         es = emotion_system
         for _ in range(3):
-            es.process_interaction_feedback(
-                engagement_ratio=0.1, had_error=True
-            )
+            es.process_interaction_feedback(engagement_ratio=0.1, had_error=True)
 
         last = es.emotion_history[-1]
         # After 3 bad interactions, valence should be lower than initial
@@ -171,14 +175,14 @@ class TestProcessInteractionFeedback:
         es.process_interaction_feedback(engagement_ratio=0.3, had_error=False)
 
         last = es.emotion_history[-1]
-        assert -1.0 <= last.valence <= 1.0, \
-            f"Valence {last.valence} out of range"
-        assert 0.0 <= last.arousal <= 1.0, \
-            f"Arousal {last.arousal} out of range"
-        assert 0.0 <= last.emotion_intensity <= 1.0, \
-            f"Intensity {last.emotion_intensity} out of range"
-        assert isinstance(last.primary_emotion, EmotionType), \
-            f"Invalid emotion type: {last.primary_emotion}"
+        assert -1.0 <= last.valence <= 1.0, f"Valence {last.valence} out of range"
+        assert 0.0 <= last.arousal <= 1.0, f"Arousal {last.arousal} out of range"
+        assert (
+            0.0 <= last.emotion_intensity <= 1.0
+        ), f"Intensity {last.emotion_intensity} out of range"
+        assert isinstance(
+            last.primary_emotion, EmotionType
+        ), f"Invalid emotion type: {last.primary_emotion}"
 
     def test_sustained_low_engagement_resets_counter_on_recovery(self, emotion_system):
         """After 2 low-engagement interactions, one good interaction resets the counter."""
@@ -186,8 +190,9 @@ class TestProcessInteractionFeedback:
         for _ in range(2):
             es.process_interaction_feedback(engagement_ratio=0.1, had_error=False)
         es.process_interaction_feedback(engagement_ratio=3.0, had_error=False)
-        assert es._sustained_negative_counter == 0, \
-            "Counter should reset after positive interaction"
+        assert (
+            es._sustained_negative_counter == 0
+        ), "Counter should reset after positive interaction"
 
 
 class TestSustainedNegativeRouting:
@@ -206,8 +211,9 @@ class TestSustainedNegativeRouting:
         for _ in range(3):
             self.es.process_interaction_feedback(engagement_ratio=3.0, had_error=False)
         # After 3 good, should be exploratory
-        assert self._get_routing_mode() == "exploratory", \
-            f"Expected exploratory after good feedback, got {self._get_routing_mode()}"
+        assert (
+            self._get_routing_mode() == "exploratory"
+        ), f"Expected exploratory after good feedback, got {self._get_routing_mode()}"
 
         self.es.process_interaction_feedback(engagement_ratio=0.1, had_error=False)
         # After 1 bad, should still be the same (no flip yet)
@@ -219,24 +225,23 @@ class TestSustainedNegativeRouting:
             self.es.process_interaction_feedback(engagement_ratio=0.1, had_error=False)
         # After 5 low, counter >= 3 means cumulative fatigue should have flipped
         mode = self._get_routing_mode()
-        assert mode == "conservative", \
-            f"Expected conservative after 5 low engagements, got {mode}"
+        assert mode == "conservative", f"Expected conservative after 5 low engagements, got {mode}"
 
     def test_three_errors_in_row_flips_routing(self):
         """Three consecutive errors should flip routing_mode."""
         for _ in range(5):
             self.es.process_interaction_feedback(engagement_ratio=1.0, had_error=True)
         mode = self._get_routing_mode()
-        assert mode == "conservative", \
-            f"Expected conservative after 5 errors, got {mode}"
+        assert mode == "conservative", f"Expected conservative after 5 errors, got {mode}"
 
     def test_sustained_negative_counter_tracks_accurately(self):
         """The counter should track sustained negative interactions."""
         assert self.es._sustained_negative_counter == 0
         for _ in range(4):
             self.es.process_interaction_feedback(engagement_ratio=0.1, had_error=False)
-        assert self.es._sustained_negative_counter == 4, \
-            f"Expected counter=4, got {self.es._sustained_negative_counter}"
+        assert (
+            self.es._sustained_negative_counter == 4
+        ), f"Expected counter=4, got {self.es._sustained_negative_counter}"
 
     def test_recovery_after_sustained_negative(self):
         """After sustained negative, recovery should reset counter and restore routing."""
@@ -255,5 +260,4 @@ class TestSustainedNegativeRouting:
         for _ in range(count):
             emotion_system.process_interaction_feedback(engagement_ratio=0.1, had_error=False)
         mode = emotion_system.get_behavioral_adjustment().get("routing_mode", "neutral")
-        assert mode == "conservative", \
-            f"Expected conservative after {count} low, got {mode}"
+        assert mode == "conservative", f"Expected conservative after {count} low, got {mode}"

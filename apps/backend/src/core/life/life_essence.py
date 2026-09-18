@@ -78,7 +78,9 @@ class TendencyWeights:
         )
 
     @classmethod
-    def inherited(cls, parent_weights: TendencyWeights, inheritance_rate: float = 0.3) -> TendencyWeights:
+    def inherited(
+        cls, parent_weights: TendencyWeights, inheritance_rate: float = 0.3
+    ) -> TendencyWeights:
         """從上一個世代繼承傾向。
 
         新的世代不是複製父母的傾向，而是：
@@ -375,7 +377,7 @@ class LifeEssence:
             delta = base_delta * 0.5
 
         # 高信心度的決策留下更深的痕跡
-        delta *= (0.5 + confidence * 0.5)
+        delta *= 0.5 + confidence * 0.5
 
         return dimension, delta
 
@@ -437,9 +439,7 @@ class LifeEssence:
             return False
 
         # 檢查是否有任何維度已穩定
-        has_stable_dimension = any(
-            sigma < 0.15 for sigma in self._tendencies.sigma.values()
-        )
+        has_stable_dimension = any(sigma < 0.15 for sigma in self._tendencies.sigma.values())
 
         return has_stable_dimension and len(self._traces) >= self._max_traces_before_bloom * 0.5
 
@@ -482,7 +482,7 @@ class LifeEssence:
         # 注意：_traces 不清除！舊痕跡保留為祖先記憶
         # 但為了節省空間，如果痕跡過多可以截斷
         if len(self._traces) > self._max_traces_before_bloom * 2:
-            self._traces = self._traces[-self._max_traces_before_bloom:]
+            self._traces = self._traces[-self._max_traces_before_bloom :]
 
         logger.info(
             f"[LifeEssence] 🌸 Generation {self._generation} bloomed! "
@@ -496,9 +496,7 @@ class LifeEssence:
                 "new_generation": self._generation,
                 "ancestral_cores": len(self._ancestral_cores),
                 "preserved_traces": len(self._traces),
-                "inherited_tendencies": {
-                    d.name: round(v, 3) for d, v in inherited.mu.items()
-                },
+                "inherited_tendencies": {d.name: round(v, 3) for d, v in inherited.mu.items()},
             },
         )
 
@@ -521,13 +519,15 @@ class LifeEssence:
 
         moments = []
         for trace in sorted_traces[:count]:
-            moments.append({
-                "trace_type": trace.trace_type,
-                "dimension": trace.dimension.name,
-                "delta_mu": round(trace.delta_mu, 4),
-                "context": trace.context,
-                "timestamp": trace.timestamp,
-            })
+            moments.append(
+                {
+                    "trace_type": trace.trace_type,
+                    "dimension": trace.dimension.name,
+                    "delta_mu": round(trace.delta_mu, 4),
+                    "context": trace.context,
+                    "timestamp": trace.timestamp,
+                }
+            )
 
         return moments
 
@@ -541,10 +541,7 @@ class LifeEssence:
 
     def get_all_blended_tendencies(self) -> Dict[str, float]:
         """取得所有維度的混合傾向值。"""
-        return {
-            d.name: round(self._tendencies.get_blended(d), 4)
-            for d in EssenceDimension
-        }
+        return {d.name: round(self._tendencies.get_blended(d), 4) for d in EssenceDimension}
 
     def get_tendency_details(self) -> Dict[str, Dict[str, float]]:
         """取得所有維度的詳細傾向資訊（μ 和 σ）。"""
@@ -564,24 +561,28 @@ class LifeEssence:
         """
         wisdom = []
         for i, core in enumerate(self._ancestral_cores):
-            wisdom.append({
-                "generation": core.generation,
-                "total_traces": core.total_traces,
-                "final_tendencies": {
-                    d.name: round(core.final_tendencies.mu.get(d, 0), 4)
-                    for d in EssenceDimension
-                },
-                "crystallization_moments": core.crystallization_moments[:3],
-                "lifecycle_summary": core.lifecycle_summary,
-            })
+            wisdom.append(
+                {
+                    "generation": core.generation,
+                    "total_traces": core.total_traces,
+                    "final_tendencies": {
+                        d.name: round(core.final_tendencies.mu.get(d, 0), 4)
+                        for d in EssenceDimension
+                    },
+                    "crystallization_moments": core.crystallization_moments[:3],
+                    "lifecycle_summary": core.lifecycle_summary,
+                }
+            )
 
         # 加上當前世代
-        wisdom.append({
-            "generation": self._generation,
-            "is_current": True,
-            "total_traces": len(self._traces),
-            "current_tendencies": self.get_all_blended_tendencies(),
-        })
+        wisdom.append(
+            {
+                "generation": self._generation,
+                "is_current": True,
+                "total_traces": len(self._traces),
+                "current_tendencies": self.get_all_blended_tendencies(),
+            }
+        )
 
         return wisdom
 
@@ -707,7 +708,9 @@ class LifeEssence:
                 core_sigma = {}
                 for d in EssenceDimension:
                     core_mu[d] = final_tendencies_data.get("mu", {}).get(d.name, _DEFAULT_MU)
-                    core_sigma[d] = final_tendencies_data.get("sigma", {}).get(d.name, _DEFAULT_SIGMA)
+                    core_sigma[d] = final_tendencies_data.get("sigma", {}).get(
+                        d.name, _DEFAULT_SIGMA
+                    )
 
                 self._ancestral_cores.append(
                     AncestralCore(

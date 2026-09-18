@@ -115,7 +115,9 @@ async def execute_hook(hook_name: str, data: Dict[str, Any] = Body(default={})) 
         results = await pm.execute_hook(hook_name, data)
         return {
             "hook": hook_name,
-            "results": [{"handler": r.handler_name, "success": r.success, "data": r.data} for r in results],
+            "results": [
+                {"handler": r.handler_name, "success": r.success, "data": r.data} for r in results
+            ],
             "count": len(results),
         }
     except Exception as e:

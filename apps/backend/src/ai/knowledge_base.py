@@ -388,7 +388,9 @@ def route_knowledge(text: str) -> Optional[str]:
             if (
                 _answer_fallback is None
                 and "answer" in attrs
-                and any(k in t for k in ("who", "what", "when", "where", "which", "how", "誰", "什麼"))
+                and any(
+                    k in t for k in ("who", "what", "when", "where", "which", "how", "誰", "什麼")
+                )
             ):
                 _answer_fallback = attrs["answer"]
             # prim covers only legacy attrs; author/capital/ended/answer have
@@ -411,7 +413,10 @@ def route_knowledge(text: str) -> Optional[str]:
         return _answer_fallback
 
     # 6) unit conversion: "how many m in a km", "convert 5 km to m"
-    m = re.search(r"(?:convert|how many|how much)\s+(-?\d+(?:\.\d+)?)?\s*(\w+)\s+(?:to|in a|in|per)\s+(\w+)", t)
+    m = re.search(
+        r"(?:convert|how many|how much)\s+(-?\d+(?:\.\d+)?)?\s*(\w+)\s+(?:to|in a|in|per)\s+(\w+)",
+        t,
+    )
     if m:
         value_str, src_unit, dst_unit = m.group(1), m.group(2), m.group(3)
         conv = _UNIT_CONVERSIONS.get((src_unit, dst_unit))

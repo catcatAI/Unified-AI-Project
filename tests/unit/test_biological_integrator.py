@@ -1,4 +1,5 @@
 """Tests for BiologicalIntegrator — stress/relaxation methods (production dependency via §X #80)."""
+
 import sys
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -30,6 +31,7 @@ def _mock_heavy_modules():
 def _reset_singleton():
     """Reset BiologicalIntegrator singleton between tests."""
     import core.bio.biological_integrator as bi_mod
+
     bi_mod.BiologicalIntegrator._instance = None
     bi_mod.BiologicalIntegrator._initialized = False
     yield
@@ -51,9 +53,7 @@ def mock_subsystems():
     for m in mocks:
         m.return_value = MagicMock()
 
-    yield dict(zip(
-        ["tactile", "endocrine", "nervous", "neuroplasticity", "emotional"], mocks
-    ))
+    yield dict(zip(["tactile", "endocrine", "nervous", "neuroplasticity", "emotional"], mocks))
 
     for p in patches:
         p.stop()
@@ -63,6 +63,7 @@ def mock_subsystems():
 def integrator(mock_subsystems):
     """Create a BiologicalIntegrator with mocked subsystems."""
     import core.bio.biological_integrator as bi
+
     inst = bi.BiologicalIntegrator()
     inst.tactile_system = mock_subsystems["tactile"].return_value
     inst.endocrine_system = mock_subsystems["endocrine"].return_value
@@ -80,21 +81,28 @@ class TestBiologicalEventPublisher:
 
     @pytest.fixture
     def publisher(self):
-        from core.bio.biological_integrator import BiologicalEventPublisher, BiologicalEvent
+        from core.bio.biological_integrator import BiologicalEvent, BiologicalEventPublisher
+
         return BiologicalEventPublisher(), BiologicalEvent
 
     def test_subscribe_and_publish(self, publisher):
         pub, BioEvent = publisher
         callback = MagicMock()
         pub.subscribe(BioEvent.STRESS_CHANGED.value, callback)
-        assert pub.get_subscribers_count(BioEvent.STRESS_CHANGED.value)[BioEvent.STRESS_CHANGED.value] == 1
+        assert (
+            pub.get_subscribers_count(BioEvent.STRESS_CHANGED.value)[BioEvent.STRESS_CHANGED.value]
+            == 1
+        )
 
     def test_unsubscribe(self, publisher):
         pub, BioEvent = publisher
         callback = MagicMock()
         pub.subscribe(BioEvent.STRESS_CHANGED.value, callback)
         pub.unsubscribe(BioEvent.STRESS_CHANGED.value, callback)
-        assert pub.get_subscribers_count(BioEvent.STRESS_CHANGED.value)[BioEvent.STRESS_CHANGED.value] == 0
+        assert (
+            pub.get_subscribers_count(BioEvent.STRESS_CHANGED.value)[BioEvent.STRESS_CHANGED.value]
+            == 0
+        )
 
     @pytest.mark.asyncio
     async def test_publish_calls_callback(self, publisher):
@@ -131,6 +139,7 @@ class TestBiologicalIntegratorInit:
 
     def test_singleton(self, mock_subsystems):
         from core.bio.biological_integrator import BiologicalIntegrator
+
         a = BiologicalIntegrator()
         b = BiologicalIntegrator()
         assert a is b
@@ -230,9 +239,7 @@ class TestGetBiologicalState:
         )
         integrator.nervous_system.arousal_level = 35
         integrator.endocrine_system.stress_level = 0.2
-        integrator.endocrine_system.get_hormone_summary = MagicMock(
-            return_value={"cortisol": 0.15}
-        )
+        integrator.endocrine_system.get_hormone_summary = MagicMock(return_value={"cortisol": 0.15})
 
         state = integrator.get_biological_state()
         assert isinstance(state, dict)

@@ -62,9 +62,9 @@ def select_anchored_keys(
     snn_sorted = sorted(snn_candidates, key=lambda k: snn_only[k], reverse=True)
 
     # Anchors = top input keys by confidence.
-    anchor_keys = sorted(
-        input_keys.keys(), key=lambda k: input_keys[k], reverse=True
-    )[:anchor_slots]
+    anchor_keys = sorted(input_keys.keys(), key=lambda k: input_keys[k], reverse=True)[
+        :anchor_slots
+    ]
 
     seen: set = set(anchor_keys)
     combined: List[str] = list(anchor_keys)

@@ -75,9 +75,8 @@ class TestLLMConfigRoutes:
         assert "true/false" in res["error"]
 
     async def test_post_valid_writes_user_yaml(self, tmp_path, monkeypatch):
-        import yaml
-
         import core.system.config.tiered_loader as tl
+        import yaml
         from api.routes.llm_routes import llm_config_set
 
         sys_dir = tmp_path / "system"
@@ -142,9 +141,8 @@ class TestWriteUserConfig:
         assert ok is False
 
     async def test_merge_roundtrip(self, tmp_path, monkeypatch):
-        import yaml
-
         import core.system.config.tiered_loader as tl
+        import yaml
 
         sys_dir = tmp_path / "system"
         sys_dir.mkdir()

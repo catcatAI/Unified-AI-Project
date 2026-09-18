@@ -56,7 +56,9 @@ class TestSharedProbe:
             if cmd[0] in ("nvidia-smi", "rocm-smi"):
                 raise FileNotFoundError(cmd[0])
             if cmd[0] == "lspci":
-                out = "03:00.0 VGA compatible controller [0300]: Intel Corporation Device [8086:e20c]"
+                out = (
+                    "03:00.0 VGA compatible controller [0300]: Intel Corporation Device [8086:e20c]"
+                )
                 return subprocess.CompletedProcess(cmd, 0, out, "")
             if cmd[0] == "glxinfo":
                 out = "OpenGL renderer string: Mesa Intel(R) Arc(tm) B570 Graphics (BMG G21)\nVideo memory: 10172MB\n"

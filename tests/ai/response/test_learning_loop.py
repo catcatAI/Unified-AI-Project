@@ -1,4 +1,5 @@
 """Tests for ai.response.learning_loop"""
+
 import pytest
 
 

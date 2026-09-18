@@ -353,6 +353,7 @@ class MemoryIntegrationLoop:
         # 提取基本信息
         words = content.split()
         import re as _re
+
         sentences = _re.split(r"(?<=[。！？.!?\n])\s*", content)
 
         return {

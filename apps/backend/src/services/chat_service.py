@@ -199,11 +199,11 @@ class ChatService:
             logger.warning("CulturalContextModule init skipped: %s", e, exc_info=True)
         # Initialize KnowledgePipeline for pre-LLM local data lookup (§X #268)
         try:
+            from ai.memory.grounded_knowledge import GroundedKnowledgeStore
             from ai.meta.knowledge_pipeline import KnowledgePipeline
+            from ai.reasoning.planning_engine import PlanningEngine
             from services.math_verifier import MathVerifier
             from services.weather_service import WeatherService
-            from ai.memory.grounded_knowledge import GroundedKnowledgeStore
-            from ai.reasoning.planning_engine import PlanningEngine
 
             self._knowledge_pipeline = KnowledgePipeline(
                 math_verifier=MathVerifier(),
@@ -219,8 +219,11 @@ class ChatService:
         # Warm up ED3N dictionary (loads 460k entries) in background
         try:
             from ai.ed3n.ed3n_engine import ED3NEngine
+
             if _os.environ.get("ANGELA_LEGACY_ED3N") == "1":
-                self._spawn_background_task(asyncio.to_thread(lambda: ED3NEngine.get_shared(load_trained=True).warm_up()))
+                self._spawn_background_task(
+                    asyncio.to_thread(lambda: ED3NEngine.get_shared(load_trained=True).warm_up())
+                )
             logger.info("ED3N dictionary warm-up scheduled (460k entries)")
         except Exception as e:
             logger.debug("ED3N warm-up skipped: %s", e)
@@ -544,7 +547,9 @@ class ChatService:
         except Exception as e:
             logger.warning("Continuous learning interaction failed: %s", e)
 
-    async def _process_garden_learning(self, user_message: str, response, context: dict = None) -> None:
+    async def _process_garden_learning(
+        self, user_message: str, response, context: dict = None
+    ) -> None:
         if not self._garden_engine:
             return
         try:

@@ -8,13 +8,12 @@ reasoning (transitive / syllogism / calendar / quantity / mass-trick).
 """
 
 import pytest
-
 from ai.symbolic_reasoner import route_reasoning
-
 
 # ---------------------------------------------------------------------------
 # Transitive (taller-than chains)
 # ---------------------------------------------------------------------------
+
 
 def test_transitive_tallest():
     out = route_reasoning("A is taller than B. B is taller than C. Who is the tallest?")
@@ -32,27 +31,22 @@ def test_transitive_shortest():
 # Syllogism (universal premise + membership)
 # ---------------------------------------------------------------------------
 
+
 def test_syllogism_affirmative():
-    out = route_reasoning(
-        "All mammals are animals. A dog is a mammal. Is a dog an animal?"
-    )
+    out = route_reasoning("All mammals are animals. A dog is a mammal. Is a dog an animal?")
     assert out is not None
     assert "yes" in out.lower()
 
 
 def test_syllogism_negative():
-    out = route_reasoning(
-        "No birds can swim. A penguin is a bird. Can a penguin swim?"
-    )
+    out = route_reasoning("No birds can swim. A penguin is a bird. Can a penguin swim?")
     assert out is not None
     assert "no" in out.lower()
 
 
 def test_syllogism_plural_singular_membership():
     # Category given in plural ("birds") but membership in singular ("bird").
-    out = route_reasoning(
-        "All birds can fly. A sparrow is a bird. Can a sparrow fly?"
-    )
+    out = route_reasoning("All birds can fly. A sparrow is a bird. Can a sparrow fly?")
     assert out is not None
     assert "yes" in out.lower()
 
@@ -61,11 +55,15 @@ def test_syllogism_plural_singular_membership():
 # Calendar
 # ---------------------------------------------------------------------------
 
-@pytest.mark.parametrize("today,expected", [
-    ("Monday", "Tuesday"),
-    ("Friday", "Saturday"),
-    ("Sunday", "Monday"),
-])
+
+@pytest.mark.parametrize(
+    "today,expected",
+    [
+        ("Monday", "Tuesday"),
+        ("Friday", "Saturday"),
+        ("Sunday", "Monday"),
+    ],
+)
 def test_calendar_tomorrow(today, expected):
     out = route_reasoning(f"If today is {today}, what day is tomorrow?")
     assert out is not None
@@ -76,10 +74,9 @@ def test_calendar_tomorrow(today, expected):
 # Quantity (word-problem subtraction)
 # ---------------------------------------------------------------------------
 
+
 def test_quantity_subtraction():
-    out = route_reasoning(
-        "John has 3 apples. He gives 1 away. How many left?"
-    )
+    out = route_reasoning("John has 3 apples. He gives 1 away. How many left?")
     assert out is not None
     assert "2" in out
 
@@ -87,6 +84,7 @@ def test_quantity_subtraction():
 # ---------------------------------------------------------------------------
 # Mass trick
 # ---------------------------------------------------------------------------
+
 
 def test_mass_trick_english():
     out = route_reasoning("Which is heavier: 1kg of feathers or 1kg of steel?")
@@ -103,6 +101,7 @@ def test_mass_trick_chinese():
 # ---------------------------------------------------------------------------
 # Two-object linear pair (chicken-rabbit cage)
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.parametrize(
     "question, a, b",
@@ -138,7 +137,11 @@ def test_chicken_rabbit_small_case():
         # nickels/quarters with decimal dollar total: 17 coins, $2.05 -> 11 nickels (55) + 6 quarters (150)
         ("I have 17 coins worth $2.05, all nickels and quarters. How many of each?", 11, 6),
         # motorcycles/cars: 30 vehicles, 100 wheels -> 10 motorcycles (20) + 20 cars (80)
-        ("A parking lot has motorcycles and cars, 30 vehicles and 100 wheels. How many of each?", 10, 20),
+        (
+            "A parking lot has motorcycles and cars, 30 vehicles and 100 wheels. How many of each?",
+            10,
+            20,
+        ),
     ],
 )
 def test_word_problem_extended_kinds(question, a, b):
@@ -156,7 +159,9 @@ def test_word_problem_coin_chinese():
 
 def test_word_problem_rejects_unsolvable():
     # No clean integer solution -> fall through (None).
-    out = route_reasoning("I have 25 coins worth $4.10, all nickels and quarters. How many of each?")
+    out = route_reasoning(
+        "I have 25 coins worth $4.10, all nickels and quarters. How many of each?"
+    )
     assert out is None
 
 
@@ -179,6 +184,7 @@ def test_word_problem_three_entities_falls_through():
 # ---------------------------------------------------------------------------
 # Out-of-scope (should fall through -> None)
 # ---------------------------------------------------------------------------
+
 
 def test_out_of_scope_returns_none():
     assert route_reasoning("What is the meaning of life?") is None

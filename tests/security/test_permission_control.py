@@ -1,10 +1,10 @@
 import pytest
 from security.permission_control import (
-    PermissionControlSystem,
     PermissionContext,
+    PermissionControlSystem,
+    PermissionLevel,
     PermissionRule,
     PermissionType,
-    PermissionLevel,
 )
 
 

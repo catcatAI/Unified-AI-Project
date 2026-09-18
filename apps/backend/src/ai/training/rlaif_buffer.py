@@ -30,7 +30,7 @@ class PreferencePair:
     """DPO 偏好對: win 比 lose 更符合結構/語義."""
 
     prompt: str
-    win_vec: np.ndarray   # [263] winning primitive vector
+    win_vec: np.ndarray  # [263] winning primitive vector
     lose_vec: np.ndarray  # [263]
     score_win: float
     score_lose: float
@@ -76,7 +76,11 @@ class RLAIFBuffer:
             prompt, vec = self._queue.popleft()
             try:
                 if scorer is not None:
-                    score = float(await scorer(prompt, vec) if asyncio.iscoroutinefunction(scorer) else scorer(prompt, vec))
+                    score = float(
+                        await scorer(prompt, vec)
+                        if asyncio.iscoroutinefunction(scorer)
+                        else scorer(prompt, vec)
+                    )
                 else:
                     # Heuristic: vector 的非零密度與範圍作為結構分
                     nz = float(np.count_nonzero(vec)) / max(len(vec), 1)
@@ -94,7 +98,15 @@ class RLAIFBuffer:
                 continue
             win, lose = (p1, v1, s1, p2, v2, s2) if s1 > s2 else (p2, v2, s2, p1, v1, s1)
             # win prompt is arbitrary; use winning prompt
-            self._pairs.append(PreferencePair(prompt=win[0], win_vec=win[1], lose_vec=lose[1], score_win=win[2], score_lose=lose[2]))
+            self._pairs.append(
+                PreferencePair(
+                    prompt=win[0],
+                    win_vec=win[1],
+                    lose_vec=lose[1],
+                    score_win=win[2],
+                    score_lose=lose[2],
+                )
+            )
         return len(scored)
 
     def dpo_loss(self, beta: float = 0.1) -> Optional[Dict[str, float]]:
@@ -121,4 +133,9 @@ class RLAIFBuffer:
         self._pairs.clear()
 
     def stats(self) -> Dict[str, Any]:
-        return {"queued": len(self._queue), "pairs": len(self._pairs), "enabled": self.enabled, "step": self._step}
+        return {
+            "queued": len(self._queue),
+            "pairs": len(self._pairs),
+            "enabled": self.enabled,
+            "step": self._step,
+        }

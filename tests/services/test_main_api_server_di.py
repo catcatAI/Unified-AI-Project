@@ -31,20 +31,23 @@ class TestMainApiServerDependencies:
     def test_get_desktop_interaction_returns_instance(self):
         """Calling get_desktop_interaction returns an object."""
         from api.lifespan import get_desktop_interaction
+
         instance = get_desktop_interaction()
-        assert type(instance).__name__ == 'DesktopInteraction'
+        assert type(instance).__name__ == "DesktopInteraction"
 
     def test_get_action_executor_returns_instance(self):
         """Calling get_action_executor returns an object."""
         from api.lifespan import get_action_executor
+
         instance = get_action_executor()
-        assert type(instance).__name__ == 'ActionExecutor'
+        assert type(instance).__name__ == "ActionExecutor"
 
     def test_get_digital_life_returns_instance(self):
         """Calling get_digital_life returns an object."""
         from api.lifespan import get_digital_life
+
         instance = get_digital_life()
-        assert type(instance).__name__ == 'DigitalLifeIntegrator'
+        assert type(instance).__name__ == "DigitalLifeIntegrator"
 
     def test_depends_in_route_signatures(self):
         """The router endpoints that use Depends() reference the factory functions."""

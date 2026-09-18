@@ -33,7 +33,6 @@ import random
 import string
 
 import pytest
-
 from ai.garden.garden_engine import GARDENEngine, is_deterministic_match
 
 _DATASET = os.path.join(
@@ -94,9 +93,7 @@ class TestDailyDataLearnable:
         engine = GARDENEngine(compatibility_mode=True)
         before = len(engine.dictionary.entries)
 
-        result = engine.learn_batch(
-            samples=sample, confidence=0.7, train_associations=True
-        )
+        result = engine.learn_batch(samples=sample, confidence=0.7, train_associations=True)
 
         # Absorption: no sample skipped as deterministic, dictionary grew.
         assert result["samples_processed"] == len(sample)
@@ -107,9 +104,7 @@ class TestDailyDataLearnable:
         # Non-degenerate retrieval: at least one learned input returns a
         # response sharing an expected output token.
         recovered = sum(
-            1
-            for it in sample
-            if _tokens(it["output"]) & _tokens(engine.process(it["input"]))
+            1 for it in sample if _tokens(it["output"]) & _tokens(engine.process(it["input"]))
         )
         assert recovered >= 1
 
@@ -180,9 +175,7 @@ class TestLearnedRecallIndex:
         vocab = [f"c{i}" for i in range(2000)]
         for _ in range(300):
             cs = frozenset(rng.sample(vocab, 6))
-            engine._record_learned(
-                {k: 0.7 for k in cs}, {k: 0.5 for k in rng.sample(vocab, 5)}
-            )
+            engine._record_learned({k: 0.7 for k in cs}, {k: 0.5 for k in rng.sample(vocab, 5)})
         assert len(engine._learned_recall) == 40
         assert len(engine._learned_order) == 40
         assert engine._learned_next_id == 300

@@ -1,7 +1,6 @@
 """Tests for PriorityNegotiator — weighted fusion of routing preferences."""
 
 import pytest
-
 from ai.meta.priority_negotiator import (
     PriorityNegotiator,
     VoterVote,
@@ -55,6 +54,7 @@ class TestPriorityNegotiator:
     def test_single_voter(self):
         def vote(ctx):
             return VoterVote(routing_mode="exploratory", response_style="curious", confidence=0.9)
+
         self.negotiator.register_voter("test", vote)
         result = self.negotiator.resolve({})
         assert result["routing_mode"] == "exploratory"
@@ -63,8 +63,10 @@ class TestPriorityNegotiator:
     def test_weighted_plurality(self):
         def v1(ctx):
             return VoterVote(routing_mode="conservative", confidence=0.9)
+
         def v2(ctx):
             return VoterVote(routing_mode="exploratory", confidence=0.5)
+
         self.negotiator.register_voter("v1", v1)
         self.negotiator.register_voter("v2", v2)
         result = self.negotiator.resolve({})
@@ -73,8 +75,10 @@ class TestPriorityNegotiator:
     def test_weight_fn_scales_confidence(self):
         def low_conf(ctx):
             return VoterVote(routing_mode="exploratory", confidence=0.9)
+
         def high_conf(ctx):
             return VoterVote(routing_mode="conservative", confidence=0.3)
+
         self.negotiator.register_voter("v1", low_conf, weight_fn=lambda ctx: 0.1)
         self.negotiator.register_voter("v2", high_conf, weight_fn=lambda ctx: 1.0)
         result = self.negotiator.resolve({})
@@ -84,6 +88,7 @@ class TestPriorityNegotiator:
     def test_abstain_returns_none(self):
         def always_none(ctx):
             return None
+
         self.negotiator.register_voter("abstainer", always_none)
         result = self.negotiator.resolve({})
         assert result["routing_mode"] is None
@@ -92,8 +97,10 @@ class TestPriorityNegotiator:
     def test_voter_error_does_not_crash(self):
         def broken(ctx):
             raise RuntimeError("voter crashed")
+
         def good(ctx):
             return VoterVote(routing_mode="neutral", confidence=1.0)
+
         self.negotiator.register_voter("broken", broken)
         self.negotiator.register_voter("good", good)
         result = self.negotiator.resolve({})
@@ -102,8 +109,10 @@ class TestPriorityNegotiator:
     def test_temperature_bias_weighted_average(self):
         def v1(ctx):
             return VoterVote(temperature_bias=-0.2, confidence=0.8)
+
         def v2(ctx):
             return VoterVote(temperature_bias=0.1, confidence=0.2)
+
         self.negotiator.register_voter("v1", v1)
         self.negotiator.register_voter("v2", v2)
         result = self.negotiator.resolve({})
@@ -113,8 +122,10 @@ class TestPriorityNegotiator:
     def test_tokens_bias_weighted_average(self):
         def v1(ctx):
             return VoterVote(tokens_bias=-50, confidence=0.9)
+
         def v2(ctx):
             return VoterVote(tokens_bias=100, confidence=0.1)
+
         self.negotiator.register_voter("v1", v1)
         self.negotiator.register_voter("v2", v2)
         result = self.negotiator.resolve({})
@@ -124,6 +135,7 @@ class TestPriorityNegotiator:
     def test_unregister_voter(self):
         def v(ctx):
             return VoterVote(routing_mode="test", confidence=1.0)
+
         self.negotiator.register_voter("v", v)
         assert self.negotiator.unregister_voter("v") is True
         assert self.negotiator.unregister_voter("nonexistent") is False
@@ -133,8 +145,10 @@ class TestPriorityNegotiator:
     def test_voter_contributions_in_result(self):
         def v1(ctx):
             return VoterVote(routing_mode="a", confidence=0.7)
+
         def v2(ctx):
             return VoterVote(routing_mode="b", confidence=0.3)
+
         self.negotiator.register_voter("v1", v1)
         self.negotiator.register_voter("v2", v2)
         result = self.negotiator.resolve({})
@@ -145,8 +159,10 @@ class TestPriorityNegotiator:
     def test_resolved_by_highest_contribution(self):
         def low(ctx):
             return VoterVote(routing_mode="a", confidence=0.2)
+
         def high(ctx):
             return VoterVote(routing_mode="b", confidence=0.9)
+
         self.negotiator.register_voter("low", low)
         self.negotiator.register_voter("high", high)
         result = self.negotiator.resolve({})
@@ -157,7 +173,13 @@ class TestDefaultVoterFunctions:
     """Test the default voter functions provided by priority_negotiator."""
 
     def test_lifecycle_voter_present(self):
-        ctx = {"lifecycle_behavior": {"routing_mode": "conservative", "response_style": "cautious", "confidence": 0.7}}
+        ctx = {
+            "lifecycle_behavior": {
+                "routing_mode": "conservative",
+                "response_style": "cautious",
+                "confidence": 0.7,
+            }
+        }
         vote = lifecycle_voter(ctx)
         assert vote is not None
         assert vote.routing_mode == "conservative"
@@ -177,7 +199,13 @@ class TestDefaultVoterFunctions:
         assert emotional_voter({}) is None
 
     def test_intent_voter_present(self):
-        ctx = {"intent_routing": {"routing_mode": "empathetic", "response_style": "warm", "intent_strength": 0.6}}
+        ctx = {
+            "intent_routing": {
+                "routing_mode": "empathetic",
+                "response_style": "warm",
+                "intent_strength": 0.6,
+            }
+        }
         vote = intent_voter(ctx)
         assert vote.routing_mode == "empathetic"
         assert vote.response_style == "warm"
@@ -187,7 +215,13 @@ class TestDefaultVoterFunctions:
         assert intent_voter({}) is None
 
     def test_angela_emotion_voter_present(self):
-        ctx = {"angela_emotion": {"routing_mode": "conservative", "response_style": "soothing", "emotion_intensity": 0.9}}
+        ctx = {
+            "angela_emotion": {
+                "routing_mode": "conservative",
+                "response_style": "soothing",
+                "emotion_intensity": 0.9,
+            }
+        }
         vote = angela_emotion_voter(ctx)
         assert vote.routing_mode == "conservative"
         assert vote.response_style == "soothing"
@@ -197,7 +231,13 @@ class TestDefaultVoterFunctions:
         assert angela_emotion_voter({}) is None
 
     def test_causal_voter_above_threshold(self):
-        ctx = {"causal_routing": {"temperature_bias": -0.15, "max_tokens_bias": -50, "causal_confidence": 0.8}}
+        ctx = {
+            "causal_routing": {
+                "temperature_bias": -0.15,
+                "max_tokens_bias": -50,
+                "causal_confidence": 0.8,
+            }
+        }
         vote = causal_voter(ctx)
         assert vote is not None
         assert vote.temperature_bias == -0.15
@@ -221,11 +261,27 @@ class TestDefaultVoterFunctions:
         negotiator.register_voter("causal", causal_voter, weight_fn=lambda ctx: 0.5)
 
         ctx = {
-            "lifecycle_behavior": {"routing_mode": "neutral", "response_style": "thoughtful", "confidence": 0.6},
+            "lifecycle_behavior": {
+                "routing_mode": "neutral",
+                "response_style": "thoughtful",
+                "confidence": 0.6,
+            },
             "emotional_behavior": {"routing_mode": "exploratory", "confidence": 0.5},
-            "intent_routing": {"routing_mode": "empathetic", "response_style": "warm", "intent_strength": 0.4},
-            "angela_emotion": {"routing_mode": "conservative", "response_style": "calming", "emotion_intensity": 0.7},
-            "causal_routing": {"temperature_bias": -0.1, "max_tokens_bias": -50, "causal_confidence": 0.6},
+            "intent_routing": {
+                "routing_mode": "empathetic",
+                "response_style": "warm",
+                "intent_strength": 0.4,
+            },
+            "angela_emotion": {
+                "routing_mode": "conservative",
+                "response_style": "calming",
+                "emotion_intensity": 0.7,
+            },
+            "causal_routing": {
+                "temperature_bias": -0.1,
+                "max_tokens_bias": -50,
+                "causal_confidence": 0.6,
+            },
         }
 
         result = negotiator.resolve(ctx)
@@ -277,8 +333,9 @@ class TestMetaCalibrationVoter:
 
     def test_adjustment_integrated_in_negotiator_resolve(self):
         negotiator = PriorityNegotiator()
-        negotiator.register_voter("meta_calibration", meta_calibration_voter,
-                                  weight_fn=lambda ctx: 0.4)
+        negotiator.register_voter(
+            "meta_calibration", meta_calibration_voter, weight_fn=lambda ctx: 0.4
+        )
 
         ctx = {"meta_calibration": {"weighted_adjustment": 0.05}}
         result = negotiator.resolve(ctx)

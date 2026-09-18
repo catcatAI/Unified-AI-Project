@@ -1,11 +1,11 @@
 """Tests for AutonomousLifeCycle — formula-driven life decisions with config-driven feedback."""
+
 import json
 import os
 import tempfile
 from datetime import datetime
 
 import pytest
-
 from core.autonomous.behavior_executor import BehaviorExecutor
 from core.life.autonomous_life_cycle import AutonomousLifeCycle, FormulaMetrics, LifePhase
 from core.system.config.magic_numbers import lifecycle_value
@@ -15,10 +15,19 @@ from core.system.config.magic_numbers import lifecycle_value
 def metrics():
     return FormulaMetrics(
         timestamp=datetime.now(),
-        hsm_value=0.3, c_gap=0.2, cdm_conversion_rate=0.7,
-        life_intensity=0.6, c_inf=0.8, c_limit=1.0, m_f=0.4,
-        a_c=0.5, s_stress=0.3, o_order=0.4, cognitive_gap=0.3,
-        coexistence_active=False, resonance_total=0.5,
+        hsm_value=0.3,
+        c_gap=0.2,
+        cdm_conversion_rate=0.7,
+        life_intensity=0.6,
+        c_inf=0.8,
+        c_limit=1.0,
+        m_f=0.4,
+        a_c=0.5,
+        s_stress=0.3,
+        o_order=0.4,
+        cognitive_gap=0.3,
+        coexistence_active=False,
+        resonance_total=0.5,
     )
 
 
@@ -196,13 +205,21 @@ class TestLifecycleBehavioralAdjustment:
         alc = AutonomousLifeCycle()
         # Simulate a recent exploration decision
         from datetime import datetime
+
         from core.life.autonomous_life_cycle import LifeDecision
-        alc.decision_history.append(LifeDecision(
-            decision_id="test_1", timestamp=datetime.now(),
-            phase=LifePhase.EXPLORATION, triggered_by="HSM",
-            decision_type="exploration", rationale="test",
-            expected_outcome={}, confidence=0.8,
-        ))
+
+        alc.decision_history.append(
+            LifeDecision(
+                decision_id="test_1",
+                timestamp=datetime.now(),
+                phase=LifePhase.EXPLORATION,
+                triggered_by="HSM",
+                decision_type="exploration",
+                rationale="test",
+                expected_outcome={},
+                confidence=0.8,
+            )
+        )
         adj = alc.get_behavioral_adjustment()
         assert adj["response_style"] == "adventurous"
         assert adj["decision_type"] == "exploration"
@@ -211,13 +228,21 @@ class TestLifecycleBehavioralAdjustment:
         """Recent coexistence decision → empathetic style."""
         alc = AutonomousLifeCycle()
         from datetime import datetime
+
         from core.life.autonomous_life_cycle import LifeDecision
-        alc.decision_history.append(LifeDecision(
-            decision_id="test_2", timestamp=datetime.now(),
-            phase=LifePhase.COEXISTENCE, triggered_by="NonParadox",
-            decision_type="coexistence_activation", rationale="test",
-            expected_outcome={}, confidence=0.7,
-        ))
+
+        alc.decision_history.append(
+            LifeDecision(
+                decision_id="test_2",
+                timestamp=datetime.now(),
+                phase=LifePhase.COEXISTENCE,
+                triggered_by="NonParadox",
+                decision_type="coexistence_activation",
+                rationale="test",
+                expected_outcome={},
+                confidence=0.7,
+            )
+        )
         adj = alc.get_behavioral_adjustment()
         assert adj["response_style"] == "empathetic"
 
@@ -225,13 +250,21 @@ class TestLifecycleBehavioralAdjustment:
         """Recent meaning_construction decision → contemplative style."""
         alc = AutonomousLifeCycle()
         from datetime import datetime
+
         from core.life.autonomous_life_cycle import LifeDecision
-        alc.decision_history.append(LifeDecision(
-            decision_id="test_3", timestamp=datetime.now(),
-            phase=LifePhase.CONSOLIDATION, triggered_by="ActiveCognition",
-            decision_type="meaning_construction", rationale="test",
-            expected_outcome={}, confidence=0.9,
-        ))
+
+        alc.decision_history.append(
+            LifeDecision(
+                decision_id="test_3",
+                timestamp=datetime.now(),
+                phase=LifePhase.CONSOLIDATION,
+                triggered_by="ActiveCognition",
+                decision_type="meaning_construction",
+                rationale="test",
+                expected_outcome={},
+                confidence=0.9,
+            )
+        )
         adj = alc.get_behavioral_adjustment()
         assert adj["response_style"] == "contemplative"
 
@@ -239,13 +272,21 @@ class TestLifecycleBehavioralAdjustment:
         """Recent resource_reallocation decision → focused style."""
         alc = AutonomousLifeCycle()
         from datetime import datetime
+
         from core.life.autonomous_life_cycle import LifeDecision
-        alc.decision_history.append(LifeDecision(
-            decision_id="test_4", timestamp=datetime.now(),
-            phase=LifePhase.TRANSCENDENCE, triggered_by="CDM",
-            decision_type="resource_reallocation", rationale="test",
-            expected_outcome={}, confidence=0.6,
-        ))
+
+        alc.decision_history.append(
+            LifeDecision(
+                decision_id="test_4",
+                timestamp=datetime.now(),
+                phase=LifePhase.TRANSCENDENCE,
+                triggered_by="CDM",
+                decision_type="resource_reallocation",
+                rationale="test",
+                expected_outcome={},
+                confidence=0.6,
+            )
+        )
         adj = alc.get_behavioral_adjustment()
         assert adj["response_style"] == "focused"
 
@@ -253,14 +294,27 @@ class TestLifecycleBehavioralAdjustment:
         """Confidence reflects life_intensity and a_c from recent metrics."""
         alc = AutonomousLifeCycle()
         from datetime import datetime
+
         from core.life.autonomous_life_cycle import FormulaMetrics
-        alc.metrics_history.append(FormulaMetrics(
-            timestamp=datetime.now(),
-            hsm_value=0.8, c_gap=0.5, cdm_conversion_rate=0.9,
-            life_intensity=0.9, c_inf=0.9, c_limit=1.0, m_f=0.7,
-            a_c=1.2, s_stress=0.2, o_order=0.6, cognitive_gap=0.3,
-            coexistence_active=False, resonance_total=0.8,
-        ))
+
+        alc.metrics_history.append(
+            FormulaMetrics(
+                timestamp=datetime.now(),
+                hsm_value=0.8,
+                c_gap=0.5,
+                cdm_conversion_rate=0.9,
+                life_intensity=0.9,
+                c_inf=0.9,
+                c_limit=1.0,
+                m_f=0.7,
+                a_c=1.2,
+                s_stress=0.2,
+                o_order=0.6,
+                cognitive_gap=0.3,
+                coexistence_active=False,
+                resonance_total=0.8,
+            )
+        )
         alc.current_phase = LifePhase.TRANSCENDENCE
         adj = alc.get_behavioral_adjustment()
         # life_intensity=0.9, a_c=1.2/1.5=0.8, avg=0.85
@@ -271,13 +325,21 @@ class TestLifecycleBehavioralAdjustment:
         alc = AutonomousLifeCycle()
         alc.current_phase = LifePhase.EXPLORATION
         from datetime import datetime
+
         from core.life.autonomous_life_cycle import LifeDecision
-        alc.decision_history.append(LifeDecision(
-            decision_id="test_5", timestamp=datetime.now(),
-            phase=LifePhase.EXPLORATION, triggered_by="HSM",
-            decision_type="exploration", rationale="test",
-            expected_outcome={}, confidence=0.9,
-        ))
+
+        alc.decision_history.append(
+            LifeDecision(
+                decision_id="test_5",
+                timestamp=datetime.now(),
+                phase=LifePhase.EXPLORATION,
+                triggered_by="HSM",
+                decision_type="exploration",
+                rationale="test",
+                expected_outcome={},
+                confidence=0.9,
+            )
+        )
         adj = alc.get_behavioral_adjustment()
         # EXPLORATION + exploration decision = exploratory + adventurous
         assert adj["routing_mode"] == "exploratory"
@@ -301,13 +363,21 @@ class TestLifecyclePersistence:
         alc._behavior_executor._type_fail = {"exploration": 1, "coexistence_activation": 0}
         # Seed decision history
         from datetime import datetime
+
         from core.life.autonomous_life_cycle import LifeDecision
-        alc.decision_history.append(LifeDecision(
-            decision_id="d1", timestamp=datetime.now(),
-            phase=LifePhase.EXPLORATION, triggered_by="HSM",
-            decision_type="exploration", rationale="gap detected",
-            expected_outcome={}, confidence=0.8,
-        ))
+
+        alc.decision_history.append(
+            LifeDecision(
+                decision_id="d1",
+                timestamp=datetime.now(),
+                phase=LifePhase.EXPLORATION,
+                triggered_by="HSM",
+                decision_type="exploration",
+                rationale="gap detected",
+                expected_outcome={},
+                confidence=0.8,
+            )
+        )
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             path = f.name
         try:
@@ -336,15 +406,18 @@ class TestLifecyclePersistence:
     def test_auto_load_on_init(self):
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             path = f.name
-            json.dump({
-                "explorations_triggered": 3,
-                "coexistence_activated": 1,
-                "decisions_made": 4,
-                "executions_succeeded": 3,
-                "executions_failed": 1,
-                "behavior_executor_type_stats": {"exploration": {"success": 3, "fail": 1}},
-                "recent_decisions": [],
-            }, f)
+            json.dump(
+                {
+                    "explorations_triggered": 3,
+                    "coexistence_activated": 1,
+                    "decisions_made": 4,
+                    "executions_succeeded": 3,
+                    "executions_failed": 1,
+                    "behavior_executor_type_stats": {"exploration": {"success": 3, "fail": 1}},
+                    "recent_decisions": [],
+                },
+                f,
+            )
         try:
             alc = AutonomousLifeCycle(persist_path=path)
             assert alc.decisions_made == 4
@@ -364,14 +437,22 @@ class TestLifecyclePersistence:
     def test_decision_history_limited_to_100(self):
         alc = AutonomousLifeCycle(persist_path=None)
         from datetime import datetime
+
         from core.life.autonomous_life_cycle import LifeDecision
+
         for i in range(110):
-            alc.decision_history.append(LifeDecision(
-                decision_id=f"d{i}", timestamp=datetime.now(),
-                phase=LifePhase.EMERGENCE, triggered_by="test",
-                decision_type="exploration", rationale=str(i),
-                expected_outcome={}, confidence=0.5,
-            ))
+            alc.decision_history.append(
+                LifeDecision(
+                    decision_id=f"d{i}",
+                    timestamp=datetime.now(),
+                    phase=LifePhase.EMERGENCE,
+                    triggered_by="test",
+                    decision_type="exploration",
+                    rationale=str(i),
+                    expected_outcome={},
+                    confidence=0.5,
+                )
+            )
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             path = f.name
         try:
@@ -386,15 +467,18 @@ class TestLifecyclePersistence:
         """Verify that loaded type stats affect per-type feedback in _evaluate_and_decide."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             path = f.name
-            json.dump({
-                "explorations_triggered": 0,
-                "coexistence_activated": 0,
-                "decisions_made": 0,
-                "executions_succeeded": 1,
-                "executions_failed": 5,
-                "behavior_executor_type_stats": {"exploration": {"success": 1, "fail": 5}},
-                "recent_decisions": [],
-            }, f)
+            json.dump(
+                {
+                    "explorations_triggered": 0,
+                    "coexistence_activated": 0,
+                    "decisions_made": 0,
+                    "executions_succeeded": 1,
+                    "executions_failed": 5,
+                    "behavior_executor_type_stats": {"exploration": {"success": 1, "fail": 5}},
+                    "recent_decisions": [],
+                },
+                f,
+            )
         try:
             alc = AutonomousLifeCycle(persist_path=path)
             # Verify type stats are loaded

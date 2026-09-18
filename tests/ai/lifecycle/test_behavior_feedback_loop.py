@@ -32,6 +32,7 @@ def mock_learning_engine():
 @pytest.fixture
 def feedback_loop(mock_llm_service, mock_memory_manager, mock_learning_engine):
     from ai.lifecycle.behavior_feedback_loop import BehaviorFeedbackLoop
+
     return BehaviorFeedbackLoop(
         llm_service=mock_llm_service,
         memory_manager=mock_memory_manager,
@@ -45,54 +46,57 @@ class TestBehaviorRecord:
 
     def test_record_creation(self):
         from ai.lifecycle.behavior_feedback_loop import BehaviorRecord
+
         now = datetime.now()
         record = BehaviorRecord(
-            action='greet',
-            message='Hello!',
-            priority='high',
+            action="greet",
+            message="Hello!",
+            priority="high",
             timestamp=now,
-            user_response='Hi there',
-            user_emotion='happy',
+            user_response="Hi there",
+            user_emotion="happy",
         )
-        assert record.action == 'greet'
-        assert record.message == 'Hello!'
-        assert record.priority == 'high'
-        assert record.user_response == 'Hi there'
-        assert record.user_emotion == 'happy'
+        assert record.action == "greet"
+        assert record.message == "Hello!"
+        assert record.priority == "high"
+        assert record.user_response == "Hi there"
+        assert record.user_emotion == "happy"
         assert record.effectiveness_score == 0.0
-        assert record.outcome == 'unknown'
+        assert record.outcome == "unknown"
 
     def test_record_to_dict(self):
         from ai.lifecycle.behavior_feedback_loop import BehaviorRecord
+
         now = datetime.now()
         record = BehaviorRecord(
-            action='comfort',
-            message='Feel better',
-            priority='high',
+            action="comfort",
+            message="Feel better",
+            priority="high",
             timestamp=now,
-            user_response='Thanks',
-            user_emotion='neutral',
+            user_response="Thanks",
+            user_emotion="neutral",
             effectiveness_score=0.7,
-            outcome='success',
+            outcome="success",
         )
         result = record.to_dict()
-        assert result['action'] == 'comfort'
-        assert result['effectiveness_score'] == 0.7
-        assert result['outcome'] == 'success'
-        assert result['user_response'] == 'Thanks'
+        assert result["action"] == "comfort"
+        assert result["effectiveness_score"] == 0.7
+        assert result["outcome"] == "success"
+        assert result["user_response"] == "Thanks"
 
     def test_record_defaults(self):
         from ai.lifecycle.behavior_feedback_loop import BehaviorRecord
+
         record = BehaviorRecord(
-            action='greet',
-            message='Hi',
-            priority='low',
+            action="greet",
+            message="Hi",
+            priority="low",
             timestamp=datetime.now(),
         )
         assert record.user_response is None
         assert record.user_emotion is None
         assert record.effectiveness_score == 0.0
-        assert record.outcome == 'unknown'
+        assert record.outcome == "unknown"
 
 
 class TestBehaviorPattern:
@@ -100,35 +104,37 @@ class TestBehaviorPattern:
 
     def test_pattern_creation(self):
         from ai.lifecycle.behavior_feedback_loop import BehaviorPattern
+
         now = datetime.now()
         pattern = BehaviorPattern(
-            action='greet',
-            context='default',
+            action="greet",
+            context="default",
             success_rate=0.8,
             avg_effectiveness=0.75,
             count=10,
             last_updated=now,
         )
-        assert pattern.action == 'greet'
+        assert pattern.action == "greet"
         assert pattern.success_rate == 0.8
         assert pattern.avg_effectiveness == 0.75
         assert pattern.count == 10
 
     def test_pattern_to_dict(self):
         from ai.lifecycle.behavior_feedback_loop import BehaviorPattern
+
         now = datetime.now()
         pattern = BehaviorPattern(
-            action='comfort',
-            context='default',
+            action="comfort",
+            context="default",
             success_rate=0.5,
             avg_effectiveness=0.6,
             count=5,
             last_updated=now,
         )
         result = pattern.to_dict()
-        assert result['action'] == 'comfort'
-        assert result['success_rate'] == 0.5
-        assert result['count'] == 5
+        assert result["action"] == "comfort"
+        assert result["success_rate"] == 0.5
+        assert result["count"] == 5
 
 
 class TestBehaviorFeedbackLoopInit:
@@ -139,11 +145,14 @@ class TestBehaviorFeedbackLoopInit:
         assert feedback_loop.loop_interval == 30.0
         assert feedback_loop.behavior_records == []
         assert feedback_loop.behavior_patterns == {}
-        assert feedback_loop.stats['total_behaviors'] == 0
-        assert feedback_loop.stats['evaluated_behaviors'] == 0
+        assert feedback_loop.stats["total_behaviors"] == 0
+        assert feedback_loop.stats["evaluated_behaviors"] == 0
 
-    def test_init_with_custom_values(self, mock_llm_service, mock_memory_manager, mock_learning_engine):
+    def test_init_with_custom_values(
+        self, mock_llm_service, mock_memory_manager, mock_learning_engine
+    ):
         from ai.lifecycle.behavior_feedback_loop import BehaviorFeedbackLoop
+
         loop = BehaviorFeedbackLoop(
             llm_service=mock_llm_service,
             memory_manager=mock_memory_manager,
@@ -158,23 +167,26 @@ class TestBehaviorFeedbackLoopInit:
 
     def test_strategy_parameters_defaults(self, feedback_loop):
         params = feedback_loop.strategy_parameters
-        assert params['greet_threshold'] == 60.0
-        assert params['comfort_sensitivity'] == 0.7
-        assert params['interaction_frequency'] == 0.5
-        assert params['priority_weight']['high'] == 1.0
-        assert params['priority_weight']['medium'] == 0.7
-        assert params['priority_weight']['low'] == 0.4
+        assert params["greet_threshold"] == 60.0
+        assert params["comfort_sensitivity"] == 0.7
+        assert params["interaction_frequency"] == 0.5
+        assert params["priority_weight"]["high"] == 1.0
+        assert params["priority_weight"]["medium"] == 0.7
+        assert params["priority_weight"]["low"] == 0.4
+
     async def test_start_stop(self, feedback_loop):
         await feedback_loop.start()
         assert feedback_loop.is_running
         assert feedback_loop._feedback_task is not None
         await feedback_loop.stop()
         assert not feedback_loop.is_running
+
     async def test_start_when_already_running(self, feedback_loop):
         await feedback_loop.start()
         await feedback_loop.start()
         assert feedback_loop.is_running
         await feedback_loop.stop()
+
     async def test_stop_when_not_running(self, feedback_loop):
         await feedback_loop.stop()
         assert not feedback_loop.is_running
@@ -185,24 +197,24 @@ class TestRecordBehavior:
 
     def test_record_behavior(self, feedback_loop):
         feedback_loop.record_behavior(
-            action='greet',
-            message='Hello!',
-            priority='high',
-            user_response='Hi!',
-            user_emotion='happy',
+            action="greet",
+            message="Hello!",
+            priority="high",
+            user_response="Hi!",
+            user_emotion="happy",
         )
         assert len(feedback_loop.behavior_records) == 1
-        assert feedback_loop.stats['total_behaviors'] == 1
+        assert feedback_loop.stats["total_behaviors"] == 1
         record = feedback_loop.behavior_records[0]
-        assert record.action == 'greet'
-        assert record.user_response == 'Hi!'
-        assert record.user_emotion == 'happy'
+        assert record.action == "greet"
+        assert record.user_response == "Hi!"
+        assert record.user_emotion == "happy"
 
     def test_record_behavior_without_optional_fields(self, feedback_loop):
         feedback_loop.record_behavior(
-            action='observe',
-            message='Watching',
-            priority='low',
+            action="observe",
+            message="Watching",
+            priority="low",
         )
         assert len(feedback_loop.behavior_records) == 1
         record = feedback_loop.behavior_records[0]
@@ -213,98 +225,123 @@ class TestRecordBehavior:
         feedback_loop.max_records = 3
         for i in range(5):
             feedback_loop.record_behavior(
-                action='greet',
-                message=f'Hi {i}',
-                priority='low',
+                action="greet",
+                message=f"Hi {i}",
+                priority="low",
             )
         assert len(feedback_loop.behavior_records) == 3
 
     def test_get_behavior_history(self, feedback_loop):
         for i in range(5):
             feedback_loop.record_behavior(
-                action='greet', message=f'Hi {i}', priority='low',
+                action="greet",
+                message=f"Hi {i}",
+                priority="low",
             )
         history = feedback_loop.get_behavior_history(limit=3)
         assert len(history) == 3
         for entry in history:
-            assert 'action' in entry
-            assert 'message' in entry
-            assert 'timestamp' in entry
+            assert "action" in entry
+            assert "message" in entry
+            assert "timestamp" in entry
 
 
 class TestEvaluateBehavior:
     """Tests for behavior evaluation."""
+
     async def test_evaluate_behavior_with_positive_response(self, feedback_loop):
         from ai.lifecycle.behavior_feedback_loop import BehaviorRecord
+
         now = datetime.now()
         record = BehaviorRecord(
-            action='greet',
-            message='Hello!',
-            priority='high',
+            action="greet",
+            message="Hello!",
+            priority="high",
             timestamp=now,
-            user_response='A long and thoughtful response',
-            user_emotion='happy',
+            user_response="A long and thoughtful response",
+            user_emotion="happy",
         )
         score = await feedback_loop.evaluate_behavior(record)
         assert score >= 0.0
         assert score <= 1.0
+
     async def test_evaluate_behavior_no_response(self, feedback_loop):
         from ai.lifecycle.behavior_feedback_loop import BehaviorRecord
+
         record = BehaviorRecord(
-            action='greet',
-            message='Hello!',
-            priority='low',
+            action="greet",
+            message="Hello!",
+            priority="low",
             timestamp=datetime.now(),
         )
         score = await feedback_loop.evaluate_behavior(record)
         assert score == 0.6  # 0.5 base + 0.1 time bonus
+
     async def test_evaluate_behavior_negative_emotion(self, feedback_loop):
         from ai.lifecycle.behavior_feedback_loop import BehaviorRecord
+
         record = BehaviorRecord(
-            action='comfort',
-            message='Feel better',
-            priority='high',
+            action="comfort",
+            message="Feel better",
+            priority="high",
             timestamp=datetime.now(),
-            user_response='Still sad',
-            user_emotion='sad',
+            user_response="Still sad",
+            user_emotion="sad",
         )
         score = await feedback_loop.evaluate_behavior(record)
         assert score == 0.5  # 0.5 base + 0.1 response - 0.2 emotion + 0.1 time
+
     async def test_evaluate_behavior_old_record(self, feedback_loop):
         from ai.lifecycle.behavior_feedback_loop import BehaviorRecord
+
         old_time = datetime.now() - timedelta(hours=2)
         record = BehaviorRecord(
-            action='greet',
-            message='Hello!',
-            priority='low',
+            action="greet",
+            message="Hello!",
+            priority="low",
             timestamp=old_time,
-            user_response='Hi!',
-            user_emotion='neutral',
+            user_response="Hi!",
+            user_emotion="neutral",
             effectiveness_score=0.0,
         )
         score = await feedback_loop.evaluate_behavior(record)
         assert score == 0.6
+
     async def test_evaluate_behaviors_catches_evaluation_errors(self, feedback_loop):
         from ai.lifecycle.behavior_feedback_loop import BehaviorRecord
+
         record = BehaviorRecord(
-            action='greet', message='Hi', priority='low',
-            timestamp=datetime.now(), user_response='Hi!',
+            action="greet",
+            message="Hi",
+            priority="low",
+            timestamp=datetime.now(),
+            user_response="Hi!",
         )
         feedback_loop.behavior_records.append(record)
-        with patch.object(feedback_loop, 'evaluate_behavior', AsyncMock(side_effect=Exception('Eval error'))):
+        with patch.object(
+            feedback_loop, "evaluate_behavior", AsyncMock(side_effect=Exception("Eval error"))
+        ):
             await feedback_loop._process_feedback()  # should not raise
-        assert feedback_loop.stats['evaluated_behaviors'] == 0
+        assert feedback_loop.stats["evaluated_behaviors"] == 0
+
     async def test_evaluate_behaviors_skips_already_evaluated(self, feedback_loop):
         from ai.lifecycle.behavior_feedback_loop import BehaviorRecord
+
         evaluated = BehaviorRecord(
-            action='greet', message='Hi', priority='low',
+            action="greet",
+            message="Hi",
+            priority="low",
             timestamp=datetime.now(),
-            effectiveness_score=0.8, outcome='success',
+            effectiveness_score=0.8,
+            outcome="success",
         )
         unevaluated = BehaviorRecord(
-            action='comfort', message='There', priority='high',
+            action="comfort",
+            message="There",
+            priority="high",
             timestamp=datetime.now(),
-            effectiveness_score=0.0, outcome='unknown',
+            effectiveness_score=0.0,
+            outcome="unknown",
         )
         feedback_loop.behavior_records = [evaluated, unevaluated]
         await feedback_loop._evaluate_behaviors()
@@ -314,110 +351,166 @@ class TestEvaluateBehavior:
 
 class TestAnalyzePatterns:
     """Tests for behavior pattern analysis."""
+
     async def test_analyze_patterns_creates_patterns(self, feedback_loop):
         from ai.lifecycle.behavior_feedback_loop import BehaviorRecord
+
         now = datetime.now()
         for i in range(3):
-            feedback_loop.behavior_records.append(BehaviorRecord(
-                action='greet', message=f'Hi {i}', priority='medium',
-                timestamp=now, effectiveness_score=0.8, outcome='success',
-            ))
-        feedback_loop.stats['evaluated_behaviors'] = 3
-        feedback_loop.stats['successful_behaviors'] = 3
+            feedback_loop.behavior_records.append(
+                BehaviorRecord(
+                    action="greet",
+                    message=f"Hi {i}",
+                    priority="medium",
+                    timestamp=now,
+                    effectiveness_score=0.8,
+                    outcome="success",
+                )
+            )
+        feedback_loop.stats["evaluated_behaviors"] = 3
+        feedback_loop.stats["successful_behaviors"] = 3
         await feedback_loop._analyze_patterns()
-        assert 'greet_default' in feedback_loop.behavior_patterns
-        pattern = feedback_loop.behavior_patterns['greet_default']
+        assert "greet_default" in feedback_loop.behavior_patterns
+        pattern = feedback_loop.behavior_patterns["greet_default"]
         assert pattern.success_rate == 1.0
         assert pattern.avg_effectiveness == pytest.approx(0.8)
+
     async def test_analyze_patterns_skips_insufficient_data(self, feedback_loop):
         from ai.lifecycle.behavior_feedback_loop import BehaviorRecord
-        feedback_loop.behavior_records.append(BehaviorRecord(
-            action='comfort', message='There', priority='high',
-            timestamp=datetime.now(), effectiveness_score=0.5, outcome='neutral',
-        ))
+
+        feedback_loop.behavior_records.append(
+            BehaviorRecord(
+                action="comfort",
+                message="There",
+                priority="high",
+                timestamp=datetime.now(),
+                effectiveness_score=0.5,
+                outcome="neutral",
+            )
+        )
         await feedback_loop._analyze_patterns()
-        assert 'comfort_default' not in feedback_loop.behavior_patterns
+        assert "comfort_default" not in feedback_loop.behavior_patterns
+
     async def test_analyze_patterns_updates_existing(self, feedback_loop):
         from ai.lifecycle.behavior_feedback_loop import BehaviorPattern, BehaviorRecord
+
         now = datetime.now()
-        feedback_loop.behavior_patterns['greet_default'] = BehaviorPattern(
-            action='greet', context='default',
-            success_rate=0.5, avg_effectiveness=0.5, count=3,
+        feedback_loop.behavior_patterns["greet_default"] = BehaviorPattern(
+            action="greet",
+            context="default",
+            success_rate=0.5,
+            avg_effectiveness=0.5,
+            count=3,
             last_updated=now - timedelta(hours=1),
         )
         for i in range(5):
-            feedback_loop.behavior_records.append(BehaviorRecord(
-                action='greet', message=f'Hi {i}', priority='medium',
-                timestamp=now, effectiveness_score=0.9, outcome='success',
-            ))
-        feedback_loop.stats['evaluated_behaviors'] = 5
-        feedback_loop.stats['successful_behaviors'] = 5
+            feedback_loop.behavior_records.append(
+                BehaviorRecord(
+                    action="greet",
+                    message=f"Hi {i}",
+                    priority="medium",
+                    timestamp=now,
+                    effectiveness_score=0.9,
+                    outcome="success",
+                )
+            )
+        feedback_loop.stats["evaluated_behaviors"] = 5
+        feedback_loop.stats["successful_behaviors"] = 5
         await feedback_loop._analyze_patterns()
-        pattern = feedback_loop.behavior_patterns['greet_default']
+        pattern = feedback_loop.behavior_patterns["greet_default"]
         assert pattern.success_rate == 1.0
         assert pattern.count == 5
 
 
 class TestUpdateStrategy:
     """Tests for strategy parameter updates."""
+
     async def test_update_strategy_low_success_rate(self, feedback_loop):
         from ai.lifecycle.behavior_feedback_loop import BehaviorPattern
+
         now = datetime.now()
-        feedback_loop.behavior_patterns['greet_default'] = BehaviorPattern(
-            action='greet', context='default',
-            success_rate=0.3, avg_effectiveness=0.3, count=10,
+        feedback_loop.behavior_patterns["greet_default"] = BehaviorPattern(
+            action="greet",
+            context="default",
+            success_rate=0.3,
+            avg_effectiveness=0.3,
+            count=10,
             last_updated=now,
         )
-        initial_threshold = feedback_loop.strategy_parameters['greet_threshold']
+        initial_threshold = feedback_loop.strategy_parameters["greet_threshold"]
         await feedback_loop._update_strategy()
-        assert feedback_loop.strategy_parameters['greet_threshold'] > initial_threshold
-        assert feedback_loop.stats['strategy_updates'] == 1
+        assert feedback_loop.strategy_parameters["greet_threshold"] > initial_threshold
+        assert feedback_loop.stats["strategy_updates"] == 1
+
     async def test_update_strategy_high_success_rate(self, feedback_loop):
         from ai.lifecycle.behavior_feedback_loop import BehaviorPattern
+
         now = datetime.now()
-        feedback_loop.behavior_patterns['greet_default'] = BehaviorPattern(
-            action='greet', context='default',
-            success_rate=0.9, avg_effectiveness=0.9, count=10,
+        feedback_loop.behavior_patterns["greet_default"] = BehaviorPattern(
+            action="greet",
+            context="default",
+            success_rate=0.9,
+            avg_effectiveness=0.9,
+            count=10,
             last_updated=now,
         )
-        initial_threshold = feedback_loop.strategy_parameters['greet_threshold']
+        initial_threshold = feedback_loop.strategy_parameters["greet_threshold"]
         await feedback_loop._update_strategy()
-        assert feedback_loop.strategy_parameters['greet_threshold'] < initial_threshold
-        assert feedback_loop.stats['strategy_updates'] == 1
+        assert feedback_loop.strategy_parameters["greet_threshold"] < initial_threshold
+        assert feedback_loop.stats["strategy_updates"] == 1
+
     async def test_update_strategy_comfort_low_success(self, feedback_loop):
         from ai.lifecycle.behavior_feedback_loop import BehaviorPattern
+
         now = datetime.now()
-        feedback_loop.behavior_patterns['comfort_default'] = BehaviorPattern(
-            action='comfort', context='default',
-            success_rate=0.2, avg_effectiveness=0.2, count=10,
+        feedback_loop.behavior_patterns["comfort_default"] = BehaviorPattern(
+            action="comfort",
+            context="default",
+            success_rate=0.2,
+            avg_effectiveness=0.2,
+            count=10,
             last_updated=now,
         )
         await feedback_loop._update_strategy()
-        assert feedback_loop.strategy_parameters['comfort_sensitivity'] <= 1.0
+        assert feedback_loop.strategy_parameters["comfort_sensitivity"] <= 1.0
+
     async def test_update_strategy_insufficient_data(self, feedback_loop):
         from ai.lifecycle.behavior_feedback_loop import BehaviorPattern
+
         now = datetime.now()
-        feedback_loop.behavior_patterns['greet_default'] = BehaviorPattern(
-            action='greet', context='default',
-            success_rate=0.3, avg_effectiveness=0.3, count=3,
+        feedback_loop.behavior_patterns["greet_default"] = BehaviorPattern(
+            action="greet",
+            context="default",
+            success_rate=0.3,
+            avg_effectiveness=0.3,
+            count=3,
             last_updated=now,
         )
         await feedback_loop._update_strategy()
-        assert feedback_loop.stats['strategy_updates'] == 0  # count <= 5
+        assert feedback_loop.stats["strategy_updates"] == 0  # count <= 5
 
 
 class TestStoreLearningResults:
     """Tests for storing learning results."""
-    async def test_store_learning_results_calls_memory_manager(self, feedback_loop, mock_memory_manager):
+
+    async def test_store_learning_results_calls_memory_manager(
+        self, feedback_loop, mock_memory_manager
+    ):
         await feedback_loop._store_learning_results()
         mock_memory_manager.store_experience.assert_called_once()
-    async def test_store_learning_results_without_memory_method(self, feedback_loop, mock_memory_manager):
+
+    async def test_store_learning_results_without_memory_method(
+        self, feedback_loop, mock_memory_manager
+    ):
         del mock_memory_manager.store_experience
         initial_stats = feedback_loop.get_stats()
         await feedback_loop._store_learning_results()
-        assert feedback_loop.get_stats()['total_behaviors'] == initial_stats['total_behaviors']
-    async def test_store_learning_results_handles_exception(self, feedback_loop, mock_memory_manager):
-        mock_memory_manager.store_experience.side_effect = Exception('Storage error')
+        assert feedback_loop.get_stats()["total_behaviors"] == initial_stats["total_behaviors"]
+
+    async def test_store_learning_results_handles_exception(
+        self, feedback_loop, mock_memory_manager
+    ):
+        mock_memory_manager.store_experience.side_effect = Exception("Storage error")
         initial_behaviors = feedback_loop.behavior_records.copy()
         await feedback_loop._store_learning_results()
         assert len(feedback_loop.behavior_records) == len(initial_behaviors)
@@ -451,23 +544,23 @@ class TestStatsAndGetters:
 
     def test_get_strategy_parameters(self, feedback_loop):
         params = feedback_loop.get_strategy_parameters()
-        assert 'greet_threshold' in params
-        assert 'comfort_sensitivity' in params
+        assert "greet_threshold" in params
+        assert "comfort_sensitivity" in params
 
     def test_get_stats(self, feedback_loop):
         stats = feedback_loop.get_stats()
-        assert 'is_running' in stats
-        assert 'total_behaviors' in stats
-        assert 'evaluated_behaviors' in stats
-        assert 'success_rate' in stats
-        assert 'patterns_count' in stats
+        assert "is_running" in stats
+        assert "total_behaviors" in stats
+        assert "evaluated_behaviors" in stats
+        assert "success_rate" in stats
+        assert "patterns_count" in stats
 
     def test_get_stats_success_rate_calculation(self, feedback_loop):
-        feedback_loop.stats['evaluated_behaviors'] = 10
-        feedback_loop.stats['successful_behaviors'] = 7
+        feedback_loop.stats["evaluated_behaviors"] = 10
+        feedback_loop.stats["successful_behaviors"] = 7
         stats = feedback_loop.get_stats()
-        assert stats['success_rate'] == 0.7
+        assert stats["success_rate"] == 0.7
 
     def test_get_stats_success_rate_zero_division(self, feedback_loop):
         stats = feedback_loop.get_stats()
-        assert stats['success_rate'] == 0.0
+        assert stats["success_rate"] == 0.0

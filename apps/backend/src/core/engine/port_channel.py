@@ -71,9 +71,7 @@ class PortChannel:
             是否成功
         """
         if len(self.buffer) >= self.max_buffer:
-            logger.warning(
-                f"[PortChannel] Buffer full for '{self.port_name}', dropping oldest"
-            )
+            logger.warning(f"[PortChannel] Buffer full for '{self.port_name}', dropping oldest")
             self.buffer.popleft()
 
         self.buffer.append(data)
@@ -230,13 +228,14 @@ class AxisOutputManager:
         threshold = 0.6
 
         for port in outputs:
-            if port.priority >= threshold:
-                channel = self._get_channel(port.name)
+            port_priority = port.get("priority", 0.5)
+            if port_priority >= threshold:
+                channel = self._get_channel(port.get("axis", ""))
                 channel.push({"axis": axis_name, "data": data, "timestamp": time.time()})
                 dispatched += 1
-                results[port.name] = {"status": "dispatched", "priority": port.priority}
+                results[port.get("axis", "")] = {"status": "dispatched", "priority": port_priority}
             else:
-                results[port.name] = {"status": "skipped", "priority": port.priority}
+                results[port.get("axis", "")] = {"status": "skipped", "priority": port_priority}
 
         logger.info(
             f"[AxisOutputManager] output('{axis_name}') → {dispatched}/{len(outputs)} ports dispatched"
@@ -271,7 +270,8 @@ class AxisOutputManager:
         total_weight = 0.0
 
         for port in inputs:
-            channel = self._channels.get(port.name)
+            port_name = port.get("axis", "")
+            channel = self._channels.get(port_name)
             if not channel or channel.is_empty():
                 continue
 
@@ -280,7 +280,7 @@ class AxisOutputManager:
                 continue
 
             port_data = data["data"]
-            weight = port.priority
+            weight = port.get("priority", 0.5)
             total_weight += weight
 
             for key, value in port_data.items():

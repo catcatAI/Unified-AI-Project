@@ -1,4 +1,5 @@
 """Title screen."""
+
 from __future__ import annotations
 
 from textual.app import ComposeResult
@@ -69,6 +70,7 @@ class TitleScreen(Screen):
 
     def action_select(self) -> None:
         from .screens import WorldSelectScreen
+
         self.app.push_screen(WorldSelectScreen(self.engine))
 
     def action_set_lang_zh(self) -> None:

@@ -118,30 +118,38 @@ class TestEncryptionUtils:
 
 
 class TestValidatePasswordStrength:
-    @pytest.mark.parametrize("password,expected_valid", [
-        ("Abcdef1!", True),
-        ("A1!", False),       # too short
-        ("Abcdefg1", False),  # no special char
-        ("Abcdefg!", False),  # no digit
-        ("abcdef1!", False),  # no uppercase
-        ("ABCDEF1!", False),  # no lowercase
-    ])
+    @pytest.mark.parametrize(
+        "password,expected_valid",
+        [
+            ("Abcdef1!", True),
+            ("A1!", False),  # too short
+            ("Abcdefg1", False),  # no special char
+            ("Abcdefg!", False),  # no digit
+            ("abcdef1!", False),  # no uppercase
+            ("ABCDEF1!", False),  # no lowercase
+        ],
+    )
     def test_password_strength(self, password, expected_valid):
         from apps.backend.src.core.security.encryption import validate_password_strength
+
         result = validate_password_strength(password)
         assert result["valid"] is expected_valid
 
 
 class TestSanitizeInput:
-    @pytest.mark.parametrize("input_val,expected", [
-        ("hello world", "hello world"),
-        ("<script>alert('xss')</script>", "sanitized"),
-        ("", ""),
-        (None, ""),
-        ("  hello  ", "hello"),
-    ])
+    @pytest.mark.parametrize(
+        "input_val,expected",
+        [
+            ("hello world", "hello world"),
+            ("<script>alert('xss')</script>", "sanitized"),
+            ("", ""),
+            (None, ""),
+            ("  hello  ", "hello"),
+        ],
+    )
     def test_sanitize_input(self, input_val, expected):
         from apps.backend.src.core.security.encryption import sanitize_input
+
         result = sanitize_input(input_val)
         if expected == "sanitized":
             assert "<" not in result and ">" not in result
@@ -169,12 +177,14 @@ class TestEncryptionSmoke:
 
     def test_import(self):
         from core.security.encryption import EncryptionUtils
+
         assert EncryptionUtils is not None
 
     @patch("core.security.encryption.FERNET_AVAILABLE", True)
     @patch("core.security.encryption.Fernet")
     def test_instantiation_with_fernet(self, mock_fernet):
         from unittest.mock import MagicMock
+
         from core.security.encryption import EncryptionUtils
 
         mock_fernet_instance = MagicMock()

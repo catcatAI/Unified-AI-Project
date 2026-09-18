@@ -1,4 +1,5 @@
 """Tests for PrimitiveTrainer and FullTrainingPipeline Phase 3d."""
+
 import numpy as np
 import pytest
 
@@ -6,6 +7,7 @@ import pytest
 @pytest.fixture
 def pipeline():
     from ai.multimodal.training_pipeline import FullTrainingPipeline
+
     return FullTrainingPipeline()
 
 
@@ -14,9 +16,10 @@ class TestPrimitiveTrainer:
 
     @pytest.fixture
     def trainer(self):
-        from ai.multimodal.primitives.primitive_encoder import PrimitiveEncoder
         from ai.multimodal.generator.sequence_generator import SequenceGenerator
+        from ai.multimodal.primitives.primitive_encoder import PrimitiveEncoder
         from ai.multimodal.training_pipeline import PrimitiveTrainer
+
         encoder = PrimitiveEncoder(embedding_dim=128)
         seq_gen = SequenceGenerator()
         return PrimitiveTrainer(encoder, seq_gen)
@@ -29,9 +32,11 @@ class TestPrimitiveTrainer:
 
     def test_populate_library(self, trainer):
         from ai.multimodal.primitives.primitive_library import PrimitiveLibrary
+
         shapes = trainer._create_library_shapes()
-        lib = PrimitiveLibrary(embedding_dim=trainer._encoder.embedding_dim,
-                               max_primitives=len(shapes))
+        lib = PrimitiveLibrary(
+            embedding_dim=trainer._encoder.embedding_dim, max_primitives=len(shapes)
+        )
         for i, shape in enumerate(shapes):
             emb = trainer._encoder.encode(shape)
             lib.add_primitive(f"t_{i:04d}", shape, emb)
@@ -45,9 +50,11 @@ class TestPrimitiveTrainer:
 
     def test_reencode_library_improves_reconstruction(self, trainer):
         from ai.multimodal.primitives.primitive_library import PrimitiveLibrary
+
         shapes = trainer._create_library_shapes()
-        lib = PrimitiveLibrary(embedding_dim=trainer._encoder.embedding_dim,
-                               max_primitives=len(shapes))
+        lib = PrimitiveLibrary(
+            embedding_dim=trainer._encoder.embedding_dim, max_primitives=len(shapes)
+        )
         for i, shape in enumerate(shapes):
             emb = trainer._encoder.encode(shape)
             lib.add_primitive(f"s_{i:04d}", shape, emb)
@@ -91,10 +98,10 @@ class TestPrimitiveTrainer:
 
     def test_library_property(self, trainer):
         from ai.multimodal.primitives.primitive_library import PrimitiveLibrary
+
         assert trainer.library is None
         shapes = trainer._create_library_shapes()
-        lib = PrimitiveLibrary(embedding_dim=trainer._encoder.embedding_dim,
-                               max_primitives=10)
+        lib = PrimitiveLibrary(embedding_dim=trainer._encoder.embedding_dim, max_primitives=10)
         for i, shape in enumerate(shapes[:5]):
             emb = trainer._encoder.encode(shape)
             lib.add_primitive(f"p_{i:04d}", shape, emb)
@@ -138,6 +145,7 @@ class TestFullPipelinePhase3d:
     @pytest.mark.slow
     def test_image_generator_produces_structured_output_after_training(self, pipeline):
         from ai.multimodal.generator.image_generator import ImageGenerator
+
         pipeline.train_primitives(epochs=30, lr=0.01, seq_epochs=20, seq_lr=0.001)
         gen = ImageGenerator(
             sequence_generator=pipeline._sequence_generator,
@@ -158,12 +166,17 @@ class TestPrimitiveEncoderPersistence:
         save_path = str(tmp_path / "prim_enc_keys.npz")
         pipeline.save_weights(save_path)
         data = np.load(save_path, allow_pickle=False)
-        for key in ["prim_enc_W_encode", "prim_enc_b_encode",
-                     "prim_enc_W_decode", "prim_enc_b_decode"]:
+        for key in [
+            "prim_enc_W_encode",
+            "prim_enc_b_encode",
+            "prim_enc_W_decode",
+            "prim_enc_b_decode",
+        ]:
             assert key in data, f"Missing key: {key}"
 
     def test_load_weights_restores_primitive_encoder(self, pipeline, tmp_path):
         from ai.multimodal.training_pipeline import FullTrainingPipeline
+
         pipeline.train_primitives(epochs=10, lr=0.01, seq_epochs=0)
         save_path = str(tmp_path / "prim_enc_roundtrip.npz")
         pipeline.save_weights(save_path)
@@ -174,18 +187,15 @@ class TestPrimitiveEncoderPersistence:
         assert loaded
         assert fresh._primitive_encoder is not None
         assert fresh._primitive_encoder.is_trained
-        assert np.allclose(
-            fresh._primitive_encoder._W_encode, data_before["prim_enc_W_encode"])
-        assert np.allclose(
-            fresh._primitive_encoder._b_encode, data_before["prim_enc_b_encode"])
-        assert np.allclose(
-            fresh._primitive_encoder._W_decode, data_before["prim_enc_W_decode"])
-        assert np.allclose(
-            fresh._primitive_encoder._b_decode, data_before["prim_enc_b_decode"])
+        assert np.allclose(fresh._primitive_encoder._W_encode, data_before["prim_enc_W_encode"])
+        assert np.allclose(fresh._primitive_encoder._b_encode, data_before["prim_enc_b_encode"])
+        assert np.allclose(fresh._primitive_encoder._W_decode, data_before["prim_enc_W_decode"])
+        assert np.allclose(fresh._primitive_encoder._b_decode, data_before["prim_enc_b_decode"])
 
     def test_load_weights_compatible_without_prim_enc(self, pipeline, tmp_path):
         """Old weight files without primitive encoder should still load."""
         from ai.multimodal.training_pipeline import FullTrainingPipeline
+
         pipeline.train_sequence(batch_size=2, steps=3, lr=0.001)
         save_path = str(tmp_path / "no_prim_enc.npz")
         pipeline.save_weights(save_path)
@@ -202,6 +212,7 @@ class TestPrimitiveEncoderPersistence:
     def test_image_generator_works_after_weight_roundtrip(self, pipeline, tmp_path):
         from ai.multimodal.generator.image_generator import ImageGenerator
         from ai.multimodal.training_pipeline import FullTrainingPipeline
+
         pipeline.train_primitives(epochs=20, lr=0.01, seq_epochs=15, seq_lr=0.001)
         save_path = str(tmp_path / "gen_roundtrip.npz")
         pipeline.save_weights(save_path)

@@ -392,9 +392,9 @@ class BrowserController:
                         clean_text = "\n".join(chunk for chunk in chunks if chunk)
 
                         # 提取圖片與連結 (前幾個)
-                        images = [str(img.get("src")) for img in soup.find_all("img") if img.get("src")][
-                            :5
-                        ]
+                        images = [
+                            str(img.get("src")) for img in soup.find_all("img") if img.get("src")
+                        ][:5]
                         links = [str(a.get("href")) for a in soup.find_all("a", href=True)][:5]
 
                         _title_raw = soup.title.string if soup.title else None
@@ -414,7 +414,6 @@ class BrowserController:
                     else:
                         logger.warning(
                             f"Extraction failed with status {response.status} for {url}",
-
                         )
                         return None
         except (

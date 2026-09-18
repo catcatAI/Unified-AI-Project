@@ -33,7 +33,7 @@ class HardwareScenario(Enum):
     """5+1 種硬體場景 / Hardware scenarios (§8.7)"""
 
     HIGH_PERFORMANCE_DESKTOP = "high_performance_desktop"
-    DESKTOP_IGPU = "desktop_igpu"          # Desktop with integrated GPU only
+    DESKTOP_IGPU = "desktop_igpu"  # Desktop with integrated GPU only
     LAPTOP_NORMAL = "laptop_normal"
     LAPTOP_POWER_SAVER = "laptop_power_saver"
     LOW_POWER_DEVICE = "low_power_device"
@@ -305,6 +305,7 @@ class HardwareProfile:
         # This is the hardware-adaptive core: same spec -> same tier, regardless of chassis
         try:
             from core.backbone.hardware import HardwareProfile as BHw
+
             spec = BHw.detect()
             tier = BHw.get_tier(spec)
             # Map backbone tier -> this module's scenario (names align, but handle high_performance_gpu)
@@ -322,15 +323,30 @@ class HardwareProfile:
                 # (Windows/Darwin only, best-effort)
                 if system in ("Windows", "Darwin"):
                     bat = _check_battery(system)
-                    if bat == "power_saver" and tier in ("high_performance_desktop", "laptop_normal"):
-                        logger.info("HardwareProfile: battery discharging <30%% downgrade %s -> LAPTOP_POWER_SAVER (spec: RAM %.1fGB VRAM %.1fGB)", tier, spec.get("ram_gb",0), spec.get("gpu_memory_gb",0))
+                    if bat == "power_saver" and tier in (
+                        "high_performance_desktop",
+                        "laptop_normal",
+                    ):
+                        logger.info(
+                            "HardwareProfile: battery discharging <30%% downgrade %s -> LAPTOP_POWER_SAVER (spec: RAM %.1fGB VRAM %.1fGB)",
+                            tier,
+                            spec.get("ram_gb", 0),
+                            spec.get("gpu_memory_gb", 0),
+                        )
                         return HardwareScenario.LAPTOP_POWER_SAVER
-                logger.info("HardwareProfile: spec-driven %s (RAM %.1fGB VRAM %.1fGB CPU %s, chassis-agnostic)",
-                            mapping[tier].value, spec.get("ram_gb",0), spec.get("gpu_memory_gb",0), spec.get("cpu_cores",0))
+                logger.info(
+                    "HardwareProfile: spec-driven %s (RAM %.1fGB VRAM %.1fGB CPU %s, chassis-agnostic)",
+                    mapping[tier].value,
+                    spec.get("ram_gb", 0),
+                    spec.get("gpu_memory_gb", 0),
+                    spec.get("cpu_cores", 0),
+                )
                 return mapping[tier]
             logger.debug("HardwareProfile: spec tier %s not in mapping, fallback", tier)
         except Exception as e:
-            logger.debug("HardwareProfile: spec-driven detect failed, fallback to chassis check: %s", e)
+            logger.debug(
+                "HardwareProfile: spec-driven detect failed, fallback to chassis check: %s", e
+            )
 
         # 4. Fallback: headless / chassis checks (secondary, for when spec detect fails)
         has_display = bool(os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"))

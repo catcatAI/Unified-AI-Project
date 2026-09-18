@@ -1,4 +1,5 @@
 """Tests for ThreeLayerVisual — PCA encoder + nonlinear decoder."""
+
 import os
 import subprocess
 import sys
@@ -6,7 +7,6 @@ import tempfile
 
 import numpy as np
 import pytest
-
 
 _HAS_TORCH_CACHE = None
 
@@ -26,6 +26,7 @@ def _has_torch():
         return _HAS_TORCH_CACHE
     try:
         import torch  # noqa: F401
+
         _HAS_TORCH_CACHE = True
     except Exception:
         _HAS_TORCH_CACHE = False
@@ -45,7 +46,7 @@ def synthetic_data():
             cx, cy = rng.integers(8, 24), rng.integers(8, 24)
             r = rng.integers(3, 6)
             color = rng.uniform(0.4, 0.9)
-            img[max(0, cx-r):cx+r, max(0, cy-r):cy+r] = color
+            img[max(0, cx - r) : cx + r, max(0, cy - r) : cy + r] = color
             images.append(img.reshape(-1))
             labels.append(class_id)
     return np.array(images, dtype=np.float32), np.array(labels, dtype=np.int64)
@@ -53,6 +54,7 @@ def synthetic_data():
 
 def _make_tlv():
     from ai.multimodal.three_layer_visual import ThreeLayerVisual
+
     return ThreeLayerVisual(model_dir=tempfile.mkdtemp())
 
 
@@ -67,6 +69,7 @@ class TestThreeLayerVisual:
 
     def test_init_with_nonexistent_dir(self):
         from ai.multimodal.three_layer_visual import ThreeLayerVisual
+
         tlv = ThreeLayerVisual(model_dir="/nonexistent/path/three_layer")
         assert tlv._encoder is None
 
@@ -155,6 +158,7 @@ class TestThreeLayerVisual:
         tlv.fit(images, labels, n_epochs=10, verbose=False)
 
         from ai.multimodal.three_layer_visual import ThreeLayerVisual
+
         save_dir = tempfile.mkdtemp()
         tlv.save(save_dir)
 
@@ -174,6 +178,7 @@ class TestThreeLayerVisual:
         recon_before = tlv.reconstruct(images[:3], enhance=False)
 
         from ai.multimodal.three_layer_visual import ThreeLayerVisual
+
         save_dir = tempfile.mkdtemp()
         tlv.save(save_dir)
         loaded = ThreeLayerVisual(model_dir=save_dir)
@@ -231,6 +236,7 @@ class TestThreeLayerVisual:
 
     def test_load_returns_false_for_missing_dir(self):
         from ai.multimodal.three_layer_visual import ThreeLayerVisual
+
         tlv = ThreeLayerVisual(model_dir="/nonexistent/path")
         ok = tlv.load("/nonexistent/path")
         assert ok is False

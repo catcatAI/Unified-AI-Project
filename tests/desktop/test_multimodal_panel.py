@@ -51,8 +51,16 @@ class TestMultimodalPanelHTML:
     def test_html_has_quality_metrics(self):
         """T4: HTML has quality dashboard with all metrics."""
         content = HTML_FILE.read_text(encoding="utf-8")
-        metrics = ["q-ssim", "q-psnr", "q-vision-calls", "q-vision-time",
-                   "q-snr", "q-audio-calls", "q-audio-time", "health-bar-fill"]
+        metrics = [
+            "q-ssim",
+            "q-psnr",
+            "q-vision-calls",
+            "q-vision-time",
+            "q-snr",
+            "q-audio-calls",
+            "q-audio-time",
+            "health-bar-fill",
+        ]
         for m in metrics:
             assert f'id="{m}"' in content, f"Missing metric element: {m}"
 
@@ -71,9 +79,17 @@ class TestMultimodalClientJS:
         assert CLIENT_JS.exists()
         content = CLIENT_JS.read_text(encoding="utf-8")
         required_methods = [
-            "encode(", "decode(", "compare(", "retrieve(",
-            "train(", "evaluate(", "generate(", "crossInfer(",
-            "qualityDashboard(", "checkHealth(", "multimodalHealth("
+            "encode(",
+            "decode(",
+            "compare(",
+            "retrieve(",
+            "train(",
+            "evaluate(",
+            "generate(",
+            "crossInfer(",
+            "qualityDashboard(",
+            "checkHealth(",
+            "multimodalHealth(",
         ]
         for method in required_methods:
             assert method in content, f"Missing method: {method}"

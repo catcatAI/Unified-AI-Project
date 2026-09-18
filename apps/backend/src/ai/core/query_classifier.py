@@ -62,12 +62,12 @@ class QueryResult:
 # bare literals through _adjust_confidence / _calc_actionability). Centralized
 # here so recalibration never requires hunting through matching logic.
 # =============================================================================
-_CONF_ANCHORED_BONUS = 0.05        # anchored keyword match reliability bonus
-_CONF_DENSE_KEYWORD_BONUS = 0.05   # keyword density above _DENSITY_HIGH
+_CONF_ANCHORED_BONUS = 0.05  # anchored keyword match reliability bonus
+_CONF_DENSE_KEYWORD_BONUS = 0.05  # keyword density above _DENSITY_HIGH
 _CONF_SPARSE_KEYWORD_PENALTY = 0.10  # keyword density below _DENSITY_LOW
-_CONF_SHORT_INPUT_PENALTY = 0.05   # input shorter than _INPUT_SHORT
-_CONF_LONG_INPUT_BONUS = 0.03      # input longer than _INPUT_LONG
-_CONF_NEGATION_PENALTY = 0.15      # negation present
+_CONF_SHORT_INPUT_PENALTY = 0.05  # input shorter than _INPUT_SHORT
+_CONF_LONG_INPUT_BONUS = 0.03  # input longer than _INPUT_LONG
+_CONF_NEGATION_PENALTY = 0.15  # negation present
 _DENSITY_HIGH = 0.5
 _DENSITY_LOW = 0.2
 _INPUT_SHORT = 5
@@ -946,8 +946,21 @@ class QueryClassifier:
             QueryType.SEARCH: {"搜寻", "查找", "搜索", "search", "find", "google"},
             QueryType.CODE: {"程式", "代码", "函数", "code", "program", "function"},
             QueryType.VISION: {"图片", "照片", "影像", "image", "photo", "vision"},
-            QueryType.CIVIL: {"梁", "柱", "板", "橋", "桥", "混凝土", "建模", "出圖",
-                              "beam", "bridge", "column", "concrete", "CAD"},
+            QueryType.CIVIL: {
+                "梁",
+                "柱",
+                "板",
+                "橋",
+                "桥",
+                "混凝土",
+                "建模",
+                "出圖",
+                "beam",
+                "bridge",
+                "column",
+                "concrete",
+                "CAD",
+            },
             QueryType.AUDIO: {"语音", "音乐", "录音", "audio", "voice", "music"},
             QueryType.TASK: {"任务", "工作", "待辦", "task", "todo", "schedule"},
         }

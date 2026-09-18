@@ -6,23 +6,25 @@
 Multi-level token producers for hierarchical document streaming.
 Section→Paragraph→Sentence→Token, each with fast+slow pass.
 """
+
 from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Dict, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    from ai.garden.garden_engine import GARDENEngine
     from ai.ed3n.ed3n_engine import ED3NEngine
+    from ai.garden.garden_engine import GARDENEngine
 
 
 @dataclass
 class ProducerConfig:
     """Base producer configuration."""
+
     enabled: bool = True
     max_tokens: int = 512
     chunk_size: int = 32
@@ -54,6 +56,7 @@ class BaseLevelProducer(ABC):
             return None
         network_out = self.garden.snn.forward(keys)
         from ai.garden.garden_engine import _anchored_decode
+
         return _anchored_decode(network_out, keys, self.garden.dictionary, original_text=text)
 
     def _ed3n_process(self, text: str, depth: str = "shallow") -> Optional[str]:
@@ -77,6 +80,7 @@ class SectionProducer(BaseLevelProducer):
             return None
         network_out = self.garden.snn.forward(keys)
         from ai.garden.garden_engine import _anchored_decode
+
         return _anchored_decode(network_out, keys, self.garden.dictionary, original_text=query)
 
     def slow_pass(self, query: str, buffer: str, fast_output: Optional[str]) -> Optional[str]:

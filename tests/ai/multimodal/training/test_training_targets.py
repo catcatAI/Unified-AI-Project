@@ -13,18 +13,18 @@ Current baseline (2026-07-01, §X #79):
 
 import numpy as np
 import pytest
-
-from ai.multimodal.quality_metrics import psnr, ssim, snr
+from ai.multimodal.audio_decoder import AudioWaveformDecoder, load_default_audio_decoder_weights
+from ai.multimodal.quality_metrics import psnr, snr, ssim
 from ai.multimodal.visual_decoder import (
     VisualDecoder,
     load_default_visual_decoder_weights,
 )
-from ai.multimodal.audio_decoder import AudioWaveformDecoder, load_default_audio_decoder_weights
 
 
 def _get_weights_path():
     """Resolve p29_trained.npz path."""
     from pathlib import Path
+
     root = Path(__file__).resolve().parent.parent.parent.parent.parent
     p = root / "data" / "multimodal" / "weights" / "p29_trained.npz"
     return str(p) if p.exists() else None
@@ -72,9 +72,12 @@ class TestVisualDecoderWeights:
     def test_all_weight_keys_present(self, weights_path):
         data = np.load(weights_path)
         expected_keys = {
-            "visual_decoder_W", "visual_decoder_b",
-            "texture_W_hidden", "texture_b_hidden",
-            "texture_W_featmap", "texture_b_featmap",
+            "visual_decoder_W",
+            "visual_decoder_b",
+            "texture_W_hidden",
+            "texture_b_hidden",
+            "texture_W_featmap",
+            "texture_b_featmap",
             "texture_tex_kernels",
         }
         present = set(data.keys())
@@ -119,7 +122,7 @@ class TestAudioWaveformDecoderWeights:
     def test_trained_waveform_not_silent(self, decoder_with_weights):
         latent = np.random.default_rng(42).normal(0, 1, 64).astype(np.float32)
         wav = decoder_with_weights.decode(latent)
-        rms = np.sqrt(np.mean(wav ** 2))
+        rms = np.sqrt(np.mean(wav**2))
         assert rms > 0.001, f"Trained waveform RMS={rms:.6f} — too quiet"
 
 
@@ -171,6 +174,7 @@ class TestQualityMetrics:
 
     def test_quality_report_keys(self):
         from ai.multimodal.quality_metrics import quality_report
+
         img = np.random.default_rng(42).integers(0, 256, (128, 128, 3), dtype=np.uint8)
         wav = np.random.default_rng(42).normal(0, 1, 16000).astype(np.float32)
         report = quality_report(img, img, wav, wav)
@@ -187,8 +191,9 @@ class TestTextureBenchmark:
     def cifar_images(self):
         pytest.importorskip("scipy.ndimage")
         pytest.importorskip("ai.multimodal.data_loader")
-        from scipy.ndimage import zoom
         from ai.multimodal.data_loader import CIFAR10Loader
+        from scipy.ndimage import zoom
+
         loader = CIFAR10Loader()
         if not loader.available:
             pytest.skip("CIFAR-10 data not available")
@@ -204,18 +209,20 @@ class TestTextureBenchmark:
         return images
 
     def test_texture_training_reduces_loss_on_real_data(self, cifar_images):
-        from ai.multimodal.training_pipeline import (
-            FullTrainingPipeline, TextureTrainer)
+        from ai.multimodal.training_pipeline import FullTrainingPipeline, TextureTrainer
+
         pipeline = FullTrainingPipeline()
         trainer = TextureTrainer(pipeline._reconstruction, pipeline._visual_decoder)
         result = trainer.train_on_real(cifar_images, steps=3, lr=0.01)
         after_loss = result["final_loss"]
-        assert after_loss < 30000, f"Texture loss after 3 steps should drop below baseline (~17618), got {after_loss:.4f}"
+        assert (
+            after_loss < 30000
+        ), f"Texture loss after 3 steps should drop below baseline (~17618), got {after_loss:.4f}"
         assert len(result["history"]) == 3
 
     def test_ssim_improves_after_real_texture_training(self, cifar_images):
-        from ai.multimodal.training_pipeline import (
-            FullTrainingPipeline, TextureTrainer)
+        from ai.multimodal.training_pipeline import FullTrainingPipeline, TextureTrainer
+
         pipeline = FullTrainingPipeline()
         trainer = TextureTrainer(pipeline._reconstruction, pipeline._visual_decoder)
         img = cifar_images[0]
@@ -229,5 +236,6 @@ class TestTextureBenchmark:
         # 10% relative tolerance, robust to negative/near-zero SSIM (multiplying a
         # negative baseline by 0.9 would invert the tolerance direction).
         tolerance = abs(ssim_before) * 0.1
-        assert ssim_after >= ssim_before - tolerance or ssim_after > 0.3, (
-            f"SSIM should not degrade significantly: before={ssim_before:.4f}, after={ssim_after:.4f}")
+        assert (
+            ssim_after >= ssim_before - tolerance or ssim_after > 0.3
+        ), f"SSIM should not degrade significantly: before={ssim_before:.4f}, after={ssim_after:.4f}"

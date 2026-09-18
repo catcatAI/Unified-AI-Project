@@ -1,4 +1,5 @@
 """Tests for EnvironmentDynamics."""
+
 import pytest
 from core.life.env_dynamics import EnvironmentDynamics
 

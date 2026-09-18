@@ -8,10 +8,10 @@ from apps.backend.src.core.hsp.versioning import (
     HSPCompatibilityChecker,
     HSPVersionCompatibility,
     HSPVersionConverter,
+    HSPVersionedMessageHandler,
     HSPVersionInfo,
     HSPVersionManager,
     HSPVersionNegotiator,
-    HSPVersionedMessageHandler,
 )
 
 
@@ -120,9 +120,7 @@ class TestHSPCompatibilityChecker:
     def test_check_message_compatibility(self):
         mgr = HSPVersionManager()
         checker = HSPCompatibilityChecker(mgr)
-        result = checker.check_message_compatibility(
-            {"protocol_version": "0.1.0"}, "0.1.0"
-        )
+        result = checker.check_message_compatibility({"protocol_version": "0.1.0"}, "0.1.0")
         assert result["is_compatible"] is True
 
     def test_generate_compatibility_report(self):

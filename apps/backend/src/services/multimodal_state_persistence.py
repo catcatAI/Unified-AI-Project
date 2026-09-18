@@ -16,6 +16,7 @@ import json
 import logging
 import os
 
+
 def _multimodal_checkpoints_root():
     try:
         from core.data_config import get_multimodal_dir
@@ -23,6 +24,8 @@ def _multimodal_checkpoints_root():
         return get_multimodal_dir()
     except Exception:  # noqa: BLE001 - fallback to legacy relative path
         return os.path.join("data", "multimodal")
+
+
 import shutil
 import time
 from datetime import datetime
@@ -58,9 +61,7 @@ class MultimodalStatePersistence:
       - Metadata (timestamp, label, component versions)
     """
 
-    DEFAULT_CHECKPOINT_DIR = os.path.join(
-        str(_multimodal_checkpoints_root()), "checkpoints"
-    )
+    DEFAULT_CHECKPOINT_DIR = os.path.join(str(_multimodal_checkpoints_root()), "checkpoints")
     MAX_CHECKPOINTS = 10
 
     def __init__(self, service, checkpoint_dir: Optional[str] = None):
@@ -92,9 +93,9 @@ class MultimodalStatePersistence:
         label = self._sanitize_label(label or f"cp_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
         cp_dir = os.path.join(self._checkpoint_dir, label)
         # Verify cp_dir is within checkpoint_dir to prevent traversal
-        if os.path.commonpath([os.path.abspath(cp_dir), os.path.abspath(self._checkpoint_dir)]) != os.path.abspath(
-            self._checkpoint_dir
-        ):
+        if os.path.commonpath(
+            [os.path.abspath(cp_dir), os.path.abspath(self._checkpoint_dir)]
+        ) != os.path.abspath(self._checkpoint_dir):
             raise ValueError(f"Invalid checkpoint label: {label}")
         os.makedirs(cp_dir, exist_ok=True)
 
@@ -204,9 +205,9 @@ class MultimodalStatePersistence:
         """
         label = self._sanitize_label(label)
         cp_dir = os.path.join(self._checkpoint_dir, label)
-        if os.path.commonpath([os.path.abspath(cp_dir), os.path.abspath(self._checkpoint_dir)]) != os.path.abspath(
-            self._checkpoint_dir
-        ):
+        if os.path.commonpath(
+            [os.path.abspath(cp_dir), os.path.abspath(self._checkpoint_dir)]
+        ) != os.path.abspath(self._checkpoint_dir):
             return {"status": "error", "error": f"Invalid checkpoint label: {label}"}
         if not os.path.isdir(cp_dir):
             return {"status": "error", "error": f"Checkpoint not found: {label}"}
@@ -357,8 +358,8 @@ class MultimodalStatePersistence:
         """
         label = self._sanitize_label(label)
         cp_dir = os.path.join(self._checkpoint_dir, label)
-        if os.path.commonpath([os.path.abspath(cp_dir), os.path.abspath(self._checkpoint_dir)]) != os.path.abspath(
-            self._checkpoint_dir
-        ):
+        if os.path.commonpath(
+            [os.path.abspath(cp_dir), os.path.abspath(self._checkpoint_dir)]
+        ) != os.path.abspath(self._checkpoint_dir):
             return None
         return cp_dir if os.path.isdir(cp_dir) else None

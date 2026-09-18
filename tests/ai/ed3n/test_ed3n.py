@@ -454,6 +454,7 @@ class TestContinuousLearningPipeline:
 
     def test_corrupted_load(self, engine: ED3NEngine):
         import json
+
         with tempfile.TemporaryDirectory() as tmp:
             path = os.path.join(tmp, "corrupt.json")
             with open(path, "w", encoding="utf-8") as f:
@@ -477,6 +478,7 @@ class TestContinuousLearningPipeline:
 
     def test_telemetry_empty(self, engine: ED3NEngine):
         from apps.backend.src.ai.ed3n.telemetry import TelemetryCollector
+
         tc = TelemetryCollector()
         summary = tc.get_summary()
         assert summary["total_queries"] == 0
@@ -484,6 +486,7 @@ class TestContinuousLearningPipeline:
     def test_io_analyzer_empty(self, engine: ED3NEngine):
         from apps.backend.src.ai.ed3n.io_analyzer import IOAnalyzer
         from apps.backend.src.ai.ed3n.telemetry import TelemetryCollector
+
         tc = TelemetryCollector()
         analyzer = IOAnalyzer(tc)
         report = analyzer.generate_report()
@@ -491,18 +494,36 @@ class TestContinuousLearningPipeline:
 
     def test_telemetry_percentiles(self, engine: ED3NEngine):
         from apps.backend.src.ai.ed3n.telemetry import TelemetryCollector
+
         tc = TelemetryCollector()
-        tc.record_query("t1", "hi", stages={"reflex": 1.0}, reflex_match=None,
-                        cache_hit=False, matched_keys=[], output_text="hi",
-                        confidence=0.5, is_fallback=False)
-        tc.record_query("t2", "hello", stages={"reflex": 2.0}, reflex_match="hello",
-                        cache_hit=True, matched_keys=["g1"], output_text="hello",
-                        confidence=0.9, is_fallback=False)
+        tc.record_query(
+            "t1",
+            "hi",
+            stages={"reflex": 1.0},
+            reflex_match=None,
+            cache_hit=False,
+            matched_keys=[],
+            output_text="hi",
+            confidence=0.5,
+            is_fallback=False,
+        )
+        tc.record_query(
+            "t2",
+            "hello",
+            stages={"reflex": 2.0},
+            reflex_match="hello",
+            cache_hit=True,
+            matched_keys=["g1"],
+            output_text="hello",
+            confidence=0.9,
+            is_fallback=False,
+        )
         summary = tc.get_summary()
         assert summary["total_queries"] == 2
 
     def test_thread_safety_encode(self, engine: ED3NEngine):
         import concurrent.futures
+
         engine.warm_up()
         dl = engine.dictionary
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
@@ -513,19 +534,25 @@ class TestContinuousLearningPipeline:
 
     def test_thread_safety_process(self, engine: ED3NEngine):
         import concurrent.futures
+
         engine.warm_up()
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
-            futures = [pool.submit(engine.process, t) for t in ["你好", "hello", "再见", "谢谢"] * 8]
+            futures = [
+                pool.submit(engine.process, t) for t in ["你好", "hello", "再见", "谢谢"] * 8
+            ]
             results = [f.result(timeout=120) for f in futures]
         assert len(results) == 32
         assert all(isinstance(r, str) for r in results)
 
     def test_thread_safety_cl(self, engine: ED3NEngine):
         import concurrent.futures
+
         engine.warm_up()
         cl = ContinuousLearningPipeline(engine=engine, auto_grow=False)
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
-            futures = [pool.submit(cl.process_interaction, f"test_{i}", f"resp_{i}", {}) for i in range(20)]
+            futures = [
+                pool.submit(cl.process_interaction, f"test_{i}", f"resp_{i}", {}) for i in range(20)
+            ]
             results = [f.result(timeout=120) for f in futures]
         assert len(results) == 20
         assert cl._interaction_count == 20
@@ -545,9 +572,12 @@ class TestContinuousLearningPipeline:
 class TestSequenceDataUtils:
     def test_training_example_to_sequence(self, engine: ED3NEngine):
         tex = TrainingExample(
-            input_text="hello world", expected_output="hi",
-            input_keys=["g1", "g2"], output_keys=["g5"],
-            relation_pairs=[], confidence=0.8,
+            input_text="hello world",
+            expected_output="hi",
+            input_keys=["g1", "g2"],
+            output_keys=["g5"],
+            relation_pairs=[],
+            confidence=0.8,
         )
         seq = training_example_to_sequence(tex)
         assert seq.input_key_seq == ["g1", "g2"]
@@ -578,10 +608,12 @@ class TestSequenceDataUtils:
 class TestSequenceTrainer:
     def test_sequence_trainer_basic(self, engine: ED3NEngine):
         trainer = SequenceTrainer(engine, seq_lr=0.1)
-        batch = make_synthetic_seq_batch([
-            (["a"], ["b"]),
-            (["b"], ["c"]),
-        ])
+        batch = make_synthetic_seq_batch(
+            [
+                (["a"], ["b"]),
+                (["b"], ["c"]),
+            ]
+        )
         metrics = trainer.train_step(batch)
         assert isinstance(metrics.loss, float)
         assert isinstance(metrics.accuracy, float)
@@ -589,9 +621,12 @@ class TestSequenceTrainer:
 
     def test_sequence_trainer_improves(self, engine: ED3NEngine):
         trainer = SequenceTrainer(engine, seq_lr=0.2)
-        batch = make_synthetic_seq_batch([
-            (["start"], ["middle", "end"]),
-        ] * 5)
+        batch = make_synthetic_seq_batch(
+            [
+                (["start"], ["middle", "end"]),
+            ]
+            * 5
+        )
         first = trainer.train_step(batch)
         engine.dictionary.add_entry("middle", {"en": "middle"})
         engine.dictionary.add_entry("end", {"en": "end"})
@@ -603,7 +638,8 @@ class TestSequenceTrainer:
 
     def test_scheduled_sampling_decay(self, engine: ED3NEngine):
         trainer = SequenceTrainer(
-            engine, seq_lr=0.1,
+            engine,
+            seq_lr=0.1,
             scheduled_sampling_start=1.0,
             scheduled_sampling_end=0.0,
             scheduled_sampling_decay=0.1,
@@ -616,7 +652,8 @@ class TestSequenceTrainer:
 
     def test_scheduled_sampling_never_below_end(self, engine: ED3NEngine):
         trainer = SequenceTrainer(
-            engine, seq_lr=0.1,
+            engine,
+            seq_lr=0.1,
             scheduled_sampling_start=0.5,
             scheduled_sampling_end=0.3,
             scheduled_sampling_decay=0.01,
@@ -628,7 +665,8 @@ class TestSequenceTrainer:
 
     def test_reset_scheduled_sampling(self, engine: ED3NEngine):
         trainer = SequenceTrainer(
-            engine, seq_lr=0.1,
+            engine,
+            seq_lr=0.1,
             scheduled_sampling_start=1.0,
             scheduled_sampling_end=0.0,
             scheduled_sampling_decay=0.1,
@@ -641,19 +679,24 @@ class TestSequenceTrainer:
 
     def test_forward_sequential_called(self, engine: ED3NEngine):
         trainer = SequenceTrainer(engine)
-        batch = make_synthetic_seq_batch([
-            (["key_a"], ["key_b"]),
-        ])
+        batch = make_synthetic_seq_batch(
+            [
+                (["key_a"], ["key_b"]),
+            ]
+        )
         metrics = trainer.train_step(batch)
         assert metrics.loss >= 0.0
 
     def test_sequence_trainer_save_load(self, engine: ED3NEngine):
         import os
         import tempfile
+
         trainer = SequenceTrainer(engine, seq_lr=0.2)
-        batch = make_synthetic_seq_batch([
-            (["start", "middle"], ["end"]),
-        ])
+        batch = make_synthetic_seq_batch(
+            [
+                (["start", "middle"], ["end"]),
+            ]
+        )
         trainer.train_step(batch)
         trainer.train_step(batch)
         with tempfile.TemporaryDirectory() as tmp:
@@ -783,6 +826,7 @@ class TestJointTrainer:
     def test_joint_trainer_save_load(self, engine: ED3NEngine):
         import os
         import tempfile
+
         trainer = JointTrainer(engine, dict_lr=0.05, network_lr=0.05, seq_lr=0.1, anchor_weight=0.2)
         batch = TrainingBatch(
             examples=[TrainingExample("hi", "hello", ["g1"], ["g5"], [], 0.8)],

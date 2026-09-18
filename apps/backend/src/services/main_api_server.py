@@ -93,11 +93,12 @@ except ImportError:
         exc_info=True,
     )
 
+from api.lifespan import lifespan  # noqa: E402
 from api.router import router as api_v1_router  # noqa: E402
 from fastapi import FastAPI  # noqa: E402
+
 # get_llm_service is imported lazily by ChatService during lifespan startup
 
-from api.lifespan import lifespan  # noqa: E402
 
 app = FastAPI(
     title="Angela AI API",
@@ -146,7 +147,6 @@ if __name__ == "__main__":
         run_repl_mode()
     else:
         import uvicorn
-
         from core.system.config.network_defaults import get_server_bind
 
         bind_host, bind_port = get_server_bind()

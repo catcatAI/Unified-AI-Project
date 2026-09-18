@@ -22,12 +22,14 @@ if SRC not in sys.path:
 # ContinuousMultimodalLearning Tests
 # ============================================================================
 
+
 class TestContinuousMultimodalLearning:
     """T1-T10: CML functionality."""
 
     def test_record_encode_adds_to_buffer(self):
         """T1: record_encode adds an example to the buffer."""
         from ai.multimodal.continuous_multimodal_learning import ContinuousMultimodalLearning
+
         cml = ContinuousMultimodalLearning(buffer_max=64)
         assert cml.get_stats()["buffer_size"] == 0
         cml.record_encode("vision", [0.1] * 256, [0.2] * 64, 0.8)
@@ -36,6 +38,7 @@ class TestContinuousMultimodalLearning:
     def test_record_encode_multiple_modalities(self):
         """T2: CML handles both vision and audio modality records."""
         from ai.multimodal.continuous_multimodal_learning import ContinuousMultimodalLearning
+
         cml = ContinuousMultimodalLearning(buffer_max=64)
         cml.record_encode("vision", [0.1] * 256, [0.2] * 64, 0.8)
         cml.record_encode("audio", [0.3] * 128, [0.4] * 64, 15.0)
@@ -44,6 +47,7 @@ class TestContinuousMultimodalLearning:
     def test_buffer_max_respected(self):
         """T3: Buffer does not exceed max capacity."""
         from ai.multimodal.continuous_multimodal_learning import ContinuousMultimodalLearning
+
         cml = ContinuousMultimodalLearning(buffer_max=10)
         for i in range(20):
             cml.record_encode("vision", [float(i)] * 256, [float(i)] * 64, 0.5)
@@ -53,6 +57,7 @@ class TestContinuousMultimodalLearning:
     def test_should_train_false_when_buffer_small(self):
         """T4: should_train returns False when buffer below threshold."""
         from ai.multimodal.continuous_multimodal_learning import ContinuousMultimodalLearning
+
         cml = ContinuousMultimodalLearning(auto_train_threshold=10)
         assert cml.should_train() is False
         for i in range(5):
@@ -62,6 +67,7 @@ class TestContinuousMultimodalLearning:
     def test_should_train_true_when_ready(self):
         """T5: should_train returns True when buffer >= threshold and time passed."""
         from ai.multimodal.continuous_multimodal_learning import ContinuousMultimodalLearning
+
         cml = ContinuousMultimodalLearning(auto_train_threshold=5, min_interval_sec=0)
         for i in range(5):
             cml.record_encode("vision", [float(i)] * 256, [float(i)] * 64, 0.5)
@@ -70,6 +76,7 @@ class TestContinuousMultimodalLearning:
     def test_micro_train_runs_successfully(self):
         """T6: micro_train completes without errors."""
         from ai.multimodal.continuous_multimodal_learning import ContinuousMultimodalLearning
+
         cml = ContinuousMultimodalLearning(buffer_max=32, auto_train_threshold=10)
         for i in range(10):
             cml.record_encode("vision", [float(i)] * 256, [float(i)] * 64, 0.5)
@@ -82,7 +89,10 @@ class TestContinuousMultimodalLearning:
     def test_micro_train_auto_trim(self):
         """T7: micro_train trims buffer after completion."""
         from ai.multimodal.continuous_multimodal_learning import ContinuousMultimodalLearning
-        cml = ContinuousMultimodalLearning(buffer_max=32, auto_train_threshold=5, min_interval_sec=0)
+
+        cml = ContinuousMultimodalLearning(
+            buffer_max=32, auto_train_threshold=5, min_interval_sec=0
+        )
         for i in range(8):
             cml.record_encode("vision", [float(i)] * 256, [float(i)] * 64, 0.5)
         result = cml.micro_train(epochs=2)
@@ -93,6 +103,7 @@ class TestContinuousMultimodalLearning:
     def test_quality_trend_insufficient(self):
         """T8: quality_trend returns insufficient_data when no history."""
         from ai.multimodal.continuous_multimodal_learning import ContinuousMultimodalLearning
+
         cml = ContinuousMultimodalLearning()
         trend = cml.quality_trend()
         assert trend["delta_assessment"] == "insufficient_data"
@@ -100,9 +111,12 @@ class TestContinuousMultimodalLearning:
     def test_quality_trend_with_data(self):
         """T9: quality_trend returns assessment after recording quality."""
         from ai.multimodal.continuous_multimodal_learning import ContinuousMultimodalLearning
+
         cml = ContinuousMultimodalLearning()
         for i in range(10):
-            cml.record_quality({"delta": 0.01 * i, "loss_before": 1.0, "loss_after": 1.0 - 0.01 * i})
+            cml.record_quality(
+                {"delta": 0.01 * i, "loss_before": 1.0, "loss_after": 1.0 - 0.01 * i}
+            )
         trend = cml.quality_trend()
         assert trend["delta_assessment"] in ("improving", "stable")
         assert trend["total_training_runs"] >= 0
@@ -110,6 +124,7 @@ class TestContinuousMultimodalLearning:
     def test_get_stats(self):
         """T10: get_stats returns all expected fields."""
         from ai.multimodal.continuous_multimodal_learning import ContinuousMultimodalLearning
+
         cml = ContinuousMultimodalLearning(buffer_max=64, auto_train_threshold=32)
         cml.record_encode("vision", [0.1] * 256, [0.2] * 64, 0.8)
         stats = cml.get_stats()
@@ -123,6 +138,7 @@ class TestContinuousMultimodalLearning:
 # MultimodalMemoryStore Tests
 # ============================================================================
 
+
 class TestMultimodalMemoryStore:
     """T11-T20: Memory store functionality."""
 
@@ -130,6 +146,7 @@ class TestMultimodalMemoryStore:
     async def test_store_returns_entry_id(self):
         """T11: store() returns a unique entry ID."""
         from ai.multimodal.multimodal_memory import MultimodalMemoryStore
+
         store = MultimodalMemoryStore()
         eid = await store.store("vision", [0.1] * 64, {"label": "test"})
         assert eid is not None
@@ -139,6 +156,7 @@ class TestMultimodalMemoryStore:
     async def test_store_multiple_entries(self):
         """T12: store() handles multiple entries."""
         from ai.multimodal.multimodal_memory import MultimodalMemoryStore
+
         store = MultimodalMemoryStore()
         eid1 = await store.store("vision", [0.1] * 64)
         eid2 = await store.store("audio", [0.2] * 64)
@@ -149,6 +167,7 @@ class TestMultimodalMemoryStore:
     async def test_search_returns_similar(self):
         """T13: search() returns similar latents ordered by score."""
         from ai.multimodal.multimodal_memory import MultimodalMemoryStore
+
         store = MultimodalMemoryStore()
         await store.store("vision", [0.1] * 64, {"name": "a"})
         await store.store("vision", [0.2] * 64, {"name": "b"})
@@ -163,6 +182,7 @@ class TestMultimodalMemoryStore:
     async def test_search_with_modality_filter(self):
         """T14: search() respects modality_filter."""
         from ai.multimodal.multimodal_memory import MultimodalMemoryStore
+
         store = MultimodalMemoryStore()
         await store.store("vision", [0.1] * 64)
         await store.store("audio", [0.1] * 64)
@@ -173,6 +193,7 @@ class TestMultimodalMemoryStore:
     async def test_recall_by_time(self):
         """T15: recall_by_time returns entries within time window."""
         from ai.multimodal.multimodal_memory import MultimodalMemoryStore
+
         store = MultimodalMemoryStore()
         await store.store("vision", [0.1] * 64)
         results = await store.recall_by_time(hours=24)
@@ -185,6 +206,7 @@ class TestMultimodalMemoryStore:
     async def test_recall_by_time_with_modality(self):
         """T16: recall_by_time respects modality_filter."""
         from ai.multimodal.multimodal_memory import MultimodalMemoryStore
+
         store = MultimodalMemoryStore()
         await store.store("vision", [0.1] * 64)
         await store.store("audio", [0.2] * 64)
@@ -195,6 +217,7 @@ class TestMultimodalMemoryStore:
     async def test_get_entry(self):
         """T17: get_entry returns stored entry."""
         from ai.multimodal.multimodal_memory import MultimodalMemoryStore
+
         store = MultimodalMemoryStore()
         eid = await store.store("vision", [0.1] * 64, {"label": "test"})
         entry = await store.get_entry(eid)
@@ -206,6 +229,7 @@ class TestMultimodalMemoryStore:
     async def test_get_nonexistent_entry(self):
         """T18: get_entry returns None for unknown ID."""
         from ai.multimodal.multimodal_memory import MultimodalMemoryStore
+
         store = MultimodalMemoryStore()
         entry = await store.get_entry("nonexistent")
         assert entry is None
@@ -214,6 +238,7 @@ class TestMultimodalMemoryStore:
     async def test_stats(self):
         """T19: stats returns expected fields."""
         from ai.multimodal.multimodal_memory import MultimodalMemoryStore
+
         store = MultimodalMemoryStore()
         await store.store("vision", [0.1] * 64)
         await store.store("audio", [0.2] * 64)
@@ -226,6 +251,7 @@ class TestMultimodalMemoryStore:
     async def test_compact_and_cleanup(self):
         """T20: compact() runs without errors."""
         from ai.multimodal.multimodal_memory import MultimodalMemoryStore
+
         store = MultimodalMemoryStore(ttl_days=0, ttl_compact_days=0)  # Expire immediately
         await store.store("vision", [0.1] * 64)
         result = await store.compact()

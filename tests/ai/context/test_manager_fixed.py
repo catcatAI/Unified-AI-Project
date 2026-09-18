@@ -31,14 +31,14 @@ class TestContextManager:
 
     def test_create_context(self):
         mgr = ContextManager()
-        ctx_id = mgr.create_context(ContextType.TOOL, {'key': 'value'})
+        ctx_id = mgr.create_context(ContextType.TOOL, {"key": "value"})
         assert ctx_id is not None
         assert isinstance(ctx_id, str)
         assert ctx_id in mgr._context_cache
         ctx = mgr.get_context(ctx_id)
         assert ctx is not None
         assert ctx.context_type == ContextType.TOOL
-        assert ctx.content['key'] == 'value'
+        assert ctx.content["key"] == "value"
 
     def test_create_context_without_content(self):
         mgr = ContextManager()
@@ -56,7 +56,7 @@ class TestContextManager:
 
     def test_get_context_not_found(self):
         mgr = ContextManager()
-        assert mgr.get_context('nonexistent') is None
+        assert mgr.get_context("nonexistent") is None
 
     def test_get_context_from_cache(self):
         mgr = ContextManager()
@@ -70,16 +70,16 @@ class TestContextManager:
 
     def test_update_context(self):
         mgr = ContextManager()
-        ctx_id = mgr.create_context(ContextType.TOOL, {'a': 1})
-        result = mgr.update_context(ctx_id, {'b': 2})
+        ctx_id = mgr.create_context(ContextType.TOOL, {"a": 1})
+        result = mgr.update_context(ctx_id, {"b": 2})
         assert result is True
         ctx = mgr.get_context(ctx_id)
-        assert ctx.content['a'] == 1
-        assert ctx.content['b'] == 2
+        assert ctx.content["a"] == 1
+        assert ctx.content["b"] == 2
 
     def test_update_context_not_found(self):
         mgr = ContextManager()
-        result = mgr.update_context('nonexistent', {'a': 1})
+        result = mgr.update_context("nonexistent", {"a": 1})
         assert result is False
 
     def test_delete_context(self):
@@ -92,76 +92,76 @@ class TestContextManager:
     def test_delete_context_not_found(self):
         mgr = ContextManager()
         # Deleting nonexistent should return False (both storage delete return False)
-        result = mgr.delete_context('nonexistent')
+        result = mgr.delete_context("nonexistent")
         assert result is False
 
     def test_search_contexts(self):
         mgr = ContextManager()
         mgr.disk_storage.list_contexts = MagicMock(return_value=[])
-        ctx_id = mgr.create_context(ContextType.TOOL, {'name': 'calculator'})
-        mgr.create_context(ContextType.MEMORY, {'name': 'memories'})
-        results = mgr.search_contexts('calculator')
+        ctx_id = mgr.create_context(ContextType.TOOL, {"name": "calculator"})
+        mgr.create_context(ContextType.MEMORY, {"name": "memories"})
+        results = mgr.search_contexts("calculator")
         assert len(results) == 1
         assert results[0].context_id == ctx_id
 
     def test_search_contexts_by_type(self):
         mgr = ContextManager()
         mgr.disk_storage.list_contexts = MagicMock(return_value=[])
-        mgr.create_context(ContextType.TOOL, {'name': 'hammer'})
-        mgr.create_context(ContextType.MEMORY, {'name': 'hammer'})
-        results = mgr.search_contexts('hammer', context_types=[ContextType.TOOL])
+        mgr.create_context(ContextType.TOOL, {"name": "hammer"})
+        mgr.create_context(ContextType.MEMORY, {"name": "hammer"})
+        results = mgr.search_contexts("hammer", context_types=[ContextType.TOOL])
         assert len(results) == 1
         assert results[0].context_type == ContextType.TOOL
 
     def test_transfer_context(self):
         mgr = ContextManager()
-        src_id = mgr.create_context(ContextType.TOOL, {'data': 'important'})
+        src_id = mgr.create_context(ContextType.TOOL, {"data": "important"})
         tgt_id = mgr.create_context(ContextType.TOOL, {})
         result = mgr.transfer_context(src_id, tgt_id)
         assert result is True
         tgt = mgr.get_context(tgt_id)
-        assert tgt.content['data'] == 'important'
+        assert tgt.content["data"] == "important"
 
     def test_transfer_context_source_not_found(self):
         mgr = ContextManager()
         tgt_id = mgr.create_context(ContextType.TOOL)
-        assert mgr.transfer_context('nonexistent', tgt_id) is False
+        assert mgr.transfer_context("nonexistent", tgt_id) is False
 
     def test_transfer_context_target_not_found(self):
         mgr = ContextManager()
         src_id = mgr.create_context(ContextType.TOOL)
-        assert mgr.transfer_context(src_id, 'nonexistent') is False
+        assert mgr.transfer_context(src_id, "nonexistent") is False
 
     def test_transfer_context_with_filter(self):
         mgr = ContextManager()
-        src_id = mgr.create_context(ContextType.TOOL, {'keep': 'this', 'drop': 'that'})
+        src_id = mgr.create_context(ContextType.TOOL, {"keep": "this", "drop": "that"})
         tgt_id = mgr.create_context(ContextType.TOOL, {})
-        result = mgr.transfer_context(src_id, tgt_id, filter_criteria={'drop': 'other'})
+        result = mgr.transfer_context(src_id, tgt_id, filter_criteria={"drop": "other"})
         assert result is True
         tgt = mgr.get_context(tgt_id)
-        assert 'keep' in tgt.content
-        assert 'drop' not in tgt.content
+        assert "keep" in tgt.content
+        assert "drop" not in tgt.content
 
     def test_get_context_summary(self):
         mgr = ContextManager()
-        ctx_id = mgr.create_context(ContextType.TOOL, {'key': 'val'})
+        ctx_id = mgr.create_context(ContextType.TOOL, {"key": "val"})
         summary = mgr.get_context_summary(ctx_id)
-        assert summary['context_id'] == ctx_id
-        assert summary['context_type'] == 'tool'
-        assert summary['content_keys'] == ['key']
-        assert summary['status'] == 'active'
+        assert summary["context_id"] == ctx_id
+        assert summary["context_type"] == "tool"
+        assert summary["content_keys"] == ["key"]
+        assert summary["status"] == "active"
 
     def test_get_context_summary_not_found(self):
         mgr = ContextManager()
-        assert mgr.get_context_summary('nonexistent') == {}
+        assert mgr.get_context_summary("nonexistent") == {}
 
     def test_context_lifecycle(self):
         mgr = ContextManager()
-        ctx_id = mgr.create_context(ContextType.DIALOGUE, {'msg': 'hello'})
+        ctx_id = mgr.create_context(ContextType.DIALOGUE, {"msg": "hello"})
         assert mgr.get_context(ctx_id) is not None
-        assert mgr.update_context(ctx_id, {'msg': 'world'}) is True
+        assert mgr.update_context(ctx_id, {"msg": "world"}) is True
         ctx = mgr.get_context(ctx_id)
-        assert ctx.content['msg'] == 'world'
+        assert ctx.content["msg"] == "world"
         assert mgr.delete_context(ctx_id) is True
         assert mgr.get_context(ctx_id) is None
 
@@ -169,21 +169,25 @@ class TestContextManager:
 class TestGetContextManager:
     def setup_method(self):
         from apps.backend.src.ai.context.manager_fixed import _context_manager
+
         self._old = _context_manager
 
     def teardown_method(self):
         import apps.backend.src.ai.context.manager_fixed as m
         from apps.backend.src.ai.context.manager_fixed import _context_manager
+
         m._context_manager = self._old
 
     def test_get_context_manager(self):
         from apps.backend.src.ai.context import manager_fixed as m
+
         m._context_manager = None
         instance = get_context_manager()
         assert isinstance(instance, ContextManager)
 
     def test_get_context_manager_singleton(self):
         from apps.backend.src.ai.context import manager_fixed as m
+
         m._context_manager = None
         instance1 = get_context_manager()
         instance2 = get_context_manager()
@@ -191,6 +195,7 @@ class TestGetContextManager:
 
     def test_get_context_manager_with_storage(self):
         from apps.backend.src.ai.context import manager_fixed as m
+
         m._context_manager = None
         mock_mem = MagicMock()
         mock_disk = MagicMock()

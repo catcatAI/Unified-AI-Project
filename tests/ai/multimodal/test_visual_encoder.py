@@ -6,6 +6,7 @@ from PIL import Image
 @pytest.fixture
 def encoder():
     from ai.multimodal.visual_encoder import VisualEncoder
+
     return VisualEncoder()
 
 
@@ -13,6 +14,7 @@ def encoder():
 def sample_image_bytes():
     img = Image.new("RGB", (64, 64), color=(128, 64, 32))
     import io
+
     buf = io.BytesIO()
     img.save(buf, format="PNG")
     return buf.getvalue()

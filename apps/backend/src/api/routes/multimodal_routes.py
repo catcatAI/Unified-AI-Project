@@ -260,7 +260,8 @@ async def cross_infer_endpoint(
         data = await file.read()
         if len(data) > _MAX_UPLOAD_BYTES:
             raise HTTPException(
-                status_code=413, detail=f"File too large: {len(data)} bytes > {_MAX_UPLOAD_BYTES} limit"
+                status_code=413,
+                detail=f"File too large: {len(data)} bytes > {_MAX_UPLOAD_BYTES} limit",
             )
     if not data and not item_id:
         # If no data and no item_id, still can do cross-modal comparison

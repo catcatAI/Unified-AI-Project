@@ -23,8 +23,8 @@ Date: 2026-02-02
 from __future__ import annotations
 
 import asyncio
-import inspect
 import heapq
+import inspect
 import logging
 import time
 from collections import defaultdict, deque
@@ -761,9 +761,7 @@ class EventLoopSystem:
         """Get list of pending events (snapshot for external access)."""
         async with self.queue._lock:
             pending = [
-                event
-                for _, _, event in self.queue._queue
-                if event.status == EventStatus.PENDING
+                event for _, _, event in self.queue._queue if event.status == EventStatus.PENDING
             ]
         # Sort by (priority level, sequence) to mirror queue ordering
         return sorted(pending, key=lambda e: (e.priority.level, e.timestamp))

@@ -18,6 +18,16 @@ Intentional design (capacity / precision-loss, not truncation):
     single config source governs growth.
 """
 
+from ai.data_eng.assemble import (
+    decode_slot_budget,
+    select_anchored_keys,
+)
+from ai.data_eng.chunk import (
+    split_paragraphs,
+    split_sections,
+    split_sentence_blocks,
+    split_sentences,
+)
 from ai.data_eng.dedup import (
     count_suffix_key,
     download_dedup_key,
@@ -32,16 +42,6 @@ from ai.data_eng.grow import (
     growth_cap_ok,
     growth_gate_batch,
     resolved_max_entries,
-)
-from ai.data_eng.chunk import (
-    split_paragraphs,
-    split_sections,
-    split_sentence_blocks,
-    split_sentences,
-)
-from ai.data_eng.assemble import (
-    decode_slot_budget,
-    select_anchored_keys,
 )
 
 __all__ = [

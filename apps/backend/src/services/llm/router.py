@@ -191,6 +191,7 @@ TaskGenerator: Any = None
 
 # New subsystem imports (extracted from this module)
 from services.llm.emotion_analyzer import EmotionAnalyzer
+
 # MemoryIntegration imported lazily inside __init__ to avoid circular import:
 # router.py -> memory_integration.py -> (TYPE_CHECKING) -> router.py
 
@@ -326,6 +327,7 @@ class AngelaLLMService:
         # ========== 记忆集成系统（委派到 MemoryIntegration）==========
         # Lazy import to break circular: router -> memory_integration -> (TYPE_CHECKING) -> router
         from services.llm.memory_integration import MemoryIntegration
+
         self.memory_integration = MemoryIntegration(self)
 
         routing = self.config.get("routing") or {}
@@ -698,13 +700,16 @@ class AngelaLLMService:
         """
         try:
             from core.backbone.hardware import HardwareProfile
+
             hw = HardwareProfile.detect()
             adaptive = HardwareProfile.get_adaptive_compute(hw)
             usable = adaptive["usable_ram_gb"]
             # Qwen2-0.5B Q4 ~0.8GB, Phi-3-mini 2.2GB, need +2GB OS reserve already in usable
             feasible = bool(usable >= need_gb)
             if not feasible:
-                logger.info(f"本地模型需 {need_gb}GB 可用 RAM，當前 {usable}GB 不足 → 跳過註冊（硬件自適應，{hw['gpu']} tier={HardwareProfile.get_tier(hw)}）")
+                logger.info(
+                    f"本地模型需 {need_gb}GB 可用 RAM，當前 {usable}GB 不足 → 跳過註冊（硬件自適應，{hw['gpu']} tier={HardwareProfile.get_tier(hw)}）"
+                )
             return feasible
         except Exception as e:
             logger.debug(f"硬件自適應檢查失敗，允許註冊（fallback）: {e}")
@@ -733,7 +738,9 @@ class AngelaLLMService:
         if LLMBackend.OLLAMA not in self.backends:
             # Ollama 本地模型同樣硬件自適應（L2-5）
             need = 0.8 if "0.5" in (model_name or "") else 1.0
-            if os.environ.get("ANGELA_FORCE_LOCAL") != "1" and not self._is_local_model_feasible(need):
+            if os.environ.get("ANGELA_FORCE_LOCAL") != "1" and not self._is_local_model_feasible(
+                need
+            ):
                 logger.info(f"跳過 Ollama {model_name}（硬件不足，需 {need}GB）")
                 return
             self.backends[LLMBackend.OLLAMA] = OllamaBackend(
@@ -836,9 +843,7 @@ class AngelaLLMService:
                     )
                     return True
 
-            logger.warning(
-                "[auto] NeuroAutoSelector 未能選擇可用後端，使用標準初始化"
-            )
+            logger.warning("[auto] NeuroAutoSelector 未能選擇可用後端，使用標準初始化")
         except Exception as e:
             logger.warning(
                 f"[auto] NeuroAutoSelector 初始化失敗: {e}，使用標準初始化", exc_info=True
@@ -859,9 +864,7 @@ class AngelaLLMService:
             elif selection == "available":
                 logger.info(f"✗ {backend_type.value} 後端健康檢查失敗，從可用清單移除")
         if selection == "available":
-            self.backends = {
-                bt: b for bt, b in self.backends.items() if bt in available
-            }
+            self.backends = {bt: b for bt, b in self.backends.items() if bt in available}
 
         if not available:
             logger.warning("沒有可用的 LLM 後端，將使用備份回應機制")
@@ -937,7 +940,9 @@ class AngelaLLMService:
         ranked = sorted(available, key=_rank)
         # User-persisted preference (Desktop Settings → llm.user.yaml
         # settings.preferred_backend) wins when it names an available backend.
-        preferred = str((self.config.get("settings") or {}).get("preferred_backend", "")).strip().lower()
+        preferred = (
+            str((self.config.get("settings") or {}).get("preferred_backend", "")).strip().lower()
+        )
         if preferred:
             matched = next(
                 (
@@ -980,8 +985,8 @@ class AngelaLLMService:
 
     def _register_model_bus_handlers(self):
         try:
-            from services.handlers.code_execution_handler import CodeExecutionHandler
             from services.handlers.civil_model_handler import CivilModelHandler
+            from services.handlers.code_execution_handler import CodeExecutionHandler
             from services.handlers.file_operation_handler import FileOperationHandler
             from services.handlers.learning_handler import LearningHandler
             from services.handlers.system_command_handler import SystemCommandHandler
@@ -994,19 +999,45 @@ class AngelaLLMService:
                 return
             bus.register_handler("file_ops", FileOperationHandler(), ["file"])
             bus.register_handler("web_search", WebSearchHandler(), ["search"])
-            bus.register_handler(
-                "code_exec", CodeExecutionHandler(), ["code", "execute"]
-            )
+            bus.register_handler("code_exec", CodeExecutionHandler(), ["code", "execute"])
             bus.register_handler("system_cmd", SystemCommandHandler(), ["system"])
             bus.register_handler("task_mgr", TaskManagerHandler(), ["task"])
             bus.register_handler("vision", VisionHandler(), ["vision"])
             bus.register_handler("learning", LearningHandler(), ["learn", "remember"])
             bus.register_handler(
-                "civil", CivilModelHandler(),
-                ["beam", "bridge", "column", "slab", "concrete", "CAD", "STEP", "STL",
-                 "DXF", "box", "tbeam", "steel", "truss", "prestress",
-                 "梁", "柱", "板", "橋", "箱", "鋼", "桁架", "預力", "预力",
-                 "護欄", "支座", "混凝土", "建模", "出圖", "計算"],
+                "civil",
+                CivilModelHandler(),
+                [
+                    "beam",
+                    "bridge",
+                    "column",
+                    "slab",
+                    "concrete",
+                    "CAD",
+                    "STEP",
+                    "STL",
+                    "DXF",
+                    "box",
+                    "tbeam",
+                    "steel",
+                    "truss",
+                    "prestress",
+                    "梁",
+                    "柱",
+                    "板",
+                    "橋",
+                    "箱",
+                    "鋼",
+                    "桁架",
+                    "預力",
+                    "预力",
+                    "護欄",
+                    "支座",
+                    "混凝土",
+                    "建模",
+                    "出圖",
+                    "計算",
+                ],
             )
             logger.info(
                 "Model Bus handlers registered: file_ops, web_search, code_exec, system_cmd, task_mgr, vision, learning, civil"
@@ -1104,9 +1135,11 @@ class AngelaLLMService:
             )
         # Backup: if no Pipeline context, try MathVerifier directly
         import re as _re_math
+
         if _re_math.search(r"\d\s*[+\-*/^%()\s]+\d", user_message):
             try:
                 from services.math_verifier import MathVerifier
+
                 mv = MathVerifier()
                 vr = mv.verify(user_message)
                 if vr.is_correct:
@@ -1156,7 +1189,10 @@ class AngelaLLMService:
             _qc = QueryClassifier()
             _qr = _qc.classify(user_message)
             # Knowledge/creative/opinion/search are question-like; greeting/reflex are not
-            _is_question_like = _qr.primary_type not in (QueryType.UNKNOWN, QueryType.GREETING, QueryType.REFLEX) and _qr.confidence > 0.35
+            _is_question_like = (
+                _qr.primary_type not in (QueryType.UNKNOWN, QueryType.GREETING, QueryType.REFLEX)
+                and _qr.confidence > 0.35
+            )
         except Exception as exc:
             logger.debug("QueryClassifier failed, falling back to regex: %s", exc)
         if not _is_question_like:
@@ -1189,11 +1225,24 @@ class AngelaLLMService:
                 mode = (self.config.get("deployment") or {}).get("mode", "local")
                 others = [bt for bt in self.backends if bt != LLMBackend.UNIFIED]
                 if mode in ("local+llm", "llm", "auto") and others:
-                    for bt in sorted(others, key=lambda x: int(
-                        (self.config.get("backends") or {}).get(
-                            next((bid for bid, c in (self.config.get("backends") or {}).items()
-                                  if str(c.get("provider")) == x.value), {}),
-                            {}).get("priority", 99))):
+                    for bt in sorted(
+                        others,
+                        key=lambda x: int(
+                            (self.config.get("backends") or {})
+                            .get(
+                                next(
+                                    (
+                                        bid
+                                        for bid, c in (self.config.get("backends") or {}).items()
+                                        if str(c.get("provider")) == x.value
+                                    ),
+                                    {},
+                                ),
+                                {},
+                            )
+                            .get("priority", 99)
+                        ),
+                    ):
                         try:
                             healthy = await self.backends[bt].check_health()
                         except Exception:
@@ -1426,7 +1475,8 @@ class AngelaLLMService:
                 logger.debug("semantic_qa check failed: %s", _e)
         # pick best non-unified backend
         candidates = [
-            bt for bt in self.backends
+            bt
+            for bt in self.backends
             if bt != LLMBackend.UNIFIED and bt.value in self._allowed_types()
         ]
         if not candidates:
@@ -1439,11 +1489,24 @@ class AngelaLLMService:
                 ok = False
             return ok
 
-        for bt in sorted(candidates, key=lambda x: int(
+        for bt in sorted(
+            candidates,
+            key=lambda x: int(
                 (self.config.get("backends") or {})
-                .get(next((bid for bid, c in (self.config.get("backends") or {}).items()
-                           if c.get("provider") == x.value), {}),
-                    {}).get("priority", 99))):
+                .get(
+                    next(
+                        (
+                            bid
+                            for bid, c in (self.config.get("backends") or {}).items()
+                            if c.get("provider") == x.value
+                        ),
+                        {},
+                    ),
+                    {},
+                )
+                .get("priority", 99)
+            ),
+        ):
             if await _rank(bt):
                 logger.info(f"[fusion] open-domain → {bt.value} (unified context carried)")
                 try:
@@ -1506,8 +1569,7 @@ class AngelaLLMService:
         result.metadata["route"] = "neural_bridge"
         result.response_time_ms = response_time_ms
         logger.info(
-            f"NeuralBridge route: {response_time_ms:.0f}ms "
-            f"(bypassed LLM text transfer)"
+            f"NeuralBridge route: {response_time_ms:.0f}ms " f"(bypassed LLM text transfer)"
         )
         self.stats["total_response_time"] += response_time_ms
         return result
@@ -1559,6 +1621,7 @@ class AngelaLLMService:
                 try:
                     from ai.memory.memory_template import ResponseCategory
                     from ai.memory.template_library import get_template_library
+
                     lib = get_template_library()
                     chosen = None
                     # Try preferred template ID first
@@ -1574,6 +1637,7 @@ class AngelaLLMService:
                         templates = lib.get_by_category(cat)
                         if templates:
                             import random as _rand
+
                             chosen = _rand.choice(templates)
                     if chosen:
                         response_time = (time.time() - start_time) * 1000
@@ -1599,12 +1663,13 @@ class AngelaLLMService:
                 try:
                     from ai.memory.memory_template import ResponseCategory
                     from ai.memory.template_library import get_template_library
+
                     _lib = get_template_library()
                     _input_lower = user_message.strip().lower()
                     _best_cat = None
                     _best_overlap = 0
                     for _t in _lib.get_all_templates():
-                        for _kw in (getattr(_t, 'keywords', []) or []):
+                        for _kw in getattr(_t, "keywords", []) or []:
                             _kw_lower = _kw.lower().strip()
                             if _kw_lower and len(_kw_lower) >= 2 and _kw_lower in _input_lower:
                                 if len(_kw_lower) > _best_overlap:
@@ -1637,6 +1702,7 @@ class AngelaLLMService:
                             _tpls_e = _lib.get_by_category(_cat_e)
                             if _tpls_e:
                                 import random as _rand_e
+
                                 _ch_e = _rand_e.choice(_tpls_e)
                                 _rt_e = (time.time() - start_time) * 1000
                                 self.stats["composed_responses"] += 1
@@ -1655,10 +1721,22 @@ class AngelaLLMService:
                             pass
                     # Structural pattern fallback for greeting/farewell only
                     _PATTERN_CATEGORY = {
-                        "farewell": ["good night", "goodnight", "晚安", "see you",
-                                     "see ya", "see you later"],
-                        "greeting": ["morning", "good morning", "早上好", "午安",
-                                     "afternoon", "evening"],
+                        "farewell": [
+                            "good night",
+                            "goodnight",
+                            "晚安",
+                            "see you",
+                            "see ya",
+                            "see you later",
+                        ],
+                        "greeting": [
+                            "morning",
+                            "good morning",
+                            "早上好",
+                            "午安",
+                            "afternoon",
+                            "evening",
+                        ],
                     }
                     _input_lower2 = user_message.strip().lower()
                     for _cat_name, _patterns in _PATTERN_CATEGORY.items():
@@ -1668,29 +1746,32 @@ class AngelaLLMService:
                                     _cat = ResponseCategory(_cat_name)
                                     _tpls = _lib.get_by_category(_cat)
                                     if not _tpls:
-                                            # Fallback: try a related category
-                                            _FALLBACK = {"support": "affirmation",
-                                                         "apology": "affirmation",
-                                                         "gratitude": "affirmation"}
-                                            _fb = _FALLBACK.get(_cat_name)
-                                            if _fb:
-                                                _tpls = _lib.get_by_category(ResponseCategory(_fb))
+                                        # Fallback: try a related category
+                                        _FALLBACK = {
+                                            "support": "affirmation",
+                                            "apology": "affirmation",
+                                            "gratitude": "affirmation",
+                                        }
+                                        _fb = _FALLBACK.get(_cat_name)
+                                        if _fb:
+                                            _tpls = _lib.get_by_category(ResponseCategory(_fb))
                                     if not _tpls:
                                         break  # no templates for this category, try next pattern
                                     import random as _rand3
+
                                     _ch = _rand3.choice(_tpls)
                                     _rt2 = (time.time() - start_time) * 1000
                                     self.stats["composed_responses"] += 1
                                     return ChatResponse(
-                                            text=_ch.content,
-                                            backend="composed-template",
-                                            model="template-based",
-                                            tokens_used=50,
-                                            response_time_ms=_rt2,
-                                            confidence=0.8,
-                                            hit_score=0.8,
-                                            hit_source="pattern-category",
-                                            route="COMPOSED",
+                                        text=_ch.content,
+                                        backend="composed-template",
+                                        model="template-based",
+                                        tokens_used=50,
+                                        response_time_ms=_rt2,
+                                        confidence=0.8,
+                                        hit_score=0.8,
+                                        hit_source="pattern-category",
+                                        route="COMPOSED",
                                     )
                                 except Exception:
                                     pass
@@ -1700,7 +1781,6 @@ class AngelaLLMService:
                         break
                 except Exception:
                     pass
-
 
             match_result = self.template_matcher.match(user_message, context)
             match_score = match_result.score
@@ -1974,13 +2054,19 @@ class AngelaLLMService:
                 sub_type = intent_result.get("sub_type", "")
                 if sub_type in ("greeting", "farewell"):
                     try:
-                        from ai.memory.template_library import get_template_library
                         from ai.memory.memory_template import ResponseCategory
+                        from ai.memory.template_library import get_template_library
+
                         lib = get_template_library()
-                        cat = ResponseCategory.GREETING if sub_type == "greeting" else ResponseCategory.FAREWELL
+                        cat = (
+                            ResponseCategory.GREETING
+                            if sub_type == "greeting"
+                            else ResponseCategory.FAREWELL
+                        )
                         templates = lib.get_by_category(cat)
                         if templates:
                             import random as _rand
+
                             text = _rand.choice(templates).content
                             return LLMResponse(
                                 text=text,
@@ -2027,20 +2113,23 @@ class AngelaLLMService:
                     )
                     normalized_msg = user_message.translate(_T2S).lower()
                     # CJK: single-char granularity (难 vs 别难过 share 难+过)
-                    user_words = set(_re2.findall(
-                        r"[\u4e00-\u9fff]|[A-Za-z]{3,}", normalized_msg,
-                    ))
+                    user_words = set(
+                        _re2.findall(
+                            r"[\u4e00-\u9fff]|[A-Za-z]{3,}",
+                            normalized_msg,
+                        )
+                    )
                     scored = []
                     for t in templates:
                         c = str(getattr(t, "content", ""))
-                        tw = set(_re2.findall(
-                            r"[\u4e00-\u9fff]|[A-Za-z]{3,}", c.lower()
-                        ))
+                        tw = set(_re2.findall(r"[\u4e00-\u9fff]|[A-Za-z]{3,}", c.lower()))
                         overlap = len(user_words & tw)
                         scored.append((overlap, c))
                     scored.sort(key=lambda x: -x[0])
-                    best_text = scored[0][1] if scored and scored[0][0] > 0 else random.choice(
-                        [c for _, c in scored]
+                    best_text = (
+                        scored[0][1]
+                        if scored and scored[0][0] > 0
+                        else random.choice([c for _, c in scored])
                     )
                     text = best_text.replace("{user_name}", context.get("user_name", "朋友"))
                     return LLMResponse(
@@ -2048,8 +2137,7 @@ class AngelaLLMService:
                         backend="local-fallback",
                         model="support-template",
                         confidence=0.5,
-                        metadata={"fallback": True, "tier": "support",
-                                  "emotion": dominant},
+                        metadata={"fallback": True, "tier": "support", "emotion": dominant},
                     )
             except Exception as exc:
                 logger.warning(f"Support template fallback failed: {exc}")
@@ -2229,7 +2317,9 @@ class AngelaLLMService:
                 intent_vec[_key] = max(_base * _qr.confidence, intent_vec.get(_key, 0.0))
             if _qr.secondary_type and _qr.secondary_type in _type_to_intent:
                 _key2, _base2 = _type_to_intent[_qr.secondary_type]
-                intent_vec[_key2] = max(_base2 * _qr.secondary_confidence * 0.5, intent_vec.get(_key2, 0.0))
+                intent_vec[_key2] = max(
+                    _base2 * _qr.secondary_confidence * 0.5, intent_vec.get(_key2, 0.0)
+                )
         except Exception as exc:
             logger.debug("QueryClassifier intent_vec fallback: %s", exc)
 
@@ -2469,9 +2559,7 @@ class AngelaLLMService:
         # keeps everything it is good at; LLM covers what n-grams cannot.
         cloud_resp = await self._maybe_cloud_fusion(user_message, context, gen_params)
         if cloud_resp is not None:
-            return await self._post_process_response(
-                cloud_resp, user_message, context, start_time
-            )
+            return await self._post_process_response(cloud_resp, user_message, context, start_time)
 
         try:
             response = await self._call_llm_backend(user_message, context, gen_params)
@@ -2611,7 +2699,8 @@ class AngelaLLMService:
             if isinstance(md, dict):
                 route = str(md.get("route", ""))
             if route in ("statistical-core", "none") or (
-                not route and "=" in (response.text or "")[:80]
+                not route
+                and "=" in (response.text or "")[:80]
                 and (response.text or "").strip().lower().endswith(("=true", "=false"))
             ):
                 logger.debug("Skipped template storage for stat-core guess")
@@ -2629,12 +2718,14 @@ class AngelaLLMService:
             # template pool: single-token answers, echo-answers ("X=X"),
             # pure numbers, or very short responses.
             import re as _re_trash
+
             _text_raw = (response.text or "").strip()
             if (
                 len(_text_raw) < 5
                 or _re_trash.match(r"^[\w\s.=/+\-*]+$", _text_raw)
                 or _re_trash.match(r"^[\d.\s]+$", _text_raw)
-                or "=" in _text_raw and len(_text_raw.split("=")) == 2
+                or "=" in _text_raw
+                and len(_text_raw.split("=")) == 2
                 and _text_raw.split("=")[0].strip() == _text_raw.split("=")[1].strip()
             ):
                 logger.debug("Skipped template storage for trivial/garbage response")
@@ -2905,7 +2996,7 @@ class AngelaLLMService:
                         temperature=temperature,
                         max_tokens=max_tokens,
                     ),
-                timeout=timeout_value("llm.generate_text", 60.0),
+                    timeout=timeout_value("llm.generate_text", 60.0),
                 )
 
             chat_resp = await _call_with_retry(_do_chat, label="chat_completion")

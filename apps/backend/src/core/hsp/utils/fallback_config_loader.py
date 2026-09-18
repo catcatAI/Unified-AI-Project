@@ -131,7 +131,9 @@ class FallbackConfigLoader:
     def get_protocol_config(self, protocol_name: str) -> Dict[str, Any]:
         """获取特定协议的配置"""
         fallback_config = self.get_fallback_config()
-        protocols = fallback_config.get("protocols", {}) if isinstance(fallback_config, dict) else {}
+        protocols = (
+            fallback_config.get("protocols", {}) if isinstance(fallback_config, dict) else {}
+        )
         if isinstance(protocols, dict):
             return protocols.get(protocol_name, {})
         return {}

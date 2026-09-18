@@ -149,7 +149,12 @@ class HardwareProbe:
                     return "Apple Silicon"
                 return "Unknown GPU"
             else:
-                result = subprocess.run(["lspci"], capture_output=True, text=True, timeout=timeout_value("hardware.lspci", 5))
+                result = subprocess.run(
+                    ["lspci"],
+                    capture_output=True,
+                    text=True,
+                    timeout=timeout_value("hardware.lspci", 5),
+                )
                 for line in result.stdout.split("\n"):
                     if "VGA" in line or "3D" in line or "Display" in line:
                         return line.strip()

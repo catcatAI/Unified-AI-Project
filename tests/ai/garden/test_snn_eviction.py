@@ -13,7 +13,6 @@ without truncating the input dataset or blowing up V**2 memory.
 import time
 
 import pytest
-
 from ai.garden.snn_core import TensorSNNCore
 
 

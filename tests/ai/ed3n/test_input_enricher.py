@@ -19,6 +19,7 @@ from ai.ed3n.input_enricher import EnrichedInput, InputEnricher
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 def _make_dict() -> DictionaryLayer:
     """Build a minimal DictionaryLayer with preset entries."""
     d = DictionaryLayer()

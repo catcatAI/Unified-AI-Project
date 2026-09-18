@@ -97,12 +97,12 @@ class TestSequenceGeneratorTrain:
         gen = SequenceGenerator()
         clip_emb = np.random.randn(512).astype(np.float32)
         targets = [np.random.randn(128).astype(np.float32) for _ in range(3)]
-        
+
         losses = []
         for _ in range(50):
             loss = gen.train_step(clip_emb, targets, lr=0.01)
             losses.append(loss)
-        
+
         # Loss should decrease
         assert losses[-1] < losses[0]
 
@@ -116,9 +116,10 @@ class TestSequenceGeneratorTrain:
         gen = SequenceGenerator(hidden_dim=32)
         n_samples = 10
         clip_embs = [np.random.randn(512).astype(np.float32) for _ in range(n_samples)]
-        sequences = [[np.random.randn(128).astype(np.float32) for _ in range(3)]
-                     for _ in range(n_samples)]
-        
+        sequences = [
+            [np.random.randn(128).astype(np.float32) for _ in range(3)] for _ in range(n_samples)
+        ]
+
         result = gen.train(clip_embs, sequences, epochs=30, lr=0.005)
         assert result["final_loss"] < result["history"][0]
 
@@ -145,16 +146,16 @@ class TestSequenceGeneratorSaveLoad:
         gen = SequenceGenerator(hidden_dim=32)
         clip_emb = np.random.randn(512).astype(np.float32)
         gen.generate_deterministic(clip_emb)  # Touch weights
-        
+
         path = str(tmp_path / "gen.json")
         gen.save(path)
-        
+
         loaded = SequenceGenerator.load(path)
         assert loaded.input_dim == gen.input_dim
         assert loaded.hidden_dim == gen.hidden_dim
         assert loaded.primitive_dim == gen.primitive_dim
         assert loaded.is_trained is True
-        
+
         # Should produce same output
         r1 = gen.generate_deterministic(clip_emb)
         r2 = loaded.generate_deterministic(clip_emb)

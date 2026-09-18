@@ -175,7 +175,6 @@ class CrisisSystem:
         elif action_details == "notify_human_moderator":  # Example from previous version
             logging.critical(
                 f"CRITICAL_ALERT: Human moderator notification required for crisis level {level}. Details: {details}",
-
             )
         elif action_details == "log_only":
             logging.info(f"CRISIS_INFO: Level {level} event logged. Details: {details}")

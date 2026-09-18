@@ -1,4 +1,5 @@
 """NPC system — default NPCs with routines, schedules, relationships."""
+
 from __future__ import annotations
 
 import random
@@ -8,6 +9,7 @@ from dataclasses import dataclass, field
 @dataclass
 class NPCRoutine:
     """A time-based routine for an NPC."""
+
     time_start: int  # hour (0-23)
     time_end: int
     activity: str
@@ -18,6 +20,7 @@ class NPCRoutine:
 @dataclass
 class NPC:
     """Non-player character with behavior."""
+
     card_id: str
     name: str
     description: str = ""
@@ -45,7 +48,7 @@ class NPC:
         return self._i18n_fallback("未知", "Unknown", "不明")
 
     def _i18n_fallback(self, zh: str, en: str, ja: str) -> str:
-        lang = getattr(self, '_lang', 'zh')
+        lang = getattr(self, "_lang", "zh")
         return {"zh": zh, "en": en, "ja": ja}.get(lang, zh)
 
     def get_greeting(self) -> str:
@@ -105,7 +108,7 @@ class NPC:
 
     def get_dialogue(self) -> str:
         if self.dialogue_pool:
-            lang = getattr(self, '_lang', 'zh')
+            lang = getattr(self, "_lang", "zh")
             if isinstance(self.dialogue_pool, dict):
                 lines = self.dialogue_pool.get(lang, self.dialogue_pool.get("zh", []))
             else:
@@ -169,7 +172,7 @@ DEFAULT_NPCS: dict[str, dict] = {
             ],
             "en": [
                 '"The water flows beneath the ice. Listen."',
-                '"Don\'t step on that rock. It doesn\'t like it."',
+                "\"Don't step on that rock. It doesn't like it.\"",
                 '"...The spirit particles are quiet today."',
                 '"Want to see the ice crystals? I can carve one."',
             ],
@@ -473,7 +476,7 @@ DEFAULT_NPCS: dict[str, dict] = {
             ],
             "en": [
                 '"...Come here. Let me see your wound."',
-                '"A mission. It\'s not because I\'m worried about you."',
+                "\"A mission. It's not because I'm worried about you.\"",
                 '"...You\'re hurt again. Why does this always happen?"',
                 '"(Folds a paper crane in silence)"',
             ],
@@ -503,7 +506,7 @@ DEFAULT_NPCS: dict[str, dict] = {
             "en": [
                 '"Aah—(opens mouth waiting to be eaten)"',
                 '"Smell that? My cream is extra fragrant today!"',
-                '"Don\'t throw me away! I\'m not expired!"',
+                "\"Don't throw me away! I'm not expired!\"",
                 '"(happily rolls around)"',
             ],
             "ja": [
@@ -653,7 +656,7 @@ DEFAULT_NPCS: dict[str, dict] = {
             "en": [
                 '"Come, let me see your wound."',
                 '"Close your eyes, listen to my voice. You\'ll get better."',
-                '"Today\'s herbs are fresh. They\'ll work better."',
+                "\"Today's herbs are fresh. They'll work better.\"",
                 '"You look tired. Take a rest."',
             ],
             "ja": [
@@ -714,7 +717,7 @@ DEFAULT_NPCS: dict[str, dict] = {
             ],
             "en": [
                 '"Is there anything you need me to protect?"',
-                '"Courage isn\'t the absence of fear—it\'s moving forward despite it."',
+                "\"Courage isn't the absence of fear—it's moving forward despite it.\"",
                 '"Your swordsmanship... needs practice. Come, I\'ll teach you."',
                 '"Today\'s patrol was uneventful."',
             ],

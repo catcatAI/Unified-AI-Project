@@ -48,7 +48,10 @@ class BehaviorExecutor:
         decision_type = kwargs.get("decision_type", "unknown")
         base_rate = _BASE_SUCCESS_RATE.get(decision_type, 0.5)
         type_stats = self.get_type_stats()
-        if decision_type in type_stats and (type_stats[decision_type]["success"] + type_stats[decision_type]["fail"]) >= 3:
+        if (
+            decision_type in type_stats
+            and (type_stats[decision_type]["success"] + type_stats[decision_type]["fail"]) >= 3
+        ):
             base_rate = type_stats[decision_type]["rate"]
         success = random.random() < base_rate
 
@@ -67,7 +70,12 @@ class BehaviorExecutor:
             self._type_fail[decision_type] = self._type_fail.get(decision_type, 0) + 1
 
         # Broadcast meaningful decisions to user via WebSocket
-        _BROADCAST_TYPES = {"exploration", "coexistence_activation", "meaning_construction", "resource_reallocation"}
+        _BROADCAST_TYPES = {
+            "exploration",
+            "coexistence_activation",
+            "meaning_construction",
+            "resource_reallocation",
+        }
         if decision_type in _BROADCAST_TYPES and self._broadcast_callback:
             _MESSAGE_TEMPLATES = {
                 "exploration": "I feel curious - there's something new I want to explore.",
@@ -77,15 +85,17 @@ class BehaviorExecutor:
             }
             msg = _MESSAGE_TEMPLATES.get(decision_type, "I'm processing something internally.")
             try:
-                await self._broadcast_callback({
-                    "type": "angela_action",
-                    "action": "lifecycle_decision",
-                    "decision_type": decision_type,
-                    "message": msg,
-                    "rationale": kwargs.get("rationale", ""),
-                    "phase": kwargs.get("phase", "unknown"),
-                    "timestamp": datetime.now().isoformat(),
-                })
+                await self._broadcast_callback(
+                    {
+                        "type": "angela_action",
+                        "action": "lifecycle_decision",
+                        "decision_type": decision_type,
+                        "message": msg,
+                        "rationale": kwargs.get("rationale", ""),
+                        "phase": kwargs.get("phase", "unknown"),
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                )
                 logger.info("[BehaviorExecutor] Broadcast %s decision to user", decision_type)
             except Exception as e:
                 logger.warning("BehaviorExecutor broadcast failed: %s", e)

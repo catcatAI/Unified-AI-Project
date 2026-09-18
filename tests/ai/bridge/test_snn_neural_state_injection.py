@@ -8,7 +8,6 @@ is now activated as the StateMatrix → SNN connection point).
 """
 
 import pytest
-
 from ai.garden.snn_core import TensorSNNCore
 
 

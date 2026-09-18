@@ -110,7 +110,5 @@ class TestTransferContextMemory:
         intg, mgr, ham = integration
         ctx_id = mgr.create_context("dialogue", {"data": "value"})
         intg.transfer_context_memory(ctx_id, "long-term")
-        records = [
-            r for r in ham._data["conversations"] if r.get("memory_type") == "long-term"
-        ]
+        records = [r for r in ham._data["conversations"] if r.get("memory_type") == "long-term"]
         assert len(records) == 1

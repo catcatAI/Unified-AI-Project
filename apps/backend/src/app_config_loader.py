@@ -16,10 +16,30 @@ _CONFIG: Dict[str, Any] = {
             "gpu_enabled": False,
         },
         "hardware_tiers": {
-            "Extreme": {"score_threshold": 80, "max_fps": 60, "llm_model": "gemini-1.5-pro-latest", "precision": 1.0},
-            "High": {"score_threshold": 60, "max_fps": 60, "llm_model": "gemini-pro", "precision": 0.8},
-            "Medium": {"score_threshold": 40, "max_fps": 30, "llm_model": "gemini-pro", "precision": 0.5},
-            "Low": {"score_threshold": 0, "max_fps": 24, "llm_model": "gemini-1.5-flash", "precision": 0.3},
+            "Extreme": {
+                "score_threshold": 80,
+                "max_fps": 60,
+                "llm_model": "gemini-1.5-pro-latest",
+                "precision": 1.0,
+            },
+            "High": {
+                "score_threshold": 60,
+                "max_fps": 60,
+                "llm_model": "gemini-pro",
+                "precision": 0.8,
+            },
+            "Medium": {
+                "score_threshold": 40,
+                "max_fps": 30,
+                "llm_model": "gemini-pro",
+                "precision": 0.5,
+            },
+            "Low": {
+                "score_threshold": 0,
+                "max_fps": 24,
+                "llm_model": "gemini-1.5-flash",
+                "precision": 0.3,
+            },
         },
         "scoring_weights": {
             "cpu_core_multiplier": 2,
@@ -73,7 +93,9 @@ def _merge_bootstrap_overrides() -> None:
         if isinstance(bootstrap, dict) and bootstrap:
             _CONFIG.setdefault("bootstrap", {}).update(bootstrap)
     except Exception as e:
-        logger.warning("Tiered config loader unavailable, using hardcoded defaults: %s", e, exc_info=True)
+        logger.warning(
+            "Tiered config loader unavailable, using hardcoded defaults: %s", e, exc_info=True
+        )
     finally:
         _bootstrap_merged = True
 

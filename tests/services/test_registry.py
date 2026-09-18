@@ -1,4 +1,5 @@
 """Tests for LLMBackend enum registry."""
+
 import pytest
 from services.llm.providers.registry import LLMBackend
 

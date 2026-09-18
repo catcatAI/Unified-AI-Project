@@ -1,4 +1,5 @@
 """Internationalization — zh/en/ja strings for all UI."""
+
 from __future__ import annotations
 
 STRINGS: dict[str, dict[str, str]] = {
@@ -28,7 +29,6 @@ STRINGS: dict[str, dict[str, str]] = {
         "en": "Quit",
         "ja": "終了",
     },
-
     # === World Selection ===
     "world_select": {
         "zh": "選擇世界線",
@@ -55,7 +55,6 @@ STRINGS: dict[str, dict[str, str]] = {
         "en": "Military/History. Ship girl anthropomorphism, strategy, factions.",
         "ja": "軍事/歴史。艦船擬人化、戦略、勢力。",
     },
-
     # === Character Selection ===
     "char_select": {
         "zh": "選擇角色",
@@ -87,7 +86,6 @@ STRINGS: dict[str, dict[str, str]] = {
         "en": "Back",
         "ja": "戻る",
     },
-
     # === Game Screen ===
     "equip": {
         "zh": "裝備",
@@ -129,7 +127,6 @@ STRINGS: dict[str, dict[str, str]] = {
         "en": "Turn",
         "ja": "ターン",
     },
-
     # === Choices ===
     "choice_observe": {
         "zh": "觀察周圍環境",
@@ -161,7 +158,6 @@ STRINGS: dict[str, dict[str, str]] = {
         "en": "View status",
         "ja": "ステータス確認",
     },
-
     # === Game Over ===
     "gameover": {
         "zh": "遊戲結束",
@@ -198,7 +194,6 @@ STRINGS: dict[str, dict[str, str]] = {
         "en": "Play Again",
         "ja": "もう一度プレイ",
     },
-
     # === System ===
     "system": {
         "zh": "系統",
@@ -220,7 +215,6 @@ STRINGS: dict[str, dict[str, str]] = {
         "en": "Inventory: {items}",
         "ja": "背包: {items}",
     },
-
     # === Quest & NPC ===
     "choice_quests": {
         "zh": "查看任務",
@@ -277,7 +271,6 @@ STRINGS: dict[str, dict[str, str]] = {
         "en": "NPC Info",
         "ja": "NPC情報",
     },
-
     # === Narration (new game, advance, observe) ===
     "narration_scene_intro": {
         "zh": "【{name}】{desc}",
@@ -304,7 +297,6 @@ STRINGS: dict[str, dict[str, str]] = {
         "en": "Quest started: {title}",
         "ja": "クエスト開始: {title}",
     },
-
     # === Combat ===
     "combat_success": {
         "zh": "攻擊！擲骰 {roll} + {bonus}(令牌) + {skill}(技能) = {total}。造成 {dmg} 傷害。",
@@ -331,7 +323,6 @@ STRINGS: dict[str, dict[str, str]] = {
         "en": "Spirit Crystal",
         "ja": "霊子結晶",
     },
-
     # === Observe ===
     "observe_scene": {
         "zh": "場景：{name}",
@@ -348,7 +339,6 @@ STRINGS: dict[str, dict[str, str]] = {
         "en": "Temperature: {temp}",
         "ja": "温度: {temp}",
     },
-
     # === Status ===
     "status_turn_hour": {
         "zh": "回合: {turn} | 時間: {hour}:00",
@@ -360,7 +350,6 @@ STRINGS: dict[str, dict[str, str]] = {
         "en": "Token effects:",
         "ja": "トークン効果:",
     },
-
     # === NPC Info ===
     "no_npcs_here": {
         "zh": "這裡沒有其他人。",
@@ -372,7 +361,6 @@ STRINGS: dict[str, dict[str, str]] = {
         "en": "Mood: {mood} | Disposition: {disp}",
         "ja": "気分: {mood} | 好感: {disp}",
     },
-
     # === Character Select Detail ===
     "char_tokens": {
         "zh": "令牌效果",
@@ -384,7 +372,6 @@ STRINGS: dict[str, dict[str, str]] = {
         "en": "HP: {hp} | SP: {sp} | SK: {sk}",
         "ja": "HP: {hp} | SP: {sp} | SK: {sk}",
     },
-
     # === Inventory Items ===
     "item_flashlight": {
         "zh": "手電筒",
@@ -396,7 +383,6 @@ STRINGS: dict[str, dict[str, str]] = {
         "en": "Map",
         "ja": "地図",
     },
-
     # === Scene Panel ===
     "scene_spirit_density": {
         "zh": "靈子濃度：{density}ppm",
@@ -408,7 +394,6 @@ STRINGS: dict[str, dict[str, str]] = {
         "en": "Temp: {temp}",
         "ja": "温度: {temp}",
     },
-
     # === Scene Fallbacks ===
     "scene_default_name": {
         "zh": "未知場景",
@@ -420,14 +405,12 @@ STRINGS: dict[str, dict[str, str]] = {
         "en": "An unknown area",
         "ja": "不明のエリア",
     },
-
     # === NPC Activity Fallback ===
     "npc_activity_unknown": {
         "zh": "未知",
         "en": "Unknown",
         "ja": "不明",
     },
-
     # === Interaction Choices ===
     "choice_accept_quest": {
         "zh": "接受 {name} 的委託",
@@ -456,7 +439,7 @@ STRINGS: dict[str, dict[str, str]] = {
     },
     "npc_no_quest": {
         "zh": "「目前沒有什麼需要幫忙的。」",
-        "en": "\"Nothing I need help with right now.\"",
+        "en": '"Nothing I need help with right now."',
         "ja": "「今は手伝いが必要じゃない。」",
     },
     "npc_quest_hint": {
@@ -466,22 +449,22 @@ STRINGS: dict[str, dict[str, str]] = {
     },
     "npc_help_yes": {
         "zh": "「沒問題，讓我幫你。」{name}為你恢復了 HP +{heal}，靈 +{spirit}。",
-        "en": "\"Sure, let me help.\" {name} restored HP +{heal}, Spirit +{spirit}.",
+        "en": '"Sure, let me help." {name} restored HP +{heal}, Spirit +{spirit}.',
         "ja": "「もちろん、手伝うよ。」{name}がHP +{heal}、霊 +{spirit}を回復した。",
     },
     "npc_help_no": {
         "zh": "「抱歉，我現在不方便。」",
-        "en": "\"Sorry, I can't help right now.\"",
+        "en": '"Sorry, I can\'t help right now."',
         "ja": "「ごめん、今はちょっと。」",
     },
     "npc_item_received": {
         "zh": "「這是給我的？謝謝。」{name}看起來很高興。",
-        "en": "\"This is for me? Thank you.\" {name} seems pleased.",
+        "en": '"This is for me? Thank you." {name} seems pleased.',
         "ja": "「これ、わたしに？ありがとう。」{name}は嬉しそうだ。",
     },
     "npc_no_item": {
         "zh": "「你手上沒有什麼可以給我的東西。」",
-        "en": "\"You don't have anything to give me.\"",
+        "en": '"You don\'t have anything to give me."',
         "ja": "「渡すものがないみたいだね。」",
     },
     "you_leave": {
@@ -494,7 +477,6 @@ STRINGS: dict[str, dict[str, str]] = {
         "en": "No one is here to talk to.",
         "ja": "話せる人がいない。",
     },
-
     # === Travel Events ===
     "travel_danger": {
         "zh": "旅途中遭遇了 {enemy}！受到 {dmg} 傷害。",
@@ -506,7 +488,6 @@ STRINGS: dict[str, dict[str, str]] = {
         "en": "Found {item} on the way! HP +{heal}.",
         "ja": "途中で{item}を発見！HP +{heal}。",
     },
-
     # === Combat (new) ===
     "combat_encounter": {
         "zh": "遭遇了 {enemy}！",
@@ -528,7 +509,6 @@ STRINGS: dict[str, dict[str, str]] = {
         "en": "Hit by {enemy}! Took {dmg} dmg (resist {resist}%).",
         "ja": "{enemy}に攻撃された！{dmg}ダメージ被弾（減傷{resist}%）。",
     },
-
     # === Observe (new) ===
     "observe_footprints": {
         "zh": "地上有一些奇怪的足跡，似乎不久前有人走過。",
@@ -580,7 +560,6 @@ STRINGS: dict[str, dict[str, str]] = {
         "en": "You notice {discovery}",
         "ja": "{discovery}に気づいた",
     },
-
     # === Rest Events ===
     "rest_npc_visit": {
         "zh": "休息時{name}走了過來：{line}",
@@ -594,7 +573,7 @@ STRINGS: dict[str, dict[str, str]] = {
     },
     "rest_dream_voice": {
         "zh": "你聽見一個聲音在低語：「選擇已經做出，只是你還沒意識到。」",
-        "en": "A voice whispers: \"The choice was already made — you just haven't realized it yet.\"",
+        "en": 'A voice whispers: "The choice was already made — you just haven\'t realized it yet."',
         "ja": "声が囁いた。「選択はもう行われた。ただ気づいていないだけだ。」",
     },
     "rest_dream_memory": {
@@ -607,7 +586,6 @@ STRINGS: dict[str, dict[str, str]] = {
         "en": "Ambushed while resting! Took {dmg} damage.",
         "ja": "休憩中に不意打ち！{dmg}ダメージ被弾。",
     },
-
     # === Game Ending ===
     "ending_title": {
         "zh": "冒險結束",

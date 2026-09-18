@@ -33,9 +33,12 @@ class TestCausalNode:
 
     def test_to_dict_node(self):
         node = CausalNode(
-            id="node_1", parent_id="root",
-            layer=LayerType.L3, module="test_mod",
-            action="run", data={"key": "val"},
+            id="node_1",
+            parent_id="root",
+            layer=LayerType.L3,
+            module="test_mod",
+            action="run",
+            data={"key": "val"},
         )
         d = node.to_dict()
         assert d["id"] == "node_1"
@@ -47,9 +50,12 @@ class TestCausalNode:
 
     def test_from_dict_roundtrip_node(self):
         original = CausalNode(
-            id="node_1", parent_id="root",
-            layer=LayerType.L4, module="m",
-            action="a", data={"k": "v"},
+            id="node_1",
+            parent_id="root",
+            layer=LayerType.L4,
+            module="m",
+            action="a",
+            data={"k": "v"},
         )
         d = original.to_dict()
         restored = CausalNode.from_dict(d)
@@ -62,7 +68,8 @@ class TestCausalNode:
 
     def test_from_dict_minimal(self):
         d = {
-            "id": "n1", "layer": "L2",
+            "id": "n1",
+            "layer": "L2",
             "timestamp": datetime.now().isoformat(),
         }
         node = CausalNode.from_dict(d)
@@ -146,7 +153,9 @@ class TestCausalChain:
         chain = CausalChain(root_id="root_1")
         now = datetime.now()
         n1 = CausalNode(id="n1", module="m", action="a", timestamp=now)
-        n2 = CausalNode(id="n2", parent_id="n1", module="m", action="b", timestamp=now + timedelta(seconds=5))
+        n2 = CausalNode(
+            id="n2", parent_id="n1", module="m", action="b", timestamp=now + timedelta(seconds=5)
+        )
         chain.add_node(n1)
         chain.add_node(n2)
         assert chain.get_execution_time() == pytest.approx(5.0)

@@ -1,5 +1,8 @@
+# -*- coding: utf-8 -*-
+# =============================================================================
+# ANGELA-MATRIX: [L4] [β] [B] [L0]
+# =============================================================================
 """
-
 Angela AI v6.0 - Desktop Interaction System
 桌面交互系统
 
@@ -49,6 +52,7 @@ def _get_screen_size() -> tuple:
     except Exception:
         logger.debug("Screen size config load failed, using defaults", exc_info=True)
         return (1920, 1080)
+
 
 # =============================================================================
 # ANGELA-MATRIX: [L4] [δ] [A] [L6+]
@@ -159,10 +163,10 @@ class DesktopBrowserIntegration:
 
     def __init__(self, desktop_interaction: DesktopInteraction):
         self.desktop = desktop_interaction
-        self.browser_window = None
-        self.current_url = None
+        self.browser_window: Any = None
+        self.current_url: Optional[str] = None
         self.learning_mode = False
-        self.collected_resources = []
+        self.collected_resources: List[Any] = []
 
     async def open_browser_in_background(self, url: str = "about:blank") -> None:
         """
@@ -255,7 +259,7 @@ class DesktopBrowserIntegration:
                     };
                 })()
                 """
-                result = self.browser_window.evaluate_js(js_code)
+                result: Any = self.browser_window.evaluate_js(js_code)
             return result if result else {}
         except (
             Exception
@@ -269,7 +273,7 @@ class DesktopBrowserIntegration:
         """
         logger.info(f"Angela正在浏览画廊: {gallery_url}")
 
-        artworks = []
+        artworks: List[Dict[str, Any]] = []
 
         if self.browser_window:
             self.browser_window.load_url(gallery_url)
@@ -339,6 +343,7 @@ class DesktopBrowserIntegration:
                             "mode": img.mode,
                             "style_tags": self._infer_style_tags(img),
                         }
+                    return {}
 
         except Exception as e:  # broad exception acceptable: style analysis should be resilient
             logger.error(f"风格分析失败: {e}", exc_info=True)
@@ -563,19 +568,41 @@ class DesktopInteraction:
                 if self.current_state.clutter_level > 0.5:
                     await self.organize_desktop()
 
-    async def organize_desktop(self) -> List[FileOperation]:
+    async def organize_desktop(self) -> List[Dict[str, Any]]:
         """
-        Organize desktop files by category
+        Organize desktop files into categorized folders.
 
         Returns:
             List of file operations performed
         """
-        operations = []
+        operations: List[Dict[str, Any]] = []
 
         if not self.desktop_path.exists():
             return operations
 
+        file_paths = []
         for file_path in self.desktop_path.iterdir():
+            if file_path.is_file() and file_path != self.organized_path:
+                file_paths.append(file_path)
+
+        file_ops = self._execute_organize(file_paths, self.desktop_path)
+        return file_ops
+
+    async def _execute_organize(
+        self, file_paths: List[Path], desktop_path: Path
+    ) -> List[Dict[str, Any]]:
+        """
+        Execute the organization of files.
+
+        Returns:
+            List of file operations performed
+        """
+        operations: List[Dict[str, Any]] = []
+
+        if not self.desktop_path.exists():
+            return operations
+
+        for file_path in file_paths:
             if file_path.is_file() and file_path != self.organized_path:
                 category = self._categorize_file(file_path)
                 target_dir = self.organized_path / category.cn_name
@@ -662,17 +689,7 @@ class DesktopInteraction:
     async def create_file(
         self, filename: str, content: str, category: Optional[FileCategory] = None
     ) -> Optional[Path]:
-        """
-        Create a new file on desktop
-
-        Args:
-            filename: Name of the file
-            content: File content
-            category: Optional category for organization
-
-        Returns:
-            Path to created file or None if failed
-        """
+        # Create a new file on desktop
         try:
             if category:
                 target_dir = self.organized_path / category.cn_name
@@ -698,8 +715,7 @@ class DesktopInteraction:
                 self.operation_history = self.operation_history[-_MAX_OPERATION_HISTORY:]
 
             return file_path
-
-        except Exception as e:  # broad exception acceptable: file creation errors should be logged
+        except Exception as e:
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             return None
 
@@ -723,13 +739,13 @@ class DesktopInteraction:
                     self.operation_history = self.operation_history[-_MAX_OPERATION_HISTORY:]
 
                 return True
+            return False
         except Exception as e:  # broad exception acceptable: file deletion errors should be logged
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
-
-        return False
+            return False
 
     async def move_file(self, source: Path, target: Path) -> bool:
-        """Move a file"""
+        # Move a file
         try:
             sandbox = [self.desktop_path, self.organized_path]
             if not _is_safe_path(source, sandbox) or not _is_safe_path(target, sandbox):
@@ -746,7 +762,7 @@ class DesktopInteraction:
         return False
 
     def _set_wallpaper_windows(self, image_path: Path) -> None:
-        """Set wallpaper windows."""
+        # Set wallpaper windows
         import ctypes
         import typing
 
@@ -757,15 +773,7 @@ class DesktopInteraction:
         )
 
     async def set_wallpaper(self, image_path: Path) -> bool:
-        """
-        Set desktop wallpaper
-
-        Args:
-            image_path: Path to wallpaper image
-
-        Returns:
-            True if successful
-        """
+        # Set wallpaper image
         try:
             if not image_path.exists():
                 return False
@@ -787,11 +795,19 @@ class DesktopInteraction:
                     await loop.run_in_executor(
                         None,
                         lambda: subprocess.run(
-                            ["osascript", "-e", script], check=True, capture_output=True, text=True, timeout=timeout_value("desktop.wallpaper_macos", 15)
+                            ["osascript", "-e", script],
+                            check=True,
+                            capture_output=True,
+                            text=True,
+                            timeout=timeout_value("desktop.wallpaper_macos", 15),
                         ),
                     )
                     return True
-                except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired) as e:
+                except (
+                    subprocess.CalledProcessError,
+                    FileNotFoundError,
+                    subprocess.TimeoutExpired,
+                ) as e:
                     logger.info(f"macOS 壁紙設置失敗: {e}")
                     return False
 
@@ -846,7 +862,11 @@ class DesktopInteraction:
                             ),
                         )
                         return True
-                except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired) as e:
+                except (
+                    subprocess.CalledProcessError,
+                    FileNotFoundError,
+                    subprocess.TimeoutExpired,
+                ) as e:
                     logger.info(f"Linux 壁紙設置失敗: {e}")
                     return False
                 return True
@@ -859,7 +879,7 @@ class DesktopInteraction:
         return False
 
     async def rotate_wallpaper(self) -> bool:
-        """Rotate to next wallpaper from wallpaper directory"""
+        # Rotate to next wallpaper from wallpaper directory
         try:
             if not self.wallpaper_path.exists():
                 return False
@@ -884,12 +904,12 @@ class DesktopInteraction:
         return False
 
     def get_desktop_state(self) -> DesktopState:
-        """Get current desktop state"""
+        # Get current desktop state
         return self.current_state
 
     def get_files_by_category(self, category: FileCategory) -> List[Path]:
-        """Get all files of a specific category"""
-        files = []
+        # Get all files of a specific category
+        files: List[Path] = []
         target_dir = self.organized_path / category.cn_name
 
         if target_dir.exists():
@@ -898,15 +918,15 @@ class DesktopInteraction:
         return files
 
     def register_file_change_callback(self, callback: Callable[[Path, str], None]) -> None:
-        """Register callback for file changes"""
+        # Register callback for file changes
         self._file_change_callbacks.append(callback)
 
     def register_operation_callback(self, callback: Callable[[FileOperation], None]) -> None:
-        """Register callback for file operations"""
+        # Register callback for file operations
         self._operation_callbacks.append(callback)
 
     def get_operation_history(self, since: Optional[datetime] = None) -> List[FileOperation]:
-        """Get operation history"""
+        # Get operation history
         if since is None:
             return self.operation_history.copy()
 
@@ -917,7 +937,7 @@ class DesktopInteraction:
 if __name__ == "__main__":
 
     async def demo() -> None:
-        """Run a demonstration."""
+        # Run a demonstration.
         desktop = DesktopInteraction()
         await desktop.initialize()
 

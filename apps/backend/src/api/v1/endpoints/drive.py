@@ -513,7 +513,8 @@ async def upload_file(
             os.close(fd)
             _fd_closed = True
             raise HTTPException(
-                status_code=413, detail=f"File too large: {len(content)} bytes > {_MAX_DRIVE_UPLOAD} limit"
+                status_code=413,
+                detail=f"File too large: {len(content)} bytes > {_MAX_DRIVE_UPLOAD} limit",
             )
         with os.fdopen(fd, "wb") as f:
             _fd_closed = True

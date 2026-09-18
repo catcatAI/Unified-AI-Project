@@ -23,8 +23,7 @@ class TestVisualWord:
 
     def test_to_dict_and_from_dict_visual_word(self):
         center = np.random.rand(TOTAL_DIM).astype(np.float32)
-        vw = VisualWord(word_id=1, center=center, count=5,
-                        primitive_signature={"n_circles": 2})
+        vw = VisualWord(word_id=1, center=center, count=5, primitive_signature={"n_circles": 2})
         d = vw.to_dict()
         vw2 = VisualWord.from_dict(d)
         assert vw2.word_id == 1
@@ -79,8 +78,7 @@ class TestGeometricVocabulary:
         labels = np.random.randint(0, n_classes, size=n_images)
 
         vocab = GeometricVocabulary(n_visual_words=10)
-        vocab.build_from_optimized(params, labels,
-                                   [f"class_{i}" for i in range(n_classes)])
+        vocab.build_from_optimized(params, labels, [f"class_{i}" for i in range(n_classes)])
 
         # Check visual words were created
         assert len(vocab.get_visual_words()) > 0

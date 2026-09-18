@@ -37,7 +37,6 @@ import time
 from typing import Any, Dict, Optional
 
 
-
 def _is_mountable_instance(obj: Any) -> bool:
     """物件是否已實作 Mountable 協定（有 mount/unmount/is_mounted/persistence_path 方法）。"""
     return all(hasattr(obj, m) for m in ("mount", "unmount", "is_mounted", "persistence_path"))

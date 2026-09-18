@@ -1,7 +1,7 @@
 """
- * =============================================================================
- * ANGELA-MATRIX: [L4-Test] [α-Test] [A-Validation] [L0-L3]
- * =============================================================================
+* =============================================================================
+* ANGELA-MATRIX: [L4-Test] [α-Test] [A-Validation] [L0-L3]
+* =============================================================================
 """
 
 import json
@@ -28,9 +28,16 @@ class TestAuditEventType:
     def test_all_defined(self):
         names = {e.name for e in AuditEventType}
         expected = {
-            "OPERATION", "FILE_ACCESS", "NETWORK_ACCESS", "SYSTEM_COMMAND",
-            "APPLICATION_CONTROL", "DATA_PROCESSING", "SANDBOX_EXECUTION",
-            "PERMISSION_CHECK", "SECURITY_VIOLATION", "ERROR",
+            "OPERATION",
+            "FILE_ACCESS",
+            "NETWORK_ACCESS",
+            "SYSTEM_COMMAND",
+            "APPLICATION_CONTROL",
+            "DATA_PROCESSING",
+            "SANDBOX_EXECUTION",
+            "PERMISSION_CHECK",
+            "SECURITY_VIOLATION",
+            "ERROR",
         }
         assert names == expected
 

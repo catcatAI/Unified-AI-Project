@@ -11,7 +11,6 @@ import asyncio
 from datetime import datetime, timedelta
 
 import pytest
-
 from core.event_loop_system import Event, EventPriority, EventQueue
 
 

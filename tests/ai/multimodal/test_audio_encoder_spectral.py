@@ -9,13 +9,16 @@ import pytest
 @pytest.fixture
 def encoder():
     from ai.multimodal.audio_encoder_spectral import AudioSpectralEncoder
+
     return AudioSpectralEncoder()
 
 
 def _make_sine_wav(freq=440, duration=1.0, sample_rate=16000):
     """Generate a simple sine wave WAV file bytes."""
     n_samples = int(sample_rate * duration)
-    samples = (np.sin(2 * np.pi * freq * np.arange(n_samples) / sample_rate) * 32767).astype(np.int16)
+    samples = (np.sin(2 * np.pi * freq * np.arange(n_samples) / sample_rate) * 32767).astype(
+        np.int16
+    )
     buf = io.BytesIO()
     with wave.open(buf, "wb") as wf:
         wf.setnchannels(1)

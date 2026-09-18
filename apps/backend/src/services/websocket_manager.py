@@ -82,7 +82,10 @@ class ConnectionManager:
         return self._sm.heartbeat_timeout
 
     async def connect(
-        self, websocket: WebSocket, session_id: Optional[str] = None, metadata: Optional[dict] = None
+        self,
+        websocket: WebSocket,
+        session_id: Optional[str] = None,
+        metadata: Optional[dict] = None,
     ) -> str:
         """Establish connection."""
         await websocket.accept()
@@ -349,7 +352,9 @@ async def broadcast_state_updates() -> None:
 
 async def _handle_handshake(websocket: WebSocket) -> Optional[tuple]:
     try:
-        raw_data = await asyncio.wait_for(websocket.receive_text(), timeout=timeout_value("ws.handshake", 10))
+        raw_data = await asyncio.wait_for(
+            websocket.receive_text(), timeout=timeout_value("ws.handshake", 10)
+        )
         try:
             handshake = json.loads(raw_data)
         except json.JSONDecodeError:

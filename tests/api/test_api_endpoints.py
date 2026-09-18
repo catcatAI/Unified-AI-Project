@@ -11,21 +11,29 @@ from services.main_api_server import app
 # Mock services
 # =============================================================================
 
+
 class MockDriveService:
     def is_authenticated(self):
         return True
+
     def get_storage_info(self):
         return {"used": "1GB", "total": "15GB", "user": "test@example.com"}
+
     def get_auth_url(self):
         return "https://accounts.google.com/o/oauth2/auth?mock=1"
+
     def exchange_code(self, code: str) -> bool:
         return True
+
     def logout(self):
         pass
+
     def list_files(self, page_size=10, query=None):
         return [{"id": "1", "name": "test.txt", "mimeType": "text/plain"}]
+
     def get_file_metadata(self, file_id: str):
         return {"id": file_id, "name": "test.txt", "mimeType": "text/plain", "size": "1024"}
+
     def download_file(self, file_id: str, dest_path: str) -> bool:
         return True
 
@@ -33,6 +41,7 @@ class MockDriveService:
 # =============================================================================
 # Fixtures
 # =============================================================================
+
 
 @pytest.fixture
 async def client():
@@ -45,10 +54,12 @@ async def client():
 # Drive API (8 endpoints)
 # =============================================================================
 
+
 class TestDriveAPI:
     @pytest.fixture(autouse=True)
     def setup(self):
         from api.v1.endpoints._deps import get_drive_service
+
         app.dependency_overrides[get_drive_service] = lambda: MockDriveService()
         yield
         app.dependency_overrides.clear()
@@ -122,6 +133,7 @@ class TestDriveAPI:
 # Ops API (3 endpoints)
 # =============================================================================
 
+
 class TestOpsAPI:
     @pytest.mark.asyncio
     async def test_ops_status(self, client):
@@ -151,6 +163,7 @@ class TestOpsAPI:
 # =============================================================================
 # Desktop API (6 endpoints)
 # =============================================================================
+
 
 class TestDesktopAPI:
     @pytest.fixture(autouse=True)
@@ -222,7 +235,6 @@ class TestDesktopAPI:
         assert data["result"]["status"] == "ok"
 
 
-
 # =============================================================================
 # Other V1 Status stubs (7 endpoints)
 # =============================================================================
@@ -252,6 +264,7 @@ class TestStatusStubs:
 # =============================================================================
 # Mobile API (5 endpoints)
 # =============================================================================
+
 
 class TestMobileAPI:
     @pytest.mark.asyncio
@@ -330,6 +343,7 @@ class TestMobileAPI:
 # System API (partially implemented — only security/sync-key-c exists)
 # =============================================================================
 
+
 class TestSystemAPI:
     @pytest.mark.asyncio
     @patch("api.routes.chat_routes.get_abc_key_manager")
@@ -348,6 +362,7 @@ class TestMetaControllerEndpoints:
     async def test_confidence_summary(self, client):
         from ai.meta.meta_controller import MetaController
         from api.routes.meta_routes import set_meta_controller
+
         mc = MetaController()
         mc.record_confidence("test:ed3n", 0.85)
         mc.record_confidence("test:garden", 0.72)
@@ -365,6 +380,7 @@ class TestMetaControllerEndpoints:
     async def test_confidence_calibration_known_source(self, client):
         from ai.meta.meta_controller import MetaController
         from api.routes.meta_routes import set_meta_controller
+
         mc = MetaController()
         for i in range(5):
             mc.record_confidence("test:ed3n", 0.85)
@@ -380,6 +396,7 @@ class TestMetaControllerEndpoints:
     async def test_confidence_calibration_unknown_source(self, client):
         from ai.meta.meta_controller import MetaController
         from api.routes.meta_routes import set_meta_controller
+
         mc = MetaController()
         set_meta_controller(mc)
         try:

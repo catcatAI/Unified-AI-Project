@@ -36,8 +36,8 @@ def ssim(
         sigma_b = np.var(channel_b)
         sigma_ab = np.mean((channel_a - mu_a) * (channel_b - mu_b))
 
-        numerator = (2 * mu_a * mu_b + c1) * (2 * sigma_ab + c2)
-        denominator = (mu_a**2 + mu_b**2 + c1) * (sigma_a + sigma_b + c2)
+        numerator = float((2 * mu_a * mu_b + c1) * (2 * sigma_ab + c2))
+        denominator = float((mu_a**2 + mu_b**2 + c1) * (sigma_a + sigma_b + c2))
         scores.append(float(numerator / max(denominator, 1e-8)))
     return float(np.mean(scores))
 

@@ -72,9 +72,7 @@ _STATE_TO_GARDEN: Dict[Tuple[str, str], str] = {
     ("beta", "focus"): "c1",
 }
 
-_GARDEN_TO_STATE: Dict[str, Tuple[str, str]] = {
-    v: k for k, v in _STATE_TO_GARDEN.items()
-}
+_GARDEN_TO_STATE: Dict[str, Tuple[str, str]] = {v: k for k, v in _STATE_TO_GARDEN.items()}
 
 
 def state_to_neural_inputs(state_matrix: Any) -> Dict[str, float]:
@@ -149,15 +147,11 @@ def apply_state_updates(state_matrix: Any, updates: Dict[str, Dict[str, float]])
             dim.update(**values)
             applied += len(values)
         except Exception as e:
-            logger.warning(
-                "NeuralBridge writeback to axis '%s' failed: %s", axis, e, exc_info=True
-            )
+            logger.warning("NeuralBridge writeback to axis '%s' failed: %s", axis, e, exc_info=True)
     return applied
 
 
-def build_neural_context(
-    context: Optional[Dict[str, Any]], state_matrix: Any
-) -> Dict[str, Any]:
+def build_neural_context(context: Optional[Dict[str, Any]], state_matrix: Any) -> Dict[str, Any]:
     """Return a context copy augmented with the ``neural_state`` injection slot.
 
     The GARDEN SNN forward() reads ``context.get("neural_state")`` (a dict of

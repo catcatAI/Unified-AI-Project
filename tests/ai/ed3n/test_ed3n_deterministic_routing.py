@@ -6,7 +6,6 @@
 # =============================================================================
 
 import pytest
-
 from ai.ed3n.ed3n_engine import ED3NEngine
 
 

@@ -15,7 +15,6 @@ import os
 
 import numpy as np
 import pytest
-
 from ai.multimodal.shared_latent_space import SharedLatentSpace, get_shared_latent_space
 from core.backbone import get_backbone, reset_backbone
 

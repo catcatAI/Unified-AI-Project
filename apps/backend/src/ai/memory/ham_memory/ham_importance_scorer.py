@@ -120,12 +120,12 @@ class ImportanceScorer:
 
     # Time-decay sub-scores (named — were bare literals in _calculate_time_score
     # / record_access / cleanup_old_history).
-    TIME_DECAY_FACTOR = 0.95        # daily exponential decay factor
-    TIME_DECAY_FLOOR = 0.3          # minimum recency score for old memories
-    TIME_FRESH_DAYS = 1             # no decay within this many days
-    TIME_ERROR_FALLBACK = 0.5       # score when timestamp is unparseable
-    ACCESS_HISTORY_MAX = 100        # per-memory access entries kept
-    HISTORY_RETENTION_DAYS = 30     # default cleanup window
+    TIME_DECAY_FACTOR = 0.95  # daily exponential decay factor
+    TIME_DECAY_FLOOR = 0.3  # minimum recency score for old memories
+    TIME_FRESH_DAYS = 1  # no decay within this many days
+    TIME_ERROR_FALLBACK = 0.5  # score when timestamp is unparseable
+    ACCESS_HISTORY_MAX = 100  # per-memory access entries kept
+    HISTORY_RETENTION_DAYS = 30  # default cleanup window
 
     def __init__(self):
         self._access_history: Dict[str, List[datetime]] = {}

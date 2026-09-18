@@ -1,4 +1,5 @@
 """Tests for MetaController — confidence calibration and threshold adjustment."""
+
 import json
 import os
 import tempfile
@@ -164,7 +165,11 @@ class TestMetaControllerCache:
         r2 = mc.get_calibration("src")
         assert r2 is not None
         # Adjustment should change after new data
-        assert r2.suggested_threshold_adjustment != adj_before or mc._calibration_cache_dirty is False or "src" not in mc._calibration_cache
+        assert (
+            r2.suggested_threshold_adjustment != adj_before
+            or mc._calibration_cache_dirty is False
+            or "src" not in mc._calibration_cache
+        )
 
     def test_cache_dirty_flag_after_record(self):
         mc = MetaController()
@@ -273,14 +278,17 @@ class TestMetaControllerPersistence:
         mc.get_calibration("src")
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             path = f.name
-            json.dump({
-                "ewma": {"src": 0.85},
-                "threshold_adjustments": {"src": -0.05},
-                "adjustment_multipliers": {"src": 1.5},
-                "raw_adjustments": {"src": -0.05},
-                "total_samples": 15,
-                "calibration_history": {"src": ["over", "over", "over"]},
-            }, f)
+            json.dump(
+                {
+                    "ewma": {"src": 0.85},
+                    "threshold_adjustments": {"src": -0.05},
+                    "adjustment_multipliers": {"src": 1.5},
+                    "raw_adjustments": {"src": -0.05},
+                    "total_samples": 15,
+                    "calibration_history": {"src": ["over", "over", "over"]},
+                },
+                f,
+            )
         try:
             mc2 = MetaController(persist_path=path)
             assert mc2._total_samples == 15

@@ -1,8 +1,7 @@
 """ai.context.utils 工具函数测试"""
 
-from cryptography.fernet import Fernet
-
 import pytest
+from cryptography.fernet import Fernet
 
 from apps.backend.src.ai.context.storage.base import Context, ContextStatus, ContextType
 from apps.backend.src.ai.context.utils import (

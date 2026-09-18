@@ -27,7 +27,10 @@ class TestAngelaCore:
             assert os.path.isfile(config_file), f"Missing config: {config_file}"
 
     def test_live2d_manager_has_key_functions(self):
-        live2d_path = project_root / "apps/desktop-app/CubismSdkForWeb-5-r.5/Samples/TypeScript/Demo/src/lapplive2dmanager.ts"
+        live2d_path = (
+            project_root
+            / "apps/desktop-app/CubismSdkForWeb-5-r.5/Samples/TypeScript/Demo/src/lapplive2dmanager.ts"
+        )
         assert live2d_path.exists(), "Live2D manager not found"
         content = live2d_path.read_text()
         for func in ["public initialize(", "addModel(", "onTap(", "onUpdate("]:

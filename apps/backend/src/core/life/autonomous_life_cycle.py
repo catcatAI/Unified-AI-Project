@@ -247,6 +247,7 @@ class AutonomousLifeCycle:
         if self._life_essence is None:
             try:
                 from core.life.life_essence import get_life_essence
+
                 self._life_essence = get_life_essence()
             except Exception as e:
                 logger.warning(f"[LifeEssence] Not available: {e}", exc_info=True)

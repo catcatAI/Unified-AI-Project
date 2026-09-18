@@ -1,4 +1,5 @@
 """Tests for services.llm.prompt_builder"""
+
 import json
 from unittest.mock import mock_open, patch
 
@@ -17,11 +18,16 @@ class TestGetBiologicalState:
     @patch("services.llm.prompt_builder._get_llm_config")
     def test_returns_status_with_valid_data(self, mock_cfg):
         mock_cfg.return_value = {
-            "energy_low": 30, "energy_moderate": 60,
-            "stress_high_desc": 0.8, "stress_high_threshold": 0.5,
-            "stress_max": 70, "energy_high": 0.8,
-            "default_certainty": 0.5, "stress_default": 0.0,
-            "default_mood": "calm", "caffeine_sensitivity": 0.8,
+            "energy_low": 30,
+            "energy_moderate": 60,
+            "stress_high_desc": 0.8,
+            "stress_high_threshold": 0.5,
+            "stress_max": 70,
+            "energy_high": 0.8,
+            "default_certainty": 0.5,
+            "stress_default": 0.0,
+            "default_mood": "calm",
+            "caffeine_sensitivity": 0.8,
         }
         mock_data = {
             "biological": {
@@ -123,7 +129,12 @@ class TestConstructAngelaPrompt:
         context = {
             "state_for_llm": {
                 "axes": {"alpha": {"values": {"valence": 0.8, "energy": 0.6}}},
-                "theta": {"novelty": 0.7, "theta_negativity": 0.1, "creation_urge": 0.3, "correction_urge": 0.2},
+                "theta": {
+                    "novelty": 0.7,
+                    "theta_negativity": 0.1,
+                    "creation_urge": 0.3,
+                    "correction_urge": 0.2,
+                },
                 "eta": {"module_count": 3, "success_rate": 0.9, "structural_drift": 0.05},
                 "guidance": ["保持友好"],
             },
@@ -192,8 +203,8 @@ class TestModalityState:
     """Test modality gateway state injection into prompt (C³ 3.0 — closed loop)."""
 
     def test_append_modality_state_active_exists(self):
-        from services.llm.prompt_builder import _append_modality_state
         from core.life.digital_life_integrator import ModalityGateway
+        from services.llm.prompt_builder import _append_modality_state
 
         mg = ModalityGateway()
         summary = mg.get_modality_summary()
@@ -314,4 +325,3 @@ class TestCrisisSafety:
         combined = " ".join(msg["content"] for msg in result)
         assert "[SAFETY INSTRUCTION" in combined
         assert "crisis level 3" in combined
-

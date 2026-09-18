@@ -351,6 +351,7 @@ class ActionExecutor:
             if action:
                 task = asyncio.create_task(self._execute_with_semaphore(action))
                 self._background_tasks.add(task)
+
                 def _task_done_callback(t: asyncio.Task) -> None:
                     self._background_tasks.discard(t)
                     if not t.cancelled() and t.exception():
@@ -457,7 +458,6 @@ class ActionExecutor:
                 logger.warning(
                     f"[ActionExecutor] Action {action.name} failed due to "
                     f"dynamic success rate ({success_rate:.2%})",
-
                 )
 
         except asyncio.TimeoutError:
@@ -543,7 +543,6 @@ class ActionExecutor:
                         # Non-critical check failed - log but continue
                         logger.warning(
                             f"Non-critical safety check failed: {check_name} - {message}",
-
                         )
 
         return True, None
@@ -787,9 +786,11 @@ class ActionExecutor:
                     action.priority.level, behavior_executor("priority_cost_default", 0.3)
                 )
 
-            health_tension = float(sm.evaluate_math_spatially(
-                f"({energy:.4f} + {comfort:.4f}) / 2 - {tension:.4f} - {priority_cost:.4f}"
-            ))
+            health_tension = float(
+                sm.evaluate_math_spatially(
+                    f"({energy:.4f} + {comfort:.4f}) / 2 - {tension:.4f} - {priority_cost:.4f}"
+                )
+            )
 
             success_rate_min = behavior_executor("success_rate_min", 0.3)
             success_rate_max = behavior_executor("success_rate_max", 0.99)

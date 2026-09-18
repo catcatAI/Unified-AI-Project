@@ -142,9 +142,7 @@ class TrainingCoordinator:
     # ------------------------------------------------------------------
     # D4 (REFACTOR_PLAN §13.4): priority-queued, sorted training execution.
     # ------------------------------------------------------------------
-    def enqueue(
-        self, domain: str, sample: Dict[str, Any], priority: float = 0.0
-    ) -> None:
+    def enqueue(self, domain: str, sample: Dict[str, Any], priority: float = 0.0) -> None:
         """Queue a training sample for sorted execution (highest priority first).
 
         Non-blocking and cheap; safe to call on the main ingest path.

@@ -17,7 +17,6 @@ import subprocess
 import sys
 
 import pytest
-
 from core.backbone import get_backbone, reset_backbone
 from core.backbone.structure import BackboneStructure, dump, inventory
 

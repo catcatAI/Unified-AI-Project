@@ -6,6 +6,7 @@ import pytest
 @pytest.fixture
 def dictionary():
     from ai.ed3n.dictionary_layer import DictionaryLayer
+
     d = DictionaryLayer(max_entries=500)
     d.load_preset_responses()
     return d
@@ -17,6 +18,7 @@ class TestDisambiguate:
         keys = list(dictionary.entries.keys())[:3]
         allowed: int = dict  # placeholder
         from ai.ed3n.dictionary_layer import Dict
+
         result = dictionary.disambiguate(keys, {"topic": "greeting"})
         assert len(result) == len(keys)
         assert isinstance(result, list)
@@ -56,6 +58,7 @@ class TestAssignKey:
 
     def test_grow_keys_unique_across_bulk_and_grow(self):
         from ai.ed3n.dictionary_layer import DictionaryLayer
+
         d = DictionaryLayer(max_entries=500)
         d.add_entry("c1", {"en": "existing"})
         # force _next_key_id to collide with c1

@@ -64,7 +64,9 @@ class MathExtractor:
             m = re.search(p, text)
             if m:
                 expr = m.group(1).strip()
-                if len(expr) >= 2 and (any(op in expr for op in "+-*/%") or re.search(r"[a-zA-Z_]\w*\(", expr)):
+                if len(expr) >= 2 and (
+                    any(op in expr for op in "+-*/%") or re.search(r"[a-zA-Z_]\w*\(", expr)
+                ):
                     return expr, self._safe_eval(expr)
         return None
 
@@ -177,7 +179,9 @@ class MathVerifier:
                             explanation=f"計算結果: {result}",
                         )
                     except (ZeroDivisionError, Exception):
-                        logger.warning("Math evaluation failed for expression: %s", message, exc_info=True)
+                        logger.warning(
+                            "Math evaluation failed for expression: %s", message, exc_info=True
+                        )
             return MathVerifyResult(
                 response_text=None,
                 is_correct=False,
@@ -282,6 +286,7 @@ _MATH_CONSTANTS: Dict[str, Tuple[str, float]] = {
     "e": ("e", math.e),
     "inf": ("∞", float("inf")),
 }
+
 
 # Number theory helpers
 def _is_prime(n: float) -> bool:
@@ -480,6 +485,7 @@ def evaluate_logic(text: str) -> Optional[str]:
     expr = re.sub(r"\b(True|False)\s+nor\s+(True|False)\b", _expand_nor, expr)
     expr = re.sub(r"\b(True|False)\s+nand\s+(True|False)\b", _expand_nand, expr)
     expr = re.sub(r"\b(True|False)\s+xor\s+(True|False)\b", _expand_xor, expr)
+
     # xnor: both prefix and infix orders
     def _expand_xnor(m):
         parts = re.findall(r"(True|False)", m.group(0))
@@ -542,19 +548,25 @@ def evaluate_math(text: str) -> Optional[str]:
         result = _is_prime(n)
         return f"{n} is prime = {'true' if result else 'false'}"
 
-    gcd_m = re.search(r"(?:gcd|最大公因數|最大公约数)\s*[：(]?\s*(-?\d+)\s*,?\s*(-?\d+)", text.strip().lower())
+    gcd_m = re.search(
+        r"(?:gcd|最大公因數|最大公约数)\s*[：(]?\s*(-?\d+)\s*,?\s*(-?\d+)", text.strip().lower()
+    )
     if gcd_m:
         a, b = int(gcd_m.group(1)), int(gcd_m.group(2))
         return f"gcd({a}, {b}) = {_gcd(a, b)}"
 
-    lcm_m = re.search(r"(?:lcm|最小公倍數|最小公倍数)\s*[：(]?\s*(-?\d+)\s*,?\s*(-?\d+)", text.strip().lower())
+    lcm_m = re.search(
+        r"(?:lcm|最小公倍數|最小公倍数)\s*[：(]?\s*(-?\d+)\s*,?\s*(-?\d+)", text.strip().lower()
+    )
     if lcm_m:
         a, b = int(lcm_m.group(1)), int(lcm_m.group(2))
         return f"lcm({a}, {b}) = {_lcm(a, b)}"
 
     # Step 3: normal expression evaluation
     expr = _normalize_expr(text)
-    if not re.search(r"-?\d+\s*(\*\*|//|[+\-*/%])\s*-?\d+", expr) and not re.search(r"[a-zA-Z_]\w*\s*\(", expr):
+    if not re.search(r"-?\d+\s*(\*\*|//|[+\-*/%])\s*-?\d+", expr) and not re.search(
+        r"[a-zA-Z_]\w*\s*\(", expr
+    ):
         return None
     if re.search(r"/\s*0(?![.\d])", expr):
         return f"{_normalize_expr(text)} = 除数不能为零"

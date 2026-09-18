@@ -294,9 +294,7 @@ class HSPVersionConverter:
             return self.version_manager.convert_message(message, message_version, current_version)
         else:
             # 消息版本比当前版本新, 可能需要降级或其他处理
-            logger.warning(
-                f"消息版本比当前版本新: {message_version} > {current_version}"
-            )
+            logger.warning(f"消息版本比当前版本新: {message_version} > {current_version}")
             return message
 
 

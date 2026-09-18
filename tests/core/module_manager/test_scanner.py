@@ -4,9 +4,8 @@ from tempfile import TemporaryDirectory
 import pytest
 import yaml
 
-from apps.backend.src.core.system.module_manager.scanner import ModuleScanner, ValidationError
-
 from apps.backend.src.core.system.module_manager.models import ModuleKind
+from apps.backend.src.core.system.module_manager.scanner import ModuleScanner, ValidationError
 
 VALID_YAML = {
     "name": "test_module",

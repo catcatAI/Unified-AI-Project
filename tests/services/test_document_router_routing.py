@@ -8,7 +8,6 @@ google_drive must NOT be intercepted here.
 """
 
 import pytest
-
 from services.document_router import try_intent_routing
 
 

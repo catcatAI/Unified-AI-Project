@@ -12,21 +12,24 @@ ALL of its sub-stages finish.
 # ANGELA-MATRIX: [L3] [γ] [A] [L0]
 # =============================================================================
 
-import os
-import sys
 import json
+import os
 import shutil
+import sys
 import tempfile
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", "apps", "backend", "src"))
+sys.path.insert(
+    0, os.path.join(os.path.dirname(__file__), "..", "..", "..", "apps", "backend", "src")
+)
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 
-import scripts.train_pipeline as tp
 from unittest.mock import patch
+
 from ai.core.training_coordinator import TrainingCoordinator
 
+import scripts.train_pipeline as tp
 
 # Use an isolated temp dir so the test never touches the real production
 # data/checkpoints (which holds trained models).
@@ -42,11 +45,13 @@ def _ckpt_dir():
 def _make_tiny_batches():
     s = []
     for a, b in [("Alice", "Bob"), ("Bob", "Carol")]:
-        s.append({
-            "input": f"{a} is taller than {b}.",
-            "output": f"{b} is shorter than {a}.",
-            "domain": "association",
-        })
+        s.append(
+            {
+                "input": f"{a} is taller than {b}.",
+                "output": f"{b} is shorter than {a}.",
+                "domain": "association",
+            }
+        )
     for i in range(20):
         s.append({"input": f"{i}+1", "output": str(i + 1), "domain": "math"})
     return {"ed3n": s, "garden": []}
@@ -76,6 +81,7 @@ def _save_state_factory(state):
             state.update(data)
         with open(_state_file(), "w", encoding="utf-8") as f:
             json.dump(state, f)
+
     return save_state
 
 
@@ -85,14 +91,18 @@ def test_ed3n_epoch_resume_continues_from_checkpoint():
     save = _save_state_factory(state)
     batches = _make_tiny_batches()
 
-    with patch.object(tp, "limit_value", side_effect=lambda k, d=2: 1 if k == "train.ed3n.epochs" else d):
+    with patch.object(
+        tp, "limit_value", side_effect=lambda k, d=2: 1 if k == "train.ed3n.epochs" else d
+    ):
         tp._step4_train_ed3n(TrainingCoordinator(), batches, state, save)
 
     assert state.get("ed3n_epochs_done") == 1
     assert os.path.exists(os.path.join(_ckpt_dir(), "ed3n_epoch1.json"))
     assert not os.path.exists(os.path.join(_ckpt_dir(), "ed3n_epoch2.json"))
 
-    with patch.object(tp, "limit_value", side_effect=lambda k, d=2: 2 if k == "train.ed3n.epochs" else d):
+    with patch.object(
+        tp, "limit_value", side_effect=lambda k, d=2: 2 if k == "train.ed3n.epochs" else d
+    ):
         tp._step4_train_ed3n(TrainingCoordinator(), batches, state, save)
 
     assert state.get("ed3n_epochs_done") == 2
@@ -118,7 +128,9 @@ def test_step4_not_completed_mid_epoch_kill():
             raise KeyboardInterrupt("simulated kill after epoch 1")
         return orig_train(self, batch)
 
-    with patch.object(tp, "limit_value", side_effect=lambda k, d=2: 2 if k == "train.ed3n.epochs" else d):
+    with patch.object(
+        tp, "limit_value", side_effect=lambda k, d=2: 2 if k == "train.ed3n.epochs" else d
+    ):
         with patch.object(tp.ED3NTrainer, "train_step", _boom):
             try:
                 tp._step4_train_ed3n(TrainingCoordinator(), batches, state, save)
@@ -135,7 +147,10 @@ def test_garden_batch_resume_continues_from_index():
     """A re-invoked GARDEN step must resume from garden_batch_done, not redo all."""
     state = {"garden_batch_done": 0}
     save = _save_state_factory(state)
-    batches = {"ed3n": [], "garden": [{"input": f"fact {i}", "output": str(i)} for i in range(1500)]}
+    batches = {
+        "ed3n": [],
+        "garden": [{"input": f"fact {i}", "output": str(i)} for i in range(1500)],
+    }
 
     orig_learn = tp.GARDENEngine.learn_batch
     seen = {"n": 0}
@@ -144,7 +159,9 @@ def test_garden_batch_resume_continues_from_index():
         seen["n"] += len(samples)
         if seen["n"] >= 1000:
             raise KeyboardInterrupt("simulated kill after batch 1")
-        return orig_learn(self, samples, confidence=confidence, train_associations=train_associations)
+        return orig_learn(
+            self, samples, confidence=confidence, train_associations=train_associations
+        )
 
     with patch.object(tp.GARDENEngine, "learn_batch", _partial):
         try:

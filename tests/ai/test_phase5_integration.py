@@ -14,9 +14,11 @@ import pytest
 # 5.6.1  ContinuousLearningPipeline saves state after interactions
 # ---------------------------------------------------------------------------
 
+
 class TestContinuousLearningState:
     def test_save_state_after_interactions(self, tmp_path):
         from ai.ed3n.continuous_learning import ContinuousLearningPipeline
+
         pipeline = ContinuousLearningPipeline(
             growth_interval=5,
             train_interval=100,
@@ -36,6 +38,7 @@ class TestContinuousLearningState:
 
     def test_load_state_restores_interactions(self, tmp_path):
         from ai.ed3n.continuous_learning import ContinuousLearningPipeline
+
         pipeline = ContinuousLearningPipeline(auto_grow=False)
         for i in range(5):
             pipeline.process_interaction(f"msg_{i}", f"reply_{i}", {})
@@ -50,9 +53,11 @@ class TestContinuousLearningState:
 # 5.6.3  MemoryContextManager save/load session persistence
 # ---------------------------------------------------------------------------
 
+
 class TestSessionPersistence:
     def test_save_and_load_session(self, tmp_path):
         from ai.context.memory_context import MemoryContextManager
+
         session_dir = str(tmp_path / "sessions")
         mgr = MemoryContextManager(session_dir=session_dir)
         mgr.create_memory("我喜欢音乐", "short_term", {"topic": "music"})
@@ -67,6 +72,7 @@ class TestSessionPersistence:
 
     def test_load_nonexistent_session_returns_false(self, tmp_path):
         from ai.context.memory_context import MemoryContextManager
+
         mgr = MemoryContextManager(session_dir=str(tmp_path / "sessions"))
         assert mgr.load_session("nonexistent") is False
 
@@ -75,9 +81,11 @@ class TestSessionPersistence:
 # 5.6.4  MemoryContextManager importance boost on frequently accessed memories
 # ---------------------------------------------------------------------------
 
+
 class TestMemoryImportanceBoost:
     def test_search_by_embedding(self, tmp_path):
         from ai.context.memory_context import MemoryContextManager
+
         mgr = MemoryContextManager(session_dir=str(tmp_path / "s"))
         mid = mgr.create_memory("test content", "short_term")
         mgr.update_memory_embedding(mid, [1.0, 0.0, 0.0])
@@ -87,6 +95,7 @@ class TestMemoryImportanceBoost:
 
     def test_cosine_similarity(self):
         from ai.context.memory_context import MemoryContextManager
+
         assert MemoryContextManager._cosine_similarity([1, 0], [1, 0]) == pytest.approx(1.0)
         assert MemoryContextManager._cosine_similarity([1, 0], [0, 1]) == pytest.approx(0.0)
         assert MemoryContextManager._cosine_similarity([], [1, 0]) == 0.0
@@ -96,9 +105,11 @@ class TestMemoryImportanceBoost:
 # 5.6.6  LearningLoop adjusts learning rate based on feedback
 # ---------------------------------------------------------------------------
 
+
 class TestLearningLoopFeedback:
     def test_learning_rate_increases_on_positive(self):
         from ai.response.learning_loop import LearningLoop
+
         loop = LearningLoop()
         initial = loop.learning_rate
         loop.record_user_engagement(positive=True)
@@ -106,6 +117,7 @@ class TestLearningLoopFeedback:
 
     def test_learning_rate_decreases_on_negative(self):
         from ai.response.learning_loop import LearningLoop
+
         loop = LearningLoop()
         initial = loop.learning_rate
         loop.record_user_engagement(positive=False)
@@ -113,6 +125,7 @@ class TestLearningLoopFeedback:
 
     def test_learning_rate_bounds(self):
         from ai.response.learning_loop import LearningLoop
+
         loop = LearningLoop()
         for _ in range(50):
             loop.record_user_engagement(positive=True)
@@ -123,12 +136,14 @@ class TestLearningLoopFeedback:
 
     def test_process_llm_response_extracts_novelty(self):
         from ai.response.learning_loop import LearningLoop
+
         loop = LearningLoop()
         count = loop.process_llm_response("「全新的句子」和一些内容。")
         assert count >= 0
 
     def test_bind_engines(self):
         from ai.response.learning_loop import LearningLoop
+
         loop = LearningLoop()
         dummy_ed3n = object()
         dummy_garden = object()
@@ -142,10 +157,12 @@ class TestLearningLoopFeedback:
 # 5.6.5  LearningLoop process_user_feedback triggers GARDEN update
 # ---------------------------------------------------------------------------
 
+
 class TestLearningLoopGardenIntegration:
     def test_process_user_feedback_calls_garden(self, tmp_path):
         from ai.garden.garden_engine import GARDENEngine
         from ai.response.learning_loop import LearningLoop
+
         garden = GARDENEngine(compatibility_mode=True)
         garden.load_presets()
         loop = LearningLoop()
@@ -155,6 +172,7 @@ class TestLearningLoopGardenIntegration:
 
     def test_process_user_feedback_negative(self):
         from ai.response.learning_loop import LearningLoop
+
         loop = LearningLoop()
         mock_garden = type("MockGarden", (), {"learn_from_interaction": lambda self, u, r: None})()
         loop.bind_garden_engine(mock_garden)

@@ -201,9 +201,7 @@ class HAMQueryEngine:
 
     async def retrieve_relevant_memories(self, query: str, limit: int = 10) -> List[HAMMemory]:
         if not self.vector_store_manager.vector_store:
-            logger.warning(
-                "Vector store not initialized. Cannot perform semantic search."
-            )
+            logger.warning("Vector store not initialized. Cannot perform semantic search.")
             return await self._fallback_keyword_search(query, limit)
 
         try:

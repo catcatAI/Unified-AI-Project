@@ -23,6 +23,8 @@ def test_data_agent_initialization(data_agent) -> None:
     capability_names = [cap["name"] for cap in data_agent.capabilities]
     assert "statistical_analysis" in capability_names
     assert "data_processing" in capability_names
+
+
 async def test_data_agent_handle_task_request_statistical_analysis(data_agent) -> None:
     """Test DataAnalysisAgent handling statistical_analysis task."""
     # Mock the HSP connector
@@ -61,6 +63,8 @@ async def test_data_agent_handle_task_request_statistical_analysis(data_agent) -
     assert result_payload["request_id"] == "test_request_123"
     assert "payload" in result_payload
     assert "descriptive_stats" in result_payload["payload"]
+
+
 async def test_data_agent_handle_task_request_data_processing(data_agent) -> None:
     """Test DataAnalysisAgent handling data_processing task."""
     # Mock the HSP connector
@@ -99,6 +103,8 @@ async def test_data_agent_handle_task_request_data_processing(data_agent) -> Non
     assert result_payload["request_id"] == "test_request_456"
     assert "payload" in result_payload
     assert "processed_data" in result_payload["payload"]
+
+
 async def test_data_agent_handle_task_request_unsupported_capability(data_agent) -> None:
     """Test DataAnalysisAgent handling unsupported capability."""
     # Mock the HSP connector

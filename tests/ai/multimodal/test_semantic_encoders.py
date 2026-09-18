@@ -24,6 +24,7 @@ from ai.multimodal.semantic_visual import SemanticVisualEncoder
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def sample_png() -> bytes:
     """Generate a minimal valid PNG (1x1 white pixel)."""
@@ -32,23 +33,22 @@ def sample_png() -> bytes:
 
     def _make_png():
         width, height = 1, 1
-        raw = b''
+        raw = b""
         for y in range(height):
-            raw += b'\x00'  # filter byte
+            raw += b"\x00"  # filter byte
             for x in range(width):
-                raw += b'\xff\xff\xff'  # RGB white
+                raw += b"\xff\xff\xff"  # RGB white
 
         def chunk(chunk_type, data):
             c = chunk_type + data
-            crc = struct.pack('>I', zlib.crc32(c) & 0xffffffff)
-            return struct.pack('>I', len(data)) + c + crc
+            crc = struct.pack(">I", zlib.crc32(c) & 0xFFFFFFFF)
+            return struct.pack(">I", len(data)) + c + crc
 
-        ihdr = struct.pack('>IIBBBBB', width, height, 8, 2, 0, 0, 0)
+        ihdr = struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0)
         idat = zlib.compress(raw)
-        return (b'\x89PNG\r\n\x1a\n'
-                + chunk(b'IHDR', ihdr)
-                + chunk(b'IDAT', idat)
-                + chunk(b'IEND', b''))
+        return (
+            b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", ihdr) + chunk(b"IDAT", idat) + chunk(b"IEND", b"")
+        )
 
     return _make_png()
 
@@ -57,15 +57,16 @@ def sample_png() -> bytes:
 def sample_wav() -> bytes:
     """Generate a minimal valid WAV (0.1s silence, 16kHz, mono, 16-bit)."""
     import struct
+
     sample_rate = 16000
     duration = 0.1
     num_samples = int(sample_rate * duration)
-    data = struct.pack('<' + 'h' * num_samples, *([0] * num_samples))
+    data = struct.pack("<" + "h" * num_samples, *([0] * num_samples))
     data_size = len(data)
     # WAV header
-    header = struct.pack('<4sI4s', b'RIFF', 36 + data_size, b'WAVE')
-    fmt = struct.pack('<4sIHHIIHH', b'fmt ', 16, 1, 1, sample_rate, sample_rate * 2, 2, 16)
-    data_chunk = struct.pack('<4sI', b'data', data_size) + data
+    header = struct.pack("<4sI4s", b"RIFF", 36 + data_size, b"WAVE")
+    fmt = struct.pack("<4sIHHIIHH", b"fmt ", 16, 1, 1, sample_rate, sample_rate * 2, 2, 16)
+    data_chunk = struct.pack("<4sI", b"data", data_size) + data
     return header + fmt + data_chunk
 
 
@@ -73,26 +74,28 @@ def sample_wav() -> bytes:
 # SemanticVisualEncoder Tests (6)
 # ---------------------------------------------------------------------------
 
+
 class TestSemanticVisualEncoderInit:
     """P42a: SemanticVisualEncoder initialization and backend detection."""
 
     def test_init_no_torch_visual(self):
         """S1: SemanticVisualEncoder reports unavailable when CLIP can't load."""
         import ai.multimodal.semantic_visual as sve_mod
+
         # Reset module-level cache so the probe re-runs under the mock.
         sve_mod._CLIP_AVAILABLE = False
         sve_mod._CLIP_MODEL = None
         sve_mod._CLIP_PROCESSOR = None
-        with patch('ai.multimodal.semantic_visual._lazy_init_clip',
-                   return_value=(None, None)):
+        with patch("ai.multimodal.semantic_visual._lazy_init_clip", return_value=(None, None)):
             sve = SemanticVisualEncoder()
-            assert hasattr(sve, 'is_available')
+            assert hasattr(sve, "is_available")
             assert not sve.is_available  # No CLIP backend → not available
 
     def test_init_with_torch_clip(self):
         """S2: SemanticVisualEncoder detects CLIP availability (mocked)."""
-        with patch('ai.multimodal.semantic_visual._lazy_init_clip',
-                   return_value=(MagicMock(), MagicMock())):
+        with patch(
+            "ai.multimodal.semantic_visual._lazy_init_clip", return_value=(MagicMock(), MagicMock())
+        ):
             sve = SemanticVisualEncoder()
             # Force backend init to use the mock
             backend = sve._get_backend()
@@ -102,16 +105,16 @@ class TestSemanticVisualEncoderInit:
 
     def test_encode_no_clip(self):
         """S3: encode returns None when CLIP is unavailable."""
-        with patch.object(SemanticVisualEncoder, '_get_backend',
-                          return_value=(None, None)):
+        with patch.object(SemanticVisualEncoder, "_get_backend", return_value=(None, None)):
             sve = SemanticVisualEncoder()
-            result = sve.encode(b'some_image_data')
+            result = sve.encode(b"some_image_data")
             assert result is None
 
     def test_encode_returns_512dim(self, sample_png):
         """S4: encode with mock CLIP backend returns 512-dim vector."""
-        with patch('ai.multimodal.semantic_visual._lazy_init_clip') as mock_init, \
-             patch('ai.multimodal.semantic_visual._check_torch_subprocess', return_value=True):
+        with patch("ai.multimodal.semantic_visual._lazy_init_clip") as mock_init, patch(
+            "ai.multimodal.semantic_visual._check_torch_subprocess", return_value=True
+        ):
             mock_model = MagicMock()
             mock_processor = MagicMock()
             mock_init.return_value = (mock_model, mock_processor)
@@ -134,6 +137,7 @@ class TestSemanticVisualEncoderInit:
     def test_encode_from_pil(self, sample_png):
         """S5: encode_from_pil works with mock CLIP backend."""
         from PIL import Image
+
         img = Image.open(io.BytesIO(sample_png))
 
         mock_model = MagicMock()
@@ -145,9 +149,9 @@ class TestSemanticVisualEncoderInit:
         mock_output.pooler_output = mock_tensor
         mock_model.get_image_features.return_value = mock_output
 
-        with patch.object(SemanticVisualEncoder, '_get_backend',
-                          return_value=(mock_model, mock_processor)), \
-             patch('ai.multimodal.semantic_visual._check_torch_subprocess', return_value=True):
+        with patch.object(
+            SemanticVisualEncoder, "_get_backend", return_value=(mock_model, mock_processor)
+        ), patch("ai.multimodal.semantic_visual._check_torch_subprocess", return_value=True):
             sve = SemanticVisualEncoder()
             result = sve.encode_from_pil(img)
             assert result is not None
@@ -155,10 +159,9 @@ class TestSemanticVisualEncoderInit:
 
     def test_encode_empty_data(self):
         """S6: encode handles empty bytes gracefully."""
-        with patch.object(SemanticVisualEncoder, '_get_backend',
-                          return_value=(None, None)):
+        with patch.object(SemanticVisualEncoder, "_get_backend", return_value=(None, None)):
             sve = SemanticVisualEncoder()
-            result = sve.encode(b'')
+            result = sve.encode(b"")
             assert result is None
 
 
@@ -166,40 +169,43 @@ class TestSemanticVisualEncoderInit:
 # SemanticAudioEncoder Tests (6)
 # ---------------------------------------------------------------------------
 
+
 class TestSemanticAudioEncoder:
     """P42b: SemanticAudioEncoder tests."""
 
     def test_init_audio_encoder(self):
         """A1: SemanticAudioEncoder initializes."""
         sae = SemanticAudioEncoder()
-        assert hasattr(sae, 'is_available')
-        assert hasattr(sae, 'FEATURE_DIM')
+        assert hasattr(sae, "is_available")
+        assert hasattr(sae, "FEATURE_DIM")
 
     def test_init_no_torch(self):
         """A2: SemanticAudioEncoder detects unavailable backend."""
         # Reset module-level globals to force re-init through mock
         import ai.multimodal.semantic_audio as sem_audio_mod
+
         sem_audio_mod._WHISPER_AVAILABLE = False
         sem_audio_mod._WHISPER_MODEL = None
         sem_audio_mod._WHISPER_PROCESSOR = None
         sem_audio_mod._WHISPER_FEATURE_EXTRACTOR = None
 
-        with patch('ai.multimodal.semantic_audio._lazy_init_whisper',
-                   return_value=(None, None, None)):
+        with patch(
+            "ai.multimodal.semantic_audio._lazy_init_whisper", return_value=(None, None, None)
+        ):
             sae = SemanticAudioEncoder()
             assert not sae.is_available
 
     def test_encode_no_whisper(self):
         """A3: encode returns None when Whisper is unavailable."""
-        with patch.object(SemanticAudioEncoder, '_get_backend',
-                          return_value=(None, None, None)):
+        with patch.object(SemanticAudioEncoder, "_get_backend", return_value=(None, None, None)):
             sae = SemanticAudioEncoder()
-            result = sae.encode(b'some_audio_data')
+            result = sae.encode(b"some_audio_data")
             assert result is None
 
     def test_encode_with_mock(self, sample_wav):
         """A4: encode with mock Whisper backend returns 384-dim vector."""
         import ai.multimodal.semantic_audio as sem_audio_mod
+
         sem_audio_mod._WHISPER_AVAILABLE = False
         sem_audio_mod._WHISPER_MODEL = None
 
@@ -210,16 +216,18 @@ class TestSemanticAudioEncoder:
         # Properly set up encoder return: model.encoder(**inputs) → encoder_output.last_hidden_state
         mock_hidden = MagicMock()
         mock_hidden.mean.return_value = MagicMock()
-        mock_hidden.mean.return_value.cpu.return_value.numpy.return_value = \
-            np.random.randn(1, 384).astype(np.float32)
+        mock_hidden.mean.return_value.cpu.return_value.numpy.return_value = np.random.randn(
+            1, 384
+        ).astype(np.float32)
         encoder_output = MagicMock()
         encoder_output.last_hidden_state = mock_hidden
         mock_model.encoder = MagicMock()
         mock_model.encoder.return_value = encoder_output
 
-        with patch('ai.multimodal.semantic_audio._lazy_init_whisper',
-                   return_value=(mock_model, mock_processor, mock_feat)), \
-             patch('ai.multimodal.semantic_audio._check_torch_subprocess', return_value=True):
+        with patch(
+            "ai.multimodal.semantic_audio._lazy_init_whisper",
+            return_value=(mock_model, mock_processor, mock_feat),
+        ), patch("ai.multimodal.semantic_audio._check_torch_subprocess", return_value=True):
             sae = SemanticAudioEncoder()
             sae._model = None
             result = sae.encode(sample_wav)
@@ -241,10 +249,9 @@ class TestSemanticAudioEncoder:
 
     def test_encode_empty_audio_encoder(self):
         """A6: encode handles empty audio gracefully."""
-        with patch.object(SemanticAudioEncoder, '_get_backend',
-                          return_value=(None, None, None)):
+        with patch.object(SemanticAudioEncoder, "_get_backend", return_value=(None, None, None)):
             sae = SemanticAudioEncoder()
-            result = sae.encode(b'')
+            result = sae.encode(b"")
             assert result is None
 
 
@@ -252,15 +259,16 @@ class TestSemanticAudioEncoder:
 # DualEncoderRouter Tests (8)
 # ---------------------------------------------------------------------------
 
+
 class TestDualEncoderRouter:
     """P42c: DualEncoderRouter tests."""
 
     def test_init(self):
         """R1: DualEncoderRouter initializes."""
         router = DualEncoderRouter()
-        assert hasattr(router, 'encode_vision')
-        assert hasattr(router, 'encode_audio')
-        assert hasattr(router, 'availability_report')
+        assert hasattr(router, "encode_vision")
+        assert hasattr(router, "encode_audio")
+        assert hasattr(router, "availability_report")
 
     def test_encode_vision_both(self, sample_png):
         """R2: encode_vision returns both structural and semantic when available."""
@@ -271,7 +279,7 @@ class TestDualEncoderRouter:
         mock_sve.is_available = True
         mock_sve.encode.return_value = np.ones(512, dtype=np.float32)
 
-        with patch.object(router, '_get_semantic_visual', return_value=mock_sve):
+        with patch.object(router, "_get_semantic_visual", return_value=mock_sve):
             result = router.encode_vision(sample_png)
 
         assert "structural_vision" in result.get("modalities_used", [])
@@ -300,7 +308,7 @@ class TestDualEncoderRouter:
         mock_sae.is_available = True
         mock_sae.encode.return_value = np.ones(384, dtype=np.float32)
 
-        with patch.object(router, '_get_semantic_audio', return_value=mock_sae):
+        with patch.object(router, "_get_semantic_audio", return_value=mock_sae):
             result = router.encode_audio(sample_wav)
 
         assert "structural_audio" in result.get("modalities_used", [])
@@ -316,8 +324,9 @@ class TestDualEncoderRouter:
         mock_sve.is_available = False
         mock_sae = MagicMock()
         mock_sae.is_available = False
-        with patch.object(router, '_get_semantic_visual', return_value=mock_sve), \
-             patch.object(router, '_get_semantic_audio', return_value=mock_sae):
+        with patch.object(router, "_get_semantic_visual", return_value=mock_sve), patch.object(
+            router, "_get_semantic_audio", return_value=mock_sae
+        ):
             report = router.availability_report()
 
         assert isinstance(report, dict)
@@ -368,7 +377,7 @@ class TestDualEncoderRouter:
     def test_encode_empty_vision(self):
         """R9: encode_vision handles empty bytes gracefully."""
         router = DualEncoderRouter()
-        result = router.encode_vision(b'', include_semantic=False)
+        result = router.encode_vision(b"", include_semantic=False)
         # Structural encoder handles empty data by returning zeros
         assert result.get("structural") is not None
         assert isinstance(result["structural"], np.ndarray)
@@ -376,7 +385,7 @@ class TestDualEncoderRouter:
     def test_encode_empty_audio(self):
         """R10: encode_audio handles empty bytes gracefully."""
         router = DualEncoderRouter()
-        result = router.encode_audio(b'', include_semantic=False)
+        result = router.encode_audio(b"", include_semantic=False)
         assert result.get("structural") is not None
         assert isinstance(result["structural"], np.ndarray)
 
@@ -384,6 +393,7 @@ class TestDualEncoderRouter:
 # ---------------------------------------------------------------------------
 # Real Model Loading Tests (slow, requires HF cache)
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.slow
 class TestSemanticEncoderRealModels:
@@ -411,10 +421,12 @@ class TestSemanticEncoderRealModels:
         """Load real CLIP model once per class."""
         import subprocess
         import sys
+
         try:
             result = subprocess.run(
                 [sys.executable, "-c", "import torch; print('ok')"],
-                capture_output=True, timeout=10,
+                capture_output=True,
+                timeout=10,
             )
             torch_ok = result.returncode == 0
         except Exception:
@@ -422,6 +434,7 @@ class TestSemanticEncoderRealModels:
         if not torch_ok:
             pytest.skip("torch unavailable (subprocess check failed)")
         from ai.multimodal.semantic_visual import _lazy_init_clip
+
         model, processor = _lazy_init_clip()
         if model is None or processor is None:
             pytest.skip("CLIP model not available in HF cache")
@@ -432,10 +445,12 @@ class TestSemanticEncoderRealModels:
         """Load real Whisper model once per class."""
         import subprocess
         import sys
+
         try:
             result = subprocess.run(
                 [sys.executable, "-c", "import torch; print('ok')"],
-                capture_output=True, timeout=10,
+                capture_output=True,
+                timeout=10,
             )
             torch_ok = result.returncode == 0
         except Exception:
@@ -443,6 +458,7 @@ class TestSemanticEncoderRealModels:
         if not torch_ok:
             pytest.skip("torch unavailable (subprocess check failed)")
         from ai.multimodal.semantic_audio import _lazy_init_whisper
+
         model, processor, feat = _lazy_init_whisper()
         if model is None or processor is None:
             pytest.skip("Whisper model not available in HF cache")
@@ -451,8 +467,10 @@ class TestSemanticEncoderRealModels:
     def test_clip_loads(self, clip_model):
         """RL1: Real CLIP model loads and produces valid 512-dim embeddings."""
         import io
+
         import numpy as np
         from PIL import Image
+
         model, processor = clip_model
         assert model is not None
         # Encode a real image
@@ -471,6 +489,7 @@ class TestSemanticEncoderRealModels:
     def test_clip_encode_text(self, clip_model):
         """RL2: Real CLIP model supports text encoding."""
         import numpy as np
+
         model, processor = clip_model
         sve = SemanticVisualEncoder()
         sve._model, sve._processor = model, processor
@@ -484,7 +503,9 @@ class TestSemanticEncoderRealModels:
     def test_clip_classify_image(self, clip_model):
         """RL3: Real CLIP model supports zero-shot classification."""
         import io
+
         from PIL import Image
+
         model, processor = clip_model
         img = Image.new("RGB", (224, 224), color=(200, 140, 80))
         buf = io.BytesIO()
@@ -501,7 +522,9 @@ class TestSemanticEncoderRealModels:
         """RL4: Real Whisper model loads and produces 384-dim embeddings."""
         import io
         import struct
+
         import numpy as np
+
         model, processor, feat = whisper_model
         assert model is not None
         # Generate WAV silence
@@ -523,21 +546,23 @@ class TestSemanticEncoderRealModels:
     def test_dual_encoder_real_clip(self, clip_model):
         """RL5: DualEncoderRouter returns semantic when real CLIP is injected."""
         import io
+
         import numpy as np
-        from PIL import Image
         from ai.multimodal.dual_encoder_router import DualEncoderRouter
+        from PIL import Image
+
         router = DualEncoderRouter()
         mock_sve = SemanticVisualEncoder()
         mock_sve._model, mock_sve._processor = clip_model
         mock_sve._model_cls = None
 
         from unittest.mock import PropertyMock
-        with patch.object(type(mock_sve), 'is_available',
-                          new_callable=PropertyMock, return_value=True):
-            with patch.object(mock_sve, 'encode',
-                              return_value=np.ones(512, dtype=np.float32)):
-                with patch.object(router, '_get_semantic_visual',
-                                  return_value=mock_sve):
+
+        with patch.object(
+            type(mock_sve), "is_available", new_callable=PropertyMock, return_value=True
+        ):
+            with patch.object(mock_sve, "encode", return_value=np.ones(512, dtype=np.float32)):
+                with patch.object(router, "_get_semantic_visual", return_value=mock_sve):
                     img = Image.new("RGB", (224, 224), color=(100, 150, 200))
                     buf = io.BytesIO()
                     img.save(buf, format="PNG")

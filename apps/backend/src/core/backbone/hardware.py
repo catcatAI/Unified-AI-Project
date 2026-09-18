@@ -42,7 +42,8 @@ class HardwareProfile:
     def _get_ram_gb() -> float:
         try:
             import psutil
-            return float(psutil.virtual_memory().total / (1024 ** 3))
+
+            return float(psutil.virtual_memory().total / (1024**3))
         except ImportError:
             pass
         try:
@@ -50,7 +51,7 @@ class HardwareProfile:
                 for line in f:
                     if line.startswith("MemTotal"):
                         kb = int(line.split()[1])
-                        return kb / (1024 ** 2)
+                        return kb / (1024**2)
         except (FileNotFoundError, ValueError):
             pass
         return 4.0
@@ -59,7 +60,8 @@ class HardwareProfile:
     def _get_disk_free_gb() -> float:
         try:
             import shutil
-            return shutil.disk_usage("/").free / (1024 ** 3)
+
+            return shutil.disk_usage("/").free / (1024**3)
         except Exception as e:
             logger.debug(f"disk_usage failed: {e}", exc_info=True)
             return 0.0
@@ -126,6 +128,7 @@ class HardwareProfile:
                 if "8086:" in low:
                     # Extract device ID: [8086:e20c]
                     import re
+
                     m = re.search(r"\[8086:([0-9a-f]{4})\]", low)
                     if m:
                         dev_id = m.group(1)
@@ -173,9 +176,7 @@ class HardwareProfile:
 
         # Legacy lspci without -nn (fallback)
         try:
-            out = subprocess.check_output(
-                ["lspci"], stderr=subprocess.DEVNULL, timeout=5
-            ).decode()
+            out = subprocess.check_output(["lspci"], stderr=subprocess.DEVNULL, timeout=5).decode()
             for line in out.splitlines():
                 low = line.lower()
                 if "arc" in low and "intel" in low:
@@ -202,6 +203,7 @@ class HardwareProfile:
             for line in out.splitlines():
                 if "Video memory:" in line or "Dedicated video memory:" in line:
                     import re
+
                     m = re.search(r"(\d+)\s*MB", line)
                     if m:
                         vram3_mb = int(m.group(1))
@@ -235,6 +237,7 @@ class HardwareProfile:
         # 4) /dev/dri existence (last resort)
         try:
             import os
+
             if os.path.exists("/dev/dri/renderD128"):
                 result["gpu"] = result["gpu"] or "Intel/AMD GPU (renderD128)"
                 result["gpu_memory_gb"] = result["gpu_memory_gb"] or 4
@@ -247,6 +250,7 @@ class HardwareProfile:
     def _check_torch() -> bool:
         try:
             import torch
+
             return True
         except ImportError:
             return False
@@ -255,6 +259,7 @@ class HardwareProfile:
     def _check_chromadb() -> bool:
         try:
             import chromadb
+
             return True
         except ImportError:
             return False
@@ -278,12 +283,20 @@ class HardwareProfile:
         """
         # Allow explicit override (hardware-adaptive respects user choice)
         import os
+
         env = os.environ.get("ANGELA_HARDWARE_PROFILE")
         if env:
             # Validate against known tiers
-            known = {"high_performance_desktop", "desktop_igpu", "laptop_normal",
-                     "laptop_power_saver", "low_power_device", "server_cloud",
-                     "high_performance_gpu", "auto"}
+            known = {
+                "high_performance_desktop",
+                "desktop_igpu",
+                "laptop_normal",
+                "laptop_power_saver",
+                "low_power_device",
+                "server_cloud",
+                "high_performance_gpu",
+                "auto",
+            }
             if env in known and env != "auto":
                 return env
 

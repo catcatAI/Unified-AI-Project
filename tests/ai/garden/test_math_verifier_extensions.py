@@ -4,18 +4,18 @@
 """Tests for deterministic engine extensions (trig, constants, logic, KB)."""
 
 import math
-import pytest
 
+import pytest
+from ai.knowledge_base import _CHEMICAL_FORMULAS, _UNIT_CONVERSIONS, route_knowledge
 from services.math_verifier import (
-    evaluate_math,
-    evaluate_logic,
-    MathExtractor,
-    _SAFE_FUNCTIONS,
     _MATH_CONSTANTS,
-    _is_prime,
+    _SAFE_FUNCTIONS,
+    MathExtractor,
     _gcd,
+    _is_prime,
+    evaluate_logic,
+    evaluate_math,
 )
-from ai.knowledge_base import route_knowledge, _UNIT_CONVERSIONS, _CHEMICAL_FORMULAS
 
 
 class TestSafeFunctions:

@@ -4,7 +4,6 @@
 """Tests for the deterministic knowledge base (native factual recall)."""
 
 import pytest
-
 from ai.knowledge_base import known_subjects, route_knowledge
 
 

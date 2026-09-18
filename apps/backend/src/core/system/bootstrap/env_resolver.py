@@ -85,7 +85,10 @@ $sc.Description = "Angela AI - Digital Life"
 $sc.Save()
 """
             subprocess.run(
-                ["powershell", "-Command", ps], capture_output=True, check=True, timeout=timeout_value("bootstrap.shortcut_creation", 15)
+                ["powershell", "-Command", ps],
+                capture_output=True,
+                check=True,
+                timeout=timeout_value("bootstrap.shortcut_creation", 15),
             )
             logger.info("✅ Desktop shortcut created.")
             return True
@@ -123,7 +126,6 @@ $sc.Save()
         ):
             logger.error(
                 f"Python version mismatch: {sys.version}. Required: {min_version[0]}.{min_version[1]}+",
-
             )
             return False
         return True
@@ -131,9 +133,7 @@ $sc.Save()
     def check_node_presence(self) -> Optional[str]:
         """Checks for node.js and returns version if found."""
         try:
-            res = subprocess.run(
-                ["node", "--version"], capture_output=True, text=True, timeout=5
-            )
+            res = subprocess.run(["node", "--version"], capture_output=True, text=True, timeout=5)
             if res.returncode == 0:
                 return res.stdout.strip()
         except (FileNotFoundError, subprocess.TimeoutExpired):

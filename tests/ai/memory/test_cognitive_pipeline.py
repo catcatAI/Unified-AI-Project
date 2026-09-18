@@ -21,9 +21,7 @@ import pytest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
 sys.path.insert(
     0,
-    os.path.join(
-        os.path.dirname(__file__), "..", "..", "..", "..", "apps", "backend", "src"
-    ),
+    os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "apps", "backend", "src"),
 )
 
 

@@ -9,17 +9,17 @@ P28: TrainingCoordinator (domain training orchestration).
 """
 
 from ai.core.dictionary_classifier import DictionaryClassifier, get_dictionary_classifier
-from ai.core.execution_gate import GateDecision, ExecutionGate
-from ai.core.model_bus import ModelCapability, ModelRouteResult, RouteDecision, ModelBus
-from ai.core.query_classifier import QueryType, QueryResult, QueryClassifier
+from ai.core.execution_gate import ExecutionGate, GateDecision
+from ai.core.model_bus import ModelBus, ModelCapability, ModelRouteResult, RouteDecision
+from ai.core.query_classifier import QueryClassifier, QueryResult, QueryType
 from ai.core.training_coordinator import DomainTrainingRecord, TrainingCoordinator
 from ai.core.unicode_utils import (
+    cjk_radical,
+    is_cjk,
+    is_english_dominant,
+    is_japanese,
     normalize_text,
     to_romaji,
-    is_cjk,
-    is_japanese,
-    is_english_dominant,
-    cjk_radical,
 )
 
 __all__ = [

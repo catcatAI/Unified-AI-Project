@@ -5,6 +5,7 @@ import pytest
 @pytest.fixture
 def ls():
     from ai.multimodal.shared_latent_space import SharedLatentSpace
+
     space = SharedLatentSpace(latent_dim=64)
     space.register_modality("vision", 128)
     space.register_modality("audio", 32)
@@ -64,7 +65,9 @@ class TestContrastiveLearning:
         assert dist_after >= dist_before - 1e-4
 
     def test_no_registered_modality_returns_zero_loss(self, ls):
-        result = ls.train([("unknown", _random_feat(10), "vision", _random_feat(128))], [], epochs=1)
+        result = ls.train(
+            [("unknown", _random_feat(10), "vision", _random_feat(128))], [], epochs=1
+        )
         assert result["final_loss"] == 0.0
 
     def test_training_updates_weights(self, ls):

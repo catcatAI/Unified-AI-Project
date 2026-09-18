@@ -15,7 +15,6 @@ Verifies:
 import asyncio
 
 import pytest
-
 from ai.core.training_coordinator import DOMAIN_OWNERSHIP, TrainingCoordinator
 from ai.ed3n.core_network import CoreNetwork, RelationType
 from ai.ed3n.ed3n_engine import ED3NEngine
@@ -37,9 +36,21 @@ def test_association_samples_train_snn_edges():
     eng.load_presets()
     before = eng.network._conn_count
     samples = [
-        {"input": "Alice is taller than Bob.", "output": "Bob is shorter than Alice.", "domain": "association"},
-        {"input": "Bob is taller than Carol.", "output": "Carol is shorter than Bob.", "domain": "association"},
-        {"input": "Carol is taller than Dave.", "output": "Dave is shorter than Carol.", "domain": "association"},
+        {
+            "input": "Alice is taller than Bob.",
+            "output": "Bob is shorter than Alice.",
+            "domain": "association",
+        },
+        {
+            "input": "Bob is taller than Carol.",
+            "output": "Carol is shorter than Bob.",
+            "domain": "association",
+        },
+        {
+            "input": "Carol is taller than Dave.",
+            "output": "Dave is shorter than Carol.",
+            "domain": "association",
+        },
     ]
     examples = []
     for s in samples:
@@ -48,10 +59,17 @@ def test_association_samples_train_snn_edges():
         if not ik or not ok_:
             continue
         pairs = [(a, "mapping", b) for a in ik for b in ok_]
-        examples.append(TrainingExample(
-            input_text=s["input"], expected_output=s["output"],
-            input_keys=ik, output_keys=ok_, relation_pairs=pairs,
-            confidence=0.8, metadata={"domain": "association"}))
+        examples.append(
+            TrainingExample(
+                input_text=s["input"],
+                expected_output=s["output"],
+                input_keys=ik,
+                output_keys=ok_,
+                relation_pairs=pairs,
+                confidence=0.8,
+                metadata={"domain": "association"},
+            )
+        )
     trainer = ED3NTrainer(eng)
     trainer.train_step(TrainingBatch(examples=examples, batch_id="assoc"))
     assert eng.network._conn_count > before, "association samples must add SNN edges"

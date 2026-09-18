@@ -27,7 +27,6 @@ import threading
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
-
 from ai.arithmetic.deterministic_router import try_logic as _det_try_logic
 from ai.arithmetic.deterministic_router import try_math as _det_try_math
 from ai.core.unicode_utils import normalize_text
@@ -71,10 +70,9 @@ class UnifiedEngine:
                 slots = 65536
         if use_feat is None:
             try:
-                from core.system.config.magic_numbers import compute_bool as _cb
-
                 # unified.use_feat is not a mode flag; read via _get directly
                 from core.system.config.magic_numbers import _get
+                from core.system.config.magic_numbers import compute_bool as _cb
 
                 v = _get("unified.use_feat", None)
                 use_feat = bool(v) if v is not None else True
@@ -92,13 +90,18 @@ class UnifiedEngine:
         # effective cap is the same cascade that guards GARDEN (usable-2GB).
         if slots is not None and slots > 65536:
             try:
-                from core.system.config.magic_numbers import _probe_ram_total_gb, effective_capacity_bytes
+                from core.system.config.magic_numbers import (
+                    _probe_ram_total_gb,
+                    effective_capacity_bytes,
+                )
 
                 ram = _probe_ram_total_gb()
                 if ram and ram > 0:
                     # unified tables: 4 gram tables + delta + feat ≈ 5*slots*256*4
                     # ~= slots*5120 bytes. Clamp so unified alone fits in cap.
-                    cap = effective_capacity_bytes("memory", total_gb=max(0, ram - 2.0), numeric_mb=8192)
+                    cap = effective_capacity_bytes(
+                        "memory", total_gb=max(0, ram - 2.0), numeric_mb=8192
+                    )
                     max_slots = int(cap / 5120)
                     # round down to power of two
                     max_pow2 = 1 << (max_slots.bit_length() - 1) if max_slots > 0 else 65536
@@ -107,7 +110,9 @@ class UnifiedEngine:
                         slots = max(32768, max_pow2)
             except Exception:
                 pass
-        self.core = FixedSizeCore(max_seq=max_seq, slots=slots, use_feat=use_feat, use_delta=use_delta)
+        self.core = FixedSizeCore(
+            max_seq=max_seq, slots=slots, use_feat=use_feat, use_delta=use_delta
+        )
         self._cap_bytes = self._resolve_cap(memory_cap_mb)
         self._last_confidence = 0.0
         self._last_route = ""
@@ -124,9 +129,7 @@ class UnifiedEngine:
         try:
             from core.data_config import get_checkpoints_dir
 
-            path = os.path.join(
-                str(get_checkpoints_dir()), "unified", "qa_knowledge.json"
-            )
+            path = os.path.join(str(get_checkpoints_dir()), "unified", "qa_knowledge.json")
             if os.path.exists(path):
                 import json as _json
 
@@ -137,9 +140,7 @@ class UnifiedEngine:
                     self.semantic_qa = None
                     logger.info("semantic QA knowledge file invalid, skipped")
                 else:
-                    logger.info(
-                        "semantic QA loaded %d facts", len(self.semantic_qa._questions)
-                    )
+                    logger.info("semantic QA loaded %d facts", len(self.semantic_qa._questions))
                     return
         except Exception as exc:  # noqa: BLE001 - optional boot feature
             logger.debug("semantic QA auto-load skipped: %s", exc)
@@ -167,7 +168,9 @@ class UnifiedEngine:
                 fallback_path = _Path2("configs/qa_fallback.json")
             self.semantic_qa = SemanticQA()
             self.semantic_qa.learn(fallback_pairs, epochs=10)
-            logger.info("semantic QA fallback loaded %d facts from %s", len(fallback_pairs), fallback_path)
+            logger.info(
+                "semantic QA fallback loaded %d facts from %s", len(fallback_pairs), fallback_path
+            )
         except Exception as exc:
             logger.debug("semantic QA fallback failed: %s", exc)
             self.semantic_qa = None
@@ -251,7 +254,10 @@ class UnifiedEngine:
                 if idx == -1:
                     break
                 before = idx == 0 or not normalized[idx - 1].isalnum()
-                after = idx + len(pattern) >= len(normalized) or not normalized[idx + len(pattern)].isalnum()
+                after = (
+                    idx + len(pattern) >= len(normalized)
+                    or not normalized[idx + len(pattern)].isalnum()
+                )
                 # For CJK patterns: skip word-boundary check (CJK has no spaces)
                 is_cjk = bool(_cjk_re.search(pattern))
                 if is_cjk or (before and after):
@@ -318,8 +324,22 @@ class UnifiedEngine:
         # Answer voting only for genuine questions. Statements ("please
         # explain X") previously got fabricated "=e" answers.
         is_question = text.rstrip().endswith(("?", "？")) or q.startswith(
-            ("what ", "who ", "when ", "where ", "why ", "how ",
-             "what'", "什麼", "什么", "誰", "谁", "為何", "为何", "如何")
+            (
+                "what ",
+                "who ",
+                "when ",
+                "where ",
+                "why ",
+                "how ",
+                "what'",
+                "什麼",
+                "什么",
+                "誰",
+                "谁",
+                "為何",
+                "为何",
+                "如何",
+            )
         )
         if not is_question:
             return None
@@ -341,17 +361,22 @@ class UnifiedEngine:
         the topic entity from the previous turn when the raw question would
         otherwise retrieve nothing."""
         low = text.lower().strip()
-        has_pronoun = any(w in low for w in (" it ", " it?", "it ", "他", "她", "它", "這個", "那个"))
+        has_pronoun = any(
+            w in low for w in (" it ", " it?", "it ", "他", "她", "它", "這個", "那个")
+        )
         if not has_pronoun or not self._turns:
             return text
         prev_q = self._turns[-1][0]
         # extract content words from previous question as the topic
         import re as _re
 
-        words = [w for w in _re.findall(r"[A-Za-z\u4e00-\u9fff]+", prev_q)
-                 if len(w) > 2 and w.lower() not in
-                 ("what", "which", "who", "where", "when", "the", "is", "of",
-                  "capital", "city")]
+        words = [
+            w
+            for w in _re.findall(r"[A-Za-z\u4e00-\u9fff]+", prev_q)
+            if len(w) > 2
+            and w.lower()
+            not in ("what", "which", "who", "where", "when", "the", "is", "of", "capital", "city")
+        ]
         if not words:
             return text
         topic = words[-1]
@@ -365,8 +390,10 @@ class UnifiedEngine:
         """Natural sentence wrapping: if the stored answer is already a full
         sentence, keep it; if bare (e.g. 'Paris'), embed a light frame."""
         a = answer.strip()
-        if len(a) > 0 and (a[0].isupper() or "\u4e00" <= a[0] <= "\u9fff") and (
-            a.endswith((".", "!", "?", "。", "！"))
+        if (
+            len(a) > 0
+            and (a[0].isupper() or "\u4e00" <= a[0] <= "\u9fff")
+            and (a.endswith((".", "!", "?", "。", "！")))
         ):
             return a
         q = question.strip().rstrip("？?").strip()
@@ -430,10 +457,29 @@ class UnifiedEngine:
                     # High-similarity hits (sim >= 0.85) bypass the guard.
                     guard_thr = threshold_value("semantic_qa.overlap_guard", 0.85)
                     if sim < guard_thr:
-                        stop = {"what", "is", "the", "of", "are", "there", "a", "an",
-                                "to", "in", "on", "how", "does", "do", "many", "much"}
-                        qws = [w.lower() for w in _re.findall(r"[A-Za-z]{3,}", resolved)
-                               if w.lower() not in stop]
+                        stop = {
+                            "what",
+                            "is",
+                            "the",
+                            "of",
+                            "are",
+                            "there",
+                            "a",
+                            "an",
+                            "to",
+                            "in",
+                            "on",
+                            "how",
+                            "does",
+                            "do",
+                            "many",
+                            "much",
+                        }
+                        qws = [
+                            w.lower()
+                            for w in _re.findall(r"[A-Za-z]{3,}", resolved)
+                            if w.lower() not in stop
+                        ]
                         qws += [c for c in _re.findall(r"[\u4e00-\u9fff]{2,}", resolved)]
                         if qws and not any(
                             w in hit[0].lower()

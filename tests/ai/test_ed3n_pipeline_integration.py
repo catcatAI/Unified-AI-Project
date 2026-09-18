@@ -2,6 +2,7 @@
 Test: Can the system retrieve content from conversation history?
 Tests ED3N dictionary-based retrieval and context matching.
 """
+
 import sys
 
 import pytest
@@ -62,7 +63,9 @@ def test_query_classifier_classification():
 
     for text, expected in test_cases:
         r = clf.classify(text)
-        assert r.primary_type == expected, f"'{text}' -> {r.primary_type.value} (expected {expected.value})"
+        assert (
+            r.primary_type == expected
+        ), f"'{text}' -> {r.primary_type.value} (expected {expected.value})"
 
 
 def test_execution_gate_decisions():
@@ -84,7 +87,9 @@ def test_execution_gate_decisions():
     for text, expected in test_cases:
         r = clf.classify(text)
         d = gate.decide(r.primary_type.value, r.action_type, text, r.confidence, {})
-        assert d.action == expected, f"'{text}' -> {d.action} (expected {expected}) score={d.score:.3f}"
+        assert (
+            d.action == expected
+        ), f"'{text}' -> {d.action} (expected {expected}) score={d.score:.3f}"
 
 
 def test_prompt_builder_injection():
@@ -104,7 +109,9 @@ def test_prompt_builder_injection():
     messages = construct_angela_prompt("台北天氣如何？", context)
 
     system_content = messages[0]["content"]
-    assert "Execution Result" in system_content, "System prompt should contain execution result block"
+    assert (
+        "Execution Result" in system_content
+    ), "System prompt should contain execution result block"
     assert "web_search" in system_content, "Should contain handler type"
     assert "是" in system_content, "Should contain success status"
     assert "Search result" in system_content, "Should contain result text"
@@ -113,6 +120,7 @@ def test_prompt_builder_injection():
 def test_retrieval_from_txt_file():
     """Test retrieving content from a text file."""
     import os
+
     if not os.path.exists("test_retrieval.txt"):
         pytest.skip("test_retrieval.txt not found")
     with open("test_retrieval.txt", "r", encoding="utf-8") as f:
@@ -137,6 +145,7 @@ def test_ed3n_classifier_integration():
     assert r.primary_type.value == "search"
 
     from ai.ed3n.ed3n_engine import ED3NEngine
+
     engine = ED3NEngine()
     engine.load_presets()
 

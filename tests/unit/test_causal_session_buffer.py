@@ -4,6 +4,7 @@ Tests for session-based temporal buffer in _fire_causal_learning.
 Verifies that per-session buffers accumulate across multiple calls,
 enabling Granger causality (>= 5 samples) to fire.
 """
+
 # =============================================================================
 # ANGELA-MATRIX: L3 β A L4
 # =============================================================================
@@ -142,6 +143,7 @@ def _reset_all():
     """Clear module-level buffers AND reset temporal state."""
     _CAUSAL_BUFFERS.clear()
     from api.routes.chat_routes import _get_causal_temporal_state
+
     ts = _get_causal_temporal_state()
     ts.clear()
 
@@ -149,8 +151,10 @@ def _reset_all():
 def test_get_causal_temporal_state_creates_ts():
     _reset_all()
     from api.routes.chat_routes import _get_causal_temporal_state
+
     ts = _get_causal_temporal_state()
     from core.state.temporal import TemporalState
+
     assert isinstance(ts, TemporalState)
     assert ts.max_size == 200
 
@@ -158,6 +162,7 @@ def test_get_causal_temporal_state_creates_ts():
 def test_get_causal_temporal_state_is_singleton():
     _reset_all()
     from api.routes.chat_routes import _get_causal_temporal_state
+
     ts1 = _get_causal_temporal_state()
     ts2 = _get_causal_temporal_state()
     assert ts1 is ts2
@@ -170,6 +175,7 @@ def test_fire_causal_learning_records_temporal_snapshot(mock_get_causal):
     mock_get_causal.return_value = mock_causal
 
     from api.routes.chat_routes import _fire_causal_learning, _get_causal_temporal_state
+
     ts = _get_causal_temporal_state()
     assert ts.size() == 0
 
@@ -258,6 +264,7 @@ class TestCausalRoutingAdjustment:
         """When causal engine unavailable, returns zero biases."""
         with _patch_routing_causal(return_none=True):
             from api.routes.chat_routes import _get_causal_routing_adjustment
+
             result = _get_causal_routing_adjustment()
         assert result["temperature_bias"] == 0.0
         assert result["max_tokens_bias"] == 0
@@ -267,22 +274,26 @@ class TestCausalRoutingAdjustment:
         """When engine has no relationships, returns zero biases."""
         with _patch_routing_causal({}):
             from api.routes.chat_routes import _get_causal_routing_adjustment
+
             result = _get_causal_routing_adjustment()
         assert result["temperature_bias"] == 0.0
         assert result["causal_confidence"] == 0.0
 
     def test_strong_user_input_effect_reduces_temperature(self):
         """Strong user_input→response correlation should reduce temperature for consistency."""
-        with _patch_routing_causal({
-            "user_input": [
-                {"cause": "user_input", "effect": "angela_response", "strength": 0.85},
-                {"cause": "user_input", "effect": "user_satisfaction", "strength": 0.6},
-            ],
-            "query_complexity": [],
-            "conversation_momentum": [],
-            "interaction_value": [],
-        }):
+        with _patch_routing_causal(
+            {
+                "user_input": [
+                    {"cause": "user_input", "effect": "angela_response", "strength": 0.85},
+                    {"cause": "user_input", "effect": "user_satisfaction", "strength": 0.6},
+                ],
+                "query_complexity": [],
+                "conversation_momentum": [],
+                "interaction_value": [],
+            }
+        ):
             from api.routes.chat_routes import _get_causal_routing_adjustment
+
             result = _get_causal_routing_adjustment()
         # avg strength = (0.85 + 0.6) / 2 = 0.725 > 0.5 → -0.15 * 0.725 = -0.109
         assert result["temperature_bias"] < 0  # should be negative
@@ -291,15 +302,18 @@ class TestCausalRoutingAdjustment:
 
     def test_strong_query_complexity_reduces_temperature_and_boosts_tokens(self):
         """Strong query_complexity→response should reduce temp and increase max_tokens."""
-        with _patch_routing_causal({
-            "user_input": [],
-            "query_complexity": [
-                {"cause": "query_complexity", "effect": "angela_response", "strength": 0.75},
-            ],
-            "conversation_momentum": [],
-            "interaction_value": [],
-        }):
+        with _patch_routing_causal(
+            {
+                "user_input": [],
+                "query_complexity": [
+                    {"cause": "query_complexity", "effect": "angela_response", "strength": 0.75},
+                ],
+                "conversation_momentum": [],
+                "interaction_value": [],
+            }
+        ):
             from api.routes.chat_routes import _get_causal_routing_adjustment
+
             result = _get_causal_routing_adjustment()
         assert result["temperature_bias"] < 0  # negative temp bias
         assert result["max_tokens_bias"] > 0  # positive tokens bias
@@ -308,15 +322,18 @@ class TestCausalRoutingAdjustment:
 
     def test_high_momentum_increases_temperature(self):
         """High conversation_momentum should increase temperature for creativity."""
-        with _patch_routing_causal({
-            "user_input": [],
-            "query_complexity": [],
-            "conversation_momentum": [
-                {"cause": "conversation_momentum", "effect": "user_input", "strength": 0.6},
-            ],
-            "interaction_value": [],
-        }):
+        with _patch_routing_causal(
+            {
+                "user_input": [],
+                "query_complexity": [],
+                "conversation_momentum": [
+                    {"cause": "conversation_momentum", "effect": "user_input", "strength": 0.6},
+                ],
+                "interaction_value": [],
+            }
+        ):
             from api.routes.chat_routes import _get_causal_routing_adjustment
+
             result = _get_causal_routing_adjustment()
         assert result["temperature_bias"] > 0  # positive temp bias
         assert result["max_tokens_bias"] > 0  # positive tokens bias
@@ -324,15 +341,18 @@ class TestCausalRoutingAdjustment:
 
     def test_max_tokens_bias_is_clamped(self):
         """Ensure max_tokens_bias stays within [-256, +256] bounds."""
-        with _patch_routing_causal({
-            "user_input": [],
-            "query_complexity": [],
-            "conversation_momentum": [],
-            "interaction_value": [
-                {"cause": "interaction_value", "effect": "user_input", "strength": 0.8},
-            ],
-        }):
+        with _patch_routing_causal(
+            {
+                "user_input": [],
+                "query_complexity": [],
+                "conversation_momentum": [],
+                "interaction_value": [
+                    {"cause": "interaction_value", "effect": "user_input", "strength": 0.8},
+                ],
+            }
+        ):
             from api.routes.chat_routes import _get_causal_routing_adjustment
+
             result = _get_causal_routing_adjustment()
         # interaction_value strength 0.8 → 128 * 0.8 = 102 (within bounds)
         assert -256 <= result["max_tokens_bias"] <= 256
@@ -344,15 +364,18 @@ class TestCausalRoutingInjection:
 
     def test_causal_routing_injected_when_high_confidence(self):
         """causal_routing should be injected into context when confidence >= 0.25."""
-        with _patch_routing_causal({
-            "user_input": [
-                {"cause": "user_input", "effect": "angela_response", "strength": 0.85},
-            ],
-            "query_complexity": [],
-            "conversation_momentum": [],
-            "interaction_value": [],
-        }):
+        with _patch_routing_causal(
+            {
+                "user_input": [
+                    {"cause": "user_input", "effect": "angela_response", "strength": 0.85},
+                ],
+                "query_complexity": [],
+                "conversation_momentum": [],
+                "interaction_value": [],
+            }
+        ):
             from api.routes.chat_routes import _inject_causal_predictions
+
             context: dict = {}
             _inject_causal_predictions(context)
 
@@ -364,6 +387,7 @@ class TestCausalRoutingInjection:
         """causal_routing should NOT be injected when confidence too low."""
         with _patch_routing_causal({}):
             from api.routes.chat_routes import _inject_causal_predictions
+
             context: dict = {}
             _inject_causal_predictions(context)
 
@@ -379,6 +403,7 @@ def test_session_eviction_when_max_exceeded():
     """When >200 sessions exist, oldest session is evicted."""
     _reset_buffers()
     from api.routes.chat_routes import _CAUSAL_BUFFER_MAX_SESSIONS
+
     for i in range(_CAUSAL_BUFFER_MAX_SESSIONS + 5):
         _get_causal_buffer(f"session_{i}")
     assert len(_CAUSAL_BUFFERS) == _CAUSAL_BUFFER_MAX_SESSIONS

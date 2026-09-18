@@ -51,14 +51,14 @@ class MetaController:
     # Calibration thresholds (named constants — were bare literals in
     # _compute_calibration). Tune the calibration sensitivity HERE.
     # ------------------------------------------------------------------
-    MIN_SAMPLES_FOR_REPORT = 3        # below → no calibration report
-    OVERCONFIDENT_THRESHOLD = 0.7     # confidence above + wrong = overconfident sample
-    UNDERCONFIDENT_THRESHOLD = 0.3    # confidence below + correct = underconfident sample
-    MISCALIBRATION_RATIO = 0.2        # ratio above → apply adjustment
-    ADJUSTMENT_STEP = 0.05            # magnitude of each threshold nudge
-    RELIABLE_MAX_CAL_ERROR = 0.2      # calibration error below → reliable
-    RELIABLE_MIN_CORRECT = 10         # labeled samples needed for reliability
-    MULTIPLIER_DECAY = 0.8            # closed-loop multiplier decay per negative cycle
+    MIN_SAMPLES_FOR_REPORT = 3  # below → no calibration report
+    OVERCONFIDENT_THRESHOLD = 0.7  # confidence above + wrong = overconfident sample
+    UNDERCONFIDENT_THRESHOLD = 0.3  # confidence below + correct = underconfident sample
+    MISCALIBRATION_RATIO = 0.2  # ratio above → apply adjustment
+    ADJUSTMENT_STEP = 0.05  # magnitude of each threshold nudge
+    RELIABLE_MAX_CAL_ERROR = 0.2  # calibration error below → reliable
+    RELIABLE_MIN_CORRECT = 10  # labeled samples needed for reliability
+    MULTIPLIER_DECAY = 0.8  # closed-loop multiplier decay per negative cycle
 
     def __init__(
         self,
@@ -184,10 +184,14 @@ class MetaController:
             accuracy = sum(1 for s in known_correct if s.correct) / len(known_correct)
             calibration_error = abs(ewma_conf - accuracy)
             overconfident = [
-                s for s in known_correct if s.confidence > self.OVERCONFIDENT_THRESHOLD and not s.correct
+                s
+                for s in known_correct
+                if s.confidence > self.OVERCONFIDENT_THRESHOLD and not s.correct
             ]
             underconfident = [
-                s for s in known_correct if s.confidence < self.UNDERCONFIDENT_THRESHOLD and s.correct
+                s
+                for s in known_correct
+                if s.confidence < self.UNDERCONFIDENT_THRESHOLD and s.correct
             ]
             overconfidence_ratio = len(overconfident) / len(known_correct) if known_correct else 0.0
             underconfidence_ratio = (

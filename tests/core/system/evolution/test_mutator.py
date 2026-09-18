@@ -32,5 +32,3 @@ def test_config_mutator() -> None:
     assert llm_proposal["ready_to_apply"] is True
 
     print("\n✅ ConfigMutator basic tests passed!")
-
-

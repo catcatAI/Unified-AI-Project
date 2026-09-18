@@ -1,4 +1,5 @@
 """Textual TUI — main app entry point."""
+
 from __future__ import annotations
 
 from textual.app import App

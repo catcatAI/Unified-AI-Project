@@ -130,7 +130,6 @@ class ContextHAMIntegration:
             if not create:
                 logger.warning(
                     "context_manager.create_context not available, cannot create memory context",
-
                 )
                 return None
             from ai.context.storage.base import ContextType
@@ -177,9 +176,7 @@ class ContextHAMIntegration:
                     updated = True
                     break
             if not updated:
-                logger.warning(
-                    f"HAM memory {memory_id} not found for update"
-                )
+                logger.warning(f"HAM memory {memory_id} not found for update")
                 return False
 
             save = getattr(self.ham_manager, "_save", None)
@@ -216,7 +213,6 @@ class ContextHAMIntegration:
             if not create:
                 logger.warning(
                     "context_manager.create_context not available, cannot transfer",
-
                 )
                 return False
             from ai.context.storage.base import ContextType

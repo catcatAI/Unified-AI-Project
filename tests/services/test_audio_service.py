@@ -8,19 +8,19 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 _MOCKED_MODULES = (
-    'core.perception.auditory_sampler',
-    'core.perception.auditory_memory',
-    'core.perception.auditory_attention',
-    'core.sync.realtime_sync',
-    'system.cluster_manager',
+    "core.perception.auditory_sampler",
+    "core.perception.auditory_memory",
+    "core.perception.auditory_attention",
+    "core.sync.realtime_sync",
+    "system.cluster_manager",
 )
 
 # Module names that bind the mocked dependencies at import time; they must be
 # re-imported under the mocks and dropped again on teardown so the real modules
 # are not left shadowed for other test files in the same session.
 _AUDIO_SERVICE_MODULES = (
-    'apps.backend.src.services.audio_service',
-    'services.audio_service',
+    "apps.backend.src.services.audio_service",
+    "services.audio_service",
 )
 
 
@@ -52,6 +52,7 @@ def _mock_audio_dependencies():
 @pytest.fixture
 def audio_service():
     from apps.backend.src.services.audio_service import AudioService
+
     service = AudioService(config={})
     service._init_sync_listener = AsyncMock()
     return service
@@ -69,71 +70,71 @@ class TestAudioServiceInit:
 class TestAudioServiceScanIdentify:
 
     async def test_scan_and_identify_basic(self, audio_service):
-        result = await audio_service.scan_and_identify(audio_data=b'test_audio')
-        assert result['status'] == 'success'
-        assert isinstance(result['detected_sources_count'], int)
+        result = await audio_service.scan_and_identify(audio_data=b"test_audio")
+        assert result["status"] == "success"
+        assert isinstance(result["detected_sources_count"], int)
 
     async def test_scan_and_identify_with_duration(self, audio_service):
-        result = await audio_service.scan_and_identify(audio_data=b'test_audio', duration=2.0)
-        assert result['status'] == 'success'
+        result = await audio_service.scan_and_identify(audio_data=b"test_audio", duration=2.0)
+        assert result["status"] == "success"
 
     async def test_scan_and_identify_no_data(self, audio_service):
-        result = await audio_service.scan_and_identify(audio_data=b'')
-        assert result['status'] == 'success'
+        result = await audio_service.scan_and_identify(audio_data=b"")
+        assert result["status"] == "success"
 
 
 class TestAudioServiceRegisterVoice:
 
     async def test_register_user_voice(self, audio_service):
-        result = await audio_service.register_user_voice(audio_data=b'voice_sample')
-        assert result['status'] == 'success'
-        assert result['name'] == 'User'
+        result = await audio_service.register_user_voice(audio_data=b"voice_sample")
+        assert result["status"] == "success"
+        assert result["name"] == "User"
 
     async def test_register_user_voice_empty(self, audio_service):
-        result = await audio_service.register_user_voice(audio_data=b'')
-        assert result['status'] == 'success'
+        result = await audio_service.register_user_voice(audio_data=b"")
+        assert result["status"] == "success"
 
 
 class TestAudioServiceSpeechToText:
 
     async def test_speech_to_text_basic(self, audio_service):
-        result = await audio_service.speech_to_text(audio_data=b'test_audio')
-        assert 'processing_id' in result
-        assert 'text' in result
+        result = await audio_service.speech_to_text(audio_data=b"test_audio")
+        assert "processing_id" in result
+        assert "text" in result
 
     async def test_speech_to_text_empty(self, audio_service):
-        result = await audio_service.speech_to_text(audio_data=b'', language='en')
-        assert 'processing_id' in result
+        result = await audio_service.speech_to_text(audio_data=b"", language="en")
+        assert "processing_id" in result
 
 
 class TestAudioServiceTextToSpeech:
 
     async def test_text_to_speech_basic(self, audio_service):
-        result = await audio_service.text_to_speech(text='Hello world')
+        result = await audio_service.text_to_speech(text="Hello world")
         assert result is None or isinstance(result, bytes)
 
     async def test_text_to_speech_empty(self, audio_service):
-        result = await audio_service.text_to_speech(text='')
+        result = await audio_service.text_to_speech(text="")
         assert result is None
 
 
 class TestAudioServiceProcess:
 
     async def test_process_with_scan_intent(self, audio_service):
-        result = await audio_service.process({'scan_and_identify': True, 'audio_data': b'test'})
-        assert 'processing_id' in result
+        result = await audio_service.process({"scan_and_identify": True, "audio_data": b"test"})
+        assert "processing_id" in result
 
     async def test_process_invalid_input(self, audio_service):
         result = await audio_service.process(None)
-        assert result['error'] == 'Invalid input format for audio processing'
+        assert result["error"] == "Invalid input format for audio processing"
 
     async def test_process_empty_dict(self, audio_service):
         result = await audio_service.process({})
-        assert result['error'] == 'Invalid input format for audio processing'
+        assert result["error"] == "Invalid input format for audio processing"
 
 
 class TestAudioServiceHelpers:
 
     def test_set_peer_services(self, audio_service):
-        audio_service.set_peer_services({'vision': MagicMock()})
-        assert 'vision' in audio_service.peer_services
+        audio_service.set_peer_services({"vision": MagicMock()})
+        assert "vision" in audio_service.peer_services

@@ -12,8 +12,6 @@ import uuid
 from datetime import datetime, timedelta
 from typing import Any, AsyncGenerator, Dict, List, Optional, Tuple
 
-from fastapi.responses import StreamingResponse
-
 from api.lifespan import (
     _angela_cfg,
     _get_chat_service,
@@ -25,6 +23,7 @@ from api.lifespan import (
 )
 from core.utils import safe_error
 from fastapi import APIRouter, Body, File, Form, HTTPException, Request, UploadFile
+from fastapi.responses import StreamingResponse
 from services.document_router import try_intent_routing as _try_intent_routing
 
 logger = logging.getLogger(__name__)
@@ -175,6 +174,7 @@ def _get_query_classifier():
     and the classifier is stateless across requests, so one instance serves
     all call sites (was previously rebuilt per request in 3 places).
     """
+
     def _factory():
         from ai.core.query_classifier import QueryClassifier
 
@@ -673,9 +673,7 @@ async def _build_chat_context(
             "eta": {
                 "module_count": len(eta_state.active_modules) if eta_state else 0,
                 "success_rate": round(eta_state.success_rate, 3) if eta_state else 0.0,
-                "structural_drift": (
-                    round(eta_state.structural_drift, 3) if eta_state else 0.0
-                ),
+                "structural_drift": (round(eta_state.structural_drift, 3) if eta_state else 0.0),
             },
             "guidance": [],
         }
@@ -950,27 +948,33 @@ async def _try_agent_routing(
             confidence = classify_result.confidence
 
         # Only route non-actionable intents (execution gate handles actionable ones)
-        actionable = {t.value for t in (
-            QueryType.FILE,
-            QueryType.SEARCH,
-            QueryType.CODE,
-            QueryType.EXECUTE,
-            QueryType.TASK,
-            QueryType.SYSTEM,
-        )}
+        actionable = {
+            t.value
+            for t in (
+                QueryType.FILE,
+                QueryType.SEARCH,
+                QueryType.CODE,
+                QueryType.EXECUTE,
+                QueryType.TASK,
+                QueryType.SYSTEM,
+            )
+        }
         if primary_type_name in actionable:
             return None
 
         # Map QueryType to agent suitability threshold — route all non-actionable intents
-        agent_types = {t.value for t in (
-            QueryType.CREATIVE,
-            QueryType.KNOWLEDGE,
-            QueryType.OPINION,
-            QueryType.VISION,
-            QueryType.AUDIO,
-            QueryType.LOGIC,
-            QueryType.COMMAND,
-        )}
+        agent_types = {
+            t.value
+            for t in (
+                QueryType.CREATIVE,
+                QueryType.KNOWLEDGE,
+                QueryType.OPINION,
+                QueryType.VISION,
+                QueryType.AUDIO,
+                QueryType.LOGIC,
+                QueryType.COMMAND,
+            )
+        }
         if primary_type_name not in agent_types and confidence < 0.3:
             return None
 
@@ -1003,7 +1007,11 @@ async def _try_agent_routing(
             # Specialized agents return dicts like {"status": "success"} — an
             # error/unavailable status must not be presented as a successful
             # response (fall through to the LLM instead).
-            if isinstance(inner, dict) and inner.get("status") in ("error", "unavailable", "failed"):
+            if isinstance(inner, dict) and inner.get("status") in (
+                "error",
+                "unavailable",
+                "failed",
+            ):
                 logger.debug(
                     "Agent %s returned non-success status; falling back to LLM: %s",
                     primary.get("agent", "unknown"),
@@ -1541,7 +1549,9 @@ async def _handle_chat_request(
                 if session_data is None:
                     raise HTTPException(status_code=404, detail="Session not found")
                 messages_raw = session_data.get("messages")
-                messages: List[Dict[str, Any]] = messages_raw if isinstance(messages_raw, list) else []
+                messages: List[Dict[str, Any]] = (
+                    messages_raw if isinstance(messages_raw, list) else []
+                )
                 if not messages:
                     session["messages"] = messages
                 messages.append(
@@ -1845,18 +1855,21 @@ async def _run_chat_pipeline(
     except Exception as e:
         logger.warning(f"Intent outcome recording unavailable: {e}", exc_info=True)
 
-    _set_latest_response(session_id, _format_chat_response(
-        response_text,
-        llm_response,
-        emotion_result,
-        schema_ver,
-        trunc_msg,
-        user_message,
-        max_len,
+    _set_latest_response(
         session_id,
-        source=flow_source,
-        was_truncated=_was_truncated,
-    ))
+        _format_chat_response(
+            response_text,
+            llm_response,
+            emotion_result,
+            schema_ver,
+            trunc_msg,
+            user_message,
+            max_len,
+            session_id,
+            source=flow_source,
+            was_truncated=_was_truncated,
+        ),
+    )
     return _latest_responses[session_id]
 
 
@@ -1924,9 +1937,7 @@ async def sync_key_c(request: Request) -> dict:
         if h.strip()
     )
     if client_host not in trusted:
-        logger.warning(
-            f"Unauthorized access attempt to sync-key-c from {client_host}"
-        )
+        logger.warning(f"Unauthorized access attempt to sync-key-c from {client_host}")
         raise HTTPException(status_code=403, detail="Access restricted to localhost")
     abc_key_manager = get_abc_key_manager()
     key_c = abc_key_manager.get_key("KeyC")

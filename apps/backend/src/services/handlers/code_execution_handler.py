@@ -20,48 +20,138 @@ _MAX_OUTPUT = 4000
 _TIMEOUT = 10
 _MAX_TRACEBACK_LINES = 10
 
-_BLOCKED_DUNDER_ATTRS = frozenset({
-    "__subclasses__", "__class__", "__bases__", "__mro__",
-    "__globals__", "__code__", "__closure__", "__defaults__",
-    "__import__", "__builtins__", "__loader__", "__spec__",
-    "__dict__", "__weakref__", "__slots__", "__qualname__",
-    "__init_subclass__", "__set_name__", "__init__",
-    "__del__", "__delattr__", "__delete__",
-    "__format__", "__round__", "__trunc__", "__floor__", "__ceil__",
-    "__pos__", "__neg__", "__abs__", "__invert__",
-    "__add__", "__sub__", "__mul__", "__truediv__", "__floordiv__",
-    "__mod__", "__pow__", "__lshift__", "__rshift__",
-    "__and__", "__or__", "__xor__",
-    "__getattr__", "__getattribute__",
-    "__setattr__", "__set__", "__set_name__",
-    "__call__", "__len__", "__length_hint__",
-    "__getitem__", "__setitem__", "__delitem__",
-    "__contains__", "__iter__", "__next__",
-    "__enter__", "__exit__",
-    "__aenter__", "__aexit__",
-    "__index__", "__int__", "__float__", "__complex__",
-    "__bool__", "__hash__", "__eq__", "__ne__",
-    "__lt__", "__le__", "__gt__", "__ge__",
-    "__repr__", "__str__", "__bytes__",
-    "__copy__", "__deepcopy__", "__reduce__", "__reduce_ex__",
-    "__sizeof__", "__dir__",
-})
+_BLOCKED_DUNDER_ATTRS = frozenset(
+    {
+        "__subclasses__",
+        "__class__",
+        "__bases__",
+        "__mro__",
+        "__globals__",
+        "__code__",
+        "__closure__",
+        "__defaults__",
+        "__import__",
+        "__builtins__",
+        "__loader__",
+        "__spec__",
+        "__dict__",
+        "__weakref__",
+        "__slots__",
+        "__qualname__",
+        "__init_subclass__",
+        "__set_name__",
+        "__init__",
+        "__del__",
+        "__delattr__",
+        "__delete__",
+        "__format__",
+        "__round__",
+        "__trunc__",
+        "__floor__",
+        "__ceil__",
+        "__pos__",
+        "__neg__",
+        "__abs__",
+        "__invert__",
+        "__add__",
+        "__sub__",
+        "__mul__",
+        "__truediv__",
+        "__floordiv__",
+        "__mod__",
+        "__pow__",
+        "__lshift__",
+        "__rshift__",
+        "__and__",
+        "__or__",
+        "__xor__",
+        "__getattr__",
+        "__getattribute__",
+        "__setattr__",
+        "__set__",
+        "__set_name__",
+        "__call__",
+        "__len__",
+        "__length_hint__",
+        "__getitem__",
+        "__setitem__",
+        "__delitem__",
+        "__contains__",
+        "__iter__",
+        "__next__",
+        "__enter__",
+        "__exit__",
+        "__aenter__",
+        "__aexit__",
+        "__index__",
+        "__int__",
+        "__float__",
+        "__complex__",
+        "__bool__",
+        "__hash__",
+        "__eq__",
+        "__ne__",
+        "__lt__",
+        "__le__",
+        "__gt__",
+        "__ge__",
+        "__repr__",
+        "__str__",
+        "__bytes__",
+        "__copy__",
+        "__deepcopy__",
+        "__reduce__",
+        "__reduce_ex__",
+        "__sizeof__",
+        "__dir__",
+    }
+)
 
-_BLOCKED_CALL_NAMES = frozenset({
-    "exec", "eval", "compile", "__import__", "open", "input",
-    "breakpoint", "exit", "quit", "help",
-    # Attribute-reflection builtins: getattr/setattr with a dunder string
-    # argument bypass the AST Attribute-node dunder check (C3 sandbox escape).
-    "getattr", "setattr", "vars", "globals", "locals",
-})
+_BLOCKED_CALL_NAMES = frozenset(
+    {
+        "exec",
+        "eval",
+        "compile",
+        "__import__",
+        "open",
+        "input",
+        "breakpoint",
+        "exit",
+        "quit",
+        "help",
+        # Attribute-reflection builtins: getattr/setattr with a dunder string
+        # argument bypass the AST Attribute-node dunder check (C3 sandbox escape).
+        "getattr",
+        "setattr",
+        "vars",
+        "globals",
+        "locals",
+    }
+)
 
-_BLOCKED_IMPORT_MODULES = frozenset({
-    "os", "sys", "subprocess", "shutil", "pathlib",
-    "socket", "http", "urllib", "requests",
-    "ctypes", "importlib", "code", "codeop",
-    "signal", "threading", "multiprocessing",
-    "pickle", "shelve", "marshal",
-})
+_BLOCKED_IMPORT_MODULES = frozenset(
+    {
+        "os",
+        "sys",
+        "subprocess",
+        "shutil",
+        "pathlib",
+        "socket",
+        "http",
+        "urllib",
+        "requests",
+        "ctypes",
+        "importlib",
+        "code",
+        "codeop",
+        "signal",
+        "threading",
+        "multiprocessing",
+        "pickle",
+        "shelve",
+        "marshal",
+    }
+)
 
 
 class _SandboxViolation(Exception):
@@ -303,9 +393,8 @@ class CodeExecutionHandler:
         # ``for`` / ``if`` / ``def``), treat it as raw code — inline extraction
         # would otherwise grab just ``range(3)`` out of ``for i in range(3):``.
         stripped_first = text.strip().splitlines()[0].strip() if text.strip() else ""
-        if (
-            len(text.strip().splitlines()) > 1
-            or stripped_first.startswith(("for ", "if ", "while ", "def ", "class ", "try:", "with ", "async ", "@"))
+        if len(text.strip().splitlines()) > 1 or stripped_first.startswith(
+            ("for ", "if ", "while ", "def ", "class ", "try:", "with ", "async ", "@")
         ):
             lines = text.strip().splitlines()
             code_lines = []

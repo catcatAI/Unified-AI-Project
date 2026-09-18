@@ -43,6 +43,7 @@ def test_ethics_manager_import() -> None:
 # Group 2: PhysiologicalTactile — enum values and required methods (was 3 tests)
 # =============================================================================
 
+
 def test_tactile_enums_have_required_values() -> None:
     """Verify TactileType and BodyPart enums have required values."""
     from core.bio.physiological_tactile import BodyPart, TactileType
@@ -76,10 +77,12 @@ def test_tactile_system_has_required_methods() -> None:
 # Group 3: gmqtt / ExternalConnector (was 3 tests)
 # =============================================================================
 
+
 def test_gmqtt_library_available() -> None:
     """Verify gmqtt library is importable (explicit library check)."""
     pytest.importorskip("gmqtt")
     import gmqtt  # noqa: F401
+
     assert gmqtt is not None
 
 

@@ -110,7 +110,9 @@ class TestGARDENEngineInit:
         assert engine._learn_count == 0
 
     def test_init_custom(self):
-        engine = GARDENEngine(top_k=4, similarity_threshold=0.5, snn_timesteps=3, compatibility_mode=True)
+        engine = GARDENEngine(
+            top_k=4, similarity_threshold=0.5, snn_timesteps=3, compatibility_mode=True
+        )
         assert engine.dictionary.top_k == 4
         assert engine.dictionary.similarity_threshold == 0.5
         assert engine.snn.timesteps == 3
@@ -296,7 +298,9 @@ class TestGARDENEnginePersistence:
         with tempfile.TemporaryDirectory() as tmp:
             engine.save(tmp)
             assert os.path.exists(os.path.join(tmp, "dictionary.json"))
-            assert os.path.exists(os.path.join(tmp, "snn.pt")) or os.path.exists(os.path.join(tmp, "snn.pt.npy"))
+            assert os.path.exists(os.path.join(tmp, "snn.pt")) or os.path.exists(
+                os.path.join(tmp, "snn.pt.npy")
+            )
             assert os.path.exists(os.path.join(tmp, "engine_meta.json"))
 
     def test_save_meta(self, engine: GARDENEngine):
@@ -304,6 +308,7 @@ class TestGARDENEnginePersistence:
         with tempfile.TemporaryDirectory() as tmp:
             engine.save(tmp)
             import json
+
             with open(os.path.join(tmp, "engine_meta.json"), "r", encoding="utf-8") as f:
                 meta = json.load(f)
         assert meta["tier"] == "GARDEN-1G"
@@ -461,7 +466,9 @@ class TestIsDeterministicMatch:
 
 
 def _rand_word(min_len=4, max_len=10):
-    return "".join(random.choice(string.ascii_lowercase) for _ in range(random.randint(min_len, max_len)))
+    return "".join(
+        random.choice(string.ascii_lowercase) for _ in range(random.randint(min_len, max_len))
+    )
 
 
 class TestLearnBatchRobustness:
@@ -491,10 +498,7 @@ class TestLearnBatchRobustness:
         b1 = [{"input": _rand_word() + " one", "output": _rand_word() + " two"} for _ in range(8)]
         e.learn_batch(b1, confidence=0.7)
         # Batch 2 adds many distinct tokens -> encoder re-fit with larger dim.
-        b2 = [
-            {"input": _rand_word() + " xyzqr abcde", "output": _rand_word()}
-            for _ in range(30)
-        ]
+        b2 = [{"input": _rand_word() + " xyzqr abcde", "output": _rand_word()} for _ in range(30)]
         r2 = e.learn_batch(b2, confidence=0.7)
         assert r2["samples_processed"] == 30
         # A query that must run TF-IDF Step 4 (unmatched token, uses cache).

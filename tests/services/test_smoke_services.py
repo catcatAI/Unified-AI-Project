@@ -35,6 +35,6 @@ def test_service_module_import(module_path: str) -> None:
 
     module = importlib.import_module(module_path)
     assert module is not None
-    assert module.__name__ == module_path, (
-        f"Expected __name__ '{module_path}', got '{module.__name__}'"
-    )
+    assert (
+        module.__name__ == module_path
+    ), f"Expected __name__ '{module_path}', got '{module.__name__}'"

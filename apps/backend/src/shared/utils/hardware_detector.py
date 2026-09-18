@@ -137,7 +137,9 @@ class SystemHardwareProbe:
             try:
                 result = subprocess.run(
                     ["wmic", "cpu", "get", "Caption", "/format:list"],
-                    capture_output=True, text=True, timeout=5
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
                 )
                 for line in result.stdout.splitlines():
                     if "Caption=" in line:
@@ -146,9 +148,7 @@ class SystemHardwareProbe:
                 logger.warning("WMIC CPU query failed: %s", e, exc_info=True)
         elif self.platform_name == "darwin":
             try:
-                result = subprocess.run(
-                    ["sysctl", "-a"], capture_output=True, text=True, timeout=5
-                )
+                result = subprocess.run(["sysctl", "-a"], capture_output=True, text=True, timeout=5)
                 for line in result.stdout.splitlines():
                     if "hw.optional." in line and ": 1" in line:
                         parts = line.split(".")
@@ -202,11 +202,12 @@ class SystemHardwareProbe:
             try:
                 import re
 
-                arc_ids = {"e20b": ("Arc B580", 12288), "e20c": ("Arc B570", 10240),
-                           "e20d": ("Arc B570", 10240)}
-                result = subprocess.run(
-                    ["lspci", "-nn"], capture_output=True, text=True, timeout=5
-                )
+                arc_ids = {
+                    "e20b": ("Arc B580", 12288),
+                    "e20c": ("Arc B570", 10240),
+                    "e20d": ("Arc B570", 10240),
+                }
+                result = subprocess.run(["lspci", "-nn"], capture_output=True, text=True, timeout=5)
                 if result.returncode == 0:
                     for line in result.stdout.splitlines():
                         m = re.search(r"\[8086:([0-9a-f]{4})\]", line.lower())
@@ -387,9 +388,7 @@ class ModeRecommender:
                     mode_config,
                 )
             else:
-                logger.warning(
-                    f"Preferred mode {preferred_mode} not compatible: {reason}"
-                )
+                logger.warning(f"Preferred mode {preferred_mode} not compatible: {reason}")
 
         # Priority 2: Auto-selection based on profile
         modes_to_check = ["extended", "standard", "lite"]

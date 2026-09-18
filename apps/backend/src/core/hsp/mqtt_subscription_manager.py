@@ -154,9 +154,7 @@ class MQTTSubscriptionManager:
                     else:
                         self.mqtt_client.subscribe(topic, qos)
                 else:
-                    logger.error(
-                        "[MQTTSubManager] MQTT client has no subscribe method"
-                    )
+                    logger.error("[MQTTSubManager] MQTT client has no subscribe method")
                     return False
 
                 logger.info(f"[MQTTSubManager] Subscribed to: {topic} (QoS: {qos})")
@@ -178,9 +176,7 @@ class MQTTSubscriptionManager:
                     backoff_step = timing_value("hsp.mqtt.subscribe_backoff_step", 1.0)
                     await asyncio.sleep(backoff_step * (attempt + 1))
 
-        logger.error(
-            f"[MQTTSubManager] Subscribe failed after {retry} attempts: {last_error}"
-        )
+        logger.error(f"[MQTTSubManager] Subscribe failed after {retry} attempts: {last_error}")
         return False
 
     async def unsubscribe(self, topic: str) -> bool:
@@ -259,9 +255,7 @@ class MQTTSubscriptionManager:
             self._register_callback(topic, callback)
             logger.info(f"[MQTTSubManager] Added callback for: {topic}")
         else:
-            logger.warning(
-                f"[MQTTSubManager] Cannot add callback: not subscribed to {topic}"
-            )
+            logger.warning(f"[MQTTSubManager] Cannot add callback: not subscribed to {topic}")
 
     def remove_callback(self, topic: str, callback: Callable) -> None:
         """移除回调函数"""

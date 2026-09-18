@@ -9,6 +9,7 @@ class TestPluginHandlerDeployment:
         from core.plugin.handlers.message_logger import MessageLoggerHandler
         from core.plugin.hook_registry import HookRegistry
         from core.plugin.plugin_manager import PluginManager
+
         self.r = HookRegistry()
         self.pm = PluginManager(self.r)
         self.handler = MessageLoggerHandler()
@@ -73,7 +74,10 @@ class TestPluginHandlerDeployment:
         """on_response pipeline executes via registered handler."""
         self.pm.add_handler("test_logger", "on_response", self.handler)
         modified = asyncio.run(
-            self.pm.execute_pipeline("on_response", {"response_text": "hello world", "model_id": "gpt4", "tokens_used": 42})
+            self.pm.execute_pipeline(
+                "on_response",
+                {"response_text": "hello world", "model_id": "gpt4", "tokens_used": 42},
+            )
         )
         assert "plugin_logged_at" in modified
         assert modified["response_text"] == "hello world"
@@ -81,8 +85,6 @@ class TestPluginHandlerDeployment:
     def test_on_tick_pipeline_executes(self):
         """on_tick pipeline executes via registered handler."""
         self.pm.add_handler("test_logger", "on_tick", self.handler)
-        modified = asyncio.run(
-            self.pm.execute_pipeline("on_tick", {"tick_interval": 30})
-        )
+        modified = asyncio.run(self.pm.execute_pipeline("on_tick", {"tick_interval": 30}))
         assert "plugin_logged_at" in modified
         assert modified["tick_interval"] == 30

@@ -49,7 +49,7 @@ class ExperienceTracker:
             }
         )
         if len(self.experience_history) > self._MAX_HISTORY:
-            self.experience_history = self.experience_history[-self._MAX_HISTORY // 2:]
+            self.experience_history = self.experience_history[-self._MAX_HISTORY // 2 :]
         logger.debug(f"Added {amount} experience from {source}")
 
     def get_level(self) -> MaturityLevel:

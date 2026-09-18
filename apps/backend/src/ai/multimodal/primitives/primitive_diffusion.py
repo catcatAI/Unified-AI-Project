@@ -44,28 +44,28 @@ logger = logging.getLogger(__name__)
 # ── Segment layout (must match primitive_types.py:99-105) ──────────────
 _SEGMENTS = {
     "header": (0, 5),
-    "points": (5, 80),      # 15 × 5
-    "lines": (80, 160),     # 10 × 8
-    "planes": (160, 205),   # 5 × 9
+    "points": (5, 80),  # 15 × 5
+    "lines": (80, 160),  # 10 × 8
+    "planes": (160, 205),  # 5 × 9
     "circles": (205, 233),  # 4 × 7
-    "arcs": (233, 263),     # 3 × 10
+    "arcs": (233, 263),  # 3 × 10
 }
 
 # Per-segment noise scale (structure low, detail high) — 實現「結構先、細節後」
 _SEGMENT_BETA_SCALE = {
     "header": 1.0,
-    "points": 1.5,   # high-frequency detail
+    "points": 1.5,  # high-frequency detail
     "lines": 1.5,
-    "planes": 0.7,   # low-frequency structure
+    "planes": 0.7,  # low-frequency structure
     "circles": 0.7,
     "arcs": 1.2,
 }
 
 # Level grouping for two-level diffusion
 _LEVEL_SEGMENTS = {
-    "background": ["planes"],                    # layout
-    "subject": ["circles", "arcs"],             # main objects
-    "detail": ["points", "lines"],              # fine strokes
+    "background": ["planes"],  # layout
+    "subject": ["circles", "arcs"],  # main objects
+    "detail": ["points", "lines"],  # fine strokes
 }
 
 # ── Diffusion schedule ────────────────────────────────────────────────
@@ -132,7 +132,9 @@ class MLPDenoiser:
         self.b1 = np.zeros(hidden, dtype=np.float32)
         self.W2 = (rng.standard_normal((hidden, hidden)) * math.sqrt(2 / hidden)).astype(np.float32)
         self.b2 = np.zeros(hidden, dtype=np.float32)
-        self.W3 = (rng.standard_normal((vec_dim, hidden)) * math.sqrt(2 / hidden)).astype(np.float32)
+        self.W3 = (rng.standard_normal((vec_dim, hidden)) * math.sqrt(2 / hidden)).astype(
+            np.float32
+        )
         self.b3 = np.zeros(vec_dim, dtype=np.float32)
 
     def forward(self, x_t: np.ndarray, t_emb: np.ndarray, cond: np.ndarray) -> np.ndarray:
@@ -147,7 +149,14 @@ class MLPDenoiser:
         return sum(a.nbytes for a in [self.W1, self.b1, self.W2, self.b2, self.W3, self.b3])
 
     def to_dict(self) -> Dict[str, np.ndarray]:
-        return {"W1": self.W1, "b1": self.b1, "W2": self.W2, "b2": self.b2, "W3": self.W3, "b3": self.b3}
+        return {
+            "W1": self.W1,
+            "b1": self.b1,
+            "W2": self.W2,
+            "b2": self.b2,
+            "W3": self.W3,
+            "b3": self.b3,
+        }
 
     def load_dict(self, d: Dict[str, np.ndarray]) -> None:
         for k in ("W1", "b1", "W2", "b2", "W3", "b3"):
@@ -313,7 +322,11 @@ class TwoLevelDiffusion:
         # Stage2: learn refinement (full target, conditioned on coarse + cond)
         # For training we use ground-truth coarse as cond augmentation
         r2 = self.stage2.train_step(x0, cond)
-        return {"loss_stage1": r1["loss"], "loss_stage2": r2["loss"], "loss": (r1["loss"] + r2["loss"]) / 2}
+        return {
+            "loss_stage1": r1["loss"],
+            "loss_stage2": r2["loss"],
+            "loss": (r1["loss"] + r2["loss"]) / 2,
+        }
 
     def sample(self, cond: np.ndarray, steps: int = 10, seed: int = 0) -> np.ndarray:
         """Two-stage sampling: stage1 coarse -> stage2 refine."""
@@ -332,7 +345,11 @@ class TwoLevelDiffusion:
         refined = self.stage2.sample(cond, steps=steps, seed=seed + 1)
         # Blend: keep stage1's structure where stage2 is uncertain (small magnitude)
         # Simple heuristic: where stage1 has strong signal (>0.3), keep it
-        mask = (np.abs(coarse) > 0.3).astype(np.float32) if coarse.ndim == 1 else (np.abs(coarse) > 0.3).astype(np.float32)
+        mask = (
+            (np.abs(coarse) > 0.3).astype(np.float32)
+            if coarse.ndim == 1
+            else (np.abs(coarse) > 0.3).astype(np.float32)
+        )
         # For 1D case, blend in place
         if refined.ndim == 1:
             return np.where(mask > 0, 0.7 * coarse + 0.3 * refined, refined)

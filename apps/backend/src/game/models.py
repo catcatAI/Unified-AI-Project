@@ -1,4 +1,5 @@
 """Game data models — Character, Scene, GameState."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

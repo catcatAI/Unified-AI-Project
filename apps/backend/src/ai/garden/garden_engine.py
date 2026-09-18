@@ -32,8 +32,8 @@ from ai.data_eng.assemble import decode_slot_budget, select_anchored_keys
 from ai.data_eng.presets import REFLEX_PRESETS
 from core.system.config.magic_numbers import (
     cache_value,
-    confidence_value,
     compute_bool,
+    confidence_value,
     learning_rate,
     limit_value,
     threshold_value,
@@ -118,9 +118,35 @@ def _slot_budget(n_input: int) -> tuple:
 
 _TPL_STOPWORDS = frozenset(
     {
-        "is", "the", "of", "than", "what", "in", "on", "at", "to", "for",
-        "a", "an", "and", "or", "this", "that", "was", "are", "be", "do",
-        "does", "did", "with", "from", "by", "it", "its", "as", "not",
+        "is",
+        "the",
+        "of",
+        "than",
+        "what",
+        "in",
+        "on",
+        "at",
+        "to",
+        "for",
+        "a",
+        "an",
+        "and",
+        "or",
+        "this",
+        "that",
+        "was",
+        "are",
+        "be",
+        "do",
+        "does",
+        "did",
+        "with",
+        "from",
+        "by",
+        "it",
+        "its",
+        "as",
+        "not",
     }
 )
 
@@ -219,9 +245,7 @@ def _extract_template_pair(
     return in_tpl, out_tpl, in_vars, out_vars
 
 
-def _fill_template(
-    out_tpl: str, slot_map: Dict[int, int], in_vars: List[str]
-) -> str:
+def _fill_template(out_tpl: str, slot_map: Dict[int, int], in_vars: List[str]) -> str:
     """Fill an output template's slots from the input's slot fillers.
 
     ``slot_map`` maps an output-slot index -> input-slot index (e.g. the
@@ -381,9 +405,7 @@ def _math_value_matches(engine_output: str, expected: str) -> bool:
     return False
 
 
-def _output_matches(
-    engine_output: str, expected: str, engine_type: str = "text"
-) -> bool:
+def _output_matches(engine_output: str, expected: str, engine_type: str = "text") -> bool:
     """Check if the deterministic engine output matches the expected training output.
 
     ``engine_type`` controls the comparison strategy:
@@ -481,7 +503,7 @@ def _data_region(text: str) -> str:
     nums = list(re.finditer(r"-?\d+(?:\.\d+)?", text))
     if not nums:
         return ""
-    return text[nums[0].start():nums[-1].end()]
+    return text[nums[0].start() : nums[-1].end()]
 
 
 def _result_numbers(text: str) -> List[str]:
@@ -520,7 +542,7 @@ def _learn_template(
     if expr and expr in sample_input:
         idx = sample_input.find(expr)
         input_prefix = sample_input[:idx]
-        input_suffix = sample_input[idx + len(expr):]
+        input_suffix = sample_input[idx + len(expr) :]
     elif not expr:
         # Non-math engines consume the whole input
         input_prefix, input_suffix = "", ""
@@ -534,7 +556,9 @@ def _learn_template(
         for i, n in enumerate(_result_numbers(result_val)):
             m = re.search(re.escape(n), output_template)
             if m:
-                output_template = output_template[:m.start()] + f"{{R{i}}}" + output_template[m.end():]
+                output_template = (
+                    output_template[: m.start()] + f"{{R{i}}}" + output_template[m.end() :]
+                )
                 inserted = True
         if expr and expr in output_template:
             output_template = output_template.replace(expr, "{L0_input}", 1)
@@ -620,10 +644,12 @@ def _reconstruct_with_template(
         if not input_prefix and not input_suffix:
             continue
         if user_input.startswith(input_prefix) and user_input.endswith(input_suffix):
-            middle = user_input[len(input_prefix):]
+            middle = user_input[len(input_prefix) :]
             if input_suffix:
-                middle = middle[:-len(input_suffix)] if len(input_suffix) else middle
-            filled = output_template.replace("{L0_input}", middle).replace("{L0_result}", result_val)
+                middle = middle[: -len(input_suffix)] if len(input_suffix) else middle
+            filled = output_template.replace("{L0_input}", middle).replace(
+                "{L0_result}", result_val
+            )
             if filled != engine_result:
                 return filled
 
@@ -699,7 +725,7 @@ class GARDENEngine:
             if snn_timesteps is not None
             else limit_value("ai.garden.engine.snn_timesteps", 6)
         )
-        
+
         # Use compute config to determine device for SNN
         use_gpu = compute_bool("garden_snn", True)
         if use_gpu:
@@ -707,7 +733,7 @@ class GARDENEngine:
                 device = "cuda"  # Will be handled by SNN core's dual backend
         else:
             device = "cpu"
-        
+
         self.model_name = model_name
         self.device = device
 
@@ -900,9 +926,7 @@ class GARDENEngine:
         # If the same in-template produced a different out-template, keep the
         # more-frequent one (structure -> structure is the strongest signal).
         if entry["out_tpl"] != out_tpl and entry["samples"] > 1:
-            entry["out_tpl"] = (
-                out_tpl if confidence > entry["confidence"] else entry["out_tpl"]
-            )
+            entry["out_tpl"] = out_tpl if confidence > entry["confidence"] else entry["out_tpl"]
 
         # Register the template keys into the SNN key space (not the
         # dictionary's token keys — those stay in the dictionary).
@@ -924,8 +948,10 @@ class GARDENEngine:
             self._templates.pop(oldest, None)
             try:
                 orphan_keys = [f"tpl:{oldest}"]
-                if evicted_out and evicted_out != oldest and not any(
-                    v.get("out_tpl") == evicted_out for v in self._templates.values()
+                if (
+                    evicted_out
+                    and evicted_out != oldest
+                    and not any(v.get("out_tpl") == evicted_out for v in self._templates.values())
                 ):
                     orphan_keys.append(f"tpl:{evicted_out}")
                 removed = self.snn.compact_removed_keys(orphan_keys)
@@ -988,9 +1014,7 @@ class GARDENEngine:
         self._last_confidence = 0.85 if snn_conf >= 0.3 else 0.60
         return filled
 
-    def _record_learned(
-        self, input_keys: Dict[str, float], output_keys: Dict[str, float]
-    ) -> None:
+    def _record_learned(self, input_keys: Dict[str, float], output_keys: Dict[str, float]) -> None:
         """Record an input-concept set -> output-concept set in the provenance
         store so process() can surface learned output tokens whose Hebbian
         weight never reaches the SNN/decode threshold on a single pass.
@@ -1179,9 +1203,7 @@ class GARDENEngine:
         # them at a decodable magnitude so the neural layer's learned
         # associations actually surface. Inert when nothing was learned for the
         # active input.
-        rescue = self._retrieval_targets(
-            input_keys, slots=_slot_budget(len(input_keys))[1]
-        )
+        rescue = self._retrieval_targets(input_keys, slots=_slot_budget(len(input_keys))[1])
         if rescue:
             w_max = max(rescue.values())
             for k, w in rescue.items():
@@ -1199,7 +1221,9 @@ class GARDENEngine:
 
         if not response:
             # Fallback: decode input keys directly
-            fallback_keys = list(input_keys.keys())[: limit_value("ai.garden.engine.fallback_decode_keys", 4)]
+            fallback_keys = list(input_keys.keys())[
+                : limit_value("ai.garden.engine.fallback_decode_keys", 4)
+            ]
             response = self.dictionary.decode(
                 fallback_keys,
                 original_text=text,
@@ -1217,9 +1241,7 @@ class GARDENEngine:
         # can never improve the response. The loop therefore defaults OFF
         # (ai.garden.engine.max_cycles=0) — re-enable only once forward()
         # actually consumes the refinement context.
-        MAX_CYCLES = getattr(
-            self, "max_cycles", limit_value("ai.garden.engine.max_cycles", 0)
-        )
+        MAX_CYCLES = getattr(self, "max_cycles", limit_value("ai.garden.engine.max_cycles", 0))
         MIN_RESPONSE_LEN = limit_value("ai.garden.engine.min_response_len", 5)
         current_output = response
         cycles_used = 0
@@ -1235,7 +1257,9 @@ class GARDENEngine:
             cycle_context["cycle"] = cycle + 1
 
             cycle_network = self.snn.forward(input_keys, context=cycle_context)
-            cycle_response = _anchored_decode(cycle_network, input_keys, self.dictionary, original_text=text)
+            cycle_response = _anchored_decode(
+                cycle_network, input_keys, self.dictionary, original_text=text
+            )
 
             if cycle_response and len(cycle_response) > len(current_output):
                 current_output = cycle_response
@@ -1249,7 +1273,9 @@ class GARDENEngine:
         key_ratio_weight = confidence_value("ai.garden.engine.key_ratio_weight", 0.5)
         quality_weight = confidence_value("ai.garden.engine.quality_weight", 0.3)
         base_confidence = limit_value("ai.garden.engine.confidence_base", 20) / 100.0
-        cycle_penalty = 1.0 - (cycles_used * timing_value("ai.garden.engine.cycle_penalty_step", 0.1))
+        cycle_penalty = 1.0 - (
+            cycles_used * timing_value("ai.garden.engine.cycle_penalty_step", 0.1)
+        )
         self._last_confidence = round(
             max(
                 0.0,
@@ -1680,9 +1706,7 @@ class GARDENEngine:
         updates_performed = 0
         if train_associations:
             lr = learning_rate("ai.garden.engine.hebbian_lr", 0.05)
-            target_str = confidence_value(
-                "ai.garden.engine.hebbian_target_strength", 0.35
-            )
+            target_str = confidence_value("ai.garden.engine.hebbian_target_strength", 0.35)
 
             # Batch-level text dedup: identical input/output strings recur a
             # lot inside a batch (common phrases, templates). Encode each
@@ -1741,8 +1765,7 @@ class GARDENEngine:
                         # learns multi-hop structural reasoning.
                         snn_intermediate = self.snn.forward({f"tpl:{in_tpl}": 1.0})
                         intermediate: Dict[str, float] = {
-                            k: v for k, v in snn_intermediate.items()
-                            if v > 0.3
+                            k: v for k, v in snn_intermediate.items() if v > 0.3
                         }
                         if intermediate:
                             combined: Dict[str, float] = dict(intermediate)
@@ -1849,8 +1872,10 @@ class GARDENEngine:
 
         if os.path.exists(dict_path):
             self.dictionary.import_from_json(dict_path)
-        if os.path.exists(snn_path) or os.path.exists(snn_path + ".npy") or os.path.exists(
-            snn_path + ".npz"
+        if (
+            os.path.exists(snn_path)
+            or os.path.exists(snn_path + ".npy")
+            or os.path.exists(snn_path + ".npz")
         ):
             self.snn.load(snn_path)
         if os.path.exists(meta_path):
@@ -1891,9 +1916,7 @@ class GARDENEngine:
                     self._learned_order.append(rec_id)
                     for c in concepts:
                         self._learned_index.setdefault(c, set()).add(rec_id)
-                self._learned_next_id = max(
-                    self._learned_recall.keys(), default=-1
-                ) + 1
+                self._learned_next_id = max(self._learned_recall.keys(), default=-1) + 1
             self._learned_next_id = meta.get("learned_next_id", self._learned_next_id)
             # Restore the reflex table saved with the checkpoint. If the
             # checkpoint predates reflex persistence (or stores none), fall

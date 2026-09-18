@@ -90,7 +90,7 @@ def _scalar_hash(ctx: bytes, wmix: int = 0) -> int:
     for b in ctx:
         h ^= b
         h = (h * 16777619) & 0xFFFFFFFF
-    return ((h + wmix) & 0xFFFFFFFF)
+    return (h + wmix) & 0xFFFFFFFF
 
 
 class FixedSizeCore:

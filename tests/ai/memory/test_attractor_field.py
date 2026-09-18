@@ -87,7 +87,9 @@ class TestGradientField:
 
         closest_attractor = result.nearest_attractors[0][0]
         dist_start = math.sqrt(sum((s - a) ** 2 for s, a in zip(start, closest_attractor.coord)))
-        dist_end = math.sqrt(sum((e - a) ** 2 for e, a in zip(result.current_state, closest_attractor.coord)))
+        dist_end = math.sqrt(
+            sum((e - a) ** 2 for e, a in zip(result.current_state, closest_attractor.coord))
+        )
 
         assert dist_end < dist_start or result.gradient_strength < 0.01
 
@@ -143,7 +145,7 @@ class TestGradientField:
             tags=["test"],
         )
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             temp_path = f.name
             field.attractors = [attractor]
             field.save_attractors(temp_path)
@@ -161,7 +163,16 @@ class TestBehaviorTone:
     """BehaviorTone 枚举测试"""
 
     def test_all_tones_exist(self):
-        expected = ["certain", "warm", "hesitant", "curious", "sympathetic", "excited", "fearful", "calm"]
+        expected = [
+            "certain",
+            "warm",
+            "hesitant",
+            "curious",
+            "sympathetic",
+            "excited",
+            "fearful",
+            "calm",
+        ]
         actual = [t.value for t in BehaviorTone]
         for e in expected:
             assert e in actual

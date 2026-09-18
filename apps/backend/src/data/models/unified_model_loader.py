@@ -19,9 +19,7 @@ class UnifiedModelLoader:
         logger.info(f"[UnifiedModelLoader] Registered custom loader for: {model_name}")
 
     @classmethod
-    def load_model(
-        cls, model_name: str, model_path: Optional[str] = None, **kwargs: Any
-    ) -> Any:
+    def load_model(cls, model_name: str, model_path: Optional[str] = None, **kwargs: Any) -> Any:
         """加载指定名称的模型
 
         优先使用已注册的自定义加载器；否则返回带元数据的模型句柄。
@@ -31,9 +29,7 @@ class UnifiedModelLoader:
 
         loader = cls._loaders.get(model_name)
         if loader is not None:
-            logger.info(
-                f"[UnifiedModelLoader] Loading model via custom loader: {model_name}"
-            )
+            logger.info(f"[UnifiedModelLoader] Loading model via custom loader: {model_name}")
             instance = loader(model_path=model_path, **kwargs)
         else:
             logger.info(

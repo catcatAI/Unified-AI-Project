@@ -85,7 +85,7 @@ class DocumentChunker:
     def extract_tokens(self, text: str, min_len: int = 3) -> List[str]:
         tokens = set()
         for word in text.lower().split():
-            cleaned = word.strip(".,!?;:'\"()[]{}「」『』【】《》""''")
+            cleaned = word.strip(".,!?;:'\"()[]{}「」『』【】《》" "''")
             if cleaned and len(cleaned) >= min_len:
                 tokens.add(cleaned)
         for run in re.findall(r"[\u4e00-\u9fff]{2,}", text.lower()):

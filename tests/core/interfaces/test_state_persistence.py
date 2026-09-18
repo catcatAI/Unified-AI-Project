@@ -61,9 +61,7 @@ class TestMetacognitivePersistence:
             MetacognitiveCapabilitiesEngine,
         )
 
-        return MetacognitiveCapabilitiesEngine(
-            workspace_path="data/test_meta_persistence"
-        )
+        return MetacognitiveCapabilitiesEngine(workspace_path="data/test_meta_persistence")
 
     def test_conforms_to_protocol(self, engine):
         from core.interfaces.persistence import StatePersistence
@@ -117,6 +115,7 @@ def test_state_matrix_adapter_conforms(sm_adapter):
     from core.interfaces.persistence import StatePersistence
 
     assert isinstance(sm_adapter, StatePersistence)
+
 
 async def test_state_matrix_adapter_save_load(sm_adapter):
     """Basic save + load via protocol interface (JSON-file backend)."""

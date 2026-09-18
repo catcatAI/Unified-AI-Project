@@ -56,6 +56,7 @@ def _check_torch_subprocess() -> bool:
     if not (sys.platform.startswith("win") or sys.version_info >= (3, 14)):
         try:
             import torch  # noqa: F401
+
             _TORCH_AVAILABLE = True
             return _TORCH_AVAILABLE
         except ImportError:
@@ -269,7 +270,9 @@ class ThreeLayerVisual:
             if verbose and (epoch + 1) % 25 == 0:
                 logger.info("  Epoch %d: MSE=%.4f", epoch + 1, total_loss / max(n_batches, 1))
 
-    def _build_metrics(self, images: np.ndarray, latent: np.ndarray, t0: float, verbose: bool) -> Dict[str, Any]:
+    def _build_metrics(
+        self, images: np.ndarray, latent: np.ndarray, t0: float, verbose: bool
+    ) -> Dict[str, Any]:
         if self._torch is None or self._decoder is None:
             raise RuntimeError("Model not fully fitted (torch or decoder missing)")
         self._decoder.eval()

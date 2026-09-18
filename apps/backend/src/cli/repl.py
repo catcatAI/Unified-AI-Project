@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 
 # ─── ANSI color helpers ───────────────────────────────────────────
 
+
 def _supports_color() -> bool:
     """Check if terminal supports ANSI color."""
     if os.getenv("NO_COLOR") or os.getenv("TERM") == "dumb":
@@ -69,13 +70,14 @@ def _cyan(text: str) -> str:
 
 # ─── Visual helpers ────────────────────────────────────────────────
 
+
 def _bar(value: float, width: int = 20) -> str:
     """Render a text-based bar with color: [████████░░░░░░░░░░░░] 0.45"""
     clamped = max(0.0, min(1.0, value))
     filled = round(clamped * width)
     empty = width - filled
-    bar_char = '█'
-    empty_char = '░'
+    bar_char = "█"
+    empty_char = "░"
     if _supports_color():
         if clamped >= 0.7:
             bar_colored = _green(bar_char * filled)
@@ -111,13 +113,16 @@ def _section(title: str) -> str:
 
 # ─── LLM service singleton ─────────────────────────────────────────
 
+
 def _get_llm_svc():
     """Get the LLM service (synchronous wrapper)."""
     try:
         from services.angela_llm_service import get_llm_service
+
         loop = asyncio.get_event_loop()
         if loop.is_running():
             import concurrent.futures
+
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 future = executor.submit(asyncio.run, get_llm_service())
                 return future.result()
@@ -130,6 +135,7 @@ def _get_llm_svc():
 # ═══════════════════════════════════════════════════════════════════
 # Entry points
 # ═══════════════════════════════════════════════════════════════════
+
 
 def run_repl_mode() -> None:
     """Execute the run repl mode operation."""
@@ -146,7 +152,6 @@ def run_repl_mode() -> None:
 def _run_uvicorn_in_thread() -> None:
     """Run uvicorn in thread."""
     import uvicorn
-
     from core.system.config.network_defaults import get_server_bind
     from services.main_api_server import app
 
@@ -212,7 +217,11 @@ def _print_boot_status(service: Any) -> None:
     else:
         print(f"  LLM:      {_badge('No backend available', False)}")
         print(_hint("Add Ollama: install from https://ollama.ai, then 'ollama pull qwen3.5:0.8b'"))
-        print(_hint("Or add API key: set OPENAI_API_KEY in .env and deployment.mode: local+llm in llm.default.yaml"))
+        print(
+            _hint(
+                "Or add API key: set OPENAI_API_KEY in .env and deployment.mode: local+llm in llm.default.yaml"
+            )
+        )
 
     # Memory
     if hasattr(service, "memory_manager") and service.memory_manager:
@@ -236,6 +245,7 @@ def _print_boot_status(service: Any) -> None:
 # ═══════════════════════════════════════════════════════════════════
 # Command router
 # ═══════════════════════════════════════════════════════════════════
+
 
 def _handle_repl_command(text: str, service: Any, history: list[str]) -> Tuple[str, Optional[str]]:
     """Handle repl command request."""
@@ -299,6 +309,7 @@ def _handle_repl_command(text: str, service: Any, history: list[str]) -> Tuple[s
 # /help — categorized
 # ═══════════════════════════════════════════════════════════════════
 
+
 def _build_help_text() -> str:
     return """Angela REPL — Command Reference
 
@@ -341,6 +352,7 @@ def _build_help_text() -> str:
 # /state — visual bars
 # ═══════════════════════════════════════════════════════════════════
 
+
 def _format_state_snapshot(service: Any) -> str:
     """Format state snapshot with visual bars."""
     try:
@@ -349,12 +361,12 @@ def _format_state_snapshot(service: Any) -> str:
 
         axes_display = [
             ("α alpha ", "alpha", "energy, comfort, arousal"),
-            ("β beta  ", "beta",  "focus, curiosity, learning"),
+            ("β beta  ", "beta", "focus, curiosity, learning"),
             ("γ gamma ", "gamma", "happiness, trust, anticipation"),
             ("δ delta ", "delta", "bond, trust, attention"),
             ("ε epsln ", "epsilon", "precision, confidence"),
             ("θ theta ", "theta", "novelty, correction urge"),
-            ("ζ zeta  ", "zeta",  "(reserved)"),
+            ("ζ zeta  ", "zeta", "(reserved)"),
         ]
 
         for label, axis_name, description in axes_display:
@@ -373,9 +385,13 @@ def _format_state_snapshot(service: Any) -> str:
         if eta:
             lines.append("")
             lines.append(_section("η Eta (Execution)"))
-            lines.append(f"  exec_count  {_bar(min(eta.execution_count / 100, 1.0))}  count={eta.execution_count}")
+            lines.append(
+                f"  exec_count  {_bar(min(eta.execution_count / 100, 1.0))}  count={eta.execution_count}"
+            )
             lines.append(f"  success     {_bar(eta.success_rate)}  rate={eta.success_rate:.1%}")
-            lines.append(f"  drift       {_bar(eta.structural_drift)}  drift={eta.structural_drift:.4f}")
+            lines.append(
+                f"  drift       {_bar(eta.structural_drift)}  drift={eta.structural_drift:.4f}"
+            )
 
         return "\n".join(lines)
     except Exception as e:
@@ -386,6 +402,7 @@ def _format_state_snapshot(service: Any) -> str:
 # ═══════════════════════════════════════════════════════════════════
 # /config — rich with warnings
 # ═══════════════════════════════════════════════════════════════════
+
 
 def _format_config_summary(service: Any) -> str:
     """Format config summary with deployment mode and warnings."""
@@ -422,7 +439,9 @@ def _format_config_summary(service: Any) -> str:
             max_tok = llm_cfg.get("defaults", {}).get("max_tokens", 512)
             llm_mode = llm_cfg.get("llm_mode", "standard")
             mem_enh = llm_cfg.get("enable_memory_enhancement", True)
-            lines.append(f"  LLM:         mode={llm_mode}  temp={temp}  max_tokens={max_tok}  memory_enhance={mem_enh}")
+            lines.append(
+                f"  LLM:         mode={llm_mode}  temp={temp}  max_tokens={max_tok}  memory_enhance={mem_enh}"
+            )
         except Exception:
             pass
 
@@ -433,8 +452,16 @@ def _format_config_summary(service: Any) -> str:
         except Exception:
             pass
         if backends_cfg:
-            enabled = [k for k, v in backends_cfg.items() if isinstance(v, dict) and v.get("enabled", False)]
-            disabled = [k for k, v in backends_cfg.items() if isinstance(v, dict) and not v.get("enabled", True)]
+            enabled = [
+                k
+                for k, v in backends_cfg.items()
+                if isinstance(v, dict) and v.get("enabled", False)
+            ]
+            disabled = [
+                k
+                for k, v in backends_cfg.items()
+                if isinstance(v, dict) and not v.get("enabled", True)
+            ]
             lines.append(f"  Backends:    {len(enabled)} enabled, {len(disabled)} disabled")
             for bid in enabled:
                 b = backends_cfg[bid]
@@ -461,6 +488,7 @@ def _format_config_summary(service: Any) -> str:
         # Learned configs
         try:
             from pathlib import Path
+
             learned_dir = Path(__file__).resolve().parents[2] / "data" / "angela_learned"
             if learned_dir.exists():
                 learned_files = list(learned_dir.glob("*.yaml"))
@@ -475,11 +503,16 @@ def _format_config_summary(service: Any) -> str:
             has_openai = bool(os.getenv("OPENAI_API_KEY"))
             has_anthropic = bool(os.getenv("ANTHROPIC_API_KEY"))
             has_google = bool(os.getenv("GOOGLE_API_KEY"))
-            cloud_backends = [k for k, v in backends_cfg.items()
-                             if isinstance(v, dict) and v.get("type") == "cloud" and v.get("enabled")]
+            cloud_backends = [
+                k
+                for k, v in backends_cfg.items()
+                if isinstance(v, dict) and v.get("type") == "cloud" and v.get("enabled")
+            ]
             if cloud_backends and not any([has_openai, has_anthropic, has_google]):
                 warnings.append("⚠️  Cloud backends enabled but no API keys found in environment!")
-                warnings.append(_hint("Set OPENAI_API_KEY, ANTHROPIC_API_KEY, or GOOGLE_API_KEY in .env"))
+                warnings.append(
+                    _hint("Set OPENAI_API_KEY, ANTHROPIC_API_KEY, or GOOGLE_API_KEY in .env")
+                )
 
         if warnings:
             lines.append("")
@@ -495,6 +528,7 @@ def _format_config_summary(service: Any) -> str:
 # ═══════════════════════════════════════════════════════════════════
 # /intent — clean table
 # ═══════════════════════════════════════════════════════════════════
+
 
 def _format_intent_registry() -> str:
     """Format intent registry as a clean table."""
@@ -529,6 +563,7 @@ def _format_intent_registry() -> str:
 # /route — backend detail + health
 # ═══════════════════════════════════════════════════════════════════
 
+
 def _format_llm_routing(service: Any) -> str:
     """Format LLM routing with backend health details."""
     try:
@@ -562,13 +597,18 @@ def _format_llm_routing(service: Any) -> str:
 
             for btype, bobj in backends.items():
                 name = btype.name if hasattr(btype, "name") else str(btype)
-                backend_type = getattr(bobj, "_config", {}).get("type", "?") if hasattr(bobj, "_config") else "?"
-                is_active = (active_type is not None and btype == active_type)
+                backend_type = (
+                    getattr(bobj, "_config", {}).get("type", "?")
+                    if hasattr(bobj, "_config")
+                    else "?"
+                )
+                is_active = active_type is not None and btype == active_type
                 marker = " ★" if is_active else ""
                 # Try health check
                 health = "?"
                 try:
                     import asyncio as _aio
+
                     h = _aio.get_event_loop()
                     if h.is_running():
                         health = "ok"  # skip health check in running loop
@@ -591,10 +631,18 @@ def _format_llm_routing(service: Any) -> str:
         if not is_available:
             lines.append(_hint("No backend passed health check"))
             lines.append(_hint("For local: ensure Ollama is running (ollama serve)"))
-            lines.append(_hint("For cloud: set API key in .env and deployment.mode: local+llm in llm.default.yaml"))
+            lines.append(
+                _hint(
+                    "For cloud: set API key in .env and deployment.mode: local+llm in llm.default.yaml"
+                )
+            )
         elif llm_mode == "local":
             lines.append(_hint("Running in local-only mode. Cloud backends are gated."))
-            lines.append(_hint("To enable cloud: change deployment.mode to 'local+llm' or 'auto' in llm.default.yaml"))
+            lines.append(
+                _hint(
+                    "To enable cloud: change deployment.mode to 'local+llm' or 'auto' in llm.default.yaml"
+                )
+            )
 
         return "\n".join(lines)
     except Exception as e:
@@ -605,6 +653,7 @@ def _format_llm_routing(service: Any) -> str:
 # ═══════════════════════════════════════════════════════════════════
 # /model — table with health
 # ═══════════════════════════════════════════════════════════════════
+
 
 def _handle_model_command(args: str, service: Any) -> str:
     """Handle model command request with rich output."""
@@ -638,11 +687,12 @@ def _handle_model_command(args: str, service: Any) -> str:
         for btype, bobj in backends.items():
             idx += 1
             name = btype.name if hasattr(btype, "name") else str(btype)
-            is_active = (active_type is not None and btype == active_type)
+            is_active = active_type is not None and btype == active_type
             marker = " ★" if is_active else "  "
             health = "ok"
             try:
                 import asyncio as _aio
+
                 h = _aio.get_event_loop()
                 if not h.is_running():
                     health = "ok" if h.run_until_complete(bobj.check_health()) else "fail"
@@ -668,7 +718,9 @@ def _handle_model_command(args: str, service: Any) -> str:
     # ── /model switch ──
     if subcmd in ("switch", "sw", "set"):
         if not subarg:
-            available = [btype.name for btype in backends.keys()] if hasattr(backends, "keys") else []
+            available = (
+                [btype.name for btype in backends.keys()] if hasattr(backends, "keys") else []
+            )
             lines = ["Usage: /model switch <name>"]
             lines.append(f"Available: {available}")
             return "\n".join(lines)
@@ -680,7 +732,9 @@ def _handle_model_command(args: str, service: Any) -> str:
                 llm_svc.active_backend = bobj
                 llm_svc.active_backend_type = btype
                 return f"✅ Switched to {name}"
-        available = [btype.name if hasattr(btype, "name") else str(btype) for btype in backends.keys()]
+        available = [
+            btype.name if hasattr(btype, "name") else str(btype) for btype in backends.keys()
+        ]
         return f"❌ Model '{backend_key}' not found.\nAvailable: {available}"
 
     # ── /model auto ──
@@ -694,6 +748,7 @@ def _handle_model_command(args: str, service: Any) -> str:
 # ═══════════════════════════════════════════════════════════════════
 # /ctx — subcommands
 # ═══════════════════════════════════════════════════════════════════
+
 
 def _format_context_overview(service: Any, args: str) -> str:
     """Format context overview with subcommands."""
@@ -721,7 +776,9 @@ def _format_context_overview(service: Any, args: str) -> str:
         focus = beta.values.get("focus", 0.5) if beta and hasattr(beta, "values") else 0.5
         happy = gamma.values.get("happiness", 0.5) if gamma and hasattr(gamma, "values") else 0.5
 
-        lines.append(f"  State:     energy {_bar(energy)}  focus {_bar(focus)}  happy {_bar(happy)}")
+        lines.append(
+            f"  State:     energy {_bar(energy)}  focus {_bar(focus)}  happy {_bar(happy)}"
+        )
     except Exception:
         lines.append("  State:     (unavailable)")
 
@@ -778,6 +835,7 @@ def _format_context_overview(service: Any, args: str) -> str:
 # /memory
 # ═══════════════════════════════════════════════════════════════════
 
+
 def _format_memory_summary(service: Any, search: str) -> str:
     """Format memory summary."""
     try:
@@ -792,7 +850,13 @@ def _format_memory_summary(service: Any, search: str) -> str:
             if not results:
                 return "(no memories found)"
 
-            lines = [_section(f"Memory ({len(results)} results" + (f', query="{search}"' if search else ", recent experiences") + ")")]
+            lines = [
+                _section(
+                    f"Memory ({len(results)} results"
+                    + (f', query="{search}"' if search else ", recent experiences")
+                    + ")"
+                )
+            ]
 
             for i, r in enumerate(results):
                 content = r.get("content", "")[:100]
@@ -818,6 +882,7 @@ def _format_memory_summary(service: Any, search: str) -> str:
 # /eval
 # ═══════════════════════════════════════════════════════════════════
 
+
 def _handle_eval_command(args: str) -> str:
     """Evaluate a Python expression."""
     if not args:
@@ -832,6 +897,7 @@ def _handle_eval_command(args: str) -> str:
 # ═══════════════════════════════════════════════════════════════════
 # /tickle
 # ═══════════════════════════════════════════════════════════════════
+
 
 def _handle_tickle_command(args: str) -> str:
     """Handle tickle command request."""
@@ -1029,7 +1095,6 @@ _DRIVE_HELP = (
 def _handle_drive_command(args: str) -> str:
     """Handle drive command request."""
     import httpx
-
     from core.config_loader import get_angela_config
     from core.system.config.network_defaults import (
         DEFAULT_HOST,

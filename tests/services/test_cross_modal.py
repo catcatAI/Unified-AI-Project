@@ -28,9 +28,11 @@ if SRC not in sys.path:
 # Helpers
 # ============================================================================
 
+
 def _sample_image_bytes() -> bytes:
     """Generate a small valid PNG image."""
     from PIL import Image
+
     buf = io.BytesIO()
     img = Image.new("RGB", (32, 32), color=(128, 200, 64))
     img.save(buf, format="PNG")
@@ -41,10 +43,11 @@ def _sample_wav_bytes() -> bytes:
     """Generate a small valid WAV audio clip."""
     import struct
     import wave
+
     sample_rate = 16000
     duration = 0.1
     n_samples = int(sample_rate * duration)
-    samples = (np.sin(2 * np.pi * 440 * np.arange(n_samples) / sample_rate) * 0.5)
+    samples = np.sin(2 * np.pi * 440 * np.arange(n_samples) / sample_rate) * 0.5
     int16 = (samples * 32767).astype(np.int16)
     buf = io.BytesIO()
     with wave.open(buf, "wb") as wf:
@@ -59,6 +62,7 @@ def _sample_wav_bytes() -> bytes:
 # CrossModalRouter Tests
 # ============================================================================
 
+
 class TestCrossModalRouterRoute:
     """T1-T8: CrossModalRouter routing functionality."""
 
@@ -66,6 +70,7 @@ class TestCrossModalRouterRoute:
     async def test_route_vision_encode(self):
         """T1: Route vision data returns vision pipeline result."""
         from services.cross_modal_router import CrossModalRouter
+
         router = CrossModalRouter()
         img = _sample_image_bytes()
         result = await router.route("vision", img, "encode")
@@ -78,6 +83,7 @@ class TestCrossModalRouterRoute:
     async def test_route_audio_encode(self):
         """T2: Route audio data returns audio pipeline result."""
         from services.cross_modal_router import CrossModalRouter
+
         router = CrossModalRouter()
         wav = _sample_wav_bytes()
         result = await router.route("audio", wav, "encode")
@@ -89,6 +95,7 @@ class TestCrossModalRouterRoute:
     async def test_route_cross_compare(self):
         """T3: Route cross-modal compare returns similarity."""
         from services.cross_modal_router import CrossModalRouter
+
         router = CrossModalRouter()
         result = await router.route("cross", b"", "compare")
         assert result["pipeline"] == "cross"
@@ -98,6 +105,7 @@ class TestCrossModalRouterRoute:
     async def test_route_unknown_modality(self):
         """T4: Route unknown modality returns error."""
         from services.cross_modal_router import CrossModalRouter
+
         router = CrossModalRouter()
         result = await router.route("unknown", b"", "auto")
         assert "error" in result
@@ -107,6 +115,7 @@ class TestCrossModalRouterRoute:
     async def test_route_caching(self):
         """T5: Identical requests return cached result."""
         from services.cross_modal_router import CrossModalRouter
+
         router = CrossModalRouter()
         img = _sample_image_bytes()
         r1 = await router.route("vision", img, "encode")
@@ -118,6 +127,7 @@ class TestCrossModalRouterRoute:
     async def test_route_rate_limit(self):
         """T6: Rate limiting returns rate_limited pipeline."""
         from services.cross_modal_router import CrossModalRouter
+
         router = CrossModalRouter(cache_size=0, rate_limit=1)
         img = _sample_image_bytes()
         # First request
@@ -131,6 +141,7 @@ class TestCrossModalRouterRoute:
     async def test_list_pipelines(self):
         """T7: List all available pipelines with status."""
         from services.cross_modal_router import CrossModalRouter
+
         router = CrossModalRouter()
         status = await router.list_pipelines()
         assert "pipelines" in status
@@ -143,6 +154,7 @@ class TestCrossModalRouterRoute:
     async def test_route_stats(self):
         """T8: Route stats returns diagnostics."""
         from services.cross_modal_router import CrossModalRouter
+
         router = CrossModalRouter()
         stats = router.get_route_stats()
         assert "cache_size" in stats
@@ -154,25 +166,35 @@ class TestCrossModalRouterRoute:
 # CrossModalQualityDashboard Tests
 # ============================================================================
 
+
 class TestCrossModalQualityDashboard:
     """T9-T15: Quality dashboard functionality."""
 
     def _sample_vision_result(self, ssim=0.85, psnr=30.0, time_ms=50.0, cache_hit=False):
         return {
-            "ssim": ssim, "psnr": psnr, "time_ms": time_ms,
-            "original_size": (128, 128), "cache_hit": cache_hit,
-            "image_hash": "abc123", "error": None,
+            "ssim": ssim,
+            "psnr": psnr,
+            "time_ms": time_ms,
+            "original_size": (128, 128),
+            "cache_hit": cache_hit,
+            "image_hash": "abc123",
+            "error": None,
         }
 
     def _sample_audio_result(self, snr=20.0, time_ms=40.0, duration=1.0, cache_hit=False):
         return {
-            "snr": snr, "time_ms": time_ms, "duration": duration,
-            "cache_hit": cache_hit, "audio_hash": "def456", "error": None,
+            "snr": snr,
+            "time_ms": time_ms,
+            "duration": duration,
+            "cache_hit": cache_hit,
+            "audio_hash": "def456",
+            "error": None,
         }
 
     def test_record_vision(self):
         """T9: Record vision pipeline result."""
         from services.cross_modal_quality import CrossModalQualityDashboard
+
         dq = CrossModalQualityDashboard()
         dq.record_vision(self._sample_vision_result())
         report = dq.dashboard()
@@ -181,6 +203,7 @@ class TestCrossModalQualityDashboard:
     def test_record_audio(self):
         """T10: Record audio pipeline result."""
         from services.cross_modal_quality import CrossModalQualityDashboard
+
         dq = CrossModalQualityDashboard()
         dq.record_audio(self._sample_audio_result())
         report = dq.dashboard()
@@ -189,6 +212,7 @@ class TestCrossModalQualityDashboard:
     def test_dashboard_aggregation(self):
         """T11: Dashboard aggregates both vision and audio."""
         from services.cross_modal_quality import CrossModalQualityDashboard
+
         dq = CrossModalQualityDashboard()
         dq.record_vision(self._sample_vision_result())
         dq.record_audio(self._sample_audio_result())
@@ -201,6 +225,7 @@ class TestCrossModalQualityDashboard:
     def test_dashboard_simple(self):
         """T12: Simple dashboard returns condensed view."""
         from services.cross_modal_quality import CrossModalQualityDashboard
+
         dq = CrossModalQualityDashboard()
         dq.record_vision(self._sample_vision_result())
         simple = dq.dashboard_simple()
@@ -213,6 +238,7 @@ class TestCrossModalQualityDashboard:
     def test_empty_dashboard(self):
         """T13: Empty dashboard returns zeros."""
         from services.cross_modal_quality import CrossModalQualityDashboard
+
         dq = CrossModalQualityDashboard()
         report = dq.dashboard()
         assert report["vision_summary"]["total_calls"] == 0
@@ -221,6 +247,7 @@ class TestCrossModalQualityDashboard:
     def test_quality_trend_insufficient(self):
         """T14: Trend with insufficient data returns assessment."""
         from services.cross_modal_quality import CrossModalQualityDashboard
+
         dq = CrossModalQualityDashboard()
         trend = dq.quality_trend()
         assert trend["overall_assessment"] in ("stable", "insufficient_data")
@@ -228,6 +255,7 @@ class TestCrossModalQualityDashboard:
     def test_overall_health(self):
         """T15: Overall health computed correctly."""
         from services.cross_modal_quality import CrossModalQualityDashboard
+
         dq = CrossModalQualityDashboard()
         # High quality records
         for _ in range(5):
@@ -243,6 +271,7 @@ class TestCrossModalQualityDashboard:
 # MultimodalService Pipeline Wiring Tests
 # ============================================================================
 
+
 class TestMultimodalServicePipelineWiring:
     """T16-T21: MultimodalService pipeline integration."""
 
@@ -250,6 +279,7 @@ class TestMultimodalServicePipelineWiring:
     async def test_encode_vision_uses_pipeline(self):
         """T16: Encode vision uses VisionPipeline and records quality."""
         from services.multimodal_service import MultimodalService
+
         svc = MultimodalService()
         img = _sample_image_bytes()
         result = await svc.encode(img, "vision")
@@ -265,6 +295,7 @@ class TestMultimodalServicePipelineWiring:
     async def test_encode_audio_uses_pipeline(self):
         """T17: Encode audio uses AudioPipeline and records quality."""
         from services.multimodal_service import MultimodalService
+
         svc = MultimodalService()
         wav = _sample_wav_bytes()
         result = await svc.encode(wav, "audio")
@@ -278,6 +309,7 @@ class TestMultimodalServicePipelineWiring:
     async def test_evaluate_vision_with_item(self):
         """T18: Evaluate vision item uses quality monitor report."""
         from services.multimodal_service import MultimodalService
+
         svc = MultimodalService()
         img = _sample_image_bytes()
         await svc.encode(img, "vision")
@@ -292,6 +324,7 @@ class TestMultimodalServicePipelineWiring:
     async def test_evaluate_audio_with_item(self):
         """T19: Evaluate audio item uses quality monitor report."""
         from services.multimodal_service import MultimodalService
+
         svc = MultimodalService()
         wav = _sample_wav_bytes()
         await svc.encode(wav, "audio")
@@ -306,6 +339,7 @@ class TestMultimodalServicePipelineWiring:
     async def test_health_includes_pipelines(self):
         """T20: Health check includes vision pipeline and encoders."""
         from services.multimodal_service import MultimodalService
+
         svc = MultimodalService()
         health = await svc.health()
         assert health["status"] == "healthy"
@@ -319,6 +353,7 @@ class TestMultimodalServicePipelineWiring:
     async def test_encode_empty_data(self):
         """T21: Encode empty data returns error."""
         from services.multimodal_service import MultimodalService
+
         svc = MultimodalService()
         result = await svc.encode(b"", "vision")
         assert "error" in result
@@ -327,6 +362,7 @@ class TestMultimodalServicePipelineWiring:
 # ============================================================================
 # API Integration Tests
 # ============================================================================
+
 
 class TestCrossModalAPI:
     """T22-T25: API endpoint integration."""
@@ -339,6 +375,7 @@ class TestCrossModalAPI:
 
         # Call directly with vision data
         from services.cross_modal_router import CrossModalRouter
+
         router = CrossModalRouter()
         img = _sample_image_bytes()
         result = await router.route("vision", img, "pipeline")
@@ -349,6 +386,7 @@ class TestCrossModalAPI:
     async def test_cross_infer_audio_pipeline(self):
         """T23: POST /multimodal/cross-infer with audio data."""
         from services.cross_modal_router import CrossModalRouter
+
         router = CrossModalRouter()
         wav = _sample_wav_bytes()
         result = await router.route("audio", wav, "pipeline")
@@ -359,6 +397,7 @@ class TestCrossModalAPI:
     async def test_cross_infer_cross_compare(self):
         """T24: POST /multimodal/cross-infer with cross-modal compare."""
         from services.cross_modal_router import CrossModalRouter
+
         router = CrossModalRouter()
         result = await router.route("cross", b"", "compare")
         assert result.get("error") is None
@@ -367,6 +406,7 @@ class TestCrossModalAPI:
     def test_quality_dashboard_endpoint(self):
         """T25: GET /multimodal/quality/dashboard returns valid report."""
         from services.cross_modal_quality import CrossModalQualityDashboard
+
         dashboard = CrossModalQualityDashboard()
         simple = dashboard.dashboard_simple()
         assert "vision" in simple

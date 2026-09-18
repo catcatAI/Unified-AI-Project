@@ -1,4 +1,5 @@
 """Tests for core/angela_error.py"""
+
 import pytest
 
 
@@ -8,17 +9,19 @@ class TestAngelaError:
     def test_import_angela_error(self):
         """Verify AngelaError is a proper Exception subclass with expected hierarchy"""
         from core.angela_error import AngelaError, ErrorCategory, ErrorHandler, ErrorSeverity
+
         assert issubclass(AngelaError, Exception)
         assert AngelaError.DEFAULT_CODE == "ANGELA_ERROR"
         assert AngelaError.DEFAULT_MESSAGE == "An error occurred in Angela AI"
         assert AngelaError.DEFAULT_CATEGORY == ErrorCategory.UNKNOWN
         assert AngelaError.DEFAULT_SEVERITY == ErrorSeverity.ERROR
-        assert hasattr(ErrorHandler, 'handle')
-        assert hasattr(ErrorHandler, 'register_handler')
+        assert hasattr(ErrorHandler, "handle")
+        assert hasattr(ErrorHandler, "register_handler")
 
     def test_angela_error_instantiation(self):
         """Verify AngelaError default instantiation sets correct defaults"""
         from core.angela_error import AngelaError, ErrorCategory, ErrorSeverity
+
         err = AngelaError()
         assert isinstance(err, Exception)
         assert err.message == "An error occurred in Angela AI"
@@ -33,6 +36,7 @@ class TestAngelaError:
     def test_angela_error_with_message(self):
         """Verify AngelaError accepts custom params, serializes correctly, and chains causes"""
         from core.angela_error import AngelaError, ErrorCategory, ErrorSeverity
+
         err = AngelaError(
             message="test error",
             code="TEST_CODE",
@@ -59,30 +63,35 @@ class TestAngelaError:
     def test_configuration_error(self):
         """Verify ConfigurationError can be imported and raised"""
         from core.angela_error import ConfigurationError
+
         err = ConfigurationError()
         assert isinstance(err, Exception)
 
     def test_core_error(self):
         """Verify CoreError can be imported and raised"""
         from core.angela_error import CoreError
+
         err = CoreError()
         assert isinstance(err, Exception)
 
     def test_network_error(self):
         """Verify NetworkError can be imported and raised"""
         from core.angela_error import NetworkError
+
         err = NetworkError()
         assert isinstance(err, Exception)
 
     def test_resource_error(self):
         """Verify ResourceError can be imported and raised"""
         from core.angela_error import ResourceError
+
         err = ResourceError()
         assert isinstance(err, Exception)
 
     def test_validation_error(self):
         """Verify ValidationError can be imported and raised"""
         from core.angela_error import ValidationError
+
         err = ValidationError()
         assert isinstance(err, Exception)
 
@@ -108,4 +117,5 @@ class TestAngelaError:
             ValidationError,
             WebSocketError,
         )
+
         assert AngelaError is not None

@@ -1,4 +1,5 @@
 """Quest system — state-based objective completion from card data."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -9,12 +10,14 @@ class QuestObjective:
     description: str
     completed: bool = False
     # State-based completion conditions
-    require_action: str = ""       # "observe", "talk", "advance", "combat", "rest", "give_item", "ask_help"
-    require_scene: str = ""        # card_id of required scene
-    require_npc: str = ""          # NPC name required
-    require_item: str = ""         # item name required
-    require_times: int = 1         # how many times action must be done
-    _count: int = 0                # current count
+    require_action: str = (
+        ""  # "observe", "talk", "advance", "combat", "rest", "give_item", "ask_help"
+    )
+    require_scene: str = ""  # card_id of required scene
+    require_npc: str = ""  # NPC name required
+    require_item: str = ""  # item name required
+    require_times: int = 1  # how many times action must be done
+    _count: int = 0  # current count
 
     def check(self, action: str, scene_id: str, npc_name: str, inventory: list[str]) -> bool:
         """Check if this objective completes given current game state."""

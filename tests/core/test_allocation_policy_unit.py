@@ -5,7 +5,7 @@ Unit Tests — AllocationPolicy
 Author: Angela AI v6.2
 """
 
-
+import pytest
 from core.allocation.policy import (
     AllocationAction,
     AllocationContext,
@@ -18,15 +18,13 @@ from core.allocation.policy import (
     DeferStage,
 )
 
-import pytest
-
 
 def test_assign_stage_high_sim():
     ctx = AllocationContext(
         vector=[0.1] * 32,
-        similarities={'alpha': 0.8, 'beta': 0.3},
+        similarities={"alpha": 0.8, "beta": 0.3},
         max_resonance=0.8,
-        best_axis='alpha',
+        best_axis="alpha",
         num_high_sim=1,
         entropy=0.5,
         active_dims=2,
@@ -37,16 +35,16 @@ def test_assign_stage_high_sim():
     assert stage.matches(ctx)
     decision = stage.decide(ctx)
     assert decision.action == AllocationAction.ASSIGN
-    assert decision.target == 'alpha'
+    assert decision.target == "alpha"
     assert decision.confidence == 0.8
 
 
 def test_assign_stage_low_sim():
     ctx = AllocationContext(
         vector=[0.1] * 32,
-        similarities={'alpha': 0.5, 'beta': 0.3},
+        similarities={"alpha": 0.5, "beta": 0.3},
         max_resonance=0.5,
-        best_axis='alpha',
+        best_axis="alpha",
         num_high_sim=0,
         entropy=0.5,
         active_dims=2,
@@ -60,9 +58,9 @@ def test_assign_stage_low_sim():
 def test_composite_stage():
     ctx = AllocationContext(
         vector=[0.1] * 32,
-        similarities={'alpha': 0.5, 'beta': 0.4, 'gamma': 0.3},
+        similarities={"alpha": 0.5, "beta": 0.4, "gamma": 0.3},
         max_resonance=0.5,
-        best_axis='alpha',
+        best_axis="alpha",
         num_high_sim=2,
         entropy=0.5,
         active_dims=3,
@@ -80,7 +78,7 @@ def test_composite_stage():
 def test_create_stage():
     ctx = AllocationContext(
         vector=[0.1] * 32,
-        similarities={'alpha': 0.2, 'beta': 0.2},
+        similarities={"alpha": 0.2, "beta": 0.2},
         max_resonance=0.2,
         best_axis=None,
         num_high_sim=0,
@@ -99,9 +97,9 @@ def test_create_stage():
 def test_defer_stage():
     ctx = AllocationContext(
         vector=[0.1] * 32,
-        similarities={'alpha': 0.3},
+        similarities={"alpha": 0.3},
         max_resonance=0.3,
-        best_axis='alpha',
+        best_axis="alpha",
         num_high_sim=0,
         entropy=0.9,
         active_dims=1,
@@ -119,9 +117,9 @@ def test_policy_full_pipeline():
 
     ctx = AllocationContext(
         vector=[0.1] * 32,
-        similarities={'alpha': 0.8, 'beta': 0.3},
+        similarities={"alpha": 0.8, "beta": 0.3},
         max_resonance=0.8,
-        best_axis='alpha',
+        best_axis="alpha",
         num_high_sim=1,
         entropy=0.5,
         active_dims=2,
@@ -130,16 +128,16 @@ def test_policy_full_pipeline():
     )
     decision = policy.decide(ctx)
     assert decision.action == AllocationAction.ASSIGN
-    assert decision.target == 'alpha'
+    assert decision.target == "alpha"
 
 
 def test_policy_falls_through_to_defer():
     policy = AllocationPolicy()
     ctx = AllocationContext(
         vector=[0.1] * 32,
-        similarities={'alpha': 0.1, 'beta': 0.1},
+        similarities={"alpha": 0.1, "beta": 0.1},
         max_resonance=0.1,
-        best_axis='alpha',
+        best_axis="alpha",
         num_high_sim=0,
         entropy=0.9,
         active_dims=1,
@@ -156,15 +154,15 @@ def test_policy_decide_from_profile():
     from core.allocation.resonance import ResonanceProfile
 
     profile = ResonanceProfile(
-        similarities={'alpha': 0.8, 'beta': 0.3},
-        best_axis='alpha',
+        similarities={"alpha": 0.8, "beta": 0.3},
+        best_axis="alpha",
         max_resonance=0.8,
         num_high_sim=1,
         entropy=0.5,
         active_count=2,
     )
     policy = AllocationPolicy()
-    decision = policy.decide_from_profile([0.1] * 32, profile, label='test')
+    decision = policy.decide_from_profile([0.1] * 32, profile, label="test")
     assert decision.action == AllocationAction.ASSIGN
 
 
@@ -175,10 +173,14 @@ def test_add_remove_stage():
     class CustomStage(BaseStage):
         def __init__(self):
             self.name = "CustomStage"
+
         def matches(self, ctx):
             return ctx.max_resonance > 0.95
+
         def decide(self, ctx):
-            return AllocationDecision(action=AllocationAction.ASSIGN, target='custom', confidence=1.0)
+            return AllocationDecision(
+                action=AllocationAction.ASSIGN, target="custom", confidence=1.0
+            )
 
     policy.add_stage(CustomStage())
     assert len(policy.stages) == initial_count + 1
@@ -189,9 +191,7 @@ def test_add_remove_stage():
 
 
 def test_decision_repr():
-    d = AllocationDecision(action=AllocationAction.ASSIGN, target='alpha', confidence=0.8)
+    d = AllocationDecision(action=AllocationAction.ASSIGN, target="alpha", confidence=0.8)
     repr_str = repr(d)
-    assert 'ASSIGN' in repr_str
-    assert 'alpha' in repr_str
-
-
+    assert "ASSIGN" in repr_str
+    assert "alpha" in repr_str

@@ -1,4 +1,5 @@
 """Smoke tests for core/version.py"""
+
 from core.version import ReleasePhase, VersionInfo
 
 

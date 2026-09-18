@@ -157,9 +157,9 @@ class VisualEncoder:
         mag = np.sqrt(gx**2 + gy**2)
         ang = np.arctan2(gy, gx) + np.pi
         bin_idx = (ang / (2 * np.pi) * self.EDGE_BINS).astype(int) % self.EDGE_BINS
-        hist = np.bincount(
-            bin_idx.ravel(), weights=mag.ravel(), minlength=self.EDGE_BINS
-        ).astype(np.float32)
+        hist = np.bincount(bin_idx.ravel(), weights=mag.ravel(), minlength=self.EDGE_BINS).astype(
+            np.float32
+        )
         total = hist.sum()
         if total > 0:
             hist = hist / total
@@ -206,7 +206,9 @@ class VisualEncoder:
         result: np.ndarray = self._projection @ raw
         return result
 
-    def train_step(self, image_data: bytes, target_latent: Optional[np.ndarray], lr: float = 0.001) -> float:
+    def train_step(
+        self, image_data: bytes, target_latent: Optional[np.ndarray], lr: float = 0.001
+    ) -> float:
         """Train the projection matrix to map image features to target latent.
 
         Uses MSE loss between projected features and target latent vector.

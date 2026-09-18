@@ -32,6 +32,7 @@ class TestServiceDecode:
     @pytest.fixture
     def service(self):
         from ai.multimodal.similarity_service import MultimodalSimilarityService
+
         return MultimodalSimilarityService()
 
     async def test_decode_to_image_after_encode(self, service, sample_image_bytes):
@@ -70,10 +71,12 @@ class TestVisualEncoderConv2d:
     @pytest.fixture
     def encoder(self):
         from ai.multimodal.visual_encoder import VisualEncoder
+
         return VisualEncoder()
 
     def test_vectorized_conv2d_matches_manual(self, encoder):
         import numpy as np
+
         img = np.random.default_rng(42).normal(0, 1, (128, 128)).astype(np.float32)
 
         filters = encoder._build_filters()
@@ -86,7 +89,7 @@ class TestVisualEncoderConv2d:
         manual = np.zeros((h_out, w_out), dtype=np.float32)
         for y in range(0, h_out * s, s):
             for x in range(0, w_out * s, s):
-                manual[y // s, x // s] = np.sum(img[y:y + k_h, x:x + k_w] * k)
+                manual[y // s, x // s] = np.sum(img[y : y + k_h, x : x + k_w] * k)
 
         windows = np.lib.stride_tricks.sliding_window_view(img, (k_h, k_w))[::s, ::s]
         vectorized = np.tensordot(windows, k, axes=2)
@@ -103,6 +106,7 @@ class TestMultimodalBridge:
     @pytest.fixture
     def bridge(self):
         from ai.multimodal.multimodal_bridge import MultimodalBridge
+
         return MultimodalBridge()
 
     def test_encode_image_bytes(self, bridge, sample_image_bytes):

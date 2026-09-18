@@ -37,7 +37,9 @@ def get_data_root() -> Path:
             return p
     # Default: check if /media/covo/ZX is mounted and has our data, prefer it
     zx = Path("/media/covo/ZX/Unified-AI-Project-data")
-    if zx.exists() and any((zx / d).exists() for d in ("dictionaries", "raw_datasets", "checkpoints")):
+    if zx.exists() and any(
+        (zx / d).exists() for d in ("dictionaries", "raw_datasets", "checkpoints")
+    ):
         return zx
     # Fallback to repo-local data/
     return _PROJECT_ROOT / "data"

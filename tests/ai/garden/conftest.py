@@ -61,4 +61,3 @@ def temp_dir() -> str:
 def kg_importer() -> KGImporter:
     """Empty KGImporter instance."""
     return KGImporter()
-

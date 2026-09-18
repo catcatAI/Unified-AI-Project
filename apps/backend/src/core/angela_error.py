@@ -100,12 +100,16 @@ class AngelaError(Exception):
 
 
 class CoreError(AngelaError):
-    def __init__(self, message: str = "Core system error", details: Optional[dict] = None, **kwargs):
+    def __init__(
+        self, message: str = "Core system error", details: Optional[dict] = None, **kwargs
+    ):
         super().__init__(message, code="CORE_ERR", category=ErrorCategory.CORE, **kwargs)
 
 
 class ConfigurationError(AngelaError):
-    def __init__(self, message: str = "Configuration error", details: Optional[dict] = None, **kwargs):
+    def __init__(
+        self, message: str = "Configuration error", details: Optional[dict] = None, **kwargs
+    ):
         super().__init__(message, code="CONFIG_ERR", category=ErrorCategory.CONFIGURATION, **kwargs)
 
 
@@ -140,7 +144,9 @@ class NotFoundError(AngelaError):
 
 
 class MemoryError(AngelaError):
-    def __init__(self, message: str = "Memory system error", details: Optional[dict] = None, **kwargs):
+    def __init__(
+        self, message: str = "Memory system error", details: Optional[dict] = None, **kwargs
+    ):
         super().__init__(message, code="MEM_ERR", category=ErrorCategory.MEMORY, **kwargs)
 
 
@@ -165,32 +171,44 @@ class SecurityError(AngelaError):
 
 
 class AuthenticationError(AngelaError):
-    def __init__(self, message: str = "Authentication error", details: Optional[dict] = None, **kwargs):
+    def __init__(
+        self, message: str = "Authentication error", details: Optional[dict] = None, **kwargs
+    ):
         super().__init__(message, code="AUTH_ERR", category=ErrorCategory.AUTHENTICATION, **kwargs)
 
 
 class AuthorizationError(AngelaError):
-    def __init__(self, message: str = "Authorization error", details: Optional[dict] = None, **kwargs):
+    def __init__(
+        self, message: str = "Authorization error", details: Optional[dict] = None, **kwargs
+    ):
         super().__init__(message, code="AUTHZ_ERR", category=ErrorCategory.AUTHORIZATION, **kwargs)
 
 
 class BusinessLogicError(AngelaError):
-    def __init__(self, message: str = "Business logic error", details: Optional[dict] = None, **kwargs):
+    def __init__(
+        self, message: str = "Business logic error", details: Optional[dict] = None, **kwargs
+    ):
         super().__init__(message, code="BIZ_ERR", category=ErrorCategory.BUSINESS_LOGIC, **kwargs)
 
 
 class RateLimitError(AngelaError):
-    def __init__(self, message: str = "Rate limit exceeded", details: Optional[dict] = None, **kwargs):
+    def __init__(
+        self, message: str = "Rate limit exceeded", details: Optional[dict] = None, **kwargs
+    ):
         super().__init__(message, code="RATE_LIMIT", category=ErrorCategory.RATE_LIMIT, **kwargs)
 
 
 class IntentError(AngelaError):
-    def __init__(self, message: str = "Intent detection error", details: Optional[dict] = None, **kwargs):
+    def __init__(
+        self, message: str = "Intent detection error", details: Optional[dict] = None, **kwargs
+    ):
         super().__init__(message, code="INTENT_ERR", category=ErrorCategory.INTENT, **kwargs)
 
 
 class CardError(AngelaError):
-    def __init__(self, message: str = "Card pipeline error", details: Optional[dict] = None, **kwargs):
+    def __init__(
+        self, message: str = "Card pipeline error", details: Optional[dict] = None, **kwargs
+    ):
         super().__init__(message, code="CARD_ERR", category=ErrorCategory.CARD, **kwargs)
 
 

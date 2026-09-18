@@ -1,13 +1,12 @@
 """Tests for the knowledge verifier (offline fake search backend)."""
 
 import pytest
-
+from ai.memory.grounded_knowledge import VerificationStatus
 from ai.meta.knowledge_verifier import (
     KnowledgeVerifier,
     VerificationResult,
     heuristic_assess,
 )
-from ai.memory.grounded_knowledge import VerificationStatus
 
 
 class FakeSearchTool:
@@ -23,12 +22,18 @@ class FakeSearchTool:
 
 
 SUPPORT = [
-    {"title": "Speed of light", "url": "https://en.wikipedia.org/wiki/Speed_of_light",
-     "snippet": "The speed of light in vacuum is exactly 299792458 m/s."},
+    {
+        "title": "Speed of light",
+        "url": "https://en.wikipedia.org/wiki/Speed_of_light",
+        "snippet": "The speed of light in vacuum is exactly 299792458 m/s.",
+    },
 ]
 CONTRADICT = [
-    {"title": "Flat Earth debunked", "url": "https://example.com/flat",
-     "snippet": "The Earth is not flat. That claim is false and debunked."},
+    {
+        "title": "Flat Earth debunked",
+        "url": "https://example.com/flat",
+        "snippet": "The Earth is not flat. That claim is false and debunked.",
+    },
 ]
 EMPTY = []
 
@@ -75,9 +80,7 @@ async def test_verify_caches_and_avoids_second_search():
 
 
 def test_heuristic_assess_directly():
-    status, conf = heuristic_assess(
-        "The speed of light is 299792458 m/s", SUPPORT
-    )
+    status, conf = heuristic_assess("The speed of light is 299792458 m/s", SUPPORT)
     assert status == VerificationStatus.VERIFIED
     status2, _ = heuristic_assess("The Earth is flat", CONTRADICT)
     assert status2 == VerificationStatus.CONTRADICTED

@@ -305,15 +305,11 @@ class DialogueContextManager:
         """传递对话上下文"""
         try:
             if source_conversation_id not in self.conversations:
-                logger.error(
-                    f"Source conversation {source_conversation_id} not found"
-                )
+                logger.error(f"Source conversation {source_conversation_id} not found")
                 return False
 
             if target_conversation_id not in self.conversations:
-                logger.error(
-                    f"Target conversation {target_conversation_id} not found"
-                )
+                logger.error(f"Target conversation {target_conversation_id} not found")
                 return False
 
             source_conv = self.conversations[source_conversation_id]

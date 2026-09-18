@@ -17,7 +17,10 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow  # type: ignore[import-untyped]
 from googleapiclient.discovery import build  # type: ignore[import-untyped]
 from googleapiclient.errors import HttpError  # type: ignore[import-untyped]
-from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload  # type: ignore[import-untyped]
+from googleapiclient.http import (  # type: ignore[import-untyped]
+    MediaFileUpload,
+    MediaIoBaseDownload,
+)
 
 logger = logging.getLogger(__name__)
 

@@ -12,7 +12,7 @@ class TestPoint:
         assert p.y == 0.5
         assert p.color == (255, 0, 0)
         assert p.size == 0.1
-    
+
     def test_point_clamps_values(self):
         p = Point(1.5, -0.5, (300, -10, 128), 1.5)
         assert p.x == 1.0
@@ -54,22 +54,29 @@ class TestDrawingInstructions:
         assert len(instr.lines) == 0
         assert len(instr.planes) == 0
         assert instr.background_color == (255, 255, 255)
-    
+
     def test_to_vector_shape(self):
         from ai.multimodal.primitives.primitive_types import TOTAL_DIM
+
         instr = DrawingInstructions()
         vec = instr.to_vector()
         assert vec.shape == (TOTAL_DIM,)
         assert vec.dtype == np.float32
-    
+
     def test_to_vector_with_content(self):
         from ai.multimodal.primitives.primitive_types import TOTAL_DIM
+
         instr = DrawingInstructions(
             points=[Point(0.5, 0.5, (255, 0, 0), 0.1)],
-            lines=[Line(Point(0.0, 0.0, (0, 0, 0), 0.0), 
-                       Point(1.0, 1.0, (0, 0, 0), 0.0), 
-                       0.05, (0, 255, 0))],
-            background_color=(0, 0, 0)
+            lines=[
+                Line(
+                    Point(0.0, 0.0, (0, 0, 0), 0.0),
+                    Point(1.0, 1.0, (0, 0, 0), 0.0),
+                    0.05,
+                    (0, 255, 0),
+                )
+            ],
+            background_color=(0, 0, 0),
         )
         vec = instr.to_vector()
         assert vec.shape == (TOTAL_DIM,)
@@ -77,11 +84,10 @@ class TestDrawingInstructions:
         assert vec[0] == 0.0
         assert vec[1] == 0.0
         assert vec[2] == 0.0
-    
+
     def test_from_vector_roundtrip(self):
         original = DrawingInstructions(
-            points=[Point(0.5, 0.5, (255, 0, 0), 0.1)],
-            background_color=(128, 128, 128)
+            points=[Point(0.5, 0.5, (255, 0, 0), 0.1)], background_color=(128, 128, 128)
         )
         vec = original.to_vector()
         restored = DrawingInstructions.from_vector(vec)

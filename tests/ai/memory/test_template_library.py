@@ -16,10 +16,10 @@ from apps.backend.src.ai.memory.template_library import (
 class TestPredefinedTemplate:
 
     def test_members(self):
-        assert PredefinedTemplate.GREETING_MORNING.value == 'greeting_morning'
-        assert PredefinedTemplate.GREETING_GENERAL.value == 'greeting_general'
-        assert PredefinedTemplate.FAREWELL_GENERAL.value == 'farewell_general'
-        assert PredefinedTemplate.UNKNOWN.value == 'unknown'
+        assert PredefinedTemplate.GREETING_MORNING.value == "greeting_morning"
+        assert PredefinedTemplate.GREETING_GENERAL.value == "greeting_general"
+        assert PredefinedTemplate.FAREWELL_GENERAL.value == "farewell_general"
+        assert PredefinedTemplate.UNKNOWN.value == "unknown"
 
     def test_count(self):
         assert len(PredefinedTemplate) == 46
@@ -35,9 +35,9 @@ class TestTemplateLibraryInit:
 
     def test_init_contains_known_ids(self):
         lib = TemplateLibrary()
-        assert lib.get_by_id('greeting_morning').id == 'greeting_morning'
-        assert lib.get_by_id('farewell_general').id == 'farewell_general'
-        assert lib.get_by_id('comfort_sad').id == 'comfort_sad'
+        assert lib.get_by_id("greeting_morning").id == "greeting_morning"
+        assert lib.get_by_id("farewell_general").id == "farewell_general"
+        assert lib.get_by_id("comfort_sad").id == "comfort_sad"
 
 
 class TestTemplateLibraryGet:
@@ -50,17 +50,17 @@ class TestTemplateLibraryGet:
         templates = lib.get_all_templates()
         assert len(templates) == 51
         ids = [t.id for t in templates]
-        assert 'greeting_morning' in ids
-        assert 'farewell_general' in ids
-        assert 'comfort_sad' in ids
+        assert "greeting_morning" in ids
+        assert "farewell_general" in ids
+        assert "comfort_sad" in ids
 
     def test_get_by_id_exists(self, lib):
-        tpl = lib.get_by_id('greeting_general')
+        tpl = lib.get_by_id("greeting_general")
         assert tpl is not None
-        assert tpl.content == '你好呀！见到你真开心~'
+        assert tpl.content == "你好呀！见到你真开心~"
 
     def test_get_by_id_missing(self, lib):
-        tpl = lib.get_by_id('nonexistent')
+        tpl = lib.get_by_id("nonexistent")
         assert tpl is None
 
     def test_get_by_category_greeting(self, lib):
@@ -111,45 +111,46 @@ class TestTemplateLibraryAddRemove:
 
     def test_add_custom_template(self, lib):
         tpl = MemoryTemplate(
-            id='custom_1',
+            id="custom_1",
             category=ResponseCategory.QUESTION,
-            content='custom content',
+            content="custom content",
         )
         before = lib.get_template_count()
         lib.add_custom_template(tpl)
         assert lib.get_template_count() == before + 1
-        assert lib.get_by_id('custom_1').id == 'custom_1'
+        assert lib.get_by_id("custom_1").id == "custom_1"
 
     def test_add_custom_template_overwrite(self, lib):
         tpl = MemoryTemplate(
-            id='greeting_morning',
+            id="greeting_morning",
             category=ResponseCategory.QUESTION,
-            content='overwritten',
+            content="overwritten",
         )
         lib.add_custom_template(tpl)
-        fetched = lib.get_by_id('greeting_morning')
+        fetched = lib.get_by_id("greeting_morning")
         assert fetched.category == ResponseCategory.QUESTION
 
     def test_remove_template_exists(self, lib):
         before = lib.get_template_count()
-        result = lib.remove_template('greeting_morning')
+        result = lib.remove_template("greeting_morning")
         assert result is True
         assert lib.get_template_count() == before - 1
-        assert lib.get_by_id('greeting_morning') is None
+        assert lib.get_by_id("greeting_morning") is None
 
     def test_remove_template_missing(self, lib):
-        result = lib.remove_template('nonexistent')
+        result = lib.remove_template("nonexistent")
         assert result is False
+
     async def test_add_custom_template_async(self, lib):
         tpl = MemoryTemplate(
-            id='async_custom',
+            id="async_custom",
             category=ResponseCategory.FAREWELL,
-            content='async test',
+            content="async test",
         )
         before = lib.get_template_count()
         lib.add_custom_template(tpl)
         assert lib.get_template_count() == before + 1
-        assert lib.get_by_id('async_custom') is not None
+        assert lib.get_by_id("async_custom") is not None
 
 
 class TestTemplateLibrarySingleton:

@@ -28,6 +28,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "apps/bac
 # Mock WebSocket helper
 # =============================================================================
 
+
 def _mock_ws():
     """Create a mock WebSocket that behaves like FastAPI's WebSocket."""
     ws = AsyncMock()
@@ -40,12 +41,14 @@ def _mock_ws():
 # SessionState enum tests
 # =============================================================================
 
+
 class TestSessionState:
     """Verify SessionState enum values."""
 
     def test_has_all_states(self):
         """SessionState has all expected lifecycle states."""
         from services.connection_session import SessionState
+
         assert SessionState.CLOSED.value == "closed"
         assert SessionState.CONNECTING.value == "connecting"
         assert SessionState.OPEN.value == "open"
@@ -55,6 +58,7 @@ class TestSessionState:
     def test_state_comparison(self):
         """SessionState values compare correctly."""
         from services.connection_session import SessionState
+
         assert SessionState.OPEN != SessionState.CLOSED
         assert SessionState.OPEN == SessionState.OPEN
 
@@ -63,12 +67,14 @@ class TestSessionState:
 # ConnectionSession dataclass tests
 # =============================================================================
 
+
 class TestConnectionSession:
     """Verify ConnectionSession dataclass."""
 
     def test_create_default_state(self):
         """ConnectionSession defaults to CONNECTING state."""
         from services.connection_session import ConnectionSession, SessionState
+
         ws = _mock_ws()
         session = ConnectionSession(
             client_id="test-client-1",
@@ -87,6 +93,7 @@ class TestConnectionSession:
     def test_create_with_all_fields(self):
         """ConnectionSession accepts all fields."""
         from services.connection_session import ConnectionSession, SessionState
+
         ws = _mock_ws()
         now = datetime.now()
         session = ConnectionSession(
@@ -107,6 +114,7 @@ class TestConnectionSession:
     def test_is_active_open(self):
         """is_active returns True for OPEN state."""
         from services.connection_session import ConnectionSession, SessionState
+
         session = ConnectionSession(client_id="c1", session_id="s1", websocket=_mock_ws())
         session.state = SessionState.OPEN
         assert session.is_active is True
@@ -114,6 +122,7 @@ class TestConnectionSession:
     def test_is_active_connecting(self):
         """is_active returns True for CONNECTING state."""
         from services.connection_session import ConnectionSession, SessionState
+
         session = ConnectionSession(client_id="c1", session_id="s1", websocket=_mock_ws())
         session.state = SessionState.CONNECTING
         assert session.is_active is True
@@ -121,6 +130,7 @@ class TestConnectionSession:
     def test_is_active_closed(self):
         """is_active returns False for CLOSED state."""
         from services.connection_session import ConnectionSession, SessionState
+
         session = ConnectionSession(client_id="c1", session_id="s1", websocket=_mock_ws())
         session.state = SessionState.CLOSED
         assert session.is_active is False
@@ -128,6 +138,7 @@ class TestConnectionSession:
     def test_hashable(self):
         """ConnectionSession is hashable by client_id."""
         from services.connection_session import ConnectionSession
+
         s1 = ConnectionSession(client_id="c1", session_id="s1", websocket=_mock_ws())
         s2 = ConnectionSession(client_id="c1", session_id="s1", websocket=_mock_ws())
         assert hash(s1) == hash(s2)
@@ -137,12 +148,14 @@ class TestConnectionSession:
 # SessionStats dataclass tests
 # =============================================================================
 
+
 class TestSessionStats:
     """Verify SessionStats dataclass."""
 
     def test_default_values(self):
         """SessionStats defaults to zeros."""
         from services.connection_session import SessionStats
+
         stats = SessionStats()
         assert stats.total_sessions == 0
         assert stats.active_sessions == 0
@@ -154,12 +167,14 @@ class TestSessionStats:
 # SessionManager initialization tests
 # =============================================================================
 
+
 class TestSessionManagerInit:
     """Verify SessionManager initialization."""
 
     def test_default_config(self):
         """SessionManager uses sane defaults."""
         from services.connection_session import SessionManager
+
         sm = SessionManager()
         assert sm.heartbeat_interval == 30
         assert sm.heartbeat_timeout == 120
@@ -169,6 +184,7 @@ class TestSessionManagerInit:
     def test_custom_config(self):
         """SessionManager accepts custom configuration."""
         from services.connection_session import SessionManager
+
         sm = SessionManager(heartbeat_interval=10, heartbeat_timeout=60, max_buffer_size=5)
         assert sm.heartbeat_interval == 10
         assert sm.heartbeat_timeout == 60
@@ -177,6 +193,7 @@ class TestSessionManagerInit:
     def test_initial_state_empty(self):
         """SessionManager starts with no sessions."""
         from services.connection_session import SessionManager
+
         sm = SessionManager()
         assert len(sm._sessions) == 0
         assert len(sm._sessions_by_id) == 0
@@ -186,6 +203,7 @@ class TestSessionManagerInit:
     def test_initial_stats_zero(self):
         """SessionManager initial stats are zero."""
         from services.connection_session import SessionManager
+
         sm = SessionManager()
         stats = sm.get_stats()
         assert stats.total_sessions == 0
@@ -196,6 +214,7 @@ class TestSessionManagerInit:
 # SessionManager register tests
 # =============================================================================
 
+
 @pytest.mark.asyncio
 class TestSessionManagerRegister:
     """Verify session registration."""
@@ -203,6 +222,7 @@ class TestSessionManagerRegister:
     async def test_register_generates_client_id(self):
         """register generates a unique client_id and returns session."""
         from services.connection_session import SessionManager
+
         sm = SessionManager()
         ws = _mock_ws()
         session = await sm.register(ws)
@@ -213,6 +233,7 @@ class TestSessionManagerRegister:
     async def test_register_with_session_id(self):
         """register accepts a provided session_id."""
         from services.connection_session import SessionManager
+
         sm = SessionManager()
         ws = _mock_ws()
         session = await sm.register(ws, session_id="my-session")
@@ -221,6 +242,7 @@ class TestSessionManagerRegister:
     async def test_register_with_metadata(self):
         """register stores metadata on the session."""
         from services.connection_session import SessionManager
+
         sm = SessionManager()
         ws = _mock_ws()
         meta = {"client_type": "mobile", "version": "2.0"}
@@ -230,6 +252,7 @@ class TestSessionManagerRegister:
     async def test_register_updates_stats(self):
         """register increments total_sessions and active_sessions."""
         from services.connection_session import SessionManager
+
         sm = SessionManager()
         ws = _mock_ws()
         await sm.register(ws)
@@ -240,6 +263,7 @@ class TestSessionManagerRegister:
     async def test_register_multiple_sessions_same_id(self):
         """Multiple connections can share the same session_id (multi-device)."""
         from services.connection_session import SessionManager
+
         sm = SessionManager()
         ws1 = _mock_ws()
         ws2 = _mock_ws()
@@ -252,6 +276,7 @@ class TestSessionManagerRegister:
     async def test_register_single_device_replaces(self):
         """single_device_mode replaces old connections with same session_id."""
         from services.connection_session import SessionManager
+
         sm = SessionManager()
         ws_old = _mock_ws()
         ws_new = _mock_ws()
@@ -269,6 +294,7 @@ class TestSessionManagerRegister:
     async def test_register_starts_heartbeat_task(self):
         """register starts a heartbeat monitor task."""
         from services.connection_session import SessionManager
+
         sm = SessionManager()
         ws = _mock_ws()
         session = await sm.register(ws)
@@ -278,6 +304,7 @@ class TestSessionManagerRegister:
     async def test_register_in_message_buffers(self):
         """register initializes message buffer for client."""
         from services.connection_session import SessionManager
+
         sm = SessionManager()
         ws = _mock_ws()
         session = await sm.register(ws)
@@ -289,6 +316,7 @@ class TestSessionManagerRegister:
 # SessionManager unregister tests
 # =============================================================================
 
+
 @pytest.mark.asyncio
 class TestSessionManagerUnregister:
     """Verify session unregistration."""
@@ -296,6 +324,7 @@ class TestSessionManagerUnregister:
     async def test_unregister_removes_session(self):
         """unregister removes session from storage."""
         from services.connection_session import SessionManager
+
         sm = SessionManager()
         ws = _mock_ws()
         session = await sm.register(ws)
@@ -305,6 +334,7 @@ class TestSessionManagerUnregister:
     async def test_unregister_cancels_heartbeat(self):
         """unregister cancels heartbeat task."""
         from services.connection_session import SessionManager
+
         sm = SessionManager()
         ws = _mock_ws()
         session = await sm.register(ws)
@@ -317,6 +347,7 @@ class TestSessionManagerUnregister:
     async def test_unregister_clears_buffer(self):
         """unregister clears the message buffer."""
         from services.connection_session import SessionManager
+
         sm = SessionManager()
         ws = _mock_ws()
         session = await sm.register(ws)
@@ -328,6 +359,7 @@ class TestSessionManagerUnregister:
     async def test_unregister_unknown_client(self):
         """unregister with unknown client_id does not raise and state is unchanged."""
         from services.connection_session import SessionManager
+
         sm = SessionManager()
         stats_before = sm.get_stats()
         await sm.unregister("nonexistent-client")
@@ -338,6 +370,7 @@ class TestSessionManagerUnregister:
     async def test_unregister_updates_stats(self):
         """unregister decrements active_sessions."""
         from services.connection_session import SessionManager
+
         sm = SessionManager()
         ws = _mock_ws()
         session = await sm.register(ws)
@@ -350,6 +383,7 @@ class TestSessionManagerUnregister:
 # SessionManager send tests
 # =============================================================================
 
+
 @pytest.mark.asyncio
 class TestSessionManagerSend:
     """Verify message sending methods."""
@@ -357,6 +391,7 @@ class TestSessionManagerSend:
     async def test_send_to_session_success(self):
         """send_to_session sends to all connections with session_id."""
         from services.connection_session import SessionManager
+
         sm = SessionManager()
         ws = _mock_ws()
         session = await sm.register(ws, session_id="sid")
@@ -368,6 +403,7 @@ class TestSessionManagerSend:
     async def test_send_to_session_multiple_clients(self):
         """send_to_session sends to all connections sharing session_id."""
         from services.connection_session import SessionManager
+
         sm = SessionManager()
         ws1 = _mock_ws()
         ws2 = _mock_ws()
@@ -379,6 +415,7 @@ class TestSessionManagerSend:
     async def test_send_to_session_unknown_id(self):
         """send_to_session with unknown session_id returns 0."""
         from services.connection_session import SessionManager
+
         sm = SessionManager()
         sent = await sm.send_to_session("nonexistent", {"msg": "test"})
         assert sent == 0
@@ -386,6 +423,7 @@ class TestSessionManagerSend:
     async def test_send_to_session_failure_buffers(self):
         """send_to_session buffers message on send failure."""
         from services.connection_session import SessionManager, SessionState
+
         sm = SessionManager()
         ws = _mock_ws()
         ws.send_json.side_effect = Exception("Connection lost")
@@ -400,6 +438,7 @@ class TestSessionManagerSend:
     async def test_send_to_client_success(self):
         """send_to_client sends to a specific client."""
         from services.connection_session import SessionManager
+
         sm = SessionManager()
         ws = _mock_ws()
         session = await sm.register(ws)
@@ -410,6 +449,7 @@ class TestSessionManagerSend:
     async def test_send_to_client_unknown(self):
         """send_to_client with unknown client returns False."""
         from services.connection_session import SessionManager
+
         sm = SessionManager()
         result = await sm.send_to_client("nonexistent", {"msg": "fail"})
         assert result is False
@@ -417,6 +457,7 @@ class TestSessionManagerSend:
     async def test_send_to_client_failure(self):
         """send_to_client returns False on send failure."""
         from services.connection_session import SessionManager
+
         sm = SessionManager()
         ws = _mock_ws()
         ws.send_json.side_effect = Exception("Failed")
@@ -427,6 +468,7 @@ class TestSessionManagerSend:
     async def test_broadcast_to_all(self):
         """broadcast sends to all registered sessions."""
         from services.connection_session import SessionManager
+
         sm = SessionManager()
         ws1 = _mock_ws()
         ws2 = _mock_ws()
@@ -438,6 +480,7 @@ class TestSessionManagerSend:
     async def test_broadcast_exclude_session(self):
         """broadcast excludes specified session_ids."""
         from services.connection_session import SessionManager
+
         sm = SessionManager()
         ws1 = _mock_ws()
         ws2 = _mock_ws()
@@ -449,6 +492,7 @@ class TestSessionManagerSend:
     async def test_stats_tracking(self):
         """send operations update stats correctly."""
         from services.connection_session import SessionManager
+
         sm = SessionManager()
         ws = _mock_ws()
         session = await sm.register(ws)
@@ -461,12 +505,14 @@ class TestSessionManagerSend:
 # SessionManager message buffering tests
 # =============================================================================
 
+
 class TestSessionManagerBuffering:
     """Verify message buffering."""
 
     def test_buffer_message(self):
         """_buffer_message stores a message in the buffer."""
         from services.connection_session import SessionManager
+
         sm = SessionManager()
         sm._buffer_message("client-1", {"msg": "hello"})
         buffered = sm.get_buffered_messages("client-1")
@@ -476,6 +522,7 @@ class TestSessionManagerBuffering:
     def test_buffer_limit(self):
         """Buffer is limited to max_buffer_size."""
         from services.connection_session import SessionManager
+
         sm = SessionManager(max_buffer_size=3)
         for i in range(5):
             sm._buffer_message("client-1", {"seq": i})
@@ -486,6 +533,7 @@ class TestSessionManagerBuffering:
     def test_clear_buffer(self):
         """clear_buffer empties the buffer."""
         from services.connection_session import SessionManager
+
         sm = SessionManager()
         sm._buffer_message("client-1", {"msg": "test"})
         sm.clear_buffer("client-1")
@@ -494,6 +542,7 @@ class TestSessionManagerBuffering:
     def test_get_buffered_returns_copy(self):
         """get_buffered_messages returns a copy, not a reference."""
         from services.connection_session import SessionManager
+
         sm = SessionManager()
         sm._buffer_message("client-1", {"msg": "test"})
         buffered = sm.get_buffered_messages("client-1")
@@ -506,6 +555,7 @@ class TestSessionManagerBuffering:
 # SessionManager query methods tests
 # =============================================================================
 
+
 class TestSessionManagerQueries:
     """Verify query and accessor methods."""
 
@@ -514,6 +564,7 @@ class TestSessionManagerQueries:
         import asyncio
 
         from services.connection_session import SessionManager
+
         sm = SessionManager()
         ws = _mock_ws()
         session = asyncio.run(sm.register(ws))
@@ -524,6 +575,7 @@ class TestSessionManagerQueries:
     def test_get_nonexistent(self):
         """get returns None for unknown client_id."""
         from services.connection_session import SessionManager
+
         sm = SessionManager()
         assert sm.get("nonexistent") is None
 
@@ -532,6 +584,7 @@ class TestSessionManagerQueries:
         import asyncio
 
         from services.connection_session import SessionManager
+
         sm = SessionManager()
         ws1 = _mock_ws()
         ws2 = _mock_ws()
@@ -543,6 +596,7 @@ class TestSessionManagerQueries:
     def test_get_by_session_id_unknown(self):
         """get_by_session_id returns empty list for unknown session_id."""
         from services.connection_session import SessionManager
+
         sm = SessionManager()
         assert sm.get_by_session_id("unknown") == []
 
@@ -551,6 +605,7 @@ class TestSessionManagerQueries:
         import asyncio
 
         from services.connection_session import SessionManager
+
         sm = SessionManager()
         ws1 = _mock_ws()
         ws2 = _mock_ws()
@@ -565,10 +620,12 @@ class TestSessionManagerQueries:
         import asyncio
 
         from services.connection_session import SessionManager
+
         sm = SessionManager()
         ws = _mock_ws()
-        session = asyncio.run(sm.register(ws, session_id="info-test",
-                                          metadata={"client_type": "test"}))
+        session = asyncio.run(
+            sm.register(ws, session_id="info-test", metadata={"client_type": "test"})
+        )
         info_list = sm.get_all_connections_info()
         assert len(info_list) == 1
         entry = info_list[0]
@@ -582,6 +639,7 @@ class TestSessionManagerQueries:
 # SessionManager heartbeat tests
 # =============================================================================
 
+
 @pytest.mark.asyncio
 class TestSessionManagerHeartbeat:
     """Verify heartbeat operations."""
@@ -589,11 +647,13 @@ class TestSessionManagerHeartbeat:
     async def test_update_heartbeat_updates_timestamp(self):
         """update_heartbeat refreshes last_heartbeat on the session."""
         from services.connection_session import SessionManager
+
         sm = SessionManager()
         ws = _mock_ws()
         session = await sm.register(ws)
         # Set a past timestamp so the update is unambiguous
         import datetime
+
         session.last_heartbeat = datetime.datetime.now() - datetime.timedelta(seconds=10)
         old_ts = session.last_heartbeat
 
@@ -604,6 +664,7 @@ class TestSessionManagerHeartbeat:
     async def test_update_heartbeat_unknown(self):
         """update_heartbeat for unknown client does not raise and manager is unchanged."""
         from services.connection_session import SessionManager
+
         sm = SessionManager()
         sessions_before = len(sm._sessions)
         await sm.update_heartbeat("nonexistent")
@@ -612,6 +673,7 @@ class TestSessionManagerHeartbeat:
     async def test_heartbeat_timeout_closes_session(self):
         """heartbeat monitor closes session on timeout."""
         from services.connection_session import SessionManager
+
         sm = SessionManager(heartbeat_interval=0.05, heartbeat_timeout=0.3)
         ws = _mock_ws()
         session = await sm.register(ws)
@@ -629,6 +691,7 @@ class TestSessionManagerHeartbeat:
     async def test_increment_sequence(self):
         """increment_sequence increases sequence number."""
         from services.connection_session import SessionManager
+
         sm = SessionManager()
         ws = _mock_ws()
         session = await sm.register(ws)
@@ -640,6 +703,7 @@ class TestSessionManagerHeartbeat:
     async def test_increment_sequence_unknown(self):
         """increment_sequence for unknown client returns 0."""
         from services.connection_session import SessionManager
+
         sm = SessionManager()
         seq = sm.increment_sequence("nonexistent")
         assert seq == 0
@@ -649,6 +713,7 @@ class TestSessionManagerHeartbeat:
 # Singleton pattern tests
 # =============================================================================
 
+
 class TestSessionManagerSingleton:
     """Verify get_session_manager and shutdown_session_manager."""
 
@@ -657,6 +722,7 @@ class TestSessionManagerSingleton:
         # Reset first
         import services.connection_session as cs
         from services.connection_session import _session_manager, get_session_manager
+
         cs._session_manager = None
         sm1 = get_session_manager()
         sm2 = get_session_manager()
@@ -666,9 +732,11 @@ class TestSessionManagerSingleton:
         """get_session_manager creates a new SessionManager if none exists."""
         import services.connection_session as cs
         from services.connection_session import get_session_manager
+
         cs._session_manager = None
         sm = get_session_manager()
         from services.connection_session import SessionManager
+
         assert isinstance(sm, SessionManager)
 
     @pytest.mark.asyncio
@@ -676,6 +744,7 @@ class TestSessionManagerSingleton:
         """shutdown_session_manager sets global to None."""
         import services.connection_session as cs
         from services.connection_session import get_session_manager, shutdown_session_manager
+
         cs._session_manager = None
         sm = get_session_manager()
         assert cs._session_manager is sm
@@ -692,6 +761,7 @@ class TestSessionManagerSingleton:
         """shutdown_session_manager cancels all heartbeat tasks."""
         import services.connection_session as cs
         from services.connection_session import get_session_manager, shutdown_session_manager
+
         cs._session_manager = None
         sm = get_session_manager()
 
@@ -703,15 +773,14 @@ class TestSessionManagerSingleton:
 
         await shutdown_session_manager()
         # All tasks should be done (cancelled)
-        assert len(sm._heartbeat_tasks) == 0 or all(
-            t.done() for t in sm._heartbeat_tasks.values()
-        )
+        assert len(sm._heartbeat_tasks) == 0 or all(t.done() for t in sm._heartbeat_tasks.values())
 
     @pytest.mark.asyncio
     async def test_shutdown_idempotent(self):
         """shutdown_session_manager can be called multiple times safely."""
         import services.connection_session as cs
         from services.connection_session import shutdown_session_manager
+
         cs._session_manager = None
         await shutdown_session_manager()
         assert cs._session_manager is None

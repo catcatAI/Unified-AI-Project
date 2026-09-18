@@ -351,9 +351,9 @@ class ContinuousLearningPipeline:
                 state = json.load(f)
         except (FileNotFoundError, json.JSONDecodeError, OSError) as e:
             logger.warning(
-                "ContinuousLearningPipeline: failed to load checkpoint %s: %s; "
-                "starting fresh",
-                path, e,
+                "ContinuousLearningPipeline: failed to load checkpoint %s: %s; " "starting fresh",
+                path,
+                e,
             )
             return cls(engine=engine, trainer=trainer)
         if not isinstance(state, dict):

@@ -6,9 +6,9 @@ Verifies the multi-turn memory chain:
   3. The session's "messages" list is the source for /session/{id}/send history.
   4. History passed into the pipeline falls back to persisted session messages.
 """
-import pytest
 
 import api.routes.chat_routes as cr
+import pytest
 from api.routes.chat_routes import (
     _handle_chat_request,
     _run_chat_pipeline,
@@ -208,8 +208,7 @@ async def test_history_bounded_to_80_messages(monkeypatch):
             "origin": "Human",
             "user_name": "Tester",
             "messages": [
-                {"role": "user", "content": f"old-{i}", "timestamp": "t"}
-                for i in range(100)
+                {"role": "user", "content": f"old-{i}", "timestamp": "t"} for i in range(100)
             ],
         },
     )
@@ -242,6 +241,7 @@ async def test_history_bounded_to_80_messages(monkeypatch):
 # =============================================================================
 # Truncation marker tests
 # =============================================================================
+
 
 class TestTruncationMarker:
     def test_format_chat_response_shows_marker_when_truncated(self):
@@ -326,7 +326,6 @@ class TestTruncationMarker:
 
         msg = _validate_and_truncate_input("fine", cfg)
         assert msg == "fine"
-
 
 
 @pytest.mark.asyncio

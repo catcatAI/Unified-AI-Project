@@ -600,9 +600,7 @@ class AgentManager:
                     agents_dir = os.path.join(os.path.dirname(__file__), "..", "agents")
 
             if not os.path.isdir(agents_dir):
-                logger.warning(
-                    f"[AgentManager] Agents directory not found: {agents_dir}"
-                )
+                logger.warning(f"[AgentManager] Agents directory not found: {agents_dir}")
                 return agent_map
 
             for filename in os.listdir(agents_dir):
@@ -637,9 +635,7 @@ class AgentManager:
         """
         with self.launch_lock:
             if agent_name not in self.agent_script_map:
-                logger.error(
-                    f"[AgentManager] Error: Agent '{agent_name}' not found."
-                )
+                logger.error(f"[AgentManager] Error: Agent '{agent_name}' not found.")
                 return None
 
             if agent_name in self.active_agents and self.active_agents[agent_name].poll() is None:
@@ -739,9 +735,7 @@ class AgentManager:
             del self.active_agents[agent_name]
             return True
         else:
-            logger.warning(
-                f"[AgentManager] Agent '{agent_name}' not found or not running."
-            )
+            logger.warning(f"[AgentManager] Agent '{agent_name}' not found or not running.")
             return False
 
     def shutdown_all_agents(self) -> None:
@@ -814,7 +808,6 @@ class AgentManager:
 
         logger.warning(
             f"[AgentManager] Agent '{agent_name}' not ready within {timeout} seconds.",
-
         )
 
     def get_available_agents(self) -> List[str]:
@@ -853,7 +846,6 @@ class AgentManager:
                     else:
                         logger.warning(
                             f"[AgentManager] No {agent_class_name} class in {agent_name}",
-
                         )
             except (
                 Exception

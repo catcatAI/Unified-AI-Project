@@ -25,7 +25,9 @@ class TestVectorDictionaryInit:
         assert d._matrix is None
 
     def test_init_custom(self):
-        d = VectorDictionary(top_k=5, similarity_threshold=0.5, device="cpu", compatibility_mode=True)
+        d = VectorDictionary(
+            top_k=5, similarity_threshold=0.5, device="cpu", compatibility_mode=True
+        )
         assert d.top_k == 5
         assert d.similarity_threshold == 0.5
 
@@ -352,11 +354,20 @@ class TestVectorDictionaryPruneForGrowth:
 
 class TestVectorDictionaryConfigLoading:
     """Tests for loading config from directory."""
+
     def test_config_files_exist(self):
         """Verify that config JSON files exist."""
         config_dir = os.path.join(
-            os.path.dirname(__file__), "..", "..", "..",
-            "apps", "backend", "src", "ai", "garden", "config"
+            os.path.dirname(__file__),
+            "..",
+            "..",
+            "..",
+            "apps",
+            "backend",
+            "src",
+            "ai",
+            "garden",
+            "config",
         )
         assert os.path.isdir(config_dir)
         files = [f for f in os.listdir(config_dir) if f.endswith(".json")]

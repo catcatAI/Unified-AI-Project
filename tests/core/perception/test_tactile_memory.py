@@ -1,4 +1,5 @@
 """Tests for TactileMemory."""
+
 import pytest
 from core.perception.tactile_memory import TactileMemory
 

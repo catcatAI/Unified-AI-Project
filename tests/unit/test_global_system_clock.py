@@ -1,7 +1,8 @@
 """Tests for GlobalSystemClock — unified time base."""
-import asyncio
-import pytest
 
+import asyncio
+
+import pytest
 from core.clock.global_system_clock import GlobalSystemClock
 
 
@@ -48,8 +49,10 @@ async def test_clock_now(clock):
 async def test_clock_subscribe_multi_interval(clock):
     """Use force_tick to test subscription interval logic deterministically."""
     results = []
+
     async def cb(tick):
         results.append(tick)
+
     clock.subscribe(3, cb)
     for _ in range(10):
         await clock.force_tick()
@@ -59,8 +62,10 @@ async def test_clock_subscribe_multi_interval(clock):
 @pytest.mark.asyncio
 async def test_clock_subscribe_unsubscribe(clock):
     results = []
+
     async def cb(tick):
         results.append(tick)
+
     sub = clock.subscribe(2, cb)
     for _ in range(4):
         await clock.force_tick()
@@ -74,8 +79,10 @@ async def test_clock_subscribe_unsubscribe(clock):
 @pytest.mark.asyncio
 async def test_clock_disable_enable(clock):
     results = []
+
     async def cb(tick):
         results.append(tick)
+
     sub = clock.subscribe(2, cb)
     clock.disable_subscription(sub)
     for _ in range(6):
@@ -91,10 +98,13 @@ async def test_clock_disable_enable(clock):
 async def test_clock_multiple_subscriptions(clock):
     results1 = []
     results2 = []
+
     async def cb1(tick):
         results1.append(tick)
+
     async def cb2(tick):
         results2.append(tick)
+
     clock.subscribe(3, cb1)
     clock.subscribe(5, cb2)
     for _ in range(15):
@@ -107,9 +117,12 @@ async def test_clock_multiple_subscriptions(clock):
 async def test_clock_callback_exception_does_not_crash(clock):
     async def bad_cb(tick):
         raise ValueError("test error")
+
     good_results = []
+
     async def good_cb(tick):
         good_results.append(tick)
+
     clock.subscribe(1, bad_cb)
     clock.subscribe(1, good_cb)
     for _ in range(5):
@@ -144,8 +157,10 @@ async def test_clock_elapsed_seconds(clock):
 @pytest.mark.asyncio
 async def test_clock_subscribe_interval_one(clock):
     results = []
+
     async def cb(tick):
         results.append(tick)
+
     clock.subscribe(0, cb)
     for _ in range(5):
         await clock.force_tick()
@@ -155,6 +170,7 @@ async def test_clock_subscribe_interval_one(clock):
 @pytest.mark.asyncio
 async def test_wait_for_ticks_deterministic(clock):
     """wait_for_ticks advances correctly with force_tick."""
+
     async def ticker():
         for _ in range(10):
             await asyncio.sleep(0.01)
@@ -182,6 +198,7 @@ async def test_wait_for_ticks_real_time(clock):
 @pytest.mark.asyncio
 async def test_wait_for_ticks_clamped_to_one(clock):
     """wait_for_ticks(0) should wait at least 1 tick."""
+
     async def ticker():
         for _ in range(5):
             await asyncio.sleep(0.01)
@@ -200,6 +217,7 @@ async def test_wait_for_ticks_clamped_to_one(clock):
 @pytest.mark.asyncio
 async def test_wait_for_ticks_multi_waiter(clock):
     """Multiple waiters all receive correct tick count."""
+
     async def ticker():
         for _ in range(15):
             await asyncio.sleep(0.01)

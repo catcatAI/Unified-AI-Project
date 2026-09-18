@@ -1,4 +1,5 @@
 """Smoke tests for SelfIntrospector"""
+
 from core.life.self_introspector import SelfIntrospector
 
 
@@ -23,6 +24,7 @@ class TestSelfIntrospector:
         instance = SelfIntrospector()
         result = instance.perform_mental_health_check(combined_state={})
         import asyncio
+
         assert asyncio.iscoroutine(result)
 
     def test_get_introspection_prompt_injection_returns_string(self):

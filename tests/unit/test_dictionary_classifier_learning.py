@@ -7,7 +7,6 @@
 from typing import Generator, List
 
 import pytest
-
 from ai.core.dictionary_classifier import DictionaryClassifier
 
 
@@ -24,8 +23,9 @@ def dc() -> Generator[DictionaryClassifier, None, None]:
                 del classifier._dictionary.entries[key]
 
 
-def _learn_no_persist(dc: DictionaryClassifier, text: str, qtype: str,
-                       action: str = "none", conf: float = 0.5) -> str:
+def _learn_no_persist(
+    dc: DictionaryClassifier, text: str, qtype: str, action: str = "none", conf: float = 0.5
+) -> str:
     """Learn without persisting to JSON (for test isolation)."""
     return dc.learn(text, qtype, action, confidence=conf, persist=False)
 

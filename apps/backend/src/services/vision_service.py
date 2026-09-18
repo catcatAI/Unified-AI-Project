@@ -8,7 +8,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple, cast
 
 from core.perception.attention_controller import AttentionController
-from core.perception.perceptual_memory import PerceptualMemory, PerceivedObject
+from core.perception.perceptual_memory import PerceivedObject, PerceptualMemory
 from core.perception.visual_sampler import SamplingDistribution, VisualSampler
 from core.sync.realtime_sync import SyncEvent, SyncEventType, sync_manager
 from core.system.cluster_manager import cluster_manager
@@ -273,7 +273,9 @@ class VisionService:
                     max_diff = len(p1) * 3 * 255
                     similarity_score = 1.0 - (diffs / max_diff)
                 except Exception as err:
-                    logger.warning("Image similarity comparison fallback (PIL failed): %s", err, exc_info=True)
+                    logger.warning(
+                        "Image similarity comparison fallback (PIL failed): %s", err, exc_info=True
+                    )
                     size_factor = 1 - abs(len(image_data1) - len(image_data2)) / max(
                         len(image_data1), len(image_data2), 1
                     )
@@ -299,7 +301,9 @@ class VisionService:
                     diff_score = float(np.mean(diff) / 255.0)
                     comparison_result["difference_score"] = round(diff_score, 3)
                 except Exception as err:
-                    logger.warning("Image difference fallback (numpy failed): %s", err, exc_info=True)
+                    logger.warning(
+                        "Image difference fallback (numpy failed): %s", err, exc_info=True
+                    )
                     comparison_result["difference_score"] = round(
                         1 - len(image_data1) / max(len(image_data2), 1), 3
                     )

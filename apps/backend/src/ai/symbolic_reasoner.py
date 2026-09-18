@@ -129,10 +129,21 @@ def _extract_entities(text: str) -> List[str]:
 
 # Base-form adjectives for "not as <adj> as" (normalized before _LESSER/_GREATER check)
 _BASE_TO_COMP = {
-    "short": "shorter", "tall": "taller", "big": "bigger", "small": "smaller",
-    "long": "longer", "old": "older", "young": "younger", "fast": "faster",
-    "slow": "slower", "high": "higher", "low": "lower", "strong": "stronger",
-    "weak": "weaker", "heavy": "heavier", "light": "lighter",
+    "short": "shorter",
+    "tall": "taller",
+    "big": "bigger",
+    "small": "smaller",
+    "long": "longer",
+    "old": "older",
+    "young": "younger",
+    "fast": "faster",
+    "slow": "slower",
+    "high": "higher",
+    "low": "lower",
+    "strong": "stronger",
+    "weak": "weaker",
+    "heavy": "heavier",
+    "light": "lighter",
 }
 
 
@@ -163,7 +174,9 @@ def _solve_transitive(text: str) -> Optional[str]:
         facts_text = text[: q_cn_match.start()]
     # English "X is taller than Y" / "X taller than Y" (multi-letter entities:
     # "Tom is older than Jerry", "first is higher than second")
-    for m in re.finditer(r"\b([A-Za-z]+)\b\s+(?:is\s+)?(\w+?)\s+than\s+\b([A-Za-z]+)\b", facts_text):
+    for m in re.finditer(
+        r"\b([A-Za-z]+)\b\s+(?:is\s+)?(\w+?)\s+than\s+\b([A-Za-z]+)\b", facts_text
+    ):
         subj, comp, obj = m.group(1).upper(), m.group(2).lower(), m.group(3).upper()
         pairs.append((subj, obj, comp))
     # Symbol chains "X > Y > Z" (consecutive pairs; finditer would skip overlaps)
@@ -386,8 +399,20 @@ def _superlative(comp: str, least: bool = False) -> str:
 
 
 _INFERIOR_ASK = (
-    "最笨", "最差", "最末", "最弱", "最慢", "最矮", "最小",
-    "dumbest", "stupidest", "worst", "weakest", "slowest", "shortest", "smallest",
+    "最笨",
+    "最差",
+    "最末",
+    "最弱",
+    "最慢",
+    "最矮",
+    "最小",
+    "dumbest",
+    "stupidest",
+    "worst",
+    "weakest",
+    "slowest",
+    "shortest",
+    "smallest",
 )
 
 
@@ -580,7 +605,18 @@ _ENTITY_ALIASES: Dict[str, List[str]] = {
     "duck": ["duck", "ducks", "鴨", "鸭"],
     "cow": ["cow", "cows", "cattle", "牛"],
     "octopus": ["octopus", "octopuses", "章魚", "章鱼"],
-    "bicycle": ["bicycle", "bicycles", "bike", "bikes", "自行車", "自行车", "腳踏車", "脚踏车", "單車", "单车"],
+    "bicycle": [
+        "bicycle",
+        "bicycles",
+        "bike",
+        "bikes",
+        "自行車",
+        "自行车",
+        "腳踏車",
+        "脚踏车",
+        "單車",
+        "单车",
+    ],
     "tricycle": ["tricycle", "tricycles", "三輪車", "三轮车"],
     "car": ["car", "cars", "小汽車", "小汽车", "汽車", "汽车"],
     "motorcycle": ["motorcycle", "motorcycles", "機車", "机车", "摩托車", "摩托车"],
@@ -589,6 +625,7 @@ _ENTITY_ALIASES: Dict[str, List[str]] = {
     "dime": ["dime", "dimes", "一角硬幣", "一角硬币", "一毛"],
     "quarter": ["quarter", "quarters", "兩角五分", "兩毛五", "二十五分", "25分硬幣"],
 }
+
 
 # Attribute kinds the two-object linear-pair solver understands. Each maps the
 # natural-language word (plain, for detection), the knowledge-base attribute
@@ -654,7 +691,9 @@ def _solve_word_problem(text: str) -> Optional[str]:
     integer solution, so the caller falls through to its normal pipeline.
     """
     low = text.lower()
-    present = [key for key, al in _ENTITY_ALIASES.items() if any(_alias_present(a, low) for a in al)]
+    present = [
+        key for key, al in _ENTITY_ALIASES.items() if any(_alias_present(a, low) for a in al)
+    ]
     if len(present) != 2:
         # Fewer than two objects cannot be a pair; more than two is not a
         # 2-variable linear system -> fall through rather than risk a wrong
@@ -732,8 +771,12 @@ def _solve_word_problem(text: str) -> Optional[str]:
     cjk = any("\u4e00" <= ch <= "\u9fff" for ch in low)
     aliases = _ENTITY_ALIASES
     if cjk:
-        label_a = next((x for x in aliases[a] if any("\u4e00" <= ch <= "\u9fff" for ch in x)), aliases[a][0])
-        label_b = next((x for x in aliases[b] if any("\u4e00" <= ch <= "\u9fff" for ch in x)), aliases[b][0])
+        label_a = next(
+            (x for x in aliases[a] if any("\u4e00" <= ch <= "\u9fff" for ch in x)), aliases[a][0]
+        )
+        label_b = next(
+            (x for x in aliases[b] if any("\u4e00" <= ch <= "\u9fff" for ch in x)), aliases[b][0]
+        )
     else:
         label_a, label_b = aliases[a][0], aliases[b][0]
     return f"{count_a} {label_a}, {count_b} {label_b}"

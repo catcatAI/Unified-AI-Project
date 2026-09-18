@@ -15,7 +15,6 @@
 """
 
 import pytest
-
 from ai.ed3n.dictionary_layer import DictionaryLayer
 from core.backbone import get_backbone, reset_backbone
 from core.backbone.contracts import MultimodalDictionary
@@ -158,6 +157,7 @@ class TestBackboneDictionaryQuery:
 
     def test_dictionary_without_query_degrades(self):
         bb = get_backbone()
+
         # 沒有 query 方法的字典：query_dictionary 應跳過不炸
         class NoQuery:
             def encode(self, input_data, **kwargs):

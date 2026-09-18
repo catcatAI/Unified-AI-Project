@@ -24,9 +24,9 @@ def test_pilot_learns_and_exits_zero():
 
 
 def test_pilot_deterministic_history():
-    import numpy as np
-
     import sys
+
+    import numpy as np
 
     sys.path.insert(
         0,

@@ -1,4 +1,5 @@
 """Unit tests for CausalReasoningEngine — core causal inference methods."""
+
 import pytest
 
 from apps.backend.src.ai.reasoning.causal_reasoning_engine import (
@@ -98,8 +99,7 @@ class TestCausalReasoningEngine:
             "data": {"x": x, "y": y},
         }
         engine.learn(obs)
-        x_to_y = [r for r in engine.get_relationships()
-                  if r["cause"] == "x" and r["effect"] == "y"]
+        x_to_y = [r for r in engine.get_relationships() if r["cause"] == "x" and r["effect"] == "y"]
         assert len(x_to_y) >= 1
         assert x_to_y[0]["strength"] > 0.3
 
@@ -123,9 +123,7 @@ class TestCausalReasoningEngine:
             "ice_cream": [10, 15, 20, 25],
             "crime": [5, 6, 7, 8],
         }
-        conf = engine._find_confounders(
-            "temp", "crime", data, ["temp", "ice_cream", "crime"]
-        )
+        conf = engine._find_confounders("temp", "crime", data, ["temp", "ice_cream", "crime"])
         assert isinstance(conf, list)
 
     def test_pearson_edge_cases(self):
@@ -174,6 +172,7 @@ class TestIngestTemporalState:
     def test_ingest_empty_temporal_returns_zero(self):
         engine = CausalReasoningEngine()
         from core.state.temporal import TemporalState
+
         ts = TemporalState()
         count = engine.ingest_temporal_state(ts)
         assert count == 0
@@ -181,6 +180,7 @@ class TestIngestTemporalState:
     def test_ingest_with_snapshots_learns_observations(self):
         engine = CausalReasoningEngine()
         from core.state.temporal import TemporalState
+
         ts = TemporalState()
         ts.record({"axis_a": {"field_x": 1.0, "field_y": 2.0}})
         ts.record({"axis_a": {"field_x": 3.0, "field_y": 4.0}})
@@ -191,6 +191,7 @@ class TestIngestTemporalState:
     def test_ingest_window_limits_observations(self):
         engine = CausalReasoningEngine()
         from core.state.temporal import TemporalState
+
         ts = TemporalState()
         for i in range(20):
             ts.record({"axis_b": {"val": float(i)}})
@@ -238,11 +239,13 @@ class TestRetrospectiveWarmStart:
     def test_warm_start_does_not_overwrite_existing_relationships(self):
         """If the engine already has relationships, warm-start skips."""
         engine = CausalReasoningEngine({"causality_threshold": 0.1})
-        engine.learn({
-            "id": "pre_existing",
-            "variables": ["custom_a", "custom_b"],
-            "data": {"custom_a": [1], "custom_b": [2]},
-        })
+        engine.learn(
+            {
+                "id": "pre_existing",
+                "variables": ["custom_a", "custom_b"],
+                "data": {"custom_a": [1], "custom_b": [2]},
+            }
+        )
         before = len(engine.get_relationships())
         count = engine.retrospective_warm_start()
         assert count == 0  # Skips because relationships exist

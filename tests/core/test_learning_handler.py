@@ -5,6 +5,7 @@ class TestLearningHandler:
 
     def setup_method(self):
         from services.handlers.learning_handler import LearningHandler
+
         self.handler = LearningHandler()
 
     def test_handler_instantiated(self):
@@ -41,11 +42,13 @@ class TestLearningHandler:
 
     def test_handle_empty_text(self):
         import asyncio
+
         result = asyncio.run(self.handler.handle("記住", "learning"))
         assert "想讓我記住什麼" in result
 
     def test_handle_valid_text(self):
         import asyncio
+
         result = asyncio.run(self.handler.handle("學習 AsyncIO 的基本用法", "learning"))
         assert "我記住了" in result
         assert "AsyncIO 的基本用法" in result

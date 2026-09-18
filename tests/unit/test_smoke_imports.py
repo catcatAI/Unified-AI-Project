@@ -2,7 +2,9 @@
 Replaces 40+ individual boilerplate test files (test_*.py with just
 test_import + test_instantiation).
 """
+
 import importlib
+
 import pytest
 
 # (module_path, class_name, init_kwargs)
@@ -11,7 +13,11 @@ _SMOKE_MODULES = [
     ("core.engine.angela_model_core", "AngelaModelCore", {}),
     ("core.art.real_playwright_browser", "AngelaRealBrowser", {}),
     ("core.art.real_edge_tts", "AngelaRealVoice", {}),
-    ("services.llm.providers.anthropic", "AnthropicAPIBackend", {"api_key": "test-key-placeholder"}),
+    (
+        "services.llm.providers.anthropic",
+        "AnthropicAPIBackend",
+        {"api_key": "test-key-placeholder"},
+    ),
     ("ai.audio.audio_processing", "AudioProcessing", {}),
     ("core.engine.audio_system", "AudioSystem", {}),
     ("core.life.bio_reflex_manager", "BiogenicReflexManager", {"bio_integrator": None}),
@@ -39,9 +45,18 @@ _SMOKE_MODULES = [
     ("ai.level5_asi_system", "Level5ASISystem", {}),
     ("services.llm.providers.llamacpp", "LlamaCppBackend", {}),
     ("ai.context.memory_context", "Memory", {"content": "test"}),
-    ("ai.context.model_context", "ModelCallRecord",
-     {"caller_model_id": "a", "callee_model_id": "b", "parameters": {},
-      "result": None, "duration": 0.5, "success": True}),
+    (
+        "ai.context.model_context",
+        "ModelCallRecord",
+        {
+            "caller_model_id": "a",
+            "callee_model_id": "b",
+            "parameters": {},
+            "result": None,
+            "duration": 0.5,
+            "success": True,
+        },
+    ),
     ("ai.multimodal.multimodal_processor", "MultimodalProcessor", {}),
     ("services.llm.providers.ollama", "OllamaBackend", {}),
     ("ai.alignment.ontology_system", "OntologySystem", {}),
@@ -69,7 +84,6 @@ _SMOKE_MODULES = [
     ("core.state.precision_projection_matrix", "PrecisionProjectionMatrix", {}),
     # Merged from tests/unit/test_card_types.py (§X #134)
     ("core.card.card_types", "Card", {}),
-
     # Merged from tests/unit/test_event_loop_system.py (§X #134)
     ("core.event_loop_system", "EventLoopSystem", {}),
     # Merged from tests/unit/test_hook_registry.py (§X #134)
@@ -92,8 +106,11 @@ def _try_import_class(module_path, class_name):
         return None
 
 
-@pytest.mark.parametrize("module_path,class_name,kwargs", _SMOKE_MODULES,
-                         ids=lambda x: x.split(".")[-1] if isinstance(x, str) else "")
+@pytest.mark.parametrize(
+    "module_path,class_name,kwargs",
+    _SMOKE_MODULES,
+    ids=lambda x: x.split(".")[-1] if isinstance(x, str) else "",
+)
 def test_smoke_import(module_path, class_name, kwargs):
     """Verify module can be imported."""
     cls = _try_import_class(module_path, class_name)
@@ -102,8 +119,11 @@ def test_smoke_import(module_path, class_name, kwargs):
     assert cls is not None
 
 
-@pytest.mark.parametrize("module_path,class_name,kwargs", _SMOKE_MODULES,
-                         ids=lambda x: x.split(".")[-1] if isinstance(x, str) else "")
+@pytest.mark.parametrize(
+    "module_path,class_name,kwargs",
+    _SMOKE_MODULES,
+    ids=lambda x: x.split(".")[-1] if isinstance(x, str) else "",
+)
 def test_smoke_instantiate(module_path, class_name, kwargs):
     """Verify basic instantiation."""
     cls = _try_import_class(module_path, class_name)
@@ -119,6 +139,7 @@ class TestGravityCalibrator:
     def test_constants(self):
         pytest.importorskip("core.card.quality.gravity_calibration")
         from core.card.quality.gravity_calibration import G_CANDIDATES, IDEAL_LOWER, IDEAL_UPPER
+
         assert IDEAL_LOWER == 0.6
         assert IDEAL_UPPER == 0.85
         assert len(G_CANDIDATES) == 4
@@ -130,6 +151,7 @@ class TestLevel5ASISystem:
     def test_instantiation_system_id(self):
         pytest.importorskip("ai.level5_asi_system")
         from ai.level5_asi_system import Level5ASISystem
+
         instance = Level5ASISystem()
         assert instance.system_id == "level5_asi_system"
 
@@ -161,8 +183,11 @@ _MODULE_ATTR_IMPORTS = [
 class TestOptionalModuleImports:
     """Parametrized import tests for optional module attributes."""
 
-    @pytest.mark.parametrize("module_path,attr_name", _MODULE_ATTR_IMPORTS,
-                             ids=lambda x: f"{x[0].split('.')[-1]}.{x[1]}" if isinstance(x, tuple) else str(x))
+    @pytest.mark.parametrize(
+        "module_path,attr_name",
+        _MODULE_ATTR_IMPORTS,
+        ids=lambda x: f"{x[0].split('.')[-1]}.{x[1]}" if isinstance(x, tuple) else str(x),
+    )
     def test_optional_module_import(self, module_path: str, attr_name: str) -> None:
         """Verify optional module attribute is importable."""
         pytest.importorskip(module_path)
@@ -178,11 +203,13 @@ class TestCardTypes:
 
     def _import(self, name):
         from importlib import import_module
+
         return getattr(import_module(self._module), name)
 
     def test_source_file(self):
         sf = self._import("SourceFile")
         from datetime import datetime
+
         inst = sf(path="/test/path", doc_id="doc123", last_write_time=datetime.now())
         assert inst.path == "/test/path"
         assert inst.doc_id == "doc123"
@@ -196,6 +223,7 @@ class TestCardTypes:
     def test_event(self):
         Event = self._import("Event")
         from datetime import datetime
+
         ev = Event(timestamp=datetime.now(), title="test event")
         assert ev.title == "test event"
 
@@ -206,10 +234,15 @@ class TestCardTypes:
         assert card.name == ""
 
     def test_import_all_enums(self):
-        CardType, ConflictType, IntentFlag = self._import("CardType"), self._import("ConflictType"), self._import("IntentFlag")
+        CardType, ConflictType, IntentFlag = (
+            self._import("CardType"),
+            self._import("ConflictType"),
+            self._import("IntentFlag"),
+        )
         assert CardType.CHARACTER is not None
         assert ConflictType.HARD_ERROR is not None
         assert IntentFlag.PENDING is not None
+
 
 class TestEventLoopSystem:
     """Extra tests for EventLoopSystem (was dedicated file)."""
@@ -218,6 +251,7 @@ class TestEventLoopSystem:
     def _import():
         pytest.importorskip("core.event_loop_system")
         from core.event_loop_system import EventLoopSystem
+
         return EventLoopSystem
 
     def test_instantiation_with_latency_target(self):
@@ -232,10 +266,18 @@ class TestEventLoopSystem:
 
     def test_event_dataclass(self):
         pytest.importorskip("core.event_loop_system")
-        from core.event_loop_system import Event, EventPriority, EventStatus
         from datetime import datetime
-        event = Event(event_id="evt_1", event_type="test", priority=EventPriority.NORMAL,
-                      data={"key": "value"}, timestamp=datetime.now(), source="test")
+
+        from core.event_loop_system import Event, EventPriority, EventStatus
+
+        event = Event(
+            event_id="evt_1",
+            event_type="test",
+            priority=EventPriority.NORMAL,
+            data={"key": "value"},
+            timestamp=datetime.now(),
+            source="test",
+        )
         assert event.event_id == "evt_1"
 
 
@@ -246,6 +288,7 @@ class TestHookRegistry:
     def _import():
         pytest.importorskip("core.plugin.hook_registry")
         from core.plugin.hook_registry import HookRegistry
+
         return HookRegistry
 
     def test_define_and_list_hooks(self):
@@ -270,6 +313,7 @@ class TestHSMFormulaSystem:
     def _import():
         pytest.importorskip("core.hsm_formula_system")
         from core.hsm_formula_system import HSMFormulaSystem
+
         return HSMFormulaSystem
 
     def test_config_constant(self):
@@ -289,6 +333,7 @@ class TestMaturitySystem:
     def test_maturity_level(self):
         pytest.importorskip("core.maturity.maturity_system")
         from core.maturity.maturity_system import MaturityLevel
+
         assert len(MaturityLevel) == 12
         assert MaturityLevel.L0.value == "L0"
         assert MaturityLevel.L11.value == "L11"
@@ -296,11 +341,13 @@ class TestMaturitySystem:
     def test_maturity_manager(self):
         pytest.importorskip("core.maturity.maturity_system")
         from core.maturity.maturity_system import MaturityLevel, MaturityManager
+
         instance = MaturityManager()
         assert instance.current_level == MaturityLevel.L0
 
     def test_experience_tracker(self):
         pytest.importorskip("core.maturity.maturity_system")
         from core.maturity.maturity_system import ExperienceTracker
+
         instance = ExperienceTracker()
         assert instance.total_experience == 0

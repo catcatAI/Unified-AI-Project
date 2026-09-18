@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # =============================================================================
 # ANGELA-MATRIX: [L4] [αβγδ] [C] [L2-L4]
 # =============================================================================
@@ -6,7 +7,7 @@ SNN-based core network replacing sequential CoreNetwork.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from core.system.config.magic_numbers import compute_bool
 
@@ -15,21 +16,23 @@ from .lif_neuron import LIFNeuron
 
 logger = logging.getLogger(__name__)
 
-try:
+if TYPE_CHECKING:
     from ..relation_classifier import RelationClassifier
-except ImportError:
-    RelationClassifier = None
-
-try:
-    from .batch_reorder import (
-        BatchReorderEngine,
-    )
-    from .sparse_engine import (
-        SparseComputationEngine,
-    )
-except ImportError:
-    BatchReorderEngine = None
-    SparseComputationEngine = None
+    from .batch_reorder import BatchReorderEngine
+    from .sparse_engine import SparseComputationEngine
+else:
+    try:
+        from ..relation_classifier import RelationClassifier
+    except ImportError:
+        RelationClassifier = None
+    try:
+        from .batch_reorder import BatchReorderEngine
+    except ImportError:
+        BatchReorderEngine = None
+    try:
+        from .sparse_engine import SparseComputationEngine
+    except ImportError:
+        SparseComputationEngine = None
 
 
 class SNNRelationGroup:
@@ -66,9 +69,13 @@ class SNNCore:
             "mapping": SNNRelationGroup("mapping"),
             "analogy": SNNRelationGroup("analogy"),
         }
-        self.classifier = classifier or (RelationClassifier() if RelationClassifier else None)
-        self.batch_engine = BatchReorderEngine() if BatchReorderEngine else None
-        self.sparse_engine = SparseComputationEngine() if SparseComputationEngine else None
+        self.classifier = classifier or (
+            RelationClassifier() if RelationClassifier is not None else None
+        )
+        self.batch_engine = BatchReorderEngine() if BatchReorderEngine is not None else None
+        self.sparse_engine = (
+            SparseComputationEngine() if SparseComputationEngine is not None else None
+        )
         self.modulator = HormonalModulator()
         self._timestep: float = 1.0
         self._enabled = compute_bool("ed3n_snn")
@@ -97,7 +104,7 @@ class SNNCore:
         if not self._enabled:
             logger.debug("ed3n_snn disabled by compute config, returning empty result")
             return {}
-        
+
         self.reset()
 
         self.modulator.sync_from_endocrine()
@@ -120,14 +127,17 @@ class SNNCore:
 
         batch = (
             self.batch_engine.create_initial_batch(input_keys, input_currents)
-            if self.batch_engine
+            if self.batch_engine is not None
             else None
         )
-        if self.sparse_engine:
+        if self.sparse_engine is not None:
             self.sparse_engine.activate(input_keys)
 
         all_spikes: Dict[int, List[str]] = {}
         iteration = 0
+
+        if self.batch_engine is None:
+            return {}
 
         while batch is not None and iteration < max_iterations:
             active_neurons = {
@@ -140,7 +150,7 @@ class SNNCore:
             all_spikes[batch.batch_id] = spiked
 
             silent = [k for k in batch.neuron_keys if k not in spiked]
-            if self.sparse_engine:
+            if self.sparse_engine is not None:
                 self.sparse_engine.deactivate(silent)
 
             if spiked:

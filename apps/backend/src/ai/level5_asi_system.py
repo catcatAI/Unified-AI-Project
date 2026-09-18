@@ -4,12 +4,6 @@ Level 5 ASI 系统
 整合所有Level 5 ASI组件的完整系统实现
 """
 
-from core.utils import safe_error
-
-# =============================================================================
-# ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
-# =============================================================================
-
 import asyncio
 import logging
 import uuid
@@ -18,6 +12,7 @@ from typing import Any, Dict, List, Optional
 
 from core.hsp.types import HSPMessageEnvelopeClass as HSPMessageEnvelope
 from core.system.config.magic_numbers import batch_value
+from core.utils import safe_error
 
 from .alignment.adversarial_generation_system import AdversarialGenerationSystem
 from .alignment.aligned_base_agent import AlignedBaseAgent, AlignmentLevel
@@ -29,6 +24,13 @@ from .alignment.emotion_system import EmotionSystem
 from .alignment.hyperlinked_parameter_cluster import HyperlinkedParameterCluster
 from .alignment.ontology_system import OntologySystem
 from .alignment.reasoning_system import ReasoningSystem
+
+# =============================================================================
+# ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
+# =============================================================================
+
+
+
 
 logger = logging.getLogger(__name__)
 

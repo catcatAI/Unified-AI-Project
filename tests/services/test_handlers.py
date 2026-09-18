@@ -24,6 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "apps/bac
 # FileOperationHandler tests
 # =============================================================================
 
+
 @pytest.mark.asyncio
 class TestFileOperationHandler:
     """Test file operations with real temp directory."""
@@ -35,17 +36,20 @@ class TestFileOperationHandler:
         # We can't easily patch _ALLOWED_ROOTS from test, so test safe paths only
         yield
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     async def test_import(self):
         """FileOperationHandler imports correctly."""
         from services.handlers.file_operation_handler import FileOperationHandler
+
         handler = FileOperationHandler()
         assert handler is not None
 
     async def test_empty_path_returns_prompt(self):
         """handle returns prompt when no path provided."""
         from services.handlers.file_operation_handler import FileOperationHandler
+
         handler = FileOperationHandler()
         result = await handler.handle("file_op", {})
         assert isinstance(result, str)
@@ -54,6 +58,7 @@ class TestFileOperationHandler:
     async def test_unknown_action_returns_help(self):
         """handle returns help message for unknown actions."""
         from services.handlers.file_operation_handler import FileOperationHandler
+
         handler = FileOperationHandler()
         result = await handler.handle("file_op_bogus", {"path": "/tmp"})
         assert isinstance(result, str)
@@ -62,6 +67,7 @@ class TestFileOperationHandler:
     async def test_move_file_to_directory(self):
         """move moves a file INTO a target directory, not just rename."""
         from services.handlers.file_operation_handler import FileOperationHandler
+
         handler = FileOperationHandler()
 
         # Create source file
@@ -73,11 +79,14 @@ class TestFileOperationHandler:
         target_dir = self.temp_dir / "target_subdir"
         target_dir.mkdir(parents=True, exist_ok=True)
 
-        result = await handler.handle("file_op_move", {
-            "action": "move",
-            "path": str(src_file),
-            "new_name": str(target_dir),
-        })
+        result = await handler.handle(
+            "file_op_move",
+            {
+                "action": "move",
+                "path": str(src_file),
+                "new_name": str(target_dir),
+            },
+        )
         assert isinstance(result, str)
         assert len(result) > 0
         # File should no longer exist at source
@@ -90,6 +99,7 @@ class TestFileOperationHandler:
     async def test_handle_parses_natural_language_text(self):
         """C5 regression: _text payload is parsed into action/path/content."""
         from services.handlers.file_operation_handler import FileOperationHandler
+
         handler = FileOperationHandler()
         target = self.temp_dir / "nl_probe.txt"
         # create via natural language
@@ -108,26 +118,34 @@ class TestFileOperationHandler:
     async def test_move_nonexistent_source(self):
         """move returns error when source doesn't exist."""
         from services.handlers.file_operation_handler import FileOperationHandler
+
         handler = FileOperationHandler()
         nonexistent = self.temp_dir / "does_not_exist.txt"
-        result = await handler.handle("file_op_move", {
-            "action": "move",
-            "path": str(nonexistent),
-            "new_name": str(self.temp_dir),
-        })
+        result = await handler.handle(
+            "file_op_move",
+            {
+                "action": "move",
+                "path": str(nonexistent),
+                "new_name": str(self.temp_dir),
+            },
+        )
         assert isinstance(result, str)
         assert len(result) > 0
 
     async def test_move_missing_target_dir(self):
         """move returns prompt when no target directory specified."""
         from services.handlers.file_operation_handler import FileOperationHandler
+
         handler = FileOperationHandler()
         src_file = self.temp_dir / "source_no_target.txt"
         src_file.write_text("test", encoding="utf-8")
-        result = await handler.handle("file_op_move", {
-            "action": "move",
-            "path": str(src_file),
-        })
+        result = await handler.handle(
+            "file_op_move",
+            {
+                "action": "move",
+                "path": str(src_file),
+            },
+        )
         assert isinstance(result, str)
         assert len(result) > 0
 
@@ -136,6 +154,7 @@ class TestFileOperationHandler:
 # GoogleDriveHandler tests
 # =============================================================================
 
+
 @pytest.mark.asyncio
 class TestGoogleDriveHandler:
     """Test GoogleDriveHandler with local fs fallback."""
@@ -143,19 +162,32 @@ class TestGoogleDriveHandler:
     async def test_import(self):
         """GoogleDriveHandler imports correctly."""
         from services.handlers.google_drive_handler import GoogleDriveHandler
+
         handler = GoogleDriveHandler()
         assert handler is not None
 
     async def test_supported_actions(self):
         """Handler has expected supported actions."""
         from services.handlers.google_drive_handler import GoogleDriveHandler
-        expected = {"list", "search", "sync", "download", "upload",
-                     "delete", "rename", "move", "copy", "info"}
+
+        expected = {
+            "list",
+            "search",
+            "sync",
+            "download",
+            "upload",
+            "delete",
+            "rename",
+            "move",
+            "copy",
+            "info",
+        }
         assert GoogleDriveHandler.SUPPORTED_ACTIONS == expected
 
     async def test_unsupported_action(self):
         """Returns error for unsupported actions."""
         from services.handlers.google_drive_handler import GoogleDriveHandler
+
         handler = GoogleDriveHandler()
         result = await handler.handle("google_drive", {"action": "unsupported_action_xyz"})
         assert result["status"] == "error"
@@ -163,8 +195,10 @@ class TestGoogleDriveHandler:
     async def test_info_existing_path(self):
         """info action returns file info for existing path."""
         from services.handlers.google_drive_handler import GoogleDriveHandler
+
         handler = GoogleDriveHandler()
         import os
+
         result = await handler.handle("google_drive", {"action": "info", "path": os.getcwd()})
         assert result["status"] == "ok"
         assert result["exists"] is True
@@ -172,8 +206,11 @@ class TestGoogleDriveHandler:
     async def test_info_nonexistent_path(self):
         """info action returns exists=False for nonexistent path."""
         from services.handlers.google_drive_handler import GoogleDriveHandler
+
         handler = GoogleDriveHandler()
-        result = await handler.handle("google_drive", {"action": "info", "path": "/nonexistent_path_xyz_123"})
+        result = await handler.handle(
+            "google_drive", {"action": "info", "path": "/nonexistent_path_xyz_123"}
+        )
         assert result["status"] == "ok"
         assert result["exists"] is False
 
@@ -182,6 +219,7 @@ class TestGoogleDriveHandler:
 # WebSearchHandler tests
 # =============================================================================
 
+
 @pytest.mark.asyncio
 class TestWebSearchHandler:
     """Test WebSearchHandler extract logic."""
@@ -189,12 +227,14 @@ class TestWebSearchHandler:
     async def test_import(self):
         """WebSearchHandler imports correctly."""
         from services.handlers.web_search_handler import WebSearchHandler
+
         handler = WebSearchHandler()
         assert handler is not None
 
     async def test_handle_empty_text(self):
         """handle returns prompt for empty text."""
         from services.handlers.web_search_handler import WebSearchHandler
+
         handler = WebSearchHandler()
         result = await handler.handle("", "web_search")
         assert "搜尋" in result
@@ -202,6 +242,7 @@ class TestWebSearchHandler:
     async def test_extract_query_removes_prefix(self):
         """_extract_query removes prefix keywords."""
         from services.handlers.web_search_handler import WebSearchHandler
+
         handler = WebSearchHandler()
         query = handler._extract_query("搜尋如何學習Python")
         assert query is not None
@@ -210,6 +251,7 @@ class TestWebSearchHandler:
     async def test_extract_query_short_text(self):
         """_extract_query returns None for very short text."""
         from services.handlers.web_search_handler import WebSearchHandler
+
         handler = WebSearchHandler()
         query = handler._extract_query("搜尋")
         assert query is None or len(query) < 2
@@ -219,6 +261,7 @@ class TestWebSearchHandler:
 # CodeExecutionHandler tests
 # =============================================================================
 
+
 @pytest.mark.asyncio
 class TestCodeExecutionHandler:
     """Test CodeExecutionHandler with sandboxed execution."""
@@ -226,12 +269,14 @@ class TestCodeExecutionHandler:
     async def test_import(self):
         """CodeExecutionHandler imports correctly."""
         from services.handlers.code_execution_handler import CodeExecutionHandler
+
         handler = CodeExecutionHandler()
         assert handler is not None
 
     async def test_extract_code_from_fence(self):
         """_extract_code extracts code from markdown fence."""
         from services.handlers.code_execution_handler import CodeExecutionHandler
+
         handler = CodeExecutionHandler()
         code = handler._extract_code("```python\nprint('hello')\n```")
         assert "print('hello')" in code
@@ -239,6 +284,7 @@ class TestCodeExecutionHandler:
     async def test_extract_code_from_inline(self):
         """_extract_code extracts code from backtick."""
         from services.handlers.code_execution_handler import CodeExecutionHandler
+
         handler = CodeExecutionHandler()
         code = handler._extract_code("run `print(42)`")
         assert "print(42)" in code
@@ -246,6 +292,7 @@ class TestCodeExecutionHandler:
     async def test_extract_code_empty(self):
         """_extract_code returns empty for prose without any code pattern."""
         from services.handlers.code_execution_handler import CodeExecutionHandler
+
         handler = CodeExecutionHandler()
         code = handler._extract_code("今天天氣真好")
         assert code == ""
@@ -253,6 +300,7 @@ class TestCodeExecutionHandler:
     async def test_extract_code_from_natural_language_snippet(self):
         """Inline snippet in natural language is extracted and executed."""
         from services.handlers.code_execution_handler import CodeExecutionHandler
+
         handler = CodeExecutionHandler()
         code = handler._extract_code("執行 print(42)")
         assert "print(42)" in code
@@ -262,6 +310,7 @@ class TestCodeExecutionHandler:
     async def test_extract_code_multiline_compound_statement(self):
         """Multi-line compound statements are extracted whole, not truncated."""
         from services.handlers.code_execution_handler import CodeExecutionHandler
+
         handler = CodeExecutionHandler()
         code = handler._extract_code("for i in range(3):\n    print(i)")
         assert "for i in range(3):" in code
@@ -272,6 +321,7 @@ class TestCodeExecutionHandler:
     async def test_execute_simple_print(self):
         """_execute runs simple print statement."""
         from services.handlers.code_execution_handler import CodeExecutionHandler
+
         handler = CodeExecutionHandler()
         result = await handler._execute("print('hello_world_test')")
         # i18n returns raw keys in test context, so check for execution markers
@@ -281,6 +331,7 @@ class TestCodeExecutionHandler:
     async def test_handle_with_code(self):
         """handle extracts and executes code from message."""
         from services.handlers.code_execution_handler import CodeExecutionHandler
+
         handler = CodeExecutionHandler()
         result = await handler.handle("```python\nprint('hello')\n```", "code")
         # Check that execution happened (i18n returns raw key in test context)
@@ -290,6 +341,7 @@ class TestCodeExecutionHandler:
     async def test_execute_math(self):
         """_execute runs math expression."""
         from services.handlers.code_execution_handler import CodeExecutionHandler
+
         handler = CodeExecutionHandler()
         result = await handler._execute("print(2 + 3)")
         assert len(result) > 10
@@ -297,6 +349,7 @@ class TestCodeExecutionHandler:
     async def test_sandbox_blocks_getattr_escape(self):
         """C3 regression: getattr-based dunder chain must be rejected."""
         from services.handlers.code_execution_handler import CodeExecutionHandler
+
         handler = CodeExecutionHandler()
         payload = (
             "wrap = next(c for c in getattr(getattr(getattr((), '__class__'), "
@@ -311,6 +364,7 @@ class TestCodeExecutionHandler:
     async def test_extract_code_keeps_break_lines(self):
         """C4 regression: bare break/continue/pass must not truncate extraction."""
         from services.handlers.code_execution_handler import CodeExecutionHandler
+
         handler = CodeExecutionHandler()
         code = (
             "for i in range(3):\n"
@@ -329,6 +383,7 @@ class TestCodeExecutionHandler:
 # SystemCommandHandler tests
 # =============================================================================
 
+
 @pytest.mark.asyncio
 class TestSystemCommandHandler:
     """Test SystemCommandHandler with safe commands."""
@@ -336,12 +391,14 @@ class TestSystemCommandHandler:
     async def test_import(self):
         """SystemCommandHandler imports correctly."""
         from services.handlers.system_command_handler import SystemCommandHandler
+
         handler = SystemCommandHandler()
         assert handler is not None
 
     async def test_extract_command_from_fence(self):
         """_extract_command extracts from markdown fence."""
         from services.handlers.system_command_handler import SystemCommandHandler
+
         handler = SystemCommandHandler()
         cmd = handler._extract_command("```bash\necho hello\n```")
         assert "echo hello" in cmd
@@ -349,6 +406,7 @@ class TestSystemCommandHandler:
     async def test_extract_command_from_inline(self):
         """_extract_command extracts from backtick."""
         from services.handlers.system_command_handler import SystemCommandHandler
+
         handler = SystemCommandHandler()
         cmd = handler._extract_command("run `echo hi`")
         assert "echo hi" in cmd
@@ -356,6 +414,7 @@ class TestSystemCommandHandler:
     async def test_unsafe_command_rejected(self):
         """handle rejects unsafe commands."""
         from services.handlers.system_command_handler import SystemCommandHandler
+
         handler = SystemCommandHandler()
         result = await handler.handle("執行 rm -rf /", "system")
         assert "unsafe" in result.lower() or "安全" in result or "allow" in result.lower()
@@ -363,6 +422,7 @@ class TestSystemCommandHandler:
     async def test_safe_command_runs(self):
         """handle runs safe commands like echo."""
         from services.handlers.system_command_handler import SystemCommandHandler
+
         handler = SystemCommandHandler()
         result = await handler.handle("執行 echo hello_test_123", "system")
         # May or may not have echo in _SAFE_COMMANDS on this platform
@@ -373,6 +433,7 @@ class TestSystemCommandHandler:
     async def test_sensitive_commands_rejected(self):
         """M1 regression: file-read / env-dump / package-run commands rejected."""
         from services.handlers.system_command_handler import SystemCommandHandler
+
         handler = SystemCommandHandler()
         for msg in [
             "cat /etc/passwd",
@@ -390,6 +451,7 @@ class TestSystemCommandHandler:
     async def test_unclosed_quote_returns_parse_error(self):
         """R8: shlex ValueError must not escape handle()."""
         from services.handlers.system_command_handler import SystemCommandHandler
+
         handler = SystemCommandHandler()
         result = await handler.handle("執行 echo 'unclosed", "system")
         assert "解析失敗" in result or "parse failed" in result.lower()
@@ -397,6 +459,7 @@ class TestSystemCommandHandler:
     async def test_absolute_path_bypass_rejected(self):
         """R8: /bin/ls must not bypass the allowlist via path."""
         from services.handlers.system_command_handler import SystemCommandHandler
+
         handler = SystemCommandHandler()
         result = await handler.handle("/bin/ls /", "system")
         assert "不安全" in result or "unsafe" in result.lower()
@@ -424,6 +487,7 @@ class TestSystemCommandHandler:
 # TaskManagerHandler tests
 # =============================================================================
 
+
 @pytest.mark.asyncio
 class TestTaskManagerHandler:
     """Test TaskManagerHandler with isolated tasks file."""
@@ -432,6 +496,7 @@ class TestTaskManagerHandler:
     def setup(self):
         # Backup and restore _TASKS_FILE / _TASKS_DIR
         import services.handlers.task_manager_handler as tm
+
         self._orig_tasks_dir = tm._TASKS_DIR
         self._orig_tasks_file = tm._TASKS_FILE
         test_dir = Path(tempfile.mkdtemp()) / "tasks"
@@ -441,17 +506,20 @@ class TestTaskManagerHandler:
         tm._TASKS_DIR = self._orig_tasks_dir
         tm._TASKS_FILE = self._orig_tasks_file
         import shutil
+
         shutil.rmtree(test_dir.parent, ignore_errors=True)
 
     async def test_import(self):
         """TaskManagerHandler imports correctly."""
         from services.handlers.task_manager_handler import TaskManagerHandler
+
         handler = TaskManagerHandler()
         assert handler is not None
 
     async def test_create_task(self):
         """create action adds a task."""
         from services.handlers.task_manager_handler import TaskManagerHandler
+
         handler = TaskManagerHandler()
         result = await handler.handle("建立任務測試", "task")
         assert "task" in result.lower() or "任務" in result
@@ -459,9 +527,13 @@ class TestTaskManagerHandler:
     async def test_list_tasks(self):
         """list action returns task list."""
         from services.handlers.task_manager_handler import TaskManagerHandler
+
         handler = TaskManagerHandler()
         import services.handlers.task_manager_handler as tm
-        tm._save_tasks([{"id": 1, "title": "test_task_123", "status": "pending", "created_at": 1000}])
+
+        tm._save_tasks(
+            [{"id": 1, "title": "test_task_123", "status": "pending", "created_at": 1000}]
+        )
         result = await handler.handle("任務列表", "task")
         # i18n returns raw keys in test context, but task data should be in output
         assert "test_task_123" in result or "task_ops.task_list" in result
@@ -469,6 +541,7 @@ class TestTaskManagerHandler:
     async def test_parse_create(self):
         """_parse identifies create action."""
         from services.handlers.task_manager_handler import TaskManagerHandler
+
         handler = TaskManagerHandler()
         action, payload = handler._parse("建立任務測試工作")
         assert action == "create"
@@ -479,6 +552,7 @@ class TestTaskManagerHandler:
 # VisionHandler tests
 # =============================================================================
 
+
 @pytest.mark.asyncio
 class TestVisionHandler:
     """Test VisionHandler extract logic."""
@@ -486,12 +560,14 @@ class TestVisionHandler:
     async def test_import(self):
         """VisionHandler imports correctly."""
         from services.handlers.vision_handler import VisionHandler
+
         handler = VisionHandler()
         assert handler is not None
 
     async def test_extract_image_path_no_path(self):
         """_extract_image_path returns None when no image reference."""
         from services.handlers.vision_handler import VisionHandler
+
         handler = VisionHandler()
         path = handler._extract_image_path("今天天氣真好")
         assert path is None
@@ -499,6 +575,7 @@ class TestVisionHandler:
     async def test_extract_image_path_with_extension(self):
         """_extract_image_path finds path with image extension."""
         from services.handlers.vision_handler import VisionHandler
+
         handler = VisionHandler()
         path = handler._extract_image_path("分析圖片 /path/to/photo.png")
         assert path is not None
@@ -507,6 +584,7 @@ class TestVisionHandler:
     async def test_extract_image_path_with_fence(self):
         """_extract_image_path extracts from code fence."""
         from services.handlers.vision_handler import VisionHandler
+
         handler = VisionHandler()
         path = handler._extract_image_path("```\n/image.jpg\n```")
         assert path is not None
@@ -515,6 +593,7 @@ class TestVisionHandler:
     async def test_handle_no_path(self):
         """handle returns prompt when no image path."""
         from services.handlers.vision_handler import VisionHandler
+
         handler = VisionHandler()
         result = await handler.handle("分析圖片", "vision")
         assert isinstance(result, str)
@@ -524,6 +603,7 @@ class TestVisionHandler:
 # =============================================================================
 # LearningHandler tests
 # =============================================================================
+
 
 @pytest.mark.asyncio
 class TestHandlersInit:
@@ -542,6 +622,7 @@ class TestHandlersInit:
             VisionHandler,
             WebSearchHandler,
         )
+
         assert FileOperationHandler is not None
         assert GoogleDriveHandler is not None
         assert WebSearchHandler is not None
@@ -555,6 +636,7 @@ class TestHandlersInit:
     def test_all_exports_match(self):
         """__all__ matches exported names."""
         from services.handlers import __all__
+
         expected = [
             "CivilModelHandler",
             "FileOperationHandler",
@@ -614,8 +696,8 @@ class TestTaskUpdateGuard:
         monkeypatch.setattr(tm, "_TASKS_FILE", d / "tasks.json")
 
     async def test_update_without_id_refused_without_mutation(self):
-        from services.handlers.task_manager_handler import TaskManagerHandler
         import services.handlers.task_manager_handler as tm
+        from services.handlers.task_manager_handler import TaskManagerHandler
 
         handler = TaskManagerHandler()
         await handler.handle("建立任務：買牛奶", "task")

@@ -11,11 +11,13 @@ returned as answer templates, leaking raw interaction records such as
 # ANGELA-MATRIX: [L3] [β] [A] [L0]
 # =============================================================================
 
-import sys
-import os
 import asyncio
+import os
+import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", "apps", "backend", "src"))
+sys.path.insert(
+    0, os.path.join(os.path.dirname(__file__), "..", "..", "..", "apps", "backend", "src")
+)
 
 from services.llm.memory_integration import MemoryIntegration
 
@@ -49,11 +51,13 @@ def _make_integration(entries):
 
 def test_conversation_log_not_returned_as_answer():
     """A stored conversation/interaction record must NOT be returned as a response."""
-    entries = [{
-        "content": "{'user': 'what is the opposite of hot', 'assistant': 'cold'}",
-        "data_type": "conversation",
-        "keywords": ["hot", "opposite"],
-    }]
+    entries = [
+        {
+            "content": "{'user': 'what is the opposite of hot', 'assistant': 'cold'}",
+            "data_type": "conversation",
+            "keywords": ["hot", "opposite"],
+        }
+    ]
     mi = _make_integration(entries)
     result = asyncio.run(mi.try_memory_retrieval("what is the opposite of hot", {}))
     assert result is None, "conversation log must not leak as an answer template"
@@ -61,11 +65,13 @@ def test_conversation_log_not_returned_as_answer():
 
 def test_genuine_template_still_returned():
     """A real answer template (data_type != conversation) is still usable."""
-    entries = [{
-        "content": "The opposite of hot is cold.",
-        "data_type": "response_template",
-        "keywords": ["hot", "opposite"],
-    }]
+    entries = [
+        {
+            "content": "The opposite of hot is cold.",
+            "data_type": "response_template",
+            "keywords": ["hot", "opposite"],
+        }
+    ]
     mi = _make_integration(entries)
     result = asyncio.run(mi.try_memory_retrieval("what is the opposite of hot", {}))
     assert result is not None
@@ -75,11 +81,13 @@ def test_genuine_template_still_returned():
 
 def test_dict_content_not_returned():
     """Even a non-conversation entry whose content is a dict must not leak."""
-    entries = [{
-        "content": {"user": "x", "assistant": "y"},
-        "data_type": "answer",
-        "keywords": ["x"],
-    }]
+    entries = [
+        {
+            "content": {"user": "x", "assistant": "y"},
+            "data_type": "answer",
+            "keywords": ["x"],
+        }
+    ]
     mi = _make_integration(entries)
     result = asyncio.run(mi.try_memory_retrieval("x", {}))
     assert result is None

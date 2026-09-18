@@ -53,9 +53,7 @@ class TestLearningIntegrator:
 class TestStrategyAdjuster:
     def test_adjust_merges_overrides(self):
         adjuster = StrategyAdjuster()
-        adjusted = asyncio.run(
-            adjuster.adjust({"timeout": 5}, timeout=10, retry=3)
-        )
+        adjusted = asyncio.run(adjuster.adjust({"timeout": 5}, timeout=10, retry=3))
         assert adjusted == {"timeout": 10, "retry": 3}
 
     def test_adjustment_history_tracked(self):

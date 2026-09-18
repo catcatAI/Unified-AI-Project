@@ -6,6 +6,7 @@ import pytest
 @pytest.fixture
 def cultural_context():
     from ai.context.cultural_context import CulturalContextModule
+
     return CulturalContextModule()
 
 
@@ -66,9 +67,7 @@ class TestEnrichContext:
         assert "note" in notes[0]
 
     def test_enrich_context_preserves_existing_keys(self, cultural_context):
-        result = cultural_context.enrich_context(
-            {"existing_key": "keep_me"}, "test"
-        )
+        result = cultural_context.enrich_context({"existing_key": "keep_me"}, "test")
         assert result["existing_key"] == "keep_me"
 
     def test_enrich_context_without_text(self, cultural_context):

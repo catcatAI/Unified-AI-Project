@@ -117,7 +117,11 @@ class _SafeEvalChecker(ast.NodeVisitor):
 
     def _constant_int(self, node) -> Optional[int]:
         """Return the integer value of a Constant node, else None."""
-        if isinstance(node, ast.Constant) and isinstance(node.value, int) and not isinstance(node.value, bool):
+        if (
+            isinstance(node, ast.Constant)
+            and isinstance(node.value, int)
+            and not isinstance(node.value, bool)
+        ):
             return node.value
         return None
 

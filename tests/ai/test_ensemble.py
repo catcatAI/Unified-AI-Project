@@ -24,16 +24,22 @@ class TestModelWeight:
 class TestEnsembleResult:
     def test_minimal_creation(self):
         result = EnsembleResult(
-            content="hello", model_votes={"m1": 0.8},
-            confidence=0.8, latency=1.5, token_usage={"total": 100},
+            content="hello",
+            model_votes={"m1": 0.8},
+            confidence=0.8,
+            latency=1.5,
+            token_usage={"total": 100},
         )
         assert result.content == "hello"
         assert result.confidence == 0.8
 
     def test_metadata_default(self):
         result = EnsembleResult(
-            content="x", model_votes={},
-            confidence=0.5, latency=0.1, token_usage={},
+            content="x",
+            model_votes={},
+            confidence=0.5,
+            latency=0.1,
+            token_usage={},
         )
         assert result.metadata == {}
 
@@ -74,7 +80,9 @@ class TestResponseFusionEngine:
     def test_quality_score_empty(self, engine):
         resp = FakeLLMResponse("m", "", 0.5, {})
         score = engine._calculate_quality_score(resp)
-        assert score < 0.7  # Empty content gets 0 for length, but still has coherence+latency bonuses
+        assert (
+            score < 0.7
+        )  # Empty content gets 0 for length, but still has coherence+latency bonuses
 
     def test_quality_score_latency_factor(self, engine):
         fast = FakeLLMResponse("m", "Good content here for testing.", 0.3, {})
@@ -90,6 +98,7 @@ class TestResponseFusionEngine:
 
 class FakeLLMResponse:
     """Minimal LLMResponse-compatible object for testing."""
+
     def __init__(self, model, content, latency, usage):
         self.model = model
         self.text = content

@@ -1,15 +1,18 @@
 """Tests for ai.core.training_coordinator"""
+
 import pytest
 
 
 class TestTrainingCoordinator:
     def test_import(self):
         from ai.core.training_coordinator import DomainTrainingRecord, TrainingCoordinator
+
         assert TrainingCoordinator is not None
         assert DomainTrainingRecord is not None
 
     def test_instantiation(self):
         from ai.core.training_coordinator import TrainingCoordinator
+
         tc = TrainingCoordinator()
         assert tc._domain_map == {}
         assert tc._seen_hashes == {}
@@ -20,6 +23,7 @@ class TestTrainingCoordinator:
     @pytest.mark.asyncio
     async def test_assign_domain_no_bus(self):
         from ai.core.training_coordinator import TrainingCoordinator
+
         tc = TrainingCoordinator()
         assert await tc.assign_domain("math") == "ed3n"
         assert await tc.assign_domain("knowledge") == "garden"
@@ -30,12 +34,14 @@ class TestTrainingCoordinator:
     @pytest.mark.asyncio
     async def test_assign_domain_unknown(self):
         from ai.core.training_coordinator import TrainingCoordinator
+
         tc = TrainingCoordinator()
         assert await tc.assign_domain("unknown") == "garden"
 
     @pytest.mark.asyncio
     async def test_record_training_creates_new_entry(self):
         from ai.core.training_coordinator import TrainingCoordinator
+
         tc = TrainingCoordinator()
         await tc.record_training("math", "ed3n-v1", 5, 0.95, [{"input": "1+1=?"}])
         assert "math" in tc._domain_map
@@ -45,6 +51,7 @@ class TestTrainingCoordinator:
     @pytest.mark.asyncio
     async def test_record_training_updates_existing_entry(self):
         from ai.core.training_coordinator import TrainingCoordinator
+
         tc = TrainingCoordinator()
         await tc.record_training("math", "ed3n-v1", 5, 0.95, [{"input": "1+1=?"}])
         await tc.record_training("math", "ed3n-v1", 3, 0.97, [{"input": "2+2=?"}])
@@ -54,6 +61,7 @@ class TestTrainingCoordinator:
     @pytest.mark.asyncio
     async def test_should_skip_duplicate_input(self):
         from ai.core.training_coordinator import TrainingCoordinator
+
         tc = TrainingCoordinator()
         await tc.record_training("math", "ed3n-v1", 1, 0.9, [{"input": "1+1=?"}])
         assert await tc.should_skip("math", "1+1=?") is True
@@ -63,6 +71,7 @@ class TestTrainingCoordinator:
     @pytest.mark.asyncio
     async def test_get_domain_report_empty(self):
         from ai.core.training_coordinator import TrainingCoordinator
+
         tc = TrainingCoordinator()
         report = await tc.get_domain_report()
         assert "No training records yet" in report
@@ -70,6 +79,7 @@ class TestTrainingCoordinator:
     @pytest.mark.asyncio
     async def test_get_domain_report_with_data(self):
         from ai.core.training_coordinator import TrainingCoordinator
+
         tc = TrainingCoordinator()
         await tc.record_training("math", "ed3n-v1", 5, 0.95, [{"input": "1+1=?"}])
         report = await tc.get_domain_report()
@@ -80,6 +90,7 @@ class TestTrainingCoordinator:
     @pytest.mark.asyncio
     async def test_deconflict_samples(self):
         from ai.core.training_coordinator import TrainingCoordinator
+
         tc = TrainingCoordinator()
         samples = [
             {"domain": "math", "input": "1+1"},
@@ -101,6 +112,7 @@ class TestTrainingCoordinator:
     @pytest.mark.asyncio
     async def test_deconflict_samples_routes_logic_to_garden(self):
         from ai.core.training_coordinator import TrainingCoordinator
+
         tc = TrainingCoordinator()
         samples = [
             {"domain": "logic", "input": "if A then B"},
@@ -114,6 +126,7 @@ class TestTrainingCoordinator:
     @pytest.mark.asyncio
     async def test_sync_reflex_patterns_no_method(self):
         from ai.core.training_coordinator import TrainingCoordinator
+
         tc = TrainingCoordinator()
         source = object()
         target = object()
@@ -123,6 +136,7 @@ class TestTrainingCoordinator:
     @pytest.mark.asyncio
     async def test_max_examples_eviction(self):
         from ai.core.training_coordinator import TrainingCoordinator
+
         tc = TrainingCoordinator(max_examples_per_domain=3)
         for i in range(10):
             await tc.record_training("test", "model-v1", 1, 0.9, [{"input": f"sample_{i}"}])
@@ -132,6 +146,7 @@ class TestTrainingCoordinator:
     @pytest.mark.asyncio
     async def test_max_hashes_eviction(self):
         from ai.core.training_coordinator import TrainingCoordinator
+
         tc = TrainingCoordinator(max_hashes_per_domain=5)
         for i in range(10):
             await tc.record_training("test", "model-v1", 1, 0.9, [{"input": f"sample_{i}"}])

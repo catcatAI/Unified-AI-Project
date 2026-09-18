@@ -90,7 +90,6 @@ class TestDependencyGraphWithHealth:
 
 
 class TestAdminEndpointLogic:
-
     """Tests the admin endpoint handler logic by using ModuleManager directly."""
 
     async def test_admin_modules_response_shape(self):

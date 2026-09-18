@@ -24,6 +24,7 @@ from ai.multimodal.shared_latent_space import SharedLatentSpace
 # Fixtures
 # =========================================================================
 
+
 @pytest.fixture
 def latent_space():
     """SharedLatentSpace with both structural and semantic modalities (P43)."""
@@ -44,6 +45,7 @@ def router():
 # =========================================================================
 # 1. SharedLatentSpace Semantic Extensions (6 tests)
 # =========================================================================
+
 
 class TestRegisterSemanticModality:
     """P43a: register_semantic_modality creates correct projection entries."""
@@ -107,6 +109,7 @@ class TestSemanticConsistency:
 # 2. DualEncoderRouter SharedLatentSpace Integration (5 tests)
 # =========================================================================
 
+
 class TestRouterLatentSpace:
     """P43c: DualEncoderRouter uses SharedLatentSpace for projections."""
 
@@ -128,7 +131,7 @@ class TestRouterLatentSpace:
         mock_sve.is_available = True
         mock_sve.encode.return_value = np.ones(512, dtype=np.float32)
 
-        with patch.object(router, '_get_semantic_visual', return_value=mock_sve):
+        with patch.object(router, "_get_semantic_visual", return_value=mock_sve):
             result = router.encode_vision(sample_png)
 
         assert "structural_latent" in result
@@ -168,7 +171,7 @@ class TestRouterLatentSpace:
         mock_sae.is_available = True
         mock_sae.encode.return_value = np.ones(384, dtype=np.float32)
 
-        with patch.object(router, '_get_semantic_audio', return_value=mock_sae):
+        with patch.object(router, "_get_semantic_audio", return_value=mock_sae):
             result = router.encode_audio(sample_wav)
 
         assert "structural_latent" in result
@@ -190,6 +193,7 @@ class TestRouterLatentSpace:
 # 3. Semantic Contrastive Training (4 tests)
 # =========================================================================
 
+
 class TestSemanticContrastiveTraining:
     """P43d: semantic_contrastive_train trains semantic projection weights."""
 
@@ -208,9 +212,7 @@ class TestSemanticContrastiveTraining:
             for _ in range(10)
         ]
         result = latent_space.semantic_contrastive_train(
-            pos_pairs, [],
-            modality="vision_semantic",
-            epochs=3, lr=0.01
+            pos_pairs, [], modality="vision_semantic", epochs=3, lr=0.01
         )
         # Final loss should be positive and finite
         assert result["final_loss"] >= 0
@@ -225,9 +227,7 @@ class TestSemanticContrastiveTraining:
         feat_b = -np.ones(512, dtype=np.float32)
         neg_pairs = [(feat_a.copy(), feat_b.copy()) for _ in range(10)]
         result = latent_space.semantic_contrastive_train(
-            [], neg_pairs,
-            modality="vision_semantic",
-            epochs=3, lr=0.01
+            [], neg_pairs, modality="vision_semantic", epochs=3, lr=0.01
         )
         assert result["final_loss"] >= 0
         assert len(result["history"]) == 3
@@ -236,23 +236,17 @@ class TestSemanticContrastiveTraining:
         """C4: semantic_consistency improves after contrastive training."""
         # Create a set of same-class features
         prototype = np.random.randn(512).astype(np.float32)
-        same_class = [
-            prototype + 0.05 * np.random.randn(512).astype(np.float32)
-            for _ in range(5)
-        ]
+        same_class = [prototype + 0.05 * np.random.randn(512).astype(np.float32) for _ in range(5)]
 
         # Measure consistency before training
         before = latent_space.semantic_consistency("vision", same_class)
 
         # Train on positive pairs from the same class
         pos_pairs = [
-            (same_class[i].copy(), same_class[j].copy())
-            for i in range(5) for j in range(i + 1, 5)
+            (same_class[i].copy(), same_class[j].copy()) for i in range(5) for j in range(i + 1, 5)
         ]
         latent_space.semantic_contrastive_train(
-            pos_pairs, [],
-            modality="vision_semantic",
-            epochs=100, lr=0.1
+            pos_pairs, [], modality="vision_semantic", epochs=100, lr=0.1
         )
 
         # Measure consistency after training
@@ -264,6 +258,7 @@ class TestSemanticContrastiveTraining:
 # =========================================================================
 # 4. Cross-modal Semantic Similarity (2 tests)
 # =========================================================================
+
 
 class TestCrossModalSemantic:
     """P43e: cross-modal similarity between structural and semantic projections."""
@@ -309,6 +304,7 @@ class TestCrossModalSemantic:
 # 5. Cross-modal Retrieval Quality Metrics (6 tests)
 # =========================================================================
 
+
 class TestCrossModalRetrievalMetrics:
     """P43f: Cross-modal retrieval precision benchmarks (§X #22).
 
@@ -342,6 +338,7 @@ class TestCrossModalRetrievalMetrics:
     def test_cross_modal_retrieval_precision(self):
         """Q1: Cross-modal retrieval P@1 = 1.0 for known pairs."""
         from ai.ed3n.multimodal.cross_modal_trainer import CrossModalTrainer
+
         trainer = CrossModalTrainer()
         text_keys, img_keys, aud_keys = self._build_paired_dataset()
         self._train_on_dataset(trainer, text_keys, img_keys, aud_keys)
@@ -357,6 +354,7 @@ class TestCrossModalRetrievalMetrics:
     def test_cross_modal_retrieval_rejects_wrong_modality(self):
         """Q2: get_related_keys('image') returns only img_ keys."""
         from ai.ed3n.multimodal.cross_modal_trainer import CrossModalTrainer
+
         trainer = CrossModalTrainer()
         text_keys, img_keys, aud_keys = self._build_paired_dataset()
         self._train_on_dataset(trainer, text_keys, img_keys, aud_keys)
@@ -367,12 +365,12 @@ class TestCrossModalRetrievalMetrics:
                 assert r.startswith("img_"), f"Non-image key: {r}"
             for other_text, other_img in zip(text_keys, img_keys):
                 if other_img != correct_img:
-                    assert other_img not in results, \
-                        f"Wrong image {other_img} for {text}"
+                    assert other_img not in results, f"Wrong image {other_img} for {text}"
 
     def test_cross_modal_audio_retrieval(self):
         """Q3: Audio retrieval precision P@1 = 1.0."""
         from ai.ed3n.multimodal.cross_modal_trainer import CrossModalTrainer
+
         trainer = CrossModalTrainer()
         text_keys, img_keys, aud_keys = self._build_paired_dataset()
         self._train_on_dataset(trainer, text_keys, img_keys, aud_keys)
@@ -388,6 +386,7 @@ class TestCrossModalRetrievalMetrics:
     def test_cross_modal_dual_modality_retrieval(self):
         """Q4: Both image and audio retrieved for same text key."""
         from ai.ed3n.multimodal.cross_modal_trainer import CrossModalTrainer
+
         trainer = CrossModalTrainer()
         text_keys, img_keys, aud_keys = self._build_paired_dataset()
         self._train_on_dataset(trainer, text_keys, img_keys, aud_keys)
@@ -401,6 +400,7 @@ class TestCrossModalRetrievalMetrics:
     def test_get_stats_reflects_training(self):
         """Q5: CrossModalTrainer.get_stats() reflects trained state."""
         from ai.ed3n.multimodal.cross_modal_trainer import CrossModalTrainer
+
         trainer = CrossModalTrainer()
         text_keys, img_keys, aud_keys = self._build_paired_dataset()
         self._train_on_dataset(trainer, text_keys, img_keys, aud_keys)
@@ -414,6 +414,7 @@ class TestCrossModalRetrievalMetrics:
     def test_retrieval_with_insufficient_training(self):
         """Q6: Low co-occurrence = low confidence, but mapping still exists."""
         from ai.ed3n.multimodal.cross_modal_trainer import CrossModalTrainer
+
         trainer = CrossModalTrainer()
         text_keys, img_keys, _ = self._build_paired_dataset()
         # Only 1 co-occurrence per pair (below train_mapping threshold)
@@ -426,6 +427,7 @@ class TestCrossModalRetrievalMetrics:
     def test_shared_latent_space_semantic_consistency(self):
         """Q7: SharedLatentSpace.semantic_consistency() returns meaningful score."""
         from ai.multimodal.shared_latent_space import SharedLatentSpace
+
         ls = SharedLatentSpace(latent_dim=64)
         ls.register_semantic_modality("vision", 512)
 
@@ -439,42 +441,41 @@ class TestCrossModalRetrievalMetrics:
         tight_score = ls.semantic_consistency("vision", tight)
         loose_score = ls.semantic_consistency("vision", loose)
         # Tight cluster should have higher consistency than loose cluster
-        assert tight_score > loose_score, \
-            f"tight={tight_score:.4f} <= loose={loose_score:.4f}"
+        assert tight_score > loose_score, f"tight={tight_score:.4f} <= loose={loose_score:.4f}"
 
 
 # =========================================================================
 # Helpers
 # =========================================================================
 
+
 def _make_sample_png() -> bytes:
     """Generate a minimal valid PNG (1×1 white pixel)."""
     import struct
     import zlib
+
     width, height = 1, 1
-    raw = b'\x00' + b'\xff\xff\xff' * width * height
+    raw = b"\x00" + b"\xff\xff\xff" * width * height
 
     def chunk(t, data):
         c = t + data
-        crc = struct.pack('>I', zlib.crc32(c) & 0xffffffff)
-        return struct.pack('>I', len(data)) + c + crc
+        crc = struct.pack(">I", zlib.crc32(c) & 0xFFFFFFFF)
+        return struct.pack(">I", len(data)) + c + crc
 
-    ihdr = struct.pack('>IIBBBBB', width, height, 8, 2, 0, 0, 0)
+    ihdr = struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0)
     idat = zlib.compress(raw)
-    return (b'\x89PNG\r\n\x1a\n'
-            + chunk(b'IHDR', ihdr)
-            + chunk(b'IDAT', idat)
-            + chunk(b'IEND', b''))
+    return b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", ihdr) + chunk(b"IDAT", idat) + chunk(b"IEND", b"")
 
 
 def _make_sample_wav() -> bytes:
     """Generate a minimal valid WAV (0.1s silence, 16 kHz, 16-bit mono)."""
     import struct
+
     sr = 16000
     n_samples = int(sr * 0.1)
-    data = struct.pack('<' + 'h' * n_samples, *([0] * n_samples))
+    data = struct.pack("<" + "h" * n_samples, *([0] * n_samples))
     data_size = len(data)
-    header = struct.pack('<4sI4s', b'RIFF', 36 + data_size, b'WAVE')
-    fmt = struct.pack('<4sIHHIIHH', b'fmt ', 16, 1, 1, sr, sr * 2, 2, 16)
-    data_chunk = struct.pack('<4sI', b'data', data_size) + data
+    header = struct.pack("<4sI4s", b"RIFF", 36 + data_size, b"WAVE")
+    fmt = struct.pack("<4sIHHIIHH", b"fmt ", 16, 1, 1, sr, sr * 2, 2, 16)
+    data_chunk = struct.pack("<4sI", b"data", data_size) + data
     return header + fmt + data_chunk

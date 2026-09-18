@@ -276,6 +276,7 @@ def lifecycle_value(key: str, default: float = 0.5) -> float:
 # min(max_bytes, total × max_percent). Whichever fires first is the cap.
 # =============================================================================
 
+
 def _get_capacity_config() -> Dict[str, Any]:
     """Get the capacity cascade from tiered config: system.capacity.capacity."""
     cfg = _get("system.capacity.capacity", {})
@@ -331,6 +332,7 @@ def effective_capacity_bytes(
 # GPU/CPU Compute Configuration
 # =============================================================================
 
+
 def _get_compute_config() -> Dict[str, Any]:
     """Get compute configuration from tiered config."""
     # Config is nested: system.compute.compute
@@ -375,19 +377,22 @@ def compute_bool(feature: str, default: bool = True) -> bool:
             return bool(global_profile["mode"] != "off")
         # Check force_cpu_on_low_power
         if profile_cfg.get("force_cpu_on_low_power", True):
-            if profile.scenario in (HardwareScenario.LAPTOP_POWER_SAVER, HardwareScenario.LOW_POWER_DEVICE):
+            if profile.scenario in (
+                HardwareScenario.LAPTOP_POWER_SAVER,
+                HardwareScenario.LOW_POWER_DEVICE,
+            ):
                 return False
     return True
 
 
 def compute_int(feature: str, key: str, default: int = 0) -> int:
     """Get integer compute setting for a feature (e.g., batch_size, max_vocab).
-    
+
     Priority: profile-specific feature > profile global > global feature > default
     """
     config = _get_compute_config()
     profile = _get_hardware_profile()
-    
+
     # Check profile-specific first
     if profile is not None:
         profile_cfg = config.get("profiles", {}).get(profile.scenario.value, {})
@@ -399,14 +404,14 @@ def compute_int(feature: str, key: str, default: int = 0) -> int:
         val = global_profile.get(key)
         if val is not None:
             return _safe_int(val, default)
-    
+
     # Fall back to global feature config
     feature_cfg = config.get(feature, {})
     if isinstance(feature_cfg, dict):
         val = feature_cfg.get(key)
         if val is not None:
             return _safe_int(val, default)
-    
+
     return default
 
 
@@ -470,6 +475,7 @@ def compute_log_fallback() -> bool:
 
 _EXTENDED_RAM_RESERVE_GB: float = 2.0
 
+
 def model_sizing_config() -> Dict[str, int]:
     """Return (max_vocab, connection_budget) based on the sizing mode.
 
@@ -479,12 +485,11 @@ def model_sizing_config() -> Dict[str, int]:
     joint memory/% cap so it never exceeds what RAM actually holds.
     """
     import os
+
     extended = os.environ.get("ANGELA_EXTENDED_MODEL", "0") == "1"
     if extended:
         target_keys = _safe_int(
-            _get_capacity_config().get("garden_snn", {}).get("vocabulary", {}).get(
-                "target_keys"
-            ),
+            _get_capacity_config().get("garden_snn", {}).get("vocabulary", {}).get("target_keys"),
             51812,
         )
         # Clamp by memory: bytes cap / (4 B) then sqrt → max keys RAM allows.
@@ -500,14 +505,14 @@ def model_sizing_config() -> Dict[str, int]:
                 _EXTENDED_RAM_RESERVE_GB,
             )
             usable_gb = max(0.0, ram_total - reserve_gb)
-            cap_bytes = effective_capacity_bytes("memory", total_gb=usable_gb, numeric_mb=dynamic_mb)
+            cap_bytes = effective_capacity_bytes(
+                "memory", total_gb=usable_gb, numeric_mb=dynamic_mb
+            )
             max_keys_by_ram = int((cap_bytes / 4.0) ** 0.5)
             target_keys = max(1, min(target_keys, max_keys_by_ram))
         else:
             target_keys = max(1, target_keys)
-        budget = _safe_int(
-            _get_capacity_config().get("ed3n", {}).get("core_connections"), 200000
-        )
+        budget = _safe_int(_get_capacity_config().get("ed3n", {}).get("core_connections"), 200000)
         logger.info(
             "Model sizing: EXTENDED mode (max_vocab=%d, budget=%d ≈%.2fGB matrix)",
             target_keys,

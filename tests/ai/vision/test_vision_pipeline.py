@@ -34,9 +34,7 @@ from ai.vision.vision_pipeline import VisionPipeline
 
 def _sample_image_bytes(size: int = 32) -> bytes:
     """Generate a simple PNG image for testing."""
-    img = Image.fromarray(
-        np.random.randint(0, 255, (size, size, 3), dtype=np.uint8)
-    )
+    img = Image.fromarray(np.random.randint(0, 255, (size, size, 3), dtype=np.uint8))
     buf = io.BytesIO()
     img.save(buf, format="PNG")
     return buf.getvalue()
@@ -184,14 +182,16 @@ class TestVisionQualityMonitor:
     def test_report_after_records(self, monitor):
         """T16: Report returns correct averages after recording."""
         for _ in range(10):
-            monitor.record({
-                "ssim": 0.8,
-                "psnr": 25.0,
-                "time_ms": 50.0,
-                "original_size": (128, 128),
-                "cache_hit": False,
-                "image_hash": "abc",
-            })
+            monitor.record(
+                {
+                    "ssim": 0.8,
+                    "psnr": 25.0,
+                    "time_ms": 50.0,
+                    "original_size": (128, 128),
+                    "cache_hit": False,
+                    "image_hash": "abc",
+                }
+            )
         report = monitor.report()
         assert report["total_calls"] == 10
         assert abs(report["avg_ssim"] - 0.8) < 0.01
@@ -205,14 +205,16 @@ class TestVisionQualityMonitor:
     def test_quality_trend_stable(self, monitor):
         """T18: Trend with stable data returns stable."""
         for _ in range(20):
-            monitor.record({
-                "ssim": 0.8,
-                "psnr": 25.0,
-                "time_ms": 50.0,
-                "original_size": (128, 128),
-                "cache_hit": False,
-                "image_hash": "abc",
-            })
+            monitor.record(
+                {
+                    "ssim": 0.8,
+                    "psnr": 25.0,
+                    "time_ms": 50.0,
+                    "original_size": (128, 128),
+                    "cache_hit": False,
+                    "image_hash": "abc",
+                }
+            )
         trend = monitor.quality_trend(window=10)
         assert trend["assessment"] in ("stable", "improving")
 
@@ -223,6 +225,7 @@ class TestVisionServiceExtension:
     async def test_encode_with_pipeline_returns_full_result(self):
         """T19: encode_with_pipeline returns vision pipeline result."""
         from services.vision_service import VisionService
+
         svc = VisionService()
         data = _sample_image_bytes()
         result = await svc.encode_with_pipeline(data)
@@ -234,6 +237,7 @@ class TestVisionServiceExtension:
     async def test_batch_encode_returns_list(self):
         """T20: batch_encode returns list of results."""
         from services.vision_service import VisionService
+
         svc = VisionService()
         imgs = [_sample_image_bytes() for _ in range(3)]
         results = await svc.batch_encode(imgs)

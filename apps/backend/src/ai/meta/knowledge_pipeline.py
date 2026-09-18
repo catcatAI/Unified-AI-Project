@@ -91,7 +91,9 @@ class KnowledgePipeline:
                 result = await handler(text, context or {})
                 if result and result.get("answer"):
                     result["source"] = source_name
-                    logger.debug("[KnowledgePipeline] Hit from %s: %s", source_name, result["answer"][:50])
+                    logger.debug(
+                        "[KnowledgePipeline] Hit from %s: %s", source_name, result["answer"][:50]
+                    )
                     return result
             except Exception as e:
                 logger.debug("[KnowledgePipeline] %s failed: %s", source_name, e)
@@ -106,7 +108,9 @@ class KnowledgePipeline:
             if hasattr(self._math, "is_math_message") and self._math.is_math_message(text):
                 verification = self._math.verify(text)
                 if verification and getattr(verification, "is_correct", False):
-                    answer = getattr(verification, "final_answer", None) or getattr(verification, "response_text", None)
+                    answer = getattr(verification, "final_answer", None) or getattr(
+                        verification, "response_text", None
+                    )
                     if answer:
                         return {"answer": str(answer), "confidence": 0.99}
         except Exception as e:
@@ -138,6 +142,7 @@ class KnowledgePipeline:
     async def _try_knowledge(self, text: str, ctx: Dict) -> Optional[Dict]:
         try:
             from ai.knowledge_base import route_knowledge
+
             answer = route_knowledge(text)
             if answer:
                 return {"answer": answer, "confidence": 0.95}
@@ -157,7 +162,11 @@ class KnowledgePipeline:
                     answers = []
                     for claim in verified[:3]:
                         answers.append(claim.text)
-                    return {"answer": "\n".join(answers), "confidence": 0.90, "source": "grounded_knowledge"}
+                    return {
+                        "answer": "\n".join(answers),
+                        "confidence": 0.90,
+                        "source": "grounded_knowledge",
+                    }
         except Exception as e:
             logger.debug("_try_grounded_knowledge: %s", e)
         return None
@@ -166,6 +175,7 @@ class KnowledgePipeline:
         """Query the ED3N DictionaryLayer (242k+ entries) for translations/definitions."""
         try:
             from ai.ed3n.ed3n_engine import ED3NEngine
+
             engine = ED3NEngine.get_shared(load_trained=False)
             if not engine or not hasattr(engine, "dictionary"):
                 return None
@@ -183,10 +193,10 @@ class KnowledgePipeline:
                 for key, entry in entries.items():
                     if not entry:
                         continue
-                    surfaces = getattr(entry, 'surface_forms', {})
+                    surfaces = getattr(entry, "surface_forms", {})
                     if isinstance(surfaces, dict) and surfaces:
-                        zh = surfaces.get('zh', '')
-                        en = surfaces.get('en', '')
+                        zh = surfaces.get("zh", "")
+                        en = surfaces.get("en", "")
                         if zh and en:
                             parts.append(f"{zh} = {en}")
                         elif zh:
@@ -196,7 +206,11 @@ class KnowledgePipeline:
                     elif entry.contexts:
                         parts.append(f"{key}: {entry.contexts[0]}")
                 if parts:
-                    return {"answer": "\n".join(parts[:3]), "confidence": 0.90, "source": "dictionary"}
+                    return {
+                        "answer": "\n".join(parts[:3]),
+                        "confidence": 0.90,
+                        "source": "dictionary",
+                    }
         except Exception as e:
             logger.debug("_try_dictionary_lookup: %s", e)
         return None
@@ -256,9 +270,21 @@ class KnowledgePipeline:
     def _detect_weather_query(text: str) -> Tuple[bool, Optional[str]]:
         t = text.lower()
         weather_keywords = [
-            "天氣", "天气", "氣溫", "气温", "溫度", "温度",
-            "weather", "temperature", "forecast",
-            "下雨", "刮風", "颱風", "颱風", "rain", "snow",
+            "天氣",
+            "天气",
+            "氣溫",
+            "气温",
+            "溫度",
+            "温度",
+            "weather",
+            "temperature",
+            "forecast",
+            "下雨",
+            "刮風",
+            "颱風",
+            "颱風",
+            "rain",
+            "snow",
         ]
         location_patterns = [
             r"(.{1,10})(?:的)?(?:天氣|天气|氣溫|weather)",
@@ -295,14 +321,30 @@ class KnowledgePipeline:
         if len(t) <= 10 and re.match(r"^[\w\s\-\u4e00-\u9fff]+$", t):
             question_marks = ("?", "？", "吗", "嗎", "呢")
             greetings = (
-                "你好", "您好", "hi", "hello", "hey", "嗨", "哈囉", "哈嘍",
-                "早安", "晚安", "午安", "謝謝", "谢谢", "再見", "再见",
-                "你好呀", "您好吗", "你好嗎", "你好吗",
+                "你好",
+                "您好",
+                "hi",
+                "hello",
+                "hey",
+                "嗨",
+                "哈囉",
+                "哈嘍",
+                "早安",
+                "晚安",
+                "午安",
+                "謝謝",
+                "谢谢",
+                "再見",
+                "再见",
+                "你好呀",
+                "您好吗",
+                "你好嗎",
+                "你好吗",
             )
             if any(g in t for g in greetings) or any(mk in t for mk in question_marks):
                 return False, ""
             words = t.split()
-            if len(words) > 3:      # a sentence, not a lookup
+            if len(words) > 3:  # a sentence, not a lookup
                 return False, ""
             return True, t
         return False, ""

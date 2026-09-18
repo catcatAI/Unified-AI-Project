@@ -180,7 +180,8 @@ class HAMMemoryManager:
                     elif len(kw_lower) <= 2:
                         # Require word-boundary context for short keywords
                         import re as _kw_re
-                        pattern = r'(?<![\w])' + _kw_re.escape(kw_lower) + r'(?![\w])'
+
+                        pattern = r"(?<![\w])" + _kw_re.escape(kw_lower) + r"(?![\w])"
                         if _kw_re.search(pattern, query_lower):
                             best_score = max(best_score, 0.9)
                     else:
@@ -211,7 +212,7 @@ class HAMMemoryManager:
                 # so unrelated templates don't win over honest fallback.
                 # 1/N match → score × (1/N), e.g. 0.9 × 1/3 = 0.3 < 0.5
                 elif len(matched_kws) <= 1 and total_non_stop > 1:
-                    best_score *= (1.0 / max(total_non_stop, 2))
+                    best_score *= 1.0 / max(total_non_stop, 2)
                     if best_score < min_score:
                         continue
                 scored.append((tpl, best_score))
@@ -342,12 +343,13 @@ class HAMMemoryManager:
         # Fallback: first N meaningful 2-char fragments from text.
         # Skip single-char or pure-symbol fragments ("*", " ", etc.).
         import re as _re_fallback
+
         return [
             frag.strip()
             for frag in (text[i : i + 2] for i in range(0, min(len(text), max_keywords * 2), 2))
             if len(frag.strip()) >= 2
             and frag.strip().lower() not in _STOPWORDS
-            and _re_fallback.search(r'[\w]', frag)  # must contain at least one word char
+            and _re_fallback.search(r"[\w]", frag)  # must contain at least one word char
         ][:max_keywords]
 
     def store_conversation(self, conversation: Dict[str, Any]) -> None:

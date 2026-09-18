@@ -108,12 +108,14 @@ class TestModuleExecution:
             ModuleConfig,
         )
 
-        eta.register_module(ModuleConfig(
-            name="and_gate",
-            module_type=AtomicModuleType.LOGIC_GATE,
-            sub_type=LogicGateType.AND,
-            parameters={},
-        ))
+        eta.register_module(
+            ModuleConfig(
+                name="and_gate",
+                module_type=AtomicModuleType.LOGIC_GATE,
+                sub_type=LogicGateType.AND,
+                parameters={},
+            )
+        )
         assert eta.execute("and_gate", {"values": [1, 2, 3]}) is True
         assert eta.execute("and_gate", {"values": [0, 1, 2]}) is False
 
@@ -124,12 +126,14 @@ class TestModuleExecution:
             ModuleConfig,
         )
 
-        eta.register_module(ModuleConfig(
-            name="add_op",
-            module_type=AtomicModuleType.ARITHMETIC_OP,
-            sub_type=ArithmeticOpType.ADD,
-            parameters={},
-        ))
+        eta.register_module(
+            ModuleConfig(
+                name="add_op",
+                module_type=AtomicModuleType.ARITHMETIC_OP,
+                sub_type=ArithmeticOpType.ADD,
+                parameters={},
+            )
+        )
         assert eta.execute("add_op", {"values": [1.0, 2.0, 3.0]}) == 6.0
 
     def test_aggregator_mean(self, eta):
@@ -139,12 +143,14 @@ class TestModuleExecution:
             ModuleConfig,
         )
 
-        eta.register_module(ModuleConfig(
-            name="mean_agg",
-            module_type=AtomicModuleType.AGGREGATOR,
-            sub_type=AggregatorType.MEAN,
-            parameters={},
-        ))
+        eta.register_module(
+            ModuleConfig(
+                name="mean_agg",
+                module_type=AtomicModuleType.AGGREGATOR,
+                sub_type=AggregatorType.MEAN,
+                parameters={},
+            )
+        )
         assert eta.execute("mean_agg", {"values": [2.0, 4.0, 6.0]}) == 4.0
 
     def test_router_direct(self, eta):
@@ -154,12 +160,14 @@ class TestModuleExecution:
             RouterType,
         )
 
-        eta.register_module(ModuleConfig(
-            name="direct_router",
-            module_type=AtomicModuleType.ROUTER,
-            sub_type=RouterType.DIRECT,
-            parameters={"targets": ["alpha"]},
-        ))
+        eta.register_module(
+            ModuleConfig(
+                name="direct_router",
+                module_type=AtomicModuleType.ROUTER,
+                sub_type=RouterType.DIRECT,
+                parameters={"targets": ["alpha"]},
+            )
+        )
         assert eta.execute("direct_router", {}) == ["alpha"]
 
 
@@ -210,9 +218,7 @@ class TestTriggerCurve:
         from core.engine.eta_axis import TriggerCurve
 
         tc = TriggerCurve()
-        new_th = tc.compute_trigger_threshold(
-            actual_rate=0.5, target_rate=0.3, current=0.5
-        )
+        new_th = tc.compute_trigger_threshold(actual_rate=0.5, target_rate=0.3, current=0.5)
         assert 0.1 <= new_th <= 0.9
 
 

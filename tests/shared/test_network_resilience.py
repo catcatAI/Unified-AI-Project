@@ -1,6 +1,7 @@
 import asyncio
+
 import pytest
-from shared.network_resilience import RetryPolicy, CircuitBreaker
+from shared.network_resilience import CircuitBreaker, RetryPolicy
 
 
 class TestRetryPolicy:
@@ -50,6 +51,7 @@ class TestRetryPolicy:
 
         original_sleep = asyncio.sleep
         try:
+
             async def tracking_sleep(d):
                 delays.append(d)
 

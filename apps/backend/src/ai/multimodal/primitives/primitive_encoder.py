@@ -1,6 +1,5 @@
 """Encode primitive parameters to/from embeddings."""
 
-
 import numpy as np
 
 from .primitive_types import DrawingInstructions

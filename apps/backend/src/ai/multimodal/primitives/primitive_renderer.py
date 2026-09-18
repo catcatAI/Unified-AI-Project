@@ -1,7 +1,7 @@
 """Render drawing instructions to images using PIL."""
 
 import math
-from typing import Tuple, Any
+from typing import Any, Tuple
 
 from PIL import Image, ImageDraw
 

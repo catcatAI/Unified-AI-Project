@@ -16,7 +16,13 @@ Provides:
 Import directly from submodules: from shared.key_manager import get_security_key
 """
 
-from shared.error import ErrorHandler, HSPConnectionError, ProjectError, ResourceError, SecurityError
+from shared.error import (
+    ErrorHandler,
+    HSPConnectionError,
+    ProjectError,
+    ResourceError,
+    SecurityError,
+)
 from shared.key_manager import UnifiedKeyManager
 from shared.network_resilience import CircuitBreaker, RetryPolicy
 from shared.security_middleware import SignedCommunicationMiddleware

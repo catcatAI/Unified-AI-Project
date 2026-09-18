@@ -1,4 +1,5 @@
 """Game engine — integrates tokens, NPCs, quests, and all mechanics."""
+
 from __future__ import annotations
 
 import json
@@ -7,19 +8,21 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from .i18n import I18n
-from .models import Character, Scene, GameState, Message
+from .models import Character, GameState, Message, Scene
 from .npc import NPC, create_npcs_for_scene
 from .quests import QuestLog
 from .token_effects import (
     apply_token_hp,
-    apply_token_spirit,
     apply_token_skill_bonus,
+    apply_token_spirit,
     get_combat_dice_bonus,
     get_damage_resistance,
     get_token_descriptions,
 )
 
-DATA_DIR = Path(__file__).resolve().parent.parent.parent.parent.parent / "apps" / "game-rpg" / "data"
+DATA_DIR = (
+    Path(__file__).resolve().parent.parent.parent.parent.parent / "apps" / "game-rpg" / "data"
+)
 CARDS_PATH = DATA_DIR / "game_cards.json"
 
 WORLDS: Dict[str, Dict[str, Any]] = {
@@ -50,7 +53,7 @@ NPC_LINES = {
         '"Watch your step — the ice here is unstable."',
         '"Do you feel that vibration? That\'s the flow of spirit particles."',
         '"The path ahead is unclear. We should observe first."',
-        '"Don\'t worry, I\'ll protect you."',
+        "\"Don't worry, I'll protect you.\"",
         '"Did you hear that? The sound... it comes from deep below."',
         '"We need more intelligence. Found anything?"',
     ],
@@ -131,11 +134,13 @@ class GameEngine:
     def get_worlds(self) -> list[dict]:
         result = []
         for wid, wdef in WORLDS.items():
-            result.append({
-                "id": wid,
-                "name": self.i18n.t(wdef["name_key"]),
-                "desc": self.i18n.t(wdef["desc_key"]),
-            })
+            result.append(
+                {
+                    "id": wid,
+                    "name": self.i18n.t(wdef["name_key"]),
+                    "desc": self.i18n.t(wdef["desc_key"]),
+                }
+            )
         return result
 
     def get_characters(self) -> list[dict]:
@@ -187,14 +192,28 @@ class GameEngine:
         scene = Scene(
             card_id=scene_card["card_id"] if scene_card else scene_card_id,
             name=scene_name or "鏡湖周邊",
-            description=_extract_stat(scene_card, "location", "場景", "nature", default="鏡湖周邊區域") if scene_card else "鏡湖周邊區域",
-            spirit_density=float(
-                _extract_stat(scene_card, "spirit_density", default="2.0")
-                .replace("ppm", "").split("-")[0]
-            ) if scene_card else 2.0,
-            temperature=_extract_stat(scene_card, "temperature", default="常溫") if scene_card else "常溫",
-            characters=_extract_stat(scene_card, "involved_characters", default="").split("、")
-            if scene_card else [],
+            description=(
+                _extract_stat(scene_card, "location", "場景", "nature", default="鏡湖周邊區域")
+                if scene_card
+                else "鏡湖周邊區域"
+            ),
+            spirit_density=(
+                float(
+                    _extract_stat(scene_card, "spirit_density", default="2.0")
+                    .replace("ppm", "")
+                    .split("-")[0]
+                )
+                if scene_card
+                else 2.0
+            ),
+            temperature=(
+                _extract_stat(scene_card, "temperature", default="常溫") if scene_card else "常溫"
+            ),
+            characters=(
+                _extract_stat(scene_card, "involved_characters", default="").split("、")
+                if scene_card
+                else []
+            ),
             tokens=scene_card.get("tokens", []) if scene_card else [],
         )
 
@@ -202,36 +221,46 @@ class GameEngine:
         self.npcs = create_npcs_for_scene(scene_card_id, lang=self.i18n.lang)
         self.hour = 12
 
-        self._state.messages.append(Message(
-            speaker="system",
-            text=self.i18n.t("narration_scene_intro", name=scene.name, desc=scene.description),
-            kind="narration",
-        ))
-        self._state.messages.append(Message(
-            speaker="system",
-            text=self.i18n.t("narration_enter_world", name=pc.name),
-            kind="narration",
-        ))
+        self._state.messages.append(
+            Message(
+                speaker="system",
+                text=self.i18n.t("narration_scene_intro", name=scene.name, desc=scene.description),
+                kind="narration",
+            )
+        )
+        self._state.messages.append(
+            Message(
+                speaker="system",
+                text=self.i18n.t("narration_enter_world", name=pc.name),
+                kind="narration",
+            )
+        )
         if self.npcs:
             names = ", ".join(n.name for n in self.npcs)
-            self._state.messages.append(Message(
-                speaker="system",
-                text=self.i18n.t("narration_present", names=names),
-                kind="narration",
-            ))
+            self._state.messages.append(
+                Message(
+                    speaker="system",
+                    text=self.i18n.t("narration_present", names=names),
+                    kind="narration",
+                )
+            )
         else:
-            self._state.messages.append(Message(
-                speaker="system",
-                text=self.i18n.t("narration_no_npcs"),
-                kind="narration",
-            ))
+            self._state.messages.append(
+                Message(
+                    speaker="system",
+                    text=self.i18n.t("narration_no_npcs"),
+                    kind="narration",
+                )
+            )
 
         self.quest_log.activate_quest("MQ-01")
-        self._state.messages.append(Message(
-            speaker="system",
-            text=self.i18n.t("quest_started", title=self.quest_log.get_main_quests()[0].title),
-            kind="system",
-        ))
+        self._state.messages.append(
+            Message(
+                speaker="system",
+                text=self.i18n.t("quest_started", title=self.quest_log.get_main_quests()[0].title),
+                kind="system",
+            )
+        )
 
         self._refresh_choices()
         return self._state
@@ -259,7 +288,9 @@ class GameEngine:
             if 0 <= idx < len(s.choices):
                 self._handle_choice(idx)
             else:
-                s.messages.append(Message(speaker="system", text=self.i18n.t("invalid_choice"), kind="system"))
+                s.messages.append(
+                    Message(speaker="system", text=self.i18n.t("invalid_choice"), kind="system")
+                )
         else:
             s.messages.append(Message(speaker="你", text=text, kind="action"))
             self._handle_free_input(text)
@@ -357,7 +388,9 @@ class GameEngine:
             "煦掠": "SQ-06",
         }
         quest_id = npc_quest_map.get(npc.name)
-        if quest_id and not any(q.quest_id == quest_id for q in self.quest_log.quests if q.status != "available"):
+        if quest_id and not any(
+            q.quest_id == quest_id for q in self.quest_log.quests if q.status != "available"
+        ):
             choices.insert(0, ("accept_quest", self.i18n.t("choice_accept_quest", name=npc.name)))
 
         self._pending_npc = npc
@@ -375,19 +408,28 @@ class GameEngine:
 
         if action_key == "accept_quest":
             npc_quest_map = {
-                "晞咕萊雅": "SQ-01", "紅": "SQ-02", "小狐丸": "MQ-02",
-                "晴空": "SQ-03", "深痕·裂脊": "SQ-04", "翎翾": "SQ-05", "煦掠": "SQ-06",
+                "晞咕萊雅": "SQ-01",
+                "紅": "SQ-02",
+                "小狐丸": "MQ-02",
+                "晴空": "SQ-03",
+                "深痕·裂脊": "SQ-04",
+                "翎翾": "SQ-05",
+                "煦掠": "SQ-06",
             }
             quest_id = npc_quest_map.get(npc.name)
             if quest_id and self.quest_log.activate_quest(quest_id):
                 quest = next(q for q in self.quest_log.quests if q.quest_id == quest_id)
-                s.messages.append(Message(
-                    speaker="system",
-                    text=self.i18n.t("quest_started", title=quest.title),
-                    kind="system",
-                ))
+                s.messages.append(
+                    Message(
+                        speaker="system",
+                        text=self.i18n.t("quest_started", title=quest.title),
+                        kind="system",
+                    )
+                )
             else:
-                s.messages.append(Message(speaker=npc.name, text=self.i18n.t("npc_no_quest"), kind="dialogue"))
+                s.messages.append(
+                    Message(speaker=npc.name, text=self.i18n.t("npc_no_quest"), kind="dialogue")
+                )
 
         elif action_key == "ask_info":
             info_lines = npc.get_dialogue()
@@ -408,17 +450,21 @@ class GameEngine:
                 s.pc.hp = min(s.pc.max_hp, s.pc.hp + heal)
                 spirit = random.randint(5, 15)
                 s.pc.spirit = min(s.pc.max_spirit, s.pc.spirit + spirit)
-                s.messages.append(Message(
-                    speaker=npc.name,
-                    text=self.i18n.t("npc_help_yes", name=npc.name, heal=heal, spirit=spirit),
-                    kind="dialogue",
-                ))
+                s.messages.append(
+                    Message(
+                        speaker=npc.name,
+                        text=self.i18n.t("npc_help_yes", name=npc.name, heal=heal, spirit=spirit),
+                        kind="dialogue",
+                    )
+                )
             else:
-                s.messages.append(Message(
-                    speaker=npc.name,
-                    text=self.i18n.t("npc_help_no", name=npc.name),
-                    kind="dialogue",
-                ))
+                s.messages.append(
+                    Message(
+                        speaker=npc.name,
+                        text=self.i18n.t("npc_help_no", name=npc.name),
+                        kind="dialogue",
+                    )
+                )
             self._check_quest_progress("ask_help", npc_name=npc.name)
 
         elif action_key == "give_item":
@@ -426,25 +472,31 @@ class GameEngine:
                 item = s.pc.inventory[0]
                 s.pc.inventory.pop(0)
                 npc.disposition = min(100, npc.disposition + 10)
-                s.messages.append(Message(
-                    speaker=npc.name,
-                    text=self.i18n.t("npc_item_received", name=npc.name, item=item),
-                    kind="dialogue",
-                ))
+                s.messages.append(
+                    Message(
+                        speaker=npc.name,
+                        text=self.i18n.t("npc_item_received", name=npc.name, item=item),
+                        kind="dialogue",
+                    )
+                )
                 self._check_quest_progress("give_item", npc_name=npc.name)
             else:
-                s.messages.append(Message(
-                    speaker=npc.name,
-                    text=self.i18n.t("npc_no_item"),
-                    kind="dialogue",
-                ))
+                s.messages.append(
+                    Message(
+                        speaker=npc.name,
+                        text=self.i18n.t("npc_no_item"),
+                        kind="dialogue",
+                    )
+                )
 
         elif action_key == "leave":
-            s.messages.append(Message(
-                speaker="system",
-                text=self.i18n.t("you_leave", name=npc.name),
-                kind="narration",
-            ))
+            s.messages.append(
+                Message(
+                    speaker="system",
+                    text=self.i18n.t("you_leave", name=npc.name),
+                    kind="narration",
+                )
+            )
 
         self._showing_interaction = False
         self._pending_npc = None
@@ -474,64 +526,93 @@ class GameEngine:
                 break
 
         if event_type == "danger":
-            enemy = random.choice(["失控的靈子體", " Concept野兽", "流浪的自動人偶", "概念碎片結晶體"])
-            enemy_en = random.choice(["Rogue spirit", "Concept beast", "Wandering automaton", "Concept crystal"])
+            enemy = random.choice(
+                ["失控的靈子體", " Concept野兽", "流浪的自動人偶", "概念碎片結晶體"]
+            )
+            enemy_en = random.choice(
+                ["Rogue spirit", "Concept beast", "Wandering automaton", "Concept crystal"]
+            )
             enemy_ja = random.choice(["暴走霊子体", "概念獣", "流浪オートマトン", "概念結晶体"])
             enemy_name = {"zh": enemy, "en": enemy_en, "ja": enemy_ja}[self.i18n.lang]
             dmg = random.randint(5, 15)
             s.pc.hp -= dmg
-            s.messages.append(Message(
-                speaker="system",
-                text=self.i18n.t("travel_danger", enemy=enemy_name, dmg=dmg),
-                kind="narration",
-            ))
+            s.messages.append(
+                Message(
+                    speaker="system",
+                    text=self.i18n.t("travel_danger", enemy=enemy_name, dmg=dmg),
+                    kind="narration",
+                )
+            )
         elif event_type == "discovery":
             loot_options = [
                 self.i18n.t("loot_spirit_crystal"),
                 self.i18n.t("item_flashlight"),
                 self.i18n.t("item_map"),
-                "復原藥水" if self.i18n.lang == "zh" else "Healing Potion" if self.i18n.lang == "en" else "回復薬",
+                (
+                    "復原藥水"
+                    if self.i18n.lang == "zh"
+                    else "Healing Potion" if self.i18n.lang == "en" else "回復薬"
+                ),
             ]
             loot = random.choice(loot_options)
             s.pc.inventory.append(loot)
             heal = random.randint(5, 15)
             s.pc.hp = min(s.pc.max_hp, s.pc.hp + heal)
-            s.messages.append(Message(
-                speaker="system",
-                text=self.i18n.t("travel_discovery", item=loot, heal=heal),
-                kind="narration",
-            ))
+            s.messages.append(
+                Message(
+                    speaker="system",
+                    text=self.i18n.t("travel_discovery", item=loot, heal=heal),
+                    kind="narration",
+                )
+            )
 
         card = _find_card(self.cards, next_id)
         if card:
-            name = card.get("name", "") or _extract_stat(card, "location", "場景", "name", default="")
+            name = card.get("name", "") or _extract_stat(
+                card, "location", "場景", "name", default=""
+            )
             s.scene = Scene(
                 card_id=card["card_id"],
                 name=name or card["card_id"],
                 description=_extract_stat(card, "location", "場景", "nature", default=""),
                 spirit_density=float(
                     _extract_stat(card, "spirit_density", default="2.0")
-                    .replace("ppm", "").split("-")[0]
+                    .replace("ppm", "")
+                    .split("-")[0]
                 ),
                 temperature=_extract_stat(card, "temperature", default="常溫"),
                 characters=_extract_stat(card, "involved_characters", default="").split("、"),
                 tokens=card.get("tokens", []),
             )
             self.npcs = create_npcs_for_scene(next_id, lang=self.i18n.lang)
-            s.messages.append(Message(
-                speaker="system",
-                text=self.i18n.t("narration_scene_intro", name=s.scene.name, desc=s.scene.description),
-                kind="narration",
-            ))
+            s.messages.append(
+                Message(
+                    speaker="system",
+                    text=self.i18n.t(
+                        "narration_scene_intro", name=s.scene.name, desc=s.scene.description
+                    ),
+                    kind="narration",
+                )
+            )
             if self.npcs:
                 names = ", ".join(n.name for n in self.npcs)
-                s.messages.append(Message(speaker="system", text=self.i18n.t("narration_present", names=names), kind="narration"))
+                s.messages.append(
+                    Message(
+                        speaker="system",
+                        text=self.i18n.t("narration_present", names=names),
+                        kind="narration",
+                    )
+                )
                 # NPC reacts to player arrival
                 npc = random.choice(self.npcs)
                 greeting = npc.get_greeting()
                 s.messages.append(Message(speaker=npc.name, text=greeting, kind="dialogue"))
             else:
-                s.messages.append(Message(speaker="system", text=self.i18n.t("narration_no_npcs"), kind="narration"))
+                s.messages.append(
+                    Message(
+                        speaker="system", text=self.i18n.t("narration_no_npcs"), kind="narration"
+                    )
+                )
 
     def _rest(self) -> None:
         s = self.state
@@ -549,11 +630,13 @@ class GameEngine:
             # NPC visits while resting
             npc = random.choice(self.npcs)
             visit_line = npc.get_dialogue()
-            s.messages.append(Message(
-                speaker=npc.name,
-                text=self.i18n.t("rest_npc_visit", name=npc.name, line=visit_line),
-                kind="dialogue",
-            ))
+            s.messages.append(
+                Message(
+                    speaker=npc.name,
+                    text=self.i18n.t("rest_npc_visit", name=npc.name, line=visit_line),
+                    kind="dialogue",
+                )
+            )
         elif roll < 0.45:
             # Dream / vision
             dreams = [
@@ -561,20 +644,24 @@ class GameEngine:
                 self.i18n.t("rest_dream_voice"),
                 self.i18n.t("rest_dream_memory"),
             ]
-            s.messages.append(Message(
-                speaker="system",
-                text=random.choice(dreams),
-                kind="narration",
-            ))
+            s.messages.append(
+                Message(
+                    speaker="system",
+                    text=random.choice(dreams),
+                    kind="narration",
+                )
+            )
         elif roll < 0.55:
             # Danger while resting
             dmg = random.randint(3, 10)
             s.pc.hp -= dmg
-            s.messages.append(Message(
-                speaker="system",
-                text=self.i18n.t("rest_danger", dmg=dmg),
-                kind="narration",
-            ))
+            s.messages.append(
+                Message(
+                    speaker="system",
+                    text=self.i18n.t("rest_danger", dmg=dmg),
+                    kind="narration",
+                )
+            )
 
     def _combat(self, text: str) -> None:
         s = self.state
@@ -606,11 +693,13 @@ class GameEngine:
             ],
         }
         enemy_name, enemy_hp, enemy_dmg = random.choice(enemies[self.i18n.lang])
-        s.messages.append(Message(
-            speaker="system",
-            text=self.i18n.t("combat_encounter", enemy=enemy_name),
-            kind="narration",
-        ))
+        s.messages.append(
+            Message(
+                speaker="system",
+                text=self.i18n.t("combat_encounter", enemy=enemy_name),
+                kind="narration",
+            )
+        )
 
         # Player attacks
         roll = random.randint(1, 12)
@@ -623,40 +712,63 @@ class GameEngine:
         if total >= 10:
             dmg = random.randint(15, 35)
             enemy_hp -= dmg
-            loot = random.choice([
-                self.i18n.t("loot_spirit_crystal"),
-                "記憶碎片" if self.i18n.lang == "zh" else "Memory shard" if self.i18n.lang == "en" else "記憶欠片",
-                "概念殘片" if self.i18n.lang == "zh" else "Concept fragment" if self.i18n.lang == "en" else "概念断片",
-            ])
+            loot = random.choice(
+                [
+                    self.i18n.t("loot_spirit_crystal"),
+                    (
+                        "記憶碎片"
+                        if self.i18n.lang == "zh"
+                        else "Memory shard" if self.i18n.lang == "en" else "記憶欠片"
+                    ),
+                    (
+                        "概念殘片"
+                        if self.i18n.lang == "zh"
+                        else "Concept fragment" if self.i18n.lang == "en" else "概念断片"
+                    ),
+                ]
+            )
             s.pc.inventory.append(loot)
             heal = random.randint(5, 15)
             s.pc.hp = min(s.pc.max_hp, s.pc.hp + heal)
-            s.messages.append(Message(
-                speaker="system",
-                text=self.i18n.t("combat_win", enemy=enemy_name, dmg=dmg, item=loot, heal=heal),
-                kind="system",
-            ))
+            s.messages.append(
+                Message(
+                    speaker="system",
+                    text=self.i18n.t("combat_win", enemy=enemy_name, dmg=dmg, item=loot, heal=heal),
+                    kind="system",
+                )
+            )
             self._check_quest_progress("combat")
         elif total >= 6:
             # Draw: both take damage
             player_dmg = random.randint(5, 15)
             enemy_dmg_actual = random.randint(3, 10)
             s.pc.hp -= int(player_dmg * (1 - resistance))
-            s.messages.append(Message(
-                speaker="system",
-                text=self.i18n.t("combat_draw", enemy=enemy_name, player_dmg=player_dmg, enemy_dmg=enemy_dmg_actual),
-                kind="system",
-            ))
+            s.messages.append(
+                Message(
+                    speaker="system",
+                    text=self.i18n.t(
+                        "combat_draw",
+                        enemy=enemy_name,
+                        player_dmg=player_dmg,
+                        enemy_dmg=enemy_dmg_actual,
+                    ),
+                    kind="system",
+                )
+            )
         else:
             # Player takes damage
             counter = random.randint(enemy_dmg // 2, enemy_dmg)
             reduced = int(counter * (1 - resistance))
             s.pc.hp -= reduced
-            s.messages.append(Message(
-                speaker="system",
-                text=self.i18n.t("combat_lose", enemy=enemy_name, dmg=reduced, resist=int(resistance * 100)),
-                kind="system",
-            ))
+            s.messages.append(
+                Message(
+                    speaker="system",
+                    text=self.i18n.t(
+                        "combat_lose", enemy=enemy_name, dmg=reduced, resist=int(resistance * 100)
+                    ),
+                    kind="system",
+                )
+            )
 
     def _observe(self) -> None:
         s = self.state
@@ -676,50 +788,70 @@ class GameEngine:
         find_roll = random.random()
         if find_roll < 0.3:
             # Find an item
-            loot = random.choice([
-                self.i18n.t("loot_spirit_crystal"),
-                "補給物資" if self.i18n.lang == "zh" else "Supplies" if self.i18n.lang == "en" else "補給物資",
-                "舊地圖" if self.i18n.lang == "zh" else "Old map" if self.i18n.lang == "en" else "古い地図",
-            ])
+            loot = random.choice(
+                [
+                    self.i18n.t("loot_spirit_crystal"),
+                    (
+                        "補給物資"
+                        if self.i18n.lang == "zh"
+                        else "Supplies" if self.i18n.lang == "en" else "補給物資"
+                    ),
+                    (
+                        "舊地圖"
+                        if self.i18n.lang == "zh"
+                        else "Old map" if self.i18n.lang == "en" else "古い地図"
+                    ),
+                ]
+            )
             s.pc.inventory.append(loot)
-            s.messages.append(Message(
-                speaker="system",
-                text=self.i18n.t("observe_find", discovery=discovery, item=loot),
-                kind="narration",
-            ))
+            s.messages.append(
+                Message(
+                    speaker="system",
+                    text=self.i18n.t("observe_find", discovery=discovery, item=loot),
+                    kind="narration",
+                )
+            )
         elif find_roll < 0.5:
             # Find a clue about the quest
             active = self.quest_log.get_active()
             if active:
                 q = random.choice(active)
-                s.messages.append(Message(
-                    speaker="system",
-                    text=self.i18n.t("observe_quest_clue", discovery=discovery, quest=q.title),
-                    kind="narration",
-                ))
+                s.messages.append(
+                    Message(
+                        speaker="system",
+                        text=self.i18n.t("observe_quest_clue", discovery=discovery, quest=q.title),
+                        kind="narration",
+                    )
+                )
             else:
-                s.messages.append(Message(
+                s.messages.append(
+                    Message(
+                        speaker="system",
+                        text=self.i18n.t("observe_generic", discovery=discovery),
+                        kind="narration",
+                    )
+                )
+        else:
+            # Just describe what you see
+            s.messages.append(
+                Message(
                     speaker="system",
                     text=self.i18n.t("observe_generic", discovery=discovery),
                     kind="narration",
-                ))
-        else:
-            # Just describe what you see
-            s.messages.append(Message(
-                speaker="system",
-                text=self.i18n.t("observe_generic", discovery=discovery),
-                kind="narration",
-            ))
+                )
+            )
 
         # Maybe NPC approaches
         if self.npcs and random.random() < 0.4:
             npc = random.choice(self.npcs)
             approach_line = npc.get_dialogue()
-            s.messages.append(Message(
-                speaker=npc.name,
-                text=approach_line,
-                kind="dialogue",
-            ))
+            s.messages.append(
+                Message(
+                    speaker=npc.name,
+                    text=approach_line,
+                    kind="dialogue",
+                )
+            )
 
     def _show_inventory(self) -> None:
         s = self.state
@@ -747,14 +879,25 @@ class GameEngine:
         active = self.quest_log.get_active()
         completed = self.quest_log.get_completed()
         if not active and not completed:
-            s.messages.append(Message(speaker="system", text=self.i18n.t("no_quests"), kind="system"))
+            s.messages.append(
+                Message(speaker="system", text=self.i18n.t("no_quests"), kind="system")
+            )
             return
         lines = []
         for q in active:
             pct = int(q.progress * 100)
             obj_done = sum(1 for o in q.objectives if o.completed)
             obj_total = len(q.objectives)
-            lines.append(self.i18n.t("quest_progress", id=q.quest_id, title=q.title, pct=pct, done=obj_done, total=obj_total))
+            lines.append(
+                self.i18n.t(
+                    "quest_progress",
+                    id=q.quest_id,
+                    title=q.title,
+                    pct=pct,
+                    done=obj_done,
+                    total=obj_total,
+                )
+            )
         for q in completed:
             lines.append(self.i18n.t("quest_done", id=q.quest_id, title=q.title))
         s.messages.append(Message(speaker="system", text="\n".join(lines), kind="system"))
@@ -762,7 +905,9 @@ class GameEngine:
     def _show_npc_info(self) -> None:
         s = self.state
         if not self.npcs:
-            s.messages.append(Message(speaker="system", text=self.i18n.t("no_npcs_here"), kind="system"))
+            s.messages.append(
+                Message(speaker="system", text=self.i18n.t("no_npcs_here"), kind="system")
+            )
             return
         lines = []
         for npc in self.npcs:
@@ -802,26 +947,32 @@ class GameEngine:
             for q in self.quest_log.get_available():
                 if q.source_card_id == scene_id:
                     self.quest_log.activate_quest(q.quest_id)
-                    s.messages.append(Message(
-                        speaker="system",
-                        text=self.i18n.t("quest_started", title=q.title),
-                        kind="system",
-                    ))
+                    s.messages.append(
+                        Message(
+                            speaker="system",
+                            text=self.i18n.t("quest_started", title=q.title),
+                            kind="system",
+                        )
+                    )
 
         for quest in self.quest_log.get_active():
             for obj in quest.objectives:
                 if obj.completed:
                     continue
                 if obj.check(base_action, scene_id, npc_name, s.pc.inventory):
-                    s.messages.append(Message(
-                        speaker="system",
-                        text=self.i18n.t("quest_obj_complete", desc=obj.description),
-                        kind="system",
-                    ))
+                    s.messages.append(
+                        Message(
+                            speaker="system",
+                            text=self.i18n.t("quest_obj_complete", desc=obj.description),
+                            kind="system",
+                        )
+                    )
             if quest.status != "completed" and all(o.completed for o in quest.objectives):
                 quest.status = "completed"
-                s.messages.append(Message(
-                    speaker="system",
-                    text=self.i18n.t("quest_complete", title=quest.title),
-                    kind="system",
-                ))
+                s.messages.append(
+                    Message(
+                        speaker="system",
+                        text=self.i18n.t("quest_complete", title=quest.title),
+                        kind="system",
+                    )
+                )

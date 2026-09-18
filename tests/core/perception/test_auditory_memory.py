@@ -1,4 +1,5 @@
 """Tests for AuditoryMemory."""
+
 import numpy as np
 import pytest
 from core.perception.auditory_memory import AuditoryMemory, VoiceprintProfile

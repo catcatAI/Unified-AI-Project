@@ -39,12 +39,18 @@ def mock_service():
     svc.save_weights = AsyncMock(return_value={"status": "saved", "path": "/tmp/test.npz"})
     svc.load_weights = AsyncMock(return_value={"status": "loaded"})
     svc.list_items = AsyncMock(return_value={"items": {"a": {"modality": "vision"}}, "count": 1})
-    svc.get_item = AsyncMock(return_value={
-        "modality": "vision", "latent": [0.1, 0.2], "feature_vector": [0.3, 0.4],
-    })
-    svc.evaluate = AsyncMock(return_value={
-        "metrics": {"ssim": 0.85, "snr": 15.0},
-    })
+    svc.get_item = AsyncMock(
+        return_value={
+            "modality": "vision",
+            "latent": [0.1, 0.2],
+            "feature_vector": [0.3, 0.4],
+        }
+    )
+    svc.evaluate = AsyncMock(
+        return_value={
+            "metrics": {"ssim": 0.85, "snr": 15.0},
+        }
+    )
     # Explicitly avoid _get_cml mocking (state_persistence checks isinstance)
     # to prevent MagicMock recursive serialization hangs.
     svc._get_cml = None  # type: ignore
@@ -99,7 +105,10 @@ class TestErrorRecoveryEncode:
     async def test_encode_all_retries_fail(self, error_recovery, mock_service, tmp_path):
         """All retries fail returns error dict."""
         mock_service.encode.side_effect = [
-            {"error": "err1"}, {"error": "err2"}, {"error": "err3"}, {"error": "err4"},
+            {"error": "err1"},
+            {"error": "err2"},
+            {"error": "err3"},
+            {"error": "err4"},
         ]
         log_path = str(tmp_path / "crisis_log.txt")
         with patch("core.crisis_log.CRISIS_LOG_PATH", log_path):
@@ -305,11 +314,13 @@ class TestQualityMonitor:
         """Degradation is detected when quality drops > 10%."""
         # Populate history with 3 high quality samples (need >=3 for baseline)
         for _ in range(3):
-            quality_monitor._history.append({
-                "timestamp": time.time(),
-                "vision": {"quality": 0.95, "source": "synthetic"},
-                "audio": {"quality": 20.0, "source": "synthetic"},
-            })
+            quality_monitor._history.append(
+                {
+                    "timestamp": time.time(),
+                    "vision": {"quality": 0.95, "source": "synthetic"},
+                    "audio": {"quality": 20.0, "source": "synthetic"},
+                }
+            )
         # Test with low quality — should detect degradation
         degradation = quality_monitor._detect_degradation(0.5, 5.0)
         assert degradation is not None
@@ -319,16 +330,20 @@ class TestQualityMonitor:
     @pytest.mark.asyncio
     async def test_no_false_degradation(self, quality_monitor):
         """Similar quality does not trigger false degradation."""
-        quality_monitor._history.append({
-            "timestamp": time.time(),
-            "vision": {"quality": 0.85, "source": "synthetic"},
-            "audio": {"quality": 15.0, "source": "synthetic"},
-        })
-        quality_monitor._history.append({
-            "timestamp": time.time(),
-            "vision": {"quality": 0.84, "source": "synthetic"},
-            "audio": {"quality": 14.8, "source": "synthetic"},
-        })
+        quality_monitor._history.append(
+            {
+                "timestamp": time.time(),
+                "vision": {"quality": 0.85, "source": "synthetic"},
+                "audio": {"quality": 15.0, "source": "synthetic"},
+            }
+        )
+        quality_monitor._history.append(
+            {
+                "timestamp": time.time(),
+                "vision": {"quality": 0.84, "source": "synthetic"},
+                "audio": {"quality": 14.8, "source": "synthetic"},
+            }
+        )
         degradation = quality_monitor._detect_degradation(0.83, 14.5)
         assert degradation is None
 

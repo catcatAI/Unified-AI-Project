@@ -40,7 +40,9 @@ logger = logging.getLogger(__name__)
 class AgentError(Exception):
     """Base exception for all agent-related errors."""
 
-    def __init__(self, message: str, agent_id: Optional[str] = None, error_type: Optional[str] = None):
+    def __init__(
+        self, message: str, agent_id: Optional[str] = None, error_type: Optional[str] = None
+    ):
         super().__init__(message)
         self.agent_id = agent_id
         self.error_type = error_type
@@ -110,7 +112,7 @@ class BaseAgent:
         self.is_running = False
         self.task_queue: list[QueuedTask] = []
         self.max_queue_size = cache_value("agent_queue_size", 100)
-        self.task_queue_lock: Optional[asyncio.Lock] = None
+        self.task_queue_lock: asyncio.Lock = asyncio.Lock()
         self.task_handlers: dict[str, Callable] = {}
         self.max_retries = retry_value("agent_task_retries", 3)
         self.retry_delay = loop_sleep("agent_retry_delay", 1.0)
@@ -128,7 +130,6 @@ class BaseAgent:
         """Basic synchronous initialization to avoid complex dependencies."""
         if self._initialized:
             return
-        self.task_queue_lock = asyncio.Lock()
         self._initialized = True
         logger.info(f"[{self.agent_id}] BaseAgent basic initialization complete.")
 
@@ -240,7 +241,6 @@ class BaseAgent:
             if len(self.task_queue) >= self.max_queue_size:
                 logger.warning(
                     f"[{self.agent_id}] Task queue is full, rejecting task {queued_task.task_id}",
-
                 )
                 await self._send_task_rejection(queued_task)
                 return
@@ -302,7 +302,7 @@ class BaseAgent:
         self._task_counter += 1
 
         try:
-            capability_id = task.payload.get("capability_id_filter", "")
+            capability_id = task.payload.get("capability_id_filter") or ""
             handler = self.task_handlers.get(capability_id, self._default_task_handler)
             result = await handler(task.payload, task.sender_id, task.envelope)
 
@@ -346,7 +346,7 @@ class BaseAgent:
                 async with self.task_queue_lock:
                     self.task_queue.insert(0, task)
             else:
-                logger.error(
+                logger.error(  # type: ignore[func-returns-value]
                     f"[{self.agent_id}] Task {task.task_id} failed after {self.max_retries} retries.",
                     exc_info=True,
                     extra={
@@ -356,7 +356,7 @@ class BaseAgent:
                         "correlation_id": task_error.correlation_id,
                         "timestamp": task_error.timestamp,
                     },
-                )
+                ),
                 if task.payload.get("callback_address") and self.hsp_connector:
                     await self._send_task_failure(
                         task, f"Task failed after {self.max_retries} retries: {safe_error(e)}"
@@ -370,9 +370,7 @@ class BaseAgent:
     ) -> dict[str, Any]:
         """Default task handler for unimplemented capabilities."""
         capability_id = task_payload.get("capability_id_filter", "")
-        logger.warning(
-            f"[{self.agent_id}] No specific handler for capability '{capability_id}'"
-        )
+        logger.warning(f"[{self.agent_id}] No specific handler for capability '{capability_id}'")
         return {
             "status": "failure",
             "error_details": {
@@ -428,7 +426,6 @@ class BaseAgent:
 
         logger.error(
             f"[{self.agent_id}] Critical error detected: {error}",
-
             extra={
                 "agent_id": self.agent_id,
                 "error_type": "critical_error",
@@ -551,7 +548,6 @@ class BaseAgent:
                     lambda t: (
                         logger.error(
                             f"[{self.agent_id}] Destructor cleanup failed: {t.exception()}",
-
                         )
                         if not t.cancelled() and t.exception()
                         else None

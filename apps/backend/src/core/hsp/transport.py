@@ -263,7 +263,6 @@ class MQTTTransport(HSPTransport):
         if not self._external_connector or not self._subscription_manager:
             logger.error(
                 "Not connected to MQTT broker or subscription manager not initialized",
-
             )
             return False
 

@@ -81,6 +81,7 @@ def svc():
 def sample_image_bytes():
     """Generate a small test image (16x16 PNG) for fast encoding."""
     from PIL import Image
+
     img = Image.new("RGB", (16, 16), color=(100, 150, 200))
     buf = io.BytesIO()
     img.save(buf, format="PNG")
@@ -95,6 +96,7 @@ def sample_audio_bytes():
     t = np.linspace(0, duration, int(sample_rate * duration), endpoint=False)
     tone = np.sin(2 * np.pi * 440 * t, dtype=np.float32) * 0.5
     import wave
+
     buf = io.BytesIO()
     with wave.open(buf, "wb") as wf:
         wf.setnchannels(1)
@@ -124,14 +126,8 @@ class TestMultimodalStress:
         t0 = time.time()
 
         # Create concurrent tasks
-        vision_tasks = [
-            svc.encode(sample_image_bytes, "vision")
-            for _ in range(n_vision)
-        ]
-        audio_tasks = [
-            svc.encode(sample_audio_bytes, "audio")
-            for _ in range(n_audio)
-        ]
+        vision_tasks = [svc.encode(sample_image_bytes, "vision") for _ in range(n_vision)]
+        audio_tasks = [svc.encode(sample_audio_bytes, "audio") for _ in range(n_audio)]
 
         all_tasks = vision_tasks + audio_tasks
         results = await asyncio.gather(*all_tasks, return_exceptions=True)
@@ -159,10 +155,7 @@ class TestMultimodalStress:
 
         t0 = time.time()
 
-        decode_tasks = [
-            svc.decode(item_id, "vision", output_format="pil")
-            for _ in range(100)
-        ]
+        decode_tasks = [svc.decode(item_id, "vision", output_format="pil") for _ in range(100)]
         results = await asyncio.gather(*decode_tasks, return_exceptions=True)
 
         elapsed = time.time() - t0
@@ -186,10 +179,7 @@ class TestMultimodalStress:
 
         t0 = time.time()
 
-        compare_tasks = [
-            svc.compare(vis["item_id"], aud["item_id"])
-            for _ in range(50)
-        ]
+        compare_tasks = [svc.compare(vis["item_id"], aud["item_id"]) for _ in range(50)]
         results = await asyncio.gather(*compare_tasks, return_exceptions=True)
 
         elapsed = time.time() - t0
@@ -230,9 +220,9 @@ class TestMultimodalStress:
         """
         # Vision encode with invalid data — should return error after retries
         result = await svc.encode_with_retry(b"", "vision")
-        assert result.get("error") is not None, (
-            f"Expected error for empty data encode, got: {result}"
-        )
+        assert (
+            result.get("error") is not None
+        ), f"Expected error for empty data encode, got: {result}"
 
         # Audio encode with garbage will likely succeed (audio pipeline
         # is robust enough to process any bytes), so we just verify it

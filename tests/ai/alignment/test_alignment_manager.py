@@ -1,7 +1,6 @@
 """Tests for apps.backend.src.ai.alignment.alignment_manager"""
 
 import pytest
-
 from ai.alignment.alignment_manager import AlignmentManager
 
 

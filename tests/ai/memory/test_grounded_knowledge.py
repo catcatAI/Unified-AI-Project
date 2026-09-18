@@ -4,7 +4,6 @@ import os
 import tempfile
 
 import pytest
-
 from ai.memory.grounded_knowledge import (
     GroundedClaim,
     GroundedKnowledgeStore,
@@ -73,8 +72,9 @@ def test_confidence_clamped():
 def test_save_and_load_roundtrip():
     store = GroundedKnowledgeStore()
     c = store.add_or_update("Gold has atomic number 79")
-    store.record_verification(c.claim_key, VerificationStatus.VERIFIED,
-                              [SourceRef(url="https://example.com/gold")], 0.7)
+    store.record_verification(
+        c.claim_key, VerificationStatus.VERIFIED, [SourceRef(url="https://example.com/gold")], 0.7
+    )
     with tempfile.TemporaryDirectory() as d:
         path = os.path.join(d, "gk.json")
         store.save(path)

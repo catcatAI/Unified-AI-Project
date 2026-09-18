@@ -158,5 +158,3 @@ def test_port_name_extraction_dict_and_object():
 
     assert ThetaRouter._port_name(FakePort()) == "p2"
     assert ThetaRouter._port_name(object()) is None
-
-

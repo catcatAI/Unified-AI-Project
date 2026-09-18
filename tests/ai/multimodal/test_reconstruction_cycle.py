@@ -5,6 +5,7 @@ import pytest
 @pytest.fixture
 def latent_space():
     from ai.multimodal.shared_latent_space import SharedLatentSpace
+
     ls = SharedLatentSpace(latent_dim=64)
     ls.register_modality("vision", 256)
     ls.register_modality("audio", 128)
@@ -14,12 +15,14 @@ def latent_space():
 @pytest.fixture
 def visual_decoder():
     from ai.multimodal.visual_decoder import VisualDecoder
+
     return VisualDecoder()
 
 
 @pytest.fixture
 def audio_decoder():
     from ai.multimodal.audio_decoder import AudioWaveformDecoder
+
     return AudioWaveformDecoder()
 
 
@@ -40,6 +43,7 @@ class TestReconstructionCycle:
     @pytest.fixture
     def cycle(self, latent_space, visual_decoder, audio_decoder):
         from ai.multimodal.reconstruction_cycle import ReconstructionCycle
+
         return ReconstructionCycle(latent_space, visual_decoder, audio_decoder)
 
     def test_init(self, cycle):
@@ -87,21 +91,27 @@ class TestCrossModalSynthesizer:
     @pytest.fixture
     def synthesizer(self, latent_space, visual_decoder, audio_decoder):
         from ai.multimodal.reconstruction_cycle import CrossModalSynthesizer
+
         return CrossModalSynthesizer(latent_space, visual_decoder, audio_decoder)
 
     def test_blend_latents_returns_64dim(self, synthesizer, vision_features, audio_features):
-        blended = synthesizer.blend_latents([
-            ("vision", vision_features),
-            ("audio", audio_features),
-        ])
+        blended = synthesizer.blend_latents(
+            [
+                ("vision", vision_features),
+                ("audio", audio_features),
+            ]
+        )
         assert len(blended) == 64
         assert blended.dtype == np.float32
 
     def test_blend_latents_equal_weights(self, synthesizer, vision_features, audio_features):
-        blended = synthesizer.blend_latents([
-            ("vision", vision_features),
-            ("audio", audio_features),
-        ], weights=[0.5, 0.5])
+        blended = synthesizer.blend_latents(
+            [
+                ("vision", vision_features),
+                ("audio", audio_features),
+            ],
+            weights=[0.5, 0.5],
+        )
         z_v = synthesizer._ls.project("vision", vision_features)
         z_a = synthesizer._ls.project("audio", audio_features)
         expected = 0.5 * z_v + 0.5 * z_a
@@ -136,6 +146,7 @@ class TestCrossModalSynthesizer:
     def test_generate_image_no_decoder_returns_zeros(self):
         from ai.multimodal.reconstruction_cycle import CrossModalSynthesizer
         from ai.multimodal.shared_latent_space import SharedLatentSpace
+
         ls = SharedLatentSpace(latent_dim=64)
         syn = CrossModalSynthesizer(ls)
         img = syn.generate_image(np.zeros(64))
@@ -147,18 +158,19 @@ class TestTextureTraining:
     @pytest.fixture
     def visual_decoder(self):
         from ai.multimodal.visual_decoder import VisualDecoder
+
         return VisualDecoder()
 
     @pytest.fixture
     def rc(self, latent_space, visual_decoder):
         from ai.multimodal.reconstruction_cycle import ReconstructionCycle
+
         return ReconstructionCycle(latent_space, visual_decoder)
 
     def test_train_texture_step_returns_positive_loss(self, rc, visual_decoder):
         """train_texture_step should return a positive loss value."""
         z = np.random.RandomState(42).randn(2, 64).astype(np.float32)
-        targets = np.random.RandomState(99).randint(
-            0, 256, (2, 128, 128, 3), dtype=np.uint8)
+        targets = np.random.RandomState(99).randint(0, 256, (2, 128, 128, 3), dtype=np.uint8)
         loss = rc.train_texture_step(z, targets, lr=0.001)
         assert loss > 0
         assert isinstance(loss, float)
@@ -167,8 +179,7 @@ class TestTextureTraining:
         """Training with lr>0 should reduce loss vs lr=0."""
         rng = np.random.RandomState(42)
         z = rng.randn(2, 64).astype(np.float32)
-        targets = np.random.RandomState(99).randint(
-            0, 256, (2, 128, 128, 3), dtype=np.uint8)
+        targets = np.random.RandomState(99).randint(0, 256, (2, 128, 128, 3), dtype=np.uint8)
 
         loss_before = rc.train_texture_step(z, targets, lr=0.0)
         loss_after = rc.train_texture_step(z, targets, lr=0.01)
@@ -183,8 +194,7 @@ class TestTextureTraining:
             "tex_kernels": visual_decoder._tex_kernels.copy(),
         }
         z = np.random.RandomState(42).randn(1, 64).astype(np.float32)
-        targets = np.random.RandomState(99).randint(
-            0, 256, (1, 128, 128, 3), dtype=np.uint8)
+        targets = np.random.RandomState(99).randint(0, 256, (1, 128, 128, 3), dtype=np.uint8)
         rc.train_texture_step(z, targets, lr=0.1)
 
         assert not np.allclose(visual_decoder._W_hidden, snap_before["W_hidden"])
@@ -202,17 +212,18 @@ class TestWavetableTraining:
     @pytest.fixture
     def audio_decoder(self):
         from ai.multimodal.audio_decoder import AudioWaveformDecoder
+
         return AudioWaveformDecoder()
 
     @pytest.fixture
     def rc(self, latent_space, audio_decoder):
         from ai.multimodal.reconstruction_cycle import ReconstructionCycle
+
         return ReconstructionCycle(latent_space, audio_decoder=audio_decoder)
 
     def test_train_wavetable_step_returns_positive_loss(self, rc, audio_decoder):
         z = np.random.RandomState(42).randn(2, 64).astype(np.float32)
-        targets = np.random.RandomState(99).randn(
-            2, 16000).astype(np.float32)
+        targets = np.random.RandomState(99).randn(2, 16000).astype(np.float32)
         loss = rc.train_wavetable_step(z, targets, lr=0.001)
         assert loss > 0
         assert isinstance(loss, float)

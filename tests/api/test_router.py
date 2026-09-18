@@ -27,6 +27,7 @@ def _collect_paths(router, prefix: str = ""):
 @pytest.fixture(scope="module")
 def router():
     from api.router import router as _router
+
     return _router
 
 
@@ -43,17 +44,16 @@ class TestRouterConstruction:
     def test_endpoint_routes_registered(self, router):
         """Check that known endpoint routes exist."""
         paths = _collect_paths(router)
-        prefixes = ["/api/v1/drive", "/api/v1/vision",
-                    "/api/v1/audio", "/api/v1/mobile"]
+        prefixes = ["/api/v1/drive", "/api/v1/vision", "/api/v1/audio", "/api/v1/mobile"]
         found = any(any(p.startswith(prefix) for p in paths) for prefix in prefixes)
         assert found, "No endpoint routes found (drive/vision/audio/mobile)"
 
     def test_cluster_status_route_registered(self, router):
         """Frontend settings monitor polls /api/v1/system/cluster/status."""
         paths = _collect_paths(router)
-        assert "/api/v1/system/cluster/status" in paths, (
-            "Frontend settings.js polls this endpoint but it is not registered"
-        )
+        assert (
+            "/api/v1/system/cluster/status" in paths
+        ), "Frontend settings.js polls this endpoint but it is not registered"
 
 
 class TestClusterStatusEndpoint:
@@ -61,6 +61,7 @@ class TestClusterStatusEndpoint:
 
     def test_returns_hardware_and_cluster_shape(self):
         from api.router import get_cluster_status
+
         data = get_cluster_status()
 
         hw = data["hardware"]
@@ -87,14 +88,17 @@ class TestOpsRoutes:
 
     def test_ops_router_is_apirouter(self):
         from api.routes.ops_routes import router as ops_router
+
         assert isinstance(ops_router, APIRouter)
 
     def test_ops_router_has_prefix(self):
         from api.routes.ops_routes import router as ops_router
+
         assert ops_router.prefix == "/ops"
 
     def test_ops_router_has_routes(self):
         from api.routes.ops_routes import router as ops_router
+
         assert len(ops_router.routes) > 0
         paths = {r.path for r in ops_router.routes}
         # Verify at least some ops routes exist (actual route paths may differ from expected)
@@ -114,18 +118,22 @@ class TestIncludeEndpointRouters:
 
     def test_include_endpoint_routers_adds_subrouters(self):
         from api.v1.endpoints import include_endpoint_routers
+
         test_router = APIRouter()
         include_endpoint_routers(test_router)
         paths = _collect_paths(test_router)
-        prefixes = ["/drive", "/vision", "/audio",
-                     "/mobile", "/trace"]
+        prefixes = ["/drive", "/vision", "/audio", "/mobile", "/trace"]
         for prefix in prefixes:
             assert any(p.startswith(prefix) for p in paths), f"No routes with {prefix}"
 
     def test_all_endpoint_prefixes_in_main_router(self, router):
         paths = _collect_paths(router)
-        prefixes = ["/api/v1/drive", "/api/v1/vision",
-                     "/api/v1/audio", "/api/v1/mobile",
-                     "/api/v1/trace"]
+        prefixes = [
+            "/api/v1/drive",
+            "/api/v1/vision",
+            "/api/v1/audio",
+            "/api/v1/mobile",
+            "/api/v1/trace",
+        ]
         for prefix in prefixes:
             assert any(p.startswith(prefix) for p in paths), f"No routes with {prefix}"

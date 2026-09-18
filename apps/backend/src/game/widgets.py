@@ -1,4 +1,5 @@
 """Shared widgets for the game TUI."""
+
 from __future__ import annotations
 
 from textual.widgets import Static

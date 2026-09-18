@@ -10,7 +10,6 @@ with a pure symbolic key mapping (no vector projection, no numeric scaling).
 """
 
 import pytest
-
 from ai.bridge.neural_bridge import (
     _GARDEN_TO_STATE,
     _STATE_TO_GARDEN,
@@ -40,9 +39,7 @@ class _FakeStateMatrix:
     def __init__(self):
         self.alpha = _FakeDim({"energy": 0.8, "comfort": 0.5})
         self.beta = _FakeDim({"focus": 0.9, "curiosity": 0.6})
-        self.gamma = _FakeDim(
-            {"happiness": 0.7, "sadness": 0.1, "anger": 0.0, "fear": 0.2}
-        )
+        self.gamma = _FakeDim({"happiness": 0.7, "sadness": 0.1, "anger": 0.0, "fear": 0.2})
         self.delta = _FakeDim({"attention": 0.5, "bond": 0.4})
         self.epsilon = _FakeDim({"logic": 0.5})
         self.theta = _FakeDim({"novelty": 0.5})

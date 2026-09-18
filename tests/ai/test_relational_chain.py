@@ -3,8 +3,8 @@
 These verify genuine multi-hop transitive-closure derivation over explicitly
 stated comparison edges, independent of any pre-trained neural association.
 """
-import pytest
 
+import pytest
 from ai.reasoning.relational_chain import (
     ask_direction,
     parse_and_resolve_relational_chain,
@@ -18,9 +18,7 @@ def _edges(*triples):
 
 
 def test_parse_detects_comparison_edges():
-    edges, entities = parse_comparison_edges(
-        "X is warmer than Y. Y is warmer than Z."
-    )
+    edges, entities = parse_comparison_edges("X is warmer than Y. Y is warmer than Z.")
     assert ("X", "Y", 1.0) in edges
     assert ("Y", "Z", 1.0) in edges
     assert set(entities) >= {"X", "Y", "Z"}
@@ -85,12 +83,8 @@ def test_ed3n_chain_stage():
     engine = ED3NEngine()
     engine.load_presets()
     # The full process() must route relational chains correctly.
-    assert "Z" in engine.process(
-        "X is richer than Y. Y is richer than Z. Who is the poorest?"
-    )
-    assert "A" in engine.process(
-        "A is warmer than B. B is warmer than C. Who is warmest?"
-    )
+    assert "Z" in engine.process("X is richer than Y. Y is richer than Z. Who is the poorest?")
+    assert "A" in engine.process("A is warmer than B. B is warmer than C. Who is warmest?")
 
 
 def test_garden_chain_stage():
@@ -98,12 +92,13 @@ def test_garden_chain_stage():
 
     engine = GARDENEngine(compatibility_mode=True)
     engine.load_presets()
-    assert "Z" in engine.process(
-        "X is richer than Y. Y is richer than Z. Who is the poorest?"
-    )
+    assert "Z" in engine.process("X is richer than Y. Y is richer than Z. Who is the poorest?")
     # Novel proper-noun comparators (Alpha/Beta/Gamma): resolved by the regex
     # reasoner since multi-letter entities (2026-09-03) or by template recall —
     # either routing must land on Gamma (case-insensitive).
-    assert "gamma" in engine.process(
-        "Alpha is faster than Beta. Beta is faster than Gamma. Who is slowest?"
-    ).lower()
+    assert (
+        "gamma"
+        in engine.process(
+            "Alpha is faster than Beta. Beta is faster than Gamma. Who is slowest?"
+        ).lower()
+    )

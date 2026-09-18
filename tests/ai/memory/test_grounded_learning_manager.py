@@ -1,12 +1,11 @@
 """Tests for the grounded learning manager (offline)."""
 
 import pytest
-
+from ai.memory.grounded_knowledge import GroundedKnowledgeStore, SourceRef, VerificationStatus
 from ai.memory.grounded_learning_manager import (
     GroundedLearningManager,
     get_grounded_learning_manager,
 )
-from ai.memory.grounded_knowledge import GroundedKnowledgeStore, SourceRef, VerificationStatus
 from ai.meta.knowledge_verifier import KnowledgeVerifier
 
 
@@ -19,8 +18,11 @@ class FakeSearchTool:
 
 
 SUPPORT = [
-    {"title": "Speed of light", "url": "https://en.wikipedia.org/wiki/Speed_of_light",
-     "snippet": "The speed of light in vacuum is exactly 299792458 m/s."},
+    {
+        "title": "Speed of light",
+        "url": "https://en.wikipedia.org/wiki/Speed_of_light",
+        "snippet": "The speed of light in vacuum is exactly 299792458 m/s.",
+    },
 ]
 
 
@@ -64,9 +66,9 @@ def test_get_grounded_context_only_verified():
     assert mgr.get_grounded_context("speed of light") == ""
     # simulate verification result applied
     mgr.store.record_verification(
-        claim.claim_key, VerificationStatus.VERIFIED,
-        [SourceRef(
-            url="https://en.wikipedia.org/wiki/Speed_of_light")],
+        claim.claim_key,
+        VerificationStatus.VERIFIED,
+        [SourceRef(url="https://en.wikipedia.org/wiki/Speed_of_light")],
         0.9,
     )
     block = mgr.get_grounded_context("speed of light")
@@ -78,8 +80,11 @@ def test_get_grounded_context_only_verified():
 def test_learn_verified_from_search_records_verified():
     mgr = _manager_with_support()
     results = [
-        {"title": "Taipei", "url": "https://en.wikipedia.org/wiki/Taipei",
-         "snippet": "Capital of Taiwan."},
+        {
+            "title": "Taipei",
+            "url": "https://en.wikipedia.org/wiki/Taipei",
+            "snippet": "Capital of Taiwan.",
+        },
         {"title": "Other", "url": "https://example.com", "snippet": "x"},
     ]
     claim = mgr.learn_verified_from_search("What is the capital of Taiwan?", results)
@@ -102,8 +107,13 @@ def test_learn_verified_from_search_skips_errors():
 def test_persistence_roundtrip(tmp_path):
     path = str(tmp_path / "gk.json")
     mgr = GroundedLearningManager(data_path=path)
-    results = [{"title": "Taipei", "url": "https://en.wikipedia.org/wiki/Taipei",
-                "snippet": "Capital of Taiwan."}]
+    results = [
+        {
+            "title": "Taipei",
+            "url": "https://en.wikipedia.org/wiki/Taipei",
+            "snippet": "Capital of Taiwan.",
+        }
+    ]
     mgr.learn_verified_from_search("What is the capital of Taiwan?", results)
     # reload from a fresh manager on the same path
     mgr2 = GroundedLearningManager(data_path=path)
@@ -119,6 +129,7 @@ async def test_queue_claims_runs_background_verification():
     await mgr.queue_claims("The speed of light is 299792458 m/s.", "Thanks!")
     # allow background tasks to finish
     import asyncio
+
     for _ in range(20):
         if mgr.store.stats()["verified"] >= 1:
             break

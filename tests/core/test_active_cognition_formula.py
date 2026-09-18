@@ -13,7 +13,9 @@ class TestStressVector:
     def test_calculate_stress_contribution(self):
         sv = StressVector(
             source=StressSource.NOVELTY_DEMAND,
-            intensity=0.8, direction=0.5, persistence=0.5,
+            intensity=0.8,
+            direction=0.5,
+            persistence=0.5,
         )
         contrib = sv.calculate_stress_contribution()
         assert 0.6 < contrib < 1.0
@@ -21,11 +23,15 @@ class TestStressVector:
     def test_calculate_stress_persistence_amplifies(self):
         sv_low = StressVector(
             source=StressSource.NOVELTY_DEMAND,
-            intensity=0.5, direction=0.0, persistence=0.0,
+            intensity=0.5,
+            direction=0.0,
+            persistence=0.0,
         )
         sv_high = StressVector(
             source=StressSource.NOVELTY_DEMAND,
-            intensity=0.5, direction=0.0, persistence=1.0,
+            intensity=0.5,
+            direction=0.0,
+            persistence=1.0,
         )
         assert sv_high.calculate_stress_contribution() > sv_low.calculate_stress_contribution()
 
@@ -34,14 +40,18 @@ class TestOrderBaseline:
     def test_calculate_order_strength_high(self):
         ob = OrderBaseline(
             order_type=OrderType.ALGORITHMIC,
-            stability=1.0, flexibility=1.0, complexity=0.0,
+            stability=1.0,
+            flexibility=1.0,
+            complexity=0.0,
         )
         assert ob.calculate_order_strength() > 0.5
 
     def test_calculate_order_strength_low(self):
         ob = OrderBaseline(
             order_type=OrderType.ALGORITHMIC,
-            stability=0.0, flexibility=0.0, complexity=1.0,
+            stability=0.0,
+            flexibility=0.0,
+            complexity=1.0,
         )
         assert ob.calculate_order_strength() < 0.5
 
@@ -52,11 +62,13 @@ class TestActiveCognitionFormula:
         assert ac.calculate_s_stress() == 0.0
 
     def test_instantiation_with_config(self):
-        ac = ActiveCognitionFormula(config={
-            "stress_decay_rate": 0.1,
-            "min_a_c_threshold": 0.7,
-            "max_history_size": 1000,
-        })
+        ac = ActiveCognitionFormula(
+            config={
+                "stress_decay_rate": 0.1,
+                "min_a_c_threshold": 0.7,
+                "max_history_size": 1000,
+            }
+        )
         assert ac.stress_decay_rate == 0.1
         assert ac.min_a_c_threshold == 0.7
         assert ac.max_history_size == 1000
@@ -68,7 +80,10 @@ class TestActiveCognitionFormula:
     def test_add_stress_vector(self):
         ac = ActiveCognitionFormula()
         sv = ac.add_stress_vector(
-            StressSource.CONTRADICTION, intensity=0.7, direction=0.5, persistence=0.6,
+            StressSource.CONTRADICTION,
+            intensity=0.7,
+            direction=0.5,
+            persistence=0.6,
         )
         assert len(ac.stress_vectors) == 1
         assert sv.intensity == 0.7

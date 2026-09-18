@@ -1,4 +1,5 @@
 """Tests for ai.core.unicode_utils — CJK text normalization and detection"""
+
 import pytest
 from ai.core.unicode_utils import (
     cjk_radical,

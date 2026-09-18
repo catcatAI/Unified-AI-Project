@@ -69,9 +69,7 @@ def test_config_accessor_fallback(
     module = importlib.import_module(module_path)
     func = getattr(module, func_name)
     # Fallback behavior
-    assert func("nonexistent", default) == default, (
-        f"{func_name} did not return default {default}"
-    )
+    assert func("nonexistent", default) == default, f"{func_name} did not return default {default}"
     # Real key existence (if known)
     if real_key is not None:
         val = func(real_key)
@@ -102,6 +100,7 @@ def test_module_manager_models_have_required_enums() -> None:
 # Group 3: Plugin system
 # =============================================================================
 
+
 def test_plugin_manager_importable() -> None:
     """Verify PluginManager can be imported."""
     from core.plugin.plugin_manager import PluginManager
@@ -112,6 +111,7 @@ def test_plugin_manager_importable() -> None:
 # =============================================================================
 # Group 4: Error handling system
 # =============================================================================
+
 
 def test_error_enums_have_required_values() -> None:
     """Verify error handling enums exposed via the compatibility shim."""
@@ -144,6 +144,7 @@ def test_error_handler_instantiation() -> None:
 # Group 5: Scheduler
 # =============================================================================
 
+
 def test_waiting_scheduler_task_creation() -> None:
     """Verify ScheduledTask creation with required fields."""
     from core.waiting_scheduler import ScheduledTask
@@ -163,6 +164,7 @@ def test_waiting_scheduler_task_creation() -> None:
 # =============================================================================
 # Group 6: Event loop enums
 # =============================================================================
+
 
 def test_event_loop_enums_have_required_values() -> None:
     """Verify event loop enums have required values."""

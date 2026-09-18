@@ -5,6 +5,7 @@ import pytest
 @pytest.fixture
 def latent_space():
     from ai.multimodal.shared_latent_space import SharedLatentSpace
+
     ls = SharedLatentSpace(latent_dim=64)
     ls.register_modality("vision", 128)
     ls.register_modality("audio", 32)

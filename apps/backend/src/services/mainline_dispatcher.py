@@ -33,14 +33,14 @@ class DispatchIntent(Enum):
     """High-level intent decided at ingest time."""
 
     GENERATE = "generate"  # produce a response (FORWARD to pipeline)
-    LEARN = "learn"        # ingest as a learning signal
-    TRAIN = "train"        # enqueue for (sorted) training execution
+    LEARN = "learn"  # ingest as a learning signal
+    TRAIN = "train"  # enqueue for (sorted) training execution
 
 
 class ActionType(Enum):
     FORWARD = "forward"  # continue the generative pipeline
-    LEARN = "learn"      # record into memory / continuous learning
-    TRAIN = "train"      # enqueue into TrainingCoordinator
+    LEARN = "learn"  # record into memory / continuous learning
+    TRAIN = "train"  # enqueue into TrainingCoordinator
 
 
 @dataclass
@@ -131,9 +131,7 @@ def classify_dispatch(text: str) -> DispatchDecision:
         intent = DispatchIntent.GENERATE
         reason = f"sub_type={sub_type}; default generate"
 
-    return DispatchDecision(
-        intent=intent, confidence=confidence, sub_type=sub_type, reason=reason
-    )
+    return DispatchDecision(intent=intent, confidence=confidence, sub_type=sub_type, reason=reason)
 
 
 def _priority_for(envelope: InputEnvelope, decision: DispatchDecision) -> float:

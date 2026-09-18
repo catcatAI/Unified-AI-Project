@@ -16,7 +16,6 @@ object/space 共 5 種）。
 
 import numpy as np
 import pytest
-
 from ai.multimodal.semantic_key_mapper import SemanticKeyMapper
 from core.backbone import get_backbone, reset_backbone
 from core.backbone.contracts import MultimodalDictionary

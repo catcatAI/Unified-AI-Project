@@ -1,4 +1,5 @@
 """Tests for MemoryStorage"""
+
 import pytest
 
 from apps.backend.src.ai.context.storage.base import Context, ContextType
@@ -8,12 +9,13 @@ from apps.backend.src.ai.context.storage.memory import MemoryStorage
 class TestMemoryStorage:
     def test_import(self):
         from apps.backend.src.ai.context.storage.memory import MemoryStorage
-        assert hasattr(MemoryStorage, 'save_context')
-        assert hasattr(MemoryStorage, 'load_context')
-        assert hasattr(MemoryStorage, 'delete_context')
-        assert hasattr(MemoryStorage, 'list_contexts')
-        assert hasattr(MemoryStorage, 'update_context_metadata')
-        assert hasattr(MemoryStorage, 'get_storage_info')
+
+        assert hasattr(MemoryStorage, "save_context")
+        assert hasattr(MemoryStorage, "load_context")
+        assert hasattr(MemoryStorage, "delete_context")
+        assert hasattr(MemoryStorage, "list_contexts")
+        assert hasattr(MemoryStorage, "update_context_metadata")
+        assert hasattr(MemoryStorage, "get_storage_info")
 
     def test_instantiation(self):
         instance = MemoryStorage(max_size=100)

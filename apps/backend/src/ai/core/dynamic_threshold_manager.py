@@ -19,21 +19,20 @@ import asyncio
 import json
 import logging
 import time
-from collections import deque, defaultdict
+from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
-
-
+from core.system.config.hardware_profile import HardwareProfile
 from core.system.state_store.global_store import state_store
 
-from core.system.config.hardware_profile import HardwareProfile
 logger = logging.getLogger(__name__)
 
 
 class AdaptationMode(Enum):
     """自适应模式"""
+
     CONSERVATIVE = "conservative"
     BALANCED = "balanced"
     AGGRESSIVE = "aggressive"
@@ -42,6 +41,7 @@ class AdaptationMode(Enum):
 
 class OptimizationType(Enum):
     """优化类型"""
+
     THRESHOLD = "threshold"
     PERFORMANCE = "performance"
     EFFICIENCY = "efficiency"
@@ -52,6 +52,7 @@ class OptimizationType(Enum):
 @dataclass
 class ThresholdConfiguration:
     """阈值配置"""
+
     name: str
     value: float
     min_value: float
@@ -65,6 +66,7 @@ class ThresholdConfiguration:
 @dataclass
 class PerformanceMetrics:
     """性能指标"""
+
     timestamp: float
     accuracy: float  # 0.0-1.0
     latency: float  # 毫秒
@@ -77,6 +79,7 @@ class PerformanceMetrics:
 @dataclass
 class AdaptationHistory:
     """自适应历史"""
+
     timestamp: float
     optimization_type: OptimizationType
     before_value: float
@@ -90,6 +93,7 @@ class AdaptationHistory:
 @dataclass
 class HardwareConstraint:
     """硬件约束"""
+
     hardware_profile: str
     max_threshold: float
     optimal_range: Tuple[float, float]
@@ -389,14 +393,16 @@ class DynamicThresholdManager:
         self.adaptation_rules = [
             {
                 "name": "performance_degradation",
-                "condition": lambda m, p, h: p["latency"] > self.performance_thresholds["max_latency_ms"].value * 1.5,
+                "condition": lambda m, p, h: p["latency"]
+                > self.performance_thresholds["max_latency_ms"].value * 1.5,
                 "action": "increase_threshold",
                 "target_metric": "max_latency_ms",
                 "adjustment_factor": 1.2,
             },
             {
                 "name": "accuracy_drop",
-                "condition": lambda m, p, h: p["accuracy"] < self.performance_thresholds["min_accuracy"].value * 0.9,
+                "condition": lambda m, p, h: p["accuracy"]
+                < self.performance_thresholds["min_accuracy"].value * 0.9,
                 "action": "decrease_threshold",
                 "target_metric": "confidence_threshold",
                 "adjustment_factor": 0.9,
@@ -410,7 +416,8 @@ class DynamicThresholdManager:
             },
             {
                 "name": "hardware_constraint",
-                "condition": lambda m, p, h: h["profile"] != "high_performance_desktop" and m["overall_score"] > 0.9,
+                "condition": lambda m, p, h: h["profile"] != "high_performance_desktop"
+                and m["overall_score"] > 0.9,
                 "action": "apply_hardware_limits",
                 "target_metrics": ["confidence_threshold", "temperature_threshold"],
                 "adjustment_factor": 0.9,
@@ -568,7 +575,9 @@ class DynamicThresholdManager:
             before_thresholds = self._collect_current_thresholds()
 
             # 执行自适应
-            adaptations = self._execute_adaptations(metrics, context or {}, state_result["urgency_level"])
+            adaptations = self._execute_adaptations(
+                metrics, context or {}, state_result["urgency_level"]
+            )
 
             # 获取适应后的阈值
             after_thresholds = self._collect_current_thresholds()
@@ -577,7 +586,9 @@ class DynamicThresholdManager:
             improvements = {}
             for key in after_thresholds:
                 if key in before_thresholds:
-                    improvement = (after_thresholds[key] - before_thresholds[key]) / before_thresholds[key]
+                    improvement = (
+                        after_thresholds[key] - before_thresholds[key]
+                    ) / before_thresholds[key]
                     improvements[key] = improvement
 
             # 记录自适应
@@ -658,9 +669,7 @@ class DynamicThresholdManager:
             thresholds = {}
 
             for name, config in self.thresholds.items():
-                optimized_value = self._calculate_optimized_threshold(
-                    name, config, system_state
-                )
+                optimized_value = self._calculate_optimized_threshold(name, config, system_state)
                 thresholds[name] = {
                     "name": name,
                     "value": optimized_value,
@@ -671,9 +680,7 @@ class DynamicThresholdManager:
                 }
 
             for name, config in self.performance_thresholds.items():
-                optimized_value = self._calculate_optimized_threshold(
-                    name, config, system_state
-                )
+                optimized_value = self._calculate_optimized_threshold(name, config, system_state)
                 thresholds[name] = {
                     "name": name,
                     "value": optimized_value,
@@ -732,7 +739,9 @@ class DynamicThresholdManager:
             if len(self.performance_history) >= 10:
                 self._check_and_adapt_if_needed(context)
 
-            logger.debug(f"Performance metrics recorded - accuracy: {metrics.get('accuracy', 0.0):.2f}, latency: {metrics.get('latency', 0.0):.2f}ms")
+            logger.debug(
+                f"Performance metrics recorded - accuracy: {metrics.get('accuracy', 0.0):.2f}, latency: {metrics.get('latency', 0.0):.2f}ms"
+            )
 
         except Exception as e:
             logger.error(f"Error recording performance metrics: {e}", exc_info=True)
@@ -787,7 +796,9 @@ class DynamicThresholdManager:
             if self.hardware_profile:
                 profile_name = self.hardware_profile.scenario.value
                 system_info["hardware_profile"] = profile_name
-                system_info["hardware_constraints"] = self.hardware_constraints.get(profile_name, {})
+                system_info["hardware_constraints"] = self.hardware_constraints.get(
+                    profile_name, {}
+                )
 
             # 适应模式
             system_info["adaptation_mode"] = self.current_adaptation_mode.value
@@ -1004,16 +1015,18 @@ class DynamicThresholdManager:
 
         # 记录自适应
         for adaptation in adaptations:
-            self.adaptation_history.append(AdaptationHistory(
-                timestamp=time.time(),
-                optimization_type=OptimizationType(adaptation["type"]),
-                before_value=adaptation["before"],
-                after_value=adaptation["after"],
-                improvement=adaptation.get("improvement", 0.0),
-                performance_gain=adaptation.get("performance_gain", 0.0),
-                feedback=adaptation.get("feedback", ""),
-                context=context,
-            ))
+            self.adaptation_history.append(
+                AdaptationHistory(
+                    timestamp=time.time(),
+                    optimization_type=OptimizationType(adaptation["type"]),
+                    before_value=adaptation["before"],
+                    after_value=adaptation["after"],
+                    improvement=adaptation.get("improvement", 0.0),
+                    performance_gain=adaptation.get("performance_gain", 0.0),
+                    feedback=adaptation.get("feedback", ""),
+                    context=context,
+                )
+            )
 
         return adaptations
 
@@ -1033,15 +1046,18 @@ class DynamicThresholdManager:
                 / self.performance_thresholds["max_latency_ms"].value,
             )
 
-            adaptations.append({
-                "type": "threshold",
-                "target": "max_latency_ms",
-                "before": self.performance_thresholds["max_latency_ms"].value,
-                "after": self.performance_thresholds["max_latency_ms"].value * (1.0 - latency_improvement * 0.3),
-                "improvement": latency_improvement * 0.3,
-                "performance_gain": min(0.5, latency_improvement * 0.5),
-                "feedback": "High latency, aggressive threshold adjustment",
-            })
+            adaptations.append(
+                {
+                    "type": "threshold",
+                    "target": "max_latency_ms",
+                    "before": self.performance_thresholds["max_latency_ms"].value,
+                    "after": self.performance_thresholds["max_latency_ms"].value
+                    * (1.0 - latency_improvement * 0.3),
+                    "improvement": latency_improvement * 0.3,
+                    "performance_gain": min(0.5, latency_improvement * 0.5),
+                    "feedback": "High latency, aggressive threshold adjustment",
+                }
+            )
 
         # 快速调整准确率相关的阈值
         if metrics.get("accuracy", 0) < self.performance_thresholds["min_accuracy"].value:
@@ -1051,15 +1067,18 @@ class DynamicThresholdManager:
                 / self.performance_thresholds["min_accuracy"].value,
             )
 
-            adaptations.append({
-                "type": "threshold",
-                "target": "confidence_threshold",
-                "before": self.thresholds["confidence_threshold"].value,
-                "after": self.thresholds["confidence_threshold"].value * (1.0 + accuracy_improvement * 0.2),
-                "improvement": accuracy_improvement * 0.2,
-                "performance_gain": accuracy_improvement * 0.4,
-                "feedback": "Low accuracy, confidence threshold adjustment",
-            })
+            adaptations.append(
+                {
+                    "type": "threshold",
+                    "target": "confidence_threshold",
+                    "before": self.thresholds["confidence_threshold"].value,
+                    "after": self.thresholds["confidence_threshold"].value
+                    * (1.0 + accuracy_improvement * 0.2),
+                    "improvement": accuracy_improvement * 0.2,
+                    "performance_gain": accuracy_improvement * 0.4,
+                    "feedback": "Low accuracy, confidence threshold adjustment",
+                }
+            )
 
         return adaptations
 
@@ -1073,26 +1092,30 @@ class DynamicThresholdManager:
 
         # 平衡调整多个阈值
         if metrics.get("latency", 0) > self.performance_thresholds["max_latency_ms"].value * 1.2:
-            adaptations.append({
-                "type": "threshold",
-                "target": "max_latency_ms",
-                "before": self.performance_thresholds["max_latency_ms"].value,
-                "after": self.performance_thresholds["max_latency_ms"].value * 0.95,
-                "improvement": 0.05,
-                "performance_gain": 0.08,
-                "feedback": "Moderate latency increase, balanced adjustment",
-            })
+            adaptations.append(
+                {
+                    "type": "threshold",
+                    "target": "max_latency_ms",
+                    "before": self.performance_thresholds["max_latency_ms"].value,
+                    "after": self.performance_thresholds["max_latency_ms"].value * 0.95,
+                    "improvement": 0.05,
+                    "performance_gain": 0.08,
+                    "feedback": "Moderate latency increase, balanced adjustment",
+                }
+            )
 
         if metrics.get("accuracy", 0) < self.performance_thresholds["min_accuracy"].value * 0.95:
-            adaptations.append({
-                "type": "threshold",
-                "target": "temperature_threshold",
-                "before": self.thresholds["temperature_threshold"].value,
-                "after": self.thresholds["temperature_threshold"].value * 1.05,
-                "improvement": 0.05,
-                "performance_gain": 0.06,
-                "feedback": "Slight accuracy decrease, temperature threshold adjustment",
-            })
+            adaptations.append(
+                {
+                    "type": "threshold",
+                    "target": "temperature_threshold",
+                    "before": self.thresholds["temperature_threshold"].value,
+                    "after": self.thresholds["temperature_threshold"].value * 1.05,
+                    "improvement": 0.05,
+                    "performance_gain": 0.06,
+                    "feedback": "Slight accuracy decrease, temperature threshold adjustment",
+                }
+            )
 
         return adaptations
 
@@ -1106,15 +1129,17 @@ class DynamicThresholdManager:
 
         # 保守调整阈值
         if metrics.get("latency", 0) > self.performance_thresholds["max_latency_ms"].value:
-            adaptations.append({
-                "type": "threshold",
-                "target": "max_latency_ms",
-                "before": self.performance_thresholds["max_latency_ms"].value,
-                "after": self.performance_thresholds["max_latency_ms"].value * 0.98,
-                "improvement": 0.02,
-                "performance_gain": 0.03,
-                "feedback": "Conservative adaptation for stability",
-            })
+            adaptations.append(
+                {
+                    "type": "threshold",
+                    "target": "max_latency_ms",
+                    "before": self.performance_thresholds["max_latency_ms"].value,
+                    "after": self.performance_thresholds["max_latency_ms"].value * 0.98,
+                    "improvement": 0.02,
+                    "performance_gain": 0.03,
+                    "feedback": "Conservative adaptation for stability",
+                }
+            )
 
         return adaptations
 
@@ -1137,26 +1162,30 @@ class DynamicThresholdManager:
         memory_limit = constraints.memory_limit
 
         if cpu_limit < 0.8:
-            adaptations.append({
-                "type": "hardware",
-                "target": "temperature_threshold",
-                "before": self.thresholds["temperature_threshold"].value,
-                "after": self.thresholds["temperature_threshold"].value * cpu_limit,
-                "improvement": cpu_limit - self.thresholds["temperature_threshold"].value,
-                "performance_gain": 0.0,
-                "feedback": f"Hardware constraint: CPU limit {cpu_limit}",
-            })
+            adaptations.append(
+                {
+                    "type": "hardware",
+                    "target": "temperature_threshold",
+                    "before": self.thresholds["temperature_threshold"].value,
+                    "after": self.thresholds["temperature_threshold"].value * cpu_limit,
+                    "improvement": cpu_limit - self.thresholds["temperature_threshold"].value,
+                    "performance_gain": 0.0,
+                    "feedback": f"Hardware constraint: CPU limit {cpu_limit}",
+                }
+            )
 
         if memory_limit < 0.8:
-            adaptations.append({
-                "type": "hardware",
-                "target": "confidence_threshold",
-                "before": self.thresholds["confidence_threshold"].value,
-                "after": self.thresholds["confidence_threshold"].value * memory_limit,
-                "improvement": memory_limit - self.thresholds["confidence_threshold"].value,
-                "performance_gain": 0.0,
-                "feedback": f"Hardware constraint: Memory limit {memory_limit}",
-            })
+            adaptations.append(
+                {
+                    "type": "hardware",
+                    "target": "confidence_threshold",
+                    "before": self.thresholds["confidence_threshold"].value,
+                    "after": self.thresholds["confidence_threshold"].value * memory_limit,
+                    "improvement": memory_limit - self.thresholds["confidence_threshold"].value,
+                    "performance_gain": 0.0,
+                    "feedback": f"Hardware constraint: Memory limit {memory_limit}",
+                }
+            )
 
         return adaptations
 
@@ -1186,14 +1215,16 @@ class DynamicThresholdManager:
         # 获取最近10个性能记录
         recent_metrics = []
         for metric_record in list(self.performance_history)[-10:]:
-            recent_metrics.append({
-                "accuracy": metric_record.accuracy,
-                "latency": metric_record.latency,
-                "throughput": metric_record.throughput,
-                "error_rate": metric_record.error_rate,
-                "resource_usage": metric_record.resource_usage,
-                "memory_usage": metric_record.memory_usage,
-            })
+            recent_metrics.append(
+                {
+                    "accuracy": metric_record.accuracy,
+                    "latency": metric_record.latency,
+                    "throughput": metric_record.throughput,
+                    "error_rate": metric_record.error_rate,
+                    "resource_usage": metric_record.resource_usage,
+                    "memory_usage": metric_record.memory_usage,
+                }
+            )
 
         # 计算平均值
         if not recent_metrics:
@@ -1213,7 +1244,8 @@ class DynamicThresholdManager:
         """计算自适应统计"""
         try:
             adaptations_in_window = [
-                cycle for cycle in self.optimization_cycles
+                cycle
+                for cycle in self.optimization_cycles
                 if start_time <= cycle["timestamp"] <= end_time
             ]
 
@@ -1260,10 +1292,12 @@ class DynamicThresholdManager:
             thresholds_in_window = []
             for cycle in self.optimization_cycles:
                 if start_time <= cycle["timestamp"] <= end_time:
-                    thresholds_in_window.extend([
-                        (name, after_value)
-                        for name, after_value in cycle.get("after", {}).items()
-                    ])
+                    thresholds_in_window.extend(
+                        [
+                            (name, after_value)
+                            for name, after_value in cycle.get("after", {}).items()
+                        ]
+                    )
 
             if not thresholds_in_window:
                 return {
@@ -1293,7 +1327,8 @@ class DynamicThresholdManager:
                     "mean": sum(values) / len(values),
                     "min": min(values),
                     "max": max(values),
-                    "std": (sum((v - sum(values) / len(values)) ** 2 for v in values) / len(values)) ** 0.5,
+                    "std": (sum((v - sum(values) / len(values)) ** 2 for v in values) / len(values))
+                    ** 0.5,
                 }
 
             return {
@@ -1332,8 +1367,7 @@ class DynamicThresholdManager:
             ) / (len(metrics_in_window) - 1)
 
             latency_trend = sum(
-                (metrics_in_window[0].latency - metric.latency)
-                for metric in metrics_in_window[1:]
+                (metrics_in_window[0].latency - metric.latency) for metric in metrics_in_window[1:]
             ) / (len(metrics_in_window) - 1)
 
             return {
@@ -1378,11 +1412,17 @@ class DynamicThresholdManager:
         # 检查错误率改进
         error_rate_improved = metrics.get("error_rate", 0) < before_metrics.get("error_rate", 0)
 
-        return (latency_improved and accuracy_improved) or error_rate_improved or not any([
-            metrics.get("latency", 0) > before_metrics.get("latency", 0) * 1.5,
-            metrics.get("accuracy", 0) < before_metrics.get("accuracy", 0) * 0.9,
-            metrics.get("error_rate", 0) > before_metrics.get("error_rate", 0) * 1.5,
-        ])
+        return (
+            (latency_improved and accuracy_improved)
+            or error_rate_improved
+            or not any(
+                [
+                    metrics.get("latency", 0) > before_metrics.get("latency", 0) * 1.5,
+                    metrics.get("accuracy", 0) < before_metrics.get("accuracy", 0) * 0.9,
+                    metrics.get("error_rate", 0) > before_metrics.get("error_rate", 0) * 1.5,
+                ]
+            )
+        )
 
     def _get_performance_target_key_from_metric(
         self,
@@ -1418,7 +1458,9 @@ class DynamicThresholdManager:
             "performance_history_size": len(self.performance_history),
             "adaptation_history_size": len(self.adaptation_history),
             "thresholds_count": len(self.thresholds) + len(self.performance_thresholds),
-            "hardware_profile": self.hardware_profile.scenario.value if self.hardware_profile else "unknown",
+            "hardware_profile": (
+                self.hardware_profile.scenario.value if self.hardware_profile else "unknown"
+            ),
             "adaptation_efficiency": adaptation_efficiency,
             "optimization_effectiveness": optimization_effectiveness,
         }
@@ -1452,7 +1494,6 @@ class DynamicThresholdManager:
 
     def __repr__(self) -> str:
         return self.__str__()
-
 
     def _collect_current_thresholds(self) -> Dict[str, Any]:
         """Collect current threshold values for before/after comparison."""

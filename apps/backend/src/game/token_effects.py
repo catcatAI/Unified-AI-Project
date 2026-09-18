@@ -1,4 +1,5 @@
 """Token effects system — tokens affect game mechanics."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -7,6 +8,7 @@ from dataclasses import dataclass, field
 @dataclass
 class TokenEffect:
     """A computed effect from a token."""
+
     category: str
     name: str
     stat_bonus: dict[str, int] = field(default_factory=dict)
@@ -25,19 +27,50 @@ def compute_token_effects(tokens: list[dict]) -> list[TokenEffect]:
         bonus = int(strength * 10)
 
         if cat == "combat":
-            effects.append(TokenEffect(category=cat, name=name, dice_bonus=bonus, special="combat_attack"))
+            effects.append(
+                TokenEffect(category=cat, name=name, dice_bonus=bonus, special="combat_attack")
+            )
         elif cat == "vitality":
-            effects.append(TokenEffect(category=cat, name=name, stat_bonus={"hp": bonus * 3, "max_hp": bonus * 3}, resistance=min(strength * 0.3, 0.3), special="vitality"))
+            effects.append(
+                TokenEffect(
+                    category=cat,
+                    name=name,
+                    stat_bonus={"hp": bonus * 3, "max_hp": bonus * 3},
+                    resistance=min(strength * 0.3, 0.3),
+                    special="vitality",
+                )
+            )
         elif cat == "energy":
-            effects.append(TokenEffect(category=cat, name=name, stat_bonus={"spirit": bonus * 2, "max_spirit": bonus * 2}, special="energy"))
+            effects.append(
+                TokenEffect(
+                    category=cat,
+                    name=name,
+                    stat_bonus={"spirit": bonus * 2, "max_spirit": bonus * 2},
+                    special="energy",
+                )
+            )
         elif cat == "skill":
-            effects.append(TokenEffect(category=cat, name=name, stat_bonus={"skill": bonus * 2}, dice_bonus=bonus // 2, special="skill"))
+            effects.append(
+                TokenEffect(
+                    category=cat,
+                    name=name,
+                    stat_bonus={"skill": bonus * 2},
+                    dice_bonus=bonus // 2,
+                    special="skill",
+                )
+            )
         elif cat == "element":
-            effects.append(TokenEffect(category=cat, name=name, dice_bonus=bonus, special="element"))
+            effects.append(
+                TokenEffect(category=cat, name=name, dice_bonus=bonus, special="element")
+            )
         elif cat == "craft":
-            effects.append(TokenEffect(category=cat, name=name, dice_bonus=bonus // 2, special="craft"))
+            effects.append(
+                TokenEffect(category=cat, name=name, dice_bonus=bonus // 2, special="craft")
+            )
         elif cat == "knowledge":
-            effects.append(TokenEffect(category=cat, name=name, dice_bonus=bonus // 2, special="knowledge"))
+            effects.append(
+                TokenEffect(category=cat, name=name, dice_bonus=bonus // 2, special="knowledge")
+            )
         elif cat in ("status", "mechanism", "relation", "social", "exploration", "lore"):
             effects.append(TokenEffect(category=cat, name=name, special=cat))
     return effects
@@ -46,6 +79,7 @@ def compute_token_effects(tokens: list[dict]) -> list[TokenEffect]:
 def apply_token_hp(tokens: list[dict], base_hp: int = 100) -> tuple[int, int]:
     """Compute HP and maxHP from vitality tokens. Start slightly below max."""
     import random as _rnd
+
     max_hp = base_hp
     for t in tokens:
         if t.get("category") == "vitality":
@@ -58,6 +92,7 @@ def apply_token_hp(tokens: list[dict], base_hp: int = 100) -> tuple[int, int]:
 def apply_token_spirit(tokens: list[dict], base_spirit: int = 50) -> tuple[int, int]:
     """Compute spirit and maxSpirit from energy tokens. Start slightly below max."""
     import random as _rnd
+
     max_spirit = base_spirit
     for t in tokens:
         if t.get("category") == "energy":

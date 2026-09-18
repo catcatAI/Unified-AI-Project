@@ -21,15 +21,16 @@ import logging
 import math
 import os
 import zlib
-from pathlib import Path
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 if TYPE_CHECKING:
     import torch
 
-import numpy as np
 from collections import OrderedDict
+
+import numpy as np
 from ai.core.unicode_utils import normalize_text
 from ai.data_eng.dedup import prefix_dedup, prefix_overlap, surface_dedup
 from ai.data_eng.grow import growth_cap_ok, resolved_max_entries
@@ -102,9 +103,7 @@ class _OnnxEncoder:
         # Two threads: matches the measured baseline; more threads raised
         # latency variance without throughput wins on small batches.
         so.intra_op_num_threads = 2
-        self._sess = ort.InferenceSession(
-            onnx_path, so, providers=["CPUExecutionProvider"]
-        )
+        self._sess = ort.InferenceSession(onnx_path, so, providers=["CPUExecutionProvider"])
         # Tokenizer ships beside the model (exported by
         # scripts/export_minilm_onnx.py) — fully offline, no hub lookups.
         tok_dir = onnx_path.replace(".onnx", "-tokenizer")
@@ -126,7 +125,9 @@ class _OnnxEncoder:
             "input_ids": batch["input_ids"].astype(np.int64),
             "attention_mask": batch["attention_mask"].astype(np.int64),
         }
-        out: np.ndarray = self._sess.run(None, feed)[0]  # last_hidden_state [B, S, H]  # type: ignore[return-value]
+        out: np.ndarray = self._sess.run(None, feed)[
+            0
+        ]  # last_hidden_state [B, S, H]  # type: ignore[return-value]
         m = feed["attention_mask"].astype(np.float32)[:, :, None]
         emb = (out * m).sum(1) / np.clip(m.sum(1), 1e-9, None)
         norms = np.linalg.norm(emb, axis=1, keepdims=True)
@@ -137,9 +138,7 @@ class _OnnxEncoder:
 def _model_in_hf_cache(model_name: str) -> bool:
     """True when a sentence-transformers model is fully present in the local
     HuggingFace hub cache (~/.cache/huggingface/hub/models--<org>--<name>)."""
-    hub = os.path.join(
-        os.environ.get("HF_HOME", os.path.expanduser("~/.cache/huggingface")), "hub"
-    )
+    hub = os.path.join(os.environ.get("HF_HOME", os.path.expanduser("~/.cache/huggingface")), "hub")
     if not os.path.isdir(hub):
         return False
 
@@ -166,20 +165,18 @@ def _model_in_hf_cache(model_name: str) -> bool:
             return True
     # Last resort: unique substring match (handles custom orgs).
     tail = parts[-1]
-    matches = [
-        d
-        for d in os.listdir(hub)
-        if d.startswith("models--") and d.endswith("--" + tail)
-    ]
+    matches = [d for d in os.listdir(hub) if d.startswith("models--") and d.endswith("--" + tail)]
     if len(matches) == 1:
         return _has_weights(os.path.join(hub, matches[0]))
     return False
+
 
 # ---------------------------------------------------------------------------
 # Lazy torch import (compatible with Python 3.14 where torch may be absent)
 # ---------------------------------------------------------------------------
 
-from typing import Tuple, Union, Any as _Any
+from typing import Any as _Any
+from typing import Tuple, Union
 
 _torch: Optional[Tuple[_Any, _Any]] = None
 
@@ -510,6 +507,7 @@ class _ChromaEncoder:
         torch, _ = _lazy_torch()
         if torch is None:
             import numpy as np
+
             return np.zeros((0, self.EMBEDDING_DIM), dtype=np.float32)
         if not texts:
             return torch.zeros(0, self.EMBEDDING_DIM)
@@ -633,7 +631,9 @@ class VectorDictionary:
         self._pruned_keys: List[str] = []  # keys evicted by _prune_for_growth, awaiting SNN sync
         self._surface_set: Dict[str, str] = {}  # {lower_surface: key} for O(1) dedup
         self._surface_to_key: Optional[Dict[str, str]] = None  # lazy reverse lookup cache
-        self._prefix_first: Optional[Dict[str, List[Tuple[str, str]]]] = None  # first-3-char → [(lower_form, key)]
+        self._prefix_first: Optional[Dict[str, List[Tuple[str, str]]]] = (
+            None  # first-3-char → [(lower_form, key)]
+        )
         self._embed_cache: Optional[OrderedDict] = None  # query → normalized qvec (LRU)
         self._embed_cache_max = 1024
         self._encoder = self._build_encoder(model_name)
@@ -717,9 +717,7 @@ class VectorDictionary:
         sync the SNN (see :attr:`drain_pruned_keys`).
         """
         candidates = [
-            (entry.confidence, key)
-            for key, entry in self.entries.items()
-            if not entry.relations
+            (entry.confidence, key) for key, entry in self.entries.items() if not entry.relations
         ]
         if not candidates:
             return False
@@ -1144,7 +1142,9 @@ class VectorDictionary:
                 best_score = 0.0
                 # _prefix_overlap needs a shared prefix >= min_prefix(3), so any
                 # form scoring >0 must share the first 3 chars — bucket is exact.
-                for form, key in (self._prefix_first.get(token_lower[:3], ()) if self._prefix_first else ()):
+                for form, key in (
+                    self._prefix_first.get(token_lower[:3], ()) if self._prefix_first else ()
+                ):
                     score = self._prefix_overlap(token_lower, form)
                     if score > best_score:
                         best_score = score
@@ -1204,7 +1204,9 @@ class VectorDictionary:
                 for score, idx in zip(top_scores.tolist(), top_indices.tolist()):
                     if score >= self.similarity_threshold:
                         conf = min(float(score), 0.5)
-                        result[self._key_order[idx]] = max(result.get(self._key_order[idx], 0.0), conf)
+                        result[self._key_order[idx]] = max(
+                            result.get(self._key_order[idx], 0.0), conf
+                        )
 
         # ======================================================================
         # Step 5: Whole-text TF-IDF (phrase-level catch-all)

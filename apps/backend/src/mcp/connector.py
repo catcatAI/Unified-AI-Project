@@ -16,8 +16,6 @@ import paho.mqtt.client as mqtt
 logger = logging.getLogger(__name__)
 
 from mcp.fallback.mcp_fallback_protocols import initialize_fallback_protocols
-
-
 from shared.error import ProjectError
 
 

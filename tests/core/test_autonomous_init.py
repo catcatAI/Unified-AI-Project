@@ -62,9 +62,7 @@ class TestInitializeAllSystems:
             "core.life.self_generation": "SelfGeneration",
         }
         for module_name, class_name in modules.items():
-            monkeypatch.setattr(
-                f"{module_name}.{class_name}", _mock_system, raising=False
-            )
+            monkeypatch.setattr(f"{module_name}.{class_name}", _mock_system, raising=False)
 
         systems = asyncio.run(initialize_all_systems())
         assert isinstance(systems, dict)
@@ -102,9 +100,7 @@ class TestInitializeAllSystems:
             "core.life.self_generation": "SelfGeneration",
         }
         for module_name, class_name in modules.items():
-            monkeypatch.setattr(
-                f"{module_name}.{class_name}", _mock_system, raising=False
-            )
+            monkeypatch.setattr(f"{module_name}.{class_name}", _mock_system, raising=False)
 
         systems = asyncio.run(initialize_all_systems())
         assert all(isinstance(k, str) for k in systems.keys())

@@ -1,4 +1,5 @@
 """Tests for HSPAdvancedPerformanceOptimizer and HSPAdvancedPerformanceEnhancer."""
+
 import pytest
 from core.hsp.advanced_performance_optimizer import (
     HSPAdvancedPerformanceEnhancer,

@@ -1,6 +1,5 @@
 """Tests for port_channel.py"""
 
-
 from core.engine.port_channel import AxisOutputManager, PortChannel
 
 
@@ -104,5 +103,3 @@ def test_axis_output_manager_get_port_summary_no_channel():
     manager = AxisOutputManager(state_adapter=None, port_registry=None)
     summary = manager.get_port_summary("nonexistent")
     assert summary["status"] == "no_channel"
-
-

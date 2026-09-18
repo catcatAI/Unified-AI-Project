@@ -2,6 +2,7 @@ def init_ok(deps=None):
     class _Mod:
         async def some_method(self):
             return None
+
     return _Mod()
 
 

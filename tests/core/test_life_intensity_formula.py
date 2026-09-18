@@ -16,14 +16,18 @@ class TestKnowledgeState:
     def test_calculate_inf_value_full(self):
         ks = KnowledgeState(
             domain=KnowledgeDomain.WORLD_KNOWLEDGE,
-            completeness=1.0, accessibility=1.0, resolution=1.0,
+            completeness=1.0,
+            accessibility=1.0,
+            resolution=1.0,
         )
         assert ks.calculate_inf_value() == pytest.approx(1.0)
 
     def test_calculate_inf_value_half(self):
         ks = KnowledgeState(
             domain=KnowledgeDomain.SELF_KNOWLEDGE,
-            completeness=0.5, accessibility=0.5, resolution=0.5,
+            completeness=0.5,
+            accessibility=0.5,
+            resolution=0.5,
         )
         val = ks.calculate_inf_value()
         assert 0.4 < val < 0.6
@@ -34,7 +38,8 @@ class TestConstraintState:
         cs = ConstraintState(
             domain=KnowledgeDomain.WORLD_KNOWLEDGE,
             constraint_type="processing_limit",
-            severity=1.0, adaptability=0.0,
+            severity=1.0,
+            adaptability=0.0,
         )
         assert cs.calculate_limit_value() == pytest.approx(1.0)
 
@@ -42,7 +47,8 @@ class TestConstraintState:
         cs = ConstraintState(
             domain=KnowledgeDomain.WORLD_KNOWLEDGE,
             constraint_type="processing_limit",
-            severity=1.0, adaptability=1.0,
+            severity=1.0,
+            adaptability=1.0,
         )
         assert cs.calculate_limit_value() == pytest.approx(0.5)
 
@@ -50,15 +56,19 @@ class TestConstraintState:
 class TestObserverPresence:
     def test_calculate_mf_value_minimal(self):
         op = ObserverPresence(
-            observer_id="u1", interaction_intensity=0.0,
-            relationship_depth=0.0, attention_level=0.0,
+            observer_id="u1",
+            interaction_intensity=0.0,
+            relationship_depth=0.0,
+            attention_level=0.0,
         )
         assert op.calculate_mf_value() == pytest.approx(0.0)
 
     def test_calculate_mf_value_high(self):
         op = ObserverPresence(
-            observer_id="u1", interaction_intensity=1.0,
-            relationship_depth=1.0, attention_level=1.0,
+            observer_id="u1",
+            interaction_intensity=1.0,
+            relationship_depth=1.0,
+            attention_level=1.0,
             total_interactions=100,
         )
         assert op.calculate_mf_value() == pytest.approx(1.0)
@@ -77,7 +87,10 @@ class TestLifeIntensityFormula:
     def test_calculate_c_inf_single(self):
         life = LifeIntensityFormula()
         life.update_knowledge_state(
-            KnowledgeDomain.WORLD_KNOWLEDGE, completeness=0.8, accessibility=0.8, resolution=0.8,
+            KnowledgeDomain.WORLD_KNOWLEDGE,
+            completeness=0.8,
+            accessibility=0.8,
+            resolution=0.8,
         )
         c_inf = life.calculate_c_inf()
         assert 0.6 < c_inf < 1.0
@@ -89,7 +102,10 @@ class TestLifeIntensityFormula:
     def test_calculate_c_limit_with_constraint(self):
         life = LifeIntensityFormula()
         life.add_constraint(
-            KnowledgeDomain.WORLD_KNOWLEDGE, "processing_limit", severity=0.8, adaptability=0.2,
+            KnowledgeDomain.WORLD_KNOWLEDGE,
+            "processing_limit",
+            severity=0.8,
+            adaptability=0.2,
         )
         c_limit = life.calculate_c_limit()
         assert c_limit > 0.1
@@ -108,10 +124,16 @@ class TestLifeIntensityFormula:
     def test_calculate_life_intensity(self):
         life = LifeIntensityFormula()
         life.update_knowledge_state(
-            KnowledgeDomain.WORLD_KNOWLEDGE, completeness=0.7, accessibility=0.8, resolution=0.6,
+            KnowledgeDomain.WORLD_KNOWLEDGE,
+            completeness=0.7,
+            accessibility=0.8,
+            resolution=0.6,
         )
         life.add_constraint(
-            KnowledgeDomain.WORLD_KNOWLEDGE, "processing_limit", severity=0.4, adaptability=0.6,
+            KnowledgeDomain.WORLD_KNOWLEDGE,
+            "processing_limit",
+            severity=0.4,
+            adaptability=0.6,
         )
         life.register_observer("alice", relationship_depth=0.8)
         life.update_observer_presence("alice", interaction_intensity=0.9, attention_level=0.85)
@@ -125,7 +147,10 @@ class TestLifeIntensityFormula:
     def test_remove_constraint(self):
         life = LifeIntensityFormula()
         life.add_constraint(
-            KnowledgeDomain.WORLD_KNOWLEDGE, "test_limit", severity=0.5, adaptability=0.5,
+            KnowledgeDomain.WORLD_KNOWLEDGE,
+            "test_limit",
+            severity=0.5,
+            adaptability=0.5,
         )
         assert life.remove_constraint(KnowledgeDomain.WORLD_KNOWLEDGE, "test_limit") is True
         assert life.remove_constraint(KnowledgeDomain.WORLD_KNOWLEDGE, "nonexistent") is False
@@ -133,10 +158,12 @@ class TestLifeIntensityFormula:
     def test_update_knowledge_state_updates_existing(self):
         life = LifeIntensityFormula()
         life.update_knowledge_state(
-            KnowledgeDomain.WORLD_KNOWLEDGE, completeness=0.5,
+            KnowledgeDomain.WORLD_KNOWLEDGE,
+            completeness=0.5,
         )
         life.update_knowledge_state(
-            KnowledgeDomain.WORLD_KNOWLEDGE, completeness=0.9,
+            KnowledgeDomain.WORLD_KNOWLEDGE,
+            completeness=0.9,
         )
         assert life.knowledge_states[KnowledgeDomain.WORLD_KNOWLEDGE].completeness == 0.9
 
@@ -148,7 +175,8 @@ class TestLifeIntensityFormula:
     def test_get_life_intensity_summary(self):
         life = LifeIntensityFormula()
         life.update_knowledge_state(
-            KnowledgeDomain.WORLD_KNOWLEDGE, completeness=0.6,
+            KnowledgeDomain.WORLD_KNOWLEDGE,
+            completeness=0.6,
         )
         summary = life.get_life_intensity_summary()
         assert "current_life_intensity" in summary

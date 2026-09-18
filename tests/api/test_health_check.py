@@ -26,11 +26,13 @@ class TestHealthCheck:
 
     def test_router_has_ops_routes(self):
         from api.router import ops_router
+
         assert ops_router is not None
         assert len(ops_router.routes) > 0
 
     def test_ops_routes_have_paths(self):
         from api.router import ops_router
+
         paths = [r.path for r in ops_router.routes]
         assert len(paths) > 0
         # Ops router has actual health/status/maintenance routes
@@ -39,6 +41,7 @@ class TestHealthCheck:
     def test_main_router_includes_ops_paths(self):
         from api.router import ops_router
         from api.router import router as main_router
+
         ops_paths = {r.path for r in ops_router.routes}
         main_paths = _collect_paths(main_router)
         # ops routes should be included in main router under /api/v1

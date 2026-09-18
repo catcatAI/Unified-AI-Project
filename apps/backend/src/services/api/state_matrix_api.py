@@ -225,10 +225,10 @@ async def navigate(request: Dict[str, Any]):
     matrix = get_state_matrix()
     target_axis = request.get("target_axis")
     target_values = request.get("target_values", {})
-    
+
     if not target_axis:
         raise HTTPException(status_code=400, detail="target_axis is required")
-    
+
     axis_map = {
         "alpha": matrix.alpha,
         "beta": matrix.beta,
@@ -239,12 +239,12 @@ async def navigate(request: Dict[str, Any]):
     }
     if target_axis not in axis_map:
         raise HTTPException(status_code=404, detail=f"Axis '{target_axis}' not found")
-    
+
     axis = axis_map[target_axis]
     if hasattr(axis, "update") and target_values:
         axis.update(**target_values)
         logger.info("Navigated axis '%s' to values: %s", target_axis, target_values)
-    
+
     axis_values = getattr(axis, "values", None)
     return {
         "status": "navigated",

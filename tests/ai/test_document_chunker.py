@@ -3,7 +3,7 @@ ANGELA-MATRIX: [L3] [γ] [B] [L2]
 Tests for DocumentChunker — hierarchical document chunking.
 """
 
-from ai.document.chunker import DocumentChunker, ChunkTree, Section, Paragraph
+from ai.document.chunker import ChunkTree, DocumentChunker, Paragraph, Section
 
 
 def test_empty_text():

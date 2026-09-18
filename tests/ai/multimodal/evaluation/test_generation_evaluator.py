@@ -115,9 +115,9 @@ class TestPrimitiveDiversity:
     def test_different_primitives_high_diversity(self):
         eval_ = GenerationEvaluator()
         prims = [
-            np.array([1] + [0]*63, dtype=np.float32),
-            np.array([0]*63 + [1], dtype=np.float32),
-            np.array([0, 1] + [0]*62, dtype=np.float32),
+            np.array([1] + [0] * 63, dtype=np.float32),
+            np.array([0] * 63 + [1], dtype=np.float32),
+            np.array([0, 1] + [0] * 62, dtype=np.float32),
         ]
         result = eval_.evaluate(_make_image(), primitives=prims)
         assert result["primitive_diversity"] > 0.5

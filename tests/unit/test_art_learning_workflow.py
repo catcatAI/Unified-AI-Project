@@ -1,6 +1,6 @@
 """Tests for core.engine.art_learning_workflow"""
-import pytest
 
+import pytest
 from core.engine.art_learning_workflow import (
     ArtLearningWorkflow,
     GenerationResult,
@@ -15,18 +15,18 @@ from core.engine.art_learning_workflow import (
 class TestArtLearningWorkflow:
     def test_import_all(self):
         """Verify all classes are importable with expected interfaces"""
-        assert hasattr(LearningObjective, 'update_progress')
-        assert hasattr(WorkflowProgress, 'overall_progress')
-        assert hasattr(WorkflowProgress, 'record_quality')
-        assert hasattr(WorkflowProgress, 'average_quality')
-        assert hasattr(WorkflowProgress, 'get_bottleneck_stage')
-        assert hasattr(SkillAssessment, 'mastery_level')
-        assert hasattr(SkillAssessment, 'update_from_feedback')
-        assert hasattr(SkillAssessment, 'sessions_to_target')
-        assert hasattr(GenerationResult, 'is_positive')
-        assert hasattr(GenerationResult, 'is_negative')
-        assert hasattr(ArtLearningWorkflow, 'update_visual_state')
-        assert hasattr(ArtLearningWorkflow, 'process_user_aesthetic_feedback')
+        assert hasattr(LearningObjective, "update_progress")
+        assert hasattr(WorkflowProgress, "overall_progress")
+        assert hasattr(WorkflowProgress, "record_quality")
+        assert hasattr(WorkflowProgress, "average_quality")
+        assert hasattr(WorkflowProgress, "get_bottleneck_stage")
+        assert hasattr(SkillAssessment, "mastery_level")
+        assert hasattr(SkillAssessment, "update_from_feedback")
+        assert hasattr(SkillAssessment, "sessions_to_target")
+        assert hasattr(GenerationResult, "is_positive")
+        assert hasattr(GenerationResult, "is_negative")
+        assert hasattr(ArtLearningWorkflow, "update_visual_state")
+        assert hasattr(ArtLearningWorkflow, "process_user_aesthetic_feedback")
 
     def test_workflow_stage_enum(self):
         """Verify WorkflowStage enum has all 5 stages with proper tuple values"""
@@ -70,7 +70,9 @@ class TestArtLearningWorkflow:
         assert sa.mastery_level() == 0.0
 
     def test_generation_result(self):
-        gr = GenerationResult(input_emotion_state={"mood": "happy"}, generated_params={"color": "red"})
+        gr = GenerationResult(
+            input_emotion_state={"mood": "happy"}, generated_params={"color": "red"}
+        )
         assert "mood" in gr.input_emotion_state
         assert gr.generated_params["color"] == "red"
 

@@ -14,14 +14,13 @@ try:
     from ai.context.tool_context import ToolContextManager
     from ai.ed3n.ed3n_engine import ED3NEngine
     from ai.garden.garden_engine import GARDENEngine
+
     IMPORTS_AVAILABLE = True
 except ImportError:
     IMPORTS_AVAILABLE = False
 
 
-pytestmark = pytest.mark.skipif(
-    not IMPORTS_AVAILABLE, reason="Phase 1 modules not available"
-)
+pytestmark = pytest.mark.skipif(not IMPORTS_AVAILABLE, reason="Phase 1 modules not available")
 
 
 class TestDialogueContext:

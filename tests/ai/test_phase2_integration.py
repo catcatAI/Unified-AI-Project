@@ -16,14 +16,13 @@ try:
         AnalogicalReasoner,
         ChainOfThoughtReasoner,
     )
+
     IMPORTS_AVAILABLE = True
 except ImportError:
     IMPORTS_AVAILABLE = False
 
 
-pytestmark = pytest.mark.skipif(
-    not IMPORTS_AVAILABLE, reason="Phase 2 modules not available"
-)
+pytestmark = pytest.mark.skipif(not IMPORTS_AVAILABLE, reason="Phase 2 modules not available")
 
 
 class TestAgentOrchestratorIntegration:

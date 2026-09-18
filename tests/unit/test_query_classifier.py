@@ -1,4 +1,5 @@
 """Tests for ai.core.query_classifier — classify() returns QueryResult (not tuple)"""
+
 import pytest
 
 

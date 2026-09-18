@@ -4,7 +4,6 @@ import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
 from services.weather_service import WeatherService
 
 
@@ -52,17 +51,21 @@ class TestWeatherService:
     @patch("services.weather_service.aiohttp.ClientSession")
     def test_get_weather_parses_response(self, mock_session_cls):
         json_data = {
-            "current_condition": [{
-                "temp_C": "22",
-                "FeelsLikeC": "20",
-                "weatherDesc": [{"value": "Partly cloudy"}],
-                "humidity": "65",
-                "windspeedKmph": "15",
-            }],
-            "nearest_area": [{
-                "areaName": [{"value": "Tokyo"}],
-                "country": [{"value": "Japan"}],
-            }],
+            "current_condition": [
+                {
+                    "temp_C": "22",
+                    "FeelsLikeC": "20",
+                    "weatherDesc": [{"value": "Partly cloudy"}],
+                    "humidity": "65",
+                    "windspeedKmph": "15",
+                }
+            ],
+            "nearest_area": [
+                {
+                    "areaName": [{"value": "Tokyo"}],
+                    "country": [{"value": "Japan"}],
+                }
+            ],
         }
         mock_session_cls.return_value = self._mock_aiohttp(status=200, json_data=json_data)
 
@@ -80,8 +83,17 @@ class TestWeatherService:
     @patch("services.weather_service.aiohttp.ClientSession")
     def test_caching_returns_cached_result(self, mock_session_cls):
         json_data = {
-            "current_condition": [{"temp_C": "25", "weatherDesc": [{"value": "Sunny"}], "humidity": "50", "windspeedKmph": "10"}],
-            "nearest_area": [{"areaName": [{"value": "Berlin"}], "country": [{"value": "Germany"}]}],
+            "current_condition": [
+                {
+                    "temp_C": "25",
+                    "weatherDesc": [{"value": "Sunny"}],
+                    "humidity": "50",
+                    "windspeedKmph": "10",
+                }
+            ],
+            "nearest_area": [
+                {"areaName": [{"value": "Berlin"}], "country": [{"value": "Germany"}]}
+            ],
         }
         mock_session_cls.return_value = self._mock_aiohttp(status=200, json_data=json_data)
 
@@ -95,11 +107,29 @@ class TestWeatherService:
     @patch("services.weather_service.aiohttp.ClientSession")
     def test_different_location_ignores_cache(self, mock_session_cls):
         json_data1 = {
-            "current_condition": [{"temp_C": "25", "FeelsLikeC": "24", "weatherDesc": [{"value": "Sunny"}], "humidity": "50", "windspeedKmph": "10"}],
-            "nearest_area": [{"areaName": [{"value": "Berlin"}], "country": [{"value": "Germany"}]}],
+            "current_condition": [
+                {
+                    "temp_C": "25",
+                    "FeelsLikeC": "24",
+                    "weatherDesc": [{"value": "Sunny"}],
+                    "humidity": "50",
+                    "windspeedKmph": "10",
+                }
+            ],
+            "nearest_area": [
+                {"areaName": [{"value": "Berlin"}], "country": [{"value": "Germany"}]}
+            ],
         }
         json_data2 = {
-            "current_condition": [{"temp_C": "15", "FeelsLikeC": "13", "weatherDesc": [{"value": "Rainy"}], "humidity": "80", "windspeedKmph": "25"}],
+            "current_condition": [
+                {
+                    "temp_C": "15",
+                    "FeelsLikeC": "13",
+                    "weatherDesc": [{"value": "Rainy"}],
+                    "humidity": "80",
+                    "windspeedKmph": "25",
+                }
+            ],
             "nearest_area": [{"areaName": [{"value": "London"}], "country": [{"value": "UK"}]}],
         }
 
@@ -113,7 +143,9 @@ class TestWeatherService:
         resp2.__aenter__.return_value = resp2
 
         mock_session = MagicMock()
-        mock_session.get.side_effect = lambda url, timeout=10: resp1 if "Berlin" in str(url) else resp2
+        mock_session.get.side_effect = lambda url, timeout=10: (
+            resp1 if "Berlin" in str(url) else resp2
+        )
         mock_session.__aenter__.return_value = mock_session
         mock_session_cls.return_value = mock_session
 
@@ -158,12 +190,16 @@ class TestWeatherService:
 
     def test_parse_wttr_response_none_values(self):
         svc = WeatherService()
-        result = svc._parse_wttr_response({
-            "current_condition": [{
-                "temp_C": None,
-                "weatherDesc": [{}],
-            }],
-        })
+        result = svc._parse_wttr_response(
+            {
+                "current_condition": [
+                    {
+                        "temp_C": None,
+                        "weatherDesc": [{}],
+                    }
+                ],
+            }
+        )
         assert result["temperature_c"] is None
 
     def test_cache_expiry(self):

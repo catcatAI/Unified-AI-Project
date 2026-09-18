@@ -22,8 +22,8 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
-from ai.ed3n.ed3n_engine import ED3NEngine as _ED3NEngine_cls
 from ai.data_eng.chunk import split_sentence_blocks
+from ai.ed3n.ed3n_engine import ED3NEngine as _ED3NEngine_cls
 from core.system.config.magic_numbers import (
     confidence_value,
     learning_rate,

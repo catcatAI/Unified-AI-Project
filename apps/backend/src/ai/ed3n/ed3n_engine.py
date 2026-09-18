@@ -147,10 +147,9 @@ class ED3NEngine:
         self.multimodal_adapter: Optional[Any] = None
         self._continuous_learning = continuous_learning
         self._external_dicts_loaded = False
-        self._dict_load_attempted = (
-            self._external_dicts_loaded
-            or os.environ.get("ANGELA_SKIP_EXTERNAL_DICTS", "").lower() in ("1", "true", "yes")
-        )
+        self._dict_load_attempted = self._external_dicts_loaded or os.environ.get(
+            "ANGELA_SKIP_EXTERNAL_DICTS", ""
+        ).lower() in ("1", "true", "yes")
         self._last_confidence = 0.0
         self._dual_encoder_router: Optional[Any] = None
         self._semantic_key_mapper: Optional[Any] = None
@@ -243,9 +242,7 @@ class ED3NEngine:
             try:
                 count = self.load_external_dictionaries()
                 if count > 0:
-                    logger.info(
-                        "Lazy-loaded %d external dictionary entries on first query", count
-                    )
+                    logger.info("Lazy-loaded %d external dictionary entries on first query", count)
             except Exception as e:
                 logger.warning("Lazy dictionary load failed (non-critical): %s", e, exc_info=True)
 
@@ -306,7 +303,9 @@ class ED3NEngine:
 
             return try_knowledge(text)
         except Exception as e:
-            logger.warning("Knowledge routing via deterministic router failed: %s", e, exc_info=True)
+            logger.warning(
+                "Knowledge routing via deterministic router failed: %s", e, exc_info=True
+            )
             return None
 
     def _try_reasoning(self, text: str) -> Optional[str]:
@@ -316,7 +315,9 @@ class ED3NEngine:
 
             return try_reasoning(text)
         except Exception as e:
-            logger.warning("Symbolic reasoning routing via deterministic router failed: %s", e, exc_info=True)
+            logger.warning(
+                "Symbolic reasoning routing via deterministic router failed: %s", e, exc_info=True
+            )
             return None
 
     def _perform_encode(self, input_text: str) -> Tuple[List[str], bool]:
@@ -1232,14 +1233,17 @@ class ED3NEngine:
             raw_patterns = state["reflex_patterns"]
             if not isinstance(raw_patterns, list):
                 logger.warning(
-                    "ED3NEngine: reflex_patterns malformed (%s), skipping", type(raw_patterns).__name__
+                    "ED3NEngine: reflex_patterns malformed (%s), skipping",
+                    type(raw_patterns).__name__,
                 )
             else:
                 self.reflex.patterns.clear()
                 for pattern, response in raw_patterns:
                     if isinstance(pattern, str) and isinstance(response, str):
                         self.reflex.patterns[pattern] = response
-                logger.info("Loaded %d reflex patterns from checkpoint.", len(state["reflex_patterns"]))
+                logger.info(
+                    "Loaded %d reflex patterns from checkpoint.", len(state["reflex_patterns"])
+                )
         if "network" in state:
             from ai.ed3n.core_network import CoreNetwork
 

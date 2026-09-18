@@ -5,12 +5,12 @@ import os
 import pytest
 
 from apps.backend.src.core.config_validator import (
-    ConfigValidator,
-    REQUIRED_VARS,
     OPTIONAL_VARS,
     REQUIRED_CONFIG_KEYS,
-    validate_environment,
+    REQUIRED_VARS,
+    ConfigValidator,
     validate_config,
+    validate_environment,
 )
 
 

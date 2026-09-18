@@ -33,9 +33,9 @@ class FileBasedProtocol:
         try:
             key = self._sanitize_key(key)
             file_path = os.path.join(self.base_path, f"{key}.json")
-            if os.path.commonpath([os.path.abspath(file_path), os.path.abspath(self.base_path)]) != os.path.abspath(
-                self.base_path
-            ):
+            if os.path.commonpath(
+                [os.path.abspath(file_path), os.path.abspath(self.base_path)]
+            ) != os.path.abspath(self.base_path):
                 logger.warning(f"Invalid key for FileBasedProtocol.save: {key}")
                 return False
             with open(file_path, "w", encoding="utf-8") as f:
@@ -49,9 +49,9 @@ class FileBasedProtocol:
         try:
             key = self._sanitize_key(key)
             file_path = os.path.join(self.base_path, f"{key}.json")
-            if os.path.commonpath([os.path.abspath(file_path), os.path.abspath(self.base_path)]) != os.path.abspath(
-                self.base_path
-            ):
+            if os.path.commonpath(
+                [os.path.abspath(file_path), os.path.abspath(self.base_path)]
+            ) != os.path.abspath(self.base_path):
                 logger.warning(f"Invalid key for FileBasedProtocol.load: {key}")
                 return None
             if not os.path.exists(file_path):

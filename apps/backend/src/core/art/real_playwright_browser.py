@@ -11,7 +11,7 @@ import asyncio
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional, TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, cast
 
 from core.utils import safe_error
 
@@ -38,6 +38,7 @@ def _get_browser_viewport() -> dict:
         return {"width": screen.get("width", 1920), "height": screen.get("height", 1080)}
     except Exception:
         return {"width": 1920, "height": 1080}
+
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +68,7 @@ class Artwork:
 def _check_playwright_available() -> bool:
     try:
         import importlib
+
         importlib.import_module("playwright.async_api")
         return True
     except ImportError:
@@ -78,6 +80,7 @@ def _get_async_playwright() -> Any:
     """Lazily import playwright at runtime."""
     try:
         import importlib
+
         pw_module = importlib.import_module("playwright.async_api")
         return pw_module.async_playwright
     except ImportError:
@@ -109,9 +112,11 @@ class AngelaRealBrowser:
     async def initialize(self) -> bool:
         """初始化浏览器"""
         if not _check_playwright_available():
-            logger.error("❌ Playwright 未安裝，請執行: pip install playwright && playwright install chromium")
+            logger.error(
+                "❌ Playwright 未安裝，請執行: pip install playwright && playwright install chromium"
+            )
             return False
-            
+
         try:
             ap = _get_async_playwright()
             if ap is None:
@@ -179,7 +184,7 @@ class AngelaRealBrowser:
         if self.page is None:
             logger.error("❌ 頁面未初始化")
             return None
-            
+
         try:
             await self.page.goto(url, timeout=30020)
             await self.page.wait_for_load_state("networkidle")
@@ -231,7 +236,7 @@ class AngelaRealBrowser:
         if self.page is None:
             logger.error("❌ 頁面未初始化")
             return []
-            
+
         artworks = []
 
         try:
@@ -289,7 +294,7 @@ class AngelaRealBrowser:
         if self.page is None:
             logger.error("❌ 頁面未初始化")
             return {"error": "Page not initialized"}
-            
+
         try:
             await self.page.goto(image_url, timeout=30020)
             await self.page.wait_for_load_state("networkidle")
@@ -329,7 +334,7 @@ class AngelaRealBrowser:
         if self.page is None:
             logger.error("❌ 頁面未初始化")
             return []
-            
+
         search_url = f"https://www.google.com/search?q={query.replace(' ', '+')}+art+tutorial"
 
         try:
@@ -377,7 +382,7 @@ class AngelaRealBrowser:
         if self.page is None:
             logger.error("❌ 頁面未初始化")
             return ""
-            
+
         if not path:
             from datetime import datetime
 

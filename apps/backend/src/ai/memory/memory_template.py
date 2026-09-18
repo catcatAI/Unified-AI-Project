@@ -230,9 +230,9 @@ class MemoryTemplate:
 
         # 更新成功率（移动平均）
         current_success = 1.0 if success else 0.0
-        self.success_rate = (
-            self.success_rate * self.SUCCESS_EMA_HISTORY_WEIGHT
-        ) + (current_success * self.SUCCESS_EMA_NEW_WEIGHT)
+        self.success_rate = (self.success_rate * self.SUCCESS_EMA_HISTORY_WEIGHT) + (
+            current_success * self.SUCCESS_EMA_NEW_WEIGHT
+        )
 
         self.updated_at = datetime.now(timezone.utc)
 

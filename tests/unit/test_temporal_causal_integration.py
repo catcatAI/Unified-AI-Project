@@ -1,9 +1,10 @@
 """Integration tests: TemporalState ↔ CausalReasoningEngine bridge.
 Tests the to_observations() export method and ingest_trend_buffer() consumer.
 """
+
 import pytest
-from core.state.temporal import TemporalState
 from ai.reasoning.causal_reasoning_engine import CausalReasoningEngine
+from core.state.temporal import TemporalState
 
 
 class TestTemporalStateToObservations:
@@ -97,8 +98,7 @@ class TestCausalIngestTemporalState:
         for i in range(20):
             ts.record({"ts": {"x": x[i], "y": y[i]}})
         cre.ingest_temporal_state(ts)
-        x_to_y = [r for r in cre.get_relationships()
-                  if r["cause"] == "x" and r["effect"] == "y"]
+        x_to_y = [r for r in cre.get_relationships() if r["cause"] == "x" and r["effect"] == "y"]
         assert len(x_to_y) >= 1
         assert x_to_y[0]["strength"] > 0.3
 

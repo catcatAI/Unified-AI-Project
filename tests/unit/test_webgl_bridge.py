@@ -1,4 +1,5 @@
 """Smoke tests for core.hardware.webgl_bridge"""
+
 import pytest
 
 pytest.importorskip("core.hardware.webgl_bridge")
@@ -7,11 +8,11 @@ from core.hardware.webgl_bridge import WebGLGPUInfo
 
 class TestWebGLGPUInfo:
     def test_import_webgl_gpu_info(self):
-        assert hasattr(WebGLGPUInfo, 'from_dict')
-        assert hasattr(WebGLGPUInfo, 'to_uhrc_format')
-        assert hasattr(WebGLGPUInfo, '_detect_gpu_type')
-        assert hasattr(WebGLGPUInfo, '_estimate_memory')
-        assert hasattr(WebGLGPUInfo, '_get_capabilities')
+        assert hasattr(WebGLGPUInfo, "from_dict")
+        assert hasattr(WebGLGPUInfo, "to_uhrc_format")
+        assert hasattr(WebGLGPUInfo, "_detect_gpu_type")
+        assert hasattr(WebGLGPUInfo, "_estimate_memory")
+        assert hasattr(WebGLGPUInfo, "_get_capabilities")
 
     def test_instantiation_webgl_gpu_info(self):
         instance = WebGLGPUInfo(
@@ -46,13 +47,15 @@ class TestWebGLGPUInfo:
 class TestWebGLBridge:
     def test_import(self):
         from core.hardware.webgl_bridge import WebGLBridge
-        assert hasattr(WebGLBridge, 'process_gpu_info')
-        assert hasattr(WebGLBridge, 'get_gpu_info')
-        assert hasattr(WebGLBridge, 'is_synced')
-        assert hasattr(WebGLBridge, 'get_summary')
+
+        assert hasattr(WebGLBridge, "process_gpu_info")
+        assert hasattr(WebGLBridge, "get_gpu_info")
+        assert hasattr(WebGLBridge, "is_synced")
+        assert hasattr(WebGLBridge, "get_summary")
 
     def test_instantiation(self):
         from core.hardware.webgl_bridge import WebGLBridge
+
         instance = WebGLBridge()
         assert instance._initialized is True
         assert instance._gpu_info is None

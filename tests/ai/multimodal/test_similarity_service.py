@@ -9,6 +9,7 @@ from PIL import Image
 @pytest.fixture
 def vision_service():
     from services.vision_service import VisionService
+
     svc = VisionService()
     return svc
 
@@ -16,6 +17,7 @@ def vision_service():
 @pytest.fixture
 def audio_service():
     from services.audio_service import AudioService
+
     svc = AudioService()
     return svc
 
@@ -80,6 +82,7 @@ class TestMultimodalSimilarityService:
     @pytest.fixture
     def sim_service(self):
         from ai.multimodal.similarity_service import MultimodalSimilarityService
+
         return MultimodalSimilarityService()
 
     async def test_encode_and_compare(self, sim_service):
@@ -129,6 +132,7 @@ class TestMultimodalSimilarityServiceQuality:
     @pytest.fixture
     def sim_service(self):
         from ai.multimodal.similarity_service import MultimodalSimilarityService
+
         return MultimodalSimilarityService()
 
     async def test_evaluate_image_generation_returns_ssim(self, sim_service):
@@ -157,8 +161,7 @@ class TestMultimodalSimilarityServiceQuality:
         await sim_service.encode_vision(img_bytes, "full_img")
         await sim_service.encode_audio(aud_bytes, "full_aud")
         report = sim_service.full_quality_report(
-            image_data=img_bytes, audio_data=aud_bytes,
-            image_item="full_img", audio_item="full_aud"
+            image_data=img_bytes, audio_data=aud_bytes, image_item="full_img", audio_item="full_aud"
         )
         assert "image" in report
         assert "audio" in report

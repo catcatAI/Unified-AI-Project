@@ -17,7 +17,7 @@ class Point:
 
     x: float  # 0-1 normalized
     y: float  # 0-1 normalized
-    color: Tuple[int, int, int]  # RGB 0-255
+    color: Tuple[int, ...]  # RGB 0-255
     size: float  # 0-1 normalized
 
     def __post_init__(self):
@@ -34,7 +34,7 @@ class Line:
     start: Point
     end: Point
     width: float  # 0-1 normalized
-    color: Tuple[int, int, int]
+    color: Tuple[int, ...]
 
     def __post_init__(self):
         self.width = max(0.0, min(1.0, self.width))
@@ -46,8 +46,8 @@ class Plane:
     """A plane primitive (filled polygon) with vertices and colors."""
 
     points: List[Point]  # Polygon vertices
-    fill_color: Tuple[int, int, int]
-    outline_color: Tuple[int, int, int]
+    fill_color: Tuple[int, ...]
+    outline_color: Tuple[int, ...]
     outline_width: float
 
     def __post_init__(self):
@@ -63,8 +63,8 @@ class Circle:
     cx: float  # 0-1 normalized
     cy: float  # 0-1 normalized
     radius: float  # 0-1 normalized
-    fill_color: Tuple[int, int, int]
-    outline_color: Tuple[int, int, int]
+    fill_color: Tuple[int, ...]
+    outline_color: Tuple[int, ...]
     outline_width: float
 
     def __post_init__(self):
@@ -86,7 +86,7 @@ class Arc:
     start_angle: float  # radians
     end_angle: float  # radians
     width: float  # line width
-    color: Tuple[int, int, int]
+    color: Tuple[int, ...]
 
     def __post_init__(self):
         self.cx = max(0.0, min(1.0, self.cx))
@@ -158,7 +158,7 @@ class DrawingInstructions:
     planes: List[Plane] = field(default_factory=list)
     circles: List[Circle] = field(default_factory=list)
     arcs: List[Arc] = field(default_factory=list)
-    background_color: Tuple[int, int, int] = (255, 255, 255)
+    background_color: Tuple[int, ...] = (255, 255, 255)
     canvas_size: Tuple[int, int] = (128, 128)
 
     def to_vector(self) -> np.ndarray:

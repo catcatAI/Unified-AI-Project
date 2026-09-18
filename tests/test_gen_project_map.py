@@ -227,12 +227,8 @@ def test_dep_usage_unused_and_noqa(tmp_path):
     mod = load_tool()
     d = tmp_path / "s"
     d.mkdir()
-    (d / "a.py").write_text(
-        "import os\nimport sys\nprint(os.name)\n", encoding="utf-8"
-    )
-    (d / "b.py").write_text(
-        "from x import y  # noqa: F401\nprint(1)\n", encoding="utf-8"
-    )
+    (d / "a.py").write_text("import os\nimport sys\nprint(os.name)\n", encoding="utf-8")
+    (d / "b.py").write_text("from x import y  # noqa: F401\nprint(1)\n", encoding="utf-8")
     files = mod.walk_files(str(tmp_path))
     lines = mod.block_dep_usage(str(tmp_path), files)
     text = "\n".join(lines)
@@ -257,9 +253,7 @@ def test_dep_usage_future_excluded(tmp_path):
     mod = load_tool()
     d = tmp_path / "s"
     d.mkdir()
-    (d / "e.py").write_text(
-        "from __future__ import annotations\nX: int = 1\n", encoding="utf-8"
-    )
+    (d / "e.py").write_text("from __future__ import annotations\nX: int = 1\n", encoding="utf-8")
     files = mod.walk_files(str(tmp_path))
     lines = mod.block_dep_usage(str(tmp_path), files)
     assert not any("e.py" in line for line in lines)

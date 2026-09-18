@@ -1,4 +1,5 @@
 """Tests for DataAligner — data format alignment (outgoing/incoming)."""
+
 import pytest
 from core.hsp.bridge.data_aligner import DataAligner
 

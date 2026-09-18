@@ -66,17 +66,23 @@ class TestVerdictKeysAlwaysEmitted:
 class TestAutosize:
     def test_beam_zero_demand_passes(self, db):
         r = size(
-            db, "beam", "As", 1.0, 20000.0,
-            {"b": 300, "d": 500, "M_Ed_kNm": 0.0, "V_Ed_kN": 0.0,
-             "Asw_s": 0.0, "L": 8000},
+            db,
+            "beam",
+            "As",
+            1.0,
+            20000.0,
+            {"b": 300, "d": 500, "M_Ed_kNm": 0.0, "V_Ed_kN": 0.0, "Asw_s": 0.0, "L": 8000},
         )
         assert r["ok"] is True
 
     def test_beam_absurd_demand_still_unreachable(self, db):
         r = size(
-            db, "beam", "As", 1.0, 20000.0,
-            {"b": 300, "d": 500, "M_Ed_kNm": 1e9, "V_Ed_kN": 0.0,
-             "Asw_s": 0.0, "L": 8000},
+            db,
+            "beam",
+            "As",
+            1.0,
+            20000.0,
+            {"b": 300, "d": 500, "M_Ed_kNm": 1e9, "V_Ed_kN": 0.0, "Asw_s": 0.0, "L": 8000},
         )
         assert r["ok"] is False
         assert "不可達" in r["reason"]
@@ -84,7 +90,11 @@ class TestAutosize:
     def test_steel_supported(self, db):
         assert "steel" in FUNCS and "prestressed" in FUNCS
         r = size(
-            db, "steel", "A", 1.0, 20000.0,
+            db,
+            "steel",
+            "A",
+            1.0,
+            20000.0,
             {"Iy": 45.9e6, "L": 5000.0, "N_Ed_kN": 1500.0},
         )
         assert r["ok"] is True
@@ -92,7 +102,11 @@ class TestAutosize:
 
     def test_prestressed_supported(self, db):
         r = size(
-            db, "prestressed", "P_kN", 1.0, 40000.0,
+            db,
+            "prestressed",
+            "P_kN",
+            1.0,
+            40000.0,
             {"b": 1000, "h": 1500, "e_mm": 500, "M_kNm": 8000},
         )
         assert r["ok"] is True

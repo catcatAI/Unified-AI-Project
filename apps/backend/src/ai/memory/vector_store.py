@@ -20,7 +20,6 @@ import zlib
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
-
 from core.system.config.magic_numbers import cache_value, timing_value
 
 logger = logging.getLogger(__name__)

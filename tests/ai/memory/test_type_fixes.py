@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 from ai.memory.vector_store import VectorMemoryStore
 
+
 def full_health_check():
     return {"status": "mock_ok"}
 

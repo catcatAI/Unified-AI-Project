@@ -5,7 +5,10 @@ Tests for StreamingPipeline — merge algorithm + producer scaffolding.
 
 from ai.streaming.pipeline import StreamingPipeline
 from ai.streaming.producers import (
-    SectionProducer, ParagraphProducer, SentenceProducer, TokenProducer,
+    ParagraphProducer,
+    SectionProducer,
+    SentenceProducer,
+    TokenProducer,
 )
 
 

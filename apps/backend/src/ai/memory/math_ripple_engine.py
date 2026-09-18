@@ -501,15 +501,15 @@ class MathRippleEngine:
     # personality HERE, never inline.
     # =========================================================================
     # ADD（簡單位移）
-    GAIN_ADD_EPSILON_RATIO = 0.05      # ε = |b|/(|a|+ε_DENOM) × this
+    GAIN_ADD_EPSILON_RATIO = 0.05  # ε = |b|/(|a|+ε_DENOM) × this
     GAIN_ADD_EPSILON_DENOM = 0.1
     GAIN_ADD_BETA_CAP = 0.2
-    GAIN_ADD_BETA_SCALE = 0.01         # β = min(cap, |b| × scale)
+    GAIN_ADD_BETA_SCALE = 0.01  # β = min(cap, |b| × scale)
     GAIN_ADD_DELTA = 0.1
     # SUB（減法非交換）
     GAIN_SUB_EPSILON = -0.05
-    GAIN_SUB_GAMMA_SMALLER = 0.05      # b ≤ a：意外較小
-    GAIN_SUB_GAMMA_LARGER = 0.1        # b > a：意外較大
+    GAIN_SUB_GAMMA_SMALLER = 0.05  # b ≤ a：意外較小
+    GAIN_SUB_GAMMA_LARGER = 0.1  # b > a：意外較大
     GAIN_SUB_BETA = 0.15
     GAIN_SUB_DELTA = 0.15
     # MUL（乘法放大）— 軸 = min(cap, base + log1p(mag)×slope)
@@ -530,12 +530,12 @@ class MathRippleEngine:
     GAIN_DIV_FEAR_EPSILON = 1.0
     GAIN_DIV_FEAR_GAMMA = 0.3
     GAIN_DIV_EPSILON_BASE = 0.1
-    GAIN_DIV_EPSILON_SCALE = 0.02      # ε = base + |a/b| × scale
+    GAIN_DIV_EPSILON_SCALE = 0.02  # ε = base + |a/b| × scale
     GAIN_DIV_ALPHA = 0.15
     GAIN_DIV_BETA = 0.25
     GAIN_DIV_GAMMA = 0.1
     GAIN_DIV_OVERLOAD_RESULT = 1000.0  # |result| above → overload
-    GAIN_DIV_NEARZERO_RESULT = 0.01    # |result| below → "趨近零"
+    GAIN_DIV_NEARZERO_RESULT = 0.01  # |result| below → "趨近零"
     # POW（指數爆炸）
     GAIN_POW_EPSILON_SLOPE = 0.15
     GAIN_POW_ALPHA_BASE = 0.2
@@ -872,9 +872,7 @@ class MathRippleEngine:
             ripple.epsilon_delta = (
                 abs(b) / (abs(a) + self.GAIN_ADD_EPSILON_DENOM) * self.GAIN_ADD_EPSILON_RATIO
             )
-            ripple.beta_focus = min(
-                self.GAIN_ADD_BETA_CAP, abs(b) * self.GAIN_ADD_BETA_SCALE
-            )
+            ripple.beta_focus = min(self.GAIN_ADD_BETA_CAP, abs(b) * self.GAIN_ADD_BETA_SCALE)
             ripple.delta_engagement = self.GAIN_ADD_DELTA
             ripple.description = f"{a} + {b} = {result}（簡單位移）"
 
@@ -1002,15 +1000,19 @@ class MathRippleEngine:
 
         if hasattr(self.state_matrix, "epsilon"):
             self.state_matrix.epsilon.values["fatigue"] = min(
-                1.0, self.state_matrix.epsilon.values.get("fatigue", 0.0) + self.OVERLOAD_FATIGUE_GAIN
+                1.0,
+                self.state_matrix.epsilon.values.get("fatigue", 0.0) + self.OVERLOAD_FATIGUE_GAIN,
             )
             self.state_matrix.epsilon.values["certainty"] = max(
-                0.0, self.state_matrix.epsilon.values.get("certainty", 0.5) - self.OVERLOAD_CERTAINTY_LOSS
+                0.0,
+                self.state_matrix.epsilon.values.get("certainty", 0.5)
+                - self.OVERLOAD_CERTAINTY_LOSS,
             )
 
         if hasattr(self.state_matrix, "gamma"):
             self.state_matrix.gamma.values["surprise"] = min(
-                1.0, self.state_matrix.gamma.values.get("surprise", 0.0) + self.OVERLOAD_SURPRISE_GAIN
+                1.0,
+                self.state_matrix.gamma.values.get("surprise", 0.0) + self.OVERLOAD_SURPRISE_GAIN,
             )
             self.state_matrix.gamma.values["fear"] = min(
                 1.0, self.state_matrix.gamma.values.get("fear", 0.0) + self.OVERLOAD_FEAR_GAIN
@@ -1021,7 +1023,8 @@ class MathRippleEngine:
                 0.0, self.state_matrix.beta.values.get("focus", 0.5) - self.OVERLOAD_FOCUS_LOSS
             )
             self.state_matrix.beta.values["confusion"] = min(
-                1.0, self.state_matrix.beta.values.get("confusion", 0.0) + self.OVERLOAD_CONFUSION_GAIN
+                1.0,
+                self.state_matrix.beta.values.get("confusion", 0.0) + self.OVERLOAD_CONFUSION_GAIN,
             )
 
         logger.info("[MathRipple] Cognitive overload triggered")
@@ -1033,7 +1036,8 @@ class MathRippleEngine:
 
         if hasattr(self.state_matrix, "epsilon"):
             self.state_matrix.epsilon.values["certainty"] = max(
-                0.0, self.state_matrix.epsilon.values.get("certainty", 0.5) - self.FEAR_CERTAINTY_LOSS
+                0.0,
+                self.state_matrix.epsilon.values.get("certainty", 0.5) - self.FEAR_CERTAINTY_LOSS,
             )
 
         if hasattr(self.state_matrix, "gamma"):

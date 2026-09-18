@@ -165,7 +165,9 @@ class LearningLoop:
                     self._garden_engine.learn_from_interaction(user_message, response)
                     logger.debug("[LearningLoop] GARDEN weights updated from feedback")
             except Exception as e:
-                logger.warning("[LearningLoop] GARDEN feedback processing failed: %s", e, exc_info=True)
+                logger.warning(
+                    "[LearningLoop] GARDEN feedback processing failed: %s", e, exc_info=True
+                )
 
         self.record_user_engagement(positive)
 

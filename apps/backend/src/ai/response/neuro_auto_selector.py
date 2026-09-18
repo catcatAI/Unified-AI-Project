@@ -773,15 +773,9 @@ class NeuroAutoSelector:
         """
         import os
 
-        matrix = (
-            self.config.get("auto_mode", {}).get("backend_models")
-            or DEFAULT_BACKEND_MODELS
-        )
+        matrix = self.config.get("auto_mode", {}).get("backend_models") or DEFAULT_BACKEND_MODELS
         entry = matrix.get(backend, {})
-        model = (
-            entry.get("reasoning" if needs_reasoning else "general")
-            or entry.get("general", "")
-        )
+        model = entry.get("reasoning" if needs_reasoning else "general") or entry.get("general", "")
         return os.getenv(f"ANGELA_MODEL_{backend.upper()}", model) or model
 
     def _is_local_capable(self, hw_details: Dict[str, Any]) -> bool:

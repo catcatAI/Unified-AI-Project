@@ -76,7 +76,7 @@ def subprocess_check(module_name: str, timeout: Optional[int] = None) -> bool:
     if fast is not None:
         return fast
     # Inconclusive: fall back to the subprocess probe.
-    if not re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', module_name):
+    if not re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", module_name):
         return False
     timeout = _resolve_timeout(timeout)
     try:

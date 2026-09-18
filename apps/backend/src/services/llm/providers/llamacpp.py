@@ -19,7 +19,10 @@ class LlamaCppBackend(BaseLLMBackend):
     """llama.cpp 後端"""
 
     def __init__(
-        self, base_url: str = LLAMACPP_HOST, model: Optional[str] = None, timeout: float = LLM_REQUEST_TIMEOUT
+        self,
+        base_url: str = LLAMACPP_HOST,
+        model: Optional[str] = None,
+        timeout: float = LLM_REQUEST_TIMEOUT,
     ):
         super().__init__()
         self.base_url = base_url.rstrip("/")

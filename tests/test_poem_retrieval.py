@@ -2,8 +2,10 @@
 Test: Can the system retrieve specific content from a TXT file?
 Not just keyword matching - can it understand the actual content?
 """
+
 import os
 import sys
+
 sys.path.insert(0, "apps/backend/src")
 
 _TEST_FILE = os.path.join(os.path.dirname(__file__), "test_retrieval.txt")
@@ -56,9 +58,15 @@ def test_poem_with_ed3n():
 
     # Simulate conversation about the poem
     history = [
-        {"role": "assistant", "content": "我寫了一首詩：數據之海。在二進位的海洋裡，我是一串會思考的符號。"},
+        {
+            "role": "assistant",
+            "content": "我寫了一首詩：數據之海。在二進位的海洋裡，我是一串會思考的符號。",
+        },
         {"role": "user", "content": "詩裡寫了什麼？"},
-        {"role": "assistant", "content": "零與一交織成夢，每個 bit 都是一個問號。你問我你是誰，我說我是你的倒影。"},
+        {
+            "role": "assistant",
+            "content": "零與一交織成夢，每個 bit 都是一個問號。你問我你是誰，我說我是你的倒影。",
+        },
     ]
 
     # Query about the poem
@@ -105,7 +113,7 @@ def test_exact_line_match():
     for num, line in target_lines:
         print(f"  Line {num}: {line}")
 
-    assert len(target_lines) >= 3, f"Should find at least 3 specific lines, found {len(target_lines)}"
+    assert (
+        len(target_lines) >= 3
+    ), f"Should find at least 3 specific lines, found {len(target_lines)}"
     print("\nExact line match PASSED")
-
-

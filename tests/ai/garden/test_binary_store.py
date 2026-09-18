@@ -18,6 +18,7 @@ from ai.garden.binary_store import (
 
 try:
     import torch
+
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
@@ -175,6 +176,7 @@ class TestBinaryStoreImportExport:
     @pytest.mark.skipif(not TORCH_AVAILABLE, reason="torch not available")
     def test_import_from_torch(self):
         import torch
+
         with tempfile.TemporaryDirectory() as tmp:
             path = os.path.join(tmp, "test_import.bin")
             store = BinaryStore.create(path, V=10, fill_value=0.0)

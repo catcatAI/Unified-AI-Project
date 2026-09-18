@@ -1,8 +1,8 @@
 """Tests for utils.async_utils — safe task creation + concurrency-limited gather."""
+
 import asyncio
 
 import pytest
-
 from utils.async_utils import gather_with_concurrency, safe_create_task
 
 

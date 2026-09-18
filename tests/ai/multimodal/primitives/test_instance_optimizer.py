@@ -42,8 +42,7 @@ class TestInstanceOptimizer:
         target = np.random.rand(128, 128, 3).astype(np.float32)
 
         result = optimizer.optimize_for_image(
-            target, concept_name="cat",
-            n_iterations=3, n_probes=3
+            target, concept_name="cat", n_iterations=3, n_probes=3
         )
 
         assert "vector" in result
@@ -58,10 +57,7 @@ class TestInstanceOptimizer:
 
         target = np.random.rand(128, 128, 3).astype(np.float32)
 
-        result = optimizer.optimize_for_image(
-            target, concept_name=None,
-            n_iterations=3, n_probes=3
-        )
+        result = optimizer.optimize_for_image(target, concept_name=None, n_iterations=3, n_probes=3)
 
         assert "vector" in result
         assert result["loss"] >= 0
@@ -72,9 +68,7 @@ class TestInstanceOptimizer:
 
         target = np.random.rand(64, 64, 3).astype(np.float32)
 
-        result = optimizer.optimize_for_image(
-            target, n_iterations=2, n_probes=2
-        )
+        result = optimizer.optimize_for_image(target, n_iterations=2, n_probes=2)
 
         rendered = result["rendered"]
         assert rendered.size == (64, 64)

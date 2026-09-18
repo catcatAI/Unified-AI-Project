@@ -1,5 +1,7 @@
 """Tests for AngelaModelCore — GlobalSystemClock integration."""
+
 import asyncio
+
 import pytest
 
 pytestmark = pytest.mark.slow
@@ -8,6 +10,7 @@ pytestmark = pytest.mark.slow
 @pytest.fixture
 def model():
     from core.engine.angela_model_core import AngelaModelCore
+
     m = AngelaModelCore()
     yield m
 

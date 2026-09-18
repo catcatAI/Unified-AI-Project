@@ -30,6 +30,7 @@ class TestModelBusRegistration:
 
     def setup_method(self):
         from ai.core.model_bus import ModelBus, ModelCapability
+
         self.bus = ModelBus()
         self.ModelCapability = ModelCapability
 
@@ -69,6 +70,7 @@ class TestModelBusRegistration:
             async def generate(self, query: str, context=None):
                 self.called = True
                 from core.interfaces.protocols import LLMResponse
+
                 return LLMResponse(text="generated", confidence=0.9)
 
         backend = BackendWithGenerate()
@@ -86,11 +88,16 @@ class TestModelBusDomainQueries:
 
     def setup_method(self):
         from ai.core.model_bus import ModelBus, ModelCapability
+
         self.bus = ModelBus()
         self.ModelCapability = ModelCapability
         self.bus.register("model_a", _MockEngine("a"), ModelCapability("t1", "reflex", 1.0, 0.9))
-        self.bus.register("model_b", _MockEngine("b"), ModelCapability("t1", "knowledge", 10.0, 0.7))
-        self.bus.register("model_c", _MockEngine("c"), ModelCapability("t2", "knowledge", 20.0, 0.6))
+        self.bus.register(
+            "model_b", _MockEngine("b"), ModelCapability("t1", "knowledge", 10.0, 0.7)
+        )
+        self.bus.register(
+            "model_c", _MockEngine("c"), ModelCapability("t2", "knowledge", 20.0, 0.6)
+        )
 
     def test_get_models_for_domain(self):
         models = self.bus.get_models_for_domain("knowledge")
@@ -115,10 +122,13 @@ class TestModelBusResolveCandidates:
 
     def setup_method(self):
         from ai.core.model_bus import ModelBus, ModelCapability
+
         self.bus = ModelBus()
         self.ModelCapability = ModelCapability
         self.bus.register("ed3n", _MockEngine(), ModelCapability("reflex", "reflex", 0.1, 0.95))
-        self.bus.register("garden", _MockEngine(), ModelCapability("lightweight", "knowledge", 10.0, 0.7))
+        self.bus.register(
+            "garden", _MockEngine(), ModelCapability("lightweight", "knowledge", 10.0, 0.7)
+        )
         self.bus.register("cloud", _MockEngine(), ModelCapability("cloud", "creative", 500.0, 0.6))
 
     def test_resolve_reflex(self):
@@ -151,6 +161,7 @@ class TestModelBusPickBest:
 
     def test_pick_best_highest_confidence(self):
         from ai.core.model_bus import ModelBus, ModelRouteResult
+
         r1 = ModelRouteResult("a", "text", 0.5, 10.0, "x")
         r2 = ModelRouteResult("b", "text", 0.9, 10.0, "x")
         best = ModelBus._pick_best({"a": r1, "b": r2})
@@ -159,11 +170,13 @@ class TestModelBusPickBest:
 
     def test_pick_best_empty_returns_none(self):
         from ai.core.model_bus import ModelBus
+
         best = ModelBus._pick_best({})
         assert best["model_id"] == "none"
 
     def test_pick_best_single(self):
         from ai.core.model_bus import ModelBus, ModelRouteResult
+
         r = ModelRouteResult("a", "text", 0.7, 10.0, "x")
         best = ModelBus._pick_best({"a": r})
         assert best["model_id"] == "a"
@@ -173,6 +186,7 @@ class TestModelBusInjectPattern:
 
     def test_inject_pattern_with_reflex_add_pattern(self):
         from ai.core.model_bus import ModelBus
+
         engine = _MockReflexEngine()
         result = ModelBus._inject_pattern(engine, "hello", "world")
         assert result is True
@@ -180,12 +194,14 @@ class TestModelBusInjectPattern:
 
     def test_inject_pattern_no_reflex(self):
         from ai.core.model_bus import ModelBus
+
         engine = _MockEngine()
         result = ModelBus._inject_pattern(engine, "hello", "world")
         assert result is False
 
     def test_sync_knowledge_syncs_patterns(self):
         from ai.core.model_bus import ModelBus, ModelCapability
+
         bus = ModelBus()
         source = _MockReflexEngine("source")
         target = _MockReflexEngine("target")
@@ -198,6 +214,7 @@ class TestModelBusInjectPattern:
 
     def test_sync_knowledge_unknown_model(self):
         from ai.core.model_bus import ModelBus, ModelCapability
+
         bus = ModelBus()
         target = _MockReflexEngine("t")
         bus.register("tgt", target, ModelCapability("t", "d", 1.0, 0.5))
@@ -209,13 +226,26 @@ class TestModelBusRouting:
 
     def setup_method(self):
         from ai.core.model_bus import ModelBus, ModelCapability
+
         self.bus = ModelBus()
         self.ModelCapability = ModelCapability
 
     def register_all(self):
-        self.bus.register("ed3n", _MockEngine("reflex_response"), self.ModelCapability("reflex", "reflex", 0.1, 0.95))
-        self.bus.register("garden", _MockEngine("garden_response"), self.ModelCapability("lightweight", "knowledge", 10.0, 0.7))
-        self.bus.register("cloud", _MockEngine("cloud_response"), self.ModelCapability("cloud", "creative", 500.0, 0.6))
+        self.bus.register(
+            "ed3n",
+            _MockEngine("reflex_response"),
+            self.ModelCapability("reflex", "reflex", 0.1, 0.95),
+        )
+        self.bus.register(
+            "garden",
+            _MockEngine("garden_response"),
+            self.ModelCapability("lightweight", "knowledge", 10.0, 0.7),
+        )
+        self.bus.register(
+            "cloud",
+            _MockEngine("cloud_response"),
+            self.ModelCapability("cloud", "creative", 500.0, 0.6),
+        )
 
     async def test_route_reflex(self):
         self.register_all()
@@ -256,7 +286,9 @@ class TestModelBusRouting:
         assert "not registered" in (decision.results["ed3n"].error or "")
 
     async def test_route_unregistered_model_type(self):
-        self.bus.register("ed3n", _MockEngine(), self.ModelCapability("reflex", "reflex", 0.1, 0.95))
+        self.bus.register(
+            "ed3n", _MockEngine(), self.ModelCapability("reflex", "reflex", 0.1, 0.95)
+        )
         decision = await self.bus.route("test", "creative")
         assert "cloud" in decision.results
         assert "not registered" in (decision.results["cloud"].error or "")
@@ -267,7 +299,9 @@ class TestModelBusRouting:
                 msg = "engine crashed"
                 raise RuntimeError(msg)
 
-        self.bus.register("ed3n", _CrashEngine(), self.ModelCapability("reflex", "reflex", 0.1, 0.95))
+        self.bus.register(
+            "ed3n", _CrashEngine(), self.ModelCapability("reflex", "reflex", 0.1, 0.95)
+        )
         decision = await self.bus.route("hello", "reflex")
         assert decision.results["ed3n"].error is not None
         assert decision.confidence == 0.0
@@ -276,11 +310,14 @@ class TestModelBusRouting:
         class _SlowEngine:
             async def process(self, query: str, context=None) -> str:
                 import asyncio
+
                 await asyncio.sleep(100)
                 return "too late"
 
         self.bus.default_timeout = 0.01
-        self.bus.register("ed3n", _SlowEngine(), self.ModelCapability("reflex", "reflex", 0.1, 0.95))
+        self.bus.register(
+            "ed3n", _SlowEngine(), self.ModelCapability("reflex", "reflex", 0.1, 0.95)
+        )
         decision = await self.bus.route("hello", "reflex")
         assert "Timeout" in (decision.results["ed3n"].error or "")
 
@@ -289,8 +326,12 @@ class TestModelBusRouting:
             async def process(self, query: str, context=None) -> str:
                 return ""
 
-        self.bus.register("garden", _LowConfEngine(), self.ModelCapability("lightweight", "knowledge", 10.0, 0.7))
-        self.bus.register("cloud", _MockEngine("fallback"), self.ModelCapability("cloud", "creative", 500.0, 0.6))
+        self.bus.register(
+            "garden", _LowConfEngine(), self.ModelCapability("lightweight", "knowledge", 10.0, 0.7)
+        )
+        self.bus.register(
+            "cloud", _MockEngine("fallback"), self.ModelCapability("cloud", "creative", 500.0, 0.6)
+        )
         decision = await self.bus.route("knowledge query", "knowledge")
         assert "cloud" in decision.results
 
@@ -314,5 +355,7 @@ class TestModelBusRouting:
         assert calls == []
         assert "code_exec" not in decision.results
         # The handler is still reachable via execute_handler (gate path).
-        result = await self.bus.execute_handler("code_exec", "執行 python", {"query_type": "execute"})
+        result = await self.bus.execute_handler(
+            "code_exec", "執行 python", {"query_type": "execute"}
+        )
         assert result.get("result") == "HANDLER_RAN"

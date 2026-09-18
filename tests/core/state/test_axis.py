@@ -39,13 +39,17 @@ class TestAxis:
 
     def test_set_and_get(self):
         axis = Axis.create_alpha()
-        energy_field = AxisField(axis="alpha", name="energy", label="能量", default=0.5, min_val=0.0, max_val=1.0)
+        energy_field = AxisField(
+            axis="alpha", name="energy", label="能量", default=0.5, min_val=0.0, max_val=1.0
+        )
         axis.set(energy_field, 0.8)
         assert axis.get(energy_field) == pytest.approx(0.8)
 
     def test_set_clamps_value(self):
         axis = Axis.create_alpha()
-        energy_field = AxisField(axis="alpha", name="energy", label="能量", default=0.5, min_val=0.0, max_val=1.0)
+        energy_field = AxisField(
+            axis="alpha", name="energy", label="能量", default=0.5, min_val=0.0, max_val=1.0
+        )
         axis.set(energy_field, 5.0)
         assert axis.get(energy_field) == pytest.approx(1.0)
 
@@ -57,14 +61,18 @@ class TestAxis:
 
     def test_modify_adds_delta(self):
         axis = Axis.create_alpha()
-        energy_field = AxisField(axis="alpha", name="energy", label="能量", default=0.5, min_val=0.0, max_val=1.0)
+        energy_field = AxisField(
+            axis="alpha", name="energy", label="能量", default=0.5, min_val=0.0, max_val=1.0
+        )
         axis.set(energy_field, 0.5)
         axis.modify(energy_field, 0.3)
         assert axis.get(energy_field) == pytest.approx(0.8)
 
     def test_modify_clamps(self):
         axis = Axis.create_alpha()
-        energy_field = AxisField(axis="alpha", name="energy", label="能量", default=0.5, min_val=0.0, max_val=1.0)
+        energy_field = AxisField(
+            axis="alpha", name="energy", label="能量", default=0.5, min_val=0.0, max_val=1.0
+        )
         axis.set(energy_field, 0.5)
         axis.modify(energy_field, 10.0)
         assert axis.get(energy_field) == pytest.approx(1.0)
@@ -149,7 +157,9 @@ class TestAxis:
 
     def test_from_config_with_initial_values(self):
         axis = Axis.from_config(
-            "custom", "Custom", initial_values={"energy": 0.7, "comfort": 0.3},
+            "custom",
+            "Custom",
+            initial_values={"energy": 0.7, "comfort": 0.3},
         )
         assert axis.get_str("energy") == pytest.approx(0.7)
 

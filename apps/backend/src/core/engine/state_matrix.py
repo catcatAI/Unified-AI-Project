@@ -33,10 +33,10 @@ from core.engine.cognitive_operations import (
 from core.engine.cognitive_operations import get_dimension_value as _gdv
 from core.engine.cognitive_operations import get_position as _gp
 from core.engine.cognitive_operations import perform_spatial_reasoning as _psr
-from core.state.temporal import TemporalState
 from core.engine.cognitive_operations import (
     set_intent_target,
 )
+from core.state.temporal import TemporalState
 from core.state.text_to_vector import text_to_vector as _text_to_vector_impl
 
 logger = logging.getLogger(__name__)

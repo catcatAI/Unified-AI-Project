@@ -71,7 +71,9 @@ class AtlassianCLIBridge:
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
-            stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=timeout_value("atlassian.cli", 30))
+            stdout, stderr = await asyncio.wait_for(
+                process.communicate(), timeout=timeout_value("atlassian.cli", 30)
+            )
 
             if process.returncode == 0:
                 out_str = stdout.decode().strip()

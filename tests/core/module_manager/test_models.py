@@ -45,9 +45,7 @@ def test_module_descriptor_defaults():
 
 def test_module_descriptor_required_fields():
     hooks = LifecycleHooks(init="init_fn")
-    desc = ModuleDescriptor(
-        name="test", version="1.0.0", kind=ModuleKind.SERVICE, lifecycle=hooks
-    )
+    desc = ModuleDescriptor(name="test", version="1.0.0", kind=ModuleKind.SERVICE, lifecycle=hooks)
     assert desc.name == "test"
     assert desc.version == "1.0.0"
     assert desc.kind == ModuleKind.SERVICE
@@ -91,7 +89,9 @@ def test_hotplug_result():
 
 def test_module_descriptor_full():
     hooks = LifecycleHooks(
-        init="init", start="start", stop="stop",
+        init="init",
+        start="start",
+        stop="stop",
         health=HealthConfig(endpoint="/health", interval=10, timeout=3),
         hooks=[HookDecl(event="evt", handler="hdl")],
         thread_safe=False,
@@ -102,9 +102,14 @@ def test_module_descriptor_full():
         adapters=[AdapterDecl(name="a", interface="i")],
     )
     desc = ModuleDescriptor(
-        name="full", version="2.0", kind=ModuleKind.ADAPTER,
-        description="full desc", depends_on=deps, provides=svcs,
-        lifecycle=hooks, config={"key": "val"},
+        name="full",
+        version="2.0",
+        kind=ModuleKind.ADAPTER,
+        description="full desc",
+        depends_on=deps,
+        provides=svcs,
+        lifecycle=hooks,
+        config={"key": "val"},
     )
     assert desc.name == "full"
     assert desc.version == "2.0"

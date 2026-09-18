@@ -30,17 +30,19 @@ logger = logging.getLogger(__name__)
 
 class TrustDimension(Enum):
     """信任评分的多维度"""
-    RELIABILITY = "reliability"      # 一致性，是否守信
-    EXPERTISE = "expertise"          # 专业知识，能力水平
-    INTENT_ALIGNMENT = "intent"     # 意图一致性，共情性
-    COMPLIANCE = "compliance"        # 合规性，道德标准
-    TRANSPARENCY = "transparency"    # 透明度，信息开放
-    RESPONSIVENESS = "responsiveness" # 响应性，反馈及时性
-    CONSISTENCY = "consistency"     # 一致性，行为稳定
+
+    RELIABILITY = "reliability"  # 一致性，是否守信
+    EXPERTISE = "expertise"  # 专业知识，能力水平
+    INTENT_ALIGNMENT = "intent"  # 意图一致性，共情性
+    COMPLIANCE = "compliance"  # 合规性，道德标准
+    TRANSPARENCY = "transparency"  # 透明度，信息开放
+    RESPONSIVENESS = "responsiveness"  # 响应性，反馈及时性
+    CONSISTENCY = "consistency"  # 一致性，行为稳定
 
 
 class TrustLevel(Enum):
     """信任等级"""
+
     VERY_HIGH = "very_high"
     HIGH = "high"
     MEDIUM = "medium"
@@ -50,15 +52,17 @@ class TrustLevel(Enum):
 
 class RiskCategory(Enum):
     """风险类别"""
-    BEHAVIORAL = "behavioral"      # 行为风险
-    DATA = "data"                   # 数据风险
-    MODEL = "model"                 # 模型风险
-    ENVIRONMENTAL = "environmental" # 环境风险
+
+    BEHAVIORAL = "behavioral"  # 行为风险
+    DATA = "data"  # 数据风险
+    MODEL = "model"  # 模型风险
+    ENVIRONMENTAL = "environmental"  # 环境风险
 
 
 @dataclass
 class TrustScore:
     """信任评分结果"""
+
     dimension: TrustDimension
     score: float  # 0.0 - 1.0
     confidence: float  # 置信度 0.0 - 1.0
@@ -71,6 +75,7 @@ class TrustScore:
 @dataclass
 class TrustRelationship:
     """信任关系"""
+
     target_entity: str
     entity_type: str
     trust_score: Dict[TrustDimension, TrustScore]
@@ -83,6 +88,7 @@ class TrustRelationship:
 @dataclass
 class RiskAssessment:
     """风险评估结果"""
+
     category: RiskCategory
     risk_level: float  # 0.0 - 1.0
     impact_score: float  # 影响程度
@@ -105,17 +111,17 @@ class TrustManager:
     # Scoring coefficients & level cutoffs (named constants — were bare
     # literals scattered through _calculate_* / _classify_trust_level).
     # ------------------------------------------------------------------
-    CONF_CONSISTENCY_WEIGHT = 0.7     # confidence = consistency×w + data×w
+    CONF_CONSISTENCY_WEIGHT = 0.7  # confidence = consistency×w + data×w
     CONF_DATA_VOLUME_WEIGHT = 0.3
-    CONF_DATA_FULL_SAMPLES = 10.0     # sample count at which data_factor=1.0
-    CONF_INITIAL = 0.8                # confidence with <2 evidence points
+    CONF_DATA_FULL_SAMPLES = 10.0  # sample count at which data_factor=1.0
+    CONF_INITIAL = 0.8  # confidence with <2 evidence points
     CONF_FLOOR = 0.1
-    TRUST_LEVEL_VERY_HIGH = 0.8       # _classify_trust_level cutoffs
+    TRUST_LEVEL_VERY_HIGH = 0.8  # _classify_trust_level cutoffs
     TRUST_LEVEL_HIGH = 0.6
     TRUST_LEVEL_MEDIUM = 0.4
     TRUST_LEVEL_LOW = 0.2
-    RISK_TRUST_IMPACT_STEP = 0.3      # per-dimension (1-score) × this
-    RISK_TRUST_IMPACT_WEIGHT = 0.3    # overall risk fusion weights below
+    RISK_TRUST_IMPACT_STEP = 0.3  # per-dimension (1-score) × this
+    RISK_TRUST_IMPACT_WEIGHT = 0.3  # overall risk fusion weights below
     RISK_HISTORY_WEIGHT = 0.5
     RISK_FEATURE_WEIGHT = 0.2
 
@@ -178,8 +184,7 @@ class TrustManager:
 
         # 初始化维度权重
         self.dimension_weights = {
-            dim: self.config["dimension_weights"][dim.value]
-            for dim in TrustDimension
+            dim: self.config["dimension_weights"][dim.value] for dim in TrustDimension
         }
 
         # 初始化风险阈值
@@ -303,7 +308,11 @@ class TrustManager:
                 weight = self.dimension_weights.get(dimension, 0.1)
                 weighted_scores.append(score_obj.score * weight)
 
-            overall_score = sum(weighted_scores) / sum(self.dimension_weights.values()) if weighted_scores else 0.0
+            overall_score = (
+                sum(weighted_scores) / sum(self.dimension_weights.values())
+                if weighted_scores
+                else 0.0
+            )
 
             # 确定信任等级
             trust_level = self._classify_trust_level(overall_score)
@@ -332,7 +341,9 @@ class TrustManager:
                 "risk_category": risk_assessment["risk_category"],
                 "detailed_scores": detailed_scores,
                 "last_updated": time.time(),
-                "interaction_count": len(self.trust_history[entity_id].get(TrustDimension.RELIABILITY, [])),
+                "interaction_count": len(
+                    self.trust_history[entity_id].get(TrustDimension.RELIABILITY, [])
+                ),
             }
 
             if include_history:
@@ -516,9 +527,7 @@ class TrustManager:
                 "target_trust": target_trust,
                 "relationship_type": relationship_type,
                 "mutual_trust": (source_trust["overall_score"] + target_trust["overall_score"]) / 2,
-                "last_updated": max(
-                    source_trust["last_updated"], target_trust["last_updated"]
-                ),
+                "last_updated": max(source_trust["last_updated"], target_trust["last_updated"]),
             }
 
         except Exception as e:
@@ -604,7 +613,7 @@ class TrustManager:
             scores = [s.score for s in history]
             mean_score = sum(scores) / len(scores)
             variance = sum((s - mean_score) ** 2 for s in scores) / len(scores)
-            std_dev = variance ** 0.5
+            std_dev = variance**0.5
 
             # 根据一致性和数据量计算置信度
             consistency_factor = max(0.0, 1.0 - std_dev)
@@ -770,7 +779,13 @@ class TrustManager:
             return max(0.0, min(1.0, overall_risk))
 
         except Exception as e:
-            logger.warning("Category risk calculation failed for %s/%s: %s", entity_id, category, e, exc_info=True)
+            logger.warning(
+                "Category risk calculation failed for %s/%s: %s",
+                entity_id,
+                category,
+                e,
+                exc_info=True,
+            )
             return 0.0
 
     def _calculate_category_history_risk(
@@ -790,14 +805,22 @@ class TrustManager:
             for dimension, scores in self.trust_history[entity_id].items():
                 if len(scores) >= 3:
                     recent_scores = [s.score for s in scores[-3:]]
-                    volatility = sum((s - sum(recent_scores) / len(recent_scores)) ** 2 for s in recent_scores)
-                    total_volatility += volatility ** 0.5
+                    volatility = sum(
+                        (s - sum(recent_scores) / len(recent_scores)) ** 2 for s in recent_scores
+                    )
+                    total_volatility += volatility**0.5
                     total_categories += 1
 
             return total_volatility / max(1, total_categories)
 
         except Exception as e:
-            logger.warning("Category history risk calculation failed for %s/%s: %s", entity_id, category, e, exc_info=True)
+            logger.warning(
+                "Category history risk calculation failed for %s/%s: %s",
+                entity_id,
+                category,
+                e,
+                exc_info=True,
+            )
             return 0.0
 
     def _calculate_category_feature_risk(
@@ -824,7 +847,13 @@ class TrustManager:
                 return 0.0
 
         except Exception as e:
-            logger.warning("Category feature risk calculation failed for %s/%s: %s", entity_id, category, e, exc_info=True)
+            logger.warning(
+                "Category feature risk calculation failed for %s/%s: %s",
+                entity_id,
+                category,
+                e,
+                exc_info=True,
+            )
             return 0.0
 
     def _generate_risk_recommendations(
@@ -838,28 +867,36 @@ class TrustManager:
         recommendations = []
 
         if overall_risk > 0.8:
-            recommendations.extend([
-                "立即停止所有高风险交互",
-                "进行全面风险评估",
-                "实施强化安全措施",
-            ])
+            recommendations.extend(
+                [
+                    "立即停止所有高风险交互",
+                    "进行全面风险评估",
+                    "实施强化安全措施",
+                ]
+            )
         elif overall_risk > 0.6:
-            recommendations.extend([
-                "限制交互频率",
-                "实施监控措施",
-                "制定应急预案",
-            ])
+            recommendations.extend(
+                [
+                    "限制交互频率",
+                    "实施监控措施",
+                    "制定应急预案",
+                ]
+            )
         elif overall_risk > 0.4:
-            recommendations.extend([
-                "实施中期审查",
-                "增加记录和审计",
-                "制定改进计划",
-            ])
+            recommendations.extend(
+                [
+                    "实施中期审查",
+                    "增加记录和审计",
+                    "制定改进计划",
+                ]
+            )
         else:
-            recommendations.extend([
-                "继续监控风险水平",
-                "定期评估合规性",
-            ])
+            recommendations.extend(
+                [
+                    "继续监控风险水平",
+                    "定期评估合规性",
+                ]
+            )
 
         return recommendations
 
@@ -921,19 +958,22 @@ class TrustManager:
         if current_time - self._last_cache_cleared > 300.0:  # 5分钟
             # 清理信任计算缓存
             self._trust_computation_cache = {
-                k: v for k, v in self._trust_computation_cache.items()
+                k: v
+                for k, v in self._trust_computation_cache.items()
                 if current_time - v["timestamp"] < 300.0
             }
 
             # 清理关系计算缓存
             self._relationship_computation_cache = {
-                k: v for k, v in self._relationship_computation_cache.items()
+                k: v
+                for k, v in self._relationship_computation_cache.items()
                 if current_time - v["timestamp"] < 300.0
             }
 
             # 清理风险计算缓存
             self._risk_computation_cache = {
-                k: v for k, v in self._risk_computation_cache.items()
+                k: v
+                for k, v in self._risk_computation_cache.items()
                 if current_time - v["timestamp"] < 300.0
             }
 

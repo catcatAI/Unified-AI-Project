@@ -8,14 +8,17 @@ and real external dictionaries. Takes ~90s standalone and stalls the full
 test suite under a combined run. Skipped by default; run explicitly when
 a CLIP-capable environment is available.
 """
+
 import io
 import os
 import sys
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..', 'apps', 'backend', 'src'))
-os.environ['HF_HUB_DISABLE_TELEMETRY'] = '1'
+sys.path.insert(
+    0, os.path.join(os.path.dirname(__file__), "..", "..", "..", "apps", "backend", "src")
+)
+os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
 
 import numpy as np
 from ai.ed3n.ed3n_engine import ED3NEngine
@@ -68,11 +71,11 @@ def generator(ed3n):
 
 
 def make_img(draw_func):
-    img = Image.new('RGB', (224, 224), (240, 240, 240))
+    img = Image.new("RGB", (224, 224), (240, 240, 240))
     d = ImageDraw.Draw(img)
     draw_func(d)
     buf = io.BytesIO()
-    img.save(buf, format='PNG')
+    img.save(buf, format="PNG")
     return buf.getvalue()
 
 

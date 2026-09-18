@@ -277,7 +277,9 @@ class AudioSpectralEncoder:
         result: np.ndarray = self._projection @ raw
         return result
 
-    def train_step(self, audio_data: bytes, target_latent: Optional[np.ndarray], lr: float = 0.001) -> float:
+    def train_step(
+        self, audio_data: bytes, target_latent: Optional[np.ndarray], lr: float = 0.001
+    ) -> float:
         """Train the projection matrix to map audio features to target latent.
 
         Uses MSE loss between projected features and target latent vector.

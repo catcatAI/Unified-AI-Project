@@ -61,9 +61,7 @@ class ContextManager:
 
             # 保存到磁盘存储 (失败不抛异常，仅警告)
             if not self.disk_storage.save_context(context):
-                logger.warning(
-                    f"Failed to save context {context_id} to disk storage"
-                )
+                logger.warning(f"Failed to save context {context_id} to disk storage")
 
             # 添加到缓存
             self._context_cache[context_id] = context
@@ -124,9 +122,7 @@ class ContextManager:
 
             # 保存到内存存储
             if not self.memory_storage.save_context(context):
-                logger.error(
-                    f"Failed to save context {context_id} to memory storage"
-                )
+                logger.error(f"Failed to save context {context_id} to memory storage")
                 return False
 
             # 保存到磁盘存储
@@ -162,7 +158,6 @@ class ContextManager:
             else:
                 logger.warning(
                     f"Failed to delete context {context_id} from one or more storage layers",
-
                 )
 
             return success
@@ -252,15 +247,11 @@ class ContextManager:
 
             # 保存目标上下文
             if not self.memory_storage.save_context(target_context):
-                logger.error(
-                    f"Failed to save target context {target_id} to memory storage"
-                )
+                logger.error(f"Failed to save target context {target_id} to memory storage")
                 return False
 
             if not self.disk_storage.save_context(target_context):
-                logger.error(
-                    f"Failed to save target context {target_id} to disk storage"
-                )
+                logger.error(f"Failed to save target context {target_id} to disk storage")
                 return False
 
             # 更新缓存

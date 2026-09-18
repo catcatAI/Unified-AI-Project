@@ -23,5 +23,3 @@ def test_bootstrap() -> None:
     assert "environment" in state
     assert "performance" in state
     print("\n✅ Bootstrap test passed!")
-
-

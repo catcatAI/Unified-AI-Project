@@ -15,11 +15,11 @@ GVV architecture (correct):
 
 from .concept_mapper import ConceptMapper
 from .differentiable_renderer import DifferentiableRenderer
-from .primitive_diffusion import PrimitiveDiffusion, TwoLevelDiffusion, get_diffusion
 
 # GVV architecture
 from .geometric_vocabulary import GeometricVocabulary
 from .instance_optimizer import InstanceOptimizer
+from .primitive_diffusion import PrimitiveDiffusion, TwoLevelDiffusion, get_diffusion
 from .primitive_encoder import PrimitiveEncoder
 from .primitive_renderer import PrimitiveRenderer
 

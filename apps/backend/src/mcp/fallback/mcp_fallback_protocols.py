@@ -54,9 +54,7 @@ async def initialize_fallback_protocols(
     """初始化所有备选通信协议并返回协议实例映射"""
     logger.info(f"[MCP-Fallback] Initializing protocols (multiprocess={is_multiprocess})...")
     protocols = {
-        FallbackProtocolType.IN_PROCESS.value: FallbackProtocol(
-            FallbackProtocolType.IN_PROCESS
-        ),
+        FallbackProtocolType.IN_PROCESS.value: FallbackProtocol(FallbackProtocolType.IN_PROCESS),
     }
     if is_multiprocess:
         protocols[FallbackProtocolType.SHARED_MEMORY.value] = FallbackProtocol(

@@ -8,10 +8,8 @@ import time
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple, cast, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
 from unittest.mock import MagicMock
-
-from .external.external_connector import ExternalConnector
 
 from core.system.config.magic_numbers import cache_value, threshold_value, timeout_value
 
@@ -30,6 +28,7 @@ from .advanced_performance_optimizer import (
 from .bridge.data_aligner import DataAligner
 from .bridge.message_bridge import MessageBridge
 from .extensibility import HSPExtensionManager, HSPMessageRegistry
+from .external.external_connector import ExternalConnector
 
 # Type alias for external connector (can be real or mock)
 ExternalConnectorType = Union[ExternalConnector, MagicMock]
@@ -56,6 +55,7 @@ if os.environ.get("TEST_MODE") or os.environ.get("TESTING"):
     from unittest.mock import AsyncMock, MagicMock
 else:
     from typing import TYPE_CHECKING
+
     if TYPE_CHECKING:
         from unittest.mock import AsyncMock, MagicMock
     else:
@@ -107,9 +107,7 @@ def get_schema_uri(schema_name: str) -> str:
         # This makes the path relative to the current working directory
         # In a real-world scenario, a more robust solution might be needed
         # like using an environment variable or a configuration setting.
-        logger.warning(
-            f"Schema file not found: {schema_name}. Path was: {schema_path}"
-        )
+        logger.warning(f"Schema file not found: {schema_name}. Path was: {schema_path}")
         return f"file:///{schema_name}_not_found"
     return schema_path.as_uri()
 
@@ -198,17 +196,23 @@ class HSPConnector:
             )
             mock_connector = MagicMock()
             mock_connector.ai_id = ai_id
+
             # Mock async methods to return coroutines
             async def mock_connect() -> bool:
                 return True
+
             async def mock_disconnect() -> None:
                 return None
+
             async def mock_subscribe(topic: str) -> bool:
                 return True
+
             async def mock_unsubscribe(topic: str) -> bool:
                 return True
+
             async def mock_publish(topic: str, message: Dict[str, Any]) -> bool:
                 return True
+
             mock_connector.connect = mock_connect
             mock_connector.disconnect = mock_disconnect
             mock_connector.subscribe = mock_subscribe
@@ -240,11 +244,7 @@ class HSPConnector:
         if message_bridge is None:
             # MessageBridge is a dataclass with source, target, config
             source_id = getattr(self.external_connector, "ai_id", ai_id)
-            self.message_bridge = MessageBridge(
-                source=source_id,
-                target="",
-                config={}
-            )
+            self.message_bridge = MessageBridge(source=source_id, target="", config={})
         else:
             self.message_bridge = message_bridge
 
@@ -778,9 +778,7 @@ class HSPConnector:
             if success:
                 self.logger.info(f"Opinion {opinion_payload.get('id')} published successfully.")
             else:
-                logger.error(
-                    f"Failed to publish opinion {opinion_payload.get('id')}."
-                )
+                logger.error(f"Failed to publish opinion {opinion_payload.get('id')}.")
 
             return success
 
@@ -828,9 +826,7 @@ class HSPConnector:
             message
         )
         if not is_valid:
-            logger.warning(
-                f"消息安全验证失败: {message.get('message_id', 'unknown')}"
-            )
+            logger.warning(f"消息安全验证失败: {message.get('message_id', 'unknown')}")
             return
 
         # 使用验证后的消息
@@ -901,9 +897,7 @@ class HSPConnector:
             message
         )
         if not is_valid:
-            logger.warning(
-                f"消息安全验证失败: {message.get('message_id', 'unknown')}"
-            )
+            logger.warning(f"消息安全验证失败: {message.get('message_id', 'unknown')}")
             return
 
         # 使用验证后的消息
@@ -1118,7 +1112,7 @@ class HSPConnector:
             # We need to combine them: circuit breaker wraps retry policy wraps the actual function
             async def _publish_with_retry() -> bool:
                 return await self.retry_policy.execute(self._raw_publish_message, topic, envelope, qos)  # type: ignore[no-any-return]
-            
+
             raw_result = await self.circuit_breaker.call(_publish_with_retry)
 
             if not raw_result:

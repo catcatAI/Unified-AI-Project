@@ -5,7 +5,6 @@ import tempfile
 from pathlib import Path
 
 import pytest
-
 from core.system.config.async_io import (
     async_json_dump,
     async_json_load,
@@ -62,7 +61,7 @@ class TestAsyncJsonDump:
         await async_json_dump(data, str(path), indent=2)
         content = path.read_text(encoding="utf-8")
         assert '"key"' in content
-        assert '  ' in content
+        assert "  " in content
 
 
 class TestAsyncJsonLoad:

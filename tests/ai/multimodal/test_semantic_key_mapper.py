@@ -16,6 +16,7 @@ from ai.multimodal.semantic_key_mapper import SemanticKeyMapper
 # Fixtures
 # =========================================================================
 
+
 @pytest.fixture
 def mapper():
     return SemanticKeyMapper(max_entries=100)
@@ -36,6 +37,7 @@ def seeded_mapper():
 # =========================================================================
 # 1. Basic Indexing and Querying (4 tests)
 # =========================================================================
+
 
 class TestBasicIndexQuery:
     """P44a: Basic SemanticKeyMapper operations."""
@@ -77,6 +79,7 @@ class TestBasicIndexQuery:
 # 2. Router Result Integration (2 tests)
 # =========================================================================
 
+
 class TestRouterIntegration:
     """P44b: index_from_router_result extracts latents from router dict."""
 
@@ -112,6 +115,7 @@ class TestRouterIntegration:
 # 3. Batch Indexing (1 test)
 # =========================================================================
 
+
 class TestBatchIndex:
     """P44c: index_batch indexes multiple entries."""
 
@@ -131,6 +135,7 @@ class TestBatchIndex:
 # 4. Edge Cases (3 tests)
 # =========================================================================
 
+
 class TestEdgeCases:
     """P44d: Edge cases and error handling."""
 
@@ -144,7 +149,9 @@ class TestEdgeCases:
         mapper.index_key("dup", np.ones(64, dtype=np.float32), np.ones(64, dtype=np.float32))
         assert mapper.count == 1
         # Update with new latents
-        mapper.index_key("dup", np.ones(64, dtype=np.float32) * 5, np.ones(64, dtype=np.float32) * 6)
+        mapper.index_key(
+            "dup", np.ones(64, dtype=np.float32) * 5, np.ones(64, dtype=np.float32) * 6
+        )
         assert mapper.count == 1  # Still 1 entry
         assert np.allclose(mapper._structural_latents[0], 5.0)  # Updated
         assert np.allclose(mapper._semantic_latents[0], 6.0)
@@ -153,8 +160,9 @@ class TestEdgeCases:
         """E3: exceeding max_entries drops oldest."""
         m = SemanticKeyMapper(max_entries=3)
         for i in range(5):
-            m.index_key(f"key{i}", np.ones(64, dtype=np.float32) * i,
-                        np.ones(64, dtype=np.float32) * i)
+            m.index_key(
+                f"key{i}", np.ones(64, dtype=np.float32) * i, np.ones(64, dtype=np.float32) * i
+            )
         assert m.count == 3
         # Oldest (key0, key1) should be gone
         assert m._keys == ["key2", "key3", "key4"]
@@ -174,4 +182,3 @@ class TestEdgeCases:
         # Modifying the returned list shouldn't affect the mapper
         k.append("new_key")
         assert seeded_mapper.count == 5
-

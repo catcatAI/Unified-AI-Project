@@ -15,7 +15,6 @@
 """
 
 import pytest
-
 from core.backbone import get_backbone, reset_backbone
 from core.backbone.training import TrainingMount
 

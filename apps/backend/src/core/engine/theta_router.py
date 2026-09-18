@@ -27,7 +27,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Protocol
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Protocol, Tuple
 
 from core.system.config.magic_numbers import cache_value
 

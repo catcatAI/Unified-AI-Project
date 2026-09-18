@@ -23,7 +23,6 @@ from __future__ import annotations
 import logging
 import random
 import uuid
-
 from typing import Optional
 
 from core.system.config.magic_numbers import cache_value, llm_param, threshold_value
@@ -47,7 +46,9 @@ class HSMFormulaSystem:
         self._running = False
         logger.debug("HSMFormulaSystem initialized")
 
-    def calculate_spontaneity(self, cognitive_gap: float, randomness: Optional[float] = None) -> float:
+    def calculate_spontaneity(
+        self, cognitive_gap: float, randomness: Optional[float] = None
+    ) -> float:
         if randomness is None:
             randomness = llm_param("hsm_default_randomness", 0.1)
         return cognitive_gap * randomness

@@ -77,7 +77,7 @@ def split_sections(text: str) -> List[Tuple[str, str, int]]:
         result.append((header, sec_text, level))
 
     if sections[0][0] > 0:
-        preamble = "\n".join(lines[:sections[0][0]]).strip()
+        preamble = "\n".join(lines[: sections[0][0]]).strip()
         if preamble:
             result.insert(0, ("", preamble, 0))
 

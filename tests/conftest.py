@@ -46,11 +46,14 @@ def benchmark(func: Callable, *args, iterations: int = 10, **kwargs) -> Dict[str
 
 class PerformanceTimer:
     """Context manager for timing code blocks."""
+
     def __init__(self, name: str = "block"):
         self.name = name
         self.elapsed = 0.0
+
     def __enter__(self):
         self.start = time.perf_counter()
         return self
+
     def __exit__(self, *args):
         self.elapsed = time.perf_counter() - self.start

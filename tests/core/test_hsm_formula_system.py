@@ -12,16 +12,20 @@ from apps.backend.src.core.hsm_formula_system import (
 class TestCognitiveGap:
     def test_calculate_pressure(self):
         gap = CognitiveGap(
-            gap_id="test_1", domain="test",
-            uncertainty_level=0.8, information_deficit=0.6,
+            gap_id="test_1",
+            domain="test",
+            uncertainty_level=0.8,
+            information_deficit=0.6,
         )
         pressure = gap.calculate_pressure()
         assert 0.5 < pressure < 1.5
 
     def test_calculate_pressure_fatigue(self):
         gap = CognitiveGap(
-            gap_id="test_1", domain="test",
-            uncertainty_level=0.8, information_deficit=0.6,
+            gap_id="test_1",
+            domain="test",
+            uncertainty_level=0.8,
+            information_deficit=0.6,
             exploration_attempts=10,
         )
         pressure = gap.calculate_pressure()
@@ -43,7 +47,9 @@ class TestHSMFormulaSystem:
 
     def test_detect_cognitive_gap(self):
         hsm = HSMFormulaSystem()
-        gap = hsm.detect_cognitive_gap("test_domain", uncertainty_level=0.7, information_deficit=0.5)
+        gap = hsm.detect_cognitive_gap(
+            "test_domain", uncertainty_level=0.7, information_deficit=0.5
+        )
         assert gap.domain == "test_domain"
         assert gap.uncertainty_level == 0.7
         assert len(hsm.cognitive_gaps) == 1
@@ -92,11 +98,13 @@ class TestHSMFormulaSystem:
         hsm = HSMFormulaSystem()
         gap = hsm.detect_cognitive_gap("test", uncertainty_level=0.5, information_deficit=0.5)
         event = hsm.trigger_exploration(gap.gap_id)
-        event.discoveries.append({
-            "type": ExplorationResult.RULE_CANDIDATE,
-            "confidence": 0.8,
-            "description": "test rule",
-        })
+        event.discoveries.append(
+            {
+                "type": ExplorationResult.RULE_CANDIDATE,
+                "confidence": 0.8,
+                "description": "test rule",
+            }
+        )
         result = hsm.activate_governance_rule(gap.gap_id)
         assert isinstance(result, bool)
 

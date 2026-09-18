@@ -1,4 +1,5 @@
 """Game over screen."""
+
 from __future__ import annotations
 
 from textual.app import ComposeResult
@@ -74,6 +75,7 @@ class GameOverScreen(Screen):
 
     def action_restart(self) -> None:
         from .title_screen import TitleScreen
+
         while len(self.app.screen_stack) > 1:
             self.app.pop_screen()
         self.app.push_screen(TitleScreen(self.engine))

@@ -1,5 +1,5 @@
 import pytest
-from security.content_filter import ContentFilter, FilterResult, SafetyLevel, FilterAction
+from security.content_filter import ContentFilter, FilterAction, FilterResult, SafetyLevel
 
 
 class TestContentFilter:
@@ -73,6 +73,8 @@ class TestContentFilter:
         assert result.confidence == 1.0
 
     def test_warn_on_risky_disabled(self):
-        cf = ContentFilter({"warn_on_risky": False, "pii_detection": True, "block_on_unsafe": False})
+        cf = ContentFilter(
+            {"warn_on_risky": False, "pii_detection": True, "block_on_unsafe": False}
+        )
         result = cf.filter_content("email: a@b.com")
         assert result.action == FilterAction.PASS

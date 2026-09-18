@@ -56,7 +56,12 @@ async def multimodal_stream_handler(websocket: WebSocket) -> None:
         logger.error(f"Multimodal WS error: {e}")
 
 
-async def _dispatch(svc: MultimodalService, action: str, payload: Dict[str, Any], websocket: Optional[WebSocket] = None) -> Any:
+async def _dispatch(
+    svc: MultimodalService,
+    action: str,
+    payload: Dict[str, Any],
+    websocket: Optional[WebSocket] = None,
+) -> Any:
     if action in ("encode", "multimodal_encode"):
         return await svc.encode(
             (
@@ -112,9 +117,9 @@ async def _handle_chat_stream(websocket: WebSocket, payload: Dict[str, Any]) -> 
     if not text:
         return "empty_input"
 
-    from ai.streaming import StreamingPipeline, TokenStream
-    from ai.garden.garden_engine import GARDENEngine
     from ai.ed3n.ed3n_engine import ED3NEngine
+    from ai.garden.garden_engine import GARDENEngine
+    from ai.streaming import StreamingPipeline, TokenStream
 
     garden = GARDENEngine.get_shared()
     ed3n = ED3NEngine.get_shared(load_trained=False)

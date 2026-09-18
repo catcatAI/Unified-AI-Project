@@ -104,5 +104,4 @@ class LearningLogDB:
         else:
             logger.warning(
                 f"Attempted to delete non-existent LearningLogDB file: {self.db_path}",
-
             )

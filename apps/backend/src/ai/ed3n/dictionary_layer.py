@@ -140,9 +140,7 @@ class DictionaryLayer:
         if len(raw) <= cap:
             return raw
         soft = self.encode_soft(text)
-        scored = [
-            (k, soft[k]) for k in raw if k in soft and soft[k] >= self.MIN_ENCODE_SCORE
-        ]
+        scored = [(k, soft[k]) for k in raw if k in soft and soft[k] >= self.MIN_ENCODE_SCORE]
         scored.sort(key=lambda x: x[1], reverse=True)
         filtered = [k for k, s in scored]
         if not filtered:
@@ -533,9 +531,7 @@ class DictionaryLayer:
                 with open(fpath, "r", encoding="utf-8") as f:
                     data = json.load(f)
             except (OSError, json.JSONDecodeError) as e:
-                logger.warning(
-                    "DictionaryLayer: skipping unreadable preset file %s: %s", fpath, e
-                )
+                logger.warning("DictionaryLayer: skipping unreadable preset file %s: %s", fpath, e)
                 continue
             if not isinstance(data, dict):
                 logger.warning(

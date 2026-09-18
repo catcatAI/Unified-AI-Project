@@ -22,6 +22,7 @@ class TestMultimodalRoutes:
     async def test_multimodal_routes_import(self):
         """T20: multimodal_routes module imports without error."""
         from api.routes.multimodal_routes import router
+
         assert router is not None
         assert router.prefix == ""
         assert router.tags == ["multimodal"]
@@ -29,12 +30,23 @@ class TestMultimodalRoutes:
     async def test_multimodal_routes_has_endpoints(self):
         """T21: Router has the expected multimodal endpoints."""
         from api.routes.multimodal_routes import router
+
         paths = [r.path for r in router.routes]
         # Core multimodal endpoints that must exist
-        core = ["/multimodal/encode", "/multimodal/decode", "/multimodal/compare",
-                "/multimodal/retrieve", "/multimodal/train", "/multimodal/evaluate",
-                "/multimodal/generate", "/multimodal/visualize", "/multimodal/health",
-                "/multimodal/items", "/multimodal/clear", "/multimodal/cross-infer"]
+        core = [
+            "/multimodal/encode",
+            "/multimodal/decode",
+            "/multimodal/compare",
+            "/multimodal/retrieve",
+            "/multimodal/train",
+            "/multimodal/evaluate",
+            "/multimodal/generate",
+            "/multimodal/visualize",
+            "/multimodal/health",
+            "/multimodal/items",
+            "/multimodal/clear",
+            "/multimodal/cross-infer",
+        ]
         for ep in core:
             assert ep in paths, f"Missing endpoint: {ep}"
         # Thin wrappers (encode-with-retry, decode-with-fallback, train-with-checkpoint) removed in §X #238
@@ -69,11 +81,13 @@ class TestMultimodalServiceIntegration:
     async def test_service_encode_then_decode(self):
         """T23: Encode then decode returns base64 image."""
         from services.multimodal_service import MultimodalService
+
         svc = MultimodalService()
         import io
 
         import numpy as np
         from PIL import Image
+
         img = Image.fromarray(np.random.randint(0, 255, (32, 32, 3), dtype=np.uint8))
         buf = io.BytesIO()
         img.save(buf, format="PNG")
@@ -88,6 +102,7 @@ class TestMultimodalServiceIntegration:
     async def test_service_full_pipeline_synthetic(self):
         """T24: Full pipeline (train → evaluate) on synthetic data."""
         from services.multimodal_service import MultimodalService
+
         svc = MultimodalService()
         train_result = await svc.train(mode="full", epochs=2)
         assert train_result["status"] == "completed"
@@ -97,11 +112,13 @@ class TestMultimodalServiceIntegration:
     async def test_service_cross_modal_roundtrip(self):
         """T25: Cross-modal vision→audio→vision roundtrip."""
         from services.multimodal_service import MultimodalService
+
         svc = MultimodalService()
         import io
 
         import numpy as np
         from PIL import Image
+
         img = Image.fromarray(np.random.randint(0, 255, (32, 32, 3), dtype=np.uint8))
         buf = io.BytesIO()
         img.save(buf, format="PNG")

@@ -5,7 +5,12 @@ Tests for DocumentLearner — dedup, LRU eviction, structure, signatures.
 
 import hashlib
 
-from ai.document.learner import DocumentLearner, _DOCUMENT_REGISTRY, _MAX_REGISTRY_SIZE, _evict_oldest
+from ai.document.learner import (
+    _DOCUMENT_REGISTRY,
+    _MAX_REGISTRY_SIZE,
+    DocumentLearner,
+    _evict_oldest,
+)
 
 
 def test_learner_init():

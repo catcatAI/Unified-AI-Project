@@ -5,12 +5,14 @@ import pytest
 @pytest.fixture
 def visual_decoder():
     from ai.multimodal.visual_decoder import VisualDecoder
+
     return VisualDecoder()
 
 
 @pytest.fixture
 def audio_decoder():
     from ai.multimodal.audio_decoder import AudioWaveformDecoder
+
     return AudioWaveformDecoder()
 
 
@@ -29,6 +31,7 @@ class TestVisualDecoder:
 
     def test_decode_to_pil(self, visual_decoder, latent):
         from PIL import Image
+
         pil = visual_decoder.decode_to_pil(latent)
         assert isinstance(pil, Image.Image)
         assert pil.size == (128, 128)
@@ -88,9 +91,12 @@ class TestVisualDecoder:
         assert np.allclose(visual_decoder._b_hidden, saved)
 
     def test_save_and_load_weights(self, visual_decoder, tmp_path):
-        from ai.multimodal.visual_decoder import (VisualDecoder,
-                                                   save_visual_decoder_weights,
-                                                   load_default_visual_decoder_weights)
+        from ai.multimodal.visual_decoder import (
+            VisualDecoder,
+            load_default_visual_decoder_weights,
+            save_visual_decoder_weights,
+        )
+
         save_path = str(tmp_path / "test_weights.npz")
         assert save_visual_decoder_weights(visual_decoder, save_path)
         decoder2 = VisualDecoder()
@@ -118,7 +124,7 @@ class TestAudioWaveformDecoder:
 
     def test_waveform_not_silent(self, audio_decoder, latent):
         wav = audio_decoder.decode(latent)
-        rms = np.sqrt(np.mean(wav ** 2))
+        rms = np.sqrt(np.mean(wav**2))
         assert rms > 0.001
 
     def test_different_latents_different_waveforms(self, audio_decoder):
@@ -181,15 +187,19 @@ class TestAudioWaveformDecoder:
         snap_wn = audio_decoder._W_noise.copy()
         snap_bn = audio_decoder._b_noise.copy()
         wrong_h = np.zeros((1, 1), dtype=np.float32)
-        audio_decoder.set_wavetable_weights(wrong_h, np.ones(64), np.zeros((768, 64)),
-                                             np.ones(768), np.zeros((16, 64)), np.ones(16))
+        audio_decoder.set_wavetable_weights(
+            wrong_h, np.ones(64), np.zeros((768, 64)), np.ones(768), np.zeros((16, 64)), np.ones(16)
+        )
         assert np.allclose(audio_decoder._W_hidden, snap_w), "Wrong shape should skip"
 
     def test_save_and_load_audio_decoder_weights(self, audio_decoder, tmp_path):
         """save_audio_decoder_weights / load_default_audio_decoder_weights round-trip."""
-        from ai.multimodal.audio_decoder import (AudioWaveformDecoder,
-                                                  save_audio_decoder_weights,
-                                                  load_default_audio_decoder_weights)
+        from ai.multimodal.audio_decoder import (
+            AudioWaveformDecoder,
+            load_default_audio_decoder_weights,
+            save_audio_decoder_weights,
+        )
+
         save_path = str(tmp_path / "audio_test.npz")
         audio_decoder._W_hidden[:] = 0.5
         audio_decoder._b_hidden[:] = 0.25

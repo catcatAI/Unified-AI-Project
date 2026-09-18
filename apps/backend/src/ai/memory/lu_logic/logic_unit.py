@@ -155,9 +155,7 @@ class LogicUnit:
         try:
             # 检查规则数量限制
             if len(self.rules) >= self.max_rules:
-                logger.warning(
-                    f"Cannot add rule {rule.rule_id}: max_rules limit reached"
-                )
+                logger.warning(f"Cannot add rule {rule.rule_id}: max_rules limit reached")
                 return False
 
             # 检查规则ID是否已存在

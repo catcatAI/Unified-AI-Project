@@ -89,7 +89,9 @@ class TestBug8HAMMissingMethods:
 
     def test_query_core_memory_keyword(self):
         ham = self._make_ham()
-        ham.store_conversation({"role": "user", "content": "remember the apple tree", "type": "chat"})
+        ham.store_conversation(
+            {"role": "user", "content": "remember the apple tree", "type": "chat"}
+        )
         ham.store_conversation({"role": "user", "content": "unrelated topic", "type": "chat"})
 
         async def run():

@@ -21,8 +21,8 @@ Date: 2026-02-02
 from __future__ import annotations
 
 import asyncio
-import os
 import logging
+import os
 from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
@@ -116,7 +116,6 @@ class ModalityGateway:
                 self.modalities[ModalityType.AUDIO].is_active = False
                 logger.warning(
                     f"⚠️ [Modality] High Dissonance ({dissonance:.2f}). Throttling energy-heavy modalities.",
-
                 )
             else:
                 # 根據任務類型動態開啟
@@ -630,7 +629,6 @@ class DigitalLifeIntegrator:
                 if self.introspection_report.get("dissonance_detected"):
                     logger.warning(
                         f"[DigitalLife] Cognitive dissonance detected: {self.introspection_report['anomalies']}",
-
                     )
 
                 # [Task N.20.2] 更新模態閘控

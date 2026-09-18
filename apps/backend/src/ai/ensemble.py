@@ -64,12 +64,12 @@ class ResponseFusionEngine:
     """Fuses responses from multiple models into coherent output"""
 
     # Quality-score rubric (named constants — were bare literals).
-    QS_LEN_IDEAL_MIN = 50        # chars; below = terse
-    QS_LEN_IDEAL_MAX = 2000      # chars; above = rambling
+    QS_LEN_IDEAL_MIN = 50  # chars; below = terse
+    QS_LEN_IDEAL_MAX = 2000  # chars; above = rambling
     QS_LEN_FULL_SCORE = 1.0
     QS_LEN_SOME_SCORE = 0.5
     QS_LEN_NONE_SCORE = 0.0
-    QS_MARKER_COUNT_MIN = 5      # punctuation/newline markers for coherence
+    QS_MARKER_COUNT_MIN = 5  # punctuation/newline markers for coherence
     QS_COHERENT_SCORE = 1.0
     QS_PARTIAL_SCORE = 0.7
     QS_LATENCY_FAST_SEC = 1.0

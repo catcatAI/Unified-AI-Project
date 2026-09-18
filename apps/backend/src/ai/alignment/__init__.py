@@ -27,10 +27,7 @@ _MAX_CHECK_HISTORY = 200
 # `from ai.alignment import EmotionSystem` returned the weak stub instead of the
 # real class. They are now re-exported as the single source of truth.
 from .emotion_system import EmotionSystem
-
-
 from .ontology_system import OntologySystem
-
 
 try:
     from .alignment_manager import AlignmentManager
@@ -72,7 +69,6 @@ except ImportError:
 
 
 from .asi_autonomous_alignment import ASIAutonomousAlignment
-
 
 __all__ = [
     "ReasoningSystem",

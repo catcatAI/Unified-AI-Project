@@ -36,8 +36,15 @@ class _FakeStateMatrix:
         self.beta = _Axis(["curiosity", "focus", "confusion", "learning", "clarity"])
         self.gamma = _Axis(
             [
-                "happiness", "sadness", "anger", "fear", "disgust",
-                "surprise", "trust", "anticipation", "calm",
+                "happiness",
+                "sadness",
+                "anger",
+                "fear",
+                "disgust",
+                "surprise",
+                "trust",
+                "anticipation",
+                "calm",
             ]
         )
         self.delta = _Axis(["attention", "bond", "trust", "presence", "engagement"])
@@ -46,8 +53,14 @@ class _FakeStateMatrix:
         )
         self.theta = _Axis(
             [
-                "novelty", "complexity", "ambiguity", "dimension_fit",
-                "creation_urge", "theta_negativity", "correction_urge", "audit_intensity",
+                "novelty",
+                "complexity",
+                "ambiguity",
+                "dimension_fit",
+                "creation_urge",
+                "theta_negativity",
+                "correction_urge",
+                "audit_intensity",
             ]
         )
 
@@ -63,6 +76,7 @@ def _make_pipeline():
 # ---------------------------------------------------------------------------
 # Router + classification: which tokens ripple, which don't
 # ---------------------------------------------------------------------------
+
 
 def test_stateless_math_is_not_meaningful():
     from ai.memory.domain_ripple import route_domain
@@ -109,6 +123,7 @@ def test_chit_chat_is_not_a_domain():
 # Domain engine correctness
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.parametrize(
     "formula,expected",
     [("H2O", 18.015), ("CO2", 44.009), ("NaCl", 58.44), ("O2", 31.998)],
@@ -142,6 +157,7 @@ def test_physics_ripple_shape_for_force():
 # ---------------------------------------------------------------------------
 # Full ripple application to the StateMatrix (no dropped keys, no spurious keys)
 # ---------------------------------------------------------------------------
+
 
 def test_full_ripple_applies_negative_valence():
     from ai.memory.domain_ripple import apply_ripple_to_state
@@ -189,6 +205,7 @@ def test_full_ripple_clamps_and_uses_schema():
 # ---------------------------------------------------------------------------
 # Bounded-cognition magnitudes are principled
 # ---------------------------------------------------------------------------
+
 
 def test_joy_only_for_posed_question():
     from ai.memory.domain_ripple import MathDomainEngine
@@ -239,6 +256,7 @@ def test_stateless_returns_no_deltas():
 # End-to-end through CognitivePipeline (stateless -> no emotion)
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_pipeline_stateless_no_emotion():
     pipeline, sm = _make_pipeline()
@@ -288,9 +306,9 @@ def test_ripple_delta_cap_unifies_magnitude():
     single math ripple is no stronger than a physics/chemistry ripple.
     """
     from ai.memory.domain_ripple import (
+        RIPPLE_DELTA_CAP,
         MathDomainEngine,
         apply_ripple_to_state,
-        RIPPLE_DELTA_CAP,
     )
 
     sm = _FakeStateMatrix()

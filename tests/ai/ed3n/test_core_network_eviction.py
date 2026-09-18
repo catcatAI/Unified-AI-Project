@@ -12,7 +12,6 @@ input dataset). Also confirms the running connection counter stays accurate.
 import time
 
 import pytest
-
 from ai.ed3n.core_network import CoreNetwork, RelationGroup, RelationType
 
 
@@ -106,9 +105,9 @@ class TestCoreNetworkEviction:
         core.groups["mapping"].add_neuron(Neuron(key="k2", group_type="mapping"))
         core.adjust_connection("k1", "k2", 0.2)
         assert core.groups["synonym"].neurons["k1"].connections["k2"] == 0.7
-        assert "k2" not in core.groups["mapping"].neurons["k1"].connections, (
-            "mapping group must not gain a spurious connection"
-        )
+        assert (
+            "k2" not in core.groups["mapping"].neurons["k1"].connections
+        ), "mapping group must not gain a spurious connection"
 
     def test_add_directed_fresh_pair_counts_one(self):
         """add_directed() on a fresh pair creates a single one-sided edge
@@ -117,9 +116,9 @@ class TestCoreNetworkEviction:
         core = _fresh_core(max_connections=1000)
         core.add_directed("s0", "t0", weight=0.5)
         assert "t0" in core.groups["mapping"].neurons["s0"].connections
-        assert "s0" not in core.groups["mapping"].neurons["t0"].connections, (
-            "fresh directed edge must NOT create a reverse edge"
-        )
+        assert (
+            "s0" not in core.groups["mapping"].neurons["t0"].connections
+        ), "fresh directed edge must NOT create a reverse edge"
         assert core._conn_count == core._count_connections() == 1
 
     def test_from_dict_recomputes_conn_count(self):
@@ -137,4 +136,3 @@ class TestCoreNetworkEviction:
             restored._conn_count,
         )
         assert restored._conn_count == restored._count_connections()
-

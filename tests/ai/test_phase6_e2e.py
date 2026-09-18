@@ -12,9 +12,11 @@ import pytest
 # 6.1.1  Search query: classify -> SEARCH -> gate -> auto_execute
 # ---------------------------------------------------------------------------
 
+
 class TestE2ESearchQuery:
     def test_classify_search_query(self):
         from ai.core.query_classifier import QueryClassifier, QueryType
+
         qc = QueryClassifier()
         result = qc.classify("搜尋台北天氣")
         assert result.primary_type == QueryType.SEARCH
@@ -22,6 +24,7 @@ class TestE2ESearchQuery:
 
     def test_gate_auto_execute_search(self):
         from ai.core.execution_gate import ExecutionGate
+
         gate = ExecutionGate()
         decision = gate.decide(
             query_type="search",
@@ -35,6 +38,7 @@ class TestE2ESearchQuery:
 
     def test_model_bus_execute_handler(self):
         from ai.core.model_bus import ModelBus
+
         bus = ModelBus()
 
         class MockSearchHandler:
@@ -51,9 +55,11 @@ class TestE2ESearchQuery:
 # 6.1.2  File read query: classify -> FILE -> gate -> auto_execute
 # ---------------------------------------------------------------------------
 
+
 class TestE2EFileRead:
     def test_classify_file_read(self):
         from ai.core.query_classifier import QueryClassifier, QueryType
+
         qc = QueryClassifier()
         result = qc.classify("讀取 temp.txt")
         assert result.primary_type == QueryType.FILE
@@ -61,6 +67,7 @@ class TestE2EFileRead:
 
     def test_gate_auto_execute_file_read(self):
         from ai.core.execution_gate import ExecutionGate
+
         gate = ExecutionGate()
         decision = gate.decide(
             query_type="file",
@@ -77,10 +84,12 @@ class TestE2EFileRead:
 # 6.1.3  File delete: classify -> FILE -> gate -> reject (irreversible)
 # ---------------------------------------------------------------------------
 
+
 class TestE2EFileDelete:
     def test_gate_confirms_delete(self):
         """H9: delete is irreversible — gate must ask for confirmation."""
         from ai.core.execution_gate import ExecutionGate
+
         gate = ExecutionGate()
         decision = gate.decide(
             query_type="file",
@@ -96,6 +105,7 @@ class TestE2EFileDelete:
     def test_gate_confirms_delete_all(self):
         """H9: delete-all is irreversible — gate must ask for confirmation."""
         from ai.core.execution_gate import ExecutionGate
+
         gate = ExecutionGate()
         decision = gate.decide(
             query_type="file",
@@ -113,9 +123,11 @@ class TestE2EFileDelete:
 # 6.1.5  Command with confirmation
 # ---------------------------------------------------------------------------
 
+
 class TestE2ECommandConfirm:
     def test_gate_confirm_command(self):
         from ai.core.execution_gate import ExecutionGate
+
         gate = ExecutionGate()
         decision = gate.decide(
             query_type="command",
@@ -128,6 +140,7 @@ class TestE2ECommandConfirm:
 
     def test_gate_rejects_low_score_no_handler(self):
         from ai.core.execution_gate import ExecutionGate
+
         gate = ExecutionGate()
         decision = gate.decide(
             query_type="unknown",
@@ -143,9 +156,11 @@ class TestE2ECommandConfirm:
 # 6.1.7  Negation detection -> reject
 # ---------------------------------------------------------------------------
 
+
 class TestE2ENegation:
     def test_negation_rejects(self):
         from ai.core.execution_gate import ExecutionGate
+
         gate = ExecutionGate()
         decision = gate.decide(
             query_type="search",
@@ -161,15 +176,18 @@ class TestE2ENegation:
 # 6.1.10  Greeting -> reflex -> LLM
 # ---------------------------------------------------------------------------
 
+
 class TestE2EGreeting:
     def test_classify_greeting(self):
         from ai.core.query_classifier import QueryClassifier, QueryType
+
         qc = QueryClassifier()
         result = qc.classify("你是誰")
         assert result.confidence > 0.2
 
     def test_classify_greeting_hello(self):
         from ai.core.query_classifier import QueryClassifier, QueryType
+
         qc = QueryClassifier()
         result = qc.classify("你好")
         assert result.primary_type == QueryType.GREETING
@@ -180,9 +198,11 @@ class TestE2EGreeting:
 # 6.1.11  Math query -> ED3N math evaluation
 # ---------------------------------------------------------------------------
 
+
 class TestE2EMath:
     def test_classify_math(self):
         from ai.core.query_classifier import QueryClassifier, QueryType
+
         qc = QueryClassifier()
         result = qc.classify("123 + 456")
         assert result.primary_type == QueryType.MATH
@@ -190,6 +210,7 @@ class TestE2EMath:
 
     def test_ed3n_math_evaluation(self):
         from ai.ed3n.ed3n_engine import ED3NEngine
+
         engine = ED3NEngine()
         engine.load_presets()
         result = engine.process("三加五")
@@ -201,9 +222,11 @@ class TestE2EMath:
 # 6.1.14  Session persistence: memories survive restart
 # ---------------------------------------------------------------------------
 
+
 class TestE2ESessionPersistence:
     def test_session_save_and_load(self, tmp_path):
         from ai.context.memory_context import MemoryContextManager
+
         session_dir = str(tmp_path / "sessions")
         mgr = MemoryContextManager(session_dir=session_dir)
         mgr.create_memory("用戶問了天氣", "short_term", {"topic": "weather"})
@@ -219,9 +242,11 @@ class TestE2ESessionPersistence:
 # 6.2  Performance Benchmarks
 # ---------------------------------------------------------------------------
 
+
 class TestPerformanceBenchmarks:
     def test_reflex_latency_under_1ms(self):
         from ai.ed3n.ed3n_engine import ED3NEngine
+
         engine = ED3NEngine()
         engine.load_presets()
         start = time.perf_counter()
@@ -232,6 +257,7 @@ class TestPerformanceBenchmarks:
 
     def test_classify_latency_under_5ms(self):
         from ai.core.query_classifier import QueryClassifier
+
         qc = QueryClassifier()
         start = time.perf_counter()
         for _ in range(100):
@@ -241,6 +267,7 @@ class TestPerformanceBenchmarks:
 
     def test_garden_process_latency_under_50ms(self):
         from ai.garden.garden_engine import GARDENEngine
+
         engine = GARDENEngine(compatibility_mode=True)
         engine.load_presets()
         start = time.perf_counter()
@@ -251,6 +278,7 @@ class TestPerformanceBenchmarks:
 
     def test_execution_gate_latency_under_1ms(self):
         from ai.core.execution_gate import ExecutionGate
+
         gate = ExecutionGate()
         start = time.perf_counter()
         for _ in range(100):
@@ -262,6 +290,7 @@ class TestPerformanceBenchmarks:
 # ---------------------------------------------------------------------------
 # 6.1.12  Continuation loop protection
 # ---------------------------------------------------------------------------
+
 
 class TestE2EContinuationLoop:
     def test_continuation_count_increments(self):
@@ -275,6 +304,7 @@ class TestE2EContinuationLoop:
 # ---------------------------------------------------------------------------
 # 6.1.13  Cross-turn context
 # ---------------------------------------------------------------------------
+
 
 class TestE2ECrossTurnContext:
     def test_history_preserves_context(self):
@@ -291,15 +321,18 @@ class TestE2ECrossTurnContext:
 # ModelBus handler registration
 # ---------------------------------------------------------------------------
 
+
 class TestModelBusHandlerRegistration:
     def test_handler_not_found_returns_error(self):
         from ai.core.model_bus import ModelBus
+
         bus = ModelBus()
         result = asyncio.run(bus.execute_handler("nonexistent_handler", "test", {}))
         assert result["success"] is False
 
     def test_execute_handler_returns_structured_result(self):
         from ai.core.model_bus import ModelBus
+
         bus = ModelBus()
 
         class MockHandler:
@@ -314,6 +347,7 @@ class TestModelBusHandlerRegistration:
 
     def test_model_bus_handler_latency_under_100ms(self):
         from ai.core.model_bus import ModelBus
+
         bus = ModelBus()
 
         class MockHandler:

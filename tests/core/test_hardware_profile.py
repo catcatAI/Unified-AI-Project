@@ -35,11 +35,13 @@ class TestHardwareScenario:
 
     def test_multiplier_ordering(self) -> None:
         """High-performance should be fastest, low-power slowest."""
-        assert PROFILES[HardwareScenario.SERVER_CLOUD].base_multiplier > \
-               PROFILES[HardwareScenario.HIGH_PERFORMANCE_DESKTOP].base_multiplier > \
-               PROFILES[HardwareScenario.LAPTOP_NORMAL].base_multiplier > \
-               PROFILES[HardwareScenario.LAPTOP_POWER_SAVER].base_multiplier > \
-               PROFILES[HardwareScenario.LOW_POWER_DEVICE].base_multiplier
+        assert (
+            PROFILES[HardwareScenario.SERVER_CLOUD].base_multiplier
+            > PROFILES[HardwareScenario.HIGH_PERFORMANCE_DESKTOP].base_multiplier
+            > PROFILES[HardwareScenario.LAPTOP_NORMAL].base_multiplier
+            > PROFILES[HardwareScenario.LAPTOP_POWER_SAVER].base_multiplier
+            > PROFILES[HardwareScenario.LOW_POWER_DEVICE].base_multiplier
+        )
 
     def test_all_keys_defined_in_all_profiles(self) -> None:
         """Every profile must define the same set of keys."""
@@ -144,8 +146,9 @@ class TestFrequencyProfile:
     def test_heartbeat_range_valid(self) -> None:
         """heartbeat_min must be <= heartbeat_max in all profiles."""
         for scenario, profile in PROFILES.items():
-            assert profile.heartbeat_min <= profile.heartbeat_max, \
-                f"{scenario}: min={profile.heartbeat_min} > max={profile.heartbeat_max}"
+            assert (
+                profile.heartbeat_min <= profile.heartbeat_max
+            ), f"{scenario}: min={profile.heartbeat_min} > max={profile.heartbeat_max}"
 
     def test_positive_intervals(self) -> None:
         """All interval fields must be > 0."""
@@ -164,7 +167,14 @@ class TestGetSummary:
         """get_summary() should contain all expected keys."""
         profile = HardwareProfile(scenario=HardwareScenario.HIGH_PERFORMANCE_DESKTOP)
         summary = profile.get_summary()
-        expected = {"scenario", "base_multiplier", "ans_update", "heartbeat_min",
-                     "heartbeat_max", "decision_interval", "neuroplasticity_update",
-                     "override_count"}
+        expected = {
+            "scenario",
+            "base_multiplier",
+            "ans_update",
+            "heartbeat_min",
+            "heartbeat_max",
+            "decision_interval",
+            "neuroplasticity_update",
+            "override_count",
+        }
         assert set(summary.keys()) >= expected

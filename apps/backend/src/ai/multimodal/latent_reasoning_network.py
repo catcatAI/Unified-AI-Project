@@ -790,7 +790,8 @@ class LatentReasoningNetwork:
         except ValueError as e:
             if "Object arrays" in str(e) or "allow_pickle" in str(e):
                 logger.warning(
-                    "Legacy checkpoint %s requires pickle (object dtype) — loading with allow_pickle=True", path
+                    "Legacy checkpoint %s requires pickle (object dtype) — loading with allow_pickle=True",
+                    path,
                 )
                 data = np.load(path, allow_pickle=True)
             else:

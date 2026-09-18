@@ -35,51 +35,51 @@ from ai.multimodal.visual_encoder import VisualEncoder
 # Image Generation
 # =========================================================================
 
+
 def _make_png(width: int, height: int, raw: bytes) -> bytes:
     """Build a valid PNG from raw pixel data."""
+
     def chunk(t, data):
         c = t + data
-        crc = struct.pack('>I', zlib.crc32(c) & 0xffffffff)
-        return struct.pack('>I', len(data)) + c + crc
-    ihdr = struct.pack('>IIBBBBB', width, height, 8, 2, 0, 0, 0)
+        crc = struct.pack(">I", zlib.crc32(c) & 0xFFFFFFFF)
+        return struct.pack(">I", len(data)) + c + crc
+
+    ihdr = struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0)
     idat = zlib.compress(raw)
-    return (b'\x89PNG\r\n\x1a\n'
-            + chunk(b'IHDR', ihdr)
-            + chunk(b'IDAT', idat)
-            + chunk(b'IEND', b''))
+    return b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", ihdr) + chunk(b"IDAT", idat) + chunk(b"IEND", b"")
 
 
-def _make_circle_png(radius: float, r: int, g: int, b: int,
-                     noise: float = 0.0, seed: int = 0) -> bytes:
+def _make_circle_png(
+    radius: float, r: int, g: int, b: int, noise: float = 0.0, seed: int = 0
+) -> bytes:
     """Yellow-ish circle on white background with optional noise."""
     width, height = 16, 16
     rng = np.random.default_rng(seed)
-    raw = b''
+    raw = b""
     cx, cy = 8, 8
     for y in range(height):
-        raw += b'\x00'
+        raw += b"\x00"
         for x in range(width):
             dx, dy = x - cx, y - cy
-            dist = (dx ** 2 + dy ** 2) ** 0.5
+            dist = (dx**2 + dy**2) ** 0.5
             if dist < radius:
                 nr = max(0, min(255, r + int(noise * rng.standard_normal())))
                 ng = max(0, min(255, g + int(noise * rng.standard_normal())))
                 nb = max(0, min(255, b + int(noise * rng.standard_normal())))
                 raw += bytes([nr, ng, nb])
             else:
-                raw += b'\xff\xff\xff'
+                raw += b"\xff\xff\xff"
     return _make_png(width, height, raw)
 
 
-def _make_square_png(size: int, r: int, g: int, b: int,
-                     noise: float = 0.0, seed: int = 0) -> bytes:
+def _make_square_png(size: int, r: int, g: int, b: int, noise: float = 0.0, seed: int = 0) -> bytes:
     """Colored square on white background with optional noise."""
     width, height = 16, 16
     rng = np.random.default_rng(seed)
-    raw = b''
+    raw = b""
     x0, y0 = 8 - size // 2, 8 - size // 2
     for y in range(height):
-        raw += b'\x00'
+        raw += b"\x00"
         for x in range(width):
             if x0 <= x < x0 + size and y0 <= y < y0 + size:
                 nr = max(0, min(255, r + int(noise * rng.standard_normal())))
@@ -87,13 +87,14 @@ def _make_square_png(size: int, r: int, g: int, b: int,
                 nb = max(0, min(255, b + int(noise * rng.standard_normal())))
                 raw += bytes([nr, ng, nb])
             else:
-                raw += b'\xff\xff\xff'
+                raw += b"\xff\xff\xff"
     return _make_png(width, height, raw)
 
 
 # =========================================================================
 # Fixtures
 # =========================================================================
+
 
 @pytest.fixture(scope="module")
 def encoder():
@@ -220,6 +221,7 @@ def projected_latents(trained_ls, encoded_features):
 # Tests — 小雞吃米圖 Lower-Bound (5 real tests)
 # =========================================================================
 
+
 class TestChickenEatsRice:
     """P44e: 小雞吃米圖 lower-bound — REAL tests, no bypass."""
 
@@ -261,8 +263,9 @@ class TestChickenEatsRice:
         avg_cross = float(np.mean(cross_class_sims))
 
         # After training, same-class should be closer than cross-class
-        assert avg_same > avg_cross, \
-            f"Training failed to cluster: same={avg_same:.4f} <= cross={avg_cross:.4f}"
+        assert (
+            avg_same > avg_cross
+        ), f"Training failed to cluster: same={avg_same:.4f} <= cross={avg_cross:.4f}"
 
     # ------------------------------------------------------------------
     # Test 2: Cross-image generalization — chicken
@@ -278,19 +281,22 @@ class TestChickenEatsRice:
         mapper = SemanticKeyMapper(max_entries=100)
 
         # Index ONE chicken image (index 0)
-        mapper.index_key("chicken",
-                         structural_latent=projected_latents["chicken"][0],
-                         semantic_latent=projected_latents["chicken"][0],
-                         combined_latent=projected_latents["chicken"][0])
+        mapper.index_key(
+            "chicken",
+            structural_latent=projected_latents["chicken"][0],
+            semantic_latent=projected_latents["chicken"][0],
+            combined_latent=projected_latents["chicken"][0],
+        )
 
         # Query with DIFFERENT chicken images (indices 1, 2, 3)
         for idx in range(1, 4):
             results = mapper.map_latent_to_keys(
-                projected_latents["chicken"][idx], top_k=1, mode="combined")
-            assert len(results) >= 1, \
-                f"Chicken[{idx}] returned no matches"
-            assert results[0]["key"] == "chicken", \
-                f"Chicken[{idx}] mapped to '{results[0]['key']}' instead of 'chicken' (score={results[0]['score']})"
+                projected_latents["chicken"][idx], top_k=1, mode="combined"
+            )
+            assert len(results) >= 1, f"Chicken[{idx}] returned no matches"
+            assert (
+                results[0]["key"] == "chicken"
+            ), f"Chicken[{idx}] mapped to '{results[0]['key']}' instead of 'chicken' (score={results[0]['score']})"
 
     # ------------------------------------------------------------------
     # Test 3: Cross-image generalization — cat
@@ -300,17 +306,21 @@ class TestChickenEatsRice:
         """Same as test_02 but for cat. Verifies the effect generalizes
         across concepts, not just chicken."""
         mapper = SemanticKeyMapper(max_entries=100)
-        mapper.index_key("cat",
-                         structural_latent=projected_latents["cat"][0],
-                         semantic_latent=projected_latents["cat"][0],
-                         combined_latent=projected_latents["cat"][0])
+        mapper.index_key(
+            "cat",
+            structural_latent=projected_latents["cat"][0],
+            semantic_latent=projected_latents["cat"][0],
+            combined_latent=projected_latents["cat"][0],
+        )
 
         for idx in range(1, 4):
             results = mapper.map_latent_to_keys(
-                projected_latents["cat"][idx], top_k=1, mode="combined")
+                projected_latents["cat"][idx], top_k=1, mode="combined"
+            )
             assert len(results) >= 1
-            assert results[0]["key"] == "cat", \
-                f"Cat[{idx}] mapped to '{results[0]['key']}' instead of 'cat'"
+            assert (
+                results[0]["key"] == "cat"
+            ), f"Cat[{idx}] mapped to '{results[0]['key']}' instead of 'cat'"
 
     # ------------------------------------------------------------------
     # Test 4: Cross-concept discrimination
@@ -327,10 +337,12 @@ class TestChickenEatsRice:
 
         # Index image 0 from each concept
         for concept in ["chicken", "cat", "dog"]:
-            mapper.index_key(concept,
-                             structural_latent=projected_latents[concept][0],
-                             semantic_latent=projected_latents[concept][0],
-                             combined_latent=projected_latents[concept][0])
+            mapper.index_key(
+                concept,
+                structural_latent=projected_latents[concept][0],
+                semantic_latent=projected_latents[concept][0],
+                combined_latent=projected_latents[concept][0],
+            )
 
         # Query images 1,2,3 from each concept — all must classify correctly
         total = 0
@@ -339,25 +351,25 @@ class TestChickenEatsRice:
             for idx in range(1, 4):
                 total += 1
                 results = mapper.map_latent_to_keys(
-                    projected_latents[concept][idx], top_k=1, mode="combined")
+                    projected_latents[concept][idx], top_k=1, mode="combined"
+                )
                 if len(results) >= 1 and results[0]["key"] == concept:
                     correct += 1
 
         accuracy = correct / max(total, 1)
-        assert accuracy >= 2/3, \
-            f"Cross-concept accuracy too low: {correct}/{total}"
+        assert accuracy >= 2 / 3, f"Cross-concept accuracy too low: {correct}/{total}"
 
         # At minimum, each concept must have at least 1 correct cross-image match
         for concept in ["chicken", "cat", "dog"]:
             any_correct = False
             for idx in range(1, 4):
                 results = mapper.map_latent_to_keys(
-                    projected_latents[concept][idx], top_k=1, mode="combined")
+                    projected_latents[concept][idx], top_k=1, mode="combined"
+                )
                 if len(results) >= 1 and results[0]["key"] == concept:
                     any_correct = True
                     break
-            assert any_correct, \
-                f"Concept '{concept}' had ZERO cross-image correct matches"
+            assert any_correct, f"Concept '{concept}' had ZERO cross-image correct matches"
 
     # ------------------------------------------------------------------
     # Test 5: Training materially changed the projection weights
@@ -379,9 +391,9 @@ class TestChickenEatsRice:
         diff = np.abs(trained_W - original_W).mean()
 
         # The weights should have changed measurably
-        assert diff > 1e-6, \
-            f"Training did NOT materially change weights (Δ={diff:.2e})"
+        assert diff > 1e-6, f"Training did NOT materially change weights (Δ={diff:.2e})"
 
         # The weights should NOT be identical to initial random
-        assert not np.allclose(trained_W, original_W, atol=1e-6), \
-            "Training weights are identical to initial weights — training was a no-op"
+        assert not np.allclose(
+            trained_W, original_W, atol=1e-6
+        ), "Training weights are identical to initial weights — training was a no-op"

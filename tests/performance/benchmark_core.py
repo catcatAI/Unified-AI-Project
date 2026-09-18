@@ -1,4 +1,5 @@
 """Benchmarks for core AI system components."""
+
 import asyncio
 
 import pytest
@@ -16,10 +17,16 @@ def test_importance_scorer_speed():
         scorer = ImportanceScorer()
         docs = []
         for i in range(100):
-            docs.append({
-                "content": f"Document {i} with some important keywords like error and critical #{i}",
-                "metadata": {"source": "user", "priority": 0.5 + (i % 10) * 0.05, "has_code": i % 3 == 0},
-            })
+            docs.append(
+                {
+                    "content": f"Document {i} with some important keywords like error and critical #{i}",
+                    "metadata": {
+                        "source": "user",
+                        "priority": 0.5 + (i % 10) * 0.05,
+                        "has_code": i % 3 == 0,
+                    },
+                }
+            )
         for doc in docs:
             await scorer.calculate(doc["content"], doc["metadata"])
 
@@ -48,9 +55,6 @@ def test_importance_scorer_accuracy():
         assert long_high > long_no_keywords, f"Expected {long_high} > {long_no_keywords}"
 
     benchmark(lambda: asyncio.run(_run()), iterations=5)
-
-
-
 
 
 @pytest.mark.benchmark

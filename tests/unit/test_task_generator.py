@@ -1,4 +1,5 @@
 """Tests for ai.memory.task_generator"""
+
 import pytest
 
 pytest.importorskip("ai.memory.task_generator", reason="TaskGenerator not available")
@@ -53,11 +54,13 @@ class TestTaskGenerator:
 
     def test_generate_tasks_with_history(self):
         tg = TaskGenerator()
-        tg.analyze_patterns([
-            {"topic": "math", "content": "2+2"},
-            {"topic": "math", "content": "3+3"},
-            {"topic": "science", "content": "physics"},
-        ])
+        tg.analyze_patterns(
+            [
+                {"topic": "math", "content": "2+2"},
+                {"topic": "math", "content": "3+3"},
+                {"topic": "science", "content": "physics"},
+            ]
+        )
         tasks = tg.generate_tasks()
         types = [t["task_type"] for t in tasks]
         assert "prefetch_knowledge" in types
@@ -68,11 +71,13 @@ class TestTaskGenerator:
 
     def test_predict_next_query_with_history(self):
         tg = TaskGenerator()
-        tg.analyze_patterns([
-            {"topic": "math", "content": "2+2"},
-            {"topic": "science", "content": "gravity"},
-            {"topic": "math", "content": "3*4"},
-            {"topic": "science", "content": "biology"},
-        ])
+        tg.analyze_patterns(
+            [
+                {"topic": "math", "content": "2+2"},
+                {"topic": "science", "content": "gravity"},
+                {"topic": "math", "content": "3*4"},
+                {"topic": "science", "content": "biology"},
+            ]
+        )
         prediction = tg.predict_next_query("user1")
         assert prediction == "math"

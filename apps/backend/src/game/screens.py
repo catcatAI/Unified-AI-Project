@@ -1,4 +1,5 @@
 """World select, character select, game, and game-over screens."""
+
 from __future__ import annotations
 
 from textual.app import ComposeResult
@@ -7,10 +8,10 @@ from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.screen import Screen
 from textual.widgets import Footer, Header, Input, Label, Static
 
-from .token_effects import apply_token_hp, apply_token_spirit, apply_token_skill_bonus
-
+from .token_effects import apply_token_hp, apply_token_skill_bonus, apply_token_spirit
 
 # ─────────────── World Select ───────────────
+
 
 class WorldSelectScreen(Screen):
     CSS = """
@@ -64,6 +65,7 @@ class WorldSelectScreen(Screen):
 
 
 # ─────────────── Character Select ───────────────
+
 
 class CharacterSelectScreen(Screen):
     CSS = """
@@ -169,9 +171,16 @@ class CharacterSelectScreen(Screen):
             "HP: {}/{} | SP: {}/{} | SK: {}/{}\n\n"
             "[b]Tokens ({})[/b]\n{}"
         ).format(
-            c["name"], self._selected_idx + 1, len(self._chars),
+            c["name"],
+            self._selected_idx + 1,
+            len(self._chars),
             c.get("description", ""),
-            hp, max_hp, sp, max_sp, sk, 100,
+            hp,
+            max_hp,
+            sp,
+            max_sp,
+            sk,
+            100,
             len(tokens),
             token_summary,
         )
@@ -183,7 +192,7 @@ class CharacterSelectScreen(Screen):
         list_widget = self.query_one("#cs-list", VerticalScroll)
         # Remove old char labels
         for child in list_widget.children:
-            if hasattr(child, 'id') and child.id and child.id.startswith("char-"):
+            if hasattr(child, "id") and child.id and child.id.startswith("char-"):
                 child.remove()
         # Re-add visible labels
         end = min(self._page_start + self.PAGE_SIZE, len(self._chars))
@@ -238,6 +247,7 @@ class CharacterSelectScreen(Screen):
 
 # ─────────────── Game Screen ───────────────
 
+
 class CharPanel(Static):
     def update_display(self, engine) -> None:
         pc = engine.state.pc
@@ -288,9 +298,7 @@ class ScenePanel(Static):
             lines.append("")
             lines.append("-- {} --".format(engine.i18n.t("scene_info")))
             for t in sc.tokens[:4]:
-                lines.append("  {}: {}".format(
-                    t.get("name", ""), str(t.get("value", ""))[:30]
-                ))
+                lines.append("  {}: {}".format(t.get("name", ""), str(t.get("value", ""))[:30]))
         self.update("\n".join(lines))
 
 
@@ -325,8 +333,13 @@ class StatusBar(Static):
     def update_display(self, engine) -> None:
         s = engine.state
         text = "  {} {} | {} | HP:{}/{} | SP:{}/{}".format(
-            engine.i18n.t("turn"), s.turn, s.scene.name,
-            s.pc.hp, s.pc.max_hp, s.pc.spirit, s.pc.max_spirit,
+            engine.i18n.t("turn"),
+            s.turn,
+            s.scene.name,
+            s.pc.hp,
+            s.pc.max_hp,
+            s.pc.spirit,
+            s.pc.max_spirit,
         )
         self.update(text)
 
@@ -387,9 +400,7 @@ class GameScreen(Screen):
             "[dim]1-8: choose | attack/fight: combat | rest: heal | go/move: advance | look: observe | talk: NPC | quest: quests | q: quit[/dim]",
             id="input-hint",
         )
-        yield Input(
-            placeholder=self.engine.i18n.t("input_hint"), id="input-bar"
-        )
+        yield Input(placeholder=self.engine.i18n.t("input_hint"), id="input-bar")
         yield StatusBar(id="status-bar")
         yield Footer()
 
@@ -403,9 +414,7 @@ class GameScreen(Screen):
     def _refresh_all(self) -> None:
         self.query_one("#char-panel", CharPanel).update_display(self.engine)
         self.query_one("#scene-panel", ScenePanel).update_display(self.engine)
-        self.query_one("#choice-list", ChoiceList).update_choices(
-            self.engine.state.choices
-        )
+        self.query_one("#choice-list", ChoiceList).update_choices(self.engine.state.choices)
         self.query_one("#status-bar", StatusBar).update_display(self.engine)
 
     def on_input_submitted(self, event) -> None:
@@ -415,17 +424,19 @@ class GameScreen(Screen):
             return
         self.engine.process_input(text)
         log = self.query_one("#message-log", MessageLog)
-        for msg in self.engine.state.messages[self._displayed_count:]:
+        for msg in self.engine.state.messages[self._displayed_count :]:
             log.add_message(msg)
         self._displayed_count = len(self.engine.state.messages)
         self._refresh_all()
         if self.engine.is_game_over():
             from .gameover_screen import GameOverScreen
+
             self.app.push_screen(GameOverScreen(self.engine))
 
     def action_quit_game(self) -> None:
         self.engine.state.quit = True
         from .gameover_screen import GameOverScreen
+
         self.app.push_screen(GameOverScreen(self.engine))
 
     def action_clear_log(self) -> None:

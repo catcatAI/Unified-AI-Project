@@ -69,16 +69,28 @@ class TestTaskPriority:
         """Test that sort produces correct CRITICAL > HIGH > NORMAL > LOW order."""
         base_agent.task_queue = [
             QueuedTask(
-                task_id="normal", priority=TaskPriority.NORMAL,
-                payload={}, sender_id="s", envelope={}, received_time=0.0,
+                task_id="normal",
+                priority=TaskPriority.NORMAL,
+                payload={},
+                sender_id="s",
+                envelope={},
+                received_time=0.0,
             ),
             QueuedTask(
-                task_id="critical", priority=TaskPriority.CRITICAL,
-                payload={}, sender_id="s", envelope={}, received_time=0.0,
+                task_id="critical",
+                priority=TaskPriority.CRITICAL,
+                payload={},
+                sender_id="s",
+                envelope={},
+                received_time=0.0,
             ),
             QueuedTask(
-                task_id="low", priority=TaskPriority.LOW,
-                payload={}, sender_id="s", envelope={}, received_time=0.0,
+                task_id="low",
+                priority=TaskPriority.LOW,
+                payload={},
+                sender_id="s",
+                envelope={},
+                received_time=0.0,
             ),
         ]
         base_agent.task_queue.sort(key=lambda t: t.priority.value, reverse=True)
@@ -89,12 +101,20 @@ class TestTaskPriority:
         """Test that LOW priority tasks appear at the end after sort."""
         base_agent.task_queue = [
             QueuedTask(
-                task_id="low", priority=TaskPriority.LOW,
-                payload={}, sender_id="s", envelope={}, received_time=0.0,
+                task_id="low",
+                priority=TaskPriority.LOW,
+                payload={},
+                sender_id="s",
+                envelope={},
+                received_time=0.0,
             ),
             QueuedTask(
-                task_id="high", priority=TaskPriority.HIGH,
-                payload={}, sender_id="s", envelope={}, received_time=0.0,
+                task_id="high",
+                priority=TaskPriority.HIGH,
+                payload={},
+                sender_id="s",
+                envelope={},
+                received_time=0.0,
             ),
         ]
         base_agent.task_queue.sort(key=lambda t: t.priority.value, reverse=True)
@@ -104,6 +124,7 @@ class TestTaskPriority:
 
 class TestTaskQueue:
     """Tests for task queue operations."""
+
     async def test_handle_task_request_adds_to_queue(self, base_agent):
         """Test that handle_task_request adds a task to the queue."""
         base_agent.hsp_connector = AsyncMock()
@@ -114,6 +135,7 @@ class TestTaskQueue:
         # Task should be in queue (may be consumed by _process_task_queue later)
         assert len(base_agent.task_queue) > 0
         assert base_agent.task_queue[0].task_id == "req_001"
+
     async def test_queue_task_sorts_by_priority_on_insert(self, base_agent):
         """Test that adding tasks via handle_task_request maintains priority order."""
         base_agent.hsp_connector = AsyncMock()
@@ -130,6 +152,7 @@ class TestTaskQueue:
         if len(base_agent.task_queue) >= 2:
             assert base_agent.task_queue[0].task_id == "high_001"
             assert base_agent.task_queue[1].task_id == "low_001"
+
     async def test_process_task_queue_pops_first_task(self, base_agent):
         """Test that _process_task_queue pops and processes the first task."""
         base_agent.hsp_connector = AsyncMock()
@@ -138,19 +161,24 @@ class TestTaskQueue:
         # Manually populate the queue
         base_agent.task_queue = [
             QueuedTask(
-                task_id="task_001", priority=TaskPriority.NORMAL,
+                task_id="task_001",
+                priority=TaskPriority.NORMAL,
                 payload={"capability_id_filter": ""},
-                sender_id="sender", envelope={}, received_time=0.0,
+                sender_id="sender",
+                envelope={},
+                received_time=0.0,
             ),
         ]
 
         await base_agent._process_task_queue()
         assert len(base_agent.task_queue) == 0
+
     async def test_process_task_queue_empty_does_nothing(self, base_agent):
         """Test that _process_task_queue does nothing when queue is empty."""
         base_agent.task_queue = []
         await base_agent._process_task_queue()
         assert base_agent.task_queue == []
+
     async def test_queue_overflow_rejects_task(self, base_agent):
         """Test that tasks are rejected when queue exceeds max_queue_size."""
         base_agent.hsp_connector = AsyncMock()
@@ -173,6 +201,7 @@ class TestTaskQueue:
         call_args = base_agent.hsp_connector.send_task_result.call_args
         result_payload = call_args[0][0]
         assert result_payload["status"] == "rejected"
+
     async def test_handle_task_request_parses_priority(self, base_agent):
         """Test that handle_task_request correctly parses priority from payload."""
         base_agent.hsp_connector = AsyncMock()
@@ -182,6 +211,7 @@ class TestTaskQueue:
 
         assert len(base_agent.task_queue) > 0
         assert base_agent.task_queue[0].priority == TaskPriority.CRITICAL
+
     async def test_handle_task_request_invalid_priority_defaults_normal(self, base_agent):
         """Test that invalid priority value defaults to NORMAL."""
         base_agent.hsp_connector = AsyncMock()
@@ -191,6 +221,7 @@ class TestTaskQueue:
 
         assert len(base_agent.task_queue) > 0
         assert base_agent.task_queue[0].priority == TaskPriority.NORMAL
+
     async def test_handle_task_request_no_priority_defaults_normal(self, base_agent):
         """Test that missing priority defaults to NORMAL."""
         base_agent.hsp_connector = AsyncMock()
@@ -200,6 +231,7 @@ class TestTaskQueue:
 
         assert len(base_agent.task_queue) > 0
         assert base_agent.task_queue[0].priority == TaskPriority.NORMAL
+
     async def test_default_task_handler_returns_not_implemented(self, base_agent):
         """Test that default task handler returns NOT_IMPLEMENTED failure."""
         base_agent.hsp_connector = AsyncMock()
@@ -227,6 +259,7 @@ class TestTaskQueue:
 
 class TestAgentLifecycle:
     """Tests for agent lifecycle (start, stop, health)."""
+
     async def test_is_healthy_false_by_default(self, base_agent):
         """Test that is_healthy returns False when not started."""
         assert base_agent.is_healthy() is False
@@ -250,6 +283,7 @@ class TestAgentLifecycle:
         base_agent.is_running = True
         base_agent.hsp_connector = None
         assert base_agent.is_healthy() is False
+
     async def test_stop_sets_running_false(self, base_agent):
         """Test that stop sets is_running to False."""
         base_agent.is_running = True
@@ -257,6 +291,7 @@ class TestAgentLifecycle:
         base_agent.hsp_connector.is_connected = True
         await base_agent.stop()
         assert base_agent.is_running is False
+
     async def test_start_with_mock_connector(self, base_agent):
         """Test start succeeds when hsp_connector is pre-configured."""
         base_agent.hsp_connector = AsyncMock()

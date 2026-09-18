@@ -78,7 +78,9 @@ class DictionaryClassifier:
         self._training_data = {}
         self._loaded = False
         self._keyword_index: Dict[str, List[str]] = {}  # keyword -> list of entry keys
-        self._match_tables: Optional[Tuple[Dict[str, List[str]], List[Tuple[str, List[str]]], Dict[str, int]]] = None  # inverted lookup cache
+        self._match_tables: Optional[
+            Tuple[Dict[str, List[str]], List[Tuple[str, List[str]]], Dict[str, int]]
+        ] = None  # inverted lookup cache
         self._cache: Dict[str, Tuple[str, str, float]] = {}  # text -> (type, action, conf)
         self._cache_max = 500  # LRU bound to prevent unbounded growth
 

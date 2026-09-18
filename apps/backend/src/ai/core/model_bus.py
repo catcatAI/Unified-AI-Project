@@ -297,12 +297,9 @@ class ModelBus:
                     "MetaController adjusted %s threshold by %.3f", selected_model, threshold_adj
                 )
 
-        if (
-            selected_model in ("ed3n", "garden")
-            and confidence_value("ai.model_bus.refine_zone_low", 0.4)
-            <= confidence
-            < confidence_value("ai.model_bus.refine_zone_high", 0.8)
-        ):
+        if selected_model in ("ed3n", "garden") and confidence_value(
+            "ai.model_bus.refine_zone_low", 0.4
+        ) <= confidence < confidence_value("ai.model_bus.refine_zone_high", 0.8):
             if "cloud" in self._registry:
                 logger.info(
                     f"ModelBus: {selected_model} confidence ({confidence:.2f}) in refinement zone. Routing to cloud for polish."

@@ -119,8 +119,9 @@ class TestMultilingualMultimodal:
         assert found >= 3, f"Only {found}/4 multilingual IDs found in items list"
 
     @pytest.mark.asyncio
-    async def test_cross_modal_compare_multilingual(self, svc, sample_image_bytes,
-                                                    sample_audio_bytes):
+    async def test_cross_modal_compare_multilingual(
+        self, svc, sample_image_bytes, sample_audio_bytes
+    ):
         """Compare registered items with multilingual IDs works."""
         cn_id = "\u4e2d\u6587_img"
         kr_id = "\ud55c\uad6d\uc5b4_aud"

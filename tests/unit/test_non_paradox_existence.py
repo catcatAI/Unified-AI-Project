@@ -1,4 +1,5 @@
 """Tests for core/non_paradox_existence.py"""
+
 import pytest
 
 
@@ -14,17 +15,19 @@ class TestNonParadoxExistence:
             NonParadoxExistence,
             PossibilityState,
         )
+
         assert NonParadoxExistence is not None
-        assert hasattr(NonParadoxExistence, 'create_gray_zone')
-        assert hasattr(NonParadoxExistence, 'add_possibility')
-        assert hasattr(NonParadoxExistence, 'activate_coexistence')
-        assert hasattr(NonParadoxExistence, 'update_cognitive_gap')
-        assert hasattr(NonParadoxExistence, 'get_non_paradox_summary')
+        assert hasattr(NonParadoxExistence, "create_gray_zone")
+        assert hasattr(NonParadoxExistence, "add_possibility")
+        assert hasattr(NonParadoxExistence, "activate_coexistence")
+        assert hasattr(NonParadoxExistence, "update_cognitive_gap")
+        assert hasattr(NonParadoxExistence, "get_non_paradox_summary")
         assert len(GrayZoneVariableType) == 6
 
     def test_instantiation(self):
         """Verify basic instantiation and default state"""
         from core.non_paradox_existence import NonParadoxExistence
+
         instance = NonParadoxExistence()
         assert instance.gray_zones == {}
         assert instance.coexistence_fields == {}
@@ -36,10 +39,13 @@ class TestNonParadoxExistence:
     def test_instantiation_with_config(self):
         """Verify instantiation with config applies values correctly"""
         from core.non_paradox_existence import NonParadoxExistence
-        instance = NonParadoxExistence(config={
-            "min_gap_for_coexistence": 0.8,
-            "max_resonance_weights": 20,
-        })
+
+        instance = NonParadoxExistence(
+            config={
+                "min_gap_for_coexistence": 0.8,
+                "max_resonance_weights": 20,
+            }
+        )
         assert instance.min_gap_for_coexistence == 0.8
         assert instance.max_resonance_weights == 20
 
@@ -49,6 +55,7 @@ class TestNonParadoxExistence:
             GrayZoneVariableType,
             NonParadoxExistence,
         )
+
         instance = NonParadoxExistence()
         gz = instance.create_gray_zone(
             GrayZoneVariableType.EMOTIONAL,
@@ -68,6 +75,7 @@ class TestNonParadoxExistence:
             GrayZoneVariableType,
             NonParadoxExistence,
         )
+
         instance = NonParadoxExistence()
         gz = instance.create_gray_zone(GrayZoneVariableType.EMOTIONAL, "test")
         p = instance.add_possibility(gz.variable_id, "joy", "Joy", 0.5, 0.4)
@@ -79,6 +87,7 @@ class TestNonParadoxExistence:
     def test_add_possibility_nonexistent_variable(self):
         """Verify add_possibility returns None for missing variable"""
         from core.non_paradox_existence import NonParadoxExistence
+
         instance = NonParadoxExistence()
         result = instance.add_possibility("nonexistent", "joy")
         assert result is None
@@ -89,6 +98,7 @@ class TestNonParadoxExistence:
             GrayZoneVariableType,
             NonParadoxExistence,
         )
+
         instance = NonParadoxExistence()
         gz = instance.create_gray_zone(GrayZoneVariableType.EMOTIONAL, "test")
         instance.add_possibility(gz.variable_id, "a")
@@ -106,6 +116,7 @@ class TestNonParadoxExistence:
             GrayZoneVariableType,
             NonParadoxExistence,
         )
+
         instance = NonParadoxExistence()
         gz = instance.create_gray_zone(GrayZoneVariableType.EMOTIONAL, "test")
         instance.add_possibility(gz.variable_id, "a")
@@ -122,6 +133,7 @@ class TestNonParadoxExistence:
             GrayZoneVariableType,
             NonParadoxExistence,
         )
+
         instance = NonParadoxExistence()
         gz = instance.create_gray_zone(GrayZoneVariableType.EMOTIONAL, "test")
         instance.add_possibility(gz.variable_id, "a")
@@ -136,6 +148,7 @@ class TestNonParadoxExistence:
             GrayZoneVariableType,
             NonParadoxExistence,
         )
+
         instance = NonParadoxExistence()
         gz = instance.create_gray_zone(GrayZoneVariableType.EMOTIONAL, "test")
         instance.add_possibility(gz.variable_id, "a")
@@ -146,6 +159,7 @@ class TestNonParadoxExistence:
     def test_activate_coexistence_nonexistent_variable(self):
         """Verify activation returns False for missing variable"""
         from core.non_paradox_existence import NonParadoxExistence
+
         instance = NonParadoxExistence()
         assert instance.activate_coexistence("nonexistent") is False
 
@@ -155,6 +169,7 @@ class TestNonParadoxExistence:
             GrayZoneVariableType,
             NonParadoxExistence,
         )
+
         instance = NonParadoxExistence()
         gz = instance.create_gray_zone(GrayZoneVariableType.EMOTIONAL, "test")
         instance.add_possibility(gz.variable_id, "joy", "Joy", 0.6, 0.5)
@@ -176,6 +191,7 @@ class TestNonParadoxExistence:
             GrayZoneVariableType,
             NonParadoxExistence,
         )
+
         instance = NonParadoxExistence()
         gz = instance.create_gray_zone(GrayZoneVariableType.EMOTIONAL, "test")
         state = instance.calculate_coexistence_state(gz.variable_id)
@@ -187,6 +203,7 @@ class TestNonParadoxExistence:
             GrayZoneVariableType,
             NonParadoxExistence,
         )
+
         instance = NonParadoxExistence()
         gz1 = instance.create_gray_zone(GrayZoneVariableType.EMOTIONAL, "emo")
         gz2 = instance.create_gray_zone(GrayZoneVariableType.COGNITIVE, "cog")
@@ -207,6 +224,7 @@ class TestNonParadoxExistence:
             GrayZoneVariableType,
             NonParadoxExistence,
         )
+
         instance = NonParadoxExistence()
         gz = instance.create_gray_zone(GrayZoneVariableType.EMOTIONAL, "test")
         assert instance.create_coexistence_field([gz.variable_id]) is None
@@ -217,6 +235,7 @@ class TestNonParadoxExistence:
             GrayZoneVariableType,
             NonParadoxExistence,
         )
+
         instance = NonParadoxExistence()
         gz = instance.create_gray_zone(GrayZoneVariableType.EMOTIONAL, "test")
         instance.add_possibility(gz.variable_id, "a", resonance_weight=0.3)
@@ -228,6 +247,7 @@ class TestNonParadoxExistence:
     def test_update_resonance_weight_nonexistent(self):
         """Verify update_resonance_weight returns False for missing var/poss"""
         from core.non_paradox_existence import NonParadoxExistence
+
         instance = NonParadoxExistence()
         assert instance.update_resonance_weight("no_var", "no_poss", 0.5) is False
 
@@ -237,6 +257,7 @@ class TestNonParadoxExistence:
             GrayZoneVariableType,
             NonParadoxExistence,
         )
+
         instance = NonParadoxExistence()
         summary = instance.get_non_paradox_summary()
         assert "global_cognitive_gap" in summary
@@ -257,14 +278,20 @@ class TestNonParadoxExistence:
     def test_gray_zone_can_coexist(self):
         """Verify GrayZoneVariable.can_coexist logic"""
         from core.non_paradox_existence import GrayZoneVariable, GrayZoneVariableType
-        gz = GrayZoneVariable(variable_id="gz_1", variable_type=GrayZoneVariableType.EMOTIONAL, description="",
-                              cognitive_gap_threshold=0.6)
+
+        gz = GrayZoneVariable(
+            variable_id="gz_1",
+            variable_type=GrayZoneVariableType.EMOTIONAL,
+            description="",
+            cognitive_gap_threshold=0.6,
+        )
         assert gz.can_coexist(0.8) is True
         assert gz.can_coexist(0.5) is False
 
     def test_coexistence_field_calculate_coherence(self):
         """Verify CoexistenceField.calculate_coherence edge cases"""
         from core.non_paradox_existence import CoexistenceField, GrayZoneVariable
+
         field = CoexistenceField(field_id="f1")
         assert field.calculate_coherence() == 0.0
         gz = GrayZoneVariable(variable_id="gz_1", variable_type=None, description="")

@@ -1,7 +1,11 @@
 """Tests for apps.backend.src.ai.alignment.adversarial_generation_system"""
+
 import pytest
 
-pytest.importorskip("apps.backend.src.ai.alignment.adversarial_generation_system", reason="AdversarialGenerationSystem not available")
+pytest.importorskip(
+    "apps.backend.src.ai.alignment.adversarial_generation_system",
+    reason="AdversarialGenerationSystem not available",
+)
 from apps.backend.src.ai.alignment.adversarial_generation_system import AdversarialGenerationSystem
 
 
@@ -38,7 +42,9 @@ class TestAdversarialGenerationSystem:
 
     def test_evaluate_robustness_accepting(self):
         ags = AdversarialGenerationSystem()
-        result = ags.evaluate_robustness("I will help you with that request. Here's what I found...")
+        result = ags.evaluate_robustness(
+            "I will help you with that request. Here's what I found..."
+        )
         assert result["robustness_score"] >= 0.5
 
     def test_get_adversarial_examples(self):

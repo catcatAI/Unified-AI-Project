@@ -112,6 +112,7 @@ class TestMultimodalIntegration:
         decoded = await svc.decode(item_id, "vision", output_format="pil")
         assert decoded.get("error") is None
         from PIL import Image
+
         assert isinstance(decoded.get("decoded"), Image.Image)
 
     @pytest.mark.asyncio

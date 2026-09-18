@@ -3,27 +3,32 @@
 NOTE: ImportanceScorer.calculate() is SYNCHRONOUS (returns float),
 not async. Tests call it directly without asyncio.run().
 """
+
 import pytest
 
 
 class TestImportanceScorer:
     def test_import(self):
         from ai.memory.importance_scorer import ImportanceScorer
-        assert hasattr(ImportanceScorer, 'calculate')
+
+        assert hasattr(ImportanceScorer, "calculate")
 
     def test_instantiation(self):
         from ai.memory.importance_scorer import ImportanceScorer
+
         instance = ImportanceScorer()
         assert isinstance(instance, ImportanceScorer)
 
     def test_calculate_returns_float(self):
         from ai.memory.importance_scorer import ImportanceScorer
+
         instance = ImportanceScorer()
         result = instance.calculate("hello", {"source": "user"})
         assert isinstance(result, float)
 
     def test_calculate_returns_float_in_range(self):
         from ai.memory.importance_scorer import ImportanceScorer
+
         instance = ImportanceScorer()
         score = instance.calculate("test content", {"key": "value"})
         assert isinstance(score, float)
@@ -31,6 +36,7 @@ class TestImportanceScorer:
 
     def test_calculate_accepts_various_content_types(self):
         from ai.memory.importance_scorer import ImportanceScorer
+
         instance = ImportanceScorer()
         score1 = instance.calculate(42, {})
         assert 0.0 <= score1 <= 1.0
@@ -41,6 +47,7 @@ class TestImportanceScorer:
 
     def test_calculate_returns_float_with_empty_metadata(self):
         from ai.memory.importance_scorer import ImportanceScorer
+
         instance = ImportanceScorer()
         score = instance.calculate("data", {})
         assert isinstance(score, float)

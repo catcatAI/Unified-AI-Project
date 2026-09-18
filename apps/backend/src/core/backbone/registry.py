@@ -27,7 +27,6 @@ from __future__ import annotations
 from typing import Any, Callable, Dict, List, Optional
 
 
-
 class RegistryError(RuntimeError):
     """註冊表錯誤（重複註冊 / 未知鍵）。"""
 

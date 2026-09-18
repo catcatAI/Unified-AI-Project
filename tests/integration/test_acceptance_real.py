@@ -18,6 +18,7 @@ from PIL import Image
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def make_real_photo(width=224, height=224, color=(100, 150, 200), label="photo"):
     """Create a realistic-looking photo (gradient + noise)."""
     rng = np.random.RandomState(42)
@@ -42,9 +43,10 @@ def make_cat_like_photo():
     # Orange-brown base
     arr[:, :, 0] = 200  # R
     arr[:, :, 1] = 140  # G
-    arr[:, :, 2] = 80   # B
+    arr[:, :, 2] = 80  # B
     # Add dark eye-like spots
     from PIL import ImageDraw
+
     img = Image.fromarray(arr)
     draw = ImageDraw.Draw(img)
     draw.ellipse([80, 80, 100, 100], fill=(30, 30, 30))
@@ -68,6 +70,7 @@ def make_dog_like_photo():
     arr[:, :, 1] = 120
     arr[:, :, 2] = 80
     from PIL import ImageDraw
+
     img = Image.fromarray(arr)
     draw = ImageDraw.Draw(img)
     # Snout
@@ -90,12 +93,14 @@ def make_dog_like_photo():
 # Test: CLIP pipeline works with real photos
 # ---------------------------------------------------------------------------
 
+
 class TestCLIPRealPhotos:
     """Verify CLIP classification works with realistic photos."""
 
     @pytest.fixture
     def encoder(self):
         from ai.multimodal.semantic_visual import SemanticVisualEncoder
+
         enc = SemanticVisualEncoder()
         if not enc.is_available:
             pytest.skip("CLIP not available (torch+transformers required)")
@@ -105,6 +110,7 @@ class TestCLIPRealPhotos:
     def library(self, encoder):
         from ai.multimodal.concept_library import ConceptLibrary
         from ai.multimodal.semantic_key_mapper import SemanticKeyMapper
+
         lib = ConceptLibrary(
             semantic_encoder=encoder,
             key_mapper=SemanticKeyMapper(max_entries=1000),
@@ -117,7 +123,17 @@ class TestCLIPRealPhotos:
         img_data = make_cat_like_photo()
         results = library.classify(img_data, top_k=3)
         assert len(results) >= 1
-        animal_concepts = {"chicken", "cat", "dog", "bird", "fish", "horse", "rabbit", "elephant", "bear"}
+        animal_concepts = {
+            "chicken",
+            "cat",
+            "dog",
+            "bird",
+            "fish",
+            "horse",
+            "rabbit",
+            "elephant",
+            "bear",
+        }
         top_concept = results[0]["concept_name"]
         assert top_concept in animal_concepts, f"Expected animal, got: {top_concept}"
         assert results[0]["confidence"] > 0.10
@@ -128,7 +144,17 @@ class TestCLIPRealPhotos:
         results = library.classify(img_data, top_k=3)
         assert len(results) >= 1
         # The top concept should be an animal
-        animal_concepts = {"chicken", "cat", "dog", "bird", "fish", "horse", "rabbit", "elephant", "bear"}
+        animal_concepts = {
+            "chicken",
+            "cat",
+            "dog",
+            "bird",
+            "fish",
+            "horse",
+            "rabbit",
+            "elephant",
+            "bear",
+        }
         assert results[0]["concept_name"] in animal_concepts
 
     def test_generic_photo_classified(self, library):
@@ -145,7 +171,9 @@ class TestCLIPRealPhotos:
         text_vec = encoder.encode_text("a photo of a cat")[0]
         assert img_vec is not None
         assert text_vec is not None
-        similarity = float(np.dot(img_vec, text_vec) / (np.linalg.norm(img_vec) * np.linalg.norm(text_vec)))
+        similarity = float(
+            np.dot(img_vec, text_vec) / (np.linalg.norm(img_vec) * np.linalg.norm(text_vec))
+        )
         assert similarity > 0.1, f"Photo-text similarity too low: {similarity}"
 
 
@@ -153,18 +181,22 @@ class TestCLIPRealPhotos:
 # Test: VisionResponseGenerator with real classifications
 # ---------------------------------------------------------------------------
 
+
 class TestVisionResponseReal:
     """Verify response generation works with real CLIP classifications."""
 
     def test_chinese_response_for_any_concept(self):
         from ai.multimodal.vision_response_generator import VisionResponseGenerator
+
         gen = VisionResponseGenerator()
         # Simulate a real classification result
-        classifications = [{
-            "concept_name": "cat",
-            "dict_key": "concept_cat",
-            "confidence": 0.75,
-        }]
+        classifications = [
+            {
+                "concept_name": "cat",
+                "dict_key": "concept_cat",
+                "confidence": 0.75,
+            }
+        ]
         response = gen.generate_response(classifications, language="zh")
         assert isinstance(response, str)
         assert len(response) > 0
@@ -172,23 +204,29 @@ class TestVisionResponseReal:
 
     def test_response_with_action(self):
         from ai.multimodal.vision_response_generator import VisionResponseGenerator
+
         gen = VisionResponseGenerator()
-        classifications = [{
-            "concept_name": "dog",
-            "dict_key": "concept_dog",
-            "confidence": 0.65,
-        }]
+        classifications = [
+            {
+                "concept_name": "dog",
+                "dict_key": "concept_dog",
+                "confidence": 0.65,
+            }
+        ]
         response = gen.generate_response(classifications, language="zh", action="在跑")
         assert "在跑" in response
 
     def test_english_response(self):
         from ai.multimodal.vision_response_generator import VisionResponseGenerator
+
         gen = VisionResponseGenerator()
-        classifications = [{
-            "concept_name": "bird",
-            "dict_key": "concept_bird",
-            "confidence": 0.80,
-        }]
+        classifications = [
+            {
+                "concept_name": "bird",
+                "dict_key": "concept_bird",
+                "confidence": 0.80,
+            }
+        ]
         response = gen.generate_response(classifications, language="en")
         assert "bird" in response.lower()
 
@@ -197,12 +235,14 @@ class TestVisionResponseReal:
 # Test: VectorStore memory storage and retrieval
 # ---------------------------------------------------------------------------
 
+
 class TestVectorStoreMemory:
     """Verify VectorStore stores and retrieves memories."""
 
     @pytest.fixture
     def store(self):
         from ai.memory.vector_store import VectorMemoryStore
+
         vs = VectorMemoryStore()
         yield vs
 
@@ -235,6 +275,7 @@ class TestVectorStoreMemory:
 # Test: AudioService STT works
 # ---------------------------------------------------------------------------
 
+
 class TestAudioSTT:
     """Verify speech-to-text works."""
 
@@ -242,18 +283,30 @@ class TestAudioSTT:
     async def test_stt_with_silence(self):
         """STT should handle silence gracefully."""
         from services.audio_service import AudioService
+
         svc = AudioService()
         # Create a minimal WAV file (1 second of silence)
         import struct
+
         sample_rate = 16000
         num_samples = sample_rate
         wav_header = struct.pack(
-            '<4sI4s4sIHHIIHH4sI',
-            b'RIFF', 36 + num_samples * 2, b'WAVE',
-            b'fmt ', 16, 1, 1, sample_rate, sample_rate * 2, 2, 16,
-            b'data', num_samples * 2,
+            "<4sI4s4sIHHIIHH4sI",
+            b"RIFF",
+            36 + num_samples * 2,
+            b"WAVE",
+            b"fmt ",
+            16,
+            1,
+            1,
+            sample_rate,
+            sample_rate * 2,
+            2,
+            16,
+            b"data",
+            num_samples * 2,
         )
-        silence = b'\x00\x00' * num_samples
+        silence = b"\x00\x00" * num_samples
         audio_data = wav_header + silence
 
         result = await svc.speech_to_text(audio_data)
@@ -265,6 +318,7 @@ class TestAudioSTT:
     async def test_tts_produces_audio(self):
         """TTS should produce audio bytes."""
         from services.audio_service import AudioService
+
         svc = AudioService()
         result = await svc.text_to_speech("你好")
         # edge-tts may not be installed, so result could be None

@@ -51,9 +51,7 @@ class DatabaseStorage(Storage):
                 }
                 self._db[context.context_id] = context_data
             else:
-                logger.debug(
-                    f"Context {context.context_id} 存储到数据库 (connected mode)"
-                )
+                logger.debug(f"Context {context.context_id} 存储到数据库 (connected mode)")
                 context_data = {
                     "context_id": context.context_id,
                     "context_type": context.context_type.value,
@@ -202,9 +200,7 @@ class DatabaseStorage(Storage):
                     )
                     return False
             else:
-                logger.debug(
-                    f"Context {context_id} 元数据更新到数据库 (connected mode)"
-                )
+                logger.debug(f"Context {context_id} 元数据更新到数据库 (connected mode)")
                 if context_id in self._db:
                     self._db[context_id]["metadata"].update(metadata)
                     self._db[context_id]["updated_at"] = datetime.now().isoformat()

@@ -109,8 +109,9 @@ async def review_specific_files(files: list[str]):
     engine = _get_engine()
     if engine is None:
         raise HTTPException(status_code=503, detail="Review engine not available")
-    from ai.meta.angela_review_engine import CodeReviewer
     from pathlib import Path
+
+    from ai.meta.angela_review_engine import CodeReviewer
 
     src_root = Path(__file__).resolve().parent.parent.parent
     report = CodeReviewer(src_root).review(target_files=files)

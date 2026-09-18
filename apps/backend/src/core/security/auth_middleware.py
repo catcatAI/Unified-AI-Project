@@ -36,6 +36,7 @@ class AuthMiddleware:
         self.config = config or {}
         # Priority: env var > config dict > auto-generated
         import os
+
         self.secret_key = (
             os.environ.get("SECRET_KEY")
             or self.config.get("secret_key")

@@ -10,7 +10,7 @@ Usage:
     from core.backbone import get_backbone
     bb = get_backbone()
     bb.initialize()
-    
+
     # Unified access
     intent = bb.engine("intent")
     memory = bb.memory()

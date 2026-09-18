@@ -304,9 +304,7 @@ class Backbone:
             "translators": regs.translators.count(),
             "mountables": len(regs.dictionaries._mountables),
             "pairs": len(self.pairs.pending()) if self._pairs is not None else 0,
-            "io_pairs_domain_bound": (
-                len(self._io._down_handlers) if self._io is not None else 0
-            ),
+            "io_pairs_domain_bound": (len(self._io._down_handlers) if self._io is not None else 0),
         }
 
     def structure(self) -> Dict[str, Any]:
@@ -344,12 +342,8 @@ class Backbone:
                     SemanticKeyMapperTranslator,
                 )
 
-                regs.translators.register_rule(
-                    "neural_bridge", NeuralBridgeTranslator()
-                )
-                regs.translators.register_rule(
-                    "semantic_key_mapper", SemanticKeyMapperTranslator()
-                )
+                regs.translators.register_rule("neural_bridge", NeuralBridgeTranslator())
+                regs.translators.register_rule("semantic_key_mapper", SemanticKeyMapperTranslator())
             except Exception as e:
                 logger.debug(f"Backbone registries init failed: {e}", exc_info=True)
             self._registries = regs
@@ -470,9 +464,7 @@ class Backbone:
         if self._state_sync is None:
             from core.backbone.subscriptions import CNSDomainSync
 
-            self._state_sync = CNSDomainSync(
-                state=self.state, matrix=self.primary_matrix()
-            )
+            self._state_sync = CNSDomainSync(state=self.state, matrix=self.primary_matrix())
         return self._state_sync
 
     @property
@@ -564,12 +556,16 @@ class Backbone:
         return await self.external.call_external(name, method, **kwargs)
 
     # 字典查詢聚合
-    def query_dictionary(self, theme: str, input_data: Any = None, top_k: int = 5, **kwargs: Any) -> list:
+    def query_dictionary(
+        self, theme: str, input_data: Any = None, top_k: int = 5, **kwargs: Any
+    ) -> list:
         if input_data is None:
             input_data = theme
         return self.registries.dictionaries.query(theme, input_data, top_k=top_k, **kwargs)
 
-    def encode_dictionaries(self, theme: str, input_data: Any = None, **kwargs: Any) -> Dict[str, list]:
+    def encode_dictionaries(
+        self, theme: str, input_data: Any = None, **kwargs: Any
+    ) -> Dict[str, list]:
         if input_data is None:
             input_data = theme
         return self.registries.dictionaries.encode_all(theme, input_data, **kwargs)
@@ -649,9 +645,7 @@ class Backbone:
         direction: str = "down",
         **ctx: Any,
     ) -> Any:
-        return self.translator.translate(
-            source, target, data, direction=direction, **ctx
-        )
+        return self.translator.translate(source, target, data, direction=direction, **ctx)
 
     # 自由矩陣（theta/SNN/共振/語意/代理/因果/外部）
     def register_free_matrix(self, name: str, matrix: Any) -> None:
@@ -744,7 +738,9 @@ class Backbone:
     def send_up(self, envelope: Any, **kwargs: Any) -> Any:
         return self.io.send_up(envelope, **kwargs)
 
-    async def respond(self, user_message: Any, context: Any = None, mode: str = "1:1", **kwargs: Any) -> Any:
+    async def respond(
+        self, user_message: Any, context: Any = None, mode: str = "1:1", **kwargs: Any
+    ) -> Any:
         return await self.response.respond(user_message, context=context, mode=mode, **kwargs)
 
     # 其它骨架掛載點

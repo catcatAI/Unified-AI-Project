@@ -24,12 +24,15 @@ class PlanningAgent:
         self.agent_id = kwargs.get("agent_id")
         try:
             from ai.reasoning.planning_engine import PlanningEngine
+
             self._engine = PlanningEngine()
         except ImportError:
             self._engine = None
             logger.warning("PlanningAgent: PlanningEngine not available")
 
-    def create_plan(self, goal: str, constraints: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def create_plan(
+        self, goal: str, constraints: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         if not goal:
             return {"status": "error", "message": "No goal provided"}
         if self._engine:
@@ -46,7 +49,11 @@ class PlanningAgent:
         if self._engine:
             status = self._engine.get_plan_status(plan_id)
             if status:
-                return {"status": "success", "plan_id": plan_id, "optimized_steps": status.get("total_steps", 0)}
+                return {
+                    "status": "success",
+                    "plan_id": plan_id,
+                    "optimized_steps": status.get("total_steps", 0),
+                }
         return {"status": "error", "message": f"Plan '{plan_id}' not found"}
 
     def track_progress(self, plan_id: str, completed_steps: List[str]) -> Dict[str, Any]:

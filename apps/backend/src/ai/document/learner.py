@@ -57,7 +57,11 @@ class DocumentLearner:
 
         logger.info(
             "Learned '%s': %d sections, %d paragraphs, %d sentences, %d tokens",
-            source, stats["sections"], stats["paragraphs"], stats["sentences"], stats["tokens"],
+            source,
+            stats["sections"],
+            stats["paragraphs"],
+            stats["sentences"],
+            stats["tokens"],
         )
         return {"status": "ok", "source": source, "hash": doc_hash, **stats}
 

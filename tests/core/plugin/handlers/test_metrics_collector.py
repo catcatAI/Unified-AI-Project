@@ -1,4 +1,5 @@
 """Tests for MetricsCollectorHandler — hook invocation counting."""
+
 import pytest
 from core.plugin.handlers.metrics_collector import MetricsCollectorHandler
 

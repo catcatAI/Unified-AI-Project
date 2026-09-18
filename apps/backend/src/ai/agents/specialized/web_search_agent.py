@@ -89,7 +89,7 @@ class WebSearchAgent:
                 }
             )
             if len(self._search_history) > self._MAX_SEARCH_HISTORY:
-                self._search_history = self._search_history[-self._MAX_SEARCH_HISTORY:]
+                self._search_history = self._search_history[-self._MAX_SEARCH_HISTORY :]
             logger.info(f"search: '{query}' -> {len(results)} results")
             return {
                 "status": "success",

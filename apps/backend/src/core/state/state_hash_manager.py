@@ -95,7 +95,7 @@ class StateHashManager:
             }
         )
         if len(self.change_log) > self._max_change_log:
-            self.change_log = self.change_log[-self._max_change_log // 2:]
+            self.change_log = self.change_log[-self._max_change_log // 2 :]
 
         self._stats["total_operations"] += 1
 

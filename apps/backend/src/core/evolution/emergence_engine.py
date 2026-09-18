@@ -23,9 +23,9 @@ Level 5 AGI核心組件 - 實現真正的自進化能力
 import hashlib
 import logging
 import random
+from dataclasses import asdict, dataclass
 from datetime import datetime
-from typing import Dict, List, Any, Optional, Tuple, Callable
-from dataclasses import dataclass, asdict
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 # 嘗試導入可選的AI庫
 try:

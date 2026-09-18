@@ -22,9 +22,7 @@ from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
 
-from ai.memory.ham_memory.ham_importance_scorer import (
-    ImportanceScorer as _HamImportanceScorer,
-)
+from ai.memory.ham_memory.ham_importance_scorer import ImportanceScorer as _HamImportanceScorer
 
 
 class ImportanceScorer:
@@ -43,9 +41,7 @@ class ImportanceScorer:
         if isinstance(content, (list, tuple, set)):
             return " ".join(ImportanceScorer._coerce(item) for item in content)
         if isinstance(content, dict):
-            return " ".join(
-                ImportanceScorer._coerce(value) for value in content.values()
-            )
+            return " ".join(ImportanceScorer._coerce(value) for value in content.values())
         return str(content)
 
     def calculate(self, content: Any, metadata: Dict[str, Any] = None) -> float:

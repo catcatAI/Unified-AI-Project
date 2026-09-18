@@ -31,7 +31,9 @@ class _Services:
 _services = _Services()
 
 
-def initialize_services(config=None, ai_id=None, use_mock_ham=False, operational_configs=None) -> None:
+def initialize_services(
+    config=None, ai_id=None, use_mock_ham=False, operational_configs=None
+) -> None:
     """Initialize all services."""
     cfg = config or {}
     logger.info("CLI standalone mode: registering basic services")
@@ -39,16 +41,20 @@ def initialize_services(config=None, ai_id=None, use_mock_ham=False, operational
     class LoggerService:
         def info(self, msg: str) -> None:
             logger.info(msg)
+
         def debug(self, msg: str) -> None:
             logger.debug(msg)
+
         def error(self, msg: str) -> None:
             logger.error(msg)
 
     class ConfigService:
         def __init__(self, conf: dict):
             self._conf = conf
+
         def get(self, key: str, default: Any = None) -> Any:
             return self._conf.get(key, default)
+
         def all(self) -> dict:
             return self._conf
 
@@ -60,7 +66,9 @@ def initialize_services(config=None, ai_id=None, use_mock_ham=False, operational
         _services.register("ai_id", ai_id)
 
     if use_mock_ham:
-        logger.info("Mock HAM service requested but not available — use_mock_ham=True has no effect")
+        logger.info(
+            "Mock HAM service requested but not available — use_mock_ham=True has no effect"
+        )
 
 
 def get_services() -> _Services:

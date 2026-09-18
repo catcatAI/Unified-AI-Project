@@ -16,13 +16,13 @@ Level 4+ AGI高级组件 - 实现AI伦理审查和偏见检测
 - 伦理规则库管理
 """
 
-from datetime import datetime
-from typing import Dict, List, Any, Optional, Tuple, Set
-from dataclasses import dataclass, asdict
-from enum import Enum
-from collections import defaultdict
 import logging
 import re
+from collections import defaultdict
+from dataclasses import asdict, dataclass
+from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 # 尝试导入AI库以支持高级分析
 try:

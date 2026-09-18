@@ -8,8 +8,8 @@
 import inspect
 
 from services.atlassian_api import (
-    AtlassianConfig,
     AtlassianCLIBridge,
+    AtlassianConfig,
     ConfluencePageCreate,
     JiraIssueCreate,
     TaskAssignment,
@@ -128,9 +128,7 @@ def test_atlassian_bridge_still_complete():
 
 def test_atlassian_router_exposes_issue_listing():
     assert any(
-        hasattr(r, "methods")
-        and r.path == "/api/v1/atlassian/jira/issues"
-        and "GET" in r.methods
+        hasattr(r, "methods") and r.path == "/api/v1/atlassian/jira/issues" and "GET" in r.methods
         for r in atlassian_router.routes
     )
 

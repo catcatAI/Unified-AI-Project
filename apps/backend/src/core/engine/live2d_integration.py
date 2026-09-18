@@ -22,14 +22,15 @@ from __future__ import annotations
 
 from typing import Any, Callable, Dict, List, Optional
 
+# ExpressionType is defined canonically in live2d_avatar_generator.py;
+# re-export to keep a single source of truth.
+from core.engine.live2d_avatar_generator import ExpressionType  # noqa: F401
+
 # =============================================================================
 # ANGELA-MATRIX: [L3] [β] [B] [L4]
 # =============================================================================
 
 
-# ExpressionType is defined canonically in live2d_avatar_generator.py;
-# re-export to keep a single source of truth.
-from core.engine.live2d_avatar_generator import ExpressionType  # noqa: F401
 
 
 class Live2DIntegration:

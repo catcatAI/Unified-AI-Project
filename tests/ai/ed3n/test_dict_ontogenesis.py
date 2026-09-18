@@ -22,7 +22,6 @@ import json
 import tempfile
 
 import pytest
-
 from ai.ed3n.dictionary_layer import DictionaryLayer, get_dictionary, reset_dictionary_singleton
 from ai.ed3n.output_anchor import ResponseAnchorValidator, anchored_decode
 

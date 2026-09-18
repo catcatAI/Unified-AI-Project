@@ -1,4 +1,5 @@
 """Tests for WaitingScheduler"""
+
 import pytest
 
 
@@ -7,10 +8,12 @@ class TestWaitingScheduler:
 
     def test_import(self):
         from core.waiting_scheduler import WaitingScheduler
+
         assert WaitingScheduler is not None
 
     def test_instantiation_and_shutdown(self):
         from core.waiting_scheduler import WaitingScheduler
+
         instance = WaitingScheduler(max_wait_seconds=5.0)
         assert instance is not None
         assert instance.max_wait_seconds == 5.0
@@ -20,6 +23,7 @@ class TestWaitingScheduler:
 
     def test_shutdown_idempotent(self):
         from core.waiting_scheduler import WaitingScheduler
+
         instance = WaitingScheduler(max_wait_seconds=5.0)
         instance.shutdown()
         assert not instance.is_alive()
@@ -28,6 +32,7 @@ class TestWaitingScheduler:
 
     def test_clear(self):
         from core.waiting_scheduler import WaitingScheduler
+
         instance = WaitingScheduler(max_wait_seconds=5.0)
         assert instance.is_alive()
         instance.clear()
@@ -37,6 +42,7 @@ class TestWaitingScheduler:
 
     def test_is_alive_initial_state(self):
         from core.waiting_scheduler import WaitingScheduler
+
         instance = WaitingScheduler(max_wait_seconds=5.0)
         assert instance.is_alive() is True
         instance.shutdown()

@@ -1,6 +1,7 @@
 """
 Verification test for scientific hormone modeling
 """
+
 import asyncio
 import math
 
@@ -22,6 +23,7 @@ async def test_hormone_scientific_decay():
     await system.advance_time(120.0 * 60.0)
     stable_level = system.get_hormone_level(HormoneType.ADRENALINE)
     assert 9.9 < stable_level < 10.1
+
 
 if __name__ == "__main__":
     asyncio.run(test_hormone_scientific_decay())

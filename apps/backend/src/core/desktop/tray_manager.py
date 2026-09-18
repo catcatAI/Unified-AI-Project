@@ -12,14 +12,14 @@ Features:
 - Exit
 """
 
-import sys
-import platform
-import logging
-import threading
 import asyncio
-from typing import Optional, Dict, Any, Callable
+import logging
+import platform
+import sys
+import threading
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any, Callable, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -142,17 +142,13 @@ class WindowsTrayManager(BaseTrayManager):
                     ),
                     pystray.MenuItem(
                         lambda text: (
-                            "✓ Standard"
-                            if self._get_current_mode() == "standard"
-                            else "  Standard"
+                            "✓ Standard" if self._get_current_mode() == "standard" else "  Standard"
                         ),
                         lambda: self._switch_mode("standard"),
                     ),
                     pystray.MenuItem(
                         lambda text: (
-                            "✓ Extended"
-                            if self._get_current_mode() == "extended"
-                            else "  Extended"
+                            "✓ Extended" if self._get_current_mode() == "extended" else "  Extended"
                         ),
                         lambda: self._switch_mode("extended"),
                     ),
@@ -191,7 +187,9 @@ class WindowsTrayManager(BaseTrayManager):
                 # Run in thread to avoid blocking tray
                 threading.Thread(target=lambda: asyncio.run(self.angela.switch_mode(mode))).start()
                 self.show_notification("Angela AI", f"Switching to {mode.title()} mode...")
-            except Exception as e:  # broad exception acceptable: mode switching may fail with asyncio or callback errors
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: mode switching may fail with asyncio or callback errors
                 logger.error(f"Error switching mode: {e}", exc_info=True)
                 self.show_notification("Angela AI", f"Failed to switch mode: {e}")
 
@@ -208,7 +206,9 @@ class WindowsTrayManager(BaseTrayManager):
             else:
                 logger.warning("Key manager GUI script not found", exc_info=True)
                 self.show_notification("Angela AI", "Key manager not yet implemented")
-        except Exception as e:  # broad exception acceptable: key manager launch may fail with subprocess or file system errors
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: key manager launch may fail with subprocess or file system errors
             logger.error(f"Error opening key manager: {e}", exc_info=True)
 
     def _open_settings(self):
@@ -223,7 +223,9 @@ class WindowsTrayManager(BaseTrayManager):
             else:
                 logger.warning("Settings GUI script not found", exc_info=True)
                 self.show_notification("Angela AI", "Settings GUI not yet implemented")
-        except Exception as e:  # broad exception acceptable: settings GUI launch may fail with subprocess or file system errors
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: settings GUI launch may fail with subprocess or file system errors
             logger.error(f"Error opening settings: {e}", exc_info=True)
 
     def _exit(self):
@@ -232,7 +234,9 @@ class WindowsTrayManager(BaseTrayManager):
         if self.angela and hasattr(self.angela, "shutdown"):
             try:
                 asyncio.run(self.angela.shutdown())
-            except Exception as e:  # broad exception acceptable: shutdown may fail with asyncio or process termination errors
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: shutdown may fail with asyncio or process termination errors
                 logger.error(f"Error during shutdown: {e}", exc_info=True)
 
         if self._tray_icon:
@@ -346,7 +350,7 @@ class LinuxTrayManager(BaseTrayManager):
     def setup_menu(self):
         """Setup Linux system tray"""
         try:
-            from gi.repository import Gtk, AppIndicator3
+            from gi.repository import AppIndicator3, Gtk
 
             # Create indicator
             self._indicator = AppIndicator3.Indicator.new(
@@ -520,6 +524,3 @@ class AngelaTrayManager:
         """Show notification"""
         if self._manager:
             self._manager.show_notification(title, message)
-
-
-

@@ -90,12 +90,12 @@ class EmotionSystem:
     # (named constants — were bare literals in apply_influence /
     # _generate_empathetic_response / _identify_primary_emotion).
     # ------------------------------------------------------------------
-    PAD_VALENCE_BOUNDARY = 0.3        # |valence| above → positive/negative quadrant
-    PAD_AROUSAL_BOUNDARY = 0.5        # arousal above → high-arousal quadrant
-    PAD_SURPRISE_AROUSAL = 0.6        # arousal above (neutral valence) → surprise
-    SENTIMENT_POSITIVE = 0.5          # TextBlob polarity boundaries
+    PAD_VALENCE_BOUNDARY = 0.3  # |valence| above → positive/negative quadrant
+    PAD_AROUSAL_BOUNDARY = 0.5  # arousal above → high-arousal quadrant
+    PAD_SURPRISE_AROUSAL = 0.6  # arousal above (neutral valence) → surprise
+    SENTIMENT_POSITIVE = 0.5  # TextBlob polarity boundaries
     SENTIMENT_NEGATIVE = -0.5
-    EMPATHY_HIGH_LEVEL = 0.7          # empathy level above → "高度共情" prefix
+    EMPATHY_HIGH_LEVEL = 0.7  # empathy level above → "高度共情" prefix
 
     def __init__(self, system_id: str = "emotion_system_v1"):
         self.system_id = system_id
@@ -395,6 +395,7 @@ class EmotionSystem:
         # Record emotion trace in LifeEssence for deep accumulation
         try:
             from core.life.life_essence import get_life_essence
+
             le = get_life_essence()
             le.record_emotion_trace(
                 primary_emotion=new_emotion.value,

@@ -32,15 +32,18 @@ class TestAxisAccess:
 class TestUpdateMethods:
     """All update methods can be called and verify state changed."""
 
-    @pytest.mark.parametrize("axis_name,field,value", [
-        ("alpha", "focus", 0.8),
-        ("beta", "curiosity", 0.6),
-        ("gamma", "excitement", 0.7),
-        ("delta", "engagement", 0.5),
-        ("epsilon", "awareness", 0.9),
-        ("theta", "doubt", 0.3),
-        ("zeta", "surprise", 0.4),
-    ])
+    @pytest.mark.parametrize(
+        "axis_name,field,value",
+        [
+            ("alpha", "focus", 0.8),
+            ("beta", "curiosity", 0.6),
+            ("gamma", "excitement", 0.7),
+            ("delta", "engagement", 0.5),
+            ("epsilon", "awareness", 0.9),
+            ("theta", "doubt", 0.3),
+            ("zeta", "surprise", 0.4),
+        ],
+    )
     def test_update_axis_succeeds(self, adapter, axis_name, field, value):
         update_fn = getattr(adapter, f"update_{axis_name}")
         update_fn(**{field: value})
@@ -69,15 +72,21 @@ class TestInfluenceComputation:
 
     def test_compute_influences_reflects_actual_state(self):
         from core.engine.state_matrix_adapter import StateMatrixAdapter
+
         sm = StateMatrixAdapter()
         sm.update_alpha(energy=0.8, comfort=0.6)
         sm.update_beta(focus=0.9, curiosity=0.7)
         result = sm.compute_influences()
-        assert result["alpha"] > 0, "alpha influence should be > 0 when both alpha and beta have values"
-        assert result["beta"] > 0, "beta influence should be > 0 when both alpha and beta have values"
+        assert (
+            result["alpha"] > 0
+        ), "alpha influence should be > 0 when both alpha and beta have values"
+        assert (
+            result["beta"] > 0
+        ), "beta influence should be > 0 when both alpha and beta have values"
 
     def test_compute_influences_empty_when_no_state(self):
         from core.engine.state_matrix_adapter import StateMatrixAdapter
+
         sm = StateMatrixAdapter()
         result = sm.compute_influences()
         assert all(v == 0.0 for v in result.values()), "all influences should be 0 with empty state"
@@ -95,6 +104,7 @@ class TestTemporalQueries:
 
     def test_temporal_trend_computes_real_trend(self):
         from core.engine.state_matrix_adapter import StateMatrixAdapter
+
         sm = StateMatrixAdapter()
         for v in [0.1, 0.2, 0.3, 0.4, 0.5]:
             sm.temporal.record("alpha", "energy", v)
@@ -104,12 +114,14 @@ class TestTemporalQueries:
 
     def test_temporal_trend_zero_for_empty(self):
         from core.engine.state_matrix_adapter import StateMatrixAdapter
+
         sm = StateMatrixAdapter()
         trend = sm.temporal_trend("alpha", "energy")
         assert trend is None
 
     def test_temporal_anomalies_detects_outliers(self):
         from core.engine.state_matrix_adapter import StateMatrixAdapter
+
         sm = StateMatrixAdapter()
         for v in [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 5.0]:
             sm.temporal.record("alpha", "energy", v)

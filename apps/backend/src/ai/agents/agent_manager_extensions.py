@@ -111,7 +111,6 @@ class AgentManagerExtensions:
                     if not agent_info.process.is_alive():
                         logger.warning(
                             f"Agent {agent_id} is dead (PID: {agent_info.process.pid})",
-
                         )
                         dead_agents.append(agent_id)
 
