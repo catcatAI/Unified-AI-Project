@@ -57,13 +57,20 @@ export default function ContextViewer() {
         <h3>State Matrix</h3>
         {Object.entries(AXIS_LABELS).map(([axis, label]) => {
           const vals = ctx.state[axis]
-          if (!vals) return <div key={axis} className="bar-row"><span className="bar-label">{label}</span><span className="bar-value">(no data)</span></div>
+          if (!vals)
+            return (
+              <div key={axis} className="bar-row">
+                <span className="bar-label">{label}</span>
+                <span className="bar-value">(no data)</span>
+              </div>
+            )
           const avg = Object.values(vals).reduce((a, b) => a + b, 0) / Object.values(vals).length
           return <Bar key={axis} value={avg} label={label} />
         })}
         {ctx.eta && (
           <div className="eta-info">
-            η exec={ctx.eta.execution_count} success={ctx.eta.success_rate.toFixed(1%)} drift={ctx.eta.structural_drift.toFixed(4)}
+            η exec={ctx.eta.execution_count} success={ctx.eta.success_rate.toFixed(1) + '%'} drift=
+            {ctx.eta.structural_drift.toFixed(4)}
           </div>
         )}
       </div>
@@ -74,7 +81,10 @@ export default function ContextViewer() {
         <div className="ctx-grid">
           <div className="ctx-item">
             <span className="ctx-label">Memory</span>
-            <span className="ctx-value">{ctx.memory.initialized ? '✅' : '❌'}{ctx.memory.recent_count !== undefined ? ` ${ctx.memory.recent_count} recent` : ''}</span>
+            <span className="ctx-value">
+              {ctx.memory.initialized ? '✅' : '❌'}
+              {ctx.memory.recent_count !== undefined ? ` ${ctx.memory.recent_count} recent` : ''}
+            </span>
           </div>
           <div className="ctx-item">
             <span className="ctx-label">Intents</span>
@@ -82,7 +92,9 @@ export default function ContextViewer() {
           </div>
           <div className="ctx-item">
             <span className="ctx-label">LLM</span>
-            <span className="ctx-value">{ctx.llm.available ? '✅' : '❌'} {ctx.llm.active || '(none)'}</span>
+            <span className="ctx-value">
+              {ctx.llm.available ? '✅' : '❌'} {ctx.llm.active || '(none)'}
+            </span>
           </div>
         </div>
       </div>
@@ -93,7 +105,9 @@ export default function ContextViewer() {
           <h3>Intents ({ctx.intents.count})</h3>
           <div className="intent-list">
             {ctx.intents.names.map((name) => (
-              <span key={name} className="intent-tag">{name}</span>
+              <span key={name} className="intent-tag">
+                {name}
+              </span>
             ))}
           </div>
         </div>

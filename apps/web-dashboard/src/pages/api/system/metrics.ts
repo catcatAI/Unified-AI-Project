@@ -17,11 +17,13 @@ type Data = {
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   try {
     const resp = await fetch(`${BACKEND}/api/v1/ops/status`, {
-      headers: { 'Accept': 'application/json' },
+      headers: { Accept: 'application/json' },
       signal: AbortSignal.timeout(5000),
     })
     if (!resp.ok) {
-      res.status(resp.status).json({ cpu: 0, memory: 0, disk: 0, error: `Backend returned ${resp.status}` })
+      res
+        .status(resp.status)
+        .json({ cpu: 0, memory: 0, disk: 0, error: `Backend returned ${resp.status}` })
       return
     }
     const data = await resp.json()

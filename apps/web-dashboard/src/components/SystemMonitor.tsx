@@ -44,9 +44,15 @@ export default function SystemMonitor() {
       <h2>System Monitor</h2>
       {error && <div className="error-hint">⚠️ {error} — is the backend running on :8000?</div>}
       <div className="metrics">
-        <div>CPU: {metrics.cpu.toFixed(1)}% [{bar(metrics.cpu)}]</div>
-        <div>Memory: {metrics.memory.toFixed(1)}% [{bar(metrics.memory)}]</div>
-        <div>Disk: {metrics.disk.toFixed(1)}% [{bar(metrics.disk)}]</div>
+        <div>
+          CPU: {metrics.cpu.toFixed(1)}% [{bar(metrics.cpu)}]
+        </div>
+        <div>
+          Memory: {metrics.memory.toFixed(1)}% [{bar(metrics.memory)}]
+        </div>
+        <div>
+          Disk: {metrics.disk.toFixed(1)}% [{bar(metrics.disk)}]
+        </div>
       </div>
     </div>
   )

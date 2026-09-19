@@ -63,7 +63,11 @@ export default function ModelSelector() {
         <span className={`status-badge ${status.available ? 'ok' : 'err'}`}>
           {status.available ? '✅' : '❌'} {status.mode}
         </span>
-        {status.active && <span className="active-model">Active: <strong>{status.active}</strong></span>}
+        {status.active && (
+          <span className="active-model">
+            Active: <strong>{status.active}</strong>
+          </span>
+        )}
       </div>
 
       <table className="model-table">
@@ -78,7 +82,10 @@ export default function ModelSelector() {
         <tbody>
           {status.backends.map((b) => (
             <tr key={b.name} className={b.active ? 'active-row' : ''}>
-              <td>{b.active ? '★ ' : ''}{b.name}</td>
+              <td>
+                {b.active ? '★ ' : ''}
+                {b.name}
+              </td>
               <td>{b.type}</td>
               <td>
                 <span className={`health-${b.health}`}>
@@ -100,7 +107,9 @@ export default function ModelSelector() {
             </tr>
           ))}
           {status.backends.length === 0 && (
-            <tr><td colSpan={4}>No backends registered</td></tr>
+            <tr>
+              <td colSpan={4}>No backends registered</td>
+            </tr>
           )}
         </tbody>
       </table>

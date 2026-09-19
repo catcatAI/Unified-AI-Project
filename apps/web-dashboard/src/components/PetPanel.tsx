@@ -12,7 +12,7 @@ export default function PetPanel() {
     happiness: 0.5,
     hunger: 0.5,
     energy: 0.5,
-    health: 1.0
+    health: 1.0,
   })
 
   useEffect(() => {
@@ -27,7 +27,7 @@ export default function PetPanel() {
         console.error('Failed to fetch pet state:', err)
       }
     }
-    
+
     fetchPetState()
     const interval = setInterval(fetchPetState, 5000)
     return () => clearInterval(interval)
@@ -38,7 +38,7 @@ export default function PetPanel() {
       const res = await fetch('/api/pet/interact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action })
+        body: JSON.stringify({ action }),
       })
       if (res.ok) {
         const data = await res.json()

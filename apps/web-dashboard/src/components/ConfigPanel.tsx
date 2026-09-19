@@ -49,7 +49,9 @@ export default function ConfigPanel() {
         <h3>Deployment</h3>
         <div className="config-row">
           <span className="label">Mode</span>
-          <span className="value">{modeIcon[config.deployment.mode] || '❓'} {config.deployment.mode}</span>
+          <span className="value">
+            {modeIcon[config.deployment.mode] || '❓'} {config.deployment.mode}
+          </span>
         </div>
         <div className="config-row">
           <span className="label">Selection</span>
@@ -57,7 +59,9 @@ export default function ConfigPanel() {
         </div>
         <div className="config-row">
           <span className="label">Uptime</span>
-          <span className="value">{uptimeH}h {uptimeM}m</span>
+          <span className="value">
+            {uptimeH}h {uptimeM}m
+          </span>
         </div>
       </div>
 
@@ -81,12 +85,16 @@ export default function ConfigPanel() {
         <h3>Backends ({config.llm.backends.length})</h3>
         {config.llm.backends.map((b) => (
           <div key={b.name} className="config-row">
-            <span className="label">{b.active ? '★' : '·'} {b.name}</span>
+            <span className="label">
+              {b.active ? '★' : '·'} {b.name}
+            </span>
             <span className="value">{b.type}</span>
           </div>
         ))}
         {config.llm.backends.length === 0 && (
-          <div className="config-row"><span className="value">(none registered)</span></div>
+          <div className="config-row">
+            <span className="value">(none registered)</span>
+          </div>
         )}
       </div>
 
@@ -102,7 +110,9 @@ export default function ConfigPanel() {
         </div>
         <div className="config-row">
           <span className="label">Web Search</span>
-          <span className="value">{config.web_search.enabled ? `✅ ${config.web_search.provider}` : '❌'}</span>
+          <span className="value">
+            {config.web_search.enabled ? `✅ ${config.web_search.provider}` : '❌'}
+          </span>
         </div>
       </div>
     </div>

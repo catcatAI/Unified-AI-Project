@@ -50,7 +50,7 @@ export default function MemoryViewer() {
     return () => clearInterval(interval)
   }, [])
 
-  const filteredMemories = memories.filter(m => {
+  const filteredMemories = memories.filter((m) => {
     const matchesSearch = m.content.toLowerCase().includes(search.toLowerCase())
     const matchesCategory = category === 'all' || m.type === category
     return matchesSearch && matchesCategory
@@ -87,7 +87,9 @@ export default function MemoryViewer() {
           <div key={i} className="memory-item">
             <div className="memory-header">
               <span className="category">{memory.type || 'unknown'}</span>
-              <span className="importance">Importance: {(memory.importance * 100).toFixed(0)}%</span>
+              <span className="importance">
+                Importance: {(memory.importance * 100).toFixed(0)}%
+              </span>
             </div>
             <p className="content">{memory.content}</p>
             {formatDate(memory.timestamp) && (
@@ -96,7 +98,9 @@ export default function MemoryViewer() {
           </div>
         ))}
         {initialized && filteredMemories.length === 0 && (
-          <div className="empty-hint">No memories match. Talk to Angela first to build memories.</div>
+          <div className="empty-hint">
+            No memories match. Talk to Angela first to build memories.
+          </div>
         )}
       </div>
     </div>

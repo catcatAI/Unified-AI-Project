@@ -5,7 +5,7 @@ const BACKEND = process.env.BACKEND_URL || 'http://localhost:8000'
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const resp = await fetch(`${BACKEND}/api/v1/context/summary`, {
-      headers: { 'Accept': 'application/json' },
+      headers: { Accept: 'application/json' },
       signal: AbortSignal.timeout(5000),
     })
     if (!resp.ok) {

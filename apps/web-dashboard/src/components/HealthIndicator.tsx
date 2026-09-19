@@ -30,13 +30,16 @@ export default function HealthIndicator() {
     health.status === 'healthy'
       ? 'health-ok'
       : health.status === 'degraded'
-      ? 'health-warn'
-      : 'health-err'
+        ? 'health-warn'
+        : 'health-err'
 
   return (
-    <span className={`health-badge ${color}`} title={`CPU ${health.cpu_percent.toFixed(0)}% · MEM ${health.memory_percent.toFixed(0)}%`}>
-      {health.status === 'healthy' ? '🟢' : health.status === 'degraded' ? '🟡' : '🔴'}
-      {' '}{health.status}
+    <span
+      className={`health-badge ${color}`}
+      title={`CPU ${health.cpu_percent.toFixed(0)}% · MEM ${health.memory_percent.toFixed(0)}%`}
+    >
+      {health.status === 'healthy' ? '🟢' : health.status === 'degraded' ? '🟡' : '🔴'}{' '}
+      {health.status}
     </span>
   )
 }

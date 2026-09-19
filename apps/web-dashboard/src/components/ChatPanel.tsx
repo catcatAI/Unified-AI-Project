@@ -14,7 +14,10 @@ function renderMarkdown(text: string): string {
     .replace(/>/g, '&gt;')
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/`(.+?)`/g, '<code style="background:rgba(0,0,0,0.3);padding:2px 4px;border-radius:3px;font-size:0.9em">$1</code>')
+    .replace(
+      /`(.+?)`/g,
+      '<code style="background:rgba(0,0,0,0.3);padding:2px 4px;border-radius:3px;font-size:0.9em">$1</code>'
+    )
     .replace(/\n/g, '<br/>')
 }
 
@@ -48,13 +51,16 @@ export default function ChatPanel() {
       try {
         const data = JSON.parse(event.data)
         if (data.type === 'chat_response') {
-          setMessages(prev => {
-            const next = [...prev, {
-              id: Date.now().toString(),
-              role: 'assistant',
-              content: data.content,
-              timestamp: Date.now()
-            }]
+          setMessages((prev: Message[]) => {
+            const next: Message[] = [
+              ...prev,
+              {
+                id: Date.now().toString(),
+                role: 'assistant',
+                content: data.content,
+                timestamp: Date.now(),
+              },
+            ]
             return next.length > MAX_MESSAGES ? next.slice(-MAX_MESSAGES) : next
           })
         }
@@ -76,33 +82,36 @@ export default function ChatPanel() {
 
   const sendMessage = () => {
     if (!input.trim() || !wsRef.current) return
-    
-    setMessages(prev => {
-      const next = [...prev, {
-        id: Date.now().toString(),
-        role: 'user',
-        content: input,
-        timestamp: Date.now()
-      }]
+
+    setMessages((prev: Message[]) => {
+      const next: Message[] = [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          role: 'user',
+          content: input,
+          timestamp: Date.now(),
+        },
+      ]
       return next.length > MAX_MESSAGES ? next.slice(-MAX_MESSAGES) : next
     })
-    
-    wsRef.current.send(JSON.stringify({
-      type: 'chat',
-      content: input
-    }))
-    
+
+    wsRef.current.send(
+      JSON.stringify({
+        type: 'chat',
+        content: input,
+      })
+    )
+
     setInput('')
   }
 
   return (
     <div className="chat-panel">
       <h2>Chat</h2>
-      <div className="status">
-        {connected ? '🟢 Connected' : '🔴 Disconnected'}
-      </div>
+      <div className="status">{connected ? '🟢 Connected' : '🔴 Disconnected'}</div>
       <div className="messages">
-        {messages.map(msg => (
+        {messages.map((msg) => (
           <div key={msg.id} className={`message ${msg.role}`}>
             <span className="role">{msg.role === 'user' ? 'You' : 'Angela'}</span>
             <p dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }} />

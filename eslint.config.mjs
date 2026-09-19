@@ -6,6 +6,7 @@ export default [
       "**/node_modules/**",
       "**/dist/**",
       "**/build/**",
+      "**/.next/**",
       "**/venv/**",
       "**/.venv/**",
       "**/.pytest_cache/**",
