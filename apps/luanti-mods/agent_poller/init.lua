@@ -186,12 +186,19 @@ local function wield_placeable(player)
     return nil
 end
 
--- BODY REFLEXES: interoceptive only. Every loop below triggers on BODY
--- state (breath, burns, falling) — never on world prediction (no depth
--- checks, no sight rays, no terrain reading). Predicting the world is the
--- brain's job (coordinates + paths); the spine only answers damage that
--- is happening right now. Same principle covers hypoxia, burns, falls.
-local body_track = {} -- pname -> {y = float, hp = int}
+-- ACTUATOR DOCTRINE (single gateway: the behavior library decides,
+-- the poller executes). Lua holds NO triggers and NO goals:
+--   - interlocks: dead guard (circuit breaker, not behavior);
+--   - limiters: step_hold (motor cutout on overspeed), collision in
+--     try_step (a step into a wall fails; choosing elsewhere is the
+--     library's recovery/turn, not Lua's);
+--   - patterns: fixed local mechanics with no intent (candidate-scan
+--     place, auto-wield, face-at-execution, path advance).
+-- Reflex DECISIONS (surface on low breath, retreat on burns) live in the
+-- library with triggers, evaluated per agent tick against body state the
+-- poller reports. A 2s-poll actuator cannot be "fast" anyway; putting the
+-- trigger next to memory/LLM costs zero latency and gains editability.
+local body_track = {} -- pname -> {y = float} (fall-rate limiter input)
 local step_hold = {} -- pname -> true while airborne (withhold steps)
 local last_notice = {}
 
@@ -204,42 +211,20 @@ local function notice(pname, key, msg)
     end
 end
 
-local function rise(player, pname, why)
-    local dest = vector.add(player:get_pos(), {x = 0, y = 1.5, z = 0})
-    local hdef = minetest.registered_nodes[minetest.get_node(dest).name] or {}
-    if not hdef.walkable then
-        player:set_pos(dest)
-        notice(pname, why, why)
-    end
-end
-
--- Runs every poll for the living target. Senses body, actuates at most a
--- 1.5m rise or a step-hold flag. Never reads terrain ahead.
+-- Runs every poll for the living target. Tracks fall rate only (motor
+-- cutout input). Breath/heat DECISIONS live in the library now; the
+-- poller merely reports body state (breath, in_water, in_lava) in the
+-- poll payload for triggers to read.
 local function sense_body(player, pname)
     local pos = player:get_pos()
-    local hp = player:get_hp()
-    local breath = player:get_breath()
-    local prev = body_track[pname] or {y = pos.y, hp = hp}
-
-    -- Hypoxia: oxygen deficit -> surface NOW, whatever surrounds her.
-    -- (Diving in with full lungs is allowed; suffocating is not.)
-    if breath < 10 then
-        rise(player, pname, "gasping (breath " .. breath .. "/10)")
-    end
-
-    -- Burns: standing IN heat -> get out upward (lava pools surface).
-    -- Contact is current bodily insult, not foresight.
-    local feetname = minetest.get_node(pos).name
-    if feetname:find("lava") or feetname:find("fire") then
-        rise(player, pname, "burning on " .. feetname)
-    end
+    local prev = body_track[pname] or {y = pos.y}
 
     -- Falls: dropping faster than any stairs (>1.5m/poll) -> withhold
     -- steps until stable. Walking off one edge costs one harmless drop;
     -- the death spiral was step after step into the void.
     step_hold[pname] = (pos.y - prev.y) < -1.5
 
-    body_track[pname] = {y = pos.y, hp = hp}
+    body_track[pname] = {y = pos.y}
 end
 
 -- One collision-aware step toward dest (max ~1.5m). Tries ground level,
@@ -341,9 +326,9 @@ local function advance_goto(player, pname)
         g.stuck = 0
         goto_report = {status = "walking", dest = g.dest}
     else
+        -- No turn here: unsticking is the library's job (bump reflex reads
+        -- position, recovery reads stuck). Report honestly instead.
         g.stuck = (g.stuck or 0) + 1
-        local yaw = player:get_look_horizontal()
-        player:set_look_horizontal(yaw + math.pi / 4)
         if g.stuck > 8 then
             active_goto[pname] = nil
             goto_report = {status = "failed", reason = "blocked", dest = g.dest}
@@ -384,7 +369,7 @@ local function execute_commands(actions, player)
             dir = vector.rotate(dir, vector.new(0, yaw, 0))
             local pname = player:get_player_name()
             if step_hold[pname] then
-                -- Airborne: withhold steps until stable.
+                -- Airborne: withhold steps until stable (motor cutout).
             else
                 local flat = vector.new(dir.x, 0, dir.z)
                 if vector.length(flat) > 0.05 then
@@ -394,11 +379,11 @@ local function execute_commands(actions, player)
                         vector.multiply(vector.normalize(flat), 1.5)
                     )
                     if not try_step(player, dest, action.jump) then
-                        -- Bump-and-turn keeps a blind move from hugging walls.
-                        player:set_look_horizontal(yaw + math.pi / 4)
+                        -- Blocked is reported, not decided: the library's
+                        -- bump reflex (position-static detector) turns.
                         minetest.log(
                             "action",
-                            "[agent_poller] move blocked, turning for " .. pname
+                            "[agent_poller] move blocked for " .. pname
                         )
                     end
                 end
@@ -424,6 +409,14 @@ local function execute_commands(actions, player)
                 player:get_player_name(),
                 vector.add(pos, vector.multiply(dir, tonumber(action.dist) or 4.5))
             )
+        elseif action.type == "rise" then
+            -- Buoyancy primitive (no trigger, no decision): up 1.5m if free.
+            -- WHEN to rise is the library's surface reflex (breath/heat).
+            local dest = vector.add(player:get_pos(), {x = 0, y = 1.5, z = 0})
+            local hdef = minetest.registered_nodes[minetest.get_node(dest).name] or {}
+            if not hdef.walkable then
+                player:set_pos(dest)
+            end
         elseif action.type == "look_at" then
             local t = action.pos
             if t and t.x and t.y and t.z then
@@ -767,6 +760,8 @@ local function poll_bridge()
         goto_ = goto_report,
         scan = pending_scan,
         vision = pending_vision,
+        in_water = minetest.get_node(pos).name:find("water") ~= nil,
+        in_lava = minetest.get_node(pos).name:find("lava") ~= nil,
     }
     pending_scan = nil -- one-shot deliveries; goto_ stays sticky
     pending_vision = nil

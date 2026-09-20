@@ -40,6 +40,8 @@ class TestBehaviorRegistry:
             "dig_at",
             "place_at",
             "look_vision",
+            "craft_one",
+            "surface",
         }
 
     def test_walk_is_coordinate_step_ahead(self):
@@ -173,6 +175,142 @@ class TestNameAliases:
 
         bridge = GameMemoryBridge()
         assert any(r.recipe_id == "stick" for r in bridge.get_craftable_recipes({"wood": 2}))
+
+
+class TestSkillTranslator:
+    def test_move_walks_forward(self):
+        from ai.multimodal.game_behaviors import skill_to_behavior
+
+        assert skill_to_behavior("move", {"forward": 1.0}) == (
+            "walk",
+            {"steps": 3, "backward": False},
+        )
+        assert skill_to_behavior("navigate", {"forward": -1.0}) == (
+            "walk",
+            {"steps": 3, "backward": True},
+        )
+
+    def test_dig_and_combat_dig(self):
+        from ai.multimodal.game_behaviors import skill_to_behavior
+
+        assert skill_to_behavior("dig", {}) == ("dig_burst", {"n": 1})
+        assert skill_to_behavior("combat", {}) == ("dig_burst", {"n": 1})
+
+    def test_look_translates_yaw_only(self):
+        from ai.multimodal.game_behaviors import skill_to_behavior
+
+        import math
+
+        bid, params = skill_to_behavior("look", {"yaw": 0.5})
+        assert bid == "turn"
+        assert params["degrees"] == pytest.approx(math.degrees(0.5))
+        assert skill_to_behavior("look", {"yaw": 0.0}) == ("", {})
+        assert skill_to_behavior("look", {"pitch": -0.3}) == ("", {})
+
+    def test_craft_gate(self):
+        from ai.multimodal.game_behaviors import skill_to_behavior
+
+        assert skill_to_behavior("craft", {"recipe_id": "stick"}, craftable=lambda r: True) == (
+            "craft_one",
+            {"recipe_id": "stick"},
+        )
+        assert skill_to_behavior("craft", {"recipe_id": "auto"}, craftable=lambda r: False) == (
+            "",
+            {},
+        )
+
+    def test_no_undirected_verbs(self):
+        from ai.multimodal.game_behaviors import skill_to_behavior
+
+        for skill in ("place", "build", "eat", "dance"):
+            assert skill_to_behavior(skill, {}) == ("", {})
+
+    def test_craft_one_expands(self):
+        assert expand_behavior("craft_one", {"recipe_id": "stick"}) == [
+            {"type": "craft", "recipe": "stick"}
+        ]
+
+
+class TestReflexTriggers:
+    def _state(self, breath=10, lava=False):
+        from ai.multimodal.game_structs import GameState, Proprioception
+
+        return GameState(proprioception=Proprioception(breath=breath, is_in_lava=lava))
+
+    def test_surface_fires_on_low_breath(self):
+        from ai.multimodal.game_behaviors import BEHAVIORS
+
+        trig = BEHAVIORS["surface"].trigger
+        assert trig is not None
+        assert trig(self._state(breath=9)) is True
+        assert trig(self._state(breath=10)) is False
+
+    def test_surface_fires_on_lava(self):
+        from ai.multimodal.game_behaviors import BEHAVIORS
+
+        trig = BEHAVIORS["surface"].trigger
+        assert trig(self._state(breath=10, lava=True)) is True
+
+    def test_surface_expands_to_rise(self):
+        assert expand_behavior("surface", {}) == [{"type": "rise"}]
+
+    def test_plain_behaviors_have_no_trigger(self):
+        assert BEHAVIORS["walk"].trigger is None
+        assert BEHAVIORS["dig_burst"].trigger is None
+
+
+class TestAffectAndRecovery:
+    def test_apply_affect_maps_modes(self):
+        from ai.autonomous.angela_agent import AngelaAutonomousAgent
+
+        agent = AngelaAutonomousAgent()
+        agent.selector = None
+
+        class Emo:
+            def __init__(self, mode):
+                self._mode = mode
+
+            def get_behavioral_adjustment(self):
+                return {"routing_mode": self._mode}
+
+        agent.emotion = Emo("conservative")
+        agent.lifecycle = None
+        agent._apply_affect()
+        assert agent._affect_mode == "conservative"
+        agent.emotion = Emo("exploratory")
+        agent._apply_affect()
+        assert agent._affect_mode == "exploratory"
+
+    def test_apply_recovery_fallback(self):
+        from types import SimpleNamespace
+
+        from ai.autonomous.angela_agent import AngelaAutonomousAgent
+        from ai.multimodal.game_task_executor import GameTaskExecutor
+
+        agent = AngelaAutonomousAgent()
+        agent.executor = GameTaskExecutor()
+        psg = SimpleNamespace(
+            id="t1", skill="move", params={}, preconditions=[],
+            success_criteria="done", timeout=100,
+        )
+        strat = SimpleNamespace(
+            immediate_action=SimpleNamespace(type="fallback_subgoal", subgoal=psg)
+        )
+        agent._apply_recovery(strat)
+        ids = [s.subgoal.subgoal_id for s in agent.executor._queue]
+        assert any("llm_t1" in i for i in ids)
+
+    def test_apply_recovery_explore_walks(self):
+        from types import SimpleNamespace
+
+        from ai.autonomous.angela_agent import AngelaAutonomousAgent
+
+        agent = AngelaAutonomousAgent()
+        agent.tick_count = 99
+        strat = SimpleNamespace(immediate_action=SimpleNamespace(type="explore"))
+        agent._apply_recovery(strat)
+        assert agent._active_behavior is not None
+        assert agent._active_behavior["id"] == "walk"
 
 
 class TestDecisionContracts:

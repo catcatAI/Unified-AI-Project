@@ -57,6 +57,8 @@ class PollingBridge:
                 "goto_": data.get("goto_"),
                 "scan": data.get("scan"),
                 "vision": data.get("vision"),
+                "in_water": data.get("in_water", False),
+                "in_lava": data.get("in_lava", False),
                 "timestamp": datetime.now().isoformat(),
             }
 

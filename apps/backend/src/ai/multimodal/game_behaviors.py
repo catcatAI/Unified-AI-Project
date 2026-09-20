@@ -44,6 +44,7 @@ class Behavior:
     expand: Callable[[Dict[str, Any], Any], List[Action]]  # (params, state) -> actions
     success_criteria: str = "steps_done"  # steps_done | any_pickup | arrived | scan_done
     wait_for: str = ""  # "scan": 動作發完後等掃描結果再由 LLM 二段編排
+    trigger: Optional[Callable[[Any], bool]] = None  # 反射觸發條件（每 tick 評估）
     adjust: Optional[Callable[[Dict[str, Any], BehaviorFeedback], Dict[str, Any]]] = None
 
     def with_defaults(self, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -370,6 +371,44 @@ _register(
 
 _register(
     Behavior(
+        behavior_id="craft_one",
+        description="按配方合成一次（recipe_id 或 auto）。材料夠不夠由上游判斷。",
+        params_schema={
+            "recipe_id": {"type": "str", "default": "auto", "desc": "配方短名或 auto"},
+        },
+        preconditions=_no_preconditions,
+        expand=lambda params, _state=None: [
+            {"type": "craft", "recipe": str(params.get("recipe_id", "auto") or "auto")}
+        ],
+    )
+)
+
+def _surface_trigger(state: Any) -> bool:
+    """缺氧或灼傷：身體訊號，不是世界預測。"""
+    try:
+        prop = state.proprioception if state else None
+        if prop is None:
+            return False
+        if int(getattr(prop, "breath", 10) or 10) < 10:
+            return True
+        return bool(getattr(prop, "is_in_lava", False))
+    except Exception:
+        return False
+
+
+_register(
+    Behavior(
+        behavior_id="surface",
+        description="【反射】缺氧或站在岩漿里時上浮 1.5 米。保命用，不用選它（觸發自動開火）。",
+        params_schema={},
+        preconditions=_no_preconditions,
+        expand=lambda _p, _s=None: [{"type": "rise"}],
+        trigger=_surface_trigger,
+    )
+)
+
+_register(
+    Behavior(
         behavior_id="look_vision",
         description="睜眼看：15 條視線掃描視錐（5 方向×3 俯仰，有遮擋、看得到水和樹）。想瞄準東西、確認前面是什麼都用它開頭。",
         params_schema={
@@ -437,3 +476,44 @@ class ChatDecision(BaseModel):
     behavior_id: str = Field(default="", description="順帶執行的行為 id（可空）")
     params: Dict[str, Any] = Field(default_factory=dict, description="行為參數")
     reasoning: str = Field(default="", description="一句話說明")
+
+
+# 舊迴圈（executor/L1 SkillContext）進遊戲的唯一翻譯器。
+# 意圖（skill＋params）只能翻成行為庫的語言；翻不出來（place/build/
+# eat／做不出的 craft）就禁排——此前三處 abstain 補丁都是在這裡
+# 漏水的症狀，現在由翻譯器從架構上保證：沒有「亂放」這個動詞。
+def skill_to_behavior(
+    skill: str,
+    params: Optional[Dict[str, Any]] = None,
+    craftable: Optional[Callable[[str], bool]] = None,
+) -> Tuple[str, Dict[str, Any]]:
+    """(skill, params) -> (behavior_id, params)，翻不出回 ("", {})."""
+    params = params or {}
+    if skill in ("move", "navigate"):
+        try:
+            fwd = float(params.get("forward", 1.0))
+        except (TypeError, ValueError):
+            fwd = 1.0
+        return "walk", {"steps": 3, "backward": bool(fwd < 0)}
+    if skill in ("dig", "combat"):
+        return "dig_burst", {"n": 1}
+    if skill == "look":
+        # 只有 yaw 轉得出來（turn）；pitch 抬頭低頭沒有對應動詞，
+        # 真瞄準走 look_at。零轉動直接禁排（此前全是空轉）。
+        try:
+            yaw = float(params.get("yaw", 0.0) or 0.0)
+        except (TypeError, ValueError):
+            yaw = 0.0
+        if yaw == 0.0:
+            return "", {}
+        import math
+
+        return "turn", {"degrees": math.degrees(yaw)}
+    if skill == "craft":
+        rid = str(params.get("recipe_id", "auto") or "auto")
+        if craftable is not None and not craftable(rid):
+            return "", {}
+        return "craft_one", {"recipe_id": rid}
+    # place/build/eat: 沒有無目的的動詞。定向放置走 place_one/place_at
+    #（runner/chat/plan），吃東西缺 use 動作（poller 待補），藍圖缺執行器。
+    return "", {}

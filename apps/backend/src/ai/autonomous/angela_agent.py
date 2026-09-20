@@ -47,8 +47,8 @@ from ai.multimodal.game_memory_bridge import GameMemoryBridge
 from ai.multimodal.game_strategy import GameStrategy, StrategyConfig, StrategyWeights
 from ai.multimodal.llm_game_interface import LLMGameInterface, LLMConfig, RuleBasedFallback
 from ai.multimodal.game_behaviors import BEHAVIORS, BehaviorFeedback, expand_behavior
-from luanti_polling_bridge import PollingBridge
-from luanti_connector import PlayerState
+from integrations.luanti_polling_bridge import PollingBridge
+from integrations.luanti_connector import PlayerState
 from ai.multimodal.game_structs import (
     SkillID,
     SkillSpec,
@@ -74,7 +74,7 @@ from ai.multimodal.game_planner import PlannerConfig, GoalManager, GoalType, Pla
 from ai.multimodal.game_memory_bridge import GameMemoryBridge
 from ai.multimodal.game_strategy import GameStrategy, StrategyConfig
 from ai.multimodal.llm_game_interface import LLMGameInterface, LLMConfig, RuleBasedFallback
-from luanti_polling_bridge import PollingBridge
+from integrations.luanti_polling_bridge import PollingBridge
 from ai.multimodal.game_policy import PolicyConfig, PolicyOutput
 from ai.multimodal.skill_selector import SelectorConfig
 from ai.multimodal.game_task_executor import ExecutorConfig
@@ -82,8 +82,8 @@ from ai.multimodal.game_planner import PlannerConfig, GoalManager, GoalType, Pla
 from ai.multimodal.game_memory_bridge import GameMemoryBridge
 from ai.multimodal.game_strategy import GameStrategy, StrategyConfig
 from ai.multimodal.llm_game_interface import LLMGameInterface, LLMConfig
-from luanti_polling_bridge import PollingBridge
-from luanti_connector import LuantiConnector, LuantiConfig, GameSnapshot, PlayerState
+from integrations.luanti_polling_bridge import PollingBridge
+from integrations.luanti_connector import LuantiConnector, LuantiConfig, GameSnapshot, PlayerState
 from ai.multimodal.game_structs import (
     SkillID,
     SkillSpec,
@@ -187,6 +187,17 @@ class AngelaAutonomousAgent:
         self._active_behavior: Optional[Dict[str, Any]] = None
         self._last_behavior_feed_tick: int = 0
         self._behavior_followup: Optional[Dict[str, Any]] = None
+        # Reflex monitor state (library-owned triggers, evaluated per tick)
+        self._last_reflex: Dict[str, int] = {}
+        self._last_loco: Optional[Dict[str, Any]] = None  # {tick, pos}
+        self._recent_actions: Deque[str] = deque(maxlen=10)
+        self._death_count: int = 0
+        self._prev_hp: Optional[int] = None
+        self._strategy_llm_counter: int = 0
+        self._last_diag_tick: int = -10000
+        self._affect_mode: str = "neutral"
+        self._total_pickups: int = 0
+        self._anomaly_count: int = 0
         # Cooperative action slot: the runner's feed sets a hold so the
         # 10Hz executor doesn't overwrite it before the 0.5Hz poll drains
         # it (observed: 4 consecutive vision actions died in queue).
@@ -396,6 +407,10 @@ class AngelaAutonomousAgent:
                 if self._should_replan() and self.current_state is not None:
                     await self._replan()
 
+                # 3b. Reflexes (library triggers + bump detector). Surface
+                # preempts anything; bump turns only when idle.
+                self._check_reflexes()
+
                 # 4. Execute tasks (L2)
                 await self._execute_tasks()
 
@@ -475,6 +490,8 @@ class AngelaAutonomousAgent:
                         inventory=state.get("inventory") or {},
                         wielded_item=state.get("wielded", ""),
                         is_on_ground=state.get("on_ground", True),
+                        is_in_water=bool(state.get("in_water", False)),
+                        is_in_lava=bool(state.get("in_lava", False)),
                         velocity=(0.0, 0.0, 0.0),
                     ),
                     visual=None,  # Filled below when a frame is present
@@ -526,6 +543,17 @@ class AngelaAutonomousAgent:
             except Exception as e:
                 logger.debug(f"Goto/scan/vision perception failed: {e}")
 
+            # Death rising edge (strategy context + honesty about dying)
+            try:
+                hp = state.get("hp", 20) if state else 20
+                if hp is not None and self._prev_hp is not None:
+                    if self._prev_hp > 0 and int(hp) <= 0:
+                        self._death_count += 1
+                        logger.warning(f"Angela died in game (death #{self._death_count})")
+                self._prev_hp = int(hp) if hp is not None else self._prev_hp
+            except Exception as e:
+                logger.debug(f"Death tracking failed: {e}")
+
         except Exception as e:
             logger.error(f"Perception error: {e}")
 
@@ -540,6 +568,153 @@ class AngelaAutonomousAgent:
             logger.debug(f"Strategy update: {directive}")
         except Exception as e:
             logger.error(f"Strategy update error: {e}")
+        self._strategy_llm_counter += 1
+        if self._strategy_llm_counter % 4 == 0:
+            asyncio.create_task(self._llm_evaluate())
+
+    def _apply_affect(self):
+        """Close the affect loop: emotion/lifecycle read back into decisions.
+
+        They were write-only (fed outcomes, never consulted). Now the
+        dominant routing mode sets selector temperature: exploratory
+        samples wider, conservative sticks to the best skill.
+        """
+        try:
+            mode = "neutral"
+            if self.emotion is not None:
+                try:
+                    mode = self.emotion.get_behavioral_adjustment().get(
+                        "routing_mode", mode
+                    )
+                except Exception:
+                    pass
+            if self.lifecycle is not None and hasattr(
+                self.lifecycle, "get_behavioral_adjustment"
+            ):
+                try:
+                    lm = self.lifecycle.get_behavioral_adjustment().get("routing_mode")
+                    if lm and lm != "neutral":
+                        mode = lm
+                except Exception:
+                    pass
+            temps = {"exploratory": 1.25, "conservative": 0.7}
+            new_temp = temps.get(mode, 1.0)
+            if self.selector is not None and abs(
+                self.selector.config.temperature - new_temp
+            ) > 1e-9:
+                self.selector.config.temperature = new_temp
+                logger.info(f"Affect mode -> {mode} (selector temperature {new_temp})")
+            self._affect_mode = mode
+        except Exception as e:
+            logger.debug(f"Affect read failed: {e}")
+
+    async def _llm_diagnose(self):
+        """L2/L3: LLM diagnoses a terminal failure (was defined, never called)."""
+        try:
+            from ai.multimodal.llm_game_interface import AnomalyContext
+
+            if not self.current_state:
+                return
+            self._anomaly_count = getattr(self, "_anomaly_count", 0) + 1
+            cur = self.executor.get_current_subgoal() if self.executor else None
+            prop = self.current_state.proprioception
+            inv = dict((prop.inventory if prop else {}) or {})
+            clean_inv = {}
+            for k, v in inv.items():
+                try:
+                    clean_inv[str(k)] = int(v)
+                except (TypeError, ValueError):
+                    continue
+            pos = tuple(prop.position or (0, 0, 0)) if prop else (0, 0, 0)
+            ctx = AnomalyContext(
+                stuck_reason="blocked",
+                current_subgoal=cur.subgoal_id if cur else "unknown",
+                recent_actions=list(self._recent_actions)[-10:],
+                inventory=clean_inv,
+                position={"x": float(pos[0]), "y": float(pos[1]), "z": float(pos[2])},
+                health=float(getattr(prop, "hp", 20) or 20),
+                hunger=float(getattr(prop, "hunger", 20) or 20),
+            )
+            strat = await self.llm.adiagnose_anomaly(ctx)
+            self._apply_recovery(strat)
+        except Exception as e:
+            logger.warning(f"LLM diagnose failed: {e}")
+
+    def _apply_recovery(self, strat):
+        """Apply an LLM recovery strategy to the live loop."""
+        try:
+            from ai.multimodal.game_structs import SkillID as _SkillID
+            from ai.multimodal.game_task_executor import Subgoal as _Subgoal
+
+            act = strat.immediate_action
+            t = getattr(act, "type", "replan")
+            if t == "replan" or (t == "fallback_subgoal" and not getattr(act, "subgoal", None)):
+                logger.info("LLM recovery: replan")
+                asyncio.create_task(self._replan())
+            elif t == "fallback_subgoal" and getattr(act, "subgoal", None):
+                psg = act.subgoal
+                try:
+                    sid = _SkillID(psg.skill)
+                except Exception:
+                    sid = _SkillID.MOVE
+                sg = _Subgoal(
+                    subgoal_id=f"llm_{psg.id}",
+                    skill_id=sid,
+                    params=dict(psg.params or {}),
+                    preconditions=list(psg.preconditions or []),
+                    success_criteria=psg.success_criteria or "completed",
+                    timeout_ticks=int(psg.timeout or 300),
+                )
+                logger.info(f"LLM recovery: force subgoal {sg.subgoal_id}")
+                self.executor.force_subgoal(sg)
+                # force_subgoal doesn't leave REPLANNING: drive again.
+                self.executor._state = ExecutorState.EXECUTING
+            elif t == "explore":
+                self._start_behavior("walk", {"steps": 5}, "llm-recovery")
+            elif t == "wait":
+                self._start_behavior("wait", {"ticks": 50}, "llm-recovery")
+            elif t == "heal":
+                logger.info("LLM recovery: heal (no food path, waiting)")
+                self._start_behavior("wait", {"ticks": 50}, "llm-recovery")
+        except Exception as e:
+            logger.warning(f"Apply recovery failed: {e}")
+
+    async def _llm_evaluate(self):
+        """L4: LLM adjusts strategy weights (was defined, never called)."""
+        try:
+            from ai.multimodal.llm_game_interface import StrategyContext
+
+            if not self.strategy_engine:
+                return
+            uptime_min = max(1.0, (time.time() - self.start_time) / 60.0)
+            completed = list(getattr(self.executor, "_completed", []) or [])
+            failed = list(getattr(self.executor, "_failed", []) or [])
+            ctx = StrategyContext(
+                session_duration_min=uptime_min,
+                goals_completed=[getattr(s, "subgoal_id", "?") for s in completed[-10:]],
+                goals_failed=[getattr(s, "subgoal_id", "?") for s in failed[-10:]],
+                death_count=int(getattr(self, "_death_count", 0)),
+                resource_collection_rate={
+                    "gathered_per_min": float(getattr(self, "_total_pickups", 0))
+                    / uptime_min
+                },
+                anomaly_count=int(getattr(self, "_anomaly_count", 0)),
+                current_strategy=dict(self.strategy_engine.get_directive()),
+            )
+            adj = await self.llm.aevaluate_strategy(ctx)
+            w = self.strategy_engine.weights
+            w.exploration_weight = float(
+                min(1.0, max(0.0, w.exploration_weight + adj.exploration_weight_delta))
+            )
+            w.risk_tolerance = float(
+                min(1.0, max(0.0, w.risk_tolerance + adj.risk_tolerance_delta))
+            )
+            logger.info(
+                f"LLM strategy adjust: explore {w.exploration_weight:.2f}, "
+                f"risk {w.risk_tolerance:.2f} ({adj.reasoning[:80]})"
+            )
+        except Exception as e:
+            logger.warning(f"LLM evaluate failed: {e}")
 
     def _should_replan(self) -> bool:
         """Determine if replanning is needed.
@@ -561,6 +736,19 @@ class AngelaAutonomousAgent:
 
     async def _replan(self):
         """L3: Replan based on current state and goals"""
+        self._apply_affect()
+        # A terminal failure carries a blocker: let the LLM diagnose first.
+        # A fallback subgoal can resolve it without a full replan.
+        try:
+            blocker = getattr(
+                getattr(self.executor, "_task_progress", None), "blocker", ""
+            )
+            if blocker and self.tick_count - self._last_diag_tick > 300:
+                self._last_diag_tick = self.tick_count
+                await self._llm_diagnose()
+                return
+        except Exception as e:
+            logger.debug(f"Diagnose-first failed: {e}")
         if not self.current_goal:
             # Select highest priority goal
             goal = self.goal_manager.get_highest_priority()
@@ -689,6 +877,7 @@ class AngelaAutonomousAgent:
         """L1: Select skill based on context"""
         if not self.current_state:
             return
+        self._apply_affect()
 
         latent = np.zeros(128, dtype=np.float32)
         if self.current_state.visual:
@@ -696,38 +885,10 @@ class AngelaAutonomousAgent:
 
         skill_params = self.selector.select(latent, self.current_state)
         if skill_params:
-            # Undirected L1 placement entombs the agent (observed: boxed
-            # herself in cobble/sand, then "no free cell" forever). Placement
-            # only comes from plans, LLM behaviors, or chat from now on.
-            # BUILD maps to the same place action (no blueprint runner
-            # exists), so it abstains too — observed stacking dirt piles.
-            if skill_params.skill_id in (SkillID.PLACE, SkillID.BUILD):
-                logger.info(f"L1 {skill_params.skill_id.value} abstained (undirected placement)")
-                return
-            # Abstain from uncraftable crafts: the L1 path carries no
-            # template preconditions, so without this gate it queues
-            # doomed auto-crafts every tick (observed log spam). The
-            # selector already recorded _last_used, so cooldown rotates.
-            if skill_params.skill_id == SkillID.CRAFT and self.memory:
-                from ai.multimodal.game_memory_bridge import normalize_inventory
-
-                prop = self.current_state.proprioception
-                inv = dict((prop.inventory if prop else {}) or {})
-                rid = (skill_params.params or {}).get("recipe_id", "auto")
-                craftable = False
-                if rid and rid != "auto":
-                    rec = self.memory.get_recipe(rid)
-                    if rec:
-                        norm = normalize_inventory(inv)
-                        craftable = all(
-                            norm.get(ing, 0) >= cnt
-                            for ing, cnt in rec.ingredients.items()
-                        )
-                else:
-                    craftable = bool(self.memory.get_craftable_recipes(inv))
-                if not craftable:
-                    logger.info(f"L1 craft abstained (nothing craftable for {rid})")
-                    return
+            # No per-skill abstention hacks here: _queue_skill translates
+            # every skill through the behavior library, which abstains
+            # untranslatable intents (undirected place/build/eat,
+            # uncraftable craft, no-op looks) by architecture.
             ctx = SkillContext(
                 active_skill=skill_params.skill_id,
                 params=skill_params.params,
@@ -759,8 +920,33 @@ class AngelaAutonomousAgent:
             ctx.discrete_triggers = skill_params.discrete_triggers
             self._queue_skill(ctx)
 
+    def _craftable_check(self, rid: str) -> bool:
+        """Can she craft this right now (L1/translator gate)? Fail-open."""
+        try:
+            if not self.memory:
+                return True
+            from ai.multimodal.game_memory_bridge import normalize_inventory
+
+            prop = self.current_state.proprioception if self.current_state else None
+            inv = dict((prop.inventory if prop else {}) or {})
+            if not rid or rid == "auto":
+                return bool(self.memory.get_craftable_recipes(inv))
+            rec = self.memory.get_recipe(rid)
+            if not rec:
+                return False
+            norm = normalize_inventory(inv)
+            return all(norm.get(ing, 0) >= cnt for ing, cnt in rec.ingredients.items())
+        except Exception:
+            return True
+
     def _queue_skill(self, skill_ctx: SkillContext):
-        """Queue skill for execution via bridge (poller-compatible action)."""
+        """Queue skill for execution via the behavior library.
+
+        The ONLY gateway from the old loop into the game: every skill is
+        translated to behavior-library verbs first. Untranslatable intents
+        (undirected place/build/eat, uncraftable craft, no-op looks)
+        abstain here by architecture, not by patch.
+        """
         # Yield to a runner-fed behavior action: the executor's 10Hz writes
         # would otherwise overwrite it before the 0.5Hz poll drains it.
         if self.tick_count - self._behavior_hold_tick < 30:
@@ -771,57 +957,93 @@ class AngelaAutonomousAgent:
                 return
         except Exception:
             pass
+        from ai.multimodal.game_behaviors import expand_behavior, skill_to_behavior
+
         skill_id = skill_ctx.active_skill.value
-        params = skill_ctx.params or {}
-        bias = getattr(skill_ctx, "continuous_bias", None)
-        triggers = getattr(skill_ctx, "discrete_triggers", {}) or {}
-
-        def _f(i, default=0.0):
-            try:
-                return float(bias[i])
-            except Exception:
-                return default
-
+        params = dict(skill_ctx.params or {})
+        # Recovery spiral: a nonzero yaw becomes a real turn one tick in
+        # three (via the look path); the other two ticks walk. The yaw
+        # used to be silently dropped, so recovery never turned.
         if skill_id in ("move", "navigate"):
-            # All locomotion is coordinate-grounded: step_ahead resolves
-            # facing in Lua (exact); blind directional moves are gone.
-            # A nonzero yaw param (recovery unstick) becomes a real turn —
-            # it used to be silently dropped, so recovery never turned.
             try:
                 yaw_param = float(params.get("yaw", 0.0) or 0.0)
             except (TypeError, ValueError):
                 yaw_param = 0.0
             if yaw_param != 0.0 and self.tick_count % 3 == 0:
-                # Spiral out: turn one tick in three, step the others.
-                action = {"type": "look", "yaw_delta": yaw_param, "pitch_delta": 0.0}
-            else:
-                try:
-                    fwd = float(params.get("forward", _f(0, 1.0)))
-                except (TypeError, ValueError):
-                    fwd = 1.0
-                action = {
-                    "type": "step_ahead",
-                    "dist": 4.5,
-                    "backward": bool(fwd < 0),
-                }
-        elif skill_id == "look":
-            action = {
-                "type": "look",
-                "yaw_delta": params.get("yaw", _f(0, 0.0)),
-                "pitch_delta": params.get("pitch", _f(1, 0.0)),
-            }
-        elif skill_id in ("dig", "combat"):
-            action = {"type": "dig"}
-        elif skill_id in ("place", "build", "eat"):
-            action = {"type": "place"}
-        elif skill_id == "craft":
-            action = {"type": "craft", "recipe": params.get("recipe_id", "auto")}
-        else:
-            action = {"type": "move", "forward": 0.5, "strafe": 0.0}
+                skill_id, params = "look", {"yaw": yaw_param}
+        bid, bparams = skill_to_behavior(
+            skill_id, params, craftable=self._craftable_check
+        )
+        if not bid:
+            logger.debug(f"No behavior verb for skill {skill_id}, abstaining")
+            return
+        actions = expand_behavior(bid, bparams, self.current_state)
+        if not actions:
+            return
         try:
-            self.bridge.queue_action(action)
+            self.bridge.queue_action(actions[0])
+            self._note_feed(actions[0].get("type", ""))
         except Exception as e:
             logger.error(f"Queue skill failed: {e}")
+
+    def _note_feed(self, action_type: str):
+        """Record every action actually queued (diagnose context + bump)."""
+        try:
+            self._recent_actions.append(str(action_type))
+        except Exception:
+            pass
+        if action_type in ("step_ahead", "goto"):
+            try:
+                prop = self.current_state.proprioception if self.current_state else None
+                pos = tuple(prop.position or (0, 0, 0)) if prop else (0, 0, 0)
+            except Exception:
+                pos = (0, 0, 0)
+            self._last_loco = {"tick": self.tick_count, "pos": pos}
+
+    def _check_reflexes(self):
+        """Evaluate library-owned reflex triggers + bump detector.
+
+        Surface (breath/lava) preempts anything; bump (locomotion fed but
+        zero displacement) turns only when no behavior runs. Cooldowns stop
+        flapping. Everything decided here lives in the behavior library —
+        the poller only executes primitives.
+        """
+        if not self.current_state:
+            return
+        try:
+            for bid, b in BEHAVIORS.items():
+                trigger = getattr(b, "trigger", None)
+                if not trigger:
+                    continue
+                if self.tick_count - self._last_reflex.get(bid, -1000) < 30:
+                    continue
+                try:
+                    fired = bool(trigger(self.current_state))
+                except Exception:
+                    continue
+                if fired:
+                    self._last_reflex[bid] = self.tick_count
+                    logger.warning(f"Reflex fired: {bid}")
+                    self._start_behavior(bid, {}, f"reflex:{bid}")
+                    return
+        except Exception as e:
+            logger.debug(f"Reflex check failed: {e}")
+        try:
+            if self._active_behavior or not self._last_loco:
+                return
+            age = self.tick_count - self._last_loco["tick"]
+            if not 12 <= age < 40:
+                return
+            prop = self.current_state.proprioception
+            pos = tuple(prop.position or (0, 0, 0)) if prop else (0, 0, 0)
+            old = self._last_loco["pos"]
+            dist = sum((a - b) ** 2 for a, b in zip(pos, old)) ** 0.5
+            if dist < 0.4:
+                logger.info("Bump detected (no displacement), turning")
+                self._last_loco = None
+                self._start_behavior("turn", {"degrees": 45}, "reflex:bump")
+        except Exception as e:
+            logger.debug(f"Bump check failed: {e}")
 
     async def _execute_reflex(self):
         """L0: Execute reflex actions via bridge"""
@@ -1048,6 +1270,7 @@ class AngelaAutonomousAgent:
             self._behavior_hold_tick = self.tick_count
             try:
                 self.bridge.queue_action(nxt)
+                self._note_feed(nxt.get("type", ""))
             except Exception as e:
                 logger.error(f"Queue behavior action failed: {e}")
 
@@ -1078,6 +1301,12 @@ class AngelaAutonomousAgent:
         if not ab:
             return
         pickups = self._behavior_pickups(ab)
+        try:
+            self._total_pickups = int(getattr(self, "_total_pickups", 0)) + sum(
+                int(v) for v in pickups.values()
+            )
+        except Exception:
+            pass
         logger.info(
             f"Behavior settled: {ab['id']} completed={completed} "
             f"reason={reason} pickups={pickups}"
