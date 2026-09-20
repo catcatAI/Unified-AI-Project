@@ -147,7 +147,9 @@ class LLMGameInterface:
             {"role": "user", "content": f"{user}\n\n輸出格式 (JSON Schema):\n{schema}"},
         ]
 
-    async def _call_llm(self, messages: List[Dict], response_model: type) -> Any:
+    async def _call_llm(
+        self, messages: List[Dict], response_model: type, max_tokens: Optional[int] = None
+    ) -> Any:
         """通用 LLM 呼叫"""
         async with self._semaphore:
             session = await self._get_session()
@@ -156,7 +158,7 @@ class LLMGameInterface:
                 "model": self.config.model,
                 "messages": messages,
                 "temperature": self.config.temperature,
-                "max_tokens": self.config.max_tokens,
+                "max_tokens": max_tokens or self.config.max_tokens,
                 "response_format": (
                     {"type": "json_object"} if self.config.provider in ["openai", "vllm"] else None
                 ),
@@ -270,6 +272,8 @@ class LLMGameInterface:
         task: str,
         state_summary: str,
         memories: Optional[List[str]] = None,
+        only_behaviors: Optional[List[str]] = None,
+        max_tokens: int = 256,
     ):
         """行為庫編排：LLM 從目錄選行為＋填參數（用户要求的決策方式）"""
         from ai.multimodal.game_behaviors import BehaviorOrder, behavior_catalog_text
@@ -278,7 +282,7 @@ class LLMGameInterface:
             raise Exception("LLM disabled")
 
         system = """你是 Angela AI 的行為編排器。從行為目錄選一個最合適的行為並填好參數。
-只准選目錄裡的 behavior_id，參數必須符合 schema。輸出 JSON。"""
+只准選目錄裡的 behavior_id，參數必須符合 schema。座標用 {x,y,z} 數字。輸出 JSON。"""
 
         user = f"""任務: {task}
 
@@ -289,12 +293,12 @@ class LLMGameInterface:
 {chr(10).join((memories or [])[:5]) or '無'}
 
 行為目錄:
-{behavior_catalog_text()}
+{behavior_catalog_text(only=only_behaviors)}
 
 請輸出 JSON。"""
         schema = BehaviorOrder.model_json_schema()
         messages = self._build_prompt(system, user, json.dumps(schema, ensure_ascii=False))
-        return await self._call_llm(messages, BehaviorOrder)
+        return await self._call_llm(messages, BehaviorOrder, max_tokens=max_tokens)
 
     async def adecide_chat(
         self,
@@ -310,7 +314,8 @@ class LLMGameInterface:
             raise Exception("LLM disabled")
 
         system = """你是 Angela，一個在 Luanti (Minetest) 方塊世界裡活著的 AI 女孩。
-玩家在遊戲裡跟你說話，用繁體中文回，親切簡短（兩句內），像朋友不像客服。
+玩家在遊戲裡跟你說話，用繁體中文回，親切簡短（一句內），像朋友不像客服。
+絕對不要重複玩家的原話；回覆要是新的句子。
 你也可以順帶做一個行為（走路/轉向/挖/放/看/等），不要沒事亂放方塊。
 只准用目錄裡的 behavior_id；不想做事就留空。輸出 JSON。"""
 

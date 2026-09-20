@@ -71,6 +71,14 @@ class TestBehaviorRegistry:
         assert BEHAVIORS["scout"].wait_for == "scan"
         assert BEHAVIORS["goto"].success_criteria == "arrived"
 
+    def test_aim_subset_catalog(self):
+        from ai.multimodal.game_behaviors import AIM_BEHAVIORS, behavior_catalog_text
+
+        assert set(AIM_BEHAVIORS) == {"look_at", "goto", "dig_at", "turn", "walk"}
+        small = behavior_catalog_text(only=AIM_BEHAVIORS)
+        assert "scout" not in small and "goto" in small
+        assert len(small) < len(behavior_catalog_text())
+
     def test_look_vision(self):
         acts = expand_behavior("look_vision", {"range": 24})
         assert acts == [{"type": "vision", "range": 24}]

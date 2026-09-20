@@ -308,16 +308,26 @@ _register(
 )
 
 
-def behavior_catalog_text() -> str:
-    """給 LLM 的行為目錄（compose/adjust 提示詞用）"""
+def behavior_catalog_text(only: Optional[List[str]] = None) -> str:
+    """給 LLM 的行為目錄（compose/adjust 提示詞用）。
+
+    only: 只列需要的子集。高頻调用（15s 瞄準）用小目錄——prefill
+    token 直接決定本地小模型的延遲，13 行全目錄太貴。
+    """
     lines = []
     for b in BEHAVIORS.values():
+        if only and b.behavior_id not in only:
+            continue
         params = ", ".join(
             f"{k}({v.get('type')}, 預設 {v.get('default')}): {v.get('desc')}"
             for k, v in b.params_schema.items()
         )
         lines.append(f"- {b.behavior_id}: {b.description} 參數: {params or '無'}")
     return "\n".join(lines)
+
+
+# 高頻瞄準用的小目錄（移動＋注視，不含掃描/對話/等待）
+AIM_BEHAVIORS = ["look_at", "goto", "dig_at", "turn", "walk"]
 
 
 def expand_behavior(

@@ -186,6 +186,7 @@ class AngelaAutonomousAgent:
         self._chat_history: Deque[str] = deque(maxlen=12)
         self._active_behavior: Optional[Dict[str, Any]] = None
         self._last_behavior_feed_tick: int = 0
+        self._behavior_followup: Optional[Dict[str, Any]] = None
         # Cooperative action slot: the runner's feed sets a hold so the
         # 10Hz executor doesn't overwrite it before the 0.5Hz poll drains
         # it (observed: 4 consecutive vision actions died in queue).
@@ -862,6 +863,11 @@ class AngelaAutonomousAgent:
             say, bid, bparams = self._fallback_chat(player, message)
 
         say = say[:300]
+        # Echo guard: small models sometimes parrot the input as the reply.
+        if say and message and (say.strip() == message.strip() or message.strip() in say and len(say) < len(message) + 8):
+            logger.warning(f"LLM echoed chat, using fallback line instead")
+            say, bid, bparams = self._fallback_chat(player, message)
+            say = say[:300]
         logger.info(f"Angela replies to {player}: {say}")
         if say:
             self._chat_history.append(f"{player}: {message}")
@@ -898,6 +904,8 @@ class AngelaAutonomousAgent:
     @staticmethod
     def _fallback_chat(player: str, message: str):
         """Keyword intent fallback when the LLM is unreachable."""
+        if any(k in message for k in ("砍", "樹", "tree", "chop")):
+            return "好，我去找棵樹砍！", "scout", {"node": "default:tree"}
         if any(k in message for k in ("挖", "dig", "採")):
             return "收到，我來挖！", "dig_burst", {"n": 5}
         if any(k in message for k in ("來", "過來", "come", "follow", "跟")):
@@ -1061,6 +1069,16 @@ class AngelaAutonomousAgent:
             f"Behavior settled: {ab['id']} completed={completed} "
             f"reason={reason} pickups={pickups}"
         )
+        # Follow-up chain (e.g. scout -> goto -> dig_at the tree): the
+        # finished behavior leaves the next link, run only on success.
+        if completed:
+            follow = getattr(self, "_behavior_followup", None)
+            self._behavior_followup = None
+            if follow and follow.get("behavior_id") in BEHAVIORS:
+                logger.info(f"Behavior follow-up: {follow['behavior_id']}")
+                self._start_behavior(
+                    follow["behavior_id"], follow.get("params", {}), "follow-up"
+                )
         try:
             if self.memory:
                 from ai.multimodal.game_memory_bridge import GameExperience, MemoryType
@@ -1098,22 +1116,38 @@ class AngelaAutonomousAgent:
             f"原因是: {ab.get('reason', '')}）。偏好最近的，目的地站在目標旁邊 "
             f"2 米（y 取目標 y）。\n掃描結果:\n{node_lines}"
         )
+        picked_pos = None
+        picked_walked = False
         try:
-            order = await self.llm.acompose_behavior(task, self._state_summary(), [])
+            from ai.multimodal.game_behaviors import AIM_BEHAVIORS
+
+            order = await self.llm.acompose_behavior(
+                task, self._state_summary(), [], only_behaviors=AIM_BEHAVIORS, max_tokens=128
+            )
             if order.behavior_id in ("goto", "look_at", "dig_at") and order.params.get(
                 "pos"
             ):
+                picked_pos = order.params["pos"]
+                picked_walked = order.behavior_id == "goto"
                 self._start_behavior(
                     order.behavior_id, order.params, f"scout-pick:{ab['id']}"
                 )
-                return
-            logger.warning(f"Scout pick rejected (no pos): {order.behavior_id}")
+            else:
+                logger.warning(f"Scout pick rejected (no pos): {order.behavior_id}")
         except Exception as e:
             logger.warning(f"Scout pick LLM failed, nearest fallback: {e}")
-        n0 = nodes[0]
-        self._start_behavior(
-            "goto", {"pos": {"x": n0["x"], "y": n0["y"], "z": n0["z"]}}, "scout-fallback"
-        )
+        if picked_pos is None:
+            if not nodes:
+                return
+            n0 = nodes[0]
+            picked_pos = {"x": n0["x"], "y": n0["y"], "z": n0["z"]}
+            picked_walked = True
+            self._start_behavior("goto", {"pos": picked_pos}, "scout-fallback")
+        # After walking to a scouted resource, dig it: scout -> goto ->
+        # dig_at completes "go chop that tree" as one intent. Only when
+        # she actually walked there (dig_at reaches 6.5m).
+        if picked_walked:
+            self._behavior_followup = {"behavior_id": "dig_at", "params": {"pos": picked_pos}}
 
     async def _finish_vision(self, ab: Dict[str, Any], vision: Dict[str, Any]):
         """Vision phase two: aim at interest (LLM).
@@ -1139,7 +1173,11 @@ class AngelaAutonomousAgent:
             f"視線:\n{ray_lines}"
         )
         try:
-            order = await self.llm.acompose_behavior(task, self._state_summary(), [])
+            from ai.multimodal.game_behaviors import AIM_BEHAVIORS
+
+            order = await self.llm.acompose_behavior(
+                task, self._state_summary(), [], only_behaviors=AIM_BEHAVIORS, max_tokens=128
+            )
             if order.behavior_id in ("look_at", "goto", "dig_at") and order.params.get("pos"):
                 self._start_behavior(order.behavior_id, order.params, "vision-aim")
                 return
