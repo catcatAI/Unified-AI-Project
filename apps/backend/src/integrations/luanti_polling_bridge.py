@@ -94,10 +94,20 @@ class PollingBridge:
         )
 
     def queue_action(self, action: Dict[str, Any]) -> str:
-        """Queue an action from the autonomous agent (sync, no HTTP needed)."""
+        """Queue an action from the autonomous agent (sync, no HTTP needed).
+
+        Latest-wins with a 1-slot cap: the agent produces at 10Hz while the
+        poller drains at ~0.5Hz, so an unbounded queue fills with stale
+        actions from dead subgoals and starves the current one. Freshness
+        beats history here — every action type (move/dig/place/craft) is
+        either continuous (newest direction wins) or single-shot idempotent.
+        """
         action_id = str(uuid.uuid4())
         normalized = {"id": action_id, **action}
-        self.pending_actions.append(normalized)
+        if self.pending_actions:
+            self.pending_actions[-1] = normalized
+        else:
+            self.pending_actions.append(normalized)
         logger.info(f"Queued action: {normalized.get('type')}")
         return action_id
 

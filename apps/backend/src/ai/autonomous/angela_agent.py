@@ -27,6 +27,8 @@ from ai.multimodal.foveated_sampler import FoveatedSampler, SamplingConfig, Samp
 from ai.multimodal.game_policy import GamePolicy, PolicyConfig, PolicyOutput
 from ai.multimodal.skill_selector import SkillSelector, SelectorConfig
 from ai.multimodal.game_task_executor import (
+    ActiveSubgoal,
+    ExecutorState,
     GameTaskExecutor,
     ExecutorConfig,
     Subgoal,
@@ -638,14 +640,26 @@ class AngelaAutonomousAgent:
                 priority=skill_params.priority,
                 interrupt_on=[],
             )
-            self.executor._current = Subgoal(
-                subgoal_id=f"skill_{skill_params.skill_id.value}_{uuid.uuid4().hex[:8]}",
-                skill_id=skill_params.skill_id,
-                params=skill_params.params,
-                preconditions=[],
-                success_criteria="skill_complete",
-                timeout_ticks=300,
+            # Must wrap in ActiveSubgoal: the executor invariant is
+            # _current: ActiveSubgoal (raw Subgoal here crashed
+            # get_current_subgoal/_derive_skill_result/_log_status).
+            self.executor._current = ActiveSubgoal(
+                subgoal=Subgoal(
+                    subgoal_id=f"skill_{skill_params.skill_id.value}_{uuid.uuid4().hex[:8]}",
+                    skill_id=skill_params.skill_id,
+                    params=skill_params.params,
+                    preconditions=[],
+                    success_criteria="skill_complete",
+                    timeout_ticks=300,
+                ),
+                status=SubgoalStatus.ACTIVE,
+                started_tick=self.executor._tick,
+                last_progress_tick=self.executor._tick,
             )
+            # The plan is exhausted (IDLE) at this point; without forcing
+            # EXECUTING the injected skill never drives, times out, or
+            # completes — a live loop with a zombie subgoal and no actions.
+            self.executor._state = ExecutorState.EXECUTING
             self.executor._current.skill_params = skill_params
             ctx.continuous_bias = skill_params.continuous_bias
             ctx.discrete_triggers = skill_params.discrete_triggers
@@ -783,7 +797,7 @@ class AngelaAutonomousAgent:
         logger.info(
             f"Tick {self.tick_count} | Uptime: {uptime:.1f}s | "
             f"Goal: {self.current_goal.value if self.current_goal else 'None'} | "
-            f"Subgoal: {self.executor._current.subgoal.subgoal_id if self.executor._current else 'None'} | "
+            f"Subgoal: {self.executor.get_current_subgoal().subgoal_id if self.executor and self.executor.get_current_subgoal() else 'None'} | "
             f"Exploration: {directive.get('exploration_weight', 0):.2f} | "
             f"Risk: {directive.get('risk_tolerance', 0):.2f}"
         )

@@ -10,10 +10,11 @@ Game Task Executor - L2 任務執行層
 """
 
 import logging
+import re
 import time
 from collections import deque
 from dataclasses import dataclass, field
-from typing import Optional, Dict, Any, List, Deque, Callable
+from typing import Optional, Dict, Any, List, Deque, Callable, Tuple
 from enum import Enum
 
 import numpy as np
@@ -270,11 +271,83 @@ class GameTaskExecutor:
         return self._selector.select(latent, state, ctx)
 
     def _check_preconditions(self, active: ActiveSubgoal, state: GameState) -> bool:
-        """檢查前置條件"""
+        """檢查前置條件（技能規格＋子目標自帶條件都要過）"""
         ok, failed = check_preconditions(active.subgoal.skill_id, state)
         if not ok:
             logger.debug(f"Preconditions failed for {active.subgoal.subgoal_id}: {failed}")
-        return ok
+            return False
+        ok2, failed2 = self._check_subgoal_preconditions(active.subgoal.preconditions, state)
+        if not ok2:
+            logger.debug(f"Subgoal preconditions failed for {active.subgoal.subgoal_id}: {failed2}")
+            return False
+        return True
+
+    @staticmethod
+    def _check_subgoal_preconditions(
+        preconditions: List[str], state: GameState
+    ) -> Tuple[bool, List[str]]:
+        """評估子目標自帶的前置字串（模板如 has_wood / has_X>=N / has_tool:X）。
+
+        之前執行期只檢查技能規格的前置，子目標的 has_wood 等形同虛設：
+        沒木頭也照排 craft，6 秒超時、重試、重規劃無限空轉。
+        """
+        prop = state.proprioception if state else None
+        inv = dict((prop.inventory if prop else {}) or {})
+        failed: List[str] = []
+
+        def _count(needle: str) -> int:
+            total = 0
+            for key, val in inv.items():
+                if needle in str(key):
+                    try:
+                        total += int(val)
+                    except (TypeError, ValueError):
+                        pass
+            return total
+
+        for cond in preconditions or []:
+            if cond.startswith("completed:"):
+                continue  # 依賴在出隊時已驗過
+            elif cond in (
+                "recipe_unlocked",
+                "ingredients_in_inv",
+                "hostile_in_range",
+                "has_materials",
+                "space_available",
+            ):
+                continue  # 具體檢查在執行時做（與規格層一致）
+            elif cond == "has_food":
+                food_items = ["apple", "bread", "meat", "cooked", "carrot", "potato"]
+                if not any(f in str(k) for k in inv for f in food_items):
+                    failed.append("無食物")
+            elif cond == "hunger_low":
+                max_hunger = getattr(prop, "max_hunger", 20) if prop else 20
+                hunger = getattr(prop, "hunger", 20) if prop else 20
+                try:
+                    if float(hunger) > float(max_hunger) * 0.3:
+                        failed.append("飢餓度未低")
+                except (TypeError, ValueError):
+                    pass
+            elif cond.startswith("has_tool:"):
+                tool = cond.split(":", 1)[1]
+                if _count(tool) <= 0:
+                    failed.append(f"缺少工具: {tool}")
+            elif cond.startswith("has_"):
+                # has_wood / has_wood>=3 / has_cobblestone>=3
+                m = re.match(r"has_([a-z_]+)(>=(\d+))?", cond)
+                if m:
+                    item, _, need = m.groups()
+                    have = _count(item)
+                    if need is not None and have < int(need):
+                        failed.append(f"缺少材料: {item} ({have}/{need})")
+                    elif need is None and have <= 0:
+                        failed.append(f"缺少材料: {item}")
+                else:
+                    logger.debug(f"Unknown subgoal precondition (ignored): {cond}")
+            else:
+                logger.debug(f"Unknown subgoal precondition (ignored): {cond}")
+
+        return len(failed) == 0, failed
 
     def _process_skill_result(self, result: SkillResult):
         """處理技能執行結果"""
@@ -302,6 +375,10 @@ class GameTaskExecutor:
 
         if criteria.startswith("inventory_changed:"):
             item = criteria.split(":")[1]
+            if item in ("*", "craft_output"):
+                # 通配：_derive_skill_result 只在真有物品增長時才回傳成功，
+                # 收到即視為完成（"*" 字面比對永遠 False，不可直接 in）。
+                return True
             return any(item in effect for effect in result.side_effects)
         elif criteria == "block_placed":
             return any("placed" in effect for effect in result.side_effects)

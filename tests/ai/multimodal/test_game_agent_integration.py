@@ -90,16 +90,14 @@ class TestGameStructs:
             )
         )
 
-        # 有木頭、工具 -> 可挖掘
-        ok, failed = check_preconditions(SkillID.DIG, state)
-        # DIG 需要 has_tool:pickaxe
-        assert not ok
-        assert "缺少工具: pickaxe" in failed
-
-        # 加上工具
-        state.proprioception.inventory["pickaxe"] = 1
+        # 空手也可挖掘（Minetest Game 真值：土/沙/木可手挖）
         ok, failed = check_preconditions(SkillID.DIG, state)
         assert ok
+
+        # EAT 無食物 -> 不可執行（仍被前置擋下）
+        ok, failed = check_preconditions(SkillID.EAT, state)
+        assert not ok
+        assert "無食物" in failed
 
     def test_get_available_skills(self):
         """測試可用技能列表"""
@@ -263,15 +261,15 @@ class TestSkillSelector:
 
     def test_precondition_filtering(self, selector, state):
         """前置條件過濾"""
-        # 沒有工具時不應選 DIG
+        # 沒有食物時不應選 EAT（DIG 已改為空手可挖，不再以此為例）
         state.proprioception.inventory = {"wood": 10}
         latent = np.random.randn(128).astype(np.float32)
 
         available = selector.get_skill_triggers(latent, state)
-        dig_triggers = [t for t in available if t.skill_id == SkillID.DIG]
-        # DIG 應被過濾或低優先級
-        if dig_triggers:
-            assert dig_triggers[0].confidence < 0.5
+        eat_triggers = [t for t in available if t.skill_id == SkillID.EAT]
+        # EAT 應被過濾或低優先級
+        if eat_triggers:
+            assert eat_triggers[0].confidence < 0.5
 
 
 class TestGameTaskExecutor:
@@ -395,15 +393,18 @@ class TestGameTaskExecutor:
         ctx1 = executor.tick(None, state, latent)
         assert ctx1 is not None  # fallback ctx
 
-        # 執行更多 tick
-        for _ in range(10):
+        # 執行更多 tick（timeout_ticks=10 需第 12 tick 才觸發超時判定）
+        for _ in range(14):
             executor.tick(None, state, latent)
 
-        # 應觸發 fallback (檢查當前或已完成子目標)
+        # 應觸發 fallback (前置阻塞走 unblock，超時失敗走 fallback_N)
+        def _is_fallback(sg_id: str) -> bool:
+            return "unblock" in sg_id or "fallback" in sg_id
+
         fallback_triggered = (
-            any("unblock" in sg.subgoal_id for sg in executor._queue)
-            or any("unblock" in sg.subgoal_id for sg in executor._completed)
-            or (executor._current and "unblock" in executor._current.subgoal.subgoal_id)
+            any(_is_fallback(sg.subgoal_id) for sg in executor._queue)
+            or any(_is_fallback(sg.subgoal_id) for sg in executor._completed)
+            or (executor._current and _is_fallback(executor._current.subgoal.subgoal_id))
         )
         assert (
             fallback_triggered

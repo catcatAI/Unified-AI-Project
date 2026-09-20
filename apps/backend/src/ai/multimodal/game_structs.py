@@ -181,9 +181,12 @@ GAME_SKILLS: Dict[SkillID, SkillSpec] = {
         continuous_dim=2,
         discrete_triggers=["attack"],
         params=["target_node", "direction", "tool"],
-        preconditions=["has_tool:pickaxe"],
+        # No tool gate: Minetest Game hand-digs soil/sand/wood (slowly, with
+        # correct per-tool drops via node_dig). Gating on pickaxe deadlocked
+        # the whole survival loop for a fresh agent that owns nothing.
+        preconditions=[],
         duration_ticks=range(5, 200),
-        description="挖掘方塊：需對應工具，持續按住 attack",
+        description="挖掘方塊：空手可挖土/沙/木，持續按住 attack",
     ),
     SkillID.PLACE: SkillSpec(
         continuous_dim=2,

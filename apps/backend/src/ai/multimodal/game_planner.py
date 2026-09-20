@@ -128,8 +128,10 @@ class GamePlanner:
                 {
                     "skill": SkillID.DIG,
                     "params": {"target_node": "tree"},
-                    "preconditions": ["has_tool:pickaxe"],
-                    "criteria": "inventory_changed:wood",
+                    # 盲體無視覺瞄準：第一次拾取即算採集進展；木頭真到手後
+                    # craft 的 has_wood 前置自然解開，鏈條繼續推進。
+                    "preconditions": [],
+                    "criteria": "inventory_changed:*",
                 },
             ],
             GoalType.TOOL: [

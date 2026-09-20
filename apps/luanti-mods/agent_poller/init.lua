@@ -152,6 +152,44 @@ local function execute_commands(actions, player)
                 local v = player:get_velocity()
                 player:set_velocity({x = v.x, y = 6, z = v.z})
             end
+            -- Server-side step: Luanti movement is client-authoritative, so
+            -- set_velocity alone never displaces a standing-still client
+            -- (800 move actions, 0.0m gained — measured). Step the position
+            -- directly, collision-aware, so move decisions become motion.
+            local flat = vector.new(dir.x, 0, dir.z)
+            if vector.length(flat) > 0.05 then
+                flat = vector.normalize(flat)
+                local pos = player:get_pos()
+                local stepped = false
+                for _, dy in ipairs({0, 1}) do
+                    local dest = vector.add(
+                        vector.add(pos, vector.multiply(flat, 1.5)),
+                        {x = 0, y = dy, z = 0}
+                    )
+                    local feet = minetest.get_node(dest)
+                    local head = minetest.get_node(vector.add(dest, {x = 0, y = 1, z = 0}))
+                    local fdef = minetest.registered_nodes[feet.name] or {}
+                    local hdef = minetest.registered_nodes[head.name] or {}
+                    if not fdef.walkable and not hdef.walkable then
+                        player:set_pos(dest)
+                        minetest.log(
+                            "action",
+                            "[agent_poller] moved to "
+                                .. minetest.pos_to_string(dest, 1)
+                                .. " for "
+                                .. player:get_player_name()
+                        )
+                        stepped = true
+                        break
+                    end
+                end
+                if not stepped then
+                    minetest.log(
+                        "action",
+                        "[agent_poller] move blocked (wall) for " .. player:get_player_name()
+                    )
+                end
+            end
         elseif action.type == "look" then
             local yaw = (action.yaw_delta or 0) + player:get_look_horizontal()
             local pitch = (action.pitch_delta or 0) + player:get_look_vertical()
