@@ -1001,6 +1001,10 @@ class AngelaAutonomousAgent:
                 return
             pickups = self._behavior_pickups(ab)
             if b.success_criteria == "any_pickup" and not pickups:
+                # Give the last fed action a full poll cycle to land before
+                # calling it a miss (observed: dig_at judged 0.1s after feed).
+                if (self.tick_count - self._last_behavior_feed_tick) < 25:
+                    return
                 if b.adjust and ab["retries"] < 1:
                     ab["params"] = b.adjust(
                         ab["params"],
@@ -1021,7 +1025,14 @@ class AngelaAutonomousAgent:
                     return
                 await self._settle_behavior(False, "no_pickup")
                 return
-            await self._settle_behavior(True, "")
+            # steps_done: settle only after the queue demonstrably drained
+            # (slot-hold mutes the executor, so empty really means consumed).
+            try:
+                drained = len(getattr(self.bridge, "pending_actions", [])) == 0
+            except Exception:
+                drained = False
+            if drained and (self.tick_count - self._last_behavior_feed_tick) >= 15:
+                await self._settle_behavior(True, "")
             return
 
         try:
@@ -1168,8 +1179,9 @@ class AngelaAutonomousAgent:
             f"- {r.get('node')} {r.get('dist')}m (yaw {r.get('yaw_off')})" for r in rays
         )
         task = (
-            "你剛睜眼看了四周。選一個最值得注意的東西面對它（優先樹/煤/石頭，"
-            "忽略空氣；如果全是土和沙就隨便選個近的）。\n"
+            "你剛睜眼看了四周。選一個最值得注意的東西（優先樹/煤/石頭，忽略空氣；"
+            "全是土和沙就選個近的）：3 米內用 look_at 面對它或 dig_at 挖它，"
+            "3 米外用 goto 走過去。只做一步。\n"
             f"視線:\n{ray_lines}"
         )
         try:
