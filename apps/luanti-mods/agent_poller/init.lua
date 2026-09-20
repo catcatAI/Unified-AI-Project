@@ -26,71 +26,10 @@ local function get_target_player()
     return nil
 end
 
-local function execute_commands(actions, player)
-    if not player or not actions then
-        return
-    end
-    for _, action in ipairs(actions) do
-        if action.type == "move" then
-            local yaw = player:get_look_horizontal()
-            local dir = vector.new(action.forward or 0, 0, action.strafe or 0)
-            dir = vector.rotate(dir, vector.new(0, yaw, 0))
-            player:set_velocity(vector.multiply(dir, 4))
-            if action.jump then
-                local v = player:get_velocity()
-                player:set_velocity({x = v.x, y = 6, z = v.z})
-            end
-        elseif action.type == "look" then
-            local yaw = (action.yaw_delta or 0) + player:get_look_horizontal()
-            local pitch = (action.pitch_delta or 0) + player:get_look_vertical()
-            player:set_look_horizontal(yaw)
-            player:set_look_vertical(math.max(-math.pi / 2, math.min(math.pi / 2, pitch)))
-        elseif action.type == "dig" then
-            local pos = player:get_pos()
-            local dir = player:get_look_dir()
-            local target = vector.add(pos, vector.multiply(dir, 4))
-            local node = minetest.get_node(target)
-            if node.name ~= "air" then
-                minetest.node_dig(target, node, player)
-                minetest.log("action", "[agent_poller] dig executed for " .. player:get_player_name())
-            end
-        elseif action.type == "place" then
-            local pos = player:get_pos()
-            local dir = player:get_look_dir()
-            local target = vector.add(pos, vector.multiply(dir, 4))
-            local node = minetest.get_node(target)
-            if node.name == "air" then
-                local stack = player:get_wielded_item()
-                if not stack:is_empty() then
-                    minetest.item_place(
-                        stack,
-                        player,
-                        {type = "node", under = target, above = vector.add(target, {x = 0, y = 1, z = 0})}
-                    )
-                    minetest.log("action", "[agent_poller] place executed for " .. player:get_player_name())
-                end
-            end
-        elseif action.type == "chat" then
-            minetest.chat_send_all("[Angela] " .. tostring(action.message or ""))
-        elseif action.type == "craft" then
-            do_craft(player, action)
-        elseif action.type == "give" then
-            -- TEST ONLY: grant items so crafting can be verified end-to-end.
-            local itemstring = ITEMS[action.item] or action.item
-            local count = tonumber(action.count) or 1
-            if itemstring then
-                player:get_inventory():add_item("main", itemstring .. " " .. count)
-                minetest.log(
-                    "action",
-                    "[agent_poller] gave " .. itemstring .. " x" .. count .. " to " .. player:get_player_name()
-                )
-            end
-        end
-    end
-end
-
 -- Short recipe ids (as sent by the agent) to Minetest Game items.
 -- Mirrors apps/backend/src/ai/multimodal/game_memory_bridge.py defaults.
+-- NOTE: must be defined BEFORE execute_commands (Lua locals are only
+-- visible after their declaration point in the chunk).
 local RECIPES = {
     stick = {needs = {wood = 2}, gives = {stick = 4}},
     wooden_pickaxe = {needs = {wood = 3}, gives = {wooden_pickaxe = 1}},
@@ -132,7 +71,7 @@ local function count_item(inv, itemstring)
     return total
 end
 
-function do_craft(player, action)
+local function do_craft(player, action)
     local recipe_id = action.recipe_id or action.recipe or "auto"
     local recipe = RECIPES[recipe_id]
     if not recipe then
@@ -194,6 +133,69 @@ function do_craft(player, action)
         "action",
         "[agent_poller] crafted " .. recipe_id .. " for " .. player:get_player_name()
     )
+end
+
+local function execute_commands(actions, player)
+    if not player or not actions then
+        return
+    end
+    for _, action in ipairs(actions) do
+        if action.type == "move" then
+            local yaw = player:get_look_horizontal()
+            local dir = vector.new(action.forward or 0, 0, action.strafe or 0)
+            dir = vector.rotate(dir, vector.new(0, yaw, 0))
+            player:set_velocity(vector.multiply(dir, 4))
+            if action.jump then
+                local v = player:get_velocity()
+                player:set_velocity({x = v.x, y = 6, z = v.z})
+            end
+        elseif action.type == "look" then
+            local yaw = (action.yaw_delta or 0) + player:get_look_horizontal()
+            local pitch = (action.pitch_delta or 0) + player:get_look_vertical()
+            player:set_look_horizontal(yaw)
+            player:set_look_vertical(math.max(-math.pi / 2, math.min(math.pi / 2, pitch)))
+        elseif action.type == "dig" then
+            local pos = player:get_pos()
+            local dir = player:get_look_dir()
+            local target = vector.add(pos, vector.multiply(dir, 4))
+            local node = minetest.get_node(target)
+            if node.name ~= "air" then
+                minetest.node_dig(target, node, player)
+                minetest.log("action", "[agent_poller] dig executed for " .. player:get_player_name())
+            end
+        elseif action.type == "place" then
+            local pos = player:get_pos()
+            local dir = player:get_look_dir()
+            local target = vector.add(pos, vector.multiply(dir, 4))
+            local node = minetest.get_node(target)
+            if node.name == "air" then
+                local stack = player:get_wielded_item()
+                if not stack:is_empty() then
+                    minetest.item_place(
+                        stack,
+                        player,
+                        {type = "node", under = target, above = vector.add(target, {x = 0, y = 1, z = 0})}
+                    )
+                    minetest.log("action", "[agent_poller] place executed for " .. player:get_player_name())
+                end
+            end
+        elseif action.type == "chat" then
+            minetest.chat_send_all("[Angela] " .. tostring(action.message or ""))
+        elseif action.type == "craft" then
+            do_craft(player, action)
+        elseif action.type == "give" then
+            -- TEST ONLY: grant items so crafting can be verified end-to-end.
+            local itemstring = ITEMS[action.item] or action.item
+            local count = tonumber(action.count) or 1
+            if itemstring then
+                player:get_inventory():add_item("main", itemstring .. " " .. count)
+                minetest.log(
+                    "action",
+                    "[agent_poller] gave " .. itemstring .. " x" .. count .. " to " .. player:get_player_name()
+                )
+            end
+        end
+    end
 end
 
 local function on_poll_response(player_name, res)
