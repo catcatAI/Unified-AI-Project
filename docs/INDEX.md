@@ -2,10 +2,13 @@
 
 ## Structure
 
-- **`00-overview/`** — Project vision, goals, roadmap, glossary (GLOSSARY.md updated 2026-06-25)
+- **`00-overview/`** — Project vision, goals, roadmap, glossary (GLOSSARY.md
+  updated 2026-06-25)
 - **`02-game-design/`** — Game components, workflow, game-design docs
-- **`03-technical-architecture/`** — Architecture, HSP, HAM, AI components, API, testing, security, analysis
-- **`04-advanced-concepts/`** — Agent collaboration, meta-formulas (deprecated — package deleted, see Px6), advanced features
+- **`03-technical-architecture/`** — Architecture, HSP, HAM, AI components, API,
+  testing, security, analysis
+- **`04-advanced-concepts/`** — Agent collaboration, meta-formulas (deprecated —
+  package deleted, see Px6), advanced features
 - **`05-development/`** — Dev guides, deployment, environment setup, debugging
 - **`06-project-management/`** — Plans, status, audit reports
 - **`09-archive/`** — Historical/completed/obsolete docs
@@ -15,42 +18,67 @@
 - **`AGENTS.md`** — 代理開發指南 (構建/測試/代碼規範)
 - **`ARCHITECTURE.md`** — System architecture overview (SSOT, 部分過時)
 - **`CHANGELOG.md`** — 版本歷史與變更記錄
-- **[`QUICK_START.md`](QUICK_START.md)** — Getting started guide (2026-06-25 更新，命令已驗證)
-- **[`USABILITY_GUIDE.md`](USABILITY_GUIDE.md)** — **Configuration, AI models, context, UI discovery** — where everything is, what's available, how to use it
-- **[`PRODUCTION_USABILITY_PLAN.md`](PRODUCTION_USABILITY_PLAN.md)** — **Usability audit & implementation plan** — current state vs target for CLI/Web/Desktop/API, gap matrix, phased roadmap
-- **[`STATUS_MATRIX.md`](STATUS_MATRIX.md)** — **功能成熟度唯一總表（R70）** — 五級狀態（claimed/implemented/wired/verified/production）＋驗證指令，衝突時以此為準
-- **[`user_guide/unsupported.md`](user_guide/unsupported.md)** — **正式版明確不支援項** — 與 RELEASE_CRITERIA 同步，每項附替代方案
-- **[`architecture/limitations.md`](architecture/limitations.md)** — **架構邊界與限制** — 單用戶、單機、CPU-only 等設計邊界
-- **[`user_guide/hardware.md`](user_guide/hardware.md)** — **硬體指南** — 需求、CPU-only 推理、規格自適應
+- **[`QUICK_START.md`](QUICK_START.md)** — Getting started guide
+  (2026-06-25 更新，命令已驗證)
+- **[`USABILITY_GUIDE.md`](USABILITY_GUIDE.md)** — **Configuration, AI models,
+  context, UI discovery** — where everything is, what's available, how to use it
+- **[`PRODUCTION_USABILITY_PLAN.md`](PRODUCTION_USABILITY_PLAN.md)** —
+  **Usability audit & implementation plan** — current state vs target for
+  CLI/Web/Desktop/API, gap matrix, phased roadmap
+- **[`STATUS_MATRIX.md`](STATUS_MATRIX.md)** — **功能成熟度唯一總表（R70）**
+- **[`INVOCATION_MATRIX.md`](INVOCATION_MATRIX.md)** — **調用方式唯一總表（R71d）**：啟動入口/API/配置照表即用，模組重複度結論，驗證速查
+  — 五級狀態（claimed/implemented/wired/verified/production）＋驗證指令，衝突時以此為準
+- **[`user_guide/unsupported.md`](user_guide/unsupported.md)** —
+  **正式版明確不支援項** — 與 RELEASE_CRITERIA 同步，每項附替代方案
+- **[`architecture/limitations.md`](architecture/limitations.md)** —
+  **架構邊界與限制** — 單用戶、單機、CPU-only 等設計邊界
+- **[`user_guide/hardware.md`](user_guide/hardware.md)** — **硬體指南**
+  — 需求、CPU-only 推理、規格自適應
 - **`INDEX.md`** — This file
 - **`FRAMEWORK_OVERVIEW.md`** — 框架概述 (雙語，含誠實成熟度審計)
-- **[`IMPROVEMENT_ROADMAP.md`](06-project-management/IMPROVEMENT_ROADMAP.md)** — **改善路線圖 (新 2026-06-28)** — 修正/修復/更新/迭代/訓練/學習/整理完整計畫，含數據驗證矩陣
-- **[`MASTER_TASK_MAP.md`](06-project-management/MASTER_TASK_MAP.md)** — **主任務地圖** — 23份文檔144條索賠的完整來源追蹤，§X 31項 (20 DONE, 11 PENDING)
-- **`09-archive/auto-archived-2026-08-11/COMPREHENSIVE_REPAIR_ROADMAP.md`** — **全面修復路線圖** — 6 階段修復計畫
-- **`09-archive/auto-archived-2026-08-11/COMPREHENSIVE_AUDIT_2026-06-25.md`** — **最新全面審計報告**
+- **[`IMPROVEMENT_ROADMAP.md`](06-project-management/IMPROVEMENT_ROADMAP.md)** —
+  **改善路線圖 (新 2026-06-28)**
+  — 修正/修復/更新/迭代/訓練/學習/整理完整計畫，含數據驗證矩陣
+- **[`MASTER_TASK_MAP.md`](06-project-management/MASTER_TASK_MAP.md)** —
+  **主任務地圖** — 23份文檔144條索賠的完整來源追蹤，§X 31項 (20 DONE, 11
+  PENDING)
+- **`09-archive/auto-archived-2026-08-11/COMPREHENSIVE_REPAIR_ROADMAP.md`** —
+  **全面修復路線圖** — 6 階段修復計畫
+- **`09-archive/auto-archived-2026-08-11/COMPREHENSIVE_AUDIT_2026-06-25.md`** —
+  **最新全面審計報告**
 
 ## Key Active Documents
 
 ### Plans (優先閱讀順序)
-| 文件 | 說明 |
-|------|------|
-| **[IMPROVEMENT_ROADMAP.md](06-project-management/IMPROVEMENT_ROADMAP.md)** | **改善路線圖 (2026-06-28)** — 修正/修復/更新/迭代/訓練/學習/整理完整計畫，含數據驗證矩陣與業界比較 |
-| **[MASTER_TASK_MAP.md](06-project-management/MASTER_TASK_MAP.md)** | **主任務地圖** — 31項追蹤，含完整成熟度審計，190+ AI類別業界比較 |
-| **[FRAMEWORK_OVERVIEW.md](FRAMEWORK_OVERVIEW.md)** | **框架概述** — 雙語架構導覽，誠實 AI 能力評估 (6.0 with LLM / <0.5 native) |
-| **[COMPREHENSIVE_AUDIT_2026-06-25.md](09-archive/auto-archived-2026-08-11/COMPREHENSIVE_AUDIT_2026-06-25.md)** | **全面審計報告 (2026-06-25)** — 最新全專案審計, 26+發現 |
-| **[IDEAL_ARCHITECTURE.md](IDEAL_ARCHITECTURE.md)** | **理想架構規範** — 16章節定義目標狀態, 目錄結構/路由標準/AI子系統/測試/CI-CD |
 
-所有歷史計畫 (PHASE_REVIEW1-6, COMPREHENSIVE_AUDIT_V1-V3, MASTER_CONSOLIDATED_PLAN 等) 位於 `06-project-management/plans/` 目錄下。
+| 文件                                                                                                           | 說明                                                                                               |
+| -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| **[IMPROVEMENT_ROADMAP.md](06-project-management/IMPROVEMENT_ROADMAP.md)**                                     | **改善路線圖 (2026-06-28)** — 修正/修復/更新/迭代/訓練/學習/整理完整計畫，含數據驗證矩陣與業界比較 |
+| **[MASTER_TASK_MAP.md](06-project-management/MASTER_TASK_MAP.md)**                                             | **主任務地圖** — 31項追蹤，含完整成熟度審計，190+ AI類別業界比較                                   |
+| **[FRAMEWORK_OVERVIEW.md](FRAMEWORK_OVERVIEW.md)**                                                             | **框架概述** — 雙語架構導覽，誠實 AI 能力評估 (6.0 with LLM / <0.5 native)                         |
+| **[COMPREHENSIVE_AUDIT_2026-06-25.md](09-archive/auto-archived-2026-08-11/COMPREHENSIVE_AUDIT_2026-06-25.md)** | **全面審計報告 (2026-06-25)** — 最新全專案審計, 26+發現                                            |
+| **[IDEAL_ARCHITECTURE.md](IDEAL_ARCHITECTURE.md)**                                                             | **理想架構規範** — 16章節定義目標狀態, 目錄結構/路由標準/AI子系統/測試/CI-CD                       |
+
+所有歷史計畫 (PHASE_REVIEW1-6, COMPREHENSIVE_AUDIT_V1-V3,
+MASTER_CONSOLIDATED_PLAN 等) 位於 `06-project-management/plans/` 目錄下。
 
 ### Architecture & Design
-- `03-technical-architecture/communication/hsp-specification/` — HSP protocol spec
-- `09-archive/03-technical-architecture-memory-systems/memory-systems/` — HAM memory design 🗑️ 已歸檔 (described obsolete `src/core_ai/` layout)
-- `03-technical-architecture/design/MODULE_MANAGER_SYSTEM.md` — ModuleManager design
-- **[architecture/ANGELA_FULL_ARCHITECTURE.md](architecture/ANGELA_FULL_ARCHITECTURE.md)** — 架構概覽 (部分過時)
+
+- `03-technical-architecture/communication/hsp-specification/` — HSP protocol
+  spec
+- `09-archive/03-technical-architecture-memory-systems/memory-systems/` — HAM
+  memory design 🗑️ 已歸檔 (described obsolete `src/core_ai/` layout)
+- `03-technical-architecture/design/MODULE_MANAGER_SYSTEM.md` — ModuleManager
+  design
+- **[architecture/ANGELA_FULL_ARCHITECTURE.md](architecture/ANGELA_FULL_ARCHITECTURE.md)**
+  — 架構概覽 (部分過時)
 
 ### Development Docs
-- **[development/SERVICE_CATALOG.md](development/SERVICE_CATALOG.md)** — 所有服務/模組列表
-- **[development/STUB_TRACKING.md](development/STUB_TRACKING.md)** — 所有 stub 位置與狀態
+
+- **[development/SERVICE_CATALOG.md](development/SERVICE_CATALOG.md)**
+  — 所有服務/模組列表
+- **[development/STUB_TRACKING.md](development/STUB_TRACKING.md)**
+  — 所有 stub 位置與狀態
 
 ## Packages
 
@@ -63,4 +91,9 @@
 - `packages/cli/` — CLI tools
 
 ---
-_Last Updated: 2026-06-28_ | [README.md](../README.md) | [Improvement Roadmap](06-project-management/IMPROVEMENT_ROADMAP.md) | [Master Task Map](06-project-management/MASTER_TASK_MAP.md) | [Framework Overview](FRAMEWORK_OVERVIEW.md) | [Comprehensive Audit 2026-06-25](09-archive/auto-archived-2026-08-11/COMPREHENSIVE_AUDIT_2026-06-25.md)
+
+_Last Updated: 2026-06-28_ | [README.md](../README.md) |
+[Improvement Roadmap](06-project-management/IMPROVEMENT_ROADMAP.md) |
+[Master Task Map](06-project-management/MASTER_TASK_MAP.md) |
+[Framework Overview](FRAMEWORK_OVERVIEW.md) |
+[Comprehensive Audit 2026-06-25](09-archive/auto-archived-2026-08-11/COMPREHENSIVE_AUDIT_2026-06-25.md)

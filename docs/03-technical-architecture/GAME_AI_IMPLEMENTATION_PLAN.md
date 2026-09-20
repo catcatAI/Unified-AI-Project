@@ -372,8 +372,12 @@ python -m apps.backend.src.ai.multimodal.game_agent --config configs/standard/ga
 | LLM 非同步規劃 + 超時 fallback | ✅ 真實 | fallback 實測；LLM 本體為本地 llama.cpp（:8080），規劃/診斷/對話皆可走真模型 |
 | Polling bridge ↔ Luanti 雙向 | ✅ 真實 | live：server poll + `AngelaBot digs` + 遊戲內 chat 可見 |
 | skill_result 閉環 | ✅ 真實 | 背包差分推導，不再恆 None |
-| VisualEncoder 接線 | ⚠️ 半接 | 已實例化；poller 只送 state 無幀，visual 仍 None |
-| `/api/frame` 畫面來源 | ❌ stub | placeholder，需 CSM 截圖或 client 擷取 |
+| 識別：截窗視覺（GameVision→encoder） | ✅ 真實 | `_capture_screen_vision` 先 `select_source()`（無遊戲窗自動退整屏，R71b 修復）→節流截幀→recognize→`current_state.visual` 真實像素特徵；只截圖不動鏡頭；失敗靜默降級 None；591 multimodal 測試過 |
+| 識別：世界語義（raycast scan/vision） | ✅ 真實 | poller 射線/掃描結果即時入空間記憶（`observe_world`，vision 帶 `pointed.under` 世界座標）；此前只被行為閉環短暫消費 |
+| `/api/frame` 畫面來源 | ⚠️ 不再依賴 | stub 保留但非視覺來源；畫面改由 pyautogui 截窗（GameVision.capture，有遊戲窗截窗否則整屏） |
+| 記憶：空間記憶持久化 | ✅ 真實 | `save_spatial/load_spatial`（JSON 原子寫）；啟動載入、cleanup＋每 600 tick 週期存檔（crash-safe）；逐行容錯＋相容舊格式；上限 2000 地點防洩漏；R71b 審查後 591 multimodal 測試過 |
+| 記憶：觀察入 HAM episodic | ✅ 真實 | 每 300 tick 將「在哪看到什麼」（scan/vision，過濾空氣，同點去重）寫 episodic；recall 可回「之前在東邊看過一棵樹」 |
+| 自主性：好奇探索 | ✅ 真實（語意已修正） | `find_unexplored` 取「看過但久未親訪」的點 → goto 重訪；`last_seen`（看到）/`last_visited`（親訪）分離——R71b 修復「站著盯著的點永不會被選」因果顛倒；goto 到場 `mark_visited`；live 待玩家在線驗 |
 | poller `craft` 動作 | ✅ 真實 | live 驗證：wood×4 → craft stick → wood×2 + stick×4，`crafted stick for AngelaBot` 留痕；material 不足/無配方 log 失敗不當機 |
 | poller `place` 動作 | ✅ 真實 | live 驗證：cobble×8 → place → cobble×7，`placed default:cobble at (2,6,65)`；look 優先＋鄰格 fallback（空氣＋實心支撐），手牌空時 auto-wield 背包第一個可放方塊；無格/無料 log 失敗不當機 |
 | poller `give` 後門 | ✅ 已上鎖 | `agent_poller_allow_give` 預設 false（拒絕＋warning）；測試環境 minetest.conf 顯式開啟 |
@@ -385,7 +389,7 @@ python -m apps.backend.src.ai.multimodal.game_agent --config configs/standard/ga
 | 名稱斷層修復（itemstring↔短名） | ✅ 真實 | `ITEM_ALIASES`＋`normalize_inventory`；此前可合成判斷＋完成檢測全錯；單元測試覆蓋 |
 | L1 craft 節制（做不出就不排） | ✅ 真實 | 無材料時 abstain（此前每 2s 空轉刷屏）；單元測試覆蓋，live 待驗 |
 | Policy 權重訓練 (BC/RL) | ❌ 未做 | 現為 Xavier 初始化，動作笨拙屬實 |
-| 20 FPS 閉環 | ❌ 未達 | agent 10Hz + poller 2s；需幀源 + 降級策略 |
+| 20 FPS 閉環 | ❌ 未達 | agent 10Hz + poller 2s；截窗視覺已補上幀源（pyautogui），仍需降級策略達 20 FPS |
 
 ---
 
