@@ -183,25 +183,65 @@ local function wield_placeable(player)
     return nil
 end
 
--- Feet in water -> rise toward the surface. Returns true when swimming
--- (caller must skip horizontal motion that tick).
-local function swim_up(player)
-    local ppos = player:get_pos()
-    if minetest.get_node(ppos).name:find("water") then
-        local dest = vector.add(ppos, {x = 0, y = 1.5, z = 0})
-        local hdef = minetest.registered_nodes[minetest.get_node(dest).name] or {}
-        if not hdef.walkable then
-            player:set_pos(dest)
-            minetest.log("action", "[agent_poller] swimming up for " .. player:get_player_name())
-        end
-        return true
+-- BODY REFLEXES: interoceptive only. Every loop below triggers on BODY
+-- state (breath, burns, falling) — never on world prediction (no depth
+-- checks, no sight rays, no terrain reading). Predicting the world is the
+-- brain's job (coordinates + paths); the spine only answers damage that
+-- is happening right now. Same principle covers hypoxia, burns, falls.
+local body_track = {} -- pname -> {y = float, hp = int}
+local step_hold = {} -- pname -> true while airborne (withhold steps)
+local last_notice = {}
+
+local function notice(pname, key, msg)
+    local now = minetest.get_gametime()
+    last_notice[pname] = last_notice[pname] or {}
+    if now - (last_notice[pname][key] or -99) >= 10 then
+        last_notice[pname][key] = now
+        minetest.log("action", "[agent_poller] " .. msg .. " for " .. pname)
     end
-    return false
+end
+
+local function rise(player, pname, why)
+    local dest = vector.add(player:get_pos(), {x = 0, y = 1.5, z = 0})
+    local hdef = minetest.registered_nodes[minetest.get_node(dest).name] or {}
+    if not hdef.walkable then
+        player:set_pos(dest)
+        notice(pname, why, why)
+    end
+end
+
+-- Runs every poll for the living target. Senses body, actuates at most a
+-- 1.5m rise or a step-hold flag. Never reads terrain ahead.
+local function sense_body(player, pname)
+    local pos = player:get_pos()
+    local hp = player:get_hp()
+    local breath = player:get_breath()
+    local prev = body_track[pname] or {y = pos.y, hp = hp}
+
+    -- Hypoxia: oxygen deficit -> surface NOW, whatever surrounds her.
+    -- (Diving in with full lungs is allowed; suffocating is not.)
+    if breath < 10 then
+        rise(player, pname, "gasping (breath " .. breath .. "/10)")
+    end
+
+    -- Burns: standing IN heat -> get out upward (lava pools surface).
+    -- Contact is current bodily insult, not foresight.
+    local feetname = minetest.get_node(pos).name
+    if feetname:find("lava") or feetname:find("fire") then
+        rise(player, pname, "burning on " .. feetname)
+    end
+
+    -- Falls: dropping faster than any stairs (>1.5m/poll) -> withhold
+    -- steps until stable. Walking off one edge costs one harmless drop;
+    -- the death spiral was step after step into the void.
+    step_hold[pname] = (pos.y - prev.y) < -1.5
+
+    body_track[pname] = {y = pos.y, hp = hp}
 end
 
 -- One collision-aware step toward dest (max ~1.5m). Tries ground level,
--- step-up, and (allow_climb) a jump-height scramble. Refuses steps that
--- drown (deep water column, see step_drowns). Returns true if moved.
+-- step-up, and (allow_climb) a jump-height scramble. Returns true if moved.
+-- (No drowning/depth logic here: water safety is hypoxia-driven above.)
 local function try_step(player, dest, allow_climb)
     local pos = player:get_pos()
     local flat = vector.new(dest.x - pos.x, 0, dest.z - pos.z)
@@ -214,13 +254,6 @@ local function try_step(player, dest, allow_climb)
         local c = vector.round(
             vector.add(vector.add(pos, vector.multiply(flat, 1.5)), {x = 0, y = dy, z = 0})
         )
-        if step_drowns(c) then
-            minetest.log(
-                "action",
-                "[agent_poller] step refused (deep water) for " .. player:get_player_name()
-            )
-            return false
-        end
         local fdef = minetest.registered_nodes[minetest.get_node(c).name] or {}
         local head = vector.add(c, {x = 0, y = 1, z = 0})
         local hdef = minetest.registered_nodes[minetest.get_node(head).name] or {}
@@ -239,22 +272,9 @@ local function try_step(player, dest, allow_climb)
     return false
 end
 
--- The water reflex answers ONE question: will this step drown her?
--- Trigger is the committing foot, not sight: water in view can be a
--- paddleable shore, the far bank, a waterfall (brain business); a step
--- into a deep column with no bottom is spinal business. Depth rule: the
--- target cell is water AND the two cells below are also water.
-local function step_drowns(dest)
-    if minetest.get_node(dest).name:find("water") == nil then
-        return false
-    end
-    local b1 = vector.add(dest, {x = 0, y = -1, z = 0})
-    local b2 = vector.add(dest, {x = 0, y = -2, z = 0})
-    return minetest.get_node(b1).name:find("water") ~= nil
-        and minetest.get_node(b2).name:find("water") ~= nil
-end
-
 -- Start (or replace) a coordinate walk: engine path, advanced every poll.
+-- max_drop 3 keeps cliff routes out of plans (fall prevention belongs to
+-- coordinates, not to reflexes: the spine cannot un-fall you).
 local function start_goto(player, pname, dest)
     dest = vector.round(dest)
     local pos = player:get_pos()
@@ -263,7 +283,7 @@ local function start_goto(player, pname, dest)
         goto_report = {status = "arrived", dest = dest}
         return
     end
-    local path = minetest.find_path(pos, dest, 16, 1, 1)
+    local path = minetest.find_path(pos, dest, 16, 1, 3)
     if path and #path > 0 then
         active_goto[pname] = {path = path, idx = 1, dest = dest, stuck = 0}
         goto_report = {status = "walking", dest = dest}
@@ -293,7 +313,8 @@ local function advance_goto(player, pname)
         goto_report = {status = "aborted", reason = "dead"}
         return
     end
-    if swim_up(player) then
+    if step_hold[pname] then
+        -- Airborne: withhold steps until stable (sense_body sets this).
         goto_report = {status = "walking", dest = g.dest}
         return
     end
@@ -355,7 +376,10 @@ local function execute_commands(actions, player)
             local yaw = player:get_look_horizontal()
             local dir = vector.new(action.forward or 0, 0, action.strafe or 0)
             dir = vector.rotate(dir, vector.new(0, yaw, 0))
-            if not swim_up(player) then
+            local pname = player:get_player_name()
+            if step_hold[pname] then
+                -- Airborne: withhold steps until stable.
+            else
                 local flat = vector.new(dir.x, 0, dir.z)
                 if vector.length(flat) > 0.05 then
                     local pos = player:get_pos()
@@ -368,8 +392,7 @@ local function execute_commands(actions, player)
                         player:set_look_horizontal(yaw + math.pi / 4)
                         minetest.log(
                             "action",
-                            "[agent_poller] move blocked, turning for "
-                                .. player:get_player_name()
+                            "[agent_poller] move blocked, turning for " .. pname
                         )
                     end
                 end
@@ -698,9 +721,17 @@ local function poll_bridge()
         return
     end
     local player_name = player:get_player_name()
+    -- Body sense first (hypoxia/burn/fall flags), then walking: reflexes
+    -- gate motion, never the other way around.
+    if player:get_hp() > 0 then
+        do
+            local ok, err = pcall(sense_body, player, player_name)
+            if not ok then
+                minetest.log("error", "[agent_poller] sense_body failed: " .. tostring(err))
+            end
+        end
+    end
     -- Coordinate walk advances every poll, independent of queued actions.
-    -- (Water safety lives inside try_step as step refusal + inside move as
-    -- swim-up: both trigger on the committing foot, not on sight.)
     do
         local ok, err = pcall(advance_goto, player, player_name)
         if not ok then

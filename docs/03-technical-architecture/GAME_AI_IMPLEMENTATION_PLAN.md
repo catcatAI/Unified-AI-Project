@@ -378,7 +378,7 @@ python -m apps.backend.src.ai.multimodal.game_agent --config configs/standard/ga
 | poller `place` 動作 | ✅ 真實 | live 驗證：cobble×8 → place → cobble×7，`placed default:cobble at (2,6,65)`；look 優先＋鄰格 fallback（空氣＋實心支撐），手牌空時 auto-wield 背包第一個可放方塊；無格/無料 log 失敗不當機 |
 | poller `give` 後門 | ✅ 已上鎖 | `agent_poller_allow_give` 預設 false（拒絕＋warning）；測試環境 minetest.conf 顯式開啟 |
 | poller `move` 步進＋撞牆轉彎 | ✅ 真實 | live：`(0.6,4.5,64.9)→(2.6,4.5,66.2)`；移動是客戶端權威所以 server 側步進（1.5m/格，碰撞感知）；被擋轉 45° |
-| 身體反射層（poller per-poll） | ⚠️ 半驗 | 落水上浮＋見水轉向＋撞牆轉彎全在身體側每 poll 跑（runner 側的慢驚跳已刪除——反射錯層已修正）；上浮／轉向待玩家重生後 live 驗 |
+| 身體反射層（poller per-poll，只感受身體） | ⚠️ 半驗 | 缺氧上浮＋灼傷脫離＋滯空凍結＋撞牆轉彎；觸發全是 body-state（breath/hp/y），水深檢查／視線轉彎兩版錯層已刪；待玩家重生後 live 驗 |
 | 本地 LLM（Qwen2.5-1.5B-Q4，:8080） | ✅ 真實 | 全離線；`llama_cpp.server`；中文回覆＋JSON 編排 live 驗證；依賴 `localllm` extra 已宣告 |
 | 行為庫 game_behaviors（7 行為） | ✅ 真實 | walk/turn/dig_burst/place_one/look_scan/speak/wait；LLM compose＋adjust；20 測試；live：「幫我挖」→dig_burst→無拾取→自動改參數重試 |
 | 遊戲對話閉環（聽→回→做＋記憶） | ✅ 真實 | poller 擷取→bridge /api/chat→LLM 回覆＋行為→HAM 記憶；bridge 端到端驗證；遊戲內送達待玩家在線驗 |
