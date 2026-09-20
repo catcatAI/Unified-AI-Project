@@ -360,6 +360,22 @@ _register(
 
 _register(
     Behavior(
+        behavior_id="look_vision",
+        description="睜眼看：15 條視線掃描視錐（5 方向×3 俯仰，有遮擋、看得到水和樹）。想瞄準東西、確認前面是什麼都用它開頭。",
+        params_schema={
+            "range": {"type": "int", "default": 24, "desc": "視距 4-32"},
+        },
+        preconditions=_no_preconditions,
+        expand=lambda params, _state=None: [
+            {"type": "vision", "range": max(4, min(int(params.get("range", 24)), 32))}
+        ],
+        success_criteria="vision_done",
+        wait_for="vision",
+    )
+)
+
+_register(
+    Behavior(
         behavior_id="look_at",
         description="轉頭注視世界座標 pos（執行期精確計算朝向）。",
         params_schema={

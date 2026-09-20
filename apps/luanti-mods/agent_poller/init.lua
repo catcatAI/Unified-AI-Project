@@ -151,6 +151,8 @@ local active_goto = {}
 local goto_report = nil -- sticky status, attached to every poll state
 local pending_scan = nil -- one-shot node survey, attached to next poll state
 local scan_seq = 0
+local pending_vision = nil -- one-shot raycast view, attached to next poll state
+local vision_seq = 0
 
 -- Face an exact world coordinate (execution-time precise; state yaw is stale).
 local function face_toward(player, target)
@@ -473,6 +475,45 @@ local function execute_commands(actions, player)
                         .. player:get_player_name()
                 )
             end
+        elseif action.type == "vision" then
+            -- Raycast eyes: 5 yaw x 3 pitch rays across the view frustum.
+            -- Base direction comes from the engine (no yaw-convention math);
+            -- small Euler offsets only spread the grid, so approximate is fine.
+            -- Occluded like real sight (unlike scan); water is visible.
+            local eye = player:get_pos()
+            eye.y = eye.y + 1.6
+            local base = player:get_look_dir()
+            local range = math.min(tonumber(action.range) or 24, 32)
+            local rays = {}
+            for _, yo in ipairs({0, 0.4, -0.4, 0.8, -0.8}) do
+                for _, po in ipairs({0, 0.35, -0.35}) do
+                    local dir = vector.rotate(base, {x = po, y = yo, z = 0})
+                    local rc = minetest.raycast(
+                        eye, vector.add(eye, vector.multiply(dir, range)), false, false
+                    )
+                    local hit = {node = "air", dist = range, yaw_off = yo, pitch_off = po}
+                    for pointed in rc do
+                        if pointed.type == "node" then
+                            local p = pointed.under
+                            hit = {
+                                node = minetest.get_node(p).name,
+                                x = p.x, y = p.y, z = p.z,
+                                dist = math.floor(vector.distance(eye, p) * 10) / 10,
+                                yaw_off = yo, pitch_off = po,
+                            }
+                        end
+                        break
+                    end
+                    rays[#rays + 1] = hit
+                end
+            end
+            vision_seq = vision_seq + 1
+            pending_vision = {seq = vision_seq, rays = rays}
+            minetest.log(
+                "action",
+                "[agent_poller] vision (" .. #rays .. " rays) for "
+                    .. player:get_player_name()
+            )
         elseif action.type == "look" then
             local yaw = (action.yaw_delta or 0) + player:get_look_horizontal()
             local pitch = (action.pitch_delta or 0) + player:get_look_vertical()
@@ -663,8 +704,10 @@ local function poll_bridge()
         on_ground = true,
         goto_ = goto_report,
         scan = pending_scan,
+        vision = pending_vision,
     }
-    pending_scan = nil -- one-shot delivery; goto_ stays sticky
+    pending_scan = nil -- one-shot deliveries; goto_ stays sticky
+    pending_vision = nil
     http_api.fetch({
         url = BRIDGE_URL .. "/api/poll",
         method = "POST",

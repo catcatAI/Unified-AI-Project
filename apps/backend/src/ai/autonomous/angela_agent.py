@@ -188,6 +188,7 @@ class AngelaAutonomousAgent:
         self._last_behavior_feed_tick: int = 0
         self._last_goto: Optional[Dict[str, Any]] = None
         self._last_scan: Optional[Dict[str, Any]] = None
+        self._last_vision: Optional[Dict[str, Any]] = None
 
         # State
         self.running = False
@@ -401,6 +402,15 @@ class AngelaAutonomousAgent:
                 # 4c. Behavior runner: feed LLM-composed behavior actions
                 await self._tick_behavior()
 
+                # 4d. Periodic eyes: look around every ~15s when idle, so
+                # aiming and water-flinch run without chat prompts.
+                if (
+                    not self._active_behavior
+                    and self.current_state
+                    and self.tick_count % 150 == 0
+                ):
+                    self._start_behavior("look_vision", {"range": 24}, "periodic-eyes")
+
                 # 5. Skill selection (L1) - if no active subgoal
                 if not self.executor._current:
                     await self._select_skill()
@@ -498,14 +508,17 @@ class AngelaAutonomousAgent:
             except Exception as e:
                 logger.debug(f"Chat drain failed: {e}")
 
-            # Coordinate-walk + survey status (sticky in bridge state)
+            # Coordinate-walk + survey + vision status
             try:
                 self._last_goto = state.get("goto_") if state else None
                 scan = state.get("scan") if state else None
                 if scan:
                     self._last_scan = scan
+                vision = state.get("vision") if state else None
+                if vision:
+                    self._last_vision = vision
             except Exception as e:
-                logger.debug(f"Goto/scan perception failed: {e}")
+                logger.debug(f"Goto/scan/vision perception failed: {e}")
 
         except Exception as e:
             logger.error(f"Perception error: {e}")
@@ -892,6 +905,8 @@ class AngelaAutonomousAgent:
             return
         ok, missing = b.preconditions(self.current_state)
         merged = b.with_defaults(params)
+        basis = self._last_vision if b.wait_for == "vision" else self._last_scan
+        basis_seq = basis.get("seq", 0) if isinstance(basis, dict) else 0
         self._active_behavior = {
             "id": bid,
             "params": merged,
@@ -904,7 +919,7 @@ class AngelaAutonomousAgent:
             "blocked": not ok,
             "missing": missing,
             "wait_for": b.wait_for,
-            "scan_seq": (self._last_scan or {}).get("seq", 0) if isinstance(self._last_scan, dict) else 0,
+            "scan_seq": basis_seq,
         }
         logger.info(f"Behavior started: {bid} ({reason}) blocked={not ok} {missing}")
 
@@ -930,16 +945,21 @@ class AngelaAutonomousAgent:
             return
 
         if ab["idx"] >= len(actions):
-            # Two-phase grounding: scout waits for the survey, then the LLM
-            # picks a concrete coordinate and chains a goto ("that tree" ->
-            # scan -> "2m in front of it" -> walk). Timeout guards a lost scan.
-            if ab.get("wait_for") == "scan":
-                scan = self._last_scan if isinstance(self._last_scan, dict) else None
-                if scan and scan.get("seq", 0) != ab.get("scan_seq", 0):
-                    await self._finish_scout(ab, scan)
+            # Two-phase grounding: scout/vision wait for their survey, then
+            # either flinch (rule) or the LLM picks a coordinate and chains
+            # the next behavior. Timeouts guard lost surveys.
+            wait_for = ab.get("wait_for", "")
+            if wait_for in ("scan", "vision"):
+                store = self._last_scan if wait_for == "scan" else self._last_vision
+                store = store if isinstance(store, dict) else None
+                if store and store.get("seq", 0) != ab.get("scan_seq", 0):
+                    if wait_for == "scan":
+                        await self._finish_scout(ab, store)
+                    else:
+                        await self._finish_vision(ab, store)
                     return
                 if self.tick_count - ab["started"] > 120:
-                    await self._settle_behavior(False, "scan_timeout")
+                    await self._settle_behavior(False, f"{wait_for}_timeout")
                 return
             if b.success_criteria == "arrived":
                 status = (self._last_goto or {}).get("status") if isinstance(
@@ -1070,6 +1090,45 @@ class AngelaAutonomousAgent:
         self._start_behavior(
             "goto", {"pos": {"x": n0["x"], "y": n0["y"], "z": n0["z"]}}, "scout-fallback"
         )
+
+    async def _finish_vision(self, ab: Dict[str, Any], vision: Dict[str, Any]):
+        """Vision phase two: flinch at water (rule), aim at interest (LLM)."""
+        rays = vision.get("rays", []) or []
+        await self._settle_behavior(True, "vision_done")
+        if not rays:
+            return
+        center = next(
+            (r for r in rays if r.get("yaw_off", 1) == 0 and r.get("pitch_off", 1) == 0),
+            rays[0],
+        )
+        boring = {"air", "default:dirt", "default:sand", "default:dirt_with_grass"}
+        if all(str(r.get("node", "air")) in boring for r in rays):
+            logger.debug("Vision: nothing interesting")
+            return
+        node = str(center.get("node", "air"))
+        dist = float(center.get("dist", 99) or 99)
+        # Flinch: water dead ahead within 8m -> turn away at once. No LLM
+        # round trip; this is the reflex that replaces drowning.
+        if "water" in node and dist < 8:
+            logger.info(f"Water ahead ({dist}m), flinching away")
+            self._start_behavior("turn", {"degrees": 90}, "water-flinch")
+            return
+        ray_lines = "\n".join(
+            f"- {r.get('node')} {r.get('dist')}m (yaw {r.get('yaw_off')})" for r in rays
+        )
+        task = (
+            "你剛睜眼看了四周。選一個最值得注意的東西面對它（優先樹/煤/石頭，"
+            "忽略空氣；如果全是土和沙就隨便選個近的）。\n"
+            f"視線:\n{ray_lines}"
+        )
+        try:
+            order = await self.llm.acompose_behavior(task, self._state_summary(), [])
+            if order.behavior_id in ("look_at", "goto", "dig_at") and order.params.get("pos"):
+                self._start_behavior(order.behavior_id, order.params, "vision-aim")
+                return
+            logger.info(f"Vision aim stood down: {order.behavior_id}")
+        except Exception as e:
+            logger.warning(f"Vision aim LLM failed: {e}")
 
     async def _consolidate_memory(self):
         """Consolidate experiences into long-term memory"""

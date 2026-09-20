@@ -56,6 +56,7 @@ class PollingBridge:
                 "on_ground": data.get("on_ground"),
                 "goto_": data.get("goto_"),
                 "scan": data.get("scan"),
+                "vision": data.get("vision"),
                 "timestamp": datetime.now().isoformat(),
             }
 

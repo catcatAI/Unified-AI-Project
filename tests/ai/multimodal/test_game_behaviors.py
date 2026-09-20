@@ -39,6 +39,7 @@ class TestBehaviorRegistry:
             "look_at",
             "dig_at",
             "place_at",
+            "look_vision",
         }
 
     def test_walk_is_coordinate_step_ahead(self):
@@ -69,6 +70,13 @@ class TestBehaviorRegistry:
     def test_scout_waits_for_scan(self):
         assert BEHAVIORS["scout"].wait_for == "scan"
         assert BEHAVIORS["goto"].success_criteria == "arrived"
+
+    def test_look_vision(self):
+        acts = expand_behavior("look_vision", {"range": 24})
+        assert acts == [{"type": "vision", "range": 24}]
+        assert expand_behavior("look_vision", {"range": 99}) == [{"type": "vision", "range": 32}]
+        assert BEHAVIORS["look_vision"].wait_for == "vision"
+        assert BEHAVIORS["look_vision"].success_criteria == "vision_done"
 
     def test_catalog_lists_everything(self):
         text = behavior_catalog_text()
