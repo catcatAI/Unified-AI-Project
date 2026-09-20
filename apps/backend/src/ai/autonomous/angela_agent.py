@@ -46,6 +46,7 @@ from ai.multimodal.game_planner import (
 from ai.multimodal.game_memory_bridge import GameMemoryBridge
 from ai.multimodal.game_strategy import GameStrategy, StrategyConfig, StrategyWeights
 from ai.multimodal.llm_game_interface import LLMGameInterface, LLMConfig, RuleBasedFallback
+from ai.multimodal.game_behaviors import BEHAVIORS, BehaviorFeedback, expand_behavior
 from luanti_polling_bridge import PollingBridge
 from luanti_connector import PlayerState
 from ai.multimodal.game_structs import (
@@ -180,6 +181,11 @@ class AngelaAutonomousAgent:
         self._last_completed = 0
         self._last_failed = 0
         self._last_inventory: Dict[str, Any] = {}
+        # Dialogue + behavior-runner state (in-game interaction loop)
+        self._pending_chats: List[Dict[str, Any]] = []
+        self._chat_history: Deque[str] = deque(maxlen=12)
+        self._active_behavior: Optional[Dict[str, Any]] = None
+        self._last_behavior_feed_tick: int = 0
 
         # State
         self.running = False
@@ -217,16 +223,19 @@ class AngelaAutonomousAgent:
             logger.warning(f"Real HAM unavailable, memory stays local-only: {e}")
             await self.memory.initialize(None)
 
-        # Initialize LLM interface
+        # Initialize LLM interface: local llama.cpp server (fully offline).
+        # Falls back to rules per-call when the model is unreachable.
         llm_config = LLMConfig(
             enabled=True,
-            provider="ollama",
-            base_url="http://localhost:11434/v1",
-            model="qwen2.5:7b",
-            timeout_sec=self.config.llm_timeout,
+            provider="llamacpp",
+            base_url="http://127.0.0.1:8080/v1",
+            model="data/models/qwen2.5-1.5b-instruct-q4_k_m.gguf",
+            timeout_sec=60.0,
+            max_tokens=512,
+            temperature=0.4,
         )
         self.llm = LLMGameInterface(llm_config)
-        logger.info("LLM interface initialized")
+        logger.info("LLM interface initialized (local llama.cpp)")
 
         # Initialize polling bridge (only if not already set)
         if not hasattr(self, "bridge") or self.bridge is None:
@@ -381,6 +390,15 @@ class AngelaAutonomousAgent:
                 # 4. Execute tasks (L2)
                 await self._execute_tasks()
 
+                # 4b. In-game dialogue: one reply task per overheard chat
+                if self._pending_chats:
+                    chats, self._pending_chats = self._pending_chats, []
+                    for ev in chats:
+                        asyncio.create_task(self._handle_chat_event(ev))
+
+                # 4c. Behavior runner: feed LLM-composed behavior actions
+                await self._tick_behavior()
+
                 # 5. Skill selection (L1) - if no active subgoal
                 if not self.executor._current:
                     await self._select_skill()
@@ -469,6 +487,14 @@ class AngelaAutonomousAgent:
                         )
                     except Exception as e:
                         logger.debug(f"Frame encode failed: {e}")
+
+            # Drain overheard player chat (in-process bridge, no HTTP)
+            try:
+                fresh = self.bridge.take_chat_events()
+                if fresh:
+                    self._pending_chats.extend(fresh)
+            except Exception as e:
+                logger.debug(f"Chat drain failed: {e}")
 
         except Exception as e:
             logger.error(f"Perception error: {e}")
@@ -718,6 +744,216 @@ class AngelaAutonomousAgent:
         # Get pending actions from bridge
         # This is handled by the polling bridge automatically
         pass
+
+    def _state_summary(self) -> str:
+        """One-paragraph snapshot for LLM prompts (dialogue/compose)."""
+        try:
+            prop = self.current_state.proprioception if self.current_state else None
+            pos = getattr(prop, "position", (0, 0, 0)) if prop else (0, 0, 0)
+            inv = dict(getattr(prop, "inventory", {}) or {}) if prop else {}
+            hp = f"{getattr(prop, 'hp', '?')}/{getattr(prop, 'max_hp', 20)}" if prop else "?"
+            goal = self.current_goal.value if self.current_goal else "none"
+            cur = self.executor.get_current_subgoal() if self.executor else None
+            sg = cur.subgoal_id if cur else "none"
+            return f"位置 {pos}，背包 {inv or '空'}，血量 {hp}，當前目標 {goal}，子目標 {sg}"
+        except Exception:
+            return "狀態未知"
+
+    async def _handle_chat_event(self, ev: Dict[str, Any]):
+        """Overheard a player: LLM decides what to say + do (with fallback)."""
+        player = str(ev.get("player", "?"))
+        message = str(ev.get("message", "")).strip()
+        if not message or player == "Angela" or message.startswith("[Angela]"):
+            return
+        logger.info(f"Overheard chat from {player}: {message}")
+
+        summary = self._state_summary()
+        history = list(self._chat_history)
+        say, bid, bparams = "", "", {}
+        try:
+            dec = await self.llm.adecide_chat(player, message, summary, history)
+            say, bid, bparams = (dec.say or "").strip(), dec.behavior_id or "", dec.params or {}
+        except Exception as e:
+            logger.warning(f"LLM chat decision failed, keyword fallback: {e}")
+            say, bid, bparams = self._fallback_chat(player, message)
+
+        say = say[:300]
+        logger.info(f"Angela replies to {player}: {say}")
+        if say:
+            self._chat_history.append(f"{player}: {message}")
+            self._chat_history.append(f"Angela: {say}")
+            try:
+                self.bridge.queue_action({"type": "chat", "message": say})
+            except Exception as e:
+                logger.error(f"Queue chat failed: {e}")
+        if bid and bid in BEHAVIORS:
+            self._start_behavior(bid, bparams, f"chat:{player}")
+
+        try:
+            if self.memory:
+                from ai.multimodal.game_memory_bridge import GameExperience, MemoryType
+
+                prop = self.current_state.proprioception if self.current_state else None
+                pos = tuple(getattr(prop, "position", (0, 0, 0)) or (0, 0, 0))
+                await self.memory.store_experience(
+                    GameExperience(
+                        exp_id=f"chat_{int(time.time() * 1000)}",
+                        memory_type=MemoryType.EPISODIC,
+                        timestamp=time.time(),
+                        position=(float(pos[0]), float(pos[1]), float(pos[2])),
+                        action="chat",
+                        context={"player": player, "message": message},
+                        outcome={"say": say, "behavior": bid},
+                        reward=0.5,
+                        tags=["chat", player],
+                    )
+                )
+        except Exception as e:
+            logger.debug(f"Chat memory store failed: {e}")
+
+    @staticmethod
+    def _fallback_chat(player: str, message: str):
+        """Keyword intent fallback when the LLM is unreachable."""
+        if any(k in message for k in ("挖", "dig", "採")):
+            return "收到，我來挖！", "dig_burst", {"n": 5}
+        if any(k in message for k in ("來", "過來", "come", "follow", "跟")):
+            return "我來了！", "walk", {"steps": 3}
+        if any(k in message for k in ("停", "等", "wait", "stop")):
+            return "好，我待一下。", "wait", {"ticks": 30}
+        if any(k in message for k in ("轉", "看", "turn", "look")):
+            return "我看看四周。", "look_scan", {}
+        return "我在呢，我聽到了！", "", {}
+
+    def _start_behavior(self, bid: str, params: Dict[str, Any], reason: str):
+        b = BEHAVIORS.get(bid)
+        if not b:
+            return
+        ok, missing = b.preconditions(self.current_state)
+        self._active_behavior = {
+            "id": bid,
+            "params": b.with_defaults(params),
+            "reason": reason,
+            "actions": expand_behavior(bid, params) if ok else [],
+            "idx": 0,
+            "started": self.tick_count,
+            "inv_start": dict(self._last_inventory or {}),
+            "retries": 0,
+            "blocked": not ok,
+            "missing": missing,
+        }
+        logger.info(f"Behavior started: {bid} ({reason}) blocked={not ok} {missing}")
+
+    async def _tick_behavior(self):
+        """Feed one behavior action per drain; settle on done/timeout."""
+        ab = self._active_behavior
+        if not ab:
+            return
+        b = BEHAVIORS.get(ab["id"])
+        if not b:
+            self._active_behavior = None
+            return
+
+        if ab.get("blocked"):
+            await self._settle_behavior(False, f"blocked:{','.join(ab.get('missing', []))}")
+            return
+
+        actions = ab["actions"]
+        if not actions:
+            target = int(ab["params"].get("ticks", 20)) if ab["id"] == "wait" else 1
+            if self.tick_count - ab["started"] >= max(target, 1):
+                await self._settle_behavior(True, "")
+            return
+
+        if ab["idx"] >= len(actions):
+            pickups = self._behavior_pickups(ab)
+            if b.success_criteria == "any_pickup" and not pickups:
+                if b.adjust and ab["retries"] < 1:
+                    ab["params"] = b.adjust(
+                        ab["params"],
+                        BehaviorFeedback(
+                            behavior_id=ab["id"],
+                            params=ab["params"],
+                            ticks_used=self.tick_count - ab["started"],
+                            pickups=pickups,
+                            completed=False,
+                            fail_reason="no_pickup",
+                        ),
+                    )
+                    ab["actions"] = b.expand(ab["params"])
+                    ab["idx"] = 0
+                    ab["started"] = self.tick_count
+                    ab["retries"] += 1
+                    logger.info(f"Behavior adjusted: {ab['id']} -> {ab['params']}")
+                    return
+                await self._settle_behavior(False, "no_pickup")
+                return
+            await self._settle_behavior(True, "")
+            return
+
+        try:
+            pending = len(getattr(self.bridge, "pending_actions", []))
+        except Exception:
+            pending = 0
+        if pending == 0 or (self.tick_count - self._last_behavior_feed_tick) >= 20:
+            nxt = actions[ab["idx"]]
+            ab["idx"] += 1
+            self._last_behavior_feed_tick = self.tick_count
+            try:
+                self.bridge.queue_action(nxt)
+            except Exception as e:
+                logger.error(f"Queue behavior action failed: {e}")
+
+        if self.tick_count - ab["started"] > 60 + 25 * len(actions):
+            await self._settle_behavior(False, "timeout")
+
+    def _behavior_pickups(self, ab: Dict[str, Any]) -> Dict[str, int]:
+        try:
+            prop = self.current_state.proprioception if self.current_state else None
+            cur = dict((prop.inventory if prop else {}) or {})
+        except Exception:
+            cur = {}
+        start = ab.get("inv_start", {}) or {}
+        out = {}
+        for k, v in cur.items():
+            try:
+                grown = int(v) - int(start.get(k, 0))
+            except (TypeError, ValueError):
+                continue
+            if grown > 0:
+                out[str(k)] = grown
+        return out
+
+    async def _settle_behavior(self, completed: bool, reason: str):
+        ab = self._active_behavior
+        self._active_behavior = None
+        if not ab:
+            return
+        pickups = self._behavior_pickups(ab)
+        logger.info(
+            f"Behavior settled: {ab['id']} completed={completed} "
+            f"reason={reason} pickups={pickups}"
+        )
+        try:
+            if self.memory:
+                from ai.multimodal.game_memory_bridge import GameExperience, MemoryType
+
+                prop = self.current_state.proprioception if self.current_state else None
+                pos = tuple(getattr(prop, "position", (0, 0, 0)) or (0, 0, 0))
+                await self.memory.store_experience(
+                    GameExperience(
+                        exp_id=f"behavior_{int(time.time() * 1000)}",
+                        memory_type=MemoryType.PROCEDURAL,
+                        timestamp=time.time(),
+                        position=(float(pos[0]), float(pos[1]), float(pos[2])),
+                        action=ab["id"],
+                        context={"params": ab["params"], "reason": ab.get("reason", "")},
+                        outcome={"completed": completed, "reason": reason, "pickups": pickups},
+                        reward=1.0 if completed else -0.2,
+                        tags=["behavior", ab["id"]],
+                    )
+                )
+        except Exception as e:
+            logger.debug(f"Behavior memory store failed: {e}")
 
     async def _consolidate_memory(self):
         """Consolidate experiences into long-term memory"""

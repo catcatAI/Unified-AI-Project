@@ -88,7 +88,9 @@ class StrategyAdjustment(BaseModel):
 @dataclass
 class LLMConfig:
     enabled: bool = True
-    provider: Literal["ollama", "openai", "vllm", "custom"] = "ollama"
+    # "llamacpp" = local llama.cpp server (OpenAI-compatible /v1).
+    # Runs fully offline; see data/models/*.gguf.
+    provider: Literal["ollama", "openai", "vllm", "custom", "llamacpp"] = "ollama"
     base_url: str = "http://localhost:11434/v1"
     model: str = "qwen2.5:7b"
     api_key: str = ""
@@ -206,6 +208,127 @@ class LLMGameInterface:
             raise Exception("LLM call failed after retries")
 
     # ==================== Public Methods ====================
+
+    async def achat_text(self, messages: List[Dict], max_tokens: int = 256) -> str:
+        """Free-text chat completion (dialogue, no JSON schema).
+
+        Used for in-game conversation: same transport/retries/stats as
+        _call_llm, but returns raw text instead of a validated model.
+        """
+        async with self._semaphore:
+            session = await self._get_session()
+
+            payload = {
+                "model": self.config.model,
+                "messages": messages,
+                "temperature": self.config.temperature,
+                "max_tokens": max_tokens,
+                "stream": False,
+            }
+
+            headers = {"Content-Type": "application/json"}
+            if self.config.api_key:
+                headers["Authorization"] = f"Bearer {self.config.api_key}"
+
+            url = f"{self.config.base_url}/chat/completions"
+
+            for attempt in range(self.config.max_retries + 1):
+                try:
+                    start = time.perf_counter()
+                    async with session.post(url, json=payload, headers=headers) as resp:
+                        if resp.status != 200:
+                            raise Exception(f"HTTP {resp.status}: {await resp.text()}")
+                        data = await resp.json()
+                        text = data["choices"][0]["message"]["content"] or ""
+                        text = text.strip()
+
+                        elapsed = (time.perf_counter() - start) * 1000
+                        self._stats["total_calls"] += 1
+                        self._stats["successful"] += 1
+                        self._stats["avg_latency_ms"] = (
+                            self._stats["avg_latency_ms"] * (self._stats["successful"] - 1)
+                            + elapsed
+                        ) / self._stats["successful"]
+
+                        return text
+                except asyncio.TimeoutError:
+                    self._stats["timeouts"] += 1
+                    logger.warning(
+                        f"LLM chat timeout (attempt {attempt + 1}/{self.config.max_retries + 1})"
+                    )
+                except Exception as e:
+                    logger.warning(f"LLM chat failed (attempt {attempt + 1}): {e}")
+
+                if attempt < self.config.max_retries:
+                    await asyncio.sleep(0.5 * (attempt + 1))
+
+            self._stats["failed"] += 1
+            raise Exception("LLM chat failed after retries")
+
+    async def acompose_behavior(
+        self,
+        task: str,
+        state_summary: str,
+        memories: Optional[List[str]] = None,
+    ):
+        """行為庫編排：LLM 從目錄選行為＋填參數（用户要求的決策方式）"""
+        from ai.multimodal.game_behaviors import BehaviorOrder, behavior_catalog_text
+
+        if not self.config.enabled:
+            raise Exception("LLM disabled")
+
+        system = """你是 Angela AI 的行為編排器。從行為目錄選一個最合適的行為並填好參數。
+只准選目錄裡的 behavior_id，參數必須符合 schema。輸出 JSON。"""
+
+        user = f"""任務: {task}
+
+當前狀態:
+{state_summary}
+
+相關記憶:
+{chr(10).join((memories or [])[:5]) or '無'}
+
+行為目錄:
+{behavior_catalog_text()}
+
+請輸出 JSON。"""
+        schema = BehaviorOrder.model_json_schema()
+        messages = self._build_prompt(system, user, json.dumps(schema, ensure_ascii=False))
+        return await self._call_llm(messages, BehaviorOrder)
+
+    async def adecide_chat(
+        self,
+        player: str,
+        message: str,
+        state_summary: str,
+        history: Optional[List[str]] = None,
+    ):
+        """遊戲對話決策：LLM 決定說什麼＋順帶做什麼"""
+        from ai.multimodal.game_behaviors import ChatDecision, behavior_catalog_text
+
+        if not self.config.enabled:
+            raise Exception("LLM disabled")
+
+        system = """你是 Angela，一個在 Luanti (Minetest) 方塊世界裡活著的 AI 女孩。
+玩家在遊戲裡跟你說話，用繁體中文回，親切簡短（兩句內），像朋友不像客服。
+你也可以順帶做一個行為（走路/轉向/挖/放/看/等），不要沒事亂放方塊。
+只准用目錄裡的 behavior_id；不想做事就留空。輸出 JSON。"""
+
+        user = f"""玩家 {player} 說: {message}
+
+你現在的狀態:
+{state_summary}
+
+最近對話:
+{chr(10).join((history or [])[-6:]) or '無'}
+
+行為目錄:
+{behavior_catalog_text()}
+
+請輸出 JSON。"""
+        schema = ChatDecision.model_json_schema()
+        messages = self._build_prompt(system, user, json.dumps(schema, ensure_ascii=False))
+        return await self._call_llm(messages, ChatDecision)
 
     async def apropose_plan(self, ctx: "PlanContext") -> PlanProposal:
         """L3 呼叫：制定多步驟計劃"""

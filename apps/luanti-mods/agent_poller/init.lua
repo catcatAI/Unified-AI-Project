@@ -184,9 +184,14 @@ local function execute_commands(actions, player)
                     end
                 end
                 if not stepped then
+                    -- Bump-and-turn: face a new direction so the next step
+                    -- goes elsewhere. A player turns when blocked; without
+                    -- this she walks into the same wall forever (her look
+                    -- decisions rarely steer her on their own).
+                    player:set_look_horizontal(yaw + math.pi / 4)
                     minetest.log(
                         "action",
-                        "[agent_poller] move blocked (wall) for " .. player:get_player_name()
+                        "[agent_poller] move blocked, turning for " .. player:get_player_name()
                     )
                 end
             end
@@ -251,7 +256,12 @@ local function execute_commands(actions, player)
                     for i = 1, inv:get_size("main") do
                         local s = inv:get_stack("main", i)
                         if not s:is_empty() and minetest.registered_nodes[s:get_name()] then
-                            player:set_wield_index(i)
+                            -- No set_wield_index in this Luanti build: swap
+                            -- the stack into the current wield slot instead.
+                            local wi = player:get_wield_index()
+                            local wielded = inv:get_stack("main", wi)
+                            inv:set_stack("main", wi, s)
+                            inv:set_stack("main", i, wielded)
                             stack = player:get_wielded_item()
                             found = true
                             break
@@ -265,6 +275,8 @@ local function execute_commands(actions, player)
                     minetest.log("action", "[agent_poller] place failed (nothing placeable) for " .. pname)
                 else
                     -- under/above were resolved in the candidate scan above.
+                    -- Capture the name first: item_place may consume `stack`.
+                    local placed_name = stack:get_name()
                     local leftover = minetest.item_place(
                         stack,
                         player,
@@ -276,7 +288,7 @@ local function execute_commands(actions, player)
                     minetest.log(
                         "action",
                         "[agent_poller] placed "
-                            .. stack:get_name()
+                            .. placed_name
                             .. " at "
                             .. minetest.pos_to_string(target)
                             .. " for "
@@ -398,6 +410,23 @@ minetest.after(1, function()
             minetest.log("error", "[agent_poller] Bridge NOT reachable at " .. BRIDGE_URL)
         end
     end)
+end)
+
+-- Forward player chat to the bridge so the agent hears it. Returning
+-- false lets the message show normally. The agent's own "[Angela] ..."
+-- lines go through chat_send_all and never re-enter here: no loop.
+minetest.register_on_chat_message(function(name, message)
+    local ok, err = pcall(http_api.fetch, {
+        url = BRIDGE_URL .. "/api/chat",
+        method = "POST",
+        data = minetest.write_json({type = "chat", player = name, message = message}),
+        extra_headers = {"Content-Type: application/json"},
+        timeout = 5,
+    }, function(_) end)
+    if not ok then
+        minetest.log("warning", "[agent_poller] chat forward failed: " .. tostring(err))
+    end
+    return false
 end)
 
 minetest.log("action", "[agent_poller] Loaded, target=" .. TARGET_PLAYER_NAME .. " (fallback: first player)")
