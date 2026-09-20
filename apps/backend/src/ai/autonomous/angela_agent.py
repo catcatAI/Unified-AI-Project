@@ -414,14 +414,17 @@ class AngelaAutonomousAgent:
             logger.error(f"Strategy update error: {e}")
 
     def _should_replan(self) -> bool:
-        """Determine if replanning is needed"""
-        if not self.executor._current and self.executor._queue:
-            return True
+        """Determine if replanning is needed.
+
+        Note: an empty _current with a non-empty _queue is NORMAL
+        (executor pops the next subgoal on its next tick), not a
+        reason to replan — replanning there caused a reload loop.
+        """
         if self.executor._current and self.executor._current.status == SubgoalStatus.BLOCKED:
             return True
         if self.executor._state.value in ("REPLANNING", "STUCK"):
             return True
-        if self.current_goal and not self.current_plan:
+        if self.current_goal and not self.current_plan and not self.executor._queue:
             return True
         return False
 
@@ -597,7 +600,9 @@ class AngelaAutonomousAgent:
             "action": "autonomous",
             "context": {
                 "goal": self.current_goal.value if self.current_goal else None,
-                "subgoal": self.executor._current.subgoal_id if self.executor._current else None,
+                "subgoal": (
+                    self.executor._current.subgoal.subgoal_id if self.executor._current else None
+                ),
             },
             "outcome": {"position_change": True},
             "reward": 0.1,  # Small positive reward for surviving
@@ -630,7 +635,7 @@ class AngelaAutonomousAgent:
         logger.info(
             f"Tick {self.tick_count} | Uptime: {uptime:.1f}s | "
             f"Goal: {self.current_goal.value if self.current_goal else 'None'} | "
-            f"Subgoal: {self.executor._current.subgoal_id if self.executor._current else 'None'} | "
+            f"Subgoal: {self.executor._current.subgoal.subgoal_id if self.executor._current else 'None'} | "
             f"Exploration: {directive.get('exploration_weight', 0):.2f} | "
             f"Risk: {directive.get('risk_tolerance', 0):.2f}"
         )
