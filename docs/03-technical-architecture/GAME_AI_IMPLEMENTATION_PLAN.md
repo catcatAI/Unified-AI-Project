@@ -374,7 +374,7 @@ python -m apps.backend.src.ai.multimodal.game_agent --config configs/standard/ga
 | skill_result 閉環 | ✅ 真實 | 背包差分推導，不再恆 None |
 | VisualEncoder 接線 | ⚠️ 半接 | 已實例化；poller 只送 state 無幀，visual 仍 None |
 | `/api/frame` 畫面來源 | ❌ stub | placeholder，需 CSM 截圖或 client 擷取 |
-| poller `craft` 動作 | ❌ stub | 回傳 note，不執行真合成 |
+| poller `craft` 動作 | ✅ 真實 | live 驗證：wood×4 → craft stick → wood×2 + stick×4，`crafted stick for AngelaBot` 留痕；material 不足/無配方 log 失敗不當機 |
 | Policy 權重訓練 (BC/RL) | ❌ 未做 | 現為 Xavier 初始化，動作笨拙屬實 |
 | 20 FPS 閉環 | ❌ 未達 | agent 10Hz + poller 2s；需幀源 + 降級策略 |
 
