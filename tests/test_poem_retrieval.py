@@ -6,7 +6,8 @@ Not just keyword matching - can it understand the actual content?
 import os
 import sys
 
-sys.path.insert(0, "apps/backend/src")
+if "apps/backend/src" not in sys.path:
+    sys.path.insert(0, "apps/backend/src")
 
 _TEST_FILE = os.path.join(os.path.dirname(__file__), "test_retrieval.txt")
 

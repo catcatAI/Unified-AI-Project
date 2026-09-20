@@ -27,7 +27,7 @@ from .game_planner import GamePlanner, PlannerConfig, PlanningContext, GoalManag
 from .game_memory_bridge import GameMemoryBridge, MockHAMManager
 from .game_strategy import GameStrategy, StrategyConfig
 from .llm_game_interface import LLMGameInterface, LLMConfig, RuleBasedFallback
-from apps.backend.src.integrations.luanti_connector import LuantiConnector, LuantiConfig, GameSnapshot, SyncLuantiConnector
+from integrations.luanti_connector import LuantiConnector, LuantiConfig, GameSnapshot, SyncLuantiConnector
 
 logger = logging.getLogger(__name__)
 

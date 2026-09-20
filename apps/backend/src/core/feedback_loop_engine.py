@@ -51,11 +51,9 @@ class PerformanceMetrics(TypedDict):
 
 
 if TYPE_CHECKING:
-    from ..action_execution_bridge import ActionExecutionBridge
     from .autonomous.action_executor import ActionExecutor
-    from .autonomous.audio_system import AudioSystem
     from .autonomous.desktop_interaction import DesktopInteraction
-    from .autonomous.desktop_presence import DesktopPresence
+    from .engine.audio_system import AudioSystem
     from .event_loop_system import EventLoopSystem
     from .feedback_processor import FeedbackProcessor
     from .real_time_monitor import RealTimeMonitor
@@ -298,7 +296,7 @@ class FeedbackLoopEngine:
 
         # Initialize sub-systems if not provided
         if not self.real_time_monitor:
-            from real_time_monitor import RealTimeMonitor
+            from .real_time_monitor import RealTimeMonitor
 
             self.real_time_monitor = RealTimeMonitor(
                 desktop_presence=self.desktop_presence,
@@ -307,14 +305,14 @@ class FeedbackLoopEngine:
             )
 
         if not self.feedback_processor:
-            from feedback_processor import FeedbackProcessor
+            from .feedback_processor import FeedbackProcessor
 
             self.feedback_processor = FeedbackProcessor(
                 hsm=self.hsm, cdm=self.cdm, feedback_loop_engine=self
             )
 
         if not self.event_loop_system:
-            from event_loop_system import EventLoopSystem
+            from .event_loop_system import EventLoopSystem
 
             self.event_loop_system = EventLoopSystem(latency_target_ms=self.latency_threshold_ms)
 

@@ -15,9 +15,9 @@ import sys
 
 import pytest
 
-sys.path.insert(
-    0, os.path.join(os.path.dirname(__file__), "..", "..", "..", "apps", "backend", "src")
-)
+# NOTE: 不再插入 sys.path——pytest conftest 已正確設定 src 路徑；
+# 此前的 insert(0) 使後續模組以不同身份重載（雙重 sys.path 條目），
+# 導致 services.main_api_server 的 Body 驗證在組合運行時返回 400。
 os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
 
 import numpy as np

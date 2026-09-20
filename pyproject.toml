@@ -83,6 +83,23 @@ exclude = [
 ]
 
 [[tool.mypy.overrides]]
+# 無型別標記（py.typed）或可選依賴的第三方庫：跳過分析而非報錯擋住全量檢查
+module = [
+    'pytesseract.*',
+    'textblob.*',
+    'scipy.ndimage.*',
+    'pyautogui.*',
+    'pystray.*',
+    'rumps.*',
+    'gi.*',
+    'textual.*',
+    'sklearn.*',
+    'speech_recognition.*',
+    'faster_whisper.*',
+]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
 # 特定模块的类型检查配置
 module = [
     'fastapi.*',

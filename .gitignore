@@ -198,3 +198,6 @@ tests/test_output_data/
 # *.npy is globally ignored; this file is an explicit exception
 !apps/pixel-angela/angela_dna_v1.npy
 # Test output artifacts should stay ignored (see below)
+# CMake build artifacts (accidental in-root cmake run from /tmp/luanti-build)
+CMakeCache.txt
+CMakeFiles/

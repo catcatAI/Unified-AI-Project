@@ -20,8 +20,9 @@ from typing import Any, Dict, List, Optional, Tuple, Deque
 
 import numpy as np
 
-# Add project paths
-sys.path.insert(0, "/home/cxuo/文件/GitHub/Unified-AI-Project/apps/backend/src")
+# Add project paths（__file__ 相對解析，任何 clone 位置/使用者皆可）
+# .../apps/backend/src/ai/autonomous/angela_agent.py → parents[2] = apps/backend/src
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from ai.multimodal.foveated_sampler import FoveatedSampler, SamplingConfig, SamplingStrategy
 from ai.multimodal.game_policy import GamePolicy, PolicyConfig, PolicyOutput

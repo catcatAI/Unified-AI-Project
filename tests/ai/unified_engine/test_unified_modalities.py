@@ -32,12 +32,11 @@ import zlib
 
 import pytest
 
-sys.path.insert(
-    0,
-    os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "..", "..", "..", "apps", "backend", "src")
-    ),
+_SRC = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "..", "..", "apps", "backend", "src")
 )
+if _SRC not in sys.path:
+    sys.path.insert(0, _SRC)
 
 from ai.unified_engine.core_model import FixedSizeCore  # noqa: E402
 

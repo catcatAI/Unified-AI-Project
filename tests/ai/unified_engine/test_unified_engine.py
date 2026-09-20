@@ -24,10 +24,8 @@ import sys
 
 import pytest
 
-sys.path.insert(
-    0,
-    os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "apps", "backend", "src")),
-)
+if os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "apps", "backend", "src")) not in sys.path:
+    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "apps", "backend", "src")),)
 
 from ai.unified_engine.core_model import FixedSizeCore  # noqa: E402
 from ai.unified_engine.trainer import (  # noqa: E402
