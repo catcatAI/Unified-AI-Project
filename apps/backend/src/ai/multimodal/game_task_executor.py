@@ -421,7 +421,8 @@ class GameTaskExecutor:
         )
         self._queue.appendleft(ActiveSubgoal(subgoal=recovery_sg))
         self._current = None
-        self._stuck_detector.reset()
+        self._stuck_detector.reset(self._tick)
+        self._state = ExecutorState.EXECUTING
         return self._drive_execution(state, latent)
 
     def _handle_waiting(self, state: GameState, latent: np.ndarray) -> Optional[SkillContext]:
@@ -498,8 +499,10 @@ class StuckDetector:
 
         return (current_tick - self.last_progress_tick) > self.threshold
 
-    def reset(self):
-        self.last_progress_tick = 0
+    def reset(self, current_tick: int = 0):
+        # 必須錨定到當前 tick；歸零會讓 (tick - 0) > threshold 立即成立，
+        # 造成 _handle_stuck ↔ _drive_execution 無限遞迴
+        self.last_progress_tick = current_tick
         self.last_progress_value = 0.0
 
 
