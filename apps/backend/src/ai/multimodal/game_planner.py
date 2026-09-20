@@ -327,8 +327,8 @@ class GamePlanner:
             explore_id = f"explore_{len(nodes)}"
             nodes[explore_id] = Subgoal(
                 subgoal_id=explore_id,
-                skill_id=SkillID.EXPLORE,
-                params={"target": "random_direction"},
+                skill_id=SkillID.NAVIGATE,
+                params={"target_pos": "random_direction"},
                 preconditions=[],
                 success_criteria="explored_new_area",
                 timeout_ticks=1000,
