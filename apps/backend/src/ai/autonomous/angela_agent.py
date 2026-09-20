@@ -356,6 +356,20 @@ class AngelaAutonomousAgent:
             if self.tick_count % 100 == 0:
                 self._log_status()
 
+    @staticmethod
+    def _normalize_position(pos) -> Tuple[float, float, float]:
+        """Bridge sends dict {x,y,z}; policy stack needs a tuple."""
+        if isinstance(pos, dict):
+            return (
+                float(pos.get("x", 0.0)),
+                float(pos.get("y", 0.0)),
+                float(pos.get("z", 0.0)),
+            )
+        try:
+            return (float(pos[0]), float(pos[1]), float(pos[2]))
+        except Exception:
+            return (0.0, 0.0, 0.0)
+
     async def _perceive(self):
         """L0: Perception - get game state from polling bridge"""
         try:
@@ -366,7 +380,7 @@ class AngelaAutonomousAgent:
                     tick=self.tick_count,
                     timestamp=time.time(),
                     proprioception=PlayerState(
-                        position=state.get("position", (0, 0, 0)),
+                        position=self._normalize_position(state.get("position", (0, 0, 0))),
                         yaw=state.get("yaw", 0.0),
                         pitch=state.get("pitch", 0.0),
                         hp=state.get("hp", 20),
@@ -450,7 +464,7 @@ class AngelaAutonomousAgent:
                 self.executor.load_plan(plan)
                 logger.info(f"New plan: {plan.plan_id} with {len(plan.nodes)} subgoals")
         except Exception as e:
-            logger.error(f"Replan error: {e}")
+            logger.error(f"Replan error: {e}", exc_info=True)
 
     async def _execute_tasks(self):
         """L2: Execute current subgoal"""
@@ -469,7 +483,7 @@ class AngelaAutonomousAgent:
             proprio[0] = prop.hp / prop.max_hp
             proprio[1] = prop.hunger / 20.0  # max_hunger is 20
             proprio[2] = prop.breath / 10.0
-            proprio[3:6] = prop.position
+            proprio[3:6] = self._normalize_position(prop.position)
             proprio[6] = prop.yaw / np.pi
             proprio[7] = prop.pitch / (np.pi / 2)
             proprio[8] = 1.0 if prop.is_on_ground else 0.0
