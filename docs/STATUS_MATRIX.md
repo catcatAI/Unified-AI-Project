@@ -39,7 +39,7 @@
 | 明確不支援項文檔                     | 正式版聲明範圍                                  | `docs/user_guide/unsupported.md`、`docs/architecture/limitations.md`、`docs/user_guide/hardware.md` | **verified**                       | 文檔存在且與 RELEASE_CRITERIA 同步                                                                                                      | 2026-09-17 |
 | HSP 加密金鑰                         | 加密可用且啟動不炸                              | `core/hsp/security.py` 驗證 Fernet key，佔位符自動回退生成＋警告                                    | **verified**                       | `.env` 佔位符 `generate_key` 已致 5 errors → 修復後全綠；`pytest tests/core/hsp/` 通過                                                  | 2026-09-17 |
 | 測試品質門                           | 全倉綠                                          | pytest testpaths 全量                                                                               | **verified**                       | `pytest tests/` → **5454 passed, 122 skipped, 0 failed**（2026-09-17 含本輪新增 13）                                                    | 2026-09-17 |
-| mypy 型別債                          | 收斂中                                          | R87 後 **581 errors**（2026-09-17 實測）                                                            | **implemented**（結構性）          | 見 RELEASE_CRITERIA mypy 行                                                                                                             | 2026-09-17 |
+| mypy 型別債                          | 收斂中                                          | R72 後 **680 errors**（2026-09-21 全量實測；581 之後 numpy 2.5 stubs 會擋住全量使數字不可比，R72 修開全量可跑） | **implemented**（結構性）          | 見 RELEASE_CRITERIA mypy 行                                                                                                             | 2026-09-21 |
 | flake8                               | 0 errors                                        | .flake8 設定                                                                                        | **verified**                       | 全倉 0（37 類忽略為已知門檻寬鬆，非隱瞞）                                                                                               | 2026-09-03 |
 | 離線能力                             | 無 key 可運作（部分）                           | unified-1g 永遠可用；反射/數學/字典離線                                                             | **wired / partial**                | 開放域生成需 LLM；unsupported.md 已聲明邊界                                                                                             | 2026-09-17 |
 | 多模態                               | 圖片/音訊/生成                                  | Vision/Audio/CLIP/GVV 管線                                                                          | **implemented**                    | 真實對比訓練 82% top1（CIFAR 試點）；生成品質未達標                                                                                     | 2026-09-03 |
@@ -53,7 +53,7 @@
 2. **學習品質未證明**
    — 「字典增長」≠「能力增長」；需 hold-out 前後測成為常態門。
 3. **Dashboard E2E** — 新面板僅 wired，缺自動化瀏覽器測試。
-4. **mypy 581** — 多輪分域收斂進行中（R87；詳見 RELEASE_CRITERIA）。
+4. **mypy 680** — 全量可跑的真實基線（R72 修開被 numpy stubs 擋死的全量；詳見 RELEASE_CRITERIA）。
 5. **公開 benchmark** — 確定性能力有腳本級驗證；對外可重現的品質報告尚未發佈。
 6. **Luanti policy 權重未訓練** — Xavier 隨機、動作笨拙；20 FPS 閉環未達（10Hz＋2s poller）。
 7. **EmotionSystem 跨進程不共享** — 非 singleton、無持久化；遊戲 agent 與主 server 的生命階段已透過共享 lifecycle JSON 互通（R71c），但情緒狀態仍各自 in-memory。遊戲 agent LLM 直連本地 llama.cpp 為低延遲正當第二路徑（非 ModelBus）。
