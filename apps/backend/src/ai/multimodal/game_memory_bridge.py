@@ -9,6 +9,9 @@ Game Memory Bridge - HAM 記憶系統的遊戲適配層
 """
 
 import logging
+import json
+import math
+import os
 import time
 import asyncio
 from dataclasses import dataclass, field
@@ -51,10 +54,18 @@ class SpatialMemory:
     position: Tuple[float, float, float]
     node_type: str  # "resource", "base", "danger", "landmark", "spawn"
     resources: Dict[str, int]  # 資源分布
-    last_visited: float
+    last_seen: float = 0.0  # 最後「看到」（observe_world 刷新）
+    last_visited: float = 0.0  # 最後「到訪」（agent 實際到場，好奇心用）
     visit_count: int = 0
     danger_level: float = 0.0
     notes: str = ""
+
+    @property
+    def staleness(self) -> float:
+        """探索價值：看過但久未親訪的點最值得重訪。"""
+        if self.last_visited:
+            return min(time.time() - self.last_visited, time.time() - self.last_seen)
+        return time.time() - self.last_seen
 
 
 @dataclass
@@ -112,6 +123,10 @@ class GameMemoryBridge:
     封裝底層 HAM 操作，提供遊戲特化的查詢介面
     """
 
+    # 記憶體護欄（計畫風險表「記憶體洩漏」對策）：地點/經驗超出即丟最舊
+    MAX_SPATIAL = 2000
+    MAX_EXPERIENCES = 500
+
     def __init__(self, ham_manager=None):
         self._ham = ham_manager
         self._experiences: List[GameExperience] = []
@@ -120,6 +135,72 @@ class GameMemoryBridge:
         self._procedural_chains: Dict[str, List[str]] = defaultdict(list)
         self._initialized = False
         self._init_default_recipes()
+
+    # ==================== 空間記憶持久化 ====================
+
+    def save_spatial(self, path: str) -> bool:
+        """空間記憶存 JSON（原子寫）。位置取整 1m 格，與 loc_id 口徑一致。"""
+        try:
+            os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+            payload = {
+                "version": 1,
+                "saved_at": time.time(),
+                "locations": [
+                    {
+                        "location_id": n.location_id,
+                        "position": [round(float(n.position[0]), 1), round(float(n.position[1]), 1), round(float(n.position[2]), 1)],
+                        "node_type": n.node_type,
+                        "resources": dict(n.resources),
+                        "last_seen": n.last_seen,
+                        "last_visited": n.last_visited,
+                        "visit_count": n.visit_count,
+                        "danger_level": n.danger_level,
+                        "notes": n.notes,
+                    }
+                    for n in self._spatial_index.values()
+                ],
+            }
+            tmp = path + ".tmp"
+            with open(tmp, "w", encoding="utf-8") as f:
+                json.dump(payload, f, ensure_ascii=False)
+            os.replace(tmp, path)
+            return True
+        except Exception as e:
+            logger.error(f"save_spatial failed: {e}")
+            return False
+
+    def load_spatial(self, path: str) -> int:
+        """讀回空間記憶，返回載入的地點數。檔案不存在返回 0。"""
+        try:
+            if not os.path.exists(path):
+                return 0
+            with open(path, "r", encoding="utf-8") as f:
+                payload = json.load(f)
+            n_loaded = 0
+            for item in payload.get("locations", []):
+                # 逐行容錯：單行壞資料跳過，不炸掉整份記憶
+                try:
+                    pos = item.get("position") or [0.0, 0.0, 0.0]
+                    loc_id = str(item.get("location_id") or f"{int(pos[0])}_{int(pos[1])}_{int(pos[2])}")
+                    self._spatial_index[loc_id] = SpatialMemory(
+                        location_id=loc_id,
+                        position=(float(pos[0]), float(pos[1]), float(pos[2])),
+                        node_type=str(item.get("node_type", "unknown")),
+                        resources={str(k): int(v) for k, v in (item.get("resources") or {}).items()},
+                        last_seen=float(item.get("last_seen", 0.0)),
+                        last_visited=float(item.get("last_visited", 0.0)),
+                        visit_count=int(item.get("visit_count", 0)),
+                        danger_level=float(item.get("danger_level", 0.0)),
+                        notes=str(item.get("notes", "")),
+                    )
+                    n_loaded += 1
+                except (TypeError, ValueError, KeyError) as e:
+                    logger.warning(f"load_spatial skipped bad row: {e}")
+            logger.info(f"Loaded {n_loaded} spatial memories from {path}")
+            return n_loaded
+        except Exception as e:
+            logger.error(f"load_spatial failed: {e}")
+            return 0
 
     def _init_default_recipes(self):
         """初始化預設配方知識"""
@@ -155,11 +236,113 @@ class GameMemoryBridge:
         self._initialized = True
         logger.info("GameMemoryBridge initialized")
 
+    # ==================== 世界觀察（識別→記憶閉環） ====================
+
+    def observe_world(
+        self,
+        position: Tuple[float, float, float],
+        nodes: List[Dict[str, Any]],
+        source: str = "scan",
+        timestamp: Optional[float] = None,
+    ) -> int:
+        """把掃描/視線看到的節點寫進空間記憶。
+
+        nodes 元素: {"node": "default:tree", "x":.., "y":.., "z":..}（scan）
+        或 {"node": .., "dist":.., "yaw_off":..}（vision，以自身位置+朝向推回世界座標）。
+        返回新發現的地點數。vision 的朝向數學由呼叫端做（這裡只收世界座標）。
+        """
+        ts = timestamp if timestamp is not None else time.time()
+        new_spots = 0
+        for n in nodes or []:
+            node_name = str(n.get("node", ""))
+            if not node_name or node_name == "air":
+                continue
+            if "x" in n and "z" in n and "y" in n:
+                wpos = (float(n["x"]), float(n["y"]), float(n["z"]))
+            else:
+                continue
+            loc_id = f"{int(wpos[0])}_{int(wpos[1])}_{int(wpos[2])}"
+            spot = self._spatial_index.get(loc_id)
+            if spot is None:
+                if len(self._spatial_index) >= self.MAX_SPATIAL:
+                    # 丟最舊的（last_seen 最小），維持上限
+                    oldest = min(self._spatial_index.values(), key=lambda s: s.last_seen)
+                    del self._spatial_index[oldest.location_id]
+                spot = SpatialMemory(
+                    location_id=loc_id,
+                    position=wpos,
+                    node_type="resource",
+                    resources={},
+                    last_seen=ts,
+                )
+                self._spatial_index[loc_id] = spot
+                new_spots += 1
+            spot.last_seen = max(spot.last_seen, ts)
+            key = node_name.split(":")[-1]
+            spot.resources[key] = spot.resources.get(key, 0) + 1
+            if spot.notes and source not in spot.notes:
+                spot.notes = f"{spot.notes},{source}"[:80]
+            elif not spot.notes:
+                spot.notes = source
+        return new_spots
+
+    def find_unexplored(
+        self,
+        position: Tuple[float, float, float],
+        max_dist: float = 80.0,
+        min_age_sec: float = 180.0,
+    ) -> Optional[SpatialMemory]:
+        """找最久沒「親訪」的已知資源點（好奇心：看過≠去過）。
+
+        語意：observe_world 只刷新 last_seen（看到）；last_visited 只由
+        agent 到場更新。看過但久未親訪 → staleness 大 → 值得走去看看。
+        """
+        now = time.time()
+        best = None
+        best_score = -1.0
+        for node in self._spatial_index.values():
+            if node.node_type == "danger" or node.danger_level >= 1.0:
+                continue
+            dist = self._distance(position, node.position)
+            if dist <= 0.5 or dist > max_dist:
+                continue
+            # 從沒親訪過的點用 last_seen 當年齡（看過很久了還沒去過）
+            age = now - node.last_visited if node.last_visited else now - node.last_seen
+            if age < min_age_sec:
+                continue
+            # 老地方加權，但太遠扣分（可達性）
+            score = age / 60.0 - dist / 40.0
+            if score > best_score:
+                best_score = score
+                best = node
+        return best
+
+    def mark_visited(self, position: Tuple[float, float, float], radius: float = 3.0) -> int:
+        """agent 實際到場：更新附近地點的 last_visited/visit_count（好奇心語意基準）。"""
+        ts = time.time()
+        n = 0
+        for spot in self._spatial_index.values():
+            if self._distance(position, spot.position) <= radius:
+                spot.last_visited = ts
+                spot.visit_count += 1
+                n += 1
+        return n
+
+    def spatial_stats(self) -> Dict[str, Any]:
+        """空間記憶統計（觀測性用）。"""
+        types: Dict[str, int] = defaultdict(int)
+        for n in self._spatial_index.values():
+            types[n.node_type] += 1
+        return {"total": len(self._spatial_index), "by_type": dict(types)}
+
     # ==================== 經驗存儲 ====================
 
     async def store_experience(self, exp: GameExperience):
         """存儲經驗到 HAM"""
         self._experiences.append(exp)
+        if len(self._experiences) > self.MAX_EXPERIENCES:
+            # 護欄：丟最舊，避免長時間運行記憶體洩漏
+            del self._experiences[: len(self._experiences) - self.MAX_EXPERIENCES]
 
         # 同時更新空間/程序記憶
         if exp.memory_type == MemoryType.SPATIAL:
@@ -194,18 +377,25 @@ class GameMemoryBridge:
             logger.error(f"HAM write failed: {e}")
 
     async def _update_spatial(self, exp: GameExperience):
-        """更新空間記憶"""
+        """更新空間記憶（任務經驗＝真正在該地做事，計入親訪）。"""
         pos = exp.position
         loc_id = f"{int(pos[0])}_{int(pos[1])}_{int(pos[2])}"
 
-        if loc_id not in self._spatial_index:
-            self._spatial_index[loc_id] = SpatialMemory(
+        spot = self._spatial_index.get(loc_id)
+        if spot is None:
+            if len(self._spatial_index) >= self.MAX_SPATIAL:
+                oldest = min(self._spatial_index.values(), key=lambda s: s.last_seen)
+                del self._spatial_index[oldest.location_id]
+            spot = SpatialMemory(
                 location_id=loc_id,
                 position=pos,
                 node_type="unknown",
                 resources={},
-                last_visited=exp.timestamp,
+                last_seen=exp.timestamp,
             )
+            self._spatial_index[loc_id] = spot
+        spot.last_visited = max(spot.last_visited, exp.timestamp)
+        spot.visit_count += 1
 
         node = self._spatial_index[loc_id]
         node.last_visited = exp.timestamp

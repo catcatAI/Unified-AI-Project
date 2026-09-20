@@ -49,6 +49,7 @@ from ai.multimodal.llm_game_interface import LLMGameInterface, LLMConfig, RuleBa
 from ai.multimodal.game_behaviors import BEHAVIORS, BehaviorFeedback, expand_behavior
 from integrations.luanti_polling_bridge import PollingBridge
 from integrations.luanti_connector import PlayerState
+from ai.multimodal.game_vision import GameVision
 from ai.multimodal.game_structs import (
     SkillID,
     SkillSpec,
@@ -140,6 +141,10 @@ class AngelaConfig:
     # L4 Strategy
     strategy_update_interval: float = 30.0
 
+    # Vision (pyautogui 截窗視覺；找不到遊戲窗口時自動降級為 None)
+    vision_enabled: bool = True
+    vision_interval_sec: float = 1.0  # 截窗編碼節流（10Hz tick 每秒編一幀）
+
     # Memory
     memory_path: str = "data/angela_memory"
 
@@ -206,6 +211,14 @@ class AngelaAutonomousAgent:
         self._last_goto: Optional[Dict[str, Any]] = None
         self._last_scan: Optional[Dict[str, Any]] = None
         self._last_vision: Optional[Dict[str, Any]] = None
+        # 好奇探索狀態（自主性）：巡訪記憶中久未造訪的資源點
+        self._last_explore_tick: int = -10000
+        self._explore_cooldown_ticks: int = 600  # ~60s @10Hz
+        # 觀察記憶節流（識別→記憶閉環）
+        self._last_obs_store_tick: int = 0
+        self._obs_signatures: set = set()  # 觀察去重（同點同物不重複寫 HAM）
+        # 截窗視覺（識別）；GameVision 在 initialize() 懶建，主迴圈節流取幀
+        self._last_frame_tick: int = 0
 
         # State
         self.running = False
@@ -242,6 +255,32 @@ class AngelaAutonomousAgent:
         except Exception as e:
             logger.warning(f"Real HAM unavailable, memory stays local-only: {e}")
             await self.memory.initialize(None)
+
+        # 空間記憶持久化：重啟後記得去過哪、哪裡有樹/石頭
+        try:
+            spatial_path = str(Path(self.config.memory_path) / "spatial_memory.json")
+            n_loaded = self.memory.load_spatial(spatial_path)
+            self._spatial_path = spatial_path
+            if n_loaded:
+                logger.info(f"Spatial memory restored: {n_loaded} locations")
+        except Exception as e:
+            logger.warning(f"Spatial memory load skipped: {e}")
+            self._spatial_path = None
+
+        # 截窗視覺（識別）：OS 級 pyautogui 截 Luanti 窗口。找不到窗口/
+        # 無顯示環境時保持 None，主迴圈自動降級——不影響 poller 資料路徑。
+        self._screen_vision: Optional[GameVision] = None
+        if self.config.vision_enabled:
+            try:
+                self._screen_vision = GameVision()
+                rect = self._screen_vision.locate_game_window()
+                if rect:
+                    logger.info(f"Screen vision ready (game window {rect})")
+                else:
+                    logger.info("Screen vision armed (no game window yet; will retry)")
+            except Exception as e:
+                logger.warning(f"Screen vision unavailable: {e}")
+                self._screen_vision = None
 
         # Initialize LLM interface: local llama.cpp server (fully offline).
         # Falls back to rules per-call when the model is unreachable.
@@ -388,6 +427,10 @@ class AngelaAutonomousAgent:
                 # 1. Perceive - get game state
                 await self._perceive()
 
+                # 1b. Screen vision (throttled): pixel features for the
+                # policy stack; captures only, never moves the camera.
+                self._capture_screen_vision()
+
                 # 2. Update strategy (L4) - periodically
                 if (
                     self.tick_count
@@ -432,6 +475,19 @@ class AngelaAutonomousAgent:
                 ):
                     self._start_behavior("look_vision", {"range": 24}, "periodic-eyes")
 
+                # 4e. Curiosity: visit stale-known spots on foot so their
+                # surroundings re-enter spatial memory. Never preempts an
+                # active behavior. Checks on the 15s cadence, fires at most
+                # once per cooldown.
+                if (
+                    not self._active_behavior
+                    and self.current_state
+                    and self.tick_count % 150 == 0
+                    and self.tick_count - self._last_explore_tick
+                    >= self._explore_cooldown_ticks
+                ):
+                    self._maybe_start_curiosity_exploration()
+
                 # 5. Skill selection (L1) - if no active subgoal
                 if not self.executor._current:
                     await self._select_skill()
@@ -442,6 +498,33 @@ class AngelaAutonomousAgent:
                 # 6. Memory consolidation
                 if self.tick_count % 100 == 0:
                     await self._consolidate_memory()
+
+                # 6b. Observation memory: periodic episodic snapshot of what
+                # was just seen (scan/vision), so HAM recall works on places
+                # even without a task event.
+                if self.tick_count - self._last_obs_store_tick >= 300:
+                    if self._last_scan or self._last_vision:
+                        self._last_obs_store_tick = self.tick_count
+                        await self._store_observation_memory()
+
+                # 6c. Periodic spatial snapshot: crash-safe (cleanup-only
+                # save loses everything on hard exit). Cheap JSON write.
+                if getattr(self, "_spatial_path", None) and self.tick_count % 600 == 0:
+                    try:
+                        self.memory.save_spatial(self._spatial_path)
+                    except Exception as e:
+                        logger.debug(f"Periodic spatial save failed: {e}")
+
+                # 6d. Lifecycle state sync: agent is a separate process from
+                # the main server; both share the lifecycle JSON so game and
+                # chat Angelas share one life phase (save_state was previously
+                # dead code — loaded by nobody's writes).
+                if self.lifecycle is not None and self.tick_count % 600 == 0:
+                    try:
+                        if getattr(self.lifecycle, "_persist_path", None):
+                            self.lifecycle.save_state(self.lifecycle._persist_path)
+                    except Exception as e:
+                        logger.debug(f"Lifecycle state save failed: {e}")
 
             except Exception as e:
                 logger.error(f"Tick error: {e}", exc_info=True)
@@ -540,6 +623,27 @@ class AngelaAutonomousAgent:
                 vision = state.get("vision") if state else None
                 if vision:
                     self._last_vision = vision
+                    # 識別→記憶閉環：射線命中帶世界座標，直接入空間記憶
+                    if self.memory:
+                        try:
+                            self.memory.observe_world(
+                                self._normalize_position(state.get("position", (0, 0, 0))) if state else (0, 0, 0),
+                                vision.get("rays") or [],
+                                source="vision",
+                            )
+                        except Exception as e:
+                            logger.debug(f"Vision->spatial memory failed: {e}")
+                if scan:
+                    # 同上：掃描結果也進空間記憶（比視線範圍廣）
+                    if self.memory:
+                        try:
+                            self.memory.observe_world(
+                                self._normalize_position(state.get("position", (0, 0, 0))) if state else (0, 0, 0),
+                                scan.get("nodes") or [],
+                                source="scan",
+                            )
+                        except Exception as e:
+                            logger.debug(f"Scan->spatial memory failed: {e}")
             except Exception as e:
                 logger.debug(f"Goto/scan/vision perception failed: {e}")
 
@@ -556,6 +660,78 @@ class AngelaAutonomousAgent:
 
         except Exception as e:
             logger.error(f"Perception error: {e}")
+
+    def _capture_screen_vision(self):
+        """截窗視覺（識別）：節流截幀→encoder→current_state.visual。
+
+        與 poller 的 raycast 視覺互補：這是像素級特徵（給 policy/encoder），
+        那是世界語義（給記憶/規劃）。只截圖不動滑鼠/鏡頭；失敗一律
+        靜默降級為 None，不影響 poller 資料路徑。
+        """
+        if self._screen_vision is None or self.current_state is None:
+            return
+        frame_every = max(
+            int(self.config.vision_interval_sec / self.config.tick_interval), 1
+        )
+        if self.tick_count - self._last_frame_tick < frame_every:
+            return
+        self._last_frame_tick = self.tick_count
+        try:
+            # 自動退回：無遊戲窗時 select_source 切整屏（帶冷卻防抖），
+            # 否則 capture(GAME_WINDOW) 永遠 None。
+            self._screen_vision.select_source()
+            frame = self._screen_vision.capture()  # 有遊戲窗截遊戲，否則整屏
+            if frame is None:
+                return
+            recognition = self._screen_vision.recognize(frame)
+            if recognition is None:
+                return
+            self.current_state.visual = VisualObservation(
+                frame_id=self.tick_count,
+                timestamp=frame.timestamp,
+                features=np.asarray(recognition.features, dtype=np.float32),
+                fovea_xy=recognition.focus_xy,
+                inverse_map=recognition.inverse_map,
+                raw_frame_shape=frame.image.size[::-1],
+            )
+        except Exception as e:
+            logger.debug(f"Screen vision capture failed: {e}")
+
+    def _maybe_start_curiosity_exploration(self):
+        """好奇探索（自主性）：空間記憶裡最久沒訪的資源點，走過去重看。
+
+        走到後 idle 週期的 periodic-eyes 會自然張望，新的 scan/vision
+        結果再進空間記憶——巡訪本身就是記憶刷新。永不搶佔進行中的
+        行為或規劃佇列。
+        """
+        try:
+            prop = self.current_state.proprioception if self.current_state else None
+            if prop is None or self.memory is None:
+                return
+            pos = self._normalize_position(prop.position)
+            target = self.memory.find_unexplored(pos)
+            if target is None:
+                return
+            self._last_explore_tick = self.tick_count
+            tpos = target.position
+            self._start_behavior(
+                "goto",
+                {
+                    "pos": {
+                        "x": round(tpos[0], 1),
+                        "y": round(tpos[1], 1),
+                        "z": round(tpos[2], 1),
+                    }
+                },
+                "curiosity:stale-spot",
+            )
+            age = int(time.time() - target.last_visited)
+            logger.info(
+                f"Curiosity: walking to stale spot {target.location_id} "
+                f"({target.notes or target.node_type}, age {age}s)"
+            )
+        except Exception as e:
+            logger.debug(f"Curiosity exploration failed: {e}")
 
     async def _update_strategy(self):
         """L4: Update strategy weights based on performance"""
@@ -1054,6 +1230,52 @@ class AngelaAutonomousAgent:
         # This is handled by the polling bridge automatically
         pass
 
+    async def _store_observation_memory(self):
+        """把「剛剛看到了什麼」寫成 HAM episodic（識別→記憶閉環）。
+
+        scan 給世界語義（附近有什麼節點），vision 給射線視角。每 30s
+        一筆，記住「在什麼位置看到了什麼」——HAM recall 時可回「我
+        之前在東邊看過一棵樹」。
+        """
+        try:
+            if not self.memory or not self.current_state:
+                return
+            from ai.multimodal.game_memory_bridge import GameExperience, MemoryType
+
+            prop = self.current_state.proprioception
+            pos = self._normalize_position(getattr(prop, "position", (0, 0, 0)))
+            scan = self._last_scan or {}
+            vision = self._last_vision or {}
+            scan_nodes = [n.get("node", "") for n in (scan.get("nodes") or [])][:10]
+            seen = [n for n in scan_nodes if n and n != "air"]
+            if not seen:
+                rays = vision.get("rays") or []
+                seen = [str(r.get("node")) for r in rays if r.get("node", "air") != "air"]
+            if not seen:
+                return  # 沒看到值得記的東西，不產生垃圾記憶
+            # 去重：同一地點同一批節點只寫一次 HAM（每 30s 重複觀察是噪音）
+            sig = (f"{pos[0]:.0f}_{pos[1]:.0f}_{pos[2]:.0f}", tuple(sorted(seen)))
+            if sig in self._obs_signatures:
+                return
+            self._obs_signatures.add(sig)
+            if len(self._obs_signatures) > 200:
+                self._obs_signatures.clear()  # 簡單重置，避免無界成長
+            await self.memory.store_experience(
+                GameExperience(
+                    exp_id=f"obs_{self.tick_count}",
+                    memory_type=MemoryType.EPISODIC,
+                    timestamp=time.time(),
+                    position=pos,
+                    action="observe",
+                    context={"seen_nodes": seen[:10], "sources": [s for s, d in (("scan", scan), ("vision", vision)) if d]},
+                    outcome={"seen_count": len(seen)},
+                    reward=0.0,
+                    tags=["observation"],
+                )
+            )
+        except Exception as e:
+            logger.debug(f"Observation memory store failed: {e}")
+
     def _state_summary(self) -> str:
         """One-paragraph snapshot for LLM prompts (dialogue/compose)."""
         try:
@@ -1064,7 +1286,16 @@ class AngelaAutonomousAgent:
             goal = self.current_goal.value if self.current_goal else "none"
             cur = self.executor.get_current_subgoal() if self.executor else None
             sg = cur.subgoal_id if cur else "none"
-            return f"位置 {pos}，背包 {inv or '空'}，血量 {hp}，當前目標 {goal}，子目標 {sg}"
+            # 記得的附近地點（讓對話能引用空間記憶）
+            near = ""
+            try:
+                if self.memory is not None:
+                    spots = self.memory.find_unexplored(pos, max_dist=40, min_age_sec=60)
+                    if spots:
+                        near = f"，附近記得有 {spots.notes or spots.node_type} @({spots.position[0]:.0f},{spots.position[1]:.0f},{spots.position[2]:.0f})"
+            except Exception:
+                near = ""
+            return f"位置 {pos}，背包 {inv or '空'}，血量 {hp}，當前目標 {goal}，子目標 {sg}{near}"
         except Exception:
             return "狀態未知"
 
@@ -1311,6 +1542,15 @@ class AngelaAutonomousAgent:
             f"Behavior settled: {ab['id']} completed={completed} "
             f"reason={reason} pickups={pickups}"
         )
+        # 到場標記：goto 成功＝親訪，刷新附近地點 last_visited/visit_count
+        #（好奇心語意基準：看過≠去過）。
+        if completed and ab.get("id") == "goto" and self.memory and self.current_state:
+            try:
+                self.memory.mark_visited(
+                    self._normalize_position(self.current_state.proprioception.position)
+                )
+            except Exception as e:
+                logger.debug(f"mark_visited failed: {e}")
         # Follow-up chain (e.g. scout -> goto -> dig_at the tree): the
         # finished behavior leaves the next link, run only on success.
         if completed:
@@ -1539,6 +1779,22 @@ class AngelaAutonomousAgent:
                 await self.memory.store_experience(exp)
             except Exception as e:
                 logger.warning(f"Final memory save failed: {e}")
+
+            # 空間記憶持久化：重啟後記得世界長什麼樣
+            try:
+                if getattr(self, "_spatial_path", None):
+                    if self.memory.save_spatial(self._spatial_path):
+                        logger.info(f"Spatial memory saved to {self._spatial_path}")
+            except Exception as e:
+                logger.warning(f"Spatial memory save failed: {e}")
+
+        # 生命狀態最終同步：遊戲進程的成長（探索次數、成敗）寫回共享檔
+        if self.lifecycle is not None and getattr(self.lifecycle, "_persist_path", None):
+            try:
+                self.lifecycle.save_state(self.lifecycle._persist_path)
+                logger.info("Lifecycle state saved (shared with main server)")
+            except Exception as e:
+                logger.warning(f"Lifecycle state save failed: {e}")
 
         logger.info("Angela shutdown complete")
 
