@@ -387,7 +387,7 @@ class AngelaAutonomousAgent:
                         max_hp=state.get("max_hp", 20),
                         hunger=state.get("hunger", 20),
                         breath=state.get("breath", 10),
-                        inventory=state.get("inventory", {}),
+                        inventory=state.get("inventory") or {},
                         wielded_item=state.get("wielded", ""),
                         is_on_ground=state.get("on_ground", True),
                         velocity=(0.0, 0.0, 0.0),
@@ -487,8 +487,11 @@ class AngelaAutonomousAgent:
             proprio[6] = prop.yaw / np.pi
             proprio[7] = prop.pitch / (np.pi / 2)
             proprio[8] = 1.0 if prop.is_on_ground else 0.0
-            for i, (item, count) in enumerate(list(prop.inventory.items())[:20]):
-                proprio[9 + i] = min(count / 64.0, 1.0)
+            for i, (item, count) in enumerate(list((prop.inventory or {}).items())[:20]):
+                try:
+                    proprio[9 + i] = min(float(count) / 64.0, 1.0)
+                except (TypeError, ValueError):
+                    continue
 
         full_latent = np.concatenate([latent[:96], proprio])
 

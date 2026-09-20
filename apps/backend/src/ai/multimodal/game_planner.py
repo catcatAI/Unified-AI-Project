@@ -350,29 +350,18 @@ class GamePlanner:
             logger.warning("LLM not available, falling back to rule-based")
             return await self._rule_based_plan(context, plan_id)
 
-        # 準備 LLM 上下文
+        # 準備 LLM 上下文 (llm_game_interface.PlanContext 會自行從 state 導出 position/inventory)
         llm_ctx = PlanContext(
             current_goal=context.current_goal.value,
-            inventory=(
-                context.state.proprioception.inventory if context.state.proprioception else {}
-            ),
-            position=(
-                dict(
-                    x=context.state.proprioception.position[0],
-                    y=context.state.proprioception.position[1],
-                    z=context.state.proprioception.position[2],
-                )
-                if context.state.proprioception
-                else {}
-            ),
-            nearby_entities=[],
-            known_recipes=list(self._recipe_graph.keys()),
+            goal_params=context.goal_params,
+            state=context.state,
             ham_memories=context.ham_memories[:10],
             strategy=dict(
                 exploration_weight=context.strategy.exploration_weight,
                 risk_tolerance=context.strategy.risk_tolerance,
             ),
         )
+        llm_ctx.known_recipes = list(self._recipe_graph.keys())
 
         try:
             proposal = await asyncio.wait_for(
