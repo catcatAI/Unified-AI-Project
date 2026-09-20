@@ -15,19 +15,21 @@
 
 ## 需求
 
-| 項目 | 最低 | 建議 |
-|------|------|------|
-| Python | 3.10 | 3.10+ |
-| RAM | 4GB | 8GB+（GARDEN/SNN 訓練建議 16GB） |
-| 磁碟 | 2GB | 10GB+（模型、字典、資料集） |
-| GPU | 無（可全程 CPU） | 非必要——見下方「僅 CPU 推理」 |
+| 項目   | 最低             | 建議                             |
+| ------ | ---------------- | -------------------------------- |
+| Python | 3.10             | 3.10+                            |
+| RAM    | 4GB              | 8GB+（GARDEN/SNN 訓練建議 16GB） |
+| 磁碟   | 2GB              | 10GB+（模型、字典、資料集）      |
+| GPU    | 無（可全程 CPU） | 非必要——見下方「僅 CPU 推理」    |
 
 ## 推理限制：僅 CPU
 
 > **正式版明確不支援硬體加速推理（CUDA/ROCm/Metal）**。所有模型推理（ED3N、GARDEN、本地 LLM 的 Python 端編碼、多模態管線）皆在 CPU 執行。
 
-- 本地 LLM（Ollama/llama.cpp）本身的 GPU offload 由該服務自行管理，不受本專案控制；本專案對其僅做 HTTP 呼叫。
-- 專案內的 SNN／多模態訓練依「硬體規格自適應」自動調整 batch size、詞彙量與背景循環頻率（`backbone/hardware.py`＋`hardware/unified_hardware_center.py`，純規格驅動：RAM/VRAM/CPU 核心數）。
+- 本地 LLM（Ollama/llama.cpp）本身的 GPU
+  offload 由該服務自行管理，不受本專案控制；本專案對其僅做 HTTP 呼叫。
+- 專案內的 SNN／多模態訓練依「硬體規格自適應」自動調整 batch
+  size、詞彙量與背景循環頻率（`backbone/hardware.py`＋`hardware/unified_hardware_center.py`，純規格驅動：RAM/VRAM/CPU 核心數）。
 - 訓練類腳本有 RAM 門檻保護（預設 85%），避免 OOM。
 
 ## 省電與低階裝置
