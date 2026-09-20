@@ -162,6 +162,7 @@ class AngelaAutonomousAgent:
         self.bridge: Optional[PollingBridge] = None
         # self.connector removed - using polling bridge instead
         self.sampler: Optional[FoveatedSampler] = None
+        self.visual_encoder: Optional[Any] = None
         self.policy: Optional[GamePolicy] = None
         self.selector: Optional[SkillSelector] = None
         self.executor: Optional[GameTaskExecutor] = None
@@ -172,6 +173,11 @@ class AngelaAutonomousAgent:
         self.planner_wrapper: Optional[GamePlanner] = None
         self.goal_manager: Optional[GoalManager] = None
         self.strategy_engine: Optional[GameStrategy] = None
+        self.emotion: Optional[Any] = None
+        self.lifecycle: Optional[Any] = None
+        self._last_completed = 0
+        self._last_failed = 0
+        self._last_inventory: Dict[str, Any] = {}
 
         # State
         self.running = False
@@ -194,10 +200,20 @@ class AngelaAutonomousAgent:
         # Create memory directory
         Path(self.config.memory_path).mkdir(parents=True, exist_ok=True)
 
-        # Initialize memory bridge
+        # Initialize memory bridge with the REAL HAM backend
+        # (previously MockHAMManager — experiences never persisted)
         self.memory = GameMemoryBridge()
-        await self.memory.initialize(None)
-        logger.info("Memory bridge initialized")
+        try:
+            from ai.memory.ham_memory.ham_manager import HAMMemoryManager
+
+            ham = HAMMemoryManager(
+                memory_file=str(Path(self.config.memory_path) / "ham_game_memory.json"),
+            )
+            await self.memory.initialize(ham)
+            logger.info("Memory bridge initialized with real HAM backend")
+        except Exception as e:
+            logger.warning(f"Real HAM unavailable, memory stays local-only: {e}")
+            await self.memory.initialize(None)
 
         # Initialize LLM interface
         llm_config = LLMConfig(
@@ -228,6 +244,17 @@ class AngelaAutonomousAgent:
                 strategy=SamplingStrategy.LOG_POLAR,
             )
         )
+
+        # Real VisualEncoder for when frames arrive (currently the poller
+        # reports state only, so visual stays None until /api/frame lands)
+        try:
+            from ai.multimodal.visual_encoder import VisualEncoder
+
+            self.visual_encoder = VisualEncoder()
+            logger.info("VisualEncoder wired (awaiting frame source)")
+        except Exception as e:
+            logger.warning(f"VisualEncoder unavailable: {e}")
+            self.visual_encoder = None
 
         self.policy = GamePolicy(
             PolicyConfig(latent_dim=128, continuous_dim=16, discrete_dim=8, use_diffusion=True)
@@ -271,6 +298,25 @@ class AngelaAutonomousAgent:
         self.strategy_engine = GameStrategy(
             StrategyConfig(update_interval_sec=self.config.strategy_update_interval)
         )
+
+        # Emotion + Lifecycle: wire the REAL project systems so game
+        # outcomes feed the same loops the chat pipeline uses
+        try:
+            from ai.alignment.emotion_system import EmotionSystem
+
+            self.emotion = EmotionSystem(system_id="angela_game_agent")
+            logger.info("EmotionSystem wired into game agent")
+        except Exception as e:
+            logger.warning(f"EmotionSystem unavailable, game affect disabled: {e}")
+            self.emotion = None
+        try:
+            from core.life.autonomous_life_cycle import AutonomousLifeCycle
+
+            self.lifecycle = AutonomousLifeCycle()
+            logger.info("AutonomousLifeCycle wired into game agent")
+        except Exception as e:
+            logger.warning(f"AutonomousLifeCycle unavailable: {e}")
+            self.lifecycle = None
 
         logger.info("All components initialized successfully")
         return True
@@ -393,11 +439,34 @@ class AngelaAutonomousAgent:
                         is_on_ground=state.get("on_ground", True),
                         velocity=(0.0, 0.0, 0.0),
                     ),
-                    visual=None,  # Will be filled by sampler
+                    visual=None,  # Filled below when a frame is present
                 )
 
-                # Note: Visual frame would need separate handling via bridge
-                # For now, we use the state from polling
+                # Encode a frame when the bridge provides one; otherwise
+                # visual stays None and the policy runs on proprioception.
+                # (Honest stub: /api/frame is still a placeholder.)
+                frame = state.get("frame")
+                if frame is not None and self.visual_encoder is not None:
+                    try:
+                        import numpy as _np
+                        from PIL import Image as _Image
+                        import io as _io
+
+                        if isinstance(frame, (bytes, bytearray)):
+                            img = _Image.open(_io.BytesIO(bytes(frame))).convert("RGB")
+                        else:
+                            img = _Image.fromarray(_np.asarray(frame, dtype=_np.uint8))
+                        feats = self.visual_encoder.encode_from_pil(img)
+                        self.current_state.visual = VisualObservation(
+                            frame_id=self.tick_count,
+                            timestamp=time.time(),
+                            features=_np.asarray(feats, dtype=_np.float32),
+                            fovea_xy=(320, 240),
+                            inverse_map=None,
+                            raw_frame_shape=img.size[::-1],
+                        )
+                    except Exception as e:
+                        logger.debug(f"Frame encode failed: {e}")
 
         except Exception as e:
             logger.error(f"Perception error: {e}")
@@ -474,6 +543,44 @@ class AngelaAutonomousAgent:
         except Exception as e:
             logger.error(f"Replan error: {e}", exc_info=True)
 
+    def _derive_skill_result(self) -> Optional[SkillResult]:
+        """Derive a SkillResult from inventory diffs since the last tick.
+
+        The poller reports no per-action results, so completion is inferred:
+        if the active subgoal's success_criteria names an item that appeared
+        or grew, report success with side_effects the executor understands.
+        """
+        try:
+            active = self.executor._current if self.executor else None
+            prop = self.current_state.proprioception if self.current_state else None
+            inv = dict((prop.inventory or {}) if prop else {})
+            prev = self._last_inventory
+            self._last_inventory = inv
+            if not active or not prev:
+                return None
+            criteria = active.subgoal.success_criteria or ""
+            if not criteria.startswith("inventory_changed:"):
+                return None
+            item = criteria.split(":", 1)[1]
+            if item in ("*", "craft_output"):
+                grown = [k for k, v in inv.items() if v > prev.get(k, 0)]
+                if grown:
+                    return SkillResult(
+                        skill_id=active.subgoal.skill_id,
+                        success=True,
+                        side_effects=[f"inventory_changed:{g}" for g in grown],
+                    )
+                return None
+            if inv.get(item, 0) > prev.get(item, 0):
+                return SkillResult(
+                    skill_id=active.subgoal.skill_id,
+                    success=True,
+                    side_effects=[f"inventory_changed:{item}"],
+                )
+        except Exception as e:
+            logger.debug(f"Derive skill result failed: {e}")
+        return None
+
     async def _execute_tasks(self):
         """L2: Execute current subgoal"""
         if not self.current_state:
@@ -504,7 +611,10 @@ class AngelaAutonomousAgent:
         full_latent = np.concatenate([latent[:96], proprio])
 
         # Execute task executor tick
-        skill_result = None  # Would come from previous action
+        # Derive skill_result from inventory diffs: the poller reports no
+        # explicit per-action results, so a subgoal whose success_criteria
+        # names an item (inventory_changed:X) completes when X appears/grows.
+        skill_result = self._derive_skill_result()
         skill_ctx = self.executor.tick(skill_result, self.current_state, full_latent)
 
         if skill_ctx:
@@ -638,6 +748,33 @@ class AngelaAutonomousAgent:
             tags=exp["tags"],
         )
         await self.memory.store_experience(exp_obj)
+
+        # Feed task outcomes into the shared affect/lifecycle loops so the
+        # game agent and the chat pipeline react to the same history
+        try:
+            completed = len(getattr(self.executor, "_completed", []) or [])
+            failed = len(getattr(self.executor, "_failed", []) or [])
+            d_done = completed - self._last_completed
+            d_fail = failed - self._last_failed
+            self._last_completed, self._last_failed = completed, failed
+            if d_done or d_fail:
+                total = max(1, d_done + d_fail)
+                engagement = (1.0 + d_done) / (1.0 + total)
+                success = d_done >= d_fail
+                if self.emotion is not None:
+                    self.emotion.process_interaction_feedback(
+                        engagement_ratio=engagement,
+                        had_error=not success,
+                        response_success=success,
+                    )
+                if self.lifecycle is not None and hasattr(
+                    self.lifecycle, "feed_interaction_outcome"
+                ):
+                    self.lifecycle.feed_interaction_outcome(
+                        engagement_ratio=engagement, success=success
+                    )
+        except Exception as e:
+            logger.debug(f"Affect feedback failed: {e}")
 
     def _log_status(self):
         """Log agent status"""

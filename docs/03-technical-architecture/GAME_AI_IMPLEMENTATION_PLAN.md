@@ -348,11 +348,35 @@ python -m apps.backend.src.ai.multimodal.game_agent --config configs/standard/ga
 
 | 階段 | 狀態 | 開始日期 | 完成日期 | 備註 |
 |------|------|----------|----------|------|
-| Phase 1: 視覺採樣與連接器 | 🔄 進行中 | 2026-09-19 | - | 優先實作 |
-| Phase 2: 技能基元與任務執行 | ⏳ 待開始 | - | - | 依 Phase 1 |
-| Phase 3: 規劃與記憶整合 | ⏳ 待開始 | - | - | 依 Phase 2 |
-| Phase 4: 元策略與端到端 | ⏳ 待開始 | - | - | 依 Phase 3 |
-| 文檔更新 | ⏳ 待開始 | - | - | 隨實作同步 |
+| Phase 1: 視覺採樣與連接器 | ✅ 完成 (2026-09-20) | 2026-09-19 | 2026-09-20 | foveated_sampler + polling bridge 實測通過 |
+| Phase 2: 技能基元與任務執行 | ✅ 完成 (2026-09-20) | 2026-09-20 | 2026-09-20 | 9 技能 + 狀態機 + 卡住/超時/跳過，36 測試全過 |
+| Phase 3: 規劃與記憶整合 | ✅ 完成 (2026-09-20) | 2026-09-20 | 2026-09-20 | 規則規劃 + 真實 HAM + LLM fallback |
+| Phase 4: 元策略與端到端 | ✅ 完成 (2026-09-20) | 2026-09-20 | 2026-09-20 | 策略權重 + 活體 Luanti 驗證 (chat 到達遊戲) |
+| 文檔更新 | ✅ 本次同步 | - | 2026-09-20 | 誠實狀態表見 §10 |
+
+---
+
+## 10. 誠實狀態表 (2026-09-20 實測為準)
+
+> 原則：只寫驗證過的；stub 明確標出，不宣稱。
+
+| 能力 | 狀態 | 證據 |
+|------|------|------|
+| Foveated 採樣 (log-polar/deformable/quadtree/uniform) | ✅ 真實 | 單元測試 4/4，固定輸出 shape |
+| Continuous policy + grounding head (numpy/MLP) | ✅ 真實 | 前向 <5ms，整合測試通過 |
+| 9 技能選擇 + 前置條件 + 參數化 | ✅ 真實 | 整合測試，live 吃到 dig/move |
+| 任務狀態機 + 超時重試 + 卡住跳過 | ✅ 真實 | live：eat blocked 10 ticks → skip → craft → dig |
+| 規則規劃 DAG + 拓撲驗證 | ✅ 真實 | survival 3 subgoals，live 產出 |
+| HAM 持久記憶 (store + recall) | ✅ 真實 | `ham_game_memory.json`，非 Mock |
+| EmotionSystem / AutonomousLifeCycle 回饋 | ✅ 真實 | 每 100 tick 按任務成敗餵入 |
+| LLM 非同步規劃 + 超時 fallback | ✅ 真實 | fallback 實測；LLM 本體需本地 Ollama |
+| Polling bridge ↔ Luanti 雙向 | ✅ 真實 | live：server poll + `AngelaBot digs` + 遊戲內 chat 可見 |
+| skill_result 閉環 | ✅ 真實 | 背包差分推導，不再恆 None |
+| VisualEncoder 接線 | ⚠️ 半接 | 已實例化；poller 只送 state 無幀，visual 仍 None |
+| `/api/frame` 畫面來源 | ❌ stub | placeholder，需 CSM 截圖或 client 擷取 |
+| poller `craft` 動作 | ❌ stub | 回傳 note，不執行真合成 |
+| Policy 權重訓練 (BC/RL) | ❌ 未做 | 現為 Xavier 初始化，動作笨拙屬實 |
+| 20 FPS 閉環 | ❌ 未達 | agent 10Hz + poller 2s；需幀源 + 降級策略 |
 
 ---
 

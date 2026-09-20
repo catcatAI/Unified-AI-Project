@@ -137,11 +137,24 @@ class GameMemoryBridge:
             asyncio.create_task(self._write_to_ham(exp))
 
     async def _write_to_ham(self, exp: GameExperience):
-        """寫入 HAM 後端"""
+        """寫入 HAM 後端 (真實調用 HAMMemoryManager.store_experience)"""
         try:
-            # 實際調用 HAM API
-            # self._ham.store(...)
-            pass
+            await self._ham.store_experience(
+                raw_data={
+                    "action": exp.action,
+                    "position": list(exp.position),
+                    "outcome": exp.outcome,
+                    "reward": exp.reward,
+                },
+                data_type="game_experience",
+                metadata={
+                    "memory_type": exp.memory_type.value,
+                    "timestamp": exp.timestamp,
+                    "tags": exp.tags,
+                    "context": exp.context,
+                },
+                keywords=[exp.action] + list(exp.tags),
+            )
         except Exception as e:
             logger.error(f"HAM write failed: {e}")
 
@@ -195,9 +208,29 @@ class GameMemoryBridge:
         """
         檢索相關經驗 (返回摘要字串列表)
 
-        實際應調用 HAM 向量檢索，這裡用簡化關鍵字匹配
+        先查本地會話快取，再查 HAM 持久層，兩者合併去重。
         """
         results = []
+        # 1. HAM 持久層 (真實調用)
+        try:
+            if self._ham is not None and hasattr(self._ham, "query_core_memory"):
+                ham_hits = await self._ham.query_core_memory(
+                    keywords=[query],
+                    data_type_filter="game_experience",
+                    limit=limit,
+                )
+                for hit in ham_hits or []:
+                    content = getattr(hit, "content", hit)
+                    if isinstance(content, dict):
+                        summary = (
+                            f"[ham] {content.get('action')} @ "
+                            f"{content.get('position')} -> {content.get('outcome')}"
+                        )
+                    else:
+                        summary = f"[ham] {content}"
+                    results.append((1, summary))
+        except Exception as e:
+            logger.debug(f"HAM recall failed, using local only: {e}")
         query_lower = query.lower()
 
         for exp in reversed(self._experiences):  # 最新優先
