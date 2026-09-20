@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 
 # ==================== Pydantic Models ====================
 
+
 class PlanSubgoal(BaseModel):
     id: str
     skill: str  # "move", "dig", "place", "craft", "combat", "navigate", "eat", "build", "look"
@@ -83,6 +84,7 @@ class StrategyAdjustment(BaseModel):
 
 # ==================== LLM Client ====================
 
+
 @dataclass
 class LLMConfig:
     enabled: bool = True
@@ -100,7 +102,7 @@ class LLMConfig:
 class LLMGameInterface:
     """
     非阻塞 LLM 介面
-    
+
     設計原則：
     - 所有呼叫 async、帶超時
     - 結構化輸出 (Pydantic 驗證)
@@ -108,7 +110,7 @@ class LLMGameInterface:
     - 並發控制
     - 完整的錯誤處理與 fallback
     """
-    
+
     def __init__(self, config: Optional[LLMConfig] = None):
         self.config = config or LLMConfig()
         self._semaphore = asyncio.Semaphore(self.config.max_concurrent)
@@ -118,49 +120,52 @@ class LLMGameInterface:
             "successful": 0,
             "failed": 0,
             "timeouts": 0,
-            "avg_latency_ms": 0.0
+            "avg_latency_ms": 0.0,
         }
-    
+
     async def _get_session(self):
         """懶加載 HTTP session"""
         if self._session is None:
             import aiohttp
+
             timeout = aiohttp.ClientTimeout(total=self.config.timeout_sec)
             self._session = aiohttp.ClientSession(timeout=timeout)
         return self._session
-    
+
     async def close(self):
         """關閉 session"""
         if self._session:
             await self._session.close()
             self._session = None
-    
+
     def _build_prompt(self, system: str, user: str, schema: str) -> List[Dict]:
         """構建提示詞"""
         return [
             {"role": "system", "content": system},
-            {"role": "user", "content": f"{user}\n\n輸出格式 (JSON Schema):\n{schema}"}
+            {"role": "user", "content": f"{user}\n\n輸出格式 (JSON Schema):\n{schema}"},
         ]
-    
+
     async def _call_llm(self, messages: List[Dict], response_model: type) -> Any:
         """通用 LLM 呼叫"""
         async with self._semaphore:
             session = await self._get_session()
-            
+
             payload = {
                 "model": self.config.model,
                 "messages": messages,
                 "temperature": self.config.temperature,
                 "max_tokens": self.config.max_tokens,
-                "response_format": {"type": "json_object"} if self.config.provider in ["openai", "vllm"] else None
+                "response_format": (
+                    {"type": "json_object"} if self.config.provider in ["openai", "vllm"] else None
+                ),
             }
-            
+
             headers = {"Content-Type": "application/json"}
             if self.config.api_key:
                 headers["Authorization"] = f"Bearer {self.config.api_key}"
-            
+
             url = f"{self.config.base_url}/chat/completions"
-            
+
             for attempt in range(self.config.max_retries + 1):
                 try:
                     start = time.perf_counter()
@@ -168,44 +173,47 @@ class LLMGameInterface:
                         if resp.status != 200:
                             text = await resp.text()
                             raise Exception(f"HTTP {resp.status}: {text}")
-                        
+
                         data = await resp.json()
                         content = data["choices"][0]["message"]["content"]
-                        
+
                         # 解析並驗證
                         parsed = json.loads(content)
                         validated = response_model(**parsed)
-                        
+
                         elapsed = (time.perf_counter() - start) * 1000
                         self._stats["total_calls"] += 1
                         self._stats["successful"] += 1
                         self._stats["avg_latency_ms"] = (
-                            self._stats["avg_latency_ms"] * (self._stats["successful"] - 1) + elapsed
+                            self._stats["avg_latency_ms"] * (self._stats["successful"] - 1)
+                            + elapsed
                         ) / self._stats["successful"]
-                        
+
                         return validated
-                        
+
                 except asyncio.TimeoutError:
                     self._stats["timeouts"] += 1
-                    logger.warning(f"LLM timeout (attempt {attempt + 1}/{self.config.max_retries + 1})")
+                    logger.warning(
+                        f"LLM timeout (attempt {attempt + 1}/{self.config.max_retries + 1})"
+                    )
                 except Exception as e:
                     logger.warning(f"LLM call failed (attempt {attempt + 1}): {e}")
-                
+
                 if attempt < self.config.max_retries:
                     await asyncio.sleep(0.5 * (attempt + 1))  # 指數退避
-            
+
             self._stats["failed"] += 1
             raise Exception("LLM call failed after retries")
-    
+
     # ==================== Public Methods ====================
-    
-    async def apropose_plan(self, ctx: 'PlanContext') -> PlanProposal:
+
+    async def apropose_plan(self, ctx: "PlanContext") -> PlanProposal:
         """L3 呼叫：制定多步驟計劃"""
-        
+
         # 如果 LLM 未啟用，直接使用 fallback
         if not self.config.enabled:
             return RuleBasedFallback.propose_plan(ctx)
-        
+
         system = """你是 Angela AI 的遊戲規劃模組。請為 Luanti (Minetest) 遊戲制定詳細執行計劃。
 
 規則：
@@ -237,19 +245,19 @@ class LLMGameInterface:
 
         schema = PlanProposal.model_json_schema()
         messages = self._build_prompt(system, user, json.dumps(schema, ensure_ascii=False))
-        
+
         try:
             return await self._call_llm(messages, PlanProposal)
         except Exception as e:
             logger.warning(f"LLM propose_plan failed, using fallback: {e}")
             return RuleBasedFallback.propose_plan(ctx)
-    
+
     async def adiagnose_anomaly(self, ctx: AnomalyContext) -> RecoveryStrategy:
         """L2/L3 卡住時呼叫：診斷並給恢復策略"""
-        
+
         if not self.config.enabled:
             return RuleBasedFallback.diagnose_anomaly(ctx)
-        
+
         system = """你是 Angela AI 的異常診斷模組。分析遊戲卡住原因，給出恢復策略。
 
 恢復動作類型：
@@ -276,19 +284,19 @@ class LLMGameInterface:
 
         schema = RecoveryStrategy.model_json_schema()
         messages = self._build_prompt(system, user, json.dumps(schema, ensure_ascii=False))
-        
+
         try:
             return await self._call_llm(messages, RecoveryStrategy)
         except Exception as e:
             logger.warning(f"LLM diagnose_anomaly failed, using fallback: {e}")
             return RuleBasedFallback.diagnose_anomaly(ctx)
-    
+
     async def aevaluate_strategy(self, ctx: StrategyContext) -> StrategyAdjustment:
         """L4 定期呼叫：長期策略調整"""
-        
+
         if not self.config.enabled:
             return RuleBasedFallback.evaluate_strategy(ctx)
-        
+
         system = """你是 Angela AI 的元策略模組。根據長期統計調整策略權重。
 
 輸出：
@@ -314,24 +322,25 @@ class LLMGameInterface:
 
         schema = StrategyAdjustment.model_json_schema()
         messages = self._build_prompt(system, user, json.dumps(schema, ensure_ascii=False))
-        
+
         try:
             return await self._call_llm(messages, StrategyAdjustment)
         except Exception as e:
             logger.warning(f"LLM evaluate_strategy failed, using fallback: {e}")
             return RuleBasedFallback.evaluate_strategy(ctx)
-    
+
     def get_stats(self) -> Dict[str, Any]:
         return self._stats.copy()
 
 
 # ==================== Fallback Rules (無 LLM 時) ====================
 
+
 class RuleBasedFallback:
     """規則基礎 fallback (LLM 不可用時)"""
-    
+
     @staticmethod
-    def propose_plan(ctx: 'PlanContext') -> PlanProposal:
+    def propose_plan(ctx: "PlanContext") -> PlanProposal:
         """簡單規則規劃"""
         # 這裡應委託給 GamePlanner 的 rule_based_plan
         # 這裡只提供最基本的生存計劃
@@ -342,7 +351,7 @@ class RuleBasedFallback:
                 params={},
                 preconditions=["hunger_low", "has_food"],
                 success_criteria="hunger_restored",
-                timeout=40
+                timeout=40,
             ),
             PlanSubgoal(
                 id="survival_tool",
@@ -350,16 +359,16 @@ class RuleBasedFallback:
                 params={"recipe_id": "wooden_pickaxe"},
                 preconditions=["has_wood"],
                 success_criteria="inventory_changed:wooden_pickaxe",
-                timeout=60
+                timeout=60,
             ),
         ]
         return PlanProposal(
             plan_id=f"fallback_{uuid.uuid4().hex[:8]}",
             subgoals=subgoals,
             reasoning="Fallback rule-based survival plan",
-            estimated_duration_ticks=200
+            estimated_duration_ticks=200,
         )
-    
+
     @staticmethod
     def diagnose_anomaly(ctx: AnomalyContext) -> RecoveryStrategy:
         """規則基礎異常診斷"""
@@ -367,49 +376,67 @@ class RuleBasedFallback:
         if ctx.health < 6:
             return RecoveryStrategy(
                 immediate_action=RecoveryAction(type="heal", reasoning="Health critical"),
-                reasoning="Health below 30%, prioritize healing"
+                reasoning="Health below 30%, prioritize healing",
             )
         if ctx.hunger < 4:
             return RecoveryStrategy(
                 immediate_action=RecoveryAction(type="heal", reasoning="Hunger critical"),
-                reasoning="Hunger below 20%, need food"
+                reasoning="Hunger below 20%, need food",
             )
-        
+
         # 根據卡住類型
         if ctx.stuck_reason == "missing_resource":
-            fallback_sg = PlanSubgoal(id="explore_resource", skill="navigate", params={}, 
-                                       preconditions=[], success_criteria="found_resource", timeout=1000)
+            fallback_sg = PlanSubgoal(
+                id="explore_resource",
+                skill="navigate",
+                params={},
+                preconditions=[],
+                success_criteria="found_resource",
+                timeout=1000,
+            )
             return RecoveryStrategy(
-                immediate_action=RecoveryAction(type="fallback_subgoal", reasoning="Missing resource, explore to find",
-                    subgoal=fallback_sg),
+                immediate_action=RecoveryAction(
+                    type="fallback_subgoal",
+                    reasoning="Missing resource, explore to find",
+                    subgoal=fallback_sg,
+                ),
                 fallback_subgoal=fallback_sg,
-                reasoning="Missing resource, explore to find"
+                reasoning="Missing resource, explore to find",
             )
         elif ctx.stuck_reason == "combat_failed":
-            fallback_sg = PlanSubgoal(id="flee", skill="move", params={"forward": -1.0},
-                                       preconditions=[], success_criteria="safe_distance", timeout=200)
+            fallback_sg = PlanSubgoal(
+                id="flee",
+                skill="move",
+                params={"forward": -1.0},
+                preconditions=[],
+                success_criteria="safe_distance",
+                timeout=200,
+            )
             return RecoveryStrategy(
-                immediate_action=RecoveryAction(type="fallback_subgoal", reasoning="Combat failed, flee and recover",
-                    subgoal=fallback_sg),
+                immediate_action=RecoveryAction(
+                    type="fallback_subgoal",
+                    reasoning="Combat failed, flee and recover",
+                    subgoal=fallback_sg,
+                ),
                 fallback_subgoal=fallback_sg,
-                reasoning="Combat failed, flee and recover"
+                reasoning="Combat failed, flee and recover",
             )
         elif ctx.stuck_reason == "blocked":
             return RecoveryStrategy(
                 immediate_action=RecoveryAction(type="explore", reasoning="Blocked, try explore"),
-                reasoning="Path blocked, explore alternative"
+                reasoning="Path blocked, explore alternative",
             )
-        
+
         return RecoveryStrategy(
             immediate_action=RecoveryAction(type="explore", reasoning="Unknown issue, explore"),
-            reasoning="Generic exploration fallback"
+            reasoning="Generic exploration fallback",
         )
-    
+
     @staticmethod
     def evaluate_strategy(ctx: StrategyContext) -> StrategyAdjustment:
         """規則基礎策略調整"""
         adj = StrategyAdjustment(reasoning="Rule-based adjustment")
-        
+
         # 死亡率調整
         if ctx.death_count > 3:
             adj.risk_tolerance_delta = -0.15
@@ -420,32 +447,40 @@ class RuleBasedFallback:
             adj.risk_tolerance_delta = 0.05
             adj.exploration_weight_delta = 0.05
             adj.reasoning = "No deaths, slightly more aggressive"
-        
+
         # 資源收集率
         total_rate = sum(ctx.resource_collection_rate.values())
         if total_rate < 0.1 and ctx.session_duration_min > 5:
             adj.exploration_weight_delta = 0.1
             adj.reasoning = "Low resource collection, increasing exploration"
-        
+
         # 異常頻率
         if ctx.anomaly_count > 10:
             adj.exploration_weight_delta = -0.1
             adj.risk_tolerance_delta = -0.05
             adj.reasoning = "High anomaly rate, becoming more cautious"
-        
+
         return adj
 
 
 # ==================== Context Classes (for type hints) ====================
 
+
 class PlanContext:
     """規劃上下文 (避免循環 import)"""
-    def __init__(self, current_goal: str, goal_params: Dict, state: Any, 
-                 ham_memories: List[str], strategy: Dict):
+
+    def __init__(
+        self,
+        current_goal: str,
+        goal_params: Dict,
+        state: Any,
+        ham_memories: List[str],
+        strategy: Dict,
+    ):
         self.current_goal = current_goal
         self.goal_params = goal_params
         self.position = {"x": 0, "y": 0, "z": 0}
-        if state and hasattr(state, 'proprioception') and state.proprioception:
+        if state and hasattr(state, "proprioception") and state.proprioception:
             pos = state.proprioception.position
             self.position = {"x": pos[0], "y": pos[1], "z": pos[2]}
         self.inventory = state.proprioception.inventory if state and state.proprioception else {}

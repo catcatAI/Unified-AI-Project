@@ -114,6 +114,7 @@ class StrategyDirective:
 @dataclass
 class VisualObservation:
     """L0 輸出給 L1 的觀測結構"""
+
     frame_id: int
     timestamp: float
     features: np.ndarray  # (256,) visual encoder output
@@ -125,6 +126,7 @@ class VisualObservation:
 @dataclass
 class Proprioception:
     """本體感覺：生命值、飢餓、背包、位置、朝向等"""
+
     health: float = 20.0
     max_health: float = 20.0
     hunger: float = 20.0
@@ -139,12 +141,12 @@ class Proprioception:
     is_in_water: bool = False
     is_in_lava: bool = False
     light_level: int = 15
-    
+
     # 別名屬性 (兼容性)
     @property
     def hp(self) -> float:
         return self.health
-    
+
     @property
     def max_hp(self) -> float:
         return self.max_health
@@ -153,6 +155,7 @@ class Proprioception:
 @dataclass
 class GameState:
     """完整遊戲狀態快照，供各層讀取"""
+
     tick: int = 0
     timestamp: float = 0.0
     visual: Optional[VisualObservation] = None
@@ -170,7 +173,7 @@ GAME_SKILLS: Dict[SkillID, SkillSpec] = {
         params=["forward", "strafe", "yaw"],
         preconditions=[],
         duration_ticks=range(1, 400),
-        description="基礎移動：前進/後退/左右/跳躍/衝刺/潛行"
+        description="基礎移動：前進/後退/左右/跳躍/衝刺/潛行",
     ),
     SkillID.DIG: SkillSpec(
         continuous_dim=2,
@@ -178,7 +181,7 @@ GAME_SKILLS: Dict[SkillID, SkillSpec] = {
         params=["target_node", "direction", "tool"],
         preconditions=["has_tool:pickaxe"],
         duration_ticks=range(5, 200),
-        description="挖掘方塊：需對應工具，持續按住 attack"
+        description="挖掘方塊：需對應工具，持續按住 attack",
     ),
     SkillID.PLACE: SkillSpec(
         continuous_dim=2,
@@ -186,7 +189,7 @@ GAME_SKILLS: Dict[SkillID, SkillSpec] = {
         params=["block_type", "face", "direction"],
         preconditions=["has_block:*"],
         duration_ticks=range(1, 20),
-        description="放置方塊：需背包有對應方塊"
+        description="放置方塊：需背包有對應方塊",
     ),
     SkillID.CRAFT: SkillSpec(
         continuous_dim=0,
@@ -194,7 +197,7 @@ GAME_SKILLS: Dict[SkillID, SkillSpec] = {
         params=["recipe_id", "count"],
         preconditions=["recipe_unlocked", "ingredients_in_inv"],
         duration_ticks=range(10, 60),
-        description="合成物品：打開背包、放入材料、取出成品"
+        description="合成物品：打開背包、放入材料、取出成品",
     ),
     SkillID.COMBAT: SkillSpec(
         continuous_dim=3,
@@ -202,7 +205,7 @@ GAME_SKILLS: Dict[SkillID, SkillSpec] = {
         params=["target_entity", "weapon", "tactic"],
         preconditions=["hostile_in_range"],
         duration_ticks=range(10, 600),
-        description="戰鬥：攻擊/格擋/閃避/走位"
+        description="戰鬥：攻擊/格擋/閃避/走位",
     ),
     SkillID.NAVIGATE: SkillSpec(
         continuous_dim=3,
@@ -210,7 +213,7 @@ GAME_SKILLS: Dict[SkillID, SkillSpec] = {
         params=["target_pos", "path"],
         preconditions=[],
         duration_ticks=range(10, 2000),
-        description="導航到座標：避開障礙、跳躍、游泳"
+        description="導航到座標：避開障礙、跳躍、游泳",
     ),
     SkillID.EAT: SkillSpec(
         continuous_dim=0,
@@ -218,7 +221,7 @@ GAME_SKILLS: Dict[SkillID, SkillSpec] = {
         params=["food_item"],
         preconditions=["hunger_low", "has_food"],
         duration_ticks=range(20, 40),
-        description="進食：飢餓度低時自動執行"
+        description="進食：飢餓度低時自動執行",
     ),
     SkillID.BUILD: SkillSpec(
         continuous_dim=2,
@@ -226,7 +229,7 @@ GAME_SKILLS: Dict[SkillID, SkillSpec] = {
         params=["blueprint", "origin", "rotation"],
         preconditions=["has_materials", "space_available"],
         duration_ticks=range(100, 5000),
-        description="按藍圖建造：依序放置方塊"
+        description="按藍圖建造：依序放置方塊",
     ),
     SkillID.LOOK: SkillSpec(
         continuous_dim=2,
@@ -234,7 +237,7 @@ GAME_SKILLS: Dict[SkillID, SkillSpec] = {
         params=["yaw", "pitch", "target"],
         preconditions=[],
         duration_ticks=range(1, 100),
-        description="視線控制：注視目標、掃視環境"
+        description="視線控制：注視目標、掃視環境",
     ),
 }
 
@@ -244,7 +247,7 @@ def check_preconditions(skill_id: SkillID, state: GameState) -> Tuple[bool, List
     spec = GAME_SKILLS[skill_id]
     failed = []
     inv = state.proprioception.inventory if state.proprioception else {}
-    
+
     for cond in spec.preconditions:
         if cond.startswith("has_tool:"):
             tool = cond.split(":")[1]
@@ -259,7 +262,10 @@ def check_preconditions(skill_id: SkillID, state: GameState) -> Tuple[bool, List
             if not any(f in inv for f in food_items):
                 failed.append("無食物")
         elif cond == "hunger_low":
-            if state.proprioception and state.proprioception.hunger > state.proprioception.max_hunger * 0.3:
+            if (
+                state.proprioception
+                and state.proprioception.hunger > state.proprioception.max_hunger * 0.3
+            ):
                 failed.append("飢餓度未低")
         elif cond == "recipe_unlocked":
             # 簡化：假設基本配方都解鎖
@@ -274,7 +280,7 @@ def check_preconditions(skill_id: SkillID, state: GameState) -> Tuple[bool, List
             pass
         elif cond == "space_available":
             pass
-    
+
     return len(failed) == 0, failed
 
 
