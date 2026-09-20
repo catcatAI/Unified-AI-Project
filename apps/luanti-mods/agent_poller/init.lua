@@ -12,6 +12,9 @@ local BRIDGE_URL = "http://192.168.1.112:30003"
 local TARGET_PLAYER_NAME = "AngelaBot"
 local POLL_INTERVAL = 2.0
 local last_poll = 0
+-- Test-only item grants. Default OFF: enable with
+-- `agent_poller_allow_give = true` in minetest.conf for manual verification.
+local ALLOW_GIVE = minetest.settings:get_bool("agent_poller_allow_give", false)
 
 local function get_target_player()
     local players = minetest.get_connected_players()
@@ -166,17 +169,56 @@ local function execute_commands(actions, player)
         elseif action.type == "place" then
             local pos = player:get_pos()
             local dir = player:get_look_dir()
-            local target = vector.add(pos, vector.multiply(dir, 4))
+            local target = vector.round(vector.add(pos, vector.multiply(dir, 3)))
+            local pname = player:get_player_name()
             local node = minetest.get_node(target)
-            if node.name == "air" then
+            if node.name ~= "air" then
+                minetest.log("action", "[agent_poller] place failed (target not air): " .. node.name)
+            else
                 local stack = player:get_wielded_item()
-                if not stack:is_empty() then
-                    minetest.item_place(
+                if stack:is_empty() or not minetest.registered_nodes[stack:get_name()] then
+                    -- Agent has no select-slot action: auto-wield the first
+                    -- placeable node stack so place works autonomously.
+                    local inv = player:get_inventory()
+                    local found = false
+                    for i = 1, inv:get_size("main") do
+                        local s = inv:get_stack("main", i)
+                        if not s:is_empty() and minetest.registered_nodes[s:get_name()] then
+                            player:set_wield_index(i)
+                            stack = player:get_wielded_item()
+                            found = true
+                            break
+                        end
+                    end
+                    if not found then
+                        stack = ItemStack("")
+                    end
+                end
+                if stack:is_empty() then
+                    minetest.log("action", "[agent_poller] place failed (nothing placeable) for " .. pname)
+                else
+                    -- under = solid neighbour being pointed at, above = air cell for the new node.
+                    local under = vector.add(target, {x = 0, y = -1, z = 0})
+                    if minetest.get_node(under).name == "air" then
+                        under = vector.round(pos)
+                    end
+                    local leftover = minetest.item_place(
                         stack,
                         player,
-                        {type = "node", under = target, above = vector.add(target, {x = 0, y = 1, z = 0})}
+                        {type = "node", under = under, above = target}
                     )
-                    minetest.log("action", "[agent_poller] place executed for " .. player:get_player_name())
+                    if leftover then
+                        player:set_wielded_item(leftover)
+                    end
+                    minetest.log(
+                        "action",
+                        "[agent_poller] placed "
+                            .. stack:get_name()
+                            .. " at "
+                            .. minetest.pos_to_string(target)
+                            .. " for "
+                            .. pname
+                    )
                 end
             end
         elseif action.type == "chat" then
@@ -184,7 +226,10 @@ local function execute_commands(actions, player)
         elseif action.type == "craft" then
             do_craft(player, action)
         elseif action.type == "give" then
-            -- TEST ONLY: grant items so crafting can be verified end-to-end.
+            -- TEST ONLY, gated by agent_poller_allow_give (default false).
+            if not ALLOW_GIVE then
+                minetest.log("warning", "[agent_poller] give rejected (allow_give off)")
+            else
             local itemstring = ITEMS[action.item] or action.item
             local count = tonumber(action.count) or 1
             if itemstring then
@@ -193,6 +238,7 @@ local function execute_commands(actions, player)
                     "action",
                     "[agent_poller] gave " .. itemstring .. " x" .. count .. " to " .. player:get_player_name()
                 )
+            end
             end
         end
     end
