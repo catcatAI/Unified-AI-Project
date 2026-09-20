@@ -142,12 +142,30 @@ local function do_craft(player, action)
     )
 end
 
+local last_dead_notice = 0
+
 local function execute_commands(actions, player)
     if not player or not actions then
         return
     end
     for _, action in ipairs(actions) do
-        if action.type == "move" then
+        -- Dead players stay dead: skip everything physical so the loop
+        -- doesn't march a corpse around (observed: hp 0 still stepping).
+        -- Chat still goes through. Respawn is a human click.
+        if action.type ~= "chat" and player:get_hp() <= 0 then
+            local now = minetest.get_gametime()
+            if now - last_dead_notice >= 10 then
+                last_dead_notice = now
+                minetest.log(
+                    "action",
+                    "[agent_poller] skipping "
+                        .. tostring(action.type)
+                        .. " ("
+                        .. player:get_player_name()
+                        .. " is dead, awaiting respawn)"
+                )
+            end
+        elseif action.type == "move" then
             local yaw = player:get_look_horizontal()
             local dir = vector.new(action.forward or 0, 0, action.strafe or 0)
             dir = vector.rotate(dir, vector.new(0, yaw, 0))
@@ -156,11 +174,33 @@ local function execute_commands(actions, player)
                 local v = player:get_velocity()
                 player:set_velocity({x = v.x, y = 6, z = v.z})
             end
+            -- Swim reflex: stepping keeps y constant, so without this she
+            -- walks along the seabed and drowns (observed: hp 0 at y=-5.6).
+            -- Feet in water -> move straight up toward the surface instead.
+            local swimming = false
+            do
+                local ppos = player:get_pos()
+                local feet = minetest.get_node(ppos).name
+                if feet:find("water") then
+                    swimming = true
+                    local dest = vector.add(ppos, {x = 0, y = 1.5, z = 0})
+                    local hdef = minetest.registered_nodes[minetest.get_node(dest).name]
+                        or {}
+                    if not hdef.walkable then
+                        player:set_pos(dest)
+                        minetest.log(
+                            "action",
+                            "[agent_poller] swimming up for " .. player:get_player_name()
+                        )
+                    end
+                end
+            end
             -- Server-side step: Luanti movement is client-authoritative, so
             -- set_velocity alone never displaces a standing-still client
             -- (800 move actions, 0.0m gained — measured). Step the position
             -- directly, collision-aware, so move decisions become motion.
-            local flat = vector.new(dir.x, 0, dir.z)
+            -- Skipped while swimming (buoyancy first).
+            local flat = (not swimming) and vector.new(dir.x, 0, dir.z) or vector.new()
             if vector.length(flat) > 0.05 then
                 flat = vector.normalize(flat)
                 local pos = player:get_pos()

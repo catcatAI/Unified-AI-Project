@@ -666,6 +666,12 @@ class AngelaAutonomousAgent:
 
         skill_params = self.selector.select(latent, self.current_state)
         if skill_params:
+            # Undirected L1 placement entombs the agent (observed: boxed
+            # herself in cobble/sand, then "no free cell" forever). Placement
+            # only comes from plans, LLM behaviors, or chat from now on.
+            if skill_params.skill_id == SkillID.PLACE:
+                logger.info("L1 place abstained (undirected placement)")
+                return
             # Abstain from uncraftable crafts: the L1 path carries no
             # template preconditions, so without this gate it queues
             # doomed auto-crafts every tick (observed log spam). The
