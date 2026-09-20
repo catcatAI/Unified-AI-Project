@@ -70,6 +70,41 @@ class RecipeMemory:
     proficiency: float = 0.0  # 熟練度 0-1
 
 
+# Minetest itemstring -> 配方短名。遊戲報的是 default:cobble，
+# 配方寫的是 cobblestone；不斷層判斷（可合成嗎？做完了嗎？）全錯。
+# 與 apps/luanti-mods/agent_poller/init.lua 的 ITEMS 表同源，保持同步。
+ITEM_ALIASES = {
+    "default:wood": "wood",
+    "default:cobble": "cobblestone",
+    "default:stick": "stick",
+    "default:coal_lump": "coal",
+    "default:pick_wood": "wooden_pickaxe",
+    "default:pick_stone": "stone_pickaxe",
+    "default:axe_stone": "stone_axe",
+    "default:shovel_stone": "stone_shovel",
+    "default:sword_stone": "stone_sword",
+    "default:furnace": "furnace",
+    "default:chest": "chest",
+    "default:workbench": "crafting_table",
+    "default:torch": "torch",
+    "default:sand": "sand",
+    "default:dirt": "dirt",
+}
+
+
+def normalize_inventory(inventory: Dict[str, Any]) -> Dict[str, int]:
+    """itemstring 背包折成短名計數（未知名原樣保留）。"""
+    out: Dict[str, int] = {}
+    for key, val in (inventory or {}).items():
+        try:
+            count = int(val)
+        except (TypeError, ValueError):
+            continue
+        short = ITEM_ALIASES.get(str(key), str(key))
+        out[short] = out.get(short, 0) + count
+    return out
+
+
 class GameMemoryBridge:
     """
     HAM 記憶橋接器
@@ -271,7 +306,8 @@ class GameMemoryBridge:
         return self._recipes.get(recipe_id)
 
     def get_craftable_recipes(self, inventory: Dict[str, int]) -> List[RecipeMemory]:
-        """根據背包獲取可製作配方"""
+        """根據背包獲取可製作配方（先折短名，否則 itemstring 永遠對不上）"""
+        inventory = normalize_inventory(inventory)
         craftable = []
         for recipe in self._recipes.values():
             if not recipe.unlocked:

@@ -579,6 +579,8 @@ class AngelaAutonomousAgent:
         or grew, report success with side_effects the executor understands.
         """
         try:
+            from ai.multimodal.game_memory_bridge import ITEM_ALIASES, normalize_inventory
+
             active = self.executor._current if self.executor else None
             prop = self.current_state.proprioception if self.current_state else None
             inv = dict((prop.inventory or {}) if prop else {})
@@ -589,9 +591,13 @@ class AngelaAutonomousAgent:
             criteria = active.subgoal.success_criteria or ""
             if not criteria.startswith("inventory_changed:"):
                 return None
-            item = criteria.split(":", 1)[1]
+            # Both sides folded to short names: the game reports
+            # default:pick_wood, criteria says wooden_pickaxe.
+            norm = normalize_inventory(inv)
+            norm_prev = normalize_inventory(prev)
+            item = ITEM_ALIASES.get(criteria.split(":", 1)[1], criteria.split(":", 1)[1])
             if item in ("*", "craft_output"):
-                grown = [k for k, v in inv.items() if v > prev.get(k, 0)]
+                grown = [k for k, v in norm.items() if v > norm_prev.get(k, 0)]
                 if grown:
                     return SkillResult(
                         skill_id=active.subgoal.skill_id,
@@ -599,7 +605,7 @@ class AngelaAutonomousAgent:
                         side_effects=[f"inventory_changed:{g}" for g in grown],
                     )
                 return None
-            if inv.get(item, 0) > prev.get(item, 0):
+            if norm.get(item, 0) > norm_prev.get(item, 0):
                 return SkillResult(
                     skill_id=active.subgoal.skill_id,
                     success=True,
@@ -660,6 +666,30 @@ class AngelaAutonomousAgent:
 
         skill_params = self.selector.select(latent, self.current_state)
         if skill_params:
+            # Abstain from uncraftable crafts: the L1 path carries no
+            # template preconditions, so without this gate it queues
+            # doomed auto-crafts every tick (observed log spam). The
+            # selector already recorded _last_used, so cooldown rotates.
+            if skill_params.skill_id == SkillID.CRAFT and self.memory:
+                from ai.multimodal.game_memory_bridge import normalize_inventory
+
+                prop = self.current_state.proprioception
+                inv = dict((prop.inventory if prop else {}) or {})
+                rid = (skill_params.params or {}).get("recipe_id", "auto")
+                craftable = False
+                if rid and rid != "auto":
+                    rec = self.memory.get_recipe(rid)
+                    if rec:
+                        norm = normalize_inventory(inv)
+                        craftable = all(
+                            norm.get(ing, 0) >= cnt
+                            for ing, cnt in rec.ingredients.items()
+                        )
+                else:
+                    craftable = bool(self.memory.get_craftable_recipes(inv))
+                if not craftable:
+                    logger.info(f"L1 craft abstained (nothing craftable for {rid})")
+                    return
             ctx = SkillContext(
                 active_skill=skill_params.skill_id,
                 params=skill_params.params,

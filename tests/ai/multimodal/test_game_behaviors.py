@@ -102,6 +102,28 @@ class TestBehaviorAdjust:
         assert b.adjust({"n": 5}, fb) == {"n": 5}
 
 
+class TestNameAliases:
+    def test_normalize_folds_itemstrings(self):
+        from ai.multimodal.game_memory_bridge import normalize_inventory
+
+        norm = normalize_inventory({"default:cobble": 8, "default:stick": 4, "default:sand": 3})
+        assert norm == {"cobblestone": 8, "stick": 4, "sand": 3}
+
+    def test_craftable_matches_real_inventory(self):
+        from ai.multimodal.game_memory_bridge import GameMemoryBridge
+
+        bridge = GameMemoryBridge()
+        # Real poller itemstrings: stick needs wood×2
+        assert any(r.recipe_id == "stick" for r in bridge.get_craftable_recipes({"default:wood": 4}))
+        assert bridge.get_craftable_recipes({"default:cobble": 1}) == []
+
+    def test_short_names_still_work(self):
+        from ai.multimodal.game_memory_bridge import GameMemoryBridge
+
+        bridge = GameMemoryBridge()
+        assert any(r.recipe_id == "stick" for r in bridge.get_craftable_recipes({"wood": 2}))
+
+
 class TestDecisionContracts:
     def test_behavior_order_validates(self):
         o = BehaviorOrder(behavior_id="walk", params={"steps": 3}, reasoning="go")

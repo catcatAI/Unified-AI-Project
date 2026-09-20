@@ -158,6 +158,14 @@ installer = [
 game = [
   "pygame",
 ]
+# Local LLM for in-game autonomy (Angela game agent): llama.cpp server
+# mode needs sse-starlette + starlette-context on top of the binding.
+# Model weights (~1GB gguf) live in data/models/ (git-ignored).
+localllm = [
+  "llama-cpp-python>=0.3.0",
+  "sse-starlette>=3.0.0",
+  "starlette-context>=0.3.0",
+]
 # Textual TUI for the text adventure game.
 tui = [
   "textual>=0.80.0",
@@ -169,9 +177,10 @@ tui = [
 # ===========================================================================
 
 # 有需求的用戶 / Feature user: full-feature runtime (real embeddings, vector
-# DB, media, GPU, cache, STT). Everything to actually use the product, no dev tools.
+# DB, media, GPU, cache, STT, local LLM). Everything to actually use the
+# product, no dev tools.
 standard = [
-  "unified-ai-project[ml,vector,data,media,audio,gpu,cache,google,docs]",
+  "unified-ai-project[ml,vector,data,media,audio,gpu,cache,google,docs,localllm]",
 ]
 
 # 專業工程師 / Contributor: standard features + the full dev/test toolchain

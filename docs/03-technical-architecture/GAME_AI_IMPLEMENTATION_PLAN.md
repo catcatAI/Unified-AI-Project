@@ -369,7 +369,7 @@ python -m apps.backend.src.ai.multimodal.game_agent --config configs/standard/ga
 | 規則規劃 DAG + 拓撲驗證 | ✅ 真實 | survival 3 subgoals，live 產出 |
 | HAM 持久記憶 (store + recall) | ✅ 真實 | `ham_game_memory.json`，非 Mock |
 | EmotionSystem / AutonomousLifeCycle 回饋 | ✅ 真實 | 每 100 tick 按任務成敗餵入 |
-| LLM 非同步規劃 + 超時 fallback | ✅ 真實 | fallback 實測；LLM 本體需本地 Ollama |
+| LLM 非同步規劃 + 超時 fallback | ✅ 真實 | fallback 實測；LLM 本體為本地 llama.cpp（:8080），規劃/診斷/對話皆可走真模型 |
 | Polling bridge ↔ Luanti 雙向 | ✅ 真實 | live：server poll + `AngelaBot digs` + 遊戲內 chat 可見 |
 | skill_result 閉環 | ✅ 真實 | 背包差分推導，不再恆 None |
 | VisualEncoder 接線 | ⚠️ 半接 | 已實例化；poller 只送 state 無幀，visual 仍 None |
@@ -377,6 +377,12 @@ python -m apps.backend.src.ai.multimodal.game_agent --config configs/standard/ga
 | poller `craft` 動作 | ✅ 真實 | live 驗證：wood×4 → craft stick → wood×2 + stick×4，`crafted stick for AngelaBot` 留痕；material 不足/無配方 log 失敗不當機 |
 | poller `place` 動作 | ✅ 真實 | live 驗證：cobble×8 → place → cobble×7，`placed default:cobble at (2,6,65)`；look 優先＋鄰格 fallback（空氣＋實心支撐），手牌空時 auto-wield 背包第一個可放方塊；無格/無料 log 失敗不當機 |
 | poller `give` 後門 | ✅ 已上鎖 | `agent_poller_allow_give` 預設 false（拒絕＋warning）；測試環境 minetest.conf 顯式開啟 |
+| poller `move` 步進＋撞牆轉彎 | ✅ 真實 | live：`(0.6,4.5,64.9)→(2.6,4.5,66.2)`；移動是客戶端權威所以 server 側步進（1.5m/格，碰撞感知）；被擋轉 45°（已部署，玩家重進後驗轉彎） |
+| 本地 LLM（Qwen2.5-1.5B-Q4，:8080） | ✅ 真實 | 全離線；`llama_cpp.server`；中文回覆＋JSON 編排 live 驗證；依賴 `localllm` extra 已宣告 |
+| 行為庫 game_behaviors（7 行為） | ✅ 真實 | walk/turn/dig_burst/place_one/look_scan/speak/wait；LLM compose＋adjust；20 測試；live：「幫我挖」→dig_burst→無拾取→自動改參數重試 |
+| 遊戲對話閉環（聽→回→做＋記憶） | ✅ 真實 | poller 擷取→bridge /api/chat→LLM 回覆＋行為→HAM 記憶；bridge 端到端驗證；遊戲內送達待玩家在線驗 |
+| 名稱斷層修復（itemstring↔短名） | ✅ 真實 | `ITEM_ALIASES`＋`normalize_inventory`；此前可合成判斷＋完成檢測全錯；單元測試覆蓋 |
+| L1 craft 節制（做不出就不排） | ✅ 真實 | 無材料時 abstain（此前每 2s 空轉刷屏）；單元測試覆蓋，live 待驗 |
 | Policy 權重訓練 (BC/RL) | ❌ 未做 | 現為 Xavier 初始化，動作笨拙屬實 |
 | 20 FPS 閉環 | ❌ 未達 | agent 10Hz + poller 2s；需幀源 + 降級策略 |
 

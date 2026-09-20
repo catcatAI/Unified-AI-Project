@@ -96,7 +96,11 @@ local function do_craft(player, action)
         end
     end
     if not recipe then
-        minetest.log("action", "[agent_poller] craft failed (no recipe): " .. tostring(action.recipe_id))
+        minetest.log(
+            "action",
+            "[agent_poller] craft failed (no recipe): "
+                .. tostring(action.recipe_id or action.recipe or "auto")
+        )
         return
     end
     local inv = player:get_inventory()

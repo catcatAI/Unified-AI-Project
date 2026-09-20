@@ -34,7 +34,10 @@ class SelectorConfig:
     hidden_dim: int = 128
     temperature: float = 1.0
     min_confidence: float = 0.3
-    skill_cooldown_ticks: int = 10
+    # Repeat penalty window. The poller executes at ~0.5Hz, so switching
+    # skills faster than ~3s is pure flicker (observed: place/dig/move
+    # churn with no commitment). 30 ticks ≈ 3s at the 10Hz agent loop.
+    skill_cooldown_ticks: int = 30
 
 
 @dataclass
@@ -252,10 +255,13 @@ class SkillSelector:
                     break
 
         elif skill_id == SkillID.CRAFT:
-            # 簡化：優先合成工具
-            if "cobblestone" in prop.inventory and prop.inventory["cobblestone"] >= 3:
+            # 簡化：優先合成工具（背包先折短名，否則 itemstring 永遠對不上）
+            from ai.multimodal.game_memory_bridge import normalize_inventory
+
+            inv = normalize_inventory(prop.inventory)
+            if inv.get("cobblestone", 0) >= 3:
                 params = {"recipe_id": "stone_pickaxe", "count": 1}
-            elif "wood" in prop.inventory and prop.inventory["wood"] >= 2:
+            elif inv.get("wood", 0) >= 2:
                 params = {"recipe_id": "stick", "count": 4}
             else:
                 params = {"recipe_id": "auto", "count": 1}
