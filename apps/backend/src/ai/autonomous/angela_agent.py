@@ -186,6 +186,8 @@ class AngelaAutonomousAgent:
         self._chat_history: Deque[str] = deque(maxlen=12)
         self._active_behavior: Optional[Dict[str, Any]] = None
         self._last_behavior_feed_tick: int = 0
+        self._last_goto: Optional[Dict[str, Any]] = None
+        self._last_scan: Optional[Dict[str, Any]] = None
 
         # State
         self.running = False
@@ -496,6 +498,15 @@ class AngelaAutonomousAgent:
             except Exception as e:
                 logger.debug(f"Chat drain failed: {e}")
 
+            # Coordinate-walk + survey status (sticky in bridge state)
+            try:
+                self._last_goto = state.get("goto_") if state else None
+                scan = state.get("scan") if state else None
+                if scan:
+                    self._last_scan = scan
+            except Exception as e:
+                logger.debug(f"Goto/scan perception failed: {e}")
+
         except Exception as e:
             logger.error(f"Perception error: {e}")
 
@@ -747,12 +758,27 @@ class AngelaAutonomousAgent:
                 return default
 
         if skill_id in ("move", "navigate"):
-            action = {
-                "type": "move",
-                "forward": params.get("forward", _f(0, 1.0)),
-                "strafe": params.get("strafe", _f(1, 0.0)),
-                "jump": bool(params.get("jump", triggers.get("jump", 0) > 0.5)),
-            }
+            # All locomotion is coordinate-grounded: step_ahead resolves
+            # facing in Lua (exact); blind directional moves are gone.
+            # A nonzero yaw param (recovery unstick) becomes a real turn —
+            # it used to be silently dropped, so recovery never turned.
+            try:
+                yaw_param = float(params.get("yaw", 0.0) or 0.0)
+            except (TypeError, ValueError):
+                yaw_param = 0.0
+            if yaw_param != 0.0 and self.tick_count % 3 == 0:
+                # Spiral out: turn one tick in three, step the others.
+                action = {"type": "look", "yaw_delta": yaw_param, "pitch_delta": 0.0}
+            else:
+                try:
+                    fwd = float(params.get("forward", _f(0, 1.0)))
+                except (TypeError, ValueError):
+                    fwd = 1.0
+                action = {
+                    "type": "step_ahead",
+                    "dist": 4.5,
+                    "backward": bool(fwd < 0),
+                }
         elif skill_id == "look":
             action = {
                 "type": "look",
@@ -865,17 +891,20 @@ class AngelaAutonomousAgent:
         if not b:
             return
         ok, missing = b.preconditions(self.current_state)
+        merged = b.with_defaults(params)
         self._active_behavior = {
             "id": bid,
-            "params": b.with_defaults(params),
+            "params": merged,
             "reason": reason,
-            "actions": expand_behavior(bid, params) if ok else [],
+            "actions": expand_behavior(bid, merged, self.current_state) if ok else [],
             "idx": 0,
             "started": self.tick_count,
             "inv_start": dict(self._last_inventory or {}),
             "retries": 0,
             "blocked": not ok,
             "missing": missing,
+            "wait_for": b.wait_for,
+            "scan_seq": (self._last_scan or {}).get("seq", 0) if isinstance(self._last_scan, dict) else 0,
         }
         logger.info(f"Behavior started: {bid} ({reason}) blocked={not ok} {missing}")
 
@@ -901,6 +930,28 @@ class AngelaAutonomousAgent:
             return
 
         if ab["idx"] >= len(actions):
+            # Two-phase grounding: scout waits for the survey, then the LLM
+            # picks a concrete coordinate and chains a goto ("that tree" ->
+            # scan -> "2m in front of it" -> walk). Timeout guards a lost scan.
+            if ab.get("wait_for") == "scan":
+                scan = self._last_scan if isinstance(self._last_scan, dict) else None
+                if scan and scan.get("seq", 0) != ab.get("scan_seq", 0):
+                    await self._finish_scout(ab, scan)
+                    return
+                if self.tick_count - ab["started"] > 120:
+                    await self._settle_behavior(False, "scan_timeout")
+                return
+            if b.success_criteria == "arrived":
+                status = (self._last_goto or {}).get("status") if isinstance(
+                    self._last_goto, dict
+                ) else None
+                if status == "arrived":
+                    await self._settle_behavior(True, "")
+                elif status in ("failed", "aborted"):
+                    await self._settle_behavior(
+                        False, f"goto_{(self._last_goto or {}).get('reason', 'unknown')}"
+                    )
+                return
             pickups = self._behavior_pickups(ab)
             if b.success_criteria == "any_pickup" and not pickups:
                 if b.adjust and ab["retries"] < 1:
@@ -915,7 +966,7 @@ class AngelaAutonomousAgent:
                             fail_reason="no_pickup",
                         ),
                     )
-                    ab["actions"] = b.expand(ab["params"])
+                    ab["actions"] = b.expand(ab["params"], self.current_state)
                     ab["idx"] = 0
                     ab["started"] = self.tick_count
                     ab["retries"] += 1
@@ -939,7 +990,8 @@ class AngelaAutonomousAgent:
             except Exception as e:
                 logger.error(f"Queue behavior action failed: {e}")
 
-        if self.tick_count - ab["started"] > 60 + 25 * len(actions):
+        limit = 600 if b.success_criteria == "arrived" else 60 + 25 * len(actions)
+        if self.tick_count - ab["started"] > limit:
             await self._settle_behavior(False, "timeout")
 
     def _behavior_pickups(self, ab: Dict[str, Any]) -> Dict[str, int]:
@@ -990,6 +1042,34 @@ class AngelaAutonomousAgent:
                 )
         except Exception as e:
             logger.debug(f"Behavior memory store failed: {e}")
+
+    async def _finish_scout(self, ab: Dict[str, Any], scan: Dict[str, Any]):
+        """Scout phase two: LLM turns surveyed nodes into a goto coordinate."""
+        nodes = scan.get("nodes", []) or []
+        node_lines = "\n".join(
+            f"- {n.get('node')} at ({n.get('x')},{n.get('y')},{n.get('z')})" for n in nodes[:12]
+        )
+        await self._settle_behavior(True, "scan_done")
+        if not nodes:
+            logger.info("Scout found nothing")
+            return
+        task = (
+            f"從掃描結果選一個地點走過去（{ab['params'].get('node', '')}，"
+            f"原因是: {ab.get('reason', '')}）。偏好最近的，目的地站在目標旁邊 "
+            f"2 米（y 取目標 y）。\n掃描結果:\n{node_lines}"
+        )
+        try:
+            order = await self.llm.acompose_behavior(task, self._state_summary(), [])
+            if order.behavior_id == "goto" and order.params.get("pos"):
+                self._start_behavior("goto", order.params, f"scout-pick:{ab['id']}")
+                return
+            logger.warning(f"Scout pick rejected (not goto): {order.behavior_id}")
+        except Exception as e:
+            logger.warning(f"Scout pick LLM failed, nearest fallback: {e}")
+        n0 = nodes[0]
+        self._start_behavior(
+            "goto", {"pos": {"x": n0["x"], "y": n0["y"], "z": n0["z"]}}, "scout-fallback"
+        )
 
     async def _consolidate_memory(self):
         """Consolidate experiences into long-term memory"""

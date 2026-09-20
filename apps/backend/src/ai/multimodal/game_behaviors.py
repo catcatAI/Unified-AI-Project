@@ -1,17 +1,12 @@
 """
-Game Behavior Library - 可組合行為庫
+Game Behavior Library - 可組合行為庫（v2：意圖→座標）
 
-使用者要求：不是寫死腳本/模板當 AI，而是專案內的行為庫
-（走、轉、挖、放、看、說、等），由狀態＋記憶＋LLM 來
-決策、編排、編輯參數，並在遊戲中即時執行。
-
-設計：
-- Behavior = 宣告式單位：id、給 LLM 看的 description、參數 schema、
-  前置檢查、展開成 poller 動作、完成判準、反饋改參數（adjust）。
-- LLM 做兩件事：compose（選行為＋填參數）與 adjust（失敗後改參數），
-  都走 LLMGameInterface 的結構化輸出；規則只做保底。
-- 執行由 agent 的 BehaviorRunner 驅動：一次一個動作餵給 bridge，
-  按完成判準/超時結算，再把結果餵回 LLM 改參數。
+使用者要求：不是寫死腳本/模板當 AI，而是專案內的行為庫，由
+狀態＋記憶＋LLM 來決策、編排、編輯參數，並在遊戲中即時執行。
+v2 架構原則：意圖在 library 落成遊戲可接收的座標
+（goto x,y,z / dig_at / look_at …），poller 只走引擎認的路
+（find_path＋執行期精確朝向）。Python 端不做 yaw 數學、不盲走，
+不跟客戶端搶方向盤。
 """
 
 import logging
@@ -46,8 +41,9 @@ class Behavior:
     description: str  # 給 LLM 看的用途說明
     params_schema: Dict[str, Dict[str, Any]]  # name -> {type, default, desc}
     preconditions: Callable[[Any], Tuple[bool, List[str]]]  # (state) -> (ok, missing)
-    expand: Callable[[Dict[str, Any]], List[Action]]  # params -> poller actions
-    success_criteria: str = "steps_done"
+    expand: Callable[[Dict[str, Any], Any], List[Action]]  # (params, state) -> actions
+    success_criteria: str = "steps_done"  # steps_done | any_pickup | arrived | scan_done
+    wait_for: str = ""  # "scan": 動作發完後等掃描結果再由 LLM 二段編排
     adjust: Optional[Callable[[Dict[str, Any], BehaviorFeedback], Dict[str, Any]]] = None
 
     def with_defaults(self, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -55,6 +51,31 @@ class Behavior:
         if params:
             merged.update({k: v for k, v in params.items() if k in self.params_schema})
         return merged
+
+
+# 口語/短名 -> Minetest 節點名（scout 用；LLM 輸出哪種都接得住）
+NODE_ALIASES = {
+    "tree": "default:tree",
+    "wood": "default:tree",
+    "stone": "default:stone",
+    "cobble": "default:cobble",
+    "cobblestone": "default:cobble",
+    "coal": "default:coal_ore",
+    "sand": "default:sand",
+    "dirt": "default:dirt",
+    "water": "default:water_source",
+    "grass": "default:dirt_with_grass",
+    "flower": "default:dandelion_yellow",
+}
+
+
+def _pos_of(state: Any) -> Tuple[float, float, float]:
+    try:
+        prop = state.proprioception if state else None
+        p = prop.position if prop else (0, 0, 0)
+        return (float(p[0]), float(p[1]), float(p[2]))
+    except Exception:
+        return (0.0, 0.0, 0.0)
 
 
 def _inventory_of(state: Any) -> Dict[str, Any]:
@@ -86,21 +107,27 @@ def _needs_placeable(state: Any) -> Tuple[bool, List[str]]:
     return False, ["placeable block"]
 
 
-def _walk_expand(params: Dict[str, Any]) -> List[Action]:
+def _walk_expand(params: Dict[str, Any], _state: Any = None) -> List[Action]:
+    # 意圖「往前走 N 步」落成座標語義：沿面朝走 steps*1.5 米。
+    # 朝向數學在 poller（step_ahead 精確用自身 yaw），此處只給距離。
     steps = max(1, min(int(params.get("steps", 3)), 10))
-    backward = bool(params.get("backward", False))
-    fwd = -1.0 if backward else 1.0
-    return [{"type": "move", "forward": fwd, "strafe": 0.0} for _ in range(steps)]
+    return [
+        {
+            "type": "step_ahead",
+            "dist": steps * 1.5,
+            "backward": bool(params.get("backward", False)),
+        }
+    ]
 
 
-def _turn_expand(params: Dict[str, Any]) -> List[Action]:
+def _turn_expand(params: Dict[str, Any], _state: Any = None) -> List[Action]:
     import math
 
     degrees = float(params.get("degrees", 45))
     return [{"type": "look", "yaw_delta": math.radians(degrees), "pitch_delta": 0.0}]
 
 
-def _dig_expand(params: Dict[str, Any]) -> List[Action]:
+def _dig_expand(params: Dict[str, Any], _state: Any = None) -> List[Action]:
     n = max(1, min(int(params.get("n", 5)), 20))
     actions: List[Action] = []
     if params.get("turn_first"):
@@ -109,6 +136,57 @@ def _dig_expand(params: Dict[str, Any]) -> List[Action]:
         actions.append({"type": "look", "yaw_delta": math.radians(45), "pitch_delta": 0.0})
     actions.extend([{"type": "dig"} for _ in range(n)])
     return actions
+
+
+def _xyz(params: Dict[str, Any], key: str = "pos") -> Optional[Dict[str, float]]:
+    p = params.get(key)
+    if isinstance(p, dict) and all(k in p for k in ("x", "y", "z")):
+        try:
+            return {"x": float(p["x"]), "y": float(p["y"]), "z": float(p["z"])}
+        except (TypeError, ValueError):
+            return None
+    if isinstance(p, (list, tuple)) and len(p) == 3:
+        try:
+            return {"x": float(p[0]), "y": float(p[1]), "z": float(p[2])}
+        except (TypeError, ValueError):
+            return None
+    for sep in (",", " "):
+        if isinstance(p, str) and sep in p:
+            try:
+                x, y, z = [float(v) for v in p.split(sep) if v.strip() != ""]
+                return {"x": x, "y": y, "z": z}
+            except (TypeError, ValueError):
+                continue
+    return None
+
+
+def _goto_expand(params: Dict[str, Any], _state: Any = None) -> List[Action]:
+    pos = _xyz(params)
+    return [{"type": "goto", "pos": pos}] if pos else []
+
+
+def _look_at_expand(params: Dict[str, Any], _state: Any = None) -> List[Action]:
+    pos = _xyz(params)
+    return [{"type": "look_at", "pos": pos}] if pos else []
+
+
+def _dig_at_expand(params: Dict[str, Any], _state: Any = None) -> List[Action]:
+    pos = _xyz(params)
+    return [{"type": "dig_at", "pos": pos}] if pos else []
+
+
+def _place_at_expand(params: Dict[str, Any], _state: Any = None) -> List[Action]:
+    pos = _xyz(params)
+    return [{"type": "place_at", "pos": pos}] if pos else []
+
+
+def _scout_expand(params: Dict[str, Any], _state: Any = None) -> List[Action]:
+    raw = str(params.get("node", "default:tree"))
+    node = NODE_ALIASES.get(raw, raw)
+    if ":" not in node:
+        node = f"default:{node}"
+    radius = max(4, min(int(params.get("radius", 16)), 24))
+    return [{"type": "scan", "nodes": [node], "radius": radius}]
 
 
 def _dig_adjust(params: Dict[str, Any], fb: BehaviorFeedback) -> Dict[str, Any]:
@@ -120,11 +198,11 @@ def _dig_adjust(params: Dict[str, Any], fb: BehaviorFeedback) -> Dict[str, Any]:
     return new
 
 
-def _place_expand(_params: Dict[str, Any]) -> List[Action]:
+def _place_expand(_params: Dict[str, Any], _state: Any = None) -> List[Action]:
     return [{"type": "place"}]
 
 
-def _scan_expand(_params: Dict[str, Any]) -> List[Action]:
+def _scan_expand(_params: Dict[str, Any], _state: Any = None) -> List[Action]:
     import math
 
     return [
@@ -132,7 +210,7 @@ def _scan_expand(_params: Dict[str, Any]) -> List[Action]:
     ]
 
 
-def _speak_expand(params: Dict[str, Any]) -> List[Action]:
+def _speak_expand(params: Dict[str, Any], _state: Any = None) -> List[Action]:
     text = str(params.get("text", ""))[:300]
     return [{"type": "chat", "message": text}] if text else []
 
@@ -148,7 +226,7 @@ def _register(b: Behavior) -> Behavior:
 _register(
     Behavior(
         behavior_id="walk",
-        description="向前（或向後）走 N 步，每步約 1.5 米。走路只認面朝方向，轉彎用 turn。",
+        description="沿面朝走 N*1.5 米（落成座標由引擎尋路走，有牆繞、落水浮）。轉彎用 turn，去指定地點用 goto。",
         params_schema={
             "steps": {"type": "int", "default": 3, "desc": "步數 1-10"},
             "backward": {"type": "bool", "default": False, "desc": "是否倒退"},
@@ -242,12 +320,80 @@ def behavior_catalog_text() -> str:
     return "\n".join(lines)
 
 
-def expand_behavior(behavior_id: str, params: Optional[Dict[str, Any]] = None) -> List[Action]:
+def expand_behavior(
+    behavior_id: str, params: Optional[Dict[str, Any]] = None, state: Any = None
+) -> List[Action]:
     b = BEHAVIORS.get(behavior_id)
     if not b:
         logger.warning(f"Unknown behavior: {behavior_id}")
         return []
-    return b.expand(b.with_defaults(params))
+    return b.expand(b.with_defaults(params), state)
+
+
+_register(
+    Behavior(
+        behavior_id="goto",
+        description="走到世界座標 pos（x,y,z）。引擎尋路＋逐格推進，有牆繞、到不了就回報。",
+        params_schema={
+            "pos": {"type": "xyz", "default": None, "desc": "目的地座標 {x,y,z}"},
+        },
+        preconditions=_no_preconditions,
+        expand=_goto_expand,
+        success_criteria="arrived",
+    )
+)
+
+_register(
+    Behavior(
+        behavior_id="scout",
+        description="掃描周圍 node（如 default:tree），結果回傳後由 LLM 二段選點再走過去。找東西（樹/石/煤）都用它開頭。",
+        params_schema={
+            "node": {"type": "str", "default": "default:tree", "desc": "節點名（tree/stone/coal 可寫短名）"},
+            "radius": {"type": "int", "default": 16, "desc": "掃描半徑 4-24"},
+        },
+        preconditions=_no_preconditions,
+        expand=_scout_expand,
+        success_criteria="scan_done",
+        wait_for="scan",
+    )
+)
+
+_register(
+    Behavior(
+        behavior_id="look_at",
+        description="轉頭注視世界座標 pos（執行期精確計算朝向）。",
+        params_schema={
+            "pos": {"type": "xyz", "default": None, "desc": "注視點座標 {x,y,z}"},
+        },
+        preconditions=_no_preconditions,
+        expand=_look_at_expand,
+    )
+)
+
+_register(
+    Behavior(
+        behavior_id="dig_at",
+        description="面朝世界座標 pos 並挖掉那格（6 米內、非空氣）。指哪打哪。",
+        params_schema={
+            "pos": {"type": "xyz", "default": None, "desc": "目標格座標 {x,y,z}"},
+        },
+        preconditions=_no_preconditions,
+        expand=_dig_at_expand,
+        success_criteria="any_pickup",
+    )
+)
+
+_register(
+    Behavior(
+        behavior_id="place_at",
+        description="在世界座標 pos 放一個方塊（該格須為空且下方實心）。",
+        params_schema={
+            "pos": {"type": "xyz", "default": None, "desc": "目標格座標 {x,y,z}"},
+        },
+        preconditions=_needs_placeable,
+        expand=_place_at_expand,
+    )
+)
 
 
 class BehaviorOrder(BaseModel):

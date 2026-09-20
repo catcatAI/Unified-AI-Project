@@ -34,7 +34,41 @@ class TestBehaviorRegistry:
             "look_scan",
             "speak",
             "wait",
+            "goto",
+            "scout",
+            "look_at",
+            "dig_at",
+            "place_at",
         }
+
+    def test_walk_is_coordinate_step_ahead(self):
+        acts = expand_behavior("walk", {"steps": 3})
+        assert acts == [{"type": "step_ahead", "dist": 4.5, "backward": False}]
+
+    def test_goto_needs_xyz(self):
+        assert expand_behavior("goto", {"pos": {"x": 1, "y": 2, "z": 3}}) == [
+            {"type": "goto", "pos": {"x": 1.0, "y": 2.0, "z": 3.0}}
+        ]
+        assert expand_behavior("goto", {}) == []
+        assert expand_behavior("goto", {"pos": "1,2,3"}) == [
+            {"type": "goto", "pos": {"x": 1.0, "y": 2.0, "z": 3.0}}
+        ]
+
+    def test_scout_normalizes_node_names(self):
+        acts = expand_behavior("scout", {"node": "tree", "radius": 16})
+        assert acts == [{"type": "scan", "nodes": ["default:tree"], "radius": 16}]
+        acts = expand_behavior("scout", {"node": "default:stone", "radius": 99})
+        assert acts[0]["radius"] == 24
+
+    def test_dig_at_and_look_at(self):
+        p = {"x": 0, "y": 0, "z": 0}
+        assert expand_behavior("dig_at", {"pos": p}) == [{"type": "dig_at", "pos": p}]
+        assert expand_behavior("look_at", {"pos": p}) == [{"type": "look_at", "pos": p}]
+        assert expand_behavior("place_at", {"pos": p}) == [{"type": "place_at", "pos": p}]
+
+    def test_scout_waits_for_scan(self):
+        assert BEHAVIORS["scout"].wait_for == "scan"
+        assert BEHAVIORS["goto"].success_criteria == "arrived"
 
     def test_catalog_lists_everything(self):
         text = behavior_catalog_text()
@@ -48,11 +82,12 @@ class TestBehaviorRegistry:
 class TestBehaviorExpansion:
     def test_walk_steps_bounded(self):
         acts = expand_behavior("walk", {"steps": 3})
-        assert len(acts) == 3
-        assert all(a["type"] == "move" and a["forward"] == 1.0 for a in acts)
-        assert len(expand_behavior("walk", {"steps": 99})) == 10
+        assert acts == [{"type": "step_ahead", "dist": 4.5, "backward": False}]
+        assert expand_behavior("walk", {"steps": 99}) == [
+            {"type": "step_ahead", "dist": 15.0, "backward": False}
+        ]
         back = expand_behavior("walk", {"steps": 2, "backward": True})
-        assert all(a["forward"] == -1.0 for a in back)
+        assert back == [{"type": "step_ahead", "dist": 3.0, "backward": True}]
 
     def test_turn_degrees(self):
         acts = expand_behavior("turn", {"degrees": 90})

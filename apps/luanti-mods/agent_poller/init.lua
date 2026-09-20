@@ -144,6 +144,164 @@ end
 
 local last_dead_notice = 0
 
+-- Active coordinate walk, per player: {path = {...}, idx = N, dest = pos, stuck = N}.
+-- The library converts intents to coordinates; the poller walks the
+-- engine-computed path. No blind stepping, no fighting the client.
+local active_goto = {}
+local goto_report = nil -- sticky status, attached to every poll state
+local pending_scan = nil -- one-shot node survey, attached to next poll state
+local scan_seq = 0
+
+-- Face an exact world coordinate (execution-time precise; state yaw is stale).
+local function face_toward(player, target)
+    local eye = player:get_pos()
+    eye.y = eye.y + 1.6
+    local rot = vector.dir_to_rotation(vector.direction(eye, target))
+    player:set_look_horizontal(rot.y)
+    player:set_look_vertical(rot.x)
+end
+
+-- First placeable node stack into the wield slot (slot swap; this Luanti
+-- build has no set_wield_index). Returns the wielded stack or nil.
+local function wield_placeable(player)
+    local stack = player:get_wielded_item()
+    if not stack:is_empty() and minetest.registered_nodes[stack:get_name()] then
+        return stack
+    end
+    local inv = player:get_inventory()
+    for i = 1, inv:get_size("main") do
+        local s = inv:get_stack("main", i)
+        if not s:is_empty() and minetest.registered_nodes[s:get_name()] then
+            local wi = player:get_wield_index()
+            inv:set_stack("main", wi, s)
+            inv:set_stack("main", i, stack)
+            return player:get_wielded_item()
+        end
+    end
+    return nil
+end
+
+-- Feet in water -> rise toward the surface. Returns true when swimming
+-- (caller must skip horizontal motion that tick).
+local function swim_up(player)
+    local ppos = player:get_pos()
+    if minetest.get_node(ppos).name:find("water") then
+        local dest = vector.add(ppos, {x = 0, y = 1.5, z = 0})
+        local hdef = minetest.registered_nodes[minetest.get_node(dest).name] or {}
+        if not hdef.walkable then
+            player:set_pos(dest)
+            minetest.log("action", "[agent_poller] swimming up for " .. player:get_player_name())
+        end
+        return true
+    end
+    return false
+end
+
+-- One collision-aware step toward dest (max ~1.5m). Tries ground level,
+-- step-up, and (allow_climb) a jump-height scramble. Returns true if moved.
+local function try_step(player, dest, allow_climb)
+    local pos = player:get_pos()
+    local flat = vector.new(dest.x - pos.x, 0, dest.z - pos.z)
+    if vector.length(flat) < 0.05 then
+        return true
+    end
+    flat = vector.normalize(flat)
+    local dys = allow_climb and {0, 1, 2} or {0, 1}
+    for _, dy in ipairs(dys) do
+        local c = vector.round(
+            vector.add(vector.add(pos, vector.multiply(flat, 1.5)), {x = 0, y = dy, z = 0})
+        )
+        local fdef = minetest.registered_nodes[minetest.get_node(c).name] or {}
+        local head = vector.add(c, {x = 0, y = 1, z = 0})
+        local hdef = minetest.registered_nodes[minetest.get_node(head).name] or {}
+        if not fdef.walkable and not hdef.walkable then
+            player:set_pos(c)
+            minetest.log(
+                "action",
+                "[agent_poller] moved to "
+                    .. minetest.pos_to_string(c, 1)
+                    .. " for "
+                    .. player:get_player_name()
+            )
+            return true
+        end
+    end
+    return false
+end
+
+-- Start (or replace) a coordinate walk: engine path, advanced every poll.
+local function start_goto(player, pname, dest)
+    dest = vector.round(dest)
+    local pos = player:get_pos()
+    if vector.distance(pos, dest) < 1.5 then
+        active_goto[pname] = nil
+        goto_report = {status = "arrived", dest = dest}
+        return
+    end
+    local path = minetest.find_path(pos, dest, 16, 1, 1)
+    if path and #path > 0 then
+        active_goto[pname] = {path = path, idx = 1, dest = dest, stuck = 0}
+        goto_report = {status = "walking", dest = dest}
+        minetest.log(
+            "action",
+            "[agent_poller] goto "
+                .. minetest.pos_to_string(dest, 1)
+                .. " (" .. #path .. " wp) for " .. pname
+        )
+    else
+        active_goto[pname] = nil
+        goto_report = {status = "failed", reason = "no_path", dest = dest}
+        minetest.log("action", "[agent_poller] goto failed (no path) for " .. pname)
+    end
+end
+
+-- Advance the active goto one waypoint per poll. Runs inside poll_bridge
+-- so walking continues smoothly even when the action queue holds
+-- something else (10Hz agent vs 0.5Hz poller).
+local function advance_goto(player, pname)
+    local g = active_goto[pname]
+    if not g then
+        return
+    end
+    if player:get_hp() <= 0 then
+        active_goto[pname] = nil
+        goto_report = {status = "aborted", reason = "dead"}
+        return
+    end
+    if swim_up(player) then
+        goto_report = {status = "walking", dest = g.dest}
+        return
+    end
+    local pos = player:get_pos()
+    local wp = g.path[g.idx]
+    if not wp then
+        active_goto[pname] = nil
+        goto_report = {status = "arrived", dest = g.dest}
+        minetest.log("action", "[agent_poller] arrived for " .. pname)
+        return
+    end
+    if vector.distance(pos, wp) < 0.8 then
+        g.idx = g.idx + 1
+        goto_report = {status = "walking", dest = g.dest}
+        return
+    end
+    if try_step(player, wp, false) then
+        g.stuck = 0
+        goto_report = {status = "walking", dest = g.dest}
+    else
+        g.stuck = (g.stuck or 0) + 1
+        local yaw = player:get_look_horizontal()
+        player:set_look_horizontal(yaw + math.pi / 4)
+        if g.stuck > 8 then
+            active_goto[pname] = nil
+            goto_report = {status = "failed", reason = "blocked", dest = g.dest}
+            minetest.log("action", "[agent_poller] goto failed (blocked) for " .. pname)
+        else
+            goto_report = {status = "walking", dest = g.dest}
+        end
+    end
+end
+
 local function execute_commands(actions, player)
     if not player or not actions then
         return
@@ -166,78 +324,154 @@ local function execute_commands(actions, player)
                 )
             end
         elseif action.type == "move" then
+            -- NOTE: no set_velocity anywhere: movement is client-authoritative
+            -- and the standing-still client always wins, so velocity commands
+            -- are dead weight. The single control path is coordinate stepping.
             local yaw = player:get_look_horizontal()
             local dir = vector.new(action.forward or 0, 0, action.strafe or 0)
             dir = vector.rotate(dir, vector.new(0, yaw, 0))
-            player:set_velocity(vector.multiply(dir, 4))
-            if action.jump then
-                local v = player:get_velocity()
-                player:set_velocity({x = v.x, y = 6, z = v.z})
-            end
-            -- Swim reflex: stepping keeps y constant, so without this she
-            -- walks along the seabed and drowns (observed: hp 0 at y=-5.6).
-            -- Feet in water -> move straight up toward the surface instead.
-            local swimming = false
-            do
-                local ppos = player:get_pos()
-                local feet = minetest.get_node(ppos).name
-                if feet:find("water") then
-                    swimming = true
-                    local dest = vector.add(ppos, {x = 0, y = 1.5, z = 0})
-                    local hdef = minetest.registered_nodes[minetest.get_node(dest).name]
-                        or {}
-                    if not hdef.walkable then
-                        player:set_pos(dest)
-                        minetest.log(
-                            "action",
-                            "[agent_poller] swimming up for " .. player:get_player_name()
-                        )
-                    end
-                end
-            end
-            -- Server-side step: Luanti movement is client-authoritative, so
-            -- set_velocity alone never displaces a standing-still client
-            -- (800 move actions, 0.0m gained — measured). Step the position
-            -- directly, collision-aware, so move decisions become motion.
-            -- Skipped while swimming (buoyancy first).
-            local flat = (not swimming) and vector.new(dir.x, 0, dir.z) or vector.new()
-            if vector.length(flat) > 0.05 then
-                flat = vector.normalize(flat)
-                local pos = player:get_pos()
-                local stepped = false
-                for _, dy in ipairs({0, 1}) do
+            if not swim_up(player) then
+                local flat = vector.new(dir.x, 0, dir.z)
+                if vector.length(flat) > 0.05 then
+                    local pos = player:get_pos()
                     local dest = vector.add(
-                        vector.add(pos, vector.multiply(flat, 1.5)),
-                        {x = 0, y = dy, z = 0}
+                        pos,
+                        vector.multiply(vector.normalize(flat), 1.5)
                     )
-                    local feet = minetest.get_node(dest)
-                    local head = minetest.get_node(vector.add(dest, {x = 0, y = 1, z = 0}))
-                    local fdef = minetest.registered_nodes[feet.name] or {}
-                    local hdef = minetest.registered_nodes[head.name] or {}
-                    if not fdef.walkable and not hdef.walkable then
-                        player:set_pos(dest)
+                    if not try_step(player, dest, action.jump) then
+                        -- Bump-and-turn keeps a blind move from hugging walls.
+                        player:set_look_horizontal(yaw + math.pi / 4)
                         minetest.log(
                             "action",
-                            "[agent_poller] moved to "
-                                .. minetest.pos_to_string(dest, 1)
-                                .. " for "
+                            "[agent_poller] move blocked, turning for "
                                 .. player:get_player_name()
                         )
-                        stepped = true
-                        break
                     end
                 end
-                if not stepped then
-                    -- Bump-and-turn: face a new direction so the next step
-                    -- goes elsewhere. A player turns when blocked; without
-                    -- this she walks into the same wall forever (her look
-                    -- decisions rarely steer her on their own).
-                    player:set_look_horizontal(yaw + math.pi / 4)
+            end
+        elseif action.type == "goto" then
+            -- Coordinate walk: engine path, advanced every poll by
+            -- advance_goto (smooth even when the queue holds other actions).
+            local d = action.pos
+            if d and d.x and d.y and d.z then
+                start_goto(player, player:get_player_name(), vector.new(d.x, d.y, d.z))
+            end
+        elseif action.type == "step_ahead" then
+            -- "Walk N meters along current facing" as coordinates. Facing
+            -- math stays in Lua (exact); the library only says how far.
+            local yaw = player:get_look_horizontal()
+            local dir = vector.rotate(vector.new(1, 0, 0), vector.new(0, yaw, 0))
+            if action.backward then
+                dir = vector.multiply(dir, -1)
+            end
+            local pos = player:get_pos()
+            start_goto(
+                player,
+                player:get_player_name(),
+                vector.add(pos, vector.multiply(dir, tonumber(action.dist) or 4.5))
+            )
+        elseif action.type == "look_at" then
+            local t = action.pos
+            if t and t.x and t.y and t.z then
+                face_toward(player, vector.new(t.x, t.y, t.z))
+            end
+        elseif action.type == "dig_at" then
+            local t = action.pos
+            if t and t.x and t.y and t.z then
+                local target = vector.round(vector.new(t.x, t.y, t.z))
+                face_toward(player, target)
+                local eye = player:get_pos()
+                eye.y = eye.y + 1.6
+                local node = minetest.get_node(target)
+                if vector.distance(eye, target) <= 6.5
+                    and node.name ~= "air"
+                    and node.name ~= "ignore" then
+                    minetest.node_dig(target, node, player)
                     minetest.log(
                         "action",
-                        "[agent_poller] move blocked, turning for " .. player:get_player_name()
+                        "[agent_poller] dug " .. node.name .. " at "
+                            .. minetest.pos_to_string(target, 1)
+                            .. " for " .. player:get_player_name()
+                    )
+                else
+                    minetest.log(
+                        "action",
+                        "[agent_poller] dig_at failed (" .. node.name .. ") for "
+                            .. player:get_player_name()
                     )
                 end
+            end
+        elseif action.type == "place_at" then
+            local t = action.pos
+            if t and t.x and t.y and t.z then
+                local target = vector.round(vector.new(t.x, t.y, t.z))
+                face_toward(player, target)
+                local below = vector.add(target, {x = 0, y = -1, z = 0})
+                if minetest.get_node(target).name == "air"
+                    and minetest.get_node(below).name ~= "air" then
+                    local stack = wield_placeable(player)
+                    if stack then
+                        local placed_name = stack:get_name()
+                        local leftover = minetest.item_place(
+                            stack, player, {type = "node", under = below, above = target}
+                        )
+                        if leftover then
+                            player:set_wielded_item(leftover)
+                        end
+                        minetest.log(
+                            "action",
+                            "[agent_poller] placed " .. placed_name .. " at "
+                                .. minetest.pos_to_string(target, 1)
+                                .. " for " .. player:get_player_name()
+                        )
+                    else
+                        minetest.log(
+                            "action",
+                            "[agent_poller] place_at failed (nothing placeable) for "
+                                .. player:get_player_name()
+                        )
+                    end
+                else
+                    minetest.log(
+                        "action",
+                        "[agent_poller] place_at failed (no free cell) for "
+                            .. player:get_player_name()
+                    )
+                end
+            end
+        elseif action.type == "scan" then
+            -- Node survey for intent grounding ("that tree" -> coordinates).
+            -- Result rides the next poll state; the library picks from it.
+            local names = action.nodes or (action.node and {action.node} or {})
+            if type(names) == "string" then
+                names = {names}
+            end
+            if #names > 0 then
+                local pos = vector.round(player:get_pos())
+                local r = math.min(tonumber(action.radius) or 16, 24)
+                local found = minetest.find_nodes_in_area(
+                    vector.subtract(pos, r), vector.add(pos, r), names
+                ) or {}
+                local scored = {}
+                for _, p in ipairs(found) do
+                    scored[#scored + 1] = {pos = p, d = vector.distance(pos, p)}
+                end
+                table.sort(scored, function(a, b) return a.d < b.d end)
+                local items = {}
+                for i = 1, math.min(#scored, 12) do
+                    local p = scored[i].pos
+                    items[#items + 1] = {
+                        node = minetest.get_node(p).name,
+                        x = p.x, y = p.y, z = p.z,
+                    }
+                end
+                scan_seq = scan_seq + 1
+                pending_scan = {seq = scan_seq, center = {x = pos.x, y = pos.y, z = pos.z}, nodes = items}
+                minetest.log(
+                    "action",
+                    "[agent_poller] scanned " .. #items .. " nodes for "
+                        .. player:get_player_name()
+                )
             end
         elseif action.type == "look" then
             local yaw = (action.yaw_delta or 0) + player:get_look_horizontal()
@@ -400,6 +634,13 @@ local function poll_bridge()
         return
     end
     local player_name = player:get_player_name()
+    -- Coordinate walk advances every poll, independent of queued actions.
+    do
+        local ok, err = pcall(advance_goto, player, player_name)
+        if not ok then
+            minetest.log("error", "[agent_poller] goto advance failed: " .. tostring(err))
+        end
+    end
     local pos = player:get_pos()
     local inv = player:get_inventory()
     local inv_list = {}
@@ -420,7 +661,10 @@ local function poll_bridge()
         yaw = player:get_look_horizontal(),
         pitch = player:get_look_vertical(),
         on_ground = true,
+        goto_ = goto_report,
+        scan = pending_scan,
     }
+    pending_scan = nil -- one-shot delivery; goto_ stays sticky
     http_api.fetch({
         url = BRIDGE_URL .. "/api/poll",
         method = "POST",

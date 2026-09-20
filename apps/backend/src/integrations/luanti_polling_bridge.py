@@ -42,7 +42,8 @@ class PollingBridge:
             data = await request.json()
             logger.debug(f"Poll received: {data.get('position')}")
 
-            # Update player state
+            # Update player state (goto_/scan ride along opaquely for
+            # the coordinate-grounded behavior library)
             self.player_state = {
                 "position": data.get("position"),
                 "hp": data.get("hp"),
@@ -53,6 +54,8 @@ class PollingBridge:
                 "yaw": data.get("yaw"),
                 "pitch": data.get("pitch"),
                 "on_ground": data.get("on_ground"),
+                "goto_": data.get("goto_"),
+                "scan": data.get("scan"),
                 "timestamp": datetime.now().isoformat(),
             }
 
