@@ -186,6 +186,11 @@ class AngelaAutonomousAgent:
         self._chat_history: Deque[str] = deque(maxlen=12)
         self._active_behavior: Optional[Dict[str, Any]] = None
         self._last_behavior_feed_tick: int = 0
+        # Cooperative action slot: the runner's feed sets a hold so the
+        # 10Hz executor doesn't overwrite it before the 0.5Hz poll drains
+        # it (observed: 4 consecutive vision actions died in queue).
+        # Auto-expires after 30 ticks so a stuck runner can't mute plans.
+        self._behavior_hold_tick: int = -1000
         self._last_goto: Optional[Dict[str, Any]] = None
         self._last_scan: Optional[Dict[str, Any]] = None
         self._last_vision: Optional[Dict[str, Any]] = None
@@ -753,6 +758,10 @@ class AngelaAutonomousAgent:
 
     def _queue_skill(self, skill_ctx: SkillContext):
         """Queue skill for execution via bridge (poller-compatible action)."""
+        # Yield to a runner-fed behavior action: the executor's 10Hz writes
+        # would otherwise overwrite it before the 0.5Hz poll drains it.
+        if self.tick_count - self._behavior_hold_tick < 30:
+            return
         # 背壓：poller 2s 取一次，agent 10Hz 生產會淹沒 queue；超過上限就丟棄
         try:
             if len(getattr(self.bridge, "pending_actions", [])) >= 3:
@@ -920,6 +929,7 @@ class AngelaAutonomousAgent:
             "missing": missing,
             "wait_for": b.wait_for,
             "scan_seq": basis_seq,
+            "goto_basis": self._last_goto,
         }
         logger.info(f"Behavior started: {bid} ({reason}) blocked={not ok} {missing}")
 
@@ -939,7 +949,12 @@ class AngelaAutonomousAgent:
 
         actions = ab["actions"]
         if not actions:
-            target = int(ab["params"].get("ticks", 20)) if ab["id"] == "wait" else 1
+            # wait counts ticks; anything else expanding to nothing means
+            # bad params (e.g. LLM goto without pos) — fail, don't fake success.
+            if ab["id"] != "wait":
+                await self._settle_behavior(False, "empty_expand")
+                return
+            target = int(ab["params"].get("ticks", 20))
             if self.tick_count - ab["started"] >= max(target, 1):
                 await self._settle_behavior(True, "")
             return
@@ -962,15 +977,19 @@ class AngelaAutonomousAgent:
                     await self._settle_behavior(False, f"{wait_for}_timeout")
                 return
             if b.success_criteria == "arrived":
-                status = (self._last_goto or {}).get("status") if isinstance(
-                    self._last_goto, dict
-                ) else None
-                if status == "arrived":
-                    await self._settle_behavior(True, "")
-                elif status in ("failed", "aborted"):
-                    await self._settle_behavior(
-                        False, f"goto_{(self._last_goto or {}).get('reason', 'unknown')}"
-                    )
+                # Freshness: ignore reports predating this behavior, or a
+                # previous walk's failure settles the new one instantly.
+                cur = self._last_goto if isinstance(self._last_goto, dict) else None
+                if cur is not None and cur is not ab.get("goto_basis"):
+                    status = cur.get("status")
+                    if status == "arrived":
+                        await self._settle_behavior(True, "")
+                        return
+                    if status in ("failed", "aborted"):
+                        await self._settle_behavior(
+                            False, f"goto_{cur.get('reason', 'unknown')}"
+                        )
+                        return
                 return
             pickups = self._behavior_pickups(ab)
             if b.success_criteria == "any_pickup" and not pickups:
@@ -1005,6 +1024,7 @@ class AngelaAutonomousAgent:
             nxt = actions[ab["idx"]]
             ab["idx"] += 1
             self._last_behavior_feed_tick = self.tick_count
+            self._behavior_hold_tick = self.tick_count
             try:
                 self.bridge.queue_action(nxt)
             except Exception as e:
@@ -1080,10 +1100,14 @@ class AngelaAutonomousAgent:
         )
         try:
             order = await self.llm.acompose_behavior(task, self._state_summary(), [])
-            if order.behavior_id == "goto" and order.params.get("pos"):
-                self._start_behavior("goto", order.params, f"scout-pick:{ab['id']}")
+            if order.behavior_id in ("goto", "look_at", "dig_at") and order.params.get(
+                "pos"
+            ):
+                self._start_behavior(
+                    order.behavior_id, order.params, f"scout-pick:{ab['id']}"
+                )
                 return
-            logger.warning(f"Scout pick rejected (not goto): {order.behavior_id}")
+            logger.warning(f"Scout pick rejected (no pos): {order.behavior_id}")
         except Exception as e:
             logger.warning(f"Scout pick LLM failed, nearest fallback: {e}")
         n0 = nodes[0]

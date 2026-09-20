@@ -158,6 +158,9 @@ local vision_seq = 0
 local function face_toward(player, target)
     local eye = player:get_pos()
     eye.y = eye.y + 1.6
+    if vector.distance(eye, target) < 0.1 then
+        return
+    end
     local rot = vector.dir_to_rotation(vector.direction(eye, target))
     player:set_look_horizontal(rot.y)
     player:set_look_vertical(rot.x)
@@ -297,6 +300,9 @@ local function start_goto(player, pname, dest)
         active_goto[pname] = nil
         goto_report = {status = "failed", reason = "no_path", dest = dest}
         minetest.log("action", "[agent_poller] goto failed (no path) for " .. pname)
+        -- Best effort: one direct step anyway (dune buried the target).
+        -- try_step turns on total blockage, so motion never just dies.
+        try_step(player, dest, false)
     end
 end
 
