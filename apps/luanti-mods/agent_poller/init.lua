@@ -72,8 +72,128 @@ local function execute_commands(actions, player)
             end
         elseif action.type == "chat" then
             minetest.chat_send_all("[Angela] " .. tostring(action.message or ""))
+        elseif action.type == "craft" then
+            do_craft(player, action)
+        elseif action.type == "give" then
+            -- TEST ONLY: grant items so crafting can be verified end-to-end.
+            local itemstring = ITEMS[action.item] or action.item
+            local count = tonumber(action.count) or 1
+            if itemstring then
+                player:get_inventory():add_item("main", itemstring .. " " .. count)
+                minetest.log(
+                    "action",
+                    "[agent_poller] gave " .. itemstring .. " x" .. count .. " to " .. player:get_player_name()
+                )
+            end
         end
     end
+end
+
+-- Short recipe ids (as sent by the agent) to Minetest Game items.
+-- Mirrors apps/backend/src/ai/multimodal/game_memory_bridge.py defaults.
+local RECIPES = {
+    stick = {needs = {wood = 2}, gives = {stick = 4}},
+    wooden_pickaxe = {needs = {wood = 3}, gives = {wooden_pickaxe = 1}},
+    stone_pickaxe = {needs = {cobblestone = 3, stick = 2}, gives = {stone_pickaxe = 1}},
+    stone_axe = {needs = {cobblestone = 3, stick = 2}, gives = {stone_axe = 1}},
+    stone_shovel = {needs = {cobblestone = 1, stick = 2}, gives = {stone_shovel = 1}},
+    stone_sword = {needs = {cobblestone = 2, stick = 1}, gives = {stone_sword = 1}},
+    furnace = {needs = {cobblestone = 8}, gives = {furnace = 1}},
+    chest = {needs = {wood = 8}, gives = {chest = 1}},
+    crafting_table = {needs = {wood = 4}, gives = {crafting_table = 1}},
+    torch = {needs = {stick = 1, coal = 1}, gives = {torch = 4}},
+}
+
+-- Short names to Minetest Game itemstrings.
+local ITEMS = {
+    wood = "default:wood",
+    cobblestone = "default:cobble",
+    stick = "default:stick",
+    coal = "default:coal_lump",
+    wooden_pickaxe = "default:pick_wood",
+    stone_pickaxe = "default:pick_stone",
+    stone_axe = "default:axe_stone",
+    stone_shovel = "default:shovel_stone",
+    stone_sword = "default:sword_stone",
+    furnace = "default:furnace",
+    chest = "default:chest",
+    crafting_table = "default:workbench",
+    torch = "default:torch",
+}
+
+local function count_item(inv, itemstring)
+    local total = 0
+    for i = 1, inv:get_size("main") do
+        local stack = inv:get_stack("main", i)
+        if not stack:is_empty() and stack:get_name() == itemstring then
+            total = total + stack:get_count()
+        end
+    end
+    return total
+end
+
+function do_craft(player, action)
+    local recipe_id = action.recipe_id or action.recipe or "auto"
+    local recipe = RECIPES[recipe_id]
+    if not recipe then
+        -- Auto: pick the first recipe whose ingredients are all present
+        for rid, r in pairs(RECIPES) do
+            local ok = true
+            local inv = player:get_inventory()
+            for short, n in pairs(r.needs) do
+                if count_item(inv, ITEMS[short] or short) < n then
+                    ok = false
+                    break
+                end
+            end
+            if ok then
+                recipe_id = rid
+                recipe = r
+                break
+            end
+        end
+    end
+    if not recipe then
+        minetest.log("action", "[agent_poller] craft failed (no recipe): " .. tostring(action.recipe_id))
+        return
+    end
+    local inv = player:get_inventory()
+    for short, n in pairs(recipe.needs) do
+        local itemstring = ITEMS[short] or short
+        if count_item(inv, itemstring) < n then
+            minetest.log(
+                "action",
+                "[agent_poller] craft failed (missing "
+                    .. itemstring
+                    .. ") for "
+                    .. player:get_player_name()
+            )
+            return
+        end
+    end
+    for short, n in pairs(recipe.needs) do
+        local itemstring = ITEMS[short] or short
+        local rest = n
+        for i = 1, inv:get_size("main") do
+            if rest <= 0 then
+                break
+            end
+            local stack = inv:get_stack("main", i)
+            if not stack:is_empty() and stack:get_name() == itemstring then
+                local take = math.min(rest, stack:get_count())
+                stack:set_count(stack:get_count() - take)
+                inv:set_stack("main", i, stack)
+                rest = rest - take
+            end
+        end
+    end
+    for short, n in pairs(recipe.gives) do
+        inv:add_item("main", (ITEMS[short] or short) .. " " .. n)
+    end
+    minetest.log(
+        "action",
+        "[agent_poller] crafted " .. recipe_id .. " for " .. player:get_player_name()
+    )
 end
 
 local function on_poll_response(player_name, res)
