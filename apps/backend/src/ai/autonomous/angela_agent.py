@@ -543,6 +543,12 @@ class AngelaAutonomousAgent:
 
     def _queue_skill(self, skill_ctx: SkillContext):
         """Queue skill for execution via bridge (poller-compatible action)."""
+        # 背壓：poller 2s 取一次，agent 10Hz 生產會淹沒 queue；超過上限就丟棄
+        try:
+            if len(getattr(self.bridge, "pending_actions", [])) >= 3:
+                return
+        except Exception:
+            pass
         skill_id = skill_ctx.active_skill.value
         params = skill_ctx.params or {}
         bias = getattr(skill_ctx, "continuous_bias", None)
