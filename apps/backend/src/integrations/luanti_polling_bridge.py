@@ -93,6 +93,14 @@ class PollingBridge:
             }
         )
 
+    def queue_action(self, action: Dict[str, Any]) -> str:
+        """Queue an action from the autonomous agent (sync, no HTTP needed)."""
+        action_id = str(uuid.uuid4())
+        normalized = {"id": action_id, **action}
+        self.pending_actions.append(normalized)
+        logger.info(f"Queued action: {normalized.get('type')}")
+        return action_id
+
     async def start(self):
         app = web.Application()
         app.router.add_post("/api/poll", self.handle_poll)

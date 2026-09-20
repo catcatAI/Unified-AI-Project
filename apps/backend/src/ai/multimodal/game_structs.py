@@ -69,6 +69,8 @@ class SkillContext:
     params: Dict[str, Any]
     priority: float
     interrupt_on: List[str] = field(default_factory=list)
+    continuous_bias: Any = None
+    discrete_triggers: Any = None
 
 
 @dataclass

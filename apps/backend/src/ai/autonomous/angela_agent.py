@@ -512,13 +512,48 @@ class AngelaAutonomousAgent:
                 timeout_ticks=300,
             )
             self.executor._current.skill_params = skill_params
-            self._queue_skill(skill_ctx)
+            ctx.continuous_bias = skill_params.continuous_bias
+            ctx.discrete_triggers = skill_params.discrete_triggers
+            self._queue_skill(ctx)
 
     def _queue_skill(self, skill_ctx: SkillContext):
-        """Queue skill for execution via bridge"""
-        action = {"type": "action", "action": skill_ctx.active_skill.value, **skill_ctx.params}
-        # Queue in bridge
-        asyncio.create_task(self.bridge.handle_action_internal(action))
+        """Queue skill for execution via bridge (poller-compatible action)."""
+        skill_id = skill_ctx.active_skill.value
+        params = skill_ctx.params or {}
+        bias = getattr(skill_ctx, "continuous_bias", None)
+        triggers = getattr(skill_ctx, "discrete_triggers", {}) or {}
+
+        def _f(i, default=0.0):
+            try:
+                return float(bias[i])
+            except Exception:
+                return default
+
+        if skill_id in ("move", "navigate"):
+            action = {
+                "type": "move",
+                "forward": params.get("forward", _f(0, 1.0)),
+                "strafe": params.get("strafe", _f(1, 0.0)),
+                "jump": bool(params.get("jump", triggers.get("jump", 0) > 0.5)),
+            }
+        elif skill_id == "look":
+            action = {
+                "type": "look",
+                "yaw_delta": params.get("yaw", _f(0, 0.0)),
+                "pitch_delta": params.get("pitch", _f(1, 0.0)),
+            }
+        elif skill_id in ("dig", "combat"):
+            action = {"type": "dig"}
+        elif skill_id in ("place", "build", "eat"):
+            action = {"type": "place"}
+        elif skill_id == "craft":
+            action = {"type": "craft", "recipe": params.get("recipe_id", "auto")}
+        else:
+            action = {"type": "move", "forward": 0.5, "strafe": 0.0}
+        try:
+            self.bridge.queue_action(action)
+        except Exception as e:
+            logger.error(f"Queue skill failed: {e}")
 
     async def _execute_reflex(self):
         """L0: Execute reflex actions via bridge"""
