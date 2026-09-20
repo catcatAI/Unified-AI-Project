@@ -375,6 +375,8 @@ python -m apps.backend.src.ai.multimodal.game_agent --config configs/standard/ga
 | VisualEncoder 接線 | ⚠️ 半接 | 已實例化；poller 只送 state 無幀，visual 仍 None |
 | `/api/frame` 畫面來源 | ❌ stub | placeholder，需 CSM 截圖或 client 擷取 |
 | poller `craft` 動作 | ✅ 真實 | live 驗證：wood×4 → craft stick → wood×2 + stick×4，`crafted stick for AngelaBot` 留痕；material 不足/無配方 log 失敗不當機 |
+| poller `place` 動作 | ✅ 真實 | live 驗證：cobble×8 → place → cobble×7，`placed default:cobble at (2,6,65)`；look 優先＋鄰格 fallback（空氣＋實心支撐），手牌空時 auto-wield 背包第一個可放方塊；無格/無料 log 失敗不當機 |
+| poller `give` 後門 | ✅ 已上鎖 | `agent_poller_allow_give` 預設 false（拒絕＋warning）；測試環境 minetest.conf 顯式開啟 |
 | Policy 權重訓練 (BC/RL) | ❌ 未做 | 現為 Xavier 初始化，動作笨拙屬實 |
 | 20 FPS 閉環 | ❌ 未達 | agent 10Hz + poller 2s；需幀源 + 降級策略 |
 

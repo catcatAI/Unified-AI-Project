@@ -169,11 +169,40 @@ local function execute_commands(actions, player)
         elseif action.type == "place" then
             local pos = player:get_pos()
             local dir = player:get_look_dir()
-            local target = vector.round(vector.add(pos, vector.multiply(dir, 3)))
             local pname = player:get_player_name()
-            local node = minetest.get_node(target)
-            if node.name ~= "air" then
-                minetest.log("action", "[agent_poller] place failed (target not air): " .. node.name)
+            -- Candidates: look target first, then nearby cells. The agent has
+            -- no vision, so look-aim is luck; fall back to the first free
+            -- cell with solid support to guarantee progress.
+            local candidates = {
+                vector.round(vector.add(pos, vector.multiply(dir, 3))),
+            }
+            for _, off in ipairs({
+                {x = 0, y = 2, z = 0},
+                {x = 1, y = 1, z = 0},
+                {x = -1, y = 1, z = 0},
+                {x = 0, y = 1, z = 1},
+                {x = 0, y = 1, z = -1},
+                {x = 1, y = 0, z = 0},
+                {x = -1, y = 0, z = 0},
+                {x = 0, y = 0, z = 1},
+                {x = 0, y = 0, z = -1},
+            }) do
+                candidates[#candidates + 1] = vector.round(vector.add(pos, off))
+            end
+            local target = nil
+            local under = nil
+            for _, c in ipairs(candidates) do
+                if minetest.get_node(c).name == "air" then
+                    local below = vector.add(c, {x = 0, y = -1, z = 0})
+                    if minetest.get_node(below).name ~= "air" then
+                        target = c
+                        under = below
+                        break
+                    end
+                end
+            end
+            if not target then
+                minetest.log("action", "[agent_poller] place failed (no free cell) for " .. pname)
             else
                 local stack = player:get_wielded_item()
                 if stack:is_empty() or not minetest.registered_nodes[stack:get_name()] then
@@ -197,11 +226,7 @@ local function execute_commands(actions, player)
                 if stack:is_empty() then
                     minetest.log("action", "[agent_poller] place failed (nothing placeable) for " .. pname)
                 else
-                    -- under = solid neighbour being pointed at, above = air cell for the new node.
-                    local under = vector.add(target, {x = 0, y = -1, z = 0})
-                    if minetest.get_node(under).name == "air" then
-                        under = vector.round(pos)
-                    end
+                    -- under/above were resolved in the candidate scan above.
                     local leftover = minetest.item_place(
                         stack,
                         player,
