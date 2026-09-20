@@ -1,4 +1,5 @@
 # 多維度行為觸發系統 v2.0
+
 ## MultiDimensional Behavior Trigger System
 
 ---
@@ -6,18 +7,22 @@
 ## 核心理念轉變
 
 ### ❌ 舊思維（單一維度判定）
+
 ```
 if α > 0.7:
     執行 seek(尋找)
 ```
+
 - 問題：行為單一、機械化、閾值僵化
 - 結果：像機器人，不像生命體
 
 ### ✅ 新思維（多維度組合判定）
+
 ```
 if α.physical_arousal > 0.4 + γ.playfulness > 0.3 + 外部刺激(搔癢):
     執行 giggle(咯咯笑) + playful_reaction(玩鬧反應)
 ```
+
 - 優勢：行為豐富、自然、有機組合
 - 結果：像有個性的生命體
 
@@ -51,23 +56,23 @@ gamma_state = {
 BehaviorTrigger(
     behavior_id="tickle_response",
     behavior_name="搔癢反應",
-    
+
     # 必需條件（多維度組合）
     required_dimensions={
         "alpha": {"min": 0.4, "keys": ["physical_arousal"]},  # 需要生理反應
         "gamma": {"min": 0.3, "keys": ["playfulness"]}       # 需要玩心
     },
-    
+
     # 可選條件（有就加分）
     optional_dimensions={
         "gamma": {"keys": ["happiness"], "boost": 0.2},      # 快樂會加分
     },
-    
+
     # 外部刺激條件
     stimulus_requirements=[
         {"type": "touch", "location": "sensitive", "min_intensity": 0.3}
     ],
-    
+
     action_type="react",
     expression_style="playful"
 )
@@ -96,60 +101,80 @@ trigger_system.process_stimulus(stimulus)
 ## 預設行為觸發器
 
 ### 1. 搔癢反應 (`tickle_response`)
+
 **觸發條件**：
+
 - 必需：`α.physical_arousal > 0.4` + `γ.playfulness > 0.3`
 - 刺激：`touch` + `location: sensitive` + `intensity > 0.3`
 - 可選：`γ.happiness` 越高越好
 
 **行為表現**：
+
 - 咯咯笑、躲閃、 playful 反應
 - 表達風格：playful
 
 ### 2. 親密回應 (`affection_response`)
+
 **觸發條件**：
-- 必需：`γ.affection > 0.5` + `δ.attention_to_user > 0.6` + `δ.bond_strength > 0.3`
+
+- 必需：`γ.affection > 0.5` + `δ.attention_to_user > 0.6` +
+  `δ.bond_strength > 0.3`
 - 刺激：`touch` (任意) 或 `speech(tone: gentle)`
 - 可選：`α.comfort` 越高越好
 
 **行為表現**：
+
 - 溫柔回應、親密表達
 - 表達風格：warm
 
 ### 3. 好奇探索 (`curiosity_explore`)
+
 **觸發條件**：
+
 - 必需：`β.curiosity + β.learning_drive > 0.3` (加總，不是單一值)
 - 刺激：`system(quiet_period)`
 - 可選：`α.energy > 0.4` (能量不能太低)
 
 **行為表現**：
+
 - 主動探索、詢問、學習
 - 表達風格：curious
 
 ### 4. 尋求關注 (`attention_seeking`)
+
 **觸發條件**：
-- 必需：`δ.presence_need + δ.attention_to_user > 0.4` (平均) + `γ.affection > 0.3`
+
+- 必需：`δ.presence_need + δ.attention_to_user > 0.4` (平均) +
+  `γ.affection > 0.3`
 - 刺激：無（純內部狀態驅動）
 
 **行為表現**：
+
 - 撒嬌、引起注意
 - 表達風格：cute
 
 ### 5. 疲憊休息 (`tired_rest`)
+
 **觸發條件**：
+
 - 必需：`α.energy < 0.3` + `α.rest_need > 0.5`
 - 權重：2.0（高優先級）
 
 **行為表現**：
+
 - 打哈欠、休息、降低活動
 - 表達風格：tired
 
 ### 6. 驚喜反應 (`surprise_response`)
+
 **觸發條件**：
+
 - 必需：`γ.emotional_arousal > 0.5` + `α.physical_arousal > 0.3`
 - 刺激：`gift(intensity > 0.6)` 或 `system(unexpected)`
 - 可選：`γ.happiness` 越高越好
 
 **行為表現**：
+
 - 驚喜、開心、感謝
 - 表達風格：surprised
 
@@ -194,10 +219,10 @@ class EnhancedAutonomousLifeCycle:
         # 原有系統
         self.matrix = EnhancedAutonomyMatrix()
         self.synthesizer = MatrixDrivenBehaviorSynthesizer(self.matrix)
-        
+
         # [新] 多維度觸發系統
         self.multi_trigger = MultiDimensionalBehaviorTrigger()
-        
+
         # 模式切換
         self.trigger_mode = "multidimensional"  # "legacy" | "enhanced" | "multidimensional"
 ```
@@ -210,15 +235,15 @@ async def _life_cycle(self):
         if self.trigger_mode == "multidimensional":
             # 1. 時間演化（自然衰減）
             self.multi_trigger.natural_decay(1.0)
-            
+
             # 2. 尋找匹配行為
             matches = self.multi_trigger.find_matching_behaviors(top_n=3)
-            
+
             # 3. 執行最佳匹配
             if matches:
                 result = self.multi_trigger.select_and_execute(matches)
                 await self._execute_multidimensional_behavior(result)
-        
+
         await asyncio.sleep(1.0)
 ```
 
@@ -238,10 +263,10 @@ async def handle_live2d_interaction(self, interaction_data):
         alpha_impact=0.5 if interaction_data['area'] == 'sensitive' else 0.3,
         gamma_impact=0.4
     )
-    
+
     # 處理刺激
     self.multi_trigger.process_stimulus(stimulus)
-    
+
     # 立即評估（不用等生命週期循環）
     matches = self.multi_trigger.find_matching_behaviors()
     if matches:
@@ -254,29 +279,30 @@ async def handle_live2d_interaction(self, interaction_data):
 
 ### vs 單一維度判定
 
-| 面向 | 單一維度 | 多維度組合 |
-|------|---------|-----------|
-| **行為豐富度** | 低（4種基本行為） | 高（組合產生多種變體） |
-| **自然度** | 機械化 | 有機、類生命 |
-| **外部響應** | 間接（通過維度） | 直接（刺激系統） |
-| **閾值** | 固定（0.7, 0.5, 0.6） | 動態組合 |
-| **表達** | 模板化 | 上下文相關 |
+| 面向           | 單一維度              | 多維度組合             |
+| -------------- | --------------------- | ---------------------- |
+| **行為豐富度** | 低（4種基本行為）     | 高（組合產生多種變體） |
+| **自然度**     | 機械化                | 有機、類生命           |
+| **外部響應**   | 間接（通過維度）      | 直接（刺激系統）       |
+| **閾值**       | 固定（0.7, 0.5, 0.6） | 動態組合               |
+| **表達**       | 模板化                | 上下文相關             |
 
 ### vs 其他 AI 系統
 
-| 特性 | ChatGPT | Character.AI | **Angela (多維度)** |
-|------|---------|--------------|---------------------|
-| 自主行為 | ❌ 無 | ❌ 無 | ✅ 有 |
-| 內部狀態 | ❌ 無 | ❌ 無 | ✅ 4維多參數 |
-| 外部刺激 | ❌ 僅文本 | ❌ 僅文本 | ✅ Live2D觸摸等 |
-| 多維度組合 | ❌ 無 | ❌ 無 | ✅ 核心設計 |
-| 時間持續性 | ❌ 無 | ❌ 無 | ✅ 自然衰減 |
+| 特性       | ChatGPT   | Character.AI | **Angela (多維度)** |
+| ---------- | --------- | ------------ | ------------------- |
+| 自主行為   | ❌ 無     | ❌ 無        | ✅ 有               |
+| 內部狀態   | ❌ 無     | ❌ 無        | ✅ 4維多參數        |
+| 外部刺激   | ❌ 僅文本 | ❌ 僅文本    | ✅ Live2D觸摸等     |
+| 多維度組合 | ❌ 無     | ❌ 無        | ✅ 核心設計         |
+| 時間持續性 | ❌ 無     | ❌ 無        | ✅ 自然衰減         |
 
 ---
 
 ## 未來擴展
 
 ### 1. 動態行為註冊
+
 ```python
 # 允許用戶定義新行為
 trigger_system.register_trigger(BehaviorTrigger(
@@ -291,11 +317,13 @@ trigger_system.register_trigger(BehaviorTrigger(
 ```
 
 ### 2. 學習優化
+
 - 記錄用戶反應（喜歡/不喜歡）
 - 自動調整 `boost` 值和 `min` 閾值
 - 發現新的行為組合模式
 
 ### 3. 多層級行為
+
 ```python
 # 複合行為（多步驟）
 ComplexBehavior([
@@ -331,6 +359,6 @@ ComplexBehavior([
 
 ---
 
-*文件版本：2.0*  
-*更新日期：2026-02-01*  
-*架構設計：多維度行為觸發系統*
+_文件版本：2.0_  
+_更新日期：2026-02-01_  
+_架構設計：多維度行為觸發系統_

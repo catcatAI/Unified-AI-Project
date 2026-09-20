@@ -25,6 +25,7 @@ python apps/backend/src/core/art/desktop_demo.py
 ```
 
 输出示例:
+
 ```
 🎨 Angela 开始创作...
 📂 保存位置: C:\Users\catai\OneDrive\Desktop
@@ -58,6 +59,7 @@ python apps/backend/src/core/art/real_creator.py
 使用 PIL 绘制简单图像，无需外部服务。
 
 **功能:**
+
 - 绘制自画像
 - 绘制表情图标
 - 绘制背景图
@@ -68,10 +70,12 @@ python apps/backend/src/core/art/real_creator.py
 ComfyUI API 集成，用于 AI 绘画。
 
 **依赖:**
+
 - ComfyUI 运行在 http://127.0.0.1:8188
 - 安装了 Stable Diffusion 模型
 
 **使用示例:**
+
 ```python
 from apps.backend.src.core.art.real_comfyui_api import AngelaRealPainter
 
@@ -101,10 +105,12 @@ path = await painter.paint_expression(
 Microsoft Edge TTS 集成，用于高质量语音合成。
 
 **依赖:**
+
 - Windows 系统
 - pip install edge-tts
 
 **使用示例:**
+
 ```python
 from apps.backend.src.core.art.real_edge_tts import AngelaRealVoice
 
@@ -122,10 +128,12 @@ path = await voice.express_emotion("happy")
 Playwright 浏览器控制，用于网页浏览和学习。
 
 **依赖:**
+
 - pip install playwright
 - playwright install chromium
 
 **使用示例:**
+
 ```python
 from apps.backend.src.core.art.real_playwright_browser import AngelaRealBrowser
 
@@ -146,6 +154,7 @@ await browser.close()
 整合所有创作功能的统一系统。
 
 **功能:**
+
 - 从网络学习教程和作品
 - 生成 AI 绘画作品
 - 生成配套语音
@@ -183,9 +192,9 @@ playwright install chromium
 
 ## 版本历史
 
-| 版本 | 日期 | 描述 |
-|------|------|------|
-| 1.0.0 | 2026-02-04 | 初始版本，添加 desktop_demo |
+| 版本  | 日期       | 描述                                                                        |
+| ----- | ---------- | --------------------------------------------------------------------------- |
+| 1.0.0 | 2026-02-04 | 初始版本，添加 desktop_demo                                                 |
 | 1.1.0 | 2026-02-04 | 添加 real_creator, real_comfyui_api, real_edge_tts, real_playwright_browser |
 
 ## 许可证

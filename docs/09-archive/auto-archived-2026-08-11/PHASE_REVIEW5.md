@@ -1,12 +1,14 @@
 # 階段性審查報告 5 — 2026-06-06（H5 衝刺完成）
 
-> **⚠️ SUPERSEDED — 2026-06-26**
-> This review (2837 tests, ~62%) has been superseded by PHASE_REVIEW6.md (4920 tests, ~85-90%).
-> All H5 sprint items are absorbed into the current state. See PHASE_REVIEW6.md for latest assessment.
+> **⚠️ SUPERSEDED — 2026-06-26** This review (2837 tests, ~62%) has been
+> superseded by PHASE_REVIEW6.md (4920 tests, ~85-90%). All H5 sprint items are
+> absorbed into the current state. See PHASE_REVIEW6.md for latest assessment.
 
 > **判定標準**: 不完整、不完美、不全面、不細緻、不穩定、不快速、不清晰、不清楚、不有序、無真實服務。只要有個「不」、沒到滿分，就不算完美完成。
 >
-> **判定結論**: ❌ **未達到完美完成** — 綜合評分 **~62%**。H5 stub 衝刺（06-06）已完成 36/37 嚴格 stub 實作，測試收集數從 2744 提升至 **2837（+93）**，空 except 修復 24 處，HIGH 漏洞全數清除。但仍需 H7 超長檔案重構及文檔一致性處理。
+> **判定結論**: ❌ **未達到完美完成** — 綜合評分 **~62%**。H5
+> stub 衝刺（06-06）已完成 36/37 嚴格 stub 實作，測試收集數從 2744 提升至
+> **2837（+93）**，空 except 修復 24 處，HIGH 漏洞全數清除。但仍需 H7 超長檔案重構及文檔一致性處理。
 
 ---
 
@@ -14,46 +16,46 @@
 
 4 並行代理 + 人工綜合：
 
-| 代理 | 範圍 | 掃描結果 |
-|:----|------|:--------:|
-| **靜態代碼審計** | `apps/backend/src/` 全部 564 檔案 | 36/37 嚴格 stub 已實作，3 true stubs 剩餘（1 functional + 2 deprecated），20 空 except（intentional），132 檔案 >200 行 |
-| **動態運行審計** | 導入鏈/記憶體/溢位/死鎖/環境敏感度 | 0 HIGH（全部修復），31 create_task 皆為 intentional background tasks |
-| **測試品質審計** | 416 測試檔案 / 9 CI workflows | **2837 測試 0 收集錯誤**（+93 啟用），tests/unit/ 已納入 CI |
-| **文件審計** | README/AGENTS/CHANGELOG/INDEX/計畫 | 版本一致 14/14，但 4 廢棄計畫未歸檔，ARCHITECTURE/OVERVIEW 過時 |
+| 代理             | 範圍                               |                                                        掃描結果                                                         |
+| :--------------- | ---------------------------------- | :---------------------------------------------------------------------------------------------------------------------: |
+| **靜態代碼審計** | `apps/backend/src/` 全部 564 檔案  | 36/37 嚴格 stub 已實作，3 true stubs 剩餘（1 functional + 2 deprecated），20 空 except（intentional），132 檔案 >200 行 |
+| **動態運行審計** | 導入鏈/記憶體/溢位/死鎖/環境敏感度 |                          0 HIGH（全部修復），31 create_task 皆為 intentional background tasks                           |
+| **測試品質審計** | 416 測試檔案 / 9 CI workflows      |                               **2837 測試 0 收集錯誤**（+93 啟用），tests/unit/ 已納入 CI                               |
+| **文件審計**     | README/AGENTS/CHANGELOG/INDEX/計畫 |                             版本一致 14/14，但 4 廢棄計畫未歸檔，ARCHITECTURE/OVERVIEW 過時                             |
 
 ---
 
 ## 一、與前次審計對比
 
-| 指標 | PR1 (06-02) | PR2 (06-03) | PR3 (06-04) | PR4 (06-05) | **PR5 (06-06)** |
-|:----|:-----------:|:-----------:|:-----------:|:-----------:|:----------------:|
-| 嚴格 stub 實作 | 0 | 0 | 0 | 10/37 | **36/37 ✅** |
-| 測試收集數 | 362 | 668 | ~460 | 2,744 | **2,837 (+93)** |
-| 收集錯誤 | — | — | 43 | 0 | **0 ✅** |
-| 空 except | 302 | ~15 | ~15 | 23 待修復 | **24 已修復**，20 intentional |
-| HIGH 漏洞 | — | — | — | 3 | **0 ✅**（全部修復） |
-| 版本一致性 | 6/14 | 14/14 | 14/14 | 14/14 | **14/14 ✅** |
-| 超長檔案 >200 行 | ~6 | ~24 | 28+1 | 108 | **138**（+6 來自拆分新檔） |
-| 最長檔案（行） | — | — | 323 (live2d) | 1416 (router.py) | **1244 (state_matrix.py)**（後續重構刪減） |
-| CI 納入 tests/unit/ | ❌ | ❌ | ❌ | ✅ | **✅** |
-| 綜合評分 | ~58% | ~96% | ~85% | ~55% | **~62%** |
+| 指標                | PR1 (06-02) | PR2 (06-03) | PR3 (06-04)  |   PR4 (06-05)    |              **PR5 (06-06)**               |
+| :------------------ | :---------: | :---------: | :----------: | :--------------: | :----------------------------------------: |
+| 嚴格 stub 實作      |      0      |      0      |      0       |      10/37       |                **36/37 ✅**                |
+| 測試收集數          |     362     |     668     |     ~460     |      2,744       |              **2,837 (+93)**               |
+| 收集錯誤            |      —      |      —      |      43      |        0         |                  **0 ✅**                  |
+| 空 except           |     302     |     ~15     |     ~15      |    23 待修復     |       **24 已修復**，20 intentional        |
+| HIGH 漏洞           |      —      |      —      |      —       |        3         |            **0 ✅**（全部修復）            |
+| 版本一致性          |    6/14     |    14/14    |    14/14     |      14/14       |                **14/14 ✅**                |
+| 超長檔案 >200 行    |     ~6      |     ~24     |     28+1     |       108        |         **138**（+6 來自拆分新檔）         |
+| 最長檔案（行）      |      —      |      —      | 323 (live2d) | 1416 (router.py) | **1244 (state_matrix.py)**（後續重構刪減） |
+| CI 納入 tests/unit/ |     ❌      |     ❌      |      ❌      |        ✅        |                   **✅**                   |
+| 綜合評分            |    ~58%     |    ~96%     |     ~85%     |       ~55%       |                  **~62%**                  |
 
 ---
 
 ## 二、10 維度判定
 
-| 維度 | 分數 | 判定 | 制約因素 |
-|:----:|:----:|:----:|----------|
-| **完整** | 65% | ❌ | 36/37 嚴格 stub 已實作，2837 測試（+93）。核心模組（capacity_planner、environment_simulator、module_manager、perception/life/bio/card 等）全數實作 |
-| **完美** | 50% | ❌ | 0 測試 ImportError。但 132 檔案 >200 行（最大 1671），ANGELA-MATRIX 註解僅部分實作 |
-| **全面** | 55% | ❌ | CLI/mobile/plugin/deployment 零文件，0 測試檔損壞，tests/unit/ 已納入 CI。無 E2E/負載/邊界測試 |
-| **細緻** | 62% | ❌ | ~87% type annotation，24 空 except 已修復，20 剩餘皆 intentional |
-| **穩定** | 65% | ❌ | 0 HIGH 漏洞，0 測試收集錯誤。31 create_task 皆為生命週期背景任務 |
-| **快速** | 55% | ❌ | `import core` 0.5s (lazy import 優秀)，但 132 檔案超 200 行，3 檔案超 1500 行 |
-| **清晰** | 55% | ❌ | 版本號 14/14 一致，AGENTS.md 日期過時 (02-19)，4 廢棄計畫混淆 |
-| **清楚** | 55% | ❌ | 文檔廣泛但 ARCHITECTURE.md/OVERVIEW.md 過時，MATRIX 規範 0/6 實作 |
-| **有序** | 50% | ❌ | 70+ 修改未提交，91 檔案在 archive 無清理計畫，4 廢棄計畫在 active 目錄 |
-| **真實服務** | 45% | ❌ | 專案可 import，36/37 核心模組實作。但尚未執行完整啟動測試 |
+|     維度     | 分數 | 判定 | 制約因素                                                                                                                                           |
+| :----------: | :--: | :--: | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+|   **完整**   | 65%  |  ❌  | 36/37 嚴格 stub 已實作，2837 測試（+93）。核心模組（capacity_planner、environment_simulator、module_manager、perception/life/bio/card 等）全數實作 |
+|   **完美**   | 50%  |  ❌  | 0 測試 ImportError。但 132 檔案 >200 行（最大 1671），ANGELA-MATRIX 註解僅部分實作                                                                 |
+|   **全面**   | 55%  |  ❌  | CLI/mobile/plugin/deployment 零文件，0 測試檔損壞，tests/unit/ 已納入 CI。無 E2E/負載/邊界測試                                                     |
+|   **細緻**   | 62%  |  ❌  | ~87% type annotation，24 空 except 已修復，20 剩餘皆 intentional                                                                                   |
+|   **穩定**   | 65%  |  ❌  | 0 HIGH 漏洞，0 測試收集錯誤。31 create_task 皆為生命週期背景任務                                                                                   |
+|   **快速**   | 55%  |  ❌  | `import core` 0.5s (lazy import 優秀)，但 132 檔案超 200 行，3 檔案超 1500 行                                                                      |
+|   **清晰**   | 55%  |  ❌  | 版本號 14/14 一致，AGENTS.md 日期過時 (02-19)，4 廢棄計畫混淆                                                                                      |
+|   **清楚**   | 55%  |  ❌  | 文檔廣泛但 ARCHITECTURE.md/OVERVIEW.md 過時，MATRIX 規範 0/6 實作                                                                                  |
+|   **有序**   | 50%  |  ❌  | 70+ 修改未提交，91 檔案在 archive 無清理計畫，4 廢棄計畫在 active 目錄                                                                             |
+| **真實服務** | 45%  |  ❌  | 專案可 import，36/37 核心模組實作。但尚未執行完整啟動測試                                                                                          |
 
 ### 綜合分數: **~62%** — 較 PR4 的 55% 提升 7pp
 
@@ -63,45 +65,45 @@
 
 ### 3.1 Stub 實作曲線
 
-| 批次 | 模組 | 檔案 | 測試驗證 |
-|:----|------|:----:|:--------:|
-| Batch 1 | core perception/life/bio | `input_sensor`, `intent_model`, `bio_reflex_manager`, `env_dynamics`, `attention_controller`, `tactile_memory`, `auditory_attention`, `auditory_memory` | 55/55 ✅ |
-| Batch 2 | ai alignment/learning | `asi_autonomous_alignment`, `ontology_system`, `lightweight_code_model`, `learning_manager`, `code_complexity_analyzer` | 28/28 ✅ |
-| Batch 3 | ai memory/multimodal/security | `vector_store`, `multimodal_processor`, `ego_guard`, `service_discovery_module`, `trust_manager_module`, `environment_simulator`, `knowledge_graph/types` | 37/37 ✅ |
-| Batch 4 | core/card/tools/sync/config | `merge_engine`, `import_quality_checker`, `code_understanding_tool`, `web_search_tool`, `realtime_sync`, `tiered_loader`, `app_config_loader` + `timeline_resolver`, `pdf_exporter`, `html_viewer` | 33/33 ✅ |
-| Batch 5 | api/v1/endpoints | `economy`, `audio`, `pet`, `tactile`, `vision`, `plugins`, `_deps` | 7/7 ✅ |
-| Batch 6 | misc | `demo_context_system`, `unified_model_loader`, `mcp_fallback_protocols`, `env_utils`, `async_utils` | import ✅ |
-| Batch 7 (新發現) | ai 額外 stub | `adversarial_generation_system`, `alignment_manager`, `decision_theory_system`, `local_cluster_manager`, `memory_learning`, `precompute_service`, `task_generator` | import ✅ |
-| Batch 8 (服務) | services/handlers | `file_operation_handler`, `google_drive_handler`（含 `__init__.py` 更新） | import ✅ |
-| Batch 9 (遺漏) | core/error/reasoning | `angela_error.py`（完整 ErrorSeverity/ErrorCategory/ErrorHandler + 18 子類）, `causal_reasoning_engine.py`（新增 `_analyze_observation_causality`） | **18/18 ✅** |
+| 批次             | 模組                          |                                                                                                檔案                                                                                                |   測試驗證   |
+| :--------------- | ----------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :----------: |
+| Batch 1          | core perception/life/bio      |                      `input_sensor`, `intent_model`, `bio_reflex_manager`, `env_dynamics`, `attention_controller`, `tactile_memory`, `auditory_attention`, `auditory_memory`                       |   55/55 ✅   |
+| Batch 2          | ai alignment/learning         |                                      `asi_autonomous_alignment`, `ontology_system`, `lightweight_code_model`, `learning_manager`, `code_complexity_analyzer`                                       |   28/28 ✅   |
+| Batch 3          | ai memory/multimodal/security |                     `vector_store`, `multimodal_processor`, `ego_guard`, `service_discovery_module`, `trust_manager_module`, `environment_simulator`, `knowledge_graph/types`                      |   37/37 ✅   |
+| Batch 4          | core/card/tools/sync/config   | `merge_engine`, `import_quality_checker`, `code_understanding_tool`, `web_search_tool`, `realtime_sync`, `tiered_loader`, `app_config_loader` + `timeline_resolver`, `pdf_exporter`, `html_viewer` |   33/33 ✅   |
+| Batch 5          | api/v1/endpoints              |                                                                 `economy`, `audio`, `pet`, `tactile`, `vision`, `plugins`, `_deps`                                                                 |    7/7 ✅    |
+| Batch 6          | misc                          |                                                `demo_context_system`, `unified_model_loader`, `mcp_fallback_protocols`, `env_utils`, `async_utils`                                                 |  import ✅   |
+| Batch 7 (新發現) | ai 額外 stub                  |                 `adversarial_generation_system`, `alignment_manager`, `decision_theory_system`, `local_cluster_manager`, `memory_learning`, `precompute_service`, `task_generator`                 |  import ✅   |
+| Batch 8 (服務)   | services/handlers             |                                                             `file_operation_handler`, `google_drive_handler`（含 `__init__.py` 更新）                                                              |  import ✅   |
+| Batch 9 (遺漏)   | core/error/reasoning          |                        `angela_error.py`（完整 ErrorSeverity/ErrorCategory/ErrorHandler + 18 子類）, `causal_reasoning_engine.py`（新增 `_analyze_observation_causality`）                         | **18/18 ✅** |
 
 ### 3.2 Bug 修復
 
-| # | 問題 | 檔案 | 影響 | 修復 |
-|:-:|------|------|:----:|------|
-| B1 | `timezone.utc()` → `timezone.utc` | `test_ai_ops_complete.py`（8 處） | 8 test failures → 0 | `TypeError` 因 `datetime.timezone` 不可調用 |
-| B2 | `get_insights()` dict vs OpsInsight | `intelligent_ops_manager.py:862` | 1 test failure → 0 | dict items 正規化為 OpsInsight 物件 |
-| B3 | `tactile_service.py` 遺失 config 參數 | `services/tactile_service.py:16` | ImportError → 可導入 | 新增 config 參數 + 遺失方法 |
-| B4 | `angela_error.py` 缺少 enum/類別 | `core/angela_error.py` | 3 test failures → 0 | 加入 `ErrorSeverity`, `ErrorCategory`, `ErrorHandler`, 18 子類 |
-| B5 | `causal_reasoning_engine.py` 缺少方法 | `ai/reasoning/causal_reasoning_engine.py` | 1 test failure → 0 | 加入 `_analyze_observation_causality` + Pearson 相關 |
+|  #  | 問題                                  | 檔案                                      |         影響         | 修復                                                           |
+| :-: | ------------------------------------- | ----------------------------------------- | :------------------: | -------------------------------------------------------------- |
+| B1  | `timezone.utc()` → `timezone.utc`     | `test_ai_ops_complete.py`（8 處）         | 8 test failures → 0  | `TypeError` 因 `datetime.timezone` 不可調用                    |
+| B2  | `get_insights()` dict vs OpsInsight   | `intelligent_ops_manager.py:862`          |  1 test failure → 0  | dict items 正規化為 OpsInsight 物件                            |
+| B3  | `tactile_service.py` 遺失 config 參數 | `services/tactile_service.py:16`          | ImportError → 可導入 | 新增 config 參數 + 遺失方法                                    |
+| B4  | `angela_error.py` 缺少 enum/類別      | `core/angela_error.py`                    | 3 test failures → 0  | 加入 `ErrorSeverity`, `ErrorCategory`, `ErrorHandler`, 18 子類 |
+| B5  | `causal_reasoning_engine.py` 缺少方法 | `ai/reasoning/causal_reasoning_engine.py` |  1 test failure → 0  | 加入 `_analyze_observation_causality` + Pearson 相關           |
 
 ### 3.3 空 Except 修復（24 處）
 
-| 檔案 | 行數 | 原始狀態 | 修復方式 |
-|------|:----:|:--------:|:--------|
-| `agent_manager_extensions.py` | 86 | `except CancelledError: pass` | `logger.debug` |
-| `dynamic_agent_registry.py` | 63 | `except CancelledError: pass` | `logger.debug` |
-| `importance_scorer.py` | 66 | `except (ValueError, TypeError): pass` | `logger.warning` |
-| `action_execution_bridge.py` | 299 | `except CancelledError: pass` | `logger.debug` |
-| 5 bio 檔案 | 188-328 | `except CancelledError: pass` | `logger.debug` |
-| 4 engine 檔案 | 228-1209 | `except (CancelledError, Exception): pass` | `logger.debug/warning` |
-| `hsp/transport.py` | 99 | `except CancelledError: pass` | `logger.debug` |
-| 2 life 檔案 | 200-227 | `except CancelledError: pass` | `logger.debug` |
-| `performance_optimizer.py` | 138 | `except CancelledError: pass` | `logger.debug` |
-| `pet_manager.py` | 192 | `except RuntimeError: pass` | `logger.debug` |
-| `brain_bridge_service.py` | 47 | `except CancelledError: pass` | `logger.debug` |
-| `main_api_server.py` | 58 | `except ImportError: pass` | `logger.warning` |
-| 2 async_utils | 34-65 | `except CancelledError: pass` | `logger.debug` |
+| 檔案                          |   行數   |                  原始狀態                  | 修復方式               |
+| ----------------------------- | :------: | :----------------------------------------: | :--------------------- |
+| `agent_manager_extensions.py` |    86    |       `except CancelledError: pass`        | `logger.debug`         |
+| `dynamic_agent_registry.py`   |    63    |       `except CancelledError: pass`        | `logger.debug`         |
+| `importance_scorer.py`        |    66    |   `except (ValueError, TypeError): pass`   | `logger.warning`       |
+| `action_execution_bridge.py`  |   299    |       `except CancelledError: pass`        | `logger.debug`         |
+| 5 bio 檔案                    | 188-328  |       `except CancelledError: pass`        | `logger.debug`         |
+| 4 engine 檔案                 | 228-1209 | `except (CancelledError, Exception): pass` | `logger.debug/warning` |
+| `hsp/transport.py`            |    99    |       `except CancelledError: pass`        | `logger.debug`         |
+| 2 life 檔案                   | 200-227  |       `except CancelledError: pass`        | `logger.debug`         |
+| `performance_optimizer.py`    |   138    |       `except CancelledError: pass`        | `logger.debug`         |
+| `pet_manager.py`              |   192    |        `except RuntimeError: pass`         | `logger.debug`         |
+| `brain_bridge_service.py`     |    47    |       `except CancelledError: pass`        | `logger.debug`         |
+| `main_api_server.py`          |    58    |         `except ImportError: pass`         | `logger.warning`       |
+| 2 async_utils                 |  34-65   |       `except CancelledError: pass`        | `logger.debug`         |
 
 ---
 
@@ -110,32 +112,38 @@
 ### 🔴 H7：超長檔案重構
 
 **已拆分（06-06 完成）**:
-| 原檔案 | 原行數 | 現狀 | 子模組 |
-|:------|:------:|:-----|:-------|
-| `core/bio/neuroplasticity.py` | 1,671 | ✅ 35 行 shim | `neuroplasticity_core`(637), `skill_acquisition`(189), `habit_formation`(176), `trauma_memory`(396), `explicit_implicit_learning`(179) |
-| `services/llm/router.py` | 1,633 | ✅ 1,284 行 | `emotion_analyzer`(282), `memory_integration`(183) |
-| `core/engine/state_matrix.py` | 1,625 | ✅ 1,244 行（已拆分清理） | 無待辦 |
-| `core/bio/physiological_tactile.py` | 1,575 | ✅ 125 行 shim | `physiological_tactile_types`(233), `_system`(456), `_analysis`(546) |
-| `core/bio/endocrine_system.py` | 1,251 | ✅ 130 行 shim | `endocrine_types`(121), `_system_core`(516), `hormone_kinetics`(309), `feedback_loop`(309) |
+
+| 原檔案                              | 原行數 | 現狀                      | 子模組                                                                                                                                 |
+| :---------------------------------- | :----: | :------------------------ | :------------------------------------------------------------------------------------------------------------------------------------- |
+| `core/bio/neuroplasticity.py`       | 1,671  | ✅ 35 行 shim             | `neuroplasticity_core`(637), `skill_acquisition`(189), `habit_formation`(176), `trauma_memory`(396), `explicit_implicit_learning`(179) |
+| `services/llm/router.py`            | 1,633  | ✅ 1,284 行               | `emotion_analyzer`(282), `memory_integration`(183)                                                                                     |
+| `core/engine/state_matrix.py`       | 1,625  | ✅ 1,244 行（已拆分清理） | 無待辦                                                                                                                                 |
+| `core/bio/physiological_tactile.py` | 1,575  | ✅ 125 行 shim            | `physiological_tactile_types`(233), `_system`(456), `_analysis`(546)                                                                   |
+| `core/bio/endocrine_system.py`      | 1,251  | ✅ 130 行 shim            | `endocrine_types`(121), `_system_core`(516), `hormone_kinetics`(309), `feedback_loop`(309)                                             |
 
 **新前 5 長檔案（待處理）**:
-| 優先 | 檔案 | 行數 |
-|:----:|------|:----:|
-| P1 | `core/engine/state_matrix.py` | 1,244 |
-| P2 | `ai/response/composer.py` | 1,208 |
-| P3 | `core/engine/live2d_avatar_generator.py` | 1,200 |
-| P4 | `core/engine/desktop_interaction.py` | 1,168 |
-| P5 | `core/action_execution_bridge.py` | 1,167 |
+
+| 優先 | 檔案                                     | 行數  |
+| :--: | ---------------------------------------- | :---: |
+|  P1  | `core/engine/state_matrix.py`            | 1,244 |
+|  P2  | `ai/response/composer.py`                | 1,208 |
+|  P3  | `core/engine/live2d_avatar_generator.py` | 1,200 |
+|  P4  | `core/engine/desktop_interaction.py`     | 1,168 |
+|  P5  | `core/action_execution_bridge.py`        | 1,167 |
 
 ### H7.5 ED3N Phase 1 原型
+
 - **狀態**: ✅ 完成
 - **檔案**: `ai/ed3n/` (6 檔, 962 行總計)
 - **核心元件**:
-  - `dictionary_layer.py` — DictionaryLayer (270 行, 30 預設條目, 中英雙語表面形式, 自動增長)
-  - `relation_classifier.py` — RelationClassifier (175 行, 6 關係類型, Jaccard/Levenshtein 啟發式)
+  - `dictionary_layer.py` — DictionaryLayer (270 行,
+    30 預設條目, 中英雙語表面形式, 自動增長)
+  - `relation_classifier.py` — RelationClassifier (175 行, 6 關係類型,
+    Jaccard/Levenshtein 啟發式)
   - `core_network.py` — CoreNetwork (195 行, 脈衝傳播, forward 方法)
   - `output_anchor.py` — anchored_decode + ResponseAnchorValidator (130 行)
-  - `ed3n_engine.py` — ReflexLayer + ED3NEngine (170 行, 三層速度: reflex→shallow→deep)
+  - `ed3n_engine.py` — ReflexLayer + ED3NEngine (170 行, 三層速度:
+    reflex→shallow→deep)
 - **整合點**:
   - `LLMBackend.ED3N` 枚舉值 (`registry.py`)
   - `ED3NBackend` LLM 提供者 (`services/llm/providers/ed3n.py`)
@@ -144,72 +152,86 @@
   - `ResponseRoute.ED3N` (`deviation_tracker.py`)
   - `BACKEND_PRIORITY` 加入 ed3n (priority=5, 最高)
 - **硬編碼取代**:
-  - `router.py` — 3 處 fallback 回應改為 ED3N 生成, 4 處 `return ""` 改為 `_ed3n_fallback_text()`, 3 處 error 回傳改為 ED3N
+  - `router.py` — 3 處 fallback 回應改為 ED3N 生成, 4 處 `return ""` 改為
+    `_ed3n_fallback_text()`, 3 處 error 回傳改為 ED3N
   - `composer.py` — 4 處 fallback 字串改為 `_ED3NEngine().process()`
-  - `proactive_interaction_system.py` — 6 組硬編碼訊息 (15+ 字串) 改為 ED3N reflex layer
+  - `proactive_interaction_system.py` — 6 組硬編碼訊息 (15+ 字串) 改為 ED3N
+    reflex layer
   - `chat_routes.py` — timeout 回應、歡迎訊息、隨機回應池改為 ED3N
   - `daily_language_model.py` — error/fallback 回應改為 ED3N
-- **配置文件**: `ed3n.default.yaml`, `llm.default.yaml` 加入 ed3n-v1, `llm_providers.default.yaml` 加入 ed3n provider, `angela_core.default.yaml` 加入 backend_priority
+- **配置文件**: `ed3n.default.yaml`, `llm.default.yaml` 加入 ed3n-v1,
+  `llm_providers.default.yaml` 加入 ed3n provider, `angela_core.default.yaml`
+  加入 backend_priority
 - **下階段**: Phase 2 (訓練系統, 字典自我增長, 梯度流), Phase 3 (SNN 整合)
 
 ### H7.6 ED3N Phase 2 訓練系統
+
 - **狀態**: ✅ 完成
-- **新檔案**: `ai/ed3n/training_types.py`, `ed3n_trainer.py`, `continuous_learning.py`, `learning_integration.py`
-- **字典增長**: detect_new_concepts, learn_from_conversation, merge_entries, JSON 匯入匯出
+- **新檔案**: `ai/ed3n/training_types.py`, `ed3n_trainer.py`,
+  `continuous_learning.py`, `learning_integration.py`
+- **字典增長**: detect_new_concepts, learn_from_conversation, merge_entries,
+  JSON 匯入匯出
 - **訓練系統**: ED3NTrainer 交替字典/網路 Hebbian 訓練, CoreNetwork.train_step
 - **學習管道**: ContinuousLearningPipeline 對話→概念檢測→佇列→自動訓練
-- **系統整合**: ED3NLearningIntegration 橋接 LearningManager, ExperienceReplayBuffer, MemoryLearningEngine
+- **系統整合**: ED3NLearningIntegration 橋接 LearningManager,
+  ExperienceReplayBuffer, MemoryLearningEngine
 - **下階段**: Phase 3 SNN 整合 (LIF 神經元, 批次重排序, 荷爾蒙調製)
 
 ### H7.7 ED3N Phase 3 SNN 整合
+
 - **狀態**: ✅ 完成
 - **新子套件**: `ai/ed3n/snn/` (6 檔, ~500 行)
 - **LIF 神經元**: LIFNeuron, LIFState (膜電位積分, 漏電, 不應期, 脈衝)
 - **批次重排序**: BatchReorderEngine, SNNBatch (初始→下游鏈式→脈衝收集)
-- **荷爾蒙調製**: HormonalModulator (6 荷爾蒙, EndocrineSystem 同步, threshold 調製)
+- **荷爾蒙調製**: HormonalModulator (6 荷爾蒙, EndocrineSystem 同步,
+  threshold 調製)
 - **稀疏優化**: SparseComputationEngine (活躍/非活躍追蹤)
 - **SNN 核心**: SNNCore, SNNRelationGroup (snn_forward 演算法)
 - **引擎整合**: ED3NEngine.snn_mode, process_snn(), depth="snn"
 - **下階段**: Phase 4 模態擴充 (圖像, 音訊編碼器)
 
 ### H7.8 ED3N Phase 4 模態擴充
+
 - **狀態**: ✅ 完成
-- **新模組**: `ai/ed3n/multimodal/image_encoder.py`, `audio_encoder.py`, `cross_modal_trainer.py`
-- **圖像編碼器**: ImageEncoder (CNN 特徵提取, 注意力池化, 語義投影至 ED3N 字典空間)
+- **新模組**: `ai/ed3n/multimodal/image_encoder.py`, `audio_encoder.py`,
+  `cross_modal_trainer.py`
+- **圖像編碼器**: ImageEncoder
+  (CNN 特徵提取, 注意力池化, 語義投影至 ED3N 字典空間)
 - **音訊編碼器**: AudioEncoder (頻譜特徵, 時序建模, 跨模態對齊)
 - **跨模態訓練**: CrossModalTrainer (配對/未配對學習, 對比損失, 模態一致校驗)
-- **引擎整合**: ED3NEngine 支援 `process_multimodal(image, audio, text)` 統一入口, 三模態融合推論
+- **引擎整合**: ED3NEngine 支援 `process_multimodal(image, audio, text)`
+  統一入口, 三模態融合推論
 
 ### 🟡 文檔一致性
 
-| # | 問題 | 優先級 |
-|:-:|------|:------:|
-| 1 | ARCHITECTURE.md 行數/模組數過時 | ✅ 已更新 |
-| 2 | OVERVIEW.md 數字錯誤（模組 8→11+） | ✅ 已更新 |
-| 3 | AGENTS.md 日期 2026-02-19 | ✅ 已為 2026-06-06 |
-| 4 | 4 廢棄計畫未歸檔 | ✅ 已歸檔至 docs/09-archive/ |
+|  #  | 問題                               |            優先級            |
+| :-: | ---------------------------------- | :--------------------------: |
+|  1  | ARCHITECTURE.md 行數/模組數過時    |          ✅ 已更新           |
+|  2  | OVERVIEW.md 數字錯誤（模組 8→11+） |          ✅ 已更新           |
+|  3  | AGENTS.md 日期 2026-02-19          |      ✅ 已為 2026-06-06      |
+|  4  | 4 廢棄計畫未歸檔                   | ✅ 已歸檔至 docs/09-archive/ |
 
 ### 🟢 測試品質
 
-| # | 缺口 | 建議 |
-|:-:|:----|:----|
-| 1 | 無邊界測試 | 為核心 API 加入邊界值測試 |
-| 2 | 無性能基準 | 建立 `tests/benchmarks/` 目錄 |
-| 3 | 無並發測試 | 為 GlobalStateStore, HSPConnector 加入競爭條件測試 |
-| 4 | 覆蓋率 ~6.8% | CI 加入覆蓋率門檻（目標 40%） |
+|  #  | 缺口         | 建議                                               |
+| :-: | :----------- | :------------------------------------------------- |
+|  1  | 無邊界測試   | 為核心 API 加入邊界值測試                          |
+|  2  | 無性能基準   | 建立 `tests/benchmarks/` 目錄                      |
+|  3  | 無並發測試   | 為 GlobalStateStore, HSPConnector 加入競爭條件測試 |
+|  4  | 覆蓋率 ~6.8% | CI 加入覆蓋率門檻（目標 40%）                      |
 
 ---
 
 ## 五、已修復項目總表（H5 新增）
 
-| # | 檔案 | 問題 | 修復 |
-|:-:|------|------|------|
-| 18 | `core/angela_error.py` | 僅有簡單 AngelaError 層次 | 完整實作 ErrorSeverity enum、ErrorCategory enum、ErrorHandler class、18 子類（CoreError, NetworkError 等）、to_dict/to_json 序列化、cause chain、ErrorContext |
-| 19 | `ai/reasoning/causal_reasoning_engine.py` | 缺少 `_analyze_observation_causality` | 加入 async method + 內部 Pearson 相關係數計算 |
-| 20-43 | 22 檔案（含 bio, engine, life, services 等） | 24 處 `except X: pass` | 加入 logger.debug/warning |
-| 44 | `ai/alignment/__init__.py` + 7 新 stub | 新發現的空檔案 | 7 個新 stub 實作（adversarial_generation, alignment_manager 等） |
-| 45-47 | 3 services/handlers | 服務 handler 缺失 | FileOperationHandler, GoogleDriveHandler + __init__.py 匯出 |
-| 48 | `services/handlers/__init__.py` | 缺少 GoogleDriveHandler | 加入 import/export |
+|   #   | 檔案                                         | 問題                                  | 修復                                                                                                                                                          |
+| :---: | -------------------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|  18   | `core/angela_error.py`                       | 僅有簡單 AngelaError 層次             | 完整實作 ErrorSeverity enum、ErrorCategory enum、ErrorHandler class、18 子類（CoreError, NetworkError 等）、to_dict/to_json 序列化、cause chain、ErrorContext |
+|  19   | `ai/reasoning/causal_reasoning_engine.py`    | 缺少 `_analyze_observation_causality` | 加入 async method + 內部 Pearson 相關係數計算                                                                                                                 |
+| 20-43 | 22 檔案（含 bio, engine, life, services 等） | 24 處 `except X: pass`                | 加入 logger.debug/warning                                                                                                                                     |
+|  44   | `ai/alignment/__init__.py` + 7 新 stub       | 新發現的空檔案                        | 7 個新 stub 實作（adversarial_generation, alignment_manager 等）                                                                                              |
+| 45-47 | 3 services/handlers                          | 服務 handler 缺失                     | FileOperationHandler, GoogleDriveHandler + **init**.py 匯出                                                                                                   |
+|  48   | `services/handlers/__init__.py`              | 缺少 GoogleDriveHandler               | 加入 import/export                                                                                                                                            |
 
 ---
 
@@ -241,4 +263,5 @@ Phase          Focus                          Score Target  Priority
 
 ---
 
-_建立: 2026-06-06 | 基於 PR4 (06-05) + H5 衝刺後狀態 | 4 代理並行審計 | 綜合評分 ~62%（+7pp from PR4）_
+_建立: 2026-06-06 | 基於 PR4 (06-05) + H5 衝刺後狀態 |
+4 代理並行審計 | 綜合評分 ~62%（+7pp from PR4）_

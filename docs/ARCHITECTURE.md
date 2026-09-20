@@ -1,9 +1,9 @@
 # Angela AI Architecture
 
-> **Source of Truth**: This document is the authoritative reference for Angela AI system architecture.
-> **Last Updated**: 2026-06-25
-> **Derived from**: `docs/FULL_ARCHITECTURE_ANALYSIS.md`
-> **完整感知・認知・執行架構**: [ANGELA_FULL_ARCHITECTURE.md](architecture/ANGELA_FULL_ARCHITECTURE.md)
+> **Source of Truth**: This document is the authoritative reference for Angela
+> AI system architecture. **Last Updated**: 2026-06-25 **Derived from**:
+> `docs/FULL_ARCHITECTURE_ANALYSIS.md` **完整感知・認知・執行架構**:
+> [ANGELA_FULL_ARCHITECTURE.md](architecture/ANGELA_FULL_ARCHITECTURE.md)
 
 ---
 
@@ -123,9 +123,11 @@ User Input → Desktop App (Electron)
       └→ ChatPanel.showResponse(text)
 ```
 
-> **ModuleManager**: The `ModuleManager` (in `core/system/module_manager/`) orchestrates lifecycle management
-> for all discoverable service modules. It handles dynamic registration, dependency wiring, and graceful
-> shutdown of modules such as ChatService, LLMService, BioIntegrator, and the Plugin Pipeline system.
+> **ModuleManager**: The `ModuleManager` (in `core/system/module_manager/`)
+> orchestrates lifecycle management for all discoverable service modules. It
+> handles dynamic registration, dependency wiring, and graceful shutdown of
+> modules such as ChatService, LLMService, BioIntegrator, and the Plugin
+> Pipeline system.
 
 ---
 
@@ -169,18 +171,18 @@ unified-ai-project/
 
 ## 5. Key Technologies & Patterns
 
-| Component | Technology | Pattern |
-|-----------|-----------|---------|
-| API Framework | FastAPI (uvicorn) | Route-level Depends DI |
-| Middleware | CORS → SignedCommunication | Chain of Responsibility |
-| LLM Integration | Ollama / GPT / Gemini | Strategy pattern via LLMService |
-| Memory | ChromaDB (HAM) | Layered memory hierarchy |
-| State Matrix | 6D (αβγδεθ) | Observer → WebSocket push |
-| Security | Key A/B/C encryption | AES + signed middleware |
-| Configuration | YAML 3-tier (system/standard/MOD) | ConfigLoader |
-| Messaging | WebSocket | Pub/Sub |
-| Desktop Renderer | Live2D Cubism SDK 5 R5 | WebGL2 |
-| Package Manager | pnpm (workspace) | Monorepo |
+| Component        | Technology                        | Pattern                         |
+| ---------------- | --------------------------------- | ------------------------------- |
+| API Framework    | FastAPI (uvicorn)                 | Route-level Depends DI          |
+| Middleware       | CORS → SignedCommunication        | Chain of Responsibility         |
+| LLM Integration  | Ollama / GPT / Gemini             | Strategy pattern via LLMService |
+| Memory           | ChromaDB (HAM)                    | Layered memory hierarchy        |
+| State Matrix     | 6D (αβγδεθ)                       | Observer → WebSocket push       |
+| Security         | Key A/B/C encryption              | AES + signed middleware         |
+| Configuration    | YAML 3-tier (system/standard/MOD) | ConfigLoader                    |
+| Messaging        | WebSocket                         | Pub/Sub                         |
+| Desktop Renderer | Live2D Cubism SDK 5 R5            | WebGL2                          |
+| Package Manager  | pnpm (workspace)                  | Monorepo                        |
 
 ---
 
@@ -188,36 +190,39 @@ unified-ai-project/
 
 ### Overview
 
-The GVV (Geometric Vocabulary Vector) pipeline generates images from text using a multi-stage approach:
+The GVV (Geometric Vocabulary Vector) pipeline generates images from text using
+a multi-stage approach:
 
 ```
-Text → CLIP (512-dim) → Concept Space (PCA, 87% accuracy) → 
+Text → CLIP (512-dim) → Concept Space (PCA, 87% accuracy) →
 ConceptMapper → GeometricVocabulary → InstanceOptimizer → Render
 ```
 
 ### Components
 
-| Component | Location | Responsibility |
-|-----------|----------|---------------|
-| **ConceptMapper** | `ai/multimodal/primitives/concept_mapper.py` | Maps CLIP embeddings to shared concept space |
-| **ConceptSpaceMapper** | `ai/multimodal/primitives/concept_space.py` | PCA-based projection with class centers |
-| **GeometricVocabulary** | `ai/multimodal/primitives/geometric_vocabulary.py` | Stores primitive geometric patterns |
-| **InstanceOptimizer** | `ai/multimodal/primitives/instance_optimizer.py` | Text-driven primitive optimization |
-| **LearnableDecomposer** | `ai/multimodal/primitives/learnable_decomposer.py` | Neural image→primitive decomposition |
-| **ThreeLayerVisual** | `ai/multimodal/three_layer_visual.py` | PCA encoder + nonlinear decoder (128-dim) |
-| **Primitive Renderer** | `ai/multimodal/primitives/primitive_renderer.py` | PIL-based rendering of primitives |
+| Component               | Location                                           | Responsibility                               |
+| ----------------------- | -------------------------------------------------- | -------------------------------------------- |
+| **ConceptMapper**       | `ai/multimodal/primitives/concept_mapper.py`       | Maps CLIP embeddings to shared concept space |
+| **ConceptSpaceMapper**  | `ai/multimodal/primitives/concept_space.py`        | PCA-based projection with class centers      |
+| **GeometricVocabulary** | `ai/multimodal/primitives/geometric_vocabulary.py` | Stores primitive geometric patterns          |
+| **InstanceOptimizer**   | `ai/multimodal/primitives/instance_optimizer.py`   | Text-driven primitive optimization           |
+| **LearnableDecomposer** | `ai/multimodal/primitives/learnable_decomposer.py` | Neural image→primitive decomposition         |
+| **ThreeLayerVisual**    | `ai/multimodal/three_layer_visual.py`              | PCA encoder + nonlinear decoder (128-dim)    |
+| **Primitive Renderer**  | `ai/multimodal/primitives/primitive_renderer.py`   | PIL-based rendering of primitives            |
 
 ### API Endpoints
 
-| Method | Path | Function |
-|--------|------|----------|
-| POST | `/api/v1/image/generate` | Text-to-image generation |
-| POST | `/api/v1/image/recognize` | Image recognition via concept space |
-| POST | `/api/v1/image/reconstruct` | Image reconstruction via ThreeLayerVisual |
-| POST | `/api/v1/image/interpolate` | Class interpolation |
-| GET | `/api/v1/image/status` | Pipeline health check |
+| Method | Path                        | Function                                  |
+| ------ | --------------------------- | ----------------------------------------- |
+| POST   | `/api/v1/image/generate`    | Text-to-image generation                  |
+| POST   | `/api/v1/image/recognize`   | Image recognition via concept space       |
+| POST   | `/api/v1/image/reconstruct` | Image reconstruction via ThreeLayerVisual |
+| POST   | `/api/v1/image/interpolate` | Class interpolation                       |
+| GET    | `/api/v1/image/status`      | Pipeline health check                     |
 
-> **Deprecated endpoints removed in v7.5.0**: `/generate-image`, `/recognize-image`, `/reconstruct-image`, `/interpolate-classes`, `/generate-image/status` — use `/api/v1/image/*` equivalents only.
+> **Deprecated endpoints removed in v7.5.0**: `/generate-image`,
+> `/recognize-image`, `/reconstruct-image`, `/interpolate-classes`,
+> `/generate-image/status` — use `/api/v1/image/*` equivalents only.
 
 ### Key Metrics
 
@@ -229,34 +234,37 @@ ConceptMapper → GeometricVocabulary → InstanceOptimizer → Render
 
 ## 8. State Matrix (αβγδεθ — 理想目標 8D αβγδ εθζη)
 
-> **實際狀態**: 代碼中實作為 `StateMatrix4D`（`core/engine/state_matrix.py:58`，1,244 行），支援 6 維度（αβγδεθ）。8D 規格（含 ζη）為理想架構目標。
+> **實際狀態**: 代碼中實作為
+> `StateMatrix4D`（`core/engine/state_matrix.py:58`，1,244 行），支援 6 維度（αβγδεθ）。8D 規格（含 ζη）為理想架構目標。
 
-| Dimension | Name | Description | Range |
-|-----------|------|-------------|-------|
-| α | Physiological | Energy, comfort, arousal, rest, vitality, tension | 0.0–1.0 |
-| β | Cognitive | Curiosity, focus, confusion, learning, clarity, creativity | 0.0–1.0 |
-| γ | Physical | Position, velocity, collision, gravity, friction | 0.0–1.0 |
-| δ | Spiritual | Emotion, affect, personality, wisdom, empathy | 0.0–1.0 |
-| ε | Environmental | Complexity, social density, information flow, time pressure | 0.0–1.0 |
-| θ | Meta-cognitive | Novelty, mismatch doubt, creation urge, correction drive | 0.0–1.0 |
-| ζ | Connectivity | Cross-module coupling, sync state, redundancy, mesh aggregation | 0.0–1.0 |
-| η | Execution | Active modules, success rate, structural drift, resource efficiency | 0.0–1.0 |
+| Dimension | Name           | Description                                                         | Range   |
+| --------- | -------------- | ------------------------------------------------------------------- | ------- |
+| α         | Physiological  | Energy, comfort, arousal, rest, vitality, tension                   | 0.0–1.0 |
+| β         | Cognitive      | Curiosity, focus, confusion, learning, clarity, creativity          | 0.0–1.0 |
+| γ         | Physical       | Position, velocity, collision, gravity, friction                    | 0.0–1.0 |
+| δ         | Spiritual      | Emotion, affect, personality, wisdom, empathy                       | 0.0–1.0 |
+| ε         | Environmental  | Complexity, social density, information flow, time pressure         | 0.0–1.0 |
+| θ         | Meta-cognitive | Novelty, mismatch doubt, creation urge, correction drive            | 0.0–1.0 |
+| ζ         | Connectivity   | Cross-module coupling, sync state, redundancy, mesh aggregation     | 0.0–1.0 |
+| η         | Execution      | Active modules, success rate, structural drift, resource efficiency | 0.0–1.0 |
 
 ---
 
 ## 9. Naming Conventions
 
-| Language | Convention | Enforcement |
-|----------|-----------|-------------|
-| Python | snake_case, PascalCase classes, UPPER_SNAKE constants | Black + isort + mypy |
-| JavaScript | camelCase, PascalCase classes, UPPER_SNAKE constants | ESLint + Prettier |
-| API Routes | /api/v1/{resource}/{action} | FastAPI router prefixes |
+| Language   | Convention                                            | Enforcement             |
+| ---------- | ----------------------------------------------------- | ----------------------- |
+| Python     | snake_case, PascalCase classes, UPPER_SNAKE constants | Black + isort + mypy    |
+| JavaScript | camelCase, PascalCase classes, UPPER_SNAKE constants  | ESLint + Prettier       |
+| API Routes | /api/v1/{resource}/{action}                           | FastAPI router prefixes |
 
 ## 10. Error Handling
 
-- **Python**: Use `AngelaError` hierarchy; log with `logger.exception()` for unexpected errors
+- **Python**: Use `AngelaError` hierarchy; log with `logger.exception()` for
+  unexpected errors
 - **JavaScript**: try/catch with `throw new Error()`
-- **API**: HTTPException with appropriate status codes (4xx for client, 5xx for server)
+- **API**: HTTPException with appropriate status codes (4xx for client, 5xx for
+  server)
 
 ## 11. Version Governance
 
@@ -269,13 +277,13 @@ ConceptMapper → GeometricVocabulary → InstanceOptimizer → Render
 
 ## 12. Relevant Documents
 
-| Document | Purpose |
-|----------|---------|
-| `AGENTS.md` | Development guide, build/test/lint commands |
-| `ANGELA_MATRIX_ANNOTATION_GUIDE.md` | Matrix annotation standards (L1-L6, αβγδ εθζη, A/B/C, L0-L11) |
-| `docs/COMPREHENSIVE_REPAIR_ROADMAP.md` | Phased repair roadmap (Phase A-F) |
-| `docs/OMISSIONS_CHECKLIST.md` | Known omissions and gaps tracker |
-| `docs/COMPOSITIONAL_IMAGE_GENERATION_IMPLEMENTATION_SUMMARY.md` | GVV pipeline summary |
-| `docs/06-project-management/plans/PHASE_REVIEW6.md` | 62.5-round dev log |
-| `docs/06-project-management/plans/PROJECT_HONEST_AUDIT.md` | Honest project audit (~6.0/10) |
-| `CHANGELOG.md` | Release history |
+| Document                                                        | Purpose                                                       |
+| --------------------------------------------------------------- | ------------------------------------------------------------- |
+| `AGENTS.md`                                                     | Development guide, build/test/lint commands                   |
+| `ANGELA_MATRIX_ANNOTATION_GUIDE.md`                             | Matrix annotation standards (L1-L6, αβγδ εθζη, A/B/C, L0-L11) |
+| `docs/COMPREHENSIVE_REPAIR_ROADMAP.md`                          | Phased repair roadmap (Phase A-F)                             |
+| `docs/OMISSIONS_CHECKLIST.md`                                   | Known omissions and gaps tracker                              |
+| `docs/COMPOSITIONAL_IMAGE_GENERATION_IMPLEMENTATION_SUMMARY.md` | GVV pipeline summary                                          |
+| `docs/06-project-management/plans/PHASE_REVIEW6.md`             | 62.5-round dev log                                            |
+| `docs/06-project-management/plans/PROJECT_HONEST_AUDIT.md`      | Honest project audit (~6.0/10)                                |
+| `CHANGELOG.md`                                                  | Release history                                               |

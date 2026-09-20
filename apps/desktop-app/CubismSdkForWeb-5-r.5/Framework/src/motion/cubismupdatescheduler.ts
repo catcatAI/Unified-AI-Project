@@ -5,23 +5,23 @@
  * that can be found at https://www.live2d.com/eula/live2d-open-software-license-agreement_en.html.
  */
 
-import { ICubismUpdater, ICubismUpdaterChangeListener } from './icubismupdater';
-import { CubismModel } from '../model/cubismmodel';
+import { ICubismUpdater, ICubismUpdaterChangeListener } from './icubismupdater'
+import { CubismModel } from '../model/cubismmodel'
 
 /**
  * Scheduler for managing and updating ICubismUpdater instances.
  * Handles the management of update order and execution through a sorted list.
  */
 export class CubismUpdateScheduler implements ICubismUpdaterChangeListener {
-  private _cubismUpdatableList: ICubismUpdater[];
-  private _needsSort: boolean;
+  private _cubismUpdatableList: ICubismUpdater[]
+  private _needsSort: boolean
 
   /**
    * Constructor
    */
   constructor() {
-    this._cubismUpdatableList = [];
-    this._needsSort = false;
+    this._cubismUpdatableList = []
+    this._needsSort = false
   }
 
   /**
@@ -31,12 +31,12 @@ export class CubismUpdateScheduler implements ICubismUpdaterChangeListener {
     // Remove all listeners before clearing
     for (const updater of this._cubismUpdatableList) {
       if (updater) {
-        updater.removeChangeListener(this);
+        updater.removeChangeListener(this)
       }
     }
     // Clear the list - in TypeScript we don't need to manually delete objects
     // as they will be garbage collected when no longer referenced
-    this._cubismUpdatableList.length = 0;
+    this._cubismUpdatableList.length = 0
   }
 
   /**
@@ -47,17 +47,17 @@ export class CubismUpdateScheduler implements ICubismUpdaterChangeListener {
    */
   public addUpdatableList(updatable: ICubismUpdater): void {
     if (!updatable) {
-      return;
+      return
     }
 
     // Check for duplicate registration
     if (this.hasUpdatable(updatable)) {
-      return; // Already exists, skip adding
+      return // Already exists, skip adding
     }
 
-    this._cubismUpdatableList.push(updatable);
-    updatable.addChangeListener(this);
-    this._needsSort = true;
+    this._cubismUpdatableList.push(updatable)
+    updatable.addChangeListener(this)
+    this._needsSort = true
   }
 
   /**
@@ -68,25 +68,25 @@ export class CubismUpdateScheduler implements ICubismUpdaterChangeListener {
    */
   public removeUpdatableList(updatable: ICubismUpdater): boolean {
     if (!updatable) {
-      return false;
+      return false
     }
 
-    const index = this._cubismUpdatableList.indexOf(updatable);
+    const index = this._cubismUpdatableList.indexOf(updatable)
     if (index >= 0) {
-      this._cubismUpdatableList.splice(index, 1);
-      updatable.removeChangeListener(this);
+      this._cubismUpdatableList.splice(index, 1)
+      updatable.removeChangeListener(this)
       // Note: removal doesn't require re-sorting
-      return true;
+      return true
     }
-    return false;
+    return false
   }
 
   /**
    * Sorts the update list using the ICubismUpdater sort function.
    */
   public sortUpdatableList(): void {
-    this._cubismUpdatableList.sort(ICubismUpdater.sortFunction);
-    this._needsSort = false;
+    this._cubismUpdatableList.sort(ICubismUpdater.sortFunction)
+    this._needsSort = false
   }
 
   /**
@@ -98,18 +98,18 @@ export class CubismUpdateScheduler implements ICubismUpdaterChangeListener {
    */
   public onLateUpdate(model: CubismModel, deltaTimeSeconds: number): void {
     if (!model) {
-      return;
+      return
     }
 
     // Automatically sort if needed to ensure execution order
     if (this._needsSort) {
-      this.sortUpdatableList();
+      this.sortUpdatableList()
     }
 
     for (let i = 0; i < this._cubismUpdatableList.length; ++i) {
-      const updater = this._cubismUpdatableList[i];
+      const updater = this._cubismUpdatableList[i]
       if (updater) {
-        updater.onLateUpdate(model, deltaTimeSeconds);
+        updater.onLateUpdate(model, deltaTimeSeconds)
       }
     }
   }
@@ -120,7 +120,7 @@ export class CubismUpdateScheduler implements ICubismUpdaterChangeListener {
    * @return Number of updaters
    */
   public getUpdatableCount(): number {
-    return this._cubismUpdatableList.length;
+    return this._cubismUpdatableList.length
   }
 
   /**
@@ -131,9 +131,9 @@ export class CubismUpdateScheduler implements ICubismUpdaterChangeListener {
    */
   public getUpdatable(index: number): ICubismUpdater | null {
     if (index < 0 || index >= this._cubismUpdatableList.length) {
-      return null;
+      return null
     }
-    return this._cubismUpdatableList[index];
+    return this._cubismUpdatableList[index]
   }
 
   /**
@@ -143,7 +143,7 @@ export class CubismUpdateScheduler implements ICubismUpdaterChangeListener {
    * @return true if the updater exists in the list, false otherwise
    */
   public hasUpdatable(updatable: ICubismUpdater): boolean {
-    return this._cubismUpdatableList.indexOf(updatable) >= 0;
+    return this._cubismUpdatableList.indexOf(updatable) >= 0
   }
 
   /**
@@ -153,11 +153,11 @@ export class CubismUpdateScheduler implements ICubismUpdaterChangeListener {
     // Remove listeners before clearing
     for (const updater of this._cubismUpdatableList) {
       if (updater) {
-        updater.removeChangeListener(this);
+        updater.removeChangeListener(this)
       }
     }
-    this._cubismUpdatableList.length = 0;
-    this._needsSort = false;
+    this._cubismUpdatableList.length = 0
+    this._needsSort = false
   }
 
   /**
@@ -167,14 +167,14 @@ export class CubismUpdateScheduler implements ICubismUpdaterChangeListener {
    * @param updater The updater that was changed
    */
   public onUpdaterChanged(updater: ICubismUpdater): void {
-    this._needsSort = true;
+    this._needsSort = true
   }
 }
 
 // Namespace definition for compatibility.
-import * as $ from './cubismupdatescheduler';
+import * as $ from './cubismupdatescheduler'
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
-  export const CubismUpdateScheduler = $.CubismUpdateScheduler;
-  export type CubismUpdateScheduler = $.CubismUpdateScheduler;
+  export const CubismUpdateScheduler = $.CubismUpdateScheduler
+  export type CubismUpdateScheduler = $.CubismUpdateScheduler
 }

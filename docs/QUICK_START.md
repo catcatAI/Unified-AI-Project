@@ -1,6 +1,7 @@
 # Unified AI Project — Quick Start Guide
 
-> **Last verified**: 2026-06-25 — commands tested against actual project structure
+> **Last verified**: 2026-06-25 — commands tested against actual project
+> structure
 
 ## Prerequisites
 
@@ -62,33 +63,38 @@ pytest tests/path/to/test_file.py -v
 
 ## Services (after starting)
 
-| Service | URL |
-|---------|-----|
-| Backend API | http://localhost:8000 |
+| Service            | URL                        |
+| ------------------ | -------------------------- |
+| Backend API        | http://localhost:8000      |
 | API Docs (Swagger) | http://localhost:8000/docs |
-| Web dashboard | http://localhost:3000 |
+| Web dashboard      | http://localhost:3000      |
 
 ## Project Structure (key directories)
 
-| Directory | Purpose |
-|-----------|---------|
-| `apps/backend/src/` | Python FastAPI backend (667 files, ~96K lines) |
-| `apps/desktop-app/` | Electron + Live2D desktop companion |
-| `apps/web-live2d-viewer/` | Web-based Live2D viewer |
-| `apps/pixel-angela/` | PyQt6 pixel art engine |
-| `packages/shared-js/` | Shared JS library (33 files) |
-| `packages/cli/` | Python CLI tools |
-| `tests/` | Test suite (~5,448 tests; 6,111 full) |
-| `docs/` | Documentation (50+ MD files) |
+| Directory                 | Purpose                                        |
+| ------------------------- | ---------------------------------------------- |
+| `apps/backend/src/`       | Python FastAPI backend (667 files, ~96K lines) |
+| `apps/desktop-app/`       | Electron + Live2D desktop companion            |
+| `apps/web-live2d-viewer/` | Web-based Live2D viewer                        |
+| `apps/pixel-angela/`      | PyQt6 pixel art engine                         |
+| `packages/shared-js/`     | Shared JS library (33 files)                   |
+| `packages/cli/`           | Python CLI tools                               |
+| `tests/`                  | Test suite (~5,448 tests; 6,111 full)          |
+| `docs/`                   | Documentation (50+ MD files)                   |
 
 ## Key Facts
 
 - **667 Python files** in backend src (~96K lines)
 - **~5,448 tests** (tests/; 6,111 full) across 480+ test files, 0 errors
-- **Architecture health**: ~95% (2026-07-18 verified) - [see audit](09-archive/auto-archived-2026-08-11/COMPREHENSIVE_AUDIT_2026-06-25.md)
+- **Architecture health**: ~95% (2026-07-18 verified) -
+  [see audit](09-archive/auto-archived-2026-08-11/COMPREHENSIVE_AUDIT_2026-06-25.md)
 - **Repair phases**: All 6 phases (0-5 + C/D/E/F) complete
-- **See**: `docs/09-archive/auto-archived-2026-08-11/COMPREHENSIVE_REPAIR_ROADMAP.md` for full repair status
+- **See**:
+  `docs/09-archive/auto-archived-2026-08-11/COMPREHENSIVE_REPAIR_ROADMAP.md` for
+  full repair status
 
 ---
 
-*For detailed developer guidelines, see [AGENTS.md](../AGENTS.md). For version history, see [CHANGELOG.md](../CHANGELOG.md). For full audit, see [COMPREHENSIVE_AUDIT_2026-06-25.md](09-archive/auto-archived-2026-08-11/COMPREHENSIVE_AUDIT_2026-06-25.md).*
+_For detailed developer guidelines, see [AGENTS.md](../AGENTS.md). For version
+history, see [CHANGELOG.md](../CHANGELOG.md). For full audit, see
+[COMPREHENSIVE_AUDIT_2026-06-25.md](09-archive/auto-archived-2026-08-11/COMPREHENSIVE_AUDIT_2026-06-25.md)._

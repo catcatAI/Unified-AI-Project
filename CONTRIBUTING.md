@@ -1,6 +1,7 @@
 # Contributing to Angela AI
 
-Thank you for your interest in contributing to Angela AI! This document provides guidelines and instructions for contributing.
+Thank you for your interest in contributing to Angela AI! This document provides
+guidelines and instructions for contributing.
 
 ## 📋 Table of Contents
 
@@ -16,7 +17,8 @@ Thank you for your interest in contributing to Angela AI! This document provides
 
 ## 🤝 Code of Conduct
 
-This project adheres to a [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code of conduct.
+This project adheres to a [Code of Conduct](CODE_OF_CONDUCT.md). By
+participating, you are expected to uphold this code of conduct.
 
 ## 🚀 Getting Started
 
@@ -92,7 +94,8 @@ npm start
 
 ### Reporting Bugs
 
-1. Check if the bug is already reported in [Issues](https://github.com/catcatAI/Unified-AI-Project/issues)
+1. Check if the bug is already reported in
+   [Issues](https://github.com/catcatAI/Unified-AI-Project/issues)
 2. If not, create a new issue with:
    - Clear title and description
    - Steps to reproduce
@@ -109,6 +112,7 @@ npm start
 ### Contributing Code
 
 1. **Create a branch**
+
    ```bash
    git checkout -b feature/your-feature-name
    # or
@@ -121,15 +125,17 @@ npm start
    - Update documentation
 
 3. **Test your changes**
+
    ```bash
    # Run pytest tests
    python3 -m pytest tests/
-   
+
    # Run linting
    python3 -m flake8 apps/backend/src/
    ```
 
 4. **Commit and push**
+
    ```bash
    git add .
    git commit -m "feat: add new feature"
@@ -157,15 +163,15 @@ def process_user_input(
     context: Optional[Dict] = None
 ) -> Response:
     """Process user input and generate response.
-    
+
     Args:
         user_id: Unique identifier for the user
         message: Input message from user
         context: Optional conversation context
-        
+
     Returns:
         Response object containing the AI's reply
-        
+
     Raises:
         ValueError: If user_id is empty
     """
@@ -210,13 +216,13 @@ class TestImportanceScorer:
     @pytest.fixture
     def scorer(self):
         return ImportanceScorer()
-    
+
     @pytest.mark.asyncio
     async def test_basic_score(self, scorer):
         metadata = {}
         score = await scorer.calculate("普通消息", metadata)
         assert 0.0 <= score <= 1.0
-    
+
     @pytest.mark.asyncio
     async def test_keyword_boost(self, scorer):
         score_urgent = await scorer.calculate("这是一个urgent消息", {})
@@ -236,6 +242,7 @@ class TestImportanceScorer:
 ### Project Documentation
 
 Located in `docs/` directory:
+
 - `docs/00-overview/` - Project overview and vision
 - `docs/01-summaries-and-reports/` - Project reports and summaries
 - `docs/02-game-design/` - Game design documentation
@@ -255,6 +262,7 @@ Located in `docs/` directory:
 Main API endpoints:
 
 **Backend API (FastAPI)**
+
 - `GET /health` - Health check
 - `POST /angela/chat` - Chat endpoint (uses LLM)
 - `POST /dialogue` - Dialogue management
@@ -262,6 +270,7 @@ Main API endpoints:
 - WebSocket `/ws` - Real-time communication
 
 **Key Services**
+
 - LLM Service: Multi-backend support (Ollama, OpenAI, Anthropic)
 - HAM Memory System: Hierarchical associative memory
 - AI Agents: 15 specialized agents
@@ -280,6 +289,7 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 ```
 
 Types:
+
 - `feat`: New feature
 - `fix`: Bug fix
 - `docs`: Documentation only
@@ -289,6 +299,7 @@ Types:
 - `chore`: Build process, dependencies, etc.
 
 Examples:
+
 ```
 feat(ham): add episodic memory compression
 
@@ -339,12 +350,14 @@ log management and filtering.
 ## 🏆 Recognition
 
 Contributors will be:
+
 - Listed in release notes
 - Credited in documentation
 
 ## 📜 License
 
-By contributing, you agree that your contributions will be licensed under the MIT License.
+By contributing, you agree that your contributions will be licensed under the
+MIT License.
 
 ---
 

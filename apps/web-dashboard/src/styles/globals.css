@@ -37,7 +37,9 @@ h1 {
   gap: 20px;
 }
 
-.chat-panel, .pet-panel, .system-monitor {
+.chat-panel,
+.pet-panel,
+.system-monitor {
   background: var(--bg-secondary);
   border-radius: 10px;
   padding: 20px;
@@ -58,7 +60,7 @@ h2 {
   overflow-y: auto;
   margin-bottom: 15px;
   padding: 10px;
-  background: rgba(0,0,0,0.2);
+  background: rgba(0, 0, 0, 0.2);
   border-radius: 5px;
 }
 
@@ -93,7 +95,7 @@ h2 {
   padding: 10px;
   border: none;
   border-radius: 5px;
-  background: rgba(0,0,0,0.3);
+  background: rgba(0, 0, 0, 0.3);
   color: white;
 }
 
@@ -132,7 +134,7 @@ h2 {
 .metrics div {
   margin-bottom: 8px;
   padding: 8px;
-  background: rgba(0,0,0,0.2);
+  background: rgba(0, 0, 0, 0.2);
   border-radius: 5px;
 }
 
@@ -192,16 +194,26 @@ h2 {
   font-size: 0.9em;
   padding: 4px 10px;
   border-radius: 12px;
-  background: rgba(0,0,0,0.3);
+  background: rgba(0, 0, 0, 0.3);
 }
 
-.health-ok { color: #2ecc71; }
-.health-warn { color: #f1c40f; }
-.health-err { color: #e74c3c; }
-.health-unknown { color: #95a5a6; }
+.health-ok {
+  color: #2ecc71;
+}
+.health-warn {
+  color: #f1c40f;
+}
+.health-err {
+  color: #e74c3c;
+}
+.health-unknown {
+  color: #95a5a6;
+}
 
 /* ── Config panel ── */
-.config-panel, .model-selector, .context-viewer {
+.config-panel,
+.model-selector,
+.context-viewer {
   background: var(--bg-secondary);
   border-radius: 10px;
   padding: 20px;
@@ -222,11 +234,16 @@ h2 {
   display: flex;
   justify-content: space-between;
   padding: 6px 0;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.config-row .label { color: var(--text-secondary); }
-.config-row .value { color: var(--text-primary); font-weight: 500; }
+.config-row .label {
+  color: var(--text-secondary);
+}
+.config-row .value {
+  color: var(--text-primary);
+  font-weight: 500;
+}
 
 /* ── Model selector ── */
 .model-status {
@@ -241,20 +258,29 @@ h2 {
   border-radius: 8px;
   font-size: 0.9em;
 }
-.status-badge.ok { background: rgba(46,204,113,0.15); color: #2ecc71; }
-.status-badge.err { background: rgba(231,76,60,0.15); color: #e74c3c; }
+.status-badge.ok {
+  background: rgba(46, 204, 113, 0.15);
+  color: #2ecc71;
+}
+.status-badge.err {
+  background: rgba(231, 76, 60, 0.15);
+  color: #e74c3c;
+}
 
-.active-model { color: var(--text-secondary); }
+.active-model {
+  color: var(--text-secondary);
+}
 
 .model-table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.model-table th, .model-table td {
+.model-table th,
+.model-table td {
   padding: 10px 12px;
   text-align: left;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .model-table th {
@@ -263,7 +289,9 @@ h2 {
   text-transform: uppercase;
 }
 
-.active-row { background: rgba(233,69,96,0.08); }
+.active-row {
+  background: rgba(233, 69, 96, 0.08);
+}
 
 .btn-switch {
   padding: 4px 12px;
@@ -274,16 +302,35 @@ h2 {
   cursor: pointer;
   font-size: 0.85em;
 }
-.btn-switch:hover { background: var(--highlight); color: white; }
-.btn-switch:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-switch:hover {
+  background: var(--highlight);
+  color: white;
+}
+.btn-switch:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
-.active-label { color: #2ecc71; font-size: 0.85em; }
+.active-label {
+  color: #2ecc71;
+  font-size: 0.85em;
+}
 
-.health-ok { color: #2ecc71; }
-.health-fail { color: #e74c3c; }
+.health-ok {
+  color: #2ecc71;
+}
+.health-fail {
+  color: #e74c3c;
+}
 
-.model-stats { margin-top: 16px; }
-.model-stats h3 { color: var(--text-secondary); font-size: 0.85em; margin-bottom: 8px; }
+.model-stats {
+  margin-top: 16px;
+}
+.model-stats h3 {
+  color: var(--text-secondary);
+  font-size: 0.85em;
+  margin-bottom: 8px;
+}
 
 /* ── Context viewer ── */
 .ctx-section {
@@ -313,7 +360,7 @@ h2 {
 .bar-track {
   flex: 1;
   height: 8px;
-  background: rgba(0,0,0,0.3);
+  background: rgba(0, 0, 0, 0.3);
   border-radius: 4px;
   overflow: hidden;
 }
@@ -344,7 +391,7 @@ h2 {
 }
 
 .ctx-item {
-  background: rgba(0,0,0,0.2);
+  background: rgba(0, 0, 0, 0.2);
   padding: 10px;
   border-radius: 6px;
 }
@@ -356,7 +403,9 @@ h2 {
   margin-bottom: 4px;
 }
 
-.ctx-value { font-weight: 500; }
+.ctx-value {
+  font-weight: 500;
+}
 
 .intent-list {
   display: flex;
@@ -366,7 +415,7 @@ h2 {
 
 .intent-tag {
   padding: 3px 8px;
-  background: rgba(15,52,96,0.5);
+  background: rgba(15, 52, 96, 0.5);
   border-radius: 4px;
   font-size: 0.8em;
   color: var(--text-secondary);

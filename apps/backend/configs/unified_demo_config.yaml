@@ -4,14 +4,14 @@ cleanup_config:
     demo_data: 30
     important_logs: 7
   targets:
-  - temporary_files
-  - cache_data
-  - log_files
-  - demo_artifacts
+    - temporary_files
+    - cache_data
+    - log_files
+    - demo_artifacts
   triggers:
-  - session_end
-  - daily_cleanup
-  - storage_limit
+    - session_end
+    - daily_cleanup
+    - storage_limit
 demo_mode:
   auto_actions:
     cleanup: true
@@ -20,9 +20,9 @@ demo_mode:
     mock_services: true
   auto_detect: true
   detection_patterns:
-  - DEMO_.*_2025
-  - demo-.*
-  - .*@catcatai.dev
+    - DEMO_.*_2025
+    - demo-.*
+    - .*@catcatai.dev
   enabled: true
   fixed_keys:
     ANTHROPIC_API_KEY: DEMO_ANTHROPIC_KEY_2025
@@ -36,8 +36,8 @@ demo_mode:
 learning_config:
   max_size_mb: 100
   modes:
-  - basic_operations
-  - error_patterns
-  - user_preferences
+    - basic_operations
+    - error_patterns
+    - user_preferences
   retention_days: 30
   storage_path: data/demo_learning

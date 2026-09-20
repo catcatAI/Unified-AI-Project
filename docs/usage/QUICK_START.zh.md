@@ -19,25 +19,26 @@
 
 ## 環境需求
 
-| 需求 | 版本 | 說明 |
-|------|------|------|
-| Python | 3.10+ | 已測試 3.10–3.14 |
-| Node.js | 16+ | 前端所需 |
-| pnpm | 最新 | JS 工作區管理器（可用 `npx pnpm`） |
-| Ollama | 最新 | 本地 LLM 後端（可選但推薦） |
+| 需求    | 版本  | 說明                               |
+| ------- | ----- | ---------------------------------- |
+| Python  | 3.10+ | 已測試 3.10–3.14                   |
+| Node.js | 16+   | 前端所需                           |
+| pnpm    | 最新  | JS 工作區管理器（可用 `npx pnpm`） |
+| Ollama  | 最新  | 本地 LLM 後端（可選但推薦）        |
 
 ## 我該裝哪個層級？
 
 後端依賴已依需求拆分成數個層級，只裝你需要的即可。
 
-| 我是…​ | 指令 | 得到什麼 | 大致體積 |
-| --- | --- | --- | --- |
-| **只想快速試用** | `pip install -e "apps/backend"` | 伺服器 + 核心 AI（GARDEN/ED3N，純 numpy 後端）。不含 torch、不含向量庫。 | 最小 / 最快 |
-| **有需求、要完整功能** | `pip install -e "apps/backend[standard]"` | 以上全部 **＋ 真實神經嵌入（torch）、ChromaDB 向量庫、媒體（TTS/OCR/螢幕）、GPU 遙測、Redis 快取**。 | 大（含 torch 約 120MB） |
-| **開發者 / 貢獻者** | `pip install -e "apps/backend[dev]"` | *standard* 全部 **＋ 測試與品質工具鏈**（pytest、black、isort、flake8、mypy、pre-commit、MQTT 測試 broker）。 | 最大 |
+| 我是…​                 | 指令                                      | 得到什麼                                                                                                      | 大致體積                |
+| ---------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ----------------------- |
+| **只想快速試用**       | `pip install -e "apps/backend"`           | 伺服器 + 核心 AI（GARDEN/ED3N，純 numpy 後端）。不含 torch、不含向量庫。                                      | 最小 / 最快             |
+| **有需求、要完整功能** | `pip install -e "apps/backend[standard]"` | 以上全部 **＋ 真實神經嵌入（torch）、ChromaDB 向量庫、媒體（TTS/OCR/螢幕）、GPU 遙測、Redis 快取**。          | 大（含 torch 約 120MB） |
+| **開發者 / 貢獻者**    | `pip install -e "apps/backend[dev]"`      | _standard_ 全部 **＋ 測試與品質工具鏈**（pytest、black、isort、flake8、mypy、pre-commit、MQTT 測試 broker）。 | 最大                    |
 
-也可自由組合更細的群組，例如 `pip install -e "apps/backend[ml,vector]"`。
-可用群組：`ml`、`vector`、`data`、`media`、`gpu`、`cache`、`google`、`docs`、`nlp`、`installer`、`game`。`full` 會裝上全部。
+也可自由組合更細的群組，例如
+`pip install -e "apps/backend[ml,vector]"`。可用群組：`ml`、`vector`、`data`、`media`、`gpu`、`cache`、`google`、`docs`、`nlp`、`installer`、`game`。`full`
+會裝上全部。
 
 ## 第一步：複製並設定
 
@@ -85,7 +86,8 @@ OPENAI_API_KEY=
 LOG_LEVEL=INFO
 ```
 
-**沒有 LLM？** 系統會自動降級至 ED3N+GARDEN 內建推論模型。功能會受限（詳見 [SCENARIOS.zh.md](SCENARIOS.zh.md#不使用-llm)）。
+**沒有 LLM？** 系統會自動降級至 ED3N+GARDEN 內建推論模型。功能會受限（詳見
+[SCENARIOS.zh.md](SCENARIOS.zh.md#不使用-llm)）。
 
 ## 第三步：啟動
 
@@ -104,16 +106,16 @@ python scripts/run_angela.py --health-check
 
 ## 直接可用功能
 
-| 功能 | 狀態 | 預期行為 |
-|------|------|----------|
-| **聊天 API** | ✅ | `POST /api/v1/chat` — 基礎對話，情緒感知回應 |
-| **情緒系統** | ✅ | 人格根據對話上下文動態調整 |
-| **記憶系統** | ✅ | HAM + VectorStore，跨會話持久化 |
-| **圖片理解** | ✅ | `POST /api/v1/chat` 附圖片附件 |
-| **TTL 模型** | ✅ | 三層視覺解碼器，已預先訓練 |
-| **訓練管線** | ✅ | `python scripts/train_pipeline.py` |
-| **Live2D 桌面** | ✅ | `npx pnpm dev:desktop`（另開終端機） |
-| **Web 檢視器** | ✅ | `npx pnpm dev:web` |
+| 功能            | 狀態 | 預期行為                                     |
+| --------------- | ---- | -------------------------------------------- |
+| **聊天 API**    | ✅   | `POST /api/v1/chat` — 基礎對話，情緒感知回應 |
+| **情緒系統**    | ✅   | 人格根據對話上下文動態調整                   |
+| **記憶系統**    | ✅   | HAM + VectorStore，跨會話持久化              |
+| **圖片理解**    | ✅   | `POST /api/v1/chat` 附圖片附件               |
+| **TTL 模型**    | ✅   | 三層視覺解碼器，已預先訓練                   |
+| **訓練管線**    | ✅   | `python scripts/train_pipeline.py`           |
+| **Live2D 桌面** | ✅   | `npx pnpm dev:desktop`（另開終端機）         |
+| **Web 檢視器**  | ✅   | `npx pnpm dev:web`                           |
 
 ## 需要 LLM 的功能
 
@@ -127,12 +129,14 @@ python scripts/run_angela.py --health-check
 ## 故障排除
 
 ### 「Module not found」錯誤
+
 ```powershell
 # 重裝你原本使用的層級（範例：standard）
 pip install -e "apps/backend[standard]" --force-reinstall
 ```
 
 ### 連接埠 8000 已被佔用
+
 ```powershell
 # 檢查誰在用
 netstat -ano | findstr :8000
@@ -141,24 +145,32 @@ API_PORT=8001
 ```
 
 ### Live2D 桌面無法開啟
+
 改用 Web 檢視器：
+
 ```powershell
 npx pnpm dev:web
 ```
+
 然後在瀏覽器中開啟 `http://localhost:5173`。
 
 ### Ghostscript/GPL Ghostscript 警告
+
 這些是無害的，可以忽略。來自 PDF/圖片處理管線。
 
 ### 長時間運行記憶體持續增長（記憶體洩漏預防）
+
 若發現長時間運行後記憶體持續增加，系統現在會自動限制內部歷史緩衝區。所有無限制陣列已在第3輪審計中修復：
+
 - **聊天會話**：TTL 快取每60秒清理一次，最多1000個會話
 - **向量存儲**：上限10,000條（FIFO 淘汰）
 - **情緒歷史**：上限1,000個狀態
 - **所有 JS 監聽器陣列**：已去重，`destroy()`時清理
-- **Live2D 管理器**：`_stopAnimation` → `stop()`（原拋出 TypeError，導致 rAF/定時器永久洩漏）
+- **Live2D 管理器**：`_stopAnimation` →
+  `stop()`（原拋出 TypeError，導致 rAF/定時器永久洩漏）
 
 ### 「No module named 'ai.*'」
+
 確保你在專案根目錄（`Unified-AI-Project/`）執行，而非 `apps/backend/` 內。
 
 ## 下一步

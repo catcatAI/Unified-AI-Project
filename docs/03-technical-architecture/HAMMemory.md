@@ -2,7 +2,8 @@
 
 ## 現況
 
-HAM (Hierarchical Associative Memory) 分層關聯記憶系統是 Unified AI Project 的核心記憶架構，目前已完成實現並處於穩定狀態。它提供了高效的記憶存儲、檢索和抽象能力，是系統智能的基礎。
+HAM (Hierarchical Associative Memory) 分層關聯記憶系統是 Unified AI
+Project 的核心記憶架構，目前已完成實現並處於穩定狀態。它提供了高效的記憶存儲、檢索和抽象能力，是系統智能的基礎。
 
 ### 實現狀態
 

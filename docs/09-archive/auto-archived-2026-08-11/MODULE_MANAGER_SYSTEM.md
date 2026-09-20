@@ -1,9 +1,15 @@
 # Angela Module Manager System
 
 > **Design Date**: 2026-05-30  
-> **Status**: Implemented — M0-M5 core (6 source files + 100 tests) deployed. M1 (card_pipeline) + M2 (intent_registry) + M5 (vision, audio, tactile, google_drive) modules active under `modules/`. wiring.py integration via `initialize_module_manager()` in lifespan startup. Phase 5: version negotiation + unplug + hotplug rollback.  
-> **解决的问题**: 耦合集中度 35/100、共享可變狀態 35/100、God module 35/100 — 見 `MODULARITY_ANALYSIS.md`  
-> **與 8D Matrix 的關係**: 8D 管理 Angela 的執行時狀態；ModuleManager 管理程式碼的架構接線。兩者互補。
+> **Status**: Implemented — M0-M5 core (6 source files + 100 tests) deployed. M1
+> (card_pipeline) + M2 (intent_registry) + M5 (vision, audio, tactile,
+> google_drive) modules active under `modules/`. wiring.py integration via
+> `initialize_module_manager()` in lifespan startup. Phase 5: version
+> negotiation + unplug + hotplug rollback.  
+> **解决的问题**: 耦合集中度 35/100、共享可變狀態 35/100、God module 35/100 — 見
+> `MODULARITY_ANALYSIS.md`  
+> **與 8D Matrix 的關係**:
+> 8D 管理 Angela 的執行時狀態；ModuleManager 管理程式碼的架構接線。兩者互補。
 
 ---
 
@@ -25,15 +31,16 @@
 
 ### 1.1 三個核心指標
 
-| 指標 | 分數 | 瓶頸 | 根因 |
-|------|------|------|------|
-| 耦合集中度 | 35/100 | `services/llm/router.py` (1522 行) | 所有模組的手動 import 都集中在 router 和 lifespan |
-| 共享可變狀態 | 35/100 | ~14 個 module-level globals | 沒有統一的 lifecycle 管理，被迫用 `_xxx = None` 做 lazy init |
-| God module | 35/100 | 9 個檔案 >1000 行 | 模組職責不明確，wiring 邏輯混在業務邏輯中 |
+| 指標         | 分數   | 瓶頸                               | 根因                                                         |
+| ------------ | ------ | ---------------------------------- | ------------------------------------------------------------ |
+| 耦合集中度   | 35/100 | `services/llm/router.py` (1522 行) | 所有模組的手動 import 都集中在 router 和 lifespan            |
+| 共享可變狀態 | 35/100 | ~14 個 module-level globals        | 沒有統一的 lifecycle 管理，被迫用 `_xxx = None` 做 lazy init |
+| God module   | 35/100 | 9 個檔案 >1000 行                  | 模組職責不明確，wiring 邏輯混在業務邏輯中                    |
 
 ### 1.2 25 個 Plan 問題的根因
 
-ANGELA_CARD_INTEGRATION_PLAN.md 的 audit 發現 25 個問題（6 HIGH）——全部追溯到同一個 root cause：
+ANGELA_CARD_INTEGRATION_PLAN.md 的 audit 發現 25 個問題（6
+HIGH）——全部追溯到同一個 root cause：
 
 ```
 每次接新模組：
@@ -58,13 +65,13 @@ ANGELA_CARD_INTEGRATION_PLAN.md 的 audit 發現 25 個問題（6 HIGH）——�
 
 ### 2.2 設計原則
 
-| 原則 | 說明 |
-|------|------|
-| **Declarative over imperative** | 用 YAML 宣告依賴，不要用程式碼手動 import |
-| **Incremental migration** | 不一次全改，逐個 hotspot 遷移 |
-| **Fail fast** | 啟動時檢查所有依賴，缺了就報錯，不 runtime 崩 |
-| **Sync/async aware** | 知道每個 module 是 sync 還是 async，自動提供正確 context |
-| **Existing infra first** | 建立在 ServiceRegistry + wiring.py + lifespan.py 之上，不重造輪子 |
+| 原則                            | 說明                                                              |
+| ------------------------------- | ----------------------------------------------------------------- |
+| **Declarative over imperative** | 用 YAML 宣告依賴，不要用程式碼手動 import                         |
+| **Incremental migration**       | 不一次全改，逐個 hotspot 遷移                                     |
+| **Fail fast**                   | 啟動時檢查所有依賴，缺了就報錯，不 runtime 崩                     |
+| **Sync/async aware**            | 知道每個 module 是 sync 還是 async，自動提供正確 context          |
+| **Existing infra first**        | 建立在 ServiceRegistry + wiring.py + lifespan.py 之上，不重造輪子 |
 
 ---
 
@@ -76,8 +83,9 @@ ANGELA_CARD_INTEGRATION_PLAN.md 的 audit 發現 25 個問題（6 HIGH）——�
 # modules/card_pipeline/module.yaml
 name: card_pipeline
 version: 1.0.0
-description: Card import pipeline — deterministic parsing, conflict resolution, LLM bridge
-kind: service                     # service | adapter | provider | cli
+description:
+  Card import pipeline — deterministic parsing, conflict resolution, LLM bridge
+kind: service # service | adapter | provider | cli
 
 depends_on:
   required:
@@ -92,7 +100,7 @@ provides:
   services:
     - name: card_import_handler
       interface: core.card.protocols.CardImportHandler
-      type: singleton              # singleton | factory | transient
+      type: singleton # singleton | factory | transient
   adapters:
     - name: memory_adapter
       interface: core.card.protocols.MemoryAdapter
@@ -126,25 +134,26 @@ config:
 
 ### 3.2 欄位說明
 
-| 欄位 | 必填 | 說明 |
-|------|------|------|
-| `name` | ✅ | 模組名稱，同時作為 ServiceRegistry key |
-| `version` | ✅ | 語意化版本 |
-| `kind` | ✅ | `service`（常駐服務）、`adapter`（純轉接層）、`provider`（後端實作）、`cli`（命令列工具） |
-| `depends_on.required` | ❌ | 啟動時必須存在的依賴，缺少則 fail fast。支援字串 `"mod_name"` 或 dict `{name: "mod_name", version: ">=1.0.0"}` |
-| `depends_on.optional` | ❌ | 可選依賴，不存在時 module 降級運作。支援同上 dict 格式解析約束 |
-| `provides.services` | ❌ | 註冊到 ServiceRegistry 的服務 |
-| `provides.adapters` | ❌ | 註冊到 AdapterRegistry 的轉接器 |
-| `lifecycle.init` | ✅ | 初始化函數（可 sync 或 async），返回 module 實例 |
-| `lifecycle.start` | ❌ | 啟動函數（可 sync 或 async），在 init 完成後呼叫 |
-| `lifecycle.stop` | ❌ | 關閉函數（可 sync 或 async），用於清理資源 |
-| `lifecycle.health` | ❌ | Health check 設定 (若無指定 endpoint，ModuleManager 用 `get_status()` 回應) |
-| `lifecycle.hooks` | ❌ | 事件驅動的 lifecycle hook |
-| `config` | ❌ | 預設配置。ModuleManager 啟動時會從 `angela_core.yaml` 讀取 `modules.{name}` 覆蓋此處的值 |
+| 欄位                  | 必填 | 說明                                                                                                           |
+| --------------------- | ---- | -------------------------------------------------------------------------------------------------------------- |
+| `name`                | ✅   | 模組名稱，同時作為 ServiceRegistry key                                                                         |
+| `version`             | ✅   | 語意化版本                                                                                                     |
+| `kind`                | ✅   | `service`（常駐服務）、`adapter`（純轉接層）、`provider`（後端實作）、`cli`（命令列工具）                      |
+| `depends_on.required` | ❌   | 啟動時必須存在的依賴，缺少則 fail fast。支援字串 `"mod_name"` 或 dict `{name: "mod_name", version: ">=1.0.0"}` |
+| `depends_on.optional` | ❌   | 可選依賴，不存在時 module 降級運作。支援同上 dict 格式解析約束                                                 |
+| `provides.services`   | ❌   | 註冊到 ServiceRegistry 的服務                                                                                  |
+| `provides.adapters`   | ❌   | 註冊到 AdapterRegistry 的轉接器                                                                                |
+| `lifecycle.init`      | ✅   | 初始化函數（可 sync 或 async），返回 module 實例                                                               |
+| `lifecycle.start`     | ❌   | 啟動函數（可 sync 或 async），在 init 完成後呼叫                                                               |
+| `lifecycle.stop`      | ❌   | 關閉函數（可 sync 或 async），用於清理資源                                                                     |
+| `lifecycle.health`    | ❌   | Health check 設定 (若無指定 endpoint，ModuleManager 用 `get_status()` 回應)                                    |
+| `lifecycle.hooks`     | ❌   | 事件驅動的 lifecycle hook                                                                                      |
+| `config`              | ❌   | 預設配置。ModuleManager 啟動時會從 `angela_core.yaml` 讀取 `modules.{name}` 覆蓋此處的值                       |
 
 ### 3.2a 目錄慣例
 
-所有 module 放在 `apps/backend/src/modules/`（與 `core/`, `services/`, `api/` 同層級）：
+所有 module 放在 `apps/backend/src/modules/`（與 `core/`, `services/`, `api/`
+同層級）：
 
 ```
 apps/backend/src/
@@ -157,8 +166,9 @@ apps/backend/src/
       __init__.py
 ```
 
-這確保 `from modules.card_pipeline import init` 的 import path 可以在現有 `sys.path` 中正確解析。
-ModuleManager 的預設掃描路徑是 `[Path("apps/backend/src/modules/")]`。
+這確保 `from modules.card_pipeline import init` 的 import path 可以在現有
+`sys.path` 中正確解析。ModuleManager 的預設掃描路徑是
+`[Path("apps/backend/src/modules/")]`。
 
 ### 3.2b 配置覆蓋機制
 
@@ -169,7 +179,7 @@ ModuleManager 啟動時讀取 `angela_core.yaml` 的 `modules` 區段：
 modules:
   card_pipeline:
     pipeline:
-      resolution_threshold: 0.90  # 覆蓋 descriptor 的 0.85
+      resolution_threshold: 0.90 # 覆蓋 descriptor 的 0.85
 ```
 
 合併規則：`angela_core.yaml` > `module.yaml config` > 程式碼內建的預設值。
@@ -284,21 +294,25 @@ ModuleManager.hotplug(module_path)
 
 ### 4.5 Sync/async boundary 與 thread safety
 
-當 ModuleManager 在 async context 中呼叫 sync method 時，預設使用 `asyncio.to_thread()`，
-但需注意 `concurrent.futures` 的要求：**傳入 `to_thread` 的函數和參數必須可 pickle**。
+當 ModuleManager 在 async context 中呼叫 sync method 時，預設使用
+`asyncio.to_thread()`，但需注意 `concurrent.futures` 的要求：**傳入 `to_thread`
+的函數和參數必須可 pickle**。
 
 若 module 有不可 pickle 的屬性（如 file handles, socket connections），應：
 
-1. **在 `init()` 中建立這些資源**（ModuleManager 在 async 環境中呼叫 init，不需 pickle）
+1. **在 `init()`
+   中建立這些資源**（ModuleManager 在 async 環境中呼叫 init，不需 pickle）
 2. **`start()` 後才使用它們**
 3. **在 `module.yaml` 中標記**：
    ```yaml
    lifecycle:
-     thread_safe: false  # 若 false，ModuleManager 不在 thread pool 中執行此 module 的 sync method
+     thread_safe: false # 若 false，ModuleManager 不在 thread pool 中執行此 module 的 sync method
    ```
 
-若 `thread_safe: false`，ModuleManager 改為在 event loop 中直接呼叫 sync method
-（會短暫阻塞 event loop，適合少量快速操作）。長時間 CPU-bound 操作仍應提取到獨立的 thread/process。**不建議用在 pipeline.process() 這類長時間操作** — 這類 method 應宣告為 async。
+若 `thread_safe: false`，ModuleManager 改為在 event loop 中直接呼叫 sync
+method（會短暫阻塞 event
+loop，適合少量快速操作）。長時間 CPU-bound 操作仍應提取到獨立的 thread/process。**不建議用在 pipeline.process() 這類長時間操作**
+— 這類 method 應宣告為 async。
 
 ---
 
@@ -364,15 +378,15 @@ class LifecycleHooks:
 
 ### 5.3 Events
 
-| Event | 觸發時機 | Data |
-|-------|----------|------|
-| `{module}.init` | 模組 init 完成 | `{name, instance, elapsed_ms}` |
-| `{module}.ready` | 模組 start 完成 | `{name, provided_services}` |
-| `{module}.failed` | 模組 init 或 start 失敗 | `{name, phase, error}` |
-| `{module}.stopped` | 模組 stop 完成 | `{name, elapsed_ms}` |
-| `{module}.health_ok` | 健康檢查通過 | `{name, latency_ms}` |
-| `{module}.health_fail` | 健康檢查失敗 | `{name, error, consecutive_fails}` |
-| `dependency.missing` | 必需依賴不存在 | `{module, missing_dep}` |
+| Event                  | 觸發時機                | Data                               |
+| ---------------------- | ----------------------- | ---------------------------------- |
+| `{module}.init`        | 模組 init 完成          | `{name, instance, elapsed_ms}`     |
+| `{module}.ready`       | 模組 start 完成         | `{name, provided_services}`        |
+| `{module}.failed`      | 模組 init 或 start 失敗 | `{name, phase, error}`             |
+| `{module}.stopped`     | 模組 stop 完成          | `{name, elapsed_ms}`               |
+| `{module}.health_ok`   | 健康檢查通過            | `{name, latency_ms}`               |
+| `{module}.health_fail` | 健康檢查失敗            | `{name, error, consecutive_fails}` |
+| `dependency.missing`   | 必需依賴不存在          | `{module, missing_dep}`            |
 
 ---
 
@@ -450,18 +464,19 @@ vision = module_manager.get_module("vision_service")
 
 ### 7.1 階段規劃
 
-| Phase | 內容 | 目標 | 影響 | 狀態 |
-|-------|------|------|------|------|
-| **M0** | ModuleManager 核心 + descriptor schema | Scanner, Resolver, Lifecycle, Events | 新建，不影響現有 | ✅ **59 tests pass** |
-| **M1** | card_pipeline 成為第一個 module | `modules/card_pipeline/module.yaml` | 驗證整個流程 | ✅ **已實作 (w/o adapter.py)** |
-| **M2** | intent_registry module | 解決 intent 學習回饋問題 | 修復 HIGH 8/8 | 🟡 **module 已實作, hook 為 stub** |
-| **M3** | chat_service module | ChatService 不再直接 import | 降耦合 | ⏳ 未開始 |
-| **M4** | llm_module (取代 router.py hotspot) | `modules/llm/module.yaml` | 1522→拆分 | ⏳ 未開始 |
-| **M5** | 其餘 service → module | vision, audio, tactile, drive | 全面覆蓋 | ⏳ 未開始 |
+| Phase  | 內容                                   | 目標                                 | 影響             | 狀態                               |
+| ------ | -------------------------------------- | ------------------------------------ | ---------------- | ---------------------------------- |
+| **M0** | ModuleManager 核心 + descriptor schema | Scanner, Resolver, Lifecycle, Events | 新建，不影響現有 | ✅ **59 tests pass**               |
+| **M1** | card_pipeline 成為第一個 module        | `modules/card_pipeline/module.yaml`  | 驗證整個流程     | ✅ **已實作 (w/o adapter.py)**     |
+| **M2** | intent_registry module                 | 解決 intent 學習回饋問題             | 修復 HIGH 8/8    | 🟡 **module 已實作, hook 為 stub** |
+| **M3** | chat_service module                    | ChatService 不再直接 import          | 降耦合           | ⏳ 未開始                          |
+| **M4** | llm_module (取代 router.py hotspot)    | `modules/llm/module.yaml`            | 1522→拆分        | ⏳ 未開始                          |
+| **M5** | 其餘 service → module                  | vision, audio, tactile, drive        | 全面覆蓋         | ⏳ 未開始                          |
 
 ### 7.2 M0: ModuleManager 核心
 
 **新增檔案**:
+
 - `core/system/module_manager/__init__.py` — ModuleManager 類
 - `core/system/module_manager/scanner.py` — Scanner
 - `core/system/module_manager/resolver.py` — Resolver
@@ -473,6 +488,7 @@ vision = module_manager.get_module("vision_service")
 **不修改任何現有檔案**。ModuleManager 在這一階段是純新增，與現有系統並行運作。
 
 **測試目錄**: `tests/core/module_manager/`（與現有 `tests/core/` 結構一致）：
+
 ```
 tests/core/module_manager/
   test_models.py       — ModuleDescriptor dataclass 序列化/反序列化
@@ -485,12 +501,13 @@ tests/core/module_manager/
 
 ### 7.3 M1: card_pipeline 示範
 
-新增 `modules/card_pipeline/module.yaml` + 實作 init/start 函數。
-ModuleManager 可以獨立啟動 card_pipeline，不需要改任何現有 wiring。
+新增
+`modules/card_pipeline/module.yaml` + 實作 init/start 函數。ModuleManager 可以獨立啟動 card_pipeline，不需要改任何現有 wiring。
 
 ### 7.4 M2-M5: 逐步遷移
 
 每個 module 遷移步驟：
+
 1. 寫 `module.yaml`
 2. 實作 `init()` 函數（取代原有的 `get_xxx()` factory）
 3. 更新 `module.yaml` 的 `depends_on` 指向已遷移的 module
@@ -503,38 +520,38 @@ ModuleManager 可以獨立啟動 card_pipeline，不需要改任何現有 wiring
 
 ### 8.1 與 25 個 Plan Issues 的對應
 
-| Issue | Phase | Severity | ModuleManager 如何解決 |
-|-------|-------|----------|----------------------|
-| 0.1 IntentRegistry 非 singleton | 0 | HIGH | Descriptor 宣告 `intent_registry` → ModuleManager 提供 singleton |
-| 1.1 Sync pipeline in async | 1 | HIGH | Descriptor 宣告 sync/async → ModuleManager 提供 `run_in_thread()` |
-| 1.2 Fresh IntentRegistry per msg | 1 | HIGH | ModuleRegistry 提供 singleton，不再每次 new |
-| 2.1 asyncio in sync method | 2 | HIGH | Lifecycle 知道 sync/async 邊界 → 提供 async context |
-| 2.2 No async process() | 2 | HIGH | Descriptor 宣告 `interface: CardImportHandler` → 編譯時檢查 |
-| 3.1 text[:50] garbage keyword | 3 | HIGH | Config schema 驗證 → 拒絕無意義資料 |
-| 4.1 pipeline 阻塞 event loop | 4 | HIGH | ModuleManager 自動在 thread pool 跑 CPU-bound modules |
-| 4.2 deprecated utcnow() | 4 | HIGH | Code review + 統一 lint |
-| 0.3 CLI 卡片不可見 | 0 | MEDIUM | CLI module 用 ModuleManager，註冊到 ServiceRegistry |
-| 1.3 Pipeline 失敗丟失 | 1 | MEDIUM | ModuleManager 管理 registry state → 不會丟 |
-| 4.3 lifespan vs wiring 矛盾 | 4 | MEDIUM | 只有一個入口：ModuleManager.start() |
-| 4.4 無 auth/rate limit | 4 | MEDIUM | Module descriptor 可宣告 middleware 需求 |
-| X.1 靜默錯誤 | All | MEDIUM | ModuleManager events 追蹤每個失敗 |
+| Issue                            | Phase | Severity | ModuleManager 如何解決                                            |
+| -------------------------------- | ----- | -------- | ----------------------------------------------------------------- |
+| 0.1 IntentRegistry 非 singleton  | 0     | HIGH     | Descriptor 宣告 `intent_registry` → ModuleManager 提供 singleton  |
+| 1.1 Sync pipeline in async       | 1     | HIGH     | Descriptor 宣告 sync/async → ModuleManager 提供 `run_in_thread()` |
+| 1.2 Fresh IntentRegistry per msg | 1     | HIGH     | ModuleRegistry 提供 singleton，不再每次 new                       |
+| 2.1 asyncio in sync method       | 2     | HIGH     | Lifecycle 知道 sync/async 邊界 → 提供 async context               |
+| 2.2 No async process()           | 2     | HIGH     | Descriptor 宣告 `interface: CardImportHandler` → 編譯時檢查       |
+| 3.1 text[:50] garbage keyword    | 3     | HIGH     | Config schema 驗證 → 拒絕無意義資料                               |
+| 4.1 pipeline 阻塞 event loop     | 4     | HIGH     | ModuleManager 自動在 thread pool 跑 CPU-bound modules             |
+| 4.2 deprecated utcnow()          | 4     | HIGH     | Code review + 統一 lint                                           |
+| 0.3 CLI 卡片不可見               | 0     | MEDIUM   | CLI module 用 ModuleManager，註冊到 ServiceRegistry               |
+| 1.3 Pipeline 失敗丟失            | 1     | MEDIUM   | ModuleManager 管理 registry state → 不會丟                        |
+| 4.3 lifespan vs wiring 矛盾      | 4     | MEDIUM   | 只有一個入口：ModuleManager.start()                               |
+| 4.4 無 auth/rate limit           | 4     | MEDIUM   | Module descriptor 可宣告 middleware 需求                          |
+| X.1 靜默錯誤                     | All   | MEDIUM   | ModuleManager events 追蹤每個失敗                                 |
 
 ### 8.2 與三個架構指標的對應
 
-| 指標 | Before | After ModuleManager | 原因 |
-|------|--------|-------------------|------|
-| 耦合集中度 | 35 | **65-70** | router.py 的 import 職責由 ModuleManager 接管 |
-| 共享可變狀態 | 35 | **60** | module-level `_xxx = None` → ModuleManager lifecycle |
-| God module | 35 | **60** | 模組只 export interface，wiring 在 descriptor |
+| 指標         | Before | After ModuleManager | 原因                                                 |
+| ------------ | ------ | ------------------- | ---------------------------------------------------- |
+| 耦合集中度   | 35     | **65-70**           | router.py 的 import 職責由 ModuleManager 接管        |
+| 共享可變狀態 | 35     | **60**              | module-level `_xxx = None` → ModuleManager lifecycle |
+| God module   | 35     | **60**              | 模組只 export interface，wiring 在 descriptor        |
 
 ### 8.3 與 8D Matrix 的互動
 
-| 維度 | 8D Matrix | ModuleManager |
-|------|-----------|---------------|
-| 範圍 | Angela 執行時狀態 | 程式碼架構接線 |
-| 資料 | cognitive/emotional/bio metrics | Module 依賴/健康/狀態 |
-| 輸出 | Response generation, behavior | Service wiring, routing |
-| 時機 | 每個 user message | 啟動時 + 熱插拔時 |
+| 維度 | 8D Matrix                        | ModuleManager                                |
+| ---- | -------------------------------- | -------------------------------------------- |
+| 範圍 | Angela 執行時狀態                | 程式碼架構接線                               |
+| 資料 | cognitive/emotional/bio metrics  | Module 依賴/健康/狀態                        |
+| 輸出 | Response generation, behavior    | Service wiring, routing                      |
+| 時機 | 每個 user message                | 啟動時 + 熱插拔時                            |
 | 整合 | ModuleManager 可以 query 8D 狀態 | 8D 可以透過 ModuleManager 取得 module 健康度 |
 
 ---
@@ -585,11 +602,11 @@ Week 5: M5 其餘 service ✅ 已完成
 
 ### 9.1 驗收標準
 
-| 標準 | 門檻 | 驗證方式 |
-|------|------|---------|
-| ModuleManager 啟動 | 0 error | `pytest tests/core/module_manager/` |
-| 舊系統不受影響 | 所有既有 test pass | `pytest tests/` |
-| card_pipeline 可獨立部署 | module.yaml + init OK | `manager.discover("modules/card_pipeline")` |
-| 熱插拔不影響其他 module | 新增/移除 module，其餘正常 | `manager.hotplug("modules/new_module")` |
-| Cycle detection 正確 | 故意引入 cycle → fail fast | `resolver.detect_cycles()` |
-| Health check 報告正確 | module 掛了 → status=DEAD | `manager.get_status("xxx")` |
+| 標準                     | 門檻                       | 驗證方式                                    |
+| ------------------------ | -------------------------- | ------------------------------------------- |
+| ModuleManager 啟動       | 0 error                    | `pytest tests/core/module_manager/`         |
+| 舊系統不受影響           | 所有既有 test pass         | `pytest tests/`                             |
+| card_pipeline 可獨立部署 | module.yaml + init OK      | `manager.discover("modules/card_pipeline")` |
+| 熱插拔不影響其他 module  | 新增/移除 module，其餘正常 | `manager.hotplug("modules/new_module")`     |
+| Cycle detection 正確     | 故意引入 cycle → fail fast | `resolver.detect_cycles()`                  |
+| Health check 報告正確    | module 掛了 → status=DEAD  | `manager.get_status("xxx")`                 |

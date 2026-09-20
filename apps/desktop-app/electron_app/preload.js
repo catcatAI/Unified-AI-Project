@@ -1,11 +1,11 @@
 /**
  * Angela AI Desktop App - Preload Script
- * 
+ *
  * Provides secure IPC communication between main and renderer processes
  */
 
-const log = require('electron-log');
-const { contextBridge, ipcRenderer } = require('electron');
+const log = require('electron-log')
+const { contextBridge, ipcRenderer } = require('electron')
 
 // Expose protected methods that allow the renderer process to use
 // the ipcRenderer without exposing the entire object
@@ -17,20 +17,22 @@ contextBridge.exposeInMainWorld('electronAPI', {
     restore: () => ipcRenderer.invoke('window-restore'),
     close: () => ipcRenderer.invoke('window-close'),
     setSize: (width, height) => ipcRenderer.invoke('window-set-size', { width, height }),
-    setSizeAndCenter: (width, height) => ipcRenderer.invoke('window-set-size-and-center', { width, height }),
+    setSizeAndCenter: (width, height) =>
+      ipcRenderer.invoke('window-set-size-and-center', { width, height }),
     getPosition: () => ipcRenderer.invoke('window-get-position'),
     setPosition: (x, y) => ipcRenderer.invoke('window-set-position', { x, y }),
     getBounds: () => ipcRenderer.invoke('window-get-bounds'),
     setAlwaysOnTop: (flag) => ipcRenderer.invoke('window-set-always-on-top', flag),
-    setIgnoreMouseEvents: (ignore, options) => ipcRenderer.invoke('window-set-ignore-mouse-events', ignore, options),
+    setIgnoreMouseEvents: (ignore, options) =>
+      ipcRenderer.invoke('window-set-ignore-mouse-events', ignore, options),
     setClickThroughRegions: (regions) => ipcRenderer.invoke('set-click-through-regions', regions),
-    setBounds: (bounds) => ipcRenderer.send('window-set-bounds', bounds)
+    setBounds: (bounds) => ipcRenderer.send('window-set-bounds', bounds),
   },
 
   // Live2D model management
   live2d: {
     loadModel: (modelPath) => ipcRenderer.invoke('live2d-load-model', modelPath),
-    getModels: () => ipcRenderer.invoke('live2d-get-models')
+    getModels: () => ipcRenderer.invoke('live2d-get-models'),
   },
 
   // Wallpaper management
@@ -39,36 +41,36 @@ contextBridge.exposeInMainWorld('electronAPI', {
     get: () => ipcRenderer.invoke('wallpaper-get'),
     getMode: () => ipcRenderer.invoke('wallpaper-get-mode'),
     setMode: (mode) => ipcRenderer.invoke('wallpaper-set-mode', mode),
-    injectObject: (objectData) => ipcRenderer.invoke('wallpaper-inject-object', objectData)
+    injectObject: (objectData) => ipcRenderer.invoke('wallpaper-inject-object', objectData),
   },
 
   // Performance management
   performance: {
     getMode: () => ipcRenderer.invoke('performance-get-mode'),
-    setMode: (mode) => ipcRenderer.invoke('performance-set-mode', mode)
+    setMode: (mode) => ipcRenderer.invoke('performance-set-mode', mode),
   },
 
   // Module management
   modules: {
-    setState: (module, enabled) => ipcRenderer.invoke('module-set-state', { module, enabled })
+    setState: (module, enabled) => ipcRenderer.invoke('module-set-state', { module, enabled }),
   },
 
   // Backend settings
   backend: {
     getIP: () => ipcRenderer.invoke('backend-get-ip'),
-    setIP: (ip) => ipcRenderer.invoke('backend-set-ip', ip)
+    setIP: (ip) => ipcRenderer.invoke('backend-set-ip', ip),
   },
 
   // Screen information
   screen: {
     getDisplays: () => ipcRenderer.invoke('screen-get-displays'),
-    getPrimaryDisplay: () => ipcRenderer.invoke('screen-get-primary-display')
+    getPrimaryDisplay: () => ipcRenderer.invoke('screen-get-primary-display'),
   },
 
   // System theme
   theme: {
     getCurrent: () => ipcRenderer.invoke('theme-get-current'),
-    setSource: (source) => ipcRenderer.send('theme-set-source', source)
+    setSource: (source) => ipcRenderer.send('theme-set-source', source),
   },
 
   // Settings management
@@ -77,23 +79,23 @@ contextBridge.exposeInMainWorld('electronAPI', {
     close: () => ipcRenderer.send('settings-close'),
     getAll: () => ipcRenderer.invoke('settings-get-all'),
     setAll: (settings) => ipcRenderer.invoke('settings-set-all', settings),
-    reset: () => ipcRenderer.invoke('settings-reset')
+    reset: () => ipcRenderer.invoke('settings-reset'),
   },
 
   // Audio system
   audio: {
-    getDevices: () => ipcRenderer.invoke('audio-get-devices')
+    getDevices: () => ipcRenderer.invoke('audio-get-devices'),
   },
 
   // Haptic system
   haptic: {
-    getDevices: () => ipcRenderer.invoke('haptic-get-devices')
+    getDevices: () => ipcRenderer.invoke('haptic-get-devices'),
   },
 
   // File operations
   file: {
     saveDialog: (options) => ipcRenderer.invoke('file-save-dialog', options),
-    openDialog: (options) => ipcRenderer.invoke('file-open-dialog', options)
+    openDialog: (options) => ipcRenderer.invoke('file-open-dialog', options),
   },
 
   // Security management
@@ -102,7 +104,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     isInitialized: () => ipcRenderer.invoke('security:is-initialized'),
     sync: () => ipcRenderer.invoke('security:sync'),
     encrypt: (data) => ipcRenderer.invoke('security:encrypt', data),
-    decrypt: (encryptedData) => ipcRenderer.invoke('security:decrypt', encryptedData)
+    decrypt: (encryptedData) => ipcRenderer.invoke('security:decrypt', encryptedData),
   },
 
   // Plugin management (C3)
@@ -110,7 +112,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     list: () => ipcRenderer.invoke('plugins-list'),
     load: (name, code) => ipcRenderer.invoke('plugins-load', { name, code }),
     save: (name, code) => ipcRenderer.invoke('plugins-save', { name, code }),
-    del: (name) => ipcRenderer.invoke('plugins-delete', name)
+    del: (name) => ipcRenderer.invoke('plugins-delete', name),
   },
 
   // WebSocket communication with backend
@@ -118,7 +120,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     connect: (url, sessionInfo) => ipcRenderer.send('websocket-connect', { url, sessionInfo }),
     disconnect: () => ipcRenderer.send('websocket-disconnect'),
     send: (message) => ipcRenderer.send('websocket-send', message),
-    getStatus: () => ipcRenderer.invoke('websocket-get-status')
+    getStatus: () => ipcRenderer.invoke('websocket-get-status'),
   },
 
   // Event listeners (receive messages from main process)
@@ -142,18 +144,18 @@ contextBridge.exposeInMainWorld('electronAPI', {
       'module-toggle',
       'plugins-changed',
       'reload-model',
-      'always-on-top-changed'
-    ];
+      'always-on-top-changed',
+    ]
 
     if (validChannels.includes(channel)) {
-      ipcRenderer.on(channel, (event, ...args) => callback(...args));
+      ipcRenderer.on(channel, (event, ...args) => callback(...args))
     }
   },
 
   off: (channel, callback) => {
-    ipcRenderer.removeListener(channel, callback);
-  }
-});
+    ipcRenderer.removeListener(channel, callback)
+  },
+})
 
 // Expose logging to renderer process
 contextBridge.exposeInMainWorld('electronLog', {
@@ -161,6 +163,6 @@ contextBridge.exposeInMainWorld('electronLog', {
   warn: (...args) => log.warn(...args),
   error: (...args) => log.error(...args),
   debug: (...args) => log.debug(...args),
-});
+})
 
-log.info('ElectronAPI preload loaded successfully');
+log.info('ElectronAPI preload loaded successfully')

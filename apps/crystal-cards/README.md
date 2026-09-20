@@ -4,22 +4,27 @@ Stacklands-style card game set in the Angela Matrix world.
 
 ## Features
 
-- **Stacklands gameplay**: Drag cards, stack to craft, explore locations, fight enemies
-- **Crystal card design**: Glassmorphism frosted glass cards with color-coded types
-- **Rich world content**: 10+ locations, 5+ characters, 10+ items, 5+ enemies from game-rpg
-- **Story system**: Branching dialogues with choices, skill checks, and consequences
-- **Sound effects**: Procedural audio via Web Audio API (no external files needed)
+- **Stacklands gameplay**: Drag cards, stack to craft, explore locations, fight
+  enemies
+- **Crystal card design**: Glassmorphism frosted glass cards with color-coded
+  types
+- **Rich world content**: 10+ locations, 5+ characters, 10+ items, 5+ enemies
+  from game-rpg
+- **Story system**: Branching dialogues with choices, skill checks, and
+  consequences
+- **Sound effects**: Procedural audio via Web Audio API (no external files
+  needed)
 - **Settings**: Volume, language, quality, tutorial toggle
 
 ## Card Types
 
-| Color | Type | Example |
-|-------|------|---------|
-| 🔵 Blue | Location | 聖十字校園, 鏡湖, 迴廊 |
-| 🟣 Purple | Character | 晞咕萊雅, 紅, 守門人 |
-| 🟢 Green | Item | 手電筒, 迴廊鑰匙, 水晶 |
-| 🟡 Yellow | Resource | 木材, 草藥, 金幣 |
-| 🔴 Red | Enemy | 暗影, 腐化體, 迴音 |
+| Color     | Type      | Example                |
+| --------- | --------- | ---------------------- |
+| 🔵 Blue   | Location  | 聖十字校園, 鏡湖, 迴廊 |
+| 🟣 Purple | Character | 晞咕萊雅, 紅, 守門人   |
+| 🟢 Green  | Item      | 手電筒, 迴廊鑰匙, 水晶 |
+| 🟡 Yellow | Resource  | 木材, 草藥, 金幣       |
+| 🔴 Red    | Enemy     | 暗影, 腐化體, 迴音     |
 
 ## Development
 
@@ -68,7 +73,9 @@ apps/crystal-cards/
 
 ## Content Source
 
-All game content (locations, characters, items, enemies, dialogues) is extracted from:
+All game content (locations, characters, items, enemies, dialogues) is extracted
+from:
+
 - `apps/game-rpg/game_data.py` — NPC generation, item catalogs, world settings
 - `apps/game-rpg/game.py` — Story scenes, choices, skill checks
 - Angela AI project world setting (W01-W04 world lines, 迴廊, etc.)

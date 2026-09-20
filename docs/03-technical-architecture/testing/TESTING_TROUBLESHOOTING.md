@@ -5,6 +5,7 @@
 ## 🚀 快速诊断
 
 ### 第一步：运行健康检查
+
 ```cmd
 双击 health-check.bat
 ```
@@ -16,11 +17,13 @@
 ### 1. 后端测试问题
 
 #### 问题：Python 虚拟环境未找到
+
 ```
 ❌ Python 虚拟环境未找到，请先运行 start-dev.bat 进行设置
 ```
 
 **解决方案：**
+
 ```cmd
 # 方法1：自动设置
 双击 start-dev.bat，选择任意选项进行自动设置
@@ -35,11 +38,13 @@ pip install -r requirements-dev.txt
 ```
 
 #### 问题：pytest 命令不存在
+
 ```
 'pytest' 不是内部或外部命令
 ```
 
 **解决方案：**
+
 ```cmd
 cd apps\backend
 call venv\Scripts\activate.bat
@@ -47,12 +52,13 @@ pip install pytest pytest-cov pytest-asyncio
 ```
 
 #### 问题：导入错误
+
 ```
 ImportError: No module named 'src'
 ```
 
-**解决方案：**
-检查 `apps\backend\pytest.ini` 文件中的 `pythonpath` 配置：
+**解决方案：** 检查 `apps\backend\pytest.ini` 文件中的 `pythonpath` 配置：
+
 ```ini
 [pytest]
 pythonpath = src
@@ -62,11 +68,13 @@ testpaths = tests
 ### 2. 前端测试问题
 
 #### 问题：pnpm 命令失败
+
 ```
 ⚠️ pnpm 测试失败，尝试使用 npm...
 ```
 
 **解决方案：**
+
 ```cmd
 # 检查 pnpm 是否安装
 pnpm --version
@@ -80,12 +88,14 @@ pnpm install
 ```
 
 #### 问题：Jest 配置错误
+
 ```
 Jest configuration error
 ```
 
-**解决方案：**
-检查 `apps\frontend-dashboard\jest.config.js` 文件是否存在并配置正确：
+**解决方案：** 检查 `apps\frontend-dashboard\jest.config.js`
+文件是否存在并配置正确：
+
 ```javascript
 module.exports = {
   testEnvironment: 'jsdom',
@@ -97,28 +107,31 @@ module.exports = {
   moduleNameMapping: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
-};
+}
 ```
 
 #### 问题：React 测试错误
+
 ```
 ReferenceError: React is not defined
 ```
 
-**解决方案：**
-检查 `apps\frontend-dashboard\jest.setup.js` 文件：
+**解决方案：** 检查 `apps\frontend-dashboard\jest.setup.js` 文件：
+
 ```javascript
-import '@testing-library/jest-dom';
+import '@testing-library/jest-dom'
 ```
 
 ### 3. 桌面应用测试问题
 
 #### 问题：Electron 测试环境配置
+
 ```
 Error: Electron failed to install correctly
 ```
 
 **解决方案：**
+
 ```cmd
 cd apps\desktop-app
 npm install electron --save-dev
@@ -127,12 +140,13 @@ pnpm add electron -D
 ```
 
 #### 问题：Jest 与 Electron 兼容性
+
 ```
 Jest worker encountered 4 child process exceptions
 ```
 
-**解决方案：**
-更新 `apps\desktop-app\jest.config.js`：
+**解决方案：** 更新 `apps\desktop-app\jest.config.js`：
+
 ```javascript
 module.exports = {
   testEnvironment: 'node',
@@ -141,19 +155,23 @@ module.exports = {
   transform: {
     '^.+\\.(js|jsx|ts|tsx)$': 'babel-jest',
   },
-};
+}
 ```
 
 ### 4. 性能问题
 
 #### 问题：测试运行缓慢
+
 **解决方案：**
+
 1. 使用快速测试模式：
+
    ```cmd
    # 选择 run-tests.bat 中的选项 7
    ```
 
 2. 并行运行测试：
+
    ```cmd
    # 后端
    pytest -n auto  # 需要安装 pytest-xdist
@@ -168,11 +186,13 @@ module.exports = {
    ```
 
 #### 问题：内存不足
+
 ```
 JavaScript heap out of memory
 ```
 
 **解决方案：**
+
 ```cmd
 # 增加 Node.js 内存限制
 set NODE_OPTIONS=--max-old-space-size=4096
@@ -182,11 +202,13 @@ npm test
 ### 5. 网络问题
 
 #### 问题：依赖下载失败
+
 ```
 Failed to fetch package
 ```
 
 **解决方案：**
+
 ```cmd
 # 清除缓存并重新安装
 pnpm store prune
@@ -198,7 +220,9 @@ npm install
 ```
 
 #### 问题：代理设置
+
 如果在公司网络环境下：
+
 ```cmd
 # 设置 npm 代理
 npm config set proxy http://proxy.company.com:8080
@@ -212,6 +236,7 @@ pnpm config set https-proxy http://proxy.company.com:8080
 ## 🔍 高级排查
 
 ### 启用详细日志
+
 ```cmd
 # 后端详细日志
 cd apps\backend
@@ -226,6 +251,7 @@ pnpm test --reporter=verbose
 ```
 
 ### 检查依赖冲突
+
 ```cmd
 # 检查 Python 依赖
 pip check
@@ -236,6 +262,7 @@ pnpm list
 ```
 
 ### 环境变量检查
+
 ```cmd
 # 检查关键环境变量
 echo %NODE_ENV%
@@ -253,6 +280,7 @@ echo %PATH%
 4. **查看项目文档**：阅读 `DEVELOPMENT_GUIDE.md` 获取更多信息
 
 ### 完全重置步骤
+
 ```cmd
 # 1. 清理所有依赖
 rmdir /s /q node_modules

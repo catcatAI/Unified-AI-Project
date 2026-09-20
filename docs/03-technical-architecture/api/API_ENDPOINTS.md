@@ -1,10 +1,12 @@
 # API Endpoints
 
-This document provides detailed information about the backend API endpoints for the Unified AI Project.
+This document provides detailed information about the backend API endpoints for
+the Unified AI Project.
 
 ## Base URL
 
 All API endpoints are relative to the base URL:
+
 ```
 http://localhost:8000/api
 ```
@@ -13,7 +15,8 @@ In production, this would be replaced with the actual domain.
 
 ## Authentication
 
-Most endpoints require authentication. Authentication is handled through API keys passed in the `Authorization` header:
+Most endpoints require authentication. Authentication is handled through API
+keys passed in the `Authorization` header:
 
 ```
 Authorization: Bearer YOUR_API_KEY
@@ -26,6 +29,7 @@ Authorization: Bearer YOUR_API_KEY
 Check the health status of the API server.
 
 **Response:**
+
 ```json
 {
   "status": "healthy",
@@ -40,6 +44,7 @@ Check the health status of the API server.
 Retrieve a list of all available AI agents.
 
 **Response:**
+
 ```json
 {
   "agents": [
@@ -67,6 +72,7 @@ Retrieve a list of all available AI agents.
 Submit a task to a specific agent.
 
 **Request Body:**
+
 ```json
 {
   "task": "Write a short story about a robot learning to paint",
@@ -78,6 +84,7 @@ Submit a task to a specific agent.
 ```
 
 **Response:**
+
 ```json
 {
   "task_id": "task_12345",
@@ -91,6 +98,7 @@ Submit a task to a specific agent.
 Check the status of a specific task.
 
 **Response:**
+
 ```json
 {
   "task_id": "task_12345",
@@ -107,6 +115,7 @@ Check the status of a specific task.
 Store information in the HAM memory system.
 
 **Request Body:**
+
 ```json
 {
   "content": "The sky is blue because of Rayleigh scattering",
@@ -119,6 +128,7 @@ Store information in the HAM memory system.
 ```
 
 **Response:**
+
 ```json
 {
   "memory_id": "mem_12345",
@@ -132,10 +142,12 @@ Store information in the HAM memory system.
 Retrieve information from the HAM memory system.
 
 **Query Parameters:**
+
 - `query`: The search query
 - `limit`: Maximum number of results (default: 10)
 
 **Response:**
+
 ```json
 {
   "results": [
@@ -157,6 +169,7 @@ Retrieve information from the HAM memory system.
 Start a training session.
 
 **Request Body:**
+
 ```json
 {
   "model_type": "concept_model",
@@ -170,6 +183,7 @@ Start a training session.
 ```
 
 **Response:**
+
 ```json
 {
   "training_id": "train_12345",
@@ -183,6 +197,7 @@ Start a training session.
 Check the status of a training session.
 
 **Response:**
+
 ```json
 {
   "training_id": "train_12345",
@@ -201,9 +216,12 @@ Check the status of a training session.
 
 ### POST /mobile/chat
 
-Secure mobile chat proxy endpoint (NGR v6.3). Routes through `_handle_chat_request` for full NGR pipeline: math verification → LLM → NeuroBlender fallback.
+Secure mobile chat proxy endpoint (NGR v6.3). Routes through
+`_handle_chat_request` for full NGR pipeline: math verification → LLM →
+NeuroBlender fallback.
 
 **Request Body:**
+
 ```json
 {
   "message": "你好！",
@@ -214,6 +232,7 @@ Secure mobile chat proxy endpoint (NGR v6.3). Routes through `_handle_chat_reque
 ```
 
 **Response:**
+
 ```json
 {
   "response_text": "嗨～今天過得怎麼樣？",
@@ -226,7 +245,8 @@ Secure mobile chat proxy endpoint (NGR v6.3). Routes through `_handle_chat_reque
 }
 ```
 
-- `source` can be: `"llm"`, `"neuro_blender"`, `"dual_rail"`, `"fallback"`, `"fallback-timeout"`
+- `source` can be: `"llm"`, `"neuro_blender"`, `"dual_rail"`, `"fallback"`,
+  `"fallback-timeout"`
 - Requires Key B encrypted payload (see mobile.py:113-132)
 
 ### POST /api/v1/chat/unified
@@ -242,6 +262,7 @@ Unified multi-persona chat endpoint. Preferred for new clients.
 Register a new service with the HSP protocol.
 
 **Request Body:**
+
 ```json
 {
   "service_id": "my-service",
@@ -251,6 +272,7 @@ Register a new service with the HSP protocol.
 ```
 
 **Response:**
+
 ```json
 {
   "service_id": "my-service",
@@ -264,6 +286,7 @@ Register a new service with the HSP protocol.
 Send a message through the HSP protocol.
 
 **Request Body:**
+
 ```json
 {
   "sender": "unified-ai",
@@ -274,6 +297,7 @@ Send a message through the HSP protocol.
 ```
 
 **Response:**
+
 ```json
 {
   "message_id": "msg_12345",
@@ -289,6 +313,7 @@ Send a message through the HSP protocol.
 Retrieve system performance metrics.
 
 **Response:**
+
 ```json
 {
   "timestamp": "2023-01-01T00:00:00Z",
@@ -307,10 +332,12 @@ Retrieve system performance metrics.
 Retrieve recent system logs.
 
 **Query Parameters:**
+
 - `level`: Log level (DEBUG, INFO, WARNING, ERROR)
 - `limit`: Maximum number of logs to retrieve (default: 50)
 
 **Response:**
+
 ```json
 {
   "logs": [
@@ -336,6 +363,7 @@ All API endpoints follow standard HTTP status codes:
 - **500**: Internal Server Error
 
 Error responses follow this format:
+
 ```json
 {
   "error": "Error message",
@@ -355,13 +383,16 @@ Exceeding rate limits will result in a 429 (Too Many Requests) response.
 
 ## Versioning
 
-The API follows semantic versioning. Breaking changes will be introduced in new major versions, while backward-compatible changes will be added in minor versions.
+The API follows semantic versioning. Breaking changes will be introduced in new
+major versions, while backward-compatible changes will be added in minor
+versions.
 
 Current API version: v1
 
 ## Changelog
 
 ### v1.0.0
+
 - Initial release of the API
 - Basic agent management endpoints
 - Memory storage and retrieval
@@ -370,6 +401,7 @@ Current API version: v1
 - System monitoring
 
 ### v1.1.0
+
 - Added rate limiting
 - Improved error handling
 - Enhanced documentation

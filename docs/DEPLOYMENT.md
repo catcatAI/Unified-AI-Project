@@ -64,14 +64,14 @@ open http://localhost:3000
 
 ## Services
 
-| Service | Port | Description |
-|---------|------|-------------|
-| backend | 8000 | Angela AI API server |
-| redis | 6379 | Cache and pub/sub |
-| postgres | 5432 | Primary database |
-| prometheus | 9090 | Metrics collection |
-| grafana | 3000 | Metrics visualization |
-| nginx | 80, 443 | Reverse proxy |
+| Service    | Port    | Description           |
+| ---------- | ------- | --------------------- |
+| backend    | 8000    | Angela AI API server  |
+| redis      | 6379    | Cache and pub/sub     |
+| postgres   | 5432    | Primary database      |
+| prometheus | 9090    | Metrics collection    |
+| grafana    | 3000    | Metrics visualization |
+| nginx      | 80, 443 | Reverse proxy         |
 
 ## Configuration
 
@@ -122,7 +122,10 @@ upstream backend {
 docker-compose up -d
 ```
 
-> Note: Kubernetes manifests (`k8s/`) and production override (`docker-compose.prod.yml`) are not yet implemented. See `.github/workflows/deploy.yml` for the current CI/CD pipeline (Docker build → ghcr.io → SSH staging/production).
+> Note: Kubernetes manifests (`k8s/`) and production override
+> (`docker-compose.prod.yml`) are not yet implemented. See
+> `.github/workflows/deploy.yml` for the current CI/CD pipeline (Docker build →
+> ghcr.io → SSH staging/production).
 
 ## Monitoring
 

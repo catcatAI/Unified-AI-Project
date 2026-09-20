@@ -9,10 +9,7 @@
     "collaboration": {
       "collaboration_id": "collab_20250922194623728150",
       "task_id": "task_001",
-      "participating_agents": [
-        "agent_001",
-        "agent_002"
-      ],
+      "participating_agents": ["agent_001", "agent_002"],
       "start_time": "2025-09-22T19:46:23.728150",
       "status": "active"
     }

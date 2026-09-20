@@ -7,10 +7,12 @@ design documents.
 ## Core AI
 
 - LLM Routing & Adaptation (Phase 1 → Phase 3)
-  - Phase 1 (Backend Core): Provider adapters、ModelRegistry、Router、/models/available、/models/route、multi_llm_service 接線（進行中）
-  - Phase 2 (UI/CLI): Settings/Models、Auto/Manual、CLI models list/route、chat --model（待啟動）
-  - Phase 3 (Hardening): Fallback/backoff、rate limiting、metrics、E2E tests（待啟動）
-
+  - Phase 1 (Backend Core): Provider
+    adapters、ModelRegistry、Router、/models/available、/models/route、multi_llm_service 接線（進行中）
+  - Phase 2 (UI/CLI): Settings/Models、Auto/Manual、CLI models list/route、chat
+    --model（待啟動）
+  - Phase 3 (Hardening): Fallback/backoff、rate limiting、metrics、E2E
+    tests（待啟動）
 
 - **`AIStateSynchronization`**: Implement a mechanism for AIs to share parts of
   their internal models or states. This will be a complex feature requiring a

@@ -33,15 +33,15 @@
 compute:
   # Global GPU/CPU strategy
   global:
-    mode: "auto"                    # auto | on | off
-    force_cpu_on_low_power: true    # Switch to CPU when LAPTOP_POWER_SAVER/LOW_POWER_DEVICE
-    log_fallback: true              # Log when falling back from GPU to CPU
+    mode: "auto" # auto | on | off
+    force_cpu_on_low_power: true # Switch to CPU when LAPTOP_POWER_SAVER/LOW_POWER_DEVICE
+    log_fallback: true # Log when falling back from GPU to CPU
 
   # ED3N Spiking Neural Network
   ed3n_snn:
     mode: "auto"
-    batch_size_multiplier: 1.0      # Scale batch size for GPU memory
-    timestep_parallel: false        # Parallelize timesteps (GPU only)
+    batch_size_multiplier: 1.0 # Scale batch size for GPU memory
+    timestep_parallel: false # Parallelize timesteps (GPU only)
 
   # GARDEN TensorSNNCore — vocab matrix is V²×4B (10k→0.38GB, 20k→1.5GB,
   # 51k→10GB). Default 10k is the lean conservative target (fits 8GB boxes);
@@ -50,21 +50,21 @@ compute:
   # effective = min(ceiling, sqrt(usable_GB*1024³*max_percent/4)).
   garden_snn:
     mode: "auto"
-    max_vocab: 10000                # lean default 0.38GB; 51812 for extended 10GB
-    connection_budget: 50000        # lean default; 500k/1M for extended
+    max_vocab: 10000 # lean default 0.38GB; 51812 for extended 10GB
+    connection_budget: 50000 # lean default; 500k/1M for extended
 
   # NeuralBridge — StateMatrix ↔ GARDEN/ED3N SNN direct numeric connection.
   # When "on", state axis values are injected into the SNN as input
   # activations and SNN outputs are written back to the state matrix,
   # bypassing the LLM text-based transfer.
   neural_bridge:
-    mode: "off"                     # off | auto | on
+    mode: "off" # off | auto | on
 
   # ThreeLayerVisual decoder training
   three_layer_visual:
     mode: "auto"
     training_batch_size: 32
-    use_mixed_precision: true       # FP16 on GPU
+    use_mixed_precision: true # FP16 on GPU
     pca_components: 64
 
   # Semantic Visual Encoder (CLIP)
@@ -86,33 +86,33 @@ compute:
     contrastive_epochs: 10
     recon_epochs: 10
     batch_size: 20
-    rlaif_enabled: false            # opt-in: 90% pixel + 10% DPO async (rlaif_buffer)
+    rlaif_enabled: false # opt-in: 90% pixel + 10% DPO async (rlaif_buffer)
 
   # Primitive Diffusion — structure/color -> strokes -> composition (vvv 兩級擴散)
   # Level1: 結構/色彩 -> 筆觸/色塊 (內生物件), Level2: 物件內二次擴散 -> 組合
   # 263維向量空間擴散 (vs 49k 像素省 187 倍), 0.33M/級, T=100, DDIM 10步, 純 numpy CPU
   primitive_diffusion:
-    mode: "auto"                    # auto | on | off (low_power -> off)
+    mode: "auto" # auto | on | off (low_power -> off)
     timesteps: 100
-    hidden_dim: 256                 # 256 lean (1.3MB), 512 for quality
+    hidden_dim: 256 # 256 lean (1.3MB), 512 for quality
     ddim_steps: 10
-    two_level: true                 # true = 級1佈局 + 級2筆觸, false = 單級
+    two_level: true # true = 級1佈局 + 級2筆觸, false = 單級
 
   # Vector Store (ChromaDB embeddings)
   vector_store:
     mode: "auto"
-    use_gpu_index: false            # GPU index only if >100k vectors
+    use_gpu_index: false # GPU index only if >100k vectors
 
   # GPU Accelerator Service (WebGL - requires GPU)
   gpu_accelerator:
-    mode: "off"                     # Default off - requires WebGL context
+    mode: "off" # Default off - requires WebGL context
     webgl_version: 2
     fallback_cpu: true
 
   # Local LLM GPU offload (llama.cpp / ollama)
   llm_local_gpu:
     mode: "auto"
-    gpu_layers: -1                  # -1 = all layers on GPU
+    gpu_layers: -1 # -1 = all layers on GPU
     main_gpu: 0
 
   # Unified Engine — fixed-size statistical core (text)
@@ -122,8 +122,8 @@ compute:
   # fill them; set false to reclaim memory.
   unified:
     mode: "auto"
-    slots: 65536                 # 65k default; 131072 for -5.6% bpc on 8GB+
-    use_feat: true              # set false to save 65.5MB on pure-text
+    slots: 65536 # 65k default; 131072 for -5.6% bpc on 8GB+
+    use_feat: true # set false to save 65.5MB on pure-text
     use_delta: true
 
   # Game (apps/game-rpg) integration
@@ -154,7 +154,7 @@ compute:
       semantic_audio:
         batch_size: 16
       unified:
-        slots: 65536              # keep 65k default; set 131072 to trade +127MB for -5.6% bpc
+        slots: 65536 # keep 65k default; set 131072 to trade +127MB for -5.6% bpc
 
     laptop_normal:
       global:
@@ -204,8 +204,8 @@ compute:
       global:
         mode: "off"
       unified:
-        slots: 32768              # 32k saves ~96MB vs 65k (loss ~+3% bpc)
-        use_feat: false           # saves extra 32MB feature table
+        slots: 32768 # 32k saves ~96MB vs 65k (loss ~+3% bpc)
+        use_feat: false # saves extra 32MB feature table
       primitive_diffusion:
         mode: "off"
       # All features forced to CPU/off

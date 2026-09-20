@@ -17,14 +17,18 @@
 ## 修复措施
 
 ### 1. 修复导入路径
+
 修改了`scripts/training_integration.py`文件中的所有导入语句：
+
 - 视觉服务导入：`from src.services.vision_service import VisionService`
 - 音频服务导入：`from src.services.audio_service import AudioService`
 - 推理引擎导入：`from src.core_ai.reasoning.causal_reasoning_engine import CausalReasoningEngine`
 - 记忆系统导入：`from src.core_ai.memory.vector_store import VectorMemoryStore`
 
 ### 2. 修复Python路径设置
+
 修改了`scripts/training_integration.py`文件中的路径设置代码：
+
 ```python
 # 添加項目路徑
 project_root = Path(__file__).parent.parent
@@ -47,6 +51,7 @@ sys.path.insert(0, str(backend_path / "src"))
 ## 测试详情
 
 音频服务测试执行了以下操作：
+
 1. 创建AudioService实例
 2. 生成模拟音频数据
 3. 调用speech_to_text方法进行语音识别测试

@@ -23,14 +23,14 @@ export class CubismId {
    *       CubismIdManager().getId(id)を使用してください
    */
   public static createIdInternal(id: string) {
-    return new CubismId(id);
+    return new CubismId(id)
   }
 
   /**
    * ID名を取得する
    */
   public getString() {
-    return this._id;
+    return this._id
   }
 
   /**
@@ -40,11 +40,11 @@ export class CubismId {
    */
   public isEqual(c: string | CubismId): boolean {
     if (typeof c === 'string') {
-      return this._id == c;
+      return this._id == c
     } else if (c instanceof CubismId) {
-      return this._id == c._id;
+      return this._id == c._id
     }
-    return false;
+    return false
   }
 
   /**
@@ -54,11 +54,11 @@ export class CubismId {
    */
   public isNotEqual(c: string | CubismId): boolean {
     if (typeof c == 'string') {
-      return !(this._id == c);
+      return !(this._id == c)
     } else if (c instanceof CubismId) {
-      return !(this._id == c._id);
+      return !(this._id == c._id)
     }
-    return false;
+    return false
   }
 
   /**
@@ -67,19 +67,19 @@ export class CubismId {
    * @note ユーザーによる生成は許可しません
    */
   private constructor(id: string) {
-    this._id = id;
+    this._id = id
   }
 
-  private _id: string; // ID名
+  private _id: string // ID名
 }
 
-export declare type CubismIdHandle = CubismId;
+export declare type CubismIdHandle = CubismId
 
 // Namespace definition for compatibility.
-import * as $ from './cubismid';
+import * as $ from './cubismid'
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
-  export const CubismId = $.CubismId;
-  export type CubismId = $.CubismId;
-  export type CubismIdHandle = $.CubismIdHandle;
+  export const CubismId = $.CubismId
+  export type CubismId = $.CubismId
+  export type CubismIdHandle = $.CubismIdHandle
 }

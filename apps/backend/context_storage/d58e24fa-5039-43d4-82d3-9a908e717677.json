@@ -8,10 +8,7 @@
   "content": {
     "conversation": {
       "conversation_id": "test_conv_001",
-      "participants": [
-        "user",
-        "ai"
-      ],
+      "participants": ["user", "ai"],
       "start_time": "2025-09-22T19:46:23.846799",
       "status": "active"
     }

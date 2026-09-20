@@ -55,33 +55,35 @@ if get_number() > 0:
 ## 实际项目中的修复示例
 
 ### 修复前：
+
 ```python
 async def diagnose_all_components(self):
     """診斷所有核心組件"""
     logger.info("🔍 開始組件診斷...")
-    
+
     # 診斷各個組件
     await self.diagnose_audio_service()
     await self.diagnose_vision_service()
     await self.diagnose_vector_store()
     await self.diagnose_causal_reasoning()
-    
+
     # 報告結果
     self.report_diagnosis()
 ```
 
 ### 修复后：
+
 ```python
 async def diagnose_all_components(self):
     """診斷所有核心組件"""
     logger.info("🔍 開始組件診斷...")
-    
+
     # 診斷各個組件
     _ = await self.diagnose_audio_service()
     _ = await self.diagnose_vision_service()
     _ = await self.diagnose_vector_store()
     _ = await self.diagnose_causal_reasoning()
-    
+
     # 報告結果
     _ = self.report_diagnosis()
 ```

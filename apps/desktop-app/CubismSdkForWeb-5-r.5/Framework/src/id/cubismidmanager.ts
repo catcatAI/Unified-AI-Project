@@ -5,7 +5,7 @@
  * that can be found at https://www.live2d.com/eula/live2d-open-software-license-agreement_en.html.
  */
 
-import { CubismId } from './cubismid';
+import { CubismId } from './cubismid'
 
 /**
  * ID名の管理
@@ -17,7 +17,7 @@ export class CubismIdManager {
    * コンストラクタ
    */
   public constructor() {
-    this._ids = new Array<CubismId>();
+    this._ids = new Array<CubismId>()
   }
 
   /**
@@ -25,9 +25,9 @@ export class CubismIdManager {
    */
   public release(): void {
     for (let i = 0; i < this._ids.length; ++i) {
-      this._ids[i] = void 0;
+      this._ids[i] = void 0
     }
-    this._ids = null;
+    this._ids = null
   }
 
   /**
@@ -38,7 +38,7 @@ export class CubismIdManager {
    */
   public registerIds(ids: string[]): void {
     for (let i = 0; i < ids.length; i++) {
-      this.registerId(ids[i]);
+      this.registerId(ids[i])
     }
   }
 
@@ -48,20 +48,20 @@ export class CubismIdManager {
    * @param id ID名
    */
   public registerId(id: string): CubismId {
-    let result: CubismId = null;
+    let result: CubismId = null
 
     if ('string' == typeof id) {
       if ((result = this.findId(id)) != null) {
-        return result;
+        return result
       }
 
-      result = CubismId.createIdInternal(id);
-      this._ids.push(result);
+      result = CubismId.createIdInternal(id)
+      this._ids.push(result)
     } else {
-      return this.registerId(id);
+      return this.registerId(id)
     }
 
-    return result;
+    return result
   }
 
   /**
@@ -70,7 +70,7 @@ export class CubismIdManager {
    * @param id ID名
    */
   public getId(id: string): CubismId {
-    return this.registerId(id);
+    return this.registerId(id)
   }
 
   /**
@@ -81,9 +81,9 @@ export class CubismIdManager {
    */
   public isExist(id: string): boolean {
     if ('string' == typeof id) {
-      return this.findId(id) != null;
+      return this.findId(id) != null
     }
-    return this.isExist(id);
+    return this.isExist(id)
   }
 
   /**
@@ -95,20 +95,20 @@ export class CubismIdManager {
   private findId(id: string): CubismId {
     for (let i = 0; i < this._ids.length; ++i) {
       if (this._ids[i].getString() == id) {
-        return this._ids[i];
+        return this._ids[i]
       }
     }
 
-    return null;
+    return null
   }
 
-  private _ids: Array<CubismId>; // 登録されているIDのリスト
+  private _ids: Array<CubismId> // 登録されているIDのリスト
 }
 
 // Namespace definition for compatibility.
-import * as $ from './cubismidmanager';
+import * as $ from './cubismidmanager'
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
-  export const CubismIdManager = $.CubismIdManager;
-  export type CubismIdManager = $.CubismIdManager;
+  export const CubismIdManager = $.CubismIdManager
+  export type CubismIdManager = $.CubismIdManager
 }

@@ -1,9 +1,9 @@
-const { app, BrowserWindow, ipcMain, Menu } = require('electron');
-const path = require('path');
-const { AIPlayerServer } = require('./ai-player-server');
+const { app, BrowserWindow, ipcMain, Menu } = require('electron')
+const path = require('path')
+const { AIPlayerServer } = require('./ai-player-server')
 
-let mainWindow;
-const aiServer = new AIPlayerServer();
+let mainWindow
+const aiServer = new AIPlayerServer()
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -20,35 +20,35 @@ function createWindow() {
     },
     icon: path.join(__dirname, '..', 'assets', 'icons', 'icon.png'),
     autoHideMenuBar: true,
-  });
+  })
 
-  mainWindow.loadFile(path.join(__dirname, 'index.html'));
+  mainWindow.loadFile(path.join(__dirname, 'index.html'))
 
-  Menu.setApplicationMenu(null);
+  Menu.setApplicationMenu(null)
 
   // Connect AI player server to game window
-  aiServer.setGameWindow(mainWindow);
+  aiServer.setGameWindow(mainWindow)
 
   mainWindow.on('closed', () => {
-    mainWindow = null;
-  });
+    mainWindow = null
+  })
 }
 
 app.whenReady().then(() => {
-  createWindow();
+  createWindow()
 
   // Start AI player server
-  aiServer.start();
+  aiServer.start()
 
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
-  });
-});
+    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+  })
+})
 
 app.on('window-all-closed', () => {
-  aiServer.stop();
-  if (process.platform !== 'darwin') app.quit();
-});
+  aiServer.stop()
+  if (process.platform !== 'darwin') app.quit()
+})
 
 // IPC handlers
 ipcMain.handle('get-settings', async () => {
@@ -57,14 +57,14 @@ ipcMain.handle('get-settings', async () => {
     language: 'zh-TW',
     quality: 'high',
     showTutorial: true,
-  };
-});
+  }
+})
 
 ipcMain.handle('save-settings', async (_event, settings) => {
-  console.log('Settings saved:', settings);
-  return true;
-});
+  console.log('Settings saved:', settings)
+  return true
+})
 
 ipcMain.handle('get-data-path', async () => {
-  return path.join(__dirname, '..', 'game-data');
-});
+  return path.join(__dirname, '..', 'game-data')
+})

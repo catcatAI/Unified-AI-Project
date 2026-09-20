@@ -5,7 +5,8 @@
 **审计日期**: 2026年2月10日  
 **项目版本**: v6.2.0  
 **审计范围**: 全量代码 + 配置文件  
-**代码库规模**: 
+**代码库规模**:
+
 - Python 文件: 477 个
 - JavaScript 模块: 52 个
 - 总代码行数: ~30,000+
@@ -14,13 +15,13 @@
 
 ## 🎯 问题矩阵摘要
 
-| 严重程度 | Python | JavaScript | 配置文件 | 总计 |
-|---------|--------|-----------|---------|------|
-| **CRITICAL** | 12 | 2 | 0 | **14** |
-| **HIGH** | 184 | 12 | 3 | **199** |
-| **MEDIUM** | 31 | 25 | 5 | **61** |
-| **LOW** | 50+ | 20+ | 2 | **72+** |
-| **总计** | **~280** | **~60** | **10** | **~350** |
+| 严重程度     | Python   | JavaScript | 配置文件 | 总计     |
+| ------------ | -------- | ---------- | -------- | -------- |
+| **CRITICAL** | 12       | 2          | 0        | **14**   |
+| **HIGH**     | 184      | 12         | 3        | **199**  |
+| **MEDIUM**   | 31       | 25         | 5        | **61**   |
+| **LOW**      | 50+      | 20+        | 2        | **72+**  |
+| **总计**     | **~280** | **~60**    | **10**   | **~350** |
 
 ---
 
@@ -28,27 +29,27 @@
 
 ### Python 后端 (12个)
 
-| # | 文件路径 | 行号 | 问题描述 | 影响 |
-|---|---------|------|---------|------|
-| 1 | `shared/utils/env_utils.py` | 2 | `from tests.tools.test_tool_dispatcher_logging import` - 导入语句不完整 | ❌ 语法错误，无法运行 |
-| 2 | `shared/network_resilience.py` | 83 | `self.logger.info("Circuit Breaker,` - 未终止的字符串字面量 | ❌ 语法错误，无法运行 |
-| 3 | `shared/types/mappable_data_object.py` | 3 | `from tests.test_json_fix import` - 导入语句不完整 | ❌ 语法错误，无法运行 |
-| 4 | `core/hsp/types_fixed.py` | 9 | `3.9 for Literal with TypedDict effectively):` - 无效语法 | ❌ 语法错误，无法运行 |
-| 5 | `core/error/error_handler.py` | 8 | `from system_test import` - 导入语句不完整 | ❌ 语法错误，无法运行 |
-| 6 | `core/shared/utils/cleanup_utils.py` | 2 | `from tests.tools.test_tool_dispatcher_logging import` - 导入语句不完整 | ❌ 语法错误，无法运行 |
-| 7 | `core/shared/key_manager.py` | 6 | `from diagnose_base_agent import` - 导入语句不完整 | ❌ 语法错误，无法运行 |
-| 8 | `core/shared/types/common_types.py` | 61 | `status: Literal[]` - 类型提示语法错误 | ❌ 语法错误，无法运行 |
-| 9 | `core/logging/enterprise_logger.py` | 6 | `from tests.tools.test_tool_dispatcher_logging import` - 导入语句不完整 | ❌ 语法错误，无法运行 |
-| 10 | `core/metacognition/metacognitive_capabilities_engine.py` | 16 | `from tests.tools.test_tool_dispatcher_logging import` - 导入语句不完整 | ❌ 语法错误，无法运行 |
-| 11 | `core/knowledge/unified_knowledge_graph.py` | 15 | `from tests.tools.test_tool_dispatcher_logging import` - 导入语句不完整 | ❌ 语法错误，无法运行 |
-| 12 | `core/shared/types/mappable_data_object.py` | 3 | 重复的导入错误 | ❌ 语法错误，无法运行 |
+| #   | 文件路径                                                  | 行号 | 问题描述                                                                | 影响                  |
+| --- | --------------------------------------------------------- | ---- | ----------------------------------------------------------------------- | --------------------- |
+| 1   | `shared/utils/env_utils.py`                               | 2    | `from tests.tools.test_tool_dispatcher_logging import` - 导入语句不完整 | ❌ 语法错误，无法运行 |
+| 2   | `shared/network_resilience.py`                            | 83   | `self.logger.info("Circuit Breaker,` - 未终止的字符串字面量             | ❌ 语法错误，无法运行 |
+| 3   | `shared/types/mappable_data_object.py`                    | 3    | `from tests.test_json_fix import` - 导入语句不完整                      | ❌ 语法错误，无法运行 |
+| 4   | `core/hsp/types_fixed.py`                                 | 9    | `3.9 for Literal with TypedDict effectively):` - 无效语法               | ❌ 语法错误，无法运行 |
+| 5   | `core/error/error_handler.py`                             | 8    | `from system_test import` - 导入语句不完整                              | ❌ 语法错误，无法运行 |
+| 6   | `core/shared/utils/cleanup_utils.py`                      | 2    | `from tests.tools.test_tool_dispatcher_logging import` - 导入语句不完整 | ❌ 语法错误，无法运行 |
+| 7   | `core/shared/key_manager.py`                              | 6    | `from diagnose_base_agent import` - 导入语句不完整                      | ❌ 语法错误，无法运行 |
+| 8   | `core/shared/types/common_types.py`                       | 61   | `status: Literal[]` - 类型提示语法错误                                  | ❌ 语法错误，无法运行 |
+| 9   | `core/logging/enterprise_logger.py`                       | 6    | `from tests.tools.test_tool_dispatcher_logging import` - 导入语句不完整 | ❌ 语法错误，无法运行 |
+| 10  | `core/metacognition/metacognitive_capabilities_engine.py` | 16   | `from tests.tools.test_tool_dispatcher_logging import` - 导入语句不完整 | ❌ 语法错误，无法运行 |
+| 11  | `core/knowledge/unified_knowledge_graph.py`               | 15   | `from tests.tools.test_tool_dispatcher_logging import` - 导入语句不完整 | ❌ 语法错误，无法运行 |
+| 12  | `core/shared/types/mappable_data_object.py`               | 3    | 重复的导入错误                                                          | ❌ 语法错误，无法运行 |
 
 ### JavaScript 前端 (2个)
 
-| # | 文件路径 | 行号 | 问题描述 | 影响 |
-|---|---------|------|---------|------|
-| 1 | `js/live2d-cubism-wrapper.js` | 243-247 | 重复的闭合括号 `}` | ❌ 语法错误，Live2D 无法加载 |
-| 2 | `main.js` | 145-210 | 本地协议处理器存在路径遍历漏洞 | 🔒 安全漏洞，可访问任意文件 |
+| #   | 文件路径                      | 行号    | 问题描述                       | 影响                         |
+| --- | ----------------------------- | ------- | ------------------------------ | ---------------------------- |
+| 1   | `js/live2d-cubism-wrapper.js` | 243-247 | 重复的闭合括号 `}`             | ❌ 语法错误，Live2D 无法加载 |
+| 2   | `main.js`                     | 145-210 | 本地协议处理器存在路径遍历漏洞 | 🔒 安全漏洞，可访问任意文件  |
 
 ---
 
@@ -59,50 +60,51 @@
 #### 导入错误 (178个)
 
 **缺失的标准库导入**:
+
 ```
-asyncio (15+), traceback (5+), uuid (10+), hashlib (8+), numpy (12+), 
-torch (6+), tensorflow (4+), yaml (8+), secrets (4+), jwt (2+), 
-pandas (2+), requests (2+), redis.asyncio (4+), psutil (8+), base64 (3+), 
-zlib (4+), pickle (3+), jieba (2+), threading (6+), random (6+), 
-argparse (6+), gc (2+), signal (1+), smtplib (1+), socket (1+), 
+asyncio (15+), traceback (5+), uuid (10+), hashlib (8+), numpy (12+),
+torch (6+), tensorflow (4+), yaml (8+), secrets (4+), jwt (2+),
+pandas (2+), requests (2+), redis.asyncio (4+), psutil (8+), base64 (3+),
+zlib (4+), pickle (3+), jieba (2+), threading (6+), random (6+),
+argparse (6+), gc (2+), signal (1+), smtplib (1+), socket (1+),
 websockets (1+), huggingface_hub (2+), speech_recognition (2+)
 ```
 
 #### 安全问题 (6个)
 
-| # | 文件路径 | 问题描述 | 影响 |
-|---|---------|---------|------|
-| 1 | `core/config/system_config.py` | MQTT 密码直接使用，未验证或加密 | 🔒 密码泄露风险 |
-| 2 | `core/desktop/key_manager_gui.py` | API 密钥配置需要加密存储 | 🔒 密钥泄露风险 |
-| 3 | `core/security/auth_middleware.py` | 密钥生成需要更安全的存储方式 | 🔒 密钥泄露风险 |
-| 4 | `core/shared/key_manager.py` | 硬编码演示密钥 `DEMO_HAM_FIXED_KEY_2025` | 🔒 密钥泄露风险 |
-| 5 | `integrations/confluence_integration.py` | 硬编码模拟令牌 `mock_token` | 🔒 密钥泄露风险 |
-| 6 | `integrations/jira_integration.py` | 硬编码模拟令牌 `mock_token` | 🔒 密钥泄露风险 |
+| #   | 文件路径                                 | 问题描述                                 | 影响            |
+| --- | ---------------------------------------- | ---------------------------------------- | --------------- |
+| 1   | `core/config/system_config.py`           | MQTT 密码直接使用，未验证或加密          | 🔒 密码泄露风险 |
+| 2   | `core/desktop/key_manager_gui.py`        | API 密钥配置需要加密存储                 | 🔒 密钥泄露风险 |
+| 3   | `core/security/auth_middleware.py`       | 密钥生成需要更安全的存储方式             | 🔒 密钥泄露风险 |
+| 4   | `core/shared/key_manager.py`             | 硬编码演示密钥 `DEMO_HAM_FIXED_KEY_2025` | 🔒 密钥泄露风险 |
+| 5   | `integrations/confluence_integration.py` | 硬编码模拟令牌 `mock_token`              | 🔒 密钥泄露风险 |
+| 6   | `integrations/jira_integration.py`       | 硬编码模拟令牌 `mock_token`              | 🔒 密钥泄露风险 |
 
 ### JavaScript 前端 (12个)
 
-| # | 文件路径 | 问题描述 | 影响 |
-|---|---------|---------|------|
-| 1 | `js/live2d-cubism-wrapper.js` | 纹理缩放效率低 - 每次都创建新 Canvas | ⚡ 性能问题 |
-| 2 | `js/performance-manager.js` | 自动调整造成模式切换震荡 | ⚡ 性能问题 |
-| 3 | `js/backend-websocket.js` | 内存泄漏 - _pendingResponses Map 永不清理 | 💾 内存泄漏 |
-| 4 | `js/live2d-manager.js` | 字符图像加载缺少错误处理 | 🎨 Live2D 加载失败 |
-| 5 | `js/security-manager.js` | Scrypt 盐硬编码为 'salt' | 🔒 加密强度降低 |
-| 6 | `js/security-manager.js` | HTTP 请求缺少证书验证 | 🔒 MITM 攻击风险 |
-| 7 | `js/live2d-cubism-wrapper.js` | CDN 资源加载缺少 SRI 哈希 | 🔒 供应链攻击风险 |
-| 8 | `js/app.js` | Key C 通过 HTTP 获取 | 🔒 中间人攻击风险 |
-| 9 | `js/live2d-cubism-wrapper.js` | 多余的 CDN 回退尝试 | ⚡ 性能问题 |
-| 10 | `js/live2d-manager.js` | 模型加载深度嵌套 (5层) | 🎨 代码可读性差 |
-| 11 | `js/live2d-cubism-wrapper.js` | findFile() 只尝试第一个路径 | 🎨 模型加载失败 |
-| 12 | `js/live2d-cubism-wrapper.js` | 后备渲染器不完整 | 🎨 Live2D 功能缺失 |
+| #   | 文件路径                      | 问题描述                                  | 影响               |
+| --- | ----------------------------- | ----------------------------------------- | ------------------ |
+| 1   | `js/live2d-cubism-wrapper.js` | 纹理缩放效率低 - 每次都创建新 Canvas      | ⚡ 性能问题        |
+| 2   | `js/performance-manager.js`   | 自动调整造成模式切换震荡                  | ⚡ 性能问题        |
+| 3   | `js/backend-websocket.js`     | 内存泄漏 - _pendingResponses Map 永不清理 | 💾 内存泄漏        |
+| 4   | `js/live2d-manager.js`        | 字符图像加载缺少错误处理                  | 🎨 Live2D 加载失败 |
+| 5   | `js/security-manager.js`      | Scrypt 盐硬编码为 'salt'                  | 🔒 加密强度降低    |
+| 6   | `js/security-manager.js`      | HTTP 请求缺少证书验证                     | 🔒 MITM 攻击风险   |
+| 7   | `js/live2d-cubism-wrapper.js` | CDN 资源加载缺少 SRI 哈希                 | 🔒 供应链攻击风险  |
+| 8   | `js/app.js`                   | Key C 通过 HTTP 获取                      | 🔒 中间人攻击风险  |
+| 9   | `js/live2d-cubism-wrapper.js` | 多余的 CDN 回退尝试                       | ⚡ 性能问题        |
+| 10  | `js/live2d-manager.js`        | 模型加载深度嵌套 (5层)                    | 🎨 代码可读性差    |
+| 11  | `js/live2d-cubism-wrapper.js` | findFile() 只尝试第一个路径               | 🎨 模型加载失败    |
+| 12  | `js/live2d-cubism-wrapper.js` | 后备渲染器不完整                          | 🎨 Live2D 功能缺失 |
 
 ### 配置文件 (3个)
 
-| # | 文件路径 | 问题描述 | 影响 |
-|---|---------|---------|------|
-| 1 | `configs/multi_llm_config.json` | API 密钥占位符 `YOUR_API_KEY` | 🔒 生产环境不安全 |
-| 2 | `.env` | 安全密钥占位符需要自动生成 | 🔒 系统初始化问题 |
-| 3 | `configs/system_config.yaml` | ai_name 设置为 "Miko" 应为 "Angela" | 📝 配置不一致 |
+| #   | 文件路径                        | 问题描述                            | 影响              |
+| --- | ------------------------------- | ----------------------------------- | ----------------- |
+| 1   | `configs/multi_llm_config.json` | API 密钥占位符 `YOUR_API_KEY`       | 🔒 生产环境不安全 |
+| 2   | `.env`                          | 安全密钥占位符需要自动生成          | 🔒 系统初始化问题 |
+| 3   | `configs/system_config.yaml`    | ai_name 设置为 "Miko" 应为 "Angela" | 📝 配置不一致     |
 
 ---
 
@@ -113,6 +115,7 @@ websockets (1+), huggingface_hub (2+), speech_recognition (2+)
 #### 错误处理问题 (23个)
 
 **裸异常捕获** (`except:` 无参数):
+
 ```
 ai/integration/local_cluster_manager.py:137, 143, 197
 ai/ops/capacity_planner.py:916
@@ -350,6 +353,7 @@ Key C (Desktop Sync)
 #### Live2D 集成
 
 **要求**:
+
 - ✅ 60fps 流畅动画
 - ✅ 7 种表情: neutral, happy, sad, angry, surprised, shy, love
 - ✅ 10 种动作: idle, greeting, thinking, dancing, waving, clapping, nod, shake
@@ -361,6 +365,7 @@ Key C (Desktop Sync)
 - ✅ 触觉响应: 18 个身体部位的触摸反馈
 
 **当前问题**:
+
 - ❌ CDN 加载缺少 SRI 哈希
 - ❌ 纹理缩放效率低
 - ❌ 后备渲染器不完整
@@ -369,6 +374,7 @@ Key C (Desktop Sync)
 #### 对话系统
 
 **要求**:
+
 - ✅ 自然语言理解
 - ✅ 上下文记忆
 - ✅ 情感响应
@@ -376,6 +382,7 @@ Key C (Desktop Sync)
 - ✅ 多语言支持 (EN, ZH-CN, ZH-TW, JA, KO)
 
 **当前问题**:
+
 - ❌ 上下文记忆不完整
 - ❌ 情感状态未充分利用
 - ❌ 个性化程度不足
@@ -383,6 +390,7 @@ Key C (Desktop Sync)
 #### 桌面整合
 
 **要求**:
+
 - ✅ 系统托盘集成
 - ✅ 自动启动
 - ✅ 点击穿透
@@ -391,6 +399,7 @@ Key C (Desktop Sync)
 - ✅ 系统音频捕获
 
 **当前问题**:
+
 - ❌ 路径遍历漏洞
 - ❌ 文件操作缺少验证
 - ❌ 权限管理不完善
@@ -398,6 +407,7 @@ Key C (Desktop Sync)
 #### 性能要求
 
 **要求**:
+
 ```
 Live2D FPS: 60 (目标)
 内存使用: < 100MB
@@ -408,6 +418,7 @@ CPU 使用: < 5%
 ```
 
 **当前问题**:
+
 - ❌ 内存泄漏
 - ❌ 性能震荡
 - ❌ 缓存不足
@@ -440,6 +451,7 @@ core/knowledge/unified_knowledge_graph.py
 ```
 
 **修复步骤**:
+
 1. 移除不完整的导入语句
 2. 修复未终止的字符串字面量
 3. 修正类型提示语法
@@ -454,6 +466,7 @@ main.js:145-210
 ```
 
 **修复步骤**:
+
 1. 移除重复的闭合括号
 2. 添加路径验证和规范化
 3. 运行 ESLint 验证
@@ -470,6 +483,7 @@ npx eslint js/**/*.js
 ```
 
 **验证标准**:
+
 - ✅ 0 语法错误
 - ✅ 所有文件可以正常导入
 
@@ -484,12 +498,14 @@ npx eslint js/**/*.js
 #### 任务 2.1: 修复 Python 导入错误 (178个)
 
 **子任务**:
+
 1. 创建标准导入模板
 2. 批量添加缺失的导入
 3. 更新 requirements.txt
 4. 验证所有依赖可安装
 
 **文件示例**:
+
 ```python
 # apps/backend/src/shared/network_resilience.py
 import asyncio
@@ -511,6 +527,7 @@ import psutil
 #### 任务 2.2: 修复安全问题 (20个)
 
 **子任务**:
+
 1. 移除所有硬编码密钥
 2. 实现安全的密钥管理
 3. 添加证书验证
@@ -518,6 +535,7 @@ import psutil
 5. 修复路径遍历漏洞
 
 **修复示例**:
+
 ```python
 # 修复前
 mqtt_password = os.getenv("MQTT_PASSWORD", "")
@@ -536,6 +554,7 @@ mqtt_password = key_manager.get_key("mqtt_password")
 #### 任务 2.3: 修复 JavaScript 性能问题 (5个)
 
 **子任务**:
+
 1. 实现纹理缓存
 2. 修复内存泄漏
 3. 添加模式切换迟滞
@@ -543,30 +562,35 @@ mqtt_password = key_manager.get_key("mqtt_password")
 5. 实现事件监听器清理
 
 **修复示例**:
+
 ```javascript
 // 修复内存泄漏
 class BackendWebSocketClient {
   constructor() {
-    this._pendingResponses = new Map();
+    this._pendingResponses = new Map()
     this._cleanupInterval = setInterval(() => {
-      this._cleanupPendingResponses();
-    }, 60000); // 每分钟清理一次
+      this._cleanupPendingResponses()
+    }, 60000) // 每分钟清理一次
   }
 
   _cleanupPendingResponses() {
-    const now = Date.now();
-    for (const [id, { timeout, timestamp }] of this._pendingResponses.entries()) {
-      if (now - timestamp > 35000) { // 35秒后清理
-        clearTimeout(timeout);
-        this._pendingResponses.delete(id);
+    const now = Date.now()
+    for (const [
+      id,
+      { timeout, timestamp },
+    ] of this._pendingResponses.entries()) {
+      if (now - timestamp > 35000) {
+        // 35秒后清理
+        clearTimeout(timeout)
+        this._pendingResponses.delete(id)
       }
     }
   }
 
   destroy() {
-    clearInterval(this._cleanupInterval);
-    this._pendingResponses.forEach(({ timeout }) => clearTimeout(timeout));
-    this._pendingResponses.clear();
+    clearInterval(this._cleanupInterval)
+    this._pendingResponses.forEach(({ timeout }) => clearTimeout(timeout))
+    this._pendingResponses.clear()
   }
 }
 ```
@@ -582,12 +606,14 @@ class BackendWebSocketClient {
 #### 任务 3.1: 改进错误处理 (23个)
 
 **子任务**:
+
 1. 替换所有裸 `except:` 为特定异常
 2. 添加适当的日志记录
 3. 实现错误恢复机制
 4. 添加错误边界
 
 **修复示例**:
+
 ```python
 # 修复前
 try:
@@ -613,10 +639,12 @@ except Exception as e:
 #### 任务 3.2: 修复类型提示 (2个)
 
 **子任务**:
+
 1. 修正 TypedDict 类型定义
 2. 添加完整的类型注解
 
 **修复示例**:
+
 ```python
 # 修复前
 class ToolDispatcherResponse(TypedDict):
@@ -642,12 +670,14 @@ class ToolDispatcherResponse(TypedDict):
 #### 任务 3.3: 性能优化 (12个)
 
 **子任务**:
+
 1. 实现任务池限制
 2. 添加批量处理
 3. 优化 JSON 解析
 4. 实现缓存机制
 
 **修复示例**:
+
 ```python
 # 任务池限制
 import asyncio
@@ -662,7 +692,7 @@ class TaskPool:
         async with self.semaphore:
             loop = asyncio.get_event_loop()
             return await loop.run_in_executor(
-                self.executor, 
+                self.executor,
                 lambda: func(*args, **kwargs)
             )
 ```
@@ -678,6 +708,7 @@ class TaskPool:
 #### 任务 4.1: 代码风格统一
 
 **子任务**:
+
 1. 统一命名规范
 2. 修复中文标点
 3. 添加类型提示
@@ -687,39 +718,49 @@ class TaskPool:
 #### 任务 4.2: 实现日志系统
 
 **子任务**:
+
 1. 替换所有 console.log
 2. 实现日志分级
 3. 添加生产环境开关
 4. 实现日志轮转
 
 **修复示例**:
+
 ```javascript
 // 创建统一日志系统
 class Logger {
   constructor(level = 'INFO') {
-    this.level = level;
-    this.levels = { DEBUG: 0, INFO: 1, WARN: 2, ERROR: 3 };
+    this.level = level
+    this.levels = { DEBUG: 0, INFO: 1, WARN: 2, ERROR: 3 }
   }
 
   _log(level, message, data) {
     if (this.levels[level] >= this.levels[this.level]) {
-      const timestamp = new Date().toISOString();
-      const logData = data ? ` ${JSON.stringify(data)}` : '';
+      const timestamp = new Date().toISOString()
+      const logData = data ? ` ${JSON.stringify(data)}` : ''
       console[level === 'DEBUG' ? 'log' : level.toLowerCase()](
         `[${timestamp}] [${level}] ${message}${logData}`
-      );
+      )
     }
   }
 
-  debug(message, data) { this._log('DEBUG', message, data); }
-  info(message, data) { this._log('INFO', message, data); }
-  warn(message, data) { this._log('WARN', message, data); }
-  error(message, data) { this._log('ERROR', message, data); }
+  debug(message, data) {
+    this._log('DEBUG', message, data)
+  }
+  info(message, data) {
+    this._log('INFO', message, data)
+  }
+  warn(message, data) {
+    this._log('WARN', message, data)
+  }
+  error(message, data) {
+    this._log('ERROR', message, data)
+  }
 }
 
 // 使用
-const logger = new Logger(process.env.LOG_LEVEL || 'INFO');
-logger.info('Live2D model loaded successfully', { model: 'miara_pro_t03' });
+const logger = new Logger(process.env.LOG_LEVEL || 'INFO')
+logger.info('Live2D model loaded successfully', { model: 'miara_pro_t03' })
 ```
 
 ---
@@ -774,14 +815,14 @@ pip-audit
 
 ## 📊 修复进度跟踪
 
-| 阶段 | 任务数 | 已完成 | 进行中 | 待开始 | 完成率 |
-|-----|-------|-------|-------|-------|-------|
-| 阶段 1: CRITICAL | 14 | 0 | 0 | 14 | 0% |
-| 阶段 2: HIGH | 199 | 0 | 0 | 199 | 0% |
-| 阶段 3: MEDIUM | 61 | 0 | 0 | 61 | 0% |
-| 阶段 4: LOW | 72+ | 0 | 0 | 72+ | 0% |
-| 阶段 5: 测试 | 持续 | 0 | 0 | 持续 | 0% |
-| **总计** | **~350** | **0** | **0** | **~350** | **0%** |
+| 阶段             | 任务数   | 已完成 | 进行中 | 待开始   | 完成率 |
+| ---------------- | -------- | ------ | ------ | -------- | ------ |
+| 阶段 1: CRITICAL | 14       | 0      | 0      | 14       | 0%     |
+| 阶段 2: HIGH     | 199      | 0      | 0      | 199      | 0%     |
+| 阶段 3: MEDIUM   | 61       | 0      | 0      | 61       | 0%     |
+| 阶段 4: LOW      | 72+      | 0      | 0      | 72+      | 0%     |
+| 阶段 5: 测试     | 持续     | 0      | 0      | 持续     | 0%     |
+| **总计**         | **~350** | **0**  | **0**  | **~350** | **0%** |
 
 ---
 

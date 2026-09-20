@@ -63,9 +63,9 @@ fallback_chain:
 
 # 性能追蹤
 performance_tracking:
-  success_rate_threshold: 0.70   # 成功率 < 70% 觸發降級
-  latency_threshold_ms: 30000     # 延遲 > 30s 觸發降級
-  tracking_window: 50             # 追蹤最近 50 次請求
+  success_rate_threshold: 0.70 # 成功率 < 70% 觸發降級
+  latency_threshold_ms: 30000 # 延遲 > 30s 觸發降級
+  tracking_window: 50 # 追蹤最近 50 次請求
 
 # Prompt 模板
 prompt_templates:

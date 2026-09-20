@@ -1,67 +1,69 @@
-const PULSEAUDIO_BINDING = require('./build/Release/pulseaudio-capture.node');
+const PULSEAUDIO_BINDING = require('./build/Release/pulseaudio-capture.node')
 
 class PulseAudioCapture {
-    constructor() {
-        this._native = new PULSEAUDIO_BINDING.PulseAudioCapture();
-        this._isCapturing = false;
+  constructor() {
+    this._native = new PULSEAUDIO_BINDING.PulseAudioCapture()
+    this._isCapturing = false
+  }
+
+  async start(deviceId = null, callback = null) {
+    if (this._isCapturing) {
+      throw new Error('Already capturing')
     }
 
-    async start(deviceId = null, callback = null) {
-        if (this._isCapturing) {
-            throw new Error('Already capturing');
-        }
-
-        return new Promise((resolve, reject) => {
-            try {
-                const wrappedCallback = callback ? (data) => {
-                    if (callback) callback(data);
-                } : null;
-
-                const result = this._native.start(deviceId || '', wrappedCallback);
-                
-                if (result) {
-                    this._isCapturing = true;
-                    resolve(true);
-                } else {
-                    reject(new Error('Failed to start capture'));
-                }
-            } catch (error) {
-                reject(error);
+    return new Promise((resolve, reject) => {
+      try {
+        const wrappedCallback = callback
+          ? (data) => {
+              if (callback) callback(data)
             }
-        });
-    }
+          : null
 
-    async stop() {
-        if (!this._isCapturing) {
-            return true;
+        const result = this._native.start(deviceId || '', wrappedCallback)
+
+        if (result) {
+          this._isCapturing = true
+          resolve(true)
+        } else {
+          reject(new Error('Failed to start capture'))
         }
+      } catch (error) {
+        reject(error)
+      }
+    })
+  }
 
-        return new Promise((resolve, reject) => {
-            try {
-                const result = this._native.stop();
-                this._isCapturing = false;
-                resolve(result);
-            } catch (error) {
-                reject(error);
-            }
-        });
+  async stop() {
+    if (!this._isCapturing) {
+      return true
     }
 
-    getFormat() {
-        return this._native.getFormat();
-    }
+    return new Promise((resolve, reject) => {
+      try {
+        const result = this._native.stop()
+        this._isCapturing = false
+        resolve(result)
+      } catch (error) {
+        reject(error)
+      }
+    })
+  }
 
-    get isCapturing() {
-        return this._isCapturing;
-    }
+  getFormat() {
+    return this._native.getFormat()
+  }
 
-    static getDevices() {
-        return PULSEAUDIO_BINDING.PulseAudioCapture.getDevices();
-    }
+  get isCapturing() {
+    return this._isCapturing
+  }
 
-    static getDefaultDevice() {
-        return PULSEAUDIO_BINDING.PulseAudioCapture.getDefaultDevice();
-    }
+  static getDevices() {
+    return PULSEAUDIO_BINDING.PulseAudioCapture.getDevices()
+  }
+
+  static getDefaultDevice() {
+    return PULSEAUDIO_BINDING.PulseAudioCapture.getDefaultDevice()
+  }
 }
 
-module.exports = PulseAudioCapture;
+module.exports = PulseAudioCapture

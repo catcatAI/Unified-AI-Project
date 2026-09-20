@@ -15,8 +15,9 @@
 # 測試改善路線圖 v1.0
 
 > **目標**: 去重（Deduplicate）、泛化（Generalize）、提升精密度（Precision）與有效性（Effectiveness）  
-> **範圍**: 493 個測試檔案（tests/ + apps/backend/tests/）  
-> **起點**: ~120 個僅含 import 測試的最小檔案 → 整合為參數化測試  
+> **範圍**:
+> 493 個測試檔案（tests/ + apps/backend/tests/）  
+> **起點**: ~120 個僅含 import 測試的最小檔案 → 整合為參數化測試
 
 ---
 
@@ -24,37 +25,37 @@
 
 ### 1.1 整體數據
 
-| 指標 | 數值 |
-|:-----|:----:|
-| 測試檔案總數 | 493（tests/ + apps/backend/tests/） |
-| tests/unit/ 檔案數 | 289 |
-| tests/core/ 檔案數 | 113 |
-| tests/ai/ 檔案數 | 117 |
-| 最小檔案（< 20 行, import-only） | ~120 |
-| conftest.py 檔案數 | 4（tests/, tests/ai/ed3n/, tests/ai/garden/, tests/integration/） |
-| parametrize 使用 | 少量（tests/api/test_endpoints.py 等） |
+| 指標                             |                               數值                                |
+| :------------------------------- | :---------------------------------------------------------------: |
+| 測試檔案總數                     |                493（tests/ + apps/backend/tests/）                |
+| tests/unit/ 檔案數               |                                289                                |
+| tests/core/ 檔案數               |                                113                                |
+| tests/ai/ 檔案數                 |                                117                                |
+| 最小檔案（< 20 行, import-only） |                               ~120                                |
+| conftest.py 檔案數               | 4（tests/, tests/ai/ed3n/, tests/ai/garden/, tests/integration/） |
+| parametrize 使用                 |              少量（tests/api/test_endpoints.py 等）               |
 
 ### 1.2 核心問題
 
-| 問題 | 影響 | 嚴重性 |
-|:-----|:-----|:------:|
-| **~120 個 import-only 測試** | 每個檔案僅測試「模組能否導入」 — 無行為驗證，測試維護成本高於測試價值 | 🔴 高 |
-| **30+ 獨立 import 測試在 test_smoke_core.py** | 30 個獨立函數，應為單一參數化測試 | 🟡 中 |
-| **10+ 獨立 import 測試在 test_imports.py (agents)** | 同上 | 🟡 中 |
-| **無統一 conftest fixtures** | 每個測試自行處理 sys.path、mock、setup — 重複程式碼 | 🟡 中 |
-| **少用 parametrize** | 相似測試邏輯以複製貼上實現 | 🟡 中 |
-| **部分測試僅測「不回傳錯誤」** | 不驗證輸出正確性 | 🔴 高 |
+| 問題                                                | 影響                                                                  | 嚴重性 |
+| :-------------------------------------------------- | :-------------------------------------------------------------------- | :----: |
+| **~120 個 import-only 測試**                        | 每個檔案僅測試「模組能否導入」 — 無行為驗證，測試維護成本高於測試價值 | 🔴 高  |
+| **30+ 獨立 import 測試在 test_smoke_core.py**       | 30 個獨立函數，應為單一參數化測試                                     | 🟡 中  |
+| **10+ 獨立 import 測試在 test_imports.py (agents)** | 同上                                                                  | 🟡 中  |
+| **無統一 conftest fixtures**                        | 每個測試自行處理 sys.path、mock、setup — 重複程式碼                   | 🟡 中  |
+| **少用 parametrize**                                | 相似測試邏輯以複製貼上實現                                            | 🟡 中  |
+| **部分測試僅測「不回傳錯誤」**                      | 不驗證輸出正確性                                                      | 🔴 高  |
 
 ### 1.3 §X 進度追蹤
 
-| §X | 內容 | 狀態 |
-|:--:|:-----|:----:|
-| #66 | 測試改善計畫 + 文件 | ✅ **DONE** (2026-06-30) |
-| #67 | import-only 測試整合 | ✅ **DONE** (2026-06-30, §X #66 — 14 files→5 files) |
-| #68 | test_smoke_core 參數化 + commit deletions | ✅ **DONE** (2026-06-30, §X #68 — 23 file deletions committed) |
-| #69 | agents import 參數化 | ✅ **DONE** (2026-06-30, §X #67 — 3 more service files consolidated) |
-| #75 | 41 smoke test files → 1 parameterized | ✅ **DONE** (2026-07-01, −739 lines, net 96 pass/20 skip) |
-| #86 | Delete 4 redundant test files | ✅ **DONE** (2026-07-01, encryption, code_inspector, simple) |
+| §X  | 內容                                      |                                 狀態                                 |
+| :-: | :---------------------------------------- | :------------------------------------------------------------------: |
+| #66 | 測試改善計畫 + 文件                       |                       ✅ **DONE** (2026-06-30)                       |
+| #67 | import-only 測試整合                      |         ✅ **DONE** (2026-06-30, §X #66 — 14 files→5 files)          |
+| #68 | test_smoke_core 參數化 + commit deletions |    ✅ **DONE** (2026-06-30, §X #68 — 23 file deletions committed)    |
+| #69 | agents import 參數化                      | ✅ **DONE** (2026-06-30, §X #67 — 3 more service files consolidated) |
+| #75 | 41 smoke test files → 1 parameterized     |      ✅ **DONE** (2026-07-01, −739 lines, net 96 pass/20 skip)       |
+| #86 | Delete 4 redundant test files             |     ✅ **DONE** (2026-07-01, encryption, code_inspector, simple)     |
 
 ---
 
@@ -90,7 +91,8 @@ def test_module_import(module_path: str, class_name: str) -> None:
 
 ### 2.2 第二階段：參數化重複測試（泛化）
 
-**問題**: 
+**問題**:
+
 - `tests/core/test_smoke_core.py`: 30 個獨立 import 函數
 - `tests/ai/agents/test_imports.py`: 10 個獨立 import 函數
 - `tests/services/test_smoke_services.py`: 多個獨立 import 函數
@@ -102,6 +104,7 @@ def test_module_import(module_path: str, class_name: str) -> None:
 **問題**: 許多模組只有 import 測試，缺乏行為驗證
 
 **解法**: 為每個模組加入至少一個行為測試：
+
 - 靜態方法測試（classmethod 回傳正確類型）
 - 邊界條件測試（空輸入、None、極值）
 - 整合測試（多模組互動）
@@ -110,7 +113,8 @@ def test_module_import(module_path: str, class_name: str) -> None:
 
 **問題**: 部分測試使用 `assert True` 或僅檢查不回傳錯誤
 
-**解法**: 
+**解法**:
+
 - 替換 `assert True` 為實際斷言
 - 加入 fuzzy 斷言（允許合理變異）
 - 使用 property-based testing（Hypothesis）
@@ -128,14 +132,14 @@ graph TD
     P5 --> P6[§X #71: 有效性提升]
 ```
 
-| 階段 | §X | 內容 | 預期檔案數變化 | 風險 |
-|:----:|:--:|:-----|:--------------:|:----:|
-| 1 | #66 | 計畫文件 | +1 | 低 |
-| 2 | #67 | import-only 整合 | -119 | 低 |
-| 3 | #68 | test_smoke_core 參數化 | 0（同一檔案） | 低 |
-| 4 | #69 | agents/services 參數化 | -2 | 低 |
-| 5 | #70 | 行為測試補充 | +10~20 | 中 |
-| 6 | #71 | 有效性提升 | 0（修改既有檔案） | 中 |
+| 階段 | §X  | 內容                   |  預期檔案數變化   | 風險 |
+| :--: | :-: | :--------------------- | :---------------: | :--: |
+|  1   | #66 | 計畫文件               |        +1         |  低  |
+|  2   | #67 | import-only 整合       |       -119        |  低  |
+|  3   | #68 | test_smoke_core 參數化 |   0（同一檔案）   |  低  |
+|  4   | #69 | agents/services 參數化 |        -2         |  低  |
+|  5   | #70 | 行為測試補充           |      +10~20       |  中  |
+|  6   | #71 | 有效性提升             | 0（修改既有檔案） |  中  |
 
 ---
 
@@ -216,6 +220,7 @@ services:
 ### 4.2 不整合的測試
 
 以下類型的測試保持獨立：
+
 - 有特殊 fixture 需求的測試（conftest 限定）
 - 需要外部資源的測試（資料庫、網路、硬體）
 - 測試時間 > 5s 的慢測試

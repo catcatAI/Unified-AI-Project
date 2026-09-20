@@ -16,13 +16,13 @@ export class csmVector<T> {
    */
   constructor(initialCapacity = 0) {
     if (initialCapacity < 1) {
-      this._ptr = [];
-      this._capacity = 0;
-      this._size = 0;
+      this._ptr = []
+      this._capacity = 0
+      this._size = 0
     } else {
-      this._ptr = new Array(initialCapacity);
-      this._capacity = initialCapacity;
-      this._size = 0;
+      this._ptr = new Array(initialCapacity)
+      this._capacity = initialCapacity
+      this._size = 0
     }
   }
 
@@ -30,7 +30,7 @@ export class csmVector<T> {
    * インデックスで指定した要素を返す
    */
   public at(index: number): T {
-    return this._ptr[index];
+    return this._ptr[index]
   }
 
   /**
@@ -39,18 +39,18 @@ export class csmVector<T> {
    * @param value セットする要素
    */
   public set(index: number, value: T): void {
-    this._ptr[index] = value;
+    this._ptr[index] = value
   }
 
   /**
    * コンテナを取得する
    */
   public get(offset = 0): T[] {
-    const ret: T[] = new Array<T>();
+    const ret: T[] = new Array<T>()
     for (let i = offset; i < this._size; i++) {
-      ret.push(this._ptr[i]);
+      ret.push(this._ptr[i])
     }
-    return ret;
+    return ret
   }
 
   /**
@@ -59,20 +59,18 @@ export class csmVector<T> {
    */
   public pushBack(value: T): void {
     if (this._size >= this._capacity) {
-      this.prepareCapacity(
-        this._capacity == 0 ? csmVector.DefaultSize : this._capacity * 2
-      );
+      this.prepareCapacity(this._capacity == 0 ? csmVector.DefaultSize : this._capacity * 2)
     }
 
-    this._ptr[this._size++] = value;
+    this._ptr[this._size++] = value
   }
 
   /**
    * コンテナの全要素を解放する
    */
   public clear(): void {
-    this._ptr.length = 0;
-    this._size = 0;
+    this._ptr.length = 0
+    this._size = 0
   }
 
   /**
@@ -80,7 +78,7 @@ export class csmVector<T> {
    * @return コンテナの要素数
    */
   public getSize(): number {
-    return this._size;
+    return this._size
   }
 
   /**
@@ -89,61 +87,57 @@ export class csmVector<T> {
    * @param value 要素に代入する値
    */
   public assign(newSize: number, value: T): void {
-    const curSize = this._size;
+    const curSize = this._size
 
     if (curSize < newSize) {
-      this.prepareCapacity(newSize); // capacity更新
+      this.prepareCapacity(newSize) // capacity更新
     }
 
     for (let i = 0; i < newSize; i++) {
-      this._ptr[i] = value;
+      this._ptr[i] = value
     }
 
-    this._size = newSize;
+    this._size = newSize
   }
 
   /**
    * サイズ変更
    */
   public resize(newSize: number, value: T = null): void {
-    this.updateSize(newSize, value, true);
+    this.updateSize(newSize, value, true)
   }
 
   /**
    * サイズ変更
    */
-  public updateSize(
-    newSize: number,
-    value: any = null,
-    callPlacementNew = true
-  ): void {
-    const curSize: number = this._size;
+  public updateSize(newSize: number, value: any = null, callPlacementNew = true): void {
+    const curSize: number = this._size
 
     if (curSize < newSize) {
-      this.prepareCapacity(newSize); // capacity更新
+      this.prepareCapacity(newSize) // capacity更新
 
       if (callPlacementNew) {
         for (let i: number = this._size; i < newSize; i++) {
           if (typeof value == 'function') {
             // new
-            this._ptr[i] = JSON.parse(JSON.stringify(new value()));
+            this._ptr[i] = JSON.parse(JSON.stringify(new value()))
           } // プリミティブ型なので値渡し
           else {
-            this._ptr[i] = value;
+            this._ptr[i] = value
           }
         }
       } else {
         for (let i: number = this._size; i < newSize; i++) {
-          this._ptr[i] = value;
+          this._ptr[i] = value
         }
       }
     } else {
       // newSize <= this._size
       //---
-      const sub = this._size - newSize;
-      this._ptr.splice(this._size - sub, sub); // 不要なので破棄する
+      const sub = this._size - newSize
+      this._ptr.splice(this._size - sub, sub) // 不要なので破棄する
     }
-    this._size = newSize;
+    this._size = newSize
   }
 
   /**
@@ -152,32 +146,28 @@ export class csmVector<T> {
    * @param begin 挿入するコンテナの開始位置
    * @param end 挿入するコンテナの終端位置
    */
-  public insert(
-    position: iterator<T>,
-    begin: iterator<T>,
-    end: iterator<T>
-  ): void {
-    let dstSi: number = position._index;
-    const srcSi: number = begin._index;
-    const srcEi: number = end._index;
+  public insert(position: iterator<T>, begin: iterator<T>, end: iterator<T>): void {
+    let dstSi: number = position._index
+    const srcSi: number = begin._index
+    const srcEi: number = end._index
 
-    const addCount: number = srcEi - srcSi;
+    const addCount: number = srcEi - srcSi
 
-    this.prepareCapacity(this._size + addCount);
+    this.prepareCapacity(this._size + addCount)
 
     // 挿入用の既存データをシフトして隙間を作る
-    const addSize = this._size - dstSi;
+    const addSize = this._size - dstSi
     if (addSize > 0) {
       for (let i = 0; i < addSize; i++) {
-        this._ptr.splice(dstSi + i, 0, null);
+        this._ptr.splice(dstSi + i, 0, null)
       }
     }
 
     for (let i: number = srcSi; i < srcEi; i++, dstSi++) {
-      this._ptr[dstSi] = begin._vector._ptr[i];
+      this._ptr[dstSi] = begin._vector._ptr[i]
     }
 
-    this._size = this._size + addCount;
+    this._size = this._size + addCount
   }
 
   /**
@@ -188,13 +178,13 @@ export class csmVector<T> {
    */
   public remove(index: number): boolean {
     if (index < 0 || this._size <= index) {
-      return false; // 削除範囲外
+      return false // 削除範囲外
     }
 
-    this._ptr.splice(index, 1);
-    --this._size;
+    this._ptr.splice(index, 1)
+    --this._size
 
-    return true;
+    return true
   }
 
   /**
@@ -202,17 +192,17 @@ export class csmVector<T> {
    * @param ite 削除する要素
    */
   public erase(ite: iterator<T>): iterator<T> {
-    const index: number = ite._index;
+    const index: number = ite._index
     if (index < 0 || this._size <= index) {
-      return ite; // 削除範囲外
+      return ite // 削除範囲外
     }
 
     // 削除
-    this._ptr.splice(index, 1);
-    --this._size;
+    this._ptr.splice(index, 1)
+    --this._size
 
-    const ite2: iterator<T> = new iterator<T>(this, index); // 終了
-    return ite2;
+    const ite2: iterator<T> = new iterator<T>(this, index) // 終了
+    return ite2
   }
 
   /**
@@ -222,11 +212,11 @@ export class csmVector<T> {
   public prepareCapacity(newSize: number): void {
     if (newSize > this._capacity) {
       if (this._capacity == 0) {
-        this._ptr = new Array(newSize);
-        this._capacity = newSize;
+        this._ptr = new Array(newSize)
+        this._capacity = newSize
       } else {
-        this._ptr.length = newSize;
-        this._capacity = newSize;
+        this._ptr.length = newSize
+        this._capacity = newSize
       }
     }
   }
@@ -235,33 +225,32 @@ export class csmVector<T> {
    * コンテナの先頭要素を返す
    */
   public begin(): iterator<T> {
-    const ite: iterator<T> =
-      this._size == 0 ? this.end() : new iterator<T>(this, 0);
-    return ite;
+    const ite: iterator<T> = this._size == 0 ? this.end() : new iterator<T>(this, 0)
+    return ite
   }
 
   /**
    * コンテナの終端要素を返す
    */
   public end(): iterator<T> {
-    const ite: iterator<T> = new iterator<T>(this, this._size);
-    return ite;
+    const ite: iterator<T> = new iterator<T>(this, this._size)
+    return ite
   }
 
   public getOffset(offset: number): csmVector<T> {
-    const newVector = new csmVector<T>();
-    newVector._ptr = this.get(offset);
-    newVector._size = this.get(offset).length;
-    newVector._capacity = this.get(offset).length;
+    const newVector = new csmVector<T>()
+    newVector._ptr = this.get(offset)
+    newVector._size = this.get(offset).length
+    newVector._capacity = this.get(offset).length
 
-    return newVector;
+    return newVector
   }
 
-  _ptr: T[]; // コンテナの先頭アドレス
-  _size: number; // コンテナの要素数
-  _capacity: number; // コンテナのキャパシティ
+  _ptr: T[] // コンテナの先頭アドレス
+  _size: number // コンテナの要素数
+  _capacity: number // コンテナのキャパシティ
 
-  static readonly DefaultSize = 10; // コンテナ初期化のデフォルトサイズ
+  static readonly DefaultSize = 10 // コンテナ初期化のデフォルトサイズ
 }
 
 export class iterator<T> {
@@ -269,84 +258,84 @@ export class iterator<T> {
    * コンストラクタ
    */
   public constructor(v?: csmVector<T>, index?: number) {
-    this._vector = v != undefined ? v : null;
-    this._index = index != undefined ? index : 0;
+    this._vector = v != undefined ? v : null
+    this._index = index != undefined ? index : 0
   }
 
   /**
    * 代入
    */
   public set(ite: iterator<T>): iterator<T> {
-    this._index = ite._index;
-    this._vector = ite._vector;
-    return this;
+    this._index = ite._index
+    this._vector = ite._vector
+    return this
   }
 
   /**
    * 前置き++演算
    */
   public preIncrement(): iterator<T> {
-    ++this._index;
-    return this;
+    ++this._index
+    return this
   }
 
   /**
    * 前置き--演算
    */
   public preDecrement(): iterator<T> {
-    --this._index;
-    return this;
+    --this._index
+    return this
   }
 
   /**
    * 後置き++演算子
    */
   public increment(): iterator<T> {
-    const iteold = new iterator<T>(this._vector, this._index++); // 古い値を保存
-    return iteold;
+    const iteold = new iterator<T>(this._vector, this._index++) // 古い値を保存
+    return iteold
   }
 
   /**
    * 後置き--演算子
    */
   public decrement(): iterator<T> {
-    const iteold = new iterator<T>(this._vector, this._index--); // 古い値を保存
-    return iteold;
+    const iteold = new iterator<T>(this._vector, this._index--) // 古い値を保存
+    return iteold
   }
 
   /**
    * ptr
    */
   public ptr(): T {
-    return this._vector._ptr[this._index];
+    return this._vector._ptr[this._index]
   }
 
   /**
    * =演算子のオーバーロード
    */
   public substitution(ite: iterator<T>): iterator<T> {
-    this._index = ite._index;
-    this._vector = ite._vector;
-    return this;
+    this._index = ite._index
+    this._vector = ite._vector
+    return this
   }
 
   /**
    * !=演算子のオーバーロード
    */
   public notEqual(ite: iterator<T>): boolean {
-    return this._index != ite._index || this._vector != ite._vector;
+    return this._index != ite._index || this._vector != ite._vector
   }
 
-  _index: number; // コンテナのインデックス値
-  _vector: csmVector<T>; // コンテナ
+  _index: number // コンテナのインデックス値
+  _vector: csmVector<T> // コンテナ
 }
 
 // Namespace definition for compatibility.
-import * as $ from './csmvector';
+import * as $ from './csmvector'
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
-  export const csmVector = $.csmVector;
-  export type csmVector<T> = $.csmVector<T>;
-  export const iterator = $.iterator;
-  export type iterator<T> = $.iterator<T>;
+  export const csmVector = $.csmVector
+  export type csmVector<T> = $.csmVector<T>
+  export const iterator = $.iterator
+  export type iterator<T> = $.iterator<T>
 }

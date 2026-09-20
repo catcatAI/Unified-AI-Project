@@ -3,194 +3,333 @@
 All notable changes to the Angela AI project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+and this project adheres to
+[Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [7.5.0-dev] - 2026-08-11 — Angela 真實多模態學習與審核
 
 ### Added
-- 📚 **多模態字典知識庫**：下載 CC-CEDICT（124,803 zh↔en）+ WordNet 3.0（117,658 en）→ `data/dictionaries/`，匯入 `DictionaryLayer` 242,461 條目。
-- 🧠 **Angela 專案學習**：`learn_from_conversation` 學習專案文檔概念 + grounding 1,221 個類別名 + 649 個 camelCase 代碼術語 → 字典擴至 **244,031 條目 / 53,850 relations**（`data/dictionaries/angela_knowledge.json`）。
-- 🖼️ **真實多模態數據集**：CIFAR-10（50,000 影像）+ ESC-50（2,000 音訊）→ `data/multimodal/`。
-- 🎯 **自由矩陣真實對比訓練**：SharedLatentSpace vision+audio 雙模態，CIFAR 300 樣本（vision loss→0.195）+ ESC-50 2,000 樣本（audio loss→0.26），權重存 `models/shared_latent_space.npz`。同類 vs 異類相似度驗證：視覺 0.285 vs 0.192、音訊 1.0 vs 0.929。
-- 🔍 **Angela 專案審核報告**：`docs/09-archive/ANGELA_LEARNING_AUDIT_2026-08-11.md`（字典涵蓋率、代碼重複類別、camelCase 覆蓋、中文繁簡混用；已完成，歸檔 2026-08-13）。
-- 🧩 **Angela 代碼模式學習**：`learn_reflex` 學習 6 個專案代碼慣例（service/route/test/module/命名/backbone），持久化至 `data/dictionaries/angela_code_patterns.json`，重載後精準回答。
-- 🧹 **pyflakes 全 src 掃描**：0 語法錯誤、545 警告（456 未使用 import、19 undefined name 全受 `__future__ import annotations` 保護）。
+
+- 📚 **多模態字典知識庫**：下載 CC-CEDICT（124,803 zh↔en）+ WordNet 3.0（117,658
+  en）→ `data/dictionaries/`，匯入 `DictionaryLayer` 242,461 條目。
+- 🧠 **Angela 專案學習**：`learn_from_conversation` 學習專案文檔概念 + grounding
+  1,221 個類別名 + 649 個 camelCase 代碼術語 → 字典擴至 **244,031 條目 / 53,850
+  relations**（`data/dictionaries/angela_knowledge.json`）。
+- 🖼️ **真實多模態數據集**：CIFAR-10（50,000 影像）+ ESC-50（2,000 音訊）→
+  `data/multimodal/`。
+- 🎯 **自由矩陣真實對比訓練**：SharedLatentSpace vision+audio 雙模態，CIFAR
+  300 樣本（vision loss→0.195）+ ESC-50 2,000 樣本（audio loss→0.26），權重存
+  `models/shared_latent_space.npz`。同類 vs 異類相似度驗證：視覺 0.285 vs
+  0.192、音訊 1.0 vs 0.929。
+- 🔍
+  **Angela 專案審核報告**：`docs/09-archive/ANGELA_LEARNING_AUDIT_2026-08-11.md`（字典涵蓋率、代碼重複類別、camelCase 覆蓋、中文繁簡混用；已完成，歸檔 2026-08-13）。
+- 🧩 **Angela 代碼模式學習**：`learn_reflex`
+  學習 6 個專案代碼慣例（service/route/test/module/命名/backbone），持久化至
+  `data/dictionaries/angela_code_patterns.json`，重載後精準回答。
+- 🧹 **pyflakes 全 src 掃描**：0 語法錯誤、545 警告（456 未使用 import、19
+  undefined name 全受 `__future__ import annotations` 保護）。
 
 ### Fixed
-- 🐛 **`DictionaryLayer._assign_key` key 衝突覆寫 bug**：grow() 從 `_next_key_id=1` 計數，從 JSON 載入（含 `l1`-`l1221`）後覆寫既有 key `l1` 造成資料遺失。修復為迴圈跳過已存在 key。**+2 回歸測試**，6 tests 通過，flake8 乾淨。
-- 🧹 **未使用 import 清理**：`kg_import.py`（`math/re/Iterator/Set/entity_set`）、`producers.py`（`re/time/List`）、`synthesizer_core.py`（`re/time/field/Any/Deque`）——均為 pyflakes 確診、非惰性、非 shim，27/41 tests 通過，flake8 乾淨。
-- 📄 **`docs/03-technical-architecture/README.md` 最新審計指向修正**：6/25 audit（被 12 檔引用、非最新）→ 指向 8/08 分析 + V3 audit。
+
+- 🐛 **`DictionaryLayer._assign_key` key 衝突覆寫 bug**：grow() 從
+  `_next_key_id=1` 計數，從 JSON 載入（含 `l1`-`l1221`）後覆寫既有 key `l1`
+  造成資料遺失。修復為迴圈跳過已存在 key。**+2 回歸測試**，6
+  tests 通過，flake8 乾淨。
+- 🧹
+  **未使用 import 清理**：`kg_import.py`（`math/re/Iterator/Set/entity_set`）、`producers.py`（`re/time/List`）、`synthesizer_core.py`（`re/time/field/Any/Deque`）——均為 pyflakes 確診、非惰性、非 shim，27/41
+  tests 通過，flake8 乾淨。
+- 📄 **`docs/03-technical-architecture/README.md` 最新審計指向修正**：6/25
+  audit（被 12 檔引用、非最新）→ 指向 8/08 分析 + V3 audit。
 
 ### Known
+
 - ED3N 序列訓練（JointTrainer）對自造雙語對 accuracy=0.0——需真實 QA 大語料。
 - 46 個跨檔重複類別（`ErrorHandler`×3 等）記錄待人工決策合併。
 
 ## [7.5.0-dev] - 2026-07-19 — GPU/CPU Compute Configuration + Hardware-Aware Profiles
 
 ### Added
-- 🖥️ **GPU/CPU Compute Configuration System** (`apps/backend/configs/system/compute.default.yaml` + `apps/backend/configs/standard/compute.default.yaml`): Centralized hardware acceleration control for all compute-intensive AI features.
-  - **Per-feature modes**: `auto` (detect hardware), `on` (force GPU), `off` (force CPU) for: `ed3n_snn`, `garden_snn`, `three_layer_visual`, `semantic_visual`, `semantic_audio`, `multimodal_train`, `vector_store`, `gpu_accelerator`, `llm_local_gpu`
-  - **Hardware-profile overrides** (5 profiles): `high_performance_desktop` (max budgets), `laptop_normal` (balanced), `laptop_power_saver` (forced CPU), `low_power_device` (forced CPU), `server_cloud` (max budgets + all GPU)
-  - **Global controls**: `force_cpu_on_low_power` (auto-switch on battery/power-saver), `log_fallback` (log GPU→CPU events)
-- 🔧 **Compute Config Accessors** in `magic_numbers.py`: `compute_mode()`, `compute_bool()`, `compute_int()`, `compute_float()` with profile-aware priority chain (profile feature > profile global > global feature > default)
-- 🧠 **ED3N SNNCore**: Uses `compute_bool("ed3n_snn")` to enable/disable; returns empty result when disabled
-- 🌱 **GARDEN TensorSNNCore**: Uses `compute_int()` for `max_vocab`/`connection_budget` with profile-specific overrides
+
+- 🖥️ **GPU/CPU Compute Configuration System**
+  (`apps/backend/configs/system/compute.default.yaml` +
+  `apps/backend/configs/standard/compute.default.yaml`): Centralized hardware
+  acceleration control for all compute-intensive AI features.
+  - **Per-feature modes**: `auto` (detect hardware), `on` (force GPU), `off`
+    (force CPU) for: `ed3n_snn`, `garden_snn`, `three_layer_visual`,
+    `semantic_visual`, `semantic_audio`, `multimodal_train`, `vector_store`,
+    `gpu_accelerator`, `llm_local_gpu`
+  - **Hardware-profile overrides** (5 profiles): `high_performance_desktop` (max
+    budgets), `laptop_normal` (balanced), `laptop_power_saver` (forced CPU),
+    `low_power_device` (forced CPU), `server_cloud` (max budgets + all GPU)
+  - **Global controls**: `force_cpu_on_low_power` (auto-switch on
+    battery/power-saver), `log_fallback` (log GPU→CPU events)
+- 🔧 **Compute Config Accessors** in `magic_numbers.py`: `compute_mode()`,
+  `compute_bool()`, `compute_int()`, `compute_float()` with profile-aware
+  priority chain (profile feature > profile global > global feature > default)
+- 🧠 **ED3N SNNCore**: Uses `compute_bool("ed3n_snn")` to enable/disable;
+  returns empty result when disabled
+- 🌱 **GARDEN TensorSNNCore**: Uses `compute_int()` for
+  `max_vocab`/`connection_budget` with profile-specific overrides
 - 🌱 **GARDEN Engine**: Uses `compute_bool("garden_snn")` for device selection
-- 📚 **GARDEN VectorDictionary**: Uses `compute_bool("garden_snn")` for device selection
+- 📚 **GARDEN VectorDictionary**: Uses `compute_bool("garden_snn")` for device
+  selection
 
 ### Fixed
-- 🐛 Fixed indentation bug in `TensorSNNCore.__init__` (was at module level instead of class level)
-- 🐛 Fixed line endings in `garden/snn_core.py` (CRLF→LF) causing `IndentationError`
-- 🔧 Updated `tiered_loader.py` to find `compute.default.yaml` in correct location (moved from `standard/compute/` to `standard/`)
+
+- 🐛 Fixed indentation bug in `TensorSNNCore.__init__` (was at module level
+  instead of class level)
+- 🐛 Fixed line endings in `garden/snn_core.py` (CRLF→LF) causing
+  `IndentationError`
+- 🔧 Updated `tiered_loader.py` to find `compute.default.yaml` in correct
+  location (moved from `standard/compute/` to `standard/`)
 
 ### Testing
+
 - All 639+ core tests passing (API, autonomous, core, benchmarks, ED3N, memory)
-- Profile-specific overrides verified: `high_performance_desktop` → max_vocab=100000, `laptop_power_saver` → features forced off
+- Profile-specific overrides verified: `high_performance_desktop` →
+  max_vocab=100000, `laptop_power_saver` → features forced off
 - Hardware detection verified: `high_performance_desktop` on Windows desktop
 
 ## [7.5.0-dev] - 2026-07-13 — Multi-Perspective Production-Readiness Complete
 
 ### Added
-- 🧪 **§X #243 — Documentation Production-Readiness**: Fixed 6 issues found by doc/user perspective audit
+
+- 🧪 **§X #243 — Documentation Production-Readiness**: Fixed 6 issues found by
+  doc/user perspective audit
   - Dockerfile: Fixed WORKDIR paths, healthcheck, pip install with hash
   - nginx.conf: Fixed proxy_pass paths, upstream configuration, error handling
-  - QUICKSTART.md: Fixed broken script references, fake test coverage claims, fake mode flags
-  - .env.example: Added missing required vars (ANGELA_KEY_A, ANGELA_KEY_B, BACKEND_HOST)
+  - QUICKSTART.md: Fixed broken script references, fake test coverage claims,
+    fake mode flags
+  - .env.example: Added missing required vars (ANGELA_KEY_A, ANGELA_KEY_B,
+    BACKEND_HOST)
   - ARCHITECTURE.md: Synced 6-layer diagram with current project structure
-- 🧪 **§X #244 — Healthcheck Path Restoration**: Reverted wrong healthcheck `/health` → `/api/v1/ops/health`; fixed pre-existing test failures from endpoint cleanup
-- 🧪 **§X #245 — 7-Perspective Audit**: Fixed print()→logging in 4 production AI files (garden_engine, context/utils, decomposer, permission_control); corrected comment accuracy in 5 files
-- 🧪 **§X #246 — Test Fix**: Enabled skipped `test_apply_inter_dimensional_drag` with correct expectation (0.05, not 1.0); removed dead benchmark referencing deleted `ai.ops`
+- 🧪 **§X #244 — Healthcheck Path Restoration**: Reverted wrong healthcheck
+  `/health` → `/api/v1/ops/health`; fixed pre-existing test failures from
+  endpoint cleanup
+- 🧪 **§X #245 — 7-Perspective Audit**: Fixed print()→logging in 4 production AI
+  files (garden_engine, context/utils, decomposer, permission_control);
+  corrected comment accuracy in 5 files
+- 🧪 **§X #246 — Test Fix**: Enabled skipped `test_apply_inter_dimensional_drag`
+  with correct expectation (0.05, not 1.0); removed dead benchmark referencing
+  deleted `ai.ops`
 - 🧪 **§X #247 — 41 Test Failures Fixed**: Comprehensive fix across 7 categories
   - F1: Created `test_retrieval.txt` poem + fixed path resolution
-  - F2: Fixed angular JS paths (live2d-manager, hardware-detection, performance-manager → system-profile)
+  - F2: Fixed angular JS paths (live2d-manager, hardware-detection,
+    performance-manager → system-profile)
   - F3: Fixed server import attributes to match real main_api_server exports
-  - F4: Removed `spec=ExternalConnector` from HSP mock (lacked subscribe/unsubscribe methods)
-  - F5: Fixed middleware test — added `import os`, fixed key_b bytes→str, updated expectations for pass-through behavior (401→200, 403→200)
+  - F4: Removed `spec=ExternalConnector` from HSP mock (lacked
+    subscribe/unsubscribe methods)
+  - F5: Fixed middleware test — added `import os`, fixed key_b bytes→str,
+    updated expectations for pass-through behavior (401→200, 403→200)
   - F6: vision_service test was already passing
-  - F7+F8: Fixed multimodal health test to check `vision_pipeline` + `encoders` + `latent_space`
+  - F7+F8: Fixed multimodal health test to check `vision_pipeline` +
+    `encoders` + `latent_space`
   - F9: Adjusted line match threshold 4→3 for exact poem content
 
 ### Security Sprint (2026-07-13) — Dependabot + CodeQL + Secret Scanning
 
 #### Dependabot Alerts (44+ Fixed)
-- 🛡️ **§X #249 — GitHub Actions + pip security pins**: Fixed Dependabot alerts for GitHub Actions versions (aws-actions, actions/checkout, actions/setup-python, actions/cache, docker/*, appleboy/ssh-action) and pip security pins (requests, urllib3, certifi, idna, cryptography, pillow, jinja2). **14+ alerts fixed**.
-- 🛡️ **§X #250 — Next.js 14→16 upgrade**: Major upgrade fixing 5 High + 9 Moderate npm vulnerabilities. Next.js 14.2.21 → 16.2.10 + related deps (react, react-dom, @types/react, @types/node, next-sitemap, sharp). Updated docker-compose node 18→20. **16 alerts fixed**.
-- 🛡️ **§X #252 — Vite + serialize-javascript + fast-uri**: Vite 5.4.14→6.0.12 (DoS/fix), serialize-javascript 6.0.1→6.0.2 (XSS), fast-uri 2.3.0→3.0.6 (ReDoS). **10 alerts fixed**.
-- 🛡️ **§X #252b — qs integrity fix**: Corrected qs@6.14.0 integrity hash in pnpm-lock.yaml (was `sha512-6Zsl5L...` → `sha512-Y2bFWCeO2dE4N9N0/+GcfMzQesWM1QE5KFxrM0F8k4C92+EU+0d7Q8y3CbrLdY4TRicboK5Bdxe+eM/vH6I9Gg==`). **1 alert fixed**.
-- 🛡️ **§X #253 — postcss XSS + js-yaml DoS**: postcss@8.4.31→8.5.19 (XSS via unescaped `</style>`) in pnpm-lock.yaml; js-yaml@4.1.1→5.2.1 (quadratic DoS) in Cubism SDK Demo + Framework. **3 Moderate alerts fixed**.
+
+- 🛡️ **§X #249 — GitHub Actions + pip security pins**: Fixed Dependabot alerts
+  for GitHub Actions versions (aws-actions, actions/checkout,
+  actions/setup-python, actions/cache, docker/*, appleboy/ssh-action) and pip
+  security pins (requests, urllib3, certifi, idna, cryptography, pillow,
+  jinja2). **14+ alerts fixed**.
+- 🛡️ **§X #250 — Next.js 14→16 upgrade**: Major upgrade fixing 5 High + 9
+  Moderate npm vulnerabilities. Next.js 14.2.21 → 16.2.10 + related deps (react,
+  react-dom, @types/react, @types/node, next-sitemap, sharp). Updated
+  docker-compose node 18→20. **16 alerts fixed**.
+- 🛡️ **§X #252 — Vite + serialize-javascript + fast-uri**: Vite 5.4.14→6.0.12
+  (DoS/fix), serialize-javascript 6.0.1→6.0.2 (XSS), fast-uri 2.3.0→3.0.6
+  (ReDoS). **10 alerts fixed**.
+- 🛡️ **§X #252b — qs integrity fix**: Corrected qs@6.14.0 integrity hash in
+  pnpm-lock.yaml (was `sha512-6Zsl5L...` →
+  `sha512-Y2bFWCeO2dE4N9N0/+GcfMzQesWM1QE5KFxrM0F8k4C92+EU+0d7Q8y3CbrLdY4TRicboK5Bdxe+eM/vH6I9Gg==`).
+  **1 alert fixed**.
+- 🛡️ **§X #253 — postcss XSS + js-yaml DoS**: postcss@8.4.31→8.5.19 (XSS via
+  unescaped `</style>`) in pnpm-lock.yaml; js-yaml@4.1.1→5.2.1 (quadratic DoS)
+  in Cubism SDK Demo + Framework. **3 Moderate alerts fixed**.
 
 #### CodeQL Security (17 High + 1 Medium)
+
 - 🔒 **§X #254 — 17 CodeQL alerts fixed**:
-  - **6 HIGH Path traversal** (drive.py): Added `_validate_drive_folder()` early validation; `_safe_drive_dest()` raises HTTPException instead of silent fallback
-  - **4 HIGH Sensitive info logging** (bio `__main__` demos): `logger.info()` → `print()` for demo outputs
-  - **5 HIGH Insecure randomness** (JS): `Math.random()` → `crypto.getRandomValues()` in user-manager, backend-websocket, api-client
-  - **4 HIGH Bad HTML regexp / URL checks** (security-utils.js): Replaced ReDoS-vulnerable regex with string-based `includes()` + DOM entity decoding
-  - **1 MEDIUM Overly permissive regex** (dialogue_context.py): URL regex tightened to RFC 3986
+  - **6 HIGH Path traversal** (drive.py): Added `_validate_drive_folder()` early
+    validation; `_safe_drive_dest()` raises HTTPException instead of silent
+    fallback
+  - **4 HIGH Sensitive info logging** (bio `__main__` demos): `logger.info()` →
+    `print()` for demo outputs
+  - **5 HIGH Insecure randomness** (JS): `Math.random()` →
+    `crypto.getRandomValues()` in user-manager, backend-websocket, api-client
+  - **4 HIGH Bad HTML regexp / URL checks** (security-utils.js): Replaced
+    ReDoS-vulnerable regex with string-based `includes()` + DOM entity decoding
+  - **1 MEDIUM Overly permissive regex** (dialogue_context.py): URL regex
+    tightened to RFC 3986
 
 #### Secret Scanning (10 Leaked Google API Keys)
-- 🔑 **§X #255 — CodeQL re-scan + key redaction**: Fixed 7 remaining CodeQL alerts (whitelist path in drive.py, `stderr.write()` demos, string-based XSS keywords). Redacted 10 Google API keys in 3 docs: `CRITICAL_FIXES_REPORT.md`, `FINAL_FIX_COMPLETE_REPORT.md`, `COMPREHENSIVE_FIX_REPORT.md`.
-- 🔑 **§X #256 — AIza[...] format**: All leaked API keys replaced with `AIza[...]` placeholder across all docs files.
+
+- 🔑 **§X #255 — CodeQL re-scan + key redaction**: Fixed 7 remaining CodeQL
+  alerts (whitelist path in drive.py, `stderr.write()` demos, string-based XSS
+  keywords). Redacted 10 Google API keys in 3 docs: `CRITICAL_FIXES_REPORT.md`,
+  `FINAL_FIX_COMPLETE_REPORT.md`, `COMPREHENSIVE_FIX_REPORT.md`.
+- 🔑 **§X #256 — AIza[...] format**: All leaked API keys replaced with
+  `AIza[...]` placeholder across all docs files.
 
 #### Security Sprint Summary
-| Sprint | Category | Files Modified | Alerts Fixed |
-|:-------|:---------|:--------------:|:-----------:|
-| §X #249 | Dependabot — Actions + pip pins | 8 | 14+ |
-| §X #250 | Dependabot — Next.js 14→16 | 14 | 16 |
-| §X #252 | Dependabot — Vite + JS deps | 2 | 10 |
-| §X #252b | Dependabot — qs integrity | 1 | 1 |
-| §X #253 | Dependabot — postcss + js-yaml | 5 | 3 |
-| §X #254 | CodeQL — 17 alerts | 9 | 18 |
-| §X #255-#256 | Secret Scanning + re-scan fixes | 7 | 10+ |
-| **Total** | | **46 files** | **44+ Dependabot + 18 CodeQL + 10 Secrets** |
+
+| Sprint       | Category                        | Files Modified |                Alerts Fixed                 |
+| :----------- | :------------------------------ | :------------: | :-----------------------------------------: |
+| §X #249      | Dependabot — Actions + pip pins |       8        |                     14+                     |
+| §X #250      | Dependabot — Next.js 14→16      |       14       |                     16                      |
+| §X #252      | Dependabot — Vite + JS deps     |       2        |                     10                      |
+| §X #252b     | Dependabot — qs integrity       |       1        |                      1                      |
+| §X #253      | Dependabot — postcss + js-yaml  |       5        |                      3                      |
+| §X #254      | CodeQL — 17 alerts              |       9        |                     18                      |
+| §X #255-#256 | Secret Scanning + re-scan fixes |       7        |                     10+                     |
+| **Total**    |                                 |  **46 files**  | **44+ Dependabot + 18 CodeQL + 10 Secrets** |
 
 ### Production-Readiness Score
+
 - **7-perspective score**: 9.5/10
 - **17 files modified** across 5 commits (pre-security)
 - **46 files modified** across 8 security commits
 - **41 test failures resolved** → 0 remaining
 - **0 `print()` in production code** (all migrated to logging)
 - **Docker/nginx/config**: All verified production-ready
-- **Security**: 44+ Dependabot + 18 CodeQL + 10 Secret Scanning = **72+ security alerts fixed**
+- **Security**: 44+ Dependabot + 18 CodeQL + 10 Secret Scanning = **72+ security
+  alerts fixed**
 
-> ✅ **IMPORTANT NOTICE (2026-06-16) — PHASE 7 i18n COMPLETE**: Internationalization system fully implemented:
-> - **I18nManager**: `load_from_json()`, `load_from_locale_dir()`, `encode()`, `decode()` methods added
-> - **PromptManager**: Centralized LLM prompt template management with language-aware selection
-> - **Handler i18n**: 4 handlers completed (file_operation, task_manager, system_command, code_execution)
-> - **LLM Prompt i18n**: prompt_builder.py, unified_control_center.py, llm_decision_loop.py, project_coordinator.py updated
-> - **Locale files**: en-US.json, zh-CN.json, prompts.en-US.json, prompts.zh-CN.json created/updated
+> ✅ **IMPORTANT NOTICE (2026-06-16) — PHASE 7 i18n COMPLETE**:
+> Internationalization system fully implemented:
+>
+> - **I18nManager**: `load_from_json()`, `load_from_locale_dir()`, `encode()`,
+>   `decode()` methods added
+> - **PromptManager**: Centralized LLM prompt template management with
+>   language-aware selection
+> - **Handler i18n**: 4 handlers completed (file_operation, task_manager,
+>   system_command, code_execution)
+> - **LLM Prompt i18n**: prompt_builder.py, unified_control_center.py,
+>   llm_decision_loop.py, project_coordinator.py updated
+> - **Locale files**: en-US.json, zh-CN.json, prompts.en-US.json,
+>   prompts.zh-CN.json created/updated
 > - **Tests**: 45 tests passing (8 i18n + 13 prompt_manager + 24 E2E)
-> - See [EXECUTION_PLAN.md](docs/EXECUTION_PLAN.md#9-phase-7-i18n-internationalization) for full details
+> - See
+>   [EXECUTION_PLAN.md](docs/EXECUTION_PLAN.md#9-phase-7-i18n-internationalization)
+>   for full details
 
-> ✅ **IMPORTANT NOTICE (2026-06-13) — LIVE2D + PIXEL-ANGELA FIXES**: All Live2D model loading fixed, pixel-angela 6 bugs resolved:
-> - **Live2D**: Framework check removed, Epsilon_free model3.json created, default model switched
-> - **pixel-angela**: ear_twitch crash fixed, WebSocket handshake aligned, chat/bio-feedback handlers added
-> - **Backend**: tiered_loader.py rewritten for YAML configs, ED3N duplicate entry warning fixed
-> - See [PLAN_pixel_angela_and_live2d.md](PLAN_pixel_angela_and_live2d.md) for full details
+> ✅ **IMPORTANT NOTICE (2026-06-13) — LIVE2D + PIXEL-ANGELA FIXES**: All Live2D
+> model loading fixed, pixel-angela 6 bugs resolved:
+>
+> - **Live2D**: Framework check removed, Epsilon_free model3.json created,
+>   default model switched
+> - **pixel-angela**: ear_twitch crash fixed, WebSocket handshake aligned,
+>   chat/bio-feedback handlers added
+> - **Backend**: tiered_loader.py rewritten for YAML configs, ED3N duplicate
+>   entry warning fixed
+> - See [PLAN_pixel_angela_and_live2d.md](PLAN_pixel_angela_and_live2d.md) for
+>   full details
 
 ## [7.5.0-dev] - 2026-06-25 — Full Repair: Phases 0-5 Complete ✅
 
 ### Added
-- 🧹 **Phase 4 — JS Sharing**: Created `packages/shared-js/` with 33 shared JS files
+
+- 🧹 **Phase 4 — JS Sharing**: Created `packages/shared-js/` with 33 shared JS
+  files
   - Platform detection (`AngelaPlatform.isElectron/isWeb/getImageRoot`)
-  - Desktop + web now load from `../../packages/shared-js/js/` instead of local copies
+  - Desktop + web now load from `../../packages/shared-js/js/` instead of local
+    copies
   - 0 duplicate files remaining (desktop: 7 app-specific, web: 10 app-specific)
 - 🧹 **Phase 5.8 — SessionManager Tests**: 56 new tests covering full lifecycle
-  - SessionState enum (5 states), ConnectionSession, SessionStats, SessionManager
+  - SessionState enum (5 states), ConnectionSession, SessionStats,
+    SessionManager
   - Register/unregister/send/broadcast/buffering/heartbeat/singleton mode
-- 🧹 **Phase 5.9 — Skip Test Audit**: Fixed 5 collection errors, verified all skip reasons
-  - Renamed `scripts/test_drive_integration.py` → `test_drive_integration_script.py`
-  - All collection errors resolved: 4,742 tests / 0 errors / 41 intentional skips
+- 🧹 **Phase 5.9 — Skip Test Audit**: Fixed 5 collection errors, verified all
+  skip reasons
+  - Renamed `scripts/test_drive_integration.py` →
+    `test_drive_integration_script.py`
+  - All collection errors resolved: 4,742 tests / 0 errors / 41 intentional
+    skips
 
 ### Fixed
+
 - 🐛 **pyrightconfig.json**: pythonVersion fixed from "3.8" → "3.10"
 - 🐛 **main_api_server.py**: Removed dead imports
-- 🐛 **resource_awareness_service.py**: Fixed __main__ block
+- 🐛 **resource_awareness_service.py**: Fixed **main** block
 - 🐛 **angela_config.yaml**: Fixed test_mode/debug_mode defaults
-- 🐛 **Various stale docs**: AGENTS.md, ARCHITECTURE.md, INDEX.md, README.md updated
+- 🐛 **Various stale docs**: AGENTS.md, ARCHITECTURE.md, INDEX.md, README.md
+  updated
 
 ### Cleaned
-- 🗑️ **`apps/backend/src/search/`** — Removed 16-line stub `SearchEngine` (no production imports, followed IDEAL_ARCHITECTURE §2.2 direction)
-- 🗑️ **`tests/search/test_search_engine.py`** — Removed alongside stub (only verified import succeeded)
-- 🗑️ **`apps/backend/src/creation/`** — `creation_engine.py` (95行), 0 imports across project, dead code
-- 🗑️ **`apps/backend/src/optimization/`** — `performance_optimizer.py` (300行), 0 imports from src/ or active tests, dead code (tests reference deleted `ai.ops.`)
-- 🗑️ **`apps/backend/src/tools/`** — `file_system_tool.py` (57行), 0 imports across project, dead code
+
+- 🗑️ **`apps/backend/src/search/`** — Removed 16-line stub `SearchEngine` (no
+  production imports, followed IDEAL_ARCHITECTURE §2.2 direction)
+- 🗑️ **`tests/search/test_search_engine.py`** — Removed alongside stub (only
+  verified import succeeded)
+- 🗑️ **`apps/backend/src/creation/`** — `creation_engine.py` (95行), 0 imports
+  across project, dead code
+- 🗑️ **`apps/backend/src/optimization/`** — `performance_optimizer.py` (300行),
+  0 imports from src/ or active tests, dead code (tests reference deleted
+  `ai.ops.`)
+- 🗑️ **`apps/backend/src/tools/`** — `file_system_tool.py` (57行), 0 imports
+  across project, dead code
 
 ### Synced
+
 - 🔄 **AGENTS.md** — 檔案/行數修正 (620→612 files, ~127K→~96K lines)
 - 🔄 **COMPREHENSIVE_AUDIT_2026-06-25.md** — 檔案數 620→612
-- 🔄 **COMPREHENSIVE_REPAIR_ROADMAP.md** — `CI/CD 缺口`→`CI/CD 系統確認`（deploy.yml 實際存在）
-- 🔄 **IDEAL_ARCHITECTURE.md §16.2** — CI/CD 問題表全面更新（8 項實際狀態取代 4 項過時疑慮）
-- 🔄 **GARDEN_MODEL_PLAN.md** — 參數數 100M→22M-33M, 檔案行數/測試數按實際校正, hybrid_router.py 不存在註記
+- 🔄 **COMPREHENSIVE_REPAIR_ROADMAP.md** —
+  `CI/CD 缺口`→`CI/CD 系統確認`（deploy.yml 實際存在）
+- 🔄 **IDEAL_ARCHITECTURE.md §16.2** —
+  CI/CD 問題表全面更新（8 項實際狀態取代 4 項過時疑慮）
+- 🔄 **GARDEN_MODEL_PLAN.md** — 參數數 100M→22M-33M, 檔案行數/測試數按實際校正,
+  hybrid_router.py 不存在註記
 - 🔄 **PHASE_REVIEW5.md** — state_matrix.py 行數 1611→1244
-- 🔄 **COMPREHENSIVE_AUDIT_REPORT.md/v2** — 加上 OUTDATED 標記（被 V3/2026-06-25 取代）
-- 🔄 **DOCUMENTATION_TRUTH_MAP.md** 交叉引用確認：F-1 (ModelProvider) 已修復, F-3 (ED3N) 已修, F-4 (GARDEN) 已修
+- 🔄 **COMPREHENSIVE_AUDIT_REPORT.md/v2**
+  — 加上 OUTDATED 標記（被 V3/2026-06-25 取代）
+- 🔄 **DOCUMENTATION_TRUTH_MAP.md** 交叉引用確認：F-1 (ModelProvider) 已修復,
+  F-3 (ED3N) 已修, F-4 (GARDEN) 已修
 
 ### Repaired
-- 🔧 **Phase C — 7 Subsystem Audit**: All 61 files / ~14,744 lines reviewed — **only 1 real stub found, fixed**
+
+- 🔧 **Phase C — 7 Subsystem Audit**: All 61 files / ~14,744 lines reviewed —
+  **only 1 real stub found, fixed**
   - `ai/response/`, `ai/audio/`, `ai/crisis/`: 0 stubs, fully functional
   - `ai/lifecycle/`: 10 false-positive TODOs, 0 real stubs
   - `ai/agents/`, `ai/context/`: 0 stubs across 38 files
-  - `ai/reasoning/`: 1 `pass` stub in `AbductiveReasoner.__init__` → replaced with docstring
-  - **Key finding**: PROJECT_HONEST_AUDIT's "55% meaningless stacking" no longer applies
+  - `ai/reasoning/`: 1 `pass` stub in `AbductiveReasoner.__init__` → replaced
+    with docstring
+  - **Key finding**: PROJECT_HONEST_AUDIT's "55% meaningless stacking" no longer
+    applies
 - 🔧 **Phase D — Code Review**: Cleared cognitive blind spots
-  - `apps/gemini-os-bridge/` (15 files, ~1,300 lines): 0 TODOs, clean OS automation
+  - `apps/gemini-os-bridge/` (15 files, ~1,300 lines): 0 TODOs, clean OS
+    automation
   - `apps/pixel-angela/` (23 files, ~850 lines): 0 TODOs, tested PyQt6 engine
-- 🔧 **Phase E — 41 Skipped Tests Audit**: All skip markers classified into 4 categories
-  - 🟢 Environment-dependent: 7 skips (torch, sklearn, import conditions) — reasonable
+- 🔧 **Phase E — 41 Skipped Tests Audit**: All skip markers classified into 4
+  categories
+  - 🟢 Environment-dependent: 7 skips (torch, sklearn, import conditions) —
+    reasonable
   - 🟢 E2E live server: 2 skips (Atlassian, training workflow) — reasonable
-  - 🟡 Fixed: 1 skip removed (`test_update_state_over_time` — API superseded by `apply_resource_decay`)
-  - 🟡 Pending: 7 skips remaining (6 pet_manager logic + 1 mock issue) — needs developer
-- 🔧 **Phase F — Document Sync**: ARCHITECTURE.md, OMISSIONS_CHECKLIST.md, INDEX.md, roadmap updated
-  - ARCHITECTURE.md: Removed deleted subsystems (mobile-app, wiring.py, tactile_service, HSP)
-  - ARCHITECTURE.md: Added ED3N, GARDEN, GVV, ThreeLayerVisual, shared-js to layers
-  - ARCHITECTURE.md: Fixed duplicated section numbers (7→8/9/10/11/12), fixed Module Dependency Graph
-  - OMISSIONS_CHECKLIST.md v1.3.0: Phase C+D+E findings, all high-priority items resolved
+  - 🟡 Fixed: 1 skip removed (`test_update_state_over_time` — API superseded by
+    `apply_resource_decay`)
+  - 🟡 Pending: 7 skips remaining (6 pet_manager logic + 1 mock issue) — needs
+    developer
+- 🔧 **Phase F — Document Sync**: ARCHITECTURE.md, OMISSIONS_CHECKLIST.md,
+  INDEX.md, roadmap updated
+  - ARCHITECTURE.md: Removed deleted subsystems (mobile-app, wiring.py,
+    tactile_service, HSP)
+  - ARCHITECTURE.md: Added ED3N, GARDEN, GVV, ThreeLayerVisual, shared-js to
+    layers
+  - ARCHITECTURE.md: Fixed duplicated section numbers (7→8/9/10/11/12), fixed
+    Module Dependency Graph
+  - OMISSIONS_CHECKLIST.md v1.3.0: Phase C+D+E findings, all high-priority items
+    resolved
   - COMPREHENSIVE_REPAIR_ROADMAP.md v1.2.0: Phase C+D+E progress recorded
 
 ### GVV + ThreeLayerVisual + Image Generation API
 
 ### Added
-- 🎨 **GVV Pipeline**: Geometric Vocabulary Vector architecture added to primitives system
+
+- 🎨 **GVV Pipeline**: Geometric Vocabulary Vector architecture added to
+  primitives system
   - Concept Mapper: CLIP → shared concept space (PCA 87% accuracy)
   - Geometric Vocabulary: Primitive pattern storage with similarity search
   - Instance Optimizer: Text-driven primitive optimization
@@ -199,7 +338,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 🎨 **ThreeLayerVisual Architecture**: PCA encoder + nonlinear decoder
   - 128-dim latent space for visual representation
   - Concept space mapping from CLIP embeddings
-- 🎨 **Image Generation API Routes**: New endpoints in `image_generation_routes.py`
+- 🎨 **Image Generation API Routes**: New endpoints in
+  `image_generation_routes.py`
   - `POST /api/v1/generate-image` — Text-to-image
   - `POST /api/v1/recognize-image` — Image recognition
   - `POST /api/v1/reconstruct-image` — Image reconstruction
@@ -208,22 +348,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 🧪 **New training scripts**: `train_gvv.py`, `train_learned_repr.py` (v1-v5)
 
 ### Tests
-- 🧪 **GVV pipeline tests**: ~24 new tests (concept_mapper, geometric_vocabulary, instance_optimizer)
+
+- 🧪 **GVV pipeline tests**: ~24 new tests (concept_mapper,
+  geometric_vocabulary, instance_optimizer)
 - 🧪 **Primitives total**: ~62 tests (38 Phase 1 + ~24 GVV)
 
 ## [7.5.0-dev] - 2026-06-28 — Reality Audit: Test Count Corrected + Doc Sync
 
 ### Reality Check
-- 🔍 **Full test count verified**: 4,840 (docs claimed 4,826 — +14 accumulated tests)
-- 🔍 **Session commit count verified**: 136 (AGENTS.md claimed 64 — 72 commits low)
+
+- 🔍 **Full test count verified**: 4,840 (docs claimed 4,826 — +14 accumulated
+  tests)
+- 🔍 **Session commit count verified**: 136 (AGENTS.md claimed 64 — 72 commits
+  low)
 - 🔍 Compiled accuracy scores for all major doc claims (~88% overall)
-- 🔍 Identified 3 remaining truth gaps: AGENTS.md count, README.md counts, empty coverage.json
+- 🔍 Identified 3 remaining truth gaps: AGENTS.md count, README.md counts, empty
+  coverage.json
 
 ### Fixed
-- 🐛 **test_phase6_e2e.py**: Fixed 2 stale assertions (handler=None when gate rejects, was expecting "file_ops" impossible after reject) — 24/24 pass
+
+- 🐛 **test_phase6_e2e.py**: Fixed 2 stale assertions (handler=None when gate
+  rejects, was expecting "file_ops" impossible after reject) — 24/24 pass
 
 ### Synced
-- 🔄 **MASTER_TASK_MAP.md**: Baseline 4,826→4,840. Added §VI-E (Reality Audit) and §VI-F (Session Summary).
+
+- 🔄 **MASTER_TASK_MAP.md**: Baseline 4,826→4,840. Added §VI-E (Reality Audit)
+  and §VI-F (Session Summary).
 - 🔄 **AGENTS.md**: Session count 64→136 commits.
 - 🔄 **README.md**: Test counts 4,826→4,840 in 6+ references.
 - 🔄 **IMPROVEMENT_ROADMAP.md**: Test counts 4,826→4,840.
@@ -231,195 +381,398 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [7.5.0-dev] - 2026-06-28 — Final Doc Sync: L5/R4/R5/I3/O4/L3/L4 + Session Summary
 
 ### Synced
-- 🔄 **AGENTS.md**: Session summary (22→35 commits), §X #6 25/31 refactored. Test count: 4,774→4,785, 0 collection errors.
-- 🔄 **MASTER_TASK_MAP.md**: §X count 16→18 DONE. All L3/L4/R4/R5/I3/L5/O4 marked DONE.
-- 🔄 **IMPROVEMENT_ROADMAP.md**: L5 DONE (+12 tests, 79 total), I3 DONE, R5 DONE, R4 DONE.
+
+- 🔄 **AGENTS.md**: Session summary (22→35 commits), §X #6 25/31 refactored.
+  Test count: 4,774→4,785, 0 collection errors.
+- 🔄 **MASTER_TASK_MAP.md**: §X count 16→18 DONE. All L3/L4/R4/R5/I3/L5/O4
+  marked DONE.
+- 🔄 **IMPROVEMENT_ROADMAP.md**: L5 DONE (+12 tests, 79 total), I3 DONE, R5
+  DONE, R4 DONE.
 - 🔄 **INDEX.md**: §X counts synced to 18 DONE.
 
 ## [7.5.0-dev] - 2026-06-28 — L5: Formula→Emotion→Response Chain Quantified
 
 ### Added
-- 🧪 **12 new behavioral impact tests** (`test_formula_behavioral_impact.py`): Quantified how formula changes affect crisis decisions, prompt formulation, response sentiment, and emotional blending across all 5 formulas (active_cognition, life_intensity, hsm_abs, hsm_rel, non_paradox_existence). Tests verify chain integrity: Formula score change → emotional blend shift → response classification change.
+
+- 🧪 **12 new behavioral impact tests** (`test_formula_behavioral_impact.py`):
+  Quantified how formula changes affect crisis decisions, prompt formulation,
+  response sentiment, and emotional blending across all 5 formulas
+  (active_cognition, life_intensity, hsm_abs, hsm_rel, non_paradox_existence).
+  Tests verify chain integrity: Formula score change → emotional blend shift →
+  response classification change.
 - 🧪 **Total formula system tests**: 67→79, all pass.
 
 ## [7.5.0-dev] - 2026-06-28 — I3: GARDEN SNN Sparse Forward Propagation
 
 ### Changed
-- 🔄 **SNN forward propagation**: Replaced dense `a @ W` with activation-driven propagation — only active neurons participate in the matrix-vector product. Inactive neurons are skipped using boolean activation mask. Reduces FLOPs proportionally to sparsity.
-- 🔄 **get_stats()**: Now tracks `sparsity_ratio` (fraction of inactive neurons per layer) and `avg_firing_rate` for performance monitoring.
+
+- 🔄 **SNN forward propagation**: Replaced dense `a @ W` with activation-driven
+  propagation — only active neurons participate in the matrix-vector product.
+  Inactive neurons are skipped using boolean activation mask. Reduces FLOPs
+  proportionally to sparsity.
+- 🔄 **get_stats()**: Now tracks `sparsity_ratio` (fraction of inactive neurons
+  per layer) and `avg_firing_rate` for performance monitoring.
 
 ## [7.5.0-dev] - 2026-06-28 — R5: AdversarialGenerationSystem → Production
 
 ### Added
-- 🔧 **Wired into Level5ASISystem.process_request()**: `_run_adversarial_evaluation()` runs after every request, scoring input against 10 adversarial patterns (injection, jailbreak, role-play, etc.).
-- 🔧 **run_comprehensive_test()** now includes adversarial robustness self-test as part of system health check.
-- 🔧 **evaluate_robustness()** improved: multilingual keyword matching (Chinese + English), language ratio detection, `get_average_robustness()` aggregate score.
+
+- 🔧 **Wired into Level5ASISystem.process_request()**:
+  `_run_adversarial_evaluation()` runs after every request, scoring input
+  against 10 adversarial patterns (injection, jailbreak, role-play, etc.).
+- 🔧 **run_comprehensive_test()** now includes adversarial robustness self-test
+  as part of system health check.
+- 🔧 **evaluate_robustness()** improved: multilingual keyword matching
+  (Chinese + English), language ratio detection, `get_average_robustness()`
+  aggregate score.
 
 ## [7.5.0-dev] - 2026-06-28 — R4: TaskGenerator → PrecomputeService
 
 ### Added
-- 🔧 **`_schedule_precompute_tasks()`**: Wired into `AngelaLLMService` — calls `analyze_patterns()` + `generate_tasks()` after every successful response, enqueues `PrecomputeTask` items into `PrecomputeService`.
-- 🔧 **History caps**: `_history` capped at `MAX_HISTORY_PER_USER` (100). Per-user isolation via `_user_histories` dict (keyed by `session_id`). `predict_next_user_tasks()` generates topic-transition chains per user.
+
+- 🔧 **`_schedule_precompute_tasks()`**: Wired into `AngelaLLMService` — calls
+  `analyze_patterns()` + `generate_tasks()` after every successful response,
+  enqueues `PrecomputeTask` items into `PrecomputeService`.
+- 🔧 **History caps**: `_history` capped at `MAX_HISTORY_PER_USER` (100).
+  Per-user isolation via `_user_histories` dict (keyed by `session_id`).
+  `predict_next_user_tasks()` generates topic-transition chains per user.
 
 ## [7.5.0-dev] - 2026-06-28 — O4: Archive Stale Docs
 
 ### Changed
-- 🗑️ **7 stale docs archived** to `docs/09-archive/`: ACTION_PLAN.md, DOCUMENTATION_TRUTH_MAP.md, RECOMMENDATIONS.md, TODO_ANALYSIS.md, UNIFIED_AI_IMPROVEMENT_PLAN.md, port_routing_plan.md, CONDITIONAL_IMAGE_GENERATION_IMPLEMENTATION_SUMMARY.md.
+
+- 🗑️ **7 stale docs archived** to `docs/09-archive/`: ACTION_PLAN.md,
+  DOCUMENTATION_TRUTH_MAP.md, RECOMMENDATIONS.md, TODO_ANALYSIS.md,
+  UNIFIED_AI_IMPROVEMENT_PLAN.md, port_routing_plan.md,
+  CONDITIONAL_IMAGE_GENERATION_IMPLEMENTATION_SUMMARY.md.
 - 🔄 **IMPROVEMENT_ROADMAP.md**: Updated archive counts.
 
 ## [7.5.0-dev] - 2026-06-28 — L3+L4: CML Adaptive Thresholds + NeuroAutoSelector Closed-Loop
 
 ### Changed
-- 🔄 **L3 — CML quality-adaptive thresholds**: `ContinuousMultimodalLearning` now uses quality trend to dynamically adjust training threshold. Lower recent quality → threshold decreases (more aggressive training); higher quality → threshold increases (conservation mode). Smoothed via EWMA.
-- 🔄 **L4 — NeuroAutoSelector ↔ MetaController**: `NeuroAutoSelector.__init__` accepts `meta_controller` parameter; `record_result()` forwards `hw_score` + `success` to `MetaController.record_confidence()`. `router.py` creates shared MetaController before both auto and standard branches. Enables confidence-calibrated response selection.
+
+- 🔄 **L3 — CML quality-adaptive thresholds**: `ContinuousMultimodalLearning`
+  now uses quality trend to dynamically adjust training threshold. Lower recent
+  quality → threshold decreases (more aggressive training); higher quality →
+  threshold increases (conservation mode). Smoothed via EWMA.
+- 🔄 **L4 — NeuroAutoSelector ↔ MetaController**: `NeuroAutoSelector.__init__`
+  accepts `meta_controller` parameter; `record_result()` forwards `hw_score` +
+  `success` to `MetaController.record_confidence()`. `router.py` creates shared
+  MetaController before both auto and standard branches. Enables
+  confidence-calibrated response selection.
 
 ## [7.5.0-dev] - 2026-06-28 — L1: Wire JointTrainer into runtime
 
 ### Added
-- 🧹 **L1: ED3NTrainer → JointTrainer runtime wiring**: Changed `ED3NEngine.train()`, `__main__.py cmd_train`, and `cmd_serve` (CLP) to use `JointTrainer` (composes ED3NTrainer + SequenceTrainer). All 3 trainers now active during runtime/continuous learning. 15/15 trainer tests pass.
+
+- 🧹 **L1: ED3NTrainer → JointTrainer runtime wiring**: Changed
+  `ED3NEngine.train()`, `__main__.py cmd_train`, and `cmd_serve` (CLP) to use
+  `JointTrainer` (composes ED3NTrainer + SequenceTrainer). All 3 trainers now
+  active during runtime/continuous learning. 15/15 trainer tests pass.
 
 ### Refactored
-- 🔧 **31 functions >100L**: 25/31 refactored, 0 algorithmic remain (4 pure-data skipped). Key refactors: ED3NEngine._process_unlocked (203→54L), QueryClassifier.classify (106→40L), DictionaryClassifier.classify (106→25L), lifespan (140→16L), HAMQueryEngine.retrieve_relevant_memories (101→32L), DifferentiableRenderer.render (101→22L), AgentManager._start_router (132→22L), Decomposer.decompose_spatial (102→20L), SelfGeneration._simulate_generation (103→13L), HSPConnector.publish_message (136→42L), AngelaLLMService.generate_response (144→64L), _try_template_match (147→4 helpers), initialize (135→5 helpers), ThreeLayerVisual.fit (104→5 helpers), physiological_tactile demo (119→5 helpers), emotional_blending demo (102→5 helpers), save_checkpoint (102→5 helpers).
+
+- 🔧 **31 functions >100L**: 25/31 refactored, 0 algorithmic remain (4 pure-data
+  skipped). Key refactors: ED3NEngine._process_unlocked (203→54L),
+  QueryClassifier.classify (106→40L), DictionaryClassifier.classify (106→25L),
+  lifespan (140→16L), HAMQueryEngine.retrieve_relevant_memories (101→32L),
+  DifferentiableRenderer.render (101→22L), AgentManager._start_router (132→22L),
+  Decomposer.decompose_spatial (102→20L), SelfGeneration._simulate_generation
+  (103→13L), HSPConnector.publish_message (136→42L),
+  AngelaLLMService.generate_response (144→64L), _try_template_match (147→4
+  helpers), initialize (135→5 helpers), ThreeLayerVisual.fit (104→5 helpers),
+  physiological_tactile demo (119→5 helpers), emotional_blending demo (102→5
+  helpers), save_checkpoint (102→5 helpers).
 
 ### Fixed
-- 🐛 **Hormone config**: Added `biological` formula config with real hormone parameters. Fixes `test_hormone_scientific_decay`.
-- 🐛 **`_call_llm_backend`**: `active_backend_type` → `getattr` guard. Fixes `test_refinement_pipeline`.
+
+- 🐛 **Hormone config**: Added `biological` formula config with real hormone
+  parameters. Fixes `test_hormone_scientific_decay`.
+- 🐛 **`_call_llm_backend`**: `active_backend_type` → `getattr` guard. Fixes
+  `test_refinement_pipeline`.
 - 🐛 **10 stale test expectations** in test_query_classifier_v2.py (72/72 pass).
 
 ### Benchmark
-- 📊 **`scripts/benchmark_ed3n_garden.py`**: 15 questions cross-domain. Math accuracy 100% (5/5).
-- 📊 **MathRippleEngine PEMDAS fix**: `* / ^` before `+ -`. `**` tokenization fix.
+
+- 📊 **`scripts/benchmark_ed3n_garden.py`**: 15 questions cross-domain. Math
+  accuracy 100% (5/5).
+- 📊 **MathRippleEngine PEMDAS fix**: `* / ^` before `+ -`. `**` tokenization
+  fix.
 
 ### Synced
+
 - 🔄 **IMPROVEMENT_ROADMAP.md §2.6 L1**: PARTIALLY DONE → DONE.
-- 🔄 **MASTER_TASK_MAP.md**: Test count 4774→4785, session summary (§VI-A), §X #6 progress 25/31.
+- 🔄 **MASTER_TASK_MAP.md**: Test count 4774→4785, session summary (§VI-A), §X
+  #6 progress 25/31.
 - 🔄 **AGENTS.md**: Updated with session progress.
 
 ### Refactored
-- 🔧 **AgentManager._start_router** (132L→22L): Extracted embedded FastAPI router script to module-level `_ROUTER_SCRIPT` constant. Health check retry loop extracted to `_wait_router_health()` helper. All 101 agent tests pass.
+
+- 🔧 **AgentManager.\_start_router** (132L→22L): Extracted embedded FastAPI
+  router script to module-level `_ROUTER_SCRIPT` constant. Health check retry
+  loop extracted to `_wait_router_health()` helper. All 101 agent tests pass.
 
 ### Synced
-- 🔄 **MASTER_TASK_MAP.md §X #6**: Progress 14/31→15/31, remaining 17→16 functions >100L.
+
+- 🔄 **MASTER_TASK_MAP.md §X #6**: Progress 14/31→15/31, remaining 17→16
+  functions >100L.
 
 ## [7.5.0-dev] - 2026-06-28 — DifferentiableRenderer Refactoring
 
 ### Refactored
-- 🔧 **DifferentiableRenderer.render** (101L→22L): Extracted 6 helpers (`_layer`, `_render_planes`, `_render_circles`, `_render_arcs`, `_render_lines`, `_render_points`). Nested `layer()` closure replaced with `@staticmethod _layer` that mutates canvas/weight in-place. Each primitive type now rendered by dedicated method. All 57 primitive tests pass.
+
+- 🔧 **DifferentiableRenderer.render** (101L→22L): Extracted 6 helpers
+  (`_layer`, `_render_planes`, `_render_circles`, `_render_arcs`,
+  `_render_lines`, `_render_points`). Nested `layer()` closure replaced with
+  `@staticmethod _layer` that mutates canvas/weight in-place. Each primitive
+  type now rendered by dedicated method. All 57 primitive tests pass.
 
 ### Synced
-- 🔄 **MASTER_TASK_MAP.md §X #6**: Progress 13/31→14/31, remaining 18→17 functions >100L.
+
+- 🔄 **MASTER_TASK_MAP.md §X #6**: Progress 13/31→14/31, remaining 18→17
+  functions >100L.
 
 ## [7.5.0-dev] - 2026-06-28 — HAM QueryEngine Refactoring
 
 ### Refactored
-- 🔧 **HAMQueryEngine.retrieve_relevant_memories** (101L→32L): Extracted 2 helpers (`_process_vector_result`, `_decode_memory_content`). Consolidated duplicate primary+fallback decode logic into single 2-attempt loop with base64 fallback. Eliminated 40L of duplicated try/except blocks. All 13/15 HAM tests pass (2 pre-existing ImportanceScorer failures).
+
+- 🔧 **HAMQueryEngine.retrieve_relevant_memories** (101L→32L): Extracted 2
+  helpers (`_process_vector_result`, `_decode_memory_content`). Consolidated
+  duplicate primary+fallback decode logic into single 2-attempt loop with base64
+  fallback. Eliminated 40L of duplicated try/except blocks. All 13/15 HAM tests
+  pass (2 pre-existing ImportanceScorer failures).
 
 ### Synced
-- 🔄 **MASTER_TASK_MAP.md §X #6**: Progress 12/31→13/31, remaining 19→18 functions >100L.
+
+- 🔄 **MASTER_TASK_MAP.md §X #6**: Progress 12/31→13/31, remaining 19→18
+  functions >100L.
 
 ## [7.5.0-dev] - 2026-06-28 — Lifespan Refactoring + Test Fixes + Doc Sync
 
 ### Refactored
-- 🔧 **lifespan** (140L→16L): Extracted 10 helpers (`_init_plugins`, `_try_start_bio`, `_try_start_agents`, `_try_init_crisis`, `_try_init_causal_reasoning`, `_try_init_session_manager`, `_try_start_broadcast`, `_try_warm_ed3n`, `_shutdown_services`). Main function now clean orchestration + yield. All 42 importing tests pass.
+
+- 🔧 **lifespan** (140L→16L): Extracted 10 helpers (`_init_plugins`,
+  `_try_start_bio`, `_try_start_agents`, `_try_init_crisis`,
+  `_try_init_causal_reasoning`, `_try_init_session_manager`,
+  `_try_start_broadcast`, `_try_warm_ed3n`, `_shutdown_services`). Main function
+  now clean orchestration + yield. All 42 importing tests pass.
 
 ### Fixed
-- 🐛 **test_query_classifier_v2.py**: 10 stale test expectations fixed — dictionary_classifier now returns matches for inputs where tests previously expected regex/reflex/question-mark paths. Updated assertions to accept `dictionary_match` reason and dictionary-derived action_types. All 72 classifier tests now pass (was 62).
+
+- 🐛 **test_query_classifier_v2.py**: 10 stale test expectations fixed —
+  dictionary_classifier now returns matches for inputs where tests previously
+  expected regex/reflex/question-mark paths. Updated assertions to accept
+  `dictionary_match` reason and dictionary-derived action_types. All 72
+  classifier tests now pass (was 62).
 
 ### Synced
-- 🔄 **IMPROVEMENT_ROADMAP.md**: F1 (`ed3n_engine.py` long functions), F2 (`model_bus.py` long functions) → **DONE**. R4 (TaskGenerator), R5 (AdversarialGenerationSystem) → **PARTIALLY DONE**. Defects table: TaskGenerator/Adversarial entries updated to LOW severity with current line counts.
-- 🔄 **MASTER_TASK_MAP.md §X #6**: Progress 11/31→12/31, remaining 20→19 functions >100L.
+
+- 🔄 **IMPROVEMENT_ROADMAP.md**: F1 (`ed3n_engine.py` long functions), F2
+  (`model_bus.py` long functions) → **DONE**. R4 (TaskGenerator), R5
+  (AdversarialGenerationSystem) → **PARTIALLY DONE**. Defects table:
+  TaskGenerator/Adversarial entries updated to LOW severity with current line
+  counts.
+- 🔄 **MASTER_TASK_MAP.md §X #6**: Progress 11/31→12/31, remaining 20→19
+  functions >100L.
 
 ## [7.5.0-dev] - 2026-06-28 — QueryClassifier + DictionaryClassifier Refactoring
 
 ### Refactored
-- 🔧 **QueryClassifier.classify** (106L→40L): Extracted 5 helper methods (`_classify_by_length`, `_classify_by_dictionary`, `_classify_by_regex`, `_classify_reflex_override`, `_classify_question_override`). Main classify now reads as orchestration of 8 steps. Fixed `QueryType(dict_type)` lookup (was checking `__members__` names instead of values). 72 tests pass (was 62 after test fix).
-- 🔧 **DictionaryClassifier.classify** (106L→25L): Extracted 6 helper methods (`_check_cache`, `_check_negation`, `_match_keywords`, `_resolve_entry`, `_map_file_action`, `_map_execute_action`). `_resolve_entry` consolidates entry lookup + context resolution; action maps moved to static methods.
+
+- 🔧 **QueryClassifier.classify** (106L→40L): Extracted 5 helper methods
+  (`_classify_by_length`, `_classify_by_dictionary`, `_classify_by_regex`,
+  `_classify_reflex_override`, `_classify_question_override`). Main classify now
+  reads as orchestration of 8 steps. Fixed `QueryType(dict_type)` lookup (was
+  checking `__members__` names instead of values). 72 tests pass (was 62 after
+  test fix).
+- 🔧 **DictionaryClassifier.classify** (106L→25L): Extracted 6 helper methods
+  (`_check_cache`, `_check_negation`, `_match_keywords`, `_resolve_entry`,
+  `_map_file_action`, `_map_execute_action`). `_resolve_entry` consolidates
+  entry lookup + context resolution; action maps moved to static methods.
 
 ### Synced
-- 🔄 **MASTER_TASK_MAP.md §X #6**: Progress 10/31→11/31, remaining 21→20 functions >100L.
+
+- 🔄 **MASTER_TASK_MAP.md §X #6**: Progress 10/31→11/31, remaining 21→20
+  functions >100L.
 
 ## [7.5.0-dev] - 2026-06-28 — TaskGenerator + AdversarialGenerationSystem Improvements
 
 ### Improved
-- 🧠 **TaskGenerator** (16→46L): `predict_next_query()` now returns most likely topic from transition chains. `generate_tasks()` creates prioritized tasks based on detected patterns (precompute + prefetch_knowledge). `analyze_patterns()` tracks topic transitions. 8 new tests (9 total, all pass).
-- 🧠 **AdversarialGenerationSystem** (18→65L): Added 10 adversarial pattern library (trolley problem, prompt injection, alignment skepticism, etc.). `evaluate_robustness()` now checks refusal keywords + short-response evasion. 7 new tests (8 total, all pass).
+
+- 🧠 **TaskGenerator** (16→46L): `predict_next_query()` now returns most likely
+  topic from transition chains. `generate_tasks()` creates prioritized tasks
+  based on detected patterns (precompute + prefetch_knowledge).
+  `analyze_patterns()` tracks topic transitions. 8 new tests (9 total, all
+  pass).
+- 🧠 **AdversarialGenerationSystem** (18→65L): Added 10 adversarial pattern
+  library (trolley problem, prompt injection, alignment skepticism, etc.).
+  `evaluate_robustness()` now checks refusal keywords + short-response evasion.
+  7 new tests (8 total, all pass).
 
 ### Synced
-- 🔄 **MASTER_TASK_MAP.md §X #28**: Status from "placeholder stubs" to "PARTIALLY DONE — core logic implemented, 18 tests pass".
+
+- 🔄 **MASTER_TASK_MAP.md §X #28**: Status from "placeholder stubs" to
+  "PARTIALLY DONE — core logic implemented, 18 tests pass".
 
 ## [7.5.0-dev] - 2026-06-28 — Refactor ED3NEngine._process_unlocked + Doc Sync
 
 ### Refactored
-- 🔧 **ED3NEngine._process_unlocked** (203L→54L): Extracted 9 stage helper methods (`_stage_reflex`, `_stage_math`, `_stage_encode`, `_stage_enrich`, `_stage_shallow_decode`, `_stage_network_forward`, `_stage_anchored_decode`, `_stage_validate`, `_stage_cycling`) plus `_telemetry_return` for DRY telemetry recording. Main function now reads as a clean 9-stage pipeline. All 3 ED3N engine tests pass. **9/28 long functions refactored.**
+
+- 🔧 **ED3NEngine.\_process_unlocked** (203L→54L): Extracted 9 stage helper
+  methods (`_stage_reflex`, `_stage_math`, `_stage_encode`, `_stage_enrich`,
+  `_stage_shallow_decode`, `_stage_network_forward`, `_stage_anchored_decode`,
+  `_stage_validate`, `_stage_cycling`) plus `_telemetry_return` for DRY
+  telemetry recording. Main function now reads as a clean 9-stage pipeline. All
+  3 ED3N engine tests pass. **9/28 long functions refactored.**
 
 ### Synced
-- 🔄 **MASTER_TASK_MAP.md §X #6**: Progress 8/28→9/28, remaining functions 23→22.
+
+- 🔄 **MASTER_TASK_MAP.md §X #6**: Progress 8/28→9/28, remaining functions
+  23→22.
 
 ## [7.5.0-dev] - 2026-06-28 — Benchmark + MathRippleEngine PEMDAS Fix
 
 ### Added
-- 📊 **scripts/benchmark_ed3n_garden.py**: Cross-domain benchmark harness for ED3N/GARDEN (15 questions across math/knowledge/reasoning). Supports `--engine ed3n|garden|both`, `--verbose`, `--output` JSON. Baseline: math 100% (5/5), knowledge 0%, reasoning 0% for both engines. Enables tracking of improvement over time.
+
+- 📊 **scripts/benchmark_ed3n_garden.py**: Cross-domain benchmark harness for
+  ED3N/GARDEN (15 questions across math/knowledge/reasoning). Supports
+  `--engine ed3n|garden|both`, `--verbose`, `--output` JSON. Baseline: math 100%
+  (5/5), knowledge 0%, reasoning 0% for both engines. Enables tracking of
+  improvement over time.
 
 ### Fixed
-- 🐛 **MathRippleEngine._process_operator_chain**: PEMDAS operator precedence. Was evaluating `2 + 3 * 4 = 20` (left-to-right), now correctly computes `14` (multiplication before addition). Uses two-pass collapse: high-precedence (`* / ^`) before low-precedence (`+ -`). All 56 MRE tests pass.
-- 🐛 **MathRippleEngine._tokenize**: `^` replacement with `**` previously produced two separate `*` tokens (e.g., `["2", "*", "*", "10"]`), breaking power expressions. Now handles `**` as a single token.
+
+- 🐛 **MathRippleEngine.\_process_operator_chain**: PEMDAS operator precedence.
+  Was evaluating `2 + 3 * 4 = 20` (left-to-right), now correctly computes `14`
+  (multiplication before addition). Uses two-pass collapse: high-precedence
+  (`* / ^`) before low-precedence (`+ -`). All 56 MRE tests pass.
+- 🐛 **MathRippleEngine.\_tokenize**: `^` replacement with `**` previously
+  produced two separate `*` tokens (e.g., `["2", "*", "*", "10"]`), breaking
+  power expressions. Now handles `**` as a single token.
 
 ### Synced
-- 🔄 **MASTER_TASK_MAP.md §X #17**: Benchmark harness now exists → status from "no unified benchmark harness" to "harness created; math at 100%". PEMDAS fix documented in new §X #31.
-- 🔄 **IMPROVEMENT_ROADMAP.md §1.1**: ED3N math accuracy from 77.7% → 100% (benchmark 5/5). Added benchmark harness row.
-- 🔄 **FRAMEWORK_OVERVIEW.md**: Math accuracy 77.7% → 100% (ED3N) / 100% (GARDEN). Benchmark script noted.
-- 🔄 **PANORAMIC_MIXED_TRAINING_PLAN.md**: ED3N accuracy 77.7% → 100% post-PEMDAS fix.
+
+- 🔄 **MASTER_TASK_MAP.md §X #17**: Benchmark harness now exists → status from
+  "no unified benchmark harness" to "harness created; math at 100%". PEMDAS fix
+  documented in new §X #31.
+- 🔄 **IMPROVEMENT_ROADMAP.md §1.1**: ED3N math accuracy from 77.7% → 100%
+  (benchmark 5/5). Added benchmark harness row.
+- 🔄 **FRAMEWORK_OVERVIEW.md**: Math accuracy 77.7% → 100% (ED3N) / 100%
+  (GARDEN). Benchmark script noted.
+- 🔄 **PANORAMIC_MIXED_TRAINING_PLAN.md**: ED3N accuracy 77.7% → 100%
+  post-PEMDAS fix.
 - 🔄 **ED3N_TRAINING_GUIDE.md**: Network accuracy 77.7% → 100% (benchmark).
 
 ## [7.5.0-dev] - 2026-06-26 — Long Function Refactoring + Doc Sync
 
 ### Refactored
-- 🔧 **QueryClassifier.__init__** (187L→7L): Extracted 180 lines of pattern data into `_build_patterns()`/`_build_reflex_words()` static methods. 16 unit tests pass.
-- 🔧 **HAMDataProcessor._abstract_text** (133L→72L): Extracted `_extract_gist`, `_extract_keywords`, `_extract_entities`, `_extract_key_sentences` static methods.
-- 🔧 **HAMQueryEngine._fallback_keyword_search** (107L→65L): Extracted `_try_decrypt`/`_try_b64_fallback` eliminating duplicated logic. 8 HAM tests pass.
-- 🔧 **prompt_builder.construct_angela_prompt** (F48→D27): Extracted 9 `_append_*` helper functions, reducing main function from 232L to ~142L. 10 prompt_builder tests pass.
-- 🔧 **model_bus.ModelBus.route** (E39→B8): Replaced 8-branch if/elif chain with dispatch dict + 6 strategy handler methods. Cyclomatic complexity reduced from 39 to 8. All 34 model bus tests pass.
-- 🔧 **vision_service.VisionService._analyze_colors** (E36→B7): Extracted `_extract_dominant_colors` + `_name_color` helper methods. 17 vision service tests pass.
-- 🔧 **repl._handle_drive_command** (E32→B7): Replaced 8-branch if-chain with dispatch dict + 8 handler functions. Extracted `_resolve_drive_op`, `_drive_status`, `_drive_auth`, `_drive_logout`, `_drive_list`, `_drive_search`, `_drive_sync`, `_drive_analyze` top-level functions. Config-based alias resolution preserved.
-- 🔧 **router.AngelaLLMService._init_backends** (E31→B6): Replaced 7-branch if/elif chain with `_resolve_backend_provider` + dispatch dict `_BACKEND_FACTORIES` + 7 factory methods. Provider normalization for llama_cpp/ollama edge cases preserved.
-- 🔧 **chat_service.ChatService.generate_response** (E39→A3): Extracted 9 helper methods (`_inject_cultural_context`, `_inject_memory_context`, `_inject_multimodal_context`, `_process_multimodal_output`, `_process_continuous_learning`, `_process_garden_learning`, `_store_interaction_memories`). Main function reduced from 137L to 14L orchestration. All 12 chat service tests pass.
-- 🔧 **ed3n_engine.ED3NEngine.process_multimodal** (E35→B6): Extracted 7 helper methods (`_encode_text_keys`, `_encode_image_keys`, `_encode_audio_keys`, `_enrich_with_multimodal_rag`, `_enrich_with_semantic_keys`, `_record_cross_modal_cooccurrence`, `_process_with_network`). **Last E-grade function eliminated.** All 8 ED3N engine tests pass.
+
+- 🔧 **QueryClassifier.**init**** (187L→7L): Extracted 180 lines of pattern data
+  into `_build_patterns()`/`_build_reflex_words()` static methods. 16 unit tests
+  pass.
+- 🔧 **HAMDataProcessor.\_abstract_text** (133L→72L): Extracted `_extract_gist`,
+  `_extract_keywords`, `_extract_entities`, `_extract_key_sentences` static
+  methods.
+- 🔧 **HAMQueryEngine.\_fallback_keyword_search** (107L→65L): Extracted
+  `_try_decrypt`/`_try_b64_fallback` eliminating duplicated logic. 8 HAM tests
+  pass.
+- 🔧 **prompt_builder.construct_angela_prompt** (F48→D27): Extracted 9
+  `_append_*` helper functions, reducing main function from 232L to ~142L. 10
+  prompt_builder tests pass.
+- 🔧 **model_bus.ModelBus.route** (E39→B8): Replaced 8-branch if/elif chain with
+  dispatch dict + 6 strategy handler methods. Cyclomatic complexity reduced from
+  39 to 8. All 34 model bus tests pass.
+- 🔧 **vision_service.VisionService.\_analyze_colors** (E36→B7): Extracted
+  `_extract_dominant_colors` + `_name_color` helper methods. 17 vision service
+  tests pass.
+- 🔧 **repl.\_handle_drive_command** (E32→B7): Replaced 8-branch if-chain with
+  dispatch dict + 8 handler functions. Extracted `_resolve_drive_op`,
+  `_drive_status`, `_drive_auth`, `_drive_logout`, `_drive_list`,
+  `_drive_search`, `_drive_sync`, `_drive_analyze` top-level functions.
+  Config-based alias resolution preserved.
+- 🔧 **router.AngelaLLMService.\_init_backends** (E31→B6): Replaced 7-branch
+  if/elif chain with `_resolve_backend_provider` + dispatch dict
+  `_BACKEND_FACTORIES` + 7 factory methods. Provider normalization for
+  llama_cpp/ollama edge cases preserved.
+- 🔧 **chat_service.ChatService.generate_response** (E39→A3): Extracted 9 helper
+  methods (`_inject_cultural_context`, `_inject_memory_context`,
+  `_inject_multimodal_context`, `_process_multimodal_output`,
+  `_process_continuous_learning`, `_process_garden_learning`,
+  `_store_interaction_memories`). Main function reduced from 137L to 14L
+  orchestration. All 12 chat service tests pass.
+- 🔧 **ed3n_engine.ED3NEngine.process_multimodal** (E35→B6): Extracted 7 helper
+  methods (`_encode_text_keys`, `_encode_image_keys`, `_encode_audio_keys`,
+  `_enrich_with_multimodal_rag`, `_enrich_with_semantic_keys`,
+  `_record_cross_modal_cooccurrence`, `_process_with_network`). **Last E-grade
+  function eliminated.** All 8 ED3N engine tests pass.
 
 ### Fixed
-- 🐛 **opentelemetry_middleware.py**: Fixed syntax error (`OPEN TELEMETRY_AVAILABLE` → `OPENTELEMETRY_AVAILABLE` — space in variable name). File now parses correctly.
-- 🐛 **MASTER_TASK_MAP §X**: 3 stale claims corrected — shared code dedup (resolved by Phase 9-12), Whisper STT (actually wired), formula tests (67 exist, all pass).
-- 🐛 **MASTER_TASK_MAP §II P4-1**: Formula system tests correct from "blocked" to ✅.
-- 🐛 **MASTER_TASK_MAP §I-C**: P4 long function refactor from "NOT STARTED" to "3/28 done".
-- 🐛 **MASTER_TASK_MAP §VII**: Whisper STT description from "not wired" to "pipeline wired end-to-end".
+
+- 🐛 **opentelemetry_middleware.py**: Fixed syntax error
+  (`OPEN TELEMETRY_AVAILABLE` → `OPENTELEMETRY_AVAILABLE` — space in variable
+  name). File now parses correctly.
+- 🐛 **MASTER_TASK_MAP §X**: 3 stale claims corrected — shared code dedup
+  (resolved by Phase 9-12), Whisper STT (actually wired), formula tests (67
+  exist, all pass).
+- 🐛 **MASTER_TASK_MAP §II P4-1**: Formula system tests correct from "blocked"
+  to ✅.
+- 🐛 **MASTER_TASK_MAP §I-C**: P4 long function refactor from "NOT STARTED" to
+  "3/28 done".
+- 🐛 **MASTER_TASK_MAP §VII**: Whisper STT description from "not wired" to
+  "pipeline wired end-to-end".
 
 ### Synced
-- 🔄 **docs/INDEX.md**: Added FRAMEWORK_OVERVIEW.md + MASTER_TASK_MAP.md entries.
-- 🔄 **docs/00-overview/PROJECT_CHARTER.md**: SUPERSEDED marker (10 months stale).
-- 🔄 **docs/00-overview/UNIFIED_DOCUMENTATION_INDEX.md**: Added FRAMEWORK_OVERVIEW + MASTER_TASK_MAP refs.
-- 🔄 **docs/COMPREHENSIVE_REPAIR_ROADMAP.md**: Added FRAMEWORK_OVERVIEW + MASTER_TASK_MAP refs.
-- 🔄 **docs/06-project-management/plans/REPAIR_PLAN.md**: P3-9~11 dedup marked RESOLVED.
+
+- 🔄 **docs/INDEX.md**: Added FRAMEWORK_OVERVIEW.md + MASTER_TASK_MAP.md
+  entries.
+- 🔄 **docs/00-overview/PROJECT_CHARTER.md**: SUPERSEDED marker (10 months
+  stale).
+- 🔄 **docs/00-overview/UNIFIED_DOCUMENTATION_INDEX.md**: Added
+  FRAMEWORK_OVERVIEW + MASTER_TASK_MAP refs.
+- 🔄 **docs/COMPREHENSIVE_REPAIR_ROADMAP.md**: Added FRAMEWORK_OVERVIEW +
+  MASTER_TASK_MAP refs.
+- 🔄 **docs/06-project-management/plans/REPAIR_PLAN.md**: P3-9~11 dedup marked
+  RESOLVED.
 
 ### §X Pending Progress
-- 6/16 DONE (was 4/16): auto-repair, WS route, shared code dedup, agent routing, Whisper wiring, formula tests
-- 10 remain: YOLO, C901 (0 E-grade remain, target achieved), long functions (24/28), load tests, tray, E2E, VisualDecoder, Level5ASI, annotations
+
+- 6/16 DONE (was 4/16): auto-repair, WS route, shared code dedup, agent routing,
+  Whisper wiring, formula tests
+- 10 remain: YOLO, C901 (0 E-grade remain, target achieved), long functions
+  (24/28), load tests, tray, E2E, VisualDecoder, Level5ASI, annotations
 
 ## [7.5.0-dev] - 2026-06-16 — Phase 7 i18n Internationalization
 
 ### Added
-- 🌐 **I18nManager enhancements**: Added `load_from_json()`, `load_from_locale_dir()`, `encode()`, `decode()` methods
-- 🌐 **PromptManager**: New centralized prompt template management with language-aware selection
-- 🌐 **Locale files**: Created `prompts.en-US.json` and `prompts.zh-CN.json` with 80+ prompt templates
-- 🌐 **Desktop i18n fix**: Fixed zh-CN locale detection bug with case-insensitive matching
+
+- 🌐 **I18nManager enhancements**: Added `load_from_json()`,
+  `load_from_locale_dir()`, `encode()`, `decode()` methods
+- 🌐 **PromptManager**: New centralized prompt template management with
+  language-aware selection
+- 🌐 **Locale files**: Created `prompts.en-US.json` and `prompts.zh-CN.json`
+  with 80+ prompt templates
+- 🌐 **Desktop i18n fix**: Fixed zh-CN locale detection bug with
+  case-insensitive matching
 
 ### Changed
-- 🌐 **Handler i18n**: Replaced hardcoded Chinese strings in `file_operation_handler.py` (35 strings), `task_manager_handler.py` (15 strings), `system_command_handler.py` (9 strings), `code_execution_handler.py` (9 strings)
-- 🌐 **Prompt Builder i18n**: Replaced 60+ hardcoded strings in `prompt_builder.py` with `prompt()` calls
-- 🌐 **UCC i18n**: Updated `unified_control_center.py` system prompts to use `prompt()` calls
-- 🌐 **LLM Decision Loop i18n**: Replaced 40+ strings in `llm_decision_loop.py` with `prompt()` calls
-- 🌐 **Project Coordinator i18n**: Updated prompt templates in `project_coordinator.py`
-- 🌐 **Locale updates**: Added `file_ops`, `task_ops`, `sys_cmd`, `code_exec` sections to en-US.json and zh-CN.json
+
+- 🌐 **Handler i18n**: Replaced hardcoded Chinese strings in
+  `file_operation_handler.py` (35 strings), `task_manager_handler.py` (15
+  strings), `system_command_handler.py` (9 strings), `code_execution_handler.py`
+  (9 strings)
+- 🌐 **Prompt Builder i18n**: Replaced 60+ hardcoded strings in
+  `prompt_builder.py` with `prompt()` calls
+- 🌐 **UCC i18n**: Updated `unified_control_center.py` system prompts to use
+  `prompt()` calls
+- 🌐 **LLM Decision Loop i18n**: Replaced 40+ strings in `llm_decision_loop.py`
+  with `prompt()` calls
+- 🌐 **Project Coordinator i18n**: Updated prompt templates in
+  `project_coordinator.py`
+- 🌐 **Locale updates**: Added `file_ops`, `task_ops`, `sys_cmd`, `code_exec`
+  sections to en-US.json and zh-CN.json
 
 ### Tests
+
 - 🧪 **i18n tests**: 8 new tests in `test_i18n_enhanced.py`
 - 🧪 **PromptManager tests**: 13 new tests in `test_prompt_manager.py`
 - 🧪 **Total**: 45 tests passing across all Phase 7 test files
@@ -427,105 +780,168 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [7.5.0-dev] - 2026-06-13 — Live2D + Pixel-Angela Fixes
 
 ### Added
-- 🎨 **Epsilon_free model3.json**: Created at `resources/models/Epsilon_free/runtime/` with 16 motions + 8 expressions (verified actual filenames)
-- 🎨 **Epsilon_free model deployed**: Copied to `apps/desktop-app/electron_app/models/` and `apps/web-live2d-viewer/models/` (28 files each)
-- 🎨 **Default model switched**: `angela-character-config.js` (desktop + web) now defaults to Epsilon_free (2.8MB/2048x) with miara_pro_en as fallback
-- 🧪 **WebSocket handshake**: pixel-angela now sends proper handshake JSON (`client_type: "pixel-angela"`) and waits for `connected` response
-- 🧪 **Chat/bio-feedback handlers**: `update_state()` now processes `chat_response` (shows speech bubble) and `biological_feedback` (logs reflex)
+
+- 🎨 **Epsilon_free model3.json**: Created at
+  `resources/models/Epsilon_free/runtime/` with 16 motions + 8 expressions
+  (verified actual filenames)
+- 🎨 **Epsilon_free model deployed**: Copied to
+  `apps/desktop-app/electron_app/models/` and `apps/web-live2d-viewer/models/`
+  (28 files each)
+- 🎨 **Default model switched**: `angela-character-config.js` (desktop + web)
+  now defaults to Epsilon_free (2.8MB/2048x) with miara_pro_en as fallback
+- 🧪 **WebSocket handshake**: pixel-angela now sends proper handshake JSON
+  (`client_type: "pixel-angela"`) and waits for `connected` response
+- 🧪 **Chat/bio-feedback handlers**: `update_state()` now processes
+  `chat_response` (shows speech bubble) and `biological_feedback` (logs reflex)
 
 ### Fixed
-- 🐛 **Live2D Framework check**: Removed unnecessary `hasFramework` check in desktop `live2d-manager.js` — wrapper only needs Core SDK, not Framework
-- 🐛 **SDK timeout**: Increased from 5s to 10s in both desktop and web `live2d-manager.js` for low-end hardware
-- 🐛 **dna_body.py ear_twitch crash**: Added `ear_twitch` parameter to `_build_volumetric_body()` and `apply_dynamics()` (was undefined NameError on line 178)
-- 🐛 **dna_body.py finger_matrix None**: Fixed `kwargs.get("finger_matrix") or default` (was returning None instead of default)
-- 🐛 **skin_engine.py typing**: Added `from typing import Dict, Any` (was NameError)
-- 🐛 **renderer.py DNA init**: Wrapped `AngelaDNA()` in try/except with null guards for graceful degradation
-- 🐛 **renderer.py WebSocket URL**: Now reads from `ANGELA_WS_URL` env var (was hardcoded)
-- 🐛 **ED3N dictionary_layer.py**: Added `if key not in self.entries` guard to prevent "Overwriting existing entry" warnings
-- 🐛 **resource_awareness_service.py**: Fixed path resolution (`".."` → `"..", ".."`) for `simulated_resources.yaml`
-- 🐛 **tiered_loader.py**: Rewritten to load YAML configs from `apps/backend/configs/` with 3-layer merge (default → user → evolved)
-- 🐛 **sprite_converter.py**: Replaced hardcoded `D:\Projects\...\angela_01.jpg` with relative path
-- 📝 **router.py**: Removed dead code (unreachable API key loading block after `return`)
+
+- 🐛 **Live2D Framework check**: Removed unnecessary `hasFramework` check in
+  desktop `live2d-manager.js` — wrapper only needs Core SDK, not Framework
+- 🐛 **SDK timeout**: Increased from 5s to 10s in both desktop and web
+  `live2d-manager.js` for low-end hardware
+- 🐛 **dna_body.py ear_twitch crash**: Added `ear_twitch` parameter to
+  `_build_volumetric_body()` and `apply_dynamics()` (was undefined NameError on
+  line 178)
+- 🐛 **dna_body.py finger_matrix None**: Fixed
+  `kwargs.get("finger_matrix") or default` (was returning None instead of
+  default)
+- 🐛 **skin_engine.py typing**: Added `from typing import Dict, Any` (was
+  NameError)
+- 🐛 **renderer.py DNA init**: Wrapped `AngelaDNA()` in try/except with null
+  guards for graceful degradation
+- 🐛 **renderer.py WebSocket URL**: Now reads from `ANGELA_WS_URL` env var (was
+  hardcoded)
+- 🐛 **ED3N dictionary_layer.py**: Added `if key not in self.entries` guard to
+  prevent "Overwriting existing entry" warnings
+- 🐛 **resource_awareness_service.py**: Fixed path resolution (`".."` →
+  `"..", ".."`) for `simulated_resources.yaml`
+- 🐛 **tiered_loader.py**: Rewritten to load YAML configs from
+  `apps/backend/configs/` with 3-layer merge (default → user → evolved)
+- 🐛 **sprite_converter.py**: Replaced hardcoded `D:\Projects\...\angela_01.jpg`
+  with relative path
+- 📝 **router.py**: Removed dead code (unreachable API key loading block after
+  `return`)
 
 > - Server **IMPORTS OK** — `ModelProvider` alias added to `protocols.py`
-> - Tests **COLLECTING** — ~3,500+ tests across 469 test files, 0 collection errors
+> - Tests **COLLECTING** — ~3,500+ tests across 469 test files, 0 collection
+>   errors
 > - Phase 3-6 added **162 new tests** (125 garden + 13 phase5 + 24 phase6)
 > - "Stub" files are backward-compat shims; real implementations complete
-> - Actual completion: **~85-90%** (5 alias exports = ~10 lines total — ALL DONE)
-> - See [README.md](README.md#name-mappings-test-expectation--actual-implementation) for name mappings
+> - Actual completion: **~85-90%** (5 alias exports = ~10 lines total — ALL
+>   DONE)
+> - See
+>   [README.md](README.md#name-mappings-test-expectation--actual-implementation)
+>   for name mappings
 
 ## [7.5.0-dev] - 2026-06-03 — Internal/Unreleased
 
-> ⚠️ **Note**: 11-session cleanup sweep (06-01 → 06-03). Current source code version. All 7.x entries below this are historical AI agent self-assigned versions that exist in the codebase under 7.5.0-dev.
+> ⚠️ **Note**: 11-session cleanup sweep (06-01 → 06-03). Current source code
+> version. All 7.x entries below this are historical AI agent self-assigned
+> versions that exist in the codebase under 7.5.0-dev.
 
 ### Added
-- 🧪 **R1/R1a**: Processed 9 remaining stub files (performance_optimizer asyncio.gather implementation, 2 deprecated warnings, 6 logged stub confirmation); removed misleading SKELETON markers from 7 files with real code
+
+- 🧪 **R1/R1a**: Processed 9 remaining stub files (performance_optimizer
+  asyncio.gather implementation, 2 deprecated warnings, 6 logged stub
+  confirmation); removed misleading SKELETON markers from 7 files with real code
 - 🧪 **R3 HIGH**: 40 `except Exception: pass` → `logger.warning` across 20 files
 - 🧪 **R3 MEDIUM**: 13 `except SpecificError: pass` across 11 files
 - 🧪 **R3 LOW**: 62 silent except+fallback blocks fixed across 42 files
-- 🧪 **R4**: 3 async blocking calls (subprocess.run → loop.run_in_executor) in desktop_interaction.py
-- 🧪 **R5 batch 1**: 10 test files upgraded from smoke to meaningful (enterprise_monitor, intent_registry, attention_controller, kinetic_validator, webgl_bridge, active_cognition_formula, life_intensity_formula, non_paradox_existence, causal_chain, capacity_planner)
-- 🧪 **R5 batch 2**: 10 more test files upgraded, +135 new tests (angela_error, art_learning_workflow, deep_mapper, axis, axis_field, lis_manager, code_learning, context_storage_memory, value_assessment, symbolic_space)
-- 🧪 **R5 FINAL**: Remaining 42 test files upgraded, +293 new assertions — all smoke tests converted to meaningful
-- 🧪 **R6**: 1472 return type annotations across 366 files (coverage ~64% → 95%+); batch 3: 100 complex/mixed return types fixed
+- 🧪 **R4**: 3 async blocking calls (subprocess.run → loop.run_in_executor) in
+  desktop_interaction.py
+- 🧪 **R5 batch 1**: 10 test files upgraded from smoke to meaningful
+  (enterprise_monitor, intent_registry, attention_controller, kinetic_validator,
+  webgl_bridge, active_cognition_formula, life_intensity_formula,
+  non_paradox_existence, causal_chain, capacity_planner)
+- 🧪 **R5 batch 2**: 10 more test files upgraded, +135 new tests (angela_error,
+  art_learning_workflow, deep_mapper, axis, axis_field, lis_manager,
+  code_learning, context_storage_memory, value_assessment, symbolic_space)
+- 🧪 **R5 FINAL**: Remaining 42 test files upgraded, +293 new assertions — all
+  smoke tests converted to meaningful
+- 🧪 **R6**: 1472 return type annotations across 366 files (coverage ~64% →
+  95%+); batch 3: 100 complex/mixed return types fixed
 - 🧪 **R7**: 954 docstrings across 259 files (coverage ~65% → 95%+)
 - 🧪 **R8**: 40 blocks of commented-out dead code cleaned (279 lines)
-- 🧪 **Phase Review 2**: 3-agent re-audit (528 regressed typing imports fixed, compare_versions() DEV bug fixed)
+- 🧪 **Phase Review 2**: 3-agent re-audit (528 regressed typing imports fixed,
+  compare_versions() DEV bug fixed)
 - 🧪 **PHASE_REVIEW2.md** created with updated ~70% assessment
 - 🧪 **Version consistency**: 14/14 locations verified and synced
-- 🧪 **Phase Review audit** (3 parallel agents): found 259 pass, 46 stub, 127 silent except, 247 unused imports
+- 🧪 **Phase Review audit** (3 parallel agents): found 259 pass, 46 stub, 127
+  silent except, 247 unused imports
 - 🧪 **PHASE_REVIEW.md** created (10-dimension scoring, P0-P2 repair roadmap)
 
 ### Changed
-- 🔄 **R2a/b/c**: 18 real incomplete pass statements eliminated (DatabaseStorage, llm_decision_loop, browser_controller, etc.)
-- 🔄 **237 unused typing imports** removed from 166 files (cleanup sessions 1-2 + session 9)
+
+- 🔄 **R2a/b/c**: 18 real incomplete pass statements eliminated
+  (DatabaseStorage, llm_decision_loop, browser_controller, etc.)
+- 🔄 **237 unused typing imports** removed from 166 files (cleanup sessions
+  1-2 + session 9)
 
 ### Fixed
+
 - 🐛 **AGENTS.md**: Python version 3.8 → 3.9; plan % conflicts resolved
 - 🐛 **README**: Broken links fixed
 - 🐛 **INDEX.md**: Missing links added
 - 🐛 **compare_versions()**: DEV bug discovered and fixed during Phase Review 2
 
 ### Removed
-- 🗑️ **Silent except blocks**: 127 bare `except:` removed; 302 silent except total reduced to ~15
+
+- 🗑️ **Silent except blocks**: 127 bare `except:` removed; 302 silent except
+  total reduced to ~15
 - 🗑️ **stub: True returns**: 46 → 1 (remaining is confirmed intentional)
 
 ### Status (Audit Report Claims — NOT Verified at Runtime)
-- **Overall completion**: ~70% (up from ~58%) — *claim unverified*
-- **Real incomplete pass**: 18 → 0 ✅ — *code-level claim*
-- **Smoke test %**: 84% → ~5% — *claim unverified*
-- **Return type coverage**: ~64% → 95%+ — *claim unverified*
-- **Docstring coverage**: ~65% → 95%+ — *claim unverified*
-- **Version consistency**: 8/14 → 14/14 ✅ — *needs independent audit*
+
+- **Overall completion**: ~70% (up from ~58%) — _claim unverified_
+- **Real incomplete pass**: 18 → 0 ✅ — _code-level claim_
+- **Smoke test %**: 84% → ~5% — _claim unverified_
+- **Return type coverage**: ~64% → 95%+ — _claim unverified_
+- **Docstring coverage**: ~65% → 95%+ — _claim unverified_
+- **Version consistency**: 8/14 → 14/14 ✅ — _needs independent audit_
 - **Test functions**: 362 → 668
 
 ### Actual Verified Status (2026-06-08) — ALL FIXES APPLIED
+
 - **Server**: ✅ **IMPORTS OK** — all 5 alias exports applied
 - **Tests**: ✅ **511 tests collected, 0 errors** (was 21 collection errors)
-- **Real completion**: **~85-90%** (core systems implemented; all 5 alias exports = ~10 lines done)
-
-
+- **Real completion**: **~85-90%** (core systems implemented; all 5 alias
+  exports = ~10 lines done)
 
 ## [7.5.0-dev] - 2026-06-08 — Alias Fixes Applied
 
 ### Fixed
-- 🐛 **ModelProvider alias**: Added ModelProvider = LLMBackend in core/interfaces/protocols.py
-- 🐛 **ArtLearningSystem alias**: Added ArtLearningSystem = ArtLearningWorkflow in core/engine/art_learning_system.py
-- 🐛 **DesktopPresence alias**: Added DesktopPresence = DesktopInteraction in core/engine/desktop_presence.py
-- 🐛 **Live2DIntegration alias**: Added Live2DIntegration = Live2DAvatarGenerator in core/engine/live2d_integration.py
-- 🐛 **MemoryNeuroplasticityBridge alias**: Added MemoryNeuroplasticityBridge = NeuroplasticitySystem in core/bio/memory_neuroplasticity_bridge.py
-- 🐛 **AuditoryAttentionController alias**: Added AuditoryAttentionController = AttentionController in core/perception/auditory_attention.py
-- 🐛 **DynamicThresholdManager**: Implemented in core/life/dynamic_parameters.py (was 20-line stub)
-- 🐛 **state_matrix_router**: Implemented FastAPI router in services/api/state_matrix_api.py
-- 🐛 **Autonomous submodules**: Created 6 backward-compat modules in core/autonomous/
+
+- 🐛 **ModelProvider alias**: Added ModelProvider = LLMBackend in
+  core/interfaces/protocols.py
+- 🐛 **ArtLearningSystem alias**: Added ArtLearningSystem = ArtLearningWorkflow
+  in core/engine/art_learning_system.py
+- 🐛 **DesktopPresence alias**: Added DesktopPresence = DesktopInteraction in
+  core/engine/desktop_presence.py
+- 🐛 **Live2DIntegration alias**: Added Live2DIntegration =
+  Live2DAvatarGenerator in core/engine/live2d_integration.py
+- 🐛 **MemoryNeuroplasticityBridge alias**: Added MemoryNeuroplasticityBridge =
+  NeuroplasticitySystem in core/bio/memory_neuroplasticity_bridge.py
+- 🐛 **AuditoryAttentionController alias**: Added AuditoryAttentionController =
+  AttentionController in core/perception/auditory_attention.py
+- 🐛 **DynamicThresholdManager**: Implemented in core/life/dynamic_parameters.py
+  (was 20-line stub)
+- 🐛 **state_matrix_router**: Implemented FastAPI router in
+  services/api/state_matrix_api.py
+- 🐛 **Autonomous submodules**: Created 6 backward-compat modules in
+  core/autonomous/
 - 🐛 **Test import paths**: Fixed 9 test files using `apps.backend.src.*` paths
 
 ### Changed
-- 🔄 **Test collection**: 511 tests collected, 0 errors (was 21 collection errors)
+
+- 🔄 **Test collection**: 511 tests collected, 0 errors (was 21 collection
+  errors)
 - 🔄 **Server imports**: main_api_server.py imports successfully
-- 🔄 **Documentation**: README.md, AGENTS.md, CHANGELOG.md updated with verified status
+- 🔄 **Documentation**: README.md, AGENTS.md, CHANGELOG.md updated with verified
+  status
 
 ### Status
+
 - **Server**: ✅ Imports OK
 - **Tests**: ✅ 511 tests, 0 collection errors
 - **Completion**: ~85-90% (core systems implemented, all aliases applied)
@@ -533,84 +949,149 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [6.2.2] - 2026-05-16
 
 ### Added
-- 🆕 **SessionManager** (`services/connection_session.py`): Centralized WebSocket session management with client_id, session_id, heartbeat monitoring, and message buffering.
-- 🆕 **ConnectionSession** dataclass: Stores client_id (backend-assigned), session_id (client-provided, persistent), websocket, state, sequence, metadata.
-- 🆕 **Session-based handshake protocol**: Clients send `{type:'connect', session_id, client_type, client_version}`, receive `{type:'connected', client_id, session_id}`.
-- 🆕 **test_connection_session.py**: 21 unit tests for SessionManager functionality.
+
+- 🆕 **SessionManager** (`services/connection_session.py`): Centralized
+  WebSocket session management with client_id, session_id, heartbeat monitoring,
+  and message buffering.
+- 🆕 **ConnectionSession** dataclass: Stores client_id (backend-assigned),
+  session_id (client-provided, persistent), websocket, state, sequence,
+  metadata.
+- 🆕 **Session-based handshake protocol**: Clients send
+  `{type:'connect', session_id, client_type, client_version}`, receive
+  `{type:'connected', client_id, session_id}`.
+- 🆕 **test_connection_session.py**: 21 unit tests for SessionManager
+  functionality.
 
 ### Changed
-- 🔄 **ConnectionManager** (`main_api_server.py`): Now delegates to SessionManager, supports session_id registration.
-- 🔄 **WebSocket endpoint** (`main_api_server.py:967`): Now waits for handshake message with session_id before confirming connection.
-- 🔄 **BackendWebSocketClient** (`electron_app/js/backend-websocket.js`): Added sessionId (from localStorage), clientId (from backend), `_loadOrCreateSessionId()`, `_buildUrl()`, `_buildHandshake()`.
-- 🔄 **Main process** (`electron_app/main.js`): Sends handshake on connect, waits for 'connected' message before marking success. Removed auto-reconnect.
-- 🔄 **Preload** (`preload.js`): IPC `websocket-connect` now accepts `sessionInfo` parameter.
+
+- 🔄 **ConnectionManager** (`main_api_server.py`): Now delegates to
+  SessionManager, supports session_id registration.
+- 🔄 **WebSocket endpoint** (`main_api_server.py:967`): Now waits for handshake
+  message with session_id before confirming connection.
+- 🔄 **BackendWebSocketClient** (`electron_app/js/backend-websocket.js`): Added
+  sessionId (from localStorage), clientId (from backend),
+  `_loadOrCreateSessionId()`, `_buildUrl()`, `_buildHandshake()`.
+- 🔄 **Main process** (`electron_app/main.js`): Sends handshake on connect,
+  waits for 'connected' message before marking success. Removed auto-reconnect.
+- 🔄 **Preload** (`preload.js`): IPC `websocket-connect` now accepts
+  `sessionInfo` parameter.
 
 ### Fixed
-- 🐛 **Multiple client_id problem**: Previously each reconnect generated a new UUID. Now single session_id persists across reconnects.
-- 🐛 **Double-reconnect conflict**: Removed auto-reconnect from main process. Only renderer (BackendWebSocketClient) controls reconnection.
-- 🐛 **Invalid RSV bits error**: Now properly sends handshake before marking connected, preventing malformed frames.
+
+- 🐛 **Multiple client_id problem**: Previously each reconnect generated a new
+  UUID. Now single session_id persists across reconnects.
+- 🐛 **Double-reconnect conflict**: Removed auto-reconnect from main process.
+  Only renderer (BackendWebSocketClient) controls reconnection.
+- 🐛 **Invalid RSV bits error**: Now properly sends handshake before marking
+  connected, preventing malformed frames.
 
 ### Architecture
+
 ```
-Client connects → sends {type:'connect', session_id:'sess_xxx'} → 
+Client connects → sends {type:'connect', session_id:'sess_xxx'} →
 Backend registers session → returns {type:'connected', client_id:'uuid', session_id:'sess_xxx'}
                    ↓
         Same session_id used on reconnect (from localStorage)
 ```
 
 ### Status
+
 - **Phase**: Phase 4 (WebSocket Session Management)
 - **Test count**: 115+ tests (21 new for SessionManager)
 
 ## [7.4.0] - 2026-05-09 — Internal/Unreleased
 
-> ⚠️ **Note**: This version was self-assigned by AI agent in CHANGELOG only. No corresponding git tag or source code version exists. All described features exist in the codebase under version `7.5.0-dev`.
+> ⚠️ **Note**: This version was self-assigned by AI agent in CHANGELOG only. No
+> corresponding git tag or source code version exists. All described features
+> exist in the codebase under version `7.5.0-dev`.
 
 ### Added
-- 🪐 **[N.22.E1] Spatial Gravity Parameters** (`dynamic_parameters.py`): Replaced rule-based dynamic thresholds with 4D spatial anchors that fluctuate based on coordinate gravity.
-- 🧠 **[N.22.E2] Spatial Memory Contexts** (`tool_context_manager.py`): Connected tool contexts to `MemoryNeuroplasticityBridge` for automatic tool preset retrieval based on Euclidean proximity to current mood.
-- 🖱️ **[N.22.E3] Intent-Driven Mouse Gravity** (`desktop_presence.py`): Linked `SOCIAL_BOND` and `SELF_PRESERVATION` intents to mouse interaction. Added predictive high-velocity obstacle avoidance via Click-Through layer shifting.
-- 🧬 **[N.22.E4] Loss-based Cerebellum Evolution** (`cerebellum_engine.py`): Evolved gait generation using gradient descent on displacement residuals (loss) and added Beta-dimension driven dynamic damping.
+
+- 🪐 **[N.22.E1] Spatial Gravity Parameters** (`dynamic_parameters.py`):
+  Replaced rule-based dynamic thresholds with 4D spatial anchors that fluctuate
+  based on coordinate gravity.
+- 🧠 **[N.22.E2] Spatial Memory Contexts** (`tool_context_manager.py`):
+  Connected tool contexts to `MemoryNeuroplasticityBridge` for automatic tool
+  preset retrieval based on Euclidean proximity to current mood.
+- 🖱️ **[N.22.E3] Intent-Driven Mouse Gravity** (`desktop_presence.py`): Linked
+  `SOCIAL_BOND` and `SELF_PRESERVATION` intents to mouse interaction. Added
+  predictive high-velocity obstacle avoidance via Click-Through layer shifting.
+- 🧬 **[N.22.E4] Loss-based Cerebellum Evolution** (`cerebellum_engine.py`):
+  Evolved gait generation using gradient descent on displacement residuals
+  (loss) and added Beta-dimension driven dynamic damping.
 
 ## [7.3.0] - 2026-05-09 — Internal/Unreleased
 
-> ⚠️ **Note**: AI agent self-assigned version. Features exist in codebase under `7.5.0-dev`.
+> ⚠️ **Note**: AI agent self-assigned version. Features exist in codebase under
+> `7.5.0-dev`.
 
 ### Added
-- 🎨 **[N.22.1] Workflow Data Classes** (`art_learning_workflow.py`): Replaced placeholder classes with full implementations, including a Power Law mastery curve in `SkillAssessment` that adapts based on user feedback.
-- 📉 **[N.22.5] Spatial Aesthetic Inference** (`art_learning_system.py`): Implemented `get_color_overrides_spatial` to project gamma dimension coordinates onto RGB space, replacing hardcoded tables. Added `learn_from_feedback_spatial` for gravity-based preference adjustments.
-- 📈 **[N.22.6] Introspection Trend Tracking** (`self_introspector.py`): Added `_wellbeing_history` trend analysis capable of detecting sustained wellbeing drops. Implemented AL-driven `_dissonance_threshold` adaptation.
+
+- 🎨 **[N.22.1] Workflow Data Classes** (`art_learning_workflow.py`): Replaced
+  placeholder classes with full implementations, including a Power Law mastery
+  curve in `SkillAssessment` that adapts based on user feedback.
+- 📉 **[N.22.5] Spatial Aesthetic Inference** (`art_learning_system.py`):
+  Implemented `get_color_overrides_spatial` to project gamma dimension
+  coordinates onto RGB space, replacing hardcoded tables. Added
+  `learn_from_feedback_spatial` for gravity-based preference adjustments.
+- 📈 **[N.22.6] Introspection Trend Tracking** (`self_introspector.py`): Added
+  `_wellbeing_history` trend analysis capable of detecting sustained wellbeing
+  drops. Implemented AL-driven `_dissonance_threshold` adaptation.
 
 ### Changed
-- 🔄 **[N.22.2] Action Success Rate** (`action_executor.py`): Replaced `random.random()` failure simulation with `_get_action_success_rate_spatial` using alpha-dimension physiological tension calculations.
-- 🔄 **[N.22.3] Spatial Maturity Lifecycle** (`digital_life_integrator.py`): Replaced fixed-time threshold transitions with `_compute_maturity_score` computing 4D stability vectors via spatial math.
-- 💡 **[N.22.4] State Behaviors**: Filled in `GROWING` and `MATURE` lifecycle states with actual learning boosts and formula evaluations.
+
+- 🔄 **[N.22.2] Action Success Rate** (`action_executor.py`): Replaced
+  `random.random()` failure simulation with `_get_action_success_rate_spatial`
+  using alpha-dimension physiological tension calculations.
+- 🔄 **[N.22.3] Spatial Maturity Lifecycle** (`digital_life_integrator.py`):
+  Replaced fixed-time threshold transitions with `_compute_maturity_score`
+  computing 4D stability vectors via spatial math.
+- 💡 **[N.22.4] State Behaviors**: Filled in `GROWING` and `MATURE` lifecycle
+  states with actual learning boosts and formula evaluations.
 
 ### Status
+
 - **Phase**: Native Coordinate AI (N.22)
 - **Core AI Replacement**: ✅ Complete
 
 ## [7.2.0] - 2026-05-09 — Internal/Unreleased
 
-> ⚠️ **Note**: AI agent self-assigned version. Features exist in codebase under `7.5.0-dev`.
+> ⚠️ **Note**: AI agent self-assigned version. Features exist in codebase under
+> `7.5.0-dev`.
 
 ### Added
-- 🧠 **[N.20.5] Native Spatial Math Engine** (`state_matrix.py`): Shunting-yard algorithm + RPN executor for pure geometry-based arithmetic without LLM.
-- 🤩 **[N.21.3] Intent Gravity Pull** (`state_matrix.py`): `apply_intent_gravity` pulls dimension coordinates toward intent vectors each cycle.
-- 🔗 **[N.21.7] Inter-Dimensional Drag** (`state_matrix.py`): `apply_inter_dimensional_drag` propagates coordinate shifts across all dimensions.
-- 📌 **[N.20.4b] Spatial Anchoring Memory** (`memory_neuroplasticity_bridge.py`): `retrieve_by_spatial_proximity` retrieves memories by 3D coordinate radius.
-- 🤖 **[N.21.x] Homeostatic Intent Generation** (`intent_model.py`): Auto-generates physiological intents based on state matrix energy levels.
-- ⚠️ **[N.21.x] Intent Alignment Check** (`self_introspector.py`): Detects cognitive dissonance between LLM action proposals and native biological intent.
-- 🔧 `CognitiveOp` enum in `state_matrix.py`: ACCUMULATE, DECREMENT, AMPLIFY, DIMINISH, RESONATE - maps math ops to spatial geometry.
-- `DimensionState.coordinate` + `DimensionState.intent_vector`: 3D spatial embedding for all 4 dimensions (αβγδ).
+
+- 🧠 **[N.20.5] Native Spatial Math Engine** (`state_matrix.py`): Shunting-yard
+  algorithm + RPN executor for pure geometry-based arithmetic without LLM.
+- 🤩 **[N.21.3] Intent Gravity Pull** (`state_matrix.py`):
+  `apply_intent_gravity` pulls dimension coordinates toward intent vectors each
+  cycle.
+- 🔗 **[N.21.7] Inter-Dimensional Drag** (`state_matrix.py`):
+  `apply_inter_dimensional_drag` propagates coordinate shifts across all
+  dimensions.
+- 📌 **[N.20.4b] Spatial Anchoring Memory**
+  (`memory_neuroplasticity_bridge.py`): `retrieve_by_spatial_proximity`
+  retrieves memories by 3D coordinate radius.
+- 🤖 **[N.21.x] Homeostatic Intent Generation** (`intent_model.py`):
+  Auto-generates physiological intents based on state matrix energy levels.
+- ⚠️ **[N.21.x] Intent Alignment Check** (`self_introspector.py`): Detects
+  cognitive dissonance between LLM action proposals and native biological
+  intent.
+- 🔧 `CognitiveOp` enum in `state_matrix.py`: ACCUMULATE, DECREMENT, AMPLIFY,
+  DIMINISH, RESONATE - maps math ops to spatial geometry.
+- `DimensionState.coordinate` + `DimensionState.intent_vector`: 3D spatial
+  embedding for all 4 dimensions (αβγδ).
 
 ### Changed
-- `StateMatrix4D._post_update`: Now calls `apply_intent_gravity` and `apply_inter_dimensional_drag` on every dimension update.
+
+- `StateMatrix4D._post_update`: Now calls `apply_intent_gravity` and
+  `apply_inter_dimensional_drag` on every dimension update.
 - `state_matrix.py` expanded from 23KB to 36KB with full spatial engine.
 - `ANGELA_TASK_BOOK.md` updated to v2.9 (Spatial-Intent SYNC).
 - Logic fingerprint updated to `ANGELA-ASI-SYNC-20260509-SPATIAL-V2.9`.
 
 ### Status
+
 - **Phase**: Spatial Intelligence (N.20-N.21 in progress)
 - **Core Spatial Features**: ✅ Complete
 - **Intent Alignment Logic**: 🔄 In Progress
@@ -620,6 +1101,7 @@ Backend registers session → returns {type:'connected', client_id:'uuid', sessi
 > ⚠️ **Note**: AI agent self-assigned version. No corresponding git tag.
 
 ### Added
+
 - 📊 Completed comprehensive resource analysis (2,761 resources identified)
   - Python files: 1,001
   - JavaScript files: 140
@@ -635,6 +1117,7 @@ Backend registers session → returns {type:'connected', client_id:'uuid', sessi
 - 📝 Updated PROJECT_STATUS.md statistics to reflect current codebase
 
 ### Changed
+
 - 📝 Updated README.md statistics (total code lines: ~35,000+)
 - 📝 Updated AGENTS.md statistics to reflect current codebase
 - 📝 Updated PROJECT_STATUS.md statistics (Python: 1,001, JS: 140, Tests: 238)
@@ -642,6 +1125,7 @@ Backend registers session → returns {type:'connected', client_id:'uuid', sessi
 - 📝 Merged version history from v6.2.0 to v7.1.1
 
 ### Status
+
 - **Total Resources**: 2,761
 - **Test Pass Rate**: 100% (9/9)
 - **Code Coverage**: ~80%
@@ -649,6 +1133,7 @@ Backend registers session → returns {type:'connected', client_id:'uuid', sessi
 - **Overall Quality**: ⭐⭐⭐⭐⭐ (4.8/5)
 
 ### Planned (Future)
+
 - 🔒 Enhance security: Fix SQL injection vulnerabilities
 - 🧪 Improve test coverage to >80%
 - 📝 Update API documentation
@@ -658,6 +1143,7 @@ Backend registers session → returns {type:'connected', client_id:'uuid', sessi
 ## [6.2.0] - 2026-02-07
 
 ### Added
+
 - ✅ LICENSE file (MIT License)
 - ✅ VERSION file for centralized version management
 - ✅ CHANGELOG.md for tracking version history
@@ -665,6 +1151,7 @@ Backend registers session → returns {type:'connected', client_id:'uuid', sessi
 - Updated version_manifest.json to reflect production status
 
 ### Changed
+
 - 📝 Updated README.md version consistency (all references now v6.2.0)
 - 📝 Updated desktop app package.json version to 6.2.0
 - 📝 Updated metrics.md version to 6.2.0
@@ -672,28 +1159,34 @@ Backend registers session → returns {type:'connected', client_id:'uuid', sessi
 - 📝 Updated JavaScript module count to 40 files
 
 ### Fixed
+
 - 🐛 Fixed git clone command in README (was malformed)
 - 🐛 Fixed version inconsistencies across documentation
 - 🐛 Fixed module count discrepancy in README
 
 ### Status
+
 - **Phase**: Phase 14 Complete
 - **Completion**: 99.2%
 - **Status**: Production Ready ✅
 
 ### Known Issues
+
 - 42 issues identified in comprehensive analysis
-- See [PROJECT_ISSUES_ANALYSIS_REPORT.md](PROJECT_ISSUES_ANALYSIS_REPORT.md) for details
+- See [PROJECT_ISSUES_ANALYSIS_REPORT.md](PROJECT_ISSUES_ANALYSIS_REPORT.md) for
+  details
 
 ## [6.1.0] - 2026-02-05
 
 ### Added
+
 - Phase 12 Restoration Complete
 - Emotional States system restored
 - Enhanced Live2D integration
 - Improved desktop awareness
 
 ### Changed
+
 - Performance optimizations
 - Security enhancements
 - Documentation updates
@@ -701,6 +1194,7 @@ Backend registers session → returns {type:'connected', client_id:'uuid', sessi
 ## [6.0.0] - 2026-01-XX
 
 ### Added
+
 - A/B/C Security System
 - Three-tier key isolation mechanism
 - Security Tray Monitor
@@ -709,6 +1203,7 @@ Backend registers session → returns {type:'connected', client_id:'uuid', sessi
 - AES-256-CBC encryption
 
 ### Changed
+
 - Major architecture overhaul
 - Enhanced security infrastructure
 - Improved cross-platform support
@@ -716,6 +1211,7 @@ Backend registers session → returns {type:'connected', client_id:'uuid', sessi
 ## [5.0.0] - 2025-XX-XX
 
 ### Added
+
 - Live2D Cubism Web SDK integration
 - 60fps animation support
 - 7 expressions (neutral, happy, sad, angry, surprised, shy, love)
@@ -724,6 +1220,7 @@ Backend registers session → returns {type:'connected', client_id:'uuid', sessi
 - Touch sensitivity system (18 body parts)
 
 ### Changed
+
 - Complete UI redesign
 - Enhanced animation system
 - Improved performance
@@ -731,6 +1228,7 @@ Backend registers session → returns {type:'connected', client_id:'uuid', sessi
 ## [4.0.0] - 2025-XX-XX
 
 ### Added
+
 - Desktop integration features
 - System tray support
 - Auto-startup capability
@@ -739,12 +1237,14 @@ Backend registers session → returns {type:'connected', client_id:'uuid', sessi
 - Wallpaper modeling (2D/2.5D/3D)
 
 ### Changed
+
 - Enhanced desktop awareness
 - Improved system integration
 
 ## [3.0.0] - 2025-XX-XX
 
 ### Added
+
 - 4D State Matrix (αβγδ)
 - Maturity System (L0-L11)
 - Precision Management (INT-DEC4)
@@ -753,6 +1253,7 @@ Backend registers session → returns {type:'connected', client_id:'uuid', sessi
 - Plugin system
 
 ### Changed
+
 - Advanced AI features
 - Adaptive complexity
 - Performance scaling
@@ -760,18 +1261,21 @@ Backend registers session → returns {type:'connected', client_id:'uuid', sessi
 ## [2.0.0] - 2025-XX-XX
 
 ### Added
+
 - Cross-platform support (Windows, macOS, Linux)
 - Native audio modules (WASAPI, CoreAudio, PulseAudio)
 - Internationalization (5 languages)
 - Theme system (Light, Dark, Angela)
 
 ### Changed
+
 - Multi-platform architecture
 - Enhanced audio system
 
 ## [1.0.0] - 2024-XX-XX
 
 ### Added
+
 - Initial release
 - Basic AI conversation
 - Voice recognition
@@ -779,12 +1283,14 @@ Backend registers session → returns {type:'connected', client_id:'uuid', sessi
 - Simple desktop companion
 
 ### Changed
+
 - Foundation architecture
 - Core functionality
 
 ## [0.1.0] - 2024-XX-XX
 
 ### Added
+
 - Genesis merge of MikoAI and Fragmenta
 - Consolidated configuration system
 - Defined project structure
@@ -794,20 +1300,20 @@ Backend registers session → returns {type:'connected', client_id:'uuid', sessi
 
 ## Version History Summary
 
-| Version | Date | Status | Key Features |
-|---------|------|--------|--------------|
-| 7.3.0 | 2026-05-09 | Active Dev | Native Coordinate AI: Spatial inference, Power Law mastery, Trend tracking |
-| 7.2.0 | 2026-05-09 | Active Dev | Spatial AI: Intent Gravity, Dimensional Drag, Spatial Math, Spatial Memory |
-| 7.1.1 | 2026-02-13 | Production | Comprehensive Resource Analysis, Version Consolidation |
-| 6.2.0 | 2026-02-07 | Production | Phase 14 Complete, 99.2% completion |
-| 6.1.0 | 2026-02-05 | Production | Phase 12 Restoration |
-| 6.0.0 | 2026-01-XX | Production | A/B/C Security System |
-| 5.0.0 | 2025-XX-XX | Beta | Live2D Integration |
-| 4.0.0 | 2025-XX-XX | Beta | Desktop Integration |
-| 3.0.0 | 2025-XX-XX | Beta | Advanced AI Features |
-| 2.0.0 | 2025-XX-XX | Alpha | Cross-Platform Support |
-| 1.0.0 | 2024-XX-XX | Alpha | Initial Release |
-| 0.1.0 | 2024-XX-XX | Pre-Alpha | Genesis Merge |
+| Version | Date       | Status     | Key Features                                                               |
+| ------- | ---------- | ---------- | -------------------------------------------------------------------------- |
+| 7.3.0   | 2026-05-09 | Active Dev | Native Coordinate AI: Spatial inference, Power Law mastery, Trend tracking |
+| 7.2.0   | 2026-05-09 | Active Dev | Spatial AI: Intent Gravity, Dimensional Drag, Spatial Math, Spatial Memory |
+| 7.1.1   | 2026-02-13 | Production | Comprehensive Resource Analysis, Version Consolidation                     |
+| 6.2.0   | 2026-02-07 | Production | Phase 14 Complete, 99.2% completion                                        |
+| 6.1.0   | 2026-02-05 | Production | Phase 12 Restoration                                                       |
+| 6.0.0   | 2026-01-XX | Production | A/B/C Security System                                                      |
+| 5.0.0   | 2025-XX-XX | Beta       | Live2D Integration                                                         |
+| 4.0.0   | 2025-XX-XX | Beta       | Desktop Integration                                                        |
+| 3.0.0   | 2025-XX-XX | Beta       | Advanced AI Features                                                       |
+| 2.0.0   | 2025-XX-XX | Alpha      | Cross-Platform Support                                                     |
+| 1.0.0   | 2024-XX-XX | Alpha      | Initial Release                                                            |
+| 0.1.0   | 2024-XX-XX | Pre-Alpha  | Genesis Merge                                                              |
 
 ---
 
@@ -822,81 +1328,129 @@ Backend registers session → returns {type:'connected', client_id:'uuid', sessi
 
 ### §X #144 (2026-07-03) — Test quality: fix test_audit_comprehensive print-based diagnostic script + orphan module tracking
 
-- **test_audit_comprehensive.py**: Restructured as proper diagnostic script — added module-level `pytest.skip()` (was unconditional), wrapped ALL ~250 lines of diagnostic code (sections 1-14) inside `if __name__ == "__main__":` guard, fixed broken `try:from` import line with missing newline, removed redundant `test_print_based_script()` function
-- **test_cli_imports.py**: Added 3 orphan `ai.code_inspection.*` module paths to `_DELETED_MODULES` (`code_inspector`, `code_learning`, `apps.backend.src.ai.code_inspection.code_learning`)
+- **test_audit_comprehensive.py**: Restructured as proper diagnostic script —
+  added module-level `pytest.skip()` (was unconditional), wrapped ALL ~250 lines
+  of diagnostic code (sections 1-14) inside `if __name__ == "__main__":` guard,
+  fixed broken `try:from` import line with missing newline, removed redundant
+  `test_print_based_script()` function
+- **test_cli_imports.py**: Added 3 orphan `ai.code_inspection.*` module paths to
+  `_DELETED_MODULES` (`code_inspector`, `code_learning`,
+  `apps.backend.src.ai.code_inspection.code_learning`)
 - **Net**: +3 tests (5,033→5,036)
 
 ### §X #145 (2026-07-03) — Test quality: proper skip guards for 7 false-positive test files
 
-- **test_base_agent_simple.py**: Added `pytest.skip(allow_module_level=True)` — print-based diagnostic, 0 asserts
-- **verify_all_agents.py**: Added `pytest.skip(allow_module_level=True)` — print-based verification, 0 asserts
-- **run_fixed_tests.py**: Added `pytest.skip(allow_module_level=True)` — print-based runner, 0 asserts
-- **quick_test_concept_models.py**: Added `pytest.skip(allow_module_level=True)` — print-based script, 0 asserts
-- **test_websocket.py**: Added `pytest.skip(allow_module_level=True)` — requires running server
-- **test_websocket_comprehensive.py**: Added `pytest.skip(allow_module_level=True)` — requires running server
-- **test_gmqtt_mock.py**: Added missing `@pytest.mark.asyncio` decorator + fixed missing blank line
+- **test_base_agent_simple.py**: Added `pytest.skip(allow_module_level=True)` —
+  print-based diagnostic, 0 asserts
+- **verify_all_agents.py**: Added `pytest.skip(allow_module_level=True)` —
+  print-based verification, 0 asserts
+- **run_fixed_tests.py**: Added `pytest.skip(allow_module_level=True)` —
+  print-based runner, 0 asserts
+- **quick_test_concept_models.py**: Added `pytest.skip(allow_module_level=True)`
+  — print-based script, 0 asserts
+- **test_websocket.py**: Added `pytest.skip(allow_module_level=True)` — requires
+  running server
+- **test_websocket_comprehensive.py**: Added
+  `pytest.skip(allow_module_level=True)` — requires running server
+- **test_gmqtt_mock.py**: Added missing `@pytest.mark.asyncio` decorator + fixed
+  missing blank line
 - **Net**: -2 tests (5,036→5,034)
 
 ### §X #146 (2026-07-03) — Test quality: proper skip guards for 5 more false-positive test files
 
-- **test_data_analysis_debug.py**: Added `pytest.skip(allow_module_level=True)` — print-based diagnostic, 0 asserts
-- **test_rovodev_integration.py**: Added `pytest.skip(allow_module_level=True)` — print-based integration test, requires server
-- **verify_fixes.py**: Added `pytest.skip(allow_module_level=True)` — print-based verification, 0 asserts
-- **verify_phase14_concurrency.py**: Added `pytest.skip(allow_module_level=True)` — print-based concurrency test, 0 asserts
-- **test_integration.py (shared)**: Added `pytest.skip(allow_module_level=True)` — print-based integration, 0 asserts
+- **test_data_analysis_debug.py**: Added `pytest.skip(allow_module_level=True)`
+  — print-based diagnostic, 0 asserts
+- **test_rovodev_integration.py**: Added `pytest.skip(allow_module_level=True)`
+  — print-based integration test, requires server
+- **verify_fixes.py**: Added `pytest.skip(allow_module_level=True)` —
+  print-based verification, 0 asserts
+- **verify_phase14_concurrency.py**: Added
+  `pytest.skip(allow_module_level=True)` — print-based concurrency test, 0
+  asserts
+- **test_integration.py (shared)**: Added `pytest.skip(allow_module_level=True)`
+  — print-based integration, 0 asserts
 - **Net**: -6 tests (5,034→5,028)
 
 ### §X #137 (2026-07-03) — EmotionSystem C³ 5.0→6.0 — sustained negative feedback accumulation
 
-- **EmotionSystem**: Added `_sustained_negative_counter` tracking consecutive negative interactions (engagement < 0.5, errors, or failures)
-- When counter ≥ 3, cumulative fatigue influence (stress/sadness) amplifies, ensuring routing_mode actually flips to "conservative"
-- Counter resets to 0 on positive interaction (engagement ≥ 0.5, no error, no failure)
+- **EmotionSystem**: Added `_sustained_negative_counter` tracking consecutive
+  negative interactions (engagement < 0.5, errors, or failures)
+- When counter ≥ 3, cumulative fatigue influence (stress/sadness) amplifies,
+  ensuring routing_mode actually flips to "conservative"
+- Counter resets to 0 on positive interaction (engagement ≥ 0.5, no error, no
+  failure)
 - Added `sustained_negative_counter` to `emotion.behavioral_adjustment` event
-- **Tests**: 10 new — parametrized routing flip verification, counter tracking, recovery, threshold test
+- **Tests**: 10 new — parametrized routing flip verification, counter tracking,
+  recovery, threshold test
 - **C³**: EmotionSystem 5.0→**6.0/10**
 - **Net**: +10 tests (4,999→5,009)
 
 ### §X #136 (2026-07-03) — MetaController C³ 5.0→6.0 — registered as PriorityNegotiator voter
 
-- **PriorityNegotiator**: Added `meta_calibration_voter()` — translates MetaController's `get_weighted_adjustment()` into temperature/tokens bias
+- **PriorityNegotiator**: Added `meta_calibration_voter()` — translates
+  MetaController's `get_weighted_adjustment()` into temperature/tokens bias
   - Negative adjustment (overconfident) → reduce temperature (more conservative)
-  - Positive adjustment (underconfident) → increase temperature (more exploratory)
+  - Positive adjustment (underconfident) → increase temperature (more
+    exploratory)
   - Confidence proportional to |adjustment|, capped at 1.0
-- **Router**: `_prepare_generation_context()` injects `meta_calibration` into context before negotiator resolve
+- **Router**: `_prepare_generation_context()` injects `meta_calibration` into
+  context before negotiator resolve
 - **C³**: MetaController 5.0→**6.0/10** (closed-loop rate 30%→60%+)
-- **Tests**: 7 new tests covering abstention, positive/negative bias, threshold, confidence cap, integration in resolve()
+- **Tests**: 7 new tests covering abstention, positive/negative bias, threshold,
+  confidence cap, integration in resolve()
 - **Net**: +7 tests (4,992→4,999)
 
 ### §X #135 (2026-07-03) — IntentModel C³ 5.0→6.0 — closed intent feedback loop
 
-- **IntentModel**: Added `record_intent_outcome()` method storing success/failure per routing mode in `_outcome_history` (bounded to 20 per mode)
-- **IntentModel**: Added `get_intent_success_rate()` returning default 0.5 for unseen modes
-- **IntentModel**: Modified `get_intent_routing_adjustment()` to adjust `intent_strength` by `0.5 + 0.5 * success_rate` — poor-performing modes get less influence
-- **Router**: Stored actual routing_mode from PriorityNegotiator in `context["_actual_routing_mode"]`
-- **Chat routes**: Added Step 10b recording intent outcome post-LLM-response (recommended mode + success boolean)
-- **Tests**: 11 new tests covering outcome history, success rate, history bounding, confidence adjustment
+- **IntentModel**: Added `record_intent_outcome()` method storing
+  success/failure per routing mode in `_outcome_history` (bounded to 20 per
+  mode)
+- **IntentModel**: Added `get_intent_success_rate()` returning default 0.5 for
+  unseen modes
+- **IntentModel**: Modified `get_intent_routing_adjustment()` to adjust
+  `intent_strength` by `0.5 + 0.5 * success_rate` — poor-performing modes get
+  less influence
+- **Router**: Stored actual routing_mode from PriorityNegotiator in
+  `context["_actual_routing_mode"]`
+- **Chat routes**: Added Step 10b recording intent outcome post-LLM-response
+  (recommended mode + success boolean)
+- **Tests**: 11 new tests covering outcome history, success rate, history
+  bounding, confidence adjustment
 - **C³**: IntentModel 5.0→**6.0/10** (closed-loop rate 30%→60%+)
 - **Net**: +11 tests (4,981→4,992)
 
 ### §X #134 (2026-07-03) — Test consolidation R6
 
-- **Test consolidation R6**: 7 modules added to `_SMOKE_MODULES` (card_types, digital_life_constants, event_loop_system, hook_registry, hsm_formula_system, maturity_system, multimodal_service)
-- **6 extra test classes** preserve behavioral assertions (37 tests): TestCardTypes, TestDigitalLifeConstants, TestEventLoopSystem, TestHookRegistry, TestHSMFormulaSystem, TestMaturitySystem
-- **Deleted 9 redundant files**: 6 import-only test files + test_simple.py (trivial env validation) + test_result_feedback.py (dead utility, `__test__ = False`) + test_trained_models.py (orphan, moved 3 modules to _DELETED_MODULES)
+- **Test consolidation R6**: 7 modules added to `_SMOKE_MODULES` (card_types,
+  digital_life_constants, event_loop_system, hook_registry, hsm_formula_system,
+  maturity_system, multimodal_service)
+- **6 extra test classes** preserve behavioral assertions (37 tests):
+  TestCardTypes, TestDigitalLifeConstants, TestEventLoopSystem,
+  TestHookRegistry, TestHSMFormulaSystem, TestMaturitySystem
+- **Deleted 9 redundant files**: 6 import-only test files + test_simple.py
+  (trivial env validation) + test_result_feedback.py (dead utility,
+  `__test__ = False`) + test_trained_models.py (orphan, moved 3 modules to
+  _DELETED_MODULES)
 - **Fixed** `assert True` no-op in test_multimodal_integration.py:226
 - **Net**: -2 tests (4,983→4,981)
 
 ### §X #197 (2026-07-04) — Unified SharedLatentSpace singleton
 
-- **SharedLatentSpace**: 9 separate instances → 1 process-wide singleton via `get_shared_latent_space()`
-- **5 modalities** registered once: vision, audio, text, vision_semantic, audio_semantic
-- **9 components wired**: MultimodalBridge, ED3NEngine, SimilarityService, DualEncoderRouter, VisionPipeline, AudioPipeline, MultimodalService, CrossModalRouter, TrainingPipeline
+- **SharedLatentSpace**: 9 separate instances → 1 process-wide singleton via
+  `get_shared_latent_space()`
+- **5 modalities** registered once: vision, audio, text, vision_semantic,
+  audio_semantic
+- **9 components wired**: MultimodalBridge, ED3NEngine, SimilarityService,
+  DualEncoderRouter, VisionPipeline, AudioPipeline, MultimodalService,
+  CrossModalRouter, TrainingPipeline
 - **18 lines dead code removed**
 - **5,019 tests — 0 errors**
 
 ### §X #198 (2026-07-05) — Code audit + stale Phase reference cleanup
 
-- **Full audit**: 0 direct SharedLatentSpace instantiation, 0 external register_modality calls, 0 TODO/FIXME/HACK, 0 STUB markers, 0 deleted module references, 0 bare except blocks
+- **Full audit**: 0 direct SharedLatentSpace instantiation, 0 external
+  register_modality calls, 0 TODO/FIXME/HACK, 0 STUB markers, 0 deleted module
+  references, 0 bare except blocks
 - **4 stale Phase references** fixed in comments
 - **5,019 tests — 0 errors**
 
@@ -906,178 +1460,317 @@ Backend registers session → returns {type:'connected', client_id:'uuid', sessi
 - **LatentReasoningNetwork**: wired into pipeline (Phase 4 training)
 - **VisualEncoder/AudioEncoder**: trainable projections (Phase 0 training)
 - **FullTrainingPipeline**: upgraded to 8 phases
-- **Training executed**: ED3N acc=0.914 (84,726 math + 11,180 knowledge), GARDEN acc=0.700, JointTrainer acc=0.939
+- **Training executed**: ED3N acc=0.914 (84,726 math + 11,180 knowledge), GARDEN
+  acc=0.700, JointTrainer acc=0.939
 - **Evaluation**: 9/10 (90%) passed
 - **SNN audit**: genuine LIF SNN but marginal benefit
 - **5,019 tests — 0 errors**
 
 ### §X #200 (2026-07-06) — Score inflation root cause analysis + honest scoring framework
 
-- **Root cause**: PHASE_REVIEW6.md used "framework scores" as "actual scores" without distinguishing score types
+- **Root cause**: PHASE_REVIEW6.md used "framework scores" as "actual scores"
+  without distinguishing score types
 - **6-type score classification** table added to INTELLIGENCE_ASSESSMENT.md
-- **PHASE_REVIEW6.md**: Added inflation root cause analysis with corrected scores
+- **PHASE_REVIEW6.md**: Added inflation root cause analysis with corrected
+  scores
 - **FRAMEWORK_OVERVIEW.md**: Added "trained" column to intelligence table
-- **MASTER_TASK_MAP.md**: Score corrections table with framework vs trained columns
+- **MASTER_TASK_MAP.md**: Score corrections table with framework vs trained
+  columns
 - **4,526 tests — 0 errors**
 
 ### §X #201 (2026-07-06) — Fix test collection hang via lazy imports + pre-existing bug cleanup
 
-- **4 `__init__.py`** → lazy `__getattr__`: `services/`, `services/llm/`, `services/llm/providers/`, `core/autonomous/`
+- **4 `__init__.py`** → lazy `__getattr__`: `services/`, `services/llm/`,
+  `services/llm/providers/`, `core/autonomous/`
 - **`desktop_routes.py`**: DigitalLifeIntegrator under `TYPE_CHECKING`
-- **3 pre-existing bugs fixed**: sign/encrypt order + cleanup in `security.py`, `max_attempts→max_retries` in `connector.py`, double-wrap removal
+- **3 pre-existing bugs fixed**: sign/encrypt order + cleanup in `security.py`,
+  `max_attempts→max_retries` in `connector.py`, double-wrap removal
 - **17 skip guards** added for 72 pre-existing test failures (stub/API-mismatch)
 - **13 more skip guards**: 4 template_matcher + 9 proactive_interaction
-- **orphan cleanup**: deleted `tests/ai/compression/`, `tests/ai/dialogue/`, 4 dead test files importing deleted modules
-- **MD sync**: README.md (5→4,464), IMPROVEMENT_ROADMAP.md, INTELLIGENCE_ASSESSMENT.md, CAUSAL_CHAIN_COMPLETENESS.md
+- **orphan cleanup**: deleted `tests/ai/compression/`, `tests/ai/dialogue/`, 4
+  dead test files importing deleted modules
+- **MD sync**: README.md (5→4,464), IMPROVEMENT_ROADMAP.md,
+  INTELLIGENCE_ASSESSMENT.md, CAUSAL_CHAIN_COMPLETENESS.md
 - **4,464 tests collected** in 97.80s (was hanging >120s)
 
 ### §X #201b (2026-07-07) — MD sync + orphan cleanup
 
-- **MD test count sync**: README.md (5 locations: 5,016→4,464), IMPROVEMENT_ROADMAP.md, INTELLIGENCE_ASSESSMENT.md
+- **MD test count sync**: README.md (5 locations: 5,016→4,464),
+  IMPROVEMENT_ROADMAP.md, INTELLIGENCE_ASSESSMENT.md
 - **CHANGELOG.md**: Added entries for §X #197-201
-- **Orphan directories deleted**: `tests/ai/compression/`, `tests/ai/dialogue/` (stale __init__.py + .pyc)
-- **Dead test files deleted**: `test_code_inspector.py`, `test_performance_optimizer.py`, `test_predictive_maintenance.py`, `test_alpha_upgrade.py` (all imported deleted Phase 11 modules)
-- **test_phase1_core_activation.py**: Repaired — removed deleted `ai.learning` import + TestUnifiedLearningOrchestrator class (5 tests unblocked)
-- **21 utility scripts moved**: `tests/utils/`→`scripts/utils/` (all standalone scripts, zero importers)
-- **6 mock-only integration tests rewritten**: replaced `assert AsyncMock(return_value=True) is True` (tested Python mock mechanics, not project code) with real import + instantiation tests using actual production classes (KnowledgeGraphAgent, EvolutionEngine, SystemManager, DictionaryLayer, HSPConnector). 10 passed, 2 skipped (pre-existing MessageBridge bug revealed).
-- **MessageBridge bug fixed**: Added `handle_external_message()` method — was missing, causing AttributeError in HSPConnector._register_default_hooks(). Previously masked by mock-only tests.
-- **8 more weak tests handled**: Rewrote 5 with real production classes (MCPConnector, ElementLayer, VisionToneInverter, AgentManager, AtlassianBridge). Skipped 3 orphan files (context7_connector stub, learning_and_trust deleted module, tool_dispatcher_logging no Python class). 10 passed, 3 skipped.
-- **test_base.py fixed**: `__test__ = False` + `Any` import bug fixed (dead base class, no consumers)
-- **batch file fixed**: `tests/run_enterprise_tests.bat` → `python scripts\utils\enterprise_test_suite.py`
-- **Usage docs created**: `docs/usage/QUICK_START.md` (direct start guide) + `docs/usage/SCENARIOS.md` (train-first/configure-first/deployment scenarios)
+- **Orphan directories deleted**: `tests/ai/compression/`, `tests/ai/dialogue/`
+  (stale **init**.py + .pyc)
+- **Dead test files deleted**: `test_code_inspector.py`,
+  `test_performance_optimizer.py`, `test_predictive_maintenance.py`,
+  `test_alpha_upgrade.py` (all imported deleted Phase 11 modules)
+- **test_phase1_core_activation.py**: Repaired — removed deleted `ai.learning`
+  import + TestUnifiedLearningOrchestrator class (5 tests unblocked)
+- **21 utility scripts moved**: `tests/utils/`→`scripts/utils/` (all standalone
+  scripts, zero importers)
+- **6 mock-only integration tests rewritten**: replaced
+  `assert AsyncMock(return_value=True) is True` (tested Python mock mechanics,
+  not project code) with real import + instantiation tests using actual
+  production classes (KnowledgeGraphAgent, EvolutionEngine, SystemManager,
+  DictionaryLayer, HSPConnector). 10 passed, 2 skipped (pre-existing
+  MessageBridge bug revealed).
+- **MessageBridge bug fixed**: Added `handle_external_message()` method — was
+  missing, causing AttributeError in HSPConnector._register_default_hooks().
+  Previously masked by mock-only tests.
+- **8 more weak tests handled**: Rewrote 5 with real production classes
+  (MCPConnector, ElementLayer, VisionToneInverter, AgentManager,
+  AtlassianBridge). Skipped 3 orphan files (context7_connector stub,
+  learning_and_trust deleted module, tool_dispatcher_logging no Python class).
+  10 passed, 3 skipped.
+- **test_base.py fixed**: `__test__ = False` + `Any` import bug fixed (dead base
+  class, no consumers)
+- **batch file fixed**: `tests/run_enterprise_tests.bat` →
+  `python scripts\utils\enterprise_test_suite.py`
+- **Usage docs created**: `docs/usage/QUICK_START.md` (direct start guide) +
+  `docs/usage/SCENARIOS.md` (train-first/configure-first/deployment scenarios)
 - **New baseline**: 4,438 tests — 0 errors
-- **§X #202**: Test parametrization + 3 production bug fixes. (a) Parametrized `test_atlassian_bridge_methods.py`: 300→106 lines (-194), 18 tests preserved after fixing broad `except Exception: pytest.skip()` that was masking real failures. (b) Parametrized `test_vision_service.py` compare_images: 4→1 parametrized test. (c) Fixed `atlassian_bridge._load_endpoint_configs()` not assigning to `self.endpoints` (endpoints always empty). (d) Fixed `get_jira_projects()` `AttributeError` when API returns a list. (e) Fixed last bare `except:pass` in `dictionary.py`. (f) No broad `except Exception: pytest.skip()` remains in tests/. **4,438 tests — 0 errors**.
-- **§X #203**: Test coverage expansion — 62 new tests for 2 previously uncovered modules: `core/utils.py` (38 tests: hash, text, JSON, extraction, time, dict, list, Timer) + `ai/core/unicode_utils.py` (24 tests: normalization, romaji, CJK detection, radical lookup). **4,500 tests — 0 errors** (+62).
-- **README.md**: Updated English + Chinese index + Quick Start sections with cross-refs to new usage docs
+- **§X #202**: Test parametrization + 3 production bug fixes. (a) Parametrized
+  `test_atlassian_bridge_methods.py`: 300→106 lines (-194), 18 tests preserved
+  after fixing broad `except Exception: pytest.skip()` that was masking real
+  failures. (b) Parametrized `test_vision_service.py` compare_images: 4→1
+  parametrized test. (c) Fixed `atlassian_bridge._load_endpoint_configs()` not
+  assigning to `self.endpoints` (endpoints always empty). (d) Fixed
+  `get_jira_projects()` `AttributeError` when API returns a list. (e) Fixed last
+  bare `except:pass` in `dictionary.py`. (f) No broad
+  `except Exception: pytest.skip()` remains in tests/. **4,438 tests — 0
+  errors**.
+- **§X #203**: Test coverage expansion — 62 new tests for 2 previously uncovered
+  modules: `core/utils.py` (38 tests: hash, text, JSON, extraction, time, dict,
+  list, Timer) + `ai/core/unicode_utils.py` (24 tests: normalization, romaji,
+  CJK detection, radical lookup). **4,500 tests — 0 errors** (+62).
+- **README.md**: Updated English + Chinese index + Quick Start sections with
+  cross-refs to new usage docs
 - **ACTIVE_SCRIPTS.md**: Updated with 21 new `scripts/utils/` entries + counts
 - **CAUSAL_CHAIN_COMPLETENESS.md**: Added §X #201b row
 - **4,438 test baseline** — 0 errors (35.93s collection)
 - **§X #204 — Deep audit rounds 1-9**: Comprehensive technical debt elimination.
-  - **#204-1**: Deleted orphan `mcp/context7_connector.py`, fixed `mcp/connector.py` stub log fallback,
-    fixed `cli/repl.py` hardcoded time.sleep(3), removed stale `if TYPE_CHECKING: pass` blocks,
-    migrated 2 hardcoded sleeps to config-driven `loop_sleep`, added beam_search decode params to config.
-  - **#204-2**: Fixed `state_matrix.py` `CognitiveOp=None` overwrite bug (imported object was None at runtime),
-    deleted `web-live2d-viewer/js/security-manager.js` (Node.js code in browser context, never loaded),
-    replaced 3 dead lazy-init methods in `learning_integration.py` with `return None`.
-  - **#204-3**: Deleted dangerous `ai/context/requirements.txt` (stdlib listed as pip deps),
-    fixed `tray-manager.js` top-level `require('fs')` without guard (crashes in Electron renderer),
-    removed 4 dead script refs from `apps/backend/package.json`, deleted 6 dead source files,
-    fixed 3 `try/except` test anti-patterns, deleted 3 skip-only test files.
-  - **#204-4**: Fixed 3 broken scripts in root `package.json`, fixed root `Dockerfile` entry point,
-    removed dead `generate_and_save_to_desktop` lazy import, deleted `pixel-angela/visualizer.py`,
-    deleted unused `code_understanding_tool.py`, fixed 9 broken script paths in Electron HTML test pages,
-    fixed `setup.py` `python_requires` (3.8→3.10), cleaned root `.gitignore`.
-  - **#204-5 through #204-8**: Converted `loguru` imports to stdlib logging (loguru not in any dep group),
-    guarded `BeautifulSoup` import (only in optional `full` deps), moved `src/docs/`→`docs/src-docs/`,
-    deleted stale `.pyc` files from deleted modules, deleted empty `services/node_services/`.
-  - **Net**: 20+ dead files deleted, 2 import-time crash bugs fixed, 3 test anti-patterns fixed,
-    config/docs/housekeeping cleanup across 15+ files. **4,500 tests — 0 errors**.
-  - **§X #204-9 (this commit)**: Deep audit rounds 10-11 — dead subsystem deletion + dep audit.
-    - **Deleted 4 dead integration modules** (584 lines): `atlassian_bridge.py`, `rovo_dev_connector.py`,
-      `rovo_dev_agent.py`, `enhanced_rovo_dev_connector.py` — zero production importers.
-    - **Deleted economy/ subsystem** (340 lines + API route): `economy_db.py`, `economy_manager.py`,
-      `economy.py` route — half-built shell, never wired into production.
-    - **Deleted orphan shared/ files**: `cleanup_utils.py` (never imported by any file),
-      `test_cleanup_utils.py` (tested generic dicts, not actual code).
-    - **Deleted orphan test file**: `test_async_utils.py` (referenced deleted `shared.utils.async_utils`).
-    - **Deleted 7 test files** for deleted modules (6 integration + 1 atlassian).
-    - **Fixed pyproject.toml deps**: Added 5 missing deps (redis, PyJWT, pynvml, textblob, scipy);
-      removed 12 unused deps (networkx, faiss-cpu, gmqtt, rich, click, tqdm, firebase-admin,
-      openai-whisper, pynput, pygetwindow, websockets, py-cpuinfo).
-    - **Cleaned up references**: `core/__init__.py` __all__, `integrations/__init__.py`,
-      `pet/pet_manager.py`, `_deps.py`, `lifespan.py`, `pet.py` endpoint, test files,
-      router test expectations, smoke imports.
+  - **#204-1**: Deleted orphan `mcp/context7_connector.py`, fixed
+    `mcp/connector.py` stub log fallback, fixed `cli/repl.py` hardcoded
+    time.sleep(3), removed stale `if TYPE_CHECKING: pass` blocks, migrated 2
+    hardcoded sleeps to config-driven `loop_sleep`, added beam_search decode
+    params to config.
+  - **#204-2**: Fixed `state_matrix.py` `CognitiveOp=None` overwrite bug
+    (imported object was None at runtime), deleted
+    `web-live2d-viewer/js/security-manager.js` (Node.js code in browser context,
+    never loaded), replaced 3 dead lazy-init methods in
+    `learning_integration.py` with `return None`.
+  - **#204-3**: Deleted dangerous `ai/context/requirements.txt` (stdlib listed
+    as pip deps), fixed `tray-manager.js` top-level `require('fs')` without
+    guard (crashes in Electron renderer), removed 4 dead script refs from
+    `apps/backend/package.json`, deleted 6 dead source files, fixed 3
+    `try/except` test anti-patterns, deleted 3 skip-only test files.
+  - **#204-4**: Fixed 3 broken scripts in root `package.json`, fixed root
+    `Dockerfile` entry point, removed dead `generate_and_save_to_desktop` lazy
+    import, deleted `pixel-angela/visualizer.py`, deleted unused
+    `code_understanding_tool.py`, fixed 9 broken script paths in Electron HTML
+    test pages, fixed `setup.py` `python_requires` (3.8→3.10), cleaned root
+    `.gitignore`.
+  - **#204-5 through #204-8**: Converted `loguru` imports to stdlib logging
+    (loguru not in any dep group), guarded `BeautifulSoup` import (only in
+    optional `full` deps), moved `src/docs/`→`docs/src-docs/`, deleted stale
+    `.pyc` files from deleted modules, deleted empty `services/node_services/`.
+  - **Net**: 20+ dead files deleted, 2 import-time crash bugs fixed, 3 test
+    anti-patterns fixed, config/docs/housekeeping cleanup across 15+ files.
+    **4,500 tests — 0 errors**.
+  - **§X #204-9 (this commit)**: Deep audit rounds 10-11 — dead subsystem
+    deletion + dep audit.
+    - **Deleted 4 dead integration modules** (584 lines): `atlassian_bridge.py`,
+      `rovo_dev_connector.py`, `rovo_dev_agent.py`,
+      `enhanced_rovo_dev_connector.py` — zero production importers.
+    - **Deleted economy/ subsystem** (340 lines + API route): `economy_db.py`,
+      `economy_manager.py`, `economy.py` route — half-built shell, never wired
+      into production.
+    - **Deleted orphan shared/ files**: `cleanup_utils.py` (never imported by
+      any file), `test_cleanup_utils.py` (tested generic dicts, not actual
+      code).
+    - **Deleted orphan test file**: `test_async_utils.py` (referenced deleted
+      `shared.utils.async_utils`).
+    - **Deleted 7 test files** for deleted modules (6 integration + 1
+      atlassian).
+    - **Fixed pyproject.toml deps**: Added 5 missing deps (redis, PyJWT, pynvml,
+      textblob, scipy); removed 12 unused deps (networkx, faiss-cpu, gmqtt,
+      rich, click, tqdm, firebase-admin, openai-whisper, pynput, pygetwindow,
+      websockets, py-cpuinfo).
+    - **Cleaned up references**: `core/__init__.py` **all**,
+      `integrations/__init__.py`, `pet/pet_manager.py`, `_deps.py`,
+      `lifespan.py`, `pet.py` endpoint, test files, router test expectations,
+      smoke imports.
     - **Fixed test bug**: `test_security_middleware.py` compared str vs bytes.
     - **Net**: -1,658 lines, -17 files, -12 unused deps, +5 missing deps.
-    - **4,441 tests collected — 0 errors** (-105 vs baseline 4,546, all from deleted dead module tests).
+    - **4,441 tests collected — 0 errors** (-105 vs baseline 4,546, all from
+      deleted dead module tests).
   - **§X #204-10 (this commit)**: Test quality cleanup + MD sync.
-    - **Deleted 8 dead test files** (1,220 lines): 6 fully-skipped (`allow_module_level=True`),
-      2 zero-assertion/no-op files.
-    - **Files deleted**: `test_llm_e2e.py`, `test_persistence.py`, `test_maturity_system.py`,
-      `test_project_coordinator_isolation.py`, `test_message_bridge.py`, `test_module_integration.py`,
-      `test_base.py`, `test_google_drive_handler.py` (partially skipped; reduced 5/6 tests to skip
-      markers, kept import test), `test_apple_inc.py`, `test_agi_integration.py`,
-      `test_cli_imports.py`.
-    - **MD sync**: Updated 4 files (MASTER_TASK_MAP, IMPROVEMENT_ROADMAP, README — 9 baseline
-      references) from 4,438/4,500 → **4,398 tests collected — 0 errors**.
+    - **Deleted 8 dead test files** (1,220 lines): 6 fully-skipped
+      (`allow_module_level=True`), 2 zero-assertion/no-op files.
+    - **Files deleted**: `test_llm_e2e.py`, `test_persistence.py`,
+      `test_maturity_system.py`, `test_project_coordinator_isolation.py`,
+      `test_message_bridge.py`, `test_module_integration.py`, `test_base.py`,
+      `test_google_drive_handler.py` (partially skipped; reduced 5/6 tests to
+      skip markers, kept import test), `test_apple_inc.py`,
+      `test_agi_integration.py`, `test_cli_imports.py`.
+    - **MD sync**: Updated 4 files (MASTER_TASK_MAP, IMPROVEMENT_ROADMAP, README
+      — 9 baseline references) from 4,438/4,500 → **4,398 tests collected — 0
+      errors**.
     - **Net**: -1,220 lines of dead test code, -11 test files.
-    - **4,398 tests collected — 0 errors** (-43 from prior baseline, all from dead test deletion).
+    - **4,398 tests collected — 0 errors** (-43 from prior baseline, all from
+      dead test deletion).
   - **§X #204-11**: Test coverage expansion for 2 uncovered modules.
-    - **weather_service.py**: 13 tests covering parse, caching, error handling, timeout.
+    - **weather_service.py**: 13 tests covering parse, caching, error handling,
+      timeout.
     - **async_io.py**: 11 tests covering text/JSON/binary async I/O.
     - **Net**: +30 tests, -0 lines (2 new test files).
     - **4,428 tests collected — 0 errors** (+30 from prior baseline).
-    - MD sync across 5 files (AGENTS, README, IMPROVEMENT_ROADMAP, CAUSAL_CHAIN, CHANGELOG).
+    - MD sync across 5 files (AGENTS, README, IMPROVEMENT_ROADMAP, CAUSAL_CHAIN,
+      CHANGELOG).
   - **§X #204-12**: Bug fixes + test consolidation.
-    - **3 HIGH bug fixes**: `__import__("asyncio")` in RetryPolicy → proper `import asyncio`;
-      `math_verifier._safe_eval` silent `except Exception` → added logging with `exc_info=True`;
-      deprecated `asyncio.get_event_loop()` → `get_running_loop()` in waiting_scheduler.
-    - **4 MEDIUM fixes**: vision_service scene/compare logging with `exc_info=True`;
-      `services/__init__.py` lazy import debug logging; circuit breaker logging.
-    - **Test consolidation**: Deleted 4 dead/duplicate test files + empty e2e/ dir.
-    - **Net**: -17 tests (consolidation), -2,861 lines total across all §X #204 rounds.
+    - **3 HIGH bug fixes**: `__import__("asyncio")` in RetryPolicy → proper
+      `import asyncio`; `math_verifier._safe_eval` silent `except Exception` →
+      added logging with `exc_info=True`; deprecated `asyncio.get_event_loop()`
+      → `get_running_loop()` in waiting_scheduler.
+    - **4 MEDIUM fixes**: vision_service scene/compare logging with
+      `exc_info=True`; `services/__init__.py` lazy import debug logging; circuit
+      breaker logging.
+    - **Test consolidation**: Deleted 4 dead/duplicate test files + empty e2e/
+      dir.
+    - **Net**: -17 tests (consolidation), -2,861 lines total across all §X #204
+      rounds.
     - **4,411 tests collected — 0 errors** (-17 from prior baseline).
   - **§X #204-14**: Test deduplication + diagnostic cleanup.
-    - Merged 2 duplicate test pairs: web_search_handler (core/unit) + service_registry (core/interfaces).
+    - Merged 2 duplicate test pairs: web_search_handler (core/unit) +
+      service_registry (core/interfaces).
     - Deleted 2 redundant test files + 1 empty directory.
-    - Cleaned 33 diagnostic print statements from test_phase1.py (assertions preserved).
+    - Cleaned 33 diagnostic print statements from test_phase1.py (assertions
+      preserved).
     - Net: -13 tests, -0 lines of meaningful coverage lost.
     - **4,398 tests collected — 0 errors** (-13 from prior baseline).
-  - **§X #206 (2026-07-09)**: Bug fixes Round 3 — 16 unbounded array/listener/memory leak fixes across 26 files.
-    - **JS fixes**: unified-display-matrix.js (4 listener arrays + off() methods); wallpaper-handler.js (electronAPI.on listener leak); simple-live2d-loader.js (PIXI .on('hit') listener leak); state-matrix.js (changeCallbacks dedup + unregister); live2d-cubism-wrapper.js (60-120×/frame GPU query cache)
-    - **Python fixes**: lif_neuron.py (_spike_history→deque(1000)), self_generation.py (avatar_history→200), adversarial_generation_system.py (examples→500, eval→1000), vector_store.py (ids→10000), text_gravity.py (_history→1000), negativity.py (_history→5000), ed3n_trainer.py (training_history→500), digital_life_integrator.py (life_events→1000, sig_events→200), state_matrix.py (unclassified_buffer→1000)
+  - **§X #206 (2026-07-09)**: Bug fixes Round 3 — 16 unbounded
+    array/listener/memory leak fixes across 26 files.
+    - **JS fixes**: unified-display-matrix.js (4 listener arrays + off()
+      methods); wallpaper-handler.js (electronAPI.on listener leak);
+      simple-live2d-loader.js (PIXI .on('hit') listener leak); state-matrix.js
+      (changeCallbacks dedup + unregister); live2d-cubism-wrapper.js
+      (60-120×/frame GPU query cache)
+    - **Python fixes**: lif_neuron.py (_spike_history→deque(1000)),
+      self_generation.py (avatar_history→200), adversarial_generation_system.py
+      (examples→500, eval→1000), vector_store.py (ids→10000), text_gravity.py
+      (_history→1000), negativity.py (_history→5000), ed3n_trainer.py
+      (training_history→500), digital_life_integrator.py (life_events→1000,
+      sig_events→200), state_matrix.py (unclassified_buffer→1000)
     - **Net**: 26 files modified, 0 lines of coverage lost.
     - All syntax-checked (16 Python py_compile, 10 JS node -c).
-    - **4,398 tests collected — 0 errors** (no test count change; these were behavioral fixes).
+    - **4,398 tests collected — 0 errors** (no test count change; these were
+      behavioral fixes).
   - **§X #207 (2026-07-09)**: Test dedup + deep audit.
-    - Merged duplicate test_active_cognition_formula.py + test_influence_applicator.py (unit→core).
-    - Preserved unique `test_instantiation_with_config`. Added `__test__ = False` to comprehensive_test_framework.py.
-    - Deep audit confirmed eta_axis_state is self-contained, config_loader.py + app_config_loader.py are distinct.
-    - CHANGELOG §X #204-10 corrected: test_google_drive_handler.py partially skipped but not deleted.
+    - Merged duplicate test_active_cognition_formula.py +
+      test_influence_applicator.py (unit→core).
+    - Preserved unique `test_instantiation_with_config`. Added
+      `__test__ = False` to comprehensive_test_framework.py.
+    - Deep audit confirmed eta_axis_state is self-contained, config_loader.py +
+      app_config_loader.py are distinct.
+    - CHANGELOG §X #204-10 corrected: test_google_drive_handler.py partially
+      skipped but not deleted.
     - Net: -2 files, -141 lines.
     - **4,396 tests collected — 0 errors** (-2 from dedup).
 
-> **§X #208 (2026-07-09)**: DesktopInteraction path validation + response route transparency + test README update.
-> - Added `_is_safe_path()` with `_ALLOWED_ROOTS` whitelist to DesktopInteraction (guards `create_file`, `delete_file`, `move_file`, `initialize`)
-> - Fixed response `route` field — now reports `'fallback'` when LLM fallback chain produced the response (was always `'llm'`)
+> **§X #208 (2026-07-09)**: DesktopInteraction path validation + response route
+> transparency + test README update.
+>
+> - Added `_is_safe_path()` with `_ALLOWED_ROOTS` whitelist to
+>   DesktopInteraction (guards `create_file`, `delete_file`, `move_file`,
+>   `initialize`)
+> - Fixed response `route` field — now reports `'fallback'` when LLM fallback
+>   chain produced the response (was always `'llm'`)
 > - Updated `tests/README.md` with current directory structure
 > - **4,387 tests collected — 0 errors** (-9 from prior baseline)
-> 
-> > **§X #209 (2026-07-10)**: Routing quality — word-boundary-aware keyword matching across 13 files.
-> > - **core/utils.py**: Added `any_keyword()` — English KWs use `\b` word boundaries; CJK keeps substring (density+anti+format triple-gate prevents false positives). Added `all_keywords()` for multi-keyword AND conditions.
-> > - **IntentRegistry**: `detect()` rewritten — density scoring (keyword-char positions / query length), anti_keyword penalty (-50% each), format_keys discount (0.3×). Priority raised to 3 (beats file_op on ties).
-> > - **document_router.py**: `_parse_task_type()` triple gate (density+anti+format), returns None on rejection. English KWs use any_keyword().
-> > - **13 routing files** switched from bare `any(k in text)` to `any_keyword()`: query_classifier (13), dictionary_classifier (2), execution_gate (6), task_manager_handler (5), planning_engine (4), reasoning_engines (2), composer (8), template_matcher (1), garden_engine (2), router.py fallback (2), input_sensor (1), intent_registry (1 inline), document_router (1).
-> > - **Bug found & fixed**: `execution_gate.py` false positive — `'no' in '建立 notes.md'` matched substring "no" inside "notes.md". Fixed by word-boundary check.
-> > - **4,387 tests collected — 0 errors** (no test count change; behavioral fixes only).
-> 
-> > **§X #210 (2026-07-10)**: Routing quality — density scoring, anti-keywords, format gate.
-> > - **IntentRegistry `_DEFAULT_PATTERNS`**: Added 9 missing operation keywords (分析/優化/摘要/總結/分類/精簡/濃縮/歸納/歸檔). Priority raised to 3.
-> > - **Format gate**: `format_keys` field added to IntentPattern. At least one format key must match the query, otherwise score is discounted 0.3×. Rejects "分類器" (format gate) but allows "分類文件" (keyword match + format key "文件").
-> > - **Anti-keyword gate**: Each anti-keyword hit reduces score by 50% (capped at 90%). "整理思路" → anti "思路" hits → score × 0.5.
-> > - **document_router anti-patterns**: 整理→思路/想法/概念/邏輯; 優化→算法/模型/參數/訓練; 總結→心得/感想/體會/討論/會議. Each causes _parse_task_type() to return None.
+>
+> > **§X #209 (2026-07-10)**: Routing quality — word-boundary-aware keyword
+> > matching across 13 files.
+> >
+> > - **core/utils.py**: Added `any_keyword()` — English KWs use `\b` word
+> >   boundaries; CJK keeps substring (density+anti+format triple-gate prevents
+> >   false positives). Added `all_keywords()` for multi-keyword AND conditions.
+> > - **IntentRegistry**: `detect()` rewritten — density scoring (keyword-char
+> >   positions / query length), anti_keyword penalty (-50% each), format_keys
+> >   discount (0.3×). Priority raised to 3 (beats file_op on ties).
+> > - **document_router.py**: `_parse_task_type()` triple gate
+> >   (density+anti+format), returns None on rejection. English KWs use
+> >   any_keyword().
+> > - **13 routing files** switched from bare `any(k in text)` to
+> >   `any_keyword()`: query_classifier (13), dictionary_classifier (2),
+> >   execution_gate (6), task_manager_handler (5), planning_engine (4),
+> >   reasoning_engines (2), composer (8), template_matcher (1), garden_engine
+> >   (2), router.py fallback (2), input_sensor (1), intent_registry (1 inline),
+> >   document_router (1).
+> > - **Bug found & fixed**: `execution_gate.py` false positive —
+> >   `'no' in '建立 notes.md'` matched substring "no" inside "notes.md". Fixed
+> >   by word-boundary check.
+> > - **4,387 tests collected — 0 errors** (no test count change; behavioral
+> >   fixes only).
+>
+> > **§X #210 (2026-07-10)**: Routing quality — density scoring, anti-keywords,
+> > format gate.
+> >
+> > - **IntentRegistry `_DEFAULT_PATTERNS`**: Added 9 missing operation keywords
+> >   (分析/優化/摘要/總結/分類/精簡/濃縮/歸納/歸檔). Priority raised to 3.
+> > - **Format gate**: `format_keys` field added to IntentPattern. At least one
+> >   format key must match the query, otherwise score is discounted 0.3×.
+> >   Rejects "分類器" (format gate) but allows "分類文件" (keyword match +
+> >   format key "文件").
+> > - **Anti-keyword gate**: Each anti-keyword hit reduces score by 50% (capped
+> >   at 90%). "整理思路" → anti "思路" hits → score × 0.5.
+> > - **document_router
+> >   anti-patterns**: 整理→思路/想法/概念/邏輯; 優化→算法/模型/參數/訓練; 總結→心得/感想/體會/討論/會議.
+> >   Each causes _parse_task_type() to return None.
 > > - All 16 document routing test cases pass: 0 document false positives.
 > > - **4,387 tests collected — 0 errors**.
-> 
-> > **§X #211 (2026-07-10)**: Routing bypass path elimination — TaskManagerHandler, AgentOrchestrator, ModelBus, MathVerifier.
-> > - **TaskManagerHandler**: `_parse()` default changed from `return "create", {"title": text}` to `if any_keyword(text, ("任務","task","待辦","todo")): return "list", {}`. Fixes "之前給了啥任務來著?" creating nonsense tasks instead of listing them.
-> > - **AgentOrchestrator**: `classify_intent()` gated by IntentRegistry detect() first. If IR identifies task/math/document/learning/character_card intent, returns "general" immediately. Sub-classification only runs after the gate passes.
-> > - **ModelBus direct hit** (router.py): Before returning `_try_template_match` result, gates through PriorityNegotiator routing_mode. Conservative mode requires effective_threshold ≥ max(0.9, direct_threshold).
-> > - **MathVerifier short-circuit** (chat_routes.py): Change from early return to context enrichment. IntentRegistry gate: only fast-path if IR confirms "math" at ≥ 0.1 confidence.
+>
+> > **§X #211 (2026-07-10)**: Routing bypass path elimination —
+> > TaskManagerHandler, AgentOrchestrator, ModelBus, MathVerifier.
+> >
+> > - **TaskManagerHandler**: `_parse()` default changed from
+> >   `return "create", {"title": text}` to
+> >   `if any_keyword(text, ("任務","task","待辦","todo")): return "list", {}`.
+> >   Fixes "之前給了啥任務來著?" creating nonsense tasks instead of listing
+> >   them.
+> > - **AgentOrchestrator**: `classify_intent()` gated by IntentRegistry
+> >   detect() first. If IR identifies
+> >   task/math/document/learning/character_card intent, returns "general"
+> >   immediately. Sub-classification only runs after the gate passes.
+> > - **ModelBus direct hit** (router.py): Before returning
+> >   `_try_template_match` result, gates through PriorityNegotiator
+> >   routing_mode. Conservative mode requires effective_threshold ≥ max(0.9,
+> >   direct_threshold).
+> > - **MathVerifier short-circuit** (chat_routes.py): Change from early return
+> >   to context enrichment. IntentRegistry gate: only fast-path if IR confirms
+> >   "math" at ≥ 0.1 confidence.
 > > - **4,387 tests collected — 0 errors**.
-> 
-> > **§X #212 (2026-07-10)**: Comprehensive pipeline integrity overhaul + remaining issues audit.
-> > - Complete audit of all 10 routing bypass paths in the project. Found and fixed 4 remaining:
-> >   1. `_try_agent_routing()` → injection into context instead of direct response return
-> >   2. `_handle_execution_gate()` auto_execute → gated through IntentRegistry validation
-> >   3. `/session/{session_id}/send` → redirected to `_handle_chat_request()` full pipeline
-> >   4. `agent_orchestrator.py classify_intent()` → expanded IntentRegistry gate to ALL intents at conf ≥ 0.3
+>
+> > **§X #212 (2026-07-10)**: Comprehensive pipeline integrity overhaul +
+> > remaining issues audit.
+> >
+> > - Complete audit of all 10 routing bypass paths in the project. Found and
+> >   fixed 4 remaining:
+> >   1. `_try_agent_routing()` → injection into context instead of direct
+> >      response return
+> >   2. `_handle_execution_gate()` auto_execute → gated through IntentRegistry
+> >      validation
+> >   3. `/session/{session_id}/send` → redirected to `_handle_chat_request()`
+> >      full pipeline
+> >   4. `agent_orchestrator.py classify_intent()` → expanded IntentRegistry
+> >      gate to ALL intents at conf ≥ 0.3
 > > - Added vision/audio patterns to IntentRegistry for multimodal routing.
-> > - PromptBuilder: added `_agent_result` injection so LLM sees agent processing results.
-> > - Fixed 3 pre-existing IntentPattern test bugs (wrong positional args, density scoring expectations).
+> > - PromptBuilder: added `_agent_result` injection so LLM sees agent
+> >   processing results.
+> > - Fixed 3 pre-existing IntentPattern test bugs (wrong positional args,
+> >   density scoring expectations).
 > > - Comprehensive codebase audit found ~85 issues across 20 categories.
 > > - **4,387 tests collected — 0 errors** (20 intent registry tests pass).
 
 ---
 
-**Note**: Dates marked with XX are approximate or to be determined. This changelog will be updated as more historical information becomes available.
+**Note**: Dates marked with XX are approximate or to be determined. This
+changelog will be updated as more historical information becomes available.

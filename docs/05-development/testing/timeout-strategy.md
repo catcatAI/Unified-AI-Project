@@ -1,16 +1,17 @@
 # 測試超時策略與實測指南
 
-本文檔描述了專案的測試超時策略、實測（Practical Testing）方法，以及前端終端對話測試流程。
+本文檔描述了專案的測試超時策略、實測（Practical
+Testing）方法，以及前端終端對話測試流程。
 
 ## 當前測試狀態
 
-| 指標 | 數值 |
-|:-----|:----:|
-| **測試總數** | **4,387** (2026-07-09) |
-| 收集時間 | ~26 秒 |
-| 0 errors | ✅ |
-| pytest-timeout | 已安裝 |
-| pytest-asyncio | 已安裝 |
+| 指標           |          數值          |
+| :------------- | :--------------------: |
+| **測試總數**   | **4,387** (2026-07-09) |
+| 收集時間       |         ~26 秒         |
+| 0 errors       |           ✅           |
+| pytest-timeout |         已安裝         |
+| pytest-asyncio |         已安裝         |
 
 ## 超時設置原則
 
@@ -93,15 +94,19 @@ pytest tests/cli/ --timeout=10 -v
 
 ## 前端終端對話實測（Frontend Terminal Testing）
 
-所有 3 個前端（web-live2d-viewer、Electron、Electron MVP）均配備**浮動終端覆蓋層**（Ctrl+` 切換），可直接測試對話流程。
+所有 3 個前端（web-live2d-viewer、Electron、Electron
+MVP）均配備**浮動終端覆蓋層**（Ctrl+` 切換），可直接測試對話流程。
 
 ### 實測步驟
 
 1. **啟動後端**：
+
    ```bash
    python run_angela.py --api-only
    ```
+
    或
+
    ```bash
    pnpm dev:backend
    ```
@@ -116,13 +121,13 @@ pytest tests/cli/ --timeout=10 -v
    - 觀察 `route` 和 `hit_source` 欄位
 
 4. **測試模式**：
-   | 模式 | 輸入 | 預期 route |
-   |------|------|-----------|
-   | 一般問候 | "你好" | llm |
-   | 數學 | "2+2" | dual_rail |
-   | 檔案操作 | "幫我建立一個筆記" | gate_confirm → agent |
-   | 情感 | "我今天心情不好" | llm（含 emotion） |
-   | 緊急 | "救命" | llm（含 crisis_level） |
+   | 模式     | 輸入               | 預期 route             |
+   | -------- | ------------------ | ---------------------- |
+   | 一般問候 | "你好"             | llm                    |
+   | 數學     | "2+2"              | dual_rail              |
+   | 檔案操作 | "幫我建立一個筆記" | gate_confirm → agent   |
+   | 情感     | "我今天心情不好"   | llm（含 emotion）      |
+   | 緊急     | "救命"             | llm（含 crisis_level） |
 
 ### 自動化實測建議
 
@@ -146,48 +151,48 @@ curl -X POST http://localhost:8000/api/v1/chat/unified \
 
 專案的 AI 回應管線支援三種智能層級，實測應涵蓋：
 
-| 層級 | 名稱 | 實測重點 |
-|:----:|:-----|:---------|
-| L1 | **預設組合式硬編** (ED3N Reflex) | 基本問候、數學、時事回應是否合理 |
-| L2 | **本地訓練模型** (ED3N/GARDEN) | 訓練後是否提升準確率、記憶是否正確 |
-| L3 | **LLM** (外部 API) | 複雜對話、創意、情感回應是否自然 |
+| 層級 | 名稱                             | 實測重點                           |
+| :--: | :------------------------------- | :--------------------------------- |
+|  L1  | **預設組合式硬編** (ED3N Reflex) | 基本問候、數學、時事回應是否合理   |
+|  L2  | **本地訓練模型** (ED3N/GARDEN)   | 訓練後是否提升準確率、記憶是否正確 |
+|  L3  | **LLM** (外部 API)               | 複雜對話、創意、情感回應是否自然   |
 
 ### 安全驗證
 
 實測中需確認：
 
-- ✅ **檔案操作安全**：`DesktopInteraction._is_safe_path()` 限制操作範圍在 `_ALLOWED_ROOTS` 內
-- ✅ **自主行為追蹤**：`AutonomousLifeCycle` 所有決策均透過 `BehaviorExecutor` 記錄成功/失敗
-- ✅ **非同步一致性**：`ExecutionGate` 透過 `confirm_then_execute` 要求用戶確認後才執行
+- ✅ **檔案操作安全**：`DesktopInteraction._is_safe_path()` 限制操作範圍在
+  `_ALLOWED_ROOTS` 內
+- ✅ **自主行為追蹤**：`AutonomousLifeCycle` 所有決策均透過 `BehaviorExecutor`
+  記錄成功/失敗
+- ✅ **非同步一致性**：`ExecutionGate` 透過 `confirm_then_execute`
+  要求用戶確認後才執行
 - ✅ **表達式安全**：`safe_eval` 使用 AST 白名單，禁止任意程式碼執行
 - ❌ **無幻覺漏洞**：不存在「對話說新增→執行刪除」這類非同步不一致
 
 ### 硬件資源消耗驗證
 
-| 場景 | 預期行為 |
-|:-----|:---------|
-| 低配備硬體 | 自動降級至 ED3N Reflex（L1），關閉 Live2D/GPU |
-| 高配備硬體 | 啟用 LLM（L3）+ Live2D + 多模態 |
-| 自動調整 | `PerformanceManager` + `HardwareDetection` 自動偵測並調整 |
+| 場景       | 預期行為                                                  |
+| :--------- | :-------------------------------------------------------- |
+| 低配備硬體 | 自動降級至 ED3N Reflex（L1），關閉 Live2D/GPU             |
+| 高配備硬體 | 啟用 LLM（L3）+ Live2D + 多模態                           |
+| 自動調整   | `PerformanceManager` + `HardwareDetection` 自動偵測並調整 |
 
 ## 常見問題排查
 
 ### 測試超時
 
-1. **問題**：測試經常超時
-   **解決方案**：
+1. **問題**：測試經常超時 **解決方案**：
    - 檢查是否有無限循環
    - 優化數據庫查詢
    - 增加超時時間（僅在必要時）
 
-2. **問題**：異步測試卡住
-   **解決方案**：
+2. **問題**：異步測試卡住 **解決方案**：
    - 確保所有異步操作都有適當的 `await`
    - 使用 `asyncio.wait_for` 設置超時
    - 檢查是否有未完成的協程
 
-3. **問題**：CI 環境中超時
-   **解決方案**：
+3. **問題**：CI 環境中超時 **解決方案**：
    - 在 CI 配置中增加超時時間
    - 考慮將長時間運行的測試標記為 `@pytest.mark.slow` 並單獨運行
    - 優化測試數據和環境設置

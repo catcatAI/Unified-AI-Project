@@ -12,22 +12,28 @@
 ### 1. 数据分析师代理测试失败
 
 **错误信息**：
+
 ```
 AssertionError: 'Dummy analysis failed: Unsupported query or invalid CSV.' != 'Dummy analysis failed: Invalid CSV format (inconsistent columns).'
 ```
 
-**问题原因**：
-在测试文件 [test_data_analysis_agent.py](../apps/backend/tests/agents/test_data_analysis_agent.py) 中，期望的错误消息是 "Invalid CSV format (inconsistent columns)"，但实际实现中返回的是 "Unsupported query or invalid CSV."。
+**问题原因**：在测试文件
+[test_data_analysis_agent.py](../apps/backend/tests/agents/test_data_analysis_agent.py)
+中，期望的错误消息是 "Invalid CSV format (inconsistent
+columns)"，但实际实现中返回的是 "Unsupported query or invalid CSV."。
 
 ### 2. 项目协调器测试失败
 
 **错误信息**：
+
 ```
 TypeError: object MagicMock can't be used in 'await' expression
 ```
 
-**问题原因**：
-在测试文件 [test_project_coordinator.py](../apps/backend/tests/core_ai/dialogue/test_project_coordinator.py) 中，使用了 `MagicMock` 对象来模拟异步方法，但 `MagicMock` 不能在 `await` 表达式中使用。应该使用 `AsyncMock`。
+**问题原因**：在测试文件
+[test_project_coordinator.py](../apps/backend/tests/core_ai/dialogue/test_project_coordinator.py)
+中，使用了 `MagicMock` 对象来模拟异步方法，但 `MagicMock` 不能在 `await`
+表达式中使用。应该使用 `AsyncMock`。
 
 ## 🛠️ 解决方案实施
 
@@ -35,8 +41,9 @@ TypeError: object MagicMock can't be used in 'await' expression
 
 **修改文件**：[apps/backend/src/agents/data_analysis_agent.py](../apps/backend/src/agents/data_analysis_agent.py)
 
-**修改内容**：
-将错误消息从 "Dummy analysis failed: Unsupported query or invalid CSV." 修改为 "Dummy analysis failed: Invalid CSV format (inconsistent columns)."，使其与测试期望一致。
+**修改内容**：将错误消息从 "Dummy analysis failed: Unsupported query or invalid
+CSV." 修改为 "Dummy analysis failed: Invalid CSV format (inconsistent
+columns)."，使其与测试期望一致。
 
 ```python
 # 修改前
@@ -56,8 +63,8 @@ else:
 
 **修改文件**：[apps/backend/tests/core_ai/dialogue/test_project_coordinator.py](../apps/backend/tests/core_ai/dialogue/test_project_coordinator.py)
 
-**修改内容**：
-将所有应该返回异步对象的 `MagicMock` 替换为 `AsyncMock`，并确保所有异步方法都使用 `AsyncMock` 进行模拟。
+**修改内容**：将所有应该返回异步对象的 `MagicMock` 替换为
+`AsyncMock`，并确保所有异步方法都使用 `AsyncMock` 进行模拟。
 
 ```python
 # 修改前
@@ -68,6 +75,7 @@ mock_service_discovery = AsyncMock()
 ```
 
 还修改了其他相关的地方：
+
 1. `pc.service_discovery.find_capabilities = AsyncMock(return_value=[])`
 2. `pc.service_discovery.find_capabilities = AsyncMock(side_effect=[[], [new_capability_payload]])`
 
@@ -81,7 +89,8 @@ mock_service_discovery = AsyncMock()
 ## 📝 后续建议
 
 1. **定期检查测试**：建议定期运行测试套件，确保代码修改不会引入新的问题
-2. **Mock对象使用规范**：在编写异步测试时，确保正确使用 `AsyncMock` 而不是 `MagicMock`
+2. **Mock对象使用规范**：在编写异步测试时，确保正确使用 `AsyncMock` 而不是
+   `MagicMock`
 3. **错误消息一致性**：确保实现代码中的错误消息与测试期望保持一致
 
 ## 🎉 结论

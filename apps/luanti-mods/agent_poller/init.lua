@@ -153,6 +153,8 @@ local pending_scan = nil -- one-shot node survey, attached to next poll state
 local scan_seq = 0
 local pending_vision = nil -- one-shot raycast view, attached to next poll state
 local vision_seq = 0
+local pending_ground = nil -- one-shot screen-point grounding, next poll state
+local ground_seq = 0
 
 -- Face an exact world coordinate (execution-time precise; state yaw is stale).
 local function face_toward(player, target)
@@ -557,6 +559,62 @@ local function execute_commands(actions, player)
             minetest.log(
                 "action",
                 "[agent_poller] vision (" .. #rays .. " rays) for "
+                    .. player:get_player_name()
+            )
+        elseif action.type == "ground" then
+            -- Screen point (nx,ny in game-window space) -> world coordinate.
+            -- Uses NUMERIC DIFFERENTIATION so zero yaw/pitch convention
+            -- knowledge is needed: nudge each axis by epsilon, read the
+            -- resulting look dirs, build local axes, offset from the live ray.
+            -- FOV 72deg vertical assumed (Luanti default); aspect comes from
+            -- the agent (it knows the capture size). Sign of the offsets is
+            -- an assumption — verified/fixed live on first use.
+            local nx = tonumber(action.nx) or 0.5
+            local ny = tonumber(action.ny) or 0.5
+            local aspect = tonumber(action.aspect) or 1.78
+            local yaw0 = player:get_look_horizontal()
+            local pitch0 = player:get_look_vertical()
+            local D0 = player:get_look_dir()
+            local eps = 0.02
+            player:set_look_horizontal(yaw0 + eps)
+            local Dyaw = vector.subtract(player:get_look_dir(), D0)
+            player:set_look_horizontal(yaw0)
+            player:set_look_vertical(pitch0 + eps)
+            local Dpitch = vector.subtract(player:get_look_dir(), D0)
+            player:set_look_vertical(pitch0)
+            local fov_v = math.rad(72)
+            local fov_h = 2 * math.atan(math.tan(fov_v / 2) * aspect)
+            local dir = vector.normalize(
+                vector.add(
+                    D0,
+                    vector.add(
+                        vector.multiply(Dyaw, (0.5 - nx) * fov_h / eps),
+                        vector.multiply(Dpitch, (0.5 - ny) * fov_v / eps)
+                    )
+                )
+            )
+            local eye = player:get_pos()
+            eye.y = eye.y + 1.6
+            local rc = minetest.raycast(
+                eye, vector.add(eye, vector.multiply(dir, 30)), false, false
+            )
+            local found = {node = "air", dist = 30}
+            for pointed in rc do
+                if pointed.type == "node" then
+                    local p = pointed.under
+                    found = {
+                        node = minetest.get_node(p).name,
+                        x = p.x, y = p.y, z = p.z,
+                        dist = math.floor(vector.distance(eye, p) * 10) / 10,
+                    }
+                end
+                break
+            end
+            ground_seq = ground_seq + 1
+            pending_ground = {seq = ground_seq, point = found, nx = nx, ny = ny}
+            minetest.log(
+                "action",
+                "[agent_poller] grounded (" .. found.node .. ") for "
                     .. player:get_player_name()
             )
         elseif action.type == "look" then

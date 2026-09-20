@@ -1,13 +1,16 @@
 # API Status Report (Unified-AI-Project)
 
-This document enumerates all current HTTP API endpoints exposed by the backend service in the monorepo. Unless otherwise noted, the base URL in development is:
+This document enumerates all current HTTP API endpoints exposed by the backend
+service in the monorepo. Unless otherwise noted, the base URL in development is:
 
 - Backend (direct): http://localhost:8000
 - Through Frontend Proxy: http://localhost:3000/api/py
 
-Important: New v1 endpoints live under /api/v1/... while some legacy integration endpoints still exist under /api/.... This report covers both for clarity.
+Important: New v1 endpoints live under /api/v1/... while some legacy integration
+endpoints still exist under /api/.... This report covers both for clarity.
 
 ## Index
+
 - [Health and System](#health-and-system)
 - [AI Chat and Sessions](#ai-chat-and-sessions)
 - [Code, Search, Image](#code-search-image)
@@ -32,7 +35,8 @@ Important: New v1 endpoints live under /api/v1/... while some legacy integration
 - GET `/api/v1/system/metrics/detailed`  
   Detailed metrics (CPU, Memory, Disk, Network). Uses real psutil values.
 
-Proxy via Next.js: `/api/py/api/v1/health`, `/api/py/api/v1/system/services`, `/api/py/api/v1/system/metrics/detailed`
+Proxy via Next.js: `/api/py/api/v1/health`, `/api/py/api/v1/system/services`,
+`/api/py/api/v1/system/metrics/detailed`
 
 ## AI Chat and Sessions
 
@@ -63,7 +67,8 @@ Proxy: `/api/py/api/v1/code`, `/api/py/api/v1/search`, `/api/py/api/v1/image`
 
 ## Atlassian CLI Bridge (v1)
 
-These endpoints shell out to `acli.exe` via the bridge and return parsed results.
+These endpoints shell out to `acli.exe` via the bridge and return parsed
+results.
 
 - GET `/api/v1/atlassian/status`  
   Returns: `{ acli_available, version, path }`.
@@ -76,10 +81,10 @@ These endpoints shell out to `acli.exe` via the bridge and return parsed results
   Returns list of issues.
 
 - POST `/api/v1/atlassian/jira/issue`  
-  Body: `{ project_key, summary, description?, issue_type?, priority?, labels? }`  
+  Body: `{ project_key, summary, description?, issue_type?, priority?, labels? }`
   - `priority`: e.g. High/Medium/Low (string)
   - `labels`: comma-separated string or array of strings  
-  Creates a Jira issue.
+    Creates a Jira issue.
 
 - GET `/api/v1/atlassian/confluence/spaces`  
   Returns list of Confluence spaces.
@@ -92,26 +97,29 @@ Proxy: `/api/py/api/v1/atlassian/...`
 
 ## Models and Agents (placeholders/extended)
 
-These routes appear in the current file but may be placeholders or extended in your branch. Confirm implementation details before use.
+These routes appear in the current file but may be placeholders or extended in
+your branch. Confirm implementation details before use.
 
-- GET `/api/v1/agents`  
-- GET `/api/v1/agents/{agent_id}`  
-- POST `/api/v1/agents/{agent_id}/action`  
+- GET `/api/v1/agents`
+- GET `/api/v1/agents/{agent_id}`
+- POST `/api/v1/agents/{agent_id}/action`
 
-- GET `/api/v1/models`  
-- GET `/api/v1/models/{model_id}/metrics`  
-- GET `/api/v1/models/{model_id}/training`  
+- GET `/api/v1/models`
+- GET `/api/v1/models/{model_id}/metrics`
+- GET `/api/v1/models/{model_id}/training`
 
-- GET `/api/v1/images/history`  
-- DELETE `/api/v1/images/{image_id}`  
-- POST `/api/v1/images/batch-delete`  
+- GET `/api/v1/images/history`
+- DELETE `/api/v1/images/{image_id}`
+- POST `/api/v1/images/batch-delete`
 - GET `/api/v1/images/statistics`
 
 Proxy: `/api/py` + above paths
 
 ## Legacy Atlassian/Integrations (non-v1)
 
-These endpoints exist in the same file (likely earlier API style). They are not routed via /api/v1. Prefer using the v1 ACLI bridge endpoints unless you rely on existing flows.
+These endpoints exist in the same file (likely earlier API style). They are not
+routed via /api/v1. Prefer using the v1 ACLI bridge endpoints unless you rely on
+existing flows.
 
 - POST `/api/atlassian/config`
 - POST `/api/atlassian/test-connection`
@@ -137,9 +145,15 @@ Legacy Rovo Dev integration endpoints (not under v1 prefix):
 ---
 
 ## Usage Notes
+
 - For frontend requests, always use the proxy prefix: `/api/py` + backend path.
-- For CLI, the default base URL is `http://localhost:8000`. You can override with `--url` or environment variable `CLI_BASE_URL`.
-- Some integrations require credentials (e.g., Atlassian ACLI). Configure those per vendor docs.
+- For CLI, the default base URL is `http://localhost:8000`. You can override
+  with `--url` or environment variable `CLI_BASE_URL`.
+- Some integrations require credentials (e.g., Atlassian ACLI). Configure those
+  per vendor docs.
 
 ## Maintenance
-Regenerate this report whenever API routes are added or changed. You can grep the backend service file for patterns like `@app.get(` and `@app.post(` to discover routes.
+
+Regenerate this report whenever API routes are added or changed. You can grep
+the backend service file for patterns like `@app.get(` and `@app.post(` to
+discover routes.

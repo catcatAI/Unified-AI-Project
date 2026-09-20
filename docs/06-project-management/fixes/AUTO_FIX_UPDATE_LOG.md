@@ -37,16 +37,19 @@
 ### 使用说明
 
 1. **运行自动修复工具更新检查**：
+
    ```bash
    python scripts/check_auto_fix_updates.py
    ```
 
 2. **运行增强版自动修复工具**：
+
    ```bash
    python scripts/enhanced_auto_fix.py --all
    ```
 
 3. **运行项目一键修复**：
+
    ```bash
    python scripts/auto_fix_project.py
    ```

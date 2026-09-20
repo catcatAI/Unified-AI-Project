@@ -36,10 +36,12 @@ AI Project.
 ### Natural Language Processing
 
 - **Multi-LLM Service**
-  - **Description:** A unified interface for various large language models (LLMs) like OpenAI, Google Gemini, Anthropic Claude, etc.
+  - **Description:** A unified interface for various large language models
+    (LLMs) like OpenAI, Google Gemini, Anthropic Claude, etc.
   - **Location:** `apps/backend/src/services/multi_llm_service.py`
   - **Status:** Integrated
-  - **Usage:** Used by `DialogueManager` and `ToolDispatcher` for natural language understanding and generation.
+  - **Usage:** Used by `DialogueManager` and `ToolDispatcher` for natural
+    language understanding and generation.
 
 - **Speech-to-Text Model**
   - **Description:** The speech-to-text model can be used to recognize speech
@@ -68,8 +70,6 @@ AI Project.
   - **Status:** Completed
   - **Usage:** The math tool can be used through the `ToolDispatcher`.
 
-
-
 ### Logic
 
 - **Logic Tool**
@@ -96,8 +96,6 @@ AI Project.
   - **Location:** `apps/backend/src/tools/speech_to_text_tool.py`
   - **Status:** Completed
   - **Usage:** The speech-to-text tool can be used through the `ToolDispatcher`.
-
-
 
 ### Web
 

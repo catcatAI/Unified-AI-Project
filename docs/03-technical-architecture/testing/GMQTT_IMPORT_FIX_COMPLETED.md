@@ -3,6 +3,7 @@
 ## 问题描述
 
 项目中出现了以下错误：
+
 ```
 无法解析导入 "gmqtt" basedpyright(reportMissingImports)
 ```
@@ -17,7 +18,10 @@
 
 ### 1. 条件导入和错误处理
 
-在 [external_connector.py](file:///d:/Projects/Unified-AI-Project/apps/backend/src/hsp/external/external_connector.py) 中已经实现了条件导入：
+在
+[external_connector.py](file:///d:/Projects/Unified-AI-Project/apps/backend/src/hsp/external/external_connector.py)
+中已经实现了条件导入：
+
 ```python
 # 尝试导入 gmqtt，如果失败则设置为 None 并记录错误
 try:
@@ -32,19 +36,27 @@ except ImportError as e:
 ### 2. 类型检查兼容性
 
 使用了以下技术来解决类型检查问题：
+
 - `TYPE_CHECKING` 条件导入
 - `# type: ignore` 注释忽略特定行的类型检查
-- 在 [pyrightconfig.json](file:///d:/Projects/Unified-AI-Project/apps/backend/pyrightconfig.json) 中配置忽略特定文件
+- 在
+  [pyrightconfig.json](file:///d:/Projects/Unified-AI-Project/apps/backend/pyrightconfig.json)
+  中配置忽略特定文件
 
 ### 3. 类型存根文件
 
-创建了类型存根文件 [gmqtt.pyi](file:///d:/Projects/Unified-AI-Project/apps/backend/src/stubs/gmqtt.pyi) 来为Pyright提供类型信息：
+创建了类型存根文件
+[gmqtt.pyi](file:///d:/Projects/Unified-AI-Project/apps/backend/src/stubs/gmqtt.pyi)
+来为Pyright提供类型信息：
+
 - 位置：[apps/backend/src/stubs/gmqtt.pyi](file:///d:/Projects/Unified-AI-Project/apps/backend/src/stubs/gmqtt.pyi)
 - 包含了基本的类型定义，满足类型检查需求
 
 ### 4. 自动安装脚本
 
-项目包含 [install_gmqtt.py](file:///d:/Projects/Unified-AI-Project/install_gmqtt.py) 脚本，可以自动检测和安装缺失的依赖。
+项目包含
+[install_gmqtt.py](file:///d:/Projects/Unified-AI-Project/install_gmqtt.py)
+脚本，可以自动检测和安装缺失的依赖。
 
 ## 验证结果
 
@@ -68,4 +80,5 @@ except ImportError as e:
 - [test_gmqtt_import.py](file:///d:/Projects/Unified-AI-Project/test_gmqtt_import.py) - 验证脚本
 - [install_gmqtt.py](file:///d:/Projects/Unified-AI-Project/install_gmqtt.py) - 自动安装脚本
 - [apps/backend/src/stubs/gmqtt.pyi](file:///d:/Projects/Unified-AI-Project/apps/backend/src/stubs/gmqtt.pyi) - 类型存根文件
-- [apps/backend/pyrightconfig.json](file:///d:/Projects/Unified-AI-Project/apps/backend/pyrightconfig.json) - Pyright配置文件
+- [apps/backend/pyrightconfig.json](file:///d:/Projects/Unified-AI-Project/apps/backend/pyrightconfig.json) -
+  Pyright配置文件

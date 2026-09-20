@@ -5,7 +5,7 @@
  * that can be found at https://www.live2d.com/eula/live2d-open-software-license-agreement_en.html.
  */
 
-import { CubismLogError } from '../utils/cubismdebug';
+import { CubismLogError } from '../utils/cubismdebug'
 
 /**
  * WebGL用オフスクリーンサーフェス
@@ -24,20 +24,18 @@ export class CubismRenderTarget_WebGL {
     dst: CubismRenderTarget_WebGL
   ): void {
     if (src == null || dst == null) {
-      return;
+      return
     }
 
     if (!(gl instanceof WebGL2RenderingContext)) {
-      throw new Error('WebGL2RenderingContext is required for buffer copy.');
+      throw new Error('WebGL2RenderingContext is required for buffer copy.')
     }
 
-    const previousFramebuffer = gl.getParameter(
-      gl.FRAMEBUFFER_BINDING
-    ) as WebGLFramebuffer;
+    const previousFramebuffer = gl.getParameter(gl.FRAMEBUFFER_BINDING) as WebGLFramebuffer
 
     // 各オフスクリーンサーフェスのレンダーテクスチャをバインド
-    gl.bindFramebuffer(gl.READ_FRAMEBUFFER, src.getRenderTexture());
-    gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, dst.getRenderTexture());
+    gl.bindFramebuffer(gl.READ_FRAMEBUFFER, src.getRenderTexture())
+    gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, dst.getRenderTexture())
 
     // バッファのコピーを実行
     gl.blitFramebuffer(
@@ -51,10 +49,10 @@ export class CubismRenderTarget_WebGL {
       dst.getBufferHeight(),
       gl.COLOR_BUFFER_BIT,
       gl.NEAREST
-    );
+    )
 
     // コピー後、元のフレームバッファを復元
-    gl.bindFramebuffer(gl.FRAMEBUFFER, previousFramebuffer);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, previousFramebuffer)
   }
 
   /**
@@ -64,19 +62,19 @@ export class CubismRenderTarget_WebGL {
    */
   public beginDraw(restoreFbo: WebGLFramebuffer = null): void {
     if (this._renderTexture == null) {
-      console.error('_renderTexture is null');
-      return;
+      console.error('_renderTexture is null')
+      return
     }
 
     // バックバッファのサーフェイスを記憶しておく。
     if (restoreFbo == null) {
-      this._oldFbo = this._gl.getParameter(this._gl.FRAMEBUFFER_BINDING);
+      this._oldFbo = this._gl.getParameter(this._gl.FRAMEBUFFER_BINDING)
     } else {
-      this._oldFbo = restoreFbo;
+      this._oldFbo = restoreFbo
     }
 
     // RenderTextureをactiveにセット
-    this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, this._renderTexture);
+    this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, this._renderTexture)
   }
 
   /**
@@ -84,7 +82,7 @@ export class CubismRenderTarget_WebGL {
    */
   public endDraw(): void {
     // バックバッファのサーフェイスを復元
-    this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, this._oldFbo);
+    this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, this._oldFbo)
   }
 
   /**
@@ -97,8 +95,8 @@ export class CubismRenderTarget_WebGL {
    */
   public clear(r: number, g: number, b: number, a: number): void {
     // クリア処理
-    this._gl.clearColor(r, g, b, a);
-    this._gl.clear(this._gl.COLOR_BUFFER_BIT);
+    this._gl.clearColor(r, g, b, a)
+    this._gl.clear(this._gl.COLOR_BUFFER_BIT)
   }
 
   /**
@@ -118,10 +116,10 @@ export class CubismRenderTarget_WebGL {
     displayBufferHeight: number,
     previousFramebuffer: WebGLFramebuffer
   ): boolean {
-    this.destroyRenderTarget();
+    this.destroyRenderTarget()
 
-    this._colorBuffer = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, this._colorBuffer);
+    this._colorBuffer = gl.createTexture()
+    gl.bindTexture(gl.TEXTURE_2D, this._colorBuffer)
     gl.texImage2D(
       gl.TEXTURE_2D,
       0,
@@ -132,52 +130,52 @@ export class CubismRenderTarget_WebGL {
       gl.RGBA,
       gl.UNSIGNED_BYTE,
       null
-    );
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    )
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
 
-    gl.bindTexture(gl.TEXTURE_2D, null);
+    gl.bindTexture(gl.TEXTURE_2D, null)
 
     // フレームバッファを作成
-    const ret = gl.createFramebuffer();
+    const ret = gl.createFramebuffer()
     if (ret == null) {
-      CubismLogError('Failed to create framebuffer');
-      return false;
+      CubismLogError('Failed to create framebuffer')
+      return false
     }
 
     // 作成したフレームバッファをバインド
-    gl.bindFramebuffer(gl.FRAMEBUFFER, ret);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, ret)
     gl.framebufferTexture2D(
       gl.FRAMEBUFFER,
       gl.COLOR_ATTACHMENT0,
       gl.TEXTURE_2D,
       this._colorBuffer,
       0
-    );
+    )
 
     // 状態をチェック
-    const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+    const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER)
 
     // フレームバッファが完全でない場合はエラーを出力して以前のフレームバッファを復元
     if (status !== gl.FRAMEBUFFER_COMPLETE) {
-      CubismLogError('Framebuffer is not complete');
-      gl.bindFramebuffer(gl.FRAMEBUFFER, previousFramebuffer);
-      gl.deleteFramebuffer(ret);
+      CubismLogError('Framebuffer is not complete')
+      gl.bindFramebuffer(gl.FRAMEBUFFER, previousFramebuffer)
+      gl.deleteFramebuffer(ret)
 
-      this.destroyRenderTarget();
+      this.destroyRenderTarget()
 
-      return false;
+      return false
     }
 
-    this._renderTexture = ret;
-    this._bufferWidth = displayBufferWidth;
-    this._bufferHeight = displayBufferHeight;
+    this._renderTexture = ret
+    this._bufferWidth = displayBufferWidth
+    this._bufferHeight = displayBufferHeight
 
-    this._gl = gl;
+    this._gl = gl
 
-    return true;
+    return true
   }
 
   /**
@@ -185,15 +183,15 @@ export class CubismRenderTarget_WebGL {
    */
   public destroyRenderTarget(): void {
     if (this._colorBuffer) {
-      this._gl.bindTexture(this._gl.TEXTURE_2D, null);
-      this._gl.deleteTexture(this._colorBuffer);
-      this._colorBuffer = null;
+      this._gl.bindTexture(this._gl.TEXTURE_2D, null)
+      this._gl.deleteTexture(this._colorBuffer)
+      this._colorBuffer = null
     }
 
     if (this._renderTexture) {
-      this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, null);
-      this._gl.deleteFramebuffer(this._renderTexture);
-      this._renderTexture = null;
+      this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, null)
+      this._gl.deleteFramebuffer(this._renderTexture)
+      this._renderTexture = null
     }
   }
 
@@ -203,7 +201,7 @@ export class CubismRenderTarget_WebGL {
    * @return WebGLRenderingContextまたはWebGL2RenderingContext
    */
   public getGL(): WebGLRenderingContext | WebGL2RenderingContext {
-    return this._gl;
+    return this._gl
   }
 
   /**
@@ -212,7 +210,7 @@ export class CubismRenderTarget_WebGL {
    * @return WebGLFramebuffer
    */
   public getRenderTexture(): WebGLFramebuffer {
-    return this._renderTexture;
+    return this._renderTexture
   }
 
   /**
@@ -221,7 +219,7 @@ export class CubismRenderTarget_WebGL {
    * @return WebGLTexture
    */
   public getColorBuffer(): WebGLTexture {
-    return this._colorBuffer;
+    return this._colorBuffer
   }
 
   /**
@@ -230,7 +228,7 @@ export class CubismRenderTarget_WebGL {
    * @return カラーバッファの幅
    */
   public getBufferWidth(): number {
-    return this._bufferWidth;
+    return this._bufferWidth
   }
 
   /**
@@ -239,7 +237,7 @@ export class CubismRenderTarget_WebGL {
    * @return カラーバッファの高さ
    */
   public getBufferHeight(): number {
-    return this._bufferHeight;
+    return this._bufferHeight
   }
 
   /**
@@ -248,7 +246,7 @@ export class CubismRenderTarget_WebGL {
    * @return 有効な場合はtrue、無効な場合はfalse
    */
   public isValid(): boolean {
-    return this._renderTexture != null;
+    return this._renderTexture != null
   }
 
   /**
@@ -257,33 +255,33 @@ export class CubismRenderTarget_WebGL {
    * @return 以前のフレームバッファ
    */
   public getOldFBO(): WebGLFramebuffer {
-    return this._oldFbo;
+    return this._oldFbo
   }
 
   /**
    * コンストラクタ
    */
   constructor() {
-    this._gl = null;
-    this._colorBuffer = null;
-    this._renderTexture = null;
-    this._bufferWidth = 0;
-    this._bufferHeight = 0;
-    this._oldFbo = null;
+    this._gl = null
+    this._colorBuffer = null
+    this._renderTexture = null
+    this._bufferWidth = 0
+    this._bufferHeight = 0
+    this._oldFbo = null
   }
 
-  protected _gl: WebGLRenderingContext | WebGL2RenderingContext; // WebGLのコンテキスト
-  protected _colorBuffer: WebGLTexture; // カラーバッファ
-  protected _renderTexture: WebGLFramebuffer; // フレームバッファ
-  protected _bufferWidth: number; // カラーバッファの幅
-  protected _bufferHeight: number; // カラーバッファの高さ
-  private _oldFbo: WebGLFramebuffer; // 以前のフレームバッファ
+  protected _gl: WebGLRenderingContext | WebGL2RenderingContext // WebGLのコンテキスト
+  protected _colorBuffer: WebGLTexture // カラーバッファ
+  protected _renderTexture: WebGLFramebuffer // フレームバッファ
+  protected _bufferWidth: number // カラーバッファの幅
+  protected _bufferHeight: number // カラーバッファの高さ
+  private _oldFbo: WebGLFramebuffer // 以前のフレームバッファ
 }
 
 // Namespace definition for compatibility.
-import * as $ from './cubismrendertarget_webgl';
+import * as $ from './cubismrendertarget_webgl'
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
-  export const CubismOffscreenSurface_WebGL = $.CubismRenderTarget_WebGL;
-  export type CubismOffscreenSurface_WebGL = $.CubismRenderTarget_WebGL;
+  export const CubismOffscreenSurface_WebGL = $.CubismRenderTarget_WebGL
+  export type CubismOffscreenSurface_WebGL = $.CubismRenderTarget_WebGL
 }

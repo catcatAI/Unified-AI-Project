@@ -5,10 +5,10 @@
  * that can be found at https://www.live2d.com/eula/live2d-open-software-license-agreement_en.html.
  */
 
-import { CubismMatrix44 } from '../math/cubismmatrix44';
-import { CubismModel } from '../model/cubismmodel';
-import { csmRect } from '../type/csmrectf';
-import { ICubismClippingManager } from './cubismclippingmanager';
+import { CubismMatrix44 } from '../math/cubismmatrix44'
+import { CubismModel } from '../model/cubismmodel'
+import { csmRect } from '../type/csmrectf'
+import { ICubismClippingManager } from './cubismclippingmanager'
 
 /**
  * モデル描画を処理するレンダラ
@@ -22,14 +22,14 @@ export abstract class CubismRenderer {
    * @return レンダラのインスタンス
    */
   public static create(): CubismRenderer {
-    return null;
+    return null
   }
 
   /**
    * レンダラのインスタンスを解放する
    */
   public static delete(renderer: CubismRenderer): void {
-    renderer = null;
+    renderer = null
   }
 
   /**
@@ -38,20 +38,20 @@ export abstract class CubismRenderer {
    * @param model モデルのインスタンス
    */
   public initialize(model: CubismModel): void {
-    this._model = model;
+    this._model = model
   }
 
   /**
    * モデルを描画する
    */
   public drawModel(): void {
-    if (this.getModel() == null) return;
+    if (this.getModel() == null) return
 
-    this.saveProfile();
+    this.saveProfile()
 
-    this.doDrawModel();
+    this.doDrawModel()
 
-    this.restoreProfile();
+    this.restoreProfile()
   }
 
   /**
@@ -60,7 +60,7 @@ export abstract class CubismRenderer {
    * @param matrix44 Model-View-Projection 行列
    */
   public setMvpMatrix(matrix44: CubismMatrix44): void {
-    this._mvpMatrix4x4.setMatrix(matrix44.getArray());
+    this._mvpMatrix4x4.setMatrix(matrix44.getArray())
   }
 
   /**
@@ -68,7 +68,7 @@ export abstract class CubismRenderer {
    * @return Model-View-Projection 行列
    */
   public getMvpMatrix(): CubismMatrix44 {
-    return this._mvpMatrix4x4;
+    return this._mvpMatrix4x4
   }
 
   /**
@@ -79,40 +79,35 @@ export abstract class CubismRenderer {
    * @param blue 青チャンネルの値
    * @param alpha αチャンネルの値
    */
-  public setModelColor(
-    red: number,
-    green: number,
-    blue: number,
-    alpha: number
-  ): void {
+  public setModelColor(red: number, green: number, blue: number, alpha: number): void {
     if (red < 0.0) {
-      red = 0.0;
+      red = 0.0
     } else if (red > 1.0) {
-      red = 1.0;
+      red = 1.0
     }
 
     if (green < 0.0) {
-      green = 0.0;
+      green = 0.0
     } else if (green > 1.0) {
-      green = 1.0;
+      green = 1.0
     }
 
     if (blue < 0.0) {
-      blue = 0.0;
+      blue = 0.0
     } else if (blue > 1.0) {
-      blue = 1.0;
+      blue = 1.0
     }
 
     if (alpha < 0.0) {
-      alpha = 0.0;
+      alpha = 0.0
     } else if (alpha > 1.0) {
-      alpha = 1.0;
+      alpha = 1.0
     }
 
-    this._modelColor.r = red;
-    this._modelColor.g = green;
-    this._modelColor.b = blue;
-    this._modelColor.a = alpha;
+    this._modelColor.r = red
+    this._modelColor.g = green
+    this._modelColor.b = blue
+    this._modelColor.a = alpha
   }
 
   /**
@@ -122,7 +117,7 @@ export abstract class CubismRenderer {
    * @return RGBAのカラー情報
    */
   public getModelColor(): CubismTextureColor {
-    return JSON.parse(JSON.stringify(this._modelColor));
+    return JSON.parse(JSON.stringify(this._modelColor))
   }
 
   /**
@@ -133,14 +128,14 @@ export abstract class CubismRenderer {
    * @return RGBAのカラー情報
    */
   getModelColorWithOpacity(opacity: number): CubismTextureColor {
-    const modelColorRGBA: CubismTextureColor = this.getModelColor();
-    modelColorRGBA.a *= opacity;
+    const modelColorRGBA: CubismTextureColor = this.getModelColor()
+    modelColorRGBA.a *= opacity
     if (this.isPremultipliedAlpha()) {
-      modelColorRGBA.r *= modelColorRGBA.a;
-      modelColorRGBA.g *= modelColorRGBA.a;
-      modelColorRGBA.b *= modelColorRGBA.a;
+      modelColorRGBA.r *= modelColorRGBA.a
+      modelColorRGBA.g *= modelColorRGBA.a
+      modelColorRGBA.b *= modelColorRGBA.a
     }
-    return modelColorRGBA;
+    return modelColorRGBA
   }
 
   /**
@@ -148,7 +143,7 @@ export abstract class CubismRenderer {
    * 有効にするならtrue、無効にするならfalseをセットする
    */
   public setIsPremultipliedAlpha(enable: boolean): void {
-    this._isPremultipliedAlpha = enable;
+    this._isPremultipliedAlpha = enable
   }
 
   /**
@@ -157,7 +152,7 @@ export abstract class CubismRenderer {
    * @return false 乗算済みのα無効
    */
   public isPremultipliedAlpha(): boolean {
-    return this._isPremultipliedAlpha;
+    return this._isPremultipliedAlpha
   }
 
   /**
@@ -165,7 +160,7 @@ export abstract class CubismRenderer {
    * 有効にするならtrue、無効にするならfalseをセットする
    */
   public setIsCulling(culling: boolean): void {
-    this._isCulling = culling;
+    this._isCulling = culling
   }
 
   /**
@@ -174,7 +169,7 @@ export abstract class CubismRenderer {
    * @return false カリング無効
    */
   public isCulling(): boolean {
-    return this._isCulling;
+    return this._isCulling
   }
 
   /**
@@ -183,7 +178,7 @@ export abstract class CubismRenderer {
    * @param n パラメータの値
    */
   public setAnisotropy(n: number): void {
-    this._anisotropy = n;
+    this._anisotropy = n
   }
 
   /**
@@ -191,7 +186,7 @@ export abstract class CubismRenderer {
    * @return 異方性フィルタリングのパラメータ
    */
   public getAnisotropy(): number {
-    return this._anisotropy;
+    return this._anisotropy
   }
 
   /**
@@ -199,7 +194,7 @@ export abstract class CubismRenderer {
    * @return レンダリングするモデル
    */
   public getModel(): CubismModel {
-    return this._model;
+    return this._model
   }
 
   /**
@@ -211,7 +206,7 @@ export abstract class CubismRenderer {
    * @param high 高精細マスクに切り替えるか？
    */
   public useHighPrecisionMask(high: boolean): void {
-    this._useHighPrecisionMask = high;
+    this._useHighPrecisionMask = high
   }
 
   /**
@@ -220,58 +215,58 @@ export abstract class CubismRenderer {
    * @return false デフォルト
    */
   public isUsingHighPrecisionMask(): boolean {
-    return this._useHighPrecisionMask;
+    return this._useHighPrecisionMask
   }
 
   /**
    * コンストラクタ
    */
   protected constructor() {
-    this._isCulling = false;
-    this._isPremultipliedAlpha = false;
-    this._anisotropy = 0.0;
-    this._model = null;
-    this._modelColor = new CubismTextureColor();
-    this._useHighPrecisionMask = false;
+    this._isCulling = false
+    this._isPremultipliedAlpha = false
+    this._anisotropy = 0.0
+    this._model = null
+    this._modelColor = new CubismTextureColor()
+    this._useHighPrecisionMask = false
 
     // 単位行列に初期化
-    this._mvpMatrix4x4 = new CubismMatrix44();
-    this._mvpMatrix4x4.loadIdentity();
+    this._mvpMatrix4x4 = new CubismMatrix44()
+    this._mvpMatrix4x4.loadIdentity()
   }
 
   /**
    * モデル描画の実装
    */
-  public abstract doDrawModel(): void;
+  public abstract doDrawModel(): void
 
   /**
    * モデル描画直前のレンダラのステートを保持する
    */
-  protected abstract saveProfile(): void;
+  protected abstract saveProfile(): void
 
   /**
    * モデル描画直前のレンダラのステートを復帰する
    */
-  protected abstract restoreProfile(): void;
+  protected abstract restoreProfile(): void
 
   /**
    * レンダラが保持する静的なリソースを開放する
    */
-  public static staticRelease: any;
+  public static staticRelease: any
 
-  protected _mvpMatrix4x4: CubismMatrix44; // Model-View-Projection 行列
-  protected _modelColor: CubismTextureColor; // モデル自体のカラー（RGBA）
-  protected _isCulling: boolean; // カリングが有効ならtrue
-  protected _isPremultipliedAlpha: boolean; // 乗算済みαならtrue
-  protected _anisotropy: any; // テクスチャの異方性フィルタリングのパラメータ
-  protected _model: CubismModel; // レンダリング対象のモデル
-  protected _useHighPrecisionMask: boolean; // falseの場合、マスクを纏めて描画する trueの場合、マスクはパーツ描画ごとに書き直す
+  protected _mvpMatrix4x4: CubismMatrix44 // Model-View-Projection 行列
+  protected _modelColor: CubismTextureColor // モデル自体のカラー（RGBA）
+  protected _isCulling: boolean // カリングが有効ならtrue
+  protected _isPremultipliedAlpha: boolean // 乗算済みαならtrue
+  protected _anisotropy: any // テクスチャの異方性フィルタリングのパラメータ
+  protected _model: CubismModel // レンダリング対象のモデル
+  protected _useHighPrecisionMask: boolean // falseの場合、マスクを纏めて描画する trueの場合、マスクはパーツ描画ごとに書き直す
 }
 
 export enum CubismBlendMode {
   CubismBlendMode_Normal = 0, // 通常
   CubismBlendMode_Additive = 1, // 加算
-  CubismBlendMode_Multiplicative = 2 // 乗算
+  CubismBlendMode_Multiplicative = 2, // 乗算
 }
 
 /**
@@ -282,16 +277,16 @@ export class CubismTextureColor {
    * コンストラクタ
    */
   constructor(r = 1.0, g = 1.0, b = 1.0, a = 1.0) {
-    this.r = r;
-    this.g = g;
-    this.b = b;
-    this.a = a;
+    this.r = r
+    this.g = g
+    this.b = b
+    this.a = a
   }
 
-  r: number; // 赤チャンネル
-  g: number; // 緑チャンネル
-  b: number; // 青チャンネル
-  a: number; // αチャンネル
+  r: number // 赤チャンネル
+  g: number // 緑チャンネル
+  b: number // 青チャンネル
+  a: number // αチャンネル
 }
 
 /**
@@ -303,42 +298,42 @@ export abstract class CubismClippingContext {
    */
   public constructor(clippingDrawableIndices: Int32Array, clipCount: number) {
     // クリップしている（＝マスク用の）Drawableのインデックスリスト
-    this._clippingIdList = clippingDrawableIndices;
+    this._clippingIdList = clippingDrawableIndices
 
     // マスクの数
-    this._clippingIdCount = clipCount;
+    this._clippingIdCount = clipCount
 
-    this._allClippedDrawRect = new csmRect();
-    this._layoutBounds = new csmRect();
+    this._allClippedDrawRect = new csmRect()
+    this._layoutBounds = new csmRect()
 
-    this._clippedDrawableIndexList = [];
+    this._clippedDrawableIndexList = []
 
-    this._matrixForMask = new CubismMatrix44();
-    this._matrixForDraw = new CubismMatrix44();
+    this._matrixForMask = new CubismMatrix44()
+    this._matrixForDraw = new CubismMatrix44()
 
-    this._bufferIndex = 0;
+    this._bufferIndex = 0
   }
 
   /**
    * このマスクを管理するマネージャのインスタンスを取得する
    * @return クリッピングマネージャのインスタンス
    */
-  public abstract getClippingManager(): ICubismClippingManager;
+  public abstract getClippingManager(): ICubismClippingManager
 
   /**
    * デストラクタ相当の処理
    */
   public release(): void {
     if (this._layoutBounds != null) {
-      this._layoutBounds = null;
+      this._layoutBounds = null
     }
 
     if (this._allClippedDrawRect != null) {
-      this._allClippedDrawRect = null;
+      this._allClippedDrawRect = null
     }
 
     if (this._clippedDrawableIndexList != null) {
-      this._clippedDrawableIndexList = null;
+      this._clippedDrawableIndexList = null
     }
   }
 
@@ -348,29 +343,29 @@ export abstract class CubismClippingContext {
    * @param drawableIndex クリッピング対象に追加する描画オブジェクトのインデックス
    */
   public addClippedDrawable(drawableIndex: number) {
-    this._clippedDrawableIndexList.push(drawableIndex);
+    this._clippedDrawableIndexList.push(drawableIndex)
   }
 
-  public _isUsing: boolean; // 現在の描画状態でマスクの準備が必要ならtrue
-  public readonly _clippingIdList: Int32Array; // クリッピングマスクのIDリスト
-  public _clippingIdCount: number; // クリッピングマスクの数
-  public _layoutChannelIndex: number; // RGBAのいずれのチャンネルにこのクリップを配置するか（0:R, 1:G, 2:B, 3:A）
-  public _layoutBounds: csmRect; // マスク用チャンネルのどの領域にマスクを入れるか（View座標-1~1, UVは0~1に直す）
-  public _allClippedDrawRect: csmRect; // このクリッピングで、クリッピングされるすべての描画オブジェクトの囲み矩形（毎回更新）
-  public _matrixForMask: CubismMatrix44; // マスクの位置計算結果を保持する行列
-  public _matrixForDraw: CubismMatrix44; // 描画オブジェクトの位置計算結果を保持する行列
-  public _clippedDrawableIndexList: number[]; // このマスクにクリップされる描画オブジェクトのリスト
-  public _bufferIndex: number; // このマスクが割り当てられるレンダーテクスチャ（フレームバッファ）やカラーバッファのインデックス
+  public _isUsing: boolean // 現在の描画状態でマスクの準備が必要ならtrue
+  public readonly _clippingIdList: Int32Array // クリッピングマスクのIDリスト
+  public _clippingIdCount: number // クリッピングマスクの数
+  public _layoutChannelIndex: number // RGBAのいずれのチャンネルにこのクリップを配置するか（0:R, 1:G, 2:B, 3:A）
+  public _layoutBounds: csmRect // マスク用チャンネルのどの領域にマスクを入れるか（View座標-1~1, UVは0~1に直す）
+  public _allClippedDrawRect: csmRect // このクリッピングで、クリッピングされるすべての描画オブジェクトの囲み矩形（毎回更新）
+  public _matrixForMask: CubismMatrix44 // マスクの位置計算結果を保持する行列
+  public _matrixForDraw: CubismMatrix44 // 描画オブジェクトの位置計算結果を保持する行列
+  public _clippedDrawableIndexList: number[] // このマスクにクリップされる描画オブジェクトのリスト
+  public _bufferIndex: number // このマスクが割り当てられるレンダーテクスチャ（フレームバッファ）やカラーバッファのインデックス
 }
 
 // Namespace definition for compatibility.
-import * as $ from './cubismrenderer';
+import * as $ from './cubismrenderer'
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
-  export const CubismBlendMode = $.CubismBlendMode;
-  export type CubismBlendMode = $.CubismBlendMode;
-  export const CubismRenderer = $.CubismRenderer;
-  export type CubismRenderer = $.CubismRenderer;
-  export const CubismTextureColor = $.CubismTextureColor;
-  export type CubismTextureColor = $.CubismTextureColor;
+  export const CubismBlendMode = $.CubismBlendMode
+  export type CubismBlendMode = $.CubismBlendMode
+  export const CubismRenderer = $.CubismRenderer
+  export type CubismRenderer = $.CubismRenderer
+  export const CubismTextureColor = $.CubismTextureColor
+  export type CubismTextureColor = $.CubismTextureColor
 }

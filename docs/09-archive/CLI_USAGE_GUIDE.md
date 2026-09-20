@@ -1,10 +1,12 @@
 # CLI Usage Guide
 
-This guide provides detailed instructions for using the command-line interface (CLI) tools included in the Unified AI Project.
+This guide provides detailed instructions for using the command-line interface
+(CLI) tools included in the Unified AI Project.
 
 ## Overview
 
-The Unified AI Project includes several CLI tools designed to interact with different aspects of the system:
+The Unified AI Project includes several CLI tools designed to interact with
+different aspects of the system:
 
 1. **Unified CLI** - General AI interaction and system management
 2. **AI Models CLI** - Model management and interaction
@@ -23,6 +25,7 @@ The Unified AI Project includes several CLI tools designed to interact with diff
 ### Option 2: Manual Installation
 
 1. Navigate to the tools directory:
+
    ```bash
    cd tools/
    ```
@@ -39,19 +42,25 @@ The Unified CLI provides general interaction with the AI system.
 ### Basic Commands
 
 #### Health Check
+
 Check the health status of the system:
+
 ```bash
 unified-cli health
 ```
 
 #### Chat with AI
+
 Have a conversation with the AI:
+
 ```bash
 unified-cli chat "Hello, how are you today?"
 ```
 
 #### System Information
+
 Get information about the system:
+
 ```bash
 unified-cli info
 ```
@@ -59,34 +68,43 @@ unified-cli info
 ### Advanced Commands
 
 #### Agent Management
+
 List available agents:
+
 ```bash
 unified-cli agents list
 ```
 
 Get details about a specific agent:
+
 ```bash
 unified-cli agents info creative-writing-agent
 ```
 
 #### Memory Operations
+
 Store information in memory:
+
 ```bash
 unified-cli memory store "The sky is blue" --tags science,physics
 ```
 
 Retrieve information from memory:
+
 ```bash
 unified-cli memory retrieve "Why is the sky blue?"
 ```
 
 #### Task Management
+
 Submit a task to an agent:
+
 ```bash
 unified-cli task submit creative-writing-agent "Write a poem about autumn"
 ```
 
 Check task status:
+
 ```bash
 unified-cli task status task_12345
 ```
@@ -98,19 +116,25 @@ The AI Models CLI provides tools for managing and interacting with AI models.
 ### Model Management
 
 #### List Models
+
 List all available models:
+
 ```bash
 ai-models-cli list
 ```
 
 #### Model Information
+
 Get detailed information about a specific model:
+
 ```bash
 ai-models-cli info concept-model-environment-simulator
 ```
 
 #### Model Status
+
 Check the status of a model:
+
 ```bash
 ai-models-cli status concept-model-environment-simulator
 ```
@@ -118,13 +142,17 @@ ai-models-cli status concept-model-environment-simulator
 ### Model Interaction
 
 #### Generate Content
+
 Generate content using a specific model:
+
 ```bash
 ai-models-cli generate creative-writing-agent "Write a short story about a robot"
 ```
 
 #### Evaluate Model
+
 Evaluate model performance:
+
 ```bash
 ai-models-cli evaluate concept-model-causal-reasoning --test-data path/to/test/data
 ```
@@ -136,19 +164,25 @@ The HSP CLI provides tools for working with the Heterogeneous Service Protocol.
 ### Service Management
 
 #### Register Service
+
 Register a new service with the HSP network:
+
 ```bash
 hsp-cli register --service-id my-service --endpoint http://localhost:8080/hsp
 ```
 
 #### List Services
+
 List all registered services:
+
 ```bash
 hsp-cli services list
 ```
 
 #### Service Information
+
 Get information about a specific service:
+
 ```bash
 hsp-cli services info my-service
 ```
@@ -156,13 +190,17 @@ hsp-cli services info my-service
 ### Message Handling
 
 #### Send Message
+
 Send a message through the HSP protocol:
+
 ```bash
 hsp-cli message send --recipient my-service --content "Hello, service!"
 ```
 
 #### Receive Messages
+
 Listen for incoming messages:
+
 ```bash
 hsp-cli message listen
 ```
@@ -174,19 +212,25 @@ The Training CLI provides tools for model training and evaluation.
 ### Training Management
 
 #### Start Training
+
 Start a training session:
+
 ```bash
 training-cli start --model concept-model-adaptive-learning --data path/to/training/data
 ```
 
 #### Training Status
+
 Check the status of a training session:
+
 ```bash
 training-cli status training_12345
 ```
 
 #### Stop Training
+
 Stop a training session:
+
 ```bash
 training-cli stop training_12345
 ```
@@ -194,13 +238,17 @@ training-cli stop training_12345
 ### Model Evaluation
 
 #### Evaluate Model
+
 Evaluate a trained model:
+
 ```bash
 training-cli evaluate --model concept-model-adaptive-learning --test-data path/to/test/data
 ```
 
 #### Compare Models
+
 Compare the performance of different models:
+
 ```bash
 training-cli compare model_1 model_2 model_3
 ```
@@ -217,19 +265,20 @@ The CLI tools can be configured using environment variables:
 
 ### Configuration Files
 
-CLI tools can also be configured using YAML files located in `~/.unified-ai/config.yaml`:
+CLI tools can also be configured using YAML files located in
+`~/.unified-ai/config.yaml`:
 
 ```yaml
 api:
-  endpoint: "http://localhost:8000"
-  key: "your-api-key"
+  endpoint: 'http://localhost:8000'
+  key: 'your-api-key'
 
 logging:
-  level: "INFO"
-  file: "~/.unified-ai/logs/cli.log"
+  level: 'INFO'
+  file: '~/.unified-ai/logs/cli.log'
 
 models:
-  default: "concept-model-environment-simulator"
+  default: 'concept-model-environment-simulator'
 ```
 
 ## Advanced Usage
@@ -275,19 +324,25 @@ Create custom commands by extending the CLI tools:
 ### Common Issues
 
 #### Command Not Found
+
 If you get a "command not found" error:
+
 1. Ensure the CLI tools are installed
 2. Check that the tools directory is in your PATH
 3. Try using the full path to the CLI runner
 
 #### Authentication Errors
+
 If you encounter authentication errors:
+
 1. Verify your API key is correct
 2. Check that the API endpoint is accessible
 3. Ensure your environment variables are set correctly
 
 #### Network Issues
+
 If you experience network issues:
+
 1. Check your internet connection
 2. Verify the API endpoint URL
 3. Check firewall settings
@@ -295,6 +350,7 @@ If you experience network issues:
 ### Debugging
 
 Enable debug logging for detailed information:
+
 ```bash
 export UNIFIED_AI_LOG_LEVEL=DEBUG
 unified-cli health
@@ -402,4 +458,7 @@ training-cli jobs list
 
 ## Conclusion
 
-The CLI tools provide powerful command-line access to the Unified AI Project's functionality. By following this guide, you can effectively use these tools for development, testing, and system administration tasks. Remember to consult the built-in help for detailed information about specific commands and options.
+The CLI tools provide powerful command-line access to the Unified AI Project's
+functionality. By following this guide, you can effectively use these tools for
+development, testing, and system administration tasks. Remember to consult the
+built-in help for detailed information about specific commands and options.

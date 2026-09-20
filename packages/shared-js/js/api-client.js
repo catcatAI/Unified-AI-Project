@@ -18,415 +18,415 @@
  */
 
 class AngelaAPIClient {
-    constructor(baseURL = 'http://localhost:8000') {
-        this.baseURL = baseURL;
-        this.connected = false;
-        this.unifiedChatPath = '/api/v1/chat/unified'; // 新接口（迁移目标）
-        
-        // 超時配置（毫秒）
-        this.timeouts = {
-            connection: 5000,      // 連接超時
-            chat: 30000,            // 對話超時
-            status: 5000,           // 狀態查詢超時
-            action: 5000            // 動作超時
-        };
+  constructor(baseURL = 'http://localhost:8000') {
+    this.baseURL = baseURL
+    this.connected = false
+    this.unifiedChatPath = '/api/v1/chat/unified' // 新接口（迁移目标）
+
+    // 超時配置（毫秒）
+    this.timeouts = {
+      connection: 5000, // 連接超時
+      chat: 30000, // 對話超時
+      status: 5000, // 狀態查詢超時
+      action: 5000, // 動作超時
+    }
+  }
+
+  /**
+   * Test connection to backend
+   */
+  async testConnection() {
+    try {
+      const response = await fetch(`${this.baseURL}/health`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      })
+      this.connected = response.ok
+      return this.connected
+    } catch (error) {
+      console.error('Backend connection failed:', error)
+      this.connected = false
+      return false
+    }
+  }
+
+  /**
+   * 驗證所有 API 端點的可用性
+   * @returns {Promise<Object>} 驗證結果
+   */
+  async validateEndpoints() {
+    const endpoints = [
+      { path: '/health', method: 'GET', required: true },
+      { path: '/api/v1/ops/status', method: 'GET', required: true },
+      { path: this.unifiedChatPath, method: 'POST', required: true },
+    ]
+
+    const results = {
+      total: endpoints.length,
+      success: 0,
+      failed: 0,
+      requiredSuccess: 0,
+      requiredFailed: 0,
+      details: [],
     }
 
-    /**
-     * Test connection to backend
-     */
-    async testConnection() {
-        try {
-            const response = await fetch(`${this.baseURL}/health`, {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' }
-            });
-            this.connected = response.ok;
-            return this.connected;
-        } catch (error) {
-            console.error('Backend connection failed:', error);
-            this.connected = false;
-            return false;
-        }
-    }
+    for (const endpoint of endpoints) {
+      const startTime = Date.now()
+      let status = 'error'
+      let statusCode = null
+      let errorMessage = null
 
-    /**
-     * 驗證所有 API 端點的可用性
-     * @returns {Promise<Object>} 驗證結果
-     */
-    async validateEndpoints() {
-        const endpoints = [
-            { path: '/health', method: 'GET', required: true },
-            { path: '/api/v1/ops/status', method: 'GET', required: true },
-            { path: this.unifiedChatPath, method: 'POST', required: true },
-        ];
-
-        const results = {
-            total: endpoints.length,
-            success: 0,
-            failed: 0,
-            requiredSuccess: 0,
-            requiredFailed: 0,
-            details: []
-        };
-
-        for (const endpoint of endpoints) {
-            const startTime = Date.now();
-            let status = 'error';
-            let statusCode = null;
-            let errorMessage = null;
-
-            try {
-                const options = {
-                    method: endpoint.method,
-                    headers: { 'Content-Type': 'application/json' },
-                    signal: AbortSignal.timeout(5000) // 5秒超時
-                };
-
-                if (endpoint.method === 'POST') {
-                    options.body = JSON.stringify({
-                        message: 'health_check',
-                        action: 'ping'
-                    });
-                }
-
-                const response = await fetch(`${this.baseURL}${endpoint.path}`, options);
-                const duration = Date.now() - startTime;
-                statusCode = response.status;
-
-                if (response.ok) {
-                    status = 'success';
-                    results.success++;
-                    if (endpoint.required) {
-                        results.requiredSuccess++;
-                    }
-                } else {
-                    status = 'error';
-                    results.failed++;
-                    if (endpoint.required) {
-                        results.requiredFailed++;
-                    }
-                    errorMessage = `HTTP ${statusCode}: ${response.statusText}`;
-                }
-
-                results.details.push({
-                    path: endpoint.path,
-                    method: endpoint.method,
-                    required: endpoint.required,
-                    status: status,
-                    statusCode: statusCode,
-                    duration: duration,
-                    errorMessage: errorMessage
-                });
-
-                console.log(`[APIClient] ${endpoint.method} ${endpoint.path} - ${status} (${duration}ms)`);
-            } catch (error) {
-                const duration = Date.now() - startTime;
-                status = 'error';
-                results.failed++;
-                if (endpoint.required) {
-                    results.requiredFailed++;
-                }
-                errorMessage = error.message;
-
-                results.details.push({
-                    path: endpoint.path,
-                    method: endpoint.method,
-                    required: endpoint.required,
-                    status: status,
-                    statusCode: null,
-                    duration: duration,
-                    errorMessage: errorMessage
-                });
-
-                console.error(`[APIClient] ${endpoint.method} ${endpoint.path} - error (${duration}ms):`, error.message);
-            }
+      try {
+        const options = {
+          method: endpoint.method,
+          headers: { 'Content-Type': 'application/json' },
+          signal: AbortSignal.timeout(5000), // 5秒超時
         }
 
-        // 判斷整體狀態
-        results.allRequiredPassed = results.requiredFailed === 0;
-        results.overallStatus = results.allRequiredPassed ? 'healthy' : 'degraded';
-
-        console.log(`[APIClient] API 端點驗證完成: ${results.success}/${results.total} 通過, ${results.requiredFailed} 個必需端點失敗`);
-
-        return results;
-    }
-
-    /**
-     * Send message to Angela
-     * @param {string} message - User message
-     * @returns {Promise<Object>} Angela's response
-     */
-    async sendMessage(message) {
-        // 參數驗證
-        const validation = this._validateMessage(message);
-        if (!validation.valid) {
-            return {
-                success: false,
-                response: `Error: ${validation.error}`,
-                emotion: 'confused',
-                timestamp: new Date().toISOString()
-            };
+        if (endpoint.method === 'POST') {
+          options.body = JSON.stringify({
+            message: 'health_check',
+            action: 'ping',
+          })
         }
 
-        console.log(`[APIClient] Fetching: ${this.baseURL}${this.unifiedChatPath}`, { message });
-        try {
-            let response = await fetch(`${this.baseURL}${this.unifiedChatPath}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
+        const response = await fetch(`${this.baseURL}${endpoint.path}`, options)
+        const duration = Date.now() - startTime
+        statusCode = response.status
 
-                    message: message,
-                    user_id: 'desktop_user',
-                    session_id: this.getSessionId(),
-                    tenant_id: 'default_tenant',
-                    persona_id: 'angela_desktop',
-                    client_id: 'desktop_electron'
-                }),
-                signal: AbortSignal.timeout(this.timeouts.chat)
-            });
-
-            // No backward compatibility fallback — legacy /dialogue removed in v7.5.0
-
-            console.log(`[APIClient] Response Status: ${response.status} ${response.statusText}`);
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-
-            const data = await response.json();
-            console.log(`[APIClient] Received Data:`, data);
-
-            return {
-                success: true,
-                response: data.response || data.message || 'No response',
-                emotion: data.emotion || 'neutral',
-                source: data.source || 'unknown',
-                neuro_blend: data.neuro_blend || null,
-                timestamp: new Date().toISOString()
-            };
-        } catch (error) {
-            console.error('Failed to send message:', error);
-            return {
-                success: false,
-                response: `Error: ${error.message}`,
-                emotion: 'confused',
-                timestamp: new Date().toISOString()
-            };
-        }
-    }
-
-    /**
-     * 驗證消息參數
-     * @param {string} message - 用戶消息
-     * @returns {object} - 驗證結果
-     */
-    _validateMessage(message) {
-        const result = {
-            valid: true,
-            error: null
-        };
-
-        // 檢查是否為字符串
-        if (typeof message !== 'string') {
-            result.valid = false;
-            result.error = 'Message must be a string';
-            return result;
-        }
-
-        // 檢查是否為空
-        if (!message || message.trim().length === 0) {
-            result.valid = false;
-            result.error = 'Message cannot be empty';
-            return result;
-        }
-
-        // 檢查長度限制
-        if (message.length > 10000) {
-            result.valid = false;
-            result.error = 'Message too long (max 10000 characters)';
-            return result;
-        }
-
-        // 檢查是否包含潛在的惡意內容
-        const dangerousPatterns = [
-            /<script[^>]*>/i,
-            /javascript:/i,
-            /on\w+\s*=/i
-        ];
-
-        for (const pattern of dangerousPatterns) {
-            if (pattern.test(message)) {
-                result.valid = false;
-                result.error = 'Message contains potentially malicious content';
-                return result;
-            }
-        }
-
-        return result;
-    }
-
-    /**
-     * Get Angela's current status
-     * @returns {Promise<Object>} Status data
-     */
-    async getStatus() {
-        try {
-            const response = await fetch(`${this.baseURL}/api/v1/ops/status`);
-            const data = await response.json();
-            return {
-                success: true,
-                status: data.status || 'idle',
-                metrics: data.metrics || {},
-                service: data.service || null,
-                timestamp: data.timestamp || new Date().toISOString()
-            };
-        } catch (error) {
-            console.error('Failed to get status:', error);
-            return {
-                success: false,
-                status: 'offline',
-                metrics: {},
-                service: null,
-                timestamp: new Date().toISOString()
-            };
-        }
-    }
-
-    /**
-     * Get or create session ID
-     * @private
-     */
-    getSessionId() {
-        let sessionId = localStorage.getItem('angela_session_id');
-        if (!sessionId) {
-            const arr = new Uint32Array(1);
-            crypto.getRandomValues(arr);
-            sessionId = `session_${Date.now()}_${arr[0].toString(36)}`;
-            localStorage.setItem('angela_session_id', sessionId);
-        }
-        return sessionId;
-    }
-
-    /**
-     * 檢查 LLM 服務的可用性
-     * @returns {Promise<Object>} LLM 服務狀態
-     */
-    async checkLLMAvailability() {
-        const llmEndpoints = [
-            { path: this.unifiedChatPath, name: 'Unified Chat', backend: 'unified' },
-        ];
-
-        const results = {
-            available: false,
-            services: [],
-            errors: [],
-            timestamp: new Date().toISOString()
-        };
-
-        for (const endpoint of llmEndpoints) {
-            const startTime = Date.now();
-            let status = 'unknown';
-            let errorMessage = null;
-            let responseTime = null;
-
-            try {
-                const response = await fetch(`${this.baseURL}${endpoint.path}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        message: 'ping',
-                        test: true
-                    }),
-                    signal: AbortSignal.timeout(10000) // 10秒超時
-                });
-
-                responseTime = Date.now() - startTime;
-
-                if (response.ok) {
-                    const data = await response.json();
-                    status = 'available';
-
-                    // 檢查是否有有效的 LLM 響應
-                    if (data.response || data.content || data.message) {
-                        status = 'healthy';
-                        results.available = true;
-                    }
-                } else {
-                    status = 'unavailable';
-                    errorMessage = `HTTP ${response.status}`;
-                }
-            } catch (error) {
-                responseTime = Date.now() - startTime;
-                status = 'error';
-                errorMessage = error.message;
-                results.errors.push({
-                    endpoint: endpoint.name,
-                    error: error.message
-                });
-            }
-
-            results.services.push({
-                name: endpoint.name,
-                path: endpoint.path,
-                backend: endpoint.backend,
-                status: status,
-                responseTime: responseTime,
-                errorMessage: errorMessage
-            });
-
-            console.log(`[APIClient] LLM ${endpoint.name} - ${status} (${responseTime}ms)`);
-        }
-
-        // 總結狀態
-        results.healthyServices = results.services.filter(s => s.status === 'healthy').length;
-        results.summary = results.available ? 'LLM services are available' : 'LLM services are not available';
-
-        return results;
-    }
-
-    /**
-     * 快速檢查後端和 LLM 服務的健康狀態
-     * @returns {Promise<Object>} 健康狀態摘要
-     */
-    async healthCheck() {
-        console.log('[APIClient] Performing health check...');
-
-        const results = {
-            timestamp: new Date().toISOString(),
-            backend: null,
-            llm: null,
-            overall: 'unknown'
-        };
-
-        // 檢查後端連接
-        results.backend = await this.testConnection();
-
-        if (results.backend) {
-            // 檢查 LLM 服務
-            results.llm = await this.checkLLMAvailability();
+        if (response.ok) {
+          status = 'success'
+          results.success++
+          if (endpoint.required) {
+            results.requiredSuccess++
+          }
         } else {
-            results.llm = {
-                available: false,
-                summary: 'Backend is not available, cannot check LLM'
-            };
+          status = 'error'
+          results.failed++
+          if (endpoint.required) {
+            results.requiredFailed++
+          }
+          errorMessage = `HTTP ${statusCode}: ${response.statusText}`
         }
 
-        // 確定整體狀態
-        if (results.backend && results.llm.available) {
-            results.overall = 'healthy';
-        } else if (results.backend) {
-            results.overall = 'degraded';
-        } else {
-            results.overall = 'unhealthy';
+        results.details.push({
+          path: endpoint.path,
+          method: endpoint.method,
+          required: endpoint.required,
+          status: status,
+          statusCode: statusCode,
+          duration: duration,
+          errorMessage: errorMessage,
+        })
+
+        console.log(`[APIClient] ${endpoint.method} ${endpoint.path} - ${status} (${duration}ms)`)
+      } catch (error) {
+        const duration = Date.now() - startTime
+        status = 'error'
+        results.failed++
+        if (endpoint.required) {
+          results.requiredFailed++
         }
+        errorMessage = error.message
 
-        console.log(`[APIClient] Health check completed: ${results.overall}`);
+        results.details.push({
+          path: endpoint.path,
+          method: endpoint.method,
+          required: endpoint.required,
+          status: status,
+          statusCode: null,
+          duration: duration,
+          errorMessage: errorMessage,
+        })
 
-        return results;
+        console.error(
+          `[APIClient] ${endpoint.method} ${endpoint.path} - error (${duration}ms):`,
+          error.message
+        )
+      }
     }
+
+    // 判斷整體狀態
+    results.allRequiredPassed = results.requiredFailed === 0
+    results.overallStatus = results.allRequiredPassed ? 'healthy' : 'degraded'
+
+    console.log(
+      `[APIClient] API 端點驗證完成: ${results.success}/${results.total} 通過, ${results.requiredFailed} 個必需端點失敗`
+    )
+
+    return results
+  }
+
+  /**
+   * Send message to Angela
+   * @param {string} message - User message
+   * @returns {Promise<Object>} Angela's response
+   */
+  async sendMessage(message) {
+    // 參數驗證
+    const validation = this._validateMessage(message)
+    if (!validation.valid) {
+      return {
+        success: false,
+        response: `Error: ${validation.error}`,
+        emotion: 'confused',
+        timestamp: new Date().toISOString(),
+      }
+    }
+
+    console.log(`[APIClient] Fetching: ${this.baseURL}${this.unifiedChatPath}`, { message })
+    try {
+      let response = await fetch(`${this.baseURL}${this.unifiedChatPath}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: message,
+          user_id: 'desktop_user',
+          session_id: this.getSessionId(),
+          tenant_id: 'default_tenant',
+          persona_id: 'angela_desktop',
+          client_id: 'desktop_electron',
+        }),
+        signal: AbortSignal.timeout(this.timeouts.chat),
+      })
+
+      // No backward compatibility fallback — legacy /dialogue removed in v7.5.0
+
+      console.log(`[APIClient] Response Status: ${response.status} ${response.statusText}`)
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+
+      const data = await response.json()
+      console.log(`[APIClient] Received Data:`, data)
+
+      return {
+        success: true,
+        response: data.response || data.message || 'No response',
+        emotion: data.emotion || 'neutral',
+        source: data.source || 'unknown',
+        neuro_blend: data.neuro_blend || null,
+        timestamp: new Date().toISOString(),
+      }
+    } catch (error) {
+      console.error('Failed to send message:', error)
+      return {
+        success: false,
+        response: `Error: ${error.message}`,
+        emotion: 'confused',
+        timestamp: new Date().toISOString(),
+      }
+    }
+  }
+
+  /**
+   * 驗證消息參數
+   * @param {string} message - 用戶消息
+   * @returns {object} - 驗證結果
+   */
+  _validateMessage(message) {
+    const result = {
+      valid: true,
+      error: null,
+    }
+
+    // 檢查是否為字符串
+    if (typeof message !== 'string') {
+      result.valid = false
+      result.error = 'Message must be a string'
+      return result
+    }
+
+    // 檢查是否為空
+    if (!message || message.trim().length === 0) {
+      result.valid = false
+      result.error = 'Message cannot be empty'
+      return result
+    }
+
+    // 檢查長度限制
+    if (message.length > 10000) {
+      result.valid = false
+      result.error = 'Message too long (max 10000 characters)'
+      return result
+    }
+
+    // 檢查是否包含潛在的惡意內容
+    const dangerousPatterns = [/<script[^>]*>/i, /javascript:/i, /on\w+\s*=/i]
+
+    for (const pattern of dangerousPatterns) {
+      if (pattern.test(message)) {
+        result.valid = false
+        result.error = 'Message contains potentially malicious content'
+        return result
+      }
+    }
+
+    return result
+  }
+
+  /**
+   * Get Angela's current status
+   * @returns {Promise<Object>} Status data
+   */
+  async getStatus() {
+    try {
+      const response = await fetch(`${this.baseURL}/api/v1/ops/status`)
+      const data = await response.json()
+      return {
+        success: true,
+        status: data.status || 'idle',
+        metrics: data.metrics || {},
+        service: data.service || null,
+        timestamp: data.timestamp || new Date().toISOString(),
+      }
+    } catch (error) {
+      console.error('Failed to get status:', error)
+      return {
+        success: false,
+        status: 'offline',
+        metrics: {},
+        service: null,
+        timestamp: new Date().toISOString(),
+      }
+    }
+  }
+
+  /**
+   * Get or create session ID
+   * @private
+   */
+  getSessionId() {
+    let sessionId = localStorage.getItem('angela_session_id')
+    if (!sessionId) {
+      const arr = new Uint32Array(1)
+      crypto.getRandomValues(arr)
+      sessionId = `session_${Date.now()}_${arr[0].toString(36)}`
+      localStorage.setItem('angela_session_id', sessionId)
+    }
+    return sessionId
+  }
+
+  /**
+   * 檢查 LLM 服務的可用性
+   * @returns {Promise<Object>} LLM 服務狀態
+   */
+  async checkLLMAvailability() {
+    const llmEndpoints = [{ path: this.unifiedChatPath, name: 'Unified Chat', backend: 'unified' }]
+
+    const results = {
+      available: false,
+      services: [],
+      errors: [],
+      timestamp: new Date().toISOString(),
+    }
+
+    for (const endpoint of llmEndpoints) {
+      const startTime = Date.now()
+      let status = 'unknown'
+      let errorMessage = null
+      let responseTime = null
+
+      try {
+        const response = await fetch(`${this.baseURL}${endpoint.path}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: 'ping',
+            test: true,
+          }),
+          signal: AbortSignal.timeout(10000), // 10秒超時
+        })
+
+        responseTime = Date.now() - startTime
+
+        if (response.ok) {
+          const data = await response.json()
+          status = 'available'
+
+          // 檢查是否有有效的 LLM 響應
+          if (data.response || data.content || data.message) {
+            status = 'healthy'
+            results.available = true
+          }
+        } else {
+          status = 'unavailable'
+          errorMessage = `HTTP ${response.status}`
+        }
+      } catch (error) {
+        responseTime = Date.now() - startTime
+        status = 'error'
+        errorMessage = error.message
+        results.errors.push({
+          endpoint: endpoint.name,
+          error: error.message,
+        })
+      }
+
+      results.services.push({
+        name: endpoint.name,
+        path: endpoint.path,
+        backend: endpoint.backend,
+        status: status,
+        responseTime: responseTime,
+        errorMessage: errorMessage,
+      })
+
+      console.log(`[APIClient] LLM ${endpoint.name} - ${status} (${responseTime}ms)`)
+    }
+
+    // 總結狀態
+    results.healthyServices = results.services.filter((s) => s.status === 'healthy').length
+    results.summary = results.available
+      ? 'LLM services are available'
+      : 'LLM services are not available'
+
+    return results
+  }
+
+  /**
+   * 快速檢查後端和 LLM 服務的健康狀態
+   * @returns {Promise<Object>} 健康狀態摘要
+   */
+  async healthCheck() {
+    console.log('[APIClient] Performing health check...')
+
+    const results = {
+      timestamp: new Date().toISOString(),
+      backend: null,
+      llm: null,
+      overall: 'unknown',
+    }
+
+    // 檢查後端連接
+    results.backend = await this.testConnection()
+
+    if (results.backend) {
+      // 檢查 LLM 服務
+      results.llm = await this.checkLLMAvailability()
+    } else {
+      results.llm = {
+        available: false,
+        summary: 'Backend is not available, cannot check LLM',
+      }
+    }
+
+    // 確定整體狀態
+    if (results.backend && results.llm.available) {
+      results.overall = 'healthy'
+    } else if (results.backend) {
+      results.overall = 'degraded'
+    } else {
+      results.overall = 'unhealthy'
+    }
+
+    console.log(`[APIClient] Health check completed: ${results.overall}`)
+
+    return results
+  }
 }
 
 // Export for use in renderer
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = AngelaAPIClient;
+  module.exports = AngelaAPIClient
 }

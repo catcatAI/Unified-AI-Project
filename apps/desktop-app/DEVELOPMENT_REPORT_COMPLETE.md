@@ -7,6 +7,7 @@
 ### 1. 專案結構建立
 
 #### 核心文件結構
+
 ```
 apps/desktop-app/electron_app/
 ├── main.js                 # Electron 主進程 (460 行)
@@ -38,6 +39,7 @@ apps/desktop-app/electron_app/
 ```
 
 #### 資源目錄
+
 ```
 resources/models/
 └── miara_pro/            # Live2D 模型 (從 miara_pro_en.zip 提取)
@@ -59,6 +61,7 @@ resources/models/
 ### 1. 日誌系統 (logger.js)
 
 **功能清單:**
+
 - ✅ 多級別日誌（debug, info, warn, error, critical）
 - ✅ 日誌持久化（localStorage）
 - ✅ 日誌過濾和查詢
@@ -68,6 +71,7 @@ resources/models/
 - ✅ 監聽器模式（onLog, offLog）
 
 **日誌級別:**
+
 ```javascript
 {
     debug: 0,    // 調試信息
@@ -79,12 +83,13 @@ resources/models/
 ```
 
 **API 示例:**
+
 ```javascript
-const logger = new Logger({ level: 'info' });
-logger.info('Application started');
-logger.error('Something went wrong', error);
-const moduleLogger = logger.createModuleLogger('Live2D');
-moduleLogger.debug('Model loaded');
+const logger = new Logger({ level: 'info' })
+logger.info('Application started')
+logger.error('Something went wrong', error)
+const moduleLogger = logger.createModuleLogger('Live2D')
+moduleLogger.debug('Model loaded')
 ```
 
 ---
@@ -92,6 +97,7 @@ moduleLogger.debug('Model loaded');
 ### 2. 數據持久化系統 (data-persistence.js)
 
 **功能清單:**
+
 - ✅ 鍵值對存儲（基於 localStorage）
 - ✅ 自動保存（可配置間隔）
 - ✅ 數據版本管理
@@ -101,22 +107,24 @@ moduleLogger.debug('Model loaded');
 - ✅ 跨標籤頁同步（storage 事件）
 
 **StatePersistence 子類:**
+
 ```javascript
 {
-    saveState(state),      // 保存當前狀態
-    loadState(),           // 加載當前狀態
-    getHistory(limit),     // 獲取歷史記錄
-    restoreFromHistory(index)  // 從歷史恢復
+  ;(saveState(state), // 保存當前狀態
+    loadState(), // 加載當前狀態
+    getHistory(limit), // 獲取歷史記錄
+    restoreFromHistory(index)) // 從歷史恢復
 }
 ```
 
 **API 示例:**
+
 ```javascript
-const persistence = new DataPersistence();
-persistence.set('user_settings', { theme: 'dark' });
-const settings = persistence.get('user_settings');
-persistence.export();  // 導出所有數據
-persistence.import(jsonString);  // 導入數據
+const persistence = new DataPersistence()
+persistence.set('user_settings', { theme: 'dark' })
+const settings = persistence.get('user_settings')
+persistence.export() // 導出所有數據
+persistence.import(jsonString) // 導入數據
 ```
 
 ---
@@ -124,6 +132,7 @@ persistence.import(jsonString);  // 導入數據
 ### 3. 國際化系統 (i18n.js)
 
 **功能清單:**
+
 - ✅ 多語言支持（en, zh-CN, zh-TW, ja, ko）
 - ✅ 自動語言檢測
 - ✅ 動態語言切換
@@ -133,6 +142,7 @@ persistence.import(jsonString);  // 導入數據
 - ✅ 回調通知
 
 **支持語言:**
+
 - English (en)
 - 簡體中文 (zh-CN)
 - 繁體中文 (zh-TW)
@@ -140,12 +150,13 @@ persistence.import(jsonString);  // 導入數據
 - 한국어 (ko)
 
 **API 示例:**
+
 ```javascript
-i18n.setLocale('zh-CN');
-i18n.t('ui.settings');  // 獲取翻譯
-i18n.t('interaction.click', { part: 'head' });  // 帶參數
-i18n.formatDate(new Date());
-i18n.formatRelativeTime(new Date());
+i18n.setLocale('zh-CN')
+i18n.t('ui.settings') // 獲取翻譯
+i18n.t('interaction.click', { part: 'head' }) // 帶參數
+i18n.formatDate(new Date())
+i18n.formatRelativeTime(new Date())
 ```
 
 ---
@@ -153,6 +164,7 @@ i18n.formatRelativeTime(new Date());
 ### 4. 主題管理系統 (theme-manager.js)
 
 **功能清單:**
+
 - ✅ 多主題支持（light, dark, angela）
 - ✅ CSS 變量自動應用
 - ✅ 主題切換動畫
@@ -161,6 +173,7 @@ i18n.formatRelativeTime(new Date());
 - ✅ 回調通知
 
 **主題定義:**
+
 ```javascript
 {
     colors: {
@@ -178,12 +191,13 @@ i18n.formatRelativeTime(new Date());
 ```
 
 **API 示例:**
+
 ```javascript
-theme.setTheme('dark');
-theme.toggleTheme();
-theme.getColor('primary');
-theme.getSpacing('md');
-theme.getShadow('lg');
+theme.setTheme('dark')
+theme.toggleTheme()
+theme.getColor('primary')
+theme.getSpacing('md')
+theme.getShadow('lg')
 ```
 
 ---
@@ -191,6 +205,7 @@ theme.getShadow('lg');
 ### 5. 插件系統 (plugin-manager.js)
 
 **功能清單:**
+
 - ✅ 插件加載/卸載
 - ✅ 沙箱執行
 - ✅ 依賴管理
@@ -200,6 +215,7 @@ theme.getShadow('lg');
 - ✅ 插件導入/導出
 
 **插件結構:**
+
 ```javascript
 {
     name: 'plugin-name',
@@ -216,11 +232,12 @@ theme.getShadow('lg');
 ```
 
 **API 示例:**
+
 ```javascript
-await pluginManager.loadPlugin('my-plugin');
-pluginManager.enablePlugin('my-plugin');
-await pluginManager.executeHook('before-update', data);
-const plugins = pluginManager.getPlugins();
+await pluginManager.loadPlugin('my-plugin')
+pluginManager.enablePlugin('my-plugin')
+await pluginManager.executeHook('before-update', data)
+const plugins = pluginManager.getPlugins()
 ```
 
 ---
@@ -228,6 +245,7 @@ const plugins = pluginManager.getPlugins();
 ### 6. 用戶管理系統 (user-manager.js)
 
 **功能清單:**
+
 - ✅ 用戶創建/更新/刪除
 - ✅ 統計數據追蹤
 - ✅ 關係管理（trust, intimacy, bond）
@@ -236,6 +254,7 @@ const plugins = pluginManager.getPlugins();
 - ✅ 多用戶支持
 
 **用戶數據結構:**
+
 ```javascript
 {
     id: 'user_xxx',
@@ -256,6 +275,7 @@ const plugins = pluginManager.getPlugins();
 ```
 
 **關係等級:**
+
 - Stranger (陌生人): < 0.2
 - Acquaintance (熟人): 0.2 - 0.4
 - Friend (朋友): 0.4 - 0.6
@@ -263,11 +283,12 @@ const plugins = pluginManager.getPlugins();
 - Intimate (親密): > 0.8
 
 **API 示例:**
+
 ```javascript
-userManager.createUser({ name: 'John' });
-userManager.updateStats(userId, { clickCount: 1 });
-userManager.incrementInteraction(userId, 'click');
-const level = userManager.getRelationshipLevel(userId);
+userManager.createUser({ name: 'John' })
+userManager.updateStats(userId, { clickCount: 1 })
+userManager.incrementInteraction(userId, 'click')
+const level = userManager.getRelationshipLevel(userId)
 ```
 
 ---
@@ -275,6 +296,7 @@ const level = userManager.getRelationshipLevel(userId);
 ### 7. 性能監控系統 (user-manager.js - PerformanceMonitor)
 
 **功能清單:**
+
 - ✅ FPS 監控
 - ✅ 內存使用監控
 - ✅ 性能指標收集
@@ -283,6 +305,7 @@ const level = userManager.getRelationshipLevel(userId);
 - ✅ 性能數據導出
 
 **監控指標:**
+
 ```javascript
 {
     fps: 60,
@@ -309,54 +332,56 @@ const level = userManager.getRelationshipLevel(userId);
 ```
 
 **API 示例:**
+
 ```javascript
-performanceMonitor.startCollecting();
-performanceMonitor.recordFrame();
-performanceMonitor.recordInteraction('click');
-performanceMonitor.addCustomMetric('custom_metric', value);
-const stats = performanceMonitor.getSessionStats();
+performanceMonitor.startCollecting()
+performanceMonitor.recordFrame()
+performanceMonitor.recordInteraction('click')
+performanceMonitor.addCustomMetric('custom_metric', value)
+const stats = performanceMonitor.getSessionStats()
 ```
 
 ---
 
 ## 📊 代碼統計（完整版）
 
-| 模組 | 文件 | 行數 | 功能 |
-|------|------|------|------|
-| **核心系統** | | | |
-| Electron 主進程 | main.js | 460 | 視窗管理、IPC、跨平台 |
-| 預加載腳本 | preload.js | 120 | IPC 通訊橋 |
-| 主應用 | app.js | 760+ | 模組協調、事件處理、後端整合 |
-| 日誌系統 | logger.js | 300 | 多級別日誌、持久化 |
-| 數據持久化 | data-persistence.js | 350 | 鍵值存儲、狀態歷史 |
-| 國際化 | i18n.js | 450 | 多語言、格式化 |
-| 主題管理 | theme-manager.js | 400 | 主題切換、CSS 變量 |
-| **Angela 系統** | | | |
-| 硬體檢測 | hardware-detection.js | 400 | 硬體檢測、效能評估 |
-| 後端 WebSocket | backend-websocket.js | 300+ | WebSocket 通訊、重連機制 |
-| 4D 狀態矩陣 | state-matrix.js | 500+ | αβγδ 狀態管理、Live2D 映射 |
-| 性能管理器 | performance-manager.js | 400+ | 動態性能調整、FPS/解析度/特效 |
-| 成熟度追蹤器 | maturity-tracker.js | 400+ | L0-L11 成熟度、經驗追蹤 |
-| 精度管理器 | precision-manager.js | 400+ | INT/DEC1-DEC4 精度、記憶優化 |
-| **輸入輸出** | | | |
-| Live2D 管理器 | live2d-manager.js | 500 | Live2D 整合 |
-| 輸入處理器 | input-handler.js | 350 | 視覺輸入 |
-| 音訊處理器 | audio-handler.js | 350 | 音訊輸入/輸出 |
-| 觸覺處理器 | haptic-handler.js | 280 | 觸覺輸入/輸出 |
-| 桌布處理器 | wallpaper-handler.js | 320 | 桌布整合 |
-| **擴展系統** | | | |
-| 插件管理 | plugin-manager.js | 450 | 插件加載、鉤子系統 |
-| 用戶管理 | user-manager.js | 500 | 用戶管理、關係追蹤 |
-| 性能監控 | (in user-manager.js) | 300+ | FPS、內存、性能指標 |
-| 設定腳本 | settings.js | 300 | 設定管理 |
-| HTML/CSS | index.html, settings.html | ~500 | UI 結構 |
-| **總計** | **20 個文件** | **~8,500+ 行** | **完整功能 + 完整後端整合** |
+| 模組            | 文件                      | 行數           | 功能                          |
+| --------------- | ------------------------- | -------------- | ----------------------------- |
+| **核心系統**    |                           |                |                               |
+| Electron 主進程 | main.js                   | 460            | 視窗管理、IPC、跨平台         |
+| 預加載腳本      | preload.js                | 120            | IPC 通訊橋                    |
+| 主應用          | app.js                    | 760+           | 模組協調、事件處理、後端整合  |
+| 日誌系統        | logger.js                 | 300            | 多級別日誌、持久化            |
+| 數據持久化      | data-persistence.js       | 350            | 鍵值存儲、狀態歷史            |
+| 國際化          | i18n.js                   | 450            | 多語言、格式化                |
+| 主題管理        | theme-manager.js          | 400            | 主題切換、CSS 變量            |
+| **Angela 系統** |                           |                |                               |
+| 硬體檢測        | hardware-detection.js     | 400            | 硬體檢測、效能評估            |
+| 後端 WebSocket  | backend-websocket.js      | 300+           | WebSocket 通訊、重連機制      |
+| 4D 狀態矩陣     | state-matrix.js           | 500+           | αβγδ 狀態管理、Live2D 映射    |
+| 性能管理器      | performance-manager.js    | 400+           | 動態性能調整、FPS/解析度/特效 |
+| 成熟度追蹤器    | maturity-tracker.js       | 400+           | L0-L11 成熟度、經驗追蹤       |
+| 精度管理器      | precision-manager.js      | 400+           | INT/DEC1-DEC4 精度、記憶優化  |
+| **輸入輸出**    |                           |                |                               |
+| Live2D 管理器   | live2d-manager.js         | 500            | Live2D 整合                   |
+| 輸入處理器      | input-handler.js          | 350            | 視覺輸入                      |
+| 音訊處理器      | audio-handler.js          | 350            | 音訊輸入/輸出                 |
+| 觸覺處理器      | haptic-handler.js         | 280            | 觸覺輸入/輸出                 |
+| 桌布處理器      | wallpaper-handler.js      | 320            | 桌布整合                      |
+| **擴展系統**    |                           |                |                               |
+| 插件管理        | plugin-manager.js         | 450            | 插件加載、鉤子系統            |
+| 用戶管理        | user-manager.js           | 500            | 用戶管理、關係追蹤            |
+| 性能監控        | (in user-manager.js)      | 300+           | FPS、內存、性能指標           |
+| 設定腳本        | settings.js               | 300            | 設定管理                      |
+| HTML/CSS        | index.html, settings.html | ~500           | UI 結構                       |
+| **總計**        | **20 個文件**             | **~8,500+ 行** | **完整功能 + 完整後端整合**   |
 
 ---
 
 ## 🎯 核心需求滿足度
 
 ### 視覺輸入 ✅
+
 - [x] 滑鼠追蹤
 - [x] 點擊檢測
 - [x] 拖拽手勢
@@ -365,6 +390,7 @@ const stats = performanceMonitor.getSessionStats();
 - [x] 視線追蹤
 
 ### 聽覺輸入 ✅
+
 - [x] 麥克風捕捉
 - [x] 語音識別
 - [x] 系統音訊（架構準備）
@@ -372,23 +398,27 @@ const stats = performanceMonitor.getSessionStats();
 - [x] 音訊分析
 
 ### 聽覺輸出 ✅
+
 - [x] TTS（文字轉語音）
 - [x] 口型同步
 - [x] 音效播放
 - [x] 樂器音效（振盪器）
 
 ### 觸覺輸入 ✅
+
 - [x] 多種觸覺裝置支援
 - [x] 裝置自動發現
 - [x] 觸覺訊號處理
 
 ### 觸覺輸出 ✅
+
 - [x] 觸覺回饋模式
 - [x] 身體部位映射
 - [x] 情緒-觸覺映射
 - [x] 自定義觸覺模式
 
 ### 桌面整合 ✅
+
 - [x] 桌面覆蓋層
 - [x] 點擊穿透機制
 - [x] 區域命中測試
@@ -396,12 +426,14 @@ const stats = performanceMonitor.getSessionStats();
 - [x] 桌布非破壞性合成
 
 ### 桌布系統 ✅
+
 - [x] 桌布載入與顯示
 - [x] 非破壞性整合
 - [x] 快照與匯出
 - [x] 視覺特效
 
 ### Live2D 整合 ✅
+
 - [x] 模型載入與解析
 - [x] 參數控制
 - [x] 表情管理
@@ -410,6 +442,7 @@ const stats = performanceMonitor.getSessionStats();
 - [x] 口型同步
 
 ### 後端整合 ✅
+
 - [x] 4D 狀態矩陣同步
 - [x] 成熟度等級同步
 - [x] 精度模式同步
@@ -417,6 +450,7 @@ const stats = performanceMonitor.getSessionStats();
 - [x] WebSocket 通訊
 
 ### 系統功能 ✅
+
 - [x] 日誌系統
 - [x] 數據持久化
 - [x] 國際化
@@ -430,6 +464,7 @@ const stats = performanceMonitor.getSessionStats();
 ## 🔄 後端整合完成度
 
 ### 已整合後端系統
+
 1. **StateMatrix4D** - 4D 狀態矩陣系統
    - ✅ 前端鏡像後端結構
    - ✅ 實時同步通過 WebSocket
@@ -455,6 +490,7 @@ const stats = performanceMonitor.getSessionStats();
    - ✅ 與後端硬體檢測同步
 
 ### 後端通訊協議
+
 - ✅ WebSocket 連接管理
 - ✅ 自動重連機制
 - ✅ 心跳機制
@@ -467,9 +503,11 @@ const stats = performanceMonitor.getSessionStats();
 ## 🎯 後端整合 - 硬體基礎動態變化系統
 
 ### 核心理念
+
 Angela 的行為和能力根據檢測到的硬體動態調整，實現硬體自適應的虛擬伴侶體驗。
 
 ### 系統架構
+
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                    前端 (Desktop App)                         │
@@ -516,6 +554,7 @@ Angela 的行為和能力根據檢測到的硬體動態調整，實現硬體自�
 ## 🚧 進行中工作
 
 ### 1. Live2D Web SDK 整合
+
 - 狀態: 進行中
 - 待完成:
   - 實際集成 Live2D Cubism Web SDK
@@ -523,6 +562,7 @@ Angela 的行為和能力根據檢測到的硬體動態調整，實現硬體自�
   - 模型動畫流程
 
 ### 2. 系統音訊捕捉
+
 - 狀態: 進行中
 - 待完成:
   - 原生模組開發
@@ -535,44 +575,47 @@ Angela 的行為和能力根據檢測到的硬體動態調整，實現硬體自�
 ## ⏭️ 下一步工作
 
 ### 高優先級
+
 1. **完成 Live2D Web SDK 整合**
-    - 集成官方 Live2D Cubism Web SDK
-    - 實現真實的模型渲染
-    - 優化性能（60 FPS）
+   - 集成官方 Live2D Cubism Web SDK
+   - 實現真實的模型渲染
+   - 優化性能（60 FPS）
 
 2. **開發系統音訊捕捉原生模組**
-    - Windows: node-wasapi-capture
-    - macOS: node-coreaudio-capture
-    - Linux: node-pulseaudio-capture
+   - Windows: node-wasapi-capture
+   - macOS: node-coreaudio-capture
+   - Linux: node-pulseaudio-capture
 
 ### 中優先級
+
 3. **桌面整合跨平台優化**
-    - Windows 點擊穿透穩定性
-    - macOS 視窗層級管理
-    - Linux 合成器相容性
+   - Windows 點擊穿透穩定性
+   - macOS 視窗層級管理
+   - Linux 合成器相容性
 
 4. **觸覺裝置完整支持**
-    - WebHID 裝置通信
-    - 藍牙觸覺裝置
-    - 自定義觸覺模式
+   - WebHID 裝置通信
+   - 藍牙觸覺裝置
+   - 自定義觸覺模式
 
 5. **性能優化**
-    - WebGL 渲染優化
-    - 記憶體使用優化
-    - CPU 使用優化
+   - WebGL 渲染優化
+   - 記憶體使用優化
+   - CPU 使用優化
 
 ### 低優先級
+
 6. **高級功能**
-    - 多模型支持
-    - 自定義動作創作
-    - AI 驅動表情
-    - 語音情感分析
+   - 多模型支持
+   - 自定義動作創作
+   - AI 驅動表情
+   - 語音情感分析
 
 7. **測試與文檔**
-    - 單元測試
-    - 集成測試
-    - 用戶手冊
-    - API 文檔完整化
+   - 單元測試
+   - 集成測試
+   - 用戶手冊
+   - API 文檔完整化
 
 ---
 
@@ -589,6 +632,7 @@ Angela 的行為和能力根據檢測到的硬體動態調整，實現硬體自�
 ## 📝 附註
 
 ### 技術選型決定
+
 - **Electron**: 跨平台桌面應用開發標準選擇
 - **Live2D Web SDK**: 便於集成和維護
 - **Web APIs**: 利用現代瀏覽器 API 減少原生開發
@@ -596,6 +640,7 @@ Angela 的行為和能力根據檢測到的硬體動態調整，實現硬體自�
 - **WebSocket**: 實時雙向通信
 
 ### 設計原則
+
 - **模組化**: 各模組獨立、可測試
 - **跨平台**: 優先考慮跨平台相容性
 - **非侵入性**: 不修改用戶系統設置
@@ -605,6 +650,7 @@ Angela 的行為和能力根據檢測到的硬體動態調整，實現硬體自�
 - **主題化**: 多主題支持
 
 ### 性能目標
+
 - **幀率**: 60 FPS (Live2D 渲染)
 - **延遲**: < 50ms (觸覺回饋)
 - **音訊延遲**: < 30ms (口型同步)

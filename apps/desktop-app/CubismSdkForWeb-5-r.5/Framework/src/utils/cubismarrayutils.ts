@@ -18,25 +18,25 @@ export function updateSize<T>(
   value: any = null,
   callPlacementNew: boolean = null
 ): void {
-  const curSize: number = curArray.length;
+  const curSize: number = curArray.length
 
   if (curSize < newSize) {
     if (callPlacementNew) {
       for (let i: number = curArray.length; i < newSize; i++) {
         if (typeof value == 'function') {
           // new
-          curArray[i] = JSON.parse(JSON.stringify(new value()));
+          curArray[i] = JSON.parse(JSON.stringify(new value()))
         } // プリミティブ型なので値渡し
         else {
-          curArray[i] = value;
+          curArray[i] = value
         }
       }
     } else {
       for (let i: number = curArray.length; i < newSize; i++) {
-        curArray[i] = value;
+        curArray[i] = value
       }
     }
   } else {
-    curArray.length = newSize;
+    curArray.length = newSize
   }
 }

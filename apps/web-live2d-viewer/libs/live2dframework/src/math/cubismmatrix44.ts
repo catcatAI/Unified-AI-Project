@@ -15,8 +15,8 @@ export class CubismMatrix44 {
    * コンストラクタ
    */
   public constructor() {
-    this._tr = new Float32Array(16); // 4 * 4のサイズ
-    this.loadIdentity();
+    this._tr = new Float32Array(16) // 4 * 4のサイズ
+    this.loadIdentity()
   }
 
   /**
@@ -26,28 +26,23 @@ export class CubismMatrix44 {
    * @param b 行列b
    * @return 乗算結果の行列
    */
-  public static multiply(
-    a: Float32Array,
-    b: Float32Array,
-    dst: Float32Array
-  ): void {
+  public static multiply(a: Float32Array, b: Float32Array, dst: Float32Array): void {
     const c: Float32Array = new Float32Array([
-      0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-      0.0
-    ]);
+      0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+    ])
 
-    const n = 4;
+    const n = 4
 
     for (let i = 0; i < n; ++i) {
       for (let j = 0; j < n; ++j) {
         for (let k = 0; k < n; ++k) {
-          c[j + i * 4] += a[k + i * 4] * b[j + k * 4];
+          c[j + i * 4] += a[k + i * 4] * b[j + k * 4]
         }
       }
     }
 
     for (let i = 0; i < 16; ++i) {
-      dst[i] = c[i];
+      dst[i] = c[i]
     }
   }
 
@@ -56,11 +51,10 @@ export class CubismMatrix44 {
    */
   public loadIdentity(): void {
     const c: Float32Array = new Float32Array([
-      1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0,
-      1.0
-    ]);
+      1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
+    ])
 
-    this.setMatrix(c);
+    this.setMatrix(c)
   }
 
   /**
@@ -70,7 +64,7 @@ export class CubismMatrix44 {
    */
   public setMatrix(tr: Float32Array): void {
     for (let i = 0; i < 16; ++i) {
-      this._tr[i] = tr[i];
+      this._tr[i] = tr[i]
     }
   }
 
@@ -80,7 +74,7 @@ export class CubismMatrix44 {
    * @return 16個の浮動小数点数で表される4x4の行列
    */
   public getArray(): Float32Array {
-    return this._tr;
+    return this._tr
   }
 
   /**
@@ -88,7 +82,7 @@ export class CubismMatrix44 {
    * @return X軸の拡大率
    */
   public getScaleX(): number {
-    return this._tr[0];
+    return this._tr[0]
   }
 
   /**
@@ -97,7 +91,7 @@ export class CubismMatrix44 {
    * @return Y軸の拡大率
    */
   public getScaleY(): number {
-    return this._tr[5];
+    return this._tr[5]
   }
 
   /**
@@ -105,7 +99,7 @@ export class CubismMatrix44 {
    * @return X軸の移動量
    */
   public getTranslateX(): number {
-    return this._tr[12];
+    return this._tr[12]
   }
 
   /**
@@ -113,7 +107,7 @@ export class CubismMatrix44 {
    * @return Y軸の移動量
    */
   public getTranslateY(): number {
-    return this._tr[13];
+    return this._tr[13]
   }
 
   /**
@@ -123,7 +117,7 @@ export class CubismMatrix44 {
    * @return 現在の行列で計算されたX軸の値
    */
   public transformX(src: number): number {
-    return this._tr[0] * src + this._tr[12];
+    return this._tr[0] * src + this._tr[12]
   }
 
   /**
@@ -133,21 +127,21 @@ export class CubismMatrix44 {
    * @return 現在の行列で計算されたY軸の値
    */
   public transformY(src: number): number {
-    return this._tr[5] * src + this._tr[13];
+    return this._tr[5] * src + this._tr[13]
   }
 
   /**
    * X軸の値を現在の行列で逆計算
    */
   public invertTransformX(src: number): number {
-    return (src - this._tr[12]) / this._tr[0];
+    return (src - this._tr[12]) / this._tr[0]
   }
 
   /**
    * Y軸の値を現在の行列で逆計算
    */
   public invertTransformY(src: number): number {
-    return (src - this._tr[13]) / this._tr[5];
+    return (src - this._tr[13]) / this._tr[5]
   }
 
   /**
@@ -175,10 +169,10 @@ export class CubismMatrix44 {
       x,
       y,
       0.0,
-      1.0
-    ]);
+      1.0,
+    ])
 
-    CubismMatrix44.multiply(tr1, this._tr, this._tr);
+    CubismMatrix44.multiply(tr1, this._tr, this._tr)
   }
 
   /**
@@ -190,8 +184,8 @@ export class CubismMatrix44 {
    * @param y y軸の移動量
    */
   public translate(x: number, y: number): void {
-    this._tr[12] = x;
-    this._tr[13] = y;
+    this._tr[12] = x
+    this._tr[13] = y
   }
 
   /**
@@ -200,7 +194,7 @@ export class CubismMatrix44 {
    * @param x X軸の移動量
    */
   public translateX(x: number): void {
-    this._tr[12] = x;
+    this._tr[12] = x
   }
 
   /**
@@ -209,7 +203,7 @@ export class CubismMatrix44 {
    * @param y Y軸の移動量
    */
   public translateY(y: number): void {
-    this._tr[13] = y;
+    this._tr[13] = y
   }
 
   /**
@@ -235,10 +229,10 @@ export class CubismMatrix44 {
       0.0,
       0.0,
       0.0,
-      1.0
-    ]);
+      1.0,
+    ])
 
-    CubismMatrix44.multiply(tr1, this._tr, this._tr);
+    CubismMatrix44.multiply(tr1, this._tr, this._tr)
   }
 
   /**
@@ -248,8 +242,8 @@ export class CubismMatrix44 {
    * @param y Y軸の拡大率
    */
   public scale(x: number, y: number): void {
-    this._tr[0] = x;
-    this._tr[5] = y;
+    this._tr[0] = x
+    this._tr[5] = y
   }
 
   /**
@@ -260,29 +254,29 @@ export class CubismMatrix44 {
    * @param m 行列
    */
   public multiplyByMatrix(m: CubismMatrix44): void {
-    CubismMatrix44.multiply(m.getArray(), this._tr, this._tr);
+    CubismMatrix44.multiply(m.getArray(), this._tr, this._tr)
   }
 
   /**
    * オブジェクトのコピーを生成する
    */
   public clone(): CubismMatrix44 {
-    const cloneMatrix: CubismMatrix44 = new CubismMatrix44();
+    const cloneMatrix: CubismMatrix44 = new CubismMatrix44()
 
     for (let i = 0; i < this._tr.length; i++) {
-      cloneMatrix._tr[i] = this._tr[i];
+      cloneMatrix._tr[i] = this._tr[i]
     }
 
-    return cloneMatrix;
+    return cloneMatrix
   }
 
-  protected _tr: Float32Array; // 4x4行列データ
+  protected _tr: Float32Array // 4x4行列データ
 }
 
 // Namespace definition for compatibility.
-import * as $ from './cubismmatrix44';
+import * as $ from './cubismmatrix44'
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
-  export const CubismMatrix44 = $.CubismMatrix44;
-  export type CubismMatrix44 = $.CubismMatrix44;
+  export const CubismMatrix44 = $.CubismMatrix44
+  export type CubismMatrix44 = $.CubismMatrix44
 }

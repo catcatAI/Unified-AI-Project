@@ -23,6 +23,7 @@ tools\setup-doc-tools.bat
 ```
 
 安裝腳本將自動：
+
 - 檢查Python環境
 - 安裝必要的Python套件
 - 驗證文檔更新工具腳本

@@ -2,8 +2,11 @@
 
 **日期**: 2026-06-15
 **目標**: 讓 Angela 知行合一 — 意圖分類精確、執行結果回饋 LLM、不確定時不亂做
-**對齊**: AGENTS.md (Surgical Precision, No Placeholders), ANGELA_FULL_ARCHITECTURE.md
-**前置**: 已審查 query_classifier.py (277行), router.py (1457行), prompt_builder.py (377行), chat_routes.py (540行), chat_service.py (128行), file_operation_handler.py (38行), web_search_handler.py (63行), model_bus.py (511行)
+**對齊**: AGENTS.md (Surgical Precision, No Placeholders),
+ANGELA_FULL_ARCHITECTURE.md **前置**: 已審查 query_classifier.py (277行),
+router.py (1457行), prompt_builder.py (377行), chat_routes.py (540行),
+chat_service.py (128行), file_operation_handler.py (38行), web_search_handler.py
+(63行), model_bus.py (511行)
 
 ---
 
@@ -15,6 +18,7 @@
 ```
 
 **四條鐵律：**
+
 1. **不確定 → 不執行，問用戶**（寧可多問一句，不能做錯一件事）
 2. **執行結果必須回饋 LLM**（做了什麼、成功失敗，都要讓 LLM 看到）
 3. **LLM 基於事實回應**（不能自己編結果）
@@ -113,19 +117,19 @@ def _calculate_exec_score(self, action_type: str, user_message: str,
 
 ### 2.6 分數範例（完整計算過程）
 
-| 輸入 | action_type | 可逆性 | 影響度 | 明確度 | 執行分數 | 決策 |
-|------|------------|--------|--------|--------|---------|------|
-| `搜尋台北天氣` | read | 1.0 | 1.0 | 0.9 | **0.900** | 直接執行 |
-| `讀取 temp.txt` | read | 1.0 | 1.0 | 0.95 | **0.950** | 直接執行 |
-| `建立 notes.md` | create | 0.9 | 0.9 | 0.85 | **0.689** | 問用戶 |
-| `修改 config.json` | modify | 0.6 | 0.7 | 0.8 | **0.336** | 問用戶 |
-| `刪除 temp.txt` | delete | 0.2 | 0.4 | 0.9 | **0.072** | 問用戶+影響 |
-| `刪除全部檔案` | delete | 0.2 | 0.1 | 0.9 | **0.018** | 不執行 |
-| `幫我查字典` | read | 1.0 | 1.0 | 0.3 | **0.300** | 問用戶 |
-| `開玩笑` | system | 0.0 | 0.5 | 0.2 | **0.000** | 不執行 |
-| `今天?` | none | 1.0 | 1.0 | 0.2 | **0.200** | 問用戶 |
-| `幫我處理檔案` | modify | 0.6 | 0.7 | 0.4 | **0.168** | 問用戶 |
-| `不要搜尋` | read | 1.0 | 1.0 | 0.4 | **0.400** | 否定→不執行 |
+| 輸入               | action_type | 可逆性 | 影響度 | 明確度 | 執行分數  | 決策        |
+| ------------------ | ----------- | ------ | ------ | ------ | --------- | ----------- |
+| `搜尋台北天氣`     | read        | 1.0    | 1.0    | 0.9    | **0.900** | 直接執行    |
+| `讀取 temp.txt`    | read        | 1.0    | 1.0    | 0.95   | **0.950** | 直接執行    |
+| `建立 notes.md`    | create      | 0.9    | 0.9    | 0.85   | **0.689** | 問用戶      |
+| `修改 config.json` | modify      | 0.6    | 0.7    | 0.8    | **0.336** | 問用戶      |
+| `刪除 temp.txt`    | delete      | 0.2    | 0.4    | 0.9    | **0.072** | 問用戶+影響 |
+| `刪除全部檔案`     | delete      | 0.2    | 0.1    | 0.9    | **0.018** | 不執行      |
+| `幫我查字典`       | read        | 1.0    | 1.0    | 0.3    | **0.300** | 問用戶      |
+| `開玩笑`           | system      | 0.0    | 0.5    | 0.2    | **0.000** | 不執行      |
+| `今天?`            | none        | 1.0    | 1.0    | 0.2    | **0.200** | 問用戶      |
+| `幫我處理檔案`     | modify      | 0.6    | 0.7    | 0.4    | **0.168** | 問用戶      |
+| `不要搜尋`         | read        | 1.0    | 1.0    | 0.4    | **0.400** | 否定→不執行 |
 
 ---
 
@@ -436,7 +440,8 @@ def _infer_action_type(self, query_type: QueryType, text: str) -> str:
 
 ### 3.7 Regex word boundary 修正
 
-**問題：** 現有 pattern 使用 `re.search()` 做 substring match，`"開玩笑"` 會匹配到 `"開"` 進入 EXECUTE。
+**問題：** 現有 pattern 使用 `re.search()` 做 substring match，`"開玩笑"`
+會匹配到 `"開"` 進入 EXECUTE。
 
 **修正方式：** 所有 pattern 加上前后邊界，確保匹配完整詞。
 
@@ -470,24 +475,25 @@ r"^(幫我|請|打開|關閉|開始|停止|can you|please)"
 
 **需要修正的 pattern 清單（query_classifier.py:48-198）：**
 
-| Pattern | 修正前 | 修正後 |
-|---------|--------|--------|
-| EXECUTE | `r"(執行\|運行\|..."` | 加 WORD_BOUNDARY |
-| FILE | `r"(整理\|刪除\|..."` | 加 WORD_BOUNDARY |
-| SEARCH | `r"(搜尋\|搜索\|..."` | 加 WORD_BOUNDARY |
-| CODE | `r"(程序\|代碼\|..."` | 加 WORD_BOUNDARY |
-| TASK | `r"(任務\|工作\|..."` | 加 WORD_BOUNDARY |
-| VISION | `r"(圖片\|照片\|..."` | 加 WORD_BOUNDARY |
-| AUDIO | `r"(語音\|音訊\|..."` | 加 WORD_BOUNDARY |
-| COMMAND | `r"^(幫我\|..."` | 已錨定，不改 |
-| MATH | `r"(\d+\s*[+\-*/]\s*\d+)"` | 不改（已有數字邊界） |
-| LOGIC | `r"(true\|false\|..."` | 加 WORD_BOUNDARY |
-| KNOWLEDGE | `r"(什麼是\|how\|..."` | 加 WORD_BOUNDARY |
-| CREATIVE | `r"(寫\|作\|..."` | 加 WORD_BOUNDARY |
-| OPINION | `r"(覺得\|認為\|..."` | 加 WORD_BOUNDARY |
-| GREETING | `r"(你好\|hello\|..."` | 加 WORD_BOUNDARY |
+| Pattern   | 修正前                     | 修正後               |
+| --------- | -------------------------- | -------------------- |
+| EXECUTE   | `r"(執行\|運行\|..."`      | 加 WORD_BOUNDARY     |
+| FILE      | `r"(整理\|刪除\|..."`      | 加 WORD_BOUNDARY     |
+| SEARCH    | `r"(搜尋\|搜索\|..."`      | 加 WORD_BOUNDARY     |
+| CODE      | `r"(程序\|代碼\|..."`      | 加 WORD_BOUNDARY     |
+| TASK      | `r"(任務\|工作\|..."`      | 加 WORD_BOUNDARY     |
+| VISION    | `r"(圖片\|照片\|..."`      | 加 WORD_BOUNDARY     |
+| AUDIO     | `r"(語音\|音訊\|..."`      | 加 WORD_BOUNDARY     |
+| COMMAND   | `r"^(幫我\|..."`           | 已錨定，不改         |
+| MATH      | `r"(\d+\s*[+\-*/]\s*\d+)"` | 不改（已有數字邊界） |
+| LOGIC     | `r"(true\|false\|..."`     | 加 WORD_BOUNDARY     |
+| KNOWLEDGE | `r"(什麼是\|how\|..."`     | 加 WORD_BOUNDARY     |
+| CREATIVE  | `r"(寫\|作\|..."`          | 加 WORD_BOUNDARY     |
+| OPINION   | `r"(覺得\|認為\|..."`      | 加 WORD_BOUNDARY     |
+| GREETING  | `r"(你好\|hello\|..."`     | 加 WORD_BOUNDARY     |
 
 **驗證方法：**
+
 ```python
 # 測試用例
 test_cases = [
@@ -672,7 +678,8 @@ class ExecutionGate:
 
 ### 5.1 pending_action 存儲
 
-在 `chat_routes.py` 的 `_handle_chat_request` 中，session context 已有 dict 結構。新增：
+在 `chat_routes.py` 的 `_handle_chat_request` 中，session
+context 已有 dict 結構。新增：
 
 ```python
 # session context 新增欄位
@@ -818,6 +825,7 @@ if continuation >= 3:
 ### 7.1 否定詞檢測位置
 
 在兩個地方檢查：
+
 1. **QueryClassifier.classify()** — Step 0（line ~210）→ 降低 confidence
 2. **ExecutionGate.decide()** — score 計算後 → 強制 reject
 
@@ -840,14 +848,15 @@ if any(neg in user_message for neg in _NEGATION_WORDS):
 
 ### 8.1 現有 handler 接口不統一
 
-| Handler | 接口 | 回傳 |
-|---------|------|------|
+| Handler              | 接口                     | 回傳             |
+| -------------------- | ------------------------ | ---------------- |
 | FileOperationHandler | `handle(intent, params)` | `Dict[str, Any]` |
-| WebSearchHandler | `handle(text, intent)` | `str` |
+| WebSearchHandler     | `handle(text, intent)`   | `str`            |
 
 ### 8.2 統一為 `execute(query, context)` 接口
 
-在 `model_bus.py` 的 `_adapt_handler` 已經做了包裝（line 150-178），將 handler 包裝為 `process(query, context)` 接口。
+在 `model_bus.py` 的 `_adapt_handler` 已經做了包裝（line
+150-178），將 handler 包裝為 `process(query, context)` 接口。
 
 **需要修改：** 讓 `execute_handler` 方法回傳結構化結果：
 
@@ -955,45 +964,45 @@ async def _handle_chat_request(user_message, user_name, history, session_id, ext
 
 ### Phase 1: QueryClassifier v2（2-3 天）
 
-| # | 項目 | 檔案:行號 | 具體修改 |
-|---|------|-----------|---------|
-| 1.1 | 新增 QueryResult dataclass | `query_classifier.py:1-18` | 在 import 後新增 dataclass |
-| 1.2 | 新增常數 | `query_classifier.py:19-40` | 在 QueryType 後新增所有常數 |
-| 1.3 | 替換 classify() | `query_classifier.py:200-243` | 用 3.3 的完整方法替換 |
-| 1.4 | 新增 _adjust_confidence() | `query_classifier.py` | 新方法（3.4） |
-| 1.5 | 新增 _calc_actionability() | `query_classifier.py` | 新方法（3.5） |
-| 1.6 | 新增 _infer_action_type() | `query_classifier.py` | 新方法（3.6） |
-| 1.7 | 修正 regex patterns | `query_classifier.py:48-198` | 所有 pattern 加 word boundary |
-| 1.8 | 單元測試 | `tests/ai/core/test_query_classifier_v2.py` | 新建，30+ 測試 |
+| #   | 項目                       | 檔案:行號                                   | 具體修改                      |
+| --- | -------------------------- | ------------------------------------------- | ----------------------------- |
+| 1.1 | 新增 QueryResult dataclass | `query_classifier.py:1-18`                  | 在 import 後新增 dataclass    |
+| 1.2 | 新增常數                   | `query_classifier.py:19-40`                 | 在 QueryType 後新增所有常數   |
+| 1.3 | 替換 classify()            | `query_classifier.py:200-243`               | 用 3.3 的完整方法替換         |
+| 1.4 | 新增 _adjust_confidence()  | `query_classifier.py`                       | 新方法（3.4）                 |
+| 1.5 | 新增 _calc_actionability() | `query_classifier.py`                       | 新方法（3.5）                 |
+| 1.6 | 新增 _infer_action_type()  | `query_classifier.py`                       | 新方法（3.6）                 |
+| 1.7 | 修正 regex patterns        | `query_classifier.py:48-198`                | 所有 pattern 加 word boundary |
+| 1.8 | 單元測試                   | `tests/ai/core/test_query_classifier_v2.py` | 新建，30+ 測試                |
 
 ### Phase 2: ExecutionGate（1-2 天）
 
-| # | 項目 | 檔案:行號 | 具體修改 |
-|---|------|-----------|---------|
-| 2.1 | 新建 ExecutionGate | `ai/core/execution_gate.py` | 新建檔案（4.2 完整類） |
-| 2.2 | 新增 execute_handler | `model_bus.py:128-148` | 新增結構化回傳方法（8.2） |
-| 2.3 | 修改 _handle_chat_request | `chat_routes.py:88-327` | 插入確認處理 + 分類 + 閘門（第 9 章） |
-| 2.4 | 修改 prompt_builder | `prompt_builder.py:354-365` | 插入執行結果注入（6.1）+ 續行保護（6.3） |
-| 2.5 | 單元測試 | `tests/ai/core/test_execution_gate.py` | 新建，15+ 測試 |
+| #   | 項目                      | 檔案:行號                              | 具體修改                                 |
+| --- | ------------------------- | -------------------------------------- | ---------------------------------------- |
+| 2.1 | 新建 ExecutionGate        | `ai/core/execution_gate.py`            | 新建檔案（4.2 完整類）                   |
+| 2.2 | 新增 execute_handler      | `model_bus.py:128-148`                 | 新增結構化回傳方法（8.2）                |
+| 2.3 | 修改 _handle_chat_request | `chat_routes.py:88-327`                | 插入確認處理 + 分類 + 閘門（第 9 章）    |
+| 2.4 | 修改 prompt_builder       | `prompt_builder.py:354-365`            | 插入執行結果注入（6.1）+ 續行保護（6.3） |
+| 2.5 | 單元測試                  | `tests/ai/core/test_execution_gate.py` | 新建，15+ 測試                           |
 
 ### Phase 3: 整合測試（1-2 天）
 
-| # | 測試案例（具體輸入/預期） |
-|---|---------|
-| 3.1 | `"搜尋台北天氣"` → exec_score ≥ 0.6 → 自動執行 |
-| 3.2 | `"讀取 temp.txt"` → exec_score ≥ 0.6 → 自動執行 |
-| 3.3 | `"刪除 temp.txt"` → exec_score < 0.2 → 問用戶 |
-| 3.4 | `"刪除全部檔案"` → exec_score < 0.2 → 問用戶+影響說明 |
-| 3.5 | `"幫我查字典"` → exec_score 0.2-0.6 → 問用戶 |
-| 3.6 | `"開玩笑"` → exec_score = 0 → 不執行 |
-| 3.7 | `"不要搜尋"` → 否定詞 → reject |
-| 3.8 | `"看"` → 單字不 override → exec_score 0.2-0.6 → 問用戶 |
-| 3.9 | `"今天?"` → exec_score ~0.2 → 問用戶 |
-| 3.10 | 確認後執行：先問 → 用戶回"好" → 執行 → LLM 回應含結果 |
-| 3.11 | 執行失敗：刪除 system32 → 失敗 → LLM 說明原因 |
-| 3.12 | 多步驟：搜尋+整理 → 先搜尋 → 問要不要整理 → 整理 |
-| 3.13 | 續行迴圈保護：3 次後強制停止 |
-| 3.14 | 舊 86 個測試仍通過 |
+| #    | 測試案例（具體輸入/預期）                              |
+| ---- | ------------------------------------------------------ |
+| 3.1  | `"搜尋台北天氣"` → exec_score ≥ 0.6 → 自動執行         |
+| 3.2  | `"讀取 temp.txt"` → exec_score ≥ 0.6 → 自動執行        |
+| 3.3  | `"刪除 temp.txt"` → exec_score < 0.2 → 問用戶          |
+| 3.4  | `"刪除全部檔案"` → exec_score < 0.2 → 問用戶+影響說明  |
+| 3.5  | `"幫我查字典"` → exec_score 0.2-0.6 → 問用戶           |
+| 3.6  | `"開玩笑"` → exec_score = 0 → 不執行                   |
+| 3.7  | `"不要搜尋"` → 否定詞 → reject                         |
+| 3.8  | `"看"` → 單字不 override → exec_score 0.2-0.6 → 問用戶 |
+| 3.9  | `"今天?"` → exec_score ~0.2 → 問用戶                   |
+| 3.10 | 確認後執行：先問 → 用戶回"好" → 執行 → LLM 回應含結果  |
+| 3.11 | 執行失敗：刪除 system32 → 失敗 → LLM 說明原因          |
+| 3.12 | 多步驟：搜尋+整理 → 先搜尋 → 問要不要整理 → 整理       |
+| 3.13 | 續行迴圈保護：3 次後強制停止                           |
+| 3.14 | 舊 86 個測試仍通過                                     |
 
 ---
 
@@ -1002,7 +1011,9 @@ async def _handle_chat_request(user_message, user_name, history, session_id, ext
 **实施状态**: 2026-06-15 — Phase 1-2 已完成，所有验证通过
 
 ### 精确度（每个都有具体分数）
-- [x] `"開玩笑"` → action_type=none, exec_score=0.2 → confirm（无 handler，问用户）
+
+- [x] `"開玩笑"` → action_type=none, exec_score=0.2 →
+      confirm（无 handler，问用户）
 - [x] `"關心"` → action_type=none, exec_score=0.2 → confirm（同上）
 - [x] `"幫我查字典"` → action_type=none, exec_score=0.3 → confirm
 - [x] `"搜尋台北天氣"` → action_type=read, exec_score=1.0 → auto_execute ✅
@@ -1013,9 +1024,11 @@ async def _handle_chat_request(user_message, user_name, history, session_id, ext
 - [x] `"好看嗎?"` → action_type=none, exec_score=0.55 → confirm（问号 override）
 - [x] `"看"` → action_type=read, exec_score=0.6 → confirm（无 VISION handler）
 - [x] `"不要搜尋"` → 否定詞 → reject ✅
-- [x] `"執行這個命令"` → action_type=system, exec_score=0.0 → reject（系统操作不可逆）
+- [x] `"執行這個命令"` → action_type=system, exec_score=0.0 →
+      reject（系统操作不可逆）
 
 ### 知行合一
+
 - [x] auto_execute → LLM prompt 包含 `[執行結果]` 區塊（prompt_builder.py 注入）
 - [x] 執行成功 → LLM 回應描述結果（执行规则 prompt 指导）
 - [x] 執行失敗 → LLM 回應說明失敗原因（执行规则 prompt 指导）
@@ -1026,17 +1039,19 @@ async def _handle_chat_request(user_message, user_name, history, session_id, ext
 - [x] 續行迴圈 ≥ 3 → 強制停止（continuation_count 检查）
 
 ### 回归
+
 - [x] 舊 86 個測試仍通過（未修改现有逻辑，仅新增）
 - [x] 新增 102 個測試（58 classifier + 44 gate），全部通過 ✅
 
 ### 实施的文件
-| 文件 | 变更 |
-|------|------|
-| `ai/core/query_classifier.py` | QueryResult dataclass, v2 classify(), _adjust_confidence, _calc_actionability, _infer_action_type, regex word boundary, FILE/TASK patterns enhanced |
-| `ai/core/execution_gate.py` | **新建**: ExecutionGate class, GateDecision dataclass, REVERSIBILITY scores |
-| `ai/core/model_bus.py` | 新增 execute_handler() 方法 + 修复 classify() 调用 (tuple→QueryResult) |
-| `api/routes/chat_routes.py` | _handle_chat_request 插入执行闸门流程 |
-| `services/llm/prompt_builder.py` | 执行结果注入 + 执行规则 prompt |
-| `services/llm/router.py` | 修复 classify() 调用 (tuple→QueryResult) |
-| `tests/ai/core/test_query_classifier_v2.py` | **新建**: 58 个测试 |
-| `tests/ai/core/test_execution_gate.py` | **新建**: 44 个测试 |
+
+| 文件                                        | 变更                                                                                                                                                |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ai/core/query_classifier.py`               | QueryResult dataclass, v2 classify(), _adjust_confidence, _calc_actionability, _infer_action_type, regex word boundary, FILE/TASK patterns enhanced |
+| `ai/core/execution_gate.py`                 | **新建**: ExecutionGate class, GateDecision dataclass, REVERSIBILITY scores                                                                         |
+| `ai/core/model_bus.py`                      | 新增 execute_handler() 方法 + 修复 classify() 调用 (tuple→QueryResult)                                                                              |
+| `api/routes/chat_routes.py`                 | _handle_chat_request 插入执行闸门流程                                                                                                               |
+| `services/llm/prompt_builder.py`            | 执行结果注入 + 执行规则 prompt                                                                                                                      |
+| `services/llm/router.py`                    | 修复 classify() 调用 (tuple→QueryResult)                                                                                                            |
+| `tests/ai/core/test_query_classifier_v2.py` | **新建**: 58 个测试                                                                                                                                 |
+| `tests/ai/core/test_execution_gate.py`      | **新建**: 44 个测试                                                                                                                                 |

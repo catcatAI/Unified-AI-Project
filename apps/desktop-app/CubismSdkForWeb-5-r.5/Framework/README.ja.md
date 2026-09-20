@@ -4,45 +4,44 @@
 
 # Cubism Web Framework
 
-Live2D Cubism Editor で出力したモデルをアプリケーションで利用するためのフレームワークです。
+Live2D Cubism
+Editor で出力したモデルをアプリケーションで利用するためのフレームワークです。
 
-モデルを表示、操作するための各種機能を提供します。
-モデルをロードするには Live2D Cubism Core ライブラリと組み合わせて使用します。
+モデルを表示、操作するための各種機能を提供します。モデルをロードするには Live2D
+Cubism Core ライブラリと組み合わせて使用します。
 
 ビルドを行うことで、ブラウザで利用可能な JavaScript ライブラリとして利用することができます。
-
 
 ## ライセンス
 
 本 SDK を使用する前に、[ライセンス](LICENSE.md)をご確認ください。
 
-
 ## Cubism 5.3新機能や過去バージョンとの互換性について
 
-本 SDK はCubism 5.3に対応した製品です。
-Cubism 5.3 Editorに搭載された新機能のSDK対応については [こちら](https://docs.live2d.com/cubism-sdk-manual/cubism-5-3-new-functions/)をご確認ください。
-過去バージョンのCubism SDKとの互換性については [こちら](https://docs.live2d.com/cubism-sdk-manual/compatibility-with-cubism-5-3/)をご確認ください。
-
+本 SDK はCubism 5.3に対応した製品です。Cubism 5.3
+Editorに搭載された新機能のSDK対応については
+[こちら](https://docs.live2d.com/cubism-sdk-manual/cubism-5-3-new-functions/)をご確認ください。過去バージョンのCubism
+SDKとの互換性については
+[こちら](https://docs.live2d.com/cubism-sdk-manual/compatibility-with-cubism-5-3/)をご確認ください。
 
 ## 開発環境
 
 ### Node.js
 
-* 25.8.2
-* 24.14.1
-
+- 25.8.2
+- 24.14.1
 
 ### TypeScript
 
 5.9.3
 
-
 ## 開発環境構築
 
 1. [Node.js] と [Visual Studio Code] をインストールします
 1. Visual Studio Code で本プロジェクトを開き、推奨拡張機能をインストールします
-    * 拡張機能タブから `@recommended` と入力することで確認できます
-1. コマンドパレット（*View > Command Palette...*）で `>Tasks: Run Task` を入力してタスク一覧を表示します
+   - 拡張機能タブから `@recommended` と入力することで確認できます
+1. コマンドパレット（_View > Command Palette..._）で `>Tasks: Run Task`
+   を入力してタスク一覧を表示します
 1. `npm: install` を選択して依存パッケージのダウンロードを行います
 
 コマンドパレットのタスク一覧から各種コマンドを実行することができます。
@@ -78,7 +77,6 @@ TypeScript の型チェックテストを行います。
 ### `npm: clean`
 
 ビルド成果物ディレクトリ（`dist`）を削除します。
-
 
 ## コンポーネント
 
@@ -118,7 +116,6 @@ TypeScript の型チェックテストを行います。
 
 JSONパーサーやログ出力などのユーティリティ機能を提供します。
 
-
 ## Live2D Cubism Core for Web
 
 当リポジトリには Cubism Core for Web は同梱されていません。
@@ -127,23 +124,19 @@ JSONパーサーやログ出力などのユーティリティ機能を提供し�
 
 [Cubism SDK for Web]: https://www.live2d.com/download/cubism-sdk/download-web/
 
-
 ## サンプル
 
 標準的なアプリケーションの実装例は [CubismWebSamples] を参照ください。
 
 [CubismWebSamples]: https://github.com/Live2D/CubismWebSamples
 
-
 ## マニュアル
 
 [Cubism SDK Manual](https://docs.live2d.com/cubism-sdk-manual/top/)
 
-
 ## 変更履歴
 
 当リポジトリの変更履歴については [CHANGELOG.md](CHANGELOG.md) を参照ください。
-
 
 ## プロジェクトへの貢献
 
@@ -161,10 +154,10 @@ Live2Dコミュニティでは、問題のレポートと機能リクエスト�
 
 SDKの将来についてのフィードバックにも関心があります。Live2Dコミュニティで提案や機能のリクエストを送信できます。このプロセスをより効果的にするために、それらをより明確に定義するのに役立つより多くの情報を含めるようお願いしています。
 
-
 ## フォーラム
 
-ユーザー同士でCubism SDKの活用方法の提案や質問をしたい場合は、是非フォーラムをご活用ください。
+ユーザー同士でCubism
+SDKの活用方法の提案や質問をしたい場合は、是非フォーラムをご活用ください。
 
 - [Live2D 公式クリエイターズフォーラム](https://creatorsforum.live2d.com/)
 - [Live2D Creator's Forum(English)](https://community.live2d.com/)

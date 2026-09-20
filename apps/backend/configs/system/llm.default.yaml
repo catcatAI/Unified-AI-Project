@@ -28,15 +28,15 @@
 # =============================================================================
 
 deployment:
-  mode: local                 # local | local+llm | llm | auto
-  selection: available        # available | per-vendor
+  mode: local # local | local+llm | llm | auto
+  selection: available # available | per-vendor
 
 # Web/grounding search — base tool, always available across all deployment
 # modes. No API key required (DuckDuckGo + Wikipedia). Used for factual
 # grounding and as a last-resort answer source for unknown facts.
 web_search:
   enabled: true
-  provider: duckduckgo        # duckduckgo | wikipedia | both
+  provider: duckduckgo # duckduckgo | wikipedia | both
   ddg_url: "https://lite.duckduckgo.com/lite/"
   wiki_api: "https://en.wikipedia.org/w/api.php"
   user_agent: "AngelaAI/7.5.0"
@@ -45,7 +45,7 @@ web_search:
 
 # Service-level settings (was angela_core.llm + llm_mode).
 settings:
-  llm_mode: standard          # standard | auto
+  llm_mode: standard # standard | auto
   enable_memory_enhancement: true
   memory:
     max_history: 10

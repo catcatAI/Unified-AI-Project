@@ -33,12 +33,14 @@ Angela 視覺反應 (表情、動作)
 **位置**: `apps/desktop-app/electron_app/js/input-handler.js`
 
 **功能**:
+
 - 滑鼠位置追蹤
 - 點擊檢測 (mousedown/mouseup)
 - 拖拽手勢識別
 - 多點觸控支援
 
 **輸出事件**:
+
 ```javascript
 {
     type: 'click',  // 或 'drag', 'hover'
@@ -57,37 +59,40 @@ Angela 視覺反應 (表情、動作)
 **位置**: `apps/desktop-app/electron_app/js/haptic-handler.js`
 
 **功能**:
+
 - 接收滑鼠輸入事件
 - 觸發觸覺回饋 (振動)
 - 向後端發送觸覺事件
 - 管理觸覺設備
 
 **觸覺模式**:
+
 ```javascript
 const hapticPatterns = {
-    'click': { duration: 10, intensity: 0.5 },
-    'hover': { duration: 5, intensity: 0.3 },
-    'touch': { duration: 50, intensity: 1.0 },
-    'pat': { duration: 30, intensity: 0.8 },
-    'stroke': { duration: 40, intensity: 0.6 },
-    'poke': { duration: 20, intensity: 0.9 },
-    'pinch': { duration: 15, intensity: 0.7 },
-    'tickle': { duration: 35, intensity: 0.4 }
-};
+  click: { duration: 10, intensity: 0.5 },
+  hover: { duration: 5, intensity: 0.3 },
+  touch: { duration: 50, intensity: 1.0 },
+  pat: { duration: 30, intensity: 0.8 },
+  stroke: { duration: 40, intensity: 0.6 },
+  poke: { duration: 20, intensity: 0.9 },
+  pinch: { duration: 15, intensity: 0.7 },
+  tickle: { duration: 35, intensity: 0.4 },
+}
 ```
 
 **向後端發送**:
+
 ```javascript
 // 通過 WebSocket 發送到後端
 websocket.send({
-    type: 'tactile_event',
-    data: {
-        bodyPart: 'head',
-        touchType: 'pat',
-        intensity: 0.8,
-        timestamp: Date.now()
-    }
-});
+  type: 'tactile_event',
+  data: {
+    bodyPart: 'head',
+    touchType: 'pat',
+    intensity: 0.8,
+    timestamp: Date.now(),
+  },
+})
 ```
 
 ---
@@ -99,6 +104,7 @@ websocket.send({
 **核心組件**:
 
 #### 3.1 6 種皮膚受體 (Skin Receptors)
+
 ```python
 class ReceptorType(Enum):
     MEISSNER = auto()    # 邁斯納小體 - 輕觸、快速適應
@@ -110,6 +116,7 @@ class ReceptorType(Enum):
 ```
 
 #### 3.2 18 個身體部位 (Body Parts)
+
 ```python
 class BodyPart(Enum):
     # 頭部
@@ -117,24 +124,24 @@ class BodyPart(Enum):
     FOREHEAD = ("額頭", BodyRegion.HEAD, 0.8)
     FACE = ("面部", BodyRegion.HEAD, 0.9)
     NECK = ("頸部", BodyRegion.HEAD, 0.6)
-    
+
     # 上身
     CHEST = ("胸部", BodyRegion.UPPER_BODY, 0.5)
     BACK = ("背部", BodyRegion.UPPER_BODY, 0.4)
     ABDOMEN = ("腹部", BodyRegion.UPPER_BODY, 0.5)
     WAIST = ("腰部", BodyRegion.UPPER_BODY, 0.5)
-    
+
     # 下身
     HIPS = ("臀部", BodyRegion.LOWER_BODY, 0.4)
     THIGHS = ("大腿", BodyRegion.LOWER_BODY, 0.4)
-    
+
     # 上肢
     SHOULDERS = ("肩膀", BodyRegion.UPPER_LIMBS, 0.6)
     UPPER_ARMS = ("上臂", BodyRegion.UPPER_LIMBS, 0.5)
     FOREARMS = ("前臂", BodyRegion.UPPER_LIMBS, 0.6)
     HANDS = ("手掌", BodyRegion.UPPER_LIMBS, 1.0)
     FINGERS = ("手指", BodyRegion.UPPER_LIMBS, 1.0)
-    
+
     # 下肢
     KNEES = ("膝蓋", BodyRegion.LOWER_LIMBS, 0.6)
     CALVES = ("小腿", BodyRegion.LOWER_LIMBS, 0.5)
@@ -142,6 +149,7 @@ class BodyPart(Enum):
 ```
 
 #### 3.3 6 種觸覺類型 (Tactile Types)
+
 ```python
 class TactileType(Enum):
     LIGHT_TOUCH = auto()  # 輕觸
@@ -159,6 +167,7 @@ class TactileType(Enum):
 **位置**: `apps/backend/src/core/autonomous/physiological_tactile.py:692-769`
 
 **結構**:
+
 ```python
 BODY_TO_LIVE2D_MAPPING = {
     "top_of_head": {
@@ -176,7 +185,7 @@ BODY_TO_LIVE2D_MAPPING = {
             "ParamHairSwing": (0, 0.3)    # 擺動
         }
     },
-    
+
     "face": {
         "pat": {
             "ParamCheek": (0.2, 0.8),      # 臉頰紅暈
@@ -197,7 +206,7 @@ BODY_TO_LIVE2D_MAPPING = {
             "ParamCheek": (0.5, 0.9)       # 明顯紅暈
         }
     },
-    
+
     "chest": {
         "pat": {
             "ParamBodyAngleX": (-8, 8),      # 身體左右晃動
@@ -207,12 +216,13 @@ BODY_TO_LIVE2D_MAPPING = {
             "ParamBreath": (0.2, 0.6)        # 明顯呼吸
         }
     },
-    
+
     # ... 其他身體部位
 }
 ```
 
 **參數格式**:
+
 ```python
 {
     "ParamAngleX": (-15, 15),  # (最小值, 最大值)
@@ -228,42 +238,44 @@ BODY_TO_LIVE2D_MAPPING = {
 **位置**: `apps/backend/src/core/autonomous/physiological_tactile.py:300-500`
 
 **處理流程**:
+
 ```python
 async def process_stimulus(self, stimulus: TactileStimulus):
     """處理觸覺刺激並更新生理狀態"""
-    
+
     # 1. 更新相應部位的受體激活
     for receptor in self.receptors[stimulus.location]:
         activation = self._calculate_receptor_activation(
             receptor, stimulus
         )
         receptor.current_activation = activation
-    
+
     # 2. 更新生理狀態
     self._update_physiological_state()
-    
+
     # 3. 更新情感狀態
     self._update_emotional_state(stimulus)
-    
+
     # 4. 觸發回調
     for callback in self._on_stimulus_callbacks:
         callback(stimulus)
 ```
 
 **生理狀態更新**:
+
 ```python
 def _update_physiological_state(self):
     """更新生理狀態"""
-    
+
     # 計算總體激發水平 (arousal level)
     total_activation = sum(
         r.current_activation for receptor in all_receptors
     )
     self.arousal_level = min(100, total_activation)
-    
+
     # 更新神經系統狀態
     self._update_nervous_system()
-    
+
     # 更新內分泌系統
     self._update_endocrine_system()
 ```
@@ -371,7 +383,7 @@ PhysiologicalTactileSystem.process_stimulus():
     ↓
 Live2D Integration:
     - 查找 BODY_TO_LIVE2D_MAPPING['top_of_head']['pat']
-    - 計算參數: 
+    - 計算參數:
         * ParamAngleX = -15 + (30) × 0.8 = 9
         * ParamAngleY = -10 + (20) × 0.8 = 6
         * ParamHairSwing = 0 + (0.8) × 0.8 = 0.64
@@ -438,6 +450,7 @@ Live2D 視覺反應: 身體輕微晃動 + 呼吸變化 + 鬆鬆表情
 ## 🔧 參數計算公式
 
 ### 通用公式
+
 ```python
 # 將強度 (0-1) 映射到參數範圍 (min-max)
 value = min_value + (max_value - min_value) × intensity
@@ -446,6 +459,7 @@ value = min_value + (max_value - min_value) × intensity
 ```
 
 ### 表情參數計算
+
 ```python
 # 表情參數混合
 final_value = current_value + (target_value - current_value) × blend_factor
@@ -454,6 +468,7 @@ final_value = current_value + (target_value - current_value) × blend_factor
 ```
 
 ### 動作參數計算
+
 ```python
 # 動作持續時間
 duration = base_duration × (1 + (1 - intensity) × 0.5)
@@ -515,67 +530,70 @@ EMOTIONAL_TACTILE_MAPPINGS = {
 ### 步驟 1: 建立 WebSocket 連接
 
 **桌面端** (`apps/desktop-app/electron_app/js/app.js`):
+
 ```javascript
 // 連接後端
 async function connectBackend() {
-    const ws = new WebSocket('ws://localhost:8000/ws');
-    
-    ws.onopen = () => {
-        console.log('WebSocket connected');
-    };
-    
-    ws.onmessage = (event) => {
-        const message = JSON.parse(event.data);
-        
-        if (message.type === 'tactile_response') {
-            // 更新 Live2D 模型
-            updateLive2DFromTactile(message.data);
-        }
-    };
+  const ws = new WebSocket('ws://localhost:8000/ws')
+
+  ws.onopen = () => {
+    console.log('WebSocket connected')
+  }
+
+  ws.onmessage = (event) => {
+    const message = JSON.parse(event.data)
+
+    if (message.type === 'tactile_response') {
+      // 更新 Live2D 模型
+      updateLive2DFromTactile(message.data)
+    }
+  }
 }
 ```
 
 ### 步驟 2: 發送觸覺事件
 
 **桌面端** (`apps/desktop-app/electron_app/js/input-handler.js`):
+
 ```javascript
 function handleClick(region, position) {
-    // 構建觸覺事件
-    const tactileEvent = {
-        type: 'tactile_event',
-        data: {
-            bodyPart: region.name,          // 'head', 'face', 'chest' 等
-            touchType: 'pat',               // 根據點擊類型判定
-            intensity: 0.8,                  // 計算的強度
-            timestamp: Date.now()
-        }
-    };
-    
-    // 發送到後端
-    if (window.angelaApp && window.angelaApp.websocket) {
-        window.angelaApp.websocket.send(JSON.stringify(tactileEvent));
-    }
+  // 構建觸覺事件
+  const tactileEvent = {
+    type: 'tactile_event',
+    data: {
+      bodyPart: region.name, // 'head', 'face', 'chest' 等
+      touchType: 'pat', // 根據點擊類型判定
+      intensity: 0.8, // 計算的強度
+      timestamp: Date.now(),
+    },
+  }
+
+  // 發送到後端
+  if (window.angelaApp && window.angelaApp.websocket) {
+    window.angelaApp.websocket.send(JSON.stringify(tactileEvent))
+  }
 }
 ```
 
 ### 步驟 3: 後端處理觸覺事件
 
 **後端** (`apps/backend/src/main.py` 或相關 API):
+
 ```python
 from apps.backend.src.core.autonomous.physiological_tactile import PhysiologicalTactileSystem
 from apps.backend.src.core.autonomous.live2d_integration import Live2DIntegration
 
 async def handle_tactile_event(event: dict):
     """處理觸覺事件"""
-    
+
     # 解析事件
     body_part_str = event['bodyPart']
     touch_type = event['touchType']
     intensity = event['intensity']
-    
+
     # 轉換 BodyPart 枚舉
     body_part = BodyPart[body_part_str.upper()]
-    
+
     # 轉換 TactileType 枚舉
     touch_type_map = {
         'pat': TactileType.LIGHT_TOUCH,
@@ -585,7 +603,7 @@ async def handle_tactile_event(event: dict):
         'tickle': TactileType.VIBRATION
     }
     tactile_type = touch_type_map.get(touch_type, TactileType.LIGHT_TOUCH)
-    
+
     # 創建觸覺刺激
     stimulus = TactileStimulus(
         tactile_type=tactile_type,
@@ -594,17 +612,17 @@ async def handle_tactile_event(event: dict):
         duration=2.0,
         source='user'
     )
-    
+
     # 處理刺激 (更新生理矩陣)
     await physiological_tactile_system.process_stimulus(stimulus)
-    
+
     # 更新 Live2D 模型
     live2d_integration.apply_body_touch(
         body_part=body_part_str,
         touch_type=touch_type,
         intensity=intensity
     )
-    
+
     # 返回結果給前端
     return {
         'status': 'success',
@@ -618,27 +636,28 @@ async def handle_tactile_event(event: dict):
 ### 步驟 4: 更新 Live2D 模型
 
 **桌面端** (`apps/desktop-app/electron_app/js/app.js`):
+
 ```javascript
 function updateLive2DFromTactile(data) {
-    // 獲取 Live2D 參數變化
-    const parameterChanges = data.parameters;
-    
-    // 應用參數到 Live2D 模型
-    if (window.angelaApp && window.angelaApp.live2dManager) {
-        for (const [paramName, value] of Object.entries(parameterChanges)) {
-            window.angelaApp.live2dManager.setParameter(paramName, value);
-        }
-        
-        // 設置表情
-        if (data.emotion) {
-            window.angelaApp.live2dManager.setExpression(data.emotion);
-        }
-        
-        // 播放動作
-        if (data.motion) {
-            window.angelaApp.live2dManager.playMotion(data.motion);
-        }
+  // 獲取 Live2D 參數變化
+  const parameterChanges = data.parameters
+
+  // 應用參數到 Live2D 模型
+  if (window.angelaApp && window.angelaApp.live2dManager) {
+    for (const [paramName, value] of Object.entries(parameterChanges)) {
+      window.angelaApp.live2dManager.setParameter(paramName, value)
     }
+
+    // 設置表情
+    if (data.emotion) {
+      window.angelaApp.live2dManager.setExpression(data.emotion)
+    }
+
+    // 播放動作
+    if (data.motion) {
+      window.angelaApp.live2dManager.playMotion(data.motion)
+    }
+  }
 }
 ```
 

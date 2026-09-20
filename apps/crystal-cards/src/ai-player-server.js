@@ -14,107 +14,111 @@
  *   Server → Client: { type: "action_result", success: true }
  */
 
-const http = require('http');
-const { WebSocketServer } = require('ws');
+const http = require('http')
+const { WebSocketServer } = require('ws')
 
 class AIPlayerServer {
   constructor() {
-    this.port = 8765;
-    this.server = null;
-    this.wss = null;
-    this.gameWindow = null;
+    this.port = 8765
+    this.server = null
+    this.wss = null
+    this.gameWindow = null
   }
 
   setGameWindow(win) {
-    this.gameWindow = win;
+    this.gameWindow = win
   }
 
   start() {
     this.server = http.createServer((req, res) => {
       // CORS headers
-      res.setHeader('Access-Control-Allow-Origin', '*');
-      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+      res.setHeader('Access-Control-Allow-Origin', '*')
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
 
       if (req.method === 'OPTIONS') {
-        res.writeHead(200);
-        res.end();
-        return;
+        res.writeHead(200)
+        res.end()
+        return
       }
 
       // REST API fallback
       if (req.url === '/state' && req.method === 'GET') {
-        this.getState().then(state => {
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify(state));
-        }).catch(err => {
-          res.writeHead(500);
-          res.end(JSON.stringify({ error: err.message }));
-        });
-        return;
+        this.getState()
+          .then((state) => {
+            res.writeHead(200, { 'Content-Type': 'application/json' })
+            res.end(JSON.stringify(state))
+          })
+          .catch((err) => {
+            res.writeHead(500)
+            res.end(JSON.stringify({ error: err.message }))
+          })
+        return
       }
 
       if (req.url === '/action' && req.method === 'POST') {
-        let body = '';
-        req.on('data', chunk => body += chunk);
+        let body = ''
+        req.on('data', (chunk) => (body += chunk))
         req.on('end', () => {
           try {
-            const action = JSON.parse(body);
-            this.executeAction(action).then(result => {
-              res.writeHead(200, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify(result));
-            }).catch(err => {
-              res.writeHead(500);
-              res.end(JSON.stringify({ error: err.message }));
-            });
+            const action = JSON.parse(body)
+            this.executeAction(action)
+              .then((result) => {
+                res.writeHead(200, { 'Content-Type': 'application/json' })
+                res.end(JSON.stringify(result))
+              })
+              .catch((err) => {
+                res.writeHead(500)
+                res.end(JSON.stringify({ error: err.message }))
+              })
           } catch (e) {
-            res.writeHead(400);
-            res.end(JSON.stringify({ error: 'Invalid JSON' }));
+            res.writeHead(400)
+            res.end(JSON.stringify({ error: 'Invalid JSON' }))
           }
-        });
-        return;
+        })
+        return
       }
 
-      res.writeHead(404);
-      res.end('Not found');
-    });
+      res.writeHead(404)
+      res.end('Not found')
+    })
 
-    this.wss = new WebSocketServer({ server: this.server });
+    this.wss = new WebSocketServer({ server: this.server })
 
     this.wss.on('connection', (ws) => {
-      console.log('[AI Player] Client connected');
+      console.log('[AI Player] Client connected')
 
       ws.on('message', async (data) => {
         try {
-          const msg = JSON.parse(data.toString());
+          const msg = JSON.parse(data.toString())
 
           if (msg.type === 'get_state') {
-            const state = await this.getState();
-            ws.send(JSON.stringify({ type: 'game_state', state }));
+            const state = await this.getState()
+            ws.send(JSON.stringify({ type: 'game_state', state }))
           } else if (msg.type === 'action') {
-            const result = await this.executeAction(msg);
-            ws.send(JSON.stringify({ type: 'action_result', ...result }));
+            const result = await this.executeAction(msg)
+            ws.send(JSON.stringify({ type: 'action_result', ...result }))
           } else if (msg.type === 'screenshot') {
-            const screenshot = await this.getScreenshot();
-            ws.send(JSON.stringify({ type: 'screenshot', data: screenshot }));
+            const screenshot = await this.getScreenshot()
+            ws.send(JSON.stringify({ type: 'screenshot', data: screenshot }))
           }
         } catch (err) {
-          ws.send(JSON.stringify({ type: 'error', message: err.message }));
+          ws.send(JSON.stringify({ type: 'error', message: err.message }))
         }
-      });
+      })
 
       ws.on('close', () => {
-        console.log('[AI Player] Client disconnected');
-      });
-    });
+        console.log('[AI Player] Client disconnected')
+      })
+    })
 
     this.server.listen(this.port, '127.0.0.1', () => {
-      console.log(`[AI Player] Server listening on ws://127.0.0.1:${this.port}`);
-    });
+      console.log(`[AI Player] Server listening on ws://127.0.0.1:${this.port}`)
+    })
   }
 
   async getState() {
-    if (!this.gameWindow) return { error: 'No game window' };
+    if (!this.gameWindow) return { error: 'No game window' }
 
     // Execute JS in the game window to get state
     const state = await this.gameWindow.webContents.executeJavaScript(`
@@ -173,13 +177,13 @@ class AIPlayerServer {
           bonds: s.bonds,
         };
       })()
-    `);
+    `)
 
-    return state;
+    return state
   }
 
   async executeAction(action) {
-    if (!this.gameWindow) return { success: false, error: 'No game window' };
+    if (!this.gameWindow) return { success: false, error: 'No game window' }
 
     switch (action.action) {
       case 'click':
@@ -192,7 +196,7 @@ class AIPlayerServer {
             }
             return { success: false, error: 'No card at position' };
           })()
-        `);
+        `)
 
       case 'drag':
         return await this.gameWindow.webContents.executeJavaScript(`
@@ -214,7 +218,7 @@ class AIPlayerServer {
             }
             return { success: false, error: 'No card to drag' };
           })()
-        `);
+        `)
 
       case 'sidebar_click':
         return await this.gameWindow.webContents.executeJavaScript(`
@@ -226,7 +230,7 @@ class AIPlayerServer {
             }
             return { success: false, error: 'No sidebar card at index' };
           })()
-        `);
+        `)
 
       case 'draw_card':
         return await this.gameWindow.webContents.executeJavaScript(`
@@ -234,7 +238,7 @@ class AIPlayerServer {
             document.getElementById('btn-draw').click();
             return { success: true };
           })()
-        `);
+        `)
 
       case 'dialog_choice':
         return await this.gameWindow.webContents.executeJavaScript(`
@@ -246,7 +250,7 @@ class AIPlayerServer {
             }
             return { success: false, error: 'No available choice at index' };
           })()
-        `);
+        `)
 
       case 'stack_cards':
         // Stack two cards by ID
@@ -263,29 +267,29 @@ class AIPlayerServer {
             }
             return { success: false, error: 'Card not found' };
           })()
-        `);
+        `)
 
       case 'pause':
         return await this.gameWindow.webContents.executeJavaScript(`
           window.GameEngine.state.paused = !window.GameEngine.state.paused;
           { success: true, paused: window.GameEngine.state.paused }
-        `);
+        `)
 
       default:
-        return { success: false, error: `Unknown action: ${action.action}` };
+        return { success: false, error: `Unknown action: ${action.action}` }
     }
   }
 
   async getScreenshot() {
-    if (!this.gameWindow) return null;
-    const image = await this.gameWindow.webContents.capturePage();
-    return image.toDataURL();
+    if (!this.gameWindow) return null
+    const image = await this.gameWindow.webContents.capturePage()
+    return image.toDataURL()
   }
 
   stop() {
-    if (this.wss) this.wss.close();
-    if (this.server) this.server.close();
+    if (this.wss) this.wss.close()
+    if (this.server) this.server.close()
   }
 }
 
-module.exports = { AIPlayerServer };
+module.exports = { AIPlayerServer }

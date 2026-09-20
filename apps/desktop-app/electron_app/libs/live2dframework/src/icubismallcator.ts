@@ -18,14 +18,14 @@ export abstract class ICubismAllocator {
    * @param size 確保するバイト数
    * @return 成功すると割り当てられたメモリのアドレス。そうでなければ'0'を返す
    */
-  public abstract allocate(size: number): any;
+  public abstract allocate(size: number): any
 
   /**
    * アラインメント制約なしのヒープ・メモリーを解放します。
    *
    * @param memory 解放するメモリのアドレス
    */
-  public abstract deallocate(memory: any): void;
+  public abstract deallocate(memory: any): void
 
   /**
    * アラインメント制約有のヒープ・メモリーを確保します。
@@ -33,19 +33,19 @@ export abstract class ICubismAllocator {
    * @param alignment メモリーブロックのアラインメント幅
    * @return 成功すると割り当てられたメモリのアドレス。そうでなければ'0'を返す
    */
-  public abstract allocateAligned(size: number, alignment: number): any;
+  public abstract allocateAligned(size: number, alignment: number): any
 
   /**
    * アラインメント制約ありのヒープ・メモリーを解放します。
    * @param alignedMemory 解放するメモリのアドレス
    */
-  public abstract deallocateAligned(alignedMemory: any): void;
+  public abstract deallocateAligned(alignedMemory: any): void
 }
 
 // Namespace definition for compatibility.
-import * as $ from './icubismallcator';
+import * as $ from './icubismallcator'
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
-  export const ICubismAllocator = $.ICubismAllocator;
-  export type ICubismAllocator = $.ICubismAllocator;
+  export const ICubismAllocator = $.ICubismAllocator
+  export type ICubismAllocator = $.ICubismAllocator
 }

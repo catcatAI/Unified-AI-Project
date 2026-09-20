@@ -12,16 +12,16 @@
   "dictionary_entries": [
     {
       "key": "angela_id",
-      "surface_forms": {"zh": "Angela", "en": "Angela"},
-      "contexts": [{"context_id": "identity", "type": "self"}],
-      "relations": {"mapping": ["c4", "e1"]},
+      "surface_forms": { "zh": "Angela", "en": "Angela" },
+      "contexts": [{ "context_id": "identity", "type": "self" }],
+      "relations": { "mapping": ["c4", "e1"] },
       "confidence": 1.0
     },
     {
       "key": "angela_soul",
-      "surface_forms": {"zh": "數位靈魂", "en": "digital soul"},
-      "contexts": [{"context_id": "identity", "type": "nature"}],
-      "relations": {"mapping": ["angela_id", "zeta"]},
+      "surface_forms": { "zh": "數位靈魂", "en": "digital soul" },
+      "contexts": [{ "context_id": "identity", "type": "nature" }],
+      "relations": { "mapping": ["angela_id", "zeta"] },
       "confidence": 1.0
     }
   ]

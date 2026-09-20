@@ -39,13 +39,13 @@ initial_coordinates:
   zeta: [0.0, 0.0, 0.0]
 
 influence_matrix:
-  alpha: {beta: 0.3, gamma: 0.5, delta: 0.2, epsilon: 0.1, theta: 0.05, zeta: 0.05}
-  beta: {alpha: 0.2, gamma: 0.4, delta: 0.3, epsilon: 0.2, theta: 0.1, zeta: 0.1}
-  gamma: {alpha: 0.4, beta: 0.3, delta: 0.5, epsilon: 0.3, theta: 0.15, zeta: 0.1}
-  delta: {alpha: 0.2, beta: 0.3, gamma: 0.6, epsilon: 0.1, theta: 0.15, zeta: 0.05}
-  epsilon: {alpha: 0.1, beta: 0.3, gamma: 0.4, delta: 0.1, theta: 0.1, zeta: 0.05}
-  theta: {alpha: 0.05, beta: 0.1, gamma: 0.1, delta: 0.05, epsilon: 0.05, zeta: 0.05}
-  zeta: {alpha: 0.05, beta: 0.1, gamma: 0.1, delta: 0.05, epsilon: 0.05, theta: 0.05}
+  alpha: { beta: 0.3, gamma: 0.5, delta: 0.2, epsilon: 0.1, theta: 0.05, zeta: 0.05 }
+  beta: { alpha: 0.2, gamma: 0.4, delta: 0.3, epsilon: 0.2, theta: 0.1, zeta: 0.1 }
+  gamma: { alpha: 0.4, beta: 0.3, delta: 0.5, epsilon: 0.3, theta: 0.15, zeta: 0.1 }
+  delta: { alpha: 0.2, beta: 0.3, gamma: 0.6, epsilon: 0.1, theta: 0.15, zeta: 0.05 }
+  epsilon: { alpha: 0.1, beta: 0.3, gamma: 0.4, delta: 0.1, theta: 0.1, zeta: 0.05 }
+  theta: { alpha: 0.05, beta: 0.1, gamma: 0.1, delta: 0.05, epsilon: 0.05, zeta: 0.05 }
+  zeta: { alpha: 0.05, beta: 0.1, gamma: 0.1, delta: 0.05, epsilon: 0.05, theta: 0.05 }
 
 mapping:
   cosine_similarity_threshold: 0.8

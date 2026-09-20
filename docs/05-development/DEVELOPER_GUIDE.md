@@ -1,12 +1,15 @@
 # Developer Guide
 
-This guide provides detailed information for developers contributing to the Unified AI Project, including architecture overview, development workflows, and contribution guidelines.
+This guide provides detailed information for developers contributing to the
+Unified AI Project, including architecture overview, development workflows, and
+contribution guidelines.
 
 ## Project Architecture
 
 ### Monorepo Structure
 
-The Unified AI Project follows a monorepo architecture organized into applications and packages:
+The Unified AI Project follows a monorepo architecture organized into
+applications and packages:
 
 ```
 unified-ai-project/
@@ -72,17 +75,20 @@ Install the following tools:
 ### Initial Setup
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/your-org/unified-ai-project.git
    cd unified-ai-project
    ```
 
 2. Install dependencies:
+
    ```bash
    pnpm install
    ```
 
 3. Set up Python environment:
+
    ```bash
    cd apps/backend
    python -m venv venv
@@ -91,8 +97,8 @@ Install the following tools:
    pip install -r requirements-dev.txt
    ```
 
-4. Configure environment variables:
-   Create a `.env` file in `apps/backend/` with necessary configuration.
+4. Configure environment variables: Create a `.env` file in `apps/backend/` with
+   necessary configuration.
 
 ## Development Workflow
 
@@ -109,6 +115,7 @@ Follow the GitFlow branching strategy:
 ### Creating a New Feature
 
 1. Create a feature branch from `develop`:
+
    ```bash
    git checkout develop
    git pull origin develop
@@ -121,12 +128,14 @@ Follow the GitFlow branching strategy:
    - Update documentation as needed
 
 3. Commit your changes:
+
    ```bash
    git add .
    git commit -m "Add feature: brief description of changes"
    ```
 
 4. Push to remote repository:
+
    ```bash
    git push origin feature/your-feature-name
    ```
@@ -153,6 +162,7 @@ Follow PEP 8 guidelines and use the following tools:
 - **mypy**: Type checking
 
 Example:
+
 ```python
 def calculate_sum(numbers: List[int]) -> int:
     """Calculate the sum of a list of numbers."""
@@ -165,13 +175,13 @@ Use ESLint with the project's configuration:
 
 ```typescript
 interface User {
-  id: string;
-  name: string;
-  email: string;
+  id: string
+  name: string
+  email: string
 }
 
 function greetUser(user: User): string {
-  return `Hello, ${user.name}!`;
+  return `Hello, ${user.name}!`
 }
 ```
 
@@ -195,18 +205,21 @@ The project includes multiple test types:
 ### Running Tests
 
 Backend tests:
+
 ```bash
 cd apps/backend
 python -m pytest tests/
 ```
 
 Frontend tests:
+
 ```bash
 cd apps/frontend-dashboard
 pnpm test
 ```
 
 All tests:
+
 ```bash
 pnpm test
 ```
@@ -221,15 +234,16 @@ Follow these guidelines when writing tests:
 4. Use appropriate assertion methods
 
 Example:
+
 ```python
 def test_calculate_sum():
     # Arrange
     numbers = [1, 2, 3, 4, 5]
     expected = 15
-    
+
     # Act
     result = calculate_sum(numbers)
-    
+
     # Assert
     assert result == expected
 ```
@@ -239,6 +253,7 @@ def test_calculate_sum():
 ### Backend Debugging
 
 1. Use logging for tracing execution:
+
    ```python
    import logging
    logger = logging.getLogger(__name__)
@@ -272,6 +287,7 @@ def test_calculate_sum():
 5. Update API documentation
 
 Example:
+
 ```python
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -287,7 +303,7 @@ async def create_user(user: UserCreate):
     # Validate input
     if not user.name or not user.email:
         raise HTTPException(status_code=400, detail="Name and email required")
-    
+
     # Create user logic here
     return {"id": "user_123", "name": user.name, "email": user.email}
 ```
@@ -319,6 +335,7 @@ Update `docs/API_ENDPOINTS.md` when adding new endpoints.
 ### Profiling
 
 Use Python's built-in profiling tools:
+
 ```bash
 python -m cProfile -o output.prof your_script.py
 ```
@@ -326,6 +343,7 @@ python -m cProfile -o output.prof your_script.py
 ### Caching
 
 Implement caching for expensive operations:
+
 ```python
 from functools import lru_cache
 
@@ -338,6 +356,7 @@ def expensive_calculation(n):
 ### Asynchronous Processing
 
 Use async/await for I/O-bound operations:
+
 ```python
 import asyncio
 
@@ -356,12 +375,13 @@ async def process_data():
 ### Input Validation
 
 Always validate and sanitize user input:
+
 ```python
 from pydantic import BaseModel, validator
 
 class UserInput(BaseModel):
     email: str
-    
+
     @validator('email')
     def validate_email(cls, v):
         if '@' not in v:
@@ -372,6 +392,7 @@ class UserInput(BaseModel):
 ### Authentication
 
 Use secure authentication mechanisms:
+
 - JWT tokens for API authentication
 - Secure password hashing
 - Role-based access control
@@ -387,6 +408,7 @@ Use secure authentication mechanisms:
 ### Building for Production
 
 Build all applications:
+
 ```bash
 pnpm build
 ```
@@ -394,6 +416,7 @@ pnpm build
 ### Containerization
 
 Use Docker for consistent deployment:
+
 ```dockerfile
 FROM python:3.9
 WORKDIR /app
@@ -406,6 +429,7 @@ CMD ["python", "main.py"]
 ### Environment Configuration
 
 Use different environment files:
+
 - `.env.development` for development
 - `.env.staging` for staging
 - `.env.production` for production
@@ -415,6 +439,7 @@ Use different environment files:
 ### Structured Logging
 
 Use structured logging for better analysis:
+
 ```python
 import logging
 import json
@@ -435,6 +460,7 @@ def process_request(request_id, data):
 ### Performance Metrics
 
 Track key performance indicators:
+
 - Response times
 - Error rates
 - Resource utilization
@@ -469,6 +495,7 @@ Track key performance indicators:
 ### Memory Management
 
 Implement efficient memory usage:
+
 - Use generators for large datasets
 - Implement proper cleanup
 - Monitor memory usage
@@ -476,6 +503,7 @@ Implement efficient memory usage:
 ### Concurrency
 
 Use appropriate concurrency models:
+
 - Threading for I/O-bound tasks
 - Multiprocessing for CPU-bound tasks
 - AsyncIO for asynchronous operations
@@ -483,6 +511,7 @@ Use appropriate concurrency models:
 ### Scalability
 
 Design for horizontal scaling:
+
 - Stateless services
 - Database connection pooling
 - Load balancing strategies
@@ -511,4 +540,8 @@ Design for horizontal scaling:
 
 ## Conclusion
 
-This developer guide provides a comprehensive overview of working with the Unified AI Project. By following these guidelines and best practices, you can contribute effectively to the project while maintaining code quality and consistency. Remember to consult the technical documentation for detailed information about specific components and systems.
+This developer guide provides a comprehensive overview of working with the
+Unified AI Project. By following these guidelines and best practices, you can
+contribute effectively to the project while maintaining code quality and
+consistency. Remember to consult the technical documentation for detailed
+information about specific components and systems.

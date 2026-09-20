@@ -29,8 +29,8 @@ class BackendWebSocketClient {
     this.eventHandlers = {}
 
     // Session management (P0: Single session per window)
-    this.clientId = null        // Backend-assigned client_id (received on connect)
-    this.sessionId = this._loadOrCreateSessionId()  // Persistent session identifier
+    this.clientId = null // Backend-assigned client_id (received on connect)
+    this.sessionId = this._loadOrCreateSessionId() // Persistent session identifier
     this.clientType = 'desktop'
     this.clientVersion = '7.5.0-dev'
 
@@ -98,7 +98,7 @@ class BackendWebSocketClient {
       session_id: this.sessionId,
       client_type: this.clientType,
       client_version: this.clientVersion,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     }
   }
 
@@ -121,35 +121,35 @@ class BackendWebSocketClient {
       if (window.electronAPI && window.electronAPI.websocket) {
         console.log('[BackendWebSocket] Using Electron IPC bridge')
         console.log('[BackendWebSocket] Session ID:', this.sessionId)
-        
+
         // Don't mark as connected immediately - wait for confirmation
         this._usingIpcBridge = true
-        
+
         // Listen for backend connection confirmation BEFORE marking connected
         const onConnectedHandler = (data) => {
           console.log('[BackendWebSocket] Backend confirmed connection via IPC:', data)
-          
+
           // Store client_id received from backend
           if (data.client_id) {
             this.clientId = data.client_id
             console.log('[BackendWebSocket] Received client_id:', this.clientId)
           }
-          
+
           this.connected = true
           this._fireEvent('connected', data)
-          
+
           // Start cleanup timer
           this._startPendingResponsesCleanup()
-          
+
           // Send any queued messages
           this._flushOfflineQueue()
-          
+
           // Remove this listener after first connection
           window.electronAPI.off('websocket-connected', onConnectedHandler)
         }
-        
+
         window.electronAPI.on('websocket-connected', onConnectedHandler)
-        
+
         // Also listen for messages from main process
         window.electronAPI.on('websocket-message', (message) => {
           console.log('[BackendWebSocket] Received via IPC:', message)
@@ -171,12 +171,12 @@ class BackendWebSocketClient {
           this._stopHeartbeat()
           this._handleReconnect()
         })
-        
+
         // Trigger connection with session info
         window.electronAPI.websocket.connect(url, {
           sessionId: this.sessionId,
           clientType: this.clientType,
-          clientVersion: this.clientVersion
+          clientVersion: this.clientVersion,
         })
         return
       }
@@ -185,18 +185,18 @@ class BackendWebSocketClient {
       // This happens in browser environments, not in Electron
       console.log('[BackendWebSocket] IPC bridge not available, using native WebSocket')
       console.log('[BackendWebSocket] Session ID:', this.sessionId)
-      
+
       const wsUrl = this._buildUrl(url)
       this.ws = new WebSocket(wsUrl)
 
       this.ws.onopen = () => {
         console.log('[BackendWebSocket] Native WebSocket connected, sending handshake')
-        
+
         // Send handshake message with session info
         const handshake = this._buildHandshake()
         console.log('[BackendWebSocket] Sending handshake:', handshake)
         this.ws.send(JSON.stringify(handshake))
-        
+
         // Wait for 'connected' response before marking as connected
         // (This will be handled in _routeMessage)
       }
@@ -230,7 +230,7 @@ class BackendWebSocketClient {
     }
   }
 
-_routeMessage(message) {
+  _routeMessage(message) {
     if (!message) return
 
     const type = message.type
@@ -242,25 +242,25 @@ _routeMessage(message) {
       case 'connected':
         // Backend confirmed connection with session info
         console.log('[BackendWebSocket] Backend confirmed connection:', message)
-        
+
         // Store client_id from backend
         if (message.client_id) {
           this.clientId = message.client_id
           console.log('[BackendWebSocket] Received client_id:', this.clientId)
         }
-        
+
         // Mark as connected and start services
         this.connected = true
         this.reconnectAttempts = 0
-        
+
         // 開始心跳
         this._startHeartbeat()
-        
+
         // 启动待处理响应清理
         this._startPendingResponsesCleanup()
-        
+
         this._fireEvent('connected', message)
-        
+
         // 发送离线队列中的消息
         this._flushOfflineQueue()
         break
@@ -438,7 +438,7 @@ _routeMessage(message) {
   /**
    * P0-1: 状态数据合并（避免覆盖）
    */
-   _mergeStateData(updateData) {
+  _mergeStateData(updateData) {
     if (!window.angelaApp || !window.angelaApp.stateMatrix) {
       return updateData
     }
@@ -727,7 +727,10 @@ _routeMessage(message) {
         },
       }
 
-      console.log('[BackendWebSocket] >>> sendMessage payload:', JSON.stringify(payload).substring(0, 300))
+      console.log(
+        '[BackendWebSocket] >>> sendMessage payload:',
+        JSON.stringify(payload).substring(0, 300)
+      )
 
       try {
         if (this._usingIpcBridge && window.electronAPI && window.electronAPI.websocket) {
@@ -755,7 +758,7 @@ _routeMessage(message) {
       this._addToOfflineQueue({
         type: 'state_update',
         data: stateUpdate,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       })
       return false
     }
@@ -764,8 +767,8 @@ _routeMessage(message) {
       type: 'state_update',
       data: {
         ...stateUpdate,
-        timestamp: Date.now()
-      }
+        timestamp: Date.now(),
+      },
     }
 
     try {
@@ -782,7 +785,7 @@ _routeMessage(message) {
       this._addToOfflineQueue({
         type: 'state_update',
         data: stateUpdate,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       })
       return false
     }
@@ -810,8 +813,8 @@ _routeMessage(message) {
         type: 'request_state',
         data: {
           message_id: messageId,
-          timestamp: new Date().toISOString()
-        }
+          timestamp: new Date().toISOString(),
+        },
       }
 
       try {
@@ -854,8 +857,8 @@ _routeMessage(message) {
         type: 'request_eta_status',
         data: {
           message_id: messageId,
-          timestamp: new Date().toISOString()
-        }
+          timestamp: new Date().toISOString(),
+        },
       }
 
       try {
@@ -1220,9 +1223,18 @@ _routeMessage(message) {
 
     // Remove electronAPI listeners if connected via IPC
     if (window.electronAPI) {
-      const events = ['websocket-connected', 'websocket-message', 'websocket-disconnected', 'websocket-error']
+      const events = [
+        'websocket-connected',
+        'websocket-message',
+        'websocket-disconnected',
+        'websocket-error',
+      ]
       for (const evt of events) {
-        try { window.electronAPI.off?.(evt) } catch (_) { console.warn('[BackendWebSocket] Failed to remove IPC listener:', evt) }
+        try {
+          window.electronAPI.off?.(evt)
+        } catch (_) {
+          console.warn('[BackendWebSocket] Failed to remove IPC listener:', evt)
+        }
       }
     }
 
@@ -1285,13 +1297,16 @@ _routeMessage(message) {
   _handleChatResponse(data) {
     if (!data) return
 
-    console.log('[BackendWebSocket] _handleChatResponse called, data:', JSON.stringify(data || {}).substring(0, 200))
+    console.log(
+      '[BackendWebSocket] _handleChatResponse called, data:',
+      JSON.stringify(data || {}).substring(0, 200)
+    )
 
     // 觸發事件 (供 UI 顯示)
     this._fireEvent('angela_response', {
       response: data.content || data.response || '',
       session_id: data.session_id,
-      timestamp: data.timestamp
+      timestamp: data.timestamp,
     })
 
     if (!data.message_id) return

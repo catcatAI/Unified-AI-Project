@@ -2,7 +2,8 @@
 
 ## 概述
 
-本文档介绍了如何在 Unified AI Project 中集成和使用 Atlassian 服务。Atlassian 集成提供了与 Jira、Confluence 和 Bitbucket 的连接，支持项目管理、文档协作和代码仓库管理。
+本文档介绍了如何在 Unified AI
+Project 中集成和使用 Atlassian 服务。Atlassian 集成提供了与 Jira、Confluence 和 Bitbucket 的连接，支持项目管理、文档协作和代码仓库管理。
 
 ## 架构概览
 
@@ -22,18 +23,22 @@ Atlassian 云服务
 
 ### 1. Atlassian CLI 桥接器
 
-位于 `apps/backend/src/integrations/atlassian_cli_bridge.py`，负责与 Atlassian CLI 工具通信。
+位于 `apps/backend/src/integrations/atlassian_cli_bridge.py`，负责与 Atlassian
+CLI 工具通信。
 
 主要功能：
+
 - 执行 Atlassian CLI 命令
 - 解析命令输出
 - 处理错误和异常
 
 ### 2. 增强版 Atlassian 桥接器
 
-位于 `apps/backend/src/integrations/enhanced_atlassian_bridge.py`，扩展了基础桥接器的功能。
+位于
+`apps/backend/src/integrations/enhanced_atlassian_bridge.py`，扩展了基础桥接器的功能。
 
 主要功能：
+
 - 集成演示学习管理器
 - 支持离线模式
 - 提供高级功能接口
@@ -43,15 +48,18 @@ Atlassian 云服务
 位于 `apps/backend/src/services/atlassian_api.py`，提供 RESTful API 接口。
 
 主要功能：
+
 - 配置管理
 - 状态监控
 - 数据操作接口
 
 ### 4. 前端 Atlassian API 客户端
 
-位于 `apps/frontend-dashboard/src/lib/atlassian-api.ts`，提供前端与后端服务的通信接口。
+位于
+`apps/frontend-dashboard/src/lib/atlassian-api.ts`，提供前端与后端服务的通信接口。
 
 主要功能：
+
 - 封装 HTTP 请求
 - 处理离线模式
 - 提供 React Hook 接口
@@ -90,46 +98,54 @@ ACLIPATH=acli.exe  # Atlassian CLI 路径
 在前端应用中配置 Atlassian 集成：
 
 ```typescript
-import { useAtlassianApi } from '@/lib/atlassian-api';
+import { useAtlassianApi } from '@/lib/atlassian-api'
 
-const { client } = useAtlassianApi();
+const { client } = useAtlassianApi()
 
 const config = {
   domain: 'your-domain.atlassian.net',
   userEmail: 'user@example.com',
   apiToken: 'your-api-token',
-  cloudId: 'your-cloud-id'
-};
+  cloudId: 'your-cloud-id',
+}
 
-await client.configure(config);
+await client.configure(config)
 ```
 
 ### 2. 获取服务状态
 
 ```typescript
-const status = await client.getStatus();
-console.log('Connected:', status.connected);
-console.log('Services:', status.services);
+const status = await client.getStatus()
+console.log('Connected:', status.connected)
+console.log('Services:', status.services)
 ```
 
 ### 3. 操作 Jira 项目
 
 ```typescript
 // 获取项目列表
-const projects = await client.getJiraProjects();
+const projects = await client.getJiraProjects()
 
 // 创建新问题
-const issue = await client.createJiraIssue('PROJ', 'Issue Summary', 'Issue Description');
+const issue = await client.createJiraIssue(
+  'PROJ',
+  'Issue Summary',
+  'Issue Description'
+)
 ```
 
 ### 4. 操作 Confluence 页面
 
 ```typescript
 // 获取空间列表
-const spaces = await client.getConfluenceSpaces();
+const spaces = await client.getConfluenceSpaces()
 
 // 创建新页面
-const page = await client.createConfluencePage('SPACEKEY', 'Page Title', 'Page Content');
+const page = await client.createConfluencePage(
+  'SPACEKEY',
+  'Page Title',
+  'Page Content'
+)
 ```
 
 ## 离线支持
@@ -142,9 +158,9 @@ Atlassian 集成支持离线模式，当网络不可用时：
 
 ```typescript
 // 检查离线状态
-const offlineStatus = client.getOfflineStatus();
-console.log('Online:', offlineStatus.isOnline);
-console.log('Queue size:', offlineStatus.queueSize);
+const offlineStatus = client.getOfflineStatus()
+console.log('Online:', offlineStatus.isOnline)
+console.log('Queue size:', offlineStatus.queueSize)
 ```
 
 ## 错误处理
@@ -158,9 +174,9 @@ console.log('Queue size:', offlineStatus.queueSize);
 
 ```typescript
 try {
-  await client.createJiraIssue('PROJ', 'Summary');
+  await client.createJiraIssue('PROJ', 'Summary')
 } catch (error) {
-  console.error('Failed to create issue:', error.message);
+  console.error('Failed to create issue:', error.message)
 }
 ```
 
@@ -234,6 +250,7 @@ def test_atlassian_full_workflow(self):
 **问题**: 系统提示找不到 `acli.exe`
 
 **解决方案**:
+
 1. 确认 Atlassian CLI 已正确安装
 2. 检查 `ACLIPATH` 环境变量配置
 3. 将 `acli.exe` 添加到系统 PATH
@@ -243,6 +260,7 @@ def test_atlassian_full_workflow(self):
 **问题**: 配置后仍无法连接 Atlassian 服务
 
 **解决方案**:
+
 1. 验证认证信息是否正确
 2. 检查网络连接
 3. 确认 Atlassian API 令牌权限
@@ -252,6 +270,7 @@ def test_atlassian_full_workflow(self):
 **问题**: 离线操作后数据未同步
 
 **解决方案**:
+
 1. 检查网络连接状态
 2. 手动触发同步操作
 3. 查看离线队列状态
@@ -286,6 +305,7 @@ def test_atlassian_full_workflow(self):
 4. 发起 Pull Request
 
 请确保：
+
 - 遵循代码风格指南
 - 添加适当的测试
 - 更新相关文档

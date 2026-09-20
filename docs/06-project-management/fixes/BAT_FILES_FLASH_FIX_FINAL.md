@@ -13,9 +13,12 @@
 
 ### 1. 修正输入验证逻辑
 
-在 [unified-ai.bat](../../../unified-ai.bat) 和 [tools\run-tests.bat](../../../tools/run-tests.bat) 中，我们完全重写了输入验证逻辑，使用更简单、更可靠的方法：
+在 [unified-ai.bat](../../../unified-ai.bat) 和
+[tools\run-tests.bat](../../../tools/run-tests.bat)
+中，我们完全重写了输入验证逻辑，使用更简单、更可靠的方法：
 
 **修复前**：
+
 ```batch
 :: 添加输入验证 - 修正验证逻辑
 echo "%choice%" | findstr /R "^[1-9][0]*$" >nul
@@ -30,6 +33,7 @@ if errorlevel 1 (
 ```
 
 **修复后**：
+
 ```batch
 :: 修正输入验证逻辑 - 确保所有1-10的选项都能被正确识别
 set "valid_choice=false"
@@ -72,6 +76,7 @@ start "Backend API" /b cmd /k "cd /d %~dp0apps\backend && call venv\Scripts\acti
 ## 测试验证
 
 所有修复后的脚本都已通过以下测试：
+
 1. 正常执行流程测试
 2. 错误处理流程测试
 3. 输入验证测试（所有有效选项1-14或1-10都能正确识别）
@@ -82,6 +87,7 @@ start "Backend API" /b cmd /k "cd /d %~dp0apps\backend && call venv\Scripts\acti
 通过本次最终修复，我们彻底解决了 .bat 文件闪退问题。新的输入验证逻辑更加简单可靠，避免了之前复杂的正则表达式验证可能带来的问题。现在所有脚本都能正确处理用户输入，正确设置路径，并提供良好的错误处理机制。
 
 详细信息请查看以下文件：
+
 - [BAT_FILES_FLASH_FIX.md](BAT_FILES_FLASH_FIX.md) - 初次修复说明
 - [BAT_FILES_FLASH_FIX_SUMMARY.md](../reports/BAT_FILES_FLASH_FIX_SUMMARY.md) - 初次修复总结报告
 - [BAT_FILES_FLASH_FIX_REPAIR.md](BAT_FILES_FLASH_FIX_REPAIR.md) - 二次修复报告

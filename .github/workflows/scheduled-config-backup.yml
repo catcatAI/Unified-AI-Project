@@ -2,7 +2,7 @@ name: Scheduled Config Backup
 
 on:
   schedule:
-    - cron: '0 3 * * 1'  # Every Monday 03:00 UTC
+    - cron: "0 3 * * 1" # Every Monday 03:00 UTC
   workflow_dispatch:
 
 permissions:

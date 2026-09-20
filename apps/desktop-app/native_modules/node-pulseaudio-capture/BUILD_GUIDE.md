@@ -10,6 +10,7 @@ cd apps/desktop-app/native_modules/node-pulseaudio-capture
 ```
 
 此脚本会：
+
 1. ✅ 检查系统环境（Node.js, npm, node-gyp）
 2. ✅ 检查并安装PulseAudio开发库
 3. ✅ 清理之前的构建
@@ -75,11 +76,13 @@ node-gyp build
 ### 问题1：找不到pulse/pulseaudio.h
 
 **错误信息**：
+
 ```
 fatal error: pulse/pulseaudio.h: No such file or directory
 ```
 
 **解决方案**：
+
 ```bash
 sudo apt-get install -y libpulse-dev libpulse-simple-dev
 ```
@@ -87,11 +90,13 @@ sudo apt-get install -y libpulse-dev libpulse-simple-dev
 ### 问题2：node-gyp未安装
 
 **错误信息**：
+
 ```
 sh: node-gyp: command not found
 ```
 
 **解决方案**：
+
 ```bash
 npm install -g node-gyp
 ```
@@ -99,11 +104,13 @@ npm install -g node-gyp
 ### 问题3：编译失败，缺少Python
 
 **错误信息**：
+
 ```
 gyp: Call to 'python' failed
 ```
 
 **解决方案**：
+
 ```bash
 # 检查Python版本
 python3 --version
@@ -115,11 +122,13 @@ sudo apt-get install -y python3 python3-pip
 ### 问题4：权限问题
 
 **错误信息**：
+
 ```
 EACCES: permission denied
 ```
 
 **解决方案**：
+
 ```bash
 # 不要使用sudo运行npm
 # 确保目录权限正确
@@ -129,11 +138,13 @@ chmod -R 755 .
 ### 问题5：缓存问题
 
 **错误信息**：
+
 ```
 Previous build artifacts detected
 ```
 
 **解决方案**：
+
 ```bash
 # 清理构建缓存
 rm -rf build node_modules
@@ -173,28 +184,31 @@ node test.js
 ```javascript
 // audio-handler.js中的回退逻辑
 try {
-    const module = await this._loadNativeModule();
-    if (module) {
-        this.systemAudioCapture = new module();
-        console.log('Native system audio capture module loaded');
-    }
+  const module = await this._loadNativeModule()
+  if (module) {
+    this.systemAudioCapture = new module()
+    console.log('Native system audio capture module loaded')
+  }
 } catch (error) {
-    console.warn('Failed to load native audio module:', error.message);
-    // 回退到Web Audio API
+  console.warn('Failed to load native audio module:', error.message)
+  // 回退到Web Audio API
 }
 ```
 
 ## 平台差异
 
 ### Linux (本模块)
+
 - 使用PulseAudio API
 - 编译产物：`pulseaudio-capture.node`
 
 ### Windows
+
 - 使用WASAPI
 - 模块位置：`node-wasapi-capture/`
 
 ### macOS
+
 - 使用CoreAudio
 - 模块位置：`node-coreaudio-capture/`
 

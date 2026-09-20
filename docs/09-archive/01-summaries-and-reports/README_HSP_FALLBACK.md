@@ -2,7 +2,8 @@
 
 ## 快速開始
 
-HSP Fallback協議系統為HSP通訊提供了強大的備用機制，確保在主協議不可用時仍能維持通訊。
+HSP
+Fallback協議系統為HSP通訊提供了強大的備用機制，確保在主協議不可用時仍能維持通訊。
 
 ### 基本使用
 
@@ -12,7 +13,7 @@ from src.hsp.connector import HSPConnector
 # 創建啟用fallback的HSP連接器
 connector = HSPConnector(
     ai_id="my_ai_agent",
-    broker_address="127.0.0.1", 
+    broker_address="127.0.0.1",
     broker_port=1883,
     enable_fallback=True  # 啟用fallback協議
 )
@@ -43,11 +44,11 @@ hsp_fallback:
   protocols:
     http:
       priority: 3
-      host: "127.0.0.1"
+      host: '127.0.0.1'
       port: 8765
     file:
       priority: 2
-      base_path: "data/fallback_comm"
+      base_path: 'data/fallback_comm'
     memory:
       priority: 1
       queue_size: 1000
@@ -93,6 +94,7 @@ python examples/hsp_fallback_example.py
 ## 文檔
 
 詳細文檔請參考：
+
 - [HSP Fallback協議詳細文檔](../03-technical-architecture/communication/hsp-fallback-protocols.md)
 - [實現總結](../03-technical-architecture/communication/hsp-fallback-implementation-summary.md)
 

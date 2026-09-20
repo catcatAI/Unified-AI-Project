@@ -1,1058 +1,1149 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Angela AI - Settings</title>
     <style>
-        :root {
-            --success-color: #2ecc71;
-            --danger-color: #e74c3c;
-        }
+      :root {
+        --success-color: #2ecc71;
+        --danger-color: #e74c3c;
+      }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f5f5f5;
-            color: #333;
-            overflow: hidden;
-        }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: #f5f5f5;
+        color: #333;
+        overflow: hidden;
+      }
 
-        .container {
-            display: flex;
-            height: 100vh;
-        }
+      .container {
+        display: flex;
+        height: 100vh;
+      }
 
-        .sidebar {
-            width: 250px;
-            background: #2c3e50;
-            color: white;
-            display: flex;
-            flex-direction: column;
-        }
+      .sidebar {
+        width: 250px;
+        background: #2c3e50;
+        color: white;
+        display: flex;
+        flex-direction: column;
+      }
 
-        .sidebar-header {
-            padding: 20px;
-            border-bottom: 1px solid #34495e;
-        }
+      .sidebar-header {
+        padding: 20px;
+        border-bottom: 1px solid #34495e;
+      }
 
-        .sidebar-header h1 {
-            font-size: 18px;
-            margin-bottom: 5px;
-        }
+      .sidebar-header h1 {
+        font-size: 18px;
+        margin-bottom: 5px;
+      }
 
-        .sidebar-header p {
-            font-size: 12px;
-            color: #7f8c8d;
-        }
+      .sidebar-header p {
+        font-size: 12px;
+        color: #7f8c8d;
+      }
 
-        .nav-item {
-            padding: 15px 20px;
-            cursor: pointer;
-            transition: background 0.2s;
-            border-left: 3px solid transparent;
-        }
+      .nav-item {
+        padding: 15px 20px;
+        cursor: pointer;
+        transition: background 0.2s;
+        border-left: 3px solid transparent;
+      }
 
-        .nav-item:hover {
-            background: #34495e;
-        }
+      .nav-item:hover {
+        background: #34495e;
+      }
 
-        .nav-item.active {
-            background: #34495e;
-            border-left-color: #3498db;
-        }
+      .nav-item.active {
+        background: #34495e;
+        border-left-color: #3498db;
+      }
 
-        .nav-item i {
-            margin-right: 10px;
-        }
+      .nav-item i {
+        margin-right: 10px;
+      }
 
-        .content {
-            flex: 1;
-            overflow-y: auto;
-            padding: 30px;
-        }
+      .content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 30px;
+      }
 
-        .section {
-            display: none;
-        }
+      .section {
+        display: none;
+      }
 
-        .section.active {
-            display: block;
-        }
+      .section.active {
+        display: block;
+      }
 
-        .section h2 {
-            font-size: 24px;
-            margin-bottom: 20px;
-            color: #2c3e50;
-        }
+      .section h2 {
+        font-size: 24px;
+        margin-bottom: 20px;
+        color: #2c3e50;
+      }
 
-        .setting-group {
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
+      .setting-group {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
 
-        .setting-group h3 {
-            font-size: 16px;
-            margin-bottom: 15px;
-            color: #34495e;
-        }
+      .setting-group h3 {
+        font-size: 16px;
+        margin-bottom: 15px;
+        color: #34495e;
+      }
 
-        .setting-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 0;
-            border-bottom: 1px solid #ecf0f1;
-        }
+      .setting-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 0;
+        border-bottom: 1px solid #ecf0f1;
+      }
 
-        .setting-item:last-child {
-            border-bottom: none;
-        }
+      .setting-item:last-child {
+        border-bottom: none;
+      }
 
-        .setting-label {
-            flex: 1;
-        }
+      .setting-label {
+        flex: 1;
+      }
 
-        .setting-label label {
-            font-weight: 500;
-            color: #2c3e50;
-        }
+      .setting-label label {
+        font-weight: 500;
+        color: #2c3e50;
+      }
 
-        .setting-label p {
-            font-size: 12px;
-            color: #7f8c8d;
-            margin-top: 4px;
-        }
+      .setting-label p {
+        font-size: 12px;
+        color: #7f8c8d;
+        margin-top: 4px;
+      }
 
-        .setting-control {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+      .setting-control {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
 
-        input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-        }
+      input[type='checkbox'] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+      }
 
-        input[type="range"] {
-            width: 150px;
-            cursor: pointer;
-        }
+      input[type='range'] {
+        width: 150px;
+        cursor: pointer;
+      }
 
-        select {
-            padding: 8px 12px;
-            border: 1px solid #bdc3c7;
-            border-radius: 4px;
-            background: white;
-            cursor: pointer;
-        }
+      select {
+        padding: 8px 12px;
+        border: 1px solid #bdc3c7;
+        border-radius: 4px;
+        background: white;
+        cursor: pointer;
+      }
 
-        input[type="text"],
-        input[type="number"] {
-            padding: 8px 12px;
-            border: 1px solid #bdc3c7;
-            border-radius: 4px;
-            width: 200px;
-        }
+      input[type='text'],
+      input[type='number'] {
+        padding: 8px 12px;
+        border: 1px solid #bdc3c7;
+        border-radius: 4px;
+        width: 200px;
+      }
 
-        button {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            background: #3498db;
-            color: white;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
+      button {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        background: #3498db;
+        color: white;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
 
-        button:hover {
-            background: #2980b9;
-        }
+      button:hover {
+        background: #2980b9;
+      }
 
-        button.secondary {
-            background: #95a5a6;
-        }
+      button.secondary {
+        background: #95a5a6;
+      }
 
-        button.secondary:hover {
-            background: #7f8c8d;
-        }
+      button.secondary:hover {
+        background: #7f8c8d;
+      }
 
-        button.danger {
-            background: #e74c3c;
-        }
+      button.danger {
+        background: #e74c3c;
+      }
 
-        button.danger:hover {
-            background: #c0392b;
-        }
+      button.danger:hover {
+        background: #c0392b;
+      }
 
-        .value-display {
-            font-size: 14px;
-            color: #7f8c8d;
-            min-width: 40px;
-        }
+      .value-display {
+        font-size: 14px;
+        color: #7f8c8d;
+        min-width: 40px;
+      }
 
-        .status-badge {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: 500;
-        }
+      .status-badge {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 500;
+      }
 
-        .status-badge.connected {
-            background: var(--success-color);
-            color: white;
-        }
+      .status-badge.connected {
+        background: var(--success-color);
+        color: white;
+      }
 
-        .status-badge.disconnected {
-            background: var(--danger-color);
-            color: white;
-        }
+      .status-badge.disconnected {
+        background: var(--danger-color);
+        color: white;
+      }
 
-        .model-preview {
-            width: 100%;
-            height: 200px;
-            background: #ecf0f1;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 15px;
-        }
+      .model-preview {
+        width: 100%;
+        height: 200px;
+        background: #ecf0f1;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 15px;
+      }
 
-        .model-preview canvas {
-            max-width: 100%;
-            max-height: 100%;
-        }
+      .model-preview canvas {
+        max-width: 100%;
+        max-height: 100%;
+      }
 
+      .footer {
+        padding: 15px;
+        border-top: 1px solid #ecf0f1;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+      }
+
+      /* Footer 響應式設計 */
+      @media (max-width: 768px) {
         .footer {
-            padding: 15px;
-            border-top: 1px solid #ecf0f1;
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
+          flex-direction: column;
+          gap: 8px;
+          padding: 12px;
         }
 
-        /* Footer 響應式設計 */
-        @media (max-width: 768px) {
-            .footer {
-                flex-direction: column;
-                gap: 8px;
-                padding: 12px;
-            }
+        .footer button {
+          width: 100%;
+          font-size: 14px;
+        }
+      }
 
-            .footer button {
-                width: 100%;
-                font-size: 14px;
-            }
+      @media (max-width: 480px) {
+        .footer {
+          flex-direction: row;
+          flex-wrap: wrap;
+          justify-content: center;
+          padding: 10px;
         }
 
-        @media (max-width: 480px) {
-            .footer {
-                flex-direction: row;
-                flex-wrap: wrap;
-                justify-content: center;
-                padding: 10px;
-            }
-
-            .footer button {
-                flex: 1;
-                min-width: 80px;
-                font-size: 13px;
-                padding: 8px 12px;
-            }
+        .footer button {
+          flex: 1;
+          min-width: 80px;
+          font-size: 13px;
+          padding: 8px 12px;
         }
+      }
 
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #3498db;
-            color: white;
-            padding: 12px 20px;
-            border-radius: 4px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            z-index: var(--z-index-notification, 1000);
-            animation: slideIn 0.3s ease-out;
-        }
+      .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #3498db;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 4px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        z-index: var(--z-index-notification, 1000);
+        animation: slideIn 0.3s ease-out;
+      }
 
-        @keyframes slideIn {
-            from {
-                transform: translateX(400px);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
+      @keyframes slideIn {
+        from {
+          transform: translateX(400px);
+          opacity: 0;
         }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <div class="sidebar">
-            <div class="sidebar-header">
-                <h1>Angela AI Settings</h1>
-                <p>v1.0.0</p>
+      <div class="sidebar">
+        <div class="sidebar-header">
+          <h1>Angela AI Settings</h1>
+          <p>v1.0.0</p>
+        </div>
+        <div class="nav-item active" data-section="general" role="button" tabindex="0">
+          <i>⚙️</i> General
+        </div>
+        <div class="nav-item" data-section="appearance" role="button" tabindex="0">
+          <i>🎨</i> Appearance
+        </div>
+        <div class="nav-item" data-section="audio" role="button" tabindex="0"><i>🔊</i> Audio</div>
+        <div class="nav-item" data-section="haptics" role="button" tabindex="0">
+          <i>📳</i> Haptics
+        </div>
+        <div class="nav-item" data-section="network" role="button" tabindex="0">
+          <i>🌐</i> Network & Cluster
+        </div>
+        <div class="nav-item" data-section="llm" role="button" tabindex="0"><i>🤖</i> LLM & AI</div>
+        <div class="nav-item" data-section="advanced" role="button" tabindex="0">
+          <i>🔧</i> Advanced
+        </div>
+        <div class="nav-item" data-section="help" role="button" tabindex="0"><i>❓</i> Help</div>
+      </div>
+
+      <div class="content">
+        <!-- General Section -->
+        <div class="section active" id="general">
+          <h2>General Settings</h2>
+
+          <div class="setting-group">
+            <h3>Window</h3>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Always on Top</label>
+                <p>Keep Angela visible above other windows</p>
+              </div>
+              <div class="setting-control">
+                <input type="checkbox" id="always-on-top" />
+              </div>
             </div>
-            <div class="nav-item active" data-section="general" role="button" tabindex="0">
-                <i>⚙️</i> General
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Auto-start with System</label>
+                <p>Launch Angela when system starts</p>
+              </div>
+              <div class="setting-control">
+                <input type="checkbox" id="auto-start" />
+              </div>
             </div>
-            <div class="nav-item" data-section="appearance" role="button" tabindex="0">
-                <i>🎨</i> Appearance
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Window Opacity</label>
+                <p>Adjust transparency of Angela window</p>
+              </div>
+              <div class="setting-control">
+                <input type="range" id="window-opacity" min="0.1" max="1" step="0.1" value="1" />
+                <span class="value-display" id="opacity-value">100%</span>
+              </div>
             </div>
-            <div class="nav-item" data-section="audio" role="button" tabindex="0">
-                <i>🔊</i> Audio
+          </div>
+
+          <div class="setting-group">
+            <h3>Behavior</h3>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Idle Mode</label>
+                <p>Enable autonomous behaviors when idle</p>
+              </div>
+              <div class="setting-control">
+                <input type="checkbox" id="idle-mode" checked />
+              </div>
             </div>
-            <div class="nav-item" data-section="haptics" role="button" tabindex="0">
-                <i>📳</i> Haptics
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Response Sensitivity</label>
+                <p>How quickly Angela responds to interactions</p>
+              </div>
+              <div class="setting-control">
+                <select id="sensitivity">
+                  <option value="low">Low</option>
+                  <option value="medium" selected>Medium</option>
+                  <option value="high">High</option>
+                </select>
+              </div>
             </div>
-            <div class="nav-item" data-section="network" role="button" tabindex="0">
-                <i>🌐</i> Network & Cluster
-            </div>
-            <div class="nav-item" data-section="llm" role="button" tabindex="0">
-                <i>🤖</i> LLM & AI
-            </div>
-            <div class="nav-item" data-section="advanced" role="button" tabindex="0">
-                <i>🔧</i> Advanced
-            </div>
-            <div class="nav-item" data-section="help" role="button" tabindex="0">
-                <i>❓</i> Help
-            </div>
+          </div>
         </div>
 
-        <div class="content">
-            <!-- General Section -->
-            <div class="section active" id="general">
-                <h2>General Settings</h2>
-                
-                <div class="setting-group">
-                    <h3>Window</h3>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Always on Top</label>
-                            <p>Keep Angela visible above other windows</p>
-                        </div>
-                        <div class="setting-control">
-                            <input type="checkbox" id="always-on-top">
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Auto-start with System</label>
-                            <p>Launch Angela when system starts</p>
-                        </div>
-                        <div class="setting-control">
-                            <input type="checkbox" id="auto-start">
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Window Opacity</label>
-                            <p>Adjust transparency of Angela window</p>
-                        </div>
-                        <div class="setting-control">
-                            <input type="range" id="window-opacity" min="0.1" max="1" step="0.1" value="1">
-                            <span class="value-display" id="opacity-value">100%</span>
-                        </div>
-                    </div>
-                </div>
+        <!-- Appearance Section -->
+        <div class="section" id="appearance">
+          <h2>Appearance</h2>
 
-                <div class="setting-group">
-                    <h3>Behavior</h3>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Idle Mode</label>
-                            <p>Enable autonomous behaviors when idle</p>
-                        </div>
-                        <div class="setting-control">
-                            <input type="checkbox" id="idle-mode" checked>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Response Sensitivity</label>
-                            <p>How quickly Angela responds to interactions</p>
-                        </div>
-                        <div class="setting-control">
-                            <select id="sensitivity">
-                                <option value="low">Low</option>
-                                <option value="medium" selected>Medium</option>
-                                <option value="high">High</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
+          <div class="setting-group">
+            <h3>Model Selection</h3>
+            <div class="model-preview">
+              <canvas id="model-preview-canvas"></canvas>
             </div>
-
-            <!-- Appearance Section -->
-            <div class="section" id="appearance">
-                <h2>Appearance</h2>
-                
-                <div class="setting-group">
-                    <h3>Model Selection</h3>
-                    <div class="model-preview">
-                        <canvas id="model-preview-canvas"></canvas>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Active Model</label>
-                            <p>Choose which Live2D model to display</p>
-                        </div>
-                        <div class="setting-control">
-                            <select id="model-select">
-                                <option value="miara_pro">Miara Pro</option>
-                                <!-- More models will be added dynamically -->
-                            </select>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Model Scale</label>
-                            <p>Adjust the size of the model</p>
-                        </div>
-                        <div class="setting-control">
-                            <input type="range" id="model-scale" min="0.5" max="2" step="0.1" value="1">
-                            <span class="value-display" id="scale-value">1.0x</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="setting-group">
-                    <h3>Rendering Mode</h3>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Current Mode</label>
-                            <p>Select rendering mode: Live2D (animated) or Static Image (立繪)</p>
-                        </div>
-                        <div class="setting-control">
-                            <select id="render-mode">
-                                <option value="live2d">Live2D (Animated)</option>
-                                <option value="fallback">Static Image (立繪)</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Auto-switch on Low Performance</label>
-                            <p>Automatically switch to fallback mode when performance is low</p>
-                        </div>
-                        <div class="setting-control">
-                            <input type="checkbox" id="auto-switch-fallback">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="setting-group">
-                    <h3>Wallpaper</h3>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Wallpaper Mode</label>
-                            <p>How Angela integrates with desktop wallpaper</p>
-                        </div>
-                        <div class="setting-control">
-                            <select id="wallpaper-mode">
-                                <option value="overlay">Overlay (on top)</option>
-                                <option value="behind">Behind Desktop Icons</option>
-                                <option value="none">No Wallpaper</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Custom Wallpaper</label>
-                            <p>Load a custom wallpaper image</p>
-                        </div>
-                        <div class="setting-control">
-                            <button class="secondary" id="load-wallpaper">Browse...</button>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Wallpaper Effects</label>
-                            <p>Apply visual effects to wallpaper</p>
-                        </div>
-                        <div class="setting-control">
-                            <select id="wallpaper-effect">
-                                <option value="none">None</option>
-                                <option value="blur">Blur</option>
-                                <option value="darken">Darken</option>
-                                <option value="grayscale">Grayscale</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Active Model</label>
+                <p>Choose which Live2D model to display</p>
+              </div>
+              <div class="setting-control">
+                <select id="model-select">
+                  <option value="miara_pro">Miara Pro</option>
+                  <!-- More models will be added dynamically -->
+                </select>
+              </div>
             </div>
-
-            <!-- Audio Section -->
-            <div class="section" id="audio">
-                <h2>Audio Settings</h2>
-                
-                <div class="setting-group">
-                    <h3>Text-to-Speech</h3>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>TTS Engine</label>
-                            <p>Choose the text-to-speech engine</p>
-                        </div>
-                        <div class="setting-control">
-                            <select id="tts-engine">
-                                <option value="browser">Browser (Web Speech API)</option>
-                                <option value="edge">Microsoft Edge TTS</option>
-                                <option value="google">Google Cloud TTS</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Voice</label>
-                            <p>Select the voice for TTS</p>
-                        </div>
-                        <div class="setting-control">
-                            <select id="tts-voice">
-                                <!-- Voices will be loaded dynamically -->
-                            </select>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Speech Rate</label>
-                            <p>Speed of speech</p>
-                        </div>
-                        <div class="setting-control">
-                            <input type="range" id="speech-rate" min="0.5" max="2" step="0.1" value="1">
-                            <span class="value-display" id="rate-value">1.0x</span>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Pitch</label>
-                            <p>Pitch of speech</p>
-                        </div>
-                        <div class="setting-control">
-                            <input type="range" id="speech-pitch" min="0.5" max="2" step="0.1" value="1">
-                            <span class="value-display" id="pitch-value">1.0x</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="setting-group">
-                    <h3>Speech Recognition</h3>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Language</label>
-                            <p>Language for speech recognition</p>
-                        </div>
-                        <div class="setting-control">
-                            <select id="speech-language">
-                                <option value="en-US">English (US)</option>
-                                <option value="zh-TW">Chinese (Taiwan)</option>
-                                <option value="ja-JP">Japanese</option>
-                                <option value="ko-KR">Korean</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Continuous Recognition</label>
-                            <p>Keep listening even after detecting speech</p>
-                        </div>
-                        <div class="setting-control">
-                            <input type="checkbox" id="continuous-recognition" checked>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="setting-group">
-                    <h3>System Audio</h3>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Capture System Audio</label>
-                            <p>Allow Angela to listen to system sounds</p>
-                        </div>
-                        <div class="setting-control">
-                            <input type="checkbox" id="capture-system-audio">
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Backend Connection</label>
-                            <p>Connection status to backend server</p>
-                        </div>
-                        <div class="setting-control">
-                            <span class="status-badge disconnected" id="backend-status">Disconnected</span>
-                        </div>
-                    </div>
-                </div>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Model Scale</label>
+                <p>Adjust the size of the model</p>
+              </div>
+              <div class="setting-control">
+                <input type="range" id="model-scale" min="0.5" max="2" step="0.1" value="1" />
+                <span class="value-display" id="scale-value">1.0x</span>
+              </div>
             </div>
+          </div>
 
-            <!-- Haptics Section -->
-            <div class="section" id="haptics">
-                <h2>Haptic Settings</h2>
-                
-                <div class="setting-group">
-                    <h3>Haptic Devices</h3>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Enable Haptics</label>
-                            <p>Enable haptic feedback</p>
-                        </div>
-                        <div class="setting-control">
-                            <input type="checkbox" id="enable-haptics" checked>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Connected Devices</label>
-                            <p>List of available haptic devices</p>
-                        </div>
-                        <div class="setting-control">
-                            <button class="secondary" id="scan-devices">Scan Devices</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="setting-group">
-                    <h3>Haptic Intensity</h3>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Click Intensity</label>
-                            <p>Intensity for click feedback</p>
-                        </div>
-                        <div class="setting-control">
-                            <input type="range" id="click-intensity" min="0" max="1" step="0.1" value="0.5">
-                            <span class="value-display" id="click-value">50%</span>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Touch Intensity</label>
-                            <p>Intensity for touch feedback</p>
-                        </div>
-                        <div class="setting-control">
-                            <input type="range" id="touch-intensity" min="0" max="1" step="0.1" value="0.8">
-                            <span class="value-display" id="touch-value">80%</span>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Emotion Intensity</label>
-                            <p>Intensity for emotion-based haptics</p>
-                        </div>
-                        <div class="setting-control">
-                            <input type="range" id="emotion-intensity" min="0" max="1" step="0.1" value="0.7">
-                            <span class="value-display" id="emotion-value">70%</span>
-                        </div>
-                    </div>
-                </div>
+          <div class="setting-group">
+            <h3>Rendering Mode</h3>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Current Mode</label>
+                <p>Select rendering mode: Live2D (animated) or Static Image (立繪)</p>
+              </div>
+              <div class="setting-control">
+                <select id="render-mode">
+                  <option value="live2d">Live2D (Animated)</option>
+                  <option value="fallback">Static Image (立繪)</option>
+                </select>
+              </div>
             </div>
-
-            <!-- Network & Cluster Section -->
-            <div class="section" id="network">
-                <h2>Network & Cluster</h2>
-                
-                <div class="setting-group">
-                    <h3>Connection</h3>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Backend IP Address</label>
-                            <p>IP address of the backend server (Default: 127.0.0.1)</p>
-                        </div>
-                        <div class="setting-control">
-                            <input type="text" id="backend-ip" placeholder="127.0.0.1" value="127.0.0.1">
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Backend Port</label>
-                            <p>Port of the backend server (Default: 8000)</p>
-                        </div>
-                        <div class="setting-control">
-                            <input type="number" id="backend-port" placeholder="8000" value="8000">
-                        </div>
-                    </div>
-                </div>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Auto-switch on Low Performance</label>
+                <p>Automatically switch to fallback mode when performance is low</p>
+              </div>
+              <div class="setting-control">
+                <input type="checkbox" id="auto-switch-fallback" />
+              </div>
             </div>
+          </div>
 
-            <!-- System Status Section -->
-            <div class="section" id="system-status">
-                <div class="setting-group" id="cluster-monitor-group">
-                    <h3>System Status & Cluster Monitoring</h3>
-                    <div id="cluster-monitor-content">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-                            <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; border: 1px solid #dee2e6;">
-                                <div style="font-size: 12px; color: #6c757d;">CPU Usage</div>
-                                <div id="mon-cpu-usage" style="font-size: 18px; font-weight: bold; color: #2c3e50;">0%</div>
-                                <div id="mon-cpu-brand" style="font-size: 10px; color: #adb5bd; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">-</div>
-                            </div>
-                            <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; border: 1px solid #dee2e6;">
-                                <div style="font-size: 12px; color: #6c757d;">Memory</div>
-                                <div id="mon-mem-usage" style="font-size: 18px; font-weight: bold; color: #2c3e50;">0%</div>
-                                <div id="mon-mem-total" style="font-size: 10px; color: #adb5bd;">0 GB</div>
-                            </div>
-                        </div>
-                        <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; border: 1px solid #dee2e6; margin-bottom: 15px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                <div style="font-size: 12px; color: #6c757d;">Active Nodes</div>
-                                <div id="mon-active-nodes" class="status-badge connected">1 / 1</div>
-                            </div>
-                            <div id="node-list" style="font-size: 11px;">
-                                <!-- Nodes will be added here -->
-                            </div>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; font-size: 11px; color: #6c757d;">
-                            <span>Performance Tier: <b id="mon-perf-tier">-</b></span>
-                            <span>AI Capability: <b id="mon-ai-score">-</b></span>
-                        </div>
-                    </div>
-                </div>
+          <div class="setting-group">
+            <h3>Wallpaper</h3>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Wallpaper Mode</label>
+                <p>How Angela integrates with desktop wallpaper</p>
+              </div>
+              <div class="setting-control">
+                <select id="wallpaper-mode">
+                  <option value="overlay">Overlay (on top)</option>
+                  <option value="behind">Behind Desktop Icons</option>
+                  <option value="none">No Wallpaper</option>
+                </select>
+              </div>
             </div>
-
-            <!-- Advanced Section -->
-            <div class="section" id="advanced">
-                <h2>Advanced Settings</h2>
-                
-                <div class="setting-group">
-                    <h3>Performance</h3>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Frame Rate</label>
-                            <p>Live2D rendering frame rate</p>
-                        </div>
-                        <div class="setting-control">
-                            <select id="frame-rate">
-                                <option value="30">30 FPS</option>
-                                <option value="60" selected>60 FPS</option>
-                                <option value="120">120 FPS</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Render Quality</label>
-                            <p>Balance between quality and performance</p>
-                        </div>
-                        <div class="setting-control">
-                            <select id="render-quality">
-                                <option value="low">Low</option>
-                                <option value="medium" selected>Medium</option>
-                                <option value="high">High</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="setting-group">
-                    <h3>Cluster Deployment (Legacy/Experimental)</h3>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Enable Cluster Mode</label>
-                            <p>Enable (L0~L11) × (4~8) matrix distributed computing</p>
-                        </div>
-                        <div class="setting-control">
-                            <input type="checkbox" id="enable-cluster">
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Node Role</label>
-                            <p>Master handles distribution, Worker handles calculation</p>
-                        </div>
-                        <div class="setting-control">
-                            <select id="cluster-role">
-                                <option value="auto">Auto Detect</option>
-                                <option value="master">Master</option>
-                                <option value="worker">Worker</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Integer-Only Transmission</label>
-                            <p>Reduce latency by transmitting only integers between nodes</p>
-                        </div>
-                        <div class="setting-control">
-                            <input type="checkbox" id="cluster-integer-only" checked>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Decimal Memoization</label>
-                            <p>Store decimal values on workers to maintain precision</p>
-                        </div>
-                        <div class="setting-control">
-                            <input type="checkbox" id="cluster-memoization" checked>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Node Name</label>
-                            <p>Identifier for this node in the cluster</p>
-                        </div>
-                        <div class="setting-control">
-                            <input type="text" id="node-name" placeholder="Angela-Node-1">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="setting-group">
-                    <h3>Debug</h3>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Debug Mode</label>
-                            <p>Enable debug logging and tools</p>
-                        </div>
-                        <div class="setting-control">
-                            <input type="checkbox" id="debug-mode">
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Show Click Regions</label>
-                            <p>Visualize clickable areas on model</p>
-                        </div>
-                        <div class="setting-control">
-                            <input type="checkbox" id="show-click-regions">
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Developer Tools</label>
-                            <p>Open Chrome DevTools for debugging</p>
-                        </div>
-                        <div class="setting-control">
-                            <button class="secondary" id="open-devtools">Open DevTools</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="setting-group" style="border-left: 4px solid #e74c3c;">
-                    <h3 style="color: #c0392b;">Danger Zone</h3>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Reset All Settings</label>
-                            <p>Reset all settings to default values</p>
-                        </div>
-                        <div class="setting-control">
-                            <button class="danger" id="reset-settings">Reset</button>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Clear Cache</label>
-                            <p>Clear all cached data</p>
-                        </div>
-                        <div class="setting-control">
-                            <button class="danger" id="clear-cache">Clear</button>
-                        </div>
-                    </div>
-                </div>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Custom Wallpaper</label>
+                <p>Load a custom wallpaper image</p>
+              </div>
+              <div class="setting-control">
+                <button class="secondary" id="load-wallpaper">Browse...</button>
+              </div>
             </div>
-
-            <!-- LLM & AI Section -->
-            <div class="section" id="llm">
-                <h2>LLM & AI Settings</h2>
-
-                <div class="setting-group">
-                    <h3>Deployment</h3>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Deployment Mode</label>
-                            <p>Which AI backends are allowed</p>
-                        </div>
-                        <div class="setting-control">
-                            <select id="llm-deployment-mode">
-                                <option value="local">🏠 Local only (Ollama, ED3N)</option>
-                                <option value="local+llm">🔗 Local + Cloud LLM</option>
-                                <option value="llm">☁️ Cloud LLM only</option>
-                                <option value="auto">🤖 Auto-select best</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Backend Selection</label>
-                            <p>How backends are chosen within the allowed set</p>
-                        </div>
-                        <div class="setting-control">
-                            <select id="llm-selection">
-                                <option value="available">Available (health-checked only)</option>
-                                <option value="per-vendor">Per-vendor (register all, fallback on fail)</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="setting-group">
-                    <h3>Active Backend</h3>
-                    <div id="llm-backend-status" style="padding: 10px; background: rgba(0,0,0,0.2); border-radius: 5px; margin-bottom: 10px;">
-                        <p style="color: #aaa;">Loading backend status...</p>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Switch Backend</label>
-                            <p>Select which LLM backend to use</p>
-                        </div>
-                        <div class="setting-control">
-                            <select id="llm-backend-select">
-                                <option value="">Loading...</option>
-                            </select>
-                            <button class="secondary" id="llm-switch-btn" style="margin-left: 8px;">Switch</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="setting-group">
-                    <h3>Generation Defaults</h3>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Temperature</label>
-                            <p>Higher = more creative, lower = more focused (0.0–2.0)</p>
-                        </div>
-                        <div class="setting-control">
-                            <input type="range" id="llm-temperature" min="0" max="2" step="0.1" value="0.7">
-                            <span class="value-display" id="temp-value">0.7</span>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Max Tokens</label>
-                            <p>Maximum response length</p>
-                        </div>
-                        <div class="setting-control">
-                            <select id="llm-max-tokens">
-                                <option value="256">256</option>
-                                <option value="512" selected>512</option>
-                                <option value="1024">1024</option>
-                                <option value="2048">2048</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="setting-group">
-                    <h3>Web Search</h3>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Enable Web Search</label>
-                            <p>Factual grounding via DuckDuckGo / Wikipedia (always available)</p>
-                        </div>
-                        <div class="setting-control">
-                            <input type="checkbox" id="llm-web-search" checked>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="setting-group">
-                    <h3>Context & Memory</h3>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Memory Enhancement</label>
-                            <p>Enhance LLM responses with stored memories</p>
-                        </div>
-                        <div class="setting-control">
-                            <input type="checkbox" id="llm-memory-enhance" checked>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Max History</label>
-                            <p>Number of recent messages included in context</p>
-                        </div>
-                        <div class="setting-control">
-                            <select id="llm-max-history">
-                                <option value="5">5</option>
-                                <option value="10" selected>10</option>
-                                <option value="20">20</option>
-                                <option value="50">50</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Wallpaper Effects</label>
+                <p>Apply visual effects to wallpaper</p>
+              </div>
+              <div class="setting-control">
+                <select id="wallpaper-effect">
+                  <option value="none">None</option>
+                  <option value="blur">Blur</option>
+                  <option value="darken">Darken</option>
+                  <option value="grayscale">Grayscale</option>
+                </select>
+              </div>
             </div>
-
-            <!-- Help Section -->
-            <div class="section" id="help">
-                <h2>Help & About</h2>
-
-                <div class="setting-group">
-                    <h3>About</h3>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Angela AI</label>
-                            <p>Digital Life Companion — v7.5.0-dev</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="setting-group">
-                    <h3>Documentation</h3>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Usability Guide</label>
-                            <p>Configuration, AI models, context, UI discovery</p>
-                        </div>
-                        <div class="setting-control">
-                            <button class="secondary" onclick="require('electron').shell.openExternal('https://github.com/catcatAI/Unified-AI-Project/blob/main/docs/USABILITY_GUIDE.md')">Open</button>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>API Docs (Swagger)</label>
-                            <p>Auto-generated API reference</p>
-                        </div>
-                        <div class="setting-control">
-                            <button class="secondary" onclick="require('electron').shell.openExternal('http://localhost:8000/docs')">Open</button>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Architecture</label>
-                            <p>System architecture overview</p>
-                        </div>
-                        <div class="setting-control">
-                            <button class="secondary" onclick="require('electron').shell.openExternal('https://github.com/catcatAI/Unified-AI-Project/blob/main/docs/ARCHITECTURE.md')">Open</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="setting-group">
-                    <h3>Keyboard Shortcuts</h3>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Ctrl+Shift+S</label>
-                            <p>Open Settings</p>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Ctrl+`</label>
-                            <p>Toggle Terminal</p>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Ctrl+Q</label>
-                            <p>Quit</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="footer">
-                <button class="secondary" id="cancel">Cancel</button>
-                <button id="save">Save Changes</button>
-            </div>
+          </div>
         </div>
+
+        <!-- Audio Section -->
+        <div class="section" id="audio">
+          <h2>Audio Settings</h2>
+
+          <div class="setting-group">
+            <h3>Text-to-Speech</h3>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>TTS Engine</label>
+                <p>Choose the text-to-speech engine</p>
+              </div>
+              <div class="setting-control">
+                <select id="tts-engine">
+                  <option value="browser">Browser (Web Speech API)</option>
+                  <option value="edge">Microsoft Edge TTS</option>
+                  <option value="google">Google Cloud TTS</option>
+                </select>
+              </div>
+            </div>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Voice</label>
+                <p>Select the voice for TTS</p>
+              </div>
+              <div class="setting-control">
+                <select id="tts-voice">
+                  <!-- Voices will be loaded dynamically -->
+                </select>
+              </div>
+            </div>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Speech Rate</label>
+                <p>Speed of speech</p>
+              </div>
+              <div class="setting-control">
+                <input type="range" id="speech-rate" min="0.5" max="2" step="0.1" value="1" />
+                <span class="value-display" id="rate-value">1.0x</span>
+              </div>
+            </div>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Pitch</label>
+                <p>Pitch of speech</p>
+              </div>
+              <div class="setting-control">
+                <input type="range" id="speech-pitch" min="0.5" max="2" step="0.1" value="1" />
+                <span class="value-display" id="pitch-value">1.0x</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="setting-group">
+            <h3>Speech Recognition</h3>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Language</label>
+                <p>Language for speech recognition</p>
+              </div>
+              <div class="setting-control">
+                <select id="speech-language">
+                  <option value="en-US">English (US)</option>
+                  <option value="zh-TW">Chinese (Taiwan)</option>
+                  <option value="ja-JP">Japanese</option>
+                  <option value="ko-KR">Korean</option>
+                </select>
+              </div>
+            </div>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Continuous Recognition</label>
+                <p>Keep listening even after detecting speech</p>
+              </div>
+              <div class="setting-control">
+                <input type="checkbox" id="continuous-recognition" checked />
+              </div>
+            </div>
+          </div>
+
+          <div class="setting-group">
+            <h3>System Audio</h3>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Capture System Audio</label>
+                <p>Allow Angela to listen to system sounds</p>
+              </div>
+              <div class="setting-control">
+                <input type="checkbox" id="capture-system-audio" />
+              </div>
+            </div>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Backend Connection</label>
+                <p>Connection status to backend server</p>
+              </div>
+              <div class="setting-control">
+                <span class="status-badge disconnected" id="backend-status">Disconnected</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Haptics Section -->
+        <div class="section" id="haptics">
+          <h2>Haptic Settings</h2>
+
+          <div class="setting-group">
+            <h3>Haptic Devices</h3>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Enable Haptics</label>
+                <p>Enable haptic feedback</p>
+              </div>
+              <div class="setting-control">
+                <input type="checkbox" id="enable-haptics" checked />
+              </div>
+            </div>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Connected Devices</label>
+                <p>List of available haptic devices</p>
+              </div>
+              <div class="setting-control">
+                <button class="secondary" id="scan-devices">Scan Devices</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="setting-group">
+            <h3>Haptic Intensity</h3>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Click Intensity</label>
+                <p>Intensity for click feedback</p>
+              </div>
+              <div class="setting-control">
+                <input type="range" id="click-intensity" min="0" max="1" step="0.1" value="0.5" />
+                <span class="value-display" id="click-value">50%</span>
+              </div>
+            </div>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Touch Intensity</label>
+                <p>Intensity for touch feedback</p>
+              </div>
+              <div class="setting-control">
+                <input type="range" id="touch-intensity" min="0" max="1" step="0.1" value="0.8" />
+                <span class="value-display" id="touch-value">80%</span>
+              </div>
+            </div>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Emotion Intensity</label>
+                <p>Intensity for emotion-based haptics</p>
+              </div>
+              <div class="setting-control">
+                <input type="range" id="emotion-intensity" min="0" max="1" step="0.1" value="0.7" />
+                <span class="value-display" id="emotion-value">70%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Network & Cluster Section -->
+        <div class="section" id="network">
+          <h2>Network & Cluster</h2>
+
+          <div class="setting-group">
+            <h3>Connection</h3>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Backend IP Address</label>
+                <p>IP address of the backend server (Default: 127.0.0.1)</p>
+              </div>
+              <div class="setting-control">
+                <input type="text" id="backend-ip" placeholder="127.0.0.1" value="127.0.0.1" />
+              </div>
+            </div>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Backend Port</label>
+                <p>Port of the backend server (Default: 8000)</p>
+              </div>
+              <div class="setting-control">
+                <input type="number" id="backend-port" placeholder="8000" value="8000" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- System Status Section -->
+        <div class="section" id="system-status">
+          <div class="setting-group" id="cluster-monitor-group">
+            <h3>System Status & Cluster Monitoring</h3>
+            <div id="cluster-monitor-content">
+              <div
+                style="
+                  display: grid;
+                  grid-template-columns: 1fr 1fr;
+                  gap: 15px;
+                  margin-bottom: 15px;
+                "
+              >
+                <div
+                  style="
+                    background: #f8f9fa;
+                    padding: 10px;
+                    border-radius: 6px;
+                    border: 1px solid #dee2e6;
+                  "
+                >
+                  <div style="font-size: 12px; color: #6c757d">CPU Usage</div>
+                  <div
+                    id="mon-cpu-usage"
+                    style="font-size: 18px; font-weight: bold; color: #2c3e50"
+                  >
+                    0%
+                  </div>
+                  <div
+                    id="mon-cpu-brand"
+                    style="
+                      font-size: 10px;
+                      color: #adb5bd;
+                      overflow: hidden;
+                      text-overflow: ellipsis;
+                      white-space: nowrap;
+                    "
+                  >
+                    -
+                  </div>
+                </div>
+                <div
+                  style="
+                    background: #f8f9fa;
+                    padding: 10px;
+                    border-radius: 6px;
+                    border: 1px solid #dee2e6;
+                  "
+                >
+                  <div style="font-size: 12px; color: #6c757d">Memory</div>
+                  <div
+                    id="mon-mem-usage"
+                    style="font-size: 18px; font-weight: bold; color: #2c3e50"
+                  >
+                    0%
+                  </div>
+                  <div id="mon-mem-total" style="font-size: 10px; color: #adb5bd">0 GB</div>
+                </div>
+              </div>
+              <div
+                style="
+                  background: #f8f9fa;
+                  padding: 10px;
+                  border-radius: 6px;
+                  border: 1px solid #dee2e6;
+                  margin-bottom: 15px;
+                "
+              >
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 8px;
+                  "
+                >
+                  <div style="font-size: 12px; color: #6c757d">Active Nodes</div>
+                  <div id="mon-active-nodes" class="status-badge connected">1 / 1</div>
+                </div>
+                <div id="node-list" style="font-size: 11px">
+                  <!-- Nodes will be added here -->
+                </div>
+              </div>
+              <div
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  font-size: 11px;
+                  color: #6c757d;
+                "
+              >
+                <span>Performance Tier: <b id="mon-perf-tier">-</b></span>
+                <span>AI Capability: <b id="mon-ai-score">-</b></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Advanced Section -->
+        <div class="section" id="advanced">
+          <h2>Advanced Settings</h2>
+
+          <div class="setting-group">
+            <h3>Performance</h3>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Frame Rate</label>
+                <p>Live2D rendering frame rate</p>
+              </div>
+              <div class="setting-control">
+                <select id="frame-rate">
+                  <option value="30">30 FPS</option>
+                  <option value="60" selected>60 FPS</option>
+                  <option value="120">120 FPS</option>
+                </select>
+              </div>
+            </div>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Render Quality</label>
+                <p>Balance between quality and performance</p>
+              </div>
+              <div class="setting-control">
+                <select id="render-quality">
+                  <option value="low">Low</option>
+                  <option value="medium" selected>Medium</option>
+                  <option value="high">High</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="setting-group">
+            <h3>Cluster Deployment (Legacy/Experimental)</h3>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Enable Cluster Mode</label>
+                <p>Enable (L0~L11) × (4~8) matrix distributed computing</p>
+              </div>
+              <div class="setting-control">
+                <input type="checkbox" id="enable-cluster" />
+              </div>
+            </div>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Node Role</label>
+                <p>Master handles distribution, Worker handles calculation</p>
+              </div>
+              <div class="setting-control">
+                <select id="cluster-role">
+                  <option value="auto">Auto Detect</option>
+                  <option value="master">Master</option>
+                  <option value="worker">Worker</option>
+                </select>
+              </div>
+            </div>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Integer-Only Transmission</label>
+                <p>Reduce latency by transmitting only integers between nodes</p>
+              </div>
+              <div class="setting-control">
+                <input type="checkbox" id="cluster-integer-only" checked />
+              </div>
+            </div>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Decimal Memoization</label>
+                <p>Store decimal values on workers to maintain precision</p>
+              </div>
+              <div class="setting-control">
+                <input type="checkbox" id="cluster-memoization" checked />
+              </div>
+            </div>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Node Name</label>
+                <p>Identifier for this node in the cluster</p>
+              </div>
+              <div class="setting-control">
+                <input type="text" id="node-name" placeholder="Angela-Node-1" />
+              </div>
+            </div>
+          </div>
+
+          <div class="setting-group">
+            <h3>Debug</h3>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Debug Mode</label>
+                <p>Enable debug logging and tools</p>
+              </div>
+              <div class="setting-control">
+                <input type="checkbox" id="debug-mode" />
+              </div>
+            </div>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Show Click Regions</label>
+                <p>Visualize clickable areas on model</p>
+              </div>
+              <div class="setting-control">
+                <input type="checkbox" id="show-click-regions" />
+              </div>
+            </div>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Developer Tools</label>
+                <p>Open Chrome DevTools for debugging</p>
+              </div>
+              <div class="setting-control">
+                <button class="secondary" id="open-devtools">Open DevTools</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="setting-group" style="border-left: 4px solid #e74c3c">
+            <h3 style="color: #c0392b">Danger Zone</h3>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Reset All Settings</label>
+                <p>Reset all settings to default values</p>
+              </div>
+              <div class="setting-control">
+                <button class="danger" id="reset-settings">Reset</button>
+              </div>
+            </div>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Clear Cache</label>
+                <p>Clear all cached data</p>
+              </div>
+              <div class="setting-control">
+                <button class="danger" id="clear-cache">Clear</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- LLM & AI Section -->
+        <div class="section" id="llm">
+          <h2>LLM & AI Settings</h2>
+
+          <div class="setting-group">
+            <h3>Deployment</h3>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Deployment Mode</label>
+                <p>Which AI backends are allowed</p>
+              </div>
+              <div class="setting-control">
+                <select id="llm-deployment-mode">
+                  <option value="local">🏠 Local only (Ollama, ED3N)</option>
+                  <option value="local+llm">🔗 Local + Cloud LLM</option>
+                  <option value="llm">☁️ Cloud LLM only</option>
+                  <option value="auto">🤖 Auto-select best</option>
+                </select>
+              </div>
+            </div>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Backend Selection</label>
+                <p>How backends are chosen within the allowed set</p>
+              </div>
+              <div class="setting-control">
+                <select id="llm-selection">
+                  <option value="available">Available (health-checked only)</option>
+                  <option value="per-vendor">Per-vendor (register all, fallback on fail)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="setting-group">
+            <h3>Active Backend</h3>
+            <div
+              id="llm-backend-status"
+              style="
+                padding: 10px;
+                background: rgba(0, 0, 0, 0.2);
+                border-radius: 5px;
+                margin-bottom: 10px;
+              "
+            >
+              <p style="color: #aaa">Loading backend status...</p>
+            </div>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Switch Backend</label>
+                <p>Select which LLM backend to use</p>
+              </div>
+              <div class="setting-control">
+                <select id="llm-backend-select">
+                  <option value="">Loading...</option>
+                </select>
+                <button class="secondary" id="llm-switch-btn" style="margin-left: 8px">
+                  Switch
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="setting-group">
+            <h3>Generation Defaults</h3>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Temperature</label>
+                <p>Higher = more creative, lower = more focused (0.0–2.0)</p>
+              </div>
+              <div class="setting-control">
+                <input type="range" id="llm-temperature" min="0" max="2" step="0.1" value="0.7" />
+                <span class="value-display" id="temp-value">0.7</span>
+              </div>
+            </div>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Max Tokens</label>
+                <p>Maximum response length</p>
+              </div>
+              <div class="setting-control">
+                <select id="llm-max-tokens">
+                  <option value="256">256</option>
+                  <option value="512" selected>512</option>
+                  <option value="1024">1024</option>
+                  <option value="2048">2048</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="setting-group">
+            <h3>Web Search</h3>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Enable Web Search</label>
+                <p>Factual grounding via DuckDuckGo / Wikipedia (always available)</p>
+              </div>
+              <div class="setting-control">
+                <input type="checkbox" id="llm-web-search" checked />
+              </div>
+            </div>
+          </div>
+
+          <div class="setting-group">
+            <h3>Context & Memory</h3>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Memory Enhancement</label>
+                <p>Enhance LLM responses with stored memories</p>
+              </div>
+              <div class="setting-control">
+                <input type="checkbox" id="llm-memory-enhance" checked />
+              </div>
+            </div>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Max History</label>
+                <p>Number of recent messages included in context</p>
+              </div>
+              <div class="setting-control">
+                <select id="llm-max-history">
+                  <option value="5">5</option>
+                  <option value="10" selected>10</option>
+                  <option value="20">20</option>
+                  <option value="50">50</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Help Section -->
+        <div class="section" id="help">
+          <h2>Help & About</h2>
+
+          <div class="setting-group">
+            <h3>About</h3>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Angela AI</label>
+                <p>Digital Life Companion — v7.5.0-dev</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="setting-group">
+            <h3>Documentation</h3>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Usability Guide</label>
+                <p>Configuration, AI models, context, UI discovery</p>
+              </div>
+              <div class="setting-control">
+                <button
+                  class="secondary"
+                  onclick="
+                    require('electron').shell.openExternal(
+                      'https://github.com/catcatAI/Unified-AI-Project/blob/main/docs/USABILITY_GUIDE.md'
+                    )
+                  "
+                >
+                  Open
+                </button>
+              </div>
+            </div>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>API Docs (Swagger)</label>
+                <p>Auto-generated API reference</p>
+              </div>
+              <div class="setting-control">
+                <button
+                  class="secondary"
+                  onclick="require('electron').shell.openExternal('http://localhost:8000/docs')"
+                >
+                  Open
+                </button>
+              </div>
+            </div>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Architecture</label>
+                <p>System architecture overview</p>
+              </div>
+              <div class="setting-control">
+                <button
+                  class="secondary"
+                  onclick="
+                    require('electron').shell.openExternal(
+                      'https://github.com/catcatAI/Unified-AI-Project/blob/main/docs/ARCHITECTURE.md'
+                    )
+                  "
+                >
+                  Open
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="setting-group">
+            <h3>Keyboard Shortcuts</h3>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Ctrl+Shift+S</label>
+                <p>Open Settings</p>
+              </div>
+            </div>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Ctrl+`</label>
+                <p>Toggle Terminal</p>
+              </div>
+            </div>
+            <div class="setting-item">
+              <div class="setting-label">
+                <label>Ctrl+Q</label>
+                <p>Quit</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="footer">
+          <button class="secondary" id="cancel">Cancel</button>
+          <button id="save">Save Changes</button>
+        </div>
+      </div>
     </div>
 
     <!-- Notification container -->
@@ -1063,154 +1154,172 @@
 
     <!-- LLM & AI status polling -->
     <script>
-    (function() {
-        const API_BASE = 'http://localhost:8000/api/v1';
+      ;(function () {
+        const API_BASE = 'http://localhost:8000/api/v1'
 
         async function fetchLLMStatus() {
-            try {
-                const res = await fetch(API_BASE + '/llm/status');
-                if (!res.ok) return;
-                const data = await res.json();
+          try {
+            const res = await fetch(API_BASE + '/llm/status')
+            if (!res.ok) return
+            const data = await res.json()
 
-                // Update status display
-                const statusEl = document.getElementById('llm-backend-status');
-                if (statusEl) {
-                    const mode = data.mode || 'unknown';
-                    const active = data.active || '(none)';
-                    const avail = data.available ? '✅' : '❌';
-                    statusEl.innerHTML = '<p>' + avail + ' Mode: <b>' + mode + '</b> | Active: <b>' + active + '</b></p>';
-                }
-
-                // Populate backend select
-                const select = document.getElementById('llm-backend-select');
-                if (select && data.backends && data.backends.length > 0) {
-                    select.innerHTML = '';
-                    data.backends.forEach(function(b) {
-                        const opt = document.createElement('option');
-                        opt.value = b.name;
-                        opt.textContent = b.name + (b.active ? ' ★' : '') + ' (' + b.health + ')';
-                        if (b.active) opt.selected = true;
-                        select.appendChild(opt);
-                    });
-                }
-            } catch (e) {
-                console.log('[Settings] LLM status fetch failed:', e.message);
+            // Update status display
+            const statusEl = document.getElementById('llm-backend-status')
+            if (statusEl) {
+              const mode = data.mode || 'unknown'
+              const active = data.active || '(none)'
+              const avail = data.available ? '✅' : '❌'
+              statusEl.innerHTML =
+                '<p>' + avail + ' Mode: <b>' + mode + '</b> | Active: <b>' + active + '</b></p>'
             }
+
+            // Populate backend select
+            const select = document.getElementById('llm-backend-select')
+            if (select && data.backends && data.backends.length > 0) {
+              select.innerHTML = ''
+              data.backends.forEach(function (b) {
+                const opt = document.createElement('option')
+                opt.value = b.name
+                opt.textContent = b.name + (b.active ? ' ★' : '') + ' (' + b.health + ')'
+                if (b.active) opt.selected = true
+                select.appendChild(opt)
+              })
+            }
+          } catch (e) {
+            console.log('[Settings] LLM status fetch failed:', e.message)
+          }
         }
 
         // Switch backend button
-        var switchBtn = document.getElementById('llm-switch-btn');
+        var switchBtn = document.getElementById('llm-switch-btn')
         if (switchBtn) {
-            switchBtn.addEventListener('click', async function() {
-                var select = document.getElementById('llm-backend-select');
-                var backend = select ? select.value : '';
-                if (!backend) return;
-                try {
-                    var res = await fetch(API_BASE + '/llm/switch', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ backend: backend })
-                    });
-                    var data = await res.json();
-                    if (data.ok) {
-                        fetchLLMStatus();
-                    } else {
-                        alert('Switch failed: ' + (data.error || 'unknown'));
-                    }
-                } catch (e) {
-                    alert('Switch error: ' + e.message);
-                }
-            });
+          switchBtn.addEventListener('click', async function () {
+            var select = document.getElementById('llm-backend-select')
+            var backend = select ? select.value : ''
+            if (!backend) return
+            try {
+              var res = await fetch(API_BASE + '/llm/switch', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ backend: backend }),
+              })
+              var data = await res.json()
+              if (data.ok) {
+                fetchLLMStatus()
+              } else {
+                alert('Switch failed: ' + (data.error || 'unknown'))
+              }
+            } catch (e) {
+              alert('Switch error: ' + e.message)
+            }
+          })
         }
 
         // Temperature slider
-        var tempSlider = document.getElementById('llm-temperature');
-        var tempDisplay = document.getElementById('temp-value');
+        var tempSlider = document.getElementById('llm-temperature')
+        var tempDisplay = document.getElementById('temp-value')
         if (tempSlider && tempDisplay) {
-            tempSlider.addEventListener('input', function() {
-                tempDisplay.textContent = this.value;
-            });
+          tempSlider.addEventListener('input', function () {
+            tempDisplay.textContent = this.value
+          })
         }
 
         // Prefill LLM fields from backend truth (merged config)
         function setField(id, value) {
-            if (value === undefined || value === null) return;
-            var el = document.getElementById(id);
-            if (!el) return;
-            if (el.type === 'checkbox') { el.checked = !!value; return; }
-            el.value = String(value);
-            if (id === 'llm-temperature' && tempDisplay) tempDisplay.textContent = String(value);
+          if (value === undefined || value === null) return
+          var el = document.getElementById(id)
+          if (!el) return
+          if (el.type === 'checkbox') {
+            el.checked = !!value
+            return
+          }
+          el.value = String(value)
+          if (id === 'llm-temperature' && tempDisplay) tempDisplay.textContent = String(value)
         }
         async function loadLLMConfig() {
-            try {
-                var res = await fetch(API_BASE + '/llm/config');
-                if (!res.ok) return;
-                var data = await res.json();
-                var cfg = (data && data.config) || {};
-                setField('llm-deployment-mode', cfg['deployment.mode']);
-                setField('llm-selection', cfg['deployment.selection']);
-                setField('llm-temperature', cfg['settings.defaults.temperature']);
-                setField('llm-max-tokens', cfg['settings.defaults.max_tokens']);
-                setField('llm-web-search', cfg['web_search.enabled']);
-                setField('llm-memory-enhance', cfg['settings.enable_memory_enhancement']);
-                setField('llm-max-history', cfg['settings.memory.max_history']);
-            } catch (e) {
-                console.log('[Settings] LLM config load failed:', e.message);
-            }
+          try {
+            var res = await fetch(API_BASE + '/llm/config')
+            if (!res.ok) return
+            var data = await res.json()
+            var cfg = (data && data.config) || {}
+            setField('llm-deployment-mode', cfg['deployment.mode'])
+            setField('llm-selection', cfg['deployment.selection'])
+            setField('llm-temperature', cfg['settings.defaults.temperature'])
+            setField('llm-max-tokens', cfg['settings.defaults.max_tokens'])
+            setField('llm-web-search', cfg['web_search.enabled'])
+            setField('llm-memory-enhance', cfg['settings.enable_memory_enhancement'])
+            setField('llm-max-history', cfg['settings.memory.max_history'])
+          } catch (e) {
+            console.log('[Settings] LLM config load failed:', e.message)
+          }
         }
 
         // Persist LLM fields to backend llm.user.yaml on Save
         function collectLLMConfig() {
-            var payload = {};
-            function getVal(id) {
-                var el = document.getElementById(id);
-                if (!el) return undefined;
-                return el.type === 'checkbox' ? el.checked : el.value;
-            }
-            var mode = getVal('llm-deployment-mode');
-            if (mode) payload['deployment.mode'] = mode;
-            var selection = getVal('llm-selection');
-            if (selection) payload['deployment.selection'] = selection;
-            var temp = getVal('llm-temperature');
-            if (temp !== undefined && temp !== '') payload['settings.defaults.temperature'] = parseFloat(temp);
-            var tokens = getVal('llm-max-tokens');
-            if (tokens !== undefined && tokens !== '') payload['settings.defaults.max_tokens'] = parseInt(tokens, 10);
-            var ws = getVal('llm-web-search');
-            if (ws !== undefined) payload['web_search.enabled'] = !!ws;
-            var mem = getVal('llm-memory-enhance');
-            if (mem !== undefined) payload['settings.enable_memory_enhancement'] = !!mem;
-            var hist = getVal('llm-max-history');
-            if (hist !== undefined && hist !== '') payload['settings.memory.max_history'] = parseInt(hist, 10);
-            var backendSelect = document.getElementById('llm-backend-select');
-            var backend = backendSelect ? backendSelect.value : '';
-            if (backend && backend !== 'Loading...') payload['settings.preferred_backend'] = backend;
-            return payload;
+          var payload = {}
+          function getVal(id) {
+            var el = document.getElementById(id)
+            if (!el) return undefined
+            return el.type === 'checkbox' ? el.checked : el.value
+          }
+          var mode = getVal('llm-deployment-mode')
+          if (mode) payload['deployment.mode'] = mode
+          var selection = getVal('llm-selection')
+          if (selection) payload['deployment.selection'] = selection
+          var temp = getVal('llm-temperature')
+          if (temp !== undefined && temp !== '')
+            payload['settings.defaults.temperature'] = parseFloat(temp)
+          var tokens = getVal('llm-max-tokens')
+          if (tokens !== undefined && tokens !== '')
+            payload['settings.defaults.max_tokens'] = parseInt(tokens, 10)
+          var ws = getVal('llm-web-search')
+          if (ws !== undefined) payload['web_search.enabled'] = !!ws
+          var mem = getVal('llm-memory-enhance')
+          if (mem !== undefined) payload['settings.enable_memory_enhancement'] = !!mem
+          var hist = getVal('llm-max-history')
+          if (hist !== undefined && hist !== '')
+            payload['settings.memory.max_history'] = parseInt(hist, 10)
+          var backendSelect = document.getElementById('llm-backend-select')
+          var backend = backendSelect ? backendSelect.value : ''
+          if (backend && backend !== 'Loading...') payload['settings.preferred_backend'] = backend
+          return payload
         }
         async function saveLLMConfig() {
-            var payload = collectLLMConfig();
-            if (Object.keys(payload).length === 0) return;
-            try {
-                var res = await fetch(API_BASE + '/llm/config', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                var data = await res.json();
-                if (!data.ok) {
-                    alert('LLM settings save failed: ' + (data.error || 'unknown') + '\n(Local desktop settings were still saved.)');
-                }
-            } catch (e) {
-                alert('LLM settings save error (backend unreachable?): ' + e.message + '\n(Local desktop settings were still saved.)');
+          var payload = collectLLMConfig()
+          if (Object.keys(payload).length === 0) return
+          try {
+            var res = await fetch(API_BASE + '/llm/config', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload),
+            })
+            var data = await res.json()
+            if (!data.ok) {
+              alert(
+                'LLM settings save failed: ' +
+                  (data.error || 'unknown') +
+                  '\n(Local desktop settings were still saved.)'
+              )
             }
+          } catch (e) {
+            alert(
+              'LLM settings save error (backend unreachable?): ' +
+                e.message +
+                '\n(Local desktop settings were still saved.)'
+            )
+          }
         }
-        var saveBtn = document.getElementById('save');
-        if (saveBtn) saveBtn.addEventListener('click', function() { saveLLMConfig(); });
+        var saveBtn = document.getElementById('save')
+        if (saveBtn)
+          saveBtn.addEventListener('click', function () {
+            saveLLMConfig()
+          })
 
         // Initial fetch + polling
-        fetchLLMStatus();
-        loadLLMConfig();
-        setInterval(fetchLLMStatus, 10000);
-    })();
+        fetchLLMStatus()
+        loadLLMConfig()
+        setInterval(fetchLLMStatus, 10000)
+      })()
     </script>
-</body>
+  </body>
 </html>

@@ -1,4 +1,5 @@
 # 生理真實觸覺系統 v3.0
+
 ## Physiological Tactile System
 
 ---
@@ -15,6 +16,7 @@
 ### 為什麼這樣設計？
 
 **現實中的觸摸不是二元的**：
+
 - 輕輕掠過臉頰 ≠ 用力戳臉頰
 - 快速滑動 ≠ 慢速按壓
 - 持續30秒撫摸 ≠ 瞬間觸碰
@@ -52,14 +54,14 @@ Live2D虛擬區域
 
 ### 2. 皮膚受體類型（真實生理學）
 
-| 受體類型 | 功能 | 密度分布 | 適應速率 |
-|---------|------|---------|---------|
-| **Meissner** | 輕觸、運動感知 | 指尖/臉頰高 | 快（0.3） |
-| **Merkel** | 持續壓力、邊緣 | 指尖/嘴唇 | 慢（0.1） |
-| **Pacinian** | 深壓、高頻震動 | 手掌/腳底 | 極快（0.5） |
-| **Ruffini** | 皮膚拉伸 | 手指/手背 | 慢（0.2） |
-| **FreeNerve** | 痛覺、溫度、瘙癢 | 全身 | 極慢（0.05） |
-| **HairFollicle** | 毛髮運動 | 頭皮/眉毛 | 快（0.35） |
+| 受體類型         | 功能             | 密度分布    | 適應速率     |
+| ---------------- | ---------------- | ----------- | ------------ |
+| **Meissner**     | 輕觸、運動感知   | 指尖/臉頰高 | 快（0.3）    |
+| **Merkel**       | 持續壓力、邊緣   | 指尖/嘴唇   | 慢（0.1）    |
+| **Pacinian**     | 深壓、高頻震動   | 手掌/腳底   | 極快（0.5）  |
+| **Ruffini**      | 皮膚拉伸         | 手指/手背   | 慢（0.2）    |
+| **FreeNerve**    | 痛覺、溫度、瘙癢 | 全身        | 極慢（0.05） |
+| **HairFollicle** | 毛髮運動         | 頭皮/眉毛   | 快（0.35）   |
 
 ### 3. 刺激強度計算公式
 
@@ -70,7 +72,7 @@ intensity = pressure^1.5 × speed_factor × pattern_multiplier + accel_boost
 其中：
 - pressure^1.5: 高壓遞增（非線性）
 - speed_factor: 50/speed（速度越快，強度越低）
-- pattern_multiplier: 
+- pattern_multiplier:
   * pressing（按壓）: 1.2
   * stroking（撫摸）: 0.7
   * scratching（搔抓）: 1.0
@@ -110,7 +112,7 @@ for i in range(20):
     x = 100 + i * 2        # 緩慢移動
     y = 200 + sin(i*0.3)*5 # 輕微波浪
     pressure = 0.3         # 輕壓
-    
+
     stimulus = tactile_system.process_touch_input(
         BodyRegion.FACE_CHEEK, x, y, pressure
     )
@@ -123,6 +125,7 @@ for i in range(20):
 ```
 
 **生理解釋**：
+
 - 慢速（2px/步）→ 高接觸時間 → 強度增加
 - 輕壓（0.3）→ 非線性壓縮 → 實際壓力因子=0.16
 - 臉頰高密度Meissner受體 → 放大1.5倍
@@ -144,6 +147,7 @@ for i in range(15):
 ```
 
 **生理解釋**：
+
 - 快速運動 → 接觸時間短 → 強度降低
 - 但頭頂HairFollicle受體超敏感（密度250/cm²）
 - 毛髮運動被放大1.3倍
@@ -164,6 +168,7 @@ for i in range(5):
 ```
 
 **生理解釋**：
+
 - 眼睛痛閾極低：0.05
 - FreeNerve受體密度300/cm²（全身最高）
 - 幾乎不適應（適應率0.02）
@@ -184,6 +189,7 @@ for i in range(30):  # 3秒持續按壓
 ```
 
 **生理解釋**：
+
 - Meissner受體快速適應（0.3速率）
 - 持續刺激 → 受體敏感度下降
 - 這就是為什麼戴手錶後會「忘記」它的存在
@@ -258,35 +264,36 @@ tactile_mappings[BodyRegion.FACE_CHEEK] = {
 
 ```javascript
 // 在 Live2D 中追蹤滑鼠
-let trajectory = [];
-let lastTime = Date.now();
+let trajectory = []
+let lastTime = Date.now()
 
 function onMouseMove(x, y) {
-    const now = Date.now();
-    const dt = now - lastTime;
-    
-    trajectory.push({x, y, time: now});
-    if (trajectory.length > 60) trajectory.shift();
-    
-    // 發送到後端
-    fetch('/api/touch', {
-        method: 'POST',
-        body: JSON.stringify({
-            region: 'face_cheek',  // Live2D檢測到的部位
-            x, y,
-            pressure: isMouseDown ? 0.7 : 0.2,
-            trajectory: trajectory.slice(-10) // 最近10點
-        })
-    });
-    
-    lastTime = now;
+  const now = Date.now()
+  const dt = now - lastTime
+
+  trajectory.push({ x, y, time: now })
+  if (trajectory.length > 60) trajectory.shift()
+
+  // 發送到後端
+  fetch('/api/touch', {
+    method: 'POST',
+    body: JSON.stringify({
+      region: 'face_cheek', // Live2D檢測到的部位
+      x,
+      y,
+      pressure: isMouseDown ? 0.7 : 0.2,
+      trajectory: trajectory.slice(-10), // 最近10點
+    }),
+  })
+
+  lastTime = now
 }
 
 function onMouseUp() {
-    fetch('/api/touch/end', {
-        method: 'POST',
-        body: JSON.stringify({region: 'face_cheek'})
-    });
+  fetch('/api/touch/end', {
+    method: 'POST',
+    body: JSON.stringify({ region: 'face_cheek' }),
+  })
 }
 ```
 
@@ -305,7 +312,7 @@ async def handle_touch(data: TouchData):
         y=data.y,
         pressure=data.pressure
     )
-    
+
     return {
         "behavior": result['behavior']['behavior_name'] if result['behavior'] else None,
         "expression": generate_expression(result['tactile']),
@@ -320,14 +327,14 @@ async def handle_touch(data: TouchData):
 
 ### vs 傳統觸摸系統
 
-| 特性 | 傳統系統 | 生理觸覺系統 |
-|-----|---------|-------------|
-| **輸入** | 單點點擊 | 連續軌跡 |
-| **強度** | 固定/二元 | 動態計算 |
-| **部位差異** | 無 | 受體密度不同 |
-| **時間特性** | 瞬間 | 持續+適應 |
-| **疼痛** | 無或簡單 | 真實生理計算 |
-| **愉悅度** | 無 | 動態計算 |
+| 特性         | 傳統系統  | 生理觸覺系統 |
+| ------------ | --------- | ------------ |
+| **輸入**     | 單點點擊  | 連續軌跡     |
+| **強度**     | 固定/二元 | 動態計算     |
+| **部位差異** | 無        | 受體密度不同 |
+| **時間特性** | 瞬間      | 持續+適應    |
+| **疼痛**     | 無或簡單  | 真實生理計算 |
+| **愉悅度**   | 無        | 動態計算     |
 
 ### 實際效果
 
@@ -335,7 +342,7 @@ async def handle_touch(data: TouchData):
 
 ```
 傳統系統：
-用戶: *輕撫臉頰* 
+用戶: *輕撫臉頰*
 Angela: "我被觸摸了！" (每次反應相同)
 用戶: *用力戳眼睛*
 Angela: "我被觸摸了！" (反應相同)
@@ -358,21 +365,25 @@ Angela: *幾乎無感* "...?" (背部受體稀少)
 ## 擴展建議
 
 ### 1. 添加更多受體類型
+
 - 溫度受體（冷熱感知）
 - 瘙癢專用受體（不同於痛覺）
 - 本體感覺（肢體位置感知）
 
 ### 2. 多點觸摸
+
 - 同時追蹤多個手指
 - 計算接觸面積
 - 多部位同時刺激
 
 ### 3. 學習適應
+
 - 記錄用戶習慣（誰喜歡輕撫、誰喜歡重壓）
 - 調整各部位愉悅度權重
 - 個性化反應
 
 ### 4. 情緒記憶
+
 - 觸摸與情感記憶關聯
 - 被傷害過的部位更敏感
 - 建立「安全區」vs「危險區」
@@ -392,6 +403,6 @@ Angela: *幾乎無感* "...?" (背部受體稀少)
 
 ---
 
-*系統版本: 3.0*  
-*最終更新: 2026-02-01*  
-*神經生理學基礎: 人體皮膚受體分布*
+_系統版本: 3.0_  
+_最終更新: 2026-02-01_  
+_神經生理學基礎: 人體皮膚受體分布_

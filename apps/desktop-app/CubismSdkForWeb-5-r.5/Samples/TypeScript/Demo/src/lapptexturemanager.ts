@@ -5,7 +5,7 @@
  * that can be found at https://www.live2d.com/eula/live2d-open-software-license-agreement_en.html.
  */
 
-import { LAppGlManager } from './lappglmanager';
+import { LAppGlManager } from './lappglmanager'
 
 /**
  * テクスチャ管理クラス
@@ -16,7 +16,7 @@ export class LAppTextureManager {
    * コンストラクタ
    */
   public constructor() {
-    this._textures = new Array<TextureInfo>();
+    this._textures = new Array<TextureInfo>()
   }
 
   /**
@@ -24,9 +24,9 @@ export class LAppTextureManager {
    */
   public release(): void {
     for (let i = 0; i < this._textures.length; i++) {
-      this._glManager.getGl().deleteTexture(this._textures[i].id);
+      this._glManager.getGl().deleteTexture(this._textures[i].id)
     }
-    this._textures = null;
+    this._textures = null
   }
 
   /**
@@ -50,31 +50,25 @@ export class LAppTextureManager {
         // 2回目以降はキャッシュが使用される(待ち時間なし)
         // WebKitでは同じImageのonloadを再度呼ぶには再インスタンスが必要
         // 詳細：https://stackoverflow.com/a/5024181
-        this._textures[i].img = new Image();
-        this._textures[i].img.addEventListener(
-          'load',
-          (): void => callback(this._textures[i]),
-          {
-            passive: true
-          }
-        );
-        this._textures[i].img.src = fileName;
-        return;
+        this._textures[i].img = new Image()
+        this._textures[i].img.addEventListener('load', (): void => callback(this._textures[i]), {
+          passive: true,
+        })
+        this._textures[i].img.src = fileName
+        return
       }
     }
 
     // データのオンロードをトリガーにする
-    const img = new Image();
+    const img = new Image()
     img.addEventListener(
       'load',
       (): void => {
         // テクスチャオブジェクトの作成
-        const tex: WebGLTexture = this._glManager.getGl().createTexture();
+        const tex: WebGLTexture = this._glManager.getGl().createTexture()
 
         // テクスチャを選択
-        this._glManager
-          .getGl()
-          .bindTexture(this._glManager.getGl().TEXTURE_2D, tex);
+        this._glManager.getGl().bindTexture(this._glManager.getGl().TEXTURE_2D, tex)
 
         // テクスチャにピクセルを書き込む
         this._glManager
@@ -83,23 +77,20 @@ export class LAppTextureManager {
             this._glManager.getGl().TEXTURE_2D,
             this._glManager.getGl().TEXTURE_MIN_FILTER,
             this._glManager.getGl().LINEAR_MIPMAP_LINEAR
-          );
+          )
         this._glManager
           .getGl()
           .texParameteri(
             this._glManager.getGl().TEXTURE_2D,
             this._glManager.getGl().TEXTURE_MAG_FILTER,
             this._glManager.getGl().LINEAR
-          );
+          )
 
         // Premult処理を行わせる
         if (usePremultiply) {
           this._glManager
             .getGl()
-            .pixelStorei(
-              this._glManager.getGl().UNPACK_PREMULTIPLY_ALPHA_WEBGL,
-              1
-            );
+            .pixelStorei(this._glManager.getGl().UNPACK_PREMULTIPLY_ALPHA_WEBGL, 1)
         }
 
         // テクスチャにピクセルを書き込む
@@ -112,36 +103,32 @@ export class LAppTextureManager {
             this._glManager.getGl().RGBA,
             this._glManager.getGl().UNSIGNED_BYTE,
             img
-          );
+          )
 
         // ミップマップを生成
-        this._glManager
-          .getGl()
-          .generateMipmap(this._glManager.getGl().TEXTURE_2D);
+        this._glManager.getGl().generateMipmap(this._glManager.getGl().TEXTURE_2D)
 
         // テクスチャをバインド
-        this._glManager
-          .getGl()
-          .bindTexture(this._glManager.getGl().TEXTURE_2D, null);
+        this._glManager.getGl().bindTexture(this._glManager.getGl().TEXTURE_2D, null)
 
-        const textureInfo: TextureInfo = new TextureInfo();
+        const textureInfo: TextureInfo = new TextureInfo()
         if (textureInfo != null) {
-          textureInfo.fileName = fileName;
-          textureInfo.width = img.width;
-          textureInfo.height = img.height;
-          textureInfo.id = tex;
-          textureInfo.img = img;
-          textureInfo.usePremultply = usePremultiply;
+          textureInfo.fileName = fileName
+          textureInfo.width = img.width
+          textureInfo.height = img.height
+          textureInfo.id = tex
+          textureInfo.img = img
+          textureInfo.usePremultply = usePremultiply
           if (this._textures != null) {
-            this._textures.push(textureInfo);
+            this._textures.push(textureInfo)
           }
         }
 
-        callback(textureInfo);
+        callback(textureInfo)
       },
       { passive: true }
-    );
-    img.src = fileName;
+    )
+    img.src = fileName
   }
 
   /**
@@ -151,11 +138,11 @@ export class LAppTextureManager {
    */
   public releaseTextures(): void {
     for (let i = 0; i < this._textures.length; i++) {
-      this._glManager.getGl().deleteTexture(this._textures[i].id);
-      this._textures[i] = null;
+      this._glManager.getGl().deleteTexture(this._textures[i].id)
+      this._textures[i] = null
     }
 
-    this._textures.length = 0;
+    this._textures.length = 0
   }
 
   /**
@@ -167,13 +154,13 @@ export class LAppTextureManager {
   public releaseTextureByTexture(texture: WebGLTexture): void {
     for (let i = 0; i < this._textures.length; i++) {
       if (this._textures[i].id != texture) {
-        continue;
+        continue
       }
 
-      this._glManager.getGl().deleteTexture(this._textures[i].id);
-      this._textures[i] = null;
-      this._textures.splice(i, 1);
-      break;
+      this._glManager.getGl().deleteTexture(this._textures[i].id)
+      this._textures[i] = null
+      this._textures.splice(i, 1)
+      break
     }
   }
 
@@ -186,10 +173,10 @@ export class LAppTextureManager {
   public releaseTextureByFilePath(fileName: string): void {
     for (let i = 0; i < this._textures.length; i++) {
       if (this._textures[i].fileName == fileName) {
-        this._glManager.getGl().deleteTexture(this._textures[i].id);
-        this._textures[i] = null;
-        this._textures.splice(i, 1);
-        break;
+        this._glManager.getGl().deleteTexture(this._textures[i].id)
+        this._textures[i] = null
+        this._textures.splice(i, 1)
+        break
       }
     }
   }
@@ -199,21 +186,21 @@ export class LAppTextureManager {
    * @param glManager
    */
   public setGlManager(glManager: LAppGlManager): void {
-    this._glManager = glManager;
+    this._glManager = glManager
   }
 
-  _textures: Array<TextureInfo>;
-  private _glManager: LAppGlManager;
+  _textures: Array<TextureInfo>
+  private _glManager: LAppGlManager
 }
 
 /**
  * 画像情報構造体
  */
 export class TextureInfo {
-  img: HTMLImageElement; // 画像
-  id: WebGLTexture = null; // テクスチャ
-  width = 0; // 横幅
-  height = 0; // 高さ
-  usePremultply: boolean; // Premult処理を有効にするか
-  fileName: string; // ファイル名
+  img: HTMLImageElement // 画像
+  id: WebGLTexture = null // テクスチャ
+  width = 0 // 横幅
+  height = 0 // 高さ
+  usePremultply: boolean // Premult処理を有効にするか
+  fileName: string // ファイル名
 }

@@ -8,7 +8,7 @@ catcatAI 組織下目前主要有三個相關專案：
 | -------------------- | --------------------- | ---------- | ------------------------------ | -------------------------- |
 | Unified-AI-Project   | AI平台/後端服務集成   | Python 94% | TypeScript, JavaScript, HTML等 | AI 能力統一整合平台        |
 | github-connect-quest | GitHub集成/自動化工具 | Python 81% | TypeScript, JavaScript, HTML等 | 與 GitHub 互動的自動化工具 |
-| Rovo Dev Agents      | Atlassian生態集成     | Python/API | REST API, Atlassian SDK       | 智能開發協作與文檔管理     |
+| Rovo Dev Agents      | Atlassian生態集成     | Python/API | REST API, Atlassian SDK        | 智能開發協作與文檔管理     |
 
 ---
 
@@ -62,7 +62,8 @@ catcatAI 組織下目前主要有三個相關專案：
 2. **API 對接**
    - Unified-AI-Project 將 AI 能力封裝為 RESTful API 或 gRPC 服務。
    - github-connect-quest 做為客戶端，通過 HTTP 調用 Unified-AI-Project 的 API 實現各種自動化與智能功能。
-   - Rovo Dev Agents 通過 HSP 協議與 Unified-AI-Project 集成，提供 Atlassian 服務的智能代理能力。
+   - Rovo Dev
+     Agents 通過 HSP 協議與 Unified-AI-Project 集成，提供 Atlassian 服務的智能代理能力。
 
 3. **前後端協作**
    - 前端統一使用 TypeScript/React，提升維護性和互操作性。

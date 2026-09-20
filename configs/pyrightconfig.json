@@ -1,8 +1,5 @@
 {
-  "include": [
-    ".",
-    "apps/backend/src"
-  ],
+  "include": [".", "apps/backend/src"],
   "exclude": [
     "**/node_modules",
     "**/__pycache__",
@@ -34,7 +31,5 @@
   "reportMissingImports": true,
   "reportMissingTypeStubs": false,
   "pythonVersion": "3.10",
-  "extraPaths": [
-    "apps/backend/src"
-  ]
+  "extraPaths": ["apps/backend/src"]
 }

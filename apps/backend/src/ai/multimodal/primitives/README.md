@@ -4,7 +4,9 @@ Compositional image generation system for Angela AI.
 
 ## Overview
 
-This package implements a learnable compositional image generation system that decomposes images into visual primitives (points, lines, planes) and composes them to generate new images from text descriptions.
+This package implements a learnable compositional image generation system that
+decomposes images into visual primitives (points, lines, planes) and composes
+them to generate new images from text descriptions.
 
 ## Architecture
 
@@ -18,23 +20,27 @@ Text/CLIP Embedding → Sequence Generator → Drawing Instructions → PIL Rend
 ## Components
 
 ### 1. Primitive Types (`primitive_types.py`)
+
 - `Point`: Position, color, size
 - `Line`: Start/end points, width, color
 - `Plane`: Polygon vertices, fill/outline colors
 - `DrawingInstructions`: Complete set of drawing instructions
 
 ### 2. Primitive Renderer (`primitive_renderer.py`)
+
 - Renders `DrawingInstructions` to PIL Images
 - Supports points, lines, and planes
 - Configurable canvas size
 
 ### 3. Primitive Library (`primitive_library.py`)
+
 - Stores primitives with embeddings
 - Similarity search via cosine similarity
 - Auto-expansion when new primitives are sufficiently different
 - Save/load to JSON
 
 ### 4. Primitive Encoder (`primitive_encoder.py`)
+
 - Encodes `DrawingInstructions` to fixed-size embeddings
 - Decodes embeddings back to instructions
 - Trainable via reconstruction loss
@@ -42,6 +48,7 @@ Text/CLIP Embedding → Sequence Generator → Drawing Instructions → PIL Rend
 ## Usage
 
 ### Basic Rendering
+
 ```python
 from ai.multimodal.primitives import Point, Line, DrawingInstructions, PrimitiveRenderer
 
@@ -61,6 +68,7 @@ img.save("output.png")
 ```
 
 ### Primitive Library
+
 ```python
 from ai.multimodal.primitives import PrimitiveLibrary, PrimitiveEncoder
 
@@ -77,6 +85,7 @@ similar = library.find_similar(embedding, top_k=5)
 ```
 
 ### Training
+
 ```python
 # Train encoder to improve reconstruction
 encoder.train(instructions_list, epochs=100, lr=0.001)
@@ -85,6 +94,7 @@ encoder.train(instructions_list, epochs=100, lr=0.001)
 ## Tests
 
 Run all tests:
+
 ```bash
 pytest tests/ai/multimodal/primitives/ -v
 ```
@@ -92,6 +102,7 @@ pytest tests/ai/multimodal/primitives/ -v
 ## Integration with CLIP
 
 The primitives system integrates with the existing CLIP encoder:
+
 1. Encode images/text with `SemanticVisualEncoder`
 2. Map CLIP embeddings to primitive embeddings
 3. Generate drawing instructions from embeddings
@@ -100,14 +111,17 @@ The primitives system integrates with the existing CLIP encoder:
 ## Future Work
 
 ### Phase 1: Primitive Discovery
+
 - Use CLIP to discover visual primitives from CIFAR-10
 - Learn to reconstruct images from primitives
 
 ### Phase 2: Sequence Generator
+
 - Train RNN to predict drawing instructions from CLIP embeddings
 - Generate complex compositions from text
 
 ### Phase 3: Rendering Pipeline
+
 - SVG rendering for scalable output
 - Evaluation metrics (CLIP similarity, FID)
 - API integration

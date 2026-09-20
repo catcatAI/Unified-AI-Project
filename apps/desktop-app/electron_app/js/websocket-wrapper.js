@@ -16,7 +16,10 @@ function generateKey() {
 }
 
 function generateAccept(key) {
-  return crypto.createHash('sha1').update(key + GUID).digest('base64')
+  return crypto
+    .createHash('sha1')
+    .update(key + GUID)
+    .digest('base64')
 }
 
 class WebSocketConnection extends events.EventEmitter {
@@ -108,11 +111,19 @@ class WebSocketConnection extends events.EventEmitter {
       const rsv = firstByte & 0x70
       if (rsv !== 0) {
         // Invalid frame with reserved bits - log but try to recover
-        const textPreview = this._buffer.slice(0, Math.min(50, this._buffer.length)).toString('utf8')
-        console.warn('[NativeWS] Received frame with RSV bits set (ignoring). firstByte=0x' + firstByte.toString(16) + ', text="...' + textPreview.replace(/[\r\n]/g, ' ') + '"')
+        const textPreview = this._buffer
+          .slice(0, Math.min(50, this._buffer.length))
+          .toString('utf8')
+        console.warn(
+          '[NativeWS] Received frame with RSV bits set (ignoring). firstByte=0x' +
+            firstByte.toString(16) +
+            ', text="...' +
+            textPreview.replace(/[\r\n]/g, ' ') +
+            '"'
+        )
         // Clear this byte and try to resync
         this._buffer = this._buffer.slice(1)
-        continue  // Skip this byte and try again
+        continue // Skip this byte and try again
       }
       const masked = (secondByte & 0x80) !== 0
       let payloadLen = secondByte & 0x7f
@@ -162,9 +173,9 @@ class WebSocketConnection extends events.EventEmitter {
         this.emit('close', 1005, Buffer.alloc(0))
         break
       case 0x9:
-        this._sendFrame(0xA, payload)
+        this._sendFrame(0xa, payload)
         break
-      case 0xA:
+      case 0xa:
         break
     }
   }
@@ -217,7 +228,14 @@ class WebSocketConnection extends events.EventEmitter {
 
     // Debug: log first few bytes
     const hexDump = frame.slice(0, Math.min(16, frame.length)).toString('hex')
-    console.debug('[NativeWS] Sending frame: opcode=0x' + opcode.toString(16) + ', payloadLen=' + payloadLen + ', firstBytes=' + hexDump)
+    console.debug(
+      '[NativeWS] Sending frame: opcode=0x' +
+        opcode.toString(16) +
+        ', payloadLen=' +
+        payloadLen +
+        ', firstBytes=' +
+        hexDump
+    )
 
     this._socket.write(frame)
   }

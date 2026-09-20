@@ -17,7 +17,8 @@
 
 ## 簡介
 
-Angela AI Desktop App 是一個跨平台（Windows/macOS/Linux）的桌面應用，以 Live2D 虛擬角色「Angela」為核心，提供完整的視聽觸知覺輸入輸出，並與用戶桌面無侵入性整合。
+Angela AI Desktop
+App 是一個跨平台（Windows/macOS/Linux）的桌面應用，以 Live2D 虛擬角色「Angela」為核心，提供完整的視聽觸知覺輸入輸出，並與用戶桌面無侵入性整合。
 
 ### 核心特性
 
@@ -36,6 +37,7 @@ Angela AI Desktop App 是一個跨平台（Windows/macOS/Linux）的桌面應用
 ## 功能特性
 
 ### 視覺輸入
+
 - ✅ 滑鼠位置追蹤（全域/局部）
 - ✅ 滑鼠點擊檢測（左右鍵）
 - ✅ 拖拽手勢識別
@@ -44,12 +46,14 @@ Angela AI Desktop App 是一個跨平台（Windows/macOS/Linux）的桌面應用
 - ✅ 視線追蹤
 
 ### 聽覺輸入
+
 - ✅ 麥克風音訊捕捉
 - ✅ 語音識別（Web Speech API）
 - ✅ 系統音訊 loopback（準備中）
 - ✅ 音訊分析（頻譜/音量）
 
 ### 聽覺輸出
+
 - ✅ TTS（文字轉語音）
 - ✅ 口型同步
 - ✅ 音效播放
@@ -57,17 +61,20 @@ Angela AI Desktop App 是一個跨平台（Windows/macOS/Linux）的桌面應用
 - ✅ 音訊視覺化
 
 ### 觸覺輸入
+
 - ✅ 多種觸覺裝置支援
 - ✅ 裝置自動發現
 - ✅ 觸覺訊號處理
 
 ### 觸覺輸出
+
 - ✅ 觸覺回饋模式
 - ✅ 身體部位映射
 - ✅ 情緒-觸覺映射
 - ✅ 自定義觸覺模式
 
 ### 桌面整合
+
 - ✅ 桌面覆蓋層
 - ✅ 點擊穿透機制
 - ✅ 區域命中測試
@@ -75,6 +82,7 @@ Angela AI Desktop App 是一個跨平台（Windows/macOS/Linux）的桌面應用
 - ✅ 桌布非破壞性合成
 
 ### Live2D 整合
+
 - ✅ 模型載入與解析
 - ✅ 參數控制（50+）
 - ✅ 表情管理（7 種）
@@ -89,11 +97,13 @@ Angela AI Desktop App 是一個跨平台（Windows/macOS/Linux）的桌面應用
 ### 前置需求
 
 #### 必需
+
 - **Node.js**: 18.x 或更高版本
 - **Python**: 3.9 或更高版本（後端）
 - **Git**: 最新版本
 
 #### 可選
+
 - **Visual Studio Code**: 推薦的 IDE
 - **Electron Builder**: 用於打包
 
@@ -153,6 +163,7 @@ npm start
 ### 2. 基本操作
 
 #### 點擊互動
+
 - 點擊 Angela 的不同部位會觸發不同的反應
 - 頭部：驚訝表情
 - 臉部：開心表情
@@ -160,10 +171,12 @@ npm start
 - 手臂：開心表情
 
 #### 拖拽互動
+
 - 按住 Angela 並拖動，身體會跟隨移動
 - 釋放後，Angela 會恢復到原來的位置
 
 #### 語音指令
+
 - "hello" / "hi"：打招呼
 - "sad"：顯示悲傷表情
 - "happy" / "smile"：顯示開心表情
@@ -176,6 +189,7 @@ npm start
 - "language zh"：切換到中文
 
 #### 鍵盤快捷鍵
+
 - `Ctrl/Cmd + Shift + H`：顯示/隱藏 Angela
 - `Ctrl/Cmd + Shift + S`：打開設置
 - `Ctrl/Cmd + Shift + Q`：退出應用
@@ -185,6 +199,7 @@ npm start
 點擊左下角的設置按鈕（⚙️）打開設置面板。
 
 #### 設置選項
+
 - **通用設置**：窗口、行為
 - **外觀設置**：模型選擇、縮放、桌布
 - **音訊設置**：TTS、語音識別、系統音訊
@@ -201,6 +216,7 @@ npm start
 Angela 的行為由 4D 狀態矩陣控制：
 
 #### α（生理）維度
+
 - **energy**：能量水平
 - **comfort**：舒適度
 - **arousal**：喚醒度
@@ -209,6 +225,7 @@ Angela 的行為由 4D 狀態矩陣控制：
 - **tension**：緊張度
 
 #### β（認知）維度
+
 - **curiosity**：好奇心
 - **focus**：專注度
 - **confusion**：困惑度
@@ -217,6 +234,7 @@ Angela 的行為由 4D 狀態矩陣控制：
 - **creativity**：創造力
 
 #### γ（情感）維度
+
 - **happiness**：快樂
 - **sadness**：悲傷
 - **anger**：憤怒
@@ -229,6 +247,7 @@ Angela 的行為由 4D 狀態矩陣控制：
 - **calm**：平靜
 
 #### δ（社交）維度
+
 - **attention**：注意力
 - **bond**：連結
 - **trust**：信任
@@ -240,39 +259,39 @@ Angela 的行為由 4D 狀態矩陣控制：
 
 Angela 從 L0（新生）到 L11（全知）的成長路徑：
 
-| 等級 | 名稱 | 記憶門檻 | 能力 |
-|-----|------|---------|------|
-| L0 | 新生 | 0-100 | 基本問候、簡單回應 |
-| L1 | 幼兒 | 100-1K | 簡單聊天、偏好學習 |
-| L2 | 童年 | 1K-5K | 深入對話、笑話、故事 |
-| L3 | 少年 | 5K-20K | 情感支持、建議、辯論 |
-| L4 | 青年 | 20K-50K | 深度親密、承諾、共同目標 |
-| L5 | 成熟 | 50K-100K | 智慧、細緻理解 |
-| L6-L11 | 高級~全知 | 100K+ | 超越、全知 |
+| 等級   | 名稱      | 記憶門檻 | 能力                     |
+| ------ | --------- | -------- | ------------------------ |
+| L0     | 新生      | 0-100    | 基本問候、簡單回應       |
+| L1     | 幼兒      | 100-1K   | 簡單聊天、偏好學習       |
+| L2     | 童年      | 1K-5K    | 深入對話、笑話、故事     |
+| L3     | 少年      | 5K-20K   | 情感支持、建議、辯論     |
+| L4     | 青年      | 20K-50K  | 深度親密、承諾、共同目標 |
+| L5     | 成熟      | 50K-100K | 智慧、細緻理解           |
+| L6-L11 | 高級~全知 | 100K+    | 超越、全知               |
 
 ### 性能管理
 
 根據硬體能力自動調整性能：
 
 | 硬體能力 | 性能模式 | FPS | 解析度 | 特效 |
-|---------|---------|-----|--------|------|
-| 非常低 | very-low | 30 | 0.5x | 0 |
-| 低 | low | 30 | 0.6x | 1 |
-| 中 | medium | 45 | 0.75x | 2 |
-| 高 | high | 60 | 1.0x | 3 |
-| 極致 | ultra | 120 | 1.25x | 4 |
+| -------- | -------- | --- | ------ | ---- |
+| 非常低   | very-low | 30  | 0.5x   | 0    |
+| 低       | low      | 30  | 0.6x   | 1    |
+| 中       | medium   | 45  | 0.75x  | 2    |
+| 高       | high     | 60  | 1.0x   | 3    |
+| 極致     | ultra    | 120 | 1.25x  | 4    |
 
 ### 精度管理
 
 根據系統資源自動調整精度：
 
-| 精度模式 | 小數位數 | 量級 | 記憶使用 | 性能影響 |
-|---------|---------|------|---------|---------|
-| INT | 0 | 1x | 最小 | 最低 |
-| DEC1 | 1 | 10x | 極低 | 極低 |
-| DEC2 | 2 | 100x | 低 | 低 |
-| DEC3 | 3 | 1000x | 中 | 中 |
-| DEC4 | 4 | 10000x | 高 | 高 |
+| 精度模式 | 小數位數 | 量級   | 記憶使用 | 性能影響 |
+| -------- | -------- | ------ | -------- | -------- |
+| INT      | 0        | 1x     | 最小     | 最低     |
+| DEC1     | 1        | 10x    | 極低     | 極低     |
+| DEC2     | 2        | 100x   | 低       | 低       |
+| DEC3     | 3        | 1000x  | 中       | 中       |
+| DEC4     | 4        | 10000x | 高       | 高       |
 
 ---
 
@@ -283,6 +302,7 @@ Angela 從 L0（新生）到 L11（全知）的成長路徑：
 應用通過 WebSocket 與後端通信：
 
 #### 發送到後端
+
 ```javascript
 {
     type: 'init',              // 初始化
@@ -296,6 +316,7 @@ Angela 從 L0（新生）到 L11（全知）的成長路徑：
 ```
 
 #### 從後端接收
+
 ```javascript
 {
     type: 'state_update',      // 後端狀態同步
@@ -321,86 +342,86 @@ Angela 從 L0（新生）到 L11（全知）的成長路徑：
 ```javascript
 // my-plugin.js
 const exports = {
-    name: 'my-plugin',
-    version: '1.0.0',
-    description: 'My first Angela plugin',
-    dependencies: [],
-    
-    hooks: {
-        'before-update': async (data) => {
-            console.log('Before update:', data);
-            return data;
-        },
-        'after-update': async (data) => {
-            console.log('After update:', data);
-        }
+  name: 'my-plugin',
+  version: '1.0.0',
+  description: 'My first Angela plugin',
+  dependencies: [],
+
+  hooks: {
+    'before-update': async (data) => {
+      console.log('Before update:', data)
+      return data
     },
-    
-    async activate(context) {
-        console.log('Plugin activated!');
-        
-        // 訪問 Angela API
-        const api = context.getAPI();
-        console.log('Current state:', api.stateMatrix.getState());
-        
-        // 添加鉤子
-        context.addHook('custom-event', async (data) => {
-            console.log('Custom event:', data);
-        });
+    'after-update': async (data) => {
+      console.log('After update:', data)
     },
-    
-    async deactivate() {
-        console.log('Plugin deactivated!');
-    }
-};
+  },
+
+  async activate(context) {
+    console.log('Plugin activated!')
+
+    // 訪問 Angela API
+    const api = context.getAPI()
+    console.log('Current state:', api.stateMatrix.getState())
+
+    // 添加鉤子
+    context.addHook('custom-event', async (data) => {
+      console.log('Custom event:', data)
+    })
+  },
+
+  async deactivate() {
+    console.log('Plugin deactivated!')
+  },
+}
 ```
 
 #### 安裝插件
 
 ```javascript
-const pluginCode = await fetch('path/to/my-plugin.js').then(r => r.text());
-await window.angelaApp.pluginManager.loadPlugin('my-plugin', null);
-window.angelaApp.pluginManager.enablePlugin('my-plugin');
+const pluginCode = await fetch('path/to/my-plugin.js').then((r) => r.text())
+await window.angelaApp.pluginManager.loadPlugin('my-plugin', null)
+window.angelaApp.pluginManager.enablePlugin('my-plugin')
 ```
 
 ### 使用 API
 
 ```javascript
 // 訪問 Angela 模組
-const api = window.angelaApp;
+const api = window.angelaApp
 
 // Live2D 控制
-api.live2dManager.setParameter('ParamEyeLOpen', 0.8);
-api.live2dManager.setExpression('happy');
+api.live2dManager.setParameter('ParamEyeLOpen', 0.8)
+api.live2dManager.setExpression('happy')
 
 // 狀態矩陣
-api.stateMatrix.updateAlpha({ energy: 0.8 });
-api.stateMatrix.handleInteraction('click', { part: 'head' });
+api.stateMatrix.updateAlpha({ energy: 0.8 })
+api.stateMatrix.handleInteraction('click', { part: 'head' })
 
 // 成熟度
-api.maturityTracker.addExperience('click', 10);
+api.maturityTracker.addExperience('click', 10)
 
 // 性能管理
-api.performanceManager.setPerformanceMode('high');
+api.performanceManager.setPerformanceMode('high')
 
 // 精度管理
-api.precisionManager.setGlobalPrecision(3);
+api.precisionManager.setGlobalPrecision(3)
 
 // 用戶管理
-const user = api.userManager.getCurrentUser();
-api.userManager.updateStats(user.id, { clickCount: 1 });
+const user = api.userManager.getCurrentUser()
+api.userManager.updateStats(user.id, { clickCount: 1 })
 
 // 日誌
-api.logger.info('Custom log message');
+api.logger.info('Custom log message')
 
 // 國際化
-const text = api.i18n.t('ui.settings');
+const text = api.i18n.t('ui.settings')
 
 // 主題
-api.theme.setTheme('dark');
+api.theme.setTheme('dark')
 
 // 數據持久化
-api.dataPersistence.set('my_key', 'my_value');
+api.dataPersistence.set('my_key', 'my_value')
 ```
 
 ---
@@ -412,6 +433,7 @@ api.dataPersistence.set('my_key', 'my_value');
 #### 1. 應用無法啟動
 
 **解決方案**：
+
 ```bash
 # 清除 npm 緩存
 npm cache clean --force
@@ -427,6 +449,7 @@ npm start
 #### 2. Live2D 模型無法加載
 
 **解決方案**：
+
 - 檢查模型文件是否在 `resources/models/miara_pro/` 目錄
 - 確認所有必需文件存在：
   - `miara_pro_t03.moc3`
@@ -438,6 +461,7 @@ npm start
 #### 3. 麥克風無法工作
 
 **解決方案**：
+
 - 檢查瀏覽器權限設置
 - 確認系統麥克風已啟用
 - 嘗試刷新頁面並重新授權
@@ -445,6 +469,7 @@ npm start
 #### 4. WebSocket 連接失敗
 
 **解決方案**：
+
 - 檢查後端服務是否運行
 - 確認 WebSocket URL 正確
 - 檢查防火牆設置
@@ -452,6 +477,7 @@ npm start
 #### 5. 性能問題
 
 **解決方案**：
+
 - 降低性能模式：在設置中選擇較低的性能模式
 - 降低解析度：在設置中調整解析度
 - 關閉不必要的特效
@@ -466,16 +492,16 @@ npm start
 
 #### 方法
 
-| 方法 | 描述 |
-|-----|------|
-| `initialize()` | 初始化應用 |
-| `loadModel(path)` | 加載 Live2D 模型 |
-| `setExpression(expression)` | 設置表情 |
-| `speak(text)` | 語音播放 |
-| `takeSnapshot()` | 保存快照 |
-| `connectBackend(url)` | 連接後端 |
-| `disconnectBackend()` | 斷開後端 |
-| `shutdown()` | 關閉應用 |
+| 方法                        | 描述             |
+| --------------------------- | ---------------- |
+| `initialize()`              | 初始化應用       |
+| `loadModel(path)`           | 加載 Live2D 模型 |
+| `setExpression(expression)` | 設置表情         |
+| `speak(text)`               | 語音播放         |
+| `takeSnapshot()`            | 保存快照         |
+| `connectBackend(url)`       | 連接後端         |
+| `disconnectBackend()`       | 斷開後端         |
+| `shutdown()`                | 關閉應用         |
 
 ### Live2DManager
 
@@ -483,14 +509,14 @@ Live2D 模型管理器。
 
 #### 方法
 
-| 方法 | 描述 |
-|-----|------|
-| `loadModel(path)` | 加載模型 |
-| `setExpression(name)` | 設置表情 |
-| `setParameter(name, value)` | 設置參數 |
-| `playMotion(group, name)` | 播放動作 |
-| `resetPose()` | 重置姿勢 |
-| `enableLipSync(enabled)` | 啟用/禁用口型同步 |
+| 方法                        | 描述              |
+| --------------------------- | ----------------- |
+| `loadModel(path)`           | 加載模型          |
+| `setExpression(name)`       | 設置表情          |
+| `setParameter(name, value)` | 設置參數          |
+| `playMotion(group, name)`   | 播放動作          |
+| `resetPose()`               | 重置姿勢          |
+| `enableLipSync(enabled)`    | 啟用/禁用口型同步 |
 
 ### StateMatrix4D
 
@@ -498,15 +524,15 @@ Live2D 模型管理器。
 
 #### 方法
 
-| 方法 | 描述 |
-|-----|------|
-| `updateAlpha(kwargs)` | 更新 α 維度 |
-| `updateBeta(kwargs)` | 更新 β 維度 |
-| `updateGamma(kwargs)` | 更新 γ 維度 |
-| `updateDelta(kwargs)` | 更新 δ 維度 |
-| `handleInteraction(type, data)` | 處理互動 |
-| `computeInfluences()` | 計算維度間影響 |
-| `getAnalysis()` | 獲取綜合分析 |
+| 方法                            | 描述           |
+| ------------------------------- | -------------- |
+| `updateAlpha(kwargs)`           | 更新 α 維度    |
+| `updateBeta(kwargs)`            | 更新 β 維度    |
+| `updateGamma(kwargs)`           | 更新 γ 維度    |
+| `updateDelta(kwargs)`           | 更新 δ 維度    |
+| `handleInteraction(type, data)` | 處理互動       |
+| `computeInfluences()`           | 計算維度間影響 |
+| `getAnalysis()`                 | 獲取綜合分析   |
 
 ### MaturityTracker
 
@@ -514,12 +540,12 @@ Live2D 模型管理器。
 
 #### 方法
 
-| 方法 | 描述 |
-|-----|------|
-| `addExperience(type, impact)` | 添加經驗 |
-| `getStatus()` | 獲取當前狀態 |
-| `getLevelInfo(level)` | 獲取等級信息 |
-| `getRecommendedAngelaMode()` | 獲取推薦模式 |
+| 方法                          | 描述         |
+| ----------------------------- | ------------ |
+| `addExperience(type, impact)` | 添加經驗     |
+| `getStatus()`                 | 獲取當前狀態 |
+| `getLevelInfo(level)`         | 獲取等級信息 |
+| `getRecommendedAngelaMode()`  | 獲取推薦模式 |
 
 ---
 

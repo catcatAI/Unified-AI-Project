@@ -4,7 +4,8 @@
 
 ## 概述
 
-Angela AI 使用 **Google 风格**的 docstring，这是 Python 社区广泛接受的文档字符串格式。
+Angela AI 使用
+**Google 风格**的 docstring，这是 Python 社区广泛接受的文档字符串格式。
 
 ## 基本格式
 

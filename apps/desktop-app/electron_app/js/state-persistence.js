@@ -4,116 +4,116 @@
  */
 
 class StatePersistence {
-    constructor(options = {}) {
-        this.maxHistorySize = options.maxHistorySize || 100;
-        this.currentState = {};
-        this.history = [];
-        this.listeners = new Map();
+  constructor(options = {}) {
+    this.maxHistorySize = options.maxHistorySize || 100
+    this.currentState = {}
+    this.history = []
+    this.listeners = new Map()
+  }
+
+  saveState(key, value) {
+    const previousValue = this.currentState[key]
+    this.currentState[key] = value
+
+    const changeRecord = {
+      key,
+      previousValue,
+      newValue: value,
+      timestamp: Date.now(),
     }
 
-    saveState(key, value) {
-        const previousValue = this.currentState[key];
-        this.currentState[key] = value;
-
-        const changeRecord = {
-            key,
-            previousValue,
-            newValue: value,
-            timestamp: Date.now()
-        };
-
-        this.history.push(changeRecord);
-        if (this.history.length > this.maxHistorySize) {
-            this.history.shift();
-        }
-
-        this._notifyListeners(key, value, previousValue);
-        return changeRecord;
+    this.history.push(changeRecord)
+    if (this.history.length > this.maxHistorySize) {
+      this.history.shift()
     }
 
-    getState(key) {
-        return this.currentState[key];
-    }
+    this._notifyListeners(key, value, previousValue)
+    return changeRecord
+  }
 
-    getAllState() {
-        return { ...this.currentState };
-    }
+  getState(key) {
+    return this.currentState[key]
+  }
 
-    clearState() {
-        this.currentState = {};
-        this.history = [];
-    }
+  getAllState() {
+    return { ...this.currentState }
+  }
 
-    getHistory(key = null) {
-        if (key === null) {
-            return [...this.history];
-        }
-        return this.history.filter(record => record.key === key);
-    }
+  clearState() {
+    this.currentState = {}
+    this.history = []
+  }
 
-    restoreFromHistory(index) {
-        if (index < 0 || index >= this.history.length) {
-            return false;
-        }
-        const record = this.history[index];
-        this.currentState[record.key] = record.previousValue;
-        this._notifyListeners(record.key, record.previousValue, record.newValue);
-        return true;
+  getHistory(key = null) {
+    if (key === null) {
+      return [...this.history]
     }
+    return this.history.filter((record) => record.key === key)
+  }
 
-    subscribe(key, callback) {
-        if (!this.listeners.has(key)) {
-            this.listeners.set(key, new Set());
-        }
-        this.listeners.get(key).add(callback);
-        return () => {
-            this.listeners.get(key).delete(callback);
-        };
+  restoreFromHistory(index) {
+    if (index < 0 || index >= this.history.length) {
+      return false
     }
+    const record = this.history[index]
+    this.currentState[record.key] = record.previousValue
+    this._notifyListeners(record.key, record.previousValue, record.newValue)
+    return true
+  }
 
-    _notifyListeners(key, newValue, previousValue) {
-        const keyListeners = this.listeners.get(key);
-        if (keyListeners) {
-            keyListeners.forEach(callback => {
-                try {
-                    callback(newValue, previousValue);
-                } catch (e) {
-                    console.error('[StatePersistence] Listener error:', e);
-                }
-            });
-        }
+  subscribe(key, callback) {
+    if (!this.listeners.has(key)) {
+      this.listeners.set(key, new Set())
     }
-
-    serialize() {
-        return JSON.stringify({
-            currentState: this.currentState,
-            history: this.history,
-            maxHistorySize: this.maxHistorySize
-        });
+    this.listeners.get(key).add(callback)
+    return () => {
+      this.listeners.get(key).delete(callback)
     }
+  }
 
-    deserialize(data) {
+  _notifyListeners(key, newValue, previousValue) {
+    const keyListeners = this.listeners.get(key)
+    if (keyListeners) {
+      keyListeners.forEach((callback) => {
         try {
-            if (!data || typeof data !== 'string') {
-                console.warn('[StatePersistence] Invalid data type for deserialization');
-                return false;
-            }
-            const parsed = JSON.parse(data);
-            if (parsed === null || parsed === undefined) {
-                console.warn('[StatePersistence] Parsed data is null or undefined');
-                return false;
-            }
-            this.currentState = parsed.currentState || {};
-            this.history = parsed.history || [];
-            this.maxHistorySize = parsed.maxHistorySize || 100;
-            return true;
+          callback(newValue, previousValue)
         } catch (e) {
-            console.error('[StatePersistence] Deserialize error:', e);
-            return false;
+          console.error('[StatePersistence] Listener error:', e)
         }
+      })
     }
+  }
+
+  serialize() {
+    return JSON.stringify({
+      currentState: this.currentState,
+      history: this.history,
+      maxHistorySize: this.maxHistorySize,
+    })
+  }
+
+  deserialize(data) {
+    try {
+      if (!data || typeof data !== 'string') {
+        console.warn('[StatePersistence] Invalid data type for deserialization')
+        return false
+      }
+      const parsed = JSON.parse(data)
+      if (parsed === null || parsed === undefined) {
+        console.warn('[StatePersistence] Parsed data is null or undefined')
+        return false
+      }
+      this.currentState = parsed.currentState || {}
+      this.history = parsed.history || []
+      this.maxHistorySize = parsed.maxHistorySize || 100
+      return true
+    } catch (e) {
+      console.error('[StatePersistence] Deserialize error:', e)
+      return false
+    }
+  }
 }
 
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = StatePersistence;
+  module.exports = StatePersistence
 }

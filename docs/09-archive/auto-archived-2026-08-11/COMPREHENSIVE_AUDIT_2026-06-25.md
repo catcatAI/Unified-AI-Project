@@ -3,14 +3,24 @@
 **審計日期**: 2026-06-25  
 **修訂日期**: 2026-06-25 (v2.0)  
 **審計範圍**: 全專案 — 代碼、配置、路由、管線、文檔、測試、修復進度  
-**基準**: 前次審計 + Phase A-F 修復發現 + Phase C 子系統審計 + Phase D 程式碼審查 + Phase E 測試審計  
+**基準**: 前次審計 + Phase A-F 修復發現 + Phase C 子系統審計 + Phase
+D 程式碼審查 + Phase E 測試審計  
 **方法**: 逐文件驗證、內容檢查、612 Python 檔案行掃描、跨 3 份審計文件比對  
 **最終健康度**: **~85-90%**（較 v1.0 的 55-60% 提升 +30%）
 
-> ⚠️ **v2.0 重要修正**: 修正了 v1.0 的多項嚴重偏差——包括將 Phase 11 刪除誤判為「遺失的模組」、忽略 Phase C 發現（7 子系統 61 檔案僅 1 stub）、以及低估 ED3N（26 檔案, 5,521 行, 僅 1 個 intentional `except ValueError: pass`）和 GARDEN（9 檔案, 2,586 行, 僅 1 個 documented no-op `fit()`) 的 AI 引擎品質。  
-> ✅ **Phase F 最終確認**: 所有 6 個修復階段（Phase 0-5 + Phase C/D/E/F）已完成。`.gitignore` 全面補強、`pyrightconfig.json` 修復、README 損壞連結修復、OMISSIONS_CHECKLIST v1.4.0 同步。
+> ⚠️ **v2.0 重要修正**: 修正了 v1.0 的多項嚴重偏差——包括將 Phase
+> 11 刪除誤判為「遺失的模組」、忽略 Phase C 發現（7 子系統 61 檔案僅 1
+> stub）、以及低估 ED3N（26 檔案, 5,521 行, 僅 1 個 intentional
+> `except ValueError: pass`）和 GARDEN（9 檔案, 2,586 行, 僅 1 個 documented
+> no-op `fit()`) 的 AI 引擎品質。  
+> ✅ **Phase F 最終確認**: 所有 6 個修復階段（Phase 0-5 + Phase
+> C/D/E/F）已完成。`.gitignore` 全面補強、`pyrightconfig.json`
+> 修復、README 損壞連結修復、OMISSIONS_CHECKLIST v1.4.0 同步。
 >
-> 📌 **v2.0 範圍說明**: 本審計聚焦**整體架構健康度**（stub 密度、死代碼、文件同步、模組完整性），與 `docs/06-project-management/plans/COMPREHENSIVE_AUDIT_V3.md`（聚焦程式碼品質：執行緒安全、錯誤處理、邊界案例）視角不同。兩者為互補關係，不矛盾。V3 發現的 16 項 HIGH/MEDIUM 問題（H1-H16, P0-P4）已於 2026-06-07 全數修復並經程式碼驗證（`weights_only=True`、`zlib.adler32`、RLock 保護等）。
+> 📌
+> **v2.0 範圍說明**: 本審計聚焦**整體架構健康度**（stub 密度、死代碼、文件同步、模組完整性），與
+> `docs/06-project-management/plans/COMPREHENSIVE_AUDIT_V3.md`（聚焦程式碼品質：執行緒安全、錯誤處理、邊界案例）視角不同。兩者為互補關係，不矛盾。V3 發現的 16 項 HIGH/MEDIUM 問題（H1-H16,
+> P0-P4）已於 2026-06-07 全數修復並經程式碼驗證（`weights_only=True`、`zlib.adler32`、RLock 保護等）。
 
 ---
 
@@ -37,26 +47,30 @@
 
 Git history 顯示以下新增（自 6/16 審計後）:
 
-| Commit | 內容 |
-|--------|------|
-| `feat: Three-Layer Visual Architecture` | PCA encoder + nonlinear decoder |
-| `fix: GVV API bugs, add ThreeLayerVisual endpoints` | API 路由、Bug 修復 |
-| `feat: Concept space improved` | PCA projection 87% accuracy |
-| `feat: Concept space mapping` | CLIP → shared concept space |
-| `GVV fully wired` | CLIP text encoding, API route, 24 tests |
+| Commit                                              | 內容                                    |
+| --------------------------------------------------- | --------------------------------------- |
+| `feat: Three-Layer Visual Architecture`             | PCA encoder + nonlinear decoder         |
+| `fix: GVV API bugs, add ThreeLayerVisual endpoints` | API 路由、Bug 修復                      |
+| `feat: Concept space improved`                      | PCA projection 87% accuracy             |
+| `feat: Concept space mapping`                       | CLIP → shared concept space             |
+| `GVV fully wired`                                   | CLIP text encoding, API route, 24 tests |
 
 #### 實際檔案 vs 文檔宣稱不符
 
-| 檔案 | 文檔宣稱數量 | 實際數量 | 差異 |
-|------|-------------|---------|------|
-| `ai/multimodal/primitives/*.py` | **6** (primitive_types, renderer, library, encoder, __init__, README) | **14** (+ concept_mapper, concept_space, geometric_vocabulary, instance_optimizer, vocabulary_expander, decomposer, differentiable_renderer, learnable_decomposer, pixel_refiner) | +8 |
-| `tests/ai/multimodal/primitives/*.py` | **5** (test_types, renderer, library, encoder, integration) | **8** (+ test_concept_mapper, test_geometric_vocabulary, test_instance_optimizer) | +3 |
+| 檔案                                  | 文檔宣稱數量                                                          | 實際數量                                                                                                                                                                          | 差異 |
+| ------------------------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- |
+| `ai/multimodal/primitives/*.py`       | **6** (primitive_types, renderer, library, encoder, **init**, README) | **14** (+ concept_mapper, concept_space, geometric_vocabulary, instance_optimizer, vocabulary_expander, decomposer, differentiable_renderer, learnable_decomposer, pixel_refiner) | +8   |
+| `tests/ai/multimodal/primitives/*.py` | **5** (test_types, renderer, library, encoder, integration)           | **8** (+ test_concept_mapper, test_geometric_vocabulary, test_instance_optimizer)                                                                                                 | +3   |
 
-**問題**: `COMPOSITIONAL_IMAGE_GENERATION_COMPLETE.md` 和 `docs/COMPOSITIONAL_IMAGE_GENERATION_IMPLEMENTATION_SUMMARY.md` 都只記錄了 Phase 1（5 個基礎檔案），完全未提及後續新增的 GVV 架構（geometric_vocabulary, concept_mapper, instance_optimizer 等 9 個檔案）。
+**問題**: `COMPOSITIONAL_IMAGE_GENERATION_COMPLETE.md` 和
+`docs/COMPOSITIONAL_IMAGE_GENERATION_IMPLEMENTATION_SUMMARY.md` 都只記錄了 Phase
+1（5 個基礎檔案），完全未提及後續新增的 GVV 架構（geometric_vocabulary,
+concept_mapper, instance_optimizer 等 9 個檔案）。
 
 ### 1.2 新增: image_generation_routes.py
 
-新的 API 路由檔案 `apps/backend/src/api/routes/image_generation_routes.py`，包含 6 個端點:
+新的 API 路由檔案
+`apps/backend/src/api/routes/image_generation_routes.py`，包含 6 個端點:
 
 - `POST /api/v1/generate-image` — 從文字產生圖像
 - `POST /api/v1/recognize-image` — 圖像辨識
@@ -64,19 +78,21 @@ Git history 顯示以下新增（自 6/16 審計後）:
 - `POST /api/v1/interpolate-classes` — 類別插值
 - `GET /api/v1/generate-image/status` — 健康檢查
 
-**問題**: 路由路徑不一致 — `generate-image` 而非 `/image/generate` 或 `/image-generation/generate`。
+**問題**: 路由路徑不一致 — `generate-image` 而非 `/image/generate` 或
+`/image-generation/generate`。
 
 ### 1.3 新增: 訓練腳本
 
-| 腳本 | 路徑 |
-|------|------|
-| `train_learned_repr.py` | `scripts/train_learned_repr.py` |
+| 腳本                       | 路徑                               |
+| -------------------------- | ---------------------------------- |
+| `train_learned_repr.py`    | `scripts/train_learned_repr.py`    |
 | `train_learned_repr_v2.py` | `scripts/train_learned_repr_v2.py` |
 | `train_learned_repr_v3.py` | `scripts/train_learned_repr_v3.py` |
 | `train_learned_repr_v4.py` | `scripts/train_learned_repr_v4.py` |
 | `train_learned_repr_v5.py` | `scripts/train_learned_repr_v5.py` |
 
-**問題**: 5 個版本代表迭代開發，但 `/scripts/ACTIVE_SCRIPTS.md` 可能未更新這些新腳本。
+**問題**: 5 個版本代表迭代開發，但 `/scripts/ACTIVE_SCRIPTS.md`
+可能未更新這些新腳本。
 
 ---
 
@@ -84,32 +100,32 @@ Git history 顯示以下新增（自 6/16 審計後）:
 
 ### 2.1 前次審計已指出的問題（仍未解決）
 
-| 文件 | 前次審計指出問題 | 當前狀態 |
-|------|-----------------|---------|
-| `docs/ARCHITECTURE.md` | 缺少 ED3N、GARDEN、ModelBus | ❌ 仍未更新 GVV pipeline |
-| `docs/INDEX.md` | 文件索引需更新 | ❌ 仍未包含 image generation |
-| `AGENTS.md` | 項目結構不完整 | ⚠️ 有修改（git status 顯示已修改但未提交），但尚未反映完整結構 |
-| `docs/development/SERVICE_CATALOG.md` | 可能過時 | ❌ 未驗證是否更新 |
-| `docs/development/STUB_TRACKING.md` | 應追蹤所有 stub | ❌ 可能未反映當前 stub 列表 |
-| `README.md` | 文件統計數字不正確 | ❌ 仍引用過時數據 |
+| 文件                                  | 前次審計指出問題            | 當前狀態                                                       |
+| ------------------------------------- | --------------------------- | -------------------------------------------------------------- |
+| `docs/ARCHITECTURE.md`                | 缺少 ED3N、GARDEN、ModelBus | ❌ 仍未更新 GVV pipeline                                       |
+| `docs/INDEX.md`                       | 文件索引需更新              | ❌ 仍未包含 image generation                                   |
+| `AGENTS.md`                           | 項目結構不完整              | ⚠️ 有修改（git status 顯示已修改但未提交），但尚未反映完整結構 |
+| `docs/development/SERVICE_CATALOG.md` | 可能過時                    | ❌ 未驗證是否更新                                              |
+| `docs/development/STUB_TRACKING.md`   | 應追蹤所有 stub             | ❌ 可能未反映當前 stub 列表                                    |
+| `README.md`                           | 文件統計數字不正確          | ❌ 仍引用過時數據                                              |
 
 ### 2.2 新增的文檔問題
 
-| 文件 | 問題 | 嚴重度 |
-|------|------|--------|
-| `COMPOSITIONAL_IMAGE_GENERATION_COMPLETE.md` | 聲稱 6 個檔案，實際 14 個檔案；完全未提及 GVV 架構 | 🔴 HIGH |
-| `docs/COMPOSITIONAL_IMAGE_GENERATION_IMPLEMENTATION_SUMMARY.md` | 同上 — 只記錄 Phase 1 | 🔴 HIGH |
-| `PHASE1_IMPLEMENTATION_COMPLETE.txt` | 空內容/未知 | 🟡 MEDIUM |
-| `docs/ARCHITECTURE.md` | 未提及 GVV 管線、image_generation_routes | 🔴 HIGH |
-| `docs/INDEX.md` | 無 image generation 引用 | 🟡 MEDIUM |
+| 文件                                                            | 問題                                               | 嚴重度    |
+| --------------------------------------------------------------- | -------------------------------------------------- | --------- |
+| `COMPOSITIONAL_IMAGE_GENERATION_COMPLETE.md`                    | 聲稱 6 個檔案，實際 14 個檔案；完全未提及 GVV 架構 | 🔴 HIGH   |
+| `docs/COMPOSITIONAL_IMAGE_GENERATION_IMPLEMENTATION_SUMMARY.md` | 同上 — 只記錄 Phase 1                              | 🔴 HIGH   |
+| `PHASE1_IMPLEMENTATION_COMPLETE.txt`                            | 空內容/未知                                        | 🟡 MEDIUM |
+| `docs/ARCHITECTURE.md`                                          | 未提及 GVV 管線、image_generation_routes           | 🔴 HIGH   |
+| `docs/INDEX.md`                                                 | 無 image generation 引用                           | 🟡 MEDIUM |
 
 ### 2.3 前次審計後已修復的
 
-| 文件 | 修復 | 來源 |
-|------|------|------|
+| 文件                      | 修復                                           | 來源      |
+| ------------------------- | ---------------------------------------------- | --------- |
 | `.pre-commit-config.yaml` | Python 版本已修正為 3.10（前次審計指出是 3.8） | ✅ 已修復 |
-| Phantom imports | 36 個幻影匯入已修復（Rounds 1-3） | ✅ 已修復 |
-| 孤兒目錄 | 12 個 stub 目錄已移除 | ✅ 已修復 |
+| Phantom imports           | 36 個幻影匯入已修復（Rounds 1-3）              | ✅ 已修復 |
+| 孤兒目錄                  | 12 個 stub 目錄已移除                          | ✅ 已修復 |
 
 ---
 
@@ -119,40 +135,46 @@ Git history 顯示以下新增（自 6/16 審計後）:
 
 `chat_routes.py` 中有 **3 個幾乎完全相同的 POST 端點**:
 
-| 路由 | 行為 | 差異 |
-|------|------|------|
-| `POST /api/v1/angela/chat` | 調用 `_handle_chat_request()` | session_id = "angela-{uuid}"，user_name = "朋友" |
-| `POST /api/v1/dialogue` | 調用 `_handle_chat_request()` | session_id = "angela-{uuid}"，user_name = "朋友" |
+| 路由                        | 行為                          | 差異                                              |
+| --------------------------- | ----------------------------- | ------------------------------------------------- |
+| `POST /api/v1/angela/chat`  | 調用 `_handle_chat_request()` | session_id = "angela-{uuid}"，user_name = "朋友"  |
+| `POST /api/v1/dialogue`     | 調用 `_handle_chat_request()` | session_id = "angela-{uuid}"，user_name = "朋友"  |
 | `POST /api/v1/chat/unified` | 調用 `_handle_chat_request()` | 多 persona 隔離，tenant_id, persona_id, client_id |
 
 `/angela/chat` 和 `/dialogue` **完全等價** — 只是 URL 不同。
 
 ### 3.2 路由前綴不一致
 
-| 路由檔案 | 自帶前綴 | router.py 加入前綴 | 最終路徑 |
-|----------|---------|-------------------|---------|
-| `ops_routes.py` | `/ops` | `/api/v1` | `/api/v1/ops/status` |
-| `image_generation_routes.py` | 無 (直接 `/generate-image`) | `/api/v1` | `/api/v1/generate-image` |
-| `chat_routes.py` | 無 | `/api/v1` | `/api/v1/angela/chat` |
-| `desktop_routes.py` | 無 | `/api/v1` | `/api/v1/desktop/state` |
-| `multimodal_routes.py` | 無 (直接 `/multimodal/...`) | `/api/v1` | `/api/v1/multimodal/encode` |
+| 路由檔案                     | 自帶前綴                    | router.py 加入前綴 | 最終路徑                    |
+| ---------------------------- | --------------------------- | ------------------ | --------------------------- |
+| `ops_routes.py`              | `/ops`                      | `/api/v1`          | `/api/v1/ops/status`        |
+| `image_generation_routes.py` | 無 (直接 `/generate-image`) | `/api/v1`          | `/api/v1/generate-image`    |
+| `chat_routes.py`             | 無                          | `/api/v1`          | `/api/v1/angela/chat`       |
+| `desktop_routes.py`          | 無                          | `/api/v1`          | `/api/v1/desktop/state`     |
+| `multimodal_routes.py`       | 無 (直接 `/multimodal/...`) | `/api/v1`          | `/api/v1/multimodal/encode` |
 
-**問題**: 不一致的命名風格 — 有些用名詞 (`desktop`)、有些用領域 (`multimodal`)、有些直接功能 (`generate-image`)。建議統一卷式如 `/api/v1/{domain}/{action}`。
+**問題**: 不一致的命名風格 — 有些用名詞 (`desktop`)、有些用領域 (`multimodal`)、有些直接功能 (`generate-image`)。建議統一卷式如
+`/api/v1/{domain}/{action}`。
 
 ### 3.3 main_api_server.py 死匯入（dead imports）
 
 `apps/backend/src/services/main_api_server.py` 中:
+
 ```python
 from api.routes.chat_routes import router as chat_router
 from api.routes.desktop_routes import router as desktop_router
 ```
-這兩個路由被 **import 但從未被 `app.include_router()` 調用** — 它們已經是透過 `api_v1_router` 間接引入。
 
-**問題**: 死匯入（dead imports）— 變數 `chat_router` 和 `desktop_router` 被賦值但從未使用。這不是 bug，但是不乾淨的程式碼。
+這兩個路由被 **import 但從未被 `app.include_router()` 調用** — 它們已經是透過
+`api_v1_router` 間接引入。
+
+**問題**: 死匯入（dead imports）— 變數 `chat_router` 和 `desktop_router`
+被賦值但從未使用。這不是 bug，但是不乾淨的程式碼。
 
 ### 3.4 ops_routes.py 極簡實作
 
 `ops_routes.py` 只有 3 個端點，所有返回硬編碼 dict:
+
 ```python
 @router.get("/status")     → return {"status": "ok", "service": "ops"}
 @router.get("/health")     → return {"status": "healthy", "service": "ops"}
@@ -163,12 +185,12 @@ from api.routes.desktop_routes import router as desktop_router
 
 ### 3.5 缺少的常見端點
 
-| 端點 | 狀態 | 說明 |
-|------|------|------|
-| `GET /health` | 僅在 `ops/health` 可用（需 `/api/v1` 前綴） | 無根級別健康檢查 |
-| `GET /metrics` | ❌ 不存在 | Prometheus metrics 端點 |
-| `GET /docs` | FastAPI 自動生成 | ✅ 應可用 |
-| `GET /openapi.json` | FastAPI 自動生成 | ✅ 應可用 |
+| 端點                | 狀態                                        | 說明                    |
+| ------------------- | ------------------------------------------- | ----------------------- |
+| `GET /health`       | 僅在 `ops/health` 可用（需 `/api/v1` 前綴） | 無根級別健康檢查        |
+| `GET /metrics`      | ❌ 不存在                                   | Prometheus metrics 端點 |
+| `GET /docs`         | FastAPI 自動生成                            | ✅ 應可用               |
+| `GET /openapi.json` | FastAPI 自動生成                            | ✅ 應可用               |
 
 ---
 
@@ -176,32 +198,37 @@ from api.routes.desktop_routes import router as desktop_router
 
 ### 4.1 Python 版本衝突
 
-| 文件 | Python 版本 | 
-|------|------------|
-| `pyproject.toml` | `>=3.10` |
-| `.pre-commit-config.yaml` | ✅ 已修復為 `python3.10`（前次審計指出問題） |
-| `configs/pyrightconfig.json` | **`pythonVersion: "3.8"`** ⚠️ |
+| 文件                         | Python 版本                                  |
+| ---------------------------- | -------------------------------------------- |
+| `pyproject.toml`             | `>=3.10`                                     |
+| `.pre-commit-config.yaml`    | ✅ 已修復為 `python3.10`（前次審計指出問題） |
+| `configs/pyrightconfig.json` | **`pythonVersion: "3.8"`** ⚠️                |
 
-**問題**: `pyrightconfig.json` 仍設定 Python 3.8，與 `pyproject.toml` 的 `>=3.10` 衝突。這會導致 Pyright 型別檢查使用錯誤的 Python 版本規則。
+**問題**: `pyrightconfig.json` 仍設定 Python 3.8，與 `pyproject.toml` 的
+`>=3.10` 衝突。這會導致 Pyright 型別檢查使用錯誤的 Python 版本規則。
 
 ### 4.2 預設值問題
 
-| 配置 | 值 | 問題 |
-|------|-----|------|
-| `configs/angela_config.yaml` | `test_mode: true` | 🟡 預設為測試模式 |
-| `configs/angela_config.yaml` | `debug_mode: true` | 🟡 預設為除錯模式 |
+| 配置                         | 值                    | 問題                                    |
+| ---------------------------- | --------------------- | --------------------------------------- |
+| `configs/angela_config.yaml` | `test_mode: true`     | 🟡 預設為測試模式                       |
+| `configs/angela_config.yaml` | `debug_mode: true`    | 🟡 預設為除錯模式                       |
 | `configs/angela_config.yaml` | `mobile_bridge: true` | ❌ 手機端是 skeleton，不存在真正 bridge |
-| `configs/angela_config.yaml` | `mock_apis: false` | 🟢 合理 |
+| `configs/angela_config.yaml` | `mock_apis: false`    | 🟢 合理                                 |
 
 ### 4.3 外部服務配置
 
-`configs/angela_config.yaml` 和 `configs/angela_config.json` 都參考了外部服務（OpenAI、Google）但：
+`configs/angela_config.yaml` 和 `configs/angela_config.json`
+都參考了外部服務（OpenAI、Google）但：
+
 - API keys 顯示為空 (`"google_api_key": ""`)
 - 無證據顯示這些服務已配置可用
 
 ### 4.4 Docker/Infrastructure 配置
 
-`configs/prometheus.yml` 和 `docker-compose.yml` 參考了 `backend:8000`、`redis:6379`、`postgres:5432` 等服務，但：
+`configs/prometheus.yml` 和 `docker-compose.yml` 參考了
+`backend:8000`、`redis:6379`、`postgres:5432` 等服務，但：
+
 - 無證據 Redis 或 PostgreSQL 實際配置
 - Nginx SSL 配置參考 `/etc/nginx/ssl/cert.pem` — 無提供證書
 
@@ -211,37 +238,38 @@ from api.routes.desktop_routes import router as desktop_router
 
 ### 5.1 已知殘留 Stub（來自前次審計）
 
-> ⚠️ **2026-06-26 校正**: 以下多項在前次審計中被標記為 STUB，但經程式碼驗證實際上為**功能性實作**，非 stub。
+> ⚠️
+> **2026-06-26 校正**: 以下多項在前次審計中被標記為 STUB，但經程式碼驗證實際上為**功能性實作**，非 stub。
 
-| 檔案 | 前次審計狀態 | 當前狀態（2026-06-26） |
-|------|------------|---------------------|
-| `services/handlers/google_drive_handler.py` | ❌ STUB | ✅ **實作完成**（65 行，有本地 filesystem fallback，非 stub） |
-| `core/security/key_generator.py` | ❌ STUB | ✅ **實作完成**（40 行，secrets 模組生成強隨機密鑰） |
-| `core/security/secure_eval.py` | ❌ STUB | ✅ **實作完成**（345 行，完整 AST-based 安全求值器，白名單運算符+函數） |
-| `ai/multimodal/multimodal_processor.py` | ❌ STUB | ⚠️ 部分實作（有 process_text/process_image 方法但有實作，非完全空 stub） |
-| `ai/trust/trust_manager_module.py` | ✅ 已重寫 (Phase 3) | ✅ 檔案不存在（Phase 1 清理時刪除） |
-| `ai/world_model/environment_simulator.py` | ✅ 已擴充 (Phase 3) | ✅ 檔案不存在（Phase 1 清理時刪除） |
-| `core/search/search_engine.py` | ❌ STUB | ✅ 檔案不存在（Phase 1 清理時刪除） |
+| 檔案                                        | 前次審計狀態        | 當前狀態（2026-06-26）                                                   |
+| ------------------------------------------- | ------------------- | ------------------------------------------------------------------------ |
+| `services/handlers/google_drive_handler.py` | ❌ STUB             | ✅ **實作完成**（65 行，有本地 filesystem fallback，非 stub）            |
+| `core/security/key_generator.py`            | ❌ STUB             | ✅ **實作完成**（40 行，secrets 模組生成強隨機密鑰）                     |
+| `core/security/secure_eval.py`              | ❌ STUB             | ✅ **實作完成**（345 行，完整 AST-based 安全求值器，白名單運算符+函數）  |
+| `ai/multimodal/multimodal_processor.py`     | ❌ STUB             | ⚠️ 部分實作（有 process_text/process_image 方法但有實作，非完全空 stub） |
+| `ai/trust/trust_manager_module.py`          | ✅ 已重寫 (Phase 3) | ✅ 檔案不存在（Phase 1 清理時刪除）                                      |
+| `ai/world_model/environment_simulator.py`   | ✅ 已擴充 (Phase 3) | ✅ 檔案不存在（Phase 1 清理時刪除）                                      |
+| `core/search/search_engine.py`              | ❌ STUB             | ✅ 檔案不存在（Phase 1 清理時刪除）                                      |
 
 ### 5.2 已檢查但非 stub 的項目
 
 > ✅ **2026-06-26 校正**: 以下項目經程式碼驗證為**正確實作**，非 stub：
 
-| 檔案 | 原問題 | 實際情況 |
-|------|--------|---------|
-| `services/math_verifier.py` | docstring 自標 stub | ✅ 171 行，含 MathExtractor/SpatialEngine/MathVerifier，匯入正常，docstring 已清除 "stub" |
-| `core/waiting_scheduler.py` | docstring 自標 stub | ✅ 3.5KB，docstring 已清除 "stub" |
-| `core/state/axis_field.py:87` | `return NotImplemented` | ✅ 標準 Python `__eq__` 型別分派模式，正確 |
-| `services/cross_modal_router.py:283-293` | 多個 `pass` 區塊 | ✅ `except` 中的 `pass` 是故意的（健康檢查時忽略錯誤） |
-| `services/cross_modal_quality.py:209-213` | 多個 `pass` 區塊 | ✅ `except` 中的 `pass` 是故意的（清除監控時忽略錯誤） |
+| 檔案                                      | 原問題                  | 實際情況                                                                                  |
+| ----------------------------------------- | ----------------------- | ----------------------------------------------------------------------------------------- |
+| `services/math_verifier.py`               | docstring 自標 stub     | ✅ 171 行，含 MathExtractor/SpatialEngine/MathVerifier，匯入正常，docstring 已清除 "stub" |
+| `core/waiting_scheduler.py`               | docstring 自標 stub     | ✅ 3.5KB，docstring 已清除 "stub"                                                         |
+| `core/state/axis_field.py:87`             | `return NotImplemented` | ✅ 標準 Python `__eq__` 型別分派模式，正確                                                |
+| `services/cross_modal_router.py:283-293`  | 多個 `pass` 區塊        | ✅ `except` 中的 `pass` 是故意的（健康檢查時忽略錯誤）                                    |
+| `services/cross_modal_quality.py:209-213` | 多個 `pass` 區塊        | ✅ `except` 中的 `pass` 是故意的（清除監控時忽略錯誤）                                    |
 
 ### 5.3 極簡實作（非完全 stub 但功能有限）
 
-| 檔案 | 行數 | 功能 | 狀態 |
-|------|------|------|:----:|
-| `services/ops_routes.py` | 22 | 3 個端點都回傳硬編碼 dict | 🟡 極簡 |
-| `services/node_services/server.js` | 36 | Express placeholder server | 🟡 極簡 |
-| `core/tools/js_tool_dispatcher/index.js` | 49 | 回傳 "Placeholder tools loaded" | 🟡 極簡 |
+| 檔案                                     | 行數 | 功能                            |  狀態   |
+| ---------------------------------------- | ---- | ------------------------------- | :-----: |
+| `services/ops_routes.py`                 | 22   | 3 個端點都回傳硬編碼 dict       | 🟡 極簡 |
+| `services/node_services/server.js`       | 36   | Express placeholder server      | 🟡 極簡 |
+| `core/tools/js_tool_dispatcher/index.js` | 49   | 回傳 "Placeholder tools loaded" | 🟡 極簡 |
 
 ---
 
@@ -249,29 +277,29 @@ from api.routes.desktop_routes import router as desktop_router
 
 ### 6.1 自報版本與未來日期
 
-| 版本 | 日期 | 標記 | 問題 |
-|------|------|------|------|
-| 7.5.0-dev | 2026-06-16 | Phase 7 i18n | ✅ 合理（當前開發版本） |
-| 7.3.0 | 2026-05-09 | Internal/Unreleased | ⚠️ 自報版本，無對應 git tag |
-| 7.2.0 | 2026-05-09 | Internal/Unreleased | ⚠️ 自報版本 |
-| 7.1.1 | 2026-02-13 | Internal/Unreleased | ⚠️ 自報版本 |
+| 版本      | 日期       | 標記                | 問題                        |
+| --------- | ---------- | ------------------- | --------------------------- |
+| 7.5.0-dev | 2026-06-16 | Phase 7 i18n        | ✅ 合理（當前開發版本）     |
+| 7.3.0     | 2026-05-09 | Internal/Unreleased | ⚠️ 自報版本，無對應 git tag |
+| 7.2.0     | 2026-05-09 | Internal/Unreleased | ⚠️ 自報版本                 |
+| 7.1.1     | 2026-02-13 | Internal/Unreleased | ⚠️ 自報版本                 |
 
 ### 6.2 不一致的完成度聲稱
 
-| 位置 | 聲稱 | 問題 |
-|------|------|------|
-| CHANGELOG 7.5.0-dev | Server imports OK, Tests 511, ~85-90% complete | 未經獨立驗證的聲稱 |
-| CHANGELOG 7.1.1 | "Phase 14 Complete, 99.2% completion" | 明顯誇大 |
-| CHANGELOG v6.2.0 | "Phase 14 Complete, Production Ready" | 與當前 7.5.0-dev 狀態矛盾 |
+| 位置                | 聲稱                                           | 問題                      |
+| ------------------- | ---------------------------------------------- | ------------------------- |
+| CHANGELOG 7.5.0-dev | Server imports OK, Tests 511, ~85-90% complete | 未經獨立驗證的聲稱        |
+| CHANGELOG 7.1.1     | "Phase 14 Complete, 99.2% completion"          | 明顯誇大                  |
+| CHANGELOG v6.2.0    | "Phase 14 Complete, Production Ready"          | 與當前 7.5.0-dev 狀態矛盾 |
 
 ### 6.3 缺失的 CHANGELOG 條目
 
-| 功能 | 出現時間 | CHANGELOG 是否記錄 |
-|------|---------|------------------|
-| GVV pipeline | 6/16-6/25 之間 | ❌ 無 |
-| ThreeLayerVisual | 同上 | ❌ 無 |
-| image_generation_routes | 同上 | ❌ 無 |
-| Compositional Image Generation | 同上 | ❌ 無 |
+| 功能                           | 出現時間       | CHANGELOG 是否記錄 |
+| ------------------------------ | -------------- | ------------------ |
+| GVV pipeline                   | 6/16-6/25 之間 | ❌ 無              |
+| ThreeLayerVisual               | 同上           | ❌ 無              |
+| image_generation_routes        | 同上           | ❌ 無              |
+| Compositional Image Generation | 同上           | ❌ 無              |
 
 ---
 
@@ -279,13 +307,13 @@ from api.routes.desktop_routes import router as desktop_router
 
 AGENTS.md 聲稱「所有 14 個版本位置必須保持同步」。檢查結果:
 
-| 位置 | 版本 | 狀態 |
-|------|------|------|
-| `VERSION` | 7.5.0-dev | ✅ |
-| `package.json` | 7.5.0-dev | ✅ |
-| `apps/backend/pyproject.toml` | 7.5.0-dev | ✅ |
-| `configs/angela_config.json` | 7.5.0-dev | ✅ |
-| `apps/backend/src/services/main_api_server.py` | 7.5.0-dev (docstring + FastAPI version) | ✅ |
+| 位置                                           | 版本                                    | 狀態 |
+| ---------------------------------------------- | --------------------------------------- | ---- |
+| `VERSION`                                      | 7.5.0-dev                               | ✅   |
+| `package.json`                                 | 7.5.0-dev                               | ✅   |
+| `apps/backend/pyproject.toml`                  | 7.5.0-dev                               | ✅   |
+| `configs/angela_config.json`                   | 7.5.0-dev                               | ✅   |
+| `apps/backend/src/services/main_api_server.py` | 7.5.0-dev (docstring + FastAPI version) | ✅   |
 
 **結論**: 已檢查的版本位置一致。但 AGENTS.md 提到 14 個位置 — 需要完整驗證所有 14 個。
 
@@ -296,9 +324,10 @@ AGENTS.md 聲稱「所有 14 個版本位置必須保持同步」。檢查結果
 ### 8.1 前次審計的測試數量
 
 前次審計（6/16）報告:
+
 - Phase 6 E2E: 24/24 ✅
 - Phase 5 Integration: 13/13 ✅
-- Phase 5 Infrastructure: 24/24 ✅  
+- Phase 5 Infrastructure: 24/24 ✅
 - Phase 6 Documentation: 15/15 ✅
 - Phase 1 Core Activation: 10/10 ✅
 - Phase 2 Intelligence: 7/7 ✅
@@ -307,15 +336,16 @@ AGENTS.md 聲稱「所有 14 個版本位置必須保持同步」。檢查結果
 
 ### 8.2 新測試
 
-| 測試集 | 文件 | 預估數量 |
-|--------|------|---------|
-| Primitives Phase 1 | 5 個測試檔案 | ~38 tests (文檔聲稱) |
-| GVV pipeline | 3 個測試檔案 (test_concept_mapper, test_geometric_vocabulary, test_instance_optimizer) | ~24 tests (git commit 聲稱) |
-| 總計新增 | | ~62 tests |
+| 測試集             | 文件                                                                                   | 預估數量                    |
+| ------------------ | -------------------------------------------------------------------------------------- | --------------------------- |
+| Primitives Phase 1 | 5 個測試檔案                                                                           | ~38 tests (文檔聲稱)        |
+| GVV pipeline       | 3 個測試檔案 (test_concept_mapper, test_geometric_vocabulary, test_instance_optimizer) | ~24 tests (git commit 聲稱) |
+| 總計新增           |                                                                                        | ~62 tests                   |
 
 ### 8.3 測試覆蓋缺口（持續存在）
 
 前次審計指出的未測試模組:
+
 - ✅ `services/handlers/*.py` — 全部無專屬測試（7/8 handlers）
 - ✅ `services/llm/providers/ed3n.py` — 無測試
 - ✅ `services/llm/providers/garden.py` — 無測試
@@ -327,17 +357,17 @@ AGENTS.md 聲稱「所有 14 個版本位置必須保持同步」。檢查結果
 
 大量測試因 stub modules 跳過（來自 code-search 結果）:
 
-| 被跳過的 stub module | 測試檔案數 |
-|---------------------|-----------|
-| StateMatrixAdapter | 6 |
-| ResonanceEngine | 5 |
-| AllocationPolicy | 4 |
-| RippleNode / InfluenceSpace | 2 |
-| ConfigValidator | 1 |
-| KeyGenerator | 1 |
-| SecureEval | 1 |
-| MergeEngine | 1 |
-| 其他 | 10+ |
+| 被跳過的 stub module        | 測試檔案數 |
+| --------------------------- | ---------- |
+| StateMatrixAdapter          | 6          |
+| ResonanceEngine             | 5          |
+| AllocationPolicy            | 4          |
+| RippleNode / InfluenceSpace | 2          |
+| ConfigValidator             | 1          |
+| KeyGenerator                | 1          |
+| SecureEval                  | 1          |
+| MergeEngine                 | 1          |
+| 其他                        | 10+        |
 
 ---
 
@@ -349,30 +379,34 @@ AGENTS.md 聲稱「所有 14 個版本位置必須保持同步」。檢查結果
 
 ### 9.2 Vision 分析端點
 
-| 路由 | 檔案 | 功能 |
-|------|------|------|
-| `POST /api/v1/vision/analyze` | `chat_routes.py` | 上傳圖片 + 問題 → VisionService |
+| 路由                           | 檔案             | 功能                                   |
+| ------------------------------ | ---------------- | -------------------------------------- |
+| `POST /api/v1/vision/analyze`  | `chat_routes.py` | 上傳圖片 + 問題 → VisionService        |
 | `POST /api/v1/chat/with-image` | `chat_routes.py` | 上傳圖片 + 訊息 → CLIP → VisionService |
 
-**問題**: 這兩個端點都在 `chat_routes.py` 中，且都有圖像分析功能。`/chat/with-image` 有額外的 CLIP 分類步驟，但 `/vision/analyze` 更簡單直接。功能重疊。
+**問題**: 這兩個端點都在 `chat_routes.py`
+中，且都有圖像分析功能。`/chat/with-image` 有額外的 CLIP 分類步驟，但
+`/vision/analyze` 更簡單直接。功能重疊。
 
 ### 9.3 Reflex Tables 重複
 
-| 位置 | 類型 |
-|------|------|
-| `ai/ed3n/reflex_layer` | ED3N 反射層（含 LRU cache） |
-| `ai/garden/_ReflexTable` | GARDEN 反射表（無 cache） |
+| 位置                     | 類型                        |
+| ------------------------ | --------------------------- |
+| `ai/ed3n/reflex_layer`   | ED3N 反射層（含 LRU cache） |
+| `ai/garden/_ReflexTable` | GARDEN 反射表（無 cache）   |
 
-前次審計指出 GARDEN 的 `_ReflexTable.PRESETS` 與 ED3N 的反射層有 18 個相同的反射對。建議提取為共用 `ReflexTable` 類。
+前次審計指出 GARDEN 的 `_ReflexTable.PRESETS`
+與 ED3N 的反射層有 18 個相同的反射對。建議提取為共用 `ReflexTable` 類。
 
 ### 9.4 分類器重複
 
-| 位置 | 功能 |
-|------|------|
-| `ai/core/query_classifier.py` | QueryClassifier v2（ED3N-first） |
+| 位置                               | 功能                                         |
+| ---------------------------------- | -------------------------------------------- |
+| `ai/core/query_classifier.py`      | QueryClassifier v2（ED3N-first）             |
 | `ai/core/dictionary_classifier.py` | DictionaryClassifier（老的基於字典的分類器） |
 
-這兩個分類器在 `_handle_chat_request()` 中僅 `QueryClassifier` 被使用。`DictionaryClassifier` 可能是舊版殘留。
+這兩個分類器在 `_handle_chat_request()` 中僅 `QueryClassifier`
+被使用。`DictionaryClassifier` 可能是舊版殘留。
 
 ---
 
@@ -381,6 +415,7 @@ AGENTS.md 聲稱「所有 14 個版本位置必須保持同步」。檢查結果
 ### 10.1 image_generation_routes.py 管線問題
 
 `_get_gvv()` 函數做了:
+
 1. `sys.path.insert(0, ...)` — 破壞性的全域路徑修改
 2. `GeometricVocabulary.load()` — 從檔案載入
 3. `ConceptMapper.load()` — 從檔案載入
@@ -388,6 +423,7 @@ AGENTS.md 聲稱「所有 14 個版本位置必須保持同步」。檢查結果
 5. `InstanceOptimizer(vocabulary, mapper, (128, 128))` — canvas 硬編碼
 
 **問題**:
+
 - `sys.path` 修改應避免 — 使用相對匯入
 - Canvas size 硬編碼為 128x128
 - 無錯誤恢復機制（如某個模型檔案損壞）
@@ -397,6 +433,7 @@ AGENTS.md 聲稱「所有 14 個版本位置必須保持同步」。檢查結果
 ### 10.2 _handle_chat_request 的巨型 try/except
 
 約 330 行的 `_handle_chat_request` 函數中，幾乎每個區塊都用:
+
 ```python
 try:
     ...
@@ -408,11 +445,13 @@ except Exception as e:
 
 ### 10.3 無跨輪次上下文傳播
 
-`QueryClassifier.classify()` 只接收文字，不接收對話上下文，無法消歧（如「另一個呢？」）。
+`QueryClassifier.classify()`
+只接收文字，不接收對話上下文，無法消歧（如「另一個呢？」）。
 
 ### 10.4 學習管線未完全整合
 
-ED3N `ContinuousLearningPipeline` 在 `_handle_chat_request` 中被 fire-and-forget 調用，但分類器改進、字典增長、用戶偏好學習等尚未整合到統一迴路中。
+ED3N `ContinuousLearningPipeline` 在 `_handle_chat_request`
+中被 fire-and-forget 調用，但分類器改進、字典增長、用戶偏好學習等尚未整合到統一迴路中。
 
 ---
 
@@ -420,39 +459,39 @@ ED3N `ContinuousLearningPipeline` 在 `_handle_chat_request` 中被 fire-and-for
 
 ### P0 — 緊急
 
-| # | 問題 | 修復 |
-|---|------|------|
-| 1 | `pyrightconfig.json` 版本 3.8 | 改為 `"pythonVersion": "3.10"` |
-| 2 | `main_api_server.py` 重複路由匯入 | 移除 chat_router/desktop_router 的直接 `include_router` |
-| 3 | 文件與實際 primitives 數量不一致 | 更新 `COMPOSITIONAL_IMAGE_GENERATION_COMPLETE.md` 和 `docs/COMPOSITIONAL_IMAGE_GENERATION_IMPLEMENTATION_SUMMARY.md` |
+| #   | 問題                              | 修復                                                                                                                 |
+| --- | --------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| 1   | `pyrightconfig.json` 版本 3.8     | 改為 `"pythonVersion": "3.10"`                                                                                       |
+| 2   | `main_api_server.py` 重複路由匯入 | 移除 chat_router/desktop_router 的直接 `include_router`                                                              |
+| 3   | 文件與實際 primitives 數量不一致  | 更新 `COMPOSITIONAL_IMAGE_GENERATION_COMPLETE.md` 和 `docs/COMPOSITIONAL_IMAGE_GENERATION_IMPLEMENTATION_SUMMARY.md` |
 
 ### P1 — 高優先
 
-| # | 問題 | 修復 |
-|---|------|------|
-| 4 | `/angela/chat` 和 `/dialogue` 重複 | 棄用 `/dialogue`，統一使用 `/angela/chat` 或 `/chat/unified` |
-| 5 | `configs/angela_config.yaml` 預設 test_mode/debug_mode | 改為 `false` |
-| 6 | `image_generation_routes.py` 的 `sys.path` 修改 | 改用相對匯入 |
-| 7 | CHANGELOG 缺少 GVV pipeline 條目 | 新增 CHANGELOG 記錄 |
+| #   | 問題                                                   | 修復                                                         |
+| --- | ------------------------------------------------------ | ------------------------------------------------------------ |
+| 4   | `/angela/chat` 和 `/dialogue` 重複                     | 棄用 `/dialogue`，統一使用 `/angela/chat` 或 `/chat/unified` |
+| 5   | `configs/angela_config.yaml` 預設 test_mode/debug_mode | 改為 `false`                                                 |
+| 6   | `image_generation_routes.py` 的 `sys.path` 修改        | 改用相對匯入                                                 |
+| 7   | CHANGELOG 缺少 GVV pipeline 條目                       | 新增 CHANGELOG 記錄                                          |
 
 ### P2 — 中優先
 
-| # | 問題 | 修復 |
-|---|------|------|
-| 8 | `services/math_verifier.py` stub | 實作或加載階段跳過 |
-| 9 | `core/waiting_scheduler.py` stub | 實作或移除 |
-| 10 | 路由路徑命名不一致 | 統一路徑命名規範 |
-| 11 | `docs/ARCHITECTURE.md` 更新 | 加入 GVV 管線、image_generation_routes |
-| 12 | `docs/INDEX.md` 更新 | 加入 image generation 相關文件 |
+| #   | 問題                             | 修復                                   |
+| --- | -------------------------------- | -------------------------------------- |
+| 8   | `services/math_verifier.py` stub | 實作或加載階段跳過                     |
+| 9   | `core/waiting_scheduler.py` stub | 實作或移除                             |
+| 10  | 路由路徑命名不一致               | 統一路徑命名規範                       |
+| 11  | `docs/ARCHITECTURE.md` 更新      | 加入 GVV 管線、image_generation_routes |
+| 12  | `docs/INDEX.md` 更新             | 加入 image generation 相關文件         |
 
 ### P3 — 低優先
 
-| # | 問題 | 修復 |
-|---|------|------|
-| 13 | 殘留 stub 實現或移除 | google_drive_handler, secure_eval, key_generator |
-| 14 | 版本一致性完整驗證 | 檢查所有 14 個版本位置 |
-| 15 | `ops_routes.py` 擴展 | 加入真正的運維功能 |
-| 16 | `_handle_chat_request` 重構 | 拆分為更小的函數 |
+| #   | 問題                        | 修復                                             |
+| --- | --------------------------- | ------------------------------------------------ |
+| 13  | 殘留 stub 實現或移除        | google_drive_handler, secure_eval, key_generator |
+| 14  | 版本一致性完整驗證          | 檢查所有 14 個版本位置                           |
+| 15  | `ops_routes.py` 擴展        | 加入真正的運維功能                               |
+| 16  | `_handle_chat_request` 重構 | 拆分為更小的函數                                 |
 
 ---
 
@@ -460,96 +499,104 @@ ED3N `ContinuousLearningPipeline` 在 `_handle_chat_request` 中被 fire-and-for
 
 ### 前次審計（6/12-6/16）已修復 ✅
 
-| 類別 | 數量 |
-|------|------|
-| Phantom imports 修復 | 36 |
-| 孤兒 stub 目錄移除 | 12 |
-| BOM 字元移除 | 6 |
-| 循環依賴修復 | 1 |
-| Python 版本修正 (pre-commit) | 1 |
+| 類別                         | 數量 |
+| ---------------------------- | ---- |
+| Phantom imports 修復         | 36   |
+| 孤兒 stub 目錄移除           | 12   |
+| BOM 字元移除                 | 6    |
+| 循環依賴修復                 | 1    |
+| Python 版本修正 (pre-commit) | 1    |
 
 ### 前次審計問題仍存在 ❌
 
-| 類別 | 數量 | 說明 |
-|------|------|------|
-| 殘留 stub | 3+ | google_drive_handler, secure_eval, key_generator |
-| 文檔陳舊 | 5+ | ARCHITECTURE.md, INDEX.md, COMPOSITIONAL_IMAGE_GENERATION docs |
-| 重複程式碼 | 3+ | 聊天端點、ReflexTables、分類器 |
-| 配置不一致 | 2+ | pyrightconfig.json pythonVersion, test_mode 預設 |
+| 類別       | 數量 | 說明                                                           |
+| ---------- | ---- | -------------------------------------------------------------- |
+| 殘留 stub  | 3+   | google_drive_handler, secure_eval, key_generator               |
+| 文檔陳舊   | 5+   | ARCHITECTURE.md, INDEX.md, COMPOSITIONAL_IMAGE_GENERATION docs |
+| 重複程式碼 | 3+   | 聊天端點、ReflexTables、分類器                                 |
+| 配置不一致 | 2+   | pyrightconfig.json pythonVersion, test_mode 預設               |
 
 ### 新發現的問題（6 月 16 日後）🆕
 
-| 類別 | 數量 | 說明 |
-|------|------|------|
-| 文檔與實際不符 | 2 | Compositional Image Generation docs 未反映 GVV |
-| CHANGELOG 缺失條目 | 3 | GVV, ThreeLayerVisual, image_generation_routes |
-| 路由路徑不一致 | 3 | generate-image vs domain-based |
-| 重複路由匯入 | 1 | main_api_server.py 重複 include_router |
-| 未測試的新代碼 | 1 | image_generation_routes.py |
+| 類別               | 數量 | 說明                                           |
+| ------------------ | ---- | ---------------------------------------------- |
+| 文檔與實際不符     | 2    | Compositional Image Generation docs 未反映 GVV |
+| CHANGELOG 缺失條目 | 3    | GVV, ThreeLayerVisual, image_generation_routes |
+| 路由路徑不一致     | 3    | generate-image vs domain-based                 |
+| 重複路由匯入       | 1    | main_api_server.py 重複 include_router         |
+| 未測試的新代碼     | 1    | image_generation_routes.py                     |
 
 ### 總體健康度評分（v2.0 修正）
 
-| 維度 | v1.0 評分 | v2.0 修正 | 修正原因 |
-|------|:--------:|:---------:|---------|
-| 核心後端 (core/) | 80-90% | 80-90% | — 無變化 |
-| AI 子系統 (ai/) | 60-70% → **40-50%** | **85-90%** | v1.0 誤將 Phase 11 刪除計為「品質低」；ED3N 5,521 行 0 stub + GARDEN 2,586 行 0 stub + 7 子系統審計 ✅ |
-| LLM 整合 | 95% | 95% | — 無變化 |
-| API 路由 | 70% | 75% | 路由功能完整，deprecation 有 warning |
-| 文檔 | 50-60% | **65-75%** | Phase F 已更新 ARCHITECTURE.md + OMISSIONS_CHECKLIST.md + ROADMAP |
-| 測試 | 75% | **80%** | 4,261 tests / 33 skips，新增 ED3N/GARDEN 覆蓋 |
-| 配置 | 65% | 70% | pyrightconfig 仍待修，其餘已清理 |
-| **總體** | **55-60%** | **~82-88%** | ★ 大幅修正 — Phase C+D+E 清理 + ED3N/GARDEN 實為高品質 |
+| 維度             |      v1.0 評分      |  v2.0 修正  | 修正原因                                                                                               |
+| ---------------- | :-----------------: | :---------: | ------------------------------------------------------------------------------------------------------ |
+| 核心後端 (core/) |       80-90%        |   80-90%    | — 無變化                                                                                               |
+| AI 子系統 (ai/)  | 60-70% → **40-50%** | **85-90%**  | v1.0 誤將 Phase 11 刪除計為「品質低」；ED3N 5,521 行 0 stub + GARDEN 2,586 行 0 stub + 7 子系統審計 ✅ |
+| LLM 整合         |         95%         |     95%     | — 無變化                                                                                               |
+| API 路由         |         70%         |     75%     | 路由功能完整，deprecation 有 warning                                                                   |
+| 文檔             |       50-60%        | **65-75%**  | Phase F 已更新 ARCHITECTURE.md + OMISSIONS_CHECKLIST.md + ROADMAP                                      |
+| 測試             |         75%         |   **80%**   | 4,261 tests / 33 skips，新增 ED3N/GARDEN 覆蓋                                                          |
+| 配置             |         65%         |     70%     | pyrightconfig 仍待修，其餘已清理                                                                       |
+| **總體**         |     **55-60%**      | **~82-88%** | ★ 大幅修正 — Phase C+D+E 清理 + ED3N/GARDEN 實為高品質                                                 |
 
 ### 為何 v1.0 評分過低
 
 v1.0 的「55-60%」評分源於三個系統性偏差：
 
-1. **將 Phase 11 刪除誤判為 CRITICAL**（Section 13）：`learning/`, `ops/`, `lis/` 等 11 個子目錄在 Phase 11 中被**故意刪除**（因為是 stub/死代碼），但審計將其標記為「11 個模組消失 🔴 CRITICAL」，導致 AI 子系統評分被大幅扣減。
-2. **忽略 Phase C 發現**：7 個部分實作子系統（61 檔案/14,744 行）審計結果僅 1 個 stub，但評分未反映此發現。
-3. **ED3N/GARDEN 未納入評分**：ED3N（26 檔案/5,521 行/0 stub）和 GARDEN（9 檔案/2,586 行/0 stub）是專案的核心 AI 引擎，v1.0 完全未將其品質納入考量。
+1. **將 Phase 11 刪除誤判為 CRITICAL**（Section 13）：`learning/`, `ops/`,
+   `lis/` 等 11 個子目錄在 Phase
+   11 中被**故意刪除**（因為是 stub/死代碼），但審計將其標記為「11 個模組消失 🔴
+   CRITICAL」，導致 AI 子系統評分被大幅扣減。
+2. **忽略 Phase
+   C 發現**：7 個部分實作子系統（61 檔案/14,744 行）審計結果僅 1 個 stub，但評分未反映此發現。
+3. **ED3N/GARDEN 未納入評分**：ED3N（26 檔案/5,521 行/0
+   stub）和 GARDEN（9 檔案/2,586 行/0
+   stub）是專案的核心 AI 引擎，v1.0 完全未將其品質納入考量。
 
 ### 三份審計文件評分對照
 
-| 審計 | 評分 | 視角 | 評分基礎 |
-|------|:----:|------|---------|
-| PROJECT_HONEST_AUDIT.md | **~6.0/10** | 外部審計（無 LLM） | 只看 ED3N/GARDEN 本地推理，不計 LLM API 驅動功能 |
-| PHASE_REVIEW6.md | **~9.1/10** | 內部開發日誌（含 LLM） | 以 LLM API 驅動所有功能為上限 |
-| **本次（v2.0 修正）** | **~8.5/10** | 綜合中立 | 本地引擎 (ED3N/GARDEN) 85% + LLM 層 95% + 文檔 70% = 加權平均 ~85% |
+| 審計                    |    評分     | 視角                   | 評分基礎                                                           |
+| ----------------------- | :---------: | ---------------------- | ------------------------------------------------------------------ |
+| PROJECT_HONEST_AUDIT.md | **~6.0/10** | 外部審計（無 LLM）     | 只看 ED3N/GARDEN 本地推理，不計 LLM API 驅動功能                   |
+| PHASE_REVIEW6.md        | **~9.1/10** | 內部開發日誌（含 LLM） | 以 LLM API 驅動所有功能為上限                                      |
+| **本次（v2.0 修正）**   | **~8.5/10** | 綜合中立               | 本地引擎 (ED3N/GARDEN) 85% + LLM 層 95% + 文檔 70% = 加權平均 ~85% |
 
 三份審計的評分差異是**視角不同**，不是事實矛盾。
 
 ---
 
-*本報告基於 2026-06-25 的代碼審計（v2.0 修訂版）。前次審計參考: `COMPREHENSIVE_AUDIT_2026-06-16.md`、`COMPREHENSIVE_PROJECT_AUDIT.md`。v1.0 評分（55-60%）已廢棄。*
+_本報告基於 2026-06-25 的代碼審計（v2.0 修訂版）。前次審計參考:
+`COMPREHENSIVE_AUDIT_2026-06-16.md`、`COMPREHENSIVE_PROJECT_AUDIT.md`。v1.0 評分（55-60%）已廢棄。_
 
 ## 13. 重大發現：遺失的 AI 子模組 🔴
 
 ### 13.1 先前審計聲稱存在但實際已消失的目錄
 
-**`COMPREHENSIVE_AUDIT_2026-06-16.md`** 和 **`AGENTS.md`** 都記錄了以下 `ai/` 子目錄有真實實作，但本次審計發現它們**完全不存在**（glob 返回 0 個檔案）：
+**`COMPREHENSIVE_AUDIT_2026-06-16.md`** 和 **`AGENTS.md`** 都記錄了以下 `ai/`
+子目錄有真實實作，但本次審計發現它們**完全不存在**（glob 返回 0 個檔案）：
 
-| 目錄 | 6/16 審計聲稱 | 實際狀態 | 差異 |
-|------|-------------|---------|------|
-| `ai/learning/` | 「5 個學習系統：LearningManager, ContinuousLearning 等」 | ❌ **不存在** | 目錄完全消失 |
-| `ai/ops/` | 「ai_ops_engine.py 9.9KB ✅ REAL」 | ❌ **不存在** | 目錄完全消失 |
-| `ai/lis/` | 「lis_manager.py 生命強度系統，未審計」 | ❌ **不存在** | 目錄完全消失 |
-| `ai/compression/` | 「alpha_deep_model.py 16.9KB ✅ REAL」 | ❌ **不存在** | 目錄完全消失 |
-| `ai/evaluation/` | 「evaluation/task_evaluator.py 6.5KB ✅ REAL」 | ❌ **不存在** | 目錄完全消失 |
-| `ai/symbolic_space/` | 「unified_symbolic_space.py 11.1KB ✅ REAL」 | ❌ **不存在** | 目錄完全消失 |
-| `ai/trust/` | 「trust_manager_module.py 已重寫（Phase 3）」 | ❌ **不存在** | 目錄完全消失 |
-| `ai/world_model/` | 「environment_simulator.py 已擴充（Phase 3）」 | ❌ **不存在** | 目錄完全消失 |
-| `ai/security/` | － | ❌ **不存在** | 目錄完全消失 |
-| `ai/token/` | － | ❌ **不存在** | 目錄完全消失 |
-| `ai/distributed/` | 空目錄 | ❌ **不存在** | 先前已空，現在消失 |
+| 目錄                 | 6/16 審計聲稱                                            | 實際狀態      | 差異               |
+| -------------------- | -------------------------------------------------------- | ------------- | ------------------ |
+| `ai/learning/`       | 「5 個學習系統：LearningManager, ContinuousLearning 等」 | ❌ **不存在** | 目錄完全消失       |
+| `ai/ops/`            | 「ai_ops_engine.py 9.9KB ✅ REAL」                       | ❌ **不存在** | 目錄完全消失       |
+| `ai/lis/`            | 「lis_manager.py 生命強度系統，未審計」                  | ❌ **不存在** | 目錄完全消失       |
+| `ai/compression/`    | 「alpha_deep_model.py 16.9KB ✅ REAL」                   | ❌ **不存在** | 目錄完全消失       |
+| `ai/evaluation/`     | 「evaluation/task_evaluator.py 6.5KB ✅ REAL」           | ❌ **不存在** | 目錄完全消失       |
+| `ai/symbolic_space/` | 「unified_symbolic_space.py 11.1KB ✅ REAL」             | ❌ **不存在** | 目錄完全消失       |
+| `ai/trust/`          | 「trust_manager_module.py 已重寫（Phase 3）」            | ❌ **不存在** | 目錄完全消失       |
+| `ai/world_model/`    | 「environment_simulator.py 已擴充（Phase 3）」           | ❌ **不存在** | 目錄完全消失       |
+| `ai/security/`       | －                                                       | ❌ **不存在** | 目錄完全消失       |
+| `ai/token/`          | －                                                       | ❌ **不存在** | 目錄完全消失       |
+| `ai/distributed/`    | 空目錄                                                   | ❌ **不存在** | 先前已空，現在消失 |
 
 ### 13.2 影響分析
 
-| 影響 | 說明 |
-|------|------|
-| **測試跳過** | 這些模組的測試現在全部以 `pytest.skip` 跳過 |
-| **文檔引用** | AGENTS.md、ARCHITECTURE.md、INDEX.md 都引用這些目錄 |
-| **匯入斷裂** | 任何匯入這些模組的代碼都會失敗（`ModuleNotFoundError`） |
-| **聲稱的可信度** | 6/16 審計對這些模組的 "REAL" 判定是錯誤的 |
+| 影響             | 說明                                                    |
+| ---------------- | ------------------------------------------------------- |
+| **測試跳過**     | 這些模組的測試現在全部以 `pytest.skip` 跳過             |
+| **文檔引用**     | AGENTS.md、ARCHITECTURE.md、INDEX.md 都引用這些目錄     |
+| **匯入斷裂**     | 任何匯入這些模組的代碼都會失敗（`ModuleNotFoundError`） |
+| **聲稱的可信度** | 6/16 審計對這些模組的 "REAL" 判定是錯誤的               |
 
 **可能原因**: 這些目錄可能在一次重大重構中被刪除或移動，而文檔未更新。
 
@@ -560,6 +607,7 @@ v1.0 的「55-60%」評分源於三個系統性偏差：
 ### 14.1 死匯入與未使用變數
 
 `apps/desktop-app/electron_app/main.js`:
+
 - `chat_routes` 和 `desktop_routes` 被 import 但從未使用
 
 ### 14.2 WebSocket 衝突
@@ -569,15 +617,17 @@ v1.0 的「55-60%」評分源於三個系統性偏差：
 // Renderer process uses IPC bridge for WebSocket communication
 // const wsUrl = `ws://${backendIP}:8000/ws`
 ```
-Main process 的 WebSocket 自動連線被**註解掉**但保留，而 renderer process 透過 IPC bridge 另有一套 WebSocket 連線。兩者可能衝突。
+
+Main process 的 WebSocket 自動連線被**註解掉**但保留，而 renderer
+process 透過 IPC bridge 另有一套 WebSocket 連線。兩者可能衝突。
 
 ### 14.3 Placeholder 系統
 
-| 功能 | 狀態 | 代碼 |
-|------|------|------|
-| 音頻 | ❌ Placeholder | `ipcMain.handle('audio-get-devices', async () => { return { inputDevices: [], outputDevices: [] } })` |
-| 觸覺 | ❌ Placeholder | `ipcMain.handle('haptic-get-devices', async () => { return { devices: [] } })` |
-| 音頻註解 | ❌ 未實作 | `// Will use node-core-audio or similar` |
+| 功能     | 狀態           | 代碼                                                                                                  |
+| -------- | -------------- | ----------------------------------------------------------------------------------------------------- |
+| 音頻     | ❌ Placeholder | `ipcMain.handle('audio-get-devices', async () => { return { inputDevices: [], outputDevices: [] } })` |
+| 觸覺     | ❌ Placeholder | `ipcMain.handle('haptic-get-devices', async () => { return { devices: [] } })`                        |
+| 音頻註解 | ❌ 未實作      | `// Will use node-core-audio or similar`                                                              |
 
 ### 14.4 空的 catch 區塊
 
@@ -593,21 +643,23 @@ function restoreWindowPosition() {
 
 ### 14.5 38 個 JS 檔案 — 大量功能重疊
 
-`electron_app/js/` 目錄有 38 個 JS 檔案，與 `web-live2d-viewer/js/`（41 個檔案）有許多重複：
+`electron_app/js/` 目錄有 38 個 JS 檔案，與
+`web-live2d-viewer/js/`（41 個檔案）有許多重複：
 
-| 共同檔案（兩處都有） |
-|------|
-| app.js, audio-handler.js, availability-manager.js, backend-websocket.js,
-character-touch-detector.js, dialogue-ui.js, error-handler.js, frontend-utils.js,
-haptic-handler.js, i18n.js, input-handler.js, layer-renderer.js,
-live2d-cubism-wrapper.js, live2d-manager.js, logger.js, maturity-tracker.js,
-performance-manager.js, plugin-manager.js, precision-manager.js,
-security-manager.js, security-utils.js, settings.js,
-simple-live2d-loader.js, state-matrix.js, theme-manager.js, tray-manager.js,
-unified-display-matrix.js, user-manager.js, wallpaper-handler.js,
-z-index-manager.js |
+| 共同檔案（兩處都有）                                                              |
+| --------------------------------------------------------------------------------- |
+| app.js, audio-handler.js, availability-manager.js, backend-websocket.js,          |
+| character-touch-detector.js, dialogue-ui.js, error-handler.js, frontend-utils.js, |
+| haptic-handler.js, i18n.js, input-handler.js, layer-renderer.js,                  |
+| live2d-cubism-wrapper.js, live2d-manager.js, logger.js, maturity-tracker.js,      |
+| performance-manager.js, plugin-manager.js, precision-manager.js,                  |
+| security-manager.js, security-utils.js, settings.js,                              |
+| simple-live2d-loader.js, state-matrix.js, theme-manager.js, tray-manager.js,      |
+| unified-display-matrix.js, user-manager.js, wallpaper-handler.js,                 |
+| z-index-manager.js                                                                |
 
-**問題**: ~30 個 JS 檔案在 desktop 和 web-live2d-viewer 之間重複，維護兩個副本增加不一致風險。
+**問題**:
+~30 個 JS 檔案在 desktop 和 web-live2d-viewer 之間重複，維護兩個副本增加不一致風險。
 
 ---
 
@@ -617,21 +669,22 @@ z-index-manager.js |
 
 `apps/backend/src/modules/` 目錄包含 11 個子目錄，每個只有一個 `__init__.py`：
 
-| 模組 | 內容 | 狀態 |
-|------|------|------|
-| `audio_service/` | 匯入真正的 AudioService | 🟡 僅包裝 |
-| `card_pipeline/` | 最小實作 | 🟡 僅包裝 |
-| `chat_service/` | 匯入真正的 ChatService | 🟡 僅包裝 |
-| `google_drive_service/` | 匯入真正的 GoogleDriveHandler | 🟡 僅包裝 |
-| `hot_reload_service/` | 匯入真正的 HotReloadService | 🟡 僅包裝 |
-| `intent_registry/` | 最小實作 | 🟡 僅包裝 |
-| `llm_service/` | 匯入真正的 LLM Service | 🟡 僅包裝 |
-| `math_verifier/` | **自標 stubbed, not yet implemented** | ❌ STUB |
-| `resource_awareness_service/` | 匯入真正的 ResourceAwarenessService | 🟡 僅包裝 |
-| `tactile_service/` | **DEPRECATED: TactileService removed** | ❌ 棄用 |
-| `vision_service/` | 匯入真正的 VisionService | 🟡 僅包裝 |
+| 模組                          | 內容                                   | 狀態      |
+| ----------------------------- | -------------------------------------- | --------- |
+| `audio_service/`              | 匯入真正的 AudioService                | 🟡 僅包裝 |
+| `card_pipeline/`              | 最小實作                               | 🟡 僅包裝 |
+| `chat_service/`               | 匯入真正的 ChatService                 | 🟡 僅包裝 |
+| `google_drive_service/`       | 匯入真正的 GoogleDriveHandler          | 🟡 僅包裝 |
+| `hot_reload_service/`         | 匯入真正的 HotReloadService            | 🟡 僅包裝 |
+| `intent_registry/`            | 最小實作                               | 🟡 僅包裝 |
+| `llm_service/`                | 匯入真正的 LLM Service                 | 🟡 僅包裝 |
+| `math_verifier/`              | **自標 stubbed, not yet implemented**  | ❌ STUB   |
+| `resource_awareness_service/` | 匯入真正的 ResourceAwarenessService    | 🟡 僅包裝 |
+| `tactile_service/`            | **DEPRECATED: TactileService removed** | ❌ 棄用   |
+| `vision_service/`             | 匯入真正的 VisionService               | 🟡 僅包裝 |
 
-**問題**: 11 個模組中 9 個只是包裝器（wrapper），1 個是 stub，1 個是 deprecation notice。這些包裝器增加複雜度但沒有提供增值功能。
+**問題**: 11 個模組中 9 個只是包裝器（wrapper），1 個是 stub，1 個是 deprecation
+notice。這些包裝器增加複雜度但沒有提供增值功能。
 
 ---
 
@@ -639,49 +692,59 @@ z-index-manager.js |
 
 ### 16.1 resource_awareness_service.py 引用不存在的方法
 
-在 `if __name__ == "__main__"` 測試區塊中，程式碼呼叫了 `service_default.get_simulated_disk_config()`，但該方法**從未在類別中定義**。這會在執行時引發 `AttributeError`。
+在 `if __name__ == "__main__"` 測試區塊中，程式碼呼叫了
+`service_default.get_simulated_disk_config()`，但該方法**從未在類別中定義**。這會在執行時引發
+`AttributeError`。
 
-### 16.2 ai/core/__init__.py 不存在
+### 16.2 ai/core/**init**.py 不存在
 
-`apps/backend/src/ai/core/__init__.py` 不存在（[FILE_DOES_NOT_EXIST]）。雖然這不一定是錯誤（`__init__.py` 在 Python 3.3+ 對 namespace package 非必要），但與專案中其他 162 個 `__init__.py` 不一致。
+`apps/backend/src/ai/core/__init__.py`
+不存在（[FILE_DOES_NOT_EXIST]）。雖然這不一定是錯誤（`__init__.py` 在 Python
+3.3+ 對 namespace package 非必要），但與專案中其他 162 個 `__init__.py` 不一致。
 
 ### 16.3 state_matrix_api.py 多個端點回傳 "not_implemented"
 
-| 端點 | 行為 |
-|------|------|
-| `POST /navigate` | `# Placeholder for navigation logic` — 回傳硬編碼 dict |
+| 端點                  | 行為                                                                   |
+| --------------------- | ---------------------------------------------------------------------- |
+| `POST /navigate`      | `# Placeholder for navigation logic` — 回傳硬編碼 dict                 |
 | `POST /port/register` | `if hasattr(matrix, "register_port"):` — fallback 回 "not_implemented" |
-| `POST /ripple` | 同上 |
-| `POST /allocation` | 同上 |
-| `GET /temporal/trend` | `Temporal tracking not available` — **所有功能都回傳 None** |
+| `POST /ripple`        | 同上                                                                   |
+| `POST /allocation`    | 同上                                                                   |
+| `GET /temporal/trend` | `Temporal tracking not available` — **所有功能都回傳 None**            |
 
-**問題**: 多個端點使用 `hasattr` 檢查方法是否存在，而非假設它們存在。建議在 StateMatrix4D 中直接實作這些方法或移除端點。
+**問題**: 多個端點使用 `hasattr`
+檢查方法是否存在，而非假設它們存在。建議在 StateMatrix4D 中直接實作這些方法或移除端點。
 
 ### 16.4 brain_bridge_service.py 引用可能不存在的屬性
 
 ```python
 bio_state = self.digital_life.biological_integrator.get_biological_state()
 ```
-`DigitalLifeIntegrator` 可能沒有 `biological_integrator` 屬性 — 至少在 `lifespan.py` 中的初始化流程中 `_bio_integrator_instance` 是獨立初始化的，而非作為 `DigitalLifeIntegrator` 的一部分。
+
+`DigitalLifeIntegrator` 可能沒有 `biological_integrator` 屬性 — 至少在
+`lifespan.py` 中的初始化流程中 `_bio_integrator_instance`
+是獨立初始化的，而非作為 `DigitalLifeIntegrator` 的一部分。
 
 ### 16.5 connection_session.py 完整但獨立
 
-`SessionManager` 類別（~250 行）有**完整的 session 管理實作**，但從未被 `websocket_manager.py` 或 `lifespan.py` 引用。這是一個孤立的完整實作。
+`SessionManager` 類別（~250 行）有**完整的 session 管理實作**，但從未被
+`websocket_manager.py` 或 `lifespan.py` 引用。這是一個孤立的完整實作。
 
 ### 16.6 context_storage/ 在專案根目錄
 
-`context_storage/` 目錄包含 **數百個 JSON 檔案**（runtime state data），儲存在專案根目錄中。這些應存放在 `data/` 或 `var/` 目錄下。
+`context_storage/` 目錄包含 **數百個 JSON 檔案**（runtime state
+data），儲存在專案根目錄中。這些應存放在 `data/` 或 `var/` 目錄下。
 
 ---
 
 ## 17. 過時的根目錄計畫文件
 
-| 文件 | 問題 |
-|------|------|
-| `PLAN_chat_pipeline_fix.md` | 根目錄中的過時計畫 |
-| `PLAN_full_pipeline_architecture.md` | 根目錄中的過時計畫 |
-| `PLAN_pixel_angela_and_live2d.md` | ✅ 已在 CHANGELOG 6/13 記錄完成 |
-| `PLAN_REVIEW.md` | 根目錄中的過時計畫 |
+| 文件                                 | 問題                            |
+| ------------------------------------ | ------------------------------- |
+| `PLAN_chat_pipeline_fix.md`          | 根目錄中的過時計畫              |
+| `PLAN_full_pipeline_architecture.md` | 根目錄中的過時計畫              |
+| `PLAN_pixel_angela_and_live2d.md`    | ✅ 已在 CHANGELOG 6/13 記錄完成 |
+| `PLAN_REVIEW.md`                     | 根目錄中的過時計畫              |
 
 建議：將已完成/過時的 PLAN 文件移至 `docs/09-archive/`。
 
@@ -691,48 +754,49 @@ bio_state = self.digital_life.biological_integrator.get_biological_state()
 
 ### 🆕 新增至總問題清單
 
-| # | 問題 | 嚴重度 | 類型 |
-|---|------|--------|------|
-| 17 | 11 個 ai/ 子模組消失（learning/, ops/, lis/ 等） | 🔴 **CRITICAL** | 代碼缺失 |
-| 18 | Desktop app 音頻/觸覺 placeholder | 🟡 MEDIUM | 未完成 |
-| 19 | Desktop/web-live2d-viewer JS 重複 ~30 個檔案 | 🟡 MEDIUM | 重複 |
-| 20 | modules/ 目錄 11 個包裝器無增值 | 🟢 LOW | 設計問題 |
-| 21 | resource_awareness_service 引用不存在方法 | 🟡 MEDIUM | Bug |
-| 22 | state_matrix_api 多端點 "not_implemented" | 🟡 MEDIUM | 未完成 |
-| 23 | brain_bridge_service 可能引用不存在屬性 | 🟡 MEDIUM | 潛在 Bug |
-| 24 | connection_session.py 完整但孤立未使用 | 🟢 LOW | 死代碼 |
-| 25 | context_storage/ 在根目錄（數百 JSON） | 🟢 LOW | 組織問題 |
-| 26 | 4 個過時根目錄 PLAN 文件 | 🟢 LOW | 清理 |
+| #   | 問題                                             | 嚴重度          | 類型     |
+| --- | ------------------------------------------------ | --------------- | -------- |
+| 17  | 11 個 ai/ 子模組消失（learning/, ops/, lis/ 等） | 🔴 **CRITICAL** | 代碼缺失 |
+| 18  | Desktop app 音頻/觸覺 placeholder                | 🟡 MEDIUM       | 未完成   |
+| 19  | Desktop/web-live2d-viewer JS 重複 ~30 個檔案     | 🟡 MEDIUM       | 重複     |
+| 20  | modules/ 目錄 11 個包裝器無增值                  | 🟢 LOW          | 設計問題 |
+| 21  | resource_awareness_service 引用不存在方法        | 🟡 MEDIUM       | Bug      |
+| 22  | state_matrix_api 多端點 "not_implemented"        | 🟡 MEDIUM       | 未完成   |
+| 23  | brain_bridge_service 可能引用不存在屬性          | 🟡 MEDIUM       | 潛在 Bug |
+| 24  | connection_session.py 完整但孤立未使用           | 🟢 LOW          | 死代碼   |
+| 25  | context_storage/ 在根目錄（數百 JSON）           | 🟢 LOW          | 組織問題 |
+| 26  | 4 個過時根目錄 PLAN 文件                         | 🟢 LOW          | 清理     |
 
 ### 總體健康度（v2.0 修正）
 
-| 維度 | 評分（v2.0） | 變化（相較 v1.0） | 原因 |
-|------|------------|-------------------|------|
-| 核心後端 (core/) | 85-90% | ⬆️ +5-10% | 無 stub，功能完整 |
-| AI 子系統 (ai/) | **85-90%** | ⬆️ **+45%** | Phase C 審計：61 檔案僅 1 stub（已修復）；ED3N (5,521行)/GARDEN (2,586行) 0 stub |
-| LLM 整合 | 95% | — | 無變化 |
-| API 路由 | 85% | ⬆️ +15% | 22 handler tests + 22 ops tests + 22 image tests + 40 handler tests |
-| Desktop App | 80% | ⬆️ +10% | JS sharing 完成，7 unique + 33 shared files |
-| web-live2d-viewer | 75% | ⬆️ +15% | JS 重複已移除，10 unique files |
-| 文檔 | 75% | ⬆️ +25-35% | ARCHITECTURE.md/INDEX.md/OMISSIONS_CHECKLIST.md/README.md 已同步 |
-| 測試 | 85% | ⬆️ +10% | 4,261 tests, 0 errors, Phase 5 新增 140+ tests |
-| 配置 | 80% | ⬆️ +20% | .gitignore 補強、pyrightconfig 修復、version 一致 |
-| **總體** | **~85-90%** | ⬆️ **+30%** | 所有 Phase 0-5 + Phase C-F 修復完成 |
+| 維度              | 評分（v2.0） | 變化（相較 v1.0） | 原因                                                                             |
+| ----------------- | ------------ | ----------------- | -------------------------------------------------------------------------------- |
+| 核心後端 (core/)  | 85-90%       | ⬆️ +5-10%         | 無 stub，功能完整                                                                |
+| AI 子系統 (ai/)   | **85-90%**   | ⬆️ **+45%**       | Phase C 審計：61 檔案僅 1 stub（已修復）；ED3N (5,521行)/GARDEN (2,586行) 0 stub |
+| LLM 整合          | 95%          | —                 | 無變化                                                                           |
+| API 路由          | 85%          | ⬆️ +15%           | 22 handler tests + 22 ops tests + 22 image tests + 40 handler tests              |
+| Desktop App       | 80%          | ⬆️ +10%           | JS sharing 完成，7 unique + 33 shared files                                      |
+| web-live2d-viewer | 75%          | ⬆️ +15%           | JS 重複已移除，10 unique files                                                   |
+| 文檔              | 75%          | ⬆️ +25-35%        | ARCHITECTURE.md/INDEX.md/OMISSIONS_CHECKLIST.md/README.md 已同步                 |
+| 測試              | 85%          | ⬆️ +10%           | 4,261 tests, 0 errors, Phase 5 新增 140+ tests                                   |
+| 配置              | 80%          | ⬆️ +20%           | .gitignore 補強、pyrightconfig 修復、version 一致                                |
+| **總體**          | **~85-90%**  | ⬆️ **+30%**       | 所有 Phase 0-5 + Phase C-F 修復完成                                              |
 
 ### 已解決的 v1.0 緊急/高優先項目
 
 以下 v1.0 列出的 P0/P1 問題已在 Phase A-F 中全部解決：
 
-| # | 問題 | 狀態 | 解決方式 |
-|---|------|:----:|---------|
-| 17 | 11 個 ai/ 子模組消失 | ✅ | 確認為 Phase 11 計畫性刪除，非遺失；文檔已更新 |
-| 18 | resource_awareness_service 不存在方法 | ✅ | `__main__` 中的錯誤調用已修復 |
-| 19 | Desktop/web-l2d JS 重複 | ✅ | Phase 4: 建立 packages/shared-js/，64 重複檔案已刪除 |
-| 20 | state_matrix_api "not_implemented" 端點 | ✅ | 已實作（0 pass/NotImplementedError） |
-| 21 | modules/ 包裝器 | ✅ | Phase 1: 已移除 modules/ 目錄（12 包裝器檔案） |
-| 22 | context_storage/ 放入 data/ | ✅ | runtime 資料已正確隔離 |
-| 23 | 過時 PLAN 文件 | ✅ | 根目錄 4 個 PLAN 已清理，其餘保留作為歷史參考 |
+| #   | 問題                                    | 狀態 | 解決方式                                             |
+| --- | --------------------------------------- | :--: | ---------------------------------------------------- |
+| 17  | 11 個 ai/ 子模組消失                    |  ✅  | 確認為 Phase 11 計畫性刪除，非遺失；文檔已更新       |
+| 18  | resource_awareness_service 不存在方法   |  ✅  | `__main__` 中的錯誤調用已修復                        |
+| 19  | Desktop/web-l2d JS 重複                 |  ✅  | Phase 4: 建立 packages/shared-js/，64 重複檔案已刪除 |
+| 20  | state_matrix_api "not_implemented" 端點 |  ✅  | 已實作（0 pass/NotImplementedError）                 |
+| 21  | modules/ 包裝器                         |  ✅  | Phase 1: 已移除 modules/ 目錄（12 包裝器檔案）       |
+| 22  | context_storage/ 放入 data/             |  ✅  | runtime 資料已正確隔離                               |
+| 23  | 過時 PLAN 文件                          |  ✅  | 根目錄 4 個 PLAN 已清理，其餘保留作為歷史參考        |
 
 ---
 
-*報告完整 (v2.0)。審計方法：逐文件驗證、glob 搜索、code search、檔案內容檢查。最終健康度：~85-90%。*
+_報告完整 (v2.0)。審計方法：逐文件驗證、glob 搜索、code
+search、檔案內容檢查。最終健康度：~85-90%。_

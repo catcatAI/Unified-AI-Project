@@ -5,23 +5,23 @@
  * that can be found at https://www.live2d.com/eula/live2d-open-software-license-agreement_en.html.
  */
 
-import { ICubismUpdater, CubismUpdateOrder } from './icubismupdater';
-import { CubismModel } from '../model/cubismmodel';
-import { CubismPhysics } from '../physics/cubismphysics';
+import { ICubismUpdater, CubismUpdateOrder } from './icubismupdater'
+import { CubismModel } from '../model/cubismmodel'
+import { CubismPhysics } from '../physics/cubismphysics'
 
 /**
  * Updater for physics effects.
  * Handles the management of physics simulation through the CubismPhysics class.
  */
 export class CubismPhysicsUpdater extends ICubismUpdater {
-  private _physics: CubismPhysics;
+  private _physics: CubismPhysics
 
   /**
    * Constructor
    *
    * @param physics CubismPhysics reference
    */
-  constructor(physics: CubismPhysics);
+  constructor(physics: CubismPhysics)
 
   /**
    * Constructor
@@ -29,11 +29,11 @@ export class CubismPhysicsUpdater extends ICubismUpdater {
    * @param physics CubismPhysics reference
    * @param executionOrder Order of operations
    */
-  constructor(physics: CubismPhysics, executionOrder: number);
+  constructor(physics: CubismPhysics, executionOrder: number)
 
   constructor(physics: CubismPhysics, executionOrder?: number) {
-    super(executionOrder ?? CubismUpdateOrder.CubismUpdateOrder_Physics);
-    this._physics = physics;
+    super(executionOrder ?? CubismUpdateOrder.CubismUpdateOrder_Physics)
+    this._physics = physics
   }
 
   /**
@@ -44,17 +44,17 @@ export class CubismPhysicsUpdater extends ICubismUpdater {
    */
   onLateUpdate(model: CubismModel, deltaTimeSeconds: number): void {
     if (!model) {
-      return;
+      return
     }
 
-    this._physics.evaluate(model, deltaTimeSeconds);
+    this._physics.evaluate(model, deltaTimeSeconds)
   }
 }
 
 // Namespace definition for compatibility.
-import * as $ from './cubismphysicsupdater';
+import * as $ from './cubismphysicsupdater'
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
-  export const CubismPhysicsUpdater = $.CubismPhysicsUpdater;
-  export type CubismPhysicsUpdater = $.CubismPhysicsUpdater;
+  export const CubismPhysicsUpdater = $.CubismPhysicsUpdater
+  export type CubismPhysicsUpdater = $.CubismPhysicsUpdater
 }

@@ -29,7 +29,6 @@ middleware:
     allow_headers: ["*"]
     allow_credentials: true
 
-
 # ── 工作階段管理 ───────────────────────────────────────────────────────────
 
 session_manager:
@@ -867,8 +866,8 @@ document_builder:
   segment_timeout_seconds: 15.0
   max_segments: 10
   learning_threshold:
-    success_count: 3   # 成功 >= 3 次才學習格式
-    keyword_match_count: 2  # keyword 匹配 >= 2 次才學習
+    success_count: 3 # 成功 >= 3 次才學習格式
+    keyword_match_count: 2 # keyword 匹配 >= 2 次才學習
 
 # ── LLM 服務配置 ───────────────────────────────────────────────────────────
 
@@ -913,7 +912,23 @@ llm:
     task_generator_max_tasks: 10
   emotion:
     negation_words: ["不", "沒", "没", "别", "別", "非", "無", "无", "未"]
-    intensifier_words: ["很", "非常", "太", "超", "極", "極其", "好", "真", "挺", "有點", "比較", "比較", "相當", "十分"]
+    intensifier_words:
+      [
+        "很",
+        "非常",
+        "太",
+        "超",
+        "極",
+        "極其",
+        "好",
+        "真",
+        "挺",
+        "有點",
+        "比較",
+        "比較",
+        "相當",
+        "十分",
+      ]
 
 # ── [auto] LLM Mode ──────────────────────────────────────────────────────
 # 控制 NeuroAutoSelector 的行為
@@ -922,8 +937,8 @@ llm:
 auto_mode:
   enabled: true
   default_if_unknown: "ollama:phi:latest"
-  min_time_budget_ms: 5000        # 低於此直接 NeuroBlender
-  max_time_budget_ms: 60000       # 最高預算上限
+  min_time_budget_ms: 5000 # 低於此直接 NeuroBlender
+  max_time_budget_ms: 60000 # 最高預算上限
 
   # 意圖對應的計算成本 (0.0-1.0)
   intent_cost:

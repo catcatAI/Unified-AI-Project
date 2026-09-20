@@ -22,20 +22,20 @@ export abstract class IParameterProvider {
    *
    * @return true if the update is successful.
    */
-  abstract update(deltaTimeSeconds?: number): boolean;
+  abstract update(deltaTimeSeconds?: number): boolean
 
   /**
    * Retrieves the current value of the parameter.
    *
    * @return The parameter value as a floating-point number.
    */
-  abstract getParameter(): number;
+  abstract getParameter(): number
 }
 
 // Namespace definition for compatibility.
-import * as $ from './iparameterprovider';
+import * as $ from './iparameterprovider'
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
-  export const IParameterProvider = $.IParameterProvider;
-  export type IParameterProvider = $.IParameterProvider;
+  export const IParameterProvider = $.IParameterProvider
+  export type IParameterProvider = $.IParameterProvider
 }

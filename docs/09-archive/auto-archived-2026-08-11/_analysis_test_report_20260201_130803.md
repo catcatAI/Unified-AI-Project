@@ -5,8 +5,12 @@
 ## 總體評分: 72/100
 
 ## 通過測試: 19
+
 ## 失敗測試: 1
+
 ## 警告: 0
 
 ## 發現的問題:
-- **Data Link: HSM → Orchestrator**: Partial - memories retrieved but not fully used in decisions
+
+- **Data Link: HSM → Orchestrator**: Partial - memories retrieved but not fully
+  used in decisions

@@ -2,7 +2,8 @@
 
 ## 概述
 
-Unified AI Project的AI代理系统是一个模块化的多代理架构，基于[BaseAgent](base-agent.md)类构建。每个代理都是专门化的子代理，负责处理特定类型的任务，通过HSP（异构服务协议）进行通信和协作。
+Unified AI
+Project的AI代理系统是一个模块化的多代理架构，基于[BaseAgent](base-agent.md)类构建。每个代理都是专门化的子代理，负责处理特定类型的任务，通过HSP（异构服务协议）进行通信和协作。
 
 ## 代理架构
 
@@ -15,43 +16,60 @@ Unified AI Project的AI代理系统是一个模块化的多代理架构，基于
 - 代理协作、监控和注册功能
 - 任务队列和重试机制
 
-> **注意 (Phase 14 Update)**: 所有代理現在都由 `UnifiedControlCenter` 透過 HSP 統一調度。代理應實現標準的 HSP 任務處理介面以接收來自 UCC 的指令。
+> **注意 (Phase 14 Update)**: 所有代理現在都由 `UnifiedControlCenter`
+> 透過 HSP 統一調度。代理應實現標準的 HSP 任務處理介面以接收來自 UCC 的指令。
 
 ### 专门化代理
 
 #### 1. Creative Writing Agent
-- **文件**: [creative_writing_agent.py](../../../apps/backend/src/ai/agents/specialized/creative_writing_agent.py)
+
+- **文件**:
+  [creative_writing_agent.py](../../../apps/backend/src/ai/agents/specialized/creative_writing_agent.py)
 - **文档**: [creative-writing-agent.md](creative-writing-agent.md)
 - **功能**: 创意写作任务，如生成营销文案、润色文本
 
 #### 2. Image Generation Agent
-- **文件**: [image_generation_agent.py](../../../apps/backend/src/ai/agents/specialized/image_generation_agent.py)
+
+- **文件**:
+  [image_generation_agent.py](../../../apps/backend/src/ai/agents/specialized/image_generation_agent.py)
 - **文档**: [image-generation-agent.md](image-generation-agent.md)
 - **功能**: 根据文本提示生成图像
 
 #### 3. Web Search Agent
-- **文件**: [web_search_agent.py](../../../apps/backend/src/ai/agents/specialized/web_search_agent.py)
+
+- **文件**:
+  [web_search_agent.py](../../../apps/backend/src/ai/agents/specialized/web_search_agent.py)
 - **文档**: [web-search-agent.md](web-search-agent.md)
 - **功能**: 网络搜索和信息检索
 
 #### 4. Data Analysis Agent
-- **文件**: [data_analysis_agent.py](../../../apps/backend/src/ai/agents/specialized/data_analysis_agent.py)
+
+- **文件**:
+  [data_analysis_agent.py](../../../apps/backend/src/ai/agents/specialized/data_analysis_agent.py)
 - **功能**: 数据统计分析和处理
 
 #### 5. Code Understanding Agent
-- **文件**: [code_understanding_agent.py](../../../apps/backend/src/ai/agents/specialized/code_understanding_agent.py)
+
+- **文件**:
+  [code_understanding_agent.py](../../../apps/backend/src/ai/agents/specialized/code_understanding_agent.py)
 - **功能**: 代码分析、文档生成和代码审查
 
 #### 6. Audio Processing Agent
-- **文件**: [audio_processing_agent.py](../../../apps/backend/src/ai/agents/specialized/audio_processing_agent.py)
+
+- **文件**:
+  [audio_processing_agent.py](../../../apps/backend/src/ai/agents/specialized/audio_processing_agent.py)
 - **功能**: 语音识别、音频分类和音频增强
 
 #### 7. Vision Processing Agent
-- **文件**: [vision_processing_agent.py](../../../apps/backend/src/ai/agents/specialized/vision_processing_agent.py)
+
+- **文件**:
+  [vision_processing_agent.py](../../../apps/backend/src/ai/agents/specialized/vision_processing_agent.py)
 - **功能**: 图像分类、物体检测和图像增强
 
 #### 8. Knowledge Graph Agent
-- **文件**: [knowledge_graph_agent.py](../../../apps/backend/src/ai/agents/specialized/knowledge_graph_agent.py)
+
+- **文件**:
+  [knowledge_graph_agent.py](../../../apps/backend/src/ai/agents/specialized/knowledge_graph_agent.py)
 - **功能**: 实体链接、关系提取和知识图谱查询
 
 ## 代理协作
@@ -116,5 +134,5 @@ task_payload = {
 - 错误日志记录
 
 ---
-*最后更新: 2025年9月21日*
-*维护者: Unified AI Project Team*
+
+_最后更新: 2025年9月21日_ _维护者: Unified AI Project Team_

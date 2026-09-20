@@ -7,7 +7,8 @@
 
 ## Executive Summary
 
-Backend WebSocket server is **FULLY FUNCTIONAL** with comprehensive message handling, connection management, and broadcasting capabilities.
+Backend WebSocket server is **FULLY FUNCTIONAL** with comprehensive message
+handling, connection management, and broadcasting capabilities.
 
 ---
 
@@ -25,6 +26,7 @@ Backend WebSocket server is **FULLY FUNCTIONAL** with comprehensive message hand
 **Class**: `ConnectionManager` (lines 169-195)
 
 **Features**:
+
 - Connection tracking (list of active connections)
 - Accept new connections
 - Disconnect handling
@@ -32,6 +34,7 @@ Backend WebSocket server is **FULLY FUNCTIONAL** with comprehensive message hand
 - Broadcast to all clients
 
 **Code**:
+
 ```python
 class ConnectionManager:
     """WebSocket 連接管理器"""
@@ -64,12 +67,14 @@ class ConnectionManager:
 ### Supported Message Types
 
 1. **Ping/Pong** ✅
+
    ```json
    Request: {"type": "ping"}
    Response: {"type": "pong", "timestamp": "2026-02-07T..."}
    ```
 
 2. **Module Control** ✅
+
    ```json
    Request: {
      "type": "module_control",
@@ -109,24 +114,30 @@ Desktop App → WebSocket → Backend
 ## Integration Points
 
 ### 1. System Manager Integration ✅
+
 ```python
 system_manager.set_module_state(module, enabled)
 ```
+
 - Updates module states (vision, audio, tactile, action)
 - Manages system-wide configuration
 
 ### 2. Sync Manager Integration ✅
+
 ```python
 await sync_manager.broadcast_event(SyncEvent(...))
 ```
+
 - Real-time synchronization across services
 - Event-driven architecture
 - Multi-client coordination
 
 ### 3. Pet Manager Integration ✅
+
 ```python
 pet_manager.broadcast_callback = broadcast_to_clients
 ```
+
 - Desktop pet state changes
 - Emotion updates
 - Animation triggers
@@ -136,18 +147,21 @@ pet_manager.broadcast_callback = broadcast_to_clients
 ## Error Handling: ✅ ROBUST
 
 ### Connection Errors
+
 ```python
 except WebSocketDisconnect:
     manager.disconnect(websocket)
 ```
 
 ### Message Parsing Errors
+
 ```python
 except json.JSONDecodeError:
     await websocket.send_text(json.dumps({"error": "Invalid JSON"}))
 ```
 
 ### General Errors
+
 ```python
 except Exception as e:
     logger.error(f"WebSocket 錯誤: {e}")
@@ -161,22 +175,24 @@ except Exception as e:
 ### Lifespan Events ✅
 
 **On Startup**:
+
 ```python
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Initialize sync manager
     await sync_manager.initialize()
-    
+
     # Register WebSocket broadcast callback
     async def ws_broadcast_callback(event: SyncEvent):
         await manager.broadcast(event.to_dict())
-    
+
     await sync_manager.register_client("websocket_bridge", ws_broadcast_callback)
-    
+
     logger.info("✅ 实时同步系统初始化完成並已橋接 WebSocket")
 ```
 
 **Pet Manager Bridge**:
+
 ```python
 pet_manager = get_pet_manager()
 pet_manager.broadcast_callback = broadcast_to_clients
@@ -188,6 +204,7 @@ logger.info("✅ Desktop Pet WebSocket bridge established")
 ## Testing Verification
 
 ### Connection Test
+
 ```bash
 # Start backend
 cd apps/backend
@@ -198,6 +215,7 @@ python main.py
 ```
 
 ### Desktop App Connection
+
 ```bash
 # Start desktop app
 cd apps/desktop-app/electron_app
@@ -209,11 +227,12 @@ npm start
 ```
 
 ### Message Test
+
 ```javascript
 // From desktop app console
 window.electronAPI.websocketSend({
-  type: "ping"
-});
+  type: 'ping',
+})
 
 // Expected response:
 // {"type": "pong", "timestamp": "2026-02-07T..."}
@@ -224,21 +243,25 @@ window.electronAPI.websocketSend({
 ## Communication Protocol
 
 ### Message Format
+
 All messages use JSON format:
+
 ```json
 {
   "type": "message_type",
-  "data": { /* payload */ },
+  "data": {/* payload */},
   "timestamp": "ISO 8601 timestamp"
 }
 ```
 
 ### Desktop → Backend
+
 - `ping`: Heartbeat check
 - `module_control`: Enable/disable modules
 - Custom messages: Forwarded to sync manager
 
 ### Backend → Desktop
+
 - `pong`: Heartbeat response
 - `module_status_changed`: Module state updates
 - `pet_state_changed`: Pet emotion/animation updates
@@ -249,14 +272,17 @@ All messages use JSON format:
 ## Security
 
 ### Encryption Middleware ✅
+
 ```python
 app.add_middleware(EncryptedCommunicationMiddleware, key_b=km.get_key("KeyB"))
 ```
+
 - Uses Key B for encrypted communication
 - Protects WebSocket messages
 - Integrated with security manager
 
 ### CORS Configuration ✅
+
 ```python
 app.add_middleware(
     CORSMiddleware,
@@ -272,11 +298,13 @@ app.add_middleware(
 ## Performance
 
 ### Connection Tracking
+
 - Maintains list of active connections
 - Efficient broadcast to all clients
 - Automatic cleanup on disconnect
 
 ### Logging
+
 - Connection count tracking
 - Message logging for debugging
 - Error logging for troubleshooting
@@ -288,12 +316,14 @@ app.add_middleware(
 **Both Desktop App and Backend have complete WebSocket implementations!**
 
 ### Desktop App ✅
+
 - Full WebSocket client
 - Auto-connection on startup
 - Reconnection logic
 - Message handling
 
 ### Backend ✅
+
 - WebSocket server endpoint (`/ws`)
 - Connection manager
 - Message routing
@@ -301,6 +331,7 @@ app.add_middleware(
 - Integration with all major systems
 
 ### Communication Status
+
 - **Protocol**: Compatible (JSON messages)
 - **Endpoint**: Matching (`/ws`)
 - **Port**: Matching (8000)
@@ -324,5 +355,5 @@ app.add_middleware(
 
 ---
 
-*This verification confirms that the WebSocket communication layer is fully implemented and ready for testing.*
-
+_This verification confirms that the WebSocket communication layer is fully
+implemented and ready for testing._

@@ -1,16 +1,20 @@
 # GitHub仓库重置指南
+
 ## Unified-AI-Project v6.0.0 全新推送
 
 ### ✅ 本地备份状态
 
 **已完成的备份：**
-- 📦 Bundle备份: `.git-backup-20260202-040146/unified-ai-COMPLETE.bundle` (560MB)
+
+- 📦 Bundle备份: `.git-backup-20260202-040146/unified-ai-COMPLETE.bundle`
+  (560MB)
 - 📝 分支列表: 160个分支
-- 🏷️ 标签: 1个标签  
+- 🏷️ 标签: 1个标签
 - 📊 提交历史: 2462个提交完整保存
 - 🔐 校验和: 已生成
 
 **恢复命令（如需要）：**
+
 ```bash
 git clone .git-backup-20260202-040146/unified-ai-COMPLETE.bundle restored-repo
 cd restored-repo
@@ -24,12 +28,14 @@ git remote add origin https://github.com/catcatAI/Unified-AI-Project.git
 #### 第1步：删除GitHub上的远程仓库（需要手动操作）
 
 **选项A：通过GitHub网页（推荐）**
+
 1. 访问 https://github.com/catcatAI/Unified-AI-Project/settings
 2. 滚动到底部 "Danger Zone"
 3. 点击 "Delete this repository"
 4. 输入仓库名确认删除
 
 **选项B：使用GitHub CLI（如果已安装）**
+
 ```bash
 gh repo delete catcatAI/Unified-AI-Project --yes
 ```
@@ -41,6 +47,7 @@ gh repo delete catcatAI/Unified-AI-Project --yes
 #### 第2步：创建新的干净仓库
 
 创建新仓库后，获取新的仓库URL：
+
 ```
 https://github.com/catcatAI/Unified-AI-Project.git
 ```
@@ -50,6 +57,7 @@ https://github.com/catcatAI/Unified-AI-Project.git
 #### 第3步：本地准备干净提交
 
 **A. 创建干净分支（基于当前工作目录）：**
+
 ```bash
 # 保存当前所有工作（包括未跟踪文件）
 git add -A
@@ -128,11 +136,13 @@ git push -u origin v6.0-clean:main --force
 ### 📊 预期结果
 
 **推送前：**
+
 - GitHub上有2462个提交的历史记录
 - 160个分支（包括已合并的）
 - 包含大文件历史（如606MB的torch库）
 
 **推送后：**
+
 - 只有1个干净的提交
 - 只有1个分支（main）
 - 没有大文件历史
@@ -143,6 +153,7 @@ git push -u origin v6.0-clean:main --force
 ### 🆘 如果出现问题
 
 **恢复所有数据：**
+
 ```bash
 # 从bundle恢复完整仓库
 git clone .git-backup-20260202-040146/unified-ai-COMPLETE.bundle recovered-repo
@@ -158,6 +169,7 @@ git push --all origin
 ### 📞 下一步
 
 请确认：
+
 1. ✅ 备份是否足够？
 2. ✅ 是否准备好删除GitHub仓库？
 3. ✅ 新的仓库名是否相同（catcatAI/Unified-AI-Project）？

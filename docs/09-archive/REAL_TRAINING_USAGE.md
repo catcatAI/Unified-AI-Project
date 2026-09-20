@@ -2,7 +2,8 @@
 
 ## 概述
 
-本文档说明如何使用Unified AI Project中的真实训练功能。真实训练功能使用TensorFlow进行实际的神经网络训练，而不是模拟训练。
+本文档说明如何使用Unified AI
+Project中的真实训练功能。真实训练功能使用TensorFlow进行实际的神经网络训练，而不是模拟训练。
 
 ## 可用的真实训练选项
 
@@ -14,6 +15,7 @@
 ### 通过训练管理器使用
 
 1. 运行训练管理器：
+
    ```
    tools\train-manager.bat
    ```
@@ -42,23 +44,27 @@ python train_model.py --preset real_logic_model_training
 ## 模型架构
 
 ### 数学模型
+
 - 使用LSTM编码器-解码器架构
 - 输入序列编码为固定长度向量
 - 解码器生成输出序列
 - 适用于基本算术运算（加法、减法、乘法、除法）
 
 ### 逻辑推理模型
+
 - 使用嵌入层+LSTM层+密集层的简单序列分类架构
 - 适用于基本逻辑运算（AND、OR、NOT）
 
 ## 训练数据
 
 ### 数学模型数据
+
 - 位置：`apps/backend/data/raw_datasets/arithmetic_train_dataset.json`
 - 格式：JSON文件，包含输入表达式和期望输出
 - 示例：{"input": "10 + 5", "target": "15"}
 
 ### 逻辑推理模型数据
+
 - 位置：`apps/backend/data/raw_datasets/logic_train.json`
 - 格式：JSON文件，包含逻辑表达式和布尔结果
 - 示例：{"proposition": "true AND false", "answer": false}
@@ -88,17 +94,22 @@ python test_trained_models.py
 ## 故障排除
 
 ### TensorFlow错误
+
 如果遇到TensorFlow相关错误，请确保已安装正确版本：
+
 ```bash
 pip install tensorflow
 ```
 
 ### 数据文件缺失
+
 如果提示数据文件缺失，请先生成训练数据：
+
 ```bash
 python apps/backend/src/tools/math_model/data_generator.py
 python apps/backend/src/tools/logic_model/logic_data_generator.py
 ```
 
 ### 模型文件未找到
+
 如果提示模型文件未找到，请确保训练已完成并且模型文件已正确保存。

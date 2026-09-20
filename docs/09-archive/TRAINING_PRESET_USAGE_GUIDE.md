@@ -13,9 +13,10 @@
 ## 可用的训练场景
 
 ### 1. 快速开始 (Quick Start)
+
 - **场景标识**: `quick_start`
 - **适用场景**: 快速验证训练流程，测试模型基本功能
-- **数据集**: 
+- **数据集**:
   - vision_samples (视觉数据样本)
   - audio_samples (音频数据样本)
   - reasoning_samples (推理数据样本)
@@ -25,15 +26,18 @@
   - 目标模型: vision_service, audio_service, causal_reasoning_engine
 
 ### 2. 全面训练 (Comprehensive Training)
+
 - **场景标识**: `comprehensive_training`
 - **适用场景**: 完整训练所有模型，获得最佳性能
 - **数据集**: 所有可用数据集
 - **训练参数**:
   - 训练轮数: 50
   - 批次大小: 32
-  - 目标模型: vision_service, audio_service, causal_reasoning_engine, multimodal_service
+  - 目标模型: vision_service, audio_service, causal_reasoning_engine,
+    multimodal_service
 
 ### 3. 视觉专注 (Vision Focus)
+
 - **场景标识**: `vision_focus`
 - **适用场景**: 专门训练视觉服务模型
 - **数据集**: 视觉相关数据集
@@ -43,6 +47,7 @@
   - 目标模型: vision_service
 
 ### 4. 音频专注 (Audio Focus)
+
 - **场景标识**: `audio_focus`
 - **适用场景**: 专门训练音频服务模型
 - **数据集**: 音频相关数据集
@@ -56,6 +61,7 @@
 ### 方法1: 使用训练管理器 (推荐)
 
 1. 运行训练管理器:
+
    ```
    tools\train-manager.bat
    ```
@@ -93,7 +99,8 @@ python ..\..\training\train_model.py --preset audio_focus
 
 ## 自定义预设配置
 
-如果您需要自定义预设配置，可以直接编辑 `training/configs/training_preset.json` 文件。
+如果您需要自定义预设配置，可以直接编辑 `training/configs/training_preset.json`
+文件。
 
 ### 预设配置结构
 
@@ -115,12 +122,15 @@ python ..\..\training\train_model.py --preset audio_focus
 ## 故障排除
 
 ### 1. 预设配置文件未找到
+
 确保 `training/configs/training_preset.json` 文件存在。
 
 ### 2. 数据集路径错误
+
 检查预设配置文件中的数据路径是否正确。
 
 ### 3. 训练失败
+
 查看控制台输出和日志文件以获取更多信息。
 
 ## 最佳实践

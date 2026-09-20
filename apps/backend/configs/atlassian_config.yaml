@@ -7,12 +7,12 @@ atlassian:
   cloud_id: "${ATLASSIAN_CLOUD_ID}"
   user_email: "${ATLASSIAN_USER_EMAIL}"
   domain: "${ATLASSIAN_DOMAIN}"
-  
+
   # 演示模式檢測
   demo_detection:
     enabled: true
     auto_activate: true
-  
+
   # Confluence 配置（增強版）
   confluence:
     base_url: "https://${ATLASSIAN_DOMAIN}.atlassian.net/wiki"
@@ -29,7 +29,7 @@ atlassian:
       technical_doc: "technical-documentation-template"
       api_doc: "api-documentation-template"
       meeting_notes: "meeting-notes-template"
-    
+
   # Jira 配置（增強版）
   jira:
     base_url: "https://${ATLASSIAN_DOMAIN}.atlassian.net"
@@ -53,7 +53,7 @@ atlassian:
       medium: "Medium"
       low: "Low"
       lowest: "Lowest"
-      
+
   # Bitbucket 配置（增強版）
   bitbucket:
     base_url: "https://api.bitbucket.org/2.0"
@@ -65,15 +65,15 @@ atlassian:
     max_retries: 3
     retry_delay: 1.0
     health_check_interval: 60
-    
+
   # Rovo Dev Agents 配置（增強版）
   rovo_dev:
     enabled: true
     max_concurrent_requests: 5
     timeout: 30
     retry_attempts: 3
-    cache_ttl: 300  # 5 分鐘
-    
+    cache_ttl: 300 # 5 分鐘
+
     # 備用機制配置
     fallback:
       enabled: true
@@ -82,7 +82,7 @@ atlassian:
       offline_mode: true
       local_cache_enabled: true
       task_persistence: true
-    
+
     # 代理能力配置
     capabilities:
       - name: "code_analysis"
@@ -100,7 +100,7 @@ atlassian:
       - name: "code_review"
         description: "自動化代碼審查"
         enabled: true
-        
+
     # 自動化規則配置
     automation:
       auto_create_docs: true
@@ -111,7 +111,7 @@ atlassian:
           space: "DEV"
         - type: "jira"
           project: "UAI"
-          
+
 # 備用協議集成配置
 fallback_integration:
   # HSP 備用協議
@@ -119,13 +119,13 @@ fallback_integration:
     enabled: true
     priority: 1
     protocols: ["http", "file", "memory"]
-    
+
   # MCP 備用協議
   mcp_fallback:
     enabled: true
     priority: 2
     protocols: ["http", "file", "memory"]
-    
+
   # 本地緩存備用
   local_cache:
     enabled: true
@@ -139,20 +139,20 @@ hsp_integration:
   capabilities_topic: "hsp/capabilities/rovo-dev"
   task_request_topic: "hsp/tasks/rovo-dev"
   task_result_topic: "hsp/results/rovo-dev"
-  
+
   # 備用通訊配置
   fallback_communication:
     enabled: true
     protocols: ["hsp_fallback", "mcp_fallback", "local_queue"]
-    
+
   # 任務持久化配置
   task_persistence:
     enabled: true
     storage_path: "data/task_queue"
     auto_recovery: true
     max_retry_attempts: 5
-    retry_delay: 60  # 秒
-  
+    retry_delay: 60 # 秒
+
   # 任務類型映射
   task_mappings:
     "create_confluence_page": "documentation_generation"
@@ -166,16 +166,16 @@ security:
   encryption:
     enabled: true
     algorithm: "AES-256-GCM"
-  
+
   rate_limiting:
     requests_per_minute: 60
     burst_size: 10
-    
+
   access_control:
     allowed_domains:
       - "*.atlassian.net"
       - "api.bitbucket.org"
-    
+
     required_permissions:
       confluence:
         - "read"
@@ -197,18 +197,18 @@ monitoring:
   metrics:
     enabled: true
     endpoint: "/metrics"
-    
+
   logging:
     level: "INFO"
     format: "json"
     file: "data/logs/atlassian_integration.log"
     max_size: "100MB"
     backup_count: 5
-    
+
   health_check:
     enabled: true
-    interval: 60  # 秒
-    timeout: 10   # 秒
+    interval: 60 # 秒
+    timeout: 10 # 秒
     endpoints:
       - name: "confluence"
         url: "${CONFLUENCE_BASE_URL}/rest/api/space"
@@ -223,7 +223,7 @@ development:
   test_space: "TEST"
   test_project: "TEST"
   debug_logging: true
-  
+
   # 測試數據
   test_data:
     confluence_page_title: "Test Page - Automated"

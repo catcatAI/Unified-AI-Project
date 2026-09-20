@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   pull_request:
-    branches: [ main, master ]
+    branches: [main, master]
 
 jobs:
   js:
@@ -17,7 +17,7 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 18
-          cache: 'pnpm'
+          cache: "pnpm"
       - name: Install JS workspaces
         run: pnpm install --frozen-lockfile=false
       - name: Lint (JS)
@@ -31,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ '3.11', '3.14' ]
+        python-version: ["3.11", "3.14"]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
@@ -112,7 +112,7 @@ jobs:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
         with:
-          python-version: '3.11'
+          python-version: "3.11"
       - name: Project map budget gate (gen_project_map.py, stdlib only)
         run: |
           python scripts/gen_project_map.py --budget 10000

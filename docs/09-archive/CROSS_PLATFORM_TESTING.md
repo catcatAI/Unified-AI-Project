@@ -1,6 +1,7 @@
 # Cross-Platform Testing Guide
 
-This guide provides comprehensive testing procedures for the Angela AI Desktop Application across Windows, macOS, and Linux.
+This guide provides comprehensive testing procedures for the Angela AI Desktop
+Application across Windows, macOS, and Linux.
 
 ---
 
@@ -32,6 +33,7 @@ This guide provides comprehensive testing procedures for the Angela AI Desktop A
 - **CMake**: 3.15+ (optional but recommended)
 
 **Install Visual Studio Build Tools:**
+
 ```powershell
 winget install Microsoft.VisualStudio.2022.BuildTools
 ```
@@ -39,6 +41,7 @@ winget install Microsoft.VisualStudio.2022.BuildTools
 ### macOS Requirements
 
 - **Xcode Command Line Tools**:
+
 ```bash
 xcode-select --install
 ```
@@ -48,6 +51,7 @@ xcode-select --install
 ### Linux Requirements
 
 **Ubuntu/Debian:**
+
 ```bash
 sudo apt-get update
 sudo apt-get install -y \
@@ -58,6 +62,7 @@ sudo apt-get install -y \
 ```
 
 **Fedora/RHEL:**
+
 ```bash
 sudo dnf install -y \
     gcc-c++ \
@@ -91,18 +96,21 @@ npm install
 ### Test Native Modules Individually
 
 **Windows:**
+
 ```bash
 cd apps/desktop-app/native_modules/node-wasapi-capture
 npm test
 ```
 
 **macOS:**
+
 ```bash
 cd apps/desktop-app/native_modules/node-coreaudio-capture
 npm test
 ```
 
 **Linux:**
+
 ```bash
 cd apps/desktop-app/native_modules/node-pulseaudio-capture
 npm test
@@ -305,14 +313,14 @@ Open the browser console and run:
 
 ```javascript
 // Create test suite
-const testSuite = new Live2DTestSuite();
+const testSuite = new Live2DTestSuite()
 
 // Initialize with canvas
-const canvas = document.getElementById('live2d-canvas');
-await testSuite.initialize(canvas);
+const canvas = document.getElementById('live2d-canvas')
+await testSuite.initialize(canvas)
 
 // Run all tests
-await testSuite.runAllTests();
+await testSuite.runAllTests()
 ```
 
 ### Expected Test Results
@@ -394,9 +402,10 @@ All tests should pass with performance >= 80%:
 ### Windows WASAPI Testing
 
 1. **Device Enumeration:**
+
 ```javascript
-const devices = WASAPICapture.getDevices();
-console.log(devices);
+const devices = WASAPICapture.getDevices()
+console.log(devices)
 ```
 
 - [ ] All output devices are listed
@@ -404,20 +413,22 @@ console.log(devices);
 - [ ] Device IDs are valid
 
 2. **Default Device:**
+
 ```javascript
-const defaultDevice = WASAPICapture.getDefaultDevice();
-console.log(defaultDevice);
+const defaultDevice = WASAPICapture.getDefaultDevice()
+console.log(defaultDevice)
 ```
 
 - [ ] Default device is detected
 - [ ] Default device matches system settings
 
 3. **Audio Capture:**
+
 ```javascript
-const capture = new WASAPICapture();
+const capture = new WASAPICapture()
 await capture.start(null, (samples) => {
-    console.log('Received', samples.length, 'samples');
-});
+  console.log('Received', samples.length, 'samples')
+})
 ```
 
 - [ ] Capture starts without errors
@@ -429,9 +440,10 @@ await capture.start(null, (samples) => {
 ### macOS CoreAudio Testing
 
 1. **Device Enumeration:**
+
 ```javascript
-const devices = CoreAudioCapture.getDevices();
-console.log(devices);
+const devices = CoreAudioCapture.getDevices()
+console.log(devices)
 ```
 
 - [ ] All output devices are listed
@@ -439,20 +451,22 @@ console.log(devices);
 - [ ] Device IDs are valid
 
 2. **Default Device:**
+
 ```javascript
-const defaultDevice = CoreAudioCapture.getDefaultDevice();
-console.log(defaultDevice);
+const defaultDevice = CoreAudioCapture.getDefaultDevice()
+console.log(defaultDevice)
 ```
 
 - [ ] Default device is detected
 - [ ] Default device matches system settings
 
 3. **Audio Capture:**
+
 ```javascript
-const capture = new CoreAudioCapture();
+const capture = new CoreAudioCapture()
 await capture.start(null, (samples) => {
-    console.log('Received', samples.length, 'samples');
-});
+  console.log('Received', samples.length, 'samples')
+})
 ```
 
 - [ ] Capture starts without errors
@@ -464,9 +478,10 @@ await capture.start(null, (samples) => {
 ### Linux PulseAudio Testing
 
 1. **Device Enumeration:**
+
 ```javascript
-const devices = PulseAudioCapture.getDevices();
-console.log(devices);
+const devices = PulseAudioCapture.getDevices()
+console.log(devices)
 ```
 
 - [ ] All sink monitors are listed
@@ -474,20 +489,22 @@ console.log(devices);
 - [ ] Device descriptions are present
 
 2. **Default Device:**
+
 ```javascript
-const defaultDevice = PulseAudioCapture.getDefaultDevice();
-console.log(defaultDevice);
+const defaultDevice = PulseAudioCapture.getDefaultDevice()
+console.log(defaultDevice)
 ```
 
 - [ ] Default sink is detected
 - [ ] Default sink matches system settings
 
 3. **Audio Capture:**
+
 ```javascript
-const capture = new PulseAudioCapture();
+const capture = new PulseAudioCapture()
 await capture.start(null, (samples) => {
-    console.log('Received', samples.length, 'samples');
-});
+  console.log('Received', samples.length, 'samples')
+})
 ```
 
 - [ ] Capture starts without errors
@@ -547,6 +564,7 @@ await capture.start(null, (samples) => {
 #### Native Module Build Failures
 
 **Windows:**
+
 ```powershell
 # Clear node-gyp cache
 rd /s /q %APPDATA%\..\Local\node-gyp\Cache
@@ -559,6 +577,7 @@ npm install
 ```
 
 **macOS:**
+
 ```bash
 # Clear node-gyp cache
 rm -rf ~/.node-gyp
@@ -571,6 +590,7 @@ npm install
 ```
 
 **Linux:**
+
 ```bash
 # Clear node-gyp cache
 rm -rf ~/.node-gyp
@@ -597,16 +617,19 @@ npm install
 #### System Audio Not Capturing
 
 **Windows:**
+
 - Ensure WASAPI is enabled in Windows settings
 - Check Windows privacy settings for microphone/audio access
 - Run application as administrator if needed
 
 **macOS:**
+
 - Grant microphone/audio permissions in System Preferences
 - Check security settings for CoreAudio access
 - Ensure PulseAudio is running (Linux)
 
 **Linux:**
+
 - Ensure PulseAudio daemon is running: `pulseaudio --check -v`
 - Check user permissions for audio devices
 - Verify monitor sources are available: `pactl list sources`
@@ -623,11 +646,13 @@ npm install
 ## Test Checklist Summary
 
 ### Installation
+
 - [ ] Application installs correctly
 - [ ] Native modules build successfully
 - [ ] All dependencies resolve
 
 ### Functionality
+
 - [ ] Live2D model renders
 - [ ] All animations play
 - [ ] System audio captures
@@ -636,18 +661,21 @@ npm install
 - [ ] Settings save/restore
 
 ### Integration
+
 - [ ] Backend sync works
 - [ ] WebSocket connects
 - [ ] State matrix updates
 - [ ] Performance scales correctly
 
 ### User Experience
+
 - [ ] System tray works
 - [ ] Auto-startup works
 - [ ] Desktop integration works
 - [ ] Click-through works
 
 ### Cross-Platform
+
 - [ ] Windows: All features work
 - [ ] macOS: All features work
 - [ ] Linux: All features work
@@ -672,15 +700,18 @@ When reporting issues, include:
 
 ### Expected Performance
 
-| Component | Target | Minimum |
-|-----------|--------|---------|
-| Live2D FPS | 60 | 30 |
-| Audio Latency | < 50ms | < 100ms |
-| Memory Usage | < 100MB | < 200MB |
-| CPU Usage | < 5% | < 15% |
+| Component     | Target  | Minimum |
+| ------------- | ------- | ------- |
+| Live2D FPS    | 60      | 30      |
+| Audio Latency | < 50ms  | < 100ms |
+| Memory Usage  | < 100MB | < 200MB |
+| CPU Usage     | < 5%    | < 15%   |
 
 ---
 
 ## Conclusion
 
-This testing guide ensures comprehensive coverage of all Angela AI Desktop Application features across all supported platforms. Regular testing during development and before releases is essential for maintaining high quality and user satisfaction.
+This testing guide ensures comprehensive coverage of all Angela AI Desktop
+Application features across all supported platforms. Regular testing during
+development and before releases is essential for maintaining high quality and
+user satisfaction.

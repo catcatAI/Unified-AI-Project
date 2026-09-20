@@ -1,1163 +1,1196 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Angela AI - Digital Life Companion v6.2.0</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            width: 100vw;
-            height: 100vh;
-            overflow: hidden;
-            background: transparent;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            cursor: default;
-            -webkit-user-select: none;
-            user-select: none;
-            /* FIX: Allow pointer events by default, child elements can override if needed */
-            pointer-events: auto;
-        }
-
-        /* 主題變量 */
-        :root {
-            --bg-primary: transparent;
-            --bg-overlay: rgba(0, 0, 0, 0.5);
-            --bg-hover: rgba(255, 255, 255, 0.1);
-            --text-primary: #ffffff;
-            --accent-color: #4facfe;
-            --danger-color: #ff4040;
-            --success-color: #00ff80;
-            --warning-color: #ffcc00;
-            --control-bg: rgba(0, 0, 0, 0.5);
-            --control-bg-hover: rgba(255, 255, 255, 0.8);
-            --control-bg-disabled: rgba(0, 0, 0, 0.3);
-        }
-
-        /* 暗色主題 */
-        [data-theme="dark"] {
-            --bg-primary: #1a1a2e;
-            --bg-overlay: rgba(0, 0, 0, 0.7);
-            --bg-hover: rgba(255, 255, 255, 0.15);
-            --text-primary: #ffffff;
-            --accent-color: #4facfe;
-            --danger-color: #ff4040;
-            --success-color: #00ff80;
-            --warning-color: #ffcc00;
-            --control-bg: rgba(0, 0, 0, 0.5);
-            --control-bg-hover: rgba(255, 255, 255, 0.8);
-            --control-bg-disabled: rgba(0, 0, 0, 0.3);
-        }
-
-        /* 亮色主題 */
-        [data-theme="light"] {
-            --bg-primary: #ffffff;
-            --bg-overlay: rgba(255, 255, 255, 0.7);
-            --bg-hover: rgba(0, 0, 0, 0.05);
-            --text-primary: #333333;
-            --accent-color: #0077cc;
-            --danger-color: #ff4040;
-            --success-color: #00cc66;
-            --warning-color: #ff9900;
-            --control-bg: rgba(255, 255, 255, 0.7);
-            --control-bg-hover: rgba(255, 255, 255, 0.9);
-            --control-bg-disabled: rgba(0, 0, 0, 0.3);
-        }
-
-        /* 自定義主題 */
-        [data-theme="custom"] {
-            --bg-primary: #1a1a2e;
-            --bg-overlay: rgba(0, 0, 0, 0.7);
-            --bg-hover: rgba(255, 255, 255, 0.1);
-            --text-primary: #ffffff;
-            --accent-color: #9b59b6;
-            --danger-color: #e74c3c;
-            --success-color: #2ecc71;
-            --warning-color: #f1c40f;
-            --control-bg: rgba(155, 89, 182, 0.5);
-            --control-bg-hover: rgba(155, 89, 182, 0.7);
-            --control-bg-disabled: rgba(155, 89, 182, 0.3);
-        }
-
-        #container {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        #live2d-canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 10;
-            pointer-events: none;
-        }
-
-        /* Canvas wrapper for fallback character - supports proper scaling */
-        .canvas-wrapper {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            /* 尺寸由 UDM 动态设置 (720p = 1280x720 @ 100%) */
-            width: 1280px;
-            height: 720px;
-            z-index: 15;
-            display: none;
-            pointer-events: none;
-        }
-
-        .canvas-wrapper.visible {
-            display: block;
-        }
-
-        /* Legacy wrapper for fallback canvas (without proper scaling) */
-        #fallback-wrapper {
-            display: none;
-            /* 继承 canvas-wrapper 的尺寸 (720p = 1280x720) */
-            width: 1280px;
-            height: 720px;
-        }
-
-        #fallback-wrapper.visible {
-            display: block;
-        }
-
-        #click-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 20;
-            pointer-events: none;
-        }
-
-        /* Auto-hiding top title bar */
-        #top-bar {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 40px;
-            background: linear-gradient(180deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.6) 100%);
-            -webkit-backdrop-filter: blur(10px);
-            backdrop-filter: blur(10px);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 10px;
-            z-index: 100;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        #top-bar:hover {
-            opacity: 1;
-        }
-
-        #top-bar.visible {
-            opacity: 1;
-        }
-
-        .window-controls {
-            display: flex;
-            gap: 8px;
-        }
-
-        .window-btn {
-            width: 32px;
-            height: 32px;
-            border: none;
-            border-radius: 4px;
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            font-size: 14px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.2s;
-        }
-
-        .window-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        .window-btn.close:hover {
-            background: rgba(255, 0, 0, 0.8);
-        }
-
-        /* Auto-hiding bottom toolbar */
-        #bottom-bar {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 60px;
-            background: linear-gradient(0deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.6) 100%);
-            -webkit-backdrop-filter: blur(10px);
-            backdrop-filter: blur(10px);
-            display: flex;
-            flex-direction: column;
-            z-index: 100;
-            opacity: 0;
-            transition: height 0.3s ease, opacity 0.3s ease;
-        }
-
-        #bottom-bar:hover {
-            opacity: 1;
-        }
-
-        #bottom-bar.visible {
-            opacity: 1;
-        }
-
-        #bottom-bar .toolbar-content {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 0 15px;
-            height: 60px;
-            min-height: 60px;
-        }
-
-        #dialogue-input {
-            flex: 1;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 20px;
-            padding: 8px 15px;
-            color: white;
-            font-size: 14px;
-            outline: none;
-        }
-
-        #dialogue-input::placeholder {
-            color: rgba(255, 255, 255, 0.5);
-        }
-
-        #dialogue-input:focus {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: rgba(79, 172, 254, 0.6);
-        }
-
-        .toolbar-btn {
-            width: 36px;
-            height: 36px;
-            border: none;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            font-size: 18px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.2s;
-        }
-
-        .toolbar-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        /* Expandable dialogue panel */
-        #bottom-bar {
-            transition: height 0.3s ease, opacity 0.3s ease;
-        }
-
-        #bottom-bar.expanded {
-            height: 400px;
-        }
-
-        #dialogue-messages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 15px;
-            display: none;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        #bottom-bar.expanded #dialogue-messages {
-            display: flex;
-        }
-
-        #dialogue-messages::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        #dialogue-messages::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 3px;
-        }
-
-        .message {
-            padding: 10px 14px;
-            border-radius: 12px;
-            max-width: 70%;
-            word-wrap: break-word;
-            animation: fadeIn 0.3s ease-in;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .message.user {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            align-self: flex-end;
-            margin-left: auto;
-        }
-
-        .message.angela {
-            background: rgba(255, 255, 255, 0.1);
-            color: #e0e0e0;
-            align-self: flex-start;
-        }
-
-        .message-time {
-            font-size: 10px;
-            opacity: 0.7;
-            margin-top: 4px;
-        }
-
-        /* 8-direction resize handles */
-        .resize-handle {
-            position: absolute;
-            z-index: 95;
-            pointer-events: auto;
-        }
-
-        .resize-handle.top,
-        .resize-handle.bottom {
-            left: 0;
-            right: 0;
-            height: 5px;
-            cursor: ns-resize;
-        }
-
-        .resize-handle.left,
-        .resize-handle.right {
-            top: 0;
-            bottom: 0;
-            width: 5px;
-            cursor: ew-resize;
-        }
-
-        .resize-handle.top {
-            top: 0;
-        }
-
-        .resize-handle.bottom {
-            bottom: 0;
-        }
-
-        .resize-handle.left {
-            left: 0;
-        }
-
-        .resize-handle.right {
-            right: 0;
-        }
-
-        .resize-handle.corner {
-            width: 10px;
-            height: 10px;
-        }
-
-        .resize-handle.top-left {
-            top: 0;
-            left: 0;
-            cursor: nwse-resize;
-        }
-
-        .resize-handle.top-right {
-            top: 0;
-            right: 0;
-            cursor: nesw-resize;
-        }
-
-        .resize-handle.bottom-left {
-            bottom: 0;
-            left: 0;
-            cursor: nesw-resize;
-        }
-
-        .resize-handle.bottom-right {
-            bottom: 0;
-            right: 0;
-            cursor: nwse-resize;
-        }
-
-        #status-bar {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            padding: 8px 12px;
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            border-radius: 4px;
-            font-size: 12px;
-            z-index: 100;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        #status-bar.visible {
-            opacity: 1;
-        }
-
-        #badge-container {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            z-index: 100;
-        }
-
-        .badge {
-            padding: 6px 12px;
-            border-radius: 16px;
-            font-size: 11px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            -webkit-backdrop-filter: blur(8px);
-            backdrop-filter: blur(8px);
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            pointer-events: auto;
-            max-width: 200px;
-            /* 防止溢出 */
-            min-width: 100px;
-            /* 確保最小寬度 */
-            white-space: nowrap;
-            /* 防止文字換行 */
-            overflow: hidden;
-            /* 隱溢出內容 */
-            text-overflow: ellipsis;
-            /* 溢出時顯示省略號 */
-        }
-
-        .badge.secure {
-            background: rgba(0, 255, 128, 0.2);
-            color: var(--success-color);
-            border-color: rgba(0, 255, 128, 0.4);
-        }
-
-        .badge.unsecure {
-            background: rgba(255, 64, 64, 0.2);
-            color: var(--danger-color);
-            border-color: rgba(255, 64, 64, 0.4);
-        }
-
-        #loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 200;
-            color: white;
-        }
-
-        #loading-overlay.hidden {
-            display: none;
-        }
-
-        .loader {
-            width: 48px;
-            height: 48px;
-            border: 4px solid #fff;
-            border-bottom-color: transparent;
-            border-radius: 50%;
-            animation: rotation 1s linear infinite;
-        }
-
-        @keyframes rotation {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
-        }
-
-        #loading-text {
-            margin-top: 20px;
-            font-size: 16px;
-            font-weight: 500;
-        }
-
-        .progress-bar {
-            width: 200px;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 2px;
-            margin-top: 15px;
-            overflow: hidden;
-        }
-
-        .progress-bar-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
-            border-radius: 2px;
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-
-        .progress-bar-fill.complete {
-            background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
-        }
-
-        #controls {
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            display: flex;
-            gap: 5px;
-            z-index: 40;
-            opacity: 0.8;
-            transition: opacity 0.3s, transform 0.3s;
-            transform: translateY(0);
-        }
-
-        #controls.controls-hidden {
-            opacity: 0;
-            transform: translateY(10px);
-            pointer-events: none;
-        }
-
-        #controls.visible {
-            opacity: 1;
-            transform: translateY(0);
-            pointer-events: auto;
-        }
-
-        .control-btn {
-            width: 32px;
-            height: 32px;
-            border: none;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.8);
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 16px;
-            transition: transform 0.2s, background 0.2s;
-        }
-
-        .control-btn:hover {
-            transform: scale(1.1);
-            background: rgba(255, 255, 255, 1);
-        }
-
-        .control-btn:active {
-            transform: scale(0.95);
-        }
-
-        #visual-feedback {
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(255, 200, 100, 0.8), transparent);
-            pointer-events: none;
-            opacity: 0;
-            transform: translate(-50%, -50%);
-            z-index: 150;
-            animation: ripple 0.6s ease-out;
-        }
-
-        @keyframes ripple {
-            0% {
-                width: 20px;
-                height: 20px;
-                opacity: 1;
-            }
-
-            100% {
-                width: 100px;
-                height: 100px;
-                opacity: 0;
-            }
-        }
-
-        #audio-visualizer {
-            position: fixed;
-            bottom: 50px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 3px;
-            z-index: 100;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        #audio-visualizer.visible {
-            opacity: 1;
-        }
-
-        .audio-bar {
-            width: 4px;
-            height: 20px;
-            background: linear-gradient(to top, #4CAF50, #8BC34A);
-            border-radius: 2px;
-            animation: audio-wave 0.5s ease-in-out infinite alternate;
-        }
-
-        @keyframes audio-wave {
-            0% {
-                height: 10px;
-            }
-
-            100% {
-                height: 30px;
-            }
-        }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        background: transparent;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        cursor: default;
+        -webkit-user-select: none;
+        user-select: none;
+        /* FIX: Allow pointer events by default, child elements can override if needed */
+        pointer-events: auto;
+      }
+
+      /* 主題變量 */
+      :root {
+        --bg-primary: transparent;
+        --bg-overlay: rgba(0, 0, 0, 0.5);
+        --bg-hover: rgba(255, 255, 255, 0.1);
+        --text-primary: #ffffff;
+        --accent-color: #4facfe;
+        --danger-color: #ff4040;
+        --success-color: #00ff80;
+        --warning-color: #ffcc00;
+        --control-bg: rgba(0, 0, 0, 0.5);
+        --control-bg-hover: rgba(255, 255, 255, 0.8);
+        --control-bg-disabled: rgba(0, 0, 0, 0.3);
+      }
+
+      /* 暗色主題 */
+      [data-theme='dark'] {
+        --bg-primary: #1a1a2e;
+        --bg-overlay: rgba(0, 0, 0, 0.7);
+        --bg-hover: rgba(255, 255, 255, 0.15);
+        --text-primary: #ffffff;
+        --accent-color: #4facfe;
+        --danger-color: #ff4040;
+        --success-color: #00ff80;
+        --warning-color: #ffcc00;
+        --control-bg: rgba(0, 0, 0, 0.5);
+        --control-bg-hover: rgba(255, 255, 255, 0.8);
+        --control-bg-disabled: rgba(0, 0, 0, 0.3);
+      }
+
+      /* 亮色主題 */
+      [data-theme='light'] {
+        --bg-primary: #ffffff;
+        --bg-overlay: rgba(255, 255, 255, 0.7);
+        --bg-hover: rgba(0, 0, 0, 0.05);
+        --text-primary: #333333;
+        --accent-color: #0077cc;
+        --danger-color: #ff4040;
+        --success-color: #00cc66;
+        --warning-color: #ff9900;
+        --control-bg: rgba(255, 255, 255, 0.7);
+        --control-bg-hover: rgba(255, 255, 255, 0.9);
+        --control-bg-disabled: rgba(0, 0, 0, 0.3);
+      }
+
+      /* 自定義主題 */
+      [data-theme='custom'] {
+        --bg-primary: #1a1a2e;
+        --bg-overlay: rgba(0, 0, 0, 0.7);
+        --bg-hover: rgba(255, 255, 255, 0.1);
+        --text-primary: #ffffff;
+        --accent-color: #9b59b6;
+        --danger-color: #e74c3c;
+        --success-color: #2ecc71;
+        --warning-color: #f1c40f;
+        --control-bg: rgba(155, 89, 182, 0.5);
+        --control-bg-hover: rgba(155, 89, 182, 0.7);
+        --control-bg-disabled: rgba(155, 89, 182, 0.3);
+      }
+
+      #container {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      #live2d-canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 10;
+        pointer-events: none;
+      }
+
+      /* Canvas wrapper for fallback character - supports proper scaling */
+      .canvas-wrapper {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        /* 尺寸由 UDM 动态设置 (720p = 1280x720 @ 100%) */
+        width: 1280px;
+        height: 720px;
+        z-index: 15;
+        display: none;
+        pointer-events: none;
+      }
+
+      .canvas-wrapper.visible {
+        display: block;
+      }
+
+      /* Legacy wrapper for fallback canvas (without proper scaling) */
+      #fallback-wrapper {
+        display: none;
+        /* 继承 canvas-wrapper 的尺寸 (720p = 1280x720) */
+        width: 1280px;
+        height: 720px;
+      }
+
+      #fallback-wrapper.visible {
+        display: block;
+      }
+
+      #click-layer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 20;
+        pointer-events: none;
+      }
+
+      /* Auto-hiding top title bar */
+      #top-bar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 40px;
+        background: linear-gradient(180deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.6) 100%);
+        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(10px);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 10px;
+        z-index: 100;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      #top-bar:hover {
+        opacity: 1;
+      }
+
+      #top-bar.visible {
+        opacity: 1;
+      }
+
+      .window-controls {
+        display: flex;
+        gap: 8px;
+      }
+
+      .window-btn {
+        width: 32px;
+        height: 32px;
+        border: none;
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        font-size: 14px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s;
+      }
+
+      .window-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      .window-btn.close:hover {
+        background: rgba(255, 0, 0, 0.8);
+      }
+
+      /* Auto-hiding bottom toolbar */
+      #bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        background: linear-gradient(0deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.6) 100%);
+        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(10px);
+        display: flex;
+        flex-direction: column;
+        z-index: 100;
+        opacity: 0;
+        transition:
+          height 0.3s ease,
+          opacity 0.3s ease;
+      }
+
+      #bottom-bar:hover {
+        opacity: 1;
+      }
+
+      #bottom-bar.visible {
+        opacity: 1;
+      }
+
+      #bottom-bar .toolbar-content {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0 15px;
+        height: 60px;
+        min-height: 60px;
+      }
+
+      #dialogue-input {
+        flex: 1;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 20px;
+        padding: 8px 15px;
+        color: white;
+        font-size: 14px;
+        outline: none;
+      }
+
+      #dialogue-input::placeholder {
+        color: rgba(255, 255, 255, 0.5);
+      }
+
+      #dialogue-input:focus {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: rgba(79, 172, 254, 0.6);
+      }
+
+      .toolbar-btn {
+        width: 36px;
+        height: 36px;
+        border: none;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        font-size: 18px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s;
+      }
+
+      .toolbar-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      /* Expandable dialogue panel */
+      #bottom-bar {
+        transition:
+          height 0.3s ease,
+          opacity 0.3s ease;
+      }
+
+      #bottom-bar.expanded {
+        height: 400px;
+      }
+
+      #dialogue-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 15px;
+        display: none;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      #bottom-bar.expanded #dialogue-messages {
+        display: flex;
+      }
+
+      #dialogue-messages::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      #dialogue-messages::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 3px;
+      }
+
+      .message {
+        padding: 10px 14px;
+        border-radius: 12px;
+        max-width: 70%;
+        word-wrap: break-word;
+        animation: fadeIn 0.3s ease-in;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .message.user {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        align-self: flex-end;
+        margin-left: auto;
+      }
+
+      .message.angela {
+        background: rgba(255, 255, 255, 0.1);
+        color: #e0e0e0;
+        align-self: flex-start;
+      }
+
+      .message-time {
+        font-size: 10px;
+        opacity: 0.7;
+        margin-top: 4px;
+      }
+
+      /* 8-direction resize handles */
+      .resize-handle {
+        position: absolute;
+        z-index: 95;
+        pointer-events: auto;
+      }
+
+      .resize-handle.top,
+      .resize-handle.bottom {
+        left: 0;
+        right: 0;
+        height: 5px;
+        cursor: ns-resize;
+      }
+
+      .resize-handle.left,
+      .resize-handle.right {
+        top: 0;
+        bottom: 0;
+        width: 5px;
+        cursor: ew-resize;
+      }
+
+      .resize-handle.top {
+        top: 0;
+      }
+
+      .resize-handle.bottom {
+        bottom: 0;
+      }
+
+      .resize-handle.left {
+        left: 0;
+      }
+
+      .resize-handle.right {
+        right: 0;
+      }
+
+      .resize-handle.corner {
+        width: 10px;
+        height: 10px;
+      }
+
+      .resize-handle.top-left {
+        top: 0;
+        left: 0;
+        cursor: nwse-resize;
+      }
+
+      .resize-handle.top-right {
+        top: 0;
+        right: 0;
+        cursor: nesw-resize;
+      }
+
+      .resize-handle.bottom-left {
+        bottom: 0;
+        left: 0;
+        cursor: nesw-resize;
+      }
+
+      .resize-handle.bottom-right {
+        bottom: 0;
+        right: 0;
+        cursor: nwse-resize;
+      }
+
+      #status-bar {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        padding: 8px 12px;
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        border-radius: 4px;
+        font-size: 12px;
+        z-index: 100;
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+
+      #status-bar.visible {
+        opacity: 1;
+      }
+
+      #badge-container {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        z-index: 100;
+      }
+
+      .badge {
+        padding: 6px 12px;
+        border-radius: 16px;
+        font-size: 11px;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        -webkit-backdrop-filter: blur(8px);
+        backdrop-filter: blur(8px);
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        pointer-events: auto;
+        max-width: 200px;
+        /* 防止溢出 */
+        min-width: 100px;
+        /* 確保最小寬度 */
+        white-space: nowrap;
+        /* 防止文字換行 */
+        overflow: hidden;
+        /* 隱溢出內容 */
+        text-overflow: ellipsis;
+        /* 溢出時顯示省略號 */
+      }
+
+      .badge.secure {
+        background: rgba(0, 255, 128, 0.2);
+        color: var(--success-color);
+        border-color: rgba(0, 255, 128, 0.4);
+      }
+
+      .badge.unsecure {
+        background: rgba(255, 64, 64, 0.2);
+        color: var(--danger-color);
+        border-color: rgba(255, 64, 64, 0.4);
+      }
+
+      #loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 200;
+        color: white;
+      }
+
+      #loading-overlay.hidden {
+        display: none;
+      }
+
+      .loader {
+        width: 48px;
+        height: 48px;
+        border: 4px solid #fff;
+        border-bottom-color: transparent;
+        border-radius: 50%;
+        animation: rotation 1s linear infinite;
+      }
+
+      @keyframes rotation {
+        0% {
+          transform: rotate(0deg);
+        }
+
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      #loading-text {
+        margin-top: 20px;
+        font-size: 16px;
+        font-weight: 500;
+      }
+
+      .progress-bar {
+        width: 200px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 2px;
+        margin-top: 15px;
+        overflow: hidden;
+      }
+
+      .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+        border-radius: 2px;
+        width: 0%;
+        transition: width 0.3s ease;
+      }
+
+      .progress-bar-fill.complete {
+        background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
+      }
+
+      #controls {
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        display: flex;
+        gap: 5px;
+        z-index: 40;
+        opacity: 0.8;
+        transition:
+          opacity 0.3s,
+          transform 0.3s;
+        transform: translateY(0);
+      }
+
+      #controls.controls-hidden {
+        opacity: 0;
+        transform: translateY(10px);
+        pointer-events: none;
+      }
+
+      #controls.visible {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+      }
+
+      .control-btn {
+        width: 32px;
+        height: 32px;
+        border: none;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.8);
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 16px;
+        transition:
+          transform 0.2s,
+          background 0.2s;
+      }
+
+      .control-btn:hover {
+        transform: scale(1.1);
+        background: rgba(255, 255, 255, 1);
+      }
+
+      .control-btn:active {
+        transform: scale(0.95);
+      }
+
+      #visual-feedback {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(255, 200, 100, 0.8), transparent);
+        pointer-events: none;
+        opacity: 0;
+        transform: translate(-50%, -50%);
+        z-index: 150;
+        animation: ripple 0.6s ease-out;
+      }
+
+      @keyframes ripple {
+        0% {
+          width: 20px;
+          height: 20px;
+          opacity: 1;
+        }
+
+        100% {
+          width: 100px;
+          height: 100px;
+          opacity: 0;
+        }
+      }
+
+      #audio-visualizer {
+        position: fixed;
+        bottom: 50px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 3px;
+        z-index: 100;
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+
+      #audio-visualizer.visible {
+        opacity: 1;
+      }
+
+      .audio-bar {
+        width: 4px;
+        height: 20px;
+        background: linear-gradient(to top, #4caf50, #8bc34a);
+        border-radius: 2px;
+        animation: audio-wave 0.5s ease-in-out infinite alternate;
+      }
+
+      @keyframes audio-wave {
+        0% {
+          height: 10px;
+        }
+
+        100% {
+          height: 30px;
+        }
+      }
     </style>
 
     <!-- Unified Shell Styles -->
     <style>
-        #unified-nav {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 44px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            padding: 0 10px;
-            background: linear-gradient(180deg, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.7) 100%);
-            -webkit-backdrop-filter: blur(10px);
-            backdrop-filter: blur(10px);
-            z-index: 190;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-        }
+      #unified-nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 0 10px;
+        background: linear-gradient(180deg, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.7) 100%);
+        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(10px);
+        z-index: 190;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
 
-        #unified-nav button {
-            border: none;
-            border-radius: 6px;
-            background: transparent;
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 13px;
-            padding: 6px 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
+      #unified-nav button {
+        border: none;
+        border-radius: 6px;
+        background: transparent;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 13px;
+        padding: 6px 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
 
-        #unified-nav button:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: #fff;
-        }
+      #unified-nav button:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+      }
 
-        #unified-nav button.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #fff;
-        }
+      #unified-nav button.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #fff;
+      }
 
-        .unified-backend-state {
-            margin-left: auto;
-            font-size: 11px;
-            color: var(--warning-color);
-            padding: 3px 8px;
-            border-radius: 10px;
-            background: rgba(255, 204, 0, 0.12);
-        }
+      .unified-backend-state {
+        margin-left: auto;
+        font-size: 11px;
+        color: var(--warning-color);
+        padding: 3px 8px;
+        border-radius: 10px;
+        background: rgba(255, 204, 0, 0.12);
+      }
 
-        .unified-backend-state.ok {
-            color: var(--success-color);
-            background: rgba(0, 255, 128, 0.12);
-        }
+      .unified-backend-state.ok {
+        color: var(--success-color);
+        background: rgba(0, 255, 128, 0.12);
+      }
 
-        .shell-panel {
-            display: none;
-            position: fixed;
-            top: 44px;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            z-index: 170;
-            background: #16213e;
-            overflow-y: auto;
-            color: var(--text-primary);
-            padding: 16px;
-        }
+      .shell-panel {
+        display: none;
+        position: fixed;
+        top: 44px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 170;
+        background: #16213e;
+        overflow-y: auto;
+        color: var(--text-primary);
+        padding: 16px;
+      }
 
-        .shell-panel.active {
-            display: block;
-        }
+      .shell-panel.active {
+        display: block;
+      }
 
-        .shell-panel h2 {
-            font-size: 16px;
-            margin-bottom: 12px;
-            color: #fff;
-        }
+      .shell-panel h2 {
+        font-size: 16px;
+        margin-bottom: 12px;
+        color: #fff;
+      }
 
-        .panel-card {
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 10px;
-            padding: 14px;
-            margin-bottom: 12px;
-        }
+      .panel-card {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 10px;
+        padding: 14px;
+        margin-bottom: 12px;
+      }
 
-        .panel-card .card-title {
-            font-size: 13px;
-            color: var(--accent-color);
-            margin-bottom: 8px;
-            font-weight: 600;
-        }
+      .panel-card .card-title {
+        font-size: 13px;
+        color: var(--accent-color);
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
 
-        .shell-panel select,
-        .shell-panel input[type="text"],
-        .shell-panel input[type="number"],
-        .shell-panel button,
-        .shell-panel textarea {
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 6px;
-            color: var(--text-primary);
-            padding: 7px 10px;
-            font-size: 13px;
-        }
+      .shell-panel select,
+      .shell-panel input[type='text'],
+      .shell-panel input[type='number'],
+      .shell-panel button,
+      .shell-panel textarea {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 6px;
+        color: var(--text-primary);
+        padding: 7px 10px;
+        font-size: 13px;
+      }
 
-        .shell-panel button {
-            cursor: pointer;
-            transition: all 0.2s;
-        }
+      .shell-panel button {
+        cursor: pointer;
+        transition: all 0.2s;
+      }
 
-        .shell-panel button:hover {
-            background: rgba(79, 172, 254, 0.2);
-        }
+      .shell-panel button:hover {
+        background: rgba(79, 172, 254, 0.2);
+      }
 
-        .shell-panel button.primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-        }
+      .shell-panel button.primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+      }
 
-        .panel-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 12px;
-        }
+      .panel-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 12px;
+      }
 
-        .metric-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 6px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-            font-size: 13px;
-        }
+      .metric-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 6px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        font-size: 13px;
+      }
 
-        .metric-row .metric-label {
-            color: var(--accent-color);
-        }
+      .metric-row .metric-label {
+        color: var(--accent-color);
+      }
 
-        /* Chat panel */
-        #chat-messages {
-            height: calc(100vh - 220px);
-            overflow-y: auto;
-            background: rgba(0, 0, 0, 0.25);
-            border-radius: 8px;
-            padding: 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
+      /* Chat panel */
+      #chat-messages {
+        height: calc(100vh - 220px);
+        overflow-y: auto;
+        background: rgba(0, 0, 0, 0.25);
+        border-radius: 8px;
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
 
-        #chat-messages .message {
-            max-width: 80%;
-        }
+      #chat-messages .message {
+        max-width: 80%;
+      }
 
-        #chat-input-row {
-            display: flex;
-            gap: 8px;
-            margin-top: 10px;
-        }
+      #chat-input-row {
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+      }
 
-        #chat-input-row input {
-            flex: 1;
-        }
+      #chat-input-row input {
+        flex: 1;
+      }
 
-        /* Game panel */
-        #game-console {
-            background: rgba(0, 0, 0, 0.35);
-            border-radius: 8px;
-            padding: 12px;
-            height: calc(100vh - 320px);
-            overflow-y: auto;
-            font-size: 13px;
-            line-height: 1.6;
-            color: #d0d0d0;
-        }
+      /* Game panel */
+      #game-console {
+        background: rgba(0, 0, 0, 0.35);
+        border-radius: 8px;
+        padding: 12px;
+        height: calc(100vh - 320px);
+        overflow-y: auto;
+        font-size: 13px;
+        line-height: 1.6;
+        color: #d0d0d0;
+      }
 
-        .game-line {
-            margin-bottom: 4px;
-            white-space: pre-wrap;
-        }
+      .game-line {
+        margin-bottom: 4px;
+        white-space: pre-wrap;
+      }
 
-        .game-line.system {
-            color: #888;
-            font-style: italic;
-        }
+      .game-line.system {
+        color: #888;
+        font-style: italic;
+      }
 
-        .game-line.narration {
-            color: #e0b0ff;
-        }
+      .game-line.narration {
+        color: #e0b0ff;
+      }
 
-        .game-line.player {
-            color: #7fd1ff;
-        }
+      .game-line.player {
+        color: #7fd1ff;
+      }
 
-        .game-line.npc {
-            color: #a8f0a0;
-        }
+      .game-line.npc {
+        color: #a8f0a0;
+      }
 
-        #game-choices {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            margin-top: 8px;
-        }
+      #game-choices {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 8px;
+      }
 
-        #game-act-row {
-            display: flex;
-            gap: 8px;
-            margin-top: 10px;
-        }
+      #game-act-row {
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+      }
 
-        #game-act-row input {
-            flex: 1;
-        }
+      #game-act-row input {
+        flex: 1;
+      }
 
-        /* Multimodal scoped styles */
-        #panel-multimodal {
-            --bg: #16213e;
-            --bg-card: #1a2a4e;
-            --bg-hover: #0f3460;
-            --accent: #4facfe;
-            --accent2: #00f2fe;
-            --text: #e0e0e0;
-            --text-dim: #8899aa;
-            --success: #00ff80;
-            --warning: #ffcc00;
-            --danger: #ff4040;
-            --border: rgba(255, 255, 255, 0.08);
-            --radius: 12px;
-        }
+      /* Multimodal scoped styles */
+      #panel-multimodal {
+        --bg: #16213e;
+        --bg-card: #1a2a4e;
+        --bg-hover: #0f3460;
+        --accent: #4facfe;
+        --accent2: #00f2fe;
+        --text: #e0e0e0;
+        --text-dim: #8899aa;
+        --success: #00ff80;
+        --warning: #ffcc00;
+        --danger: #ff4040;
+        --border: rgba(255, 255, 255, 0.08);
+        --radius: 12px;
+      }
 
-        #panel-multimodal .mm-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 16px;
-        }
+      #panel-multimodal .mm-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
 
-        #panel-multimodal .mm-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
+      #panel-multimodal .mm-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
 
-        #panel-multimodal .mm-grid .grid-full {
-            grid-column: 1 / -1;
-        }
+      #panel-multimodal .mm-grid .grid-full {
+        grid-column: 1 / -1;
+      }
 
-        #panel-multimodal .mm-card {
-            background: var(--bg-card);
-            border-radius: var(--radius);
-            padding: 14px;
-            border: 1px solid var(--border);
-        }
+      #panel-multimodal .mm-card {
+        background: var(--bg-card);
+        border-radius: var(--radius);
+        padding: 14px;
+        border: 1px solid var(--border);
+      }
 
-        #panel-multimodal .mm-card .card-title {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--accent);
-            margin-bottom: 10px;
-        }
+      #panel-multimodal .mm-card .card-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--accent);
+        margin-bottom: 10px;
+      }
 
-        #panel-multimodal .mm-tab-bar {
-            display: flex;
-            gap: 4px;
-            margin-bottom: 12px;
-            background: rgba(0, 0, 0, 0.25);
-            border-radius: 8px;
-            padding: 4px;
-        }
+      #panel-multimodal .mm-tab-bar {
+        display: flex;
+        gap: 4px;
+        margin-bottom: 12px;
+        background: rgba(0, 0, 0, 0.25);
+        border-radius: 8px;
+        padding: 4px;
+      }
 
-        #panel-multimodal .mm-tab-bar .mm-tab {
-            padding: 7px 14px;
-            border: none;
-            border-radius: 6px;
-            background: transparent;
-            color: var(--text-dim);
-            font-size: 13px;
-            cursor: pointer;
-        }
+      #panel-multimodal .mm-tab-bar .mm-tab {
+        padding: 7px 14px;
+        border: none;
+        border-radius: 6px;
+        background: transparent;
+        color: var(--text-dim);
+        font-size: 13px;
+        cursor: pointer;
+      }
 
-        #panel-multimodal .mm-tab-bar .mm-tab.active {
-            background: var(--accent);
-            color: #fff;
-        }
+      #panel-multimodal .mm-tab-bar .mm-tab.active {
+        background: var(--accent);
+        color: #fff;
+      }
 
-        #panel-multimodal .mm-tab-content {
-            display: none;
-        }
+      #panel-multimodal .mm-tab-content {
+        display: none;
+      }
 
-        #panel-multimodal .mm-tab-content.active {
-            display: block;
-        }
+      #panel-multimodal .mm-tab-content.active {
+        display: block;
+      }
 
-        #panel-multimodal .mm-upload-zone {
-            border: 2px dashed rgba(79, 172, 254, 0.3);
-            border-radius: 8px;
-            padding: 24px 12px;
-            text-align: center;
-            cursor: pointer;
-        }
+      #panel-multimodal .mm-upload-zone {
+        border: 2px dashed rgba(79, 172, 254, 0.3);
+        border-radius: 8px;
+        padding: 24px 12px;
+        text-align: center;
+        cursor: pointer;
+      }
 
-        #panel-multimodal .mm-upload-zone:hover,
-        #panel-multimodal .mm-upload-zone.dragover {
-            border-color: var(--accent);
-            background: rgba(79, 172, 254, 0.08);
-        }
+      #panel-multimodal .mm-upload-zone:hover,
+      #panel-multimodal .mm-upload-zone.dragover {
+        border-color: var(--accent);
+        background: rgba(79, 172, 254, 0.08);
+      }
 
-        #panel-multimodal .mm-result {
-            background: rgba(0, 0, 0, 0.25);
-            border-radius: 8px;
-            padding: 10px;
-            margin-top: 8px;
-            font-size: 12px;
-            max-height: 180px;
-            overflow-y: auto;
-            display: none;
-        }
+      #panel-multimodal .mm-result {
+        background: rgba(0, 0, 0, 0.25);
+        border-radius: 8px;
+        padding: 10px;
+        margin-top: 8px;
+        font-size: 12px;
+        max-height: 180px;
+        overflow-y: auto;
+        display: none;
+      }
 
-        #panel-multimodal .mm-btn-group {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin-top: 10px;
-        }
+      #panel-multimodal .mm-btn-group {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+      }
 
-        #panel-multimodal .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--success);
-            display: inline-block;
-        }
+      #panel-multimodal .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--success);
+        display: inline-block;
+      }
 
-        #panel-multimodal .status-dot.offline {
-            background: var(--danger);
-        }
+      #panel-multimodal .status-dot.offline {
+        background: var(--danger);
+      }
 
-        #panel-multimodal .record-btn {
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            border: 3px solid var(--danger);
-            background: transparent;
-            cursor: pointer;
-            margin: 0 auto;
-        }
+      #panel-multimodal .record-btn {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        border: 3px solid var(--danger);
+        background: transparent;
+        cursor: pointer;
+        margin: 0 auto;
+      }
 
-        #panel-multimodal .record-btn.recording {
-            background: var(--danger);
-        }
+      #panel-multimodal .record-btn.recording {
+        background: var(--danger);
+      }
     </style>
 
     <!-- Terminal Overlay Styles -->
     <style>
-        #terminal-overlay {
-            position: fixed;
-            right: 10px;
-            bottom: 70px;
-            width: 520px;
-            height: 360px;
-            background: rgba(10, 10, 14, 0.92);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 8px;
-            display: flex;
-            flex-direction: column;
-            z-index: 180;
-            font-family: 'Cascadia Code', 'Fira Code', 'Consolas', 'Courier New', monospace;
-            font-size: 13px;
-            color: #c0c0c0;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
-            transition: opacity 0.2s ease, transform 0.2s ease;
-        }
-        #terminal-overlay.terminal-hidden {
-            opacity: 0;
-            transform: translateY(8px) scale(0.97);
-            pointer-events: none;
-        }
-        #terminal-overlay.terminal-visible {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-            pointer-events: auto;
-        }
-        .terminal-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 6px 12px;
-            background: rgba(255, 255, 255, 0.05);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 8px 8px 0 0;
-            flex-shrink: 0;
-        }
-        .terminal-title {
-            color: #888;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .terminal-header-actions { display: flex; gap: 6px; }
-        .terminal-header-actions button {
-            background: none;
-            border: none;
-            color: #666;
-            cursor: pointer;
-            font-size: 13px;
-            padding: 2px 4px;
-            line-height: 1;
-            border-radius: 3px;
-        }
-        .terminal-header-actions button:hover {
-            color: #ccc;
-            background: rgba(255, 255, 255, 0.1);
-        }
-        .terminal-output {
-            flex: 1;
-            overflow-y: auto;
-            padding: 8px 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-        .terminal-output::-webkit-scrollbar { width: 5px; }
-        .terminal-output::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
-        .terminal-line { white-space: pre-wrap; word-break: break-word; line-height: 1.5; padding: 1px 0; }
-        .terminal-input { color: #4ec9b0; }
-        .terminal-response { color: #e0e0e0; }
-        .terminal-system { color: #888; font-style: italic; }
-        .terminal-error { color: #f44747; }
-        .terminal-input-line {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 12px;
-            border-top: 1px solid rgba(255, 255, 255, 0.08);
-            flex-shrink: 0;
-        }
-        .terminal-prompt {
-            color: #4ec9b0;
-            font-weight: bold;
-            flex-shrink: 0;
-        }
-        .terminal-input-line input {
-            flex: 1;
-            background: transparent;
-            border: none;
-            color: #e0e0e0;
-            font-family: inherit;
-            font-size: 13px;
-            outline: none;
-        }
-        .terminal-input-line input::placeholder { color: #555; }
+      #terminal-overlay {
+        position: fixed;
+        right: 10px;
+        bottom: 70px;
+        width: 520px;
+        height: 360px;
+        background: rgba(10, 10, 14, 0.92);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        z-index: 180;
+        font-family: 'Cascadia Code', 'Fira Code', 'Consolas', 'Courier New', monospace;
+        font-size: 13px;
+        color: #c0c0c0;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+        transition:
+          opacity 0.2s ease,
+          transform 0.2s ease;
+      }
+      #terminal-overlay.terminal-hidden {
+        opacity: 0;
+        transform: translateY(8px) scale(0.97);
+        pointer-events: none;
+      }
+      #terminal-overlay.terminal-visible {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        pointer-events: auto;
+      }
+      .terminal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 6px 12px;
+        background: rgba(255, 255, 255, 0.05);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 8px 8px 0 0;
+        flex-shrink: 0;
+      }
+      .terminal-title {
+        color: #888;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      .terminal-header-actions {
+        display: flex;
+        gap: 6px;
+      }
+      .terminal-header-actions button {
+        background: none;
+        border: none;
+        color: #666;
+        cursor: pointer;
+        font-size: 13px;
+        padding: 2px 4px;
+        line-height: 1;
+        border-radius: 3px;
+      }
+      .terminal-header-actions button:hover {
+        color: #ccc;
+        background: rgba(255, 255, 255, 0.1);
+      }
+      .terminal-output {
+        flex: 1;
+        overflow-y: auto;
+        padding: 8px 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .terminal-output::-webkit-scrollbar {
+        width: 5px;
+      }
+      .terminal-output::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 3px;
+      }
+      .terminal-line {
+        white-space: pre-wrap;
+        word-break: break-word;
+        line-height: 1.5;
+        padding: 1px 0;
+      }
+      .terminal-input {
+        color: #4ec9b0;
+      }
+      .terminal-response {
+        color: #e0e0e0;
+      }
+      .terminal-system {
+        color: #888;
+        font-style: italic;
+      }
+      .terminal-error {
+        color: #f44747;
+      }
+      .terminal-input-line {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        flex-shrink: 0;
+      }
+      .terminal-prompt {
+        color: #4ec9b0;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
+      .terminal-input-line input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        color: #e0e0e0;
+        font-family: inherit;
+        font-size: 13px;
+        outline: none;
+      }
+      .terminal-input-line input::placeholder {
+        color: #555;
+      }
     </style>
-</head>
+  </head>
 
-<body>
+  <body>
     <div id="loading-overlay">
-        <div class="loader"></div>
-        <div id="loading-text">Loading Angela AI...</div>
-        <div class="progress-bar">
-            <div class="progress-bar-fill" id="progress-bar-fill"></div>
-        </div>
+      <div class="loader"></div>
+      <div id="loading-text">Loading Angela AI...</div>
+      <div class="progress-bar">
+        <div class="progress-bar-fill" id="progress-bar-fill"></div>
+      </div>
     </div>
 
     <div id="container">
-        <!-- Auto-hiding top title bar -->
-        <div id="top-bar">
-            <div class="window-title">Angela AI</div>
-            <div class="window-controls">
-                <button class="window-btn minimize" id="btn-minimize" title="Minimize">−</button>
-                <button class="window-btn maximize" id="btn-maximize" title="Maximize">□</button>
-                <button class="window-btn close" id="btn-close" title="Close">✕</button>
-            </div>
+      <!-- Auto-hiding top title bar -->
+      <div id="top-bar">
+        <div class="window-title">Angela AI</div>
+        <div class="window-controls">
+          <button class="window-btn minimize" id="btn-minimize" title="Minimize">−</button>
+          <button class="window-btn maximize" id="btn-maximize" title="Maximize">□</button>
+          <button class="window-btn close" id="btn-close" title="Close">✕</button>
         </div>
+      </div>
 
-        <!-- Canvas layers -->
-        <div id="character-container" class="canvas-wrapper">
-            <canvas id="live2d-canvas"></canvas>
-            <div id="fallback-wrapper" style="width: 100%; height: 100%;">
-                <canvas id="fallback-canvas" style="width: 100%; height: 100%;"></canvas>
-            </div>
+      <!-- Canvas layers -->
+      <div id="character-container" class="canvas-wrapper">
+        <canvas id="live2d-canvas"></canvas>
+        <div id="fallback-wrapper" style="width: 100%; height: 100%">
+          <canvas id="fallback-canvas" style="width: 100%; height: 100%"></canvas>
         </div>
-        <div id="click-layer"></div>
+      </div>
+      <div id="click-layer"></div>
 
-        <!-- Auto-hiding bottom toolbar with dialogue -->
-        <div id="bottom-bar">
-            <div id="dialogue-messages"></div>
-            <div class="toolbar-content">
-                <button class="toolbar-btn" id="btn-toggle-dialogue" title="Toggle Chat">💬</button>
-                <button class="toolbar-btn" id="btn-settings" title="Settings">⚙️</button>
-                <button class="toolbar-btn" id="btn-terminal" title="Terminal (Ctrl+`)">>_</button>
-                <input type="text" id="dialogue-input" placeholder="與 Angela 對話..." />
-                <button class="toolbar-btn" id="btn-send" title="Send">📤</button>
-            </div>
+      <!-- Auto-hiding bottom toolbar with dialogue -->
+      <div id="bottom-bar">
+        <div id="dialogue-messages"></div>
+        <div class="toolbar-content">
+          <button class="toolbar-btn" id="btn-toggle-dialogue" title="Toggle Chat">💬</button>
+          <button class="toolbar-btn" id="btn-settings" title="Settings">⚙️</button>
+          <button class="toolbar-btn" id="btn-terminal" title="Terminal (Ctrl+`)">>_</button>
+          <input type="text" id="dialogue-input" placeholder="與 Angela 對話..." />
+          <button class="toolbar-btn" id="btn-send" title="Send">📤</button>
         </div>
+      </div>
 
-        <!-- 8-direction resize handles -->
-        <div class="resize-handle top"></div>
-        <div class="resize-handle bottom"></div>
-        <div class="resize-handle left"></div>
-        <div class="resize-handle right"></div>
-        <div class="resize-handle corner top-left"></div>
-        <div class="resize-handle corner top-right"></div>
-        <div class="resize-handle corner bottom-left"></div>
-        <div class="resize-handle corner bottom-right"></div>
+      <!-- 8-direction resize handles -->
+      <div class="resize-handle top"></div>
+      <div class="resize-handle bottom"></div>
+      <div class="resize-handle left"></div>
+      <div class="resize-handle right"></div>
+      <div class="resize-handle corner top-left"></div>
+      <div class="resize-handle corner top-right"></div>
+      <div class="resize-handle corner bottom-left"></div>
+      <div class="resize-handle corner bottom-right"></div>
     </div>
 
     <div id="status-bar"></div>
@@ -1166,207 +1199,269 @@
 
     <!-- ==================== Unified Shell ==================== -->
     <nav id="unified-nav">
-        <button data-panel="pet" class="active">🖼️ 寵物</button>
-        <button data-panel="chat">💬 對話</button>
-        <button data-panel="system">📊 系統</button>
-        <button data-panel="multimodal">🧠 多模態</button>
-        <button data-panel="game">🎮 遊戲</button>
-        <button data-panel="settings">⚙️ 設定</button>
-        <span id="unified-backend-state" class="unified-backend-state">Offline</span>
+      <button data-panel="pet" class="active">🖼️ 寵物</button>
+      <button data-panel="chat">💬 對話</button>
+      <button data-panel="system">📊 系統</button>
+      <button data-panel="multimodal">🧠 多模態</button>
+      <button data-panel="game">🎮 遊戲</button>
+      <button data-panel="settings">⚙️ 設定</button>
+      <span id="unified-backend-state" class="unified-backend-state">Offline</span>
     </nav>
 
     <!-- Pet Panel (Live2D Character View) -->
     <section class="shell-panel active" id="panel-pet">
-        <h2>🖼️ Angela</h2>
-        <div id="pet-canvas-container">
-            <canvas id="live2d-canvas"></canvas>
-        </div>
-        <div id="pet-status">
-            <span id="pet-mood">情緒: 平靜</span>
-            <span id="pet-energy">能量: 100%</span>
-        </div>
+      <h2>🖼️ Angela</h2>
+      <div id="pet-canvas-container">
+        <canvas id="live2d-canvas"></canvas>
+      </div>
+      <div id="pet-status">
+        <span id="pet-mood">情緒: 平靜</span>
+        <span id="pet-energy">能量: 100%</span>
+      </div>
     </section>
 
     <!-- Chat Panel -->
     <section class="shell-panel" id="panel-chat">
-        <h2>💬 與 Angela 對話</h2>
-        <div id="chat-messages"></div>
-        <div id="chat-input-row">
-            <input type="text" id="chat-input" placeholder="輸入訊息..." />
-            <button class="primary" id="btn-chat-send">Send</button>
-        </div>
+      <h2>💬 與 Angela 對話</h2>
+      <div id="chat-messages"></div>
+      <div id="chat-input-row">
+        <input type="text" id="chat-input" placeholder="輸入訊息..." />
+        <button class="primary" id="btn-chat-send">Send</button>
+      </div>
     </section>
 
     <!-- System Panel -->
     <section class="shell-panel" id="panel-system">
-        <h2>📊 系統監控</h2>
-        <div class="panel-card">
-            <div class="card-title">Backend</div>
-            <div class="metric-row"><span class="metric-label">Status</span><span id="sys-status">—</span></div>
-            <div class="metric-row"><span class="metric-label">Service</span><span id="sys-service">—</span></div>
-            <div class="metric-row"><span class="metric-label">CPU</span><span id="sys-cpu">—</span></div>
-            <div class="metric-row"><span class="metric-label">Memory</span><span id="sys-mem">—</span></div>
-            <div class="metric-row"><span class="metric-label">Disk</span><span id="sys-disk">—</span></div>
-            <div class="metric-row"><span class="metric-label">Cluster Nodes</span><span id="sys-nodes">—</span></div>
-            <div class="metric-row"><span class="metric-label">Perf Tier</span><span id="sys-tier">—</span></div>
-            <div class="metric-row"><span class="metric-label">AI Score</span><span id="sys-ai">—</span></div>
+      <h2>📊 系統監控</h2>
+      <div class="panel-card">
+        <div class="card-title">Backend</div>
+        <div class="metric-row">
+          <span class="metric-label">Status</span><span id="sys-status">—</span>
         </div>
+        <div class="metric-row">
+          <span class="metric-label">Service</span><span id="sys-service">—</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">CPU</span><span id="sys-cpu">—</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Memory</span><span id="sys-mem">—</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Disk</span><span id="sys-disk">—</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Cluster Nodes</span><span id="sys-nodes">—</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Perf Tier</span><span id="sys-tier">—</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">AI Score</span><span id="sys-ai">—</span>
+        </div>
+      </div>
     </section>
 
     <!-- Multimodal Panel -->
     <section class="shell-panel" id="panel-multimodal">
-        <div class="mm-header">
-            <h2 style="margin:0">🧠 Multimodal Panel</h2>
-            <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-dim)">
-                <span class="status-dot" id="mm-status-dot"></span>
-                <span id="mm-status-text">Disconnected</span>
+      <div class="mm-header">
+        <h2 style="margin: 0">🧠 Multimodal Panel</h2>
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-dim);
+          "
+        >
+          <span class="status-dot" id="mm-status-dot"></span>
+          <span id="mm-status-text">Disconnected</span>
+        </div>
+      </div>
+      <div class="mm-tab-bar">
+        <button class="mm-tab active" data-mm-tab="encode">🎯 Encode</button>
+        <button class="mm-tab" data-mm-tab="compare">🔗 Compare</button>
+        <button class="mm-tab" data-mm-tab="generate">✨ Generate</button>
+        <button class="mm-tab" data-mm-tab="quality">📊 Quality</button>
+      </div>
+      <div class="mm-tab-content active" id="mm-tab-encode">
+        <div class="mm-grid">
+          <div class="mm-card">
+            <div class="card-title">🖼️ Vision Encode</div>
+            <div class="mm-upload-zone" id="mm-vision-upload">
+              <div style="font-size: 24px">🖼️</div>
+              <div style="font-size: 12px; color: var(--text-dim)">Upload or drop image</div>
+              <input
+                type="file"
+                id="mm-vision-file"
+                accept="image/png,image/jpeg"
+                style="display: none"
+              />
             </div>
-        </div>
-        <div class="mm-tab-bar">
-            <button class="mm-tab active" data-mm-tab="encode">🎯 Encode</button>
-            <button class="mm-tab" data-mm-tab="compare">🔗 Compare</button>
-            <button class="mm-tab" data-mm-tab="generate">✨ Generate</button>
-            <button class="mm-tab" data-mm-tab="quality">📊 Quality</button>
-        </div>
-        <div class="mm-tab-content active" id="mm-tab-encode">
-            <div class="mm-grid">
-                <div class="mm-card">
-                    <div class="card-title">🖼️ Vision Encode</div>
-                    <div class="mm-upload-zone" id="mm-vision-upload">
-                        <div style="font-size:24px">🖼️</div>
-                        <div style="font-size:12px;color:var(--text-dim)">Upload or drop image</div>
-                        <input type="file" id="mm-vision-file" accept="image/png,image/jpeg" style="display:none">
-                    </div>
-                    <div class="mm-btn-group">
-                        <button class="primary" id="mm-btn-vision-encode">🔮 Encode</button>
-                        <button id="mm-btn-vision-decode">🔄 Decode</button>
-                    </div>
-                    <div id="mm-vision-preview"></div>
-                    <div class="mm-result" id="mm-vision-result"></div>
-                </div>
-                <div class="mm-card">
-                    <div class="card-title">🎵 Audio</div>
-                    <div class="mm-upload-zone" id="mm-audio-upload">
-                        <div style="font-size:24px">🎵</div>
-                        <div style="font-size:12px;color:var(--text-dim)">Upload WAV</div>
-                        <input type="file" id="mm-audio-file" accept="audio/wav" style="display:none">
-                    </div>
-                    <div style="text-align:center;margin-top:8px">
-                        <div class="record-btn" id="mm-record-btn"></div>
-                    </div>
-                    <div class="mm-btn-group">
-                        <button class="primary" id="mm-btn-audio-encode">🔮 Encode</button>
-                        <button id="mm-btn-audio-decode">🔄 Decode</button>
-                    </div>
-                    <div class="mm-result" id="mm-audio-result"></div>
-                </div>
-                <div class="mm-card" style="grid-column:1/-1">
-                    <div class="card-title">📋 Registered Items</div>
-                    <div id="mm-items-list" style="font-size:12px;color:var(--text-dim)">No items registered.</div>
-                    <div class="mm-btn-group">
-                        <button id="mm-btn-refresh">🔄 Refresh</button>
-                        <button id="mm-btn-clear">🗑️ Clear All</button>
-                    </div>
-                </div>
+            <div class="mm-btn-group">
+              <button class="primary" id="mm-btn-vision-encode">🔮 Encode</button>
+              <button id="mm-btn-vision-decode">🔄 Decode</button>
             </div>
-        </div>
-        <div class="mm-tab-content" id="mm-tab-compare">
-            <div class="mm-card">
-                <div class="card-title">🔗 Cross-Modal Comparison</div>
-                <div style="display:flex;gap:8px;flex-wrap:wrap">
-                    <select id="mm-compare-a" style="flex:1"><option value="">Item A...</option></select>
-                    <select id="mm-compare-b" style="flex:1"><option value="">Item B...</option></select>
-                    <button class="primary" id="mm-btn-compare">🔍 Compare</button>
-                </div>
-                <div class="mm-result" id="mm-compare-result"></div>
+            <div id="mm-vision-preview"></div>
+            <div class="mm-result" id="mm-vision-result"></div>
+          </div>
+          <div class="mm-card">
+            <div class="card-title">🎵 Audio</div>
+            <div class="mm-upload-zone" id="mm-audio-upload">
+              <div style="font-size: 24px">🎵</div>
+              <div style="font-size: 12px; color: var(--text-dim)">Upload WAV</div>
+              <input type="file" id="mm-audio-file" accept="audio/wav" style="display: none" />
             </div>
-        </div>
-        <div class="mm-tab-content" id="mm-tab-generate">
-            <div class="mm-card">
-                <div class="card-title">✨ Cross-Modal Generation</div>
-                <div style="display:flex;gap:8px;flex-wrap:wrap">
-                    <select id="mm-generate-source" style="flex:1"><option value="">Source...</option></select>
-                    <select id="mm-generate-target" style="flex:1">
-                        <option value="audio">→ Audio</option>
-                        <option value="vision">→ Vision</option>
-                    </select>
-                    <button class="primary" id="mm-btn-generate">✨ Generate</button>
-                </div>
-                <div class="mm-result" id="mm-generate-result"></div>
+            <div style="text-align: center; margin-top: 8px">
+              <div class="record-btn" id="mm-record-btn"></div>
             </div>
-        </div>
-        <div class="mm-tab-content" id="mm-tab-quality">
-            <div class="mm-grid">
-                <div class="mm-card">
-                    <div class="card-title">👁️ Vision</div>
-                    <div id="mm-quality">
-                        <div class="metric-row"><span class="metric-label">SSIM</span><span id="mm-q-ssim">—</span></div>
-                        <div class="metric-row"><span class="metric-label">PSNR</span><span id="mm-q-psnr">—</span></div>
-                        <div class="metric-row"><span class="metric-label">Calls</span><span id="mm-q-vision-calls">0</span></div>
-                    </div>
-                </div>
-                <div class="mm-card">
-                    <div class="card-title">🎵 Audio</div>
-                    <div class="metric-row"><span class="metric-label">SNR</span><span id="mm-q-snr">—</span></div>
-                    <div class="metric-row"><span class="metric-label">Calls</span><span id="mm-q-audio-calls">0</span></div>
-                </div>
-                <div class="mm-card" style="grid-column:1/-1">
-                    <div class="card-title">❤️ Overall Health</div>
-                    <div class="metric-row"><span class="metric-label">Health</span><span id="mm-q-health">—</span></div>
-                    <div class="metric-row"><span class="metric-label">Requests</span><span id="mm-q-requests">—</span></div>
-                    <button id="mm-btn-refresh-quality" style="margin-top:8px">🔄 Refresh</button>
-                </div>
+            <div class="mm-btn-group">
+              <button class="primary" id="mm-btn-audio-encode">🔮 Encode</button>
+              <button id="mm-btn-audio-decode">🔄 Decode</button>
             </div>
+            <div class="mm-result" id="mm-audio-result"></div>
+          </div>
+          <div class="mm-card" style="grid-column: 1/-1">
+            <div class="card-title">📋 Registered Items</div>
+            <div id="mm-items-list" style="font-size: 12px; color: var(--text-dim)">
+              No items registered.
+            </div>
+            <div class="mm-btn-group">
+              <button id="mm-btn-refresh">🔄 Refresh</button>
+              <button id="mm-btn-clear">🗑️ Clear All</button>
+            </div>
+          </div>
         </div>
+      </div>
+      <div class="mm-tab-content" id="mm-tab-compare">
+        <div class="mm-card">
+          <div class="card-title">🔗 Cross-Modal Comparison</div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap">
+            <select id="mm-compare-a" style="flex: 1">
+              <option value="">Item A...</option>
+            </select>
+            <select id="mm-compare-b" style="flex: 1">
+              <option value="">Item B...</option>
+            </select>
+            <button class="primary" id="mm-btn-compare">🔍 Compare</button>
+          </div>
+          <div class="mm-result" id="mm-compare-result"></div>
+        </div>
+      </div>
+      <div class="mm-tab-content" id="mm-tab-generate">
+        <div class="mm-card">
+          <div class="card-title">✨ Cross-Modal Generation</div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap">
+            <select id="mm-generate-source" style="flex: 1">
+              <option value="">Source...</option>
+            </select>
+            <select id="mm-generate-target" style="flex: 1">
+              <option value="audio">→ Audio</option>
+              <option value="vision">→ Vision</option>
+            </select>
+            <button class="primary" id="mm-btn-generate">✨ Generate</button>
+          </div>
+          <div class="mm-result" id="mm-generate-result"></div>
+        </div>
+      </div>
+      <div class="mm-tab-content" id="mm-tab-quality">
+        <div class="mm-grid">
+          <div class="mm-card">
+            <div class="card-title">👁️ Vision</div>
+            <div id="mm-quality">
+              <div class="metric-row">
+                <span class="metric-label">SSIM</span><span id="mm-q-ssim">—</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-label">PSNR</span><span id="mm-q-psnr">—</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-label">Calls</span><span id="mm-q-vision-calls">0</span>
+              </div>
+            </div>
+          </div>
+          <div class="mm-card">
+            <div class="card-title">🎵 Audio</div>
+            <div class="metric-row">
+              <span class="metric-label">SNR</span><span id="mm-q-snr">—</span>
+            </div>
+            <div class="metric-row">
+              <span class="metric-label">Calls</span><span id="mm-q-audio-calls">0</span>
+            </div>
+          </div>
+          <div class="mm-card" style="grid-column: 1/-1">
+            <div class="card-title">❤️ Overall Health</div>
+            <div class="metric-row">
+              <span class="metric-label">Health</span><span id="mm-q-health">—</span>
+            </div>
+            <div class="metric-row">
+              <span class="metric-label">Requests</span><span id="mm-q-requests">—</span>
+            </div>
+            <button id="mm-btn-refresh-quality" style="margin-top: 8px">🔄 Refresh</button>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- Game Panel -->
     <section class="shell-panel" id="panel-game">
-        <h2>🎮 遊戲</h2>
+      <h2>🎮 遊戲</h2>
+      <div class="panel-card">
+        <div class="card-title">World</div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap">
+          <select id="game-world" style="flex: 1"></select>
+          <select id="game-character" style="flex: 1"></select>
+          <button class="primary" id="btn-game-start">▶ 開始遊戲</button>
+          <button id="btn-game-new">🔄 New</button>
+        </div>
+      </div>
+      <div id="game-state">
         <div class="panel-card">
-            <div class="card-title">World</div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-                <select id="game-world" style="flex:1"></select>
-                <select id="game-character" style="flex:1"></select>
-                <button class="primary" id="btn-game-start">▶ 開始遊戲</button>
-                <button id="btn-game-new">🔄 New</button>
-            </div>
+          <div class="card-title" id="game-scene-title">未開始</div>
+          <div id="game-console"></div>
+          <div id="game-choices"></div>
+          <div id="game-act-row">
+            <input
+              type="text"
+              id="game-act-input"
+              placeholder="輸入指令（如 attack / 看 / 休息...）"
+            />
+            <button id="btn-game-act">➤</button>
+          </div>
         </div>
-        <div id="game-state">
-            <div class="panel-card">
-                <div class="card-title" id="game-scene-title">未開始</div>
-                <div id="game-console"></div>
-                <div id="game-choices"></div>
-                <div id="game-act-row">
-                    <input type="text" id="game-act-input" placeholder="輸入指令（如 attack / 看 / 休息...）" />
-                    <button id="btn-game-act">➤</button>
-                </div>
-            </div>
-        </div>
+      </div>
     </section>
 
     <!-- Settings Panel -->
     <section class="shell-panel" id="panel-settings">
-        <h2>⚙️ 設定</h2>
-        <div class="panel-card">
-            <div class="card-title">Backend</div>
-            <div style="display:flex;gap:8px;margin-bottom:8px">
-                <input type="text" id="settings-backend-ip" placeholder="http://localhost:8000" style="flex:1" />
-                <button class="primary" id="btn-settings-save-ip">Save</button>
-            </div>
-            <div class="metric-row"><span class="metric-label">Current IP</span><span id="settings-current-ip">—</span></div>
+      <h2>⚙️ 設定</h2>
+      <div class="panel-card">
+        <div class="card-title">Backend</div>
+        <div style="display: flex; gap: 8px; margin-bottom: 8px">
+          <input
+            type="text"
+            id="settings-backend-ip"
+            placeholder="http://localhost:8000"
+            style="flex: 1"
+          />
+          <button class="primary" id="btn-settings-save-ip">Save</button>
         </div>
-        <div class="panel-card">
-            <div class="card-title">Render</div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-                <select id="settings-render-mode">
-                    <option value="auto">Auto</option>
-                    <option value="live2d">Live2D</option>
-                    <option value="fallback">Fallback 2D</option>
-                </select>
-                <button id="btn-settings-apply-render">Apply & Reload</button>
-            </div>
+        <div class="metric-row">
+          <span class="metric-label">Current IP</span><span id="settings-current-ip">—</span>
         </div>
+      </div>
+      <div class="panel-card">
+        <div class="card-title">Render</div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap">
+          <select id="settings-render-mode">
+            <option value="auto">Auto</option>
+            <option value="live2d">Live2D</option>
+            <option value="fallback">Fallback 2D</option>
+          </select>
+          <button id="btn-settings-apply-render">Apply & Reload</button>
+        </div>
+      </div>
     </section>
 
     <!-- Live2D Cubism Web SDK -->
@@ -1377,15 +1472,15 @@
     <!-- Fallback Local SDK -->
     <script src="libs/live2d-fallback.js?v=3"></script>
     <script>
-        console.log('[Init] Checking Live2D SDK status...');
-        console.log('[Init] window.Live2DCubismCore:', typeof window.Live2DCubismCore);
-        // 如果 CDN 加载失败，使用本地 fallback
-        if (typeof window.Live2DCubismCore === 'undefined') {
-            console.log('[Init] CDN failed, using local fallback SDK');
-            window.loadLocalLive2DSDK();
-        } else {
-            console.log('[Init] CDN loaded successfully');
-        }
+      console.log('[Init] Checking Live2D SDK status...')
+      console.log('[Init] window.Live2DCubismCore:', typeof window.Live2DCubismCore)
+      // 如果 CDN 加载失败，使用本地 fallback
+      if (typeof window.Live2DCubismCore === 'undefined') {
+        console.log('[Init] CDN failed, using local fallback SDK')
+        window.loadLocalLive2DSDK()
+      } else {
+        console.log('[Init] CDN loaded successfully')
+      }
     </script>
 
     <!-- Hardware Detection -->
@@ -1393,10 +1488,10 @@
     <script src="js/hardware-detection.js?v=3"></script>
 
     <script src="../../packages/shared-js/js/index.js"></script>
-<!-- Centralized Configuration & Profile -->
+    <!-- Centralized Configuration & Profile -->
     <script src="../../packages/shared-js/js/settings-manager.js"></script>
     <script src="../../packages/shared-js/js/system-profile.js"></script>
-<!-- Security Utils -->
+    <!-- Security Utils -->
     <script src="../../packages/shared-js/js/security-utils.js"></script>
     <script src="js/storage-manager.js?v=3"></script>
 
@@ -1467,70 +1562,71 @@
 
     <!-- Initialize Angela App -->
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            console.log('[App] Starting Angela App initialization...');
-            // Mock Electron API for web environment
-            window.electronAPI = {
-                settings: {
-                    open: () => console.log('Settings opened (web mock)')
-                },
-                window: {
-                    minimize: () => console.log('Window minimized (web mock)'),
-                    maximize: () => console.log('Window maximized (web mock)'),
-                    close: () => console.log('Window closed (web mock)'),
-                    setBounds: (bounds) => console.log('Window setBounds (web mock):', bounds),
-                    setAlwaysOnTop: (flag) => console.log('Window setAlwaysOnTop (web mock):', flag),
-                    setIgnoreMouseEvents: (ignore, options) => console.log('Window setIgnoreMouseEvents (web mock):', ignore, options),
-                    setClickThroughRegions: (regions) => console.log('Mock setClickThroughRegions:', regions)
-                },
-                security: {
-                    init: async (keyC) => {
-                        console.log('Security (web mock) initialized with key:', keyC);
-                        return { success: true };
-                    }
-                },
-                on: (channel, callback) => {
-                    console.log(`ElectronAPI.on called for channel: ${channel} (web mock)`);
-                },
-                platform: 'web',
-                hardware: {
-                    getDiagnostics: async () => ({ status: 'mock' })
-                }
-            };
-            window.angelaApp = new AngelaApp();
-            _initTerminal();
-        });
-
-        function _initTerminal() {
-            const app = window.angelaApp;
-            if (!app) return;
-
-            const terminal = new TerminalUI({
-                onSend: (text) => {
-                    if (app.backendWebSocket && app.backendWebSocket.connected) {
-                        app.backendWebSocket.sendMessage(text);
-                    } else if (app.apiClient) {
-                        app.apiClient.sendMessage(text).then(r => {
-                            if (r && r.response) terminal.writeResponse(r.response);
-                        });
-                    }
-                }
-            });
-            terminal.registerGlobalShortcut();
-            window._terminal = terminal;
-
-            if (app.backendWebSocket) {
-                app.backendWebSocket.on('angela_response', (data) => {
-                    if (data && data.response) terminal.writeResponse(data.response);
-                });
-            }
-
-            const btn = document.getElementById('btn-terminal');
-            if (btn) btn.addEventListener('click', () => terminal.toggle());
-
-            terminal.writeSystem('Terminal ready. Press Ctrl+` to toggle.');
+      document.addEventListener('DOMContentLoaded', function () {
+        console.log('[App] Starting Angela App initialization...')
+        // Mock Electron API for web environment
+        window.electronAPI = {
+          settings: {
+            open: () => console.log('Settings opened (web mock)'),
+          },
+          window: {
+            minimize: () => console.log('Window minimized (web mock)'),
+            maximize: () => console.log('Window maximized (web mock)'),
+            close: () => console.log('Window closed (web mock)'),
+            setBounds: (bounds) => console.log('Window setBounds (web mock):', bounds),
+            setAlwaysOnTop: (flag) => console.log('Window setAlwaysOnTop (web mock):', flag),
+            setIgnoreMouseEvents: (ignore, options) =>
+              console.log('Window setIgnoreMouseEvents (web mock):', ignore, options),
+            setClickThroughRegions: (regions) =>
+              console.log('Mock setClickThroughRegions:', regions),
+          },
+          security: {
+            init: async (keyC) => {
+              console.log('Security (web mock) initialized with key:', keyC)
+              return { success: true }
+            },
+          },
+          on: (channel, callback) => {
+            console.log(`ElectronAPI.on called for channel: ${channel} (web mock)`)
+          },
+          platform: 'web',
+          hardware: {
+            getDiagnostics: async () => ({ status: 'mock' }),
+          },
         }
-    </script>
-</body>
+        window.angelaApp = new AngelaApp()
+        _initTerminal()
+      })
 
+      function _initTerminal() {
+        const app = window.angelaApp
+        if (!app) return
+
+        const terminal = new TerminalUI({
+          onSend: (text) => {
+            if (app.backendWebSocket && app.backendWebSocket.connected) {
+              app.backendWebSocket.sendMessage(text)
+            } else if (app.apiClient) {
+              app.apiClient.sendMessage(text).then((r) => {
+                if (r && r.response) terminal.writeResponse(r.response)
+              })
+            }
+          },
+        })
+        terminal.registerGlobalShortcut()
+        window._terminal = terminal
+
+        if (app.backendWebSocket) {
+          app.backendWebSocket.on('angela_response', (data) => {
+            if (data && data.response) terminal.writeResponse(data.response)
+          })
+        }
+
+        const btn = document.getElementById('btn-terminal')
+        if (btn) btn.addEventListener('click', () => terminal.toggle())
+
+        terminal.writeSystem('Terminal ready. Press Ctrl+` to toggle.')
+      }
+    </script>
+  </body>
 </html>

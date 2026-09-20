@@ -4,13 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       resume:
-        description: 'Resume from last checkpoint'
+        description: "Resume from last checkpoint"
         type: boolean
         default: true
       preset:
-        description: 'Training preset name'
+        description: "Training preset name"
         type: string
-        default: 'quick_start'
+        default: "quick_start"
 
 permissions:
   contents: read
@@ -26,7 +26,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: '3.10'
+          python-version: "3.10"
 
       - name: Install dependencies
         shell: bash

@@ -1,6 +1,7 @@
 # Angela AI - Luanti 遊戲代理實作計畫
 
-> **目標**：讓 Angela 在無 LLM 情況下以 20 FPS 玩 Luanti (Minetest)，支援基礎移動、挖掘、合成、戰鬥、長期規劃與異常恢復。
+> **目標**：讓 Angela 在無 LLM 情況下以 20 FPS 玩 Luanti
+> (Minetest)，支援基礎移動、挖掘、合成、戰鬥、長期規劃與異常恢復。
 
 ---
 
@@ -41,13 +42,14 @@
 
 ### Phase 1: 視覺採樣與連接器 (Week 1-2)
 
-| 檔案 | 功能 | 關鍵介面 |
-|------|------|----------|
-| `apps/backend/src/ai/multimodal/foveated_sampler.py` | 固定預算非均勻採樣 (Log-polar / Deformable mesh) | `sample(frame, focus_xy) -> (tensor, inverse_map)` |
-| `apps/backend/src/integrations/luanti_connector.py` | Luanti WebSocket 連線、畫面抓取、指令下發 | `connect()`, `get_frame()`, `send_action(action)` |
-| `apps/backend/src/ai/multimodal/game_policy.py` | L0 Policy: Continuous Action Head + Visual Grounding | `forward(latent) -> (continuous, discrete, heatmap)` |
+| 檔案                                                 | 功能                                                 | 關鍵介面                                             |
+| ---------------------------------------------------- | ---------------------------------------------------- | ---------------------------------------------------- |
+| `apps/backend/src/ai/multimodal/foveated_sampler.py` | 固定預算非均勻採樣 (Log-polar / Deformable mesh)     | `sample(frame, focus_xy) -> (tensor, inverse_map)`   |
+| `apps/backend/src/integrations/luanti_connector.py`  | Luanti WebSocket 連線、畫面抓取、指令下發            | `connect()`, `get_frame()`, `send_action(action)`    |
+| `apps/backend/src/ai/multimodal/game_policy.py`      | L0 Policy: Continuous Action Head + Visual Grounding | `forward(latent) -> (continuous, discrete, heatmap)` |
 
 **測試標準**：
+
 - [ ] 連線 Luanti 本地伺服器成功
 - [ ] 20 FPS 穩定抓取畫面
 - [ ] Foveated sampling 輸出固定 shape (64, 64, 3)
@@ -57,13 +59,14 @@
 
 ### Phase 2: 技能基元與任務執行 (Week 2-3)
 
-| 檔案 | 功能 | 關鍵介面 |
-|------|------|----------|
-| `apps/backend/src/ai/multimodal/game_skills.py` | 技能規格定義 (move, dig, place, craft, combat) | `GAME_SKILLS: Dict[str, SkillSpec]` |
-| `apps/backend/src/ai/multimodal/skill_selector.py` | L1: 根據 latent + context 選技能 + 參數化 | `select(latent, context) -> SkillParams` |
-| `apps/backend/src/ai/multimodal/game_task_executor.py` | L2: 狀態機 + 子目標隊列 + 卡住檢測 | `tick(skill_result) -> Optional[SkillContext]` |
+| 檔案                                                   | 功能                                           | 關鍵介面                                       |
+| ------------------------------------------------------ | ---------------------------------------------- | ---------------------------------------------- |
+| `apps/backend/src/ai/multimodal/game_skills.py`        | 技能規格定義 (move, dig, place, craft, combat) | `GAME_SKILLS: Dict[str, SkillSpec]`            |
+| `apps/backend/src/ai/multimodal/skill_selector.py`     | L1: 根據 latent + context 選技能 + 參數化      | `select(latent, context) -> SkillParams`       |
+| `apps/backend/src/ai/multimodal/game_task_executor.py` | L2: 狀態機 + 子目標隊列 + 卡住檢測             | `tick(skill_result) -> Optional[SkillContext]` |
 
 **測試標準**：
+
 - [ ] 技能庫覆蓋：move, dig, place, craft, combat
 - [ ] 技能選擇準確率 > 90% (模擬環境)
 - [ ] 任務執行器能完成「收集 3 圓石 → 合成石鎬」流程
@@ -73,13 +76,14 @@
 
 ### Phase 3: 規劃與記憶整合 (Week 3-4)
 
-| 檔案 | 功能 | 關鍵介面 |
-|------|------|----------|
-| `apps/backend/src/ai/multimodal/game_planner.py` | L3: 目標分解 DAG + 前置條件 + LLM 非同步客戶端 | `propose_plan(goal) -> PlanDAG`, `replan(blocker)` |
-| `apps/backend/src/ai/multimodal/game_memory_bridge.py` | HAM 記憶查詢適配 (配方、經驗、位置) | `query_recipes()`, `recall_location()`, `store_experience()` |
-| `apps/backend/src/ai/multimodal/llm_game_interface.py` | LLM 非同步介面：結構化輸出、超時控制 | `apropose_plan()`, `adiagnose_anomaly()` |
+| 檔案                                                   | 功能                                           | 關鍵介面                                                     |
+| ------------------------------------------------------ | ---------------------------------------------- | ------------------------------------------------------------ |
+| `apps/backend/src/ai/multimodal/game_planner.py`       | L3: 目標分解 DAG + 前置條件 + LLM 非同步客戶端 | `propose_plan(goal) -> PlanDAG`, `replan(blocker)`           |
+| `apps/backend/src/ai/multimodal/game_memory_bridge.py` | HAM 記憶查詢適配 (配方、經驗、位置)            | `query_recipes()`, `recall_location()`, `store_experience()` |
+| `apps/backend/src/ai/multimodal/llm_game_interface.py` | LLM 非同步介面：結構化輸出、超時控制           | `apropose_plan()`, `adiagnose_anomaly()`                     |
 
 **測試標準**：
+
 - [ ] 能分解「建造石頭房子」為 10+ 子目標 DAG
 - [ ] HAM 記憶能查詢合成表、資源分布
 - [ ] LLM 非同步呼叫不阻塞主循環
@@ -89,13 +93,14 @@
 
 ### Phase 4: 元策略與端到端測試 (Week 4-5)
 
-| 檔案 | 功能 | 關鍵介面 |
-|------|------|----------|
-| `apps/backend/src/ai/multimodal/game_strategy.py` | L4: 長期統計、策略權重、探索/利用平衡 | `update_stats()`, `get_directive()` |
-| `apps/backend/src/ai/multimodal/game_agent.py` | 主控制器：串聯 L0-L4、主循環、生命週期 | `run()`, `step()`, `shutdown()` |
-| `configs/standard/game.default.yaml` | 遊戲啟用配置 | `enabled: true`, luanti 連線參數 |
+| 檔案                                              | 功能                                   | 關鍵介面                            |
+| ------------------------------------------------- | -------------------------------------- | ----------------------------------- |
+| `apps/backend/src/ai/multimodal/game_strategy.py` | L4: 長期統計、策略權重、探索/利用平衡  | `update_stats()`, `get_directive()` |
+| `apps/backend/src/ai/multimodal/game_agent.py`    | 主控制器：串聯 L0-L4、主循環、生命週期 | `run()`, `step()`, `shutdown()`     |
+| `configs/standard/game.default.yaml`              | 遊戲啟用配置                           | `enabled: true`, luanti 連線參數    |
 
 **測試標準 (端到端)**：
+
 - [ ] **生存測試**：新世界生存 30 分鐘不死、有食物、有工具
 - [ ] **進度測試**：10 分鐘內完成「木工具 → 石工具 → 鐵工具」進度
 - [ ] **建築測試**：能按規劃建造 5x5x3 簡易庇護所
@@ -237,15 +242,15 @@ class StrategyAdjustment(BaseModel):
 
 class LLMGameInterface:
     """非阻塞 LLM 介面，所有呼叫均為 async、帶超時、有 fallback"""
-    
+
     async def apropose_plan(self, ctx: PlanContext) -> PlanProposal:
         """L3 呼叫：制定多步驟計劃"""
         ...
-    
+
     async def adiagnose_anomaly(self, ctx: AnomalyContext) -> RecoveryStrategy:
         """L2/L3 卡住時呼叫：診斷並給恢復策略"""
         ...
-    
+
     async def aevaluate_strategy(self, ctx: StrategyContext) -> StrategyAdjustment:
         """L4 定期呼叫：長期策略調整"""
         ...
@@ -258,59 +263,59 @@ class LLMGameInterface:
 ```yaml
 # configs/standard/game.default.yaml
 game:
-  enabled: false  # 預設關閉，需手動開啟
-  
+  enabled: false # 預設關閉，需手動開啟
+
   luanti:
-    host: "localhost"
+    host: 'localhost'
     port: 30000
-    password: ""
-    protocol_version: 39  # Minetest 5.8+
+    password: ''
+    protocol_version: 39 # Minetest 5.8+
     auto_reconnect: true
     reconnect_interval: 5
-  
+
   vision:
-    budget_pixels: 83000      # 1/25 of 1920x1080 ≈ 82944
-    fovea_ratio: 0.7          # 70% 預算給焦點區
-    fovea_radius_px: 160      # 焦點半徑 (原圖座標)
-    sampling_strategy: "log_polar"  # "log_polar" | "deformable" | "quadtree"
+    budget_pixels: 83000 # 1/25 of 1920x1080 ≈ 82944
+    fovea_ratio: 0.7 # 70% 預算給焦點區
+    fovea_radius_px: 160 # 焦點半徑 (原圖座標)
+    sampling_strategy: 'log_polar' # "log_polar" | "deformable" | "quadtree"
     fps: 20
-    input_size: [64, 64]      # 送入 encoder 的固定尺寸
-  
+    input_size: [64, 64] # 送入 encoder 的固定尺寸
+
   policy:
     latent_dim: 128
-    continuous_dim: 16        # move(3) + look(2) + dig(2) + place(2) + craft(0) + combat(3) + navigate(2) + eat(0) + build(2)
-    discrete_dim: 8           # attack, use, jump, sprint, sneak, inventory, craft_grid, craft_output
+    continuous_dim: 16 # move(3) + look(2) + dig(2) + place(2) + craft(0) + combat(3) + navigate(2) + eat(0) + build(2)
+    discrete_dim: 8 # attack, use, jump, sprint, sneak, inventory, craft_grid, craft_output
     hidden_dim: 256
-    diffusion_steps: 4        # Diffusion Policy 步數
+    diffusion_steps: 4 # Diffusion Policy 步數
     use_diffusion: true
-  
+
   skills:
-    move_speed: 4.5           # 節點/秒
-    dig_range: 4.0            # 挖掘距離
+    move_speed: 4.5 # 節點/秒
+    dig_range: 4.0 # 挖掘距離
     place_range: 4.0
     combat_range: 3.0
-    eat_threshold: 0.3        # hunger < 30% 才吃
-  
+    eat_threshold: 0.3 # hunger < 30% 才吃
+
   task:
-    stuck_threshold_ticks: 600    # 30s 無進展視為卡住
+    stuck_threshold_ticks: 600 # 30s 無進展視為卡住
     max_subgoal_retries: 3
     fallback_timeout_ticks: 3000
-  
+
   planner:
     max_plan_depth: 10
     max_subgoals_per_plan: 20
     replan_on_blocker: true
     llm_timeout_sec: 5.0
-  
+
   memory:
     ham_recall_limit: 20
     experience_decay_days: 7
     spatial_index_radius: 100
-  
+
   llm:
     enabled: true
-    model: "qwen2.5:7b"  # 本地模型優先
-    base_url: "http://localhost:11434/v1"
+    model: 'qwen2.5:7b' # 本地模型優先
+    base_url: 'http://localhost:11434/v1'
     timeout_sec: 10.0
     max_concurrent: 2
 ```
@@ -346,13 +351,13 @@ python -m apps.backend.src.ai.multimodal.game_agent --config configs/standard/ga
 
 ## 7. 進度追蹤
 
-| 階段 | 狀態 | 開始日期 | 完成日期 | 備註 |
-|------|------|----------|----------|------|
-| Phase 1: 視覺採樣與連接器 | ✅ 完成 (2026-09-20) | 2026-09-19 | 2026-09-20 | foveated_sampler + polling bridge 實測通過 |
+| 階段                        | 狀態                 | 開始日期   | 完成日期   | 備註                                          |
+| --------------------------- | -------------------- | ---------- | ---------- | --------------------------------------------- |
+| Phase 1: 視覺採樣與連接器   | ✅ 完成 (2026-09-20) | 2026-09-19 | 2026-09-20 | foveated_sampler + polling bridge 實測通過    |
 | Phase 2: 技能基元與任務執行 | ✅ 完成 (2026-09-20) | 2026-09-20 | 2026-09-20 | 9 技能 + 狀態機 + 卡住/超時/跳過，36 測試全過 |
-| Phase 3: 規劃與記憶整合 | ✅ 完成 (2026-09-20) | 2026-09-20 | 2026-09-20 | 規則規劃 + 真實 HAM + LLM fallback |
-| Phase 4: 元策略與端到端 | ✅ 完成 (2026-09-20) | 2026-09-20 | 2026-09-20 | 策略權重 + 活體 Luanti 驗證 (chat 到達遊戲) |
-| 文檔更新 | ✅ 本次同步 | - | 2026-09-20 | 誠實狀態表見 §10 |
+| Phase 3: 規劃與記憶整合     | ✅ 完成 (2026-09-20) | 2026-09-20 | 2026-09-20 | 規則規劃 + 真實 HAM + LLM fallback            |
+| Phase 4: 元策略與端到端     | ✅ 完成 (2026-09-20) | 2026-09-20 | 2026-09-20 | 策略權重 + 活體 Luanti 驗證 (chat 到達遊戲)   |
+| 文檔更新                    | ✅ 本次同步          | -          | 2026-09-20 | 誠實狀態表見 §10                              |
 
 ---
 
@@ -360,48 +365,48 @@ python -m apps.backend.src.ai.multimodal.game_agent --config configs/standard/ga
 
 > 原則：只寫驗證過的；stub 明確標出，不宣稱。
 
-| 能力 | 狀態 | 證據 |
-|------|------|------|
-| Foveated 採樣 (log-polar/deformable/quadtree/uniform) | ✅ 真實 | 單元測試 4/4，固定輸出 shape |
-| Continuous policy + grounding head (numpy/MLP) | ✅ 真實 | 前向 <5ms，整合測試通過 |
-| 9 技能選擇 + 前置條件 + 參數化 | ✅ 真實 | 整合測試，live 吃到 dig/move |
-| 任務狀態機 + 超時重試 + 卡住跳過 | ✅ 真實 | live：eat blocked 10 ticks → skip → craft → dig |
-| 規則規劃 DAG + 拓撲驗證 | ✅ 真實 | survival 3 subgoals，live 產出 |
-| HAM 持久記憶 (store + recall) | ✅ 真實 | `ham_game_memory.json`，非 Mock |
-| EmotionSystem / AutonomousLifeCycle 回饋 | ✅ 真實 | 每 100 tick 按任務成敗餵入 |
-| LLM 非同步規劃 + 超時 fallback | ✅ 真實 | fallback 實測；LLM 本體為本地 llama.cpp（:8080），規劃/診斷/對話皆可走真模型 |
-| Polling bridge ↔ Luanti 雙向 | ✅ 真實 | live：server poll + `AngelaBot digs` + 遊戲內 chat 可見 |
-| skill_result 閉環 | ✅ 真實 | 背包差分推導，不再恆 None |
-| 識別：截窗視覺（GameVision→encoder） | ✅ 真實 | `_capture_screen_vision` 先 `select_source()`（無遊戲窗自動退整屏，R71b 修復）→節流截幀→recognize→`current_state.visual` 真實像素特徵；只截圖不動鏡頭；失敗靜默降級 None；591 multimodal 測試過 |
-| 識別：世界語義（raycast scan/vision） | ✅ 真實 | poller 射線/掃描結果即時入空間記憶（`observe_world`，vision 帶 `pointed.under` 世界座標）；此前只被行為閉環短暫消費 |
-| `/api/frame` 畫面來源 | ⚠️ 不再依賴 | stub 保留但非視覺來源；畫面改由 pyautogui 截窗（GameVision.capture，有遊戲窗截窗否則整屏） |
-| 記憶：空間記憶持久化 | ✅ 真實 | `save_spatial/load_spatial`（JSON 原子寫）；啟動載入、cleanup＋每 600 tick 週期存檔（crash-safe）；逐行容錯＋相容舊格式；上限 2000 地點防洩漏；R71b 審查後 591 multimodal 測試過 |
-| 記憶：觀察入 HAM episodic | ✅ 真實 | 每 300 tick 將「在哪看到什麼」（scan/vision，過濾空氣，同點去重）寫 episodic；recall 可回「之前在東邊看過一棵樹」 |
-| 自主性：好奇探索 | ✅ 真實（語意已修正） | `find_unexplored` 取「看過但久未親訪」的點 → goto 重訪；`last_seen`（看到）/`last_visited`（親訪）分離——R71b 修復「站著盯著的點永不會被選」因果顛倒；goto 到場 `mark_visited`；live 待玩家在線驗 |
-| poller `craft` 動作 | ✅ 真實 | live 驗證：wood×4 → craft stick → wood×2 + stick×4，`crafted stick for AngelaBot` 留痕；material 不足/無配方 log 失敗不當機 |
-| poller `place` 動作 | ✅ 真實 | live 驗證：cobble×8 → place → cobble×7，`placed default:cobble at (2,6,65)`；look 優先＋鄰格 fallback（空氣＋實心支撐），手牌空時 auto-wield 背包第一個可放方塊；無格/無料 log 失敗不當機 |
-| poller `give` 後門 | ✅ 已上鎖 | `agent_poller_allow_give` 預設 false（拒絕＋warning）；測試環境 minetest.conf 顯式開啟 |
-| poller `move` 步進＋撞牆轉彎 | ✅ 真實 | live：`(0.6,4.5,64.9)→(2.6,4.5,66.2)`；移動是客戶端權威所以 server 側步進（1.5m/格，碰撞感知）；被擋轉 45° |
-| 身體反射層（poller per-poll，只感受身體） | ⚠️ 半驗 | 缺氧上浮＋灼傷脫離＋滯空凍結＋撞牆轉彎；觸發全是 body-state（breath/hp/y），水深檢查／視線轉彎兩版錯層已刪；待玩家重生後 live 驗 |
-| 本地 LLM（Qwen2.5-1.5B-Q4，:8080） | ✅ 真實 | 全離線；`llama_cpp.server`；中文回覆＋JSON 編排 live 驗證；依賴 `localllm` extra 已宣告 |
-| 行為庫 game_behaviors（7 行為） | ✅ 真實 | walk/turn/dig_burst/place_one/look_scan/speak/wait；LLM compose＋adjust；20 測試；live：「幫我挖」→dig_burst→無拾取→自動改參數重試 |
-| 遊戲對話閉環（聽→回→做＋記憶） | ✅ 真實 | poller 擷取→bridge /api/chat→LLM 回覆＋行為→HAM 記憶；bridge 端到端驗證；遊戲內送達待玩家在線驗 |
-| 名稱斷層修復（itemstring↔短名） | ✅ 真實 | `ITEM_ALIASES`＋`normalize_inventory`；此前可合成判斷＋完成檢測全錯；單元測試覆蓋 |
-| L1 craft 節制（做不出就不排） | ✅ 真實 | 無材料時 abstain（此前每 2s 空轉刷屏）；單元測試覆蓋，live 待驗 |
-| Policy 權重訓練 (BC/RL) | ❌ 未做 | 現為 Xavier 初始化，動作笨拙屬實 |
-| 20 FPS 閉環 | ❌ 未達 | agent 10Hz + poller 2s；截窗視覺已補上幀源（pyautogui），仍需降級策略達 20 FPS |
+| 能力                                                  | 狀態                  | 證據                                                                                                                                                                                             |
+| ----------------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Foveated 採樣 (log-polar/deformable/quadtree/uniform) | ✅ 真實               | 單元測試 4/4，固定輸出 shape                                                                                                                                                                     |
+| Continuous policy + grounding head (numpy/MLP)        | ✅ 真實               | 前向 <5ms，整合測試通過                                                                                                                                                                          |
+| 9 技能選擇 + 前置條件 + 參數化                        | ✅ 真實               | 整合測試，live 吃到 dig/move                                                                                                                                                                     |
+| 任務狀態機 + 超時重試 + 卡住跳過                      | ✅ 真實               | live：eat blocked 10 ticks → skip → craft → dig                                                                                                                                                  |
+| 規則規劃 DAG + 拓撲驗證                               | ✅ 真實               | survival 3 subgoals，live 產出                                                                                                                                                                   |
+| HAM 持久記憶 (store + recall)                         | ✅ 真實               | `ham_game_memory.json`，非 Mock                                                                                                                                                                  |
+| EmotionSystem / AutonomousLifeCycle 回饋              | ✅ 真實               | 每 100 tick 按任務成敗餵入                                                                                                                                                                       |
+| LLM 非同步規劃 + 超時 fallback                        | ✅ 真實               | fallback 實測；LLM 本體為本地 llama.cpp（:8080），規劃/診斷/對話皆可走真模型                                                                                                                     |
+| Polling bridge ↔ Luanti 雙向                          | ✅ 真實               | live：server poll + `AngelaBot digs` + 遊戲內 chat 可見                                                                                                                                          |
+| skill_result 閉環                                     | ✅ 真實               | 背包差分推導，不再恆 None                                                                                                                                                                        |
+| 識別：截窗視覺（GameVision→encoder）                  | ✅ 真實               | `_capture_screen_vision` 先 `select_source()`（無遊戲窗自動退整屏，R71b 修復）→節流截幀→recognize→`current_state.visual` 真實像素特徵；只截圖不動鏡頭；失敗靜默降級 None；591 multimodal 測試過  |
+| 識別：世界語義（raycast scan/vision）                 | ✅ 真實               | poller 射線/掃描結果即時入空間記憶（`observe_world`，vision 帶 `pointed.under` 世界座標）；此前只被行為閉環短暫消費                                                                              |
+| `/api/frame` 畫面來源                                 | ⚠️ 不再依賴           | stub 保留但非視覺來源；畫面改由 pyautogui 截窗（GameVision.capture，有遊戲窗截窗否則整屏）                                                                                                       |
+| 記憶：空間記憶持久化                                  | ✅ 真實               | `save_spatial/load_spatial`（JSON 原子寫）；啟動載入、cleanup＋每 600 tick 週期存檔（crash-safe）；逐行容錯＋相容舊格式；上限 2000 地點防洩漏；R71b 審查後 591 multimodal 測試過                 |
+| 記憶：觀察入 HAM episodic                             | ✅ 真實               | 每 300 tick 將「在哪看到什麼」（scan/vision，過濾空氣，同點去重）寫 episodic；recall 可回「之前在東邊看過一棵樹」                                                                                |
+| 自主性：好奇探索                                      | ✅ 真實（語意已修正） | `find_unexplored` 取「看過但久未親訪」的點 → goto 重訪；`last_seen`（看到）/`last_visited`（親訪）分離——R71b 修復「站著盯著的點永不會被選」因果顛倒；goto 到場 `mark_visited`；live 待玩家在線驗 |
+| poller `craft` 動作                                   | ✅ 真實               | live 驗證：wood×4 → craft stick → wood×2 + stick×4，`crafted stick for AngelaBot` 留痕；material 不足/無配方 log 失敗不當機                                                                      |
+| poller `place` 動作                                   | ✅ 真實               | live 驗證：cobble×8 → place → cobble×7，`placed default:cobble at (2,6,65)`；look 優先＋鄰格 fallback（空氣＋實心支撐），手牌空時 auto-wield 背包第一個可放方塊；無格/無料 log 失敗不當機        |
+| poller `give` 後門                                    | ✅ 已上鎖             | `agent_poller_allow_give` 預設 false（拒絕＋warning）；測試環境 minetest.conf 顯式開啟                                                                                                           |
+| poller `move` 步進＋撞牆轉彎                          | ✅ 真實               | live：`(0.6,4.5,64.9)→(2.6,4.5,66.2)`；移動是客戶端權威所以 server 側步進（1.5m/格，碰撞感知）；被擋轉 45°                                                                                       |
+| 身體反射層（poller per-poll，只感受身體）             | ⚠️ 半驗               | 缺氧上浮＋灼傷脫離＋滯空凍結＋撞牆轉彎；觸發全是 body-state（breath/hp/y），水深檢查／視線轉彎兩版錯層已刪；待玩家重生後 live 驗                                                                 |
+| 本地 LLM（Qwen2.5-1.5B-Q4，:8080）                    | ✅ 真實               | 全離線；`llama_cpp.server`；中文回覆＋JSON 編排 live 驗證；依賴 `localllm` extra 已宣告                                                                                                          |
+| 行為庫 game_behaviors（7 行為）                       | ✅ 真實               | walk/turn/dig_burst/place_one/look_scan/speak/wait；LLM compose＋adjust；20 測試；live：「幫我挖」→dig_burst→無拾取→自動改參數重試                                                               |
+| 遊戲對話閉環（聽→回→做＋記憶）                        | ✅ 真實               | poller 擷取→bridge /api/chat→LLM 回覆＋行為→HAM 記憶；bridge 端到端驗證；遊戲內送達待玩家在線驗                                                                                                  |
+| 名稱斷層修復（itemstring↔短名）                       | ✅ 真實               | `ITEM_ALIASES`＋`normalize_inventory`；此前可合成判斷＋完成檢測全錯；單元測試覆蓋                                                                                                                |
+| L1 craft 節制（做不出就不排）                         | ✅ 真實               | 無材料時 abstain（此前每 2s 空轉刷屏）；單元測試覆蓋，live 待驗                                                                                                                                  |
+| Policy 權重訓練 (BC/RL)                               | ❌ 未做               | 現為 Xavier 初始化，動作笨拙屬實                                                                                                                                                                 |
+| 20 FPS 閉環                                           | ❌ 未達               | agent 10Hz + poller 2s；截窗視覺已補上幀源（pyautogui），仍需降級策略達 20 FPS                                                                                                                   |
 
 ---
 
 ## 8. 風險與對策
 
-| 風險 | 影響 | 對策 |
-|------|------|------|
-| Luanti 協議版本不相容 | 無法連線 | 先實作協議探測、支援多版本 |
-| 畫面抓取延遲 > 50ms | 20 FPS 破功 | 使用共享記憶體 / GPU 直傳、降級至 10 FPS |
-| Policy 訓練資料不足 | 動作笨拙 | 先用行為克隆 (BC) 預訓練、再 RL 微調 |
-| LLM 呼叫超時阻塞主循環 | 卡頓 | 強制非同步 + 超時 fallback + 本地規則備援 |
-| 記憶體洩漏 (長時間跑) | 崩潰 | 定期 GC、經驗緩衝區上限、定期 checkpoint |
+| 風險                   | 影響        | 對策                                      |
+| ---------------------- | ----------- | ----------------------------------------- |
+| Luanti 協議版本不相容  | 無法連線    | 先實作協議探測、支援多版本                |
+| 畫面抓取延遲 > 50ms    | 20 FPS 破功 | 使用共享記憶體 / GPU 直傳、降級至 10 FPS  |
+| Policy 訓練資料不足    | 動作笨拙    | 先用行為克隆 (BC) 預訓練、再 RL 微調      |
+| LLM 呼叫超時阻塞主循環 | 卡頓        | 強制非同步 + 超時 fallback + 本地規則備援 |
+| 記憶體洩漏 (長時間跑)  | 崩潰        | 定期 GC、經驗緩衝區上限、定期 checkpoint  |
 
 ---
 

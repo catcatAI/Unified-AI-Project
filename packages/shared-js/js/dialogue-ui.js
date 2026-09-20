@@ -4,17 +4,17 @@
  */
 
 class DialogueUI {
-    constructor(apiClient) {
-        this.apiClient = apiClient;
-        this.messages = [];
-        this.init();
-    }
+  constructor(apiClient) {
+    this.apiClient = apiClient
+    this.messages = []
+    this.init()
+  }
 
-    init() {
-        // Create dialogue container
-        const container = document.createElement('div');
-        container.id = 'dialogue-container';
-        container.innerHTML = `
+  init() {
+    // Create dialogue container
+    const container = document.createElement('div')
+    container.id = 'dialogue-container'
+    container.innerHTML = `
             <div id="dialogue-panel">
                 <div id="dialogue-header">
                     <span class="title">💬 Chat with Angela</span>
@@ -26,11 +26,11 @@ class DialogueUI {
                     <button id="btn-send">Send</button>
                 </div>
             </div>
-        `;
+        `
 
-        // Add styles
-        const style = document.createElement('style');
-        style.textContent = `
+    // Add styles
+    const style = document.createElement('style')
+    style.textContent = `
             #dialogue-container {
                 position: fixed;
                 bottom: 20px;
@@ -213,136 +213,141 @@ class DialogueUI {
             #dialogue-panel.collapsed #dialogue-input-area {
                 display: none;
             }
-        `;
+        `
 
-        document.head.appendChild(style);
-        document.body.appendChild(container);
+    document.head.appendChild(style)
+    document.body.appendChild(container)
 
-        // Bind events
-        this.bindEvents();
+    // Bind events
+    this.bindEvents()
 
-        // Add welcome message
-        this.addSystemMessage('Connected to Angela AI. Say hello!');
+    // Add welcome message
+    this.addSystemMessage('Connected to Angela AI. Say hello!')
+  }
+
+  bindEvents() {
+    const input = document.getElementById('dialogue-input')
+    const sendBtn = document.getElementById('btn-send')
+    const toggleBtn = document.getElementById('btn-toggle-dialogue')
+
+    // Send message on button click
+    sendBtn.addEventListener('click', () => this.sendMessage())
+
+    // Send message on Enter key
+    input.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        this.sendMessage()
+      }
+    })
+
+    // Toggle panel
+    toggleBtn.addEventListener('click', () => {
+      const panel = document.getElementById('dialogue-panel')
+      panel.classList.toggle('collapsed')
+      toggleBtn.textContent = panel.classList.contains('collapsed') ? '+' : '−'
+    })
+  }
+
+  async sendMessage() {
+    const input = document.getElementById('dialogue-input')
+    const message = input.value.trim()
+
+    if (!message) return
+
+    // Add user message to UI
+    this.addMessage('user', message)
+    input.value = ''
+
+    // Disable input while waiting
+    const sendBtn = document.getElementById('btn-send')
+    sendBtn.disabled = true
+    input.disabled = true
+
+    // Send to backend
+    const response = await this.apiClient.sendMessage(message)
+
+    // Re-enable input
+    sendBtn.disabled = false
+    input.disabled = false
+    input.focus()
+
+    // Add Angela's response
+    if (response.success) {
+      this.addMessage(
+        'angela',
+        response.response,
+        response.source || 'unknown',
+        response.neuro_blend
+      )
+    } else {
+      this.addSystemMessage(`Error: ${response.response}`)
+    }
+  }
+
+  addMessage(sender, text, source, neuroBlend) {
+    const messagesContainer = document.getElementById('dialogue-messages')
+    const messageDiv = document.createElement('div')
+    messageDiv.className = `message ${sender}`
+
+    const time = new Date().toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+
+    let badge = ''
+    if (sender === 'angela') {
+      if (source === 'neuro_blender' || (neuroBlend && neuroBlend.confidence > 0.3)) {
+        badge = '<span class="source-badge neuro">✨ 合成</span>'
+      } else if (source === 'llm' || source === 'llm_full') {
+        badge = '<span class="source-badge llm">🧠 LLM</span>'
+      } else if (source === 'fallback') {
+        badge = '<span class="source-badge fallback">📡 離線</span>'
+      } else if (source === 'dual_rail') {
+        badge = '<span class="source-badge math">🔢 數學</span>'
+      } else if (neuroBlend && neuroBlend.confidence) {
+        badge = `<span class="source-badge neuro">✨ ${Math.round(neuroBlend.confidence * 100)}%</span>`
+      }
     }
 
-    bindEvents() {
-        const input = document.getElementById('dialogue-input');
-        const sendBtn = document.getElementById('btn-send');
-        const toggleBtn = document.getElementById('btn-toggle-dialogue');
-
-        // Send message on button click
-        sendBtn.addEventListener('click', () => this.sendMessage());
-
-        // Send message on Enter key
-        input.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                this.sendMessage();
-            }
-        });
-
-        // Toggle panel
-        toggleBtn.addEventListener('click', () => {
-            const panel = document.getElementById('dialogue-panel');
-            panel.classList.toggle('collapsed');
-            toggleBtn.textContent = panel.classList.contains('collapsed') ? '+' : '−';
-        });
-    }
-
-    async sendMessage() {
-        const input = document.getElementById('dialogue-input');
-        const message = input.value.trim();
-
-        if (!message) return;
-
-        // Add user message to UI
-        this.addMessage('user', message);
-        input.value = '';
-
-        // Disable input while waiting
-        const sendBtn = document.getElementById('btn-send');
-        sendBtn.disabled = true;
-        input.disabled = true;
-
-        // Send to backend
-        const response = await this.apiClient.sendMessage(message);
-
-        // Re-enable input
-        sendBtn.disabled = false;
-        input.disabled = false;
-        input.focus();
-
-        // Add Angela's response
-        if (response.success) {
-            this.addMessage('angela', response.response, response.source || 'unknown', response.neuro_blend);
-        } else {
-            this.addSystemMessage(`Error: ${response.response}`);
-        }
-    }
-
-    addMessage(sender, text, source, neuroBlend) {
-        const messagesContainer = document.getElementById('dialogue-messages');
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `message ${sender}`;
-
-        const time = new Date().toLocaleTimeString('en-US', {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-
-        let badge = '';
-        if (sender === 'angela') {
-            if (source === 'neuro_blender' || (neuroBlend && neuroBlend.confidence > 0.3)) {
-                badge = '<span class="source-badge neuro">✨ 合成</span>';
-            } else if (source === 'llm' || source === 'llm_full') {
-                badge = '<span class="source-badge llm">🧠 LLM</span>';
-            } else if (source === 'fallback') {
-                badge = '<span class="source-badge fallback">📡 離線</span>';
-            } else if (source === 'dual_rail') {
-                badge = '<span class="source-badge math">🔢 數學</span>';
-            } else if (neuroBlend && neuroBlend.confidence) {
-                badge = `<span class="source-badge neuro">✨ ${Math.round(neuroBlend.confidence * 100)}%</span>`;
-            }
-        }
-
-        messageDiv.innerHTML = `
+    messageDiv.innerHTML = `
             <div class="message-text">${this.escapeHtml(text)}${badge}</div>
             <div class="message-time">${time}</div>
-        `;
+        `
 
-        messagesContainer.appendChild(messageDiv);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    messagesContainer.appendChild(messageDiv)
+    messagesContainer.scrollTop = messagesContainer.scrollHeight
 
-        this.messages.push({ sender, text, time, source, neuroBlend });
+    this.messages.push({ sender, text, time, source, neuroBlend })
 
-        // Evict oldest messages beyond max limit
-        const MAX_MESSAGES = 200;
-        if (this.messages.length > MAX_MESSAGES) {
-            const excess = this.messages.length - MAX_MESSAGES;
-            this.messages.splice(0, excess);
-            while (messagesContainer.children.length > MAX_MESSAGES) {
-                messagesContainer.removeChild(messagesContainer.firstChild);
-            }
-        }
+    // Evict oldest messages beyond max limit
+    const MAX_MESSAGES = 200
+    if (this.messages.length > MAX_MESSAGES) {
+      const excess = this.messages.length - MAX_MESSAGES
+      this.messages.splice(0, excess)
+      while (messagesContainer.children.length > MAX_MESSAGES) {
+        messagesContainer.removeChild(messagesContainer.firstChild)
+      }
     }
+  }
 
-    addSystemMessage(text) {
-        const messagesContainer = document.getElementById('dialogue-messages');
-        const messageDiv = document.createElement('div');
-        messageDiv.className = 'message system';
-        messageDiv.textContent = text;
+  addSystemMessage(text) {
+    const messagesContainer = document.getElementById('dialogue-messages')
+    const messageDiv = document.createElement('div')
+    messageDiv.className = 'message system'
+    messageDiv.textContent = text
 
-        messagesContainer.appendChild(messageDiv);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }
+    messagesContainer.appendChild(messageDiv)
+    messagesContainer.scrollTop = messagesContainer.scrollHeight
+  }
 
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
+  escapeHtml(text) {
+    const div = document.createElement('div')
+    div.textContent = text
+    return div.innerHTML
+  }
 }
 
 // Export for use in app.js
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = DialogueUI;
+  module.exports = DialogueUI
 }

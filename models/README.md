@@ -1,17 +1,18 @@
 # Models
 
-This directory stores model artifacts, embedding dictionaries, and training data for AI subsystems.
+This directory stores model artifacts, embedding dictionaries, and training data
+for AI subsystems.
 
 ## Contents
 
-| Path | Description |
-|------|-------------|
-| `three_layer/` | Neural network weights (3-layer SNN) — `.pt` or `.npy` + `.json` (numpy fallback) |
-| `concept_mapper.json` | ED3N concept mapping between surface forms and internal IDs |
-| `concept_space.json` | ED3N concept space embeddings |
-| `decomposer_optimized.json` | Optimized decomposer configuration |
-| `decomposer_training_history.json` | Training history for the concept decomposer |
-| `geometric_vocabulary.json` | Geometric vocabulary for spatial/math reasoning |
+| Path                               | Description                                                                       |
+| ---------------------------------- | --------------------------------------------------------------------------------- |
+| `three_layer/`                     | Neural network weights (3-layer SNN) — `.pt` or `.npy` + `.json` (numpy fallback) |
+| `concept_mapper.json`              | ED3N concept mapping between surface forms and internal IDs                       |
+| `concept_space.json`               | ED3N concept space embeddings                                                     |
+| `decomposer_optimized.json`        | Optimized decomposer configuration                                                |
+| `decomposer_training_history.json` | Training history for the concept decomposer                                       |
+| `geometric_vocabulary.json`        | Geometric vocabulary for spatial/math reasoning                                   |
 
 ## Notes
 

@@ -1,6 +1,9 @@
 # Core Services Overview
 
-This document provides an overview of the core services within the Unified-AI-Project. The central initialization and management logic for these services is primarily handled by `apps/backend/src/core_ai/genesis.py` and orchestrated through `apps/backend/src/services/main_api_server.py`.
+This document provides an overview of the core services within the
+Unified-AI-Project. The central initialization and management logic for these
+services is primarily handled by `apps/backend/src/core_ai/genesis.py` and
+orchestrated through `apps/backend/src/services/main_api_server.py`.
 
 ## 1. Purpose and Role
 
@@ -65,10 +68,11 @@ following steps:
     - `FormulaEngine`: Executes predefined formulas.
     - `ToolDispatcher`: Dispatches and manages AI tools.
     - `AgentManager`: Manages the lifecycle of various AI agents.
-    - **`apps/backend/src/core_ai/dialogue/dialogue_manager.py`**: The `DialogueManager` is the
-  first point of contact for user queries. It identifies complex project
-  requests and delegates them to the `ProjectCoordinator`. For simpler queries,
-  it can provide a direct response.
+    - **`apps/backend/src/core_ai/dialogue/dialogue_manager.py`**: The
+      `DialogueManager` is the first point of contact for user queries. It
+      identifies complex project requests and delegates them to the
+      `ProjectCoordinator`. For simpler queries, it can provide a direct
+      response.
 
 ### `get_services() -> Dict[str, Any]`
 

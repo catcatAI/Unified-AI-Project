@@ -132,8 +132,7 @@ detokenization logic.
   intermediate results (see `docs/architecture/Fragmenta_design_spec.md`). These
   intermediate results, or even recurring patterns in input data processed by
   Fragmenta, might be prime candidates for Deep Mapping when stored in HAM.
-- **HAM (`src/ai/memory/ham_memory_manager.py`)**: HAM would be responsible
-  for:
+- **HAM (`src/ai/memory/ham_memory_manager.py`)**: HAM would be responsible for:
   - Identifying data suitable for Deep Mapping.
   - Performing the mapping transformation before storage.
   - Performing the reverse "unmapping" or rehydration process when the data is
@@ -289,4 +288,3 @@ involved in data ingestion and pre-storage processing, or identification of
 specific initial data sets. The current `HAMMemoryManager.py` itself focuses on
 abstraction, compression, and encryption of provided data rather than explicit
 symbolic tokenization of complex states into fixed strings like "XXX".
-

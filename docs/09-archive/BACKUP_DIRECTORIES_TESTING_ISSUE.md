@@ -3,6 +3,7 @@
 ## 问题描述
 
 在运行 pytest 测试时，可能会错误地收集和执行备份目录中的测试文件，导致以下问题：
+
 1. 测试时间增加
 2. 测试结果不准确
 3. 可能执行已废弃或不正确的测试代码
@@ -18,7 +19,8 @@
 
 ### 1. 更新 pytest 配置
 
-在项目根目录的 [pytest.ini](file:///d:/Projects/Unified-AI-Project/pytest.ini) 文件中，确保包含以下配置：
+在项目根目录的 [pytest.ini](file:///d:/Projects/Unified-AI-Project/pytest.ini)
+文件中，确保包含以下配置：
 
 ```ini
 [tool:pytest]
@@ -28,7 +30,7 @@ python_classes = Test*
 python_functions = test_*
 
 # Exclude backup directories and other problematic paths
-norecursedirs = 
+norecursedirs =
     backup
     backup_*
     backup_*_*
@@ -53,14 +55,14 @@ norecursedirs =
     */*/auto_fix_*
 
 # Test discovery patterns
-testpaths = 
+testpaths =
     apps/backend/tests
     apps/backend/src
     scripts
     tools
 
 # Ignore specific files that cause issues
-ignore = 
+ignore =
     backup
     backup_*
     backup_*_*
@@ -93,7 +95,7 @@ ignore =
     */*/backup_*
 
 # Additional options
-addopts = 
+addopts =
     --tb=short
     --strict-markers
     --disable-warnings
@@ -137,7 +139,9 @@ addopts =
 
 ### 2. 更新 apps/backend 目录下的配置
 
-确保 [apps/backend/pytest.ini](file:///d:/Projects/Unified-AI-Project/apps/backend/pytest.ini) 文件中也包含相应的忽略规则：
+确保
+[apps/backend/pytest.ini](file:///d:/Projects/Unified-AI-Project/apps/backend/pytest.ini)
+文件中也包含相应的忽略规则：
 
 ```ini
 [tool:pytest]

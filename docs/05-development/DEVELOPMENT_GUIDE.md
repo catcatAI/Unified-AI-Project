@@ -1,6 +1,7 @@
 # Unified AI Project - 开发环境使用指南
 
-本文档详细说明如何设置和使用 Unified AI Project 的开发环境，解决"执行后能测试，测试后能执行，执行中能测试"的需求。
+本文档详细说明如何设置和使用 Unified AI
+Project 的开发环境，解决"执行后能测试，测试后能执行，执行中能测试"的需求。
 
 ## 🚀 快速开始
 
@@ -20,6 +21,7 @@ node scripts/setup.js
 ```
 
 这个命令会：
+
 - 检查系统依赖
 - 安装所有 Node.js 依赖
 - 创建 Python 虚拟环境
@@ -42,7 +44,7 @@ scripts\\dev.bat install
 # 开发环境
 pnpm dev              # 启动后端 + 前端
 pnpm dev:backend      # 只启动后端
-pnpm dev:frontend     # 只启动前端  
+pnpm dev:frontend     # 只启动前端
 pnpm dev:desktop      # 只启动桌面应用
 pnpm dev:all          # 启动所有组件
 
@@ -123,6 +125,7 @@ pnpm dev-test
 ```
 
 这个模式会：
+
 - 启动后端 API 服务器 (localhost:8000)
 - 启动前端仪表板 (localhost:3000)
 - 启动 ChromaDB 服务器 (localhost:8001)
@@ -153,15 +156,18 @@ node scripts/test-watcher.js
 ### 测试配置
 
 #### 后端测试 (pytest)
+
 - 配置文件: `apps/backend/pytest.ini`
 - 测试目录: `apps/backend/tests/`
 - 覆盖率报告: `apps/backend/htmlcov/`
 
 #### 前端测试 (Jest)
+
 - 配置文件: `apps/frontend-dashboard/jest.config.js`
 - 测试目录: `apps/frontend-dashboard/__tests__/`
 
 #### 桌面应用测试 (Jest)
+
 - 配置文件: `apps/desktop-app/jest.config.js`
 - 测试目录: `apps/desktop-app/__tests__/`
 
@@ -188,6 +194,7 @@ pytest -s     # 显示print输出
 ### 常见问题
 
 1. **Python 虚拟环境问题**
+
    ```bash
    # 重新创建虚拟环境
    cd apps/backend
@@ -198,6 +205,7 @@ pytest -s     # 显示print输出
    ```
 
 2. **依赖冲突**
+
    ```bash
    # 清理并重新安装
    pnpm clean
@@ -206,16 +214,17 @@ pytest -s     # 显示print输出
    ```
 
 3. **端口被占用**
+
    ```bash
    # 使用端口管理工具
    pnpm port-info                    # 查看所有端口状态
    pnpm port-check 8000             # 检查特定端口
    pnpm port-kill-service BACKEND   # 终止后端服务
-   
+
    # 或者手动查找占用端口的进程
    netstat -ano | findstr :8000  # Windows
    lsof -i :8000  # Linux/Mac
-   
+
    # 或者使用不同端口
    uvicorn src.services.main_api_server:app --port 8001
    ```
@@ -232,23 +241,25 @@ pytest -s     # 显示print输出
 
 项目采用统一的端口管理策略来避免开发过程中的端口冲突问题：
 
-| 服务名称 | 端口号 | 用途说明 |
-|---------|-------|---------|
-| FRONTEND_DASHBOARD | 3000 | 前端仪表板 Web 服务 |
-| DESKTOP_APP | 3001 | 桌面应用 Electron 服务 |
-| BACKEND_API | 8000 | 后端 API 服务 |
+| 服务名称           | 端口号 | 用途说明               |
+| ------------------ | ------ | ---------------------- |
+| FRONTEND_DASHBOARD | 3000   | 前端仪表板 Web 服务    |
+| DESKTOP_APP        | 3001   | 桌面应用 Electron 服务 |
+| BACKEND_API        | 8000   | 后端 API 服务          |
 
 项目实现了自动化的端口冲突检测和解决机制，在启动服务之前会自动检测并终止已存在的冲突进程。详细信息请参阅：[端口管理策略](PORT_MANAGEMENT_STRATEGY.md)
 
 ### 调试技巧
 
 1. **使用健康检查**
+
    ```bash
    pnpm health-check
    python scripts/health_check.py
    ```
 
 2. **查看日志**
+
    ```bash
    # 后端日志 (开发模式会输出到控制台)
    # 前端日志 (浏览器开发者工具)
@@ -258,8 +269,8 @@ pytest -s     # 显示print输出
    ```bash
    # 后端测试调试
    pytest --pdb -x  # 第一个失败时停止并进入调试器
-   
-   # 前端测试调试  
+
+   # 前端测试调试
    pnpm test --debug
    ```
 

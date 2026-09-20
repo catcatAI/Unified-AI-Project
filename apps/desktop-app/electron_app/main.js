@@ -544,7 +544,7 @@ function createMainWindow() {
         {
           label: 'Multimodal Panel',
           click: () => {
-            createMultimodalWindow();
+            createMultimodalWindow()
           },
         },
         { type: 'separator' },
@@ -582,7 +582,8 @@ function createMainWindow() {
     if (message.includes('[Renderer]')) return
     const now = Date.now()
     if (now - _consoleLastLog > 5000) {
-      if (_consoleCount > 10) log.warn(`[Renderer] ... ${_consoleCount} suppressed console messages`)
+      if (_consoleCount > 10)
+        log.warn(`[Renderer] ... ${_consoleCount} suppressed console messages`)
       _consoleCount = 0
       _consoleLastLog = now
     }
@@ -628,7 +629,7 @@ function createMainWindow() {
 function createTray() {
   const trayManager = new TrayManager()
   const iconPath = getTrayIconPath()
-  
+
   if (trayManager.initialize(iconPath, 'Angela AI')) {
     tray = trayManager.tray // Keep global reference if needed elsewhere
 
@@ -1083,12 +1084,12 @@ ipcMain.handle('set-click-through-regions', (event, regions) => {
 })
 
 // Multimodal panel window
-let multimodalWindow = null;
+let multimodalWindow = null
 
 function createMultimodalWindow() {
   if (multimodalWindow && !multimodalWindow.isDestroyed()) {
-    multimodalWindow.focus();
-    return;
+    multimodalWindow.focus()
+    return
   }
 
   multimodalWindow = new BrowserWindow({
@@ -1104,50 +1105,50 @@ function createMultimodalWindow() {
       contextIsolation: true,
       nodeIntegration: false,
     },
-  });
+  })
 
-  multimodalWindow.loadFile('multimodal-panel.html');
+  multimodalWindow.loadFile('multimodal-panel.html')
 
   multimodalWindow.on('closed', () => {
-    multimodalWindow = null;
-  });
+    multimodalWindow = null
+  })
 
   // Open DevTools in dev mode
   if (!app.isPackaged) {
-    multimodalWindow.webContents.openDevTools();
+    multimodalWindow.webContents.openDevTools()
   }
 }
 
 ipcMain.on('multimodal-open', () => {
-  createMultimodalWindow();
-});
+  createMultimodalWindow()
+})
 
 ipcMain.handle('multimodal-is-open', () => {
-  return multimodalWindow !== null && !multimodalWindow.isDestroyed();
-});
+  return multimodalWindow !== null && !multimodalWindow.isDestroyed()
+})
 
 // Add multimodal to the context menu
 // (The context menu is created in createMainWindow() - we'll add the item there)
 
 // Live2D model management
-  // Settings IPC
-  ipcMain.handle('settings-get-all', () => {
-    return globalSettings
-  })
+// Settings IPC
+ipcMain.handle('settings-get-all', () => {
+  return globalSettings
+})
 
-  ipcMain.handle('settings-set-all', (event, settings) => {
-    globalSettings = settings
-    saveSettings(globalSettings)
-    return true
-  })
+ipcMain.handle('settings-set-all', (event, settings) => {
+  globalSettings = settings
+  saveSettings(globalSettings)
+  return true
+})
 
-  ipcMain.handle('settings-reset', () => {
-    globalSettings = {}
-    saveSettings(globalSettings)
-    return globalSettings
-  })
+ipcMain.handle('settings-reset', () => {
+  globalSettings = {}
+  saveSettings(globalSettings)
+  return globalSettings
+})
 
-  ipcMain.handle('live2d-load-model', async (event, modelPath) => {
+ipcMain.handle('live2d-load-model', async (event, modelPath) => {
   try {
     // Normalize path separators
     const normalizedModelPath = modelPath.replace(/\\/g, '/')
@@ -1442,7 +1443,7 @@ ipcMain.handle('file-open-dialog', async (event, options) => {
 
 // Backend API communication (WebSocket)
 let wsClient = null
-let wsSessionInfo = null  // Store session info for reconnect
+let wsSessionInfo = null // Store session info for reconnect
 let wsReconnectTimer = null
 let wsReconnectAttempts = 0
 let wsHeartbeatInterval = null
@@ -1459,10 +1460,14 @@ const WS_STATE_CLOSED = 3
 
 function connectWebSocket(url, sessionInfo) {
   log.info('[Main] connectWebSocket() called with:', url, 'session:', sessionInfo)
-  
+
   // Store session info for potential reconnect
-  wsSessionInfo = sessionInfo || { sessionId: null, clientType: 'desktop', clientVersion: '7.5.0-dev' }
-  
+  wsSessionInfo = sessionInfo || {
+    sessionId: null,
+    clientType: 'desktop',
+    clientVersion: '7.5.0-dev',
+  }
+
   if (wsClient && wsClient.readyState === WS_STATE_OPEN) {
     log.info('[WebSocket] Already connected, skipping')
     return
@@ -1482,11 +1487,11 @@ function connectWebSocket(url, sessionInfo) {
         session_id: wsSessionInfo?.sessionId || null,
         client_type: wsSessionInfo?.clientType || 'desktop',
         client_version: wsSessionInfo?.clientVersion || '7.5.0-dev',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       }
       log.info('[WebSocket] Sending handshake:', handshake)
       wsClient.send(JSON.stringify(handshake))
-      
+
       // NOTE: Don't mark connected immediately. Wait for 'connected' message from backend.
     })
 
@@ -1497,11 +1502,16 @@ function connectWebSocket(url, sessionInfo) {
       try {
         const message = JSON.parse(data.toString())
         log.info('[WebSocket] Received:', message)
-        
+
         // Handle 'connected' message - this is the session confirmation
         if (message.type === 'connected') {
-          log.info('[WebSocket] Session confirmed - client_id:', message.client_id, 'session_id:', message.session_id)
-          
+          log.info(
+            '[WebSocket] Session confirmed - client_id:',
+            message.client_id,
+            'session_id:',
+            message.session_id
+          )
+
           // Start heartbeat now
           if (wsHeartbeatInterval) clearInterval(wsHeartbeatInterval)
           wsHeartbeatInterval = setInterval(() => {
@@ -1509,14 +1519,17 @@ function connectWebSocket(url, sessionInfo) {
               wsClient.send(JSON.stringify({ type: 'heartbeat', timestamp: Date.now() }))
             }
           }, 30000)
-          
+
           // Forward to renderer
           sendToMainWindow('websocket-connected', message)
         } else {
           // Debug: log chat_response for tracing
           if (message.type === 'chat_response') {
             log.info('[WebSocket] >>> chat_response received from backend, forwarding to renderer')
-            log.info('[WebSocket] >>> chat_response data:', JSON.stringify(message.data || {}).substring(0, 200))
+            log.info(
+              '[WebSocket] >>> chat_response data:',
+              JSON.stringify(message.data || {}).substring(0, 200)
+            )
           }
           // Forward other messages to renderer
           sendToMainWindow('websocket-message', message)
@@ -1526,9 +1539,9 @@ function connectWebSocket(url, sessionInfo) {
       }
     })
 
-wsClient.on('error', (error) => {
+    wsClient.on('error', (error) => {
       log.error(`[WebSocket] Error: ${error.message}`)
-      
+
       // Clear reconnection state on error
       if (wsReconnectTimer) {
         clearTimeout(wsReconnectTimer)
@@ -1539,7 +1552,7 @@ wsClient.on('error', (error) => {
       // Skip sending if window is destroyed
       if (!mainWindow || mainWindow.isDestroyed()) return
       sendToMainWindow('websocket-error', { error: error.message })
-      
+
       // NOTE: Auto-reconnect is DISABLED.
       // Renderer process via IPC bridge controls connection lifecycle.
       // If renderer wants to reconnect, it will call websocket-connect IPC.
@@ -1570,7 +1583,7 @@ wsClient.on('error', (error) => {
 
       sendToMainWindow('websocket-disconnected', { code, reason: reason.toString() })
 
-      // NOTE: Auto-reconnect is DISABLED. 
+      // NOTE: Auto-reconnect is DISABLED.
       // Renderer process via IPC bridge controls connection lifecycle.
       // If renderer wants to reconnect, it will call websocket-connect IPC.
     })
@@ -1644,8 +1657,8 @@ if (!fs.existsSync(pluginDir)) {
 
 ipcMain.handle('plugins-list', () => {
   try {
-    const files = fs.readdirSync(pluginDir).filter(f => f.endsWith('.js'))
-    return files.map(f => {
+    const files = fs.readdirSync(pluginDir).filter((f) => f.endsWith('.js'))
+    return files.map((f) => {
       const p = path.join(pluginDir, f)
       const code = fs.readFileSync(p, 'utf-8')
       const name = f.replace(/\.js$/, '')
@@ -1672,7 +1685,9 @@ ipcMain.handle('plugins-load', (event, { name, code }) => {
       fs.writeFileSync(p, code, 'utf-8')
     }
     return { success: true, path: p }
-  } catch (e) { return { success: false, error: e.message } }
+  } catch (e) {
+    return { success: false, error: e.message }
+  }
 })
 
 ipcMain.handle('plugins-save', (event, { name, code }) => {
@@ -1681,7 +1696,9 @@ ipcMain.handle('plugins-save', (event, { name, code }) => {
     if (!p) return { success: false, error: 'Invalid plugin name' }
     fs.writeFileSync(p, code, 'utf-8')
     return { success: true, path: p }
-  } catch (e) { return { success: false, error: e.message } }
+  } catch (e) {
+    return { success: false, error: e.message }
+  }
 })
 
 ipcMain.handle('plugins-delete', (event, name) => {
@@ -1690,7 +1707,9 @@ ipcMain.handle('plugins-delete', (event, name) => {
     if (!p) return { success: false, error: 'Invalid plugin name' }
     if (fs.existsSync(p)) fs.unlinkSync(p)
     return { success: true }
-  } catch (e) { return { success: false, error: e.message } }
+  } catch (e) {
+    return { success: false, error: e.message }
+  }
 })
 
 // C3 Phase 3: Plugin hot-reload via fs.watch
@@ -1705,7 +1724,10 @@ function startPluginWatcher() {
       if (watchDebounceTimer) clearTimeout(watchDebounceTimer)
       watchDebounceTimer = setTimeout(() => {
         const name = filename.replace(/\.js$/, '')
-        sendToMainWindow('plugins-changed', { name, event: eventType === 'rename' ? 'rename' : 'change' })
+        sendToMainWindow('plugins-changed', {
+          name,
+          event: eventType === 'rename' ? 'rename' : 'change',
+        })
       }, 500)
     })
     log.info('[PluginWatcher] Started watching:', pluginDir)

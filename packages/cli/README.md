@@ -1,6 +1,7 @@
 # CLI Package
 
-This package contains the command-line interface (CLI) tools for interacting with the Unified AI Project's backend services.
+This package contains the command-line interface (CLI) tools for interacting
+with the Unified AI Project's backend services.
 
 ## Features
 
@@ -23,22 +24,26 @@ This package contains the command-line interface (CLI) tools for interacting wit
 ### Install (dev)
 
 - Option A: Run via pnpm
+
 ```bash
 pnpm --filter cli start -- --help
 ```
 
 - Option B: Install as console script
+
 ```bash
 pip install -e .\packages\cli
 unified-ai --help
 ```
 
 Environment variables:
+
 - CLI_BASE_URL (default http://localhost:8000)
 - CLI_TOKEN (optional)
 - CLI_TIMEOUT (default 10)
 
 Examples:
+
 ```bash
 unified-ai health --json
 unified-ai chat "Hello" --session-id s1 --json

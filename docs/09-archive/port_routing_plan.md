@@ -1,4 +1,5 @@
 # 6D 軸端口路由系統建設計劃
+
 ## 2026-05-14 v1.0
 
 ---
@@ -6,6 +7,7 @@
 ## 願景
 
 讓 θ 元認知軸作為「路由大腦」：
+
 - 外部系統（LLM、HSP、CLI）只需要管理「端口」（port）
 - 端口只需要聲明自己的存在（name、direction、semantic_vector）
 - θ 軸根據所有端口的語義向量，自動決定：
@@ -43,21 +45,21 @@
 └─────────────────────────────────────────┘
 ```
 
-| Direction | 說明 |
-|-----------|------|
-| IN | 數據輸入端口（外部→軸） |
-| OUT | 數據輸出端口（軸→外部） |
-| IO | 雙向端口 |
+| Direction | 說明                    |
+| --------- | ----------------------- |
+| IN        | 數據輸入端口（外部→軸） |
+| OUT       | 數據輸出端口（軸→外部） |
+| IO        | 雙向端口                |
 
 ### 路由模式（θ 決策）
 
-| 模式 | 觸發條件 | 動作 |
-|------|----------|------|
-| ALLOCATE_NEW_AXIS | 沒有軸匹配端口語義 | `create_axis()` + 綁定 |
-| BIND_EXISTING_AXIS | 某軸語義靠近端口 | 綁定端口到軸 |
-| RE_ROUTE_AXIS | 軸被多端口競爭 | 重新分配端口 |
-| UNBIND_IDLE_PORT | 端口長期無數據 | 解綁定 |
-| CASCADE_OUTPUT | θ 決定路由方向 | 軸→多端口廣播 |
+| 模式               | 觸發條件           | 動作                   |
+| ------------------ | ------------------ | ---------------------- |
+| ALLOCATE_NEW_AXIS  | 沒有軸匹配端口語義 | `create_axis()` + 綁定 |
+| BIND_EXISTING_AXIS | 某軸語義靠近端口   | 綁定端口到軸           |
+| RE_ROUTE_AXIS      | 軸被多端口競爭     | 重新分配端口           |
+| UNBIND_IDLE_PORT   | 端口長期無數據     | 解綁定                 |
+| CASCADE_OUTPUT     | θ 決定路由方向     | 軸→多端口廣播          |
 
 ---
 
@@ -137,39 +139,39 @@ Port 註冊 → 計算與所有軸的語義相似度 → θ 軸更新 (novelty, 
 
 ### Phase 1: 核心註冊表
 
-| # | 任務 | 檔案 | 說明 |
-|---|------|------|------|
-| 1.1 | Port dataclass | `axis_port_registry.py` | PortDirection enum, Port dataclass |
-| 1.2 | PortRegistry 核心 | `axis_port_registry.py` | register/unregister/find_axis/bind |
-| 1.3 | 與 StateMatrix4D 集成 | `state_matrix_adapter.py` | 添加 `_port_registry` 初始化 |
-| 1.4 | 單元測試 | `test_axis_port_registry.py` | 5 個測試 |
+| #   | 任務                  | 檔案                         | 說明                               |
+| --- | --------------------- | ---------------------------- | ---------------------------------- |
+| 1.1 | Port dataclass        | `axis_port_registry.py`      | PortDirection enum, Port dataclass |
+| 1.2 | PortRegistry 核心     | `axis_port_registry.py`      | register/unregister/find_axis/bind |
+| 1.3 | 與 StateMatrix4D 集成 | `state_matrix_adapter.py`    | 添加 `_port_registry` 初始化       |
+| 1.4 | 單元測試              | `test_axis_port_registry.py` | 5 個測試                           |
 
 ### Phase 2: θ 路由引擎
 
-| # | 任務 | 檔案 | 說明 |
-|---|------|------|------|
-| 2.1 | ThetaRouter 核心 | `theta_router.py` | resolve_route / auto_allocate / auto_bind |
-| 2.2 | θ 觸發點集成 | `state_matrix_adapter.py` | allocation_decide() / create_axis() 觸發路由 |
-| 2.3 | 路由策略配置 | `theta_router.py` | routing_policy (threshold, weights) |
-| 2.4 | 單元測試 | `test_theta_router.py` | 5 個測試 |
+| #   | 任務             | 檔案                      | 說明                                         |
+| --- | ---------------- | ------------------------- | -------------------------------------------- |
+| 2.1 | ThetaRouter 核心 | `theta_router.py`         | resolve_route / auto_allocate / auto_bind    |
+| 2.2 | θ 觸發點集成     | `state_matrix_adapter.py` | allocation_decide() / create_axis() 觸發路由 |
+| 2.3 | 路由策略配置     | `theta_router.py`         | routing_policy (threshold, weights)          |
+| 2.4 | 單元測試         | `test_theta_router.py`    | 5 個測試                                     |
 
 ### Phase 3: 端口通道與 I/O
 
-| # | 任務 | 檔案 | 說明 |
-|---|------|------|------|
-| 3.1 | PortChannel | `port_channel.py` | push/pull/peek/clear |
-| 3.2 | AxisOutputManager | `axis_output_manager.py` | output/input/batch_output |
-| 3.3 | 與 RippleNode 集成 | `state_matrix_adapter.py` | 漣漪觸發 → 端口輸出 |
-| 3.4 | 單元測試 | `test_port_channel.py` | 5 個測試 |
+| #   | 任務               | 檔案                      | 說明                      |
+| --- | ------------------ | ------------------------- | ------------------------- |
+| 3.1 | PortChannel        | `port_channel.py`         | push/pull/peek/clear      |
+| 3.2 | AxisOutputManager  | `axis_output_manager.py`  | output/input/batch_output |
+| 3.3 | 與 RippleNode 集成 | `state_matrix_adapter.py` | 漣漪觸發 → 端口輸出       |
+| 3.4 | 單元測試           | `test_port_channel.py`    | 5 個測試                  |
 
 ### Phase 4: 自動路由集成
 
-| # | 任務 | 檔案 | 說明 |
-|---|------|------|------|
-| 4.1 | θ → port 自動路由 | `theta_router.py` | θ 更新時觸發路由重算 |
-| 4.2 | 端口優先級管理 | `axis_port_registry.py` | priority-based routing |
-| 4.3 | 端到端測試 | `test_port_routing_e2e.py` | port → axis → port 完整流 |
-| 4.4 | 文檔更新 | TASK_PRIORITY.md | 標記完成 |
+| #   | 任務              | 檔案                       | 說明                      |
+| --- | ----------------- | -------------------------- | ------------------------- |
+| 4.1 | θ → port 自動路由 | `theta_router.py`          | θ 更新時觸發路由重算      |
+| 4.2 | 端口優先級管理    | `axis_port_registry.py`    | priority-based routing    |
+| 4.3 | 端到端測試        | `test_port_routing_e2e.py` | port → axis → port 完整流 |
+| 4.4 | 文檔更新          | TASK_PRIORITY.md           | 標記完成                  |
 
 ---
 
@@ -236,12 +238,12 @@ StateMatrixAdapter     →   AxisOutputManager (集成點)
 
 ## 測試計劃
 
-| 測試檔案 | 測試數 | 覆蓋內容 |
-|---------|--------|---------|
-| test_axis_port_registry.py | 5 | register/unregister/find_axis/bind/list |
-| test_theta_router.py | 5 | resolve_route/auto_allocate/auto_bind/cascade |
-| test_port_channel.py | 5 | push/pull/peek/clear/overflow |
-| test_port_routing_e2e.py | 5 | port→axis→port 完整流 |
+| 測試檔案                   | 測試數 | 覆蓋內容                                      |
+| -------------------------- | ------ | --------------------------------------------- |
+| test_axis_port_registry.py | 5      | register/unregister/find_axis/bind/list       |
+| test_theta_router.py       | 5      | resolve_route/auto_allocate/auto_bind/cascade |
+| test_port_channel.py       | 5      | push/pull/peek/clear/overflow                 |
+| test_port_routing_e2e.py   | 5      | port→axis→port 完整流                         |
 
 ---
 

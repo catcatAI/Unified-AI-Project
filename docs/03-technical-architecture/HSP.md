@@ -2,14 +2,15 @@
 
 ## 現況
 
-HSP (High-Speed Synchronization Protocol) 高速同步協議是 Unified AI Project 的核心通信框架，目前已完成實現並處於穩定狀態。它支持內部模塊與外部 AI 實體的可信協作，是系統各組件間通信的基礎設施。
+HSP (High-Speed Synchronization Protocol) 高速同步協議是 Unified AI
+Project 的核心通信框架，目前已完成實現並處於穩定狀態。它支持內部模塊與外部 AI 實體的可信協作，是系統各組件間通信的基礎設施。
 
 ### 實現狀態
 
 - **完成度**: 100%
 - **版本**: 1.0.0
 - **位置**: `apps/backend/src/core/hsp/`
-- **主要文件**: 
+- **主要文件**:
   - `connector.py`: HSP連接器實現
   - `performance_optimizer.py`: 性能優化器
   - `types.py`: 協議類型定義
@@ -86,11 +87,11 @@ HSP協議支持豐富的配置選項，通過YAML配置文件進行管理：
 hsp_primary:
   # MQTT配置
   mqtt:
-    broker_address: "127.0.0.1"
+    broker_address: '127.0.0.1'
     broker_port: 1883
     keepalive: 60
     qos_default: 1
-    
+
   # 連接配置
   connection:
     # 連接超時（秒）

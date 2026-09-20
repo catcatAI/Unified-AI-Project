@@ -1,12 +1,14 @@
 # 备份与恢复标准化操作流程
 
-> **备份说明**: 此文档已备份至 `backup_20250903/recovery_docs/BACKUP_RECOVERY_STANDARD_PROCEDURE.md.backup`，作为历史记录保存。
+> **备份说明**: 此文档已备份至
+> `backup_20250903/recovery_docs/BACKUP_RECOVERY_STANDARD_PROCEDURE.md.backup`，作为历史记录保存。
 >
 > **状态**: 问题已解决，此文档仅供历史参考。
 
 ## 1. 概述
 
-本文档定义了 Unified AI Project 项目中备份与恢复操作的标准化流程，确保在执行任何修改前都进行适当的备份，并在需要时能够可靠地恢复文件。
+本文档定义了 Unified AI
+Project 项目中备份与恢复操作的标准化流程，确保在执行任何修改前都进行适当的备份，并在需要时能够可靠地恢复文件。
 
 ## 2. 备份操作标准化流程
 
@@ -15,19 +17,23 @@
 在对任何项目文件进行修改前，必须遵循以下备份流程：
 
 #### 步骤 1: 确定要修改的文件
+
 ```
 # 示例：确定要修改的文件
 要修改的文件: apps/desktop-app/electron_app/main.js
 ```
 
 #### 步骤 2: 创建备份文件
+
 ```bash
 # 使用日期时间戳创建备份文件
 cp apps/desktop-app/electron_app/main.js backup/desktop-app-main.js.backup_$(date +%Y%m%d_%H%M%S)
 ```
 
 #### 步骤 3: 记录备份信息
+
 在 [BACKUP_LOG.md](../../../../..) 中记录以下信息：
+
 - 备份时间
 - 原始文件路径
 - 备份文件路径
@@ -35,6 +41,7 @@ cp apps/desktop-app/electron_app/main.js backup/desktop-app-main.js.backup_$(dat
 - 操作人员
 
 #### 步骤 4: 验证备份完整性
+
 ```bash
 # 检查备份文件是否存在且非空
 if [ -s backup/desktop-app-main.js.backup_$(date +%Y%m%d_%H%M%S) ]; then
@@ -49,7 +56,9 @@ fi
 当需要备份多个文件时，使用以下流程：
 
 #### 步骤 1: 创建备份清单
+
 创建一个包含所有要备份文件的清单文件：
+
 ```bash
 # backup_list.txt
 apps/desktop-app/electron_app/main.js
@@ -59,6 +68,7 @@ scripts/setup_env.bat
 ```
 
 #### 步骤 2: 执行批量备份
+
 ```bash
 #!/bin/bash
 # batch_backup.sh
@@ -73,7 +83,7 @@ while read file; do
         # 创建目录结构
         FILE_DIR=$(dirname "$file")
         mkdir -p "$BACKUP_DIR/$FILE_DIR"
-        
+
         # 执行备份
         cp "$file" "$BACKUP_DIR/$file"
         echo "已备份: $file"
@@ -86,6 +96,7 @@ echo "批量备份完成，备份目录: $BACKUP_DIR"
 ```
 
 #### 步骤 3: 验证批量备份
+
 ```bash
 # 验证备份完整性
 find backup/$(date +%Y%m%d_%H%M%S) -type f | wc -l
@@ -96,6 +107,7 @@ find backup/$(date +%Y%m%d_%H%M%S) -type f | wc -l
 在进行重大修改前，备份当前Git状态：
 
 #### 步骤 1: 创建Git状态快照
+
 ```bash
 # 创建包含当前Git状态的快照
 git status > backup/git_status_$(date +%Y%m%d_%H%M%S).txt
@@ -103,6 +115,7 @@ git diff > backup/git_diff_$(date +%Y%m%d_%H%M%S).patch
 ```
 
 #### 步骤 2: 创建提交备份
+
 ```bash
 # 创建临时提交以保存当前状态
 git add .
@@ -111,6 +124,7 @@ git tag -a backup_$(date +%Y%m%d_%H%M%S) -m "自动备份标签"
 ```
 
 #### 步骤 3: 记录备份信息
+
 在 [BACKUP_LOG.md](../../../../..) 中记录Git备份信息。
 
 ## 3. 恢复操作标准化流程
@@ -118,18 +132,21 @@ git tag -a backup_$(date +%Y%m%d_%H%M%S) -m "自动备份标签"
 ### 3.1 单文件恢复流程
 
 #### 步骤 1: 确定要恢复的文件和备份版本
+
 ```bash
 # 查找可用备份
 ls -la backup/desktop-app-main.js.backup_*
 ```
 
 #### 步骤 2: 执行恢复操作
+
 ```bash
 # 从指定备份恢复文件
 cp backup/desktop-app-main.js.backup_20250901_143022 apps/desktop-app/electron_app/main.js
 ```
 
 #### 步骤 3: 验证恢复结果
+
 ```bash
 # 检查文件完整性
 ls -la apps/desktop-app/electron_app/main.js
@@ -137,17 +154,20 @@ ls -la apps/desktop-app/electron_app/main.js
 ```
 
 #### 步骤 4: 记录恢复操作
+
 在 [BACKUP_LOG.md](../../../../..) 中记录恢复操作信息。
 
 ### 3.2 批量文件恢复流程
 
 #### 步骤 1: 确定恢复点
+
 ```bash
 # 查找备份目录
 ls -la backup/
 ```
 
 #### 步骤 2: 执行批量恢复
+
 ```bash
 #!/bin/bash
 # batch_restore.sh
@@ -159,10 +179,10 @@ BACKUP_DIR="backup/20250901_143022"
 find $BACKUP_DIR -type f | while read backup_file; do
     # 计算原始文件路径
     original_file=${backup_file#$BACKUP_DIR/}
-    
+
     # 创建目录（如果不存在）
     mkdir -p "$(dirname "$original_file")"
-    
+
     # 执行恢复
     cp "$backup_file" "$original_file"
     echo "已恢复: $original_file"
@@ -172,6 +192,7 @@ echo "批量恢复完成"
 ```
 
 #### 步骤 3: 验证批量恢复
+
 ```bash
 # 验证恢复文件数量
 find apps/ packages/ tools/ scripts/ -type f | wc -l
@@ -180,18 +201,21 @@ find apps/ packages/ tools/ scripts/ -type f | wc -l
 ### 3.3 Git状态恢复流程
 
 #### 步骤 1: 确定要恢复的Git状态
+
 ```bash
 # 查看备份标签
 git tag | grep backup_
 ```
 
 #### 步骤 2: 执行Git恢复
+
 ```bash
 # 恢复到指定标签状态
 git reset --hard backup_20250901_143022
 ```
 
 #### 步骤 3: 清理临时提交（如果需要）
+
 ```bash
 # 删除备份标签
 git tag -d backup_20250901_143022
@@ -371,6 +395,7 @@ fi
 ### 7.1 紧急情况识别
 
 当出现以下情况时，需要执行紧急恢复：
+
 - 核心功能严重故障
 - 数据丢失或损坏
 - 系统无法正常启动
@@ -379,6 +404,7 @@ fi
 ### 7.2 紧急恢复步骤
 
 #### 步骤 1: 停止所有写入操作
+
 ```bash
 # 停止开发服务器
 pkill -f "uvicorn"
@@ -386,12 +412,14 @@ pkill -f "next"
 ```
 
 #### 步骤 2: 确定最近的稳定备份点
+
 ```bash
 # 查看备份目录
 ls -la backups/
 ```
 
 #### 步骤 3: 执行紧急恢复
+
 ```bash
 # 从最近的备份恢复
 LATEST_BACKUP=$(ls -t backups/ | head -n1)
@@ -399,12 +427,14 @@ cp -r backups/$LATEST_BACKUP/* ./
 ```
 
 #### 步骤 4: 验证恢复结果
+
 ```bash
 # 运行健康检查
 tools/health-check.bat
 ```
 
 #### 步骤 5: 记录紧急恢复操作
+
 在 [BACKUP_LOG.md](../../../../..) 中详细记录紧急恢复过程。
 
 ## 8. 最佳实践和注意事项

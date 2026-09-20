@@ -1,9 +1,11 @@
 # Angela AI — 理想架構規範（Target Architecture）
 
 **版本**: 1.0.0  
-**最後更新**: 2026-06-25 (v2 — §2.2/§4.4 實際狀態同步; creation/optimization/tools 已移除)  
+**最後更新**: 2026-06-25 (v2 — §2.2/§4.4 實際狀態同步;
+creation/optimization/tools 已移除)  
 **狀態**: Target / Blueprint  
-**目的**: 定義 Unified AI Project 應有的理想狀態 — 完整、全面、細節、細緻的架構規範
+**目的**: 定義 Unified AI
+Project 應有的理想狀態 — 完整、全面、細節、細緻的架構規範
 
 ---
 
@@ -32,42 +34,42 @@
 
 ### 1.1 架構原則
 
-| 原則 | 說明 | 強制程度 |
-|------|------|---------|
-| **單一職責** | 每個模組/類別/函數只做一件事 | 🔴 強制 |
-| **依賴反轉** | 高層模組不依賴低層模組，都依賴抽象 | 🔴 強制 |
-| **明確優於隱含** | 顯式 import、顯式錯誤處理、顯式配置 | 🔴 強制 |
-| **一致命名** | 相同概念使用相同命名規則 | 🔴 強制 |
-| **最小依賴** | 避免不必要的依賴和包裝層 | 🟡 建議 |
-| **文檔即真實** | 文檔必須與程式碼相符 | 🔴 強制 |
-| **測試即規範** | 測試應作為行為規範文件 | 🔴 強制 |
-| **無死代碼** | 沒有被使用的程式碼應被刪除 | 🔴 強制 |
+| 原則             | 說明                                | 強制程度 |
+| ---------------- | ----------------------------------- | -------- |
+| **單一職責**     | 每個模組/類別/函數只做一件事        | 🔴 強制  |
+| **依賴反轉**     | 高層模組不依賴低層模組，都依賴抽象  | 🔴 強制  |
+| **明確優於隱含** | 顯式 import、顯式錯誤處理、顯式配置 | 🔴 強制  |
+| **一致命名**     | 相同概念使用相同命名規則            | 🔴 強制  |
+| **最小依賴**     | 避免不必要的依賴和包裝層            | 🟡 建議  |
+| **文檔即真實**   | 文檔必須與程式碼相符                | 🔴 強制  |
+| **測試即規範**   | 測試應作為行為規範文件              | 🔴 強制  |
+| **無死代碼**     | 沒有被使用的程式碼應被刪除          | 🔴 強制  |
 
 ### 1.2 命名規範
 
-| 類別 | 規則 | 範例 |
-|------|------|------|
-| Python 套件 | `snake_case` | `ai/memory/ham_memory/` |
-| Python 模組 | `snake_case.py` | `query_classifier.py` |
-| Python 類別 | `PascalCase` | `QueryClassifier` |
-| Python 函數 | `snake_case` | `classify_query()` |
-| API 路由 | `/api/v1/{domain}/{action}` | `/api/v1/chat/send` |
-| 配置鍵 | `snake_case` | `max_message_length` |
-| JS 檔案 | `kebab-case.js` | `live2d-manager.js` |
-| JS 類別 | `PascalCase` | `Live2DManager` |
-| JS 函數 | `camelCase` | `loadModel()` |
-| 目錄 | `kebab-case` | `ham-memory/` |
+| 類別        | 規則                        | 範例                    |
+| ----------- | --------------------------- | ----------------------- |
+| Python 套件 | `snake_case`                | `ai/memory/ham_memory/` |
+| Python 模組 | `snake_case.py`             | `query_classifier.py`   |
+| Python 類別 | `PascalCase`                | `QueryClassifier`       |
+| Python 函數 | `snake_case`                | `classify_query()`      |
+| API 路由    | `/api/v1/{domain}/{action}` | `/api/v1/chat/send`     |
+| 配置鍵      | `snake_case`                | `max_message_length`    |
+| JS 檔案     | `kebab-case.js`             | `live2d-manager.js`     |
+| JS 類別     | `PascalCase`                | `Live2DManager`         |
+| JS 函數     | `camelCase`                 | `loadModel()`           |
+| 目錄        | `kebab-case`                | `ham-memory/`           |
 
 ### 1.3 設計模式偏好
 
-| 情境 | 模式 | 說明 |
-|------|------|------|
-| 服務建立 | Singleton + Factory | 由 lifespan 統一管理 |
-| 路由依賴 | FastAPI Depends | 透過 lifespan 的 lazy factories |
-| AI 引擎 | Strategy | 統一介面，多種實作 |
-| 事件處理 | Pub/Sub | Plugin 系統、WebSocket 推送 |
-| 錯誤處理 | 自訂 Exception Hierarchy | 繼承自 `AngelaError` |
-| 配置載入 | Adapter + Overlay | YAML 3-tier merge |
+| 情境     | 模式                     | 說明                            |
+| -------- | ------------------------ | ------------------------------- |
+| 服務建立 | Singleton + Factory      | 由 lifespan 統一管理            |
+| 路由依賴 | FastAPI Depends          | 透過 lifespan 的 lazy factories |
+| AI 引擎  | Strategy                 | 統一介面，多種實作              |
+| 事件處理 | Pub/Sub                  | Plugin 系統、WebSocket 推送     |
+| 錯誤處理 | 自訂 Exception Hierarchy | 繼承自 `AngelaError`            |
+| 配置載入 | Adapter + Overlay        | YAML 3-tier merge               |
 
 ---
 
@@ -188,43 +190,43 @@ unified-ai-project/
 
 ### 2.2 應該存在的目錄 vs 不該存在的目錄
 
-| 目錄 | 理想狀態 | 實際狀態 | 說明 |
-|------|---------|:--------:|------|
-| `apps/backend/src/ai/core/__init__.py` | ✅ **應存在** | ✅ 存在 | 讓 `ai.core` 成為 namespace package |
-| `apps/backend/src/modules/` | ❌ **不應存在** | ✅ 已移除 (Phase 1) | 包裝器層無增值 |
-| `apps/backend/src/monitoring/` | ❌ **不應存在** | ⚠️ 仍存在 | `system_monitor.py` (252行) 監控系統資源（CPU/GPU/記憶體/磁碟/網路），與 `core/monitoring/enterprise_monitor.py` (指標告警框架) 不同職責。有測試依賴，待合併至 `core/monitoring/` |
-| `apps/backend/src/optimization/` | ❌ **不應存在** | ✅ 已移除 (2026-06-25) | `performance_optimizer.py` (300行)，0 生產代碼/測試引用。測試引用已刪除的 `ai.ops.performance_optimizer` |
-| `apps/backend/src/creation/` | ❌ **不應存在** | ✅ 已移除 (2026-06-25) | `creation_engine.py` (95行)，0 引用，完全死代碼 |
-| `apps/backend/src/search/` | ❌ **不應存在** | ✅ 已移除 (2026-06-25) | 16 行 stub，無生產代碼引用 |
-| `apps/backend/src/tools/` | ❌ **不應存在** | ✅ 已移除 (2026-06-25) | `file_system_tool.py` (57行)，0 引用，完全死代碼 |
-| `apps/mobile-app/` | ❌ **已不存在** | skeleton 已被刪除 |
-| `context_storage/` (根目錄) | ❌ **不應在根目錄** | 應在 `data/context_storage/` |
-| `packages/shared-js/` | ✅ **應新增** | 共用 JS 程式庫 |
+| 目錄                                   | 理想狀態            |           實際狀態           | 說明                                                                                                                                                                              |
+| -------------------------------------- | ------------------- | :--------------------------: | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/backend/src/ai/core/__init__.py` | ✅ **應存在**       |           ✅ 存在            | 讓 `ai.core` 成為 namespace package                                                                                                                                               |
+| `apps/backend/src/modules/`            | ❌ **不應存在**     |     ✅ 已移除 (Phase 1)      | 包裝器層無增值                                                                                                                                                                    |
+| `apps/backend/src/monitoring/`         | ❌ **不應存在**     |          ⚠️ 仍存在           | `system_monitor.py` (252行) 監控系統資源（CPU/GPU/記憶體/磁碟/網路），與 `core/monitoring/enterprise_monitor.py` (指標告警框架) 不同職責。有測試依賴，待合併至 `core/monitoring/` |
+| `apps/backend/src/optimization/`       | ❌ **不應存在**     |    ✅ 已移除 (2026-06-25)    | `performance_optimizer.py` (300行)，0 生產代碼/測試引用。測試引用已刪除的 `ai.ops.performance_optimizer`                                                                          |
+| `apps/backend/src/creation/`           | ❌ **不應存在**     |    ✅ 已移除 (2026-06-25)    | `creation_engine.py` (95行)，0 引用，完全死代碼                                                                                                                                   |
+| `apps/backend/src/search/`             | ❌ **不應存在**     |    ✅ 已移除 (2026-06-25)    | 16 行 stub，無生產代碼引用                                                                                                                                                        |
+| `apps/backend/src/tools/`              | ❌ **不應存在**     |    ✅ 已移除 (2026-06-25)    | `file_system_tool.py` (57行)，0 引用，完全死代碼                                                                                                                                  |
+| `apps/mobile-app/`                     | ❌ **已不存在**     |      skeleton 已被刪除       |
+| `context_storage/` (根目錄)            | ❌ **不應在根目錄** | 應在 `data/context_storage/` |
+| `packages/shared-js/`                  | ✅ **應新增**       |        共用 JS 程式庫        |
 
 ### 2.3 已刪除的 AI 子模組 — 最終決定
 
-| 目錄 | 審計發現 | 理想決定 | 理由 |
-|------|---------|---------|------|
-| `ai/learning/` | Phase 11 刪除 | ❌ **不恢復** — 功能已移至 ED3N | ED3N ContinuousLearningPipeline 已涵蓋 |
-| `ai/ops/` | Phase 11 刪除 | ❌ **不恢復** — 功能已分散 | `core/managers/`、`core/monitoring/` |
-| `ai/lis/` | Phase 11 刪除 | ❌ **不恢復** — 冗餘 | 被 `core/life/` 取代 |
-| `ai/compression/` | Phase 11 刪除 | ❌ **不恢復** — alpha_deep_model 應重建於 `core/` | `ai/` 不合適 |
-| `ai/evaluation/` | Phase 11 刪除 | ❌ **不恢復** — 功能在 `core/managers/` |
-| `ai/symbolic_space/` | Phase 11 刪除 | ❌ **不恢復** — 功能冗餘 |
-| `ai/trust/` | Phase 12b 刪除 | ❌ **不恢復** — 功能在 `security/` |
-| `ai/world_model/` | Phase 9 刪除 | ❌ **不恢復** — 原本就是 stub |
-| `ai/security/` | chore 刪除 | ❌ **不恢復** — 功能在 `core/security/` |
-| `ai/token/` | Phase 9 刪除 | ❌ **不恢復** — 原本就是 stub |
-| `ai/distributed/` | 移除 | ❌ **不恢復** — 無需求 |
-| `ai/dialogue/` | Phase 11 刪除 | ❌ **不恢復** | 功能已移至 `services/chat_service.py` |
-| `ai/execution/` | Phase 11 刪除 | ❌ **不恢復** | 功能在 `core/engine/action_executor.py` |
-| `ai/code_inspection/` | Phase 11 刪除 | ❌ **不恢復** | 功能在 `core/tools/` |
-| `ai/language_models/` | Phase 11 刪除 | ❌ **不恢復** | 功能在 `services/llm/` |
-| `ai/integration/` | Phase 11 刪除 | ❌ **不恢復** | 功能分散在各處 |
-| `ai/formula_engine/` | Phase 9 刪除 | ❌ **不恢復** | 原本就是 stub |
-| `ai/rag/` | Phase 9 刪除 | ❌ **不恢復** | 無需求 |
-| `ai/service_discovery/` | Phase 9 刪除 | ❌ **不恢復** | 原本就是 stub |
-| `ai/deep_mapper/` | Fix 刪除 | ❌ **不恢復** | 無需求 |
+| 目錄                    | 審計發現       | 理想決定                                          | 理由                                    |
+| ----------------------- | -------------- | ------------------------------------------------- | --------------------------------------- |
+| `ai/learning/`          | Phase 11 刪除  | ❌ **不恢復** — 功能已移至 ED3N                   | ED3N ContinuousLearningPipeline 已涵蓋  |
+| `ai/ops/`               | Phase 11 刪除  | ❌ **不恢復** — 功能已分散                        | `core/managers/`、`core/monitoring/`    |
+| `ai/lis/`               | Phase 11 刪除  | ❌ **不恢復** — 冗餘                              | 被 `core/life/` 取代                    |
+| `ai/compression/`       | Phase 11 刪除  | ❌ **不恢復** — alpha_deep_model 應重建於 `core/` | `ai/` 不合適                            |
+| `ai/evaluation/`        | Phase 11 刪除  | ❌ **不恢復** — 功能在 `core/managers/`           |
+| `ai/symbolic_space/`    | Phase 11 刪除  | ❌ **不恢復** — 功能冗餘                          |
+| `ai/trust/`             | Phase 12b 刪除 | ❌ **不恢復** — 功能在 `security/`                |
+| `ai/world_model/`       | Phase 9 刪除   | ❌ **不恢復** — 原本就是 stub                     |
+| `ai/security/`          | chore 刪除     | ❌ **不恢復** — 功能在 `core/security/`           |
+| `ai/token/`             | Phase 9 刪除   | ❌ **不恢復** — 原本就是 stub                     |
+| `ai/distributed/`       | 移除           | ❌ **不恢復** — 無需求                            |
+| `ai/dialogue/`          | Phase 11 刪除  | ❌ **不恢復**                                     | 功能已移至 `services/chat_service.py`   |
+| `ai/execution/`         | Phase 11 刪除  | ❌ **不恢復**                                     | 功能在 `core/engine/action_executor.py` |
+| `ai/code_inspection/`   | Phase 11 刪除  | ❌ **不恢復**                                     | 功能在 `core/tools/`                    |
+| `ai/language_models/`   | Phase 11 刪除  | ❌ **不恢復**                                     | 功能在 `services/llm/`                  |
+| `ai/integration/`       | Phase 11 刪除  | ❌ **不恢復**                                     | 功能分散在各處                          |
+| `ai/formula_engine/`    | Phase 9 刪除   | ❌ **不恢復**                                     | 原本就是 stub                           |
+| `ai/rag/`               | Phase 9 刪除   | ❌ **不恢復**                                     | 無需求                                  |
+| `ai/service_discovery/` | Phase 9 刪除   | ❌ **不恢復**                                     | 原本就是 stub                           |
+| `ai/deep_mapper/`       | Fix 刪除       | ❌ **不恢復**                                     | 無需求                                  |
 
 ---
 
@@ -281,6 +283,7 @@ L6 (Presentation) → L5 (API) → L4 (Services) → L3 (Core) → L2 (AI) → L
 ```
 
 **強制規則**:
+
 - L6 只能依賴 L5
 - L5 只能依賴 L4
 - L4 只能依賴 L3 + L2
@@ -290,13 +293,13 @@ L6 (Presentation) → L5 (API) → L4 (Services) → L3 (Core) → L2 (AI) → L
 
 ### 3.3 模組間通訊規則
 
-| 通訊方式 | 使用場景 | 範例 |
-|---------|---------|------|
-| **直接函數調用** | 同層級模組 | `StateMatrix4D.update_dimension()` |
-| **依賴注入** | 跨層級工廠 | `lifespan.py` 提供 `get_digital_life()` |
-| **事件/Plugin** | 橫切關注點 | `plugin_manager.emit("on_message", msg)` |
-| **WebSocket Pub/Sub** | 即時推送 | `websocket_manager.broadcast(state_update)` |
-| **HSP 協定** | 外部系統整合 | `HSPConnector.send()` |
+| 通訊方式              | 使用場景     | 範例                                        |
+| --------------------- | ------------ | ------------------------------------------- |
+| **直接函數調用**      | 同層級模組   | `StateMatrix4D.update_dimension()`          |
+| **依賴注入**          | 跨層級工廠   | `lifespan.py` 提供 `get_digital_life()`     |
+| **事件/Plugin**       | 橫切關注點   | `plugin_manager.emit("on_message", msg)`    |
+| **WebSocket Pub/Sub** | 即時推送     | `websocket_manager.broadcast(state_update)` |
+| **HSP 協定**          | 外部系統整合 | `HSPConnector.send()`                       |
 
 ---
 
@@ -306,71 +309,71 @@ L6 (Presentation) → L5 (API) → L4 (Services) → L3 (Core) → L2 (AI) → L
 
 **格式**: `/{version}/{domain}/{resource}[/{action}]`
 
-| 域 (Domain) | 路由前綴 | 範例 |
-|------------|---------|------|
-| Chat | `/api/v1/chat` | `POST /api/v1/chat/send` |
-| Desktop | `/api/v1/desktop` | `GET /api/v1/desktop/state` |
-| Multimodal | `/api/v1/multimodal` | `POST /api/v1/multimodal/encode` |
-| Image Gen | `/api/v1/image` | `POST /api/v1/image/generate` |
-| Meta | `/api/v1/meta` | `GET /api/v1/meta/confidence/summary` |
-| Ops | `/api/v1/ops` | `GET /api/v1/ops/health` |
-| State | `/api/v1/state` | `GET /api/v1/state/summary` |
+| 域 (Domain) | 路由前綴             | 範例                                  |
+| ----------- | -------------------- | ------------------------------------- |
+| Chat        | `/api/v1/chat`       | `POST /api/v1/chat/send`              |
+| Desktop     | `/api/v1/desktop`    | `GET /api/v1/desktop/state`           |
+| Multimodal  | `/api/v1/multimodal` | `POST /api/v1/multimodal/encode`      |
+| Image Gen   | `/api/v1/image`      | `POST /api/v1/image/generate`         |
+| Meta        | `/api/v1/meta`       | `GET /api/v1/meta/confidence/summary` |
+| Ops         | `/api/v1/ops`        | `GET /api/v1/ops/health`              |
+| State       | `/api/v1/state`      | `GET /api/v1/state/summary`           |
 
 ### 4.2 端點命名規則
 
-| HTTP 方法 | 動作 | 範例 |
-|----------|------|------|
-| `GET` | 讀取資源 | `GET /api/v1/chat/sessions/{id}` |
-| `POST` | 建立資源/動作 | `POST /api/v1/chat/send` |
-| `PUT` | 完整更新 | `PUT /api/v1/state/axis/{name}` |
-| `PATCH` | 部分更新 | `PATCH /api/v1/chat/sessions/{id}` |
-| `DELETE` | 刪除 | `DELETE /api/v1/chat/sessions/{id}` |
+| HTTP 方法 | 動作          | 範例                                |
+| --------- | ------------- | ----------------------------------- |
+| `GET`     | 讀取資源      | `GET /api/v1/chat/sessions/{id}`    |
+| `POST`    | 建立資源/動作 | `POST /api/v1/chat/send`            |
+| `PUT`     | 完整更新      | `PUT /api/v1/state/axis/{name}`     |
+| `PATCH`   | 部分更新      | `PATCH /api/v1/chat/sessions/{id}`  |
+| `DELETE`  | 刪除          | `DELETE /api/v1/chat/sessions/{id}` |
 
 ### 4.3 理想路由清單
 
-| 方法 | 路徑 | 功能 | 所屬檔案 |
-|------|------|------|---------|
-| `GET` | `/health` | 根級健康檢查 | `routes/ops.py` |
-| `GET` | `/metrics` | Prometheus metrics | `routes/ops.py` |
-| `POST` | `/api/v1/chat/send` | 發送訊息（統一入口） | `routes/chat.py` |
-| `POST` | `/api/v1/chat/session/start` | 建立 Session | `routes/chat.py` |
-| `POST` | `/api/v1/chat/with-image` | 圖片對話 | `routes/chat.py` |
-| `POST` | `/api/v1/chat/with-audio` | 語音對話 | `routes/chat.py` |
-| `GET` | `/api/v1/desktop/state` | 桌面狀態 | `routes/desktop.py` |
-| `POST` | `/api/v1/desktop/organize` | 整理桌面 | `routes/desktop.py` |
-| `POST` | `/api/v1/desktop/cleanup` | 清理桌面 | `routes/desktop.py` |
-| `GET` | `/api/v1/image/status` | 圖像生成狀態 | `routes/image_gen.py` |
-| `POST` | `/api/v1/image/generate` | 從文字產生圖像 | `routes/image_gen.py` |
-| `POST` | `/api/v1/image/recognize` | 圖像辨識 | `routes/image_gen.py` |
-| `POST` | `/api/v1/image/reconstruct` | 圖像重建 | `routes/image_gen.py` |
-| `POST` | `/api/v1/image/interpolate` | 類別插值 | `routes/image_gen.py` |
-| `POST` | `/api/v1/multimodal/encode` | 編碼 | `routes/multimodal.py` |
-| `POST` | `/api/v1/multimodal/decode` | 解碼 | `routes/multimodal.py` |
-| `POST` | `/api/v1/multimodal/compare` | 比較 | `routes/multimodal.py` |
-| `POST` | `/api/v1/multimodal/train` | 訓練 | `routes/multimodal.py` |
-| `GET` | `/api/v1/multimodal/health` | 多模態健康 | `routes/multimodal.py` |
-| `GET` | `/api/v1/meta/confidence/summary` | 信心摘要 | `routes/meta.py` |
-| `GET` | `/api/v1/ops/health` | 運維健康 | `routes/ops.py` |
-| `GET` | `/api/v1/ops/status` | 運維狀態 | `routes/ops.py` |
-| `POST` | `/api/v1/ops/maintenance` | 維護觸發 | `routes/ops.py` |
-| `GET` | `/api/v1/state/summary` | 狀態矩陣摘要 | `routes/state.py` |
-| `GET` | `/api/v1/state/axis/{name}` | 單軸狀態 | `routes/state.py` |
-| `POST` | `/api/v1/state/axis/{name}/update` | 更新軸值 | `routes/state.py` |
+| 方法   | 路徑                               | 功能                 | 所屬檔案               |
+| ------ | ---------------------------------- | -------------------- | ---------------------- |
+| `GET`  | `/health`                          | 根級健康檢查         | `routes/ops.py`        |
+| `GET`  | `/metrics`                         | Prometheus metrics   | `routes/ops.py`        |
+| `POST` | `/api/v1/chat/send`                | 發送訊息（統一入口） | `routes/chat.py`       |
+| `POST` | `/api/v1/chat/session/start`       | 建立 Session         | `routes/chat.py`       |
+| `POST` | `/api/v1/chat/with-image`          | 圖片對話             | `routes/chat.py`       |
+| `POST` | `/api/v1/chat/with-audio`          | 語音對話             | `routes/chat.py`       |
+| `GET`  | `/api/v1/desktop/state`            | 桌面狀態             | `routes/desktop.py`    |
+| `POST` | `/api/v1/desktop/organize`         | 整理桌面             | `routes/desktop.py`    |
+| `POST` | `/api/v1/desktop/cleanup`          | 清理桌面             | `routes/desktop.py`    |
+| `GET`  | `/api/v1/image/status`             | 圖像生成狀態         | `routes/image_gen.py`  |
+| `POST` | `/api/v1/image/generate`           | 從文字產生圖像       | `routes/image_gen.py`  |
+| `POST` | `/api/v1/image/recognize`          | 圖像辨識             | `routes/image_gen.py`  |
+| `POST` | `/api/v1/image/reconstruct`        | 圖像重建             | `routes/image_gen.py`  |
+| `POST` | `/api/v1/image/interpolate`        | 類別插值             | `routes/image_gen.py`  |
+| `POST` | `/api/v1/multimodal/encode`        | 編碼                 | `routes/multimodal.py` |
+| `POST` | `/api/v1/multimodal/decode`        | 解碼                 | `routes/multimodal.py` |
+| `POST` | `/api/v1/multimodal/compare`       | 比較                 | `routes/multimodal.py` |
+| `POST` | `/api/v1/multimodal/train`         | 訓練                 | `routes/multimodal.py` |
+| `GET`  | `/api/v1/multimodal/health`        | 多模態健康           | `routes/multimodal.py` |
+| `GET`  | `/api/v1/meta/confidence/summary`  | 信心摘要             | `routes/meta.py`       |
+| `GET`  | `/api/v1/ops/health`               | 運維健康             | `routes/ops.py`        |
+| `GET`  | `/api/v1/ops/status`               | 運維狀態             | `routes/ops.py`        |
+| `POST` | `/api/v1/ops/maintenance`          | 維護觸發             | `routes/ops.py`        |
+| `GET`  | `/api/v1/state/summary`            | 狀態矩陣摘要         | `routes/state.py`      |
+| `GET`  | `/api/v1/state/axis/{name}`        | 單軸狀態             | `routes/state.py`      |
+| `POST` | `/api/v1/state/axis/{name}/update` | 更新軸值             | `routes/state.py`      |
 
 ### 4.4 棄用路由（不應存在 — 但仍有實際代碼）
 
 以下路由存在於實際代碼中，但已加上 `DeprecationWarning`。最終目標是移除。
 
-| 當前路由 | 實際狀態 | 應改為 | 理由 |
-|---------|:--------:|-------|------|
-| `POST /api/v1/angela/chat` | ⚠️ 存在 (有 DeprecationWarning) | `POST /api/v1/chat/send` | 與 `/dialogue` 重複 |
-| `POST /api/v1/dialogue` | ⚠️ 存在 (有 DeprecationWarning) | `POST /api/v1/chat/send` | 與 `/angela/chat` 重複 |
-| `POST /api/v1/generate-image` | ⚠️ 存在 (有 DeprecationWarning) | `POST /api/v1/image/generate` | 命名不一致 |
-| `POST /api/v1/reconstruct-image` | ⚠️ 存在 (有 DeprecationWarning) | `POST /api/v1/image/reconstruct` | 同上 |
-| `POST /api/v1/recognize-image` | ⚠️ 存在 (有 DeprecationWarning) | `POST /api/v1/image/recognize` | 同上 |
-| `POST /api/v1/interpolate-classes` | ⚠️ 存在 (有 DeprecationWarning) | `POST /api/v1/image/interpolate` | 同上 |
-| `POST /api/v1/vision/analyze` | ⚠️ 存在 (有 DeprecationWarning) | `POST /api/v1/multimodal/encode` | 與 `/chat/with-image` 重疊 |
-| `GET /generate-image/status` | ⚠️ 存在 (有 DeprecationWarning) | `GET /api/v1/image/status` | 命名不一致 |
+| 當前路由                           |            實際狀態             | 應改為                           | 理由                       |
+| ---------------------------------- | :-----------------------------: | -------------------------------- | -------------------------- |
+| `POST /api/v1/angela/chat`         | ⚠️ 存在 (有 DeprecationWarning) | `POST /api/v1/chat/send`         | 與 `/dialogue` 重複        |
+| `POST /api/v1/dialogue`            | ⚠️ 存在 (有 DeprecationWarning) | `POST /api/v1/chat/send`         | 與 `/angela/chat` 重複     |
+| `POST /api/v1/generate-image`      | ⚠️ 存在 (有 DeprecationWarning) | `POST /api/v1/image/generate`    | 命名不一致                 |
+| `POST /api/v1/reconstruct-image`   | ⚠️ 存在 (有 DeprecationWarning) | `POST /api/v1/image/reconstruct` | 同上                       |
+| `POST /api/v1/recognize-image`     | ⚠️ 存在 (有 DeprecationWarning) | `POST /api/v1/image/recognize`   | 同上                       |
+| `POST /api/v1/interpolate-classes` | ⚠️ 存在 (有 DeprecationWarning) | `POST /api/v1/image/interpolate` | 同上                       |
+| `POST /api/v1/vision/analyze`      | ⚠️ 存在 (有 DeprecationWarning) | `POST /api/v1/multimodal/encode` | 與 `/chat/with-image` 重疊 |
+| `GET /generate-image/status`       | ⚠️ 存在 (有 DeprecationWarning) | `GET /api/v1/image/status`       | 命名不一致                 |
 
 ---
 
@@ -545,13 +548,13 @@ class StateMatrix4D:
     def update_theta(self, **values)
     def compute_influences()
     def apply_epsilon_influence()
-    
+
     # 需實作 ❌ (目前回傳 "not_implemented")
     def register_port(self, name: str, config: dict)
     def unregister_port(self, name: str)
     def apply_ripple(self, source_axis, source_value, target_axes, strength)
     def allocation_decide(self, candidates, dimension)
-    
+
     # 需確認是否存在
     def save_state(self, filepath)
     def load_state(self, filepath)
@@ -607,7 +610,7 @@ apps/backend/src/services/
 ```python
 class BaseHandler(ABC):
     """所有處理器的基礎類別"""
-    
+
     @abstractmethod
     async def handle(self, intent: str, params: dict) -> dict:
         """處理意圖並返回結果"""
@@ -679,27 +682,27 @@ Layer 4: 環境變數                        # Runtime 覆蓋
 
 ### 9.2 配置欄位標準
 
-| 欄位 | 類型 | 預設值 | 必填 | 說明 |
-|------|------|--------|------|------|
-| `app.name` | string | "Angela AI" | ✅ | 應用名稱 |
-| `app.version` | string | "7.5.0-dev" | ✅ | 版本（與 VERSION 同步） |
-| `backend.host` | string | "127.0.0.1" | ✅ | 後端主機 |
-| `backend.port` | int | 8000 | ✅ | 後端埠號 |
-| `features.voice_recognition` | bool | false | ✅ | 語音辨識（預設關閉） |
-| `features.text_to_speech` | bool | false | ✅ | 文字轉語音（預設關閉） |
-| `features.mobile_bridge` | bool | false | ✅ | 手機橋接（預設關閉—實際不存在） |
-| `security.session_timeout` | int | 3600 | ✅ | Session 逾時 |
-| `logging.level` | string | "INFO" | ✅ | 日誌級別 |
-| `testing.test_mode` | bool | false | ✅ | 測試模式（**必須預設關閉**） |
-| `development.debug_mode` | bool | false | ✅ | 除錯模式（**必須預設關閉**） |
+| 欄位                         | 類型   | 預設值      | 必填 | 說明                            |
+| ---------------------------- | ------ | ----------- | ---- | ------------------------------- |
+| `app.name`                   | string | "Angela AI" | ✅   | 應用名稱                        |
+| `app.version`                | string | "7.5.0-dev" | ✅   | 版本（與 VERSION 同步）         |
+| `backend.host`               | string | "127.0.0.1" | ✅   | 後端主機                        |
+| `backend.port`               | int    | 8000        | ✅   | 後端埠號                        |
+| `features.voice_recognition` | bool   | false       | ✅   | 語音辨識（預設關閉）            |
+| `features.text_to_speech`    | bool   | false       | ✅   | 文字轉語音（預設關閉）          |
+| `features.mobile_bridge`     | bool   | false       | ✅   | 手機橋接（預設關閉—實際不存在） |
+| `security.session_timeout`   | int    | 3600        | ✅   | Session 逾時                    |
+| `logging.level`              | string | "INFO"      | ✅   | 日誌級別                        |
+| `testing.test_mode`          | bool   | false       | ✅   | 測試模式（**必須預設關閉**）    |
+| `development.debug_mode`     | bool   | false       | ✅   | 除錯模式（**必須預設關閉**）    |
 
 ### 9.3 禁止的預設值
 
-| 配置 | 當前值 | 理想值 | 實際狀態 | 理由 |
-|------|:------:|:------:|:--------:|------|
-| `test_mode` | `true` (舊) | `false` | ✅ 已是 `false` | 生產環境不應預設測試模式 |
-| `debug_mode` | `true` (舊) | `false` | ✅ 已是 `false` | 生產環境不應設施錯模式 |
-| `mobile_bridge` | `true` (舊) | `false` | ✅ 已是 `false` | 實際不存在此功能 |
+| 配置            |   當前值    | 理想值  |    實際狀態     | 理由                     |
+| --------------- | :---------: | :-----: | :-------------: | ------------------------ |
+| `test_mode`     | `true` (舊) | `false` | ✅ 已是 `false` | 生產環境不應預設測試模式 |
+| `debug_mode`    | `true` (舊) | `false` | ✅ 已是 `false` | 生產環境不應設施錯模式   |
+| `mobile_bridge` | `true` (舊) | `false` | ✅ 已是 `false` | 實際不存在此功能         |
 
 ---
 
@@ -731,24 +734,24 @@ Level 4 — E2E Tests (tests/e2e/)
 
 ### 10.2 測試覆蓋目標
 
-| 模組類別 | 覆蓋率目標 | 當前估計 |
-|---------|-----------|---------|
-| Core 引擎 | >90% | ~80% |
-| AI 引擎 (ED3N, GARDEN) | >85% | ~70% |
-| Services | >80% | ~50% |
-| API Routes | >90% | ~60% |
-| Handlers | >80% | ~10% (幾乎無測試) |
-| LLM Providers | >90% | ~80% |
+| 模組類別               | 覆蓋率目標 | 當前估計          |
+| ---------------------- | ---------- | ----------------- |
+| Core 引擎              | >90%       | ~80%              |
+| AI 引擎 (ED3N, GARDEN) | >85%       | ~70%              |
+| Services               | >80%       | ~50%              |
+| API Routes             | >90%       | ~60%              |
+| Handlers               | >80%       | ~10% (幾乎無測試) |
+| LLM Providers          | >90%       | ~80%              |
 
 ### 10.3 測試禁令
 
-| 禁止 | 替代方案 | 理由 |
-|------|---------|------|
-| `pytest.skip()` 因 stub module | 實作 module 或移除測試 | 測試不應永久跳過 |
-| `except ImportError: pytest.skip()` | 修復 import 路徑 | 掩蓋真實問題 |
-| `assert True` 佔位符 | 移除測試 | 無意義 |
-| `pass` 測試方法 | 移除測試 | 無意義 |
-| Mock 整個外部服務 | 使用真實服務或 lightweight fake | 過度 mock 降低信心 |
+| 禁止                                | 替代方案                        | 理由               |
+| ----------------------------------- | ------------------------------- | ------------------ |
+| `pytest.skip()` 因 stub module      | 實作 module 或移除測試          | 測試不應永久跳過   |
+| `except ImportError: pytest.skip()` | 修復 import 路徑                | 掩蓋真實問題       |
+| `assert True` 佔位符                | 移除測試                        | 無意義             |
+| `pass` 測試方法                     | 移除測試                        | 無意義             |
+| Mock 整個外部服務                   | 使用真實服務或 lightweight fake | 過度 mock 降低信心 |
 
 ---
 
@@ -756,26 +759,26 @@ Level 4 — E2E Tests (tests/e2e/)
 
 ### 11.1 文件分類
 
-| 類別 | 位置 | 維護頻率 |
-|------|------|---------|
-| 開發指南 | `AGENTS.md` | 每次結構變更 |
-| 架構概覽 | `docs/ARCHITECTURE.md` | 每次架構變更 |
-| 文件索引 | `docs/INDEX.md` | 每新增/刪除文件 |
-| 模組文檔 | `*/README.md` | 每次模組變更 |
-| 審計報告 | `docs/COMPREHENSIVE_AUDIT_*.md` | 每月或重大變更後 |
-| 計畫 | `docs/06-project-management/` | 執行期間持續更新 |
-| CHANGELOG | `CHANGELOG.md` | 每次提交功能變更 |
-| 用戶指南 | `README.md`, `QUICK_START.md` | 每次釋出版本 |
+| 類別      | 位置                            | 維護頻率         |
+| --------- | ------------------------------- | ---------------- |
+| 開發指南  | `AGENTS.md`                     | 每次結構變更     |
+| 架構概覽  | `docs/ARCHITECTURE.md`          | 每次架構變更     |
+| 文件索引  | `docs/INDEX.md`                 | 每新增/刪除文件  |
+| 模組文檔  | `*/README.md`                   | 每次模組變更     |
+| 審計報告  | `docs/COMPREHENSIVE_AUDIT_*.md` | 每月或重大變更後 |
+| 計畫      | `docs/06-project-management/`   | 執行期間持續更新 |
+| CHANGELOG | `CHANGELOG.md`                  | 每次提交功能變更 |
+| 用戶指南  | `README.md`, `QUICK_START.md`   | 每次釋出版本     |
 
 ### 11.2 文檔必須反映現實
 
-| 檢查項 | 頻率 | 方法 |
-|--------|------|------|
-| 目錄結構 | 每次提交 | glob 比對文檔宣稱的檔案 |
-| 檔案數量 | 每次提交 | `find . -name "*.py" | wc -l` |
-| 版本號 | CI 檢查 | 14 個位置比對 |
+| 檢查項   | 頻率         | 方法                      |
+| -------- | ------------ | ------------------------- |
+| 目錄結構 | 每次提交     | glob 比對文檔宣稱的檔案   |
+| 檔案數量 | 每次提交     | `find . -name "*.py"      | wc -l` |
+| 版本號   | CI 檢查      | 14 個位置比對             |
 | API 路由 | 每次路由變更 | OpenAPI schema 與文檔比對 |
-| 模組狀態 | 每月 | 重新執行審計腳本 |
+| 模組狀態 | 每月         | 重新執行審計腳本          |
 
 ### 11.3 過時文檔處理
 
@@ -790,28 +793,29 @@ Level 4 — E2E Tests (tests/e2e/)
 
 ### 12.1 16 個版本位置（已驗證）
 
-| # | 位置 | 當前版本 | 檢查方法 |
-|---|------|---------|---------|
-| 1 | `VERSION` | 7.5.0-dev | `cat VERSION` |
-| 2 | `package.json` | 7.5.0-dev | `jq .version` |
-| 3 | `apps/backend/pyproject.toml` | 7.5.0-dev | `grep 'version ='` |
-| 4 | `configs/angela_config.json` | 7.5.0-dev | `jq .version` |
-| 5 | `apps/backend/package.json` | 7.5.0-dev | `jq .version` |
-| 6 | `apps/desktop-app/package.json` | 7.5.0-dev | `jq .version` |
-| 7 | `apps/desktop-app/electron_app/package.json` | 7.5.0-dev | `jq .version` |
-| 8 | `packages/cli/package.json` | 7.5.0-dev | `jq .version` |
-| 9 | `packages/biology-core/package.json` | 7.5.0-dev | `jq .version` |
-| 10 | `apps/web-dashboard/package.json` | 7.5.0-dev | `jq .version` |
-| 11 | `apps/backend/src/core/version.py` | major=7, minor=5, patch=0 | 檢查版本類別 |
-| 12 | `apps/backend/src/services/main_api_server.py` | 7.5.0-dev | docstring 與 FastAPI |
-| 13 | `configs/angela_config.yaml` | 7.5.0-dev | `grep 'version'` |
-| 14 | `AGENTS.md` | 7.5.0-dev | 檔案元資料 |
-| 15 | `README.md` | 7.5.0-dev | 版本參考 |
-| 16 | `.github/workflows/ci.yml` | 7.5.0-dev | EXPECTED 變數 |
+| #   | 位置                                           | 當前版本                  | 檢查方法             |
+| --- | ---------------------------------------------- | ------------------------- | -------------------- |
+| 1   | `VERSION`                                      | 7.5.0-dev                 | `cat VERSION`        |
+| 2   | `package.json`                                 | 7.5.0-dev                 | `jq .version`        |
+| 3   | `apps/backend/pyproject.toml`                  | 7.5.0-dev                 | `grep 'version ='`   |
+| 4   | `configs/angela_config.json`                   | 7.5.0-dev                 | `jq .version`        |
+| 5   | `apps/backend/package.json`                    | 7.5.0-dev                 | `jq .version`        |
+| 6   | `apps/desktop-app/package.json`                | 7.5.0-dev                 | `jq .version`        |
+| 7   | `apps/desktop-app/electron_app/package.json`   | 7.5.0-dev                 | `jq .version`        |
+| 8   | `packages/cli/package.json`                    | 7.5.0-dev                 | `jq .version`        |
+| 9   | `packages/biology-core/package.json`           | 7.5.0-dev                 | `jq .version`        |
+| 10  | `apps/web-dashboard/package.json`              | 7.5.0-dev                 | `jq .version`        |
+| 11  | `apps/backend/src/core/version.py`             | major=7, minor=5, patch=0 | 檢查版本類別         |
+| 12  | `apps/backend/src/services/main_api_server.py` | 7.5.0-dev                 | docstring 與 FastAPI |
+| 13  | `configs/angela_config.yaml`                   | 7.5.0-dev                 | `grep 'version'`     |
+| 14  | `AGENTS.md`                                    | 7.5.0-dev                 | 檔案元資料           |
+| 15  | `README.md`                                    | 7.5.0-dev                 | 版本參考             |
+| 16  | `.github/workflows/ci.yml`                     | 7.5.0-dev                 | EXPECTED 變數        |
 
 ### 12.2 CI 版本檢查修復（已完成）
 
 **已修復 (2026-06-25)**:
+
 - ✅ `scripts/create-release.sh` 不存在檔案檢查已移除
 - ✅ `packages/cli/package.json` 版本比對已從 `1.1.0` 改為 `$EXPECTED`
 
@@ -949,28 +953,28 @@ Level 4 — E2E Tests (tests/e2e/)
 
 ### 14.1 Stub 分類與處理
 
-| 類別 | 定義 | 處理方式 |
-|------|------|---------|
+| 類別                 | 定義                       | 處理方式                                    |
+| -------------------- | -------------------------- | ------------------------------------------- |
 | **Intentional Stub** | 有明確的 TODO 計畫未來實作 | 保留，加 TODO 註解，但不得超過 1 個 release |
-| **Accidental Stub** | 應實作但未實作 | 🔴 必須在 1 週內實作或移除 |
-| **Deprecated Stub** | 功能已移除但包裝保留 | 🟡 應在下一版本移除 |
-| **Testing Stub** | 為測試建立的 mock/fake | ✅ 可保留，但需明確標記 |
-| **Dead Code** | 無任何 import 的程式碼 | 🔴 應立即刪除 |
+| **Accidental Stub**  | 應實作但未實作             | 🔴 必須在 1 週內實作或移除                  |
+| **Deprecated Stub**  | 功能已移除但包裝保留       | 🟡 應在下一版本移除                         |
+| **Testing Stub**     | 為測試建立的 mock/fake     | ✅ 可保留，但需明確標記                     |
+| **Dead Code**        | 無任何 import 的程式碼     | 🔴 應立即刪除                               |
 
 ### 14.2 當前 Stub 處理計畫
 
-| Stub | 類別 | 處理 |
-|------|------|------|
-| `google_drive_handler.py` | Accidental | 實作真正的 Google Drive 操作 |
-| `core/security/key_generator.py` | ✅ 已完成 (已有真實實作，移除 stub 標記) |
-| `core/security/secure_eval.py` | ✅ 已確認 (AST 安全求值器，完整實作，非 stub) |
-| `services/math_verifier.py` | Intentional | 保留但加明確時間表 |
-| `core/waiting_scheduler.py` | ✅ 已完成 (slot-based 排程器實作) |
-| `modules/tactile_service/` | ✅ 已移除（包含在 modules/ 刪除中） |
-| `modules/math_verifier/` | ✅ 已移除（包含在 modules/ 刪除中） |
-| `modules/` (全部 11 個) | ✅ 已移除 (Phase 1) |
-| `services/node_services/server.js` | Accidental | 實作或移除 |
-| `core/tools/js_tool_dispatcher/index.js` | Accidental | 實作或移除 |
+| Stub                                     | 類別                                          | 處理                         |
+| ---------------------------------------- | --------------------------------------------- | ---------------------------- |
+| `google_drive_handler.py`                | Accidental                                    | 實作真正的 Google Drive 操作 |
+| `core/security/key_generator.py`         | ✅ 已完成 (已有真實實作，移除 stub 標記)      |
+| `core/security/secure_eval.py`           | ✅ 已確認 (AST 安全求值器，完整實作，非 stub) |
+| `services/math_verifier.py`              | Intentional                                   | 保留但加明確時間表           |
+| `core/waiting_scheduler.py`              | ✅ 已完成 (slot-based 排程器實作)             |
+| `modules/tactile_service/`               | ✅ 已移除（包含在 modules/ 刪除中）           |
+| `modules/math_verifier/`                 | ✅ 已移除（包含在 modules/ 刪除中）           |
+| `modules/` (全部 11 個)                  | ✅ 已移除 (Phase 1)                           |
+| `services/node_services/server.js`       | Accidental                                    | 實作或移除                   |
+| `core/tools/js_tool_dispatcher/index.js` | Accidental                                    | 實作或移除                   |
 
 ---
 
@@ -978,36 +982,36 @@ Level 4 — E2E Tests (tests/e2e/)
 
 ### 15.1 Python 品質閘門
 
-| 檢查項 | 工具 | 通過標準 |
-|--------|------|---------|
-| 語法正確性 | Python compile | 0 錯誤 |
-| 格式化 | black | 無差異 |
-| Import 排序 | isort | 無差異 |
-| Lint | flake8 | 0 錯誤 (允許 F401 在 `__init__.py`) |
-| 型別檢查 | mypy | 0 錯誤 (strict mode) |
-| 測試通過率 | pytest | 100% |
-| 測試覆蓋率 | pytest-cov | >80% |
-| 安全掃描 | bandit | 0 HIGH 漏洞 |
-| Secret 掃描 | gitleaks | 0 洩漏 |
+| 檢查項      | 工具           | 通過標準                            |
+| ----------- | -------------- | ----------------------------------- |
+| 語法正確性  | Python compile | 0 錯誤                              |
+| 格式化      | black          | 無差異                              |
+| Import 排序 | isort          | 無差異                              |
+| Lint        | flake8         | 0 錯誤 (允許 F401 在 `__init__.py`) |
+| 型別檢查    | mypy           | 0 錯誤 (strict mode)                |
+| 測試通過率  | pytest         | 100%                                |
+| 測試覆蓋率  | pytest-cov     | >80%                                |
+| 安全掃描    | bandit         | 0 HIGH 漏洞                         |
+| Secret 掃描 | gitleaks       | 0 洩漏                              |
 
 ### 15.2 JavaScript 品質閘門
 
-| 檢查項 | 工具 | 通過標準 |
-|--------|------|---------|
-| Lint | ESLint | 0 錯誤 |
-| 格式化 | Prettier | 無差異 |
+| 檢查項 | 工具     | 通過標準 |
+| ------ | -------- | -------- |
+| Lint   | ESLint   | 0 錯誤   |
+| 格式化 | Prettier | 無差異   |
 
 ### 15.3 禁止模式
 
-| 模式 | 禁止原因 | 替代方案 |
-|------|---------|---------|
-| `except: pass` | 隱藏所有錯誤 | `except SpecificError: logger.warning(...)` |
-| `except Exception: pass` | 隱藏意外錯誤 | 同上 |
-| `return NotImplemented` | 執行時崩潰 | 實作方法或 `raise NotImplementedError` |
-| `if __name__ == "__main__":` 中的錯誤測試 | 生產代碼混淆 | 使用 pytest |
-| `sys.path.insert()` 在執行時 | 破壞匯入順序 | 使用正確的套件結構 |
-| `hasattr(obj, "method")` fallback | 隱藏缺失方法 | 直接在類別中實作方法 |
-| 無 `__init__.py` 的目錄 | Python <3.3 不相容 | 加入空 `__init__.py` |
+| 模式                                      | 禁止原因           | 替代方案                                    |
+| ----------------------------------------- | ------------------ | ------------------------------------------- |
+| `except: pass`                            | 隱藏所有錯誤       | `except SpecificError: logger.warning(...)` |
+| `except Exception: pass`                  | 隱藏意外錯誤       | 同上                                        |
+| `return NotImplemented`                   | 執行時崩潰         | 實作方法或 `raise NotImplementedError`      |
+| `if __name__ == "__main__":` 中的錯誤測試 | 生產代碼混淆       | 使用 pytest                                 |
+| `sys.path.insert()` 在執行時              | 破壞匯入順序       | 使用正確的套件結構                          |
+| `hasattr(obj, "method")` fallback         | 隱藏缺失方法       | 直接在類別中實作方法                        |
+| 無 `__init__.py` 的目錄                   | Python <3.3 不相容 | 加入空 `__init__.py`                        |
 
 ---
 
@@ -1042,7 +1046,7 @@ jobs:
   test_python:
     strategy:
       matrix:
-        python-version: [ '3.10', '3.11', '3.12' ]  # ✅ 不需要 3.14
+        python-version: ['3.10', '3.11', '3.12'] # ✅ 不需要 3.14
     steps:
       - pytest tests/unit/ tests/core/
       - pytest tests/ai/ --ignore=tests/ai/test_phase*.py
@@ -1063,13 +1067,13 @@ jobs:
 
 ### 16.2 CI 當前實際狀態
 
-| 組件 | 實際狀態 | 說明 |
-|------|:--------:|------|
-| **版本一致性檢查** | ✅ 14 位置已同步 | ci.yml 內嵌檢查所有 14+ 版本位置，皆為 7.5.0-dev |
-| **Deploy pipeline** | ✅ `deploy.yml` 存在 | Docker build → ghcr.io → SSH 部署至 staging/production（含通知） |
-| **Python 3.14 測試矩陣** | ⚠️ 仍存在 | 3.14 為 alpha 版，建議改為 3.10 / 3.11 / 3.12 |
-| **JS 測試** | ⚠️ 佔位符 | `echo "No JS unit tests configured yet"` — 需加入真實 JS 測試 |
-| **編譯檢查腳本** | ✅ 不存在亦不檢查 | `scripts/create-release.sh` 不存在，但 CI 也未引用（§16.1 的疑慮已確認消除） |
+| 組件                     |       實際狀態       | 說明                                                                         |
+| ------------------------ | :------------------: | ---------------------------------------------------------------------------- |
+| **版本一致性檢查**       |   ✅ 14 位置已同步   | ci.yml 內嵌檢查所有 14+ 版本位置，皆為 7.5.0-dev                             |
+| **Deploy pipeline**      | ✅ `deploy.yml` 存在 | Docker build → ghcr.io → SSH 部署至 staging/production（含通知）             |
+| **Python 3.14 測試矩陣** |      ⚠️ 仍存在       | 3.14 為 alpha 版，建議改為 3.10 / 3.11 / 3.12                                |
+| **JS 測試**              |      ⚠️ 佔位符       | `echo "No JS unit tests configured yet"` — 需加入真實 JS 測試                |
+| **編譯檢查腳本**         |  ✅ 不存在亦不檢查   | `scripts/create-release.sh` 不存在，但 CI 也未引用（§16.1 的疑慮已確認消除） |
 
 ---
 
@@ -1093,23 +1097,24 @@ configs/
 
 以下檔案已被確認不再存在且**不應恢復**：
 
-| 檔案/目錄 | 刪除時間 | 最終決定 |
-|-----------|---------|---------|
-| `apps/mobile-app/` | 2026-06 chore | ❌ 不恢復 |
-| `apps/backend/src/modules/` | — | ❌ 應刪除 |
-| `apps/backend/src/ai/learning/` | Phase 11 | ❌ 不恢復 |
-| `apps/backend/src/ai/ops/` | Phase 11 | ❌ 不恢復 |
-| `apps/backend/src/ai/lis/` | Phase 11 | ❌ 不恢復 |
-| `apps/backend/src/ai/compression/` | Phase 11 | ❌ 不恢復 |
-| `apps/backend/src/ai/evaluation/` | Phase 11 | ❌ 不恢復 |
-| `apps/backend/src/ai/symbolic_space/` | Phase 11 | ❌ 不恢復 |
-| `apps/backend/src/ai/trust/` | Phase 12b | ❌ 不恢復 |
-| `apps/backend/src/ai/security/` | chore | ❌ 不恢復 |
-| `apps/backend/src/ai/world_model/` | Phase 9 | ❌ 不恢復 |
-| `apps/backend/src/ai/token/` | Phase 9 | ❌ 不恢復 |
-| `apps/backend/src/ai/distributed/` | 移除 | ❌ 不恢復 |
-| `apps/backend/context_storage/` | — | ❌ 應移至 `data/` |
+| 檔案/目錄                             | 刪除時間      | 最終決定          |
+| ------------------------------------- | ------------- | ----------------- |
+| `apps/mobile-app/`                    | 2026-06 chore | ❌ 不恢復         |
+| `apps/backend/src/modules/`           | —             | ❌ 應刪除         |
+| `apps/backend/src/ai/learning/`       | Phase 11      | ❌ 不恢復         |
+| `apps/backend/src/ai/ops/`            | Phase 11      | ❌ 不恢復         |
+| `apps/backend/src/ai/lis/`            | Phase 11      | ❌ 不恢復         |
+| `apps/backend/src/ai/compression/`    | Phase 11      | ❌ 不恢復         |
+| `apps/backend/src/ai/evaluation/`     | Phase 11      | ❌ 不恢復         |
+| `apps/backend/src/ai/symbolic_space/` | Phase 11      | ❌ 不恢復         |
+| `apps/backend/src/ai/trust/`          | Phase 12b     | ❌ 不恢復         |
+| `apps/backend/src/ai/security/`       | chore         | ❌ 不恢復         |
+| `apps/backend/src/ai/world_model/`    | Phase 9       | ❌ 不恢復         |
+| `apps/backend/src/ai/token/`          | Phase 9       | ❌ 不恢復         |
+| `apps/backend/src/ai/distributed/`    | 移除          | ❌ 不恢復         |
+| `apps/backend/context_storage/`       | —             | ❌ 應移至 `data/` |
 
 ---
 
-*本文檔定義了 Unified AI Project 的理想目標架構。任何偏離此架構的實作都應被視為需要修復的技術債。*
+_本文檔定義了 Unified AI
+Project 的理想目標架構。任何偏離此架構的實作都應被視為需要修復的技術債。_

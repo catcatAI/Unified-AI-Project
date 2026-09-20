@@ -5,55 +5,55 @@
  * that can be found at https://www.live2d.com/eula/live2d-open-software-license-agreement_en.html.
  */
 
-import { CubismIdHandle } from '../id/cubismid';
-import { CubismFramework } from '../live2dcubismframework';
-import { CubismVector2 } from '../math/cubismvector2';
-import { CubismJson } from '../utils/cubismjson';
+import { CubismIdHandle } from '../id/cubismid'
+import { CubismFramework } from '../live2dcubismframework'
+import { CubismVector2 } from '../math/cubismvector2'
+import { CubismJson } from '../utils/cubismjson'
 
 // JSON keys
-const Position = 'Position';
-const X = 'X';
-const Y = 'Y';
-const Angle = 'Angle';
-const Type = 'Type';
-const Id = 'Id';
+const Position = 'Position'
+const X = 'X'
+const Y = 'Y'
+const Angle = 'Angle'
+const Type = 'Type'
+const Id = 'Id'
 
 // Meta
-const Meta = 'Meta';
-const EffectiveForces = 'EffectiveForces';
-const TotalInputCount = 'TotalInputCount';
-const TotalOutputCount = 'TotalOutputCount';
-const PhysicsSettingCount = 'PhysicsSettingCount';
-const Gravity = 'Gravity';
-const Wind = 'Wind';
-const VertexCount = 'VertexCount';
-const Fps = 'Fps';
+const Meta = 'Meta'
+const EffectiveForces = 'EffectiveForces'
+const TotalInputCount = 'TotalInputCount'
+const TotalOutputCount = 'TotalOutputCount'
+const PhysicsSettingCount = 'PhysicsSettingCount'
+const Gravity = 'Gravity'
+const Wind = 'Wind'
+const VertexCount = 'VertexCount'
+const Fps = 'Fps'
 
 // PhysicsSettings
-const PhysicsSettings = 'PhysicsSettings';
-const Normalization = 'Normalization';
-const Minimum = 'Minimum';
-const Maximum = 'Maximum';
-const Default = 'Default';
-const Reflect = 'Reflect';
-const Weight = 'Weight';
+const PhysicsSettings = 'PhysicsSettings'
+const Normalization = 'Normalization'
+const Minimum = 'Minimum'
+const Maximum = 'Maximum'
+const Default = 'Default'
+const Reflect = 'Reflect'
+const Weight = 'Weight'
 
 // Input
-const Input = 'Input';
-const Source = 'Source';
+const Input = 'Input'
+const Source = 'Source'
 
 // Output
-const Output = 'Output';
-const Scale = 'Scale';
-const VertexIndex = 'VertexIndex';
-const Destination = 'Destination';
+const Output = 'Output'
+const Scale = 'Scale'
+const VertexIndex = 'VertexIndex'
+const Destination = 'Destination'
 
 // Particle
-const Vertices = 'Vertices';
-const Mobility = 'Mobility';
-const Delay = 'Delay';
-const Radius = 'Radius';
-const Acceleration = 'Acceleration';
+const Vertices = 'Vertices'
+const Mobility = 'Mobility'
+const Delay = 'Delay'
+const Radius = 'Radius'
+const Acceleration = 'Acceleration'
 
 /**
  * physics3.jsonのコンテナ。
@@ -65,14 +65,14 @@ export class CubismPhysicsJson {
    * @param size バッファのサイズ
    */
   public constructor(buffer: ArrayBuffer, size: number) {
-    this._json = CubismJson.create(buffer, size);
+    this._json = CubismJson.create(buffer, size)
   }
 
   /**
    * デストラクタ相当の処理
    */
   public release(): void {
-    CubismJson.delete(this._json);
+    CubismJson.delete(this._json)
   }
 
   /**
@@ -80,22 +80,22 @@ export class CubismPhysicsJson {
    * @return 重力
    */
   public getGravity(): CubismVector2 {
-    const ret: CubismVector2 = new CubismVector2(0, 0);
+    const ret: CubismVector2 = new CubismVector2(0, 0)
     ret.x = this._json
       .getRoot()
       .getValueByString(Meta)
       .getValueByString(EffectiveForces)
       .getValueByString(Gravity)
       .getValueByString(X)
-      .toFloat();
+      .toFloat()
     ret.y = this._json
       .getRoot()
       .getValueByString(Meta)
       .getValueByString(EffectiveForces)
       .getValueByString(Gravity)
       .getValueByString(Y)
-      .toFloat();
-    return ret;
+      .toFloat()
+    return ret
   }
 
   /**
@@ -103,22 +103,22 @@ export class CubismPhysicsJson {
    * @return 風
    */
   public getWind(): CubismVector2 {
-    const ret: CubismVector2 = new CubismVector2(0, 0);
+    const ret: CubismVector2 = new CubismVector2(0, 0)
     ret.x = this._json
       .getRoot()
       .getValueByString(Meta)
       .getValueByString(EffectiveForces)
       .getValueByString(Wind)
       .getValueByString(X)
-      .toFloat();
+      .toFloat()
     ret.y = this._json
       .getRoot()
       .getValueByString(Meta)
       .getValueByString(EffectiveForces)
       .getValueByString(Wind)
       .getValueByString(Y)
-      .toFloat();
-    return ret;
+      .toFloat()
+    return ret
   }
 
   /**
@@ -126,11 +126,7 @@ export class CubismPhysicsJson {
    * @return 物理演算設定FPS
    */
   public getFps(): number {
-    return this._json
-      .getRoot()
-      .getValueByString(Meta)
-      .getValueByString(Fps)
-      .toFloat(0.0);
+    return this._json.getRoot().getValueByString(Meta).getValueByString(Fps).toFloat(0.0)
   }
 
   /**
@@ -138,11 +134,7 @@ export class CubismPhysicsJson {
    * @return 物理店の管理の個数
    */
   public getSubRigCount(): number {
-    return this._json
-      .getRoot()
-      .getValueByString(Meta)
-      .getValueByString(PhysicsSettingCount)
-      .toInt();
+    return this._json.getRoot().getValueByString(Meta).getValueByString(PhysicsSettingCount).toInt()
   }
 
   /**
@@ -150,11 +142,7 @@ export class CubismPhysicsJson {
    * @return 入力の総合計
    */
   public getTotalInputCount(): number {
-    return this._json
-      .getRoot()
-      .getValueByString(Meta)
-      .getValueByString(TotalInputCount)
-      .toInt();
+    return this._json.getRoot().getValueByString(Meta).getValueByString(TotalInputCount).toInt()
   }
 
   /**
@@ -162,11 +150,7 @@ export class CubismPhysicsJson {
    * @return 出力の総合計
    */
   public getTotalOutputCount(): number {
-    return this._json
-      .getRoot()
-      .getValueByString(Meta)
-      .getValueByString(TotalOutputCount)
-      .toInt();
+    return this._json.getRoot().getValueByString(Meta).getValueByString(TotalOutputCount).toInt()
   }
 
   /**
@@ -174,11 +158,7 @@ export class CubismPhysicsJson {
    * @return 物理点の個数
    */
   public getVertexCount(): number {
-    return this._json
-      .getRoot()
-      .getValueByString(Meta)
-      .getValueByString(VertexCount)
-      .toInt();
+    return this._json.getRoot().getValueByString(Meta).getValueByString(VertexCount).toInt()
   }
 
   /**
@@ -186,9 +166,7 @@ export class CubismPhysicsJson {
    * @param physicsSettingIndex 物理演算の設定のインデックス
    * @return 正規化された位置の最小値
    */
-  public getNormalizationPositionMinimumValue(
-    physicsSettingIndex: number
-  ): number {
+  public getNormalizationPositionMinimumValue(physicsSettingIndex: number): number {
     return this._json
       .getRoot()
       .getValueByString(PhysicsSettings)
@@ -196,7 +174,7 @@ export class CubismPhysicsJson {
       .getValueByString(Normalization)
       .getValueByString(Position)
       .getValueByString(Minimum)
-      .toFloat();
+      .toFloat()
   }
 
   /**
@@ -204,9 +182,7 @@ export class CubismPhysicsJson {
    * @param physicsSettingIndex 物理演算の設定のインデックス
    * @return 正規化された位置の最大値
    */
-  public getNormalizationPositionMaximumValue(
-    physicsSettingIndex: number
-  ): number {
+  public getNormalizationPositionMaximumValue(physicsSettingIndex: number): number {
     return this._json
       .getRoot()
       .getValueByString(PhysicsSettings)
@@ -214,7 +190,7 @@ export class CubismPhysicsJson {
       .getValueByString(Normalization)
       .getValueByString(Position)
       .getValueByString(Maximum)
-      .toFloat();
+      .toFloat()
   }
 
   /**
@@ -222,9 +198,7 @@ export class CubismPhysicsJson {
    * @param physicsSettingIndex 物理演算の設定のインデックス
    * @return 正規化された位置のデフォルト値
    */
-  public getNormalizationPositionDefaultValue(
-    physicsSettingIndex: number
-  ): number {
+  public getNormalizationPositionDefaultValue(physicsSettingIndex: number): number {
     return this._json
       .getRoot()
       .getValueByString(PhysicsSettings)
@@ -232,7 +206,7 @@ export class CubismPhysicsJson {
       .getValueByString(Normalization)
       .getValueByString(Position)
       .getValueByString(Default)
-      .toFloat();
+      .toFloat()
   }
 
   /**
@@ -240,9 +214,7 @@ export class CubismPhysicsJson {
    * @param physicsSettingIndex 物理演算の設定のインデックス
    * @return 正規化された角度の最小値
    */
-  public getNormalizationAngleMinimumValue(
-    physicsSettingIndex: number
-  ): number {
+  public getNormalizationAngleMinimumValue(physicsSettingIndex: number): number {
     return this._json
       .getRoot()
       .getValueByString(PhysicsSettings)
@@ -250,7 +222,7 @@ export class CubismPhysicsJson {
       .getValueByString(Normalization)
       .getValueByString(Angle)
       .getValueByString(Minimum)
-      .toFloat();
+      .toFloat()
   }
 
   /**
@@ -258,9 +230,7 @@ export class CubismPhysicsJson {
    * @param physicsSettingIndex
    * @return 正規化された角度の最大値
    */
-  public getNormalizationAngleMaximumValue(
-    physicsSettingIndex: number
-  ): number {
+  public getNormalizationAngleMaximumValue(physicsSettingIndex: number): number {
     return this._json
       .getRoot()
       .getValueByString(PhysicsSettings)
@@ -268,7 +238,7 @@ export class CubismPhysicsJson {
       .getValueByString(Normalization)
       .getValueByString(Angle)
       .getValueByString(Maximum)
-      .toFloat();
+      .toFloat()
   }
 
   /**
@@ -276,9 +246,7 @@ export class CubismPhysicsJson {
    * @param physicsSettingIndex 物理演算の設定のインデックス
    * @return 正規化された角度のデフォルト値
    */
-  public getNormalizationAngleDefaultValue(
-    physicsSettingIndex: number
-  ): number {
+  public getNormalizationAngleDefaultValue(physicsSettingIndex: number): number {
     return this._json
       .getRoot()
       .getValueByString(PhysicsSettings)
@@ -286,7 +254,7 @@ export class CubismPhysicsJson {
       .getValueByString(Normalization)
       .getValueByString(Angle)
       .getValueByString(Default)
-      .toFloat();
+      .toFloat()
   }
 
   /**
@@ -301,7 +269,7 @@ export class CubismPhysicsJson {
       .getValueByIndex(physicsSettingIndex)
       .getValueByString(Input)
       .getVector()
-      .getSize();
+      .getSize()
   }
 
   /**
@@ -310,10 +278,7 @@ export class CubismPhysicsJson {
    * @param inputIndex 入力のインデックス
    * @return 入力の重み
    */
-  public getInputWeight(
-    physicsSettingIndex: number,
-    inputIndex: number
-  ): number {
+  public getInputWeight(physicsSettingIndex: number, inputIndex: number): number {
     return this._json
       .getRoot()
       .getValueByString(PhysicsSettings)
@@ -321,7 +286,7 @@ export class CubismPhysicsJson {
       .getValueByString(Input)
       .getValueByIndex(inputIndex)
       .getValueByString(Weight)
-      .toFloat();
+      .toFloat()
   }
 
   /**
@@ -330,10 +295,7 @@ export class CubismPhysicsJson {
    * @param inputIndex 入力のインデックス
    * @return 入力の反転
    */
-  public getInputReflect(
-    physicsSettingIndex: number,
-    inputIndex: number
-  ): boolean {
+  public getInputReflect(physicsSettingIndex: number, inputIndex: number): boolean {
     return this._json
       .getRoot()
       .getValueByString(PhysicsSettings)
@@ -341,7 +303,7 @@ export class CubismPhysicsJson {
       .getValueByString(Input)
       .getValueByIndex(inputIndex)
       .getValueByString(Reflect)
-      .toBoolean();
+      .toBoolean()
   }
 
   /**
@@ -358,7 +320,7 @@ export class CubismPhysicsJson {
       .getValueByString(Input)
       .getValueByIndex(inputIndex)
       .getValueByString(Type)
-      .getRawString();
+      .getRawString()
   }
 
   /**
@@ -367,10 +329,7 @@ export class CubismPhysicsJson {
    * @param inputIndex 入力のインデックス
    * @return 入力元のID
    */
-  public getInputSourceId(
-    physicsSettingIndex: number,
-    inputIndex: number
-  ): CubismIdHandle {
+  public getInputSourceId(physicsSettingIndex: number, inputIndex: number): CubismIdHandle {
     return CubismFramework.getIdManager().getId(
       this._json
         .getRoot()
@@ -381,7 +340,7 @@ export class CubismPhysicsJson {
         .getValueByString(Source)
         .getValueByString(Id)
         .getRawString()
-    );
+    )
   }
 
   /**
@@ -396,7 +355,7 @@ export class CubismPhysicsJson {
       .getValueByIndex(physicsSettingIndex)
       .getValueByString(Output)
       .getVector()
-      .getSize();
+      .getSize()
   }
 
   /**
@@ -405,10 +364,7 @@ export class CubismPhysicsJson {
    * @param outputIndex 出力のインデックス
    * @return 出力の物理点のインデックス
    */
-  public getOutputVertexIndex(
-    physicsSettingIndex: number,
-    outputIndex: number
-  ): number {
+  public getOutputVertexIndex(physicsSettingIndex: number, outputIndex: number): number {
     return this._json
       .getRoot()
       .getValueByString(PhysicsSettings)
@@ -416,7 +372,7 @@ export class CubismPhysicsJson {
       .getValueByString(Output)
       .getValueByIndex(outputIndex)
       .getValueByString(VertexIndex)
-      .toInt();
+      .toInt()
   }
 
   /**
@@ -425,10 +381,7 @@ export class CubismPhysicsJson {
    * @param outputIndex 出力のインデックス
    * @return 出力の角度のスケール
    */
-  public getOutputAngleScale(
-    physicsSettingIndex: number,
-    outputIndex: number
-  ): number {
+  public getOutputAngleScale(physicsSettingIndex: number, outputIndex: number): number {
     return this._json
       .getRoot()
       .getValueByString(PhysicsSettings)
@@ -436,7 +389,7 @@ export class CubismPhysicsJson {
       .getValueByString(Output)
       .getValueByIndex(outputIndex)
       .getValueByString(Scale)
-      .toFloat();
+      .toFloat()
   }
 
   /**
@@ -445,10 +398,7 @@ export class CubismPhysicsJson {
    * @param outputIndex 出力のインデックス
    * @return 出力の重み
    */
-  public getOutputWeight(
-    physicsSettingIndex: number,
-    outputIndex: number
-  ): number {
+  public getOutputWeight(physicsSettingIndex: number, outputIndex: number): number {
     return this._json
       .getRoot()
       .getValueByString(PhysicsSettings)
@@ -456,7 +406,7 @@ export class CubismPhysicsJson {
       .getValueByString(Output)
       .getValueByIndex(outputIndex)
       .getValueByString(Weight)
-      .toFloat();
+      .toFloat()
   }
 
   /**
@@ -465,10 +415,7 @@ export class CubismPhysicsJson {
    * @param outputIndex 出力のインデックス
    * @return 出力先のID
    */
-  public getOutputDestinationId(
-    physicsSettingIndex: number,
-    outputIndex: number
-  ): CubismIdHandle {
+  public getOutputDestinationId(physicsSettingIndex: number, outputIndex: number): CubismIdHandle {
     return CubismFramework.getIdManager().getId(
       this._json
         .getRoot()
@@ -479,7 +426,7 @@ export class CubismPhysicsJson {
         .getValueByString(Destination)
         .getValueByString(Id)
         .getRawString()
-    );
+    )
   }
 
   /**
@@ -488,10 +435,7 @@ export class CubismPhysicsJson {
    * @param outputIndex 出力のインデックス
    * @return 出力の種類
    */
-  public getOutputType(
-    physicsSettingIndex: number,
-    outputIndex: number
-  ): string {
+  public getOutputType(physicsSettingIndex: number, outputIndex: number): string {
     return this._json
       .getRoot()
       .getValueByString(PhysicsSettings)
@@ -499,7 +443,7 @@ export class CubismPhysicsJson {
       .getValueByString(Output)
       .getValueByIndex(outputIndex)
       .getValueByString(Type)
-      .getRawString();
+      .getRawString()
   }
 
   /**
@@ -508,10 +452,7 @@ export class CubismPhysicsJson {
    * @param outputIndex 出力のインデックス
    * @return 出力の反転
    */
-  public getOutputReflect(
-    physicsSettingIndex: number,
-    outputIndex: number
-  ): boolean {
+  public getOutputReflect(physicsSettingIndex: number, outputIndex: number): boolean {
     return this._json
       .getRoot()
       .getValueByString(PhysicsSettings)
@@ -519,7 +460,7 @@ export class CubismPhysicsJson {
       .getValueByString(Output)
       .getValueByIndex(outputIndex)
       .getValueByString(Reflect)
-      .toBoolean();
+      .toBoolean()
   }
 
   /**
@@ -534,7 +475,7 @@ export class CubismPhysicsJson {
       .getValueByIndex(physicsSettingIndex)
       .getValueByString(Vertices)
       .getVector()
-      .getSize();
+      .getSize()
   }
 
   /**
@@ -543,10 +484,7 @@ export class CubismPhysicsJson {
    * @param vertexIndex 物理点のインデックス
    * @return 物理点の動きやすさ
    */
-  public getParticleMobility(
-    physicsSettingIndex: number,
-    vertexIndex: number
-  ): number {
+  public getParticleMobility(physicsSettingIndex: number, vertexIndex: number): number {
     return this._json
       .getRoot()
       .getValueByString(PhysicsSettings)
@@ -554,7 +492,7 @@ export class CubismPhysicsJson {
       .getValueByString(Vertices)
       .getValueByIndex(vertexIndex)
       .getValueByString(Mobility)
-      .toFloat();
+      .toFloat()
   }
 
   /**
@@ -563,10 +501,7 @@ export class CubismPhysicsJson {
    * @param vertexIndex 物理点のインデックス
    * @return 物理点の遅れ
    */
-  public getParticleDelay(
-    physicsSettingIndex: number,
-    vertexIndex: number
-  ): number {
+  public getParticleDelay(physicsSettingIndex: number, vertexIndex: number): number {
     return this._json
       .getRoot()
       .getValueByString(PhysicsSettings)
@@ -574,7 +509,7 @@ export class CubismPhysicsJson {
       .getValueByString(Vertices)
       .getValueByIndex(vertexIndex)
       .getValueByString(Delay)
-      .toFloat();
+      .toFloat()
   }
 
   /**
@@ -583,10 +518,7 @@ export class CubismPhysicsJson {
    * @param vertexIndex 物理点のインデックス
    * @return 物理点の加速度
    */
-  public getParticleAcceleration(
-    physicsSettingIndex: number,
-    vertexIndex: number
-  ): number {
+  public getParticleAcceleration(physicsSettingIndex: number, vertexIndex: number): number {
     return this._json
       .getRoot()
       .getValueByString(PhysicsSettings)
@@ -594,7 +526,7 @@ export class CubismPhysicsJson {
       .getValueByString(Vertices)
       .getValueByIndex(vertexIndex)
       .getValueByString(Acceleration)
-      .toFloat();
+      .toFloat()
   }
 
   /**
@@ -603,10 +535,7 @@ export class CubismPhysicsJson {
    * @param vertexIndex 物理点のインデックス
    * @return 物理点の距離
    */
-  public getParticleRadius(
-    physicsSettingIndex: number,
-    vertexIndex: number
-  ): number {
+  public getParticleRadius(physicsSettingIndex: number, vertexIndex: number): number {
     return this._json
       .getRoot()
       .getValueByString(PhysicsSettings)
@@ -614,7 +543,7 @@ export class CubismPhysicsJson {
       .getValueByString(Vertices)
       .getValueByIndex(vertexIndex)
       .getValueByString(Radius)
-      .toFloat();
+      .toFloat()
   }
 
   /**
@@ -623,11 +552,8 @@ export class CubismPhysicsJson {
    * @param vertexInde 物理点のインデックス
    * @return 物理点の位置
    */
-  public getParticlePosition(
-    physicsSettingIndex: number,
-    vertexIndex: number
-  ): CubismVector2 {
-    const ret: CubismVector2 = new CubismVector2(0, 0);
+  public getParticlePosition(physicsSettingIndex: number, vertexIndex: number): CubismVector2 {
+    const ret: CubismVector2 = new CubismVector2(0, 0)
     ret.x = this._json
       .getRoot()
       .getValueByString(PhysicsSettings)
@@ -636,7 +562,7 @@ export class CubismPhysicsJson {
       .getValueByIndex(vertexIndex)
       .getValueByString(Position)
       .getValueByString(X)
-      .toFloat();
+      .toFloat()
     ret.y = this._json
       .getRoot()
       .getValueByString(PhysicsSettings)
@@ -645,17 +571,17 @@ export class CubismPhysicsJson {
       .getValueByIndex(vertexIndex)
       .getValueByString(Position)
       .getValueByString(Y)
-      .toFloat();
-    return ret;
+      .toFloat()
+    return ret
   }
 
-  _json: CubismJson; // physics3.jsonデータ
+  _json: CubismJson // physics3.jsonデータ
 }
 
 // Namespace definition for compatibility.
-import * as $ from './cubismphysicsjson';
+import * as $ from './cubismphysicsjson'
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
-  export const CubismPhysicsJson = $.CubismPhysicsJson;
-  export type CubismPhysicsJson = $.CubismPhysicsJson;
+  export const CubismPhysicsJson = $.CubismPhysicsJson
+  export type CubismPhysicsJson = $.CubismPhysicsJson
 }

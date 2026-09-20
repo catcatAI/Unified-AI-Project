@@ -2,40 +2,44 @@
 
 ## 附屬遊戲：角色扮演模擬
 
-本專案的附屬遊戲是一個 **CLI 命令列角色扮演模擬**，不包含圖形化 UI，所有互動透過終端文字完成。
+本專案的附屬遊戲是一個
+**CLI 命令列角色扮演模擬**，不包含圖形化 UI，所有互動透過終端文字完成。
 
 ---
 
 ## 核心文檔
 
-| 文件 | 內容 | 定位 |
-|------|------|------|
-| [GAME_OVERVIEW.md](GAME_OVERVIEW.md) | 遊戲總覽、定位、系統概覽 | 入門必讀 |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | 技術架構、模組結構、數據流向 | 開發者必讀 |
-| [INTERFACE_TERMINAL.md](INTERFACE_TERMINAL.md) | CLI 終端呈現方式（不是 UI） | 所有文件 |
-| [WORLD_AND_STORY.md](WORLD_AND_STORY.md) | 世界觀、劇情、主線支線 | 設計者參考 |
-| [CHARACTER_SYSTEM.md](CHARACTER_SYSTEM.md) | 角色系統、屬性條、立繪 | 所有文件 |
-| [ITEM_EQUIPMENT_SYSTEM.md](ITEM_EQUIPMENT_SYSTEM.md) | 物品、裝備、背包、合成 | 所有文件 |
-| [NUMERICAL_SYSTEMS.md](NUMERICAL_SYSTEMS.md) | 數值計算公式與規則 | 開發者必讀 |
-| [MAP_AND_SCENES.md](MAP_AND_SCENES.md) | 地圖、場景、不動產、物件 | 設計者參考 |
-| [SIMULATION_SYSTEMS.md](SIMULATION_SYSTEMS.md) | NPC 作息、行程、生活模擬 | 設計者參考 |
-| [FILE_INVENTORY.md](FILE_INVENTORY.md) | 所有遊戲檔案總覽 | 管理必讀 |
+| 文件                                                 | 內容                         | 定位       |
+| ---------------------------------------------------- | ---------------------------- | ---------- |
+| [GAME_OVERVIEW.md](GAME_OVERVIEW.md)                 | 遊戲總覽、定位、系統概覽     | 入門必讀   |
+| [ARCHITECTURE.md](ARCHITECTURE.md)                   | 技術架構、模組結構、數據流向 | 開發者必讀 |
+| [INTERFACE_TERMINAL.md](INTERFACE_TERMINAL.md)       | CLI 終端呈現方式（不是 UI）  | 所有文件   |
+| [WORLD_AND_STORY.md](WORLD_AND_STORY.md)             | 世界觀、劇情、主線支線       | 設計者參考 |
+| [CHARACTER_SYSTEM.md](CHARACTER_SYSTEM.md)           | 角色系統、屬性條、立繪       | 所有文件   |
+| [ITEM_EQUIPMENT_SYSTEM.md](ITEM_EQUIPMENT_SYSTEM.md) | 物品、裝備、背包、合成       | 所有文件   |
+| [NUMERICAL_SYSTEMS.md](NUMERICAL_SYSTEMS.md)         | 數值計算公式與規則           | 開發者必讀 |
+| [MAP_AND_SCENES.md](MAP_AND_SCENES.md)               | 地圖、場景、不動產、物件     | 設計者參考 |
+| [SIMULATION_SYSTEMS.md](SIMULATION_SYSTEMS.md)       | NPC 作息、行程、生活模擬     | 設計者參考 |
+| [FILE_INVENTORY.md](FILE_INVENTORY.md)               | 所有遊戲檔案總覽             | 管理必讀   |
 
 ---
 
 ## 系統概覽
 
 ### 角色
+
 - **PC (玩家角色)**: 可選擇現有 NPC 或新建角色卡
 - **NPC**: AI 驅動，有獨立作息和生活圈
 - **GM**: Angela AI 負責敘事和演算法则
 
 ### 三色屬性條
+
 - 🔴 紅條 (身體): HP, 身體, 肢體
 - 🔵 藍條 (靈): 靈活躍度, 體力, 魔力
 - 🟢 綠條 (經歷): 經驗, 級別, 技能
 
 ### 系統結構
+
 ```
 卡片資料 → CardRegistry → 角色/場景/物品生成 → GameEngine
                                                         ↓

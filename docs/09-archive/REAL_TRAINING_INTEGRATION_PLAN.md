@@ -22,7 +22,7 @@ class ModelTrainer:
     def __init__(self, config_path=None, preset_path=None):
         # 现有代码...
         self.tensorflow_available = self._check_tensorflow_availability()
-    
+
     def _check_tensorflow_availability(self):
         """检查TensorFlow是否可用"""
         try:
@@ -30,13 +30,13 @@ class ModelTrainer:
             return True
         except ImportError:
             return False
-    
+
     def train_with_preset(self, scenario_name):
         """使用预设配置进行训练"""
         scenario = self.get_preset_scenario(scenario_name)
         if not scenario:
             return False
-            
+
         # 根据场景类型选择训练方式
         target_models = scenario.get('target_models', [])
         if 'math_model' in target_models:
@@ -58,7 +58,7 @@ def _train_math_model(self, scenario):
     if not self.tensorflow_available:
         logger.error("❌ TensorFlow不可用，无法训练数学模型")
         return False
-    
+
     try:
         # 导入数学模型训练脚本
         from apps.backend.src.tools.math_model.train import main as train_math_model
@@ -75,7 +75,7 @@ def _train_logic_model(self, scenario):
     if not self.tensorflow_available:
         logger.error("❌ TensorFlow不可用，无法训练逻辑模型")
         return False
-    
+
     try:
         # 导入逻辑模型训练脚本
         from apps.backend.src.tools.logic_model.train_logic_model import main as train_logic_model

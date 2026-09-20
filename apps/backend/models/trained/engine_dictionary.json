@@ -15,19 +15,8 @@
         }
       ],
       "relations": {
-        "synonym": [
-          "g2",
-          "g3",
-          "g4",
-          "g5",
-          "g6"
-        ],
-        "mapping": [
-          "e1",
-          "p1",
-          "p4",
-          "c4"
-        ]
+        "synonym": ["g2", "g3", "g4", "g5", "g6"],
+        "mapping": ["e1", "p1", "p4", "c4"]
       },
       "confidence": 0.9999999999999207
     },
@@ -45,14 +34,8 @@
         }
       ],
       "relations": {
-        "synonym": [
-          "g1"
-        ],
-        "mapping": [
-          "g5",
-          "f2",
-          "c3"
-        ]
+        "synonym": ["g1"],
+        "mapping": ["g5", "f2", "c3"]
       },
       "confidence": 0.9999996989536153
     },
@@ -70,13 +53,8 @@
         }
       ],
       "relations": {
-        "synonym": [
-          "g1"
-        ],
-        "mapping": [
-          "g5",
-          "c3"
-        ]
+        "synonym": ["g1"],
+        "mapping": ["g5", "c3"]
       },
       "confidence": 0.9999930666078873
     },
@@ -93,12 +71,8 @@
         }
       ],
       "relations": {
-        "synonym": [
-          "g1"
-        ],
-        "mapping": [
-          "p1"
-        ]
+        "synonym": ["g1"],
+        "mapping": ["p1"]
       },
       "confidence": 1.0
     },
@@ -115,14 +89,8 @@
         }
       ],
       "relations": {
-        "synonym": [
-          "g1",
-          "g6"
-        ],
-        "mapping": [
-          "g2",
-          "g3"
-        ]
+        "synonym": ["g1", "g6"],
+        "mapping": ["g2", "g3"]
       },
       "confidence": 0.999999999999555
     },
@@ -139,10 +107,7 @@
         }
       ],
       "relations": {
-        "synonym": [
-          "g1",
-          "g5"
-        ]
+        "synonym": ["g1", "g5"]
       },
       "confidence": 0.9993606898373678
     },
@@ -159,12 +124,8 @@
         }
       ],
       "relations": {
-        "synonym": [
-          "f2"
-        ],
-        "mapping": [
-          "p1"
-        ]
+        "synonym": ["f2"],
+        "mapping": ["p1"]
       },
       "confidence": 0.980148249942857
     },
@@ -181,12 +142,8 @@
         }
       ],
       "relations": {
-        "synonym": [
-          "f1"
-        ],
-        "mapping": [
-          "g2"
-        ]
+        "synonym": ["f1"],
+        "mapping": ["g2"]
       },
       "confidence": 0.9999974130236144
     },
@@ -203,17 +160,8 @@
         }
       ],
       "relations": {
-        "synonym": [
-          "p4"
-        ],
-        "mapping": [
-          "e1",
-          "r1",
-          "g1",
-          "g4",
-          "f1",
-          "p4"
-        ]
+        "synonym": ["p4"],
+        "mapping": ["e1", "r1", "g1", "g4", "f1", "p4"]
       },
       "confidence": 0.9999505463403103
     },
@@ -231,14 +179,8 @@
         }
       ],
       "relations": {
-        "synonym": [
-          "r2"
-        ],
-        "mapping": [
-          "r1",
-          "p3",
-          "e2"
-        ]
+        "synonym": ["r2"],
+        "mapping": ["r1", "p3", "e2"]
       },
       "confidence": 0.9585702607503102
     },
@@ -256,12 +198,8 @@
         }
       ],
       "relations": {
-        "synonym": [
-          "r3"
-        ],
-        "mapping": [
-          "p2"
-        ]
+        "synonym": ["r3"],
+        "mapping": ["p2"]
       },
       "confidence": 1.0
     },
@@ -278,13 +216,8 @@
         }
       ],
       "relations": {
-        "synonym": [
-          "p1"
-        ],
-        "mapping": [
-          "g1",
-          "p1"
-        ]
+        "synonym": ["p1"],
+        "mapping": ["g1", "p1"]
       },
       "confidence": 0.9621576318791796
     },
@@ -301,13 +234,7 @@
         }
       ],
       "relations": {
-        "mapping": [
-          "e5",
-          "r1",
-          "c3",
-          "c5",
-          "e4"
-        ]
+        "mapping": ["e5", "r1", "c3", "c5", "e4"]
       },
       "confidence": 0.9999999996769758
     },
@@ -351,11 +278,7 @@
         }
       ],
       "relations": {
-        "mapping": [
-          "g2",
-          "g3",
-          "c1"
-        ]
+        "mapping": ["g2", "g3", "c1"]
       },
       "confidence": 1.0
     },
@@ -372,9 +295,7 @@
         }
       ],
       "relations": {
-        "mapping": [
-          "g1"
-        ]
+        "mapping": ["g1"]
       },
       "confidence": 1.0
     },
@@ -391,10 +312,7 @@
         }
       ],
       "relations": {
-        "mapping": [
-          "c1",
-          "e5"
-        ]
+        "mapping": ["c1", "e5"]
       },
       "confidence": 1.0
     },
@@ -412,20 +330,9 @@
         }
       ],
       "relations": {
-        "synonym": [
-          "e5",
-          "emo_joy",
-          "emo_happy"
-        ],
-        "mapping": [
-          "c2",
-          "g1",
-          "p1",
-          "emo_surprise"
-        ],
-        "antonym": [
-          "emo_sadness"
-        ]
+        "synonym": ["e5", "emo_joy", "emo_happy"],
+        "mapping": ["c2", "g1", "p1", "emo_surprise"],
+        "antonym": ["emo_sadness"]
       },
       "confidence": 0.9924158267340069
     },
@@ -443,16 +350,8 @@
         }
       ],
       "relations": {
-        "mapping": [
-          "p2",
-          "c2",
-          "e3",
-          "e4",
-          "emo_fear"
-        ],
-        "synonym": [
-          "emo_sadness"
-        ]
+        "mapping": ["p2", "c2", "e3", "e4", "emo_fear"],
+        "synonym": ["emo_sadness"]
       },
       "confidence": 0.9397142293118044
     },
@@ -470,12 +369,7 @@
         }
       ],
       "relations": {
-        "mapping": [
-          "e2",
-          "c2",
-          "emo_anger",
-          "emo_disgust"
-        ]
+        "mapping": ["e2", "c2", "emo_anger", "emo_disgust"]
       },
       "confidence": 0.9517146409801537
     },
@@ -493,11 +387,7 @@
         }
       ],
       "relations": {
-        "mapping": [
-          "e2",
-          "c1",
-          "emo_disgust"
-        ]
+        "mapping": ["e2", "c1", "emo_disgust"]
       },
       "confidence": 0.9377245293160378
     },
@@ -515,17 +405,8 @@
         }
       ],
       "relations": {
-        "synonym": [
-          "e1",
-          "emo_joy",
-          "emo_happy"
-        ],
-        "mapping": [
-          "c2",
-          "c1",
-          "c5",
-          "emo_surprise"
-        ]
+        "synonym": ["e1", "emo_joy", "emo_happy"],
+        "mapping": ["c2", "c1", "c5", "emo_surprise"]
       },
       "confidence": 0.9754326709941935
     },
@@ -542,15 +423,8 @@
         }
       ],
       "relations": {
-        "synonym": [
-          "r2",
-          "r3"
-        ],
-        "mapping": [
-          "p1",
-          "p2",
-          "c1"
-        ]
+        "synonym": ["r2", "r3"],
+        "mapping": ["p1", "p2", "c1"]
       },
       "confidence": 0.9541440749604448
     },
@@ -567,12 +441,7 @@
         }
       ],
       "relations": {
-        "synonym": [
-          "r1",
-          "r3",
-          "r4",
-          "p2"
-        ]
+        "synonym": ["r1", "r3", "r4", "p2"]
       },
       "confidence": 0.9327426608286435
     },
@@ -589,12 +458,7 @@
         }
       ],
       "relations": {
-        "synonym": [
-          "r1",
-          "r2",
-          "r4",
-          "p3"
-        ]
+        "synonym": ["r1", "r2", "r4", "p3"]
       },
       "confidence": 0.9697848675276782
     },
@@ -611,10 +475,7 @@
         }
       ],
       "relations": {
-        "synonym": [
-          "r2",
-          "r3"
-        ]
+        "synonym": ["r2", "r3"]
       },
       "confidence": 0.9938707726651519
     },
@@ -856,9 +717,7 @@
         }
       ],
       "relations": {
-        "antonym": [
-          "b2"
-        ]
+        "antonym": ["b2"]
       },
       "confidence": 0.9174360048065661
     },
@@ -875,9 +734,7 @@
         }
       ],
       "relations": {
-        "antonym": [
-          "b1"
-        ]
+        "antonym": ["b1"]
       },
       "confidence": 0.9377245297058321
     },
@@ -934,15 +791,8 @@
       },
       "contexts": [],
       "relations": {
-        "synonym": [
-          "e1",
-          "e5",
-          "emo_happy"
-        ],
-        "mapping": [
-          "c2",
-          "emo_happy"
-        ]
+        "synonym": ["e1", "e5", "emo_happy"],
+        "mapping": ["c2", "emo_happy"]
       },
       "confidence": 0.9519009138036679
     },
@@ -954,15 +804,8 @@
       },
       "contexts": [],
       "relations": {
-        "synonym": [
-          "e1",
-          "e5",
-          "emo_joy"
-        ],
-        "mapping": [
-          "c2",
-          "emo_joy"
-        ]
+        "synonym": ["e1", "e5", "emo_joy"],
+        "mapping": ["c2", "emo_joy"]
       },
       "confidence": 0.9174360110615476
     },
@@ -974,12 +817,8 @@
       },
       "contexts": [],
       "relations": {
-        "synonym": [
-          "e2"
-        ],
-        "antonym": [
-          "e1"
-        ]
+        "synonym": ["e2"],
+        "antonym": ["e1"]
       },
       "confidence": 0.999753815584181
     },
@@ -991,10 +830,7 @@
       },
       "contexts": [],
       "relations": {
-        "mapping": [
-          "e3",
-          "c2"
-        ]
+        "mapping": ["e3", "c2"]
       },
       "confidence": 0.9999999999802173
     },
@@ -1006,10 +842,7 @@
       },
       "contexts": [],
       "relations": {
-        "mapping": [
-          "e2",
-          "c2"
-        ]
+        "mapping": ["e2", "c2"]
       },
       "confidence": 0.9999989243382277
     },
@@ -1021,11 +854,7 @@
       },
       "contexts": [],
       "relations": {
-        "mapping": [
-          "e1",
-          "e5",
-          "c2"
-        ]
+        "mapping": ["e1", "e5", "c2"]
       },
       "confidence": 0.999507631168362
     },
@@ -1037,10 +866,7 @@
       },
       "contexts": [],
       "relations": {
-        "mapping": [
-          "e3",
-          "e4"
-        ]
+        "mapping": ["e3", "e4"]
       },
       "confidence": 0.9707562026785568
     },
@@ -1052,12 +878,7 @@
       },
       "contexts": [],
       "relations": {
-        "mapping": [
-          "sci_force",
-          "sci_energy",
-          "sci_motion",
-          "sci_gravity"
-        ]
+        "mapping": ["sci_force", "sci_energy", "sci_motion", "sci_gravity"]
       },
       "confidence": 0.8663266899139372
     },
@@ -1069,10 +890,7 @@
       },
       "contexts": [],
       "relations": {
-        "mapping": [
-          "sci_physics",
-          "sci_gravity"
-        ]
+        "mapping": ["sci_physics", "sci_gravity"]
       },
       "confidence": 0.9240411302841611
     },
@@ -1084,11 +902,7 @@
       },
       "contexts": [],
       "relations": {
-        "mapping": [
-          "sci_physics",
-          "sci_light",
-          "sci_heat"
-        ]
+        "mapping": ["sci_physics", "sci_light", "sci_heat"]
       },
       "confidence": 0.9806231671117127
     },
@@ -1100,12 +914,8 @@
       },
       "contexts": [],
       "relations": {
-        "synonym": [
-          "sci_move"
-        ],
-        "mapping": [
-          "sci_physics"
-        ]
+        "synonym": ["sci_move"],
+        "mapping": ["sci_physics"]
       },
       "confidence": 0.9519009138017834
     },
@@ -1117,9 +927,7 @@
       },
       "contexts": [],
       "relations": {
-        "synonym": [
-          "sci_motion"
-        ]
+        "synonym": ["sci_motion"]
       },
       "confidence": 0.9897700862917979
     },
@@ -1131,10 +939,7 @@
       },
       "contexts": [],
       "relations": {
-        "mapping": [
-          "sci_force",
-          "sci_physics"
-        ]
+        "mapping": ["sci_force", "sci_physics"]
       },
       "confidence": 0.999507631168362
     },
@@ -1146,9 +951,7 @@
       },
       "contexts": [],
       "relations": {
-        "mapping": [
-          "sci_energy"
-        ]
+        "mapping": ["sci_energy"]
       },
       "confidence": 0.9999999999948662
     },
@@ -1170,9 +973,7 @@
       },
       "contexts": [],
       "relations": {
-        "mapping": [
-          "sci_energy"
-        ]
+        "mapping": ["sci_energy"]
       },
       "confidence": 0.9999999999999997
     },
@@ -1184,11 +985,7 @@
       },
       "contexts": [],
       "relations": {
-        "mapping": [
-          "sci_animal",
-          "sci_plant",
-          "sci_cell"
-        ]
+        "mapping": ["sci_animal", "sci_plant", "sci_cell"]
       },
       "confidence": 0.9999999999999997
     },
@@ -1200,9 +997,7 @@
       },
       "contexts": [],
       "relations": {
-        "mapping": [
-          "sci_biology"
-        ]
+        "mapping": ["sci_biology"]
       },
       "confidence": 0.9722126201921889
     },
@@ -1214,9 +1009,7 @@
       },
       "contexts": [],
       "relations": {
-        "mapping": [
-          "sci_biology"
-        ]
+        "mapping": ["sci_biology"]
       },
       "confidence": 0.8962168170790168
     },
@@ -1228,9 +1021,7 @@
       },
       "contexts": [],
       "relations": {
-        "mapping": [
-          "sci_biology"
-        ]
+        "mapping": ["sci_biology"]
       },
       "confidence": 0.9988465680026206
     },
@@ -1242,10 +1033,7 @@
       },
       "contexts": [],
       "relations": {
-        "mapping": [
-          "sci_atom",
-          "sci_molecule"
-        ]
+        "mapping": ["sci_atom", "sci_molecule"]
       },
       "confidence": 0.9999999999999997
     },
@@ -1257,9 +1045,7 @@
       },
       "contexts": [],
       "relations": {
-        "mapping": [
-          "sci_chemistry"
-        ]
+        "mapping": ["sci_chemistry"]
       },
       "confidence": 0.9115849397433121
     },
@@ -1271,9 +1057,7 @@
       },
       "contexts": [],
       "relations": {
-        "mapping": [
-          "sci_chemistry"
-        ]
+        "mapping": ["sci_chemistry"]
       },
       "confidence": 0.7798212841069647
     },
@@ -1285,11 +1069,7 @@
       },
       "contexts": [],
       "relations": {
-        "mapping": [
-          "sci_ai",
-          "sci_program",
-          "sci_network"
-        ]
+        "mapping": ["sci_ai", "sci_program", "sci_network"]
       },
       "confidence": 0.9574228145507051
     },
@@ -1301,12 +1081,8 @@
       },
       "contexts": [],
       "relations": {
-        "synonym": [
-          "id2"
-        ],
-        "mapping": [
-          "sci_computer"
-        ]
+        "synonym": ["id2"],
+        "mapping": ["sci_computer"]
       },
       "confidence": 0.9994121527416528
     },
@@ -1318,9 +1094,7 @@
       },
       "contexts": [],
       "relations": {
-        "mapping": [
-          "sci_computer"
-        ]
+        "mapping": ["sci_computer"]
       },
       "confidence": 0.9651850213288341
     },
@@ -1342,9 +1116,7 @@
       },
       "contexts": [],
       "relations": {
-        "mapping": [
-          "sci_computer"
-        ]
+        "mapping": ["sci_computer"]
       },
       "confidence": 0.9999989243382277
     }

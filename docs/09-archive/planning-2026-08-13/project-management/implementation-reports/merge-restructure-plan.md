@@ -309,8 +309,8 @@ for "Develop a Merged Project Structure")_
 The merge will be executed in phases:
 
 1.  **Initial Setup:**
-    - Create the
-      `` root directory and the basic top-level directory structure (`configs`, `data`, `src`, `scripts`, `tests`).
+    - Create the `` root directory and the basic top-level directory structure
+      (`configs`, `data`, `src`, `scripts`, `tests`).
     - Initialize a new `README.md` (briefly pointing to this plan) and
       `.gitignore` (merged from existing projects).
     - Initialize `package.json` (for Electron/Node scripts) and

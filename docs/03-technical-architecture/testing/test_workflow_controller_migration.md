@@ -9,11 +9,13 @@
 ### 1. 根目录 package.json 修改
 
 将 `pnpm test` 命令从:
+
 ```json
 "test": "cross-env TESTING=true pnpm --filter \"*\" test"
 ```
 
 修改为:
+
 ```json
 "test": "cd apps/backend && python scripts/workflow_controller.py"
 ```
@@ -21,11 +23,13 @@
 ### 2. 后端 package.json 修改
 
 将 `pnpm test` 命令从:
+
 ```json
 "test": "python scripts/smart_test_runner.py"
 ```
 
 修改为:
+
 ```json
 "test": "python scripts/workflow_controller.py"
 ```
@@ -43,16 +47,19 @@
 ## 使用方法
 
 ### 基本测试运行
+
 ```bash
 pnpm test
 ```
 
 ### 带参数的测试运行
+
 ```bash
 pnpm test --tb=short -v
 ```
 
 ### 在不同终端中运行
+
 ```bash
 pnpm test --separate-terminals
 ```
@@ -60,6 +67,7 @@ pnpm test --separate-terminals
 ## 验证
 
 运行以下命令验证变更是否生效：
+
 ```bash
 pnpm test
 ```

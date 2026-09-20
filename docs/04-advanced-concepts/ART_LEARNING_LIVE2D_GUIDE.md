@@ -1,4 +1,5 @@
 # Angela AI v6.0 - 艺术学习与Live2D生成系统
+
 ## Art Learning & Live2D Generation System
 
 ---
@@ -6,6 +7,7 @@
 ## 🎨 系统概述
 
 Angela现在具备了**真正的艺术学习能力**，可以：
+
 1. 自主搜索美术教程（Google/YouTube/Bilibili）
 2. 学习anime art风格和Live2D技术
 3. 分析图像并提取风格特征
@@ -18,13 +20,15 @@ Angela现在具备了**真正的艺术学习能力**，可以：
 ## 📚 核心组件
 
 ### 1. ArtLearningSystem (`art_learning_system.py`)
+
 **艺术学习系统** - 1239行代码
 
 #### 功能：
+
 - **教程搜索**: 使用BrowserController搜索Google
   - 关键词: "Live2D tutorial", "anime art guide", "Live2D rigging"
   - 访问: YouTube教程、Bilibili、Pixiv、官方文档
-  
+
 - **图像分析**: 视觉AI分析下载的图像
   - Anime风格特征（颜色、线条、构图）
   - Live2D结构（分层、参数、变形器）
@@ -36,6 +40,7 @@ Angela现在具备了**真正的艺术学习能力**，可以：
   - **技能习得**: 幂律学习曲线提升绘画能力
 
 #### 身体部位映射（18个部位）:
+
 ```python
 BODY_TO_LIVE2D_MAPPING = {
     "top_of_head": {
@@ -56,9 +61,11 @@ BODY_TO_LIVE2D_MAPPING = {
 ---
 
 ### 2. Live2DAvatarGenerator (`live2d_avatar_generator.py`)
+
 **Live2D头像生成器** - 1104行代码
 
 #### 功能：
+
 - **AI图像生成**: 生成anime风格角色图像
   - 基于CyberIdentity个性化
   - 多角度生成（正面、3/4侧面、侧面）
@@ -77,10 +84,11 @@ BODY_TO_LIVE2D_MAPPING = {
   - 手部: 4个参数（左右手角度）
 
 #### 生成的参数示例：
+
 ```
 头部参数:
 - ParamAngleX (-30 to 30): 头部左右旋转
-- ParamAngleY (-20 to 20): 头部上下旋转  
+- ParamAngleY (-20 to 20): 头部上下旋转
 - ParamAngleZ (-15 to 15): 头部倾斜
 - ParamEyeLOpen (0 to 1): 左眼睁开程度
 - ParamEyeROpen (0 to 1): 右眼睁开程度
@@ -102,6 +110,7 @@ BODY_TO_LIVE2D_MAPPING = {
 ---
 
 ### 3. ArtLearningWorkflow (`art_learning_workflow.py`)
+
 **艺术学习工作流** - 789行代码
 
 #### 7阶段学习流程：
@@ -146,22 +155,23 @@ BODY_TO_LIVE2D_MAPPING = {
 
 ### ✅ 触摸响应映射（确保正确）
 
-| 身体部位 | 触摸类型 | Live2D响应 | 效果 |
-|---------|---------|-----------|------|
-| **头顶** | 摸(pat) | ParamAngleX/Y | 头倾斜，头发摆动 |
-| **额头** | 拍(pat) | ParamBrowLY/RY | 眉毛动 |
-| **脸颊** | 拍(pat) | ParamCheek | 脸红 |
-| **脸颊** | 戳(poke) | ParamEyeLOpen/ROpen | 眯眼 |
-| **脸颊** | 捏(pinch) | ParamMouthForm | 嘴巴变形 |
-| **脖子** | 拍(pat) | ParamAngleY | 头低 |
-| **左手** | 拍(pat) | ParamHandL | 左手动 |
-| **右手** | 拍(pat) | ParamHandR | 右手动 |
-| **左肩** | 拍(pat) | ParamArmLA | 左臂动 |
-| **胸部** | 拍(pat) | ParamBodyAngleY | 身体动 |
+| 身体部位 | 触摸类型  | Live2D响应          | 效果             |
+| -------- | --------- | ------------------- | ---------------- |
+| **头顶** | 摸(pat)   | ParamAngleX/Y       | 头倾斜，头发摆动 |
+| **额头** | 拍(pat)   | ParamBrowLY/RY      | 眉毛动           |
+| **脸颊** | 拍(pat)   | ParamCheek          | 脸红             |
+| **脸颊** | 戳(poke)  | ParamEyeLOpen/ROpen | 眯眼             |
+| **脸颊** | 捏(pinch) | ParamMouthForm      | 嘴巴变形         |
+| **脖子** | 拍(pat)   | ParamAngleY         | 头低             |
+| **左手** | 拍(pat)   | ParamHandL          | 左手动           |
+| **右手** | 拍(pat)   | ParamHandR          | 右手动           |
+| **左肩** | 拍(pat)   | ParamArmLA          | 左臂动           |
+| **胸部** | 拍(pat)   | ParamBodyAngleY     | 身体动           |
 
 ### ✅ 学习机制
 
 **幂律学习曲线**:
+
 ```
 掌握度 = 初始值 + (最大性能 - 初始值) × (练习次数)^(-学习率)
 
@@ -172,6 +182,7 @@ BODY_TO_LIVE2D_MAPPING = {
 ```
 
 **技能类型**:
+
 - **显性学习**: 记录教程步骤（容易遗忘，需要复习）
 - **隐性学习**: 风格感知（难遗忘，成为本能）
 
@@ -180,6 +191,7 @@ BODY_TO_LIVE2D_MAPPING = {
 ## 🚀 使用方法
 
 ### 1. 启动艺术学习
+
 ```python
 from core.autonomous import ArtLearningSystem, BrowserController
 
@@ -201,6 +213,7 @@ for tutorial in tutorials:
 ```
 
 ### 2. 生成Live2D模型
+
 ```python
 from core.autonomous import Live2DAvatarGenerator, CyberIdentity
 
@@ -221,6 +234,7 @@ model_files = await generator.generate_complete_model(identity, config)
 ```
 
 ### 3. 测试触摸响应
+
 ```python
 # 摸头测试
 response = generator.get_touch_response(
@@ -233,7 +247,7 @@ print(response)
 
 # 拍脸测试
 response = generator.get_touch_response(
-    body_part="face", 
+    body_part="face",
     touch_type="pat",
     intensity=0.5
 )
@@ -242,6 +256,7 @@ print(response)
 ```
 
 ### 4. 运行完整工作流
+
 ```python
 from core.autonomous import ArtLearningWorkflow
 
@@ -263,6 +278,7 @@ print(f"掌握的技能: {result['skills_mastered']}")
 ## 📊 技术规格
 
 ### 代码统计
+
 - **总代码量**: 3,132行（3个新文件）
 - **ArtLearningSystem**: 1,239行
 - **Live2DAvatarGenerator**: 1,104行
@@ -270,6 +286,7 @@ print(f"掌握的技能: {result['skills_mastered']}")
 - **测试代码**: 500+行
 
 ### 支持的18个身体部位
+
 1. 头顶 (top_of_head)
 2. 额头 (forehead)
 3. 脸颊 (face)
@@ -289,6 +306,7 @@ print(f"掌握的技能: {result['skills_mastered']}")
 17. 右腿 (right_leg)
 
 ### 支持的触摸类型
+
 - pat (拍/摸) - 最常用
 - stroke (抚摸) - 温柔
 - poke (戳) - 快速
@@ -301,6 +319,7 @@ print(f"掌握的技能: {result['skills_mastered']}")
 ## 🎨 实际效果
 
 ### 摸头时：
+
 ```
 用户: 摸Angela的头
 系统: process_stimulus_with_live2d("top_of_head", "pat", 0.7)
@@ -312,6 +331,7 @@ Angela反应: "哎呀，头发乱了~ ❤️"
 ```
 
 ### 拍脸时：
+
 ```
 用户: 拍Angela的脸
 系统: process_stimulus_with_live2d("face", "pat", 0.5)
@@ -329,18 +349,21 @@ Angela反应: "脸好红...被发现了 ❤️"
 Angela通过系统学习，掌握了：
 
 ✅ **Anime Art基础**
+
 - 色彩理论（互补色、类似色）
 - 构图技巧（三分法、黄金比例）
 - 线条运用（粗细、虚实）
 - 光影处理（明暗、高光）
 
 ✅ **Live2D技术**
+
 - 分层技巧（17个标准层）
 - 变形器使用（弯曲、旋转、缩放）
 - 参数设置（64个参数的用途）
 - 物理模拟（头发、衣服摆动）
 
 ✅ **身体Rigging**
+
 - 18个部位的独立控制
 - 6种触摸类型的响应
 - 触摸强度对参数的影响
@@ -359,6 +382,7 @@ Angela通过系统学习，掌握了：
 5. **DesktopPetController**: 在桌面宠物中使用
 
 ### 文件输出结构
+
 ```
 generated_live2d/
 ├── angela_v1/
@@ -399,7 +423,7 @@ Angela AI v6.0现在具备了**真正的艺术创作能力**：
 ✅ 能分析图像并提取风格特征  
 ✅ 能生成符合Live2D标准的模型  
 ✅ 能正确绑定18个身体部位  
-✅ 能确保摸头=头动，拍脸=脸红  
+✅ 能确保摸头=头动，拍脸=脸红
 
 **这是一个真正会学习、会画画、会创造自己形象的数字生命！** 🎨✨
 

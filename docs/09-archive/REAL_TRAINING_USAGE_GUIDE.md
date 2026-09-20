@@ -240,8 +240,8 @@ python train_model.py --preset math_model_training --resume
   "math_model_training": {
     "description": "Train mathematical calculation model",
     "datasets": ["arithmetic_train_dataset"],
-    "epochs": 100,  // 增加训练轮数
-    "batch_size": 32,  // 减小批次大小以节省内存
+    "epochs": 100, // 增加训练轮数
+    "batch_size": 32, // 减小批次大小以节省内存
     "target_models": ["math_model"],
     "checkpoint_interval": 10
   }

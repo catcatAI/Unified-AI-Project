@@ -16,9 +16,9 @@ export class csmString {
    * @return 更新された文字列
    */
   public append(c: string, length?: number): csmString {
-    this.s += length !== undefined ? c.substr(0, length) : c;
+    this.s += length !== undefined ? c.substr(0, length) : c
 
-    return this;
+    return this
   }
 
   /**
@@ -29,24 +29,24 @@ export class csmString {
    */
   public expansion(length: number, v: string): csmString {
     for (let i = 0; i < length; i++) {
-      this.append(v);
+      this.append(v)
     }
 
-    return this;
+    return this
   }
 
   /**
    * 文字列の長さをバイト数で取得する
    */
   public getBytes(): number {
-    return encodeURIComponent(this.s).replace(/%../g, 'x').length;
+    return encodeURIComponent(this.s).replace(/%../g, 'x').length
   }
 
   /**
    * 文字列の長さを返す
    */
   public getLength(): number {
-    return this.s.length;
+    return this.s.length
   }
 
   /**
@@ -56,7 +56,7 @@ export class csmString {
    * @return false:   比較する文字列より大きい
    */
   public isLess(s: csmString): boolean {
-    return this.s < s.s;
+    return this.s < s.s
   }
 
   /**
@@ -66,7 +66,7 @@ export class csmString {
    * @return false:   比較する文字列より小さい
    */
   public isGreat(s: csmString): boolean {
-    return this.s > s.s;
+    return this.s > s.s
   }
 
   /**
@@ -76,7 +76,7 @@ export class csmString {
    * @return false:   比較する文字列と異なる
    */
   public isEqual(s: string): boolean {
-    return this.s == s;
+    return this.s == s
   }
 
   /**
@@ -85,23 +85,23 @@ export class csmString {
    * @return false: 値が設定されている
    */
   public isEmpty(): boolean {
-    return this.s.length == 0;
+    return this.s.length == 0
   }
 
   /**
    * 引数付きコンストラクタ
    */
   public constructor(s: string) {
-    this.s = s;
+    this.s = s
   }
 
-  s: string;
+  s: string
 }
 
 // Namespace definition for compatibility.
-import * as $ from './csmstring';
+import * as $ from './csmstring'
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
-  export const csmString = $.csmString;
-  export type csmString = $.csmString;
+  export const csmString = $.csmString
+  export type csmString = $.csmString
 }

@@ -1,24 +1,31 @@
 # 🚨 CRITICAL FIXES REQUIRED - Angela AI Pre-Production
 
 > **⚠️ 當前註記 (2026-05-19)**：本報告撰寫於 2026-02-01，部分資訊已過時：
-> - **".env 已刪除" (Line 6)** — 當時指從 git 追蹤中移除。`.env` 檔案仍存在於本機供運行使用，不應刪除。
-> - **GOOGLE_API_KEY vs GEMINI_API_KEY** — 現已釐清：`GOOGLE_API_KEY` 已安全移除（Drive 使用 `credentials.json` OAuth 流程，不讀 env var）；Gemini LLM 使用 `GEMINI_API_KEY`。詳見 `SESSION_CHANGE_AUDIT_AND_REPAIR_PLAN.md`。
+>
+> - **".env 已刪除" (Line 6)** — 當時指從 git 追蹤中移除。`.env`
+>   檔案仍存在於本機供運行使用，不應刪除。
+> - **GOOGLE_API_KEY vs GEMINI_API_KEY** — 現已釐清：`GOOGLE_API_KEY`
+>   已安全移除（Drive 使用 `credentials.json` OAuth 流程，不讀 env var）；Gemini
+>   LLM 使用 `GEMINI_API_KEY`。詳見 `SESSION_CHANGE_AUDIT_AND_REPAIR_PLAN.md`。
 
 ## ⚠️ 发现的关键问题 (CRITICAL ISSUES FOUND)
 
 ### 1. 🔴 SECURITY: Exposed API Key in .env
+
 - **Status**: ✅ FIXED - Removed .env file
 - **Action Required**: User must rotate API key in Google Cloud Console
 - **Impact**: HIGH - API key was exposed in git history
 
 ### 2. 🔴 CONFIG: Docker Compose Syntax Error
+
 - **Status**: ✅ FIXED - Added missing quote on line 38
 - **File**: `docker-compose.yml`
 - **Fix**: Changed `ports: - "3000:3000` to `ports: - "3000:3000"`
 
 ### 3. 🔴 API: Broken Imports in Multiple Routers
+
 - **Status**: ✅ FIXED - Created unified dependency injection system
-- **Files Affected**: 
+- **Files Affected**:
   - `chat.py` - Fixed to use `Depends(get_orchestrator)`
   - `pet.py` - Needs similar fix
   - `economy.py` - Needs similar fix
@@ -27,11 +34,13 @@
 - **Pattern**: Use `Depends(get_orchestrator)` instead of importing from main.py
 
 ### 4. 🔴 SECURITY: Hardcoded Credentials
+
 - **Status**: ⚠️ PENDING - Need to check and fix
 - **File**: `apps/backend/src/core/security/security_manager.py`
 - **Issue**: Hardcoded test credentials (`test`/`password`)
 
 ### 5. 🔴 CONFIG: Incomplete System Manager
+
 - **Status**: ⚠️ PENDING
 - **File**: `apps/backend/src/core/managers/system_manager.py`
 - **Issue**: File truncated at line 100
@@ -41,6 +50,7 @@
 ## ✅ 已完成的修复 (COMPLETED FIXES)
 
 ### 架构修复
+
 1. ✅ 移除暴露的 .env 文件
 2. ✅ 修复 docker-compose.yml 语法错误
 3. ✅ 创建统一的依赖注入模块 (`dependencies.py`)
@@ -51,6 +61,7 @@
 8. ✅ 创建环境配置模板
 
 ### 代码改进
+
 9. ✅ 添加输入验证到 orchestrator
 10. ✅ HSM 线程安全 (Lock)
 11. ✅ 配置常量化
@@ -64,6 +75,7 @@
 ## 🔄 仍需修复的问题 (REMAINING ISSUES)
 
 ### 高优先级 (Must Fix)
+
 1. **Fix remaining API routers**
    - pet.py, economy.py, local_files.py
    - Use the new `dependencies.py` pattern
@@ -80,6 +92,7 @@
    - Missing: google-generativeai, paho-mqtt, etc.
 
 ### 中优先级 (Should Fix)
+
 5. **Consolidate duplicate files**
    - Multiple orchestrator versions
    - Archive old versions
@@ -97,6 +110,7 @@
 ### 立即执行 (用户必须完成)
 
 1. **Rotate API Key** (CRITICAL - DO NOW!)
+
 ```bash
 # 1. Go to Google Cloud Console
 # https://console.cloud.google.com/apis/credentials
@@ -111,6 +125,7 @@ echo "GEMINI_API_KEY=your_new_gemini_key_here" > .env
 ```
 
 2. **Verify Docker Compose**
+
 ```bash
 # Test docker-compose syntax
 docker-compose config
@@ -118,6 +133,7 @@ docker-compose config
 ```
 
 3. **Install Dependencies**
+
 ```bash
 cd apps/backend
 pip install -r requirements.txt
@@ -128,6 +144,7 @@ pip install -r requirements.txt
 **Fix pet.py, economy.py, local_files.py:**
 
 Pattern to follow (as done in chat.py):
+
 ```python
 # OLD (broken):
 from apps.backend.main import get_system_manager
@@ -146,22 +163,23 @@ async def endpoint(system_manager = Depends(get_system_manager)):
 
 ## 📊 当前系统状态
 
-| Component | Before | After | Status |
-|-----------|--------|-------|--------|
-| Security (API keys) | 🔴 Exposed | 🟡 Removed | 90% |
-| Docker Compose | 🔴 Broken | ✅ Fixed | 100% |
-| API Imports | 🔴 Broken | 🟡 Partial | 25% |
-| Frontend Integration | 🔴 Hardcoded | ✅ Fixed | 100% |
-| CORS Config | 🟠 Inconsistent | ✅ Fixed | 100% |
-| Architecture | 🔴 Poor | ✅ Improved | 95% |
-| Documentation | 🟠 Missing | ✅ Added | 90% |
-| **Overall** | **🔴 40%** | **🟡 75%** | **Good** |
+| Component            | Before          | After       | Status   |
+| -------------------- | --------------- | ----------- | -------- |
+| Security (API keys)  | 🔴 Exposed      | 🟡 Removed  | 90%      |
+| Docker Compose       | 🔴 Broken       | ✅ Fixed    | 100%     |
+| API Imports          | 🔴 Broken       | 🟡 Partial  | 25%      |
+| Frontend Integration | 🔴 Hardcoded    | ✅ Fixed    | 100%     |
+| CORS Config          | 🟠 Inconsistent | ✅ Fixed    | 100%     |
+| Architecture         | 🔴 Poor         | ✅ Improved | 95%      |
+| Documentation        | 🟠 Missing      | ✅ Added    | 90%      |
+| **Overall**          | **🔴 40%**      | **🟡 75%**  | **Good** |
 
 ---
 
 ## ✅ 生产部署检查清单
 
 ### 部署前必须完成
+
 - [ ] Rotate exposed API key (CRITICAL)
 - [ ] Fix remaining API router imports (pet, economy, local_files)
 - [ ] Remove hardcoded credentials from security_manager
@@ -172,6 +190,7 @@ async def endpoint(system_manager = Depends(get_system_manager)):
 - [ ] Test Docker deployment locally
 
 ### 部署配置
+
 - [ ] Create production .env (not in git)
 - [ ] Configure SSL/TLS certificates
 - [ ] Set up production CORS origins
@@ -184,6 +203,7 @@ async def endpoint(system_manager = Depends(get_system_manager)):
 ## 🎯 推荐下一步行动
 
 **Option 1: Continue Fixing (Recommended)**
+
 - Fix remaining 4 API routers (30 min)
 - Remove hardcoded credentials (15 min)
 - Add missing dependencies (20 min)
@@ -191,6 +211,7 @@ async def endpoint(system_manager = Depends(get_system_manager)):
 - **Total: ~2 hours to full production readiness**
 
 **Option 2: Deploy Now (Use with Caution)**
+
 - System is 75% ready
 - Can run in development mode
 - Not recommended for production without completing fixes
@@ -200,6 +221,7 @@ async def endpoint(system_manager = Depends(get_system_manager)):
 ## 📞 紧急联系
 
 如果这些问题在生产环境导致故障：
+
 1. 立即停止服务
 2. 检查日志中的导入错误
 3. 验证 .env 文件不包含真实密钥
@@ -217,6 +239,7 @@ async def endpoint(system_manager = Depends(get_system_manager)):
 ## 🎉 总结
 
 **成就:**
+
 - ✅ 发现并修复了关键安全漏洞
 - ✅ 修复了API架构问题
 - ✅ 创建了统一的依赖注入系统
@@ -224,6 +247,7 @@ async def endpoint(system_manager = Depends(get_system_manager)):
 - ✅ 系统健康度从40%提升到75%
 
 **仍需完成:**
+
 - ⚠️ 修复剩余4个API路由器
 - ⚠️ 移除硬编码凭据
 - ⚠️ 用户必须轮换API密钥

@@ -8,11 +8,7 @@
         "en": "hello"
       },
       "relations": {
-        "synonym": [
-          "g2",
-          "g3",
-          "g5"
-        ]
+        "synonym": ["g2", "g3", "g5"]
       },
       "confidence": 1.0
     },
@@ -23,12 +19,8 @@
         "en": "good morning"
       },
       "relations": {
-        "synonym": [
-          "g1"
-        ],
-        "mapping": [
-          "g5"
-        ]
+        "synonym": ["g1"],
+        "mapping": ["g5"]
       },
       "confidence": 1.0
     },
@@ -39,9 +31,7 @@
         "en": "good evening"
       },
       "relations": {
-        "synonym": [
-          "g1"
-        ]
+        "synonym": ["g1"]
       },
       "confidence": 1.0
     },
@@ -52,9 +42,7 @@
         "en": "welcome"
       },
       "relations": {
-        "synonym": [
-          "g1"
-        ]
+        "synonym": ["g1"]
       },
       "confidence": 1.0
     },
@@ -65,10 +53,7 @@
         "en": "hi"
       },
       "relations": {
-        "synonym": [
-          "g1",
-          "g6"
-        ]
+        "synonym": ["g1", "g6"]
       },
       "confidence": 1.0
     },
@@ -79,10 +64,7 @@
         "en": "hey"
       },
       "relations": {
-        "synonym": [
-          "g1",
-          "g5"
-        ]
+        "synonym": ["g1", "g5"]
       },
       "confidence": 1.0
     },
@@ -93,9 +75,7 @@
         "en": "goodbye"
       },
       "relations": {
-        "synonym": [
-          "f2"
-        ]
+        "synonym": ["f2"]
       },
       "confidence": 1.0
     },
@@ -106,9 +86,7 @@
         "en": "see you tomorrow"
       },
       "relations": {
-        "synonym": [
-          "f1"
-        ]
+        "synonym": ["f1"]
       },
       "confidence": 1.0
     },
@@ -119,13 +97,8 @@
         "en": "thank you"
       },
       "relations": {
-        "synonym": [
-          "p4"
-        ],
-        "mapping": [
-          "e1",
-          "r1"
-        ]
+        "synonym": ["p4"],
+        "mapping": ["e1", "r1"]
       },
       "confidence": 1.0
     },
@@ -136,9 +109,7 @@
         "en": "sorry"
       },
       "relations": {
-        "synonym": [
-          "r2"
-        ]
+        "synonym": ["r2"]
       },
       "confidence": 1.0
     },
@@ -149,9 +120,7 @@
         "en": "no problem"
       },
       "relations": {
-        "synonym": [
-          "r3"
-        ]
+        "synonym": ["r3"]
       },
       "confidence": 1.0
     },
@@ -162,10 +131,7 @@
         "en": "please"
       },
       "relations": {
-        "mapping": [
-          "g1",
-          "p1"
-        ]
+        "mapping": ["g1", "p1"]
       },
       "confidence": 1.0
     },
@@ -176,12 +142,8 @@
         "en": "happy"
       },
       "relations": {
-        "synonym": [
-          "e5"
-        ],
-        "mapping": [
-          "c2"
-        ]
+        "synonym": ["e5"],
+        "mapping": ["c2"]
       },
       "confidence": 1.0
     },
@@ -192,10 +154,7 @@
         "en": "sad"
       },
       "relations": {
-        "mapping": [
-          "p2",
-          "c2"
-        ]
+        "mapping": ["p2", "c2"]
       },
       "confidence": 1.0
     },
@@ -206,10 +165,7 @@
         "en": "annoyed"
       },
       "relations": {
-        "mapping": [
-          "e2",
-          "c2"
-        ]
+        "mapping": ["e2", "c2"]
       },
       "confidence": 1.0
     },
@@ -220,10 +176,7 @@
         "en": "bored"
       },
       "relations": {
-        "mapping": [
-          "e2",
-          "c1"
-        ]
+        "mapping": ["e2", "c1"]
       },
       "confidence": 1.0
     },
@@ -234,12 +187,8 @@
         "en": "excited"
       },
       "relations": {
-        "synonym": [
-          "e1"
-        ],
-        "mapping": [
-          "c2"
-        ]
+        "synonym": ["e1"],
+        "mapping": ["c2"]
       },
       "confidence": 1.0
     },
@@ -250,10 +199,7 @@
         "en": "are you busy"
       },
       "relations": {
-        "mapping": [
-          "e5",
-          "r1"
-        ]
+        "mapping": ["e5", "r1"]
       },
       "confidence": 1.0
     },
@@ -264,12 +210,7 @@
         "en": "mood"
       },
       "relations": {
-        "mapping": [
-          "e1",
-          "e2",
-          "e3",
-          "e5"
-        ]
+        "mapping": ["e1", "e2", "e3", "e5"]
       },
       "confidence": 1.0
     },
@@ -280,11 +221,7 @@
         "en": "today"
       },
       "relations": {
-        "mapping": [
-          "g2",
-          "g3",
-          "c1"
-        ]
+        "mapping": ["g2", "g3", "c1"]
       },
       "confidence": 1.0
     },
@@ -295,9 +232,7 @@
         "en": "name"
       },
       "relations": {
-        "mapping": [
-          "g1"
-        ]
+        "mapping": ["g1"]
       },
       "confidence": 1.0
     },
@@ -308,10 +243,7 @@
         "en": "what are you doing"
       },
       "relations": {
-        "mapping": [
-          "c1",
-          "e5"
-        ]
+        "mapping": ["c1", "e5"]
       },
       "confidence": 1.0
     },
@@ -322,10 +254,7 @@
         "en": "uh-huh"
       },
       "relations": {
-        "synonym": [
-          "r2",
-          "r3"
-        ]
+        "synonym": ["r2", "r3"]
       },
       "confidence": 1.0
     },
@@ -336,11 +265,7 @@
         "en": "okay"
       },
       "relations": {
-        "synonym": [
-          "r1",
-          "r3",
-          "r4"
-        ]
+        "synonym": ["r1", "r3", "r4"]
       },
       "confidence": 1.0
     },
@@ -351,11 +276,7 @@
         "en": "understood"
       },
       "relations": {
-        "synonym": [
-          "r1",
-          "r2",
-          "r4"
-        ]
+        "synonym": ["r1", "r2", "r4"]
       },
       "confidence": 1.0
     },
@@ -366,9 +287,7 @@
         "en": "sure"
       },
       "relations": {
-        "synonym": [
-          "r2"
-        ]
+        "synonym": ["r2"]
       },
       "confidence": 1.0
     },
@@ -379,9 +298,7 @@
         "en": "true"
       },
       "relations": {
-        "antonym": [
-          "b2"
-        ]
+        "antonym": ["b2"]
       },
       "confidence": 1.0
     },
@@ -392,9 +309,7 @@
         "en": "false"
       },
       "relations": {
-        "antonym": [
-          "b1"
-        ]
+        "antonym": ["b1"]
       },
       "confidence": 1.0
     },
@@ -522,9 +437,7 @@
         "en": "plus"
       },
       "relations": {
-        "antonym": [
-          "op2"
-        ]
+        "antonym": ["op2"]
       },
       "confidence": 1.0
     },
@@ -535,9 +448,7 @@
         "en": "minus"
       },
       "relations": {
-        "antonym": [
-          "op1"
-        ]
+        "antonym": ["op1"]
       },
       "confidence": 1.0
     },
@@ -575,9 +486,7 @@
         "en": "angela"
       },
       "relations": {
-        "mapping": [
-          "id2"
-        ]
+        "mapping": ["id2"]
       },
       "confidence": 1.0
     },
@@ -588,9 +497,7 @@
         "en": "AI assistant"
       },
       "relations": {
-        "mapping": [
-          "id1"
-        ]
+        "mapping": ["id1"]
       },
       "confidence": 1.0
     },
@@ -646,14 +553,8 @@
         "en": "joy"
       },
       "relations": {
-        "synonym": [
-          "e1",
-          "e5"
-        ],
-        "mapping": [
-          "c2",
-          "emo_happy"
-        ]
+        "synonym": ["e1", "e5"],
+        "mapping": ["c2", "emo_happy"]
       },
       "confidence": 0.95
     },
@@ -664,14 +565,8 @@
         "en": "happy"
       },
       "relations": {
-        "synonym": [
-          "e1",
-          "e5",
-          "emo_joy"
-        ],
-        "mapping": [
-          "c2"
-        ]
+        "synonym": ["e1", "e5", "emo_joy"],
+        "mapping": ["c2"]
       },
       "confidence": 0.95
     },
@@ -682,12 +577,8 @@
         "en": "sadness"
       },
       "relations": {
-        "synonym": [
-          "e2"
-        ],
-        "antonym": [
-          "e1"
-        ]
+        "synonym": ["e2"],
+        "antonym": ["e1"]
       },
       "confidence": 0.95
     },
@@ -698,10 +589,7 @@
         "en": "anger"
       },
       "relations": {
-        "mapping": [
-          "e3",
-          "c2"
-        ]
+        "mapping": ["e3", "c2"]
       },
       "confidence": 0.95
     },
@@ -712,10 +600,7 @@
         "en": "fear"
       },
       "relations": {
-        "mapping": [
-          "e2",
-          "c2"
-        ]
+        "mapping": ["e2", "c2"]
       },
       "confidence": 0.9
     },
@@ -726,11 +611,7 @@
         "en": "surprise"
       },
       "relations": {
-        "mapping": [
-          "e1",
-          "e5",
-          "c2"
-        ]
+        "mapping": ["e1", "e5", "c2"]
       },
       "confidence": 0.9
     },
@@ -741,10 +622,7 @@
         "en": "disgust"
       },
       "relations": {
-        "mapping": [
-          "e3",
-          "e4"
-        ]
+        "mapping": ["e3", "e4"]
       },
       "confidence": 0.9
     },
@@ -755,11 +633,7 @@
         "en": "physics"
       },
       "relations": {
-        "mapping": [
-          "sci_force",
-          "sci_energy",
-          "sci_motion"
-        ]
+        "mapping": ["sci_force", "sci_energy", "sci_motion"]
       },
       "confidence": 0.9
     },
@@ -788,9 +662,7 @@
         "en": "motion"
       },
       "relations": {
-        "synonym": [
-          "sci_move"
-        ]
+        "synonym": ["sci_move"]
       },
       "confidence": 0.9
     },
@@ -810,10 +682,7 @@
         "en": "gravity"
       },
       "relations": {
-        "mapping": [
-          "sci_force",
-          "sci_physics"
-        ]
+        "mapping": ["sci_force", "sci_physics"]
       },
       "confidence": 0.9
     },
@@ -824,9 +693,7 @@
         "en": "light"
       },
       "relations": {
-        "mapping": [
-          "sci_energy"
-        ]
+        "mapping": ["sci_energy"]
       },
       "confidence": 0.9
     },
@@ -846,9 +713,7 @@
         "en": "heat"
       },
       "relations": {
-        "mapping": [
-          "sci_energy"
-        ]
+        "mapping": ["sci_energy"]
       },
       "confidence": 0.9
     },
@@ -859,11 +724,7 @@
         "en": "biology"
       },
       "relations": {
-        "mapping": [
-          "sci_animal",
-          "sci_plant",
-          "sci_cell"
-        ]
+        "mapping": ["sci_animal", "sci_plant", "sci_cell"]
       },
       "confidence": 0.9
     },
@@ -901,10 +762,7 @@
         "en": "chemistry"
       },
       "relations": {
-        "mapping": [
-          "sci_atom",
-          "sci_molecule"
-        ]
+        "mapping": ["sci_atom", "sci_molecule"]
       },
       "confidence": 0.9
     },
@@ -933,10 +791,7 @@
         "en": "computer"
       },
       "relations": {
-        "mapping": [
-          "sci_ai",
-          "sci_program"
-        ]
+        "mapping": ["sci_ai", "sci_program"]
       },
       "confidence": 0.9
     },
@@ -947,9 +802,7 @@
         "en": "artificial intelligence"
       },
       "relations": {
-        "synonym": [
-          "id2"
-        ]
+        "synonym": ["id2"]
       },
       "confidence": 0.95
     },
@@ -978,9 +831,7 @@
         "en": "network"
       },
       "relations": {
-        "mapping": [
-          "sci_computer"
-        ]
+        "mapping": ["sci_computer"]
       },
       "confidence": 0.9
     }

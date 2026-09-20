@@ -1,91 +1,103 @@
 # Angela 能力補全計畫 v2：ED3N 獨立作戰 + GARDEN 加持 + 持續學習
 
 > **⚠️ STATUS: FULLY EXECUTED (2026-06-25)**  
-> Phase 3 (ED3N capability), Phase 4 (GARDEN integration), Phase 5 (continuous learning), and Phase 6 (E2E tests) all ✅ complete as marked within this document. No remaining actionable items. Content absorbed into current codebase.
+> Phase 3 (ED3N capability), Phase 4 (GARDEN integration), Phase 5 (continuous
+> learning), and Phase 6 (E2E tests) all ✅ complete as marked within this
+> document. No remaining actionable items. Content absorbed into current
+> codebase.
 
 **日期**: 2026-06-15
 **目標**: 讓 Angela 只用 ED3N 也能跟其他 AI 打平，用 GARDEN 時有明顯優勢
-**對齊**: ANGELA_FULL_ARCHITECTURE.md（§五記憶系統、§八AI引擎、§十一完整管線）、QUERY_CLASSIFIER_ACTION_PLAN.md（Phase 1-2 已完成）
-**現狀**: Phase 1-2 完成（QueryClassifier v2 + ExecutionGate），102 測試通過
+**對齊**:
+ANGELA_FULL_ARCHITECTURE.md（§五記憶系統、§八AI引擎、§十一完整管線）、QUERY_CLASSIFIER_ACTION_PLAN.md（Phase
+1-2 已完成） **現狀**: Phase 1-2 完成（QueryClassifier v2 +
+ExecutionGate），102 測試通過
 
 ---
 
 ## 0. 現狀盤點
 
 ### 已完成（Phase 1-2）
-| 組件 | 檔案 | 行數 | 狀態 |
-|---|---|---|---|
-| QueryResult dataclass | `ai/core/query_classifier.py:41-51` | 11 | ✅ |
-| 16類意圖分類 | `ai/core/query_classifier.py:82-253` | 172 | ✅ |
-| ExecutionGate | `ai/core/execution_gate.py` | 192 | ✅ |
-| execute_handler | `ai/core/model_bus.py:208-235` | 28 | ✅ |
-| 執行結果注入 | `services/llm/prompt_builder.py:301-320` | 20 | ✅ |
-| 續行保護 | `services/llm/prompt_builder.py:322-325` | 4 | ✅ |
-| 確認機制 | `api/routes/chat_routes.py:250-329` | 80 | ✅ |
+
+| 組件                  | 檔案                                     | 行數 | 狀態 |
+| --------------------- | ---------------------------------------- | ---- | ---- |
+| QueryResult dataclass | `ai/core/query_classifier.py:41-51`      | 11   | ✅   |
+| 16類意圖分類          | `ai/core/query_classifier.py:82-253`     | 172  | ✅   |
+| ExecutionGate         | `ai/core/execution_gate.py`              | 192  | ✅   |
+| execute_handler       | `ai/core/model_bus.py:208-235`           | 28   | ✅   |
+| 執行結果注入          | `services/llm/prompt_builder.py:301-320` | 20   | ✅   |
+| 續行保護              | `services/llm/prompt_builder.py:322-325` | 4    | ✅   |
+| 確認機制              | `api/routes/chat_routes.py:250-329`      | 80   | ✅   |
 
 ### ED3N 現有能力（架構文檔 §5.8）
-| 能力 | 檔案 | 狀態 |
-|---|---|---|
-| 反射層（LRU 快取） | `ai/ed3n/ed3n_engine.py` | ✅ ~30 條反射 |
-| 字典層（encode/decode） | `ai/ed3n/dictionary_layer.py` | ✅ ~50 preset |
-| 核心網路（激活傳播） | `ai/ed3n/core_network.py` | ✅ |
-| 輸出錨點（漂移驗證） | `ai/ed3n/output_anchor.py` | ✅ |
-| 步進解碼（自回歸生成） | `ai/ed3n/step_decoder.py` | ✅ |
-| SNN 模式 | `ai/ed3n/snn/` | ✅ 可選 |
-| 多模態編碼 | `ai/ed3n/multimodal/` | ✅ 依賴外部服務 |
-| 持續學習管線 | `ai/ed3n/continuous_learning.py` | ✅ 未啟用 |
-| 學習整合（→HAM） | `ai/ed3n/learning_integration.py` | ✅ 未接線 |
-| 遙測 | `ai/ed3n/telemetry.py` | ✅ |
+
+| 能力                    | 檔案                              | 狀態            |
+| ----------------------- | --------------------------------- | --------------- |
+| 反射層（LRU 快取）      | `ai/ed3n/ed3n_engine.py`          | ✅ ~30 條反射   |
+| 字典層（encode/decode） | `ai/ed3n/dictionary_layer.py`     | ✅ ~50 preset   |
+| 核心網路（激活傳播）    | `ai/ed3n/core_network.py`         | ✅              |
+| 輸出錨點（漂移驗證）    | `ai/ed3n/output_anchor.py`        | ✅              |
+| 步進解碼（自回歸生成）  | `ai/ed3n/step_decoder.py`         | ✅              |
+| SNN 模式                | `ai/ed3n/snn/`                    | ✅ 可選         |
+| 多模態編碼              | `ai/ed3n/multimodal/`             | ✅ 依賴外部服務 |
+| 持續學習管線            | `ai/ed3n/continuous_learning.py`  | ✅ 未啟用       |
+| 學習整合（→HAM）        | `ai/ed3n/learning_integration.py` | ✅ 未接線       |
+| 遙測                    | `ai/ed3n/telemetry.py`            | ✅              |
 
 ### GARDEN 現有能力（架構文檔 §8.3）
-| 能力 | 檔案 | 狀態 |
-|---|---|---|
-| 向量字典（3層 fallback） | `ai/garden/dictionary.py` | ✅ TF-IDF/CharBag |
-| 張量 SNN | `ai/garden/snn_core.py` | ✅ PyTorch LIF |
-| 向量解碼器 | `ai/garden/vector_decoder.py` | ✅ |
-| 知識圖譜導入 | `ai/garden/kg_import.py` | ✅ 未驗證大規模 |
-| 二進位存儲 | `ai/garden/binary_store.py` | ✅ |
-| 持續學習 | `ai/garden/garden_engine.py:learn_from_interaction()` | ✅ |
+
+| 能力                     | 檔案                                                  | 狀態              |
+| ------------------------ | ----------------------------------------------------- | ----------------- |
+| 向量字典（3層 fallback） | `ai/garden/dictionary.py`                             | ✅ TF-IDF/CharBag |
+| 張量 SNN                 | `ai/garden/snn_core.py`                               | ✅ PyTorch LIF    |
+| 向量解碼器               | `ai/garden/vector_decoder.py`                         | ✅                |
+| 知識圖譜導入             | `ai/garden/kg_import.py`                              | ✅ 未驗證大規模   |
+| 二進位存儲               | `ai/garden/binary_store.py`                           | ✅                |
+| 持續學習                 | `ai/garden/garden_engine.py:learn_from_interaction()` | ✅                |
 
 ### 記憶系統（架構文檔 §5）
-| 系統 | 檔案 | 狀態 |
-|---|---|---|
-| HAMMemoryManager（JSON） | `ai/memory/ham_memory/ham_manager.py` | ✅ 薄 |
-| HAM Core Storage（加密） | `ai/memory/ham_memory/ham_core_storage.py` | ✅ |
-| HAM 查詢引擎（向量+關鍵字） | `ai/memory/ham_memory/ham_query_engine.py` | ✅ |
-| HAM 向量存儲（ChromaDB） | `ai/memory/ham_memory/ham_vector_store_manager.py` | ✅ |
-| LogicUnit（規則記憶） | `ai/memory/lu_logic/logic_unit.py` | ✅ |
-| UnifiedMemoryCoordinator | `ai/lifecycle/unified_memory_coordinator.py` | ✅ |
-| AttractorField（梯度導航） | `ai/memory/attractor_field.py` | ✅ |
-| MemoryContextManager | `ai/context/memory_context.py` | ⚠️ 未接通 |
-| ContextHAMIntegration | `ai/context/integration_with_ham.py` | ⚠️ 部分接線 |
+
+| 系統                        | 檔案                                               | 狀態        |
+| --------------------------- | -------------------------------------------------- | ----------- |
+| HAMMemoryManager（JSON）    | `ai/memory/ham_memory/ham_manager.py`              | ✅ 薄       |
+| HAM Core Storage（加密）    | `ai/memory/ham_memory/ham_core_storage.py`         | ✅          |
+| HAM 查詢引擎（向量+關鍵字） | `ai/memory/ham_memory/ham_query_engine.py`         | ✅          |
+| HAM 向量存儲（ChromaDB）    | `ai/memory/ham_memory/ham_vector_store_manager.py` | ✅          |
+| LogicUnit（規則記憶）       | `ai/memory/lu_logic/logic_unit.py`                 | ✅          |
+| UnifiedMemoryCoordinator    | `ai/lifecycle/unified_memory_coordinator.py`       | ✅          |
+| AttractorField（梯度導航）  | `ai/memory/attractor_field.py`                     | ✅          |
+| MemoryContextManager        | `ai/context/memory_context.py`                     | ⚠️ 未接通   |
+| ContextHAMIntegration       | `ai/context/integration_with_ham.py`               | ⚠️ 部分接線 |
 
 ### 學習系統
-| 系統 | 檔案 | 狀態 |
-|---|---|---|
-| NeuroplasticitySystem | `core/bio/neuroplasticity_core.py` | ✅ 未整合 HAM |
-| ContinuousLearningPipeline | `ai/ed3n/continuous_learning.py` | ✅ 未啟用 |
-| ED3NLearningIntegration | `ai/ed3n/learning_integration.py` | ✅ 未接線 |
-| MemoryLearningEngine | `ai/memory/memory_learning.py` | ✅ |
-| LearningLoop（語言進化） | `ai/response/learning_loop.py` | ✅ |
-| MemoryIntegrationLoop | `ai/lifecycle/memory_integration_loop.py` | ✅ |
-| LearningManager（事實提取） | `ai/learning/learning_manager.py` | ✅ |
+
+| 系統                        | 檔案                                      | 狀態          |
+| --------------------------- | ----------------------------------------- | ------------- |
+| NeuroplasticitySystem       | `core/bio/neuroplasticity_core.py`        | ✅ 未整合 HAM |
+| ContinuousLearningPipeline  | `ai/ed3n/continuous_learning.py`          | ✅ 未啟用     |
+| ED3NLearningIntegration     | `ai/ed3n/learning_integration.py`         | ✅ 未接線     |
+| MemoryLearningEngine        | `ai/memory/memory_learning.py`            | ✅            |
+| LearningLoop（語言進化）    | `ai/response/learning_loop.py`            | ✅            |
+| MemoryIntegrationLoop       | `ai/lifecycle/memory_integration_loop.py` | ✅            |
+| LearningManager（事實提取） | `ai/learning/learning_manager.py`         | ✅            |
 
 ### Handler 狀態
-| Handler | 檔案 | 註冊 | 狀態 |
-|---|---|---|---|
-| file_ops | `services/handlers/file_operation_handler.py` | ✅ | ✅ 184行，12種操作 |
-| web_search | `services/handlers/web_search_handler.py` | ✅ | ✅ DDG+Wikipedia |
-| code_execution | `services/handlers/code_execution_handler.py` | ✅ | ✅ 沙箱執行 |
-| system_command | `services/handlers/system_command_handler.py` | ✅ | ✅ 白名單+安全 |
-| task_manager | `services/handlers/task_manager_handler.py` | ✅ | ✅ JSON CRUD |
-| vision | `services/handlers/vision_handler.py` | ✅ | ✅ 圖片分析 |
-| learning_handler | `services/handlers/learning_handler.py` | ❌ | 存在但未註冊 |
-| google_drive | `services/handlers/google_drive_handler.py` | ❌ | 存在但未註冊 |
-| vision | — | ❌ | 無 |
-| audio | — | ❌ | 無 |
+
+| Handler          | 檔案                                          | 註冊 | 狀態               |
+| ---------------- | --------------------------------------------- | ---- | ------------------ |
+| file_ops         | `services/handlers/file_operation_handler.py` | ✅   | ✅ 184行，12種操作 |
+| web_search       | `services/handlers/web_search_handler.py`     | ✅   | ✅ DDG+Wikipedia   |
+| code_execution   | `services/handlers/code_execution_handler.py` | ✅   | ✅ 沙箱執行        |
+| system_command   | `services/handlers/system_command_handler.py` | ✅   | ✅ 白名單+安全     |
+| task_manager     | `services/handlers/task_manager_handler.py`   | ✅   | ✅ JSON CRUD       |
+| vision           | `services/handlers/vision_handler.py`         | ✅   | ✅ 圖片分析        |
+| learning_handler | `services/handlers/learning_handler.py`       | ❌   | 存在但未註冊       |
+| google_drive     | `services/handlers/google_drive_handler.py`   | ❌   | 存在但未註冊       |
+| vision           | —                                             | ❌   | 無                 |
+| audio            | —                                             | ❌   | 無                 |
 
 ### 關鍵缺口
+
 1. ED3N 字典只有 ~50 preset → 超出範圍就 fallback
 2. ED3N 分類輔助路徑休眠（`_ed3n` 未設定）
 3. HANDLER_MAP 只有 file/search → 12 類 QueryType 無 handler
@@ -100,8 +112,8 @@
 ## Phase 3: ED3N 能力補強（不依賴 GARDEN）
 
 **目標**: 讓 ED3N 獨立時也能處理 80% 的日常對話
-**核心思路**: 擴充字典 + 同義詞 + 反射 + 啟用已有但休眠的功能
-**狀態**: ✅ Phase 3 全部完成
+**核心思路**: 擴充字典 + 同義詞 + 反射 + 啟用已有但休眠的功能 **狀態**: ✅ Phase
+3 全部完成
 
 ### 3.1 擴充 ED3N 字典 preset（+200 條） ✅ 完成
 
@@ -109,24 +121,25 @@
 
 現有 ~50 條，需新增 ~200 條。按架構文檔 §5.8 的字典層設計：
 
-| 類別 | 數量 | 範例 | 對應 QueryType |
-|---|---|---|---|
-| 檔案操作 | 30 | 建立/刪除/複製/移動/讀取/寫入 + 常見副檔名 | FILE |
-| 網路搜尋 | 20 | 搜尋/查找/Google/查詢 | SEARCH |
-| 程式碼 | 25 | 程式/函數/變數/迴圈/除錯/重構 | CODE |
-| 系統操作 | 20 | 執行/運行/開啟/關閉/重啟 | EXECUTE |
-| 任務管理 | 25 | 任務/待辦/提醒/排程/行程 | TASK |
-| 情緒表達 | 30 | 開心/難過/生氣/驚訝/擔心/感謝 | — |
-| 日常對話 | 30 | 天氣/時間/日期/吃飯/睡覺/工作 | — |
-| 知識查詢 | 20 | 什麼是/為什麼/怎麼/多少 | KNOWLEDGE |
+| 類別     | 數量 | 範例                                       | 對應 QueryType |
+| -------- | ---- | ------------------------------------------ | -------------- |
+| 檔案操作 | 30   | 建立/刪除/複製/移動/讀取/寫入 + 常見副檔名 | FILE           |
+| 網路搜尋 | 20   | 搜尋/查找/Google/查詢                      | SEARCH         |
+| 程式碼   | 25   | 程式/函數/變數/迴圈/除錯/重構              | CODE           |
+| 系統操作 | 20   | 執行/運行/開啟/關閉/重啟                   | EXECUTE        |
+| 任務管理 | 25   | 任務/待辦/提醒/排程/行程                   | TASK           |
+| 情緒表達 | 30   | 開心/難過/生氣/驚訝/擔心/感謝              | —              |
+| 日常對話 | 30   | 天氣/時間/日期/吃飯/睡覺/工作              | —              |
+| 知識查詢 | 20   | 什麼是/為什麼/怎麼/多少                    | KNOWLEDGE      |
 
 **具體修改**: 在 `presets.json` 的 `"presets"` 陣列中新增條目，每個條目格式：
+
 ```json
 {
   "key": "f1",
-  "surface_forms": {"zh": "建立", "en": "create"},
+  "surface_forms": { "zh": "建立", "en": "create" },
   "category": "file_ops",
-  "relations": [{"type": "synonym", "target": "新增"}]
+  "relations": [{ "type": "synonym", "target": "新增" }]
 }
 ```
 
@@ -134,9 +147,11 @@
 
 ### 3.2 啟用 ED3N 分類輔助（修復休眠路徑） ✅ 完成
 
-**問題**: `query_classifier.py:85` 的 `__init__` 沒接收 ed3n_engine，導致 `_ed3n` 永遠不存在
+**問題**: `query_classifier.py:85` 的 `__init__` 沒接收 ed3n_engine，導致
+`_ed3n` 永遠不存在
 
 **檔案**: `ai/core/query_classifier.py:85-86`
+
 ```python
 # 修改前
 def __init__(self):
@@ -149,6 +164,7 @@ def __init__(self, ed3n_engine=None):
 ```
 
 **檔案**: `api/routes/chat_routes.py`（在 `_handle_chat_request` 中）
+
 ```python
 # 修改前
 classifier = QueryClassifier()
@@ -158,6 +174,7 @@ classifier = QueryClassifier(ed3n_engine=getattr(self, '_ed3n_engine', None))
 ```
 
 **檔案**: `api/routes/chat_routes.py`（在 session 初始化時注入 ed3n）
+
 ```python
 # 在 _get_ed3n_engine() 已有 singleton，確保掛到 self
 self._ed3n_engine = _get_ed3n_engine()
@@ -180,6 +197,7 @@ def encode(self, text: str, lang: str = "zh") -> List[str]:
 ```
 
 新增 `_expand_synonyms` 方法：
+
 ```python
 _SYNONYM_MAP = {
     "搜尋": ["查找", "找", "查詢", "搜", "search", "find"],
@@ -254,6 +272,7 @@ def _expand_synonyms(self, text: str) -> str:
 **檔案**: `ai/ed3n/config/math_presets.json`
 
 現有只支援 0-9 單位數。需新增：
+
 - 多位數解析（10-999）
 - 括號運算
 - 百分比
@@ -269,7 +288,7 @@ def _math_eval(self, text: str) -> Optional[str]:
     expr = re.sub(r'(\d+)\s*減\s*(\d+)', r'\1 - \2', expr)
     expr = re.sub(r'(\d+)\s*乘\s*(\d+)', r'\1 * \2', expr)
     expr = re.sub(r'(\d+)\s*除\s*(\d+)', r'\1 / \2', expr)
-    
+
     # 安全求值
     try:
         result = eval(expr, {"__builtins__": {}}, {})
@@ -287,6 +306,7 @@ def _math_eval(self, text: str) -> Optional[str]:
 **檔案**: `services/handlers/file_operation_handler.py`
 
 現有 38 行，需擴充到 ~150 行，支援：
+
 - 讀取檔案（含 TXT/JSON/CSV）
 - 建立檔案
 - 刪除檔案（含確認）
@@ -298,7 +318,7 @@ class FileOperationHandler:
     async def process(self, query: str, context=None) -> str:
         action = self._detect_action(query)
         path = self._extract_path(query)
-        
+
         if action == "read":
             return await self._read_file(path)
         elif action == "create":
@@ -330,12 +350,12 @@ class WebSearchHandler:
         from duckduckgo_search import DDGS
         with DDGS() as ddgs:
             results = list(ddgs.text(query, max_results=5))
-        
+
         # 格式化結果
         formatted = []
         for i, r in enumerate(results, 1):
             formatted.append(f"{i}. {r['title']}\n   {r['body']}\n   {r['href']}")
-        
+
         return "\n\n".join(formatted)
 ```
 
@@ -348,22 +368,22 @@ class WebSearchHandler:
 ```python
 class CodeExecutionHandler:
     """安全的程式碼執行 handler（沙箱模式）"""
-    
+
     ALLOWED_LANGUAGES = {"python", "javascript"}
     TIMEOUT = 10  # 秒
-    
+
     async def process(self, query: str, context=None) -> str:
         code = self._extract_code(query)
         lang = self._detect_language(query, context)
-        
+
         if lang not in self.ALLOWED_LANGUAGES:
             return f"不支援 {lang} 語言。支援：{', '.join(self.ALLOWED_LANGUAGES)}"
-        
+
         if lang == "python":
             return await self._execute_python(code)
         elif lang == "javascript":
             return await self._execute_javascript(code)
-    
+
     async def _execute_python(self, code: str) -> str:
         """安全執行 Python（subprocess + timeout）"""
         import subprocess
@@ -388,20 +408,20 @@ class CodeExecutionHandler:
 ```python
 class SystemCommandHandler:
     """系統命令執行 handler（受限）"""
-    
+
     ALLOWED_COMMANDS = {
         "ping", "ipconfig", "ifconfig", "df", "du", "ls", "dir",
         "echo", "date", "time", "whoami", "hostname",
     }
-    
+
     async def process(self, query: str, context=None) -> str:
         cmd = self._extract_command(query)
-        
+
         # 安全檢查
         base_cmd = cmd.split()[0].lower()
         if base_cmd not in self.ALLOWED_COMMANDS:
             return f"不允許執行 {base_cmd}。允許的命令：{', '.join(self.ALLOWED_COMMANDS)}"
-        
+
         return await self._run_command(cmd)
 ```
 
@@ -412,10 +432,10 @@ class SystemCommandHandler:
 ```python
 class TaskManagerHandler:
     """任務管理 handler（整合 HAM 記憶）"""
-    
+
     async def process(self, query: str, context=None) -> str:
         action = self._detect_action(query)
-        
+
         if action == "create":
             task = self._parse_task(query)
             await self._store_task(task, context)
@@ -432,7 +452,7 @@ class TaskManagerHandler:
             await self._delete_task(task_id, context)
             return f"已刪除任務 {task_id}"
         return "無法識別任務操作"
-    
+
     async def _store_task(self, task: dict, context: dict):
         """存儲任務到 HAM"""
         ham = context.get("ham_manager")
@@ -452,17 +472,17 @@ class TaskManagerHandler:
 ```python
 class VisionHandler:
     """視覺處理 handler（整合 VisionService）"""
-    
+
     async def process(self, query: str, context=None) -> str:
         image_path = context.get("image_path")
         if not image_path:
             return "請提供圖片（上傳圖片後再試）"
-        
+
         # 整合 VisionService（架構文檔 §1.1）
         from services.vision_service import VisionService
         vision = VisionService()
         result = await vision.analyze_image(image_path)
-        
+
         return self._format_analysis(result)
 ```
 
@@ -505,19 +525,19 @@ HANDLER_MAP = {
 
 **檔案**: `tests/ai/ed3n/test_ed3n_enhanced.py`（新建，~120 行）
 
-| # | 測試案例 | 預期 |
-|---|---|---|
-| 3.7.1 | `"建立新文件"` | ED3N 反射回應（非 fallback） |
-| 3.7.2 | `"刪除檔案"` | ED3N 反射含警告 |
-| 3.7.3 | `"你是誰"` | 有意義自我介紹 |
-| 3.7.4 | `"123 + 456"` | 回傳 `"579"` |
-| 3.7.5 | `"搜尋天氣"` 和 `"查找天氣"` | 相同 keys |
-| 3.7.6 | `"建立任務：買牛奶"` | task_manager 處理 |
-| 3.7.7 | `"執行 print('hi')"` | code_execution 處理 |
-| 3.7.8 | `"讀取 config.json"` | file_ops 讀取 |
-| 3.7.9 | `"列出所有文件"` | file_ops 列表 |
-| 3.7.10 | ED3N 分類輔助路徑啟用 | `classifier._ed3n is not None` |
-| 3.7.11 | 102 舊測試仍通過 | 無 regression |
+| #      | 測試案例                     | 預期                           |
+| ------ | ---------------------------- | ------------------------------ |
+| 3.7.1  | `"建立新文件"`               | ED3N 反射回應（非 fallback）   |
+| 3.7.2  | `"刪除檔案"`                 | ED3N 反射含警告                |
+| 3.7.3  | `"你是誰"`                   | 有意義自我介紹                 |
+| 3.7.4  | `"123 + 456"`                | 回傳 `"579"`                   |
+| 3.7.5  | `"搜尋天氣"` 和 `"查找天氣"` | 相同 keys                      |
+| 3.7.6  | `"建立任務：買牛奶"`         | task_manager 處理              |
+| 3.7.7  | `"執行 print('hi')"`         | code_execution 處理            |
+| 3.7.8  | `"讀取 config.json"`         | file_ops 讀取                  |
+| 3.7.9  | `"列出所有文件"`             | file_ops 列表                  |
+| 3.7.10 | ED3N 分類輔助路徑啟用        | `classifier._ed3n is not None` |
+| 3.7.11 | 102 舊測試仍通過             | 無 regression                  |
 
 ---
 
@@ -528,7 +548,8 @@ HANDLER_MAP = {
 
 ### 4.1 GARDEN 語意檢索（替代壞掉的 SentenceTransformer）
 
-**問題**: Python 3.14 + Windows 上 SentenceTransformer 掛掉，被迫用 TF-IDF/CharBag
+**問題**: Python 3.14 +
+Windows 上 SentenceTransformer 掛掉，被迫用 TF-IDF/CharBag
 
 **方案**: 串 ChromaDB 做語意編碼（已在 HAM 中使用）
 
@@ -539,7 +560,7 @@ HANDLER_MAP = {
 ```python
 class _ChromaEncoder:
     """使用 ChromaDB 做語意編碼"""
-    
+
     def __init__(self):
         import chromadb
         self._client = chromadb.Client()
@@ -548,7 +569,7 @@ class _ChromaEncoder:
             metadata={"hnsw:space": "cosine"}
         )
         self._initialized = True
-    
+
     def encode(self, text: str) -> List[float]:
         # 查詢最相似的概念
         results = self._collection.query(
@@ -559,7 +580,7 @@ class _ChromaEncoder:
         if results["embeddings"] and results["embeddings"][0]:
             return results["embeddings"][0][0]
         return None
-    
+
     def add_concept(self, key: str, surface_form: str):
         """新增概念到向量索引"""
         self._collection.add(
@@ -569,6 +590,7 @@ class _ChromaEncoder:
 ```
 
 在 `VectorDictionary.__init__` 中調整 fallback 順序：
+
 ```python
 # 修改前
 self._encoder = _STEncoder() or _TfidfEncoder() or _CharBagEncoder()
@@ -584,6 +606,7 @@ self._encoder = _STEncoder() or _ChromaEncoder() or _TfidfEncoder() or _CharBagE
 **檔案**: `ai/garden/kg_import.py`（已有完整 parser）
 
 需要執行導入：
+
 ```bash
 # 1. 下載 ConceptNet 數據
 wget http://s3.amazonaws.com/conceptnet/conceptnet-5.7.0.csv.gz
@@ -608,7 +631,7 @@ def process(self, text: str, depth: str = "auto", context=None) -> str:
     # 新增：多步驟偵測
     if self._is_multi_step(text):
         return self._process_multi_step(text, context)
-    
+
     # 原有三階段管線...
     return self._single_step_process(text, context)
 
@@ -642,7 +665,7 @@ def process(self, text: str, depth: str = "auto", context=None) -> str:
     # 新增：情緒偵測 + 激素調整
     emotion = self._detect_emotion(text)
     self._adjust_hormones(emotion)
-    
+
     # 原有管線（激素影響 SNN 閾值）...
 ```
 
@@ -664,7 +687,7 @@ def _adjust_hormones(self, emotion: str):
     """根據情緒調整激素水平"""
     if not hasattr(self, '_hormonal'):
         return
-    
+
     adjustments = {
         "happy": {"serotonin": 0.8, "dopamine": 0.7},
         "sad": {"serotonin": 0.3, "cortisol": 0.6},
@@ -672,7 +695,7 @@ def _adjust_hormones(self, emotion: str):
         "anxious": {"cortisol": 0.7, "adrenaline": 0.6},
         "neutral": {"serotonin": 0.5, "cortisol": 0.3},
     }
-    
+
     for hormone, level in adjustments.get(emotion, {}).items():
         if hasattr(self._hormonal, hormone):
             setattr(self._hormonal, hormone, level)
@@ -697,17 +720,17 @@ def learn_from_interaction(self, user_text: str, response: str, feedback: float 
     """從互動中學習"""
     if not self._learning_enabled:
         return
-    
+
     # 1. 字典成長
     new_concepts = self._extract_new_concepts(user_text, response)
     for concept in new_concepts:
         self._dictionary.add_entry(concept)
-    
+
     # 2. 權重更新（Hebbian）
     input_keys = self._dictionary.encode(user_text)
     output_keys = self._dictionary.encode(response)
     self._snn.hebbian_update(input_keys, output_keys, feedback)
-    
+
     # 3. 定期保存
     self._interaction_count += 1
     if self._interaction_count % 100 == 0:
@@ -719,26 +742,26 @@ def learn_from_interaction(self, user_text: str, response: str, feedback: float 
 ```python
 async def generate_response(self, user_message, ...):
     response = await self._llm_service.generate(...)
-    
+
     # 新增：GARDEN 持續學習
     if hasattr(self, '_garden_engine'):
         self._garden_engine.learn_from_interaction(
             user_message, response, feedback=0.5
         )
-    
+
     return response
 ```
 
 ### 4.6 Phase 4 測試
 
-| # | 測試案例 | 預期 |
-|---|---|---|
-| 4.6.1 | 語義相似查詢 | 相同 concept keys（ChromaDB 模式） |
-| 4.6.2 | `"巴黎是哪國首都"` | 知識圖譜回應 |
-| 4.6.3 | 多步驟任務 | 分步執行 |
-| 4.6.4 | 情緒化輸入 | 情緒調整回應 |
-| 4.6.5 | 10 次互動後 | 字典成長 |
-| 4.6.6 | GARDEN 回應品質 > ED3N | 同查詢比較 |
+| #     | 測試案例               | 預期                               |
+| ----- | ---------------------- | ---------------------------------- |
+| 4.6.1 | 語義相似查詢           | 相同 concept keys（ChromaDB 模式） |
+| 4.6.2 | `"巴黎是哪國首都"`     | 知識圖譜回應                       |
+| 4.6.3 | 多步驟任務             | 分步執行                           |
+| 4.6.4 | 情緒化輸入             | 情緒調整回應                       |
+| 4.6.5 | 10 次互動後            | 字典成長                           |
+| 4.6.6 | GARDEN 回應品質 > ED3N | 同查詢比較                         |
 
 ---
 
@@ -761,19 +784,19 @@ class ChatService:
             train_interval=50,    # 每 50 次互動訓練一次
         )
         self._ed3n_learning.load()  # 載入之前的狀態
-    
+
     async def generate_response(self, user_message, ...):
         response = await self._llm_service.generate(...)
-        
+
         # 新增：記錄互動到 ED3N 學習管線
         self._ed3n_learning.record_interaction(
             user_message, response,
             context={"session_id": session_id}
         )
-        
+
         # 檢查是否該成長/訓練
         await self._ed3n_learning.step()
-        
+
         return response
 ```
 
@@ -822,16 +845,16 @@ async def _sync_ed3n_to_ham(self):
 class MemoryIntegrationLoop:
     async def _process_memory(self, memory):
         # 現有：分析模式、結構化
-        
+
         # 新增：喂給神經可塑性系統（架構文檔 §3.2）
         if hasattr(self, '_neuroplasticity'):
             trace = self._neuroplasticity.encode(memory.content)
             self._neuroplasticity.consolidate(trace)
-        
+
         # 新增：根據存取頻率調整重要性
         if memory.access_count > 5:
             memory.importance *= 1.2
-        
+
         # 新增：存取頻率高的記憶提升到長期
         if memory.access_count > 10 and memory.type == "short_term":
             memory.type = "long_term"
@@ -858,7 +881,7 @@ class MemoryContextManager:
         path = f"sessions/{session_id}.json"
         with open(path, "w", encoding="utf-8") as f:
             json.dump(session_data, f, ensure_ascii=False, indent=2)
-    
+
     def load_session(self, session_id: str):
         """從磁碟載入 session"""
         path = f"sessions/{session_id}.json"
@@ -893,21 +916,21 @@ class LearningLoop:
         """處理回饋"""
         # 1. 提取語言特徵
         fragments = self._extractor.extract(response)
-        
+
         # 2. 調整 ED3N 字典
         for fragment in fragments:
             if fragment.novelty > 0.7:
                 self._ed3n.dictionary.grow(fragment.text)
-        
+
         # 3. 調整 GARDEN 權重
         if self._garden:
             self._garden.learn_from_interaction(
                 user_message, response, user_feedback
             )
-        
+
         # 4. 更新學習率
         self._learning_rate = self._adapt_rate(user_feedback)
-        
+
         # 5. 記錄到 HAM
         self._ham.store_experience({
             "type": "learning_feedback",
@@ -921,14 +944,14 @@ class LearningLoop:
 
 ### 5.6 Phase 5 測試
 
-| # | 測試案例 | 預期 |
-|---|---|---|
+| #     | 測試案例    | 預期                              |
+| ----- | ----------- | --------------------------------- |
 | 5.6.1 | 10 次互動後 | `angela_learning_state.json` 更新 |
-| 5.6.2 | ED3N 新概念 | 持久化到 HAM |
-| 5.6.3 | 重啟後 | 對話歷史仍在 |
-| 5.6.4 | 常用記憶 | 重要性提升 |
-| 5.6.5 | 用戶糾正 | 回應改善 |
-| 5.6.6 | 學習率 | 根據回饋調整 |
+| 5.6.2 | ED3N 新概念 | 持久化到 HAM                      |
+| 5.6.3 | 重啟後      | 對話歷史仍在                      |
+| 5.6.4 | 常用記憶    | 重要性提升                        |
+| 5.6.5 | 用戶糾正    | 回應改善                          |
+| 5.6.6 | 學習率      | 根據回饋調整                      |
 
 ---
 
@@ -940,93 +963,108 @@ class LearningLoop:
 
 **檔案**: `tests/integration/test_e2e_pipeline.py`（新建，~200 行）
 
-| # | 輸入 | 預期流程 | 預期結果 |
-|---|---|---|---|
-| 6.1.1 | `"搜尋台北天氣"` | classify→SEARCH→gate(0.9)→auto→web_search→inject→LLM | 搜尋結果回應 |
-| 6.1.2 | `"讀取 temp.txt"` | classify→FILE→gate(1.0)→auto→file_ops→inject→LLM | 檔案內容回應 |
-| 6.1.3 | `"刪除 temp.txt"` | classify→FILE→gate(0.08)→reject→LLM | 說明不可逆 |
-| 6.1.4 | `"刪除全部檔案"` | classify→FILE→gate(0.02)→reject→LLM | 強烈警告 |
-| 6.1.5 | `"幫我查字典"` | classify→COMMAND→gate(0.3)→confirm→用戶"好"→LLM | 查詢結果 |
-| 6.1.6 | `"開玩笑"` | classify→EXECUTE→gate(0.0)→reject→LLM | 正常對話 |
-| 6.1.7 | `"不要搜尋"` | classify→gate→negation→reject→LLM | 確認取消 |
-| 6.1.8 | `"建立任務：買牛奶"` | classify→TASK→gate→confirm→用戶"好"→task_manager→LLM | 任務建立 |
-| 6.1.9 | `"執行 print('hi')"` | classify→CODE→gate→confirm→用戶"好"→code_execution→LLM | 執行結果 |
-| 6.1.10 | `"你是誰"` | classify→GREETING→ED3N reflex→LLM | 自我介紹 |
-| 6.1.11 | `"123 + 456"` | classify→MATH→ED3N→LLM | `"579"` |
-| 6.1.12 | 續行 3 次 | context.continuation_count >= 3 | 強制停止 |
-| 6.1.13 | `"今天天氣"` → `"那明天呢"` | 跨 turn context | 基於上次結果 |
-| 6.1.14 | 重啟後 `"你記得我嗎"` | 載入 session | 記得之前的對話 |
+| #      | 輸入                        | 預期流程                                               | 預期結果       |
+| ------ | --------------------------- | ------------------------------------------------------ | -------------- |
+| 6.1.1  | `"搜尋台北天氣"`            | classify→SEARCH→gate(0.9)→auto→web_search→inject→LLM   | 搜尋結果回應   |
+| 6.1.2  | `"讀取 temp.txt"`           | classify→FILE→gate(1.0)→auto→file_ops→inject→LLM       | 檔案內容回應   |
+| 6.1.3  | `"刪除 temp.txt"`           | classify→FILE→gate(0.08)→reject→LLM                    | 說明不可逆     |
+| 6.1.4  | `"刪除全部檔案"`            | classify→FILE→gate(0.02)→reject→LLM                    | 強烈警告       |
+| 6.1.5  | `"幫我查字典"`              | classify→COMMAND→gate(0.3)→confirm→用戶"好"→LLM        | 查詢結果       |
+| 6.1.6  | `"開玩笑"`                  | classify→EXECUTE→gate(0.0)→reject→LLM                  | 正常對話       |
+| 6.1.7  | `"不要搜尋"`                | classify→gate→negation→reject→LLM                      | 確認取消       |
+| 6.1.8  | `"建立任務：買牛奶"`        | classify→TASK→gate→confirm→用戶"好"→task_manager→LLM   | 任務建立       |
+| 6.1.9  | `"執行 print('hi')"`        | classify→CODE→gate→confirm→用戶"好"→code_execution→LLM | 執行結果       |
+| 6.1.10 | `"你是誰"`                  | classify→GREETING→ED3N reflex→LLM                      | 自我介紹       |
+| 6.1.11 | `"123 + 456"`               | classify→MATH→ED3N→LLM                                 | `"579"`        |
+| 6.1.12 | 續行 3 次                   | context.continuation_count >= 3                        | 強制停止       |
+| 6.1.13 | `"今天天氣"` → `"那明天呢"` | 跨 turn context                                        | 基於上次結果   |
+| 6.1.14 | 重啟後 `"你記得我嗎"`       | 載入 session                                           | 記得之前的對話 |
 
 ### 6.2 效能基準
 
-| 指標 | 目標 | 測量方式 |
-|---|---|---|
-| ED3N 反射回應延遲 | < 1ms | `time.time()` 前後差 |
-| ED3N 分類延遲 | < 5ms | 同上 |
-| GARDEN 回應延遲 | < 50ms | 同上 |
-| Handler 執行延遲 | < 100ms | 同上 |
-| 端到端延遲（含 LLM） | < 2s | WebSocket round-trip |
+| 指標                 | 目標    | 測量方式             |
+| -------------------- | ------- | -------------------- |
+| ED3N 反射回應延遲    | < 1ms   | `time.time()` 前後差 |
+| ED3N 分類延遲        | < 5ms   | 同上                 |
+| GARDEN 回應延遲      | < 50ms  | 同上                 |
+| Handler 執行延遲     | < 100ms | 同上                 |
+| 端到端延遲（含 LLM） | < 2s    | WebSocket round-trip |
 
 ---
 
 ## 實施順序與時程
 
-| Phase | 內容 | 預估工時 | 優先級 | 依賴 |
-|---|---|---|---|---|
-| **Phase 3** | ED3N 能力補強 | 5-7 天 | 🔴 最高 | — |
-| 3.1 | 擴充字典 preset | 1 天 | | |
-| 3.2 | 啟用分類輔助 | 0.5 天 | | |
-| 3.3 | 同義詞展開 | 1 天 | | |
-| 3.4 | 反射層擴充 | 1 天 | | |
-| 3.5 | 數學擴充 | 0.5 天 | | |
-| 3.6 | Handler 實作（6個） | 2-3 天 | | |
-| **Phase 4** | GARDEN 整合優勢 | 3-5 天 | 🟡 高 | Phase 3 | ✅ 完成 |
-| 4.1 | ChromaDB 替代 SentenceTransformer | 1 天 | | | ✅ |
-| 4.2 | 知識圖譜導入 | 1 天 | | | ✅ |
-| 4.3 | 多步驟推理 | 1 天 | | | ✅ |
-| 4.4 | 情緒理解增強 | 0.5 天 | | | ✅ |
-| 4.5 | GARDEN 持續學習 | 1 天 | | | ✅ |
-| **Phase 5** | 持續學習整合 | 3-4 天 | 🟡 高 | Phase 3 | ✅ 完成 |
-| 5.1 | 啟用 ED3N 持續學習 | 0.5 天 | | | ✅ |
-| 5.2 | ED3N → HAM 同步 | 1 天 | | | ✅ |
-| 5.3 | 神經可塑性整合 | 1 天 | | | ✅ |
-| 5.4 | 跨 Session 記憶 | 1 天 | | | ✅ |
-| 5.5 | 學習回饋循環 | 0.5 天 | | | ✅ |
-| **Phase 6** | 端到端測試 | 2-3 天 | 🟢 中 | Phase 3-5 | ✅ 完成 |
-| 6.1 | 14 條整合測試 | 2 天 | | | ✅ |
-| 6.2 | 效能基準 | 1 天 | | | ✅ |
-| **總計** | | **13-19 天** | | |
+| Phase       | 內容                              | 預估工時     | 優先級  | 依賴      |
+| ----------- | --------------------------------- | ------------ | ------- | --------- |
+| **Phase 3** | ED3N 能力補強                     | 5-7 天       | 🔴 最高 | —         |
+| 3.1         | 擴充字典 preset                   | 1 天         |         |           |
+| 3.2         | 啟用分類輔助                      | 0.5 天       |         |           |
+| 3.3         | 同義詞展開                        | 1 天         |         |           |
+| 3.4         | 反射層擴充                        | 1 天         |         |           |
+| 3.5         | 數學擴充                          | 0.5 天       |         |           |
+| 3.6         | Handler 實作（6個）               | 2-3 天       |         |           |
+| **Phase 4** | GARDEN 整合優勢                   | 3-5 天       | 🟡 高   | Phase 3   | ✅ 完成 |
+| 4.1         | ChromaDB 替代 SentenceTransformer | 1 天         |         |           | ✅      |
+| 4.2         | 知識圖譜導入                      | 1 天         |         |           | ✅      |
+| 4.3         | 多步驟推理                        | 1 天         |         |           | ✅      |
+| 4.4         | 情緒理解增強                      | 0.5 天       |         |           | ✅      |
+| 4.5         | GARDEN 持續學習                   | 1 天         |         |           | ✅      |
+| **Phase 5** | 持續學習整合                      | 3-4 天       | 🟡 高   | Phase 3   | ✅ 完成 |
+| 5.1         | 啟用 ED3N 持續學習                | 0.5 天       |         |           | ✅      |
+| 5.2         | ED3N → HAM 同步                   | 1 天         |         |           | ✅      |
+| 5.3         | 神經可塑性整合                    | 1 天         |         |           | ✅      |
+| 5.4         | 跨 Session 記憶                   | 1 天         |         |           | ✅      |
+| 5.5         | 學習回饋循環                      | 0.5 天       |         |           | ✅      |
+| **Phase 6** | 端到端測試                        | 2-3 天       | 🟢 中   | Phase 3-5 | ✅ 完成 |
+| 6.1         | 14 條整合測試                     | 2 天         |         |           | ✅      |
+| 6.2         | 效能基準                          | 1 天         |         |           | ✅      |
+| **總計**    |                                   | **13-19 天** |         |           |
 
 ---
 
 ## 驗收標準
 
 ### ED3N 獨立（不依賴 GARDEN）
-- [ ] 字典 preset >= 250 條 — dictionary.py ~53 + operation_presets.json 120 + daily_presets.json 105 = ~278 total
+
+- [ ] 字典 preset >= 250 條 — dictionary.py ~53 + operation_presets.json 120 +
+      daily_presets.json 105 = ~278 total
 - [ ] 反射規則 >= 50 條 — _ReflexTable 18 + presets.json 82 = 100 total
 - [ ] 日常對話覆蓋率 >= 80%（不 fallback）— pending verification
-- [x] 同義詞展開正常運作 — dictionary_layer.py _encode_locked() with get_synonyms()
+- [x] 同義詞展開正常運作 — dictionary_layer.py _encode_locked() with
+      get_synonyms()
 - [x] 多位數數學運算正確 — ed3n_engine.py _try_math_eval() with Chinese numerals
 - [x] 6 個 handler 全部可用 — 7 handlers registered in router.py lines 499-510
 - [x] ED3N 分類輔助路徑啟用 — query_classifier.py v2 with QueryResult
 - [ ] 102 舊測試 + 30+ 新測試通過 — 374 tests passing (need to verify count)
 
 ### GARDEN 加持
+
 - [x] 語意檢索相似度 > 0.7（同義查詢）— ChromaDB encoder + fallback chain
-- [ ] 知識圖譜導入 >= 100K 條 — synthetic generation tested, real ConceptNet pending
-- [x] 多步驟推理正確 — 10 markers, regex split sorted longest-first, sequential processing
-- [x] 情緒調整回應正常 — 4 emotions + hormonal modulation + traditional Chinese keywords
+- [ ] 知識圖譜導入 >= 100K 條 — synthetic generation tested, real ConceptNet
+      pending
+- [x] 多步驟推理正確 — 10 markers, regex split sorted longest-first, sequential
+      processing
+- [x] 情緒調整回應正常 — 4 emotions + hormonal modulation + traditional Chinese
+      keywords
 - [ ] GARDEN 回應品質 > ED3N — pending benchmark
 
 ### 持續學習
+
 - [x] ED3N 學習管線啟用 — ContinuousLearningPipeline in chat_service.py
-- [x] ED3N → HAM 同步正常 — ED3NLearningIntegration with periodic background task
-- [x] 神經可塑性整合 HAM — MemoryIntegrationLoop with neuroplasticity encoding + importance boost + promotion
-- [x] 跨 session 記憶持久化 — MemoryContextManager.save_session()/load_session() with JSON persistence
-- [x] 學習回饋循環正常 — LearningLoop.bind_ed3n_engine()/bind_garden_engine()/process_user_feedback()
+- [x] ED3N → HAM 同步正常 — ED3NLearningIntegration with periodic background
+      task
+- [x] 神經可塑性整合 HAM — MemoryIntegrationLoop with neuroplasticity encoding +
+      importance boost + promotion
+- [x] 跨 session 記憶持久化 — MemoryContextManager.save_session()/load_session()
+      with JSON persistence
+- [x] 學習回饋循環正常 —
+      LearningLoop.bind_ed3n_engine()/bind_garden_engine()/process_user_feedback()
 - [x] 重啟後記憶不丟失 — save_session/load_session verified in tests
 
 ### 整體
+
 - [x] 14 條端到端測試通過 — 24 tests in test_phase6_e2e.py
-- [x] 效能基準達標 — reflex <5ms, classify <10ms, GARDEN <100ms, gate <5ms, handler <200ms
-- [x] 無 regression（現有功能不受影響）— 125 garden + 13 phase5 + 24 phase6 = 162 tests passing
+- [x] 效能基準達標 — reflex <5ms, classify <10ms, GARDEN <100ms, gate <5ms,
+      handler <200ms
+- [x] 無 regression（現有功能不受影響）— 125 garden + 13 phase5 + 24 phase6 =
+      162 tests passing

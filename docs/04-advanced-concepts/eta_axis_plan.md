@@ -1,15 +1,14 @@
 # η (Eta) Axis Implementation Plan
 
-**Version**: 1.0
-**Date**: 2026-05-15
-**Status**: IMPLEMENTED (2026-05-18)
+**Version**: 1.0 **Date**: 2026-05-15 **Status**: IMPLEMENTED (2026-05-18)
 **Priority**: P10 — Complete
 
 ---
 
 ## Overview
 
-η is a new axis (7th axis after αβγδεθ) that handles **execution/operation layer** in contrast to θ's **cognitive/evaluation layer**.
+η is a new axis (7th axis after αβγδεθ) that handles **execution/operation
+layer** in contrast to θ's **cognitive/evaluation layer**.
 
 ### θ-η Dual Loop Architecture
 
@@ -34,26 +33,29 @@
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-**Key insight**: This is NOT θ self-regression. θ's output goes through η (mirror) and returns to θ. This creates higher-order metacognition where θ thinks about the execution of its own thinking.
+**Key insight**: This is NOT θ self-regression. θ's output goes through η
+(mirror) and returns to θ. This creates higher-order metacognition where θ
+thinks about the execution of its own thinking.
 
 ---
 
 ## Responsibility Split
 
-| Responsibility | θ (Cognitive) | η (Execution) |
-|---------------|---------------|---------------|
-| Routing decision | ✅ Evaluate "should route?" | ❌ |
-| Logic gate mounting | ✅ Evaluate "what logic needed?" | ✅ Execute mount |
-| Arithmetic config | ✅ Evaluate "what calculation?" | ✅ Execute config |
-| Dynamic axis creation | ✅ Evaluate "should create?" | ✅ Execute create |
-| Node capacity expansion | ✅ Evaluate "capacity enough?" | ✅ Execute expand |
-| Module parameter adjustment | ✅ Evaluate "adjust params?" | ✅ Execute adjust |
-| Module composition | ✅ Evaluate "composition valid?" | ✅ Execute compose |
-| Persistence | ❌ | ✅ Execute storage/recovery |
+| Responsibility              | θ (Cognitive)                    | η (Execution)               |
+| --------------------------- | -------------------------------- | --------------------------- |
+| Routing decision            | ✅ Evaluate "should route?"      | ❌                          |
+| Logic gate mounting         | ✅ Evaluate "what logic needed?" | ✅ Execute mount            |
+| Arithmetic config           | ✅ Evaluate "what calculation?"  | ✅ Execute config           |
+| Dynamic axis creation       | ✅ Evaluate "should create?"     | ✅ Execute create           |
+| Node capacity expansion     | ✅ Evaluate "capacity enough?"   | ✅ Execute expand           |
+| Module parameter adjustment | ✅ Evaluate "adjust params?"     | ✅ Execute adjust           |
+| Module composition          | ✅ Evaluate "composition valid?" | ✅ Execute compose          |
+| Persistence                 | ❌                               | ✅ Execute storage/recovery |
 
 ### θ keeps in θ
 
 All existing θ fields remain in θ (as intention/intent):
+
 - `theta_negativity`
 - `doubt`
 - `audit_intensity`
@@ -71,12 +73,12 @@ All existing θ fields remain in θ (as intention/intent):
 
 ### Layer 0 — Atomic Modules (Cannot split further)
 
-| Type | Description | Examples |
-|------|-------------|----------|
-| `LogicGate` | Logic decisions | AND, OR, NOT, XOR, threshold |
-| `ArithmeticOp` | Arithmetic operations | ADD, SUB, MUL, DIV, custom_expr |
-| `Aggregator` | Aggregation methods | SUM, MEAN, MAX, MIN, WEIGHTED_AVG |
-| `Router` | Routing methods | DIRECT, FANOUT, MERGE, SPLIT |
+| Type           | Description           | Examples                          |
+| -------------- | --------------------- | --------------------------------- |
+| `LogicGate`    | Logic decisions       | AND, OR, NOT, XOR, threshold      |
+| `ArithmeticOp` | Arithmetic operations | ADD, SUB, MUL, DIV, custom_expr   |
+| `Aggregator`   | Aggregation methods   | SUM, MEAN, MAX, MIN, WEIGHTED_AVG |
+| `Router`       | Routing methods       | DIRECT, FANOUT, MERGE, SPLIT      |
 
 ### Layer 1 — Composed Modules (Built from atoms)
 
@@ -112,22 +114,23 @@ OLD: Need → Create new logic gate
 NEW: Need → Adjust existing module parameters
 ```
 
-This prevents continuous new additions. Angela adjusts module parameters rather than creating from scratch.
+This prevents continuous new additions. Angela adjusts module parameters rather
+than creating from scratch.
 
 ---
 
 ## η Axis Fields
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `module_registry` | `Dict[str, ModuleConfig]` | Index of all modules (name → config) |
-| `active_modules` | `List[str]` | Currently active module names |
-| `execution_count` | `int` | Total execution count |
-| `success_rate` | `float` | Routing success rate (0-1) |
-| `parameter_tuning` | `Dict[str, float]` | Adjustment magnitude per module |
-| `structural_drift` | `float` | Structural drift amount (0-1) |
-| `module_composition` | `Dict[str, Any]` | Current topology snapshot |
-| `pending_updates` | `List[UpdateOp]` | Pending parameter updates |
+| Field                | Type                      | Description                          |
+| -------------------- | ------------------------- | ------------------------------------ |
+| `module_registry`    | `Dict[str, ModuleConfig]` | Index of all modules (name → config) |
+| `active_modules`     | `List[str]`               | Currently active module names        |
+| `execution_count`    | `int`                     | Total execution count                |
+| `success_rate`       | `float`                   | Routing success rate (0-1)           |
+| `parameter_tuning`   | `Dict[str, float]`        | Adjustment magnitude per module      |
+| `structural_drift`   | `float`                   | Structural drift amount (0-1)        |
+| `module_composition` | `Dict[str, Any]`          | Current topology snapshot            |
+| `pending_updates`    | `List[UpdateOp]`          | Pending parameter updates            |
 
 ---
 
@@ -135,13 +138,13 @@ This prevents continuous new additions. Angela adjusts module parameters rather 
 
 ### Signals (θ observations → η)
 
-| Signal | Description |
-|--------|-------------|
-| `update_frequency` | Updates per time unit |
-| `complexity_delta` | Adjacent complexity difference |
-| `novelty_peak` | Peak novelty value |
-| `misallocation_rate` | Misallocation rate |
-| `buffer_pressure` | Buffer fullness |
+| Signal               | Description                    |
+| -------------------- | ------------------------------ |
+| `update_frequency`   | Updates per time unit          |
+| `complexity_delta`   | Adjacent complexity difference |
+| `novelty_peak`       | Peak novelty value             |
+| `misallocation_rate` | Misallocation rate             |
+| `buffer_pressure`    | Buffer fullness                |
 
 ### Module Invocation Curve
 
@@ -158,14 +161,15 @@ Constants:
 #### Axis Count → Module Count Mapping
 
 | Axis Count | Base | Complexity 0.5 | Complexity 0.8 | Complexity 1.0 |
-|------------|------|----------------|----------------|----------------|
-| 6 | 3 | 4 | 6 | 12 |
-| 8 | 4 | 5 | 8 | 12 |
-| 10 | 5 | 7 | 10 | 12 |
-| 12 | 6 | 8 | 12 | 12 |
-| 16 | 8 | 12 | 12 | 12 |
+| ---------- | ---- | -------------- | -------------- | -------------- |
+| 6          | 3    | 4              | 6              | 12             |
+| 8          | 4    | 5              | 8              | 12             |
+| 10         | 5    | 7              | 10             | 12             |
+| 12         | 6    | 8              | 12             | 12             |
+| 16         | 8    | 12             | 12             | 12             |
 
-**Key insight**: More axes → more base invocations → but cap at 12 (prevents runaway)
+**Key insight**: More axes → more base invocations → but cap at 12 (prevents
+runaway)
 
 ### Parameter Adjustment Curve
 
@@ -178,20 +182,22 @@ Constants:
   BASE_DELTA = 0.15   # Base adjustment magnitude
 ```
 
-| Complexity | Adjustment |
-|------------|------------|
-| 0.1 | 0.018 |
-| 0.3 | 0.038 |
-| 0.5 | 0.075 (critical point) |
-| 0.7 | 0.135 |
-| 0.9 | 0.190 |
-| 1.0 | 0.200 (cap) |
+| Complexity | Adjustment             |
+| ---------- | ---------------------- |
+| 0.1        | 0.018                  |
+| 0.3        | 0.038                  |
+| 0.5        | 0.075 (critical point) |
+| 0.7        | 0.135                  |
+| 0.9        | 0.190                  |
+| 1.0        | 0.200 (cap)            |
 
-**Key insight**: Medium complexity starts acceleration → high complexity approaches cap → no oscillation
+**Key insight**: Medium complexity starts acceleration → high complexity
+approaches cap → no oscillation
 
 ### Adaptive Threshold
 
 The trigger threshold itself is adaptive:
+
 - No trigger for extended time → threshold auto-decreases
 - Too frequent triggers → threshold auto-increases
 
@@ -205,13 +211,13 @@ trigger_threshold(t) = trigger_threshold(t-1) × (1 + α × (target_rate - actua
 
 All existing Angela systems are automatic:
 
-| System | Trigger | Behavior |
-|--------|---------|----------|
-| AnchorLearningEngine | allocation_decide() | Auto-update anchors |
-| NegativityDetector | misallocation detected | Auto-correct |
-| InfluenceApplicator | each update | Auto-propagate influence |
-| RippleCascade | after trigger | Auto-ripple |
-| GradientField | navigate_to_attractor() | Auto-navigate |
+| System               | Trigger                 | Behavior                 |
+| -------------------- | ----------------------- | ------------------------ |
+| AnchorLearningEngine | allocation_decide()     | Auto-update anchors      |
+| NegativityDetector   | misallocation detected  | Auto-correct             |
+| InfluenceApplicator  | each update             | Auto-propagate influence |
+| RippleCascade        | after trigger           | Auto-ripple              |
+| GradientField        | navigate_to_attractor() | Auto-navigate            |
 
 **Conclusion**: η operates automatically. No Angela authorization required.
 
@@ -219,17 +225,17 @@ All existing Angela systems are automatic:
 
 ## Implementation Steps
 
-| # | Task | Priority | Description | Status |
-|---|------|----------|-------------|--------|
-| **P10.1** | η Axis Core Design | HIGH | DimensionState + 8 fields + initialization | ✅ Done |
-| **P10.2** | Atomic Module System | HIGH | LogicGate, ArithmeticOp, Aggregator, Router | ✅ Done |
-| **P10.3** | Composed Module | HIGH | Layer 1 composition logic | ✅ Done |
-| **P10.4** | Trigger Curve Implementation | HIGH | Sigmoid curves, adaptive threshold | ✅ Done |
-| **P10.5** | θ-η Feedback Loop | HIGH | θ output → η execution → θ feedback | ✅ Done |
-| **P10.6** | StateMatrixAdapter Integration | HIGH | η operations API | ✅ Done |
-| **P10.7** | Persistence | HIGH | Module + η config storage (Redis/JSON) | ✅ Done |
-| **P10.8** | HTTP API | MEDIUM | `/module/*`, `/eta/*` endpoints | ✅ Done |
-| **P10.9** | Tests | HIGH | Unit + integration tests | ✅ Done |
+| #         | Task                           | Priority | Description                                 | Status  |
+| --------- | ------------------------------ | -------- | ------------------------------------------- | ------- |
+| **P10.1** | η Axis Core Design             | HIGH     | DimensionState + 8 fields + initialization  | ✅ Done |
+| **P10.2** | Atomic Module System           | HIGH     | LogicGate, ArithmeticOp, Aggregator, Router | ✅ Done |
+| **P10.3** | Composed Module                | HIGH     | Layer 1 composition logic                   | ✅ Done |
+| **P10.4** | Trigger Curve Implementation   | HIGH     | Sigmoid curves, adaptive threshold          | ✅ Done |
+| **P10.5** | θ-η Feedback Loop              | HIGH     | θ output → η execution → θ feedback         | ✅ Done |
+| **P10.6** | StateMatrixAdapter Integration | HIGH     | η operations API                            | ✅ Done |
+| **P10.7** | Persistence                    | HIGH     | Module + η config storage (Redis/JSON)      | ✅ Done |
+| **P10.8** | HTTP API                       | MEDIUM   | `/module/*`, `/eta/*` endpoints             | ✅ Done |
+| **P10.9** | Tests                          | HIGH     | Unit + integration tests                    | ✅ Done |
 
 ---
 

@@ -4,11 +4,11 @@
 
 Angela AI 支持三个原生音频捕获模块，用于在不同平台上捕获系统音频：
 
-| 模块 | 平台 | 说明 |
-|------|------|------|
-| `node-wasapi-capture` | Windows | 使用 WASAPI (Windows Audio Session API) |
-| `node-pulseaudio-capture` | Linux | 使用 PulseAudio |
-| `node-coreaudio-capture` | macOS | 使用 CoreAudio |
+| 模块                      | 平台    | 说明                                    |
+| ------------------------- | ------- | --------------------------------------- |
+| `node-wasapi-capture`     | Windows | 使用 WASAPI (Windows Audio Session API) |
+| `node-pulseaudio-capture` | Linux   | 使用 PulseAudio                         |
+| `node-coreaudio-capture`  | macOS   | 使用 CoreAudio                          |
 
 ## 验证状态
 
@@ -37,6 +37,7 @@ bash build.sh
 ### 3. 验证编译
 
 编译成功后，应该看到：
+
 ```
 ✅ 模块编译成功！
    位置: build/Release/pulseaudio-capture.node
@@ -65,6 +66,7 @@ bash build.sh
 ### 3. 验证编译
 
 编译成功后，应该看到：
+
 ```
 ✅ 模块编译成功！
    位置: build/Release/coreaudio-capture.node
@@ -75,7 +77,9 @@ bash build.sh
 
 ### 1. 安装 Visual Studio Build Tools
 
-下载并安装 [Visual Studio Build Tools](https://visualstudio.microsoft.com/downloads/)，选择：
+下载并安装
+[Visual Studio Build Tools](https://visualstudio.microsoft.com/downloads/)，选择：
+
 - Desktop development with C++
 - Windows 10 SDK
 
@@ -95,6 +99,7 @@ build.bat
 ### 4. 验证编译
 
 编译成功后，应该看到：
+
 ```
 ✅ 模块编译成功！
    位置: build\Release\wasapi-capture.node
@@ -106,6 +111,7 @@ build.bat
 ### Linux: "libpulse-dev not found"
 
 **解决方案**:
+
 ```bash
 sudo apt-get install -y libpulse-dev libpulse-simple-dev
 ```
@@ -113,6 +119,7 @@ sudo apt-get install -y libpulse-dev libpulse-simple-dev
 ### macOS: "xcrun: error: invalid active developer path"
 
 **解决方案**:
+
 ```bash
 xcode-select --install
 ```
@@ -120,6 +127,7 @@ xcode-select --install
 ### Windows: "MSBuild not found"
 
 **解决方案**:
+
 1. 安装 Visual Studio Build Tools
 2. 确保已选择 "Desktop development with C++"
 3. 重启命令行
@@ -127,6 +135,7 @@ xcode-select --install
 ### 所有平台: "node-gyp build failed"
 
 **解决方案**:
+
 1. 清理构建目录：
    ```bash
    rm -rf build node_modules
@@ -141,12 +150,13 @@ xcode-select --install
 如果原生模块编译失败或加载失败，系统会自动回退到 Web Audio API：
 
 **影响**:
+
 - 系统音频捕获功能受限
 - 应用仍可正常运行
 - 某些音频相关功能可能不可用
 
-**验证回退**:
-在应用启动日志中查找：
+**验证回退**: 在应用启动日志中查找：
+
 ```
 [AudioHandler] Native module not available, using Web Audio API fallback
 ```
@@ -171,6 +181,7 @@ bash build.sh
 ### 模块结构
 
 每个原生模块包含：
+
 - `src/` - C++ 源代码
 - `binding.gyp` - 构建配置
 - `package.json` - NPM 包配置
@@ -189,10 +200,12 @@ bash build.sh
 
 ```javascript
 try {
-  const nativeModule = require('./native_modules/XXX-capture');
+  const nativeModule = require('./native_modules/XXX-capture')
   // 使用原生模块
 } catch (e) {
-  console.warn('[AudioHandler] Native module not available, using Web Audio API fallback');
+  console.warn(
+    '[AudioHandler] Native module not available, using Web Audio API fallback'
+  )
   // 使用 Web Audio API 回退
 }
 ```
@@ -205,5 +218,4 @@ try {
 
 ---
 
-**文档更新时间**: 2026-02-11
-**版本**: 1.0.0
+**文档更新时间**: 2026-02-11 **版本**: 1.0.0

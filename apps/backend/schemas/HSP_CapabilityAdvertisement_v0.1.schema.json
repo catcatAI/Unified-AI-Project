@@ -63,12 +63,5 @@
       }
     }
   },
-  "required": [
-    "capability_id",
-    "ai_id",
-    "name",
-    "description",
-    "version",
-    "availability_status"
-  ]
+  "required": ["capability_id", "ai_id", "name", "description", "version", "availability_status"]
 }

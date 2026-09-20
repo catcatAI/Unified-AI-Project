@@ -4,19 +4,22 @@
 
 **Audit Date:** 2026-02-01  
 **Auditor:** AI Code Review System  
-**Scope:** Complete Angela AI Codebase  
+**Scope:** Complete Angela AI Codebase
 
 ### Issues Found & Fixed
 
-| Severity | Found | Fixed | Remaining |
-|----------|-------|-------|-----------|
-| 🔴 Critical | 5 | 4 | 1 |
-| 🟠 Warning | 12 | 1 | 11 |
-| 💡 Improvement | 8 | 0 | 8 |
+| Severity       | Found | Fixed | Remaining |
+| -------------- | ----- | ----- | --------- |
+| 🔴 Critical    | 5     | 4     | 1         |
+| 🟠 Warning     | 12    | 1     | 11        |
+| 💡 Improvement | 8     | 0     | 8         |
 
 **Overall Progress:** 33% Complete (5/25 issues fixed)
 
-> **⏳ 當前註記 (2026-05-19)**：5/25 = **20%**（非 33%）。此外 `makersuite.google.com` 已過期，正確網址為 `https://aistudio.google.com/apikey`。關鍵拆分 `GOOGLE_API_KEY` vs `GEMINI_API_KEY` 已修復，詳見 `SESSION_CHANGE_AUDIT_AND_REPAIR_PLAN.md`。
+> **⏳ 當前註記 (2026-05-19)**：5/25 = **20%**（非 33%）。此外
+> `makersuite.google.com` 已過期，正確網址為
+> `https://aistudio.google.com/apikey`。關鍵拆分 `GOOGLE_API_KEY` vs
+> `GEMINI_API_KEY` 已修復，詳見 `SESSION_CHANGE_AUDIT_AND_REPAIR_PLAN.md`。
 
 ---
 
@@ -25,6 +28,7 @@
 ### 🔴 Critical Issues - FIXED
 
 #### 1. ✅ Duplicate Import Statement
+
 **File:** `apps/backend/src/core/orchestrator.py`  
 **Lines:** 1, 9  
 **Fix:** Removed duplicate `import logging` on line 9
@@ -44,18 +48,27 @@ import os
 ```
 
 #### 2. ⚠️ Exposed API Key - DOCUMENTED
+
 **File:** `.env`  
-**Issue:** `GOOGLE_API_KEY` committed to git  
-> **歷史備註**：此報告撰寫時 `GOOGLE_API_KEY` 被視為 Drive 金鑰。後續審計發現：Drive 實際上使用 `credentials.json` OAuth 2.0 流程（不讀 env var），`GOOGLE_API_KEY` 在程式碼中無任何讀取點，已安全移除。Gemini LLM 改用 `GEMINI_API_KEY`（從 https://aistudio.google.com/apikey 取得，以 `AIza` 開頭）。此處的 `AIza` 格式泄漏 key 應歸屬於 `GEMINI_API_KEY`。
-**Fix:** 
+**Issue:** `GOOGLE_API_KEY` committed to git
+
+> **歷史備註**：此報告撰寫時 `GOOGLE_API_KEY`
+> 被視為 Drive 金鑰。後續審計發現：Drive 實際上使用 `credentials.json` OAuth
+> 2.0 流程（不讀 env var），`GOOGLE_API_KEY`
+> 在程式碼中無任何讀取點，已安全移除。Gemini LLM 改用 `GEMINI_API_KEY`（從
+> https://aistudio.google.com/apikey 取得，以 `AIza` 開頭）。此處的 `AIza`
+> 格式泄漏 key 應歸屬於 `GEMINI_API_KEY`。 **Fix:**
+
 - ✅ Created `.env.example` template
 - ✅ Created `SECURITY_WARNING.md` with immediate action plan
 - ⚠️ **USER ACTION REQUIRED:** Must rotate API key in Google Cloud Console
 
 #### 3. ✅ Missing Parameter in process_user_input
+
 **File:** `apps/backend/src/core/orchestrator.py`  
 **Line:** 200  
-**Issue:** `life_cycle.py:122` calls with `autonomous=True` but parameter not defined  
+**Issue:** `life_cycle.py:122` calls with `autonomous=True` but parameter not
+defined  
 **Fix:** Added `autonomous: bool = False` parameter
 
 ```python
@@ -67,6 +80,7 @@ async def process_user_input(self, user_input: str, autonomous: bool = False) ->
 ```
 
 #### 4. ✅ HTTP Client Session Never Closed
+
 **File:** `apps/backend/src/core/orchestrator.py`  
 **Lines:** 121, 973-975  
 **Issue:** `self._http_client` (aiohttp.ClientSession) never closed  
@@ -76,20 +90,20 @@ async def process_user_input(self, user_input: str, autonomous: bool = False) ->
 async def cleanup(self):
     """清理資源 - 關閉HTTP客戶端和釋放内存"""
     logger.info("Cleaning up CognitiveOrchestrator resources...")
-    
+
     if self._http_client:
         try:
             await self._http_client.close()
             logger.info("HTTP client closed successfully")
         except Exception as e:
             logger.warning(f"Error closing HTTP client: {e}")
-    
+
     if self.hsm:
         try:
             logger.info("HSM state preserved")
         except Exception as e:
             logger.warning(f"Error preserving HSM state: {e}")
-    
+
     logger.info("CognitiveOrchestrator cleanup completed")
 ```
 
@@ -98,12 +112,14 @@ async def cleanup(self):
 ## 🚨 REMAINING CRITICAL ISSUES
 
 ### 5. 🔴 LU System Completely Disabled
+
 **File:** `apps/backend/src/core/orchestrator.py`  
 **Lines:** 21-25, 68-75, 126-136  
 **Issue:** LU (Logic Unit) system variables set to None/False with no fallback  
 **Impact:** Core cognitive feature non-functional, dead code throughout  
 **Status:** `LU_AVAILABLE = False` permanently  
 **Fix Options:**
+
 - Option A: Implement actual LU system (complex)
 - Option B: Remove all LU-related code (recommended for now)
 
@@ -112,33 +128,40 @@ async def cleanup(self):
 ## ⚠️ REMAINING WARNINGS (11)
 
 ### 6. Bare Exception Handling
+
 **Files:** Multiple  
 **Count:** 20+ bare `except Exception as e:` clauses  
 **Impact:** Catches all exceptions including KeyboardInterrupt, SystemExit  
 **Fix:** Use specific exception types
 
 ### 7. No Async Context Manager for HSM/CDM
+
 **Files:** `hsm.py`, `cdm.py`  
-**Issue:** Async methods use `asyncio.to_thread()` without proper context management  
+**Issue:** Async methods use `asyncio.to_thread()` without proper context
+management  
 **Fix:** Implement proper async context managers
 
 ### 8. Memory Space Not Thread-Safe
+
 **File:** `apps/backend/src/ai/memory/hsm.py`  
 **Lines:** 182-210  
 **Issue:** `memory_space` numpy array modified without locks  
 **Fix:** Add threading.Lock() or use asyncio locks
 
 ### 9. Circular Import Risk
+
 **Files:** Multiple  
 **Issue:** Potential circular imports between orchestrator, hsm, cdm  
 **Status:** Currently mitigated by try-except blocks  
 **Fix:** Use lazy imports or dependency injection
 
 ### 10. No Input Validation
+
 **File:** `apps/backend/src/core/orchestrator.py`  
 **Method:** `process_user_input`  
 **Issue:** No validation on `user_input` parameter  
 **Fix:** Add input validation:
+
 ```python
 if not user_input or not isinstance(user_input, str):
     raise ValueError("Invalid user input")
@@ -147,6 +170,7 @@ if len(user_input) > 10000:
 ```
 
 ### 11-17. [See original audit report for details]
+
 - Hardcoded Configuration Values
 - No Rate Limiting on LLM Calls
 - Missing Docstrings
@@ -160,26 +184,28 @@ if len(user_input) > 10000:
 ## 📊 SYSTEM HEALTH SCORES
 
 ### Before Fixes
-| Component | Score | Critical Issues |
-|-----------|-------|-----------------|
-| Orchestrator | 65/100 | 4 |
-| Template Manager | 80/100 | 0 |
-| Gemini Provider | 70/100 | 1 |
-| HSM | 75/100 | 0 |
-| CDM | 82/100 | 0 |
-| Life Cycle | 72/100 | 1 |
-| Action Executor | 78/100 | 0 |
+
+| Component        | Score  | Critical Issues |
+| ---------------- | ------ | --------------- |
+| Orchestrator     | 65/100 | 4               |
+| Template Manager | 80/100 | 0               |
+| Gemini Provider  | 70/100 | 1               |
+| HSM              | 75/100 | 0               |
+| CDM              | 82/100 | 0               |
+| Life Cycle       | 72/100 | 1               |
+| Action Executor  | 78/100 | 0               |
 
 ### After Fixes
-| Component | Score | Critical Issues |
-|-----------|-------|-----------------|
-| Orchestrator | 72/100 | 1 (LU system) |
-| Template Manager | 80/100 | 0 |
-| Gemini Provider | 70/100 | 1 (API key) |
-| HSM | 75/100 | 0 |
-| CDM | 82/100 | 0 |
-| Life Cycle | 75/100 | 0 |
-| Action Executor | 78/100 | 0 |
+
+| Component        | Score  | Critical Issues |
+| ---------------- | ------ | --------------- |
+| Orchestrator     | 72/100 | 1 (LU system)   |
+| Template Manager | 80/100 | 0               |
+| Gemini Provider  | 70/100 | 1 (API key)     |
+| HSM              | 75/100 | 0               |
+| CDM              | 82/100 | 0               |
+| Life Cycle       | 75/100 | 0               |
+| Action Executor  | 78/100 | 0               |
 
 **Overall:** 68/100 → 76/100 (+8 points)
 
@@ -188,6 +214,7 @@ if len(user_input) > 10000:
 ## 🎯 PRIORITY ACTION PLAN
 
 ### Phase 1: Critical (This Week) - 80% Complete
+
 - [x] Fix duplicate logging import
 - [x] Add autonomous parameter
 - [x] Add HTTP client cleanup
@@ -195,6 +222,7 @@ if len(user_input) > 10000:
 - [ ] Remove/fix LU system dead code
 
 ### Phase 2: High Priority (Next 2 Weeks)
+
 - [ ] Add input validation to orchestrator
 - [ ] Implement specific exception handling
 - [ ] Move hardcoded values to config
@@ -202,6 +230,7 @@ if len(user_input) > 10000:
 - [ ] Complete template manager CDM integration
 
 ### Phase 3: Medium Priority (Next Month)
+
 - [ ] Add comprehensive docstrings
 - [ ] Implement rate limiting
 - [ ] Add type hints coverage
@@ -213,25 +242,30 @@ if len(user_input) > 10000:
 ## 🔗 MISSING CONNECTIONS
 
 ### Connection Issue A: Orchestrator ↔ ActionExecutor
+
 **Status:** No direct initialization link  
 **Impact:** ActionExecutor may not have access to HSM/CDM instances  
 **Fix:** Pass orchestrator reference during initialization
 
 ### Connection Issue B: Template Manager ↔ CDM Learning
+
 **Status:** Placeholder CDM integration  
 **Impact:** Template success tracking not fully implemented  
 **Fix:** Complete the learning feedback loop in `template_manager.py:423-435`
 
 ### Connection Issue C: Life Cycle ↔ Knowledge Persistence
+
 **Status:** No state persistence between restarts  
 **Impact:** Angela "forgets" everything on restart  
 **Fix:** Auto-save HSM/CDM state periodically
 
 ### Connection Issue D: HSM Save/Load Async Pattern
+
 **Status:** Async wrappers use `asyncio.to_thread()` but no error handling  
 **Fix:** Add proper error propagation
 
 ### Connection Issue E: Gemini Provider ↔ Fallback Chain
+
 **Status:** No automatic fallback to Ollama when Gemini fails  
 **Fix:** Implement retry with exponential backoff
 
@@ -240,32 +274,40 @@ if len(user_input) > 10000:
 ## 🎓 ARCHITECTURAL ACHIEVEMENTS
 
 ### ✅ Template System Implementation
-**Achievement:** Successfully replaced hardcoded prompts with memory-driven templates
+
+**Achievement:** Successfully replaced hardcoded prompts with memory-driven
+templates
 
 **Architecture:**
+
 ```
-User Input → InputClassifier → HSM Retrieval → Template Selection → 
+User Input → InputClassifier → HSM Retrieval → Template Selection →
 Prompt Assembly → LLM → Response
 ```
 
 **Components Created:**
+
 - `template_manager.py` (328 lines)
 - 5 personality templates
 - Input classification system
 - Template scoring algorithm
 
 ### ✅ Streaming Response Support
+
 **Achievement:** Ollama streaming implementation
 
 **Results:**
+
 - Response length: 30 chars → 687 chars (+2190%)
 - Full sentence generation
 - Chunk collection mechanism
 
 ### ✅ Quota Management
+
 **Achievement:** Smart API quota management
 
 **Features:**
+
 - Daily/per-minute tracking
 - 25% cache hit rate
 - Graceful degradation
@@ -285,9 +327,11 @@ Prompt Assembly → LLM → Response
 ## ⚠️ CRITICAL REMINDERS
 
 ### 🔴 URGENT: API Key Rotation Required
+
 **The Google API key has been exposed in git history.**
 
 **Immediate Actions:**
+
 1. Go to https://aistudio.google.com/apikey
 2. Delete key: `AIza[...]`
 3. Create new key
@@ -295,7 +339,9 @@ Prompt Assembly → LLM → Response
 5. Never commit `.env` to git
 
 ### 🟠 Next Priority: LU System
+
 **Options:**
+
 - Remove dead code (cleaner, faster)
 - Implement properly (complex, time-consuming)
 
@@ -322,10 +368,12 @@ System Health: 68/100 → 76/100
 **Status:** Major progress on critical issues. System more stable and secure.
 
 **Blockers:**
+
 1. API key needs manual rotation by user
 2. LU system needs decision (remove vs implement)
 
 **Next Steps:**
+
 1. Rotate API key (user action)
 2. Remove LU dead code
 3. Continue with Phase 2 (warnings)
@@ -335,5 +383,5 @@ System Health: 68/100 → 76/100
 
 ---
 
-*Report Generated: 2026-02-01*  
-*Last Updated: After critical fixes*
+_Report Generated: 2026-02-01_  
+_Last Updated: After critical fixes_

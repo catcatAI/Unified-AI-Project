@@ -11,16 +11,19 @@
 ### System Requirements
 
 **Backend**:
+
 - Python 3.10+
 - pip package manager
 - Port 8000 available
 
 **Desktop App**:
+
 - Node.js 14+
 - npm package manager
 - Electron compatible OS (Windows/macOS/Linux)
 
 **Mobile App**:
+
 - Node.js 14+
 - React Native CLI
 - Android Studio (for Android) or Xcode (for iOS)
@@ -68,6 +71,7 @@ curl http://127.0.0.1:8000/health
 ```
 
 **Expected Response**:
+
 ```json
 {
   "status": "healthy",
@@ -82,6 +86,7 @@ curl http://127.0.0.1:8000/api/v1/security/sync-key-c
 ```
 
 **Expected Response**:
+
 ```json
 {
   "key_c": "...",
@@ -98,17 +103,20 @@ wscat -c ws://127.0.0.1:8000/ws
 ```
 
 **Expected**:
+
 - Connection established
 - Can send/receive messages
 
 **Test Message**:
+
 ```json
-{"type": "ping", "timestamp": 1234567890}
+{ "type": "ping", "timestamp": 1234567890 }
 ```
 
 **Expected Response**:
+
 ```json
-{"type": "pong", "timestamp": "2026-02-07T..."}
+{ "type": "pong", "timestamp": "2026-02-07T..." }
 ```
 
 ### 2.4 Verification Checklist
@@ -137,6 +145,7 @@ npm start
 ```
 
 **Alternative (with DevTools)**:
+
 ```bash
 npm run dev
 ```
@@ -144,12 +153,14 @@ npm run dev
 ### 3.3 Expected Behavior
 
 **Window**:
+
 - Electron window opens
 - Transparent background (if configured)
 - No frame (frameless window)
 - System tray icon appears
 
 **Console Output** (check DevTools):
+
 ```
 [WebSocket] Connecting to ws://127.0.0.1:8000/ws...
 [WebSocket] Connected successfully
@@ -159,6 +170,7 @@ npm run dev
 ```
 
 **Live2D**:
+
 - Model loads (or shows error if model files missing)
 - Animation plays
 - Model responds to mouse interaction
@@ -176,21 +188,25 @@ npm run dev
 ### 3.5 Common Issues
 
 **Issue**: Window doesn't open
+
 - Check Node.js version: `node --version`
 - Check Electron installation: `npm list electron`
 - Check console for errors
 
 **Issue**: WebSocket won't connect
+
 - Verify backend is running
 - Check URL in console
 - Check firewall settings
 
 **Issue**: Live2D model won't load
+
 - Check model files exist in `resources/models/`
 - Check console for path errors
 - Verify Cubism SDK loaded
 
 **Issue**: Key C sync fails
+
 - Verify backend is running
 - Check `/api/v1/security/sync-key-c` endpoint
 - Check network connectivity
@@ -205,11 +221,12 @@ npm run dev
 
 1. Open DevTools console
 2. Execute:
+
 ```javascript
 window.electronAPI.websocketSend({
   type: 'ping',
-  timestamp: Date.now()
-});
+  timestamp: Date.now(),
+})
 ```
 
 3. Check for response in console
@@ -225,6 +242,7 @@ window.electronAPI.websocketSend({
 3. Toggle "Vision System" checkbox
 
 **Expected**:
+
 - Checkbox state changes
 - Backend receives module_control message
 - Backend broadcasts status change
@@ -236,12 +254,13 @@ window.electronAPI.websocketSend({
 
 1. Open DevTools console
 2. Execute:
+
 ```javascript
 window.electronAPI.websocketSend({
   type: 'tool_execute',
   tool: 'calculator',
-  expression: '2 + 2'
-});
+  expression: '2 + 2',
+})
 ```
 
 3. Check for response
@@ -257,6 +276,7 @@ window.electronAPI.websocketSend({
 3. Select "Ultra"
 
 **Expected**:
+
 - Mode changes
 - Backend receives update
 - Performance adjusts
@@ -288,6 +308,7 @@ npm run android
 ```
 
 **Requirements**:
+
 - Android Studio installed
 - Android SDK configured
 - Android device or emulator running
@@ -299,6 +320,7 @@ npm run ios
 ```
 
 **Requirements**:
+
 - Xcode installed (macOS only)
 - iOS Simulator or device
 - Apple Developer account (for device)
@@ -306,16 +328,19 @@ npm run ios
 ### 5.4 Expected Behavior
 
 **App Launch**:
+
 - App opens without crashes
 - Version displays: "v6.2"
 - QR code scanner available
 
 **QR Code Pairing**:
+
 - Scan QR code from desktop app
 - Receive Key C
 - Establish encrypted connection
 
 **Communication**:
+
 - Send encrypted messages
 - Receive responses
 - Real-time sync with backend
@@ -336,6 +361,7 @@ npm run ios
 ### 6.1 Multi-Client Test
 
 **Setup**:
+
 1. Start backend
 2. Start desktop app
 3. Start mobile app (if available)
@@ -392,6 +418,7 @@ npm run ios
 4. Monitor backend performance
 
 **Expected**:
+
 - All connections stable
 - No memory leaks
 - Reasonable CPU usage
@@ -405,6 +432,7 @@ npm run ios
 3. Monitor for crashes or errors
 
 **Expected**:
+
 - No crashes
 - No memory leaks
 - Stable performance
@@ -423,42 +451,53 @@ npm run ios
 ### Backend Issues
 
 **Error**: `ModuleNotFoundError`
+
 - **Fix**: Install missing dependencies: `pip install -r requirements.txt`
 
 **Error**: `Port 8000 already in use`
-- **Fix**: Kill process using port: `lsof -ti:8000 | xargs kill -9` (macOS/Linux)
+
+- **Fix**: Kill process using port: `lsof -ti:8000 | xargs kill -9`
+  (macOS/Linux)
 - **Fix**: Change port in `main.py`
 
 **Error**: `ImportError: cannot import name 'X'`
+
 - **Fix**: Check import paths in code
 - **Fix**: Verify module exists
 
 ### Desktop App Issues
 
 **Error**: `Cannot find module 'electron'`
+
 - **Fix**: `npm install electron`
 
 **Error**: `WebSocket connection failed`
+
 - **Fix**: Verify backend is running
 - **Fix**: Check URL: `ws://127.0.0.1:8000/ws`
 - **Fix**: Check firewall
 
 **Error**: `Live2D model not found`
+
 - **Fix**: Verify model files in `resources/models/`
 - **Fix**: Check model path in code
 
 **Error**: `Key C sync failed`
-- **Fix**: Verify backend endpoint: `curl http://127.0.0.1:8000/api/v1/security/sync-key-c`
+
+- **Fix**: Verify backend endpoint:
+  `curl http://127.0.0.1:8000/api/v1/security/sync-key-c`
 - **Fix**: Check network connectivity
 
 ### Mobile App Issues
 
 **Error**: `Build failed`
+
 - **Fix**: Check Android Studio/Xcode installation
 - **Fix**: Check SDK configuration
 - **Fix**: Run `npm install` again
 
 **Error**: `App crashes on launch`
+
 - **Fix**: Check logs: `adb logcat` (Android) or Xcode console (iOS)
 - **Fix**: Verify all dependencies installed
 
@@ -494,6 +533,7 @@ npm run ios
 **Result**: ✅ PASSED
 
 **Details**:
+
 - Backend started successfully
 - All modules initialized
 - No errors in console
@@ -509,6 +549,7 @@ npm run ios
 **Result**: ⏳ PENDING
 
 **Next Steps**:
+
 1. Run `npm start` in desktop app directory
 2. Verify window opens
 3. Check WebSocket connection
@@ -526,4 +567,5 @@ npm run ios
 
 ---
 
-*This testing guide provides step-by-step instructions for verifying all components of the Angela AI system.*
+_This testing guide provides step-by-step instructions for verifying all
+components of the Angela AI system._

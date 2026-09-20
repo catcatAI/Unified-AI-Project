@@ -103,6 +103,7 @@ async def handle_message(message):
 ## 🛡️ 容錯和備用機制
 
 ### Fallback協議支持
+
 HSP現在支持多層級的備用協議，確保通訊不中斷：
 
 ```python
@@ -117,8 +118,9 @@ print(f"系統健康: {health['overall_healthy']}")
 ```
 
 ### 協議層級
+
 1. **MQTT (主協議)** - 正常網絡環境
-2. **HTTP協議** - 網絡受限環境  
+2. **HTTP協議** - 網絡受限環境
 3. **文件協議** - 本地環境
 4. **內存協議** - 同進程通訊
 
@@ -129,7 +131,8 @@ HSP 是異步消息傳遞，支持事件驅動；HTTP 是同步請求-響應模�
 
 **Q: 如何調試 HSP 消息？** A: 使用內置的消息日誌功能，所有消息都會被記錄。
 
-**Q: HSP 支持哪些傳輸方式？** A: 主要支持 MQTT，並提供 HTTP、文件、內存等備用協議。
+**Q: HSP 支持哪些傳輸方式？**
+A: 主要支持 MQTT，並提供 HTTP、文件、內存等備用協議。
 
 **Q: 如果MQTT連接失敗怎麼辦？** A: 系統會自動切換到備用協議，保證通訊不中斷。
 
@@ -145,8 +148,14 @@ _这是 HSP 的简化入门指南。完整技术细节请参考
   - 代碼現狀：`from src.integrations.enhanced_rovo_dev_connector import EnhancedRovoDevConnector`
   - 建議：統一為以 `src` 為根的匯入路徑，以匹配運行時包佈局。
 - 訊息處理裝飾器示例可能不適用：
-  - 文檔示例使用 `@connector.on_message` 裝飾器；目前後端連接器以回調註冊（例如在 `HSPConnector` 透過 `register_on_*_callback` 或由 `MessageBridge` 轉發）為主。
-  - 建議：將示例改為顯式註冊回調的形式，或連結到實際 API 範例（如 `HSPConnector.register_on_capability_advertisement_callback(...)`）。
+  - 文檔示例使用 `@connector.on_message`
+    裝飾器；目前後端連接器以回調註冊（例如在 `HSPConnector` 透過
+    `register_on_*_callback` 或由 `MessageBridge` 轉發）為主。
+  - 建議：將示例改為顯式註冊回調的形式，或連結到實際 API 範例（如
+    `HSPConnector.register_on_capability_advertisement_callback(...)`）。
 - 訊息結構示例與 HSPMessageEnvelope 欄位命名：
-  - 文檔示例使用通用字段（id/type/sender/receiver/timestamp）。實作中 `HSPMessageEnvelope` 使用例如 `message_id/sender_id/recipient_id/message_type/timestamp_sent/payload` 等欄位。
+  - 文檔示例使用通用字段（id/type/sender/receiver/timestamp）。實作中
+    `HSPMessageEnvelope` 使用例如
+    `message_id/sender_id/recipient_id/message_type/timestamp_sent/payload`
+    等欄位。
   - 建議：在快速入門中加註對應關係，避免新手混淆。

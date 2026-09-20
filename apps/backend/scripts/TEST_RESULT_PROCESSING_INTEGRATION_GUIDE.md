@@ -33,7 +33,7 @@ if __name__ == "__main__":
         send_email=True,  # 是否发送邮件通知
         recipient_emails=["dev-team@example.com"]  # 邮件接收者
     )
-    
+
     if success:
         print("测试结果处理完成")
     else:

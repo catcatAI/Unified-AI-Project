@@ -26,8 +26,8 @@ export class LAppPal {
     callback: (arrayBuffer: ArrayBuffer, size: number) => void
   ): void {
     fetch(filePath)
-      .then(response => response.arrayBuffer())
-      .then(arrayBuffer => callback(arrayBuffer, arrayBuffer.byteLength));
+      .then((response) => response.arrayBuffer())
+      .then((arrayBuffer) => callback(arrayBuffer, arrayBuffer.byteLength))
   }
 
   /**
@@ -35,13 +35,13 @@ export class LAppPal {
    * @return デルタ時間[ms]
    */
   public static getDeltaTime(): number {
-    return this.deltaTime;
+    return this.deltaTime
   }
 
   public static updateTime(): void {
-    this.currentFrame = Date.now();
-    this.deltaTime = (this.currentFrame - this.lastFrame) / 1000;
-    this.lastFrame = this.currentFrame;
+    this.currentFrame = Date.now()
+    this.deltaTime = (this.currentFrame - this.lastFrame) / 1000
+    this.lastFrame = this.currentFrame
   }
 
   /**
@@ -49,12 +49,12 @@ export class LAppPal {
    * @param message 文字列
    */
   public static printMessage(message: string): void {
-    console.log(message);
+    console.log(message)
   }
 
-  static lastUpdate = Date.now();
+  static lastUpdate = Date.now()
 
-  static currentFrame = 0.0;
-  static lastFrame = 0.0;
-  static deltaTime = 0.0;
+  static currentFrame = 0.0
+  static lastFrame = 0.0
+  static deltaTime = 0.0
 }

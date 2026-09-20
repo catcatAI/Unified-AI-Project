@@ -1,7 +1,9 @@
 # Angela AI 模組化分析
 
 > **⚠️ 過時警告（2026-05-30 審計）**: 此文件撰寫於 2026-05-21。其後 codebase 經歷大幅重構：
-> - `main_api_server.py` 從 1,452 → 314 行，`angela_llm_service.py` 從 2,287 → 36 行（shim），`chat_service.py` 從 1,416 → 313 行
+>
+> - `main_api_server.py` 從 1,452 → 314 行，`angela_llm_service.py` 從 2,287 →
+>   36 行（shim），`chat_service.py` 從 1,416 → 313 行
 > - FastAPI `Depends` 現在用於 11 個路由檔案（42 次出現）
 > - `models/` 跨套件 import 已清理
 > - `__new__` singleton 模式已全部消除
@@ -22,7 +24,8 @@ DI 框架          █████░░░░░ 50  — ↑ 從 0 提升（Fas
 
 **重構後綜合分數：~55/100**（↑ 從 34/100）
 
-注意：原始 34/100 評分基於重構前的 codebase。實際模組化改善已發生，但 `services/llm/router.py`（1,522 行）成為新的耦合 hotspot。
+注意：原始 34/100 評分基於重構前的 codebase。實際模組化改善已發生，但
+`services/llm/router.py`（1,522 行）成為新的耦合 hotspot。
 
 ---
 
@@ -45,14 +48,14 @@ class L4Creative(Protocol):      # evaluate_novelty
 
 散佈在整個 codebase：
 
-| 位置 | ABC |
-|------|-----|
-| `angela_llm_service.py` | `BaseLLMBackend(ABC)` |
-| `core/cache/` | `CacheBackend(ABC)` |
-| `core/hsp/` | `HSPMessageHandler(ABC)`, `HSPTransport(ABC)` |
-| `core/ripple/` | `CascadeStrategy(Protocol)` |
-| `ai/alignment/` | `AdversarialGenerator(ABC)`, `ProbabilityModel(ABC)` |
-| `ai/context/` | `Storage(ABC)` |
+| 位置                    | ABC                                                  |
+| ----------------------- | ---------------------------------------------------- |
+| `angela_llm_service.py` | `BaseLLMBackend(ABC)`                                |
+| `core/cache/`           | `CacheBackend(ABC)`                                  |
+| `core/hsp/`             | `HSPMessageHandler(ABC)`, `HSPTransport(ABC)`        |
+| `core/ripple/`          | `CascadeStrategy(Protocol)`                          |
+| `ai/alignment/`         | `AdversarialGenerator(ABC)`, `ProbabilityModel(ABC)` |
+| `ai/context/`           | `Storage(ABC)`                                       |
 
 ### 1.3 Factory 函數（Service Locator 模式）
 
@@ -64,8 +67,8 @@ get_metabolic_heartbeat()      → 生物心跳
 get_digital_life()             → 生物整合器
 ```
 
-配合 `core/__init__.py` 的 `create_*()` 工廠：
-`create_precision_system()`, `create_maturity_system()`, `create_soul_core()`, `create_i18n_manager()`...
+配合 `core/__init__.py` 的 `create_*()` 工廠： `create_precision_system()`,
+`create_maturity_system()`, `create_soul_core()`, `create_i18n_manager()`...
 
 ### 1.4 Lazy Import 防 Circular
 
@@ -76,7 +79,7 @@ get_digital_life()             → 生物整合器
 async def initialize(self):
     from core.autonomous.physiological_tactile import ...
     from services.vision_service import ...
-    
+
 def _handle_intent(self, ...):
     from ai.alignment.free_will_simulator import ...
 ```
@@ -101,15 +104,20 @@ core/engine/live2d_avatar_generator.py  1,032 行  (原 core/autonomous/)
 services/main_api_server.py               314 行  (↓ 重構後瘦身 78%)
 ```
 
-**這些檔案的共同問題**：一個 PR 可能同時改動聊天邏輯、意圖路由、LLM 呼叫、config 讀取、Google Drive 操作、數學驗證 — 都在同一份檔案裡。
+**這些檔案的共同問題**：一個 PR 可能同時改動聊天邏輯、意圖路由、LLM 呼叫、config 讀取、Google
+Drive 操作、數學驗證 — 都在同一份檔案裡。
 
-**2026-05-30 更新**: 重構後 `main_api_server.py`（314 行）、`chat_service.py`（313 行）、`angela_llm_service.py`（36 行 shim）已大幅瘦身。但 `services/llm/router.py`（1,522 行）成為新的耦合 hotspot。
+**2026-05-30 更新**: 重構後
+`main_api_server.py`（314 行）、`chat_service.py`（313 行）、`angela_llm_service.py`（36 行 shim）已大幅瘦身。但
+`services/llm/router.py`（1,522 行）成為新的耦合 hotspot。
 
 ### 2.2 Central Hub Coupling（重構後）
 
-**2026-05-30 更新**: `main_api_server.py` 和 `chat_service.py` 的耦合已大幅降低（瘦身 78%/78%）。耦合轉移到：
+**2026-05-30 更新**: `main_api_server.py` 和 `chat_service.py`
+的耦合已大幅降低（瘦身 78%/78%）。耦合轉移到：
 
 **`services/llm/router.py`**（1,522 行）— 新 hotspot：
+
 ```
 services/ (angela_llm_service, chat_service, math_verifier, vision_service, audio_service)
 core/     (config_loader, engine/state_matrix, engine/state_matrix_adapter, tools/*)
@@ -117,6 +125,7 @@ ai/       (memory/ham_memory, response/composer, alignment/ego_guard, context/*)
 ```
 
 **`api/lifespan.py`**（237 行）— 12 個 module-level lazy-loaded singleton：
+
 ```
 services/ (vision, audio, tactile, chat, llm, wiring, digital_life, economy)
 core/     (config_loader, life/heartbeat, bio/biological_integrator)
@@ -126,14 +135,15 @@ core/     (config_loader, life/heartbeat, bio/biological_integrator)
 
 ### 2.3 Pervasive Singleton 共享可變狀態（重構後）
 
-| 型態 | 數量 | 範例 |
-|------|------|------|
-| `__new__` singleton | **0**（↑ 已全部消除） | 原 AngelaLLMService, StateMatrix4D 等已改為 function-attribute 或 ServiceRegistry |
-| Function-attribute singleton | 5+ | get_angela_chat_service._instance, get_llm_service 等 |
-| Module-level `_xxx = None` 全域 | **~14**（↓ 從 20+ 減少） | lifespan.py 的 12 個 lazy-load + chat_service/config_loader/router |
-| Module-level 快取 | 5 | router.py 的 _llm_service, _MEMORY_ENHANCED 等 |
+| 型態                            | 數量                     | 範例                                                                              |
+| ------------------------------- | ------------------------ | --------------------------------------------------------------------------------- |
+| `__new__` singleton             | **0**（↑ 已全部消除）    | 原 AngelaLLMService, StateMatrix4D 等已改為 function-attribute 或 ServiceRegistry |
+| Function-attribute singleton    | 5+                       | get_angela_chat_service._instance, get_llm_service 等                             |
+| Module-level `_xxx = None` 全域 | **~14**（↓ 從 20+ 減少） | lifespan.py 的 12 個 lazy-load + chat_service/config_loader/router                |
+| Module-level 快取               | 5                        | router.py 的 _llm_service, _MEMORY_ENHANCED 等                                    |
 
 **後果**：
+
 - 測試需要手動 reset singleton 狀態
 - 單元測試彼此互相影響
 - 隱含的 global state mutation 難以追蹤
@@ -154,7 +164,8 @@ apps/backend/src/interfaces/
 └── __init__.py  ← 空的，無任何內容
 ```
 
-規劃了介面層但從未實作。實際的 Protocol 定義在 `core/interfaces/protocols.py`，但 `interfaces/` 這個包沒有任何匯出。
+規劃了介面層但從未實作。實際的 Protocol 定義在
+`core/interfaces/protocols.py`，但 `interfaces/` 這個包沒有任何匯出。
 
 ---
 
@@ -201,11 +212,11 @@ pet/       → 只有 pet_manager.py
 
 ## 4. 改善建議
 
-| 優先級 | 動作 | 預估工時 | 影響 |
-|--------|------|---------|------|
-| 🔴 | 把 `chat_service.py` 拆成：chat_routing + intent_handler + consciousness_synth | 2 天 | 最大耦合源 |
-| 🔴 | 把 `main_api_server.py` 的 service initialization 移到獨立 `wiring.py` | 1 天 | 第二大耦合源 |
-| 🟡 | 補上 DI 框架（至少用 FastAPI Depends） | 2 天 | 可測試性 |
-| 🟡 | 把 20+ singleton 改為 instance 傳遞 | 3 天 | 測試獨立性 |
-| 🟢 | 補上 `interfaces/__init__.py` 匯出所有 Protocol | 2 小時 | 文件化 |
-| 🟢 | 修 `models/__init__.py` 的錯誤 import | 1 小時 | 架構紀律 |
+| 優先級 | 動作                                                                           | 預估工時 | 影響         |
+| ------ | ------------------------------------------------------------------------------ | -------- | ------------ |
+| 🔴     | 把 `chat_service.py` 拆成：chat_routing + intent_handler + consciousness_synth | 2 天     | 最大耦合源   |
+| 🔴     | 把 `main_api_server.py` 的 service initialization 移到獨立 `wiring.py`         | 1 天     | 第二大耦合源 |
+| 🟡     | 補上 DI 框架（至少用 FastAPI Depends）                                         | 2 天     | 可測試性     |
+| 🟡     | 把 20+ singleton 改為 instance 傳遞                                            | 3 天     | 測試獨立性   |
+| 🟢     | 補上 `interfaces/__init__.py` 匯出所有 Protocol                                | 2 小時   | 文件化       |
+| 🟢     | 修 `models/__init__.py` 的錯誤 import                                          | 1 小時   | 架構紀律     |

@@ -5,7 +5,7 @@ app:
   name: "Angela AI"
   version: "7.5.0-dev"
   description: "Cross-Platform Digital Life System"
-  
+
 # Backend Configuration
 backend:
   host: "127.0.0.1"
@@ -13,14 +13,14 @@ backend:
   workers: 1
   reload: false
   log_level: "info"
-  
+
 # Security Configuration
 security:
-  key_rotation_interval: 86400  # 24 hours
-  session_timeout: 3600         # 1 hour
+  key_rotation_interval: 86400 # 24 hours
+  session_timeout: 3600 # 1 hour
   max_login_attempts: 5
   encryption_algorithm: "AES-256-CBC"
-  
+
 # Live2D Configuration
 live2d:
   model_path: "./resources/models/miara_pro_t03.model3.json"
@@ -28,7 +28,7 @@ live2d:
   motion_fps: 60
   physics_enabled: true
   lip_sync_enabled: true
-  
+
 # Performance Configuration
 performance:
   auto_detect: true
@@ -54,22 +54,22 @@ performance:
       fps: 120
       resolution: 1.25
       effects: 4
-      
+
 # Database Configuration
 database:
   url: "sqlite:///./angela.db"
   pool_size: 10
   max_overflow: 20
   echo: false
-  
+
 # Logging Configuration
 logging:
   level: "INFO"
   format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
   file: "./logs/angela.log"
-  max_bytes: 10485760  # 10MB
+  max_bytes: 10485760 # 10MB
   backup_count: 5
-  
+
 # Feature Flags
 features:
   voice_recognition: true
@@ -78,7 +78,7 @@ features:
   mobile_bridge: false
   desktop_pet: true
   system_monitor: true
-  
+
 # External Services
 external_services:
   openai:
@@ -88,14 +88,14 @@ external_services:
   google:
     tts_model: "en-US-Wavenet-D"
     stt_model: "latest_long"
-    
+
 # Development Configuration
 development:
   debug_mode: false
   hot_reload: true
   enable_cors: true
   mock_apis: false
-  
+
 # Testing Configuration
 testing:
   test_mode: false

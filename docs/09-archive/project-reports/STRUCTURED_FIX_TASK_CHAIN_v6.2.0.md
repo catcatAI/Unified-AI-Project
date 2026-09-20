@@ -2,7 +2,8 @@
 
 ## 📋 任务链概览
 
-本文档定义了 Angela AI 项目从当前状态 (v6.2.0, 99.2% 完成) 到完全生产就绪状态的完整修复路径。
+本文档定义了 Angela AI 项目从当前状态 (v6.2.0,
+99.2% 完成) 到完全生产就绪状态的完整修复路径。
 
 **总问题数**: ~350  
 **预计总时间**: 2-4 周  
@@ -76,20 +77,20 @@
 
 **任务列表**:
 
-| ID | 文件路径 | 行号 | 问题描述 | 修复方案 | 状态 |
-|----|---------|------|---------|---------|------|
-| P-CRITICAL-001 | `shared/utils/env_utils.py` | 2 | 不完整导入 | 移除或补全导入 | ⏳ 待开始 |
-| P-CRITICAL-002 | `shared/network_resilience.py` | 83 | 未终止字符串 | 修复引号闭合 | ⏳ 待开始 |
-| P-CRITICAL-003 | `shared/types/mappable_data_object.py` | 3 | 不完整导入 | 移除或补全导入 | ⏳ 待开始 |
-| P-CRITICAL-004 | `core/hsp/types_fixed.py` | 9 | 无效语法 | 移除或修正注释 | ⏳ 待开始 |
-| P-CRITICAL-005 | `core/error/error_handler.py` | 8 | 不完整导入 | 移除或补全导入 | ⏳ 待开始 |
-| P-CRITICAL-006 | `core/shared/utils/cleanup_utils.py` | 2 | 不完整导入 | 移除或补全导入 | ⏳ 待开始 |
-| P-CRITICAL-007 | `core/shared/key_manager.py` | 6 | 不完整导入 | 移除或补全导入 | ⏳ 待开始 |
-| P-CRITICAL-008 | `core/shared/types/common_types.py` | 61 | 类型提示错误 | 修正 Literal[] | ⏳ 待开始 |
-| P-CRITICAL-009 | `core/logging/enterprise_logger.py` | 6 | 不完整导入 | 移除或补全导入 | ⏳ 待开始 |
-| P-CRITICAL-010 | `core/metacognition/metacognitive_capabilities_engine.py` | 16 | 不完整导入 | 移除或补全导入 | ⏳ 待开始 |
-| P-CRITICAL-011 | `core/knowledge/unified_knowledge_graph.py` | 15 | 不完整导入 | 移除或补全导入 | ⏳ 待开始 |
-| P-CRITICAL-012 | `core/shared/types/mappable_data_object.py` | 3 | 重复导入错误 | 移除或补全导入 | ⏳ 待开始 |
+| ID             | 文件路径                                                  | 行号 | 问题描述     | 修复方案       | 状态      |
+| -------------- | --------------------------------------------------------- | ---- | ------------ | -------------- | --------- |
+| P-CRITICAL-001 | `shared/utils/env_utils.py`                               | 2    | 不完整导入   | 移除或补全导入 | ⏳ 待开始 |
+| P-CRITICAL-002 | `shared/network_resilience.py`                            | 83   | 未终止字符串 | 修复引号闭合   | ⏳ 待开始 |
+| P-CRITICAL-003 | `shared/types/mappable_data_object.py`                    | 3    | 不完整导入   | 移除或补全导入 | ⏳ 待开始 |
+| P-CRITICAL-004 | `core/hsp/types_fixed.py`                                 | 9    | 无效语法     | 移除或修正注释 | ⏳ 待开始 |
+| P-CRITICAL-005 | `core/error/error_handler.py`                             | 8    | 不完整导入   | 移除或补全导入 | ⏳ 待开始 |
+| P-CRITICAL-006 | `core/shared/utils/cleanup_utils.py`                      | 2    | 不完整导入   | 移除或补全导入 | ⏳ 待开始 |
+| P-CRITICAL-007 | `core/shared/key_manager.py`                              | 6    | 不完整导入   | 移除或补全导入 | ⏳ 待开始 |
+| P-CRITICAL-008 | `core/shared/types/common_types.py`                       | 61   | 类型提示错误 | 修正 Literal[] | ⏳ 待开始 |
+| P-CRITICAL-009 | `core/logging/enterprise_logger.py`                       | 6    | 不完整导入   | 移除或补全导入 | ⏳ 待开始 |
+| P-CRITICAL-010 | `core/metacognition/metacognitive_capabilities_engine.py` | 16   | 不完整导入   | 移除或补全导入 | ⏳ 待开始 |
+| P-CRITICAL-011 | `core/knowledge/unified_knowledge_graph.py`               | 15   | 不完整导入   | 移除或补全导入 | ⏳ 待开始 |
+| P-CRITICAL-012 | `core/shared/types/mappable_data_object.py`               | 3    | 重复导入错误 | 移除或补全导入 | ⏳ 待开始 |
 
 **执行步骤**:
 
@@ -110,6 +111,7 @@ find apps/backend/src -name "*.py" -exec python3 -m py_compile {} \;
 ```
 
 **验证标准**:
+
 - ✅ `python3 -m py_compile` 无错误
 - ✅ 所有文件可以正常导入
 - ✅ 无语法错误
@@ -127,10 +129,10 @@ find apps/backend/src -name "*.py" -exec python3 -m py_compile {} \;
 
 **任务列表**:
 
-| ID | 文件路径 | 行号 | 问题描述 | 修复方案 | 状态 |
-|----|---------|------|---------|---------|------|
+| ID             | 文件路径                      | 行号    | 问题描述     | 修复方案     | 状态      |
+| -------------- | ----------------------------- | ------- | ------------ | ------------ | --------- |
 | J-CRITICAL-001 | `js/live2d-cubism-wrapper.js` | 243-247 | 重复闭合括号 | 移除重复的 } | ⏳ 待开始 |
-| J-CRITICAL-002 | `main.js` | 145-210 | 路径遍历漏洞 | 添加路径验证 | ⏳ 待开始 |
+| J-CRITICAL-002 | `main.js`                     | 145-210 | 路径遍历漏洞 | 添加路径验证 | ⏳ 待开始 |
 
 **执行步骤**:
 
@@ -153,10 +155,10 @@ async loadModel(settings) {
 async loadModel(settings) {
     const modelPath = settings.modelPath;
     console.log('[loadModel] Loading from:', modelPath);
-    
+
     try {
         // ... 模型加载代码 ...
-        
+
         this.isLoaded = true;
         console.log('[loadModel] SUCCESS: Live2D model loaded successfully');
         return true;
@@ -190,33 +192,33 @@ const ALLOWED_DIRECTORIES = [
 protocol.registerFileProtocol('local', (request, callback) => {
     const url = new URL(request.url);
     let urlPath = url.pathname;
-    
+
     try {
         urlPath = decodeURIComponent(urlPath);
     } catch (e) {
         console.warn('[Main] Failed to decode URL:', urlPath);
         return callback({ error: -2 }); // Failed to decode
     }
-    
+
     // 移除 local: 前缀
     if (urlPath.startsWith('/')) {
         urlPath = urlPath.substring(1);
     }
-    
+
     // 规范化路径
     const filePath = require('path').resolve(require('path').normalize(urlPath));
-    
+
     // 验证路径是否在允许的目录内
     const isAllowed = ALLOWED_DIRECTORIES.some(allowedDir => {
         const relativePath = require('path').relative(allowedDir, filePath);
         return !relativePath.startsWith('..');
     });
-    
+
     if (!isAllowed) {
         console.warn('[Main] Path traversal attempt blocked:', filePath);
         return callback({ error: -3 }); // Access denied
     }
-    
+
     if (require('fs').existsSync(filePath)) {
         callback({ path: filePath });
     } else {
@@ -226,6 +228,7 @@ protocol.registerFileProtocol('local', (request, callback) => {
 ```
 
 **验证标准**:
+
 - ✅ ESLint 无错误
 - ✅ Live2D 可以正常加载
 - ✅ 路径遍历测试通过
@@ -283,6 +286,7 @@ EOF
 ```
 
 **验证标准**:
+
 - ✅ 0 Python 语法错误
 - ✅ 0 JavaScript 语法错误
 - ✅ 所有导入成功
@@ -402,29 +406,29 @@ def detect_missing_imports(file_path):
     """检测文件中缺失的导入"""
     with open(file_path, 'r', encoding='utf-8') as f:
         content = f.read()
-    
+
     missing = []
     for name, import_stmt in IMPORT_MAP.items():
         # 检查是否使用了该模块但未导入
         if re.search(r'\b' + name + r'\b', content):
             if not re.search(r'^' + re.escape(import_stmt), content, re.MULTILINE):
                 missing.append((name, import_stmt))
-    
+
     return missing
 
 def fix_file_imports(file_path):
     """修复文件的导入"""
     missing = detect_missing_imports(file_path)
-    
+
     if not missing:
         return False
-    
+
     with open(file_path, 'r', encoding='utf-8') as f:
         content = f.read()
-    
+
     # 在文件开头添加缺失的导入
     import_block = '\n'.join(stmt for _, stmt in missing)
-    
+
     # 找到第一个非注释、非空行
     lines = content.split('\n')
     insert_pos = 0
@@ -432,26 +436,26 @@ def fix_file_imports(file_path):
         if line.strip() and not line.strip().startswith('#'):
             insert_pos = i
             break
-    
+
     # 插入导入
     lines.insert(insert_pos, import_block)
     lines.insert(insert_pos + 1, '')
-    
+
     # 写回文件
     with open(file_path, 'w', encoding='utf-8') as f:
         f.write('\n'.join(lines))
-    
+
     return True
 
 if __name__ == '__main__':
     base_dir = Path('apps/backend/src')
-    
+
     fixed_count = 0
     for py_file in base_dir.rglob('*.py'):
         if fix_file_imports(py_file):
             print(f'Fixed imports in: {py_file}')
             fixed_count += 1
-    
+
     print(f'\nTotal files fixed: {fixed_count}')
 EOF
 
@@ -527,6 +531,7 @@ pip install -r apps/backend/requirements.txt
 ```
 
 **验证标准**:
+
 - ✅ 所有导入错误已修复
 - ✅ `requirements.txt` 已更新
 - ✅ 所有依赖可正常安装
@@ -544,20 +549,20 @@ pip install -r apps/backend/requirements.txt
 
 **任务列表**:
 
-| ID | 文件路径 | 问题描述 | 修复方案 | 状态 |
-|----|---------|---------|---------|------|
-| P-HIGH-002 | `core/config/system_config.py` | MQTT 密码直接使用 | 使用环境变量 + 验证 | ⏳ 待开始 |
-| P-HIGH-003 | `core/desktop/key_manager_gui.py` | API 密钥需加密存储 | 实现密钥管理器 | ⏳ 待开始 |
-| P-HIGH-004 | `core/security/auth_middleware.py` | 密钥存储需更安全 | 使用 Fernet 加密 | ⏳ 待开始 |
-| P-HIGH-005 | `core/shared/key_manager.py` | 硬编码演示密钥 | 移除硬编码，生成随机密钥 | ⏳ 待开始 |
-| P-HIGH-006 | `integrations/confluence_integration.py` | 硬编码模拟令牌 | 使用环境变量 | ⏳ 待开始 |
-| P-HIGH-007 | `integrations/jira_integration.py` | 硬编码模拟令牌 | 使用环境变量 | ⏳ 待开始 |
-| J-HIGH-001 | `js/security-manager.js` | Scrypt 盐硬编码 | 使用随机盐 | ⏳ 待开始 |
-| J-HIGH-002 | `js/security-manager.js` | HTTP 请求无证书验证 | 添加证书验证 | ⏳ 待开始 |
-| J-HIGH-003 | `js/live2d-cubism-wrapper.js` | CDN 无 SRI 哈希 | 添加 SRI 哈希 | ⏳ 待开始 |
-| J-HIGH-004 | `js/app.js` | Key C 使用 HTTP | 改用 HTTPS | ⏳ 待开始 |
-| J-HIGH-005 | `js/main.js` | 路径遍历漏洞 | 添加路径验证 | ⏳ 待开始 |
-| ... | ... | ... | ... | ... |
+| ID         | 文件路径                                 | 问题描述            | 修复方案                 | 状态      |
+| ---------- | ---------------------------------------- | ------------------- | ------------------------ | --------- |
+| P-HIGH-002 | `core/config/system_config.py`           | MQTT 密码直接使用   | 使用环境变量 + 验证      | ⏳ 待开始 |
+| P-HIGH-003 | `core/desktop/key_manager_gui.py`        | API 密钥需加密存储  | 实现密钥管理器           | ⏳ 待开始 |
+| P-HIGH-004 | `core/security/auth_middleware.py`       | 密钥存储需更安全    | 使用 Fernet 加密         | ⏳ 待开始 |
+| P-HIGH-005 | `core/shared/key_manager.py`             | 硬编码演示密钥      | 移除硬编码，生成随机密钥 | ⏳ 待开始 |
+| P-HIGH-006 | `integrations/confluence_integration.py` | 硬编码模拟令牌      | 使用环境变量             | ⏳ 待开始 |
+| P-HIGH-007 | `integrations/jira_integration.py`       | 硬编码模拟令牌      | 使用环境变量             | ⏳ 待开始 |
+| J-HIGH-001 | `js/security-manager.js`                 | Scrypt 盐硬编码     | 使用随机盐               | ⏳ 待开始 |
+| J-HIGH-002 | `js/security-manager.js`                 | HTTP 请求无证书验证 | 添加证书验证             | ⏳ 待开始 |
+| J-HIGH-003 | `js/live2d-cubism-wrapper.js`            | CDN 无 SRI 哈希     | 添加 SRI 哈希            | ⏳ 待开始 |
+| J-HIGH-004 | `js/app.js`                              | Key C 使用 HTTP     | 改用 HTTPS               | ⏳ 待开始 |
+| J-HIGH-005 | `js/main.js`                             | 路径遍历漏洞        | 添加路径验证             | ⏳ 待开始 |
+| ...        | ...                                      | ...                 | ...                      | ...       |
 
 **修复示例: 密钥管理器**
 
@@ -579,13 +584,13 @@ import yaml
 
 class KeyManager:
     """安全密钥管理器"""
-    
+
     def __init__(self, key_file: str = "data/security/keys.json"):
         self.key_file = Path(key_file)
         self.key_file.parent.mkdir(parents=True, exist_ok=True)
         self._keys: Dict[str, str] = {}
         self._load_keys()
-    
+
     def _derive_key(self, password: bytes, salt: bytes) -> bytes:
         """从密码派生加密密钥"""
         kdf = PBKDF2(
@@ -595,33 +600,33 @@ class KeyManager:
             iterations=100000,
         )
         return kdf.derive(password)
-    
+
     def _load_keys(self):
         """加载加密的密钥"""
         if not self.key_file.exists():
             return
-        
+
         try:
             with open(self.key_file, 'r') as f:
                 data = json.load(f)
-            
+
             # 从环境变量获取主密钥
             master_key = os.getenv('ANGELA_MASTER_KEY')
             if not master_key:
                 raise ValueError("ANGELA_MASTER_KEY environment variable not set")
-            
+
             # 解密密钥
             salt = bytes.fromhex(data['salt'])
             key = self._derive_key(master_key.encode(), salt)
             fernet = Fernet(key)
-            
+
             decrypted = fernet.decrypt(data['encrypted'].encode())
             self._keys = json.loads(decrypted.decode())
-            
+
         except Exception as e:
             print(f"Warning: Failed to load keys: {e}")
             self._keys = {}
-    
+
     def _save_keys(self):
         """保存加密的密钥"""
         try:
@@ -629,51 +634,51 @@ class KeyManager:
             master_key = os.getenv('ANGELA_MASTER_KEY')
             if not master_key:
                 raise ValueError("ANGELA_MASTER_KEY environment variable not set")
-            
+
             # 生成随机盐
             salt = secrets.token_bytes(16)
-            
+
             # 派生加密密钥
             key = self._derive_key(master_key.encode(), salt)
             fernet = Fernet(key)
-            
+
             # 加密密钥
             encrypted = fernet.encrypt(json.dumps(self._keys).encode())
-            
+
             # 保存
             data = {
                 'salt': salt.hex(),
                 'encrypted': encrypted.decode()
             }
-            
+
             with open(self.key_file, 'w') as f:
                 json.dump(data, f, indent=2)
-                
+
         except Exception as e:
             print(f"Error saving keys: {e}")
-    
+
     def generate_key(self, key_name: str, length: int = 32) -> str:
         """生成并存储新密钥"""
         key = secrets.token_urlsafe(length)
         self._keys[key_name] = key
         self._save_keys()
         return key
-    
+
     def get_key(self, key_name: str) -> Optional[str]:
         """获取密钥"""
         return self._keys.get(key_name)
-    
+
     def set_key(self, key_name: str, key_value: str):
         """设置密钥"""
         self._keys[key_name] = key_value
         self._save_keys()
-    
+
     def delete_key(self, key_name: str):
         """删除密钥"""
         if key_name in self._keys:
             del self._keys[key_name]
             self._save_keys()
-    
+
     def rotate_key(self, key_name: str) -> str:
         """轮换密钥"""
         new_key = secrets.token_urlsafe(32)
@@ -684,12 +689,12 @@ class KeyManager:
 # 使用示例
 if __name__ == '__main__':
     key_manager = KeyManager()
-    
+
     # 生成 A/B/C 密钥
     key_a = key_manager.generate_key('key_a', 32)
     key_b = key_manager.generate_key('key_b', 32)
     key_c = key_manager.generate_key('key_c', 32)
-    
+
     print(f"Key A: {key_a[:10]}...")
     print(f"Key B: {key_b[:10]}...")
     print(f"Key C: {key_c[:10]}...")
@@ -705,41 +710,42 @@ const CDN_SOURCES = {
   'cubism-sdk': {
     url: 'https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js',
     integrity: 'sha384-abcdefghijklmnopqrstuvwxyz123456', // 实际使用时需要生成正确的哈希
-    crossOrigin: 'anonymous'
+    crossOrigin: 'anonymous',
   },
   'cubism-js': {
     url: 'https://cubism.live2d.com/sdk-web/live2dframework/live2dframework.min.js',
     integrity: 'sha384-abcdefghijklmnopqrstuvwxyz123456',
-    crossOrigin: 'anonymous'
-  }
-};
+    crossOrigin: 'anonymous',
+  },
+}
 
 async function loadScriptWithSRI(source) {
   return new Promise((resolve, reject) => {
-    const script = document.createElement('script');
-    script.src = source.url;
-    script.integrity = source.integrity;
-    script.crossOrigin = source.crossOrigin;
-    
-    script.onload = () => resolve(script);
-    script.onerror = () => reject(new Error(`Failed to load ${source.url}`));
-    
-    document.head.appendChild(script);
-  });
+    const script = document.createElement('script')
+    script.src = source.url
+    script.integrity = source.integrity
+    script.crossOrigin = source.crossOrigin
+
+    script.onload = () => resolve(script)
+    script.onerror = () => reject(new Error(`Failed to load ${source.url}`))
+
+    document.head.appendChild(script)
+  })
 }
 
 // 使用
 try {
-  await loadScriptWithSRI(CDN_SOURCES['cubism-sdk']);
-  await loadScriptWithSRI(CDN_SOURCES['cubism-js']);
-  console.log('[Live2D] All scripts loaded with SRI verification');
+  await loadScriptWithSRI(CDN_SOURCES['cubism-sdk'])
+  await loadScriptWithSRI(CDN_SOURCES['cubism-js'])
+  console.log('[Live2D] All scripts loaded with SRI verification')
 } catch (error) {
-  console.error('[Live2D] Failed to load scripts:', error);
-  throw error;
+  console.error('[Live2D] Failed to load scripts:', error)
+  throw error
 }
 ```
 
 **验证标准**:
+
 - ✅ 所有硬编码密钥已移除
 - ✅ 密钥管理系统已实现
 - ✅ SRI 哈希已添加
@@ -765,95 +771,96 @@ try {
 
 class TextureCache {
   constructor(maxSize = 100) {
-    this.cache = new Map();
-    this.maxSize = maxSize;
-    this.canvasPool = [];
+    this.cache = new Map()
+    this.maxSize = maxSize
+    this.canvasPool = []
   }
-  
+
   getCanvas(width, height) {
     // 从池中获取 Canvas
     for (let canvas of this.canvasPool) {
       if (canvas.width === width && canvas.height === height) {
-        this.canvasPool = this.canvasPool.filter(c => c !== canvas);
-        return canvas;
+        this.canvasPool = this.canvasPool.filter((c) => c !== canvas)
+        return canvas
       }
     }
     // 创建新 Canvas
-    return document.createElement('canvas');
+    return document.createElement('canvas')
   }
-  
+
   releaseCanvas(canvas) {
     // 将 Canvas 返回到池中
     if (this.canvasPool.length < 10) {
-      const ctx = canvas.getContext('2d');
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      this.canvasPool.push(canvas);
+      const ctx = canvas.getContext('2d')
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      this.canvasPool.push(canvas)
     }
   }
-  
+
   get(key) {
-    return this.cache.get(key);
+    return this.cache.get(key)
   }
-  
+
   set(key, texture) {
     if (this.cache.size >= this.maxSize) {
       // LRU 淘汰
-      const firstKey = this.cache.keys().next().value;
-      this.cache.delete(firstKey);
+      const firstKey = this.cache.keys().next().value
+      this.cache.delete(firstKey)
     }
-    this.cache.set(key, texture);
+    this.cache.set(key, texture)
   }
-  
+
   clear() {
-    this.cache.clear();
-    this.canvasPool = [];
+    this.cache.clear()
+    this.canvasPool = []
   }
 }
 
 // 在 Live2DCubismWrapper 中使用
 class Live2DCubismWrapper {
   constructor() {
-    this.textureCache = new TextureCache();
+    this.textureCache = new TextureCache()
   }
-  
+
   // 原始的低效方法
   _scaleTextureOld(texture, targetWidth, targetHeight) {
-    const canvas = document.createElement('canvas'); // 每次都创建新 Canvas
-    canvas.width = targetWidth;
-    canvas.height = targetHeight;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(texture, 0, 0, targetWidth, targetHeight);
-    return canvas;
+    const canvas = document.createElement('canvas') // 每次都创建新 Canvas
+    canvas.width = targetWidth
+    canvas.height = targetHeight
+    const ctx = canvas.getContext('2d')
+    ctx.drawImage(texture, 0, 0, targetWidth, targetHeight)
+    return canvas
   }
-  
+
   // 优化后的方法
   _scaleTexture(texture, targetWidth, targetHeight) {
-    const cacheKey = `${texture.src}_${targetWidth}_${targetHeight}`;
-    const cached = this.textureCache.get(cacheKey);
-    
+    const cacheKey = `${texture.src}_${targetWidth}_${targetHeight}`
+    const cached = this.textureCache.get(cacheKey)
+
     if (cached) {
-      return cached;
+      return cached
     }
-    
+
     // 从池中获取 Canvas
-    const canvas = this.textureCache.getCanvas(targetWidth, targetHeight);
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(texture, 0, 0, targetWidth, targetHeight);
-    
+    const canvas = this.textureCache.getCanvas(targetWidth, targetHeight)
+    const ctx = canvas.getContext('2d')
+    ctx.drawImage(texture, 0, 0, targetWidth, targetHeight)
+
     // 缓存结果
-    this.textureCache.set(cacheKey, canvas);
-    
-    return canvas;
+    this.textureCache.set(cacheKey, canvas)
+
+    return canvas
   }
-  
+
   destroy() {
-    this.textureCache.clear();
+    this.textureCache.clear()
     // ... 其他清理代码
   }
 }
 ```
 
 **验证标准**:
+
 - ✅ 内存泄漏已修复
 - ✅ 性能提升 50%+
 - ✅ 纹理加载速度提升
@@ -912,7 +919,7 @@ def handle_errors(
 ):
     """
     统一错误处理装饰器
-    
+
     Args:
         default_return: 出错时的默认返回值
         log_level: 日志级别
@@ -947,7 +954,7 @@ def handle_errors(
                 if reraise:
                     raise
                 return default_return
-        
+
         @functools.wraps(func)
         def sync_wrapper(*args, **kwargs):
             try:
@@ -976,13 +983,13 @@ def handle_errors(
                 if reraise:
                     raise
                 return default_return
-        
+
         # 根据函数类型返回相应的包装器
         import asyncio
         if asyncio.iscoroutinefunction(func):
             return async_wrapper
         return sync_wrapper
-    
+
     return decorator
 
 # 使用示例
@@ -995,7 +1002,7 @@ async def load_live2d_model(model_path: str):
             code="MODEL_NOT_FOUND",
             details={'path': model_path}
         )
-    
+
     # ... 加载逻辑 ...
     return model
 ```
@@ -1042,7 +1049,7 @@ class ToolDispatcherResponse(TypedDict):
 def dispatch_tool(tool_name: str, query: str) -> ToolDispatcherResponse:
     """分发工具任务"""
     start_time = time.time()
-    
+
     try:
         result = execute_tool(tool_name, query)
         return ToolDispatcherResponse(
@@ -1084,14 +1091,14 @@ logger = logging.getLogger(__name__)
 
 class TaskPool:
     """任务池管理器"""
-    
+
     def __init__(self, max_workers: int = 10):
         self.executor = ThreadPoolExecutor(max_workers=max_workers)
         self.semaphore = asyncio.Semaphore(max_workers)
         self.max_workers = max_workers
         self.active_tasks = set()
         self.completed_tasks = 0
-    
+
     async def run(
         self,
         func: Callable[..., Any],
@@ -1103,7 +1110,7 @@ class TaskPool:
             loop = asyncio.get_event_loop()
             task_id = id(func)
             self.active_tasks.add(task_id)
-            
+
             try:
                 # 在线程池中执行同步函数
                 if not asyncio.iscoroutinefunction(func):
@@ -1114,12 +1121,12 @@ class TaskPool:
                 else:
                     # 直接运行异步函数
                     result = await func(*args, **kwargs)
-                
+
                 return result
             finally:
                 self.active_tasks.discard(task_id)
                 self.completed_tasks += 1
-    
+
     async def run_batch(
         self,
         tasks: list[tuple[Callable, tuple, dict]]
@@ -1129,7 +1136,7 @@ class TaskPool:
             self.run(func, *args, **kwargs)
             for func, args, kwargs in tasks
         ])
-    
+
     def get_stats(self) -> dict:
         """获取统计信息"""
         return {
@@ -1137,30 +1144,30 @@ class TaskPool:
             'completed_tasks': self.completed_tasks,
             'max_workers': self.max_workers
         }
-    
+
     async def shutdown(self):
         """关闭任务池"""
         # 等待所有活动任务完成
         while self.active_tasks:
             await asyncio.sleep(0.1)
-        
+
         self.executor.shutdown(wait=True)
         logger.info("Task pool shutdown complete")
 
 # 使用示例
 async def main():
     task_pool = TaskPool(max_workers=10)
-    
+
     # 运行多个任务
     results = await task_pool.run_batch([
         (process_image, ('image1.jpg',), {}),
         (process_image, ('image2.jpg',), {}),
         (process_image, ('image3.jpg',), {}),
     ])
-    
+
     print(f"Processed {len(results)} images")
     print(f"Stats: {task_pool.get_stats()}")
-    
+
     await task_pool.shutdown()
 ```
 
@@ -1260,53 +1267,53 @@ disable=
  */
 class Logger {
   constructor(level = 'INFO') {
-    this.level = level;
-    this.levels = { DEBUG: 0, INFO: 1, WARN: 2, ERROR: 3 };
-    this.enabled = process.env.NODE_ENV !== 'production';
+    this.level = level
+    this.levels = { DEBUG: 0, INFO: 1, WARN: 2, ERROR: 3 }
+    this.enabled = process.env.NODE_ENV !== 'production'
   }
 
   _shouldLog(level) {
-    return this.enabled && this.levels[level] >= this.levels[this.level];
+    return this.enabled && this.levels[level] >= this.levels[this.level]
   }
 
   _formatMessage(level, message, data) {
-    const timestamp = new Date().toISOString();
-    const prefix = `[${timestamp}] [${level}]`;
-    const suffix = data ? ` ${JSON.stringify(data)}` : '';
-    return `${prefix} ${message}${suffix}`;
+    const timestamp = new Date().toISOString()
+    const prefix = `[${timestamp}] [${level}]`
+    const suffix = data ? ` ${JSON.stringify(data)}` : ''
+    return `${prefix} ${message}${suffix}`
   }
 
   debug(message, data) {
     if (this._shouldLog('DEBUG')) {
-      console.debug(this._formatMessage('DEBUG', message, data));
+      console.debug(this._formatMessage('DEBUG', message, data))
     }
   }
 
   info(message, data) {
     if (this._shouldLog('INFO')) {
-      console.info(this._formatMessage('INFO', message, data));
+      console.info(this._formatMessage('INFO', message, data))
     }
   }
 
   warn(message, data) {
     if (this._shouldLog('WARN')) {
-      console.warn(this._formatMessage('WARN', message, data));
+      console.warn(this._formatMessage('WARN', message, data))
     }
   }
 
   error(message, data) {
     if (this._shouldLog('ERROR')) {
-      console.error(this._formatMessage('ERROR', message, data));
+      console.error(this._formatMessage('ERROR', message, data))
     }
   }
 }
 
 // 导出单例
-const logger = new Logger(process.env.LOG_LEVEL || 'INFO');
+const logger = new Logger(process.env.LOG_LEVEL || 'INFO')
 
 // 替换所有 console.log
 // 使用: logger.info('Message', { key: value });
-export default logger;
+export default logger
 ```
 
 ---
@@ -1367,50 +1374,60 @@ python3 tests/security/path_traversal_test.py
 
 ## 📊 修复进度跟踪
 
-| 阶段 | 任务数 | 已完成 | 进行中 | 待开始 | 完成率 | 状态 |
-|-----|-------|-------|-------|-------|-------|------|
-| 阶段 1: CRITICAL | 14 | 0 | 0 | 14 | 0% | ⏳ 待开始 |
-| 阶段 2: HIGH | 199 | 0 | 0 | 199 | 0% | ⏳ 待开始 |
-| 阶段 3: MEDIUM | 61 | 0 | 0 | 61 | 0% | ⏳ 待开始 |
-| 阶段 4: LOW | 72+ | 0 | 0 | 72+ | 0% | ⏳ 待开始 |
-| 阶段 5: 测试 | 持续 | 0 | 0 | 持续 | 0% | ⏳ 待开始 |
-| **总计** | **~350** | **0** | **0** | **~350** | **0%** | ⏳ 待开始 |
+| 阶段             | 任务数   | 已完成 | 进行中 | 待开始   | 完成率 | 状态      |
+| ---------------- | -------- | ------ | ------ | -------- | ------ | --------- |
+| 阶段 1: CRITICAL | 14       | 0      | 0      | 14       | 0%     | ⏳ 待开始 |
+| 阶段 2: HIGH     | 199      | 0      | 0      | 199      | 0%     | ⏳ 待开始 |
+| 阶段 3: MEDIUM   | 61       | 0      | 0      | 61       | 0%     | ⏳ 待开始 |
+| 阶段 4: LOW      | 72+      | 0      | 0      | 72+      | 0%     | ⏳ 待开始 |
+| 阶段 5: 测试     | 持续     | 0      | 0      | 持续     | 0%     | ⏳ 待开始 |
+| **总计**         | **~350** | **0**  | **0**  | **~350** | **0%** | ⏳ 待开始 |
 
 ---
 
 ## 🎯 里程碑
 
 ### 里程碑 1: CRITICAL 修复完成
+
 **时间**: 阶段 1 完成 (1-2小时)  
-**标准**: 
+**标准**:
+
 - ✅ 0 CRITICAL 错误
 - ✅ 所有文件可正常导入
 - ✅ 基础语法验证通过
 
 ### 里程碑 2: HIGH 修复完成
+
 **时间**: 阶段 2 完成 (24-48小时)  
-**标准**: 
+**标准**:
+
 - ✅ 0 HIGH 级别安全问题
 - ✅ 0 内存泄漏
 - ✅ 所有导入错误已修复
 
 ### 里程碑 3: MEDIUM 修复完成
+
 **时间**: 阶段 3 完成 (5-7天)  
-**标准**: 
+**标准**:
+
 - ✅ 0 裸异常捕获
 - ✅ 所有类型提示正确
 - ✅ 性能优化完成
 
 ### 里程碑 4: 代码规范完成
+
 **时间**: 阶段 4 完成 (2-4周)  
-**标准**: 
+**标准**:
+
 - ✅ 代码风格统一
 - ✅ 完整的日志系统
 - ✅ 90%+ 测试覆盖率
 
 ### 里程碑 5: 生产就绪
+
 **时间**: 阶段 5 完成 (持续)  
-**标准**: 
+**标准**:
+
 - ✅ 所有测试通过
 - ✅ 性能指标达标
 - ✅ 安全扫描通过

@@ -5,33 +5,33 @@
  * that can be found at https://www.live2d.com/eula/live2d-open-software-license-agreement_en.html.
  */
 
-import { CubismIdHandle } from '../id/cubismid';
-import { CubismFramework } from '../live2dcubismframework';
-import { csmString } from '../type/csmstring';
-import { CSM_ASSERT, CubismLogWarning } from '../utils/cubismdebug';
-import { CubismJson, JsonMap } from '../utils/cubismjson';
-import { CubismMotionSegmentType } from './cubismmotioninternal';
+import { CubismIdHandle } from '../id/cubismid'
+import { CubismFramework } from '../live2dcubismframework'
+import { csmString } from '../type/csmstring'
+import { CSM_ASSERT, CubismLogWarning } from '../utils/cubismdebug'
+import { CubismJson, JsonMap } from '../utils/cubismjson'
+import { CubismMotionSegmentType } from './cubismmotioninternal'
 
 // JSON keys
-const Meta = 'Meta';
-const Duration = 'Duration';
-const Loop = 'Loop';
-const AreBeziersRestricted = 'AreBeziersRestricted';
-const CurveCount = 'CurveCount';
-const Fps = 'Fps';
-const TotalSegmentCount = 'TotalSegmentCount';
-const TotalPointCount = 'TotalPointCount';
-const Curves = 'Curves';
-const Target = 'Target';
-const Id = 'Id';
-const FadeInTime = 'FadeInTime';
-const FadeOutTime = 'FadeOutTime';
-const Segments = 'Segments';
-const UserData = 'UserData';
-const UserDataCount = 'UserDataCount';
-const TotalUserDataSize = 'TotalUserDataSize';
-const Time = 'Time';
-const Value = 'Value';
+const Meta = 'Meta'
+const Duration = 'Duration'
+const Loop = 'Loop'
+const AreBeziersRestricted = 'AreBeziersRestricted'
+const CurveCount = 'CurveCount'
+const Fps = 'Fps'
+const TotalSegmentCount = 'TotalSegmentCount'
+const TotalPointCount = 'TotalPointCount'
+const Curves = 'Curves'
+const Target = 'Target'
+const Id = 'Id'
+const FadeInTime = 'FadeInTime'
+const FadeOutTime = 'FadeOutTime'
+const Segments = 'Segments'
+const UserData = 'UserData'
+const UserDataCount = 'UserDataCount'
+const TotalUserDataSize = 'TotalUserDataSize'
+const Time = 'Time'
+const Value = 'Value'
 
 /**
  * motion3.jsonのコンテナ。
@@ -43,14 +43,14 @@ export class CubismMotionJson {
    * @param size バッファのサイズ
    */
   public constructor(buffer: ArrayBuffer, size: number) {
-    this._json = CubismJson.create(buffer, size);
+    this._json = CubismJson.create(buffer, size)
   }
 
   /**
    * デストラクタ相当の処理
    */
   public release(): void {
-    CubismJson.delete(this._json);
+    CubismJson.delete(this._json)
   }
 
   /**
@@ -58,11 +58,7 @@ export class CubismMotionJson {
    * @return モーションの長さ[秒]
    */
   public getMotionDuration(): number {
-    return this._json
-      .getRoot()
-      .getValueByString(Meta)
-      .getValueByString(Duration)
-      .toFloat();
+    return this._json.getRoot().getValueByString(Meta).getValueByString(Duration).toFloat()
   }
 
   /**
@@ -71,11 +67,7 @@ export class CubismMotionJson {
    * @return false ループしない
    */
   public isMotionLoop(): boolean {
-    return this._json
-      .getRoot()
-      .getValueByString(Meta)
-      .getValueByString(Loop)
-      .toBoolean();
+    return this._json.getRoot().getValueByString(Meta).getValueByString(Loop).toBoolean()
   }
 
   /**
@@ -84,96 +76,85 @@ export class CubismMotionJson {
    * @return 正常なファイルの場合はtrueを返す。
    */
   hasConsistency(): boolean {
-    let result = true;
+    let result = true
 
     if (!this._json || !this._json.getRoot()) {
-      return false;
+      return false
     }
 
-    const actualCurveListSize = this._json
-      .getRoot()
-      .getValueByString(Curves)
-      .getVector()
-      .getSize();
-    let actualTotalSegmentCount = 0;
-    let actualTotalPointCount = 0;
+    const actualCurveListSize = this._json.getRoot().getValueByString(Curves).getVector().getSize()
+    let actualTotalSegmentCount = 0
+    let actualTotalPointCount = 0
 
     // カウント処理
-    for (
-      let curvePosition = 0;
-      curvePosition < actualCurveListSize;
-      ++curvePosition
-    ) {
+    for (let curvePosition = 0; curvePosition < actualCurveListSize; ++curvePosition) {
       for (
         let segmentPosition = 0;
         segmentPosition < this.getMotionCurveSegmentCount(curvePosition);
-
       ) {
         if (segmentPosition == 0) {
-          actualTotalPointCount += 1;
-          segmentPosition += 2;
+          actualTotalPointCount += 1
+          segmentPosition += 2
         }
 
         const segment = this.getMotionCurveSegment(
           curvePosition,
           segmentPosition
-        ) as CubismMotionSegmentType;
+        ) as CubismMotionSegmentType
 
         switch (segment) {
           case CubismMotionSegmentType.CubismMotionSegmentType_Linear:
-            actualTotalPointCount += 1;
-            segmentPosition += 3;
-            break;
+            actualTotalPointCount += 1
+            segmentPosition += 3
+            break
           case CubismMotionSegmentType.CubismMotionSegmentType_Bezier:
-            actualTotalPointCount += 3;
-            segmentPosition += 7;
-            break;
+            actualTotalPointCount += 3
+            segmentPosition += 7
+            break
           case CubismMotionSegmentType.CubismMotionSegmentType_Stepped:
-            actualTotalPointCount += 1;
-            segmentPosition += 3;
-            break;
+            actualTotalPointCount += 1
+            segmentPosition += 3
+            break
           case CubismMotionSegmentType.CubismMotionSegmentType_InverseStepped:
-            actualTotalPointCount += 1;
-            segmentPosition += 3;
-            break;
+            actualTotalPointCount += 1
+            segmentPosition += 3
+            break
           default:
-            CSM_ASSERT(0);
-            break;
+            CSM_ASSERT(0)
+            break
         }
 
-        ++actualTotalSegmentCount;
+        ++actualTotalSegmentCount
       }
     }
 
     // 個数チェック
     if (actualCurveListSize != this.getMotionCurveCount()) {
-      CubismLogWarning('The number of curves does not match the metadata.');
-      result = false;
+      CubismLogWarning('The number of curves does not match the metadata.')
+      result = false
     }
     if (actualTotalSegmentCount != this.getMotionTotalSegmentCount()) {
-      CubismLogWarning('The number of segment does not match the metadata.');
-      result = false;
+      CubismLogWarning('The number of segment does not match the metadata.')
+      result = false
     }
     if (actualTotalPointCount != this.getMotionTotalPointCount()) {
-      CubismLogWarning('The number of point does not match the metadata.');
-      result = false;
+      CubismLogWarning('The number of point does not match the metadata.')
+      result = false
     }
 
-    return result;
+    return result
   }
 
   public getEvaluationOptionFlag(flagType: EvaluationOptionFlag): boolean {
-    if (
-      EvaluationOptionFlag.EvaluationOptionFlag_AreBeziersRistricted == flagType
-    ) {
+    if (EvaluationOptionFlag.EvaluationOptionFlag_AreBeziersRistricted == flagType) {
       return this._json
         .getRoot()
         .getValueByString(Meta)
         .getValueByString(AreBeziersRestricted)
-        .toBoolean();
+        .toBoolean()
     }
 
-    return false;
+    return false
   }
 
   /**
@@ -181,11 +162,7 @@ export class CubismMotionJson {
    * @return モーションカーブの個数
    */
   public getMotionCurveCount(): number {
-    return this._json
-      .getRoot()
-      .getValueByString(Meta)
-      .getValueByString(CurveCount)
-      .toInt();
+    return this._json.getRoot().getValueByString(Meta).getValueByString(CurveCount).toInt()
   }
 
   /**
@@ -193,11 +170,7 @@ export class CubismMotionJson {
    * @return フレームレート[FPS]
    */
   public getMotionFps(): number {
-    return this._json
-      .getRoot()
-      .getValueByString(Meta)
-      .getValueByString(Fps)
-      .toFloat();
+    return this._json.getRoot().getValueByString(Meta).getValueByString(Fps).toFloat()
   }
 
   /**
@@ -205,11 +178,7 @@ export class CubismMotionJson {
    * @return モーションのセグメントの取得
    */
   public getMotionTotalSegmentCount(): number {
-    return this._json
-      .getRoot()
-      .getValueByString(Meta)
-      .getValueByString(TotalSegmentCount)
-      .toInt();
+    return this._json.getRoot().getValueByString(Meta).getValueByString(TotalSegmentCount).toInt()
   }
 
   /**
@@ -217,11 +186,7 @@ export class CubismMotionJson {
    * @return モーションのカーブの制御点の総合計
    */
   public getMotionTotalPointCount(): number {
-    return this._json
-      .getRoot()
-      .getValueByString(Meta)
-      .getValueByString(TotalPointCount)
-      .toInt();
+    return this._json.getRoot().getValueByString(Meta).getValueByString(TotalPointCount).toInt()
   }
 
   /**
@@ -230,11 +195,7 @@ export class CubismMotionJson {
    * @return false 存在しない
    */
   public isExistMotionFadeInTime(): boolean {
-    return !this._json
-      .getRoot()
-      .getValueByString(Meta)
-      .getValueByString(FadeInTime)
-      .isNull();
+    return !this._json.getRoot().getValueByString(Meta).getValueByString(FadeInTime).isNull()
   }
 
   /**
@@ -243,11 +204,7 @@ export class CubismMotionJson {
    * @return false 存在しない
    */
   public isExistMotionFadeOutTime(): boolean {
-    return !this._json
-      .getRoot()
-      .getValueByString(Meta)
-      .getValueByString(FadeOutTime)
-      .isNull();
+    return !this._json.getRoot().getValueByString(Meta).getValueByString(FadeOutTime).isNull()
   }
 
   /**
@@ -255,11 +212,7 @@ export class CubismMotionJson {
    * @return フェードイン時間[秒]
    */
   public getMotionFadeInTime(): number {
-    return this._json
-      .getRoot()
-      .getValueByString(Meta)
-      .getValueByString(FadeInTime)
-      .toFloat();
+    return this._json.getRoot().getValueByString(Meta).getValueByString(FadeInTime).toFloat()
   }
 
   /**
@@ -267,11 +220,7 @@ export class CubismMotionJson {
    * @return フェードアウト時間[秒]
    */
   public getMotionFadeOutTime(): number {
-    return this._json
-      .getRoot()
-      .getValueByString(Meta)
-      .getValueByString(FadeOutTime)
-      .toFloat();
+    return this._json.getRoot().getValueByString(Meta).getValueByString(FadeOutTime).toFloat()
   }
 
   /**
@@ -285,7 +234,7 @@ export class CubismMotionJson {
       .getValueByString(Curves)
       .getValueByIndex(curveIndex)
       .getValueByString(Target)
-      .getRawString();
+      .getRawString()
   }
 
   /**
@@ -301,7 +250,7 @@ export class CubismMotionJson {
         .getValueByIndex(curveIndex)
         .getValueByString(Id)
         .getRawString()
-    );
+    )
   }
 
   /**
@@ -316,7 +265,7 @@ export class CubismMotionJson {
       .getValueByString(Curves)
       .getValueByIndex(curveIndex)
       .getValueByString(FadeInTime)
-      .isNull();
+      .isNull()
   }
 
   /**
@@ -331,7 +280,7 @@ export class CubismMotionJson {
       .getValueByString(Curves)
       .getValueByIndex(curveIndex)
       .getValueByString(FadeOutTime)
-      .isNull();
+      .isNull()
   }
 
   /**
@@ -345,7 +294,7 @@ export class CubismMotionJson {
       .getValueByString(Curves)
       .getValueByIndex(curveIndex)
       .getValueByString(FadeInTime)
-      .toFloat();
+      .toFloat()
   }
 
   /**
@@ -359,7 +308,7 @@ export class CubismMotionJson {
       .getValueByString(Curves)
       .getValueByIndex(curveIndex)
       .getValueByString(FadeOutTime)
-      .toFloat();
+      .toFloat()
   }
 
   /**
@@ -374,7 +323,7 @@ export class CubismMotionJson {
       .getValueByIndex(curveIndex)
       .getValueByString(Segments)
       .getVector()
-      .getSize();
+      .getSize()
   }
 
   /**
@@ -383,17 +332,14 @@ export class CubismMotionJson {
    * @param segmentIndex セグメントのインデックス
    * @return セグメントの値
    */
-  public getMotionCurveSegment(
-    curveIndex: number,
-    segmentIndex: number
-  ): number {
+  public getMotionCurveSegment(curveIndex: number, segmentIndex: number): number {
     return this._json
       .getRoot()
       .getValueByString(Curves)
       .getValueByIndex(curveIndex)
       .getValueByString(Segments)
       .getValueByIndex(segmentIndex)
-      .toFloat();
+      .toFloat()
   }
 
   /**
@@ -401,11 +347,7 @@ export class CubismMotionJson {
    * @return イベントの個数
    */
   public getEventCount(): number {
-    return this._json
-      .getRoot()
-      .getValueByString(Meta)
-      .getValueByString(UserDataCount)
-      .toInt();
+    return this._json.getRoot().getValueByString(Meta).getValueByString(UserDataCount).toInt()
   }
 
   /**
@@ -413,11 +355,7 @@ export class CubismMotionJson {
    * @return イベントの総文字数
    */
   public getTotalEventValueSize(): number {
-    return this._json
-      .getRoot()
-      .getValueByString(Meta)
-      .getValueByString(TotalUserDataSize)
-      .toInt();
+    return this._json.getRoot().getValueByString(Meta).getValueByString(TotalUserDataSize).toInt()
   }
 
   /**
@@ -431,7 +369,7 @@ export class CubismMotionJson {
       .getValueByString(UserData)
       .getValueByIndex(userDataIndex)
       .getValueByString(Time)
-      .toFloat();
+      .toFloat()
   }
 
   /**
@@ -447,23 +385,23 @@ export class CubismMotionJson {
         .getValueByIndex(userDataIndex)
         .getValueByString(Value)
         .getRawString()
-    );
+    )
   }
 
-  _json: CubismJson; // motion3.jsonのデータ
+  _json: CubismJson // motion3.jsonのデータ
 }
 
 /**
  * @brief ベジェカーブの解釈方法のフラグタイプ
  */
 export enum EvaluationOptionFlag {
-  EvaluationOptionFlag_AreBeziersRistricted = 0 ///< ベジェハンドルの規制状態
+  EvaluationOptionFlag_AreBeziersRistricted = 0, ///< ベジェハンドルの規制状態
 }
 
 // Namespace definition for compatibility.
-import * as $ from './cubismmotionjson';
+import * as $ from './cubismmotionjson'
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
-  export const CubismMotionJson = $.CubismMotionJson;
-  export type CubismMotionJson = $.CubismMotionJson;
+  export const CubismMotionJson = $.CubismMotionJson
+  export type CubismMotionJson = $.CubismMotionJson
 }

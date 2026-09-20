@@ -31,13 +31,18 @@ python scripts/run_angela.py
 ```
 
 **What you get**:
+
 - ED3N+GARDEN inference (no external LLM required)
 - Emotion system active
 - Memory/vector store operational
 - Chat API at `http://localhost:8000`
 
 **Limitations without LLM**:
-- Offline: deterministic engines (math/physics/chemistry) work = 9.5/10 real capability; the neural SNN's job is **learning associations** (capability 1.0, ED3N & GARDEN — INTELLIGENCE_ASSESSMENT.md §4.1.2), NOT memorizing knowledge. With LLM ≈6.0/10.
+
+- Offline: deterministic engines (math/physics/chemistry) work = 9.5/10 real
+  capability; the neural SNN's job is **learning associations** (capability 1.0,
+  ED3N & GARDEN — INTELLIGENCE_ASSESSMENT.md §4.1.2), NOT memorizing knowledge.
+  With LLM ≈6.0/10.
 - No advanced reasoning or code generation
 - Responses shorter and more template-driven
 
@@ -58,6 +63,7 @@ python scripts/verify_training.py
 ```
 
 This trains:
+
 - **ED3N**: Reflex + SNN + Decode cycle (~500 steps)
 - **GARDEN**: Hebbian learning convergence (~200 steps)
 - **JointTrainer**: Cross-modal alignment
@@ -87,13 +93,16 @@ python -c "import numpy as np; data=np.load('data/multimodal/weights/p29_trained
 
 ### B4. Expected Quality Improvement
 
-| Metric | Untrained | Quick Train | Full Train |
-|--------|-----------|-------------|------------|
-| ED3N Text Acc | 0.60 | ~0.80 | ~0.91 |
-| GARDEN SNN | 0.50 | ~0.65 | ~0.70 |
-| SSIM | 0.85 | 0.90 | 0.95+ |
+| Metric        | Untrained | Quick Train | Full Train |
+| ------------- | --------- | ----------- | ---------- |
+| ED3N Text Acc | 0.60      | ~0.80       | ~0.91      |
+| GARDEN SNN    | 0.50      | ~0.65       | ~0.70      |
+| SSIM          | 0.85      | 0.90        | 0.95+      |
 
-> **Note**: ED3N accuracy (0.91) is training-set accuracy. Real-world performance may be lower due to distribution shift. See [PHASE_REVIEW6.md](../09-archive/auto-archived-2026-08-11/PHASE_REVIEW6.md) for methodology.
+> **Note**: ED3N accuracy (0.91) is training-set accuracy. Real-world
+> performance may be lower due to distribution shift. See
+> [PHASE_REVIEW6.md](../09-archive/auto-archived-2026-08-11/PHASE_REVIEW6.md)
+> for methodology.
 
 ### B5. Evaluation After Training
 
@@ -136,6 +145,7 @@ OLLAMA_MODEL=llama3
 ```
 
 Backend priority order (configurable via `LLM_PRIORITY_ORDER` env var):
+
 1. OpenAI → Anthropic → Ollama → Google → Azure → DeepSeek → Grok → xAI → Custom
 
 ### C2. Hardware Profile
@@ -148,13 +158,13 @@ HARDWARE_SCENARIO=SERVER_CLOUD
 
 Effects of each profile:
 
-| Profile | Decision Interval | Heartbeat | Neuroplasticity | Use Case |
-|---------|:-----------------:|:---------:|:---------------:|----------|
-| HIGH_PERFORMANCE_DESKTOP | 60s | 5-30s | 60s | Development/gaming PC |
-| LAPTOP_NORMAL | 120s | 10-60s | 120s | Everyday laptop |
-| LAPTOP_POWER_SAVER | 300s | 30-120s | 300s | Battery saving |
-| LOW_POWER_DEVICE | 600s | 60-300s | 600s | Raspberry Pi / thin client |
-| SERVER_CLOUD | 30s | 1-10s | 30s | Cloud deployment |
+| Profile                  | Decision Interval | Heartbeat | Neuroplasticity | Use Case                   |
+| ------------------------ | :---------------: | :-------: | :-------------: | -------------------------- |
+| HIGH_PERFORMANCE_DESKTOP |        60s        |   5-30s   |       60s       | Development/gaming PC      |
+| LAPTOP_NORMAL            |       120s        |  10-60s   |      120s       | Everyday laptop            |
+| LAPTOP_POWER_SAVER       |       300s        |  30-120s  |      300s       | Battery saving             |
+| LOW_POWER_DEVICE         |       600s        |  60-300s  |      600s       | Raspberry Pi / thin client |
+| SERVER_CLOUD             |        30s        |   1-10s   |       30s       | Cloud deployment           |
 
 ### C3. Emotion System
 
@@ -222,12 +232,14 @@ python scripts/run_angela.py
 ```
 
 **Capable of**:
+
 - Task status reporting ("what can you do?")
 - Simple pattern matching responses
 - Basic memory operations
 - Image processing (vision service)
 
 **Not capable of**:
+
 - Complex reasoning
 - Multi-turn planning
 - Knowledge integration
@@ -237,7 +249,8 @@ python scripts/run_angela.py
 
 ## Scenario E: Docker Deployment
 
-> Docker support is experimental. The backend can run in a container, but GPU acceleration requires additional setup.
+> Docker support is experimental. The backend can run in a container, but GPU
+> acceleration requires additional setup.
 
 ```powershell
 # Build image
@@ -254,17 +267,18 @@ docker run -p 8000:8000 --gpus all -e OLLAMA_HOST=http://ollama:11434 angela-ai
 
 ## Choosing Your Scenario
 
-| Your Goal | Recommended Path | Time |
-|-----------|-----------------|------|
-| "Just see it work" | **Scenario A** → Direct Start | 5 min |
-| "Best local quality" | **Scenario B** → Train First (quick) | 15 min |
-| "Production quality" | **Scenario B** → Train First (full) + **C1** (LLM) | 45 min |
-| "Custom deployment" | **Scenario C** → Configure + **A** → Start | 10 min |
-| "No internet/API keys" | **Scenario D** → No LLM | 5 min |
-| "Server deployment" | **Scenario C2** → Server profile + **E** → Docker | 20 min |
+| Your Goal              | Recommended Path                                   | Time   |
+| ---------------------- | -------------------------------------------------- | ------ |
+| "Just see it work"     | **Scenario A** → Direct Start                      | 5 min  |
+| "Best local quality"   | **Scenario B** → Train First (quick)               | 15 min |
+| "Production quality"   | **Scenario B** → Train First (full) + **C1** (LLM) | 45 min |
+| "Custom deployment"    | **Scenario C** → Configure + **A** → Start         | 10 min |
+| "No internet/API keys" | **Scenario D** → No LLM                            | 5 min  |
+| "Server deployment"    | **Scenario C2** → Server profile + **E** → Docker  | 20 min |
 
 ## See Also
 
 - [Quick Start](QUICK_START.md) — basic installation
 - [ACTIVE_SCRIPTS.md](../../scripts/ACTIVE_SCRIPTS.md) — command reference
-- [MASTER_TASK_MAP.md](../06-project-management/MASTER_TASK_MAP.md) — development roadmap
+- [MASTER_TASK_MAP.md](../06-project-management/MASTER_TASK_MAP.md) —
+  development roadmap

@@ -1,25 +1,40 @@
 # Compositional Image Generation - Implementation Summary
 
 > **⚠️ STATUS: Phase 1 only (2026-06-25)**  
-> This document describes **Phase 1** (5 core primitives files). Phase 2 added **9 GVV pipeline files** (concept_mapper, concept_space, geometric_vocabulary, instance_optimizer, vocabulary_expander, differentiable_renderer, learnable_decomposer, decomposer, pixel_refiner) — totaling **14 source files** with ~62 tests. See [ARCHITECTURE.md §6](../ARCHITECTURE.md) for the current GVV pipeline description.
+> This document describes **Phase 1** (5 core primitives files). Phase 2 added
+> **9 GVV pipeline files** (concept_mapper, concept_space, geometric_vocabulary,
+> instance_optimizer, vocabulary_expander, differentiable_renderer,
+> learnable_decomposer, decomposer, pixel_refiner) — totaling **14 source
+> files** with ~62 tests. See [ARCHITECTURE.md §6](../ARCHITECTURE.md) for the
+> current GVV pipeline description.
 >
-> **⚠️ Honest assessment (2026-06-28)**: The pipeline architecture is complete but **all neural weights are random** (SequenceGenerator RNN, VisualDecoder CNN). Output = gray canvas or random shapes. Training is needed before any meaningful image generation occurs. See `docs/06-project-management/IMPROVEMENT_ROADMAP.md` §2.5 (Training) for the training plan.
+> **⚠️ Honest assessment (2026-06-28)**: The pipeline architecture is complete
+> but **all neural weights are random** (SequenceGenerator RNN, VisualDecoder
+> CNN). Output = gray canvas or random shapes. Training is needed before any
+> meaningful image generation occurs. See
+> `docs/06-project-management/IMPROVEMENT_ROADMAP.md` §2.5 (Training) for the
+> training plan.
 
 ## Overview
 
-Architecture implemented for Phase 1 of the compositional image generation system for Angela AI. The system provides a foundation for learning to decompose images into visual primitives and compose them to generate new images. **Note: training is required before the system produces meaningful output.**
+Architecture implemented for Phase 1 of the compositional image generation
+system for Angela AI. The system provides a foundation for learning to decompose
+images into visual primitives and compose them to generate new images. **Note:
+training is required before the system produces meaningful output.**
 
 ## What Was Implemented
 
 ### 1. Primitive Types (`apps/backend/src/ai/multimodal/primitives/primitive_types.py`)
 
 **Data Classes:**
+
 - `Point`: Position (x, y), color (RGB), size
 - `Line`: Start/end points, width, color
 - `Plane`: Polygon vertices, fill/outline colors, outline width
 - `DrawingInstructions`: Complete drawing instructions with background color
 
 **Features:**
+
 - Vector conversion for ML (116-dim vector)
 - Value clamping and validation
 - Roundtrip conversion (instructions → vector → instructions)
@@ -27,12 +42,14 @@ Architecture implemented for Phase 1 of the compositional image generation syste
 ### 2. Primitive Renderer (`apps/backend/src/ai/multimodal/primitives/primitive_renderer.py`)
 
 **Capabilities:**
+
 - Renders DrawingInstructions to PIL Images
 - Supports points, lines, and planes
 - Configurable canvas size (default 128x128)
 - Render to PIL Image or bytes (PNG)
 
 **Usage:**
+
 ```python
 renderer = PrimitiveRenderer(canvas_size=(128, 128))
 img = renderer.render(instructions)
@@ -42,6 +59,7 @@ img.save("output.png")
 ### 3. Primitive Library (`apps/backend/src/ai/multimodal/primitives/primitive_library.py`)
 
 **Features:**
+
 - Stores primitives with embeddings
 - Cosine similarity search
 - Auto-expansion with threshold (adds new primitives if sufficiently different)
@@ -49,6 +67,7 @@ img.save("output.png")
 - Configurable max primitives (default 1000)
 
 **Usage:**
+
 ```python
 library = PrimitiveLibrary(embedding_dim=64)
 library.add_primitive("my_prim", instructions, embedding)
@@ -58,12 +77,14 @@ similar = library.find_similar(query_embedding, top_k=5)
 ### 4. Primitive Encoder (`apps/backend/src/ai/multimodal/primitives/primitive_encoder.py`)
 
 **Capabilities:**
+
 - Encodes DrawingInstructions to 64-dim embeddings
 - Decodes embeddings back to instructions
 - Trainable via reconstruction loss
 - Save/load weights
 
 **Training:**
+
 ```python
 encoder = PrimitiveEncoder(embedding_dim=64)
 encoder.train(instructions_list, epochs=100, lr=0.001)
@@ -72,6 +93,7 @@ encoder.train(instructions_list, epochs=100, lr=0.001)
 ## Test Coverage
 
 **38 tests passing:**
+
 - `test_primitive_types.py`: 8 tests
 - `test_primitive_renderer.py`: 7 tests
 - `test_primitive_library.py`: 11 tests
@@ -89,32 +111,38 @@ encoder.train(instructions_list, epochs=100, lr=0.001)
 ## Integration with Existing Systems
 
 ### CLIP Encoding
+
 - `SemanticVisualEncoder` can encode images/text to 512-dim CLIP embeddings
 - Primitives system can use these embeddings for similarity search
 - Future: Map CLIP embeddings to primitive embeddings
 
 ### ConceptLibrary
+
 - Existing concept library with 21 concepts
 - Can integrate with primitive library for concept-based generation
 
 ### VisualDecoder
+
 - Existing visual decoder (64-dim → 128x128 RGB)
 - Can compare with primitive-based rendering
 
 ## Next Steps (Phase 2 & 3)
 
 ### Phase 2: Primitive Discovery
+
 1. Create `primitive_discovery.py`
 2. Use CLIP to cluster CIFAR-10 images
 3. Learn primitive parameters for each cluster
 4. Build primitive library from real images
 
 ### Phase 3: Sequence Generator
+
 1. Create `sequence_generator.py` (RNN/Transformer)
 2. Train on (text → primitive sequence) pairs
 3. Generate complex compositions from text
 
 ### Phase 4: Rendering Pipeline
+
 1. SVG rendering for scalable output
 2. Evaluation metrics (CLIP similarity, FID)
 3. API integration
@@ -158,8 +186,11 @@ scripts/
 
 ## GVV Pipeline (Added post-Phase 1)
 
-After Phase 1, the GVV (Geometric Vocabulary Vector) architecture was added with:
-- **Concept Mapper**: Maps CLIP embeddings to shared concept space (PCA 87% accuracy)
+After Phase 1, the GVV (Geometric Vocabulary Vector) architecture was added
+with:
+
+- **Concept Mapper**: Maps CLIP embeddings to shared concept space (PCA 87%
+  accuracy)
 - **Geometric Vocabulary**: Primitive pattern storage with similarity search
 - **Instance Optimizer**: Text-driven primitive optimization
 - **Learnable Decomposer**: Neural image→primitive decomposition
@@ -181,18 +212,21 @@ After Phase 1, the GVV (Geometric Vocabulary Vector) architecture was added with
 
 ## Success Criteria (Phase 1)
 
-✅ **Primitive types defined** - Point, Line, Plane, DrawingInstructions
-✅ **Renderer working** - PIL-based rendering with all primitive types
-✅ **Library functional** - Add, retrieve, search, auto-expand
-✅ **Encoder trainable** - Encode/decode with reconstruction loss
-✅ **Tests comprehensive** - 38 tests covering all components
-✅ **Integration tested** - End-to-end pipeline working
+✅ **Primitive types defined** - Point, Line, Plane, DrawingInstructions ✅
+**Renderer working** - PIL-based rendering with all primitive types ✅ **Library
+functional** - Add, retrieve, search, auto-expand ✅ **Encoder trainable** -
+Encode/decode with reconstruction loss ✅ **Tests comprehensive** - 38 tests
+covering all components ✅ **Integration tested** - End-to-end pipeline working
 ✅ **Demo available** - Working examples in scripts/
 
 ## Conclusion
 
-Phase 1 of the compositional image generation system is complete and fully functional. The system provides a solid foundation for learning to generate images from primitives. All components are tested, documented, and ready for integration with CLIP and future phases.
+Phase 1 of the compositional image generation system is complete and fully
+functional. The system provides a solid foundation for learning to generate
+images from primitives. All components are tested, documented, and ready for
+integration with CLIP and future phases.
 
 **Next: Phase 2 Primitive Discovery + GVV pipeline optimization.**
 
-> ⚠️ **Note (2026-06-25)**: Updated to reflect GVV pipeline additions (14 source files, ~62 tests total).
+> ⚠️ **Note (2026-06-25)**: Updated to reflect GVV pipeline additions (14 source
+> files, ~62 tests total).

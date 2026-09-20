@@ -24,6 +24,7 @@ property_mappings:
   "http://schema.org/address": "cai_prop:address"
   "http://www.w3.org/2000/01/rdf-schema#label": "cai_prop:label" # rdfs:label
 
+
 # Instance mappings (optional, if specific external instances need mapping to internal IDs)
 # instance_mappings:
 #   "http://dbpedia.org/resource/London": "cai_instance:London_UK"

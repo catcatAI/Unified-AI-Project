@@ -1,9 +1,7 @@
 # 執行期行為審計與修復計畫（RUNTIME_AUDIT_FIX_PLAN）
 
 > 狀態：**已審計 · 修復中**
-> 日期：2026-08-24
-> 方法：**依代碼與實際運行驗證**，不採信 MD 宣稱。
-> 離線模擬：無雲端金鑰、無 ollama、`deployment.mode=local`。
+> 日期：2026-08-24方法：**依代碼與實際運行驗證**，不採信 MD 宣稱。離線模擬：無雲端金鑰、無 ollama、`deployment.mode=local`。
 
 ---
 
@@ -29,48 +27,51 @@ POST /chat/* 或 WS chat_message
  11. 事後: 因果學習/意圖回饋/情緒迴饋 → 回應格式化+存 session
 ```
 
-**重複處理**：同一訊息被分類 2-3 次（ExecutionGate / ModelBus / Agent）；兩套並行歷史儲存（session.messages vs WS `_session_history`）。
+**重複處理**：同一訊息被分類 2-3 次（ExecutionGate / ModelBus /
+Agent）；兩套並行歷史儲存（session.messages vs WS `_session_history`）。
 
 ---
 
 ## 2. 離線智能實測評級（不用 LLM）
 
-| 子系統 | 實測 | 評級 |
-|---|---|---|
-| 確定性數學/邏輯 | `123*456=56088` 正確 | ✅ works |
-| curated KB / 語義 QA | Paris/Tokyo 正確 | ✅ works（規模小）|
-| 詞典翻譯 | 「你好呀」→「你好 = hello」 | ⚠️ works 但**過度觸發** |
-| TemplateMatcher 小說閒聊 | cat-singing → 音樂罐頭 conf 0.95 | ❌ broken-ish |
-| HAM 記憶模板 | "Is Paris bigger than London?" → 法國首都快取 | ❌ self-poisoning |
-| 統計核 boolean 層 | 開放問題 → "…please=true" 捏造 | ❌ fabrication |
-| NeuroBlender | 情緒驅動片段合成（唯一離線情緒感知生成器）| ⚠️ 很少被到達 |
+| 子系統                   | 實測                                          | 評級                    |
+| ------------------------ | --------------------------------------------- | ----------------------- |
+| 確定性數學/邏輯          | `123*456=56088` 正確                          | ✅ works                |
+| curated KB / 語義 QA     | Paris/Tokyo 正確                              | ✅ works（規模小）      |
+| 詞典翻譯                 | 「你好呀」→「你好 = hello」                   | ⚠️ works 但**過度觸發** |
+| TemplateMatcher 小說閒聊 | cat-singing → 音樂罐頭 conf 0.95              | ❌ broken-ish           |
+| HAM 記憶模板             | "Is Paris bigger than London?" → 法國首都快取 | ❌ self-poisoning       |
+| 統計核 boolean 層        | 開放問題 → "…please=true" 捏造                | ❌ fabrication          |
+| NeuroBlender             | 情緒驅動片段合成（唯一離線情緒感知生成器）    | ⚠️ 很少被到達           |
 
-**關鍵斷線**：PriorityNegotiator 產出的 GenerationParams 被 UnifiedBackend **完全丟棄**；prompt_builder 的情緒/危機/因果上下文被 `_strip_wrapper` 剝光——8 個 voter 的調變在主離線路徑上**零效果**。
+**關鍵斷線**：PriorityNegotiator 產出的 GenerationParams 被 UnifiedBackend
+**完全丟棄**；prompt_builder 的情緒/危機/因果上下文被 `_strip_wrapper`
+剝光——8 個 voter 的調變在主離線路徑上**零效果**。
 
 ## 3. 自主性實測
 
-| 系統 | 離線狀態 |
-|---|---|
-| MetabolicHeartbeat | ✅ 全活（代謝/CNS/健康投票）|
-| DigitalLifeIntegrator | ✅ 三循環全活 |
-| AutonomousLifeCycle | ⚠️ 活但**分裂腦**（Bug A）|
-| ProactiveInteraction | ✅ 活（ED3N 反射+天氣源）|
-| LLMDecisionLoop | ⚠️ 活但退化為規則 fallback（JSON 解析失敗）|
+| 系統                  | 離線狀態                                    |
+| --------------------- | ------------------------------------------- |
+| MetabolicHeartbeat    | ✅ 全活（代謝/CNS/健康投票）                |
+| DigitalLifeIntegrator | ✅ 三循環全活                               |
+| AutonomousLifeCycle   | ⚠️ 活但**分裂腦**（Bug A）                  |
+| ProactiveInteraction  | ✅ 活（ED3N 反射+天氣源）                   |
+| LLMDecisionLoop       | ⚠️ 活但退化為規則 fallback（JSON 解析失敗） |
 
 ## 4. Bug 清單與修復分級
 
-| # | Bug | 證據 | 級別 | 修法 |
-|---|---|---|---|---|
-| A | lifecycle 分裂腦：lifespan 與 DLI 各建一份，chat 讀到休眠份 | lifespan.py:353 vs dli.py:448 | HIGH | 統一走 shared factory |
-| B | lifecycle save_state 無呼叫者→持久化死 | alc.py:1113 | HIGH | shutdown hook 接上 |
-| C | DynamicThresholdManager 永不可達（INITIALIZING 直跳 AWAKENING）| dli.py:747 vs :457 | MED | initialize 中補呼叫 |
-| D | 空訊息 → HTTP 500 | chat_routes.py:412 | HIGH | 改 400 + 友善訊息 |
-| E | ≤10 字元一律當翻譯 → 問候被劫持 | knowledge_pipeline.py:292 | HIGH | 加意圖判別（非單詞/含問句特徵不譯）|
-| F | warm-up race：KP 需 entry≥100 但 ED3N 背景載入 | chat_service.py:215 | MED | KP 未就緒時跳過 dict 路由 |
-| G | boolean 層對任意問句捏造 "=true/false" | unified_engine.py:189 | HIGH | 只在偵測到命題結構時走 boolean |
-| H | HAM 自毒：conf≥0.5 即存模板（含捏造答案）| router.py:1741 | HIGH | 拒絕存 route=statistical-core 且 conf<0.7；提供清除 |
-| I | fallback 死層（ed3n/garden tier、neural bridge）| router.py:1266,1741 | MED | 移除死分支 |
-| L/M | sessions get/set 競態、WS 雙歷史 | chat_routes.py:666 | LOW | 本次不動（併發重構另案）|
+| #   | Bug                                                             | 證據                          | 級別 | 修法                                                |
+| --- | --------------------------------------------------------------- | ----------------------------- | ---- | --------------------------------------------------- |
+| A   | lifecycle 分裂腦：lifespan 與 DLI 各建一份，chat 讀到休眠份     | lifespan.py:353 vs dli.py:448 | HIGH | 統一走 shared factory                               |
+| B   | lifecycle save_state 無呼叫者→持久化死                          | alc.py:1113                   | HIGH | shutdown hook 接上                                  |
+| C   | DynamicThresholdManager 永不可達（INITIALIZING 直跳 AWAKENING） | dli.py:747 vs :457            | MED  | initialize 中補呼叫                                 |
+| D   | 空訊息 → HTTP 500                                               | chat_routes.py:412            | HIGH | 改 400 + 友善訊息                                   |
+| E   | ≤10 字元一律當翻譯 → 問候被劫持                                 | knowledge_pipeline.py:292     | HIGH | 加意圖判別（非單詞/含問句特徵不譯）                 |
+| F   | warm-up race：KP 需 entry≥100 但 ED3N 背景載入                  | chat_service.py:215           | MED  | KP 未就緒時跳過 dict 路由                           |
+| G   | boolean 層對任意問句捏造 "=true/false"                          | unified_engine.py:189         | HIGH | 只在偵測到命題結構時走 boolean                      |
+| H   | HAM 自毒：conf≥0.5 即存模板（含捏造答案）                       | router.py:1741                | HIGH | 拒絕存 route=statistical-core 且 conf<0.7；提供清除 |
+| I   | fallback 死層（ed3n/garden tier、neural bridge）                | router.py:1266,1741           | MED  | 移除死分支                                          |
+| L/M | sessions get/set 競態、WS 雙歷史                                | chat_routes.py:666            | LOW  | 本次不動（併發重構另案）                            |
 
 ## 5. 修復後目標
 
@@ -84,29 +85,29 @@ POST /chat/* 或 WS chat_message
 
 ## 6. 修復結果（2026-08-24，全部實測）
 
-| Bug | 狀態 | 驗證 |
-|---|---|---|
-| D 空訊息 500 | ✅ 改 400 + detail | chat_routes.py:1522 |
-| E 詞典劫持 | ✅ 問候/問句/句子排除；`你好呀`→False, `dog`→True | _detect_dictionary_query 實測 |
-| G boolean 捏造 | ✅ 命題閘（連接詞+中文標記 8 種）+ 答案投票需疑問形 | `please explain…`=none、nor 命題正常 |
-| H HAM 自毒 | ✅ stat-core/none 不存模板 + 清除 2 筆毒模板 | router.py gate |
-| A lifecycle 分裂腦 | ✅ DLI 重用 lifespan singleton | dli.py initialize |
-| B save_state 死 | ✅ DLI shutdown 接上，存 checkpoints/lifecycle/ | data_config 路徑 |
-| I 死 bus 建構 | ✅ ModelBus ED3N/GARDEN 直構移除 | router.py |
-| N **WS 對話全死**（深查發現）| main.py 自帶無 chat_message 的迷你 /ws 處理器，遮蔽了完整版 websocket_handler；且 handshake 走 SessionManager.register 不填 `_sessions_by_ws` → send_personal_message 靜默失敗 | ✅ main.py 委派 websocket_handler + 握手後補映射；真實 uvicorn 端到端驗證（handshake→chat→response）|
+| Bug                           | 狀態                                                                                                                                                                           | 驗證                                                                                                 |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| D 空訊息 500                  | ✅ 改 400 + detail                                                                                                                                                             | chat_routes.py:1522                                                                                  |
+| E 詞典劫持                    | ✅ 問候/問句/句子排除；`你好呀`→False, `dog`→True                                                                                                                              | _detect_dictionary_query 實測                                                                        |
+| G boolean 捏造                | ✅ 命題閘（連接詞+中文標記 8 種）+ 答案投票需疑問形                                                                                                                            | `please explain…`=none、nor 命題正常                                                                 |
+| H HAM 自毒                    | ✅ stat-core/none 不存模板 + 清除 2 筆毒模板                                                                                                                                   | router.py gate                                                                                       |
+| A lifecycle 分裂腦            | ✅ DLI 重用 lifespan singleton                                                                                                                                                 | dli.py initialize                                                                                    |
+| B save_state 死               | ✅ DLI shutdown 接上，存 checkpoints/lifecycle/                                                                                                                                | data_config 路徑                                                                                     |
+| I 死 bus 建構                 | ✅ ModelBus ED3N/GARDEN 直構移除                                                                                                                                               | router.py                                                                                            |
+| N **WS 對話全死**（深查發現） | main.py 自帶無 chat_message 的迷你 /ws 處理器，遮蔽了完整版 websocket_handler；且 handshake 走 SessionManager.register 不填 `_sessions_by_ws` → send_personal_message 靜默失敗 | ✅ main.py 委派 websocket_handler + 握手後補映射；真實 uvicorn 端到端驗證（handshake→chat→response） |
 
 回歸：unified_engine 34/34 + ed3n routing 12/12 = **46 passed**。
 
 ## 7. 離線智能誠實分級（修復後，無 LLM）
 
-| 能力 | 分級 | 說明 |
-|---|---|---|
-| 確定性數學/邏輯 | A | 精確，含複合閘與中文邏輯 |
-| 事實 QA（KB 內） | B+ | SLS 檢索+自然包裝+多輪指代；KB 外誠實拒答 |
-| 情緒/自主性運算 | B | 全棧運算正常但對輸出文本影響仍弱（NeuroBlender 少達）|
-| 小說閒聊生成 | C | 格式合法、UTF-8 保證、局部連貫、無語義——n-gram 架構本質 |
-| 開放域 WHY/HOW | F → **B+（含 LLM 時）** | `local+llm` 模式下開放域問題自動委派最佳 LLM（攜帶 unified 上下文，metadata.fusion='unified+llm'）；數學/邏輯永不外流。無 LLM 時維持誠實拒答 |
+| 能力             | 分級                    | 說明                                                                                                                                         |
+| ---------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| 確定性數學/邏輯  | A                       | 精確，含複合閘與中文邏輯                                                                                                                     |
+| 事實 QA（KB 內） | B+                      | SLS 檢索+自然包裝+多輪指代；KB 外誠實拒答                                                                                                    |
+| 情緒/自主性運算  | B                       | 全棧運算正常但對輸出文本影響仍弱（NeuroBlender 少達）                                                                                        |
+| 小說閒聊生成     | C                       | 格式合法、UTF-8 保證、局部連貫、無語義——n-gram 架構本質                                                                                      |
+| 開放域 WHY/HOW   | F → **B+（含 LLM 時）** | `local+llm` 模式下開放域問題自動委派最佳 LLM（攜帶 unified 上下文，metadata.fusion='unified+llm'）；數學/邏輯永不外流。無 LLM 時維持誠實拒答 |
 
-**結論**：離線不再「亂答」——每個回答都可歸因到明確路由層，未知即誠實拒答。
-「快」（2.1M cached calls/s）、「省」（386MiB）、「穩」（46 測試）保持；
-「強」的邊界如實標註。
+**結論**：離線不再「亂答」——每個回答都可歸因到明確路由層，未知即誠實拒答。「快」（2.1M
+cached
+calls/s）、「省」（386MiB）、「穩」（46 測試）保持；「強」的邊界如實標註。

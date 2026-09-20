@@ -62,13 +62,7 @@
       "type": "string"
     }
   },
-  "required": [
-    "id",
-    "statement_type",
-    "source_ai_id",
-    "timestamp_created",
-    "confidence_score"
-  ],
+  "required": ["id", "statement_type", "source_ai_id", "timestamp_created", "confidence_score"],
   "$defs": {
     "HSPFactStatementStructured": {
       "type": "object",

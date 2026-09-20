@@ -2,7 +2,10 @@
 
 ## Overview
 
-The Three-Layer Visual Architecture is a learnable image representation and generation system for Angela AI. Instead of fixed geometric primitives, it uses **PCA components as learned primitives** to capture the geometric essence of images.
+The Three-Layer Visual Architecture is a learnable image representation and
+generation system for Angela AI. Instead of fixed geometric primitives, it uses
+**PCA components as learned primitives** to capture the geometric essence of
+images.
 
 ### Architecture
 
@@ -19,6 +22,7 @@ Enhanced Image (sharp, structured)
 ### Key Innovation
 
 PCA components serve as **learned visual primitives**:
+
 - Each component captures a different pattern in the data
 - More meaningful than fixed geometric types (points, lines, planes)
 - Captures the "geometric essence" of each class
@@ -26,13 +30,13 @@ PCA components serve as **learned visual primitives**:
 
 ## Performance
 
-| Metric | Geometric Primitives (263-dim) | Three-Layer (128-dim) |
-|--------|-------------------------------|------------------------|
-| MSE | 0.04 | **0.009** |
-| Visual Quality | Gray circles | **Colored, structured** |
-| Training Time | 15 min | **2.5 min** |
-| Class Centers | Gray blur | **Distinguishable features** |
-| Interpolation | Meaningless | **Smooth transition** |
+| Metric         | Geometric Primitives (263-dim) | Three-Layer (128-dim)        |
+| -------------- | ------------------------------ | ---------------------------- |
+| MSE            | 0.04                           | **0.009**                    |
+| Visual Quality | Gray circles                   | **Colored, structured**      |
+| Training Time  | 15 min                         | **2.5 min**                  |
+| Class Centers  | Gray blur                      | **Distinguishable features** |
+| Interpolation  | Meaningless                    | **Smooth transition**        |
 
 ## Usage
 
@@ -91,6 +95,7 @@ for i, comp in enumerate(components):
 ## Training Data
 
 The model works best with:
+
 - **Images**: 32×32 RGB (CIFAR-10 style), flattened to 3072-dim vectors
 - **Labels**: Integer class indices (0-9 for CIFAR-10)
 - **Minimum**: ~50 images per class for meaningful results
@@ -112,12 +117,12 @@ This transforms blurry reconstructions into sharper, more recognizable images.
 
 ## CPU Feasibility
 
-| Configuration | Training Time | Inference | Quality |
-|---------------|---------------|-----------|---------|
-| 128-dim + small decoder | 2.5 min | instant | Blurry |
-| 256-dim + medium decoder | ~5 min | instant | Better |
-| 512-dim + large decoder | ~10 min | instant | Sharp |
-| 3072-dim + full decoder | ~20 min | instant | Near-perfect |
+| Configuration            | Training Time | Inference | Quality      |
+| ------------------------ | ------------- | --------- | ------------ |
+| 128-dim + small decoder  | 2.5 min       | instant   | Blurry       |
+| 256-dim + medium decoder | ~5 min        | instant   | Better       |
+| 512-dim + large decoder  | ~10 min       | instant   | Sharp        |
+| 3072-dim + full decoder  | ~20 min       | instant   | Near-perfect |
 
 **All configurations run on CPU. No GPU required.**
 
@@ -158,7 +163,8 @@ Display to user
 2. **More Classes**: Train on larger datasets (ImageNet, etc.)
 3. **Better Decoder**: Deeper networks, perceptual loss
 4. **VAE Extension**: Add KL regularization for smoother latent space
-5. **Diffusion Integration**: Combine with diffusion models for high-quality generation
+5. **Diffusion Integration**: Combine with diffusion models for high-quality
+   generation
 
 ## Files
 
@@ -177,6 +183,7 @@ Display to user
 Reconstruct an image through the bottleneck.
 
 **Request:**
+
 ```json
 {
   "image_base64": "<base64-encoded PNG>",
@@ -185,6 +192,7 @@ Reconstruct an image through the bottleneck.
 ```
 
 **Response:**
+
 ```json
 {
   "image_base64": "<reconstructed image>",
@@ -203,6 +211,7 @@ Reconstruct an image through the bottleneck.
 Interpolate between two class centers.
 
 **Request:**
+
 ```json
 {
   "class_a": 0,
@@ -213,6 +222,7 @@ Interpolate between two class centers.
 ```
 
 **Response:**
+
 ```json
 {
   "images": ["<base64>", "..."],
@@ -232,6 +242,7 @@ Interpolate between two class centers.
 Check if image generation is available.
 
 **Response:**
+
 ```json
 {
   "gvv_available": true,

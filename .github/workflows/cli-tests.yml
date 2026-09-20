@@ -3,11 +3,11 @@ name: CLI Tests
 on:
   push:
     paths:
-      - 'packages/cli/**'
-      - '.github/workflows/cli-tests.yml'
+      - "packages/cli/**"
+      - ".github/workflows/cli-tests.yml"
   pull_request:
     paths:
-      - 'packages/cli/**'
+      - "packages/cli/**"
 
 jobs:
   test:
@@ -19,7 +19,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: '3.11'
+          python-version: "3.11"
       - name: Install CLI (editable)
         run: |
           python -m pip install --upgrade pip

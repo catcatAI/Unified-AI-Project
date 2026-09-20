@@ -11,20 +11,22 @@
 ### 1.1 PetManager API
 
 **实际API（10个公共方法）**:
-| 方法名 | 类型 | 状态 |
-|--------|------|------|
-| add_action | 同步 | ✅ 存在 |
-| apply_resource_decay | 异步 | ✅ 存在 |
-| check_survival_needs | 异步 | ✅ 存在 |
-| get_current_state | 同步 | ✅ 存在 |
-| get_pending_actions | 同步 | ✅ 存在 |
-| handle_interaction | 异步 | ✅ 存在 |
-| set_economy_manager | 同步 | ✅ 存在 |
+
+| 方法名                     | 类型 | 状态    |
+| -------------------------- | ---- | ------- |
+| add_action                 | 同步 | ✅ 存在 |
+| apply_resource_decay       | 异步 | ✅ 存在 |
+| check_survival_needs       | 异步 | ✅ 存在 |
+| get_current_state          | 同步 | ✅ 存在 |
+| get_pending_actions        | 同步 | ✅ 存在 |
+| handle_interaction         | 异步 | ✅ 存在 |
+| set_economy_manager        | 同步 | ✅ 存在 |
 | sync_with_biological_state | 同步 | ✅ 存在 |
-| update_behavior | 同步 | ✅ 存在 |
-| update_position | 同步 | ✅ 存在 |
+| update_behavior            | 同步 | ✅ 存在 |
+| update_position            | 同步 | ✅ 存在 |
 
 **公共属性（13个）**:
+
 - action_queue: list
 - behavior_rules: dict
 - biological_integrator: NoneType
@@ -39,11 +41,13 @@
 - survival_threshold: float
 
 **测试文件期望但不存在的API**:
+
 - `_update_state_over_time()` - 私有方法，实际不存在
 
 ### 1.2 AgentManager API
 
 **实际API（19个公共方法）**:
+
 - add_agent (async)
 - auto_load_agents (async)
 - check_agent_health
@@ -67,18 +71,19 @@
 
 ### 1.3 其他核心组件API
 
-| 组件 | 公共方法数 | 状态 |
-|------|-----------|------|
-| UnifiedKnowledgeGraph | 4 | ✅ 稳定 |
-| AutonomousEvolutionEngine | 7 | ✅ 稳定 |
-| CreativeWritingAgent | 7 | ✅ 稳定 |
-| WebSearchAgent | 7 | ✅ 稳定 |
+| 组件                      | 公共方法数 | 状态    |
+| ------------------------- | ---------- | ------- |
+| UnifiedKnowledgeGraph     | 4          | ✅ 稳定 |
+| AutonomousEvolutionEngine | 7          | ✅ 稳定 |
+| CreativeWritingAgent      | 7          | ✅ 稳定 |
+| WebSearchAgent            | 7          | ✅ 稳定 |
 
 ## 2. 测试文件问题分析
 
 ### 2.1 tests/pet/test_pet_manager.py
 
 **问题总结**:
+
 1. **语法错误** (已修复):
    - `unittest.TestCase()` → `unittest.TestCase`
    - `0.7()` → `0.7`
@@ -108,6 +113,7 @@
 ### 3.1 测试生成问题
 
 测试文件似乎是自动生成的，但生成时：
+
 1. 基于旧版本的API文档
 2. 没有考虑异步方法
 3. 没有验证API的实际存在性
@@ -115,6 +121,7 @@
 ### 3.2 API演进问题
 
 项目从 v6.0 演进到 v6.2.0 时：
+
 1. 某些方法被重构或移除
 2. 同步方法改为异步方法
 3. 新增了一些方法但测试未更新
@@ -122,6 +129,7 @@
 ### 3.3 文档不同步
 
 STRUCTURED_FIX_TASK_CHAIN_v6.2.0.md 中的任务可能：
+
 1. 基于旧版本API
 2. 没有反映实际的API变化
 3. 需要更新以匹配当前状态
@@ -165,14 +173,14 @@ STRUCTURED_FIX_TASK_CHAIN_v6.2.0.md 中的任务可能：
 
 ## 5. 优先级任务
 
-| 任务 | 优先级 | 预计时间 | 依赖 |
-|------|--------|---------|------|
-| 修复PetManager测试中的异步调用 | P0 | 1小时 | 无 |
-| 移除/重构不存在方法的测试 | P0 | 2小时 | 无 |
-| 验证所有核心API的一致性 | P1 | 3小时 | 无 |
-| 更新API文档 | P1 | 2小时 | API验证 |
-| 创建API兼容性检查工具 | P2 | 4小时 | 文档更新 |
-| 重构测试框架 | P2 | 1天 | 工具开发 |
+| 任务                           | 优先级 | 预计时间 | 依赖     |
+| ------------------------------ | ------ | -------- | -------- |
+| 修复PetManager测试中的异步调用 | P0     | 1小时    | 无       |
+| 移除/重构不存在方法的测试      | P0     | 2小时    | 无       |
+| 验证所有核心API的一致性        | P1     | 3小时    | 无       |
+| 更新API文档                    | P1     | 2小时    | API验证  |
+| 创建API兼容性检查工具          | P2     | 4小时    | 文档更新 |
+| 重构测试框架                   | P2     | 1天      | 工具开发 |
 
 ## 6. 下一步行动
 

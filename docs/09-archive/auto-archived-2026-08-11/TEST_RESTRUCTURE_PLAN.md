@@ -1,4 +1,5 @@
 # 測試重構與建立計畫
+
 ## Plan B: Test Restructuring & Creation
 
 ### 架構原則
@@ -21,11 +22,11 @@ integration/  →          tests/integration/   (可跨層，但須註明)
 
 每個層級的測試分為三種：
 
-| 層級 | 範圍 | 執行時間 | 覆蓋要求 |
-|------|------|---------|---------|
-| **Unit** | 單一 class/function | <100ms | 80%+ |
-| **Integration** | 跨 2-3 層協作 | <5s | 20%+ |
-| **E2E** | 完整 flow | <30s | 5%+ |
+| 層級            | 範圍                | 執行時間 | 覆蓋要求 |
+| --------------- | ------------------- | -------- | -------- |
+| **Unit**        | 單一 class/function | <100ms   | 80%+     |
+| **Integration** | 跨 2-3 層協作       | <5s      | 20%+     |
+| **E2E**         | 完整 flow           | <30s     | 5%+      |
 
 ### 測試優先級
 
@@ -46,27 +47,27 @@ Priority 8: integration/       ← Cross-layer flows
 
 ### ✅ 已完成 (審計驗證 — 實際測試數 vs MD 舊值)
 
-| Phase | 內容 | 狀態 |
-|-------|------|------|
-| **Phase 1: Core** | ServiceRegistry (9 tests)、StatePersistence protocol (7 tests)、StateMatrixAdapter (25 tests)、ExecutionMonitor (9 tests)、EtaAxis (18 tests) | ✅ **68 tests** |
-| **Phase 2: Shared** | SecurityMiddleware (4 tests)、StandardImports 驗證、wiring | ✅ **4 tests** |
-| **Phase 3: Services** | wiring (4 tests)、main_api_server DI (7 tests)、ChatService (16 tests)、VisionService (17 tests)、AudioService (15 tests)、TactileService (11 tests)、AIEditor (21 tests) | ✅ **95 tests** |
-| **Phase 4: AI** | Agents (65 tests)、Memory (84 tests)、Dialogue+Alignment (153 tests)、Learning (71 tests)、Lifecycle (162 tests) | ✅ **535 tests** |
-| **Phase 5: API** | Router (14 tests)、Endpoints (24 tests)、HealthCheck (4 tests) | ✅ **42 tests** |
-| **Phase 6: Migration** | 38 個 unittest.TestCase 全部遷移至 pytest 或移除 | ✅ |
-| **Phase 7: Integration** | Server import (2 tests)、Wiring (4 tests)、Middleware (7 tests) | ✅ **13 tests** |
-| **Phase 8: AI Migration** | 從 `tests/core_ai/` 搬遷 8 個獨特模組至 `tests/ai/` | ✅ **~20 tests** |
-| **Phase 9: Refactor Migration** | 從 `tests/refactor/` 搬遷 24 個檔案至 `tests/core/` | ✅ **24 files** |
-| **Phase 10: Quality Audit** | 審計核心/AI 15 files, Services/API 24 files (70 WEAK→STRONG), SMOKE→REAL 升級 8 subdirs (7→50 tests) | ✅ **All upgraded** |
-| **Phase 11: Legacy Migration** | 40 個 root-level 測試搬遷至正確層級 + import path 修復 | ✅ **40 files** |
-| **Phase 12: Subdirectory Cleanup** | 刪除 6 legacy stub dirs, 合併 agents/ → ai/agents/, 刪除 integrations/, 清除 8 hsp stubs, 搬遷 62 utility scripts → scripts/ | ✅ **Complete** |
-| **Phase 13: Core + Meta Tests** | `ai/meta/` 48 tests (3 modules). `core/` 222 tests across 13 modules | ✅ **270 tests** |
-| **Architecture audit** | 0 層級違規 (架構隔離正確執行) — lazy imports only | ✅ |
-| **Bug fix audit** | 6/7 source bugs verified in code; 1 (health_check_service imports) only test-mocked | ✅ **6 fixed** |
-| **Test quality audit** | 8 files spot-checked: 62–100% REAL, avg ~90%, 0 STUB | ✅ |
-| **File structure audit** | Directory tree corrected from audit (4 dirs→files, all counts updated) | ✅ |
-| **CI Integration** | `.github/workflows/ci.yml` 已更新 (py3.11/3.14, 含新測項) | ✅ |
-| **Totals** | **~1300+ tests** (審計實際總計) across 30+ directories | **coverage 16.34%** |
+| Phase                              | 內容                                                                                                                                                                      | 狀態                |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| **Phase 1: Core**                  | ServiceRegistry (9 tests)、StatePersistence protocol (7 tests)、StateMatrixAdapter (25 tests)、ExecutionMonitor (9 tests)、EtaAxis (18 tests)                             | ✅ **68 tests**     |
+| **Phase 2: Shared**                | SecurityMiddleware (4 tests)、StandardImports 驗證、wiring                                                                                                                | ✅ **4 tests**      |
+| **Phase 3: Services**              | wiring (4 tests)、main_api_server DI (7 tests)、ChatService (16 tests)、VisionService (17 tests)、AudioService (15 tests)、TactileService (11 tests)、AIEditor (21 tests) | ✅ **95 tests**     |
+| **Phase 4: AI**                    | Agents (65 tests)、Memory (84 tests)、Dialogue+Alignment (153 tests)、Learning (71 tests)、Lifecycle (162 tests)                                                          | ✅ **535 tests**    |
+| **Phase 5: API**                   | Router (14 tests)、Endpoints (24 tests)、HealthCheck (4 tests)                                                                                                            | ✅ **42 tests**     |
+| **Phase 6: Migration**             | 38 個 unittest.TestCase 全部遷移至 pytest 或移除                                                                                                                          | ✅                  |
+| **Phase 7: Integration**           | Server import (2 tests)、Wiring (4 tests)、Middleware (7 tests)                                                                                                           | ✅ **13 tests**     |
+| **Phase 8: AI Migration**          | 從 `tests/core_ai/` 搬遷 8 個獨特模組至 `tests/ai/`                                                                                                                       | ✅ **~20 tests**    |
+| **Phase 9: Refactor Migration**    | 從 `tests/refactor/` 搬遷 24 個檔案至 `tests/core/`                                                                                                                       | ✅ **24 files**     |
+| **Phase 10: Quality Audit**        | 審計核心/AI 15 files, Services/API 24 files (70 WEAK→STRONG), SMOKE→REAL 升級 8 subdirs (7→50 tests)                                                                      | ✅ **All upgraded** |
+| **Phase 11: Legacy Migration**     | 40 個 root-level 測試搬遷至正確層級 + import path 修復                                                                                                                    | ✅ **40 files**     |
+| **Phase 12: Subdirectory Cleanup** | 刪除 6 legacy stub dirs, 合併 agents/ → ai/agents/, 刪除 integrations/, 清除 8 hsp stubs, 搬遷 62 utility scripts → scripts/                                              | ✅ **Complete**     |
+| **Phase 13: Core + Meta Tests**    | `ai/meta/` 48 tests (3 modules). `core/` 222 tests across 13 modules                                                                                                      | ✅ **270 tests**    |
+| **Architecture audit**             | 0 層級違規 (架構隔離正確執行) — lazy imports only                                                                                                                         | ✅                  |
+| **Bug fix audit**                  | 6/7 source bugs verified in code; 1 (health_check_service imports) only test-mocked                                                                                       | ✅ **6 fixed**      |
+| **Test quality audit**             | 8 files spot-checked: 62–100% REAL, avg ~90%, 0 STUB                                                                                                                      | ✅                  |
+| **File structure audit**           | Directory tree corrected from audit (4 dirs→files, all counts updated)                                                                                                    | ✅                  |
+| **CI Integration**                 | `.github/workflows/ci.yml` 已更新 (py3.11/3.14, 含新測項)                                                                                                                 | ✅                  |
+| **Totals**                         | **~1300+ tests** (審計實際總計) across 30+ directories                                                                                                                    | **coverage 16.34%** |
 
 ### 當前測試目錄結構 (Phase 13 清理後 — 審計實際數據)
 
@@ -113,25 +114,27 @@ tests/
 └── __init__.py
 ```
 
-**Notice**: `execution/`, `ops/`, `rag/`, `crisis/` are FILES (`test_execution.py`, etc.) under `tests/ai/`, not subdirectories — corrected from earlier MD versions.
+**Notice**: `execution/`, `ops/`, `rag/`, `crisis/` are FILES
+(`test_execution.py`, etc.) under `tests/ai/`, not subdirectories — corrected
+from earlier MD versions.
 
 ### 剩餘待補層級 (審計更新)
 
-| 待補層級 | 檔案數 | 優先度 | 狀態 |
-|---------|--------|--------|------|
-| `tests/core/` (剩餘) | ~50 | Medium | ⏳ 部分完成 (30/80 modules 有測試, 校驗後總數 316) |
-| `health_check_service.py` 源碼 import | 2 broken imports | Low | ⚠️ 只在測試 mock, 源碼未修 |
+| 待補層級                              | 檔案數           | 優先度 | 狀態                                               |
+| ------------------------------------- | ---------------- | ------ | -------------------------------------------------- |
+| `tests/core/` (剩餘)                  | ~50              | Medium | ⏳ 部分完成 (30/80 modules 有測試, 校驗後總數 316) |
+| `health_check_service.py` 源碼 import | 2 broken imports | Low    | ⚠️ 只在測試 mock, 源碼未修                         |
 
 ### 品質審計摘要 (Phase 13 最終審計)
 
-| 審計 | 結果 | 行動 |
-|------|------|------|
-| **Architecture**: 層級隔離檢查 ai/ → services/ | 0 違規 ✅ | 4 個 lazy imports (在 method 內) 可接受 |
-| **Bug Fix Correctness**: 7 個聲稱的修復審計 | 6/7 verified in source ✅, 1 only test-mocked ⚠️ | `health_check_service.py` imports 只在測試層 mock，源碼問題未修 |
-| **Test Quality**: 8 檔案抽樣審計 | REAL 62–100%, avg ~90%, 0 STUB ✅ | 僅 9% weak (`is None` for edge cases) |
-| **File Structure**: MD 目錄 vs 實際 | 4 dirs→files, 多數 count 錯誤 ⚠️ | 全部修正：execution/ops/rag/crisis 是檔案非目錄 |
+| 審計                                            | 結果                                                                               | 行動                                                                        |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| **Architecture**: 層級隔離檢查 ai/ → services/  | 0 違規 ✅                                                                          | 4 個 lazy imports (在 method 內) 可接受                                     |
+| **Bug Fix Correctness**: 7 個聲稱的修復審計     | 6/7 verified in source ✅, 1 only test-mocked ⚠️                                   | `health_check_service.py` imports 只在測試層 mock，源碼問題未修             |
+| **Test Quality**: 8 檔案抽樣審計                | REAL 62–100%, avg ~90%, 0 STUB ✅                                                  | 僅 9% weak (`is None` for edge cases)                                       |
+| **File Structure**: MD 目錄 vs 實際             | 4 dirs→files, 多數 count 錯誤 ⚠️                                                   | 全部修正：execution/ops/rag/crisis 是檔案非目錄                             |
 | **Source bug 6** (health_check_service imports) | **NOT FIXED in source** — `ham_memory_manager.py` 與 `multi_llm_service.py` 不存在 | 僅在測試層 mock 繞過，源碼 import 仍會拋 ImportError (雖被 try/except 捕捉) |
-| **Source bug 7** (full_health_check return) | **NOT_A_BUG** — 函數正確回傳 bool | 測試的 mock 是冗餘的 |
+| **Source bug 7** (full_health_check return)     | **NOT_A_BUG** — 函數正確回傳 bool                                                  | 測試的 mock 是冗餘的                                                        |
 
 ---
 
@@ -139,29 +142,29 @@ tests/
 
 在 Phase 8 驗收前，測試必須滿足：
 
-| 指標 | 最低門檻 | 當前 |
-|------|---------|------|
-| 語法正確 | 100% | ✅ 100% |
-| import 不報錯 | 100% | ✅ 100% |
-| arch violation | 0 | ✅ 0 |
-| coverage | >15% | 🟡 **16.34%** |
-| stub files | 0 | ✅ 0 |
-| CI pass rate | 95%+ | ❓ 需 CI 執行驗證 |
+| 指標           | 最低門檻 | 當前              |
+| -------------- | -------- | ----------------- |
+| 語法正確       | 100%     | ✅ 100%           |
+| import 不報錯  | 100%     | ✅ 100%           |
+| arch violation | 0        | ✅ 0              |
+| coverage       | >15%     | 🟡 **16.34%**     |
+| stub files     | 0        | ✅ 0              |
+| CI pass rate   | 95%+     | ❓ 需 CI 執行驗證 |
 
 ---
 
 ### 執行時間估計
 
-| Phase | 檔案數 | 估計人時 | 說明 |
-|-------|--------|---------|------|
-| 1: Core | ~15 | 8h | StateMatrix + HSP + ServiceRegistry |
-| 2: Shared | ~5 | 2h | SecurityMiddleware + types |
-| 3: Services | ~10 | 6h | wiring + DI + main_api_server |
-| 4: AI | ~8 | 4h | isolation check + agents |
-| 5: Models | ~3 | 1h | Pydantic roundtrip |
-| 6: Migration | ~38 | 12h | unittest→pytest (批次處理) |
-| 7: Integration | ~5 | 4h | cross-layer contracts |
-| **Total** | **~84** | **~37h** | ~5 工作天 |
+| Phase          | 檔案數  | 估計人時 | 說明                                |
+| -------------- | ------- | -------- | ----------------------------------- |
+| 1: Core        | ~15     | 8h       | StateMatrix + HSP + ServiceRegistry |
+| 2: Shared      | ~5      | 2h       | SecurityMiddleware + types          |
+| 3: Services    | ~10     | 6h       | wiring + DI + main_api_server       |
+| 4: AI          | ~8      | 4h       | isolation check + agents            |
+| 5: Models      | ~3      | 1h       | Pydantic roundtrip                  |
+| 6: Migration   | ~38     | 12h      | unittest→pytest (批次處理)          |
+| 7: Integration | ~5      | 4h       | cross-layer contracts               |
+| **Total**      | **~84** | **~37h** | ~5 工作天                           |
 
 ### Conftest 分層架構
 
@@ -178,6 +181,7 @@ tests/
 ```
 
 Fixture scope 選用原則：
+
 - `session` — 昂貴資源（DB、LLM client）— 全域一次
 - `module` — 中等資源（FastAPI TestClient）— 每 module 一次
 - `function` — 輕量 mock — 每次測試
@@ -199,9 +203,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: '3.11'
       - run: pip install -e ".[dev]"
-      - run: pytest tests/ --cov=apps/backend/src --cov-report=term --cov-report=html -m "not slow and not online"
+      - run:
+          pytest tests/ --cov=apps/backend/src --cov-report=term
+          --cov-report=html -m "not slow and not online"
       - run: flake8 apps/backend/src tests/
 ```
 
@@ -218,12 +224,12 @@ jobs:
 
 ### Phase 12-13 清理一覽
 
-| 操作 | 數量 | 說明 |
-|------|------|------|
-| 🗑 刪除 legacy stub 目錄 | 6 dirs | `creation/`, `economy/`, `evaluation/`, `interfaces/`, `meta/`, `security/` |
-| 🚚 合併 agents/ → ai/agents/ | 6 files | `test_audio_processing_agent.py`, `test_creative_writing_agent.py`, `test_data_analysis_agent.py`, `test_imports.py`, `test_knowledge_graph_agent.py`, `test_simple.py` |
-| 🗑 刪除 agents/ duplicates | 2 files | `test_agent_manager.py`, `test_base_agent.py` (已在 ai/agents/ 有更新版) |
-| 🗑 刪除 integrations/ | 6 files | 全部為 stub, 無獨特內容 |
-| 🗑 清除 hsp stubs | 8 files | `test_basic.py`, `test_debug.py`, `test_hsp_connector.py`, 等 |
-| 🚚 utility scripts → scripts/ | 62 files | runner/verify/check/generate/report scripts |
-| 🧹 根目錄剩餘 | 2 files | 僅 `conftest.py` + `__init__.py` |
+| 操作                          | 數量     | 說明                                                                                                                                                                    |
+| ----------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 🗑 刪除 legacy stub 目錄       | 6 dirs   | `creation/`, `economy/`, `evaluation/`, `interfaces/`, `meta/`, `security/`                                                                                             |
+| 🚚 合併 agents/ → ai/agents/  | 6 files  | `test_audio_processing_agent.py`, `test_creative_writing_agent.py`, `test_data_analysis_agent.py`, `test_imports.py`, `test_knowledge_graph_agent.py`, `test_simple.py` |
+| 🗑 刪除 agents/ duplicates     | 2 files  | `test_agent_manager.py`, `test_base_agent.py` (已在 ai/agents/ 有更新版)                                                                                                |
+| 🗑 刪除 integrations/          | 6 files  | 全部為 stub, 無獨特內容                                                                                                                                                 |
+| 🗑 清除 hsp stubs              | 8 files  | `test_basic.py`, `test_debug.py`, `test_hsp_connector.py`, 等                                                                                                           |
+| 🚚 utility scripts → scripts/ | 62 files | runner/verify/check/generate/report scripts                                                                                                                             |
+| 🧹 根目錄剩餘                 | 2 files  | 僅 `conftest.py` + `__init__.py`                                                                                                                                        |

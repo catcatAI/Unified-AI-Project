@@ -1,11 +1,10 @@
 # GARDEN Training Deep-Check: Analysis, Fixes & Optimizations
 
-> **Version**: 7.5.0-dev
-> **Date**: 2026-08-16
-> **Scope**: Full deep-check of the ED3N + GARDEN training pipeline — real-bug
-> fixes, learning-depth analysis (L/V vs dataset scaling), and training-speed
-> optimizations that cut sample-training wall time by **59%** and let the full
-> GARDEN run complete on a 7GB-RAM machine without OOM.
+> **Version**: 7.5.0-dev **Date**: 2026-08-16 **Scope**: Full deep-check of the
+> ED3N + GARDEN training pipeline — real-bug fixes, learning-depth analysis (L/V
+> vs dataset scaling), and training-speed optimizations that cut sample-training
+> wall time by **59%** and let the full GARDEN run complete on a 7GB-RAM machine
+> without OOM.
 
 ---
 
@@ -18,13 +17,13 @@ the training loop so it is no longer computationally wasteful.
 
 **Key results**
 
-| Metric | Before | After |
-| --- | --- | --- |
-| Sample train (1663 samples, 4 batches) | 526.9 s | 216.2 s (**-59%**) |
-| `hebbian_update` (50-samples, V≈7665) | 22.9 s | 17.4 s (-24%) |
-| Full GARDEN train set | blocked (OOM @ V≈9620) | **complete** (11180 samples, V=9799) |
-| GARDEN tests | — | 313 passed |
-| Backend tests (`apps/backend/tests/`) | OOM kill | 468 passed, 29 skipped, 14 pre-existing fails |
+| Metric                                 | Before                 | After                                         |
+| -------------------------------------- | ---------------------- | --------------------------------------------- |
+| Sample train (1663 samples, 4 batches) | 526.9 s                | 216.2 s (**-59%**)                            |
+| `hebbian_update` (50-samples, V≈7665)  | 22.9 s                 | 17.4 s (-24%)                                 |
+| Full GARDEN train set                  | blocked (OOM @ V≈9620) | **complete** (11180 samples, V=9799)          |
+| GARDEN tests                           | —                      | 313 passed                                    |
+| Backend tests (`apps/backend/tests/`)  | OOM kill               | 468 passed, 29 skipped, 14 pre-existing fails |
 
 ---
 
@@ -40,17 +39,17 @@ the training loop so it is no longer computationally wasteful.
 ### 2.2 Dataset vs L/V ratio
 
 The full train set is 93,831 samples (arithmetic 30,000 + logic 10,000 + alpaca
-53,831 + presets/knowledge/TRPG/secondary). After deterministic-engine
-filtering (Step 3a) and domain deconfliction, GARDEN receives **11,180**
-samples (all non-deterministic math/logic are excluded — they would pollute the
-vocabulary with per-number entries).
+53,831 + presets/knowledge/TRPG/secondary). After deterministic-engine filtering
+(Step 3a) and domain deconfliction, GARDEN receives **11,180** samples (all
+non-deterministic math/logic are excluded — they would pollute the vocabulary
+with per-number entries).
 
-| Milestone | Samples consumed | V (= L) | ΔV per 500 samples |
-| --- | --- | --- | --- |
-| sample run | 1,663 | 3,033 | — |
-| full run | 6,000 | 6,297 | ~1,015 → 384 |
-| full run | 9,500 | ~8,800 | ~380 |
-| full run | 11,180 | **9,799** | ~0 (converged) |
+| Milestone  | Samples consumed | V (= L)   | ΔV per 500 samples |
+| ---------- | ---------------- | --------- | ------------------ |
+| sample run | 1,663            | 3,033     | —                  |
+| full run   | 6,000            | 6,297     | ~1,015 → 384       |
+| full run   | 9,500            | ~8,800    | ~380               |
+| full run   | 11,180           | **9,799** | ~0 (converged)     |
 
 **Ratio**: V / train-samples = 9,799 / 11,180 = **0.876**. Each sample
 introduces <1 new concept on average — the vocabulary converges as repeated
@@ -63,39 +62,41 @@ design goal: "V grows proportionally to unique concepts, not word forms"
 `_W` is pre-allocated with doubling growth (`_grow_matrix`), so the allocated
 size overshoots the live V.
 
-| Point | V (live) | `_W` allocated | utilization |
-| --- | --- | --- | --- |
-| sample (V=3,033) | 3,033 | 8,192² | 37.0% |
-| full final | 9,799 | 11,652² | 84.1% |
+| Point            | V (live) | `_W` allocated | utilization |
+| ---------------- | -------- | -------------- | ----------- |
+| sample (V=3,033) | 3,033    | 8,192²         | 37.0%       |
+| full final       | 9,799    | 11,652²        | 84.1%       |
 
 At V≈6,000 the allocation was 10,752² (~58.6% used, ~290 MB wasted). At the
 final 11,652² allocation 84.1% of the matrix is live — the amortized doubling
 strategy keeps copy cost at O(V²) instead of O(V³), at the price of some
 pre-allocated dead space. `max_vocab` is 51,812 (config), so the matrix will
 never exceed the configured cap; extrapolating the converging curve puts full
-V≈8,000-8,500 for the 11,180-sample set (measured 9,799 is slightly above due
-to longer alpaca-formatted text producing more unique bigrams).
+V≈8,000-8,500 for the 11,180-sample set (measured 9,799 is slightly above due to
+longer alpaca-formatted text producing more unique bigrams).
 
 ### 2.4 Prefix-dedup caveat (recorded, not fixed)
 
 Sampling found that prefix dedup (threshold 0.5) can merge numerically-prefixed
-surface forms: `concept_token_10` vs `concept_token_100` score overlap ≈ 0.8
-(≥ threshold) and get merged. The **production path is unaffected** — training
-uses `grow(token, token)` whose prefix buckets are exact/prefix-only (no TF-IDF
+surface forms: `concept_token_10` vs `concept_token_100` score overlap ≈ 0.8 (≥
+threshold) and get merged. The **production path is unaffected** — training uses
+`grow(token, token)` whose prefix buckets are exact/prefix-only (no TF-IDF
 semantic merging for growth), and real data (alpaca English text) converges
-normally. Recorded here as a known limitation of the dedup heuristic, not
-fixed (fixing it would change vocabulary semantics across the system).
+normally. Recorded here as a known limitation of the dedup heuristic, not fixed
+(fixing it would change vocabulary semantics across the system).
 
 ---
 
 ## 3. Real Bugs Found & Fixed
 
 ### 3.1 `_step5_train_garden` `UnboundLocalError` (scripts/train_pipeline.py)
+
 When `GARDENEngine` load failed (e.g. numpy backend after a torch checkpoint was
 written), `batch_done` was referenced before assignment in the exception path.
 Fixed by initializing `batch_done` before the loop.
 
 ### 3.2 `snn_core._check_torch_subprocess` subprocess probe
+
 A subprocess `import torch` probe was flaky (occasionally failing), which made
 the numpy backend unable to load torch-format checkpoints (dictionary existed
 but the SNN could not deserialize `snn.pt`). On Linux (non-Py3.14) torch is now
@@ -103,6 +104,7 @@ imported in-process instead of probed via subprocess — GARDEN checkpoints load
 reliably afterwards.
 
 ### 3.3 `dictionary._prune_for_growth` + `_key_counter`
+
 When `max_entries` was hit, `_prune_for_growth()` reclaimed 10% of the lowest-
 confidence entries **without relations** — but key generation used
 `len(entries) + 1`, which after a prune **reused a deleted key** (l-key
@@ -111,23 +113,27 @@ collision → wrong surface forms). Fixed with a monotonically increasing
 `load_presets`. Verified by `TestVectorDictionaryPruneForGrowth` (4 tests).
 
 ### 3.4 `hebbian_update` torch advanced indexing shape bug
+
 The vectorization used `np.ix_(src_idx, tgt_idx)`, which on torch returns shape
 `[T, S]` instead of `[S, T]`, and `self._W[src_idx, tgt_idx] = patch` is a
-pairwise (not Cartesian) index. Fixed with `index_select(0, src).index_select(1, tgt)`
-for the read and `torch.meshgrid(..., indexing="ij")` for the write, so both
-triangles are symmetric and `[S, T]`. Numpy path unchanged (`np.ix_` is correct
-there). All 106 SNN/GARDEN-engine tests pass.
+pairwise (not Cartesian) index. Fixed with
+`index_select(0, src).index_select(1, tgt)` for the read and
+`torch.meshgrid(..., indexing="ij")` for the write, so both triangles are
+symmetric and `[S, T]`. Numpy path unchanged (`np.ix_` is correct there). All
+106 SNN/GARDEN-engine tests pass.
 
 ### 3.5 OOM in `test_performance_benchmarks.py`
+
 `test_sustained_operation_stability` ran a **hard-coded 5-minute** mock loop
 appending a latency sample **every iteration** (no delay). With mocked calls
-running at hundreds of thousands of iterations/second this accumulated
-millions of floats → the pytest process hit **4.6 GB anon-RSS → kernel OOM-kill**
-(pid 397190), which in turn destabilized the environment (opencode terminated).
+running at hundreds of thousands of iterations/second this accumulated millions
+of floats → the pytest process hit **4.6 GB anon-RSS → kernel OOM-kill** (pid
+397190), which in turn destabilized the environment (opencode terminated).
 Fixed: duration shortened to 30 s and latency samples **bounded** (every 100th
 iteration). The test now passes in 30 s instead of hanging.
 
 ### 3.6 `test_sensory_overload.py` stale import
+
 Imported `core.autonomous.state_matrix` (nonexistent) — the module lives at
 `core.engine.state_matrix`. Fixed the import; test passes.
 
@@ -139,37 +145,41 @@ Profile (cProfile, 50 samples, V≈7665): `dictionary.encode` 44.7 s (44%),
 `snn.hebbian_update` 22.9 s, `snn.forward` 17.0 s, `_rebuild_index` 13.1 s.
 
 ### 4.1 `_find_similar_key_no_tfidf` — prefix-first buckets
+
 `grow` dedup previously scanned the surface set per token. Added
 `_build_prefix_buckets()` — a first-3-chars index — so growth-time dedup only
 touches tokens sharing a prefix (this is the "compare the first character"
 optimization requested during review).
 
 ### 4.2 `_rebuild_index` cache retention
+
 `_rebuild_index` cleared `_embed_cache` unconditionally after every rebuild,
 re-embedding every query after every batch. Now it clears only when the
 embedding **dimension actually changed** (TF-IDF vocab re-fit), keeping the
 cache when dim is stable — a major cost during training.
 
 ### 4.3 `learn_batch` batch-internal dedup + batch key registration
+
 The Hebbian loop encoded **each sample's** input+output separately. Identical
 strings (common phrases, templates) recur inside a batch; now each unique string
 is encoded **once** and the key dict is reused. Additionally, all new concepts
 are registered into the SNN via a single `_pre_allocate(all_new_keys)` call
-instead of one `_register_key()` per token (each of which could trigger an
-O(V²) matrix copy).
+instead of one `_register_key()` per token (each of which could trigger an O(V²)
+matrix copy).
 
 ### 4.4 Vectorized `hebbian_update`
+
 Replaced the Python double loop with batch `gate` matrix ops + `index_select`
 (Torch) / `np.ix_` (NumPy). Unknown keys still auto-register (legacy behavior).
 
 ### 4.5 Measured impact
 
-| Run | Total | Notes |
-| --- | --- | --- |
-| 50 samples, V≈7665 (pre-opt) | 100.8 s | baseline |
-| 50 samples, V≈7665 (post §4.1-4.2) | 92.7 s | -8% |
-| 1,663 samples (post §4.3) | 216.2 s | vs 526.9 s baseline, **-59%** |
-| Full 11,180 (post all) | ~2.5 h wall | vs blocked (OOM) |
+| Run                                | Total       | Notes                         |
+| ---------------------------------- | ----------- | ----------------------------- |
+| 50 samples, V≈7665 (pre-opt)       | 100.8 s     | baseline                      |
+| 50 samples, V≈7665 (post §4.1-4.2) | 92.7 s      | -8%                           |
+| 1,663 samples (post §4.3)          | 216.2 s     | vs 526.9 s baseline, **-59%** |
+| Full 11,180 (post all)             | ~2.5 h wall | vs blocked (OOM)              |
 
 Per-batch improvement on the 500-sample full run: batches 1→4 dropped from
 88/167/190/60 s to 46/68/73/15 s.
@@ -185,9 +195,9 @@ Per-batch improvement on the 500-sample full run: batches 1→4 dropped from
 - Two new helper scripts:
   - `scripts/resume_garden_train.py` — re-runs deconfliction + calls
     `_step5_train_garden` (ED3N already done).
-  - `scripts/resume_garden_tail.py` — finishes the tail in **250-sample
-    chunks** with `gc.collect()` between chunks, keeping peak RSS under the
-    7 GB machine limit (the single 500-sample batch at V≈9,600 would OOM).
+  - `scripts/resume_garden_tail.py` — finishes the tail in **250-sample chunks**
+    with `gc.collect()` between chunks, keeping peak RSS under the 7 GB machine
+    limit (the single 500-sample batch at V≈9,600 would OOM).
 - **Environment notes**: `TRAIN_NO_CORPUS=1` skips the corpus download (it is
   multi-GB and not needed to reproduce); `garden_batch_done` starts at 0 when
   `data/` is wiped, so a wiped run must re-run the full GARDEN set.
@@ -197,6 +207,7 @@ Per-batch improvement on the 500-sample full run: batches 1→4 dropped from
 ## 6. Test Results & Isolation
 
 All tests verified **isolated from the production checkpoint**:
+
 - `test_resumable_training.py` redirects `tp.CKPT_DIR`/`tp.STATE_FILE` to a temp
   dir (autouse fixture wipes it).
 - `test_garden_engine`/`test_snn_core`/`test_phase5_integration` save to
@@ -220,8 +231,9 @@ flake8: 0 errors on all modified source files.
 
 - `apps/backend/src/ai/garden/snn_core.py` — vectorized `hebbian_update` (§3.4),
   in-process torch probe (§3.2).
-- `apps/backend/src/ai/garden/dictionary.py` — `_key_counter` + `_sync_key_counter`
-  (§3.3), `_build_prefix_buckets` (§4.1), cache-retention rebuild (§4.2).
+- `apps/backend/src/ai/garden/dictionary.py` — `_key_counter` +
+  `_sync_key_counter` (§3.3), `_build_prefix_buckets` (§4.1), cache-retention
+  rebuild (§4.2).
 - `apps/backend/src/ai/garden/garden_engine.py` — batch-internal text dedup +
   `_pre_allocate` (§4.3).
 - `apps/backend/src/ai/core/training_coordinator.py` — deconflict domain routing
@@ -233,55 +245,58 @@ flake8: 0 errors on all modified source files.
 
 ## 8. Matching-pipeline step count & optimization limit (2026-08-16)
 
-`VectorDictionary.encode(text)` (`dictionary.py:799`) maps text → concept keys via
-**5 steps + 2 one-time preambles**:
+`VectorDictionary.encode(text)` (`dictionary.py:799`) maps text → concept keys
+via **5 steps + 2 one-time preambles**:
 
-| Step | Loc | Action | Complexity | Hot-path cost |
-|------|-----|--------|-----------|---------------|
-| Preamble | :813 | `_rebuild_index()` if dirty (TF-IDF fit + full encode) | O(V·D) | **OOM when polluted**; ~13s once clean |
-| Preamble | :821 | build `_surface_to_key` + `_prefix_first` buckets (first call) | O(Σ forms) | 36k forms, once |
-| **1** | :884 | CJK run all-substring exact match | O(run²) | run≤8, negligible |
-| **2** | :912 | non-CJK exact match (hash lookup) | O(T) | **O(1)/token** |
-| **3** | :925 | unmatched → `_prefix_first[:3]` bucket scan | O(T·bucket) | polluted 840-bucket **1122 µs/token**; clean 5-bucket 7 µs |
-| **4** | :951 | unmatched → TF-IDF batched matmul | O(V·D) | polluted **95 ms**; clean 5 ms |
-| **5** | :1002 | whole-text TF-IDF (phrase catch-all) | O(V·D) | +1 matmul |
+| Step     | Loc   | Action                                                         | Complexity  | Hot-path cost                                              |
+| -------- | ----- | -------------------------------------------------------------- | ----------- | ---------------------------------------------------------- |
+| Preamble | :813  | `_rebuild_index()` if dirty (TF-IDF fit + full encode)         | O(V·D)      | **OOM when polluted**; ~13s once clean                     |
+| Preamble | :821  | build `_surface_to_key` + `_prefix_first` buckets (first call) | O(Σ forms)  | 36k forms, once                                            |
+| **1**    | :884  | CJK run all-substring exact match                              | O(run²)     | run≤8, negligible                                          |
+| **2**    | :912  | non-CJK exact match (hash lookup)                              | O(T)        | **O(1)/token**                                             |
+| **3**    | :925  | unmatched → `_prefix_first[:3]` bucket scan                    | O(T·bucket) | polluted 840-bucket **1122 µs/token**; clean 5-bucket 7 µs |
+| **4**    | :951  | unmatched → TF-IDF batched matmul                              | O(V·D)      | polluted **95 ms**; clean 5 ms                             |
+| **5**    | :1002 | whole-text TF-IDF (phrase catch-all)                           | O(V·D)      | +1 matmul                                                  |
 
 Measured (this audit): polluted `[9799×26945]` matmul = **95 ms / 1056 MB**;
 clean-estimate `[5000×3000]` = **5 ms / 60 MB** — 5-45× and no longer OOM.
 
-**Optimization-limit verdict per step**: Step 2 (hash lookup) is already O(1) — no
-space. Step 3 (prefix buckets, §4.1) is near-optimal when clean (small buckets);
-only polluted buckets benefit from further sub-bucketing, and that would change
-matching semantics. Steps 4/5 are BLAS-bound — the only real lever is matrix
-**size**, which is driven by pollution, not by the algorithm. The one remaining
-algorithmic "optimization" (`_rebuild_index` incremental append instead of full
-re-fit) would skew global TF-IDF statistics and reduce match accuracy — i.e. it
-sits past the "optimizing hurts accuracy" line. **Verdict: the matching pipeline
-is at its algorithm limit; the remaining 95 ms→5 ms gain is a data-quality
-(retrain) win, not an algorithmic one.**
+**Optimization-limit verdict per step**: Step 2 (hash lookup) is already O(1) —
+no space. Step 3 (prefix buckets, §4.1) is near-optimal when clean (small
+buckets); only polluted buckets benefit from further sub-bucketing, and that
+would change matching semantics. Steps 4/5 are BLAS-bound — the only real lever
+is matrix **size**, which is driven by pollution, not by the algorithm. The one
+remaining algorithmic "optimization" (`_rebuild_index` incremental append
+instead of full re-fit) would skew global TF-IDF statistics and reduce match
+accuracy — i.e. it sits past the "optimizing hurts accuracy" line. **Verdict:
+the matching pipeline is at its algorithm limit; the remaining 95 ms→5 ms gain
+is a data-quality (retrain) win, not an algorithmic one.**
 
 ## 9. Training-time optimization limit (2026-08-16)
 
 `learn_batch` full cost model (11,180 samples / 500 per batch / ~2.5 h wall):
 
-| Stage | Loc | Optimized? | Remaining space |
-|-------|-----|-----------|-----------------|
-| 1 token collect | :1276 | no (tiny) | negligible |
-| 2 `grow` prefix-dedup | :1304 | ✅ §4.1 | polluted-bucket bound; clean = small |
-| 2b `_pre_allocate` | :1316 | ✅ §4.3 | at limit |
-| 3 `_rebuild_index` | :1322 | partial §4.2 (cache) | **largest lever but accuracy-risk** (incremental re-fit skews TF-IDF) |
-| 4 batch-dedup encode | :1342 | ✅ §4.3 | remaining cost = polluted matmul |
-| 4 `hebbian_update` ×2 | :1362 | ✅ §4.4 vectorized | at limit |
-| 4 `forward` ×1 | :1371 | not specialized | small |
+| Stage                 | Loc   | Optimized?           | Remaining space                                                       |
+| --------------------- | ----- | -------------------- | --------------------------------------------------------------------- |
+| 1 token collect       | :1276 | no (tiny)            | negligible                                                            |
+| 2 `grow` prefix-dedup | :1304 | ✅ §4.1              | polluted-bucket bound; clean = small                                  |
+| 2b `_pre_allocate`    | :1316 | ✅ §4.3              | at limit                                                              |
+| 3 `_rebuild_index`    | :1322 | partial §4.2 (cache) | **largest lever but accuracy-risk** (incremental re-fit skews TF-IDF) |
+| 4 batch-dedup encode  | :1342 | ✅ §4.3              | remaining cost = polluted matmul                                      |
+| 4 `hebbian_update` ×2 | :1362 | ✅ §4.4 vectorized   | at limit                                                              |
+| 4 `forward` ×1        | :1371 | not specialized      | small                                                                 |
 
 All applied optimizations (vectorized Hebbian, batch dedup, prefix buckets,
-single pre-allocation, cache retention) are at their algorithm limit. The dominant
-remaining cost is the **polluted `[V×D]` TF-IDF matrix** (every encode + every
-rebuild), which is a data-quality artifact — a clean retrain removes it without
-touching the algorithm. Any further algorithmic change (incremental `_rebuild_index`,
-dropping the auto-regressive pass, shrinking `top_k`/threshold) crosses into
-accuracy loss. **Verdict: training time is at the optimization limit; only
-data-quality (retrain) yields the next large win.**
-- `apps/backend/tests/integration/test_performance_benchmarks.py` — OOM fix (§3.5).
-- `apps/backend/tests/integration/scenarios/test_sensory_overload.py` — import fix (§3.6).
+single pre-allocation, cache retention) are at their algorithm limit. The
+dominant remaining cost is the **polluted `[V×D]` TF-IDF matrix** (every
+encode + every rebuild), which is a data-quality artifact — a clean retrain
+removes it without touching the algorithm. Any further algorithmic change
+(incremental `_rebuild_index`, dropping the auto-regressive pass, shrinking
+`top_k`/threshold) crosses into accuracy loss. **Verdict: training time is at
+the optimization limit; only data-quality (retrain) yields the next large win.**
+
+- `apps/backend/tests/integration/test_performance_benchmarks.py` — OOM fix
+  (§3.5).
+- `apps/backend/tests/integration/scenarios/test_sensory_overload.py` — import
+  fix (§3.6).
 - `data/` — wiped and rebuilt (ED3N + GARDEN full, `training_state.json`).

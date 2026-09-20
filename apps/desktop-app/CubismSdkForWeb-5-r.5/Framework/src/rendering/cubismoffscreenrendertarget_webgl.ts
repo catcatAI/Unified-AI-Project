@@ -5,9 +5,9 @@
  * that can be found at https://www.live2d.com/eula/live2d-open-software-license-agreement_en.html.
  */
 
-import { CubismRenderTarget_WebGL } from './cubismrendertarget_webgl';
-import { CubismWebGLOffscreenManager } from './cubismoffscreenmanager';
-import { CubismLogError } from '../utils/cubismdebug';
+import { CubismRenderTarget_WebGL } from './cubismrendertarget_webgl'
+import { CubismWebGLOffscreenManager } from './cubismoffscreenmanager'
+import { CubismLogError } from '../utils/cubismdebug'
 
 /**
  * WebGL用オフスクリーンサーフェス
@@ -25,14 +25,10 @@ export class CubismOffscreenRenderTarget_WebGL extends CubismRenderTarget_WebGL 
     displayBufferWidth: number,
     displayBufferHeight: number
   ): void {
-    this._gl = gl;
-    this._webGLOffscreenManager = CubismWebGLOffscreenManager.getInstance();
+    this._gl = gl
+    this._webGLOffscreenManager = CubismWebGLOffscreenManager.getInstance()
     if (this._webGLOffscreenManager.getContainerSize(gl) === 0) {
-      this._webGLOffscreenManager.initialize(
-        gl,
-        displayBufferWidth,
-        displayBufferHeight
-      );
+      this._webGLOffscreenManager.initialize(gl, displayBufferWidth, displayBufferHeight)
     }
   }
 
@@ -53,11 +49,7 @@ export class CubismOffscreenRenderTarget_WebGL extends CubismRenderTarget_WebGL 
   ): void {
     // マネージャがなければ初期化
     if (this._webGLOffscreenManager == null) {
-      this.initializeOffscreenManager(
-        gl,
-        displayBufferWidth,
-        displayBufferHeight
-      );
+      this.initializeOffscreenManager(gl, displayBufferWidth, displayBufferHeight)
     }
 
     // 使用可能なリソースコンテナを取得する
@@ -67,27 +59,27 @@ export class CubismOffscreenRenderTarget_WebGL extends CubismRenderTarget_WebGL 
         displayBufferWidth,
         displayBufferHeight,
         previousFramebuffer
-      );
+      )
 
     if (offscreenRenderTargetContainer == null) {
-      CubismLogError('Failed to acquire offscreen render texture container.');
-      return;
+      CubismLogError('Failed to acquire offscreen render texture container.')
+      return
     }
 
-    this._colorBuffer = offscreenRenderTargetContainer.getColorBuffer();
-    this._renderTexture = offscreenRenderTargetContainer.getRenderTexture();
+    this._colorBuffer = offscreenRenderTargetContainer.getColorBuffer()
+    this._renderTexture = offscreenRenderTargetContainer.getRenderTexture()
 
-    this._bufferWidth = displayBufferWidth;
-    this._bufferHeight = displayBufferHeight;
+    this._bufferWidth = displayBufferWidth
+    this._bufferHeight = displayBufferHeight
 
-    this._gl = gl;
+    this._gl = gl
 
     if (this._renderTexture == null) {
-      this._renderTexture = previousFramebuffer;
-      CubismLogError('Failed to create offscreen render texture.');
+      this._renderTexture = previousFramebuffer
+      CubismLogError('Failed to create offscreen render texture.')
     }
 
-    return;
+    return
   }
 
   /**
@@ -97,13 +89,10 @@ export class CubismOffscreenRenderTarget_WebGL extends CubismRenderTarget_WebGL 
    */
   public getUsingRenderTextureState(): boolean {
     if (this._webGLOffscreenManager == null || this._gl == null) {
-      return true;
+      return true
     }
 
-    return this._webGLOffscreenManager.getUsingRenderTextureState(
-      this._gl,
-      this._renderTexture
-    );
+    return this._webGLOffscreenManager.getUsingRenderTextureState(this._gl, this._renderTexture)
   }
 
   /**
@@ -111,13 +100,10 @@ export class CubismOffscreenRenderTarget_WebGL extends CubismRenderTarget_WebGL 
    */
   public startUsingRenderTexture(): void {
     if (this._webGLOffscreenManager == null || this._gl == null) {
-      return;
+      return
     }
 
-    this._webGLOffscreenManager.startUsingRenderTexture(
-      this._gl,
-      this._renderTexture
-    );
+    this._webGLOffscreenManager.startUsingRenderTexture(this._gl, this._renderTexture)
   }
 
   /**
@@ -125,13 +111,10 @@ export class CubismOffscreenRenderTarget_WebGL extends CubismRenderTarget_WebGL 
    */
   public stopUsingRenderTexture(): void {
     if (this._webGLOffscreenManager == null || this._gl == null) {
-      return;
+      return
     }
 
-    this._webGLOffscreenManager.stopUsingRenderTexture(
-      this._gl,
-      this._renderTexture
-    );
+    this._webGLOffscreenManager.stopUsingRenderTexture(this._gl, this._renderTexture)
   }
 
   /**
@@ -140,7 +123,7 @@ export class CubismOffscreenRenderTarget_WebGL extends CubismRenderTarget_WebGL 
    * @param offscreenIndex オフスクリーンのインデックス
    */
   public setOffscreenIndex(offscreenIndex: number): void {
-    this._offscreenIndex = offscreenIndex;
+    this._offscreenIndex = offscreenIndex
   }
 
   /**
@@ -149,7 +132,7 @@ export class CubismOffscreenRenderTarget_WebGL extends CubismRenderTarget_WebGL 
    * @return オフスクリーンのインデックス
    */
   public getOffscreenIndex(): number {
-    return this._offscreenIndex;
+    return this._offscreenIndex
   }
 
   /**
@@ -157,10 +140,8 @@ export class CubismOffscreenRenderTarget_WebGL extends CubismRenderTarget_WebGL 
    *
    * @param oldOffscreen 以前のオフスクリーン描画用レンダーターゲット
    */
-  public setOldOffscreen(
-    oldOffscreen: CubismOffscreenRenderTarget_WebGL
-  ): void {
-    this._oldOffscreen = oldOffscreen;
+  public setOldOffscreen(oldOffscreen: CubismOffscreenRenderTarget_WebGL): void {
+    this._oldOffscreen = oldOffscreen
   }
 
   /**
@@ -169,7 +150,7 @@ export class CubismOffscreenRenderTarget_WebGL extends CubismRenderTarget_WebGL 
    * @return 以前のオフスクリーン描画用レンダーターゲット
    */
   public getOldOffscreen(): CubismOffscreenRenderTarget_WebGL {
-    return this._oldOffscreen;
+    return this._oldOffscreen
   }
 
   /**
@@ -180,7 +161,7 @@ export class CubismOffscreenRenderTarget_WebGL extends CubismRenderTarget_WebGL 
   public setParentPartOffscreen(
     parentOffscreenRenderTarget: CubismOffscreenRenderTarget_WebGL
   ): void {
-    this._parentOffscreenRenderTarget = parentOffscreenRenderTarget;
+    this._parentOffscreenRenderTarget = parentOffscreenRenderTarget
   }
 
   /**
@@ -189,52 +170,45 @@ export class CubismOffscreenRenderTarget_WebGL extends CubismRenderTarget_WebGL 
    * @return 親のオフスクリーン描画用レンダーターゲット
    */
   public getParentPartOffscreen(): CubismOffscreenRenderTarget_WebGL {
-    return this._parentOffscreenRenderTarget;
+    return this._parentOffscreenRenderTarget
   }
 
   /**
    * コンストラクタ
    */
   constructor() {
-    super();
-    this._offscreenIndex = -1;
-    this._parentOffscreenRenderTarget = null;
-    this._oldOffscreen = null;
-    this._webGLOffscreenManager = null;
+    super()
+    this._offscreenIndex = -1
+    this._parentOffscreenRenderTarget = null
+    this._oldOffscreen = null
+    this._webGLOffscreenManager = null
   }
 
   public release(): void {
-    if (
-      this._webGLOffscreenManager != null &&
-      this._gl != null &&
-      this._renderTexture != null
-    ) {
-      this._webGLOffscreenManager.stopUsingRenderTexture(
-        this._gl,
-        this._renderTexture
-      );
+    if (this._webGLOffscreenManager != null && this._gl != null && this._renderTexture != null) {
+      this._webGLOffscreenManager.stopUsingRenderTexture(this._gl, this._renderTexture)
     }
 
     if (this._colorBuffer && this._gl) {
-      this._gl.deleteTexture(this._colorBuffer);
-      this._colorBuffer = null;
+      this._gl.deleteTexture(this._colorBuffer)
+      this._colorBuffer = null
     }
     if (this._renderTexture && this._gl) {
-      this._gl.deleteFramebuffer(this._renderTexture);
-      this._renderTexture = null;
+      this._gl.deleteFramebuffer(this._renderTexture)
+      this._renderTexture = null
     }
 
     if (this._webGLOffscreenManager != null) {
-      this._webGLOffscreenManager = null;
+      this._webGLOffscreenManager = null
     }
 
-    this._oldOffscreen = null;
-    this._parentOffscreenRenderTarget = null;
+    this._oldOffscreen = null
+    this._parentOffscreenRenderTarget = null
   }
 
-  private _offscreenIndex: number; // オフスクリーンのインデックス
-  private _parentOffscreenRenderTarget: CubismOffscreenRenderTarget_WebGL; // 親のオフスクリーン描画用レンダーターゲット
-  private _oldOffscreen: CubismOffscreenRenderTarget_WebGL; // 以前のオフスクリーン描画用レンダーターゲット
-  private _webGLOffscreenManager: CubismWebGLOffscreenManager; // オフスクリーン描画用レンダーターゲットマネージャ
-  protected _gl: WebGLRenderingContext | WebGL2RenderingContext; // WebGLコンテキスト
+  private _offscreenIndex: number // オフスクリーンのインデックス
+  private _parentOffscreenRenderTarget: CubismOffscreenRenderTarget_WebGL // 親のオフスクリーン描画用レンダーターゲット
+  private _oldOffscreen: CubismOffscreenRenderTarget_WebGL // 以前のオフスクリーン描画用レンダーターゲット
+  private _webGLOffscreenManager: CubismWebGLOffscreenManager // オフスクリーン描画用レンダーターゲットマネージャ
+  protected _gl: WebGLRenderingContext | WebGL2RenderingContext // WebGLコンテキスト
 }

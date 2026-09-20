@@ -53,7 +53,7 @@ conflict_rules:
     description: "PyTorch版本兼容性检查"
     packages: ["torch", "torchvision", "torchaudio"]
     min_version: "1.9.0"
-    
+
   - name: "fastapi_version"
     description: "FastAPI版本兼容性检查"
     packages: ["fastapi", "uvicorn"]
@@ -79,17 +79,17 @@ system_requirements:
   python_version: ">=3.8"
   memory_gb: 4
   disk_space_gb: 10
-  
+
 # 修复建议
 fix_suggestions:
   missing_dependency:
     - "运行: pip install {package_name}"
     - "或者: pip install -r requirements.txt"
-    
+
   version_conflict:
     - "升级包: pip install --upgrade {package_name}"
     - "或者: pip install {package_name}=={required_version}"
-    
+
   missing_env_var:
     - "设置环境变量: export {var_name}={example_value}"
     - "或者在.env文件中添加: {var_name}={example_value}"
@@ -100,14 +100,14 @@ auto_fix:
   backup_before_fix: true
   max_retry_attempts: 3
   timeout_seconds: 300
-  
+
   # 允许自动修复的操作
   allowed_operations:
     - install_missing_packages
     - upgrade_packages
     - create_env_file_template
     - fix_import_paths
-    
+
   # 禁止自动修复的操作
   forbidden_operations:
     - uninstall_packages

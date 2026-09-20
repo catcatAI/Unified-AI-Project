@@ -1,6 +1,8 @@
 # Documentation Update Status Report (Comprehensive)
 
-This report summarizes the documentation status for source code files across the `Unified-AI-Project`, including backend Python files and frontend TypeScript/JavaScript files. Files like `__init__.py` and tests are excluded.
+This report summarizes the documentation status for source code files across the
+`Unified-AI-Project`, including backend Python files and frontend
+TypeScript/JavaScript files. Files like `__init__.py` and tests are excluded.
 
 ---
 
@@ -11,22 +13,27 @@ This report summarizes the documentation status for source code files across the
 1.  **識別目標檔案**：從「未更新」列表中選取下一個 Python 檔案。
 2.  **讀取程式碼**：讀取目標 Python 檔案的內容，以理解其目的、功能、類別和方法。
 3.  **生成 Markdown 內容**：根據程式碼內容，撰寫一份詳細的 Markdown 文件，包含：
-    *   模組概述 (Overview)
-    *   目的 (Purpose)
-    *   主要職責與功能 (Key Responsibilities and Features)
-    *   工作原理 (How it Works)
-    *   與其他模組的整合 (Integration with Other Modules)
-    *   程式碼位置 (Code Location)
-    *   文件內容將盡可能包含中英文雙語說明。
-4.  **寫入 Markdown 檔案**：將生成的 Markdown 內容寫入 `docs/03-technical-architecture/ai-components/` 或 `docs/03-technical-architecture/communication/` 等對應目錄下的新檔案。
-5.  **更新文件索引**：將新建立的 Markdown 檔案條目加入 `UNIFIED_DOCUMENTATION_INDEX.md` 中，並保持字母順序。
-6.  **更新狀態報告**：將已處理的檔案從 `Documentation_Update_Status.md` 的「未更新」列表移動到「已更新」列表。
+    - 模組概述 (Overview)
+    - 目的 (Purpose)
+    - 主要職責與功能 (Key Responsibilities and Features)
+    - 工作原理 (How it Works)
+    - 與其他模組的整合 (Integration with Other Modules)
+    - 程式碼位置 (Code Location)
+    - 文件內容將盡可能包含中英文雙語說明。
+4.  **寫入 Markdown 檔案**：將生成的 Markdown 內容寫入
+    `docs/03-technical-architecture/ai-components/` 或
+    `docs/03-technical-architecture/communication/` 等對應目錄下的新檔案。
+5.  **更新文件索引**：將新建立的 Markdown 檔案條目加入
+    `UNIFIED_DOCUMENTATION_INDEX.md` 中，並保持字母順序。
+6.  **更新狀態報告**：將已處理的檔案從 `Documentation_Update_Status.md`
+    的「未更新」列表移動到「已更新」列表。
 
 ---
 
 ## 已更新 (Documentation Generated)
 
-*This list is based on the `111.txt` log and contains only backend Python files.*
+_This list is based on the `111.txt` log and contains only backend Python
+files._
 
 - `D:/Projects/Unified-AI-Project/apps/backend/src/modules_fragmenta/element_layer.py`
 - `D:/Projects/Unified-AI-Project/apps/backend/src/modules_fragmenta/vision_tone_inverter.py`
@@ -154,16 +161,11 @@ This report summarizes the documentation status for source code files across the
 
 ### Backend (`apps/backend/src`)
 
-
-
-
 ---
 
 ## 未更新 (Pending Documentation)
 
 ### Backend (`apps/backend/src`)
-
-
 
 - `D:/Projects/Unified-AI-Project/apps/backend/src/game/ui.py`
 - `D:/Projects/Unified-AI-Project/apps/backend/src/game/utils.py`
@@ -178,8 +180,6 @@ This report summarizes the documentation status for source code files across the
 
 ### Backend (`apps/backend/src`)
 
-
-
 - `D:/Projects/Unified-AI-Project/apps/backend/src/hsp/fallback/fallback_protocols.py`
 - `D:/Projects/Unified-AI-Project/apps/backend/src/hsp/types.py`
 
@@ -189,8 +189,6 @@ This report summarizes the documentation status for source code files across the
 
 ### Backend (`apps/backend/src`)
 
-
-
 - `D:/Projects/Unified-AI-Project/apps/backend/src/hsp/fallback/fallback_protocols.py`
 
 ---
@@ -198,8 +196,6 @@ This report summarizes the documentation status for source code files across the
 ## 未更新 (Pending Documentation)
 
 ### Backend (`apps/backend/src`)
-
-
 
 - `D:/Projects/Unified-AI-Project/apps/backend/src/hsp/types.py`
 - `D:/Projects/Unified-AI-Project/apps/backend/src/hsp/utils/fallback_config_loader.py`
@@ -305,6 +301,10 @@ This report summarizes the documentation status for source code files across the
 
 ## 特別說明 (Special Notes)
 
-- **已跳過 `__init__.py`**: All `__init__.py` files were automatically skipped during the process.
-- **未找到檔案 (File Not Found)**: `D:/Projects/Unified-AI-Project/apps/backend/src/core_ai/memory/memory_types.py` was not found and was skipped.
-- **项目状态**: Unified AI Project 已完成所有计划任务，达到发布标准。文档更新工作已完成大部分核心组件的文档生成，剩余文件将在后续更新中完成。
+- **已跳過 `__init__.py`**: All `__init__.py` files were automatically skipped
+  during the process.
+- **未找到檔案 (File Not Found)**:
+  `D:/Projects/Unified-AI-Project/apps/backend/src/core_ai/memory/memory_types.py`
+  was not found and was skipped.
+- **项目状态**: Unified AI
+  Project 已完成所有计划任务，达到发布标准。文档更新工作已完成大部分核心组件的文档生成，剩余文件将在后续更新中完成。

@@ -5,23 +5,23 @@
  * that can be found at https://www.live2d.com/eula/live2d-open-software-license-agreement_en.html.
  */
 
-import { ICubismUpdater, CubismUpdateOrder } from './icubismupdater';
-import { CubismModel } from '../model/cubismmodel';
-import { CubismPose } from '../effect/cubismpose';
+import { ICubismUpdater, CubismUpdateOrder } from './icubismupdater'
+import { CubismModel } from '../model/cubismmodel'
+import { CubismPose } from '../effect/cubismpose'
 
 /**
  * Updater for pose effects.
  * Handles the management of pose animation through the CubismPose class.
  */
 export class CubismPoseUpdater extends ICubismUpdater {
-  private _pose: CubismPose;
+  private _pose: CubismPose
 
   /**
    * Constructor
    *
    * @param pose CubismPose reference
    */
-  constructor(pose: CubismPose);
+  constructor(pose: CubismPose)
 
   /**
    * Constructor
@@ -29,11 +29,11 @@ export class CubismPoseUpdater extends ICubismUpdater {
    * @param pose CubismPose reference
    * @param executionOrder Order of operations
    */
-  constructor(pose: CubismPose, executionOrder: number);
+  constructor(pose: CubismPose, executionOrder: number)
 
   constructor(pose: CubismPose, executionOrder?: number) {
-    super(executionOrder ?? CubismUpdateOrder.CubismUpdateOrder_Pose);
-    this._pose = pose;
+    super(executionOrder ?? CubismUpdateOrder.CubismUpdateOrder_Pose)
+    this._pose = pose
   }
 
   /**
@@ -44,17 +44,17 @@ export class CubismPoseUpdater extends ICubismUpdater {
    */
   onLateUpdate(model: CubismModel, deltaTimeSeconds: number): void {
     if (!model) {
-      return;
+      return
     }
 
-    this._pose.updateParameters(model, deltaTimeSeconds);
+    this._pose.updateParameters(model, deltaTimeSeconds)
   }
 }
 
 // Namespace definition for compatibility.
-import * as $ from './cubismposeupdater';
+import * as $ from './cubismposeupdater'
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
-  export const CubismPoseUpdater = $.CubismPoseUpdater;
-  export type CubismPoseUpdater = $.CubismPoseUpdater;
+  export const CubismPoseUpdater = $.CubismPoseUpdater
+  export type CubismPoseUpdater = $.CubismPoseUpdater
 }

@@ -1,12 +1,13 @@
 # Multimodal Pipeline — Developer Guide
 
-> **Document version**: P38 (2026-06-22)
-> **Status**: ✅ Complete — 8 phases (P30-P38) all finished
+> **Document version**: P38 (2026-06-22) **Status**: ✅ Complete — 8 phases
+> (P30-P38) all finished
 
 ## Architecture Overview
 
-The multimodal pipeline provides a complete end-to-end system for encoding, decoding,
-comparing, retrieving, generating, and evaluating multimodal data (vision + audio).
+The multimodal pipeline provides a complete end-to-end system for encoding,
+decoding, comparing, retrieving, generating, and evaluating multimodal data
+(vision + audio).
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -51,17 +52,17 @@ comparing, retrieving, generating, and evaluating multimodal data (vision + audi
 
 ## Phase Overview (P30-P38)
 
-| Phase | Name | Description | Tests |
-|:-----:|------|-------------|:-----:|
-| **P30** | MultimodalService + API | Orchestrator service with 9 REST endpoints, 27 tests | ✅ |
-| **P31** | VisionPipeline | vision→encode→latent→decode→SSIM, 20 tests | ✅ |
-| **P32** | AudioPipeline | audio→encode→latent→decode→SNR, 20 tests | ✅ |
-| **P33** | CrossModalRouter + Quality | Routing, quality dashboard, ED3N deep integration, 25 tests | ✅ |
-| **P34** | Desktop Frontend UI | Electron MultimodalPanel (5 tabs), API client, 11 tests | ✅ |
-| **P35** | Mobile Frontend UI | React Native camera/audio capture (skipped) | ⬜ |
-| **P36** | Continuous Learning + Memory | CML (auto micro-train), MultimodalMemoryStore (7/30d TTL), 20 tests | ✅ |
-| **P37** | Production Hardening | ErrorRecovery (retry/fallback/checkpoint), StatePersistence (save/load/list), QualityMonitor (60s background loop), 23 tests | ✅ |
-| **P38** | Maintenance & Testing | End-to-end integration, stress tests, multilingual tests, docs, crisis_log dedup, 10 tests | ✅ |
+|  Phase  | Name                         | Description                                                                                                                  | Tests |
+| :-----: | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | :---: |
+| **P30** | MultimodalService + API      | Orchestrator service with 9 REST endpoints, 27 tests                                                                         |  ✅   |
+| **P31** | VisionPipeline               | vision→encode→latent→decode→SSIM, 20 tests                                                                                   |  ✅   |
+| **P32** | AudioPipeline                | audio→encode→latent→decode→SNR, 20 tests                                                                                     |  ✅   |
+| **P33** | CrossModalRouter + Quality   | Routing, quality dashboard, ED3N deep integration, 25 tests                                                                  |  ✅   |
+| **P34** | Desktop Frontend UI          | Electron MultimodalPanel (5 tabs), API client, 11 tests                                                                      |  ✅   |
+| **P35** | Mobile Frontend UI           | React Native camera/audio capture (skipped)                                                                                  |  ⬜   |
+| **P36** | Continuous Learning + Memory | CML (auto micro-train), MultimodalMemoryStore (7/30d TTL), 20 tests                                                          |  ✅   |
+| **P37** | Production Hardening         | ErrorRecovery (retry/fallback/checkpoint), StatePersistence (save/load/list), QualityMonitor (60s background loop), 23 tests |  ✅   |
+| **P38** | Maintenance & Testing        | End-to-end integration, stress tests, multilingual tests, docs, crisis_log dedup, 10 tests                                   |  ✅   |
 
 **Total**: P30-P38 = **167 tests** all passing ✅
 
@@ -102,26 +103,26 @@ print(f"Cross-modal similarity: {similarity['similarity']:.2f}")
 
 All endpoints are under `/multimodal/` prefix:
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/multimodal/encode` | POST | Encode image/audio to feature vector + latent |
-| `/multimodal/decode` | POST | Decode latent to image/audio (base64) |
-| `/multimodal/compare` | POST | Cross-modal similarity comparison |
-| `/multimodal/retrieve` | POST | RAG retrieval by latent query |
-| `/multimodal/train` | POST | Trigger training pipeline |
-| `/multimodal/evaluate` | POST | Evaluate generation quality |
-| `/multimodal/generate` | POST | Cross-modal generation (vision↔audio) |
-| `/multimodal/visualize` | POST | Latent space 2D projection |
-| `/multimodal/items` | GET | List registered items |
-| `/multimodal/clear` | POST | Clear all items |
-| `/multimodal/health` | GET | Health check (P37 enhanced) |
-| `/multimodal/cross-infer` | POST | Cross-modal inference routing |
-| `/multimodal/quality/dashboard` | GET | Quality dashboard |
-| `/multimodal/recovery/*` | GET/POST | Error recovery state |
-| `/multimodal/checkpoint/*` | GET/POST | State persistence |
-| `/multimodal/quality/*` | GET/POST | Quality monitoring |
-| `/multimodal/cml/*` | GET/POST | Continuous learning |
-| `/multimodal/memory/*` | GET/POST | Memory store |
+| Endpoint                        | Method   | Description                                   |
+| ------------------------------- | -------- | --------------------------------------------- |
+| `/multimodal/encode`            | POST     | Encode image/audio to feature vector + latent |
+| `/multimodal/decode`            | POST     | Decode latent to image/audio (base64)         |
+| `/multimodal/compare`           | POST     | Cross-modal similarity comparison             |
+| `/multimodal/retrieve`          | POST     | RAG retrieval by latent query                 |
+| `/multimodal/train`             | POST     | Trigger training pipeline                     |
+| `/multimodal/evaluate`          | POST     | Evaluate generation quality                   |
+| `/multimodal/generate`          | POST     | Cross-modal generation (vision↔audio)         |
+| `/multimodal/visualize`         | POST     | Latent space 2D projection                    |
+| `/multimodal/items`             | GET      | List registered items                         |
+| `/multimodal/clear`             | POST     | Clear all items                               |
+| `/multimodal/health`            | GET      | Health check (P37 enhanced)                   |
+| `/multimodal/cross-infer`       | POST     | Cross-modal inference routing                 |
+| `/multimodal/quality/dashboard` | GET      | Quality dashboard                             |
+| `/multimodal/recovery/*`        | GET/POST | Error recovery state                          |
+| `/multimodal/checkpoint/*`      | GET/POST | State persistence                             |
+| `/multimodal/quality/*`         | GET/POST | Quality monitoring                            |
+| `/multimodal/cml/*`             | GET/POST | Continuous learning                           |
+| `/multimodal/memory/*`          | GET/POST | Memory store                                  |
 
 ## Core Components
 

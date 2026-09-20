@@ -1,8 +1,11 @@
 # HAM记忆系统重复实现分析报告
 
 ## 1. 文件基本信息
-- 主实现文件: `D:\Projects\Unified-AI-Project\apps\backend\src\ai\memory\ham_memory_manager.py`
-- 备份实现文件: `D:\Projects\Unified-AI-Project\backup_modules\ai_backup\memory\ham_memory_manager.py`
+
+- 主实现文件:
+  `D:\Projects\Unified-AI-Project\apps\backend\src\ai\memory\ham_memory_manager.py`
+- 备份实现文件:
+  `D:\Projects\Unified-AI-Project\backup_modules\ai_backup\memory\ham_memory_manager.py`
 - 主实现文件大小: 56356 bytes
 - 备份实现文件大小: 61448 bytes
 - 主实现文件哈希: 2be1ff12e82e203eb72639384bfe4baf
@@ -10,18 +13,22 @@
 - 文件是否相同: 否
 
 ## 2. 函数对比分析
+
 - 主实现函数数量: 0
 - 备份实现函数数量: 3
 
 ### 2.1 主实现独有函数
+
 无
 
 ### 2.2 备份实现独有函数
+
 - `_mock_embed_texts`
 - `__call__`
 - `name`
 
 ### 2.3 实现不同的函数
+
 - `__init__`
 - `_generate_memory_id`
 - `close`
@@ -49,6 +56,7 @@
 - `increment_metadata_field`
 
 ## 3. 建议
+
 1. 详细审查备份实现中独有的函数，确认是否有用功能需要合并到主实现
 2. 对于实现不同的函数，需要详细对比代码，选择更好的实现
 3. 确保删除备份实现前，所有有用功能都已合并到主实现

@@ -5,68 +5,51 @@
  * that can be found at https://www.live2d.com/eula/live2d-open-software-license-agreement_en.html.
  */
 
-import { IParameterProvider } from '@framework/motion/iparameterprovider';
+import { IParameterProvider } from '@framework/motion/iparameterprovider'
 
 export class LAppWavFileHandler extends IParameterProvider {
   public update(deltaTimeSeconds?: number): boolean {
-    let goalOffset: number;
-    let rms: number;
+    let goalOffset: number
+    let rms: number
 
     // データロード前/ファイル末尾に達した場合は更新しない
-    if (
-      this._pcmData == null ||
-      this._sampleOffset >= this._wavFileInfo._samplesPerChannel
-    ) {
-      this._lastRms = 0.0;
-      return false;
+    if (this._pcmData == null || this._sampleOffset >= this._wavFileInfo._samplesPerChannel) {
+      this._lastRms = 0.0
+      return false
     }
 
     // 経過時間後の状態を保持 (deltaTimeSecondsがundefinedの場合は60fpsを想定)
-    const actualDeltaTime: number = deltaTimeSeconds ?? 1.0 / 60.0;
-    this._userTimeSeconds += actualDeltaTime;
-    goalOffset = Math.floor(
-      this._userTimeSeconds * this._wavFileInfo._samplingRate
-    );
+    const actualDeltaTime: number = deltaTimeSeconds ?? 1.0 / 60.0
+    this._userTimeSeconds += actualDeltaTime
+    goalOffset = Math.floor(this._userTimeSeconds * this._wavFileInfo._samplingRate)
     if (goalOffset > this._wavFileInfo._samplesPerChannel) {
-      goalOffset = this._wavFileInfo._samplesPerChannel;
+      goalOffset = this._wavFileInfo._samplesPerChannel
     }
 
     // RMS計測
-    rms = 0.0;
-    for (
-      let channelCount = 0;
-      channelCount < this._wavFileInfo._numberOfChannels;
-      channelCount++
-    ) {
-      for (
-        let sampleCount = this._sampleOffset;
-        sampleCount < goalOffset;
-        sampleCount++
-      ) {
-        const pcm = this._pcmData[channelCount][sampleCount];
-        rms += pcm * pcm;
+    rms = 0.0
+    for (let channelCount = 0; channelCount < this._wavFileInfo._numberOfChannels; channelCount++) {
+      for (let sampleCount = this._sampleOffset; sampleCount < goalOffset; sampleCount++) {
+        const pcm = this._pcmData[channelCount][sampleCount]
+        rms += pcm * pcm
       }
     }
-    rms = Math.sqrt(
-      rms /
-        (this._wavFileInfo._numberOfChannels *
-          (goalOffset - this._sampleOffset))
-    );
+    rms = Math.sqrt(rms / (this._wavFileInfo._numberOfChannels * (goalOffset - this._sampleOffset)))
 
-    this._lastRms = rms;
-    this._sampleOffset = goalOffset;
-    return true;
+    this._lastRms = rms
+    this._sampleOffset = goalOffset
+    return true
   }
 
   public start(filePath: string): void {
     // サンプル位参照位置を初期化
-    this._sampleOffset = 0;
-    this._userTimeSeconds = 0.0;
+    this._sampleOffset = 0
+    this._userTimeSeconds = 0.0
 
     // RMS値をリセット
-    this._lastRms = 0.0;
+    this._lastRms = 0.0
 
-    this.loadWavFile(filePath);
+    this.loadWavFile(filePath)
   }
 
   /**
@@ -75,121 +58,109 @@ export class LAppWavFileHandler extends IParameterProvider {
    * @return RMS value from audio
    */
   public getParameter(): number {
-    return this.getRms();
+    return this.getRms()
   }
 
   public getRms(): number {
-    return this._lastRms;
+    return this._lastRms
   }
 
   public loadWavFile(filePath: string): Promise<boolean> {
-    return new Promise(resolveValue => {
-      let ret = false;
+    return new Promise((resolveValue) => {
+      let ret = false
 
       if (this._pcmData != null) {
-        this.releasePcmData();
+        this.releasePcmData()
       }
 
       // ファイルロード
       const asyncFileLoad = async () => {
-        return fetch(filePath).then(responce => {
-          return responce.arrayBuffer();
-        });
-      };
+        return fetch(filePath).then((responce) => {
+          return responce.arrayBuffer()
+        })
+      }
 
       const asyncWavFileManager = (async () => {
-        this._byteReader._fileByte = await asyncFileLoad();
-        this._byteReader._fileDataView = new DataView(
-          this._byteReader._fileByte
-        );
-        this._byteReader._fileSize = this._byteReader._fileByte.byteLength;
-        this._byteReader._readOffset = 0;
+        this._byteReader._fileByte = await asyncFileLoad()
+        this._byteReader._fileDataView = new DataView(this._byteReader._fileByte)
+        this._byteReader._fileSize = this._byteReader._fileByte.byteLength
+        this._byteReader._readOffset = 0
 
         // ファイルロードに失敗しているか、先頭のシグネチャ"RIFF"を入れるサイズもない場合は失敗
-        if (
-          this._byteReader._fileByte == null ||
-          this._byteReader._fileSize < 4
-        ) {
-          resolveValue(false);
-          return;
+        if (this._byteReader._fileByte == null || this._byteReader._fileSize < 4) {
+          resolveValue(false)
+          return
         }
 
         // ファイル名
-        this._wavFileInfo._fileName = filePath;
+        this._wavFileInfo._fileName = filePath
 
         try {
           // シグネチャ "RIFF"
           if (!this._byteReader.getCheckSignature('RIFF')) {
-            ret = false;
-            throw new Error('Cannot find Signeture "RIFF".');
+            ret = false
+            throw new Error('Cannot find Signeture "RIFF".')
           }
           // ファイルサイズ-8（読み飛ばし）
-          this._byteReader.get32LittleEndian();
+          this._byteReader.get32LittleEndian()
           // シグネチャ "WAVE"
           if (!this._byteReader.getCheckSignature('WAVE')) {
-            ret = false;
-            throw new Error('Cannot find Signeture "WAVE".');
+            ret = false
+            throw new Error('Cannot find Signeture "WAVE".')
           }
           // シグネチャ "fmt "
           if (!this._byteReader.getCheckSignature('fmt ')) {
-            ret = false;
-            throw new Error('Cannot find Signeture "fmt".');
+            ret = false
+            throw new Error('Cannot find Signeture "fmt".')
           }
           // fmtチャンクサイズ
-          const fmtChunkSize = this._byteReader.get32LittleEndian();
+          const fmtChunkSize = this._byteReader.get32LittleEndian()
           // フォーマットIDは1（リニアPCM）以外受け付けない
           if (this._byteReader.get16LittleEndian() != 1) {
-            ret = false;
-            throw new Error('File is not linear PCM.');
+            ret = false
+            throw new Error('File is not linear PCM.')
           }
           // チャンネル数
-          this._wavFileInfo._numberOfChannels =
-            this._byteReader.get16LittleEndian();
+          this._wavFileInfo._numberOfChannels = this._byteReader.get16LittleEndian()
           // サンプリングレート
-          this._wavFileInfo._samplingRate =
-            this._byteReader.get32LittleEndian();
+          this._wavFileInfo._samplingRate = this._byteReader.get32LittleEndian()
           // データ速度[byte/sec]（読み飛ばし）
-          this._byteReader.get32LittleEndian();
+          this._byteReader.get32LittleEndian()
           // ブロックサイズ（読み飛ばし）
-          this._byteReader.get16LittleEndian();
+          this._byteReader.get16LittleEndian()
           // 量子化ビット数
-          this._wavFileInfo._bitsPerSample =
-            this._byteReader.get16LittleEndian();
+          this._wavFileInfo._bitsPerSample = this._byteReader.get16LittleEndian()
           // fmtチャンクの拡張部分の読み飛ばし
           if (fmtChunkSize > 16) {
-            this._byteReader._readOffset += fmtChunkSize - 16;
+            this._byteReader._readOffset += fmtChunkSize - 16
           }
           // "data"チャンクが出現するまで読み飛ばし
           while (
             !this._byteReader.getCheckSignature('data') &&
             this._byteReader._readOffset < this._byteReader._fileSize
           ) {
-            this._byteReader._readOffset +=
-              this._byteReader.get32LittleEndian() + 4;
+            this._byteReader._readOffset += this._byteReader.get32LittleEndian() + 4
           }
           // ファイル内に"data"チャンクが出現しなかった
           if (this._byteReader._readOffset >= this._byteReader._fileSize) {
-            ret = false;
-            throw new Error('Cannot find "data" Chunk.');
+            ret = false
+            throw new Error('Cannot find "data" Chunk.')
           }
           // サンプル数
           {
-            const dataChunkSize = this._byteReader.get32LittleEndian();
+            const dataChunkSize = this._byteReader.get32LittleEndian()
             this._wavFileInfo._samplesPerChannel =
               (dataChunkSize * 8) /
-              (this._wavFileInfo._bitsPerSample *
-                this._wavFileInfo._numberOfChannels);
+              (this._wavFileInfo._bitsPerSample * this._wavFileInfo._numberOfChannels)
           }
           // 領域確保
-          this._pcmData = new Array(this._wavFileInfo._numberOfChannels);
+          this._pcmData = new Array(this._wavFileInfo._numberOfChannels)
           for (
             let channelCount = 0;
             channelCount < this._wavFileInfo._numberOfChannels;
             channelCount++
           ) {
-            this._pcmData[channelCount] = new Float32Array(
-              this._wavFileInfo._samplesPerChannel
-            );
+            this._pcmData[channelCount] = new Float32Array(this._wavFileInfo._samplesPerChannel)
           }
           // 波形データ取得
           for (
@@ -202,44 +173,44 @@ export class LAppWavFileHandler extends IParameterProvider {
               channelCount < this._wavFileInfo._numberOfChannels;
               channelCount++
             ) {
-              this._pcmData[channelCount][sampleCount] = this.getPcmSample();
+              this._pcmData[channelCount][sampleCount] = this.getPcmSample()
             }
           }
 
-          ret = true;
+          ret = true
 
-          resolveValue(ret);
+          resolveValue(ret)
         } catch (e) {
-          console.log(e);
+          console.log(e)
         }
       })().then(() => {
-        resolveValue(ret);
-      });
-    });
+        resolveValue(ret)
+      })
+    })
   }
 
   public getPcmSample(): number {
-    let pcm32;
+    let pcm32
 
     // 32ビット幅に拡張してから-1～1の範囲に丸める
     switch (this._wavFileInfo._bitsPerSample) {
       case 8:
-        pcm32 = this._byteReader.get8() - 128;
-        pcm32 <<= 24;
-        break;
+        pcm32 = this._byteReader.get8() - 128
+        pcm32 <<= 24
+        break
       case 16:
-        pcm32 = this._byteReader.get16LittleEndian() << 16;
-        break;
+        pcm32 = this._byteReader.get16LittleEndian() << 16
+        break
       case 24:
-        pcm32 = this._byteReader.get24LittleEndian() << 8;
-        break;
+        pcm32 = this._byteReader.get24LittleEndian() << 8
+        break
       default:
         // 対応していないビット幅
-        pcm32 = 0;
-        break;
+        pcm32 = 0
+        break
     }
 
-    return pcm32 / 2147483647; //Number.MAX_VALUE;
+    return pcm32 / 2147483647 //Number.MAX_VALUE;
   }
 
   /**
@@ -251,11 +222,11 @@ export class LAppWavFileHandler extends IParameterProvider {
   public getPcmDataChannel(usechannel: number): Float32Array {
     // 指定したチャンネル数がデータ用配列の長さより多いならnullを返す。
     if (!this._pcmData || !(usechannel < this._pcmData.length)) {
-      return null;
+      return null
     }
 
     // _pcmDataから新規に指定したチャンネルのFloat32Arrayを作成する。
-    return Float32Array.from(this._pcmData[usechannel]);
+    return Float32Array.from(this._pcmData[usechannel])
   }
 
   /**
@@ -265,69 +236,65 @@ export class LAppWavFileHandler extends IParameterProvider {
    */
   public getWavSamplingRate(): number {
     if (!this._wavFileInfo || this._wavFileInfo._samplingRate < 1) {
-      return null;
+      return null
     }
 
-    return this._wavFileInfo._samplingRate;
+    return this._wavFileInfo._samplingRate
   }
 
   public releasePcmData(): void {
-    for (
-      let channelCount = 0;
-      channelCount < this._wavFileInfo._numberOfChannels;
-      channelCount++
-    ) {
-      this._pcmData[channelCount] = null;
+    for (let channelCount = 0; channelCount < this._wavFileInfo._numberOfChannels; channelCount++) {
+      this._pcmData[channelCount] = null
     }
-    delete this._pcmData;
-    this._pcmData = null;
+    delete this._pcmData
+    this._pcmData = null
   }
 
   constructor() {
-    super();
-    this._pcmData = null;
-    this._userTimeSeconds = 0.0;
-    this._lastRms = 0.0;
-    this._sampleOffset = 0.0;
-    this._wavFileInfo = new WavFileInfo();
-    this._byteReader = new ByteReader();
+    super()
+    this._pcmData = null
+    this._userTimeSeconds = 0.0
+    this._lastRms = 0.0
+    this._sampleOffset = 0.0
+    this._wavFileInfo = new WavFileInfo()
+    this._byteReader = new ByteReader()
   }
 
-  _pcmData: Array<Float32Array>;
-  _userTimeSeconds: number;
-  _lastRms: number;
-  _sampleOffset: number;
-  _wavFileInfo: WavFileInfo;
-  _byteReader: ByteReader;
+  _pcmData: Array<Float32Array>
+  _userTimeSeconds: number
+  _lastRms: number
+  _sampleOffset: number
+  _wavFileInfo: WavFileInfo
+  _byteReader: ByteReader
   loadFiletoBytes = (arrayBuffer: ArrayBuffer, length: number): void => {
-    this._byteReader._fileByte = arrayBuffer;
-    this._byteReader._fileDataView = new DataView(this._byteReader._fileByte);
-    this._byteReader._fileSize = length;
-  };
+    this._byteReader._fileByte = arrayBuffer
+    this._byteReader._fileDataView = new DataView(this._byteReader._fileByte)
+    this._byteReader._fileSize = length
+  }
 }
 
 export class WavFileInfo {
   constructor() {
-    this._fileName = '';
-    this._numberOfChannels = 0;
-    this._bitsPerSample = 0;
-    this._samplingRate = 0;
-    this._samplesPerChannel = 0;
+    this._fileName = ''
+    this._numberOfChannels = 0
+    this._bitsPerSample = 0
+    this._samplingRate = 0
+    this._samplesPerChannel = 0
   }
 
-  _fileName: string; ///< ファイル名
-  _numberOfChannels: number; ///< チャンネル数
-  _bitsPerSample: number; ///< サンプルあたりビット数
-  _samplingRate: number; ///< サンプリングレート
-  _samplesPerChannel: number; ///< 1チャンネルあたり総サンプル数
+  _fileName: string ///< ファイル名
+  _numberOfChannels: number ///< チャンネル数
+  _bitsPerSample: number ///< サンプルあたりビット数
+  _samplingRate: number ///< サンプリングレート
+  _samplesPerChannel: number ///< 1チャンネルあたり総サンプル数
 }
 
 export class ByteReader {
   constructor() {
-    this._fileByte = null;
-    this._fileDataView = null;
-    this._fileSize = 0;
-    this._readOffset = 0;
+    this._fileByte = null
+    this._fileDataView = null
+    this._fileSize = 0
+    this._readOffset = 0
   }
 
   /**
@@ -335,9 +302,9 @@ export class ByteReader {
    * @return Csm::csmUint8 読み取った8ビット値
    */
   public get8(): number {
-    const ret = this._fileDataView.getUint8(this._readOffset);
-    this._readOffset++;
-    return ret;
+    const ret = this._fileDataView.getUint8(this._readOffset)
+    this._readOffset++
+    return ret
   }
 
   /**
@@ -347,9 +314,9 @@ export class ByteReader {
   public get16LittleEndian(): number {
     const ret =
       (this._fileDataView.getUint8(this._readOffset + 1) << 8) |
-      this._fileDataView.getUint8(this._readOffset);
-    this._readOffset += 2;
-    return ret;
+      this._fileDataView.getUint8(this._readOffset)
+    this._readOffset += 2
+    return ret
   }
 
   /**
@@ -360,9 +327,9 @@ export class ByteReader {
     const ret =
       (this._fileDataView.getUint8(this._readOffset + 2) << 16) |
       (this._fileDataView.getUint8(this._readOffset + 1) << 8) |
-      this._fileDataView.getUint8(this._readOffset);
-    this._readOffset += 3;
-    return ret;
+      this._fileDataView.getUint8(this._readOffset)
+    this._readOffset += 3
+    return ret
   }
 
   /**
@@ -374,9 +341,9 @@ export class ByteReader {
       (this._fileDataView.getUint8(this._readOffset + 3) << 24) |
       (this._fileDataView.getUint8(this._readOffset + 2) << 16) |
       (this._fileDataView.getUint8(this._readOffset + 1) << 8) |
-      this._fileDataView.getUint8(this._readOffset);
-    this._readOffset += 4;
-    return ret;
+      this._fileDataView.getUint8(this._readOffset)
+    this._readOffset += 4
+    return ret
   }
 
   /**
@@ -386,24 +353,24 @@ export class ByteReader {
    *          false   一致していない
    */
   public getCheckSignature(reference: string): boolean {
-    const getSignature: Uint8Array = new Uint8Array(4);
-    const referenceString: Uint8Array = new TextEncoder().encode(reference);
+    const getSignature: Uint8Array = new Uint8Array(4)
+    const referenceString: Uint8Array = new TextEncoder().encode(reference)
     if (reference.length != 4) {
-      return false;
+      return false
     }
     for (let signatureOffset = 0; signatureOffset < 4; signatureOffset++) {
-      getSignature[signatureOffset] = this.get8();
+      getSignature[signatureOffset] = this.get8()
     }
     return (
       getSignature[0] == referenceString[0] &&
       getSignature[1] == referenceString[1] &&
       getSignature[2] == referenceString[2] &&
       getSignature[3] == referenceString[3]
-    );
+    )
   }
 
-  _fileByte: ArrayBuffer; ///< ロードしたファイルのバイト列
-  _fileDataView: DataView;
-  _fileSize: number; ///< ファイルサイズ
-  _readOffset: number; ///< ファイル参照位置
+  _fileByte: ArrayBuffer ///< ロードしたファイルのバイト列
+  _fileDataView: DataView
+  _fileSize: number ///< ファイルサイズ
+  _readOffset: number ///< ファイル参照位置
 }

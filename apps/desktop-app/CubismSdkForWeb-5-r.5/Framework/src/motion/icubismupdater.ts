@@ -5,7 +5,7 @@
  * that can be found at https://www.live2d.com/eula/live2d-open-software-license-agreement_en.html.
  */
 
-import { CubismModel } from '../model/cubismmodel';
+import { CubismModel } from '../model/cubismmodel'
 
 /**
  * Interface for listening to ICubismUpdater changes.
@@ -16,7 +16,7 @@ export interface ICubismUpdaterChangeListener {
    *
    * @param updater The updater that was changed
    */
-  onUpdaterChanged(updater: ICubismUpdater): void;
+  onUpdaterChanged(updater: ICubismUpdater): void
 }
 
 export enum CubismUpdateOrder {
@@ -27,7 +27,7 @@ export enum CubismUpdateOrder {
   CubismUpdateOrder_Physics = 600,
   CubismUpdateOrder_LipSync = 700,
   CubismUpdateOrder_Pose = 800,
-  CubismUpdateOrder_Max = Number.MAX_SAFE_INTEGER
+  CubismUpdateOrder_Max = Number.MAX_SAFE_INTEGER,
 }
 
 /**
@@ -47,21 +47,21 @@ export abstract class ICubismUpdater {
    */
   static sortFunction(left: ICubismUpdater, right: ICubismUpdater): number {
     if (!left || !right) {
-      if (!left && !right) return 0;
-      if (!left) return 1; // null/undefined elements go to end
-      if (!right) return -1;
+      if (!left && !right) return 0
+      if (!left) return 1 // null/undefined elements go to end
+      if (!right) return -1
     }
-    return left.getExecutionOrder() - right.getExecutionOrder();
+    return left.getExecutionOrder() - right.getExecutionOrder()
   }
 
-  private _executionOrder: number;
-  private _changeListeners: ICubismUpdaterChangeListener[] = [];
+  private _executionOrder: number
+  private _changeListeners: ICubismUpdaterChangeListener[] = []
 
   /**
    * Constructor
    */
   constructor(executionOrder: number = 0) {
-    this._executionOrder = executionOrder;
+    this._executionOrder = executionOrder
   }
 
   /**
@@ -70,16 +70,16 @@ export abstract class ICubismUpdater {
    * @param model Model to update
    * @param deltaTimeSeconds Delta time in seconds.
    */
-  abstract onLateUpdate(model: CubismModel, deltaTimeSeconds: number): void;
+  abstract onLateUpdate(model: CubismModel, deltaTimeSeconds: number): void
 
   getExecutionOrder(): number {
-    return this._executionOrder;
+    return this._executionOrder
   }
 
   setExecutionOrder(executionOrder: number): void {
     if (this._executionOrder !== executionOrder) {
-      this._executionOrder = executionOrder;
-      this.notifyChangeListeners();
+      this._executionOrder = executionOrder
+      this.notifyChangeListeners()
     }
   }
 
@@ -90,7 +90,7 @@ export abstract class ICubismUpdater {
    */
   addChangeListener(listener: ICubismUpdaterChangeListener): void {
     if (listener && this._changeListeners.indexOf(listener) === -1) {
-      this._changeListeners.push(listener);
+      this._changeListeners.push(listener)
     }
   }
 
@@ -100,9 +100,9 @@ export abstract class ICubismUpdater {
    * @param listener The listener to remove
    */
   removeChangeListener(listener: ICubismUpdaterChangeListener): void {
-    const index = this._changeListeners.indexOf(listener);
+    const index = this._changeListeners.indexOf(listener)
     if (index >= 0) {
-      this._changeListeners.splice(index, 1);
+      this._changeListeners.splice(index, 1)
     }
   }
 
@@ -111,16 +111,16 @@ export abstract class ICubismUpdater {
    */
   private notifyChangeListeners(): void {
     for (const listener of this._changeListeners) {
-      listener.onUpdaterChanged(this);
+      listener.onUpdaterChanged(this)
     }
   }
 }
 
 // Namespace definition for compatibility.
-import * as $ from './icubismupdater';
+import * as $ from './icubismupdater'
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
-  export const ICubismUpdater = $.ICubismUpdater;
-  export type ICubismUpdater = $.ICubismUpdater;
-  export type ICubismUpdaterChangeListener = $.ICubismUpdaterChangeListener;
+  export const ICubismUpdater = $.ICubismUpdater
+  export type ICubismUpdater = $.ICubismUpdater
+  export type ICubismUpdaterChangeListener = $.ICubismUpdaterChangeListener
 }

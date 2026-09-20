@@ -5,7 +5,7 @@
  * that can be found at https://www.live2d.com/eula/live2d-open-software-license-agreement_en.html.
  */
 
-import { csmString } from '../type/csmstring';
+import { csmString } from '../type/csmstring'
 
 /**
  * パラメータ名・パーツ名・Drawable名を保持
@@ -25,14 +25,14 @@ export class CubismId {
    *       CubismIdManager().getId(id)を使用してください
    */
   public static createIdInternal(id: string | csmString) {
-    return new CubismId(id);
+    return new CubismId(id)
   }
 
   /**
    * ID名を取得する
    */
   public getString(): csmString {
-    return this._id;
+    return this._id
   }
 
   /**
@@ -42,13 +42,13 @@ export class CubismId {
    */
   public isEqual(c: string | csmString | CubismId): boolean {
     if (typeof c === 'string') {
-      return this._id.isEqual(c);
+      return this._id.isEqual(c)
     } else if (c instanceof csmString) {
-      return this._id.isEqual(c.s);
+      return this._id.isEqual(c.s)
     } else if (c instanceof CubismId) {
-      return this._id.isEqual(c._id.s);
+      return this._id.isEqual(c._id.s)
     }
-    return false;
+    return false
   }
 
   /**
@@ -58,13 +58,13 @@ export class CubismId {
    */
   public isNotEqual(c: string | csmString | CubismId): boolean {
     if (typeof c == 'string') {
-      return !this._id.isEqual(c);
+      return !this._id.isEqual(c)
     } else if (c instanceof csmString) {
-      return !this._id.isEqual(c.s);
+      return !this._id.isEqual(c.s)
     } else if (c instanceof CubismId) {
-      return !this._id.isEqual(c._id.s);
+      return !this._id.isEqual(c._id.s)
     }
-    return false;
+    return false
   }
 
   /**
@@ -74,23 +74,23 @@ export class CubismId {
    */
   private constructor(id: string | csmString) {
     if (typeof id === 'string') {
-      this._id = new csmString(id);
-      return;
+      this._id = new csmString(id)
+      return
     }
 
-    this._id = id;
+    this._id = id
   }
 
-  private _id: csmString; // ID名
+  private _id: csmString // ID名
 }
 
-export declare type CubismIdHandle = CubismId;
+export declare type CubismIdHandle = CubismId
 
 // Namespace definition for compatibility.
-import * as $ from './cubismid';
+import * as $ from './cubismid'
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
-  export const CubismId = $.CubismId;
-  export type CubismId = $.CubismId;
-  export type CubismIdHandle = $.CubismIdHandle;
+  export const CubismId = $.CubismId
+  export type CubismId = $.CubismId
+  export type CubismIdHandle = $.CubismIdHandle
 }

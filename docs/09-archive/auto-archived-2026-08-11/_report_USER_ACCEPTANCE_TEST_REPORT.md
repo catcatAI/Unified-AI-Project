@@ -25,6 +25,7 @@
 ## 建议的解决方案
 
 1. **清理依赖**：
+
    ```
    cd D:\Projects\Unified-AI-Project
    pnpm clean
@@ -32,6 +33,7 @@
    ```
 
 2. **重新创建虚拟环境**：
+
    ```
    cd apps\backend
    rmdir /s venv
@@ -41,18 +43,18 @@
    ```
 
 3. **手动启动服务**：
+
    ```
    # 启动API服务器
    cd apps\backend
    call venv\Scripts\activate.bat
    python -m src.services.main_api_server
-   
+
    # 在新终端中启动前端
    pnpm --filter frontend-dashboard dev
    ```
 
-4. **运行测试**：
-   在服务正常运行后，执行用户验收测试：
+4. **运行测试**：在服务正常运行后，执行用户验收测试：
    ```
    cd D:\Projects\Unified-AI-Project
    python tools/user_acceptance_test.py

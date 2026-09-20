@@ -1,4 +1,5 @@
 # Angela AI 安装指南
+
 ## Installation Guide
 
 ---
@@ -10,16 +11,20 @@
 **最简单的方式** - 只需下载一个文件，运行即可：
 
 #### Windows:
+
 1. **下载安装程序**
+
    ```powershell
    # 打开PowerShell或CMD，运行：
    curl -o install_angela.py https://raw.githubusercontent.com/catcatAI/Unified-AI-Project/main/install_angela.py
    ```
 
 2. **运行安装**
+
    ```powershell
    python install_angela.py
    ```
+
    或双击下载的 `install_angela.py` 文件
 
 3. **按提示操作**
@@ -35,6 +40,7 @@
 ---
 
 #### macOS/Linux:
+
 ```bash
 # 下载安装程序
 curl -o install_angela.py https://raw.githubusercontent.com/catcatAI/Unified-AI-Project/main/install_angela.py
@@ -78,21 +84,23 @@ python scripts/run_angela.py
 
 #### 功能组 extras 一览（`pip install -e "./apps/backend[<组名>]"`）
 
-| 组名 | 内容 | 适用场景 |
-|------|------|----------|
-| `ml` | torch / transformers / sentence-transformers | 神经嵌入、SNN torch 后端 |
-| `vector` | chromadb | 持久化向量库（无则回退 numpy+JSON） |
-| `data` | pandas / scikit-learn / textblob | 表格分析、情感分析 |
-| `media` | pyautogui / pytesseract / pywebview | 屏幕控制、OCR、桌面窗口 |
-| `audio` | SpeechRecognition / faster-whisper | 语音识别 STT |
-| `gpu` | pynvml | NVIDIA GPU 遥测 |
-| `cache` | redis | Redis 缓存后端 |
-| `google` | Google API 客户端套件 | Drive / Gmail 集成 |
-| `docs` | beautifulsoup4 / python-docx / openpyxl | 文档处理 |
-| `tracing` | OpenTelemetry | 分布式追踪（可选观测性） |
-| `browser` | playwright | 无头浏览器自动化（需再执行 `playwright install`） |
+| 组名      | 内容                                         | 适用场景                                          |
+| --------- | -------------------------------------------- | ------------------------------------------------- |
+| `ml`      | torch / transformers / sentence-transformers | 神经嵌入、SNN torch 后端                          |
+| `vector`  | chromadb                                     | 持久化向量库（无则回退 numpy+JSON）               |
+| `data`    | pandas / scikit-learn / textblob             | 表格分析、情感分析                                |
+| `media`   | pyautogui / pytesseract / pywebview          | 屏幕控制、OCR、桌面窗口                           |
+| `audio`   | SpeechRecognition / faster-whisper           | 语音识别 STT                                      |
+| `gpu`     | pynvml                                       | NVIDIA GPU 遥测                                   |
+| `cache`   | redis                                        | Redis 缓存后端                                    |
+| `google`  | Google API 客户端套件                        | Drive / Gmail 集成                                |
+| `docs`    | beautifulsoup4 / python-docx / openpyxl      | 文档处理                                          |
+| `tracing` | OpenTelemetry                                | 分布式追踪（可选观测性）                          |
+| `browser` | playwright                                   | 无头浏览器自动化（需再执行 `playwright install`） |
 
-> 💡 **低内存设备提示**：torch 默认从 PyPI 安装的是捆绑 CUDA 的版本（约 2GB+）。若无需 GPU 或内存有限，建议先装 CPU 版：
+> 💡
+> **低内存设备提示**：torch 默认从 PyPI 安装的是捆绑 CUDA 的版本（约 2GB+）。若无需 GPU 或内存有限，建议先装 CPU 版：
+>
 > ```bash
 > pip install torch --index-url https://download.pytorch.org/whl/cpu
 > pip install -e "./apps/backend[ml]"
@@ -115,11 +123,11 @@ docker-compose up -d
 
 ## 📋 安装选项对比
 
-| 方式 | 适用对象 | 难度 | 特点 |
-|------|----------|------|------|
-| **一键安装** | 新用户 | ⭐ 最简单 | 自动下载、自动安装、创建快捷方式 |
-| **手动安装** | 开发者 | ⭐⭐ 中等 | 可修改代码、灵活配置 |
-| **Docker** | 高级用户 | ⭐⭐⭐ 复杂 | 容器化部署、隔离环境 |
+| 方式         | 适用对象 | 难度        | 特点                             |
+| ------------ | -------- | ----------- | -------------------------------- |
+| **一键安装** | 新用户   | ⭐ 最简单   | 自动下载、自动安装、创建快捷方式 |
+| **手动安装** | 开发者   | ⭐⭐ 中等   | 可修改代码、灵活配置             |
+| **Docker**   | 高级用户 | ⭐⭐⭐ 复杂 | 容器化部署、隔离环境             |
 
 ---
 
@@ -196,10 +204,12 @@ python install_angela.py --skip-shortcuts
 ### 方法一：使用卸载程序（推荐）
 
 **Windows:**
+
 - 开始菜单 → Angela AI → 卸载 Angela AI
 - 或在安装目录运行：`python uninstall.py`
 
 **macOS/Linux:**
+
 ```bash
 cd ~/AngelaAI
 python uninstall.py
@@ -220,16 +230,22 @@ rm -rf ~/AngelaAI
 ## ❓ 常见问题
 
 ### Q: 安装失败，提示"Git未安装"
-**A:** 安装程序会自动尝试下载ZIP文件作为备选。也可以手动安装Git：https://git-scm.com
+
+**A:**
+安装程序会自动尝试下载ZIP文件作为备选。也可以手动安装Git：https://git-scm.com
 
 ### Q: 依赖安装超时
+
 **A:** 网络问题，可以：
+
 1. 更换pip源：`pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple`
 2. 使用代理
 3. 手动安装：`pip install -r requirements.txt --user`
 
 ### Q: 如何更新到最新版本？
-**A:** 
+
+**A:**
+
 ```bash
 cd ~/AngelaAI
 git pull origin main
@@ -237,22 +253,27 @@ pip install -r requirements.txt --upgrade
 ```
 
 ### Q: 安装后找不到快捷方式
+
 **A:** 可以手动创建快捷方式指向：`python scripts/run_angela.py`
 
 ### Q: 提示缺少XXX.dll
-**A:** Windows需要安装Visual C++ Redistributable，下载：https://aka.ms/vs/17/release/vc_redist.x64.exe
+
+**A:** Windows需要安装Visual C++
+Redistributable，下载：https://aka.ms/vs/17/release/vc_redist.x64.exe
 
 ---
 
 ## 📊 系统要求
 
 ### 最低配置
+
 - **Python**: 3.10+
 - **RAM**: 4GB
 - **磁盘**: 2GB 可用空间
 - **系统**: Windows 10/11, macOS 10.15+, Ubuntu 20.04+
 
 ### 推荐配置
+
 - **Python**: 3.11 或 3.12
 - **RAM**: 8GB+
 - **磁盘**: 5GB+ 可用空间
@@ -265,15 +286,17 @@ pip install -r requirements.txt --upgrade
 ### 首次启动
 
 1. **配置API密钥**（可选，用于文件管理功能）
+
    ```bash
    # 复制示例配置文件
    cp apps/backend/config/credentials.example.json ~/.config/angela-ai/credentials.json
-   
+
    # 编辑填入你的Google API密钥
    nano ~/.config/angela-ai/credentials.json
    ```
 
 2. **启动Angela**
+
    ```bash
    # 方法1：双击桌面快捷方式
    # 方法2：终端运行
@@ -292,7 +315,8 @@ pip install -r requirements.txt --upgrade
 
 - **使用指南**: [README.md](../README.md)
 - **项目结构**: [PROJECT_STRUCTURE.md](../PROJECT_STRUCTURE.md)
-- **艺术学习**: [docs/ART_LEARNING_LIVE2D_GUIDE.md](ART_LEARNING_LIVE2D_GUIDE.md)
+- **艺术学习**:
+  [docs/ART_LEARNING_LIVE2D_GUIDE.md](ART_LEARNING_LIVE2D_GUIDE.md)
 - **API文档**: [docs/02-api-docs/](02-api-docs/)
 
 ---
@@ -309,5 +333,5 @@ pip install -r requirements.txt --upgrade
 
 ---
 
-*更新日期*: 2026-02-02  
-*作者*: CatCatAI Development Team
+_更新日期_: 2026-02-02  
+_作者_: CatCatAI Development Team

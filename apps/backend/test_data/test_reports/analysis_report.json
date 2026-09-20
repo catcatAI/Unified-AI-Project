@@ -19,17 +19,13 @@
     {
       "pattern": "超时错误",
       "count": 1,
-      "affected_tests": [
-        "tests/unit/test_product_service.py::test_get_product"
-      ],
+      "affected_tests": ["tests/unit/test_product_service.py::test_get_product"],
       "suggestion": "检查网络连接或增加超时时间，优化被测试代码的性能"
     },
     {
       "pattern": "连接错误",
       "count": 1,
-      "affected_tests": [
-        "tests/unit/test_order_service.py::test_delete_order"
-      ],
+      "affected_tests": ["tests/unit/test_order_service.py::test_delete_order"],
       "suggestion": "检查服务是否正常运行，网络配置是否正确"
     }
   ],

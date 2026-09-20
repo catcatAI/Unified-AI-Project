@@ -10,15 +10,14 @@
  * @version 7.5.0-dev
  */
 
-console.log('[shared-js] @angela/shared-js loaded');
+console.log('[shared-js] @angela/shared-js loaded')
 
 // Platform detection helper for shared modules
 window.AngelaPlatform = {
-    isElectron: typeof window.electronAPI !== 'undefined' &&
-                typeof window.electronAPI.window !== 'undefined',
-    isWeb: typeof window.electronAPI === 'undefined' ||
-           window.electronAPI?.platform === 'web',
-    getImageRoot: function() {
-        return this.isElectron ? 'local://' : '';
-    }
-};
+  isElectron:
+    typeof window.electronAPI !== 'undefined' && typeof window.electronAPI.window !== 'undefined',
+  isWeb: typeof window.electronAPI === 'undefined' || window.electronAPI?.platform === 'web',
+  getImageRoot: function () {
+    return this.isElectron ? 'local://' : ''
+  },
+}

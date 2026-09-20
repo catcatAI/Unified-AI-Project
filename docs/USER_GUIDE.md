@@ -2,7 +2,8 @@
 
 ## Introduction
 
-Angela AI is an advanced AI assistant with memory, learning, and emotional intelligence capabilities. This guide will help you get started with Angela.
+Angela AI is an advanced AI assistant with memory, learning, and emotional
+intelligence capabilities. This guide will help you get started with Angela.
 
 ## Installation
 
@@ -74,12 +75,14 @@ docker-compose up -d
 ### Voice Interaction
 
 Angela supports voice input and output:
+
 - Click the microphone icon to speak
 - Angela will respond with voice when available
 
 ### Pet Interaction
 
 The pet panel shows Angela's virtual companion:
+
 - **Pet**: Increase happiness
 - **Feed**: Reduce hunger
 - **Play**: Increase energy
@@ -90,6 +93,7 @@ The pet panel shows Angela's virtual companion:
 ### Memory System
 
 Angela remembers your conversations and preferences:
+
 - View memories in the Memory Viewer
 - Search and filter by category
 - Memories improve over time
@@ -97,6 +101,7 @@ Angela remembers your conversations and preferences:
 ### Learning
 
 Angela learns from every interaction:
+
 - ED3N dictionary grows with new terms
 - GARDEN reasoning improves with use
 - Learning Dashboard shows progress
@@ -104,6 +109,7 @@ Angela learns from every interaction:
 ### Safety
 
 Angela has a 3-layer safety system:
+
 1. **Trust Manager**: Tracks user trust scores
 2. **Content Filter**: Blocks harmful content
 3. **Safety Audit**: Logs all safety decisions
@@ -125,21 +131,23 @@ curl http://localhost:8000/api/v1/ops/health
 ### WebSocket
 
 ```javascript
-const ws = new WebSocket('ws://localhost:8000/ws');
+const ws = new WebSocket('ws://localhost:8000/ws')
 
 ws.onopen = () => {
-  ws.send(JSON.stringify({ type: 'chat', content: 'Hello!' }));
-};
+  ws.send(JSON.stringify({ type: 'chat', content: 'Hello!' }))
+}
 
 ws.onmessage = (event) => {
-  const data = JSON.parse(event.data);
-  console.log('Angela:', data.content);
-};
+  const data = JSON.parse(event.data)
+  console.log('Angela:', data.content)
+}
 ```
 
 ## Configuration
 
-> 📖 **For a complete guide** on configuration, AI models, context, UI discovery, and where everything is — see [**USABILITY_GUIDE.md**](USABILITY_GUIDE.md).
+> 📖 **For a complete guide** on configuration, AI models, context, UI
+> discovery, and where everything is — see
+> [**USABILITY_GUIDE.md**](USABILITY_GUIDE.md).
 
 ### Environment Variables
 
@@ -157,15 +165,15 @@ SECRET_KEY=your-secret-key
 
 ### Configuration Files
 
-| File | Purpose |
-|------|---------|
-| `configs/config.yaml` | Main server + AI model config |
-| `configs/system/llm.default.yaml` | LLM backends, deployment mode, web search |
-| `configs/system/llm.user.yaml` | User overrides for LLM config |
-| `configs/system/core.default.yaml` | Core system defaults |
-| `configs/crisis_system_config.json` | Crisis/safety system |
-| `configs/personality_profiles/` | Personality configurations |
-| `configs/formula_configs/` | Formula engine configs |
+| File                                | Purpose                                   |
+| ----------------------------------- | ----------------------------------------- |
+| `configs/config.yaml`               | Main server + AI model config             |
+| `configs/system/llm.default.yaml`   | LLM backends, deployment mode, web search |
+| `configs/system/llm.user.yaml`      | User overrides for LLM config             |
+| `configs/system/core.default.yaml`  | Core system defaults                      |
+| `configs/crisis_system_config.json` | Crisis/safety system                      |
+| `configs/personality_profiles/`     | Personality configurations                |
+| `configs/formula_configs/`          | Formula engine configs                    |
 
 ### Deployment Modes
 
@@ -186,13 +194,15 @@ Angela supports multiple backends. Enable in `llm.default.yaml`:
 - `anthropic-claude` — Anthropic API
 - `google-gemini` — Google AI API
 
-Use `/model list` in REPL or see [USABILITY_GUIDE.md](USABILITY_GUIDE.md#3-ai-models--backends) for details.
+Use `/model list` in REPL or see
+[USABILITY_GUIDE.md](USABILITY_GUIDE.md#3-ai-models--backends) for details.
 
 ## Troubleshooting
 
 ### Common Issues
 
 **Server won't start**
+
 ```bash
 # Check if port 8000 is in use
 lsof -i :8000
@@ -202,6 +212,7 @@ kill -9 <PID>
 ```
 
 **Database connection failed**
+
 ```bash
 # Check PostgreSQL status
 docker-compose ps postgres
@@ -211,6 +222,7 @@ docker-compose restart postgres
 ```
 
 **WebSocket not connecting**
+
 - Ensure the backend server is running
 - Check firewall settings
 - Verify WebSocket URL in dashboard settings

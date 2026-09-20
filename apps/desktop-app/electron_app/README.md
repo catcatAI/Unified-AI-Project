@@ -12,7 +12,9 @@
 
 #### 1. 安裝依賴 (重要：專案使用 pnpm monorepo 工作區架構)
 
-請勿直接在 `electron_app` 目錄下執行 `npm install`，這會因為工作區設定衝突而報錯。請至專案根目錄使用 `pnpm` 進行安裝：
+請勿直接在 `electron_app` 目錄下執行
+`npm install`，這會因為工作區設定衝突而報錯。請至專案根目錄使用 `pnpm`
+進行安裝：
 
 ```bash
 # 回到專案根目錄
@@ -33,11 +35,13 @@ npm install electron --save-dev
 #### 3. 啟動應用
 
 **開發模式**
+
 ```bash
 npm start
 ```
 
 **調試模式**
+
 ```bash
 npm run dev
 ```
@@ -63,86 +67,86 @@ npm run build:linux
 
 ```javascript
 // 加載模型
-await window.angelaApp.live2dManager.loadModel('path/to/model');
+await window.angelaApp.live2dManager.loadModel('path/to/model')
 
 // 設置表情
-window.angelaApp.live2dManager.setExpression('happy');
+window.angelaApp.live2dManager.setExpression('happy')
 
 // 播放動作
-await window.angelaApp.live2dManager.playMotion('tap');
+await window.angelaApp.live2dManager.playMotion('tap')
 
 // 視線追蹤
-window.angelaApp.live2dManager.lookAt(0.5, -0.3);
+window.angelaApp.live2dManager.lookAt(0.5, -0.3)
 
 // 重置姿態
-window.angelaApp.live2dManager.resetPose();
+window.angelaApp.live2dManager.resetPose()
 ```
 
 ### 2. 音訊控制
 
 ```javascript
 // 啟動語音識別
-window.angelaApp.audioHandler.startSpeechRecognition();
+window.angelaApp.audioHandler.startSpeechRecognition()
 
 // 語音合成 (TTS)
-window.angelaApp.speak('Hello! How are you today?');
+window.angelaApp.speak('Hello! How are you today?')
 
 // 播放音效
-window.angelaApp.audioHandler.playSoundEffect('click');
+window.angelaApp.audioHandler.playSoundEffect('click')
 
 // 啟動麥克風
-await window.angelaApp.audioHandler.startMicrophone();
+await window.angelaApp.audioHandler.startMicrophone()
 ```
 
 ### 3. 觸覺控制
 
 ```javascript
 // 發現觸覺裝置
-const devices = await window.angelaApp.hapticHandler.discoverDevices();
+const devices = await window.angelaApp.hapticHandler.discoverDevices()
 
 // 連接裝置
-await window.angelaApp.hapticHandler.connectDevice(deviceId);
+await window.angelaApp.hapticHandler.connectDevice(deviceId)
 
 // 觸覺反饋
-window.angelaApp.hapticHandler.vibrate(100, 0.8); // duration, intensity
-window.angelaApp.hapticHandler.hapticTouch(0.5); // intensity
-window.angelaApp.hapticHandler.hapticEmotion('happy'); // emotion
+window.angelaApp.hapticHandler.vibrate(100, 0.8) // duration, intensity
+window.angelaApp.hapticHandler.hapticTouch(0.5) // intensity
+window.angelaApp.hapticHandler.hapticEmotion('happy') // emotion
 
 // 肢體部位觸覺
-window.angelaApp.hapticHandler.hapticBodyPart('head', 0.8);
+window.angelaApp.hapticHandler.hapticBodyPart('head', 0.8)
 ```
 
 ### 4. 桌布控制
 
 ```javascript
 // 加載桌布
-await window.angelaApp.wallpaperHandler.loadWallpaper('path/to/image.jpg');
+await window.angelaApp.wallpaperHandler.loadWallpaper('path/to/image.jpg')
 
 // 設置桌布
-await window.angelaApp.wallpaperHandler.setWallpaper('path/to/image.jpg');
+await window.angelaApp.wallpaperHandler.setWallpaper('path/to/image.jpg')
 
 // 載入預設桌布
-await window.angelaApp.wallpaperHandler.loadPreset('gradient');
-await window.angelaApp.wallpaperHandler.loadPreset('dark');
-await window.angelaApp.wallpaperHandler.loadPreset('light');
+await window.angelaApp.wallpaperHandler.loadPreset('gradient')
+await window.angelaApp.wallpaperHandler.loadPreset('dark')
+await window.angelaApp.wallpaperHandler.loadPreset('light')
 
 // 應用特效
-window.angelaApp.wallpaperHandler.applyEffect('blur');
-window.angelaApp.wallpaperHandler.applyEffect('darken');
-window.angelaApp.wallpaperHandler.applyEffect('none');
+window.angelaApp.wallpaperHandler.applyEffect('blur')
+window.angelaApp.wallpaperHandler.applyEffect('darken')
+window.angelaApp.wallpaperHandler.applyEffect('none')
 
 // 拍攝快照
-window.angelaApp.wallpaperHandler.saveSnapshot('angela-snapshot.png');
+window.angelaApp.wallpaperHandler.saveSnapshot('angela-snapshot.png')
 ```
 
 ### 5. 後端通訊
 
 ```javascript
 // 連接後端
-await window.angelaApp.connectBackend('ws://localhost:8000/ws');
+await window.angelaApp.connectBackend('ws://localhost:8000/ws')
 
 // 斷開後端
-await window.angelaApp.disconnectBackend();
+await window.angelaApp.disconnectBackend()
 ```
 
 ---
@@ -159,15 +163,15 @@ await window.angelaApp.disconnectBackend();
 
 ```javascript
 mainWindow = new BrowserWindow({
-    width: 400,        // 窗口寬度
-    height: 600,       // 窗口高度
-    x: width - 450,    // 初始 X 位置
-    y: height - 650,   // 初始 Y 位置
-    transparent: true, // 透明背景
-    frame: false,      // 無邊框
-    alwaysOnTop: false, // 是否置頂
-    // ... 其他配置
-});
+  width: 400, // 窗口寬度
+  height: 600, // 窗口高度
+  x: width - 450, // 初始 X 位置
+  y: height - 650, // 初始 Y 位置
+  transparent: true, // 透明背景
+  frame: false, // 無邊框
+  alwaysOnTop: false, // 是否置頂
+  // ... 其他配置
+})
 ```
 
 ### 觸覺配置
@@ -176,13 +180,13 @@ mainWindow = new BrowserWindow({
 
 ```javascript
 const hapticPatterns = {
-    'click': { duration: 10, intensity: 0.5 },
-    'hover': { duration: 5, intensity: 0.3 },
-    'touch': { duration: 50, intensity: 1.0 },
-    'happy': [100, 50, 200],
-    'sad': [50, 100, 50]
-    // ... 自定義模式
-};
+  click: { duration: 10, intensity: 0.5 },
+  hover: { duration: 5, intensity: 0.3 },
+  touch: { duration: 50, intensity: 1.0 },
+  happy: [100, 50, 200],
+  sad: [50, 100, 50],
+  // ... 自定義模式
+}
 ```
 
 ---
@@ -194,21 +198,23 @@ const hapticPatterns = {
 ```javascript
 // 在 main.js 中設置
 if (isDevMode) {
-    mainWindow.webContents.openDevTools();
+  mainWindow.webContents.openDevTools()
 }
 ```
 
 ### 常見問題
 
 **問題 1: Live2D 模型無法加載**
+
 ```
-解決方案: 
+解決方案:
 1. 檢查模型路徑是否正確
 2. 確認所有必需文件存在 (moc3, model3.json, physics3.json, texture.png)
 3. 檢查控制台錯誤訊息
 ```
 
 **問題 2: 點擊穿透不工作**
+
 ```
 解決方案:
 1. 檢查 setIgnoreMouseEvents 調用
@@ -217,6 +223,7 @@ if (isDevMode) {
 ```
 
 **問題 3: 音訊無法播放**
+
 ```
 解決方案:
 1. 檢查音訊設備權限
@@ -225,6 +232,7 @@ if (isDevMode) {
 ```
 
 **問題 4: WebSocket 連接失敗**
+
 ```
 解決方案:
 1. 確認後端服務正在運行
@@ -236,11 +244,11 @@ if (isDevMode) {
 
 ## 📱 快捷鍵
 
-| 快捷鍵 | 功能 |
-|--------|------|
+| 快捷鍵         | 功能          |
+| -------------- | ------------- |
 | `Ctrl+Shift+A` | 顯示/隱藏應用 |
-| `Ctrl+Shift+S` | 打開設置 |
-| `Ctrl+Shift+Q` | 退出應用 |
+| `Ctrl+Shift+S` | 打開設置      |
+| `Ctrl+Shift+Q` | 退出應用      |
 
 ---
 
@@ -252,20 +260,20 @@ if (isDevMode) {
 class Live2DManager {
     // 初始化
     async initialize(): Promise<boolean>
-    
+
     // 模型管理
     async loadModel(modelPath: string): Promise<boolean>
-    
+
     // 參數控制
     setParameter(name: string, value: number): void
     getParameter(name: string): number
-    
+
     // 表情控制
     setExpression(expression: string): void
-    
+
     // 視線追蹤
     lookAt(x: number, y: number): void
-    
+
     // 重置
     resetPose(): void
     shutdown(): void
@@ -279,21 +287,21 @@ class AudioHandler {
     // 麥克風
     async startMicrophone(): Promise<boolean>
     stopMicrophone(): void
-    
+
     // 語音識別
     startSpeechRecognition(): void
     stopSpeechRecognition(): void
-    
+
     // 語音合成
     speak(text: string, options: object): void
     stopSpeaking(): void
-    
+
     // 音效
     playSoundEffect(name: string): void
-    
+
     // 音訊分析
     getAudioLevel(): number
-    
+
     // 關閉
     shutdown(): void
 }
@@ -306,17 +314,17 @@ class HapticHandler {
     // 設備管理
     async discoverDevices(): Promise<Array>
     async connectDevice(deviceId: string): Promise<boolean>
-    
+
     // 觸覺反饋
     vibrate(duration: number, intensity: number, pattern: Array): void
     hapticTouch(intensity: number): void
     hapticEmotion(emotion: string): void
     hapticBodyPart(bodyPart: string, intensity: number): void
-    
+
     // 啟用/禁用
     enable(): void
     disable(): void
-    
+
     // 關閉
     shutdown(): void
 }
@@ -329,21 +337,21 @@ class WallpaperHandler {
     // 桌布管理
     async loadWallpaper(imagePath: string): Promise<Image>
     async setWallpaper(imagePath: string): Promise<void>
-    
+
     // 預設
     async loadPreset(preset: string): Promise<void>
-    
+
     // 特效
     applyEffect(effect: string): void
-    
+
     // 快照
     takeSnapshot(): string
     saveSnapshot(filename: string): void
-    
+
     // 狀態
     exportState(): object
     async importState(state: object): Promise<void>
-    
+
     // 清理
     cleanup(): void
 }
@@ -408,6 +416,7 @@ footer
 ```
 
 示例:
+
 ```
 feat(live2d): add new expression support
 

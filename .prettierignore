@@ -57,6 +57,12 @@ Thumbs.db
 packages/ui/node_modules/
 apps/desktop-app/electron_app/node_modules/
 
+# 第三方 SDK（vendored，不重排）
+apps/desktop-app/CubismSdkForWeb-5-r.5/
+
+# 生成檔（重排會造成無意義 diff 與解析風險）
+pnpm-lock.yaml
+
 # 特定格式文件
 *.min.js
 *.min.css

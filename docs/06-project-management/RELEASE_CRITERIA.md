@@ -21,15 +21,14 @@
 - 開放域智能仍依外部／本地 LLM；原生引擎僅確定性＋試點泛化——分數見 INTELLIGENCE_ASSESSMENT（誠實拆分）。
 - 地圖 25 檔折疊懸崖：TREND 只認三連升（已註記）。
 - 非單調 autosize（如預力窗外）：終驗報錯（已落實）。
-- mypy 類型覆蓋債：**680**（2026-09-21 實測全量 `--python-version 3.12`；此前
-  581 之後環境中 numpy 2.5 stubs 以 `Type statement` 語法錯誤**擋住全量**，
-  「errors prevented further checking」使數字不可比。R72 修開：pyproject 加
-  無型別第三方庫 overrides（pytesseract/textblob/scipy.ndimage/pyautogui/
-  pystray/rumps/gi/textual/sklearn/speech_recognition/faster_whisper）＋清
-  feedback_loop_engine TYPE_CHECKING 死引用與裸 import、game_agent 雙重模組
-  身份 import——全量從此可跑，680 為真實基線（歷史最低點 581 errors 為
-  2026-09-17 實測，當時環境未被 numpy stubs 擋住）；收斂軌跡：R87 ensemble -7; R86
-  audio_encoder_spectral -3; R85 visual_encoder -3; R84
+- mypy 類型覆蓋債：**680**（2026-09-21 實測全量
+  `--python-version 3.12`；此前 581 之後環境中 numpy 2.5 stubs 以
+  `Type statement` 語法錯誤**擋住全量**，「errors prevented further
+  checking」使數字不可比。R72 修開：pyproject 加無型別第三方庫 overrides（pytesseract/textblob/scipy.ndimage/pyautogui/
+  pystray/rumps/gi/textual/sklearn/speech_recognition/faster_whisper）＋清 feedback_loop_engine
+  TYPE_CHECKING 死引用與裸 import、game_agent 雙重模組身份 import——全量從此可跑，680 為真實基線（歷史最低點 581
+  errors 為 2026-09-17 實測，當時環境未被 numpy stubs 擋住）；收斂軌跡：R87
+  ensemble -7; R86 audio_encoder_spectral -3; R85 visual_encoder -3; R84
   gdrive+selfgen -18; R83 coremodel+diffusion -18; R82 adapter+live2d -20; R81
   threshold+agentmgr -22; R80 symbolic+browser -15; R79 heartbeat -11; R78
   websocket -11; R77 training_pipeline -15; R76 multimodal_retriever -2; R75

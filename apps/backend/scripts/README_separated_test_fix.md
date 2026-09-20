@@ -24,11 +24,13 @@ graph TD
 ## 组件说明
 
 ### 1. 测试执行器 (test_runner.py)
+
 - 负责运行测试并收集结果
 - 将测试结果保存到 `test_results.json` 文件中
 - 在终端中显示测试输出
 
 ### 2. 错误分析器 (error_analyzer.py)
+
 - 分析测试结果文件，识别不同类型的错误
 - 生成详细的错误报告保存到 `error_report.json`
 - 支持多种错误类型的识别：
@@ -41,15 +43,18 @@ graph TD
   - 配置问题
 
 ### 3. 修复执行器 (fix_executor.py)
+
 - 根据错误报告执行相应的修复操作
 - 支持多种自动修复功能
 - 生成修复日志
 
 ### 4. 流程控制器 (workflow_controller.py)
+
 - 协调整个测试-修复流程
 - 支持在不同终端中运行测试和修复
 
 ### 5. 增强版自动修复工具 (enhanced_auto_fix.py)
+
 - 提供更多自动修复功能
 - 专门针对特定类型的错误进行修复
 
@@ -79,12 +84,14 @@ python scripts/workflow_controller.py --separate-terminals
 ### 方法3: 分别运行各组件
 
 1. 在第一个终端中运行测试：
+
 ```bash
 cd apps/backend
 python scripts/test_runner.py
 ```
 
 2. 在第二个终端中分析错误和执行修复：
+
 ```bash
 cd apps/backend
 python scripts/error_analyzer.py
@@ -94,30 +101,38 @@ python scripts/fix_executor.py
 ## 错误类型和修复策略
 
 ### 1. 异步测试协程警告
+
 - **检测方法**: 匹配 `RuntimeWarning: coroutine .* was never awaited`
 - **修复策略**: 在协程调用前添加 `await` 关键字
 
 ### 2. 对象初始化错误
-- **检测方法**: 匹配 `TypeError: .*.__init__.* missing .* required positional arguments`
+
+- **检测方法**: 匹配
+  `TypeError: .*.__init__.* missing .* required positional arguments`
 - **修复策略**: 使用 `unittest.mock` 创建必要的依赖对象
 
 ### 3. 属性错误
+
 - **检测方法**: 匹配 `AttributeError: .* object has no attribute .*`
 - **修复策略**: 需要人工检查确认方法名是否正确
 
 ### 4. 断言失败
+
 - **检测方法**: 匹配 `AssertionError: .* != .*`
 - **修复策略**: 需要人工确认期望值是否正确
 
 ### 5. 超时错误
+
 - **检测方法**: 匹配 `TimeoutError` 或 `test timeout exceeded`
 - **修复策略**: 增加测试超时设置
 
 ### 6. 导入路径错误
+
 - **检测方法**: 匹配 `ModuleNotFoundError` 或 `No module named .*`
 - **修复策略**: 修正导入路径，添加正确的模块前缀
 
 ### 7. 配置问题
+
 - **检测方法**: 分析配置文件内容和运行时行为
 - **修复策略**: 检查配置文件中的相关设置，确保必要配置项正确设置
 

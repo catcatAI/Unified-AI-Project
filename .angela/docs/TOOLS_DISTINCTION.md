@@ -39,7 +39,8 @@ tools/
 
 ### ~~现有工具: hash_annotator.py~~ (Deprecated: removed)
 
-> ⚠️ **此工具已删除。** 通用哈希注释功能已不再维护。文件头注释可手动添加或通过 Angela 专用工具 (`angela_matrix_updater.py`) 管理。
+> ⚠️ **此工具已删除。**
+> 通用哈希注释功能已不再维护。文件头注释可手动添加或通过 Angela 专用工具 (`angela_matrix_updater.py`) 管理。
 
 ---
 
@@ -173,15 +174,15 @@ python .angela/tools/angela_matrix_updater.py validate
 
 > ⚠️ `hash_annotator.py` 已删除。以下对比仅供参考。
 
-| 对比项         | ~~通用工具 (hash_annotator)~~ | Angela专用工具 (angela_ham_tracker)     |
-| -------------- | ----------------------------- | --------------------------------------- |
-| ~~**目标**~~   | ~~任何文件~~                  | HAM记忆条目                             |
-| ~~**路径**~~   | ~~`tools/hash_annotator.py`~~ | `.angela/tools/angela_ham_tracker.py`   |
+| 对比项             | ~~通用工具 (hash_annotator)~~  | Angela专用工具 (angela_ham_tracker)     |
+| ------------------ | ------------------------------ | --------------------------------------- |
+| ~~**目标**~~       | ~~任何文件~~                   | HAM记忆条目                             |
+| ~~**路径**~~       | ~~`tools/hash_annotator.py`~~  | `.angela/tools/angela_ham_tracker.py`   |
 | ~~**哈希数据库**~~ | ~~`.hashes/file_hashes.json`~~ | `.angela/hashes/ham_memory_hashes.json` |
-| ~~**概念**~~   | ~~文件路径、大小、修改时间~~  | HAM memory_id, vector_hash, emotion_tag |
-| ~~**层级**~~   | ~~不关心~~                    | 理解L1-L6架构                           |
-| ~~**关联**~~   | ~~文件间import关系~~          | HAM记忆间的关联关系                     |
-| ~~**使用对象**~~ | ~~任何项目~~                | 仅限Angela                              |
+| ~~**概念**~~       | ~~文件路径、大小、修改时间~~   | HAM memory_id, vector_hash, emotion_tag |
+| ~~**层级**~~       | ~~不关心~~                     | 理解L1-L6架构                           |
+| ~~**关联**~~       | ~~文件间import关系~~           | HAM记忆间的关联关系                     |
+| ~~**使用对象**~~   | ~~任何项目~~                   | 仅限Angela                              |
 
 **代码对比**:
 
@@ -380,12 +381,12 @@ Angela工具: angela_layer_validator.py 验证层级关系
 
 ### 通用工具 (已完成)
 
-| 工具                           | 状态            | 用途         |
-| ------------------------------ | --------------- | ------------ |
-| ~~`tools/hash_annotator.py`~~  | ❌ 已删除       | ~~文件哈希管理~~ |
-| `tools/dependency_analyzer.py` | ⏳ 待创建       | 通用依赖分析 |
-| `tools/call_tracker.py`        | ⏳ 待创建 | 通用调用追踪 |
-| `tools/workflow_validator.py`  | ⏳ 待创建 | 通用流程验证 |
+| 工具                           | 状态      | 用途             |
+| ------------------------------ | --------- | ---------------- |
+| ~~`tools/hash_annotator.py`~~  | ❌ 已删除 | ~~文件哈希管理~~ |
+| `tools/dependency_analyzer.py` | ⏳ 待创建 | 通用依赖分析     |
+| `tools/call_tracker.py`        | ⏳ 待创建 | 通用调用追踪     |
+| `tools/workflow_validator.py`  | ⏳ 待创建 | 通用流程验证     |
 
 ### Angela专用工具 (已完成)
 

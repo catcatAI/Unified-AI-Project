@@ -8,7 +8,7 @@
 data:
   # Primary data root. Env var $UNIFIED_DATA_ROOT overrides this.
   # Default auto-detects /media/covo/ZX if mounted, else <repo>/data.
-  root: ""  # empty = auto-detect
+  root: "" # empty = auto-detect
 
   # Subdirectories (relative to root, or absolute paths)
   subdirs:

@@ -1,13 +1,20 @@
 # Angela 卡片導入管道與聊天系統整合計畫 v2
 
 > **⚠️ STATUS: EXECUTED (2026-06-25)**  
-> ModuleManager (M0-M5, 6 files, 100 tests) implemented. Card pipeline wired. IntentRegistry + ChatService integration complete. All 25 review issues (6 HIGH) addressed.  
-> **Superseded by**: ModuleManager code at `apps/backend/src/core/system/module_manager/`.
+> ModuleManager (M0-M5, 6 files, 100 tests) implemented. Card pipeline wired.
+> IntentRegistry + ChatService integration complete. All 25 review issues (6
+> HIGH) addressed.  
+> **Superseded by**: ModuleManager code at
+> `apps/backend/src/core/system/module_manager/`.
 
-> **目標**: ModuleManager 驅動的架構接線 — card pipeline + ChatService + IntentRegistry + LLM 在統一模組系統下協作  
+> **目標**: ModuleManager 驅動的架構接線 — card pipeline + ChatService +
+> IntentRegistry + LLM 在統一模組系統下協作  
 > **基於**: 代碼審計（2026-05-30）+ ModuleManager 設計（`docs/03-technical-architecture/design/MODULE_MANAGER_SYSTEM.md`）  
-> **審計**: 25 個問題（6 HIGH）已在設計階段標記，非等到執行才發現  
-> **狀態**: ✅ 全部完成 — M0-M3 (ModuleManager 核心 + card_pipeline + intent_registry + cross-system dep) + Phase 2 (ChatService 接線) + Phase 3 (cross-system 依賴注入) 全部完成，76+21 tests pass。
+> **審計**:
+> 25 個問題（6 HIGH）已在設計階段標記，非等到執行才發現  
+> **狀態**: ✅ 全部完成 — M0-M3 (ModuleManager 核心 + card_pipeline +
+> intent_registry + cross-system dep) + Phase 2 (ChatService 接線) + Phase 3
+> (cross-system 依賴注入) 全部完成，76+21 tests pass。
 
 ---
 
@@ -64,18 +71,18 @@
 
 ### 1.2 精確的斷開點（file:line）
 
-| # | 斷開點 | 位置 | 說明 |
-|---|--------|------|------|
-| D1 | `MemoryAdapter` 從未實例化 | `memory_adapter.py:21-22` | `__init__` 接收 `ham_manager=None`，但永遠沒人傳入 |
-| D2 | `PersonalityAdapter` RoleplayEngine 已用但 Pipeline 未接 | `roleplay_engine.py:22-23` | `RoleplayEngine.__init__` 自動建立 `PersonalityAdapter()` 實例，但 `CardImportPipeline` 完全不使用它 |
-| D3 | `CardImportPipeline` 不接收 adapters | `pipeline_orchestrator.py:46-54` | 建構子只接收 `registry`，沒有 memory/personality adapter 掛鉤 |
-| D4 | `ChatService._analyze_intent()` 不使用 IntentRegistry | `chat_service.py:155-167` | 硬編碼 keyword match，忽略了 `IntentRegistry` 和 YAML 定義的 `character_card` intent |
-| D5 | ChatService 沒有 `character_card` 意圖處理分支 | `chat_service.py:122-127` | 只有 `llm_manage` 和 `file_op` 兩個分支 |
-| D6 | `CardRegistry` 未註冊到 ServiceRegistry（但 CLI 有使用） | 全域 | 無任何地方 `get_registry().register("card_registry", ...)` |
-| D7 | `LLMFallback` 硬編碼而非使用真實 LLM | `llm_fallback.py:39-63` | 所有 `_resolve_*` 方法都是字串拼接，從未調用 `AngelaLLMService` |
-| D8 | `ConfigLoader.learn()` 從未接收卡片數據 | `config_loader.py:285-311` | `learn()` 支援四種事件類型，但無任何代碼從 pipeline 調用它 |
-| D9 | `CardImportPipeline` 與 API 完全隔離 | `run_card_import.py:280-281` | CLI-only，無 register/router/hook |
-| D10 | `IntentRegistry` 未被 ChatService 使用 | `services/` | grep `IntentRegistry` 在 `services/` → 0 結果 |
+| #   | 斷開點                                                   | 位置                             | 說明                                                                                                 |
+| --- | -------------------------------------------------------- | -------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| D1  | `MemoryAdapter` 從未實例化                               | `memory_adapter.py:21-22`        | `__init__` 接收 `ham_manager=None`，但永遠沒人傳入                                                   |
+| D2  | `PersonalityAdapter` RoleplayEngine 已用但 Pipeline 未接 | `roleplay_engine.py:22-23`       | `RoleplayEngine.__init__` 自動建立 `PersonalityAdapter()` 實例，但 `CardImportPipeline` 完全不使用它 |
+| D3  | `CardImportPipeline` 不接收 adapters                     | `pipeline_orchestrator.py:46-54` | 建構子只接收 `registry`，沒有 memory/personality adapter 掛鉤                                        |
+| D4  | `ChatService._analyze_intent()` 不使用 IntentRegistry    | `chat_service.py:155-167`        | 硬編碼 keyword match，忽略了 `IntentRegistry` 和 YAML 定義的 `character_card` intent                 |
+| D5  | ChatService 沒有 `character_card` 意圖處理分支           | `chat_service.py:122-127`        | 只有 `llm_manage` 和 `file_op` 兩個分支                                                              |
+| D6  | `CardRegistry` 未註冊到 ServiceRegistry（但 CLI 有使用） | 全域                             | 無任何地方 `get_registry().register("card_registry", ...)`                                           |
+| D7  | `LLMFallback` 硬編碼而非使用真實 LLM                     | `llm_fallback.py:39-63`          | 所有 `_resolve_*` 方法都是字串拼接，從未調用 `AngelaLLMService`                                      |
+| D8  | `ConfigLoader.learn()` 從未接收卡片數據                  | `config_loader.py:285-311`       | `learn()` 支援四種事件類型，但無任何代碼從 pipeline 調用它                                           |
+| D9  | `CardImportPipeline` 與 API 完全隔離                     | `run_card_import.py:280-281`     | CLI-only，無 register/router/hook                                                                    |
+| D10 | `IntentRegistry` 未被 ChatService 使用                   | `services/`                      | grep `IntentRegistry` 在 `services/` → 0 結果                                                        |
 
 ---
 
@@ -83,22 +90,25 @@
 
 ### 2.1 HIGH — 必須在 Phase 0 解決
 
-| # | 來源 | 問題 | 階段影響 |
-|---|------|------|---------|
-| H1 | 0.1 | IntentRegistry 永遠不是 singleton → 學習回饋寫進黑洞 | Phase 1, 3 |
-| H2 | 1.1 | Sync `pipeline.process()` 在 async 方法內阻塞 event loop | Phase 1 |
-| H3 | 1.2 | 每次訊息 new 一個 IntentRegistry → patterns 永遠不持久 | Phase 1, 3 |
-| H4 | 2.1 | `asyncio.get_running_loop()` 在 sync method → CLI 模式直接崩 | Phase 3 |
-| H5 | 2.2 | Phase 3 讓 Stage 3 變 async 但沒給 `async process()` | Phase 3 |
-| H6 | 3.1 | `text[:50]` 作為 keyword → 學習寫 garbage | Phase 3 |
+| #   | 來源 | 問題                                                         | 階段影響   |
+| --- | ---- | ------------------------------------------------------------ | ---------- |
+| H1  | 0.1  | IntentRegistry 永遠不是 singleton → 學習回饋寫進黑洞         | Phase 1, 3 |
+| H2  | 1.1  | Sync `pipeline.process()` 在 async 方法內阻塞 event loop     | Phase 1    |
+| H3  | 1.2  | 每次訊息 new 一個 IntentRegistry → patterns 永遠不持久       | Phase 1, 3 |
+| H4  | 2.1  | `asyncio.get_running_loop()` 在 sync method → CLI 模式直接崩 | Phase 3    |
+| H5  | 2.2  | Phase 3 讓 Stage 3 變 async 但沒給 `async process()`         | Phase 3    |
+| H6  | 3.1  | `text[:50]` 作為 keyword → 學習寫 garbage                    | Phase 3    |
 
 ### 2.2 MEDIUM — Phase 0-4 逐步解決
 
-12 個 MEDIUM 問題：registry 碎片化、CLI 隔離、race condition、HAM 無 config、keyword 誤判、LLMBridge 冗餘、latency 統計損壞、lifespan vs wiring 矛盾、無 auth、zombie task、靜默錯誤。
+12 個 MEDIUM 問題：registry 碎片化、CLI 隔離、race
+condition、HAM 無 config、keyword 誤判、LLMBridge 冗餘、latency 統計損壞、lifespan
+vs wiring 矛盾、無 auth、zombie task、靜默錯誤。
 
 ### 2.3 LOW — 語義問題
 
-7 個 LOW：YAML handler 名、timeout、instance 衝突、orphan stats、無 Pydantic model、無 Phase 0。
+7 個 LOW：YAML handler 名、timeout、instance 衝突、orphan stats、無 Pydantic
+model、無 Phase 0。
 
 ---
 
@@ -106,7 +116,8 @@
 
 ### 3.1 核心思路
 
-不手動接線。每個 component 是一個 **Module**，用 `module.yaml` 宣告依賴和提供。**ModuleManager** 自動 discovery、resolve、wire。
+不手動接線。每個 component 是一個 **Module**，用 `module.yaml`
+宣告依賴和提供。**ModuleManager** 自動 discovery、resolve、wire。
 
 ```
 Manual wiring (舊方案, 25 issues):         ModuleManager (新方案):
@@ -119,46 +130,48 @@ Manual wiring (舊方案, 25 issues):         ModuleManager (新方案):
 
 ### 3.2 解決 HIGH 問題的對應
 
-| HIGH | 舊方案會怎麼做 | ModuleManager 方案 |
-|------|--------------|-------------------|
-| H1 | 手動寫 singleton pattern | descriptor 宣告 `type: singleton` → 自動 |
-| H2 | 手動加 `asyncio.to_thread()` | lifecycle 知道 sync/async boundary |
-| H3 | 手動 cache instance | ModuleManager 提供 singleton |
-| H4 | 手動判斷 CLI vs API context | lifecycle 提供適合的 context |
-| H5 | 手動補 `async def process()` | interface schema 強制 sync/async 一致 |
-| H6 | 手動 review | config schema 驗證 → 拒絕 garbage |
+| HIGH | 舊方案會怎麼做               | ModuleManager 方案                       |
+| ---- | ---------------------------- | ---------------------------------------- |
+| H1   | 手動寫 singleton pattern     | descriptor 宣告 `type: singleton` → 自動 |
+| H2   | 手動加 `asyncio.to_thread()` | lifecycle 知道 sync/async boundary       |
+| H3   | 手動 cache instance          | ModuleManager 提供 singleton             |
+| H4   | 手動判斷 CLI vs API context  | lifecycle 提供適合的 context             |
+| H5   | 手動補 `async def process()` | interface schema 強制 sync/async 一致    |
+| H6   | 手動 review                  | config schema 驗證 → 拒絕 garbage        |
 
 ### 3.3 與舊方案的差異
 
-| 維度 | v1 (舊) | v2 (新) |
-|------|---------|---------|
-| 接線方式 | 手動改 5 個檔案 | module.yaml 宣告 |
-| Singleton 管理 | 每次猜 | descriptor 宣告 |
-| Lifecycle | 散落在 lifespan/wiring/router | 統一到 ModuleManager |
-| Health check | 無 | 內建 |
-| 新模組成本 | 2-3 天分析斷開點 | 寫一個 module.yaml |
-| 審計問題 | 執行才發現 | 設計階段標記 25 個 |
+| 維度           | v1 (舊)                       | v2 (新)              |
+| -------------- | ----------------------------- | -------------------- |
+| 接線方式       | 手動改 5 個檔案               | module.yaml 宣告     |
+| Singleton 管理 | 每次猜                        | descriptor 宣告      |
+| Lifecycle      | 散落在 lifespan/wiring/router | 統一到 ModuleManager |
+| Health check   | 無                            | 內建                 |
+| 新模組成本     | 2-3 天分析斷開點              | 寫一個 module.yaml   |
+| 審計問題       | 執行才發現                    | 設計階段標記 25 個   |
 
 ---
 
 ## 4. Phase 0: ModuleManager 核心 ✅ **已完成**
 
 ### 4.1 目標
+
 建立 ModuleManager 基礎設施，不影響任何現有程式碼。
 
 ### 4.2 新增檔案
 
-| 檔案 | 說明 | 狀態 |
-|------|------|------|
-| `core/system/module_manager/models.py` | ModuleDescriptor, DependencySpec, LifecycleHooks dataclasses | ✅ 已實作 |
-| `core/system/module_manager/scanner.py` | 掃描 `modules/*/module.yaml`，回傳 descriptor list | ✅ 已實作 |
-| `core/system/module_manager/resolver.py` | topological sort + cycle detection | ✅ 已實作 |
-| `core/system/module_manager/lifecycle.py` | init/start/stop orchestration | ✅ 已實作 |
-| `core/system/module_manager/events.py` | Event bus + health monitor | ✅ 已實作 |
-| `core/system/module_manager/__init__.py` | ModuleManager facade | ✅ 已實作 |
-| `modules/.gitkeep` | Module 根目錄 | ✅ 已存在 |
+| 檔案                                      | 說明                                                         | 狀態      |
+| ----------------------------------------- | ------------------------------------------------------------ | --------- |
+| `core/system/module_manager/models.py`    | ModuleDescriptor, DependencySpec, LifecycleHooks dataclasses | ✅ 已實作 |
+| `core/system/module_manager/scanner.py`   | 掃描 `modules/*/module.yaml`，回傳 descriptor list           | ✅ 已實作 |
+| `core/system/module_manager/resolver.py`  | topological sort + cycle detection                           | ✅ 已實作 |
+| `core/system/module_manager/lifecycle.py` | init/start/stop orchestration                                | ✅ 已實作 |
+| `core/system/module_manager/events.py`    | Event bus + health monitor                                   | ✅ 已實作 |
+| `core/system/module_manager/__init__.py`  | ModuleManager facade                                         | ✅ 已實作 |
+| `modules/.gitkeep`                        | Module 根目錄                                                | ✅ 已存在 |
 
 ### 4.3 不修改
+
 現有檔案（wiring.py, lifespan.py, router.py, ChatService）全部不動。
 
 ### 4.4 驗收 ✅ **通過 (59 tests)**
@@ -173,6 +186,7 @@ pytest tests/core/module_manager/  — 59 tests, all pass
 ```
 
 ### 4.5 解決的問題
+
 - H1: ModuleManager 提供 singleton 機制
 - H2: Lifecycle 知道 sync/async boundary
 - H3: ModuleManager 管理 instance 生命週期
@@ -185,6 +199,7 @@ pytest tests/core/module_manager/  — 59 tests, all pass
 ## 5. Phase 1: card_pipeline module ✅ **已完成**
 
 ### 5.1 目標
+
 CardImportPipeline + CardRegistry 成為第一個 ModuleManager 管理的 module。
 
 ### 5.2 新增檔案
@@ -203,12 +218,12 @@ name: card_pipeline
 version: 1.0.0
 kind: service
 depends_on:
-  required: []            # Phase 1: 不依賴任何 module，先獨立驗證
+  required: [] # Phase 1: 不依賴任何 module，先獨立驗證
   optional:
-    - ham_memory          # 非必需，沒有時降級
+    - ham_memory # 非必需，沒有時降級
     - personality_module
-    - llm_module          # Stage 3 LLM resolution
-    - intent_registry     # Phase 2 加入後自動啟用 intent dispatch
+    - llm_module # Stage 3 LLM resolution
+    - intent_registry # Phase 2 加入後自動啟用 intent dispatch
 provides:
   services:
     - name: card_import_handler
@@ -239,19 +254,20 @@ async def init(deps: dict = None) -> CardImportPipeline:
 
 ### 5.5 解決的 D-points
 
-| D-point | Before | After |
-|---------|--------|-------|
-| D1 | MemoryAdapter 從未實例化 | ModuleManager 注入 |
-| D3 | Pipeline 不接收 adapters | Pipeline 建構子接收 `memory_adapter=` |
-| D6 | CardRegistry 未註冊 | ModuleManager 自動註冊到 ServiceRegistry |
-| D7 | LLMFallback 硬編碼 | ModuleManager 提供 `llm_module` |
-| D9 | CLI 隔離 | CLI 也可以透過 ModuleManager 啟動 |
+| D-point | Before                   | After                                    |
+| ------- | ------------------------ | ---------------------------------------- |
+| D1      | MemoryAdapter 從未實例化 | ModuleManager 注入                       |
+| D3      | Pipeline 不接收 adapters | Pipeline 建構子接收 `memory_adapter=`    |
+| D6      | CardRegistry 未註冊      | ModuleManager 自動註冊到 ServiceRegistry |
+| D7      | LLMFallback 硬編碼       | ModuleManager 提供 `llm_module`          |
+| D9      | CLI 隔離                 | CLI 也可以透過 ModuleManager 啟動        |
 
 ---
 
 ## 6. Phase 2: intent_registry + chat_service modules
 
 ### 6.1 目標
+
 IntentRegistry 成為 singleton module，ChatService 透過 ModuleManager 使用它。
 
 ### 6.2 新增檔案
@@ -273,7 +289,7 @@ version: 1.0.0
 kind: service
 depends_on:
   optional:
-    - card_pipeline     # 當 card_pipeline ready 時，動態註冊 character_card intent
+    - card_pipeline # 當 card_pipeline ready 時，動態註冊 character_card intent
 provides:
   services:
     - name: intent_registry
@@ -294,9 +310,9 @@ version: 1.0.0
 kind: service
 depends_on:
   required:
-    - intent_registry       # singleton, 不再是每次 new
+    - intent_registry # singleton, 不再是每次 new
   optional:
-    - card_pipeline         # 當使用者說「導入角色卡」時呼叫
+    - card_pipeline # 當使用者說「導入角色卡」時呼叫
     - llm_module
 provides:
   services:
@@ -345,29 +361,33 @@ class ChatService:
         return get_registry().get("module_manager")
 ```
 
-**選項 B（當 ChatService 成為 module 後）**：ChatService 改用 ModuleManager init 建立，由 lifecycle 傳入 deps。
+**選項 B（當 ChatService 成為 module 後）**：ChatService 改用 ModuleManager
+init 建立，由 lifecycle 傳入 deps。
 
 Phase 2 先用選項 A，Phase 3 遷移到選項 B。
 
 ### 6.7 解決的問題
 
-| 問題 | Before | After |
-|------|--------|-------|
-| H1/H3 (每次 new IntentRegistry) | `IntentRegistry()` per message | `ModuleManager.get("intent_registry")` singleton |
-| D4 (ChatService 不使用 IntentRegistry) | 手動 keyword match | `module_manager.call("intent_registry", "detect", text)` |
-| D5 (無 character_card 分支) | 只有 2 個分支 | `detect()` 返回後 dispatch |
-| D10 (IntentRegistry 0 引用) | services/ 0 match | ModuleManager 注入 |
+| 問題                                   | Before                         | After                                                    |
+| -------------------------------------- | ------------------------------ | -------------------------------------------------------- |
+| H1/H3 (每次 new IntentRegistry)        | `IntentRegistry()` per message | `ModuleManager.get("intent_registry")` singleton         |
+| D4 (ChatService 不使用 IntentRegistry) | 手動 keyword match             | `module_manager.call("intent_registry", "detect", text)` |
+| D5 (無 character_card 分支)            | 只有 2 個分支                  | `detect()` 返回後 dispatch                               |
+| D10 (IntentRegistry 0 引用)            | services/ 0 match              | ModuleManager 注入                                       |
 
 ---
 
 ## 7. Phase 3: memory + personality adapters
 
 ### 7.1 目標
+
 MemoryAdapter 和 PersonalityAdapter 透過 ModuleManager 注入 pipeline，解決 sync/async 不一致。
 
 ### 7.2 關鍵設計決策
 
-Phase 1 的 `CardImportPipeline.process()` 保持 sync（Stage 1-2 是純 CPU 計算），但透過 ModuleManager 在 async context 中自動 `run_in_thread()`：
+Phase 1 的 `CardImportPipeline.process()` 保持 sync（Stage
+1-2 是純 CPU 計算），但透過 ModuleManager 在 async context 中自動
+`run_in_thread()`：
 
 ```python
 # ModuleManager Lifecycle 處理 sync/async boundary
@@ -384,18 +404,19 @@ class ModuleLifecycle:
 
 ### 7.3 解決的問題
 
-| # | 問題 | 方案 |
-|---|------|------|
-| H4 | `asyncio.get_running_loop()` 在 sync method | Lifecycle.call() 自動判斷 sync/async |
-| H5 | Phase 3 要 async 但沒給 async process() | Interface schema 宣告 sync → 強制一致 |
-| D1 | MemoryAdapter 從未實例化 | ModuleManager 注入 |
-| D2 | PersonalityAdapter 兩個 instance 衝突 | ModuleManager 提供 singleton |
+| #   | 問題                                        | 方案                                  |
+| --- | ------------------------------------------- | ------------------------------------- |
+| H4  | `asyncio.get_running_loop()` 在 sync method | Lifecycle.call() 自動判斷 sync/async  |
+| H5  | Phase 3 要 async 但沒給 async process()     | Interface schema 宣告 sync → 強制一致 |
+| D1  | MemoryAdapter 從未實例化                    | ModuleManager 注入                    |
+| D2  | PersonalityAdapter 兩個 instance 衝突       | ModuleManager 提供 singleton          |
 
 ---
 
 ## 8. Phase 4: LLM + async API
 
 ### 8.1 目標
+
 - LLM service 成為 module（取代 router.py 的 hotspot 角色）
 - Async API endpoint 透過 ModuleManager health 系統管理
 
@@ -445,12 +466,12 @@ async def import_card(text: str = Body(...)):
 
 ### 8.4 解決的問題
 
-| # | 問題 | 方案 |
-|---|------|------|
-| H6 | `text[:50]` garbage keyword | Pipeline result 提供結構化 keyword |
-| D8 | ConfigLoader.learn() 從未接收 | Event hook `on_card_imported` → `learn()` |
-| lifecycle 管理 | lifespan.py 與 wiring.py 重複 | 統一到 ModuleManager.start() |
-| 無 auth/rate limit | 手動補 | ModuleManager middleware hooks |
+| #                  | 問題                          | 方案                                      |
+| ------------------ | ----------------------------- | ----------------------------------------- |
+| H6                 | `text[:50]` garbage keyword   | Pipeline result 提供結構化 keyword        |
+| D8                 | ConfigLoader.learn() 從未接收 | Event hook `on_card_imported` → `learn()` |
+| lifecycle 管理     | lifespan.py 與 wiring.py 重複 | 統一到 ModuleManager.start()              |
+| 無 auth/rate limit | 手動補                        | ModuleManager middleware hooks            |
 
 ---
 
@@ -458,26 +479,26 @@ async def import_card(text: str = Body(...)):
 
 ### 9.1 D-points 解決狀態
 
-| D-point | 斷開點 | Phase | 解決方式 |
-|---------|--------|-------|---------|
-| D1 | MemoryAdapter 從未實例化 | 1+3 | ModuleManager 注入 |
-| D2 | PersonalityAdapter instance 衝突 | 1+3 | ModuleManager singleton |
-| D3 | Pipeline 不接收 adapters | 1 | `pipeline(memory_adapter=)` 參數 |
-| D4 | ChatService 不使用 IntentRegistry | 2 | ModuleManager.get("intent_registry") |
-| D5 | 無 character_card 分支 | 2 | IntentRegistry.detect() dispatch |
-| D6 | CardRegistry 未註冊 | 1 | ModuleManager 自動註冊 |
-| D7 | LLMFallback 硬編碼 | 4 | ModuleManager.get("llm_service") |
-| D8 | ConfigLoader.learn() 未接 | 3+4 | Event hook |
-| D9 | CLI 隔離 | 1 | ModuleManager 可 CLI/API 共用 |
-| D10 | IntentRegistry 0 引用 | 2 | ModuleManager 注入 |
+| D-point | 斷開點                            | Phase | 解決方式                             |
+| ------- | --------------------------------- | ----- | ------------------------------------ |
+| D1      | MemoryAdapter 從未實例化          | 1+3   | ModuleManager 注入                   |
+| D2      | PersonalityAdapter instance 衝突  | 1+3   | ModuleManager singleton              |
+| D3      | Pipeline 不接收 adapters          | 1     | `pipeline(memory_adapter=)` 參數     |
+| D4      | ChatService 不使用 IntentRegistry | 2     | ModuleManager.get("intent_registry") |
+| D5      | 無 character_card 分支            | 2     | IntentRegistry.detect() dispatch     |
+| D6      | CardRegistry 未註冊               | 1     | ModuleManager 自動註冊               |
+| D7      | LLMFallback 硬編碼                | 4     | ModuleManager.get("llm_service")     |
+| D8      | ConfigLoader.learn() 未接         | 3+4   | Event hook                           |
+| D9      | CLI 隔離                          | 1     | ModuleManager 可 CLI/API 共用        |
+| D10     | IntentRegistry 0 引用             | 2     | ModuleManager 注入                   |
 
 ### 9.2 審計問題解決狀態
 
-| 等級 | 總數 | Phase 0 | Phase 1 | Phase 2 | Phase 3 | Phase 4 |
-|------|------|---------|---------|---------|---------|---------|
-| HIGH | 6 | 6 (H1-H6) | - | - | - | - |
-| MEDIUM | 12 | 2 | 3 | 3 | 2 | 2 |
-| LOW | 7 | 1 | 2 | 1 | 1 | 2 |
+| 等級   | 總數 | Phase 0   | Phase 1 | Phase 2 | Phase 3 | Phase 4 |
+| ------ | ---- | --------- | ------- | ------- | ------- | ------- |
+| HIGH   | 6    | 6 (H1-H6) | -       | -       | -       | -       |
+| MEDIUM | 12   | 2         | 3       | 3       | 2       | 2       |
+| LOW    | 7    | 1         | 2       | 1       | 1       | 2       |
 
 ---
 
@@ -485,49 +506,49 @@ async def import_card(text: str = Body(...)):
 
 ### 10.1 Phase 0 — ModuleManager 核心（新增 7 檔案）
 
-| 檔案 | 說明 | 行數估計 |
-|------|------|---------|
-| `core/system/module_manager/models.py` | 資料類別 | ~80 |
-| `core/system/module_manager/scanner.py` | 掃描 + 解析 module.yaml | ~100 |
-| `core/system/module_manager/resolver.py` | Topological sort + cycle detection | ~120 |
-| `core/system/module_manager/lifecycle.py` | Init/start/stop orchestration | ~150 |
-| `core/system/module_manager/events.py` | Event bus + health monitor | ~100 |
-| `core/system/module_manager/__init__.py` | ModuleManager facade | ~80 |
-| `modules/.gitkeep` | Module 根目錄 | 0 |
+| 檔案                                      | 說明                               | 行數估計 |
+| ----------------------------------------- | ---------------------------------- | -------- |
+| `core/system/module_manager/models.py`    | 資料類別                           | ~80      |
+| `core/system/module_manager/scanner.py`   | 掃描 + 解析 module.yaml            | ~100     |
+| `core/system/module_manager/resolver.py`  | Topological sort + cycle detection | ~120     |
+| `core/system/module_manager/lifecycle.py` | Init/start/stop orchestration      | ~150     |
+| `core/system/module_manager/events.py`    | Event bus + health monitor         | ~100     |
+| `core/system/module_manager/__init__.py`  | ModuleManager facade               | ~80      |
+| `modules/.gitkeep`                        | Module 根目錄                      | 0        |
 
 ### 10.2 Phase 1 — card_pipeline（新增 3 檔案，修改 1）
 
-| 檔案 | 操作 | 說明 |
-|------|------|------|
-| `modules/card_pipeline/module.yaml` | 新增 | Descriptor |
-| `modules/card_pipeline/__init__.py` | 新增 | init/start/stop 實作 |
-| `modules/card_pipeline/adapter.py` | 新增 | Adapter factory |
+| 檔案                                          | 操作 | 說明                            |
+| --------------------------------------------- | ---- | ------------------------------- |
+| `modules/card_pipeline/module.yaml`           | 新增 | Descriptor                      |
+| `modules/card_pipeline/__init__.py`           | 新增 | init/start/stop 實作            |
+| `modules/card_pipeline/adapter.py`            | 新增 | Adapter factory                 |
 | `core/card/resolver/pipeline_orchestrator.py` | 修改 | 建構子加 `memory_adapter=` 參數 |
 
 ### 10.3 Phase 2 — intent_registry + chat_service（新增 4 檔案，修改 2）
 
-| 檔案 | 操作 | 說明 |
-|------|------|------|
-| `modules/intent_registry/module.yaml` | 新增 | Descriptor |
-| `modules/intent_registry/__init__.py` | 新增 | init + on_card_pipeline_ready hook |
-| `modules/chat_service/module.yaml` | 新增 | Descriptor |
-| `modules/chat_service/__init__.py` | 新增 | init |
-| `services/chat_service.py` | 修改 | `_analyze_intent()` 改用 IntentRegistry |
-| `wiring.py` | 修改 | 加入 ModuleManager.start() |
+| 檔案                                  | 操作 | 說明                                    |
+| ------------------------------------- | ---- | --------------------------------------- |
+| `modules/intent_registry/module.yaml` | 新增 | Descriptor                              |
+| `modules/intent_registry/__init__.py` | 新增 | init + on_card_pipeline_ready hook      |
+| `modules/chat_service/module.yaml`    | 新增 | Descriptor                              |
+| `modules/chat_service/__init__.py`    | 新增 | init                                    |
+| `services/chat_service.py`            | 修改 | `_analyze_intent()` 改用 IntentRegistry |
+| `wiring.py`                           | 修改 | 加入 ModuleManager.start()              |
 
 ### 10.4 Phase 3 — memory + personality（新增 0 檔案，修改 2）
 
-| 檔案 | 操作 | 說明 |
-|------|------|------|
-| `core/card/resolver/pipeline_orchestrator.py` | 修改 | 加 `async_process()` 方法 |
-| `core/system/module_manager/lifecycle.py` | 修改 | 加 `call()` 自動判斷 sync/async |
+| 檔案                                          | 操作 | 說明                            |
+| --------------------------------------------- | ---- | ------------------------------- |
+| `core/card/resolver/pipeline_orchestrator.py` | 修改 | 加 `async_process()` 方法       |
+| `core/system/module_manager/lifecycle.py`     | 修改 | 加 `call()` 自動判斷 sync/async |
 
 ### 10.5 Phase 4 — LLM + API（新增 2 檔案，修改 3）
 
-| 檔案 | 操作 | 說明 |
-|------|------|------|
-| `modules/llm/module.yaml` | 新增 | Descriptor |
-| `modules/llm/__init__.py` | 新增 | init + start |
-| `api/v1/endpoints/card_import.py` | 新增 | API endpoint |
-| `api/lifespan.py` | 修改 | 簡化為 Manager.start() |
-| `services/llm/router.py` | 修改 | 部分 routing 轉給 ModuleManager |
+| 檔案                              | 操作 | 說明                            |
+| --------------------------------- | ---- | ------------------------------- |
+| `modules/llm/module.yaml`         | 新增 | Descriptor                      |
+| `modules/llm/__init__.py`         | 新增 | init + start                    |
+| `api/v1/endpoints/card_import.py` | 新增 | API endpoint                    |
+| `api/lifespan.py`                 | 修改 | 簡化為 Manager.start()          |
+| `services/llm/router.py`          | 修改 | 部分 routing 轉給 ModuleManager |

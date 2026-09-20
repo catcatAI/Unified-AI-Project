@@ -2,7 +2,8 @@
 
 ## 概述
 
-上下文系统是Unified AI Project的核心组件之一，负责管理AI系统中的各种上下文信息，包括工具上下文、模型与代理上下文、对话上下文和记忆上下文。该系统提供了结构化的上下文组织、高效的检索机制和智能的上下文传递功能。
+上下文系统是Unified AI
+Project的核心组件之一，负责管理AI系统中的各种上下文信息，包括工具上下文、模型与代理上下文、对话上下文和记忆上下文。该系统提供了结构化的上下文组织、高效的检索机制和智能的上下文传递功能。
 
 ## 系统架构
 
@@ -26,6 +27,7 @@
 上下文管理器是系统的核心，负责协调所有上下文操作。
 
 #### 主要功能：
+
 - 创建和管理上下文
 - 上下文的增删改查操作
 - 上下文检索和搜索
@@ -42,7 +44,7 @@ context_manager = ContextManager()
 
 # 创建上下文
 context_id = context_manager.create_context(
-    ContextType.TOOL, 
+    ContextType.TOOL,
     {"name": "测试工具", "version": "1.0"}
 )
 
@@ -61,16 +63,19 @@ contexts = context_manager.search_contexts("测试", [ContextType.TOOL])
 存储层提供了多种存储后端支持，包括内存存储、磁盘存储和数据库存储。
 
 #### 内存存储 (MemoryStorage)
+
 - 用于高频访问的热数据
 - 使用LRU缓存策略
 - 支持快速读写操作
 
 #### 磁盘存储 (DiskStorage)
+
 - 用于中频访问的温数据
 - 使用结构化文件存储
 - 支持事务操作
 
 #### 数据库存储 (DatabaseStorage)
+
 - 用于低频访问的冷数据
 - 使用向量数据库存储
 - 支持复杂查询和检索
@@ -80,6 +85,7 @@ contexts = context_manager.search_contexts("测试", [ContextType.TOOL])
 管理所有工具的上下文信息，支持工具分类、使用历史记录和性能分析。
 
 #### 主要功能：
+
 - 工具分类管理
 - 工具注册和使用记录
 - 工具性能指标分析
@@ -100,10 +106,10 @@ tool_manager.register_tool("tool_001", "代码生成器", "生成代码片段", 
 
 # 记录工具使用
 tool_manager.record_tool_usage(
-    "tool_001", 
-    {"input": "生成一个Python函数"}, 
-    "def hello():\n    print('Hello World')", 
-    0.5, 
+    "tool_001",
+    {"input": "生成一个Python函数"},
+    "def hello():\n    print('Hello World')",
+    0.5,
     True
 )
 ```
@@ -113,6 +119,7 @@ tool_manager.record_tool_usage(
 管理模型和代理之间的调用关系及协作机制。
 
 #### 主要功能：
+
 - 模型调用记录和性能分析
 - 代理协作管理和状态跟踪
 - 调用链追踪和可视化
@@ -127,11 +134,11 @@ model_manager = ModelContextManager(context_manager)
 
 # 记录模型调用
 model_manager.record_model_call(
-    "model_A", 
-    "model_B", 
-    {"task": "文本摘要"}, 
-    "这是摘要内容", 
-    1.2, 
+    "model_A",
+    "model_B",
+    {"task": "文本摘要"},
+    "这是摘要内容",
+    1.2,
     True
 )
 
@@ -140,7 +147,7 @@ agent_manager = AgentContextManager(context_manager)
 
 # 开始代理协作
 collaboration_id = agent_manager.start_collaboration(
-    "task_001", 
+    "task_001",
     ["agent_001", "agent_002"]
 )
 ```
@@ -150,6 +157,7 @@ collaboration_id = agent_manager.start_collaboration(
 管理对话历史，通过整理和提取重点信息实现高效的上下文传递。
 
 #### 主要功能：
+
 - 对话历史记录和管理
 - 关键信息提取和摘要生成
 - 对话上下文传递优化
@@ -178,6 +186,7 @@ summary = dialogue_manager.generate_context_summary(conversation_id)
 管理短期和长期记忆，优化记忆检索效率。
 
 #### 主要功能：
+
 - 分层记忆管理（短期/长期）
 - 记忆访问统计和分析
 - 记忆转移和清理机制
@@ -192,7 +201,7 @@ memory_manager = MemoryContextManager(context_manager)
 
 # 创建记忆
 memory_id = memory_manager.create_memory(
-    "用户对AI技术表现出浓厚兴趣", 
+    "用户对AI技术表现出浓厚兴趣",
     "short_term",
     {"importance": 0.8}
 )

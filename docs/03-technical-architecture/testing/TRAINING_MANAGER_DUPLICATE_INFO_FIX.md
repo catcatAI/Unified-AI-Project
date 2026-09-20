@@ -3,8 +3,11 @@
 ## 问题概述
 
 在使用训练管理器时，遇到了以下重复信息显示问题：
-1. 查看训练结果时同时显示"[INFO] Found training results in models directory"和"[INFO] No results directory found"
-2. 管理训练数据时同时显示"[INFO] Found data directory"和"[WARNING] No data directory found"
+
+1. 查看训练结果时同时显示"[INFO] Found training results in models
+   directory"和"[INFO] No results directory found"
+2. 管理训练数据时同时显示"[INFO] Found data directory"和"[WARNING] No data
+   directory found"
 
 ## 问题分析
 
@@ -17,12 +20,15 @@
 ## 修复方案
 
 ### 1. 确保代码唯一性
+
 检查并确保[train-manager.bat](file:///D:/Projects/Unified-AI-Project/tools/train-manager.bat)文件中每个功能块的代码都是唯一的，没有重复的检查逻辑
 
 ### 2. 改进信息显示逻辑
+
 确保每个目录检查只执行一次，并只显示相应的信息
 
 ### 3. 验证脚本版本
+
 确保用户运行的是最新版本的脚本
 
 ## 修复验证

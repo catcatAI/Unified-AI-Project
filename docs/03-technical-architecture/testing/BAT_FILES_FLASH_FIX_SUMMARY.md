@@ -14,13 +14,17 @@
 ### 1. 添加错误处理和日志记录
 
 所有主要的 .bat 文件都已添加错误处理和日志记录功能：
+
 - 添加了日志文件记录脚本执行过程
 - 在关键步骤添加错误检查
 - 在脚本结束时添加暂停命令，防止窗口立即关闭
 
 ### 2. 修复 start 命令使用问题
 
-在 [start-dev.bat](file:///d:\Projects\Unified-AI-Project\tools\start-dev.bat) 和 [ai-runner.bat](file:///d:\Projects\Unified-AI-Project\ai-runner.bat) 中，我们修复了 `start` 命令的使用：
+在 [start-dev.bat](file:///d:\Projects\Unified-AI-Project\tools\start-dev.bat)
+和 [ai-runner.bat](file:///d:\Projects\Unified-AI-Project\ai-runner.bat)
+中，我们修复了 `start` 命令的使用：
+
 - 添加了 `/b` 参数避免创建新窗口导致闪退
 - 正确设置了工作目录路径
 - 添加了错误处理
@@ -28,6 +32,7 @@
 ### 3. 改进用户交互
 
 所有脚本都添加了 `pause` 命令，确保用户可以查看执行结果：
+
 - 在脚本执行完毕后暂停
 - 在错误发生时暂停并显示错误信息
 - 在关键步骤后暂停，让用户确认执行结果
@@ -35,6 +40,7 @@
 ### 4. 输入验证
 
 添加了输入验证机制，防止无效输入导致脚本异常：
+
 - 验证用户输入是否在有效范围内
 - 添加了输入格式检查
 
@@ -43,7 +49,8 @@
 以下文件已进行闪退问题修复：
 
 1. [unified-ai.bat](file:///d:\Projects\Unified-AI-Project\unified-ai.bat) - 主要管理工具
-2. [ai-runner.bat](file:///d:\Projects\Unified-AI-Project\ai-runner.bat) - AI代理运行工具
+2. [ai-runner.bat](file:///d:\Projects\Unified-AI-Project\ai-runner.bat) -
+   AI代理运行工具
 3. [tools\start-dev.bat](file:///d:\Projects\Unified-AI-Project\tools\start-dev.bat) - 开发环境启动工具
 4. [tools\run-tests.bat](file:///d:\Projects\Unified-AI-Project\tools\run-tests.bat) - 测试运行工具
 5. [tools\health-check.bat](file:///d:\Projects\Unified-AI-Project\tools\health-check.bat) - 健康检查工具
@@ -54,9 +61,12 @@
 
 ### 错误日志查看工具
 
-新增了 [tools\view-error-logs.bat](file:///d:\Projects\Unified-AI-Project\tools\view-error-logs.bat) 工具，用于查看脚本执行过程中产生的错误日志。
+新增了
+[tools\view-error-logs.bat](file:///d:\Projects\Unified-AI-Project\tools\view-error-logs.bat)
+工具，用于查看脚本执行过程中产生的错误日志。
 
 使用方法：
+
 ```
 tools\view-error-logs.bat
 ```
@@ -64,12 +74,15 @@ tools\view-error-logs.bat
 ## 测试验证
 
 所有修复后的脚本都已通过以下测试：
+
 1. 正常执行流程测试
 2. 错误处理流程测试
 3. 中文字符处理测试
 4. 路径处理测试
 
-通过使用 [tools\view-error-logs.bat](file:///d:\Projects\Unified-AI-Project\tools\view-error-logs.bat) 工具，我们验证了错误日志系统正常工作，能够正确捕获和显示错误信息。
+通过使用
+[tools\view-error-logs.bat](file:///d:\Projects\Unified-AI-Project\tools\view-error-logs.bat)
+工具，我们验证了错误日志系统正常工作，能够正确捕获和显示错误信息。
 
 ## 后续维护建议
 

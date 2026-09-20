@@ -1,12 +1,14 @@
 # Development Guidelines
 
-This section provides information on debugging, testing, and development workflows for the Unified AI Project.
+This section provides information on debugging, testing, and development
+workflows for the Unified AI Project.
 
 ## Development Environment Setup
 
 ### Prerequisites
 
-Before setting up the development environment, ensure you have the following installed:
+Before setting up the development environment, ensure you have the following
+installed:
 
 1. **Node.js** (version 16 or higher)
 2. **Python** (version 3.8 or higher)
@@ -16,17 +18,20 @@ Before setting up the development environment, ensure you have the following ins
 ### Installation Steps
 
 1. **Clone the Repository**
+
    ```bash
    git clone <repository-url>
    cd unified-ai-project
    ```
 
 2. **Install Dependencies**
+
    ```bash
    pnpm install
    ```
 
 3. **Set Up Python Environment**
+
    ```bash
    cd apps/backend
    python -m venv venv
@@ -35,8 +40,8 @@ Before setting up the development environment, ensure you have the following ins
    pip install -r requirements-dev.txt
    ```
 
-4. **Configure Environment Variables**
-   Create a `.env` file in the `apps/backend` directory with the necessary configuration variables.
+4. **Configure Environment Variables** Create a `.env` file in the
+   `apps/backend` directory with the necessary configuration variables.
 
 ## Project Structure
 
@@ -73,9 +78,12 @@ Alternatively, you can use the unified management script:
 
 The project follows these organizational principles:
 
-1. **Modular Design**: Each component should have a single responsibility and be loosely coupled with others.
-2. **Consistent Naming**: Use consistent naming conventions across all files and directories.
-3. **Clear Documentation**: Each module should include clear documentation explaining its purpose and usage.
+1. **Modular Design**: Each component should have a single responsibility and be
+   loosely coupled with others.
+2. **Consistent Naming**: Use consistent naming conventions across all files and
+   directories.
+3. **Clear Documentation**: Each module should include clear documentation
+   explaining its purpose and usage.
 
 ### Branching Strategy
 
@@ -132,10 +140,12 @@ pnpm test
 
 When writing tests, follow these guidelines:
 
-1. **Use Descriptive Names**: Test names should clearly describe what is being tested.
+1. **Use Descriptive Names**: Test names should clearly describe what is being
+   tested.
 2. **Follow AAA Pattern**: Arrange, Act, Assert structure for test cases.
 3. **Keep Tests Independent**: Each test should be able to run independently.
-4. **Use Appropriate Assertions**: Choose the right assertion methods for the data types being tested.
+4. **Use Appropriate Assertions**: Choose the right assertion methods for the
+   data types being tested.
 
 ## Debugging
 
@@ -144,15 +154,18 @@ When writing tests, follow these guidelines:
 For debugging Python backend services:
 
 1. **Logging**: Use the built-in logging system to trace execution flow.
-2. **Debug Scripts**: Use the provided debug scripts in the `apps/backend` directory.
-3. **IDE Debugging**: Configure your IDE to attach to the running Python processes.
+2. **Debug Scripts**: Use the provided debug scripts in the `apps/backend`
+   directory.
+3. **IDE Debugging**: Configure your IDE to attach to the running Python
+   processes.
 
 ### Frontend Debugging
 
 For debugging the web-based dashboard:
 
 1. **Browser Developer Tools**: Use the browser's built-in developer tools.
-2. **React DevTools**: Install React Developer Tools for React-specific debugging.
+2. **React DevTools**: Install React Developer Tools for React-specific
+   debugging.
 3. **Console Logging**: Use console.log statements for quick debugging.
 
 ### Desktop App Debugging
@@ -160,8 +173,10 @@ For debugging the web-based dashboard:
 For debugging the Electron-based desktop application:
 
 1. **Electron DevTools**: Use Electron's built-in developer tools.
-2. **Main Process Debugging**: Configure your IDE to debug the main Electron process.
-3. **Renderer Process Debugging**: Debug the renderer process like a regular web application.
+2. **Main Process Debugging**: Configure your IDE to debug the main Electron
+   process.
+3. **Renderer Process Debugging**: Debug the renderer process like a regular web
+   application.
 
 ## Code Quality
 
@@ -183,7 +198,8 @@ pnpm lint
 
 All code changes must go through a code review process:
 
-1. **Create a Pull Request**: Submit changes as a pull request to the `develop` branch.
+1. **Create a Pull Request**: Submit changes as a pull request to the `develop`
+   branch.
 2. **Automated Checks**: Wait for automated tests and linting checks to pass.
 3. **Peer Review**: Request review from at least one other team member.
 4. **Address Feedback**: Make requested changes and resubmit for review.
@@ -193,11 +209,14 @@ All code changes must go through a code review process:
 
 ### Writing Documentation
 
-When adding new features or making significant changes, update the documentation:
+When adding new features or making significant changes, update the
+documentation:
 
-1. **API Documentation**: Update API endpoint documentation in `docs/API_ENDPOINTS.md`.
+1. **API Documentation**: Update API endpoint documentation in
+   `docs/API_ENDPOINTS.md`.
 2. **User Guides**: Update user guides in the `docs/` directory.
-3. **Technical Documentation**: Update technical documentation in the appropriate sections.
+3. **Technical Documentation**: Update technical documentation in the
+   appropriate sections.
 
 ### Documentation Style
 
@@ -241,15 +260,22 @@ Different environments require different configuration:
 
 ### Common Issues
 
-1. **Dependency Installation Failures**: Ensure all prerequisites are installed and try clearing package manager caches.
-2. **Port Conflicts**: Check if required ports are already in use by other applications.
-3. **Environment Variable Issues**: Verify that all required environment variables are set correctly.
-4. **Database Connection Problems**: Check database credentials and network connectivity.
+1. **Dependency Installation Failures**: Ensure all prerequisites are installed
+   and try clearing package manager caches.
+2. **Port Conflicts**: Check if required ports are already in use by other
+   applications.
+3. **Environment Variable Issues**: Verify that all required environment
+   variables are set correctly.
+4. **Database Connection Problems**: Check database credentials and network
+   connectivity.
 
 ### Getting Help
 
 If you encounter issues that you cannot resolve:
 
-1. **Check Existing Issues**: Search the project's issue tracker for similar problems.
-2. **Review Documentation**: Ensure you have followed all setup and usage instructions.
-3. **Ask for Help**: Create a new issue with detailed information about the problem.
+1. **Check Existing Issues**: Search the project's issue tracker for similar
+   problems.
+2. **Review Documentation**: Ensure you have followed all setup and usage
+   instructions.
+3. **Ask for Help**: Create a new issue with detailed information about the
+   problem.

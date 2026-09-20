@@ -32,7 +32,7 @@ class TestMultimodalPanelHTML:
         """T1: multimodal-panel.html exists."""
         assert HTML_FILE.exists(), f"File not found: {HTML_FILE}"
         content = HTML_FILE.read_text(encoding="utf-8")
-        assert "<!DOCTYPE html>" in content
+        assert "<!doctype html>" in content.lower()  # HTML5 doctype（prettier 正規化為小寫）
 
     def test_html_has_required_tabs(self):
         """T2: HTML has all 5 tab sections."""

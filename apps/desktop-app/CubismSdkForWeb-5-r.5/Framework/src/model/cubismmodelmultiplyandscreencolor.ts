@@ -5,40 +5,37 @@
  * that can be found at https://www.live2d.com/eula/live2d-open-software-license-agreement_en.html.
  */
 
-import { CubismTextureColor } from '../rendering/cubismrenderer';
-import { CubismModelObjectType, NoOffscreenIndex } from './cubismmodel';
-import { CubismLogWarning } from '../utils/cubismdebug';
+import { CubismTextureColor } from '../rendering/cubismrenderer'
+import { CubismModelObjectType, NoOffscreenIndex } from './cubismmodel'
+import { CubismLogWarning } from '../utils/cubismdebug'
 
 /**
  * SDK側から与えられた描画オブジェクトの乗算色・スクリーン色上書きフラグと
  * その色を保持する構造体
  */
 export class ColorData {
-  constructor(
-    isOverridden = false,
-    color: CubismTextureColor = new CubismTextureColor()
-  ) {
-    this.isOverridden = isOverridden;
-    this.color = color;
+  constructor(isOverridden = false, color: CubismTextureColor = new CubismTextureColor()) {
+    this.isOverridden = isOverridden
+    this.color = color
   }
 
-  public isOverridden: boolean;
-  public color: CubismTextureColor;
+  public isOverridden: boolean
+  public color: CubismTextureColor
 }
 
 /**
  * Handling multiply and screen colors of the model.
  */
 export class CubismModelMultiplyAndScreenColor {
-  private _model: any; // CubismModel
-  private _isOverriddenModelMultiplyColors: boolean;
-  private _isOverriddenModelScreenColors: boolean;
-  private _userPartScreenColors: Array<ColorData>;
-  private _userPartMultiplyColors: Array<ColorData>;
-  private _userDrawableScreenColors: Array<ColorData>;
-  private _userDrawableMultiplyColors: Array<ColorData>;
-  private _userOffscreenScreenColors: Array<ColorData>;
-  private _userOffscreenMultiplyColors: Array<ColorData>;
+  private _model: any // CubismModel
+  private _isOverriddenModelMultiplyColors: boolean
+  private _isOverriddenModelScreenColors: boolean
+  private _userPartScreenColors: Array<ColorData>
+  private _userPartMultiplyColors: Array<ColorData>
+  private _userDrawableScreenColors: Array<ColorData>
+  private _userDrawableMultiplyColors: Array<ColorData>
+  private _userOffscreenScreenColors: Array<ColorData>
+  private _userOffscreenMultiplyColors: Array<ColorData>
 
   /**
    * Constructor.
@@ -46,15 +43,15 @@ export class CubismModelMultiplyAndScreenColor {
    * @param model cubism model.
    */
   public constructor(model: any) {
-    this._model = model;
-    this._isOverriddenModelMultiplyColors = false;
-    this._isOverriddenModelScreenColors = false;
-    this._userPartScreenColors = [];
-    this._userPartMultiplyColors = [];
-    this._userDrawableScreenColors = [];
-    this._userDrawableMultiplyColors = [];
-    this._userOffscreenScreenColors = [];
-    this._userOffscreenMultiplyColors = [];
+    this._model = model
+    this._isOverriddenModelMultiplyColors = false
+    this._isOverriddenModelScreenColors = false
+    this._userPartScreenColors = []
+    this._userPartMultiplyColors = []
+    this._userDrawableScreenColors = []
+    this._userDrawableMultiplyColors = []
+    this._userOffscreenScreenColors = []
+    this._userOffscreenMultiplyColors = []
   }
 
   /**
@@ -64,26 +61,16 @@ export class CubismModelMultiplyAndScreenColor {
    * @param drawableCount number of drawables.
    * @param offscreenCount number of offscreen.
    */
-  public initialize(
-    partCount: number,
-    drawableCount: number,
-    offscreenCount: number
-  ): void {
+  public initialize(partCount: number, drawableCount: number, offscreenCount: number): void {
     // 乗算色の初期値
-    const userMultiplyColor = new ColorData(
-      false,
-      new CubismTextureColor(1.0, 1.0, 1.0, 1.0)
-    );
+    const userMultiplyColor = new ColorData(false, new CubismTextureColor(1.0, 1.0, 1.0, 1.0))
 
     // スクリーン色の初期値
-    const userScreenColor = new ColorData(
-      false,
-      new CubismTextureColor(0.0, 0.0, 0.0, 1.0)
-    );
+    const userScreenColor = new ColorData(false, new CubismTextureColor(0.0, 0.0, 0.0, 1.0))
 
     // Part
-    this._userPartMultiplyColors = new Array(partCount);
-    this._userPartScreenColors = new Array(partCount);
+    this._userPartMultiplyColors = new Array(partCount)
+    this._userPartScreenColors = new Array(partCount)
     for (let i = 0; i < partCount; i++) {
       this._userPartMultiplyColors[i] = new ColorData(
         userMultiplyColor.isOverridden,
@@ -93,7 +80,7 @@ export class CubismModelMultiplyAndScreenColor {
           userMultiplyColor.color.b,
           userMultiplyColor.color.a
         )
-      );
+      )
       this._userPartScreenColors[i] = new ColorData(
         userScreenColor.isOverridden,
         new CubismTextureColor(
@@ -102,12 +89,12 @@ export class CubismModelMultiplyAndScreenColor {
           userScreenColor.color.b,
           userScreenColor.color.a
         )
-      );
+      )
     }
 
     // Drawable
-    this._userDrawableMultiplyColors = new Array(drawableCount);
-    this._userDrawableScreenColors = new Array(drawableCount);
+    this._userDrawableMultiplyColors = new Array(drawableCount)
+    this._userDrawableScreenColors = new Array(drawableCount)
     for (let i = 0; i < drawableCount; i++) {
       this._userDrawableMultiplyColors[i] = new ColorData(
         userMultiplyColor.isOverridden,
@@ -117,7 +104,7 @@ export class CubismModelMultiplyAndScreenColor {
           userMultiplyColor.color.b,
           userMultiplyColor.color.a
         )
-      );
+      )
       this._userDrawableScreenColors[i] = new ColorData(
         userScreenColor.isOverridden,
         new CubismTextureColor(
@@ -126,12 +113,12 @@ export class CubismModelMultiplyAndScreenColor {
           userScreenColor.color.b,
           userScreenColor.color.a
         )
-      );
+      )
     }
 
     // Offscreen
-    this._userOffscreenMultiplyColors = new Array(offscreenCount);
-    this._userOffscreenScreenColors = new Array(offscreenCount);
+    this._userOffscreenMultiplyColors = new Array(offscreenCount)
+    this._userOffscreenScreenColors = new Array(offscreenCount)
     for (let i = 0; i < offscreenCount; i++) {
       this._userOffscreenMultiplyColors[i] = new ColorData(
         userMultiplyColor.isOverridden,
@@ -141,7 +128,7 @@ export class CubismModelMultiplyAndScreenColor {
           userMultiplyColor.color.b,
           userMultiplyColor.color.a
         )
-      );
+      )
       this._userOffscreenScreenColors[i] = new ColorData(
         userScreenColor.isOverridden,
         new CubismTextureColor(
@@ -150,7 +137,7 @@ export class CubismModelMultiplyAndScreenColor {
           userScreenColor.color.b,
           userScreenColor.color.a
         )
-      );
+      )
     }
   }
 
@@ -161,14 +148,10 @@ export class CubismModelMultiplyAndScreenColor {
    * @param index The invalid index value
    * @param maxIndex The maximum valid index (length - 1)
    */
-  private warnIndexOutOfRange(
-    functionName: string,
-    index: number,
-    maxIndex: number
-  ): void {
+  private warnIndexOutOfRange(functionName: string, index: number, maxIndex: number): void {
     CubismLogWarning(
       `${functionName}: index is out of range. index=${index}, valid range=[0, ${maxIndex}].`
-    );
+    )
   }
 
   /**
@@ -180,14 +163,10 @@ export class CubismModelMultiplyAndScreenColor {
    */
   private isValidPartIndex(index: number, functionName: string): boolean {
     if (index < 0 || index >= this._model.getPartCount()) {
-      this.warnIndexOutOfRange(
-        functionName,
-        index,
-        this._model.getPartCount() - 1
-      );
-      return false;
+      this.warnIndexOutOfRange(functionName, index, this._model.getPartCount() - 1)
+      return false
     }
-    return true;
+    return true
   }
 
   /**
@@ -199,14 +178,10 @@ export class CubismModelMultiplyAndScreenColor {
    */
   private isValidDrawableIndex(index: number, functionName: string): boolean {
     if (index < 0 || index >= this._model.getDrawableCount()) {
-      this.warnIndexOutOfRange(
-        functionName,
-        index,
-        this._model.getDrawableCount() - 1
-      );
-      return false;
+      this.warnIndexOutOfRange(functionName, index, this._model.getDrawableCount() - 1)
+      return false
     }
-    return true;
+    return true
   }
 
   /**
@@ -218,14 +193,10 @@ export class CubismModelMultiplyAndScreenColor {
    */
   private isValidOffscreenIndex(index: number, functionName: string): boolean {
     if (index < 0 || index >= this._model.getOffscreenCount()) {
-      this.warnIndexOutOfRange(
-        functionName,
-        index,
-        this._model.getOffscreenCount() - 1
-      );
-      return false;
+      this.warnIndexOutOfRange(functionName, index, this._model.getOffscreenCount() - 1)
+      return false
     }
-    return true;
+    return true
   }
 
   /**
@@ -234,7 +205,7 @@ export class CubismModelMultiplyAndScreenColor {
    * @param value true if the color set at runtime is to be used; otherwise false.
    */
   public setMultiplyColorEnabled(value: boolean): void {
-    this._isOverriddenModelMultiplyColors = value;
+    this._isOverriddenModelMultiplyColors = value
   }
 
   /**
@@ -243,7 +214,7 @@ export class CubismModelMultiplyAndScreenColor {
    * @return true if the color set at runtime is used; otherwise false.
    */
   public getMultiplyColorEnabled(): boolean {
-    return this._isOverriddenModelMultiplyColors;
+    return this._isOverriddenModelMultiplyColors
   }
 
   /**
@@ -252,7 +223,7 @@ export class CubismModelMultiplyAndScreenColor {
    * @param value true if the color set at runtime is to be used; otherwise false.
    */
   public setScreenColorEnabled(value: boolean): void {
-    this._isOverriddenModelScreenColors = value;
+    this._isOverriddenModelScreenColors = value
   }
 
   /**
@@ -261,7 +232,7 @@ export class CubismModelMultiplyAndScreenColor {
    * @return true if the color set at runtime is used; otherwise false.
    */
   public getScreenColorEnabled(): boolean {
-    return this._isOverriddenModelScreenColors;
+    return this._isOverriddenModelScreenColors
   }
 
   /**
@@ -273,7 +244,7 @@ export class CubismModelMultiplyAndScreenColor {
    */
   public setPartMultiplyColorEnabled(partIndex: number, value: boolean): void {
     if (!this.isValidPartIndex(partIndex, 'setPartMultiplyColorEnabled')) {
-      return;
+      return
     }
     this.setPartColorEnabled(
       partIndex,
@@ -281,7 +252,7 @@ export class CubismModelMultiplyAndScreenColor {
       this._userPartMultiplyColors,
       this._userDrawableMultiplyColors,
       this._userOffscreenMultiplyColors
-    );
+    )
   }
 
   /**
@@ -293,9 +264,9 @@ export class CubismModelMultiplyAndScreenColor {
    */
   public getPartMultiplyColorEnabled(partIndex: number): boolean {
     if (!this.isValidPartIndex(partIndex, 'getPartMultiplyColorEnabled')) {
-      return false;
+      return false
     }
-    return this._userPartMultiplyColors[partIndex].isOverridden;
+    return this._userPartMultiplyColors[partIndex].isOverridden
   }
 
   /**
@@ -307,7 +278,7 @@ export class CubismModelMultiplyAndScreenColor {
    */
   public setPartScreenColorEnabled(partIndex: number, value: boolean): void {
     if (!this.isValidPartIndex(partIndex, 'setPartScreenColorEnabled')) {
-      return;
+      return
     }
     this.setPartColorEnabled(
       partIndex,
@@ -315,7 +286,7 @@ export class CubismModelMultiplyAndScreenColor {
       this._userPartScreenColors,
       this._userDrawableScreenColors,
       this._userOffscreenScreenColors
-    );
+    )
   }
 
   /**
@@ -327,9 +298,9 @@ export class CubismModelMultiplyAndScreenColor {
    */
   public getPartScreenColorEnabled(partIndex: number): boolean {
     if (!this.isValidPartIndex(partIndex, 'getPartScreenColorEnabled')) {
-      return false;
+      return false
     }
-    return this._userPartScreenColors[partIndex].isOverridden;
+    return this._userPartScreenColors[partIndex].isOverridden
   }
 
   /**
@@ -338,22 +309,11 @@ export class CubismModelMultiplyAndScreenColor {
    * @param partIndex Part index
    * @param color Multiply color to be set (CubismTextureColor)
    */
-  public setPartMultiplyColorByTextureColor(
-    partIndex: number,
-    color: CubismTextureColor
-  ): void {
-    if (
-      !this.isValidPartIndex(partIndex, 'setPartMultiplyColorByTextureColor')
-    ) {
-      return;
+  public setPartMultiplyColorByTextureColor(partIndex: number, color: CubismTextureColor): void {
+    if (!this.isValidPartIndex(partIndex, 'setPartMultiplyColorByTextureColor')) {
+      return
     }
-    this.setPartMultiplyColorByRGBA(
-      partIndex,
-      color.r,
-      color.g,
-      color.b,
-      color.a
-    );
+    this.setPartMultiplyColorByRGBA(partIndex, color.r, color.g, color.b, color.a)
   }
 
   /**
@@ -373,7 +333,7 @@ export class CubismModelMultiplyAndScreenColor {
     a: number = 1.0
   ): void {
     if (!this.isValidPartIndex(partIndex, 'setPartMultiplyColorByRGBA')) {
-      return;
+      return
     }
     this.setPartColor(
       partIndex,
@@ -384,7 +344,7 @@ export class CubismModelMultiplyAndScreenColor {
       this._userPartMultiplyColors,
       this._userDrawableMultiplyColors,
       this._userOffscreenMultiplyColors
-    );
+    )
   }
 
   /**
@@ -396,9 +356,9 @@ export class CubismModelMultiplyAndScreenColor {
    */
   public getPartMultiplyColor(partIndex: number): CubismTextureColor {
     if (!this.isValidPartIndex(partIndex, 'getPartMultiplyColor')) {
-      return new CubismTextureColor(1.0, 1.0, 1.0, 1.0);
+      return new CubismTextureColor(1.0, 1.0, 1.0, 1.0)
     }
-    return this._userPartMultiplyColors[partIndex].color;
+    return this._userPartMultiplyColors[partIndex].color
   }
 
   /**
@@ -407,20 +367,11 @@ export class CubismModelMultiplyAndScreenColor {
    * @param partIndex Part index
    * @param color Screen color to be set (CubismTextureColor)
    */
-  public setPartScreenColorByTextureColor(
-    partIndex: number,
-    color: CubismTextureColor
-  ): void {
+  public setPartScreenColorByTextureColor(partIndex: number, color: CubismTextureColor): void {
     if (!this.isValidPartIndex(partIndex, 'setPartScreenColorByTextureColor')) {
-      return;
+      return
     }
-    this.setPartScreenColorByRGBA(
-      partIndex,
-      color.r,
-      color.g,
-      color.b,
-      color.a
-    );
+    this.setPartScreenColorByRGBA(partIndex, color.r, color.g, color.b, color.a)
   }
 
   /**
@@ -440,7 +391,7 @@ export class CubismModelMultiplyAndScreenColor {
     a: number = 1.0
   ): void {
     if (!this.isValidPartIndex(partIndex, 'setPartScreenColorByRGBA')) {
-      return;
+      return
     }
     this.setPartColor(
       partIndex,
@@ -451,7 +402,7 @@ export class CubismModelMultiplyAndScreenColor {
       this._userPartScreenColors,
       this._userDrawableScreenColors,
       this._userOffscreenScreenColors
-    );
+    )
   }
 
   /**
@@ -463,9 +414,9 @@ export class CubismModelMultiplyAndScreenColor {
    */
   public getPartScreenColor(partIndex: number): CubismTextureColor {
     if (!this.isValidPartIndex(partIndex, 'getPartScreenColor')) {
-      return new CubismTextureColor(0.0, 0.0, 0.0, 1.0);
+      return new CubismTextureColor(0.0, 0.0, 0.0, 1.0)
     }
-    return this._userPartScreenColors[partIndex].color;
+    return this._userPartScreenColors[partIndex].color
   }
 
   /**
@@ -474,19 +425,11 @@ export class CubismModelMultiplyAndScreenColor {
    * @param drawableIndex Drawable index
    * @param value true if the color set at runtime is to be used; otherwise false.
    */
-  public setDrawableMultiplyColorEnabled(
-    drawableIndex: number,
-    value: boolean
-  ): void {
-    if (
-      !this.isValidDrawableIndex(
-        drawableIndex,
-        'setDrawableMultiplyColorEnabled'
-      )
-    ) {
-      return;
+  public setDrawableMultiplyColorEnabled(drawableIndex: number, value: boolean): void {
+    if (!this.isValidDrawableIndex(drawableIndex, 'setDrawableMultiplyColorEnabled')) {
+      return
     }
-    this._userDrawableMultiplyColors[drawableIndex].isOverridden = value;
+    this._userDrawableMultiplyColors[drawableIndex].isOverridden = value
   }
 
   /**
@@ -497,15 +440,10 @@ export class CubismModelMultiplyAndScreenColor {
    * @return true if the color set at runtime is used; otherwise false.
    */
   public getDrawableMultiplyColorEnabled(drawableIndex: number): boolean {
-    if (
-      !this.isValidDrawableIndex(
-        drawableIndex,
-        'getDrawableMultiplyColorEnabled'
-      )
-    ) {
-      return false;
+    if (!this.isValidDrawableIndex(drawableIndex, 'getDrawableMultiplyColorEnabled')) {
+      return false
     }
-    return this._userDrawableMultiplyColors[drawableIndex].isOverridden;
+    return this._userDrawableMultiplyColors[drawableIndex].isOverridden
   }
 
   /**
@@ -514,16 +452,11 @@ export class CubismModelMultiplyAndScreenColor {
    * @param drawableIndex Drawable index
    * @param value true if the color set at runtime is to be used; otherwise false.
    */
-  public setDrawableScreenColorEnabled(
-    drawableIndex: number,
-    value: boolean
-  ): void {
-    if (
-      !this.isValidDrawableIndex(drawableIndex, 'setDrawableScreenColorEnabled')
-    ) {
-      return;
+  public setDrawableScreenColorEnabled(drawableIndex: number, value: boolean): void {
+    if (!this.isValidDrawableIndex(drawableIndex, 'setDrawableScreenColorEnabled')) {
+      return
     }
-    this._userDrawableScreenColors[drawableIndex].isOverridden = value;
+    this._userDrawableScreenColors[drawableIndex].isOverridden = value
   }
 
   /**
@@ -534,12 +467,10 @@ export class CubismModelMultiplyAndScreenColor {
    * @return true if the color set at runtime is used; otherwise false.
    */
   public getDrawableScreenColorEnabled(drawableIndex: number): boolean {
-    if (
-      !this.isValidDrawableIndex(drawableIndex, 'getDrawableScreenColorEnabled')
-    ) {
-      return false;
+    if (!this.isValidDrawableIndex(drawableIndex, 'getDrawableScreenColorEnabled')) {
+      return false
     }
-    return this._userDrawableScreenColors[drawableIndex].isOverridden;
+    return this._userDrawableScreenColors[drawableIndex].isOverridden
   }
 
   /**
@@ -552,21 +483,10 @@ export class CubismModelMultiplyAndScreenColor {
     drawableIndex: number,
     color: CubismTextureColor
   ): void {
-    if (
-      !this.isValidDrawableIndex(
-        drawableIndex,
-        'setDrawableMultiplyColorByTextureColor'
-      )
-    ) {
-      return;
+    if (!this.isValidDrawableIndex(drawableIndex, 'setDrawableMultiplyColorByTextureColor')) {
+      return
     }
-    this.setDrawableMultiplyColorByRGBA(
-      drawableIndex,
-      color.r,
-      color.g,
-      color.b,
-      color.a
-    );
+    this.setDrawableMultiplyColorByRGBA(drawableIndex, color.r, color.g, color.b, color.a)
   }
 
   /**
@@ -585,18 +505,13 @@ export class CubismModelMultiplyAndScreenColor {
     b: number,
     a: number = 1.0
   ): void {
-    if (
-      !this.isValidDrawableIndex(
-        drawableIndex,
-        'setDrawableMultiplyColorByRGBA'
-      )
-    ) {
-      return;
+    if (!this.isValidDrawableIndex(drawableIndex, 'setDrawableMultiplyColorByRGBA')) {
+      return
     }
-    this._userDrawableMultiplyColors[drawableIndex].color.r = r;
-    this._userDrawableMultiplyColors[drawableIndex].color.g = g;
-    this._userDrawableMultiplyColors[drawableIndex].color.b = b;
-    this._userDrawableMultiplyColors[drawableIndex].color.a = a;
+    this._userDrawableMultiplyColors[drawableIndex].color.r = r
+    this._userDrawableMultiplyColors[drawableIndex].color.g = g
+    this._userDrawableMultiplyColors[drawableIndex].color.b = b
+    this._userDrawableMultiplyColors[drawableIndex].color.a = a
   }
 
   /**
@@ -608,15 +523,12 @@ export class CubismModelMultiplyAndScreenColor {
    */
   public getDrawableMultiplyColor(drawableIndex: number): CubismTextureColor {
     if (!this.isValidDrawableIndex(drawableIndex, 'getDrawableMultiplyColor')) {
-      return new CubismTextureColor(1.0, 1.0, 1.0, 1.0);
+      return new CubismTextureColor(1.0, 1.0, 1.0, 1.0)
     }
-    if (
-      this.getMultiplyColorEnabled() ||
-      this.getDrawableMultiplyColorEnabled(drawableIndex)
-    ) {
-      return this._userDrawableMultiplyColors[drawableIndex].color;
+    if (this.getMultiplyColorEnabled() || this.getDrawableMultiplyColorEnabled(drawableIndex)) {
+      return this._userDrawableMultiplyColors[drawableIndex].color
     }
-    return this._model.getDrawableMultiplyColor(drawableIndex);
+    return this._model.getDrawableMultiplyColor(drawableIndex)
   }
 
   /**
@@ -629,21 +541,10 @@ export class CubismModelMultiplyAndScreenColor {
     drawableIndex: number,
     color: CubismTextureColor
   ): void {
-    if (
-      !this.isValidDrawableIndex(
-        drawableIndex,
-        'setDrawableScreenColorByTextureColor'
-      )
-    ) {
-      return;
+    if (!this.isValidDrawableIndex(drawableIndex, 'setDrawableScreenColorByTextureColor')) {
+      return
     }
-    this.setDrawableScreenColorByRGBA(
-      drawableIndex,
-      color.r,
-      color.g,
-      color.b,
-      color.a
-    );
+    this.setDrawableScreenColorByRGBA(drawableIndex, color.r, color.g, color.b, color.a)
   }
 
   /**
@@ -662,15 +563,13 @@ export class CubismModelMultiplyAndScreenColor {
     b: number,
     a: number = 1.0
   ): void {
-    if (
-      !this.isValidDrawableIndex(drawableIndex, 'setDrawableScreenColorByRGBA')
-    ) {
-      return;
+    if (!this.isValidDrawableIndex(drawableIndex, 'setDrawableScreenColorByRGBA')) {
+      return
     }
-    this._userDrawableScreenColors[drawableIndex].color.r = r;
-    this._userDrawableScreenColors[drawableIndex].color.g = g;
-    this._userDrawableScreenColors[drawableIndex].color.b = b;
-    this._userDrawableScreenColors[drawableIndex].color.a = a;
+    this._userDrawableScreenColors[drawableIndex].color.r = r
+    this._userDrawableScreenColors[drawableIndex].color.g = g
+    this._userDrawableScreenColors[drawableIndex].color.b = b
+    this._userDrawableScreenColors[drawableIndex].color.a = a
   }
 
   /**
@@ -682,15 +581,12 @@ export class CubismModelMultiplyAndScreenColor {
    */
   public getDrawableScreenColor(drawableIndex: number): CubismTextureColor {
     if (!this.isValidDrawableIndex(drawableIndex, 'getDrawableScreenColor')) {
-      return new CubismTextureColor(0.0, 0.0, 0.0, 1.0);
+      return new CubismTextureColor(0.0, 0.0, 0.0, 1.0)
     }
-    if (
-      this.getScreenColorEnabled() ||
-      this.getDrawableScreenColorEnabled(drawableIndex)
-    ) {
-      return this._userDrawableScreenColors[drawableIndex].color;
+    if (this.getScreenColorEnabled() || this.getDrawableScreenColorEnabled(drawableIndex)) {
+      return this._userDrawableScreenColors[drawableIndex].color
     }
-    return this._model.getDrawableScreenColor(drawableIndex);
+    return this._model.getDrawableScreenColor(drawableIndex)
   }
 
   /**
@@ -700,19 +596,11 @@ export class CubismModelMultiplyAndScreenColor {
    * @param offscreenIndex Offscreen index
    * @param value true enable override, false to disable
    */
-  public setOffscreenMultiplyColorEnabled(
-    offscreenIndex: number,
-    value: boolean
-  ): void {
-    if (
-      !this.isValidOffscreenIndex(
-        offscreenIndex,
-        'setOffscreenMultiplyColorEnabled'
-      )
-    ) {
-      return;
+  public setOffscreenMultiplyColorEnabled(offscreenIndex: number, value: boolean): void {
+    if (!this.isValidOffscreenIndex(offscreenIndex, 'setOffscreenMultiplyColorEnabled')) {
+      return
     }
-    this._userOffscreenMultiplyColors[offscreenIndex].isOverridden = value;
+    this._userOffscreenMultiplyColors[offscreenIndex].isOverridden = value
   }
 
   /**
@@ -723,15 +611,10 @@ export class CubismModelMultiplyAndScreenColor {
    * @return true if the color information from the SDK is used; otherwise false.
    */
   public getOffscreenMultiplyColorEnabled(offscreenIndex: number): boolean {
-    if (
-      !this.isValidOffscreenIndex(
-        offscreenIndex,
-        'getOffscreenMultiplyColorEnabled'
-      )
-    ) {
-      return false;
+    if (!this.isValidOffscreenIndex(offscreenIndex, 'getOffscreenMultiplyColorEnabled')) {
+      return false
     }
-    return this._userOffscreenMultiplyColors[offscreenIndex].isOverridden;
+    return this._userOffscreenMultiplyColors[offscreenIndex].isOverridden
   }
 
   /**
@@ -741,19 +624,11 @@ export class CubismModelMultiplyAndScreenColor {
    * @param offscreenIndex Offscreen index
    * @param value true enable override, false to disable
    */
-  public setOffscreenScreenColorEnabled(
-    offscreenIndex: number,
-    value: boolean
-  ): void {
-    if (
-      !this.isValidOffscreenIndex(
-        offscreenIndex,
-        'setOffscreenScreenColorEnabled'
-      )
-    ) {
-      return;
+  public setOffscreenScreenColorEnabled(offscreenIndex: number, value: boolean): void {
+    if (!this.isValidOffscreenIndex(offscreenIndex, 'setOffscreenScreenColorEnabled')) {
+      return
     }
-    this._userOffscreenScreenColors[offscreenIndex].isOverridden = value;
+    this._userOffscreenScreenColors[offscreenIndex].isOverridden = value
   }
 
   /**
@@ -764,15 +639,10 @@ export class CubismModelMultiplyAndScreenColor {
    * @return true if the color information from the SDK is used; otherwise false.
    */
   public getOffscreenScreenColorEnabled(offscreenIndex: number): boolean {
-    if (
-      !this.isValidOffscreenIndex(
-        offscreenIndex,
-        'getOffscreenScreenColorEnabled'
-      )
-    ) {
-      return false;
+    if (!this.isValidOffscreenIndex(offscreenIndex, 'getOffscreenScreenColorEnabled')) {
+      return false
     }
-    return this._userOffscreenScreenColors[offscreenIndex].isOverridden;
+    return this._userOffscreenScreenColors[offscreenIndex].isOverridden
   }
 
   /**
@@ -785,21 +655,10 @@ export class CubismModelMultiplyAndScreenColor {
     offscreenIndex: number,
     color: CubismTextureColor
   ): void {
-    if (
-      !this.isValidOffscreenIndex(
-        offscreenIndex,
-        'setOffscreenMultiplyColorByTextureColor'
-      )
-    ) {
-      return;
+    if (!this.isValidOffscreenIndex(offscreenIndex, 'setOffscreenMultiplyColorByTextureColor')) {
+      return
     }
-    this.setOffscreenMultiplyColorByRGBA(
-      offscreenIndex,
-      color.r,
-      color.g,
-      color.b,
-      color.a
-    );
+    this.setOffscreenMultiplyColorByRGBA(offscreenIndex, color.r, color.g, color.b, color.a)
   }
 
   /**
@@ -818,18 +677,13 @@ export class CubismModelMultiplyAndScreenColor {
     b: number,
     a: number = 1.0
   ): void {
-    if (
-      !this.isValidOffscreenIndex(
-        offscreenIndex,
-        'setOffscreenMultiplyColorByRGBA'
-      )
-    ) {
-      return;
+    if (!this.isValidOffscreenIndex(offscreenIndex, 'setOffscreenMultiplyColorByRGBA')) {
+      return
     }
-    this._userOffscreenMultiplyColors[offscreenIndex].color.r = r;
-    this._userOffscreenMultiplyColors[offscreenIndex].color.g = g;
-    this._userOffscreenMultiplyColors[offscreenIndex].color.b = b;
-    this._userOffscreenMultiplyColors[offscreenIndex].color.a = a;
+    this._userOffscreenMultiplyColors[offscreenIndex].color.r = r
+    this._userOffscreenMultiplyColors[offscreenIndex].color.g = g
+    this._userOffscreenMultiplyColors[offscreenIndex].color.b = b
+    this._userOffscreenMultiplyColors[offscreenIndex].color.a = a
   }
 
   /**
@@ -840,18 +694,13 @@ export class CubismModelMultiplyAndScreenColor {
    * @return Multiply color (CubismTextureColor)
    */
   public getOffscreenMultiplyColor(offscreenIndex: number): CubismTextureColor {
-    if (
-      !this.isValidOffscreenIndex(offscreenIndex, 'getOffscreenMultiplyColor')
-    ) {
-      return new CubismTextureColor(1.0, 1.0, 1.0, 1.0); // Default offscreen multiply color
+    if (!this.isValidOffscreenIndex(offscreenIndex, 'getOffscreenMultiplyColor')) {
+      return new CubismTextureColor(1.0, 1.0, 1.0, 1.0) // Default offscreen multiply color
     }
-    if (
-      this.getMultiplyColorEnabled() ||
-      this.getOffscreenMultiplyColorEnabled(offscreenIndex)
-    ) {
-      return this._userOffscreenMultiplyColors[offscreenIndex].color;
+    if (this.getMultiplyColorEnabled() || this.getOffscreenMultiplyColorEnabled(offscreenIndex)) {
+      return this._userOffscreenMultiplyColors[offscreenIndex].color
     }
-    return this._model.getOffscreenMultiplyColor(offscreenIndex);
+    return this._model.getOffscreenMultiplyColor(offscreenIndex)
   }
 
   /**
@@ -864,21 +713,10 @@ export class CubismModelMultiplyAndScreenColor {
     offscreenIndex: number,
     color: CubismTextureColor
   ): void {
-    if (
-      !this.isValidOffscreenIndex(
-        offscreenIndex,
-        'setOffscreenScreenColorByTextureColor'
-      )
-    ) {
-      return;
+    if (!this.isValidOffscreenIndex(offscreenIndex, 'setOffscreenScreenColorByTextureColor')) {
+      return
     }
-    this.setOffscreenScreenColorByRGBA(
-      offscreenIndex,
-      color.r,
-      color.g,
-      color.b,
-      color.a
-    );
+    this.setOffscreenScreenColorByRGBA(offscreenIndex, color.r, color.g, color.b, color.a)
   }
 
   /**
@@ -897,18 +735,13 @@ export class CubismModelMultiplyAndScreenColor {
     b: number,
     a: number = 1.0
   ): void {
-    if (
-      !this.isValidOffscreenIndex(
-        offscreenIndex,
-        'setOffscreenScreenColorByRGBA'
-      )
-    ) {
-      return;
+    if (!this.isValidOffscreenIndex(offscreenIndex, 'setOffscreenScreenColorByRGBA')) {
+      return
     }
-    this._userOffscreenScreenColors[offscreenIndex].color.r = r;
-    this._userOffscreenScreenColors[offscreenIndex].color.g = g;
-    this._userOffscreenScreenColors[offscreenIndex].color.b = b;
-    this._userOffscreenScreenColors[offscreenIndex].color.a = a;
+    this._userOffscreenScreenColors[offscreenIndex].color.r = r
+    this._userOffscreenScreenColors[offscreenIndex].color.g = g
+    this._userOffscreenScreenColors[offscreenIndex].color.b = b
+    this._userOffscreenScreenColors[offscreenIndex].color.a = a
   }
 
   /**
@@ -919,18 +752,13 @@ export class CubismModelMultiplyAndScreenColor {
    * @return Screen color (CubismTextureColor)
    */
   public getOffscreenScreenColor(offscreenIndex: number): CubismTextureColor {
-    if (
-      !this.isValidOffscreenIndex(offscreenIndex, 'getOffscreenScreenColor')
-    ) {
-      return new CubismTextureColor(0.0, 0.0, 0.0, 1.0); // Default offscreen screen color
+    if (!this.isValidOffscreenIndex(offscreenIndex, 'getOffscreenScreenColor')) {
+      return new CubismTextureColor(0.0, 0.0, 0.0, 1.0) // Default offscreen screen color
     }
-    if (
-      this.getScreenColorEnabled() ||
-      this.getOffscreenScreenColorEnabled(offscreenIndex)
-    ) {
-      return this._userOffscreenScreenColors[offscreenIndex].color;
+    if (this.getScreenColorEnabled() || this.getOffscreenScreenColorEnabled(offscreenIndex)) {
+      return this._userOffscreenScreenColors[offscreenIndex].color
     }
-    return this._model.getOffscreenScreenColor(offscreenIndex);
+    return this._model.getOffscreenScreenColor(offscreenIndex)
   }
 
   /**
@@ -946,31 +774,28 @@ export class CubismModelMultiplyAndScreenColor {
     drawableColors: Array<ColorData>,
     offscreenColors: Array<ColorData>
   ): void {
-    partColors[partIndex].color.r = r;
-    partColors[partIndex].color.g = g;
-    partColors[partIndex].color.b = b;
-    partColors[partIndex].color.a = a;
+    partColors[partIndex].color.r = r
+    partColors[partIndex].color.g = g
+    partColors[partIndex].color.b = b
+    partColors[partIndex].color.a = a
 
     if (partColors[partIndex].isOverridden) {
-      const offscreenIndices = this._model.getPartOffscreenIndices();
-      const offscreenIndex = offscreenIndices[partIndex];
+      const offscreenIndices = this._model.getPartOffscreenIndices()
+      const offscreenIndex = offscreenIndices[partIndex]
       if (offscreenIndex == NoOffscreenIndex) {
         // If no offscreen buffer is attached, the effect is applied to the children.
-        const partsHierarchy = this._model.getPartsHierarchy();
+        const partsHierarchy = this._model.getPartsHierarchy()
         if (partsHierarchy && partsHierarchy[partIndex]) {
           for (let i = 0; i < partsHierarchy[partIndex].objects.length; ++i) {
-            const objectInfo = partsHierarchy[partIndex].objects[i];
-            if (
-              objectInfo.objectType ===
-              CubismModelObjectType.CubismModelObjectType_Drawable
-            ) {
-              const drawableIndex = objectInfo.objectIndex;
-              drawableColors[drawableIndex].color.r = r;
-              drawableColors[drawableIndex].color.g = g;
-              drawableColors[drawableIndex].color.b = b;
-              drawableColors[drawableIndex].color.a = a;
+            const objectInfo = partsHierarchy[partIndex].objects[i]
+            if (objectInfo.objectType === CubismModelObjectType.CubismModelObjectType_Drawable) {
+              const drawableIndex = objectInfo.objectIndex
+              drawableColors[drawableIndex].color.r = r
+              drawableColors[drawableIndex].color.g = g
+              drawableColors[drawableIndex].color.b = b
+              drawableColors[drawableIndex].color.a = a
             } else {
-              const childPartIndex = objectInfo.objectIndex;
+              const childPartIndex = objectInfo.objectIndex
               this.setPartColor(
                 childPartIndex,
                 r,
@@ -980,16 +805,16 @@ export class CubismModelMultiplyAndScreenColor {
                 partColors,
                 drawableColors,
                 offscreenColors
-              );
+              )
             }
           }
         }
       } else {
         // If an offscreen buffer is attached, only that offscreen buffer is affected.
-        offscreenColors[offscreenIndex].color.r = r;
-        offscreenColors[offscreenIndex].color.g = g;
-        offscreenColors[offscreenIndex].color.b = b;
-        offscreenColors[offscreenIndex].color.a = a;
+        offscreenColors[offscreenIndex].color.r = r
+        offscreenColors[offscreenIndex].color.g = g
+        offscreenColors[offscreenIndex].color.b = b
+        offscreenColors[offscreenIndex].color.a = a
       }
     }
   }
@@ -1004,43 +829,32 @@ export class CubismModelMultiplyAndScreenColor {
     drawableColors: Array<ColorData>,
     offscreenColors: Array<ColorData>
   ): void {
-    partColors[partIndex].isOverridden = value;
+    partColors[partIndex].isOverridden = value
 
-    const offscreenIndices = this._model.getPartOffscreenIndices();
-    const offscreenIndex = offscreenIndices[partIndex];
+    const offscreenIndices = this._model.getPartOffscreenIndices()
+    const offscreenIndex = offscreenIndices[partIndex]
     if (offscreenIndex == NoOffscreenIndex) {
       // If no offscreen buffer is attached, the effect is applied to the children.
-      const partsHierarchy = this._model.getPartsHierarchy();
+      const partsHierarchy = this._model.getPartsHierarchy()
       if (partsHierarchy && partsHierarchy[partIndex]) {
         for (let i = 0; i < partsHierarchy[partIndex].objects.length; ++i) {
-          const objectInfo = partsHierarchy[partIndex].objects[i];
-          if (
-            objectInfo.objectType ===
-            CubismModelObjectType.CubismModelObjectType_Drawable
-          ) {
-            const drawableIndex = objectInfo.objectIndex;
-            drawableColors[drawableIndex].isOverridden = value;
+          const objectInfo = partsHierarchy[partIndex].objects[i]
+          if (objectInfo.objectType === CubismModelObjectType.CubismModelObjectType_Drawable) {
+            const drawableIndex = objectInfo.objectIndex
+            drawableColors[drawableIndex].isOverridden = value
             if (value) {
-              drawableColors[drawableIndex].color.r =
-                partColors[partIndex].color.r;
-              drawableColors[drawableIndex].color.g =
-                partColors[partIndex].color.g;
-              drawableColors[drawableIndex].color.b =
-                partColors[partIndex].color.b;
-              drawableColors[drawableIndex].color.a =
-                partColors[partIndex].color.a;
+              drawableColors[drawableIndex].color.r = partColors[partIndex].color.r
+              drawableColors[drawableIndex].color.g = partColors[partIndex].color.g
+              drawableColors[drawableIndex].color.b = partColors[partIndex].color.b
+              drawableColors[drawableIndex].color.a = partColors[partIndex].color.a
             }
           } else {
-            const childPartIndex = objectInfo.objectIndex;
+            const childPartIndex = objectInfo.objectIndex
             if (value) {
-              partColors[childPartIndex].color.r =
-                partColors[partIndex].color.r;
-              partColors[childPartIndex].color.g =
-                partColors[partIndex].color.g;
-              partColors[childPartIndex].color.b =
-                partColors[partIndex].color.b;
-              partColors[childPartIndex].color.a =
-                partColors[partIndex].color.a;
+              partColors[childPartIndex].color.r = partColors[partIndex].color.r
+              partColors[childPartIndex].color.g = partColors[partIndex].color.g
+              partColors[childPartIndex].color.b = partColors[partIndex].color.b
+              partColors[childPartIndex].color.a = partColors[partIndex].color.a
             }
             this.setPartColorEnabled(
               childPartIndex,
@@ -1048,18 +862,18 @@ export class CubismModelMultiplyAndScreenColor {
               partColors,
               drawableColors,
               offscreenColors
-            );
+            )
           }
         }
       }
     } else {
       // If an offscreen buffer is attached, only that offscreen buffer is affected.
-      offscreenColors[offscreenIndex].isOverridden = value;
+      offscreenColors[offscreenIndex].isOverridden = value
       if (value) {
-        offscreenColors[offscreenIndex].color.r = partColors[partIndex].color.r;
-        offscreenColors[offscreenIndex].color.g = partColors[partIndex].color.g;
-        offscreenColors[offscreenIndex].color.b = partColors[partIndex].color.b;
-        offscreenColors[offscreenIndex].color.a = partColors[partIndex].color.a;
+        offscreenColors[offscreenIndex].color.r = partColors[partIndex].color.r
+        offscreenColors[offscreenIndex].color.g = partColors[partIndex].color.g
+        offscreenColors[offscreenIndex].color.b = partColors[partIndex].color.b
+        offscreenColors[offscreenIndex].color.a = partColors[partIndex].color.a
       }
     }
   }

@@ -1,12 +1,14 @@
 # User Guide
 
-This guide provides comprehensive instructions for using the Unified AI Project, including setup, basic usage, and advanced features.
+This guide provides comprehensive instructions for using the Unified AI Project,
+including setup, basic usage, and advanced features.
 
 ## Getting Started
 
 ### System Requirements
 
-Before installing the Unified AI Project, ensure your system meets the following requirements:
+Before installing the Unified AI Project, ensure your system meets the following
+requirements:
 
 - **Operating System**: Windows 10/11, macOS 10.15+, or Ubuntu 20.04+
 - **Processor**: Intel i5 or equivalent (4 cores recommended)
@@ -28,17 +30,20 @@ Before installing the Unified AI Project, ensure your system meets the following
 #### Option 2: Manual Installation
 
 1. **Clone the Repository**
+
    ```bash
    git clone https://github.com/your-org/unified-ai-project.git
    cd unified-ai-project
    ```
 
 2. **Install Dependencies**
+
    ```bash
    pnpm install
    ```
 
 3. **Set Up Python Environment**
+
    ```bash
    cd apps/backend
    python -m venv venv
@@ -46,16 +51,18 @@ Before installing the Unified AI Project, ensure your system meets the following
    pip install -r requirements.txt
    ```
 
-4. **Configure Environment Variables**
-   Create a `.env` file in the `apps/backend` directory with necessary configuration.
+4. **Configure Environment Variables** Create a `.env` file in the
+   `apps/backend` directory with necessary configuration.
 
 ## Using the Unified AI Management Tool
 
-The Unified AI Management Tool (`unified-ai.bat`) provides a convenient interface for common tasks:
+The Unified AI Management Tool (`unified-ai.bat`) provides a convenient
+interface for common tasks:
 
 ### Main Menu Options
 
-1. **Setup Environment**: Install all dependencies and configure the development environment
+1. **Setup Environment**: Install all dependencies and configure the development
+   environment
 2. **Start Development**: Launch development servers for backend and frontend
 3. **Run Tests**: Execute test suites to verify system functionality
 4. **CLI Tools**: Access command-line interface tools
@@ -72,6 +79,7 @@ To start working with the Unified AI Project:
 4. Wait for the services to start (this may take a few minutes)
 
 Once started, you can access:
+
 - **Backend API**: http://localhost:8000
 - **Desktop App**: Electron app at `apps/desktop-app/`
 - **ChromaDB**: http://localhost:8001
@@ -164,11 +172,13 @@ The project includes command-line interface tools for advanced users:
 3. Choose the specific CLI tool you want to use
 
 Available CLI tools include:
+
 - **Unified CLI**: General AI interaction
 - **AI Models CLI**: Model management and interaction
 - **HSP CLI**: Heterogeneous Service Protocol tools
 
 Example CLI usage:
+
 ```bash
 # Check system health
 unified-cli health
@@ -214,24 +224,24 @@ To update to the latest version:
 
 #### Installation Problems
 
-**Issue**: Dependencies fail to install
-**Solution**: 
+**Issue**: Dependencies fail to install **Solution**:
+
 1. Ensure you have the latest versions of Python and Node.js
 2. Check your internet connection
 3. Try running the installation commands individually
 
 #### Services Not Starting
 
-**Issue**: Backend or frontend services fail to start
-**Solution**:
+**Issue**: Backend or frontend services fail to start **Solution**:
+
 1. Check that all required ports are available
 2. Verify environment variables are set correctly
 3. Review logs for specific error messages
 
 #### Performance Issues
 
-**Issue**: System running slowly
-**Solution**:
+**Issue**: System running slowly **Solution**:
+
 1. Close unnecessary applications
 2. Check system resource usage
 3. Consider upgrading hardware if consistently running low on resources
@@ -292,6 +302,11 @@ Connect to external services:
 
 ## Conclusion
 
-The Unified AI Project provides a powerful platform for exploring and developing advanced AI capabilities. By following this guide, you should be able to set up, use, and extend the system effectively. Remember to consult the technical documentation for more detailed information about specific components and features.
+The Unified AI Project provides a powerful platform for exploring and developing
+advanced AI capabilities. By following this guide, you should be able to set up,
+use, and extend the system effectively. Remember to consult the technical
+documentation for more detailed information about specific components and
+features.
 
-For ongoing support and community interaction, consider joining our community channels and contributing to the project's continued development.
+For ongoing support and community interaction, consider joining our community
+channels and contributing to the project's continued development.

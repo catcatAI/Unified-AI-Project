@@ -2,7 +2,9 @@
 
 ## Overview
 
-Angela AI uses cryptographic keys (ANGELA_KEY_A, ANGELA_KEY_B, ANGELA_KEY_C) for secure communication between components. This document describes the key rotation procedure to maintain security best practices.
+Angela AI uses cryptographic keys (ANGELA_KEY_A, ANGELA_KEY_B, ANGELA_KEY_C) for
+secure communication between components. This document describes the key
+rotation procedure to maintain security best practices.
 
 ## Key Requirements
 
@@ -28,7 +30,8 @@ Generate new Fernet keys using Python:
 python -c "from cryptography.fernet import Fernet; [print(Fernet.generate_key().decode()) for _ in range(3)]"
 ```
 
-This will print three new secure keys. Save them to `new_keys.env` or directly into your `.env`.
+This will print three new secure keys. Save them to `new_keys.env` or directly
+into your `.env`.
 
 ### 2. Backup Current Configuration
 
@@ -57,6 +60,7 @@ python apps/backend/src/core/config_validator.py --env-file .env
 ```
 
 Expected output:
+
 ```
 ✓ 配置验证通过
 ```
@@ -127,7 +131,8 @@ If a key is suspected to be compromised:
 2. **Store backups securely**: Use encrypted storage for backups
 3. **Limit access**: Only authorized personnel should have key access
 4. **Monitor usage**: Log and monitor key usage patterns
-5. **Use different keys per environment**: Development, staging, production should have unique keys
+5. **Use different keys per environment**: Development, staging, production
+   should have unique keys
 6. **Document changes**: Record key rotation dates in security log
 
 ## Troubleshooting
@@ -145,13 +150,15 @@ If a key is suspected to be compromised:
 
 ### Backend Won't Start
 
-- Run config validator: `python apps/backend/src/core/config_validator.py --env-file .env`
+- Run config validator:
+  `python apps/backend/src/core/config_validator.py --env-file .env`
 - Check for syntax errors in `.env`
 - Verify all required keys are present
 
 ## Additional Resources
 
-- Key Generation: `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"`
+- Key Generation:
+  `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"`
 - Config Validator: `apps/backend/src/core/config_validator.py`
 - Security Documentation: `docs/security/`
 

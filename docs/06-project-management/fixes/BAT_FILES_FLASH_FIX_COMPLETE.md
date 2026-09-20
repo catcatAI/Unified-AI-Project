@@ -1,12 +1,14 @@
 # Unified AI Project - .bat 文件闪退问题完整修复报告
 
-> **备份说明**: 此文档已备份至 `backup_20250903/bat_fixes/BAT_FILES_FLASH_FIX_COMPLETE.md.backup`，作为历史记录保存。
+> **备份说明**: 此文档已备份至
+> `backup_20250903/bat_fixes/BAT_FILES_FLASH_FIX_COMPLETE.md.backup`，作为历史记录保存。
 >
 > **状态**: 问题已完全解决，此文档仅供历史参考。
 
 ## 问题背景
 
 用户报告在执行以下操作序列时出现闪退问题：
+
 1. 选择选项7（Training Manager）
 2. 选择选项6（Back to Main Menu）
 3. 选择选项2（Setup Environment）或选项4（Run Tests）
@@ -15,16 +17,23 @@
 
 ## 根本原因分析
 
-1. **脚本调用链问题**：在 [unified-ai.bat](../../../unified-ai.bat) 中调用 [tools\train-manager.bat](../../../tools/train-manager.bat) 后，[train-manager.bat](../../../tools/train-manager.bat) 中的退出处理可能导致整个调用链退出
-2. **退出命令使用不当**：[train-manager.bat](../../../tools/train-manager.bat) 中使用了 `exit /b 0` 命令，这在某些情况下可能导致脚本完全退出而不是返回到调用者
+1. **脚本调用链问题**：在 [unified-ai.bat](../../../unified-ai.bat) 中调用
+   [tools\train-manager.bat](../../../tools/train-manager.bat)
+   后，[train-manager.bat](../../../tools/train-manager.bat)
+   中的退出处理可能导致整个调用链退出
+2. **退出命令使用不当**：[train-manager.bat](../../../tools/train-manager.bat)
+   中使用了 `exit /b 0`
+   命令，这在某些情况下可能导致脚本完全退出而不是返回到调用者
 
 ## 修复措施
 
 ### 1. 修正 Training Manager 的退出处理
 
-在 [tools\train-manager.bat](../../../tools/train-manager.bat) 中，我们修改了退出处理逻辑：
+在 [tools\train-manager.bat](../../../tools/train-manager.bat)
+中，我们修改了退出处理逻辑：
 
 **修复前**：
+
 ```batch
 :: 退出脚本
 :exit_script
@@ -38,6 +47,7 @@ exit /b 0
 ```
 
 **修复后**：
+
 ```batch
 :: 退出脚本
 :exit_script
@@ -60,7 +70,8 @@ exit /b 0
 
 ### 2. 确保正确的脚本调用返回
 
-在 [unified-ai.bat](../../../unified-ai.bat) 中，我们确保 Training Manager 调用后能正确返回：
+在 [unified-ai.bat](../../../unified-ai.bat) 中，我们确保 Training
+Manager 调用后能正确返回：
 
 ```batch
 :: Training Manager Function
@@ -82,6 +93,7 @@ goto main_menu
 ### 3. 保持之前的所有修复
 
 我们保持了之前对以下问题的修复：
+
 1. 输入验证逻辑的修正
 2. 路径处理的修正
 3. 错误处理机制的完善
@@ -102,6 +114,7 @@ goto main_menu
 ## 测试验证
 
 所有修复后的脚本都已通过以下测试：
+
 1. 正常执行流程测试
 2. 错误处理流程测试
 3. 输入验证测试（所有有效选项都能正确识别）
@@ -113,6 +126,7 @@ goto main_menu
 通过本次完整修复，我们彻底解决了 .bat 文件闪退问题。新的脚本调用链处理逻辑确保了在任何情况下都能正确返回到主菜单，而不会导致整个脚本退出。现在所有脚本都能正确处理用户输入，正确设置路径，并提供良好的错误处理机制。
 
 详细信息请查看以下文件：
+
 - [BAT_FILES_FLASH_FIX.md](BAT_FILES_FLASH_FIX.md) - 初次修复说明
 - [BAT_FILES_FLASH_FIX_SUMMARY.md](../reports/BAT_FILES_FLASH_FIX_SUMMARY.md) - 初次修复总结报告
 - [BAT_FILES_FLASH_FIX_REPAIR.md](BAT_FILES_FLASH_FIX_REPAIR.md) - 二次修复报告

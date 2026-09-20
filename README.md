@@ -20,8 +20,10 @@
 
 - [English Version](#english-version)
   - [Current Status](#current-status-code-verified-as-of-2026-06-15)
-- [Quick Start](#quick-start) ([Detailed](docs/usage/QUICK_START.md), [Scenarios](docs/usage/SCENARIOS.md))
-- [Usability Guide](docs/USABILITY_GUIDE.md) — Configuration, AI models, context, UI discovery
+- [Quick Start](#quick-start) ([Detailed](docs/usage/QUICK_START.md),
+  [Scenarios](docs/usage/SCENARIOS.md))
+- [Usability Guide](docs/USABILITY_GUIDE.md) — Configuration, AI models,
+  context, UI discovery
 - [Text Adventure Game](#text-adventure-game-tui)
 - [Scripts Reference](#scripts-reference)
 - [What Actually Works](#what-actually-works-code-verified-2026-06-15)
@@ -29,6 +31,7 @@
 - [Orphaned Systems](#orphaned-systems-status)
 - [Roadmap](#roadmap--future-phases)
 - [Documentation Index](#documentation-index)
+
 </details>
 
 <details>
@@ -36,13 +39,15 @@
 
 - [繁體中文版](#繁體中文版)
 - [當前進度](#當前進度2026-06-15-代碼驗證)
-- [快速啟動](#快速啟動-1) ([詳細](docs/usage/QUICK_START.zh.md), [場景](docs/usage/SCENARIOS.zh.md))
+- [快速啟動](#快速啟動-1) ([詳細](docs/usage/QUICK_START.zh.md),
+  [場景](docs/usage/SCENARIOS.zh.md))
 - [文字冒險遊戲](#文字冒險遊戲-tui)
 - [腳本參考](#腳本參考)
 - [什麼能跑](#什麼能跑2026-06-15-驗證)
 - [什麼不能用](#什麼無法運作-1)
 - [未來路線圖](#修正後路線圖)
 - [文件索引](#架構文件)
+
 </details>
 
 ---
@@ -56,152 +61,234 @@
 [![Status](https://img.shields.io/badge/Status-Active%20Development-yellow.svg)]()
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-blue.svg)]()
 
-**Angela AI** is a digital life system with biological simulation and LLM integration capabilities.
+**Angela AI** is a digital life system with biological simulation and LLM
+integration capabilities.
 
-**Quick facts**: 667 Python files in backend src (~96K lines). Electron + Live2D desktop companion (136 JS/TS files across shared-js/desktop/web). Pixel art engine (PyQt6 renderer). **~5,466 passed tests (tests/; 6,111 full) — 0 errors. Security: 0 Dependabot + 0 CodeQL + 0 Secret Scanning = fully clean.**  
-**Component versions**: backend `7.5.0-dev` · desktop `7.5.0-dev` · cli `7.5.0-dev` · biology-core `7.5.0-dev`.  
-**Architecture audit score**: **~95%** (2026-06-25; up from ~55-60% after Phases 0-5 repairs).  
-**Total project files**: ~3,500+ (667 Python in backend src · 295+ JS/TS · 1,021+ docs · 500+ config · 480+ test).  
-See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGELOG.md) for version history, and [ARCHITECTURE_AUDIT.md](docs/ARCHITECTURE_AUDIT.md) for latest audit.
+**Quick facts**: 667 Python files in backend src (~96K lines). Electron + Live2D
+desktop companion (136 JS/TS files across shared-js/desktop/web). Pixel art
+engine (PyQt6 renderer). **~5,466 passed tests (tests/; 6,111 full) — 0 errors.
+Security: 0 Dependabot + 0 CodeQL + 0 Secret Scanning = fully clean.**  
+**Component versions**: backend `7.5.0-dev` · desktop `7.5.0-dev` · cli
+`7.5.0-dev` · biology-core `7.5.0-dev`.  
+**Architecture audit score**: **~95%** (2026-06-25; up from ~55-60% after Phases
+0-5 repairs).  
+**Total project files**: ~3,500+ (667 Python in backend src · 295+ JS/TS ·
+1,021+ docs · 500+ config · 480+ test).  
+See [AGENTS.md](AGENTS.md) for developer/agent guidelines,
+[CHANGELOG.md](CHANGELOG.md) for version history, and
+[ARCHITECTURE_AUDIT.md](docs/ARCHITECTURE_AUDIT.md) for latest audit.
 
-> **STATUS (2026-07-14)**: §X #243-#247 — **Multi-perspective production-readiness** complete (9.5/10 for the *engineering/infra* layer — code, tests, security, deployment wiring). **§X #249-#256 — Security Sprint**: 44+ Dependabot + 18 CodeQL + 10 Secret Scanning = **72+ security alerts fixed** across 46 files; Next.js 14→16 upgrade, Vite 6.0, path traversal hardening, insecure randomness fixed, leaked API keys redacted. **Infra is deployable + security hardened.**
+> **STATUS (2026-07-14)**: §X #243-#247 — **Multi-perspective
+> production-readiness** complete (9.5/10 for the _engineering/infra_ layer —
+> code, tests, security, deployment wiring). **§X #249-#256 — Security Sprint**:
+> 44+ Dependabot + 18 CodeQL + 10 Secret Scanning = **72+ security alerts
+> fixed** across 46 files; Next.js 14→16 upgrade, Vite 6.0, path traversal
+> hardening, insecure randomness fixed, leaked API keys redacted. **Infra is
+> deployable + security hardened.**
 >
-> ⚠️ **Honest capability note**: Version is `7.5.0-dev` (Alpha). The system needs an **external LLM API key** (OpenAI / Gemini / Ollama) for real conversational ability. The **native text core is `ai/unified_engine`** (fixed-size statistical core + deterministic math/logic + semantic QA; see `docs/03-technical-architecture/UNIFIED_AI_RESULTS.md`) — it beats gzip on 3 languages (en 2.365 / ja 3.223 / zh 3.944 bpc) and answers factual questions with honest "don't know" fallback. Legacy ED3N/GARDEN are now *association/multimodal subsystems*, not the text path. The deterministic engines work correctly and score high — math/physics/chemistry 9.5/10, factual knowledge 10/10, and symbolic reasoning 10/10 (real, high-certainty capability, not a defect)**; the **neural SNN's job is learning associations** (A>taller>B), NOT memorizing knowledge (that lives in the KB) — its measured **association capability = 1.0** (legacy ED3N & GARDEN association layers, see `docs/06-project-management/INTELLIGENCE_ASSESSMENT.md` §4.1.2). The SNN scoring low on knowledge/math tasks alone is *by design*, not a defect. Capability-readiness per dimension (high — infra is ready): architecture **9.5**, knowledge+reasoning **8.6**, query+learning **9.0**, multimodal **5.1**, autonomy **9.0**. Native benchmarks (no LLM, re-measured 2026-07-16 via `scripts/benchmark_ed3n_garden.py`): **ED3N 20/20 (100%)** and **GARDEN 20/20 (100%)** across 20 cases (math 5 + knowledge 5 + reasoning 5 + relational-chain 5). **Important**: these are all handled by *deterministic* engines — math→MathVerifier, knowledge→knowledge_base, reasoning→symbolic_reasoner, chain→CoreNetwork transitive closure — **NOT by the neural SNN**. This measures the deterministic-engine capability (real, 9.5/10), not open-domain neural generalization (≈0). See `docs/06-project-management/INTELLIGENCE_ASSESSMENT.md` §1 & §4.1. "Production-ready" means the **runtime/codebase is shippable**, not that the built-in AI is a finished product.
-> **PIPELINE**: WebSocket → emotion → crisis gate → alignment gate → execution gate (IntentRegistry-gated) → agent routing (context enrichment) → **PriorityNegotiator** → LLM → causal learning → response.  
-> **See**: [MASTER_TASK_MAP.md](docs/06-project-management/MASTER_TASK_MAP.md) (task provenance), [IMPROVEMENT_ROADMAP.md](docs/06-project-management/IMPROVEMENT_ROADMAP.md) (improvement roadmap), [CAUSAL_CHAIN_COMPLETENESS.md](docs/06-project-management/CAUSAL_CHAIN_COMPLETENESS.md) (causal depth).
+> ⚠️ **Honest capability note**: Version is `7.5.0-dev` (Alpha). The system
+> needs an **external LLM API key** (OpenAI / Gemini / Ollama) for real
+> conversational ability. The **native text core is `ai/unified_engine`**
+> (fixed-size statistical core + deterministic math/logic + semantic QA; see
+> `docs/03-technical-architecture/UNIFIED_AI_RESULTS.md`) — it beats gzip on 3
+> languages (en 2.365 / ja 3.223 / zh 3.944 bpc) and answers factual questions
+> with honest "don't know" fallback. Legacy ED3N/GARDEN are now
+> _association/multimodal subsystems_, not the text path. The deterministic
+> engines work correctly and score high — math/physics/chemistry 9.5/10, factual
+> knowledge 10/10, and symbolic reasoning 10/10 (real, high-certainty
+> capability, not a defect)**; the **neural SNN's job is learning associations**
+> (A>taller>B), NOT memorizing knowledge (that lives in the KB) — its measured
+> **association capability = 1.0** (legacy ED3N & GARDEN association layers, see
+> `docs/06-project-management/INTELLIGENCE_ASSESSMENT.md` §4.1.2). The SNN
+> scoring low on knowledge/math tasks alone is _by design_, not a defect.
+> Capability-readiness per dimension (high — infra is ready): architecture
+> **9.5**, knowledge+reasoning **8.6**, query+learning **9.0**, multimodal
+> **5.1**, autonomy **9.0**. Native benchmarks (no LLM, re-measured 2026-07-16
+> via `scripts/benchmark_ed3n_garden.py`): **ED3N 20/20 (100%)** and **GARDEN
+> 20/20 (100%)** across 20 cases (math 5 + knowledge 5 + reasoning 5 +
+> relational-chain 5). **Important**: these are all handled by _deterministic_
+> engines — math→MathVerifier, knowledge→knowledge_base,
+> reasoning→symbolic_reasoner, chain→CoreNetwork transitive closure — **NOT by
+> the neural SNN**. This measures the deterministic-engine capability (real,
+> 9.5/10), not open-domain neural generalization (≈0). See
+> `docs/06-project-management/INTELLIGENCE_ASSESSMENT.md` §1 & §4.1.
+> "Production-ready" means the **runtime/codebase is shippable**, not that the
+> built-in AI is a finished product. **PIPELINE**: WebSocket → emotion → crisis
+> gate → alignment gate → execution gate (IntentRegistry-gated) → agent routing
+> (context enrichment) → **PriorityNegotiator** → LLM → causal learning →
+> response.  
+> **See**: [MASTER_TASK_MAP.md](docs/06-project-management/MASTER_TASK_MAP.md)
+> (task provenance),
+> [IMPROVEMENT_ROADMAP.md](docs/06-project-management/IMPROVEMENT_ROADMAP.md)
+> (improvement roadmap),
+> [CAUSAL_CHAIN_COMPLETENESS.md](docs/06-project-management/CAUSAL_CHAIN_COMPLETENESS.md)
+> (causal depth).
 
 ---
 
 ### Current Status (code-verified as of 2026-07-10)
 
-| Area | Status | Key evidence |
-|------|--------|-------------|
-| **Server starts** | ✅ IMPORTS OK | `main_api_server.py` imports successfully |
-| **Chat pipeline** | ✅ FULLY WIRED + QUALITY | Complete: WS → emotion → crisis → alignment → execution gate (IntentRegistry-gated) → agent routing (no short-circuit) → PriorityNegotiator → LLM → causal learning → response |
-| **Routing quality** | ✅ ALL BYPASSES ELIMINATED | 10 bypass paths found and fixed. IntentRegistry density+anti+format scoring → PriorityNegotiator → handler. No bare keyword matching. |
-| **IntentRegistry** | ✅ CANONICAL CLASSIFIER | Density scoring, anti-keyword penalty, format gate, 12 intent patterns. All routing paths gate through it. |
-| **PriorityNegotiator** | ✅ 8 VOTERS ACTIVE | lifecycle/emotional/intent/angela_emotion/causal/MetaController/heartbeat/DLI voters. Weighted fusion routing_mode. |
-| **CrisisSystem** | ✅ INTEGRATED | Safety gate in `chat_routes.py:142-151`, auto-reset timeout, config loaded |
-| **CausalReasoning** | ✅ INTEGRATED | Fire-and-forget learning after every response, FIFO cap (500/1000) |
-| **Level5ASI** | ✅ INTEGRATED | Alignment gate triggered at crisis_level ≥ 2, lazy-initialized |
-| **ModelEnsemble** | ✅ INTEGRATED | Multi-model voting via `context["use_ensemble"] = True` |
-| **11 Agents** | ✅ REGISTERED | AgentAdapter wraps all agents with `execute()` interface |
-| **QueryClassifier** | ✅ EXTENDED + WORD-BOUNDARY | 16 QueryTypes, all keywords switched from `any(k in text)` to `any_keyword()` with word-boundary regex |
-| **ModelBus** | ✅ EXTENDED + GATED | Handler registration + handler-first routing, gated through PriorityNegotiator |
-| **Autonomous Cognition** | ✅ INTEGRATED | AutonomousLifeCycle + θ Router + 5 formula metrics injected into prompts |
-| **Vision Endpoints** | ✅ IMPLEMENTED | `/vision/analyze` + `/chat/with-image` endpoints |
-| **Image Generation** | ✅ IMPLEMENTED | GVV + ThreeLayerVisual, 10 endpoints (5 deprecated + 5 standardized `/image/`), 14 source files, ~62 tests |
-| **AgentOrchestrator** | ✅ COMPLETE | Intent classification, agent selection, task decomposition (Phase 2) |
-| **PlanningEngine** | ✅ COMPLETE | Goal decomposition, dependency tracking, progress monitoring (Phase 2) |
-| **ReasoningEngines** | ✅ COMPLETE | ChainOfThought, Analogical, Abductive reasoning (Phase 2) |
-| **TrustManager** | ✅ COMPLETE | User trust scoring, permission control, violation tracking (Phase 3) |
-| **ContentFilter** | ✅ COMPLETE | Toxicity detection, PII filtering, safety classification (Phase 3) |
-| **SafetyAudit** | ✅ COMPLETE | Audit trail, compliance checks, alert system (Phase 3) |
-| **Web Dashboard** | ✅ COMPLETE | Next.js: ChatPanel, PetPanel, SystemMonitor, MemoryViewer (Phase 4). ⚠️ `EconomyPanel`/`LearningDashboard` UI files remain but are non-functional — their backends were deleted in Phase 11 (see §X #204) |
-| **Docker/CI/CD** | ✅ COMPLETE | Dockerfile, docker-compose, Prometheus, Grafana, Nginx, GitHub Actions deploy (Phase 5) |
-| **OpenTelemetry** | ✅ COMPLETE | Tracing middleware (Phase 5) |
-| **API Versioning** | ✅ COMPLETE | Version routing middleware (Phase 5) |
-| **i18n System** | ✅ COMPLETE | I18nManager, PromptManager, 4 handlers + 4 LLM modules i18n'd, 45 tests (Phase 7) |
-| **Config system** | ✅ | `config_loader.py:get_config()` returns Config |
-| **Tests** | ✅ PASSING | ~5,588 tests collected (tests/; 6,111 full), 0 collection errors, 2,212+ verified passing |
-| **JS Sharing** | ✅ COMPLETE | 33 shared files → `packages/shared-js/js/`, 0 duplicates remaining |
-| **SessionManager** | ✅ COMPLETE | 56 tests covering full lifecycle (Phase 5.8) |
-| **Skip Audit** | ✅ COMPLETE | Phase 5.9: 5 collection errors fixed, all skip reasons verified |
-| **Architecture Audit** | ✅ CREATED | `docs/ARCHITECTURE_AUDIT.md` — ~55-60% → ~85-90% at audit time; current code-verified architecture **~95%** (see line 60 / INTELLIGENCE_ASSESSMENT §1) |
-| **Target Blueprint** | ✅ CREATED | `docs/IDEAL_ARCHITECTURE.md` — 16-section target architecture |
-| **Repair Roadmap** | ✅ COMPLETE | `docs/09-archive/auto-archived-2026-08-11/COMPREHENSIVE_REPAIR_ROADMAP.md` — all 6 phases executed, 0 remaining tasks |
-| **Master Task Map** | ✅ CREATED | `docs/06-project-management/MASTER_TASK_MAP.md` — all 23 plans cross-referenced with git/code |
-| **Causal Chain Completeness** | ✅ CREATED | `docs/06-project-management/CAUSAL_CHAIN_COMPLETENESS.md` — §0 no-stub principle, real depth scores, timing audit |
-| **EmotionSystem Behavioral Driving** | ✅ **DONE** | `apply_influence()` now modifies PAD state, `get_behavioral_adjustment()` maps emotion→routing_mode/response_style, wired into pipeline Step 5 → prompt builder reads it |
-| **MetaController Auto-apply** | ✅ **DONE** | `auto_apply_thresholds()` now adjusts reasoning/quality/high_demand thresholds in NeuroAutoSelector._analyze_task() |
-| **LifeCycle 6/6 States** | ✅ **DONE** | INITIALIZING, AWAKENING, GROWING, MATURE, RESTING, DORMANT — all 6 have distinct behaviors in _apply_state_behaviors() |
-| **Heartbeat Integration Freq** | ✅ **FIXED** | Integration loop 0.1s → 2.0-10.0s dynamic based on arousal (was 50-600x mismatch, now ~2x) |
-| **Level5ASI Simulated Sleep** | ✅ **FIXED** | Removed `await asyncio.sleep(1.0)` simulated processing delay |
-| **IntentModel Production Wiring** | ✅ **DONE** | IntentManager wired into DigitalLifeIntegrator._life_cycle_loop(): homeostatic intents → get_intent_influence() → state matrix update (energy/focus/happiness/bond). Closed loop! |
-| **Autonomy Decision Speed** | ✅ **FIXED** | AutonomousLifeCycle decision_interval 300s→60s (5x faster, §8.6 #8) |
-| **create_task Exception Handlers** | ✅ **DONE** | **16 tasks in 13 files** — added 6 more protected loops: action_execution_bridge._execution_loop + 5 bio loops (ANS, EmotionalBlending, MultidimensionalTrigger, Neuroplasticity, Tactile). All background loops now have exception handling (§8.6 #7) |
-| **Bridge Event-Driven Wait** | ✅ **DONE** | `_wait_for_completion` busy-poll (0.05s, 20Hz) → `asyncio.Event`. Also consolidated `emotion_tick→emotion_update`, `bridge_fast→bridge_error_backoff`. §8.6 #2: 3/4 loop pairs consolidated (§8.6 #2/#3) |
-| **HardwareProfile** | ✅ **DONE** | `hardware_profile.py`: 5 hardware scenarios (desktop/laptop/power-saver/low-power/server) + 22 interval fields + auto-detection + runtime overrides. 20 tests (§8.6 #5) |
-| **HardwareProfile → loop_sleep()** | ✅ **DONE** | `magic_numbers.py` now loads HardwareProfile lazily and applies multiplier to all 32+ loops. All loops now hardware-aware (§8.6 #4 BASIC) |
-| **GPU/CPU Compute Config** | ✅ **DONE** | `compute.default.yaml` (system + standard): per-feature modes (`auto`/`on`/`off`) for 9 features (ed3n_snn, garden_snn, three_layer_visual, semantic_visual, semantic_audio, multimodal_train, vector_store, gpu_accelerator, llm_local_gpu) + 5 hardware profiles (high_performance_desktop, laptop_normal, laptop_power_saver, low_power_device, server_cloud) with profile-specific overrides (vocab sizes, batch sizes, connection budgets). Accessors in `magic_numbers.py`: `compute_mode()`, `compute_bool()`, `compute_int()`, `compute_float()`. ED3N `SNNCore.enabled` property returns `compute_bool("ed3n_snn")`; GARDEN `TensorSNNCore` uses `compute_int("garden_snn", "max_vocab")` / `connection_budget`; `GARDENEngine`/`VectorDictionary` auto-set device based on `compute_bool("garden_snn")`. Config-driven, no hardcoded GPU/CPU logic remains. |
-| **HardwareProfile → loop_sleep()** | ✅ **DONE** | `magic_numbers.py` now loads HardwareProfile lazily and applies multiplier to all 32+ loops. All loops now hardware-aware (§8.6 #4 BASIC) |
-| **time.sleep() Audit** | ✅ **DONE** | All remaining `time.sleep()` calls verified in sync/thread contexts only. §8.6 #6 effectively complete |
+| Area                                 | Status                      | Key evidence                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ------------------------------------ | --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Server starts**                    | ✅ IMPORTS OK               | `main_api_server.py` imports successfully                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| **Chat pipeline**                    | ✅ FULLY WIRED + QUALITY    | Complete: WS → emotion → crisis → alignment → execution gate (IntentRegistry-gated) → agent routing (no short-circuit) → PriorityNegotiator → LLM → causal learning → response                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| **Routing quality**                  | ✅ ALL BYPASSES ELIMINATED  | 10 bypass paths found and fixed. IntentRegistry density+anti+format scoring → PriorityNegotiator → handler. No bare keyword matching.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| **IntentRegistry**                   | ✅ CANONICAL CLASSIFIER     | Density scoring, anti-keyword penalty, format gate, 12 intent patterns. All routing paths gate through it.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| **PriorityNegotiator**               | ✅ 8 VOTERS ACTIVE          | lifecycle/emotional/intent/angela_emotion/causal/MetaController/heartbeat/DLI voters. Weighted fusion routing_mode.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| **CrisisSystem**                     | ✅ INTEGRATED               | Safety gate in `chat_routes.py:142-151`, auto-reset timeout, config loaded                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| **CausalReasoning**                  | ✅ INTEGRATED               | Fire-and-forget learning after every response, FIFO cap (500/1000)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| **Level5ASI**                        | ✅ INTEGRATED               | Alignment gate triggered at crisis_level ≥ 2, lazy-initialized                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| **ModelEnsemble**                    | ✅ INTEGRATED               | Multi-model voting via `context["use_ensemble"] = True`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| **11 Agents**                        | ✅ REGISTERED               | AgentAdapter wraps all agents with `execute()` interface                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| **QueryClassifier**                  | ✅ EXTENDED + WORD-BOUNDARY | 16 QueryTypes, all keywords switched from `any(k in text)` to `any_keyword()` with word-boundary regex                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| **ModelBus**                         | ✅ EXTENDED + GATED         | Handler registration + handler-first routing, gated through PriorityNegotiator                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| **Autonomous Cognition**             | ✅ INTEGRATED               | AutonomousLifeCycle + θ Router + 5 formula metrics injected into prompts                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| **Vision Endpoints**                 | ✅ IMPLEMENTED              | `/vision/analyze` + `/chat/with-image` endpoints                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| **Image Generation**                 | ✅ IMPLEMENTED              | GVV + ThreeLayerVisual, 10 endpoints (5 deprecated + 5 standardized `/image/`), 14 source files, ~62 tests                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| **AgentOrchestrator**                | ✅ COMPLETE                 | Intent classification, agent selection, task decomposition (Phase 2)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| **PlanningEngine**                   | ✅ COMPLETE                 | Goal decomposition, dependency tracking, progress monitoring (Phase 2)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| **ReasoningEngines**                 | ✅ COMPLETE                 | ChainOfThought, Analogical, Abductive reasoning (Phase 2)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| **TrustManager**                     | ✅ COMPLETE                 | User trust scoring, permission control, violation tracking (Phase 3)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| **ContentFilter**                    | ✅ COMPLETE                 | Toxicity detection, PII filtering, safety classification (Phase 3)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| **SafetyAudit**                      | ✅ COMPLETE                 | Audit trail, compliance checks, alert system (Phase 3)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| **Web Dashboard**                    | ✅ COMPLETE                 | Next.js: ChatPanel, PetPanel, SystemMonitor, MemoryViewer (Phase 4). ⚠️ `EconomyPanel`/`LearningDashboard` UI files remain but are non-functional — their backends were deleted in Phase 11 (see §X #204)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| **Docker/CI/CD**                     | ✅ COMPLETE                 | Dockerfile, docker-compose, Prometheus, Grafana, Nginx, GitHub Actions deploy (Phase 5)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| **OpenTelemetry**                    | ✅ COMPLETE                 | Tracing middleware (Phase 5)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| **API Versioning**                   | ✅ COMPLETE                 | Version routing middleware (Phase 5)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| **i18n System**                      | ✅ COMPLETE                 | I18nManager, PromptManager, 4 handlers + 4 LLM modules i18n'd, 45 tests (Phase 7)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| **Config system**                    | ✅                          | `config_loader.py:get_config()` returns Config                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| **Tests**                            | ✅ PASSING                  | ~5,588 tests collected (tests/; 6,111 full), 0 collection errors, 2,212+ verified passing                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| **JS Sharing**                       | ✅ COMPLETE                 | 33 shared files → `packages/shared-js/js/`, 0 duplicates remaining                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| **SessionManager**                   | ✅ COMPLETE                 | 56 tests covering full lifecycle (Phase 5.8)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| **Skip Audit**                       | ✅ COMPLETE                 | Phase 5.9: 5 collection errors fixed, all skip reasons verified                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| **Architecture Audit**               | ✅ CREATED                  | `docs/ARCHITECTURE_AUDIT.md` — ~55-60% → ~85-90% at audit time; current code-verified architecture **~95%** (see line 60 / INTELLIGENCE_ASSESSMENT §1)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| **Target Blueprint**                 | ✅ CREATED                  | `docs/IDEAL_ARCHITECTURE.md` — 16-section target architecture                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| **Repair Roadmap**                   | ✅ COMPLETE                 | `docs/09-archive/auto-archived-2026-08-11/COMPREHENSIVE_REPAIR_ROADMAP.md` — all 6 phases executed, 0 remaining tasks                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| **Master Task Map**                  | ✅ CREATED                  | `docs/06-project-management/MASTER_TASK_MAP.md` — all 23 plans cross-referenced with git/code                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| **Causal Chain Completeness**        | ✅ CREATED                  | `docs/06-project-management/CAUSAL_CHAIN_COMPLETENESS.md` — §0 no-stub principle, real depth scores, timing audit                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| **EmotionSystem Behavioral Driving** | ✅ **DONE**                 | `apply_influence()` now modifies PAD state, `get_behavioral_adjustment()` maps emotion→routing_mode/response_style, wired into pipeline Step 5 → prompt builder reads it                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| **MetaController Auto-apply**        | ✅ **DONE**                 | `auto_apply_thresholds()` now adjusts reasoning/quality/high_demand thresholds in NeuroAutoSelector._analyze_task()                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| **LifeCycle 6/6 States**             | ✅ **DONE**                 | INITIALIZING, AWAKENING, GROWING, MATURE, RESTING, DORMANT — all 6 have distinct behaviors in _apply_state_behaviors()                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| **Heartbeat Integration Freq**       | ✅ **FIXED**                | Integration loop 0.1s → 2.0-10.0s dynamic based on arousal (was 50-600x mismatch, now ~2x)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| **Level5ASI Simulated Sleep**        | ✅ **FIXED**                | Removed `await asyncio.sleep(1.0)` simulated processing delay                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| **IntentModel Production Wiring**    | ✅ **DONE**                 | IntentManager wired into DigitalLifeIntegrator._life_cycle_loop(): homeostatic intents → get_intent_influence() → state matrix update (energy/focus/happiness/bond). Closed loop!                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| **Autonomy Decision Speed**          | ✅ **FIXED**                | AutonomousLifeCycle decision_interval 300s→60s (5x faster, §8.6 #8)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| **create_task Exception Handlers**   | ✅ **DONE**                 | **16 tasks in 13 files** — added 6 more protected loops: action_execution_bridge._execution_loop + 5 bio loops (ANS, EmotionalBlending, MultidimensionalTrigger, Neuroplasticity, Tactile). All background loops now have exception handling (§8.6 #7)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| **Bridge Event-Driven Wait**         | ✅ **DONE**                 | `_wait_for_completion` busy-poll (0.05s, 20Hz) → `asyncio.Event`. Also consolidated `emotion_tick→emotion_update`, `bridge_fast→bridge_error_backoff`. §8.6 #2: 3/4 loop pairs consolidated (§8.6 #2/#3)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| **HardwareProfile**                  | ✅ **DONE**                 | `hardware_profile.py`: 5 hardware scenarios (desktop/laptop/power-saver/low-power/server) + 22 interval fields + auto-detection + runtime overrides. 20 tests (§8.6 #5)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| **HardwareProfile → loop_sleep()**   | ✅ **DONE**                 | `magic_numbers.py` now loads HardwareProfile lazily and applies multiplier to all 32+ loops. All loops now hardware-aware (§8.6 #4 BASIC)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| **GPU/CPU Compute Config**           | ✅ **DONE**                 | `compute.default.yaml` (system + standard): per-feature modes (`auto`/`on`/`off`) for 9 features (ed3n_snn, garden_snn, three_layer_visual, semantic_visual, semantic_audio, multimodal_train, vector_store, gpu_accelerator, llm_local_gpu) + 5 hardware profiles (high_performance_desktop, laptop_normal, laptop_power_saver, low_power_device, server_cloud) with profile-specific overrides (vocab sizes, batch sizes, connection budgets). Accessors in `magic_numbers.py`: `compute_mode()`, `compute_bool()`, `compute_int()`, `compute_float()`. ED3N `SNNCore.enabled` property returns `compute_bool("ed3n_snn")`; GARDEN `TensorSNNCore` uses `compute_int("garden_snn", "max_vocab")` / `connection_budget`; `GARDENEngine`/`VectorDictionary` auto-set device based on `compute_bool("garden_snn")`. Config-driven, no hardcoded GPU/CPU logic remains. |
+| **HardwareProfile → loop_sleep()**   | ✅ **DONE**                 | `magic_numbers.py` now loads HardwareProfile lazily and applies multiplier to all 32+ loops. All loops now hardware-aware (§8.6 #4 BASIC)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| **time.sleep() Audit**               | ✅ **DONE**                 | All remaining `time.sleep()` calls verified in sync/thread contexts only. §8.6 #6 effectively complete                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 
-See **[ARCHITECTURE_AUDIT.md](docs/ARCHITECTURE_AUDIT.md)** (latest audit), **[IDEAL_ARCHITECTURE.md](docs/IDEAL_ARCHITECTURE.md)** (target), **[COMPREHENSIVE_REPAIR_ROADMAP.md](docs/09-archive/auto-archived-2026-08-11/COMPREHENSIVE_REPAIR_ROADMAP.md)** (plan), **[MASTER_TASK_MAP.md](docs/06-project-management/MASTER_TASK_MAP.md)** (task provenance), **[CAUSAL_CHAIN_COMPLETENESS.md](docs/06-project-management/CAUSAL_CHAIN_COMPLETENESS.md)** (causal depth), **[IMPROVEMENT_ROADMAP.md](docs/06-project-management/IMPROVEMENT_ROADMAP.md)** (improvement roadmap).
+See **[ARCHITECTURE_AUDIT.md](docs/ARCHITECTURE_AUDIT.md)** (latest audit),
+**[IDEAL_ARCHITECTURE.md](docs/IDEAL_ARCHITECTURE.md)** (target),
+**[COMPREHENSIVE_REPAIR_ROADMAP.md](docs/09-archive/auto-archived-2026-08-11/COMPREHENSIVE_REPAIR_ROADMAP.md)**
+(plan), **[MASTER_TASK_MAP.md](docs/06-project-management/MASTER_TASK_MAP.md)**
+(task provenance),
+**[CAUSAL_CHAIN_COMPLETENESS.md](docs/06-project-management/CAUSAL_CHAIN_COMPLETENESS.md)**
+(causal depth),
+**[IMPROVEMENT_ROADMAP.md](docs/06-project-management/IMPROVEMENT_ROADMAP.md)**
+(improvement roadmap).
 
 ### Intelligence Assessment (Code-Verified 2026-06-29)
 
-Upper bound (with LLM API: OpenAI/Anthropic/Ollama) vs lower bound (unified engine only):
+Upper bound (with LLM API: OpenAI/Anthropic/Ollama) vs lower bound (unified
+engine only):
 
-| Capability | Upper | Lower | Status |
-|:-----------|:-----:|:-----:|:-------|
-| **Text understanding** | 7/10 | 5/10 | unified engine (semantic QA + stat core), real multilingual |
-| **Image understanding** | 7/10 | 5/10 | CLIP 512-dim real, VisionService PIL-based |
-| **Speech understanding** | 5/10 | 3/10 | faster-whisper 1.2.1 int8 offline STT active via AudioService._stt_faster_whisper() |
-| **Text generation** | 7/10 | 4/10 | LLM backends; unified reflex+semantic-qa offline |
-| **Image generation** | 6/10 | 6/10 | GVV + ThreeLayerVisual, MSE 0.0042, no Stable Diffusion |
-| **Speech generation** | 4/10 | 2/10 | edge-tts works (reading only, no singing) |
-| **Memory** | 7/10 | 7/10 | VectorStore 460K + HAM templates + ED3N dictionaries |
-| **Reasoning** | 4/10 | 3/10 | Framework exists (causal, CoT, analogical), depth limited |
-| **Autonomy** | 3/10 | 3/10 | AutonomousLifeCycle wired, behavior unstable |
-| **Meta-cognition** | 5/10 | 4/10 | MetaController: confidence calibration + LLM thresholds |
-| **Composite** | **6.0/10** | — (no single native total) | Architecture ~95% complete. Native capability is multi-dimensional: deterministic engines strong (math 9.5 / knowledge 10 / symbolic reasoning 10 / autonomy 9.0); neural SNN's job is **associations** (capability 1.0, §4.1.2), not knowledge. Do not sum heterogeneous dimensions into one "actual" number. |
+| Capability               |   Upper    |           Lower            | Status                                                                                                                                                                                                                                                                                                         |
+| :----------------------- | :--------: | :------------------------: | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Text understanding**   |    7/10    |            5/10            | unified engine (semantic QA + stat core), real multilingual                                                                                                                                                                                                                                                    |
+| **Image understanding**  |    7/10    |            5/10            | CLIP 512-dim real, VisionService PIL-based                                                                                                                                                                                                                                                                     |
+| **Speech understanding** |    5/10    |            3/10            | faster-whisper 1.2.1 int8 offline STT active via AudioService._stt_faster_whisper()                                                                                                                                                                                                                            |
+| **Text generation**      |    7/10    |            4/10            | LLM backends; unified reflex+semantic-qa offline                                                                                                                                                                                                                                                               |
+| **Image generation**     |    6/10    |            6/10            | GVV + ThreeLayerVisual, MSE 0.0042, no Stable Diffusion                                                                                                                                                                                                                                                        |
+| **Speech generation**    |    4/10    |            2/10            | edge-tts works (reading only, no singing)                                                                                                                                                                                                                                                                      |
+| **Memory**               |    7/10    |            7/10            | VectorStore 460K + HAM templates + ED3N dictionaries                                                                                                                                                                                                                                                           |
+| **Reasoning**            |    4/10    |            3/10            | Framework exists (causal, CoT, analogical), depth limited                                                                                                                                                                                                                                                      |
+| **Autonomy**             |    3/10    |            3/10            | AutonomousLifeCycle wired, behavior unstable                                                                                                                                                                                                                                                                   |
+| **Meta-cognition**       |    5/10    |            4/10            | MetaController: confidence calibration + LLM thresholds                                                                                                                                                                                                                                                        |
+| **Composite**            | **6.0/10** | — (no single native total) | Architecture ~95% complete. Native capability is multi-dimensional: deterministic engines strong (math 9.5 / knowledge 10 / symbolic reasoning 10 / autonomy 9.0); neural SNN's job is **associations** (capability 1.0, §4.1.2), not knowledge. Do not sum heterogeneous dimensions into one "actual" number. |
 
-**Key**: Upper bound = connected to external LLM (realistic full-power scenario). Lower bound = ED3N+GARDEN only (no-cost fallback). See [PHASE_REVIEW6.md §4](docs/09-archive/auto-archived-2026-08-11/PHASE_REVIEW6.md) for full methodology.
+**Key**: Upper bound = connected to external LLM (realistic full-power
+scenario). Lower bound = ED3N+GARDEN only (no-cost fallback). See
+[PHASE_REVIEW6.md §4](docs/09-archive/auto-archived-2026-08-11/PHASE_REVIEW6.md)
+for full methodology.
 
 ---
 
 ### Why Angela AI? — The AI That Actually Learns
 
-**Most AI projects use static, pre-trained weights — once deployed, they never learn again.**
-Angela is built around **4 levels of genuine on-the-fly learning**, not just context management:
+**Most AI projects use static, pre-trained weights — once deployed, they never
+learn again.** Angela is built around **4 levels of genuine on-the-fly
+learning**, not just context management:
 
-| Level | What It Learns | How It Works | Persists? |
-|:------|:---------------|:-------------|:---------:|
-| **L1: Vocabulary** | New words and concepts | Dictionary growth from conversation (460K → 500K+) | ✅ Across restarts |
-| **L2: Behavior** | Action→response mappings | Hebbian SNN weight updates + Causal reasoning | ✅ save()/load() |
-| **L3: Strategy** | Config-driven tuning without code changes | 30+ magic numbers control buffer sizes, intervals, thresholds | ✅ Immediate |
-| **L4: Meta-cognition** (architecture) | New network architectures | Requires code changes — framework ready | ⬜ |
+| Level                                 | What It Learns                            | How It Works                                                  |     Persists?      |
+| :------------------------------------ | :---------------------------------------- | :------------------------------------------------------------ | :----------------: |
+| **L1: Vocabulary**                    | New words and concepts                    | Dictionary growth from conversation (460K → 500K+)            | ✅ Across restarts |
+| **L2: Behavior**                      | Action→response mappings                  | Hebbian SNN weight updates + Causal reasoning                 |  ✅ save()/load()  |
+| **L3: Strategy**                      | Config-driven tuning without code changes | 30+ magic numbers control buffer sizes, intervals, thresholds |    ✅ Immediate    |
+| **L4: Meta-cognition** (architecture) | New network architectures                 | Requires code changes — framework ready                       |         ⬜         |
 
-**Real-world difference**: While AutoGPT, LangChain, and MemGPT are expert **context managers** (they retrieve facts but never change their weights), Angela actually:
+**Real-world difference**: While AutoGPT, LangChain, and MemGPT are expert
+**context managers** (they retrieve facts but never change their weights),
+Angela actually:
 
-- 🧠 **Grows its dictionary** — discovers new concepts from conversation, adds them, uses them next time
-- 🔗 **Strengthens connections** — Hebbian updates make co-occurring concepts easier to retrieve
+- 🧠 **Grows its dictionary** — discovers new concepts from conversation, adds
+  them, uses them next time
+- 🔗 **Strengthens connections** — Hebbian updates make co-occurring concepts
+  easier to retrieve
 - 💾 **Persists learning** — what it learns today survives restarts
 - 🌐 **Works offline** — all learning runs locally, no API needed
 
-> **Honest assessment**: The learning architecture is production-quality (framework 80-90% complete).
-> The ML model weights are ~5% trained — output quality improves significantly with more training data.
-> With an external LLM connected (OpenAI/Anthropic/Ollama), Angela achieves **6.0/10** composite intelligence.
-> Pure offline mode (unified engine only) is **architecture-complete**: deterministic math/logic/reflex + semantic QA + trilingual compression all work without any API key.
-> **Usability**: despite the above, Angela is **out-of-box** — `run_angela.py` launches everything and **auto-configures to your detected hardware** (no manual config). Training (Scenario B in SCENARIOS.md) is **optional** and only improves output quality.
+> **Honest assessment**: The learning architecture is production-quality
+> (framework 80-90% complete). The ML model weights are ~5% trained — output
+> quality improves significantly with more training data. With an external LLM
+> connected (OpenAI/Anthropic/Ollama), Angela achieves **6.0/10** composite
+> intelligence. Pure offline mode (unified engine only) is
+> **architecture-complete**: deterministic math/logic/reflex + semantic QA +
+> trilingual compression all work without any API key. **Usability**: despite
+> the above, Angela is **out-of-box** — `run_angela.py` launches everything and
+> **auto-configures to your detected hardware** (no manual config). Training
+> (Scenario B in SCENARIOS.md) is **optional** and only improves output quality.
 
 ---
 
 ## 🌟 What Makes Angela AI Unique?
 
-| Feature | Angela AI | Others (AutoGPT, LangChain, Character.ai) |
-|:--------|:----------|:-------------------------------------------|
-| **Continuous learning** | 🧠 Synaptic weight updates + dictionary growth | 📋 Context management + RAG only |
-| **Desktop Live2D body** | ✅ Real-time emotion-expressive desktop avatar | ❌ No persistent body |
-| **Biological simulation** | ✅ 8 modules (energy, metabolism, endocrine, etc.) | ❌ None |
-| **Offline-first** | ✅ All learning & inference on CPU, no GPU needed | ❌ Most require cloud API |
-| **Bilingual i18n** | ✅ PromptManager + I18nManager (en/zh-CN, 45 tests) | ❌ English-first |
-| **6D emotional state** | ✅ Shared αβγδεθ context across all components | ❌ No shared state |
-| **460K+ dictionary** | ✅ Grows automatically from conversation | ❌ Static vocabulary |
-| **Out-of-box & config-driven** | ✅ One-command launch (`run_angela.py`); auto-detects hardware (GPU/CPU) and selects the best backend — no manual config editing | ❌ Most require manual setup / API keys |
+| Feature                        | Angela AI                                                                                                                        | Others (AutoGPT, LangChain, Character.ai) |
+| :----------------------------- | :------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------- |
+| **Continuous learning**        | 🧠 Synaptic weight updates + dictionary growth                                                                                   | 📋 Context management + RAG only          |
+| **Desktop Live2D body**        | ✅ Real-time emotion-expressive desktop avatar                                                                                   | ❌ No persistent body                     |
+| **Biological simulation**      | ✅ 8 modules (energy, metabolism, endocrine, etc.)                                                                               | ❌ None                                   |
+| **Offline-first**              | ✅ All learning & inference on CPU, no GPU needed                                                                                | ❌ Most require cloud API                 |
+| **Bilingual i18n**             | ✅ PromptManager + I18nManager (en/zh-CN, 45 tests)                                                                              | ❌ English-first                          |
+| **6D emotional state**         | ✅ Shared αβγδεθ context across all components                                                                                   | ❌ No shared state                        |
+| **460K+ dictionary**           | ✅ Grows automatically from conversation                                                                                         | ❌ Static vocabulary                      |
+| **Out-of-box & config-driven** | ✅ One-command launch (`run_angela.py`); auto-detects hardware (GPU/CPU) and selects the best backend — no manual config editing | ❌ Most require manual setup / API keys   |
 
-**The strongest single pitch**: *An AI that gets tired, gets hungry, lives on your desktop with a Live2D body, learns from every conversation, and runs completely offline.* — No existing open-source project delivers all five simultaneously.
+**The strongest single pitch**: _An AI that gets tired, gets hungry, lives on
+your desktop with a Live2D body, learns from every conversation, and runs
+completely offline._ — No existing open-source project delivers all five
+simultaneously.
 
 ---
 
 ### Quick Start
 
-**Out-of-box in one command**: `python scripts/run_angela.py` launches the backend + desktop and **auto-configures to your hardware** (GPU/CPU, backend selection) — no manual data download or config editing. Training is **optional** (Scenario B in SCENARIOS.md) and only improves output quality.
+**Out-of-box in one command**: `python scripts/run_angela.py` launches the
+backend + desktop and **auto-configures to your hardware** (GPU/CPU, backend
+selection) — no manual data download or config editing. Training is **optional**
+(Scenario B in SCENARIOS.md) and only improves output quality.
 
-Detailed guides: [Direct Start](docs/usage/QUICK_START.md) · [Train / Configure — optional](docs/usage/SCENARIOS.md)
+Detailed guides: [Direct Start](docs/usage/QUICK_START.md) ·
+[Train / Configure — optional](docs/usage/SCENARIOS.md)
 
-**Full first-time setup (optional)**: `python scripts/setup.py` runs the complete one-command setup — hardware detection → dataset download (`download_datasets.py`) → model training (`train_pipeline.py`) → verification. Pass `--skip-download` / `--skip-training` to skip those steps and only load existing models.
+**Full first-time setup (optional)**: `python scripts/setup.py` runs the
+complete one-command setup — hardware detection → dataset download
+(`download_datasets.py`) → model training (`train_pipeline.py`) → verification.
+Pass `--skip-download` / `--skip-training` to skip those steps and only load
+existing models.
 
 ```bash
 # Clone
@@ -247,13 +334,17 @@ python apps/game-rpg/run_game.py
 
 **Prerequisites**: Python 3.10+, Node.js 16+, Ollama (LLM backend).
 
-> **New to the project?** See [QUICK_START.md](docs/usage/QUICK_START.md) for a step-by-step walkthrough, troubleshooting tips, and expected behavior. For optional training or custom configuration, see [SCENARIOS.md](docs/usage/SCENARIOS.md).
+> **New to the project?** See [QUICK_START.md](docs/usage/QUICK_START.md) for a
+> step-by-step walkthrough, troubleshooting tips, and expected behavior. For
+> optional training or custom configuration, see
+> [SCENARIOS.md](docs/usage/SCENARIOS.md).
 
 ---
 
 ### Text Adventure Game (TUI)
 
-A text-based adventure game running on ED3N/GARDEN + deterministic engines — **no LLM required**.
+A text-based adventure game running on ED3N/GARDEN + deterministic engines —
+**no LLM required**.
 
 ```bash
 # Install TUI dependencies
@@ -266,39 +357,41 @@ cd apps/backend && python -m src.game.app
 python apps/game-rpg/run_game.py
 ```
 
-**Features**: Three-column TUI layout (character stats / dialogue / scene info), D12 dice-based combat, scene exploration, inventory system. 211 cards loaded from `apps/game-rpg/data/game_cards.json`. Refresh is event-driven (no polling).
+**Features**: Three-column TUI layout (character stats / dialogue / scene info),
+D12 dice-based combat, scene exploration, inventory system. 211 cards loaded
+from `apps/game-rpg/data/game_cards.json`. Refresh is event-driven (no polling).
 
 ---
 
 ### Scripts Reference
 
-| Category | Script | Description |
-|----------|--------|-------------|
-| **Launch** | `scripts/run_angela.py` | Primary launcher (recommended) |
-| **Launch** | `apps/game-rpg/run_game.py` | CLI RPG (no LLM needed) |
-| **Launch** | `apps/backend/src/game/app.py` | Textual TUI (no LLM needed) |
-| **Launch** | `scripts/start_all.bat` | Start backend + frontend concurrently |
-| **Launch** | `scripts/start_backend.bat` | Start backend in dev mode |
-| **Launch** | `scripts/unified-ai.bat` | Comprehensive project launcher |
-| **Setup** | `scripts/setup.py` | One-command setup: detect hardware → download datasets → train models → verify (`--skip-download` / `--skip-training` to skip) |
-| **Health** | `scripts/check_auth_status.py` | Check authentication status |
-| **Health** | `scripts/check_last_memories.py` | Inspect recent HAM memory entries |
-| **Health** | `scripts/check_vec_store.py` | Verify vector store integrity |
-| **Health** | `scripts/check_ports.ps1` | Check port availability |
-| **Health** | `scripts/debug_memory.py` | Debug memory system issues |
-| **Health** | `scripts/utils/health_check.py` | Full diagnostics |
-| **Health** | `scripts/utils/check_resources.py` | System resource monitor |
-| **Training** | `scripts/train_ed3n.py` | ED3N training |
-| **Training** | `scripts/train_pipeline.py` | Training pipeline |
-| **Training** | `scripts/generate_training_data.py` | Generate training data |
-| **Drive** | `scripts/trigger_sync.py` | Manually trigger Drive sync |
-| **Drive** | `scripts/verify_drive_analyzer.py` | Verify Drive Analyzer |
-| **Dev** | `scripts/verify_ice_loop.py` | Verify ICE loop |
-| **Dev** | `scripts/verify_phase_2_loop.py` | Verify Phase 2 reward loop |
-| **Setup** | `scripts/setup_project.bat` / `.sh` | Initial project setup |
-| **Setup** | `scripts/utils/init_config.py` | Configuration initialization |
-| **Setup** | `scripts/utils/verify_p0_systems.py` | P0 systems verification |
-| **Setup** | `scripts/utils/improve_live2d_loading.py` | Live2D loading optimization |
+| Category     | Script                                    | Description                                                                                                                    |
+| ------------ | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| **Launch**   | `scripts/run_angela.py`                   | Primary launcher (recommended)                                                                                                 |
+| **Launch**   | `apps/game-rpg/run_game.py`               | CLI RPG (no LLM needed)                                                                                                        |
+| **Launch**   | `apps/backend/src/game/app.py`            | Textual TUI (no LLM needed)                                                                                                    |
+| **Launch**   | `scripts/start_all.bat`                   | Start backend + frontend concurrently                                                                                          |
+| **Launch**   | `scripts/start_backend.bat`               | Start backend in dev mode                                                                                                      |
+| **Launch**   | `scripts/unified-ai.bat`                  | Comprehensive project launcher                                                                                                 |
+| **Setup**    | `scripts/setup.py`                        | One-command setup: detect hardware → download datasets → train models → verify (`--skip-download` / `--skip-training` to skip) |
+| **Health**   | `scripts/check_auth_status.py`            | Check authentication status                                                                                                    |
+| **Health**   | `scripts/check_last_memories.py`          | Inspect recent HAM memory entries                                                                                              |
+| **Health**   | `scripts/check_vec_store.py`              | Verify vector store integrity                                                                                                  |
+| **Health**   | `scripts/check_ports.ps1`                 | Check port availability                                                                                                        |
+| **Health**   | `scripts/debug_memory.py`                 | Debug memory system issues                                                                                                     |
+| **Health**   | `scripts/utils/health_check.py`           | Full diagnostics                                                                                                               |
+| **Health**   | `scripts/utils/check_resources.py`        | System resource monitor                                                                                                        |
+| **Training** | `scripts/train_ed3n.py`                   | ED3N training                                                                                                                  |
+| **Training** | `scripts/train_pipeline.py`               | Training pipeline                                                                                                              |
+| **Training** | `scripts/generate_training_data.py`       | Generate training data                                                                                                         |
+| **Drive**    | `scripts/trigger_sync.py`                 | Manually trigger Drive sync                                                                                                    |
+| **Drive**    | `scripts/verify_drive_analyzer.py`        | Verify Drive Analyzer                                                                                                          |
+| **Dev**      | `scripts/verify_ice_loop.py`              | Verify ICE loop                                                                                                                |
+| **Dev**      | `scripts/verify_phase_2_loop.py`          | Verify Phase 2 reward loop                                                                                                     |
+| **Setup**    | `scripts/setup_project.bat` / `.sh`       | Initial project setup                                                                                                          |
+| **Setup**    | `scripts/utils/init_config.py`            | Configuration initialization                                                                                                   |
+| **Setup**    | `scripts/utils/verify_p0_systems.py`      | P0 systems verification                                                                                                        |
+| **Setup**    | `scripts/utils/improve_live2d_loading.py` | Live2D loading optimization                                                                                                    |
 
 > Full list: [scripts/ACTIVE_SCRIPTS.md](scripts/ACTIVE_SCRIPTS.md)
 
@@ -307,79 +400,115 @@ python apps/game-rpg/run_game.py
 ### What Actually Works (Code-Verified 2026-07-13)
 
 **Chat Pipeline (fully wired):**
-- **Complete pipeline** — WebSocket → emotion analysis → crisis gate → biological stimulus → alignment gate → execution gate → agent routing → LLM → causal learning → response ✅
+
+- **Complete pipeline** — WebSocket → emotion analysis → crisis gate →
+  biological stimulus → alignment gate → execution gate → agent routing → LLM →
+  causal learning → response ✅
 - **Session history** — 30-message rolling window, ED3N retrieval pool ✅
-- **Emotion analysis** — 6-category emotion keywords, emotion-aware prompt injection ✅
-- **Crisis system** — Safety gate auto-reset timeout (300s), config loaded from `apps/backend/configs/crisis_system_config.json` ✅
+- **Emotion analysis** — 6-category emotion keywords, emotion-aware prompt
+  injection ✅
+- **Crisis system** — Safety gate auto-reset timeout (300s), config loaded from
+  `apps/backend/configs/crisis_system_config.json` ✅
 - **Level5ASI alignment** — Triggered at crisis_level ≥ 2, lazy-initialized ✅
-- **CausalReasoning** — Fire-and-forget learning after every response, FIFO cap (500 obs / 1000 rels) ✅
+- **CausalReasoning** — Fire-and-forget learning after every response, FIFO cap
+  (500 obs / 1000 rels) ✅
 - **ModelEnsemble** — Multi-model voting via `context["use_ensemble"] = True` ✅
-- **Autonomous cognition** — AutonomousLifeCycle + θ Router + 5 formula metrics in prompts ✅
-- **Vision endpoints** — `/vision/analyze` + `/chat/with-image` with image context ✅
+- **Autonomous cognition** — AutonomousLifeCycle + θ Router + 5 formula metrics
+  in prompts ✅
+- **Vision endpoints** — `/vision/analyze` + `/chat/with-image` with image
+  context ✅
 - **Template matching** — 157 templates, 60s cached formula summaries ✅
 
 **AI Systems:**
-- **LLM providers** — Unified (native, priority 1), Ollama, llama.cpp, Anthropic, Google, OpenAI ✅ (legacy ED3N/GARDEN providers removed)
-- **QueryClassifier** — 16 QueryTypes (FILE, SEARCH, CODE, EXECUTE, TASK, VISION, AUDIO, OPINION, etc.) ✅
+
+- **LLM providers** — Unified (native, priority 1), Ollama, llama.cpp,
+  Anthropic, Google, OpenAI ✅ (legacy ED3N/GARDEN providers removed)
+- **QueryClassifier** — 16 QueryTypes (FILE, SEARCH, CODE, EXECUTE, TASK,
+  VISION, AUDIO, OPINION, etc.) ✅
 - **ModelBus** — Handler registration + handler-first routing ✅
-- **11 Specialized Agents** — Registered via AgentAdapter, wrapped with `execute()` interface ✅
+- **11 Specialized Agents** — Registered via AgentAdapter, wrapped with
+  `execute()` interface ✅
 - **ED3N engine** — SNN, reflex layers, cross-modal processing ✅
 - **GARDEN engine** — VectorDictionary, TensorSNNCore ✅
 
 **i18n (Internationalization) System:**
-- **I18nManager** — Multi-language translation management, JSON locale file loading ✅
-- **PromptManager** — LLM prompt template management, language-aware selection ✅
-- **Handler i18n** — 4 handlers completed (file_operation, task_manager, system_command, code_execution) ✅
+
+- **I18nManager** — Multi-language translation management, JSON locale file
+  loading ✅
+- **PromptManager** — LLM prompt template management, language-aware selection
+  ✅
+- **Handler i18n** — 4 handlers completed (file_operation, task_manager,
+  system_command, code_execution) ✅
 - **Prompt Builder i18n** — 60+ prompt strings replaced with `prompt()` calls ✅
 - **LLM Decision Loop i18n** — 40+ prompt strings replaced ✅
-- **Locale files** — en-US.json, zh-CN.json, prompts.en-US.json, prompts.zh-CN.json ✅
+- **Locale files** — en-US.json, zh-CN.json, prompts.en-US.json,
+  prompts.zh-CN.json ✅
 - **Desktop App i18n** — zh-CN bug fixed, case-insensitive locale matching ✅
 
 **Phase 0 — Foundation Fixes:**
-- **Import fixes** — execution_manager.py, UCC await-in-sync, EnvironmentSimulator, duplicate lines ✅
-- **Context subsystems activated** — dialogue_context, model_context, tool_context, memory_context, integration_with_ham ✅
+
+- **Import fixes** — execution_manager.py, UCC await-in-sync,
+  EnvironmentSimulator, duplicate lines ✅
+- **Context subsystems activated** — dialogue_context, model_context,
+  tool_context, memory_context, integration_with_ham ✅
 - **DEPRECATED markers cleaned** — 9 packages cleaned ✅
 
 **Phase 1 — Core Activation:**
-- **Context wiring** — DialogueContext + MemoryContext injected in chat pipeline ✅
+
+- **Context wiring** — DialogueContext + MemoryContext injected in chat pipeline
+  ✅
 - **ED3N cycling** — Max 3 cycles, confidence threshold 0.7 ✅
 - **GARDEN cycling** — Max 3 cycles, response length improvement check ✅
 - **UnifiedLearningOrchestrator** — Connects 6 learning subsystems ✅
 
 **Phase 2 — Intelligence Layer:**
-- **AgentOrchestrator** — Intent classification, agent selection, task decomposition ✅
-- **PlanningEngine** — Goal decomposition, dependency tracking, progress monitoring ✅
+
+- **AgentOrchestrator** — Intent classification, agent selection, task
+  decomposition ✅
+- **PlanningEngine** — Goal decomposition, dependency tracking, progress
+  monitoring ✅
 - **ReasoningEngines** — ChainOfThought, Analogical, Abductive reasoning ✅
 
 **Phase 3 — Safety & Trust:**
-- **TrustManager** — User trust scoring, permission control, violation tracking ✅
-- **ContentFilter** — Toxicity detection, PII filtering, safety classification ✅
+
+- **TrustManager** — User trust scoring, permission control, violation tracking
+  ✅
+- **ContentFilter** — Toxicity detection, PII filtering, safety classification
+  ✅
 - **SafetyAudit** — Audit trail, compliance checks, alert system ✅
 
 **Phase 4 — Embodiment:**
-- **Web Dashboard** — Next.js: ChatPanel, PetPanel, SystemMonitor, MemoryViewer ✅ (`EconomyPanel`/`LearningDashboard` UI remain but backends were deleted in Phase 11 — non-functional)
+
+- **Web Dashboard** — Next.js: ChatPanel, PetPanel, SystemMonitor, MemoryViewer
+  ✅ (`EconomyPanel`/`LearningDashboard` UI remain but backends were deleted in
+  Phase 11 — non-functional)
 
 **Phase 5 — Infrastructure:**
-- **Docker** — Multi-stage Dockerfile, docker-compose with Redis, PostgreSQL, Prometheus, Grafana, Nginx ✅
+
+- **Docker** — Multi-stage Dockerfile, docker-compose with Redis, PostgreSQL,
+  Prometheus, Grafana, Nginx ✅
 - **CI/CD** — GitHub Actions with staging/production deployment ✅
 - **Monitoring** — Prometheus metrics, Grafana dashboards, alert rules ✅
 - **OpenTelemetry** — Distributed tracing middleware ✅
 - **API Versioning** — Version routing middleware ✅
 
 **Phase 6 — Polish & Launch:**
+
 - **Benchmarks** — ED3N, GARDEN, Classifier baselines ✅
 - **Profiling** — Unified profiler with imports/memory modes ✅
 - **OpenAPI** — Static spec export script ✅
 - **Documentation** — Deployment guide, User guide ✅
 
 **Core Infrastructure:**
+
 - **Config system** — `config_loader.py:get_config()` ✅
 - **State matrix** — 6D state matrix (αβγδεθ), 1,244 lines ✅
 - **HSP connector** — 51 KB, full protocol with circuit breaker ✅
 - **Action execution** — 48 KB, priority queue, dependency resolution ✅
 - **Biological systems** — 8 modules with real code (20-46 KB each) ✅
 - **ChromaDB memory** — HAM memory with vector store ✅
-- **Desktop app** — Electron + Live2D, 7 unique + 33 shared JS files, Epsilon_free model ✅
+- **Desktop app** — Electron + Live2D, 7 unique + 33 shared JS files,
+  Epsilon_free model ✅
 - **Pixel art engine** — PyQt6 renderer, numpy voxel body ✅
 - **CLI** — Unified CLI with HTTP client ✅
 - **Gemini OS bridge** — pyautogui automation ✅
@@ -388,72 +517,92 @@ python apps/game-rpg/run_game.py
 ### What Does NOT Work / Needs Work
 
 - **YOLO object detection** — Not started ❌
-- **`/multimodal/stream` WebSocket route** — Dedicated handler (`multimodal_ws_handler.py`) + route registered ✅
-- **Whisper faster-whisper in ChatService** — Installed and wired: offline high-quality STT via AudioService._stt_faster_whisper() ✅
-- **Agent auto-routing** — Wired into chat pipeline Step 8 (creative/knowledge/opinion/vision/audio) ✅
-- **VisualDecoder training** — T1 DONE: Full pipeline (projection + texture) trainable, projection weights trained (42× CIFAR-10 loss reduction) ✅
-- **P4 refactoring** — 25/31 >100L long functions refactored (3 pure-data + 3 algorithmic remain), load/stress/E2E tests, desktop tray — partial ⏳
-- **Auto-repair pathway** — `run_angela.py` now has auto-install on missing deps (--auto-repair flag, or interactive prompt) ✅
+- **`/multimodal/stream` WebSocket route** — Dedicated handler
+  (`multimodal_ws_handler.py`) + route registered ✅
+- **Whisper faster-whisper in ChatService** — Installed and wired: offline
+  high-quality STT via AudioService._stt_faster_whisper() ✅
+- **Agent auto-routing** — Wired into chat pipeline Step 8
+  (creative/knowledge/opinion/vision/audio) ✅
+- **VisualDecoder training** — T1 DONE: Full pipeline (projection + texture)
+  trainable, projection weights trained (42× CIFAR-10 loss reduction) ✅
+- **P4 refactoring** — 25/31 >100L long functions refactored (3 pure-data + 3
+  algorithmic remain), load/stress/E2E tests, desktop tray — partial ⏳
+- **Auto-repair pathway** — `run_angela.py` now has auto-install on missing deps
+  (--auto-repair flag, or interactive prompt) ✅
 
 ### Deleted (Phase 9-12 Cleanup) — Do Not Re-implement
+
 - **Mobile app** — Was skeleton (3 files), deleted in Phase 11 🗑️
-- **TactileService** — Was stub (66 lines), no hardware support, deleted in Phase 11 🗑️
-- **ImageGenerationAgent** — Was stub always returning "unavailable", deleted in Phase 9 🗑️
-- **ComfyUIClient/AngelaRealPainter** — Stubs with `image_url: None`, deleted in Phase 10 🗑️
+- **TactileService** — Was stub (66 lines), no hardware support, deleted in
+  Phase 11 🗑️
+- **ImageGenerationAgent** — Was stub always returning "unavailable", deleted in
+  Phase 9 🗑️
+- **ComfyUIClient/AngelaRealPainter** — Stubs with `image_url: None`, deleted in
+  Phase 10 🗑️
 - **`services/wiring.py`** — Dead code never called, deleted in Phase 11 🗑️
-- **11 dead subsystems** (learning/ops/dialogue/evaluation/execution/code_inspection/compression/lis/language_models/integration/symbolic_space) — Deleted in Phase 11b 🗑️
-- **5 dead modules** (code_understanding/personality/time/translation/distributed) — Deleted in Phase 12 🗑️
+- **11 dead subsystems**
+  (learning/ops/dialogue/evaluation/execution/code_inspection/compression/lis/language_models/integration/symbolic_space)
+  — Deleted in Phase 11b 🗑️
+- **5 dead modules**
+  (code_understanding/personality/time/translation/distributed) — Deleted in
+  Phase 12 🗑️
 - **Trust module** — Deleted in Phase 12b 🗑️
 - **`ai/security/`** — Empty module, deleted in Phase 9 🗑️
 - **`comic_composer.py`** — Placeholder URL, deleted in Phase 9 🗑️
 
 ### Orphaned Systems Status
 
-| Category | Count | Action |
-|----------|-------|--------|
-| **Wired into pipeline** | 6 | CrisisSystem, CausalReasoning, Level5ASI, ModelEnsemble, 11 Agents, AgentManager |
-| **Deleted (stubs/duplicates)** | 18 | services/ai_editor_config.py, services/ai_virtual_input_service.py, plus Phase 11 deleted subsystems |
-| **Retained but unwired** | 18 | real_time_monitor, event_loop_system, execution_manager, etc. |
-| **Deleted (Phase 1 cleanup)** | 12 | modules/ directory removed (12 wrapper files) |
+| Category                       | Count | Action                                                                                               |
+| ------------------------------ | ----- | ---------------------------------------------------------------------------------------------------- |
+| **Wired into pipeline**        | 6     | CrisisSystem, CausalReasoning, Level5ASI, ModelEnsemble, 11 Agents, AgentManager                     |
+| **Deleted (stubs/duplicates)** | 18    | services/ai_editor_config.py, services/ai_virtual_input_service.py, plus Phase 11 deleted subsystems |
+| **Retained but unwired**       | 18    | real_time_monitor, event_loop_system, execution_manager, etc.                                        |
+| **Deleted (Phase 1 cleanup)**  | 12    | modules/ directory removed (12 wrapper files)                                                        |
 
 ### Roadmap / Future Phases
 
-| Phase | Focus | Status | Priority |
-|:------|:------|:------:|:--------:|
-| **Chat Pipeline** | Full wiring: emotion → crisis → alignment → LLM → causal learning | ✅ **DONE** | 🔴 CRITICAL |
-| **Orphaned Systems** | Wire 6 systems, delete 16 stubs, retain 18 for future | ✅ **DONE** | 🔴 CRITICAL |
-| **Bug Fixes** | 15 bugs fixed across ensemble, causal, crisis, level5, adapter | ✅ **DONE** | 🔴 CRITICAL |
-| **Architecture Doc** | `ANGELA_FULL_ARCHITECTURE.md` — 1183 lines, 35KB | ✅ **DONE** | 🟡 MEDIUM |
-| **Phase 0-6** | Foundation, Core, Intelligence, Safety, Embodiment, Infrastructure, Polish | ✅ **DONE** | 🔴 CRITICAL |
+| Phase                | Focus                                                                      |   Status    |  Priority   |
+| :------------------- | :------------------------------------------------------------------------- | :---------: | :---------: |
+| **Chat Pipeline**    | Full wiring: emotion → crisis → alignment → LLM → causal learning          | ✅ **DONE** | 🔴 CRITICAL |
+| **Orphaned Systems** | Wire 6 systems, delete 16 stubs, retain 18 for future                      | ✅ **DONE** | 🔴 CRITICAL |
+| **Bug Fixes**        | 15 bugs fixed across ensemble, causal, crisis, level5, adapter             | ✅ **DONE** | 🔴 CRITICAL |
+| **Architecture Doc** | `ANGELA_FULL_ARCHITECTURE.md` — 1183 lines, 35KB                           | ✅ **DONE** |  🟡 MEDIUM  |
+| **Phase 0-6**        | Foundation, Core, Intelligence, Safety, Embodiment, Infrastructure, Polish | ✅ **DONE** | 🔴 CRITICAL |
 
 ### 2026-08-13 Internal Consolidation (cross-file dedup)
 
-Executed as part of the architecture-integration goal (see `docs/REFACTOR_PLAN.md`):
+Executed as part of the architecture-integration goal (see
+`docs/REFACTOR_PLAN.md`):
 
-- **Error hierarchy unified** into `apps/backend/src/core/angela_error.py`. The legacy
-  `core/error/error_handler.py` was removed; all submodules re-export the canonical
-  classes so no import breaks (compatibility shims verified).
+- **Error hierarchy unified** into `apps/backend/src/core/angela_error.py`. The
+  legacy `core/error/error_handler.py` was removed; all submodules re-export the
+  canonical classes so no import breaks (compatibility shims verified).
 - **Cross-file duplicate classes merged**: error dataclasses, `TrainingExample`,
-  `BaseAgent`, autonomous-lifecycle / shared-latent-space singletons, etc. — duplicates
-  removed, single source of truth retained.
+  `BaseAgent`, autonomous-lifecycle / shared-latent-space singletons, etc. —
+  duplicates removed, single source of truth retained.
 - **`ANGELA_FULL_ARCHITECTURE.md` corrected**: subsystems deleted in Phase 9–12
-  (`economy/`, `ai/learning/`, `ai/ops/`, `ai/code_inspection/`, `ai/compression/`,
-  `ai/language_models/`, `ai/evaluation/`, plus the obsolete `core_ai/` tree) are now
-  marked 🗑️ deleted instead of ✅ present.
-- **Test count re-synced** to **5,432** (tests/, 0 errors) across README / QUICKSTART /
-  FRAMEWORK_OVERVIEW / IMPROVEMENT_ROADMAP / tests/README / PROJECT_OVERVIEW / AGENTS.
+  (`economy/`, `ai/learning/`, `ai/ops/`, `ai/code_inspection/`,
+  `ai/compression/`, `ai/language_models/`, `ai/evaluation/`, plus the obsolete
+  `core_ai/` tree) are now marked 🗑️ deleted instead of ✅ present.
+- **Test count re-synced** to **5,432** (tests/, 0 errors) across README /
+  QUICKSTART / FRAMEWORK_OVERVIEW / IMPROVEMENT_ROADMAP / tests/README /
+  PROJECT_OVERVIEW / AGENTS.
 
-> 🗄️ `docs/06-project-management/planning/` 已歸檔至 `docs/09-archive/planning-2026-08-13/`（原描述已不存在的 `core_ai/` 佈局）。
-| **i18n Internationalization** | I18nManager, PromptManager, Handler/Prompt replacement, Locale files | ✅ **DONE** | 🟡 MEDIUM |
-| **YOLO Object Detection** | New feature | ⬜ | 🔴 HIGH |
-| **Auto-Repair Pathway** | run_angela.py auto-install on missing deps | ✅ **DONE** | 🔴 HIGH |
-| **Agent Auto-Routing** | Chat pipeline Step 8 wires agents | ✅ **DONE** | 🔴 HIGH |
-| **Frontend Multimodal** | Image/audio upload in Desktop/Web | ⬜ | 🔴 HIGH |
-| **Whisper ChatService Wiring** | faster-whisper into chat pipeline | ✅ **DONE** | 🟡 MEDIUM |
-| **VisualDecoder Training** | Phase 3: texture branch pixel-level training added (T1 DONE) | ✅ | 🟡 MEDIUM |
-| **WebSocket Route** | `/multimodal/stream` registered | ✅ **DONE** | 🟡 MEDIUM |
-| **P4 Refactoring** | 28 long files / load tests / E2E / tray | ⬜ | 🟡 MEDIUM |
-| **Integrate Retained Systems** | real_time_monitor, event_loop_system, etc. | ⬜ | 🟢 LOW |
+> 🗄️ `docs/06-project-management/planning/` 已歸檔至
+> `docs/09-archive/planning-2026-08-13/`（原描述已不存在的 `core_ai/` 佈局）。|
+> **i18n Internationalization** | I18nManager, PromptManager, Handler/Prompt
+> replacement, Locale files | ✅ **DONE** | 🟡 MEDIUM | | **YOLO Object
+> Detection** | New feature | ⬜ | 🔴 HIGH | | **Auto-Repair Pathway** |
+> run_angela.py auto-install on missing deps | ✅ **DONE** | 🔴 HIGH | | **Agent
+> Auto-Routing** | Chat pipeline Step 8 wires agents | ✅ **DONE** | 🔴 HIGH | |
+> **Frontend Multimodal** | Image/audio upload in Desktop/Web | ⬜ | 🔴 HIGH | |
+> **Whisper ChatService Wiring** | faster-whisper into chat pipeline | ✅
+> **DONE** | 🟡 MEDIUM | | **VisualDecoder Training** | Phase 3: texture branch
+> pixel-level training added (T1 DONE) | ✅ | 🟡 MEDIUM | | **WebSocket Route**
+> | `/multimodal/stream` registered | ✅ **DONE** | 🟡 MEDIUM | | **P4
+> Refactoring** | 28 long files / load tests / E2E / tray | ⬜ | 🟡 MEDIUM | |
+> **Integrate Retained Systems** | real_time_monitor, event_loop_system, etc. |
+> ⬜ | 🟢 LOW |
 
 ---
 
@@ -461,39 +610,39 @@ Executed as part of the architecture-integration goal (see `docs/REFACTOR_PLAN.m
 
 See dedicated docs for full diagrams:
 
-| Document | Contents |
-|----------|----------|
-| [USABILITY_GUIDE](docs/USABILITY_GUIDE.md) | **Configuration, AI models, context, UI discovery** — where everything is, what's available, how to use it |
-| [PRODUCTION_USABILITY_PLAN](docs/PRODUCTION_USABILITY_PLAN.md) | **Usability audit & roadmap** — current vs target for CLI/Web/Desktop/API, gap matrix, phased implementation |
-| [FRAMEWORK_OVERVIEW](docs/FRAMEWORK_OVERVIEW.md) | **Framework positioning, component catalog, extension guide** (bilingual) — how to use Angela AI as a framework |
-| [ANGELA_FULL_ARCHITECTURE](docs/architecture/ANGELA_FULL_ARCHITECTURE.md) | **Full system architecture** — perception, cognition, emotion, execution, memory, alignment, pipeline (1183 lines) |
-| [PROJECT_CHARTER](docs/00-overview/PROJECT_CHARTER.md) | Project mission, scope, principles |
-| [GLOSSARY](docs/00-overview/GLOSSARY.md) | Full project terminology reference |
-| [UNIFIED_DOC_INDEX](docs/09-archive/UNIFIED_DOCUMENTATION_INDEX.md) | Comprehensive doc inventory (archived) |
-| [WIRING_MAP](docs/09-archive/auto-archived-2026-08-11/_analysis_WIRING_MAP_2026-05-21.md) | Server lifecycle, factory chains, subtle wiring, dead code registry |
-| [CODE_STATISTICS](docs/09-archive/auto-archived-2026-08-11/_analysis_CODE_STATISTICS_2026-05-21.md) | Live vs dead vs semi-finished code by directory |
-| [MODULARITY_ANALYSIS](docs/09-archive/auto-archived-2026-08-11/_analysis_MODULARITY_ANALYSIS_2026-05-21.md) | God modules, central hub coupling, 20+ singletons |
-| [PROBLEM_ANALYSIS](docs/09-archive/auto-archived-2026-08-11/_analysis_PROBLEM_ANALYSIS_2026-05-21.md) | 3-perspective audit, security issues, CTO roadmap |
-| [FORENSIC_AUDIT](docs/09-archive/auto-archived-2026-08-11/_analysis_FORENSIC_AUDIT_2026-05-22.md) | 3-perspective audit: execution paths, TCS migration, security + dead code |
-| [MASTER_CONSOLIDATED_PLAN](docs/09-archive/auto-archived-2026-08-11/MASTER_CONSOLIDATED_PLAN.md) | **Active task plan**: 53 items, S/A/B/C tiers, 53/53 complete |
-| [CARD_INTEGRATION_PLAN](docs/09-archive/auto-archived-2026-08-11/ANGELA_CARD_INTEGRATION_PLAN.md) | Card pipeline → ChatService wiring: 4 phases, 10 disconnection points |
-| [MODULE_MANAGER_DESIGN](docs/09-archive/auto-archived-2026-08-11/MODULE_MANAGER_SYSTEM.md) | ✅ **Implemented** — M0-M5 (6 files + 100 tests) + 6 modules (card_pipeline, intent_registry, vision, audio, tactile, drive) |
-| [CARD_INTEGRATION_REVIEW](docs/09-archive/auto-archived-2026-08-11/CARD_INTEGRATION_PLAN_REVIEW.md) | Proactive audit: 25 issues found before implementation, 8 HIGH |
-| [PHASE6_NEXT_PLAN](docs/09-archive/auto-archived-2026-08-11/PHASE6_NEXT_PLAN.md) | Quality finishing: Plugin deployment, Config handlers, Magic number migration, Stub cleanup |
-| [MASTER_FINALIZATION_PLAN](docs/09-archive/auto-archived-2026-08-11/MASTER_FINALIZATION_PLAN.md) | Final push to 0: Remaining handlers, orphaned services, NotImplementedErrors, docs, tests |
-| [REMAINING_ISSUES_PLAN](docs/09-archive/auto-archived-2026-08-11/REMAINING_ISSUES_PLAN.md) | Placeholder cleanup, unittest→pytest migration |
-| [TEST_RESTRUCTURE_PLAN](docs/09-archive/auto-archived-2026-08-11/TEST_RESTRUCTURE_PLAN.md) | Test layer architecture, conftest layering, CI integration |
-| [COMPREHENSIVE_AUDIT_REPORT](docs/09-archive/auto-archived-2026-08-11/COMPREHENSIVE_AUDIT_REPORT.md) | **Audit V1 (05-31)**: Plans, docs, code, tests, config, apps — original completion audit |
-| [COMPREHENSIVE_AUDIT_REPORT_V2](docs/09-archive/auto-archived-2026-08-11/COMPREHENSIVE_AUDIT_REPORT_V2.md) | **Audit V2 (06-06)**: H5 post-sprint full scan — 3 true stubs, 20 intentional excepts, 132 long files |
-| [COMPREHENSIVE_AUDIT_V3](docs/09-archive/auto-archived-2026-08-11/COMPREHENSIVE_AUDIT_V3.md) | **Audit V3 (06-07)**: ED3N/GARDEN/Model Bus/Router 深度審計，16 HIGH + 16 MEDIUM 問題，P0-P4 修復計畫 |
-| [PHASE_REVIEW](docs/09-archive/auto-archived-2026-08-11/PHASE_REVIEW.md) | **Phase Review 1 (06-02)**: First 3-agent parallel audit, 10-dimension assessment |
-| [PHASE_REVIEW2](docs/09-archive/auto-archived-2026-08-11/PHASE_REVIEW2.md) | **Phase Review 2 (06-03)**: 17-session tracking audit, ~96% composite |
-| [PHASE_REVIEW3](docs/09-archive/auto-archived-2026-08-11/PHASE_REVIEW3.md) | **Phase Review 3 (06-04)**: 3-agent comprehensive audit, 10-dimension assessment |
-| [PHASE_REVIEW4](docs/09-archive/auto-archived-2026-08-11/PHASE_REVIEW4.md) | **Phase Review 4 (06-05, v5)**: H5 stub sprint, 36/37 stubs done, 24 empty excepts fixed, ~62% |
-| [PHASE_REVIEW5](docs/09-archive/auto-archived-2026-08-11/PHASE_REVIEW5.md) | **Phase Review 5 (06-06, NEW)**: H5 sprint final, 0 HIGH vulns, H7 roadmap |
-| [ANGELA_LLM_SNN_ARCHITECTURE_PLAN](docs/09-archive/auto-archived-2026-08-11/ANGELA_LLM_SNN_ARCHITECTURE_PLAN.md) | **ED3N Architecture Plan (06-06, NEW)**: External Dictionary Decoupled Neural Network — LLM + SNN design, training pipeline, 4-phase roadmap |
-| [GARDEN_MODEL_PLAN](docs/09-archive/auto-archived-2026-08-11/GARDEN_MODEL_PLAN.md) | **GARDEN Scale Plan (06-06, NEW)**: Giant Associative Relation Decoupled Evolutionary Network — Lightweight 1GB model and 5-tier scaling plan |
-| [ED3N_TRAINING_GUIDE](docs/06-project-management/guides/ED3N_TRAINING_GUIDE.md) | **ED3N Training Guide (06-06, NEW)**: How to train, evaluate, and deploy ED3N with real data — terminal commands, data format, troubleshooting |
+| Document                                                                                                         | Contents                                                                                                                                       |
+| ---------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| [USABILITY_GUIDE](docs/USABILITY_GUIDE.md)                                                                       | **Configuration, AI models, context, UI discovery** — where everything is, what's available, how to use it                                     |
+| [PRODUCTION_USABILITY_PLAN](docs/PRODUCTION_USABILITY_PLAN.md)                                                   | **Usability audit & roadmap** — current vs target for CLI/Web/Desktop/API, gap matrix, phased implementation                                   |
+| [FRAMEWORK_OVERVIEW](docs/FRAMEWORK_OVERVIEW.md)                                                                 | **Framework positioning, component catalog, extension guide** (bilingual) — how to use Angela AI as a framework                                |
+| [ANGELA_FULL_ARCHITECTURE](docs/architecture/ANGELA_FULL_ARCHITECTURE.md)                                        | **Full system architecture** — perception, cognition, emotion, execution, memory, alignment, pipeline (1183 lines)                             |
+| [PROJECT_CHARTER](docs/00-overview/PROJECT_CHARTER.md)                                                           | Project mission, scope, principles                                                                                                             |
+| [GLOSSARY](docs/00-overview/GLOSSARY.md)                                                                         | Full project terminology reference                                                                                                             |
+| [UNIFIED_DOC_INDEX](docs/09-archive/UNIFIED_DOCUMENTATION_INDEX.md)                                              | Comprehensive doc inventory (archived)                                                                                                         |
+| [WIRING_MAP](docs/09-archive/auto-archived-2026-08-11/_analysis_WIRING_MAP_2026-05-21.md)                        | Server lifecycle, factory chains, subtle wiring, dead code registry                                                                            |
+| [CODE_STATISTICS](docs/09-archive/auto-archived-2026-08-11/_analysis_CODE_STATISTICS_2026-05-21.md)              | Live vs dead vs semi-finished code by directory                                                                                                |
+| [MODULARITY_ANALYSIS](docs/09-archive/auto-archived-2026-08-11/_analysis_MODULARITY_ANALYSIS_2026-05-21.md)      | God modules, central hub coupling, 20+ singletons                                                                                              |
+| [PROBLEM_ANALYSIS](docs/09-archive/auto-archived-2026-08-11/_analysis_PROBLEM_ANALYSIS_2026-05-21.md)            | 3-perspective audit, security issues, CTO roadmap                                                                                              |
+| [FORENSIC_AUDIT](docs/09-archive/auto-archived-2026-08-11/_analysis_FORENSIC_AUDIT_2026-05-22.md)                | 3-perspective audit: execution paths, TCS migration, security + dead code                                                                      |
+| [MASTER_CONSOLIDATED_PLAN](docs/09-archive/auto-archived-2026-08-11/MASTER_CONSOLIDATED_PLAN.md)                 | **Active task plan**: 53 items, S/A/B/C tiers, 53/53 complete                                                                                  |
+| [CARD_INTEGRATION_PLAN](docs/09-archive/auto-archived-2026-08-11/ANGELA_CARD_INTEGRATION_PLAN.md)                | Card pipeline → ChatService wiring: 4 phases, 10 disconnection points                                                                          |
+| [MODULE_MANAGER_DESIGN](docs/09-archive/auto-archived-2026-08-11/MODULE_MANAGER_SYSTEM.md)                       | ✅ **Implemented** — M0-M5 (6 files + 100 tests) + 6 modules (card_pipeline, intent_registry, vision, audio, tactile, drive)                   |
+| [CARD_INTEGRATION_REVIEW](docs/09-archive/auto-archived-2026-08-11/CARD_INTEGRATION_PLAN_REVIEW.md)              | Proactive audit: 25 issues found before implementation, 8 HIGH                                                                                 |
+| [PHASE6_NEXT_PLAN](docs/09-archive/auto-archived-2026-08-11/PHASE6_NEXT_PLAN.md)                                 | Quality finishing: Plugin deployment, Config handlers, Magic number migration, Stub cleanup                                                    |
+| [MASTER_FINALIZATION_PLAN](docs/09-archive/auto-archived-2026-08-11/MASTER_FINALIZATION_PLAN.md)                 | Final push to 0: Remaining handlers, orphaned services, NotImplementedErrors, docs, tests                                                      |
+| [REMAINING_ISSUES_PLAN](docs/09-archive/auto-archived-2026-08-11/REMAINING_ISSUES_PLAN.md)                       | Placeholder cleanup, unittest→pytest migration                                                                                                 |
+| [TEST_RESTRUCTURE_PLAN](docs/09-archive/auto-archived-2026-08-11/TEST_RESTRUCTURE_PLAN.md)                       | Test layer architecture, conftest layering, CI integration                                                                                     |
+| [COMPREHENSIVE_AUDIT_REPORT](docs/09-archive/auto-archived-2026-08-11/COMPREHENSIVE_AUDIT_REPORT.md)             | **Audit V1 (05-31)**: Plans, docs, code, tests, config, apps — original completion audit                                                       |
+| [COMPREHENSIVE_AUDIT_REPORT_V2](docs/09-archive/auto-archived-2026-08-11/COMPREHENSIVE_AUDIT_REPORT_V2.md)       | **Audit V2 (06-06)**: H5 post-sprint full scan — 3 true stubs, 20 intentional excepts, 132 long files                                          |
+| [COMPREHENSIVE_AUDIT_V3](docs/09-archive/auto-archived-2026-08-11/COMPREHENSIVE_AUDIT_V3.md)                     | **Audit V3 (06-07)**: ED3N/GARDEN/Model Bus/Router 深度審計，16 HIGH + 16 MEDIUM 問題，P0-P4 修復計畫                                          |
+| [PHASE_REVIEW](docs/09-archive/auto-archived-2026-08-11/PHASE_REVIEW.md)                                         | **Phase Review 1 (06-02)**: First 3-agent parallel audit, 10-dimension assessment                                                              |
+| [PHASE_REVIEW2](docs/09-archive/auto-archived-2026-08-11/PHASE_REVIEW2.md)                                       | **Phase Review 2 (06-03)**: 17-session tracking audit, ~96% composite                                                                          |
+| [PHASE_REVIEW3](docs/09-archive/auto-archived-2026-08-11/PHASE_REVIEW3.md)                                       | **Phase Review 3 (06-04)**: 3-agent comprehensive audit, 10-dimension assessment                                                               |
+| [PHASE_REVIEW4](docs/09-archive/auto-archived-2026-08-11/PHASE_REVIEW4.md)                                       | **Phase Review 4 (06-05, v5)**: H5 stub sprint, 36/37 stubs done, 24 empty excepts fixed, ~62%                                                 |
+| [PHASE_REVIEW5](docs/09-archive/auto-archived-2026-08-11/PHASE_REVIEW5.md)                                       | **Phase Review 5 (06-06, NEW)**: H5 sprint final, 0 HIGH vulns, H7 roadmap                                                                     |
+| [ANGELA_LLM_SNN_ARCHITECTURE_PLAN](docs/09-archive/auto-archived-2026-08-11/ANGELA_LLM_SNN_ARCHITECTURE_PLAN.md) | **ED3N Architecture Plan (06-06, NEW)**: External Dictionary Decoupled Neural Network — LLM + SNN design, training pipeline, 4-phase roadmap   |
+| [GARDEN_MODEL_PLAN](docs/09-archive/auto-archived-2026-08-11/GARDEN_MODEL_PLAN.md)                               | **GARDEN Scale Plan (06-06, NEW)**: Giant Associative Relation Decoupled Evolutionary Network — Lightweight 1GB model and 5-tier scaling plan  |
+| [ED3N_TRAINING_GUIDE](docs/06-project-management/guides/ED3N_TRAINING_GUIDE.md)                                  | **ED3N Training Guide (06-06, NEW)**: How to train, evaluate, and deploy ED3N with real data — terminal commands, data format, troubleshooting |
 
 ---
 
@@ -503,54 +652,63 @@ See dedicated docs for full diagrams:
 
 **Angela AI** 是一個數位生命系統，具備生物模擬、LLM 整合與完整聊天管線。
 
-**Quick facts**：667 個 Python 檔案 (backend src)、~96K 行。Electron + Live2D 桌面端、33 shared JS。  
-**實際狀態**: Phase 0-7 全部完成。聊天管線完整接線、孤兒系統整合、Phase 9-12 刪除 26 個死代碼子系統、~5,920 行死代碼移除。AgentOrchestrator、PlanningEngine、ReasoningEngines、TrustManager、ContentFilter、SafetyAudit、Web Dashboard、Docker/CI/CD、OpenTelemetry 全部運作。Phase 11-12 已清理 learning/ops/dialogue/evaluation/execution 等 11 個未使用子系統。  
-**管線**: WebSocket → 情緒分析 → 危機閘門 → 對齊閘門 → 執行閘門 → **代理路由** → LLM → 因果學習 → 回應。
+**Quick facts**：667 個 Python 檔案 (backend src)、~96K 行。Electron +
+Live2D 桌面端、33 shared JS。  
+**實際狀態**: Phase 0-7 全部完成。聊天管線完整接線、孤兒系統整合、Phase
+9-12 刪除 26 個死代碼子系統、~5,920 行死代碼移除。AgentOrchestrator、PlanningEngine、ReasoningEngines、TrustManager、ContentFilter、SafetyAudit、Web
+Dashboard、Docker/CI/CD、OpenTelemetry 全部運作。Phase
+11-12 已清理 learning/ops/dialogue/evaluation/execution 等 11 個未使用子系統。  
+**管線**: WebSocket → 情緒分析 → 危機閘門 → 對齊閘門 → 執行閘門 → **代理路由** →
+LLM → 因果學習 → 回應。
 
 ---
 
 ### 當前進度（2026-06-25 代碼驗證）
 
-| 領域 | 狀態 | 關鍵證據 |
-|:-----|:----:|:------|
-| **聊天管線** | ✅ 完整接線 | 完整管線：情緒 → 危機 → 對齊 → 執行閘門 → 代理路由 → LLM → 因果學習 |
-| **CrisisSystem** | ✅ 已整合 | 安全閘門，自動重置超時 (300s) |
-| **CausalReasoning** | ✅ 已整合 | 每次回應後觸發學習，FIFO 上限 (500/1000) |
-| **Level5ASI** | ✅ 已整合 | 對齊閘門，crisis_level ≥ 2 時觸發 |
-| **ModelEnsemble** | ✅ 已整合 | 多模型投票，`context["use_ensemble"] = True` |
-| **11 個代理** | ✅ 已註冊 | AgentAdapter 包裝所有代理 |
-| **QueryClassifier** | ✅ 已擴展 | 16 種 QueryTypes |
-| **ModelBus** | ✅ 已擴展 | Handler 註冊 + Handler-first 路由 |
-| **自主認知** | ✅ 已整合 | AutonomousLifeCycle + θ Router + 5 個公式指標 |
-| **視覺端點** | ✅ 已實作 | `/vision/analyze` + `/chat/with-image` |
-| **圖像生成** | ✅ 已實作 | GVV + ThreeLayerVisual，5 個端點，MSE 0.0042，[文檔](apps/backend/src/ai/multimodal/THREE_LAYER_VISUAL.md) |
-| **AgentOrchestrator** | ✅ 已完成 | 意圖分類、代理選擇、任務分解（Phase 2） |
-| **PlanningEngine** | ✅ 已完成 | 目標分解、依賴追蹤、進度監控（Phase 2） |
-| **ReasoningEngines** | ✅ 已完成 | ChainOfThought、Analogical、Abductive 推理（Phase 2） |
-| **TrustManager** | ✅ 已完成 | 信任評分、權限控制、違規追蹤（Phase 3） |
-| **ContentFilter** | ✅ 已完成 | 毒性偵測、PII 過濾、安全分類（Phase 3） |
-| **SafetyAudit** | ✅ 已完成 | 審計追蹤、合規檢查、警報系統（Phase 3） |
-| **Web Dashboard** | ✅ 已完成 | Next.js: ChatPanel、PetPanel、SystemMonitor、MemoryViewer（Phase 4）。⚠️ `EconomyPanel`/`LearningDashboard` UI 仍存在但無功能 — 後端已於 Phase 11 刪除（見 §X #204） |
-| **Docker/CI/CD** | ✅ 已完成 | Dockerfile、docker-compose、Prometheus、Grafana、Nginx、GitHub Actions 部署（Phase 5） |
-| **OpenTelemetry** | ✅ 已完成 | 分散式追蹤中間件（Phase 5） |
-| **API Versioning** | ✅ 已完成 | 版本路由中間件（Phase 5） |
-| **i18n 系統** | ✅ 已完成 | I18nManager、PromptManager、4 個 handler + 4 個 LLM 模組 i18n、45 個測試（Phase 7） |
-| **測試** | ✅ 通過 | ~5,466 passed (tests/; 6,111 full) — 0 collection errors |
-| **智能分數** | ✅ 已評分 (多維) | 6.0/10 (有 LLM) / 1.0/10 (純原生 神經開放域推理泛化); 確定性引擎: 數理化9.5/知識10; 準備度: 架構9.5/知識推理8.6/查詢學習9.0/多模態5.1/自主9.0 |
-| **Master Task Map** | ✅ 已建立 | 23 份計畫全部交叉參照、144 項 claim 驗證、26 個 DO-NOT-REIMPLEMENT |
-| **因果鏈完成度** | ✅ 已建立 | `docs/06-project-management/CAUSAL_CHAIN_COMPLETENESS.md` — §0 無 stub 原則、真實深度分數、時脈審計 |
-| **EmotionSystem 行為驅動** | ✅ **已完成** | `apply_influence()` 現在修改 PAD 狀態，`get_behavioral_adjustment()` 映射情緒→routing_mode/response_style，已接入管線第5步 |
-| **架構文檔** | ✅ 已建立 | `docs/architecture/ANGELA_FULL_ARCHITECTURE.md` |
+| 領域                       |       狀態       | 關鍵證據                                                                                                                                                             |
+| :------------------------- | :--------------: | :------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **聊天管線**               |   ✅ 完整接線    | 完整管線：情緒 → 危機 → 對齊 → 執行閘門 → 代理路由 → LLM → 因果學習                                                                                                  |
+| **CrisisSystem**           |    ✅ 已整合     | 安全閘門，自動重置超時 (300s)                                                                                                                                        |
+| **CausalReasoning**        |    ✅ 已整合     | 每次回應後觸發學習，FIFO 上限 (500/1000)                                                                                                                             |
+| **Level5ASI**              |    ✅ 已整合     | 對齊閘門，crisis_level ≥ 2 時觸發                                                                                                                                    |
+| **ModelEnsemble**          |    ✅ 已整合     | 多模型投票，`context["use_ensemble"] = True`                                                                                                                         |
+| **11 個代理**              |    ✅ 已註冊     | AgentAdapter 包裝所有代理                                                                                                                                            |
+| **QueryClassifier**        |    ✅ 已擴展     | 16 種 QueryTypes                                                                                                                                                     |
+| **ModelBus**               |    ✅ 已擴展     | Handler 註冊 + Handler-first 路由                                                                                                                                    |
+| **自主認知**               |    ✅ 已整合     | AutonomousLifeCycle + θ Router + 5 個公式指標                                                                                                                        |
+| **視覺端點**               |    ✅ 已實作     | `/vision/analyze` + `/chat/with-image`                                                                                                                               |
+| **圖像生成**               |    ✅ 已實作     | GVV + ThreeLayerVisual，5 個端點，MSE 0.0042，[文檔](apps/backend/src/ai/multimodal/THREE_LAYER_VISUAL.md)                                                           |
+| **AgentOrchestrator**      |    ✅ 已完成     | 意圖分類、代理選擇、任務分解（Phase 2）                                                                                                                              |
+| **PlanningEngine**         |    ✅ 已完成     | 目標分解、依賴追蹤、進度監控（Phase 2）                                                                                                                              |
+| **ReasoningEngines**       |    ✅ 已完成     | ChainOfThought、Analogical、Abductive 推理（Phase 2）                                                                                                                |
+| **TrustManager**           |    ✅ 已完成     | 信任評分、權限控制、違規追蹤（Phase 3）                                                                                                                              |
+| **ContentFilter**          |    ✅ 已完成     | 毒性偵測、PII 過濾、安全分類（Phase 3）                                                                                                                              |
+| **SafetyAudit**            |    ✅ 已完成     | 審計追蹤、合規檢查、警報系統（Phase 3）                                                                                                                              |
+| **Web Dashboard**          |    ✅ 已完成     | Next.js: ChatPanel、PetPanel、SystemMonitor、MemoryViewer（Phase 4）。⚠️ `EconomyPanel`/`LearningDashboard` UI 仍存在但無功能 — 後端已於 Phase 11 刪除（見 §X #204） |
+| **Docker/CI/CD**           |    ✅ 已完成     | Dockerfile、docker-compose、Prometheus、Grafana、Nginx、GitHub Actions 部署（Phase 5）                                                                               |
+| **OpenTelemetry**          |    ✅ 已完成     | 分散式追蹤中間件（Phase 5）                                                                                                                                          |
+| **API Versioning**         |    ✅ 已完成     | 版本路由中間件（Phase 5）                                                                                                                                            |
+| **i18n 系統**              |    ✅ 已完成     | I18nManager、PromptManager、4 個 handler + 4 個 LLM 模組 i18n、45 個測試（Phase 7）                                                                                  |
+| **測試**                   |     ✅ 通過      | ~5,466 passed (tests/; 6,111 full) — 0 collection errors                                                                                                             |
+| **智能分數**               | ✅ 已評分 (多維) | 6.0/10 (有 LLM) / 1.0/10 (純原生 神經開放域推理泛化); 確定性引擎: 數理化9.5/知識10; 準備度: 架構9.5/知識推理8.6/查詢學習9.0/多模態5.1/自主9.0                        |
+| **Master Task Map**        |    ✅ 已建立     | 23 份計畫全部交叉參照、144 項 claim 驗證、26 個 DO-NOT-REIMPLEMENT                                                                                                   |
+| **因果鏈完成度**           |    ✅ 已建立     | `docs/06-project-management/CAUSAL_CHAIN_COMPLETENESS.md` — §0 無 stub 原則、真實深度分數、時脈審計                                                                  |
+| **EmotionSystem 行為驅動** |  ✅ **已完成**   | `apply_influence()` 現在修改 PAD 狀態，`get_behavioral_adjustment()` 映射情緒→routing_mode/response_style，已接入管線第5步                                           |
+| **架構文檔**               |    ✅ 已建立     | `docs/architecture/ANGELA_FULL_ARCHITECTURE.md`                                                                                                                      |
 
 ---
 
 ### 快速啟動
 
-**一行指令即可開箱即用**：`python scripts/run_angela.py` 會啟動後端 + 桌面，並**依偵測到的硬體自動配置**（GPU/CPU、後端選擇）—— 無需手動下載資料或編輯配置。訓練為**選用**（SCENARIOS.zh.md 情境 B），僅提升輸出品質。
+**一行指令即可開箱即用**：`python scripts/run_angela.py`
+會啟動後端 + 桌面，並**依偵測到的硬體自動配置**（GPU/CPU、後端選擇）—— 無需手動下載資料或編輯配置。訓練為**選用**（SCENARIOS.zh.md 情境 B），僅提升輸出品質。
 
-詳細指南：[直接開始](docs/usage/QUICK_START.zh.md) · [訓練 / 配置 — 選用](docs/usage/SCENARIOS.zh.md)
+詳細指南：[直接開始](docs/usage/QUICK_START.zh.md) ·
+[訓練 / 配置 — 選用](docs/usage/SCENARIOS.zh.md)
 
-**首次完整安裝（選用）**：`python scripts/setup.py` 執行完整的一鍵安裝——硬體偵測 → 下載資料集（`download_datasets.py`）→ 訓練模型（`train_pipeline.py`）→ 驗證。加上 `--skip-download` / `--skip-training` 可跳過該步驟，僅載入已存在的模型。
+**首次完整安裝（選用）**：`python scripts/setup.py`
+執行完整的一鍵安裝——硬體偵測 → 下載資料集（`download_datasets.py`）→ 訓練模型（`train_pipeline.py`）→ 驗證。加上
+`--skip-download` / `--skip-training` 可跳過該步驟，僅載入已存在的模型。
 
 ```bash
 # 克隆專案
@@ -596,7 +754,9 @@ python apps/game-rpg/run_game.py
 
 **環境需求**：Python 3.10+、Node.js 16+、Ollama（LLM 後端）
 
-> **新用戶？** 查看 [QUICK_START.zh.md](docs/usage/QUICK_START.zh.md) 獲取逐步引導、故障排除與預期行為。如需選用訓練或自定義配置，請參考 [SCENARIOS.zh.md](docs/usage/SCENARIOS.zh.md)。
+> **新用戶？** 查看 [QUICK_START.zh.md](docs/usage/QUICK_START.zh.md)
+> 獲取逐步引導、故障排除與預期行為。如需選用訓練或自定義配置，請參考
+> [SCENARIOS.zh.md](docs/usage/SCENARIOS.zh.md)。
 
 ---
 
@@ -621,32 +781,32 @@ python apps/game-rpg/run_game.py
 
 ### 腳本參考
 
-| 類別 | 腳本 | 說明 |
-|------|------|------|
-| **啟動** | `scripts/run_angela.py` | 主要啟動器（推薦） |
-| **啟動** | `apps/game-rpg/run_game.py` | CLI 冒險遊戲（無需 LLM） |
-| **啟動** | `apps/backend/src/game/app.py` | Textual TUI（無需 LLM） |
-| **啟動** | `scripts/start_all.bat` | 同時啟動後端 + 桌面端 |
-| **啟動** | `scripts/start_backend.bat` | 開發模式啟動後端 |
-| **啟動** | `scripts/unified-ai.bat` | 綜合專案啟動器 |
-| **健康檢查** | `scripts/check_auth_status.py` | 檢查認證狀態 |
-| **健康檢查** | `scripts/check_last_memories.py` | 檢視近期 HAM 記憶 |
-| **健康檢查** | `scripts/check_vec_store.py` | 驗證向量儲存完整性 |
-| **健康檢查** | `scripts/check_ports.ps1` | 檢查連接埠可用性 |
-| **健康檢查** | `scripts/debug_memory.py` | 除錯記憶系統 |
-| **健康檢查** | `scripts/utils/health_check.py` | 完整診斷 |
-| **健康檢查** | `scripts/utils/check_resources.py` | 系統資源監控 |
-| **訓練** | `scripts/train_ed3n.py` | ED3N 訓練 |
-| **訓練** | `scripts/train_pipeline.py` | 訓練管線 |
-| **訓練** | `scripts/generate_training_data.py` | 生成訓練資料 |
-| **雲端硬碟** | `scripts/trigger_sync.py` | 手動觸發 Drive 同步 |
-| **雲端硬碟** | `scripts/verify_drive_analyzer.py` | 驗證 Drive Analyzer |
-| **開發** | `scripts/verify_ice_loop.py` | 驗證 ICE 循環 |
-| **開發** | `scripts/verify_phase_2_loop.py` | 驗證 Phase 2 獎勵循環 |
-| **設定** | `scripts/setup_project.bat` / `.sh` | 初始專案設定 |
-| **設定** | `scripts/utils/init_config.py` | 配置初始化 |
-| **設定** | `scripts/utils/verify_p0_systems.py` | P0 系統驗證 |
-| **設定** | `scripts/utils/improve_live2d_loading.py` | Live2D 載入優化 |
+| 類別         | 腳本                                      | 說明                     |
+| ------------ | ----------------------------------------- | ------------------------ |
+| **啟動**     | `scripts/run_angela.py`                   | 主要啟動器（推薦）       |
+| **啟動**     | `apps/game-rpg/run_game.py`               | CLI 冒險遊戲（無需 LLM） |
+| **啟動**     | `apps/backend/src/game/app.py`            | Textual TUI（無需 LLM）  |
+| **啟動**     | `scripts/start_all.bat`                   | 同時啟動後端 + 桌面端    |
+| **啟動**     | `scripts/start_backend.bat`               | 開發模式啟動後端         |
+| **啟動**     | `scripts/unified-ai.bat`                  | 綜合專案啟動器           |
+| **健康檢查** | `scripts/check_auth_status.py`            | 檢查認證狀態             |
+| **健康檢查** | `scripts/check_last_memories.py`          | 檢視近期 HAM 記憶        |
+| **健康檢查** | `scripts/check_vec_store.py`              | 驗證向量儲存完整性       |
+| **健康檢查** | `scripts/check_ports.ps1`                 | 檢查連接埠可用性         |
+| **健康檢查** | `scripts/debug_memory.py`                 | 除錯記憶系統             |
+| **健康檢查** | `scripts/utils/health_check.py`           | 完整診斷                 |
+| **健康檢查** | `scripts/utils/check_resources.py`        | 系統資源監控             |
+| **訓練**     | `scripts/train_ed3n.py`                   | ED3N 訓練                |
+| **訓練**     | `scripts/train_pipeline.py`               | 訓練管線                 |
+| **訓練**     | `scripts/generate_training_data.py`       | 生成訓練資料             |
+| **雲端硬碟** | `scripts/trigger_sync.py`                 | 手動觸發 Drive 同步      |
+| **雲端硬碟** | `scripts/verify_drive_analyzer.py`        | 驗證 Drive Analyzer      |
+| **開發**     | `scripts/verify_ice_loop.py`              | 驗證 ICE 循環            |
+| **開發**     | `scripts/verify_phase_2_loop.py`          | 驗證 Phase 2 獎勵循環    |
+| **設定**     | `scripts/setup_project.bat` / `.sh`       | 初始專案設定             |
+| **設定**     | `scripts/utils/init_config.py`            | 配置初始化               |
+| **設定**     | `scripts/utils/verify_p0_systems.py`      | P0 系統驗證              |
+| **設定**     | `scripts/utils/improve_live2d_loading.py` | Live2D 載入優化          |
 
 > 完整清單：[scripts/ACTIVE_SCRIPTS.md](scripts/ACTIVE_SCRIPTS.md)
 
@@ -655,7 +815,10 @@ python apps/game-rpg/run_game.py
 ### 什麼能跑（2026-06-25 驗證）
 
 **聊天管線（完整接線）：**
-- **完整管線** — WebSocket → 情緒分析 → 危機閘門 → 生物刺激 → 對齊閘門 → 執行閘門 → 代理路由 → LLM → 因果學習 → 回應 ✅
+
+- **完整管線** — WebSocket
+  → 情緒分析 → 危機閘門 → 生物刺激 → 對齊閘門 → 執行閘門 → 代理路由 → LLM
+  → 因果學習 → 回應 ✅
 - **Session 歷史** — 30 條訊息滾動視窗，ED3N 檢索池 ✅
 - **情緒分析** — 6 類情緒關鍵字，情緒感知 prompt 注入 ✅
 - **危機系統** — 安全閘門自動重置超時 ✅
@@ -666,7 +829,9 @@ python apps/game-rpg/run_game.py
 - **視覺端點** — 圖片分析 + 圖片聊天 ✅
 
 **AI 系統：**
-- **LLM 供應商** — 8 個供應商：Anthropic, Google, OpenAI, Ollama, llama.cpp, ED3N, GARDEN ✅
+
+- **LLM 供應商** — 8 個供應商：Anthropic, Google, OpenAI, Ollama, llama.cpp,
+  ED3N, GARDEN ✅
 - **QueryClassifier** — 16 種 QueryTypes ✅
 - **ModelBus** — Handler 註冊 + Handler-first 路由 ✅
 - **11 個專業代理** — 透過 AgentAdapter 註冊 ✅
@@ -674,52 +839,70 @@ python apps/game-rpg/run_game.py
 - **GARDEN 引擎** — VectorDictionary、TensorSNNCore ✅
 
 **國際化（i18n）系統：**
+
 - **I18nManager** — 多語言翻譯管理，支援 JSON locale 檔案載入 ✅
 - **PromptManager** — LLM 提示模板管理，語言動態選擇 ✅
-- **Handler i18n** — 4 個 handler 已完成硬編字串替換（file_operation, task_manager, system_command, code_execution）✅
+- **Handler i18n** — 4 個 handler 已完成硬編字串替換（file_operation,
+  task_manager, system_command, code_execution）✅
 - **Prompt Builder i18n** — 60+ 提示字串已替換為 `prompt()` 呼叫 ✅
 - **LLM Decision Loop i18n** — 40+ 提示字串已替換 ✅
-- **Locale 檔案** — en-US.json, zh-CN.json, prompts.en-US.json, prompts.zh-CN.json ✅
+- **Locale 檔案** — en-US.json, zh-CN.json, prompts.en-US.json,
+  prompts.zh-CN.json ✅
 - **Desktop App i18n** — zh-CN bug 修復，大小寫不敏感 locale 匹配 ✅
 
 **Phase 0 — 基礎修復：**
-- **Import 修復** — execution_manager.py、UCC await-in-sync、EnvironmentSimulator、重複行 ✅
-- **Context 子系統啟用** — dialogue_context、model_context、tool_context、memory_context、integration_with_ham ✅
+
+- **Import 修復** — execution_manager.py、UCC
+  await-in-sync、EnvironmentSimulator、重複行 ✅
+- **Context 子系統啟用** —
+  dialogue_context、model_context、tool_context、memory_context、integration_with_ham
+  ✅
 - **DEPRECATED 標記清理** — 9 個 package 清理 ✅
 
 **Phase 1 — 核心啟動：**
+
 - **Context 接線** — DialogueContext + MemoryContext 注入聊天管線 ✅
 - **ED3N 循環** — 最多 3 次迭代，信心閾值 0.7 ✅
 - **GARDEN 循環** — 最多 3 次迭代，回應長度改善檢查 ✅
 - **UnifiedLearningOrchestrator** — 連接 6 個學習子系統 ✅
 
 **Phase 2 — 智能層：**
+
 - **AgentOrchestrator** — 意圖分類、代理選擇、任務分解 ✅
 - **PlanningEngine** — 目標分解、依賴追蹤、進度監控 ✅
 - **ReasoningEngines** — ChainOfThought、Analogical、Abductive 推理 ✅
 
 **Phase 3 — 安全信任：**
+
 - **TrustManager** — 信任評分、權限控制、違規追蹤 ✅
 - **ContentFilter** — 毒性偵測、PII 過濾、安全分類 ✅
 - **SafetyAudit** — 審計追蹤、合規檢查、警報系統 ✅
 
 **Phase 4 — 具現化：**
-- **Web Dashboard** — Next.js: ChatPanel、PetPanel、SystemMonitor、MemoryViewer ✅（`EconomyPanel`/`LearningDashboard` UI 仍存在但後端已刪除 Phase 11 — 無功能）
+
+- **Web Dashboard** — Next.js: ChatPanel、PetPanel、SystemMonitor、MemoryViewer
+  ✅（`EconomyPanel`/`LearningDashboard` UI 仍存在但後端已刪除 Phase 11
+  — 無功能）
 
 **Phase 5 — 基礎設施：**
-- **Docker** — 多階段 Dockerfile、docker-compose 含 Redis、PostgreSQL、Prometheus、Grafana、Nginx ✅
+
+- **Docker**
+  — 多階段 Dockerfile、docker-compose 含 Redis、PostgreSQL、Prometheus、Grafana、Nginx
+  ✅
 - **CI/CD** — GitHub Actions staging/production 部署 ✅
 - **監控** — Prometheus 指標、Grafana 儀表板、警報規則 ✅
 - **OpenTelemetry** — 分散式追蹤中間件 ✅
 - **API Versioning** — 版本路由中間件 ✅
 
 **Phase 6 — 文件與優化：**
+
 - **基準測試** — ED3N、GARDEN、Classifier 基線 ✅
 - **效能分析** — 統一分析器（imports/memory 模式）✅
 - **OpenAPI** — 靜態規格匯出腳本 ✅
 - **文件** — 部署指南、使用者指南 ✅
 
 **核心基礎設施：**
+
 - **配置系統** — `config_loader.py:get_config()` ✅
 - **State Matrix** — 6D 狀態矩陣 (αβγδεθ)，1,244 行 ✅
 - **HSP 連接器** — 51 KB，完整協議 ✅
@@ -734,11 +917,15 @@ python apps/game-rpg/run_game.py
 - **YOLO 物件檢測** — 未開始 ❌
 - **Whisper 接線** — faster-whisper 已安裝並接入聊天管線 (離線高品質 STT) ✅
 - **代理自動路由** — 已接入聊天管線第 8 步（創意/知識/意見/視覺/聽覺）✅
-- **VisualDecoder 訓練** — T1 DONE: 投射權重已訓練 (42× CIFAR-10 損失降低)，紋理權重已可訓練 ✅
-- **P4 重構** — 25/31 長函式已重構（3 純資料 + 3 演算法剩餘），負載/E2E/tray 尚未開始 ⏳
-- **自動修復路徑** — `run_angela.py` 現在有自動安裝功能（--auto-repair 或互動提示）✅
+- **VisualDecoder 訓練** — T1 DONE: 投射權重已訓練 (42×
+  CIFAR-10 損失降低)，紋理權重已可訓練 ✅
+- **P4 重構** — 25/31 長函式已重構（3 純資料 +
+  3 演算法剩餘），負載/E2E/tray 尚未開始 ⏳
+- **自動修復路徑** — `run_angela.py`
+  現在有自動安裝功能（--auto-repair 或互動提示）✅
 
 ### 已刪除 (Phase 9-12 清理) — 不要重新實作
+
 - **手機端** — scaffold 已刪除（Phase 11）🗑️
 - **TactileService** — stub 已刪除（Phase 11）🗑️
 - **ImageGenerationAgent** — stub 已刪除（Phase 9）🗑️
@@ -749,98 +936,107 @@ python apps/game-rpg/run_game.py
 
 ### 孤兒系統狀態
 
-| 類別 | 數量 | 處理方式 |
-|------|------|---------|
-| **已接入管線** | 6 | CrisisSystem, CausalReasoning, Level5ASI, ModelEnsemble, 11 Agents, AgentManager |
-| **已刪除（stub/重複）** | 16 | services/ai_editor_config.py 等 |
-| **保留但未接入** | 18 | real_time_monitor, event_loop_system, execution_manager 等 |
+| 類別                    | 數量 | 處理方式                                                                         |
+| ----------------------- | ---- | -------------------------------------------------------------------------------- |
+| **已接入管線**          | 6    | CrisisSystem, CausalReasoning, Level5ASI, ModelEnsemble, 11 Agents, AgentManager |
+| **已刪除（stub/重複）** | 16   | services/ai_editor_config.py 等                                                  |
+| **保留但未接入**        | 18   | real_time_monitor, event_loop_system, execution_manager 等                       |
 
 ---
 
 ### 修正後路線圖
 
-| 階段 | 目標 | 狀態 | 優先級 |
-|:------|:-----|:----:|:--------:|
-| **聊天管線** | 完整接線：情緒 → 危機 → 對齊 → 執行閘門 → 代理路由 → LLM → 因果學習 | ✅ **已完成** | 🔴 CRITICAL |
-| **孤兒系統** | 接入 6 系統、刪除 16 個 stub、保留 18 個 | ✅ **已完成** | 🔴 CRITICAL |
-| **Bug 修復** | 15 個 bug 修復 | ✅ **已完成** | 🔴 CRITICAL |
-| **架構文檔** | `ANGELA_FULL_ARCHITECTURE.md` — 1183 行 | ✅ **已完成** | 🟡 MEDIUM |
-| **Phase 0-6** | Foundation, Core, Intelligence, Safety, Embodiment, Infrastructure, Polish | ✅ **已完成** | 🔴 CRITICAL |
-| **i18n 國際化** | I18nManager, PromptManager, Handler/Prompt 替換, Locale 檔案 | ✅ **已完成** | 🟡 MEDIUM |
-| **YOLO 物件檢測** | 新功能 | ⬜ | 🔴 HIGH |
-| **自動修復路徑** | run_angela.py 缺失依賴時自動安裝 | ✅ **已完成** | 🔴 HIGH |
-| **代理自動路由** | 聊天管線第 8 步接入 agent | ✅ **已完成** | 🔴 HIGH |
-| **前端多模態** | Desktop/Web 圖片/音訊上傳 | ⬜ | 🔴 HIGH |
-| **Whisper 接線** | faster-whisper 接入聊天管線 | ✅ **已完成** | 🟡 MEDIUM |
-| **VisualDecoder 訓練** | CLP 擴展訓練 decoder | ⬜ | 🟡 MEDIUM |
-| **WebSocket 路由** | `/multimodal/stream` 已註冊 | ✅ **已完成** | 🟡 MEDIUM |
-| **P4 重構** | 28 長檔案 / 負載測試 / E2E / tray | ⬜ | 🟡 MEDIUM |
-| **整合保留系統** | real_time_monitor, event_loop_system 等 | ⬜ | 🟢 LOW |
+| 階段                   | 目標                                                                       |     狀態      |   優先級    |
+| :--------------------- | :------------------------------------------------------------------------- | :-----------: | :---------: |
+| **聊天管線**           | 完整接線：情緒 → 危機 → 對齊 → 執行閘門 → 代理路由 → LLM → 因果學習        | ✅ **已完成** | 🔴 CRITICAL |
+| **孤兒系統**           | 接入 6 系統、刪除 16 個 stub、保留 18 個                                   | ✅ **已完成** | 🔴 CRITICAL |
+| **Bug 修復**           | 15 個 bug 修復                                                             | ✅ **已完成** | 🔴 CRITICAL |
+| **架構文檔**           | `ANGELA_FULL_ARCHITECTURE.md` — 1183 行                                    | ✅ **已完成** |  🟡 MEDIUM  |
+| **Phase 0-6**          | Foundation, Core, Intelligence, Safety, Embodiment, Infrastructure, Polish | ✅ **已完成** | 🔴 CRITICAL |
+| **i18n 國際化**        | I18nManager, PromptManager, Handler/Prompt 替換, Locale 檔案               | ✅ **已完成** |  🟡 MEDIUM  |
+| **YOLO 物件檢測**      | 新功能                                                                     |      ⬜       |   🔴 HIGH   |
+| **自動修復路徑**       | run_angela.py 缺失依賴時自動安裝                                           | ✅ **已完成** |   🔴 HIGH   |
+| **代理自動路由**       | 聊天管線第 8 步接入 agent                                                  | ✅ **已完成** |   🔴 HIGH   |
+| **前端多模態**         | Desktop/Web 圖片/音訊上傳                                                  |      ⬜       |   🔴 HIGH   |
+| **Whisper 接線**       | faster-whisper 接入聊天管線                                                | ✅ **已完成** |  🟡 MEDIUM  |
+| **VisualDecoder 訓練** | CLP 擴展訓練 decoder                                                       |      ⬜       |  🟡 MEDIUM  |
+| **WebSocket 路由**     | `/multimodal/stream` 已註冊                                                | ✅ **已完成** |  🟡 MEDIUM  |
+| **P4 重構**            | 28 長檔案 / 負載測試 / E2E / tray                                          |      ⬜       |  🟡 MEDIUM  |
+| **整合保留系統**       | real_time_monitor, event_loop_system 等                                    |      ⬜       |   🟢 LOW    |
 
 ---
 
 ### 架構文件
 
-| 文件 | 內容 |
-|------|------|
-| [框架總覽](docs/FRAMEWORK_OVERVIEW.md) | **框架定位、元件目錄、擴展指南**（中英雙語） |
-| [專案憲章](docs/00-overview/PROJECT_CHARTER.md) | 專案使命、範圍、原則 |
-| [詞彙表](docs/00-overview/GLOSSARY.md) | 完整名詞解釋 |
-| [統一文件索引](docs/09-archive/UNIFIED_DOCUMENTATION_INDEX.md) | 所有文件導覽（已封存） |
-| [完整架構圖](docs/architecture/ANGELA_FULL_ARCHITECTURE.md) | **Angela 感知・認知・執行完整架構** — 如何視、聽、觸、說、畫、移、思考、感受、自主 |
-| [技術架構概覽](docs/03-technical-architecture/README.md) | HSP、HAM、NGR、8D Matrix、多模態代理、通訊層、安全性 |
-| [ARCHITECTURE_MAP](docs/09-archive/auto-archived-2026-08-11/_analysis_ARCHITECTURE_MAP_2026-05-20.md) | 伺服器拓撲、port 衝突、路由對照 |
-| [全量架構分析](docs/09-archive/FULL_ARCHITECTURE_ANALYSIS.md) | 完整架構圖譜、版本溯源、六層一致性評分 |
-| [AGENTS.md](AGENTS.md) | 代理開發指南 — 構建/測試/代碼規範 |
-| [CHANGELOG.md](CHANGELOG.md) | 版本歷史與變更記錄 |
+| 文件                                                                                                  | 內容                                                                               |
+| ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| [框架總覽](docs/FRAMEWORK_OVERVIEW.md)                                                                | **框架定位、元件目錄、擴展指南**（中英雙語）                                       |
+| [專案憲章](docs/00-overview/PROJECT_CHARTER.md)                                                       | 專案使命、範圍、原則                                                               |
+| [詞彙表](docs/00-overview/GLOSSARY.md)                                                                | 完整名詞解釋                                                                       |
+| [統一文件索引](docs/09-archive/UNIFIED_DOCUMENTATION_INDEX.md)                                        | 所有文件導覽（已封存）                                                             |
+| [完整架構圖](docs/architecture/ANGELA_FULL_ARCHITECTURE.md)                                           | **Angela 感知・認知・執行完整架構** — 如何視、聽、觸、說、畫、移、思考、感受、自主 |
+| [技術架構概覽](docs/03-technical-architecture/README.md)                                              | HSP、HAM、NGR、8D Matrix、多模態代理、通訊層、安全性                               |
+| [ARCHITECTURE_MAP](docs/09-archive/auto-archived-2026-08-11/_analysis_ARCHITECTURE_MAP_2026-05-20.md) | 伺服器拓撲、port 衝突、路由對照                                                    |
+| [全量架構分析](docs/09-archive/FULL_ARCHITECTURE_ANALYSIS.md)                                         | 完整架構圖譜、版本溯源、六層一致性評分                                             |
+| [AGENTS.md](AGENTS.md)                                                                                | 代理開發指南 — 構建/測試/代碼規範                                                  |
+| [CHANGELOG.md](CHANGELOG.md)                                                                          | 版本歷史與變更記錄                                                                 |
 
 ### 分析與計畫文件
 
-| 文件 | 內容 |
-|------|------|
-| [WIRING_MAP](docs/09-archive/auto-archived-2026-08-11/_analysis_WIRING_MAP_2026-05-21.md) | 接線圖、工廠鏈、死代碼 |
-| [CODE_STATISTICS](docs/09-archive/auto-archived-2026-08-11/_analysis_CODE_STATISTICS_2026-05-21.md) | 代碼統計、活/死/半成品 |
-| [MODULARITY_ANALYSIS](docs/09-archive/auto-archived-2026-08-11/_analysis_MODULARITY_ANALYSIS_2026-05-21.md) | God module、耦合、singleton |
-| [PROBLEM_ANALYSIS](docs/09-archive/auto-archived-2026-08-11/_analysis_PROBLEM_ANALYSIS_2026-05-21.md) | 三重視角審計、安全問題、優先級 |
-| [FORENSIC_AUDIT](docs/09-archive/auto-archived-2026-08-11/_analysis_FORENSIC_AUDIT_2026-05-22.md) | 三輪獨立審計：執行路徑、TCS 遷移、安全性 + 死代碼 |
-| [MASTER_CONSOLIDATED_PLAN](docs/09-archive/auto-archived-2026-08-11/MASTER_CONSOLIDATED_PLAN.md) | **進行中任務總計畫**：53 項、S/A/B/C 分級、53/53 完成 |
-| [CARD_INTEGRATION_PLAN](docs/09-archive/auto-archived-2026-08-11/ANGELA_CARD_INTEGRATION_PLAN.md) | 卡片管道 → ChatService 接線 v2：ModuleManager 驅動 |
-| [MODULE_MANAGER_DESIGN](docs/09-archive/auto-archived-2026-08-11/MODULE_MANAGER_SYSTEM.md) | ✅ **已實作** — M0-M5 (6 files + 100 tests) + 6 模組 |
-| [CARD_INTEGRATION_REVIEW](docs/09-archive/auto-archived-2026-08-11/CARD_INTEGRATION_PLAN_REVIEW.md) | 事前審計：執行前發現 25 問題（8 HIGH） |
-| [PHASE6_NEXT_PLAN](docs/09-archive/auto-archived-2026-08-11/PHASE6_NEXT_PLAN.md) | Quality finishing: Plugin 部署, Config handler, Magic number 遷移 |
-| [MASTER_FINALIZATION_PLAN](docs/09-archive/auto-archived-2026-08-11/MASTER_FINALIZATION_PLAN.md) | Final push to 0: 殘留 handler, 孤立服務, NotImplementedError |
-| [REMAINING_ISSUES_PLAN](docs/09-archive/auto-archived-2026-08-11/REMAINING_ISSUES_PLAN.md) | placeholder 清除、unittest→pytest 遷移 |
-| [TEST_RESTRUCTURE_PLAN](docs/09-archive/auto-archived-2026-08-11/TEST_RESTRUCTURE_PLAN.md) | 測試層級架構、conftest 分層、CI 整合 |
-| [COMPREHENSIVE_AUDIT_REPORT](docs/09-archive/auto-archived-2026-08-11/COMPREHENSIVE_AUDIT_REPORT.md) | **全面審計報告 V1**: 計畫、文檔、代碼、測試、配置、應用 |
-| [COMPREHENSIVE_AUDIT_REPORT_V2](docs/09-archive/auto-archived-2026-08-11/COMPREHENSIVE_AUDIT_REPORT_V2.md) | **全面審計報告 V2**: H5 後冲刺全面扫描 — 3 個真 stub、20 個有意義 except |
-| [COMPREHENSIVE_AUDIT_V3](docs/09-archive/auto-archived-2026-08-11/COMPREHENSIVE_AUDIT_V3.md) | **全面審計報告 V3**: ED3N/GARDEN/Model Bus/Router 深度審計 |
-| [PHASE_REVIEW](docs/09-archive/auto-archived-2026-08-11/PHASE_REVIEW.md) | **階段審查 1 (06-02)**: 首次3代理並行審計，10維度評分 |
-| [PHASE_REVIEW2](docs/09-archive/auto-archived-2026-08-11/PHASE_REVIEW2.md) | **階段審查 2 (06-03)**: 17會話後追蹤審計，~96% 綜合分數 |
-| [PHASE_REVIEW3](docs/09-archive/auto-archived-2026-08-11/PHASE_REVIEW3.md) | **階段審查 3 (06-04)**: 3代理綜合審計，10維度判定 |
-| [PHASE_REVIEW4](docs/09-archive/auto-archived-2026-08-11/PHASE_REVIEW4.md) | **階段審查 4 (06-05)**: H5 stub 冲刺，36/37 stubs 完成 |
-| [PHASE_REVIEW5](docs/09-archive/auto-archived-2026-08-11/PHASE_REVIEW5.md) | **階段審查 5 (06-06)**: H5 sprint final，2837 測試，0 HIGH 漏洞 |
+| 文件                                                                                                             | 內容                                                                             |
+| ---------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| [WIRING_MAP](docs/09-archive/auto-archived-2026-08-11/_analysis_WIRING_MAP_2026-05-21.md)                        | 接線圖、工廠鏈、死代碼                                                           |
+| [CODE_STATISTICS](docs/09-archive/auto-archived-2026-08-11/_analysis_CODE_STATISTICS_2026-05-21.md)              | 代碼統計、活/死/半成品                                                           |
+| [MODULARITY_ANALYSIS](docs/09-archive/auto-archived-2026-08-11/_analysis_MODULARITY_ANALYSIS_2026-05-21.md)      | God module、耦合、singleton                                                      |
+| [PROBLEM_ANALYSIS](docs/09-archive/auto-archived-2026-08-11/_analysis_PROBLEM_ANALYSIS_2026-05-21.md)            | 三重視角審計、安全問題、優先級                                                   |
+| [FORENSIC_AUDIT](docs/09-archive/auto-archived-2026-08-11/_analysis_FORENSIC_AUDIT_2026-05-22.md)                | 三輪獨立審計：執行路徑、TCS 遷移、安全性 + 死代碼                                |
+| [MASTER_CONSOLIDATED_PLAN](docs/09-archive/auto-archived-2026-08-11/MASTER_CONSOLIDATED_PLAN.md)                 | **進行中任務總計畫**：53 項、S/A/B/C 分級、53/53 完成                            |
+| [CARD_INTEGRATION_PLAN](docs/09-archive/auto-archived-2026-08-11/ANGELA_CARD_INTEGRATION_PLAN.md)                | 卡片管道 → ChatService 接線 v2：ModuleManager 驅動                               |
+| [MODULE_MANAGER_DESIGN](docs/09-archive/auto-archived-2026-08-11/MODULE_MANAGER_SYSTEM.md)                       | ✅ **已實作** — M0-M5 (6 files + 100 tests) + 6 模組                             |
+| [CARD_INTEGRATION_REVIEW](docs/09-archive/auto-archived-2026-08-11/CARD_INTEGRATION_PLAN_REVIEW.md)              | 事前審計：執行前發現 25 問題（8 HIGH）                                           |
+| [PHASE6_NEXT_PLAN](docs/09-archive/auto-archived-2026-08-11/PHASE6_NEXT_PLAN.md)                                 | Quality finishing: Plugin 部署, Config handler, Magic number 遷移                |
+| [MASTER_FINALIZATION_PLAN](docs/09-archive/auto-archived-2026-08-11/MASTER_FINALIZATION_PLAN.md)                 | Final push to 0: 殘留 handler, 孤立服務, NotImplementedError                     |
+| [REMAINING_ISSUES_PLAN](docs/09-archive/auto-archived-2026-08-11/REMAINING_ISSUES_PLAN.md)                       | placeholder 清除、unittest→pytest 遷移                                           |
+| [TEST_RESTRUCTURE_PLAN](docs/09-archive/auto-archived-2026-08-11/TEST_RESTRUCTURE_PLAN.md)                       | 測試層級架構、conftest 分層、CI 整合                                             |
+| [COMPREHENSIVE_AUDIT_REPORT](docs/09-archive/auto-archived-2026-08-11/COMPREHENSIVE_AUDIT_REPORT.md)             | **全面審計報告 V1**: 計畫、文檔、代碼、測試、配置、應用                          |
+| [COMPREHENSIVE_AUDIT_REPORT_V2](docs/09-archive/auto-archived-2026-08-11/COMPREHENSIVE_AUDIT_REPORT_V2.md)       | **全面審計報告 V2**: H5 後冲刺全面扫描 — 3 個真 stub、20 個有意義 except         |
+| [COMPREHENSIVE_AUDIT_V3](docs/09-archive/auto-archived-2026-08-11/COMPREHENSIVE_AUDIT_V3.md)                     | **全面審計報告 V3**: ED3N/GARDEN/Model Bus/Router 深度審計                       |
+| [PHASE_REVIEW](docs/09-archive/auto-archived-2026-08-11/PHASE_REVIEW.md)                                         | **階段審查 1 (06-02)**: 首次3代理並行審計，10維度評分                            |
+| [PHASE_REVIEW2](docs/09-archive/auto-archived-2026-08-11/PHASE_REVIEW2.md)                                       | **階段審查 2 (06-03)**: 17會話後追蹤審計，~96% 綜合分數                          |
+| [PHASE_REVIEW3](docs/09-archive/auto-archived-2026-08-11/PHASE_REVIEW3.md)                                       | **階段審查 3 (06-04)**: 3代理綜合審計，10維度判定                                |
+| [PHASE_REVIEW4](docs/09-archive/auto-archived-2026-08-11/PHASE_REVIEW4.md)                                       | **階段審查 4 (06-05)**: H5 stub 冲刺，36/37 stubs 完成                           |
+| [PHASE_REVIEW5](docs/09-archive/auto-archived-2026-08-11/PHASE_REVIEW5.md)                                       | **階段審查 5 (06-06)**: H5 sprint final，2837 測試，0 HIGH 漏洞                  |
 | [ANGELA_LLM_SNN_ARCHITECTURE_PLAN](docs/09-archive/auto-archived-2026-08-11/ANGELA_LLM_SNN_ARCHITECTURE_PLAN.md) | **ED3N 架構計畫**: 外部字典解耦神經網路 — LLM + SNN 設計、訓練管線、4 階段路線圖 |
-| [GARDEN_MODEL_PLAN](docs/09-archive/auto-archived-2026-08-11/GARDEN_MODEL_PLAN.md) | **GARDEN 擴展計畫**: 1GB 輕量級本地模型與五級擴展架構 |
-| [ED3N_TRAINING_GUIDE](docs/06-project-management/guides/ED3N_TRAINING_GUIDE.md) | **ED3N 訓練指南**: 訓練、評估、部署 ED3N |
+| [GARDEN_MODEL_PLAN](docs/09-archive/auto-archived-2026-08-11/GARDEN_MODEL_PLAN.md)                               | **GARDEN 擴展計畫**: 1GB 輕量級本地模型與五級擴展架構                            |
+| [ED3N_TRAINING_GUIDE](docs/06-project-management/guides/ED3N_TRAINING_GUIDE.md)                                  | **ED3N 訓練指南**: 訓練、評估、部署 ED3N                                         |
 
 ---
 
-**Version**: 7.5.0-dev | **Code Stats**: 667 Python files, ~96K lines | **Tests**: ~5,466 passed (tests/; 6,111 full) — 0 errors | **Security**: 72+ alerts fixed → 0 remaining | **Intelligence**: 6.0/10 (upper, with LLM) / native: 數理化 9.5 · 開放域 3.0 (was 2.5/1.0, 確定性未見推理 100/100 精確匹配 via 2026-09-03; 純神經泛化仍≈0; see INTELLIGENCE_ASSESSMENT.md §1 + PROGRESS) | **Hardware**: Arc B570 10GB + 15.5GB spec-driven chassis-agnostic (high_performance_desktop) | **Architecture**: ~95% | [Architecture](docs/architecture/ANGELA_FULL_ARCHITECTURE.md) | [Task Map](docs/06-project-management/MASTER_TASK_MAP.md) | [Improvement Roadmap](docs/06-project-management/IMPROVEMENT_ROADMAP.md) | [Changelog](CHANGELOG.md)
-
+**Version**: 7.5.0-dev | **Code Stats**: 667 Python files, ~96K lines |
+**Tests**: ~5,466 passed (tests/; 6,111 full) — 0 errors | **Security**: 72+
+alerts fixed → 0 remaining | **Intelligence**: 6.0/10 (upper, with LLM) /
+native: 數理化 9.5 · 開放域 3.0 (was
+2.5/1.0, 確定性未見推理 100/100 精確匹配 via 2026-09-03; 純神經泛化仍≈0; see
+INTELLIGENCE_ASSESSMENT.md §1 + PROGRESS) | **Hardware**: Arc B570 10GB + 15.5GB
+spec-driven chassis-agnostic (high_performance_desktop) | **Architecture**: ~95%
+| [Architecture](docs/architecture/ANGELA_FULL_ARCHITECTURE.md) |
+[Task Map](docs/06-project-management/MASTER_TASK_MAP.md) |
+[Improvement Roadmap](docs/06-project-management/IMPROVEMENT_ROADMAP.md) |
+[Changelog](CHANGELOG.md)
 
 ## 附屬遊戲 (Ancillary Game)
 
 本專案包含一個 CLI 命令列角色扮演模擬遊戲，系統設計與實作文件位於 docs/02-game-design/：
 
-| 文件 | 說明 |
-|------|------|
-| [GAME_OVERVIEW.md](docs/02-game-design/GAME_OVERVIEW.md) | 遊戲總覽與定位 |
-| [ARCHITECTURE.md](docs/02-game-design/ARCHITECTURE.md) | 技術架構 |
-| [INTERFACE_TERMINAL.md](docs/02-game-design/INTERFACE_TERMINAL.md) | CLI 終端介面 |
-| [WORLD_AND_STORY.md](docs/02-game-design/WORLD_AND_STORY.md) | 世界觀與劇情 |
-| [CHARACTER_SYSTEM.md](docs/02-game-design/CHARACTER_SYSTEM.md) | 角色系統 |
+| 文件                                                                     | 說明           |
+| ------------------------------------------------------------------------ | -------------- |
+| [GAME_OVERVIEW.md](docs/02-game-design/GAME_OVERVIEW.md)                 | 遊戲總覽與定位 |
+| [ARCHITECTURE.md](docs/02-game-design/ARCHITECTURE.md)                   | 技術架構       |
+| [INTERFACE_TERMINAL.md](docs/02-game-design/INTERFACE_TERMINAL.md)       | CLI 終端介面   |
+| [WORLD_AND_STORY.md](docs/02-game-design/WORLD_AND_STORY.md)             | 世界觀與劇情   |
+| [CHARACTER_SYSTEM.md](docs/02-game-design/CHARACTER_SYSTEM.md)           | 角色系統       |
 | [ITEM_EQUIPMENT_SYSTEM.md](docs/02-game-design/ITEM_EQUIPMENT_SYSTEM.md) | 物品與裝備系統 |
-| [NUMERICAL_SYSTEMS.md](docs/02-game-design/NUMERICAL_SYSTEMS.md) | 數值系統 |
-| [MAP_AND_SCENES.md](docs/02-game-design/MAP_AND_SCENES.md) | 地圖與場景 |
-| [SIMULATION_SYSTEMS.md](docs/02-game-design/SIMULATION_SYSTEMS.md) | 模擬系統 |
-| [FILE_INVENTORY.md](docs/02-game-design/FILE_INVENTORY.md) | 檔案總覽 |
+| [NUMERICAL_SYSTEMS.md](docs/02-game-design/NUMERICAL_SYSTEMS.md)         | 數值系統       |
+| [MAP_AND_SCENES.md](docs/02-game-design/MAP_AND_SCENES.md)               | 地圖與場景     |
+| [SIMULATION_SYSTEMS.md](docs/02-game-design/SIMULATION_SYSTEMS.md)       | 模擬系統       |
+| [FILE_INVENTORY.md](docs/02-game-design/FILE_INVENTORY.md)               | 檔案總覽       |

@@ -71,7 +71,8 @@ apps/backend/src/
 4. 将工具组件移动到 `core/tools/` 目录
 5. 将HSP组件移动到 `core/hsp/` 目录
 6. 将共享组件移动到 `core/shared/` 目录
-7. 清理了原始目录，包括 `core_ai/`、`services/`、`tools/`、`hsp/` 和 `shared/` 目录
+7. 清理了原始目录，包括 `core_ai/`、`services/`、`tools/`、`hsp/` 和 `shared/`
+   目录
 
 ### 3.3 重构成果
 

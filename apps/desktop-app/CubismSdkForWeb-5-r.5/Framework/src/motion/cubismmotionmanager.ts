@@ -5,12 +5,9 @@
  * that can be found at https://www.live2d.com/eula/live2d-open-software-license-agreement_en.html.
  */
 
-import { CubismModel } from '../model/cubismmodel';
-import { ACubismMotion } from './acubismmotion';
-import {
-  CubismMotionQueueEntryHandle,
-  CubismMotionQueueManager
-} from './cubismmotionqueuemanager';
+import { CubismModel } from '../model/cubismmodel'
+import { ACubismMotion } from './acubismmotion'
+import { CubismMotionQueueEntryHandle, CubismMotionQueueManager } from './cubismmotionqueuemanager'
 
 /**
  * モーションの管理
@@ -22,9 +19,9 @@ export class CubismMotionManager extends CubismMotionQueueManager {
    * コンストラクタ
    */
   public constructor() {
-    super();
-    this._currentPriority = 0;
-    this._reservePriority = 0;
+    super()
+    this._currentPriority = 0
+    this._reservePriority = 0
   }
 
   /**
@@ -32,7 +29,7 @@ export class CubismMotionManager extends CubismMotionQueueManager {
    * @return  モーションの優先度
    */
   public getCurrentPriority(): number {
-    return this._currentPriority;
+    return this._currentPriority
   }
 
   /**
@@ -40,7 +37,7 @@ export class CubismMotionManager extends CubismMotionQueueManager {
    * @return  モーションの優先度
    */
   public getReservePriority(): number {
-    return this._reservePriority;
+    return this._reservePriority
   }
 
   /**
@@ -48,7 +45,7 @@ export class CubismMotionManager extends CubismMotionQueueManager {
    * @param   val     優先度
    */
   public setReservePriority(val: number): void {
-    this._reservePriority = val;
+    this._reservePriority = val
   }
 
   /**
@@ -65,12 +62,12 @@ export class CubismMotionManager extends CubismMotionQueueManager {
     priority: number
   ): CubismMotionQueueEntryHandle {
     if (priority == this._reservePriority) {
-      this._reservePriority = 0; // 予約を解除
+      this._reservePriority = 0 // 予約を解除
     }
 
-    this._currentPriority = priority; // 再生中モーションの優先度を設定
+    this._currentPriority = priority // 再生中モーションの優先度を設定
 
-    return super.startMotion(motion, autoDelete);
+    return super.startMotion(motion, autoDelete)
   }
 
   /**
@@ -82,15 +79,15 @@ export class CubismMotionManager extends CubismMotionQueueManager {
    * @return  false   更新されていない
    */
   public updateMotion(model: CubismModel, deltaTimeSeconds: number): boolean {
-    this._userTimeSeconds += deltaTimeSeconds;
+    this._userTimeSeconds += deltaTimeSeconds
 
-    const updated: boolean = super.doUpdateMotion(model, this._userTimeSeconds);
+    const updated: boolean = super.doUpdateMotion(model, this._userTimeSeconds)
 
     if (this.isFinished()) {
-      this._currentPriority = 0; // 再生中のモーションの優先度を解除
+      this._currentPriority = 0 // 再生中のモーションの優先度を解除
     }
 
-    return updated;
+    return updated
   }
 
   /**
@@ -101,26 +98,23 @@ export class CubismMotionManager extends CubismMotionQueueManager {
    * @return  false   予約できなかった
    */
   public reserveMotion(priority: number): boolean {
-    if (
-      priority <= this._reservePriority ||
-      priority <= this._currentPriority
-    ) {
-      return false;
+    if (priority <= this._reservePriority || priority <= this._currentPriority) {
+      return false
     }
 
-    this._reservePriority = priority;
+    this._reservePriority = priority
 
-    return true;
+    return true
   }
 
-  _currentPriority: number; // 現在再生中のモーションの優先度
-  _reservePriority: number; // 再生予定のモーションの優先度。再生中は0になる。モーションファイルを別スレッドで読み込むときの機能。
+  _currentPriority: number // 現在再生中のモーションの優先度
+  _reservePriority: number // 再生予定のモーションの優先度。再生中は0になる。モーションファイルを別スレッドで読み込むときの機能。
 }
 
 // Namespace definition for compatibility.
-import * as $ from './cubismmotionmanager';
+import * as $ from './cubismmotionmanager'
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
-  export const CubismMotionManager = $.CubismMotionManager;
-  export type CubismMotionManager = $.CubismMotionManager;
+  export const CubismMotionManager = $.CubismMotionManager
+  export type CubismMotionManager = $.CubismMotionManager
 }

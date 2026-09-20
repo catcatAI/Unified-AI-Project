@@ -5,18 +5,18 @@
  * that can be found at https://www.live2d.com/eula/live2d-open-software-license-agreement_en.html.
  */
 
-import { ICubismUpdater, CubismUpdateOrder } from './icubismupdater';
-import { CubismModel } from '../model/cubismmodel';
-import { CubismIdHandle } from '../id/cubismid';
-import { IParameterProvider } from './iparameterprovider';
+import { ICubismUpdater, CubismUpdateOrder } from './icubismupdater'
+import { CubismModel } from '../model/cubismmodel'
+import { CubismIdHandle } from '../id/cubismid'
+import { IParameterProvider } from './iparameterprovider'
 
 /**
  * Updater for lip sync effects.
  * Handles the management of lip sync animation through parameter providers.
  */
 export class CubismLipSyncUpdater extends ICubismUpdater {
-  private _lipSyncIds: Array<CubismIdHandle>;
-  private _audioProvider: IParameterProvider | null;
+  private _lipSyncIds: Array<CubismIdHandle>
+  private _audioProvider: IParameterProvider | null
 
   /**
    * Constructor
@@ -24,10 +24,7 @@ export class CubismLipSyncUpdater extends ICubismUpdater {
    * @param lipSyncIds Array of lip sync parameter IDs
    * @param audioProvider Audio parameter provider
    */
-  constructor(
-    lipSyncIds: Array<CubismIdHandle>,
-    audioProvider: IParameterProvider | null
-  );
+  constructor(lipSyncIds: Array<CubismIdHandle>, audioProvider: IParameterProvider | null)
 
   /**
    * Constructor
@@ -40,16 +37,16 @@ export class CubismLipSyncUpdater extends ICubismUpdater {
     lipSyncIds: Array<CubismIdHandle>,
     audioProvider: IParameterProvider | null,
     executionOrder: number
-  );
+  )
 
   constructor(
     lipSyncIds: Array<CubismIdHandle>,
     audioProvider: IParameterProvider | null,
     executionOrder?: number
   ) {
-    super(executionOrder ?? CubismUpdateOrder.CubismUpdateOrder_LipSync);
-    this._lipSyncIds = [...lipSyncIds]; // Copy array
-    this._audioProvider = audioProvider;
+    super(executionOrder ?? CubismUpdateOrder.CubismUpdateOrder_LipSync)
+    this._lipSyncIds = [...lipSyncIds] // Copy array
+    this._audioProvider = audioProvider
   }
 
   /**
@@ -60,17 +57,17 @@ export class CubismLipSyncUpdater extends ICubismUpdater {
    */
   onLateUpdate(model: CubismModel, deltaTimeSeconds: number): void {
     if (!model) {
-      return;
+      return
     }
 
     if (this._audioProvider) {
-      const updateSuccessful = this._audioProvider.update(deltaTimeSeconds);
+      const updateSuccessful = this._audioProvider.update(deltaTimeSeconds)
       if (updateSuccessful) {
-        const lipSyncValue = this._audioProvider.getParameter();
+        const lipSyncValue = this._audioProvider.getParameter()
 
         // Apply lip sync value to all registered parameters
         for (let i = 0; i < this._lipSyncIds.length; i++) {
-          model.addParameterValueById(this._lipSyncIds[i], lipSyncValue);
+          model.addParameterValueById(this._lipSyncIds[i], lipSyncValue)
         }
       }
     }
@@ -82,7 +79,7 @@ export class CubismLipSyncUpdater extends ICubismUpdater {
    * @param audioProvider Audio parameter provider to set
    */
   setAudioProvider(audioProvider: IParameterProvider | null): void {
-    this._audioProvider = audioProvider;
+    this._audioProvider = audioProvider
   }
 
   /**
@@ -91,14 +88,14 @@ export class CubismLipSyncUpdater extends ICubismUpdater {
    * @return Current audio parameter provider
    */
   getAudioProvider(): IParameterProvider | null {
-    return this._audioProvider;
+    return this._audioProvider
   }
 }
 
 // Namespace definition for compatibility.
-import * as $ from './cubismlipsyncupdater';
+import * as $ from './cubismlipsyncupdater'
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
-  export const CubismLipSyncUpdater = $.CubismLipSyncUpdater;
-  export type CubismLipSyncUpdater = $.CubismLipSyncUpdater;
+  export const CubismLipSyncUpdater = $.CubismLipSyncUpdater
+  export type CubismLipSyncUpdater = $.CubismLipSyncUpdater
 }

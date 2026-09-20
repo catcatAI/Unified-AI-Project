@@ -1,8 +1,11 @@
 # Angela AI — 全量架構設計圖譜與多維一致性分析
 
-> **分析日期**: 2026-05-25（2026-05-30 歸檔 — 本文件作為歷史快照保留，不反映重構後的 codebase）  
-> **項目版本**: v6.5.0-dev (代碼) / v6.2.0 (VERSION 文件) / v6.1.0 (config)  
-> **分析範圍**: 全部 apps/ backend / desktop-app / mobile-app / packages / tests / CI  
+> **分析日期**:
+> 2026-05-25（2026-05-30 歸檔 — 本文件作為歷史快照保留，不反映重構後的 codebase）  
+> **項目版本**:
+> v6.5.0-dev (代碼) / v6.2.0 (VERSION 文件) / v6.1.0 (config)  
+> **分析範圍**: 全部 apps/ backend / desktop-app / mobile-app / packages / tests
+> / CI  
 > **方法**: Git 歷史 → 淺層結構 → 中層模塊 → 深層算法，逐層檢查一致性
 
 ---
@@ -31,27 +34,28 @@
 
 ### 1.1 版本號歷史完整溯源
 
-> 本節基於 Git 從第一個 commit (`ddb266946`) 到 HEAD 的**完整提交歷史**，逐個 commit 追蹤每一個版本號變更的**精確時刻、變更內容、變更理由**。
+> 本節基於 Git 從第一個 commit
+> (`ddb266946`) 到 HEAD 的**完整提交歷史**，逐個 commit 追蹤每一個版本號變更的**精確時刻、變更內容、變更理由**。
 
 #### 版本號存在位置清單 (完整枚舉)
 
 通過對整個代碼庫的全面掃描，以下 **13 個位置** 聲明了版本號：
 
-| # | 文件路徑 | 字段 | 當前值 | 首次出現 commit | 最後更新 commit | 最後更新理由 |
-|---|---------|------|--------|----------------|----------------|------------|
-| 1 | `package.json` | `version` | **6.5.0-dev** | `ddb266946` (0.1.0) | `45c63d3af` | AI agent "Fix and update" — 無明確理由 |
-| 2 | `apps/desktop-app/electron_app/package.json` | `version` | **6.5.0-dev** | `34de65d0c` (1.0.0) | `af7f03a80` | 與根 package.json 同步 |
-| 3 | `apps/mobile-app/package.json` | `version` | **6.5.0-dev** | `2c1816e0` (6.2.0) | `af7f03a80` | 與根 package.json 同步 |
-| 4 | `apps/backend/src/core/version.py` | `CURRENT_VERSION` | **6.5.0-dev** | `bcb01db3c` (6.2.0) | `af7f03a80` | 與 package.json 同步 |
-| 5 | `VERSION` (根目錄文件) | 純文字 | **6.2.0** | `b29441e74` (6.2.0) | **從未更新** | 創建後被遺忘 |
-| 6 | `config/angela_config.json` | `version` | **6.1.0** | `b29441e74` (6.1.0) | **從未更新** | 創建後被遺忘 |
-| 7 | `apps/backend/src/core/__init__.py` | docstring | **6.2.0** | `bcb01db3c` | **從未更新** | 初始化後未被修改 |
-| 8 | `CHANGELOG.md` | section headers | **6.2.2 ~ 7.4.0** | `0e803d64` (v7.x) | `9819d95f5` (v6.2.2) | 見下方詳細分析 |
-| 9 | `packages/cli/__init__.py` | `__version__` | **1.1.0** | `037851ee` | — | 獨立於主項目的 CLI 版本 |
-| 10 | `packages/biology-core/package.json` | `version` | **1.0.0** | 初始提交 | — | 獨立包版本 |
-| 11 | `docs/README_v6.2.0_FINAL.md` | title | **v6.2.0** | — | — | 靜態文檔快照 |
-| 12 | `reports/` (~20 個報告文件) | 文件名/內容 | **v6.2.0 ~ v6.2.3** | — | — | 歷史審計報告 |
-| 13 | `test_results/api_comprehensive_test_results.json` | `version` | **6.0.4** | — | — | API 測試結果快照 |
+| #   | 文件路徑                                           | 字段              | 當前值              | 首次出現 commit     | 最後更新 commit      | 最後更新理由                           |
+| --- | -------------------------------------------------- | ----------------- | ------------------- | ------------------- | -------------------- | -------------------------------------- |
+| 1   | `package.json`                                     | `version`         | **6.5.0-dev**       | `ddb266946` (0.1.0) | `45c63d3af`          | AI agent "Fix and update" — 無明確理由 |
+| 2   | `apps/desktop-app/electron_app/package.json`       | `version`         | **6.5.0-dev**       | `34de65d0c` (1.0.0) | `af7f03a80`          | 與根 package.json 同步                 |
+| 3   | `apps/mobile-app/package.json`                     | `version`         | **6.5.0-dev**       | `2c1816e0` (6.2.0)  | `af7f03a80`          | 與根 package.json 同步                 |
+| 4   | `apps/backend/src/core/version.py`                 | `CURRENT_VERSION` | **6.5.0-dev**       | `bcb01db3c` (6.2.0) | `af7f03a80`          | 與 package.json 同步                   |
+| 5   | `VERSION` (根目錄文件)                             | 純文字            | **6.2.0**           | `b29441e74` (6.2.0) | **從未更新**         | 創建後被遺忘                           |
+| 6   | `config/angela_config.json`                        | `version`         | **6.1.0**           | `b29441e74` (6.1.0) | **從未更新**         | 創建後被遺忘                           |
+| 7   | `apps/backend/src/core/__init__.py`                | docstring         | **6.2.0**           | `bcb01db3c`         | **從未更新**         | 初始化後未被修改                       |
+| 8   | `CHANGELOG.md`                                     | section headers   | **6.2.2 ~ 7.4.0**   | `0e803d64` (v7.x)   | `9819d95f5` (v6.2.2) | 見下方詳細分析                         |
+| 9   | `packages/cli/__init__.py`                         | `__version__`     | **1.1.0**           | `037851ee`          | —                    | 獨立於主項目的 CLI 版本                |
+| 10  | `packages/biology-core/package.json`               | `version`         | **1.0.0**           | 初始提交            | —                    | 獨立包版本                             |
+| 11  | `docs/README_v6.2.0_FINAL.md`                      | title             | **v6.2.0**          | —                   | —                    | 靜態文檔快照                           |
+| 12  | `reports/` (~20 個報告文件)                        | 文件名/內容       | **v6.2.0 ~ v6.2.3** | —                   | —                    | 歷史審計報告                           |
+| 13  | `test_results/api_comprehensive_test_results.json` | `version`         | **6.0.4**           | —                   | —                    | API 測試結果快照                       |
 
 ---
 
@@ -65,14 +69,14 @@
 commit ddb266946 — Initial commit
   package.json:    "version": "0.1.0"
   pyproject.toml:  version = "0.1.0"
-  
+
 理由: 項目最初由 MikoAI + Fragmenta 合併而成，0.1.0 是標準的"初始開發版本"標記
 ```
 
 ```
 後續 ~100+ commits 保持 "0.1.0" 不變 (約 2024 ~ 2025-08)
   這期間 package.json 從未被修改過 version 字段
-  
+
 理由: 項目處於早期快速迭代階段，無人管理版本號
 ```
 
@@ -81,14 +85,14 @@ commit ddb266946 — Initial commit
 ```
 commit 34de65d0c — Session 3: Desktop Application Complete Implementation
   apps/desktop-app/electron_app/package.json: "version": "1.0.0"
-  
+
 理由: Electron 桌面應用首次獲得獨立版本號，標記為"完整實現"
 ```
 
 ```
 commit 83238b593 — chore: remove old desktop app
   根 package.json 仍然是 "0.1.0"
-  
+
 理由: 清理舊桌面應用代碼，版本號未受影響
 ```
 
@@ -134,10 +138,10 @@ commit b29441e74 — Add audit docs; update backend, desktop & agents
 ```
 這是整個版本歷史中最關鍵的矛盾點。
 
-commit 0e803d64 (2026-05-09 09:09) 
+commit 0e803d64 (2026-05-09 09:09)
   feat: implement autonomous spatial gravity, adaptive memory contexts, intent-driven
   mouse navigation, and loss-based gait evolution engines.
-  
+
   這個 commit 創建了 CHANGELOG.md，寫入了:
   ## [7.4.0] - 2026-05-09  ← 置頂 (最新)
   ## [7.3.0] - 2026-05-09
@@ -163,7 +167,7 @@ commit cbe75f61d (2026-05-09 01:22)  ← 時間最早
       2) package.json 沒有更新到 v7.x
       3) 代碼庫中沒有任何文件標記為 v7.x
       4) v7.1.1 的日期 2026-02-13 實際上是 v6.2.0 的時代
-  
+
   結論: v7.x 是 AI agent 在自動生成 CHANGELOG 時**憑空賦予的版本號**
         它描述的功能 (Spatial AI, Intent Gravity) 確實在代碼中實現了
         但版本號從未被正式批准或寫入源代碼文件
@@ -174,10 +178,10 @@ commit cbe75f61d (2026-05-09 01:22)  ← 時間最早
 ```
 commit 9819d95f5 (2026-05-16) — Fix and update
   這是一個 AI agent 的自動提交
-  
+
   在 CHANGELOG.md 的頂部插入了:
   ## [6.2.2] - 2026-05-16
-  
+
   效果: v6.2.2 被放在了 v7.x 條目的前面
         CHANGELOG 從此變成了: 6.2.2 (最新) → 7.4.0 → 7.3.0 → 7.2.0 → ...
 
@@ -217,17 +221,17 @@ commit af7f03a80 (2026-05-24) — Fix and update
 
 #### 所有版本號位置與其 Git 溯源
 
-| 位置 | 當前值 | Git 首次出現 | Git 最後更新 | 從未更新天數 | 偏差方向 |
-|------|--------|-------------|-------------|-------------|---------|
-| `package.json` | **6.5.0-dev** | `ddb266946` (0.1.0) | `45c63d3af` (2026-05-25) | 0 天 (最新) | 基準 |
-| `core/version.py` | **6.5.0-dev** | `bcb01db3c` (6.2.0) | `af7f03a80` (2026-05-24) | 1 天 | ✅ 一致 |
-| `desktop-app/package.json` | **6.5.0-dev** | `34de65d0c` (1.0.0) | `af7f03a80` (2026-05-24) | 1 天 | ✅ 一致 |
-| `mobile-app/package.json` | **6.5.0-dev** | `2c1816e0` (6.2.0) | `af7f03a80` (2026-05-24) | 1 天 | ✅ 一致 |
-| **`VERSION` 文件** | **6.2.0** | `b29441e74` (2026-02-07) | **從未更新** | **107 天** | ❌ 落後 3 minor |
-| **`config/angela_config.json`** | **6.1.0** | `b29441e74` (2026-02-07) | **從未更新** | **107 天** | ❌ 落後 4 minor |
-| **`core/__init__.py` docstring** | **6.2.0** | `bcb01db3c` (2026-02-22) | **從未更新** | **92 天** | ❌ 落後 3 minor |
-| **`CHANGELOG.md` v7.x** | **7.2.0~7.4.0** | `0e803d64` (2026-05-09) | — | — | ❌ 超前 1 major |
-| **`CHANGELOG.md` v6.2.2** | **6.2.2** | `9819d95f5` (2026-05-16) | — | — | ❌ 落後 3 minor |
+| 位置                             | 當前值          | Git 首次出現             | Git 最後更新             | 從未更新天數 | 偏差方向        |
+| -------------------------------- | --------------- | ------------------------ | ------------------------ | ------------ | --------------- |
+| `package.json`                   | **6.5.0-dev**   | `ddb266946` (0.1.0)      | `45c63d3af` (2026-05-25) | 0 天 (最新)  | 基準            |
+| `core/version.py`                | **6.5.0-dev**   | `bcb01db3c` (6.2.0)      | `af7f03a80` (2026-05-24) | 1 天         | ✅ 一致         |
+| `desktop-app/package.json`       | **6.5.0-dev**   | `34de65d0c` (1.0.0)      | `af7f03a80` (2026-05-24) | 1 天         | ✅ 一致         |
+| `mobile-app/package.json`        | **6.5.0-dev**   | `2c1816e0` (6.2.0)       | `af7f03a80` (2026-05-24) | 1 天         | ✅ 一致         |
+| **`VERSION` 文件**               | **6.2.0**       | `b29441e74` (2026-02-07) | **從未更新**             | **107 天**   | ❌ 落後 3 minor |
+| **`config/angela_config.json`**  | **6.1.0**       | `b29441e74` (2026-02-07) | **從未更新**             | **107 天**   | ❌ 落後 4 minor |
+| **`core/__init__.py` docstring** | **6.2.0**       | `bcb01db3c` (2026-02-22) | **從未更新**             | **92 天**    | ❌ 落後 3 minor |
+| **`CHANGELOG.md` v7.x**          | **7.2.0~7.4.0** | `0e803d64` (2026-05-09)  | —                        | —            | ❌ 超前 1 major |
+| **`CHANGELOG.md` v6.2.2**        | **6.2.2**       | `9819d95f5` (2026-05-16) | —                        | —            | ❌ 落後 3 minor |
 
 #### v7.x 之謎 — 完整解讀
 
@@ -252,22 +256,22 @@ CHANGELOG 中的 v7.x 不是"真正的發布版本"
 
 #### CHANGELOG vs 真實版本對照表
 
-| CHANGELOG 版本 | CHANGELOG 日期 | 真實代碼版本 (當時) | 功能 | 一致性 |
-|---------------|---------------|-------------------|------|--------|
-| [0.1.0] | 2024-XX-XX | 0.1.0 | Genesis Merge | ✅ 一致 |
-| [1.0.0] | 2024-XX-XX | 0.1.0 (未更新) | Initial Release | ❌ 回溯撰寫 |
-| [2.0.0] | 2025-XX-XX | 0.1.0 (未更新) | Cross-Platform | ❌ 回溯撰寫 |
-| [3.0.0] | 2025-XX-XX | 0.1.0 (未更新) | Advanced AI | ❌ 回溯撰寫 |
-| [4.0.0] | 2025-XX-XX | 0.1.0 (未更新) | Desktop Integration | ❌ 回溯撰寫 |
-| [5.0.0] | 2025-XX-XX | 0.1.0 (未更新) | Live2D Integration | ❌ 回溯撰寫 |
-| [6.0.0] | 2026-01-XX | 0.1.0 → 6.2.0 | A/B/C Security | ⚠️ 跳躍式 |
-| [6.1.0] | 2026-02-05 | 6.2.0 | Phase 12 Restoration | ❌ 日期矛盾 |
-| [6.2.0] | 2026-02-07 | 6.2.0 | Phase 14 Complete | ✅ 一致 |
-| [7.1.1] | 2026-02-13 | 6.2.0 | Resource Analysis | ❌ v7 回溯 |
-| [7.2.0] | 2026-05-09 | 6.2.0 → 6.2.1 | Spatial Math Engine | ❌ v7 回溯 |
-| [7.3.0] | 2026-05-09 | 6.2.0 → 6.2.1 | Coordinate AI | ❌ v7 回溯 |
-| [7.4.0] | 2026-05-09 | 6.2.0 → 6.2.1 | Spatial Gravity | ❌ v7 回溯 |
-| [6.2.2] | 2026-05-16 | 6.2.1 → 6.5.0-dev | Session Manager | ⚠️ 壓在 v7 上 |
+| CHANGELOG 版本 | CHANGELOG 日期 | 真實代碼版本 (當時) | 功能                 | 一致性        |
+| -------------- | -------------- | ------------------- | -------------------- | ------------- |
+| [0.1.0]        | 2024-XX-XX     | 0.1.0               | Genesis Merge        | ✅ 一致       |
+| [1.0.0]        | 2024-XX-XX     | 0.1.0 (未更新)      | Initial Release      | ❌ 回溯撰寫   |
+| [2.0.0]        | 2025-XX-XX     | 0.1.0 (未更新)      | Cross-Platform       | ❌ 回溯撰寫   |
+| [3.0.0]        | 2025-XX-XX     | 0.1.0 (未更新)      | Advanced AI          | ❌ 回溯撰寫   |
+| [4.0.0]        | 2025-XX-XX     | 0.1.0 (未更新)      | Desktop Integration  | ❌ 回溯撰寫   |
+| [5.0.0]        | 2025-XX-XX     | 0.1.0 (未更新)      | Live2D Integration   | ❌ 回溯撰寫   |
+| [6.0.0]        | 2026-01-XX     | 0.1.0 → 6.2.0       | A/B/C Security       | ⚠️ 跳躍式     |
+| [6.1.0]        | 2026-02-05     | 6.2.0               | Phase 12 Restoration | ❌ 日期矛盾   |
+| [6.2.0]        | 2026-02-07     | 6.2.0               | Phase 14 Complete    | ✅ 一致       |
+| [7.1.1]        | 2026-02-13     | 6.2.0               | Resource Analysis    | ❌ v7 回溯    |
+| [7.2.0]        | 2026-05-09     | 6.2.0 → 6.2.1       | Spatial Math Engine  | ❌ v7 回溯    |
+| [7.3.0]        | 2026-05-09     | 6.2.0 → 6.2.1       | Coordinate AI        | ❌ v7 回溯    |
+| [7.4.0]        | 2026-05-09     | 6.2.0 → 6.2.1       | Spatial Gravity      | ❌ v7 回溯    |
+| [6.2.2]        | 2026-05-16     | 6.2.1 → 6.5.0-dev   | Session Manager      | ⚠️ 壓在 v7 上 |
 
 #### 散亂根源總結
 
@@ -315,14 +319,14 @@ v0.1.0 ────────────────────────�
 
 ### 1.5 Git 提交統計 (按時間分組)
 
-| 時期 | 提交模式 | 代表 Branch | 關鍵變更 | 版本狀態 |
-|------|---------|------------|---------|---------|
-| **2024 H2 — Genesis** (~10 commits) | `Initial commit`, `1` | `master` | MikoAI + Fragmenta 初始合併 | 0.1.0 (從未變更) |
-| **2025 H1 — Monorepo** (~30 commits) | `feat(structure):`, `feat(backend):`, `feat(desktop):` | `main` | pnpm monorepo 遷移 | 0.1.0 (從未變更) |
-| **2025 H2 — HSP Protocol** (~60 commits) | `feat(hsp):`, `fix(hsp):`, `feat(FragmentaOrchestrator):` | `feature/*` | MQTT 協議 | 0.1.0 (從未變更) |
-| **2026 Q1 — AI Engine** (~100 commits) | `feat: implement`, `refactor:`, `fix:` | `main` | HAM Memory、Agent System | 0.1.0 → 6.2.0 (跳躍) |
-| **2026 Q2 — Spatial AI** (~50 commits) | `feat: spatial`, `feat: coordinate AI` | `main` | 8D State Matrix、Intent Gravity | 6.2.0 (v7 僅存在 CHANGELOG) |
-| **2026-05 — 收斂期** (~30 commits) | `Fix and update`, `chore(backup):` | `main` | 版本統一、配置快照 | 6.2.1 → 6.5.0-dev |
+| 時期                                     | 提交模式                                                  | 代表 Branch | 關鍵變更                        | 版本狀態                    |
+| ---------------------------------------- | --------------------------------------------------------- | ----------- | ------------------------------- | --------------------------- |
+| **2024 H2 — Genesis** (~10 commits)      | `Initial commit`, `1`                                     | `master`    | MikoAI + Fragmenta 初始合併     | 0.1.0 (從未變更)            |
+| **2025 H1 — Monorepo** (~30 commits)     | `feat(structure):`, `feat(backend):`, `feat(desktop):`    | `main`      | pnpm monorepo 遷移              | 0.1.0 (從未變更)            |
+| **2025 H2 — HSP Protocol** (~60 commits) | `feat(hsp):`, `fix(hsp):`, `feat(FragmentaOrchestrator):` | `feature/*` | MQTT 協議                       | 0.1.0 (從未變更)            |
+| **2026 Q1 — AI Engine** (~100 commits)   | `feat: implement`, `refactor:`, `fix:`                    | `main`      | HAM Memory、Agent System        | 0.1.0 → 6.2.0 (跳躍)        |
+| **2026 Q2 — Spatial AI** (~50 commits)   | `feat: spatial`, `feat: coordinate AI`                    | `main`      | 8D State Matrix、Intent Gravity | 6.2.0 (v7 僅存在 CHANGELOG) |
+| **2026-05 — 收斂期** (~30 commits)       | `Fix and update`, `chore(backup):`                        | `main`      | 版本統一、配置快照              | 6.2.1 → 6.5.0-dev           |
 
 ### 1.6 演化大事記 (完整版)
 
@@ -348,62 +352,74 @@ v0.1.0                   v0.1.0                   v0.1.0                    0.1.
 
 > 以下基於實際代碼功能完整度、獨立於任何現有版本號，為每個組件重新計算正確的 semver。
 >
-> **原則**: 非 lockstep — 每個組件依自身功能成熟度獨立定版。
-> MAJOR = 架構質變/breaking change, MINOR = 新功能集合, PATCH = 修復, -dev = 存在已知不一致
+> **原則**: 非 lockstep — 每個組件依自身功能成熟度獨立定版。MAJOR
+> = 架構質變/breaking change, MINOR = 新功能集合, PATCH = 修復, -dev
+> = 存在已知不一致
 
 #### ① apps/backend (Python FastAPI) → **7.5.0-dev**
 
 這是整個專案的核心，503 個 Python 源文件、34 個 core/ 子包、40 個 ai/ 子系統。
 
-| 版本里程碑 | 代碼證據 | 功能說明 | breaking? |
-|-----------|---------|---------|-----------|
-| v7.0 | `core/security/*`, 三鑰體系, `SignedCommunicationMiddleware` | A/B/C 安全架構 — 打破 v5 以前所有安全模型 | ✅ 是 |
-| v7.1 | `ai/memory/ham_memory/`, `ai/agents/*` (10 agents) | HAM 分層記憶 + 多 Agent 系統 | ❌ |
-| v7.2 | `state_matrix.py` shunting-yard + RPN executor | 原生空間數學引擎 (純幾何算術，脫離 LLM) | ❌ |
-| v7.3 | 8 軸 `compute_coordinate()`, `art_learning_system.py` spatial aesthetic | 原生坐標 AI + 美感空間推理 | ❌ |
-| v7.4 | `apply_intent_gravity()`, `apply_inter_dimensional_drag()`, `retrieve_by_spatial_proximity()` | 意圖重力 + 維度拖拽 + 空間記憶 | ❌ |
-| **v7.5** | `services/connection_session.py`, 各種修復 | **Session 握手協議 (超出 v7.4 的功能)** | ❌ |
+| 版本里程碑 | 代碼證據                                                                                      | 功能說明                                  | breaking? |
+| ---------- | --------------------------------------------------------------------------------------------- | ----------------------------------------- | --------- |
+| v7.0       | `core/security/*`, 三鑰體系, `SignedCommunicationMiddleware`                                  | A/B/C 安全架構 — 打破 v5 以前所有安全模型 | ✅ 是     |
+| v7.1       | `ai/memory/ham_memory/`, `ai/agents/*` (10 agents)                                            | HAM 分層記憶 + 多 Agent 系統              | ❌        |
+| v7.2       | `state_matrix.py` shunting-yard + RPN executor                                                | 原生空間數學引擎 (純幾何算術，脫離 LLM)   | ❌        |
+| v7.3       | 8 軸 `compute_coordinate()`, `art_learning_system.py` spatial aesthetic                       | 原生坐標 AI + 美感空間推理                | ❌        |
+| v7.4       | `apply_intent_gravity()`, `apply_inter_dimensional_drag()`, `retrieve_by_spatial_proximity()` | 意圖重力 + 維度拖拽 + 空間記憶            | ❌        |
+| **v7.5**   | `services/connection_session.py`, 各種修復                                                    | **Session 握手協議 (超出 v7.4 的功能)**   | ❌        |
 
 **當前錯誤標記對照**:
-| 文件 | 當前值 | 正確值 | 錯誤分析 |
-|------|--------|--------|---------|
-| `pyproject.toml` | 0.1.0 | **7.5.0-dev** | 從 monorepo 遷移 (`e32cfe31b`, 2025-03) 後從未更新，已過期約 **15 個月** |
-| `setup.py` | 0.1.0 | **7.5.0-dev** | 同上 |
-| `package.json` (backend/) | 1.0.0 | **7.5.0-dev** | 單獨的 pnpm workspace 文件，被遺忘 |
-| `core/version.py` | 6.5.0-dev | **7.5.0-dev** | MAJOR 少 1 — 忽視了 Spatial AI 帶來的架構質變 |
-| `core/__init__.py` | 6.2.0 | **7.5.0-dev** | docstring 未更新 (92 天) |
+
+| 文件                      | 當前值    | 正確值        | 錯誤分析                                                                 |
+| ------------------------- | --------- | ------------- | ------------------------------------------------------------------------ |
+| `pyproject.toml`          | 0.1.0     | **7.5.0-dev** | 從 monorepo 遷移 (`e32cfe31b`, 2025-03) 後從未更新，已過期約 **15 個月** |
+| `setup.py`                | 0.1.0     | **7.5.0-dev** | 同上                                                                     |
+| `package.json` (backend/) | 1.0.0     | **7.5.0-dev** | 單獨的 pnpm workspace 文件，被遺忘                                       |
+| `core/version.py`         | 6.5.0-dev | **7.5.0-dev** | MAJOR 少 1 — 忽視了 Spatial AI 帶來的架構質變                            |
+| `core/__init__.py`        | 6.2.0     | **7.5.0-dev** | docstring 未更新 (92 天)                                                 |
 
 ---
 
 #### ② apps/desktop-app (Electron) → **4.1.0-dev**
 
-Desktop 是**後端的客戶端**，它不實現 Spatial AI / HAM / HSP，它實現的是**桌面寵物互動 + Live2D 渲染 + 通訊層**。37 個 JS 模塊、一個 1566 行的 main process。
+Desktop 是**後端的客戶端**，它不實現 Spatial AI / HAM /
+HSP，它實現的是**桌面寵物互動 +
+Live2D 渲染 + 通訊層**。37 個 JS 模塊、一個 1566 行的 main process。
 
-| 版本里程碑 | 代碼證據 | 功能說明 | breaking? |
-|-----------|---------|---------|-----------|
-| v1.0 | `main.js` Electron shell, 基本 window | frameless + transparent + always-on-top 桌面窗口 | — |
-| v2.0 | `live2d-cubism-wrapper.js` (1426 行), Cubism SDK 5 R5 | Live2D: 7 表情, 10 動作, 物理模擬 (頭髮/衣物) | ✅ 新渲染引擎 |
-| v3.0 | `tray-manager.js`, `desktop-presence.js`, autostart | 系統托盤 + 自動啟動 + 桌面空間感知 + 壁紙整合 | ❌ |
-| v4.0 | `security-manager.js`, Key C, `state-matrix.js` | 安全層 (Key C 加密) + 4D 情緒狀態矩陣同步 | ✅ 安全架構 |
-| **v4.1** | `backend-websocket.js` session handshake, IPC 重構 | **Session 協議 + 移除 auto-reconnect + 修復多重 client_id** | ❌ |
+| 版本里程碑 | 代碼證據                                              | 功能說明                                                    | breaking?     |
+| ---------- | ----------------------------------------------------- | ----------------------------------------------------------- | ------------- |
+| v1.0       | `main.js` Electron shell, 基本 window                 | frameless + transparent + always-on-top 桌面窗口            | —             |
+| v2.0       | `live2d-cubism-wrapper.js` (1426 行), Cubism SDK 5 R5 | Live2D: 7 表情, 10 動作, 物理模擬 (頭髮/衣物)               | ✅ 新渲染引擎 |
+| v3.0       | `tray-manager.js`, `desktop-presence.js`, autostart   | 系統托盤 + 自動啟動 + 桌面空間感知 + 壁紙整合               | ❌            |
+| v4.0       | `security-manager.js`, Key C, `state-matrix.js`       | 安全層 (Key C 加密) + 4D 情緒狀態矩陣同步                   | ✅ 安全架構   |
+| **v4.1**   | `backend-websocket.js` session handshake, IPC 重構    | **Session 協議 + 移除 auto-reconnect + 修復多重 client_id** | ❌            |
 
-**為什麼是 4.x 而不是 7.x？** Desktop 的 v4 (security) 約等於 backend 的 v6 水平。Backend v7 的 Spatial AI 完全在服務器端，desktop 只是被動顯示 state matrix 的結果，不涉及自身的架構質變。
+**為什麼是 4.x 而不是 7.x？** Desktop 的 v4
+(security) 約等於 backend 的 v6 水平。Backend v7 的 Spatial
+AI 完全在服務器端，desktop 只是被動顯示 state
+matrix 的結果，不涉及自身的架構質變。
 
-**當前錯誤標記**: `electron_app/package.json` → `6.5.0-dev` ❌ — 盲目跟隨根 package.json，非自身功能反映。降級到 4.1.0-dev 才是真實狀態。
+**當前錯誤標記**: `electron_app/package.json` → `6.5.0-dev` ❌
+— 盲目跟隨根 package.json，非自身功能反映。降級到 4.1.0-dev 才是真實狀態。
 
 ---
 
 #### ③ apps/mobile-app (React Native) → **1.2.0-dev**
 
-Mobile 是**最不成熟的組件**。只有 **3 個源文件**：`App.js` (828 行)、`src/api/client.js` (131 行)、`src/security/encryption.js` (212 行)。無 Live2D、無 WebSocket、無複雜 UI。
+Mobile 是**最不成熟的組件**。只有 **3 個源文件**：`App.js`
+(828 行)、`src/api/client.js` (131 行)、`src/security/encryption.js`
+(212 行)。無 Live2D、無 WebSocket、無複雜 UI。
 
-| 版本里程碑 | 代碼證據 | 功能說明 |
-|-----------|---------|---------|
-| v1.0 | `App.js` | React Native 骨架 + QR code 掃描配對 + Matrix 狀態顯示 |
-| v1.1 | `src/security/encryption.js` | AES-256-CBC 加密通訊 + HMAC-SHA256 簽名 + Key B 整合 |
-| **v1.2** | `src/api/client.js` | **API 客戶端 (healthCheck, getSystemStatus, connectWebSocket)** |
+| 版本里程碑 | 代碼證據                     | 功能說明                                                        |
+| ---------- | ---------------------------- | --------------------------------------------------------------- |
+| v1.0       | `App.js`                     | React Native 骨架 + QR code 掃描配對 + Matrix 狀態顯示          |
+| v1.1       | `src/security/encryption.js` | AES-256-CBC 加密通訊 + HMAC-SHA256 簽名 + Key B 整合            |
+| **v1.2**   | `src/api/client.js`          | **API 客戶端 (healthCheck, getSystemStatus, connectWebSocket)** |
 
-**為什麼這麼低？** 對比 desktop (37 JS 模塊, 完整 Live2D, WebSocket, system tray, IPC security)，mobile 只有 3 個源文件，功能密度差了一個數量級。標記為 6.5.0-dev 是**整個代碼庫最嚴重的版本號通貨膨脹**。
+**為什麼這麼低？** 對比 desktop (37 JS 模塊, 完整 Live2D, WebSocket, system
+tray, IPC
+security)，mobile 只有 3 個源文件，功能密度差了一個數量級。標記為 6.5.0-dev 是**整個代碼庫最嚴重的版本號通貨膨脹**。
 
 **當前錯誤標記**: `package.json` → `6.5.0-dev` ❌ — MAJOR 虛高 5、MINOR 虛高 3。
 
@@ -413,19 +429,20 @@ Mobile 是**最不成熟的組件**。只有 **3 個源文件**：`App.js` (828 
 
 獨立工具，有自己的生命週期。8 個 Python 模塊。
 
-| 版本 | 代碼證據 | 功能 |
-|------|---------|------|
-| v1.0 | `cli/main.py`, `cli/unified_cli.py` | 基礎 CLI: health check, chat, analyze |
+| 版本     | 代碼證據                                    | 功能                                            |
+| -------- | ------------------------------------------- | ----------------------------------------------- |
+| v1.0     | `cli/main.py`, `cli/unified_cli.py`         | 基礎 CLI: health check, chat, analyze           |
 | **v1.1** | HSP 整合, `port_manager.py`, error handling | **HSP protocol CLI + port conflict resolution** |
 
-**當前錯誤標記**: `package.json` → `1.0.0` ❌ 與 `__init__.py` (`1.1.0`) 自身不一致。CLI package.json 應更新為 `1.1.0`。
+**當前錯誤標記**: `package.json` → `1.0.0` ❌ 與 `__init__.py`
+(`1.1.0`) 自身不一致。CLI package.json 應更新為 `1.1.0`。
 
 ---
 
 #### ⑤ packages/biology-core (Voxel DNA) → **1.0.0** ✅ (保持當前)
 
-| 版本 | 代碼證據 | 功能 |
-|------|---------|------|
+| 版本     | 代碼證據                   | 功能                                                                                |
+| -------- | -------------------------- | ----------------------------------------------------------------------------------- |
 | **v1.0** | `src/dna_body.py` (285 行) | AngelaDNA 體素引擎: 2.5D 128×384×6×5 軀體矩陣, 9 段脊椎, 五指獨立指節, 慣性布料物理 |
 
 單一文件但功能穩定。1.0.0 合理。
@@ -465,18 +482,18 @@ Mobile 是**最不成熟的組件**。只有 **3 個源文件**：`App.js` (828 
 
 #### 子版本號錯誤修正行動清單
 
-| 文件 | 當前值 | 正確值 | 操作 | 緊急性 |
-|------|--------|--------|------|--------|
-| `apps/backend/pyproject.toml` | 0.1.0 | 7.5.0-dev | 修改 version 字段 | 🔴 High |
-| `apps/backend/setup.py` | 0.1.0 | 7.5.0-dev | 修改 version 字段 | 🔴 High |
-| `apps/backend/package.json` | 1.0.0 | 7.5.0-dev | 修改 version 字段 | 🔴 High |
-| `apps/backend/src/core/version.py` | 6.5.0-dev | **7.5.0-dev** | MAJOR +1 | 🔴 High |
-| `apps/backend/src/core/__init__.py` | 6.2.0 | 7.5.0-dev | 更新 docstring | 🟡 Medium |
-| `apps/desktop-app/electron_app/package.json` | 6.5.0-dev | **4.1.0-dev** | MAJOR -2, MINOR -4 | 🟡 Medium |
-| `apps/mobile-app/package.json` | 6.5.0-dev | **1.2.0-dev** | MAJOR -5, MINOR -3 | 🟡 Medium |
-| `packages/cli/package.json` | 1.0.0 | **1.1.0** | PATCH +1 (與 __init__.py 統一) | 🟢 Low |
-| `VERSION` | 6.2.0 | **7.5.0-dev** | 與 backend 同步 | 🔴 High |
-| `config/angela_config.json` | 6.1.0 | **7.5.0-dev** | 與 backend 同步 | 🔴 High |
+| 文件                                         | 當前值    | 正確值        | 操作                           | 緊急性    |
+| -------------------------------------------- | --------- | ------------- | ------------------------------ | --------- |
+| `apps/backend/pyproject.toml`                | 0.1.0     | 7.5.0-dev     | 修改 version 字段              | 🔴 High   |
+| `apps/backend/setup.py`                      | 0.1.0     | 7.5.0-dev     | 修改 version 字段              | 🔴 High   |
+| `apps/backend/package.json`                  | 1.0.0     | 7.5.0-dev     | 修改 version 字段              | 🔴 High   |
+| `apps/backend/src/core/version.py`           | 6.5.0-dev | **7.5.0-dev** | MAJOR +1                       | 🔴 High   |
+| `apps/backend/src/core/__init__.py`          | 6.2.0     | 7.5.0-dev     | 更新 docstring                 | 🟡 Medium |
+| `apps/desktop-app/electron_app/package.json` | 6.5.0-dev | **4.1.0-dev** | MAJOR -2, MINOR -4             | 🟡 Medium |
+| `apps/mobile-app/package.json`               | 6.5.0-dev | **1.2.0-dev** | MAJOR -5, MINOR -3             | 🟡 Medium |
+| `packages/cli/package.json`                  | 1.0.0     | **1.1.0**     | PATCH +1 (與 **init**.py 統一) | 🟢 Low    |
+| `VERSION`                                    | 6.2.0     | **7.5.0-dev** | 與 backend 同步                | 🔴 High   |
+| `config/angela_config.json`                  | 6.1.0     | **7.5.0-dev** | 與 backend 同步                | 🔴 High   |
 
 ---
 
@@ -773,30 +790,31 @@ unified-ai-project/
 
 **淺層一致性評分**: ✅ 8/10
 
-| 檢查項 | 結果 | 備註 |
-|-------|------|------|
-| pnpm workspace 正確 | ✅ | `pnpm-workspace.yaml` 包含 `packages/*`, `apps/*`, `apps/*/electron_app` |
-| 各包有 package.json | ✅ | backend/pyproject.toml + package.json, desktop-app/package.json x2 |
-| 結構層次一致 | ⚠️ | `electron_app/` 嵌套在 `desktop-app/` 下但 pnpm 直接引用 |
-| 無冗餘目錄 | ❌ | `config/` vs `configs/` 並存且含義不明確 |
-| 文檔目錄整潔 | ❌ | `docs/` 有 179 個文件，缺乏子目錄層級管理 |
+| 檢查項              | 結果 | 備註                                                                     |
+| ------------------- | ---- | ------------------------------------------------------------------------ |
+| pnpm workspace 正確 | ✅   | `pnpm-workspace.yaml` 包含 `packages/*`, `apps/*`, `apps/*/electron_app` |
+| 各包有 package.json | ✅   | backend/pyproject.toml + package.json, desktop-app/package.json x2       |
+| 結構層次一致        | ⚠️   | `electron_app/` 嵌套在 `desktop-app/` 下但 pnpm 直接引用                 |
+| 無冗餘目錄          | ❌   | `config/` vs `configs/` 並存且含義不明確                                 |
+| 文檔目錄整潔        | ❌   | `docs/` 有 179 個文件，缺乏子目錄層級管理                                |
 
 ### 3.2 頂層配置完整性
 
-| 配置文件 | 狀態 | 評語 |
-|---------|------|------|
-| `package.json` | ✅ | 完整的 npm scripts, workspaces, devDependencies |
-| `pyproject.toml` | ✅ | Black/isort/flake8/mypy/pytest/coverage 全配置 |
-| `.pre-commit-config.yaml` | ✅ | 9 個 hooks + bandit + gitleaks + eslint |
-| `.editorconfig` | ✅ | Python 4 spaces, JS 2 spaces |
-| `.env.example` | ✅ | 130 行完整模板 |
-| `.gitignore` | ✅ | 127 行全面規則 |
-| `eslint.config.mjs` | ✅ | Flat config with globals |
-| `.prettierrc` | ✅ | No semi, single quote, 100 width |
-| `docker-compose.yml` | ✅ | Redis 7 Alpine |
-| `.flake8` | ⚠️ | 與 pyproject.toml 中的 flake8 配置重複 |
+| 配置文件                  | 狀態 | 評語                                            |
+| ------------------------- | ---- | ----------------------------------------------- |
+| `package.json`            | ✅   | 完整的 npm scripts, workspaces, devDependencies |
+| `pyproject.toml`          | ✅   | Black/isort/flake8/mypy/pytest/coverage 全配置  |
+| `.pre-commit-config.yaml` | ✅   | 9 個 hooks + bandit + gitleaks + eslint         |
+| `.editorconfig`           | ✅   | Python 4 spaces, JS 2 spaces                    |
+| `.env.example`            | ✅   | 130 行完整模板                                  |
+| `.gitignore`              | ✅   | 127 行全面規則                                  |
+| `eslint.config.mjs`       | ✅   | Flat config with globals                        |
+| `.prettierrc`             | ✅   | No semi, single quote, 100 width                |
+| `docker-compose.yml`      | ✅   | Redis 7 Alpine                                  |
+| `.flake8`                 | ⚠️   | 與 pyproject.toml 中的 flake8 配置重複          |
 
-**淺層發現**: 根目錄有 143 個條目，過多零散文件缺乏目錄整理。`config/` 與 `configs/` 並存造成混淆。
+**淺層發現**: 根目錄有 143 個條目，過多零散文件缺乏目錄整理。`config/` 與
+`configs/` 並存造成混淆。
 
 ---
 
@@ -815,7 +833,7 @@ unified-ai-project/
     services/angela_llm_service.py  →  ai/agents/        ✅ 正確
     ai/memory/ham_memory/  →  core/config_loader.py     ✅ 正確
     core/autonomous/  →  core/hsp/                      ✅ 正確
-    
+
 但發現:
     core/ 中某些模塊直接 import ai/ (違反依賴方向)        ⚠️ 警告
     ai/agents/ 直接 import api/models/                    ⚠️ 警告
@@ -823,57 +841,57 @@ unified-ai-project/
 
 ### 4.2 服務層 (services/) 分析
 
-| 服務 | 文件大小 | 職責 | 是否鬆耦合 |
-|------|---------|------|-----------|
-| `main_api_server.py` | 1668 行 | API 入口 + WebSocket + 生命週期 | ⚠️ 職責過重 (應分拆) |
-| `angela_llm_service.py` | 2196 行 | LLM 路由 + 多後端 + Prompt 構建 | ⚠️ 過大，混合了路由與格式 |
-| `chat_service.py` | 中 | 聊天協調 + 狀態矩陣整合 | ✅ |
-| `wiring.py` | 中 | DI 注入，連結各服務回調 | ✅ |
-| `connection_session.py` | 中 | WebSocket 會話管理 | ✅ |
+| 服務                    | 文件大小 | 職責                            | 是否鬆耦合                |
+| ----------------------- | -------- | ------------------------------- | ------------------------- |
+| `main_api_server.py`    | 1668 行  | API 入口 + WebSocket + 生命週期 | ⚠️ 職責過重 (應分拆)      |
+| `angela_llm_service.py` | 2196 行  | LLM 路由 + 多後端 + Prompt 構建 | ⚠️ 過大，混合了路由與格式 |
+| `chat_service.py`       | 中       | 聊天協調 + 狀態矩陣整合         | ✅                        |
+| `wiring.py`             | 中       | DI 注入，連結各服務回調         | ✅                        |
+| `connection_session.py` | 中       | WebSocket 會話管理              | ✅                        |
 
 ### 4.3 核心層 (core/) 分析 — 30+ 子包
 
-| 子包 | 文件數 | 關鍵類 | 狀態 |
-|------|-------|--------|------|
-| `autonomous/` | 60+ | `DigitalLifeIntegrator`, `EndocrineSystem`, `Neuroplasticity`, `CerebellumEngine` | ✅ 核心完整 |
-| `hsp/` | 8+ | `HSPConnector`, `MQTTSubscriptionManager`, `HSPFallbackManager` | ✅ 完整 |
-| `state/` | 10+ | `StateMatrix4D`, `DimensionState`, `Axis`, `AxisField` | ✅ 完整 |
-| `security/` | 8+ | `AuthMiddleware`, `KeyGenerator/Validator`, `SecureEval` | ✅ 完整 |
-| `config/` | 5+ | `ConfigLoader`, `AngelaConfigManager`, `TieredConfigLoader` | ✅ 完整 |
-| `precision/` | 3 | `PrecisionManager`, `DecimalMemoryBank`, `HierarchicalRouter` | ✅ 完整 |
-| `metamorphosis/` | 4 | `SoulCore`, `BodyAdapter`, `TransitionAnim` | ✅ 完整 |
-| `maturity/` | 2 | `MaturityManager`, `ExperienceTracker` | ✅ 完整 |
-| `system/` | 5+ | `BootstrapManager`, `TieredConfigLoader`, `StateStore` | ✅ 完整 |
-| `art/` | 6 | `RealComfyUIAPI`, `RealEdgeTTS`, `RealPlaywrightBrowser` | ✅ 完整 |
-| `tracing/` | 3 | `CausalChain`, `CausalTracer`, `ChainValidator` | ⚠️ 新加 |
-| `ripple/` | 2 | `RippleNodeSystem` | ⚠️ 迭代中 |
-| `metacognition/` | 2 | `MetacognitiveCapabilitiesEngine` | ⚠️ 迭代中 |
-| `influence/` | 1 | `InfluenceSpace` | ⚠️ 新加 |
+| 子包             | 文件數 | 關鍵類                                                                            | 狀態        |
+| ---------------- | ------ | --------------------------------------------------------------------------------- | ----------- |
+| `autonomous/`    | 60+    | `DigitalLifeIntegrator`, `EndocrineSystem`, `Neuroplasticity`, `CerebellumEngine` | ✅ 核心完整 |
+| `hsp/`           | 8+     | `HSPConnector`, `MQTTSubscriptionManager`, `HSPFallbackManager`                   | ✅ 完整     |
+| `state/`         | 10+    | `StateMatrix4D`, `DimensionState`, `Axis`, `AxisField`                            | ✅ 完整     |
+| `security/`      | 8+     | `AuthMiddleware`, `KeyGenerator/Validator`, `SecureEval`                          | ✅ 完整     |
+| `config/`        | 5+     | `ConfigLoader`, `AngelaConfigManager`, `TieredConfigLoader`                       | ✅ 完整     |
+| `precision/`     | 3      | `PrecisionManager`, `DecimalMemoryBank`, `HierarchicalRouter`                     | ✅ 完整     |
+| `metamorphosis/` | 4      | `SoulCore`, `BodyAdapter`, `TransitionAnim`                                       | ✅ 完整     |
+| `maturity/`      | 2      | `MaturityManager`, `ExperienceTracker`                                            | ✅ 完整     |
+| `system/`        | 5+     | `BootstrapManager`, `TieredConfigLoader`, `StateStore`                            | ✅ 完整     |
+| `art/`           | 6      | `RealComfyUIAPI`, `RealEdgeTTS`, `RealPlaywrightBrowser`                          | ✅ 完整     |
+| `tracing/`       | 3      | `CausalChain`, `CausalTracer`, `ChainValidator`                                   | ⚠️ 新加     |
+| `ripple/`        | 2      | `RippleNodeSystem`                                                                | ⚠️ 迭代中   |
+| `metacognition/` | 2      | `MetacognitiveCapabilitiesEngine`                                                 | ⚠️ 迭代中   |
+| `influence/`     | 1      | `InfluenceSpace`                                                                  | ⚠️ 新加     |
 
 ### 4.4 AI 引擎 (ai/) 分析
 
-| 子系統 | 子包數 | 關鍵能力 | 狀態 |
-|--------|-------|---------|------|
-| **HAM Memory** | 8+ | HAMMemoryManager, ChromaDB, FAISS, AttractorField | ✅ 核心 |
-| **Agent System** | 10 agents | CreativeWriting, CodeUnderstanding, DataAnalysis, etc. | ✅ 完整 |
-| **Alignment** | 6 | EmotionSystem, ValueSystem, AdversarialGen, Ontology | ⚠️ 部分實現 |
-| **Learning** | 5 | ExperienceReplay, KnowledgeDistillation, FactExtraction | ✅ 完整 |
-| **LIS** | 4 | ErrIntrospector, HAMLISCache, Antibody Management | ⚠️ 迭代中 |
-| **Response** | 5 | Composer, DeviationTracker, NeuroAutoSelector | ✅ 完整 |
-| **Context** | 5 | DialogueContext, MemoryContext, Storage backends | ✅ 完整 |
-| **Reasoning** | 2 | CausalReasoningEngine | ⚠️ 基礎實現 |
-| **Personality** | 2 | PersonalityManager, JSON templates | ✅ 完整 |
+| 子系統           | 子包數    | 關鍵能力                                                | 狀態        |
+| ---------------- | --------- | ------------------------------------------------------- | ----------- |
+| **HAM Memory**   | 8+        | HAMMemoryManager, ChromaDB, FAISS, AttractorField       | ✅ 核心     |
+| **Agent System** | 10 agents | CreativeWriting, CodeUnderstanding, DataAnalysis, etc.  | ✅ 完整     |
+| **Alignment**    | 6         | EmotionSystem, ValueSystem, AdversarialGen, Ontology    | ⚠️ 部分實現 |
+| **Learning**     | 5         | ExperienceReplay, KnowledgeDistillation, FactExtraction | ✅ 完整     |
+| **LIS**          | 4         | ErrIntrospector, HAMLISCache, Antibody Management       | ⚠️ 迭代中   |
+| **Response**     | 5         | Composer, DeviationTracker, NeuroAutoSelector           | ✅ 完整     |
+| **Context**      | 5         | DialogueContext, MemoryContext, Storage backends        | ✅ 完整     |
+| **Reasoning**    | 2         | CausalReasoningEngine                                   | ⚠️ 基礎實現 |
+| **Personality**  | 2         | PersonalityManager, JSON templates                      | ✅ 完整     |
 
 ### 4.5 中層一致性發現
 
-| 檢查項 | 結果 | 說明 |
-|-------|------|------|
-| 模塊邊界清晰 | ⚠️ 7/10 | core/autonomous 有 60+ 文件，職責過廣 |
-| 依賴方向正確 | ⚠️ 6/10 | 存在少量反向依賴 |
-| 服務粒度適當 | ❌ 4/10 | main_api_server.py 1668行, angela_llm_service.py 2196行 過大 |
-| 配置分層正確 | ✅ 8/10 | TCS 三層配置 (S/A/M) 設計合理 |
-| 錯誤處理統一 | ✅ 8/10 | AngelaError 層次清晰, ErrorHandler 統一 |
-| API 設計 RESTful | ⚠️ 6/10 | 部分端點 (如 /system/emergency) 風格不一致 |
+| 檢查項           | 結果    | 說明                                                         |
+| ---------------- | ------- | ------------------------------------------------------------ |
+| 模塊邊界清晰     | ⚠️ 7/10 | core/autonomous 有 60+ 文件，職責過廣                        |
+| 依賴方向正確     | ⚠️ 6/10 | 存在少量反向依賴                                             |
+| 服務粒度適當     | ❌ 4/10 | main_api_server.py 1668行, angela_llm_service.py 2196行 過大 |
+| 配置分層正確     | ✅ 8/10 | TCS 三層配置 (S/A/M) 設計合理                                |
+| 錯誤處理統一     | ✅ 8/10 | AngelaError 層次清晰, ErrorHandler 統一                      |
+| API 設計 RESTful | ⚠️ 6/10 | 部分端點 (如 /system/emergency) 風格不一致                   |
 
 ---
 
@@ -887,22 +905,24 @@ unified-ai-project/
 
 核心算法:
   1. update() → compute_coordinate() → apply_intent_gravity() → apply_inter_dimensional_drag()
-  
+
   2. compute_coordinate()  (動態坐標計算)
      α: x = comfort - tension
         y = (energy - rest_need) × 10
         z = arousal - 0.5
-  
+
   3. apply_intent_gravity()  (意圖重力吸引)
      每 cycle: coordinate += (intent_vector - coordinate) × gravity_strength
-  
+
   4. apply_inter_dimensional_drag()  (維度連動拖拽)
      Δ 在一個維度的變化按權重矩陣傳播到其他維度
-  
+
   5. export_for_llm() → 打包全部 8D + θ + η 狀態供 LLM Prompt
 ```
 
-**一致性檢查**: `ANGELA_STATUS.md` 中的 8D 定義與 `state_matrix.py` 實際代碼一致。但 `ANGELA_MATRIX_ANNOTATION_GUIDE.md` 只定義了 4D (αβγδ)，缺少 εθζη 四維，存在**文檔滯後**。
+**一致性檢查**: `ANGELA_STATUS.md` 中的 8D 定義與 `state_matrix.py`
+實際代碼一致。但 `ANGELA_MATRIX_ANNOTATION_GUIDE.md` 只定義了 4D
+(αβγδ)，缺少 εθζη 四維，存在**文檔滯後**。
 
 ### 5.2 HAM Memory 層次算法
 
@@ -925,7 +945,8 @@ AttractorField 算法:
   - JSON: 本地文件備份
 ```
 
-**一致性檢查**: HAM 的三層記憶模型與 `ANGELA_MATRIX_ANNOTATION_GUIDE.md` 中的 L2 生命層匹配。但相關文檔缺乏對 AttractorField 梯度下降算法的詳細記載。
+**一致性檢查**: HAM 的三層記憶模型與 `ANGELA_MATRIX_ANNOTATION_GUIDE.md`
+中的 L2 生命層匹配。但相關文檔缺乏對 AttractorField 梯度下降算法的詳細記載。
 
 ### 5.3 HSP 協議算法
 
@@ -941,25 +962,29 @@ HSP (Hierarchical State Protocol):
       "signature": "hmac...",
       "timestamp": 1234567890
     }
-  
+
   服務發現: ServiceDiscoveryModule (UDP multicast + MQTT topics)
   容錯: HSPFallbackManager (file:// → in-memory → http:// → mqtt://)
   ACK 機制: 每個發布消息等待 ACK，超時重試
 ```
 
-**一致性檢查**: `docs/HSP.md` 與實際 `core/hsp/` 代碼基本一致。但 `payload_schema_uri` 的 `hsp://` URI 格式在代碼中部分為硬編碼，不符合文檔中描述的動態 schema 註冊。
+**一致性檢查**: `docs/HSP.md` 與實際 `core/hsp/` 代碼基本一致。但
+`payload_schema_uri` 的 `hsp://`
+URI 格式在代碼中部分為硬編碼，不符合文檔中描述的動態 schema 註冊。
 
 ### 5.4 理論公式系統
 
-| 公式 | 數學基礎 | 代碼實現 | 文檔覆蓋 |
-|------|---------|---------|---------|
-| **HSM Formula** (時空映射) | CognitiveGap + ExplorationEvent → GovernanceBlueprint | `core/hsm_formula_system.py` (393 行) | ✅ 完整 |
-| **CDM Dividend** (認知紅利) | CognitiveInvestment → LifeSenseOutput → DividendDistribution | `core/cdm_dividend_model.py` | ✅ 完整 |
-| **Life Intensity** (生命強度) | KnowledgeState × ConstraintState × ObserverPresence | `core/life_intensity_formula.py` | ✅ 完整 |
-| **Active Cognition** (主動認知) | StressVector + OrderBaseline → ActiveConstruction | `core/active_cognition_formula.py` | ✅ 完整 |
-| **Non-Paradox** (非悖論) | GrayZoneVariable × PossibilityState → CoexistenceField | `core/non_paradox_existence.py` | ✅ 完整 |
+| 公式                            | 數學基礎                                                     | 代碼實現                              | 文檔覆蓋 |
+| ------------------------------- | ------------------------------------------------------------ | ------------------------------------- | -------- |
+| **HSM Formula** (時空映射)      | CognitiveGap + ExplorationEvent → GovernanceBlueprint        | `core/hsm_formula_system.py` (393 行) | ✅ 完整  |
+| **CDM Dividend** (認知紅利)     | CognitiveInvestment → LifeSenseOutput → DividendDistribution | `core/cdm_dividend_model.py`          | ✅ 完整  |
+| **Life Intensity** (生命強度)   | KnowledgeState × ConstraintState × ObserverPresence          | `core/life_intensity_formula.py`      | ✅ 完整  |
+| **Active Cognition** (主動認知) | StressVector + OrderBaseline → ActiveConstruction            | `core/active_cognition_formula.py`    | ✅ 完整  |
+| **Non-Paradox** (非悖論)        | GrayZoneVariable × PossibilityState → CoexistenceField       | `core/non_paradox_existence.py`       | ✅ 完整  |
 
-**一致性檢查**: 這五大公式系統在 `core/__init__.py` 中正確導出，代碼實現完整。但這些公式在實際 chat 流程中的使用程度不一致——部分公式的計算結果並未真正流入 LLM Prompt，屬於「定義完整但集成不完整」。
+**一致性檢查**: 這五大公式系統在 `core/__init__.py`
+中正確導出，代碼實現完整。但這些公式在實際 chat 流程中的使用程度不一致——部分公式的計算結果並未真正流入 LLM
+Prompt，屬於「定義完整但集成不完整」。
 
 ### 5.5 數位生命算法 (DigitalLifeIntegrator)
 
@@ -990,87 +1015,88 @@ HSP (Hierarchical State Protocol):
 
 ### 6.1 版本一致性 (13 位置全面校驗)
 
-| # | 文件位置 | 聲明版本 | Git 最後更新 | 滯後天數 | 與基準一致? |
-|---|---------|---------|-------------|---------|-----------|
-| 1 | `package.json` | **6.5.0-dev** | 2026-05-25 (HEAD) | 0 | ✅ 基準 |
-| 2 | `core/version.py` | **6.5.0-dev** | 2026-05-24 | 1 | ✅ |
-| 3 | `desktop-app/package.json` | **6.5.0-dev** | 2026-05-24 | 1 | ✅ |
-| 4 | `mobile-app/package.json` | **6.5.0-dev** | 2026-05-24 | 1 | ✅ |
-| 5 | `VERSION` | **6.2.0** | 2026-02-07 | **107** | ❌ 落後 3 minor + 1 phase |
-| 6 | `config/angela_config.json` | **6.1.0** | 2026-02-07 | **107** | ❌ 落後 4 minor + 1 phase |
-| 7 | `core/__init__.py` | **6.2.0** | 2026-02-22 | **92** | ❌ 落後 3 minor + 1 phase |
-| 8 | `CHANGELOG.md` (v6.2.2) | **6.2.2** | 2026-05-16 | 9 | ❌ 落後 3 minor |
-| 9 | `CHANGELOG.md` (v7.2-7.4) | **7.x** | 2026-05-09 | 16 | ❌ 超前 1 major (虛擬版本) |
-| 10 | `ANGELA_STATUS.md` | **v6.3** | — | — | ❌ 格式混亂 |
-| 11 | `packages/cli/__init__.py` | **1.1.0** | — | — | ✅ 獨立版本 (不同產品) |
-| 12 | `packages/biology-core/package.json` | **1.0.0** | — | — | ✅ 獨立版本 (不同產品) |
-| 13 | `reports/*.md` (~20 files) | **v6.2.0~v6.2.3** | 各種日期 | 各種 | ⚠️ 歷史文檔快照 |
+| #   | 文件位置                             | 聲明版本          | Git 最後更新      | 滯後天數 | 與基準一致?                |
+| --- | ------------------------------------ | ----------------- | ----------------- | -------- | -------------------------- |
+| 1   | `package.json`                       | **6.5.0-dev**     | 2026-05-25 (HEAD) | 0        | ✅ 基準                    |
+| 2   | `core/version.py`                    | **6.5.0-dev**     | 2026-05-24        | 1        | ✅                         |
+| 3   | `desktop-app/package.json`           | **6.5.0-dev**     | 2026-05-24        | 1        | ✅                         |
+| 4   | `mobile-app/package.json`            | **6.5.0-dev**     | 2026-05-24        | 1        | ✅                         |
+| 5   | `VERSION`                            | **6.2.0**         | 2026-02-07        | **107**  | ❌ 落後 3 minor + 1 phase  |
+| 6   | `config/angela_config.json`          | **6.1.0**         | 2026-02-07        | **107**  | ❌ 落後 4 minor + 1 phase  |
+| 7   | `core/__init__.py`                   | **6.2.0**         | 2026-02-22        | **92**   | ❌ 落後 3 minor + 1 phase  |
+| 8   | `CHANGELOG.md` (v6.2.2)              | **6.2.2**         | 2026-05-16        | 9        | ❌ 落後 3 minor            |
+| 9   | `CHANGELOG.md` (v7.2-7.4)            | **7.x**           | 2026-05-09        | 16       | ❌ 超前 1 major (虛擬版本) |
+| 10  | `ANGELA_STATUS.md`                   | **v6.3**          | —                 | —        | ❌ 格式混亂                |
+| 11  | `packages/cli/__init__.py`           | **1.1.0**         | —                 | —        | ✅ 獨立版本 (不同產品)     |
+| 12  | `packages/biology-core/package.json` | **1.0.0**         | —                 | —        | ✅ 獨立版本 (不同產品)     |
+| 13  | `reports/*.md` (~20 files)           | **v6.2.0~v6.2.3** | 各種日期          | 各種     | ⚠️ 歷史文檔快照            |
 
-**版本一致性統計**: 13 個位置中只有 **4 個** (31%) 與當前基準 `6.5.0-dev` 一致。
-3 個核心文件 (`VERSION`, `config`, `core/__init__`) 已超過 90 天未更新。
-CHANGELOG 中存在 v7.x 虛擬版本號，與實際代碼 v6.x 不符。
+**版本一致性統計**: 13 個位置中只有 **4 個** (31%) 與當前基準 `6.5.0-dev`
+一致。3 個核心文件 (`VERSION`, `config`,
+`core/__init__`) 已超過 90 天未更新。CHANGELOG 中存在 v7.x 虛擬版本號，與實際代碼 v6.x 不符。
 
-> **版本分數**: 4/13 一致 = **31%** (比之前 22% 略高，因為包含了更多位置的完整校驗)
+> **版本分數**: 4/13 一致 = **31%**
+> (比之前 22% 略高，因為包含了更多位置的完整校驗)
 
 #### 版本根源追溯結論
 
-| 追問 | 答案 |
-|------|------|
-| 第一個版本的版本號正確嗎? | `ddb266946` 中 `0.1.0` 是正確的初始標記 |
-| 版本號變更的理由是? | 從無理由變更。每次變更都是 AI agent 自動操作，"Fix and update" 是最常見的提交信息，從未解釋版本號變更原因 |
-| v1.0~v6.0 真的存在過嗎? | **不存在**。這些版本號只存在於回溯性 CHANGELOG 中，Git 歷史中從未有任何文件被標記為這些版本 |
-| v7.x 是真實發布嗎? | **不是**。v7.x 是 AI agent 在 2026-05-09 創建 CHANGELOG 時自行分配的版本號，代碼庫從未正式採用 |
-| 6.5.0-dev 從何而來? | 2026-05-24 由 AI agent 直接從 6.2.1 跳至 6.5.0-dev，無對應的 minor 版本遞增過程 |
+| 追問                      | 答案                                                                                                      |
+| ------------------------- | --------------------------------------------------------------------------------------------------------- |
+| 第一個版本的版本號正確嗎? | `ddb266946` 中 `0.1.0` 是正確的初始標記                                                                   |
+| 版本號變更的理由是?       | 從無理由變更。每次變更都是 AI agent 自動操作，"Fix and update" 是最常見的提交信息，從未解釋版本號變更原因 |
+| v1.0~v6.0 真的存在過嗎?   | **不存在**。這些版本號只存在於回溯性 CHANGELOG 中，Git 歷史中從未有任何文件被標記為這些版本               |
+| v7.x 是真實發布嗎?        | **不是**。v7.x 是 AI agent 在 2026-05-09 創建 CHANGELOG 時自行分配的版本號，代碼庫從未正式採用            |
+| 6.5.0-dev 從何而來?       | 2026-05-24 由 AI agent 直接從 6.2.1 跳至 6.5.0-dev，無對應的 minor 版本遞增過程                           |
 
 ### 6.2 淺層一致性 (目錄結構)
 
-| 檢查項 | 分數 | 說明 |
-|-------|------|------|
-| monorepo 結構 | 8/10 | 基本正確，嵌套略亂 |
-| 配置完整性 | 9/10 | 幾乎所有工具都有配置 |
-| 根目錄整潔 | 5/10 | 143 個條目，文件散落 |
+| 檢查項                   | 分數 | 說明                 |
+| ------------------------ | ---- | -------------------- |
+| monorepo 結構            | 8/10 | 基本正確，嵌套略亂   |
+| 配置完整性               | 9/10 | 幾乎所有工具都有配置 |
+| 根目錄整潔               | 5/10 | 143 個條目，文件散落 |
 | config/ vs configs/ 混淆 | 4/10 | 兩個配置目錄含義不明 |
 
 > **淺層分數**: 26/40 = **65%**
 
 ### 6.3 中層一致性 (模塊依賴)
 
-| 檢查項 | 分數 | 說明 |
-|-------|------|------|
-| 模塊邊界清晰 | 7/10 | 大部分清晰，部分包過大 |
-| 依賴方向正確 | 6/10 | 少量反向依賴 |
-| 服務粒度 | 4/10 | 關鍵服務文件過大 |
-| 配置分層 | 8/10 | TCS 設計合理 |
-| 錯誤處理 | 8/10 | AngelaError 統一 |
-| API 設計 | 6/10 | 部分不一致 |
-| 橫切關注點 | 7/10 | Security/Logging 良好, Monitoring 一般 |
+| 檢查項       | 分數 | 說明                                   |
+| ------------ | ---- | -------------------------------------- |
+| 模塊邊界清晰 | 7/10 | 大部分清晰，部分包過大                 |
+| 依賴方向正確 | 6/10 | 少量反向依賴                           |
+| 服務粒度     | 4/10 | 關鍵服務文件過大                       |
+| 配置分層     | 8/10 | TCS 設計合理                           |
+| 錯誤處理     | 8/10 | AngelaError 統一                       |
+| API 設計     | 6/10 | 部分不一致                             |
+| 橫切關注點   | 7/10 | Security/Logging 良好, Monitoring 一般 |
 
 > **中層分數**: 46/70 = **66%**
 
 ### 6.4 深層一致性 (算法與理論)
 
-| 檢查項 | 分數 | 說明 |
-|-------|------|------|
-| 8D State Matrix 代碼 vs 文檔 | 9/10 | 高度一致 (εθζη 文檔缺) |
-| HAM Memory 理論 vs 實現 | 8/10 | AttractorField 缺文檔 |
-| HSP Protocol 規範 vs 代碼 | 7/10 | Schema URI 硬編碼問題 |
-| 五大公式理論 vs 實現 | 8/10 | 定義完整，集成不完整 |
-| 數位生命 vs 文檔 | 8/10 | 大部分一致 |
-| LIS 設計 vs 實現 | 6/10 | 部分 LIS 功能未完全實現 |
-| Agent System 設計 vs 實現 | 8/10 | AgentManager 完整 |
-| Matrix Annotation vs 實際代碼 | 5/10 | 部分模塊缺少註解 |
+| 檢查項                        | 分數 | 說明                    |
+| ----------------------------- | ---- | ----------------------- |
+| 8D State Matrix 代碼 vs 文檔  | 9/10 | 高度一致 (εθζη 文檔缺)  |
+| HAM Memory 理論 vs 實現       | 8/10 | AttractorField 缺文檔   |
+| HSP Protocol 規範 vs 代碼     | 7/10 | Schema URI 硬編碼問題   |
+| 五大公式理論 vs 實現          | 8/10 | 定義完整，集成不完整    |
+| 數位生命 vs 文檔              | 8/10 | 大部分一致              |
+| LIS 設計 vs 實現              | 6/10 | 部分 LIS 功能未完全實現 |
+| Agent System 設計 vs 實現     | 8/10 | AgentManager 完整       |
+| Matrix Annotation vs 實際代碼 | 5/10 | 部分模塊缺少註解        |
 
 > **深層分數**: 59/80 = **74%**
 
 ### 6.5 總體一致性評分
 
-| 層級 | 分數 | 權重 | 加權分 |
-|------|------|------|--------|
-| 版本一致性 | 31% (13中4) | 15% | 4.7% |
-| 淺層 (結構) | 65% | 25% | 16.3% |
-| 中層 (模塊) | 66% | 35% | 23.1% |
-| 深層 (算法) | 74% | 25% | 18.5% |
-| **總分** | | **100%** | **62.6%** |
+| 層級        | 分數        | 權重     | 加權分    |
+| ----------- | ----------- | -------- | --------- |
+| 版本一致性  | 31% (13中4) | 15%      | 4.7%      |
+| 淺層 (結構) | 65%         | 25%      | 16.3%     |
+| 中層 (模塊) | 66%         | 35%      | 23.1%     |
+| 深層 (算法) | 74%         | 25%      | 18.5%     |
+| **總分**    |             | **100%** | **62.6%** |
 
 > **整體架構一致性評分**: 62.6% — **中等偏下，需要系統性改善**
 >
@@ -1082,33 +1108,33 @@ CHANGELOG 中存在 v7.x 虛擬版本號，與實際代碼 v6.x 不符。
 
 ### 7.1 嚴重問題 (Critical)
 
-| # | 問題 | 影響 | 涉及文件 | Git 根源 |
-|---|------|------|---------|---------|
-| C1 | **版本號散亂**: 13 個位置僅 4 個一致。`VERSION` 和 `config/angela_config.json` 已 **107 天未更新** | 混淆開發者、CI/CD 可能誤判、無法確定發布版本 | VERSION, config/*, core/*, docs/* | `b29441e74` 創建時就不一致；之後無人維護 |
-| C2 | **CHANGELOG v7.x 是 AI agent 虛構的版本號**: v7.2.0~v7.4.0 描述的功能存在於代碼，但版本號從未被寫入任何源代碼文件。Git 中**無對應 tag、無對應 package.json 版本** | 版本追溯混亂，新開發者無法理解版本譜系 | CHANGELOG.md | `0e803d64` agent 首次創建 CHANGELOG 時自行分配 |
-| C3 | **無版本管理流程**: 所有版本變更均由 AI agent 在 "Fix and update" 提交中自動完成，從無人工審核、無版本發布規範 | 版本號失去語義，無法作為發布依據 | 全局 | 項目從第一天起就沒有版本管理約定 |
-| C4 | **config/ vs configs/** 雙目錄 | 配置不統一，可能覆蓋錯誤 | config/, configs/ | 目錄重構未完成 |
+| #   | 問題                                                                                                                                                              | 影響                                         | 涉及文件                          | Git 根源                                       |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- | --------------------------------- | ---------------------------------------------- |
+| C1  | **版本號散亂**: 13 個位置僅 4 個一致。`VERSION` 和 `config/angela_config.json` 已 **107 天未更新**                                                                | 混淆開發者、CI/CD 可能誤判、無法確定發布版本 | VERSION, config/_, core/_, docs/* | `b29441e74` 創建時就不一致；之後無人維護       |
+| C2  | **CHANGELOG v7.x 是 AI agent 虛構的版本號**: v7.2.0~v7.4.0 描述的功能存在於代碼，但版本號從未被寫入任何源代碼文件。Git 中**無對應 tag、無對應 package.json 版本** | 版本追溯混亂，新開發者無法理解版本譜系       | CHANGELOG.md                      | `0e803d64` agent 首次創建 CHANGELOG 時自行分配 |
+| C3  | **無版本管理流程**: 所有版本變更均由 AI agent 在 "Fix and update" 提交中自動完成，從無人工審核、無版本發布規範                                                    | 版本號失去語義，無法作為發布依據             | 全局                              | 項目從第一天起就沒有版本管理約定               |
+| C4  | **config/ vs configs/** 雙目錄                                                                                                                                    | 配置不統一，可能覆蓋錯誤                     | config/, configs/                 | 目錄重構未完成                                 |
 
 ### 7.2 中度問題 (Major)
 
-| # | 問題 | 影響 | 涉及文件 |
-|---|------|------|---------|
-| M1 | **main_api_server.py 1668 行**: 職責過重 | 維護困難，測試覆蓋低 | services/main_api_server.py |
-| M2 | **angela_llm_service.py 2196 行**: 混合路由/格式/調用 | 違反單一職責 | services/angela_llm_service.py |
-| M3 | **core/autonomous/ 60+ 文件**: 包過大 | 邊界模糊，應拆分 | core/autonomous/ |
-| M4 | **Matrix Annotation 覆蓋不全**: 部分模塊無注解 | 違反 AGENTS.md 規範 | 多個 ai/ 子包 |
-| M5 | **8D 文檔滯後**: ANGELA_MATRIX_GUIDE 只定義了 4D | 文檔與代碼不同步 | ANGELA_MATRIX_ANNOTATION_GUIDE.md |
-| M6 | **五大公式集成不完整**: 定義有但未實際用於推理 | 浪費計算資源 | core/*_formula_*.py |
+| #   | 問題                                                  | 影響                 | 涉及文件                          |
+| --- | ----------------------------------------------------- | -------------------- | --------------------------------- |
+| M1  | **main_api_server.py 1668 行**: 職責過重              | 維護困難，測試覆蓋低 | services/main_api_server.py       |
+| M2  | **angela_llm_service.py 2196 行**: 混合路由/格式/調用 | 違反單一職責         | services/angela_llm_service.py    |
+| M3  | **core/autonomous/ 60+ 文件**: 包過大                 | 邊界模糊，應拆分     | core/autonomous/                  |
+| M4  | **Matrix Annotation 覆蓋不全**: 部分模塊無注解        | 違反 AGENTS.md 規範  | 多個 ai/ 子包                     |
+| M5  | **8D 文檔滯後**: ANGELA_MATRIX_GUIDE 只定義了 4D      | 文檔與代碼不同步     | ANGELA_MATRIX_ANNOTATION_GUIDE.md |
+| M6  | **五大公式集成不完整**: 定義有但未實際用於推理        | 浪費計算資源         | core/_*formula*_.py               |
 
 ### 7.3 輕微問題 (Minor)
 
-| # | 問題 | 涉及 |
-|---|------|------|
-| m1 | 根目錄 143 個條目過多 | 需要整理到子目錄 |
-| m2 | docs/ 179 個文件無子目錄管理 | docs/ |
-| m3 | HSP payload_schema_uri 硬編碼 | core/hsp/ |
-| m4 | 缺少 docs/ARCHITECTURE.md 作為權威架構文檔 | — |
-| m5 | 測試覆蓋率目標 80% 但實際約 60%-70% | tests/ |
+| #   | 問題                                       | 涉及             |
+| --- | ------------------------------------------ | ---------------- |
+| m1  | 根目錄 143 個條目過多                      | 需要整理到子目錄 |
+| m2  | docs/ 179 個文件無子目錄管理               | docs/            |
+| m3  | HSP payload_schema_uri 硬編碼              | core/hsp/        |
+| m4  | 缺少 docs/ARCHITECTURE.md 作為權威架構文檔 | —                |
+| m5  | 測試覆蓋率目標 80% 但實際約 60%-70%        | tests/           |
 
 ---
 
@@ -1123,9 +1149,11 @@ CHANGELOG 中存在 v7.x 虛擬版本號，與實際代碼 v6.x 不符。
    - **建立 CI 檢查**: 在 `ci.yml` 中加入版本一致性檢查，確保所有版本位置一致
 
 2. **解決 CHANGELOG v7.x 分歧**:
-   - 方案 A (推薦): 將 v7.x 條目標註為 `[7.2.0] → Internal/Unreleased`，明確標記這些是非正式內部版本
+   - 方案 A (推薦): 將 v7.x 條目標註為
+     `[7.2.0] → Internal/Unreleased`，明確標記這些是非正式內部版本
    - 方案 B: 將 CHANGELOG 全部重寫為線性 v6.x 譜系，v7.x 的功能歸入對應的 v6.x 版本
-   - **根本原因**: 防止 AI agent 未來再次自行分配版本號，應在 `AGENTS.md` 中增加"禁止 AI 自行分配主版本號"的規則
+   - **根本原因**: 防止 AI agent 未來再次自行分配版本號，應在 `AGENTS.md`
+     中增加"禁止 AI 自行分配主版本號"的規則
 
 3. **建立版本發布流程**:
    - 定義 `CONTRIBUTING.md` 中的版本變更規則:
@@ -1139,9 +1167,11 @@ CHANGELOG 中存在 v7.x 虛擬版本號，與實際代碼 v6.x 不符。
 
 ### 8.2 短期 (Priority Medium)
 
-4. **拆分大型服務文件**: 
-   - `main_api_server.py` → `api/lifespan.py` + `api/routes/*.py` + `services/websocket_manager.py`
-   - `angela_llm_service.py` → `services/llm/router.py` + `services/llm/providers/*.py`
+4. **拆分大型服務文件**:
+   - `main_api_server.py` → `api/lifespan.py` + `api/routes/*.py` +
+     `services/websocket_manager.py`
+   - `angela_llm_service.py` → `services/llm/router.py` +
+     `services/llm/providers/*.py`
 5. **重構 `core/autonomous/`**: 按領域拆分為 `life/`, `bio/`, `engine/`
 6. **更新 Matrix Annotation**: 補全缺失的 εθζη 維度到指南和代碼註解
 7. **集成理論公式**: 將五大公式計算結果實際注入 LLM Prompt
@@ -1157,40 +1187,40 @@ CHANGELOG 中存在 v7.x 虛擬版本號，與實際代碼 v6.x 不符。
 
 ## 附錄 A: 文件計數統計
 
-| 類別 | 數量 | 說明 |
-|------|------|------|
-| Python 文件 | ~1,001 | 主要後端邏輯 |
-| JS/TS 文件 | ~140 | Electron + 工具 |
-| MD 文檔 | ~805 | 包含大量生成文檔 |
-| 配置文件 | ~577 | YAML/JSON/TOML/INI |
-| 測試文件 | ~238 | 24 個測試子目錄 |
-| **總計** | **~2,761** | |
+| 類別        | 數量       | 說明               |
+| ----------- | ---------- | ------------------ |
+| Python 文件 | ~1,001     | 主要後端邏輯       |
+| JS/TS 文件  | ~140       | Electron + 工具    |
+| MD 文檔     | ~805       | 包含大量生成文檔   |
+| 配置文件    | ~577       | YAML/JSON/TOML/INI |
+| 測試文件    | ~238       | 24 個測試子目錄    |
+| **總計**    | **~2,761** |                    |
 
 ## 附錄 B: 分支拓撲 (關鍵分支)
 
-| 分支 | 基於 | 狀態 | 用途 |
-|------|------|------|------|
-| `main` | — | Active | 主開發分支 |
-| `master` | 初始 | ⏸️ 停滯 | Git 初始分支 (與 main 分離) |
-| `v6.0-clean` | main | ⏸️ | v6.0 清理版本 |
-| `infra/backups` | main | Active | 每週配置備份 |
-| `fix/*` | main | Merged | 各類修復分支 |
-| `feature/*` | main | Merged | 各類功能分支 |
-| `dependabot/*` | main | Auto | 自動依賴更新 |
+| 分支            | 基於 | 狀態    | 用途                        |
+| --------------- | ---- | ------- | --------------------------- |
+| `main`          | —    | Active  | 主開發分支                  |
+| `master`        | 初始 | ⏸️ 停滯 | Git 初始分支 (與 main 分離) |
+| `v6.0-clean`    | main | ⏸️      | v6.0 清理版本               |
+| `infra/backups` | main | Active  | 每週配置備份                |
+| `fix/*`         | main | Merged  | 各類修復分支                |
+| `feature/*`     | main | Merged  | 各類功能分支                |
+| `dependabot/*`  | main | Auto    | 自動依賴更新                |
 
 ## 附錄 C: 術語對照表
 
-| 術語 | 全稱 | 說明 |
-|------|------|------|
-| HAM | Hierarchical Associative Memory | 分層關聯記憶 |
-| HSP | Hierarchical State Protocol | 分層狀態協議 (MQTT 基礎) |
-| LIS | Linguistic Immune System | 語言免疫系統 |
-| AVIS | AI Virtual Input System | AI 虛擬輸入系統 |
-| HSM | Hierarchical Space-time Map | 分層時空映射 |
-| CDM | Cognitive Dividend Model | 認知紅利模型 |
-| MCP | Model Context Protocol | 模型上下文協議 |
-| TCS | Tiered Configuration System | 分層配置系統 |
-| UDM | Unified Display Matrix | 統一顯示矩陣 (桌面坐標) |
+| 術語 | 全稱                            | 說明                     |
+| ---- | ------------------------------- | ------------------------ |
+| HAM  | Hierarchical Associative Memory | 分層關聯記憶             |
+| HSP  | Hierarchical State Protocol     | 分層狀態協議 (MQTT 基礎) |
+| LIS  | Linguistic Immune System        | 語言免疫系統             |
+| AVIS | AI Virtual Input System         | AI 虛擬輸入系統          |
+| HSM  | Hierarchical Space-time Map     | 分層時空映射             |
+| CDM  | Cognitive Dividend Model        | 認知紅利模型             |
+| MCP  | Model Context Protocol          | 模型上下文協議           |
+| TCS  | Tiered Configuration System     | 分層配置系統             |
+| UDM  | Unified Display Matrix          | 統一顯示矩陣 (桌面坐標)  |
 
 ---
 

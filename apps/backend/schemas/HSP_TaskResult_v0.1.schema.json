@@ -37,12 +37,7 @@
       "type": "object"
     }
   },
-  "required": [
-    "result_id",
-    "request_id",
-    "executing_ai_id",
-    "status"
-  ],
+  "required": ["result_id", "request_id", "executing_ai_id", "status"],
   "$defs": {
     "HSPErrorDetails": {
       "type": "object",

@@ -97,12 +97,12 @@ python .angela/tools/angela_matrix_updater.py report
 
 ### 通用工具
 
-| 命令                                                              | 说明           |
-| ----------------------------------------------------------------- | -------------- |
-| ~~`python tools/hash_annotator.py annotate --file <file>`~~       | ~~为文件添加哈希~~ (已删除) |
+| 命令                                                                  | 说明                        |
+| --------------------------------------------------------------------- | --------------------------- |
+| ~~`python tools/hash_annotator.py annotate --file <file>`~~           | ~~为文件添加哈希~~ (已删除) |
 | ~~`python tools/hash_annotator.py annotate --dir <dir> --recursive`~~ | ~~为目录添加哈希~~ (已删除) |
-| ~~`python tools/hash_annotator.py validate`~~                     | ~~验证哈希~~ (已删除)       |
-| ~~`python tools/hash_annotator.py scan --output <file>`~~         | ~~扫描项目~~ (已删除)       |
+| ~~`python tools/hash_annotator.py validate`~~                         | ~~验证哈希~~ (已删除)       |
+| ~~`python tools/hash_annotator.py scan --output <file>`~~             | ~~扫描项目~~ (已删除)       |
 
 ### Angela专用工具
 
@@ -206,12 +206,12 @@ python .angela/tools/angela_ham_tracker.py scan
 
 ### 已完成 ✅
 
-| 工具                                      | 类型       | 状态          | 用途           |
-| ----------------------------------------- | ---------- | ------------- | -------------- |
-| ~~`tools/hash_annotator.py`~~             | 通用       | ❌ 已删除     | ~~文件哈希管理~~ |
-| `.angela/tools/angela_ham_tracker.py`     | Angela专用 | ✅            | HAM系统追踪    |
-| `.angela/tools/angela_layer_validator.py` | Angela专用 | ✅   | 6层架构验证    |
-| `.angela/tools/angela_matrix_updater.py`  | Angela专用 | ✅   | Matrix标记更新 |
+| 工具                                      | 类型       | 状态      | 用途             |
+| ----------------------------------------- | ---------- | --------- | ---------------- |
+| ~~`tools/hash_annotator.py`~~             | 通用       | ❌ 已删除 | ~~文件哈希管理~~ |
+| `.angela/tools/angela_ham_tracker.py`     | Angela专用 | ✅        | HAM系统追踪      |
+| `.angela/tools/angela_layer_validator.py` | Angela专用 | ✅        | 6层架构验证      |
+| `.angela/tools/angela_matrix_updater.py`  | Angela专用 | ✅        | Matrix标记更新   |
 
 ### 待创建 ⏳
 

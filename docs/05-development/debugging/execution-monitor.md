@@ -1,6 +1,8 @@
 # Execution Monitor - 執行監控系統
 
-> ⚠️ Note: the `from src.core_ai.execution_manager import ...` examples below reference the removed legacy module layout and are kept only as historical illustration.
+> ⚠️ Note: the `from src.core_ai.execution_manager import ...` examples below
+> reference the removed legacy module layout and are kept only as historical
+> illustration.
 
 ## 概述 | Overview
 

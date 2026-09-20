@@ -5,11 +5,11 @@
  * that can be found at https://www.live2d.com/eula/live2d-open-software-license-agreement_en.html.
  */
 
-import { CubismIdHandle } from '../id/cubismid';
-import { CubismFramework } from '../live2dcubismframework';
-import { CubismModelUserDataJson } from './cubismmodeluserdatajson';
+import { CubismIdHandle } from '../id/cubismid'
+import { CubismFramework } from '../live2dcubismframework'
+import { CubismModelUserDataJson } from './cubismmodeluserdatajson'
 
-const ArtMesh = 'ArtMesh';
+const ArtMesh = 'ArtMesh'
 
 /**
  * ユーザーデータインターフェース
@@ -17,9 +17,9 @@ const ArtMesh = 'ArtMesh';
  * Jsonから読み込んだユーザーデータを記録しておくための構造体
  */
 export class CubismModelUserDataNode {
-  targetType: CubismIdHandle; // ユーザーデータターゲットタイプ
-  targetId: CubismIdHandle; // ユーザーデータターゲットのID
-  value: string; // ユーザーデータ
+  targetType: CubismIdHandle // ユーザーデータターゲットタイプ
+  targetId: CubismIdHandle // ユーザーデータターゲットのID
+  value: string // ユーザーデータ
 }
 
 /**
@@ -36,11 +36,11 @@ export class CubismModelUserData {
    * @return 作成されたインスタンス
    */
   public static create(buffer: ArrayBuffer, size: number): CubismModelUserData {
-    const ret: CubismModelUserData = new CubismModelUserData();
+    const ret: CubismModelUserData = new CubismModelUserData()
 
-    ret.parseUserData(buffer, size);
+    ret.parseUserData(buffer, size)
 
-    return ret;
+    return ret
   }
 
   /**
@@ -50,8 +50,8 @@ export class CubismModelUserData {
    */
   public static delete(modelUserData: CubismModelUserData): void {
     if (modelUserData != null) {
-      modelUserData.release();
-      modelUserData = null;
+      modelUserData.release()
+      modelUserData = null
     }
   }
 
@@ -61,7 +61,7 @@ export class CubismModelUserData {
    * @return ユーザーデータリスト
    */
   public getArtMeshUserDatas(): Array<CubismModelUserDataNode> {
-    return this._artMeshUserDataNode;
+    return this._artMeshUserDataNode
   }
 
   /**
@@ -71,46 +71,41 @@ export class CubismModelUserData {
    * @param size      バッファのサイズ
    */
   public parseUserData(buffer: ArrayBuffer, size: number): void {
-    let json: CubismModelUserDataJson = new CubismModelUserDataJson(
-      buffer,
-      size
-    );
+    let json: CubismModelUserDataJson = new CubismModelUserDataJson(buffer, size)
     if (!json) {
-      json.release();
-      json = void 0;
-      return;
+      json.release()
+      json = void 0
+      return
     }
 
-    const typeOfArtMesh = CubismFramework.getIdManager().getId(ArtMesh);
-    const nodeCount: number = json.getUserDataCount();
+    const typeOfArtMesh = CubismFramework.getIdManager().getId(ArtMesh)
+    const nodeCount: number = json.getUserDataCount()
 
-    let dstIndex = this._userDataNodes.length;
-    this._userDataNodes.length = nodeCount;
+    let dstIndex = this._userDataNodes.length
+    this._userDataNodes.length = nodeCount
     for (let i = 0; i < nodeCount; i++) {
-      const addNode: CubismModelUserDataNode = new CubismModelUserDataNode();
+      const addNode: CubismModelUserDataNode = new CubismModelUserDataNode()
 
-      addNode.targetId = json.getUserDataId(i);
-      addNode.targetType = CubismFramework.getIdManager().getId(
-        json.getUserDataTargetType(i)
-      );
-      addNode.value = json.getUserDataValue(i);
-      this._userDataNodes[dstIndex++] = addNode;
+      addNode.targetId = json.getUserDataId(i)
+      addNode.targetType = CubismFramework.getIdManager().getId(json.getUserDataTargetType(i))
+      addNode.value = json.getUserDataValue(i)
+      this._userDataNodes[dstIndex++] = addNode
 
       if (addNode.targetType == typeOfArtMesh) {
-        this._artMeshUserDataNode.push(addNode);
+        this._artMeshUserDataNode.push(addNode)
       }
     }
 
-    json.release();
-    json = void 0;
+    json.release()
+    json = void 0
   }
 
   /**
    * コンストラクタ
    */
   public constructor() {
-    this._userDataNodes = new Array<CubismModelUserDataNode>();
-    this._artMeshUserDataNode = new Array<CubismModelUserDataNode>();
+    this._userDataNodes = new Array<CubismModelUserDataNode>()
+    this._artMeshUserDataNode = new Array<CubismModelUserDataNode>()
   }
 
   /**
@@ -120,22 +115,22 @@ export class CubismModelUserData {
    */
   public release(): void {
     for (let i = 0; i < this._userDataNodes.length; ++i) {
-      this._userDataNodes[i] = null;
+      this._userDataNodes[i] = null
     }
 
-    this._userDataNodes = null;
+    this._userDataNodes = null
   }
 
-  private _userDataNodes: Array<CubismModelUserDataNode>; // ユーザーデータ構造体配列
-  private _artMeshUserDataNode: Array<CubismModelUserDataNode>; // 閲覧リストの保持
+  private _userDataNodes: Array<CubismModelUserDataNode> // ユーザーデータ構造体配列
+  private _artMeshUserDataNode: Array<CubismModelUserDataNode> // 閲覧リストの保持
 }
 
 // Namespace definition for compatibility.
-import * as $ from './cubismmodeluserdata';
+import * as $ from './cubismmodeluserdata'
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
-  export const CubismModelUserData = $.CubismModelUserData;
-  export type CubismModelUserData = $.CubismModelUserData;
-  export const CubismModelUserDataNode = $.CubismModelUserDataNode;
-  export type CubismModelUserDataNode = $.CubismModelUserDataNode;
+  export const CubismModelUserData = $.CubismModelUserData
+  export type CubismModelUserData = $.CubismModelUserData
+  export const CubismModelUserDataNode = $.CubismModelUserDataNode
+  export type CubismModelUserDataNode = $.CubismModelUserDataNode
 }

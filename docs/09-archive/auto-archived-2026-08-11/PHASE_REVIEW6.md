@@ -1,12 +1,20 @@
 # Angela AI 專案全面分析與修復計畫 v33.13
 
-> **⚠️ HISTORICAL DOCUMENT (2026-06-23)**: Intelligence scores in this document are **inflated** — they were written before full maturity audit. Current assessment: 6.0/10 with LLM, **3.0/10 native only** (trained). See MASTER_TASK_MAP.md §X Summary for honest industry comparison. This document is retained for historical task tracking only.
-> **分析範圍**: P30-P44 (多模態管線框架 + 語意編碼器框架 + ED3N 接線, 259 多模態測試)  
+> **⚠️ HISTORICAL DOCUMENT (2026-06-23)**: Intelligence scores in this document
+> are **inflated** — they were written before full maturity audit. Current
+> assessment: 6.0/10 with LLM, **3.0/10 native only** (trained). See
+> MASTER_TASK_MAP.md §X Summary for honest industry comparison. This document is
+> retained for historical task tracking only. **分析範圍**: P30-P44
+> (多模態管線框架 + 語意編碼器框架 + ED3N 接線, 259 多模態測試)  
 > **專案版本**: 7.5.0-dev  
 > **方向修正**: P39-P41（LLM API 橋接）已移除——違背真實多模態目標  
-> **v33.7 語意理解驗證完成**: CLIP 512-dim raw vector 相似度測試通過: chicken↔chicken=1.0, chicken↔dog=0.75, chicken↔car=0.63. SemanticKeyMapper 新增 `mode="raw"` 支援 512-dim CLIP 直接比較 (跳過隨機投影). 小雞吃米圖 Step 2: 語意理解 **已驗證可用**.
-> **v33.13 CLIP pipeline 訓練**: CLIP similarity 0.89-0.97 (20 images), encoder brightness 0.37-0.60, generator loss 65.8% reduction. b_decode init fix (was 0.01, now 0.37).
-> **下一步:** YOLO 物件檢測 + 前端多模態 UI + WebSocket 串流
+> **v33.7 語意理解驗證完成**: CLIP 512-dim raw vector 相似度測試通過:
+> chicken↔chicken=1.0, chicken↔dog=0.75, chicken↔car=0.63.
+> SemanticKeyMapper 新增 `mode="raw"` 支援 512-dim
+> CLIP 直接比較 (跳過隨機投影). 小雞吃米圖 Step 2: 語意理解 **已驗證可用**.
+> **v33.13 CLIP pipeline 訓練**: CLIP similarity 0.89-0.97 (20 images), encoder
+> brightness 0.37-0.60, generator loss 65.8% reduction. b_decode init fix (was
+> 0.01, now 0.37). **下一步:** YOLO 物件檢測 + 前端多模態 UI + WebSocket 串流
 
 ---
 
@@ -16,40 +24,44 @@
 
 1. **混淆分數類型**: 本文檔的「智能維度總表」混合了「框架分數」和「實際分數」，沒有明確標註
 2. **訓練前評分**: 分數在 2026-06-22/23 評估，但當時模型從未訓練過
-3. **僅加標註未修正**: 2026-06-26 的 `44fec2abb` 提交僅添加了免責聲明，未修正實際分數
-4. **版本號不斷更新但內容不變**: v33.5→v33.7→v33.12→v33.13 版本號不斷更新，但表單內容沒有變化
+3. **僅加標註未修正**: 2026-06-26 的 `44fec2abb`
+   提交僅添加了免責聲明，未修正實際分數
+4. **版本號不斷更新但內容不變**:
+   v33.5→v33.7→v33.12→v33.13 版本號不斷更新，但表單內容沒有變化
 
 ### 分數修正（含證據）
 
-| 維度 | 原分數 (2026-06-23) | 修正分數 (2026-07-06) | 分數類型 | 證據 |
-|------|:-------------------:|:---------------------:|----------|------|
-| 認知 | 7/10 (框架) | **3.0/10** (訓練) | 訓練分數 | ED3N acc=0.914 (訓練集), 基準測試 38% |
-| 語言 | 7.5/10 (框架) | **6.0/10** (含LLM) | 實際分數 | 自然對話靠外部 LLM API |
-| 自主性 | 5/10 (框架) | **3.0/10** (訓練) | 訓練分數 | 框架完整，但無 LLM 不穩定 |
-| 視覺 | 5.5/10 (框架) | **5.0/10** (訓練) | 訓練分數 | CLIP 語意已接通，但解碼器仍模糊 |
-| 聽覺 | 5/10 (框架) | **5.0/10** (訓練) | 訓練分數 | Whisper STT 已接通，TTS 可用 |
-| 觸覺 | 2/10 (框架) | **0/10** (已刪除) | 實際分數 | TactileService 已刪除 |
-| 行動 | 4.5/10 (框架) | **4.5/10** (框架) | 框架分數 | 工具較強，但無真實執行 |
-| 情感 | 4/10 (框架) | **4.0/10** (框架) | 框架分數 | 結構存在，效果不明顯 |
-| 環境 | 3.5/10 (框架) | **3.5/10** (框架) | 框架分數 | 基礎可用 |
+| 維度   | 原分數 (2026-06-23) | 修正分數 (2026-07-06) | 分數類型 | 證據                                  |
+| ------ | :-----------------: | :-------------------: | -------- | ------------------------------------- |
+| 認知   |     7/10 (框架)     |   **3.0/10** (訓練)   | 訓練分數 | ED3N acc=0.914 (訓練集), 基準測試 38% |
+| 語言   |    7.5/10 (框架)    |  **6.0/10** (含LLM)   | 實際分數 | 自然對話靠外部 LLM API                |
+| 自主性 |     5/10 (框架)     |   **3.0/10** (訓練)   | 訓練分數 | 框架完整，但無 LLM 不穩定             |
+| 視覺   |    5.5/10 (框架)    |   **5.0/10** (訓練)   | 訓練分數 | CLIP 語意已接通，但解碼器仍模糊       |
+| 聽覺   |     5/10 (框架)     |   **5.0/10** (訓練)   | 訓練分數 | Whisper STT 已接通，TTS 可用          |
+| 觸覺   |     2/10 (框架)     |   **0/10** (已刪除)   | 實際分數 | TactileService 已刪除                 |
+| 行動   |    4.5/10 (框架)    |   **4.5/10** (框架)   | 框架分數 | 工具較強，但無真實執行                |
+| 情感   |     4/10 (框架)     |   **4.0/10** (框架)   | 框架分數 | 結構存在，效果不明顯                  |
+| 環境   |    3.5/10 (框架)    |   **3.5/10** (框架)   | 框架分數 | 基礎可用                              |
 
 ### 關鍵發現
 
 1. **ED3N 的 0.914 accuracy 是在訓練集上測的**，不是 hold-out set，所以可能高估
-2. **GARDEN 的 0.700 accuracy 是 Hebbian 收斂**（權重趨近 target_strength=0.7），不是語義理解
+2. **GARDEN 的 0.700
+   accuracy 是 Hebbian 收斂**（權重趨近 target_strength=0.7），不是語義理解
 3. **Math 100% 是因為 Python ast.parse**，不是 ED3N 學會的
-4. **Knowledge 0% 是因為 ED3N 字典以中文為主**，不包含英文知識映射（如 sky→blue, Monday→Tuesday）
+4. **Knowledge 0% 是因為 ED3N 字典以中文為主**，不包含英文知識映射（如 sky→blue,
+   Monday→Tuesday）
 
 ### 分數類型定義
 
-| 分數類型 | 定義 | 計算方式 | 證據來源 |
-|----------|------|----------|----------|
-| **架構分數** | 代碼結構理論上能支持什麼 | 代碼行數、模組數、API 路由數 | `git log --stat` |
-| **框架分數** | 已實現的框架能做什麼（含靜態數據） | 功能模組存在 + 靜態數據已加載 | 代碼審計 |
-| **預期分數** | 訓練後應該能做什麼 | 基於架構能力推斷 | 設計文檔 |
-| **訓練分數** | 訓練後在訓練集上能做什麼 | `accuracy = correct / total` on training set | `train_pipeline.py` output |
-| **驗證分數** | 在未見過的數據上能做什麼 | `accuracy = correct / total` on hold-out set | `benchmark_ed3n_garden.py` |
-| **實際分數** | 在真實使用中能做什麼 | 端到端測試 + 用戶體驗 | 實際使用 |
+| 分數類型     | 定義                               | 計算方式                                     | 證據來源                   |
+| ------------ | ---------------------------------- | -------------------------------------------- | -------------------------- |
+| **架構分數** | 代碼結構理論上能支持什麼           | 代碼行數、模組數、API 路由數                 | `git log --stat`           |
+| **框架分數** | 已實現的框架能做什麼（含靜態數據） | 功能模組存在 + 靜態數據已加載                | 代碼審計                   |
+| **預期分數** | 訓練後應該能做什麼                 | 基於架構能力推斷                             | 設計文檔                   |
+| **訓練分數** | 訓練後在訓練集上能做什麼           | `accuracy = correct / total` on training set | `train_pipeline.py` output |
+| **驗證分數** | 在未見過的數據上能做什麼           | `accuracy = correct / total` on hold-out set | `benchmark_ed3n_garden.py` |
+| **實際分數** | 在真實使用中能做什麼               | 端到端測試 + 用戶體驗                        | 實際使用                   |
 
 **⚠️ 歷史教訓**: 本文檔混淆了「框架分數」和「實際分數」，給了 7.5/10，但當時模型從未訓練過。正確做法是分別標註每種分數。
 
@@ -57,75 +69,77 @@
 
 ## 1. 測試健康度 ✅ 9.0/10
 
-> **⚠️ 數據校正 (v33.5 審計)**: 以下數據基於 2026-06-22 實際 `pytest --co` 收集結果，非歷史累計。  
-> ¹ 2026-06-26 環境驗證: `pytest tests/ --collect-only -q` 回傳 **4,261 tests / 33 skipped**。4,920 為 2026-06-22 環境值，可能受 torch/chromadb 可用性影響。
+> **⚠️ 數據校正 (v33.5 審計)**: 以下數據基於 2026-06-22 實際 `pytest --co`
+> 收集結果，非歷史累計。  
+> ¹ 2026-06-26 環境驗證: `pytest tests/ --collect-only -q` 回傳 **4,261 tests /
+> 33 skipped**。4,920 為 2026-06-22 環境值，可能受 torch/chromadb 可用性影響。
 
-| 指標 | 數值 | 狀態 |
-|------|------|------|
-| **總收集測試** | **4,261 tests collected**¹ | ✅ |
-| ED3N 完整測試 | **114/114 通過** | ✅ **0 計時器超時** |
-| GARDEN 完整測試 | **205/205 通過** | ✅ **ChromaEncoder + binary_store + 引擎全通** |
-| **多模態測試** | **259/259 通過** (19 個測試檔案) | ✅ **P15-P44 全部多模態** |
-| MetaController 相關測試 | **58 通過** (含 meta_controller + meta_routes + 整合) | ✅ |
-| ChatService 測試 | **12/12 全部通過** | ✅ |
-| API 端點 | **54 個路由** (33 multimodal + 8 chat + 2 meta + 3 ops + 8 desktop) | ✅ |
-| VectorStore | **numpy 460,235 向量** | ✅ |
-| ED3N 引擎 | **460,281 條目, ~16s 載入** | ✅ |
-| **CLP 連續學習** | **trainer 接線 + ED3NEngine._maybe_learn() 接通** | ✅ **P2 完成!** |
-| **HAM 記憶整合** | **VectorStore + HAM 注入對話上下文** | ✅ **P2 完成!** |
-| 後端啟動 | **python -m uvicorn ✅** | ✅ |
-| AudioService | **speech_recognition + edge-tts 接線** | ✅ |
-| VisionService | **PIL-based 色彩/比對/描述/OCR (pytesseract)** | ✅ |
-| AutonomousLifeCycle | **724 行實裝 → 已接線至 DigitalLifeIntegrator** | ✅ |
-| WeatherService | **wttr.in 實時天氣 + 主動交互天氣觸發** | ✅ |
-| P29 真實數據驗證 | ESC-50 + CIFAR-10 雙模態: 對比損失 **0.209** | ✅ |
+| 指標                    | 數值                                                                | 狀態                                           |
+| ----------------------- | ------------------------------------------------------------------- | ---------------------------------------------- |
+| **總收集測試**          | **4,261 tests collected**¹                                          | ✅                                             |
+| ED3N 完整測試           | **114/114 通過**                                                    | ✅ **0 計時器超時**                            |
+| GARDEN 完整測試         | **205/205 通過**                                                    | ✅ **ChromaEncoder + binary_store + 引擎全通** |
+| **多模態測試**          | **259/259 通過** (19 個測試檔案)                                    | ✅ **P15-P44 全部多模態**                      |
+| MetaController 相關測試 | **58 通過** (含 meta_controller + meta_routes + 整合)               | ✅                                             |
+| ChatService 測試        | **12/12 全部通過**                                                  | ✅                                             |
+| API 端點                | **54 個路由** (33 multimodal + 8 chat + 2 meta + 3 ops + 8 desktop) | ✅                                             |
+| VectorStore             | **numpy 460,235 向量**                                              | ✅                                             |
+| ED3N 引擎               | **460,281 條目, ~16s 載入**                                         | ✅                                             |
+| **CLP 連續學習**        | **trainer 接線 + ED3NEngine.\_maybe_learn() 接通**                  | ✅ **P2 完成!**                                |
+| **HAM 記憶整合**        | **VectorStore + HAM 注入對話上下文**                                | ✅ **P2 完成!**                                |
+| 後端啟動                | **python -m uvicorn ✅**                                            | ✅                                             |
+| AudioService            | **speech_recognition + edge-tts 接線**                              | ✅                                             |
+| VisionService           | **PIL-based 色彩/比對/描述/OCR (pytesseract)**                      | ✅                                             |
+| AutonomousLifeCycle     | **724 行實裝 → 已接線至 DigitalLifeIntegrator**                     | ✅                                             |
+| WeatherService          | **wttr.in 實時天氣 + 主動交互天氣觸發**                             | ✅                                             |
+| P29 真實數據驗證        | ESC-50 + CIFAR-10 雙模態: 對比損失 **0.209**                        | ✅                                             |
 
 ## 2. 第18-19輪變更詳情
 
 ### 第18輪: CLP 連續學習迴路接通 ✅
 
-| 變更 | 檔案 | 影響 |
-|------|------|------|
-| **ChatService 接入 ED3NTrainer** | `chat_service.py` ✅ | CLP 之前 `trainer=None` → `trainer=ED3NTrainer(engine)`，`train_step()` 現在可正常執行 |
-| **ED3NEngine._maybe_learn() 接線** | `chat_service.py` ✅ | `engine._continuous_learning = self._continuous_learning` — 直接引擎調用也能觸發學習 |
-| **CLP 概念發現驗證** | 實測 ✅ | 6 次互動後發現 2 個新概念，觸發 1 次訓練，字典從 46→48 條 |
+| 變更                                | 檔案                 | 影響                                                                                   |
+| ----------------------------------- | -------------------- | -------------------------------------------------------------------------------------- |
+| **ChatService 接入 ED3NTrainer**    | `chat_service.py` ✅ | CLP 之前 `trainer=None` → `trainer=ED3NTrainer(engine)`，`train_step()` 現在可正常執行 |
+| **ED3NEngine.\_maybe_learn() 接線** | `chat_service.py` ✅ | `engine._continuous_learning = self._continuous_learning` — 直接引擎調用也能觸發學習   |
+| **CLP 概念發現驗證**                | 實測 ✅              | 6 次互動後發現 2 個新概念，觸發 1 次訓練，字典從 46→48 條                              |
 
 ### 第19輪: HAM 記憶整合進對話迴圈 ✅ (P2 完成!)
 
-| 變更 | 檔案 | 影響 |
-|------|------|------|
-| **VectorStore 語義搜索注入** | `chat_service.py` ✅ | 每次 generate_response() 前查詢 VectorStore(460K 向量)，結果注入 `merged_context.dictionary_context` |
-| **HAMMemoryManager 模板檢索注入** | `chat_service.py` ✅ | 同步查詢 HAM (angela_memory.json 對話模板)，結果注入 `merged_context.conversation_memory` |
-| **上下文字段拆分** | `chat_service.py` ✅ | 分離 `dictionary_context` (知識) 與 `conversation_memory` (經驗) 讓 LLM 提示模板區分處理 |
-| **非阻塞修復** | `chat_service.py` ✅ | `semantic_search` 包裝 `asyncio.to_thread()` 防止 460K 向量搜索阻塞事件迴圈 |
-| **智能下限更新** | v6.21→v6.23 ✅ | 下限 7→8，記憶分數 5→7/10 |
+| 變更                              | 檔案                 | 影響                                                                                                 |
+| --------------------------------- | -------------------- | ---------------------------------------------------------------------------------------------------- |
+| **VectorStore 語義搜索注入**      | `chat_service.py` ✅ | 每次 generate_response() 前查詢 VectorStore(460K 向量)，結果注入 `merged_context.dictionary_context` |
+| **HAMMemoryManager 模板檢索注入** | `chat_service.py` ✅ | 同步查詢 HAM (angela_memory.json 對話模板)，結果注入 `merged_context.conversation_memory`            |
+| **上下文字段拆分**                | `chat_service.py` ✅ | 分離 `dictionary_context` (知識) 與 `conversation_memory` (經驗) 讓 LLM 提示模板區分處理             |
+| **非阻塞修復**                    | `chat_service.py` ✅ | `semantic_search` 包裝 `asyncio.to_thread()` 防止 460K 向量搜索阻塞事件迴圈                          |
+| **智能下限更新**                  | v6.21→v6.23 ✅       | 下限 7→8，記憶分數 5→7/10                                                                            |
 
 ### 第20輪: P3 邊際優化 — 測試韌性 + 記憶安全 + 多模態去偽 ✅
 
-| 變更 | 檔案 | 影響 |
-|------|------|------|
-| **GARDEN torch 測試 skipif 守衛** | `test_binary_store.py` ✅ | 2 個 torch 相依測試不再 crash，優雅跳過 → **42/42 全部通過** |
-| **CLP max_buffer_size 安全邊界** | `continuous_learning.py` ✅ | 新增 `max_buffer_size=500` / `max_history_size=1000` 參數，防止無限增長 |
-| **ImageEncoder 重複 try/except 清理** | `image_encoder.py` ✅ | 移除第二個無效 try block → 精簡 5 行 |
-| **版本同步 5→12 檔案** | 5 個 `package.json` ✅ | `desktop-app`, `mobile-app`, `web-dashboard`, `cli`, `biology-core` → `7.5.0-dev` |
-| **AudioService stub→functional** | `audio_service.py` ✅ | `speech_recognition` + `edge-tts` 接線，WAV 時長解析，`process()` 路由擴充 |
-| **VisionService 去隨機化** | `vision_service.py` ✅ | `_analyze_colors` → PIL 真實色提取；`_generate_image_caption` → PIL metadata；`compare_images` → 像素級比對；保留需 ML 的方法 (物件/臉部/場景) 為 mock |
-| **智能評估更新** | v6.23→v7.0 ✅ | P3 完成，測試韌性 + 記憶安全 + 多模態去偽 |
+| 變更                                  | 檔案                        | 影響                                                                                                                                                   |
+| ------------------------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **GARDEN torch 測試 skipif 守衛**     | `test_binary_store.py` ✅   | 2 個 torch 相依測試不再 crash，優雅跳過 → **42/42 全部通過**                                                                                           |
+| **CLP max_buffer_size 安全邊界**      | `continuous_learning.py` ✅ | 新增 `max_buffer_size=500` / `max_history_size=1000` 參數，防止無限增長                                                                                |
+| **ImageEncoder 重複 try/except 清理** | `image_encoder.py` ✅       | 移除第二個無效 try block → 精簡 5 行                                                                                                                   |
+| **版本同步 5→12 檔案**                | 5 個 `package.json` ✅      | `desktop-app`, `mobile-app`, `web-dashboard`, `cli`, `biology-core` → `7.5.0-dev`                                                                      |
+| **AudioService stub→functional**      | `audio_service.py` ✅       | `speech_recognition` + `edge-tts` 接線，WAV 時長解析，`process()` 路由擴充                                                                             |
+| **VisionService 去隨機化**            | `vision_service.py` ✅      | `_analyze_colors` → PIL 真實色提取；`_generate_image_caption` → PIL metadata；`compare_images` → 像素級比對；保留需 ML 的方法 (物件/臉部/場景) 為 mock |
+| **智能評估更新**                      | v6.23→v7.0 ✅               | P3 完成，測試韌性 + 記憶安全 + 多模態去偽                                                                                                              |
 
 ### 第21輪: P4 深度強化 — 自主生命接線 + 多模態去偽 + 後設認知框架 ✅
 
-| 變更 | 檔案 | 影響 |
-|------|------|------|
-| **AutonomousLifeCycle 接線** | `digital_life_integrator.py` ✅ | 724 行類別正式在 `DigitalLifeIntegrator.initialize()` 中實例化並啟動 → 自主性 **4→5** |
-| **VisionService 全去偽** | `vision_service.py` ✅ | `_detect_objects` → PIL metadata; `_analyze_scene` → 亮度/對比度; `_detect_emotions`/`_detect_faces` → 空結果 (ML needed); `_identify_differences`/`_match_image_features` → PIL 像素/哈希比對 |
-| **WeatherService 實裝** | `weather_service.py` (NEW) ✅ | wttr.in 免費 API (免金鑰), 30 分鐘快取, aiohttp 非阻塞, graceful fallback |
-| **天氣觸發接線** | `proactive_interaction_system.py` ✅ | `_check_weather_opportunities()` 檢測天氣變化，`_generate_weather_message()` 產生主動訊息 |
-| **MetaController 創建** | `meta_controller.py` (NEW) ✅ | 後設認知框架: 置信度取樣/校準誤差計算/過度自信檢測/門檻調整建議 |
-| **智能維度更新** | v7.0→v8.0 ✅ | 自主性 4→5 / 視覺 3.5→4 / 元認知 3→4 / 環境 2.5→3 |
-| **P6 強化** | v8.0→v9.0 ✅ | **元認知 4→5 / 觸覺 2→4 / 反射 0→4** |
-| **P7 強化** | v9.0→v10.0 ✅ | **ED3N 真實置信度 → ModelBus / Tactile 全橋接** |
-| **P8 強化** | v10.0→v11.0 ✅ | **MetaController→LLM 閉環 / GARDEN 置信度 / 10 新測試** |
-| **P9 強化** | v11.0→v12.0 ✅ | **MetaController API 儀表板 / 校準閉環 / 別名清理** |
+| 變更                         | 檔案                                 | 影響                                                                                                                                                                                           |
+| ---------------------------- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **AutonomousLifeCycle 接線** | `digital_life_integrator.py` ✅      | 724 行類別正式在 `DigitalLifeIntegrator.initialize()` 中實例化並啟動 → 自主性 **4→5**                                                                                                          |
+| **VisionService 全去偽**     | `vision_service.py` ✅               | `_detect_objects` → PIL metadata; `_analyze_scene` → 亮度/對比度; `_detect_emotions`/`_detect_faces` → 空結果 (ML needed); `_identify_differences`/`_match_image_features` → PIL 像素/哈希比對 |
+| **WeatherService 實裝**      | `weather_service.py` (NEW) ✅        | wttr.in 免費 API (免金鑰), 30 分鐘快取, aiohttp 非阻塞, graceful fallback                                                                                                                      |
+| **天氣觸發接線**             | `proactive_interaction_system.py` ✅ | `_check_weather_opportunities()` 檢測天氣變化，`_generate_weather_message()` 產生主動訊息                                                                                                      |
+| **MetaController 創建**      | `meta_controller.py` (NEW) ✅        | 後設認知框架: 置信度取樣/校準誤差計算/過度自信檢測/門檻調整建議                                                                                                                                |
+| **智能維度更新**             | v7.0→v8.0 ✅                         | 自主性 4→5 / 視覺 3.5→4 / 元認知 3→4 / 環境 2.5→3                                                                                                                                              |
+| **P6 強化**                  | v8.0→v9.0 ✅                         | **元認知 4→5 / 觸覺 2→4 / 反射 0→4**                                                                                                                                                           |
+| **P7 強化**                  | v9.0→v10.0 ✅                        | **ED3N 真實置信度 → ModelBus / Tactile 全橋接**                                                                                                                                                |
+| **P8 強化**                  | v10.0→v11.0 ✅                       | **MetaController→LLM 閉環 / GARDEN 置信度 / 10 新測試**                                                                                                                                        |
+| **P9 強化**                  | v11.0→v12.0 ✅                       | **MetaController API 儀表板 / 校準閉環 / 別名清理**                                                                                                                                            |
 
 ### 第22輪: P5 導入路徑清理 — N3 技術債還清 ✅
 
@@ -137,271 +151,271 @@
 
 ### 第26輪: P9 置信度儀表板 + 校準閉環 + 別名清理 ✅
 
-| 變更 | 檔案 | 影響 |
-|------|------|------|
-| **MetaController API 端點** | `api/routes/meta_routes.py` (NEW) ✅ | `GET /api/v1/meta/confidence/summary` 返回全局校準摘要; `GET /api/v1/meta/confidence/calibration/{source}` 返回單源報告 |
-| **API 路由註冊** | `api/router.py` ✅ | meta_routes 以 `/api/v1` 前綴註冊, try/except ImportError 模式 |
-| **校準閉環 (router.py 門檻)** | `services/llm/router.py` ✅ | `_try_template_match()` 0.8/0.4 硬編碼 → MetaController 動態調整 (`direct_threshold`/`draft_low`) |
-| **Live2D 別名清理** | `core/engine/live2d_integration.py` ✅ | `Live2DExpression`/`Live2DAction` 向後相容別名移除 (2 個 dead export) |
-| **Autonomous __init__ 清理** | `core/autonomous/__init__.py` ✅ | 對應 import/__all__ 更新 |
-| **測試** | 68 測試全部通過 ✅ | meta_controller 10 + model_bus 36 + tactile 11 + tickle 11 |
+| 變更                          | 檔案                                   | 影響                                                                                                                    |
+| ----------------------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| **MetaController API 端點**   | `api/routes/meta_routes.py` (NEW) ✅   | `GET /api/v1/meta/confidence/summary` 返回全局校準摘要; `GET /api/v1/meta/confidence/calibration/{source}` 返回單源報告 |
+| **API 路由註冊**              | `api/router.py` ✅                     | meta_routes 以 `/api/v1` 前綴註冊, try/except ImportError 模式                                                          |
+| **校準閉環 (router.py 門檻)** | `services/llm/router.py` ✅            | `_try_template_match()` 0.8/0.4 硬編碼 → MetaController 動態調整 (`direct_threshold`/`draft_low`)                       |
+| **Live2D 別名清理**           | `core/engine/live2d_integration.py` ✅ | `Live2DExpression`/`Live2DAction` 向後相容別名移除 (2 個 dead export)                                                   |
+| **Autonomous **init** 清理**  | `core/autonomous/__init__.py` ✅       | 對應 import/**all** 更新                                                                                                |
+| **測試**                      | 68 測試全部通過 ✅                     | meta_controller 10 + model_bus 36 + tactile 11 + tickle 11                                                              |
 
 ### 第27輪: P10 置信度測試 + ED3N warm-up + VisionService 修復 ✅
 
-| 變更 | 檔案 | 影響 |
-|------|------|------|
-| **GARDEN _last_confidence 測試** | `tests/ai/garden/test_garden_engine.py` ✅ | 4 個新測試: reflex=0.95, empty=0.0, unknown=0.0, vector>0.0 — 確保 GARDEN 流程每個路徑都正確設置置信度 |
-| **MetaController API 端點測試** | `tests/api/test_api_endpoints.py` ✅ | 3 個新測試: summary 全局摘要 / 已知來源校準 / 未知來源 404 |
-| **ED3NEngine.warm_up()** | `ai/ed3n/ed3n_engine.py` ✅ | 新方法預加載外部字典, 避免冷啟動首次查詢 500+ms 延遲 |
-| **VisionService.shutdown() 返回值** | `services/vision_service.py` ✅ | 缺少 `return True` 導致 shutdown 返回 None — 違反 Service API 約定 |
-| **lifespan.py 暖機整合** | `api/lifespan.py` ✅ | 啟動時自動調用 `ED3NEngine.get_shared().warm_up()`, 首次用戶請求零冷啟動 |
-| **GARDEN dictionary.py np 修復** | `ai/garden/dictionary.py` ✅ | 預先存在 bug: `np` 未在模組頂層導入, 相容模式下 `_normalize()` 噴 `NameError`. 加入 `import numpy as np`; `_get_xp()` 改為始終返回 numpy (torch 缺少 `.array`/`.float32`) |
-| **測試** | 75 測試全部通過 ✅ | GARDEN engine 15 + meta_controller 10 + model_bus 36 + tactile 11 + tickle 11 + API 3 |
+| 變更                                | 檔案                                       | 影響                                                                                                                                                                      |
+| ----------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **GARDEN \_last_confidence 測試**   | `tests/ai/garden/test_garden_engine.py` ✅ | 4 個新測試: reflex=0.95, empty=0.0, unknown=0.0, vector>0.0 — 確保 GARDEN 流程每個路徑都正確設置置信度                                                                    |
+| **MetaController API 端點測試**     | `tests/api/test_api_endpoints.py` ✅       | 3 個新測試: summary 全局摘要 / 已知來源校準 / 未知來源 404                                                                                                                |
+| **ED3NEngine.warm_up()**            | `ai/ed3n/ed3n_engine.py` ✅                | 新方法預加載外部字典, 避免冷啟動首次查詢 500+ms 延遲                                                                                                                      |
+| **VisionService.shutdown() 返回值** | `services/vision_service.py` ✅            | 缺少 `return True` 導致 shutdown 返回 None — 違反 Service API 約定                                                                                                        |
+| **lifespan.py 暖機整合**            | `api/lifespan.py` ✅                       | 啟動時自動調用 `ED3NEngine.get_shared().warm_up()`, 首次用戶請求零冷啟動                                                                                                  |
+| **GARDEN dictionary.py np 修復**    | `ai/garden/dictionary.py` ✅               | 預先存在 bug: `np` 未在模組頂層導入, 相容模式下 `_normalize()` 噴 `NameError`. 加入 `import numpy as np`; `_get_xp()` 改為始終返回 numpy (torch 缺少 `.array`/`.float32`) |
+| **測試**                            | 75 測試全部通過 ✅                         | GARDEN engine 15 + meta_controller 10 + model_bus 36 + tactile 11 + tickle 11 + API 3                                                                                     |
 
 ### 第28輪: P11 ED3N 信心整合測試 + GARDEN 持久化修復 ✅
 
-| 變更 | 檔案 | 影響 |
-|------|------|------|
-| **ED3N→ModelBus→MetaController 整合測試** | `tests/ai/test_integration_ai_pipeline.py` ✅ | 新 `TestConfidencePipeline` 類別 (8 測試): reflex/empty/math/shallow 置信度記錄、多查詢累積、全模型記錄、門檻調整、ED3N _last_confidence 存取 |
-| **GARDEN 持久化載入修復** | `ai/garden/garden_engine.py` ✅ | `load()` 方法在 numpy 相容模式下無法載入 SNN 權重 (檢查 `snn.pt` 但 numpy 存為 `snn.pt.npy` + `snn.json`). 新增 `os.path.exists(snn_path + ".npy")` 回退檢查 |
-| **GARDEN 持久化測試修復** | `tests/ai/garden/test_garden_engine.py` ✅ | `test_save_creates_files` 檢查 `.pt` 或 `.npy` 任一存在, 避免 numpy 模式誤判 |
-| **ModelBus 預設逾時提升** | `tests/ai/test_integration_ai_pipeline.py` ✅ | ED3N 外部字典懶載入需 30s+, 將整合測試 busy timeout 從 30s → 120s |
-| **多模態架構定義** | `docs/PHASE_REVIEW6.md §4.9` ✅ | 虛假多模態 vs 真實多模態定義、對照表、P12-P16 五階段演化路徑 |
-| **測試** | 12 測試全部通過 ✅ | 信心整合 8 + GARDEN 持久化 4 |
+| 變更                                      | 檔案                                          | 影響                                                                                                                                                         |
+| ----------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **ED3N→ModelBus→MetaController 整合測試** | `tests/ai/test_integration_ai_pipeline.py` ✅ | 新 `TestConfidencePipeline` 類別 (8 測試): reflex/empty/math/shallow 置信度記錄、多查詢累積、全模型記錄、門檻調整、ED3N _last_confidence 存取                |
+| **GARDEN 持久化載入修復**                 | `ai/garden/garden_engine.py` ✅               | `load()` 方法在 numpy 相容模式下無法載入 SNN 權重 (檢查 `snn.pt` 但 numpy 存為 `snn.pt.npy` + `snn.json`). 新增 `os.path.exists(snn_path + ".npy")` 回退檢查 |
+| **GARDEN 持久化測試修復**                 | `tests/ai/garden/test_garden_engine.py` ✅    | `test_save_creates_files` 檢查 `.pt` 或 `.npy` 任一存在, 避免 numpy 模式誤判                                                                                 |
+| **ModelBus 預設逾時提升**                 | `tests/ai/test_integration_ai_pipeline.py` ✅ | ED3N 外部字典懶載入需 30s+, 將整合測試 busy timeout 從 30s → 120s                                                                                            |
+| **多模態架構定義**                        | `docs/PHASE_REVIEW6.md §4.9` ✅               | 虛假多模態 vs 真實多模態定義、對照表、P12-P16 五階段演化路徑                                                                                                 |
+| **測試**                                  | 12 測試全部通過 ✅                            | 信心整合 8 + GARDEN 持久化 4                                                                                                                                 |
 
 ### 第29輪: P12 預先存在失敗清零 + ED3N 執行緒安全修復 ✅
 
-| 變更 | 檔案 | 影響 |
-|------|------|------|
-| **ED3N thread_safety 測試修復** | `tests/ai/ed3n/test_ed3n.py` ✅ | 3 個執行緒安全測試因 ED3N 外部字典懶載入 (30s+) 而計時器超時. 加入 `engine.warm_up()` 預載 + `f.result(timeout=120)` 明確逾時, 確保 32 執行緒並發不因首次載入而阻塞 |
-| **ChromaEncoder torch None** | 環境解析 ✅ | 4 個 ChromaEncoder 測試之前因 `torch` 為 `None` 而失敗. PyTorch 環境穩定後全部通過 (6/6) |
-| **binary_store PermissionError** | 環境解析 ✅ | 2 個 binary_store 測試之前因 Windows 檔案鎖競爭而 `PermissionError`. 環境穩定後全部通過 (2/2) |
-| **測試** | **7 預先存在失敗歸零** ✅ | GARDEN 205/205 (+7), ED3N 114/114 (+3), 總計 745 通過 |
+| 變更                             | 檔案                            | 影響                                                                                                                                                                |
+| -------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ED3N thread_safety 測試修復**  | `tests/ai/ed3n/test_ed3n.py` ✅ | 3 個執行緒安全測試因 ED3N 外部字典懶載入 (30s+) 而計時器超時. 加入 `engine.warm_up()` 預載 + `f.result(timeout=120)` 明確逾時, 確保 32 執行緒並發不因首次載入而阻塞 |
+| **ChromaEncoder torch None**     | 環境解析 ✅                     | 4 個 ChromaEncoder 測試之前因 `torch` 為 `None` 而失敗. PyTorch 環境穩定後全部通過 (6/6)                                                                            |
+| **binary_store PermissionError** | 環境解析 ✅                     | 2 個 binary_store 測試之前因 Windows 檔案鎖競爭而 `PermissionError`. 環境穩定後全部通過 (2/2)                                                                       |
+| **測試**                         | **7 預先存在失敗歸零** ✅       | GARDEN 205/205 (+7), ED3N 114/114 (+3), 總計 745 通過                                                                                                               |
 
 ### 第30輪: P13 ED3N 字典載入效能最佳化 ✅
 
-| 變更 | 檔案 | 影響 |
-|------|------|------|
-| **orjson 選用快速 JSON 解析** | `ai/ed3n/ed3n_engine.py` ✅ | `load_external_dictionaries()` 使用 `orjson.loads()` (當可用時) 替代 `json.load()` — 132MB JSON 解析從 7.5s → 3.5s. `orjson` 已安裝於環境中, 無新增依賴; `ImportError` 優雅回退至 stdlib json |
-| **normalize_text ASCII fast-path** | `core/unicode_utils.py` ✅ | `isascii()` 短路: 跳過 NFKC normalize + fullwidth translate + zero-width replace. ~70% 字典 surface 為純 ASCII — 920K 次呼叫從 4μs → 0.7μs (6x 加速) |
-| **_rebuild_index split() fast-path** | `ed3n/dictionary_layer.py` ✅ | ASCII surface 使用 `str.split()` 替代 `re.findall(r"[\w]+")` — 6.5μs → 0.1μs (65x). 語意等價 (純 ASCII 空格分割 = 單詞序列) |
-| **DictionaryEntry __slots__** | `ed3n/dictionary_layer.py` ✅ | 減少 460K 物件記憶體開銷 ~30%, 物件建立加速 ~20% |
-| **測試時間改善** | — | ED3N 完整套件: **247s → 178s** (28% 加速). 外部字典載入: **20.9s → 15.76s** (25% 加速) |
-| **GARDEN 測試** | — | 198/198 通過 (7 環境相依失敗因 chromadb/torch 可用性波動) |
+| 變更                                  | 檔案                          | 影響                                                                                                                                                                                          |
+| ------------------------------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **orjson 選用快速 JSON 解析**         | `ai/ed3n/ed3n_engine.py` ✅   | `load_external_dictionaries()` 使用 `orjson.loads()` (當可用時) 替代 `json.load()` — 132MB JSON 解析從 7.5s → 3.5s. `orjson` 已安裝於環境中, 無新增依賴; `ImportError` 優雅回退至 stdlib json |
+| **normalize_text ASCII fast-path**    | `core/unicode_utils.py` ✅    | `isascii()` 短路: 跳過 NFKC normalize + fullwidth translate + zero-width replace. ~70% 字典 surface 為純 ASCII — 920K 次呼叫從 4μs → 0.7μs (6x 加速)                                          |
+| **\_rebuild_index split() fast-path** | `ed3n/dictionary_layer.py` ✅ | ASCII surface 使用 `str.split()` 替代 `re.findall(r"[\w]+")` — 6.5μs → 0.1μs (65x). 語意等價 (純 ASCII 空格分割 = 單詞序列)                                                                   |
+| **DictionaryEntry **slots****         | `ed3n/dictionary_layer.py` ✅ | 減少 460K 物件記憶體開銷 ~30%, 物件建立加速 ~20%                                                                                                                                              |
+| **測試時間改善**                      | —                             | ED3N 完整套件: **247s → 178s** (28% 加速). 外部字典載入: **20.9s → 15.76s** (25% 加速)                                                                                                        |
+| **GARDEN 測試**                       | —                             | 198/198 通過 (7 環境相依失敗因 chromadb/torch 可用性波動)                                                                                                                                     |
 
 ### 第31輪: P14 多模態 ML 後端整合 ✅
 
-| 變更 | 檔案 | 影響 |
-|------|------|------|
-| **VisionService pytesseract OCR 後端** | `services/vision_service.py` ✅ | `import pytesseract` 保護式導入 + `_extract_text_ocr()` 方法: Pillow 圖像 open → pytesseract.image_to_string (tesseract 二進位不在 PATH 時優雅回退至 stub) |
-| **AudioService faster-whisper 離線 STT** | `services/audio_service.py` ✅ | `import faster_whisper` 保護式導入 + `_stt_faster_whisper()` 方法: 惰性 `WhisperModel` 載入 (快取於 self._whisper_model) + 批次推論 + Google API 回退. faster-whisper 尚未安裝, 將自動回退至 Google API |
-| **AudioService scan_and_identify processing_id** | `services/audio_service.py` ✅ | `scan_and_identify()` 現在遞增 `_processing_id` 並回傳 `processing_id` 欄位, 與 `speech_to_text()` 一致 |
-| **預存測試修復 ×6** | `tests/services/test_vision_service.py`, `tests/services/test_audio_service.py` ✅ | test_shutdown (None→True), test_compare_images_difference ({}→list), test_compare_images_feature_match ({}→None/dict), test_compare_images_similarity (0.95→1.0), test_analyze_image_no_data_triggers_capture (screenshot mock 修正), test_process_with_scan_intent (移除 text 斷言) |
-| **測試結果** | vision 19 + audio 13 = **32/32 全部通過** ✅ | P14 整合零回歸, 6 項預存失敗清理完畢 |
+| 變更                                             | 檔案                                                                               | 影響                                                                                                                                                                                                                                                                                 |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **VisionService pytesseract OCR 後端**           | `services/vision_service.py` ✅                                                    | `import pytesseract` 保護式導入 + `_extract_text_ocr()` 方法: Pillow 圖像 open → pytesseract.image_to_string (tesseract 二進位不在 PATH 時優雅回退至 stub)                                                                                                                           |
+| **AudioService faster-whisper 離線 STT**         | `services/audio_service.py` ✅                                                     | `import faster_whisper` 保護式導入 + `_stt_faster_whisper()` 方法: 惰性 `WhisperModel` 載入 (快取於 self._whisper_model) + 批次推論 + Google API 回退. faster-whisper 尚未安裝, 將自動回退至 Google API                                                                              |
+| **AudioService scan_and_identify processing_id** | `services/audio_service.py` ✅                                                     | `scan_and_identify()` 現在遞增 `_processing_id` 並回傳 `processing_id` 欄位, 與 `speech_to_text()` 一致                                                                                                                                                                              |
+| **預存測試修復 ×6**                              | `tests/services/test_vision_service.py`, `tests/services/test_audio_service.py` ✅ | test_shutdown (None→True), test_compare_images_difference ({}→list), test_compare_images_feature_match ({}→None/dict), test_compare_images_similarity (0.95→1.0), test_analyze_image_no_data_triggers_capture (screenshot mock 修正), test_process_with_scan_intent (移除 text 斷言) |
+| **測試結果**                                     | vision 19 + audio 13 = **32/32 全部通過** ✅                                       | P14 整合零回歸, 6 項預存失敗清理完畢                                                                                                                                                                                                                                                 |
 
 ### 第31.5輪: P14.5 預存測試大清理 ✅
 
-| 變更 | 檔案 | 影響 |
-|------|------|------|
-| **ChatService 測試重寫** | `tests/services/test_chat_service.py` ✅ | 24 個測試原測試已移除子系統 (`_analyze_intent`, `_handle_evolution_proposal`, `_handle_character_card_intent`, `ego_guard`, `_module_manager` 等). 重寫為 9 個測試驗證當前 ChatService API (`initialize`, `generate_response`, `model_bus`, `shutdown`, `_post_process_response`) |
-| **WebSocket 測試匯入修正** | `tests/services/test_websocket.py` ✅ | `ConnectionManager` 已從 `main_api_server` 遷移至 `websocket_manager` — 6 個測試更新匯入路徑 |
-| **DI 測試匯入修正** | `tests/services/test_main_api_server_di.py` ✅ | `get_desktop_interaction`, `get_action_executor`, `get_digital_life` 已從 `main_api_server` 遷移至 `api.lifespan` — 7 個測試更新匯入路徑 |
-| **Core Services 測試修復** | `tests/services/test_core_services.py` ✅ | `src_path` 未定義 + `Path` vs `str` 型別檢查 — 3 個測試修復 |
-| **ConnectionSession is_active** | `tests/services/test_connection_session.py` ✅ | `CONNECTING` 狀態 `is_active` 回傳 `True` (測試預期 `False`). 修正斷言 |
-| **Angela Core 版本字串** | `tests/services/test_angela_core.py` ✅ | `"6.0.4"` → `"7.5.0-dev"` |
-| **API 端點 cluster_manager 路徑** | `tests/api/test_api_endpoints.py` ✅ | `system.cluster_manager` → `core.system.cluster_manager` (遷移路徑). Mobile status GET 測試斷言 3 nodes |
-| **ConfigMutator 實作** | `core/system/evolution/config_mutator.py` ✅ | 原本空檔案 (僅 docstring). 實作完整 `ConfigMutator` — `propose_change()`, `_validate_biological()`, `_validate_llm()`. `test_mutator.py` 收集錯誤消除 |
-| **test_audio.py WHISPER_AVAILABLE** | `apps/backend/src/test_audio.py` ✅ | `WHISPER_AVAILABLE` → `FASTER_WHISPER_AVAILABLE` |
-| **test_drive_integration requests guard** | `scripts/test_drive_integration.py` ✅ | `import requests` 保護式導入 + 函數開頭 None 檢查 |
-| **孤立測試刪除 ×2** | `tests/services/test_ai_editor.py`, `tests/services/test_ai_virtual_input_service.py` ✅ | 兩個測試檔案測試已移除/廢棄模組 (21 收集錯誤 + 1 匯入錯誤) |
-| **測試結果** | services 190 + api 39 + unit/utils 653 = **843 測試通過, 0 失敗, 38 跳過** ✅ | 預存 46 失敗 + 21 收集錯誤 + 3 匯入錯誤 = **70 項問題全部歸零** |
+| 變更                                      | 檔案                                                                                     | 影響                                                                                                                                                                                                                                                                              |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ChatService 測試重寫**                  | `tests/services/test_chat_service.py` ✅                                                 | 24 個測試原測試已移除子系統 (`_analyze_intent`, `_handle_evolution_proposal`, `_handle_character_card_intent`, `ego_guard`, `_module_manager` 等). 重寫為 9 個測試驗證當前 ChatService API (`initialize`, `generate_response`, `model_bus`, `shutdown`, `_post_process_response`) |
+| **WebSocket 測試匯入修正**                | `tests/services/test_websocket.py` ✅                                                    | `ConnectionManager` 已從 `main_api_server` 遷移至 `websocket_manager` — 6 個測試更新匯入路徑                                                                                                                                                                                      |
+| **DI 測試匯入修正**                       | `tests/services/test_main_api_server_di.py` ✅                                           | `get_desktop_interaction`, `get_action_executor`, `get_digital_life` 已從 `main_api_server` 遷移至 `api.lifespan` — 7 個測試更新匯入路徑                                                                                                                                          |
+| **Core Services 測試修復**                | `tests/services/test_core_services.py` ✅                                                | `src_path` 未定義 + `Path` vs `str` 型別檢查 — 3 個測試修復                                                                                                                                                                                                                       |
+| **ConnectionSession is_active**           | `tests/services/test_connection_session.py` ✅                                           | `CONNECTING` 狀態 `is_active` 回傳 `True` (測試預期 `False`). 修正斷言                                                                                                                                                                                                            |
+| **Angela Core 版本字串**                  | `tests/services/test_angela_core.py` ✅                                                  | `"6.0.4"` → `"7.5.0-dev"`                                                                                                                                                                                                                                                         |
+| **API 端點 cluster_manager 路徑**         | `tests/api/test_api_endpoints.py` ✅                                                     | `system.cluster_manager` → `core.system.cluster_manager` (遷移路徑). Mobile status GET 測試斷言 3 nodes                                                                                                                                                                           |
+| **ConfigMutator 實作**                    | `core/system/evolution/config_mutator.py` ✅                                             | 原本空檔案 (僅 docstring). 實作完整 `ConfigMutator` — `propose_change()`, `_validate_biological()`, `_validate_llm()`. `test_mutator.py` 收集錯誤消除                                                                                                                             |
+| **test_audio.py WHISPER_AVAILABLE**       | `apps/backend/src/test_audio.py` ✅                                                      | `WHISPER_AVAILABLE` → `FASTER_WHISPER_AVAILABLE`                                                                                                                                                                                                                                  |
+| **test_drive_integration requests guard** | `scripts/test_drive_integration.py` ✅                                                   | `import requests` 保護式導入 + 函數開頭 None 檢查                                                                                                                                                                                                                                 |
+| **孤立測試刪除 ×2**                       | `tests/services/test_ai_editor.py`, `tests/services/test_ai_virtual_input_service.py` ✅ | 兩個測試檔案測試已移除/廢棄模組 (21 收集錯誤 + 1 匯入錯誤)                                                                                                                                                                                                                        |
+| **測試結果**                              | services 190 + api 39 + unit/utils 653 = **843 測試通過, 0 失敗, 38 跳過** ✅            | 預存 46 失敗 + 21 收集錯誤 + 3 匯入錯誤 = **70 項問題全部歸零**                                                                                                                                                                                                                   |
 
 ### 第32輪: P15 模態編碼器 — 真實多模態起點 ✅
 
-| 變更 | 檔案 | 影響 |
-|------|------|------|
-| **VisualEncoder (像素→特徵向量)** | `ai/multimodal/visual_encoder.py` (NEW) ✅ | numpy 後端: 顏色直方圖 (96) + 邊緣方向 (8) + 紋理統計 (3) + 空間佈局 (12) = 119 維原始特徵 → 128 維向量. `encode(bytes)` / `encode_from_pil(Image)` 方法. 空輸入→零向量 |
-| **AudioSpectralEncoder (頻譜→向量)** | `ai/multimodal/audio_encoder_spectral.py` (NEW) ✅ | STFT 頻譜分析 + Mel 濾波器組 (20 頻帶) + 頻譜質心/滾降/頻寬 + 過零率 + RMS 能量包絡 (4) = 28 → 32 維. WAV/PCM 解碼, <=5s 截斷. 空輸入→零向量 |
-| **SharedLatentSpace (統一投影層)** | `ai/multimodal/shared_latent_space.py` (NEW) ✅ | `register_modality(name, dim)` + `project(modality, features)→unit-norm 64-dim latent` + `similarity(a,b)→[0,1]`. 線性投影 Wx+b, L2 正規化, 未知模態→零向量. 跨模態餘弦相似度 |
-| **multimodal package reactivated** | `ai/multimodal/__init__.py` ✅ | 原標記 DEPRECATED. 現在匯出 VisualEncoder, AudioSpectralEncoder, SharedLatentSpace, MultimodalProcessor |
-| **測試 ×21** | `tests/ai/multimodal/` (3 files) ✅ | VisualEncoder 6: 形狀/空輸入/PIL編碼/不同影像/正規化/重複性. AudioSpectralEncoder 6: 形狀/空/不同頻率/重複性/raw PCM/非均勻. SharedLatentSpace 9: 投影形狀/L2正規/相似度/自相似/未知模態/註冊/reset/embedding |
-| **測試結果** | **21/21 全部通過** ✅ | P15 核心編碼器全部實作, 843+21 = **864 測試通過, 0 失敗** |
+| 變更                                 | 檔案                                               | 影響                                                                                                                                                                                                          |
+| ------------------------------------ | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **VisualEncoder (像素→特徵向量)**    | `ai/multimodal/visual_encoder.py` (NEW) ✅         | numpy 後端: 顏色直方圖 (96) + 邊緣方向 (8) + 紋理統計 (3) + 空間佈局 (12) = 119 維原始特徵 → 128 維向量. `encode(bytes)` / `encode_from_pil(Image)` 方法. 空輸入→零向量                                       |
+| **AudioSpectralEncoder (頻譜→向量)** | `ai/multimodal/audio_encoder_spectral.py` (NEW) ✅ | STFT 頻譜分析 + Mel 濾波器組 (20 頻帶) + 頻譜質心/滾降/頻寬 + 過零率 + RMS 能量包絡 (4) = 28 → 32 維. WAV/PCM 解碼, <=5s 截斷. 空輸入→零向量                                                                  |
+| **SharedLatentSpace (統一投影層)**   | `ai/multimodal/shared_latent_space.py` (NEW) ✅    | `register_modality(name, dim)` + `project(modality, features)→unit-norm 64-dim latent` + `similarity(a,b)→[0,1]`. 線性投影 Wx+b, L2 正規化, 未知模態→零向量. 跨模態餘弦相似度                                 |
+| **multimodal package reactivated**   | `ai/multimodal/__init__.py` ✅                     | 原標記 DEPRECATED. 現在匯出 VisualEncoder, AudioSpectralEncoder, SharedLatentSpace, MultimodalProcessor                                                                                                       |
+| **測試 ×21**                         | `tests/ai/multimodal/` (3 files) ✅                | VisualEncoder 6: 形狀/空輸入/PIL編碼/不同影像/正規化/重複性. AudioSpectralEncoder 6: 形狀/空/不同頻率/重複性/raw PCM/非均勻. SharedLatentSpace 9: 投影形狀/L2正規/相似度/自相似/未知模態/註冊/reset/embedding |
+| **測試結果**                         | **21/21 全部通過** ✅                              | P15 核心編碼器全部實作, 843+21 = **864 測試通過, 0 失敗**                                                                                                                                                     |
 
 ### 第33輪: P15b 編碼器整合入服務管線 ✅
 
-| 變更 | 檔案 | 影響 |
-|------|------|------|
-| **VisionService.encode_image()** | `services/vision_service.py` ✅ | 新增方法: `encode_image(image_data) → List[float]` (128 維). 空輸入→`[]`, 編碼失敗→`[]`. 使用 VisualEncoder 後端 (lazy import) |
-| **AudioService.encode_audio()** | `services/audio_service.py` ✅ | 新增方法: `encode_audio(audio_data) → List[float]` (32 維). 空輸入→`[]`, 編碼失敗→`[]`. 使用 AudioSpectralEncoder 後端 (lazy import) |
-| **MultimodalSimilarityService** | `ai/multimodal/similarity_service.py` (NEW) ✅ | 整合 VisualEncoder + AudioSpectralEncoder + SharedLatentSpace. `encode_vision(bytes, id)→128-dim list`, `encode_audio(bytes, id)→32-dim list`, `compare(id_a, id_b)→[0,1]`, `get_embedding(id)→64-dim list`, `reset()` |
-| **Testing ×66** | 所有多模態 + 視覺 + 音訊測試 ✅ | 30 整合新測試 + 36 現存服務測試 = **66/66 通過** |
-| **測試結果** | **66/66 全部通過** ✅ | P15b 整合零回歸, 編碼器全面接入服務層 |
+| 變更                             | 檔案                                           | 影響                                                                                                                                                                                                                   |
+| -------------------------------- | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **VisionService.encode_image()** | `services/vision_service.py` ✅                | 新增方法: `encode_image(image_data) → List[float]` (128 維). 空輸入→`[]`, 編碼失敗→`[]`. 使用 VisualEncoder 後端 (lazy import)                                                                                         |
+| **AudioService.encode_audio()**  | `services/audio_service.py` ✅                 | 新增方法: `encode_audio(audio_data) → List[float]` (32 維). 空輸入→`[]`, 編碼失敗→`[]`. 使用 AudioSpectralEncoder 後端 (lazy import)                                                                                   |
+| **MultimodalSimilarityService**  | `ai/multimodal/similarity_service.py` (NEW) ✅ | 整合 VisualEncoder + AudioSpectralEncoder + SharedLatentSpace. `encode_vision(bytes, id)→128-dim list`, `encode_audio(bytes, id)→32-dim list`, `compare(id_a, id_b)→[0,1]`, `get_embedding(id)→64-dim list`, `reset()` |
+| **Testing ×66**                  | 所有多模態 + 視覺 + 音訊測試 ✅                | 30 整合新測試 + 36 現存服務測試 = **66/66 通過**                                                                                                                                                                       |
+| **測試結果**                     | **66/66 全部通過** ✅                          | P15b 整合零回歸, 編碼器全面接入服務層                                                                                                                                                                                  |
 
 ### 第34輪: P16 共享隱空間對比學習 + 跨模態注意力 ✅
 
-| 變更 | 檔案 | 影響 |
-|------|------|------|
-| **contrastive_loss() 重寫: 餘弦距離 + 球面梯度** | `ai/multimodal/shared_latent_space.py` ✅ | 原本 Euclidean 距離作用於 L2 正規化向量 — 梯度被正規化層抵消. 改用餘弦距離 `d=1−cos(a,n)` + 正確的球面梯度 `d(loss)/d(a) = ±(n_b−cos·n_a)/||a||`. 正對: 拉近 `min(d)`; 負對: 推遠 `max(0, margin−d)` |
-| **project() 去正規化 → similarity() 接手** | `ai/multimodal/shared_latent_space.py` ✅ | `project()` 回傳 raw (未正規化) 向量; `similarity()` 內部 `_l2_normalize()` 後算餘弦. 訓練時梯度能正確流經未正規化隱向量, 比較時仍產出 [0,1] 分數 |
-| **cross_modal_attention() dot-product 機制** | `ai/multimodal/shared_latent_space.py` ✅ | 查詢模態隱向量 × 鍵模態隱向量 → softmax 權重. 未知查詢→全零. 自注意力保證≥其他模態 |
-| **SharedLatentSpace.train() contractive learning** | `ai/multimodal/shared_latent_space.py` ✅ | SGD 優化器 (lr=0.1/0.05), 梯度裁切 (max_norm=10), margin=0.5(正)/1.0(負), momentum=0.9. 支援正/負混合批次. 回傳 `{final_loss, history}` |
-| **Testing ×9 (P16 專用測試)** | `tests/ai/multimodal/test_shared_latent_space_p16.py` (NEW) ✅ | 對比學習 (5): train 降低損失 / 正對變近 / 負對變遠 / 未知模態零損失 / 權重更新. 跨模態注意力 (4): 權重總和=1 / 自注意力最高 / 未知查詢零 / 全模態在結果 |
-| **測試結果** | **43/43 全部通過** ✅ | P16 全部 9 測試 + 34 既有多模態測試 = 43 通過, 0 失敗 |
+| 變更                                               | 檔案                                                           | 影響                                                                                                                                                    |
+| -------------------------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **contrastive_loss() 重寫: 餘弦距離 + 球面梯度**   | `ai/multimodal/shared_latent_space.py` ✅                      | 原本 Euclidean 距離作用於 L2 正規化向量 — 梯度被正規化層抵消. 改用餘弦距離 `d=1−cos(a,n)` + 正確的球面梯度 `d(loss)/d(a) = ±(n_b−cos·n_a)/              |     | a   |     | `. 正對: 拉近 `min(d)`; 負對: 推遠 `max(0, margin−d)` |
+| **project() 去正規化 → similarity() 接手**         | `ai/multimodal/shared_latent_space.py` ✅                      | `project()` 回傳 raw (未正規化) 向量; `similarity()` 內部 `_l2_normalize()` 後算餘弦. 訓練時梯度能正確流經未正規化隱向量, 比較時仍產出 [0,1] 分數       |
+| **cross_modal_attention() dot-product 機制**       | `ai/multimodal/shared_latent_space.py` ✅                      | 查詢模態隱向量 × 鍵模態隱向量 → softmax 權重. 未知查詢→全零. 自注意力保證≥其他模態                                                                      |
+| **SharedLatentSpace.train() contractive learning** | `ai/multimodal/shared_latent_space.py` ✅                      | SGD 優化器 (lr=0.1/0.05), 梯度裁切 (max_norm=10), margin=0.5(正)/1.0(負), momentum=0.9. 支援正/負混合批次. 回傳 `{final_loss, history}`                 |
+| **Testing ×9 (P16 專用測試)**                      | `tests/ai/multimodal/test_shared_latent_space_p16.py` (NEW) ✅ | 對比學習 (5): train 降低損失 / 正對變近 / 負對變遠 / 未知模態零損失 / 權重更新. 跨模態注意力 (4): 權重總和=1 / 自注意力最高 / 未知查詢零 / 全模態在結果 |
+| **測試結果**                                       | **43/43 全部通過** ✅                                          | P16 全部 9 測試 + 34 既有多模態測試 = 43 通過, 0 失敗                                                                                                   |
 
 ### 第35輪: P17 編碼器強化 — CNN 卷積視覺編碼 + MFCC/時序注意音頻編碼 ✅
 
-| 變更 | 檔案 | 影響 |
-|------|------|------|
-| **VisualEncoder CNN Gabor-like filter bank** | `ai/multimodal/visual_encoder.py` ✅ | 8 filters (4 orientations × 2 scales), 7×7 kernel, stride 4. 各 filter 輸出 8 統計特徵 (mean/std/max/p25/p75/mae/rms/positive_ratio) = 64 → 128-dim CNN 特徵. _conv2d() 手動 numpy 卷積, valid padding. 128→256-dim 總輸出 |
-| **AudioSpectralEncoder MFCC** | `ai/multimodal/audio_encoder_spectral.py` ✅ | 13 MFCC 係數 × 4 統計 (mean/std/max/min) = 52-dim. DCT 矩陣手動建構, Type-II DCT 正規化 (k=0: √1/N, k>0: √2/N) |
-| **Spectral contrast (峰值/谷值比)** | `ai/multimodal/audio_encoder_spectral.py` ✅ | 4 octave bands, 每 band peak-valley difference + ratio = 8-dim |
-| **Temporal dot-product attention** | `ai/multimodal/audio_encoder_spectral.py` ✅ | 能量加權注意力: frame energy→softmax→10 temporal region 總和. 非參數化注意力 (pure numpy) |
-| **Mel band 3-stat (mean/std/max)** | `ai/multimodal/audio_encoder_spectral.py` ✅ | 取代原本 20-band mean → 20×3=60-dim (mean/std/max 每 band) |
-| **維度升級** | visual_encoder.py + audio_encoder_spectral.py ✅ | VisualEncoder: 128→256; AudioSpectralEncoder: 32→128. 相似度服務同步更新 |
-| **測試 ×22 (新增 0, 更新 22)** | 所有多模態測試 ✅ | 43/43 全部通過 (維度斷言更新 128→256, 32→128) |
+| 變更                                         | 檔案                                             | 影響                                                                                                                                                                                                                       |
+| -------------------------------------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **VisualEncoder CNN Gabor-like filter bank** | `ai/multimodal/visual_encoder.py` ✅             | 8 filters (4 orientations × 2 scales), 7×7 kernel, stride 4. 各 filter 輸出 8 統計特徵 (mean/std/max/p25/p75/mae/rms/positive_ratio) = 64 → 128-dim CNN 特徵. _conv2d() 手動 numpy 卷積, valid padding. 128→256-dim 總輸出 |
+| **AudioSpectralEncoder MFCC**                | `ai/multimodal/audio_encoder_spectral.py` ✅     | 13 MFCC 係數 × 4 統計 (mean/std/max/min) = 52-dim. DCT 矩陣手動建構, Type-II DCT 正規化 (k=0: √1/N, k>0: √2/N)                                                                                                             |
+| **Spectral contrast (峰值/谷值比)**          | `ai/multimodal/audio_encoder_spectral.py` ✅     | 4 octave bands, 每 band peak-valley difference + ratio = 8-dim                                                                                                                                                             |
+| **Temporal dot-product attention**           | `ai/multimodal/audio_encoder_spectral.py` ✅     | 能量加權注意力: frame energy→softmax→10 temporal region 總和. 非參數化注意力 (pure numpy)                                                                                                                                  |
+| **Mel band 3-stat (mean/std/max)**           | `ai/multimodal/audio_encoder_spectral.py` ✅     | 取代原本 20-band mean → 20×3=60-dim (mean/std/max 每 band)                                                                                                                                                                 |
+| **維度升級**                                 | visual_encoder.py + audio_encoder_spectral.py ✅ | VisualEncoder: 128→256; AudioSpectralEncoder: 32→128. 相似度服務同步更新                                                                                                                                                   |
+| **測試 ×22 (新增 0, 更新 22)**               | 所有多模態測試 ✅                                | 43/43 全部通過 (維度斷言更新 128→256, 32→128)                                                                                                                                                                              |
 
 ### 第36輪: P18 多模態生成 — 隱空間解碼至 RGB 圖像 + 波形音頻 ✅
 
-| 變更 | 檔案 | 影響 |
-|------|------|------|
-| **VisualDecoder (latent→RGB image)** | `ai/multimodal/visual_decoder.py` (NEW) ✅ | Wx+b 投影 64→256-dim feature space → 2×2 格 grid upsampling → 128×128 bilinear → per-channel contrast/brightness 調整. `decode(latent)→uint8 (128×128×3)`, `decode_to_pil(latent)→PIL.Image`. 隨機投影初始化 (seed=42) |
-| **AudioWaveformDecoder (latent→PCM waveform)** | `ai/multimodal/audio_decoder.py` (NEW) ✅ | Wx+b 投影 64→128-dim spectral space → 正弦合成 (8 harmonics, 5 base freqs) + 振幅包絡 (10 時域段) + 正規化. `decode(latent)→float32 [−1,1]`. 16kHz, 1s 輸出 |
-| **__init__.py 匯出** | `ai/multimodal/__init__.py` ✅ | VisualDecoder + AudioWaveformDecoder 加入 __all__ |
-| **Testing ×16** | `tests/ai/multimodal/test_decoders.py` (NEW) ✅ | VisualDecoder (8): shape/PIL/不同latent/錯誤dim/重複性/非均勻/投影權重. AudioWaveformDecoder (8): dtype/長度/範圍/非靜音/不同latent/錯誤dim/頻譜內容/投影形狀 |
-| **測試結果** | **59/59 全部通過** ✅ | P18 全部 16 測試 + 43 既有多模態 = 59 通過, 0 失敗 |
+| 變更                                           | 檔案                                            | 影響                                                                                                                                                                                                                   |
+| ---------------------------------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **VisualDecoder (latent→RGB image)**           | `ai/multimodal/visual_decoder.py` (NEW) ✅      | Wx+b 投影 64→256-dim feature space → 2×2 格 grid upsampling → 128×128 bilinear → per-channel contrast/brightness 調整. `decode(latent)→uint8 (128×128×3)`, `decode_to_pil(latent)→PIL.Image`. 隨機投影初始化 (seed=42) |
+| **AudioWaveformDecoder (latent→PCM waveform)** | `ai/multimodal/audio_decoder.py` (NEW) ✅       | Wx+b 投影 64→128-dim spectral space → 正弦合成 (8 harmonics, 5 base freqs) + 振幅包絡 (10 時域段) + 正規化. `decode(latent)→float32 [−1,1]`. 16kHz, 1s 輸出                                                            |
+| ****init**.py 匯出**                           | `ai/multimodal/__init__.py` ✅                  | VisualDecoder + AudioWaveformDecoder 加入 **all**                                                                                                                                                                      |
+| **Testing ×16**                                | `tests/ai/multimodal/test_decoders.py` (NEW) ✅ | VisualDecoder (8): shape/PIL/不同latent/錯誤dim/重複性/非均勻/投影權重. AudioWaveformDecoder (8): dtype/長度/範圍/非靜音/不同latent/錯誤dim/頻譜內容/投影形狀                                                          |
+| **測試結果**                                   | **59/59 全部通過** ✅                           | P18 全部 16 測試 + 43 既有多模態 = 59 通過, 0 失敗                                                                                                                                                                     |
 
 ### 第37輪: P19 閉環演化 — autoencoder 重建循環 + 跨模態生成 ✅
 
-| 變更 | 檔案 | 影響 |
-|------|------|------|
-| **ReconstructionCycle (feature-level autoencoder)** | `ai/multimodal/reconstruction_cycle.py` (NEW) ✅ | 特徵級重建: `f → W_e·f+b_e = z → W_d·z+b_d = f_hat`. Loss = ½‖f−f_hat‖². 梯度解析計算 (純 numpy), 權重更新 W_e (latent projection) + W_d (decoder projection). 梯度裁切 (max_norm=10) 防止爆炸. `train_step()`, `train()`, `reconstruct()`, `reconstruction_error()` |
-| **CrossModalSynthesizer (隱空間混合 + 跨模態解碼)** | `ai/multimodal/reconstruction_cycle.py` (NEW) ✅ | `blend_latents()`: 多模態隱向量加權混合 (加權平均). `generate_image()`/`generate_audio()`: 從混合 latent 解碼. `cross_generate()`: 編碼源模態→解碼目標模態 (e.g. 影像→音頻波形) |
-| **Gradient clipping** | `ai/multimodal/reconstruction_cycle.py` ✅ | 所有梯度張量 (grad_W_d, grad_W_e, grad_b_d, grad_b_e) 範數裁切 ≤ 10. 防止 outer product 梯度爆炸導致 NaN |
-| **__init__.py 匯出** | `ai/multimodal/__init__.py` ✅ | ReconstructionCycle + CrossModalSynthesizer 加入 __all__ |
-| **Testing ×15** | `tests/ai/multimodal/test_reconstruction_cycle.py` (NEW) ✅ | ReconstructionCycle (7): init / loss 下降 / epochs 收斂 / 重建形狀 / 誤差下降 / 未知模態 / 音頻重建. CrossModalSynthesizer (8): 混合形狀 / 等權重 / 圖像生成 / 音頻生成 / 跨模態 vision→audio / 跨模態 audio→image / 空列表 / 無解碼器 |
-| **測試結果** | **74/74 全部通過** ✅ | P19 全部 15 測試 + 59 既有多模態 = 74 通過, 0 失敗 |
+| 變更                                                | 檔案                                                        | 影響                                                                                                                                                                                                                                                                 |
+| --------------------------------------------------- | ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ReconstructionCycle (feature-level autoencoder)** | `ai/multimodal/reconstruction_cycle.py` (NEW) ✅            | 特徵級重建: `f → W_e·f+b_e = z → W_d·z+b_d = f_hat`. Loss = ½‖f−f_hat‖². 梯度解析計算 (純 numpy), 權重更新 W_e (latent projection) + W_d (decoder projection). 梯度裁切 (max_norm=10) 防止爆炸. `train_step()`, `train()`, `reconstruct()`, `reconstruction_error()` |
+| **CrossModalSynthesizer (隱空間混合 + 跨模態解碼)** | `ai/multimodal/reconstruction_cycle.py` (NEW) ✅            | `blend_latents()`: 多模態隱向量加權混合 (加權平均). `generate_image()`/`generate_audio()`: 從混合 latent 解碼. `cross_generate()`: 編碼源模態→解碼目標模態 (e.g. 影像→音頻波形)                                                                                      |
+| **Gradient clipping**                               | `ai/multimodal/reconstruction_cycle.py` ✅                  | 所有梯度張量 (grad_W_d, grad_W_e, grad_b_d, grad_b_e) 範數裁切 ≤ 10. 防止 outer product 梯度爆炸導致 NaN                                                                                                                                                             |
+| ****init**.py 匯出**                                | `ai/multimodal/__init__.py` ✅                              | ReconstructionCycle + CrossModalSynthesizer 加入 **all**                                                                                                                                                                                                             |
+| **Testing ×15**                                     | `tests/ai/multimodal/test_reconstruction_cycle.py` (NEW) ✅ | ReconstructionCycle (7): init / loss 下降 / epochs 收斂 / 重建形狀 / 誤差下降 / 未知模態 / 音頻重建. CrossModalSynthesizer (8): 混合形狀 / 等權重 / 圖像生成 / 音頻生成 / 跨模態 vision→audio / 跨模態 audio→image / 空列表 / 無解碼器                               |
+| **測試結果**                                        | **74/74 全部通過** ✅                                       | P19 全部 15 測試 + 59 既有多模態 = 74 通過, 0 失敗                                                                                                                                                                                                                   |
 
 ### 第38輪: P20 效能 + 整合 — conv2d 向量化 + decoder 服務層 + MultimodalBridge ✅
 
-| 變更 | 檔案 | 影響 |
-|------|------|------|
-| **VisualEncoder._conv2d 向量化** | `ai/multimodal/visual_encoder.py` ✅ | 原本雙層 Python for loop (31×31=961 次/濾波器) → `sliding_window_view` + `tensordot` 批次矩陣乘法. `_cnn_features` 全部 8 濾波器同時計算: `flats @ flat_filters.T`. 加速比: 實測 ~61ms 完整編碼 (含 CNN + handcrafted) |
-| **MultimodalSimilarityService decode_to_image / decode_to_audio** | `ai/multimodal/similarity_service.py` ✅ | `decode_to_image(item_id)→PIL.Image`: 從 item latent 解碼回 128×128 RGB. `decode_to_audio(item_id)→List[float]`: 從 item latent 解碼回 16kHz PCM. 錯誤/未知/錯誤模態→None. 雙向多模態正式接入服務層 |
-| **MultimodalBridge (ED3N 整合層)** | `ai/multimodal/multimodal_bridge.py` (NEW) ✅ | 同步介面 (適合 ED3N 呼叫): `encode_image_bytes/latent`, `encode_audio_bytes/latent`, `decode_latent_to_image/waveform`, `similarity` (cosine→[0,1]), `cross_similarity`, `to_dictionary_entry` (image→ED3N entry), `latent_to_entry`. 全零→None/空 |
-| **__init__.py 匯出** | `ai/multimodal/__init__.py` ✅ | MultimodalBridge 加入 __all__. 模組文檔更新至 P20 |
-| **Testing ×21** | `tests/ai/multimodal/test_p20_integration.py` (NEW) ✅ | ServiceDecode (6): image 解碼/未知/錯誤模態 + audio 解碼/未知/錯誤模態. Conv2d (2): 向量化與手動一致 + CNN shape. MultimodalBridge (13): 編碼圖像/音頻/隱向量/解碼/相似度/跨模態/ED3N entry |
-| **測試結果** | **95/95 全部通過** ✅ | P20 全部 21 測試 + 74 既有多模態 = 95 通過, 0 失敗 |
+| 變更                                                              | 檔案                                                   | 影響                                                                                                                                                                                                                                               |
+| ----------------------------------------------------------------- | ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **VisualEncoder.\_conv2d 向量化**                                 | `ai/multimodal/visual_encoder.py` ✅                   | 原本雙層 Python for loop (31×31=961 次/濾波器) → `sliding_window_view` + `tensordot` 批次矩陣乘法. `_cnn_features` 全部 8 濾波器同時計算: `flats @ flat_filters.T`. 加速比: 實測 ~61ms 完整編碼 (含 CNN + handcrafted)                             |
+| **MultimodalSimilarityService decode_to_image / decode_to_audio** | `ai/multimodal/similarity_service.py` ✅               | `decode_to_image(item_id)→PIL.Image`: 從 item latent 解碼回 128×128 RGB. `decode_to_audio(item_id)→List[float]`: 從 item latent 解碼回 16kHz PCM. 錯誤/未知/錯誤模態→None. 雙向多模態正式接入服務層                                                |
+| **MultimodalBridge (ED3N 整合層)**                                | `ai/multimodal/multimodal_bridge.py` (NEW) ✅          | 同步介面 (適合 ED3N 呼叫): `encode_image_bytes/latent`, `encode_audio_bytes/latent`, `decode_latent_to_image/waveform`, `similarity` (cosine→[0,1]), `cross_similarity`, `to_dictionary_entry` (image→ED3N entry), `latent_to_entry`. 全零→None/空 |
+| ****init**.py 匯出**                                              | `ai/multimodal/__init__.py` ✅                         | MultimodalBridge 加入 **all**. 模組文檔更新至 P20                                                                                                                                                                                                  |
+| **Testing ×21**                                                   | `tests/ai/multimodal/test_p20_integration.py` (NEW) ✅ | ServiceDecode (6): image 解碼/未知/錯誤模態 + audio 解碼/未知/錯誤模態. Conv2d (2): 向量化與手動一致 + CNN shape. MultimodalBridge (13): 編碼圖像/音頻/隱向量/解碼/相似度/跨模態/ED3N entry                                                        |
+| **測試結果**                                                      | **95/95 全部通過** ✅                                  | P20 全部 21 測試 + 74 既有多模態 = 95 通過, 0 失敗                                                                                                                                                                                                 |
 
 ### 第39輪: P21 跨模態 RAG — MultimodalRetriever 向量索引 + MultimodalRAGEngine ED3N 檢索 ✅
 
-| 變更 | 檔案 | 影響 |
-|------|------|------|
-| **MultimodalRetriever (向量索引)** | `ai/multimodal/multimodal_retriever.py` (NEW) ✅ | numpy brute-force 餘弦索引. `add(key, latent, modality, metadata)` 索引; `search(query_latent, top_k)` → top-k `{key, score, modality, metadata}`; `search_by_modality()` 過濾模態; `save/load` (npy+JSON) 持久化. 64-dim 隱向量, O(n) 掃描 |
-| **MultimodalRAGEngine (RAG 編排)** | `ai/multimodal/multimodal_rag_engine.py` (NEW) ✅ | 全管線: `index_image()`/`index_audio()` (編碼→索引) + `query_by_image()`/`query_by_audio()`/`query_by_latent()` (編碼→檢索) + `to_ed3n_entries()` (轉換為 DictionaryLayer 相容條目 `{key, surface_forms, contexts, confidence}`) + `retrieve_entries()` 統一入口 + `save/load_index()` |
-| **__init__.py 匯出** | `ai/multimodal/__init__.py` ✅ | MultimodalRetriever + MultimodalRAGEngine 加入 __all__ |
-| **ED3N 整合路徑** | 系統架構 ✅ | `MultimodalRAGEngine.retrieve_entries(image_data)` → `to_ed3n_entries()` → ED3N `DictionaryLayer.bulk_add_entries()`. 現有 `modality_encoders` hook 可直接接受 retriever 輸出 |
-| **Testing ×21** | `tests/ai/multimodal/test_multimodal_rag.py` (NEW) ✅ | Retriever (11): add/count/wrong dim/search top-k/empty/wrong dim/modality filter/list/clear/save+load/empty. RAGEngine (10): index image/audio/invalid/query image/query audio/cross-modal/to_ed3n/retrieve entries/no input/persistence |
-| **測試結果** | **116/116 全部通過** ✅ | P21 全部 21 測試 + 95 既有多模態 = 116 通過, 0 失敗 |
+| 變更                               | 檔案                                                  | 影響                                                                                                                                                                                                                                                                                   |
+| ---------------------------------- | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **MultimodalRetriever (向量索引)** | `ai/multimodal/multimodal_retriever.py` (NEW) ✅      | numpy brute-force 餘弦索引. `add(key, latent, modality, metadata)` 索引; `search(query_latent, top_k)` → top-k `{key, score, modality, metadata}`; `search_by_modality()` 過濾模態; `save/load` (npy+JSON) 持久化. 64-dim 隱向量, O(n) 掃描                                            |
+| **MultimodalRAGEngine (RAG 編排)** | `ai/multimodal/multimodal_rag_engine.py` (NEW) ✅     | 全管線: `index_image()`/`index_audio()` (編碼→索引) + `query_by_image()`/`query_by_audio()`/`query_by_latent()` (編碼→檢索) + `to_ed3n_entries()` (轉換為 DictionaryLayer 相容條目 `{key, surface_forms, contexts, confidence}`) + `retrieve_entries()` 統一入口 + `save/load_index()` |
+| ****init**.py 匯出**               | `ai/multimodal/__init__.py` ✅                        | MultimodalRetriever + MultimodalRAGEngine 加入 **all**                                                                                                                                                                                                                                 |
+| **ED3N 整合路徑**                  | 系統架構 ✅                                           | `MultimodalRAGEngine.retrieve_entries(image_data)` → `to_ed3n_entries()` → ED3N `DictionaryLayer.bulk_add_entries()`. 現有 `modality_encoders` hook 可直接接受 retriever 輸出                                                                                                          |
+| **Testing ×21**                    | `tests/ai/multimodal/test_multimodal_rag.py` (NEW) ✅ | Retriever (11): add/count/wrong dim/search top-k/empty/wrong dim/modality filter/list/clear/save+load/empty. RAGEngine (10): index image/audio/invalid/query image/query audio/cross-modal/to_ed3n/retrieve entries/no input/persistence                                               |
+| **測試結果**                       | **116/116 全部通過** ✅                               | P21 全部 21 測試 + 95 既有多模態 = 116 通過, 0 失敗                                                                                                                                                                                                                                    |
 
 ### 第40輪: P22 生成品質提升 — 非線性投影 + 多頻段合成 + ED3N 雙向接線 ✅
 
-| 變更 | 檔案 | 影響 |
-|------|------|------|
-| **VisualDecoder 非線性 tanh 投影 + 紋理細節** | `ai/multimodal/visual_decoder.py` ✅ | 新增 `_W_hidden`/`_b_hidden` (64-dim tanh hidden layer) + `_W_detail`/`_b_detail` (detail modulation). `_apply_texture_detail()` 從 hidden latent 生成強度控制的隨機紋理噪聲. 保留 `_W`/`_b` 屬性供 ReconstructionCycle 向後相容. 非線性增強保留了反向傳播相容性 |
-| **AudioWaveformDecoder 多頻段合成 + 噪聲分量** | `ai/multimodal/audio_decoder.py` ✅ | 分割頻譜特徵為 3 頻段 (低 50-500Hz, 中 500-2500Hz, 高 2500-7500Hz), 各頻段獨立合成諧波. 新增 `_W_hidden`/`_b_hidden` + `_W_noise`/`_b_noise` 噪聲分量 (tanh hidden → noise_strength control). `_add_noise_component()` 增加非週期成分以豐富音色 |
-| **MultimodalED3NAdapter (ED3N 雙向接線)** | `ai/multimodal/multimodal_ed3n_adapter.py` (NEW) ✅ | `retrieve_multimodal(image/audio/latent)` → ED3N-compatible entries. `inject_into_context(context, image/audio)` → 注入 `multimodal_entries` 至 ED3N context. `index_image_for_retrieval()`/`index_audio_for_retrieval()` 索引. `save_index()`/`load_index()` 持久化 |
-| **MultimodalRetriever save/load 修復** | `ai/multimodal/multimodal_retriever.py` ✅ | `save()`/`load()` 自動 `.npy` 擴展名處理 + `allow_pickle=False` 安全載入 |
-| **__init__.py 匯出** | `ai/multimodal/__init__.py` ✅ | MultimodalED3NAdapter 加入 __all__. 模組文檔更新至 P22 |
-| **Testing ×12** | `tests/ai/multimodal/test_decoders.py` + `test_multimodal_ed3n_adapter.py` (NEW) ✅ | Decoder (2): RC 向後相容 + 多頻段能量分佈. Adapter (10): 空查詢/上下文注入/無上下文/None上下文/latent檢索/索引image/索引audio/save-load/property/ED3N格式 |
-| **測試結果** | **128/128 全部通過** ✅ | P22 全部 12 測試 + 116 既有多模態 = 128 通過, 0 失敗 |
+| 變更                                           | 檔案                                                                                | 影響                                                                                                                                                                                                                                                                 |
+| ---------------------------------------------- | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **VisualDecoder 非線性 tanh 投影 + 紋理細節**  | `ai/multimodal/visual_decoder.py` ✅                                                | 新增 `_W_hidden`/`_b_hidden` (64-dim tanh hidden layer) + `_W_detail`/`_b_detail` (detail modulation). `_apply_texture_detail()` 從 hidden latent 生成強度控制的隨機紋理噪聲. 保留 `_W`/`_b` 屬性供 ReconstructionCycle 向後相容. 非線性增強保留了反向傳播相容性     |
+| **AudioWaveformDecoder 多頻段合成 + 噪聲分量** | `ai/multimodal/audio_decoder.py` ✅                                                 | 分割頻譜特徵為 3 頻段 (低 50-500Hz, 中 500-2500Hz, 高 2500-7500Hz), 各頻段獨立合成諧波. 新增 `_W_hidden`/`_b_hidden` + `_W_noise`/`_b_noise` 噪聲分量 (tanh hidden → noise_strength control). `_add_noise_component()` 增加非週期成分以豐富音色                      |
+| **MultimodalED3NAdapter (ED3N 雙向接線)**      | `ai/multimodal/multimodal_ed3n_adapter.py` (NEW) ✅                                 | `retrieve_multimodal(image/audio/latent)` → ED3N-compatible entries. `inject_into_context(context, image/audio)` → 注入 `multimodal_entries` 至 ED3N context. `index_image_for_retrieval()`/`index_audio_for_retrieval()` 索引. `save_index()`/`load_index()` 持久化 |
+| **MultimodalRetriever save/load 修復**         | `ai/multimodal/multimodal_retriever.py` ✅                                          | `save()`/`load()` 自動 `.npy` 擴展名處理 + `allow_pickle=False` 安全載入                                                                                                                                                                                             |
+| ****init**.py 匯出**                           | `ai/multimodal/__init__.py` ✅                                                      | MultimodalED3NAdapter 加入 **all**. 模組文檔更新至 P22                                                                                                                                                                                                               |
+| **Testing ×12**                                | `tests/ai/multimodal/test_decoders.py` + `test_multimodal_ed3n_adapter.py` (NEW) ✅ | Decoder (2): RC 向後相容 + 多頻段能量分佈. Adapter (10): 空查詢/上下文注入/無上下文/None上下文/latent檢索/索引image/索引audio/save-load/property/ED3N格式                                                                                                            |
+| **測試結果**                                   | **128/128 全部通過** ✅                                                             | P22 全部 12 測試 + 116 既有多模態 = 128 通過, 0 失敗                                                                                                                                                                                                                 |
 
 ### 第41輪: P23 多模態對話 — ChatService 上下文注入 + prompt_builder 消費 ✅
 
-| 變更 | 檔案 | 影響 |
-|------|------|------|
-| **chat_routes.py image_data 傳遞** | `api/routes/chat_routes.py` ✅ | `/chat/with-image` 路由現在將原始 `image_data` (bytes) 存入 `image_context`，供下游 ChatService 多模態接線使用 |
-| **ChatService MultimodalED3NAdapter 接線** | `services/chat_service.py` ✅ | `generate_response()` 中當 `context.image_analysis.image_data` 存在時，建立 `MultimodalED3NAdapter` 並: (1) `index_image_for_retrieval()` 為未來跨模態檢索引圖; (2) `inject_into_context()` 將 `multimodal_entries` 注入 merged_context. Lazy import, non-critical fallback |
-| **prompt_builder 消費 multimodal_entries** | `services/llm/prompt_builder.py` ✅ | 新區塊: 讀取 `context.multimodal_entries`，格式化為 `[modality] label (relevant: score)` 列表，作為 user 訊息注入 LLM 提示。使用與 `retrieved_context` 相同的 `angela.related_context` 提示模板 |
-| **Testing ×2** | `tests/services/test_chat_service.py` ✅ | `test_generate_response_with_image_context_injects_multimodal`: image_data 存在 → 不拋異常; `test_generate_response_with_image_analysis_no_data`: image_analysis 無 data → 不觸發多模態 |
-| **測試結果** | **139/139 全部通過** ✅ | P23 全部 2 新測試 + 128 多模態 + 9 既有 ChatService = 139 通過, 0 失敗 |
+| 變更                                       | 檔案                                     | 影響                                                                                                                                                                                                                                                                        |
+| ------------------------------------------ | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **chat_routes.py image_data 傳遞**         | `api/routes/chat_routes.py` ✅           | `/chat/with-image` 路由現在將原始 `image_data` (bytes) 存入 `image_context`，供下游 ChatService 多模態接線使用                                                                                                                                                              |
+| **ChatService MultimodalED3NAdapter 接線** | `services/chat_service.py` ✅            | `generate_response()` 中當 `context.image_analysis.image_data` 存在時，建立 `MultimodalED3NAdapter` 並: (1) `index_image_for_retrieval()` 為未來跨模態檢索引圖; (2) `inject_into_context()` 將 `multimodal_entries` 注入 merged_context. Lazy import, non-critical fallback |
+| **prompt_builder 消費 multimodal_entries** | `services/llm/prompt_builder.py` ✅      | 新區塊: 讀取 `context.multimodal_entries`，格式化為 `[modality] label (relevant: score)` 列表，作為 user 訊息注入 LLM 提示。使用與 `retrieved_context` 相同的 `angela.related_context` 提示模板                                                                             |
+| **Testing ×2**                             | `tests/services/test_chat_service.py` ✅ | `test_generate_response_with_image_context_injects_multimodal`: image_data 存在 → 不拋異常; `test_generate_response_with_image_analysis_no_data`: image_analysis 無 data → 不觸發多模態                                                                                     |
+| **測試結果**                               | **139/139 全部通過** ✅                  | P23 全部 2 新測試 + 128 多模態 + 9 既有 ChatService = 139 通過, 0 失敗                                                                                                                                                                                                      |
 
 ### 第42輪: P24 生成品質進階 — CNN 卷積紋理 + 波表合成 + quality_metrics ✅
 
-| 變更 | 檔案 | 影響 |
-|------|------|------|
-| **VisualDecoder CNN 轉置卷積紋理合成** | `ai/multimodal/visual_decoder.py` ✅ | 取代 P22 純噪聲紋理: `_synthesize_texture()` 從 tanh hidden 層生成 4×4×16 特徵圖, 3×16×5×5 轉置卷積核 → 128×128×3 紋理細節. `_conv2d_same` 使用 sliding_window_view + tensordot 向量化加速 |
-| **AudioWaveformDecoder 波表合成** | `ai/multimodal/audio_decoder.py` ✅ | 每頻段獨立 256-sample 波表 (W_wavetable 權重 × tanh hidden). `_synthesize_wavetable()`: 波表相位累積查找 + 諧波疊加. 取代純正弦合成 → 更豐富泛音結構 |
-| **quality_metrics 品質評估** | `ai/multimodal/quality_metrics.py` (NEW) ✅ | `ssim(a, b)` — 通道級 SSIM 結構相似度; `psnr(a, b)` — 峰值信噪比; `snr(orig, recon)` — 訊噪比 (dB); `quality_report()` — 綜合報告 {ssim, image_psnr, audio_snr} |
-| **__init__.py 匯出** | `ai/multimodal/__init__.py` ✅ | ssim, psnr, snr, quality_report 加入 __all__. 模組文檔更新至 P24 |
-| **Testing ×10** | `tests/ai/multimodal/test_quality_metrics.py` (NEW) ✅ | SSIM (4): 相同→1.0 / 不同<1.0 / 形狀不符→0 / 範圍[0,1]. PSNR (2): 相同高分 / 不同低分. SNR (2): 相同高分 / 零信號→0. Report (2): 包含所有 key / 相同資料完美分數 |
-| **測試結果** | **138/138 全部通過** ✅ | P24 全部 10 新測試 + 128 既有多模態 = 138 通過, 0 失敗 |
+| 變更                                   | 檔案                                                   | 影響                                                                                                                                                                                       |
+| -------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **VisualDecoder CNN 轉置卷積紋理合成** | `ai/multimodal/visual_decoder.py` ✅                   | 取代 P22 純噪聲紋理: `_synthesize_texture()` 從 tanh hidden 層生成 4×4×16 特徵圖, 3×16×5×5 轉置卷積核 → 128×128×3 紋理細節. `_conv2d_same` 使用 sliding_window_view + tensordot 向量化加速 |
+| **AudioWaveformDecoder 波表合成**      | `ai/multimodal/audio_decoder.py` ✅                    | 每頻段獨立 256-sample 波表 (W_wavetable 權重 × tanh hidden). `_synthesize_wavetable()`: 波表相位累積查找 + 諧波疊加. 取代純正弦合成 → 更豐富泛音結構                                       |
+| **quality_metrics 品質評估**           | `ai/multimodal/quality_metrics.py` (NEW) ✅            | `ssim(a, b)` — 通道級 SSIM 結構相似度; `psnr(a, b)` — 峰值信噪比; `snr(orig, recon)` — 訊噪比 (dB); `quality_report()` — 綜合報告 {ssim, image_psnr, audio_snr}                            |
+| ****init**.py 匯出**                   | `ai/multimodal/__init__.py` ✅                         | ssim, psnr, snr, quality_report 加入 **all**. 模組文檔更新至 P24                                                                                                                           |
+| **Testing ×10**                        | `tests/ai/multimodal/test_quality_metrics.py` (NEW) ✅ | SSIM (4): 相同→1.0 / 不同<1.0 / 形狀不符→0 / 範圍[0,1]. PSNR (2): 相同高分 / 不同低分. SNR (2): 相同高分 / 零信號→0. Report (2): 包含所有 key / 相同資料完美分數                           |
+| **測試結果**                           | **138/138 全部通過** ✅                                | P24 全部 10 新測試 + 128 既有多模態 = 138 通過, 0 失敗                                                                                                                                     |
 
 ### 第43輪: P25 完整閉環 — ED3N process_multimodal 整合 RAG + ChatService decode 輸出 ✅
 
-| 變更 | 檔案 | 影響 |
-|------|------|------|
-| **ED3NEngine.multimodal_adapter + process_multimodal RAG 檢索** | `ai/ed3n/ed3n_engine.py` ✅ | `multimodal_adapter` 屬性; `set_multimodal_adapter()` 方法; `process_multimodal()` 在組合 keys 前呼叫 `adapter.retrieve_multimodal()` 注入相關條目 keys, 非關鍵失敗僅 debug log |
-| **SimilarityService.evaluate_image_generation()** | `ai/multimodal/similarity_service.py` ✅ | 編碼→解碼→SSIM 評估: decode_to_pil(latent) vs PIL open(image_data); 返回 `{ssim: float}`; 未知 item 返回 None |
-| **SimilarityService.evaluate_audio_generation()** | `ai/multimodal/similarity_service.py` ✅ | WAV 解析 PCM int16→float32; decode(latent) 波形比較; 返回 `{snr: float}` (可使用負值—損失重建); 未知 item 返回 None |
-| **SimilarityService.full_quality_report()** | `ai/multimodal/similarity_service.py` ✅ | 圖片和音訊品質的綜合報告, 包裝 evaluate_image_generation + evaluate_audio_generation, 返回 `{image:{ssim}, audio:{snr}}` |
-| **ChatService decode 輸出至 response.metadata** | `services/chat_service.py` ✅ | `generate_response()` 在 LLM 回應後, 若有多模態 entries, 解碼 top_entry latent 為 image(PNG hex) + audio(16kHz samples) 存入 metadata.generated_image / generated_audio |
-| **Testing: ED3N 接線** | `tests/ai/multimodal/test_multimodal_ed3n_adapter.py` ✅ | TestED3NEngineAdapterWiring: set_multimodal_adapter 設定 + process_multimodal 不崩潰 (2 新測試) |
-| **Testing: 品質評估** | `tests/ai/multimodal/test_similarity_service.py` ✅ | TestMultimodalSimilarityServiceQuality: evaluate_image_generation 返回 ssim + evaluate_audio_generation 返回 snr + 未知 item 返回 None + full_quality_report 包含雙模態 (4 新測試) |
-| **Testing: ChatService 多模態輸出** | `tests/services/test_chat_service.py` ✅ | TestChatServiceMultimodalOutput: generate_response 含 image_analysis 不拋異常 (1 新測試) |
-| **測試結果** | **156/156 全部通過** ✅ | P25 新增 7 測試: 2 ED3N + 4 相似度 + 1 ChatService. 既有多模態 138 + 聊天 11 = 156 通過, 0 失敗 |
+| 變更                                                            | 檔案                                                     | 影響                                                                                                                                                                               |
+| --------------------------------------------------------------- | -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ED3NEngine.multimodal_adapter + process_multimodal RAG 檢索** | `ai/ed3n/ed3n_engine.py` ✅                              | `multimodal_adapter` 屬性; `set_multimodal_adapter()` 方法; `process_multimodal()` 在組合 keys 前呼叫 `adapter.retrieve_multimodal()` 注入相關條目 keys, 非關鍵失敗僅 debug log    |
+| **SimilarityService.evaluate_image_generation()**               | `ai/multimodal/similarity_service.py` ✅                 | 編碼→解碼→SSIM 評估: decode_to_pil(latent) vs PIL open(image_data); 返回 `{ssim: float}`; 未知 item 返回 None                                                                      |
+| **SimilarityService.evaluate_audio_generation()**               | `ai/multimodal/similarity_service.py` ✅                 | WAV 解析 PCM int16→float32; decode(latent) 波形比較; 返回 `{snr: float}` (可使用負值—損失重建); 未知 item 返回 None                                                                |
+| **SimilarityService.full_quality_report()**                     | `ai/multimodal/similarity_service.py` ✅                 | 圖片和音訊品質的綜合報告, 包裝 evaluate_image_generation + evaluate_audio_generation, 返回 `{image:{ssim}, audio:{snr}}`                                                           |
+| **ChatService decode 輸出至 response.metadata**                 | `services/chat_service.py` ✅                            | `generate_response()` 在 LLM 回應後, 若有多模態 entries, 解碼 top_entry latent 為 image(PNG hex) + audio(16kHz samples) 存入 metadata.generated_image / generated_audio            |
+| **Testing: ED3N 接線**                                          | `tests/ai/multimodal/test_multimodal_ed3n_adapter.py` ✅ | TestED3NEngineAdapterWiring: set_multimodal_adapter 設定 + process_multimodal 不崩潰 (2 新測試)                                                                                    |
+| **Testing: 品質評估**                                           | `tests/ai/multimodal/test_similarity_service.py` ✅      | TestMultimodalSimilarityServiceQuality: evaluate_image_generation 返回 ssim + evaluate_audio_generation 返回 snr + 未知 item 返回 None + full_quality_report 包含雙模態 (4 新測試) |
+| **Testing: ChatService 多模態輸出**                             | `tests/services/test_chat_service.py` ✅                 | TestChatServiceMultimodalOutput: generate_response 含 image_analysis 不拋異常 (1 新測試)                                                                                           |
+| **測試結果**                                                    | **156/156 全部通過** ✅                                  | P25 新增 7 測試: 2 ED3N + 4 相似度 + 1 ChatService. 既有多模態 138 + 聊天 11 = 156 通過, 0 失敗                                                                                    |
 
 ### 第44輪: P26 多語言與文化 — 韓語字典 + 文化感知 + 語意消歧 ✅
 
-| 變更 | 檔案 | 影響 |
-|------|------|------|
-| **KOEDict 韓英字典下載/轉換** | `scripts/download_datasets.py` ✅ | 新 `process_koedict()`: 下載 mhagiwara/korean-english-dictionary (tabfile), 解析為 ko↔en 條目, 輸出 koedict.json. 格式: `korean<TAB>english` → ED3N JSON. 透過 `python scripts/download_datasets.py koedict` 下載 |
-| **CulturalContextModule** | `ai/context/cultural_context.py` (NEW) ✅ | 6 文化區 (east_asian/western/middle_eastern/south_asian/southeast_asian/eastern_european). `CULTURE_MAP` 語言代碼→文化區映射. `detect()`: 語言代碼 + CJK/한글/阿語文字檢測. `get_notes()`: 4 概念 (greeting/respect/modesty/gift) 每區文化筆記. `enrich_context()`: 注入 `context.cultural_context.region + notes` |
-| **WSD disambiguate()** | `ai/ed3n/dictionary_layer.py` ✅ | `disambiguate(keys, context)`: 依 surface_forms 與 context text 重疊度重新排序 keys, 語境相關 keys 優先. `decode()` 在 `context.get("disambiguate")` 時自動呼叫 |
-| **ChatService 文化接線** | `services/chat_service.py` ✅ | `__init__()` 初始化 CulturalContextModule; `generate_response()` 在每次對話時呼叫 `enrich_context()`, 注入 `cultural_context` 至 merged_context 供 LLM 使用 |
-| **Testing ×14** | `tests/ai/context/test_cultural_context.py` (NEW) ✅ | TestDetectCulture (6): 代碼/文字/CJK/한글/阿拉伯/預設. TestCulturalNotes (3): 區域列表/未知空列表/問候建議. TestEnrichContext (4): 區域注入/備註注入/保留 key/空文字 |
-| **Testing ×4** | `tests/ai/test_dictionary_layer.py` (NEW) ✅ | TestDisambiguate: 回傳所有 keys/空 context 保留原始/空 keys 回傳空/context 重排序 |
-| **測試結果** | **173/173 全部通過** ✅ | P26 新增 18 測試: 14 文化 + 4 WSD. 既有多模態 138 + 聊天 11 + ED3N 2 + 品質 4 = 173 通過, 0 失敗 |
+| 變更                          | 檔案                                                 | 影響                                                                                                                                                                                                                                                                                                               |
+| ----------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **KOEDict 韓英字典下載/轉換** | `scripts/download_datasets.py` ✅                    | 新 `process_koedict()`: 下載 mhagiwara/korean-english-dictionary (tabfile), 解析為 ko↔en 條目, 輸出 koedict.json. 格式: `korean<TAB>english` → ED3N JSON. 透過 `python scripts/download_datasets.py koedict` 下載                                                                                                  |
+| **CulturalContextModule**     | `ai/context/cultural_context.py` (NEW) ✅            | 6 文化區 (east_asian/western/middle_eastern/south_asian/southeast_asian/eastern_european). `CULTURE_MAP` 語言代碼→文化區映射. `detect()`: 語言代碼 + CJK/한글/阿語文字檢測. `get_notes()`: 4 概念 (greeting/respect/modesty/gift) 每區文化筆記. `enrich_context()`: 注入 `context.cultural_context.region + notes` |
+| **WSD disambiguate()**        | `ai/ed3n/dictionary_layer.py` ✅                     | `disambiguate(keys, context)`: 依 surface_forms 與 context text 重疊度重新排序 keys, 語境相關 keys 優先. `decode()` 在 `context.get("disambiguate")` 時自動呼叫                                                                                                                                                    |
+| **ChatService 文化接線**      | `services/chat_service.py` ✅                        | `__init__()` 初始化 CulturalContextModule; `generate_response()` 在每次對話時呼叫 `enrich_context()`, 注入 `cultural_context` 至 merged_context 供 LLM 使用                                                                                                                                                        |
+| **Testing ×14**               | `tests/ai/context/test_cultural_context.py` (NEW) ✅ | TestDetectCulture (6): 代碼/文字/CJK/한글/阿拉伯/預設. TestCulturalNotes (3): 區域列表/未知空列表/問候建議. TestEnrichContext (4): 區域注入/備註注入/保留 key/空文字                                                                                                                                               |
+| **Testing ×4**                | `tests/ai/test_dictionary_layer.py` (NEW) ✅         | TestDisambiguate: 回傳所有 keys/空 context 保留原始/空 keys 回傳空/context 重排序                                                                                                                                                                                                                                  |
+| **測試結果**                  | **173/173 全部通過** ✅                              | P26 新增 18 測試: 14 文化 + 4 WSD. 既有多模態 138 + 聊天 11 + ED3N 2 + 品質 4 = 173 通過, 0 失敗                                                                                                                                                                                                                   |
 
 ### 第45輪: P27 訓練管道搭建 — 對比預訓練 + 重建微調 + CLI 腳本 ✅
 
-| 變更 | 檔案 | 影響 |
-|------|------|------|
-| **ContrastiveBatchTrainer (合成數據對比學習)** | `ai/multimodal/training_pipeline.py` (NEW) ✅ | `generate_pairs(n_pairs)`: 生成合成正負訓練對 (shared seed + noise 為正, random 為負). `train_epoch()`: 委託 SharedLatentSpace._train_epoch() 執行單 epoch. `train()`: 完整訓練迴圈回傳 `{final_loss, history}`. 零外部數據依賴 |
-| **ReconstructionTrainer (合成數據重建訓練)** | `ai/multimodal/training_pipeline.py` (NEW) ✅ | `generate_features(n_samples)`: 為每個已註冊模態生成正確維度的隨機特徵向量. `train()`: 對每個模態調用 ReconstructionCycle.train() 進行多 epoch 重建訓練. 回傳每模態 `{final_loss, history}` |
-| **FullTrainingPipeline (兩階段端到端)** | `ai/multimodal/training_pipeline.py` (NEW) ✅ | **Phase 1**: 對比預訓練 SharedLatentSpace (合成正負對). **Phase 2**: 重建微調 decoders (合成特徵). `run()`: 執行兩階段, 回傳 `{contrastive, reconstruction}`. `evaluate()`: 在合成數據上評估重建損失 |
-| **CLI 腳本 (參數控制 + 權重存/載)** | `scripts/train_multimodal.py` (NEW) ✅ | `--contrastive-only` / `--recon-only` / `--evaluate-only` 模式. `--save` / `--load` 權重持久化 (npz 格式: vision_W/b, audio_W/b, decoder_W/b). 完整 pipeline 0.1s 完成 |
-| **Testing ×11** | `tests/ai/multimodal/test_training_pipeline.py` ✅ | ContrastiveBatchTrainer (5): 生成長度/正對結構/負對結構/損失下降/結果dict. ReconstructionTrainer (3): 生成dict/維度/多模態結果. FullTrainingPipeline (3): 兩階段結果/評估/邊界情況 |
-| **測試結果** | **155/155 全部通過** ✅ | P27 全部 11 測試 + 144 既有多模態 = 155 通過, 0 失敗 |
+| 變更                                           | 檔案                                               | 影響                                                                                                                                                                                                                            |
+| ---------------------------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ContrastiveBatchTrainer (合成數據對比學習)** | `ai/multimodal/training_pipeline.py` (NEW) ✅      | `generate_pairs(n_pairs)`: 生成合成正負訓練對 (shared seed + noise 為正, random 為負). `train_epoch()`: 委託 SharedLatentSpace._train_epoch() 執行單 epoch. `train()`: 完整訓練迴圈回傳 `{final_loss, history}`. 零外部數據依賴 |
+| **ReconstructionTrainer (合成數據重建訓練)**   | `ai/multimodal/training_pipeline.py` (NEW) ✅      | `generate_features(n_samples)`: 為每個已註冊模態生成正確維度的隨機特徵向量. `train()`: 對每個模態調用 ReconstructionCycle.train() 進行多 epoch 重建訓練. 回傳每模態 `{final_loss, history}`                                     |
+| **FullTrainingPipeline (兩階段端到端)**        | `ai/multimodal/training_pipeline.py` (NEW) ✅      | **Phase 1**: 對比預訓練 SharedLatentSpace (合成正負對). **Phase 2**: 重建微調 decoders (合成特徵). `run()`: 執行兩階段, 回傳 `{contrastive, reconstruction}`. `evaluate()`: 在合成數據上評估重建損失                            |
+| **CLI 腳本 (參數控制 + 權重存/載)**            | `scripts/train_multimodal.py` (NEW) ✅             | `--contrastive-only` / `--recon-only` / `--evaluate-only` 模式. `--save` / `--load` 權重持久化 (npz 格式: vision_W/b, audio_W/b, decoder_W/b). 完整 pipeline 0.1s 完成                                                          |
+| **Testing ×11**                                | `tests/ai/multimodal/test_training_pipeline.py` ✅ | ContrastiveBatchTrainer (5): 生成長度/正對結構/負對結構/損失下降/結果dict. ReconstructionTrainer (3): 生成dict/維度/多模態結果. FullTrainingPipeline (3): 兩階段結果/評估/邊界情況                                              |
+| **測試結果**                                   | **155/155 全部通過** ✅                            | P27 全部 11 測試 + 144 既有多模態 = 155 通過, 0 失敗                                                                                                                                                                            |
 
 ### 第46輪: P28 真實數據集導入 — ESC-50 音頻 + CIFAR-10 圖像 + data_loader ✅
 
-| 變更 | 檔案 | 影響 |
-|------|------|------|
-| **download_datasets.py 擴充 (cifar10 + esc50)** | `scripts/download_datasets.py` ✅ | 新增 CIFAR-10 下載/解壓/類別目錄結構 (60K 32×32 圖像, 10 類, ~163MB); ESC-50 下載/解壓/.ref 索引 (2000 音頻, 50 類, ~615MB). `python scripts/download_datasets.py cifar10` / `esc50` / `all-multimodal` |
-| **CIFAR10Loader (圖像數據載入/編碼/配對)** | `ai/multimodal/data_loader.py` (NEW) ✅ | 掃描 class/*.npy → VisualEncoder.encode_from_pil() (128×128 resize + 256-dim 特徵). `build_contrastive_pairs()`: 同類=正對/不同=負對. `build_reconstruction_samples()`: 隨機取樣編碼特徵 |
-| **ESC50Loader (音頻數據載入/編碼/配對)** | `ai/multimodal/data_loader.py` (NEW) ✅ | 掃描 category/*.ref → WAV 讀取 → AudioSpectralEncoder.encode() (128-dim 特徵). `build_contrastive_pairs()`: 同類正對. `build_reconstruction_samples()`: 取樣編碼特徵 |
-| **RealDataProvider (統一介面)** | `ai/multimodal/data_loader.py` (NEW) ✅ | `encode_all()`: 編碼所有可用數據集. `contrastive_pairs()`: 合併多模態對. `reconstruction_samples()`: 合併多模態特徵. `has_data()`: 檢查編碼數據存在 |
-| **training_pipeline 真實數據支援** | `ai/multimodal/training_pipeline.py` ✅ | `ContrastiveBatchTrainer.train_on_real_pairs()`: 直接使用 data_loader 輸出的對. `ReconstructionTrainer.train_on_real_features()`: 使用真實編碼特徵. `FullTrainingPipeline.run_on_real()`: 兩階段真實數據訓練, 回退合成 |
-| **CLI --real 模式** | `scripts/train_multimodal.py` ✅ | `--real`: 使用真實數據. `--encode`: 編碼數據集. `--real-pairs N`: 每模態對數量. `--real-samples N`: 每模態樣本數. 自動回退合成若真實數據不可用 |
-| **Testing ×14** | `tests/ai/multimodal/test_data_loader.py` (NEW) ✅ | CIFAR10Loader (5): init無數據/掃描/編碼/標籤/空配對. ESC50Loader (5): init無數據/掃描/編碼/類ID/配對. RealDataProvider (4): init/空配對/空重建/空編碼. 全部使用 tmp_path 合成數據 |
-| **測試結果** | **169/169 全部通過** ✅ | P28 全部 14 測試 + 155 既有多模態 = 169 通過, 0 失敗 |
-| **🔬 真實訓練驗證** | ESC-50 2000 條編碼 ✅ | 對比損失: 合成 0.4320 → **真實 0.2689** (38% 改善 🎉). 音頻重建: 5915.3 (隨機解碼器權重, 待 P29 端到端). CIFAR-10 下載超時需手動重新嘗試 (`--timeout 600`) |
+| 變更                                            | 檔案                                               | 影響                                                                                                                                                                                                                   |
+| ----------------------------------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **download_datasets.py 擴充 (cifar10 + esc50)** | `scripts/download_datasets.py` ✅                  | 新增 CIFAR-10 下載/解壓/類別目錄結構 (60K 32×32 圖像, 10 類, ~163MB); ESC-50 下載/解壓/.ref 索引 (2000 音頻, 50 類, ~615MB). `python scripts/download_datasets.py cifar10` / `esc50` / `all-multimodal`                |
+| **CIFAR10Loader (圖像數據載入/編碼/配對)**      | `ai/multimodal/data_loader.py` (NEW) ✅            | 掃描 class/*.npy → VisualEncoder.encode_from_pil() (128×128 resize + 256-dim 特徵). `build_contrastive_pairs()`: 同類=正對/不同=負對. `build_reconstruction_samples()`: 隨機取樣編碼特徵                               |
+| **ESC50Loader (音頻數據載入/編碼/配對)**        | `ai/multimodal/data_loader.py` (NEW) ✅            | 掃描 category/*.ref → WAV 讀取 → AudioSpectralEncoder.encode() (128-dim 特徵). `build_contrastive_pairs()`: 同類正對. `build_reconstruction_samples()`: 取樣編碼特徵                                                   |
+| **RealDataProvider (統一介面)**                 | `ai/multimodal/data_loader.py` (NEW) ✅            | `encode_all()`: 編碼所有可用數據集. `contrastive_pairs()`: 合併多模態對. `reconstruction_samples()`: 合併多模態特徵. `has_data()`: 檢查編碼數據存在                                                                    |
+| **training_pipeline 真實數據支援**              | `ai/multimodal/training_pipeline.py` ✅            | `ContrastiveBatchTrainer.train_on_real_pairs()`: 直接使用 data_loader 輸出的對. `ReconstructionTrainer.train_on_real_features()`: 使用真實編碼特徵. `FullTrainingPipeline.run_on_real()`: 兩階段真實數據訓練, 回退合成 |
+| **CLI --real 模式**                             | `scripts/train_multimodal.py` ✅                   | `--real`: 使用真實數據. `--encode`: 編碼數據集. `--real-pairs N`: 每模態對數量. `--real-samples N`: 每模態樣本數. 自動回退合成若真實數據不可用                                                                         |
+| **Testing ×14**                                 | `tests/ai/multimodal/test_data_loader.py` (NEW) ✅ | CIFAR10Loader (5): init無數據/掃描/編碼/標籤/空配對. ESC50Loader (5): init無數據/掃描/編碼/類ID/配對. RealDataProvider (4): init/空配對/空重建/空編碼. 全部使用 tmp_path 合成數據                                      |
+| **測試結果**                                    | **169/169 全部通過** ✅                            | P28 全部 14 測試 + 155 既有多模態 = 169 通過, 0 失敗                                                                                                                                                                   |
+| **🔬 真實訓練驗證**                             | ESC-50 2000 條編碼 ✅                              | 對比損失: 合成 0.4320 → **真實 0.2689** (38% 改善 🎉). 音頻重建: 5915.3 (隨機解碼器權重, 待 P29 端到端). CIFAR-10 下載超時需手動重新嘗試 (`--timeout 600`)                                                             |
 
-| 變更 | 檔案 | 影響 |
-|------|------|------|
-| **MetaController → AngelaLLMService 接線** | `services/llm/router.py` ✅ | `__init__` 建立 MetaController 實例; `ModelBus(meta_controller=...)` 傳入; `generate_response()` 記錄 LLM 置信度; ModelBus 直接命中記錄; Ensemble 記錄 |
-| **GARDENEngine 置信度追蹤** | `ai/garden/garden_engine.py` ✅ | `__init__` 初始化 `_last_confidence`; 7 返回路徑前記錄對應置信度 (reflex=0.95, math=0.85, multi=0.70, dynamic=key_ratio×resp_quality×cycle); ModelBus 透過 `_last_confidence` 自動取得 GARDEN 真實信心 |
-| **MetaController 專屬測試** | `tests/ai/meta/test_meta_controller.py` (NEW) ✅ | 10 測試: init/record/get_calibration/adjustment/summary/window |
-| **測試** | 68 測試全部通過 ✅ | meta_controller 10 + model_bus 36 + tactile 11 + tickle 11 |
+| 變更                                       | 檔案                                             | 影響                                                                                                                                                                                                   |
+| ------------------------------------------ | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **MetaController → AngelaLLMService 接線** | `services/llm/router.py` ✅                      | `__init__` 建立 MetaController 實例; `ModelBus(meta_controller=...)` 傳入; `generate_response()` 記錄 LLM 置信度; ModelBus 直接命中記錄; Ensemble 記錄                                                 |
+| **GARDENEngine 置信度追蹤**                | `ai/garden/garden_engine.py` ✅                  | `__init__` 初始化 `_last_confidence`; 7 返回路徑前記錄對應置信度 (reflex=0.95, math=0.85, multi=0.70, dynamic=key_ratio×resp_quality×cycle); ModelBus 透過 `_last_confidence` 自動取得 GARDEN 真實信心 |
+| **MetaController 專屬測試**                | `tests/ai/meta/test_meta_controller.py` (NEW) ✅ | 10 測試: init/record/get_calibration/adjustment/summary/window                                                                                                                                         |
+| **測試**                                   | 68 測試全部通過 ✅                               | meta_controller 10 + model_bus 36 + tactile 11 + tickle 11                                                                                                                                             |
 
-| 變更 | 檔案 | 影響 |
-|------|------|------|
-| **`garden/__main__.py` sys.path 修正** | `garden/__main__.py` ✅ | `..` 從 6 層改為 5 層 (ed3n 一致)，避免路徑越過專案根目錄 |
-| **`system/cluster_manager` → `core.system`** | `core/system/cluster_manager.py` (NEW) ✅ | `system.cluster_manager` 功能完整搬移至新路徑, 4 個 import 已更新 |
-| **`system/security_monitor` → `core.system`** | `core/system/security_monitor.py` (NEW) ✅ | `ABCKeyManager` 搬移至新路徑, 1 個 import 已更新 |
-| **`desktop_presence.py` 移除** | `core/engine/desktop_presence.py` (REMOVED) ✅ | 純別名 shim (33 行), 2 個 import 改為直接從 `desktop_interaction` import + alias |
-| **`core/autonomous/` import 清理** | `autonomous/__init__.py` ✅ | 2 個舊路徑 import 改為新路徑 + explicit alias |
-| **N3 問題關閉** | — | 🎉 **5/174 已修復 → N3 實質解決** |
+| 變更                                          | 檔案                                           | 影響                                                                             |
+| --------------------------------------------- | ---------------------------------------------- | -------------------------------------------------------------------------------- |
+| **`garden/__main__.py` sys.path 修正**        | `garden/__main__.py` ✅                        | `..` 從 6 層改為 5 層 (ed3n 一致)，避免路徑越過專案根目錄                        |
+| **`system/cluster_manager` → `core.system`**  | `core/system/cluster_manager.py` (NEW) ✅      | `system.cluster_manager` 功能完整搬移至新路徑, 4 個 import 已更新                |
+| **`system/security_monitor` → `core.system`** | `core/system/security_monitor.py` (NEW) ✅     | `ABCKeyManager` 搬移至新路徑, 1 個 import 已更新                                 |
+| **`desktop_presence.py` 移除**                | `core/engine/desktop_presence.py` (REMOVED) ✅ | 純別名 shim (33 行), 2 個 import 改為直接從 `desktop_interaction` import + alias |
+| **`core/autonomous/` import 清理**            | `autonomous/__init__.py` ✅                    | 2 個舊路徑 import 改為新路徑 + explicit alias                                    |
+| **N3 問題關閉**                               | —                                              | 🎉 **5/174 已修復 → N3 實質解決**                                                |
 
 ## 3. 代碼品質 🟡 8.0/10
 
@@ -409,176 +423,180 @@
 
 ### 3.1 框架層 (Architecture / Framework) ✅ 9/10
 
-| 指標 | 數值 | 狀態 | 檔案 (行數) |
-|------|------|------|------------|
-| MultimodalService 協調器 | 完整 async orchestrator | ✅ | `multimodal_service.py` (921 行) |
-| API 路由 | **33 個 multimodal 端點** + 8 chat + 2 meta + 3 ops + 8 desktop = 54 總路由 | ✅ | `multimodal_routes.py` |
-| VisionPipeline | encode→latent→decode→ssim 完整閉環 | ✅ | `vision_pipeline.py` |
-| AudioPipeline | encode→latent→decode→SNR 完整閉環 | ✅ | `audio_pipeline.py` |
-| CrossModalRouter | 跨模態路由 + fallback chain + LRU cache | ✅ | `cross_modal_router.py` (311 行) |
-| CrossModalQualityDashboard | 視覺+音頻+跨模態品質整合 | ✅ | `cross_modal_quality.py` (213 行) |
-| MultimodalErrorRecovery | 3 次重試 + fallback + checkpoint | ✅ | `multimodal_error_recovery.py` (294 行) |
-| MultimodalStatePersistence | checkpoint save/load/prune | ✅ | `multimodal_state_persistence.py` (323 行) |
-| MultimodalQualityMonitor | 60s 後台取樣 + 降級警報 | ✅ | `multimodal_quality_monitor.py` (321 行) |
-| MultimodalMemoryStore | store/search/recall/TTL/JSON 持久化 | ✅ | `multimodal_memory.py` (375 行) |
-| ContinuousMultimodalLearning | 緩衝+auto-train+品質追蹤 | ✅ | `continuous_multimodal_learning.py` (329 行) |
-| DualEncoderRouter | 結構+語意雙編碼器路由 | ✅ | `dual_encoder_router.py` (330 行) |
-| SemanticKeyMapper | 語意隱向量→ED3N 概念鍵映射 | ✅ | `semantic_key_mapper.py` (202 行) |
-| MultimodalRetriever | numpy 餘弦暴力搜索索引 | ✅ | `multimodal_retriever.py` (146 行) |
-| MultimodalRAGEngine | 編碼→檢索→ED3N 條目 | ✅ | `multimodal_rag_engine.py` (149 行) |
-| MultimodalED3NAdapter | 雙向 ED3N 整合 | ✅ | `multimodal_ed3n_adapter.py` (89 行) |
-| ReconstructionCycle | 特徵級 autoencoder + 梯度裁切 | ✅ | `reconstruction_cycle.py` (208 行) |
-| CrossModalSynthesizer | 隱空間混合 + 跨模態生成 | ✅ | `reconstruction_cycle.py` |
-| FullTrainingPipeline | 對比預訓練 + 重建微調 + CLI | ✅ | `training_pipeline.py` (383 行) |
-| quality_metrics | SSIM / PSNR / SNR | ✅ | `quality_metrics.py` (82 行) |
-| VisualDecoder | CNN 轉置卷積紋理 + tanh 投影 | ✅ | `visual_decoder.py` (143 行) |
-| AudioWaveformDecoder | 多頻段波表合成 + 噪聲分量 | ✅ | `audio_decoder.py` (144 行) |
-| ED3N 多模態整合 | process_multimodal + multimodal_adapter | ✅ | `ed3n_engine.py` (996 行) |
-| MetaController | 置信度校準 + 門檻調整 | ✅ | `meta_controller.py` (122 行) |
-| AngelaLLMService | 多後端路由 + ModelBus + 置信度 | ✅ | `router.py` (1137+ 行) |
+| 指標                         | 數值                                                                        | 狀態 | 檔案 (行數)                                  |
+| ---------------------------- | --------------------------------------------------------------------------- | ---- | -------------------------------------------- |
+| MultimodalService 協調器     | 完整 async orchestrator                                                     | ✅   | `multimodal_service.py` (921 行)             |
+| API 路由                     | **33 個 multimodal 端點** + 8 chat + 2 meta + 3 ops + 8 desktop = 54 總路由 | ✅   | `multimodal_routes.py`                       |
+| VisionPipeline               | encode→latent→decode→ssim 完整閉環                                          | ✅   | `vision_pipeline.py`                         |
+| AudioPipeline                | encode→latent→decode→SNR 完整閉環                                           | ✅   | `audio_pipeline.py`                          |
+| CrossModalRouter             | 跨模態路由 + fallback chain + LRU cache                                     | ✅   | `cross_modal_router.py` (311 行)             |
+| CrossModalQualityDashboard   | 視覺+音頻+跨模態品質整合                                                    | ✅   | `cross_modal_quality.py` (213 行)            |
+| MultimodalErrorRecovery      | 3 次重試 + fallback + checkpoint                                            | ✅   | `multimodal_error_recovery.py` (294 行)      |
+| MultimodalStatePersistence   | checkpoint save/load/prune                                                  | ✅   | `multimodal_state_persistence.py` (323 行)   |
+| MultimodalQualityMonitor     | 60s 後台取樣 + 降級警報                                                     | ✅   | `multimodal_quality_monitor.py` (321 行)     |
+| MultimodalMemoryStore        | store/search/recall/TTL/JSON 持久化                                         | ✅   | `multimodal_memory.py` (375 行)              |
+| ContinuousMultimodalLearning | 緩衝+auto-train+品質追蹤                                                    | ✅   | `continuous_multimodal_learning.py` (329 行) |
+| DualEncoderRouter            | 結構+語意雙編碼器路由                                                       | ✅   | `dual_encoder_router.py` (330 行)            |
+| SemanticKeyMapper            | 語意隱向量→ED3N 概念鍵映射                                                  | ✅   | `semantic_key_mapper.py` (202 行)            |
+| MultimodalRetriever          | numpy 餘弦暴力搜索索引                                                      | ✅   | `multimodal_retriever.py` (146 行)           |
+| MultimodalRAGEngine          | 編碼→檢索→ED3N 條目                                                         | ✅   | `multimodal_rag_engine.py` (149 行)          |
+| MultimodalED3NAdapter        | 雙向 ED3N 整合                                                              | ✅   | `multimodal_ed3n_adapter.py` (89 行)         |
+| ReconstructionCycle          | 特徵級 autoencoder + 梯度裁切                                               | ✅   | `reconstruction_cycle.py` (208 行)           |
+| CrossModalSynthesizer        | 隱空間混合 + 跨模態生成                                                     | ✅   | `reconstruction_cycle.py`                    |
+| FullTrainingPipeline         | 對比預訓練 + 重建微調 + CLI                                                 | ✅   | `training_pipeline.py` (383 行)              |
+| quality_metrics              | SSIM / PSNR / SNR                                                           | ✅   | `quality_metrics.py` (82 行)                 |
+| VisualDecoder                | CNN 轉置卷積紋理 + tanh 投影                                                | ✅   | `visual_decoder.py` (143 行)                 |
+| AudioWaveformDecoder         | 多頻段波表合成 + 噪聲分量                                                   | ✅   | `audio_decoder.py` (144 行)                  |
+| ED3N 多模態整合              | process_multimodal + multimodal_adapter                                     | ✅   | `ed3n_engine.py` (996 行)                    |
+| MetaController               | 置信度校準 + 門檻調整                                                       | ✅   | `meta_controller.py` (122 行)                |
+| AngelaLLMService             | 多後端路由 + ModelBus + 置信度                                              | ✅   | `router.py` (1137+ 行)                       |
 
 ### 3.2 實際層 (Actual / Real) 🟡 7/10
 
-| 指標 | 數值 | 狀態 | 說明 |
-|------|------|------|------|
-| **視覺編碼器** | VisualEncoder 256-dim CNN | ✅ **實際運作** | 純 numpy, Gabor filter bank + 色彩/邊緣/紋理/空間. 無語意理解 |
-| **音頻編碼器** | AudioSpectralEncoder 128-dim MFCC | ✅ **實際運作** | 純 numpy, MFCC + 頻譜 + Mel band + 時序注意力. 無語意理解 |
-| **共享隱空間** | SharedLatentSpace 64-dim | ✅ **實際運作** | 對比學習 + 跨模態注意力 + 訓練. 結構特徵為主 |
-| **視覺解碼器** | VisualDecoder 128×128 RGB | ⚠️ **有限** | 抽象紋理色塊, 無文字→圖像控制 |
-| **音頻解碼器** | AudioWaveformDecoder 16kHz PCM | ⚠️ **有限** | 正弦/波表合成, 無人聲/歌詞 |
-| **語意編碼器 (CLIP)** | SemanticVisualEncoder 512-dim | ⚠️ **需 torch+CLIP** | 無 torch 時回退 None, 當前環境未啟用 |
-| **語意編碼器 (Whisper)** | SemanticAudioEncoder 384-dim | ⚠️ **需 torch+Whisper** | 無 torch 時回退 None, 當前環境未啟用 |
-| **ED3N 語意鍵映射** | SemanticKeyMapper | ⚠️ **需語意編碼器** | 依賴 CLIP/Whisper 輸出, 當前使用 mock 驗證 |
-| **視覺分析** | VisionService PIL-based | ✅ **實際運作** | 色彩/比對/OCR (pytesseract), 無物件/場景語意 |
-| **音頻服務** | AudioService STT/TTS | ✅ **實際運作** | edge-tts + speech_recognition, faster-whisper 未安裝 |
-| **多模態記憶** | MultimodalMemoryStore | ✅ **實際運作** | JSON 持久化, cosine search, TTL 清理 |
-| **多模態學習** | ContinuousMultimodalLearning | ✅ **實際運作** | 緩衝 auto-train, 品質追蹤 |
-| **多模態路由** | CrossModalRouter | ✅ **實際運作** | 路由至 VisionPipeline/AudioPipeline |
-| **品質評估** | SSIM/PSNR/SNR | ✅ **實際運作** | 純 numpy 計算 |
-| **CLP 連續學習** | trainer + engine 接線 | ✅ **實際運作** | ED3NEngine._maybe_learn() |
-| **HAM 記憶** | VectorStore + HAM 雙注入 | ✅ **實際運作** | 460K 向量 + 對話模板 |
-| **MetaController** | 置信度校準 + API | ✅ **實際運作** | 58 測試通過 |
-| **ED3N 信心追蹤** | `_last_confidence` 9 路徑 | ✅ **實際運作** | ModelBus 整合 |
-| **GARDEN 信心追蹤** | `_last_confidence` 7 路徑 | ✅ **實際運作** | 自動整合 |
-| **前端多模態 UI** | Desktop MultimodalPanel | ✅ **已實現** | `multimodal-panel.html` + `multimodal-panel.js` + `multimodal-client.js` (P34 commit `d1286f3cd`, 2026-06-22) |
-| **WebSocket 串流** | /multimodal/stream | 🟡 **WS message handlers exist** | `websocket_manager.py` has `_handle_multimodal_encode`/`_handle_multimodal_decode` handlers + routing dispatch. But no dedicated `/multimodal/stream` HTTP route registered. Needs route registration. |
-| **語意理解** | CLIP/YOLO 整合 | ✅ **實際運作** | CLIP 512-dim + Whisper 384-dim + DualEncoderRouter + SemanticKeyMapper, torch 已安裝 |
-| **text-to-image** | Stable Diffusion / DALL-E | ❌ **未實現** | VisualDecoder 僅抽象紋理 |
-| **真實歌唱合成** | TTS 歌唱模式 | ❌ **未實現** | edge-tts 僅朗讀, 無旋律 |
+| 指標                     | 數值                              | 狀態                             | 說明                                                                                                                                                                                                   |
+| ------------------------ | --------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **視覺編碼器**           | VisualEncoder 256-dim CNN         | ✅ **實際運作**                  | 純 numpy, Gabor filter bank + 色彩/邊緣/紋理/空間. 無語意理解                                                                                                                                          |
+| **音頻編碼器**           | AudioSpectralEncoder 128-dim MFCC | ✅ **實際運作**                  | 純 numpy, MFCC + 頻譜 + Mel band + 時序注意力. 無語意理解                                                                                                                                              |
+| **共享隱空間**           | SharedLatentSpace 64-dim          | ✅ **實際運作**                  | 對比學習 + 跨模態注意力 + 訓練. 結構特徵為主                                                                                                                                                           |
+| **視覺解碼器**           | VisualDecoder 128×128 RGB         | ⚠️ **有限**                      | 抽象紋理色塊, 無文字→圖像控制                                                                                                                                                                          |
+| **音頻解碼器**           | AudioWaveformDecoder 16kHz PCM    | ⚠️ **有限**                      | 正弦/波表合成, 無人聲/歌詞                                                                                                                                                                             |
+| **語意編碼器 (CLIP)**    | SemanticVisualEncoder 512-dim     | ⚠️ **需 torch+CLIP**             | 無 torch 時回退 None, 當前環境未啟用                                                                                                                                                                   |
+| **語意編碼器 (Whisper)** | SemanticAudioEncoder 384-dim      | ⚠️ **需 torch+Whisper**          | 無 torch 時回退 None, 當前環境未啟用                                                                                                                                                                   |
+| **ED3N 語意鍵映射**      | SemanticKeyMapper                 | ⚠️ **需語意編碼器**              | 依賴 CLIP/Whisper 輸出, 當前使用 mock 驗證                                                                                                                                                             |
+| **視覺分析**             | VisionService PIL-based           | ✅ **實際運作**                  | 色彩/比對/OCR (pytesseract), 無物件/場景語意                                                                                                                                                           |
+| **音頻服務**             | AudioService STT/TTS              | ✅ **實際運作**                  | edge-tts + speech_recognition, faster-whisper 未安裝                                                                                                                                                   |
+| **多模態記憶**           | MultimodalMemoryStore             | ✅ **實際運作**                  | JSON 持久化, cosine search, TTL 清理                                                                                                                                                                   |
+| **多模態學習**           | ContinuousMultimodalLearning      | ✅ **實際運作**                  | 緩衝 auto-train, 品質追蹤                                                                                                                                                                              |
+| **多模態路由**           | CrossModalRouter                  | ✅ **實際運作**                  | 路由至 VisionPipeline/AudioPipeline                                                                                                                                                                    |
+| **品質評估**             | SSIM/PSNR/SNR                     | ✅ **實際運作**                  | 純 numpy 計算                                                                                                                                                                                          |
+| **CLP 連續學習**         | trainer + engine 接線             | ✅ **實際運作**                  | ED3NEngine._maybe_learn()                                                                                                                                                                              |
+| **HAM 記憶**             | VectorStore + HAM 雙注入          | ✅ **實際運作**                  | 460K 向量 + 對話模板                                                                                                                                                                                   |
+| **MetaController**       | 置信度校準 + API                  | ✅ **實際運作**                  | 58 測試通過                                                                                                                                                                                            |
+| **ED3N 信心追蹤**        | `_last_confidence` 9 路徑         | ✅ **實際運作**                  | ModelBus 整合                                                                                                                                                                                          |
+| **GARDEN 信心追蹤**      | `_last_confidence` 7 路徑         | ✅ **實際運作**                  | 自動整合                                                                                                                                                                                               |
+| **前端多模態 UI**        | Desktop MultimodalPanel           | ✅ **已實現**                    | `multimodal-panel.html` + `multimodal-panel.js` + `multimodal-client.js` (P34 commit `d1286f3cd`, 2026-06-22)                                                                                          |
+| **WebSocket 串流**       | /multimodal/stream                | 🟡 **WS message handlers exist** | `websocket_manager.py` has `_handle_multimodal_encode`/`_handle_multimodal_decode` handlers + routing dispatch. But no dedicated `/multimodal/stream` HTTP route registered. Needs route registration. |
+| **語意理解**             | CLIP/YOLO 整合                    | ✅ **實際運作**                  | CLIP 512-dim + Whisper 384-dim + DualEncoderRouter + SemanticKeyMapper, torch 已安裝                                                                                                                   |
+| **text-to-image**        | Stable Diffusion / DALL-E         | ❌ **未實現**                    | VisualDecoder 僅抽象紋理                                                                                                                                                                               |
+| **真實歌唱合成**         | TTS 歌唱模式                      | ❌ **未實現**                    | edge-tts 僅朗讀, 無旋律                                                                                                                                                                                |
 
 ## 4. 智能水準 🟡 7.5/10 綜合評估
 
-> **⚠️ v33.6 重新校正**: 框架層 (架構) 達 9/10，實際層因 torch+CLIP+Whisper 已安裝從 5.0/10 提升至 **7.0/10**。綜合加權調整為 **8.5/10**。
+> **⚠️
+> v33.6 重新校正**: 框架層 (架構) 達 9/10，實際層因 torch+CLIP+Whisper 已安裝從 5.0/10 提升至
+> **7.0/10**。綜合加權調整為 **8.5/10**。
 
 ### 4.1 智能上限（有 LLM API）vs 智能下限（無 LLM API）
 
 #### 框架層 (架構已就位)
 
-| 維度 | 框架上限 | 框架下限 | 狀態 |
-|------|---------|---------|------|
-| **管線架構** | MultimodalService + 54 API 路由 | 4 子管線 (Vision/Audio/CrossModal/Training) | ✅ 完整 |
-| **編碼器** | VisualEncoder(256) + SemanticEncoder(512) + AudioEncoder(128) + SemanticAudio(384) | VisualEncoder(256) + AudioEncoder(128) | ✅ 雙編碼器路由 |
-| **隱空間** | SharedLatentSpace(64) + 對比學習 + 跨模態注意力 | 同左 | ✅ 已訓練 |
-| **解碼器** | VisualDecoder(128×128) + AudioDecoder(16kHz) | 同左 | ✅ 但僅抽象輸出 |
-| **記憶** | VectorStore(460K) + HAM + MultimodalMemoryStore | VectorStore(460K) + HAM | ✅ 三路記憶 |
-| **學習** | CLP + ContinuousMultimodalLearning | CLP | ✅ 雙學習迴路 |
-| **品質** | SSIM/PSNR/SNR + QualityMonitor | 同左 | ✅ |
-| **錯誤恢復** | ErrorRecovery + StatePersistence | 同左 | ✅ |
+| 維度         | 框架上限                                                                           | 框架下限                                    | 狀態            |
+| ------------ | ---------------------------------------------------------------------------------- | ------------------------------------------- | --------------- |
+| **管線架構** | MultimodalService + 54 API 路由                                                    | 4 子管線 (Vision/Audio/CrossModal/Training) | ✅ 完整         |
+| **編碼器**   | VisualEncoder(256) + SemanticEncoder(512) + AudioEncoder(128) + SemanticAudio(384) | VisualEncoder(256) + AudioEncoder(128)      | ✅ 雙編碼器路由 |
+| **隱空間**   | SharedLatentSpace(64) + 對比學習 + 跨模態注意力                                    | 同左                                        | ✅ 已訓練       |
+| **解碼器**   | VisualDecoder(128×128) + AudioDecoder(16kHz)                                       | 同左                                        | ✅ 但僅抽象輸出 |
+| **記憶**     | VectorStore(460K) + HAM + MultimodalMemoryStore                                    | VectorStore(460K) + HAM                     | ✅ 三路記憶     |
+| **學習**     | CLP + ContinuousMultimodalLearning                                                 | CLP                                         | ✅ 雙學習迴路   |
+| **品質**     | SSIM/PSNR/SNR + QualityMonitor                                                     | 同左                                        | ✅              |
+| **錯誤恢復** | ErrorRecovery + StatePersistence                                                   | 同左                                        | ✅              |
 
 #### 實際層 (真實能力)
 
-| 維度 | 實際上限 🟢 7.5/10 | 實際下限 🟡 6.5/10 | 說明 |
-|------|-------------------|-------------------|------|
-| **對話能力** | 自然對話、推理、程式碼生成 | 字典反射 + 向量搜索 (460K) | 上限依賴 LLM |
-| **知識範圍** | 不限 (LLM 訓練數據) | 中英日三語詞典 | 下限為字典查詢 |
-| **視覺理解** | CLIP 512-dim 語意 + VisionService PIL 分析 | VisualEncoder 像素統計 + SemanticVisualEncoder CLIP 語意 | ✅ CLIP 已啟用 |
-| **音頻理解** | Whisper 384-dim 語意 + AudioService STT | AudioSpectralEncoder 頻譜統計 + SemanticAudioEncoder Whisper 語意 | ✅ Whisper 已啟用 |
-| **視覺生成** | ❌ 無 text-to-image | VisualDecoder 抽象紋理 | ❌ 無語意生成 |
-| **音頻生成** | ❌ 無歌唱合成 | AudioWaveformDecoder 正弦合成 | ❌ 無人聲 |
-| **記憶** | VectorStore + HAM + MultimodalMemory | VectorStore + HAM | ✅ 三路→雙路 |
-| **學習** | CLP + CML | CLP | ✅ 雙→單迴路 |
-| **情緒感知** | EmotionSystem (離線) | EmotionSystem (離線) | 🟡 結構存在 |
-| **自主性** | AutonomousLifeCycle + 主動交互 | 同左 | ✅ 已接線 |
+| 維度         | 實際上限 🟢 7.5/10                         | 實際下限 🟡 6.5/10                                                | 說明              |
+| ------------ | ------------------------------------------ | ----------------------------------------------------------------- | ----------------- |
+| **對話能力** | 自然對話、推理、程式碼生成                 | 字典反射 + 向量搜索 (460K)                                        | 上限依賴 LLM      |
+| **知識範圍** | 不限 (LLM 訓練數據)                        | 中英日三語詞典                                                    | 下限為字典查詢    |
+| **視覺理解** | CLIP 512-dim 語意 + VisionService PIL 分析 | VisualEncoder 像素統計 + SemanticVisualEncoder CLIP 語意          | ✅ CLIP 已啟用    |
+| **音頻理解** | Whisper 384-dim 語意 + AudioService STT    | AudioSpectralEncoder 頻譜統計 + SemanticAudioEncoder Whisper 語意 | ✅ Whisper 已啟用 |
+| **視覺生成** | ❌ 無 text-to-image                        | VisualDecoder 抽象紋理                                            | ❌ 無語意生成     |
+| **音頻生成** | ❌ 無歌唱合成                              | AudioWaveformDecoder 正弦合成                                     | ❌ 無人聲         |
+| **記憶**     | VectorStore + HAM + MultimodalMemory       | VectorStore + HAM                                                 | ✅ 三路→雙路      |
+| **學習**     | CLP + CML                                  | CLP                                                               | ✅ 雙→單迴路      |
+| **情緒感知** | EmotionSystem (離線)                       | EmotionSystem (離線)                                              | 🟡 結構存在       |
+| **自主性**   | AutonomousLifeCycle + 主動交互             | 同左                                                              | ✅ 已接線         |
 
 ### 4.2 對應的 AI 系統比較
 
-| 等級 | 本專案對應 | 業界對等系統 | 說明 |
-|------|-----------|-------------|------|
-| **智能上限 7.5/10** | 有 LLM API (Gemini/OpenAI/Ollama) + 多模態管線框架 | GPT-3.5 等級 | 多 LLM 後端路由，54 API 路由，多模態管線框架就位但語意理解待補 |
-| **智能下限 6.5/10** | 無 LLM API (ED3N + GARDEN + VectorStore + HAM + CLP) | FAQ 機器人+ | 460K 字典 + 向量搜索 + SNN 推理 + 記憶 + 連續學習, 但無語意理解 |
-| **目標 10/10** | 上限目標 | GPT-4, Claude 3 Opus, Gemini Ultra | 自主學習 + 多模態語意完全接線 + 記憶閉合迴路 |
+| 等級                | 本專案對應                                           | 業界對等系統                       | 說明                                                            |
+| ------------------- | ---------------------------------------------------- | ---------------------------------- | --------------------------------------------------------------- |
+| **智能上限 7.5/10** | 有 LLM API (Gemini/OpenAI/Ollama) + 多模態管線框架   | GPT-3.5 等級                       | 多 LLM 後端路由，54 API 路由，多模態管線框架就位但語意理解待補  |
+| **智能下限 6.5/10** | 無 LLM API (ED3N + GARDEN + VectorStore + HAM + CLP) | FAQ 機器人+                        | 460K 字典 + 向量搜索 + SNN 推理 + 記憶 + 連續學習, 但無語意理解 |
+| **目標 10/10**      | 上限目標                                             | GPT-4, Claude 3 Opus, Gemini Ultra | 自主學習 + 多模態語意完全接線 + 記憶閉合迴路                    |
 
 **詳細對應表：**
 
-| 分數 | 本專案狀態 | 等同 AI 能力 |
-|------|-----------|-------------|
-| 0-2 | 專案初始化 | 無 AI 能力 |
-| 2-4 | 測試通過、基本架構就緒 | 簡單規則式機器人（Eliza 等級） |
-| 4-6 | 本地引擎 ED3N + GARDEN 運作 | **FAQ 機器人**（基於字典 + 向量搜索） |
-| **6-7** | **多模態管線框架就位, 但語意理解待補** | **加強版 FAQ**：管線完整但無真實多模態理解 |
-| 7-8 | 外部字典 + LLM API + 多模態管線框架 | **GPT-3 等級**：自然對話 + 工具調用 + 管線框架 |
-| 8-9 | CLIP/YOLO 語意 + 記憶 + 學習迴路閉合 | **GPT-3.5 等級**：可學習、有記憶、多模態語意 |
-| 9-10 | 完整 AGI 管道 | **GPT-4 等級**：深度推理 + 自主學習 + 全模態 |
+| 分數    | 本專案狀態                             | 等同 AI 能力                                   |
+| ------- | -------------------------------------- | ---------------------------------------------- |
+| 0-2     | 專案初始化                             | 無 AI 能力                                     |
+| 2-4     | 測試通過、基本架構就緒                 | 簡單規則式機器人（Eliza 等級）                 |
+| 4-6     | 本地引擎 ED3N + GARDEN 運作            | **FAQ 機器人**（基於字典 + 向量搜索）          |
+| **6-7** | **多模態管線框架就位, 但語意理解待補** | **加強版 FAQ**：管線完整但無真實多模態理解     |
+| 7-8     | 外部字典 + LLM API + 多模態管線框架    | **GPT-3 等級**：自然對話 + 工具調用 + 管線框架 |
+| 8-9     | CLIP/YOLO 語意 + 記憶 + 學習迴路閉合   | **GPT-3.5 等級**：可學習、有記憶、多模態語意   |
+| 9-10    | 完整 AGI 管道                          | **GPT-4 等級**：深度推理 + 自主學習 + 全模態   |
 
 ### 4.3 智能維度：多模態智能度與對應
 
 > **⚠️ 框架 vs 實際分離**: 每個維度同時標註「框架分數」(架構完整度) 和「實際分數」(真實能力)。
 
-| 模態 | 模組 | 框架分數 | 實際分數 | 說明 |
-|------|------|:--------:|:--------:|------|
-| **🟢 文字** | ED3N + GARDEN + LLM | 9/10 | **8/10** | 框架: 完整管線+API. 實際: 三語字典+LLM+路由, 但無深度推理 |
-| **🟢 數學** | MathRippleEngine + SNN | 8/10 | **7/10** | 框架: SNN+ripple. 實際: 中文數學表達式+連鎖推理 |
-| **🟡 圖像** | VisualEncoder + VisionPipeline + SemanticVisualEncoder | 9/10 | **7.5/10** | 框架: 管線+品質監控+快取+API. 實際: CNN 統計 + CLIP 512-dim 語意 |
-| **🟡 音頻** | AudioSpectralEncoder + AudioPipeline + SemanticAudioEncoder | 9/10 | **7/10** | 框架: 管線+品質監控+快取+API. 實際: MFCC/頻譜 + Whisper 384-dim 語意 |
-| **🟡 多模態交叉** | CrossModalRouter + CML + MemoryStore + DualEncoderRouter | 9/10 | **7/10** | 框架: 路由+學習+記憶+生產強化. 實際: 結構+語意雙編碼器路由 |
-| **🟡 語音** | AngelaRealVoice (TTS) | 6/10 | **3.5/10** | 框架: edge-tts + AudioService STT. 實際: 僅朗讀, ❌ 無歌唱合成 |
-| **🔴 視覺生成** | ImageGenerationAgent | 3/10 | **2/10** | 框架: Agent 結構. 實際: 依賴外部 API, 本地僅抽象紋理 |
-| **🟢 語意理解** | CLIP/YOLO/Whisper | 8/10 | **7/10** | 框架: SemanticEncoder + DualEncoderRouter + SemanticKeyMapper. 實際: CLIP 512-dim + Whisper 384-dim 已啟用 |
+| 模態              | 模組                                                        | 框架分數 |  實際分數  | 說明                                                                                                       |
+| ----------------- | ----------------------------------------------------------- | :------: | :--------: | ---------------------------------------------------------------------------------------------------------- |
+| **🟢 文字**       | ED3N + GARDEN + LLM                                         |   9/10   |  **8/10**  | 框架: 完整管線+API. 實際: 三語字典+LLM+路由, 但無深度推理                                                  |
+| **🟢 數學**       | MathRippleEngine + SNN                                      |   8/10   |  **7/10**  | 框架: SNN+ripple. 實際: 中文數學表達式+連鎖推理                                                            |
+| **🟡 圖像**       | VisualEncoder + VisionPipeline + SemanticVisualEncoder      |   9/10   | **7.5/10** | 框架: 管線+品質監控+快取+API. 實際: CNN 統計 + CLIP 512-dim 語意                                           |
+| **🟡 音頻**       | AudioSpectralEncoder + AudioPipeline + SemanticAudioEncoder |   9/10   |  **7/10**  | 框架: 管線+品質監控+快取+API. 實際: MFCC/頻譜 + Whisper 384-dim 語意                                       |
+| **🟡 多模態交叉** | CrossModalRouter + CML + MemoryStore + DualEncoderRouter    |   9/10   |  **7/10**  | 框架: 路由+學習+記憶+生產強化. 實際: 結構+語意雙編碼器路由                                                 |
+| **🟡 語音**       | AngelaRealVoice (TTS)                                       |   6/10   | **3.5/10** | 框架: edge-tts + AudioService STT. 實際: 僅朗讀, ❌ 無歌唱合成                                             |
+| **🔴 視覺生成**   | ImageGenerationAgent                                        |   3/10   |  **2/10**  | 框架: Agent 結構. 實際: 依賴外部 API, 本地僅抽象紋理                                                       |
+| **🟢 語意理解**   | CLIP/YOLO/Whisper                                           |   8/10   |  **7/10**  | 框架: SemanticEncoder + DualEncoderRouter + SemanticKeyMapper. 實際: CLIP 512-dim + Whisper 384-dim 已啟用 |
 
 ### 4.4 智能維度：認知能力
 
 > **⚠️ 框架 vs 實際分離**
 
-| 能力 | 模組 | 框架分數 | 實際分數 | 說明 |
-|------|------|:--------:|:--------:|------|
-| **🧠 推理** | ED3N + GARDEN | 8/10 | **7/10** | 框架: 多層 pipeline. 實際: reflex→math→encode→network→decode |
-| **📝 生成** | StepDecoder + VectorDecoder | 7/10 | **6/10** | 框架: Step-by-step + 溫度. 實際: 文本生成可用, 圖像/音頻生成僅抽象 |
-| **💾 記憶** | VectorStore + HAM + MultimodalMemoryStore | 9/10 | **7.5/10** | 框架: 三路記憶架構. 實際: VectorStore 460K + HAM 對話 + MultimodalMemory JSON |
-| **📚 學習** | CLP + ContinuousMultimodalLearning | 9/10 | **7/10** | 框架: 雙學習迴路. 實際: CLP 接通 + CML auto-train |
-| **😊 情緒** | EmotionSystem + HormonalModulator | 6/10 | **5/10** | 框架: valence/arousal + 激素. 實際: 離線模式 |
-| **🔗 關係** | RelationClassifier + CrossModalTrainer | 6/10 | **5/10** | 框架: 同義詞/映射. 實際: 共現記錄為主 |
-| **🛠️ 工具** | ToolCallingHandler + MultimodalErrorRecovery | 8/10 | **7/10** | 框架: 6 種 handler + 重試/降級. 實際: 需 LLM 驅動 |
-| **🧪 元認知** | MetaController + MultimodalQualityMonitor | 7/10 | **5/10** | 框架: 校準+監控+警報. 實際: 結構完整, 但校準精度待驗證 |
-| **🌐 多語言** | DictionaryLayer + unicode_utils | 8/10 | **6/10** | 框架: 三語 detecion + 編碼. 實際: 中英日字典, 韓語待匯入 |
-| **⚡ 性能** | SNN + numpy fallback | 8/10 | **7/10** | 框架: CPU/GPU 跨平台. 實際: ED3N 178s, 外部字典 16s |
+| 能力          | 模組                                         | 框架分數 |  實際分數  | 說明                                                                          |
+| ------------- | -------------------------------------------- | :------: | :--------: | ----------------------------------------------------------------------------- |
+| **🧠 推理**   | ED3N + GARDEN                                |   8/10   |  **7/10**  | 框架: 多層 pipeline. 實際: reflex→math→encode→network→decode                  |
+| **📝 生成**   | StepDecoder + VectorDecoder                  |   7/10   |  **6/10**  | 框架: Step-by-step + 溫度. 實際: 文本生成可用, 圖像/音頻生成僅抽象            |
+| **💾 記憶**   | VectorStore + HAM + MultimodalMemoryStore    |   9/10   | **7.5/10** | 框架: 三路記憶架構. 實際: VectorStore 460K + HAM 對話 + MultimodalMemory JSON |
+| **📚 學習**   | CLP + ContinuousMultimodalLearning           |   9/10   |  **7/10**  | 框架: 雙學習迴路. 實際: CLP 接通 + CML auto-train                             |
+| **😊 情緒**   | EmotionSystem + HormonalModulator            |   6/10   |  **5/10**  | 框架: valence/arousal + 激素. 實際: 離線模式                                  |
+| **🔗 關係**   | RelationClassifier + CrossModalTrainer       |   6/10   |  **5/10**  | 框架: 同義詞/映射. 實際: 共現記錄為主                                         |
+| **🛠️ 工具**   | ToolCallingHandler + MultimodalErrorRecovery |   8/10   |  **7/10**  | 框架: 6 種 handler + 重試/降級. 實際: 需 LLM 驅動                             |
+| **🧪 元認知** | MetaController + MultimodalQualityMonitor    |   7/10   |  **5/10**  | 框架: 校準+監控+警報. 實際: 結構完整, 但校準精度待驗證                        |
+| **🌐 多語言** | DictionaryLayer + unicode_utils              |   8/10   |  **6/10**  | 框架: 三語 detecion + 編碼. 實際: 中英日字典, 韓語待匯入                      |
+| **⚡ 性能**   | SNN + numpy fallback                         |   8/10   |  **7/10**  | 框架: CPU/GPU 跨平台. 實際: ED3N 178s, 外部字典 16s                           |
 
 ### 4.5 智能分數說明
 
-| 分數 | 含義 | 本專案達到此分數的條件 |
-|------|------|---------------------|
-| 10/10 | 頂尖 AGI | 自主學習 + 全模態閉環 + 記憶持續演化 |
-| 9/10 | 非常強 | 連續學習接通 + HAM 記憶閉合迴路 |
-| **8/10** | **強** 🎉 | **後端 API + LLM 連接 + 460K 字典載入 + CLIP/Whisper 語意理解** |
+| 分數       | 含義                | 本專案達到此分數的條件                                            |
+| ---------- | ------------------- | ----------------------------------------------------------------- |
+| 10/10      | 頂尖 AGI            | 自主學習 + 全模態閉環 + 記憶持續演化                              |
+| 9/10       | 非常強              | 連續學習接通 + HAM 記憶閉合迴路                                   |
+| **8/10**   | **強** 🎉           | **後端 API + LLM 連接 + 460K 字典載入 + CLIP/Whisper 語意理解**   |
 | **7.5/10** | **語意理解下限** 🎉 | **無 LLM 也有記憶召回+連續學習+CLIP/Whisper 語意理解** (當前下限) |
-| 7/10 | 良好 | 有 LLM 但缺部分功能，或無 LLM 但有記憶或學習
-| 6.5/10 | 可用 | 無 LLM 但有完整本地知識庫+推理 |
-| 5/10 | 基礎 | 無 LLM，有向量搜索但無本地推理引擎 |
-| 4/10 | 有限 | 僅反射模式 + 少量預設回應 |
-| 3/10 | 薄弱 | 只有基本測試通過 + 部分 stub |
-| 2/10 | 初始 | 專案剛初始化 |
-| 1/10 | 無 | 無任何 AI 功能 |
+| 7/10       | 良好                | 有 LLM 但缺部分功能，或無 LLM 但有記憶或學習                      |
+| 6.5/10     | 可用                | 無 LLM 但有完整本地知識庫+推理                                    |
+| 5/10       | 基礎                | 無 LLM，有向量搜索但無本地推理引擎                                |
+| 4/10       | 有限                | 僅反射模式 + 少量預設回應                                         |
+| 3/10       | 薄弱                | 只有基本測試通過 + 部分 stub                                      |
+| 2/10       | 初始                | 專案剛初始化                                                      |
+| 1/10       | 無                  | 無任何 AI 功能                                                    |
 
 ### 4.6 智能下限演化路徑
 
-> **⚠️ 歷史記錄 vs v33.6 重新校正**: 原記錄「下限 6→8」基於純文字能力評估。v33.6 顯示 torch+CLIP+Whisper 已安裝, 語意理解已啟用, 綜合下限提升至 **7.5/10** (無 LLM)。
+> **⚠️ 歷史記錄 vs
+> v33.6 重新校正**: 原記錄「下限 6→8」基於純文字能力評估。v33.6 顯示 torch+CLIP+Whisper 已安裝, 語意理解已啟用, 綜合下限提升至
+> **7.5/10** (無 LLM)。
 
-| P | 任務 | 預期影響 | 歷史狀態 | v33.6 實際 |
-|---|------|----------|---------|-----------|
-| P2 | **CLP 連續學習迴路接通** | 下限 6→7 | ✅ 已完成 | ✅ 實際運作 |
-| P2 | **HAM 記憶整合進對話** | 下限 7→8 | ✅ 已完成 | ✅ 實際運作 |
-| P30-P38 | **多模態管線框架** | 架構完整度 ↑ | ✅ 已完成 | ✅ 框架 9/10, 實際 5.0/10 |
-| P42-P44 | **語意編碼器框架+實裝** | 語意理解 ↑ | ✅ 已完成 | ✅ torch+CLIP+Whisper 已安裝, 語意編碼器實際運作 |
-| P45 | **torch+CLIP+Whisper 啟用** | 語意實際啟用 | ✅ 已完成 | ✅ CLIP 512-dim + Whisper 384-dim + DualEncoderRouter + SemanticKeyMapper 全部驗證通過 |
+| P       | 任務                        | 預期影響     | 歷史狀態  | v33.6 實際                                                                             |
+| ------- | --------------------------- | ------------ | --------- | -------------------------------------------------------------------------------------- |
+| P2      | **CLP 連續學習迴路接通**    | 下限 6→7     | ✅ 已完成 | ✅ 實際運作                                                                            |
+| P2      | **HAM 記憶整合進對話**      | 下限 7→8     | ✅ 已完成 | ✅ 實際運作                                                                            |
+| P30-P38 | **多模態管線框架**          | 架構完整度 ↑ | ✅ 已完成 | ✅ 框架 9/10, 實際 5.0/10                                                              |
+| P42-P44 | **語意編碼器框架+實裝**     | 語意理解 ↑   | ✅ 已完成 | ✅ torch+CLIP+Whisper 已安裝, 語意編碼器實際運作                                       |
+| P45     | **torch+CLIP+Whisper 啟用** | 語意實際啟用 | ✅ 已完成 | ✅ CLIP 512-dim + Whisper 384-dim + DualEncoderRouter + SemanticKeyMapper 全部驗證通過 |
 
 ### 4.7 智能維度：自主性、感知、行動與其他
 
@@ -586,90 +604,92 @@
 
 #### 4.7.1 自主性（Autonomy / 主動性）
 
-| 能力 | 模組 | 框架分數 | 實際分數 | 詳情 |
-|------|------|:--------:|:--------:|------|
-| **主動交互** | ProactiveInteractionSystem | 7/10 | **6/10** | 框架: asyncio 循環+9 種機會+WS 廣播. 實際: 天氣+時間+用戶狀態觸發 |
-| **用戶監控** | UserMonitor | 5/10 | **4/10** | 框架: 在線/離線/活動偵測. 實際: 基礎狀態追蹤 |
-| **主動認知** | ActiveCognitionFormula | 5/10 | **4/10** | 框架: A_c 公式. 實際: 偏離度量+意義模型 |
-| **自主生命週期** | AutonomousLifeCycle | 7/10 | **5/10** | 框架: 724 行+DigitalLifeIntegrator. 實際: 已接線啟動 |
-| **動態代理註冊** | DynamicAgentRegistry | 6/10 | **5/10** | 框架: HSP 協定+10+ 種代理. 實際: 註冊+廣播可用 |
+| 能力             | 模組                       | 框架分數 | 實際分數 | 詳情                                                              |
+| ---------------- | -------------------------- | :------: | :------: | ----------------------------------------------------------------- |
+| **主動交互**     | ProactiveInteractionSystem |   7/10   | **6/10** | 框架: asyncio 循環+9 種機會+WS 廣播. 實際: 天氣+時間+用戶狀態觸發 |
+| **用戶監控**     | UserMonitor                |   5/10   | **4/10** | 框架: 在線/離線/活動偵測. 實際: 基礎狀態追蹤                      |
+| **主動認知**     | ActiveCognitionFormula     |   5/10   | **4/10** | 框架: A_c 公式. 實際: 偏離度量+意義模型                           |
+| **自主生命週期** | AutonomousLifeCycle        |   7/10   | **5/10** | 框架: 724 行+DigitalLifeIntegrator. 實際: 已接線啟動              |
+| **動態代理註冊** | DynamicAgentRegistry       |   6/10   | **5/10** | 框架: HSP 協定+10+ 種代理. 實際: 註冊+廣播可用                    |
 
 **自主性整體評估：框架 6/10, 實際 5/10** — 架構完整但實際交互維度有限。
 
 #### 4.7.2 聽覺與語音（Audio / Speech / 聽）
 
-| 能力 | 模組 | 框架分數 | 實際分數 | 詳情 |
-|------|------|:--------:|:--------:|------|
-| **語音合成 TTS** | AudioSystem + edge-tts | 7/10 | **5/10** | 框架: 多引擎+中文+情感. 實際: edge-tts 朗讀可用, ❌ 無歌唱 |
-| **語音辨識 STT** | AudioService + speech_recognition | 5/10 | **3/10** | 框架: faster-whisper + SpeechRecognition. 實際: 依賴外部, 基礎 STT |
-| **音頻編碼** | AudioSpectralEncoder | 8/10 | **5/10** | 框架: 128-dim MFCC+Mel+注意力. 實際: 頻譜統計, ❌ 無語意 |
-| **音頻處理** | AudioProcessing | 4/10 | **3/10** | 框架: 特徵提取+VAD. 實際: 結構存在 |
-| **音樂播放** | AudioSystem | 4/10 | **3/10** | 框架: 播放+歌詞. 實際: 基礎可用 |
+| 能力             | 模組                              | 框架分數 | 實際分數 | 詳情                                                               |
+| ---------------- | --------------------------------- | :------: | :------: | ------------------------------------------------------------------ |
+| **語音合成 TTS** | AudioSystem + edge-tts            |   7/10   | **5/10** | 框架: 多引擎+中文+情感. 實際: edge-tts 朗讀可用, ❌ 無歌唱         |
+| **語音辨識 STT** | AudioService + speech_recognition |   5/10   | **3/10** | 框架: faster-whisper + SpeechRecognition. 實際: 依賴外部, 基礎 STT |
+| **音頻編碼**     | AudioSpectralEncoder              |   8/10   | **5/10** | 框架: 128-dim MFCC+Mel+注意力. 實際: 頻譜統計, ❌ 無語意           |
+| **音頻處理**     | AudioProcessing                   |   4/10   | **3/10** | 框架: 特徵提取+VAD. 實際: 結構存在                                 |
+| **音樂播放**     | AudioSystem                       |   4/10   | **3/10** | 框架: 播放+歌詞. 實際: 基礎可用                                    |
 
 **聽覺整體評估：框架 6/10, 實際 4/10** — 管線框架完整但語意理解缺失。
 
-離線 STT stub (faster-whisper 尚未安裝)。核心編碼器未改變 (仍為 MFCC/頻譜統計, 無語意理解), 但管線化、品質監控、連續學習、記憶、生產強化和 API 端點使音頻智能度從純粹的模型層提升至**完整可運作的生產管線**。
+離線 STT stub
+(faster-whisper 尚未安裝)。核心編碼器未改變 (仍為 MFCC/頻譜統計, 無語意理解), 但管線化、品質監控、連續學習、記憶、生產強化和 API 端點使音頻智能度從純粹的模型層提升至**完整可運作的生產管線**。
 
 #### 4.7.3 視覺與圖像（Vision / Image / 視）
 
-| 能力 | 模組 | 框架分數 | 實際分數 | 詳情 |
-|------|------|:--------:|:--------:|------|
-| **圖像編碼** | VisualEncoder | 8/10 | **5.5/10** | 框架: 256-dim CNN Gabor+色彩/邊緣. 實際: 像素級統計, ❌ 無語意 |
-| **語意編碼** | SemanticVisualEncoder (CLIP) | 7/10 | **1/10** | 框架: 512-dim CLIP. 實際: 需 torch+模型, 當前未啟用 |
-| **視覺服務** | VisionService | 6/10 | **4/10** | 框架: PIL+OCR+cluster. 實際: 色彩/比對/OCR, ❌ 無物件語意 |
-| **視覺管線** | VisionPipeline | 9/10 | **5/10** | 框架: encode→latent→decode→ssim 完整閉環. 實際: 抽象紋理輸出 |
-| **圖像生成** | VisualDecoder | 6/10 | **2.5/10** | 框架: CNN 轉置卷積+tanh. 實際: 抽象色塊, ❌ 無語意控制 |
-| **Live2D** | Live2DIntegration | 4/10 | **3/10** | 框架: 虛擬角色. 實際: 初始渲染 |
+| 能力         | 模組                         | 框架分數 |  實際分數  | 詳情                                                           |
+| ------------ | ---------------------------- | :------: | :--------: | -------------------------------------------------------------- |
+| **圖像編碼** | VisualEncoder                |   8/10   | **5.5/10** | 框架: 256-dim CNN Gabor+色彩/邊緣. 實際: 像素級統計, ❌ 無語意 |
+| **語意編碼** | SemanticVisualEncoder (CLIP) |   7/10   |  **1/10**  | 框架: 512-dim CLIP. 實際: 需 torch+模型, 當前未啟用            |
+| **視覺服務** | VisionService                |   6/10   |  **4/10**  | 框架: PIL+OCR+cluster. 實際: 色彩/比對/OCR, ❌ 無物件語意      |
+| **視覺管線** | VisionPipeline               |   9/10   |  **5/10**  | 框架: encode→latent→decode→ssim 完整閉環. 實際: 抽象紋理輸出   |
+| **圖像生成** | VisualDecoder                |   6/10   | **2.5/10** | 框架: CNN 轉置卷積+tanh. 實際: 抽象色塊, ❌ 無語意控制         |
+| **Live2D**   | Live2DIntegration            |   4/10   |  **3/10**  | 框架: 虛擬角色. 實際: 初始渲染                                 |
 
-**視覺整體評估：框架 7/10, 實際 4/10** — 管線框架完整但語意理解缺失, 解碼僅抽象紋理。
+**視覺整體評估：框架 7/10, 實際 4/10**
+— 管線框架完整但語意理解缺失, 解碼僅抽象紋理。
 
 #### 4.7.4 觸覺與體感（Tactile / Touch / 觸）
 
-| 能力 | 模組 | 框架分數 | 實際分數 | 詳情 |
-|------|------|:--------:|:--------:|------|
-| **觸覺服務** | TactileService | 4/10 | **2/10** | 框架: 模型物件+模擬觸碰. 實際: 副功能, 無硬體 |
-| **搔癢反射** | TickleReflexSystem | 4/10 | **2/10** | 框架: 14 身體部位+Phase1/2. 實際: 基礎反應模式 |
-| **生理觸覺** | PhysiologicalTactile | 3/10 | **2/10** | 框架: 測試存在. 實際: 初始 |
+| 能力         | 模組                 | 框架分數 | 實際分數 | 詳情                                           |
+| ------------ | -------------------- | :------: | :------: | ---------------------------------------------- |
+| **觸覺服務** | TactileService       |   4/10   | **2/10** | 框架: 模型物件+模擬觸碰. 實際: 副功能, 無硬體  |
+| **搔癢反射** | TickleReflexSystem   |   4/10   | **2/10** | 框架: 14 身體部位+Phase1/2. 實際: 基礎反應模式 |
+| **生理觸覺** | PhysiologicalTactile |   3/10   | **2/10** | 框架: 測試存在. 實際: 初始                     |
 
 **觸覺整體評估：框架 3.5/10, 實際 2/10** — 概念驗證層級。
 
 #### 4.7.5 行動與執行的能力（Action / Execution / 做）
 
-| 能力 | 模組 | 框架分數 | 實際分數 | 詳情 |
-|------|------|:--------:|:--------:|------|
-| **行動執行橋樑** | ActionExecutionBridge | 6/10 | **5/10** | 框架: 行動類型+orchestration. 實際: 完整實作 |
-| **工具調用** | ToolCallingHandler (6 種) | 8/10 | **7/10** | 框架: file/search/code/system/task/vision. 實際: 需 LLM 驅動 |
-| **代理協作** | AgentCollaborationManager | 5/10 | **4/10** | 框架: 多代理+任務分配. 實際: 結構存在 |
-| **桌面互動** | DesktopInteraction | 4/10 | **3/10** | 框架: 桌面存在感. 實際: 初始 |
+| 能力             | 模組                      | 框架分數 | 實際分數 | 詳情                                                         |
+| ---------------- | ------------------------- | :------: | :------: | ------------------------------------------------------------ |
+| **行動執行橋樑** | ActionExecutionBridge     |   6/10   | **5/10** | 框架: 行動類型+orchestration. 實際: 完整實作                 |
+| **工具調用**     | ToolCallingHandler (6 種) |   8/10   | **7/10** | 框架: file/search/code/system/task/vision. 實際: 需 LLM 驅動 |
+| **代理協作**     | AgentCollaborationManager |   5/10   | **4/10** | 框架: 多代理+任務分配. 實際: 結構存在                        |
+| **桌面互動**     | DesktopInteraction        |   4/10   | **3/10** | 框架: 桌面存在感. 實際: 初始                                 |
 
 **行動整體評估：框架 5.5/10, 實際 4.5/10** — 工具調用較強, 其餘為結構層。
 
 #### 4.7.6 其他感知能力
 
-| 能力 | 模組 | 框架分數 | 實際分數 | 詳情 |
-|------|------|:--------:|:--------:|------|
-| **情緒感知** | EmotionSystem | 6/10 | **5/10** | 框架: valence/arousal+激素. 實際: 離線模式 |
-| **信任評估** | TrustManager | 4/10 | **3/10** | 框架: 信任分數. 實際: 結構存在 |
-| **倫理管理** | EthicsManager | 4/10 | **3/10** | 框架: 邊界檢查. 實際: 初始 |
-| **風險評估** | CrisisMonitor | 4/10 | **3/10** | 框架: 危機等級. 實際: 初始 |
-| **時間感知** | TimeSystem | 4/10 | **3/10** | 框架: 時間+排程. 實際: 初始 |
-| **天氣感知** | WeatherService | 5/10 | **4/10** | 框架: wttr.in+快取. 實際: 實時天氣+觸發 |
+| 能力         | 模組           | 框架分數 | 實際分數 | 詳情                                       |
+| ------------ | -------------- | :------: | :------: | ------------------------------------------ |
+| **情緒感知** | EmotionSystem  |   6/10   | **5/10** | 框架: valence/arousal+激素. 實際: 離線模式 |
+| **信任評估** | TrustManager   |   4/10   | **3/10** | 框架: 信任分數. 實際: 結構存在             |
+| **倫理管理** | EthicsManager  |   4/10   | **3/10** | 框架: 邊界檢查. 實際: 初始                 |
+| **風險評估** | CrisisMonitor  |   4/10   | **3/10** | 框架: 危機等級. 實際: 初始                 |
+| **時間感知** | TimeSystem     |   4/10   | **3/10** | 框架: 時間+排程. 實際: 初始                |
+| **天氣感知** | WeatherService |   5/10   | **4/10** | 框架: wttr.in+快取. 實際: 實時天氣+觸發    |
 
 ### 4.8 智能維度總表
 
 > **⚠️ 框架 vs 實際分離**: 與 Section 4.3 一致。
 
-| 類別 | 子維度 | 框架分數 | 實際分數 | 狀態 |
-|------|--------|:--------:|:--------:|------|
-| 🧠 **認知** | 推理 / 生成 / 記憶 / 學習 / 元認知 / 多語言 | 8/10 | **7/10** | 🟡 框架完整, LLM 補足 |
-| 🗣️ **語言** | 對話 / 知識 / 創造 / 工具調用 | 9/10 | **7.5/10** | ✅ LLM+字典+工具+路由 |
-| 🤖 **自主性** | 主動交互 / 用戶監控 / 代理 / 生命週期 | 6/10 | **5/10** | 🟡 架構完整, 交互維度有限 |
-| 👁️ **視覺** | CNN 編碼 / VisionPipeline / 語意 / 解碼 | 9/10 | **5.5/10** | 🟡 管線框架完整, ❌ 無語意 |
-| 👂 **聽覺** | TTS / STT / MFCC / AudioPipeline | 8/10 | **5/10** | 🟡 管線框架完整, ❌ 無語意 |
-| ✋ **觸覺** | 觸覺服務 / 體感 / 反射 | 3.5/10 | **2/10** | 🔴 概念驗證 |
-| 🏃 **行動** | 執行橋樑 / 代理協作 / 桌面互動 | 5.5/10 | **4.5/10** | 🟡 工具較強 |
-| ❤️ **情感** | 情緒 / 信任 / 倫理 | 5/10 | **4/10** | 🟡 結構存在 |
-| 🌍 **環境** | 時間 / 天氣 | 4.5/10 | **3.5/10** | 🟡 基礎可用 |
+| 類別          | 子維度                                      | 框架分數 |  實際分數  | 狀態                       |
+| ------------- | ------------------------------------------- | :------: | :--------: | -------------------------- |
+| 🧠 **認知**   | 推理 / 生成 / 記憶 / 學習 / 元認知 / 多語言 |   8/10   |  **7/10**  | 🟡 框架完整, LLM 補足      |
+| 🗣️ **語言**   | 對話 / 知識 / 創造 / 工具調用               |   9/10   | **7.5/10** | ✅ LLM+字典+工具+路由      |
+| 🤖 **自主性** | 主動交互 / 用戶監控 / 代理 / 生命週期       |   6/10   |  **5/10**  | 🟡 架構完整, 交互維度有限  |
+| 👁️ **視覺**   | CNN 編碼 / VisionPipeline / 語意 / 解碼     |   9/10   | **5.5/10** | 🟡 管線框架完整, ❌ 無語意 |
+| 👂 **聽覺**   | TTS / STT / MFCC / AudioPipeline            |   8/10   |  **5/10**  | 🟡 管線框架完整, ❌ 無語意 |
+| ✋ **觸覺**   | 觸覺服務 / 體感 / 反射                      |  3.5/10  |  **2/10**  | 🔴 概念驗證                |
+| 🏃 **行動**   | 執行橋樑 / 代理協作 / 桌面互動              |  5.5/10  | **4.5/10** | 🟡 工具較強                |
+| ❤️ **情感**   | 情緒 / 信任 / 倫理                          |   5/10   |  **4/10**  | 🟡 結構存在                |
+| 🌍 **環境**   | 時間 / 天氣                                 |  4.5/10  | **3.5/10** | 🟡 基礎可用                |
 
 **綜合加權實際分數：5.0/10** (各維度平均) → 加上 LLM 上限加成 → **7.5/10**
 
@@ -688,6 +708,7 @@
 ```
 
 特徵：
+
 - 原始模態的結構資訊全部丟失（像素空間關係、波形頻譜、壓力分布）
 - 神經網路只看文字 token，無法直接感知非文字特徵
 - 跨模態轉換完全依賴外部工具（PIL OCR / speech_recognition / edge-tts）
@@ -697,7 +718,8 @@
 
 #### 4.9.2 真實多模態 (Real Multimodal)
 
-專案的**終極目標**架構 — 每種模態與神經網路直接連接，擁有自己的隱空間 (latent space)：
+專案的**終極目標**架構 — 每種模態與神經網路直接連接，擁有自己的隱空間 (latent
+space)：
 
 ```
 圖像 → 視覺編碼器 → 視覺隱空間 ──┐
@@ -706,30 +728,36 @@
 ```
 
 特徵：
+
 - **各模態獨立編碼**：每種模態保持自身結構進入神經網路（CNN 處理像素、spectrogram 處理波形、spatial 處理觸覺陣列）
 - **共享隱空間**：所有模態投射到同一個向量空間，跨模態的相似性/關聯性在此空間中自然浮現
-- **跨模態注意力**：任何模態可以關注 (attend to) 其他模態的隱空間表示，實現真正的多模態融合
+- **跨模態注意力**：任何模態可以關注 (attend
+  to) 其他模態的隱空間表示，實現真正的多模態融合
 - **任意模態輸出**：解碼器可以從隱空間生成任意模態的輸出（不只是文字或語音）
 - **模態間因果影響**：視覺輸入可以直接影響觸覺反饋的生成，不經過文字中介
 
 範例 — 真實多模態能做到而虛假多模態做不到的事：
-| 能力 | 虛假多模態 | 真實多模態 |
-|------|-----------|-----------|
-| 看到貓圖片 | 描述"這是一隻橘貓" | 不僅描述，還能**在隱空間中聯想到摸貓的觸感、貓叫聲、貓的氣味** |
-| 聽到笑聲 | 轉錄"哈哈哈" | 在隱空間中**直接觸發快樂情緒向量，改變語調、表情、動作** |
-| 生成圖像 | 輸出文字描述 | **直接從隱空間解碼為像素**，風格/構圖受文字+情緒+記憶共同影響 |
+
+| 能力       | 虛假多模態          | 真實多模態                                                                 |
+| ---------- | ------------------- | -------------------------------------------------------------------------- |
+| 看到貓圖片 | 描述"這是一隻橘貓"  | 不僅描述，還能**在隱空間中聯想到摸貓的觸感、貓叫聲、貓的氣味**             |
+| 聽到笑聲   | 轉錄"哈哈哈"        | 在隱空間中**直接觸發快樂情緒向量，改變語調、表情、動作**                   |
+| 生成圖像   | 輸出文字描述        | **直接從隱空間解碼為像素**，風格/構圖受文字+情緒+記憶共同影響              |
 | 跨模態推理 | "看到雨聲"→文字推測 | **視覺隱空間與聽覺隱空間直接交互**，雨的視覺特徵與雨聲頻譜在共享空間中關聯 |
 
 #### 4.9.3 專案當前位置
 
-| 面向 | 當前 (v23.0 / P17) | 路徑 | 目標 |
-|------|-------------|------|------|
-| 視覺 | **CNN 增強**: conv2d Gabor filter bank 256-dim | P18 解碼器: 隱空間→像素生成 | 真實: 像素→CNN→隱空間→解碼→像素 |
-| 聽覺 | **MFCC 增強**: 13 MFCC + 時序注意 128-dim | P18 解碼器: 隱空間→波形生成 | 真實: 波形→MFCC→隱空間→解碼→波形 |
-| 觸覺 | 虛假: 文字標籤→邏輯 | 整合觸覺陣列編碼器 | 真實: 壓力/溫度/震動→觸覺隱空間→共享空間 |
-| 交叉 | CrossModalTrainer (共現映射) | 建構共享隱空間投射層 | 跨模態注意力 + 任意模態生成 |
+| 面向 | 當前 (v23.0 / P17)                             | 路徑                        | 目標                                     |
+| ---- | ---------------------------------------------- | --------------------------- | ---------------------------------------- |
+| 視覺 | **CNN 增強**: conv2d Gabor filter bank 256-dim | P18 解碼器: 隱空間→像素生成 | 真實: 像素→CNN→隱空間→解碼→像素          |
+| 聽覺 | **MFCC 增強**: 13 MFCC + 時序注意 128-dim      | P18 解碼器: 隱空間→波形生成 | 真實: 波形→MFCC→隱空間→解碼→波形         |
+| 觸覺 | 虛假: 文字標籤→邏輯                            | 整合觸覺陣列編碼器          | 真實: 壓力/溫度/震動→觸覺隱空間→共享空間 |
+| 交叉 | CrossModalTrainer (共現映射)                   | 建構共享隱空間投射層        | 跨模態注意力 + 任意模態生成              |
 
-**關鍵洞察**：CrossModalTrainer 目前以共現記錄 + Mapping 訓練的方式運作，已經朝真實多模態邁出了第一步 — 它在模態間建立映射而非純文字轉譯。但核心神經網路（ED3N CoreNetwork / GARDEN SNN）仍然只接收文字 token，未接入獨立模態編碼器的隱空間輸出。
+**關鍵洞察**：CrossModalTrainer 目前以共現記錄 +
+Mapping 訓練的方式運作，已經朝真實多模態邁出了第一步 — 它在模態間建立映射而非純文字轉譯。但核心神經網路（ED3N
+CoreNetwork / GARDEN
+SNN）仍然只接收文字 token，未接入獨立模態編碼器的隱空間輸出。
 
 #### 4.9.4 從虛假到真實的演化路徑
 
@@ -773,82 +801,93 @@ P41 → ❌ [對話語意整合] **已移除** (虛假多模態, 不提升下限
 ```
 
 **目前專案處於 P30-P44 全部完成** — 多模態管線框架就位:
+
 - **259 多模態測試** (P15-P44, 19 個測試檔案)
 - **54 API 端點** (33 multimodal + 8 chat + 2 meta + 3 ops + 8 desktop)
 - 4 子管線 | CML 學習 | 記憶持久化 | 生產強化 | 語意編碼器框架
 - ⚠️ **P39-P41 已移除** — 虛假多模態 LLM API 橋接
-- ✅ **語意理解已啟用**: SemanticVisualEncoder (CLIP 512-dim) + SemanticAudioEncoder (Whisper 384-dim) + DualEncoderRouter + SemanticKeyMapper 全部驗證通過
+- ✅ **語意理解已啟用**: SemanticVisualEncoder (CLIP 512-dim) +
+  SemanticAudioEncoder (Whisper 384-dim) + DualEncoderRouter +
+  SemanticKeyMapper 全部驗證通過
 
 **🎯 P30-P44 框架升級成果** (框架 vs 實際):
-- 視覺: 框架 **9/10** (管線+品質+快取+API), 實際 **7.5/10** (CNN + CLIP 512-dim 語意)
-- 聽覺: 框架 **8/10** (管線+品質+快取+API), 實際 **7/10** (MFCC + Whisper 384-dim 語意)
-- 多模態交叉: 框架 **9/10** (路由+學習+記憶+生產), 實際 **7/10** (結構+語意雙編碼器路由)
+
+- 視覺: 框架 **9/10** (管線+品質+快取+API), 實際 **7.5/10** (CNN + CLIP
+  512-dim 語意)
+- 聽覺: 框架 **8/10** (管線+品質+快取+API), 實際 **7/10** (MFCC + Whisper
+  384-dim 語意)
+- 多模態交叉: 框架 **9/10** (路由+學習+記憶+生產), 實際 **7/10**
+  (結構+語意雙編碼器路由)
 
 ### 4.10 P30-P44 完成後 v33.5 全面智能重新評分
 
-> **⚠️ v33.7 重新校正**: Phase 9 stubs deleted. 框架分數下調 (移除虛假模組). 實際分數不變。
+> **⚠️ v33.7 重新校正**: Phase 9 stubs
+> deleted. 框架分數下調 (移除虛假模組). 實際分數不變。
 
 #### 4.10.1 多模態智能度變化總覽 (框架 vs 實際)
 
-| 模態 | 框架分數 | 實際分數 | 關鍵驅動因素 |
-|------|:--------:|:--------:|:------------|
-| **🟢 視覺** | 8/10 | **7.5/10** | 框架: VisionPipeline+CLIP 21 concepts. 實際: CLIP 512-dim 語意分類 |
-| **🟢 音頻** | 8/10 | **7.5/10** | 框架: AudioPipeline+Whisper. 實際: Whisper STT → 聊天管線已接通 |
-| **🟢 多模態交叉** | 8/10 | **7/10** | 框架: 路由+學習+記憶. 實際: 結構+語意雙編碼器路由 |
-| **🟢 語音** | 6/10 | **5/10** | 框架: edge-tts+AudioService. 實際: STT + TTS 基本可用 |
-| **🧠 認知 (記憶)** | 8/10 | **8/10** | 框架: VectorStore+HAM. 實際: 460K 向量+自動存儲+語義搜索 |
-| **📚 認知 (學習)** | 8/10 | **7/10** | 框架: CLP+CML. 實際: auto-train + 概念發現 |
-| **🛠️ 工具** | 7/10 | **7/10** | 框架: 6 handlers. 實際: 需 LLM 驅動 |
-| **🧪 元認知** | 6/10 | **5/10** | 框架: MetaController. 實際: 校準待驗證 |
-| **🤖 自主性** | 5/10 | **5/10** | 框架: AutonomousLifeCycle. 實際: 已接線, 交互有限 |
-| **✋ 觸覺** | 0/10 | **0/10** | ❌ TactileService 已刪除 (stub) |
+| 模態               | 框架分數 |  實際分數  | 關鍵驅動因素                                                       |
+| ------------------ | :------: | :--------: | :----------------------------------------------------------------- |
+| **🟢 視覺**        |   8/10   | **7.5/10** | 框架: VisionPipeline+CLIP 21 concepts. 實際: CLIP 512-dim 語意分類 |
+| **🟢 音頻**        |   8/10   | **7.5/10** | 框架: AudioPipeline+Whisper. 實際: Whisper STT → 聊天管線已接通    |
+| **🟢 多模態交叉**  |   8/10   |  **7/10**  | 框架: 路由+學習+記憶. 實際: 結構+語意雙編碼器路由                  |
+| **🟢 語音**        |   6/10   |  **5/10**  | 框架: edge-tts+AudioService. 實際: STT + TTS 基本可用              |
+| **🧠 認知 (記憶)** |   8/10   |  **8/10**  | 框架: VectorStore+HAM. 實際: 460K 向量+自動存儲+語義搜索           |
+| **📚 認知 (學習)** |   8/10   |  **7/10**  | 框架: CLP+CML. 實際: auto-train + 概念發現                         |
+| **🛠️ 工具**        |   7/10   |  **7/10**  | 框架: 6 handlers. 實際: 需 LLM 驅動                                |
+| **🧪 元認知**      |   6/10   |  **5/10**  | 框架: MetaController. 實際: 校準待驗證                             |
+| **🤖 自主性**      |   5/10   |  **5/10**  | 框架: AutonomousLifeCycle. 實際: 已接線, 交互有限                  |
+| **✋ 觸覺**        |   0/10   |  **0/10**  | ❌ TactileService 已刪除 (stub)                                    |
 
 #### 4.10.2 智能上限與下限重新評估
 
-| 維度 | 框架分數 | 實際分數 | 說明 |
-|------|:--------:|:--------:|------|
-| **上限 (有 LLM)** | 8/10 | **8.5/10** | 框架: 48 API + CLIP/Whisper + Memory. 實際: LLM + CLIP/Whisper 語意 |
-| **下限 (無 LLM)** | 7/10 | **7.5/10** | 框架: 管線可獨立運作. 實際: 字典+向量+CLIP/Whisper 語意 |
-| **目標** | 10/10 | 10/10 | 仍需 YOLO 物件檢測 + Diffusion 語意生成 + 前端整合 |
+| 維度              | 框架分數 |  實際分數  | 說明                                                                |
+| ----------------- | :------: | :--------: | ------------------------------------------------------------------- |
+| **上限 (有 LLM)** |   8/10   | **8.5/10** | 框架: 48 API + CLIP/Whisper + Memory. 實際: LLM + CLIP/Whisper 語意 |
+| **下限 (無 LLM)** |   7/10   | **7.5/10** | 框架: 管線可獨立運作. 實際: 字典+向量+CLIP/Whisper 語意             |
+| **目標**          |  10/10   |   10/10    | 仍需 YOLO 物件檢測 + Diffusion 語意生成 + 前端整合                  |
 
 #### 4.10.3 智能維度總表 (v33.7 更新)
 
 > **與 Section 4.3 一致**: 框架分數對齊多模態分析。Phase 9 stubs deleted.
 
-| 類別 | 子維度 | 框架分數 | 實際分數 | 說明 |
-|------|--------|:--------:|:--------:|------|
-| 🧠 **認知** | 推理 / 生成 / 記憶 / 學習 / 元認知 / 多語言 | 7/10 | **7.5/10** | 框架完整, LLM+VectorStore 補足 |
-| 🗣️ **語言** | 對話 / 知識 / 創造 / 工具調用 | 8/10 | **7.5/10** | LLM+字典+工具+路由 |
-| 🤖 **自主性** | 主動交互 / 用戶監控 / 代理 / 生命週期 | 5/10 | **5/10** | 架構完整, 交互有限 |
-| 👁️ **視覺** | CNN 編碼 / CLIP 語意 / 21 concepts / 解碼 | 8/10 | **7.5/10** | CLIP 512-dim 語意已啟用, 21 個概念 |
-| 👂 **聽覺** | TTS / STT / Whisper → 聊天管線 | 7/10 | **7.5/10** | Whisper STT 已接通聊天, edge-tts TTS 可用 |
-| ✋ **觸覺** | 觸覺服務 / 體感 / 反射 | 0/10 | **0/10** | ❌ TactileService 已刪除 |
-| 🏃 **行動** | 執行橋樑 / 代理協作 / 桌面互動 | 5/10 | **4.5/10** | 工具較強 |
-| ❤️ **情感** | 情緒 / 信任 / 倫理 | 5/10 | **4/10** | 結構存在 |
-| 🌍 **環境** | 時間 / 天氣 | 4/10 | **3.5/10** | 基礎可用 |
+| 類別          | 子維度                                      | 框架分數 |  實際分數  | 說明                                      |
+| ------------- | ------------------------------------------- | :------: | :--------: | ----------------------------------------- |
+| 🧠 **認知**   | 推理 / 生成 / 記憶 / 學習 / 元認知 / 多語言 |   7/10   | **7.5/10** | 框架完整, LLM+VectorStore 補足            |
+| 🗣️ **語言**   | 對話 / 知識 / 創造 / 工具調用               |   8/10   | **7.5/10** | LLM+字典+工具+路由                        |
+| 🤖 **自主性** | 主動交互 / 用戶監控 / 代理 / 生命週期       |   5/10   |  **5/10**  | 架構完整, 交互有限                        |
+| 👁️ **視覺**   | CNN 編碼 / CLIP 語意 / 21 concepts / 解碼   |   8/10   | **7.5/10** | CLIP 512-dim 語意已啟用, 21 個概念        |
+| 👂 **聽覺**   | TTS / STT / Whisper → 聊天管線              |   7/10   | **7.5/10** | Whisper STT 已接通聊天, edge-tts TTS 可用 |
+| ✋ **觸覺**   | 觸覺服務 / 體感 / 反射                      |   0/10   |  **0/10**  | ❌ TactileService 已刪除                  |
+| 🏃 **行動**   | 執行橋樑 / 代理協作 / 桌面互動              |   5/10   | **4.5/10** | 工具較強                                  |
+| ❤️ **情感**   | 情緒 / 信任 / 倫理                          |   5/10   |  **4/10**  | 結構存在                                  |
+| 🌍 **環境**   | 時間 / 天氣                                 |   4/10   | **3.5/10** | 基礎可用                                  |
 
 #### 4.10.4 核心限制與未來路徑
 
-P30-P44 完成了多模態管線的**框架層+實際語意理解** (服務協調、54 API 端點、品質監控、連續學習、記憶、生產強化、語意編碼器框架、ED3N 接線、torch+CLIP+Whisper 啟用)：
+P30-P44 完成了多模態管線的**框架層+實際語意理解** (服務協調、54
+API 端點、品質監控、連續學習、記憶、生產強化、語意編碼器框架、ED3N 接線、torch+CLIP+Whisper 啟用)：
 
-| 缺口 | 當前狀態 | 說明 |
-|------|---------|------|
-| ✅ 語意圖像理解 | **已啟用** | SemanticVisualEncoder CLIP 512-dim + DualEncoderRouter + SemanticKeyMapper |
-| ❌ 無 text-to-image 生成 | VisualDecoder 僅抽象紋理 | Diffusion 模型整合 | P45+ |
-| ✅ 語意音頻理解 | **已啟用** | SemanticAudioEncoder Whisper 384-dim + DualEncoderRouter |
-| ❌ 無 text-to-speech 歌唱 | AudioWaveformDecoder 僅正弦合成 | edge-tts 旋律擴充 + vocoder | P45+ |
-| ✅ Desktop MultimodalPanel 已實作 | MultimodalPanel.js 已存在 (P34, commit d1286f3cd) | ✅ **DONE** | — |
-| 🟡 WebSocket 串流 handlers 存在 | `websocket_manager.py` 有 `_handle_multimodal_encode`/`_handle_multimodal_decode` + dispatch | 缺專用路由 | P45+ |
+| 缺口                              | 當前狀態                                                                                     | 說明                                                                       |
+| --------------------------------- | -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| ✅ 語意圖像理解                   | **已啟用**                                                                                   | SemanticVisualEncoder CLIP 512-dim + DualEncoderRouter + SemanticKeyMapper |
+| ❌ 無 text-to-image 生成          | VisualDecoder 僅抽象紋理                                                                     | Diffusion 模型整合                                                         | P45+ |
+| ✅ 語意音頻理解                   | **已啟用**                                                                                   | SemanticAudioEncoder Whisper 384-dim + DualEncoderRouter                   |
+| ❌ 無 text-to-speech 歌唱         | AudioWaveformDecoder 僅正弦合成                                                              | edge-tts 旋律擴充 + vocoder                                                | P45+ |
+| ✅ Desktop MultimodalPanel 已實作 | MultimodalPanel.js 已存在 (P34, commit d1286f3cd)                                            | ✅ **DONE**                                                                | —    |
+| 🟡 WebSocket 串流 handlers 存在   | `websocket_manager.py` 有 `_handle_multimodal_encode`/`_handle_multimodal_decode` + dispatch | 缺專用路由                                                                 | P45+ |
 
 #### 4.10.5 重新評分總結
 
 > **v33.12 框架 vs 實際評分 (全部 Phase 完成後):**
+>
 > - **框架層**: **7.5/10** (不變)
 > - **實際層**: **7.8/10** (↑0.2) — CIFAR-10 實際訓練 + API 端點 + trust/ 清理
 > - **真實差距**: **-0.3** — 實際顯著超過框架
 > - **驗收測試**: **92 個真實測試**通過
 > - **綜合 (含 LLM 加成)**: **9.1/10** (↑0.2) — 完整圖像生成管線
-> - **新能力**: text → CLIP → RNN → primitives → PIL Image + /api/v1/generate-image
+> - **新能力**: text → CLIP → RNN → primitives → PIL Image +
+>   /api/v1/generate-image
 > - **代碼淨減**: Phase 9-12b 共 -10,438 行死代碼
 > - **ai/ 子目錄**: 21+ → 15 (全部有生產消費者)
 
@@ -860,46 +899,48 @@ P30-P44 完成了多模態管線的**框架層+實際語意理解** (服務協�
 
 ### 刪除統計
 
-| 類別 | 刪除行數 | 說明 |
-|------|:--------:|------|
-| ai/learning/ | ~1,672 | 自宣告 DEPRECATED, 無生產消費者 |
-| ai/ops/ | ~1,745 | 骨架代碼, 未接入任何流程 |
-| ai/dialogue/ | ~874 | 自宣告 DEPRECATED, 無生產消費者 |
-| ai/code_inspection/ | ~1,132 | 自宣告 DEPRECATED, 無生產消費者 |
-| ai/integration/ | ~566 | 死鏈根目錄 (UnifiedControlCenter) |
-| ai/evaluation/ | ~287 | 通過 UCC 的死鏈 |
-| ai/compression/ | ~404 | 通過 UCC 的死鏈 |
-| ai/lis/ | ~485 | 通過 UCC 的死鏈 |
-| ai/language_models/ | ~492 | 自宣告 DEPRECATED, 真實路由在 services/llm/ |
-| ai/symbolic_space/ | ~306 | 通過 UCC/evaluation/compression 的死鏈 |
-| ai/execution/ | ~661 | 自宣告 DEPRECATED, 標記 DORMANT |
-| **總計** | **~8,700** | |
+| 類別                |  刪除行數  | 說明                                        |
+| ------------------- | :--------: | ------------------------------------------- |
+| ai/learning/        |   ~1,672   | 自宣告 DEPRECATED, 無生產消費者             |
+| ai/ops/             |   ~1,745   | 骨架代碼, 未接入任何流程                    |
+| ai/dialogue/        |    ~874    | 自宣告 DEPRECATED, 無生產消費者             |
+| ai/code_inspection/ |   ~1,132   | 自宣告 DEPRECATED, 無生產消費者             |
+| ai/integration/     |    ~566    | 死鏈根目錄 (UnifiedControlCenter)           |
+| ai/evaluation/      |    ~287    | 通過 UCC 的死鏈                             |
+| ai/compression/     |    ~404    | 通過 UCC 的死鏈                             |
+| ai/lis/             |    ~485    | 通過 UCC 的死鏈                             |
+| ai/language_models/ |    ~492    | 自宣告 DEPRECATED, 真實路由在 services/llm/ |
+| ai/symbolic_space/  |    ~306    | 通過 UCC/evaluation/compression 的死鏈      |
+| ai/execution/       |    ~661    | 自宣告 DEPRECATED, 標記 DORMANT             |
+| **總計**            | **~8,700** |                                             |
 
 ### 引用處理
 
-| 檔案 | 變更 | 方式 |
-|------|------|------|
-| `reasoning_system.py` | UnifiedSymbolicSpace → _SimpleSymbolicSpace | 內建最小替代類 |
-| `learning_orchestrator.py` | TaskExecutionEvaluator → _SimpleEvaluator | 內建最小替代類 |
-| `digital_life_integrator.py` | 移除 UnifiedControlCenter import | 刪除未使用引用 |
-| `test_reasoning_system.py` | 33 個 mock patch 更新 | _SimpleSymbolicSpace |
+| 檔案                         | 變更                                        | 方式                 |
+| ---------------------------- | ------------------------------------------- | -------------------- |
+| `reasoning_system.py`        | UnifiedSymbolicSpace → _SimpleSymbolicSpace | 內建最小替代類       |
+| `learning_orchestrator.py`   | TaskExecutionEvaluator → _SimpleEvaluator   | 內建最小替代類       |
+| `digital_life_integrator.py` | 移除 UnifiedControlCenter import            | 刪除未使用引用       |
+| `test_reasoning_system.py`   | 33 個 mock patch 更新                       | _SimpleSymbolicSpace |
 
 ### 保留的子系統
 
-| 子系統 | 原因 | 已接線 |
-|--------|------|--------|
-| `ai/response/` | 已接入 LLM router, 有真實邏輯 + 5 個測試 | ✅ |
-| `ai/audio/` | 已接入 audio_service, 有真實信號處理 | ✅ |
-| `ai/crisis/` | 已接入 lifespan + chat_routes, 用戶安全 | ✅ |
+| 子系統         | 原因                                     | 已接線 |
+| -------------- | ---------------------------------------- | ------ |
+| `ai/response/` | 已接入 LLM router, 有真實邏輯 + 5 個測試 | ✅     |
+| `ai/audio/`    | 已接入 audio_service, 有真實信號處理     | ✅     |
+| `ai/crisis/`   | 已接入 lifespan + chat_routes, 用戶安全  | ✅     |
 
 ### 測試驗證
+
 - 37/37 alignment 測試通過
 - 12/12 驗收測試通過
 - 9/9 chicken_eats_rice E2E 測試通過
 
 ### 4.11 P42 真實語意編碼器路線圖
 
-P39-P41 的偏差告訴我們：用 LLM API「繞過」非文字模態不是答案。正確的路徑是**讓神經網路直接感知非文字模態的語意**。
+P39-P41 的偏差告訴我們：用 LLM
+API「繞過」非文字模態不是答案。正確的路徑是**讓神經網路直接感知非文字模態的語意**。
 
 #### 核心理念
 
@@ -916,154 +957,158 @@ SemanticVisualEncoder (512-dim CLIP 語意) ← 新增
 
 #### 三階段計畫
 
-| 階段 | 名稱 | 核心成果 | 預估測試 |
-|:----:|------|---------|:-------:|
-| **P42** | **語意編碼器基礎架構** | SemanticVisualEncoder (CLIP) + SemanticAudioEncoder (Whisper) + 雙編碼器路由 + 降級回退 | +20 測試 |
-| **P43** | **語意隱空間融合** ✅ | SharedLatentSpace 語意維度 (register_semantic_modality) + semantic_consistency 指標 (聚類評分) + semantic_contrastive_train (對比訓練包裝) + DualEncoderRouter SharedLatentSpace 整合 (取代隨機投影) + 跨模態語意相似度 (structural↔semantic 可比) | +19 測試 ✅ 全部通過! |
-| **P44** | **ED3N/GARDEN 直接接線** ✅ | SemanticKeyMapper (語意隱向量→ED3N 概念鍵) + ED3NEngine 整合 + SemanticKeyMapper 映射 + 小雞吃米圖基礎設施測試 | +18 測試 ✅ 全部通過! |
-| **P45** | **torch+CLIP+Whisper 啟用** ✅ | torch 2.11.0 + CLIP (openai/clip-vit-base-patch32) + Whisper (base) 已安裝. SemanticVisualEncoder 512-dim + SemanticAudioEncoder 384-dim + DualEncoderRouter 完整管線 + SemanticKeyMapper 概念映射 全部驗證通過 | ✅ 實際運作 |
+|  階段   | 名稱                           | 核心成果                                                                                                                                                                                                                                           |       預估測試        |
+| :-----: | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------: |
+| **P42** | **語意編碼器基礎架構**         | SemanticVisualEncoder (CLIP) + SemanticAudioEncoder (Whisper) + 雙編碼器路由 + 降級回退                                                                                                                                                            |       +20 測試        |
+| **P43** | **語意隱空間融合** ✅          | SharedLatentSpace 語意維度 (register_semantic_modality) + semantic_consistency 指標 (聚類評分) + semantic_contrastive_train (對比訓練包裝) + DualEncoderRouter SharedLatentSpace 整合 (取代隨機投影) + 跨模態語意相似度 (structural↔semantic 可比) | +19 測試 ✅ 全部通過! |
+| **P44** | **ED3N/GARDEN 直接接線** ✅    | SemanticKeyMapper (語意隱向量→ED3N 概念鍵) + ED3NEngine 整合 + SemanticKeyMapper 映射 + 小雞吃米圖基礎設施測試                                                                                                                                     | +18 測試 ✅ 全部通過! |
+| **P45** | **torch+CLIP+Whisper 啟用** ✅ | torch 2.11.0 + CLIP (openai/clip-vit-base-patch32) + Whisper (base) 已安裝. SemanticVisualEncoder 512-dim + SemanticAudioEncoder 384-dim + DualEncoderRouter 完整管線 + SemanticKeyMapper 概念映射 全部驗證通過                                    |      ✅ 實際運作      |
 
 #### P42 詳細任務
 
-| # | 任務 | 檔案 | 說明 | 測試 |
-|:-:|------|------|------|:---:|
-| 1 | **SemanticVisualEncoder** (NEW) | `ai/multimodal/semantic_visual.py` | torch 保護式導入, wrap CLIP `openai/clip-vit-base-patch32`. `encode(image) → 512-dim semantic vector`. 無 torch/CLIP → 優雅回退 None | ✅ 4 |
-| 2 | **SemanticAudioEncoder** (NEW) | `ai/multimodal/semantic_audio.py` | torch 保護式導入, wrap Whisper encoder. `encode(audio) → 語意向量`. 無 torch/Whisper → 優雅回退 None | ✅ 4 |
-| 3 | **DualEncoderRouter** (NEW) | `ai/multimodal/dual_encoder_router.py` | 根據 torch 可用性 + 請求模式自動選擇語意/結構編碼器. `encode_vision(bytes) → {semantic, structural, latent}` | ✅ 5 |
-| 4 | **MultimodalService 雙編碼器接線** | `services/multimodal_service.py` | 新增 `encode_semantic()` 方法, 雙編碼器路由 | ✅ 2 |
-| 5 | **降級測試** | 無 torch/CLIP/Whisper 時優雅回退至結構編碼器 | 不影響關鍵路徑 | ✅ 3 |
-| 6 | **出口測試** | 完整的 import/singleton/fallback/reentry 出口測試 | ✅ 2 |
+|  #  | 任務                               | 檔案                                              | 說明                                                                                                                                 | 測試 |
+| :-: | ---------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | :--: |
+|  1  | **SemanticVisualEncoder** (NEW)    | `ai/multimodal/semantic_visual.py`                | torch 保護式導入, wrap CLIP `openai/clip-vit-base-patch32`. `encode(image) → 512-dim semantic vector`. 無 torch/CLIP → 優雅回退 None | ✅ 4 |
+|  2  | **SemanticAudioEncoder** (NEW)     | `ai/multimodal/semantic_audio.py`                 | torch 保護式導入, wrap Whisper encoder. `encode(audio) → 語意向量`. 無 torch/Whisper → 優雅回退 None                                 | ✅ 4 |
+|  3  | **DualEncoderRouter** (NEW)        | `ai/multimodal/dual_encoder_router.py`            | 根據 torch 可用性 + 請求模式自動選擇語意/結構編碼器. `encode_vision(bytes) → {semantic, structural, latent}`                         | ✅ 5 |
+|  4  | **MultimodalService 雙編碼器接線** | `services/multimodal_service.py`                  | 新增 `encode_semantic()` 方法, 雙編碼器路由                                                                                          | ✅ 2 |
+|  5  | **降級測試**                       | 無 torch/CLIP/Whisper 時優雅回退至結構編碼器      | 不影響關鍵路徑                                                                                                                       | ✅ 3 |
+|  6  | **出口測試**                       | 完整的 import/singleton/fallback/reentry 出口測試 | ✅ 2                                                                                                                                 |
 
 **測試總數**: P42 新增 **20 測試**
 
 #### 小雞吃米圖測試影響
 
-| 面向 | P38 完成後 | P42 完成後 | P43 完成後 |
-|------|:---------:|:---------:|:---------:|
-| Step 2 下限通過 | ❌ VisualEncoder 看不懂小雞 | 🟡 SemanticVisualEncoder 可編碼語意向量 | 🟡 語意向量 + 結構向量均在 SharedLatentSpace 中可比 (但尚未接線至 ED3N→文字) |
-| 無 LLM API 時 | 無法回答「看到什麼」 | 編碼器輸出語意向量 | SharedLatentSpace 支援 semantic_consistency + cross-modal attention between structural↔semantic |
-| **依賴** | numpy | numpy + torch (選用) | numpy + torch (選用), SharedLatentSpace 統一空間 |
+| 面向            |         P38 完成後          |               P42 完成後                |                                           P43 完成後                                            |
+| --------------- | :-------------------------: | :-------------------------------------: | :---------------------------------------------------------------------------------------------: |
+| Step 2 下限通過 | ❌ VisualEncoder 看不懂小雞 | 🟡 SemanticVisualEncoder 可編碼語意向量 |          🟡 語意向量 + 結構向量均在 SharedLatentSpace 中可比 (但尚未接線至 ED3N→文字)           |
+| 無 LLM API 時   |    無法回答「看到什麼」     |           編碼器輸出語意向量            | SharedLatentSpace 支援 semantic_consistency + cross-modal attention between structural↔semantic |
+| **依賴**        |            numpy            |          numpy + torch (選用)           |                        numpy + torch (選用), SharedLatentSpace 統一空間                         |
 
-> **P47 完成後小雞吃米圖 Step 2 狀態**: ✅ **語意理解已驗證** — CLIP 512-dim raw vector 相似度: chicken↔chicken=1.0, chicken↔dog=0.75, chicken↔car=0.63. SemanticKeyMapper raw mode 正確映射: chicken=1.0, dog=0.75, car=0.63. 詳細雞圖泛化: chicken=0.96. 語意理解從「框架」升級為「已驗證實際能力」.
-
+> **P47 完成後小雞吃米圖 Step 2 狀態**: ✅ **語意理解已驗證** — CLIP 512-dim raw
+> vector 相似度: chicken↔chicken=1.0, chicken↔dog=0.75, chicken↔car=0.63.
+> SemanticKeyMapper raw mode 正確映射: chicken=1.0, dog=0.75,
+> car=0.63. 詳細雞圖泛化:
+> chicken=0.96. 語意理解從「框架」升級為「已驗證實際能力」.
 
 ## 5. 關鍵問題矩陣 (v8.0)
 
-| ID | 問題 | 優先級 | 狀態 |
-|----|------|--------|------|
-| — | 後端啟動+API | P0 | ✅ **全部驗證成功!** |
-| N8 | LLM API 金鑰 | P0 | ✅ OPENAI + GEMINI 啟用 |
-| — | VectorStore 種子 | P1 | ✅ **460,235 向量!** |
-| — | ED3N 載入外部字典 | P1 | ✅ **460,281 條目! 20.9s** |
-| — | **CLP 連續學習迴路** | P2 | ✅ **接通! trainer+engine 接線** |
-| — | **HAM 記憶整合** | P2 | ✅ **接通! VectorStore + HAM 雙注入** |
-| N7 | 引擎回應不一致 | P2 | ✅ 雙語 fallback |
-| N3 | 導入路徑不一致 | P5 | ✅ **全部已清理**: sys.path 修復 / system→core.system / desktop_presence 移除 |
-| ED3N 置信度回傳 | `str` 僅回傳 | P7 | ✅ **`_last_confidence` 暴露** — 9 路徑追蹤, ModelBus 優先使用 |
-| TactileService 全橋接 | 殘留 stub | P7 | ✅ **model_object/trigger/model_feedback 全部強化** |
-| MetaController | 未接線 | P6 | ✅ **連接到 ModelBus.route()** — 置信度記錄 + 動態門檻調整 |
-| MetaController→LLM | 未接線到 LLM | P8 | ✅ **AngelaLLMService 接線** — LLM/ModelBus/Ensemble 置信度記錄 |
-| GARDEN 置信度 | 無 (cap.min_confidence) | P8 | ✅ **`_last_confidence`** — 7 路徑信心追蹤, ModelBus 自動整合 |
-| TactileService | 純 mock | P6 | ✅ **橋接到 PhysiologicalTactileSystem** — 真實生理觸覺 + mock 回退 |
-| TickleReflexSystem | 空殼 (8 行) | P6 | ✅ **完整實作** — 14 身體部位 + Phase1/2 + 13 測試通過 |
-| — | **P2 全部完成!** | — | 🎉 **智能下限 6→8** |
-| — | GARDEN torch 測試 skipif | P3 | ✅ **42/42 通過, 優雅跳過** |
-| — | CLP max_buffer_size | P3 | ✅ **500 安全邊界** |
-| — | AudioService stub→functional | P3 | ✅ **speech_recognition + edge-tts** |
-| — | VisionService 去隨機化 | P3 | ✅ **PIL-based 色彩/比對/描述** |
-| — | 版本同步 5→12 | P3 | ✅ **全同步至 7.5.0-dev** |
-| — | **P3 全部完成!** | — | 🎉 **P3 里程碑達成!** |
-| — | AutonomousLifeCycle 接線 | P4 | ✅ **DigitalLifeIntegrator 啟動** |
-| — | VisionService 全 mock→PIL | P4 | ✅ **0 random mock 殘留** |
-| — | WeatherService 實裝 | P4 | ✅ **wttr.in + 天氣觸發** |
-| — | MetaController 框架 | P4 | ✅ **置信度校準 + 門檻調整** |
-| — | **P4 全部完成!** | — | 🎉 **P4 里程碑達成!** |
-| — | `garden/__main__.py` sys.path | P5 | ✅ **6→5 層修正** |
-| — | `system/` → `core.system/` 合併 | P5 | ✅ **4 個 import 已更新** |
-| — | `desktop_presence.py` 移除 | P5 | ✅ **別名 shim 清除** |
-| N3 | 導入路徑不一致 | P5 | ✅ **全部已清理** |
-| — | **P5 全部完成!** | — | 🎉 **P5 里程碑達成!** |
-| — | MetaController 接線 | P6 | ✅ **動態門檻調整** |
-| — | TactileService 橋接 | P6 | ✅ **真實生理觸覺** |
-| — | TickleReflexSystem 實作 | P6 | ✅ **13 測試通過** |
-| — | **P6 全部完成!** | — | 🎉 **P6 里程碑達成!** |
-| — | ED3N _last_confidence | P7 | ✅ **9 路徑置信度追蹤** |
-| — | ModelBus 真實置信度 | P7 | ✅ **優先使用引擎 `_last_confidence`** |
-| — | TactileService 殘留 stub | P7 | ✅ **model_object/trigger/model_feedback 強化** |
-| — | **P7 全部完成!** | — | 🎉 **P7 里程碑達成!** |
-| — | MetaController → LLM | P8 | ✅ **AngelaLLMService 閉環接線** |
-| — | GARDEN 置信度 | P8 | ✅ **7 路徑 `_last_confidence`** |
-| — | MetaController 測試 | P8 | ✅ **10 專屬測試** |
-| — | **P8 全部完成!** | — | 🎉 **P8 里程碑達成!** |
-| — | MetaController API | P9 | ✅ **summary + calibration 端點** |
-| — | 校準閉環 | P9 | ✅ **router.py 動態門檻** |
-| — | Live2D 別名清理 | P9 | ✅ **2 dead export 移除** |
-| — | **P9 全部完成!** | — | 🎉 **P9 里程碑達成!** |
+| ID                    | 問題                            | 優先級 | 狀態                                                                          |
+| --------------------- | ------------------------------- | ------ | ----------------------------------------------------------------------------- |
+| —                     | 後端啟動+API                    | P0     | ✅ **全部驗證成功!**                                                          |
+| N8                    | LLM API 金鑰                    | P0     | ✅ OPENAI + GEMINI 啟用                                                       |
+| —                     | VectorStore 種子                | P1     | ✅ **460,235 向量!**                                                          |
+| —                     | ED3N 載入外部字典               | P1     | ✅ **460,281 條目! 20.9s**                                                    |
+| —                     | **CLP 連續學習迴路**            | P2     | ✅ **接通! trainer+engine 接線**                                              |
+| —                     | **HAM 記憶整合**                | P2     | ✅ **接通! VectorStore + HAM 雙注入**                                         |
+| N7                    | 引擎回應不一致                  | P2     | ✅ 雙語 fallback                                                              |
+| N3                    | 導入路徑不一致                  | P5     | ✅ **全部已清理**: sys.path 修復 / system→core.system / desktop_presence 移除 |
+| ED3N 置信度回傳       | `str` 僅回傳                    | P7     | ✅ **`_last_confidence` 暴露** — 9 路徑追蹤, ModelBus 優先使用                |
+| TactileService 全橋接 | 殘留 stub                       | P7     | ✅ **model_object/trigger/model_feedback 全部強化**                           |
+| MetaController        | 未接線                          | P6     | ✅ **連接到 ModelBus.route()** — 置信度記錄 + 動態門檻調整                    |
+| MetaController→LLM    | 未接線到 LLM                    | P8     | ✅ **AngelaLLMService 接線** — LLM/ModelBus/Ensemble 置信度記錄               |
+| GARDEN 置信度         | 無 (cap.min_confidence)         | P8     | ✅ **`_last_confidence`** — 7 路徑信心追蹤, ModelBus 自動整合                 |
+| TactileService        | 純 mock                         | P6     | ✅ **橋接到 PhysiologicalTactileSystem** — 真實生理觸覺 + mock 回退           |
+| TickleReflexSystem    | 空殼 (8 行)                     | P6     | ✅ **完整實作** — 14 身體部位 + Phase1/2 + 13 測試通過                        |
+| —                     | **P2 全部完成!**                | —      | 🎉 **智能下限 6→8**                                                           |
+| —                     | GARDEN torch 測試 skipif        | P3     | ✅ **42/42 通過, 優雅跳過**                                                   |
+| —                     | CLP max_buffer_size             | P3     | ✅ **500 安全邊界**                                                           |
+| —                     | AudioService stub→functional    | P3     | ✅ **speech_recognition + edge-tts**                                          |
+| —                     | VisionService 去隨機化          | P3     | ✅ **PIL-based 色彩/比對/描述**                                               |
+| —                     | 版本同步 5→12                   | P3     | ✅ **全同步至 7.5.0-dev**                                                     |
+| —                     | **P3 全部完成!**                | —      | 🎉 **P3 里程碑達成!**                                                         |
+| —                     | AutonomousLifeCycle 接線        | P4     | ✅ **DigitalLifeIntegrator 啟動**                                             |
+| —                     | VisionService 全 mock→PIL       | P4     | ✅ **0 random mock 殘留**                                                     |
+| —                     | WeatherService 實裝             | P4     | ✅ **wttr.in + 天氣觸發**                                                     |
+| —                     | MetaController 框架             | P4     | ✅ **置信度校準 + 門檻調整**                                                  |
+| —                     | **P4 全部完成!**                | —      | 🎉 **P4 里程碑達成!**                                                         |
+| —                     | `garden/__main__.py` sys.path   | P5     | ✅ **6→5 層修正**                                                             |
+| —                     | `system/` → `core.system/` 合併 | P5     | ✅ **4 個 import 已更新**                                                     |
+| —                     | `desktop_presence.py` 移除      | P5     | ✅ **別名 shim 清除**                                                         |
+| N3                    | 導入路徑不一致                  | P5     | ✅ **全部已清理**                                                             |
+| —                     | **P5 全部完成!**                | —      | 🎉 **P5 里程碑達成!**                                                         |
+| —                     | MetaController 接線             | P6     | ✅ **動態門檻調整**                                                           |
+| —                     | TactileService 橋接             | P6     | ✅ **真實生理觸覺**                                                           |
+| —                     | TickleReflexSystem 實作         | P6     | ✅ **13 測試通過**                                                            |
+| —                     | **P6 全部完成!**                | —      | 🎉 **P6 里程碑達成!**                                                         |
+| —                     | ED3N _last_confidence           | P7     | ✅ **9 路徑置信度追蹤**                                                       |
+| —                     | ModelBus 真實置信度             | P7     | ✅ **優先使用引擎 `_last_confidence`**                                        |
+| —                     | TactileService 殘留 stub        | P7     | ✅ **model_object/trigger/model_feedback 強化**                               |
+| —                     | **P7 全部完成!**                | —      | 🎉 **P7 里程碑達成!**                                                         |
+| —                     | MetaController → LLM            | P8     | ✅ **AngelaLLMService 閉環接線**                                              |
+| —                     | GARDEN 置信度                   | P8     | ✅ **7 路徑 `_last_confidence`**                                              |
+| —                     | MetaController 測試             | P8     | ✅ **10 專屬測試**                                                            |
+| —                     | **P8 全部完成!**                | —      | 🎉 **P8 里程碑達成!**                                                         |
+| —                     | MetaController API              | P9     | ✅ **summary + calibration 端點**                                             |
+| —                     | 校準閉環                        | P9     | ✅ **router.py 動態門檻**                                                     |
+| —                     | Live2D 別名清理                 | P9     | ✅ **2 dead export 移除**                                                     |
+| —                     | **P9 全部完成!**                | —      | 🎉 **P9 里程碑達成!**                                                         |
 
 ## 6. 二十輪修復總計
 
-| 輪次 | 主要內容 | 成效 |
-|------|---------|------|
-| 1-6 | 測試修復 + 清理 | 724/724 通過, 48 修復 |
-| 7 | LLM + 引擎統一 | OpenAI 啟用, 雙語 fallback |
-| 8 | 去重 + Python 3.14 相容 | SNN 34/34, GARDEN numpy fallback |
-| 9 | VectorStore 種子 + 語義搜索 | chromadb 1515 向量 |
-| 10 | N3-A: 腳本導入路徑統一 | 5/5 腳本, 2 bug 修復 |
-| 11-14 | 後端啟動+診斷基礎設施 | 70 路由, 4 LLM 後端, 健康檢查 |
-| 15 | **Chat API 驗證** | **端到端後端測試完成!** |
-| 16 | **VectorStore 460K 種子** | **三語字典全數向量化!** |
-| 17 | **ED3N 460K 字典載入** | **智能下限 5→6** |
-| **18** | **CLP 連續學習迴路接通** | **智能下限 6→7** |
-| **19** | **HAM 記憶整合進對話** | **智能下限 7→8 🎉 P2 全部完成!** |
-| **20** | **P3 邊際優化** | **測試韌性 + 記憶安全 + 多模態去偽 🎉 P3 全部完成!** |
-| **21** | **P4 深度強化** | **自主生命接線 + Vision 全去偽 + Weather 實裝 + MetaController 🎉 P4 全部完成!** |
-| **22** | **P5 導入路徑清理** | **sys.path 修正 + system→core.system 合併 + desktop_presence 移除 🎉 P5 全部完成!** |
-| **23** | **P6 元認知 + 觸覺 + 小腦** | **MetaController 接線 + Tactile 橋接 + TickleReflex 實作 🎉 P6 全部完成!** |
-| **24** | **P7 置信度管道** | **ED3N _last_confidence + ModelBus 真實置信度 + Tactile 全橋接 🎉 P7 全部完成!** |
-| **25** | **P8 置信度閉環** | **MetaController→LLM + GARDEN 信心 + 測試擴充 🎉 P8 全部完成!** |
-| **26** | **P9 置信度儀表板** | **MetaController API + 校準閉環 + Live2D 別名清理 🎉 P9 全部完成!** |
-| **27** | **P10 置信度測試+ED3N warm-up** | **GARDEN _last_confidence 測試 (4) + MetaController API 端點測試 (3) + ED3N warm_up() + VisionService shutdown() 修復 + GARDEN np bug 修復 🎉 P10 全部完成!** |
-| **28** | **P11 ED3N 信心整合測試+GARDEN 持久化修復** | **ED3N→ModelBus→MetaController 8 整合測試 + GARDEN load() numpy 回退載入修復 + test_save_creates_files 修復 🎉 P11 全部完成!** |
-| **29** | **P12 預先存在失敗清零** | **7 個預先存在失敗全部解決! ED3N thread_safety 3 修復 (warm_up + timeout) + ChromaEncoder 6/6 + binary_store 2/2 🎉 P12 全部完成!** |
-| **30** | **P13 ED3N 字典載入最佳化** | **orjson 選用解析 + normalize_text ASCII fast-path + rebuild_index split() fast-path + DictionaryEntry __slots__. 載入 20.9s→15.76s, 測試 247s→178s 🎉 P13 全部完成!** |
-| **31** | **P14 多模態 ML 後端整合** | **VisionService pytesseract OCR 後端 + AudioService faster-whisper 離線 STT + scan_and_identify processing_id 修正 + 6 項預存測試修復 (shutdown/compare_images/analyze_image/scan_intent). 32/32 測試通過 🎉 P14 全部完成!** |
-| **31.5** | **P14.5 預存測試大清理** | **46 預存失敗清零 + 21 收集錯誤清除 + 3 匯入錯誤修復 + ConfigMutator 實作 + ChatService/WebSocket/DI/API 測試全面修復. 843 通過, 0 失敗 🎉 快速測試全部綠燈!** |
-| **32** | **P15 模態編碼器** | **VisualEncoder (numpy 像素→128維) + AudioSpectralEncoder (STFT頻譜→32維) + SharedLatentSpace (64維統一投影, 跨模態相似度). 21/21 測試通過 🎉 真實多模態第一步!** |
-| **34** | **P16 共享隱空間對比學習 + 跨模態注意力** | **project() 去正規化 + 餘弦距離損失 + 球面梯度 + cross-modal dot-product 注意力 + SGD 訓練 + 梯度裁切. 43/43 多模態測試通過 🎉 P16 全部完成!** |
-| **35** | **P17 編碼器強化** | **VisualEncoder CNN Gabor filter bank (256-dim) + AudioSpectralEncoder MFCC (128-dim) + temporal attention + spectral contrast. 43/43 多模態測試通過 🎉 P17 全部完成!** |
-| **36** | **P18 多模態生成** | **VisualDecoder (latent→128×128 RGB) + AudioWaveformDecoder (latent→16kHz PCM). 59/59 多模態測試通過 🎉 P18 全部完成! — 雙向多模態實現!** |
-| **37** | **P19 閉環演化** | **ReconstructionCycle (feature-level autoencoder) + CrossModalSynthesizer (latent blend + cross-generation). 74/74 多模態測試通過 🎉 P19 全部完成!** |
-| **38** | **P20 效能+整合** | **conv2d sliding_window_view 矩陣加速 + SimilarityService decode API + MultimodalBridge ED3N 整合. 95/95 多模態測試通過 🎉 P20 全部完成!** |
-| **39** | **P21 跨模態 RAG** | **MultimodalRetriever (numpy vector index) + MultimodalRAGEngine (encode→query→ED3N entries). 116/116 多模態測試通過 🎉 P21 全部完成!** |
-| **40** | **P22 生成品質+雙向接線** | **VisualDecoder tanh 紋理增強 + AudioWaveformDecoder 多頻段噪聲 + MultimodalED3NAdapter ED3N 接線. 128/128 多模態測試通過 🎉 P22 全部完成!** |
-| **41** | **P23 多模態對話** | **ChatService MultimodalED3NAdapter 接線 + prompt_builder multimodal_entries 消費 + chat_routes image_data 傳遞. 139/139 測試通過 🎉 P23 全部完成!** |
-| **42** | **P24 生成品質進階** | **VisualDecoder CNN 卷積紋理 + AudioWaveformDecoder 波表合成 + quality_metrics SSIM/PSNR/SNR. 138/138 多模態測試通過 🎉 P24 全部完成!** |
-| **43** | **P25 完整閉環** | **ED3N process_multimodal RAG 整合 + SimilarityService 品質評估 + ChatService decode 輸出. 156/156 測試通過 🎉 P25 全部完成!** |
-| **44** | **P26 多語言與文化** | **Korean-English 字典下載/轉換/匯入 (koedict.json) + CulturalContextModule (6 文化區, 24 文化筆記, ChatService 接線) + WSD disambiguate() (字典層上下文消歧). 173/173 測試通過 🎉 P26 全部完成!** |
-| **45** | **P27 訓練管道搭建** | **ContrastiveBatchTrainer (合成對比學習) + ReconstructionTrainer (合成重建訓練) + FullTrainingPipeline (兩階段端到端) + CLI 腳本 (存/載權重). 155/155 測試通過 🎉 P27 全部完成!** |
-| **46** | **P28 真實數據集導入** | **ESC-50 2000 音頻編碼 + CIFAR-10 圖像載入 + data_loader (CIFAR10Loader/ESC50Loader/RealDataProvider) + training_pipeline 真實支援 + CLI --real 模式. 169/169 測試通過 🎉 P28 全部完成!** |
-| **47** | **P29 端到端訓練** | **SimilarityService/Bridge load_weights; training_pipeline save/load + DEFAULT_WEIGHTS_PATH; CLI --auto-save/--auto-load/--eval-before; 權重 roundtrip 4 新測試. 真實 ESC-50+CIFAR-10 訓練驗證: 對比 0.209, 視覺 17×, 音頻 227× 改善 🎉 173/173 測試通過!** |
-| **48** | **P30 MultimodalService + API** | **MultimodalService async orchestrator (encode/decode/compare/retrieve/train/evaluate/generate/weights) + 9 REST 端點 + WS 串流 + 27 測試全通過 ✅** |
-| **49** | **P31 VisionPipeline** | **VisionPipeline (encode→latent→decode→ssim) + VisionService 擴充 + 品質監控 + 20 測試全通過 ✅** |
-| **50** | **P32 AudioPipeline** | **AudioPipeline (encode→latent→decode→SNR) + AudioService 擴充 + 品質監控 + 20 測試全通過 ✅** |
-| **51** | **P33 CrossModalRouter** | **CrossModalRouter (跨模態路由) + CrossModalQualityDashboard + MultimodalService 接線 + API 擴充 + 25 測試全通過 ✅** |
-| **52** | **P34 Desktop 前端多模態 UI** | **Electron MultimodalPanel + API Client + 5 標籤頁面 + Main 選單整合 + 11 前端測試全通過 ✅** |
-| **53** | **P36 Continuous Learning + Memory** | **ContinuousMultimodalLearning (micro-training) + MultimodalMemoryStore (persistent storage) + MultimodalService 接線 + API 端點 + 20 測試全通過 ✅** |
-| **54** | **P37 生產強化** | **MultimodalErrorRecovery (重試/降級/檢查點) + MultimodalStatePersistence (狀態存/載) + 品質監控後台循環 + API 端點擴充 (10 新端點) + 23 測試全通過 ✅** |
-| **55** | **P38 維護與測試擴充** | **端到端整合測試 + 壓力測試 + 多語言多模態 + 文件補全 + crisis_log 共用化 + 10 測試全通過 ✅** |
-| ~~56~~ | ~~P39 LLM Vision Caption~~ ❌ **已移除** | 虛假多模態：外部 LLM Vision API，無助於智能下限 |
-| ~~57~~ | ~~P40 LLM Audio Caption~~ ❌ **已移除** | 虛假多模態：外部 Whisper API，無助於智能下限 |
-| ~~58~~ | ~~P41 對話語意整合~~ ❌ **已移除** | 虛假多模態：繞過而非利用真實多模態管線 |
-| **59-61** | **P42+P43 語意編碼器 + 隱空間融合** | SemanticVisualEncoder + SemanticAudioEncoder + DualEncoderRouter + SharedLatentSpace 語意擴充 + semantic_consistency/contrastive_train |
-| **62** | **P44 SemanticKeyMapper (繞過測試版)** | SemanticKeyMapper + ED3NEngine 整合 + mock CLIP roundtrip 18 測試 — 標記為繞過測試 |
-| **62.5** | **P44 SemanticKeyMapper (非繞過重寫)** 🔥 | **全部 5 小雞吃米圖測試重寫為真實測試**: VisualEncoder 真實編碼 + SharedLatentSpace 對比訓練 (30 epoch, 66 pairs) + 跨圖像推廣驗證 (index image_A, query image_B) + 3 概念鑑別 (chicken/cat/dog) + 權重變化驗證. 移除 `index_from_dictionary` (隨機雜訊 stub). 移除 `index_from_dictionary` 對應測試 |
-| **總計** | **62.5 輪** | **155+ 修復, 345 多模態測試 (P15-P44), P39-P41 已移除, P44 繞過測試已取代** |
+| 輪次      | 主要內容                                    | 成效                                                                                                                                                                                                                                                                                                 |
+| --------- | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1-6       | 測試修復 + 清理                             | 724/724 通過, 48 修復                                                                                                                                                                                                                                                                                |
+| 7         | LLM + 引擎統一                              | OpenAI 啟用, 雙語 fallback                                                                                                                                                                                                                                                                           |
+| 8         | 去重 + Python 3.14 相容                     | SNN 34/34, GARDEN numpy fallback                                                                                                                                                                                                                                                                     |
+| 9         | VectorStore 種子 + 語義搜索                 | chromadb 1515 向量                                                                                                                                                                                                                                                                                   |
+| 10        | N3-A: 腳本導入路徑統一                      | 5/5 腳本, 2 bug 修復                                                                                                                                                                                                                                                                                 |
+| 11-14     | 後端啟動+診斷基礎設施                       | 70 路由, 4 LLM 後端, 健康檢查                                                                                                                                                                                                                                                                        |
+| 15        | **Chat API 驗證**                           | **端到端後端測試完成!**                                                                                                                                                                                                                                                                              |
+| 16        | **VectorStore 460K 種子**                   | **三語字典全數向量化!**                                                                                                                                                                                                                                                                              |
+| 17        | **ED3N 460K 字典載入**                      | **智能下限 5→6**                                                                                                                                                                                                                                                                                     |
+| **18**    | **CLP 連續學習迴路接通**                    | **智能下限 6→7**                                                                                                                                                                                                                                                                                     |
+| **19**    | **HAM 記憶整合進對話**                      | **智能下限 7→8 🎉 P2 全部完成!**                                                                                                                                                                                                                                                                     |
+| **20**    | **P3 邊際優化**                             | **測試韌性 + 記憶安全 + 多模態去偽 🎉 P3 全部完成!**                                                                                                                                                                                                                                                 |
+| **21**    | **P4 深度強化**                             | **自主生命接線 + Vision 全去偽 + Weather 實裝 + MetaController 🎉 P4 全部完成!**                                                                                                                                                                                                                     |
+| **22**    | **P5 導入路徑清理**                         | **sys.path 修正 + system→core.system 合併 + desktop_presence 移除 🎉 P5 全部完成!**                                                                                                                                                                                                                  |
+| **23**    | **P6 元認知 + 觸覺 + 小腦**                 | **MetaController 接線 + Tactile 橋接 + TickleReflex 實作 🎉 P6 全部完成!**                                                                                                                                                                                                                           |
+| **24**    | **P7 置信度管道**                           | **ED3N \_last_confidence + ModelBus 真實置信度 + Tactile 全橋接 🎉 P7 全部完成!**                                                                                                                                                                                                                    |
+| **25**    | **P8 置信度閉環**                           | **MetaController→LLM + GARDEN 信心 + 測試擴充 🎉 P8 全部完成!**                                                                                                                                                                                                                                      |
+| **26**    | **P9 置信度儀表板**                         | **MetaController API + 校準閉環 + Live2D 別名清理 🎉 P9 全部完成!**                                                                                                                                                                                                                                  |
+| **27**    | **P10 置信度測試+ED3N warm-up**             | **GARDEN \_last_confidence 測試 (4) + MetaController API 端點測試 (3) + ED3N warm_up() + VisionService shutdown() 修復 + GARDEN np bug 修復 🎉 P10 全部完成!**                                                                                                                                       |
+| **28**    | **P11 ED3N 信心整合測試+GARDEN 持久化修復** | **ED3N→ModelBus→MetaController 8 整合測試 + GARDEN load() numpy 回退載入修復 + test_save_creates_files 修復 🎉 P11 全部完成!**                                                                                                                                                                       |
+| **29**    | **P12 預先存在失敗清零**                    | **7 個預先存在失敗全部解決! ED3N thread_safety 3 修復 (warm_up + timeout) + ChromaEncoder 6/6 + binary_store 2/2 🎉 P12 全部完成!**                                                                                                                                                                  |
+| **30**    | **P13 ED3N 字典載入最佳化**                 | **orjson 選用解析 + normalize_text ASCII fast-path + rebuild_index split() fast-path + DictionaryEntry **slots**. 載入 20.9s→15.76s, 測試 247s→178s 🎉 P13 全部完成!**                                                                                                                               |
+| **31**    | **P14 多模態 ML 後端整合**                  | **VisionService pytesseract OCR 後端 + AudioService faster-whisper 離線 STT + scan_and_identify processing_id 修正 + 6 項預存測試修復 (shutdown/compare_images/analyze_image/scan_intent). 32/32 測試通過 🎉 P14 全部完成!**                                                                         |
+| **31.5**  | **P14.5 預存測試大清理**                    | **46 預存失敗清零 + 21 收集錯誤清除 + 3 匯入錯誤修復 + ConfigMutator 實作 + ChatService/WebSocket/DI/API 測試全面修復. 843 通過, 0 失敗 🎉 快速測試全部綠燈!**                                                                                                                                       |
+| **32**    | **P15 模態編碼器**                          | **VisualEncoder (numpy 像素→128維) + AudioSpectralEncoder (STFT頻譜→32維) + SharedLatentSpace (64維統一投影, 跨模態相似度). 21/21 測試通過 🎉 真實多模態第一步!**                                                                                                                                    |
+| **34**    | **P16 共享隱空間對比學習 + 跨模態注意力**   | **project() 去正規化 + 餘弦距離損失 + 球面梯度 + cross-modal dot-product 注意力 + SGD 訓練 + 梯度裁切. 43/43 多模態測試通過 🎉 P16 全部完成!**                                                                                                                                                       |
+| **35**    | **P17 編碼器強化**                          | **VisualEncoder CNN Gabor filter bank (256-dim) + AudioSpectralEncoder MFCC (128-dim) + temporal attention + spectral contrast. 43/43 多模態測試通過 🎉 P17 全部完成!**                                                                                                                              |
+| **36**    | **P18 多模態生成**                          | **VisualDecoder (latent→128×128 RGB) + AudioWaveformDecoder (latent→16kHz PCM). 59/59 多模態測試通過 🎉 P18 全部完成! — 雙向多模態實現!**                                                                                                                                                            |
+| **37**    | **P19 閉環演化**                            | **ReconstructionCycle (feature-level autoencoder) + CrossModalSynthesizer (latent blend + cross-generation). 74/74 多模態測試通過 🎉 P19 全部完成!**                                                                                                                                                 |
+| **38**    | **P20 效能+整合**                           | **conv2d sliding_window_view 矩陣加速 + SimilarityService decode API + MultimodalBridge ED3N 整合. 95/95 多模態測試通過 🎉 P20 全部完成!**                                                                                                                                                           |
+| **39**    | **P21 跨模態 RAG**                          | **MultimodalRetriever (numpy vector index) + MultimodalRAGEngine (encode→query→ED3N entries). 116/116 多模態測試通過 🎉 P21 全部完成!**                                                                                                                                                              |
+| **40**    | **P22 生成品質+雙向接線**                   | **VisualDecoder tanh 紋理增強 + AudioWaveformDecoder 多頻段噪聲 + MultimodalED3NAdapter ED3N 接線. 128/128 多模態測試通過 🎉 P22 全部完成!**                                                                                                                                                         |
+| **41**    | **P23 多模態對話**                          | **ChatService MultimodalED3NAdapter 接線 + prompt_builder multimodal_entries 消費 + chat_routes image_data 傳遞. 139/139 測試通過 🎉 P23 全部完成!**                                                                                                                                                 |
+| **42**    | **P24 生成品質進階**                        | **VisualDecoder CNN 卷積紋理 + AudioWaveformDecoder 波表合成 + quality_metrics SSIM/PSNR/SNR. 138/138 多模態測試通過 🎉 P24 全部完成!**                                                                                                                                                              |
+| **43**    | **P25 完整閉環**                            | **ED3N process_multimodal RAG 整合 + SimilarityService 品質評估 + ChatService decode 輸出. 156/156 測試通過 🎉 P25 全部完成!**                                                                                                                                                                       |
+| **44**    | **P26 多語言與文化**                        | **Korean-English 字典下載/轉換/匯入 (koedict.json) + CulturalContextModule (6 文化區, 24 文化筆記, ChatService 接線) + WSD disambiguate() (字典層上下文消歧). 173/173 測試通過 🎉 P26 全部完成!**                                                                                                    |
+| **45**    | **P27 訓練管道搭建**                        | **ContrastiveBatchTrainer (合成對比學習) + ReconstructionTrainer (合成重建訓練) + FullTrainingPipeline (兩階段端到端) + CLI 腳本 (存/載權重). 155/155 測試通過 🎉 P27 全部完成!**                                                                                                                    |
+| **46**    | **P28 真實數據集導入**                      | **ESC-50 2000 音頻編碼 + CIFAR-10 圖像載入 + data_loader (CIFAR10Loader/ESC50Loader/RealDataProvider) + training_pipeline 真實支援 + CLI --real 模式. 169/169 測試通過 🎉 P28 全部完成!**                                                                                                            |
+| **47**    | **P29 端到端訓練**                          | **SimilarityService/Bridge load_weights; training_pipeline save/load + DEFAULT_WEIGHTS_PATH; CLI --auto-save/--auto-load/--eval-before; 權重 roundtrip 4 新測試. 真實 ESC-50+CIFAR-10 訓練驗證: 對比 0.209, 視覺 17×, 音頻 227× 改善 🎉 173/173 測試通過!**                                          |
+| **48**    | **P30 MultimodalService + API**             | **MultimodalService async orchestrator (encode/decode/compare/retrieve/train/evaluate/generate/weights) + 9 REST 端點 + WS 串流 + 27 測試全通過 ✅**                                                                                                                                                 |
+| **49**    | **P31 VisionPipeline**                      | **VisionPipeline (encode→latent→decode→ssim) + VisionService 擴充 + 品質監控 + 20 測試全通過 ✅**                                                                                                                                                                                                    |
+| **50**    | **P32 AudioPipeline**                       | **AudioPipeline (encode→latent→decode→SNR) + AudioService 擴充 + 品質監控 + 20 測試全通過 ✅**                                                                                                                                                                                                       |
+| **51**    | **P33 CrossModalRouter**                    | **CrossModalRouter (跨模態路由) + CrossModalQualityDashboard + MultimodalService 接線 + API 擴充 + 25 測試全通過 ✅**                                                                                                                                                                                |
+| **52**    | **P34 Desktop 前端多模態 UI**               | **Electron MultimodalPanel + API Client + 5 標籤頁面 + Main 選單整合 + 11 前端測試全通過 ✅**                                                                                                                                                                                                        |
+| **53**    | **P36 Continuous Learning + Memory**        | **ContinuousMultimodalLearning (micro-training) + MultimodalMemoryStore (persistent storage) + MultimodalService 接線 + API 端點 + 20 測試全通過 ✅**                                                                                                                                                |
+| **54**    | **P37 生產強化**                            | **MultimodalErrorRecovery (重試/降級/檢查點) + MultimodalStatePersistence (狀態存/載) + 品質監控後台循環 + API 端點擴充 (10 新端點) + 23 測試全通過 ✅**                                                                                                                                             |
+| **55**    | **P38 維護與測試擴充**                      | **端到端整合測試 + 壓力測試 + 多語言多模態 + 文件補全 + crisis_log 共用化 + 10 測試全通過 ✅**                                                                                                                                                                                                       |
+| ~~56~~    | ~~P39 LLM Vision Caption~~ ❌ **已移除**    | 虛假多模態：外部 LLM Vision API，無助於智能下限                                                                                                                                                                                                                                                      |
+| ~~57~~    | ~~P40 LLM Audio Caption~~ ❌ **已移除**     | 虛假多模態：外部 Whisper API，無助於智能下限                                                                                                                                                                                                                                                         |
+| ~~58~~    | ~~P41 對話語意整合~~ ❌ **已移除**          | 虛假多模態：繞過而非利用真實多模態管線                                                                                                                                                                                                                                                               |
+| **59-61** | **P42+P43 語意編碼器 + 隱空間融合**         | SemanticVisualEncoder + SemanticAudioEncoder + DualEncoderRouter + SharedLatentSpace 語意擴充 + semantic_consistency/contrastive_train                                                                                                                                                               |
+| **62**    | **P44 SemanticKeyMapper (繞過測試版)**      | SemanticKeyMapper + ED3NEngine 整合 + mock CLIP roundtrip 18 測試 — 標記為繞過測試                                                                                                                                                                                                                   |
+| **62.5**  | **P44 SemanticKeyMapper (非繞過重寫)** 🔥   | **全部 5 小雞吃米圖測試重寫為真實測試**: VisualEncoder 真實編碼 + SharedLatentSpace 對比訓練 (30 epoch, 66 pairs) + 跨圖像推廣驗證 (index image_A, query image_B) + 3 概念鑑別 (chicken/cat/dog) + 權重變化驗證. 移除 `index_from_dictionary` (隨機雜訊 stub). 移除 `index_from_dictionary` 對應測試 |
+| **總計**  | **62.5 輪**                                 | **155+ 修復, 345 多模態測試 (P15-P44), P39-P41 已移除, P44 繞過測試已取代**                                                                                                                                                                                                                          |
 
 ## 7. 後續建議 — 多模態管線 vs 對話管線對比與完整管線建設計畫
 
 ### 🔍 當前管線對比分析
 
-透過深入分析整個專案架構，發現**多模態管線僅存在於模型層 (AI backend modules)**，缺乏與對話管線平行的完整端到端管線。以下為詳細對比：
+透過深入分析整個專案架構，發現**多模態管線僅存在於模型層 (AI backend
+modules)**，缺乏與對話管線平行的完整端到端管線。以下為詳細對比：
 
 #### 7.1 ✅ 對話管線 (Chat Pipeline) — 完整端到端
 
@@ -1174,21 +1219,21 @@ SemanticVisualEncoder (512-dim CLIP 語意) ← 新增
 
 #### 7.3 關鍵差距總結
 
-| 面向 | 對話管線 (Chat) | 多模態管線 (Multimodal) | 差距 |
-|------|:--------------:|:----------------------:|:----:|
-| **前端平台** | 3/3 (Desktop/Web/Mobile) | **0/3** | ❌ 完全缺失 |
-| **專屬 API 路由** | 4 端點 | **0 端點** (僅 2 間接) | ❌ 完全缺失 |
-| **專屬服務協調器** | ChatService (完整) | **無** (僅散落方法) | ❌ 完全缺失 |
-| **WebSocket 串流** | 有 (ConnectionManager) | **無** | ❌ 完全缺失 |
-| **單一模態管線 (僅視覺)** | — | **無獨立視覺管線** | ❌ 完全缺失 |
-| **單一模態管線 (僅音頻)** | — | **無獨立音頻管線** | ❌ 完全缺失 |
-| **模型層 (AI Backend)** | ED3N/GARDEN/LLM | VisualEncoder/AudioEncoder/Decoder/LatentSpace | ✅ 完整 |
-| **訓練管道** | CLP (對話學習) | FullTrainingPipeline (真實數據) | ✅ 完整 |
-| **連續學習** | CLP 接通 + HAM 同步 | **無** | ❌ 完全缺失 |
-| **記憶整合** | VectorStore + HAM 雙注入 | **無多模態記憶** | ❌ 完全缺失 |
-| **標準化數據格式** | ChatMessage/LLMResponse | **無統一多模態數據格式** | ❌ 完全缺失 |
-| **品質評估** | — | SSIM/PSNR/SNR (backend) | 🟡 僅後端 |
-| **端到端測試** | 12 ChatService 測試 | **173 測試但僅 backend** | ❌ 無整合測試 |
+| 面向                      |     對話管線 (Chat)      |            多模態管線 (Multimodal)             |     差距      |
+| ------------------------- | :----------------------: | :--------------------------------------------: | :-----------: |
+| **前端平台**              | 3/3 (Desktop/Web/Mobile) |                    **0/3**                     |  ❌ 完全缺失  |
+| **專屬 API 路由**         |          4 端點          |             **0 端點** (僅 2 間接)             |  ❌ 完全缺失  |
+| **專屬服務協調器**        |    ChatService (完整)    |              **無** (僅散落方法)               |  ❌ 完全缺失  |
+| **WebSocket 串流**        |  有 (ConnectionManager)  |                     **無**                     |  ❌ 完全缺失  |
+| **單一模態管線 (僅視覺)** |            —             |               **無獨立視覺管線**               |  ❌ 完全缺失  |
+| **單一模態管線 (僅音頻)** |            —             |               **無獨立音頻管線**               |  ❌ 完全缺失  |
+| **模型層 (AI Backend)**   |     ED3N/GARDEN/LLM      | VisualEncoder/AudioEncoder/Decoder/LatentSpace |    ✅ 完整    |
+| **訓練管道**              |      CLP (對話學習)      |        FullTrainingPipeline (真實數據)         |    ✅ 完整    |
+| **連續學習**              |   CLP 接通 + HAM 同步    |                     **無**                     |  ❌ 完全缺失  |
+| **記憶整合**              | VectorStore + HAM 雙注入 |                **無多模態記憶**                |  ❌ 完全缺失  |
+| **標準化數據格式**        | ChatMessage/LLMResponse  |            **無統一多模態數據格式**            |  ❌ 完全缺失  |
+| **品質評估**              |            —             |            SSIM/PSNR/SNR (backend)             |   🟡 僅後端   |
+| **端到端測試**            |   12 ChatService 測試    |            **173 測試但僅 backend**            | ❌ 無整合測試 |
 
 ### 🎯 完整多模態管線架構 (目標)
 
@@ -1277,17 +1322,17 @@ SemanticVisualEncoder (512-dim CLIP 語意) ← 新增
 
 以下為類比對話管線的完整多模態管線建設計畫，分 8 階段 (P30-P38) 共 100+ 測試增量：
 
-| 階段 | 名稱 | 核心目標 | 類比對話管線 | 測試增量 |
-|------|------|---------|-------------|:-------:|
-| **P30** | 🏗️ **MultimodalService 服務層 + API 路由** | 建立多模態專屬協調服務 + 9 端點 REST/WS API | ChatService + chat_routes | +25 測試 |
-| **P31** | 🏗️ **視覺管線 (Vision Pipeline) 單一模態端到端** | 上傳→編碼→隱空間→解碼→品質評估 完整閉環 | (新維度) | +20 測試 |
-| **P32** | 🏗️ **音頻管線 (Audio Pipeline) 單一模態端到端** | 錄音/上傳→編碼→隱空間→解碼→品質評估 完整閉環 | (新維度) | +20 測試 |
-| **P33** | 🔗 **跨模態管線 API + 整合** | 多模態融合路由 + 跨模態推理 + 品質儀表板 + ED3N deep 整合 | ModelBus + MetaController | +25 測試 |
-| **P34** | 🖥️ **前端多模態 UI — Desktop + Web Dashboard** | Electron + React 多模態面板、即時編碼/解碼視覺化 | frontend/chat,js | +15 測試 |
-| **P35** | 📱 **前端多模態 UI — Mobile App** | React Native 圖像/音頻捕獲 + 即時檢索 | mobile/chat | +10 測試 |
-| **P36** | 🔄 **多模態連續學習 + 記憶** | 多模態 CLP (比對對話 CLP) + 多模態記憶檢索 (比對 HAM) | CLP + HAM | +20 測試 |
-| **P37** | 🛡️ **生產強化** | 錯誤恢復 + 超時處理 + 效能基準 + 品質監控儀表板 | error_recovery + state_persistence | +15 測試 |
-| **P38+** | 🧪 **維護與測試擴充** | 端到端整合測試 + 壓力測試 + 多語言多模態 + 文件 | maintenance | +10 測試 |
+| 階段     | 名稱                                             | 核心目標                                                  | 類比對話管線                       | 測試增量 |
+| -------- | ------------------------------------------------ | --------------------------------------------------------- | ---------------------------------- | :------: |
+| **P30**  | 🏗️ **MultimodalService 服務層 + API 路由**       | 建立多模態專屬協調服務 + 9 端點 REST/WS API               | ChatService + chat_routes          | +25 測試 |
+| **P31**  | 🏗️ **視覺管線 (Vision Pipeline) 單一模態端到端** | 上傳→編碼→隱空間→解碼→品質評估 完整閉環                   | (新維度)                           | +20 測試 |
+| **P32**  | 🏗️ **音頻管線 (Audio Pipeline) 單一模態端到端**  | 錄音/上傳→編碼→隱空間→解碼→品質評估 完整閉環              | (新維度)                           | +20 測試 |
+| **P33**  | 🔗 **跨模態管線 API + 整合**                     | 多模態融合路由 + 跨模態推理 + 品質儀表板 + ED3N deep 整合 | ModelBus + MetaController          | +25 測試 |
+| **P34**  | 🖥️ **前端多模態 UI — Desktop + Web Dashboard**   | Electron + React 多模態面板、即時編碼/解碼視覺化          | frontend/chat,js                   | +15 測試 |
+| **P35**  | 📱 **前端多模態 UI — Mobile App**                | React Native 圖像/音頻捕獲 + 即時檢索                     | mobile/chat                        | +10 測試 |
+| **P36**  | 🔄 **多模態連續學習 + 記憶**                     | 多模態 CLP (比對對話 CLP) + 多模態記憶檢索 (比對 HAM)     | CLP + HAM                          | +20 測試 |
+| **P37**  | 🛡️ **生產強化**                                  | 錯誤恢復 + 超時處理 + 效能基準 + 品質監控儀表板           | error_recovery + state_persistence | +15 測試 |
+| **P38+** | 🧪 **維護與測試擴充**                            | 端到端整合測試 + 壓力測試 + 多語言多模態 + 文件           | maintenance                        | +10 測試 |
 
 ---
 
@@ -1295,24 +1340,25 @@ SemanticVisualEncoder (512-dim CLIP 語意) ← 新增
 
 **類比**: ChatService + chat_routes (對話管線的服務協調層)
 
-**目標**: 建立 MultimodalService 作為多模態管線的專屬協調器，和 ChatService 平行，並提供 9 個 REST + 1 個 WebSocket 端點。
+**目標**: 建立 MultimodalService 作為多模態管線的專屬協調器，和 ChatService 平行，並提供 9 個 REST +
+1 個 WebSocket 端點。
 
 **詳細任務**:
 
-| # | 任務 | 檔案 | 說明 | 測試 |
-|:-:|------|------|------|:---:|
-| 1 | **MultimodalService class** | `services/multimodal_service.py` (NEW) | 協調器：封裝 VisualEncoder/AudioEncoder/SharedLatentSpace/Decoders/RAG/Training Pipeline，提供統一的 `encode()`/`decode()`/`compare()`/`retrieve()`/`train()`/`evaluate()`/`generate()` 方法。非阻塞 async 版本，每個方法都有 try/except fallback。必須處理錯誤、超時、無效輸入 | ✅ 3 |
-| 2 | **POST /multimodal/encode** | `api/routes/multimodal_routes.py` (NEW) | 接收 image/audio 二進位 + 可選 item_id → 回傳 `{item_id, modality, latent, feature_vector, dim, time_ms}`。支援同時編碼多模態 (multipart request) | ✅ 3 |
-| 3 | **POST /multimodal/decode** | `api/routes/multimodal_routes.py` | 接收 `{item_id, modality, format}` → 回傳解碼後的 image (PNG base64) 或 audio (WAV base64) + 元數據 | ✅ 2 |
-| 4 | **POST /multimodal/compare** | `api/routes/multimodal_routes.py` | 接收 `{item_a_id, item_b_id}` → 回傳 `{similarity, modality_a, modality_b, cross_modal_attention_weights}` | ✅ 2 |
-| 5 | **POST /multimodal/retrieve** | `api/routes/multimodal_routes.py` | 接收 `{query_id, top_k, modality_filter}` → 回傳 top-k 檢索結果 `[{key, score, modality, metadata}]` | ✅ 2 |
-| 6 | **POST /multimodal/train** | `api/routes/multimodal_routes.py` | 接收 `{mode: "contrastive"|"recon"|"full", epochs, lr, use_real}` → 觸發訓練，回傳 `{status, final_loss, history}`。非同步執行（立即回傳 202 + task_id），可選 WebSocket 推播進度 | ✅ 3 |
-| 7 | **POST /multimodal/evaluate** | `api/routes/multimodal_routes.py` | 接收 `{item_id}` 或 `{modality, n_samples}` → 回傳 `{ssim, psnr, snr, quality_report}`。若提供 item_id 則評估該項目；若不提供則用合成樣本 | ✅ 2 |
-| 8 | **POST /multimodal/generate** | `api/routes/multimodal_routes.py` | 接收 `{source_item_id, target_modality}` → 跨模態生成 (vision→audio 或 audio→vision)，回傳生成結果 base64 + 品質分數 | ✅ 2 |
-| 9 | **POST /multimodal/visualize** | `api/routes/multimodal_routes.py` | 接收 `{item_ids[]}` 或 `{n_latents}` → 回傳隱空間 2D t-SNE/UMAP 投影座標 + 各點標籤，供前端視覺化 | ✅ 2 |
-| 10 | **WS /multimodal/stream** | `services/websocket_manager.py` (擴充) | WebSocket 串流：即時推播訓練進度、編碼/解碼結果、品質變化通知、連續學習事件。與 ConnectionManager 共用 | ✅ 2 |
-| 11 | **Router 註冊** | `api/router.py` (擴充) | multimodal_routes 以 `/api/v1` 前綴註冊，try/except ImportError 模式，與現有 routes 一致 | ✅ 1 |
-| 12 | **錯誤處理 & 超時** | `services/multimodal_service.py` | 每個方法包裝 asyncio.wait_for(timeout=30)，TimeoutError → 503 + 日誌。所有編碼/解碼異常 → 優雅降級 (回傳 None 或空結果) | ✅ 1 |
+|  #  | 任務                           | 檔案                                    | 說明                                                                                                                                                                                                                                                                            |  測試   |
+| :-: | ------------------------------ | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-----: |
+|  1  | **MultimodalService class**    | `services/multimodal_service.py` (NEW)  | 協調器：封裝 VisualEncoder/AudioEncoder/SharedLatentSpace/Decoders/RAG/Training Pipeline，提供統一的 `encode()`/`decode()`/`compare()`/`retrieve()`/`train()`/`evaluate()`/`generate()` 方法。非阻塞 async 版本，每個方法都有 try/except fallback。必須處理錯誤、超時、無效輸入 |  ✅ 3   |
+|  2  | **POST /multimodal/encode**    | `api/routes/multimodal_routes.py` (NEW) | 接收 image/audio 二進位 + 可選 item_id → 回傳 `{item_id, modality, latent, feature_vector, dim, time_ms}`。支援同時編碼多模態 (multipart request)                                                                                                                               |  ✅ 3   |
+|  3  | **POST /multimodal/decode**    | `api/routes/multimodal_routes.py`       | 接收 `{item_id, modality, format}` → 回傳解碼後的 image (PNG base64) 或 audio (WAV base64) + 元數據                                                                                                                                                                             |  ✅ 2   |
+|  4  | **POST /multimodal/compare**   | `api/routes/multimodal_routes.py`       | 接收 `{item_a_id, item_b_id}` → 回傳 `{similarity, modality_a, modality_b, cross_modal_attention_weights}`                                                                                                                                                                      |  ✅ 2   |
+|  5  | **POST /multimodal/retrieve**  | `api/routes/multimodal_routes.py`       | 接收 `{query_id, top_k, modality_filter}` → 回傳 top-k 檢索結果 `[{key, score, modality, metadata}]`                                                                                                                                                                            |  ✅ 2   |
+|  6  | **POST /multimodal/train**     | `api/routes/multimodal_routes.py`       | 接收 `{mode: "contrastive"                                                                                                                                                                                                                                                      | "recon" | "full", epochs, lr, use_real}`→ 觸發訓練，回傳`{status, final_loss, history}`。非同步執行（立即回傳 202 + task_id），可選 WebSocket 推播進度 | ✅ 3 |
+|  7  | **POST /multimodal/evaluate**  | `api/routes/multimodal_routes.py`       | 接收 `{item_id}` 或 `{modality, n_samples}` → 回傳 `{ssim, psnr, snr, quality_report}`。若提供 item_id 則評估該項目；若不提供則用合成樣本                                                                                                                                       |  ✅ 2   |
+|  8  | **POST /multimodal/generate**  | `api/routes/multimodal_routes.py`       | 接收 `{source_item_id, target_modality}` → 跨模態生成 (vision→audio 或 audio→vision)，回傳生成結果 base64 + 品質分數                                                                                                                                                            |  ✅ 2   |
+|  9  | **POST /multimodal/visualize** | `api/routes/multimodal_routes.py`       | 接收 `{item_ids[]}` 或 `{n_latents}` → 回傳隱空間 2D t-SNE/UMAP 投影座標 + 各點標籤，供前端視覺化                                                                                                                                                                               |  ✅ 2   |
+| 10  | **WS /multimodal/stream**      | `services/websocket_manager.py` (擴充)  | WebSocket 串流：即時推播訓練進度、編碼/解碼結果、品質變化通知、連續學習事件。與 ConnectionManager 共用                                                                                                                                                                          |  ✅ 2   |
+| 11  | **Router 註冊**                | `api/router.py` (擴充)                  | multimodal_routes 以 `/api/v1` 前綴註冊，try/except ImportError 模式，與現有 routes 一致                                                                                                                                                                                        |  ✅ 1   |
+| 12  | **錯誤處理 & 超時**            | `services/multimodal_service.py`        | 每個方法包裝 asyncio.wait_for(timeout=30)，TimeoutError → 503 + 日誌。所有編碼/解碼異常 → 優雅降級 (回傳 None 或空結果)                                                                                                                                                         |  ✅ 1   |
 
 **測試總數**: P30 新增 **25 測試** (單元 15 + 整合 10)
 
@@ -1320,22 +1366,23 @@ SemanticVisualEncoder (512-dim CLIP 語意) ← 新增
 
 #### P31: 視覺管線 (Vision Pipeline) 單一模態端到端 🏗️
 
-**目標**: 建立完整的**單一模態視覺管線** — 從前端上傳到後端編碼、隱空間投影、解碼、品質評估的完整閉環，類似於對話管線的「輸入→處理→輸出」流程。
+**目標**: 建立完整的**單一模態視覺管線**
+— 從前端上傳到後端編碼、隱空間投影、解碼、品質評估的完整閉環，類似於對話管線的「輸入→處理→輸出」流程。
 
 **詳細任務**:
 
-| # | 任務 | 檔案 | 說明 | 測試 |
-|:-:|------|------|------|:---:|
-| 1 | **VisionPipeline class** | `ai/vision/vision_pipeline.py` (NEW) | 視覺專用管線：`process(image_data) → {latent, decoded_image, ssim, features}`。整合 VisualEncoder.encode() → SharedLatentSpace.project("vision") → VisualDecoder.decode() → ssim()。緩存最後 10 個結果 | ✅ 3 |
-| 2 | **VisionService 擴充 — 完整編碼方法** | `services/vision_service.py` | 新增 `encode_with_pipeline()` 方法：調用 VisionPipeline.process()，回傳完整結果。與現有 `encode_image()` 相容 | ✅ 2 |
-| 3 | **VisionService 擴充 — 批量編碼** | `services/vision_service.py` | 新增 `batch_encode(images: List[bytes]) → List[dict]`，批次處理多張圖片，共用 VisualEncoder 實例 | ✅ 2 |
-| 4 | **POST /vision/pipeline** | `api/routes/vision_routes.py` (擴充) | 單一端點執行完整視覺管線：上傳→編碼→隱空間→解碼→品質評估。回傳完整結果 JSON | ✅ 2 |
-| 5 | **POST /vision/batch-encode** | `api/routes/vision_routes.py` (擴充) | 批量編碼端點：接收多個 image files → 回傳 `[{item_id, latent, ssim}]` | ✅ 2 |
-| 6 | **POST /vision/generate** | `api/routes/vision_routes.py` (擴充) | 給定 latent 向量或文字提示 → 生成圖像。使用 VisualDecoder.decode() → 回傳 PNG base64 | ✅ 2 |
-| 7 | **WS /vision/stream** | `services/websocket_manager.py` (擴充) | 即時串流視覺處理結果：編碼進度、解碼完成通知、品質分數推送 | ✅ 1 |
-| 8 | **VisionService 快取層** | `services/vision_service.py` | LRU 快取 (maxsize=50)：對相同 image_data 重複請求提供快取結果，減少編碼/解碼開銷 | ✅ 1 |
-| 9 | **VisionPipeline 連續整合到 MultimodalService** | `services/multimodal_service.py` (擴充) | MultimodalService.vision_pipeline 屬性，`encode_image()` 單一入口委託 VisionPipeline | ✅ 1 |
-| 10 | **視覺品質監控** | `ai/vision/quality_monitor.py` (NEW) | 記錄每次管線調用的 SSIM/PSNR、處理時間、圖像大小。`report()` 回傳統計摘要 `{avg_ssim, avg_psnr, p95_time, total_calls}`。可選寫入 logs/vision_quality.jsonl | ✅ 4 |
+|  #  | 任務                                            | 檔案                                    | 說明                                                                                                                                                                                                   | 測試 |
+| :-: | ----------------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :--: |
+|  1  | **VisionPipeline class**                        | `ai/vision/vision_pipeline.py` (NEW)    | 視覺專用管線：`process(image_data) → {latent, decoded_image, ssim, features}`。整合 VisualEncoder.encode() → SharedLatentSpace.project("vision") → VisualDecoder.decode() → ssim()。緩存最後 10 個結果 | ✅ 3 |
+|  2  | **VisionService 擴充 — 完整編碼方法**           | `services/vision_service.py`            | 新增 `encode_with_pipeline()` 方法：調用 VisionPipeline.process()，回傳完整結果。與現有 `encode_image()` 相容                                                                                          | ✅ 2 |
+|  3  | **VisionService 擴充 — 批量編碼**               | `services/vision_service.py`            | 新增 `batch_encode(images: List[bytes]) → List[dict]`，批次處理多張圖片，共用 VisualEncoder 實例                                                                                                       | ✅ 2 |
+|  4  | **POST /vision/pipeline**                       | `api/routes/vision_routes.py` (擴充)    | 單一端點執行完整視覺管線：上傳→編碼→隱空間→解碼→品質評估。回傳完整結果 JSON                                                                                                                            | ✅ 2 |
+|  5  | **POST /vision/batch-encode**                   | `api/routes/vision_routes.py` (擴充)    | 批量編碼端點：接收多個 image files → 回傳 `[{item_id, latent, ssim}]`                                                                                                                                  | ✅ 2 |
+|  6  | **POST /vision/generate**                       | `api/routes/vision_routes.py` (擴充)    | 給定 latent 向量或文字提示 → 生成圖像。使用 VisualDecoder.decode() → 回傳 PNG base64                                                                                                                   | ✅ 2 |
+|  7  | **WS /vision/stream**                           | `services/websocket_manager.py` (擴充)  | 即時串流視覺處理結果：編碼進度、解碼完成通知、品質分數推送                                                                                                                                             | ✅ 1 |
+|  8  | **VisionService 快取層**                        | `services/vision_service.py`            | LRU 快取 (maxsize=50)：對相同 image_data 重複請求提供快取結果，減少編碼/解碼開銷                                                                                                                       | ✅ 1 |
+|  9  | **VisionPipeline 連續整合到 MultimodalService** | `services/multimodal_service.py` (擴充) | MultimodalService.vision_pipeline 屬性，`encode_image()` 單一入口委託 VisionPipeline                                                                                                                   | ✅ 1 |
+| 10  | **視覺品質監控**                                | `ai/vision/quality_monitor.py` (NEW)    | 記錄每次管線調用的 SSIM/PSNR、處理時間、圖像大小。`report()` 回傳統計摘要 `{avg_ssim, avg_psnr, p95_time, total_calls}`。可選寫入 logs/vision_quality.jsonl                                            | ✅ 4 |
 
 **測試總數**: P31 新增 **20 測試**
 
@@ -1343,22 +1390,23 @@ SemanticVisualEncoder (512-dim CLIP 語意) ← 新增
 
 #### P32: 音頻管線 (Audio Pipeline) 單一模態端到端 🏗️
 
-**目標**: 建立完整的**單一模態音頻管線** — 錄音/上傳→編碼→隱空間投影→解碼→品質評估的完整閉環。
+**目標**: 建立完整的**單一模態音頻管線**
+— 錄音/上傳→編碼→隱空間投影→解碼→品質評估的完整閉環。
 
 **詳細任務**:
 
-| # | 任務 | 檔案 | 說明 | 測試 |
-|:-:|------|------|------|:---:|
-| 1 | **AudioPipeline class** | `ai/audio/audio_pipeline.py` (NEW) | 音頻專用管線：`process(audio_data) → {latent, decoded_waveform, snr, features}`。整合 AudioSpectralEncoder.encode() → SharedLatentSpace.project("audio") → AudioWaveformDecoder.decode() → snr()。支援 WAV/PCM 輸入 | ✅ 3 |
-| 2 | **AudioService 擴充 — 完整編碼方法** | `services/audio_service.py` | 新增 `encode_with_pipeline()` 方法：調用 AudioPipeline.process()，回傳完整結果。與現有 `encode_audio()` 相容 | ✅ 2 |
-| 3 | **AudioService 擴充 — 批次編碼** | `services/audio_service.py` | 新增 `batch_encode(audios: List[bytes]) → List[dict]`，批次處理多段音頻 | ✅ 2 |
-| 4 | **POST /audio/pipeline** | `api/routes/audio_routes.py` (擴充) | 單一端點執行完整音頻管線：上傳→編碼→隱空間→解碼→品質評估 | ✅ 2 |
-| 5 | **POST /audio/batch-encode** | `api/routes/audio_routes.py` (擴充) | 批量編碼端點 | ✅ 2 |
-| 6 | **POST /audio/generate** | `api/routes/audio_routes.py` (擴充) | 給定 latent 向量 → 生成音頻 WAV base64。使用 AudioWaveformDecoder.decode() | ✅ 2 |
-| 7 | **WS /audio/stream** | `services/websocket_manager.py` (擴充) | 即時串流音頻處理結果 | ✅ 1 |
-| 8 | **AudioService 快取層** | `services/audio_service.py` | LRU 快取 (maxsize=50)：減少重複編碼/解碼開銷 | ✅ 1 |
-| 9 | **AudioPipeline 連續整合到 MultimodalService** | `services/multimodal_service.py` (擴充) | MultimodalService.audio_pipeline 屬性，`encode_audio()` 單一入口委託 AudioPipeline | ✅ 1 |
-| 10 | **音頻品質監控** | `ai/audio/quality_monitor.py` (NEW) | 記錄每次管線調用的 SNR、處理時間、時長。`report()` 回傳統計摘要 `{avg_snr, p95_time, total_calls}`。可選寫入 logs/audio_quality.jsonl | ✅ 4 |
+|  #  | 任務                                           | 檔案                                    | 說明                                                                                                                                                                                                                | 測試 |
+| :-: | ---------------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--: |
+|  1  | **AudioPipeline class**                        | `ai/audio/audio_pipeline.py` (NEW)      | 音頻專用管線：`process(audio_data) → {latent, decoded_waveform, snr, features}`。整合 AudioSpectralEncoder.encode() → SharedLatentSpace.project("audio") → AudioWaveformDecoder.decode() → snr()。支援 WAV/PCM 輸入 | ✅ 3 |
+|  2  | **AudioService 擴充 — 完整編碼方法**           | `services/audio_service.py`             | 新增 `encode_with_pipeline()` 方法：調用 AudioPipeline.process()，回傳完整結果。與現有 `encode_audio()` 相容                                                                                                        | ✅ 2 |
+|  3  | **AudioService 擴充 — 批次編碼**               | `services/audio_service.py`             | 新增 `batch_encode(audios: List[bytes]) → List[dict]`，批次處理多段音頻                                                                                                                                             | ✅ 2 |
+|  4  | **POST /audio/pipeline**                       | `api/routes/audio_routes.py` (擴充)     | 單一端點執行完整音頻管線：上傳→編碼→隱空間→解碼→品質評估                                                                                                                                                            | ✅ 2 |
+|  5  | **POST /audio/batch-encode**                   | `api/routes/audio_routes.py` (擴充)     | 批量編碼端點                                                                                                                                                                                                        | ✅ 2 |
+|  6  | **POST /audio/generate**                       | `api/routes/audio_routes.py` (擴充)     | 給定 latent 向量 → 生成音頻 WAV base64。使用 AudioWaveformDecoder.decode()                                                                                                                                          | ✅ 2 |
+|  7  | **WS /audio/stream**                           | `services/websocket_manager.py` (擴充)  | 即時串流音頻處理結果                                                                                                                                                                                                | ✅ 1 |
+|  8  | **AudioService 快取層**                        | `services/audio_service.py`             | LRU 快取 (maxsize=50)：減少重複編碼/解碼開銷                                                                                                                                                                        | ✅ 1 |
+|  9  | **AudioPipeline 連續整合到 MultimodalService** | `services/multimodal_service.py` (擴充) | MultimodalService.audio_pipeline 屬性，`encode_audio()` 單一入口委託 AudioPipeline                                                                                                                                  | ✅ 1 |
+| 10  | **音頻品質監控**                               | `ai/audio/quality_monitor.py` (NEW)     | 記錄每次管線調用的 SNR、處理時間、時長。`report()` 回傳統計摘要 `{avg_snr, p95_time, total_calls}`。可選寫入 logs/audio_quality.jsonl                                                                               | ✅ 4 |
 
 **測試總數**: P32 新增 **20 測試**
 
@@ -1366,20 +1414,21 @@ SemanticVisualEncoder (512-dim CLIP 語意) ← 新增
 
 #### P33: 跨模態管線 API + 整合 🔗
 
-**目標**: 建立跨模態融合層，類比於對話管線的 ModelBus + MetaController，實現模態間路由、品質儀表板、推理、ED3N deep 整合。
+**目標**: 建立跨模態融合層，類比於對話管線的 ModelBus +
+MetaController，實現模態間路由、品質儀表板、推理、ED3N deep 整合。
 
 **詳細任務**:
 
-| # | 任務 | 檔案 | 說明 | 測試 |
-|:-:|------|------|------|:---:|
-| 1 | **CrossModalRouter class** | `services/cross_modal_router.py` (NEW) | 類比 ModelBus：依據輸入模態 + 查詢類型自動路由到正確的管線 (vision/audio/cross)。`route(modality, data, mode) → {result, pipeline, confidence, time_ms}`。支援 fallback chain：cross-modal → vision+audio parallel → unimodal | ✅ 4 |
-| 2 | **CrossModalQualityDashboard** | `services/cross_modal_quality.py` (NEW) | 整合 VisionQualityMonitor + AudioQualityMonitor。`dashboard() → {vision_summary, audio_summary, cross_modal_summary, overall_health}`。提供 API 端點查詢 | ✅ 3 |
-| 3 | **ED3N deep 整合：multimodal_encoder hook** | `ai/ed3n/ed3n_engine.py` (擴充) | 在 `_encode_input()` 或 `process()` 中，當輸入包含 image/audio 二進位時，自動通過 MultimodalBridge encode → inject 進 dictionary context。目前僅支援文字輸入，需擴充為真正的多模態編碼層 | ✅ 2 |
-| 4 | **POST /multimodal/cross-infer** | `api/routes/multimodal_routes.py` (擴充) | 跨模態推理：接收 `{source_modality, source_data, query_text}` → 使用 CrossModalRouter 執行多步推理，回傳 `{result, confidence, reasoning_path}` | ✅ 2 |
-| 5 | **POST /multimodal/quality/dashboard** | `api/routes/multimodal_routes.py` (擴充) | 品質儀表板端點：回傳 `{vision, audio, cross_modal, overall}` 品質摘要 | ✅ 2 |
-| 6 | **CrossModalRouter 異常處理** | `services/cross_modal_router.py` | 每個路由路徑有獨立 try/except。未知模態 → 回傳 400。管線崩潰 → fallback 到文字 LLM + 日誌警告。Timeout → 503 | ✅ 2 |
-| 7 | **CrossModalRouter 快取 + 速率限制** | `services/cross_modal_router.py` | LRU 快取結果 (相同 data hash → 直接回傳)。速率限制 (每分鐘 N 次跨模態請求，防止 O(n²) 計算) | ✅ 2 |
-| 8 | **整合測試：完整跨模態流程** | `tests/services/test_cross_modal_integration.py` (NEW) | 端到端測試：encode vision → encode audio → compare → retrieve → cross-generate → evaluate。驗證多步驟管線正確性 | ✅ 8 |
+|  #  | 任務                                        | 檔案                                                   | 說明                                                                                                                                                                                                                          | 測試 |
+| :-: | ------------------------------------------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--: |
+|  1  | **CrossModalRouter class**                  | `services/cross_modal_router.py` (NEW)                 | 類比 ModelBus：依據輸入模態 + 查詢類型自動路由到正確的管線 (vision/audio/cross)。`route(modality, data, mode) → {result, pipeline, confidence, time_ms}`。支援 fallback chain：cross-modal → vision+audio parallel → unimodal | ✅ 4 |
+|  2  | **CrossModalQualityDashboard**              | `services/cross_modal_quality.py` (NEW)                | 整合 VisionQualityMonitor + AudioQualityMonitor。`dashboard() → {vision_summary, audio_summary, cross_modal_summary, overall_health}`。提供 API 端點查詢                                                                      | ✅ 3 |
+|  3  | **ED3N deep 整合：multimodal_encoder hook** | `ai/ed3n/ed3n_engine.py` (擴充)                        | 在 `_encode_input()` 或 `process()` 中，當輸入包含 image/audio 二進位時，自動通過 MultimodalBridge encode → inject 進 dictionary context。目前僅支援文字輸入，需擴充為真正的多模態編碼層                                      | ✅ 2 |
+|  4  | **POST /multimodal/cross-infer**            | `api/routes/multimodal_routes.py` (擴充)               | 跨模態推理：接收 `{source_modality, source_data, query_text}` → 使用 CrossModalRouter 執行多步推理，回傳 `{result, confidence, reasoning_path}`                                                                               | ✅ 2 |
+|  5  | **POST /multimodal/quality/dashboard**      | `api/routes/multimodal_routes.py` (擴充)               | 品質儀表板端點：回傳 `{vision, audio, cross_modal, overall}` 品質摘要                                                                                                                                                         | ✅ 2 |
+|  6  | **CrossModalRouter 異常處理**               | `services/cross_modal_router.py`                       | 每個路由路徑有獨立 try/except。未知模態 → 回傳 400。管線崩潰 → fallback 到文字 LLM + 日誌警告。Timeout → 503                                                                                                                  | ✅ 2 |
+|  7  | **CrossModalRouter 快取 + 速率限制**        | `services/cross_modal_router.py`                       | LRU 快取結果 (相同 data hash → 直接回傳)。速率限制 (每分鐘 N 次跨模態請求，防止 O(n²) 計算)                                                                                                                                   | ✅ 2 |
+|  8  | **整合測試：完整跨模態流程**                | `tests/services/test_cross_modal_integration.py` (NEW) | 端到端測試：encode vision → encode audio → compare → retrieve → cross-generate → evaluate。驗證多步驟管線正確性                                                                                                               | ✅ 8 |
 
 **測試總數**: P33 新增 **25 測試**
 
@@ -1391,18 +1440,18 @@ SemanticVisualEncoder (512-dim CLIP 語意) ← 新增
 
 **詳細任務**:
 
-| # | 任務 | 檔案 | 說明 |
-|:-:|------|------|------|
-| 1 | **Electron: MultimodalPanel component** | `apps/desktop-app/js/components/MultimodalPanel.js` (NEW) | 與現有對話面板平行的多模態標籤頁。包含：圖像上傳/拖放區域、音頻錄製/上傳按鈕、編碼/解碼結果顯示 (圖像預覽 + 波形可視化)、品質分數卡片 (SSIM/PSNR/SNR) |
-| 2 | **Electron: 即時隱空間視覺化** | `apps/desktop-app/js/components/LatentSpaceVisualizer.js` (NEW) | 2D 散點圖顯示隱空間投影 (從 `/multimodal/visualize` API 獲取 t-SNE 座標)。支援縮放、懸浮顯示 item_id/modality、顏色區分模態 |
-| 3 | **Electron: 訓練儀表板** | `apps/desktop-app/js/components/TrainingDashboard.js` (NEW) | 訓練進度條、損失曲線圖 (Chart.js 或 Canvas)、epoch 計數器、`--auto-save`/`--auto-load` 狀態、當前訓練模式指示器 |
-| 4 | **Electron: 跨模態生成預覽** | `apps/desktop-app/js/components/CrossModalPreview.js` (NEW) | 顯示「vision→audio」或「audio→vision」生成結果。源側預覽 + 目標側播放器/圖像預覽 + 品質分數 + 信心指示 |
-| 5 | **Electron: 多模態 RAG 檢索結果面板** | `apps/desktop-app/js/components/RetrievalPanel.js` (NEW) | 顯示 multi-modal RAG 檢索結果：縮圖/波形預覽 + 相似度分數 + 模態標籤 + metadata。支援按模態過濾 |
-| 6 | **Electron: MainMenu 整合** | `apps/desktop-app/electron_app/main.js` (擴充) | 選單新增「Multimodal」條目：View → Multimodal Panel。與現有 Vision/Audio 開關整合 |
-| 7 | **Electron: API Client 擴充** | `apps/desktop-app/js/api-client.js` (擴充) | 新增 `multimodalEncode()`, `multimodalDecode()`, `multimodalCompare()`, `multimodalRetrieve()`, `multimodalTrain()`, `multimodalEvaluate()`, `multimodalGenerate()`, `multimodalVisualize()` 方法 |
-| 8 | **Web Dashboard: MultimodalDashboard 頁面** | `apps/web-dashboard/src/pages/MultimodalDashboard.tsx` (NEW) | React 頁面：包含 ImagePanel、AudioPanel、TrainingPanel、QualityPanel 子組件。與 Desktop 版功能平行 |
-| 9 | **Web Dashboard: 圖像/音頻 API client** | `apps/web-dashboard/src/api/multimodal-client.ts` (NEW) | 完整的 TypeScript API client，封裝所有 /multimodal/* 端點 |
-| 10 | **Web Dashboard: 路由整合** | `apps/web-dashboard/src/App.tsx` (擴充) | 新增 `/multimodal` 路由指向 MultimodalDashboard |
+|  #  | 任務                                        | 檔案                                                            | 說明                                                                                                                                                                                              |
+| :-: | ------------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|  1  | **Electron: MultimodalPanel component**     | `apps/desktop-app/js/components/MultimodalPanel.js` (NEW)       | 與現有對話面板平行的多模態標籤頁。包含：圖像上傳/拖放區域、音頻錄製/上傳按鈕、編碼/解碼結果顯示 (圖像預覽 + 波形可視化)、品質分數卡片 (SSIM/PSNR/SNR)                                             |
+|  2  | **Electron: 即時隱空間視覺化**              | `apps/desktop-app/js/components/LatentSpaceVisualizer.js` (NEW) | 2D 散點圖顯示隱空間投影 (從 `/multimodal/visualize` API 獲取 t-SNE 座標)。支援縮放、懸浮顯示 item_id/modality、顏色區分模態                                                                       |
+|  3  | **Electron: 訓練儀表板**                    | `apps/desktop-app/js/components/TrainingDashboard.js` (NEW)     | 訓練進度條、損失曲線圖 (Chart.js 或 Canvas)、epoch 計數器、`--auto-save`/`--auto-load` 狀態、當前訓練模式指示器                                                                                   |
+|  4  | **Electron: 跨模態生成預覽**                | `apps/desktop-app/js/components/CrossModalPreview.js` (NEW)     | 顯示「vision→audio」或「audio→vision」生成結果。源側預覽 + 目標側播放器/圖像預覽 + 品質分數 + 信心指示                                                                                            |
+|  5  | **Electron: 多模態 RAG 檢索結果面板**       | `apps/desktop-app/js/components/RetrievalPanel.js` (NEW)        | 顯示 multi-modal RAG 檢索結果：縮圖/波形預覽 + 相似度分數 + 模態標籤 + metadata。支援按模態過濾                                                                                                   |
+|  6  | **Electron: MainMenu 整合**                 | `apps/desktop-app/electron_app/main.js` (擴充)                  | 選單新增「Multimodal」條目：View → Multimodal Panel。與現有 Vision/Audio 開關整合                                                                                                                 |
+|  7  | **Electron: API Client 擴充**               | `apps/desktop-app/js/api-client.js` (擴充)                      | 新增 `multimodalEncode()`, `multimodalDecode()`, `multimodalCompare()`, `multimodalRetrieve()`, `multimodalTrain()`, `multimodalEvaluate()`, `multimodalGenerate()`, `multimodalVisualize()` 方法 |
+|  8  | **Web Dashboard: MultimodalDashboard 頁面** | `apps/web-dashboard/src/pages/MultimodalDashboard.tsx` (NEW)    | React 頁面：包含 ImagePanel、AudioPanel、TrainingPanel、QualityPanel 子組件。與 Desktop 版功能平行                                                                                                |
+|  9  | **Web Dashboard: 圖像/音頻 API client**     | `apps/web-dashboard/src/api/multimodal-client.ts` (NEW)         | 完整的 TypeScript API client，封裝所有 /multimodal/* 端點                                                                                                                                         |
+| 10  | **Web Dashboard: 路由整合**                 | `apps/web-dashboard/src/App.tsx` (擴充)                         | 新增 `/multimodal` 路由指向 MultimodalDashboard                                                                                                                                                   |
 
 **測試**: 前端測試 15 (Jest/React Testing Library)
 
@@ -1410,19 +1459,20 @@ SemanticVisualEncoder (512-dim CLIP 語意) ← 新增
 
 #### P35: 前端多模態 UI — Mobile App 📱
 
-**目標**: 在 React Native 行動應用程式中加入多模態功能，使行動用戶可以直接用手機拍攝/錄音進行多模態處理。
+**目標**: 在 React
+Native 行動應用程式中加入多模態功能，使行動用戶可以直接用手機拍攝/錄音進行多模態處理。
 
 **詳細任務**:
 
-| # | 任務 | 檔案 | 說明 |
-|:-:|------|------|------|
-| 1 | **Mobile: MultimodalScreen** | `apps/mobile-app/src/screens/MultimodalScreen.tsx` (NEW) | 多模態專用頁面：相機按鈕 (react-native-camera) → 拍攝後自動編碼; 麥克風按鈕 (react-native-audio-recorder) → 錄製後自動編碼; 結果列表顯示檢索結果 |
-| 2 | **Mobile: Image Capture + 編碼流程** | `apps/mobile-app/src/components/ImageCapture.tsx` (NEW) | 相機預覽 → 拍照 → resize → base64 → POST /multimodal/encode → 顯示 256-dim 特徵 + 解碼預覽 |
-| 3 | **Mobile: Audio Capture + 編碼流程** | `apps/mobile-app/src/components/AudioCapture.tsx` (NEW) | 錄音按鈕 → 錄製 → WAV → POST /multimodal/encode → 顯示 128-dim 特徵 + 波形可視化 |
-| 4 | **Mobile: 跨模態檢索結果** | `apps/mobile-app/src/components/RetrievalResults.tsx` (NEW) | 顯示 RAG 檢索結果列表：縮圖/波形、相似度分數、模態標籤。點擊可查看詳情或下載 |
-| 5 | **Mobile: 品質報告卡** | `apps/mobile-app/src/components/QualityCard.tsx` (NEW) | 簡潔品質報告卡片：SSIM → 色條、SNR → 色條、整體評級 (A/B/C/D/F) |
-| 6 | **Mobile: API Client 擴充** | `apps/mobile-app/src/api/multimodal-client.ts` (NEW) | TypeScript client 封裝所有多模態 API 端點 + 圖片/音頻上傳處理 |
-| 7 | **Mobile: 路由整合** | `apps/mobile-app/src/navigation/AppNavigator.tsx` (擴充) | 新增 MultimodalTab，置於底部導航欄 |
+|  #  | 任務                                 | 檔案                                                        | 說明                                                                                                                                             |
+| :-: | ------------------------------------ | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+|  1  | **Mobile: MultimodalScreen**         | `apps/mobile-app/src/screens/MultimodalScreen.tsx` (NEW)    | 多模態專用頁面：相機按鈕 (react-native-camera) → 拍攝後自動編碼; 麥克風按鈕 (react-native-audio-recorder) → 錄製後自動編碼; 結果列表顯示檢索結果 |
+|  2  | **Mobile: Image Capture + 編碼流程** | `apps/mobile-app/src/components/ImageCapture.tsx` (NEW)     | 相機預覽 → 拍照 → resize → base64 → POST /multimodal/encode → 顯示 256-dim 特徵 + 解碼預覽                                                       |
+|  3  | **Mobile: Audio Capture + 編碼流程** | `apps/mobile-app/src/components/AudioCapture.tsx` (NEW)     | 錄音按鈕 → 錄製 → WAV → POST /multimodal/encode → 顯示 128-dim 特徵 + 波形可視化                                                                 |
+|  4  | **Mobile: 跨模態檢索結果**           | `apps/mobile-app/src/components/RetrievalResults.tsx` (NEW) | 顯示 RAG 檢索結果列表：縮圖/波形、相似度分數、模態標籤。點擊可查看詳情或下載                                                                     |
+|  5  | **Mobile: 品質報告卡**               | `apps/mobile-app/src/components/QualityCard.tsx` (NEW)      | 簡潔品質報告卡片：SSIM → 色條、SNR → 色條、整體評級 (A/B/C/D/F)                                                                                  |
+|  6  | **Mobile: API Client 擴充**          | `apps/mobile-app/src/api/multimodal-client.ts` (NEW)        | TypeScript client 封裝所有多模態 API 端點 + 圖片/音頻上傳處理                                                                                    |
+|  7  | **Mobile: 路由整合**                 | `apps/mobile-app/src/navigation/AppNavigator.tsx` (擴充)    | 新增 MultimodalTab，置於底部導航欄                                                                                                               |
 
 **測試**: 前端測試 10 (Jest/React Native Testing Library)
 
@@ -1432,13 +1482,13 @@ SemanticVisualEncoder (512-dim CLIP 語意) ← 新增
 
 **狀態**: ✅ **已完成** (第53輪)
 
-| 變更 | 檔案 | 影響 |
-|------|------|------|
-| **ContinuousMultimodalLearning (CML)** | `ai/multimodal/continuous_multimodal_learning.py` 🆕 ✅ | 類比 CLP: 緩衝 64 條, auto-train 門檻 32, micro_train 使用 FullTrainingPipeline 3 epoch, 品質趨勢追蹤, save/load 持久化 |
-| **MultimodalMemoryStore** | `ai/multimodal/multimodal_memory.py` 🆕 ✅ | 類比 HAM: store/search/recall_by_time/compact/cleanup, 7 天 TTL→壓縮, 30 天→刪除, JSON 持久化 |
-| **MultimodalService CML+記憶接線** | `services/multimodal_service.py` 🔧 ✅ | encode() 完成後自動注入 CML+Memory, cml_encode/memory_store/memory_search/memory_recall 方法, 每 100 次 encode auto micro_train |
-| **API 端點擴充** | `multimodal_routes.py` 🔧 ✅ | POST /multimodal/recall, POST /multimodal/memory/recall, GET /multimodal/memory/stats |
-| **測試** | `tests/ai/multimodal/test_continuous_multimodal_learning.py` 🆕 ✅ | 20 測試: CML(8) + Memory(6) + 接線(6) |
+| 變更                                   | 檔案                                                               | 影響                                                                                                                            |
+| -------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| **ContinuousMultimodalLearning (CML)** | `ai/multimodal/continuous_multimodal_learning.py` 🆕 ✅            | 類比 CLP: 緩衝 64 條, auto-train 門檻 32, micro_train 使用 FullTrainingPipeline 3 epoch, 品質趨勢追蹤, save/load 持久化         |
+| **MultimodalMemoryStore**              | `ai/multimodal/multimodal_memory.py` 🆕 ✅                         | 類比 HAM: store/search/recall_by_time/compact/cleanup, 7 天 TTL→壓縮, 30 天→刪除, JSON 持久化                                   |
+| **MultimodalService CML+記憶接線**     | `services/multimodal_service.py` 🔧 ✅                             | encode() 完成後自動注入 CML+Memory, cml_encode/memory_store/memory_search/memory_recall 方法, 每 100 次 encode auto micro_train |
+| **API 端點擴充**                       | `multimodal_routes.py` 🔧 ✅                                       | POST /multimodal/recall, POST /multimodal/memory/recall, GET /multimodal/memory/stats                                           |
+| **測試**                               | `tests/ai/multimodal/test_continuous_multimodal_learning.py` 🆕 ✅ | 20 測試: CML(8) + Memory(6) + 接線(6)                                                                                           |
 
 **測試結果**: **123/123 全部通過** ✅ (P30-P36 全部)
 
@@ -1446,19 +1496,20 @@ SemanticVisualEncoder (512-dim CLIP 語意) ← 新增
 
 #### P37: 生產強化 🛡️ 🏗️
 
-**目標**: 類比對話管線的 CLP (ContinuousLearningPipeline) + HAM (Human Analog Memory)，建立多模態版本的連續學習與記憶系統，使多模態模型能在使用中持續改進。
+**目標**: 類比對話管線的 CLP (ContinuousLearningPipeline) + HAM (Human Analog
+Memory)，建立多模態版本的連續學習與記憶系統，使多模態模型能在使用中持續改進。
 
 **詳細任務**:
 
-| # | 任務 | 檔案 | 說明 | 測試 |
-|:-:|------|------|------|:---:|
-| 1 | **ContinuousMultimodalLearning class** | `ai/multimodal/continuous_multimodal_learning.py` (NEW) | 類比 CLP：緩衝最近 N 次編碼/解碼請求的 `(modality, features, reconstructed, quality)`，當緩衝區 ≥ 32 條時自動觸發 micro-training (3 epoch contrastive + 2 epoch recon)。`train_step()` 使用現有 FullTrainingPipeline，`state_dict()` / `load_state_dict()` 持久化 | ✅ 5 |
-| 2 | **MultimodalMemoryStore class** | `ai/multimodal/multimodal_memory.py` (NEW) | 類比 HAMMemoryManager：存儲影像/音頻編碼結果 + 元數據。`store(modality, latent, metadata) → id`，`search(query_latent, top_k, modality_filter) → [{id, score, metadata}]`，`recall_by_time(window_hours)`。持久化到 `data/multimodal/memory/` | ✅ 5 |
-| 3 | **MultimodalService CML 接線** | `services/multimodal_service.py` (擴充) | `encode()` 完成後自動將結果注入 CML 緩衝區。`train()` 方法可觸發 CML.micro_train()。定期 (每 100 次 encode) 自動調用 micro_train | ✅ 2 |
-| 4 | **MultimodalService 記憶接線** | `services/multimodal_service.py` (擴充) | `encode()` 完成後自動 `memory_store.store()`。`retrieve()` 使用記憶搜索 boost RAG 結果。`recall()` 端點支援時間視窗查詢 | ✅ 2 |
-| 5 | **POST /multimodal/recall** | `api/routes/multimodal_routes.py` (擴充) | 記憶查詢：`{modality, hours, top_k}` → 回傳最近記憶 `[{id, latent, metadata, timestamp}]` | ✅ 2 |
-| 6 | **CML 品質監控** | `ai/multimodal/continuous_multimodal_learning.py` | 追蹤每次 micro-training 前後的品質改善 (`delta_ssim`, `delta_snr`)，當改善超過 threshold 時觸發完整訓練。`quality_trend()` 回傳 `{improvements, degradation, stable}` | ✅ 2 |
-| 7 | **記憶定期清理** | `ai/multimodal/multimodal_memory.py` | TTL 策略：超過 7 天的記憶自動壓縮 (只保留 latent + 摘要 metadata)，超過 30 天自動刪除。`compact()` / `cleanup()` 方法 | ✅ 2 |
+|  #  | 任務                                   | 檔案                                                    | 說明                                                                                                                                                                                                                                                              | 測試 |
+| :-: | -------------------------------------- | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--: |
+|  1  | **ContinuousMultimodalLearning class** | `ai/multimodal/continuous_multimodal_learning.py` (NEW) | 類比 CLP：緩衝最近 N 次編碼/解碼請求的 `(modality, features, reconstructed, quality)`，當緩衝區 ≥ 32 條時自動觸發 micro-training (3 epoch contrastive + 2 epoch recon)。`train_step()` 使用現有 FullTrainingPipeline，`state_dict()` / `load_state_dict()` 持久化 | ✅ 5 |
+|  2  | **MultimodalMemoryStore class**        | `ai/multimodal/multimodal_memory.py` (NEW)              | 類比 HAMMemoryManager：存儲影像/音頻編碼結果 + 元數據。`store(modality, latent, metadata) → id`，`search(query_latent, top_k, modality_filter) → [{id, score, metadata}]`，`recall_by_time(window_hours)`。持久化到 `data/multimodal/memory/`                     | ✅ 5 |
+|  3  | **MultimodalService CML 接線**         | `services/multimodal_service.py` (擴充)                 | `encode()` 完成後自動將結果注入 CML 緩衝區。`train()` 方法可觸發 CML.micro_train()。定期 (每 100 次 encode) 自動調用 micro_train                                                                                                                                  | ✅ 2 |
+|  4  | **MultimodalService 記憶接線**         | `services/multimodal_service.py` (擴充)                 | `encode()` 完成後自動 `memory_store.store()`。`retrieve()` 使用記憶搜索 boost RAG 結果。`recall()` 端點支援時間視窗查詢                                                                                                                                           | ✅ 2 |
+|  5  | **POST /multimodal/recall**            | `api/routes/multimodal_routes.py` (擴充)                | 記憶查詢：`{modality, hours, top_k}` → 回傳最近記憶 `[{id, latent, metadata, timestamp}]`                                                                                                                                                                         | ✅ 2 |
+|  6  | **CML 品質監控**                       | `ai/multimodal/continuous_multimodal_learning.py`       | 追蹤每次 micro-training 前後的品質改善 (`delta_ssim`, `delta_snr`)，當改善超過 threshold 時觸發完整訓練。`quality_trend()` 回傳 `{improvements, degradation, stable}`                                                                                             | ✅ 2 |
+|  7  | **記憶定期清理**                       | `ai/multimodal/multimodal_memory.py`                    | TTL 策略：超過 7 天的記憶自動壓縮 (只保留 latent + 摘要 metadata)，超過 30 天自動刪除。`compact()` / `cleanup()` 方法                                                                                                                                             | ✅ 2 |
 
 **測試總數**: P36 新增 **20 測試**
 
@@ -1466,17 +1517,18 @@ SemanticVisualEncoder (512-dim CLIP 語意) ← 新增
 
 #### P37: 生產強化 🛡️
 
-**目標**: 類比對話管線的 error_recovery + state_persistence，為多模態管線添加錯誤恢復、超時處理、效能基準測試、品質監控儀表板。
+**目標**: 類比對話管線的 error_recovery +
+state_persistence，為多模態管線添加錯誤恢復、超時處理、效能基準測試、品質監控儀表板。
 
 **詳細任務**:
 
-| # | 任務 | 檔案 | 說明 | 測試 |
-|:-:|------|------|------|:---:|
-| 1 | **MultimodalErrorRecovery class** | `services/multimodal_error_recovery.py` (NEW) | 封裝所有多模態管線的錯誤恢復邏輯：`encode_with_retry()` (3 次重試)、`decode_with_fallback()` (decoder failure → 回傳文字描述)、`train_with_checkpoint()` (訓練中斷可從 checkpoint 恢復)。記錄所有失敗到 crisis_log | ✅ 4 |
-| 2 | **MultimodalStatePersistence class** | `services/multimodal_state_persistence.py` (NEW) | 類比 state_persistence：定期保存多模態系統狀態 (latent projections, decoder weights, CML buffer, memory index)。`save_checkpoint(label)` / `load_checkpoint(id)` / `list_checkpoints()`。儲存到 `data/multimodal/checkpoints/` | ✅ 4 |
-| 3 | **效能基準測試** | `tests/benchmarks/test_multimodal_benchmarks.py` (NEW) | 基準測試套件：編碼延遲 (encode latency)、解碼延遲 (decode latency)、檢索吞吐量 (retrieve QPS)、訓練時間 (train time vs epoch)。每個測試執行 10 次取 P50/P95。`benchmark.json` 輸出 | ✅ 3 |
-| 4 | **品質監控後台循環** | `services/multimodal_quality_monitor.py` (NEW) | 類比 ProactiveInteractionSystem 的後台循環：每 60s 取樣當前編碼器/解碼器品質 (合成數據評估)，記錄到日誌，當品質下降超過 10% 時觸發警報。`quality_alert()` → crisis_log | ✅ 2 |
-| 5 | **POST /multimodal/health** | `api/routes/multimodal_routes.py` (擴充) | 健康檢查端點：`{status, encoders: {vision: ✓/✗, audio: ✓/✗}, decoders: {...}, retriever: ✓/✗, training: idle/running, last_quality: {...}}` | ✅ 2 |
+|  #  | 任務                                 | 檔案                                                   | 說明                                                                                                                                                                                                                           | 測試 |
+| :-: | ------------------------------------ | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :--: |
+|  1  | **MultimodalErrorRecovery class**    | `services/multimodal_error_recovery.py` (NEW)          | 封裝所有多模態管線的錯誤恢復邏輯：`encode_with_retry()` (3 次重試)、`decode_with_fallback()` (decoder failure → 回傳文字描述)、`train_with_checkpoint()` (訓練中斷可從 checkpoint 恢復)。記錄所有失敗到 crisis_log             | ✅ 4 |
+|  2  | **MultimodalStatePersistence class** | `services/multimodal_state_persistence.py` (NEW)       | 類比 state_persistence：定期保存多模態系統狀態 (latent projections, decoder weights, CML buffer, memory index)。`save_checkpoint(label)` / `load_checkpoint(id)` / `list_checkpoints()`。儲存到 `data/multimodal/checkpoints/` | ✅ 4 |
+|  3  | **效能基準測試**                     | `tests/benchmarks/test_multimodal_benchmarks.py` (NEW) | 基準測試套件：編碼延遲 (encode latency)、解碼延遲 (decode latency)、檢索吞吐量 (retrieve QPS)、訓練時間 (train time vs epoch)。每個測試執行 10 次取 P50/P95。`benchmark.json` 輸出                                             | ✅ 3 |
+|  4  | **品質監控後台循環**                 | `services/multimodal_quality_monitor.py` (NEW)         | 類比 ProactiveInteractionSystem 的後台循環：每 60s 取樣當前編碼器/解碼器品質 (合成數據評估)，記錄到日誌，當品質下降超過 10% 時觸發警報。`quality_alert()` → crisis_log                                                         | ✅ 2 |
+|  5  | **POST /multimodal/health**          | `api/routes/multimodal_routes.py` (擴充)               | 健康檢查端點：`{status, encoders: {vision: ✓/✗, audio: ✓/✗}, decoders: {...}, retriever: ✓/✗, training: idle/running, last_quality: {...}}`                                                                                    | ✅ 2 |
 
 **測試總數**: P37 新增 **15 測試**
 
@@ -1488,13 +1540,13 @@ SemanticVisualEncoder (512-dim CLIP 語意) ← 新增
 
 **詳細任務**:
 
-| # | 任務 | 檔案 | 說明 | 測試 |
-|:-:|------|------|------|:---:|
-| 1 | **端到端整合測試** | `tests/services/test_multimodal_integration.py` (NEW) | 完整多步驟測試：encode vision → encode audio → compare → retrieve → cross-generate → evaluate。100+ 步驟驗證每個管線的正確性 | ✅ 5 |
-| 2 | **壓力測試** | `tests/benchmarks/test_multimodal_stress.py` (NEW) | 並發請求測試：100 並發 encode + 100 並發 decode + 50 並發 retrieve。驗證無 crash、無 memory leak、P95 延遲 < 5s | ✅ 3 |
-| 3 | **多語言多模態測試** | `tests/ai/multimodal/test_multilingual_multimodal.py` (NEW) | 中/英/日/韓文字 + 圖像混合輸入測試。驗證 CulturalContextModule 與 MultimodalService 協作正確性 | ✅ 2 |
-| 4 | **文件補全** | `docs/multimodal/MULTIMODAL_PIPELINE.md` (NEW) | 多模態管線開發者指南：架構圖、API 參考、前端整合指南、部署配置、疑難排解 | — |
-| 5 | **PHASE_REVIEW6.md v31 最終版** | `docs/06-project-management/plans/PHASE_REVIEW6.md` | 全 8 階段完成後更新：測試總數 1200+、總結 55+ 輪、完全多模態管線里程碑 🎉 | — |
+|  #  | 任務                            | 檔案                                                        | 說明                                                                                                                         | 測試 |
+| :-: | ------------------------------- | ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | :--: |
+|  1  | **端到端整合測試**              | `tests/services/test_multimodal_integration.py` (NEW)       | 完整多步驟測試：encode vision → encode audio → compare → retrieve → cross-generate → evaluate。100+ 步驟驗證每個管線的正確性 | ✅ 5 |
+|  2  | **壓力測試**                    | `tests/benchmarks/test_multimodal_stress.py` (NEW)          | 並發請求測試：100 並發 encode + 100 並發 decode + 50 並發 retrieve。驗證無 crash、無 memory leak、P95 延遲 < 5s              | ✅ 3 |
+|  3  | **多語言多模態測試**            | `tests/ai/multimodal/test_multilingual_multimodal.py` (NEW) | 中/英/日/韓文字 + 圖像混合輸入測試。驗證 CulturalContextModule 與 MultimodalService 協作正確性                               | ✅ 2 |
+|  4  | **文件補全**                    | `docs/multimodal/MULTIMODAL_PIPELINE.md` (NEW)              | 多模態管線開發者指南：架構圖、API 參考、前端整合指南、部署配置、疑難排解                                                     |  —   |
+|  5  | **PHASE_REVIEW6.md v31 最終版** | `docs/06-project-management/plans/PHASE_REVIEW6.md`         | 全 8 階段完成後更新：測試總數 1200+、總結 55+ 輪、完全多模態管線里程碑 🎉                                                    |  —   |
 
 **測試總數**: P38 新增 **10 測試**
 
@@ -1502,32 +1554,36 @@ SemanticVisualEncoder (512-dim CLIP 語意) ← 新增
 
 ### 🐤 7.5 多模態管線驗證標準：小雞吃米圖測試
 
-> **來源**: 2026-06-21 使用者提出的診斷測試，作為 P30-P38+ 是否完成的終極驗證標準。
+> **來源**:
+> 2026-06-21 使用者提出的診斷測試，作為 P30-P38+ 是否完成的終極驗證標準。
 
 #### 測試設計
 
-| 步驟 | 操作 | 期望結果 (P38+ 完成後) | 目前狀態 (P38 完成後) |
-|:----:|------|:---------------------:|:--------------:|
-| **Step 1** | 使用者說：「畫一張小雞吃米圖」 | Angela 生成一張 128×128 (或更高解析度) 的圖像，**可辨識為小雞在啄米的場景** | ❌ **仍無法達成** — VisualDecoder 只能從 latent 解碼抽象紋理色塊，無 text-to-image 能力。ImageGenerationAgent 結構存在需外部 API |
-| **Step 2** | 將該圖像餵回給 Angela：「你看到了什麼？」 | Angela 回答：「我看到一隻小雞在低頭吃米。」或「這是一張小雞吃米的圖。」 | ✅ **語意理解已驗證** — CLIP 512-dim raw vector: chicken↔chicken=1.0, chicken↔dog=0.75, chicken↔car=0.63. SemanticKeyMapper raw mode 正確映射概念. |
+|    步驟    | 操作                                      |                           期望結果 (P38+ 完成後)                            |                                                               目前狀態 (P38 完成後)                                                                |
+| :--------: | ----------------------------------------- | :-------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------------------------------: |
+| **Step 1** | 使用者說：「畫一張小雞吃米圖」            | Angela 生成一張 128×128 (或更高解析度) 的圖像，**可辨識為小雞在啄米的場景** |          ❌ **仍無法達成** — VisualDecoder 只能從 latent 解碼抽象紋理色塊，無 text-to-image 能力。ImageGenerationAgent 結構存在需外部 API          |
+| **Step 2** | 將該圖像餵回給 Angela：「你看到了什麼？」 |   Angela 回答：「我看到一隻小雞在低頭吃米。」或「這是一張小雞吃米的圖。」   | ✅ **語意理解已驗證** — CLIP 512-dim raw vector: chicken↔chicken=1.0, chicken↔dog=0.75, chicken↔car=0.63. SemanticKeyMapper raw mode 正確映射概念. |
 
 #### 通過條件
 
-1. **✅ Step 1 通過**: 文字 prompt → 圖像生成，圖像內容與 prompt 語意一致。需要 text-to-image (Stable Diffusion / DALL-E API 整合，或 ImageGenerationAgent 真後端)
-2. **✅ Step 2 通過**: 圖像分析 → 文字描述，描述準確反映圖像內容。需要 image captioning (LLM Vision API 或 BLIP/CLIP 本地模型)
+1. **✅ Step 1 通過**: 文字 prompt
+   → 圖像生成，圖像內容與 prompt 語意一致。需要 text-to-image (Stable Diffusion
+   / DALL-E API 整合，或 ImageGenerationAgent 真後端)
+2. **✅ Step 2 通過**: 圖像分析 → 文字描述，描述準確反映圖像內容。需要 image
+   captioning (LLM Vision API 或 BLIP/CLIP 本地模型)
 
 #### 為什麼這個測試有效
 
 這個測試看似簡單（5 歲小孩都能完成），但精準揭示了整個多模態管線的全部缺口：
 
-| 缺口 | 對應 P 階段 | 失敗原因 |
-|------|:----------:|---------|
-| ❌ 無 text-to-image 生成 | **P31+P34** | VisualDecoder 只能從 latent 解碼抽象紋理，無法從文字 prompt 生成語意圖像 |
-| ✅ 語意理解/物件檢測 | **P42-P45** | ✅ CLIP 512-dim 語意編碼已啟用, SemanticKeyMapper 概念映射已驗證 |
-| ❌ 無 image→text captioning | **P30+P33** | VisionService 回傳 PIL metadata (格式/解析度/色彩)，非語意描述 |
-| ❌ 無跨模態路由 | **P33** | 「畫圖→看圖→回答」這個閉環需要 CrossModalRouter 將各步驟串聯 |
-| ❌ 無前端介面 | **P34+P35** | Desktop/Web/Mobile 沒有任何多模態面板讓使用者上傳/查看/互動 |
-| ❌ 無端到端整合測試 | **P38** | 173 測試僅測試 backend 單元，無多步驟端到端流程驗證 |
+| 缺口                        | 對應 P 階段 | 失敗原因                                                                 |
+| --------------------------- | :---------: | ------------------------------------------------------------------------ |
+| ❌ 無 text-to-image 生成    | **P31+P34** | VisualDecoder 只能從 latent 解碼抽象紋理，無法從文字 prompt 生成語意圖像 |
+| ✅ 語意理解/物件檢測        | **P42-P45** | ✅ CLIP 512-dim 語意編碼已啟用, SemanticKeyMapper 概念映射已驗證         |
+| ❌ 無 image→text captioning | **P30+P33** | VisionService 回傳 PIL metadata (格式/解析度/色彩)，非語意描述           |
+| ❌ 無跨模態路由             |   **P33**   | 「畫圖→看圖→回答」這個閉環需要 CrossModalRouter 將各步驟串聯             |
+| ❌ 無前端介面               | **P34+P35** | Desktop/Web/Mobile 沒有任何多模態面板讓使用者上傳/查看/互動              |
+| ❌ 無端到端整合測試         |   **P38**   | 173 測試僅測試 backend 單元，無多步驟端到端流程驗證                      |
 
 #### 驗證時機
 
@@ -1545,13 +1601,17 @@ P45 (torch+CLIP+Whisper): ✅ torch 2.11.0 + CLIP + Whisper 已安裝, 語意編
 **目前 P47 完成後**: ✅ **Step 2 語意理解已驗證** — CLIP 512-dim raw vector 相似度測試通過 (chicken↔chicken=1.0, chicken↔dog=0.75, chicken↔car=0.63). SemanticKeyMapper 新增 raw mode 直接使用 CLIP 向量比較. Step 1 仍需 text-to-image 能力。
 ```
 
-> **核心洞察**: 這個測試是專屬的「圖靈測試」— 當 Angela 能回答「我看到一隻小雞在吃米」時，代表從 text→image→latent→analysis→text 的完整閉環真正接通了。P42-P47 填補了語意理解缺口: CLIP/Whisper 編碼器 + SemanticKeyMapper raw mode (512-dim 直接比較) + 小雞吃米圖 Step 2 實測通過. Step 1 (text-to-image) 仍需 Diffusion 模型.
+> **核心洞察**: 這個測試是專屬的「圖靈測試」— 當 Angela 能回答「我看到一隻小雞在吃米」時，代表從 text→image→latent→analysis→text 的完整閉環真正接通了。P42-P47 填補了語意理解缺口:
+> CLIP/Whisper 編碼器 + SemanticKeyMapper raw mode
+> (512-dim 直接比較) + 小雞吃米圖 Step 2 實測通過. Step 1
+> (text-to-image) 仍需 Diffusion 模型.
 
 ---
 
 ### 🎵 7.6 高難度多模態驗證測試
 
-> **來源**: 2026-06-21 使用者提出的進階診斷測試，作為 P30-P38+ 完成後的延伸高難度驗證標準。
+> **來源**:
+> 2026-06-21 使用者提出的進階診斷測試，作為 P30-P38+ 完成後的延伸高難度驗證標準。
 
 這組測試比「小雞吃米圖測試」更難，因為它們涉及**時間維度**（音頻/影片時序、動畫幀序列），需要多模態管線不僅處理空間靜態資料，還能理解與生成動態序列。
 
@@ -1561,27 +1621,31 @@ P45 (torch+CLIP+Whisper): ✅ torch 2.11.0 + CLIP + Whisper 已安裝, 語意編
 
 ##### 測試設計
 
-| 步驟 | 操作 | 期望結果 (完整完成後) | 目前狀態 (P30) |
-|:----:|------|:---------------------:|:--------------:|
-| **Step 1** | 使用者說：「Angela 唱一首生日快樂歌」或「唱一首歌，歌詞是『春天來了花兒開』」 | Angela 生成一段音頻檔案 (WAV/MP3)，包含可辨識的人聲旋律與歌詞 | ❌ AudioWaveformDecoder 只能從 latent 解碼抽象頻譜，無法生成含語意歌詞的人聲 |
-| **Step 2** | 將生成音頻餵回：「你剛才唱了什麼？寫出歌詞」 | Angela 回答：「我唱的是：春天來了花兒開，蝴蝶翩翩飛過來...」並正確轉錄歌詞 | ❌ AudioService.speech_to_text() 僅 STT stub，無法轉錄歌詞；AudioWaveformDecoder 生成的波形不含語言內容 |
-| **Step 3** | 「這首歌是什麼調/風格？」 | Angela 回答：「這是 C 大調，4/4 拍，活潑輕快的風格」 | ❌ 目前無音樂理論分析能力 |
+|    步驟    | 操作                                                                          |                           期望結果 (完整完成後)                            |                                             目前狀態 (P30)                                              |
+| :--------: | ----------------------------------------------------------------------------- | :------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------: |
+| **Step 1** | 使用者說：「Angela 唱一首生日快樂歌」或「唱一首歌，歌詞是『春天來了花兒開』」 |       Angela 生成一段音頻檔案 (WAV/MP3)，包含可辨識的人聲旋律與歌詞        |              ❌ AudioWaveformDecoder 只能從 latent 解碼抽象頻譜，無法生成含語意歌詞的人聲               |
+| **Step 2** | 將生成音頻餵回：「你剛才唱了什麼？寫出歌詞」                                  | Angela 回答：「我唱的是：春天來了花兒開，蝴蝶翩翩飛過來...」並正確轉錄歌詞 | ❌ AudioService.speech_to_text() 僅 STT stub，無法轉錄歌詞；AudioWaveformDecoder 生成的波形不含語言內容 |
+| **Step 3** | 「這首歌是什麼調/風格？」                                                     |            Angela 回答：「這是 C 大調，4/4 拍，活潑輕快的風格」            |                                        ❌ 目前無音樂理論分析能力                                        |
 
 ##### 通過條件
 
-1. **✅ Step 1**: 文字 → 音頻生成，生成的音頻是**含可辨識歌詞的人聲**，而非抽象噪音或純音樂。需要 text-to-speech (edge-tts 已可用) + vocal synthesis + melody generation
-2. **✅ Step 2**: 音頻 → 文字，正確轉錄歌詞（單字正確率 > 80%）。需要 Speech-to-Text (faster-whisper/gemini vision) + music-aware ASR
-3. **✅ Step 3**: 音頻 → 音樂理論分析（調性、節奏、風格）。需要 music information retrieval (MIR) 能力
+1. **✅ Step
+   1**: 文字 → 音頻生成，生成的音頻是**含可辨識歌詞的人聲**，而非抽象噪音或純音樂。需要 text-to-speech
+   (edge-tts 已可用) + vocal synthesis + melody generation
+2. **✅ Step 2**: 音頻 → 文字，正確轉錄歌詞（單字正確率 >
+   80%）。需要 Speech-to-Text (faster-whisper/gemini vision) + music-aware ASR
+3. **✅ Step 3**: 音頻 → 音樂理論分析（調性、節奏、風格）。需要 music
+   information retrieval (MIR) 能力
 
 ##### 所需元件
 
-| 能力 | 缺失元件 | 依賴 P 階段 |
-|------|---------|:----------:|
-| 🗣️ TTS 歌唱 | edge-tts 已有**朗讀**能力，但無**唱歌**（旋律+節奏+音符持續時間） | **P32 擴充**: AudioService 歌唱模式 |
-| 🎵 旋律生成 | 缺少從文字/樂譜→頻譜參數的 melody generator | **P33**: CrossModalRouter text→music |
-| 📝 歌詞轉錄 | AudioService.speech_to_text() 對歌詞準確率極低（無語言模型適應） | **P32**: AudioPipeline + faster-whisper |
-| 🎼 音樂分析 | 缺少 tempo detection / key estimation / chord recognition | **P33**: MIR 模組 (new) `ai/audio/music_analyzer.py` |
-| 🔄 閉環檢查 | encode(唱的歌) → decode(轉錄文字) → compare(原始歌詞 vs 轉錄) | **P38**: 端到端測試 |
+| 能力        | 缺失元件                                                          |                     依賴 P 階段                      |
+| ----------- | ----------------------------------------------------------------- | :--------------------------------------------------: |
+| 🗣️ TTS 歌唱 | edge-tts 已有**朗讀**能力，但無**唱歌**（旋律+節奏+音符持續時間） |         **P32 擴充**: AudioService 歌唱模式          |
+| 🎵 旋律生成 | 缺少從文字/樂譜→頻譜參數的 melody generator                       |         **P33**: CrossModalRouter text→music         |
+| 📝 歌詞轉錄 | AudioService.speech_to_text() 對歌詞準確率極低（無語言模型適應）  |       **P32**: AudioPipeline + faster-whisper        |
+| 🎼 音樂分析 | 缺少 tempo detection / key estimation / chord recognition         | **P33**: MIR 模組 (new) `ai/audio/music_analyzer.py` |
+| 🔄 閉環檢查 | encode(唱的歌) → decode(轉錄文字) → compare(原始歌詞 vs 轉錄)     |                 **P38**: 端到端測試                  |
 
 ##### 目前依賴鏈
 
@@ -1591,7 +1655,8 @@ P45 (torch+CLIP+Whisper): ✅ torch 2.11.0 + CLIP + Whisper 已安裝, 語意編
                          └──→ AudioService.speech_to_text() (STT stub → 無法轉錄)
 ```
 
-**關鍵差距**: 當前 AudioWaveformDecoder 從 latent 解碼的是**抽象頻譜**（正弦波+多頻段+噪聲），不是**人聲**。要生成可辨識歌詞的人聲，需要 vocoder（如 WaveNet/LPCNet）或 concatenative TTS 歌唱合成。
+**關鍵差距**: 當前 AudioWaveformDecoder 從 latent 解碼的是**抽象頻譜**（正弦波+多頻段+噪聲），不是**人聲**。要生成可辨識歌詞的人聲，需要 vocoder（如 WaveNet/LPCNet）或 concatenative
+TTS 歌唱合成。
 
 ##### 驗證時機
 
@@ -1609,27 +1674,32 @@ P38+ (端到端完成後延伸): ✅✅ 三個步驟全部通過
 
 ##### 測試設計
 
-| 步驟 | 操作 | 期望結果 (完整完成後) | 目前狀態 (P30) |
-|:----:|------|:---------------------:|:--------------:|
-| **Step 1** | 使用者說：「畫一張小雞吃米的 GIF 動圖，小雞在重複啄米」 | Angela 生成一段 128×128 動畫 GIF，包含 4-8 幀，顯示小雞低頭→啄米→抬頭的循環動作 | ❌ VisualDecoder 只能生成單幀靜態抽象色塊；無時間維度概念 |
-| **Step 2** | 「這個 GIF 在做什麼？」 | Angela 回答：「這是一隻小雞在重複啄米的動作，牠的頭部在上下移動，地上有米粒」 | ❌ VisionService 無時間維度分析 |
-| **Step 3** | 「每幀之間有什麼變化？動作流暢嗎？」 | Angela 回答：「幀 1→2 頭部下降，幀 2→3 啄到米，幀 3→4 頭部抬起。動作基本流暢但可以增加更多中間幀」 | ❌ 無幀序列分析/對比能力 |
+|    步驟    | 操作                                                    |                                       期望結果 (完整完成後)                                        |                      目前狀態 (P30)                       |
+| :--------: | ------------------------------------------------------- | :------------------------------------------------------------------------------------------------: | :-------------------------------------------------------: |
+| **Step 1** | 使用者說：「畫一張小雞吃米的 GIF 動圖，小雞在重複啄米」 |          Angela 生成一段 128×128 動畫 GIF，包含 4-8 幀，顯示小雞低頭→啄米→抬頭的循環動作           | ❌ VisualDecoder 只能生成單幀靜態抽象色塊；無時間維度概念 |
+| **Step 2** | 「這個 GIF 在做什麼？」                                 |           Angela 回答：「這是一隻小雞在重複啄米的動作，牠的頭部在上下移動，地上有米粒」            |              ❌ VisionService 無時間維度分析              |
+| **Step 3** | 「每幀之間有什麼變化？動作流暢嗎？」                    | Angela 回答：「幀 1→2 頭部下降，幀 2→3 啄到米，幀 3→4 頭部抬起。動作基本流暢但可以增加更多中間幀」 |                 ❌ 無幀序列分析/對比能力                  |
 
 ##### 通過條件
 
-1. **✅ Step 1**: 文字 prompt → 多幀圖像序列 → 合成為動畫 GIF，幀間動作連貫。需要 text-to-image sequence + frame interpolation + GIF encoding
-2. **✅ Step 2**: 多幀序列分析 → 文字描述，識別出**動作**（不僅是物件）。需要 video understanding / optical flow
-3. **✅ Step 3**: 幀間差異分析 + 流暢度評估。需要 frame difference metric + temporal consistency score
+1. **✅ Step 1**: 文字 prompt
+   → 多幀圖像序列 → 合成為動畫 GIF，幀間動作連貫。需要 text-to-image sequence +
+   frame interpolation + GIF encoding
+2. **✅ Step
+   2**: 多幀序列分析 → 文字描述，識別出**動作**（不僅是物件）。需要 video
+   understanding / optical flow
+3. **✅ Step 3**: 幀間差異分析 + 流暢度評估。需要 frame difference metric +
+   temporal consistency score
 
 ##### 所需元件
 
-| 能力 | 缺失元件 | 依賴 P 階段 |
-|------|---------|:----------:|
-| 🖼️ text→image 序列 | 從文字 prompt 生成多個語意相關的圖像 | **P31+P34**: VisionPipeline + ImageGenerationAgent |
-| 🔄 幀間插值 | 在關鍵幀之間生成中間幀使動畫流暢 | **P33 擴充**: FrameInterpolator (new) |
-| 🎞️ GIF 編碼 | 將多幀 PNG 序列合成為動畫 GIF | **P34**: frontend/backend GIF encoder |
-| 👁️ 動作識別 | 從多幀視覺特徵序列推斷動作類別 | **P33 擴充**: TemporalMotionAnalyzer (new) |
-| 📊 流暢度評估 | 幀間 L1/L2 差異 + optical flow consistency | **P33 擴充**: motion_smoothness metrics |
+| 能力               | 缺失元件                                   |                    依賴 P 階段                     |
+| ------------------ | ------------------------------------------ | :------------------------------------------------: |
+| 🖼️ text→image 序列 | 從文字 prompt 生成多個語意相關的圖像       | **P31+P34**: VisionPipeline + ImageGenerationAgent |
+| 🔄 幀間插值        | 在關鍵幀之間生成中間幀使動畫流暢           |       **P33 擴充**: FrameInterpolator (new)        |
+| 🎞️ GIF 編碼        | 將多幀 PNG 序列合成為動畫 GIF              |       **P34**: frontend/backend GIF encoder        |
+| 👁️ 動作識別        | 從多幀視覺特徵序列推斷動作類別             |     **P33 擴充**: TemporalMotionAnalyzer (new)     |
+| 📊 流暢度評估      | 幀間 L1/L2 差異 + optical flow consistency |      **P33 擴充**: motion_smoothness metrics       |
 
 ##### 目前依賴鏈
 
@@ -1639,7 +1709,9 @@ P38+ (端到端完成後延伸): ✅✅ 三個步驟全部通過
 ```
 
 **關鍵差距**: 當前 VisualDecoder 生成的是**隨機投影解碼的抽象紋理**，缺乏:
-1. **語意控制**: 無法從文字 prompt 控制生成內容（無 text encoder / diffusion / cross-attention）
+
+1. **語意控制**: 無法從文字 prompt 控制生成內容（無 text encoder / diffusion /
+   cross-attention）
 2. **時間維度**: 所有模態都是單幀/單段，無序列生成/理解
 3. **物體一致性**: 跨幀的物體位置/形狀沒有記憶（無 temporal embedding）
 
@@ -1660,30 +1732,36 @@ P38+ (端到端完成後延伸): ✅✅✅ 三個步驟通過
 
 ##### 測試設計
 
-| 步驟 | 操作 | 期望結果 (完整完成後) | 目前狀態 (P30) |
-|:----:|------|:---------------------:|:--------------:|
-| **Step 1** | 使用者說：「生成一段 5 秒短視頻：畫面是一隻貓在鋼琴上走過，同時有輕快的鋼琴聲」 | Angela 生成一段短視頻（5-10 幀 + 對應音頻），視覺有貓+鋼琴，聽覺有鋼琴旋律 | ❌ 無視頻生成；視覺與聽覺無時間同步 |
-| **Step 2** | 「影片中有哪些視覺內容？」 | Angela 回答：**「有一隻貓（視覺模態）在鋼琴鍵盤上走（動作模態），鋼琴蓋是黑色的（顏色模態）」** — 正確識別多個模態內容 | ❌ VisionService 無時間序列分析，無多模態內容分割 |
-| **Step 3** | 「影片中有哪些聽覺內容？與視覺同步嗎？」 | Angela 回答：**「有鋼琴聲（聽覺模態），喵叫聲（語音模態）。當貓踩到琴鍵時聲音變大，視覺與聽覺大致同步（延遲約 0.1s）」** — 正確識別聽覺內容並評估跨模態同步 | ❌ AudioService 無事件檢測；無視聽同步分析 |
-| **Step 4** | 「總結這部影片的所有模態內容」 | Angela 回答：**「這是一段 5 秒短視頻，包含 3 個模態：① 視覺 — 貓在鋼琴上行走；② 聽覺 — 鋼琴旋律 + 貓叫；③ 時間 — 動作序列。跨模態同步率 92%。建議增加背景節拍增強節奏感。」** | ❌ 無多模態內容摘要能力 |
+|    步驟    | 操作                                                                            |                                                                             期望結果 (完整完成後)                                                                             |                  目前狀態 (P30)                   |
+| :--------: | ------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :-----------------------------------------------: |
+| **Step 1** | 使用者說：「生成一段 5 秒短視頻：畫面是一隻貓在鋼琴上走過，同時有輕快的鋼琴聲」 |                                                  Angela 生成一段短視頻（5-10 幀 + 對應音頻），視覺有貓+鋼琴，聽覺有鋼琴旋律                                                   |        ❌ 無視頻生成；視覺與聽覺無時間同步        |
+| **Step 2** | 「影片中有哪些視覺內容？」                                                      |                            Angela 回答：**「有一隻貓（視覺模態）在鋼琴鍵盤上走（動作模態），鋼琴蓋是黑色的（顏色模態）」** — 正確識別多個模態內容                             | ❌ VisionService 無時間序列分析，無多模態內容分割 |
+| **Step 3** | 「影片中有哪些聽覺內容？與視覺同步嗎？」                                        |          Angela 回答：**「有鋼琴聲（聽覺模態），喵叫聲（語音模態）。當貓踩到琴鍵時聲音變大，視覺與聽覺大致同步（延遲約 0.1s）」** — 正確識別聽覺內容並評估跨模態同步          |    ❌ AudioService 無事件檢測；無視聽同步分析     |
+| **Step 4** | 「總結這部影片的所有模態內容」                                                  | Angela 回答：**「這是一段 5 秒短視頻，包含 3 個模態：① 視覺 — 貓在鋼琴上行走；② 聽覺 — 鋼琴旋律 + 貓叫；③ 時間 — 動作序列。跨模態同步率 92%。建議增加背景節拍增強節奏感。」** |              ❌ 無多模態內容摘要能力              |
 
 ##### 通過條件
 
-1. **✅ Step 1**: 文字 prompt → 多模態短視頻（同步的視覺幀序列 + 音頻波形）。需要 video generation = visual frame sequence + synchronized audio track
-2. **✅ Step 2**: 視頻 → 多模態內容分類（視覺物體、顏色、動作、場景）。需要 video object detection + scene understanding
-3. **✅ Step 3**: 視頻 → 音頻事件檢測 + 視聽同步分析。需要 audio event detection + audio-visual synchronization scoring
-4. **✅ Step 4**: 多模態內容摘要 + 品質報告。需要 cross-modal summary generator + quality_report 擴充
+1. **✅ Step 1**: 文字 prompt
+   → 多模態短視頻（同步的視覺幀序列 + 音頻波形）。需要 video generation = visual
+   frame sequence + synchronized audio track
+2. **✅ Step
+   2**: 視頻 → 多模態內容分類（視覺物體、顏色、動作、場景）。需要 video object
+   detection + scene understanding
+3. **✅ Step 3**: 視頻 → 音頻事件檢測 + 視聽同步分析。需要 audio event
+   detection + audio-visual synchronization scoring
+4. **✅ Step 4**: 多模態內容摘要 + 品質報告。需要 cross-modal summary
+   generator + quality_report 擴充
 
 ##### 所需元件
 
-| 能力 | 缺失元件 | 依賴 P 階段 |
-|------|---------|:----------:|
-| 🎬 video generation | 同步生成視覺幀序列 + 音頻軌道 | **P31+P32+P33 整合**: VisionPipeline + AudioPipeline → VideoComposer (new) |
-| 🐱 物件偵測 | 影片中物體分類與位置追蹤 | **P33 擴充**: YOLO/CLIP 整合 (new) `ai/vision/object_detector.py` |
-| 🔊 音頻事件檢測 | 從音頻中識別「鋼琴聲」「貓叫聲」等事件 | **P33 擴充**: AudioEventDetector (new) `ai/audio/event_detector.py` |
-| 🔗 視聽同步分析 | 計算視覺事件（貓踩琴鍵）與聽覺事件（鋼琴聲）的時間偏移 | **P33 擴充**: AVSyncAnalyzer (new) `services/av_sync_analyzer.py` |
-| 📝 多模態摘要 | 整合視覺/聽覺/時間分析 → 自然語言摘要 | **P33**: CrossModalRouter final aggregation |
-| 🧪 端到端測試 | encode video frames → extract audio → classify content → compare timestamps | **P38**: 端到端整合測試 |
+| 能力                | 缺失元件                                                                    |                                依賴 P 階段                                 |
+| ------------------- | --------------------------------------------------------------------------- | :------------------------------------------------------------------------: |
+| 🎬 video generation | 同步生成視覺幀序列 + 音頻軌道                                               | **P31+P32+P33 整合**: VisionPipeline + AudioPipeline → VideoComposer (new) |
+| 🐱 物件偵測         | 影片中物體分類與位置追蹤                                                    |     **P33 擴充**: YOLO/CLIP 整合 (new) `ai/vision/object_detector.py`      |
+| 🔊 音頻事件檢測     | 從音頻中識別「鋼琴聲」「貓叫聲」等事件                                      |    **P33 擴充**: AudioEventDetector (new) `ai/audio/event_detector.py`     |
+| 🔗 視聽同步分析     | 計算視覺事件（貓踩琴鍵）與聽覺事件（鋼琴聲）的時間偏移                      |     **P33 擴充**: AVSyncAnalyzer (new) `services/av_sync_analyzer.py`      |
+| 📝 多模態摘要       | 整合視覺/聽覺/時間分析 → 自然語言摘要                                       |                **P33**: CrossModalRouter final aggregation                 |
+| 🧪 端到端測試       | encode video frames → extract audio → classify content → compare timestamps |                          **P38**: 端到端整合測試                           |
 
 ##### 為什麼這是最難的測試
 
@@ -1717,20 +1795,21 @@ P38+ (端到端完成後延伸): ✅✅✅✅ 四個步驟全部通過 — 完�
 
 ### 📊 7.7 多模態驗證測試總表
 
-| 測試 | 難度 | Step 數 | 涉及模態 | 關鍵缺口 | 通過所需 P |
-|:----:|:----:|:-------:|:--------:|---------|:----------:|
-| 🐤 **小雞吃米圖** | 🟡 中等 | 2 | 文字↔圖像 | text-to-image 生成 + image-to-text captioning | **P31+P33+P34** |
-| 🎶 **唱歌+識別歌詞** | 🔴 高難度 | 3 | 文字↔音頻↔音樂理論 | TTS 歌唱合成 + 歌詞轉錄 + 音樂分析 | **P32+P33+擴充** |
-| 🎬 **GIF 動圖+描述** | 🔴🔴 極高難度 | 3 | 文字↔多幀圖像↔時間 | 多幀生成 + 幀間插值 + 動作識別 | **P31+P33+P34+擴充** |
-| 🎥 **短視頻+模態識別** | 🔴🔴🔴 終極難度 | 4 | 文字↔影片↔音頻↔時間↔跨模態同步 | 視頻生成 + 物件偵測 + 音頻事件 + 視聽同步 + 多模態摘要 | **P31+P32+P33+P34+P38+擴充** |
+|          測試          |      難度       | Step 數 |            涉及模態            | 關鍵缺口                                               |          通過所需 P          |
+| :--------------------: | :-------------: | :-----: | :----------------------------: | ------------------------------------------------------ | :--------------------------: |
+|   🐤 **小雞吃米圖**    |     🟡 中等     |    2    |           文字↔圖像            | text-to-image 生成 + image-to-text captioning          |       **P31+P33+P34**        |
+|  🎶 **唱歌+識別歌詞**  |    🔴 高難度    |    3    |       文字↔音頻↔音樂理論       | TTS 歌唱合成 + 歌詞轉錄 + 音樂分析                     |       **P32+P33+擴充**       |
+|  🎬 **GIF 動圖+描述**  |  🔴🔴 極高難度  |    3    |       文字↔多幀圖像↔時間       | 多幀生成 + 幀間插值 + 動作識別                         |     **P31+P33+P34+擴充**     |
+| 🎥 **短視頻+模態識別** | 🔴🔴🔴 終極難度 |    4    | 文字↔影片↔音頻↔時間↔跨模態同步 | 視頻生成 + 物件偵測 + 音頻事件 + 視聽同步 + 多模態摘要 | **P31+P32+P33+P34+P38+擴充** |
 
 #### 難度說明
 
-| 難度 | 所需新元件數 | 需要時間維度 | 跨模態同步 | 預估完成輪次 |
-|:----:|:-----------:|:-----------:|:---------:|:-----------:|
-| 🟡 中等 | 3-5 元件 | ❌ | ❌ | P33-P34 (2-3 輪) |
-| 🔴 高難度 | 5-8 元件 | ✅ 音頻時序 | ❌ | P35-P36 (3-4 輪) |
-| 🔴🔴 極高難度 | 8-12 元件 | ✅ 多幀序列 | 🟡 部分 | P36-P37 (4-5 輪) |
-| 🔴🔴🔴 終極難度 | 12+ 元件 | ✅ 影音同步 | ✅ 完整視聽同步 | P38+ (6-8 輪) |
+|      難度       | 所需新元件數 | 需要時間維度 |   跨模態同步    |   預估完成輪次   |
+| :-------------: | :----------: | :----------: | :-------------: | :--------------: |
+|     🟡 中等     |   3-5 元件   |      ❌      |       ❌        | P33-P34 (2-3 輪) |
+|    🔴 高難度    |   5-8 元件   | ✅ 音頻時序  |       ❌        | P35-P36 (3-4 輪) |
+|  🔴🔴 極高難度  |  8-12 元件   | ✅ 多幀序列  |     🟡 部分     | P36-P37 (4-5 輪) |
+| 🔴🔴🔴 終極難度 |   12+ 元件   | ✅ 影音同步  | ✅ 完整視聽同步 |  P38+ (6-8 輪)   |
 
-> **核心洞察**: 這四組測試構成了一個階梯式的多模態驗證金字塔。從最簡單的「小雞吃米圖」到最困難的「短視頻模態識別」，每個測試都在前一個測試的基礎上增加一個或多個維度的複雜度。當 Angela 能全部通過時，代表專案已達成**完整的多模態 AGI 能力** 🏆
+> **核心洞察**: 這四組測試構成了一個階梯式的多模態驗證金字塔。從最簡單的「小雞吃米圖」到最困難的「短視頻模態識別」，每個測試都在前一個測試的基礎上增加一個或多個維度的複雜度。當 Angela 能全部通過時，代表專案已達成**完整的多模態 AGI 能力**
+> 🏆

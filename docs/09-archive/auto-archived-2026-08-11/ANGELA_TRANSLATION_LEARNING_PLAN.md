@@ -34,7 +34,8 @@ LLM 回應
 - `_store_response_as_template` 存整段回應，不萃取特定軸點位的理解
 - `LearningLoop` 提取句子/表情/搭配，不做數值區間對應
 
-目標：Angela 學會把 `indolence=0.1248` 翻譯成「午後賴床不想動的感覺」，並隨著多次遇到相似數值而精化描述精度。
+目標：Angela 學會把 `indolence=0.1248`
+翻譯成「午後賴床不想動的感覺」，並隨著多次遇到相似數值而精化描述精度。
 
 ## 實作範圍
 
@@ -78,7 +79,8 @@ def get_value_range_mappings(self, axis_field: str) -> List[ValueRangeMapping]:
     # 回傳指定軸點位的所有 mapping
 ```
 
-**不新增檔案**，所有變更在 `composer.py` 內。`NeuroVocabulary` 已有 JSON 序列化 (`load_from_config`)，擴充 serialization 方法。
+**不新增檔案**，所有變更在 `composer.py` 內。`NeuroVocabulary`
+已有 JSON 序列化 (`load_from_config`)，擴充 serialization 方法。
 
 ### Phase 2：注入機制（改 `_construct_angela_prompt`）
 
@@ -105,7 +107,8 @@ short = ", ".join(short_parts)
 
 ### Phase 3：回存機制（擴充既有路徑）
 
-不新增 LLM call。利用**既有**的 `_store_response_as_template` 和 `LearningLoop.process_llm_response()`，追加萃取：
+不新增 LLM call。利用**既有**的 `_store_response_as_template` 和
+`LearningLoop.process_llm_response()`，追加萃取：
 
 **在 `_store_response_as_template`** 流程中加入：
 
@@ -116,7 +119,8 @@ LLM 回應文本
   → NeuroVocabulary.learn_mapping(axis_field, value, extracted_text)
 ```
 
-無額外 LLM call。正則規則沿用 `LearningLoop.FragmentExtractor` 的既有模式（`learning_loop.py:23-42`），不新增依賴。
+無額外 LLM call。正則規則沿用 `LearningLoop.FragmentExtractor`
+的既有模式（`learning_loop.py:23-42`），不新增依賴。
 
 ### Phase 4：精度自然收斂
 
@@ -129,16 +133,17 @@ LLM 回應文本
 
 ## 與 MASTER_CONSOLIDATED_PLAN.md 的衝突
 
-A3 已完成。`_construct_angela_prompt` 已位於 `services/llm/prompt_builder.py`，Phase 2 直接修改此處。
+A3 已完成。`_construct_angela_prompt` 已位於
+`services/llm/prompt_builder.py`，Phase 2 直接修改此處。
 
 ## 不做的範圍
 
-| 不做 | 理由 |
-|------|------|
-| 新增 `core/translation_vocabulary.py` 檔案 | `NeuroVocabulary` 已存在，擴充即可。零風險（已在 `ai/response/`） |
-| 新增 LLM call 來萃取描述 | 專案正在減少額外 call，正則萃取已足夠（沿用 `FragmentExtractor`） |
-| 覆蓋現有 prompt 描述格式 | 現有 threshold 分支描述（novelty_desc 等）保留不動，只附加 |
-| session 隔離 | 沿用 `NeuroVocabulary` 的 `load_from_config` 機制，跨 session 持久化 |
+| 不做                                       | 理由                                                                 |
+| ------------------------------------------ | -------------------------------------------------------------------- |
+| 新增 `core/translation_vocabulary.py` 檔案 | `NeuroVocabulary` 已存在，擴充即可。零風險（已在 `ai/response/`）    |
+| 新增 LLM call 來萃取描述                   | 專案正在減少額外 call，正則萃取已足夠（沿用 `FragmentExtractor`）    |
+| 覆蓋現有 prompt 描述格式                   | 現有 threshold 分支描述（novelty_desc 等）保留不動，只附加           |
+| session 隔離                               | 沿用 `NeuroVocabulary` 的 `load_from_config` 機制，跨 session 持久化 |
 
 ## Phase 5：反向映射 + 進階功能
 
@@ -148,7 +153,8 @@ A3 已完成。`_construct_angela_prompt` 已位於 `services/llm/prompt_builder
 
 1. **`find_axis_values(description, threshold=0.3)`** — 反向映射
    - 給定語意描述文字，找出所有包含該文字的 mapping
-   - 回傳 `[{axis_field, range_lo, range_hi, description, confidence, usage_count}]`
+   - 回傳
+     `[{axis_field, range_lo, range_hi, description, confidence, usage_count}]`
    - 支援大小寫不敏感比對
    - `threshold` 過濾低信心 mapping
 
@@ -170,15 +176,16 @@ A3 已完成。`_construct_angela_prompt` 已位於 `services/llm/prompt_builder
 
 ### 變更摘要
 
-| 檔案 | 變更 |
-|------|------|
-| `ai/response/composer.py` | + 4 個新方法 (find_axis_values, decay_confidences, get_uncovered_values, detect_overlaps) |
-| `tests/ai/test_value_range_mapping.py` | + 9 tests → 總計 21 tests |
-| `sync_to_state_store()` | 內部調用 `decay_confidences()` 作為自動清理 |
+| 檔案                                   | 變更                                                                                      |
+| -------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `ai/response/composer.py`              | + 4 個新方法 (find_axis_values, decay_confidences, get_uncovered_values, detect_overlaps) |
+| `tests/ai/test_value_range_mapping.py` | + 9 tests → 總計 21 tests                                                                 |
+| `sync_to_state_store()`                | 內部調用 `decay_confidences()` 作為自動清理                                               |
 
 ## 潛在 Phase 6（未來方向）
 
-- **Active Learning**: 當 `get_uncovered_values()` 傳回缺口時，自動產生 LLM prompt 請求描述（需新增 LLM call，權衡效益）
+- **Active Learning**: 當 `get_uncovered_values()` 傳回缺口時，自動產生 LLM
+  prompt 請求描述（需新增 LLM call，權衡效益）
 - **多語言支援**: ValueRangeMapping 新增 lang tag
 - **合併重疊 mapping**: 當 detect_overlaps 發現高相似度描述時自動合併
 
@@ -194,6 +201,7 @@ A3 拆分完成 ✓
 ```
 
 ### Phase 1 變更
+
 - `ai/response/composer.py`:
   - 新增 `ValueRangeMapping` dataclass（covers(), narrow()）
   - `NeuroVocabulary.__init__` 新增 `_value_range_mappings` dict
@@ -202,13 +210,16 @@ A3 拆分完成 ✓
   - 新增 `from datetime import datetime`
 
 ### Phase 2 變更
+
 - `services/llm/prompt_builder.py`:
   - `construct_angela_prompt` 軸格式化（line 150）改為支援語意描述附加
   - 當 `neuro_vocabulary` 參數提供時，在數值後附加 `（描述）`
 - `services/llm/router.py`:
-  - `_construct_angela_prompt` wrapper 傳遞 `neuro_vocabulary` 至 `construct_angela_prompt`
+  - `_construct_angela_prompt` wrapper 傳遞 `neuro_vocabulary` 至
+    `construct_angela_prompt`
 
 ### Phase 3 變更
+
 - `services/llm/router.py`:
   - `_store_response_as_template` 新增萃取流程：
     1. 正則分割回應文本為句子
@@ -218,7 +229,12 @@ A3 拆分完成 ✓
 
 ## 待確認
 
-1. ~~JSON 持久化路徑？~~ → 已實作 `serialize_mappings()` + `load_mappings_from_config()`，與既有 `load_from_config` 模式一致
+1. ~~JSON 持久化路徑？~~ → 已實作 `serialize_mappings()` +
+   `load_mappings_from_config()`，與既有 `load_from_config` 模式一致
 2. ~~雙語需求？~~ → 目前中文即可，後續可擴充 lang tag
-3. ~~數量上限？~~ → 已內建於 `serialize_mappings(max_age_days=90)`：超齡低使用量 mapping 自動清除
-4. ~~`serialize_mappings()` 的呼叫時機~~ → C5 Phase 4 整合：`sync_to_state_store()` 每輪學習後推至 `GlobalStateStore`，`save_all()` 自動寫入檔案；`restore_from_state_store()` 啟動時恢復
+3. ~~數量上限？~~ → 已內建於
+   `serialize_mappings(max_age_days=90)`：超齡低使用量 mapping 自動清除
+4. ~~`serialize_mappings()` 的呼叫時機~~ → C5 Phase
+   4 整合：`sync_to_state_store()` 每輪學習後推至
+   `GlobalStateStore`，`save_all()` 自動寫入檔案；`restore_from_state_store()`
+   啟動時恢復

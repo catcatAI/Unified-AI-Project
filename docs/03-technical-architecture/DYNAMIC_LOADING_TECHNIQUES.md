@@ -2,7 +2,9 @@
 
 ## 1. 概述
 
-本文档描述了 Unified AI Project 中的动态载入技术，该技术旨在支持从超级计算机到资源受限的旧设备（如2G DDR3内存的电脑）等各种硬件配置。通过实现100MB动态载入切分方案，确保项目能够在内存有限的设备上运行。
+本文档描述了 Unified AI
+Project 中的动态载入技术，该技术旨在支持从超级计算机到资源受限的旧设备（如2G
+DDR3内存的电脑）等各种硬件配置。通过实现100MB动态载入切分方案，确保项目能够在内存有限的设备上运行。
 
 ## 2. 设计目标
 
@@ -27,6 +29,7 @@
 #### 3.1.1 数据分块器 (Data Chunker)
 
 负责将大型数据集切分为100MB大小的块，支持以下功能：
+
 - 自动检测文件大小
 - 按固定大小切分文件
 - 维护块索引以支持随机访问
@@ -34,6 +37,7 @@
 #### 3.1.2 内存映射管理器 (Memory Mapping Manager)
 
 负责处理大文件的内存映射，避免将整个文件加载到内存中：
+
 - 使用mmap技术处理大文件
 - 实现文件区域的按需映射
 - 提供透明的文件访问接口
@@ -41,6 +45,7 @@
 #### 3.1.3 缓存管理器 (Cache Manager)
 
 负责管理已加载的数据块，优化访问效率：
+
 - 实现LRU缓存策略
 - 自动清理未使用的数据块
 - 支持预加载机制
@@ -72,17 +77,17 @@ import os
 def chunk_file(file_path, chunk_size=100*1024*1024):  # 100MB chunks
     """
     将文件切分为指定大小的块
-    
+
     Args:
         file_path (str): 文件路径
         chunk_size (int): 块大小（字节）
-    
+
     Returns:
         list: 块信息列表
     """
     file_size = os.path.getsize(file_path)
     chunks = []
-    
+
     # 如果文件小于块大小，不进行切分
     if file_size <= chunk_size:
         chunks.append({
@@ -92,10 +97,10 @@ def chunk_file(file_path, chunk_size=100*1024*1024):  # 100MB chunks
             'size': file_size
         })
         return chunks
-    
+
     # 计算块数量
     num_chunks = (file_size + chunk_size - 1) // chunk_size
-    
+
     # 创建块信息
     for i in range(num_chunks):
         start = i * chunk_size
@@ -107,7 +112,7 @@ def chunk_file(file_path, chunk_size=100*1024*1024):  # 100MB chunks
             'size': end - start
         }
         chunks.append(chunk_info)
-    
+
     return chunks
 ```
 
@@ -123,11 +128,11 @@ class MemoryMappedFile:
     """
     内存映射文件管理器
     """
-    
+
     def __init__(self, file_path, chunk_info=None):
         """
         初始化内存映射文件
-        
+
         Args:
             file_path (str): 文件路径
             chunk_info (dict): 块信息（可选）
@@ -136,21 +141,21 @@ class MemoryMappedFile:
         self.chunk_info = chunk_info
         self.file_handle = None
         self.mmap_obj = None
-    
+
     def __enter__(self):
         """上下文管理器入口"""
         self.open()
         return self
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         """上下文管理器出口"""
         self.close()
-    
+
     def open(self):
         """打开并映射文件"""
         # 打开文件
         self.file_handle = open(self.file_path, 'rb')
-        
+
         # 如果指定了块信息，只映射该块
         if self.chunk_info:
             self.mmap_obj = mmap.mmap(
@@ -166,20 +171,20 @@ class MemoryMappedFile:
                 0,
                 access=mmap.ACCESS_READ
             )
-    
+
     def close(self):
         """关闭映射和文件"""
         if self.mmap_obj:
             self.mmap_obj.close()
         if self.file_handle:
             self.file_handle.close()
-    
+
     def read(self, size=-1):
         """读取数据"""
         if self.mmap_obj:
             return self.mmap_obj.read(size)
         return b''
-    
+
     def seek(self, pos):
         """定位到指定位置"""
         if self.mmap_obj:
@@ -198,25 +203,25 @@ class LRUCache:
     """
     LRU缓存管理器
     """
-    
+
     def __init__(self, max_size=10):
         """
         初始化LRU缓存
-        
+
         Args:
             max_size (int): 最大缓存大小
         """
         self.max_size = max_size
         self.cache = OrderedDict()
         self.access_times = {}
-    
+
     def get(self, key):
         """
         获取缓存项
-        
+
         Args:
             key (str): 缓存键
-            
+
         Returns:
             any: 缓存值，如果不存在返回None
         """
@@ -227,11 +232,11 @@ class LRUCache:
             self.cache.move_to_end(key)
             return self.cache[key]
         return None
-    
+
     def put(self, key, value):
         """
         添加缓存项
-        
+
         Args:
             key (str): 缓存键
             value (any): 缓存值
@@ -248,17 +253,17 @@ class LRUCache:
                 del self.cache[oldest_key]
                 if oldest_key in self.access_times:
                     del self.access_times[oldest_key]
-            
+
             # 添加新项
             self.cache[key] = value
-        
+
         # 更新访问时间
         self.access_times[key] = time.time()
-    
+
     def remove(self, key):
         """
         删除缓存项
-        
+
         Args:
             key (str): 缓存键
         """
@@ -266,7 +271,7 @@ class LRUCache:
             del self.cache[key]
         if key in self.access_times:
             del self.access_times[key]
-    
+
     def clear(self):
         """清空缓存"""
         self.cache.clear()
@@ -278,6 +283,7 @@ class LRUCache:
 ### 5.1 内存使用优化
 
 针对集成显卡系统，动态载入技术采用以下优化策略：
+
 - 限制单次加载的数据块大小
 - 实现更积极的缓存清理机制
 - 优化内存映射区域大小
@@ -289,21 +295,21 @@ class IntegratedGraphicsOptimizer:
     """
     集成显卡优化器
     """
-    
+
     def __init__(self, system_info):
         """
         初始化优化器
-        
+
         Args:
             system_info (dict): 系统信息
         """
         self.system_info = system_info
         self.is_integrated_graphics = self._check_integrated_graphics()
-    
+
     def _check_integrated_graphics(self):
         """
         检查是否为集成显卡系统
-        
+
         Returns:
             bool: 是否为集成显卡系统
         """
@@ -312,23 +318,23 @@ class IntegratedGraphicsOptimizer:
         return any(keyword in gpu_name for keyword in [
             'intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics'
         ])
-    
+
     def optimize_chunk_size(self, original_chunk_size):
         """
         根据系统配置优化块大小
-        
+
         Args:
             original_chunk_size (int): 原始块大小
-            
+
         Returns:
             int: 优化后的块大小
         """
         if not self.is_integrated_graphics:
             return original_chunk_size
-        
+
         # 对于集成显卡系统，使用更小的块大小
         system_memory_gb = self.system_info.get('memory_gb', 0)
-        
+
         if system_memory_gb < 4:
             return min(original_chunk_size, 50 * 1024 * 1024)  # 50MB
         elif system_memory_gb < 8:
@@ -424,14 +430,14 @@ class PerformanceMonitor:
     """
     性能监控器
     """
-    
+
     def __init__(self):
         self.metrics = {}
-    
+
     def start_timer(self, operation):
         """
         启动计时器
-        
+
         Args:
             operation (str): 操作名称
         """
@@ -440,28 +446,28 @@ class PerformanceMonitor:
             'end_time': None,
             'duration': None
         }
-    
+
     def stop_timer(self, operation):
         """
         停止计时器
-        
+
         Args:
             operation (str): 操作名称
         """
         if operation in self.metrics:
             self.metrics[operation]['end_time'] = time.time()
             self.metrics[operation]['duration'] = (
-                self.metrics[operation]['end_time'] - 
+                self.metrics[operation]['end_time'] -
                 self.metrics[operation]['start_time']
             )
-    
+
     def get_metric(self, operation):
         """
         获取性能指标
-        
+
         Args:
             operation (str): 操作名称
-            
+
         Returns:
             dict: 性能指标
         """
@@ -515,6 +521,6 @@ python -m cProfile -o dynamic_loading.prof training/test_dynamic_loading.py
 - 提高内存映射效率
 
 ---
-**文档版本**: 1.0.0
-**最后更新**: 2025年9月17日
-**作者**: Unified AI Project Team
+
+**文档版本**: 1.0.0 **最后更新**: 2025年9月17日 **作者**: Unified AI Project
+Team

@@ -1,7 +1,6 @@
 # Angela v6.3 — 串線行動計劃
 
-**版本**: 6.3
-**日期**: 2026-05-17
+**版本**: 6.3 **日期**: 2026-05-17
 **目標**: 對話/文件/代碼/搜尋/檔管/LLM/學習/成長全串線，配置驅動，無硬編
 
 ---
@@ -10,51 +9,51 @@
 
 ### P0 完成項（需重新確認狀態）
 
-| 項目 | 原計劃狀態 | 實際代碼狀態（v6.3 審計） |
-|------|-----------|--------------------------|
-| P0.1 `chat_completion()` wrapper | ✅ 已刪除舊介面 | ✅ 保留 thin wrapper，運作正常 |
-| P0.2 `EvolutionEngine` 刪除 | ✅ 刪除 | ❌ **退化** — `chat_service.py:38` 仍引用不存在的檔案；B17 已建立 stub 但未串入學習迴路 |
-| P0.3 `DialogueManager` + `ToolDispatcher` 廢棄 | ✅ 刪除 | ✅ 檔案不存在，零引用 |
-| P0.4 `AutonomousEvolutionEngine` 刪除 | ✅ 刪除 | ✅ 檔案不存在，零引用 |
-| P0.5 `ExecutionManager` 刪除 | ✅ 刪除 | ✅ `ai/execution/execution_manager.py` 存在但零引用（audit 準確） |
+| 項目                                           | 原計劃狀態      | 實際代碼狀態（v6.3 審計）                                                               |
+| ---------------------------------------------- | --------------- | --------------------------------------------------------------------------------------- |
+| P0.1 `chat_completion()` wrapper               | ✅ 已刪除舊介面 | ✅ 保留 thin wrapper，運作正常                                                          |
+| P0.2 `EvolutionEngine` 刪除                    | ✅ 刪除         | ❌ **退化** — `chat_service.py:38` 仍引用不存在的檔案；B17 已建立 stub 但未串入學習迴路 |
+| P0.3 `DialogueManager` + `ToolDispatcher` 廢棄 | ✅ 刪除         | ✅ 檔案不存在，零引用                                                                   |
+| P0.4 `AutonomousEvolutionEngine` 刪除          | ✅ 刪除         | ✅ 檔案不存在，零引用                                                                   |
+| P0.5 `ExecutionManager` 刪除                   | ✅ 刪除         | ✅ `ai/execution/execution_manager.py` 存在但零引用（audit 準確）                       |
 
 ### P1 完成項（需重新確認狀態）
 
-| 項目 | 原計劃狀態 | 實際代碼狀態（v6.3 審計） |
-|------|-----------|--------------------------|
-| P1.1 `core/managers/execution_manager.py` 刪除 | ✅ 刪除 | ✅ 檔案不存在 |
-| P1.2 HAMMemoryManager 統一 codex 來源 | ✅ 實作 | ⚠️ **退化** — `FantasyDMAgent` codex 未啟用（line 83 設為空），DocumentBuilder 直接從 HAMMemoryManager 讀取，但 FantasyDMAgent 本身從未被 ChatService 調用 |
-| P1.3 隔離測試 | ✅ 14 測試通過 | ✅ 維持 |
-| P1.4 `IntentRegistry` 統一意圖檢測 | ✅ 創建並接線 | ✅ 仍在 PC + DB 中使用 |
+| 項目                                           | 原計劃狀態     | 實際代碼狀態（v6.3 審計）                                                                                                                                  |
+| ---------------------------------------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P1.1 `core/managers/execution_manager.py` 刪除 | ✅ 刪除        | ✅ 檔案不存在                                                                                                                                              |
+| P1.2 HAMMemoryManager 統一 codex 來源          | ✅ 實作        | ⚠️ **退化** — `FantasyDMAgent` codex 未啟用（line 83 設為空），DocumentBuilder 直接從 HAMMemoryManager 讀取，但 FantasyDMAgent 本身從未被 ChatService 調用 |
+| P1.3 隔離測試                                  | ✅ 14 測試通過 | ✅ 維持                                                                                                                                                    |
+| P1.4 `IntentRegistry` 統一意圖檢測             | ✅ 創建並接線  | ✅ 仍在 PC + DB 中使用                                                                                                                                     |
 
 ### P2 完成項（需重新確認狀態）
 
-| 項目 | 原計劃狀態 | 實際代碼狀態（v6.3 審計） |
-|------|-----------|--------------------------|
-| P2.1 ChatService 分離（< 1000 行） | ✅ 598 行 | ✅ 維持（610 行） |
-| P2.2 8D 座標追蹤 | ✅ `_update_eta()` | ⚠️ **退化** — 座標計算了但未注入 prompt，LLM 拿到只是數字不懂含義 |
-| P2.3 RAGManager 評估 | ⚠️ 待評估 | ⚠️ 未評估，RAGManager 仍存在未接線 |
-| P2.4 PlanningAgent 處理 | ⚠️ 待處理 | ✅ 標注 deprecate()，未被引用 |
-| P2.5 CreativeWritingAgent 重寫 | ✅ 63→158 行 | ✅ 維持 |
+| 項目                               | 原計劃狀態         | 實際代碼狀態（v6.3 審計）                                         |
+| ---------------------------------- | ------------------ | ----------------------------------------------------------------- |
+| P2.1 ChatService 分離（< 1000 行） | ✅ 598 行          | ✅ 維持（610 行）                                                 |
+| P2.2 8D 座標追蹤                   | ✅ `_update_eta()` | ⚠️ **退化** — 座標計算了但未注入 prompt，LLM 拿到只是數字不懂含義 |
+| P2.3 RAGManager 評估               | ⚠️ 待評估          | ⚠️ 未評估，RAGManager 仍存在未接線                                |
+| P2.4 PlanningAgent 處理            | ⚠️ 待處理          | ✅ 標注 deprecate()，未被引用                                     |
+| P2.5 CreativeWritingAgent 重寫     | ✅ 63→158 行       | ✅ 維持                                                           |
 
 ### B 系列修補（需重新確認狀態）
 
-| Bug | 原計劃狀態 | 實際代碼狀態（v6.3 審計） |
-|-----|-----------|--------------------------|
-| B4 TemplateLibrary thread-safety | ✅ 修復 | ✅ `threading.Lock` + `asyncio.Lock` 已加入 |
-| B6 HAMMemoryManager + FantasyDMAgent | ✅ 已確認 | ⚠️ FantasyDMAgent 未被調用 |
-| B7 ProjectCoordinator fallback | ✅ 已測試 | ✅ `_fallback_decompose()` 存在 |
-| B8 ProjectCoordinator 整合 fallback | ✅ 已測試 | ✅ `_integrate_subtask_results()` fallback |
-| B9 DocumentBuilder segment timeout | ✅ 已修復 | ✅ `asyncio.wait_for(timeout=15.0)` |
-| B10 WaitingScheduler vs direct calls | ⚠️ 標注差異 | ✅ 差異已標注，無需行動 |
-| B11 `_learn_format()` 去重 | ✅ 已修復 | ✅ `_learned_format_keys` |
-| B12 IntentRegistry 統一 | ✅ 已接線 | ✅ PC + DB 都在用 |
-| B13 `get_template_library()` race condition | ✅ 雙重檢查鎖 | ✅ 已修復 |
-| B14 `_fallback_response()` hasattr | ✅ 已有 getattr | ✅ 維持 |
-| B15 PlanningAgent 零引用 | ✅ 已標注 deprecate | ✅ 維持 |
-| B16 AlignedCreativeWritingAgent | ✅ 觀察中 | ✅ examples/ 目錄，無需操作 |
-| B17 EvolutionEngine 不存在 | ❌ **新問題** | ✅ B17 修復：已建立 stub |
-| **B18 主流程未串執行層** | ❌ **新發現** | ❌ L2 決策層 + L3 執行層缺席 |
+| Bug                                         | 原計劃狀態          | 實際代碼狀態（v6.3 審計）                   |
+| ------------------------------------------- | ------------------- | ------------------------------------------- |
+| B4 TemplateLibrary thread-safety            | ✅ 修復             | ✅ `threading.Lock` + `asyncio.Lock` 已加入 |
+| B6 HAMMemoryManager + FantasyDMAgent        | ✅ 已確認           | ⚠️ FantasyDMAgent 未被調用                  |
+| B7 ProjectCoordinator fallback              | ✅ 已測試           | ✅ `_fallback_decompose()` 存在             |
+| B8 ProjectCoordinator 整合 fallback         | ✅ 已測試           | ✅ `_integrate_subtask_results()` fallback  |
+| B9 DocumentBuilder segment timeout          | ✅ 已修復           | ✅ `asyncio.wait_for(timeout=15.0)`         |
+| B10 WaitingScheduler vs direct calls        | ⚠️ 標注差異         | ✅ 差異已標注，無需行動                     |
+| B11 `_learn_format()` 去重                  | ✅ 已修復           | ✅ `_learned_format_keys`                   |
+| B12 IntentRegistry 統一                     | ✅ 已接線           | ✅ PC + DB 都在用                           |
+| B13 `get_template_library()` race condition | ✅ 雙重檢查鎖       | ✅ 已修復                                   |
+| B14 `_fallback_response()` hasattr          | ✅ 已有 getattr     | ✅ 維持                                     |
+| B15 PlanningAgent 零引用                    | ✅ 已標注 deprecate | ✅ 維持                                     |
+| B16 AlignedCreativeWritingAgent             | ✅ 觀察中           | ✅ examples/ 目錄，無需操作                 |
+| B17 EvolutionEngine 不存在                  | ❌ **新問題**       | ✅ B17 修復：已建立 stub                    |
+| **B18 主流程未串執行層**                    | ❌ **新發現**       | ❌ L2 決策層 + L3 執行層缺席                |
 
 ### 退化摘要
 
@@ -74,6 +73,7 @@ B18: 執行層（DesktopInteraction/BrowserController/AudioSystem/Live2DIntegrat
 ### 不做的事（避免重複實作）
 
 以下模組**已存在且功能完整**，只需接線，不重寫：
+
 - `StateMatrix4D` — 8D 狀態管理 ✅
 - `DimensionState.compute_coordinate()` — 動態座標 ✅
 - `IntentRouter` — 意圖分流 ✅
@@ -108,6 +108,7 @@ S7 小腦反射系統   — 搔癢 + 安全邊界 + CerebellumEngine.trigger_tic
 ## 三、S1 — 配置層（無新代碼，純 YAML + 替換）
 
 ### 目標
+
 所有硬編的意圖關鍵字、閾值、路由規則、LLM 配置、檔案操作白名單，全部剝離到 YAML。
 
 ### 新增配置文件
@@ -128,35 +129,35 @@ config/
 
 ### 雙層配置說明
 
-| 層 | 位置 | 來源 | 可被 Angela 修改 |
-|----|------|------|----------------|
-| Authority | `config/angela_core.yaml` 等 | 人寫 | ❌ 否（核心邏輯不可變） |
-| Learned | `config/angela/learned_*.yaml` | Angela 自學 | ✅ 是（疊加在 Authority 上） |
+| 層        | 位置                           | 來源        | 可被 Angela 修改             |
+| --------- | ------------------------------ | ----------- | ---------------------------- |
+| Authority | `config/angela_core.yaml` 等   | 人寫        | ❌ 否（核心邏輯不可變）      |
+| Learned   | `config/angela/learned_*.yaml` | Angela 自學 | ✅ 是（疊加在 Authority 上） |
 
 合併時：Learned 只可新增 key，不可覆蓋 Authority 的任何 key。
 
 ### 硬編剝離清單（來自代碼審計）
 
-| 位置 | 硬編內容 | 目標配置 |
-|------|---------|---------|
-| `chat_service.py:108` | `_detect_math_intent()` keyword list | → `angela_core.yaml: math_keywords` |
-| `chat_service.py:109` | `_detect_code_intent()` keyword list | → `angela_core.yaml: code_keywords` |
-| `chat_service.py:110` | `_estimate_complexity()` thresholds | → `angela_core.yaml: complexity_thresholds` |
-| `project_coordinator.py` | fallback keyword patterns | → `angela_core.yaml: fallback_patterns` |
-| `document_builder.py` | segment timeout (15s) | → `angela_core.yaml: segment_timeout_seconds` |
-| `angela_llm_service.py` | model selection logic | → `llm_providers.yaml: routing_policy` |
-| `angela_llm_service.py` | httpx timeout (30s) | → `llm_providers.yaml: providers[].timeout` |
-| `template_library.py` | predefined templates | → `angela_core.yaml: predefined_templates` |
-| `cerebellum_engine.py` | 姿勢庫（無配置化） | → `angela_core.yaml: pose_library` |
-| `tickle_config.yaml` (new) | 搔癢敏感度/動畫映射 | → S7 配置 |
+| 位置                       | 硬編內容                             | 目標配置                                      |
+| -------------------------- | ------------------------------------ | --------------------------------------------- |
+| `chat_service.py:108`      | `_detect_math_intent()` keyword list | → `angela_core.yaml: math_keywords`           |
+| `chat_service.py:109`      | `_detect_code_intent()` keyword list | → `angela_core.yaml: code_keywords`           |
+| `chat_service.py:110`      | `_estimate_complexity()` thresholds  | → `angela_core.yaml: complexity_thresholds`   |
+| `project_coordinator.py`   | fallback keyword patterns            | → `angela_core.yaml: fallback_patterns`       |
+| `document_builder.py`      | segment timeout (15s)                | → `angela_core.yaml: segment_timeout_seconds` |
+| `angela_llm_service.py`    | model selection logic                | → `llm_providers.yaml: routing_policy`        |
+| `angela_llm_service.py`    | httpx timeout (30s)                  | → `llm_providers.yaml: providers[].timeout`   |
+| `template_library.py`      | predefined templates                 | → `angela_core.yaml: predefined_templates`    |
+| `cerebellum_engine.py`     | 姿勢庫（無配置化）                   | → `angela_core.yaml: pose_library`            |
+| `tickle_config.yaml` (new) | 搔癢敏感度/動畫映射                  | → S7 配置                                     |
 
 ### S1 關鍵缺口（MD示例 vs 代碼實現差距）
 
-| 缺口 | MD描述 | 代碼實際 | 風險 |
-|------|--------|---------|------|
-| 多模組配置讀取 | 各模組從 `ConfigLoader` 讀取自己的配置檔 | `ConfigLoader` 存在但祇有通用讀取，無多檔案支援 | 高：S2-S7 各模組需要讀取不同配置，但框架未定義 |
-| `anchor_rules.yaml` 解讀 | 「軸狀態解讀規則（動態生成）」 | 檔案不存在，無生成邏輯 | 高：P2.2 退化（座標未注入 prompt）的根因 |
-| 配置熱重載 | 「改 config 不重啟」 | `ConfigLoader` 有 `test_mode` 但無熱重載機制 | 中：S1 需實作 `watch_config()` |
+| 缺口                     | MD描述                                   | 代碼實際                                        | 風險                                           |
+| ------------------------ | ---------------------------------------- | ----------------------------------------------- | ---------------------------------------------- |
+| 多模組配置讀取           | 各模組從 `ConfigLoader` 讀取自己的配置檔 | `ConfigLoader` 存在但祇有通用讀取，無多檔案支援 | 高：S2-S7 各模組需要讀取不同配置，但框架未定義 |
+| `anchor_rules.yaml` 解讀 | 「軸狀態解讀規則（動態生成）」           | 檔案不存在，無生成邏輯                          | 高：P2.2 退化（座標未注入 prompt）的根因       |
+| 配置熱重載               | 「改 config 不重啟」                     | `ConfigLoader` 有 `test_mode` 但無熱重載機制    | 中：S1 需實作 `watch_config()`                 |
 
 ### 實施方式
 
@@ -188,20 +189,21 @@ pytest tests/ -k "test_project_coordinator"
 ## 四、S2 — 意圖擴展
 
 ### 目標
+
 `IntentRouter.detect()` 從 4 種擴展為 8 種，配置驅動。
 
 ### 新增意圖處理器
 
-| 意圖 | 處理器 | 現有代碼 | 需新增 |
-|------|--------|---------|--------|
-| `file_op` | FileOperationHandler | `DesktopInteraction` 存在 | 包裝層 + REPL 命令 + 從 `file_ops.yaml` 讀取白名單 |
-| `web_search` | WebSearchHandler | `BrowserController` 存在 | 包裝層 + REPL 命令 |
-| `llm_manage` | LLMManager | `multi_llm_adapter` 是 stub | 新實現（配置驅動） |
-| `learn` | LearningHandler | `AnchorLearningEngine` 存在 | 觸發 + 回應反饋 |
-| `math` | MathVerifier | 已接線 | 維持 |
-| `code` | CodeInspectorBridge | 已接線 | 維持 |
-| `task` | ProjectCoordinator | 已接線 | 維持 |
-| `general` | LLM 回應 | 已接線 | 維持 |
+| 意圖         | 處理器               | 現有代碼                    | 需新增                                             |
+| ------------ | -------------------- | --------------------------- | -------------------------------------------------- |
+| `file_op`    | FileOperationHandler | `DesktopInteraction` 存在   | 包裝層 + REPL 命令 + 從 `file_ops.yaml` 讀取白名單 |
+| `web_search` | WebSearchHandler     | `BrowserController` 存在    | 包裝層 + REPL 命令                                 |
+| `llm_manage` | LLMManager           | `multi_llm_adapter` 是 stub | 新實現（配置驅動）                                 |
+| `learn`      | LearningHandler      | `AnchorLearningEngine` 存在 | 觸發 + 回應反饋                                    |
+| `math`       | MathVerifier         | 已接線                      | 維持                                               |
+| `code`       | CodeInspectorBridge  | 已接線                      | 維持                                               |
+| `task`       | ProjectCoordinator   | 已接線                      | 維持                                               |
+| `general`    | LLM 回應             | 已接線                      | 維持                                               |
 
 ### 不重複實作
 
@@ -212,10 +214,10 @@ pytest tests/ -k "test_project_coordinator"
 
 ### S2 關鍵缺口
 
-| 缺口 | MD描述 | 代碼實際 | 風險 |
-|------|--------|---------|------|
-| RAGManager 評估 | P2.3 評估 RAGManager | 存在但未接線，未評估 | 中：S2 需決定廢棄或整合 |
-| `FantasyDMAgent` 未被調用 | P1.2 統一 codex | `FantasyDMAgent` 有 codex 但從未被 ChatService 調用 | 中：S2 需決定接線或標注廢棄 |
+| 缺口                      | MD描述               | 代碼實際                                            | 風險                        |
+| ------------------------- | -------------------- | --------------------------------------------------- | --------------------------- |
+| RAGManager 評估           | P2.3 評估 RAGManager | 存在但未接線，未評估                                | 中：S2 需決定廢棄或整合     |
+| `FantasyDMAgent` 未被調用 | P1.2 統一 codex      | `FantasyDMAgent` 有 codex 但從未被 ChatService 調用 | 中：S2 需決定接線或標注廢棄 |
 
 ### 配置驅動
 
@@ -223,21 +225,21 @@ pytest tests/ -k "test_project_coordinator"
 # angela_core.yaml
 intents:
   file_op:
-    keywords: ["整理", "桌面", "文件", "移動", "刪除", "創建文件"]
+    keywords: ['整理', '桌面', '文件', '移動', '刪除', '創建文件']
     priority: 5
-    handler: "FileOperationHandler"
+    handler: 'FileOperationHandler'
   web_search:
-    keywords: ["搜尋", "搜索", "查", "找", "google", "網頁"]
+    keywords: ['搜尋', '搜索', '查', '找', 'google', '網頁']
     priority: 5
-    handler: "WebSearchHandler"
+    handler: 'WebSearchHandler'
   llm_manage:
-    keywords: ["切換模型", "換模型", "llm", "模型管理"]
+    keywords: ['切換模型', '換模型', 'llm', '模型管理']
     priority: 6
-    handler: "LLMManager"
+    handler: 'LLMManager'
   learn:
-    keywords: ["記住", "學習", "記錄", "記住這個"]
+    keywords: ['記住', '學習', '記錄', '記住這個']
     priority: 7
-    handler: "LearningHandler"
+    handler: 'LearningHandler'
 ```
 
 ### S2 交付物
@@ -256,6 +258,7 @@ intents:
 ## 五、S3 — LLM 管理（配置驅動）
 
 ### 目標
+
 廢除 `multi_llm_adapter` stub，建立配置驅動的 `LLMManager`。
 
 ### 不重複實作
@@ -278,11 +281,11 @@ LLMManager (new, config-driven)
 
 ### S3 關鍵缺口
 
-| 缺口 | MD描述 | 代碼實際 | 風險 |
-|------|--------|---------|------|
-| LLM 延遲觸發介面 | S13 小腦反射 Phase 2 需要「延遲 LLM 輸出」 | 無延遲機制，LLM 同步輸出 | 高：S13 無法實現，必須在 S3 實作 |
-| 模型成功率追蹤 | 「追蹤成功率 → 自動降級」 | 無追蹤機制 | 高：S3 需實作成功率統計 |
-| 降級邏輯 | 「自動降級」 | `angela_llm_service.py` 有 fallback 但無自動切換 | 中：S3 需實作動態降級 |
+| 缺口             | MD描述                                     | 代碼實際                                         | 風險                             |
+| ---------------- | ------------------------------------------ | ------------------------------------------------ | -------------------------------- |
+| LLM 延遲觸發介面 | S13 小腦反射 Phase 2 需要「延遲 LLM 輸出」 | 無延遲機制，LLM 同步輸出                         | 高：S13 無法實現，必須在 S3 實作 |
+| 模型成功率追蹤   | 「追蹤成功率 → 自動降級」                  | 無追蹤機制                                       | 高：S3 需實作成功率統計          |
+| 降級邏輯         | 「自動降級」                               | `angela_llm_service.py` 有 fallback 但無自動切換 | 中：S3 需實作動態降級            |
 
 ### YAML 配置
 
@@ -290,27 +293,27 @@ LLMManager (new, config-driven)
 # llm_providers.yaml
 providers:
   ollama:
-    endpoint: "http://localhost:11434"
+    endpoint: 'http://localhost:11434'
     models:
-      - name: "phi:latest"
-        capability: "general"
+      - name: 'phi:latest'
+        capability: 'general'
         latency_ms: 37000
         context_window: 2048
-      - name: "qwen2.5-coder:latest"
-        capability: "code"
+      - name: 'qwen2.5-coder:latest'
+        capability: 'code'
         latency_ms: 15000
         context_window: 4096
-      - name: "deepseek-r1:latest"
-        capability: "reasoning"
+      - name: 'deepseek-r1:latest'
+        capability: 'reasoning'
         latency_ms: 40000
         context_window: 8192
 
 routing_policy:
-  math: "deepseek-r1:latest"
-  code: "qwen2.5-coder:latest"
-  general: "phi:latest"
-  complexity_high: "deepseek-r1:latest"
-  complexity_low: "phi:latest"
+  math: 'deepseek-r1:latest'
+  code: 'qwen2.5-coder:latest'
+  general: 'phi:latest'
+  complexity_high: 'deepseek-r1:latest'
+  complexity_low: 'phi:latest'
 
 fallback_chain:
   phi:latest:
@@ -318,9 +321,9 @@ fallback_chain:
     - openai:gpt-4o-mini
 
 performance_tracking:
-  success_rate_threshold: 0.7  # 成功率 < 70% 觸發降級
-  latency_threshold_ms: 30000   # 延遲 > 30s 觸發降級
-  tracking_window: 50           # 追蹤最近 50 次請求
+  success_rate_threshold: 0.7 # 成功率 < 70% 觸發降級
+  latency_threshold_ms: 30000 # 延遲 > 30s 觸發降級
+  tracking_window: 50 # 追蹤最近 50 次請求
 ```
 
 ### REPL 命令
@@ -347,6 +350,7 @@ performance_tracking:
 ## 六、S4 — REPL 終端
 
 ### 目標
+
 `launch_angela.bat --repl` 成為完整終端介面，支持所有能力。
 
 ### 命令架構
@@ -391,6 +395,7 @@ performance_tracking:
 ## 七、S5 — 學習閉環（含雙層配置自我優化）
 
 ### 7.1 目標
+
 Angela 從每次交互中學習意圖模式，不靠硬編；同時具備**自我配置**能力，根據觀察到的配置不足，自動補充學習結果。
 
 ### 7.2 雙層配置架構
@@ -449,12 +454,12 @@ def merge_config(base_cfg: dict, learned_cfg: dict) -> dict:
 
 ### 7.5 觸發條件與閾值
 
-| 觸發類型 | 條件 | 行為 |
-|---------|------|------|
-| 新增 keyword | 同一 (意圖, keyword) 組合觀察到 ≥ 5 次且成功率 > 80% | 寫入 learned_patterns |
-| 調整 threshold | 某意圖識別錯誤率 > 20% 持續 ≥ 10 次 | 寫入 learned_thresholds |
-| 路由學習 | 某用戶的某意圖成功率 > 90% 且延遲 < 15s | 寫入 learned_routes |
-| 配置回滾 | 某 learned pattern 連續失敗 ≥ 3 次 | 標注為 negative pattern，寫入 blocklist |
+| 觸發類型       | 條件                                                 | 行為                                    |
+| -------------- | ---------------------------------------------------- | --------------------------------------- |
+| 新增 keyword   | 同一 (意圖, keyword) 組合觀察到 ≥ 5 次且成功率 > 80% | 寫入 learned_patterns                   |
+| 調整 threshold | 某意圖識別錯誤率 > 20% 持續 ≥ 10 次                  | 寫入 learned_thresholds                 |
+| 路由學習       | 某用戶的某意圖成功率 > 90% 且延遲 < 15s              | 寫入 learned_routes                     |
+| 配置回滾       | 某 learned pattern 連續失敗 ≥ 3 次                   | 標注為 negative pattern，寫入 blocklist |
 
 ### 7.6 Guardrail
 
@@ -471,12 +476,12 @@ angela/learned/ 寫入限制：
 
 ### 7.7 S5 關鍵缺口
 
-| 缺口 | MD描述 | 代碼實際 | 風險 |
-|------|--------|---------|------|
-| `ConfigLoader.merge_config()` | 雙層配置合併 | `ConfigLoader` 無此方法 | 高：S5 無法實現，必須在 S5 實作 |
-| `AnchorLearningEngine.suggest_config_update()` | 建議配置更新 | `AnchorLearningEngine` 無此方法 | 高：S5 自我配置無法實現 |
-| 8D 座標解讀規則 | anchor_rules.yaml 解讀 | 檔案不存在 | 中：P2.2 退化（座標未注入 prompt）的根因 |
-| 回應格式存儲 | TemplateLibrary 存儲回應格式 | 已有模板功能但無格式學習 | 中：需擴展 `_learn_format()` |
+| 缺口                                           | MD描述                       | 代碼實際                        | 風險                                     |
+| ---------------------------------------------- | ---------------------------- | ------------------------------- | ---------------------------------------- |
+| `ConfigLoader.merge_config()`                  | 雙層配置合併                 | `ConfigLoader` 無此方法         | 高：S5 無法實現，必須在 S5 實作          |
+| `AnchorLearningEngine.suggest_config_update()` | 建議配置更新                 | `AnchorLearningEngine` 無此方法 | 高：S5 自我配置無法實現                  |
+| 8D 座標解讀規則                                | anchor_rules.yaml 解讀       | 檔案不存在                      | 中：P2.2 退化（座標未注入 prompt）的根因 |
+| 回應格式存儲                                   | TemplateLibrary 存儲回應格式 | 已有模板功能但無格式學習        | 中：需擴展 `_learn_format()`             |
 
 ### 7.8 API 端點（可選）
 
@@ -542,6 +547,7 @@ POST /api/v1/angela/learned/approve  ← 用戶批准建議的配置
 ```
 
 現有問題：
+
 - **輕度戳一下 LLM 瘋狂輸出**：「哈哈哈哈哈哈」沒完沒了
 - **搓揉性徵但 LLM 表演變態**：LLM 直接生成不當回應，不經反射判斷
 - **擁抱但 LLM 口述表演**：「Angela 給出了一個懷抱」，而非真正的反應
@@ -567,26 +573,26 @@ POST /api/v1/angela/learned/approve  ← 用戶批准建議的配置
 
 ### 7.3 S7 關鍵缺口（MD示例 vs 代碼實際）
 
-| 缺口 | MD描述 | 代碼實際 | 風險 |
-|------|--------|---------|------|
-| `CerebellumEngine.trigger_tickle()` | 擴展現有 CerebellumEngine | 方法不存在，祇有姿勢庫 | 高：S7 的核心介面缺失，必須新增 |
-| tickle 動畫參數 | `live2d_avatar_generator.py:420,496,730,773` 已有 | 已有 `tickle` 映射存在 ✅ | 低：可復用 |
-| `PhysiologicalTactileSystem` sensitivity | 18 部位觸覺地圖 | 有 sensitivity 機制 ✅ | 低：可復用 |
-| 強度分級 | 輕度/中度/強度/持續 | 無 tickle 強度分級 | 高：S7 需實作 |
-| 安全邊界（5層） | Output Mode Gating / Reflex Lock / Content Filter / Sustained Stimulus Guard / Behavioral Lock | 無 Phase 2 輸出校驗 | 高：S7 需實作 |
-| `tickle_config.yaml` | 獨立安全配置 | 檔案不存在 | 高：S7 需建立 + S1 ConfigLoader 需支援讀取 |
-| LLM 延遲觸發 | Phase 2 延遲 300ms | 無 LLM 延遲機制 | 高：依賴 S3 LLMManager 延遲介面 |
-| 8D 座標「被侵犯」值 | γ軸「被侵犯」飆升 | 無「被侵犯」映射 | 中：需在 anchor_rules.yaml 定義 |
-| `EgoGuard` Phase 2 校驗 | LLM 輸出不得與 Phase 1 矛盾 | EgoGuard 存在但無 tickle 校驗 | 中：S7 需擴展 |
+| 缺口                                     | MD描述                                                                                         | 代碼實際                      | 風險                                       |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------- | ----------------------------- | ------------------------------------------ |
+| `CerebellumEngine.trigger_tickle()`      | 擴展現有 CerebellumEngine                                                                      | 方法不存在，祇有姿勢庫        | 高：S7 的核心介面缺失，必須新增            |
+| tickle 動畫參數                          | `live2d_avatar_generator.py:420,496,730,773` 已有                                              | 已有 `tickle` 映射存在 ✅     | 低：可復用                                 |
+| `PhysiologicalTactileSystem` sensitivity | 18 部位觸覺地圖                                                                                | 有 sensitivity 機制 ✅        | 低：可復用                                 |
+| 強度分級                                 | 輕度/中度/強度/持續                                                                            | 無 tickle 強度分級            | 高：S7 需實作                              |
+| 安全邊界（5層）                          | Output Mode Gating / Reflex Lock / Content Filter / Sustained Stimulus Guard / Behavioral Lock | 無 Phase 2 輸出校驗           | 高：S7 需實作                              |
+| `tickle_config.yaml`                     | 獨立安全配置                                                                                   | 檔案不存在                    | 高：S7 需建立 + S1 ConfigLoader 需支援讀取 |
+| LLM 延遲觸發                             | Phase 2 延遲 300ms                                                                             | 無 LLM 延遲機制               | 高：依賴 S3 LLMManager 延遲介面            |
+| 8D 座標「被侵犯」值                      | γ軸「被侵犯」飆升                                                                              | 無「被侵犯」映射              | 中：需在 anchor_rules.yaml 定義            |
+| `EgoGuard` Phase 2 校驗                  | LLM 輸出不得與 Phase 1 矛盾                                                                    | EgoGuard 存在但無 tickle 校驗 | 中：S7 需擴展                              |
 
 ### 7.4 強度分級
 
-| 強度 | 數值範圍 | Phase 1 反應 | Phase 2 LLM 提示 |
-|------|---------|-------------|-----------------|
-| **輕度** | 0.0-0.25 | 輕微抖動、嘴角上揚 | 輕笑、禮貌性躲避 |
-| **中度** | 0.25-0.60 | 肢體扭動、笑出聲、短暫躲避意圖 | 邊笑邊說「住手」、適度推開 |
-| **強度** | 0.60-1.0 | 狂笑、踢腿、尖叫姿勢、肢體激烈扭動 | 尖叫/求饒姿勢、LLM 語言鎖定為「救命」 |
-| **持續** | >2秒 | 反射進入過度刺激狀態，γ軸「被侵犯」飆升 | 安全協議觸發，自動擁抱/尋求安慰 |
+| 強度     | 數值範圍  | Phase 1 反應                            | Phase 2 LLM 提示                      |
+| -------- | --------- | --------------------------------------- | ------------------------------------- |
+| **輕度** | 0.0-0.25  | 輕微抖動、嘴角上揚                      | 輕笑、禮貌性躲避                      |
+| **中度** | 0.25-0.60 | 肢體扭動、笑出聲、短暫躲避意圖          | 邊笑邊說「住手」、適度推開            |
+| **強度** | 0.60-1.0  | 狂笑、踢腿、尖叫姿勢、肢體激烈扭動      | 尖叫/求饒姿勢、LLM 語言鎖定為「救命」 |
+| **持續** | >2秒      | 反射進入過度刺激狀態，γ軸「被侵犯」飆升 | 安全協議觸發，自動擁抱/尋求安慰       |
 
 ### 7.5 CerebellumEngine 觸發介面（需新增）
 
@@ -658,26 +664,26 @@ reflex_responses:
     body_parts:
       abdomen:
         sensitivity: 0.9
-        reflex_type: "giggle_twitch"
+        reflex_type: 'giggle_twitch'
         # allowed_responses：此 body_part 的 Phase 2 允許的回應類型（非唯一限制）
-        allowed_responses: ["giggle", "laugh", "squirm", "plead"]
+        allowed_responses: ['giggle', 'laugh', 'squirm', 'plead']
         llm_delay_ms: 250
       feet:
         sensitivity: 0.8
-        reflex_type: "foot_kick"
-        allowed_responses: ["laughing", "squirm"]
+        reflex_type: 'foot_kick'
+        allowed_responses: ['laughing', 'squirm']
         llm_delay_ms: 300
       # ... 其他部位
 
     sensitive_parts:
       # 祇能觸發 Phase 1，Phase 2 受限（安全邊界）
-      - "chest"
-      - "shoulders"
+      - 'chest'
+      - 'shoulders'
 
     safety:
-      intense_output_mode: "scream"    # intensity >= 0.8 時，限制 LLM 輸出模式
-      sustained_action: "comfort_seek"  # > 5s 持續刺激，觸發安全行爲
-      max_llm_words: 20                 # 強度模式下 LLM 輸出長度上限（非唯一列表）
+      intense_output_mode: 'scream' # intensity >= 0.8 時，限制 LLM 輸出模式
+      sustained_action: 'comfort_seek' # > 5s 持續刺激，觸發安全行爲
+      max_llm_words: 20 # 強度模式下 LLM 輸出長度上限（非唯一列表）
 ```
 
 ### 7.8 前端接口
@@ -743,20 +749,20 @@ S7（小腦反射）── 需交付：CerebellumEngine.trigger_tickle() + tickl
 
 ### 跨-S 缺口追蹤表
 
-| 缺口ID | 缺口描述 | 影響S | 根因S | 解決方案 |
-|--------|---------|-------|-------|---------|
-| G1 | ConfigLoader 無熱重載 | S1 | S1 | S1 實作 watch_config() |
-| G2 | ConfigLoader 無多檔案讀取框架 | S1 | S1 | S1 實作多配置檔讀取 |
-| G3 | ConfigLoader 無 merge_config() | S5, S7 | S5 | S5 實作（MD 原文漏標） |
-| G4 | anchor_rules.yaml 不存在 | S1, S5 | S1 | S1 建立（解決 P2.2 退化） |
-| G5 | CerebellumEngine 無 trigger_tickle() | S7 | S7 | S7 新增（MD 原文寫「擴展」但方法不存在） |
-| G6 | LLMManager 無延遲觸發介面 | S7 | S3 | S3 實作（MD 原文未標注） |
-| G7 | EgoGuard 無 tickle Phase 2 校驗 | S7 | S7 | S7 擴展 |
-| G8 | γ軸「被侵犯」映射不存在 | S7 | S7 | S7 寫入 anchor_rules.yaml |
-| G9 | tickle_config.yaml 不存在 | S7 | S1 | S1 建立（或 S7 建立，S1 需能讀取） |
-| G10 | ModelStatsTracker 不存在 | S3 | S3 | S3 實作 |
-| G11 | AnchorLearningEngine 無 suggest_config_update() | S5 | S5 | S5 實作（MD 原文漏標） |
-| G12 | 8D 座標未注入 prompt | S5 | S1 | S1 建立 anchor_rules.yaml + S5 實作解讀 |
+| 缺口ID | 缺口描述                                        | 影響S  | 根因S | 解決方案                                 |
+| ------ | ----------------------------------------------- | ------ | ----- | ---------------------------------------- |
+| G1     | ConfigLoader 無熱重載                           | S1     | S1    | S1 實作 watch_config()                   |
+| G2     | ConfigLoader 無多檔案讀取框架                   | S1     | S1    | S1 實作多配置檔讀取                      |
+| G3     | ConfigLoader 無 merge_config()                  | S5, S7 | S5    | S5 實作（MD 原文漏標）                   |
+| G4     | anchor_rules.yaml 不存在                        | S1, S5 | S1    | S1 建立（解決 P2.2 退化）                |
+| G5     | CerebellumEngine 無 trigger_tickle()            | S7     | S7    | S7 新增（MD 原文寫「擴展」但方法不存在） |
+| G6     | LLMManager 無延遲觸發介面                       | S7     | S3    | S3 實作（MD 原文未標注）                 |
+| G7     | EgoGuard 無 tickle Phase 2 校驗                 | S7     | S7    | S7 擴展                                  |
+| G8     | γ軸「被侵犯」映射不存在                         | S7     | S7    | S7 寫入 anchor_rules.yaml                |
+| G9     | tickle_config.yaml 不存在                       | S7     | S1    | S1 建立（或 S7 建立，S1 需能讀取）       |
+| G10    | ModelStatsTracker 不存在                        | S3     | S3    | S3 實作                                  |
+| G11    | AnchorLearningEngine 無 suggest_config_update() | S5     | S5    | S5 實作（MD 原文漏標）                   |
+| G12    | 8D 座標未注入 prompt                            | S5     | S1    | S1 建立 anchor_rules.yaml + S5 實作解讀  |
 
 ---
 
@@ -765,6 +771,7 @@ S7（小腦反射）── 需交付：CerebellumEngine.trigger_tickle() + tickl
 ### 問題定義
 
 在任務實作過程中，常見一種錯誤模式：
+
 ```
 用戶在對話中給出釋例（說明某種行為/輸出不該怎樣）
 → 實現者把釋例直接寫成代碼邏輯（祇能輸出這些釋例）
@@ -773,23 +780,23 @@ S7（小腦反射）── 需交付：CerebellumEngine.trigger_tickle() + tickl
 
 ### 歷史錯誤模式案例
 
-| 錯誤類型 | 釋例 | 錯誤實現 | 正確實現 |
-|---------|------|---------|---------|
-| 將防呆釋例寫成祗能輸出的代碼 | 「不要輸出 哈哈哈」 | `if response == "哈哈哈": block` | 通用安全校驗 + 內容過濾 |
-| 將行爲描述寫成狀態枚舉 | 「輕輕戳一下瘋狂輸出」 | `if tickle_intensity < 0.25: output = "哈哈哈"` | 通用 Phase 1/2 分離 + 強度分級 |
-| 將安全邊界寫成簡單判斷 | 「LLM 不能表演變態」 | `if "變態" in response: block` | 5 層安全邊界（配置驅動） |
-| 將意圖識別寫成關鍵字枚舉 | 「擁抱但 LLM 口述表演」 | `if "抱" in msg: output = "Angela 給出了一個懷抱"` | 通用意圖識別 + 真正行爲執行 |
-| 將攻擊防範寫成正則枚舉 | 「禁用 eval, Function」 | `dangerousPatterns = [/\\beval\\b/, ...]` | sandbox 環境 + API 訪問限制（SEC-2 修復） |
+| 錯誤類型                     | 釋例                    | 錯誤實現                                           | 正確實現                                  |
+| ---------------------------- | ----------------------- | -------------------------------------------------- | ----------------------------------------- |
+| 將防呆釋例寫成祗能輸出的代碼 | 「不要輸出 哈哈哈」     | `if response == "哈哈哈": block`                   | 通用安全校驗 + 內容過濾                   |
+| 將行爲描述寫成狀態枚舉       | 「輕輕戳一下瘋狂輸出」  | `if tickle_intensity < 0.25: output = "哈哈哈"`    | 通用 Phase 1/2 分離 + 強度分級            |
+| 將安全邊界寫成簡單判斷       | 「LLM 不能表演變態」    | `if "變態" in response: block`                     | 5 層安全邊界（配置驅動）                  |
+| 將意圖識別寫成關鍵字枚舉     | 「擁抱但 LLM 口述表演」 | `if "抱" in msg: output = "Angela 給出了一個懷抱"` | 通用意圖識別 + 真正行爲執行               |
+| 將攻擊防範寫成正則枚舉       | 「禁用 eval, Function」 | `dangerousPatterns = [/\\beval\\b/, ...]`          | sandbox 環境 + API 訪問限制（SEC-2 修復） |
 
 ### 已發現的歷史問題（來自舊 MD 審計）
 
-| MD 文件 | 問題 | 狀態 |
-|---------|------|------|
-| `ANGELA_FIX_ANALYSIS.md` SEC-2 | 原修復方案將安全限制寫成 `dangerousPatterns` 正則枚舉 | ✅ 已推翻（調整後用 sandbox） |
+| MD 文件                           | 問題                                                                                         | 狀態                                                |
+| --------------------------------- | -------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| `ANGELA_FIX_ANALYSIS.md` SEC-2    | 原修復方案將安全限制寫成 `dangerousPatterns` 正則枚舉                                        | ✅ 已推翻（調整後用 sandbox）                       |
 | `ANGELA_V6.3_C串線行動計劃.md` S7 | `allowed_responses: ["giggle", "laugh", "squirm", "plead"]` 可能成為「祇能輸出這些字」的硬編 | ⚠️ 需在 S7 實現時確保為「允許列表」而非「唯一列表」 |
-| `ANGELA_V6.3_C串線行動計劃.md` S7 | `max_llm_words: 20` — 可能被錯誤理解為「20 字內隨機輸出」而非「長度限制」 | ⚠️ 需在 S7 實現時明確定義 |
-| `emotion-system.md` | 文檔說「simple keyword matching」但実装更複雜 | ⚠️ 文檔與實現不符 |
-| `web-search-tool.md` | 文檔說「DuckDuckGo + BeautifulSoup」 | ✅ 實現與文檔一致（正當） |
+| `ANGELA_V6.3_C串線行動計劃.md` S7 | `max_llm_words: 20` — 可能被錯誤理解為「20 字內隨機輸出」而非「長度限制」                    | ⚠️ 需在 S7 實現時明確定義                           |
+| `emotion-system.md`               | 文檔說「simple keyword matching」但実装更複雜                                                | ⚠️ 文檔與實現不符                                   |
+| `web-search-tool.md`              | 文檔說「DuckDuckGo + BeautifulSoup」                                                         | ✅ 實現與文檔一致（正當）                           |
 
 ### 預防原則
 
@@ -832,39 +839,39 @@ S7（小腦反射）── 需交付：CerebellumEngine.trigger_tickle() + tickl
 
 ### 11.1 審計結果：Stub / Mock / Test / Simulation 組件
 
-| 檔案 | 組件類型 | 用途 | 狀態 | 行動 |
-|------|---------|------|------|------|
-| `core/autonomous/evolution_engine.py` | **Stub** | 修復 B17 RuntimeError | ⚠️ 46行，無實際演化邏輯 | S5 學習閉環時擴展 |
-| `ai/learning/fact_extractor_module.py:96` | `MockLLM` | 測試用 mock | ✅ 測試專用，無需行動 | 保持 |
-| `ai/learning/content_analyzer_module.py:239` | `MockSpan` | 測試用 mock | ✅ 測試專用，無需行動 | 保持 |
-| `core/autonomous/live2d_avatar_generator.py:1143` | `MockImageGenerator` | 測試用 mock | ✅ 測試專用，無需行動 | 保持 |
-| `ai/lifecycle/llm_decision_loop.py:620-644` | `MockLLMService/MockResponse/MockStateManager/MockMemoryManager` | 測試 suite | ✅ 測試專用，無需行動 | 保持 |
-| `core/mode_switcher.py:345` | `MockAngela` | 測試用 mock | ✅ 測試專用，無需行動 | 保持 |
-| `core/real_time_monitor.py:229,727` | **Stub** | `get_mouse_position()` / `get_active_window()` — platform specific | ✅ 已標注 | 保持（Windows 實現缺失，但非核心） |
-| `search/search_engine.py:12` | `MockHfApi` | 測試用 mock | ✅ 測試專用，無需行動 | 保持 |
-| `mcp/connector.py:53` | `MockMQTTClient` | 測試用 mock | ✅ 測試專用，無需行動 | 保持 |
-| `core/managers/agent_collaboration_manager.py:314` | `MockAgentManager/MockHSPConnector` | 測試用 mock | ✅ 測試專用，無需行動 | 保持 |
-| `ai/alignment/adversarial_generation_system.py:30` | `TestIntensity/TestResult` | 對抗測試 | ✅ 測試專用，無需行動 | 保持 |
-| `ai/lifecycle/proactive_interaction_system.py:518` | `MockLLMService/MockStateManager/MockMemoryManager` | 測試 suite | ✅ 測試專用，無需行動 | 保持 |
-| `ai/lifecycle/memory_integration_loop.py:391` | `MockMemoryManager/MockLearningEngine` | 測試 suite | ✅ 測試專用，無需行動 | 保持 |
-| `ai/lifecycle/behavior_feedback_loop.py:424` | `MockLLMService/MockMemoryManager/MockLearningEngine` | 測試 suite | ✅ 測試專用，無需行動 | 保持 |
-| `system/cluster_manager.py:25` | **Stub** | 防止 `ModuleNotFoundError`，優雅降級 | ✅ 測試/沙盒環境專用 | 保持 |
-| `core/tools/code_understanding_tool.py:10` | **Stub** | 修復文件損壞恢復 | ✅ 已標注 | 保持 |
-| `services/ai_editor.py:22` | `SandboxExecutor` | 代碼執行沙盒 | ✅ 正式功能，非測試 | 保持 |
-| `services/ai_editor_config.py:35` | `SandboxConfig` | 沙盒配置 | ✅ 正式功能 | 保持 |
-| `ai/world_model/environment_simulator.py:72` | `EnvironmentSimulator` | 環境模擬器 | ✅ 正式功能 | 保持 |
-| `core/config_loader.py:164` | `test_mode` | 配置級測試模式 | ✅ 正式功能 | 保持 |
-| `core/hsp/security.py:86,166` | `TESTING_MODE` env var | 安全測試繞過 | ⚠️ 測試專用，但有 env flag | S6 端到端時移除測試 flag |
+| 檔案                                               | 組件類型                                                         | 用途                                                               | 狀態                       | 行動                               |
+| -------------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------ | -------------------------- | ---------------------------------- |
+| `core/autonomous/evolution_engine.py`              | **Stub**                                                         | 修復 B17 RuntimeError                                              | ⚠️ 46行，無實際演化邏輯    | S5 學習閉環時擴展                  |
+| `ai/learning/fact_extractor_module.py:96`          | `MockLLM`                                                        | 測試用 mock                                                        | ✅ 測試專用，無需行動      | 保持                               |
+| `ai/learning/content_analyzer_module.py:239`       | `MockSpan`                                                       | 測試用 mock                                                        | ✅ 測試專用，無需行動      | 保持                               |
+| `core/autonomous/live2d_avatar_generator.py:1143`  | `MockImageGenerator`                                             | 測試用 mock                                                        | ✅ 測試專用，無需行動      | 保持                               |
+| `ai/lifecycle/llm_decision_loop.py:620-644`        | `MockLLMService/MockResponse/MockStateManager/MockMemoryManager` | 測試 suite                                                         | ✅ 測試專用，無需行動      | 保持                               |
+| `core/mode_switcher.py:345`                        | `MockAngela`                                                     | 測試用 mock                                                        | ✅ 測試專用，無需行動      | 保持                               |
+| `core/real_time_monitor.py:229,727`                | **Stub**                                                         | `get_mouse_position()` / `get_active_window()` — platform specific | ✅ 已標注                  | 保持（Windows 實現缺失，但非核心） |
+| `search/search_engine.py:12`                       | `MockHfApi`                                                      | 測試用 mock                                                        | ✅ 測試專用，無需行動      | 保持                               |
+| `mcp/connector.py:53`                              | `MockMQTTClient`                                                 | 測試用 mock                                                        | ✅ 測試專用，無需行動      | 保持                               |
+| `core/managers/agent_collaboration_manager.py:314` | `MockAgentManager/MockHSPConnector`                              | 測試用 mock                                                        | ✅ 測試專用，無需行動      | 保持                               |
+| `ai/alignment/adversarial_generation_system.py:30` | `TestIntensity/TestResult`                                       | 對抗測試                                                           | ✅ 測試專用，無需行動      | 保持                               |
+| `ai/lifecycle/proactive_interaction_system.py:518` | `MockLLMService/MockStateManager/MockMemoryManager`              | 測試 suite                                                         | ✅ 測試專用，無需行動      | 保持                               |
+| `ai/lifecycle/memory_integration_loop.py:391`      | `MockMemoryManager/MockLearningEngine`                           | 測試 suite                                                         | ✅ 測試專用，無需行動      | 保持                               |
+| `ai/lifecycle/behavior_feedback_loop.py:424`       | `MockLLMService/MockMemoryManager/MockLearningEngine`            | 測試 suite                                                         | ✅ 測試專用，無需行動      | 保持                               |
+| `system/cluster_manager.py:25`                     | **Stub**                                                         | 防止 `ModuleNotFoundError`，優雅降級                               | ✅ 測試/沙盒環境專用       | 保持                               |
+| `core/tools/code_understanding_tool.py:10`         | **Stub**                                                         | 修復文件損壞恢復                                                   | ✅ 已標注                  | 保持                               |
+| `services/ai_editor.py:22`                         | `SandboxExecutor`                                                | 代碼執行沙盒                                                       | ✅ 正式功能，非測試        | 保持                               |
+| `services/ai_editor_config.py:35`                  | `SandboxConfig`                                                  | 沙盒配置                                                           | ✅ 正式功能                | 保持                               |
+| `ai/world_model/environment_simulator.py:72`       | `EnvironmentSimulator`                                           | 環境模擬器                                                         | ✅ 正式功能                | 保持                               |
+| `core/config_loader.py:164`                        | `test_mode`                                                      | 配置級測試模式                                                     | ✅ 正式功能                | 保持                               |
+| `core/hsp/security.py:86,166`                      | `TESTING_MODE` env var                                           | 安全測試繞過                                                       | ⚠️ 測試專用，但有 env flag | S6 端到端時移除測試 flag           |
 
 ### 11.2 工程化缺口
 
-| 缺口 | 位置 | 風險 | 行動 |
-|------|------|------|------|
-| `EvolutionEngine` 無實際演化邏輯 | `core/autonomous/evolution_engine.py` | 高：被 `ChatService` 依賴但只有 stub | S5 學習閉環時擴展 |
-| `MultiLLMAdapter` 是 stub | `services/adapters/multi_llm_adapter.py` | 高：LLM 管理核心 | S3 LLM 管理替換 |
-| `RAGManager` 未接線 | `ai/rag/rag_manager.py` | 中：功能完整但閒置 | S2 意圖擴展時評估 |
-| `PlanningAgent` 零引用 | `ai/agents/specialized/planning_agent.py` | 低：已標注 deprecate | 觀察 |
-| `AlignedCreativeWritingAgent` 未接線 | `ai/agents/examples/` | 低：examples 目的 | 觀察 |
+| 缺口                                 | 位置                                      | 風險                                 | 行動              |
+| ------------------------------------ | ----------------------------------------- | ------------------------------------ | ----------------- |
+| `EvolutionEngine` 無實際演化邏輯     | `core/autonomous/evolution_engine.py`     | 高：被 `ChatService` 依賴但只有 stub | S5 學習閉環時擴展 |
+| `MultiLLMAdapter` 是 stub            | `services/adapters/multi_llm_adapter.py`  | 高：LLM 管理核心                     | S3 LLM 管理替換   |
+| `RAGManager` 未接線                  | `ai/rag/rag_manager.py`                   | 中：功能完整但閒置                   | S2 意圖擴展時評估 |
+| `PlanningAgent` 零引用               | `ai/agents/specialized/planning_agent.py` | 低：已標注 deprecate                 | 觀察              |
+| `AlignedCreativeWritingAgent` 未接線 | `ai/agents/examples/`                     | 低：examples 目的                    | 觀察              |
 
 ### 11.3 嚴謹化原則
 
@@ -889,27 +896,26 @@ S7（小腦反射）── 需交付：CerebellumEngine.trigger_tickle() + tickl
 
 以下 MD 中描述的功能在實現時祇是「複製範例值」而非「真正實現」：
 
-| MD描述 | 實現方式 | 問題 |
-|--------|---------|------|
-| `anchor_rules.yaml` 解讀為「動態生成」 | 檔案根本不存在 | MD 說了等於沒說 |
-| `CerebellumEngine.trigger_tickle()` | 標注「擴展」但方法不存在 | S7 需新增而非擴展 |
-| `LLMManager` 追蹤成功率 | 無統計機制 | S3 需實作 |
-| `ConfigLoader.merge_config()` | 無此方法 | S5 需實作 |
-| `AnchorLearningEngine.suggest_config_update()` | 無此方法 | S5 需實作 |
-| 8D 座標注入 prompt | 祇計算不注入 | P2.2 退化，需 S1 anchor_rules + S5 解讀 |
+| MD描述                                         | 實現方式                 | 問題                                    |
+| ---------------------------------------------- | ------------------------ | --------------------------------------- |
+| `anchor_rules.yaml` 解讀為「動態生成」         | 檔案根本不存在           | MD 說了等於沒說                         |
+| `CerebellumEngine.trigger_tickle()`            | 標注「擴展」但方法不存在 | S7 需新增而非擴展                       |
+| `LLMManager` 追蹤成功率                        | 無統計機制               | S3 需實作                               |
+| `ConfigLoader.merge_config()`                  | 無此方法                 | S5 需實作                               |
+| `AnchorLearningEngine.suggest_config_update()` | 無此方法                 | S5 需實作                               |
+| 8D 座標注入 prompt                             | 祇計算不注入             | P2.2 退化，需 S1 anchor_rules + S5 解讀 |
 
 ---
 
 ## 十二、版本追蹤
 
-| 版本 | 日期 | 變更 |
-|------|------|------|
-| 6.2.5 | 2026-05-17 | P0/P1/P2 完成，B4-B17 修復，Execution layer 未串線 |
-| 6.3.0 | 2026-05-17 | S1-S6 串線計劃，建立本 MD |
+| 版本  | 日期       | 變更                                                                |
+| ----- | ---------- | ------------------------------------------------------------------- |
+| 6.2.5 | 2026-05-17 | P0/P1/P2 完成，B4-B17 修復，Execution layer 未串線                  |
+| 6.3.0 | 2026-05-17 | S1-S6 串線計劃，建立本 MD                                           |
 | 6.3.1 | 2026-05-17 | 追加 S7 小腦反射、跨-S 缺口追蹤矩陣（G1-G12）、MD示例審計、雙層配置 |
 
 ---
 
-*Version: 6.3.1*
-*Status: Planning*
-*Next: S1 配置層 — 建立 YAML + ConfigLoader 熱重載 + 多檔案讀取框架*
+_Version: 6.3.1_ _Status: Planning_ _Next: S1 配置層 — 建立 YAML +
+ConfigLoader 熱重載 + 多檔案讀取框架_

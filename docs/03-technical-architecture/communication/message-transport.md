@@ -12,7 +12,8 @@ are used to create HTTP servers:
 - **Flask:** A lightweight web framework for Python.
 - **FastAPI:** A modern, fast (high-performance) web framework for Python.
 
-The main API server is located in `apps/backend/src/services/main_api_server.py`.
+The main API server is located in
+`apps/backend/src/services/main_api_server.py`.
 
 ## MQTT
 
@@ -23,19 +24,20 @@ communicate with an MQTT broker.
 
 The HSP implementation is located in the `apps/backend/src/hsp/` directory.
 
-
-
 ## Standard Input/Output
 
-The command-line interface (CLI) in `packages/cli/main.py` uses standard
-input and output to communicate with the user.
+The command-line interface (CLI) in `packages/cli/main.py` uses standard input
+and output to communicate with the user.
 
 ## Fallback Protocol System
 
 ### Overview
-To address the error handling and reliability issues mentioned above, we have implemented a comprehensive fallback protocol system.
+
+To address the error handling and reliability issues mentioned above, we have
+implemented a comprehensive fallback protocol system.
 
 ### Protocol Architecture
+
 ```
 ┌─────────────┐    失敗    ┌─────────────┐
 │ MQTT (HSP)  │ ────────→  │ HTTP協議    │
@@ -53,6 +55,7 @@ To address the error handling and reliability issues mentioned above, we have im
 ```
 
 ### Error Handling Improvements
+
 - ✅ Automatic failure detection and protocol switching
 - ✅ Connection retry with exponential backoff
 - ✅ Message retransmission and deduplication
@@ -89,6 +92,7 @@ the messages and learn sensitive information about the AI.
 Communication security has been improved with the fallback system:
 
 **Implemented Features:**
+
 - ✅ Message integrity verification
 - ✅ Secure protocol selection
 - 🔄 Planned: TLS encryption for all protocols
@@ -99,11 +103,13 @@ Communication security has been improved with the fallback system:
 The fallback protocol system improves scalability:
 
 **Implemented Features:**
+
 - ✅ Multi-protocol load distribution
 - ✅ Dynamic protocol selection based on load
 - ✅ Configuration-driven protocol management
 - ✅ Horizontal scaling support through HTTP protocol
 
 **Future Recommendations:**
+
 - Use more scalable message brokers (RabbitMQ, Kafka) as additional protocols
 - Implement advanced load balancing across protocol instances

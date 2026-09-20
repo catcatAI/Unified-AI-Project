@@ -1,4 +1,4 @@
-const path = require('path');
+const path = require('path')
 
 module.exports = {
   mode: 'production',
@@ -8,14 +8,13 @@ module.exports = {
     filename: 'live2dcubismframework.bundle.js',
     library: 'Live2DCubismFramework',
     libraryTarget: 'umd',
-    globalObject: 'this'
+    globalObject: 'this',
   },
   resolve: {
     extensions: ['.js', '.ts'],
     alias: {
-      '@': path.resolve(__dirname, 'src')
-    }
+      '@': path.resolve(__dirname, 'src'),
+    },
   },
-  externals: {
-  }
-};
+  externals: {},
+}

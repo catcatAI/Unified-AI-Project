@@ -1,6 +1,7 @@
 # Implementation Reports Index
 
-This index summarizes the key implementation reports under this directory and links to their content.
+This index summarizes the key implementation reports under this directory and
+links to their content.
 
 ## Key Reports (Highlights)
 
@@ -20,10 +21,12 @@ This index summarizes the key implementation reports under this directory and li
   - Summary: Rovo Dev integration results and lessons learned.
 
 ## Also Indexed (from code/docs root)
+
 - Unified-AI-Project/Documentation_Update_Status.md
 - Unified-AI-Project/TODO_ANALYSIS.md
 
 ## Usage
+
 - Treat this directory as an archive of point-in-time analyses.
 - Start from the highlights above, then drill down into specific reports.
 - Cross-reference with planning-docs/STATUS_AND_ACTIONS.md for current actions.

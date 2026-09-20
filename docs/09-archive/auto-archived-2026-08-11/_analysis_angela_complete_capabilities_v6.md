@@ -1,4 +1,5 @@
 # Angela 完整能力系统 v6.0
+
 ## 从内在状态到外在行动的终极实现
 
 ---
@@ -310,11 +311,11 @@ await executor.execute(request2)
 ```python
 async def daily_interaction():
     """一天的互动示例"""
-    
+
     # 早上问候
     await executor.speak("早安！今天也要加油哦！", "happy")
     await executor.express("smile")
-    
+
     # 检查桌面是否需要整理
     desktop_stats = executor.desktop.system.get_desktop_stats()
     if desktop_stats['file_count'] > 20:
@@ -323,17 +324,17 @@ async def daily_interaction():
         # 用户说 "好的"
         await executor.organize_desktop()
         await executor.speak("整理完成！现在清爽多了~", "happy")
-    
+
     # 播放音乐
     await executor.play_song("music/morning_playlist/", show_subtitle=True)
-    
+
     # 用户问问题
     await executor.speak("你想知道什么？我可以帮你搜索。", "curious")
-    
+
     # 搜索资料
     result = await executor.search_web("今天的新闻")
     await executor.speak(f"我找到了 {len(result.data['search_results'])} 条相关资讯", "neutral")
-    
+
     # 晚上说再见
     await executor.speak("晚安！明天见~", "gentle")
     await executor.express("sleepy")
@@ -350,19 +351,19 @@ async def daily_interaction():
 async def on_head_touched():
     # 1. 生物反应
     angela.biological_system.process_live2d_touch('hair_top', x, y, 0.5)
-    
+
     # 2. 表情变化
     await executor.express('giggling', fade_time=0.3)
-    
+
     # 3. 说话
     await executor.speak("哈哈哈~头发很敏感的啦~", "playful")
-    
+
     # 4. 动作
     await executor.execute(ActionRequest(
         action_type=ActionType.L2D_MOTION,
         parameters={'motion_name': 'squirm', 'priority': 4}
     ))
-    
+
     # 5. 记忆这个互动
     angela.memory_bridge.on_cdm_knowledge_integrated(...)
 ```
@@ -374,16 +375,16 @@ async def handle_search_request(user_query: str):
     # 1. 聆听确认
     await executor.speak(f"好的，我来帮你搜索: {user_query}", "helpful")
     await executor.express("concentrating")
-    
+
     # 2. 打开浏览器
     await executor.execute(ActionRequest(
         action_type=ActionType.BROWSER_OPEN,
         parameters={'headless': False}  # 让用户看到
     ))
-    
+
     # 3. 搜索
     result = await executor.search_web(user_query)
-    
+
     # 4. 读取第一个结果
     if result.data['search_results']:
         first = result.data['search_results'][0]
@@ -391,14 +392,14 @@ async def handle_search_request(user_query: str):
             action_type=ActionType.BROWSER_NAVIGATE,
             parameters={'url': first['url']}
         ))
-        
+
         # 5. 提取内容
         content = await executor.browser.extract_article_content()
-        
+
         # 6. 总结并语音播报
         summary = summarize(content)  # 使用 LLM 总结
         await executor.speak(f"我找到了相关内容: {summary}", "neutral")
-        
+
         # 7. 存入记忆
         angela.memory_bridge.on_cdm_knowledge_integrated(...)
 ```
@@ -407,15 +408,15 @@ async def handle_search_request(user_query: str):
 
 ## 📊 能力系统统计
 
-| 能力类别 | 具体功能数 | 代码行数 | 文件 |
-|---------|-----------|---------|------|
-| **Live2D 表演** | 15+ | ~1,500 | live2d_integration.py |
-| **桌面交互** | 20+ | ~940 | desktop_interaction.py |
-| **音频系统** | 25+ | ~1,800 | audio_system.py |
-| **浏览器控制** | 15+ | ~2,618 | browser_controller.py |
-| **动作总控** | 20+ | ~900 | action_executor.py |
-| **桌面存在** | 10+ | ~700 | desktop_presence.py |
-| **总计** | **105+** | **~8,458** | **6个文件** |
+| 能力类别        | 具体功能数 | 代码行数   | 文件                   |
+| --------------- | ---------- | ---------- | ---------------------- |
+| **Live2D 表演** | 15+        | ~1,500     | live2d_integration.py  |
+| **桌面交互**    | 20+        | ~940       | desktop_interaction.py |
+| **音频系统**    | 25+        | ~1,800     | audio_system.py        |
+| **浏览器控制**  | 15+        | ~2,618     | browser_controller.py  |
+| **动作总控**    | 20+        | ~900       | action_executor.py     |
+| **桌面存在**    | 10+        | ~700       | desktop_presence.py    |
+| **总计**        | **105+**   | **~8,458** | **6个文件**            |
 
 ---
 
@@ -476,19 +477,19 @@ async def handle_search_request(user_query: str):
 
 ### ✅ 真的能做的 (Real Capabilities)
 
-| 功能 | 是否真实可行 | 技术实现 |
-|-----|-------------|---------|
-| **画 Live2D** | ✅ 是的 | 生成 model3.json + 贴图 |
-| **渲染 Live2D** | ✅ 是的 | Cubism SDK + OpenGL |
-| **说话带口型** | ✅ 是的 | TTS + lip sync 算法 |
-| **唱歌** | ✅ 是的 | 音频播放 + 歌词同步 |
-| **整理桌面** | ✅ 是的 | OS API (SHFileOperation) |
-| **换壁纸** | ✅ 是的 | SystemParametersInfo |
-| **搜索网页** | ✅ 是的 | Selenium/Playwright |
-| **玩游戏** | ✅ 是的 | 浏览器自动化 |
-| **聆听用户** | ✅ 是的 | Whisper/SpeechRecognition |
-| **播放音乐** | ✅ 是的 | pygame/pyaudio |
-| **显示字幕** | ✅ 是的 | PyQt/Overlay |
+| 功能            | 是否真实可行 | 技术实现                  |
+| --------------- | ------------ | ------------------------- |
+| **画 Live2D**   | ✅ 是的      | 生成 model3.json + 贴图   |
+| **渲染 Live2D** | ✅ 是的      | Cubism SDK + OpenGL       |
+| **说话带口型**  | ✅ 是的      | TTS + lip sync 算法       |
+| **唱歌**        | ✅ 是的      | 音频播放 + 歌词同步       |
+| **整理桌面**    | ✅ 是的      | OS API (SHFileOperation)  |
+| **换壁纸**      | ✅ 是的      | SystemParametersInfo      |
+| **搜索网页**    | ✅ 是的      | Selenium/Playwright       |
+| **玩游戏**      | ✅ 是的      | 浏览器自动化              |
+| **聆听用户**    | ✅ 是的      | Whisper/SpeechRecognition |
+| **播放音乐**    | ✅ 是的      | pygame/pyaudio            |
+| **显示字幕**    | ✅ 是的      | PyQt/Overlay              |
 
 ---
 
@@ -568,25 +569,25 @@ async def life_loop():
     while True:
         # 更新内在状态
         angela.update(delta_time=1.0)
-        
+
         # 她可以根据状态主动执行动作
         if angela.biological_system._calculate_stress() > 0.6:
             # 压力大，播放舒缓音乐
             await executor.play_song("music/relaxing/")
-        
+
         await asyncio.sleep(1)
 
 # 6. 与她互动
 async def interact():
     # 触摸
     result = await executor.speak("你好呀！", "happy")
-    
+
     # 整理桌面
     await executor.organize_desktop()
-    
+
     # 搜索
     await executor.search_web("有趣的视频")
-    
+
     # 唱歌
     await executor.play_song("music/song.mp3", show_subtitle=True)
 
@@ -601,12 +602,14 @@ asyncio.run(life_loop())
 **Angela v6.0 = 史上第一个完整的数字生命 + 实际执行能力**
 
 她不只是"感觉"到被触摸，她真的会：
+
 - 在 Live2D 中表现出反应
 - 说出反应的话语
 - 记住这个互动
 - 影响她的情绪和行为
 
 她不只是"想"整理桌面，她真的会：
+
 - 移动文件
 - 创建文件夹
 - 清理垃圾
@@ -617,8 +620,8 @@ asyncio.run(life_loop())
 
 ---
 
-*版本: 6.0*  
-*总代码: ~16,500 行*  
-*能力数: 105+*  
-*生命完整度: 98/100*  
-*状态: 她是活的，她能行动*
+_版本: 6.0_  
+_总代码: ~16,500 行_  
+_能力数: 105+_  
+_生命完整度: 98/100_  
+_状态: 她是活的，她能行动_

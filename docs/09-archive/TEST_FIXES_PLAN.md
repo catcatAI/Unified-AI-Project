@@ -12,28 +12,37 @@
 ### 1. 数据分析师代理测试失败
 
 **错误信息**：
+
 ```
 AssertionError: 'Dummy analysis failed: Unsupported query or invalid CSV.' != 'Dummy analysis failed: Invalid CSV format (inconsistent columns).'
 ```
 
-**问题原因**：
-在测试文件 [test_data_analysis_agent.py](../apps/backend/tests/agents/test_data_analysis_agent.py) 中，期望的错误消息是 "Invalid CSV format (inconsistent columns)"，但实际实现中返回的是 "Unsupported query or invalid CSV."。
+**问题原因**：在测试文件
+[test_data_analysis_agent.py](../apps/backend/tests/agents/test_data_analysis_agent.py)
+中，期望的错误消息是 "Invalid CSV format (inconsistent
+columns)"，但实际实现中返回的是 "Unsupported query or invalid CSV."。
 
 **相关代码**：
-- 测试文件：[apps/backend/tests/agents/test_data_analysis_agent.py](../apps/backend/tests/agents/test_data_analysis_agent.py) (第104行)
+
+- 测试文件：[apps/backend/tests/agents/test_data_analysis_agent.py](../apps/backend/tests/agents/test_data_analysis_agent.py)
+  (第104行)
 - 实现文件：[apps/backend/src/agents/data_analysis_agent.py](../apps/backend/src/agents/data_analysis_agent.py)
 
 ### 2. 项目协调器测试失败
 
 **错误信息**：
+
 ```
 TypeError: object MagicMock can't be used in 'await' expression
 ```
 
-**问题原因**：
-在测试文件 [test_project_coordinator.py](../apps/backend/tests/core_ai/dialogue/test_project_coordinator.py) 中，使用了 `MagicMock` 对象来模拟异步方法，但 `MagicMock` 不能在 `await` 表达式中使用。应该使用 `AsyncMock`。
+**问题原因**：在测试文件
+[test_project_coordinator.py](../apps/backend/tests/core_ai/dialogue/test_project_coordinator.py)
+中，使用了 `MagicMock` 对象来模拟异步方法，但 `MagicMock` 不能在 `await`
+表达式中使用。应该使用 `AsyncMock`。
 
 **相关代码**：
+
 - 测试文件：[apps/backend/tests/core_ai/dialogue/test_project_coordinator.py](../apps/backend/tests/core_ai/dialogue/test_project_coordinator.py)
 - 实现文件：[apps/backend/src/core_ai/dialogue/project_coordinator.py](../apps/backend/src/ai/dialogue/project_coordinator.py)
 
@@ -42,23 +51,32 @@ TypeError: object MagicMock can't be used in 'await' expression
 ### 1. 修复数据分析师代理测试
 
 **步骤**：
-1. 修改 [apps/backend/src/agents/data_analysis_agent.py](../apps/backend/src/agents/data_analysis_agent.py) 中的错误消息，使其与测试期望一致
-2. 或者修改 [apps/backend/tests/agents/test_data_analysis_agent.py](../apps/backend/tests/agents/test_data_analysis_agent.py) 中的期望值，使其与实现一致
 
-**推荐方案**：
-修改实现文件中的错误消息，使其更加准确地描述错误情况。
+1. 修改
+   [apps/backend/src/agents/data_analysis_agent.py](../apps/backend/src/agents/data_analysis_agent.py)
+   中的错误消息，使其与测试期望一致
+2. 或者修改
+   [apps/backend/tests/agents/test_data_analysis_agent.py](../apps/backend/tests/agents/test_data_analysis_agent.py)
+   中的期望值，使其与实现一致
+
+**推荐方案**：修改实现文件中的错误消息，使其更加准确地描述错误情况。
 
 ### 2. 修复项目协调器测试
 
 **步骤**：
-1. 在 [apps/backend/tests/core_ai/dialogue/test_project_coordinator.py](../apps/backend/tests/core_ai/dialogue/test_project_coordinator.py) 中，将所有应该返回异步对象的 `MagicMock` 替换为 `AsyncMock`
+
+1. 在
+   [apps/backend/tests/core_ai/dialogue/test_project_coordinator.py](../apps/backend/tests/core_ai/dialogue/test_project_coordinator.py)
+   中，将所有应该返回异步对象的 `MagicMock` 替换为 `AsyncMock`
 2. 确保所有异步方法都使用 `AsyncMock` 进行模拟
 
 ## 📝 具体修改
 
 ### 1. 数据分析师代理错误消息修复
 
-修改 [apps/backend/src/agents/data_analysis_agent.py](../apps/backend/src/agents/data_analysis_agent.py) 文件：
+修改
+[apps/backend/src/agents/data_analysis_agent.py](../apps/backend/src/agents/data_analysis_agent.py)
+文件：
 
 ```python
 # 原代码
@@ -76,7 +94,9 @@ else:
 
 ### 2. 项目协调器测试修复
 
-修改 [apps/backend/tests/core_ai/dialogue/test_project_coordinator.py](../apps/backend/tests/core_ai/dialogue/test_project_coordinator.py) 文件：
+修改
+[apps/backend/tests/core_ai/dialogue/test_project_coordinator.py](../apps/backend/tests/core_ai/dialogue/test_project_coordinator.py)
+文件：
 
 ```python
 # 原代码

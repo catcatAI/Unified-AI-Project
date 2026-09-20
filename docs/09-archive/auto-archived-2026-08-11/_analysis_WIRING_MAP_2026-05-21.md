@@ -4,16 +4,24 @@
 
 記錄整個專案中元件之間的呼叫、註冊、初始化關係，特別是隱晦的接線（模組層級代碼、間接依賴、背景執行緒）。
 
-> **⚠️ 過時警告（2026-05-30 審計）**: 此文件撰寫於 2026-05-21，其後 `main_api_server.py` 已從 ~1668 行重構至 314 行。約 30% 的具體宣告已過時。關鍵差異：
-> - Lifespan 已遷移至 `api/lifespan.py:168-237`（非 `main_api_server.py:341-395`）
-> - `_initialize_all_services()` → `initialize_all_services()` 在 `services/wiring.py:13`
+> **⚠️ 過時警告（2026-05-30 審計）**: 此文件撰寫於 2026-05-21，其後
+> `main_api_server.py`
+> 已從 ~1668 行重構至 314 行。約 30% 的具體宣告已過時。關鍵差異：
+>
+> - Lifespan 已遷移至 `api/lifespan.py:168-237`（非
+>   `main_api_server.py:341-395`）
+> - `_initialize_all_services()` → `initialize_all_services()` 在
+>   `services/wiring.py:13`
 > - `EncryptedCommunicationMiddleware` → `SignedCommunicationMiddleware`
 > - `resource_pool.py` 已不存在
 > - 7 個被標為「無呼叫者」的 factory 實際上已有生產呼叫者（見下方各節標註）
-> - `broadcast_state_updates()` 現在已在 `api/lifespan.py:225` 被 active create_task
+> - `broadcast_state_updates()` 現在已在 `api/lifespan.py:225` 被 active
+>   create_task
 > - `__all_` typo 在 `ai/trust/` 和 `ai/service_discovery/` 已修復
-> - **ModuleManager 已新增**（2026-05-30）: `core/system/module_manager/` 6 個源檔案 + 59 測試。Module IoC 容器，管理 `modules/` 目錄下的模組。
->   - `services/wiring.py` 新增 `initialize_module_manager()` (L122-138) — ModuleManager 啟動 + 模組註冊到 ServiceRegistry
+> - **ModuleManager 已新增**（2026-05-30）: `core/system/module_manager/`
+>   6 個源檔案 + 59 測試。Module IoC 容器，管理 `modules/` 目錄下的模組。
+>   - `services/wiring.py` 新增 `initialize_module_manager()` (L122-138) —
+>     ModuleManager 啟動 + 模組註冊到 ServiceRegistry
 >   - M0 核心: scanner, resolver, lifecycle, events, models
 >   - M1 模組: `modules/card_pipeline/` — CardImportPipeline 包裝
 >   - M2 模組: `modules/intent_registry/` — IntentRegistry 包裝
@@ -70,35 +78,28 @@ Middleware (in main_api_server.py):
 │
 └── (App A: main.py uses lifespan=lifespan + SignedCommunicationMiddleware + CORSMiddleware)
 ```
+
 ```
 
 ### 1.2 `main.py` (`apps/backend/`) — 系統管理伺服器
 
 ```
-lifespan (lines 82-178, @asynccontextmanager)
-├── Startup:
-│   ├── SystemManager.initialize()
-│   ├── BootstrapManager.run_full_bootstrap()
-│   │   ├── scaffold_directories()        ← EnvResolver
-│   │   ├── 硬體探測 (HardwareProbe)
-│   │   └── persist_state(system_status.json)
-│   ├── ClusterManager (MASTER node)
-│   ├── SyncManager
-│   │   └── register_callback(broadcast_to_clients)  ← WebSocket hook
-│   ├── UnifiedKnowledgeGraph.initialize()
-│   ├── EnterpriseMonitor.start()
-│   └── PetManager.broadcast_callback = broadcast_to_clients
-├── yield
-└── Shutdown:
-    ├── EnterpriseMonitor.stop()
-    └── SystemManager.shutdown()
 
-Router registrations (inside create_app()):
-└── app.include_router(router)  ← 與 main_api_server.py 相同的共用路由
+lifespan (lines 82-178, @asynccontextmanager) ├── Startup: │ ├──
+SystemManager.initialize() │ ├── BootstrapManager.run_full_bootstrap() │ │ ├──
+scaffold_directories() ← EnvResolver │ │ ├── 硬體探測 (HardwareProbe) │ │ └──
+persist_state(system_status.json) │ ├── ClusterManager (MASTER node) │ ├──
+SyncManager │ │ └── register_callback(broadcast_to_clients) ← WebSocket hook │
+├── UnifiedKnowledgeGraph.initialize() │ ├── EnterpriseMonitor.start() │ └──
+PetManager.broadcast_callback = broadcast_to_clients ├── yield └── Shutdown: ├──
+EnterpriseMonitor.stop() └── SystemManager.shutdown()
 
-Middleware:
-├── EncryptedCommunicationMiddleware (KeyB)
-└── CORSMiddleware (硬編碼 ["*"])
+Router registrations (inside create_app()): └── app.include_router(router)
+← 與 main_api_server.py 相同的共用路由
+
+Middleware: ├── EncryptedCommunicationMiddleware (KeyB) └── CORSMiddleware
+(硬編碼 ["*"])
+
 ```
 
 ### 1.3 關鍵差異
@@ -115,31 +116,29 @@ Middleware:
 ### 1.4 ModuleManager 接線（2026-05-30 新增）
 
 ```
-services/wiring.py
-├── initialize_module_manager()  (L122-138, async)
-│   ├── 建立 ModuleManager (scan_paths=[modules/])
-│   ├── ModuleManager.start()
-│   │   ├── scanner.discover() → [card_pipeline, intent_registry, ...]
-│   │   ├── resolver.resolve() → 拓撲排序 + 循環檢測
-│   │   ├── lifecycle.init_all() → 依序初始化模組（傳入 deps）
-│   │   │   ├── card_pipeline: 建立 CardImportPipeline(registry, memory_adapter=None, llm_service=None)
-│   │   │   └── intent_registry: 建立 IntentRegistry()
-│   │   ├── 註冊到 ServiceRegistry (inst.name → inst.instance)
-│   │   └── lifecycle.start_all() → 啟動模組 → status=RUNNING
-│   └── 回傳 manager (尚未被 lifespan 使用，僅供手動調用)
-│
-modules/card_pipeline/
-├── module.yaml: name=card_pipeline, kind=service, required=[], optional=[ham_memory, personality_module, llm_module, intent_registry]
-└── __init__.py: init(deps)→CardImportPipeline, start/stop=noop
 
-modules/intent_registry/
-├── module.yaml: name=intent_registry, kind=service, optional=[card_pipeline]
-└── __init__.py: init(deps)→IntentRegistry, on_card_pipeline_ready=stub
+services/wiring.py ├── initialize_module_manager() (L122-138, async) │
+├── 建立 ModuleManager (scan_paths=[modules/]) │ ├── ModuleManager.start() │ │
+├── scanner.discover() → [card_pipeline, intent_registry, ...] │ │ ├──
+resolver.resolve() → 拓撲排序 + 循環檢測 │ │ ├── lifecycle.init_all()
+→ 依序初始化模組（傳入 deps）│ │ │ ├──
+card_pipeline: 建立 CardImportPipeline(registry, memory_adapter=None,
+llm_service=None) │ │ │ └── intent_registry: 建立 IntentRegistry() │ │
+├── 註冊到 ServiceRegistry (inst.name → inst.instance) │ │ └──
+lifecycle.start_all() → 啟動模組 → status=RUNNING │ └── 回傳 manager
+(尚未被 lifespan 使用，僅供手動調用) │ modules/card_pipeline/ ├── module.yaml:
+name=card_pipeline, kind=service, required=[], optional=[ham_memory,
+personality_module, llm_module, intent_registry] └── **init**.py:
+init(deps)→CardImportPipeline, start/stop=noop
 
-尚未接線:
-├── ChatService._analyze_intent() → IntentRegistry (Phase 2 目標)
-├── Pipeline 結果 → MemoryAdapter / PersonalityAdapter (Phase 3)
-└── Pipeline 結果 → ConfigLoader.learn() (Phase 4)
+modules/intent_registry/ ├── module.yaml: name=intent_registry, kind=service,
+optional=[card_pipeline] └── **init**.py: init(deps)→IntentRegistry,
+on_card_pipeline_ready=stub
+
+尚未接線: ├── ChatService._analyze_intent() → IntentRegistry (Phase 2 目標) ├──
+Pipeline 結果 → MemoryAdapter / PersonalityAdapter (Phase 3) └── Pipeline 結果 →
+ConfigLoader.learn() (Phase 4)
+
 ```
 
 ---
@@ -149,31 +148,22 @@ modules/intent_registry/
 ### 2.1 核心依賴鏈
 
 ```
-get_angela_config()  [17+ callers]
-  ← get_llm_service()
-  ← get_angela_chat_service()
-  ← get_reflex_system()
-  ← get_digital_life() (indirect)
-  ← get_template_library() (indirect)
-  ← +12 others
 
-get_llm_service()  [async singleton]
-  ← get_angela_config()
-  ← get_template_library()
-  ← get_config_loader() (fallback)
-  [Called by: lifespan, chat_service, math_verifier, reflex, UCC,
-   creative_agent, project_coordinator, router /llm/reload, REPL]
+get_angela_config() [17+ callers] ← get_llm_service() ←
+get_angela_chat_service() ← get_reflex_system() ← get_digital_life() (indirect)
+← get_template_library() (indirect) ← +12 others
 
-get_angela_chat_service()  [function-attribute singleton]
-  ← get_angela_config()
-  ← get_bootstrap_manager()
-  ← get_llm_service()
-  ← get_template_library()
-  ← get_model_core()
-  ← get_value_system()
-  ← get_formula_config("dynamic")
-  [Called by: lifespan, REPL, HTTP /angela/chat]
-```
+get_llm_service() [async singleton] ← get_angela_config() ←
+get_template_library() ← get_config_loader() (fallback) [Called by: lifespan,
+chat_service, math_verifier, reflex, UCC, creative_agent, project_coordinator,
+router /llm/reload, REPL]
+
+get_angela_chat_service() [function-attribute singleton] ← get_angela_config() ←
+get_bootstrap_manager() ← get_llm_service() ← get_template_library() ←
+get_model_core() ← get_value_system() ← get_formula_config("dynamic") [Called
+by: lifespan, REPL, HTTP /angela/chat]
+
+````
 
 ### 2.2 所有 Factory 及其呼叫者
 
@@ -276,18 +266,18 @@ get_angela_chat_service()  [function-attribute singleton]
 ```python
 async def broadcast_state_updates():  # main_api_server.py:1064
     """定義了但從未被 create_task"""
-```
+````
 
 ---
 
 ## 5. 兩台伺服器比較
 
-| 面向 | main_api_server.py (App B) | main.py (App A) |
-|------|---------------------------|------------------|
-| Routes | ~104 (含共用、state-matrix、atlassian) | 8 + 共用路由 |
+| 面向       | main_api_server.py (App B)                   | main.py (App A)                           |
+| ---------- | -------------------------------------------- | ----------------------------------------- |
+| Routes     | ~104 (含共用、state-matrix、atlassian)       | 8 + 共用路由                              |
 | 啟動時接線 | chat + LLM + bio + 跨服務 wiring + heartbeat | bootstrap + cluster + sync + KG + monitor |
-| Heartbeat | ✅ `.start()` + `.stop()` 在 lifespan | ❌ 無 |
-| 共用路由 | `include_router(api_v1_router)` | `include_router(router)` (同一個) |
-| 中介層 | CORS + EncryptedComm | EncryptedComm + CORS |
-| 死代碼 | `broadcast_state_updates()` | 較少，但沒有生物模擬 |
-| 配置驅動 | 是 (lifecycle.services_to_preinit) | 部分硬編碼 |
+| Heartbeat  | ✅ `.start()` + `.stop()` 在 lifespan        | ❌ 無                                     |
+| 共用路由   | `include_router(api_v1_router)`              | `include_router(router)` (同一個)         |
+| 中介層     | CORS + EncryptedComm                         | EncryptedComm + CORS                      |
+| 死代碼     | `broadcast_state_updates()`                  | 較少，但沒有生物模擬                      |
+| 配置驅動   | 是 (lifecycle.services_to_preinit)           | 部分硬編碼                                |

@@ -1,6 +1,7 @@
 # 备份日志
 
-> **备份说明**: 此文档已备份至 `backup_20250903/recovery_docs/BACKUP_LOG.md.backup`，作为历史记录保存。
+> **备份说明**: 此文档已备份至
+> `backup_20250903/recovery_docs/BACKUP_LOG.md.backup`，作为历史记录保存。
 >
 > **状态**: 问题已解决，此文档仅供历史参考。
 
@@ -13,7 +14,7 @@
 ### 备份记录 - 2025-09-01 15:30:00
 
 - **操作类型**: 创建实施计划文档备份
-- **原始文件**: 
+- **原始文件**:
   - IMPLEMENTATION_PLAN.md
   - DESKTOP_CLI_BATCH_ENHANCEMENT_PLAN.md
   - BACKUP_RECOVERY_STANDARD_PROCEDURE.md
@@ -25,7 +26,7 @@
 ### 备份记录 - 2025-09-01 15:35:00
 
 - **操作类型**: 核心脚本文件备份
-- **原始文件**: 
+- **原始文件**:
   - apps/desktop-app/electron_app/main.js
   - packages/cli/cli/main.py
   - tools/train-manager.bat
@@ -44,7 +45,7 @@
 ### 备份记录 - 2025-09-01 21:40:00
 
 - **操作类型**: 桌面应用核心文件备份
-- **原始文件**: 
+- **原始文件**:
   - apps/desktop-app/electron_app/main.js
   - apps/desktop-app/electron_app/preload.js
   - apps/desktop-app/electron_app/index.html
@@ -60,7 +61,7 @@
 ### 备份记录 - 2025-09-01 21:46:00
 
 - **操作类型**: CLI工具核心文件备份
-- **原始文件**: 
+- **原始文件**:
   - packages/cli/cli/main.py
   - packages/cli/setup.py
   - packages/cli/package.json
@@ -74,7 +75,7 @@
 ### 备份记录 - 2025-09-01 21:48:00
 
 - **操作类型**: 批处理脚本文件备份
-- **原始文件**: 
+- **原始文件**:
   - tools/train-manager.bat
   - scripts/setup_env.bat
   - tools/health-check.bat

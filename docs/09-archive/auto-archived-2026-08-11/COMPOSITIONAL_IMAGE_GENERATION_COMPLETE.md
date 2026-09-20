@@ -1,34 +1,47 @@
 # Compositional Image Generation - Implementation Complete
 
 > **⚠️ STATUS: Phase 1 only (2026-06-25)**  
-> This document describes **Phase 1** (5 core primitives files). Phase 2 added **9 GVV pipeline files** (concept_mapper, concept_space, geometric_vocabulary, instance_optimizer, vocabulary_expander, differentiable_renderer, learnable_decomposer, decomposer, pixel_refiner) — bringing the total to **14 source files** with ~62 tests. See [docs/ARCHITECTURE.md §6](docs/ARCHITECTURE.md) for the current GVV pipeline description and [docs/FRAMEWORK_OVERVIEW.md](docs/FRAMEWORK_OVERVIEW.md) for the full component catalog.
+> This document describes **Phase 1** (5 core primitives files). Phase 2 added
+> **9 GVV pipeline files** (concept_mapper, concept_space, geometric_vocabulary,
+> instance_optimizer, vocabulary_expander, differentiable_renderer,
+> learnable_decomposer, decomposer, pixel_refiner) — bringing the total to **14
+> source files** with ~62 tests. See
+> [docs/ARCHITECTURE.md §6](docs/ARCHITECTURE.md) for the current GVV pipeline
+> description and [docs/FRAMEWORK_OVERVIEW.md](docs/FRAMEWORK_OVERVIEW.md) for
+> the full component catalog.
 
 ## Summary
 
-Successfully implemented Phase 1 of the compositional image generation system for Angela AI. The system provides a complete foundation for learning to decompose images into visual primitives and compose them to generate new images.
+Successfully implemented Phase 1 of the compositional image generation system
+for Angela AI. The system provides a complete foundation for learning to
+decompose images into visual primitives and compose them to generate new images.
 
 ## What Was Built
 
 ### Core Components
 
-1. **Primitive Types** (`apps/backend/src/ai/multimodal/primitives/primitive_types.py`)
+1. **Primitive Types**
+   (`apps/backend/src/ai/multimodal/primitives/primitive_types.py`)
    - `Point`: Position, color, size
    - `Line`: Start/end points, width, color
    - `Plane`: Polygon vertices, fill/outline colors
    - `DrawingInstructions`: Complete drawing instructions
 
-2. **Primitive Renderer** (`apps/backend/src/ai/multimodal/primitives/primitive_renderer.py`)
+2. **Primitive Renderer**
+   (`apps/backend/src/ai/multimodal/primitives/primitive_renderer.py`)
    - PIL-based rendering
    - Support for all primitive types
    - Configurable canvas size
 
-3. **Primitive Library** (`apps/backend/src/ai/multimodal/primitives/primitive_library.py`)
+3. **Primitive Library**
+   (`apps/backend/src/ai/multimodal/primitives/primitive_library.py`)
    - Storage with embeddings
    - Similarity search
    - Auto-expansion
    - Save/load to JSON
 
-4. **Primitive Encoder** (`apps/backend/src/ai/multimodal/primitives/primitive_encoder.py`)
+4. **Primitive Encoder**
+   (`apps/backend/src/ai/multimodal/primitives/primitive_encoder.py`)
    - Encode/decode instructions
    - Trainable via reconstruction loss
    - Save/load weights
@@ -36,6 +49,7 @@ Successfully implemented Phase 1 of the compositional image generation system fo
 ### Test Suite
 
 **38 tests passing:**
+
 - Primitive types: 8 tests
 - Renderer: 7 tests
 - Library: 11 tests
@@ -53,21 +67,25 @@ Successfully implemented Phase 1 of the compositional image generation system fo
 ## Key Features
 
 ### 1. Vector Conversion
+
 - DrawingInstructions → 116-dim vector for ML
 - Vector → DrawingInstructions for rendering
 - Roundtrip conversion works
 
 ### 2. Similarity Search
+
 - Cosine similarity on embeddings
 - Find similar primitives in library
 - Auto-expand when new primitive is different
 
 ### 3. Training
+
 - Encoder learns to reconstruct instructions
 - Loss decreases with training
 - Weights can be saved/loaded
 
 ### 4. Rendering
+
 - Points as filled circles
 - Lines with configurable width
 - Planes as filled polygons
@@ -76,15 +94,18 @@ Successfully implemented Phase 1 of the compositional image generation system fo
 ## Integration Points
 
 ### CLIP Encoding
+
 - `SemanticVisualEncoder` provides 512-dim CLIP embeddings
 - Primitives system can use these for similarity search
 - Future: Map CLIP embeddings to primitive embeddings
 
 ### ConceptLibrary
+
 - 21 existing concepts
 - Can integrate with primitive library
 
 ### VisualDecoder
+
 - Existing visual decoder (64-dim → 128x128 RGB)
 - Can compare with primitive-based rendering
 
@@ -128,6 +149,7 @@ scripts/
 ## Usage Examples
 
 ### Basic Rendering
+
 ```python
 from ai.multimodal.primitives import Point, Line, DrawingInstructions, PrimitiveRenderer
 
@@ -145,6 +167,7 @@ img.save("output.png")
 ```
 
 ### Library Operations
+
 ```python
 from ai.multimodal.primitives import PrimitiveLibrary, PrimitiveEncoder
 
@@ -160,6 +183,7 @@ similar = library.find_similar(embedding, top_k=5)
 ```
 
 ### Training
+
 ```python
 encoder = PrimitiveEncoder(embedding_dim=64)
 encoder.train(instructions_list, epochs=100, lr=0.001)
@@ -168,35 +192,42 @@ encoder.train(instructions_list, epochs=100, lr=0.001)
 ## Next Steps
 
 ### Phase 2: Primitive Discovery
+
 1. Create `primitive_discovery.py`
 2. Use CLIP to cluster CIFAR-10 images
 3. Learn primitive parameters for each cluster
 4. Build primitive library from real images
 
 ### Phase 3: Sequence Generator
+
 1. Create `sequence_generator.py` (RNN/Transformer)
 2. Train on (text → primitive sequence) pairs
 3. Generate complex compositions from text
 
 ### Phase 4: Rendering Pipeline
+
 1. SVG rendering for scalable output
 2. Evaluation metrics (CLIP similarity, FID)
 3. API integration
 
 ## Success Criteria (Phase 1)
 
-✅ **Primitive types defined** - Point, Line, Plane, DrawingInstructions
-✅ **Renderer working** - PIL-based rendering with all primitive types
-✅ **Library functional** - Add, retrieve, search, auto-expand
-✅ **Encoder trainable** - Encode/decode with reconstruction loss
-✅ **Tests comprehensive** - 38 tests covering all components
-✅ **Integration tested** - End-to-end pipeline working
+✅ **Primitive types defined** - Point, Line, Plane, DrawingInstructions ✅
+**Renderer working** - PIL-based rendering with all primitive types ✅ **Library
+functional** - Add, retrieve, search, auto-expand ✅ **Encoder trainable** -
+Encode/decode with reconstruction loss ✅ **Tests comprehensive** - 38 tests
+covering all components ✅ **Integration tested** - End-to-end pipeline working
 ✅ **Demo available** - Working examples in scripts/
 
 ## Conclusion
 
-Phase 1 of the compositional image generation system is complete and fully functional. The system provides a solid foundation for learning to generate images from primitives. All components are tested, documented, and ready for integration with CLIP and future phases.
+Phase 1 of the compositional image generation system is complete and fully
+functional. The system provides a solid foundation for learning to generate
+images from primitives. All components are tested, documented, and ready for
+integration with CLIP and future phases.
 
 **Next: Phase 2 Primitive Discovery + GVV pipeline optimization.**
 
-> ⚠️ **Note (2026-06-25)**: This document was updated to reflect the GVV pipeline additions. The original Phase 1 (6 files, 38 tests) has been extended with 8 additional files and ~24 more tests for the GVV architecture.
+> ⚠️ **Note (2026-06-25)**: This document was updated to reflect the GVV
+> pipeline additions. The original Phase 1 (6 files, 38 tests) has been extended
+> with 8 additional files and ~24 more tests for the GVV architecture.

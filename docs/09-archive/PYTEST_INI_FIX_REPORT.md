@@ -12,7 +12,8 @@ ERROR: D:\Projects\Unified-AI-Project\apps\backend\pytest.ini:13: unexpected lin
 
 ## 🔍 问题分析
 
-通过检查 [pytest.ini](../apps/backend/pytest.ini) 文件，我们发现其中包含以下 Git 合并冲突标记：
+通过检查 [pytest.ini](../apps/backend/pytest.ini)
+文件，我们发现其中包含以下 Git 合并冲突标记：
 
 ```ini
 norecursedirs =
@@ -38,7 +39,8 @@ timeout_method = thread
 
 ## 🛠️ 解决方案
 
-我们手动清理了 [pytest.ini](../apps/backend/pytest.ini) 文件中的合并冲突标记，并整理了配置项，确保文件格式正确。修复后的配置如下：
+我们手动清理了 [pytest.ini](../apps/backend/pytest.ini)
+文件中的合并冲突标记，并整理了配置项，确保文件格式正确。修复后的配置如下：
 
 ```ini
 [pytest]
@@ -75,15 +77,19 @@ asyncio_mode = auto
 修复后，我们进行了以下验证：
 
 1. **pytest 导入测试**：
+
    ```bash
    python -c "import pytest; print('pytest imported successfully')"
    ```
+
    结果：成功导入
 
 2. **pytest 版本检查**：
+
    ```bash
    python -m pytest --version
    ```
+
    结果：pytest 8.4.1
 
 3. **简单测试运行**：

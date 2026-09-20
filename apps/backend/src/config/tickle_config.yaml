@@ -10,10 +10,10 @@
 # ── 強度分級 ────────────────────────────────────────────────────────────────
 
 intensity_thresholds:
-  light: 0.25      # 輕度：輕微觸碰 (0.0-0.25)
-  medium: 0.55     # 中度：持續撫摸 (0.25-0.55)
-  intense: 0.60    # 強度：強烈刺激 (0.60-1.0)
-  sustained_seconds: 5.0  # 持續刺激閾值（秒）
+  light: 0.25 # 輕度：輕微觸碰 (0.0-0.25)
+  medium: 0.55 # 中度：持續撫摸 (0.25-0.55)
+  intense: 0.60 # 強度：強烈刺激 (0.60-1.0)
+  sustained_seconds: 5.0 # 持續刺激閾值（秒）
 
 # ── 部位配置 ──────────────────────────────────────────────────────────────
 
@@ -118,10 +118,10 @@ safety:
 
   # Output Mode 定義（配置驅動，非 hardcoded）
   output_modes:
-    speak:       # 正常說話
-    scream:      # 尖叫/求饒短語
-    silence:     # 不說話（祇動作）
-    comfort_seek:  # 尋求安慰/擁抱
+    speak: # 正常說話
+    scream: # 尖叫/求饒短語
+    silence: # 不說話（祇動作）
+    comfort_seek: # 尋求安慰/擁抱
 
   # LLM 語言鎖定：intense 模式下祇允許短語類型
   intense_allowed_types:
@@ -134,13 +134,13 @@ safety:
 
 gamma_invasion:
   # 持續刺激時 γ軸 的情緒影響
-  sustained_stimulus_threshold: 0.6  # 強度 > 0.6 持續 > 5s
+  sustained_stimulus_threshold: 0.6 # 強度 > 0.6 持續 > 5s
   emotion_shift:
     primary: "fear"
     secondary: "anxiety"
     tertiary: "protective"
   behavioral_trigger: "comfort_seek"
-  gamma_value_override: 0.8  # 入侵值
+  gamma_value_override: 0.8 # 入侵值
 
 # ── 小腦動畫映射 ──────────────────────────────────────────────────────────
 

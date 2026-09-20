@@ -135,11 +135,11 @@ recommendations.
 
 - **Recommendations:**
   1.  **Extensive Dependency Injection:**
-      - The `DialogueManager` (`src/ai/dialogue/dialogue_manager.py`)
-        serves as a prime example of effective dependency injection. It accepts
-        numerous module instances (e.g., `PersonalityManager`,
-        `HAMMemoryManager`, `LLMInterface`, `CrisisSystem`, `ToolDispatcher`,
-        `LearningManager`, `HSPConnector`) via its `__init__` method.
+      - The `DialogueManager` (`src/ai/dialogue/dialogue_manager.py`) serves as
+        a prime example of effective dependency injection. It accepts numerous
+        module instances (e.g., `PersonalityManager`, `HAMMemoryManager`,
+        `LLMInterface`, `CrisisSystem`, `ToolDispatcher`, `LearningManager`,
+        `HSPConnector`) via its `__init__` method.
       - _Benefit:_ This design pattern significantly reduces coupling, making
         `DialogueManager` highly testable (by mocking dependencies) and flexible
         (allowing different implementations of its dependencies to be swapped
@@ -317,4 +317,3 @@ facades, abstract interfaces, and centralized managers for cross-cutting
 concerns), the project can evolve more robustly. The recommendations above
 provide starting points for architectural discussions and potential refactoring
 efforts.
-

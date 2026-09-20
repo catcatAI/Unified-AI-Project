@@ -88,7 +88,7 @@
   ],
   "benchmarks": {
     "tests/performance/test_user_performance.py::test_user_creation_performance": {
-      "mean": 0.020,
+      "mean": 0.02,
       "median": 0.018,
       "stddev": 0.003,
       "rounds": 100
@@ -100,7 +100,7 @@
       "rounds": 50
     },
     "tests/performance/test_order_performance.py::test_order_processing_performance": {
-      "mean": 0.30,
+      "mean": 0.3,
       "median": 0.29,
       "stddev": 0.03,
       "rounds": 30
@@ -109,6 +109,6 @@
   "coverage": {
     "total_lines": 1200,
     "covered_lines": 1080,
-    "coverage_rate": 0.90
+    "coverage_rate": 0.9
   }
 }

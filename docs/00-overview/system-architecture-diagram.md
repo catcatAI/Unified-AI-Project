@@ -48,19 +48,19 @@ graph TD
 
     SYS -->|Initializes| UCC
     SYS -->|Monitors| MAINT
-    
+
     UCC -->|Enqueues| TQ
     TQ -->|Processed by| WP
     WP -->|Dispatches via| HSP
-    
+
     HSP -->|MQTT/IPC| A1
     HSP -->|MQTT/IPC| A2
     HSP -->|MQTT/IPC| A3
-    
+
     WP -->|Uses| AM
     WP -->|Uses| HAM
     WP -->|Uses| ECON
-    
+
     A1 -->|Tools| SB
 
     SM -->|8D target vector| NB

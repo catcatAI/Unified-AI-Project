@@ -1,7 +1,7 @@
 packages:
-  - 'packages/*'
-  - 'apps/*'
-  - 'apps/*/electron_app'
+  - "packages/*"
+  - "apps/*"
+  - "apps/*/electron_app"
 
 overrides:
   "@eslint/eslintrc>minimatch": "3.1.4"
@@ -25,10 +25,10 @@ allowBuilds:
   sharp: true
 
 onlyBuiltDependencies:
-  - '@prisma/client'
-  - '@prisma/engines'
-  - '@swc/core'
-  - '@tailwindcss/oxide'
+  - "@prisma/client"
+  - "@prisma/engines"
+  - "@swc/core"
+  - "@tailwindcss/oxide"
   - electron
   - es5-ext
   - esbuild

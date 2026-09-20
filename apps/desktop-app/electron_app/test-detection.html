@@ -1,131 +1,178 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>檢測系統測試</title>
     <style>
-        :root {
-            --success-color: #4ade80;
-            --danger-color: #f87171;
-            --info-color: #60a5fa;
-        }
+      :root {
+        --success-color: #4ade80;
+        --danger-color: #f87171;
+        --info-color: #60a5fa;
+      }
 
-        body { font-family: Arial, sans-serif; padding: 20px; background: #1a1a2e; color: #eee; }
-        .test-section { margin: 20px 0; padding: 15px; background: #16213e; border-radius: 8px; }
-        .pass { color: var(--success-color); }
-        .fail { color: var(--danger-color); }
-        .info { color: var(--info-color); }
-        button { padding: 10px 20px; margin: 5px; cursor: pointer; border: none; border-radius: 5px; font-size: 14px; }
-        .btn-test { background: #3b82f6; color: white; }
-        .btn-test:hover { background: #2563eb; }
-        pre { background: #0f0f23; padding: 15px; border-radius: 5px; overflow: auto; max-height: 300px; }
-        #results { margin-top: 20px; }
+      body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        background: #1a1a2e;
+        color: #eee;
+      }
+      .test-section {
+        margin: 20px 0;
+        padding: 15px;
+        background: #16213e;
+        border-radius: 8px;
+      }
+      .pass {
+        color: var(--success-color);
+      }
+      .fail {
+        color: var(--danger-color);
+      }
+      .info {
+        color: var(--info-color);
+      }
+      button {
+        padding: 10px 20px;
+        margin: 5px;
+        cursor: pointer;
+        border: none;
+        border-radius: 5px;
+        font-size: 14px;
+      }
+      .btn-test {
+        background: #3b82f6;
+        color: white;
+      }
+      .btn-test:hover {
+        background: #2563eb;
+      }
+      pre {
+        background: #0f0f23;
+        padding: 15px;
+        border-radius: 5px;
+        overflow: auto;
+        max-height: 300px;
+      }
+      #results {
+        margin-top: 20px;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <h1>🧪 Angela AI 檢測系統測試</h1>
-    
+
     <div class="test-section">
-        <h2>步驟 1: 載入檢測模塊</h2>
-        <div id="step1"></div>
+      <h2>步驟 1: 載入檢測模塊</h2>
+      <div id="step1"></div>
     </div>
-    
+
     <div class="test-section">
-        <h2>步驟 2: 測試 DriverDetector</h2>
-        <button class="btn-test" onclick="testDriverDetector()">測試驅動檢測</button>
-        <div id="driver-result"></div>
+      <h2>步驟 2: 測試 DriverDetector</h2>
+      <button class="btn-test" onclick="testDriverDetector()">測試驅動檢測</button>
+      <div id="driver-result"></div>
     </div>
-    
+
     <div class="test-section">
-        <h2>步驟 3: 測試 AvailabilityManager</h2>
-        <button class="btn-test" onclick="testAvailabilityManager()">測試可用性管理</button>
-        <div id="availability-result"></div>
+      <h2>步驟 3: 測試 AvailabilityManager</h2>
+      <button class="btn-test" onclick="testAvailabilityManager()">測試可用性管理</button>
+      <div id="availability-result"></div>
     </div>
-    
+
     <div class="test-section">
-        <h2>步驟 4: 測試 UnifiedDetectionSystem</h2>
-        <button class="btn-test" onclick="testUnifiedDetection()">測試統一檢測</button>
-        <div id="unified-result"></div>
+      <h2>步驟 4: 測試 UnifiedDetectionSystem</h2>
+      <button class="btn-test" onclick="testUnifiedDetection()">測試統一檢測</button>
+      <div id="unified-result"></div>
     </div>
-    
+
     <div class="test-section">
-        <h2>完整狀態報告</h2>
-        <button class="btn-test" onclick="getFullStatus()">獲取完整狀態</button>
-        <pre id="full-status"></pre>
+      <h2>完整狀態報告</h2>
+      <button class="btn-test" onclick="getFullStatus()">獲取完整狀態</button>
+      <pre id="full-status"></pre>
     </div>
 
     <!-- 載入檢測模塊 -->
     <script src="../../web-live2d-viewer/js/driver-detector.js"></script>
     <script src="../../../packages/shared-js/js/availability-manager.js"></script>
     <script src="../../web-live2d-viewer/js/unified-detection.js"></script>
-    
+
     <script>
-        // 步驟 1: 檢查模塊載入
-        document.getElementById('step1').innerHTML = 
-            (typeof DriverDetector !== 'undefined' ? '<span class="pass">✓</span> DriverDetector 已載入' : '<span class="fail">✗</span> DriverDetector 未載入') + '<br>' +
-            (typeof AvailabilityManager !== 'undefined' ? '<span class="pass">✓</span> AvailabilityManager 已載入' : '<span class="fail">✗</span> AvailabilityManager 未載入') + '<br>' +
-            (typeof UnifiedDetectionSystem !== 'undefined' ? '<span class="pass">✓</span> UnifiedDetectionSystem 已載入' : '<span class="fail">✗</span> UnifiedDetectionSystem 未載入');
+      // 步驟 1: 檢查模塊載入
+      document.getElementById('step1').innerHTML =
+        (typeof DriverDetector !== 'undefined'
+          ? '<span class="pass">✓</span> DriverDetector 已載入'
+          : '<span class="fail">✗</span> DriverDetector 未載入') +
+        '<br>' +
+        (typeof AvailabilityManager !== 'undefined'
+          ? '<span class="pass">✓</span> AvailabilityManager 已載入'
+          : '<span class="fail">✗</span> AvailabilityManager 未載入') +
+        '<br>' +
+        (typeof UnifiedDetectionSystem !== 'undefined'
+          ? '<span class="pass">✓</span> UnifiedDetectionSystem 已載入'
+          : '<span class="fail">✗</span> UnifiedDetectionSystem 未載入')
 
-        async function testDriverDetector() {
-            const div = document.getElementById('driver-result');
-            div.innerHTML = '<span class="info">正在測試...</span>';
-            try {
-                const detector = new DriverDetector();
-                await detector.initialize();
-                const status = detector.getDriverStatus();
-                div.innerHTML = `<span class="pass">✓</span> 驅動檢測成功<br>` +
-                    `GPU: ${status.gpu.status}<br>` +
-                    `Audio: ${status.audio.status}<br>` +
-                    `Input: ${status.input.status}<br>` +
-                    `Network: ${status.network.status}`;
-            } catch (e) {
-                div.innerHTML = `<span class="fail">✗</span> 錯誤: ${e.message}`;
-            }
+      async function testDriverDetector() {
+        const div = document.getElementById('driver-result')
+        div.innerHTML = '<span class="info">正在測試...</span>'
+        try {
+          const detector = new DriverDetector()
+          await detector.initialize()
+          const status = detector.getDriverStatus()
+          div.innerHTML =
+            `<span class="pass">✓</span> 驅動檢測成功<br>` +
+            `GPU: ${status.gpu.status}<br>` +
+            `Audio: ${status.audio.status}<br>` +
+            `Input: ${status.input.status}<br>` +
+            `Network: ${status.network.status}`
+        } catch (e) {
+          div.innerHTML = `<span class="fail">✗</span> 錯誤: ${e.message}`
         }
+      }
 
-        async function testAvailabilityManager() {
-            const div = document.getElementById('availability-result');
-            div.innerHTML = '<span class="info">正在測試...</span>';
-            try {
-                const manager = new AvailabilityManager({ enableAutoRecovery: true });
-                await manager.initialize();
-                const status = manager.getQuickStatus();
-                div.innerHTML = `<span class="pass">✓</span> 可用性管理測試成功<br>` +
-                    `狀態: ${status.state}<br>` +
-                    `健康分數: ${status.score}<br>` +
-                    `子系統: ${Object.keys(manager.subsystems).join(', ')}`;
-            } catch (e) {
-                div.innerHTML = `<span class="fail">✗</span> 錯誤: ${e.message}`;
-            }
+      async function testAvailabilityManager() {
+        const div = document.getElementById('availability-result')
+        div.innerHTML = '<span class="info">正在測試...</span>'
+        try {
+          const manager = new AvailabilityManager({ enableAutoRecovery: true })
+          await manager.initialize()
+          const status = manager.getQuickStatus()
+          div.innerHTML =
+            `<span class="pass">✓</span> 可用性管理測試成功<br>` +
+            `狀態: ${status.state}<br>` +
+            `健康分數: ${status.score}<br>` +
+            `子系統: ${Object.keys(manager.subsystems).join(', ')}`
+        } catch (e) {
+          div.innerHTML = `<span class="fail">✗</span> 錯誤: ${e.message}`
         }
+      }
 
-        async function testUnifiedDetection() {
-            const div = document.getElementById('unified-result');
-            div.innerHTML = '<span class="info">正在測試...</span>';
-            try {
-                const system = new UnifiedDetectionSystem({ checkInterval: 10000 });
-                await system.initialize();
-                div.innerHTML = `<span class="pass">✓</span> 統一檢測系統初始化成功<br>` +
-                    `檢查間隔: ${system.checkInterval}ms<br>` +
-                    `可用方法: getFullStatus(), runDiagnostics(), generateReport()`;
-            } catch (e) {
-                div.innerHTML = `<span class="fail">✗</span> 錯誤: ${e.message}`;
-            }
+      async function testUnifiedDetection() {
+        const div = document.getElementById('unified-result')
+        div.innerHTML = '<span class="info">正在測試...</span>'
+        try {
+          const system = new UnifiedDetectionSystem({ checkInterval: 10000 })
+          await system.initialize()
+          div.innerHTML =
+            `<span class="pass">✓</span> 統一檢測系統初始化成功<br>` +
+            `檢查間隔: ${system.checkInterval}ms<br>` +
+            `可用方法: getFullStatus(), runDiagnostics(), generateReport()`
+        } catch (e) {
+          div.innerHTML = `<span class="fail">✗</span> 錯誤: ${e.message}`
         }
+      }
 
-        async function getFullStatus() {
-            const pre = document.getElementById('full-status');
-            pre.innerHTML = '<span class="info">正在獲取狀態...</span>';
-            try {
-                const system = new UnifiedDetectionSystem();
-                await system.initialize();
-                const status = system.getFullStatus();
-                pre.textContent = JSON.stringify(status, null, 2);
-            } catch (e) {
-                pre.textContent = `錯誤: ${e.message}\n${e.stack}`;
-            }
+      async function getFullStatus() {
+        const pre = document.getElementById('full-status')
+        pre.innerHTML = '<span class="info">正在獲取狀態...</span>'
+        try {
+          const system = new UnifiedDetectionSystem()
+          await system.initialize()
+          const status = system.getFullStatus()
+          pre.textContent = JSON.stringify(status, null, 2)
+        } catch (e) {
+          pre.textContent = `錯誤: ${e.message}\n${e.stack}`
         }
+      }
     </script>
-</body>
+  </body>
 </html>

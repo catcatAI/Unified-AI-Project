@@ -49,26 +49,26 @@ node-gyp build
 在`audio-handler.js`中导入并使用：
 
 ```javascript
-import PulseAudioCapture from './native_modules/node-pulseaudio-capture/index.js';
+import PulseAudioCapture from './native_modules/node-pulseaudio-capture/index.js'
 
 // 创建捕获实例
 const capture = new PulseAudioCapture({
-    device: 'default',
-    sampleRate: 44100,
-    channels: 2
-});
+  device: 'default',
+  sampleRate: 44100,
+  channels: 2,
+})
 
 // 开始捕获
-capture.start();
+capture.start()
 
 // 获取音频数据
 capture.on('data', (buffer) => {
-    // 处理音频数据
-    console.log('Received audio data:', buffer.length, 'bytes');
-});
+  // 处理音频数据
+  console.log('Received audio data:', buffer.length, 'bytes')
+})
 
 // 停止捕获
-capture.stop();
+capture.stop()
 ```
 
 ## 故障排除
@@ -88,6 +88,7 @@ npm install -g node-gyp
 ### 运行时错误：模块未找到
 
 确保编译产物在正确的位置：
+
 - `build/Release/pulseaudio-capture.node`
 
 ## 测试

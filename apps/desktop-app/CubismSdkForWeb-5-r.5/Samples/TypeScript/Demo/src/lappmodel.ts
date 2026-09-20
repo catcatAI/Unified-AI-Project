@@ -5,51 +5,44 @@
  * that can be found at https://www.live2d.com/eula/live2d-open-software-license-agreement_en.html.
  */
 
-import { CubismDefaultParameterId } from '@framework/cubismdefaultparameterid';
-import { CubismModelSettingJson } from '@framework/cubismmodelsettingjson';
-import {
-  BreathParameterData,
-  CubismBreath
-} from '@framework/effect/cubismbreath';
-import { LookParameterData, CubismLook } from '@framework/effect/cubismlook';
-import { CubismEyeBlink } from '@framework/effect/cubismeyeblink';
-import { ICubismModelSetting } from '@framework/icubismmodelsetting';
-import { CubismIdHandle } from '@framework/id/cubismid';
-import { CubismFramework } from '@framework/live2dcubismframework';
-import { CubismMatrix44 } from '@framework/math/cubismmatrix44';
-import { CubismUserModel } from '@framework/model/cubismusermodel';
+import { CubismDefaultParameterId } from '@framework/cubismdefaultparameterid'
+import { CubismModelSettingJson } from '@framework/cubismmodelsettingjson'
+import { BreathParameterData, CubismBreath } from '@framework/effect/cubismbreath'
+import { LookParameterData, CubismLook } from '@framework/effect/cubismlook'
+import { CubismEyeBlink } from '@framework/effect/cubismeyeblink'
+import { ICubismModelSetting } from '@framework/icubismmodelsetting'
+import { CubismIdHandle } from '@framework/id/cubismid'
+import { CubismFramework } from '@framework/live2dcubismframework'
+import { CubismMatrix44 } from '@framework/math/cubismmatrix44'
+import { CubismUserModel } from '@framework/model/cubismusermodel'
 import {
   ACubismMotion,
   BeganMotionCallback,
-  FinishedMotionCallback
-} from '@framework/motion/acubismmotion';
-import { CubismMotion } from '@framework/motion/cubismmotion';
+  FinishedMotionCallback,
+} from '@framework/motion/acubismmotion'
+import { CubismMotion } from '@framework/motion/cubismmotion'
 import {
   CubismMotionQueueEntryHandle,
-  InvalidMotionQueueEntryHandleValue
-} from '@framework/motion/cubismmotionqueuemanager';
-import { CubismUpdateScheduler } from '@framework/motion/cubismupdatescheduler';
-import { CubismBreathUpdater } from '@framework/motion/cubismbreathupdater';
-import { CubismLookUpdater } from '@framework/motion/cubismlookupdater';
-import { CubismEyeBlinkUpdater } from '@framework/motion/cubismeyeblinkupdater';
-import { CubismExpressionUpdater } from '@framework/motion/cubismexpressionupdater';
-import { CubismPhysicsUpdater } from '@framework/motion/cubismphysicsupdater';
-import { CubismPoseUpdater } from '@framework/motion/cubismposeupdater';
-import { CubismLipSyncUpdater } from '@framework/motion/cubismlipsyncupdater';
-import { csmRect } from '@framework/type/csmrectf';
-import {
-  CSM_ASSERT,
-  CubismLogError,
-  CubismLogInfo
-} from '@framework/utils/cubismdebug';
+  InvalidMotionQueueEntryHandleValue,
+} from '@framework/motion/cubismmotionqueuemanager'
+import { CubismUpdateScheduler } from '@framework/motion/cubismupdatescheduler'
+import { CubismBreathUpdater } from '@framework/motion/cubismbreathupdater'
+import { CubismLookUpdater } from '@framework/motion/cubismlookupdater'
+import { CubismEyeBlinkUpdater } from '@framework/motion/cubismeyeblinkupdater'
+import { CubismExpressionUpdater } from '@framework/motion/cubismexpressionupdater'
+import { CubismPhysicsUpdater } from '@framework/motion/cubismphysicsupdater'
+import { CubismPoseUpdater } from '@framework/motion/cubismposeupdater'
+import { CubismLipSyncUpdater } from '@framework/motion/cubismlipsyncupdater'
+import { csmRect } from '@framework/type/csmrectf'
+import { CSM_ASSERT, CubismLogError, CubismLogInfo } from '@framework/utils/cubismdebug'
 
-import * as LAppDefine from './lappdefine';
-import { LAppPal } from './lapppal';
-import { TextureInfo } from './lapptexturemanager';
-import { LAppWavFileHandler } from './lappwavfilehandler';
-import { CubismMoc } from '@framework/model/cubismmoc';
-import { LAppDelegate } from './lappdelegate';
-import { LAppSubdelegate } from './lappsubdelegate';
+import * as LAppDefine from './lappdefine'
+import { LAppPal } from './lapppal'
+import { TextureInfo } from './lapptexturemanager'
+import { LAppWavFileHandler } from './lappwavfilehandler'
+import { CubismMoc } from '@framework/model/cubismmoc'
+import { LAppDelegate } from './lappdelegate'
+import { LAppSubdelegate } from './lappsubdelegate'
 
 enum LoadStep {
   LoadAssets,
@@ -75,7 +68,7 @@ enum LoadStep {
   CompleteSetupModel,
   LoadTexture,
   WaitLoadTexture,
-  CompleteSetup
+  CompleteSetup,
 }
 
 /**
@@ -89,26 +82,26 @@ export class LAppModel extends CubismUserModel {
    * @param fileName
    */
   public loadAssets(dir: string, fileName: string): void {
-    this._modelHomeDir = dir;
+    this._modelHomeDir = dir
 
     fetch(`${this._modelHomeDir}${fileName}`)
-      .then(response => response.arrayBuffer())
-      .then(arrayBuffer => {
+      .then((response) => response.arrayBuffer())
+      .then((arrayBuffer) => {
         const setting: ICubismModelSetting = new CubismModelSettingJson(
           arrayBuffer,
           arrayBuffer.byteLength
-        );
+        )
 
         // ステートを更新
-        this._state = LoadStep.LoadModel;
+        this._state = LoadStep.LoadModel
 
         // 結果を保存
-        this.setupModel(setting);
+        this.setupModel(setting)
       })
-      .catch(error => {
+      .catch((error) => {
         // model3.json読み込みでエラーが発生した時点で描画は不可能なので、setupせずエラーをcatchして何もしない
-        CubismLogError(`Failed to load file ${this._modelHomeDir}${fileName}`);
-      });
+        CubismLogError(`Failed to load file ${this._modelHomeDir}${fileName}`)
+      })
   }
 
   /**
@@ -118,311 +111,283 @@ export class LAppModel extends CubismUserModel {
    * @param setting ICubismModelSettingのインスタンス
    */
   private setupModel(setting: ICubismModelSetting): void {
-    this._updating = true;
-    this._initialized = false;
+    this._updating = true
+    this._initialized = false
 
-    this._modelSetting = setting;
+    this._modelSetting = setting
 
     // CubismModel
     if (this._modelSetting.getModelFileName() != '') {
-      const modelFileName = this._modelSetting.getModelFileName();
+      const modelFileName = this._modelSetting.getModelFileName()
 
       fetch(`${this._modelHomeDir}${modelFileName}`)
-        .then(response => {
+        .then((response) => {
           if (response.ok) {
-            return response.arrayBuffer();
+            return response.arrayBuffer()
           } else if (response.status >= 400) {
-            CubismLogError(
-              `Failed to load file ${this._modelHomeDir}${modelFileName}`
-            );
-            return new ArrayBuffer(0);
+            CubismLogError(`Failed to load file ${this._modelHomeDir}${modelFileName}`)
+            return new ArrayBuffer(0)
           }
         })
-        .then(arrayBuffer => {
-          this.loadModel(arrayBuffer, this._mocConsistency);
-          this._state = LoadStep.LoadExpression;
+        .then((arrayBuffer) => {
+          this.loadModel(arrayBuffer, this._mocConsistency)
+          this._state = LoadStep.LoadExpression
 
           // callback
-          loadCubismExpression();
-        });
+          loadCubismExpression()
+        })
 
-      this._state = LoadStep.WaitLoadModel;
+      this._state = LoadStep.WaitLoadModel
     } else {
-      LAppPal.printMessage('Model data does not exist.');
+      LAppPal.printMessage('Model data does not exist.')
     }
 
     // Expression
     const loadCubismExpression = (): void => {
       if (this._modelSetting.getExpressionCount() > 0) {
-        const count: number = this._modelSetting.getExpressionCount();
+        const count: number = this._modelSetting.getExpressionCount()
 
         for (let i = 0; i < count; i++) {
-          const expressionName = this._modelSetting.getExpressionName(i);
-          const expressionFileName =
-            this._modelSetting.getExpressionFileName(i);
+          const expressionName = this._modelSetting.getExpressionName(i)
+          const expressionFileName = this._modelSetting.getExpressionFileName(i)
 
           fetch(`${this._modelHomeDir}${expressionFileName}`)
-            .then(response => {
+            .then((response) => {
               if (response.ok) {
-                return response.arrayBuffer();
+                return response.arrayBuffer()
               } else if (response.status >= 400) {
-                CubismLogError(
-                  `Failed to load file ${this._modelHomeDir}${expressionFileName}`
-                );
+                CubismLogError(`Failed to load file ${this._modelHomeDir}${expressionFileName}`)
                 // ファイルが存在しなくてもresponseはnullを返却しないため、空のArrayBufferで対応する
-                return new ArrayBuffer(0);
+                return new ArrayBuffer(0)
               }
             })
-            .then(arrayBuffer => {
+            .then((arrayBuffer) => {
               const motion: ACubismMotion = this.loadExpression(
                 arrayBuffer,
                 arrayBuffer.byteLength,
                 expressionName
-              );
+              )
 
               if (this._expressions.get(expressionName) != null) {
-                ACubismMotion.delete(this._expressions.get(expressionName));
-                this._expressions.set(expressionName, null);
+                ACubismMotion.delete(this._expressions.get(expressionName))
+                this._expressions.set(expressionName, null)
               }
 
-              this._expressions.set(expressionName, motion);
+              this._expressions.set(expressionName, motion)
 
-              this._expressionCount++;
+              this._expressionCount++
 
               if (this._expressionCount >= count) {
                 // Expression Updaterの追加
                 if (this._expressionManager != null) {
-                  const expressionUpdater = new CubismExpressionUpdater(
-                    this._expressionManager
-                  );
-                  this._updateScheduler.addUpdatableList(expressionUpdater);
+                  const expressionUpdater = new CubismExpressionUpdater(this._expressionManager)
+                  this._updateScheduler.addUpdatableList(expressionUpdater)
                 }
 
-                this._state = LoadStep.LoadPhysics;
+                this._state = LoadStep.LoadPhysics
 
                 // callback
-                loadCubismPhysics();
+                loadCubismPhysics()
               }
-            });
+            })
         }
-        this._state = LoadStep.WaitLoadExpression;
+        this._state = LoadStep.WaitLoadExpression
       } else {
-        this._state = LoadStep.LoadPhysics;
+        this._state = LoadStep.LoadPhysics
 
         // callback
-        loadCubismPhysics();
+        loadCubismPhysics()
       }
-    };
+    }
 
     // Physics
     const loadCubismPhysics = (): void => {
       if (this._modelSetting.getPhysicsFileName() != '') {
-        const physicsFileName = this._modelSetting.getPhysicsFileName();
+        const physicsFileName = this._modelSetting.getPhysicsFileName()
 
         fetch(`${this._modelHomeDir}${physicsFileName}`)
-          .then(response => {
+          .then((response) => {
             if (response.ok) {
-              return response.arrayBuffer();
+              return response.arrayBuffer()
             } else if (response.status >= 400) {
-              CubismLogError(
-                `Failed to load file ${this._modelHomeDir}${physicsFileName}`
-              );
-              return new ArrayBuffer(0);
+              CubismLogError(`Failed to load file ${this._modelHomeDir}${physicsFileName}`)
+              return new ArrayBuffer(0)
             }
           })
-          .then(arrayBuffer => {
-            this.loadPhysics(arrayBuffer, arrayBuffer.byteLength);
+          .then((arrayBuffer) => {
+            this.loadPhysics(arrayBuffer, arrayBuffer.byteLength)
 
             // Physics Updaterの追加
             if (this._physics) {
-              const physicsUpdater = new CubismPhysicsUpdater(this._physics);
-              this._updateScheduler.addUpdatableList(physicsUpdater);
+              const physicsUpdater = new CubismPhysicsUpdater(this._physics)
+              this._updateScheduler.addUpdatableList(physicsUpdater)
             }
 
-            this._state = LoadStep.LoadPose;
+            this._state = LoadStep.LoadPose
 
             // callback
-            loadCubismPose();
-          });
-        this._state = LoadStep.WaitLoadPhysics;
+            loadCubismPose()
+          })
+        this._state = LoadStep.WaitLoadPhysics
       } else {
-        this._state = LoadStep.LoadPose;
+        this._state = LoadStep.LoadPose
 
         // callback
-        loadCubismPose();
+        loadCubismPose()
       }
-    };
+    }
 
     // Pose
     const loadCubismPose = (): void => {
       if (this._modelSetting.getPoseFileName() != '') {
-        const poseFileName = this._modelSetting.getPoseFileName();
+        const poseFileName = this._modelSetting.getPoseFileName()
 
         fetch(`${this._modelHomeDir}${poseFileName}`)
-          .then(response => {
+          .then((response) => {
             if (response.ok) {
-              return response.arrayBuffer();
+              return response.arrayBuffer()
             } else if (response.status >= 400) {
-              CubismLogError(
-                `Failed to load file ${this._modelHomeDir}${poseFileName}`
-              );
-              return new ArrayBuffer(0);
+              CubismLogError(`Failed to load file ${this._modelHomeDir}${poseFileName}`)
+              return new ArrayBuffer(0)
             }
           })
-          .then(arrayBuffer => {
-            this.loadPose(arrayBuffer, arrayBuffer.byteLength);
+          .then((arrayBuffer) => {
+            this.loadPose(arrayBuffer, arrayBuffer.byteLength)
 
             // Pose Updaterの追加
             if (this._pose) {
-              const poseUpdater = new CubismPoseUpdater(this._pose);
-              this._updateScheduler.addUpdatableList(poseUpdater);
+              const poseUpdater = new CubismPoseUpdater(this._pose)
+              this._updateScheduler.addUpdatableList(poseUpdater)
             }
 
-            this._state = LoadStep.SetupEyeBlink;
+            this._state = LoadStep.SetupEyeBlink
 
             // callback
-            setupEyeBlink();
-          });
-        this._state = LoadStep.WaitLoadPose;
+            setupEyeBlink()
+          })
+        this._state = LoadStep.WaitLoadPose
       } else {
-        this._state = LoadStep.SetupEyeBlink;
+        this._state = LoadStep.SetupEyeBlink
 
         // callback
-        setupEyeBlink();
+        setupEyeBlink()
       }
-    };
+    }
 
     // EyeBlink
     const setupEyeBlink = (): void => {
       if (this._modelSetting.getEyeBlinkParameterCount() > 0) {
-        this._eyeBlink = CubismEyeBlink.create(this._modelSetting);
-        const eyeBlinkUpdater = new CubismEyeBlinkUpdater(
-          () => this._motionUpdated,
-          this._eyeBlink
-        );
-        this._updateScheduler.addUpdatableList(eyeBlinkUpdater);
+        this._eyeBlink = CubismEyeBlink.create(this._modelSetting)
+        const eyeBlinkUpdater = new CubismEyeBlinkUpdater(() => this._motionUpdated, this._eyeBlink)
+        this._updateScheduler.addUpdatableList(eyeBlinkUpdater)
       }
 
-      this._state = LoadStep.SetupBreath;
+      this._state = LoadStep.SetupBreath
 
       // callback
-      setupBreath();
-    };
+      setupBreath()
+    }
 
     // Breath
     const setupBreath = (): void => {
-      this._breath = CubismBreath.create();
+      this._breath = CubismBreath.create()
 
       const breathParameters: Array<BreathParameterData> = [
         new BreathParameterData(this._idParamAngleX, 0.0, 15.0, 6.5345, 0.5),
         new BreathParameterData(this._idParamAngleY, 0.0, 8.0, 3.5345, 0.5),
         new BreathParameterData(this._idParamAngleZ, 0.0, 10.0, 5.5345, 0.5),
+        new BreathParameterData(this._idParamBodyAngleX, 0.0, 4.0, 15.5345, 0.5),
         new BreathParameterData(
-          this._idParamBodyAngleX,
-          0.0,
-          4.0,
-          15.5345,
-          0.5
-        ),
-        new BreathParameterData(
-          CubismFramework.getIdManager().getId(
-            CubismDefaultParameterId.ParamBreath
-          ),
+          CubismFramework.getIdManager().getId(CubismDefaultParameterId.ParamBreath),
           0.5,
           0.5,
           3.2345,
           1
-        )
-      ];
+        ),
+      ]
 
-      this._breath.setParameters(breathParameters);
+      this._breath.setParameters(breathParameters)
 
-      const breathUpdater = new CubismBreathUpdater(this._breath);
-      this._updateScheduler.addUpdatableList(breathUpdater);
+      const breathUpdater = new CubismBreathUpdater(this._breath)
+      this._updateScheduler.addUpdatableList(breathUpdater)
 
-      this._state = LoadStep.LoadUserData;
+      this._state = LoadStep.LoadUserData
 
       // callback
-      loadUserData();
-    };
+      loadUserData()
+    }
 
     // UserData
     const loadUserData = (): void => {
       if (this._modelSetting.getUserDataFile() != '') {
-        const userDataFile = this._modelSetting.getUserDataFile();
+        const userDataFile = this._modelSetting.getUserDataFile()
 
         fetch(`${this._modelHomeDir}${userDataFile}`)
-          .then(response => {
+          .then((response) => {
             if (response.ok) {
-              return response.arrayBuffer();
+              return response.arrayBuffer()
             } else if (response.status >= 400) {
-              CubismLogError(
-                `Failed to load file ${this._modelHomeDir}${userDataFile}`
-              );
-              return new ArrayBuffer(0);
+              CubismLogError(`Failed to load file ${this._modelHomeDir}${userDataFile}`)
+              return new ArrayBuffer(0)
             }
           })
-          .then(arrayBuffer => {
-            this.loadUserData(arrayBuffer, arrayBuffer.byteLength);
+          .then((arrayBuffer) => {
+            this.loadUserData(arrayBuffer, arrayBuffer.byteLength)
 
-            this._state = LoadStep.SetupEyeBlinkIds;
+            this._state = LoadStep.SetupEyeBlinkIds
 
             // callback
-            setupEyeBlinkIds();
-          });
+            setupEyeBlinkIds()
+          })
 
-        this._state = LoadStep.WaitLoadUserData;
+        this._state = LoadStep.WaitLoadUserData
       } else {
-        this._state = LoadStep.SetupEyeBlinkIds;
+        this._state = LoadStep.SetupEyeBlinkIds
 
         // callback
-        setupEyeBlinkIds();
+        setupEyeBlinkIds()
       }
-    };
+    }
 
     // EyeBlinkIds
     const setupEyeBlinkIds = (): void => {
-      const eyeBlinkIdCount: number =
-        this._modelSetting.getEyeBlinkParameterCount();
+      const eyeBlinkIdCount: number = this._modelSetting.getEyeBlinkParameterCount()
 
-      this._eyeBlinkIds.length = eyeBlinkIdCount;
+      this._eyeBlinkIds.length = eyeBlinkIdCount
       for (let i = 0; i < eyeBlinkIdCount; ++i) {
-        this._eyeBlinkIds[i] = this._modelSetting.getEyeBlinkParameterId(i);
+        this._eyeBlinkIds[i] = this._modelSetting.getEyeBlinkParameterId(i)
       }
 
-      this._state = LoadStep.SetupLipSyncIds;
+      this._state = LoadStep.SetupLipSyncIds
 
       // callback
-      setupLipSyncIds();
-    };
+      setupLipSyncIds()
+    }
 
     // LipSyncIds
     const setupLipSyncIds = (): void => {
-      const lipSyncIdCount = this._modelSetting.getLipSyncParameterCount();
+      const lipSyncIdCount = this._modelSetting.getLipSyncParameterCount()
 
-      this._lipSyncIds.length = lipSyncIdCount;
+      this._lipSyncIds.length = lipSyncIdCount
       for (let i = 0; i < lipSyncIdCount; ++i) {
-        this._lipSyncIds[i] = this._modelSetting.getLipSyncParameterId(i);
+        this._lipSyncIds[i] = this._modelSetting.getLipSyncParameterId(i)
       }
 
       // LipSync Updaterの追加
       if (this._lipSyncIds.length > 0) {
-        const lipSyncUpdater = new CubismLipSyncUpdater(
-          this._lipSyncIds,
-          this._wavFileHandler
-        );
-        this._updateScheduler.addUpdatableList(lipSyncUpdater);
+        const lipSyncUpdater = new CubismLipSyncUpdater(this._lipSyncIds, this._wavFileHandler)
+        this._updateScheduler.addUpdatableList(lipSyncUpdater)
       }
 
-      this._state = LoadStep.SetupLook;
+      this._state = LoadStep.SetupLook
 
       // callback
-      setupLook();
-    };
+      setupLook()
+    }
 
     // Look
     const setupLook = (): void => {
-      this._look = CubismLook.create();
+      this._look = CubismLook.create()
 
       const lookParameters: Array<LookParameterData> = [
         new LookParameterData(this._idParamAngleX, 30.0, 0.0, 0.0),
@@ -430,100 +395,96 @@ export class LAppModel extends CubismUserModel {
         new LookParameterData(this._idParamAngleZ, 0.0, 0.0, -30.0),
         new LookParameterData(this._idParamBodyAngleX, 10.0, 0.0, 0.0),
         new LookParameterData(
-          CubismFramework.getIdManager().getId(
-            CubismDefaultParameterId.ParamEyeBallX
-          ),
+          CubismFramework.getIdManager().getId(CubismDefaultParameterId.ParamEyeBallX),
           1.0,
           0.0,
           0.0
         ),
         new LookParameterData(
-          CubismFramework.getIdManager().getId(
-            CubismDefaultParameterId.ParamEyeBallY
-          ),
+          CubismFramework.getIdManager().getId(CubismDefaultParameterId.ParamEyeBallY),
           0.0,
           1.0,
           0.0
-        )
-      ];
+        ),
+      ]
 
-      this._look.setParameters(lookParameters);
+      this._look.setParameters(lookParameters)
 
-      const lookUpdater = new CubismLookUpdater(this._look, this._dragManager);
-      this._updateScheduler.addUpdatableList(lookUpdater);
+      const lookUpdater = new CubismLookUpdater(this._look, this._dragManager)
+      this._updateScheduler.addUpdatableList(lookUpdater)
 
       // callback
-      finalizeUpdaters();
-    };
+      finalizeUpdaters()
+    }
 
     // UpdateScheduler最終化処理
     const finalizeUpdaters = (): void => {
       // 全てのUpdaterが追加されたのでUpdateSchedulerを最終ソート
-      this._updateScheduler.sortUpdatableList();
+      this._updateScheduler.sortUpdatableList()
 
-      this._state = LoadStep.SetupLayout;
+      this._state = LoadStep.SetupLayout
 
       // callback
-      setupLayout();
-    };
+      setupLayout()
+    }
 
     // Layout
     const setupLayout = (): void => {
-      const layout: Map<string, number> = new Map<string, number>();
+      const layout: Map<string, number> = new Map<string, number>()
 
       if (this._modelSetting == null || this._modelMatrix == null) {
-        CubismLogError('Failed to setupLayout().');
-        return;
+        CubismLogError('Failed to setupLayout().')
+        return
       }
 
-      this._modelSetting.getLayoutMap(layout);
-      this._modelMatrix.setupFromLayout(layout);
-      this._state = LoadStep.LoadMotion;
+      this._modelSetting.getLayoutMap(layout)
+      this._modelMatrix.setupFromLayout(layout)
+      this._state = LoadStep.LoadMotion
 
       // callback
-      loadCubismMotion();
-    };
+      loadCubismMotion()
+    }
 
     // Motion
     const loadCubismMotion = (): void => {
-      this._state = LoadStep.WaitLoadMotion;
-      this._model.saveParameters();
-      this._allMotionCount = 0;
-      this._motionCount = 0;
-      const group: string[] = [];
+      this._state = LoadStep.WaitLoadMotion
+      this._model.saveParameters()
+      this._allMotionCount = 0
+      this._motionCount = 0
+      const group: string[] = []
 
-      const motionGroupCount: number = this._modelSetting.getMotionGroupCount();
+      const motionGroupCount: number = this._modelSetting.getMotionGroupCount()
 
       // モーションの総数を求める
       for (let i = 0; i < motionGroupCount; i++) {
-        group[i] = this._modelSetting.getMotionGroupName(i);
-        this._allMotionCount += this._modelSetting.getMotionCount(group[i]);
+        group[i] = this._modelSetting.getMotionGroupName(i)
+        this._allMotionCount += this._modelSetting.getMotionCount(group[i])
       }
 
       // モーションの読み込み
       for (let i = 0; i < motionGroupCount; i++) {
-        this.preLoadMotionGroup(group[i]);
+        this.preLoadMotionGroup(group[i])
       }
 
       // モーションがない場合
       if (motionGroupCount == 0) {
-        this._state = LoadStep.LoadTexture;
+        this._state = LoadStep.LoadTexture
 
         // 全てのモーションを停止する
-        this._motionManager.stopAllMotions();
+        this._motionManager.stopAllMotions()
 
-        this._updating = false;
-        this._initialized = true;
+        this._updating = false
+        this._initialized = true
 
         this.createRenderer(
           this._subdelegate.getCanvas().width,
           this._subdelegate.getCanvas().height
-        );
-        this.setupTextures();
-        this.getRenderer().startUp(this._subdelegate.getGlManager().getGl());
-        this.getRenderer().loadShaders(LAppDefine.ShaderPath);
+        )
+        this.setupTextures()
+        this.getRenderer().startUp(this._subdelegate.getGlManager().getGl())
+        this.getRenderer().loadShaders(LAppDefine.ShaderPath)
       }
-    };
+    }
   }
 
   /**
@@ -531,48 +492,43 @@ export class LAppModel extends CubismUserModel {
    */
   private setupTextures(): void {
     // iPhoneでのアルファ品質向上のためTypescriptではpremultipliedAlphaを採用
-    const usePremultiply = true;
+    const usePremultiply = true
 
     if (this._state == LoadStep.LoadTexture) {
       // テクスチャ読み込み用
-      const textureCount: number = this._modelSetting.getTextureCount();
+      const textureCount: number = this._modelSetting.getTextureCount()
 
-      for (
-        let modelTextureNumber = 0;
-        modelTextureNumber < textureCount;
-        modelTextureNumber++
-      ) {
+      for (let modelTextureNumber = 0; modelTextureNumber < textureCount; modelTextureNumber++) {
         // テクスチャ名が空文字だった場合はロード・バインド処理をスキップ
         if (this._modelSetting.getTextureFileName(modelTextureNumber) == '') {
-          console.log('getTextureFileName null');
-          continue;
+          console.log('getTextureFileName null')
+          continue
         }
 
         // WebGLのテクスチャユニットにテクスチャをロードする
-        let texturePath =
-          this._modelSetting.getTextureFileName(modelTextureNumber);
-        texturePath = this._modelHomeDir + texturePath;
+        let texturePath = this._modelSetting.getTextureFileName(modelTextureNumber)
+        texturePath = this._modelHomeDir + texturePath
 
         // ロード完了時に呼び出すコールバック関数
         const onLoad = (textureInfo: TextureInfo): void => {
-          this.getRenderer().bindTexture(modelTextureNumber, textureInfo.id);
+          this.getRenderer().bindTexture(modelTextureNumber, textureInfo.id)
 
-          this._textureCount++;
+          this._textureCount++
 
           if (this._textureCount >= textureCount) {
             // ロード完了
-            this._state = LoadStep.CompleteSetup;
+            this._state = LoadStep.CompleteSetup
           }
-        };
+        }
 
         // 読み込み
         this._subdelegate
           .getTextureManager()
-          .createTextureFromPngFile(texturePath, usePremultiply, onLoad);
-        this.getRenderer().setIsPremultipliedAlpha(usePremultiply);
+          .createTextureFromPngFile(texturePath, usePremultiply, onLoad)
+        this.getRenderer().setIsPremultipliedAlpha(usePremultiply)
       }
 
-      this._state = LoadStep.WaitLoadTexture;
+      this._state = LoadStep.WaitLoadTexture
     }
   }
 
@@ -580,48 +536,39 @@ export class LAppModel extends CubismUserModel {
    * レンダラを再構築する
    */
   public reloadRenderer(): void {
-    this.deleteRenderer();
-    this.createRenderer(
-      this._subdelegate.getCanvas().width,
-      this._subdelegate.getCanvas().height
-    );
-    this.setupTextures();
+    this.deleteRenderer()
+    this.createRenderer(this._subdelegate.getCanvas().width, this._subdelegate.getCanvas().height)
+    this.setupTextures()
   }
 
   /**
    * 更新
    */
   public update(): void {
-    if (this._state != LoadStep.CompleteSetup) return;
+    if (this._state != LoadStep.CompleteSetup) return
 
-    const deltaTimeSeconds: number = LAppPal.getDeltaTime();
-    this._userTimeSeconds += deltaTimeSeconds;
+    const deltaTimeSeconds: number = LAppPal.getDeltaTime()
+    this._userTimeSeconds += deltaTimeSeconds
 
     //--------------------------------------------------------------------------
-    this._model.loadParameters(); // 前回セーブされた状態をロード
+    this._model.loadParameters() // 前回セーブされた状態をロード
 
     // Reset motion updated flag each frame
-    this._motionUpdated = false;
+    this._motionUpdated = false
 
     if (this._motionManager.isFinished()) {
       // モーションの再生がない場合、待機モーションの中からランダムで再生する
-      this.startRandomMotion(
-        LAppDefine.MotionGroupIdle,
-        LAppDefine.PriorityIdle
-      );
+      this.startRandomMotion(LAppDefine.MotionGroupIdle, LAppDefine.PriorityIdle)
     } else {
-      this._motionUpdated = this._motionManager.updateMotion(
-        this._model,
-        deltaTimeSeconds
-      ); // モーションを更新
+      this._motionUpdated = this._motionManager.updateMotion(this._model, deltaTimeSeconds) // モーションを更新
     }
-    this._model.saveParameters(); // 状態を保存
+    this._model.saveParameters() // 状態を保存
     //--------------------------------------------------------------------------
 
     // UpdateSchedulerによる一括エフェクト更新
-    this._updateScheduler.onLateUpdate(this._model, deltaTimeSeconds);
+    this._updateScheduler.onLateUpdate(this._model, deltaTimeSeconds)
 
-    this._model.update();
+    this._model.update()
   }
 
   /**
@@ -640,34 +587,32 @@ export class LAppModel extends CubismUserModel {
     onBeganMotionHandler?: BeganMotionCallback
   ): CubismMotionQueueEntryHandle {
     if (priority == LAppDefine.PriorityForce) {
-      this._motionManager.setReservePriority(priority);
+      this._motionManager.setReservePriority(priority)
     } else if (!this._motionManager.reserveMotion(priority)) {
       if (this._debugMode) {
-        LAppPal.printMessage("[APP]can't start motion.");
+        LAppPal.printMessage("[APP]can't start motion.")
       }
-      return InvalidMotionQueueEntryHandleValue;
+      return InvalidMotionQueueEntryHandleValue
     }
 
-    const motionFileName = this._modelSetting.getMotionFileName(group, no);
+    const motionFileName = this._modelSetting.getMotionFileName(group, no)
 
     // ex) idle_0
-    const name = `${group}_${no}`;
-    let motion: CubismMotion = this._motions.get(name) as CubismMotion;
-    let autoDelete = false;
+    const name = `${group}_${no}`
+    let motion: CubismMotion = this._motions.get(name) as CubismMotion
+    let autoDelete = false
 
     if (motion == null) {
       fetch(`${this._modelHomeDir}${motionFileName}`)
-        .then(response => {
+        .then((response) => {
           if (response.ok) {
-            return response.arrayBuffer();
+            return response.arrayBuffer()
           } else if (response.status >= 400) {
-            CubismLogError(
-              `Failed to load file ${this._modelHomeDir}${motionFileName}`
-            );
-            return new ArrayBuffer(0);
+            CubismLogError(`Failed to load file ${this._modelHomeDir}${motionFileName}`)
+            return new ArrayBuffer(0)
           }
         })
-        .then(arrayBuffer => {
+        .then((arrayBuffer) => {
           motion = this.loadMotion(
             arrayBuffer,
             arrayBuffer.byteLength,
@@ -678,39 +623,35 @@ export class LAppModel extends CubismUserModel {
             group,
             no,
             this._motionConsistency
-          );
-        });
+          )
+        })
 
       if (motion) {
-        motion.setEffectIds(this._eyeBlinkIds, this._lipSyncIds);
-        autoDelete = true; // 終了時にメモリから削除
+        motion.setEffectIds(this._eyeBlinkIds, this._lipSyncIds)
+        autoDelete = true // 終了時にメモリから削除
       } else {
-        CubismLogError("Can't start motion {0} .", motionFileName);
+        CubismLogError("Can't start motion {0} .", motionFileName)
         // ロードできなかったモーションのReservePriorityをリセットする
-        this._motionManager.setReservePriority(LAppDefine.PriorityNone);
-        return InvalidMotionQueueEntryHandleValue;
+        this._motionManager.setReservePriority(LAppDefine.PriorityNone)
+        return InvalidMotionQueueEntryHandleValue
       }
     } else {
-      motion.setBeganMotionHandler(onBeganMotionHandler);
-      motion.setFinishedMotionHandler(onFinishedMotionHandler);
+      motion.setBeganMotionHandler(onBeganMotionHandler)
+      motion.setFinishedMotionHandler(onFinishedMotionHandler)
     }
 
     //voice
-    const voice = this._modelSetting.getMotionSoundFileName(group, no);
+    const voice = this._modelSetting.getMotionSoundFileName(group, no)
     if (voice.localeCompare('') != 0) {
-      let path = voice;
-      path = this._modelHomeDir + path;
-      this._wavFileHandler.start(path);
+      let path = voice
+      path = this._modelHomeDir + path
+      this._wavFileHandler.start(path)
     }
 
     if (this._debugMode) {
-      LAppPal.printMessage(`[APP]start motion: [${group}_${no}]`);
+      LAppPal.printMessage(`[APP]start motion: [${group}_${no}]`)
     }
-    return this._motionManager.startMotionPriority(
-      motion,
-      autoDelete,
-      priority
-    );
+    return this._motionManager.startMotionPriority(motion, autoDelete, priority)
   }
 
   /**
@@ -727,20 +668,12 @@ export class LAppModel extends CubismUserModel {
     onBeganMotionHandler?: BeganMotionCallback
   ): CubismMotionQueueEntryHandle {
     if (this._modelSetting.getMotionCount(group) == 0) {
-      return InvalidMotionQueueEntryHandleValue;
+      return InvalidMotionQueueEntryHandleValue
     }
 
-    const no: number = Math.floor(
-      Math.random() * this._modelSetting.getMotionCount(group)
-    );
+    const no: number = Math.floor(Math.random() * this._modelSetting.getMotionCount(group))
 
-    return this.startMotion(
-      group,
-      no,
-      priority,
-      onFinishedMotionHandler,
-      onBeganMotionHandler
-    );
+    return this.startMotion(group, no, priority, onFinishedMotionHandler, onBeganMotionHandler)
   }
 
   /**
@@ -749,17 +682,17 @@ export class LAppModel extends CubismUserModel {
    * @param expressionId 表情モーションのID
    */
   public setExpression(expressionId: string): void {
-    const motion: ACubismMotion = this._expressions.get(expressionId);
+    const motion: ACubismMotion = this._expressions.get(expressionId)
 
     if (this._debugMode) {
-      LAppPal.printMessage(`[APP]expression: [${expressionId}]`);
+      LAppPal.printMessage(`[APP]expression: [${expressionId}]`)
     }
 
     if (motion != null) {
-      this._expressionManager.startMotion(motion, false);
+      this._expressionManager.startMotion(motion, false)
     } else {
       if (this._debugMode) {
-        LAppPal.printMessage(`[APP]expression[${expressionId}] is null`);
+        LAppPal.printMessage(`[APP]expression[${expressionId}] is null`)
       }
     }
   }
@@ -769,18 +702,18 @@ export class LAppModel extends CubismUserModel {
    */
   public setRandomExpression(): void {
     if (this._expressions.size == 0) {
-      return;
+      return
     }
 
-    const no: number = Math.floor(Math.random() * this._expressions.size);
+    const no: number = Math.floor(Math.random() * this._expressions.size)
 
     for (let i = 0; i < this._expressions.size; i++) {
       if (i == no) {
         // const name: string = this._expressions._keyValues[i].first;
-        const expressionsArray = [...this._expressions.entries()];
-        const name: string = expressionsArray[i][0];
-        this.setExpression(name);
-        return;
+        const expressionsArray = [...this._expressions.entries()]
+        const name: string = expressionsArray[i][0]
+        this.setExpression(name)
+        return
       }
     }
   }
@@ -789,7 +722,7 @@ export class LAppModel extends CubismUserModel {
    * イベントの発火を受け取る
    */
   public motionEventFired(eventValue: string): void {
-    CubismLogInfo('{0} is fired on LAppModel!!', eventValue);
+    CubismLogInfo('{0} is fired on LAppModel!!', eventValue)
   }
 
   /**
@@ -803,19 +736,19 @@ export class LAppModel extends CubismUserModel {
   public hitTest(hitArenaName: string, x: number, y: number): boolean {
     // 透明時は当たり判定無し。
     if (this._opacity < 1) {
-      return false;
+      return false
     }
 
-    const count: number = this._modelSetting.getHitAreasCount();
+    const count: number = this._modelSetting.getHitAreasCount()
 
     for (let i = 0; i < count; i++) {
       if (this._modelSetting.getHitAreaName(i) == hitArenaName) {
-        const drawId: CubismIdHandle = this._modelSetting.getHitAreaId(i);
-        return this.isHit(drawId, x, y);
+        const drawId: CubismIdHandle = this._modelSetting.getHitAreaId(i)
+        return this.isHit(drawId, x, y)
       }
     }
 
-    return false;
+    return false
   }
 
   /**
@@ -826,28 +759,24 @@ export class LAppModel extends CubismUserModel {
    */
   public preLoadMotionGroup(group: string): void {
     for (let i = 0; i < this._modelSetting.getMotionCount(group); i++) {
-      const motionFileName = this._modelSetting.getMotionFileName(group, i);
+      const motionFileName = this._modelSetting.getMotionFileName(group, i)
 
       // ex) idle_0
-      const name = `${group}_${i}`;
+      const name = `${group}_${i}`
       if (this._debugMode) {
-        LAppPal.printMessage(
-          `[APP]load motion: ${motionFileName} => [${name}]`
-        );
+        LAppPal.printMessage(`[APP]load motion: ${motionFileName} => [${name}]`)
       }
 
       fetch(`${this._modelHomeDir}${motionFileName}`)
-        .then(response => {
+        .then((response) => {
           if (response.ok) {
-            return response.arrayBuffer();
+            return response.arrayBuffer()
           } else if (response.status >= 400) {
-            CubismLogError(
-              `Failed to load file ${this._modelHomeDir}${motionFileName}`
-            );
-            return new ArrayBuffer(0);
+            CubismLogError(`Failed to load file ${this._modelHomeDir}${motionFileName}`)
+            return new ArrayBuffer(0)
           }
         })
-        .then(arrayBuffer => {
+        .then((arrayBuffer) => {
           const tmpMotion: CubismMotion = this.loadMotion(
             arrayBuffer,
             arrayBuffer.byteLength,
@@ -858,43 +787,41 @@ export class LAppModel extends CubismUserModel {
             group,
             i,
             this._motionConsistency
-          );
+          )
 
           if (tmpMotion != null) {
-            tmpMotion.setEffectIds(this._eyeBlinkIds, this._lipSyncIds);
+            tmpMotion.setEffectIds(this._eyeBlinkIds, this._lipSyncIds)
 
             if (this._motions.get(name) != null) {
-              ACubismMotion.delete(this._motions.get(name));
+              ACubismMotion.delete(this._motions.get(name))
             }
 
-            this._motions.set(name, tmpMotion);
+            this._motions.set(name, tmpMotion)
 
-            this._motionCount++;
+            this._motionCount++
           } else {
             // loadMotionできなかった場合はモーションの総数がずれるので1つ減らす
-            this._allMotionCount--;
+            this._allMotionCount--
           }
 
           if (this._motionCount >= this._allMotionCount) {
-            this._state = LoadStep.LoadTexture;
+            this._state = LoadStep.LoadTexture
 
             // 全てのモーションを停止する
-            this._motionManager.stopAllMotions();
+            this._motionManager.stopAllMotions()
 
-            this._updating = false;
-            this._initialized = true;
+            this._updating = false
+            this._initialized = true
 
             this.createRenderer(
               this._subdelegate.getCanvas().width,
               this._subdelegate.getCanvas().height
-            );
-            this.setupTextures();
-            this.getRenderer().startUp(
-              this._subdelegate.getGlManager().getGl()
-            );
-            this.getRenderer().loadShaders(LAppDefine.ShaderPath);
+            )
+            this.setupTextures()
+            this.getRenderer().startUp(this._subdelegate.getGlManager().getGl())
+            this.getRenderer().loadShaders(LAppDefine.ShaderPath)
           }
-        });
+        })
     }
   }
 
@@ -902,31 +829,28 @@ export class LAppModel extends CubismUserModel {
    * すべてのモーションデータを解放する。
    */
   public releaseMotions(): void {
-    this._motions.clear();
+    this._motions.clear()
   }
 
   /**
    * 全ての表情データを解放する。
    */
   public releaseExpressions(): void {
-    this._expressions.clear();
+    this._expressions.clear()
   }
 
   /**
    * モデルを描画する処理。モデルを描画する空間のView-Projection行列を渡す。
    */
   public doDraw(): void {
-    if (this._model == null) return;
+    if (this._model == null) return
 
     // キャンバスサイズを渡す
-    const canvas = this._subdelegate.getCanvas();
-    const viewport: number[] = [0, 0, canvas.width, canvas.height];
+    const canvas = this._subdelegate.getCanvas()
+    const viewport: number[] = [0, 0, canvas.width, canvas.height]
 
-    this.getRenderer().setRenderState(
-      this._subdelegate.getFrameBuffer(),
-      viewport
-    );
-    this.getRenderer().drawModel(LAppDefine.ShaderPath);
+    this.getRenderer().setRenderState(this._subdelegate.getFrameBuffer(), viewport)
+    this.getRenderer().drawModel(LAppDefine.ShaderPath)
   }
 
   /**
@@ -934,45 +858,45 @@ export class LAppModel extends CubismUserModel {
    */
   public draw(matrix: CubismMatrix44): void {
     if (this._model == null) {
-      return;
+      return
     }
 
     // 各読み込み終了後
     if (this._state == LoadStep.CompleteSetup) {
-      matrix.multiplyByMatrix(this._modelMatrix);
+      matrix.multiplyByMatrix(this._modelMatrix)
 
-      this.getRenderer().setMvpMatrix(matrix);
+      this.getRenderer().setMvpMatrix(matrix)
 
-      this.doDraw();
+      this.doDraw()
     }
   }
 
   public async hasMocConsistencyFromFile() {
-    CSM_ASSERT(this._modelSetting.getModelFileName().localeCompare(``));
+    CSM_ASSERT(this._modelSetting.getModelFileName().localeCompare(``))
 
     // CubismModel
     if (this._modelSetting.getModelFileName() != '') {
-      const modelFileName = this._modelSetting.getModelFileName();
+      const modelFileName = this._modelSetting.getModelFileName()
 
-      const response = await fetch(`${this._modelHomeDir}${modelFileName}`);
-      const arrayBuffer = await response.arrayBuffer();
+      const response = await fetch(`${this._modelHomeDir}${modelFileName}`)
+      const arrayBuffer = await response.arrayBuffer()
 
-      this._consistency = CubismMoc.hasMocConsistency(arrayBuffer);
+      this._consistency = CubismMoc.hasMocConsistency(arrayBuffer)
 
       if (!this._consistency) {
-        CubismLogInfo('Inconsistent MOC3.');
+        CubismLogInfo('Inconsistent MOC3.')
       } else {
-        CubismLogInfo('Consistent MOC3.');
+        CubismLogInfo('Consistent MOC3.')
       }
 
-      return this._consistency;
+      return this._consistency
     } else {
-      LAppPal.printMessage('Model data does not exist.');
+      LAppPal.printMessage('Model data does not exist.')
     }
   }
 
   public setSubdelegate(subdelegate: LAppSubdelegate): void {
-    this._subdelegate = subdelegate;
+    this._subdelegate = subdelegate
   }
 
   /**
@@ -980,96 +904,90 @@ export class LAppModel extends CubismUserModel {
    */
   public release(): void {
     if (this._look) {
-      CubismLook.delete(this._look);
-      this._look = null;
+      CubismLook.delete(this._look)
+      this._look = null
     }
     if (this._updateScheduler) {
-      this._updateScheduler.release();
+      this._updateScheduler.release()
     }
-    super.release();
+    super.release()
   }
 
   /**
    * コンストラクタ
    */
   public constructor() {
-    super();
+    super()
 
-    this._modelSetting = null;
-    this._modelHomeDir = null;
-    this._userTimeSeconds = 0.0;
+    this._modelSetting = null
+    this._modelHomeDir = null
+    this._userTimeSeconds = 0.0
 
-    this._eyeBlinkIds = new Array<CubismIdHandle>();
-    this._lipSyncIds = new Array<CubismIdHandle>();
+    this._eyeBlinkIds = new Array<CubismIdHandle>()
+    this._lipSyncIds = new Array<CubismIdHandle>()
 
-    this._motions = new Map<string, ACubismMotion>();
-    this._expressions = new Map<string, ACubismMotion>();
+    this._motions = new Map<string, ACubismMotion>()
+    this._expressions = new Map<string, ACubismMotion>()
 
-    this._hitArea = new Array<csmRect>();
-    this._userArea = new Array<csmRect>();
+    this._hitArea = new Array<csmRect>()
+    this._userArea = new Array<csmRect>()
 
-    this._idParamAngleX = CubismFramework.getIdManager().getId(
-      CubismDefaultParameterId.ParamAngleX
-    );
-    this._idParamAngleY = CubismFramework.getIdManager().getId(
-      CubismDefaultParameterId.ParamAngleY
-    );
-    this._idParamAngleZ = CubismFramework.getIdManager().getId(
-      CubismDefaultParameterId.ParamAngleZ
-    );
+    this._idParamAngleX = CubismFramework.getIdManager().getId(CubismDefaultParameterId.ParamAngleX)
+    this._idParamAngleY = CubismFramework.getIdManager().getId(CubismDefaultParameterId.ParamAngleY)
+    this._idParamAngleZ = CubismFramework.getIdManager().getId(CubismDefaultParameterId.ParamAngleZ)
     this._idParamBodyAngleX = CubismFramework.getIdManager().getId(
       CubismDefaultParameterId.ParamBodyAngleX
-    );
+    )
 
     if (LAppDefine.MOCConsistencyValidationEnable) {
-      this._mocConsistency = true;
+      this._mocConsistency = true
     }
 
     if (LAppDefine.MotionConsistencyValidationEnable) {
-      this._motionConsistency = true;
+      this._motionConsistency = true
     }
 
-    this._state = LoadStep.LoadAssets;
-    this._expressionCount = 0;
-    this._textureCount = 0;
-    this._motionCount = 0;
-    this._allMotionCount = 0;
-    this._wavFileHandler = new LAppWavFileHandler();
-    this._consistency = false;
-    this._look = null;
-    this._updateScheduler = new CubismUpdateScheduler();
-    this._motionUpdated = false;
+    this._state = LoadStep.LoadAssets
+    this._expressionCount = 0
+    this._textureCount = 0
+    this._motionCount = 0
+    this._allMotionCount = 0
+    this._wavFileHandler = new LAppWavFileHandler()
+    this._consistency = false
+    this._look = null
+    this._updateScheduler = new CubismUpdateScheduler()
+    this._motionUpdated = false
   }
 
-  private _updateScheduler: CubismUpdateScheduler; // アップデートスケジューラー
-  private _motionUpdated: boolean; // モーション更新フラグ
-  private _subdelegate: LAppSubdelegate; // サブデリゲート
+  private _updateScheduler: CubismUpdateScheduler // アップデートスケジューラー
+  private _motionUpdated: boolean // モーション更新フラグ
+  private _subdelegate: LAppSubdelegate // サブデリゲート
 
-  _modelSetting: ICubismModelSetting; // モデルセッティング情報
-  _modelHomeDir: string; // モデルセッティングが置かれたディレクトリ
-  _userTimeSeconds: number; // デルタ時間の積算値[秒]
+  _modelSetting: ICubismModelSetting // モデルセッティング情報
+  _modelHomeDir: string // モデルセッティングが置かれたディレクトリ
+  _userTimeSeconds: number // デルタ時間の積算値[秒]
 
-  _eyeBlinkIds: Array<CubismIdHandle>; // モデルに設定された瞬き機能用パラメータID
-  _lipSyncIds: Array<CubismIdHandle>; // モデルに設定されたリップシンク機能用パラメータID
+  _eyeBlinkIds: Array<CubismIdHandle> // モデルに設定された瞬き機能用パラメータID
+  _lipSyncIds: Array<CubismIdHandle> // モデルに設定されたリップシンク機能用パラメータID
 
-  _motions: Map<string, ACubismMotion>; // 読み込まれているモーションのリスト
-  _expressions: Map<string, ACubismMotion>; // 読み込まれている表情のリスト
+  _motions: Map<string, ACubismMotion> // 読み込まれているモーションのリスト
+  _expressions: Map<string, ACubismMotion> // 読み込まれている表情のリスト
 
-  _hitArea: Array<csmRect>;
-  _userArea: Array<csmRect>;
+  _hitArea: Array<csmRect>
+  _userArea: Array<csmRect>
 
-  _idParamAngleX: CubismIdHandle; // パラメータID: ParamAngleX
-  _idParamAngleY: CubismIdHandle; // パラメータID: ParamAngleY
-  _idParamAngleZ: CubismIdHandle; // パラメータID: ParamAngleZ
-  _idParamBodyAngleX: CubismIdHandle; // パラメータID: ParamBodyAngleX
+  _idParamAngleX: CubismIdHandle // パラメータID: ParamAngleX
+  _idParamAngleY: CubismIdHandle // パラメータID: ParamAngleY
+  _idParamAngleZ: CubismIdHandle // パラメータID: ParamAngleZ
+  _idParamBodyAngleX: CubismIdHandle // パラメータID: ParamBodyAngleX
 
-  _look: CubismLook; // ドラッグ追従
+  _look: CubismLook // ドラッグ追従
 
-  _state: LoadStep; // 現在のステータス管理用
-  _expressionCount: number; // 表情データカウント
-  _textureCount: number; // テクスチャカウント
-  _motionCount: number; // モーションデータカウント
-  _allMotionCount: number; // モーション総数
-  _wavFileHandler: LAppWavFileHandler; //wavファイルハンドラ
-  _consistency: boolean; // MOC3整合性チェック管理用
+  _state: LoadStep // 現在のステータス管理用
+  _expressionCount: number // 表情データカウント
+  _textureCount: number // テクスチャカウント
+  _motionCount: number // モーションデータカウント
+  _allMotionCount: number // モーション総数
+  _wavFileHandler: LAppWavFileHandler //wavファイルハンドラ
+  _consistency: boolean // MOC3整合性チェック管理用
 }

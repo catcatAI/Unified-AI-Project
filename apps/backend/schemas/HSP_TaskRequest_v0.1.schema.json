@@ -41,9 +41,5 @@
       "format": "uri"
     }
   },
-  "required": [
-    "request_id",
-    "requester_ai_id",
-    "parameters"
-  ]
+  "required": ["request_id", "requester_ai_id", "parameters"]
 }

@@ -21,11 +21,11 @@
 
 ### 場景類型
 
-| 類型 | 說明 |
-|------|------|
-| outdoor | 室外場景 |
-| indoor | 室內場景 |
-| dungeon | 迷宮/地下場景 |
+| 類型    | 說明                  |
+| ------- | --------------------- |
+| outdoor | 室外場景              |
+| indoor  | 室內場景              |
+| dungeon | 迷宮/地下場景         |
 | special | 特殊場景（隱藏/獨特） |
 
 ### 場景結構
@@ -41,7 +41,7 @@ Scene:
   objects: list[Object]   # 場景中的物件
   properties: list[Prop]  # 場景中的不動產
   entry_requirements: dict    # 進入條件
-  
+
   # 卡片來源
   card_id: str            # 關聯的卡片 ID
   card_type: str          # "SCENE" | "NATION" | "ORGANIZATION"
@@ -50,6 +50,7 @@ Scene:
 ### 場景連接方向
 
 場景之間的移動支援以下方向：
+
 - north / south / east / west
 - up / down (垂直移動)
 - enter (進入建築物)
@@ -61,16 +62,17 @@ Scene:
 
 不動產是場景中的建造物，可以購買、升級和改建。
 
-| 類型 | 說明 | 功能 |
-|------|------|------|
-| house | 住宅 | 休息、存取物品 |
-| shop | 商店 | 買賣物品 |
-| workshop | 工坊 | 製作、合成 |
-| farm | 農場 | 種植、收穫 |
-| warehouse | 倉庫 | 大量物品存儲 |
-| tower | 塔樓 | 瞭望、研究 |
+| 類型      | 說明 | 功能           |
+| --------- | ---- | -------------- |
+| house     | 住宅 | 休息、存取物品 |
+| shop      | 商店 | 買賣物品       |
+| workshop  | 工坊 | 製作、合成     |
+| farm      | 農場 | 種植、收穫     |
+| warehouse | 倉庫 | 大量物品存儲   |
+| tower     | 塔樓 | 瞭望、研究     |
 
 不動產屬性：
+
 - 所有權 (owner_id)
 - 是否可購買
 - 價格
@@ -87,17 +89,18 @@ Scene:
 
 ### 物件類型
 
-| 類型 | 說明 | 互動方式 |
-|------|------|----------|
-| container | 容器 | 打開/搜索內容物 |
-| workstation | 工作台 | 使用進行製作 |
-| decoration | 裝飾 | 只能觀察 |
-| vehicle | 載具 | 可騎乘/操作 |
-| mechanism | 機制 | 觸發特定效果 |
+| 類型        | 說明   | 互動方式        |
+| ----------- | ------ | --------------- |
+| container   | 容器   | 打開/搜索內容物 |
+| workstation | 工作台 | 使用進行製作    |
+| decoration  | 裝飾   | 只能觀察        |
+| vehicle     | 載具   | 可騎乘/操作     |
+| mechanism   | 機制   | 觸發特定效果    |
 
 ### 容器物件
 
 容器可以存放物品：
+
 - is_container: bool
 - container_contents: list of items
 - is_locked: bool
@@ -106,6 +109,7 @@ Scene:
 ### 工作台物件
 
 工作台提供合成功能：
+
 - is_workstation: bool
 - workstation_type: "forge" | "alchemy_table" | "kitchen" | "workbench"
 - available_recipes: list of recipe IDs
@@ -113,11 +117,13 @@ Scene:
 ### 載具物件
 
 載具是可操作的場景物件：
+
 - 可互動以移動到其他場景
 - 可騎乘以提高移動速度
 - 可裝備部件 (引擎、護甲、工具)
 
 載具屬性：
+
 - speed: 移動速度倍率
 - capacity: 載人數
 - cargo_capacity: 貨物容量 (kg)

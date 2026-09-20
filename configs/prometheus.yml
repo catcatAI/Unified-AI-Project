@@ -8,10 +8,10 @@ global:
 
 scrape_configs:
   # Angela Backend Metrics
-  - job_name: 'angela-backend'
+  - job_name: "angela-backend"
     static_configs:
-      - targets: ['backend:8000']
-    metrics_path: '/metrics'
+      - targets: ["backend:8000"]
+    metrics_path: "/metrics"
     scrape_interval: 10s
 
   # Note: Redis and PostgreSQL metrics require dedicated exporters
@@ -19,10 +19,10 @@ scrape_configs:
   # See docs/DEPLOYMENT.md for setup instructions.
 
   # Prometheus Self-Monitoring
-  - job_name: 'prometheus'
+  - job_name: "prometheus"
     static_configs:
-      - targets: ['localhost:9090']
+      - targets: ["localhost:9090"]
 
 # Alert Rules
 rule_files:
-  - 'alert_rules.yml'
+  - "alert_rules.yml"

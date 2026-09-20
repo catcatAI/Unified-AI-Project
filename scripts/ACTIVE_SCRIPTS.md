@@ -1,15 +1,18 @@
 # Active Scripts Reference
 
-This document lists the **currently active and recommended** scripts for the Unified-AI-Project.
+This document lists the **currently active and recommended** scripts for the
+Unified-AI-Project.
 
 ## Core Operations
 
 ### Backend Management
+
 - **`restart_backend.ps1`**: Restart the FastAPI backend server
 - **`start_backend.bat`**: Start backend in development mode
 - **`start_all.bat`**: Start both backend and frontend concurrently
 
 ### Health & Monitoring
+
 - **`check_auth_status.py`**: Check authentication status
 - **`check_last_memories.py`**: Inspect recent HAM memory entries
 - **`check_vec_store.py`**: Verify vector store integrity
@@ -17,6 +20,7 @@ This document lists the **currently active and recommended** scripts for the Uni
 - **`check_ports.ps1`**: Check port availability
 
 ### Google Drive Integration
+
 - **`trigger_sync.py`**: Manually trigger Drive file synchronization
 - **`verify_drive_analyzer.py`**: Verify Drive Analyzer functionality
 - **`get_drive_auth_url.py`**: Generate OAuth authorization URL
@@ -24,16 +28,26 @@ This document lists the **currently active and recommended** scripts for the Uni
 - **`clear_drive_sync.py`**: Reset Drive sync state
 
 ### Training & AI
+
 - **`train_ed3n.py`**: ED3N training
 - **`train_pipeline.py`**: Training pipeline
-- **`train_visual_decoder.py`**: Train VisualDecoder texture weights via FullTrainingPipeline (Phase 1+2+3a). Saves `data/multimodal/weights/p29_trained.npz` with 7 weight arrays. Usage: `python scripts/train_visual_decoder.py --texture-steps 200`
-- **`train_multimodal_real.py`**: Full multimodal training with real CIFAR-10 + ESC-50 data. Phase 1+2 (real contrastive + reconstruction) + Phase 3a (texture) + Phase 3b (wavetable). Saves joint `p29_trained.npz` (15 arrays). Usage: `python scripts/train_multimodal_real.py --texture-steps 500`
+- **`train_visual_decoder.py`**: Train VisualDecoder texture weights via
+  FullTrainingPipeline (Phase 1+2+3a). Saves
+  `data/multimodal/weights/p29_trained.npz` with 7 weight arrays. Usage:
+  `python scripts/train_visual_decoder.py --texture-steps 200`
+- **`train_multimodal_real.py`**: Full multimodal training with real CIFAR-10 +
+  ESC-50 data. Phase 1+2 (real contrastive + reconstruction) + Phase 3a
+  (texture) + Phase 3b (wavetable). Saves joint `p29_trained.npz` (15 arrays).
+  Usage: `python scripts/train_multimodal_real.py --texture-steps 500`
 - **`generate_training_data.py`**: Generate training data
 
 ### Development & Testing
+
 - **`verify_ice_loop.py`**: Verify ICE (Ingest-Cognition-Execution) loop
 - **`verify_phase_2_loop.py`**: Verify Phase 2 quality-based reward loop
+
 ### Project Management
+
 - **`unified-ai.bat`**: Main project launcher (comprehensive)
 - **`unified-ai-cli.bat`**: CLI interface for project operations
 - **`setup_project.bat`**: Initial project setup (Windows)
@@ -42,11 +56,14 @@ This document lists the **currently active and recommended** scripts for the Uni
 - **`update-docs.ps1`**: Update documentation (PowerShell)
 
 ### Utilities
-- **`run_angela.py`**: Unified launcher (v6.3.0). Starts backend API + optional desktop app.
+
+- **`run_angela.py`**: Unified launcher (v6.3.0). Starts backend API + optional
+  desktop app.
   - `python scripts/run_angela.py` — default (Ctrl+C to quit)
   - `python scripts/run_angela.py --api-only` — backend only
   - `python scripts/run_angela.py --desktop-only` — desktop only
-  - `python scripts/run_angela.py --timeout 120` — test mode: auto-shutdown after 120s
+  - `python scripts/run_angela.py --timeout 120` — test mode: auto-shutdown
+    after 120s
   - `python scripts/run_angela.py --health-check` — verify system readiness
   - Uses live_logger for single-line status updates during idle
 - **`_run_phase1.bat`**: Phase 1 launcher
@@ -64,7 +81,8 @@ This document lists the **currently active and recommended** scripts for the Uni
 - **`improve_live2d_loading.py`**: Live2D loading optimization
 - **`api_test_report.py`**: Generate API test reports
 - **`enable_commented_tests.py`**: Enable commented-out tests
-- **`automated_integration_test_pipeline.py`**: Automated integration test pipeline
+- **`automated_integration_test_pipeline.py`**: Automated integration test
+  pipeline
 - **`check_test_collection.py`**: Verify test collection
 - **`check_test_results.py`**: Check test results from runs
 - **`continuous_test_improvement.py`**: Continuous improvement of test suite
@@ -89,12 +107,14 @@ This document lists the **currently active and recommended** scripts for the Uni
 ## tools/
 
 ### Legacy Scripts
+
 - **`install_angela.py`**: Full installer
 - **`AngelaLauncher.bat`**: Windows launcher with auto-repair
 
 ## Usage Guidelines
 
 ### Quick Start
+
 ```powershell
 # Start the entire system
 .\scripts\start_all.bat
@@ -104,6 +124,7 @@ This document lists the **currently active and recommended** scripts for the Uni
 ```
 
 ### Health Check
+
 ```powershell
 # Quick check
 python scripts/check_auth_status.py
@@ -116,6 +137,7 @@ python scripts/utils/health_check.py
 ```
 
 ### Drive Operations
+
 ```powershell
 # Trigger manual sync
 python scripts/trigger_sync.py
@@ -127,7 +149,9 @@ python scripts/verify_drive_analyzer.py
 ## Maintenance Notes
 
 - **Active Scripts**: ~30 scripts in `scripts/` directory
-- **Utilities**: 28 scripts in `scripts/utils/` (was 5 — expanded with test utility scripts from `tests/utils/`)
+- **Utilities**: 28 scripts in `scripts/utils/` (was 5 — expanded with test
+  utility scripts from `tests/utils/`)
 - **Tools**: 2 scripts in `tools/`
-- **Tests/utils remaining**: `test_text_utils.py`, `text_utils.py` (legitimate test files with pytest test functions)
+- **Tests/utils remaining**: `test_text_utils.py`, `text_utils.py` (legitimate
+  test files with pytest test functions)
 - **Last Cleanup**: 2026-07-07

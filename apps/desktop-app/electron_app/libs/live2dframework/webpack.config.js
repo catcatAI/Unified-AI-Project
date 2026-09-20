@@ -1,4 +1,4 @@
-const path = require('path');
+const path = require('path')
 
 module.exports = {
   mode: 'production',
@@ -8,7 +8,7 @@ module.exports = {
     filename: 'live2dcubismframework.bundle.js',
     library: 'Live2DCubismFramework',
     libraryTarget: 'umd',
-    globalObject: 'this'
+    globalObject: 'this',
   },
   module: {
     rules: [
@@ -18,19 +18,19 @@ module.exports = {
           {
             loader: 'ts-loader',
             options: {
-              transpileOnly: true  // Skip type checking - Live2DCubismCore is a runtime global
-            }
-          }
+              transpileOnly: true, // Skip type checking - Live2DCubismCore is a runtime global
+            },
+          },
         ],
-        exclude: /node_modules/
-      }
-    ]
+        exclude: /node_modules/,
+      },
+    ],
   },
   resolve: {
     extensions: ['.ts', '.js'],
     alias: {
-      '@': path.resolve(__dirname, 'src')
-    }
+      '@': path.resolve(__dirname, 'src'),
+    },
   },
-  externals: {}
-};
+  externals: {},
+}

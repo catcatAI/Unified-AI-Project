@@ -2,7 +2,8 @@
 
 ## 概述
 
-Atlassian API 提供了与 Atlassian 服务（包括 Jira、Confluence 和 Bitbucket）集成的功能。该 API 支持配置管理、状态监控、项目和问题管理、页面创建等功能。
+Atlassian
+API 提供了与 Atlassian 服务（包括 Jira、Confluence 和 Bitbucket）集成的功能。该 API 支持配置管理、状态监控、项目和问题管理、页面创建等功能。
 
 ## 基础配置
 
@@ -347,4 +348,5 @@ Content-Type: application/json
 
 ## 离线支持
 
-Atlassian API 具有离线支持功能。当网络连接不可用时，API 会将请求排队并在网络恢复时自动同步。
+Atlassian
+API 具有离线支持功能。当网络连接不可用时，API 会将请求排队并在网络恢复时自动同步。
