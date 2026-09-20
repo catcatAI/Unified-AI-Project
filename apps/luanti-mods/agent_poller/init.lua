@@ -200,7 +200,8 @@ local function swim_up(player)
 end
 
 -- One collision-aware step toward dest (max ~1.5m). Tries ground level,
--- step-up, and (allow_climb) a jump-height scramble. Returns true if moved.
+-- step-up, and (allow_climb) a jump-height scramble. Refuses steps that
+-- drown (deep water column, see step_drowns). Returns true if moved.
 local function try_step(player, dest, allow_climb)
     local pos = player:get_pos()
     local flat = vector.new(dest.x - pos.x, 0, dest.z - pos.z)
@@ -213,6 +214,13 @@ local function try_step(player, dest, allow_climb)
         local c = vector.round(
             vector.add(vector.add(pos, vector.multiply(flat, 1.5)), {x = 0, y = dy, z = 0})
         )
+        if step_drowns(c) then
+            minetest.log(
+                "action",
+                "[agent_poller] step refused (deep water) for " .. player:get_player_name()
+            )
+            return false
+        end
         local fdef = minetest.registered_nodes[minetest.get_node(c).name] or {}
         local head = vector.add(c, {x = 0, y = 1, z = 0})
         local hdef = minetest.registered_nodes[minetest.get_node(head).name] or {}
@@ -231,30 +239,19 @@ local function try_step(player, dest, allow_climb)
     return false
 end
 
--- Reflex: water dead ahead -> turn away at once. Runs every poll for
--- every living target, no LLM, no waiting, no behavior machinery: that is
--- what makes it a reflex (the runner-side "flinch" was a slow decision
--- wearing a reflex name). Casts forward-HORIZONTAL from yaw, so it works
--- no matter where she happens to be looking.
-local function water_ahead_reflex(player, pname)
-    local yaw = player:get_look_horizontal()
-    local facing = vector.rotate(vector.new(1, 0, 0), vector.new(0, yaw, 0))
-    local eye = player:get_pos()
-    eye.y = eye.y + 1.6
-    local rc = minetest.raycast(eye, vector.add(eye, vector.multiply(facing, 6)), false, false)
-    for pointed in rc do
-        if pointed.type == "node" then
-            local name = minetest.get_node(pointed.under).name
-            if name:find("water") then
-                player:set_look_horizontal(yaw + math.pi / 4)
-                minetest.log(
-                    "action",
-                    "[agent_poller] water ahead, turning for " .. pname
-                )
-            end
-        end
-        break
+-- The water reflex answers ONE question: will this step drown her?
+-- Trigger is the committing foot, not sight: water in view can be a
+-- paddleable shore, the far bank, a waterfall (brain business); a step
+-- into a deep column with no bottom is spinal business. Depth rule: the
+-- target cell is water AND the two cells below are also water.
+local function step_drowns(dest)
+    if minetest.get_node(dest).name:find("water") == nil then
+        return false
     end
+    local b1 = vector.add(dest, {x = 0, y = -1, z = 0})
+    local b2 = vector.add(dest, {x = 0, y = -2, z = 0})
+    return minetest.get_node(b1).name:find("water") ~= nil
+        and minetest.get_node(b2).name:find("water") ~= nil
 end
 
 -- Start (or replace) a coordinate walk: engine path, advanced every poll.
@@ -701,16 +698,9 @@ local function poll_bridge()
         return
     end
     local player_name = player:get_player_name()
-    -- Body reflexes run every poll, unconditionally (alive only).
-    if player:get_hp() > 0 then
-        do
-            local ok, err = pcall(water_ahead_reflex, player, player_name)
-            if not ok then
-                minetest.log("error", "[agent_poller] water reflex failed: " .. tostring(err))
-            end
-        end
-    end
     -- Coordinate walk advances every poll, independent of queued actions.
+    -- (Water safety lives inside try_step as step refusal + inside move as
+    -- swim-up: both trigger on the committing foot, not on sight.)
     do
         local ok, err = pcall(advance_goto, player, player_name)
         if not ok then
