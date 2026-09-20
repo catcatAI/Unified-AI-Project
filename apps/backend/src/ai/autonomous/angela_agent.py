@@ -699,8 +699,10 @@ class AngelaAutonomousAgent:
             # Undirected L1 placement entombs the agent (observed: boxed
             # herself in cobble/sand, then "no free cell" forever). Placement
             # only comes from plans, LLM behaviors, or chat from now on.
-            if skill_params.skill_id == SkillID.PLACE:
-                logger.info("L1 place abstained (undirected placement)")
+            # BUILD maps to the same place action (no blueprint runner
+            # exists), so it abstains too — observed stacking dirt piles.
+            if skill_params.skill_id in (SkillID.PLACE, SkillID.BUILD):
+                logger.info(f"L1 {skill_params.skill_id.value} abstained (undirected placement)")
                 return
             # Abstain from uncraftable crafts: the L1 path carries no
             # template preconditions, so without this gate it queues
