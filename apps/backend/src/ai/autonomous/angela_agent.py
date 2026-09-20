@@ -1092,26 +1092,19 @@ class AngelaAutonomousAgent:
         )
 
     async def _finish_vision(self, ab: Dict[str, Any], vision: Dict[str, Any]):
-        """Vision phase two: flinch at water (rule), aim at interest (LLM)."""
+        """Vision phase two: aim at interest (LLM).
+
+        Water avoidance is NOT here: it lives in the poller as a per-poll
+        forward-ray reflex. A 15s-cadence runner branch is a decision, and
+        calling it a reflex was a layering mistake.
+        """
         rays = vision.get("rays", []) or []
         await self._settle_behavior(True, "vision_done")
         if not rays:
             return
-        center = next(
-            (r for r in rays if r.get("yaw_off", 1) == 0 and r.get("pitch_off", 1) == 0),
-            rays[0],
-        )
         boring = {"air", "default:dirt", "default:sand", "default:dirt_with_grass"}
         if all(str(r.get("node", "air")) in boring for r in rays):
             logger.debug("Vision: nothing interesting")
-            return
-        node = str(center.get("node", "air"))
-        dist = float(center.get("dist", 99) or 99)
-        # Flinch: water dead ahead within 8m -> turn away at once. No LLM
-        # round trip; this is the reflex that replaces drowning.
-        if "water" in node and dist < 8:
-            logger.info(f"Water ahead ({dist}m), flinching away")
-            self._start_behavior("turn", {"degrees": 90}, "water-flinch")
             return
         ray_lines = "\n".join(
             f"- {r.get('node')} {r.get('dist')}m (yaw {r.get('yaw_off')})" for r in rays

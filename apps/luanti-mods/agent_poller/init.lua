@@ -231,6 +231,32 @@ local function try_step(player, dest, allow_climb)
     return false
 end
 
+-- Reflex: water dead ahead -> turn away at once. Runs every poll for
+-- every living target, no LLM, no waiting, no behavior machinery: that is
+-- what makes it a reflex (the runner-side "flinch" was a slow decision
+-- wearing a reflex name). Casts forward-HORIZONTAL from yaw, so it works
+-- no matter where she happens to be looking.
+local function water_ahead_reflex(player, pname)
+    local yaw = player:get_look_horizontal()
+    local facing = vector.rotate(vector.new(1, 0, 0), vector.new(0, yaw, 0))
+    local eye = player:get_pos()
+    eye.y = eye.y + 1.6
+    local rc = minetest.raycast(eye, vector.add(eye, vector.multiply(facing, 6)), false, false)
+    for pointed in rc do
+        if pointed.type == "node" then
+            local name = minetest.get_node(pointed.under).name
+            if name:find("water") then
+                player:set_look_horizontal(yaw + math.pi / 4)
+                minetest.log(
+                    "action",
+                    "[agent_poller] water ahead, turning for " .. pname
+                )
+            end
+        end
+        break
+    end
+end
+
 -- Start (or replace) a coordinate walk: engine path, advanced every poll.
 local function start_goto(player, pname, dest)
     dest = vector.round(dest)
@@ -675,6 +701,15 @@ local function poll_bridge()
         return
     end
     local player_name = player:get_player_name()
+    -- Body reflexes run every poll, unconditionally (alive only).
+    if player:get_hp() > 0 then
+        do
+            local ok, err = pcall(water_ahead_reflex, player, player_name)
+            if not ok then
+                minetest.log("error", "[agent_poller] water reflex failed: " .. tostring(err))
+            end
+        end
+    end
     -- Coordinate walk advances every poll, independent of queued actions.
     do
         local ok, err = pcall(advance_goto, player, player_name)
