@@ -248,7 +248,7 @@ def check_preconditions(skill_id: SkillID, state: GameState) -> Tuple[bool, List
     """檢查技能前置條件"""
     spec = GAME_SKILLS[skill_id]
     failed = []
-    inv = state.proprioception.inventory if state.proprioception else {}
+    inv = (state.proprioception.inventory if state.proprioception else {}) or {}
 
     for cond in spec.preconditions:
         if cond.startswith("has_tool:"):
@@ -264,10 +264,8 @@ def check_preconditions(skill_id: SkillID, state: GameState) -> Tuple[bool, List
             if not any(f in inv for f in food_items):
                 failed.append("無食物")
         elif cond == "hunger_low":
-            if (
-                state.proprioception
-                and state.proprioception.hunger > state.proprioception.max_hunger * 0.3
-            ):
+            max_hunger = getattr(state.proprioception, "max_hunger", 20)
+            if state.proprioception and state.proprioception.hunger > max_hunger * 0.3:
                 failed.append("飢餓度未低")
         elif cond == "recipe_unlocked":
             # 簡化：假設基本配方都解鎖

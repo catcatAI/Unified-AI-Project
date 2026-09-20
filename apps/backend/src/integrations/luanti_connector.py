@@ -51,6 +51,7 @@ class PlayerState:
     max_hp: int = 20
     breath: int = 10
     hunger: int = 20
+    max_hunger: int = 20
     inventory: Dict[str, int] = field(default_factory=dict)
     wield_index: int = 0
     wielded_item: str = ""
