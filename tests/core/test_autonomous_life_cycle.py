@@ -534,3 +534,44 @@ class TestLifecyclePersistence:
         adj = lc.get_behavioral_adjustment()
         assert "routing_mode" in adj
         assert adj["avg_interaction_quality"] == 1.0  # default when empty
+
+
+# ==================== 跨進程生命狀態共享（R71c） ====================
+
+
+class TestCrossProcessStateSharing:
+    """主 server 與遊戲 agent 是兩個進程；生命狀態經共享 JSON 互通。"""
+
+    def test_default_path_anchored_to_repo_root(self):
+        from core.life.autonomous_life_cycle import _DEFAULT_STATE_PATH
+
+        assert _DEFAULT_STATE_PATH.endswith("data/autonomous_lifecycle_state.json")
+        # 錨定 repo root，不隨啟動 cwd 漂移
+        assert "apps/backend/src" not in _DEFAULT_STATE_PATH
+
+    def test_state_roundtrip_between_instances(self, tmp_path):
+        # 模擬兩進程：agent 寫 → server 讀
+        from core.life.autonomous_life_cycle import AutonomousLifeCycle
+
+        path = str(tmp_path / "shared.json")
+        agent_lc = AutonomousLifeCycle(persist_path=path)
+        agent_lc.explorations_triggered = 7
+        agent_lc.save_state(path)
+
+        server_lc = AutonomousLifeCycle(persist_path=path)
+        assert server_lc.explorations_triggered == 7
+
+    def test_default_constructor_binds_shared_path(self):
+        # 預設建構（主 server / agent 的實際用法）綁定共享檔路徑，
+        # 建構時 auto-load 既有狀態（load 行為由 roundtrip 測試覆蓋）
+        from core.life import autonomous_life_cycle as alc_mod
+
+        lc = AutonomousLifeCycle()
+        assert lc._persist_path == alc_mod._DEFAULT_STATE_PATH
+
+    def test_persist_none_disables_loading(self, tmp_path):
+        # persist_path=None 維持「停用持久化」語意（既有測試依賴此隔離）
+        from core.life import autonomous_life_cycle as alc_mod
+
+        lc = AutonomousLifeCycle(persist_path=None)
+        assert lc._persist_path is None

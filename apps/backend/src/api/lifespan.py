@@ -565,6 +565,16 @@ async def _shutdown_services(broadcast_task, module_manager):
             logger.info("[DLI] DigitalLifeIntegrator shut down")
         except Exception as e:
             logger.warning(f"[DLI] DigitalLifeIntegrator shutdown error: {e}")
+    # Lifecycle state save: server-side life growth (decisions, phase) is
+    # written back to the shared JSON so the game agent process picks it up
+    # on next start (save_state previously had zero callers repo-wide).
+    try:
+        _lc = get_lifecycle()
+        if _lc is not None and getattr(_lc, "_persist_path", None):
+            _lc.save_state(_lc._persist_path)
+            logger.info("[LifeCycle] State saved to shared file")
+    except Exception as e:
+        logger.warning(f"[LifeCycle] State save skipped: {e}")
     if broadcast_task is not None:
         broadcast_task.cancel()
         try:

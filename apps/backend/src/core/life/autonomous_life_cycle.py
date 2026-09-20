@@ -23,6 +23,7 @@ import json
 import logging
 import os
 from collections import deque
+from pathlib import Path
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
@@ -92,6 +93,22 @@ class FormulaMetrics:
     resonance_total: float
 
 
+# 跨進程生命狀態單一真相源：主 server（api/lifespan、chat_routes、
+# prompt_builder）與遊戲 agent（scripts/run_angela.py）是兩個獨立進程，
+# 各自的 in-memory lifecycle 透過這份 JSON 交換生命階段——錨定 repo root
+# 使相對路徑與啟動 cwd 無關。
+def _repo_root_state_path() -> str:
+    try:
+        return str(
+            Path(__file__).resolve().parents[5] / "data" / "autonomous_lifecycle_state.json"
+        )
+    except Exception:
+        return "data/autonomous_lifecycle_state.json"
+
+
+_DEFAULT_STATE_PATH = _repo_root_state_path()
+
+
 class AutonomousLifeCycle:
     """
     自主生命周期主类 / Main autonomous life cycle class
@@ -134,7 +151,7 @@ class AutonomousLifeCycle:
     def __init__(
         self,
         config: Optional[Dict[str, Any]] = None,
-        persist_path: Optional[str] = "data/autonomous_lifecycle_state.json",
+        persist_path: Optional[str] = _DEFAULT_STATE_PATH,
     ):
         self.config = config or {}
         self._persist_path = persist_path
