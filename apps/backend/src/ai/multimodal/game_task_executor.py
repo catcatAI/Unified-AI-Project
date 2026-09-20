@@ -74,6 +74,7 @@ class ActiveSubgoal:
     progress_value: float = 0.0
     retry_count: int = 0
     consecutive_failures: int = 0
+    blocked_ticks: int = 0
 
 
 class GameTaskExecutor:
@@ -381,6 +382,19 @@ class GameTaskExecutor:
                 timeout_ticks=300,
             )
             self._queue.appendleft(ActiveSubgoal(subgoal=fallback_sg))
+            self._current = None
+            return self._drive_execution(state, latent)
+
+        # 無 fallback：累計 blocked 次數，超過閾值則跳過此子目標，
+        # 避免卡在 BLOCKED 觸發每 tick 重規劃的死循環
+        self._current.blocked_ticks += 1
+        if self._current.blocked_ticks >= 10:
+            logger.warning(
+                f"Subgoal {self._current.subgoal.subgoal_id} blocked "
+                f"for {self._current.blocked_ticks} ticks, skipping"
+            )
+            self._current.status = SubgoalStatus.FAILED
+            self._failed.append(self._current)
             self._current = None
             return self._drive_execution(state, latent)
 

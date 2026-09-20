@@ -185,6 +185,7 @@ class AngelaAutonomousAgent:
         self.current_goal: Optional[GoalType] = None
         self.current_plan: Optional[Any] = None
         self.last_strategy_update = 0
+        self.last_replan_tick = -1000
 
     async def initialize(self) -> bool:
         """Initialize all components"""
@@ -421,7 +422,10 @@ class AngelaAutonomousAgent:
         reason to replan — replanning there caused a reload loop.
         """
         if self.executor._current and self.executor._current.status == SubgoalStatus.BLOCKED:
-            return True
+            # 冷卻：同一 plan 最多每 50 tick 重規劃一次，防止 BLOCKED 死循環洗版
+            if self.tick_count - self.last_replan_tick >= 50:
+                return True
+            return False
         if self.executor._state.value in ("REPLANNING", "STUCK"):
             return True
         if self.current_goal and not self.current_plan and not self.executor._queue:
@@ -464,6 +468,7 @@ class AngelaAutonomousAgent:
             plan = await self.planner.propose_plan(ctx)
             if plan:
                 self.current_plan = plan
+                self.last_replan_tick = self.tick_count
                 self.executor.load_plan(plan)
                 logger.info(f"New plan: {plan.plan_id} with {len(plan.nodes)} subgoals")
         except Exception as e:
