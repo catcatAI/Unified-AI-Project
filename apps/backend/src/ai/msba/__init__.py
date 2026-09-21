@@ -41,6 +41,14 @@ from .weight_migration import WeightMigration
 from .ab_testing import ABTesting
 from .metrics_collector import MetricsCollector
 from .neuroblender_bridge import NeuroBlenderBridge
+from .performance_profiler import PerformanceProfiler
+from .block_factory import (
+    create_all_blocks,
+    create_default_blocks,
+    create_linguistic_block,
+    create_vision_block,
+    create_audio_block,
+)
 
 __all__ = [
     # Types
@@ -73,9 +81,14 @@ __all__ = [
     "MetricsCollector",
     # NeuroBlender integration
     "NeuroBlenderBridge",
+    # Performance
+    "PerformanceProfiler",
     # Factory functions
+    "create_all_blocks",
     "create_default_blocks",
     "create_linguistic_block",
+    "create_vision_block",
+    "create_audio_block",
     # Support modules
     "ColdStartManager",
     "MSBACheckpointer",

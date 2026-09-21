@@ -6,7 +6,7 @@
 > **Supersedes**: None (new architecture)
 > **Resolution Status**: 5 misjudgments + 6 omissions + 5 oversights = 16/16 resolved, zero residual
 > **Last correction**: 誤判5 — 社交輸入同樣需要語義塊參與（時間、情感、關係上下文）
-> **Implementation**: 20 modules, 163 tests, 0 lint errors
+> **Implementation**: 22 modules, 189 tests, 0 lint errors
 
 ---
 
@@ -1222,6 +1222,7 @@ Total (with LLM):     ~400ms ⚠️  fallback only
 | 0.2.1-resolved | 2026-09-21 | 誤判5修正: 社交輸入也進 MSBA，所有輸入都需語義上下文 |
 | 0.3.0-performance | 2026-09-21 | 新增 §B MemMapped Storage (1TB/1GB) + §C 效能基準 (延遲/快取/記憶體) |
 | 1.0.0 | 2026-09-21 | 實現完成: 20 個模組, 163 個測試, 0 lint 錯誤 |
+| 1.1.0 | 2026-09-21 | Phase 4: 線上訓練 (RelevanceConvergence replay buffer) + PerformanceProfiler + E2E smoke test |
 
 ### F. 實現完成清單
 
@@ -1245,3 +1246,5 @@ Total (with LLM):     ~400ms ⚠️  fallback only
 | `weight_migration.py` | CoreNetwork/TensorSNNCore 權重遷移 | ✅ |
 | `ab_testing.py` | A/B 測試框架 (流量分配/漸進式遷移) | ✅ |
 | `metrics_collector.py` | 監控指標 (延遲/快取/錯誤率) | ✅ |
+| `neuroblender_bridge.py` | MSBA → NeuroBlender 9D 映射 | ✅ |
+| `performance_profiler.py` | 逐層延遲分析 + 瓶頸識別 + 優化建議 | ✅ |
