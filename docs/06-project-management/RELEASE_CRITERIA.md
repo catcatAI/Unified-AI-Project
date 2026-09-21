@@ -4,14 +4,14 @@
 
 ## 六維度（皆為必要條件）
 
-| #   | 維度               | 正式版門檻                                               | 驗證方式                                                                                                       | 現況（2026-09-17 R70 重驗）                                                             |
-| --- | ------------------ | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| 1   | 功能完整可用       | 每個能力在主流程（對話）真跑通：分類→路由→閘門→執行→回應 | `verify_main_flow_e2e.py` 15/15 exit 0（EXEC/CONFIRM/CONFIRM-EXEC/REJECT 四態，含 task 增查改刪＋search 真搜） | ✅ 15/15（2026-09-17 重跑）                                                             |
-| 2   | 互無衝突           | 路由/閘門/handler 鍵契約一致；全回歸綠                   | 雙向契約測試＋全倉 5442 passed/122 skipped/0 failed＋地圖門                                                    | ✅ 全倉綠（2026-09-17 重驗：**5454 passed**/122 skipped/0 failed，+12 first-run 測試）  |
-| 3   | 無異常             | 錯誤皆有明確訊息＋正確退出碼；無靜默失敗、無異常逃逸     | 否定/誤判/超時/解析失敗皆有指名回應與測試；`lint:js` 硬失敗已修                                                | ✅ R3–R12；R70 修 `.env` 佔位符金鑰炸 HSP（5 errors→0）＋first-run 偵測上線             |
-| 4   | 實際使用（非模擬） | 訓練/探針數字皆真實更新或真實測量；模擬必須標明或退役    | 學習門（exit 1 若無學習）＋作廢標註＋轉發器                                                                    | ✅ R9–R10                                                                               |
-| 5   | 易用性             | 一命令可跑、可重現；錯誤指引下一步；文檔只寫事實         | e2e/試點皆單命令；confirm/指引訊息；MD 行級事實                                                                | ✅ R70：first-run 偵測＋Dashboard 真實資料＋unsupported/limitations 文檔＋STATUS_MATRIX |
-| 6   | 免維護性           | 單一真相源（無鏡像接線）；契約測試鎖邊界；CI 門禁        | handler 註冊複用＋契約測試＋budget/CI jobs；flake8 全倉 0                                                      | ✅ 進行中                                                                               |
+| #   | 維度               | 正式版門檻                                               | 驗證方式                                                                                                       | 現況（2026-09-17 R70 重驗）                                                                                                                                    |
+| --- | ------------------ | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 功能完整可用       | 每個能力在主流程（對話）真跑通：分類→路由→閘門→執行→回應 | `verify_main_flow_e2e.py` 15/15 exit 0（EXEC/CONFIRM/CONFIRM-EXEC/REJECT 四態，含 task 增查改刪＋search 真搜） | ✅ 15/15（2026-09-17 重跑）                                                                                                                                    |
+| 2   | 互無衝突           | 路由/閘門/handler 鍵契約一致；全回歸綠                   | 雙向契約測試＋全倉 5442 passed/122 skipped/0 failed＋地圖門                                                    | ✅ 全倉綠（2026-09-17 重驗：**5454 passed**/122 skipped/0 failed，+12 first-run 測試）                                                                         |
+| 3   | 無異常             | 錯誤皆有明確訊息＋正確退出碼；無靜默失敗、無異常逃逸     | 否定/誤判/超時/解析失敗皆有指名回應與測試；`lint:js` 硬失敗已修                                                | ✅ R3–R12；R70 修 `.env` 佔位符金鑰炸 HSP（5 errors→0）＋first-run 偵測上線                                                                                    |
+| 4   | 實際使用（非模擬） | 訓練/探針數字皆真實更新或真實測量；模擬必須標明或退役    | 學習門（exit 1 若無學習）＋作廢標註＋轉發器                                                                    | ✅ R9–R10                                                                                                                                                      |
+| 5   | 易用性             | 一命令可跑、可重現；錯誤指引下一步；文檔只寫事實         | e2e/試點皆單命令；confirm/指引訊息；MD 行級事實                                                                | ✅ R70：first-run 偵測＋Dashboard 真實資料＋unsupported/limitations 文檔＋STATUS_MATRIX                                                                        |
+| 6   | 免維護性           | 單一真相源（無鏡像接線）；契約測試鎖邊界；CI 門禁        | handler 註冊複用＋契約測試＋budget/CI jobs；flake8 全倉 0                                                      | ✅ R74：mypy 棘輪門（`scripts/mypy_budget_gate.py`＋budget 檔）入 CI；隨機三目錄組合汙染防線；prettier 全倉門（.prettierignore 管轄）；black/isort/flake8 全綠 |
 
 ## 已知缺口（誠實清單，非正式版阻擋即註明）
 
@@ -21,13 +21,13 @@
 - 開放域智能仍依外部／本地 LLM；原生引擎僅確定性＋試點泛化——分數見 INTELLIGENCE_ASSESSMENT（誠實拆分）。
 - 地圖 25 檔折疊懸崖：TREND 只認三連升（已註記）。
 - 非單調 autosize（如預力窗外）：終驗報錯（已落實）。
-- mypy 類型覆蓋債：**680**（2026-09-21 實測全量
-  `--python-version 3.12`；此前 581 之後環境中 numpy 2.5 stubs 以
-  `Type statement` 語法錯誤**擋住全量**，「errors prevented further
-  checking」使數字不可比。R72 修開：pyproject 加無型別第三方庫 overrides（pytesseract/textblob/scipy.ndimage/pyautogui/
-  pystray/rumps/gi/textual/sklearn/speech_recognition/faster_whisper）＋清 feedback_loop_engine
-  TYPE_CHECKING 死引用與裸 import、game_agent 雙重模組身份 import——全量從此可跑，680 為真實基線（歷史最低點 581
-  errors 為 2026-09-17 實測，當時環境未被 numpy stubs 擋住）；收斂軌跡：R87
+- mypy 類型覆蓋債：**559**（R74 棘輪門鎖定，`scripts/mypy_budget.txt`；
+  `mypy apps/backend/src`
+  全量可跑不再需旗標——python_version 提至 3.12 修開 numpy 2.5 stubs 的
+  `Type statement`
+  擋門問題，CI 矩陣 3.11/3.14 皆可用）。R74 遊戲棧收斂 −121：game_agent
+  45→0、angela_agent 42→0、skill_selector 26→0、game_policy
+  8→0，附帶修掉 proprioception=None 崩潰點與 PlayerState/Proprioception 型別謊言；歷史：680（R72 實測全量）；581（2026-09-17 環境未被擋時的最低點；R72 修開過程：pyproject 加無型別第三方庫 overrides＋清 feedback_loop_engine 死引用、game_agent 雙重模組身份 import）；收斂軌跡：R87
   ensemble -7; R86 audio_encoder_spectral -3; R85 visual_encoder -3; R84
   gdrive+selfgen -18; R83 coremodel+diffusion -18; R82 adapter+live2d -20; R81
   threshold+agentmgr -22; R80 symbolic+browser -15; R79 heartbeat -11; R78
