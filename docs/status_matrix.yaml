@@ -1,0 +1,257 @@
+# STATUS_MATRIX 資料真相源（單一來源，MD 為生成視圖）
+#
+# 本檔是功能成熟度的機器可讀單一真相源。docs/STATUS_MATRIX.md 由
+# scripts/gen_status_matrix.py 生成——手改 MD 會被下次生成覆蓋。
+#
+# 五級狀態：claimed → implemented → wired → verified → production
+#   claimed     宣稱存在（無驗證）
+#   implemented 程式存在（主要方法已實作）
+#   wired       生產路徑呼叫
+#   verified    端到端測試證明（附 verify_command）
+#   production  benchmark 達標
+#
+# 核對規則（gen_project_map.py 交叉驗證，違反即 CI 紅）：
+#   - implementation 檔案必須存在
+#   - tests 檔案必須存在
+#   - status ∈ {verified, production} ⇔ verify_command 必須存在（反之亦然）
+
+meta:
+  version: "2.0.0"
+  language: zh-TW
+  generated_view: docs/STATUS_MATRIX.md
+  last_sync: "2026-09-21"
+
+features:
+  - id: main-flow-e2e
+    domain: 主流程 e2e
+    claim: 對話→分類→閘門→執行→回應全通
+    status: verified
+    implementation: [scripts/verify_main_flow_e2e.py]
+    verify_command: python scripts/verify_main_flow_e2e.py
+    evidence: 15/15 exit 0
+    last_verified: "2026-09-17"
+
+  - id: execution-gate
+    domain: ExecutionGate
+    claim: 危險操作前需確認／拒絕
+    status: verified
+    implementation: [apps/backend/src/ai/core/execution_gate.py]
+    tests: [tests/ai/core/test_execution_gate.py]
+    verify_command: pytest tests/ai/core/test_execution_gate.py
+    evidence: 35 passed
+    last_verified: "2026-09-17"
+
+  - id: tool-handlers
+    domain: Tool handlers
+    claim: 檔案／任務／搜尋 handler 可用
+    status: verified
+    implementation: [apps/backend/src/services/handlers]
+    tests: [tests/services/test_handlers.py]
+    verify_command: pytest tests/services/test_handlers.py
+    evidence: 55 passed
+    last_verified: "2026-09-17"
+
+  - id: security-regression
+    domain: 安全回歸（audit/content/permission）
+    claim: 0 open alerts 維持
+    status: verified
+    implementation: [tests/security]
+    tests: [tests/security]
+    verify_command: pytest tests/security/
+    evidence: 52 passed
+    last_verified: "2026-09-17"
+
+  - id: first-run-detection
+    domain: First-run 偵測
+    claim: 無 LLM 後端時啟動即警告（非沉默）
+    status: verified
+    implementation:
+      - apps/backend/src/core/system/bootstrap/first_run_detection.py
+      - apps/backend/main.py
+    tests: [tests/core/system/bootstrap/test_first_run_detection.py]
+    verify_command: pytest tests/core/system/bootstrap/test_first_run_detection.py
+    evidence: 13 passed；實測分類 unified=可用、ollama=不可達、雲端=被 local mode 擋
+    last_verified: "2026-09-17"
+
+  - id: deterministic-engines
+    domain: 確定性引擎（Math/KB/symbolic）
+    claim: 數學、知識、符號推理可靠
+    status: verified
+    implementation: [apps/backend/src/services/math_verifier.py]
+    verify_command: python scripts/benchmark_ed3n_garden.py
+    evidence: ED3N/GARDEN benchmark 20/20；symbolic 探針 100（確定性路徑）；僅確定性層
+    last_verified: "2026-09-03"
+
+  - id: llm-providers
+    domain: LLM providers
+    claim: OpenAI/Anthropic/Gemini/Ollama/llama.cpp 可接入
+    status: wired
+    implementation:
+      - apps/backend/src/services/llm/providers
+      - apps/backend/src/services/llm/router.py
+    evidence: 配置與路由存在；品質 benchmark 未建立
+    last_verified: "2026-09-17"
+
+  - id: model-routing
+    domain: 多模型路由
+    claim: 依任務/硬體/模式自動選後端
+    status: wired
+    implementation:
+      - apps/backend/src/ai/core/model_bus.py
+      - apps/backend/src/ai/core/query_classifier.py
+      - apps/backend/src/services/llm/router.py
+    evidence: 架構審計指出重複分類債（Pipeline vs Router vs ModelBus）；收斂列入待辦
+    last_verified: "2026-09-17"
+
+  - id: continuous-learning
+    domain: 持續學習（ED3N/GARDEN）
+    claim: 對話中成長詞彙與權重
+    status: implemented
+    implementation:
+      - apps/backend/src/ai/ed3n/dictionary_layer.py
+      - apps/backend/src/ai/ed3n/continuous_learning.py
+    evidence: 訓練→存檔→門消費已閉環（100K 邊），可分性負結果已記錄（rank≈隨機）
+    last_verified: "2026-09-03"
+
+  - id: neural-open-domain
+    domain: 神經開放域泛化
+    claim: 誠實標示：低
+    status: implemented
+    implementation: [apps/backend/src/ai/unified_engine/core_model.py]
+    evidence: 硬指標探針 symbolic 100 / neural 0；0–60% 視指標
+    last_verified: "2026-09-03"
+
+  - id: ham-memory
+    domain: HAM 記憶查詢
+    claim: 跨 session 記憶可查
+    status: verified
+    implementation:
+      - apps/backend/src/ai/memory/ham_memory/ham_manager.py
+      - apps/backend/src/api/routes/context_routes.py
+    verify_command: curl -s localhost:8000/api/v1/context/memory/recent
+    evidence: GET /api/v1/context/memory/recent 真實查詢；Dashboard MemoryViewer 改接真實資料
+    last_verified: "2026-09-17"
+
+  - id: dashboard-metrics
+    domain: Web Dashboard 即時指標
+    claim: 系統監控顯示真實狀態
+    status: verified
+    implementation: [apps/web-dashboard/src/pages/api/system/metrics.ts]
+    verify_command: curl -s http://localhost:8000/api/v1/ops/status
+    evidence: mock（Math.random）已移除，proxy → /api/v1/ops/status（psutil）
+    last_verified: "2026-09-17"
+
+  - id: dashboard-panels
+    domain: Dashboard 新面板
+    claim: Config/Model/Context/Health 可用
+    status: wired
+    implementation:
+      - apps/web-dashboard/src/components/ConfigPanel.tsx
+      - apps/web-dashboard/src/components/ModelSelector.tsx
+      - apps/web-dashboard/src/components/ContextViewer.tsx
+      - apps/web-dashboard/src/components/HealthIndicator.tsx
+    evidence: 面板接 real backend；E2E 手動驗證待補
+    last_verified: "2026-09-17"
+
+  - id: unsupported-docs
+    domain: 明確不支援項文檔
+    claim: 正式版聲明範圍
+    status: verified
+    implementation:
+      - docs/user_guide/unsupported.md
+      - docs/architecture/limitations.md
+      - docs/user_guide/hardware.md
+    verify_command: ls docs/user_guide/unsupported.md docs/architecture/limitations.md docs/user_guide/hardware.md
+    evidence: 三文檔存在且與 RELEASE_CRITERIA 同步
+    last_verified: "2026-09-17"
+
+  - id: hsp-security
+    domain: HSP 加密金鑰
+    claim: 加密可用且啟動不炸
+    status: verified
+    implementation: [apps/backend/src/core/hsp/security.py]
+    tests: [tests/core/hsp]
+    verify_command: pytest tests/core/hsp/
+    evidence: 佔位符自動回退生成＋警告；.env 佔位符致 5 errors 已修
+    last_verified: "2026-09-17"
+
+  - id: test-suite
+    domain: 測試品質門
+    claim: 全倉綠
+    status: verified
+    verify_command: pytest tests/
+    evidence: 5586 passed, 122 skipped, 0 failed（R74 全倉前景）
+    last_verified: "2026-09-21"
+
+  - id: mypy-debt
+    domain: mypy 型別債
+    claim: 收斂中（棘輪門鎖定）
+    status: verified
+    implementation:
+      - pyproject.toml
+      - scripts/mypy_budget_gate.py
+      - scripts/mypy_budget.txt
+    verify_command: python scripts/mypy_budget_gate.py
+    evidence: 門機制可驗證；基線 559（R74 遊戲棧四檔清零）；新增債 CI 直接紅燈
+    last_verified: "2026-09-21"
+
+  - id: flake8
+    domain: flake8
+    claim: 0 errors
+    status: verified
+    implementation: [.flake8]
+    verify_command: python -m flake8
+    evidence: 全倉 0（37 類忽略為已知門檻寬鬆，非隱瞞）
+    last_verified: "2026-09-03"
+
+  - id: offline-capability
+    domain: 離線能力
+    claim: 無 key 可運作（部分）
+    status: wired
+    implementation: [apps/backend/src/services/llm/providers/unified.py]
+    evidence: unified-1g 永遠可用；反射/數學/字典離線；開放域生成需 LLM；unsupported.md 已聲明邊界
+    last_verified: "2026-09-17"
+
+  - id: multimodal
+    domain: 多模態
+    claim: 圖片/音訊/生成
+    status: implemented
+    implementation: [apps/backend/src/ai/multimodal]
+    evidence: 真實對比訓練 82% top1（CIFAR 試點）；生成品質未達標
+    last_verified: "2026-09-03"
+
+  - id: live2d
+    domain: Live2D 具身化
+    claim: 桌面互動
+    status: wired
+    implementation: [apps/desktop-app]
+    evidence: 可啟動；狀態鏈完整因果驗證未做
+    last_verified: "2026-09-17"
+
+  - id: llm-config-persistence
+    domain: Desktop LLM 設定持久化
+    claim: Settings 面板改 backend 設定重啟保留
+    status: verified
+    implementation: [apps/backend/src/api/routes/llm_routes.py]
+    tests: [tests/api/test_llm_config.py]
+    verify_command: pytest tests/api/test_llm_config.py
+    evidence: 12 passed；preferred mock 驗證（honor＋fallback 警告）
+    last_verified: "2026-09-17"
+
+  - id: luanti-agent
+    domain: Luanti 遊戲代理（識別/記憶/自主性/學習）
+    claim: 能識別環境、記住去過哪、自主探索、行為可訓練
+    status: wired
+    implementation:
+      - apps/backend/src/ai/autonomous/angela_agent.py
+      - apps/backend/src/ai/multimodal/game_agent.py
+      - apps/backend/src/ai/multimodal/game_policy.py
+      - apps/backend/src/ai/multimodal/skill_selector.py
+      - apps/backend/src/integrations/luanti_connector.py
+      - scripts/run_luanti_agent.py
+    tests:
+      - tests/ai/multimodal/test_policy_training.py
+      - tests/ai/multimodal/test_game_memory_persistence.py
+      - tests/core/test_autonomous_life_cycle.py
+    evidence: R71 識別/記憶/好奇心＋R74 行為克隆訓練閉環（hold-out 學習門、權重持久化、啟動載入、推論信心可觀測）；驗證指令見 INVOCATION_MATRIX（wired 故不列）；live 樣本待玩家在線累積；20 FPS 仍 ❌（10Hz＋2s poller）
+    last_verified: "2026-09-21"

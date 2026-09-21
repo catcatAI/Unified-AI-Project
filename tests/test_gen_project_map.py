@@ -271,3 +271,96 @@ def test_eager_heavy_top_vs_function(tmp_path):
     lines = mod.block_dep_usage(str(tmp_path), files)
     text = "\n".join(lines)
     assert "bad.py" in text and "ok.py" not in text
+
+
+# ---- R75：區塊四實時結構＋查詢模式＋STATUS_MATRIX 交叉核對 ----
+
+
+def test_block_structure_routes_and_entries(tmp_path):
+    mod = load_tool()
+    api = tmp_path / "apps" / "backend" / "src" / "api"
+    api.mkdir(parents=True)
+    (api / "chat_routes.py").write_text(
+        "router = object()\n"
+        '@router.post("/message")\n'
+        "def send(): pass\n"
+        '@router.websocket("/ws")\n'
+        "async def sock(): pass\n"
+        'if __name__ == "__main__":\n'
+        "    pass\n",
+        encoding="utf-8",
+    )
+    files = mod.walk_files(str(tmp_path))
+    trees = mod.parse_trees(str(tmp_path), files)
+    lines = mod.block_structure(str(tmp_path), files, trees)
+    text = "\n".join(lines)
+    assert "POST /message" in text
+    assert "WEBSOCKET /ws" in text
+    assert "chat_routes.py" in text
+    assert "Runtime Entry Points（1）" in text
+
+
+def test_verify_status_matrix_reports_missing(tmp_path, monkeypatch):
+    mod = load_tool()
+    yaml_mod = pytest.importorskip("yaml")
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs" / "status_matrix.yaml").write_text(
+        "features:\n"
+        "  - id: f1\n"
+        "    domain: d\n"
+        "    claim: c\n"
+        "    status: verified\n"
+        "    implementation: [ghost/module.py]\n"
+        "    verify_command: 'true'\n",
+        encoding="utf-8",
+    )
+    # tmp 樹只有 yaml，無 ghost/module.py → 必須報失蹤
+    files = mod.walk_files(str(tmp_path))
+    trees = mod.parse_trees(str(tmp_path), files)
+    mod._LAST_FILES.clear()
+    mod._LAST_FILES.extend(files)
+    lines = mod.verify_status_matrix(str(tmp_path), trees)
+    text = "\n".join(lines)
+    assert "ghost/module.py" in text
+    assert mod._LAST_STATUS_VERIFY["problems"]
+
+
+def test_verify_status_matrix_ok_on_real_repo():
+    mod = load_tool()
+    root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    files = mod.walk_files(root)
+    trees = mod.parse_trees(root, files)
+    mod._LAST_FILES.clear()
+    mod._LAST_FILES.extend(files)
+    mod.verify_status_matrix(root, trees)
+    assert mod._LAST_STATUS_VERIFY["total"] > 0
+    assert mod._LAST_STATUS_VERIFY["problems"] == []
+
+
+def test_module_query_mode(tmp_path, monkeypatch, capsys):
+    mod = load_tool()
+    d = tmp_path / "apps" / "backend" / "src" / "ai"
+    d.mkdir(parents=True)
+    (d / "leaf.py").write_text("X = 1\n", encoding="utf-8")
+    (d / "user.py").write_text("from ai.leaf import X\nprint(X)\n", encoding="utf-8")
+    monkeypatch.setattr(
+        "sys.argv",
+        ["gen_project_map.py", "--root", str(tmp_path), "--module", "leaf"],
+    )
+    rc = mod.main()
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "leaf.py" in out
+    assert "called_by" in out and "user.py" in out
+    assert not (tmp_path / "map.md").exists()  # 查詢不寫檔
+
+
+def test_module_query_no_match(tmp_path, monkeypatch):
+    mod = load_tool()
+    (tmp_path / "s").mkdir()
+    (tmp_path / "s" / "a.py").write_text("X = 1\n", encoding="utf-8")
+    monkeypatch.setattr(
+        "sys.argv",
+        ["gen_project_map.py", "--root", str(tmp_path), "--module", "nonexistent_xyz"],
+    )
+    assert mod.main() == 1

@@ -60,8 +60,13 @@ apps/desktop-app/electron_app/node_modules/
 # 第三方 SDK（vendored，不重排）
 apps/desktop-app/CubismSdkForWeb-5-r.5/
 
-# 生成檔（重排會造成無意義 diff 與解析風險）
+# 生成檔（工具輸出與 prettier 重摺打架，重排造成無意義 diff）
 pnpm-lock.yaml
+docs/PROJECT_MAP_GENERATED.md
+docs/STATUS_MATRIX.md
+
+# 執行期變異資料檔（runtime json.dump 擁有格式；重排後下次測試又髒）
+apps/backend/src/ai/ed3n/config/classifier_training.json
 
 # 特定格式文件
 *.min.js

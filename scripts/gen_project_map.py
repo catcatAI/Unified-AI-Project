@@ -12,6 +12,9 @@
 P0：分域檔案預算（超任一域亦 exit 1）+ `## DIAG` 機器可讀尾段 +
 孤兒 L1/L2/L3 分級（僅 L1 展開）。退出碼：0 內 / 1 超標 / 2 工具錯。
 P1：`## TREND` 快照（jsonl 輪轉 20 次，只報告不進門；--no-history 可關）。
+P2（R75）：區塊四實時結構（入口點/路由/模組樹/callers/測試映射/
+STATUS_MATRIX 交叉核對）+ `--module` 查詢模式（不寫檔）。
+STATUS_MATRIX YAML 核對獨立門：scripts/gen_status_matrix.py check。
 """
 
 import argparse
@@ -24,9 +27,19 @@ import re
 import sys
 
 EXCLUDE_DIRS = {
-    ".git", ".venv", "node_modules", "__pycache__", ".pytest_cache",
-    "data", ".cache", "checkpoints", ".hypothesis", "dist", "build",
-    ".mypy_cache", ".ruff_cache",
+    ".git",
+    ".venv",
+    "node_modules",
+    "__pycache__",
+    ".pytest_cache",
+    "data",
+    ".cache",
+    "checkpoints",
+    ".hypothesis",
+    "dist",
+    "build",
+    ".mypy_cache",
+    ".ruff_cache",
 }
 SKIP_EXT = {".pyc", ".pyo", ".pyd", ".so", ".o"}
 # 工具自身產物不量（自量衛生）：生成地圖 + 歷史快照若被掃入，
@@ -52,6 +65,11 @@ DOMAIN_FILE_BUDGETS = {
     "apps/desktop-app": 900,
     "packages/": 300,
 }
+
+# STATUS_MATRIX 核對結果（block_structure 留下，main 組 DIAG 用）。
+_LAST_STATUS_VERIFY = {"total": 0, "ok": 0, "problems": []}
+# 本輪掃描的全檔清單（main 填充；verify_status_matrix 用 YAML 路徑存在性核對）。
+_LAST_FILES = []
 
 # 孤兒置信度分級（P0）：L1 高疑才展開；L2 疑似入口 / L3 配置門控只折疊計數。
 ENTRY_LIKE_STEMS = {
@@ -109,7 +127,7 @@ def grade_orphan(rel, gated):
     return "L1"
 
 
-def render_diag(status, total, budget, usage, over_domains, counts, top_block):
+def render_diag(status, total, budget, usage, over_domains, counts, top_block, status_verify=None):
     """固定機器可讀尾段（CI 只依賴退出碼 + 本段鍵名；鍵名穩定，勿改）。"""
     lines = ["## DIAG", "", f"status: {status}", f"total: {total}", f"budget: {budget}"]
     lines.append("domains:")
@@ -119,6 +137,10 @@ def render_diag(status, total, budget, usage, over_domains, counts, top_block):
     lines.append(
         f"orphans: L1={counts.get('L1', 0)} L2={counts.get('L2', 0)} L3={counts.get('L3', 0)}"
     )
+    if status_verify and status_verify.get("total"):
+        lines.append(f"status_matrix: {status_verify.get('ok', 0)}/{status_verify['total']} ok")
+        for p in status_verify.get("problems", [])[:5]:
+            lines.append(f"  - {p}")
     lines.append("actions:")
     acts = []
     if over_domains:
@@ -199,12 +221,61 @@ def render_trend(hist):
     return lines
 
 
+def parse_trees(root, files, trees=None):
+    """共享 AST 解析（一輪掃描多區塊重用；返回 dict 供呼叫方直接傳回）。"""
+    if trees is not None:
+        return trees
+    trees = {}
+    for rel, _, _ in files:
+        if not rel.endswith(".py"):
+            continue
+        try:
+            with open(os.path.join(root, rel), encoding="utf-8") as f:
+                trees[rel] = ast.parse(f.read())
+        except (OSError, SyntaxError, ValueError):
+            continue
+    return trees
+
+
+def imports_of(tree, rel):
+    """單檔 import 解析為候選模組名集合（相對導入展開）。"""
+    parts = rel[:-3].split("/")
+    base = parts[:-1]
+    out = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for a in node.names:
+                if a.name:
+                    out.add(a.name)
+        elif isinstance(node, ast.ImportFrom):
+            if node.level:
+                pre = base[: len(base) - node.level + 1] if node.level > 1 else base
+                if node.module:
+                    out.add(".".join(pre + node.module.split(".")))
+                else:
+                    for a in node.names:
+                        if a.name and a.name != "*":
+                            out.add(".".join(pre + [a.name]))
+            elif node.module:
+                out.add(node.module)
+    return out
+
+
+def import_index(trees):
+    """模組名 → 引用它的檔案集合（block_orphans 同款解析邏輯，提升共享）。"""
+    from collections import defaultdict
+
+    imported = defaultdict(set)
+    for rel, tree in trees.items():
+        for mod in imports_of(tree, rel):
+            imported[mod].add(rel)
+    return imported
+
+
 def walk_files(root):
     out = []
     for dirpath, dirnames, filenames in os.walk(root):
-        dirnames[:] = sorted(
-            d for d in dirnames if d not in EXCLUDE_DIRS and not d.startswith(".")
-        )
+        dirnames[:] = sorted(d for d in dirnames if d not in EXCLUDE_DIRS and not d.startswith("."))
         for fn in sorted(filenames):
             if os.path.splitext(fn)[1] in SKIP_EXT:
                 continue
@@ -220,13 +291,23 @@ def walk_files(root):
     return out
 
 
-def block_dependencies(root, files):
+def block_dependencies(root, files, trees=None):
     import sys as _sys
 
     stdlib = set(getattr(_sys, "stdlib_module_names", ()))
     third, first, edges = {}, {}, 0
-    roots = ("apps", "packages", "core", "ai", "api", "hsp",
-             "services", "tests", "scripts", "tools")
+    roots = (
+        "apps",
+        "packages",
+        "core",
+        "ai",
+        "api",
+        "hsp",
+        "services",
+        "tests",
+        "scripts",
+        "tools",
+    )
     for rel, _, _ in files:
         if not rel.endswith(".py"):
             continue
@@ -256,7 +337,9 @@ def block_dependencies(root, files):
             else:
                 third[top] = third.get(top, 0) + 1
     lines = ["## 區塊一：依賴（排錯用）", ""]
-    lines.append(f"- Python 檔掃描：{sum(1 for r, _, _ in files if r.endswith('.py'))}，import 邊：{edges}")
+    lines.append(
+        f"- Python 檔掃描：{sum(1 for r, _, _ in files if r.endswith('.py'))}，import 邊：{edges}"
+    )
     lines.append("- 第三方 Top（引用檔數）：")
     for mod, n in sorted(third.items(), key=lambda kv: -kv[1])[:15]:
         lines.append(f"  - `{mod}`：{n}")
@@ -264,11 +347,11 @@ def block_dependencies(root, files):
     for mod, n in sorted(first.items(), key=lambda kv: -kv[1])[:15]:
         lines.append(f"  - `{mod}`：{n}")
     lines.append("")
-    lines.extend(block_orphans(root, files))
+    lines.extend(block_orphans(root, files, parse_trees(root, files, trees)))
     return lines
 
 
-def block_orphans(root, files):
+def block_orphans(root, files, trees=None):
     """疑似孤兒檔：無任何靜態 import 指向（候選，非判決）。
 
     方法局限（已驗證）：相對導入已解析、`__init__` 基已修正；但懶
@@ -288,38 +371,8 @@ def block_orphans(root, files):
             except OSError:
                 continue
 
-    imported = defaultdict(set)
-    trees = {}
-    for rel, _, _ in files:
-        if not rel.endswith(".py"):
-            continue
-        try:
-            with open(os.path.join(root, rel), encoding="utf-8") as f:
-                trees[rel] = ast.parse(f.read())
-        except (OSError, SyntaxError, ValueError):
-            continue
-    for rel, tree in trees.items():
-        parts = rel[:-3].split("/")
-        base = parts[:-1]  # __init__ 與模組皆去尾一層（包路徑）
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Import):
-                for a in node.names:
-                    if a.name:
-                        imported[a.name].add(rel)
-            elif isinstance(node, ast.ImportFrom):
-                if node.level:
-                    pre = base[:len(base) - node.level + 1] if node.level > 1 else base
-                    if node.module:
-                        full = ".".join(pre + node.module.split("."))
-                        if full:
-                            imported[full].add(rel)
-                    else:
-                        # from . import a, b（函數級延遲聚合常見式）— 成員即子模組
-                        for a in node.names:
-                            if a.name and a.name != "*":
-                                imported[".".join(pre + [a.name])].add(rel)
-                elif node.module:
-                    imported[node.module].add(rel)
+    trees = parse_trees(root, files, trees)
+    imported = import_index(trees)
     orphans = []
     for rel in trees:
         if os.path.basename(rel) in ("__init__.py", "__main__.py"):
@@ -347,9 +400,7 @@ def block_orphans(root, files):
             graded["L2"] += 1
         else:
             graded["L3"] += 1
-    _LAST_ORPHAN_COUNTS.update(
-        {"L1": len(graded["L1"]), "L2": graded["L2"], "L3": graded["L3"]}
-    )
+    _LAST_ORPHAN_COUNTS.update({"L1": len(graded["L1"]), "L2": graded["L2"], "L3": graded["L3"]})
     lines.append(
         f"- 共 {len(orphans)} 檔（L1={len(graded['L1'])} 高疑 / "
         f"L2={graded['L2']} 疑似入口 / L3={graded['L3']} 配置門控；"
@@ -409,7 +460,234 @@ def block_collisions(root, files):
             for rel, size in sorted(items):
                 lines.append(f"    - `{os.path.basename(rel)}`（{size // 1024}KB）")
         else:
-            lines.append(f"  - `{label}`：{len(items)} 檔，{tot // 1024}KB（…{len(items)} 未展開，用工具查）")
+            lines.append(
+                f"  - `{label}`：{len(items)} 檔，{tot // 1024}KB（…{len(items)} 未展開，用工具查）"
+            )
+    lines.append("")
+    return lines
+
+
+def block_structure(root, files, trees):
+    """區塊四：實時結構（永不過期的推導事實）。
+
+    - Runtime Entry Points（`__main__` 守衛，入口偵測補孤兒 L2 啟發式）
+    - API/WebSocket Routes（FastAPI 裝飾器 AST 掃描）
+    - Module Tree（src 包結構，>25 檔摺疊）
+    - Callers/Callees（import 圖內部邊 Top）
+    - Tests by Feature（測試檔 import → 模組反向映射）
+    - Config/Agents 概況
+    - STATUS_MATRIX 交叉核對（宣稱 vs 實體）
+    """
+    from collections import defaultdict
+
+    lines = ["## 區塊四：實時結構（工具推導，永不過期）", ""]
+
+    # --- Runtime Entry Points ---
+    entries = sorted(
+        rel
+        for rel, tree in trees.items()
+        if any(
+            isinstance(n, ast.If)
+            and isinstance(n.test, ast.Compare)
+            and getattr(n.test.left, "id", "") == "__name__"
+            and any(
+                isinstance(c, ast.Constant) and c.value == "__main__" for c in n.test.comparators
+            )
+            for n in tree.body
+        )
+    )
+    lines.append(f"### Runtime Entry Points（{len(entries)}）")
+    lines.append("")
+    for rel in entries[:60]:
+        lines.append(f"- `{rel}`")
+    if len(entries) > 60:
+        lines.append(f"- …{len(entries) - 60} 未展開（--module 查詢）")
+    lines.append("")
+
+    # --- API/WebSocket Routes ---
+    route_re = re.compile(r"@(\w+)\.(get|post|put|delete|patch|websocket)\(\s*[\"']([^\"']+)[\"']")
+    routes = []
+    for rel, tree in sorted(trees.items()):
+        if "/api/" not in rel:
+            continue
+        try:
+            src = open(os.path.join(root, rel), encoding="utf-8").read()
+        except OSError:
+            continue
+        for m in route_re.finditer(src):
+            routes.append((rel, m.group(2).upper(), m.group(3)))
+    ws = [r for r in routes if r[1] == "WEBSOCKET"]
+    lines.append(f"### API/WebSocket Routes（{len(routes)}，含 {len(ws)} WS）")
+    lines.append("")
+    by_file = defaultdict(list)
+    for rel, verb, path in routes:
+        by_file[rel].append((verb, path))
+    for rel in sorted(by_file):
+        vs = by_file[rel]
+        ws_n = sum(1 for v, _ in vs if v == "WEBSOCKET")
+        tag = f"（含 {ws_n} WS）" if ws_n else ""
+        lines.append(f"- `{rel}`：{len(vs)} 條{tag}")
+        shown = sorted(vs)[:12]
+        for verb, path in shown:
+            lines.append(f"  - `{verb} {path}`")
+        if len(vs) > 12:
+            lines.append(f"  - …{len(vs) - 12} 未展開")
+    lines.append("")
+
+    # --- Module Tree（src 包）---
+    pkgs = defaultdict(list)
+    for rel in trees:
+        parts = rel.split("/")
+        if len(parts) >= 5 and parts[0] == "apps" and parts[2] == "src":
+            pkgs["/".join(parts[:-1])].append(parts[-1])
+    lines.append(f"### Module Tree（src 包 {len(pkgs)} 個）")
+    lines.append("")
+    shown = 0
+    for pkg in sorted(pkgs, key=lambda p: (-p.count("/"), p)):
+        mods = pkgs[pkg]
+        if shown >= 45:
+            lines.append(f"- …其餘 {len(pkgs) - shown} 包未展開（--module 查詢）")
+            break
+        if len(mods) <= 25:
+            names = ", ".join(m[:-3] if m.endswith(".py") else m + "/" for m in sorted(mods))
+            lines.append(f"- `{pkg}`：{names}")
+            shown += 1
+        else:
+            lines.append(f"- `{pkg}`：{len(mods)} 模組（>25 摺疊，--module 查詢）")
+            shown += 1
+    lines.append("")
+
+    # --- Callers/Callees（內部 import 邊 Top）---
+    imported = import_index(trees)
+    mod2file = {}
+    for rel in trees:
+        parts = rel[:-3].split("/")
+        for i in range(len(parts)):
+            mod2file[".".join(parts[i:])] = rel
+    edges = []
+    for mod, who in imported.items():
+        f = mod2file.get(mod)
+        if f and mod != rel_module_of(f):
+            for w in sorted(who):
+                if w != f:
+                    edges.append((w, f, mod))
+    top_edges = sorted(edges, key=lambda e: -len(imported.get(e[2], ())))[:25]
+    lines.append("### 被引用最多模組 Top 25（callers 數）")
+    lines.append("")
+    for w, f, mod in top_edges:
+        n = len(imported.get(mod, ()))
+        lines.append(f"- `{mod}` ← {n} 檔（例：`{os.path.basename(w)}`）")
+    lines.append("")
+
+    # --- Tests by Feature ---
+    test_of = defaultdict(set)
+    for mod, who in imported.items():
+        f = mod2file.get(mod)
+        if not f:
+            continue
+        for w in who:
+            if w.startswith("tests/"):
+                test_of[f].add(w)
+    covered = {f for f in test_of if test_of[f]}
+    all_src = [
+        f for f in trees if f.startswith("apps/backend/src/") and not f.endswith("__init__.py")
+    ]
+    covered_src = [
+        f
+        for f in all_src
+        if any(m2 == f for m2 in (mod2file.get(m) for m in imported)) and f in covered
+    ]
+    n_uncovered = len([f for f in all_src if f not in covered])
+    lines.append(
+        f"### Tests by Feature（backend src {len(all_src)} 模組，{len(covered)} 有測試指向）"
+    )
+    lines.append("")
+    for f in sorted(covered)[:40]:
+        ts = sorted(test_of[f])
+        lines.append(f"- `{f}` ← {len(ts)} 測試（{os.path.basename(ts[0])}…）")
+    if len(covered) > 40:
+        lines.append(f"- …{len(covered) - 40} 未展開")
+    lines.append(f"- 無測試指向：{n_uncovered} 模組")
+    lines.append("")
+
+    # --- Config / Agents 概況 ---
+    n_cfg = sum(1 for rel, _, _ in files if rel.startswith("apps/backend/configs/"))
+    agent_files = [
+        rel
+        for rel in trees
+        if rel.startswith("apps/backend/src/ai/agents/") and rel.endswith("_agent.py")
+    ]
+    prov_files = [
+        rel
+        for rel in trees
+        if rel.startswith("apps/backend/src/services/llm/providers/")
+        and os.path.basename(rel) not in ("__init__.py", "base.py", "registry.py")
+    ]
+    lines.append(
+        f"### Config/Agents/Providers（configs {n_cfg} 檔；specialized agents {len(agent_files)}；LLM providers {len(prov_files)}）"
+    )
+    lines.append("")
+    lines.append("- providers：" + ", ".join(sorted(os.path.basename(p)[:-3] for p in prov_files)))
+    lines.append("")
+
+    # --- STATUS_MATRIX 交叉核對 ---
+    lines.extend(verify_status_matrix(root, trees))
+    return lines
+
+
+def rel_module_of(rel):
+    """檔案路徑 → 模組名（去 .py，apps/backend/src/ → ai.xxx 形式約定）。"""
+    parts = rel[:-3].split("/")
+    if rel.startswith("apps/backend/src/"):
+        return ".".join(parts[3:])
+    return ".".join(parts)
+
+
+def verify_status_matrix(root, trees):
+    """STATUS_MATRIX YAML 宣稱 vs 實體核對（交叉驗證）。"""
+    try:
+        import yaml  # 延遲導入：pyyaml 在 base 依賴，缺了只降級不崩
+
+        with open(os.path.join(root, "docs/status_matrix.yaml"), encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+    except ImportError:
+        return ["### STATUS_MATRIX 核對（pyyaml 缺，跳過）", ""]
+    except (OSError, yaml.YAMLError) as e:
+        return [f"### STATUS_MATRIX 核對（讀取失敗：{e}）", ""]
+
+    features = data.get("features") or []
+    problems = []
+    files_set = set(trees) | {entry[0] for entry in _LAST_FILES}
+
+    def path_exists(path):
+        """檔案或目錄皆可：精確匹配、掃描前綴、磁碟存在三路皆收。"""
+        if path in files_set:
+            return True
+        prefix = path if path.endswith("/") else path + "/"
+        if any(f.startswith(prefix) for f in files_set):
+            return True
+        return os.path.exists(os.path.join(root, path))
+
+    for feat in features:
+        fid = feat.get("id", "?")
+        for path in feat.get("implementation", []) or []:
+            if not path_exists(path):
+                problems.append(f"[{fid}] implementation 不存在：{path}")
+        for path in feat.get("tests", []) or []:
+            if not path_exists(path):
+                problems.append(f"[{fid}] tests 不存在：{path}")
+    _LAST_STATUS_VERIFY.update(
+        total=len(features),
+        ok=len(features) - len(problems),
+        problems=problems,
+    )
+    lines = [f"### STATUS_MATRIX 核對（{len(features)} 條目）", ""]
+    if problems:
+        lines.append(f"- ⛔ {len(problems)} 項宣稱與實體不符：")
+        for p in problems[:20]:
+            lines.append(f"  - {p}")
+    else:
+        lines.append("- ✅ 全部 implementation/tests 路徑存在（宣稱有實體）")
     lines.append("")
     return lines
 
@@ -449,8 +727,18 @@ def block_behavior(root, files):
 
 
 HEAVY_DEPS = {
-    "torch", "transformers", "chromadb", "sentence_transformers", "pandas",
-    "sklearn", "scipy", "redis", "spacy", "tensorflow", "cv2", "PIL",
+    "torch",
+    "transformers",
+    "chromadb",
+    "sentence_transformers",
+    "pandas",
+    "sklearn",
+    "scipy",
+    "redis",
+    "spacy",
+    "tensorflow",
+    "cv2",
+    "PIL",
 }
 # Eager-check subset: base-tier members (Pillow/scipy per pyproject) excluded —
 # only non-base heavies (ml/vector tiers) must stay lazy (§X #259).
@@ -484,7 +772,7 @@ def block_dep_usage(root, files):
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
                 for a in node.names:
-                    name = (a.asname or (a.name or "").split(".")[0])
+                    name = a.asname or (a.name or "").split(".")[0]
                     if name and name != "*":
                         bound[name] = a.name
             elif isinstance(node, ast.ImportFrom):
@@ -509,8 +797,11 @@ def block_dep_usage(root, files):
         str_used = set(re.findall(r"[A-Za-z_][A-Za-z0-9_]*", " ".join(ann_strs)))
         for node in ast.walk(tree):
             if isinstance(node, (ast.Import, ast.ImportFrom)) and hasattr(node, "lineno"):
-                if any("noqa" in (srclines[node.lineno - 1] if 0 < node.lineno <= len(srclines) else "")
-                       for _ in [0]):
+                if any(
+                    "noqa"
+                    in (srclines[node.lineno - 1] if 0 < node.lineno <= len(srclines) else "")
+                    for _ in [0]
+                ):
                     for a in node.names:
                         str_used.add(a.asname or a.name)
         if not bound:
@@ -530,11 +821,15 @@ def block_dep_usage(root, files):
             imp, ret = node.body
             if not isinstance(imp, ast.Import):
                 continue
-            if not (isinstance(ret, ast.Return) and isinstance(ret.value, ast.Constant)
-                    and ret.value.value is True):
+            if not (
+                isinstance(ret, ast.Return)
+                and isinstance(ret.value, ast.Constant)
+                and ret.value.value is True
+            ):
                 continue
-            if not any(isinstance(h.type, ast.Name) and h.type.id == "ImportError"
-                       for h in node.handlers):
+            if not any(
+                isinstance(h.type, ast.Name) and h.type.id == "ImportError" for h in node.handlers
+            ):
                 continue
             for a in imp.names:
                 if a.asname:
@@ -543,6 +838,7 @@ def block_dep_usage(root, files):
                     probes.add(a.name.split(".")[0])
         # 按頂層模組聚合：同模組任一名被用即算參與（殺 deferred-import 噪音）
         from collections import defaultdict
+
         mod_names = defaultdict(list)
         for k, v in bound.items():
             mod_names[(v or "").split(".")[0]].append(k)
@@ -616,29 +912,123 @@ def block_eager_heavy(root, files):
     return lines
 
 
+def cmd_module(args):
+    """查詢模式：--module <path-substring> 即時輸出該模組的實時情報。
+
+    退出碼：0 找到 / 1 無匹配 / 2 工具錯。永不寫檔（查詢不產生副產物）。
+    """
+    root = os.path.abspath(args.root)
+    try:
+        files = walk_files(root)
+        trees = parse_trees(root, files)
+    except Exception as e:
+        print(f"TOOL ERROR: {e}")
+        return 2
+    needle = args.module
+    matches = sorted(rel for rel in trees if needle in rel.replace("/", ".") or needle in rel)
+    if not matches:
+        print(f"NO MATCH: {needle}")
+        return 1
+    imported = import_index(trees)
+    for rel in matches[: args.limit]:
+        mod = rel_module_of(rel)
+        callers = sorted(
+            w
+            for m, who in imported.items()
+            if m == mod or m.startswith(mod + ".")
+            for w in who
+            if w != rel
+        )
+        tree = trees[rel]
+        imports = sorted(imports_of(tree, rel))
+        src_imports = [m for m in imports if mod2file_exists(m, trees)]
+        tests = sorted(
+            w
+            for m, who in imported.items()
+            if m == mod or m.startswith(mod + ".")
+            for w in who
+            if w.startswith("tests/")
+        )
+        try:
+            n_lines = sum(1 for _ in open(os.path.join(root, rel), encoding="utf-8"))
+        except OSError:
+            n_lines = 0
+        print(f"## {rel}")
+        print(
+            f"lines: {n_lines} | imports(倉內): {len(src_imports)} | callers: {len(callers)} | tests: {len(tests)}"
+        )
+        if src_imports:
+            print("imports:")
+            for m in src_imports[:20]:
+                print(f"  -> {m}")
+        if callers:
+            print("called_by:")
+            for w in callers[:20]:
+                print(f"  <- {w}")
+        if tests:
+            print("tests:")
+            for t in tests[:20]:
+                print(f"  - {t}")
+        defs = [
+            f"{type(n).__name__}:{getattr(n, 'name', '?')}"
+            for n in tree.body
+            if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
+        ]
+        if defs:
+            print(
+                f"top-level defs ({len(defs)}): {', '.join(defs[:15])}{' …' if len(defs) > 15 else ''}"
+            )
+        print()
+    return 0
+
+
+def mod2file_exists(mod, trees):
+    for rel in trees:
+        if rel_module_of(rel) == mod or rel_module_of(rel).startswith(mod + "."):
+            return True
+    return False
+
+
 def main():
     """契約：0 預算內 / 1 超預算（總行數或任一分域）/ 2 工具自身錯誤。"""
-    ap = argparse.ArgumentParser(description="專案地圖生成器（三區塊+萬行預算門）")
+    ap = argparse.ArgumentParser(description="專案地圖生成器（四區塊+萬行預算門+查詢模式）")
     ap.add_argument("--root", default=".")
     ap.add_argument("--output", default="docs/PROJECT_MAP_GENERATED.md")
     ap.add_argument("--budget", type=int, default=10000)
     ap.add_argument("--history", default="docs/.project_map_history.jsonl")
     ap.add_argument("--no-history", action="store_true")
+    ap.add_argument(
+        "--module",
+        default=None,
+        help="查詢模式：輸出匹配模組的實時 callers/callees/tests/defs，不寫檔",
+    )
+    ap.add_argument("--limit", type=int, default=5, help="查詢模式最多顯示檔數")
     args = ap.parse_args()
+    if args.module:
+        return cmd_module(args)
     root = os.path.abspath(args.root)
 
     try:
         files = walk_files(root)
+        _LAST_FILES.clear()
+        _LAST_FILES.extend(files)
         usage = domain_file_usage(root, files)
         over_domains = check_domain_budgets(usage)
-        b1 = block_dependencies(root, files)
+        trees = parse_trees(root, files)
+        b1 = block_dependencies(root, files, trees)
         b2 = block_collisions(root, files)
+        b4 = block_structure(root, files, trees)
         b3 = block_behavior(root, files)
     except Exception as e:
         print(f"TOOL ERROR: {e}")
         return 2
-    body = b1 + b2 + b3
-    counts = {"區塊一依賴": len(b1), "區塊二碰撞": len(b2), "區塊三行為": len(b3)}
+    body = b1 + b2 + b4 + b3
+    counts = {
+        "區塊一依賴": len(b1),
+        "區塊二碰撞": len(b2),
+        "區塊四結構": len(b4),
+        "區塊三行為": len(b3),
+    }
     total = len(body)
     # 預算只計三區塊行數；頁首與 ## DIAG 尾段不計（門檻穩定）。
     top_block = max(counts.items(), key=lambda kv: kv[1])[0]
@@ -647,6 +1037,9 @@ def main():
     head = [
         "<!-- Generated by scripts/gen_project_map.py — 手不改，重跑覆蓋 -->",
         f"# 專案地圖（生成於 {datetime.date.today()}，{len(files)} 檔）",
+        "",
+        "> 查詢模式：`python scripts/gen_project_map.py --module <path-片段>`",
+        "> 即時輸出 callers/callees/tests/defs（不寫檔，永不過期）。",
         "",
     ]
     if failed:
@@ -667,6 +1060,7 @@ def main():
         over_domains,
         dict(_LAST_ORPHAN_COUNTS),
         top_block if failed else "",
+        status_verify=dict(_LAST_STATUS_VERIFY),
     )
     # 趨勢：歷史只記三區塊行數+孤兒+分域（與預算同口徑）；TREND 段不計入預算。
     trend = []

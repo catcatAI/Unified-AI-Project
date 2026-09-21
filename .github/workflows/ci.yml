@@ -126,6 +126,13 @@ jobs:
       - name: Project map budget gate (gen_project_map.py, stdlib only)
         run: |
           python scripts/gen_project_map.py --budget 10000
+      - name: STATUS_MATRIX cross-check (YAML claims vs entities)
+        run: |
+          python scripts/gen_status_matrix.py check
+      - name: STATUS_MATRIX view freshness (MD must match YAML)
+        run: |
+          python scripts/gen_status_matrix.py
+          git diff --exit-code docs/STATUS_MATRIX.md
           echo "✅ Project map within 10000-line budget (over = project smell)"
 
   secrets_scan:
