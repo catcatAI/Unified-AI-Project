@@ -4,7 +4,6 @@ Tests for MSBA BlockSelector.
 """
 
 import pytest
-
 from ai.msba.block_selector import BlockSelector
 from ai.msba.semantic_block import SemanticBlock
 from ai.msba.types import SeedResult

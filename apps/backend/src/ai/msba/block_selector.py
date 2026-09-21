@@ -13,9 +13,12 @@ Signals:
 """
 
 import logging
-from typing import Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 
 from .types import BlockHistory, BlockSelection, SeedResult
+
+if TYPE_CHECKING:
+    from .semantic_block import SemanticBlock
 
 logger = logging.getLogger(__name__)
 
@@ -35,24 +38,25 @@ class BlockSelector:
         ("causal", "emotional", 0.05),
     ]
 
-    def __init__(self, blocks: Dict[str, object]):
+    def __init__(self, blocks: Dict[str, "SemanticBlock"]):
         """
         Args:
             blocks: Dict mapping block_id -> SemanticBlock.
         """
         self.blocks = blocks
         self.block_history: Dict[str, BlockHistory] = {}
-        self._embedder = None
+        self._embedder: Optional[object] = None
 
-    def _get_embedder(self):
+    def _get_embedder(self) -> object:
         """Lazy-load embedder."""
         if self._embedder is None:
             try:
                 from ai.garden.dictionary import VectorDictionary
 
-                self._embedder = VectorDictionary()
+                embedder: object = VectorDictionary()
             except ImportError:
-                self._embedder = _SimpleEmbedder()
+                embedder = _SimpleEmbedder()
+            self._embedder = embedder
         return self._embedder
 
     def select(
@@ -72,8 +76,15 @@ class BlockSelector:
         Returns:
             BlockSelection with scores and selected block IDs.
         """
-        embedder = self._get_embedder()
-        input_emb = self._embed_text(input_text, embedder)
+        # Signal 1 (cosine similarity) only matters when at least one block
+        # declares a semantic_anchor. Anchors default to None (factory never
+        # sets them yet), so loading the heavy SentenceTransformer embedder
+        # just to compare against None anchors stalls the first request for
+        # seconds inside the event loop. Embed only when anchors exist.
+        anchors_present = any(
+            getattr(block, "semantic_anchor", None) is not None for block in self.blocks.values()
+        )
+        input_emb = self._embed_text(input_text, self._get_embedder()) if anchors_present else None
 
         scores: Dict[str, float] = {}
         for block_id, block in self.blocks.items():

@@ -4,7 +4,6 @@ Tests for MSBA MultiDirectionalDecoder.
 """
 
 import pytest
-
 from ai.msba.multi_dir_decoder import MultiDirectionalDecoder
 from ai.msba.types import FusedRepresentation, SeedResult
 

@@ -41,17 +41,17 @@ class VisionBlock:
         self._vision_service = None
 
     def _get_vision_service(self) -> Any:
-        """Lazy-load vision service."""
+        """Lazy-load the real vision service (services.vision_service)."""
         if self._vision_service is None:
             try:
-                from services.vision.vision_service import VisionService
+                from services.vision_service import VisionService
 
                 self._vision_service = VisionService()
             except ImportError:
                 logger.debug("VisionService not available")
         return self._vision_service
 
-    def get_hit_activations(
+    async def get_hit_activations(
         self,
         input_text: str,
         image_data: Optional[bytes] = None,
@@ -62,13 +62,13 @@ class VisionBlock:
 
         Args:
             input_text: Text description or question about image.
-            image_data: Optional image bytes for analysis.
+            image_data: Optional image bytes for real analysis.
             seed_answer: Seed answer for verification.
 
         Returns:
             Dict mapping source_id -> activation score.
         """
-        result = {}
+        result: Dict[str, float] = {}
 
         # Text-based activation
         text_lower = input_text.lower()
@@ -95,40 +95,44 @@ class VisionBlock:
         for hs in self.hit_sources:
             result[hs.source_id] = text_activation
 
-        # If we have image data, enhance with real analysis
-        if image_data is not None:
+        # Real analysis via the project's VisionService when image data present
+        if image_data:
             service = self._get_vision_service()
             if service is not None:
                 try:
-                    analysis = self._analyze_image(service, image_data)
+                    analysis = await self._analyze_image(service, image_data)
                     result.update(analysis)
                 except Exception as e:
                     logger.debug("Image analysis failed: %s", e)
 
         return result
 
-    def _analyze_image(self, service: Any, image_data: bytes) -> Dict[str, float]:
-        """Analyze image using vision service."""
-        result = {}
+    async def _analyze_image(self, service: Any, image_data: bytes) -> Dict[str, float]:
+        """Analyze image via the real VisionService.analyze_image API."""
+        result: Dict[str, float] = {}
 
-        try:
-            # Object detection
-            objects = service.detect_objects(image_data)
-            if objects:
-                result["object_detection"] = min(1.0, len(objects) * 0.2)
+        analysis = await service.analyze_image(
+            image_data=image_data,
+            features=["objects", "scene", "colors"],
+        )
+        if not isinstance(analysis, dict) or analysis.get("error"):
+            return result
 
-            # Scene classification
-            scene = service.classify_scene(image_data)
-            if scene:
-                result["scene_classification"] = 0.8
-
-            # Color analysis
-            colors = service.analyze_colors(image_data)
-            if colors:
-                result["color_analysis"] = 0.7
-
-        except Exception as e:
-            logger.debug("Vision analysis partial failure: %s", e)
+        objects = analysis.get("objects")
+        if objects:
+            result["object_detection"] = min(1.0, len(objects) * 0.2)
+        scene = analysis.get("scene")
+        if scene:
+            result["scene_classification"] = 0.8
+        colors = analysis.get("colors")
+        if colors:
+            result["color_analysis"] = 0.7
+        faces = analysis.get("faces")
+        if faces:
+            result["face_detection"] = 0.8
+        ocr_text = analysis.get("ocr_text")
+        if ocr_text:
+            result["text_in_image"] = 0.8
 
         return result
 
@@ -157,17 +161,17 @@ class AudioBlock:
         self._audio_service = None
 
     def _get_audio_service(self) -> Any:
-        """Lazy-load audio service."""
+        """Lazy-load the real audio service (services.audio_service)."""
         if self._audio_service is None:
             try:
-                from services.audio.audio_service import AudioService
+                from services.audio_service import AudioService
 
                 self._audio_service = AudioService()
             except ImportError:
                 logger.debug("AudioService not available")
         return self._audio_service
 
-    def get_hit_activations(
+    async def get_hit_activations(
         self,
         input_text: str,
         audio_data: Optional[bytes] = None,
@@ -211,39 +215,41 @@ class AudioBlock:
         for hs in self.hit_sources:
             result[hs.source_id] = text_activation
 
-        # If we have audio data, enhance with real analysis
-        if audio_data is not None:
+        # Real analysis via the project's AudioService when audio data present
+        if audio_data:
             service = self._get_audio_service()
             if service is not None:
                 try:
-                    analysis = self._analyze_audio(service, audio_data)
+                    analysis = await self._analyze_audio(service, audio_data)
                     result.update(analysis)
                 except Exception as e:
                     logger.debug("Audio analysis failed: %s", e)
 
         return result
 
-    def _analyze_audio(self, service: Any, audio_data: bytes) -> Dict[str, float]:
-        """Analyze audio using audio service."""
-        result = {}
+    async def _analyze_audio(self, service: Any, audio_data: bytes) -> Dict[str, float]:
+        """Analyze audio via the real AudioService APIs."""
+        result: Dict[str, float] = {}
 
+        # Speech recognition
         try:
-            # Speech recognition
-            speech = service.recognize_speech(audio_data)
-            if speech:
-                result["speech_recognition"] = 0.9
-
-            # Music detection
-            music = service.detect_music(audio_data)
-            if music:
-                result["music_detection"] = 0.8
-
-            # Emotion detection
-            emotion = service.detect_emotion(audio_data)
-            if emotion:
-                result["emotion_in_speech"] = 0.7
-
+            stt = await service.speech_to_text(audio_data)
+            if isinstance(stt, dict):
+                text = stt.get("text") or ""
+                conf = float(stt.get("confidence") or 0.0)
+                if text:
+                    result["speech_recognition"] = min(1.0, conf) if conf > 0 else 0.9
         except Exception as e:
-            logger.debug("Audio analysis partial failure: %s", e)
+            logger.debug("Speech recognition failed: %s", e)
+
+        # Speaker identification via the auditory scan chain
+        try:
+            identify = await service.scan_and_identify(audio_data)
+            if isinstance(identify, dict):
+                profiles = identify.get("active_profiles") or identify.get("profiles") or []
+                if profiles:
+                    result["speaker_identification"] = min(1.0, len(profiles) * 0.5)
+        except Exception as e:
+            logger.debug("Audio scan failed: %s", e)
 
         return result

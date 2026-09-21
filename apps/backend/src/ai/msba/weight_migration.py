@@ -13,7 +13,7 @@ Handles:
 
 import logging
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional  # noqa: F401
 
 import numpy as np
 
@@ -237,7 +237,7 @@ class WeightMigration:
     def get_migration_info(self) -> Dict[str, Any]:
         """Get information about migrated weights."""
         files = self.list_migrated()
-        info = {
+        info: Dict[str, Any] = {
             "total_blocks": len(files),
             "blocks": {},
         }

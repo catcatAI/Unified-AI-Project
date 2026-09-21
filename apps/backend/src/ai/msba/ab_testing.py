@@ -123,10 +123,10 @@ class ABTesting:
 
                     with concurrent.futures.ThreadPoolExecutor() as pool:
                         future = pool.submit(asyncio.run, result)
-                        return future.result(timeout=2.0)
+                        return str(future.result(timeout=2.0))
                 else:
-                    return loop.run_until_complete(result)
-            return result
+                    return str(loop.run_until_complete(result))
+            return str(result)
         except Exception as e:
             logger.debug("MSBA failed, falling back: %s", e)
             return self._run_legacy(input_text)
@@ -135,9 +135,9 @@ class ABTesting:
         """Run input through legacy pipeline."""
         try:
             if hasattr(self.legacy_pipeline, "process"):
-                return self.legacy_pipeline.process(input_text)
+                return str(self.legacy_pipeline.process(input_text))
             elif hasattr(self.legacy_pipeline, "process_sync"):
-                return self.legacy_pipeline.process_sync(input_text)
+                return str(self.legacy_pipeline.process_sync(input_text))
             return str(self.legacy_pipeline)
         except Exception as e:
             logger.debug("Legacy pipeline failed: %s", e)

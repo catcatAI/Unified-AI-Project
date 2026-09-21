@@ -99,6 +99,7 @@ module = [
     'sklearn.*',
     'speech_recognition.*',
     'faster_whisper.*',
+    'spacy.*',
 ]
 ignore_missing_imports = true
 

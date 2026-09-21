@@ -11,9 +11,12 @@ Phase 2: spaCy integration (if available)
 
 import logging
 import re
-from typing import Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from .types import HitSource
+
+if TYPE_CHECKING:
+    import spacy
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +78,7 @@ class LinguisticBlock:
             use_spacy: If True, try to use spaCy for POS tagging.
         """
         self.use_spacy = use_spacy
-        self._nlp = None
+        self._nlp: Optional[Any] = None
 
         # Create hit sources from POS patterns
         self.hit_sources = [HitSource(source_id=k, source_name=k) for k in POS_PATTERNS.keys()]
@@ -136,10 +139,12 @@ class LinguisticBlock:
         result = {}
 
         try:
+            if self._nlp is None:
+                return self._rule_activations(text)
             doc = self._nlp(text)
 
             # Extract POS tags
-            pos_counts = {}
+            pos_counts: Dict[str, int] = {}
             for token in doc:
                 pos = token.pos_
                 pos_counts[pos] = pos_counts.get(pos, 0) + 1
@@ -157,7 +162,7 @@ class LinguisticBlock:
             result["discourse_exclamation"] = 1.0 if doc.text.rstrip().endswith("!") else 0.0
 
             # Dependency-based features
-            dep_counts = {}
+            dep_counts: Dict[str, int] = {}
             for token in doc:
                 dep = token.dep_
                 dep_counts[dep] = dep_counts.get(dep, 0) + 1

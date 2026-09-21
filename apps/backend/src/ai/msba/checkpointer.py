@@ -23,9 +23,12 @@ import json
 import logging
 import os
 import time
-from typing import Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 import numpy as np
+
+if TYPE_CHECKING:
+    from .semantic_block import SemanticBlock
 
 logger = logging.getLogger(__name__)
 
@@ -55,9 +58,9 @@ class MSBACheckpointer:
 
     def save(
         self,
-        blocks: Dict[str, object],
+        blocks: Dict[str, "SemanticBlock"],
         cross_attention: np.ndarray,
-        history: Dict[str, object],
+        history: Dict[str, Any],
         training_state: Optional[Dict[str, Any]] = None,
         ab_state: Optional[Dict[str, Any]] = None,
         metrics_snapshot: Optional[Dict[str, Any]] = None,
@@ -157,7 +160,7 @@ class MSBACheckpointer:
 
     def load(
         self,
-        blocks: Dict[str, object],
+        blocks: Dict[str, "SemanticBlock"],
         version: Optional[int] = None,
     ) -> Dict[str, Any]:
         """
@@ -172,7 +175,7 @@ class MSBACheckpointer:
         """
         # Find checkpoint directory
         if version is not None:
-            ckpt_dir = os.path.join(self.base_dir, f"v{version:04d}")
+            ckpt_dir: Optional[str] = os.path.join(self.base_dir, f"v{version:04d}")
         else:
             ckpt_dir = self._find_latest_checkpoint()
 
@@ -273,7 +276,7 @@ class MSBACheckpointer:
 
     def get_version_list(self) -> list:
         """List all checkpoint versions."""
-        versions = []
+        versions: list = []
         if not os.path.exists(self.base_dir):
             return versions
 

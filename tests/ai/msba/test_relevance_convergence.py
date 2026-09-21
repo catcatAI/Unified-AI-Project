@@ -5,7 +5,6 @@ Tests for MSBA RelevanceConvergence.
 
 import numpy as np
 import pytest
-
 from ai.msba.relevance_convergence import RelevanceConvergence
 from ai.msba.semantic_block import SemanticBlock
 from ai.msba.types import BlockHitResult, SeedResult

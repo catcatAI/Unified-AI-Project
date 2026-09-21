@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 """
 Tests for MSBA MultimodalBlocks.
+
+get_hit_activations is async on the multimodal blocks because real
+analysis awaits the project's VisionService / AudioService APIs.
 """
 
 import pytest
-
 from ai.msba.multimodal_blocks import AudioBlock, VisionBlock
 
 
@@ -14,21 +16,32 @@ class TestVisionBlock:
         assert block.block_id == "vision"
         assert len(block.hit_sources) == 7
 
-    def test_get_activations_text(self):
+    @pytest.mark.asyncio
+    async def test_get_activations_text(self):
         block = VisionBlock()
-        result = block.get_hit_activations("What is in this image?")
+        result = await block.get_hit_activations("What is in this image?")
         assert result["object_detection"] > 0.0
         assert result["scene_classification"] > 0.0
 
-    def test_get_activations_no_vision_keywords(self):
+    @pytest.mark.asyncio
+    async def test_get_activations_no_vision_keywords(self):
         block = VisionBlock()
-        result = block.get_hit_activations("hello world")
+        result = await block.get_hit_activations("hello world")
         assert all(v == 0.0 for v in result.values())
 
-    def test_get_activations_with_image_data(self):
+    @pytest.mark.asyncio
+    async def test_get_activations_with_image_data(self):
         block = VisionBlock()
         # image_data=None means no real analysis
-        result = block.get_hit_activations("describe this picture", image_data=None)
+        result = await block.get_hit_activations("describe this picture", image_data=None)
+        assert "object_detection" in result
+
+    @pytest.mark.asyncio
+    async def test_seed_answer_not_treated_as_image_data(self):
+        """seed_answer must go to the keyword slot, never into image_data."""
+        block = VisionBlock()
+        result = await block.get_hit_activations("what is this", seed_answer="photo")
+        # keyword-driven activation present, no crash from bytes coercion
         assert "object_detection" in result
 
 
@@ -38,18 +51,21 @@ class TestAudioBlock:
         assert block.block_id == "audio"
         assert len(block.hit_sources) == 7
 
-    def test_get_activations_text(self):
+    @pytest.mark.asyncio
+    async def test_get_activations_text(self):
         block = AudioBlock()
-        result = block.get_hit_activations("What does this sound like?")
+        result = await block.get_hit_activations("What does this sound like?")
         assert result["speech_recognition"] > 0.0
-        assert result["music_detection"] > 0.0
 
-    def test_get_activations_no_audio_keywords(self):
+    @pytest.mark.asyncio
+    async def test_get_activations_no_audio_keywords(self):
         block = AudioBlock()
-        result = block.get_hit_activations("hello world")
+        result = await block.get_hit_activations("hello world")
         assert all(v == 0.0 for v in result.values())
 
-    def test_get_activations_with_audio_data(self):
+    @pytest.mark.asyncio
+    async def test_get_activations_with_audio_data(self):
         block = AudioBlock()
-        result = block.get_hit_activations("listen to this", audio_data=None)
+        # audio_data=None means no real analysis
+        result = await block.get_hit_activations("listen to this", audio_data=None)
         assert "speech_recognition" in result

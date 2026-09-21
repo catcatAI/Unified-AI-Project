@@ -64,8 +64,8 @@ class MemMappedBlock:
         self._lru_cache: OrderedDict[int, np.ndarray] = OrderedDict()
         self._current_memory = 0
 
-        # Memory-mapped file (lazy loaded)
-        self._mmap: Optional[np.memmap] = None
+        # Memory-mapped file (lazy loaded); ndarray fallback when data file missing
+        self._mmap: Optional[np.ndarray] = None
         self._total_chunks = 0
 
     def _ensure_mmap(self) -> None:
@@ -122,7 +122,7 @@ class MemMappedBlock:
         with optional memmap lookup for deeper processing.
         """
         # Keyword-based activation (Phase 1)
-        result = {}
+        result: Dict[str, float] = {}
         text_lower = input_text.lower()
 
         # If no hit sources, return empty
@@ -162,6 +162,9 @@ class MemMappedBlock:
         Evicts oldest chunks if memory limit exceeded.
         """
         self._ensure_mmap()
+        mmap = self._mmap
+        if mmap is None:
+            return None
 
         # Check cache first
         if chunk_idx in self._lru_cache:
@@ -174,12 +177,12 @@ class MemMappedBlock:
 
         # Load from disk
         start = chunk_idx * self.chunk_size
-        end = min(start + self.chunk_size, len(self._mmap))
+        end = min(start + self.chunk_size, len(mmap))
 
-        if start >= len(self._mmap):
+        if start >= len(mmap):
             return None
 
-        chunk = np.array(self._mmap[start:end], copy=True)
+        chunk = np.asarray(mmap[start:end], dtype=np.float32).copy()
         chunk_bytes = chunk.nbytes
 
         # Check if we can fit this chunk

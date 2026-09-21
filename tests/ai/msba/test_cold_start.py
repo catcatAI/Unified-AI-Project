@@ -4,7 +4,6 @@ Tests for MSBA ColdStartManager.
 """
 
 import pytest
-
 from ai.msba.block_coordinator import BlockCoordinator
 from ai.msba.cold_start import ColdStartManager
 from ai.msba.semantic_block import SemanticBlock

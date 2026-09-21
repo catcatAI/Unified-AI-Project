@@ -256,6 +256,20 @@ features:
     evidence: R71 識別/記憶/好奇心＋R74 行為克隆訓練閉環（hold-out 學習門、權重持久化、啟動載入、推論信心可觀測）；驗證指令見 INVOCATION_MATRIX（wired 故不列）；live 樣本待玩家在線累積；20 FPS 仍 ❌（10Hz＋2s poller）
     last_verified: "2026-09-21"
 
+  - id: msba-pipeline
+    domain: MSBA 語意區塊架構
+    claim: 全輸入經 7 層語意區塊處理，融合表示以 NeuroBlender 9D 注入 LLM context
+    status: wired
+    implementation:
+      - apps/backend/src/ai/msba/pipeline.py
+      - apps/backend/src/ai/msba/intra_block_hit.py
+      - apps/backend/src/ai/msba/multimodal_blocks.py
+      - apps/backend/src/ai/msba/relevance_convergence.py
+      - apps/backend/src/ai/msba/block_selector.py
+    tests: [tests/ai/msba]
+    evidence: chat_routes Step 2.75 排程、Step 10 消費（50ms 預算）注入 LLM context；Layer 0 接真實 MathVerifier/ED3N 字典（R77 修復死 import）；193 tests；A/B 對照未啟用
+    last_verified: "2026-09-22"
+
 # -----------------------------------------------------------------------------
 # Chat Pipeline（主對話管線的階段構成；路徑由工具核對存在性與被引用）
 # -----------------------------------------------------------------------------
@@ -304,7 +318,7 @@ chat_pipeline:
 feature_tree:
   - id: conversation
     name: 對話
-    children: [conversation-core, conversation-emotion, conversation-memory]
+    children: [conversation-core, conversation-emotion, conversation-memory, conversation-msba]
   - id: conversation-core
     name: 核心對話（多 provider LLM＋原生引擎 fallback）
     modules:
@@ -321,6 +335,11 @@ feature_tree:
   - id: conversation-memory
     name: 記憶（HAM/向量/跨 session）
     modules: [apps/backend/src/ai/memory/ham_memory]
+  - id: conversation-msba
+    name: MSBA 語意區塊（7 層管線＋NeuroBlender）
+    modules:
+      - apps/backend/src/ai/msba/pipeline.py
+      - apps/backend/src/ai/msba/neuroblender_bridge.py
   - id: agents
     name: 專業 Agent（11 specialized）
     modules: [apps/backend/src/ai/agents, apps/backend/src/ai/agents/specialized]
@@ -371,6 +390,10 @@ lifecycle:
   - id: public-benchmark
     name: 對外公開 benchmark
     status: planned
+  - id: msba-e2e-verified
+    name: MSBA 端到端品質驗證（融合品質 benchmark）
+    status: partial
+    note: 管線與橋接 wired＋193 tests；融合輸出品質未 benchmark，A/B 對照未啟用
   - id: fps-20-loop
     name: 遊戲 20FPS 閉環
     status: planned

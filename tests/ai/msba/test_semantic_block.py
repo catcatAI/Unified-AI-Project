@@ -5,7 +5,6 @@ Tests for MSBA SemanticBlock.
 
 import numpy as np
 import pytest
-
 from ai.msba.semantic_block import SemanticBlock
 from ai.msba.types import HitSource
 

@@ -14,9 +14,12 @@ Fusion strategy:
 """
 
 import logging
-from typing import Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from .types import FusedRepresentation, SeedResult
+
+if TYPE_CHECKING:
+    from .semantic_block import SemanticBlock
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +37,7 @@ class MultiDirectionalDecoder:
     def __init__(
         self,
         dictionary: object = None,
-        blocks: Dict[str, object] = None,
+        blocks: Optional[Dict[str, "SemanticBlock"]] = None,
         llm_service: object = None,
     ):
         self.dictionary = dictionary
@@ -176,14 +179,16 @@ class MultiDirectionalDecoder:
         )
         try:
             if hasattr(self.llm_service, "generate_sync"):
-                return self.llm_service.generate_sync(prompt)
+                synced: Any = self.llm_service.generate_sync(prompt)
+                return str(synced) if synced is not None else None
             elif hasattr(self.llm_service, "generate"):
                 import asyncio
 
                 loop = asyncio.get_event_loop()
                 if loop.is_running():
                     return None
-                return loop.run_until_complete(self.llm_service.generate(prompt))
+                generated: Any = loop.run_until_complete(self.llm_service.generate(prompt))
+                return str(generated) if generated is not None else None
         except Exception as e:
             logger.debug("LLM resolve failed: %s", e)
         return None

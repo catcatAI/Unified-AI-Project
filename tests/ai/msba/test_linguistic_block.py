@@ -4,7 +4,6 @@ Tests for MSBA LinguisticBlock.
 """
 
 import pytest
-
 from ai.msba.linguistic_block import LinguisticBlock
 
 

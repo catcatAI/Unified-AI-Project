@@ -6,7 +6,6 @@ Tests for MSBA IntraBlockHitEngine.
 import asyncio
 
 import pytest
-
 from ai.msba.intra_block_hit import IntraBlockHitEngine
 from ai.msba.semantic_block import SemanticBlock
 from ai.msba.types import SeedResult
@@ -28,9 +27,7 @@ class TestIntraBlockHitEngine:
         blocks = self._make_blocks()
         engine = IntraBlockHitEngine(blocks)
         seed = SeedResult(answer="42", confidence=0.8)
-        result = asyncio.get_event_loop().run_until_complete(
-            engine.hit_all("energy level", seed, ["emotional", "cognitive"])
-        )
+        result = asyncio.run(engine.hit_all("energy level", seed, ["emotional", "cognitive"]))
         assert "emotional" in result
         assert "cognitive" in result
         assert result["emotional"].block_id == "emotional"
@@ -40,7 +37,7 @@ class TestIntraBlockHitEngine:
         blocks = self._make_blocks()
         engine = IntraBlockHitEngine(blocks)
         seed = SeedResult(answer="42", confidence=0.8)
-        result = asyncio.get_event_loop().run_until_complete(
+        result = asyncio.run(
             engine.hit_all(
                 "test",
                 seed,
@@ -52,9 +49,7 @@ class TestIntraBlockHitEngine:
 
     def test_hit_all_empty(self):
         engine = IntraBlockHitEngine({})
-        result = asyncio.get_event_loop().run_until_complete(
-            engine.hit_all("test", SeedResult(), [])
-        )
+        result = asyncio.run(engine.hit_all("test", SeedResult(), []))
         assert result == {}
 
     def test_seed_verification_confirm(self):
@@ -98,6 +93,6 @@ class TestIntraBlockHitEngine:
         blocks = self._make_blocks()
         engine = IntraBlockHitEngine(blocks)
         seed = SeedResult(answer="42", confidence=0.8)
-        asyncio.get_event_loop().run_until_complete(engine.hit_all("test", seed, ["emotional"]))
+        asyncio.run(engine.hit_all("test", seed, ["emotional"]))
         partial = engine.get_partial_results()
         assert "emotional" in partial

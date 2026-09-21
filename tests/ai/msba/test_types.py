@@ -6,7 +6,6 @@ Tests for MSBA types module.
 import time
 
 import pytest
-
 from ai.msba.types import (
     BlockHistory,
     BlockHitResult,

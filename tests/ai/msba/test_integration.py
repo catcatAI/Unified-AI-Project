@@ -6,14 +6,13 @@ Integration tests for MSBA full pipeline.
 import asyncio
 
 import pytest
-
 from ai.msba import (
+    BlockHistoryPersistence,
+    LinguisticBlock,
+    MemMappedBlock,
     MSBAPipeline,
     create_default_blocks,
     create_linguistic_block,
-    LinguisticBlock,
-    MemMappedBlock,
-    BlockHistoryPersistence,
 )
 
 
@@ -35,7 +34,7 @@ class TestMSBAIntegration:
         blocks["linguistic"] = LinguisticBlock()
 
         pipeline = MSBAPipeline(blocks=blocks)
-        result = asyncio.get_event_loop().run_until_complete(pipeline.process("What is the time?"))
+        result = asyncio.run(pipeline.process("What is the time?"))
         assert isinstance(result, str)
         assert len(result) > 0
 
@@ -103,9 +102,7 @@ class TestMSBAIntegration:
         blocks["linguistic"] = LinguisticBlock()
 
         pipeline = MSBAPipeline(blocks=blocks)
-        result = asyncio.get_event_loop().run_until_complete(
-            pipeline.process("I will go to the store")
-        )
+        result = asyncio.run(pipeline.process("I will go to the store"))
         assert isinstance(result, str)
 
     def test_block_history_persistence(self):
@@ -118,7 +115,7 @@ class TestMSBAIntegration:
             pipeline = MSBAPipeline(blocks=blocks)
 
             # Process some inputs
-            asyncio.get_event_loop().run_until_complete(pipeline.process("energy level"))
+            asyncio.run(pipeline.process("energy level"))
 
             # Save history
             persist.save(pipeline.block_selector.block_history)

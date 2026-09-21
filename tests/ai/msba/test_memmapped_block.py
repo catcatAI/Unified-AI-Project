@@ -8,7 +8,6 @@ import tempfile
 
 import numpy as np
 import pytest
-
 from ai.msba.memmapped_block import MemMappedBlock
 from ai.msba.types import HitSource
 

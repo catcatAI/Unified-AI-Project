@@ -10,7 +10,10 @@ falls back to CoreNetwork or TensorSNNCore output.
 """
 
 import logging
-from typing import Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional
+
+if TYPE_CHECKING:
+    from .semantic_block import SemanticBlock
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +30,7 @@ class ColdStartManager:
 
     def __init__(
         self,
-        blocks: Dict[str, object],
+        blocks: Dict[str, "SemanticBlock"],
         core_network: Any = None,
         tensor_snn: Any = None,
     ):
@@ -43,7 +46,8 @@ class ColdStartManager:
         coordinator = getattr(block, "coordinator", None)
         if coordinator is None:
             return False
-        return coordinator.is_warmed
+        warmed: bool = bool(coordinator.is_warmed)
+        return warmed
 
     def fallback_compute(
         self, block_id: str, input_projection: Dict[str, float]
@@ -59,7 +63,8 @@ class ColdStartManager:
 
         coordinator = getattr(block, "coordinator", None)
         if coordinator is not None and coordinator.is_warmed:
-            return coordinator.compute(input_projection)
+            result: Dict[str, float] = dict(coordinator.compute(input_projection))
+            return result
 
         # Fallback: try CoreNetwork
         if self.core_network is not None:

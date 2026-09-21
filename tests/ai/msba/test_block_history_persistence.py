@@ -7,7 +7,6 @@ import os
 import tempfile
 
 import pytest
-
 from ai.msba.block_history_persistence import BlockHistoryPersistence
 from ai.msba.types import BlockHistory
 

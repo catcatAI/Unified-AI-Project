@@ -4,7 +4,6 @@ Tests for MSBA BlockFactory.
 """
 
 import pytest
-
 from ai.msba.block_factory import (
     create_default_blocks,
     create_linguistic_block,

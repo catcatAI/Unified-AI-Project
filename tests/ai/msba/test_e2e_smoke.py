@@ -7,7 +7,6 @@ import asyncio
 import time
 
 import pytest
-
 from ai.msba import (
     MSBAPipeline,
     NeuroBlenderBridge,
@@ -33,7 +32,7 @@ class TestMSBAEndToEnd:
         pipeline = MSBAPipeline(blocks=blocks)
 
         start = time.monotonic()
-        result = asyncio.get_event_loop().run_until_complete(pipeline.process("What is the time?"))
+        result = asyncio.run(pipeline.process("What is the time?"))
         elapsed = (time.monotonic() - start) * 1000
 
         assert isinstance(result, str)
@@ -55,7 +54,7 @@ class TestMSBAEndToEnd:
         ]
 
         for inp in inputs:
-            result = asyncio.get_event_loop().run_until_complete(pipeline.process(inp))
+            result = asyncio.run(pipeline.process(inp))
             assert isinstance(result, str), f"Failed for input: {inp}"
 
     def test_neuroblender_bridge_integration(self):
@@ -64,7 +63,7 @@ class TestMSBAEndToEnd:
         pipeline = MSBAPipeline(blocks=blocks)
         bridge = NeuroBlenderBridge()
 
-        result = asyncio.get_event_loop().run_until_complete(pipeline.process("energy level"))
+        result = asyncio.run(pipeline.process("energy level"))
 
         # If result is a FusedRepresentation, convert to 9D
         if hasattr(result, "primary"):
@@ -82,7 +81,7 @@ class TestMSBAEndToEnd:
         for _ in range(3):
             start = profiler.start_total()
             t1 = profiler.start_layer("total")
-            asyncio.get_event_loop().run_until_complete(pipeline.process("test input"))
+            asyncio.run(pipeline.process("test input"))
             profiler.end_layer("total", t1)
             profiler.end_total(start)
 
@@ -95,8 +94,8 @@ class TestMSBAEndToEnd:
         blocks = create_all_blocks()
         pipeline = MSBAPipeline(blocks=blocks)
 
-        r1 = asyncio.get_event_loop().run_until_complete(pipeline.process("first input"))
-        r2 = asyncio.get_event_loop().run_until_complete(pipeline.process("second input"))
+        r1 = asyncio.run(pipeline.process("first input"))
+        r2 = asyncio.run(pipeline.process("second input"))
 
         # Both should produce valid results
         assert isinstance(r1, str)
@@ -112,7 +111,7 @@ class TestMSBAEndToEnd:
             results = await asyncio.gather(*tasks)
             return results
 
-        results = asyncio.get_event_loop().run_until_complete(run_concurrent())
+        results = asyncio.run(run_concurrent())
         assert len(results) == 5
         assert all(isinstance(r, str) for r in results)
 
@@ -123,7 +122,7 @@ class TestMSBAEndToEnd:
 
         # Process same type of input multiple times
         for _ in range(5):
-            asyncio.get_event_loop().run_until_complete(pipeline.process("energy level"))
+            asyncio.run(pipeline.process("energy level"))
 
         # Cross-attention should have been updated
         stats = pipeline.convergence.get_training_stats()

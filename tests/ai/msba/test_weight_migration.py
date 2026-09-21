@@ -8,7 +8,6 @@ import tempfile
 
 import numpy as np
 import pytest
-
 from ai.msba.weight_migration import WeightMigration
 
 

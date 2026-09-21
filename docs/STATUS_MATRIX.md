@@ -9,7 +9,7 @@
 > 本檔是**生成視圖**；單一真相源是 [`status_matrix.yaml`](status_matrix.yaml)。五級狀態：`claimed`（宣稱存在）→ `implemented`（程式存在）→ `wired`（生產路徑呼叫）→
 > `verified`（端到端測試證明）→ `production`（benchmark 達標）。每列必須附驗證指令與日期；無法附者降回 `claimed`。
 > 「架構完成度」≠「模型能力完成度」：確定性能力與神經泛化分開計分（見 INTELLIGENCE_ASSESSMENT）。
-> 狀態快照：2026-09-21（由 YAML 同步）。核對：`python scripts/gen_status_matrix.py check`（0 通過 / 1 違規）。
+> 狀態快照：2026-09-22（由 YAML 同步）。核對：`python scripts/gen_status_matrix.py check`（0 通過 / 1 違規）。
 
 | 領域 | Claim（宣稱） | Implementation（實作） | 狀態 | 驗證指令／證據 | 最後驗證 |
 | --- | --- | --- | --- | --- | --- |
@@ -36,6 +36,7 @@
 | Live2D 具身化 | 桌面互動 | `apps/desktop-app` | **wired** | 可啟動；狀態鏈完整因果驗證未做 | 2026-09-17 |
 | Desktop LLM 設定持久化 | Settings 面板改 backend 設定重啟保留 | `apps/backend/src/api/routes/llm_routes.py` | **verified** | `pytest tests/api/test_llm_config.py`；12 passed；preferred mock 驗證（honor＋fallback 警告） | 2026-09-17 |
 | Luanti 遊戲代理（識別/記憶/自主性/學習） | 能識別環境、記住去過哪、自主探索、行為可訓練 | `apps/backend/src/ai/autonomous/angela_agent.py`<br>`apps/backend/src/ai/multimodal/game_agent.py`<br>`apps/backend/src/ai/multimodal/game_policy.py`<br>`apps/backend/src/ai/multimodal/skill_selector.py`<br>`apps/backend/src/integrations/luanti_connector.py`<br>`scripts/run_luanti_agent.py` | **wired** | R71 識別/記憶/好奇心＋R74 行為克隆訓練閉環（hold-out 學習門、權重持久化、啟動載入、推論信心可觀測）；驗證指令見 INVOCATION_MATRIX（wired 故不列）；live 樣本待玩家在線累積；20 FPS 仍 ❌（10Hz＋2s poller） | 2026-09-21 |
+| MSBA 語意區塊架構 | 全輸入經 7 層語意區塊處理，融合表示以 NeuroBlender 9D 注入 LLM context | `apps/backend/src/ai/msba/pipeline.py`<br>`apps/backend/src/ai/msba/intra_block_hit.py`<br>`apps/backend/src/ai/msba/multimodal_blocks.py`<br>`apps/backend/src/ai/msba/relevance_convergence.py`<br>`apps/backend/src/ai/msba/block_selector.py` | **wired** | chat_routes Step 2.75 排程、Step 10 消費（50ms 預算）注入 LLM context；Layer 0 接真實 MathVerifier/ED3N 字典（R77 修復死 import）；193 tests；A/B 對照未啟用 | 2026-09-22 |
 
 ## Chat Pipeline（主對話管線）
 
@@ -62,6 +63,7 @@
   - 核心對話（多 provider LLM＋原生引擎 fallback）
   - 情緒與危機（辨識/狀態/閘門）
   - 記憶（HAM/向量/跨 session）
+  - MSBA 語意區塊（7 層管線＋NeuroBlender）
 - 專業 Agent（11 specialized）
 - 多模態（視覺/音訊/生成）
 - 具身化（桌面/Live2D/生命週期）
@@ -80,6 +82,7 @@
 | 🟡 partial | 遊戲代理 L4（技能學習/策略） | L0-L3 wired；L4 訓練管線通但 live 樣本未累積 |
 | 🟡 partial | 圖片生成品質 | 管線通、品質未達標 |
 | 🗓️ planned | 對外公開 benchmark |  |
+| 🟡 partial | MSBA 端到端品質驗證（融合品質 benchmark） | 管線與橋接 wired＋193 tests；融合輸出品質未 benchmark，A/B 對照未啟用 |
 | 🗓️ planned | 遊戲 20FPS 閉環 | 現 10Hz＋2s poller |
 | 🗓️ planned | Dashboard E2E 自動化 |  |
 | 🗑️ deleted | Mobile app | Phase 11 刪（骨架；路徑歷史 apps/mobile，非目錄型 token 免掃） |
@@ -92,8 +95,21 @@
 | 🗑️ deleted | apps/backend/src/ai/trust/ | Phase 12b 刪 |
 | 🗑️ deleted | apps/backend/src/ai/security/ | Phase 9 刪 |
 | 🗑️ deleted | apps/backend/src/core/card/capabilities/comic_composer.py | Phase 9 刪（佔位 URL） |
-| 🗑️ deleted | luanti_bridge.py（UDP 協議橋） | R76 刪——三傳輸實驗（UDP/WS/HTTP-polling）敗者，零引用零測試；生產走 luanti_connector（websockets）＋luanti_polling_bridge（HTTP） |
-| 🗑️ deleted | luanti_ws_bridge.py（CSM WS 橋） | R76 刪——同上，零引用零測試 |
+| 🗑️ deleted | apps/backend/src/integrations/luanti_bridge.py | R76 刪——三傳輸實驗（UDP/WS/HTTP-polling）敗者，零引用零測試；生產走 luanti_connector（websockets）＋luanti_polling_bridge（HTTP） |
+| 🗑️ deleted | apps/backend/src/integrations/luanti_ws_bridge.py | R76 刪——同上，零引用零測試 |
+| 🗑️ deleted | apps/backend/src/ai/core/trust_manager.py | R76 刪——Phase 12b Trust 模組的換位復活體（980 行），零生產接線（唯一 import 者為自身測試） |
+| 🗑️ deleted | apps/backend/src/core/desktop/tray_manager.py | R76 刪——與桌面端 electron_app/js/tray-manager（生產實際使用的實作）平行重複；Python 版零引用 |
+| 🗑️ deleted | apps/backend/src/core/desktop/key_manager_gui.py | R76 刪——僅被已刪的 tray_manager.py 以 subprocess 呼叫；714 行零生產引用 |
+| 🗑️ deleted | apps/backend/src/core/ethics/ethics_manager.py | R76 刪——1389 行零生產引用零配置；import 測試轉退役鎖 |
+| 🗑️ deleted | apps/backend/src/core/evolution/emergence_engine.py | R76 刪——零引用 |
+| 🗑️ deleted | apps/backend/src/core/knowledge/unified_knowledge_graph.py | R76 刪——main.py 明文「UnifiedKnowledgeGraph 桩模块已移除」的復活體（428 行）；真功能在 ai.garden.kg_import 與 ai.meta.knowledge_pipeline |
+| 🗑️ deleted | apps/backend/src/core/local_processing.py | R76 刪——38 行零引用（document_router 的同名函數為獨立實作非 import） |
+| 🗑️ deleted | apps/backend/src/core/feedback_loop_engine.py | R76 刪——1027 行零生產引用（R72 曾修其 TYPE_CHECKING 死引用，本輪確認整檔無接線） |
+| 🗑️ deleted | apps/backend/src/ai/agents/agent_manager_extensions.py | R76 刪——244 行零引用（agent_manager/agent_adapter 為實際實作） |
+| 🗑️ deleted | apps/backend/src/ai/context/config.py ＋ exceptions.py ＋ storage/database.py | R76 刪——包內包外均零引用；storage 包（base/disk/memory）健康保留 |
+| 🗑️ deleted | apps/backend/src/services/api_models.py | R76 刪——純 re-export 壳（22 行）且零引用；canonical 在 models/api_models.py（basename 豁免） |
+| 🗑️ deleted | apps/backend/src/game/widgets.py | R76 刪——14 行共用 widget 零引用 |
+| 🗑️ deleted | packages/cli/cli_runner.py | R76 刪——包外層殘留副本（setup.py find_packages 安裝不到）；__main__.py 曾錯誤 import 它致 python -m cli 啟動即炸，已改指 unified_cli.main |
 
 > `deleted` 列表由工具做**防復活門**：同名路徑在磁碟再現即 CI 紅（勿重實作）。
 

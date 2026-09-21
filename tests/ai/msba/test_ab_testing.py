@@ -4,7 +4,6 @@ Tests for MSBA ABTesting.
 """
 
 import pytest
-
 from ai.msba.ab_testing import ABTesting
 
 

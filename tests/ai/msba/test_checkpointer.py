@@ -9,7 +9,6 @@ import tempfile
 
 import numpy as np
 import pytest
-
 from ai.msba.checkpointer import MSBACheckpointer
 
 

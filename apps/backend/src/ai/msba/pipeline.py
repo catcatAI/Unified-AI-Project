@@ -12,7 +12,7 @@ block selection (fewer blocks) but do NOT skip the block system.
 import asyncio
 import logging
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from .ab_testing import ABTesting
 from .block_coordinator import BlockCoordinator
@@ -30,6 +30,19 @@ logger = logging.getLogger(__name__)
 
 # Query types that use lightweight block selection
 LIGHTWEIGHT_TYPES = {"reflex", "greeting", "unknown"}
+
+# Deterministic seed dependencies are imported at module level so their
+# import cost (dictionary_layer alone is ~200ms) lands at backend startup,
+# not inside the first request's event loop. None keeps graceful degradation
+# if the optional engines are unavailable.
+try:
+    from services.math_verifier import compute_arithmetic as _compute_arithmetic
+except Exception:  # pragma: no cover - optional engine
+    _compute_arithmetic = None  # type: ignore[assignment]
+try:
+    from ai.ed3n.dictionary_layer import get_dictionary as _get_dictionary
+except Exception:  # pragma: no cover - optional engine
+    _get_dictionary = None  # type: ignore[assignment]
 
 
 class MSBAPipeline:
@@ -54,6 +67,7 @@ class MSBAPipeline:
         query_classifier: Any = None,
         llm_service: Any = None,
         dictionary: Any = None,
+        legacy_pipeline: Any = None,
         enable_ab_testing: bool = False,
         enable_metrics: bool = False,
         auto_save_interval: float = 300.0,
@@ -87,11 +101,17 @@ class MSBAPipeline:
             auto_save_interval=auto_save_interval,
         )
 
-        # A/B testing
-        self.ab_testing = ABTesting() if enable_ab_testing else None
+        # A/B testing (requires a legacy pipeline to compare against)
+        if enable_ab_testing and legacy_pipeline is not None:
+            self.ab_testing: Optional[ABTesting] = ABTesting(
+                self,
+                legacy_pipeline,
+            )
+        else:
+            self.ab_testing = None
 
         # Metrics collector
-        self.metrics = MetricsCollector() if enable_metrics else None
+        self.metrics: Optional[MetricsCollector] = MetricsCollector() if enable_metrics else None
 
         # Process counter for auto-save
         self._process_count = 0
@@ -154,11 +174,8 @@ class MSBAPipeline:
         # Metrics
         if self.metrics:
             elapsed = (time.monotonic() - start) * 1000
-            self.metrics.record_request(
-                latency_ms=elapsed,
-                cache_hit=False,
-                success=True,
-            )
+            self.metrics.record_request()
+            self.metrics.record_latency("pipeline", elapsed)
 
         return result
 
@@ -181,36 +198,46 @@ class MSBAPipeline:
             return asyncio.run(self.process(input_text, state_ctx))
 
     def _deterministic_seed(self, input_text: str, state_ctx: Any) -> SeedResult:
-        """Layer 0: Generate deterministic seed."""
-        # Try math
-        try:
-            from ai.ed3n.deterministic_router import (
-                DeterministicRouter,
-            )
+        """Layer 0: Generate deterministic seed.
 
-            router = DeterministicRouter()
-            result = router.evaluate(input_text)
-            if result and result.get("answer"):
+        Reuses the project's real deterministic engines (single
+        implementation, no parallel re-implementation):
+        - Math: services.math_verifier (compute_arithmetic)
+        - Knowledge: ai.ed3n.dictionary_layer (DictionaryLayer singleton)
+        """
+        # Math via the project's math verifier (deterministic, safe eval)
+        try:
+            if _compute_arithmetic is not None:
+                value = _compute_arithmetic(input_text)
+            else:
+                value = None
+            if value is not None:
                 return SeedResult(
-                    answer=str(result["answer"]),
-                    confidence=float(result.get("confidence", 0.8)),
+                    answer=str(value),
+                    confidence=0.95,
                     source="math",
-                    reasoning_chain=result.get("steps", []),
+                    reasoning_chain=[f"compute_arithmetic({input_text!r}) = {value}"],
                 )
         except Exception:
             pass
 
-        # Try knowledge base
+        # Knowledge via the shared ED3N dictionary layer singleton
         try:
-            from ai.ed3n.knowledge_base import knowledge_base
-
-            kb_result = knowledge_base.query(input_text)
-            if kb_result and kb_result.get("answer"):
-                return SeedResult(
-                    answer=str(kb_result["answer"]),
-                    confidence=float(kb_result.get("confidence", 0.7)),
-                    source="knowledge",
-                )
+            if _get_dictionary is None:
+                return SeedResult()
+            dictionary = _get_dictionary()
+            keys = dictionary.encode(input_text, max_keys=3)
+            if keys:
+                entries = dictionary.lookup(keys)
+                hits = [e for e in entries.values() if e is not None]
+                if hits:
+                    best = max(hits, key=lambda e: getattr(e, "confidence", 0.0))
+                    return SeedResult(
+                        answer=str(getattr(best, "key", "")),
+                        confidence=min(0.9, float(getattr(best, "confidence", 0.5))),
+                        source="knowledge",
+                        reasoning_chain=[f"dictionary hits: {[e.key for e in hits]}"],
+                    )
         except Exception:
             pass
 
@@ -250,7 +277,8 @@ class MSBAPipeline:
             context = f"Semantic dimensions: {fused.dimensions}"
             prompt = f"Input: {input_text}\n" f"{context}\n" f"Provide a concise answer:"
             if hasattr(self.llm_service, "generate"):
-                return await self.llm_service.generate(prompt)
+                result: Any = await self.llm_service.generate(prompt)
+                return str(result) if result is not None else None
         except Exception as e:
             logger.debug("LLM fallback failed: %s", e)
         return None
@@ -286,8 +314,8 @@ class MSBAPipeline:
         cross_attention = self.convergence.cross_attention
         history = {bid: hist.to_dict() for bid, hist in self.block_selector.block_history.items()}
         training_state = self.convergence.get_training_stats()
-        ab_state = self.ab_testing.get_stats() if self.ab_testing else None
-        metrics_snapshot = self.metrics.get_metrics() if self.metrics else None
+        ab_state = self.ab_testing.get_metrics() if self.ab_testing else None
+        metrics_snapshot = self.metrics.get_summary() if self.metrics else None
 
         self.checkpointer.save(
             self.blocks,

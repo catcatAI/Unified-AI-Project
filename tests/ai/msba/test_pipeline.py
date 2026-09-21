@@ -6,7 +6,6 @@ Tests for MSBA Pipeline.
 import asyncio
 
 import pytest
-
 from ai.msba.pipeline import MSBAPipeline
 
 
@@ -28,7 +27,7 @@ class TestMSBAPipeline:
 
         blocks = create_default_blocks()
         pipeline = MSBAPipeline(blocks=blocks)
-        result = asyncio.get_event_loop().run_until_complete(pipeline.process("energy level"))
+        result = asyncio.run(pipeline.process("energy level"))
         assert result != ""
         assert isinstance(result, str)
 
@@ -38,7 +37,7 @@ class TestMSBAPipeline:
         blocks = create_default_blocks()
         pipeline = MSBAPipeline(blocks=blocks)
         # "energy" is short -> lightweight=True via _is_lightweight
-        result = asyncio.get_event_loop().run_until_complete(pipeline.process("energy"))
+        result = asyncio.run(pipeline.process("energy"))
         assert isinstance(result, str)
 
     def test_is_lightweight(self):

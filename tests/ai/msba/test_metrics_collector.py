@@ -4,7 +4,6 @@ Tests for MSBA MetricsCollector.
 """
 
 import pytest
-
 from ai.msba.metrics_collector import MetricsCollector
 
 

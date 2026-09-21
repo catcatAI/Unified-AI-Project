@@ -5,7 +5,6 @@ Tests for MSBA NeuroBlenderBridge.
 
 import numpy as np
 import pytest
-
 from ai.msba.neuroblender_bridge import (
     BLENDER_DIMS,
     FUSED_TO_BLENDER_MAP,

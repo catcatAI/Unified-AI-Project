@@ -12,7 +12,7 @@ import json
 import logging
 import os
 import time
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from .types import BlockHistory
 
@@ -50,7 +50,7 @@ class BlockHistoryPersistence:
         Returns:
             Path to saved file.
         """
-        data = {
+        data: Dict[str, Any] = {
             "timestamp": time.time(),
             "blocks": {},
             "selection_log": selection_log or [],
@@ -117,8 +117,9 @@ class BlockHistoryPersistence:
 
         try:
             with open(path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-            return data.get("selection_log", [])
+                data: Any = json.load(f)
+            selection_log: List[dict] = list(data.get("selection_log", []))
+            return selection_log
         except Exception:
             return []
 
@@ -139,7 +140,7 @@ class BlockHistoryPersistence:
         path = os.path.join(self.base_dir, "block_history.json")
 
         # Load existing data
-        data = {"blocks": {}, "selection_log": []}
+        data: Dict[str, Any] = {"blocks": {}, "selection_log": []}
         if os.path.exists(path):
             try:
                 with open(path, "r", encoding="utf-8") as f:

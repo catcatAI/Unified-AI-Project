@@ -6,7 +6,6 @@ Tests for MSBA PerformanceProfiler.
 import time
 
 import pytest
-
 from ai.msba.performance_profiler import PerformanceProfiler
 
 

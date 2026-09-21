@@ -10,12 +10,16 @@ Seed verdicts are verified by comparing input vs seed activations.
 """
 
 import asyncio
+import inspect
 import logging
-from typing import Dict, List, Optional
+from typing import TYPE_CHECKING, Dict, List, Optional
 
 import numpy as np
 
 from .types import BlockHitResult, SeedResult
+
+if TYPE_CHECKING:
+    from .semantic_block import SemanticBlock
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +31,7 @@ class IntraBlockHitEngine:
     Each block receives input + seed, outputs hit activations + seed verdict.
     """
 
-    def __init__(self, blocks: Dict[str, object]):
+    def __init__(self, blocks: Dict[str, "SemanticBlock"]):
         self.blocks = blocks
         self._partial_results: Dict[str, BlockHitResult] = {}
 
@@ -83,13 +87,23 @@ class IntraBlockHitEngine:
         state_ctx: object,
     ) -> BlockHitResult:
         """Compute hit for a single block."""
-        # Get block's hit activations for input
-        input_hits = block.get_hit_activations(input_text, seed.answer)
+        # Get block's hit activations for input.
+        # NOTE: seed answer must go through the keyword-only seed_answer
+        # parameter — passing it positionally would land in VisionBlock's
+        # image_data / AudioBlock's audio_data slot.
+        maybe_await = getattr(block, "get_hit_activations", None)
+        if maybe_await is None:
+            return BlockHitResult(block_id=getattr(block, "block_id", "?"))
+        input_hits = maybe_await(input_text, seed_answer=seed.answer)
+        if inspect.isawaitable(input_hits):
+            input_hits = await input_hits
 
         # Get block's hit activations for seed alone
-        seed_hits = {}
+        seed_hits: Dict[str, float] = {}
         if seed.has_seed:
-            seed_hits = block.get_hit_activations(seed.answer)
+            seed_hits = maybe_await(seed.answer, seed_answer=seed.answer)
+            if inspect.isawaitable(seed_hits):
+                seed_hits = await seed_hits
 
         # Verify seed
         verdict = self._verify_seed(input_hits, seed_hits)

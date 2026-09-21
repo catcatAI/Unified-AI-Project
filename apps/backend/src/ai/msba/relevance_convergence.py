@@ -20,9 +20,12 @@ Enhancements:
 
 import logging
 from collections import deque
-from typing import Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 import numpy as np
+
+if TYPE_CHECKING:
+    from .semantic_block import SemanticBlock
 
 from .types import (
     BlockHitResult,
@@ -83,7 +86,7 @@ class RelevanceConvergence:
     REPLAY_BUFFER_SIZE = 500
     GRADIENT_CLIP = 0.1
 
-    def __init__(self, blocks: Dict[str, object]):
+    def __init__(self, blocks: Dict[str, "SemanticBlock"]):
         self.blocks = blocks
         n = len(self.BLOCK_ORDER)
         self.cross_attention = np.ones((n, n)) * 0.05

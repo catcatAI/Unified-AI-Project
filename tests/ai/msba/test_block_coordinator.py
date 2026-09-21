@@ -4,7 +4,6 @@ Tests for MSBA BlockCoordinator.
 """
 
 import pytest
-
 from ai.msba.block_coordinator import BlockCoordinator
 
 

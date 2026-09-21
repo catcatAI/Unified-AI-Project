@@ -15,40 +15,39 @@ Seven-layer pipeline:
   Layer 6: Output + Learning (Hebbian feedback)
 """
 
+from .ab_testing import ABTesting
+from .block_coordinator import BlockCoordinator
+from .block_factory import (
+    create_all_blocks,
+    create_audio_block,
+    create_default_blocks,
+    create_linguistic_block,
+    create_vision_block,
+)
+from .block_history_persistence import BlockHistoryPersistence
+from .block_selector import BlockSelector
+from .checkpointer import MSBACheckpointer
+from .cold_start import ColdStartManager
+from .intra_block_hit import IntraBlockHitEngine
+from .linguistic_block import LinguisticBlock
+from .memmapped_block import MemMappedBlock
+from .metrics_collector import MetricsCollector
+from .multi_dir_decoder import MultiDirectionalDecoder
+from .multimodal_blocks import AudioBlock, VisionBlock
+from .neuroblender_bridge import NeuroBlenderBridge
+from .performance_profiler import PerformanceProfiler
+from .pipeline import MSBAPipeline
+from .relevance_convergence import RelevanceConvergence
+from .semantic_block import SemanticBlock
 from .types import (
-    BlockHitResult,
     BlockHistory,
+    BlockHitResult,
     BlockSelection,
     FusedRepresentation,
     HitSource,
     SeedResult,
 )
-from .block_coordinator import BlockCoordinator
-from .semantic_block import SemanticBlock
-from .block_selector import BlockSelector
-from .intra_block_hit import IntraBlockHitEngine
-from .relevance_convergence import RelevanceConvergence
-from .multi_dir_decoder import MultiDirectionalDecoder
-from .pipeline import MSBAPipeline
-from .memmapped_block import MemMappedBlock
-from .linguistic_block import LinguisticBlock
-from .block_history_persistence import BlockHistoryPersistence
-from .block_factory import create_default_blocks, create_linguistic_block
-from .cold_start import ColdStartManager
-from .checkpointer import MSBACheckpointer
-from .multimodal_blocks import VisionBlock, AudioBlock
 from .weight_migration import WeightMigration
-from .ab_testing import ABTesting
-from .metrics_collector import MetricsCollector
-from .neuroblender_bridge import NeuroBlenderBridge
-from .performance_profiler import PerformanceProfiler
-from .block_factory import (
-    create_all_blocks,
-    create_default_blocks,
-    create_linguistic_block,
-    create_vision_block,
-    create_audio_block,
-)
 
 __all__ = [
     # Types
