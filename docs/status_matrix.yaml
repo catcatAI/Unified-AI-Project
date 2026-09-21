@@ -256,6 +256,18 @@ features:
     evidence: R71 識別/記憶/好奇心＋R74 行為克隆訓練閉環（hold-out 學習門、權重持久化、啟動載入、推論信心可觀測）；驗證指令見 INVOCATION_MATRIX（wired 故不列）；live 樣本待玩家在線累積；20 FPS 仍 ❌（10Hz＋2s poller）
     last_verified: "2026-09-21"
 
+  - id: benchmark-harness
+    domain: 基準與驗收
+    claim: 可驗證的多後端基準，任何 OpenAI 相容端點可與原生堆疊同資料同比分器互相比較
+    status: verified
+    implementation:
+      - scripts/run_benchmarks.py
+      - benchmarks/data/native_bench_v1.json
+    tests: [tests/test_run_benchmarks.py]
+    verify_command: pytest tests/test_run_benchmarks.py
+    evidence: 20 tests；首輪官方結果 results/bench_20260922-022550.json（native math 71.4%/knowledge 20%/code 0%/routing 50%，逐題明細可複審）
+    last_verified: "2026-09-22"
+
   - id: msba-pipeline
     domain: MSBA 語意區塊架構
     claim: 全輸入經 7 層語意區塊處理，融合表示以 NeuroBlender 9D 注入 LLM context
@@ -389,7 +401,8 @@ lifecycle:
     note: 管線通、品質未達標
   - id: public-benchmark
     name: 對外公開 benchmark
-    status: planned
+    status: partial
+    note: 管線與首輪本機數據已建（benchmarks/README.md）；跨 AI 對比待外部 LLM 端點實際接入跑分
   - id: msba-e2e-verified
     name: MSBA 端到端品質驗證（融合品質 benchmark）
     status: partial

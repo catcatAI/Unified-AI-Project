@@ -1,0 +1,2198 @@
+{
+  "generated_at": "2026-09-22T02:25:50",
+  "dataset": "native_bench_v1.json",
+  "results": [
+    {
+      "backend": "echo",
+      "suite": "math",
+      "total": 28,
+      "passed": 1,
+      "skipped": 0,
+      "accuracy": 3.57,
+      "avg_latency_ms": 0.0,
+      "details": [
+        {
+          "id": "math-001",
+          "passed": false,
+          "skipped": false,
+          "answer": "What is 3 + 5 * 2?",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-002",
+          "passed": true,
+          "skipped": false,
+          "answer": "What is (12 - 4) / 2?",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-003",
+          "passed": false,
+          "skipped": false,
+          "answer": "What is 2 ** 10?",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-004",
+          "passed": false,
+          "skipped": false,
+          "answer": "計算：7 × 8 - 6",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-005",
+          "passed": false,
+          "skipped": false,
+          "answer": "What is 100 / 8?",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-006",
+          "passed": false,
+          "skipped": false,
+          "answer": "三十八加六十二等於多少？",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-007",
+          "passed": false,
+          "skipped": false,
+          "answer": "Sarah has 3 boxes with 12 books each. She buys 5 more books. How many books does she have?",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-008",
+          "passed": false,
+          "skipped": false,
+          "answer": "What is 15 % 4?",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-009",
+          "passed": false,
+          "skipped": false,
+          "answer": "若一件外套原價 800 元打七五折，售價是多少元？",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-010",
+          "passed": false,
+          "skipped": false,
+          "answer": "What is 17 * 24?",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-011",
+          "passed": false,
+          "skipped": false,
+          "answer": "A train travels 60 km per hour for 2.5 hours. How far does it go in km?",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-012",
+          "passed": false,
+          "skipped": false,
+          "answer": "What is 144 / 12 + 9?",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-013",
+          "passed": false,
+          "skipped": false,
+          "answer": "Tom has 4 packs of 6 stickers and 15 loose stickers. How many stickers in total?",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-014",
+          "passed": false,
+          "skipped": false,
+          "answer": "What is 9 * 9 - 3 * 3?",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-015",
+          "passed": false,
+          "skipped": false,
+          "answer": "What is 25 × 4 + 10?",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-016",
+          "passed": false,
+          "skipped": false,
+          "answer": "瑪麗買了 5 支筆每支 12 元，付了 100 元，應找多少元？",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-017",
+          "passed": false,
+          "skipped": false,
+          "answer": "What is (8 + 4) * (9 - 3)?",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-018",
+          "passed": false,
+          "skipped": false,
+          "answer": "What is 2 ** 8 / 4?",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-019",
+          "passed": false,
+          "skipped": false,
+          "answer": "一輛車油箱 50 公升，每百公里耗油 8 公升，可行駛多少公里？",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-020",
+          "passed": false,
+          "skipped": false,
+          "answer": "What is 56 / 7 * 3?",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-021",
+          "passed": false,
+          "skipped": false,
+          "answer": "What is 123 * 456 - 1000?",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-022",
+          "passed": false,
+          "skipped": false,
+          "answer": "What is 50% of 240?",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-023",
+          "passed": false,
+          "skipped": false,
+          "answer": "Compute: 6 * 7 + 8 * 9",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-024",
+          "passed": false,
+          "skipped": false,
+          "answer": "What is 81 / 9 - 2?",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-025",
+          "passed": false,
+          "skipped": false,
+          "answer": "一箱蘋果有 24 顆，7 箱共有幾顆？",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-026",
+          "passed": false,
+          "skipped": false,
+          "answer": "An object starts at rest and accelerates at 2.5 m/s2 for 8 seconds. What is its velocity?",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-027",
+          "passed": false,
+          "skipped": false,
+          "answer": "What is the force on a 5 kg mass with acceleration 2 m/s2?",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-028",
+          "passed": false,
+          "skipped": false,
+          "answer": "What is the kinetic energy of a 2 kg object moving at 3 m/s?",
+          "latency_ms": 0.0,
+          "error": ""
+        }
+      ]
+    },
+    {
+      "backend": "echo",
+      "suite": "knowledge",
+      "total": 15,
+      "passed": 0,
+      "skipped": 0,
+      "accuracy": 0.0,
+      "avg_latency_ms": 0.0,
+      "details": [
+        {
+          "id": "know-001",
+          "passed": false,
+          "skipped": false,
+          "answer": "What gas do plants absorb from the air for photosynthesis?",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-002",
+          "passed": false,
+          "skipped": false,
+          "answer": "What planet is known as the Red Planet?",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-003",
+          "passed": false,
+          "skipped": false,
+          "answer": "How many continents are there on Earth?",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-004",
+          "passed": false,
+          "skipped": false,
+          "answer": "What organ pumps blood through the human body?",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-005",
+          "passed": false,
+          "skipped": false,
+          "answer": "What is the chemical symbol for water?",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-006",
+          "passed": false,
+          "skipped": false,
+          "answer": "At what temperature does water boil at sea level in Celsius?",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-007",
+          "passed": false,
+          "skipped": false,
+          "answer": "What force keeps objects on the ground?",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-008",
+          "passed": false,
+          "skipped": false,
+          "answer": "What do bees collect from flowers to make honey?",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-009",
+          "passed": false,
+          "skipped": false,
+          "answer": "What is the largest ocean on Earth?",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-010",
+          "passed": false,
+          "skipped": false,
+          "answer": "血液中攜帶氧氣的細胞叫什麼？",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-011",
+          "passed": false,
+          "skipped": false,
+          "answer": "What is the speed of light in vacuum, approximately, in km/s?",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-012",
+          "passed": false,
+          "skipped": false,
+          "answer": "Which gas makes up most of Earth's atmosphere?",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-013",
+          "passed": false,
+          "skipped": false,
+          "answer": "How many legs does a spider have?",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-014",
+          "passed": false,
+          "skipped": false,
+          "answer": "What is the primary source of energy for Earth's climate?",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-015",
+          "passed": false,
+          "skipped": false,
+          "answer": "DNA 攜帶什麼資訊？",
+          "latency_ms": 0.0,
+          "error": ""
+        }
+      ]
+    },
+    {
+      "backend": "echo",
+      "suite": "code",
+      "total": 10,
+      "passed": 0,
+      "skipped": 0,
+      "accuracy": 0.0,
+      "avg_latency_ms": 0.0,
+      "details": [
+        {
+          "id": "code-001",
+          "passed": false,
+          "skipped": false,
+          "answer": "Write a Python function `def is_even(n):` that returns True if n is even, else False.",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "code-002",
+          "passed": false,
+          "skipped": false,
+          "answer": "Write a Python function `def max_of_three(a, b, c):` that returns the largest of three numbers.",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "code-003",
+          "passed": false,
+          "skipped": false,
+          "answer": "Write a Python function `def count_vowels(s):` that returns the number of vowels (a,e,i,o,u, case-insensitive) in s.",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "code-004",
+          "passed": false,
+          "skipped": false,
+          "answer": "Write a Python function `def reverse_words(s):` that reverses the word order of s.",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "code-005",
+          "passed": false,
+          "skipped": false,
+          "answer": "Write a Python function `def second_largest(nums):` that returns the second largest distinct number in a list.",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "code-006",
+          "passed": false,
+          "skipped": false,
+          "answer": "Write a Python function `def is_palindrome(s):` that returns True if s reads the same forwards and backwards (case-insensitive, ignore non-alphanumeric).",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "code-007",
+          "passed": false,
+          "skipped": false,
+          "answer": "Write a Python function `def sum_evens(nums):` that returns the sum of even numbers in the list.",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "code-008",
+          "passed": false,
+          "skipped": false,
+          "answer": "Write a Python function `def repeat_str(s, n):` that returns s repeated n times.",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "code-009",
+          "passed": false,
+          "skipped": false,
+          "answer": "Write a Python function `def fahrenheit_to_celsius(f):` that converts Fahrenheit to Celsius.",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "code-010",
+          "passed": false,
+          "skipped": false,
+          "answer": "Write a Python function `def flatten(nested):` that flattens a one-level nested list into a flat list.",
+          "latency_ms": 0.0,
+          "error": ""
+        }
+      ]
+    },
+    {
+      "backend": "echo",
+      "suite": "routing",
+      "total": 10,
+      "passed": 0,
+      "skipped": 0,
+      "accuracy": 0.0,
+      "avg_latency_ms": 0.0,
+      "details": [
+        {
+          "id": "route-001",
+          "passed": false,
+          "skipped": false,
+          "answer": "What is 999 + 111?",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "route-002",
+          "passed": false,
+          "skipped": false,
+          "answer": "請計算 123 × 456",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "route-003",
+          "passed": false,
+          "skipped": false,
+          "answer": "光合作用是什麼？",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "route-004",
+          "passed": false,
+          "skipped": false,
+          "answer": "What causes rainbows?",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "route-005",
+          "passed": false,
+          "skipped": false,
+          "answer": "Write a Python function that reverses a string",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "route-006",
+          "passed": false,
+          "skipped": false,
+          "answer": "幫我搜尋 Python asyncio 教學",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "route-007",
+          "passed": false,
+          "skipped": false,
+          "answer": "讀取 config.yaml 的內容",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "route-008",
+          "passed": false,
+          "skipped": false,
+          "answer": "嗨，早安！",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "route-009",
+          "passed": false,
+          "skipped": false,
+          "answer": "刪除 /tmp/old_logs 目錄",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "route-010",
+          "passed": false,
+          "skipped": false,
+          "answer": "What's the weather like today?",
+          "latency_ms": 0.0,
+          "error": ""
+        }
+      ]
+    },
+    {
+      "backend": "naive",
+      "suite": "math",
+      "total": 28,
+      "passed": 14,
+      "skipped": 0,
+      "accuracy": 50.0,
+      "avg_latency_ms": 0.0,
+      "details": [
+        {
+          "id": "math-001",
+          "passed": true,
+          "skipped": false,
+          "answer": "13",
+          "latency_ms": 0.2,
+          "error": ""
+        },
+        {
+          "id": "math-002",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-003",
+          "passed": true,
+          "skipped": false,
+          "answer": "1024",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-004",
+          "passed": true,
+          "skipped": false,
+          "answer": "50",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-005",
+          "passed": true,
+          "skipped": false,
+          "answer": "12.5",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-006",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-007",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-008",
+          "passed": true,
+          "skipped": false,
+          "answer": "3",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-009",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-010",
+          "passed": true,
+          "skipped": false,
+          "answer": "408",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-011",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-012",
+          "passed": true,
+          "skipped": false,
+          "answer": "21.0",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-013",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-014",
+          "passed": true,
+          "skipped": false,
+          "answer": "72",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-015",
+          "passed": true,
+          "skipped": false,
+          "answer": "110",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-016",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-017",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-018",
+          "passed": true,
+          "skipped": false,
+          "answer": "64.0",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-019",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-020",
+          "passed": true,
+          "skipped": false,
+          "answer": "24.0",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-021",
+          "passed": true,
+          "skipped": false,
+          "answer": "55088",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-022",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-023",
+          "passed": true,
+          "skipped": false,
+          "answer": "114",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-024",
+          "passed": true,
+          "skipped": false,
+          "answer": "7.0",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-025",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-026",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-027",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-028",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        }
+      ]
+    },
+    {
+      "backend": "naive",
+      "suite": "knowledge",
+      "total": 15,
+      "passed": 0,
+      "skipped": 0,
+      "accuracy": 0.0,
+      "avg_latency_ms": 0.0,
+      "details": [
+        {
+          "id": "know-001",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-002",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-003",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-004",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-005",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-006",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-007",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-008",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-009",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-010",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-011",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-012",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-013",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-014",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-015",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        }
+      ]
+    },
+    {
+      "backend": "naive",
+      "suite": "code",
+      "total": 10,
+      "passed": 0,
+      "skipped": 0,
+      "accuracy": 0.0,
+      "avg_latency_ms": 0.0,
+      "details": [
+        {
+          "id": "code-001",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "code-002",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "code-003",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "code-004",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "code-005",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "code-006",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "code-007",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "code-008",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "code-009",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "code-010",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        }
+      ]
+    },
+    {
+      "backend": "naive",
+      "suite": "routing",
+      "total": 10,
+      "passed": 0,
+      "skipped": 0,
+      "accuracy": 0.0,
+      "avg_latency_ms": 0.0,
+      "details": [
+        {
+          "id": "route-001",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "route-002",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "route-003",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "route-004",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "route-005",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "route-006",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "route-007",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "route-008",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "route-009",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "route-010",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        }
+      ]
+    },
+    {
+      "backend": "native",
+      "suite": "math",
+      "total": 28,
+      "passed": 20,
+      "skipped": 0,
+      "accuracy": 71.43,
+      "avg_latency_ms": 533.1,
+      "details": [
+        {
+          "id": "math-001",
+          "passed": true,
+          "skipped": false,
+          "answer": "13",
+          "latency_ms": 7328.8,
+          "error": ""
+        },
+        {
+          "id": "math-002",
+          "passed": true,
+          "skipped": false,
+          "answer": "4",
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "math-003",
+          "passed": true,
+          "skipped": false,
+          "answer": "1024",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-004",
+          "passed": true,
+          "skipped": false,
+          "answer": "50",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-005",
+          "passed": true,
+          "skipped": false,
+          "answer": "12.5",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-006",
+          "passed": true,
+          "skipped": false,
+          "answer": "100",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-007",
+          "passed": false,
+          "skipped": false,
+          "answer": "好的，收到！",
+          "latency_ms": 118.6,
+          "error": ""
+        },
+        {
+          "id": "math-008",
+          "passed": true,
+          "skipped": false,
+          "answer": "3",
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "math-009",
+          "passed": false,
+          "skipped": false,
+          "answer": "七 7 五 5 哈喽 早上好 谢谢 晚上好 对不起",
+          "latency_ms": 195.9,
+          "error": ""
+        },
+        {
+          "id": "math-010",
+          "passed": true,
+          "skipped": false,
+          "answer": "408",
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "math-011",
+          "passed": false,
+          "skipped": false,
+          "answer": "二 2 五 5 how 晚上好 对不起",
+          "latency_ms": 29.5,
+          "error": ""
+        },
+        {
+          "id": "math-012",
+          "passed": true,
+          "skipped": false,
+          "answer": "21",
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "math-013",
+          "passed": false,
+          "skipped": false,
+          "answer": "四 4 六 6 and 你好 谢谢 没关系 在忙吗 对不起 早上好",
+          "latency_ms": 7158.7,
+          "error": ""
+        },
+        {
+          "id": "math-014",
+          "passed": true,
+          "skipped": false,
+          "answer": "72",
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "math-015",
+          "passed": true,
+          "skipped": false,
+          "answer": "110",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-016",
+          "passed": false,
+          "skipped": false,
+          "answer": "零 吃鸭蛋 零族 day on which the temperature stays below 0°C days of the month ending in 5 or 0 (when payments are often due)",
+          "latency_ms": 26.2,
+          "error": ""
+        },
+        {
+          "id": "math-017",
+          "passed": true,
+          "skipped": false,
+          "answer": "72",
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "math-018",
+          "passed": true,
+          "skipped": false,
+          "answer": "64",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-019",
+          "passed": false,
+          "skipped": false,
+          "answer": "八 8 明白 什么 早上好 晚上好 在忙吗 对不起 谢谢",
+          "latency_ms": 29.2,
+          "error": ""
+        },
+        {
+          "id": "math-020",
+          "passed": true,
+          "skipped": false,
+          "answer": "24",
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "math-021",
+          "passed": true,
+          "skipped": false,
+          "answer": "55088",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-022",
+          "passed": false,
+          "skipped": false,
+          "answer": "做什么 问号 今天 好的 早上好 晚上好 哈喽 在忙吗",
+          "latency_ms": 20.0,
+          "error": ""
+        },
+        {
+          "id": "math-023",
+          "passed": true,
+          "skipped": false,
+          "answer": "114",
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "math-024",
+          "passed": true,
+          "skipped": false,
+          "answer": "7",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-025",
+          "passed": false,
+          "skipped": false,
+          "answer": "七 7 四 4 六 6 你好 嗨 晚上好 没关系 对不起 早上好",
+          "latency_ms": 18.7,
+          "error": ""
+        },
+        {
+          "id": "math-026",
+          "passed": true,
+          "skipped": false,
+          "answer": "20",
+          "latency_ms": 0.3,
+          "error": ""
+        },
+        {
+          "id": "math-027",
+          "passed": true,
+          "skipped": false,
+          "answer": "10",
+          "latency_ms": 0.2,
+          "error": ""
+        },
+        {
+          "id": "math-028",
+          "passed": true,
+          "skipped": false,
+          "answer": "9",
+          "latency_ms": 0.2,
+          "error": ""
+        }
+      ]
+    },
+    {
+      "backend": "native",
+      "suite": "knowledge",
+      "total": 15,
+      "passed": 3,
+      "skipped": 0,
+      "accuracy": 20.0,
+      "avg_latency_ms": 8.1,
+      "details": [
+        {
+          "id": "know-001",
+          "passed": false,
+          "skipped": false,
+          "answer": "做什么 问号 植物 好的 早上好 晚上好 欢迎 在忙吗",
+          "latency_ms": 21.6,
+          "error": ""
+        },
+        {
+          "id": "know-002",
+          "passed": true,
+          "skipped": false,
+          "answer": "Mars",
+          "latency_ms": 5.1,
+          "error": ""
+        },
+        {
+          "id": "know-003",
+          "passed": false,
+          "skipped": false,
+          "answer": "blue",
+          "latency_ms": 5.3,
+          "error": ""
+        },
+        {
+          "id": "know-004",
+          "passed": false,
+          "skipped": false,
+          "answer": "red",
+          "latency_ms": 0.6,
+          "error": ""
+        },
+        {
+          "id": "know-005",
+          "passed": true,
+          "skipped": false,
+          "answer": "H2O",
+          "latency_ms": 5.1,
+          "error": ""
+        },
+        {
+          "id": "know-006",
+          "passed": false,
+          "skipped": false,
+          "answer": "blue",
+          "latency_ms": 0.7,
+          "error": ""
+        },
+        {
+          "id": "know-007",
+          "passed": false,
+          "skipped": false,
+          "answer": "做什么 force 问号 可以 在忙吗 没关系 能量 兴奋 对不起",
+          "latency_ms": 11.8,
+          "error": ""
+        },
+        {
+          "id": "know-008",
+          "passed": false,
+          "skipped": false,
+          "answer": "做什么 问号 明白 兴奋 心情 晚上好 惊讶 好的 早上好",
+          "latency_ms": 14.1,
+          "error": ""
+        },
+        {
+          "id": "know-009",
+          "passed": false,
+          "skipped": false,
+          "answer": "blue",
+          "latency_ms": 0.8,
+          "error": ""
+        },
+        {
+          "id": "know-010",
+          "passed": false,
+          "skipped": false,
+          "answer": "细胞 哈喽 明白 心情 快乐 高兴 没关系 惊讶 在忙吗",
+          "latency_ms": 24.1,
+          "error": ""
+        },
+        {
+          "id": "know-011",
+          "passed": false,
+          "skipped": false,
+          "answer": "做什么 light 除 好的 嗨 你好 没关系 能量 在忙吗",
+          "latency_ms": 19.7,
+          "error": ""
+        },
+        {
+          "id": "know-012",
+          "passed": false,
+          "skipped": false,
+          "answer": "Hi there! How can I help you today?",
+          "latency_ms": 0.6,
+          "error": ""
+        },
+        {
+          "id": "know-013",
+          "passed": true,
+          "skipped": false,
+          "answer": "8",
+          "latency_ms": 0.7,
+          "error": ""
+        },
+        {
+          "id": "know-014",
+          "passed": false,
+          "skipped": false,
+          "answer": "blue",
+          "latency_ms": 0.7,
+          "error": ""
+        },
+        {
+          "id": "know-015",
+          "passed": false,
+          "skipped": false,
+          "answer": "数据 怎么 什么 对不起 谢谢 没关系 在忙吗 你好",
+          "latency_ms": 9.9,
+          "error": ""
+        }
+      ]
+    },
+    {
+      "backend": "native",
+      "suite": "code",
+      "total": 10,
+      "passed": 0,
+      "skipped": 0,
+      "accuracy": 0.0,
+      "avg_latency_ms": 0.0,
+      "details": [
+        {
+          "id": "code-001",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "code-002",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "code-003",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "code-004",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "code-005",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "code-006",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "code-007",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "code-008",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "code-009",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "code-010",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        }
+      ]
+    },
+    {
+      "backend": "native",
+      "suite": "routing",
+      "total": 10,
+      "passed": 5,
+      "skipped": 0,
+      "accuracy": 50.0,
+      "avg_latency_ms": 0.2,
+      "details": [
+        {
+          "id": "route-001",
+          "passed": true,
+          "skipped": false,
+          "answer": "math",
+          "latency_ms": 0.3,
+          "error": ""
+        },
+        {
+          "id": "route-002",
+          "passed": false,
+          "skipped": false,
+          "answer": "command",
+          "latency_ms": 0.3,
+          "error": ""
+        },
+        {
+          "id": "route-003",
+          "passed": true,
+          "skipped": false,
+          "answer": "knowledge",
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "route-004",
+          "passed": true,
+          "skipped": false,
+          "answer": "knowledge",
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "route-005",
+          "passed": false,
+          "skipped": false,
+          "answer": "file",
+          "latency_ms": 0.6,
+          "error": ""
+        },
+        {
+          "id": "route-006",
+          "passed": false,
+          "skipped": false,
+          "answer": "command",
+          "latency_ms": 0.3,
+          "error": ""
+        },
+        {
+          "id": "route-007",
+          "passed": true,
+          "skipped": false,
+          "answer": "file",
+          "latency_ms": 0.2,
+          "error": ""
+        },
+        {
+          "id": "route-008",
+          "passed": true,
+          "skipped": false,
+          "answer": "greeting",
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "route-009",
+          "passed": false,
+          "skipped": false,
+          "answer": "file",
+          "latency_ms": 0.2,
+          "error": ""
+        },
+        {
+          "id": "route-010",
+          "passed": false,
+          "skipped": false,
+          "answer": "knowledge",
+          "latency_ms": 0.2,
+          "error": ""
+        }
+      ]
+    },
+    {
+      "backend": "native-max",
+      "suite": "math",
+      "total": 28,
+      "passed": 20,
+      "skipped": 0,
+      "accuracy": 71.43,
+      "avg_latency_ms": 6.2,
+      "details": [
+        {
+          "id": "math-001",
+          "passed": true,
+          "skipped": false,
+          "answer": "13",
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "math-002",
+          "passed": true,
+          "skipped": false,
+          "answer": "4",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-003",
+          "passed": true,
+          "skipped": false,
+          "answer": "1024",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-004",
+          "passed": true,
+          "skipped": false,
+          "answer": "50",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-005",
+          "passed": true,
+          "skipped": false,
+          "answer": "12.5",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-006",
+          "passed": true,
+          "skipped": false,
+          "answer": "100",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-007",
+          "passed": false,
+          "skipped": false,
+          "answer": "好的，收到！",
+          "latency_ms": 1.2,
+          "error": ""
+        },
+        {
+          "id": "math-008",
+          "passed": true,
+          "skipped": false,
+          "answer": "3",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-009",
+          "passed": false,
+          "skipped": false,
+          "answer": "七 7 五 5 哈喽 早上好 谢谢 晚上好 对不起",
+          "latency_ms": 3.2,
+          "error": ""
+        },
+        {
+          "id": "math-010",
+          "passed": true,
+          "skipped": false,
+          "answer": "408",
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "math-011",
+          "passed": false,
+          "skipped": false,
+          "answer": "二 2 五 5 how 晚上好 对不起",
+          "latency_ms": 3.5,
+          "error": ""
+        },
+        {
+          "id": "math-012",
+          "passed": true,
+          "skipped": false,
+          "answer": "21",
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "math-013",
+          "passed": false,
+          "skipped": false,
+          "answer": "四 4 六 6 and 你好 谢谢 没关系 在忙吗 对不起 早上好",
+          "latency_ms": 149.2,
+          "error": ""
+        },
+        {
+          "id": "math-014",
+          "passed": true,
+          "skipped": false,
+          "answer": "72",
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "math-015",
+          "passed": true,
+          "skipped": false,
+          "answer": "110",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "math-016",
+          "passed": false,
+          "skipped": false,
+          "answer": "零 吃鸭蛋 零族 day on which the temperature stays below 0°C days of the month ending in 5 or 0 (when payments are often due)",
+          "latency_ms": 4.3,
+          "error": ""
+        },
+        {
+          "id": "math-017",
+          "passed": true,
+          "skipped": false,
+          "answer": "72",
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "math-018",
+          "passed": true,
+          "skipped": false,
+          "answer": "64",
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "math-019",
+          "passed": false,
+          "skipped": false,
+          "answer": "八 8 明白 什么 早上好 晚上好 在忙吗 对不起 谢谢",
+          "latency_ms": 3.2,
+          "error": ""
+        },
+        {
+          "id": "math-020",
+          "passed": true,
+          "skipped": false,
+          "answer": "24",
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "math-021",
+          "passed": true,
+          "skipped": false,
+          "answer": "55088",
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "math-022",
+          "passed": false,
+          "skipped": false,
+          "answer": "做什么 问号 明白 好的 早上好 晚上好 哈喽 在忙吗",
+          "latency_ms": 2.7,
+          "error": ""
+        },
+        {
+          "id": "math-023",
+          "passed": true,
+          "skipped": false,
+          "answer": "114",
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "math-024",
+          "passed": true,
+          "skipped": false,
+          "answer": "7",
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "math-025",
+          "passed": false,
+          "skipped": false,
+          "answer": "七 7 四 4 六 6 你好 嗨 晚上好 没关系 对不起 早上好",
+          "latency_ms": 2.8,
+          "error": ""
+        },
+        {
+          "id": "math-026",
+          "passed": true,
+          "skipped": false,
+          "answer": "20",
+          "latency_ms": 0.5,
+          "error": ""
+        },
+        {
+          "id": "math-027",
+          "passed": true,
+          "skipped": false,
+          "answer": "10",
+          "latency_ms": 0.4,
+          "error": ""
+        },
+        {
+          "id": "math-028",
+          "passed": true,
+          "skipped": false,
+          "answer": "9",
+          "latency_ms": 0.4,
+          "error": ""
+        }
+      ]
+    },
+    {
+      "backend": "native-max",
+      "suite": "knowledge",
+      "total": 15,
+      "passed": 3,
+      "skipped": 0,
+      "accuracy": 20.0,
+      "avg_latency_ms": 0.9,
+      "details": [
+        {
+          "id": "know-001",
+          "passed": false,
+          "skipped": false,
+          "answer": "做什么 问号 植物 好的 早上好 晚上好 欢迎 在忙吗",
+          "latency_ms": 2.5,
+          "error": ""
+        },
+        {
+          "id": "know-002",
+          "passed": true,
+          "skipped": false,
+          "answer": "Mars",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-003",
+          "passed": false,
+          "skipped": false,
+          "answer": "blue",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-004",
+          "passed": false,
+          "skipped": false,
+          "answer": "red",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-005",
+          "passed": true,
+          "skipped": false,
+          "answer": "H2O",
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "know-006",
+          "passed": false,
+          "skipped": false,
+          "answer": "blue",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-007",
+          "passed": false,
+          "skipped": false,
+          "answer": "做什么 force 问号 可以 在忙吗 没关系 能量 兴奋 对不起",
+          "latency_ms": 2.1,
+          "error": ""
+        },
+        {
+          "id": "know-008",
+          "passed": false,
+          "skipped": false,
+          "answer": "做什么 问号 明白 兴奋 心情 晚上好 惊讶 好的 早上好",
+          "latency_ms": 2.2,
+          "error": ""
+        },
+        {
+          "id": "know-009",
+          "passed": false,
+          "skipped": false,
+          "answer": "blue",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-010",
+          "passed": false,
+          "skipped": false,
+          "answer": "细胞 什么 为什么 心情 快乐 高兴 没关系 惊讶 在忙吗",
+          "latency_ms": 2.2,
+          "error": ""
+        },
+        {
+          "id": "know-011",
+          "passed": false,
+          "skipped": false,
+          "answer": "做什么 light 除 好的 嗨 你好 没关系 能量 在忙吗",
+          "latency_ms": 2.4,
+          "error": ""
+        },
+        {
+          "id": "know-012",
+          "passed": false,
+          "skipped": false,
+          "answer": "blue",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-013",
+          "passed": true,
+          "skipped": false,
+          "answer": "8",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-014",
+          "passed": false,
+          "skipped": false,
+          "answer": "blue",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "know-015",
+          "passed": false,
+          "skipped": false,
+          "answer": "数据 生物 什么 对不起 谢谢 没关系 在忙吗 你好",
+          "latency_ms": 2.1,
+          "error": ""
+        }
+      ]
+    },
+    {
+      "backend": "native-max",
+      "suite": "code",
+      "total": 10,
+      "passed": 0,
+      "skipped": 0,
+      "accuracy": 0.0,
+      "avg_latency_ms": 0.0,
+      "details": [
+        {
+          "id": "code-001",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "code-002",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "code-003",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "code-004",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "code-005",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "code-006",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "code-007",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "code-008",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "code-009",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        },
+        {
+          "id": "code-010",
+          "passed": false,
+          "skipped": false,
+          "answer": "",
+          "latency_ms": 0.0,
+          "error": ""
+        }
+      ]
+    },
+    {
+      "backend": "native-max",
+      "suite": "routing",
+      "total": 10,
+      "passed": 5,
+      "skipped": 0,
+      "accuracy": 50.0,
+      "avg_latency_ms": 0.2,
+      "details": [
+        {
+          "id": "route-001",
+          "passed": true,
+          "skipped": false,
+          "answer": "math",
+          "latency_ms": 0.3,
+          "error": ""
+        },
+        {
+          "id": "route-002",
+          "passed": false,
+          "skipped": false,
+          "answer": "command",
+          "latency_ms": 0.4,
+          "error": ""
+        },
+        {
+          "id": "route-003",
+          "passed": true,
+          "skipped": false,
+          "answer": "knowledge",
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "route-004",
+          "passed": true,
+          "skipped": false,
+          "answer": "knowledge",
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "route-005",
+          "passed": false,
+          "skipped": false,
+          "answer": "file",
+          "latency_ms": 0.5,
+          "error": ""
+        },
+        {
+          "id": "route-006",
+          "passed": false,
+          "skipped": false,
+          "answer": "command",
+          "latency_ms": 0.4,
+          "error": ""
+        },
+        {
+          "id": "route-007",
+          "passed": true,
+          "skipped": false,
+          "answer": "file",
+          "latency_ms": 0.3,
+          "error": ""
+        },
+        {
+          "id": "route-008",
+          "passed": true,
+          "skipped": false,
+          "answer": "greeting",
+          "latency_ms": 0.1,
+          "error": ""
+        },
+        {
+          "id": "route-009",
+          "passed": false,
+          "skipped": false,
+          "answer": "file",
+          "latency_ms": 0.3,
+          "error": ""
+        },
+        {
+          "id": "route-010",
+          "passed": false,
+          "skipped": false,
+          "answer": "knowledge",
+          "latency_ms": 0.2,
+          "error": ""
+        }
+      ]
+    }
+  ]
+}
