@@ -1021,7 +1021,7 @@ apps/
     ai/memory/       # HAM memory, vector store
     ai/agents/       # Dynamic agent registration
     ai/multimodal/primitives/  # Compositional image gen (GVV: 14 source files, ~62 tests)
-    ai/msba/         # Multi-Dimensional Semantic Block Architecture (20 modules, 163 tests)
+    ai/msba/         # Multi-Dimensional Semantic Block Architecture (22 modules, 192 tests)
     services/        # LLM routing, chat service, handlers
     api/routes/      # FastAPI routes (v1/*)
   desktop-app/       # Electron + Live2D desktop app (7 unique JS files + 33 shared)
@@ -1034,7 +1034,7 @@ packages/
 tests/
   ai/garden/         # GARDEN 測試 (125 tests)
   ai/multimodal/primitives/  # Primitives tests (38 tests, NEW)
-  ai/msba/           # MSBA tests (163 tests)
+  ai/msba/           # MSBA tests (192 tests)
   ai/                # ED3N/Lifecycle/Meta 測試 (37+ tests)
 ```
 
