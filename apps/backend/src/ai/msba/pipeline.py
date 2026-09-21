@@ -14,11 +14,13 @@ import logging
 import time
 from typing import Any, Dict, List, Optional
 
+from .ab_testing import ABTesting
 from .block_coordinator import BlockCoordinator
 from .block_selector import BlockSelector
 from .checkpointer import MSBACheckpointer
 from .cold_start import ColdStartManager
 from .intra_block_hit import IntraBlockHitEngine
+from .metrics_collector import MetricsCollector
 from .multi_dir_decoder import MultiDirectionalDecoder
 from .relevance_convergence import RelevanceConvergence
 from .semantic_block import SemanticBlock
@@ -52,6 +54,9 @@ class MSBAPipeline:
         query_classifier: Any = None,
         llm_service: Any = None,
         dictionary: Any = None,
+        enable_ab_testing: bool = False,
+        enable_metrics: bool = False,
+        auto_save_interval: float = 300.0,
     ):
         self.blocks = blocks or {}
         self.query_classifier = query_classifier
@@ -77,8 +82,19 @@ class MSBAPipeline:
         # Cold start manager
         self.cold_start = ColdStartManager(self.blocks)
 
-        # Checkpointer
-        self.checkpointer = MSBACheckpointer()
+        # Checkpointer with auto-save
+        self.checkpointer = MSBACheckpointer(
+            auto_save_interval=auto_save_interval,
+        )
+
+        # A/B testing
+        self.ab_testing = ABTesting() if enable_ab_testing else None
+
+        # Metrics collector
+        self.metrics = MetricsCollector() if enable_metrics else None
+
+        # Process counter for auto-save
+        self._process_count = 0
 
     async def process(self, input_text: str, state_ctx: Any = None) -> str:
         """
@@ -88,6 +104,12 @@ class MSBAPipeline:
         simply select fewer blocks.
         """
         start = time.monotonic()
+
+        # Auto-save check
+        self._process_count += 1
+        if self.checkpointer.check_auto_save():
+            self.save_checkpoint()
+            self.checkpointer.mark_saved()
 
         # Layer 0: Deterministic Seed
         seed = self._deterministic_seed(input_text, state_ctx)
@@ -129,6 +151,15 @@ class MSBAPipeline:
         # Layer 6: Learning
         self._post_process(result, fused, seed, state_ctx)
 
+        # Metrics
+        if self.metrics:
+            elapsed = (time.monotonic() - start) * 1000
+            self.metrics.record_request(
+                latency_ms=elapsed,
+                cache_hit=False,
+                success=True,
+            )
+
         return result
 
     def process_sync(self, input_text: str, state_ctx: Any = None) -> str:
@@ -136,7 +167,6 @@ class MSBAPipeline:
         try:
             loop = asyncio.get_event_loop()
             if loop.is_running():
-                # Already in async context, create task
                 import concurrent.futures
 
                 with concurrent.futures.ThreadPoolExecutor() as pool:
@@ -233,7 +263,7 @@ class MSBAPipeline:
         state_ctx: Any,
     ) -> None:
         """Layer 6: Post-process and learn."""
-        # Reconstruct block hits from fused primary for learning
+        # Reconstruct block hits from fused primary
         block_hits: Dict[str, BlockHitResult] = {}
         for (bid, sid, act), weight in fused.primary.items():
             if bid not in block_hits:
@@ -255,10 +285,33 @@ class MSBAPipeline:
         """Save MSBA state."""
         cross_attention = self.convergence.cross_attention
         history = {bid: hist.to_dict() for bid, hist in self.block_selector.block_history.items()}
-        self.checkpointer.save(self.blocks, cross_attention, history)
+        training_state = self.convergence.get_training_stats()
+        ab_state = self.ab_testing.get_stats() if self.ab_testing else None
+        metrics_snapshot = self.metrics.get_metrics() if self.metrics else None
 
-    def load_checkpoint(self) -> None:
+        self.checkpointer.save(
+            self.blocks,
+            cross_attention,
+            history,
+            training_state=training_state,
+            ab_state=ab_state,
+            metrics_snapshot=metrics_snapshot,
+        )
+
+    def load_checkpoint(self, version: Optional[int] = None) -> None:
         """Load MSBA state."""
-        ca = self.checkpointer.load(self.blocks)
+        result = self.checkpointer.load(self.blocks, version=version)
+        if not result:
+            return
+
+        ca = result.get("cross_attention")
         if ca is not None:
             self.convergence.cross_attention = ca
+
+        # Restore training state
+        train = result.get("training_state")
+        if train:
+            self.convergence._step_count = train.get("step_count", 0)
+            self.convergence._learning_rate = train.get(
+                "learning_rate", self.convergence.BASE_LEARNING_RATE
+            )

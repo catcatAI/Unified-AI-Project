@@ -6,7 +6,7 @@
 > **Supersedes**: None (new architecture)
 > **Resolution Status**: 5 misjudgments + 6 omissions + 5 oversights = 16/16 resolved, zero residual
 > **Last correction**: 誤判5 — 社交輸入同樣需要語義塊參與（時間、情感、關係上下文）
-> **Implementation**: 22 modules, 189 tests, 0 lint errors
+> **Implementation**: 22 modules, 192 tests, 0 lint errors
 
 ---
 
@@ -1223,6 +1223,7 @@ Total (with LLM):     ~400ms ⚠️  fallback only
 | 0.3.0-performance | 2026-09-21 | 新增 §B MemMapped Storage (1TB/1GB) + §C 效能基準 (延遲/快取/記憶體) |
 | 1.0.0 | 2026-09-21 | 實現完成: 20 個模組, 163 個測試, 0 lint 錯誤 |
 | 1.1.0 | 2026-09-21 | Phase 4: 線上訓練 (RelevanceConvergence replay buffer) + PerformanceProfiler + E2E smoke test |
+| 1.2.0 | 2026-09-21 | Phase 5: Checkpoint auto-save/versioning + A/B testing pipeline + Metrics integration |
 
 ### F. 實現完成清單
 

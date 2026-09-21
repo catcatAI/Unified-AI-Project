@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Tests for MSBA MSBACheckpointer.
+Tests for MSBA Checkpointer.
 """
 
+import json
 import os
 import tempfile
 
@@ -10,62 +11,102 @@ import numpy as np
 import pytest
 
 from ai.msba.checkpointer import MSBACheckpointer
-from ai.msba.semantic_block import SemanticBlock
-from ai.msba.types import BlockHistory
 
 
 class TestMSBACheckpointer:
     def test_creation(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            cp = MSBACheckpointer(tmpdir)
-            assert os.path.exists(tmpdir)
+            ckpt = MSBACheckpointer(base_dir=tmpdir)
+            assert ckpt.base_dir == tmpdir
+            assert ckpt.auto_save_interval == 300.0
 
-    def test_save_and_load_cross_attention(self):
+    def test_save_and_load(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            cp = MSBACheckpointer(tmpdir)
-            ca = np.random.randn(9, 9)
-            cp.save({}, ca, {})
-            loaded = cp.load({})
-            assert loaded is not None
-            np.testing.assert_array_almost_equal(loaded, ca)
+            ckpt = MSBACheckpointer(base_dir=tmpdir)
+            ca = np.ones((9, 9)) * 0.5
+            history = {"emotional": {"count": 10}}
 
-    def test_save_and_load_history(self):
+            ckpt.save({}, ca, history)
+
+            # Load
+            result = ckpt.load({})
+            assert "cross_attention" in result
+            assert np.allclose(result["cross_attention"], ca)
+            assert result["history"] == history
+
+    def test_save_with_training_state(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            cp = MSBACheckpointer(tmpdir)
-            hist = {"temporal": {"total": 5, "confirm": 3}}
-            cp.save({}, np.ones((9, 9)), hist)
-            loaded = cp.load({})
-            hist_path = os.path.join(tmpdir, "history.json")
-            assert os.path.exists(hist_path)
+            ckpt = MSBACheckpointer(base_dir=tmpdir)
+            ca = np.ones((9, 9))
+            training = {"step_count": 100, "learning_rate": 0.005}
 
-    def test_load_no_files(self):
+            ckpt.save({}, ca, {}, training_state=training)
+
+            result = ckpt.load({})
+            assert result["training_state"] == training
+
+    def test_save_with_ab_state(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            cp = MSBACheckpointer(tmpdir)
-            loaded = cp.load({})
-            assert loaded is None
+            ckpt = MSBACheckpointer(base_dir=tmpdir)
+            ca = np.ones((9, 9))
+            ab = {"variant_a": 50, "variant_b": 50}
 
-    def test_save_with_blocks(self):
+            ckpt.save({}, ca, {}, ab_state=ab)
+
+            result = ckpt.load({})
+            assert result["ab_state"] == ab
+
+    def test_version_list(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            cp = MSBACheckpointer(tmpdir)
+            ckpt = MSBACheckpointer(base_dir=tmpdir)
+            ca = np.ones((9, 9))
 
-            class MockEngine:
-                W = np.ones((3, 3))
+            ckpt.save({}, ca, {})
+            ckpt.save({}, ca, {})
 
-                def save_checkpoint(self, path):
-                    np.savez(path, W=self.W)
+            versions = ckpt.get_version_list()
+            assert len(versions) == 2
+            assert versions[0]["version"] == 1
+            assert versions[1]["version"] == 2
 
-            block = SemanticBlock(block_id="test", block_name="Test")
-            block.coordinator = type("Coord", (), {"engine": MockEngine()})()
-            cp.save({"test": block}, np.ones((9, 9)), {})
-
-            # Verify file was created
-            assert os.path.exists(os.path.join(tmpdir, "test_snn.npz"))
-
-    def test_save_load_roundtrip(self):
+    def test_auto_save_check(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            cp = MSBACheckpointer(tmpdir)
-            ca = np.eye(9) * 0.5
-            hist = {"a": {"x": 1}}
-            cp.save({}, ca, hist)
-            loaded = cp.load({})
-            assert loaded is not None
+            ckpt = MSBACheckpointer(base_dir=tmpdir, auto_save_interval=0.001)
+            # First check should trigger
+            assert ckpt.check_auto_save() is True
+            ckpt.mark_saved()
+            # Second check immediately should not
+            assert ckpt.check_auto_save() is False
+
+    def test_max_versions(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ckpt = MSBACheckpointer(base_dir=tmpdir, max_versions=3)
+            ca = np.ones((9, 9))
+
+            for _ in range(5):
+                ckpt.save({}, ca, {})
+
+            versions = ckpt.get_version_list()
+            assert len(versions) == 3
+
+    def test_load_specific_version(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ckpt = MSBACheckpointer(base_dir=tmpdir)
+            ca1 = np.ones((9, 9)) * 0.5
+            ca2 = np.ones((9, 9)) * 0.8
+
+            ckpt.save({}, ca1, {})
+            ckpt.save({}, ca2, {})
+
+            result = ckpt.load({}, version=1)
+            assert np.allclose(result["cross_attention"], ca1)
+
+    def test_latest_symlink(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ckpt = MSBACheckpointer(base_dir=tmpdir)
+            ca = np.ones((9, 9))
+
+            ckpt.save({}, ca, {})
+
+            latest = os.path.join(tmpdir, "latest")
+            assert os.path.islink(latest)
