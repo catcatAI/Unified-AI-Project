@@ -630,6 +630,40 @@ def block_structure(root, files, trees):
     lines.append("- providers：" + ", ".join(sorted(os.path.basename(p)[:-3] for p in prov_files)))
     lines.append("")
 
+    # --- JS/TS 淺覆蓋（stdlib-only：package.json 事實，無 TS 深解析）---
+    lines.append("### JS/TS 淺覆蓋（package.json 事實；TS import 深解析不在此限）")
+    lines.append("")
+    js_exts = (".ts", ".tsx", ".js", ".jsx", ".mjs", ".mts")
+    pkg_files = [
+        rel
+        for rel, _, _ in files
+        if rel.endswith("package.json")
+        and "node_modules" not in rel
+        and rel != "package.json"
+        and not any(v in rel for v in ("CubismSdkForWeb", "/libs/", "/vendor/"))
+    ]
+    for rel in sorted(pkg_files):
+        try:
+            with open(os.path.join(root, rel), encoding="utf-8") as f:
+                pkg = json.load(f)
+            deps = len((pkg.get("dependencies") or {}))
+            devdeps = len((pkg.get("devDependencies") or {}))
+            scripts = len((pkg.get("scripts") or {}))
+            main = pkg.get("main") or pkg.get("bin") or "—"
+            app_root = os.path.dirname(rel)
+            n_ts = sum(
+                1 for r, _, _ in files if r.startswith(app_root + "/") and r.endswith(js_exts)
+            )
+            lines.append(
+                f"- `{app_root}`：{n_ts} 個 TS/JS 檔，deps {deps}＋dev {devdeps}，"
+                f"scripts {scripts}，entry `{main}`"
+            )
+        except (OSError, ValueError):
+            continue
+    if not pkg_files:
+        lines.append("- （無 workspace package.json）")
+    lines.append("")
+
     # --- STATUS_MATRIX 交叉核對 ---
     lines.extend(verify_status_matrix(root, trees))
     return lines
