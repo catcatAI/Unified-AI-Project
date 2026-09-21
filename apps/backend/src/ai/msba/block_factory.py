@@ -5,9 +5,10 @@
 """
 BlockFactory — wraps existing subsystems as MSBA semantic blocks.
 
-Creates 8 blocks (no linguistic — Phase 1 uses rules):
+Creates 10 blocks (Phase 1+2):
   temporal, biological, emotional, cognitive,
-  social, mathematical, knowledge, causal
+  social, mathematical, knowledge, causal,
+  linguistic, vision, audio
 """
 
 import logging
@@ -183,3 +184,74 @@ def create_linguistic_block() -> SemanticBlock:
         coordinator=None,  # Rule-based, no SNN
         capacity=8,
     )
+
+
+def create_vision_block() -> SemanticBlock:
+    """
+    Phase 1: Vision block with feature extraction.
+    Phase 2: Integration with VisionPipeline.
+    """
+    return SemanticBlock(
+        block_id="vision",
+        block_name="Vision",
+        hit_sources=[
+            HitSource("object_detection", "object"),
+            HitSource("scene_classification", "scene"),
+            HitSource("color_analysis", "color"),
+            HitSource("spatial_relation", "spatial"),
+            HitSource("text_in_image", "text"),
+            HitSource("face_detection", "face"),
+            HitSource("motion_detection", "motion"),
+        ],
+        coordinator=None,  # Feature-based, no SNN
+        capacity=10,
+    )
+
+
+def create_audio_block() -> SemanticBlock:
+    """
+    Phase 1: Audio block with feature extraction.
+    Phase 2: Integration with AudioPipeline.
+    """
+    return SemanticBlock(
+        block_id="audio",
+        block_name="Audio",
+        hit_sources=[
+            HitSource("speech_recognition", "speech"),
+            HitSource("music_detection", "music"),
+            HitSource("noise_analysis", "noise"),
+            HitSource("emotion_in_speech", "emotion"),
+            HitSource("speaker_identification", "speaker"),
+            HitSource("temporal_pattern", "rhythm"),
+            HitSource("frequency_analysis", "frequency"),
+        ],
+        coordinator=None,  # Feature-based, no SNN
+        capacity=10,
+    )
+
+
+def create_all_blocks(
+    state_matrix: object = None,
+    core_network: object = None,
+    tensor_snn: object = None,
+) -> Dict[str, SemanticBlock]:
+    """
+    Create all MSBA blocks (10 total).
+
+    Includes:
+    - 8 core blocks (temporal, biological, emotional, cognitive,
+      social, mathematical, knowledge, causal)
+    - Linguistic block (rule-based)
+    - Vision and Audio blocks (feature-based)
+    """
+    blocks = create_default_blocks(
+        state_matrix=state_matrix,
+        core_network=core_network,
+        tensor_snn=tensor_snn,
+    )
+    blocks["linguistic"] = create_linguistic_block()
+    blocks["vision"] = create_vision_block()
+    blocks["audio"] = create_audio_block()
+
+    logger.info("Created %d MSBA blocks (all)", len(blocks))
+    return blocks

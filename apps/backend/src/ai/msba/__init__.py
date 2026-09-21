@@ -7,7 +7,7 @@ Multi-Dimensional Semantic Block Architecture (MSBA).
 
 Seven-layer pipeline:
   Layer 0: Deterministic Seed (all inputs)
-  Layer 1: Semantic Block Library (9 blocks)
+  Layer 1: Semantic Block Library (9+ blocks)
   Layer 2: Block Selector (4-signal fusion)
   Layer 3: Intra-Block Hit (parallel)
   Layer 4: Relevance Convergence (cross-attention)
@@ -36,6 +36,10 @@ from .block_history_persistence import BlockHistoryPersistence
 from .block_factory import create_default_blocks, create_linguistic_block
 from .cold_start import ColdStartManager
 from .checkpointer import MSBACheckpointer
+from .multimodal_blocks import VisionBlock, AudioBlock
+from .weight_migration import WeightMigration
+from .ab_testing import ABTesting
+from .metrics_collector import MetricsCollector
 
 __all__ = [
     # Types
@@ -57,6 +61,15 @@ __all__ = [
     "MemMappedBlock",
     "LinguisticBlock",
     "BlockHistoryPersistence",
+    # Multimodal blocks
+    "VisionBlock",
+    "AudioBlock",
+    # Weight migration
+    "WeightMigration",
+    # A/B testing
+    "ABTesting",
+    # Monitoring
+    "MetricsCollector",
     # Factory functions
     "create_default_blocks",
     "create_linguistic_block",
