@@ -25,7 +25,9 @@
 - **[`PRODUCTION_USABILITY_PLAN.md`](PRODUCTION_USABILITY_PLAN.md)** —
   **Usability audit & implementation plan** — current state vs target for
   CLI/Web/Desktop/API, gap matrix, phased roadmap
-- **[`STATUS_MATRIX.md`](STATUS_MATRIX.md)** — **功能成熟度唯一總表（R70）**
+- **[`STATUS_MATRIX.md`](STATUS_MATRIX.md)** —
+  **功能成熟度唯一總表（R70；R75 起為生成視圖：真相源
+  [`status_matrix.yaml`](status_matrix.yaml)，改狀態只改 YAML）**
 - **[`INVOCATION_MATRIX.md`](INVOCATION_MATRIX.md)** —
   **調用方式唯一總表（R71d）**：啟動入口/API/配置照表即用，模組重複度結論，驗證速查— 五級狀態（claimed/implemented/wired/verified/production）＋驗證指令，衝突時以此為準
 - **[`user_guide/unsupported.md`](user_guide/unsupported.md)** —

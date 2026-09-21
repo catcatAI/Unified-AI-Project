@@ -8,7 +8,7 @@
   LANGUAGE: zh-TW
   LAST_MODIFIED: 2026-09-20
   AUDIENCE: users, developers, support
-  SYNC: 與 STATUS_MATRIX.md（成熟度）、RELEASE_CRITERIA.md（門檻）配套
+  SYNC: 與 STATUS_MATRIX.md（成熟度，R75 起真相源 status_matrix.yaml）、RELEASE_CRITERIA.md（門檻）配套
   =============================================================================
 
   維護規則：
