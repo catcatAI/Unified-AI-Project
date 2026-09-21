@@ -22,8 +22,8 @@ jobs:
         run: pnpm install --frozen-lockfile=false
       - name: Lint (JS)
         run: pnpm lint:js
-      - name: Prettier check (JS/TS)
-        run: pnpm exec prettier --check "**/*.{js,jsx,ts,tsx,json,md}"
+      - name: Prettier check (full repo, .prettierignore-gated)
+        run: pnpm exec prettier --check .
       - name: Test (JS placeholder)
         run: echo "No JS unit tests configured yet"
 
@@ -67,7 +67,7 @@ jobs:
           black --check apps/backend/src tests/
           isort --check-only apps/backend/src tests/
           flake8 apps/backend/src tests/
-          mypy apps/backend/src
+          python scripts/mypy_budget_gate.py
         env:
           ANGELA_HARDWARE_PROFILE: high_performance_desktop
       - name: Security scan (bandit)
@@ -81,6 +81,16 @@ jobs:
       - name: Tests (Python)
         run: |
           pytest tests/ --timeout=60 --cov=apps/backend/src --cov-report=term-missing -q
+        env:
+          ANGELA_HARDWARE_PROFILE: high_performance_desktop
+      - name: Test isolation guard (random combination)
+        run: |
+          # 隨機抽 3 個測試目錄組合跑（R74）：全倉整跑會掩蓋組合間汙染
+          # （R72 實例：sys.path.insert 雙重載入只在特定組合炸）；每次 CI
+          # 隨機探索一種組合，汙染遲早被抓住
+          DIRS=$(ls -d tests/*/ | shuf -n 3 | tr '\n' ' ')
+          echo "Random combination: $DIRS"
+          pytest $DIRS -q --timeout=60
         env:
           ANGELA_HARDWARE_PROFILE: high_performance_desktop
       - name: Deterministic benchmarks (L0 守成 — 20/20 + association 1.0)

@@ -16,7 +16,7 @@ from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Deque
+from typing import Any, Deque, Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -25,85 +25,50 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from ai.multimodal.foveated_sampler import FoveatedSampler, SamplingConfig, SamplingStrategy
-from ai.multimodal.game_policy import GamePolicy, PolicyConfig, PolicyOutput
-from ai.multimodal.skill_selector import SkillSelector, SelectorConfig
-from ai.multimodal.game_task_executor import (
-    ActiveSubgoal,
-    ExecutorState,
-    GameTaskExecutor,
-    ExecutorConfig,
-    Subgoal,
-    SubgoalStatus,
-    SkillContext,
-    SkillResult,
-)
+from ai.multimodal.game_behaviors import BEHAVIORS, BehaviorFeedback, expand_behavior
+from ai.multimodal.game_memory_bridge import GameMemoryBridge
 from ai.multimodal.game_planner import (
     GamePlanner,
-    PlannerConfig,
-    PlanningContext,
     GoalManager,
     GoalType,
+    PlannerConfig,
+    PlanningContext,
 )
-from ai.multimodal.game_memory_bridge import GameMemoryBridge
+from ai.multimodal.game_policy import GamePolicy, PolicyConfig, PolicyOutput
 from ai.multimodal.game_strategy import GameStrategy, StrategyConfig, StrategyWeights
-from ai.multimodal.llm_game_interface import LLMGameInterface, LLMConfig, RuleBasedFallback
-from ai.multimodal.game_behaviors import BEHAVIORS, BehaviorFeedback, expand_behavior
-from integrations.luanti_polling_bridge import PollingBridge
-from integrations.luanti_connector import PlayerState
+from ai.multimodal.game_structs import (
+    GAME_SKILLS,
+    GameState,
+    PlanDAG,
+    Proprioception,
+    SkillContext,
+    SkillID,
+    SkillParams,
+    SkillResult,
+    SkillSpec,
+    SkillTrigger,
+    StrategyDirective,
+    Subgoal,
+    TaskProgress,
+    VisualObservation,
+    check_preconditions,
+    get_available_skills,
+)
+from ai.multimodal.game_task_executor import (
+    ActiveSubgoal,
+    ExecutorConfig,
+    ExecutorState,
+    GameTaskExecutor,
+    SkillContext,
+    SkillResult,
+    Subgoal,
+    SubgoalStatus,
+)
 from ai.multimodal.game_vision import GameVision
-from ai.multimodal.game_structs import (
-    SkillID,
-    SkillSpec,
-    SkillParams,
-    SkillContext,
-    SkillResult,
-    SkillTrigger,
-    Subgoal,
-    TaskProgress,
-    PlanDAG,
-    GameState,
-    VisualObservation,
-    Proprioception,
-    StrategyDirective,
-    GAME_SKILLS,
-    check_preconditions,
-    get_available_skills,
-)
-from ai.multimodal.game_policy import PolicyConfig, PolicyOutput
-from ai.multimodal.skill_selector import SelectorConfig
-from ai.multimodal.game_task_executor import ExecutorConfig
-from ai.multimodal.game_planner import PlannerConfig, GoalManager, GoalType, PlanningContext
-from ai.multimodal.game_memory_bridge import GameMemoryBridge
-from ai.multimodal.game_strategy import GameStrategy, StrategyConfig
-from ai.multimodal.llm_game_interface import LLMGameInterface, LLMConfig, RuleBasedFallback
+from ai.multimodal.llm_game_interface import LLMConfig, LLMGameInterface, RuleBasedFallback
+from ai.multimodal.skill_selector import SelectorConfig, SkillSelector
+from integrations.luanti_connector import GameSnapshot, LuantiConfig, LuantiConnector
 from integrations.luanti_polling_bridge import PollingBridge
-from ai.multimodal.game_policy import PolicyConfig, PolicyOutput
-from ai.multimodal.skill_selector import SelectorConfig
-from ai.multimodal.game_task_executor import ExecutorConfig
-from ai.multimodal.game_planner import PlannerConfig, GoalManager, GoalType, PlanningContext
-from ai.multimodal.game_memory_bridge import GameMemoryBridge
-from ai.multimodal.game_strategy import GameStrategy, StrategyConfig
-from ai.multimodal.llm_game_interface import LLMGameInterface, LLMConfig
-from integrations.luanti_polling_bridge import PollingBridge
-from integrations.luanti_connector import LuantiConnector, LuantiConfig, GameSnapshot, PlayerState
-from ai.multimodal.game_structs import (
-    SkillID,
-    SkillSpec,
-    SkillParams,
-    SkillContext,
-    SkillResult,
-    SkillTrigger,
-    Subgoal,
-    TaskProgress,
-    PlanDAG,
-    GameState,
-    VisualObservation,
-    Proprioception,
-    StrategyDirective,
-    GAME_SKILLS,
-    check_preconditions,
-    get_available_skills,
-)
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -146,6 +111,13 @@ class AngelaConfig:
     vision_enabled: bool = True
     vision_interval_sec: float = 1.0  # 截窗編碼節流（10Hz tick 每秒編一幀）
 
+    # L0 Policy 行為克隆訓練（R74：Xavier 隨機 → 真實訓練）
+    policy_training_enabled: bool = True
+    policy_train_interval_sec: float = 900.0  # 每 15 分鐘嘗試一輪
+    policy_min_samples: int = 50  # 樣本不足不訓練
+    policy_epochs: int = 15
+    policy_lr: float = 1e-3
+
     # Memory
     memory_path: str = "data/angela_memory"
 
@@ -167,21 +139,33 @@ class AngelaAutonomousAgent:
         self.tick_count = 0
         self.start_time = time.time()
 
-        # Components (initialized in start())
+        # 空間記憶持久化路徑（initialize 時設定；cleanup/週期存檔用）
+        self._spatial_path: Optional[str] = None
+
+        # L0 Policy 行為克隆狀態（R74）
+        self._bc_enabled: bool = self.config.policy_training_enabled
+        self._bc_buffer: Deque[Dict[str, Any]] = deque(maxlen=2000)
+        self._last_train_time: float = 0.0
+        self._policy_trained: bool = False
+        self._policy_weights_path: Optional[str] = None
+        self._last_policy_confidence: float = 0.0
+        self._bc_last_done_id: Optional[str] = None
+
+        # Components (initialized in start(); bridge 由測試可預先注入，故保持 Optional)
         self.bridge: Optional[PollingBridge] = None
         # self.connector removed - using polling bridge instead
-        self.sampler: Optional[FoveatedSampler] = None
+        self.sampler: FoveatedSampler = None  # type: ignore[assignment]
         self.visual_encoder: Optional[Any] = None
-        self.policy: Optional[GamePolicy] = None
-        self.selector: Optional[SkillSelector] = None
-        self.executor: Optional[GameTaskExecutor] = None
-        self.planner: Optional[GamePlanner] = None
-        self.memory: Optional[GameMemoryBridge] = None
-        self.strategy: Optional[GameStrategy] = None
-        self.llm: Optional[LLMGameInterface] = None
+        self.policy: GamePolicy = None  # type: ignore[assignment]
+        self.selector: SkillSelector = None  # type: ignore[assignment]
+        self.executor: GameTaskExecutor = None  # type: ignore[assignment]
+        self.planner: GamePlanner = None  # type: ignore[assignment]
+        self.memory: GameMemoryBridge = None  # type: ignore[assignment]
+        self.strategy: Optional[GameStrategy] = None  # 保留：無指派點，歷史欄位
+        self.llm: LLMGameInterface = None  # type: ignore[assignment]
         self.planner_wrapper: Optional[GamePlanner] = None
-        self.goal_manager: Optional[GoalManager] = None
-        self.strategy_engine: Optional[GameStrategy] = None
+        self.goal_manager: GoalManager = None  # type: ignore[assignment]
+        self.strategy_engine: GameStrategy = None  # type: ignore[assignment]
         self.emotion: Optional[Any] = None
         self.lifecycle: Optional[Any] = None
         self._last_completed = 0
@@ -232,7 +216,7 @@ class AngelaAutonomousAgent:
         self.autonomous_mode = True
         self.current_goal: Optional[GoalType] = None
         self.current_plan: Optional[Any] = None
-        self.last_strategy_update = 0
+        self.last_strategy_update = 0.0
         self.last_replan_tick = -1000
 
     async def initialize(self) -> bool:
@@ -266,7 +250,17 @@ class AngelaAutonomousAgent:
                 logger.info(f"Spatial memory restored: {n_loaded} locations")
         except Exception as e:
             logger.warning(f"Spatial memory load skipped: {e}")
-            self._spatial_path = None
+
+        # L0 Policy：載入已訓練權重（行為克隆產物）。Xavier 隨機只是出廠
+        # 狀態；有訓練檔就用訓練檔——訓練/推論接線閉環（R74）。
+        if self._bc_enabled:
+            try:
+                weights_path = str(Path(self.config.memory_path) / "policy_weights.json")
+                self._policy_weights_path = weights_path
+                if self.policy.load_weights(weights_path):
+                    self._policy_trained = True
+            except Exception as e:
+                logger.warning(f"Policy weights load skipped: {e}")
 
         # 截窗視覺（識別）：OS 級 pyautogui 截 Luanti 窗口。找不到窗口/
         # 無顯示環境時保持 None，主迴圈自動降級——不影響 poller 資料路徑。
@@ -469,11 +463,7 @@ class AngelaAutonomousAgent:
 
                 # 4d. Periodic eyes: look around every ~15s when idle, so
                 # aiming and water-flinch run without chat prompts.
-                if (
-                    not self._active_behavior
-                    and self.current_state
-                    and self.tick_count % 150 == 0
-                ):
+                if not self._active_behavior and self.current_state and self.tick_count % 150 == 0:
                     self._start_behavior("look_vision", {"range": 24}, "periodic-eyes")
 
                 # 4e. Curiosity: visit stale-known spots on foot so their
@@ -484,8 +474,7 @@ class AngelaAutonomousAgent:
                     not self._active_behavior
                     and self.current_state
                     and self.tick_count % 150 == 0
-                    and self.tick_count - self._last_explore_tick
-                    >= self._explore_cooldown_ticks
+                    and self.tick_count - self._last_explore_tick >= self._explore_cooldown_ticks
                 ):
                     self._maybe_start_curiosity_exploration()
 
@@ -510,7 +499,7 @@ class AngelaAutonomousAgent:
 
                 # 6c. Periodic spatial snapshot: crash-safe (cleanup-only
                 # save loses everything on hard exit). Cheap JSON write.
-                if getattr(self, "_spatial_path", None) and self.tick_count % 600 == 0:
+                if self._spatial_path and self.tick_count % 600 == 0:
                     try:
                         self.memory.save_spatial(self._spatial_path)
                     except Exception as e:
@@ -526,6 +515,15 @@ class AngelaAutonomousAgent:
                             self.lifecycle.save_state(self.lifecycle._persist_path)
                     except Exception as e:
                         logger.debug(f"Lifecycle state save failed: {e}")
+
+                # 6e. L0 policy 行為克隆：週期訓練（hold-out 門；R74）
+                if (
+                    self._bc_enabled
+                    and self.config.policy_train_interval_sec > 0
+                    and time.time() - self._last_train_time >= self.config.policy_train_interval_sec
+                ):
+                    self._last_train_time = time.time()
+                    await self._train_policy_periodic()
 
             except Exception as e:
                 logger.error(f"Tick error: {e}", exc_info=True)
@@ -558,25 +556,27 @@ class AngelaAutonomousAgent:
         """L0: Perception - get game state from polling bridge"""
         try:
             # Get state from polling bridge
+            if self.bridge is None:
+                return
             state = self.bridge.player_state
             if state:
                 self.current_state = GameState(
                     tick=self.tick_count,
                     timestamp=time.time(),
-                    proprioception=PlayerState(
+                    proprioception=Proprioception(
+                        health=float(state.get("hp", 20)),
+                        max_health=float(state.get("max_hp", 20)),
+                        hunger=float(state.get("hunger", 20)),
+                        max_hunger=float(state.get("max_hunger", 20)),
+                        breath=float(state.get("breath", 10)),
                         position=self._normalize_position(state.get("position", (0, 0, 0))),
-                        yaw=state.get("yaw", 0.0),
-                        pitch=state.get("pitch", 0.0),
-                        hp=state.get("hp", 20),
-                        max_hp=state.get("max_hp", 20),
-                        hunger=state.get("hunger", 20),
-                        breath=state.get("breath", 10),
+                        yaw=float(state.get("yaw", 0.0)),
+                        pitch=float(state.get("pitch", 0.0)),
                         inventory=state.get("inventory") or {},
                         wielded_item=state.get("wielded", ""),
                         is_on_ground=state.get("on_ground", True),
                         is_in_water=bool(state.get("in_water", False)),
                         is_in_lava=bool(state.get("in_lava", False)),
-                        velocity=(0.0, 0.0, 0.0),
                     ),
                     visual=None,  # Filled below when a frame is present
                 )
@@ -587,9 +587,10 @@ class AngelaAutonomousAgent:
                 frame = state.get("frame")
                 if frame is not None and self.visual_encoder is not None:
                     try:
+                        import io as _io
+
                         import numpy as _np
                         from PIL import Image as _Image
-                        import io as _io
 
                         if isinstance(frame, (bytes, bytearray)):
                             img = _Image.open(_io.BytesIO(bytes(frame))).convert("RGB")
@@ -609,6 +610,8 @@ class AngelaAutonomousAgent:
 
             # Drain overheard player chat (in-process bridge, no HTTP)
             try:
+                if self.bridge is None:
+                    return
                 fresh = self.bridge.take_chat_events()
                 if fresh:
                     self._pending_chats.extend(fresh)
@@ -628,7 +631,11 @@ class AngelaAutonomousAgent:
                     if self.memory:
                         try:
                             self.memory.observe_world(
-                                self._normalize_position(state.get("position", (0, 0, 0))) if state else (0, 0, 0),
+                                (
+                                    self._normalize_position(state.get("position", (0, 0, 0)))
+                                    if state
+                                    else (0, 0, 0)
+                                ),
                                 vision.get("rays") or [],
                                 source="vision",
                             )
@@ -639,7 +646,11 @@ class AngelaAutonomousAgent:
                     if self.memory:
                         try:
                             self.memory.observe_world(
-                                self._normalize_position(state.get("position", (0, 0, 0))) if state else (0, 0, 0),
+                                (
+                                    self._normalize_position(state.get("position", (0, 0, 0)))
+                                    if state
+                                    else (0, 0, 0)
+                                ),
                                 scan.get("nodes") or [],
                                 source="scan",
                             )
@@ -671,9 +682,7 @@ class AngelaAutonomousAgent:
         """
         if self._screen_vision is None or self.current_state is None:
             return
-        frame_every = max(
-            int(self.config.vision_interval_sec / self.config.tick_interval), 1
-        )
+        frame_every = max(int(self.config.vision_interval_sec / self.config.tick_interval), 1)
         if self.tick_count - self._last_frame_tick < frame_every:
             return
         self._last_frame_tick = self.tick_count
@@ -738,7 +747,7 @@ class AngelaAutonomousAgent:
         """L4: Update strategy weights based on performance"""
         try:
             self.strategy_engine.update(self.current_state)
-            self.last_strategy_update = time.time()
+            self.last_strategy_update = float(time.time())
 
             # Get directive for planner
             directive = self.strategy_engine.get_directive()
@@ -760,14 +769,10 @@ class AngelaAutonomousAgent:
             mode = "neutral"
             if self.emotion is not None:
                 try:
-                    mode = self.emotion.get_behavioral_adjustment().get(
-                        "routing_mode", mode
-                    )
+                    mode = self.emotion.get_behavioral_adjustment().get("routing_mode", mode)
                 except Exception:
                     pass
-            if self.lifecycle is not None and hasattr(
-                self.lifecycle, "get_behavioral_adjustment"
-            ):
+            if self.lifecycle is not None and hasattr(self.lifecycle, "get_behavioral_adjustment"):
                 try:
                     lm = self.lifecycle.get_behavioral_adjustment().get("routing_mode")
                     if lm and lm != "neutral":
@@ -776,9 +781,10 @@ class AngelaAutonomousAgent:
                     pass
             temps = {"exploratory": 1.25, "conservative": 0.7}
             new_temp = temps.get(mode, 1.0)
-            if self.selector is not None and abs(
-                self.selector.config.temperature - new_temp
-            ) > 1e-9:
+            if (
+                self.selector is not None
+                and abs(self.selector.config.temperature - new_temp) > 1e-9
+            ):
                 self.selector.config.temperature = new_temp
                 logger.info(f"Affect mode -> {mode} (selector temperature {new_temp})")
             self._affect_mode = mode
@@ -872,8 +878,7 @@ class AngelaAutonomousAgent:
                 goals_failed=[getattr(s, "subgoal_id", "?") for s in failed[-10:]],
                 death_count=int(getattr(self, "_death_count", 0)),
                 resource_collection_rate={
-                    "gathered_per_min": float(getattr(self, "_total_pickups", 0))
-                    / uptime_min
+                    "gathered_per_min": float(getattr(self, "_total_pickups", 0)) / uptime_min
                 },
                 anomaly_count=int(getattr(self, "_anomaly_count", 0)),
                 current_strategy=dict(self.strategy_engine.get_directive()),
@@ -917,9 +922,7 @@ class AngelaAutonomousAgent:
         # A terminal failure carries a blocker: let the LLM diagnose first.
         # A fallback subgoal can resolve it without a full replan.
         try:
-            blocker = getattr(
-                getattr(self.executor, "_task_progress", None), "blocker", ""
-            )
+            blocker = getattr(getattr(self.executor, "_task_progress", None), "blocker", "")
             if blocker and self.tick_count - self._last_diag_tick > 300:
                 self._last_diag_tick = self.tick_count
                 await self._llm_diagnose()
@@ -943,7 +946,9 @@ class AngelaAutonomousAgent:
         # Get strategy directive
         strategy = self.strategy_engine.get_directive() if self.strategy_engine else {}
 
-        # Build planning context
+        # Build planning context (state 必須已由 _perceive 建立)
+        if self.current_state is None:
+            return
         ctx = PlanningContext(
             current_goal=self.current_goal,
             goal_params={},
@@ -1046,6 +1051,21 @@ class AngelaAutonomousAgent:
         skill_result = self._derive_skill_result()
         skill_ctx = self.executor.tick(skill_result, self.current_state, full_latent)
 
+        # 行為克隆資料收集（R74）：取最新完成子目標作為教師樣本（只收
+        # 成功者——訓練目標是複製會成功的行為）。以 subgoal_id 判新，
+        # 對 executor 內部清空 _completed 的情況安全。
+        if self._bc_enabled and self.executor is not None and self.executor._completed:
+            last_done = self.executor._completed[-1]
+            if last_done.subgoal.subgoal_id != self._bc_last_done_id:
+                self._bc_last_done_id = last_done.subgoal.subgoal_id
+                bias = (last_done.subgoal.params or {}).get("continuous_bias")
+                cb = (
+                    np.asarray(bias, dtype=np.float32)
+                    if bias is not None
+                    else np.zeros(3, dtype=np.float32)
+                )
+                self._capture_bc_sample(last_done.subgoal.skill_id, cb, success=True)
+
         if skill_ctx:
             # Queue skill for execution
             self._queue_skill(skill_ctx)
@@ -1062,6 +1082,20 @@ class AngelaAutonomousAgent:
 
         skill_params = self.selector.select(latent, self.current_state)
         if skill_params:
+            # L0 推論（若 policy 已訓練）：policy 在此狀態下的離散動作若與
+            # L1 選擇一致，記錄信心度供可觀測性（目前不覆蓋 L1 決策）。
+            if self._policy_trained and self.policy is not None:
+                try:
+                    proprio32 = np.zeros(32, dtype=np.float32)
+                    if self.current_state.proprioception is not None:
+                        prop0 = self.current_state.proprioception
+                        proprio32[0] = prop0.hp / max(prop0.max_hp, 1.0)
+                        proprio32[1] = prop0.hunger / 20.0
+                        proprio32[3:6] = self._normalize_position(prop0.position)
+                    pol_out = self.policy.forward(latent, proprio32)
+                    self._last_policy_confidence = float(pol_out.confidence)
+                except Exception:
+                    pass
             # No per-skill abstention hacks here: _queue_skill translates
             # every skill through the behavior library, which abstains
             # untranslatable intents (undirected place/build/eat,
@@ -1148,9 +1182,7 @@ class AngelaAutonomousAgent:
                 yaw_param = 0.0
             if yaw_param != 0.0 and self.tick_count % 3 == 0:
                 skill_id, params = "look", {"yaw": yaw_param}
-        bid, bparams = skill_to_behavior(
-            skill_id, params, craftable=self._craftable_check
-        )
+        bid, bparams = skill_to_behavior(skill_id, params, craftable=self._craftable_check)
         if not bid:
             logger.debug(f"No behavior verb for skill {skill_id}, abstaining")
             return
@@ -1158,8 +1190,9 @@ class AngelaAutonomousAgent:
         if not actions:
             return
         try:
-            self.bridge.queue_action(actions[0])
-            self._note_feed(actions[0].get("type", ""))
+            if self.bridge is not None:
+                self.bridge.queue_action(actions[0])
+                self._note_feed(actions[0].get("type", ""))
         except Exception as e:
             logger.error(f"Queue skill failed: {e}")
 
@@ -1231,6 +1264,87 @@ class AngelaAutonomousAgent:
         # This is handled by the polling bridge automatically
         pass
 
+    # ------------------------------------------------------------------
+    # L0 Policy 行為克隆（R74：資料收集 → hold-out 門訓練 → 權重持久化）
+    # ------------------------------------------------------------------
+
+    def _capture_bc_sample(
+        self, skill_id: "SkillID", continuous_bias: np.ndarray, success: bool
+    ) -> None:
+        """把一次技能選擇記為行為克隆樣本（成功者為教師訊號）。
+
+        樣本 = (當下感知, 當下執行的動作)。只有 success=True 的樣本才
+        進 buffer——訓練目標是「複製會成功的行為」，失敗動作不示範。
+        """
+        try:
+            state = self.current_state
+            if state is None:
+                return
+            visual_latent = (
+                np.zeros(self.config.policy_latent_dim, dtype=np.float32)
+                if state.visual is None
+                else np.asarray(state.visual.features, dtype=np.float32)[
+                    : self.config.policy_latent_dim
+                ]
+            )
+            proprio = np.zeros(32, dtype=np.float32)
+            prop = state.proprioception
+            if prop is not None:
+                proprio[0] = prop.hp / max(prop.max_hp, 1.0)
+                proprio[1] = prop.hunger / 20.0
+                proprio[2] = prop.breath / 10.0
+                proprio[3:6] = self._normalize_position(prop.position)
+                proprio[6] = prop.yaw / np.pi
+                proprio[7] = prop.pitch / (np.pi / 2)
+                proprio[8] = 1.0 if prop.is_on_ground else 0.0
+            skill_idx = list(SkillID).index(skill_id)
+            continuous = np.zeros(self.config.policy_continuous_dim, dtype=np.float32)
+            continuous[0] = continuous_bias[0] if len(continuous_bias) > 0 else 0.0
+            continuous[1] = continuous_bias[1] if len(continuous_bias) > 1 else 0.0
+            continuous[2] = continuous_bias[2] if len(continuous_bias) > 2 else 0.0
+            self._bc_buffer.append(
+                {
+                    "visual_latent": visual_latent,
+                    "proprioception": proprio,
+                    "continuous": continuous,
+                    "discrete": skill_idx,
+                }
+            )
+        except Exception as e:
+            logger.debug(f"BC capture failed: {e}")
+
+    async def _train_policy_periodic(self) -> None:
+        """週期行為克隆訓練：hold-out 學習門過了才保存權重（R74）。
+
+        沒有學習門過門＝一切如舊（Xavier/上次訓練的權重），如實記錄，
+        不把擬合雜訊當成果（RELEASE_CRITERIA 第 4 維）。
+        """
+        if not self._bc_enabled or self.policy is None:
+            return
+        if len(self._bc_buffer) < self.config.policy_min_samples:
+            return
+        try:
+            dataset = list(self._bc_buffer)
+            result = self.policy.train_behavior_cloning(
+                dataset,
+                epochs=self.config.policy_epochs,
+                lr=self.config.policy_lr,
+            )
+            if result.get("learned"):
+                self._policy_trained = True
+                self._last_train_time = time.time()
+                if self._policy_weights_path:
+                    self.policy.save_weights(self._policy_weights_path)
+                imp = result.get("improvement", {})
+                logger.info(
+                    f"Policy BC trained: mae+{imp.get('mae')} acc+{imp.get('acc')} "
+                    f"(n={result.get('train_samples')}/{result.get('val_samples')})"
+                )
+            else:
+                logger.info(f"Policy BC skipped: {result.get('reason')}")
+        except Exception as e:
+            logger.warning(f"Policy BC training failed: {e}")
+
     async def _store_observation_memory(self):
         """把「剛剛看到了什麼」寫成 HAM episodic（識別→記憶閉環）。
 
@@ -1268,7 +1382,10 @@ class AngelaAutonomousAgent:
                     timestamp=time.time(),
                     position=pos,
                     action="observe",
-                    context={"seen_nodes": seen[:10], "sources": [s for s, d in (("scan", scan), ("vision", vision)) if d]},
+                    context={
+                        "seen_nodes": seen[:10],
+                        "sources": [s for s, d in (("scan", scan), ("vision", vision)) if d],
+                    },
                     outcome={"seen_count": len(seen)},
                     reward=0.0,
                     tags=["observation"],
@@ -1296,7 +1413,12 @@ class AngelaAutonomousAgent:
                         near = f"，附近記得有 {spots.notes or spots.node_type} @({spots.position[0]:.0f},{spots.position[1]:.0f},{spots.position[2]:.0f})"
             except Exception:
                 near = ""
-            return f"位置 {pos}，背包 {inv or '空'}，血量 {hp}，當前目標 {goal}，子目標 {sg}{near}"
+            bc = ""
+            if self._policy_trained:
+                bc = f"；L0 已訓練（{len(self._bc_buffer)} 樣本，信心 {self._last_policy_confidence:.2f}）"
+            return (
+                f"位置 {pos}，背包 {inv or '空'}，血量 {hp}，當前目標 {goal}，子目標 {sg}{near}{bc}"
+            )
         except Exception:
             return "狀態未知"
 
@@ -1310,18 +1432,29 @@ class AngelaAutonomousAgent:
 
         summary = self._state_summary()
         history = list(self._chat_history)
-        say, bid, bparams = "", "", {}
+        say, bid = "", ""
+        bparams: Dict[str, Any] = {}
         try:
             dec = await self.llm.adecide_chat(player, message, summary, history)
-            say, bid, bparams = (dec.say or "").strip(), dec.behavior_id or "", dec.params or {}
+            say = (dec.say or "").strip()
+            bid = dec.behavior_id or ""
+            bparams = dec.params or {}
         except Exception as e:
             logger.warning(f"LLM chat decision failed, keyword fallback: {e}")
             say, bid, bparams = self._fallback_chat(player, message)
 
         say = say[:300]
         # Echo guard: small models sometimes parrot the input as the reply.
-        if say and message and (say.strip() == message.strip() or message.strip() in say and len(say) < len(message) + 8):
-            logger.warning(f"LLM echoed chat, using fallback line instead")
+        if (
+            say
+            and message
+            and (
+                say.strip() == message.strip()
+                or message.strip() in say
+                and len(say) < len(message) + 8
+            )
+        ):
+            logger.warning("LLM echoed chat, using fallback line instead")
             say, bid, bparams = self._fallback_chat(player, message)
             say = say[:300]
         logger.info(f"Angela replies to {player}: {say}")
@@ -1329,7 +1462,8 @@ class AngelaAutonomousAgent:
             self._chat_history.append(f"{player}: {message}")
             self._chat_history.append(f"Angela: {say}")
             try:
-                self.bridge.queue_action({"type": "chat", "message": say})
+                if self.bridge is not None:
+                    self.bridge.queue_action({"type": "chat", "message": say})
             except Exception as e:
                 logger.error(f"Queue chat failed: {e}")
         if bid and bid in BEHAVIORS:
@@ -1450,9 +1584,7 @@ class AngelaAutonomousAgent:
                         await self._settle_behavior(True, "")
                         return
                     if status in ("failed", "aborted"):
-                        await self._settle_behavior(
-                            False, f"goto_{cur.get('reason', 'unknown')}"
-                        )
+                        await self._settle_behavior(False, f"goto_{cur.get('reason', 'unknown')}")
                         return
                 return
             pickups = self._behavior_pickups(ab)
@@ -1501,8 +1633,9 @@ class AngelaAutonomousAgent:
             self._last_behavior_feed_tick = self.tick_count
             self._behavior_hold_tick = self.tick_count
             try:
-                self.bridge.queue_action(nxt)
-                self._note_feed(nxt.get("type", ""))
+                if self.bridge is not None:
+                    self.bridge.queue_action(nxt)
+                    self._note_feed(nxt.get("type", ""))
             except Exception as e:
                 logger.error(f"Queue behavior action failed: {e}")
 
@@ -1544,12 +1677,12 @@ class AngelaAutonomousAgent:
             f"reason={reason} pickups={pickups}"
         )
         # 到場標記：goto 成功＝親訪，刷新附近地點 last_visited/visit_count
-        #（好奇心語意基準：看過≠去過）。
+        # （好奇心語意基準：看過≠去過）。
         if completed and ab.get("id") == "goto" and self.memory and self.current_state:
             try:
-                self.memory.mark_visited(
-                    self._normalize_position(self.current_state.proprioception.position)
-                )
+                prop = self.current_state.proprioception
+                if prop is not None:
+                    self.memory.mark_visited(self._normalize_position(prop.position))
             except Exception as e:
                 logger.debug(f"mark_visited failed: {e}")
         # Follow-up chain (e.g. scout -> goto -> dig_at the tree): the
@@ -1559,9 +1692,7 @@ class AngelaAutonomousAgent:
             self._behavior_followup = None
             if follow and follow.get("behavior_id") in BEHAVIORS:
                 logger.info(f"Behavior follow-up: {follow['behavior_id']}")
-                self._start_behavior(
-                    follow["behavior_id"], follow.get("params", {}), "follow-up"
-                )
+                self._start_behavior(follow["behavior_id"], follow.get("params", {}), "follow-up")
         try:
             if self.memory:
                 from ai.multimodal.game_memory_bridge import GameExperience, MemoryType
@@ -1607,14 +1738,10 @@ class AngelaAutonomousAgent:
             order = await self.llm.acompose_behavior(
                 task, self._state_summary(), [], only_behaviors=AIM_BEHAVIORS, max_tokens=128
             )
-            if order.behavior_id in ("goto", "look_at", "dig_at") and order.params.get(
-                "pos"
-            ):
+            if order.behavior_id in ("goto", "look_at", "dig_at") and order.params.get("pos"):
                 picked_pos = order.params["pos"]
                 picked_walked = order.behavior_id == "goto"
-                self._start_behavior(
-                    order.behavior_id, order.params, f"scout-pick:{ab['id']}"
-                )
+                self._start_behavior(order.behavior_id, order.params, f"scout-pick:{ab['id']}")
             else:
                 logger.warning(f"Scout pick rejected (no pos): {order.behavior_id}")
         except Exception as e:
@@ -1675,7 +1802,7 @@ class AngelaAutonomousAgent:
             return
 
         # Store recent experience
-        exp = {
+        exp: Dict[str, Any] = {
             "tick": self.tick_count,
             "position": (
                 self.current_state.proprioception.position
@@ -1744,10 +1871,11 @@ class AngelaAutonomousAgent:
         """Log agent status"""
         uptime = time.time() - self.start_time
         directive = self.strategy_engine.get_directive() if self.strategy_engine else {}
+        current_sub = self.executor.get_current_subgoal() if self.executor else None
         logger.info(
             f"Tick {self.tick_count} | Uptime: {uptime:.1f}s | "
             f"Goal: {self.current_goal.value if self.current_goal else 'None'} | "
-            f"Subgoal: {self.executor.get_current_subgoal().subgoal_id if self.executor and self.executor.get_current_subgoal() else 'None'} | "
+            f"Subgoal: {current_sub.subgoal_id if current_sub else 'None'} | "
             f"Exploration: {directive.get('exploration_weight', 0):.2f} | "
             f"Risk: {directive.get('risk_tolerance', 0):.2f}"
         )
@@ -1783,7 +1911,7 @@ class AngelaAutonomousAgent:
 
             # 空間記憶持久化：重啟後記得世界長什麼樣
             try:
-                if getattr(self, "_spatial_path", None):
+                if self._spatial_path:
                     if self.memory.save_spatial(self._spatial_path):
                         logger.info(f"Spatial memory saved to {self._spatial_path}")
             except Exception as e:

@@ -7,21 +7,22 @@ Skill Selector - L1 技能基元選擇與參數化
 import logging
 import time
 from dataclasses import dataclass
-from typing import Optional, Dict, Any, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
+
 import numpy as np
 
 from .game_structs import (
-    SkillID,
-    SkillSpec,
-    SkillParams,
-    SkillContext,
-    SkillTrigger,
-    SkillResult,
     GAME_SKILLS,
-    check_preconditions,
-    get_available_skills,
     GameState,
     Proprioception,
+    SkillContext,
+    SkillID,
+    SkillParams,
+    SkillResult,
+    SkillSpec,
+    SkillTrigger,
+    check_preconditions,
+    get_available_skills,
 )
 
 logger = logging.getLogger(__name__)
@@ -138,7 +139,10 @@ class SkillSelector:
 
         # 取 top-k 做加權隨機 (探索) 或直接取最佳 (利用)
         if np.random.random() < 0.1:  # 10% 探索
-            chosen = np.random.choice(scores[:3], p=self._softmax([s.score for s in scores[:3]]))
+            top = scores[:3]
+            probs = self._softmax([s.score for s in top])
+            idx = int(np.random.choice(len(top), p=probs))
+            chosen = top[idx]
         else:
             chosen = scores[0]
 
@@ -237,8 +241,12 @@ class SkillSelector:
 
     def _estimate_params(self, skill_id: SkillID, state: GameState) -> Dict[str, Any]:
         """估算技能參數"""
-        params = {}
+        params: Dict[str, Any] = {}
         prop = state.proprioception
+        if prop is None:
+            # 無本體感覺（尚未收到 poller 狀態）時無法參數化任何需要
+            # 背包/手持資訊的技能——回空參數，由下游用預設值執行。
+            return params
 
         if skill_id == SkillID.MOVE:
             params = {"forward": 1.0, "strafe": 0.0, "yaw": 0.0}
@@ -402,10 +410,10 @@ class SkillSelector:
         )
 
     def _softmax(self, scores: List[float]) -> np.ndarray:
-        arr = np.array(scores) / self.config.temperature
+        arr = np.asarray(scores, dtype=np.float64) / self.config.temperature
         arr = arr - arr.max()
         e = np.exp(arr)
-        return e / e.sum()
+        return np.asarray(e / e.sum(), dtype=np.float64)
 
     def get_skill_triggers(self, latent: np.ndarray, state: GameState) -> List[SkillTrigger]:
         """輸出所有技能觸發建議 (供 L2 參考)"""

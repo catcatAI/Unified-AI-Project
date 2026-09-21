@@ -57,7 +57,10 @@ output = "text"
 
 [tool.mypy]
 # mypy - Python 类型检查工具
-python_version = "3.10"
+# R74：python_version 提至 3.12——numpy 2.5 bundled stubs 使用 3.12 `Type statement`
+# 語法，target < 3.12 時 stub 本身 syntax error 擋住全量。CI 矩陣為 3.11/3.14
+# （3.10 不在 CI），且 R72 的 680 基線即 3.12 語意下實測，可比性不變。
+python_version = "3.12"
 # src 佈局解析（R14）：後端源碼在 apps/backend/src 下，默認雙根解析會把
 # 第一方 import 誤判為「installed but missing py.typed」（曾 1028 個假錯誤）；
 # 明確包基後跟進源碼真查（誤差 2627→1779 的差值即假簇）。
