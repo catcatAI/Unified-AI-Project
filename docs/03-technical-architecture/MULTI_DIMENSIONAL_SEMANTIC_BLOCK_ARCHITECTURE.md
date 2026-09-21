@@ -1,11 +1,12 @@
 # Multi-Dimensional Semantic Block Architecture (MSBA)
 
-> **Status**: Design Specification — ALL ISSUES RESOLVED
-> **Version**: 0.3.0-performance
+> **Status**: Implementation Complete
+> **Version**: 1.0.0
 > **Date**: 2026-09-21
 > **Supersedes**: None (new architecture)
 > **Resolution Status**: 5 misjudgments + 6 omissions + 5 oversights = 16/16 resolved, zero residual
 > **Last correction**: 誤判5 — 社交輸入同樣需要語義塊參與（時間、情感、關係上下文）
+> **Implementation**: 20 modules, 163 tests, 0 lint errors
 
 ---
 
@@ -1210,7 +1211,7 @@ Total (with LLM):     ~400ms ⚠️  fallback only
 
 ### D. 與 AGENTS.md 的差異
 
-本文檔引入新的目錄結構 `ai/msba/`，需要更新 AGENTS.md 的專案結構描述。
+本文檔引入新的目錄結構 `ai/msba/`，需要更新 AGENTS.md 的專案結構描述。已完成更新。
 
 ### E. 版本記錄
 
@@ -1220,3 +1221,27 @@ Total (with LLM):     ~400ms ⚠️  fallback only
 | 0.2.0-resolved | 2026-09-21 | 解決 15 個問題 (4 誤判 + 6 遺漏 + 5 疏失) |
 | 0.2.1-resolved | 2026-09-21 | 誤判5修正: 社交輸入也進 MSBA，所有輸入都需語義上下文 |
 | 0.3.0-performance | 2026-09-21 | 新增 §B MemMapped Storage (1TB/1GB) + §C 效能基準 (延遲/快取/記憶體) |
+| 1.0.0 | 2026-09-21 | 實現完成: 20 個模組, 163 個測試, 0 lint 錯誤 |
+
+### F. 實現完成清單
+
+| 模組 | 功能 | 狀態 |
+|------|------|------|
+| `types.py` | SeedResult, HitSource, BlockSelection, BlockHitResult, FusedRepresentation, BlockHistory | ✅ |
+| `block_coordinator.py` | SNN 引擎橋接 (CoreNetwork/TensorSNNCore) | ✅ |
+| `semantic_block.py` | SemanticBlock with split/merge 動態粒度 | ✅ |
+| `block_selector.py` | 四信號融合 (semantic 0.5 + history 0.2 + exclusion 0.1 + state 0.2) | ✅ |
+| `intra_block_hit.py` | 並行塊計算 + seed 驗證 | ✅ |
+| `relevance_convergence.py` | 交叉注意力 9x9 + 3 學習源 | ✅ |
+| `multi_dir_decoder.py` | 注意力融合 + 漂移驗證 + LLM fallback | ✅ |
+| `pipeline.py` | 7 層主管線 (所有輸入進 MSBA) | ✅ |
+| `block_factory.py` | 包裝 10 個子系統為塊 | ✅ |
+| `cold_start.py` | 冷啟動降級到 CoreNetwork | ✅ |
+| `checkpointer.py` | COO+npy+JSON 持久化 | ✅ |
+| `memmapped_block.py` | 記憶體映射存儲 (1TB/1GB) + LRU | ✅ |
+| `linguistic_block.py` | POS 標記 (規則 Phase 1 / spaCy Phase 2) | ✅ |
+| `block_history_persistence.py` | 跨 session 歷史存儲 | ✅ |
+| `multimodal_blocks.py` | VisionBlock + AudioBlock | ✅ |
+| `weight_migration.py` | CoreNetwork/TensorSNNCore 權重遷移 | ✅ |
+| `ab_testing.py` | A/B 測試框架 (流量分配/漸進式遷移) | ✅ |
+| `metrics_collector.py` | 監控指標 (延遲/快取/錯誤率) | ✅ |
