@@ -376,6 +376,23 @@ def _get_eta_axis():
     return _backbone_module("chat.eta_axis", _factory)
 
 
+def _get_msba_pipeline():
+    """Get shared MSBA pipeline (Multi-Dimensional Semantic Block Architecture)."""
+
+    def _factory():
+        try:
+            from ai.msba.pipeline import MSBAPipeline
+            from ai.msba.block_factory import create_all_blocks
+
+            blocks = create_all_blocks()
+            return MSBAPipeline(blocks=blocks)
+        except Exception as e:
+            logger.warning("MSBA pipeline creation failed: %s", e)
+            return None
+
+    return _backbone_module("chat.msba_pipeline", _factory)
+
+
 # Behavioral adjustments mapped by detected emotion
 _ANGELA_EMOTION_BEHAVIOR_MAP = {
     "joy": {"routing_mode": "exploratory", "response_style": "enthusiastic"},
@@ -1641,6 +1658,28 @@ async def _run_chat_pipeline(
     except Exception as _e:  # pragma: no cover - defensive
         logger.debug("Main-line dispatch hook skipped: %s", _e)
 
+    # Step 2.75: MSBA multi-dimensional semantic block processing
+    # All inputs enter MSBA — lightweight inputs use fewer blocks.
+    # Adds fused representation + NeuroBlender 9D vector to context.
+    try:
+        from ai.msba.pipeline import MSBAPipeline
+        from ai.msba.block_factory import create_all_blocks
+        from ai.msba.neuroblender_bridge import NeuroBlenderBridge
+
+        _msba = _get_msba_pipeline()
+        if _msba is not None:
+            import asyncio as _asyncio
+
+            _fused = _asyncio.ensure_future(
+                _msba.process(user_message)
+            )
+            # Non-blocking: schedule and continue; result used in Step 10
+            context["_msba_task"] = _fused
+            context["_msba_bridge"] = NeuroBlenderBridge()
+            logger.debug("MSBA pipeline scheduled for input")
+    except Exception as _e:
+        logger.debug("MSBA scheduling skipped: %s", _e)
+
         # Step 3: Math dual-rail verification — gate through IntentRegistry first
     math_result = await _try_math_verification(
         user_message, user_name, session_id, schema_ver, trunc_msg, _was_truncated
@@ -1768,6 +1807,35 @@ async def _run_chat_pipeline(
 
     # Step 9: Inject causal predictions into context (learned from past interactions)
     _inject_causal_predictions(context)
+
+    # Step 9.5: Collect MSBA result and inject into context
+    _msba_task = context.pop("_msba_task", None)
+    _msba_bridge = context.pop("_msba_bridge", None)
+    if _msba_task is not None:
+        try:
+            _msba_output = await asyncio.wait_for(_msba_task, timeout=0.05)
+            if _msba_output and _msba_bridge is not None:
+                context["msba_output"] = _msba_output
+                # Convert to NeuroBlender 9D for LLM context
+                try:
+                    from ai.msba.types import FusedRepresentation
+
+                    if hasattr(_msba_output, "primary"):
+                        _blender_vec = _msba_bridge.fused_to_blender_vector(
+                            _msba_output
+                        )
+                        context["msba_blender_9d"] = (
+                            _msba_bridge.blender_to_context(_blender_vec)
+                        )
+                        context["msba_dominant"] = (
+                            _msba_bridge.get_dominant_dimension(_blender_vec)
+                        )
+                except Exception as _e:
+                    logger.debug("MSBA->NeuroBlender conversion skipped: %s", _e)
+        except asyncio.TimeoutError:
+            logger.debug("MSBA result not ready within budget, continuing")
+        except Exception as _e:
+            logger.debug("MSBA result collection failed: %s", _e)
 
     # Step 10: Generate LLM response
     if mode != "1:1":

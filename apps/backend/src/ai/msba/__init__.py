@@ -40,6 +40,7 @@ from .multimodal_blocks import VisionBlock, AudioBlock
 from .weight_migration import WeightMigration
 from .ab_testing import ABTesting
 from .metrics_collector import MetricsCollector
+from .neuroblender_bridge import NeuroBlenderBridge
 
 __all__ = [
     # Types
@@ -70,6 +71,8 @@ __all__ = [
     "ABTesting",
     # Monitoring
     "MetricsCollector",
+    # NeuroBlender integration
+    "NeuroBlenderBridge",
     # Factory functions
     "create_default_blocks",
     "create_linguistic_block",
