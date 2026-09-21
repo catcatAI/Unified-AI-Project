@@ -1,7 +1,7 @@
 # Multi-Dimensional Semantic Block Architecture (MSBA)
 
 > **Status**: Design Specification — ALL ISSUES RESOLVED
-> **Version**: 0.2.0-resolved
+> **Version**: 0.3.0-performance
 > **Date**: 2026-09-21
 > **Supersedes**: None (new architecture)
 > **Resolution Status**: 5 misjudgments + 6 omissions + 5 oversights = 16/16 resolved, zero residual
@@ -1038,14 +1038,185 @@ class MSBAPipeline:
 | Context Budget | 收斂時的 token 分配上限 |
 | Cold Start Manager | BlockSNN 未訓練時的降級策略 |
 
-### B. 與 AGENTS.md 的差異
+### B. 記憶體映射存儲 (MemMapped Storage)
+
+#### 核心理念
+
+MSBA 的 **塊選擇天然適合稀疏啟動**：每次查詢只激活 2-7 個塊，其餘 99% 的數據不需要常駐記憶體。
+
+```
+理想配置：1TB disk / 1GB memory
+├─ 8 個語義塊，每塊 ~120GB (memmap)
+├─ 常駐記憶體：~1GB (LRU cache + block metadata)
+├─ 每次查詢：載入 1-2 個 chunks (~128MB each)
+└─ 釋放：LRU eviction (最近最少使用的 chunk 換出)
+```
+
+#### 架構設計
+
+```python
+class MemMappedBlock:
+    """
+    Memory-mapped semantic block.
+    
+    將 120GB 權重存於磁碟 (numpy memmap)，
+    只將活躍的 chunks 載入記憶體。
+    """
+    
+    CHUNK_SIZE = 128 * 1024 * 1024  # 128MB per chunk
+    
+    def __init__(self, path: str, max_in_memory: int = 1024 * 1024 * 1024):
+        self.path = path
+        self.max_in_memory = max_in_memory  # 1GB limit
+        self._mmap = np.memmap(path, dtype='float32', mode='r')
+        self._lru_cache: Dict[int, np.ndarray] = {}
+        self._access_order: List[int] = []
+        
+    def get_hit_activations(self, input_text: str) -> dict:
+        """只載入需要的 chunk，自動 LRU 管理。"""
+        chunk_idx = self._compute_chunk(input_text)
+        
+        if chunk_idx not in self._lru_cache:
+            self._evict_if_needed()
+            self._lru_cache[chunk_idx] = self._load_chunk(chunk_idx)
+            self._access_order.append(chunk_idx)
+        
+        return self._compute_from_chunk(chunk_idx)
+    
+    def _evict_if_needed(self):
+        """LRU eviction：記憶體滿時淘汰最久沒用的 chunk。"""
+        while self._current_memory() > self.max_in_memory:
+            if self._access_order:
+                old_idx = self._access_order.pop(0)
+                del self._lru_cache[old_idx]
+```
+
+#### 效能預期
+
+| 指標 | Cold Miss | Warm Hit | 備註 |
+|------|-----------|----------|------|
+| **Chunk 載入** | +50-80ms | 0ms | 首次查詢需從磁碟載入 |
+| **Block 選擇** | ~10ms | ~10ms | 與記憶體無關（selector 常駐） |
+| **Cross-attention** | ~5ms | ~5ms | 9x9 矩陣，常駐記憶體 |
+| **LRU 管理** | ~1ms | ~1ms | Python dict 操作 |
+
+#### 磁碟佈局
+
+```
+data/msba/
+├─ blocks/
+│   ├─ temporal.mmap       # 120GB (memmap)
+│   ├─ biological.mmap     # 120GB
+│   ├─ emotional.mmap      # 120GB
+│   ├─ cognitive.mmap      # 120GB
+│   ├─ social.mmap         # 120GB
+│   ├─ mathematical.mmap   # 120GB
+│   ├─ knowledge.mmap      # 120GB
+│   └─ causal.mmap         # 120GB
+├─ cross_attention.npy     # 324 bytes (9x9 float32)
+├─ history.json            # ~10KB
+└─ meta.yaml               # block metadata
+```
+
+#### 與現有架構的差異
+
+| 項目 | Phase 1 (現有) | Phase 2+ (MemMapped) |
+|------|---------------|---------------------|
+| Block 數據 | 全部常駐記憶體 | Memmap + LRU |
+| SNN 權重 | CoreNetwork/TensorSNNCore | 個別塊存儲 |
+| 延遲 | 穩定 (無 IO) | Cold miss +50ms |
+| 容量 | 受記憶體限制 | 受磁碟限制 (TB 級) |
+| 實現複雜度 | 低 | 中 (~200 行) |
+
+---
+
+### C. 效能基準 (Performance Benchmarks)
+
+#### 延遲分佈
+
+```
+目標延遲預算：100ms (不含 LLM fallback)
+
+┌─────────────────────────────────────────────────────────┐
+│ Layer 0: Deterministic Seed          ~5ms               │
+│ ├─ Math evaluation                   ~3ms               │
+│ └─ Knowledge base query              ~2ms               │
+├─────────────────────────────────────────────────────────┤
+│ Layer 2: Block Selection             ~10ms              │
+│ ├─ 4-signal fusion                   ~8ms               │
+│ └─ Score sorting + top-k             ~2ms               │
+├─────────────────────────────────────────────────────────┤
+│ Layer 3: Intra-Block Hits (parallel) ~40ms (bottleneck) │
+│ ├─ Block 1 computation               ~40ms             │
+│ ├─ Block 2 computation               ~40ms (parallel)  │
+│ └─ Block 3 computation               ~40ms (parallel)  │
+├─────────────────────────────────────────────────────────┤
+│ Layer 4: Relevance Convergence       ~15ms              │
+│ ├─ Cross-attention                   ~10ms              │
+│ └─ Budget enforcement                ~5ms               │
+├─────────────────────────────────────────────────────────┤
+│ Layer 5: Multi-Directional Decode    ~10ms              │
+│ ├─ Attention-weighted merge          ~8ms               │
+│ └─ Drift validation                  ~2ms               │
+├─────────────────────────────────────────────────────────┤
+│ Layer 6: Output + Learning           ~5ms               │
+│ ├─ Hebbian update                    ~3ms               │
+│ └─ History recording                 ~2ms               │
+├─────────────────────────────────────────────────────────┤
+│ LLM fallback (if triggered)          +200-500ms         │
+└─────────────────────────────────────────────────────────┘
+
+Total (without LLM):  ~85ms  ✅ < 100ms budget
+Total (with LLM):     ~400ms ⚠️  fallback only
+```
+
+#### 快取命中率預期
+
+| 場景 | Block 命中率 | 交叉注意力命中率 | 整體延遲 |
+|------|-------------|-----------------|---------|
+| **重複查詢** (相同問題模式) | 60-80% | 70-90% | ~60ms |
+| **相似語義族** (情感+社交) | 40-60% | 50-70% | ~75ms |
+| **全新查詢** (未知領域) | 10-20% | 10-20% | ~95ms |
+| **確定性種子命中** (數學/時間) | 90%+ | N/A | ~50ms |
+
+#### 記憶體佔用
+
+```
+常駐記憶體 (~1GB):
+├─ BlockSelector metadata     ~5MB
+├─ Cross-attention matrix     324 bytes (9x9)
+├─ BlockHistory cache         ~50KB
+├─ LRU cache (active chunks)  ~800MB (128MB x 6 chunks)
+├─ Pipeline state             ~10MB
+└─ Buffer                     ~185MB
+
+總計：~1GB ✅
+```
+
+#### 磁碟存儲
+
+```
+1TB 磁碟配置:
+├─ 8 個語義塊 x 120GB       = 960GB (memmap 權重)
+├─ Cross-attention 模型      = 1GB
+├─ 歷史數據 + checkpoints    = 10GB
+├─ 系統配置                  = 1GB
+└─ Buffer                    = 28GB
+
+總計：~1TB ✅
+```
+
+---
+
+### D. 與 AGENTS.md 的差異
 
 本文檔引入新的目錄結構 `ai/msba/`，需要更新 AGENTS.md 的專案結構描述。
 
-### C. 版本記錄
+### E. 版本記錄
 
 | 版本 | 日期 | 變更 |
 |------|------|------|
 | 0.1.0-draft | 2026-09-21 | 初版: 現況 + 目標架構 + 問題分析 |
 | 0.2.0-resolved | 2026-09-21 | 解決 15 個問題 (4 誤判 + 6 遺漏 + 5 疏失) |
 | 0.2.1-resolved | 2026-09-21 | 誤判5修正: 社交輸入也進 MSBA，所有輸入都需語義上下文 |
+| 0.3.0-performance | 2026-09-21 | 新增 §B MemMapped Storage (1TB/1GB) + §C 效能基準 (延遲/快取/記憶體) |
