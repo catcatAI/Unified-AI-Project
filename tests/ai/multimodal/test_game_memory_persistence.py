@@ -10,10 +10,8 @@ import time
 from unittest.mock import MagicMock
 
 import pytest
-
 from ai.multimodal.game_memory_bridge import GameMemoryBridge
 from ai.multimodal.game_structs import GameState, Proprioception
-
 
 # ==================== observe_world ====================
 
@@ -38,7 +36,10 @@ class TestObserveWorld:
         b = GameMemoryBridge()
         n1 = b.observe_world(
             (0, 5, 0),
-            [{"node": "air", "x": 1, "y": 5, "z": 1}, {"node": "default:tree", "x": 2, "y": 5, "z": 1}],
+            [
+                {"node": "air", "x": 1, "y": 5, "z": 1},
+                {"node": "default:tree", "x": 2, "y": 5, "z": 1},
+            ],
         )
         n2 = b.observe_world(
             (0, 5, 0), [{"node": "default:tree", "x": 2, "y": 5, "z": 1}], source="vision"
@@ -166,9 +167,7 @@ class TestAgentWiring:
 
     def test_curiosity_starts_goto_to_stale_spot(self):
         agent = self._agent()
-        agent.memory.observe_world(
-            (0, 5, 0), [{"node": "default:tree", "x": 12, "y": 5, "z": 4}]
-        )
+        agent.memory.observe_world((0, 5, 0), [{"node": "default:tree", "x": 12, "y": 5, "z": 4}])
         agent.memory._spatial_index["12_5_4"].last_visited = time.time() - 3600
         agent._maybe_start_curiosity_exploration()
         assert agent._active_behavior is not None
@@ -321,7 +320,12 @@ class TestLoadRobustness:
         path = str(tmp_path / "old.json")
         with open(path, "w") as f:
             json.dump(
-                {"locations": [{"location_id": "1_1_1", "position": [1, 1, 1], "last_visited": 123.0}]}, f
+                {
+                    "locations": [
+                        {"location_id": "1_1_1", "position": [1, 1, 1], "last_visited": 123.0}
+                    ]
+                },
+                f,
             )
         b = GameMemoryBridge()
         assert b.load_spatial(path) == 1

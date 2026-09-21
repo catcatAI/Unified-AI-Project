@@ -14,22 +14,22 @@ import re
 import time
 from collections import deque
 from dataclasses import dataclass, field
-from typing import Optional, Dict, Any, List, Deque, Callable, Tuple
 from enum import Enum
+from typing import Any, Callable, Deque, Dict, List, Optional, Tuple
 
 import numpy as np
 
 from .game_structs import (
-    SkillID,
-    SkillSpec,
-    SkillParams,
+    GAME_SKILLS,
+    GameState,
+    PlanDAG,
     SkillContext,
+    SkillID,
+    SkillParams,
     SkillResult,
+    SkillSpec,
     Subgoal,
     TaskProgress,
-    PlanDAG,
-    GameState,
-    GAME_SKILLS,
     check_preconditions,
     get_available_skills,
 )

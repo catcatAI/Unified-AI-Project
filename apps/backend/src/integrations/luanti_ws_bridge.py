@@ -9,8 +9,9 @@ import json
 import logging
 import uuid
 from datetime import datetime
-from typing import Dict, Any, Optional, Set
-from aiohttp import web, WSMsgType
+from typing import Any, Dict, Optional, Set
+
+from aiohttp import WSMsgType, web
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

@@ -29,7 +29,10 @@ def test_pilot_deterministic_history():
     import numpy as np
 
     if os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src") not in sys.path:
-        sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"),)
+        sys.path.insert(
+            0,
+            os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"),
+        )
     from ai.multimodal.shared_latent_space import SharedLatentSpace
 
     histories = []

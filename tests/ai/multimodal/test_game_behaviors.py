@@ -8,7 +8,6 @@ actions, feedback edits params via adjust().
 import math
 
 import pytest
-
 from ai.multimodal.game_behaviors import (
     BEHAVIORS,
     BehaviorFeedback,
@@ -167,7 +166,9 @@ class TestNameAliases:
 
         bridge = GameMemoryBridge()
         # Real poller itemstrings: stick needs wood×2
-        assert any(r.recipe_id == "stick" for r in bridge.get_craftable_recipes({"default:wood": 4}))
+        assert any(
+            r.recipe_id == "stick" for r in bridge.get_craftable_recipes({"default:wood": 4})
+        )
         assert bridge.get_craftable_recipes({"default:cobble": 1}) == []
 
     def test_short_names_still_work(self):
@@ -197,9 +198,9 @@ class TestSkillTranslator:
         assert skill_to_behavior("combat", {}) == ("dig_burst", {"n": 1})
 
     def test_look_translates_yaw_only(self):
-        from ai.multimodal.game_behaviors import skill_to_behavior
-
         import math
+
+        from ai.multimodal.game_behaviors import skill_to_behavior
 
         bid, params = skill_to_behavior("look", {"yaw": 0.5})
         assert bid == "turn"
@@ -290,8 +291,12 @@ class TestAffectAndRecovery:
         agent = AngelaAutonomousAgent()
         agent.executor = GameTaskExecutor()
         psg = SimpleNamespace(
-            id="t1", skill="move", params={}, preconditions=[],
-            success_criteria="done", timeout=100,
+            id="t1",
+            skill="move",
+            params={},
+            preconditions=[],
+            success_criteria="done",
+            timeout=100,
         )
         strat = SimpleNamespace(
             immediate_action=SimpleNamespace(type="fallback_subgoal", subgoal=psg)

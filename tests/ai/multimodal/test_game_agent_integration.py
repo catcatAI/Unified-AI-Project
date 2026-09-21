@@ -12,58 +12,58 @@ Tests the complete pipeline:
 - LLM Interface (with fallback)
 """
 
-import pytest
 import asyncio
 import time
-import numpy as np
-from unittest.mock import Mock, AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
+import numpy as np
+import pytest
+from ai.multimodal.foveated_sampler import FoveatedSampler, SamplingConfig, SamplingStrategy
+from ai.multimodal.game_agent import GameAgent, GameAgentConfig
+from ai.multimodal.game_memory_bridge import (
+    GameExperience,
+    GameMemoryBridge,
+    MemoryType,
+    MockHAMManager,
+)
+from ai.multimodal.game_planner import (
+    GamePlanner,
+    GoalManager,
+    GoalType,
+    PlannerConfig,
+    PlanningContext,
+)
+from ai.multimodal.game_policy import GamePolicy, PolicyConfig, PolicyOutput
+from ai.multimodal.game_strategy import GameStrategy, StrategyConfig, StrategyWeights
 from ai.multimodal.game_structs import (
-    SkillID,
-    SkillSpec,
-    SkillParams,
+    GAME_SKILLS,
+    GameState,
+    PlanDAG,
+    Proprioception,
     SkillContext,
+    SkillID,
+    SkillParams,
     SkillResult,
+    SkillSpec,
+    StrategyDirective,
     Subgoal,
     TaskProgress,
-    PlanDAG,
-    GameState,
     VisualObservation,
-    Proprioception,
-    StrategyDirective,
-    GAME_SKILLS,
     check_preconditions,
     get_available_skills,
 )
-from ai.multimodal.foveated_sampler import FoveatedSampler, SamplingConfig, SamplingStrategy
-from ai.multimodal.game_policy import GamePolicy, PolicyConfig, PolicyOutput
-from ai.multimodal.skill_selector import SkillSelector, SelectorConfig
-from ai.multimodal.game_task_executor import GameTaskExecutor, ExecutorConfig, SubgoalStatus
-from ai.multimodal.game_planner import (
-    GamePlanner,
-    PlannerConfig,
-    PlanningContext,
-    GoalManager,
-    GoalType,
-)
-from ai.multimodal.game_memory_bridge import (
-    GameMemoryBridge,
-    MockHAMManager,
-    MemoryType,
-    GameExperience,
-)
-from ai.multimodal.game_strategy import GameStrategy, StrategyConfig, StrategyWeights
+from ai.multimodal.game_task_executor import ExecutorConfig, GameTaskExecutor, SubgoalStatus
 from ai.multimodal.llm_game_interface import (
-    LLMGameInterface,
-    LLMConfig,
-    RuleBasedFallback,
-    PlanProposal,
     AnomalyContext,
+    LLMConfig,
+    LLMGameInterface,
+    PlanProposal,
     RecoveryStrategy,
-    StrategyContext,
+    RuleBasedFallback,
     StrategyAdjustment,
+    StrategyContext,
 )
-from ai.multimodal.game_agent import GameAgent, GameAgentConfig
+from ai.multimodal.skill_selector import SelectorConfig, SkillSelector
 
 
 class TestGameStructs:

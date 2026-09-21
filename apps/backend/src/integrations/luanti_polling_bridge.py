@@ -10,9 +10,10 @@ import json
 import logging
 import time
 import uuid
-from datetime import datetime
-from typing import Dict, Any, List, Optional
 from collections import deque
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
 from aiohttp import web
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")

@@ -23,10 +23,10 @@ import json
 import logging
 import os
 from collections import deque
-from pathlib import Path
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
 from core.active_cognition_formula import ActiveCognitionFormula, OrderType, StressSource
@@ -99,9 +99,7 @@ class FormulaMetrics:
 # 使相對路徑與啟動 cwd 無關。
 def _repo_root_state_path() -> str:
     try:
-        return str(
-            Path(__file__).resolve().parents[5] / "data" / "autonomous_lifecycle_state.json"
-        )
+        return str(Path(__file__).resolve().parents[5] / "data" / "autonomous_lifecycle_state.json")
     except Exception:
         return "data/autonomous_lifecycle_state.json"
 

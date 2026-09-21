@@ -206,9 +206,7 @@ def _place_expand(_params: Dict[str, Any], _state: Any = None) -> List[Action]:
 def _scan_expand(_params: Dict[str, Any], _state: Any = None) -> List[Action]:
     import math
 
-    return [
-        {"type": "look", "yaw_delta": math.radians(90), "pitch_delta": 0.0} for _ in range(4)
-    ]
+    return [{"type": "look", "yaw_delta": math.radians(90), "pitch_delta": 0.0} for _ in range(4)]
 
 
 def _speak_expand(params: Dict[str, Any], _state: Any = None) -> List[Action]:
@@ -359,7 +357,11 @@ _register(
         behavior_id="scout",
         description="掃描周圍 node（如 default:tree），結果回傳後由 LLM 二段選點再走過去。找東西（樹/石/煤）都用它開頭。",
         params_schema={
-            "node": {"type": "str", "default": "default:tree", "desc": "節點名（tree/stone/coal 可寫短名）"},
+            "node": {
+                "type": "str",
+                "default": "default:tree",
+                "desc": "節點名（tree/stone/coal 可寫短名）",
+            },
             "radius": {"type": "int", "default": 16, "desc": "掃描半徑 4-24"},
         },
         preconditions=_no_preconditions,
@@ -382,6 +384,7 @@ _register(
         ],
     )
 )
+
 
 def _surface_trigger(state: Any) -> bool:
     """缺氧或灼傷：身體訊號，不是世界預測。"""
@@ -515,5 +518,5 @@ def skill_to_behavior(
             return "", {}
         return "craft_one", {"recipe_id": rid}
     # place/build/eat: 沒有無目的的動詞。定向放置走 place_one/place_at
-    #（runner/chat/plan），吃東西缺 use 動作（poller 待補），藍圖缺執行器。
+    # （runner/chat/plan），吃東西缺 use 動作（poller 待補），藍圖缺執行器。
     return "", {}

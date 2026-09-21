@@ -7,14 +7,15 @@ Connects to Luanti UDP server and exposes HTTP API for Angela AI agent
 import asyncio
 import json
 import logging
+import socket
 import struct
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Optional, Dict, Any, List
 from enum import Enum
+from typing import Any, Dict, List, Optional
+
 from aiohttp import web
-import socket
 
 logger = logging.getLogger(__name__)
 

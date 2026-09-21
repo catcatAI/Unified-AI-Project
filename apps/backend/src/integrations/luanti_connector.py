@@ -14,8 +14,9 @@ import logging
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Optional, Dict, Any, List, Callable, Tuple
 from enum import Enum
+from typing import Any, Callable, Dict, List, Optional, Tuple
+
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -216,6 +217,7 @@ class LuantiConnector:
         """處理畫面資料 (base64 編碼的 PNG/JPG)"""
         import base64
         import io
+
         from PIL import Image
 
         try:

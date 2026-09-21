@@ -8,16 +8,16 @@ Game Memory Bridge - HAM 記憶系統的遊戲適配層
 - 程序記憶：技能序列、製作鏈
 """
 
-import logging
+import asyncio
 import json
+import logging
 import math
 import os
 import time
-import asyncio
-from dataclasses import dataclass, field
-from typing import Optional, Dict, Any, List, Tuple, Set
 from collections import defaultdict
+from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 import numpy as np
 
@@ -148,7 +148,11 @@ class GameMemoryBridge:
                 "locations": [
                     {
                         "location_id": n.location_id,
-                        "position": [round(float(n.position[0]), 1), round(float(n.position[1]), 1), round(float(n.position[2]), 1)],
+                        "position": [
+                            round(float(n.position[0]), 1),
+                            round(float(n.position[1]), 1),
+                            round(float(n.position[2]), 1),
+                        ],
                         "node_type": n.node_type,
                         "resources": dict(n.resources),
                         "last_seen": n.last_seen,
@@ -181,12 +185,16 @@ class GameMemoryBridge:
                 # 逐行容錯：單行壞資料跳過，不炸掉整份記憶
                 try:
                     pos = item.get("position") or [0.0, 0.0, 0.0]
-                    loc_id = str(item.get("location_id") or f"{int(pos[0])}_{int(pos[1])}_{int(pos[2])}")
+                    loc_id = str(
+                        item.get("location_id") or f"{int(pos[0])}_{int(pos[1])}_{int(pos[2])}"
+                    )
                     self._spatial_index[loc_id] = SpatialMemory(
                         location_id=loc_id,
                         position=(float(pos[0]), float(pos[1]), float(pos[2])),
                         node_type=str(item.get("node_type", "unknown")),
-                        resources={str(k): int(v) for k, v in (item.get("resources") or {}).items()},
+                        resources={
+                            str(k): int(v) for k, v in (item.get("resources") or {}).items()
+                        },
                         last_seen=float(item.get("last_seen", 0.0)),
                         last_visited=float(item.get("last_visited", 0.0)),
                         visit_count=int(item.get("visit_count", 0)),

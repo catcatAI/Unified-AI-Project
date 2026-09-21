@@ -30,8 +30,6 @@ from .alignment.reasoning_system import ReasoningSystem
 # =============================================================================
 
 
-
-
 logger = logging.getLogger(__name__)
 
 

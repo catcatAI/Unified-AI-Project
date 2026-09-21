@@ -31,8 +31,6 @@ from core.engine.live2d_avatar_generator import ExpressionType  # noqa: F401
 # =============================================================================
 
 
-
-
 class Live2DIntegration:
     """
     Live2D Integration — runtime model state manager.

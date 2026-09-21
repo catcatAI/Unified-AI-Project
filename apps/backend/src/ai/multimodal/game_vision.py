@@ -73,9 +73,7 @@ class VisionRecognition:
 def _wmctrl_list() -> List[Dict[str, Any]]:
     """列出 X11 窗口（id, x, y, w, h, title）。"""
     try:
-        out = subprocess.run(
-            ["wmctrl", "-lG"], capture_output=True, text=True, timeout=5
-        ).stdout
+        out = subprocess.run(["wmctrl", "-lG"], capture_output=True, text=True, timeout=5).stdout
     except Exception as e:
         logger.debug(f"wmctrl failed: {e}")
         return []
@@ -121,9 +119,7 @@ class GameVision:
         if self._rect_cache and now - self._rect_ts < 30:
             return self._rect_cache
         titles = [t.lower() for t in self.config.game_titles]
-        cands = [
-            w for w in _wmctrl_list() if any(t in w["title"].lower() for t in titles)
-        ]
+        cands = [w for w in _wmctrl_list() if any(t in w["title"].lower() for t in titles)]
         if not cands:
             self._rect_cache = None
             return None
@@ -152,9 +148,7 @@ class GameVision:
                 x, y = 0, 0
             if not isinstance(img, Image.Image):
                 img = Image.fromarray(np.asarray(img))
-            return VisionFrame(
-                source=src, image=img, rect=(x, y, w, h), timestamp=time.time()
-            )
+            return VisionFrame(source=src, image=img, rect=(x, y, w, h), timestamp=time.time())
         except Exception as e:
             logger.debug(f"Capture failed ({src}): {e}")
             return None
@@ -169,11 +163,7 @@ class GameVision:
         if want is not None:
             target = want
         else:
-            target = (
-                VisionSource.GAME_WINDOW
-                if self.locate_game_window()
-                else VisionSource.SCREEN
-            )
+            target = VisionSource.GAME_WINDOW if self.locate_game_window() else VisionSource.SCREEN
         if target != self.active_source:
             logger.info(f"Vision source -> {target.value}")
             self.active_source = target
@@ -216,8 +206,10 @@ class GameVision:
             sampled = self._sampler.sample(arr, focus_xy=focus_xy)
             feats = self._encoder.encode_from_pil(frame.image)
             feats = np.asarray(feats, dtype=np.float32)
-            latent = feats[:128] if feats.shape[0] >= 128 else np.pad(
-                feats, (0, max(0, 128 - feats.shape[0]))
+            latent = (
+                feats[:128]
+                if feats.shape[0] >= 128
+                else np.pad(feats, (0, max(0, 128 - feats.shape[0])))
             )
             proprio = np.zeros(32, dtype=np.float32)
             out = self._policy.forward(latent.astype(np.float32), proprio)
