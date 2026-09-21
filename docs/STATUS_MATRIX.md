@@ -37,6 +37,66 @@
 | Desktop LLM 設定持久化 | Settings 面板改 backend 設定重啟保留 | `apps/backend/src/api/routes/llm_routes.py` | **verified** | `pytest tests/api/test_llm_config.py`；12 passed；preferred mock 驗證（honor＋fallback 警告） | 2026-09-17 |
 | Luanti 遊戲代理（識別/記憶/自主性/學習） | 能識別環境、記住去過哪、自主探索、行為可訓練 | `apps/backend/src/ai/autonomous/angela_agent.py`<br>`apps/backend/src/ai/multimodal/game_agent.py`<br>`apps/backend/src/ai/multimodal/game_policy.py`<br>`apps/backend/src/ai/multimodal/skill_selector.py`<br>`apps/backend/src/integrations/luanti_connector.py`<br>`scripts/run_luanti_agent.py` | **wired** | R71 識別/記憶/好奇心＋R74 行為克隆訓練閉環（hold-out 學習門、權重持久化、啟動載入、推論信心可觀測）；驗證指令見 INVOCATION_MATRIX（wired 故不列）；live 樣本待玩家在線累積；20 FPS 仍 ❌（10Hz＋2s poller） | 2026-09-21 |
 
+## Chat Pipeline（主對話管線）
+
+> 入口：`apps/backend/src/api/routes/chat_routes.py`。階段構成為真相源事實；路徑存在性與 wired 由 `check` 核對。
+
+| # | 階段 | 模組 |
+| --- | --- | --- |
+| 1 | 意圖／複雜度分類 | `apps/backend/src/ai/core/query_classifier.py` |
+| 2 | 情緒分析與閾值調整 | `apps/backend/src/services/llm/emotion_analyzer.py` |
+| 3 | 危機偵測閘門 | `apps/backend/src/ai/crisis/crisis_system.py` |
+| 4 | Level5ASI 對齊檢查 | `apps/backend/src/ai/level5_asi_system.py` |
+| 5 | 意圖註冊與路由 | `apps/backend/src/core/intent_registry.py` |
+| 6 | 執行權限閘門 | `apps/backend/src/ai/core/execution_gate.py` |
+| 7 | 文檔/任務意圖路由 | `apps/backend/src/services/document_router.py` |
+| 8 | 模型匯流排（多 provider 呼叫） | `apps/backend/src/ai/core/model_bus.py` |
+| 9 | 因果預測注入 | `apps/backend/src/ai/reasoning/causal_reasoning_engine.py` |
+| 10 | 記憶查詢與更新 | `apps/backend/src/ai/memory/ham_memory/ham_manager.py`<br>`apps/backend/src/ai/memory/domain_ripple.py` |
+
+## Feature Tree（產品能力樹）
+
+```
+
+- 對話
+  - 核心對話（多 provider LLM＋原生引擎 fallback）
+  - 情緒與危機（辨識/狀態/閘門）
+  - 記憶（HAM/向量/跨 session）
+- 專業 Agent（11 specialized）
+- 多模態（視覺/音訊/生成）
+- 具身化（桌面/Live2D/生命週期）
+- Luanti 遊戲代理
+- 外部整合（Drive/OS 橋）
+- 離線原生（ED3N/GARDEN/確定性）
+```
+
+
+## 生命週期（Active / Partial / Planned / Deleted）
+
+| 狀態 | 項目 | 備註 |
+| --- | --- | --- |
+| ✅ active | Live2D 桌面伴侶 |  |
+| ✅ active | Crystal Cards 遊戲 |  |
+| 🟡 partial | 遊戲代理 L4（技能學習/策略） | L0-L3 wired；L4 訓練管線通但 live 樣本未累積 |
+| 🟡 partial | 圖片生成品質 | 管線通、品質未達標 |
+| 🗓️ planned | 對外公開 benchmark |  |
+| 🗓️ planned | 遊戲 20FPS 閉環 | 現 10Hz＋2s poller |
+| 🗓️ planned | Dashboard E2E 自動化 |  |
+| 🗑️ deleted | Mobile app | Phase 11 刪（骨架；路徑歷史 apps/mobile，非目錄型 token 免掃） |
+| 🗑️ deleted | TactileService | Phase 11 刪（無硬體） |
+| 🗑️ deleted | ImageGenerationAgent | Phase 9 刪（stub） |
+| 🗑️ deleted | ComfyUIClient/AngelaRealPainter | Phase 10 刪（stub） |
+| 🗑️ deleted | apps/backend/src/services/wiring.py | Phase 11 刪（死碼） |
+| 🗑️ deleted | 11 dead subsystems（learning/ops/dialogue/evaluation/execution/code_inspection/compression/lis/language_models/integration/symbolic_space） | Phase 11b 刪 |
+| 🗑️ deleted | 5 dead modules（code_understanding/personality/time/translation/distributed） | Phase 12 刪 |
+| 🗑️ deleted | apps/backend/src/ai/trust/ | Phase 12b 刪 |
+| 🗑️ deleted | apps/backend/src/ai/security/ | Phase 9 刪 |
+| 🗑️ deleted | apps/backend/src/core/card/capabilities/comic_composer.py | Phase 9 刪（佔位 URL） |
+| 🗑️ deleted | luanti_bridge.py（UDP 協議橋） | R76 刪——三傳輸實驗（UDP/WS/HTTP-polling）敗者，零引用零測試；生產走 luanti_connector（websockets）＋luanti_polling_bridge（HTTP） |
+| 🗑️ deleted | luanti_ws_bridge.py（CSM WS 橋） | R76 刪——同上，零引用零測試 |
+
+> `deleted` 列表由工具做**防復活門**：同名路徑在磁碟再現即 CI 紅（勿重實作）。
+
 ## 誠實缺口（正式版判斷依據）
 
 1. **路由重複決策**（Pipeline/Router/ModelBus 各自分類）— 架構債，最高優先收斂。
@@ -53,6 +113,6 @@
 
 - 改狀態**只改 `docs/status_matrix.yaml`**，重跑 `python scripts/gen_status_matrix.py`；手改本檔會被覆蓋。
 - 任何「看起來完成」必須附驗證指令＋日期，否則寫 `claimed`。
-- YAML 落實體核對：路徑不存在 / verified 無指令 → `gen_project_map.py` CI 紅燈。
+- YAML 落實體核對：路徑不存在 / verified 無指令 → CI 紅燈；pipeline 階段模組須被生產碼引用（wired）；deleted 項目磁碟復活即紅（防重實作）。
 - 修復安全相關項目時，同時把 regression payload 加進 `tests/security/`。
 - 舊文件與本表衝突時，以本表為準並修訂舊文件。

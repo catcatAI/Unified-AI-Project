@@ -351,12 +351,58 @@ def block_dependencies(root, files, trees=None):
     return lines
 
 
-def block_orphans(root, files, trees=None):
+def lazy_ref_index(root, files, trees):
+    """字串路由與配置入口索引（AST import 圖的盲區補丁）。
+
+    回傳 (lazy_mods, script_entries)：
+      lazy_mods: 模組路徑字串 → 引用檔集合。
+        掃描字串常量中形如 "ai.agents.specialized.x" / "core.hsp.transport" 的
+        倉內模組路徑（PEP 562 __getattr__、importlib 映射表、註冊表模式）。
+      script_entries: package.json scripts/bin 中引用的相對 .py 入口路徑集合。
+    """
+    import json as _json
+
+    lazy = {}
+    roots = ("apps", "packages", "core", "ai", "api", "hsp", "services", "tools")
+    for rel, tree in trees.items():
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Constant) and isinstance(node.value, str):
+                s = node.value
+                parts = s.split(".")
+                if len(parts) >= 2 and parts[0] in roots and all(p.isidentifier() for p in parts):
+                    lazy.setdefault(s, set()).add(rel)
+    script_entries = set()
+    for rel, _, _ in files:
+        if not rel.endswith("package.json") or "node_modules" in rel:
+            continue
+        try:
+            with open(os.path.join(root, rel), encoding="utf-8") as f:
+                pkg = _json.load(f)
+        except (OSError, ValueError):
+            continue
+        base = os.path.dirname(rel)
+        cmds = list((pkg.get("scripts") or {}).values())
+        bins = (
+            pkg["bin"].values()
+            if isinstance(pkg.get("bin"), dict)
+            else ([pkg["bin"]] if isinstance(pkg.get("bin"), str) else [])
+        )
+        for cmd in list(cmds) + list(bins):
+            for tok in str(cmd).split():
+                if tok.endswith(".py") and not tok.startswith("-"):
+                    script_entries.add(
+                        os.path.normpath(os.path.join(base, tok)).replace(os.sep, "/")
+                    )
+    return lazy, script_entries
+
+
+def block_orphans(root, files, trees=None, script_entries=None):
     """疑似孤兒檔：無任何靜態 import 指向（候選，非判決）。
 
-    方法局限（已驗證）：相對導入已解析、`__init__` 基已修正；但懶
-    `__getattr__`、importlib、字串路由、端點聚合器天生隱身；入口檔
-    （cli/desktop/game）按性質即根，不算賬。
+    方法局限（已驗證）：相對導入已解析、`__init__` 基已修正；
+    字串路由（PEP 562 __getattr__、importlib 映射）由 lazy_ref_index
+    補盲；package.json scripts/bin 指向的入口由 script_entries 豁免。
+    入口檔（cli/desktop/game）按性質即根，不算賬。
     配置門控識別：檔名幹出現在 configs/* 即標註（rlaif 教訓：靜態孤兒
     可能是有意關閉的功能，不可亂判死刑）。
     """
@@ -373,6 +419,8 @@ def block_orphans(root, files, trees=None):
 
     trees = parse_trees(root, files, trees)
     imported = import_index(trees)
+    if script_entries is None:
+        _, script_entries = lazy_ref_index(root, files, trees)
     orphans = []
     for rel in trees:
         if os.path.basename(rel) in ("__init__.py", "__main__.py"):
@@ -385,10 +433,18 @@ def block_orphans(root, files, trees=None):
         dots = [".".join(parts[i:]) for i in range(len(parts))]
         tails = [".".join(parts[-2:]), parts[-1]]
         if not any(d in imported for d in dots) and not any(t in imported for t in tails):
+            if script_entries and rel in script_entries:
+                continue  # package.json scripts/bin 指向的入口，非孤兒
             orphans.append(rel)
     lines = ["### 疑似孤兒檔（候選，分級）", ""]
-    graded = {"L1": [], "L2": 0, "L3": 0}
+    lazy, _ = lazy_ref_index(root, files, trees)
+    graded = {"L1": [], "L2": 0, "L3": 0, "lazy": []}
     for rel in sorted(orphans):
+        parts = rel[:-3].split("/")
+        dots = [".".join(parts[i:]) for i in range(len(parts))]
+        if any(d in lazy for d in dots):
+            graded["lazy"].append(rel)
+            continue  # 字串路由懶載入（註冊表映射），非孤兒
         stem = os.path.splitext(os.path.basename(rel))[0]
         norm = lambda s: s.replace("_", "").replace("-", "")
         # 短通用詞（app/config）在配置文本恆命中——只信長特徵名
@@ -400,11 +456,19 @@ def block_orphans(root, files, trees=None):
             graded["L2"] += 1
         else:
             graded["L3"] += 1
-    _LAST_ORPHAN_COUNTS.update({"L1": len(graded["L1"]), "L2": graded["L2"], "L3": graded["L3"]})
+    _LAST_ORPHAN_COUNTS.update(
+        {
+            "L1": len(graded["L1"]),
+            "L2": graded["L2"],
+            "L3": graded["L3"],
+            "lazy": len(graded["lazy"]),
+        }
+    )
     lines.append(
         f"- 共 {len(orphans)} 檔（L1={len(graded['L1'])} 高疑 / "
-        f"L2={graded['L2']} 疑似入口 / L3={graded['L3']} 配置門控；"
-        "動態加載盲區見上，個案定性前不刪）"
+        f"L2={graded['L2']} 疑似入口 / L3={graded['L3']} 配置門控 / "
+        f"字串路由 ×{len(graded['lazy'])}（折疊豁免）；"
+        "動態加載盲區已由 lazy_ref_index 補掃，個案定性前不刪）"
     )
     for rel in graded["L1"][:40]:
         lines.append(f"  - `{rel}`（L1 高疑）")
@@ -412,6 +476,9 @@ def block_orphans(root, files, trees=None):
         lines.append(f"  - …{len(graded['L1']) - 40} L1 未展開")
     lines.append(f"  - L2 疑似入口 ×{graded['L2']}（折疊，不展開）")
     lines.append(f"  - L3 配置門控 ×{graded['L3']}（折疊，不展開）")
+    if graded["lazy"]:
+        shown = ", ".join(os.path.basename(r) for r in graded["lazy"][:8])
+        lines.append(f"  - 字串路由豁免 ×{len(graded['lazy'])}：{shown}…")
     lines.append("")
     return lines
 
@@ -662,6 +729,28 @@ def block_structure(root, files, trees):
             continue
     if not pkg_files:
         lines.append("- （無 workspace package.json）")
+    lines.append("")
+
+    # --- 外部接面（Integrations）：專案與外部系統的接合點盤點 ---
+    # 接線判定用「後綴匹配」：`apps.backend.src.integrations.x` 與 `integrations.x`
+    # 都算同一模組——只比路徑會漏掉不同 import 風格的呼叫者。
+    lines.append("### 外部接面（Integrations，含接線狀態）")
+    lines.append("")
+    integration_files = sorted(
+        rel
+        for rel in trees
+        if rel.startswith("apps/backend/src/integrations/")
+        and os.path.basename(rel) != "__init__.py"
+    )
+    for rel in integration_files:
+        mod = rel_module_of(rel)
+        who = sorted(
+            w for m, ws in imported.items() if (m == mod or m.endswith("." + mod)) for w in ws
+        )
+        tests_n = sum(1 for w in who if w.startswith("tests/"))
+        prod_n = len([w for w in who if not w.startswith("tests/")])
+        status = "🟢 生產接線" if prod_n else ("🔵 僅測試引用" if tests_n else "🔴 無引用")
+        lines.append(f"- `{os.path.basename(rel)}`：{status}（生產 {prod_n}／測試 {tests_n}）")
     lines.append("")
 
     # --- STATUS_MATRIX 交叉核對 ---

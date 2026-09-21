@@ -30,13 +30,20 @@ def test_core_module_importable(module_path: str) -> None:
     assert len(public_members) > 0, f"{module_path} has no public members"
 
 
-def test_ethics_manager_import() -> None:
-    """Verify ethics_manager can be imported (has no public members at module level)."""
-    import importlib
+def test_ethics_manager_retired() -> None:
+    """R76: ethics_manager.py (1389 lines) removed as dead code.
 
-    module = importlib.import_module("core.ethics.ethics_manager")
-    assert module is not None, "core.ethics.ethics_manager failed to import"
-    # Module OK: internal-only module with no public exports -- valid design
+    Zero production imports, zero config references, zero tests.
+    Was previously only asserted importable -- see status_matrix.yaml
+    lifecycle.deleted for the anti-resurrection record.
+    """
+    import os
+
+    assert not os.path.exists(
+        os.path.join(
+            os.path.dirname(__file__), "..", "..", "apps", "backend", "src", "core", "ethics"
+        )
+    ), "core/ethics resurrected -- do not re-implement (R76)"
 
 
 # =============================================================================

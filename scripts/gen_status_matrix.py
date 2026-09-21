@@ -19,6 +19,8 @@ import datetime
 import os
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 try:
     import yaml
 except ImportError:  # pragma: no cover
@@ -41,6 +43,140 @@ STATUS_LABELS = {
 def load_yaml(path):
     with open(path, encoding="utf-8") as f:
         return yaml.safe_load(f)
+
+
+def load_map_tool():
+    """載入 gen_project_map（同目錄 importlib），複用其 AST 解析（單一事實源）。"""
+    import importlib.util
+
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "gen_project_map.py")
+    spec = importlib.util.spec_from_file_location("gen_project_map", path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def check_pipeline(root, data, map_mod=None, files=None, trees=None):
+    """chat_pipeline 區段核對：entry/stages 模組存在＋被生產碼引用（wired）。
+
+    map_mod：gen_project_map 模組（複用其 AST 解析，單一事實源）；
+    缺省時退化為存在性檢查。
+    """
+    problems = []
+    pipeline = data.get("chat_pipeline") or {}
+    if not pipeline:
+        return problems  # 區段可選：未定義即跳過
+    entry = pipeline.get("entry")
+    if not entry or not os.path.exists(os.path.join(root, entry)):
+        problems.append(f"[chat_pipeline] entry 不存在：{entry}")
+    if map_mod is None or files is None or trees is None:
+        return problems
+    imported = map_mod.import_index(trees)
+    mod2file = {map_mod.rel_module_of(r): r for r in trees}
+
+    def wired(p):
+        """p（檔或目錄）被 p 以外的生產碼（非 tests）import 即接線。"""
+        prefix = p if p.endswith("/") else p + "/"
+        for m, who in imported.items():
+            f = mod2file.get(m)
+            inside = f == p or (f is not None and f.startswith(prefix))
+            if not inside:
+                continue
+            for w in who:
+                if w.startswith("tests/") or w == f or w.startswith(prefix):
+                    continue
+                return True
+        return False
+
+    for stage in pipeline.get("stages") or []:
+        sid = stage.get("id") or "<stage>"
+        mods = stage.get("modules") or []
+        if not mods:
+            problems.append(f"[pipeline:{sid}] 無 modules")
+        for p in mods:
+            if not os.path.exists(os.path.join(root, p)):
+                problems.append(f"[pipeline:{sid}] 模組不存在：{p}")
+            elif not wired(p):
+                problems.append(f"[pipeline:{sid}] 模組無人引用（未接線）：{p}")
+    return problems
+
+
+def check_feature_tree(root, data):
+    """feature_tree 核對：children 引用存在的節點 id；modules 路徑存在。"""
+    problems = []
+    tree = data.get("feature_tree") or []
+    ids = {n.get("id") for n in tree if isinstance(n, dict)}
+    for node in tree:
+        nid = node.get("id") or "<node>"
+        if not node.get("name"):
+            problems.append(f"[tree:{nid}] 缺 name")
+        for cid in node.get("children") or []:
+            if cid not in ids:
+                problems.append(f"[tree:{nid}] children 引用不存在的節點：{cid}")
+        for p in node.get("modules") or []:
+            if not os.path.exists(os.path.join(root, p)):
+                problems.append(f"[tree:{nid}] 模組不存在：{p}")
+    return problems
+
+
+def check_lifecycle(root, data, files=None, trees=None):
+    """lifecycle 核對：status 合法值；deleted 防復活門——三層名稱比對。
+
+    路徑比對只能抓「原地復活」；亂找位置重實作要靠名稱：
+      1. 檔名 basename：全倉任意目錄出現同名檔即違規。
+      2. 符號名（symbols 欄）：AST 掃全倉 class/def 同名定義即違規——
+         換檔案重寫同類也抓到。
+      3. 路徑 token：精確路徑存在即違規。
+    files/trees：地圖工具解析結果（省略時退化為僅路徑層）。
+    """
+    import ast as _ast
+
+    problems = []
+    valid = {"active", "partial", "planned", "deleted"}
+    # 1/2 層預建索引：basename 索引＋符號定義索引
+    by_basename = {}
+    defined = {}  # symbol -> [(rel, kind)]
+    if files is not None:
+        for rel, _, _ in files:
+            by_basename.setdefault(os.path.basename(rel), []).append(rel)
+    if trees is not None:
+        for rel, tree in trees.items():
+            for node in tree.body:
+                if isinstance(node, (_ast.ClassDef, _ast.FunctionDef, _ast.AsyncFunctionDef)):
+                    defined.setdefault(node.name, []).append(rel)
+    for item in data.get("lifecycle") or []:
+        lid = item.get("id") or "<item>"
+        status = item.get("status")
+        if status not in valid:
+            problems.append(
+                f"[lifecycle:{lid}] status={status} 不合法（active/partial/planned/deleted）"
+            )
+        if status != "deleted":
+            continue
+        name = item.get("name") or ""
+        # 3. 路徑 token（精確）
+        tokens = [t for t in name.replace("（", "(").split() if "/" in t or t.endswith(".py")]
+        for t in tokens:
+            t_clean = t.strip("。；;，,")
+            if os.path.exists(os.path.join(root, t_clean)):
+                problems.append(f"[lifecycle:{lid}] 已刪除項目在磁碟復活：{t_clean}（勿重實作）")
+        # 1. 檔名 basename（任意位置；basename_ok 豁免正典同名檔）
+        ok_basenames = set(item.get("basename_ok") or [])
+        for t in tokens:
+            base = os.path.basename(t_clean)
+            hits = [r for r in by_basename.get(base, []) if r != t_clean and r not in ok_basenames]
+            if hits:
+                problems.append(
+                    f"[lifecycle:{lid}] 已刪檔名在他處重現：{base} → {hits[:3]}（亂找位置重實作）"
+                )
+        # 2. 符號名（AST 全倉）
+        for sym in item.get("symbols") or []:
+            hits = [r for r in defined.get(sym, []) if r != name]
+            if hits:
+                problems.append(
+                    f"[lifecycle:{lid}] 已刪符號在他處重新定義：{sym} → {hits[:3]}（勿重實作）"
+                )
+    return problems
 
 
 def check(root, data):
@@ -91,6 +227,74 @@ def check(root, data):
     return problems
 
 
+def render_pipeline_md(data):
+    """chat_pipeline 區段 → MD 表。"""
+    pipeline = data.get("chat_pipeline") or {}
+    if not pipeline:
+        return []
+    lines = [
+        "",
+        "## Chat Pipeline（主對話管線）",
+        "",
+        f"> 入口：`{pipeline.get('entry', '—')}`。階段構成為真相源事實；路徑存在性與 wired 由 `check` 核對。",
+        "",
+        "| # | 階段 | 模組 |",
+        "| --- | --- | --- |",
+    ]
+    for i, stage in enumerate(pipeline.get("stages") or [], 1):
+        mods = "<br>".join(f"`{m}`" for m in stage.get("modules") or ["—"])
+        lines.append(f"| {i} | {stage.get('name', '?')} | {mods} |")
+    return lines
+
+
+def render_tree_md(data):
+    """feature_tree 區段 → MD 樹狀列表。"""
+    tree = data.get("feature_tree") or []
+    if not tree:
+        return []
+    by_id = {n.get("id"): n for n in tree}
+    lines = ["", "## Feature Tree（產品能力樹）", "", "```", ""]
+
+    def emit(node, depth, seen):
+        if node is None or node.get("id") in seen:
+            return
+        seen.add(node.get("id"))
+        lines.append("  " * depth + "- " + (node.get("name") or node.get("id", "?")))
+        for cid in node.get("children") or []:
+            emit(by_id.get(cid), depth + 1, seen)
+
+    roots = [n for n in tree if not any(n.get("id") in (c.get("children") or []) for c in tree)]
+    for r in roots:
+        emit(r, 0, set())
+    lines += ["```", ""]
+    return lines
+
+
+def render_lifecycle_md(data):
+    """lifecycle 區段 → MD 表（deleted 為防復活門資料）。"""
+    life = data.get("lifecycle") or []
+    if not life:
+        return []
+    marks = {"active": "✅", "partial": "🟡", "planned": "🗓️", "deleted": "🗑️"}
+    lines = [
+        "",
+        "## 生命週期（Active / Partial / Planned / Deleted）",
+        "",
+        "| 狀態 | 項目 | 備註 |",
+        "| --- | --- | --- |",
+    ]
+    for item in life:
+        st = item.get("status", "?")
+        lines.append(
+            f"| {marks.get(st, st)} {st} | {item.get('name', '?')} | {item.get('note', '')} |"
+        )
+    lines += [
+        "",
+        "> `deleted` 列表由工具做**防復活門**：同名路徑在磁碟再現即 CI 紅（勿重實作）。",
+    ]
+    return lines
+
+
 def render_md(root, data):
     """YAML → STATUS_MATRIX.md（生成視圖）。"""
     features = data.get("features") or []
@@ -131,6 +335,9 @@ def render_md(root, data):
             f"| {STATUS_LABELS.get(feat.get('status'), feat.get('status'))} "
             f"| {verify_cell} | {feat.get('last_verified', '—')} |"
         )
+    lines += render_pipeline_md(data)
+    lines += render_tree_md(data)
+    lines += render_lifecycle_md(data)
     lines += [
         "",
         "## 誠實缺口（正式版判斷依據）",
@@ -151,7 +358,8 @@ def render_md(root, data):
         "- 改狀態**只改 `docs/status_matrix.yaml`**，重跑"
         " `python scripts/gen_status_matrix.py`；手改本檔會被覆蓋。",
         "- 任何「看起來完成」必須附驗證指令＋日期，否則寫 `claimed`。",
-        "- YAML 落實體核對：路徑不存在 / verified 無指令 → `gen_project_map.py` CI 紅燈。",
+        "- YAML 落實體核對：路徑不存在 / verified 無指令 → CI 紅燈；"
+        "pipeline 階段模組須被生產碼引用（wired）；deleted 項目磁碟復活即紅（防重實作）。",
         "- 修復安全相關項目時，同時把 regression payload 加進 `tests/security/`。",
         "- 舊文件與本表衝突時，以本表為準並修訂舊文件。",
         "",
@@ -180,12 +388,30 @@ def main():
 
     if args.mode == "check":
         problems = check(root, data)
+        # 區段核對：pipeline wired / feature tree / lifecycle（含防復活門）
+        map_mod = None
+        files = trees = None
+        try:
+            map_mod = load_map_tool()
+            files = map_mod.walk_files(root)
+            trees = map_mod.parse_trees(root, files)
+        except Exception as e:  # 地圖工具載入失敗 → 只報存在性層
+            print(f"(warn) 地圖工具解析退化：{e}")
+        problems += check_pipeline(root, data, map_mod, files, trees)
+        problems += check_feature_tree(root, data)
+        problems += check_lifecycle(root, data, files, trees)
+        n_stages = len((data.get("chat_pipeline") or {}).get("stages") or [])
+        n_tree = len(data.get("feature_tree") or [])
+        n_life = len(data.get("lifecycle") or [])
         if problems:
             print(f"STATUS_MATRIX 核對：{len(problems)} 項違規")
             for p in problems:
                 print(f"  - {p}")
             return 1
-        print(f"STATUS_MATRIX 核對通過：{len(data.get('features') or [])} 條目，三層全綠")
+        print(
+            f"STATUS_MATRIX 核對通過：{len(data.get('features') or [])} 條目"
+            f"＋pipeline {n_stages} 階段＋tree {n_tree} 節點＋lifecycle {n_life} 項，全綠"
+        )
         return 0
 
     out_lines = render_md(root, data)

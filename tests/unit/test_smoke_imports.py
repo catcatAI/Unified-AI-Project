@@ -24,9 +24,7 @@ _SMOKE_MODULES = [
     ("core.bio.cerebellum_engine", "CerebellumEngine", {}),
     ("core.tracing.chain_validator", "ChainValidator", {}),
     ("core.hardware.compute_matrix", "ComputationMatrix", {}),
-    ("ai.context.exceptions", "ContextError", {}),
     ("ai.context.storage.base", "Context", {"context_id": "test", "context_type": "memory"}),
-    ("ai.context.storage.database", "DatabaseStorage", {}),
     ("ai.context.storage.disk", "DiskStorage", {"storage_dir": "./test_storage"}),
     ("core.state.decimal_hash_table", "DecimalHashTable", {}),
     ("ai.alignment.decision_theory_system", "DecisionTheorySystem", {}),
@@ -57,7 +55,6 @@ _SMOKE_MODULES = [
             "success": True,
         },
     ),
-    ("ai.multimodal.multimodal_processor", "MultimodalProcessor", {}),
     ("services.llm.providers.ollama", "OllamaBackend", {}),
     ("ai.alignment.ontology_system", "OntologySystem", {}),
     ("services.llm.providers.openai", "OpenAIAPIBackend", {"api_key": "test-key-placeholder"}),
@@ -78,7 +75,6 @@ _SMOKE_MODULES = [
     ("ai.agents.specialized.data_analysis_agent", "DataAnalysisAgent", {}),
     ("ai.agents.specialized.knowledge_graph_agent", "KnowledgeGraphAgent", {}),
     # Merged from tests/tools/test_tools_imports.py (§X #120)
-    ("core.tools.code_understanding_tool", "CodeUnderstandingTool", {}),
     # Merged from tests/unit/test_unit_backend_imports.py (§X #123)
     ("ai.alignment.asi_autonomous_alignment", "ASIAutonomousAlignment", {}),
     ("core.state.precision_projection_matrix", "PrecisionProjectionMatrix", {}),

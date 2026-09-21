@@ -255,3 +255,235 @@ features:
       - tests/core/test_autonomous_life_cycle.py
     evidence: R71 識別/記憶/好奇心＋R74 行為克隆訓練閉環（hold-out 學習門、權重持久化、啟動載入、推論信心可觀測）；驗證指令見 INVOCATION_MATRIX（wired 故不列）；live 樣本待玩家在線累積；20 FPS 仍 ❌（10Hz＋2s poller）
     last_verified: "2026-09-21"
+
+# -----------------------------------------------------------------------------
+# Chat Pipeline（主對話管線的階段構成；路徑由工具核對存在性與被引用）
+# -----------------------------------------------------------------------------
+chat_pipeline:
+  description: >-
+    WebSocket 訊息進入後的主處理序。各階段對應真實模組；
+    本區段由 gen_status_matrix check 核對路徑存在＋imported_by 非空。
+  entry: apps/backend/src/api/routes/chat_routes.py
+  stages:
+    - id: classify
+      name: 意圖／複雜度分類
+      modules: [apps/backend/src/ai/core/query_classifier.py]
+    - id: emotion
+      name: 情緒分析與閾值調整
+      modules: [apps/backend/src/services/llm/emotion_analyzer.py]
+    - id: crisis
+      name: 危機偵測閘門
+      modules: [apps/backend/src/ai/crisis/crisis_system.py]
+    - id: alignment
+      name: Level5ASI 對齊檢查
+      modules: [apps/backend/src/ai/level5_asi_system.py]
+    - id: intent
+      name: 意圖註冊與路由
+      modules: [apps/backend/src/core/intent_registry.py]
+    - id: gate
+      name: 執行權限閘門
+      modules: [apps/backend/src/ai/core/execution_gate.py]
+    - id: route
+      name: 文檔/任務意圖路由
+      modules: [apps/backend/src/services/document_router.py]
+    - id: model
+      name: 模型匯流排（多 provider 呼叫）
+      modules: [apps/backend/src/ai/core/model_bus.py]
+    - id: causal
+      name: 因果預測注入
+      modules: [apps/backend/src/ai/reasoning/causal_reasoning_engine.py]
+    - id: memory
+      name: 記憶查詢與更新
+      modules:
+        - apps/backend/src/ai/memory/ham_memory/ham_manager.py
+        - apps/backend/src/ai/memory/domain_ripple.py
+
+# -----------------------------------------------------------------------------
+# Feature Tree（產品能力樹；語意事實，工具只核對節點引用的模組存在）
+# -----------------------------------------------------------------------------
+feature_tree:
+  - id: conversation
+    name: 對話
+    children: [conversation-core, conversation-emotion, conversation-memory]
+  - id: conversation-core
+    name: 核心對話（多 provider LLM＋原生引擎 fallback）
+    modules:
+      - apps/backend/src/services/llm/router.py
+      - apps/backend/src/services/llm/providers
+      - apps/backend/src/services/llm/providers/unified.py
+      - apps/backend/src/ai/core/model_bus.py
+  - id: conversation-emotion
+    name: 情緒與危機（辨識/狀態/閘門）
+    modules:
+      - apps/backend/src/services/llm/emotion_analyzer.py
+      - apps/backend/src/ai/alignment/emotion_system.py
+      - apps/backend/src/ai/crisis/crisis_system.py
+  - id: conversation-memory
+    name: 記憶（HAM/向量/跨 session）
+    modules: [apps/backend/src/ai/memory/ham_memory]
+  - id: agents
+    name: 專業 Agent（11 specialized）
+    modules: [apps/backend/src/ai/agents, apps/backend/src/ai/agents/specialized]
+  - id: multimodal
+    name: 多模態（視覺/音訊/生成）
+    modules: [apps/backend/src/ai/multimodal]
+  - id: embodied
+    name: 具身化（桌面/Live2D/生命週期）
+    modules:
+      - apps/desktop-app
+      - apps/backend/src/core/life
+  - id: game-agent
+    name: Luanti 遊戲代理
+    modules:
+      - apps/backend/src/ai/autonomous/angela_agent.py
+      - apps/backend/src/ai/multimodal/game_agent.py
+      - apps/backend/src/integrations/luanti_connector.py
+  - id: integrations
+    name: 外部整合（Drive/OS 橋）
+    modules:
+      - apps/backend/src/integrations/google_drive_service.py
+      - apps/backend/src/integrations/os_bridge_adapter.py
+  - id: offline
+    name: 離線原生（ED3N/GARDEN/確定性）
+    modules:
+      - apps/backend/src/ai/ed3n
+      - apps/backend/src/ai/garden
+      - apps/backend/src/services/math_verifier.py
+
+# -----------------------------------------------------------------------------
+# 生命週期（Active/Partial/Planned/Deleted—— Deleted 為防復活門資料）
+# -----------------------------------------------------------------------------
+lifecycle:
+  - id: live2d-desktop
+    name: Live2D 桌面伴侶
+    status: active
+  - id: crystal-cards
+    name: Crystal Cards 遊戲
+    status: active
+  - id: game-agent-l4
+    name: 遊戲代理 L4（技能學習/策略）
+    status: partial
+    note: L0-L3 wired；L4 訓練管線通但 live 樣本未累積
+  - id: multimodal-generation
+    name: 圖片生成品質
+    status: partial
+    note: 管線通、品質未達標
+  - id: public-benchmark
+    name: 對外公開 benchmark
+    status: planned
+  - id: fps-20-loop
+    name: 遊戲 20FPS 閉環
+    status: planned
+    note: 現 10Hz＋2s poller
+  - id: dashboard-e2e
+    name: Dashboard E2E 自動化
+    status: planned
+  - id: mobile-app
+    name: Mobile app
+    status: deleted
+    note: Phase 11 刪（骨架；路徑歷史 apps/mobile，非目錄型 token 免掃）
+  - id: tactile-service
+    name: TactileService
+    status: deleted
+    note: Phase 11 刪（無硬體）
+  - id: image-generation-agent
+    name: ImageGenerationAgent
+    status: deleted
+    note: Phase 9 刪（stub）
+  - id: comfyui-client
+    name: ComfyUIClient/AngelaRealPainter
+    status: deleted
+    note: Phase 10 刪（stub）
+  - id: services-wiring
+    name: apps/backend/src/services/wiring.py
+    symbols: [WiringError]
+    status: deleted
+    note: Phase 11 刪（死碼）
+  - id: dead-subsystems-11
+    name: 11 dead subsystems（learning/ops/dialogue/evaluation/execution/code_inspection/compression/lis/language_models/integration/symbolic_space）
+    status: deleted
+    note: Phase 11b 刪
+  - id: dead-modules-5
+    name: 5 dead modules（code_understanding/personality/time/translation/distributed）
+    status: deleted
+    note: Phase 12 刪
+  - id: trust-module
+    name: apps/backend/src/ai/trust/
+    symbols: [TrustManager, TrustProfile]
+    status: deleted
+    note: Phase 12b 刪
+  - id: ai-security-empty
+    name: apps/backend/src/ai/security/
+    status: deleted
+    note: Phase 9 刪
+  - id: comic-composer
+    name: apps/backend/src/core/card/capabilities/comic_composer.py
+    symbols: [ComicComposer]
+    status: deleted
+    note: Phase 9 刪（佔位 URL）
+  - id: luanti-udp-bridge
+    name: apps/backend/src/integrations/luanti_bridge.py
+    symbols: [LuantiBridge, MinetestProtocol]
+    status: deleted
+    note: R76 刪——三傳輸實驗（UDP/WS/HTTP-polling）敗者，零引用零測試；生產走 luanti_connector（websockets）＋luanti_polling_bridge（HTTP）
+  - id: luanti-ws-bridge
+    name: apps/backend/src/integrations/luanti_ws_bridge.py
+    symbols: [LuantiWSBridge]
+    status: deleted
+    note: R76 刪——同上，零引用零測試
+  - id: trust-manager-core
+    name: apps/backend/src/ai/core/trust_manager.py
+    symbols: [TrustManager]
+    status: deleted
+    note: R76 刪——Phase 12b Trust 模組的換位復活體（980 行），零生產接線（唯一 import 者為自身測試）
+  - id: tray-manager-py
+    name: apps/backend/src/core/desktop/tray_manager.py
+    symbols: [AngelaTrayManager, BaseTrayManager]
+    status: deleted
+    note: R76 刪——與桌面端 electron_app/js/tray-manager（生產實際使用的實作）平行重複；Python 版零引用
+  - id: key-manager-gui
+    name: apps/backend/src/core/desktop/key_manager_gui.py
+    status: deleted
+    note: R76 刪——僅被已刪的 tray_manager.py 以 subprocess 呼叫；714 行零生產引用
+  - id: ethics-manager
+    name: apps/backend/src/core/ethics/ethics_manager.py
+    symbols: [EthicsManager, EthicsSystem]
+    status: deleted
+    note: R76 刪——1389 行零生產引用零配置；import 測試轉退役鎖
+  - id: emergence-engine
+    name: apps/backend/src/core/evolution/emergence_engine.py
+    status: deleted
+    note: R76 刪——零引用
+  - id: unified-kg-stub
+    name: apps/backend/src/core/knowledge/unified_knowledge_graph.py
+    status: deleted
+    note: R76 刪——main.py 明文「UnifiedKnowledgeGraph 桩模块已移除」的復活體（428 行）；真功能在 ai.garden.kg_import 與 ai.meta.knowledge_pipeline
+  - id: local-processing
+    name: apps/backend/src/core/local_processing.py
+    status: deleted
+    note: R76 刪——38 行零引用（document_router 的同名函數為獨立實作非 import）
+  - id: feedback-loop-engine
+    name: apps/backend/src/core/feedback_loop_engine.py
+    status: deleted
+    note: R76 刪——1027 行零生產引用（R72 曾修其 TYPE_CHECKING 死引用，本輪確認整檔無接線）
+  - id: agent-manager-extensions
+    name: apps/backend/src/ai/agents/agent_manager_extensions.py
+    status: deleted
+    note: R76 刪——244 行零引用（agent_manager/agent_adapter 為實際實作）
+  - id: context-config-exceptions-db
+    name: apps/backend/src/ai/context/config.py ＋ exceptions.py ＋ storage/database.py
+    status: deleted
+    note: R76 刪——包內包外均零引用；storage 包（base/disk/memory）健康保留
+  - id: services-api-models
+    name: apps/backend/src/services/api_models.py
+    basename_ok: [apps/backend/src/models/api_models.py]
+    status: deleted
+    note: R76 刪——純 re-export 壳（22 行）且零引用；canonical 在 models/api_models.py（basename 豁免）
+  - id: game-widgets
+    name: apps/backend/src/game/widgets.py
+    status: deleted
+    note: R76 刪——14 行共用 widget 零引用
+  - id: cli-runner-stray
+    name: packages/cli/cli_runner.py
+    status: deleted
+    note: R76 刪——包外層殘留副本（setup.py find_packages 安裝不到）；__main__.py 曾錯誤 import 它致 python -m cli 啟動即炸，已改指 unified_cli.main
