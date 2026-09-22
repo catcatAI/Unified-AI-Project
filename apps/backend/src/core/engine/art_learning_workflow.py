@@ -34,7 +34,7 @@ class LearningObjective:
         self.name = name
         self.priority = priority
         self.progress = 0.0
-        self.milestones = []
+        self.milestones: List[str] = []
 
     def update_progress(self, increment: float) -> None:
         """Update progress by a given increment, capped at 1.0."""
@@ -60,14 +60,14 @@ class WorkflowProgress:
         """識別完成度最低的瓶頸階段 / Find lowest-completion stage"""
         if not self.stage_completion:
             return None
-        return min(self.stage_completion, key=self.stage_completion.get)
+        return str(min(self.stage_completion, key=lambda k: self.stage_completion[k]))
 
     def overall_progress(self) -> float:
         """整體進度 0-1 / Overall progress 0-1"""
         if not self.stage_completion:
             return 0.0
         total_stages = len(WorkflowStage) - 1  # exclude COMPLETE
-        return min(1.0, sum(self.stage_completion.values()) / max(1, total_stages))
+        return float(min(1.0, sum(self.stage_completion.values()) / max(1, total_stages)))
 
     def record_quality(self, score: float) -> None:
         """Record a quality score, clamped to [0, 1]."""

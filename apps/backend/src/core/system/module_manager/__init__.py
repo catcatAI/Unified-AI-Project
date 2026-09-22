@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from core.utils import safe_error
 
@@ -15,15 +15,15 @@ from .models import (
 
 try:
     from .scanner import ModuleScanner
-except ImportError:
-    ModuleScanner = None
+except ImportError:  # pragma: no cover
+    ModuleScanner = None  # type: ignore[assignment, misc]
 from .events import EventBus, HealthMonitor
 from .resolver import CycleError, DependencyResolver
 
 try:
     from .lifecycle import ModuleLifecycle
-except ImportError:
-    ModuleLifecycle = None
+except ImportError:  # pragma: no cover
+    ModuleLifecycle = None  # type: ignore[assignment, misc]
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +52,7 @@ class ModuleManager:
     def health_monitor(self) -> HealthMonitor:
         return self._health_monitor
 
-    def _build_deps_map(self, descriptors, instances) -> str:
+    def _build_deps_map(self, descriptors, instances) -> Dict[str, Any]:
         return {
             d.name: self._lifecycle._build_deps(d, instances, registry=self._registry)
             for d in descriptors

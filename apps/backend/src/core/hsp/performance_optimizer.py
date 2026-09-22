@@ -178,7 +178,7 @@ class HSPPerformanceOptimizer:
         """解压缩消息"""
         try:
             decompressed = zlib.decompress(compressed_data)
-            message = json.loads(decompressed.decode("utf-8"))
+            message: Dict[str, Any] = json.loads(decompressed.decode("utf-8"))
             return message
         except (
             Exception
@@ -186,7 +186,8 @@ class HSPPerformanceOptimizer:
             logger.error(f"消息解压缩失败: {e}", exc_info=True)
             # 如果解压缩失败, 假设数据未压缩
             try:
-                return json.loads(compressed_data.decode("utf-8"))
+                fallback: Dict[str, Any] = json.loads(compressed_data.decode("utf-8"))
+                return fallback
             except (json.JSONDecodeError, UnicodeDecodeError) as decode_error:
                 raise ValueError(f"无法解码消息数据: {decode_error}") from decode_error
 
@@ -194,7 +195,9 @@ class HSPPerformanceOptimizer:
         """记录消息指标"""
         self.message_metrics.append(metrics)
         if len(self.message_metrics) > _MAX_METRICS:
-            self.message_metrics = self.message_metrics[-_MAX_METRICS:]
+            self.message_metrics = deque(
+                list(self.message_metrics)[-_MAX_METRICS:], maxlen=self.message_metrics.maxlen
+            )
         logger.debug(f"记录消息指标: {metrics.message_id}")
 
     def get_performance_stats(self) -> Dict[str, Any]:
@@ -309,14 +312,14 @@ class HSPPerformanceOptimizer:
         compression_savings = network_stats.get("compression_savings", 0)
 
         if total_sent == 0:
-            return 0
+            return 0.0
 
         # 原始大小 = 发送字节数 + 压缩节省的字节数
         original_size = total_sent + compression_savings
         if original_size == 0:
-            return 0
+            return 0.0
 
-        return compression_savings / original_size
+        return float(compression_savings) / float(original_size)
 
     def _identify_bottlenecks(self, stats: Dict[str, Any]) -> List[str]:
         """识别性能瓶颈"""

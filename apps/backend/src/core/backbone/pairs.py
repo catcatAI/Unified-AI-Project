@@ -52,7 +52,7 @@ from core.backbone.contracts import (
 try:  # pragma: no cover - 型別註釋路徑
     from core.waiting_scheduler import WaitingScheduler
 except ImportError:  # pragma: no cover
-    WaitingScheduler = Any
+    WaitingScheduler = Any  # type: ignore[assignment, misc]
 
 _IO_PAIRS_DOMAIN = "io_pairs"
 

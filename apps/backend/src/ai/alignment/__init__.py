@@ -12,8 +12,8 @@ import logging
 
 try:
     from .reasoning_system import ReasoningSystem
-except ImportError:
-    ReasoningSystem = None
+except ImportError:  # pragma: no cover
+    ReasoningSystem = None  # type: ignore[assignment, misc]
 
 logger = logging.getLogger(__name__)
 
@@ -31,10 +31,10 @@ from .ontology_system import OntologySystem
 
 try:
     from .alignment_manager import AlignmentManager
-except ImportError:
+except ImportError:  # pragma: no cover
     logger.debug("alignment_manager not available, using stub")
 
-    class AlignmentManager:
+    class AlignmentManager:  # type: ignore[no-redef]
         def __init__(self, *args, **kwargs):
             raise ImportError(
                 "AlignmentManager requires ai.alignment.alignment_manager module. "
@@ -44,10 +44,10 @@ except ImportError:
 
 try:
     from .decision_theory_system import DecisionTheorySystem
-except ImportError:
+except ImportError:  # pragma: no cover
     logger.debug("decision_theory_system not available, using stub")
 
-    class DecisionTheorySystem:
+    class DecisionTheorySystem:  # type: ignore[no-redef]
         def __init__(self, *args, **kwargs):
             raise ImportError(
                 "DecisionTheorySystem requires ai.alignment.decision_theory_system module. "
@@ -57,10 +57,10 @@ except ImportError:
 
 try:
     from .adversarial_generation_system import AdversarialGenerationSystem
-except ImportError:
+except ImportError:  # pragma: no cover
     logger.debug("adversarial_generation_system not available, using stub")
 
-    class AdversarialGenerationSystem:
+    class AdversarialGenerationSystem:  # type: ignore[no-redef]
         def __init__(self, *args, **kwargs):
             raise ImportError(
                 "AdversarialGenerationSystem requires ai.alignment.adversarial_generation_system module. "

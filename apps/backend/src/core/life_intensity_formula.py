@@ -527,7 +527,7 @@ class LifeIntensityFormula:
         knowledge_gap = c_inf - c_limit
 
         # Weighted combination
-        l_s = (
+        l_s: float = (
             self.weights["c_inf"] * c_inf
             + self.weights["c_limit"] * (1.0 - c_limit)  # Less constraint = more life
             + self.weights["m_f"] * m_f
@@ -577,9 +577,9 @@ class LifeIntensityFormula:
                         logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
         # Notify callbacks
-        for callback in self._intensity_callbacks:
+        for intensity_cb in self._intensity_callbacks:
             try:
-                callback(snapshot)
+                intensity_cb(snapshot)
             except (
                 Exception
             ) as e:  # broad exception acceptable: intensity callbacks should be resilient

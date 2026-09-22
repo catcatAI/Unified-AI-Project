@@ -904,7 +904,8 @@ collected — 0 errors**).
 > biological_integrator / backbone.training / demo_context_system zeroed,
 > over-broad test fixture mock of magic_numbers root-caused — TypeError noise in
 > cross-file runs eliminated; budget gate now reports per-file error
-> distribution via --top N); full suite 5,804 in 4.5min.
+> distribution via --top N; R83 long-tail sweep: 11 files zeroed 476→432,
+> angela_bench re-run confirmed no regression 80/26.7/97.5/0/100); full suite 5,804 in 4.5min.
 
 ### JavaScript/TypeScript
 

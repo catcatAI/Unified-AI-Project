@@ -71,10 +71,10 @@ class BackboneStructure:
         return out
 
     def free_matrices(self) -> List[Dict[str, Any]]:
-        return self.bb.free_matrices()
+        return list(self.bb.free_matrices())
 
     def dictionaries(self) -> List[Dict[str, Any]]:
-        return self.bb.dictionary_sources()
+        return list(self.bb.dictionary_sources())
 
     def modules(self) -> List[Dict[str, Any]]:
         out = []
@@ -151,7 +151,7 @@ class BackboneStructure:
         return out
 
     def datasets(self) -> List[Dict[str, Any]]:
-        return self.bb.datasets_list()
+        return list(self.bb.datasets_list())
 
     def state_store(self) -> Dict[str, Any]:
         ss = getattr(self.bb, "state_store", None)
@@ -175,7 +175,8 @@ class BackboneStructure:
         by_kind: Dict[str, int] = {}
         for p in all_pairs:
             kind = p.get("kind") if isinstance(p, dict) else getattr(p, "kind", "unknown")
-            by_kind[kind] = by_kind.get(kind, 0) + 1
+            kind_key = str(kind) if kind is not None else "unknown"
+            by_kind[kind_key] = by_kind.get(kind_key, 0) + 1
         return {
             "total": len(all_pairs),
             "pending": len(pairs.pending()),

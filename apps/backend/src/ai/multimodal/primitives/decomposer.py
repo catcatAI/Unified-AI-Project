@@ -67,7 +67,7 @@ def find_regions(grid: List[List[Tuple[int, int, int]]], threshold: int = 50) ->
             if cells:
                 avg = tuple(int(np.mean([grid[cy][cx][k] for cy, cx in cells])) for k in range(3))
                 regions.append({"cells": cells, "color": avg, "count": len(cells)})
-    regions.sort(key=lambda r: r["count"], reverse=True)
+    regions.sort(key=lambda r: r["count"], reverse=True)  # type: ignore[arg-type,return-value]
     return regions
 
 

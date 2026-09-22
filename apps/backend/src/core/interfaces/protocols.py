@@ -13,8 +13,8 @@ logger = logging.getLogger(__name__)
 # These allow old imports to work while implementations use new names
 try:
     from services.llm.providers.registry import LLMBackend as ModelProvider
-except (ImportError, SyntaxError):
-    ModelProvider = None
+except (ImportError, SyntaxError):  # pragma: no cover
+    ModelProvider = Any  # type: ignore[assignment, misc]
     logger.warning("ModelProvider alias: LLMBackend not available")
 
 

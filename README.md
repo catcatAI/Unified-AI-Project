@@ -108,7 +108,7 @@ python scripts/gen_project_map.py --module execution_gate --limit 3
 - 交叉核對自動化：`gen_project_map.py`
   會驗證 YAML 宣稱的每個 implementation/tests 路徑真實存在；違規即 CI 紅。
 - 誠實缺口（mypy
-  476 棘輪門、angela_bench 已建仍有跨 AI 對比待接入、live 訓練樣本等）見 STATUS_MATRIX。
+  432 棘輪門、angela_bench 已建仍有跨 AI 對比待接入、live 訓練樣本等）見 STATUS_MATRIX。
 
 ## What Does NOT Work — 防重實作清單（手寫保護區）
 
@@ -132,7 +132,7 @@ python scripts/gen_project_map.py --module execution_gate --limit 3
 ```bash
 python scripts/gen_project_map.py --budget 10000   # 地圖預算門（超標=專案有病）
 python scripts/gen_status_matrix.py check          # 狀態宣稱核對
-python scripts/mypy_budget_gate.py                 # mypy 棘輪門（基線 476，只降不升；--top N 附按檔案分布報告）
+python scripts/mypy_budget_gate.py                 # mypy 棘輪門（基線 432，只降不升；--top N 附按檔案分布報告）
 python -m pytest tests/                            # 全倉測試
 python -m flake8 && python -m black --check . && python -m isort --check-only .
 npx prettier --check .                             # 全倉格式（豁免見 .prettierignore）

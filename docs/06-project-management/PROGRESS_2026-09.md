@@ -51,3 +51,27 @@
 ### 四、驗證
 - 全倉 **5,804 passed, 0 failed**；backbone 298、context 159、bio+core 32 passed
 - mypy **476 鎖定**；black/isort/flake8/prettier/核對門全綠
+
+## R83 — 長尾收割 476→432＋基準回歸確認無退化
+
+### 一、基準回歸（棘輪修復後無退化確認）
+angela_bench 全量重跑：native **80/26.7/97.5/0/100**、native-max mc **100%**——與 R79 官方數據逐位一致，R80–R82 的 6 個真 bug 修復零副作用。
+
+### 二、長尾收割：11 檔 44 錯清零（--top 報告驅動）
+| 檔案 | 要點 |
+|---|---|
+| `services/math_verifier.py`（5→0） | SAFE_OPS 型別收口、一元/二元 op 窄化 float()、`result` 變數重用清理 |
+| `core/interfaces/protocols.py`（2→0） | ModelProvider 別名 fallback → `Any`（非 None，避免 type 賦值錯誤） |
+| `engine/art_learning_workflow.py`（3→0） | milestones 標註、min key lambda 化、overall_progress float() |
+| `multimodal/game_behaviors.py`（5→0） | lambda 簽名統一雙參（型別推斷失敗根因） |
+| `hsp/performance_optimizer.py`（5→0） | **真 bug**：`message_metrics = self.message_metrics[-N:]` 把 deque 切片賦回 deque 欄位（切片回 list）——改重建 deque 保留 maxlen |
+| `backbone/pairs.py`（2→0） | WaitingScheduler 別名 type: ignore |
+| `module_manager/__init__.py`（3→0） | 可選 import 別名收口、`_build_deps_map` 回傳型別 str→Dict（原宣告與實作不符） |
+| `primitives/decomposer.py`（2→0） | sort key object 窄化 |
+| `backbone/structure.py`（5→0） | 三處 no-any-return list() 收口、kind None 防禦 str 化 |
+| `life_intensity_formula.py`（3→0） | l_s float 標註、callback 變數遮蔽清理（`callback` 在同函式兩種簽名重用——mypy 揭發） |
+| `ai/alignment/__init__.py`（4→0） | 可選 import 與 fallback stub 的 no-redef 收口 |
+
+### 三、驗證
+- 全倉 **5,804 passed, 0 failed**；multimodal game_behaviors 40 passed
+- mypy **432 鎖定**；black/flake8/prettier/核對門全綠

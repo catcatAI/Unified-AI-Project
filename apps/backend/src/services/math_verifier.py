@@ -24,13 +24,14 @@ import ast
 import math
 import operator
 import re
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Callable, Dict, Optional, Tuple
 
 
 class MathExtractor:
     """Extracts and parses mathematical expressions from text."""
 
-    SAFE_OPS = {
+    # 一元/二元混放：型別以「可呼叫且回傳數值」為準（operator.neg/pos 單參數）
+    SAFE_OPS: Dict[Any, Any] = {
         ast.Add: operator.add,
         ast.Sub: operator.sub,
         ast.Mult: operator.mul,
@@ -100,7 +101,10 @@ class MathExtractor:
             if op is None:
                 return None
             operand = self._eval_node(node.operand)
-            return op(operand) if operand is not None else None
+            if operand is None:
+                return None
+            result: Any = op(operand)
+            return float(result) if isinstance(result, (int, float)) else None
         if isinstance(node, ast.BinOp):
             op = self.SAFE_OPS.get(type(node.op))
             if op is None:
@@ -115,7 +119,7 @@ class MathExtractor:
                     # computation (e.g. 10**9999999 → multi-MB int / OOM).
                     if isinstance(right, int) and abs(right) > self.MAX_POW_EXPONENT:
                         return None
-                return op(left, right)
+                return float(op(left, right))
             except (ZeroDivisionError, OverflowError, MemoryError):
                 return None
         if isinstance(node, ast.Call):
@@ -545,8 +549,8 @@ def evaluate_math(text: str) -> Optional[str]:
     prime_m = re.search(r"(?:is|是)\s*(-?\d+)\s*(?:prime|質數|素数)", text.strip().lower())
     if prime_m:
         n = int(prime_m.group(1))
-        result = _is_prime(n)
-        return f"{n} is prime = {'true' if result else 'false'}"
+        is_prime = _is_prime(n)
+        return f"{n} is prime = {'true' if is_prime else 'false'}"
 
     gcd_m = re.search(
         r"(?:gcd|最大公因數|最大公约数)\s*[：(]?\s*(-?\d+)\s*,?\s*(-?\d+)", text.strip().lower()

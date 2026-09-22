@@ -302,7 +302,7 @@ _register(
             "ticks": {"type": "int", "default": 20, "desc": "等待 tick 數"},
         },
         preconditions=_no_preconditions,
-        expand=lambda _p: [],
+        expand=lambda params, state: [],
     )
 )
 
@@ -379,7 +379,7 @@ _register(
             "recipe_id": {"type": "str", "default": "auto", "desc": "配方短名或 auto"},
         },
         preconditions=_no_preconditions,
-        expand=lambda params, _state=None: [
+        expand=lambda params, state: [
             {"type": "craft", "recipe": str(params.get("recipe_id", "auto") or "auto")}
         ],
     )
@@ -405,7 +405,7 @@ _register(
         description="【反射】缺氧或站在岩漿里時上浮 1.5 米。保命用，不用選它（觸發自動開火）。",
         params_schema={},
         preconditions=_no_preconditions,
-        expand=lambda _p, _s=None: [{"type": "rise"}],
+        expand=lambda params, state: [{"type": "rise"}],
         trigger=_surface_trigger,
     )
 )
@@ -418,7 +418,7 @@ _register(
             "range": {"type": "int", "default": 24, "desc": "視距 4-32"},
         },
         preconditions=_no_preconditions,
-        expand=lambda params, _state=None: [
+        expand=lambda params, state: [
             {"type": "vision", "range": max(4, min(int(params.get("range", 24)), 32))}
         ],
         success_criteria="vision_done",
