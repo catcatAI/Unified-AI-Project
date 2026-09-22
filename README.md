@@ -107,7 +107,7 @@ python scripts/gen_project_map.py --module execution_gate --limit 3
 
 - 交叉核對自動化：`gen_project_map.py`
   會驗證 YAML 宣稱的每個 implementation/tests 路徑真實存在；違規即 CI 紅。
-- 誠實缺口（mypy 559 棘輪門、公開 benchmark、live 訓練樣本等）見 STATUS_MATRIX。
+- 誠實缺口（mypy 540 棘輪門、angela_bench 已建仍有跨 AI 對比待接入、live 訓練樣本等）見 STATUS_MATRIX。
 
 ## What Does NOT Work — 防重實作清單（手寫保護區）
 
