@@ -192,8 +192,8 @@ features:
       - scripts/mypy_budget_gate.py
       - scripts/mypy_budget.txt
     verify_command: python scripts/mypy_budget_gate.py
-    evidence: 門機制可驗證；基線 559（R74 遊戲棧四檔清零）；新增債 CI 直接紅燈
-    last_verified: "2026-09-21"
+    evidence: 門機制可驗證；基線 540（R79 鎖定；歷史 559→R77 MSBA 清零→540）；新增債 CI 直接紅燈
+    last_verified: "2026-09-22"
 
   - id: flake8
     domain: flake8
