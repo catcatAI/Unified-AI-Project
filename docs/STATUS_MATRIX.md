@@ -36,7 +36,7 @@
 | Live2D 具身化 | 桌面互動 | `apps/desktop-app` | **wired** | 可啟動；狀態鏈完整因果驗證未做 | 2026-09-17 |
 | Desktop LLM 設定持久化 | Settings 面板改 backend 設定重啟保留 | `apps/backend/src/api/routes/llm_routes.py` | **verified** | `pytest tests/api/test_llm_config.py`；12 passed；preferred mock 驗證（honor＋fallback 警告） | 2026-09-17 |
 | Luanti 遊戲代理（識別/記憶/自主性/學習） | 能識別環境、記住去過哪、自主探索、行為可訓練 | `apps/backend/src/ai/autonomous/angela_agent.py`<br>`apps/backend/src/ai/multimodal/game_agent.py`<br>`apps/backend/src/ai/multimodal/game_policy.py`<br>`apps/backend/src/ai/multimodal/skill_selector.py`<br>`apps/backend/src/integrations/luanti_connector.py`<br>`scripts/run_luanti_agent.py` | **wired** | R71 識別/記憶/好奇心＋R74 行為克隆訓練閉環（hold-out 學習門、權重持久化、啟動載入、推論信心可觀測）；驗證指令見 INVOCATION_MATRIX（wired 故不列）；live 樣本待玩家在線累積；20 FPS 仍 ❌（10Hz＋2s poller） | 2026-09-21 |
-| 基準與驗收 | 可驗證的多後端基準，任何 OpenAI 相容端點可與原生堆疊同資料同比分器互相比較 | `scripts/run_benchmarks.py`<br>`benchmarks/data/native_bench_v1.json` | **verified** | `pytest tests/test_run_benchmarks.py`；20 tests；首輪官方結果 results/bench_20260922-022550.json（native math 71.4%/knowledge 20%/code 0%/routing 50%，逐題明細可複審） | 2026-09-22 |
+| 基準與驗收 | 可驗證的多後端基準，任何 OpenAI 相容端點可與原生堆疊同資料同比分器互相比較 | `scripts/run_benchmarks.py`<br>`benchmarks/data/native_bench_v1.json` | **verified** | `pytest tests/test_run_benchmarks.py`；22 tests；115 題官方結果 results/bench_20260922-091107.json（native math 80%/knowledge 26.7%/knowledge_mc 97.5%/code 0%/routing 100%；native-max mc 100%）＋--gate-native 回歸門納入 CI，逐題明細可複審 | 2026-09-22 |
 | MSBA 語意區塊架構 | 全輸入經 7 層語意區塊處理，融合表示以 NeuroBlender 9D 注入 LLM context | `apps/backend/src/ai/msba/pipeline.py`<br>`apps/backend/src/ai/msba/intra_block_hit.py`<br>`apps/backend/src/ai/msba/multimodal_blocks.py`<br>`apps/backend/src/ai/msba/relevance_convergence.py`<br>`apps/backend/src/ai/msba/block_selector.py` | **wired** | chat_routes Step 2.75 排程、Step 10 消費（50ms 預算）注入 LLM context；Layer 0 接真實 MathVerifier/ED3N 字典（R77 修復死 import）；193 tests；A/B 對照未啟用 | 2026-09-22 |
 
 ## Chat Pipeline（主對話管線）
@@ -82,7 +82,7 @@
 | ✅ active | Crystal Cards 遊戲 |  |
 | 🟡 partial | 遊戲代理 L4（技能學習/策略） | L0-L3 wired；L4 訓練管線通但 live 樣本未累積 |
 | 🟡 partial | 圖片生成品質 | 管線通、品質未達標 |
-| 🟡 partial | 對外公開 benchmark | 管線與首輪本機數據已建（benchmarks/README.md）；跨 AI 對比待外部 LLM 端點實際接入跑分 |
+| 🟡 partial | 對外公開 benchmark | 115 題管線、官方數據與 CI 回歸門已建（benchmarks/README.md）；跨 AI 對比待外部 LLM 端點實際接入跑分 |
 | 🟡 partial | MSBA 端到端品質驗證（融合品質 benchmark） | 管線與橋接 wired＋193 tests；融合輸出品質未 benchmark，A/B 對照未啟用 |
 | 🗓️ planned | 遊戲 20FPS 閉環 | 現 10Hz＋2s poller |
 | 🗓️ planned | Dashboard E2E 自動化 |  |
