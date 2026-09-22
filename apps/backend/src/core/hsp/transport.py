@@ -14,6 +14,11 @@ from typing import Any, Callable, Optional
 
 from core.system.config.magic_numbers import loop_sleep
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from core.hsp.external.external_connector import ExternalConnector
+
 from .mqtt_subscription_manager import MQTTSubscriptionManager
 
 logger = logging.getLogger(__name__)
@@ -203,7 +208,8 @@ class MQTTTransport(HSPTransport):
         self.ai_id = ai_id
         self.broker_address = broker_address
         self.broker_port = broker_port
-        self._external_connector = None
+        self._external_connector: Optional["ExternalConnector"] = None
+        self._subscription_manager: Optional[MQTTSubscriptionManager] = None
 
         logger.info(f"MQTTTransport initialized for {ai_id}")
 
@@ -211,21 +217,20 @@ class MQTTTransport(HSPTransport):
         """建立 MQTT 連接"""
         try:
             # 延遲導入以避免循環依賴
-            from core.hsp.external.external_connector import ExternalConnector
+            from core.hsp.external.external_connector import ExternalConnector as _EC
 
-            self._external_connector = ExternalConnector(
+            self._external_connector = _EC(
                 ai_id=self.ai_id, broker_address=self.broker_address, broker_port=self.broker_port
             )
 
-            result = await self._external_connector.connect()
+            connector = self._external_connector
+            result = await connector.connect()
 
             if result:
                 # 初始化订阅管理器
                 self._subscription_manager = MQTTSubscriptionManager()
-                if hasattr(self._external_connector, "mqtt_client"):
-                    await self._subscription_manager.set_mqtt_client(
-                        self._external_connector.mqtt_client
-                    )
+                if hasattr(connector, "mqtt_client"):
+                    await self._subscription_manager.set_mqtt_client(connector.mqtt_client)
                 logger.info("MQTT subscription manager initialized")
 
             logger.info(f"MQTT connection {'successful' if result else 'failed'}")
@@ -240,14 +245,14 @@ class MQTTTransport(HSPTransport):
     async def disconnect(self) -> bool:
         """斷開 MQTT 連接"""
         # 清理订阅管理器
-        if self._subscription_manager:
+        if self._subscription_manager is not None:
             await self._subscription_manager.destroy()
             self._subscription_manager = None
 
         if self._external_connector:
-            result = await self._external_connector.disconnect()
+            # ExternalConnector.disconnect() 回傳 None（冪等清理）
+            await self._external_connector.disconnect()
             logger.info("MQTT disconnected")
-            return result
         return True
 
     async def publish(self, topic: str, payload: dict[str, Any]) -> bool:
@@ -256,7 +261,10 @@ class MQTTTransport(HSPTransport):
             logger.error("Not connected to MQTT broker")
             return False
 
-        return await self._external_connector.publish(topic, payload)
+        # ExternalConnector 只提供 send(message)（HTTP POST /message，
+        # 與 HSPConnector._raw_publish_message 同一契約）；topic 併入訊息
+        message = {"topic": topic, **payload}
+        return await self._external_connector.send(message)
 
     async def subscribe(self, topic: str, callback: Callable, qos: int = 0) -> bool:
         """訂閱 MQTT 主題"""
@@ -370,8 +378,8 @@ if __name__ == "__main__":
         logger.info("=== Testing Local IPC Transport ===\n")
 
         # 創建隊列
-        queue_a_to_b = mp.Queue()
-        queue_b_to_a = mp.Queue()
+        queue_a_to_b: "mp.Queue[Any]" = mp.Queue()
+        queue_b_to_a: "mp.Queue[Any]" = mp.Queue()
 
         # 創建兩個傳輸實例（模擬兩個進程）
         transport_a = LocalIPCTransport(send_queue=queue_a_to_b, recv_queue=queue_b_to_a)

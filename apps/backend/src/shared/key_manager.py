@@ -19,9 +19,12 @@ import secrets
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 import yaml
+
+if TYPE_CHECKING:
+    from core.system.security_monitor import ABCKeyManager
 
 logger = logging.getLogger(__name__)
 
@@ -46,12 +49,12 @@ class UnifiedKeyManager:
 
         # 1. 系統通訊密鑰 (Angela Secret Keys: A/B/C)
         # 用於內部組件、行動端、桌面端的加密與控制
+        self.abc_km: Optional[ABCKeyManager] = None
         try:
-            from core.system.security_monitor import ABCKeyManager
+            from core.system.security_monitor import ABCKeyManager as _ABCKeyManager
 
-            self.abc_km = ABCKeyManager()
+            self.abc_km = _ABCKeyManager()
         except ImportError:
-            self.abc_km = None
             logger.warning("ABCKeyManager 不可用，使用本地密钥管理", exc_info=True)
 
         # ========== 修复：持久化密钥管理 ==========
@@ -80,7 +83,8 @@ class UnifiedKeyManager:
         if self.keys_file.exists():
             try:
                 with open(self.keys_file, "r", encoding="utf-8") as f:
-                    return json.load(f)
+                    loaded = json.load(f)
+                    return loaded if isinstance(loaded, dict) else self._generate_default_keys()
             except (
                 Exception
             ) as e:  # broad exception acceptable: ensure key file errors generate new keys, not crash
@@ -91,7 +95,7 @@ class UnifiedKeyManager:
 
     def _generate_default_keys(self) -> Dict[str, Any]:
         """生成默认密钥"""
-        keys_data = {
+        keys_data: Dict[str, Any] = {
             "keys": {
                 "KeyA": secrets.token_hex(32),
                 "KeyB": secrets.token_hex(32),
@@ -104,8 +108,10 @@ class UnifiedKeyManager:
         }
 
         # 计算密钥哈希
+        key_hashes: Dict[str, str] = {}
         for key_name, key_value in keys_data["keys"].items():
-            keys_data["key_hashes"][key_name] = self._hash_key(key_value)
+            key_hashes[key_name] = self._hash_key(key_value)
+        keys_data["key_hashes"] = key_hashes
 
         # 保存密钥
         self._save_keys(keys_data)
@@ -178,8 +184,10 @@ class UnifiedKeyManager:
                 return key
 
         # 从本地密钥存储获取
-        if key_name in self.keys_data.get("keys", {}):
-            return self.keys_data["keys"][key_name]
+        local_keys = self.keys_data.get("keys", {})
+        if key_name in local_keys:
+            value = local_keys[key_name]
+            return value if isinstance(value, str) else None
 
         return None
 
@@ -191,7 +199,7 @@ class UnifiedKeyManager:
         stored_hash = self.keys_data["key_hashes"].get(key_name)
         provided_hash = self._hash_key(key_value)
 
-        return stored_hash == provided_hash
+        return bool(stored_hash) and stored_hash == provided_hash
 
     def get_api_key(self, service_name: str) -> Optional[str]:
         """獲取外部模型服務金鑰 (如 OpenAI, Anthropic API Keys)"""
@@ -199,7 +207,9 @@ class UnifiedKeyManager:
         env_key = os.environ.get(f"{service_name.upper()}_API_KEY")
         if env_key:
             return env_key
-        return self.config.get("api_keys", {}).get(service_name)
+        api_keys = self.config.get("api_keys", {})
+        value = api_keys.get(service_name) if isinstance(api_keys, dict) else None
+        return value if isinstance(value, str) else None
 
     def get_key(self, key_name: str) -> Optional[str]:
         """通用檢索 (向下相容)"""

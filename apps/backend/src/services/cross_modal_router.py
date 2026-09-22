@@ -16,9 +16,14 @@ import hashlib
 import logging
 import time
 from collections import OrderedDict
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from core.utils import safe_error
+
+if TYPE_CHECKING:
+    from ai.audio.audio_pipeline import AudioPipeline
+    from ai.vision.vision_pipeline import VisionPipeline
+    from services.multimodal_service import MultimodalService
 
 logger = logging.getLogger(__name__)
 
@@ -37,10 +42,10 @@ class CrossModalRouter:
     ROUTE_TIMEOUT: float = 30.0
 
     def __init__(self, cache_size: int = 20, rate_limit: int = 60):
-        self._multimodal_svc = None
-        self._vision_pipeline = None
-        self._audio_pipeline = None
-        self._latent_space = None
+        self._multimodal_svc: Optional["MultimodalService"] = None
+        self._vision_pipeline: Optional["VisionPipeline"] = None
+        self._audio_pipeline: Optional["AudioPipeline"] = None
+        self._latent_space: Optional[Any] = None
         # Cache: {request_hash: result}
         self._cache: OrderedDict = OrderedDict()
         self._cache_size = cache_size
@@ -50,32 +55,36 @@ class CrossModalRouter:
 
     # --- Lazy initialization ---
 
-    def _get_multimodal_svc(self):
+    def _get_multimodal_svc(self) -> "MultimodalService":
         if self._multimodal_svc is None:
             from services.multimodal_service import MultimodalService
 
             self._multimodal_svc = MultimodalService()
+        assert self._multimodal_svc is not None
         return self._multimodal_svc
 
-    def _get_vision_pipeline(self):
+    def _get_vision_pipeline(self) -> "VisionPipeline":
         if self._vision_pipeline is None:
             from ai.vision.vision_pipeline import VisionPipeline
 
             self._vision_pipeline = VisionPipeline()
+        assert self._vision_pipeline is not None
         return self._vision_pipeline
 
-    def _get_audio_pipeline(self):
+    def _get_audio_pipeline(self) -> "AudioPipeline":
         if self._audio_pipeline is None:
             from ai.audio.audio_pipeline import AudioPipeline
 
             self._audio_pipeline = AudioPipeline()
+        assert self._audio_pipeline is not None
         return self._audio_pipeline
 
-    def _get_latent_space(self):
+    def _get_latent_space(self) -> Any:
         if self._latent_space is None:
             from ai.multimodal.shared_latent_space import get_shared_latent_space
 
             self._latent_space = get_shared_latent_space(latent_dim=self.LATENT_DIM)
+        assert self._latent_space is not None
         return self._latent_space
 
     # --- Rate limiting ---
