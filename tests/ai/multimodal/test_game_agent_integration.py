@@ -691,6 +691,44 @@ class TestLLMGameInterface:
         assert isinstance(adj, StrategyAdjustment)
         assert adj.risk_tolerance_delta < 0  # 死亡多 -> 降低風險
 
+    def test_planner_parses_llm_proposal(self):
+        """回歸鎖定：_parse_llm_proposal 曾對 pydantic PlanSubgoal 呼叫 .get()
+        導致 AttributeError 被吞掉、LLM 規劃永遠靜默退回規則規劃。"""
+        from ai.multimodal.llm_game_interface import PlanSubgoal
+
+        planner = GamePlanner(PlannerConfig(use_llm_for_complex=False))
+        proposal = PlanProposal(
+            plan_id="llm_test",
+            subgoals=[
+                PlanSubgoal(
+                    id="dig_wood",
+                    skill="dig",
+                    params={"target": "tree"},
+                    success_criteria="wood_collected",
+                    timeout=120,
+                ),
+                PlanSubgoal(id="craft_planks", skill="craft", depends_on=["dig_wood"]),
+            ],
+            reasoning="unit-test",
+        )
+
+        dag = planner._parse_llm_proposal(proposal, "plan_1")
+
+        assert set(dag.nodes.keys()) == {"dig_wood", "craft_planks"}
+        assert dag.nodes["dig_wood"].skill_id == SkillID.DIG
+        assert dag.nodes["dig_wood"].params == {"target": "tree"}
+        assert dag.nodes["dig_wood"].timeout_ticks == 120
+        # 依賴邊保留
+        assert ("dig_wood", "craft_planks") in dag.edges
+        # 未知 skill 安全降級 MOVE
+        bad = PlanProposal(
+            plan_id="llm_bad",
+            subgoals=[PlanSubgoal(id="x", skill="teleport")],
+            reasoning="",
+        )
+        dag_bad = planner._parse_llm_proposal(bad, "plan_2")
+        assert dag_bad.nodes["x"].skill_id == SkillID.MOVE
+
 
 class TestGoalManager:
     """測試目標管理"""

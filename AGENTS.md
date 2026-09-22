@@ -898,8 +898,9 @@ collected — 0 errors**).
 > knowledge_base superlative/phrase queries, formula_solver target-marker bug
 > ("what velocity"→velocity), garden_engine reflex `越過`/`question` glyphs.
 > Simulated `benchmark_mmlu_subset.py` retired per RELEASE_CRITERIA. **5,803
-> passed, 118 skipped, 0 failed**; mypy ratchet 540 locked; full suite 5,803 in
-> 4.5min.
+> passed, 118 skipped, 0 failed**; mypy ratchet 518 locked (R80 game-planning
+> stack zeroed: game_planner 12→0 incl. PlanSubgoal.get() runtime bug +
+> regression test, game_task_executor 10→0); full suite 5,804 in 4.5min.
 
 ### JavaScript/TypeScript
 

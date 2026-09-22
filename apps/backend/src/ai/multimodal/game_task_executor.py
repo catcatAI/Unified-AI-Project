@@ -447,12 +447,17 @@ class GameTaskExecutor:
 
     def _handle_blocked(self, state: GameState, latent: np.ndarray) -> Optional[SkillContext]:
         """處理前置條件不滿足"""
+        # 呼叫端 _drive_execution 保證進到此處時 _current 非 None；
+        # 局部窄化讓型別檢查與防禦兩者兼得
+        cur = self._current
+        if cur is None:
+            return None
         # 嘗試插入前置子目標 (如缺工具 -> 去挖石頭)
         # 簡化：等待或請求重規劃
-        if self.config.enable_fallback and self._current.subgoal.fallback:
+        if self.config.enable_fallback and cur.subgoal.fallback:
             fallback_sg = Subgoal(
-                subgoal_id=f"{self._current.subgoal.subgoal_id}_unblock",
-                skill_id=SkillID(self._current.subgoal.fallback),
+                subgoal_id=f"{cur.subgoal.subgoal_id}_unblock",
+                skill_id=SkillID(cur.subgoal.fallback),
                 params={},
                 preconditions=[],
                 success_criteria="unblocked",
@@ -464,14 +469,14 @@ class GameTaskExecutor:
 
         # 無 fallback：累計 blocked 次數，超過閾值則跳過此子目標，
         # 避免卡在 BLOCKED 觸發每 tick 重規劃的死循環
-        self._current.blocked_ticks += 1
-        if self._current.blocked_ticks >= 10:
+        cur.blocked_ticks += 1
+        if cur.blocked_ticks >= 10:
             logger.warning(
-                f"Subgoal {self._current.subgoal.subgoal_id} blocked "
-                f"for {self._current.blocked_ticks} ticks, skipping"
+                f"Subgoal {cur.subgoal.subgoal_id} blocked "
+                f"for {cur.blocked_ticks} ticks, skipping"
             )
-            self._current.status = SubgoalStatus.FAILED
-            self._failed.append(self._current)
+            cur.status = SubgoalStatus.FAILED
+            self._failed.append(cur)
             self._current = None
             return self._drive_execution(state, latent)
 
@@ -590,7 +595,7 @@ class PriorityTaskQueue:
         self._tasks: List[ActiveSubgoal] = []
         self._dependency_graph: Dict[str, List[str]] = {}
 
-    def add(self, subgoal: ActiveSubgoal, dependencies: List[str] = None):
+    def add(self, subgoal: ActiveSubgoal, dependencies: Optional[List[str]] = None):
         self._tasks.append(subgoal)
         if dependencies:
             self._dependency_graph[subgoal.subgoal.subgoal_id] = dependencies

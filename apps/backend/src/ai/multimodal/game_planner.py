@@ -261,8 +261,8 @@ class GamePlanner:
     async def _rule_based_plan(self, context: PlanningContext, plan_id: str) -> PlanDAG:
         """規則基礎規劃 (快速、確定性)"""
         template = self._goal_templates.get(context.current_goal, [])
-        nodes = {}
-        edges = []
+        nodes: Dict[str, Subgoal] = {}
+        edges: List[Tuple[str, str]] = []
 
         for i, step in enumerate(template):
             sg_id = f"{context.current_goal.value}_{i}_{step['skill'].value}"
@@ -299,7 +299,7 @@ class GamePlanner:
             created_tick=0,
         )
 
-    def _find_dependency(self, precondition: str, nodes: Dict) -> Optional[str]:
+    def _find_dependency(self, precondition: str, nodes: Dict[str, Subgoal]) -> Optional[str]:
         """在現有節點中找滿足前置條件的節點"""
         for nid, node in nodes.items():
             if node.success_criteria == precondition or precondition in node.success_criteria:
@@ -379,29 +379,28 @@ class GamePlanner:
 
     def _parse_llm_proposal(self, proposal: PlanProposal, plan_id: str) -> PlanDAG:
         """解析 LLM 回傳的計劃提案"""
-        nodes = {}
-        edges = []
+        nodes: Dict[str, Subgoal] = {}
+        edges: List[Tuple[str, str]] = []
 
-        for i, sg_dict in enumerate(proposal.subgoals):
-            sg_id = sg_dict.get("id", f"llm_{i}")
-            skill_str = sg_dict.get("skill", "move")
+        for i, sg in enumerate(proposal.subgoals):
+            sg_id = sg.id or f"llm_{i}"
             try:
-                skill_id = SkillID(skill_str)
+                skill_id = SkillID(sg.skill)
             except ValueError:
                 skill_id = SkillID.MOVE
 
             subgoal = Subgoal(
                 subgoal_id=sg_id,
                 skill_id=skill_id,
-                params=sg_dict.get("params", {}),
-                preconditions=sg_dict.get("preconditions", []),
-                success_criteria=sg_dict.get("success_criteria", "completed"),
-                timeout_ticks=sg_dict.get("timeout", self._estimate_timeout(skill_id)),
+                params=dict(sg.params),
+                preconditions=list(sg.preconditions),
+                success_criteria=sg.success_criteria or "completed",
+                timeout_ticks=sg.timeout if sg.timeout else self._estimate_timeout(skill_id),
             )
             nodes[sg_id] = subgoal
 
             # 依賴關係
-            for dep in sg_dict.get("depends_on", []):
+            for dep in sg.depends_on:
                 edges.append((dep, sg_id))
 
         return PlanDAG(
@@ -459,7 +458,7 @@ class GamePlanner:
     def _remove_cycles(self, plan: PlanDAG) -> List[Tuple[str, str]]:
         """移除循環 (簡化：拓撲排序保留可行邊)"""
         # Kahn's algorithm
-        in_degree = defaultdict(int)
+        in_degree: Dict[str, int] = defaultdict(int)
         for f, t in plan.edges:
             in_degree[t] += 1
 
@@ -489,7 +488,7 @@ class GamePlanner:
     def get_next_subgoal(self, plan: PlanDAG, completed: List[str]) -> Optional[Subgoal]:
         """取得下一個可執行子目標 (拓撲順序)"""
         # 計算入度
-        in_degree = defaultdict(int)
+        in_degree: Dict[str, int] = defaultdict(int)
         for f, t in plan.edges:
             in_degree[t] += 1
 
@@ -513,7 +512,7 @@ class GoalManager:
         self.active_goals: List[Tuple[GoalType, Dict, float]] = []  # (goal, params, priority)
         self.completed_goals: List[GoalType] = []
 
-    def add_goal(self, goal: GoalType, params: Dict = None, priority: float = 1.0):
+    def add_goal(self, goal: GoalType, params: Optional[Dict] = None, priority: float = 1.0):
         params = params or {}
         # 去重
         self.active_goals = [(g, p, pr) for g, p, pr in self.active_goals if g != goal]
