@@ -898,10 +898,13 @@ collected — 0 errors**).
 > knowledge_base superlative/phrase queries, formula_solver target-marker bug
 > ("what velocity"→velocity), garden_engine reflex `越過`/`question` glyphs.
 > Simulated `benchmark_mmlu_subset.py` retired per RELEASE_CRITERIA. **5,803
-> passed, 118 skipped, 0 failed**; mypy ratchet 497 locked (R81: key_manager /
-> cross_modal_router / hsp.transport zeroed; MQTTTransport.publish had called
-> nonexistent ExternalConnector.publish — real dead path fixed to send()
-> contract); full suite 5,804 in 4.5min.
+> passed, 118 skipped, 0 failed**; mypy ratchet 476 locked (R81 key_manager /
+> cross_modal_router / hsp.transport zeroed — MQTTTransport.publish had called
+> nonexistent ExternalConnector.publish, fixed to send() contract; R82
+> biological_integrator / backbone.training / demo_context_system zeroed,
+> over-broad test fixture mock of magic_numbers root-caused — TypeError noise in
+> cross-file runs eliminated; budget gate now reports per-file error
+> distribution via --top N); full suite 5,804 in 4.5min.
 
 ### JavaScript/TypeScript
 

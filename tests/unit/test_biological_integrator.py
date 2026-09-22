@@ -13,8 +13,9 @@ def _mock_heavy_modules():
         "core.bio.cerebellum_engine",
         "core.engine.art_learning_workflow",
         "core.life.env_dynamics",
-        "core.system.config.tiered_loader",
-        "core.system.config.magic_numbers",
+        # 注意：不要 mock magic_numbers / tiered_loader——它們是輕量配置模組，
+        # 整模組 mock 會讓 from-import 拿到 MagicMock，背景循環的
+        # asyncio.sleep(loop_sleep(...)) 直接 TypeError（曾造成跨檔測試噪聲）
     ]
     mocks = {}
     for name in heavy_modules:

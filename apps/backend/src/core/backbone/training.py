@@ -118,7 +118,8 @@ class TrainingMount:
     def is_mounted(self) -> bool:
         return self._mounted and self._instance is not None
 
-    def persistence_path(self) -> str:
+    def get_persistence_path(self) -> str:
+        """回傳權重存檔路徑（與屬性同名易混，故改名避免 method/attr 撞名）"""
         return self.persistence_path
 
     # ------------------------------------------------------------------

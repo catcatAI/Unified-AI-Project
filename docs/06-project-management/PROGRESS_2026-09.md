@@ -32,3 +32,22 @@
 ### 三、驗證
 - 全倉 **5,804 passed, 0 failed**；hsp 57 passed、cross_modal 25 passed、key_manager 4 passed
 - mypy **497 鎖定**；black/flake8/prettier/核對門（25+10+11+33）全綠
+
+## R82 — 三域再清零 497→476＋跨檔測試 TypeError 噪聲根治＋棘輪門分布報告
+
+### 一、mypy 棘輪：biological_integrator / backbone.training / demo_context_system 各 7→0
+| 檔案 | 修復 |
+|---|---|
+| `bio/biological_integrator.py`（7→0） | `get_art_workflow` 死型別源頭修（`-> None` → `Optional[ArtLearningWorkflow]`，實際有回傳值）；PAD 窄化 `getattr` 防禦；`get_config` None 防禦（`or {}`）×2；單例 `_initialized` getattr 模式 |
+| `backbone/training.py`（7→0） | **method/attr 撞名**：`persistence_path` 屬性與同名方法共存——方法體 `return self.persistence_path` 回傳的是可呼叫物件而非字串（型別揭發的真 bug）。方法改 `get_persistence_path()`；`mountable.persistence_path(key)` 同步相容 |
+| `ai/context/demo_context_system.py`（7→0） | **真死碼**：demo 呼叫 `Context(id=, data=)` 與 `storage.save/load`——全是不存在的 API（真實是 `Context(context_id=, context_type=)`、`save_context/load_context`）。此 demo 一跑即炸。對齊真實 API＋閉環實測通過 |
+
+### 二、跨檔 TypeError 噪聲根治（既有、stash 驗證非本輪引入）
+`test_biological_integrator.py` 的 `_mock_heavy_modules` fixture 過寬——把輕量配置模組 `magic_numbers`/`tiered_loader` 整個塞進 `sys.modules` 為 MagicMock。之後任何檔案觸發 bio 背景循環，`from ... import loop_sleep` 拿到 MagicMock，`asyncio.sleep()` 即炸（三檔組合 14 次 TypeError）。修 fixture 只 mock 真正重的模組 → 組合噪聲 **14→0**。另 `hardware_profile.apply_multiplier`／`magic_numbers.loop_sleep` 加非數值防禦（深度防禦）。
+
+### 三、mypy_budget_gate 新功能：`--top N` 按檔案分布報告
+`python scripts/mypy_budget_gate.py --top 10` 在門檻輸出附「按檔案錯誤分布 Top-N（棘輪下一輪清零候選）」——「型別債集中區＝死路徑集中區」的經驗固化為工具能力。
+
+### 四、驗證
+- 全倉 **5,804 passed, 0 failed**；backbone 298、context 159、bio+core 32 passed
+- mypy **476 鎖定**；black/isort/flake8/prettier/核對門全綠

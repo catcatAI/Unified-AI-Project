@@ -12,6 +12,7 @@
 用法：
   python scripts/mypy_budget_gate.py                  # CI 嚴格門
   python scripts/mypy_budget_gate.py --allow-lower    # 本地收斂後檢查
+  python scripts/mypy_budget_gate.py --top 10         # 附帶按檔案分布 Top-N 報告
 """
 
 from __future__ import annotations
@@ -48,9 +49,23 @@ def count_mypy_errors() -> tuple[int, str]:
     return 0, output
 
 
+def top_files_by_errors(output: str, top: int = 10) -> list[tuple[str, int]]:
+    """從 mypy 輸出統計每檔錯誤數，回傳 Top-N（棘輪下一輪目標一目了然）。"""
+    counts: dict[str, int] = {}
+    for line in output.splitlines():
+        if ": error:" in line:
+            path = line.split(": error:")[0]
+            counts[path] = counts.get(path, 0) + 1
+    ranked = sorted(counts.items(), key=lambda kv: -kv[1])
+    return ranked[:top]
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="mypy ratchet budget gate")
     parser.add_argument("--allow-lower", action="store_true", help="允許 errors 低於預算時通過")
+    parser.add_argument(
+        "--top", type=int, default=0, metavar="N", help="附帶按檔案錯誤分布 Top-N 報告"
+    )
     args = parser.parse_args()
 
     budget = int(BUDGET_FILE.read_text().strip())
@@ -62,6 +77,13 @@ def main() -> int:
         return 1
 
     print(f"mypy errors: {actual} ｜ budget: {budget}")
+    if args.top > 0:
+        ranked = top_files_by_errors(output, args.top)
+        if ranked:
+            print(f"\n按檔案分布 Top-{args.top}（棘輪下一輪清零候選）:")
+            for path, count in ranked:
+                print(f"  {count:4d}  {path}")
+            print()
     if actual > budget:
         print(
             f"❌ 型別債上升（{budget} → {actual}）：禁止。修掉新增錯誤，或（僅限有充分理由時）人工上調 {BUDGET_FILE}"

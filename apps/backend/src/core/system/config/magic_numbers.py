@@ -192,7 +192,12 @@ def loop_sleep(key: str, default: float = 1.0) -> float:
     base = _safe_float(_get(key, default), default)
     profile = _get_hardware_profile()
     if profile is not None:
-        return profile.apply_multiplier(base)
+        try:
+            scaled = profile.apply_multiplier(base)
+        except Exception:
+            scaled = base
+        if isinstance(scaled, (int, float)) and not isinstance(scaled, bool):
+            return float(scaled)
     return base
 
 

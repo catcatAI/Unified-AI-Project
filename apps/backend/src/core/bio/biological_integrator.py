@@ -161,7 +161,8 @@ class BiologicalIntegrator:
         return cls._instance
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
-        if self._initialized:
+        initialized: bool = getattr(self, "_initialized", False)
+        if initialized:
             return
         self._initialized = True
         logger.info("🧬 [Bio] Initializing BiologicalIntegrator Singleton...")
@@ -611,12 +612,13 @@ class BiologicalIntegrator:
         confidence = 0.5
         if self.emotional_system.emotion_history:
             last_state = self.emotional_system.emotion_history[-1]
-            # 處理可能的多態結構 (EmotionalState 或 PADEmotion)
+            # 處理可能的多態結構 (EmotionalState 或 PADEmotion)；
+            # 目前 emotion_history 只存 PADEmotion，hasattr 分支為防禦
             if hasattr(last_state, "primary_emotion"):
-                dominant_emotion = last_state.primary_emotion.value
-                confidence = last_state.emotion_intensity
+                dominant_emotion = str(last_state.primary_emotion)
+                confidence = float(getattr(last_state, "emotion_intensity", 0.5))
             elif hasattr(last_state, "emotion"):  # 兼容舊版結構
-                dominant_emotion = last_state.emotion
+                dominant_emotion = str(getattr(last_state, "emotion", "neutral"))
                 confidence = 0.5
 
         return {
@@ -750,7 +752,7 @@ class BiologicalIntegrator:
             results["changes"]["adrenaline"] = f"+{adrenaline_increase:.1f}"
             from core.system.config.tiered_loader import get_config as _get_bio3
 
-            _beh3 = _get_bio3("standard/behavior/behavior")
+            _beh3 = _get_bio3("standard/behavior/behavior") or {}
             _cort_trigger = _beh3.get("biological_thresholds", {}).get("cortisol_trigger", 60)
             if arousal > _cort_trigger:
                 cortisol_increase = ((arousal - _cort_trigger) / 40.0) * intensity * 15.0
@@ -795,7 +797,7 @@ class BiologicalIntegrator:
                     results["changes"]["arousal"] = f"{new_arousal - current_arousal:+.1f}"
                     from core.system.config.tiered_loader import get_config as _get_bio3
 
-                    _beh3 = _get_bio3("standard/behavior/behavior")
+                    _beh3 = _get_bio3("standard/behavior/behavior") or {}
                     _symp_act = _beh3.get("biological_thresholds", {}).get(
                         "sympathetic_activation", 70
                     )

@@ -9,7 +9,7 @@
 > 本檔是**生成視圖**；單一真相源是 [`status_matrix.yaml`](status_matrix.yaml)。五級狀態：`claimed`（宣稱存在）→ `implemented`（程式存在）→ `wired`（生產路徑呼叫）→
 > `verified`（端到端測試證明）→ `production`（benchmark 達標）。每列必須附驗證指令與日期；無法附者降回 `claimed`。
 > 「架構完成度」≠「模型能力完成度」：確定性能力與神經泛化分開計分（見 INTELLIGENCE_ASSESSMENT）。
-> 狀態快照：2026-09-22（由 YAML 同步）。核對：`python scripts/gen_status_matrix.py check`（0 通過 / 1 違規）。
+> 狀態快照：2026-09-23（由 YAML 同步）。核對：`python scripts/gen_status_matrix.py check`（0 通過 / 1 違規）。
 
 | 領域 | Claim（宣稱） | Implementation（實作） | 狀態 | 驗證指令／證據 | 最後驗證 |
 | --- | --- | --- | --- | --- | --- |
@@ -29,7 +29,7 @@
 | 明確不支援項文檔 | 正式版聲明範圍 | `docs/user_guide/unsupported.md`<br>`docs/architecture/limitations.md`<br>`docs/user_guide/hardware.md` | **verified** | `ls docs/user_guide/unsupported.md docs/architecture/limitations.md docs/user_guide/hardware.md`；三文檔存在且與 RELEASE_CRITERIA 同步 | 2026-09-17 |
 | HSP 加密金鑰 | 加密可用且啟動不炸 | `apps/backend/src/core/hsp/security.py` | **verified** | `pytest tests/core/hsp/`；佔位符自動回退生成＋警告；.env 佔位符致 5 errors 已修 | 2026-09-17 |
 | 測試品質門 | 全倉綠 | —（見證據欄） | **verified** | `pytest tests/`；5586 passed, 122 skipped, 0 failed（R74 全倉前景） | 2026-09-21 |
-| mypy 型別債 | 收斂中（棘輪門鎖定） | `pyproject.toml`<br>`scripts/mypy_budget_gate.py`<br>`scripts/mypy_budget.txt` | **verified** | `python scripts/mypy_budget_gate.py`；門機制可驗證；基線 497（R81 鎖定；歷史 559→540→518→R81 三域清零→497）；新增債 CI 直接紅燈 | 2026-09-22 |
+| mypy 型別債 | 收斂中（棘輪門鎖定） | `pyproject.toml`<br>`scripts/mypy_budget_gate.py`<br>`scripts/mypy_budget.txt` | **verified** | `python scripts/mypy_budget_gate.py`；門機制可驗證；基線 476（R82 鎖定；歷史 559→540→518→497→R82 三域＋fixture 過寬 mock 根治→476）；新增債 CI 直接紅燈 | 2026-09-22 |
 | flake8 | 0 errors | `.flake8` | **verified** | `python -m flake8`；全倉 0（37 類忽略為已知門檻寬鬆，非隱瞞） | 2026-09-03 |
 | 離線能力 | 無 key 可運作（部分） | `apps/backend/src/services/llm/providers/unified.py` | **wired** | unified-1g 永遠可用；反射/數學/字典離線；開放域生成需 LLM；unsupported.md 已聲明邊界 | 2026-09-17 |
 | 多模態 | 圖片/音訊/生成 | `apps/backend/src/ai/multimodal` | **implemented** | 真實對比訓練 82% top1（CIFAR 試點）；生成品質未達標 | 2026-09-03 |

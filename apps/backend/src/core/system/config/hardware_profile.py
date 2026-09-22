@@ -419,9 +419,13 @@ class HardwareProfile:
         Returns:
             Scaled interval: base_value * (1 / multiplier).
         """
-        if self._profile.base_multiplier <= 0:
+        multiplier = self._profile.base_multiplier
+        # 防禦：非數值（如測試 mock 洩漏）或非正數時不做縮放
+        if not isinstance(multiplier, (int, float)) or isinstance(multiplier, bool):
             return base_value
-        return base_value * (1.0 / self._profile.base_multiplier)
+        if multiplier <= 0:
+            return base_value
+        return base_value * (1.0 / multiplier)
 
     def get_summary(self) -> Dict[str, object]:
         """Get human-readable summary dict."""

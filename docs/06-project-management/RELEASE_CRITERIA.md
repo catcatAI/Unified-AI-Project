@@ -21,7 +21,7 @@
 - 開放域智能仍依外部／本地 LLM；原生引擎僅確定性＋試點泛化——分數見 INTELLIGENCE_ASSESSMENT（誠實拆分）。
 - 地圖 25 檔折疊懸崖：TREND 只認三連升（已註記）。
 - 非單調 autosize（如預力窗外）：終驗報錯（已落實）。
-- mypy 類型覆蓋債：**497**（R81 棘輪門鎖定，`scripts/mypy_budget.txt`；
+- mypy 類型覆蓋債：**476**（R82 棘輪門鎖定，`scripts/mypy_budget.txt`；
   `mypy apps/backend/src`
   全量可跑不再需旗標——python_version 提至 3.12 修開 numpy 2.5 stubs 的
   `Type statement`

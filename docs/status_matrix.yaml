@@ -192,7 +192,7 @@ features:
       - scripts/mypy_budget_gate.py
       - scripts/mypy_budget.txt
     verify_command: python scripts/mypy_budget_gate.py
-    evidence: 門機制可驗證；基線 497（R81 鎖定；歷史 559→540→518→R81 三域清零→497）；新增債 CI 直接紅燈
+    evidence: 門機制可驗證；基線 476（R82 鎖定；歷史 559→540→518→497→R82 三域＋fixture 過寬 mock 根治→476）；新增債 CI 直接紅燈
     last_verified: "2026-09-22"
 
   - id: flake8

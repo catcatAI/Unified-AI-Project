@@ -213,8 +213,8 @@ class ArtLearningWorkflow:
 _instance = None
 
 
-def get_art_workflow(bio=None) -> None:
-    """Get the art workflow by bio."""
+def get_art_workflow(bio=None) -> Optional["ArtLearningWorkflow"]:
+    """Get the art workflow singleton; None until first created with bio."""
     global _instance
     if _instance is None and bio is not None:
         _instance = ArtLearningWorkflow(bio)

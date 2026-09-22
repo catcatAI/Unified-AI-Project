@@ -224,7 +224,10 @@ class MountManager:
 
     def persistence_path(self, key: str) -> str:
         wrapper = self._resources.get(key)
-        return wrapper.persistence_path() if wrapper else ""
+        getter = getattr(wrapper, "get_persistence_path", None)
+        if callable(getter):
+            return getter()
+        return ""
 
     def clear(self) -> None:
         with self._lock:
