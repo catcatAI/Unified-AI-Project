@@ -87,6 +87,11 @@ python scripts/verify_main_flow_e2e.py            # → 15/15
 # 2. 確定性 benchmark
 python scripts/benchmark_ed3n_garden.py           # → 20/20
 
+# 2b. angela_bench 跨後端基準（R78；115 題，對比 Ollama/OpenAI 相容端點）
+python scripts/run_benchmarks.py --backend native,native-max    # 全套件 5 類
+python scripts/run_benchmarks.py --backend native --gate-native # CI 回歸門 exit 0
+python scripts/run_benchmarks.py --backend native,ollama --model llama3.1
+
 # 3. 安全關鍵
 python -m pytest tests/services/test_handlers.py \
                  tests/ai/core/test_execution_gate.py \
@@ -94,7 +99,7 @@ python -m pytest tests/services/test_handlers.py \
                  tests/security/ -q               # → 全 passed
 
 # 4. 全倉回歸
-python -m pytest tests/ -q --timeout=120          # → 5454+ passed, 0 failed
+python -m pytest tests/ -q --timeout=120          # → 5803 passed, 0 failed
 
 # 5. Lint
 python -m flake8 apps/backend/src scripts/run_luanti_agent.py  # 既有基準為準
