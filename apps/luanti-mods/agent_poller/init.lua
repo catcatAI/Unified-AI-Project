@@ -8,7 +8,10 @@ if not http_api then
     return
 end
 
-local BRIDGE_URL = "http://192.168.1.112:30003"
+-- Bridge URL is configurable per-world via minetest.conf:
+--   agent_poller_bridge_url = http://192.168.1.112:30003
+-- Default matches the Python bridge's own usage docs (localhost:30003).
+local BRIDGE_URL = minetest.settings:get("agent_poller_bridge_url") or "http://localhost:30003"
 local TARGET_PLAYER_NAME = "AngelaBot"
 local POLL_INTERVAL = 2.0
 local last_poll = 0

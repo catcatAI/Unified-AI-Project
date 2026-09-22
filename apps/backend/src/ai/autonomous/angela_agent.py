@@ -78,8 +78,9 @@ logger = logging.getLogger(__name__)
 class AngelaConfig:
     """Complete configuration for Angela autonomous agent"""
 
-    # Luanti connection
-    luanti_host: str = "192.168.1.112"
+    # Luanti connection (bridge binds 0.0.0.0; host field kept for parity
+    # with multimodal.game_agent and future direct-connector use)
+    luanti_host: str = "localhost"
     luanti_port: int = 30000
     bridge_port: int = 30003
     target_player: str = "AngelaBot"

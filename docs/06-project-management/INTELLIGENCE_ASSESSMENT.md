@@ -469,7 +469,8 @@ Phase 4: LatentReasoningNetwork (latent → text)
    `entry.relations` 建關聯圖餵 SNN」（目前 `learn_batch`/`TrainingExample`
    仍是 Q→A 映射，已擋住知識滲入但關聯訓練尚未接回）；② 用 §4.1.2 的四指標作為 SNN 回歸測試，每次改動可驗證關聯能力不退化；③ 擴大關聯圖深度/廣度基準（目前僅 3 節點），測 SNN 在更深鏈上的傳遞上限。
 3. **泛化驗證** — 添加 hold-out set 測試，避免過擬合
-4. **MMLU/HumanEval** — 標準基準測試，與業界比較
+4. **MMLU/HumanEval** — R78/R79 已建 `angela_bench`（MMLU 風格 MC
+   40 題＋HumanEval 式沙箱執行 10 題，`scripts/run_benchmarks.py`）；剩餘：接入真實外部 LLM 端點跑跨 AI 對比、題庫對齊業界原版以利直接比較
 5. **SNN 優化** — 考慮稀疏矩陣或圖神經網路
 
 ### 中優先級
