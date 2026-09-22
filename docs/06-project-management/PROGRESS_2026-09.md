@@ -75,3 +75,23 @@ angela_bench 全量重跑：native **80/26.7/97.5/0/100**、native-max mc **100%
 ### 三、驗證
 - 全倉 **5,804 passed, 0 failed**；multimodal game_behaviors 40 passed
 - mypy **432 鎖定**；black/flake8/prettier/核對門全綠
+
+## R84 — Dashboard E2E：Preview 實測七面板＋WS chat 死路徑修復（planned→partial）
+
+### 一、Preview 實測（backend:8000＋dashboard:3100 實跑）
+七面板逐一走訪：Chat（WS 🟢 Connected）、Models（後端表格＋統計）、Context（State Matrix＋12 intents）、Memory（誠實提示未初始化）、System（CPU/RAM/Disk 即時值）、Pet（互動閉環：Feed 後 Happiness 50→55、Hunger 50→30）、Config（Deployment/LLM/Backends/System 摘要）——全部渲染正常、資料來自真實後端 API。
+
+### 二、E2E 抓到的真死路徑（修復）
+**Dashboard Chat 面板從未成功發送過訊息**：
+1. ChatPanel 不送 handshake——後端 websocket_handler 強制 10s 內 handshake，否則 4001 斷線
+2. 發送格式 `{"type": "chat", "content"}` 不在後端分發清單——第一條被當 handshake 消費、之後被 echo，永遠拿不到 chat_response
+
+修復：onopen 送 handshake、發送改 `{"type": "chat_message", "data": {"content"}}`（與 desktop electron 客戶端契約一致）。實測閉環：`You: 1+1等於幾？` → `Angela: 1+1 = 2.0`（確定性數學引擎，route=llm, emotion=happy）。
+
+### 三、契約鎖定
+`tests/services/test_dashboard_ws_chat_e2e.py`（3 tests）：handshake 必要性、chat_message 契約回 chat_response、**舊格式只會 echo** 的回歸鎖定（防止再走回死路徑）。
+
+### 四、驗證
+- web-dashboard `tsc --noEmit` 0 errors
+- 全倉 **5,807 passed, 0 failed**（+3 E2E 契約測試）
+- 真相源 dashboard-e2e planned→partial（附 Preview 實測證據）

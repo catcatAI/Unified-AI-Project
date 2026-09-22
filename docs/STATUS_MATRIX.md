@@ -85,7 +85,7 @@
 | 🟡 partial | 對外公開 benchmark | 115 題管線、官方數據與 CI 回歸門已建（benchmarks/README.md）；跨 AI 對比待外部 LLM 端點實際接入跑分 |
 | 🟡 partial | MSBA 端到端品質驗證（融合品質 benchmark） | 管線與橋接 wired＋193 tests；融合輸出品質未 benchmark，A/B 對照未啟用 |
 | 🗓️ planned | 遊戲 20FPS 閉環 | 現 10Hz＋2s poller |
-| 🗓️ planned | Dashboard E2E 自動化 |  |
+| 🟡 partial | Dashboard E2E 自動化 | R84 Preview 實測七面板全通；WS chat 死路徑修復（ChatPanel 缺 handshake＋ type=chat 不在後端分發清單→echo）；契約鎖定 tests/services/test_dashboard_ws_chat_e2e.py |
 | 🗑️ deleted | Mobile app | Phase 11 刪（骨架；路徑歷史 apps/mobile，非目錄型 token 免掃） |
 | 🗑️ deleted | TactileService | Phase 11 刪（無硬體） |
 | 🗑️ deleted | ImageGenerationAgent | Phase 9 刪（stub） |

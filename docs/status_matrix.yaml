@@ -413,7 +413,9 @@ lifecycle:
     note: 現 10Hz＋2s poller
   - id: dashboard-e2e
     name: Dashboard E2E 自動化
-    status: planned
+    status: partial
+    note: R84 Preview 實測七面板全通；WS chat 死路徑修復（ChatPanel 缺 handshake＋
+      type=chat 不在後端分發清單→echo）；契約鎖定 tests/services/test_dashboard_ws_chat_e2e.py
   - id: mobile-app
     name: Mobile app
     status: deleted

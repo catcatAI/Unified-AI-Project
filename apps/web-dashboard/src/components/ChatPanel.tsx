@@ -35,6 +35,14 @@ export default function ChatPanel() {
 
     ws.onopen = () => {
       setConnected(true)
+      // 後端 websocket_handler 強制 handshake（10s 內無 handshake 即 4001 斷線）
+      ws.send(
+        JSON.stringify({
+          type: 'handshake',
+          client_type: 'web-dashboard',
+          client_version: '7.5.0-dev',
+        })
+      )
       if (reconnectRef.current) {
         clearTimeout(reconnectRef.current)
         reconnectRef.current = null
@@ -98,8 +106,8 @@ export default function ChatPanel() {
 
     wsRef.current.send(
       JSON.stringify({
-        type: 'chat',
-        content: input,
+        type: 'chat_message',
+        data: { content: input, user_name: 'User' },
       })
     )
 
