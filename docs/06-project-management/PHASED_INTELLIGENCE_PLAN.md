@@ -69,7 +69,9 @@
 - **下載**：`460K 詞典` 已齊備，無需下載
 - **訓練/修復**：`knowledge_base.py` 再增 30 條（`MMLU` 缺口
   `社科/STEM`），`route_knowledge` 支持更多屬性
-- **驗收**：`benchmark_mmlu_subset 100` 有 RAG `65%→75%`
+- **驗收**：`angela_bench`（`scripts/run_benchmarks.py`，R79 起替代已退役的模擬級
+  `benchmark_mmlu_subset`）knowledge/knowledge_mc 套件分數提升， `--gate-native`
+  floor 同步上调
 - **MD**：`INTELLIGENCE_ASSESSMENT` + `PROGRESS`
 
 ## 執行紀律（每階段必做）

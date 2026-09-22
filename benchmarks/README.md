@@ -42,13 +42,13 @@ python scripts/run_benchmarks.py --backend openai \
 
 ## 套件與計分
 
-| 套件         | 題數 | 評分                                                                                         |
-| ------------ | ---- | -------------------------------------------------------------------------------------------- |
+| 套件         | 題數 | 評分                                                                                                            |
+| ------------ | ---- | --------------------------------------------------------------------------------------------------------------- |
 | math         | 40   | 數值匹配（容差 1e-6 相對）；含純算式、中文數字、百分比、物理公式應用題（F=ma、v=at、E=½mv²、W=Fd、P=W/t、p=mv） |
-| knowledge    | 15   | gate 關鍵詞任一命中即對（英中混合）                                                          |
-| knowledge_mc | 40   | MMLU 風格四選一：回答含正確選項且不含任何干擾項（詞邊界匹配）；干擾項為同類實體，無字面線索 |
-| code         | 10   | 產生函式＋斷言，`CodeExecutionHandler` 沙箱實際執行（HumanEval 式）                          |
-| routing      | 10   | QueryType 標籤精確匹配                                                                       |
+| knowledge    | 15   | gate 關鍵詞任一命中即對（英中混合）                                                                             |
+| knowledge_mc | 40   | MMLU 風格四選一：回答含正確選項且不含任何干擾項（詞邊界匹配）；干擾項為同類實體，無字面線索                     |
+| code         | 10   | 產生函式＋斷言，`CodeExecutionHandler` 沙箱實際執行（HumanEval 式）                                             |
+| routing      | 10   | QueryType 標籤精確匹配                                                                                          |
 
 共 **115 題**，全部附地面真值。
 
@@ -98,10 +98,10 @@ server、vLLM、OpenAI、DeepSeek…）一行命令即可在同一套資料上�
 
 ## CI 回歸門
 
-`--gate-native` 模式：native 後端各套件分數低於 `GATE_NATIVE` 基準（math≥75%、
-knowledge≥25%、knowledge_mc≥90%、routing≥95%）即退出碼 2——已納入 CI
-（`.github/workflows/ci.yml` angela_bench step）。門檻**只升不降**：能力提升時應
-同步上调門檻（契約測試 `tests/test_run_benchmarks.py::TestGate` 鎖定）。
+`--gate-native` 模式：native 後端各套件分數低於 `GATE_NATIVE`
+基準（math≥75%、knowledge≥25%、knowledge_mc≥90%、routing≥95%）即退出碼 2——已納入 CI（`.github/workflows/ci.yml`
+angela_bench step）。門檻**只升不降**：能力提升時應同步上调門檻（契約測試
+`tests/test_run_benchmarks.py::TestGate` 鎖定）。
 
 ## 重現
 

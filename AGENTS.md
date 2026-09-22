@@ -895,11 +895,11 @@ collected — 0 errors**).
 > `results/bench_20260922-091107.json`: native **80%/26.7%/97.5%/0%/100%**,
 > native-max mc 100%. Fixed 3 real QueryClassifier misroutes (polite-prefix
 > yield, code-yield-file), 2 dataset labels aligned to production paths,
-> knowledge_base superlative/phrase queries, formula_solver target-marker
-> bug ("what velocity"→velocity), garden_engine reflex `越過`/`question`
-> glyphs. Simulated `benchmark_mmlu_subset.py` retired per RELEASE_CRITERIA.
-> **5,803 passed, 118 skipped, 0 failed**; mypy ratchet 540 locked; full suite
-> 5,803 in 4.5min.
+> knowledge_base superlative/phrase queries, formula_solver target-marker bug
+> ("what velocity"→velocity), garden_engine reflex `越過`/`question` glyphs.
+> Simulated `benchmark_mmlu_subset.py` retired per RELEASE_CRITERIA. **5,803
+> passed, 118 skipped, 0 failed**; mypy ratchet 540 locked; full suite 5,803 in
+> 4.5min.
 
 ### JavaScript/TypeScript
 
