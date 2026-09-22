@@ -18,6 +18,7 @@ angela_bench — 可驗證的多後端基準 harness。
   python scripts/run_benchmarks.py --list-suites
 
 退出碼：0 = 全部評分完成；1 = 參數/執行錯誤。
+  --gate-native：CI 回歸門模式——native 套件分數低於 GATE_NATIVE 基準即退出碼 2。
 """
 
 from __future__ import annotations
@@ -98,7 +99,7 @@ def load_dataset(path: Path = DATASET) -> List[BenchItem]:
                     suite=suite_name,
                     metric=suite["metric"],
                     ground_truth=raw.get("a"),
-                    gate=raw.get("gate"),
+                    gate=raw.get("gate") or raw.get("distractors"),
                     entry=raw.get("entry"),
                     asserts=raw.get("asserts"),
                 )
@@ -210,7 +211,7 @@ class NativeBackend:
             decision = await bus.route(item.q, "auto")
             return decision.results[decision.selected_model].text if decision.results else ""
 
-        if item.suite == "knowledge":
+        if item.suite in ("knowledge", "knowledge_mc"):
             decision = await bus.route(item.q, "auto")
             if decision.results and decision.selected_model:
                 return decision.results[decision.selected_model].text
@@ -240,7 +241,7 @@ class NativeMaxBackend(NativeBackend):
     name = "native-max"
 
     async def answer(self, item: BenchItem) -> str:
-        if item.suite == "knowledge":
+        if item.suite in ("knowledge", "knowledge_mc"):
             try:
                 from ai.knowledge_base import route_knowledge
 
@@ -363,6 +364,18 @@ def score_item(item: BenchItem, answer: str) -> Tuple[bool, bool]:
 
     if item.metric == "sandbox-exec":
         return _score_code(item, text)
+
+    if item.metric == "mc-exact":
+        # MC 評分：正確選項出現且所有干擾項都不出現——防止「全列出」過關。
+        # 用詞邊界匹配：化學式干擾項（CO vs CO2）有前綴關係，子字串比對會誤殺
+        low = _norm(text)
+
+        def _has_token(needle: str) -> bool:
+            return re.search(rf"\b{re.escape(_norm(needle))}\b", low) is not None
+
+        correct_in = _has_token(str(item.ground_truth))
+        distractor_in = any(_has_token(str(d)) for d in (item.gate or []))
+        return (correct_in and not distractor_in), False
 
     if item.metric == "exact-match":
         return _norm(text) == _norm(str(item.ground_truth)), False
@@ -492,6 +505,40 @@ def save_results(all_results: List[SuiteResult], out_path: Path) -> None:
     out_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+# ---------------------------------------------------------------- gate
+
+# CI 回歸門：native 後端各套件的最低可接受通過率（%）。低於即退出碼 2。
+# 基準取自 2026-09-22 本機官方運行（bench_20260922-091107）；
+# 只升不降：能力提升時應同步上调門檻。
+GATE_NATIVE: Dict[str, float] = {
+    "math": 75.0,
+    "knowledge": 25.0,
+    "knowledge_mc": 90.0,
+    "routing": 95.0,
+}
+
+
+def check_gate(results: List[SuiteResult]) -> int:
+    """回傳 0（全過）或 2（有套件低於基準）。"""
+    failed = []
+    for r in results:
+        if r.backend != "native":
+            continue
+        floor = GATE_NATIVE.get(r.suite)
+        if floor is None:
+            continue
+        if r.accuracy < floor:
+            failed.append((r.suite, r.accuracy, floor))
+    if failed:
+        for suite, acc, floor in failed:
+            print(
+                f"GATE FAIL: native/{suite} {acc:.1f}% < {floor:.1f}%",
+                file=sys.stderr,
+            )
+        return 2
+    return 0
+
+
 # ---------------------------------------------------------------- main
 
 
@@ -499,11 +546,16 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="angela_bench — 可驗證的多後端基準")
     parser.add_argument("--dataset", default=str(DATASET))
     parser.add_argument("--backend", default="native,echo,naive")
-    parser.add_argument("--suite", default="math,knowledge,code,routing")
+    parser.add_argument("--suite", default="math,knowledge,knowledge_mc,code,routing")
     parser.add_argument("--model", default="", help="模型名（openai/ollama 後端）")
     parser.add_argument("--base-url", default="http://localhost:11434/v1")
     parser.add_argument("--api-key", default=os.environ.get("OPENAI_API_KEY", ""))
     parser.add_argument("--out", default=str(REPO_ROOT / "benchmarks" / "results"))
+    parser.add_argument(
+        "--gate-native",
+        action="store_true",
+        help="CI 回歸門：native 分數低於 GATE_NATIVE 即退出碼 2",
+    )
     parser.add_argument("--list-suites", action="store_true")
     args = parser.parse_args()
 
@@ -552,6 +604,12 @@ def main() -> int:
 
     print("\n=== comparison ===")
     print(render_table(all_results))
+
+    if args.gate_native:
+        rc = check_gate(all_results)
+        if rc == 0:
+            print("gate: OK (native floors met)")
+        return rc
 
     out_dir = Path(args.out)
     out_dir.mkdir(parents=True, exist_ok=True)

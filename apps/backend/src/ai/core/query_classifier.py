@@ -103,6 +103,12 @@ _FILE_SPECIFIC = re.compile(
     r"(文件|檔案|資料夾|文件夹|目錄|目录|路徑|路径|備份|备份|\.\w{1,8}|/)",
     re.IGNORECASE,
 )
+# 禮貌前綴詞表（COMMAND 讓位判定用）：這些詞本身不承載操作語意，
+# 僅靠它們命中 COMMAND 且另有領域信號時，前綴讓位給領域類型。
+# 「請計算 123 × 456」曾因 anchored 禮貌前綴判 command 而非 math。
+_POLITENESS_TOKENS = frozenset(
+    {"請", "请", "幫我", "帮我", "麻煩", "麻烦", "please", "can you", "could you"}
+)
 # 土木防誤判門控（R1）：「板」單字誤傷電腦主板類；強複合詞則為真土木信號。
 _CIVIL_FALSE_POSITIVE = re.compile(
     r"(主板|主機板|主机板|電路板|电路板|\bB\d{3,4}[A-Z]*\b|PCB|黑板|平板|面板)",
@@ -768,6 +774,31 @@ class QueryClassifier:
         # （文件/路徑/副檔名/備份），file 屬通用動詞（建立/刪除）誤中——
         # 「建立任務：買牛奶」曾判 file/create 走檔案操作要路徑。
         if any(m[0] == QueryType.TASK for m in matches) and not _FILE_SPECIFIC.search(text):
+            matches = [m for m in matches if m[0] != QueryType.FILE]
+
+        # 禮貌前綴讓位（R13 同構）：僅靠請/幫我/please 類前綴命中 COMMAND、
+        # 且存在其他領域信號（math/search/code/file…）時，前綴不構成意圖
+        # 主張——「請計算 123 × 456」應走 math 而非 command。
+        # 門控：「打開計算機／關閉計算器」類 app 名詞是命令受詞而非數學
+        # 意圖，此時 COMMAND 不讓位。
+        _APP_NOUN_GUARD = re.compile(
+            r"(打開|關閉|啟動|停止|open|close|start|stop|launch|kill)",
+            re.IGNORECASE,
+        )
+        command_hits = [m for m in matches if m[0] == QueryType.COMMAND]
+        if command_hits:
+            cmd_text_hit = any(
+                tok in text.lower()
+                for tok in _POLITENESS_TOKENS
+                if not tok.startswith(("can", "could"))
+            ) or bool(re.search(r"\b(can|could)\s+you\b", text, re.IGNORECASE))
+            domain_hits = [m for m in matches if m[0] != QueryType.COMMAND]
+            if cmd_text_hit and domain_hits and not _APP_NOUN_GUARD.search(text):
+                matches = [m for m in matches if m[0] != QueryType.COMMAND]
+
+        # code 領域讓位（R13 同構）：「Write a Python function」——write 是
+        # file 通用動詞，function 才是領域信號；無檔案實體時 file 讓位 code。
+        if any(m[0] == QueryType.CODE for m in matches) and not _FILE_SPECIFIC.search(text):
             matches = [m for m in matches if m[0] != QueryType.FILE]
         if matches:
             primary = matches[0]

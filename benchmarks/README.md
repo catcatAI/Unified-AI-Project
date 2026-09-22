@@ -42,12 +42,15 @@ python scripts/run_benchmarks.py --backend openai \
 
 ## 套件與計分
 
-| 套件      | 題數 | 評分                                                                                         |
-| --------- | ---- | -------------------------------------------------------------------------------------------- |
-| math      | 28   | 數值匹配（容差 1e-6 相對）；含純算式、中文數字、百分比、物理公式應用題（F=ma、v=at、E=½mv²） |
-| knowledge | 15   | gate 關鍵詞任一命中即對（英中混合）                                                          |
-| code      | 10   | 產生函式＋斷言，`CodeExecutionHandler` 沙箱實際執行（HumanEval 式）                          |
-| routing   | 10   | QueryType 標籤精確匹配                                                                       |
+| 套件         | 題數 | 評分                                                                                         |
+| ------------ | ---- | -------------------------------------------------------------------------------------------- |
+| math         | 40   | 數值匹配（容差 1e-6 相對）；含純算式、中文數字、百分比、物理公式應用題（F=ma、v=at、E=½mv²、W=Fd、P=W/t、p=mv） |
+| knowledge    | 15   | gate 關鍵詞任一命中即對（英中混合）                                                          |
+| knowledge_mc | 40   | MMLU 風格四選一：回答含正確選項且不含任何干擾項（詞邊界匹配）；干擾項為同類實體，無字面線索 |
+| code         | 10   | 產生函式＋斷言，`CodeExecutionHandler` 沙箱實際執行（HumanEval 式）                          |
+| routing      | 10   | QueryType 標籤精確匹配                                                                       |
+
+共 **115 題**，全部附地面真值。
 
 ## 首次官方結果（2026-09-22，本機實測）
 
@@ -60,6 +63,19 @@ Linux；原生後端無外部 LLM。原始 JSON：`results/bench_20260922-022550
 | naive（正則）                    | 50.0%     | 0.0%      | 0.0% | 0.0%      |
 | **native**（ED3N+GARDEN+確定性） | **71.4%** | **20.0%** | 0.0% | **50.0%** |
 | native-max（＋知識管線）         | 71.4%     | 20.0%     | 0.0% | 50.0%     |
+
+### R79 擴充後官方結果（2026-09-22，115 題；含分類器/知識庫/reflex 修復）
+
+原始 JSON：`results/bench_20260922-091107.json`。
+
+| Backend                          | math（40） | knowledge（15） | knowledge_mc（40） | code | routing（10） |
+| -------------------------------- | ---------- | --------------- | ------------------ | ---- | ------------- |
+| echo（下限）                     | 2.5%       | 0.0%            | 0.0%               | —    | 0.0%          |
+| naive（正則）                    | 35.0%      | 0.0%            | 0.0%               | —    | 0.0%          |
+| **native**（ED3N+GARDEN+確定性） | **80.0%**  | **26.7%**       | **97.5%**          | —    | **100%**      |
+| native-max（＋知識管線）         | 80.0%      | 26.7%           | **100%**           | —    | 100%          |
+
+（code 套件在 R79 門檻輪未跑；上輪官方結果 0% 維持不變——原生無生成模型。）
 
 ### 誠實解讀
 
@@ -79,6 +95,13 @@ Linux；原生後端無外部 LLM。原始 JSON：`results/bench_20260922-022550
 
 任何 OpenAI 相容端點（Ollama、llama.cpp
 server、vLLM、OpenAI、DeepSeek…）一行命令即可在同一套資料上出分，例如 llama3.1 與 native 的對比表會由 harness 直接輸出。外部後端跑 math/knowledge/code/routing 同一套評分，不通融、不加權。
+
+## CI 回歸門
+
+`--gate-native` 模式：native 後端各套件分數低於 `GATE_NATIVE` 基準（math≥75%、
+knowledge≥25%、knowledge_mc≥90%、routing≥95%）即退出碼 2——已納入 CI
+（`.github/workflows/ci.yml` angela_bench step）。門檻**只升不降**：能力提升時應
+同步上调門檻（契約測試 `tests/test_run_benchmarks.py::TestGate` 鎖定）。
 
 ## 重現
 

@@ -31,7 +31,7 @@ understanding, only symbolic evaluation of constrained word problems.
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, List, Optional, TypedDict
+from typing import Any, Dict, List, Optional, Tuple, TypedDict
 
 # Canonical quantity names.
 MASS = "mass"
@@ -293,9 +293,17 @@ def find_target(text: str) -> Optional[str]:
             last_marker = max(last_marker, idx)
     if last_marker >= 0:
         ask = lowered[last_marker:]
+    # R79 修復：按「ask 子串中最先出現的位置」選 target，而非 TARGET_HINTS
+    # 表順序——「What is the momentum when mass = 3 and velocity = 4?」中
+    # velocity 在表序上先於 momentum，會把 asked quantity 誤判成已知變數，
+    # 導致整題無解（unknown != target 且 qty != target）。
+    best: Optional[Tuple[int, str]] = None
     for hint in TARGET_HINTS:
-        if hint in ask:
-            return KEYWORDS.get(hint, hint)
+        idx = ask.find(hint)
+        if idx >= 0 and (best is None or idx < best[0]):
+            best = (idx, hint)
+    if best is not None:
+        return KEYWORDS.get(best[1], best[1])
     return None
 
 

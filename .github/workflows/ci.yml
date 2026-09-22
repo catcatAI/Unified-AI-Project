@@ -105,6 +105,14 @@ jobs:
         env:
           ANGELA_HARDWARE_PROFILE: laptop_power_saver
           PYTHONPATH: apps/backend/src
+      - name: angela_bench native regression gate (能力基準回歸門)
+        run: |
+          echo "⏳ Running angela_bench native suite with regression gate (~20s)..."
+          python scripts/run_benchmarks.py --backend native --suite math,knowledge,knowledge_mc,routing --gate-native --out /tmp/bench-results
+          echo "✅ native capability floors met (math≥75% knowledge≥25% knowledge_mc≥90% routing≥95%)"
+        env:
+          ANGELA_HARDWARE_PROFILE: laptop_power_saver
+          PYTHONPATH: apps/backend/src
       - name: Test count drift check
         run: |
           COLLECTED=$(python -m pytest tests/ --collect-only -q 2>&1 | grep -oP '\d+(?= tests collected)' | tail -1)

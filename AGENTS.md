@@ -886,6 +886,20 @@ collected — 0 errors**).
 > and isort import sorting. Flake8 clean (0 errors). **5,588 tests collected,
 > 5,466 passed, 122 skipped, 0 errors**. All lint/type checks passing. Ready for
 > v7.5.0 release.
+>
+> ✅ **NOTE (Updated 2026-09-22, §X #266)**: **§X #266**: Benchmark acceptance
+> round — angela_bench expanded to **115 items** (math 40 incl. graded word
+> problems, knowledge_mc 40 MMLU-style, knowledge 15, code 10 sandbox-exec,
+> routing 10) with `--gate-native` CI regression gate (floors: math≥75%,
+> knowledge≥25%, knowledge_mc≥90%, routing≥95%). Official run
+> `results/bench_20260922-091107.json`: native **80%/26.7%/97.5%/0%/100%**,
+> native-max mc 100%. Fixed 3 real QueryClassifier misroutes (polite-prefix
+> yield, code-yield-file), 2 dataset labels aligned to production paths,
+> knowledge_base superlative/phrase queries, formula_solver target-marker
+> bug ("what velocity"→velocity), garden_engine reflex `越過`/`question`
+> glyphs. Simulated `benchmark_mmlu_subset.py` retired per RELEASE_CRITERIA.
+> **5,803 passed, 118 skipped, 0 failed**; mypy ratchet 540 locked; full suite
+> 5,803 in 4.5min.
 
 ### JavaScript/TypeScript
 

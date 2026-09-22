@@ -10,6 +10,7 @@ MMLU 100 中 STEM/人文/社科 75 題因知識庫僅 81 條目未命中（25%�
 """
 
 import os, sys, time
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps/backend/src"))
 
 # 20 條新增知識（覆蓋 MMLU 缺口）
@@ -36,35 +37,45 @@ NEW_KNOWLEDGE = {
     "math_2+2": {"answer": "4"},
 }
 
+
 def main():
     from core.backbone.hardware import HardwareProfile
+
     hw = HardwareProfile.detect()
     tier = HardwareProfile.get_tier(hw)
     adaptive = HardwareProfile.get_adaptive_compute(hw)
-    print(f"硬件規格自適應（L3-1 知識擴充 20 條）: GPU={hw['gpu']} RAM={hw['ram_gb']:.1f} tier={tier}")
+    print(
+        f"硬件規格自適應（L3-1 知識擴充 20 條）: GPU={hw['gpu']} RAM={hw['ram_gb']:.1f} tier={tier}"
+    )
 
     # 歷史投影（僅供對照，不再更新）：試點當時無 RAG 25% / 有 RAG 45%，+20 條 → 65%
-    # 現狀以 benchmark_mmlu_subset.py 實測為準（20 條已持久化進源碼）。
+    # 現狀以 angela_bench（scripts/run_benchmarks.py）knowledge_mc 實測為準。
     print("  歷史投影（試點當時）: 無 RAG 25% / 有 RAG 45%，+20 條 → 65%（僅對照）")
-    print("  現狀請看 benchmark_mmlu_subset.py 實測輸出（20 條已持久化）")
+    print("  現狀請看 scripts/run_benchmarks.py --backend native-max --suite knowledge_mc")
     print("  新增 20 條（Hamlet/Shakespeare, WW2 1945, 2+2 4, 首都等）")
     # 硬件自適應 batch
-    batch = 25 if tier in ("high_performance_desktop","server_cloud") else 10
-    batch = int(batch * adaptive['ed3n_batch_multiplier'] / 1.5)
-    print(f"  硬件自適應 batch {batch}×{100//batch} 批，筆電同規格 tier {HardwareProfile.get_tier({'gpu': 'Intel Arc B570', 'gpu_memory_gb': 10, 'ram_gb': 15.5, 'cpu_cores': 4, 'gpu_vendor': 'intel'})} → ✅")
+    batch = 25 if tier in ("high_performance_desktop", "server_cloud") else 10
+    batch = int(batch * adaptive["ed3n_batch_multiplier"] / 1.5)
+    print(
+        f"  硬件自適應 batch {batch}×{100//batch} 批，筆電同規格 tier {HardwareProfile.get_tier({'gpu': 'Intel Arc B570', 'gpu_memory_gb': 10, 'ram_gb': 15.5, 'cpu_cores': 4, 'gpu_vendor': 'intel'})} → ✅"
+    )
     # 實際寫入知識庫（若存在）
     try:
         from ai.knowledge_base import _KNOWLEDGE
+
         added = 0
         for k, v in NEW_KNOWLEDGE.items():
             if k not in _KNOWLEDGE:
                 _KNOWLEDGE[k] = v
                 added += 1
-        print(f"  實際寫入知識庫 {added} 條（內存，heavy 需持久化至 models/trained/knowledge.json）")
+        print(
+            f"  實際寫入知識庫 {added} 條（內存，heavy 需持久化至 models/trained/knowledge.json）"
+        )
     except Exception as e:
         print(f"  知識庫寫入 fallback（模擬）: {e}")
     time.sleep(0.02)
     return 0
+
 
 if __name__ == "__main__":
     main()

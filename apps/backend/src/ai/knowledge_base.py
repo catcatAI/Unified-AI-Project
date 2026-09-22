@@ -99,57 +99,51 @@ _KNOWLEDGE: Dict[str, Dict[str, str]] = {
     "sunday": {"weekday": "7", "next": "monday"},
     "diamond": {"hardness": "hardest"},
     "iron": {"metal": "yes"},
-    "gold_metal": {"metal": "yes"},
     # L3-1 擴充 20 條（2026-09-01, 硬件規格自適應 Arc B570 15.5GB, MMLU 45%→65%）
-    "hamlet": {"author": "Shakespeare", "wrote": "Hamlet"},
     "shakespeare": {"wrote": "Hamlet", "author": "Shakespeare"},
+    "hamlet": {"author": "Shakespeare", "wrote": "Hamlet"},
     "ww2": {"ended": "1945", "answer": "1945"},
     "world war 2": {"ended": "1945", "answer": "1945"},
-    "ww2_1945": {"answer": "1945", "ended": "1945"},
-    "shakespeare_hamlet": {"answer": "Shakespeare", "author": "Shakespeare"},
     "einstein": {"theory": "relativity", "answer": "relativity"},
     "newton": {"law": "gravity", "answer": "gravity"},
     "oxygen": {"symbol": "O", "answer": "O"},
     "france": {"capital": "Paris", "answer": "Paris"},
     "japan": {"capital": "Tokyo", "answer": "Tokyo"},
-    "usa": {"capital": "Washington", "answer": "Washington"},
-    "china": {"capital": "Beijing", "answer": "Beijing"},
+    "usa": {"capital": "Washington", "currency": "Dollar", "answer": "Washington"},
+    "china": {"capital": "Beijing", "language": "Chinese", "answer": "Beijing"},
     "pi": {"value": "3.14", "answer": "3.14"},
     "light speed": {"value": "299792458", "answer": "299792458"},
     "heart": {"chambers": "4", "answer": "4"},
-    "math_2+2": {"answer": "4", "equals": "4"},
     "2+2": {"equals": "4", "answer": "4"},
-    # Phase 4 擴充 30 條（2026-09-02, 硬件規格自適應 Arc B570 15.5GB, MMLU 65%→75% 50 條）
-    "capital_usa": {"capital": "Washington", "answer": "Washington"},
-    "capital_uk": {"capital": "London", "answer": "London"},
-    "capital_germany": {"capital": "Berlin", "answer": "Berlin"},
-    "capital_italy": {"capital": "Rome", "answer": "Rome"},
-    "capital_russia": {"capital": "Moscow", "answer": "Moscow"},
-    "chemical_h2o": {"formula": "H2O", "answer": "H2O"},
-    "chemical_co2": {"formula": "CO2", "answer": "CO2"},
-    "chemical_nacl": {"formula": "NaCl", "answer": "NaCl"},
-    "physics_light": {"speed": "299792458", "answer": "299792458"},
-    "physics_gravity": {"value": "9.8", "answer": "9.8"},
-    "biology_dna": {"shape": "double helix", "answer": "double helix"},
-    "biology_cell": {"smallest": "cell", "answer": "cell"},
-    "history_ww1": {"ended": "1918", "answer": "1918"},
-    "history_columbus": {"year": "1492", "answer": "1492"},
-    "geography_nile": {"longest": "Nile", "answer": "Nile"},
-    "geography_everest": {"highest": "Everest", "answer": "Everest"},
-    "art_mona": {"painter": "Leonardo", "answer": "Leonardo"},
-    "music_beethoven": {"composer": "Beethoven", "answer": "Beethoven"},
-    "ocean_largest": {"largest": "Pacific", "answer": "Pacific"},
-    "desert_largest": {"largest": "Sahara", "answer": "Sahara"},
-    "planet_smallest": {"smallest": "Mercury", "answer": "Mercury"},
-    "element_lightest": {"lightest": "Hydrogen", "answer": "Hydrogen"},
-    "currency_usa": {"currency": "Dollar", "answer": "Dollar"},
-    "language_china": {"language": "Chinese", "answer": "Chinese"},
-    "inventor_lightbulb": {"inventor": "Edison", "answer": "Edison"},
-    "discoverer_america": {"discoverer": "Columbus", "answer": "Columbus"},
-    "inventor_edison": {"inventor": "Edison", "answer": "Edison"},
+    # R79 修復：Phase 4 擴充的 31 條複合底線 key（capital_uk、geography_nile…）是死
+    # 條目——tokens 匹配（re.findall(r"[a-z0-9]+")）永遠切不出生含底線的 key，
+    # 宣稱擴充但無法被任何自然語言觸發。全部改寫為實體詞 key（合併到既有 key），
+    # 並新增 superlative 短語查詢（見 route_knowledge）。
+    "uk": {"capital": "London", "answer": "London"},
+    "britain": {"capital": "London", "answer": "London"},
+    "germany": {"capital": "Berlin", "answer": "Berlin"},
+    "italy": {"capital": "Rome", "answer": "Rome"},
+    "russia": {"capital": "Moscow", "answer": "Moscow"},
+    "co2": {"formula": "CO2", "answer": "CO2"},
+    "nacl": {"formula": "NaCl", "answer": "NaCl"},
+    "gravity": {"value": "9.8", "answer": "9.8"},
+    "dna": {"shape": "double helix", "answer": "double helix"},
+    "cell": {"smallest": "cell", "answer": "cell"},
+    "ww1": {"ended": "1918", "answer": "1918"},
+    "world war 1": {"ended": "1918", "answer": "1918"},
+    "columbus": {"year": "1492", "answer": "1492"},
+    "nile": {"longest": "Nile", "answer": "Nile"},
+    "everest": {"highest": "Everest", "answer": "Everest"},
+    "mona": {"painter": "Leonardo", "answer": "Leonardo"},
+    "beethoven": {"composer": "Beethoven", "answer": "Beethoven"},
+    "pacific": {"largest": "Pacific", "answer": "Pacific"},
+    "sahara": {"largest": "Sahara", "answer": "Sahara"},
+    "mercury": {"smallest": "Mercury", "answer": "Mercury"},
+    "hydrogen": {"lightest": "Hydrogen", "answer": "Hydrogen"},
     "h2o": {"formula": "H2O", "answer": "H2O"},
     "lightbulb": {"inventor": "Edison", "answer": "Edison"},
     "edison": {"inventor": "Edison", "answer": "Edison"},
+    "america": {"discoverer": "Columbus", "answer": "Columbus"},
 }
 
 # unit conversion table: (unit_a, unit_b) -> multiplier from a to b
@@ -322,6 +316,21 @@ def route_knowledge(text: str) -> Optional[str]:
     if "blue planet" in t:
         return "Earth"
 
+    # 3b) multi-word phrase subjects：tokens 匹配切不開空格實體（"world war 2"
+    # → world/war/2；"light bulb" → light/bulb），用短語先行解析到正典 key。
+    _phrase_subjects = (
+        ("world war 2", "ww2"),
+        ("world war ii", "ww2"),
+        ("world war 1", "ww1"),
+        ("world war i", "ww1"),
+        ("light bulb", "lightbulb"),
+        ("second world war", "ww2"),
+        ("first world war", "ww1"),
+    )
+    for phrase, canonical in _phrase_subjects:
+        if phrase in t:
+            t = t.replace(phrase, canonical)
+
     # 4) days in a week / year
     if re.search(r"\bweek\b", t) and re.search(r"\bday\b", t):
         return "7"
@@ -338,6 +347,26 @@ def route_knowledge(text: str) -> Optional[str]:
         entry = _KNOWLEDGE.get(succ)
         if entry and entry.get("next"):
             return entry["next"]
+
+    # 4c) superlative phrases（策展知識庫範圍內的知名「最」問題）：
+    # 「largest ocean」「highest mountain」等固定短語直接對應專屬屬性。
+    # R79：原本靠 ocean_largest 等死 key 支撐，實際永遠答不出。
+    _superlatives = (
+        ("largest ocean", "pacific"),
+        ("largest desert", "sahara"),
+        ("highest mountain", "everest"),
+        ("tallest mountain", "everest"),
+        ("longest river", "nile"),
+        ("smallest planet", "mercury"),
+        ("lightest element", "hydrogen"),
+        ("smallest unit of life", "cell"),
+        ("smallest living unit", "cell"),
+    )
+    for phrase, subject in _superlatives:
+        if phrase in t:
+            entry = _KNOWLEDGE.get(subject)
+            if entry and "answer" in entry:
+                return entry["answer"]
 
     # 5) subject attribute lookup
     # Word-boundary match for ASCII subjects: a bare ``subject in t`` makes
@@ -374,6 +403,34 @@ def route_knowledge(text: str) -> Optional[str]:
                 return attrs["state"]
             if any(k in t for k in ("wheel", "輪子", "輪")) and "wheels" in attrs:
                 return attrs["wheels"]
+            if "chamber" in t and "chambers" in attrs:
+                return attrs["chambers"]
+            if any(k in t for k in ("currency", "貨幣", "通貨")) and "currency" in attrs:
+                return attrs["currency"]
+            if any(k in t for k in ("language", "語言", "语言")) and "language" in attrs:
+                return attrs["language"]
+            if any(k in t for k in ("composer", "作曲家")) and "composer" in attrs:
+                return attrs["composer"]
+            if any(k in t for k in ("painter", "畫家", "画家")) and "painter" in attrs:
+                return attrs["painter"]
+            if any(k in t for k in ("discoverer", "發現者", "发现者")) and "discoverer" in attrs:
+                return attrs["discoverer"]
+            if "shape" in t and "shape" in attrs:
+                return attrs["shape"]
+            if any(k in t for k in ("inventor", "發明", "发明")) and "inventor" in attrs:
+                return attrs["inventor"]
+            if "year" in t and "year" in attrs:
+                return attrs["year"]
+            if any(k in t for k in ("longest", "最長", "最长")) and "longest" in attrs:
+                return attrs["longest"]
+            if any(k in t for k in ("highest", "tallest", "最高")) and "highest" in attrs:
+                return attrs["highest"]
+            if any(k in t for k in ("largest", "最大")) and "largest" in attrs:
+                return attrs["largest"]
+            if any(k in t for k in ("smallest", "最小")) and "smallest" in attrs:
+                return attrs["smallest"]
+            if any(k in t for k in ("lightest", "最輕", "最轻")) and "lightest" in attrs:
+                return attrs["lightest"]
             if any(k in t for k in ("value", "worth", "值", "價值")) and "value" in attrs:
                 return attrs["value"]
             # L3-1 擴充：author/wrote/capital/ended 等通用屬性
@@ -429,8 +486,11 @@ def route_knowledge(text: str) -> Optional[str]:
             else:
                 return f"1 {src_unit} = {multiplier} {dst_unit}"
 
-    # 7) chemical formula: "formula of water", "what is the formula of salt"
-    m = re.search(r"(?:formula|composition|chemical)\s+(?:of|for|is)?\s*(\w+(?:\s+\w+)?)", t)
+    # 7) chemical formula: "formula of water", "what is the formula of salt",
+    #    "chemical formula of salt"（chemical 與實體間可隔 formula 一詞）
+    m = re.search(r"(?:chemical\s+)?(?:formula|composition)\s+(?:of|for|is)?\s*(\w+(?:\s+\w+)?)", t)
+    if not m:
+        m = re.search(r"chemical\s+(?:of|for|is)?\s*(\w+(?:\s+\w+)?)", t)
     if m:
         name = m.group(1).strip()
         formula = _CHEMICAL_FORMULAS.get(name)

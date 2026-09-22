@@ -79,6 +79,11 @@ class _ReflexTable:
             return self._cache[lower]
         for pattern, response in self.patterns.items():
             if pattern in lower:
+                # R79 修復：ASCII pattern 用詞邊界匹配——reflex 表中的短詞
+                # （如 "hi"）以子字串匹配會誤中 china/highest/which 等實體詞，
+                # 讓知識問題被 greeting 劫走。CJK 無詞邊界，保持子字串。
+                if pattern.isascii() and re.search(rf"\b{re.escape(pattern)}\b", lower) is None:
+                    continue
                 if len(self._cache) >= self._max_cache:
                     oldest = next(iter(self._cache))
                     del self._cache[oldest]

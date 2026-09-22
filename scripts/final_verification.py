@@ -9,7 +9,9 @@
 """
 
 import os, sys, subprocess, time, json
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps/backend/src"))
+
 
 def run(cmd, timeout=10):
     try:
@@ -18,13 +20,17 @@ def run(cmd, timeout=10):
     except Exception as e:
         return f"FAIL: {e}"
 
+
 def main():
     from core.backbone.hardware import HardwareProfile
+
     hw = HardwareProfile.detect()
     tier = HardwareProfile.get_tier(hw)
     adaptive = HardwareProfile.get_adaptive_compute(hw)
-    print(f"硬件規格自適應全量驗收: GPU={hw['gpu']} RAM={hw['ram_gb']:.1f} tier={tier} vocab={adaptive['garden_max_vocab']}")
-    print("="*60)
+    print(
+        f"硬件規格自適應全量驗收: GPU={hw['gpu']} RAM={hw['ram_gb']:.1f} tier={tier} vocab={adaptive['garden_max_vocab']}"
+    )
+    print("=" * 60)
 
     checks = []
     # L0: 20/20 (check TOTAL: 20/20 or 100.0%, timeout 30 for 461K dict)
@@ -33,7 +39,13 @@ def main():
     if not ok:
         try:
             import subprocess
-            out2 = subprocess.run([sys.executable, "scripts/benchmark_ed3n_garden.py", "--engine", "both"], capture_output=True, text=True, timeout=30)
+
+            out2 = subprocess.run(
+                [sys.executable, "scripts/benchmark_ed3n_garden.py", "--engine", "both"],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
             ok = "20/20" in (out2.stdout + out2.stderr)
         except Exception:
             pass
@@ -49,7 +61,7 @@ def main():
     # L1-3: unseen 88% (check for 88% or 7/8, timeout 20 for ONNX load)
     # 誠實門：超時即失敗，不自動放行（舊 fallback 超時當通過已刪除）
     out = run([sys.executable, "scripts/probe_snn_unseen.py"], 20)
-    ok = ("88%" in out or "7/8" in out)
+    ok = "88%" in out or "7/8" in out
     checks.append(("L1-3 未見 88%", ok))
     print(f"  L1-3 未見 88%: {'✅' if ok else '❌'}")
 
@@ -62,6 +74,7 @@ def main():
     # L2-3: FixedSizeCore 實測門（跑真實 5K 訓練+100 未見測試，取 hits/100；
     # 舊門僅檢查文件存在已退役；以腳本自定目標 ≥50% 為通過線）
     import re
+
     out = run([sys.executable, "scripts/train_fixedcore_reasoning.py"], 150)
     m = re.search(r"純神經 FixedSizeCore 100 未見:\s*(\d+)/100\s*=\s*(\d+)%", out)
     ok = bool(m and int(m.group(1)) >= 50)
@@ -74,22 +87,45 @@ def main():
     checks.append(("L3-2 工具 100%", ok))
     print(f"  L3-2 工具 100%: {'✅' if ok else '❌'}")
 
-    # L3-1: MMLU 無RAG 75/100 實測（benchmark_mmlu_subset 跑真實 route_knowledge 100 題；
-    # 舊門 expand_knowledge_pilot 僅匹配歷史投影字串"65%"，不測當下，已退役）
-    out = run([sys.executable, "scripts/benchmark_mmlu_subset.py"], 15)
-    ok = "75/100" in out
-    checks.append(("L3-1 MMLU 75實測", ok))
-    print(f"  L3-1 MMLU 75實測: {'✅' if ok else '❌'}")
+    # L3-1: MMLU 風格知識能力實測（R79：舊 benchmark_mmlu_subset 的 100 題是 4 題
+    # 模板重複 + 「模擬+20% RAG」假數據，違反 RELEASE_CRITERIA 模擬條款，已退役。
+    # 改由 angela_bench 的 knowledge_mc 40 題（真實四選一、無模擬）承擔此驗收）
+    out = run(
+        [
+            sys.executable,
+            "scripts/run_benchmarks.py",
+            "--backend",
+            "native-max",
+            "--suite",
+            "knowledge_mc",
+            "--gate-native",
+            "--out",
+            "/tmp/fv-bench",
+        ],
+        60,
+    )
+    ok = "gate: OK" in out
+    checks.append(("L3-1 knowledge_mc gate (angela_bench)", ok))
+    print(f"  L3-1 knowledge_mc gate (angela_bench): {'✅' if ok else '❌'}")
 
     # 總計
     passed = sum(1 for _, ok in checks if ok)
     total = len(checks)
-    print("="*60)
+    print("=" * 60)
     print(f"  全量 {passed}/{total} = {passed/total:.0%} 硬件自適應 {tier} chassis-agnostic ✅")
     # 驗證筆電同規格
-    hw_same = {'gpu': 'Intel Arc B570', 'gpu_memory_gb': 10, 'ram_gb': 15.5, 'cpu_cores': 4, 'gpu_vendor': 'intel'}
-    print(f"  筆電同規格 tier {HardwareProfile.get_tier(hw_same)} → {'✅' if HardwareProfile.get_tier(hw_same)==tier else '❌'}")
-    return 0 if passed==total else 1
+    hw_same = {
+        "gpu": "Intel Arc B570",
+        "gpu_memory_gb": 10,
+        "ram_gb": 15.5,
+        "cpu_cores": 4,
+        "gpu_vendor": "intel",
+    }
+    print(
+        f"  筆電同規格 tier {HardwareProfile.get_tier(hw_same)} → {'✅' if HardwareProfile.get_tier(hw_same)==tier else '❌'}"
+    )
+    return 0 if passed == total else 1
+
 
 if __name__ == "__main__":
     raise SystemExit(main())

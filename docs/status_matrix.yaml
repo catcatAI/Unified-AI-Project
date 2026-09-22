@@ -265,7 +265,7 @@ features:
       - benchmarks/data/native_bench_v1.json
     tests: [tests/test_run_benchmarks.py]
     verify_command: pytest tests/test_run_benchmarks.py
-    evidence: 20 tests；首輪官方結果 results/bench_20260922-022550.json（native math 71.4%/knowledge 20%/code 0%/routing 50%，逐題明細可複審）
+    evidence: 22 tests；115 題官方結果 results/bench_20260922-091107.json（native math 80%/knowledge 26.7%/knowledge_mc 97.5%/code 0%/routing 100%；native-max mc 100%）＋--gate-native 回歸門納入 CI，逐題明細可複審
     last_verified: "2026-09-22"
 
   - id: msba-pipeline
@@ -402,7 +402,7 @@ lifecycle:
   - id: public-benchmark
     name: 對外公開 benchmark
     status: partial
-    note: 管線與首輪本機數據已建（benchmarks/README.md）；跨 AI 對比待外部 LLM 端點實際接入跑分
+    note: 115 題管線、官方數據與 CI 回歸門已建（benchmarks/README.md）；跨 AI 對比待外部 LLM 端點實際接入跑分
   - id: msba-e2e-verified
     name: MSBA 端到端品質驗證（融合品質 benchmark）
     status: partial

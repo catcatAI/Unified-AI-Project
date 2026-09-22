@@ -43,7 +43,13 @@ class TestDataset:
 
     def test_all_backends_supported(self):
         items = tool.load_dataset()
-        assert {i.suite for i in items} == {"math", "knowledge", "code", "routing"}
+        assert {i.suite for i in items} == {
+            "math",
+            "knowledge",
+            "knowledge_mc",
+            "code",
+            "routing",
+        }
 
 
 # ---------------------------------------------------------------- scoring
@@ -211,3 +217,33 @@ class TestComparability:
         tool.save_results([r], out)
         data = json.loads(out.read_text(encoding="utf-8"))
         assert data["results"][0]["accuracy"] == 100.0
+
+
+# ---------------------------------------------------------------- gate
+
+
+class TestGate:
+    """--gate-native CI 回歸門契約：低於 GATE_NATIVE 基準 → 退出碼 2。"""
+
+    def test_below_floor_fails(self):
+        r = tool.SuiteResult(backend="native", suite="math", total=10, passed=0)
+        assert tool.check_gate([r]) == 2
+
+    def test_above_floor_passes(self):
+        r = tool.SuiteResult(backend="native", suite="math", total=10, passed=9)
+        assert tool.check_gate([r]) == 0
+
+    def test_only_native_is_gated(self):
+        r = tool.SuiteResult(backend="echo", suite="math", total=10, passed=0)
+        assert tool.check_gate([r]) == 0
+
+    def test_unknown_suite_not_gated(self):
+        r = tool.SuiteResult(backend="native", suite="code", total=10, passed=0)
+        assert tool.check_gate([r]) == 0
+
+    def test_gate_floors_are_monotone_baseline(self):
+        # 門檻只升不降：正式運行基準（2026-09-22）是下限
+        assert tool.GATE_NATIVE["math"] >= 75.0
+        assert tool.GATE_NATIVE["knowledge_mc"] >= 90.0
+        assert tool.GATE_NATIVE["routing"] >= 95.0
+        assert tool.GATE_NATIVE["knowledge"] >= 25.0
