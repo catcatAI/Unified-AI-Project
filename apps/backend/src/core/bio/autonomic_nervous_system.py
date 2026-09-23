@@ -261,9 +261,9 @@ class AutonomicNervousSystem:
             self._last_state = current_state
 
         # Arousal level callbacks
-        for callback in self._arousal_callbacks:
+        for arousal_cb in self._arousal_callbacks:
             try:
-                callback(self.arousal_level)
+                arousal_cb(self.arousal_level)
             except (
                 Exception
             ) as e:  # broad exception acceptable: arousal callbacks should not block updates

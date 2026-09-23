@@ -102,6 +102,8 @@ class LIFNeuron:
         """STDP: pre before post → LTP, post before pre → LTD. Minimal unit."""
         dt = post_spike - pre_spike
         if dt > 0:
-            return weight + a_plus * (2.718 ** (-dt / tau))
+            ltp: float = weight + a_plus * (2.718 ** (-dt / tau))
+            return ltp
         else:
-            return weight - a_minus * (2.718 ** (dt / tau))
+            ltd: float = weight - a_minus * (2.718 ** (dt / tau))
+            return ltd

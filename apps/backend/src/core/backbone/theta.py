@@ -29,7 +29,10 @@ report = bridge.get_routing_report()     # θ 值來自主幹線 StateMatrix4D
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional, cast
+
+if TYPE_CHECKING:
+    from core.engine.theta_router import _ThetaStateMatrixProtocol
 
 logger = logging.getLogger("angela_backbone_theta")
 
@@ -59,7 +62,7 @@ class ThetaBridge:
         self._matrix = primary_matrix
         self._matrix_provider = matrix_provider
         self._port_registry = port_registry
-        self._router = None
+        self._router: Optional[Any] = None
 
     # ------------------------------------------------------------------
     # 注入
@@ -97,7 +100,10 @@ class ThetaBridge:
                     logger.debug("PortRegistry unavailable: %s", exc)
             matrix = self._current_matrix()
             adapter = _MatrixAdapter(matrix) if matrix is not None else None
-            self._router = ThetaRouter(state_adapter=adapter, port_registry=self._port_registry)
+            self._router = ThetaRouter(
+                state_adapter=cast("_ThetaStateMatrixProtocol", adapter),
+                port_registry=self._port_registry,
+            )
         return self._router
 
     # ------------------------------------------------------------------
@@ -106,7 +112,8 @@ class ThetaBridge:
     def theta_values(self) -> Dict[str, float]:
         """θ 軸當前值（自主幹線 StateMatrix4D）。"""
         try:
-            return self.router().theta_values
+            values: Dict[str, float] = self.router().theta_values
+            return values
         except Exception as exc:
             logger.debug("theta values unavailable: %s", exc)
             return {}
@@ -114,7 +121,8 @@ class ThetaBridge:
     def get_routing_report(self) -> Dict[str, Any]:
         """θ 路由狀態報告（供 prompt 注入）。"""
         try:
-            return self.router().get_routing_report()
+            report: Dict[str, Any] = self.router().get_routing_report()
+            return report
         except Exception as exc:
             logger.warning("theta routing report unavailable: %s", exc)
             return {
@@ -127,7 +135,9 @@ class ThetaBridge:
 
     def resolve_route(self, port_name: str) -> Any:
         """為單個端口解析路由決策（委派 ThetaRouter）。"""
-        return self.router().resolve_route(port_name)
+        route: Any = self.router().resolve_route(port_name)
+        return route
 
     def auto_allocate(self) -> list:
-        return self.router().auto_allocate()
+        allocated: list = self.router().auto_allocate()
+        return allocated

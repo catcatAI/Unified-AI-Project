@@ -318,7 +318,8 @@ class CyberIdentity:
         if not recent:
             return 0.0
 
-        return sum(g["growth_rate"] for g in recent) / len(recent)
+        rate: float = sum(g["growth_rate"] for g in recent) / len(recent)
+        return rate
 
     def _get_recent_growth_events(self, days: int = 7) -> List[Dict[str, Any]]:
         """Get recent growth events"""
@@ -395,9 +396,9 @@ class CyberIdentity:
 
             # Notify callbacks
             if aspect in self._growth_callbacks:
-                for callback in self._growth_callbacks[aspect]:
+                for growth_cb in self._growth_callbacks[aspect]:
                     try:
-                        callback(growth_record.previous_level, growth_record.level)
+                        growth_cb(growth_record.previous_level, growth_record.level)
                     except (
                         Exception
                     ) as e:  # broad exception acceptable: growth callbacks should not block updates

@@ -323,6 +323,20 @@ class NeuroplasticitySystem:
             processed += 1
         return processed
 
+    def get_memory_stats(self) -> dict:
+        """Return memory statistics for external integrators (e.g. DLI life stats).
+
+        Keys:
+            total_memories: 全部痕跡數（含未鞏固）
+            consolidated_memories: 已鞏固痕跡數
+        """
+        total = len(self.memory_traces)
+        consolidated = sum(1 for t in self.memory_traces.values() if t.is_consolidated)
+        return {
+            "total_memories": total,
+            "consolidated_memories": consolidated,
+        }
+
     async def shutdown(self) -> None:
         """Shutdown the system"""
         self._running = False

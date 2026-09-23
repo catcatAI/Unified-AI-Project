@@ -5,8 +5,11 @@
 """步驟 B8 — 修 3 個已知 bug（§11.3 #6/#7/#8）驗證測試。"""
 
 import asyncio
+import logging
 
 import pytest
+
+logger = logging.getLogger(__name__)
 
 
 class TestBug7DynamicThresholdImport:
@@ -160,3 +163,57 @@ class TestBug6DLIMemoryBridge:
         dli = asyncio.run(run())
         # memory_bridge 可能在 initialize 中成功建立（無外部依賴的純實作）
         assert dli.memory_bridge is None or hasattr(dli.memory_bridge, "trigger_consolidation")
+
+
+class TestR85DeadPathFixes:
+    """R85 三個「宣稱接線、執行即炸」死路徑的回歸鎖定。"""
+
+    def test_dli_uses_real_biological_integrator_despite_from_import_binding(self):
+        """DLI 建構必須動態解析源模組屬性，免疫 from-import 綁定污染。
+
+        歷史 bug：test_autonomous_init 的 monkeypatch 視窗內若 DLI 首次 import，
+        其模組級 from-import 會把 mock factory 永久綁進 DLI 命名空間（teardown
+        還原不到），之後所有 DigitalLifeIntegrator() 都拿到 MagicMock。
+        """
+        from core.bio.biological_integrator import BiologicalIntegrator
+        from core.life.digital_life_integrator import DigitalLifeIntegrator
+
+        dli = DigitalLifeIntegrator(config={"enable_formula_integration": False})
+        assert type(dli.biological_integrator) is BiologicalIntegrator
+
+    def test_formula_decision_uses_decision_callback_contract(self):
+        """_on_formula_decision 契約是單參 LifeDecision，必須註冊到 decision
+        callbacks；誤註冊到 phase callbacks（雙參）會每次相位轉換 TypeError。"""
+        import inspect
+
+        from core.life.digital_life_integrator import DigitalLifeIntegrator
+
+        dli = DigitalLifeIntegrator(config={"enable_formula_integration": False})
+        params = list(inspect.signature(dli._on_formula_decision).parameters)
+        assert len(params) == 1, "單參 LifeDecision 契約"
+        # 單參回呼不能出現在 phase callback 註冊路徑（雙參呼叫會 TypeError）
+        source = inspect.getsource(DigitalLifeIntegrator.initialize)
+        assert "register_decision_callback(self._on_formula_decision)" in source
+        assert "register_phase_callback(self._on_formula_decision)" not in source
+
+    def test_neuroplasticity_get_memory_stats(self):
+        """DLI._update_statistics 依賴 get_memory_stats()；此前方法不存在，
+        AttributeError 被 except 吞掉 → memories_formed 永遠不更新。"""
+        from core.bio.neuroplasticity_core import NeuroplasticitySystem
+
+        system = NeuroplasticitySystem()
+        stats = system.get_memory_stats()
+        assert stats == {"total_memories": 0, "consolidated_memories": 0}
+        # 加一筆痕跡後統計應反映
+        from core.bio.neuroplasticity_core import MemoryTrace
+
+        system.memory_traces["m1"] = MemoryTrace(
+            memory_id="m1", content="x", initial_weight=1.0, current_weight=1.0
+        )
+        stats = system.get_memory_stats()
+        assert stats["total_memories"] == 1
+        assert stats["consolidated_memories"] == 0
+        system.trigger_consolidation()  # trigger_consolidation 需要 queue；直接標記
+        system.memory_traces["m1"].is_consolidated = True
+        stats = system.get_memory_stats()
+        assert stats["consolidated_memories"] == 1

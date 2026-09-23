@@ -31,7 +31,8 @@ from typing import Any, Callable, Dict, Optional
 
 from ai.lifecycle.llm_decision_loop import LLMDecisionLoop
 from ai.lifecycle.user_monitor import UserMonitor
-from core.bio.biological_integrator import BiologicalIntegrator
+from core.bio import biological_integrator as _bio_integrator_mod
+from core.bio.biological_integrator import BiologicalIntegrator  # noqa: F401  (type 匯出)
 from core.bio.memory_neuroplasticity_bridge import MemoryNeuroplasticityBridge
 from core.engine.action_executor import ActionExecutor
 from core.engine.state_matrix import StateMatrix4D
@@ -305,7 +306,14 @@ class DigitalLifeIntegrator:
         self.life_stats: LifeStats = LifeStats()
 
         # Subsystems
-        self.biological_integrator: BiologicalIntegrator = BiologicalIntegrator()
+        # 注意：此處以模組屬性動態解析 BiologicalIntegrator，而非直接使用上方
+        # from-import 綁定。from-import 在「patch 視窗內首次 import 本模組」時會把
+        # mock factory 永久綁進本命名空間（monkeypatch teardown 還原不到），導致
+        # 之後所有 DigitalLifeIntegrator() 都拿到 MagicMock（背景循環 await 即炸）。
+        # 模組屬性存取永遠跟隨源模組當前狀態，天然免疫此類污染。
+        self.biological_integrator: BiologicalIntegrator = (
+            _bio_integrator_mod.BiologicalIntegrator()
+        )
         self.action_executor: ActionExecutor = ActionExecutor()
         self.memory_bridge: Optional[MemoryNeuroplasticityBridge] = None
 
@@ -455,7 +463,10 @@ class DigitalLifeIntegrator:
                 except Exception:  # noqa: BLE001 - standalone mode fallback
                     self.autonomous_lifecycle = AutonomousLifeCycle(config=self.config)
                 await self.autonomous_lifecycle.initialize()
-                self.autonomous_lifecycle.register_phase_callback(self._on_formula_decision)
+                # _on_formula_decision(decision) 契約是「單參 LifeDecision」，
+                # 必須註冊到 decision callbacks；誤註冊到 phase callbacks（雙參
+                # old_phase/new_phase）會每次相位轉換都 TypeError 被吞，回呼永不觸發。
+                self.autonomous_lifecycle.register_decision_callback(self._on_formula_decision)
                 logger.info("  [Autonomy] Autonomous Life Cycle active (shared).")
             except Exception as e:
                 logger.warning(f"  [Autonomy] Life cycle degraded: {e}")

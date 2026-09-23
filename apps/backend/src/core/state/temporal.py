@@ -145,9 +145,10 @@ class TemporalState:
         if q.axes:
             result = [s for s in result if any(ax in s for ax in q.axes)]
         if q.fields:
+            captured_fields = q.fields
 
             def _has_field(s: Dict[str, Any]) -> bool:
-                for f in q.fields:
+                for f in captured_fields:
                     for v in s.values():
                         if isinstance(v, dict) and f in v:
                             return True
@@ -184,12 +185,12 @@ class TemporalState:
         if not self.history:
             return []
         snapshots = self.history[-window:]
-        axes = set()
+        axes: set[str] = set()
         for snap in snapshots:
             axes.update(k for k, v in snap.items() if isinstance(v, dict))
         observations = []
         for axis in sorted(axes):
-            fields = set()
+            fields: set[str] = set()
             for snap in snapshots:
                 ax_data = snap.get(axis, {})
                 if isinstance(ax_data, dict):
@@ -238,7 +239,7 @@ class TemporalState:
             return []
         mean_val = sum(values) / len(values)
         std = (sum((v - mean_val) ** 2 for v in values) / len(values)) ** 0.5 or 1.0
-        results = []
+        results: List["AnomalyResult"] = []
         # Scan only the most recent `window` snapshots (not the whole history),
         # matching get_field_series(). The previous implementation iterated the
         # entire history every call -> O(history) recompute per query (§11.6/§11.8 B2).

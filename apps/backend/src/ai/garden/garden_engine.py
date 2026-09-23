@@ -25,7 +25,7 @@ import re
 import string
 import threading
 from collections import deque
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Deque, Dict, List, Optional, Tuple
 
 from ai.core.unicode_utils import is_english_dominant
 from ai.data_eng.assemble import decode_slot_budget, select_anchored_keys
@@ -769,7 +769,7 @@ class GARDENEngine:
         # only records that share a concept with the query (near-constant)
         # instead of a full linear scan over every stored record.
         self._learned_recall: Dict[int, tuple] = {}
-        self._learned_order = deque()
+        self._learned_order: Deque[Any] = deque()
         self._learned_index: Dict[str, set] = {}
         self._learned_next_id = 0
         self._learned_recall_cap = limit_value("learned_recall_cap", 5000)
@@ -1963,7 +1963,7 @@ class GARDENEngine:
             "op4": {"zh": "除", "en": "divide /"},
             "op5": {"zh": "等于", "en": "equals ="},
         }
-        new_entries = {
+        new_entries: Dict[str, Dict[str, Any]] = {
             "op6": {"surface_forms": {"zh": "大于", "en": "greater >"}, "relations": {}},
             "op7": {"surface_forms": {"zh": "小于", "en": "less <"}, "relations": {}},
             "op8": {"surface_forms": {"zh": "问号", "en": "question ?"}, "relations": {}},
@@ -1973,6 +1973,10 @@ class GARDENEngine:
                 self.dictionary.entries[key].surface_forms = forms
         for key, entry_data in new_entries.items():
             if key not in self.dictionary.entries:
-                self.dictionary.add_entry(key=key, **entry_data)
+                self.dictionary.add_entry(
+                    key=key,
+                    surface_forms=entry_data["surface_forms"],
+                    relations=entry_data.get("relations"),
+                )
         self.dictionary._dirty = True
         self.dictionary._surface_to_key = None

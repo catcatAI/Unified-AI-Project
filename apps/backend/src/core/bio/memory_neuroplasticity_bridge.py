@@ -23,6 +23,6 @@ from __future__ import annotations
 try:
     from .neuroplasticity_core import NeuroplasticitySystem as MemoryConsolidation
     from .neuroplasticity_core import NeuroplasticitySystem as MemoryNeuroplasticityBridge
-except ImportError:
-    MemoryNeuroplasticityBridge = None
-    MemoryConsolidation = None
+except ImportError:  # pragma: no cover - optional dependency fallback
+    MemoryNeuroplasticityBridge = None  # type: ignore[assignment,misc]
+    MemoryConsolidation = None  # type: ignore[assignment,misc]
