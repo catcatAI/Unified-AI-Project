@@ -247,3 +247,28 @@ payload）、luanti chat 送達 handler＋無 handler 不炸、tool 統計 live 
 ### 驗證
 
 全倉 **5,821 passed, 118 skipped, 0 failed**；mypy **391 鎖定**；格式門全綠。
+
+## R88（2026-09-23）：union-attr／operator／func-returns-value 分類清剿
+
+### 方法論延續
+
+按錯誤碼逐類判定：func-returns-value（4）、union-attr（16）、operator（10）——每筆先判定「真風險 vs 型別噪聲」再動手。
+
+### 修復要點
+
+- **func-returns-value**：internal_bus／event_loop_system 的 done-callback 用「lambda 回傳 tuple」技巧繞過——改為正常 def 函式（副作用意圖明確，型別誠實）
+- **union-attr（16）**：key_validator（os.environ 窄化為 dict）、emotion_analyzer／web_search_tool／config_loader（get_config()
+  or {}）、meta_controller（cache None 早退）、dictionary_classifier（dict
+  None 防禦）、system/context routes（active_backend_type is not
+  None）、memory_integration（getattr 窄化）等——多為 `get_config()`
+  可回 None 的既有契約被呼叫端忽略
+- **operator（10）**：document_router `_OPERATIONS`
+  補顯式型別（消 4 錯）、decimal_hash_table stats 註解、transition_anim
+  start_time 二次窄化防禦、query_classifier reflex words or set()、review_engine
+  str() 收口
+- **semantic_audio**：`_get_backend` 回傳改 Any（Whisper
+  stub 契約）、cuda()/eval() 型別收口、int16/uint8 dtype 變數註解
+
+### 驗證
+
+全倉 **5,821 passed, 118 skipped, 0 failed**；mypy **344 鎖定**；格式門全綠。

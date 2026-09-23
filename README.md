@@ -132,7 +132,7 @@ python scripts/gen_project_map.py --module execution_gate --limit 3
 ```bash
 python scripts/gen_project_map.py --budget 10000   # 地圖預算門（超標=專案有病）
 python scripts/gen_status_matrix.py check          # 狀態宣稱核對
-python scripts/mypy_budget_gate.py                 # mypy 棘輪門（基線 391，只降不升；--top N 附按檔案分布報告）
+python scripts/mypy_budget_gate.py                 # mypy 棘輪門（基線 344，只降不升；--top N 附按檔案分布報告）
 python -m pytest tests/                            # 全倉測試
 python -m flake8 && python -m black --check . && python -m isort --check-only .
 npx prettier --check .                             # 全倉格式（豁免見 .prettierignore）

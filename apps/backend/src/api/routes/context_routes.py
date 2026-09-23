@@ -92,7 +92,7 @@ async def context_summary() -> Dict[str, Any]:
             "available": getattr(llm_svc, "is_available", False),
             "active": (
                 llm_svc.active_backend_type.name
-                if getattr(llm_svc, "active_backend_type", None)
+                if getattr(llm_svc, "active_backend_type", None) is not None
                 else None
             ),
             "mode": getattr(llm_svc, "llm_mode", "unknown"),

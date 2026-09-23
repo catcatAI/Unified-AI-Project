@@ -25,7 +25,7 @@ def _load_web_search_config() -> dict:
     try:
         from core.system.config.tiered_loader import get_config
 
-        ws = get_config("system/llm").get("web_search", {})
+        ws = (get_config("system/llm") or {}).get("web_search", {})
         if isinstance(ws, dict):
             return ws
     except Exception:

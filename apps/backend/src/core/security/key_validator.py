@@ -140,7 +140,7 @@ class KeyValidator:
             List[KeyValidationResult]: 所有密鑰的驗證結果
         """
         if env_dict is None:
-            env_dict = os.environ
+            env_dict = dict(os.environ)
 
         self.results = []
 

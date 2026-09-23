@@ -157,6 +157,8 @@ class MetaController:
         # Cache hit: return cached metrics with recomputed adjustment
         if not self._calibration_cache_dirty and source in self._calibration_cache:
             report = self._calibration_cache[source]
+            if report is None:
+                return None
             # Use the stored raw (pre-multiplier) adjustment for closed-loop
             raw_adj = self._raw_adjustments.get(source, report.suggested_threshold_adjustment)
             self._update_closed_loop(source, raw_adj)

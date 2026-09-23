@@ -156,7 +156,7 @@ class AngelaConfig:
                     for bid, bcfg in backends.items()
                     if isinstance(bcfg, dict)
                 }
-                routing = unified.get("routing", {})
+                routing = (unified or {}).get("routing", {})
                 if isinstance(routing, dict):
                     merged["routing_policy"] = routing.get("policy", {})
                     merged["fallback_chain"] = routing.get("fallback_chain", {})

@@ -73,9 +73,9 @@ class FallbackManager:
 _fallback_protocols: dict = {}
 
 
-def get_mcp_fallback_manager() -> dict:
+def get_mcp_fallback_manager() -> FallbackManager:
     manager = FallbackManager()
-    manager._fallback_protocols = _fallback_protocols
+    manager._fallback_protocols = _fallback_protocols  # type: ignore[attr-defined]
     return manager
 
 

@@ -145,7 +145,7 @@ def _match_cjk_kw(text: str, keyword: str) -> bool:
     return keyword in text
 
 
-def any_keyword(text: str, keywords: tuple) -> bool:
+def any_keyword(text: str, keywords: Any) -> bool:
     """Match any keyword — English gets word boundaries, CJK uses substring."""
     for kw in keywords:
         if not kw:

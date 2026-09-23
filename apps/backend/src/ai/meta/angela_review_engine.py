@@ -262,7 +262,7 @@ class DesignReviewer:
 
         text = design_doc.read_text(encoding="utf-8", errors="ignore")
         for layer_id, info in MATRIX_LAYERS.items():
-            if layer_id not in text and info["name"] not in text:
+            if layer_id not in str(text) and info["name"] not in text:
                 findings.append(
                     ReviewFinding(
                         severity=Severity.MEDIUM,

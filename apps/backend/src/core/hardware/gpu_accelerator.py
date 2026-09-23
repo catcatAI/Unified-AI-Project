@@ -233,7 +233,9 @@ class GPUAcceleratorService:
             "is_active": self._is_active,
             "performance_mode": self._performance_mode,
             "precision_mode": (
-                self.get_live2d_context().precision_mode if self.get_live2d_context() else "N/A"
+                _live2d_ctx.precision_mode
+                if (_live2d_ctx := self.get_live2d_context()) is not None
+                else "N/A"
             ),
             "webgl_info": {
                 "version": self._gpu_info.get("webgl_version", "2.0"),

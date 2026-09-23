@@ -101,7 +101,10 @@ class TransitionAnimator:
     def advance(self, delta_ms: int = 100) -> TransitionFrame:
         if self._start_time is None:
             self.start()
-        elapsed = (datetime.now() - self._start_time).total_seconds() * 1000
+        start_time = self._start_time
+        if start_time is None:  # start() 失敗的防禦窄化
+            raise RuntimeError("Transition start time unavailable")
+        elapsed = (datetime.now() - start_time).total_seconds() * 1000
         self.progress.progress = min(1.0, elapsed / self.config.duration_ms)
         self.progress.elapsed_ms = int(elapsed)
         self.progress.remaining_ms = max(0, self.config.duration_ms - int(elapsed))

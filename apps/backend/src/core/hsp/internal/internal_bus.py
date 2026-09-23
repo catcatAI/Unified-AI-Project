@@ -33,16 +33,13 @@ class InternalBus:
 
         task = asyncio.create_task(_wrapped())
         _pending_tasks.add(task)
-        task.add_done_callback(
-            lambda t: (
-                _pending_tasks.discard(t),
-                (
-                    logger.warning("InternalBus task failed: %s", t.exception())
-                    if not t.cancelled() and t.exception()
-                    else None
-                ),
-            )
-        )
+
+        def _on_done(t: asyncio.Task) -> None:
+            _pending_tasks.discard(t)
+            if not t.cancelled() and t.exception():
+                logger.warning("InternalBus task failed: %s", t.exception())
+
+        task.add_done_callback(_on_done)
 
     def publish(self, channel: str, message: Any) -> None:
         """Publish a message to a channel."""

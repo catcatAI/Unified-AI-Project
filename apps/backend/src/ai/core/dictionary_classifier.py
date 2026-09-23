@@ -131,6 +131,8 @@ class DictionaryClassifier:
             data = json.load(f)
 
         entries = data.get("dictionary_entries", [])
+        if self._dictionary is None:  # 載入失敗時不應寫入
+            return
         for entry_data in entries:
             key = entry_data["key"]
             from ai.ed3n.dictionary_layer import DictionaryEntry
@@ -253,6 +255,8 @@ class DictionaryClassifier:
         return max(min_score, min(1.0, len_ratio * position_boost * 2.0))
 
     def _resolve_entry(self, best_key: str) -> Tuple[str, str]:
+        if self._dictionary is None:
+            return ("unknown", "none")
         entry = self._dictionary.entries.get(best_key)
         if not entry or not entry.contexts:
             return ("unknown", "none")

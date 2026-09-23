@@ -92,9 +92,10 @@ class Event:
     handler: Optional[Callable] = None
     deferred_until: Optional[datetime] = None
 
-    def __lt__(self, other) -> str:
+    def __lt__(self, other: "Event") -> bool:
         """Compare for priority queue ordering"""
-        return self.priority.level < other.priority.level
+        other_level: int = other.priority.level
+        return self.priority.level < other_level
 
 
 @dataclass
@@ -220,7 +221,7 @@ class EventQueue:
     async def get_status(self) -> Dict[str, int]:
         """Get queue status statistics"""
         async with self._lock:
-            stats = defaultdict(int)
+            stats: defaultdict = defaultdict(int)
             for _, _, event in self._queue:
                 stats[event.status.value[0]] += 1
             return dict(stats)
@@ -392,16 +393,13 @@ class DebounceThrottleManager:
                 delay = config.interval_ms - (current_time - last_emit)
                 task = asyncio.create_task(self._throttle_emit_timer(event.event_type, delay))
                 self._timer_tasks.add(task)
-                task.add_done_callback(
-                    lambda t: (
-                        self._timer_tasks.discard(t),
-                        (
-                            logger.warning("Throttle timer task failed: %s", t.exception())
-                            if not t.cancelled() and t.exception()
-                            else None
-                        ),
-                    )
-                )
+
+                def _on_timer_done(t: asyncio.Task) -> None:
+                    self._timer_tasks.discard(t)
+                    if not t.cancelled() and t.exception():
+                        logger.warning("Throttle timer task failed: %s", t.exception())
+
+                task.add_done_callback(_on_timer_done)
 
             return None
 
@@ -547,14 +545,14 @@ class EventLoopSystem:
 
         logger.info("[EventLoopSystem] Shutdown complete")
 
-    def _setup_default_aggregations(self) -> str:
+    def _setup_default_aggregations(self) -> None:
         """Setup default event aggregation rules"""
 
         # Mouse move aggregation - combine rapid mouse movements
         def aggregate_mouse_moves(events: List[Event]) -> Event:
             """Execute the aggregate mouse moves operation."""
             if not events:
-                return events[0] if events else None
+                raise ValueError("aggregate_mouse_moves requires at least one event")
 
             # Use the latest event with aggregated data
             latest = max(events, key=lambda e: e.timestamp)

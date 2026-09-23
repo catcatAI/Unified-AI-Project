@@ -19,19 +19,19 @@ logger = logging.getLogger("angela_llm.memory")
 
 # Lazy imports for memory enhancement types
 _memory_modules_loaded = False
-_MEMORY_ENHANCED = None
-AngelaState = None
-UserImpression = None
-PrecomputeTask = None
+_MEMORY_ENHANCED: Optional[bool] = None
+AngelaState: Any = None
+UserImpression: Any = None
+PrecomputeTask: Any = None
 
 
-def _load_memory_modules() -> str:
+def _load_memory_modules() -> bool:
     """Lazy load memory enhancement modules on first access."""
     global _memory_modules_loaded, _MEMORY_ENHANCED
     global AngelaState, UserImpression, PrecomputeTask
 
     if _memory_modules_loaded:
-        return _MEMORY_ENHANCED
+        return bool(_MEMORY_ENHANCED)
 
     _memory_modules_loaded = True
 
@@ -145,7 +145,7 @@ class MemoryIntegration:
             await self._svc.precompute_service.stop()
             logger.info("Precompute service stopped")
 
-    async def add_precompute_task(self, task: "PrecomputeTask") -> bool:
+    async def add_precompute_task(self, task: Any) -> bool:
         """Add a precompute task to the queue."""
         if self._svc.enable_memory_enhancement and hasattr(self._svc, "precompute_service"):
             self._svc.precompute_service.enqueue(task)
@@ -171,14 +171,17 @@ class MemoryIntegration:
                     },
                 }
 
-        if hasattr(self._svc, "template_matcher"):
-            stats["template_matcher"] = self._svc.template_matcher.get_stats()
+        template_matcher = getattr(self._svc, "template_matcher", None)
+        if template_matcher is not None:
+            stats["template_matcher"] = template_matcher.get_stats()
 
-        if hasattr(self._svc, "response_composer"):
-            stats["response_composer"] = self._svc.response_composer.get_stats()
+        response_composer = getattr(self._svc, "response_composer", None)
+        if response_composer is not None:
+            stats["response_composer"] = response_composer.get_stats()
 
-        if hasattr(self._svc, "deviation_tracker"):
-            stats["deviation_tracker"] = self._svc.deviation_tracker.get_stats()
+        deviation_tracker = getattr(self._svc, "deviation_tracker", None)
+        if deviation_tracker is not None:
+            stats["deviation_tracker"] = deviation_tracker.get_stats()
 
         return stats
 

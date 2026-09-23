@@ -55,7 +55,11 @@ class DecimalHashTable:
         self.precision = self.PRECISION_DEC4 if precision == "DEC4" else self.PRECISION_DEC8
         self.entries: Dict[str, DecimalHashEntry] = {}
         self.hash_chain: List[int] = []
-        self._stats = {"total_sets": 0, "total_gets": 0, "precision_mode": precision}
+        self._stats: Dict[str, Any] = {
+            "total_sets": 0,
+            "total_gets": 0,
+            "precision_mode": precision,
+        }
 
     def _normalize_value(self, value: float) -> Decimal:
         """規範化浮點數為定點數

@@ -231,9 +231,8 @@ if __name__ == "__main__":
         logger.info(
             f"  Correctly fell back to safe default: {service_non_existent.profile.profile_name}"
         )
-        logger.info(
-            f"  Default Disk Space (GB): {service_non_existent.get_simulated_disk_config().space_gb if service_non_existent.get_simulated_disk_config() else 'N/A'}"
-        )
+        _disk_cfg = service_non_existent.get_simulated_disk_config()
+        logger.info(f"  Default Disk Space (GB): {_disk_cfg.space_gb if _disk_cfg else 'N/A'}")
     else:
         logger.error(
             f"  Test failed or profile was unexpectedly loaded: {service_non_existent.profile}"

@@ -17,7 +17,7 @@ import io
 import logging
 import subprocess
 import sys
-from typing import Optional, Tuple
+from typing import Any, Optional, Tuple
 
 import numpy as np
 
@@ -75,7 +75,7 @@ def _lazy_init_whisper():
         _WHISPER_FEATURE_EXTRACTOR = WhisperFeatureExtractor.from_pretrained(model_name)
         _WHISPER_MODEL.eval()
         if torch.cuda.is_available():
-            _WHISPER_MODEL = _WHISPER_MODEL.cuda()
+            _WHISPER_MODEL = _WHISPER_MODEL.cuda()  # type: ignore[call-arg]
         _WHISPER_AVAILABLE = True
         logger.info("SemanticAudioEncoder: Whisper loaded (%s)", model_name)
     except Exception as e:
@@ -114,7 +114,7 @@ class SemanticAudioEncoder:
         model, _, _ = self._get_backend()
         return model is not None
 
-    def _get_backend(self) -> Tuple[Optional[object], Optional[object], Optional[object]]:
+    def _get_backend(self) -> Tuple[Any, Any, Any]:
         """Get or lazy-init Whisper backend."""
         if self._model is None:
             self._model, self._processor, self._feature_extractor = _lazy_init_whisper()
@@ -165,7 +165,7 @@ class SemanticAudioEncoder:
             norm = np.linalg.norm(vec)
             if norm > 0:
                 vec = vec / norm
-            return vec
+            return np.asarray(vec, dtype=np.float32)
         except Exception as e:
             logger.warning("SemanticAudioEncoder encode failed: %s", e, exc_info=True)
             return None
@@ -200,6 +200,7 @@ class SemanticAudioEncoder:
                     frames = wf.readframes(wf.getnframes())
                     sampwidth = wf.getsampwidth()
                     nchannels = wf.getnchannels()
+            dtype: Any
             if sampwidth == 2:
                 dtype = np.int16
             elif sampwidth == 1:

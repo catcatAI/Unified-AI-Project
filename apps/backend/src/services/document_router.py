@@ -26,7 +26,7 @@ from core.utils import any_keyword, safe_error
 
 logger = logging.getLogger(__name__)
 
-_OPERATIONS = {
+_OPERATIONS: Dict[str, Dict[str, Any]] = {
     "organize": {
         "label": "整理",
         "retention": (0.80, 1.00),

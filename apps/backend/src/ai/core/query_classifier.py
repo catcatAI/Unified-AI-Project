@@ -255,7 +255,7 @@ _WORD_BOUNDARY_CJK = r"(?:^|[\s，。！？,.\s一-鿿])"
 # Static tables are pure data (never mutated) — build once per process and share
 # across instances instead of recompiling ~25 regexes per construction.
 _CLASSIFIER_PATTERNS: Optional[List[Tuple[QueryType, Pattern, float]]] = None
-_CLASSIFIER_REFLEX_WORDS: Optional[set] = None
+_CLASSIFIER_REFLEX_WORDS: Optional[set] = None  # noqa: UP006 - 延遲初始化的靜態表
 
 
 class QueryClassifier:
@@ -824,7 +824,7 @@ class QueryClassifier:
                 )
             return QueryResult(QueryType.UNKNOWN, 0.4, 0.3, "read", reason="meaningful_single_char")
         # Multi-char reflex: all chars are reflex words (cat sounds, nods, etc.)
-        if len(text) <= 10 and all(c in self._reflex_words for c in text):
+        if len(text) <= 10 and all(c in (self._reflex_words or set()) for c in text):
             return QueryResult(
                 QueryType.REFLEX, 0.9, 0.0, "none", reason="reflex_all_chars_override"
             )

@@ -29,7 +29,7 @@
 | 明確不支援項文檔 | 正式版聲明範圍 | `docs/user_guide/unsupported.md`<br>`docs/architecture/limitations.md`<br>`docs/user_guide/hardware.md` | **verified** | `ls docs/user_guide/unsupported.md docs/architecture/limitations.md docs/user_guide/hardware.md`；三文檔存在且與 RELEASE_CRITERIA 同步 | 2026-09-17 |
 | HSP 加密金鑰 | 加密可用且啟動不炸 | `apps/backend/src/core/hsp/security.py` | **verified** | `pytest tests/core/hsp/`；佔位符自動回退生成＋警告；.env 佔位符致 5 errors 已修 | 2026-09-17 |
 | 測試品質門 | 全倉綠 | —（見證據欄） | **verified** | `pytest tests/`；5586 passed, 122 skipped, 0 failed（R74 全倉前景） | 2026-09-21 |
-| mypy 型別債 | 收斂中（棘輪門鎖定） | `pyproject.toml`<br>`scripts/mypy_budget_gate.py`<br>`scripts/mypy_budget.txt` | **verified** | `python scripts/mypy_budget_gate.py`；門機制可驗證；基線 391（R87 鎖定；歷史 559→540→518→497→476→432→405→402→391）；新增債 CI 直接紅燈 | 2026-09-22 |
+| mypy 型別債 | 收斂中（棘輪門鎖定） | `pyproject.toml`<br>`scripts/mypy_budget_gate.py`<br>`scripts/mypy_budget.txt` | **verified** | `python scripts/mypy_budget_gate.py`；門機制可驗證；基線 344（R88 鎖定；歷史 559→540→518→497→476→432→405→402→391→344）；新增債 CI 直接紅燈 | 2026-09-22 |
 | flake8 | 0 errors | `.flake8` | **verified** | `python -m flake8`；全倉 0（37 類忽略為已知門檻寬鬆，非隱瞞） | 2026-09-03 |
 | 離線能力 | 無 key 可運作（部分） | `apps/backend/src/services/llm/providers/unified.py` | **wired** | unified-1g 永遠可用；反射/數學/字典離線；開放域生成需 LLM；unsupported.md 已聲明邊界 | 2026-09-17 |
 | 多模態 | 圖片/音訊/生成 | `apps/backend/src/ai/multimodal` | **implemented** | 真實對比訓練 82% top1（CIFAR 試點）；生成品質未達標 | 2026-09-03 |
