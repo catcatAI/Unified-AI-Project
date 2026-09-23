@@ -63,6 +63,34 @@ class TestHormonalModulator:
         assert isinstance(profile, dict)
         assert len(profile) >= 6
 
+    def test_sync_from_endocrine_live_values(self):
+        """R87 死路徑 #11 回歸：sync_from_endocrine 必須能吃下真實
+        get_hormonal_profile 形狀（hormones 鍵 = en_name）。
+
+        歷史 bug 三層壞：(1) HormoneType.NORADRENALINE 不存在
+        （真名 NOREPINEPHRINE）；(2) 用 enum 物件查 en_name 字串鍵；
+        (3) fallback 用 ht.name（"CORTISOL"）也查不到。AttributeError
+        被 except 吞掉 → live 同步從未成功。
+        """
+        m = HormonalModulator()
+
+        class _FakeEndocrine:
+            def get_hormonal_profile(self):
+                return {
+                    "hormones": {
+                        "Cortisol": {"current": 0.9, "base": 0.5, "normalized": 0.8},
+                        "Serotonin": {"current": 0.2, "base": 0.5, "normalized": 0.25},
+                        "Norepinephrine": {"current": 0.7, "base": 0.3, "normalized": 0.6},
+                    },
+                }
+
+        m.connect_endocrine_system(_FakeEndocrine())
+        m.sync_from_endocrine()  # 修復前這裡 AttributeError
+        assert m.hormones["cortisol"] == 0.8
+        assert m.hormones["serotonin"] == 0.25
+        assert m.hormones["noradrenaline"] == 0.6
+        assert m._last_sync > 0
+
 
 class TestTensorSNNCoreInit:
     """Tests for SNN core construction."""

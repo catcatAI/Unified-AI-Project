@@ -35,6 +35,7 @@ import os
 from typing import Any, Dict, List, Optional
 
 import numpy as np
+from ai.ed3n.snn.hormonal_modulator import HormonalModulator as _ED3NHormonalModulator
 from core.system.config.magic_numbers import timeout_value
 
 logger = logging.getLogger(__name__)
@@ -313,38 +314,24 @@ DEFAULT_DECAY = 0.6  # propagation decay per hop
 # ---------------------------------------------------------------------------
 
 
-class HormonalModulator:
-    """
-    Translates Angela's biological hormone levels into a threshold multiplier for the SNN.
-    Cortisol (stress) lowers threshold → more reactive.
-    Serotonin (stability) raises threshold → more calm.
-    """
+class HormonalModulator(_ED3NHormonalModulator):
+    """GARDEN 相容層。
 
-    def __init__(self):
-        self.hormones: Dict[str, float] = {
-            "cortisol": 0.5,
-            "serotonin": 0.5,
-            "dopamine": 0.5,
-            "adrenaline": 0.3,
-            "oxytocin": 0.5,
-            "noradrenaline": 0.3,
-        }
-
-    def set_hormone(self, name: str, value: float) -> None:
-        self.hormones[name] = max(0.0, min(1.0, value))
+    去重（R87）：此前的內嵌簡化版與 ai/ed3n/snn/hormonal_modulator.py 的完整版
+    同名但丟失了 live endocrine 接線能力（connect_endocrine_system /
+    sync_from_endocrine），屬重複實做。現以 ED3N 完整版為單一真相源，
+    本子類只補兩個歷史相容介面：
+    - get_threshold_multiplier()：舊消費者（TensorSNNCore.forward）別名
+    - get_profile_summary()：拍平 hormones 到頂層（舊消費者直接讀鍵）
+    """
 
     def get_threshold_multiplier(self) -> float:
-        cortisol = self.hormones.get("cortisol", 0.5)
-        serotonin = self.hormones.get("serotonin", 0.5)
-        adrenaline = self.hormones.get("adrenaline", 0.3)
-        # Stress hormones lower threshold (more reactive)
-        stress = cortisol * 0.4 + adrenaline * 0.2
-        # Stability hormones raise threshold
-        stability = serotonin * 0.3
-        return max(0.4, min(1.6, 1.0 - stress + stability))
+        return self.get_modulation_factor()
 
-    def get_profile_summary(self) -> Dict[str, float]:
-        return dict(self.hormones)
+    def get_profile_summary(self) -> Dict[str, Any]:
+        flat = dict(self.hormones)
+        flat.update(super().get_profile_summary())
+        return flat
 
 
 # ---------------------------------------------------------------------------

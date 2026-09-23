@@ -209,3 +209,41 @@ None 窄化、attr-defined 隨死路徑修復歸零）。
 
 全倉 **5,815 passed, 118 skipped, 0 failed**；mypy
 **402 鎖定**；格式門／真相源核對門全綠。
+
+## R87（2026-09-23）：attr-defined 全掃——5 個死路徑＋GARDEN 重複實作收斂
+
+### 方法論
+
+把 402 筆 mypy 債按錯誤碼分類：attr-defined
+31 筆**逐一人工判定**（此錯誤碼每筆都是潛在死路徑，與 R86 `apply_external_force`
+同型）。結果：5 個真死路徑、其餘為 Optional 未窄化等型別噪聲。
+
+### 五個死路徑（#11–#15）
+
+1. **hormonal_modulator 三層壞（#11）**：`HormoneType.NORADRENALINE`
+   不存在（真名 NOREPINEPHRINE）＋用 enum 物件查 en_name 字串鍵＋fallback 用 ht.name 也查不到 →
+   live 同步永不成功；且 `connect_endocrine_system`
+   零生產呼叫者。修復對齊 profile 形狀＋ED3N 引擎建構時自動接線（Bio 未初始化時優雅跳過）。
+2. **GARDEN 重複實作收斂**：`ai/garden/snn_core.py`
+   內嵌簡化版 HormonalModulator 與 ED3N 完整版同名但丟失 endocrine 接線能力——正是「不要重複實做」的活例。改為 ED3N 版子類＋兩個歷史相容介面。
+3. **KG agent 幽靈能力（#12）**：`entity_linking`／`relationship_extraction`
+   已對外註冊到 capabilities，處理函式卻不存在——請求一來就 AttributeError。依既有
+   `_entities`/`_relations` 補真實實作（不虛構未知關係）。
+4. **image route 幽靈函式（#13）**：import 不存在的
+   `render_primitives_from_vector`——端點過 503 檢查後必炸。改走既有管線：`DrawingInstructions.from_vector`
+   → `PrimitiveRenderer.render`（閉環驗證 128×128 RGB 輸出）。
+5. **luanti chat dispatch（#14）**：呼叫不存在的 `self._dispatch` →
+   AttributeError 落入外層 except（state=ERROR）中斷後續處理。chat 已由 generic
+   handler 機制涵蓋，移除重複分支。
+6. **tool 統計上下文（#15）**：`get_tool_context` 讀 `tool.total_calls`
+   等不存在屬性（真實資料在 `performance_metrics`）→ 永遠回 None。
+
+### 回歸鎖定
+
+新增/擴充 4 個測試檔：endocrine
+live 同步（FakeEndocrine 驗證 en_name 查表）、KG 兩能力閉環（FakeHSP 驗證 success
+payload）、luanti chat 送達 handler＋無 handler 不炸、tool 統計 live 值。
+
+### 驗證
+
+全倉 **5,821 passed, 118 skipped, 0 failed**；mypy **391 鎖定**；格式門全綠。

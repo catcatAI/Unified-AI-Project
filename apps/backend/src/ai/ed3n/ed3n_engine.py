@@ -137,6 +137,7 @@ class ED3NEngine:
         self.network = network or CoreNetwork(classifier=self.classifier)
         self._snn_network = snn_network
         self.modulator = modulator or HormonalModulator()
+        self._connect_modulator_to_endocrine()
         self.snn_mode = snn_mode
         self._process_lock = threading.RLock()
         self._validator: Optional[ResponseAnchorValidator] = None
@@ -821,6 +822,24 @@ class ED3NEngine:
                 return self.process_deep(input_text, context)
             finally:
                 self.snn_mode = was_snn
+
+    def _connect_modulator_to_endocrine(self) -> None:
+        """把 HormonalModulator 連接到 BiologicalIntegrator 的 EndocrineSystem。
+
+        R87 之前 connect_endocrine_system 零生產呼叫者——modulator 永遠拿不到
+        live 荷爾蒙值。 BiologicalIntegrator 是行程級單例，這裡惰性取用；
+        Bio 系統尚未初始化時（獨立訓練／測試環境）靜默跳過，
+        modulator 退回靜態預設值（原有行為）。
+        """
+        try:
+            from core.bio.biological_integrator import BiologicalIntegrator
+
+            bio = BiologicalIntegrator.__new__(BiologicalIntegrator)
+            instance = BiologicalIntegrator._instance
+            if instance is not None and getattr(instance, "_initialized", False):
+                self.modulator.connect_endocrine_system(instance.endocrine_system)
+        except Exception as e:  # bio 系統不可用屬正常降級
+            logger.debug("HormonalModulator endocrine wiring skipped: %s", e)
 
     def enable_multimodal(self, enable_image=True, enable_audio=True, enable_text=True) -> None:
         if not hasattr(self.dictionary, "modality_encoders"):

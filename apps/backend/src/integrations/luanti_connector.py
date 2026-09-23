@@ -87,7 +87,7 @@ class LuantiConnector:
     def __init__(self, config: Optional[LuantiConfig] = None):
         self.config = config or LuantiConfig()
         self.state = ConnectionState.DISCONNECTED
-        self._ws = None
+        self._ws: Optional[Any] = None  # websockets 客戶端連線；未連線時為 None
         self._reader_task: Optional[asyncio.Task] = None
         self._ping_task: Optional[asyncio.Task] = None
         self._message_queue: asyncio.Queue = asyncio.Queue(maxsize=1000)
@@ -110,9 +110,10 @@ class LuantiConnector:
         try:
             import websockets
 
-            self._ws = await asyncio.wait_for(
-                websockets.connect(url, ping_interval=None), timeout=self.config.timeout
-            )
+            # websockets.connect 回傳 Connect 物件（awaitable），
+            # asyncio.wait_for 對 stub 而言只承諾 Awaitable —— 用 cast 收口
+            connect_coro = websockets.connect(url, ping_interval=None)
+            self._ws = await asyncio.wait_for(connect_coro, timeout=self.config.timeout)
             self.state = ConnectionState.AUTHENTICATING
 
             # 啟動讀取任務
@@ -153,6 +154,8 @@ class LuantiConnector:
     async def _reader_loop(self):
         """訊息讀取迴圈"""
         try:
+            if self._ws is None:
+                return
             async for message in self._ws:
                 await self._handle_message(message)
         except Exception as e:
@@ -192,8 +195,10 @@ class LuantiConnector:
                 self._update_player_state(msg)
             elif msg_type == "frame":
                 await self._handle_frame(msg)
-            elif msg_type == "chat":
-                self._dispatch("chat", msg)
+            # R87 死路徑 #14：chat 分支此前呼叫不存在的 self._dispatch ——
+            # AttributeError 落入外層 except（state=ERROR）且中斷後續處理。
+            # chat 的分派已由上方 generic handler 機制（self._handlers）涵蓋，
+            # 此處不需再重複處理。
 
         except json.JSONDecodeError:
             logger.warning(f"Invalid JSON: {raw_message[:100]}")

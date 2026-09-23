@@ -196,14 +196,17 @@ class ToolContextManager:
                 return None
 
             tool = self.tools[tool_id]
+            # R87 死路徑 #15：此前讀 tool.total_calls 等不存在的屬性
+            # （真實資料在 tool.performance_metrics 上）→ AttributeError
+            # 被 except 吞掉回 None，工具統計上下文永遠取不到。
             result: Dict[str, Any] = {
                 "tool_id": tool.tool_id,
                 "name": tool.name,
                 "description": tool.description,
                 "category_id": tool.category_id,
-                "total_calls": tool.total_calls,
-                "success_rate": tool.success_rate,
-                "average_duration": tool.average_duration,
+                "total_calls": tool.performance_metrics.total_calls,
+                "success_rate": tool.performance_metrics.success_rate,
+                "average_duration": tool.performance_metrics.average_duration,
             }
             return result
         except Exception as e:  # broad exception acceptable: graceful degradation on failure

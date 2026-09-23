@@ -30,6 +30,29 @@ class TestToolCategory:
         assert cat.tools == []
         assert isinstance(cat.created_at, datetime)
 
+
+class TestGetToolContextR87:
+    """R87 死路徑 #15 回歸：get_tool_context 必須從 performance_metrics
+    讀統計（此前讀 tool.total_calls 等不存在屬性 → AttributeError 被吞回
+    None，統計上下文永遠取不到）。"""
+
+    def test_get_tool_context_returns_live_stats(self):
+        from apps.backend.src.ai.context.tool_context import ToolContextManager as M
+
+        mgr = M(context_manager=MagicMock())
+        mgr.tools = {}
+        mgr.categories = {}
+        tool = Tool("t1", "Tool One")
+        mgr.tools["t1"] = tool
+        tool.record_usage(
+            ToolUsageRecord(parameters={"q": 1}, result="ok", duration=0.5, success=True)
+        )
+        ctx = mgr.get_tool_context("t1")
+        assert ctx is not None
+        assert ctx["total_calls"] == 1
+        assert ctx["success_rate"] == 1.0
+        assert ctx["average_duration"] == 0.5
+
     def test_creation_with_parent(self):
         parent = ToolCategory("parent", "Parent")
         child = ToolCategory("child", "Child", parent_id="parent")

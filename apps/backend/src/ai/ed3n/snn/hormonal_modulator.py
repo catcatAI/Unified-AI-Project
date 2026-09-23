@@ -47,26 +47,27 @@ class HormonalModulator:
         try:
             from core.bio.endocrine_types import HormoneType
 
+            # 生產者（EndocrineSystemCore.get_hormonal_profile）的 hormones 鍵是
+            # ht.en_name（如 "Cortisol"）；用 en_name 查表一次到位。
             hormone_map = {
-                "cortisol": HormoneType.CORTISOL,
-                "serotonin": HormoneType.SEROTONIN,
-                "dopamine": HormoneType.DOPAMINE,
-                "adrenaline": HormoneType.ADRENALINE,
-                "oxytocin": HormoneType.OXYTOCIN,
-                "noradrenaline": HormoneType.NORADRENALINE,
+                "cortisol": HormoneType.CORTISOL.en_name,
+                "serotonin": HormoneType.SEROTONIN.en_name,
+                "dopamine": HormoneType.DOPAMINE.en_name,
+                "adrenaline": HormoneType.ADRENALINE.en_name,
+                "oxytocin": HormoneType.OXYTOCIN.en_name,
+                # 注意：內分泌系統的枚舉成員是 NOREPINEPHRINE（藥典名），
+                # 不是 NORADRENALINE——曾誤寫成不存在的成員，AttributeError 被
+                # except 吞掉，live 同步從未成功、永遠只用靜態預設值。
+                "noradrenaline": HormoneType.NOREPINEPHRINE.en_name,
             }
             profile = self._endocrine_system.get_hormonal_profile()
-            for our_key, ht in hormone_map.items():
-                normalized = (
-                    profile["hormones"]
-                    .get(ht, {})
-                    .get(
-                        "normalized",
-                        profile["hormones"].get(ht.name, {}).get("normalized", None),
-                    )
-                )
-                if normalized is not None:
-                    self.hormones[our_key] = min(max(normalized, 0.0), 1.0)
+            hormones_profile = profile.get("hormones", {})
+            for our_key, profile_key in hormone_map.items():
+                entry = hormones_profile.get(profile_key)
+                if isinstance(entry, dict):
+                    normalized = entry.get("normalized")
+                    if normalized is not None:
+                        self.hormones[our_key] = min(max(float(normalized), 0.0), 1.0)
             self._last_sync = time.time()
         except Exception as e:
             logger.warning("Failed to sync from EndocrineSystem: %s", e)

@@ -176,7 +176,8 @@ async def image_generate(request: GenerateImageRequest):
         raise HTTPException(status_code=503, detail="GVV pipeline not available")
 
     try:
-        from ai.multimodal.primitives.primitive_renderer import render_primitives_from_vector
+        from ai.multimodal.primitives.primitive_types import DrawingInstructions
+        from ai.multimodal.primitives.primitive_renderer import PrimitiveRenderer
 
         concept_mapper = gvv["concept_mapper"]
         optimizer = gvv["optimizer"]
@@ -193,7 +194,11 @@ async def image_generate(request: GenerateImageRequest):
         )
 
         size = (request.canvas_size, request.canvas_size)
-        img = render_primitives_from_vector(result["optimized_vector"], size=size)
+        # R87 死路徑 #13：此前 import 不存在的 render_primitives_from_vector——
+        # 端點通過 503 檢查後必然 AttributeError。改用既有管線組件：
+        # optimized vector → DrawingInstructions.from_vector → PrimitiveRenderer.render。
+        instructions = DrawingInstructions.from_vector(result["vector"], size)
+        img = PrimitiveRenderer(size).render(instructions)
 
         metrics = {
             "concept": concept_name,

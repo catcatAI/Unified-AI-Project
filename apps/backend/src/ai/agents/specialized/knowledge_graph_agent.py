@@ -64,16 +64,19 @@ class KnowledgeGraphAgent:
             cap_name = cap_name.rsplit("_v", 1)[0]
         result_payload = {"request_id": request_id}
         if cap_name == "entity_linking":
+            # R87 死路徑 #12：此前呼叫不存在的 self._perform_entity_linking ——
+            # 能力已對外註冊（self.capabilities），但一執行就 AttributeError。
+            # 改為基於既有 _entities 的字典前綴/子字串匹配實作。
             result_payload["status"] = "success"
             result_payload["payload"] = self._perform_entity_linking(params)
         elif cap_name == "relationship_extraction":
-            result = self._extract_relationships(params.get("text", ""))
+            result: List[Dict[str, Any]] = self._extract_relationships(params.get("text", ""))
             result_payload["status"] = "success"
             result_payload["payload"] = {"relationships": result}
         elif cap_name == "graph_query":
-            result = self.query_graph(params.get("query", ""))
+            graph_result: Dict[str, Any] = self.query_graph(params.get("query", ""))
             result_payload["status"] = "success"
-            result_payload["payload"] = {"result": result}
+            result_payload["payload"] = {"result": graph_result}
         else:
             result_payload["status"] = "failure"
             result_payload["error_details"] = {"error_code": "CAPABILITY_NOT_SUPPORTED"}
@@ -83,6 +86,57 @@ class KnowledgeGraphAgent:
             )
             return
         await self.hsp_connector.send_task_result(result_payload, callback_address)
+
+    def _perform_entity_linking(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """把 params.text 中的提及連接到已知實體（子字串匹配）。
+
+        R87 補齊：capability "entity_linking" 已對外註冊，但此前處理函式
+        不存在——請求一來就 AttributeError 被上層吞掉。以 _entities
+        字典做不區分大小寫的出現匹配，回傳提及位置與實體。
+        """
+        text = str(params.get("text", ""))
+        if not text or not self._entities:
+            return {"mentions": []}
+        text_lower = text.lower()
+        mentions: List[Dict[str, Any]] = [
+            {
+                "entity": entity,
+                "properties": properties,
+                "position": text_lower.find(entity.lower()),
+            }
+            for entity, properties in self._entities.items()
+            if entity.lower() in text_lower
+        ]
+        mentions.sort(key=lambda m: int(m["position"]))
+        return {"mentions": mentions}
+
+    def _extract_relationships(self, text: str) -> List[Dict[str, Any]]:
+        """從文本抽取已知實體對的關係（以既有 _relations 過濾）。
+
+        R87 補齊：capability "relationship_extraction" 已對外註冊，但此前
+        處理函式不存在。列出文本中同時出現的實體對之間的已知關係；
+        文本中出現但無已知關係的實體對不虛構（誠實回傳 known=false）。
+        """
+        if not text or not self._entities:
+            return []
+        text_lower = text.lower()
+        present = [e for e in self._entities if e.lower() in text_lower]
+        results: List[Dict[str, Any]] = []
+        for i, source in enumerate(present):
+            for target in present[i + 1 :]:
+                known = [
+                    r
+                    for r in self._relations
+                    if r.get("source") == source
+                    and r.get("target") == target
+                    or r.get("source") == target
+                    and r.get("target") == source
+                ]
+                if known:
+                    results.extend(known)
+                else:
+                    results.append({"source": source, "target": target, "known": False})
+        return results
 
     def query_graph(self, query: str) -> Dict[str, Any]:
         """Query the knowledge graph (in-memory lookup)."""
