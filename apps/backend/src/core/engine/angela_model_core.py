@@ -17,7 +17,8 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, Optional
 
-from core.bio.biological_integrator import BiologicalIntegrator
+from core.bio import biological_integrator as _bio_integrator_mod
+from core.bio.biological_integrator import BiologicalIntegrator  # noqa: F401  (type 匯出)
 from core.bio.cerebellum_engine import CerebellumEngine
 from core.clock.global_system_clock import GlobalSystemClock
 from core.system.config.magic_numbers import loop_sleep
@@ -33,7 +34,8 @@ class AngelaModelCore:
         logger.info("🥚 [Model-Core] Incubating Angela's Digital Embryo...")
 
         # 核心子系統集成 / Core Subsystem Integration
-        self.bio = BiologicalIntegrator()
+        # 模組屬性動態解析：免疫 from-import 綁定汙染（同 digital_life_integrator）
+        self.bio = _bio_integrator_mod.BiologicalIntegrator()
         self.spatial = StateMatrix4D()
         self.motor = CerebellumEngine()
         self.clock = GlobalSystemClock(tick_rate_hz=10.0)
@@ -44,7 +46,7 @@ class AngelaModelCore:
 
         # 代謝計時器 / Metabolic Heartbeat
         self._heartbeat_active = False
-        self._heartbeat_task = None
+        self._heartbeat_task: Optional["asyncio.Task[None]"] = None
         self.clock = GlobalSystemClock(tick_rate_hz=10.0)
 
     async def initialize(self) -> None:
@@ -75,7 +77,7 @@ class AngelaModelCore:
                 stress = bio_state.get("stress_level", 0.0)
                 from core.system.config.tiered_loader import get_config
 
-                _beh_conf = get_config("standard/behavior/behavior")
+                _beh_conf = get_config("standard/behavior/behavior") or {}
                 _stress_perturb = _beh_conf.get("biological_thresholds", {}).get(
                     "stress_perturbation", 0.7
                 )

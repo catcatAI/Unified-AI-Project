@@ -296,6 +296,20 @@ class StateMatrix4D:
         self.alpha.compute_coordinate()
         self._post_update("alpha")
 
+    def apply_external_force(self, label: str, delta: Tuple[float, float, float]) -> None:
+        """施加外部力擾動 / Apply external force perturbation to spatial state.
+
+        對 α（生理）維度座標施加微小位移並降低穩定度——例如代謝循環中
+        壓力過大時的「不穩定位移」。label 僅供觀測/除錯。
+        """
+        x, y, z = self.alpha.coordinate
+        dx, dy, dz = delta
+        self.alpha.coordinate = (x + dx, y + dy, z + dz)
+        # 穩定度隨擾動下降，clamp 到 [0, 1]（與 active_cognition 的語意一致）
+        self.alpha.stability = max(0.0, min(1.0, self.alpha.stability - 0.05))
+        self.alpha.timestamp = datetime.now()
+        self._post_update("alpha")
+
     def update_beta(self, **kwargs) -> None:
         """更新β维度 / Update beta dimension (cognitive)"""
         self.beta.update(**kwargs)

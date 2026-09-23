@@ -32,9 +32,11 @@ from typing import Any, Callable, Dict, Optional
 from ai.lifecycle.llm_decision_loop import LLMDecisionLoop
 from ai.lifecycle.user_monitor import UserMonitor
 from core.bio import biological_integrator as _bio_integrator_mod
+from core.bio import memory_neuroplasticity_bridge as _memory_bridge_mod
 from core.bio.biological_integrator import BiologicalIntegrator  # noqa: F401  (type 匯出)
-from core.bio.memory_neuroplasticity_bridge import MemoryNeuroplasticityBridge
-from core.engine.action_executor import ActionExecutor
+from core.bio.memory_neuroplasticity_bridge import MemoryNeuroplasticityBridge  # noqa: F401  (type 匯出)
+from core.engine import action_executor as _action_executor_mod
+from core.engine.action_executor import ActionExecutor  # noqa: F401  (type 匯出)
 from core.engine.state_matrix import StateMatrix4D
 from core.system.config.magic_numbers import loop_sleep
 from core.system.state_store.global_store import state_store
@@ -314,7 +316,8 @@ class DigitalLifeIntegrator:
         self.biological_integrator: BiologicalIntegrator = (
             _bio_integrator_mod.BiologicalIntegrator()
         )
-        self.action_executor: ActionExecutor = ActionExecutor()
+        # 同 biological_integrator：以模組屬性動態解析，免疫 from-import 綁定汙染
+        self.action_executor: ActionExecutor = _action_executor_mod.ActionExecutor()
         self.memory_bridge: Optional[MemoryNeuroplasticityBridge] = None
 
         # P0-4: AI Lifecycle loops
@@ -416,7 +419,7 @@ class DigitalLifeIntegrator:
         # 2.5 Memory-Neuroplasticity Bridge (§11.3 #6: 修 DLI.memory_bridge = None)
         # 建立並啟動 memory_bridge，讓 consolidation trigger 真正生效（GR/RESTING/DORMANT）。
         try:
-            self.memory_bridge = MemoryNeuroplasticityBridge()
+            self.memory_bridge = _memory_bridge_mod.MemoryNeuroplasticityBridge()
             await self.memory_bridge.initialize()
             logger.info("  [Foundation] Memory-neuroplasticity bridge online.")
         except Exception as e:

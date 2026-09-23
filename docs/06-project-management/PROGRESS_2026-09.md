@@ -180,3 +180,32 @@ import＋新增 R85 回歸測試 4 條。
 
 全倉 **5,814 passed, 118 skipped, 0 failed**；mypy
 **405 鎖定**；black/flake8/prettier/真相源核對門全綠。
+
+## R86（2026-09-23）：汙染免疫全倉化＋第 10 個死路徑（apply_external_force 從未存在）
+
+### 汙染免疫推廣至其餘 4 個建構點
+
+同型「模組屬性動態解析」套用到：DLI 的
+`ActionExecutor`／`MemoryNeuroplasticityBridge`、`heartbeat.MetabolicHeartbeat.bio_integrator`、`angela_model_core.bio`。新增**完整污染鏈重現**回歸測試（patch 視窗 →
+teardown → 建構 → 必為真實類）。
+
+### AGENTS.md 測試指南新增「跨檔 mock 汙染陷阱」
+
+機理（from-import 永久綁定）、症狀（單跑綠跨檔炸、被 except 或測試 bug 遮蔽）、四條規則（消費端動態解析、輕量模組不整 mock、except
+handler 自身可執行、二分法排查）。
+
+### 第 10 個死路徑：`StateMatrix4D.apply_external_force` 從未存在
+
+`angela_model_core._metabolic_loop` 壓力擾動呼叫此方法——`git log -S`
+證實**全倉從未實作**，每次代謝循環壓力超標就 AttributeError 被吞、循環退避 5 秒（空間「不穩定位移」行為從未發生）。依既有物理欄位（`coordinate`/`stability`）補真實實作（擾動位移＋穩定度下降），閉環驗證含 intent
+gravity 的物理鏈後通過。
+
+### mypy 棘輪 405→402
+
+angela_model_core 三錯清零（Task 型別宣告、config
+None 窄化、attr-defined 隨死路徑修復歸零）。
+
+### 驗證
+
+全倉 **5,815 passed, 118 skipped, 0 failed**；mypy
+**402 鎖定**；格式門／真相源核對門全綠。

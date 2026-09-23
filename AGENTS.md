@@ -905,7 +905,8 @@ collected — 0 errors**).
 > over-broad test fixture mock of magic_numbers root-caused — TypeError noise in
 > cross-file runs eliminated; budget gate now reports per-file error
 > distribution via --top N; R83 long-tail sweep: 11 files zeroed 476→432,
-> angela_bench re-run confirmed no regression 80/26.7/97.5/0/100); full suite 5,804 in 4.5min.
+> angela_bench re-run confirmed no regression 80/26.7/97.5/0/100); full suite
+> 5,804 in 4.5min.
 
 ### JavaScript/TypeScript
 
@@ -999,6 +1000,27 @@ try {
 - Naming: `test_*.py` for files, `test_*` for functions
 - Coverage target: >80%
 - Markers: `@pytest.mark.unit`, `@pytest.mark.integration`, `@pytest.mark.slow`
+
+### 跨檔 mock 汙染陷阱（R85 機理，必讀）
+
+`monkeypatch.setattr("module.X", mock)` 或 `patch("module.X")`
+只還原**源模組**屬性。若 patch 視窗內另一個模組**首次 import** 並用
+`from module import X`，它會把當時的mock
+**永久綁進自己的命名空間**——teardown 還原不到，之後整個行程該消費者都拿到 mock。
+
+症狀：單獨跑綠、跨檔組合炸；錯誤常被下游 `except`
+吞掉或被測試自己的 bug（如未定義的
+`logger`）遮蔽成不相干的 NameError/TypeError。
+
+規則：
+
+1. 生產碼消費端對「會被測試 patch 的系統類」建構時，用**模組屬性動態解析**：
+   `import core.bio.biological_integrator as _m; _m.BiologicalIntegrator()`，不要裸用 from-import 綁定建構（見
+   `digital_life_integrator.py` 同款註解）。
+2. 測試中不要 `sys.modules[輕量配置模組] = MagicMock()`（R82：`magic_numbers`
+   整模組 mock 會讓背景循環 `asyncio.sleep(loop_sleep(...))` 炸 TypeError）。
+3. 測試的 except handler 必須能執行：先確認引用的名字存在，否則會把真異常遮蔽。
+4. 排查「跨檔才炸」時，先懷疑 from-import 綁定汙染，用兩檔組合二分，不要猜。
 
 ## Version Governance Rules
 

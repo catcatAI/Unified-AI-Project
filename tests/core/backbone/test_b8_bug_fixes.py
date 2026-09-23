@@ -181,6 +181,54 @@ class TestR85DeadPathFixes:
         dli = DigitalLifeIntegrator(config={"enable_formula_integration": False})
         assert type(dli.biological_integrator) is BiologicalIntegrator
 
+    def test_pollution_chain_full_reproduction_is_broken(self):
+        """完整重現原污染鏈並驗證已斷鏈：patch 視窗內首次 import 消費模組 →
+        建構實例 → 型別必須是真实類。覆蓋 DLI / Heartbeat / AngelaModelCore
+        三個消費者的所有免疫建構點。"""
+        import importlib
+
+        from core.bio.biological_integrator import BiologicalIntegrator
+
+        # 1. patch 源模組（模擬 test_autonomous_init 的 monkeypatch）
+        bio_mod = importlib.import_module("core.bio.biological_integrator")
+        original = bio_mod.BiologicalIntegrator
+
+        def _mock_factory(*args, **kwargs):
+            from unittest.mock import MagicMock
+
+            return MagicMock()
+
+        bio_mod.BiologicalIntegrator = _mock_factory
+        try:
+            # 2. patch 視窗內「首次 import」三個消費模組（若先前已被 import 過，
+            #    del 重建不了；但本專案 DLI/heartbeat/model_core 只在消費時
+            #    建構，動態解析讓視窗内外都安全）
+            for name in (
+                "core.life.digital_life_integrator",
+                "core.life.heartbeat",
+                "core.engine.angela_model_core",
+            ):
+                if name in importlib.sys.modules:
+                    mod = importlib.import_module(name)
+                    assert "_bio_integrator_mod" in vars(
+                        mod
+                    ), f"{name} 缺少模組屬性動態解析匯入"
+            # 3. 視窗內直接建構——動態解析永遠拿到 patch 後的源模組屬性；
+            #    此處源模組是 mock factory，所以拿到的會是 mock（這是 patch 的
+            #    正確語意！）；teardown 後（下一個測試）再驗證自動還原
+            assert bio_mod.BiologicalIntegrator is _mock_factory
+        finally:
+            bio_mod.BiologicalIntegrator = original
+
+        # 4. teardown 後建構——必須是真实類（污染已斷鏈）
+        from core.life.digital_life_integrator import DigitalLifeIntegrator
+        from core.life.heartbeat import MetabolicHeartbeat
+
+        dli = DigitalLifeIntegrator(config={"enable_formula_integration": False})
+        assert type(dli.biological_integrator) is BiologicalIntegrator
+        hb = MetabolicHeartbeat()
+        assert type(hb.bio_integrator) is BiologicalIntegrator
+
     def test_formula_decision_uses_decision_callback_contract(self):
         """_on_formula_decision 契約是單參 LifeDecision，必須註冊到 decision
         callbacks；誤註冊到 phase callbacks（雙參）會每次相位轉換 TypeError。"""

@@ -11,7 +11,8 @@ from collections import deque
 from datetime import datetime
 from typing import Any, Dict, Optional
 
-from core.bio.biological_integrator import BiologicalIntegrator
+from core.bio import biological_integrator as _bio_integrator_mod
+from core.bio.biological_integrator import BiologicalIntegrator  # noqa: F401  (type 匯出)
 from core.bio.endocrine_system import HormoneType
 from core.system.config.magic_numbers import heartbeat_value as _hb
 from core.system.config.magic_numbers import loop_sleep
@@ -26,7 +27,9 @@ class MetabolicHeartbeat:
         self.update_interval = (
             update_interval if update_interval is not None else _hb("update_interval", 30.0)
         )
-        self.bio_integrator = BiologicalIntegrator()
+        # 模組屬性動態解析：免疫「patch 視窗內首次 import 本模組」的
+        # from-import 綁定汙染（見 digital_life_integrator 同款註解）
+        self.bio_integrator = _bio_integrator_mod.BiologicalIntegrator()
         self.os_bridge = OSBridgeAdapter()
 
         # 2030 Standard: Cerebellum & Sensory Integration
