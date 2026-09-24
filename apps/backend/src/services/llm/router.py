@@ -2347,7 +2347,16 @@ class AngelaLLMService:
         self, user_message: str, context: Dict[str, Any]
     ) -> Tuple[Optional[LLMResponse], GenerationParams]:
         defaults = _get_llm_config("defaults", {})
-        gen_timeout = getattr(self.active_backend, "timeout", defaults.get("timeout_default", 30.0))
+        # backend.timeout 必須是正數才採用；非數值/非正值（設定檔型別錯誤、mock 物件等）
+        # 回退到預設值，否則 AsyncMock 之類會流進 wait_for 造成 TypeError 與孤兒協程
+        _backend_timeout = getattr(self.active_backend, "timeout", None)
+        gen_timeout = (
+            _backend_timeout
+            if isinstance(_backend_timeout, (int, float))
+            and not isinstance(_backend_timeout, bool)
+            and _backend_timeout > 0
+            else defaults.get("timeout_default", 30.0)
+        )
         gen_temperature = defaults.get("temperature", 0.7)
         gen_max_tokens = defaults.get("max_tokens", 512)
 
@@ -2470,6 +2479,7 @@ class AngelaLLMService:
             if backend is None:
                 raise RuntimeError("No LLM backend available")
             response: Optional[LLMResponse]
+            coro: Optional[Coroutine[Any, Any, Optional[LLMResponse]]] = None
             try:
                 from core.waiting_scheduler import get_waiting_scheduler
 
@@ -2482,11 +2492,17 @@ class AngelaLLMService:
                     max_tokens=params.max_tokens,
                 )
 
-                response = await scheduler.submit(
-                    coro,
-                    timeout=params.timeout,
-                    label=f"llm:{self.active_backend_type.value if self.active_backend_type else 'gen'}",
-                )
+                try:
+                    response = await scheduler.submit(
+                        coro,
+                        timeout=params.timeout,
+                        label=f"llm:{self.active_backend_type.value if self.active_backend_type else 'gen'}",
+                    )
+                except BaseException:
+                    # submit 拋出任意例外時協程可能未被消費，關閉防孤兒
+                    # （已被消費/已完成的協程 close 為 no-op，安全）
+                    coro.close()
+                    raise
 
                 if response is None:
                     raise asyncio.TimeoutError(
@@ -2494,6 +2510,8 @@ class AngelaLLMService:
                     )
 
             except (ImportError, AttributeError) as e:
+                if coro is not None:
+                    coro.close()  # 保險：此路徑協程通常未被建立或已消費，close 為 no-op
                 logger.warning(f"WaitingScheduler 調度失敗，回退至直接調用: {e}", exc_info=True)
                 response = await asyncio.wait_for(
                     backend.generate(

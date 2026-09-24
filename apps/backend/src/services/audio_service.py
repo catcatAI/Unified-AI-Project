@@ -185,8 +185,21 @@ class AudioService:
         if not particles:
             return {"status": "error", "message": "No audio particles detected"}
 
+        # 防禦：過濾空/無效特徵向量，避免 np.mean 對空集合產生 NaN 聲紋與 RuntimeWarning
+        feature_vectors = []
+        for p in particles:
+            fv = p.feature_vector
+            try:
+                if fv is not None and len(fv) > 0:
+                    feature_vectors.append(fv)
+            except TypeError:
+                continue
+        if not feature_vectors:
+            logger.warning("register_user_voice: no valid feature vectors in audio particles")
+            return {"status": "error", "message": "No valid audio features detected"}
+
         # 取平均特徵作為用戶聲紋
-        avg_embedding = np.mean([p.feature_vector for p in particles], axis=0)
+        avg_embedding = np.mean(feature_vectors, axis=0)
         profile = self.memory.identify_or_register(avg_embedding, metadata={"is_speech": True})
         profile.name = "User"
         profile.label = "user"

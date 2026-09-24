@@ -748,6 +748,25 @@ class HSPConnector:
                     # For synchronous subscribe methods, just call directly
                     self.external_connector.subscribe(topic, qos)
 
+    async def advertise_capability(self, cap: HSPCapabilityAdvertisementPayload) -> bool:
+        """Publish a capability advertisement to the well-known discovery topic.
+
+        HSP 規範 v0.1（03-interaction-logic-and-services.md）：AI 發布
+        CapabilityAdvertisement 到 well-known topic `hsp/capabilities/advertisements/all`。
+        歷史缺陷：此方法從未存在，但 base_agent.start() 生產路徑對每個
+        capability 呼叫它——直接 AttributeError（測試以 AsyncMock 掩蓋）。
+        """
+        try:
+            envelope = self._create_envelope(
+                message_type="HSP::CapabilityAdvertisement_v0.1",
+                payload=dict(cap),
+                payload_schema_uri=get_schema_uri("HSP_CapabilityAdvertisement_v0.1.schema.json"),
+            )
+            return await self.publish_message("hsp/capabilities/advertisements/all", envelope)
+        except Exception as e:  # 廣告失敗不應阻斷 agent 啟動
+            self.logger.error(f"Error advertising capability {cap.get('capability_id')}: {e}")
+            return False
+
     async def publish_opinion(
         self, opinion_payload: HSPOpinionPayload, topic: Optional[str] = None
     ) -> bool:

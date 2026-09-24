@@ -80,7 +80,10 @@ class WaitingScheduler:
             task.deadline = now + min(slot + 1, self.max_wait_seconds)
 
     async def submit(self, coro, timeout: float = 8.0, label: str = "") -> Any:
-        if coro is None or not self._alive:
+        if coro is None:
+            return None
+        if not self._alive:
+            coro.close()  # 調度器停用時關閉協程，防 "never awaited" 孤兒
             return None
         task_id = f"{label}_{id(coro)}"
         async with self._lock:

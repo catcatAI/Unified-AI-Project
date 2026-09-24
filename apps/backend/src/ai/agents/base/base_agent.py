@@ -191,7 +191,7 @@ class BaseAgent:
         self.hsp_connector.register_on_task_request_callback(self.handle_task_request)
 
         for cap in self.capabilities:
-            self.hsp_connector.advertise_capability(cap)
+            await self.hsp_connector.advertise_capability(cap)
 
         logger.info(f"[{self.agent_id}] is running and listening for tasks.")
 

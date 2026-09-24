@@ -506,8 +506,7 @@ class _ChromaEncoder:
     def encode(self, texts: List[str]) -> Any:
         torch, _ = _lazy_torch()
         if torch is None:
-            import numpy as np
-
+            # np 為模組級 import；此處不可再 local import（會遮蔽整個函數作用域）
             return np.zeros((0, self.EMBEDDING_DIM), dtype=np.float32)
         if not texts:
             return torch.zeros(0, self.EMBEDDING_DIM)
@@ -561,7 +560,9 @@ class _ChromaEncoder:
         if not embeddings:
             return torch.zeros(0, self.EMBEDDING_DIM)
 
-        return torch.tensor(embeddings, dtype=torch.float32).cpu()
+        # list-of-ndarray 直建 tensor 會觸發 torch 慢路徑（UserWarning），先收斂成單一 ndarray
+        arr = np.array(embeddings, dtype=np.float32)
+        return torch.tensor(arr, dtype=torch.float32).cpu()
 
     def query_embedding(self, text: str) -> Optional[List[float]]:
         """Get the embedding for a single text without adding it to the collection."""

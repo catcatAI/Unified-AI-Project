@@ -47,6 +47,7 @@ def safe_create_task_sync(
         return task
     except RuntimeError:
         logger.debug(f"[Async-Task] No running event loop, skipping task '{name or 'unnamed'}'")
+        coro.close()  # 關閉未消費的協程，防 "coroutine was never awaited" 警告與資源洩漏
         return None
 
 

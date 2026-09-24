@@ -102,7 +102,11 @@ class MCPConnector:
         loop: Optional[asyncio.AbstractEventLoop] = None,
     ):
         self.ai_id = ai_id
-        self.client = mqtt.Client(client_id=f"mcp-client-{ai_id}-{uuid.uuid4().hex[:8]}")
+        # paho-mqtt 2.x：必須指定 CallbackAPIVersion.VERSION2，否則觸發 Callback API v1 棄用警告
+        self.client = mqtt.Client(
+            mqtt.CallbackAPIVersion.VERSION2,
+            client_id=f"mcp-client-{ai_id}-{uuid.uuid4().hex[:8]}",
+        )
         self.broker_address = mqtt_broker_address
         self.broker_port = mqtt_broker_port
         self.client.on_connect = self._on_connect
@@ -147,16 +151,18 @@ class MCPConnector:
         self.client.disconnect()
         self.logger.info("MCPConnector disconnected.")
 
-    def _on_connect(self, client, userdata, flags, rc) -> None:
-        """On connect."""
-        if rc == 0:
+    def _on_connect(self, client, userdata, flags, reason_code, properties) -> None:
+        """On connect (Callback API v2 signature)."""
+        if reason_code == 0:
             self.logger.info("MCPConnector connected successfully.")
             self.is_connected = True
             self.mcp_available = True
             client.subscribe("mcp/broadcast")
             client.subscribe(f"mcp/unicast/{self.ai_id}")
         else:
-            logger.warning(f"MCPConnector failed to connect, return code {rc}")
+            logger.warning(
+                f"MCPConnector failed to connect, reason code {reason_code}"
+            )
             self.is_connected = False
             self.mcp_available = False
 
