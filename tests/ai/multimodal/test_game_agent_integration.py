@@ -165,6 +165,70 @@ class TestFoveatedSampler:
         assert abs(orig_y - 120) < 50
 
 
+class TestVisualEncoding:
+    """死路徑 #18 回歸：視覺編碼契約（真實 VisualEncoder、維度對齊、確定性）"""
+
+    @pytest.mark.asyncio
+    async def test_encode_visual_uses_visual_encoder_not_random(self):
+        """幀回調→編碼→特徵必須等於 VisualEncoder 確定性輸出（隨機佔位會失敗）"""
+        agent = GameAgent(GameAgentConfig())
+        agent._running = True
+        frame = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
+
+        agent._on_frame_received(frame)
+        assert agent._state.visual is not None
+        assert agent._pending_frame is not None
+
+        await agent._encode_visual()
+
+        assert agent._pending_frame is None
+        features = agent._state.visual.features
+        assert features.shape == (agent.config.policy_latent_dim,)
+        from PIL import Image as PILImage
+
+        expected = agent._visual_encoder.encode_from_pil(PILImage.fromarray(frame))
+        assert np.allclose(features, expected), "features 應為 VisualEncoder 確定性輸出"
+
+    @pytest.mark.asyncio
+    async def test_encode_visual_without_frame_is_noop(self):
+        """無幀時編碼應為安全 no-op"""
+        agent = GameAgent(GameAgentConfig())
+        agent._state.visual = None
+        await agent._encode_visual()
+        assert agent._pending_frame is None
+
+    @pytest.mark.asyncio
+    async def test_encode_visual_failure_falls_back_to_zeros(self):
+        """編碼拋例外時回退零向量（policy 端已有零向量防禦），不阻塞主循環"""
+        agent = GameAgent(GameAgentConfig())
+        agent._running = True
+        frame = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
+        agent._on_frame_received(frame)
+
+        with patch.object(
+            agent._visual_encoder, "encode_from_pil", side_effect=RuntimeError("boom")
+        ):
+            await agent._encode_visual()
+
+        assert agent._state.visual is not None
+        assert np.all(agent._state.visual.features == 0)
+        assert agent._pending_frame is None
+
+    def test_frame_callback_stores_pending_frame(self):
+        """幀回調應保存原始幀待編碼，features 初始為 policy_latent_dim 零向量"""
+        agent = GameAgent(GameAgentConfig())
+        agent._running = True
+        frame = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
+
+        agent._on_frame_received(frame)
+
+        assert agent._pending_frame is not None
+        assert np.array_equal(agent._pending_frame, frame)
+        assert agent._state.visual is not None
+        assert agent._state.visual.features.shape == (agent.config.policy_latent_dim,)
+        assert np.all(agent._state.visual.features == 0)
+
+
 class TestGamePolicy:
     """測試 L0 Policy"""
 

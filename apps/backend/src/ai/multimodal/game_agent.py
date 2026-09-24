@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Literal, Optional, Tuple
 
 import numpy as np
+from PIL import Image
 from integrations.luanti_connector import (
     GameSnapshot,
     LuantiConfig,
@@ -26,6 +27,7 @@ from integrations.luanti_connector import (
 
 from .foveated_sampler import FoveatedSampler, SamplingConfig, SamplingStrategy, create_sampler_from_config
 from .game_memory_bridge import GameMemoryBridge, MockHAMManager
+from .visual_encoder import VisualEncoder
 from .game_planner import GamePlanner, GoalManager, GoalType, PlannerConfig, PlanningContext
 from .game_policy import GamePolicy, PolicyConfig, PolicyOutput
 from .game_strategy import GameStrategy, StrategyConfig
@@ -133,6 +135,7 @@ class GameAgent:
         self._state = GameState()
         self._current_skill_result: Optional[Any] = None
         self._pending_actions: Dict[str, Any] = {}
+        self._pending_frame: Optional[np.ndarray] = None  # 待編碼的最新採樣幀
 
         # 回調
         self._tick_callbacks: List[Callable] = []
@@ -190,6 +193,9 @@ class GameAgent:
 
         # Memory Bridge
         self._memory = GameMemoryBridge()
+
+        # 視覺編碼器（L0 前置：PIL 幀 → 固定維特徵向量）
+        self._visual_encoder = VisualEncoder(feature_dim=self.config.policy_latent_dim)
 
         # LLM Interface
         if self.config.llm_enabled:
@@ -254,15 +260,16 @@ class GameAgent:
         focus = self._get_focus_point()
         result = self._sampler.sample(frame, focus)
 
-        # 更新視覺觀測
+        # 更新視覺觀測（編碼延遲到 _encode_visual，避免回調阻塞）
         self._state.visual = VisualObservation(
             frame_id=self._tick,
             timestamp=time.time(),
-            features=np.zeros(256, dtype=np.float32),  # 將由 visual encoder 填充
+            features=np.zeros(self.config.policy_latent_dim, dtype=np.float32),
             fovea_xy=result.focus_xy,
             inverse_map=result.inverse_map,
             raw_frame_shape=frame.shape[:2],
         )
+        self._pending_frame = frame
 
     def _get_focus_point(self) -> Tuple[int, int]:
         """獲取焦點 (來自 L1/L2/L3)"""
@@ -423,12 +430,27 @@ class GameAgent:
         )
 
     async def _encode_visual(self):
-        """視覺編碼 (使用現有 visual_encoder)"""
-        # 這裡應調用 visual_encoder.encode_from_pil
-        # 暫時用隨機特徵佔位
-        if self._state.visual:
-            # TODO: 整合 visual_encoder
-            self._state.visual.features = np.random.randn(128).astype(np.float32)
+        """視覺編碼：採樣幀經 VisualEncoder 產生確定性特徵向量 (policy_latent_dim)。
+
+        死路徑 #18 修復：此處原為 np.random.randn(128) 佔位，且維度與
+        VisualObservation.features 聲明 (256) 和 policy 輸入 (latent_dim=128)
+        不一致。現接到真實 VisualEncoder（Gabor CNN 濾波器組＋色彩/邊緣/
+        紋理/空間佈局特徵），輸出維度由 config.policy_latent_dim 決定。
+        編碼失敗時回退全零向量（policy 端已零向量防禦），不阻塞主循環。
+        """
+        if self._state.visual is None or self._pending_frame is None:
+            return
+        try:
+            frame = np.clip(self._pending_frame, 0, 255).astype(np.uint8)
+            img = Image.fromarray(frame)
+            self._state.visual.features = self._visual_encoder.encode_from_pil(img)
+        except Exception as e:
+            logger.error("Visual encoding failed, falling back to zeros: %s", e)
+            self._state.visual.features = np.zeros(
+                self.config.policy_latent_dim, dtype=np.float32
+            )
+        finally:
+            self._pending_frame = None
 
     def _proprioception_to_vector(self, prop: Optional[Proprioception]) -> np.ndarray:
         """本體感覺轉向量 (32-dim)"""

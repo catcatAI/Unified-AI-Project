@@ -255,12 +255,22 @@ class MouseMonitor:
                 await asyncio.sleep((self.update_interval_ms - elapsed_ms) / 1000)
 
     async def _get_mouse_position(self) -> Tuple[float, float]:
-        """Get current mouse position (stub - platform specific)"""
-        # This would integrate with OS-specific APIs
-        # For now, return default or simulate
-        if self.current_position:
-            return self.current_position.x, self.current_position.y
-        return 0.0, 0.0
+        """Get current mouse position via pyautogui (best-effort).
+
+        Returns the last tracked position when pyautogui is unavailable
+        (headless servers, optional dependency not installed), keeping the
+        monitor loop alive instead of crashing.
+        """
+        try:
+            import pyautogui
+
+            pos = pyautogui.position()
+            return float(pos.x), float(pos.y)
+        except Exception as e:  # pyautogui 缺失或無顯示環境時降級為最後已知位置
+            if self.current_position:
+                return self.current_position.x, self.current_position.y
+            logger.debug("Mouse position unavailable (%s), using last known", e)
+            return 0.0, 0.0
 
     def register_callback(self, callback: Callable[[MouseData], None]) -> None:
         """Register position update callback"""
@@ -763,7 +773,6 @@ class UserActivityMonitor:
         if idle_seconds > 60:
             focus_score *= 0.5
 
-        # Get active window (stub)
         active_window = await self._get_active_window()
 
         return UserActivityData(
