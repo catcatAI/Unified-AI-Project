@@ -58,9 +58,9 @@ async def desktop_organize(
         "success": True,
         "operations": [
             {
-                "source": str(op.source) if hasattr(op, "source") else "",
-                "destination": str(op.destination) if hasattr(op, "destination") else "",
-                "category": op.category if hasattr(op, "category") else "",
+                "source": str(op.get("source_path", "")),
+                "destination": str(op.get("target_path", "")),
+                "category": op.get("operation_type", ""),
             }
             for op in ops
         ],

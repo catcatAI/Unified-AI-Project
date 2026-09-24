@@ -105,9 +105,9 @@ class DynamicAgentRegistry:
     ) -> None:
         """Handle capability advertisements to register agents."""
         async with self.registry_lock:
-            agent_id = capability_payload.get("ai_id", sender_ai_id)
-            agent_name = capability_payload.get("agent_name", "Unknown")
-            capability_id = capability_payload.get("capability_id", "")
+            agent_id = str(capability_payload.get("ai_id") or sender_ai_id)
+            agent_name = str(capability_payload.get("agent_name") or "Unknown")
+            capability_id = str(capability_payload.get("capability_id") or "")
 
             # Create or update agent registration
             if agent_id not in self.registered_agents:
@@ -115,7 +115,7 @@ class DynamicAgentRegistry:
                 self.registered_agents[agent_id] = RegisteredAgent(
                     agent_id=agent_id,
                     agent_name=agent_name,
-                    capabilities=[capability_payload],
+                    capabilities=[dict(capability_payload)],
                     registration_time=time.time(),
                     last_seen=time.time(),
                     status="active",
@@ -146,7 +146,7 @@ class DynamicAgentRegistry:
                 )
 
                 if not existing_capability:
-                    agent.capabilities.append(capability_payload)
+                    agent.capabilities.append(dict(capability_payload))
                     agent.metadata["capability_count"] = len(agent.capabilities)
                     logger.info(
                         f"Updated agent {agent_name} ({agent_id}) with new capability {capability_id}"

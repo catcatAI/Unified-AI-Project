@@ -28,7 +28,7 @@ import os
 import shutil
 import subprocess
 import threading
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
@@ -114,11 +114,11 @@ class FileCategory(Enum):
     CODE = ("代码", [".py", ".js", ".html", ".css", ".java", ".cpp", ".c", ".h"])
     EXECUTABLES = ("程序", [".exe", ".msi", ".app", ".deb", ".rpm"])
     DATA = ("数据", [".json", ".xml", ".csv", ".xlsx", ".db", ".sql"])
-    OTHER = ("其他", [])
+    OTHER = ("其他", None)
 
-    def __init__(self, cn_name: str, extensions: List[str]):
+    def __init__(self, cn_name: str, extensions: Optional[List[str]] = None) -> None:
         self.cn_name = cn_name
-        self.extensions = extensions
+        self.extensions: List[str] = extensions or []
 
 
 @dataclass
@@ -585,7 +585,7 @@ class DesktopInteraction:
             if file_path.is_file() and file_path != self.organized_path:
                 file_paths.append(file_path)
 
-        file_ops = self._execute_organize(file_paths, self.desktop_path)
+        file_ops = await self._execute_organize(file_paths, self.desktop_path)
         return file_ops
 
     async def _execute_organize(
@@ -597,10 +597,10 @@ class DesktopInteraction:
         Returns:
             List of file operations performed
         """
-        operations: List[Dict[str, Any]] = []
+        operations: List[FileOperation] = []
 
         if not self.desktop_path.exists():
-            return operations
+            return [asdict(op) for op in operations]
 
         for file_path in file_paths:
             if file_path.is_file() and file_path != self.organized_path:
@@ -643,7 +643,7 @@ class DesktopInteraction:
         if operations:
             self.current_state.last_organized = datetime.now()
 
-        return operations
+        return [asdict(op) for op in operations]
 
     async def cleanup_desktop(self, days_old: int = 30) -> List[FileOperation]:
         """

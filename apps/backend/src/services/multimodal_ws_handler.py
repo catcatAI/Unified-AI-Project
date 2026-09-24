@@ -106,6 +106,7 @@ async def _dispatch(
     elif action == "memory_search":
         return await svc.memory_search(payload.get("query", ""), payload.get("top_k", 5))
     elif action in ("chat_stream", "chat"):
+        assert websocket is not None  # chat 串流必須有連線；呼叫端契約
         return await _handle_chat_stream(websocket, payload)
     else:
         raise ValueError(f"Unknown multimodal action: {action}")

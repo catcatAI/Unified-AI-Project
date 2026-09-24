@@ -127,7 +127,6 @@ class TraumaMemorySystem:
         """
         if memory_id not in self.trauma_memories:
             return 0.0
-
         return self.trauma_memories[memory_id].get_retention(current_time)
 
     def reactivate(self, memory_id: str, trigger_context: str = "") -> bool:
@@ -272,6 +271,7 @@ class TraumaMemorySystem:
         return results
 
     def _validate_trauma_input(self, memory_id: str, coping_strategy: str) -> str:
+        # 回傳 memory_id（str）；呼叫端僅做日誌/流程控制
         """Validate trauma input."""
         if memory_id not in self.trauma_memories:
             raise ValueError(f"Trauma memory {memory_id} not found in system")
@@ -281,7 +281,8 @@ class TraumaMemorySystem:
                 f"Invalid coping strategy: {coping_strategy}. "
                 f"Must be one of: {valid_strategies}"
             )
-        return self.trauma_memories[memory_id]
+        # 校驗通過——回傳 id（str）；此函式是斷言式校驗，呼叫端已持有 memories dict
+        return memory_id
 
     def _handle_flashback(
         self,
@@ -316,7 +317,9 @@ class TraumaMemorySystem:
         else:
             results["flashback_intensity"] = 0.0
 
-    def _apply_emotional_regulation(self, coping_strategy, current_stress_level, results) -> str:
+    def _apply_emotional_regulation(
+        self, coping_strategy: str, current_stress_level: float, results: Dict[str, Any]
+    ) -> float:
         """Apply emotional regulation."""
         regulation_effects = {
             "default": 0.2,
@@ -332,7 +335,7 @@ class TraumaMemorySystem:
         if results["reactivation_occurred"]:
             reduced_intensity = max(0.0, results["flashback_intensity"] - effectiveness)
             results["flashback_intensity"] = reduced_intensity
-        return effectiveness
+        return float(effectiveness)
 
     def _prevent_over_activation(self, current_stress_level, results) -> None:
         """Prevent over activation."""

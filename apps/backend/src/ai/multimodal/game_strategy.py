@@ -45,7 +45,12 @@ class StrategyWeights:
 
     @classmethod
     def from_dict(cls, d: Dict[str, float]) -> "StrategyWeights":
-        return cls(**{k: d.get(k, v.default) for k, v in cls.__dataclass_fields__.items()})
+        return cls(
+            **{
+                k: float(d.get(k, v.default))  # type: ignore[arg-type]  # dataclass MISSING 哨兵窄化
+                for k, v in cls.__dataclass_fields__.items()
+            }
+        )
 
 
 @dataclass

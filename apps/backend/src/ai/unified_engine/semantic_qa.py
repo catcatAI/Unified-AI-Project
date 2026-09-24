@@ -25,7 +25,7 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -55,35 +55,24 @@ def _emotion_threshold_adjustment() -> float:
     if _EMOTION_ADJ != 0.0:
         return max(-0.10, min(0.10, _EMOTION_ADJ))
     adj = 0.0
-    # Path 1: state_store 上的 emotion 事件 (chat_routes 每輪 emit)
-    try:
-        from core.system.state_store.global_store import state_store  # type: ignore
-
-        emo = None
-        for key in ("emotion.behavioral_adjustment", "emotion.current", "angela_emotion"):
-            try:
-                emo = state_store.get(key, None)  # type: ignore[attr-defined]
-                if emo:
-                    break
-            except Exception:
-                continue
-        if isinstance(emo, dict):
-            routing = emo.get("routing_mode", "")
-            valence = float(emo.get("valence", 0.0) or 0.0)
-            arousal = float(emo.get("arousal", 0.5) or 0.5)
-            sustained = int(emo.get("sustained_negative_counter", 0) or 0)
-            if routing in ("exploratory",):
-                adj -= 0.05
-            if routing in ("conservative",):
-                adj += 0.05
-            if valence > 0.3 and arousal > 0.5:
-                adj -= 0.03
-            if valence < -0.3:
-                adj += 0.03
-            if sustained >= 3:
-                adj += 0.08
-    except Exception:
-        pass
+    # Path 1: state_store 事件訂閱快取 (EmotionSystem 每輪 emit 推送, 此處被動接收)
+    _ensure_emotion_event_subscription()
+    emo = _LATEST_EMOTION_EVENT
+    if isinstance(emo, dict):
+        routing = emo.get("routing_mode", "")
+        valence = float(emo.get("valence", 0.0) or 0.0)
+        arousal = float(emo.get("arousal", 0.5) or 0.5)
+        sustained = int(emo.get("sustained_negative_counter", 0) or 0)
+        if routing in ("exploratory",):
+            adj -= 0.05
+        if routing in ("conservative",):
+            adj += 0.05
+        if valence > 0.3 and arousal > 0.5:
+            adj -= 0.03
+        if valence < -0.3:
+            adj += 0.03
+        if sustained >= 3:
+            adj += 0.08
     if adj == 0.0:
         try:
             import importlib
@@ -118,7 +107,7 @@ def _threshold() -> float:
             _CACHED_THRESHOLD = threshold_value("semantic_qa.threshold", _DEFAULT_THRESHOLD)
         except Exception:
             _CACHED_THRESHOLD = _DEFAULT_THRESHOLD
-    base = float(_CACHED_THRESHOLD)  # type: ignore[arg-type]
+    base = float(_CACHED_THRESHOLD)
     adj = _emotion_threshold_adjustment()
     # 最終限幅 [0.60, 0.85] — 既防幻覺 (>0.85 過嚴) 也防過度沉默 (<0.60 過松)
     return max(0.60, min(0.85, base + adj))
@@ -129,6 +118,33 @@ def _threshold() -> float:
 # 把當前 PAD 推導的 routing/style 轉為閾值增量，下一輪 semantic_qa.answer() 即生效.
 # 狀態(6D) -> 情緒(PAD) -> 閾值 -> 反應(文本) -> 回饋 -> 情緒，完成閉環.
 _EMOTION_ADJ: float = 0.0
+
+
+# Path 1 訂閱式快取：GlobalStateStore.emit_event 是瞬態事件（不持久化、無 pull API），
+# 唯一正確的消費方式是訂閱推送並快取最新 payload。
+_LATEST_EMOTION_EVENT: Optional[Dict[str, Any]] = None
+_SUBSCRIBED = False
+
+
+def _ensure_emotion_event_subscription() -> None:
+    """訂閱 emotion.behavioral_adjustment 事件（冪等，訂閱一次）."""
+    global _SUBSCRIBED
+    if _SUBSCRIBED:
+        return
+    try:
+        from core.system.state_store.global_store import state_store
+
+        state_store.subscribe_event("emotion.behavioral_adjustment", _on_emotion_event)
+        _SUBSCRIBED = True
+    except Exception:
+        pass
+
+
+def _on_emotion_event(event_type: str, data: Dict[str, Any]) -> None:
+    """接收 EmotionSystem 推送的情緒行為調整事件，快取供 threshold 查詢。"""
+    global _LATEST_EMOTION_EVENT
+    if isinstance(data, dict):
+        _LATEST_EMOTION_EVENT = data
 
 
 def set_emotion_threshold_adjustment(adj: float) -> None:
@@ -161,7 +177,7 @@ def _get_onnx_encoder():
             return _ONNX_ENCODER
     except Exception as e:
         logger.debug("SemanticQA ONNX unavailable, using hash fallback: %s", e)
-    _ONNX_ENCODER = False  # type: ignore[assignment]
+    _ONNX_ENCODER = False
     return None
 
 
@@ -179,7 +195,7 @@ def _features(s: str, dim: int = _DIM) -> np.ndarray:
             # _OnnxEncoder.encode returns L2-normalized [1, H]; squeeze to [H]
             arr = enc.encode([s])
             if arr is not None and arr.shape[0] > 0:
-                return arr[0].astype(np.float32)
+                return np.asarray(arr[0], dtype=np.float32)
         except Exception:
             pass
     v = np.zeros(dim, dtype=np.float32)

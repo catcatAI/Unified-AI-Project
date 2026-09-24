@@ -35,7 +35,7 @@ async def async_json_dump(data: Any, path: str, **kwargs) -> None:
 async def async_json_load(path: str) -> Any:
     """Read and deserialize a JSON file without blocking the event loop."""
 
-    def _load() -> str:
+    def _load() -> object:
         """Load."""
         with open(path, "r", encoding="utf-8") as f:
             return json.load(f)

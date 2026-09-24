@@ -262,7 +262,7 @@ class CloudSyncManager:
                 conflict = SyncConflict(
                     item_id=item.item_id,
                     local_data=item.local_data,
-                    remote_data=item.remote_data,
+                    remote_data=item.remote_data or {},
                     local_timestamp=item.last_modified,
                     remote_timestamp=datetime.now(),
                     resolution=self.config.conflict_resolution,
@@ -281,7 +281,9 @@ class CloudSyncManager:
         data = json.dumps(item.remote_data, sort_keys=True)
         return hashlib.sha256(data.encode()).hexdigest()
 
-    async def sync(self, progress_callback: Callable[[SyncProgress], None] = None) -> bool:
+    async def sync(
+        self, progress_callback: Optional[Callable[[SyncProgress], None]] = None
+    ) -> bool:
         """执行同步 / Execute sync"""
         if self.status == SyncStatus.OFFLINE:
             return False

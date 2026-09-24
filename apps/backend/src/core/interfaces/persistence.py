@@ -71,7 +71,8 @@ class JsonFileStateStore:
         try:
             path = self._resolve_path(key)
             if path.exists():
-                return await async_json_load(str(path))
+                loaded = await async_json_load(str(path))
+                return dict(loaded) if isinstance(loaded, dict) else None
             return None
         except Exception as e:
             logger.error(f"Failed to load state key={key}: {e}", exc_info=True)

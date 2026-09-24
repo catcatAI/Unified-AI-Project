@@ -23,8 +23,9 @@ class LearningHandler:
         if self._anchor is None:
             try:
                 from core.engine.anchor_learning import AnchorLearningEngine
+                from core.allocation.resonance import ResonanceEngine
 
-                self._anchor = AnchorLearningEngine()
+                self._anchor = AnchorLearningEngine(resonance_engine=ResonanceEngine())
             except Exception as e:
                 logger.warning(f"[LearningHandler] AnchorLearningEngine unavailable: {e}")
         return self._anchor
