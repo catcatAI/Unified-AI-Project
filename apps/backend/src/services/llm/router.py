@@ -343,6 +343,18 @@ class AngelaLLMService:
         # loop. See _is_cacheable_response().
         self._response_cache: "OrderedDict[str, Tuple[float, LLMResponse]]" = OrderedDict()
 
+        # ========== 路由清單（manifest）＋引擎 ==========
+        # 把決策瀑布整理成聲明式清單；引擎為唯一執行者。
+        # ANGELA_ROUTING_ENGINE=0 可切回 legacy 瀑布（逃生門）。
+        from services.llm.routing import RouteManifest, RoutingEngine
+
+        self._routing_engine = RoutingEngine()
+        self._routing_manifest = RouteManifest()
+        self._use_routing_engine = (
+            os.environ.get("ANGELA_ROUTING_ENGINE", "1") != "0"
+        )
+        self._register_route_connectors()
+
     # ------------------------------------------------------------------
     # Response cache helpers
     # ------------------------------------------------------------------
@@ -1111,6 +1123,17 @@ class AngelaLLMService:
                 metadata={"fallback": True, "tier": "empty-input"},
             )
 
+        if self._use_routing_engine:
+            # 路由清單驅動：連接器依 manifest 順序接通資訊流
+            context["_route_start_time"] = start_time
+            order = self._routing_engine.plan_for(user_message, context)
+            if order:
+                self._routing_manifest.reorder(order)
+            return await self._routing_engine.run(
+                self._routing_manifest.plan, user_message, context
+            )
+
+        # ===== Legacy 決策瀑布（ANGELA_ROUTING_ENGINE=0 時使用）=====
         template_result = await self._try_template_match(user_message, context, start_time)
         if template_result is not None:
             return template_result
@@ -1118,45 +1141,17 @@ class AngelaLLMService:
         # Deterministic math: prefer Pipeline's pre-verified result;
         # fall back to MathVerifier when Pipeline context is unavailable
         # (e.g. direct Router calls without Pipeline).
-        math_result = context.get("_math_result")
-        if math_result and isinstance(math_result, dict) and math_result.get("response_text"):
-            response_time = (time.time() - start_time) * 1000
-            self._update_stats(response_time)
-            self.stats["memory_hits"] += 1
-            logger.info(f"Pipeline math result used: {response_time:.0f}ms")
-            return LLMResponse(
-                text=math_result["response_text"],
-                backend="deterministic-math",
-                model="pipeline-math",
-                tokens_used=0,
-                response_time_ms=response_time,
-                confidence=0.95,
-                metadata={"math": True, "source": "pipeline"},
-            )
-        # Backup: if no Pipeline context, try MathVerifier directly
-        import re as _re_math
+        pipeline_math_result = await self._pipeline_math_response(
+            user_message, context, start_time
+        )
+        if pipeline_math_result is not None:
+            return pipeline_math_result
 
-        if _re_math.search(r"\d\s*[+\-*/^%()\s]+\d", user_message):
-            try:
-                from services.math_verifier import MathVerifier
-
-                mv = MathVerifier()
-                vr = mv.verify(user_message)
-                if vr.is_correct:
-                    response_time = (time.time() - start_time) * 1000
-                    self._update_stats(response_time)
-                    self.stats["memory_hits"] += 1
-                    return LLMResponse(
-                        text=vr.explanation,
-                        backend="deterministic-math",
-                        model="math-verifier",
-                        tokens_used=0,
-                        response_time_ms=response_time,
-                        confidence=0.95,
-                        metadata={"math": True, "source": "backup"},
-                    )
-            except Exception as exc:
-                logger.debug(f"MathVerifier backup failed: {exc}")
+        math_backup_result = await self._math_backup_response(
+            user_message, context, start_time
+        )
+        if math_backup_result is not None:
+            return math_backup_result
 
         ensemble_result = await self._try_ensemble(user_message, context)
         if ensemble_result is not None:
@@ -1178,6 +1173,16 @@ class AngelaLLMService:
         if neural_result is not None:
             return neural_result
 
+        return await self._route_step_main_llm(user_message, context, start_time)
+
+    async def _route_step_main_llm(
+        self, user_message: str, context: Dict[str, Any], start_time: float
+    ) -> LLMResponse:
+        """主 LLM 生成路徑（Honest gate → fusion → LLM → fallback）。
+
+        從 generate_response_full 抽出；legacy 瀑布與路由引擎連接器共用。
+        永不回傳 None：內部失敗時自行落 fallback／ModelBus。
+        """
         # Honest gate: use QueryClassifier generically (covers CJK/多語言),
         # not a hard-coded English regex. Falls back to regex only if classifier
         # unavailable. This avoids the "hard-code short board" where new
@@ -1324,6 +1329,137 @@ class AngelaLLMService:
             if bus_result is not None:
                 return bus_result
             return await self._fallback_response(user_message, context)
+
+    # ------------------------------------------------------------------
+    # 路由清單：連接器（manifest 每一列對應一個連接器）
+    # ------------------------------------------------------------------
+
+    def _register_route_connectors(self) -> None:
+        """把決策步驟註冊為路由引擎連接器；新增路徑＝註冊＋manifest 加一列。"""
+        register = self._routing_engine.register
+        register("pipeline_math", self._connector_pipeline_math)
+        register("math_backup", self._connector_math_backup)
+        register("template_match", self._connector_template_match)
+        register("ensemble", self._connector_ensemble)
+        register("memory_retrieval", self._connector_memory_retrieval)
+        register("knowledge", self._connector_knowledge)
+        register("neural_bridge", self._connector_neural_bridge)
+        register("main_llm", self._connector_main_llm)
+        register("fallback", self._connector_fallback)
+
+    @staticmethod
+    def _route_start(context: Dict[str, Any]) -> float:
+        try:
+            return float(context.get("_route_start_time", time.time()))
+        except (TypeError, ValueError):
+            return time.time()
+
+    async def _connector_pipeline_math(
+        self, user_message: str, context: Dict[str, Any]
+    ) -> Optional[LLMResponse]:
+        return await self._pipeline_math_response(
+            user_message, context, self._route_start(context)
+        )
+
+    async def _connector_math_backup(
+        self, user_message: str, context: Dict[str, Any]
+    ) -> Optional[LLMResponse]:
+        return await self._math_backup_response(
+            user_message, context, self._route_start(context)
+        )
+
+    async def _connector_template_match(
+        self, user_message: str, context: Dict[str, Any]
+    ) -> Optional[LLMResponse]:
+        return await self._try_template_match(
+            user_message, context, self._route_start(context)
+        )
+
+    async def _connector_ensemble(
+        self, user_message: str, context: Dict[str, Any]
+    ) -> Optional[LLMResponse]:
+        return await self._try_ensemble(user_message, context)
+
+    async def _connector_memory_retrieval(
+        self, user_message: str, context: Dict[str, Any]
+    ) -> Optional[LLMResponse]:
+        return await self._try_memory_retrieval(
+            user_message, context, self._route_start(context)
+        )
+
+    async def _connector_knowledge(
+        self, user_message: str, context: Dict[str, Any]
+    ) -> Optional[LLMResponse]:
+        return await self._try_knowledge(
+            user_message, context, self._route_start(context)
+        )
+
+    async def _connector_neural_bridge(
+        self, user_message: str, context: Dict[str, Any]
+    ) -> Optional[LLMResponse]:
+        return await self._try_neural_bridge(user_message, context)
+
+    async def _connector_main_llm(
+        self, user_message: str, context: Dict[str, Any]
+    ) -> Optional[LLMResponse]:
+        return await self._route_step_main_llm(
+            user_message, context, self._route_start(context)
+        )
+
+    async def _connector_fallback(
+        self, user_message: str, context: Dict[str, Any]
+    ) -> Optional[LLMResponse]:
+        return await self._fallback_response(user_message, context)
+
+    async def _pipeline_math_response(
+        self, user_message: str, context: Dict[str, Any], start_time: float
+    ) -> Optional[LLMResponse]:
+        """Pipeline 預驗證的確定性數學結果（context["_math_result"]）。"""
+        math_result = context.get("_math_result")
+        if math_result and isinstance(math_result, dict) and math_result.get("response_text"):
+            response_time = (time.time() - start_time) * 1000
+            self._update_stats(response_time)
+            self.stats["memory_hits"] += 1
+            logger.info(f"Pipeline math result used: {response_time:.0f}ms")
+            return LLMResponse(
+                text=math_result["response_text"],
+                backend="deterministic-math",
+                model="pipeline-math",
+                tokens_used=0,
+                response_time_ms=response_time,
+                confidence=0.95,
+                metadata={"math": True, "source": "pipeline"},
+            )
+        return None
+
+    async def _math_backup_response(
+        self, user_message: str, context: Dict[str, Any], start_time: float
+    ) -> Optional[LLMResponse]:
+        """無 Pipeline 上下文時，直接以 MathVerifier 驗證的確定性數學備援。"""
+        import re as _re_math
+
+        if _re_math.search(r"\d\s*[+\-*/^%()\s]+\d", user_message):
+            try:
+                from services.math_verifier import MathVerifier
+
+                mv = MathVerifier()
+                vr = mv.verify(user_message)
+                if vr.is_correct:
+                    response_time = (time.time() - start_time) * 1000
+                    self._update_stats(response_time)
+                    self.stats["memory_hits"] += 1
+                    return LLMResponse(
+                        text=vr.explanation,
+                        backend="deterministic-math",
+                        model="math-verifier",
+                        tokens_used=0,
+                        response_time_ms=response_time,
+                        confidence=0.95,
+                        metadata={"math": True, "source": "backup"},
+                    )
+            except Exception as exc:
+                logger.debug(f"MathVerifier backup failed: {exc}")
+        return None
 
     async def _try_knowledge(
         self, user_message: str, context: Dict[str, Any], start_time: float
