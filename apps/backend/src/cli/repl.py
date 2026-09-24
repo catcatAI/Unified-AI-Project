@@ -119,14 +119,15 @@ def _get_llm_svc():
     try:
         from services.angela_llm_service import get_llm_service
 
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            import concurrent.futures
+        try:
+            asyncio.get_running_loop()
+        except RuntimeError:
+            return asyncio.run(get_llm_service())
+        import concurrent.futures
 
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                future = executor.submit(asyncio.run, get_llm_service())
-                return future.result()
-        return loop.run_until_complete(get_llm_service())
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future = executor.submit(asyncio.run, get_llm_service())
+            return future.result()
     except Exception as e:
         logger.warning("LLM service unavailable: %s", e, exc_info=True)
         return None
@@ -609,11 +610,12 @@ def _format_llm_routing(service: Any) -> str:
                 try:
                     import asyncio as _aio
 
-                    h = _aio.get_event_loop()
-                    if h.is_running():
-                        health = "ok"  # skip health check in running loop
+                    try:
+                        _aio.get_running_loop()
+                    except RuntimeError:
+                        health = "ok" if _aio.run(bobj.check_health()) else "fail"
                     else:
-                        health = "ok" if h.run_until_complete(bobj.check_health()) else "fail"
+                        health = "ok"  # skip health check in running loop
                 except Exception:
                     pass
                 status = _badge("active" if is_active else health, health == "ok" or is_active)
@@ -693,9 +695,10 @@ def _handle_model_command(args: str, service: Any) -> str:
             try:
                 import asyncio as _aio
 
-                h = _aio.get_event_loop()
-                if not h.is_running():
-                    health = "ok" if h.run_until_complete(bobj.check_health()) else "fail"
+                try:
+                    _aio.get_running_loop()
+                except RuntimeError:
+                    health = "ok" if _aio.run(bobj.check_health()) else "fail"
             except Exception:
                 pass
             status_str = "active" if is_active else health

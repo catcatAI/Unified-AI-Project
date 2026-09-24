@@ -643,7 +643,7 @@ async def main():
     agent = GameAgent(config)
 
     # 信號處理
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     for sig in (signal.SIGINT, signal.SIGTERM):
         loop.add_signal_handler(sig, lambda: asyncio.create_task(agent.shutdown()))
 

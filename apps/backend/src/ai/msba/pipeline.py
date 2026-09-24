@@ -182,20 +182,18 @@ class MSBAPipeline:
     def process_sync(self, input_text: str, state_ctx: Any = None) -> str:
         """Synchronous wrapper for process()."""
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
-                import concurrent.futures
-
-                with concurrent.futures.ThreadPoolExecutor() as pool:
-                    future = pool.submit(
-                        asyncio.run,
-                        self.process(input_text, state_ctx),
-                    )
-                    return future.result(timeout=2.0)
-            else:
-                return loop.run_until_complete(self.process(input_text, state_ctx))
-        except Exception:
+            asyncio.get_running_loop()
+        except RuntimeError:
+            # 無運行中循環：直接驅動
             return asyncio.run(self.process(input_text, state_ctx))
+        import concurrent.futures
+
+        with concurrent.futures.ThreadPoolExecutor() as pool:
+            future = pool.submit(
+                asyncio.run,
+                self.process(input_text, state_ctx),
+            )
+            return str(future.result(timeout=2.0))
 
     def _deterministic_seed(self, input_text: str, state_ctx: Any) -> SeedResult:
         """Layer 0: Generate deterministic seed.

@@ -397,7 +397,7 @@ class AngelaAutonomousAgent:
         logger.info("Starting Angela Autonomous Agent main loop...")
 
         # Register signal handlers
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         for sig in (signal.SIGINT, signal.SIGTERM):
             loop.add_signal_handler(sig, lambda: asyncio.create_task(self.stop()))
 
@@ -1943,7 +1943,7 @@ async def main():
     agent = AngelaAutonomousAgent(config)
 
     # Setup signal handlers
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     for sig in (signal.SIGINT, signal.SIGTERM):
         loop.add_signal_handler(sig, lambda: asyncio.create_task(agent.stop()))
 

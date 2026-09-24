@@ -289,7 +289,7 @@ class LuantiConnector:
         req_id = str(uuid.uuid4())
         msg = {"type": "action", "request_id": req_id, "data": action}
 
-        fut = asyncio.get_event_loop().create_future()
+        fut = asyncio.get_running_loop().create_future()
         self._response_futures[req_id] = fut
 
         await self._send(msg)

@@ -117,15 +117,15 @@ class ABTesting:
             import asyncio
 
             if asyncio.iscoroutine(result):
-                loop = asyncio.get_event_loop()
-                if loop.is_running():
-                    import concurrent.futures
+                try:
+                    asyncio.get_running_loop()
+                except RuntimeError:
+                    return str(asyncio.run(result))
+                import concurrent.futures
 
-                    with concurrent.futures.ThreadPoolExecutor() as pool:
-                        future = pool.submit(asyncio.run, result)
-                        return str(future.result(timeout=2.0))
-                else:
-                    return str(loop.run_until_complete(result))
+                with concurrent.futures.ThreadPoolExecutor() as pool:
+                    future = pool.submit(asyncio.run, result)
+                    return str(future.result(timeout=2.0))
             return str(result)
         except Exception as e:
             logger.debug("MSBA failed, falling back: %s", e)

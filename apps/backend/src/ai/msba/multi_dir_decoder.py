@@ -184,11 +184,13 @@ class MultiDirectionalDecoder:
             elif hasattr(self.llm_service, "generate"):
                 import asyncio
 
-                loop = asyncio.get_event_loop()
-                if loop.is_running():
-                    return None
-                generated: Any = loop.run_until_complete(self.llm_service.generate(prompt))
-                return str(generated) if generated is not None else None
+                try:
+                    asyncio.get_running_loop()
+                except RuntimeError:
+                    generated: Any = asyncio.run(self.llm_service.generate(prompt))
+                    return str(generated) if generated is not None else None
+                # 已在事件循環內：不做阻塞等待，交由上層異步路徑
+                return None
         except Exception as e:
             logger.debug("LLM resolve failed: %s", e)
         return None
