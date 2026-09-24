@@ -183,7 +183,7 @@ class TestMemoryTemplate:
         assert sample_template.usage_count == 1
         assert sample_template.success_rate == 1.0
         assert isinstance(sample_template.last_used, datetime)
-        assert (datetime.utcnow() - sample_template.last_used).total_seconds() < 5
+        assert (datetime.now() - sample_template.last_used).total_seconds() < 5
 
     def test_record_usage_failure(self, sample_template):
         sample_template.record_usage(success=False)

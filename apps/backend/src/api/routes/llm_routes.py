@@ -36,15 +36,10 @@ async def llm_status() -> Dict[str, Any]:
                 and btype == llm_svc.active_backend_type
             )
             # Attempt health check (skip if event loop is running to avoid blocking)
+            # 健康探測需真網路呼叫（最長 10s）；/status 不阻塞，回 unknown。
+            # 歷史代碼在 async 端點內以 loop.is_running() 判定——永遠 skip（死分支），
+            # 行為保留：不做探測。
             health = "unknown"
-            try:
-                import asyncio
-
-                loop = asyncio.get_event_loop()
-                if not loop.is_running():
-                    health = "ok" if await bobj.check_health() else "fail"
-            except Exception:
-                pass
 
             backends.append(
                 {

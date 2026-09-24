@@ -56,15 +56,13 @@ async def context_summary() -> Dict[str, Any]:
         result["memory"] = {"initialized": has_memory}
 
         if has_memory:
-            import asyncio
-
             try:
-                loop = asyncio.get_event_loop()
-                if not loop.is_running():
-                    results = await service.memory_manager.query_core_memory(
-                        keywords=["experience"], limit=5
-                    )
-                    result["memory"]["recent_count"] = len(results)
+                # 死路徑 #19 修復：原在 async 端點內以 loop.is_running() 判定——
+                # 永遠 False 導致 recent_count 永不填充；改為直接 await 查詢。
+                results = await service.memory_manager.query_core_memory(
+                    keywords=["experience"], limit=5
+                )
+                result["memory"]["recent_count"] = len(results)
             except Exception:
                 result["memory"]["recent_count"] = None
     except Exception:

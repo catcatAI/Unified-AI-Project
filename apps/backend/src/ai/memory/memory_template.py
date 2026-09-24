@@ -15,7 +15,7 @@
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime
 from enum import Enum
 from typing import Any, Optional
 
@@ -153,8 +153,8 @@ class MemoryTemplate:
 
     # 时间戳
     last_used: Optional[datetime] = None
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=datetime.now)
+    updated_at: datetime = field(default_factory=datetime.now)
 
     # 元数据
     metadata: dict[str, Any] = field(default_factory=dict)
@@ -182,16 +182,17 @@ class MemoryTemplate:
         # 解析类别
         category = ResponseCategory(data.get("category", "unknown"))
 
-        # 解析时间戳
+        # 解析時間戳（統一 naive local：與 last_used/record_usage 一致；
+        # 外部帶 tz 的字串剝離 tzinfo，避免 aware/naive 混用比較爆炸）
         created_at = (
-            datetime.fromisoformat(data["created_at"])
+            datetime.fromisoformat(data["created_at"]).replace(tzinfo=None)
             if data.get("created_at")
-            else datetime.now(timezone.utc)
+            else datetime.now()
         )
         updated_at = (
-            datetime.fromisoformat(data["updated_at"])
+            datetime.fromisoformat(data["updated_at"]).replace(tzinfo=None)
             if data.get("updated_at")
-            else datetime.now(timezone.utc)
+            else datetime.now()
         )
         lu_str = data.get("last_used")
         if lu_str:
@@ -234,7 +235,7 @@ class MemoryTemplate:
             current_success * self.SUCCESS_EMA_NEW_WEIGHT
         )
 
-        self.updated_at = datetime.now(timezone.utc)
+        self.updated_at = datetime.now()
 
     def is_suitable_for(self, angela_state: AngelaState, user_impression: UserImpression) -> bool:
         """
@@ -373,7 +374,7 @@ def generate_template_id(content: str) -> str:
     import hashlib
 
     content_hash = hashlib.md5(content.encode()).hexdigest()[:8]
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     return f"tpl_{timestamp}_{content_hash}"
 
 
