@@ -1,18 +1,19 @@
 # Multi-Dimensional Semantic Block Architecture (MSBA)
 
-> **Status**: Implementation Complete
-> **Version**: 1.0.0
-> **Date**: 2026-09-21
-> **Supersedes**: None (new architecture)
-> **Resolution Status**: 5 misjudgments + 6 omissions + 5 oversights = 16/16 resolved, zero residual
-> **Last correction**: 誤判5 — 社交輸入同樣需要語義塊參與（時間、情感、關係上下文）
-> **Implementation**: 22 modules, 192 tests, 0 lint errors
+> **Status**: Implementation Complete **Version**: 1.0.0 **Date**: 2026-09-21
+> **Supersedes**: None (new architecture) **Resolution Status**: 5
+> misjudgments + 6 omissions + 5 oversights = 16/16 resolved, zero residual
+> **Last correction**: 誤判5
+> — 社交輸入同樣需要語義塊參與（時間、情感、關係上下文） **Implementation**: 22
+> modules, 192 tests, 0 lint errors
 
 ---
 
 ## 1. Executive Summary
 
-本文檔定義 Unified-AI-Project 的下一代核心架構：**Multi-Dimensional Semantic Block Architecture (MSBA)**。該架構將現有的串行 fallback 管線重構為並行語義塊命中 + 分級收斂 + 多方向解碼。
+本文檔定義 Unified-AI-Project 的下一代核心架構：**Multi-Dimensional Semantic
+Block Architecture
+(MSBA)**。該架構將現有的串行 fallback 管線重構為並行語義塊命中 + 分級收斂 + 多方向解碼。
 
 **核心命題**：模型不應僅從輸入 token 計算語義，而應從預計算的語意庫中命中相關塊，並以分級方式參與計算。所有 token 都參與，但參與程度不同。
 
@@ -85,22 +86,22 @@ generate_response_full():
 
 ### 2.2 現有子系統映射
 
-| 子系統 | 檔案 | 行數 | 核心功能 | 現有角色 |
-|--------|------|------|---------|---------|
-| StateMatrix4D | `core/engine/state_matrix.py` | 1680 | 7 維狀態追蹤 | 狀態容器 |
-| QueryClassifier | `ai/core/query_classifier.py` | 979 | 16 類查詢分類 | 路由分類器 |
-| PriorityNegotiator | `ai/meta/priority_negotiator.py` | 325 | 8 投票者加權融合 | 路由決策 |
-| EmotionSystem | `ai/alignment/emotion_system.py` | 587 | Plutchik 8 情感 + PAD | 情感狀態 |
-| CausalReasoning | `ai/reasoning/causal_reasoning_engine.py` | 511 | Pearson/Granger 因果 | 因果推理 |
-| MetaController | `ai/meta/meta_controller.py` | 391 | 信心校準 | 閾值調整 |
-| HAMMemory | `ai/memory/ham_memory/` | ~1500 | 模板匹配 + 向量搜索 | 記憶檢索 |
-| DictionaryLayer | `ai/ed3n/dictionary_layer.py` | ~1270 | 460K 條目關鍵詞匹配 | ED3N 編碼 |
-| VectorDictionary | `ai/garden/dictionary.py` | ~1223 | 密集向量最近鄰 | GARDEN 編碼 |
-| CoreNetwork | `ai/ed3n/core_network.py` | 644 | 圖神經網路 (Hebbian) | ED3N 計算 |
-| TensorSNNCore | `ai/garden/snn_core.py` | 1035 | [V,V] LIF SNN | GARDEN 計算 |
-| ModelBus | `ai/core/model_bus.py` | 633 | 能力路由 | 模型選擇 |
-| ResponseComposer | `ai/response/composer.py` | 1362 | 8D NeuroBlender | 回應合成 |
-| AnchoredDecode | `ai/ed3n/output_anchor.py` | 211 | 錨定解碼 + 漂移驗證 | 輸出生成 |
+| 子系統             | 檔案                                      | 行數  | 核心功能              | 現有角色    |
+| ------------------ | ----------------------------------------- | ----- | --------------------- | ----------- |
+| StateMatrix4D      | `core/engine/state_matrix.py`             | 1680  | 7 維狀態追蹤          | 狀態容器    |
+| QueryClassifier    | `ai/core/query_classifier.py`             | 979   | 16 類查詢分類         | 路由分類器  |
+| PriorityNegotiator | `ai/meta/priority_negotiator.py`          | 325   | 8 投票者加權融合      | 路由決策    |
+| EmotionSystem      | `ai/alignment/emotion_system.py`          | 587   | Plutchik 8 情感 + PAD | 情感狀態    |
+| CausalReasoning    | `ai/reasoning/causal_reasoning_engine.py` | 511   | Pearson/Granger 因果  | 因果推理    |
+| MetaController     | `ai/meta/meta_controller.py`              | 391   | 信心校準              | 閾值調整    |
+| HAMMemory          | `ai/memory/ham_memory/`                   | ~1500 | 模板匹配 + 向量搜索   | 記憶檢索    |
+| DictionaryLayer    | `ai/ed3n/dictionary_layer.py`             | ~1270 | 460K 條目關鍵詞匹配   | ED3N 編碼   |
+| VectorDictionary   | `ai/garden/dictionary.py`                 | ~1223 | 密集向量最近鄰        | GARDEN 編碼 |
+| CoreNetwork        | `ai/ed3n/core_network.py`                 | 644   | 圖神經網路 (Hebbian)  | ED3N 計算   |
+| TensorSNNCore      | `ai/garden/snn_core.py`                   | 1035  | [V,V] LIF SNN         | GARDEN 計算 |
+| ModelBus           | `ai/core/model_bus.py`                    | 633   | 能力路由              | 模型選擇    |
+| ResponseComposer   | `ai/response/composer.py`                 | 1362  | 8D NeuroBlender       | 回應合成    |
+| AnchoredDecode     | `ai/ed3n/output_anchor.py`                | 211   | 錨定解碼 + 漂移驗證   | 輸出生成    |
 
 ### 2.3 根本問題
 
@@ -140,8 +141,8 @@ Layer 6: Output + Learning
 
 ### 3.2 Layer 0: Deterministic Seed (所有輸入)
 
-**修正**: 誤判4 — 所有輸入（包括社交）都進 MSBA。社交輸入同樣需要語義塊參與。
-「早安」在早上和晚上需要不同回應，這需要 TemporalBlock 的時間上下文。
+**修正**: 誤判4
+— 所有輸入（包括社交）都進 MSBA。社交輸入同樣需要語義塊參與。「早安」在早上和晚上需要不同回應，這需要 TemporalBlock 的時間上下文。
 
 ```python
 class MSBAPipeline:
@@ -212,20 +213,20 @@ class SeedResult:
 
 **設計決策**：
 
-| 決策 | 選擇 | 理由 |
-|------|------|------|
-| 所有輸入進 MSBA | **是，全部** | 社交也需要語義上下文（時間、情感、關係） |
-| 簡單輸入輕量選擇 | **是，少選塊** | 「嗯」只選 2-3 塊，不跳過塊系統 |
-| FILE/EXECUTE/TASK | **Handler + MSBA** | 安全門禁 + 語義上下文同時存在 |
-| 種子進塊系統 | **是** | 避免歷史事實取代當前事實 |
-| 塊可否推翻種子 | **可以** | 多數塊共識 > 單一種子 |
-| LLM fallback | **confidence < 0.5** | 塊無法共識時用 LLM |
+| 決策              | 選擇                 | 理由                                     |
+| ----------------- | -------------------- | ---------------------------------------- |
+| 所有輸入進 MSBA   | **是，全部**         | 社交也需要語義上下文（時間、情感、關係） |
+| 簡單輸入輕量選擇  | **是，少選塊**       | 「嗯」只選 2-3 塊，不跳過塊系統          |
+| FILE/EXECUTE/TASK | **Handler + MSBA**   | 安全門禁 + 語義上下文同時存在            |
+| 種子進塊系統      | **是**               | 避免歷史事實取代當前事實                 |
+| 塊可否推翻種子    | **可以**             | 多數塊共識 > 單一種子                    |
+| LLM fallback      | **confidence < 0.5** | 塊無法共識時用 LLM                       |
 
 ### 3.3 Layer 1: Semantic Block Library
 
 **修正**: 誤判1 — BlockCoordinator 是協調層，不替換 CoreNetwork/TensorSNNCore。
-**修正**: 誤判2 — 塊支持動態分裂/合併。
-**修正**: 遺漏1 — Phase1 語言塊用規則替代。
+**修正**: 誤判2 — 塊支持動態分裂/合併。 **修正**: 遺漏1 —
+Phase1 語言塊用規則替代。
 
 ```python
 @dataclass
@@ -324,17 +325,17 @@ class BlockCoordinator:
 
 **9 個塊**：
 
-| # | Block ID | 名稱 | 現有模組來源 | 命中源數 |
-|---|----------|------|-------------|---------|
-| 1 | `temporal` | 時態塊 | StateMatrix zeta + Lifecycle | 4 |
-| 2 | `biological` | 生物塊 | StateMatrix alpha + BiologicalIntegrator | 5 |
-| 3 | `emotional` | 情感塊 | StateMatrix gamma + EmotionSystem (PAD) | 8 |
-| 4 | `cognitive` | 認知塊 | StateMatrix beta + MetaController | 5 |
-| 5 | `social` | 社交塊 | StateMatrix delta + HAM Memory | 5 |
-| 6 | `mathematical` | 數理塊 | StateMatrix epsilon + MathVerifier | 6 |
-| 7 | `knowledge` | 知識塊 | DictionaryLayer + VectorDictionary + KB | 3 |
-| 8 | `causal` | 因果塊 | CausalReasoningEngine | 4 |
-| 9 | `linguistic` | 語言塊 | 規則引擎 (Phase1) / spaCy (Phase2) | 5 |
+| #   | Block ID       | 名稱   | 現有模組來源                             | 命中源數 |
+| --- | -------------- | ------ | ---------------------------------------- | -------- |
+| 1   | `temporal`     | 時態塊 | StateMatrix zeta + Lifecycle             | 4        |
+| 2   | `biological`   | 生物塊 | StateMatrix alpha + BiologicalIntegrator | 5        |
+| 3   | `emotional`    | 情感塊 | StateMatrix gamma + EmotionSystem (PAD)  | 8        |
+| 4   | `cognitive`    | 認知塊 | StateMatrix beta + MetaController        | 5        |
+| 5   | `social`       | 社交塊 | StateMatrix delta + HAM Memory           | 5        |
+| 6   | `mathematical` | 數理塊 | StateMatrix epsilon + MathVerifier       | 6        |
+| 7   | `knowledge`    | 知識塊 | DictionaryLayer + VectorDictionary + KB  | 3        |
+| 8   | `causal`       | 因果塊 | CausalReasoningEngine                    | 4        |
+| 9   | `linguistic`   | 語言塊 | 規則引擎 (Phase1) / spaCy (Phase2)       | 5        |
 
 ### 3.4 Layer 2: Block Selector
 
@@ -482,8 +483,8 @@ class IntraBlockHitEngine:
 
 ### 3.6 Layer 4: Relevance Convergence
 
-**修正**: 遺漏2 — 交叉注意力有三種學習來源。
-**修正**: 遺漏6 — confidence < 0.5 時 LLM 介入。
+**修正**: 遺漏2 — 交叉注意力有三種學習來源。 **修正**: 遺漏6 — confidence <
+0.5 時 LLM 介入。
 
 ```python
 class RelevanceConvergence:
@@ -917,33 +918,33 @@ class MSBAPipeline:
 
 ### 4.1 誤判解決驗證
 
-| # | 誤判 | 解決方案 | 驗證位置 |
-|---|------|---------|---------|
-| 1 | BlockSNN 替換 CoreNetwork | BlockCoordinator 協調層，不替換計算引擎 | 3.3 BlockCoordinator |
-| 2 | 9 塊粒度固定 | split()/merge() 動態粒度 | 3.3 SemanticBlock |
-| 3 | cosine 唯一選擇分數 | 四信號融合 (semantic 0.5 + history 0.2 + exclusion 0.1 + state 0.2) | 3.4 BlockSelector |
-| 4 | 誤以為社交不需要 MSBA | 所有輸入進 MSBA，簡單輸入只少選塊不跳過 | 3.2 MSBAPipeline |
+| #   | 誤判                      | 解決方案                                                            | 驗證位置             |
+| --- | ------------------------- | ------------------------------------------------------------------- | -------------------- |
+| 1   | BlockSNN 替換 CoreNetwork | BlockCoordinator 協調層，不替換計算引擎                             | 3.3 BlockCoordinator |
+| 2   | 9 塊粒度固定              | split()/merge() 動態粒度                                            | 3.3 SemanticBlock    |
+| 3   | cosine 唯一選擇分數       | 四信號融合 (semantic 0.5 + history 0.2 + exclusion 0.1 + state 0.2) | 3.4 BlockSelector    |
+| 4   | 誤以為社交不需要 MSBA     | 所有輸入進 MSBA，簡單輸入只少選塊不跳過                             | 3.2 MSBAPipeline     |
 
 ### 4.2 遺漏解決驗證
 
-| # | 遺漏 | 解決方案 | 驗證位置 |
-|---|------|---------|---------|
-| 1 | 語言塊無模組 | Phase1 規則引擎, Phase2 spaCy | 3.3 塊表 #9 |
-| 2 | 交叉注意力無訓練策略 | 手動先驗 + 共現統計 + 反饋學習 | 3.6 PRIOR + update methods |
-| 3 | 解碼融合算法未定義 | 注意力加權拼接 + LLM 衝突解決 | 3.7 decode() |
-| 4 | 冷啟動問題 | ColdStartManager + 降級到 CoreNetwork | 3.9 ColdStartManager |
-| 5 | 延遲增加 | LATENCY_BUDGET_MS + 動態 max_blocks + timeout | 3.9 MSBAPipeline |
-| 6 | LLM 整合點不明 | confidence < 0.5 時 LLM fallback | 3.2 + 3.6 |
+| #   | 遺漏                 | 解決方案                                      | 驗證位置                   |
+| --- | -------------------- | --------------------------------------------- | -------------------------- |
+| 1   | 語言塊無模組         | Phase1 規則引擎, Phase2 spaCy                 | 3.3 塊表 #9                |
+| 2   | 交叉注意力無訓練策略 | 手動先驗 + 共現統計 + 反饋學習                | 3.6 PRIOR + update methods |
+| 3   | 解碼融合算法未定義   | 注意力加權拼接 + LLM 衝突解決                 | 3.7 decode()               |
+| 4   | 冷啟動問題           | ColdStartManager + 降級到 CoreNetwork         | 3.9 ColdStartManager       |
+| 5   | 延遲增加             | LATENCY_BUDGET_MS + 動態 max_blocks + timeout | 3.9 MSBAPipeline           |
+| 6   | LLM 整合點不明       | confidence < 0.5 時 LLM fallback              | 3.2 + 3.6                  |
 
 ### 4.3 疏失解決驗證
 
-| # | 疏失 | 解決方案 | 驗證位置 |
-|---|------|---------|---------|
-| 1 | 多模態輸入 | ImageEncoder/AudioEncoder keys 注入 knowledge block | 3.9 process_multimodal |
-| 2 | Context Window | CONTEXT_BUDGET 分級截斷 (60/30/10%) | 3.9 _apply_budget |
-| 3 | 測試策略 | 8 個測試文件, >90% coverage | 3.9 測試策略 |
-| 4 | Persistence | MSBACheckpointer (sparse COO + .npy + JSON) | 3.9 MSBACheckpointer |
-| 5 | NeuroBlender 關係 | FUSED_TO_BLENDER_MAP Bridge + 長期 9D 統一 | 3.9 fused_to_blender |
+| #   | 疏失              | 解決方案                                            | 驗證位置               |
+| --- | ----------------- | --------------------------------------------------- | ---------------------- |
+| 1   | 多模態輸入        | ImageEncoder/AudioEncoder keys 注入 knowledge block | 3.9 process_multimodal |
+| 2   | Context Window    | CONTEXT_BUDGET 分級截斷 (60/30/10%)                 | 3.9 _apply_budget      |
+| 3   | 測試策略          | 8 個測試文件, >90% coverage                         | 3.9 測試策略           |
+| 4   | Persistence       | MSBACheckpointer (sparse COO + .npy + JSON)         | 3.9 MSBACheckpointer   |
+| 5   | NeuroBlender 關係 | FUSED_TO_BLENDER_MAP Bridge + 長期 9D 統一          | 3.9 fused_to_blender   |
 
 ---
 
@@ -1011,14 +1012,14 @@ class MSBAPipeline:
 
 ## 6. 風險評估
 
-| 風險 | 影響 | 機率 | 緩解策略 | 狀態 |
-|------|------|------|---------|------|
-| 交叉注意力不收斂 | 融合無意義 | 中 | 有界權重 [0.01, 0.5] + 梯度裁剪 | ✓ 已解決 |
-| 延遲超標 | 體驗下降 | 高 | LATENCY_BUDGET + 動態 max_blocks + timeout | ✓ 已解決 |
-| 冷啟動差 | 初始品質低 | 高 | ColdStartManager + 降級到 CoreNetwork | ✓ 已解決 |
-| 解碼衝突 | 輸出不一致 | 中 | LLM fallback + 漂移驗證 | ✓ 已解決 |
-| 與現有不相容 | 回歸 | 低 | MSBA 並行路徑，不替換現有 | ✓ 已解決 |
-| 訓練數據不足 | 塊無法學習 | 中 | Hebbian 自監督 + 手動先驗 | ✓ 已解決 |
+| 風險             | 影響       | 機率 | 緩解策略                                   | 狀態     |
+| ---------------- | ---------- | ---- | ------------------------------------------ | -------- |
+| 交叉注意力不收斂 | 融合無意義 | 中   | 有界權重 [0.01, 0.5] + 梯度裁剪            | ✓ 已解決 |
+| 延遲超標         | 體驗下降   | 高   | LATENCY_BUDGET + 動態 max_blocks + timeout | ✓ 已解決 |
+| 冷啟動差         | 初始品質低 | 高   | ColdStartManager + 降級到 CoreNetwork      | ✓ 已解決 |
+| 解碼衝突         | 輸出不一致 | 中   | LLM fallback + 漂移驗證                    | ✓ 已解決 |
+| 與現有不相容     | 回歸       | 低   | MSBA 並行路徑，不替換現有                  | ✓ 已解決 |
+| 訓練數據不足     | 塊無法學習 | 中   | Hebbian 自監督 + 手動先驗                  | ✓ 已解決 |
 
 ---
 
@@ -1026,24 +1027,25 @@ class MSBAPipeline:
 
 ### A. 術語表
 
-| 術語 | 定義 |
-|------|------|
-| Semantic Block | 語義塊，按語義維度組織的計算單元 |
-| Hit Source | 塊內命中源，塊的子計算單元 |
-| Seed Answer | 確定性引擎產生的初始假設答案 |
-| Seed Verdict | 塊對種子的驗證 (confirm/question/supplement) |
-| BlockCoordinator | 塊間協調層，橋接現有 SNN 引擎 |
-| Relevance Convergence | 多塊結果的分級融合過程 |
-| Multi-Directional Decode | 多維度同時解碼再融合 |
-| Cross-Attention | 塊間交叉注意力矩陣 (9x9) |
-| Context Budget | 收斂時的 token 分配上限 |
-| Cold Start Manager | BlockSNN 未訓練時的降級策略 |
+| 術語                     | 定義                                         |
+| ------------------------ | -------------------------------------------- |
+| Semantic Block           | 語義塊，按語義維度組織的計算單元             |
+| Hit Source               | 塊內命中源，塊的子計算單元                   |
+| Seed Answer              | 確定性引擎產生的初始假設答案                 |
+| Seed Verdict             | 塊對種子的驗證 (confirm/question/supplement) |
+| BlockCoordinator         | 塊間協調層，橋接現有 SNN 引擎                |
+| Relevance Convergence    | 多塊結果的分級融合過程                       |
+| Multi-Directional Decode | 多維度同時解碼再融合                         |
+| Cross-Attention          | 塊間交叉注意力矩陣 (9x9)                     |
+| Context Budget           | 收斂時的 token 分配上限                      |
+| Cold Start Manager       | BlockSNN 未訓練時的降級策略                  |
 
 ### B. 記憶體映射存儲 (MemMapped Storage)
 
 #### 核心理念
 
-MSBA 的 **塊選擇天然適合稀疏啟動**：每次查詢只激活 2-7 個塊，其餘 99% 的數據不需要常駐記憶體。
+MSBA 的
+**塊選擇天然適合稀疏啟動**：每次查詢只激活 2-7 個塊，其餘 99% 的數據不需要常駐記憶體。
 
 ```
 理想配置：1TB disk / 1GB memory
@@ -1059,31 +1061,31 @@ MSBA 的 **塊選擇天然適合稀疏啟動**：每次查詢只激活 2-7 個�
 class MemMappedBlock:
     """
     Memory-mapped semantic block.
-    
+
     將 120GB 權重存於磁碟 (numpy memmap)，
     只將活躍的 chunks 載入記憶體。
     """
-    
+
     CHUNK_SIZE = 128 * 1024 * 1024  # 128MB per chunk
-    
+
     def __init__(self, path: str, max_in_memory: int = 1024 * 1024 * 1024):
         self.path = path
         self.max_in_memory = max_in_memory  # 1GB limit
         self._mmap = np.memmap(path, dtype='float32', mode='r')
         self._lru_cache: Dict[int, np.ndarray] = {}
         self._access_order: List[int] = []
-        
+
     def get_hit_activations(self, input_text: str) -> dict:
         """只載入需要的 chunk，自動 LRU 管理。"""
         chunk_idx = self._compute_chunk(input_text)
-        
+
         if chunk_idx not in self._lru_cache:
             self._evict_if_needed()
             self._lru_cache[chunk_idx] = self._load_chunk(chunk_idx)
             self._access_order.append(chunk_idx)
-        
+
         return self._compute_from_chunk(chunk_idx)
-    
+
     def _evict_if_needed(self):
         """LRU eviction：記憶體滿時淘汰最久沒用的 chunk。"""
         while self._current_memory() > self.max_in_memory:
@@ -1094,12 +1096,12 @@ class MemMappedBlock:
 
 #### 效能預期
 
-| 指標 | Cold Miss | Warm Hit | 備註 |
-|------|-----------|----------|------|
-| **Chunk 載入** | +50-80ms | 0ms | 首次查詢需從磁碟載入 |
-| **Block 選擇** | ~10ms | ~10ms | 與記憶體無關（selector 常駐） |
-| **Cross-attention** | ~5ms | ~5ms | 9x9 矩陣，常駐記憶體 |
-| **LRU 管理** | ~1ms | ~1ms | Python dict 操作 |
+| 指標                | Cold Miss | Warm Hit | 備註                          |
+| ------------------- | --------- | -------- | ----------------------------- |
+| **Chunk 載入**      | +50-80ms  | 0ms      | 首次查詢需從磁碟載入          |
+| **Block 選擇**      | ~10ms     | ~10ms    | 與記憶體無關（selector 常駐） |
+| **Cross-attention** | ~5ms      | ~5ms     | 9x9 矩陣，常駐記憶體          |
+| **LRU 管理**        | ~1ms      | ~1ms     | Python dict 操作              |
 
 #### 磁碟佈局
 
@@ -1121,13 +1123,13 @@ data/msba/
 
 #### 與現有架構的差異
 
-| 項目 | Phase 1 (現有) | Phase 2+ (MemMapped) |
-|------|---------------|---------------------|
-| Block 數據 | 全部常駐記憶體 | Memmap + LRU |
-| SNN 權重 | CoreNetwork/TensorSNNCore | 個別塊存儲 |
-| 延遲 | 穩定 (無 IO) | Cold miss +50ms |
-| 容量 | 受記憶體限制 | 受磁碟限制 (TB 級) |
-| 實現複雜度 | 低 | 中 (~200 行) |
+| 項目       | Phase 1 (現有)            | Phase 2+ (MemMapped) |
+| ---------- | ------------------------- | -------------------- |
+| Block 數據 | 全部常駐記憶體            | Memmap + LRU         |
+| SNN 權重   | CoreNetwork/TensorSNNCore | 個別塊存儲           |
+| 延遲       | 穩定 (無 IO)              | Cold miss +50ms      |
+| 容量       | 受記憶體限制              | 受磁碟限制 (TB 級)   |
+| 實現複雜度 | 低                        | 中 (~200 行)         |
 
 ---
 
@@ -1173,12 +1175,12 @@ Total (with LLM):     ~400ms ⚠️  fallback only
 
 #### 快取命中率預期
 
-| 場景 | Block 命中率 | 交叉注意力命中率 | 整體延遲 |
-|------|-------------|-----------------|---------|
-| **重複查詢** (相同問題模式) | 60-80% | 70-90% | ~60ms |
-| **相似語義族** (情感+社交) | 40-60% | 50-70% | ~75ms |
-| **全新查詢** (未知領域) | 10-20% | 10-20% | ~95ms |
-| **確定性種子命中** (數學/時間) | 90%+ | N/A | ~50ms |
+| 場景                           | Block 命中率 | 交叉注意力命中率 | 整體延遲 |
+| ------------------------------ | ------------ | ---------------- | -------- |
+| **重複查詢** (相同問題模式)    | 60-80%       | 70-90%           | ~60ms    |
+| **相似語義族** (情感+社交)     | 40-60%       | 50-70%           | ~75ms    |
+| **全新查詢** (未知領域)        | 10-20%       | 10-20%           | ~95ms    |
+| **確定性種子命中** (數學/時間) | 90%+         | N/A              | ~50ms    |
 
 #### 記憶體佔用
 
@@ -1211,41 +1213,42 @@ Total (with LLM):     ~400ms ⚠️  fallback only
 
 ### D. 與 AGENTS.md 的差異
 
-本文檔引入新的目錄結構 `ai/msba/`，需要更新 AGENTS.md 的專案結構描述。已完成更新。
+本文檔引入新的目錄結構
+`ai/msba/`，需要更新 AGENTS.md 的專案結構描述。已完成更新。
 
 ### E. 版本記錄
 
-| 版本 | 日期 | 變更 |
-|------|------|------|
-| 0.1.0-draft | 2026-09-21 | 初版: 現況 + 目標架構 + 問題分析 |
-| 0.2.0-resolved | 2026-09-21 | 解決 15 個問題 (4 誤判 + 6 遺漏 + 5 疏失) |
-| 0.2.1-resolved | 2026-09-21 | 誤判5修正: 社交輸入也進 MSBA，所有輸入都需語義上下文 |
-| 0.3.0-performance | 2026-09-21 | 新增 §B MemMapped Storage (1TB/1GB) + §C 效能基準 (延遲/快取/記憶體) |
-| 1.0.0 | 2026-09-21 | 實現完成: 20 個模組, 163 個測試, 0 lint 錯誤 |
-| 1.1.0 | 2026-09-21 | Phase 4: 線上訓練 (RelevanceConvergence replay buffer) + PerformanceProfiler + E2E smoke test |
-| 1.2.0 | 2026-09-21 | Phase 5: Checkpoint auto-save/versioning + A/B testing pipeline + Metrics integration |
+| 版本              | 日期       | 變更                                                                                          |
+| ----------------- | ---------- | --------------------------------------------------------------------------------------------- |
+| 0.1.0-draft       | 2026-09-21 | 初版: 現況 + 目標架構 + 問題分析                                                              |
+| 0.2.0-resolved    | 2026-09-21 | 解決 15 個問題 (4 誤判 + 6 遺漏 + 5 疏失)                                                     |
+| 0.2.1-resolved    | 2026-09-21 | 誤判5修正: 社交輸入也進 MSBA，所有輸入都需語義上下文                                          |
+| 0.3.0-performance | 2026-09-21 | 新增 §B MemMapped Storage (1TB/1GB) + §C 效能基準 (延遲/快取/記憶體)                          |
+| 1.0.0             | 2026-09-21 | 實現完成: 20 個模組, 163 個測試, 0 lint 錯誤                                                  |
+| 1.1.0             | 2026-09-21 | Phase 4: 線上訓練 (RelevanceConvergence replay buffer) + PerformanceProfiler + E2E smoke test |
+| 1.2.0             | 2026-09-21 | Phase 5: Checkpoint auto-save/versioning + A/B testing pipeline + Metrics integration         |
 
 ### F. 實現完成清單
 
-| 模組 | 功能 | 狀態 |
-|------|------|------|
-| `types.py` | SeedResult, HitSource, BlockSelection, BlockHitResult, FusedRepresentation, BlockHistory | ✅ |
-| `block_coordinator.py` | SNN 引擎橋接 (CoreNetwork/TensorSNNCore) | ✅ |
-| `semantic_block.py` | SemanticBlock with split/merge 動態粒度 | ✅ |
-| `block_selector.py` | 四信號融合 (semantic 0.5 + history 0.2 + exclusion 0.1 + state 0.2) | ✅ |
-| `intra_block_hit.py` | 並行塊計算 + seed 驗證 | ✅ |
-| `relevance_convergence.py` | 交叉注意力 9x9 + 3 學習源 | ✅ |
-| `multi_dir_decoder.py` | 注意力融合 + 漂移驗證 + LLM fallback | ✅ |
-| `pipeline.py` | 7 層主管線 (所有輸入進 MSBA) | ✅ |
-| `block_factory.py` | 包裝 10 個子系統為塊 | ✅ |
-| `cold_start.py` | 冷啟動降級到 CoreNetwork | ✅ |
-| `checkpointer.py` | COO+npy+JSON 持久化 | ✅ |
-| `memmapped_block.py` | 記憶體映射存儲 (1TB/1GB) + LRU | ✅ |
-| `linguistic_block.py` | POS 標記 (規則 Phase 1 / spaCy Phase 2) | ✅ |
-| `block_history_persistence.py` | 跨 session 歷史存儲 | ✅ |
-| `multimodal_blocks.py` | VisionBlock + AudioBlock | ✅ |
-| `weight_migration.py` | CoreNetwork/TensorSNNCore 權重遷移 | ✅ |
-| `ab_testing.py` | A/B 測試框架 (流量分配/漸進式遷移) | ✅ |
-| `metrics_collector.py` | 監控指標 (延遲/快取/錯誤率) | ✅ |
-| `neuroblender_bridge.py` | MSBA → NeuroBlender 9D 映射 | ✅ |
-| `performance_profiler.py` | 逐層延遲分析 + 瓶頸識別 + 優化建議 | ✅ |
+| 模組                           | 功能                                                                                     | 狀態 |
+| ------------------------------ | ---------------------------------------------------------------------------------------- | ---- |
+| `types.py`                     | SeedResult, HitSource, BlockSelection, BlockHitResult, FusedRepresentation, BlockHistory | ✅   |
+| `block_coordinator.py`         | SNN 引擎橋接 (CoreNetwork/TensorSNNCore)                                                 | ✅   |
+| `semantic_block.py`            | SemanticBlock with split/merge 動態粒度                                                  | ✅   |
+| `block_selector.py`            | 四信號融合 (semantic 0.5 + history 0.2 + exclusion 0.1 + state 0.2)                      | ✅   |
+| `intra_block_hit.py`           | 並行塊計算 + seed 驗證                                                                   | ✅   |
+| `relevance_convergence.py`     | 交叉注意力 9x9 + 3 學習源                                                                | ✅   |
+| `multi_dir_decoder.py`         | 注意力融合 + 漂移驗證 + LLM fallback                                                     | ✅   |
+| `pipeline.py`                  | 7 層主管線 (所有輸入進 MSBA)                                                             | ✅   |
+| `block_factory.py`             | 包裝 10 個子系統為塊                                                                     | ✅   |
+| `cold_start.py`                | 冷啟動降級到 CoreNetwork                                                                 | ✅   |
+| `checkpointer.py`              | COO+npy+JSON 持久化                                                                      | ✅   |
+| `memmapped_block.py`           | 記憶體映射存儲 (1TB/1GB) + LRU                                                           | ✅   |
+| `linguistic_block.py`          | POS 標記 (規則 Phase 1 / spaCy Phase 2)                                                  | ✅   |
+| `block_history_persistence.py` | 跨 session 歷史存儲                                                                      | ✅   |
+| `multimodal_blocks.py`         | VisionBlock + AudioBlock                                                                 | ✅   |
+| `weight_migration.py`          | CoreNetwork/TensorSNNCore 權重遷移                                                       | ✅   |
+| `ab_testing.py`                | A/B 測試框架 (流量分配/漸進式遷移)                                                       | ✅   |
+| `metrics_collector.py`         | 監控指標 (延遲/快取/錯誤率)                                                              | ✅   |
+| `neuroblender_bridge.py`       | MSBA → NeuroBlender 9D 映射                                                              | ✅   |
+| `performance_profiler.py`      | 逐層延遲分析 + 瓶頸識別 + 優化建議                                                       | ✅   |
