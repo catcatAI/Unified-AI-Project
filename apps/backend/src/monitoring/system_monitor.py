@@ -19,7 +19,7 @@ try:
     PSUTIL_AVAILABLE = True
 except ImportError:
     PSUTIL_AVAILABLE = False
-    psutil = None
+    psutil = None  # type: ignore[assignment]
 
 try:
     import warnings
@@ -46,7 +46,7 @@ class SystemMetrics:
     network_bytes_recv: int
     gpu_info: List[Dict[str, Any]]
 
-    def to_dict(self) -> str:
+    def to_dict(self) -> Dict[str, Any]:
         """Convert to dict format."""
         return asdict(self)
 
@@ -61,7 +61,7 @@ class SystemMonitor:
         self.monitoring_interval = self.config.get("monitoring_interval", 5)  # 秒
         self.is_monitoring = False
         if PSUTIL_AVAILABLE:
-            self._last_net_io = psutil.net_io_counters()
+            self._last_net_io: Optional[Any] = psutil.net_io_counters()
         else:
             self._last_net_io = None
             logger.warning("psutil not available — system metrics collection disabled")
@@ -126,9 +126,15 @@ class SystemMonitor:
         disk = psutil.disk_usage("/")
         net_io = psutil.net_io_counters()
 
-        bytes_sent = net_io.bytes_sent - self._last_net_io.bytes_sent
-        bytes_recv = net_io.bytes_recv - self._last_net_io.bytes_recv
-        self._last_net_io = net_io
+        last_io = self._last_net_io
+        if last_io is None:  # 首輪無基準——直接記當前值
+            self._last_net_io = net_io
+            bytes_sent = 0
+            bytes_recv = 0
+        else:
+            bytes_sent = net_io.bytes_sent - last_io.bytes_sent
+            bytes_recv = net_io.bytes_recv - last_io.bytes_recv
+            self._last_net_io = net_io
 
         gpu_info = self.get_gpu_info()
 
@@ -241,7 +247,7 @@ class SystemMonitor:
 
     def get_metrics_history(self, limit: int = 100) -> List[Dict[str, Any]]:
         """Get the metrics history by self."""
-        return [m.to_dict() for m in self.metrics_history[-limit:]]
+        return [dict(m.to_dict()) for m in self.metrics_history[-limit:]]
 
     def export_metrics_to_file(self, filepath: str) -> None:
         """Log a diagnostic message."""

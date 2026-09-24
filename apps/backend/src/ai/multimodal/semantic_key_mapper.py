@@ -195,7 +195,9 @@ class SemanticKeyMapper:
                 # Pad query if needed (match pool dim)
                 pool_dim = max(v.size for v in pool if v.size > 0)
                 if query.size < pool_dim:
-                    query = np.pad(query, (0, pool_dim - query.size), dtype=np.float32)
+                    padded = np.zeros(pool_dim, dtype=np.float32)
+                    padded[: query.size] = query
+                    query = padded
                 elif query.size > pool_dim:
                     query = query[:pool_dim]
                 q_norm = np.linalg.norm(query)

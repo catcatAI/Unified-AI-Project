@@ -154,7 +154,7 @@ class ChainOfThoughtReasoner:
             return "Insufficient information for conclusion"
 
         last_step = steps[-1]
-        return last_step.get("conclusion", "No conclusion reached")
+        return str(last_step.get("conclusion", "No conclusion reached"))
 
     def _compute_confidence(
         self, facts: List[str], relationships: List[str], inferences: List[str]

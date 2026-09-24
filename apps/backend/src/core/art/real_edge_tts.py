@@ -11,7 +11,7 @@ import asyncio
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Dict, List, Optional
 
 import edge_tts
 
@@ -222,7 +222,7 @@ class AngelaRealVoice:
         """
         try:
             voices = await edge_tts.list_voices()
-            result = {}
+            result: Dict[str, List[Dict[str, str]]] = {}
             for voice in voices:
                 lang = voice["Locale"].split("-")[0]
                 if lang not in result:

@@ -18,7 +18,7 @@ class VisionHandler:
 
     def __init__(self, model_bus: Any = None):
         self._model_bus = model_bus
-        self._vision_service = None
+        self._vision_service: Optional[Any] = None
 
     async def handle(self, text: str, intent: str = "vision") -> str:
         image_path = self._extract_image_path(text)
@@ -46,7 +46,7 @@ class VisionHandler:
                 except Exception as e:
                     logger.warning(f"VisionService unavailable: {e}", exc_info=True)
                     self._vision_service = False  # don't retry every request
-            if self._vision_service:
+            if self._vision_service and self._vision_service is not True:
                 result = await self._vision_service.analyze_image(
                     image_data=image_data, context={"path": str(target), "mime_type": mime_type}
                 )

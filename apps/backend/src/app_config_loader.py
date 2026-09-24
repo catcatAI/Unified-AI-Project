@@ -124,9 +124,11 @@ def get_config(key: str, default: Any = None) -> Any:
 def get_bootstrap_config() -> Dict[str, Any]:
     """Return the bootstrap sub-configuration."""
     _merge_bootstrap_overrides()
-    return _CONFIG.get("bootstrap", {})
+    bootstrap: Dict[str, Any] = _CONFIG.get("bootstrap", {})
+    return bootstrap
 
 
 def get_formula_config(domain: str) -> Dict[str, Any]:
     """Return the formula sub-configuration for the given domain."""
-    return _CONFIG.get("formula", {}).get(domain, {})
+    formula_cfg: Dict[str, Any] = _CONFIG.get("formula", {}).get(domain, {})
+    return formula_cfg

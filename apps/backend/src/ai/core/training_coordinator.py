@@ -182,7 +182,7 @@ class TrainingCoordinator:
     ) -> int:
         copied = 0
         try:
-            source_patterns = getattr(source_engine, "get_reflex_patterns", lambda: [])()
+            source_patterns: List[Any] = getattr(source_engine, "get_reflex_patterns", lambda: [])()
             target_patterns = {
                 p.get("pattern", "") if isinstance(p, dict) else str(p)
                 for p in getattr(target_engine, "get_reflex_patterns", lambda: [])()

@@ -96,7 +96,7 @@ class Axis:
     def dominant(self):
         if not self.values:
             return ("", 0.0)
-        max_key = max(self.values, key=self.values.get)
+        max_key = max(self.values, key=lambda k: self.values[k])
         return (max_key, self.values[max_key])
 
     # --- Category A: Storable / State -------------------------------------------------

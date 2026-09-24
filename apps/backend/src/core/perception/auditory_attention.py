@@ -57,9 +57,12 @@ class AuditoryAttentionController:
             priority = self._calculate_priority(source, user_profile_id)
             if priority > highest_priority:
                 highest_priority = priority
-                best_source_id = (
-                    source.profile_id if hasattr(source, "profile_id") else source.get("profile_id")
+                candidate: Optional[str] = (
+                    source.profile_id
+                    if hasattr(source, "profile_id")
+                    else source.get("profile_id")
                 )
+                best_source_id = str(candidate) if candidate is not None else None
 
         if best_source_id and highest_priority > self.noise_threshold:
             if best_source_id != self.current_focus_id:
@@ -87,7 +90,8 @@ class AuditoryAttentionController:
         elif label == "speaker":
             base_priority *= 1.2
 
-        return base_priority * intensity
+        priority_value: float = base_priority * float(intensity)
+        return priority_value
 
     def reset(self) -> None:
         """Reset auditory attention controller to default state."""

@@ -248,7 +248,8 @@ class CIFAR10Loader:
         if len(encoded_indices) == 0:
             return []
         chosen = rng.choice(encoded_indices, min(n_samples, len(encoded_indices)), replace=False)
-        return [self._encoded[i] for i in chosen if self._encoded[i] is not None]
+        out: List[np.ndarray] = [v for v in (self._encoded[i] for i in chosen) if v is not None]
+        return out
 
 
 # ---------------------------------------------------------------------------
@@ -392,7 +393,8 @@ class ESC50Loader:
         if not encoded_indices:
             return []
         chosen = rng.choice(encoded_indices, min(n_samples, len(encoded_indices)), replace=False)
-        return [self._encoded[i] for i in chosen if self._encoded[i] is not None]
+        out: List[np.ndarray] = [v for v in (self._encoded[i] for i in chosen) if v is not None]
+        return out
 
 
 # ---------------------------------------------------------------------------

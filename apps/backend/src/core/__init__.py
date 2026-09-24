@@ -15,7 +15,7 @@ startup. Import directly from submodules: from core.X import Y
 
 import importlib
 import logging
-from typing import Any, List
+from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
 
@@ -152,7 +152,7 @@ _LAZY_IMPORTS = {
     "__version__": "core.version",
 }
 
-_lazy_cache = {}
+_lazy_cache: Dict[str, Any] = {}
 
 
 class _SubmoduleSentinel:

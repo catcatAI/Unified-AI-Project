@@ -63,7 +63,8 @@ class BaseLevelProducer(ABC):
         if self.ed3n is None:
             return None
         try:
-            return self.ed3n.process(text, depth=depth)
+            processed = self.ed3n.process(text, depth=depth)
+            return str(processed) if processed is not None else None
         except Exception:
             logger.debug("ED3N process failed", exc_info=True)
             return None

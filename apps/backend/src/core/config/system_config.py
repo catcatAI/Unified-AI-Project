@@ -63,23 +63,23 @@ def get_system_config() -> Dict[str, Any]:
 
 def get_ai_ops_config() -> Dict[str, Any]:
     """获取AI运维系统专用配置"""
-    config = get_system_config()["ai_ops"]
+    config: Dict[str, Any] = get_system_config()["ai_ops"]
     return config
 
 
 def get_hsp_config() -> Dict[str, Any]:
     """获取HSP协议配置"""
-    config = get_system_config()["hsp"]
+    config: Dict[str, Any] = get_system_config()["hsp"]
     return config
 
 
 def get_memory_config() -> Dict[str, Any]:
     """获取记忆系统配置"""
-    config = get_system_config()["memory"]
+    config: Dict[str, Any] = get_system_config()["memory"]
     return config
 
 
 def get_training_config() -> Dict[str, Any]:
     """获取训练系统专用配置"""
-    config = get_system_config()["training"]
+    config: Dict[str, Any] = get_system_config()["training"]
     return config

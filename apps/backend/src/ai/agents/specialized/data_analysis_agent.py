@@ -111,7 +111,7 @@ class DataAnalysisAgent:
         """Analyze dataset and return basic statistics for numeric fields."""
         if not data:
             return {"status": "error", "message": "No data provided", "stats": {}}
-        numeric_fields = {}
+        numeric_fields: Dict[str, List[float]] = {}
         for row in data:
             for key, val in row.items():
                 if isinstance(val, (int, float)):
@@ -172,7 +172,7 @@ class DataAnalysisAgent:
                 "message": "Need data and at least 2 columns",
                 "correlations": [],
             }
-        series = {col: [] for col in columns}
+        series: Dict[str, List[float]] = {col: [] for col in columns}
         for row in data:
             for col in columns:
                 val = row.get(col)

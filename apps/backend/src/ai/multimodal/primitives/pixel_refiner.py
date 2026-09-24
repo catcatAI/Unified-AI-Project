@@ -3,7 +3,7 @@
 import json
 import logging
 import os
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 
@@ -67,7 +67,7 @@ class PixelRefiner:
 
         # Clamp to [0, 1] and convert back
         out = np.clip(out, 0.0, 1.0)
-        return (out * 255.0).astype(np.uint8)
+        return np.asarray((out * 255.0).astype(np.uint8))
 
     def forward_train(self, rough_flat: np.ndarray):
         """Forward pass with cached values for backprop."""
@@ -137,7 +137,7 @@ class PixelRefiner:
 
         return loss
 
-    def refine(self, rough_image) -> "PIL.Image":
+    def refine(self, rough_image) -> Any:  # duck-typed PIL Image（PIL 為可選依賴）
         """Refine a rough PIL image.
 
         Args:

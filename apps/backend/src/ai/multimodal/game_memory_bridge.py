@@ -583,7 +583,7 @@ class GameMemoryBridge:
     ) -> Optional[SpatialMemory]:
         """尋找安全位置 (低危險、高訪問)"""
         best = None
-        best_score = -1
+        best_score: float = -1
 
         for node in self._spatial_index.values():
             dist = self._distance(position, node.position)
@@ -619,7 +619,7 @@ class GameMemoryBridge:
     # ==================== 工具方法 ====================
 
     def _distance(self, a: Tuple[float, float, float], b: Tuple[float, float, float]) -> float:
-        return np.sqrt(sum((x - y) ** 2 for x, y in zip(a, b)))
+        return float(np.sqrt(sum((x - y) ** 2 for x, y in zip(a, b))))
 
     def get_stats(self) -> Dict[str, Any]:
         return {

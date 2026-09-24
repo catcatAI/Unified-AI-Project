@@ -167,7 +167,7 @@ class AxisFieldRegistry:
         Returns:
             Dict[key -> (is_valid, error_message)]
         """
-        results = {}
+        results: Dict[str, Tuple[bool, Optional[str]]] = {}
         axis_fields = self._fields.get(axis, {})
         for key, value in values.items():
             field = axis_fields.get(key)

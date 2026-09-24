@@ -150,7 +150,7 @@ class NLPProcessingAgent:
         for cat in categories:
             keyword_count = sum(1 for word in cat.lower().split() if word in text_lower)
             scores[cat] = keyword_count
-        best_cat = max(scores, key=scores.get)
+        best_cat = max(scores, key=lambda k: scores[k])
         best_score = scores[best_cat]
         total_keywords = sum(len(c.split()) for c in categories)
         confidence = best_score / total_keywords if total_keywords > 0 else 0.0

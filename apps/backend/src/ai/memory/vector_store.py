@@ -24,7 +24,7 @@ from core.system.config.magic_numbers import cache_value, timing_value
 
 logger = logging.getLogger(__name__)
 
-_chromadb = None
+_chromadb: Any = None
 
 # Default storage directory
 _DEFAULT_PERSIST_DIR = os.path.join(os.environ.get("VECTOR_STORE_PATH", "data/vector_store"))
@@ -345,7 +345,7 @@ class _ChromadbBackend:
         result = await asyncio.to_thread(
             self.collection.query, query_texts=[query], n_results=limit
         )
-        return result
+        return dict(result)
 
 
 # =============================================================================
@@ -374,8 +374,10 @@ class VectorMemoryStore:
                 _cb = _ChromadbBackend(self.persist_directory)
                 self.client = _cb.client
                 self.collection = _cb.collection
-                self.add_memory = _cb.add_memory
-                self.semantic_search = _cb.semantic_search
+                # bound-method override：chroma 後端把 I/O 卸到 worker thread，
+                # 直接指派 override 既有 async 方法（mypy 無法表達此模式）。
+                self.add_memory = _cb.add_memory  # type: ignore[method-assign]
+                self.semantic_search = _cb.semantic_search  # type: ignore[method-assign]
                 logger.info(
                     "VectorMemoryStore: using chromadb backend at %s",
                     self.persist_directory,
@@ -417,7 +419,7 @@ class VectorMemoryStore:
             return len(self._numpy_backend)
         if self.collection is not None:
             try:
-                return self.collection.count()
+                return int(self.collection.count())
             except Exception as err:
                 logger.warning("ChromaDB count failed: %s", err, exc_info=True)
                 return 0

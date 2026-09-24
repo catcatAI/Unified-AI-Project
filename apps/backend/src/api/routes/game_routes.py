@@ -25,7 +25,7 @@ import logging
 import threading
 import uuid
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Body, HTTPException
 
@@ -44,7 +44,7 @@ _AXIS_PATH = _GAME_ROOT / "axis_system.py"
 
 _ENGINE = None
 _ENGINE_LOCK = threading.Lock()
-_SESSIONS: Dict[str, object] = {}
+_SESSIONS: Dict[str, Any] = {}
 _SESSION_LOCK = threading.Lock()
 _SESSION_MAX = 64
 
@@ -185,7 +185,7 @@ def game_cards(card_type: Optional[str] = None, limit: int = 200) -> dict:
 @router.get("/axes")
 def game_axes() -> dict:
     try:
-        return _load_axis_system()
+        return dict(_load_axis_system())
     except Exception as err:
         logger.warning("Game axes unavailable: %s", err, exc_info=True)
         raise HTTPException(status_code=503, detail=f"Axis system unavailable: {err}")

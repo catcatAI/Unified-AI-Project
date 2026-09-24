@@ -61,6 +61,7 @@ class LearningLogDB:
             (timestamp, strategy_id, current_effectiveness, message),
         )
         record_id = cursor.lastrowid
+        assert record_id is not None  # INSERT 成功後 lastrowid 必為 int
         conn.commit()
         conn.close()
         logger.debug(f"Added log entry for strategy {strategy_id} with ID: {record_id}")

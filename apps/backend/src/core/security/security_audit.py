@@ -15,7 +15,7 @@ import logging
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 from core.utils import safe_error
 
@@ -184,6 +184,10 @@ class SecurityAudit:
         """生成安全审计报告"""
         import json
 
+        vulns_by_sev: Dict[str, List[Dict[str, Any]]] = cast(
+            Dict[str, List[Dict[str, Any]]],
+            self.audit_results["vulnerabilities"],
+        )
         report = {
             "summary": {
                 "score": self.audit_results["score"],
@@ -192,8 +196,11 @@ class SecurityAudit:
                 "timestamp": self.audit_results["timestamp"],
             },
             "vulnerabilities_by_severity": {
-                k: [{"file": v["file"], "line": v["line"], "type": v["type"]} for v in vals]
-                for k, vals in self.audit_results["vulnerabilities"].items()
+                k: [
+                    {"file": v["file"], "line": v["line"], "type": v["type"]}
+                    for v in vals
+                ]
+                for k, vals in vulns_by_sev.items()
             },
             "recommendations": self.audit_results["recommendations"],
         }

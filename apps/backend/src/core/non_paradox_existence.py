@@ -56,7 +56,7 @@ class GrayZoneVariable:
         self.possibilities: Dict[str, "PossibilityState"] = {}
 
     def can_coexist(self, gap: float) -> bool:
-        return gap >= self.cognitive_gap_threshold
+        return bool(gap >= self.cognitive_gap_threshold)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -118,8 +118,9 @@ class CoexistenceField:
         if not active:
             self.coherence_score = 0.0
             return 0.0
-        self.coherence_score = sum(v.cognitive_gap_threshold for v in active) / len(active)
-        return self.coherence_score
+        coherence: float = sum(v.cognitive_gap_threshold for v in active) / len(active)
+        self.coherence_score = coherence
+        return coherence
 
 
 class NonParadoxExistence:

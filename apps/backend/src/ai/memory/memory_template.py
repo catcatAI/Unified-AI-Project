@@ -296,7 +296,7 @@ class MemoryTemplate:
             + success_score * _sc_w
         )
 
-        return total_score
+        return float(total_score)
 
     def _calculate_keyword_match(self, query: str) -> float:
         """计算关键词匹配分数"""

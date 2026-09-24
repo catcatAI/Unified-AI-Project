@@ -158,7 +158,7 @@ class ReasoningSystem:
         avg_ethical = sum(ethical_scores.values()) / len(ethical_scores)
         penalty = len(violations) * 0.25
         score = avg_ethical - penalty
-        return round(max(0.0, min(1.0, score)), 2)
+        return float(round(max(0.0, min(1.0, score)), 2))
 
     def _identify_conflicts(self, scores: dict) -> list:
         return [p for p, s in scores.items() if s < 0.5]

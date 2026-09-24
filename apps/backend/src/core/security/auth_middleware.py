@@ -16,7 +16,7 @@
 import logging
 import secrets
 from datetime import datetime, timedelta, timezone
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 try:
     import jwt
@@ -91,7 +91,7 @@ class AuthMiddleware:
             logger.warning(f"Invalid token: {e}", exc_info=True)
             return None
 
-    def generate_api_key(self, user_id: str, scopes: list[str] = None) -> str:
+    def generate_api_key(self, user_id: str, scopes: Optional[List[str]] = None) -> str:
         """生成 API 密钥"""
         if scopes is None:
             scopes = ["read", "write"]

@@ -4,7 +4,7 @@ Provides version negotiation and deprecation headers
 """
 
 import logging
-from typing import Optional
+from typing import List, Optional
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -24,7 +24,7 @@ class APIVersionMiddleware(BaseHTTPMiddleware):
 
     CURRENT_VERSION = "v1"
     SUPPORTED_VERSIONS = ["v1"]
-    DEPRECATED_VERSIONS = []
+    DEPRECATED_VERSIONS: List[str] = []
 
     async def dispatch(self, request: Request, call_next):
         # Extract version from header

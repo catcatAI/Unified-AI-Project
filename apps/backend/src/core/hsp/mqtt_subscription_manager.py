@@ -431,7 +431,12 @@ class MQTTSubscriptionManager:
 
     def list_subscriptions(self) -> List[Dict[str, Any]]:
         """列出所有订阅"""
-        return [self.get_subscription_info(topic) for topic in self._subscriptions]
+        infos: List[Dict[str, Any]] = []
+        for topic in self._subscriptions:
+            info = self.get_subscription_info(topic)
+            if info is not None:
+                infos.append(info)
+        return infos
 
     def get_stats(self) -> Dict[str, Any]:
         """获取统计信息"""

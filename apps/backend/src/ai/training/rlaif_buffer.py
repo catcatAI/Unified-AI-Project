@@ -92,11 +92,11 @@ class RLAIFBuffer:
             scored.append((prompt, vec, score))
         # Pair adjacent as win/lose
         for i in range(0, len(scored) - 1, 2):
-            p1, v1, s1 = scored[i]
-            p2, v2, s2 = scored[i + 1]
-            if abs(s1 - s2) < 1e-6:
+            win, lose = (scored[i], scored[i + 1]) if scored[i][2] >= scored[i + 1][2] else (
+                (scored[i + 1], scored[i])
+            )
+            if abs(win[2] - lose[2]) < 1e-6:
                 continue
-            win, lose = (p1, v1, s1, p2, v2, s2) if s1 > s2 else (p2, v2, s2, p1, v1, s1)
             # win prompt is arbitrary; use winning prompt
             self._pairs.append(
                 PreferencePair(

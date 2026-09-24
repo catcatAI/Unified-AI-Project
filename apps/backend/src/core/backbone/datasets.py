@@ -36,11 +36,9 @@ class Dataset:
         self.name = name
         self.path = path
         self.metadata = dict(metadata or {})
-        self._records = list(records) if records is not None else None
+        self._records: List[Any] = list(records) if records is not None else []
         self._loader = loader
         self._loaded = records is not None
-        if self._records is None:
-            self._records = []
 
     # ------------------------------------------------------------------
     def ensure_loaded(self) -> List[Any]:
@@ -48,11 +46,11 @@ class Dataset:
         if not self._loaded:
             if self._loader is None:
                 logger.warning("Dataset '%s' has no loader and no records", self.name)
-                return []
+                return list(self._records)
             self._records = list(self._loader())
             self._loaded = True
             logger.debug("Dataset '%s' loaded (%d records)", self.name, len(self._records))
-        return self._records
+        return list(self._records)
 
     @property
     def size(self) -> int:

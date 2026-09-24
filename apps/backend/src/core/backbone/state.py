@@ -33,7 +33,7 @@ from typing import Any, Callable, Dict, List, Optional
 try:  # 延遲導入，避免啟動時硬依賴
     from core.system.state_store import state_store as _default_state_store
 except Exception:  # pragma: no cover - 環境無 GlobalStateStore 時的降級
-    _default_state_store = None
+    _default_state_store = None  # type: ignore[assignment]
 
 
 class BackboneState:
@@ -104,7 +104,7 @@ class BackboneState:
         except Exception:
             return False
 
-    def unsubscribe(self, domain: str, callback: Callable = None) -> bool:
+    def unsubscribe(self, domain: str, callback: Optional[Callable] = None) -> bool:
         """取消訂閱 domain 變更。
 
         依賴下層 GlobalStateStore 的 unsubscribe 支援；不支援則回傳 False。
@@ -155,7 +155,7 @@ class BackboneState:
         `update_*` 方法。
         """
         if self._axis_registry is not None and self._axis_registry.has(axis):
-            return self._axis_registry.write(axis, key, value)
+            return bool(self._axis_registry.write(axis, key, value))
         m = self.matrix()
         if m is None:
             return False
@@ -171,7 +171,7 @@ class BackboneState:
     def update_axes(self, axis: str, data: Dict[str, Any]) -> bool:
         """一次寫入多個軸值。"""
         if self._axis_registry is not None and self._axis_registry.has(axis):
-            return self._axis_registry.update(axis, data)
+            return bool(self._axis_registry.update(axis, data))
         m = self.matrix()
         if m is None:
             return False

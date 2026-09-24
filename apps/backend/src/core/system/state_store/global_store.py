@@ -66,7 +66,7 @@ class GlobalStateStore:
         ok = await self._persistence.save_state(f"domain/{domain}", dict(data))
         if ok:
             self._dirty[domain] = False
-        return ok
+        return bool(ok)
 
     async def save_all(self) -> int:
         """Persist all dirty domains. Returns number of domains saved."""
@@ -144,7 +144,7 @@ class GlobalStateStore:
     def get_state(self, domain: Optional[str] = None) -> Dict[str, Any]:
         """Retrieve state for a domain or the entire system."""
         if domain:
-            return self._states.get(domain, {}).copy()
+            return dict(self._states.get(domain, {}).copy())
         return {k: v.copy() for k, v in self._states.items()}
 
     def is_dirty(self, domain: Optional[str] = None) -> bool:

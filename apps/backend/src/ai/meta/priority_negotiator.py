@@ -127,7 +127,7 @@ class PriorityNegotiator:
                 w = self._weight_fns[name](context) * vote.confidence
                 mode_votes[vote.routing_mode] = mode_votes.get(vote.routing_mode, 0.0) + w
 
-        winning_mode = max(mode_votes, key=mode_votes.get) if mode_votes else None
+        winning_mode = max(mode_votes, key=lambda k: mode_votes[k]) if mode_votes else None
 
         # Categorical voting: response_style (weighted plurality)
         style_votes: Dict[str, float] = {}
@@ -136,7 +136,7 @@ class PriorityNegotiator:
                 w = self._weight_fns[name](context) * vote.confidence
                 style_votes[vote.response_style] = style_votes.get(vote.response_style, 0.0) + w
 
-        winning_style = max(style_votes, key=style_votes.get) if style_votes else None
+        winning_style = max(style_votes, key=lambda k: style_votes[k]) if style_votes else None
 
         # Numeric fusion: weighted average of temperature/tokens biases
         total_conf = sum(vote.confidence for vote in votes.values())
@@ -153,7 +153,7 @@ class PriorityNegotiator:
         contributions: Dict[str, float] = {
             n: v.confidence * self._weight_fns[n](context) for n, v in votes.items()
         }
-        top_voter = max(contributions, key=contributions.get) if contributions else "none"
+        top_voter = max(contributions, key=lambda k: contributions[k]) if contributions else "none"
 
         return {
             "routing_mode": winning_mode,

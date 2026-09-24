@@ -413,7 +413,7 @@ class PhysiologicalTactileSystem:
         if mapping_key not in BODY_TO_LIVE2D_MAPPING:
             return {}
 
-        part_mapping = BODY_TO_LIVE2D_MAPPING[mapping_key]
+        part_mapping: Dict[str, Any] = BODY_TO_LIVE2D_MAPPING[mapping_key]
 
         # Get touch response (default to "pat" if touch type not found)
         touch_mapping = part_mapping.get(touch_type, part_mapping.get("pat", {}))
@@ -515,7 +515,9 @@ class PhysiologicalTactileSystem:
 
     def get_all_body_live2d_mappings(self) -> Dict[str, Dict[str, Any]]:
         """Get all body part to Live2D mappings"""
-        return BODY_TO_LIVE2D_MAPPING.copy()
+        return {
+            k: {tk: dict(tv) for tk, tv in v.items()} for k, v in BODY_TO_LIVE2D_MAPPING.items()
+        }
 
     def get_live2d_touch_zones(self) -> List[Dict[str, Any]]:
         """
@@ -530,7 +532,9 @@ class PhysiologicalTactileSystem:
             mapping_key = self._get_body_part_mapping_key(body_part)
 
             if mapping_key in BODY_TO_LIVE2D_MAPPING:
-                part_mapping = BODY_TO_LIVE2D_MAPPING[mapping_key]
+                part_mapping: Dict[str, Any] = {
+                    tk: dict(tv) for tk, tv in BODY_TO_LIVE2D_MAPPING[mapping_key].items()
+                }
 
                 # Collect all parameters for this body part
                 all_params = set()

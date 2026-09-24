@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional
 try:
     import numpy as np
 except ImportError:
-    np = None
+    np = None  # type: ignore[assignment]
 
 logger = logging.getLogger(__name__)
 
@@ -25,19 +25,21 @@ class PerformanceTracker:
         # 提取最近的成功率
         recent_data = [h.get("success_rate", 0.0) for h in performance_history[-10:]]
 
+        x_data: Any
+        y_data: Any
         if np:
-            x = np.arange(len(recent_data))
-            y = np.array(recent_data)
-            slope, _ = np.polyfit(x, y, 1)
+            x_data = np.arange(len(recent_data))
+            y_data = np.array(recent_data)
+            slope, _ = np.polyfit(x_data, y_data, 1)
         else:
             # 簡易線性回歸回退方案
             n = len(recent_data)
-            x = list(range(n))
-            y = recent_data
-            mean_x = sum(x) / n
-            mean_y = sum(y) / n
-            num = sum((x[i] - mean_x) * (y[i] - mean_y) for i in range(n))
-            den = sum((x[i] - mean_x) ** 2 for i in range(n))
+            x_data = list(range(n))
+            y_data = recent_data
+            mean_x = sum(x_data) / n
+            mean_y = sum(y_data) / n
+            num = sum((x_data[i] - mean_x) * (y_data[i] - mean_y) for i in range(n))
+            den = sum((x_data[i] - mean_x) ** 2 for i in range(n))
             slope = num / den if den != 0 else 0.0
 
         direction = "improving" if slope > 0.02 else "degrading" if slope < -0.02 else "stable"

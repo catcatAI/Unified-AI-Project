@@ -108,7 +108,7 @@ class VocabularyExpander:
 
         # Simple clustering: group by position proximity
         # Find clusters (simple: grid-based)
-        clusters = {}
+        clusters: Dict[Tuple[int, int], List[Dict]] = {}
         for i, c in enumerate(candidates):
             px, py = c["position"]
             key = (int(px * 4), int(py * 4))  # 4x4 grid

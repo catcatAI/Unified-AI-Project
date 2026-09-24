@@ -55,7 +55,7 @@ class PrimitiveEncoder:
         if norm > 0:
             embedding = embedding / norm
 
-        return embedding.astype(np.float32)
+        return np.asarray(embedding, dtype=np.float32)
 
     def decode(self, embedding: np.ndarray, canvas_size: tuple = (128, 128)) -> DrawingInstructions:
         """Decode embedding back to drawing instructions.
@@ -158,7 +158,7 @@ class PrimitiveEncoder:
         # Initialize decode bias to mean of training vectors (key fix!)
         all_vecs = np.array([inst.to_vector() for inst in instructions_list])
         mean_vec = all_vecs.mean(axis=0)
-        self._b_decode = mean_vec.copy()
+        self._b_decode = mean_vec.astype(np.float32)
 
         losses = []
         best_W_enc = self._W_encode.copy()

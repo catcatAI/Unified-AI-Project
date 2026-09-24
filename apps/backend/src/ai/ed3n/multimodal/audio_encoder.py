@@ -125,7 +125,7 @@ class AudioEncoder:
             with audio_file as source:
                 audio = recognizer.record(source)
             text = recognizer.recognize_google(audio)
-            return text
+            return str(text)
         except ImportError:
             logger.warning("speech_recognition not available")
         except Exception as e:
@@ -168,7 +168,7 @@ class AudioEncoder:
         if self.dictionary is not None:
             existing = self.dictionary.encode(concept_str)
             if existing:
-                return existing[0]
+                return str(existing[0])
             key = f"aud_{category}_{_stable_hash(concept_str) % 10000}"
             self.dictionary.add_entry(
                 key=key,

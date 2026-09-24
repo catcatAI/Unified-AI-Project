@@ -216,7 +216,7 @@ class UnifiedEngine:
     # Training
     # ------------------------------------------------------------------
     def learn_batch(self, samples: List[str]) -> Dict[str, Any]:
-        stats = self.core.learn_batch(samples)
+        stats: Dict[str, Any] = dict(self.core.learn_batch(samples))
         stats["compression_ratio"] = round(self.compression_ratio(), 4)
         stats["memory_ratio"] = round(self.memory_usage_ratio(), 4)
         return stats
@@ -495,9 +495,10 @@ class UnifiedEngine:
                     self._remember_turn(text, wrapped)
                     return wrapped
         # 3. Learned statistical core.
-        r = self._infer_from_core(text)
-        if r is not None:
-            result, conf, route = r
+        core_hit = self._infer_from_core(text)  # r 已被 reflex/math/logic 佔用（str | None）
+        if core_hit is not None:
+            result, conf, route = core_hit
+            # r: tuple[str, float, str]（_infer_from_core 契約）
             self._last_route = route
             self._last_confidence = conf
             return result
@@ -554,7 +555,7 @@ class UnifiedEngine:
                     # allow_pickle=False.
                     meta=np.array(json.dumps(meta)),
                     scalars=scalars,
-                    **core_arrays,
+                    **core_arrays,  # type: ignore[arg-type]  # numpy stubs 缺 **kwds 參數
                 )
         except Exception as e:
             logger.error("unified: npz save failed (%s); falling back to json", e)

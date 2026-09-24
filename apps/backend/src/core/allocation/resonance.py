@@ -147,7 +147,7 @@ class ResonanceEngine:
         for name in self._semantic_vectors:
             sim = self.compute_resonance(vector, name)
             sims[name] = sim
-        best_axis = max(sims, key=sims.get) if sims else ""
+        best_axis = max(sims, key=lambda k: sims[k]) if sims else ""
         max_res = sims.get(best_axis, 0.0)
         active = sum(1 for v in sims.values() if v > 0.15)
         ent = _entropy(sims)

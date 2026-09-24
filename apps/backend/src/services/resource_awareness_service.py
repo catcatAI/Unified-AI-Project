@@ -5,12 +5,12 @@ import os
 from dataclasses import dataclass, field
 from typing import Any, Dict, Optional
 
-import yaml  # type: ignore[import-untyped]
+import yaml
 
 try:
     import psutil
 except ImportError:
-    psutil = None
+    psutil = None  # type: ignore[assignment]
 
 logger = logging.getLogger(__name__)
 
@@ -199,7 +199,7 @@ class ResourceAwarenessService:
         """獲取 CPU 邏輯核心數"""
         if not self.psutil:
             return os.cpu_count() or 1
-        return self.psutil.cpu_count(logical=True)
+        return self.psutil.cpu_count(logical=True) or 1
 
 
 if __name__ == "__main__":

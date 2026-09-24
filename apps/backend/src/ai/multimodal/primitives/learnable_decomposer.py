@@ -82,10 +82,10 @@ class LearnableDecomposer:
         """Update running mean/std of CLIP embeddings."""
         self._n_seen += 1
         alpha = 1.0 / self._n_seen
-        self._clip_mean = (1 - alpha) * self._clip_mean + alpha * clip_emb
+        self._clip_mean = ((1 - alpha) * self._clip_mean + alpha * clip_emb).astype(np.float32)
         self._clip_std = np.sqrt(
             (1 - alpha) * self._clip_std**2 + alpha * (clip_emb - self._clip_mean) ** 2
-        )
+        ).astype(np.float32)
 
     def compute_approx_gradient(
         self, pred_vec: np.ndarray, target_arr: np.ndarray, renderer, n_probe: int = 20

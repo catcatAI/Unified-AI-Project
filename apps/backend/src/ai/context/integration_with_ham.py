@@ -139,7 +139,7 @@ class ContextHAMIntegration:
                 {"content": ham_memory_data.get("content", ""), **ham_memory_data},
             )
             logger.info(f"Created memory context {context_id} from HAM data")
-            return context_id
+            return str(context_id)
         except (
             Exception
         ) as e:  # broad exception acceptable: initialization continues on optional component failure

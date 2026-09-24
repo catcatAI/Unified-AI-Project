@@ -1,6 +1,6 @@
 import logging
 import math
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -11,13 +11,13 @@ class KineticValidator:
     確保肢體動作與位移符合物理極限與生物約束。
     """
 
-    def __init__(self, config: Dict[str, Any] = None):
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
         # 根據「四肢實體約束矩陣」定義的物理極限
         self.max_velocity = self.config.get("max_velocity", 500.0)  # px/s, overridable via config
         self.max_acceleration = self.config.get("max_acceleration", 200.0)  # px/s^2
-        self.last_pos = None
-        self.last_time = None
+        self.last_pos: Optional[Tuple[float, float]] = None
+        self.last_time: Optional[float] = None
 
     def validate_action(self, action_name: str, parameters: Dict[str, Any]) -> Tuple[bool, str]:
         """

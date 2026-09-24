@@ -87,7 +87,7 @@ class AttentionController:
         contrast = local_std / (local_std.max() + 1e-8)
         saliency = 0.6 * center_bias + 0.4 * contrast
         self._saliency_map = saliency
-        return saliency
+        return np.asarray(saliency)
 
     @staticmethod
     def _local_std(arr: np.ndarray, kernel: int) -> np.ndarray:
@@ -95,7 +95,7 @@ class AttentionController:
 
         mean = uniform_filter(arr, kernel)
         mean_sq = uniform_filter(arr**2, kernel)
-        return np.sqrt(np.maximum(mean_sq - mean**2, 0))
+        return np.asarray(np.sqrt(np.maximum(mean_sq - mean**2, 0)))
 
     @staticmethod
     def _parse_candidate(candidate: Any) -> Tuple[Tuple[float, float], Optional[str], float]:

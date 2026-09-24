@@ -25,7 +25,7 @@ class PlanningAgent:
         try:
             from ai.reasoning.planning_engine import PlanningEngine
 
-            self._engine = PlanningEngine()
+            self._engine: Any = PlanningEngine()
         except ImportError:
             self._engine = None
             logger.warning("PlanningAgent: PlanningEngine not available")

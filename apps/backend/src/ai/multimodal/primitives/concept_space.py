@@ -64,7 +64,7 @@ class ConceptSpaceMapper:
         self._is_trained = False
 
     def _relu(self, x: np.ndarray) -> np.ndarray:
-        return np.maximum(0, x)
+        return np.asarray(np.maximum(0, x))
 
     def _forward(self, clip_features: np.ndarray) -> np.ndarray:
         """Forward pass: CLIP features → concept space."""
@@ -75,7 +75,7 @@ class ConceptSpaceMapper:
         # L2 normalize
         norms = np.linalg.norm(out, axis=1, keepdims=True)
         norms[norms == 0] = 1.0
-        return out / norms
+        return np.asarray(out / norms)
 
     def encode(self, clip_features: np.ndarray) -> np.ndarray:
         """Map CLIP features to concept space.

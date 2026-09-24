@@ -22,7 +22,7 @@ from typing import Any, Dict, List, Optional, Tuple
 try:
     import psutil
 except ImportError:
-    psutil = None
+    psutil = None  # type: ignore[assignment]
 
 logger = logging.getLogger(__name__)
 

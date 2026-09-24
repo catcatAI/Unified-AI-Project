@@ -16,7 +16,7 @@ import time
 import uuid
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional, cast
 
 from pydantic import BaseModel, Field, validator
 
@@ -116,7 +116,7 @@ class LLMGameInterface:
     def __init__(self, config: Optional[LLMConfig] = None):
         self.config = config or LLMConfig()
         self._semaphore = asyncio.Semaphore(self.config.max_concurrent)
-        self._session = None
+        self._session: Optional[Any] = None
         self._stats = {
             "total_calls": 0,
             "successful": 0,
@@ -138,7 +138,7 @@ class LLMGameInterface:
         """關閉 session"""
         if self._session:
             await self._session.close()
-            self._session = None
+            self._session = None  # 釋放
 
     def _build_prompt(self, system: str, user: str, schema: str) -> List[Dict]:
         """構建提示詞"""
@@ -150,7 +150,7 @@ class LLMGameInterface:
     async def _call_llm(
         self, messages: List[Dict], response_model: type, max_tokens: Optional[int] = None
     ) -> Any:
-        """通用 LLM 呼叫"""
+        """通用 LLM 呼叫。回傳 ``response_model`` 實例（呼叫端負責型別收口）。"""
         async with self._semaphore:
             session = await self._get_session()
 
@@ -375,7 +375,8 @@ class LLMGameInterface:
         messages = self._build_prompt(system, user, json.dumps(schema, ensure_ascii=False))
 
         try:
-            return await self._call_llm(messages, PlanProposal)
+            result = await self._call_llm(messages, PlanProposal)
+            return cast(PlanProposal, result)
         except Exception as e:
             logger.warning(f"LLM propose_plan failed, using fallback: {e}")
             return RuleBasedFallback.propose_plan(ctx)
@@ -414,7 +415,8 @@ class LLMGameInterface:
         messages = self._build_prompt(system, user, json.dumps(schema, ensure_ascii=False))
 
         try:
-            return await self._call_llm(messages, RecoveryStrategy)
+            result = await self._call_llm(messages, RecoveryStrategy)
+            return cast(RecoveryStrategy, result)
         except Exception as e:
             logger.warning(f"LLM diagnose_anomaly failed, using fallback: {e}")
             return RuleBasedFallback.diagnose_anomaly(ctx)
@@ -452,7 +454,8 @@ class LLMGameInterface:
         messages = self._build_prompt(system, user, json.dumps(schema, ensure_ascii=False))
 
         try:
-            return await self._call_llm(messages, StrategyAdjustment)
+            result = await self._call_llm(messages, StrategyAdjustment)
+            return cast(StrategyAdjustment, result)
         except Exception as e:
             logger.warning(f"LLM evaluate_strategy failed, using fallback: {e}")
             return RuleBasedFallback.evaluate_strategy(ctx)
@@ -614,4 +617,4 @@ class PlanContext:
         self.inventory = state.proprioception.inventory if state and state.proprioception else {}
         self.ham_memories = ham_memories
         self.strategy = strategy
-        self.known_recipes = []
+        self.known_recipes: List[str] = []

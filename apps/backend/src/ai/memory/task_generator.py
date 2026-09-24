@@ -45,7 +45,7 @@ class TaskGenerator:
             if len(user_hist) > self._max_history:
                 self._user_histories[user_id] = user_hist[-self._max_history :]
 
-        topics = {}
+        topics: Dict[str, int] = {}
         prev_topic = None
 
         for interaction in recent_interactions:
@@ -57,7 +57,7 @@ class TaskGenerator:
             prev_topic = topic
 
         total = len(recent_interactions)
-        dominant = max(topics, key=topics.get) if topics else "general"
+        dominant = max(topics, key=lambda k: topics[k]) if topics else "general"
         return {
             "topics": topics,
             "dominant_topic": dominant,
@@ -106,7 +106,7 @@ class TaskGenerator:
         transitions = self._topic_chain.get(last, {})
         if not transitions:
             return None
-        most_likely = max(transitions, key=transitions.get)
+        most_likely = max(transitions, key=lambda k: transitions[k])
         return most_likely
 
 

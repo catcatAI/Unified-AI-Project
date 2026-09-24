@@ -114,7 +114,7 @@ class StepDecoder:
             return None
 
         if temperature <= 0 or len(candidates) == 1:
-            return max(candidates, key=candidates.get)
+            return max(candidates, key=lambda k: candidates[k])
 
         scaled = {k: v / max(temperature, 0.01) for k, v in candidates.items()}
         max_val = max(scaled.values())
@@ -122,7 +122,7 @@ class StepDecoder:
         total = sum(shifted.values())
 
         if total <= 0:
-            return max(candidates, key=candidates.get)
+            return max(candidates, key=lambda k: candidates[k])
 
         r = random() * total
         cumulative = 0.0
@@ -131,7 +131,7 @@ class StepDecoder:
             if r <= cumulative:
                 return key
 
-        return max(candidates, key=candidates.get)
+        return max(candidates, key=lambda k: candidates[k])
 
     def generate_text(
         self,

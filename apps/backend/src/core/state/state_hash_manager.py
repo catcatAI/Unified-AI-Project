@@ -148,7 +148,7 @@ class StateHashManager:
         fingerprint_bytes = hashlib.sha256(combined).digest()[:8]
         global_fingerprint = struct.unpack(">Q", fingerprint_bytes)[0]
 
-        return global_fingerprint
+        return int(global_fingerprint)
 
     def verify_causality(
         self, start_hash: int, end_hash: int, change_log: Optional[List[Dict[str, Any]]] = None
@@ -266,7 +266,7 @@ class StateHashManager:
         """
         data = f"{key}:{value}".encode()
         hash_bytes = hashlib.sha256(data).digest()[:8]
-        return struct.unpack(">Q", hash_bytes)[0]
+        return int(struct.unpack(">Q", hash_bytes)[0])
 
     def get_precision_mode(self) -> str:
         """獲取當前精度模式

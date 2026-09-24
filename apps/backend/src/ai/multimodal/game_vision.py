@@ -107,9 +107,9 @@ class GameVision:
         self._last_switch: float = 0.0
         self._rect_cache: Optional[Tuple[int, int, int, int]] = None
         self._rect_ts: float = 0.0
-        self._sampler = None
-        self._encoder = None
-        self._policy = None
+        self._sampler: Optional[Any] = None
+        self._encoder: Optional[Any] = None
+        self._policy: Optional[Any] = None
 
     # ---------- 源定位與捕獲 ----------
 
@@ -202,9 +202,14 @@ class GameVision:
         """一幀走完：採樣 -> 編碼 -> policy grounding。無 LLM，全 numpy 快迴圈。"""
         try:
             self._ensure_stack()
+            sampler = self._sampler
+            encoder = self._encoder
+            policy = self._policy
+            if sampler is None or encoder is None or policy is None:
+                return None
             arr = np.asarray(frame.image.convert("RGB"), dtype=np.uint8)
-            sampled = self._sampler.sample(arr, focus_xy=focus_xy)
-            feats = self._encoder.encode_from_pil(frame.image)
+            sampled = sampler.sample(arr, focus_xy=focus_xy)
+            feats = encoder.encode_from_pil(frame.image)
             feats = np.asarray(feats, dtype=np.float32)
             latent = (
                 feats[:128]
@@ -212,7 +217,7 @@ class GameVision:
                 else np.pad(feats, (0, max(0, 128 - feats.shape[0])))
             )
             proprio = np.zeros(32, dtype=np.float32)
-            out = self._policy.forward(latent.astype(np.float32), proprio)
+            out = policy.forward(latent.astype(np.float32), proprio)
             return VisionRecognition(
                 source=frame.source,
                 features=feats,

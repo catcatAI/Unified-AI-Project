@@ -93,7 +93,9 @@ class AngelaConfig:
     # ------------------------------------------------------------------ #
     # Authority access
     # ------------------------------------------------------------------ #
-    def get_authority(self, section: str, default: Dict[str, Any] = None) -> Dict[str, Any]:
+    def get_authority(
+        self, section: str, default: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """Get authority config for a section (by config filename stem)."""
         default = default if default is not None else {}
         if section in self._files:
@@ -108,7 +110,8 @@ class AngelaConfig:
     # ------------------------------------------------------------------ #
     def get_intents(self) -> Dict[str, Any]:
         """Return the authority intent definitions from angela_core."""
-        return self.get_authority("angela_core", {}).get("intents", {})
+        intents: Dict[str, Any] = self.get_authority("angela_core", {}).get("intents", {})
+        return intents
 
     def get_intent_keywords(self, intent: str) -> List[str]:
         """Return keywords for an intent (authority first, registry fallback)."""
@@ -129,7 +132,8 @@ class AngelaConfig:
         """Return google_drive sub-operations config (list/sync/search/...)."""
         gd = self.get_intents().get("google_drive", {})
         if isinstance(gd, dict):
-            return gd.get("sub_operations", {})
+            sub_ops: Dict[str, Any] = gd.get("sub_operations", {})
+            return sub_ops
         return {}
 
     # ------------------------------------------------------------------ #
@@ -279,13 +283,15 @@ class AngelaConfig:
         template = rules.get("prompt_context_template", "") if isinstance(rules, dict) else ""
         if template:
             try:
-                return template.format(overall_summary=overall_summary, **contexts)
+                rendered: str = template.format(overall_summary=overall_summary, **contexts)
+                return rendered
             except (KeyError, IndexError, ValueError):
                 pass
         parts = [v for v in contexts.values() if v]
         if overall_summary:
             parts.append(overall_summary)
-        return "\n".join(parts)
+        joined: str = "\n".join(parts)
+        return joined
 
     # ------------------------------------------------------------------ #
     # Learned config (runtime learning closed loop)

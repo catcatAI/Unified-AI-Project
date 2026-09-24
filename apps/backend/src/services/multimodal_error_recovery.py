@@ -23,7 +23,7 @@ try:
 except Exception:  # noqa: BLE001
     _MM_DIR = os.path.join("data", "multimodal")
 import time
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, cast
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +57,9 @@ class MultimodalErrorRecovery:
             service: An object with async encode/decode/train methods
                      (e.g., MultimodalService instance)
         """
-        self._service = service
+        # service 是鴨子型別的 MultimodalService（async encode/decode/train/get_item），
+        # 歷史上誤標 Dict 導致四筆假 attr-defined；誠實標 Any。
+        self._service: Any = service
         self._retry_count: Dict[str, int] = {}  # operation_key → failure count
         self._crisis_level: Dict[str, int] = {}  # operation_key → crisis level
         self._last_success: Dict[str, float] = {}  # operation_key → timestamp
@@ -111,7 +113,7 @@ class MultimodalErrorRecovery:
                     "attempts": attempt + 1,
                     "retried": attempt > 0,
                 }
-                return result
+                return dict(result)
             except Exception as e:
                 last_error = safe_error(e)
                 logger.warning(
@@ -164,7 +166,7 @@ class MultimodalErrorRecovery:
             self._retry_count[op_key] = 0
             self._last_success[op_key] = time.time()
             result["recovery"] = {"fallback_used": False}
-            return result
+            return dict(result)
         except Exception as e:
             logger.warning("Decode failed for %s (%s), using fallback: %s", item_id, modality, e)
             self._retry_count[op_key] = self._retry_count.get(op_key, 0) + 1
@@ -257,7 +259,7 @@ class MultimodalErrorRecovery:
                 "path": cp_path or "",
                 "saved_before_training": cp_path is not None,
             }
-            return result
+            return dict(result)
         except Exception as e:
             logger.error("Training failed after checkpoint saved at %s: %s", cp_path, e)
             self._retry_count[op_key] = self._retry_count.get(op_key, 0) + 1

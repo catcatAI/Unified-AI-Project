@@ -80,7 +80,7 @@ class HAMQueryEngine:
 
     def _check_basic_filters(
         self,
-        data_package: Dict[str, Any],
+        data_package: HAMDataPackageInternal,
         data_type_filter: Optional[str],
         min_importance: float,
         date_range: Optional[Tuple[datetime, datetime]],
@@ -99,7 +99,7 @@ class HAMQueryEngine:
 
     def _search_keywords_in_memory(
         self,
-        data_package: Dict[str, Any],
+        data_package: HAMDataPackageInternal,
         keywords: List[str],
         mem_id: str = "",
     ) -> tuple:
@@ -142,11 +142,13 @@ class HAMQueryEngine:
                 )
                 return "", False
 
-    def _extract_gist(self, data_package: Dict[str, Any], decompressed_data_str: str) -> str:
+    def _extract_gist(
+        self, data_package: HAMDataPackageInternal, decompressed_data_str: str
+    ) -> str:
         """Extract gist."""
         if "dialogue_text" in data_package["data_type"]:
             abstracted_gist = json.loads(decompressed_data_str)
-            return abstracted_gist.get("gist", "")
+            return str(abstracted_gist.get("gist", ""))
         return decompressed_data_str
 
     async def query_core_memory(
@@ -249,7 +251,7 @@ class HAMQueryEngine:
             relevance=result.get("distance", 0.0),
         )
 
-    async def _decode_memory_content(self, data_package: dict) -> Optional[str]:
+    async def _decode_memory_content(self, data_package: HAMDataPackageInternal) -> Optional[str]:
         for attempt in range(2):
             try:
                 payload = data_package["encrypted_package"]
@@ -291,7 +293,7 @@ class HAMQueryEngine:
         return results[:limit]
 
     def _process_memory_for_keyword(
-        self, mem_id: str, data_package: dict, query_words: set
+        self, mem_id: str, data_package: HAMDataPackageInternal, query_words: set
     ) -> Optional[HAMMemory]:
         encrypted = data_package["encrypted_package"]
         for attempt in (self._try_decrypt, self._try_b64_fallback):
@@ -316,7 +318,7 @@ class HAMQueryEngine:
         return content, relevance
 
     def _try_decrypt(
-        self, mem_id: str, data_package: dict, encrypted: Any, query_words: set
+        self, mem_id: str, data_package: HAMDataPackageInternal, encrypted: Any, query_words: set
     ) -> Optional[HAMMemory]:
         try:
             decrypted_data = self.data_processor._decrypt(encrypted)
@@ -355,7 +357,7 @@ class HAMQueryEngine:
             return None
 
     def _try_b64_fallback(
-        self, mem_id: str, data_package: dict, encrypted: Any, query_words: set
+        self, mem_id: str, data_package: HAMDataPackageInternal, encrypted: Any, query_words: set
     ) -> Optional[HAMMemory]:
         try:
             import base64

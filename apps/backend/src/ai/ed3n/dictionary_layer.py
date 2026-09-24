@@ -272,7 +272,7 @@ class DictionaryLayer:
         cached = self._encode_cache.get(cache_key)
         if cached is not None:
             self._encode_cache.move_to_end(cache_key)
-            return cached
+            return [str(k) for k in cached]
         text_lower = text.lower().strip()
         matched_keys: List[str] = []
 

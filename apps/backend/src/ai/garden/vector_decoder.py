@@ -67,21 +67,21 @@ class VectorDecoder:
         if not candidates:
             return None
         if self.temperature <= 0 or len(candidates) == 1:
-            return max(candidates, key=candidates.get)
+            return max(candidates, key=lambda k: candidates[k])
 
         scaled = {k: v / max(self.temperature, 0.01) for k, v in candidates.items()}
         max_val = max(scaled.values())
         shifted = {k: math.exp(v - max_val) for k, v in scaled.items()}
         total = sum(shifted.values())
         if total <= 0:
-            return max(candidates, key=candidates.get)
+            return max(candidates, key=lambda k: candidates[k])
         r = random() * total
         cumulative = 0.0
         for key, prob in sorted(shifted.items(), key=lambda x: x[1], reverse=True):
             cumulative += prob
             if r <= cumulative:
                 return key
-        return max(candidates, key=candidates.get)
+        return max(candidates, key=lambda k: candidates[k])
 
     def generate_text(
         self,

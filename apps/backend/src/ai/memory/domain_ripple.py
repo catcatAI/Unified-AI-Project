@@ -417,6 +417,7 @@ class MathDomainEngine(DomainRippleEngine):
 
     def __init__(self, state_matrix=None):
         self.state_matrix = state_matrix
+        self._engine: Any
         try:
             from ai.memory.math_ripple_engine import MathRippleEngine
 
@@ -502,7 +503,7 @@ class PhysicsDomainEngine(DomainRippleEngine):
 
         sol = solve_formula(text)
         if sol is not None:
-            return float(sol["value"])
+            return float(sol["value"])  # type: ignore[arg-type]
 
         from services.math_verifier import compute_arithmetic
 

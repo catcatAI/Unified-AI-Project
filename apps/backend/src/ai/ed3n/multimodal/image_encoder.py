@@ -114,7 +114,7 @@ class ImageEncoder:
         if self.dictionary is not None:
             existing = self.dictionary.encode(concept_str)
             if existing:
-                return existing[0]
+                return str(existing[0])
             key = f"img_{category}_{_stable_hash(concept_str) % 10000}"
             self.dictionary.add_entry(
                 key=key,
@@ -143,7 +143,10 @@ class ImageEncoder:
                     if colors:
                         colors.sort(reverse=True)
                         dominant = colors[0][1]
-                        r, g, b = dominant
+                        if isinstance(dominant, (tuple, list)) and len(dominant) == 3:
+                            r, g, b = dominant
+                        else:
+                            r = g = b = 0
                         if r > 200 and g > 200 and b > 200:
                             keys.append(self._key_for_concept("bright", "color"))
                         elif r < 60 and g < 60 and b < 60:

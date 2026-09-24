@@ -135,7 +135,7 @@ class AudioService:
                             "constant",
                         ).tolist()
                     )
-                    await cluster_manager.distribute_task("Audio", feature_vector)
+                    await cluster_manager.distribute_task("Audio", list(feature_vector))
                 except Exception:  # cluster distribution is optional, must not block perception
                     logger.warning("Audio cluster distribution failed", exc_info=True)
 
@@ -320,7 +320,7 @@ class AudioService:
 
             encoder = AudioSpectralEncoder()
             vec = encoder.encode(audio_data)
-            return vec.tolist()
+            return list(vec.tolist())
         except Exception as e:
             logger.warning("AudioSpectralEncoder failed: %s", e)
             return []

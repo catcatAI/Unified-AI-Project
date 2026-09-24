@@ -178,18 +178,21 @@ class AudioPipeline:
     def encode_only(self, audio_data: bytes) -> np.ndarray:
         """Encode audio to feature vector only (bypasses full pipeline)."""
         encoder = self._get_encoder()
-        return encoder.encode(audio_data)
+        features: np.ndarray = encoder.encode(audio_data)
+        return features
 
     def get_latent(self, audio_data: bytes) -> np.ndarray:
         """Encode and project to latent only."""
         ls = self._get_latent_space()
         feat = self.encode_only(audio_data)
-        return ls.project("audio", feat)
+        latent: np.ndarray = ls.project("audio", feat)
+        return latent
 
     def decode_latent_to_waveform(self, latent: np.ndarray) -> np.ndarray:
         """Decode a latent vector to a waveform array."""
         decoder = self._get_decoder()
-        return decoder.decode(latent)
+        waveform: np.ndarray = decoder.decode(latent)
+        return waveform
 
     @staticmethod
     def _hash_audio(audio_data: bytes) -> str:
@@ -215,7 +218,8 @@ class AudioPipeline:
             bytes_per_sec = channels * sample_rate * bits_per_sample // 8
             if bytes_per_sec == 0:
                 return 0.0
-            return data_size / bytes_per_sec
+            duration: float = data_size / bytes_per_sec
+            return duration
         except (struct.error, IndexError):
             return 0.0
 

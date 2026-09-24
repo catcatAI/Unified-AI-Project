@@ -134,12 +134,12 @@ class DualEncoderRouter:
     @property
     def semantic_vision_available(self) -> bool:
         """Whether CLIP-based semantic vision encoder is available."""
-        return self._get_semantic_visual().is_available
+        return bool(self._get_semantic_visual().is_available)
 
     @property
     def semantic_audio_available(self) -> bool:
         """Whether Whisper-based semantic audio encoder is available."""
-        return self._get_semantic_audio().is_available
+        return bool(self._get_semantic_audio().is_available)
 
     @property
     def structural_vision_available(self) -> bool:

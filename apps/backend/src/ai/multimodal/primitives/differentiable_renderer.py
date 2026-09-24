@@ -32,7 +32,7 @@ class DifferentiableRenderer:
         off = self._render_lines(vec, off, canvas, weight, nx, ny)
         self._render_points(vec, off, canvas, weight, nx, ny)
 
-        canvas = canvas + bg * (1 - weight[:, :, None])
+        canvas = (canvas + bg * (1 - weight[:, :, None])).astype(np.float32)
         return np.clip(canvas, 0, 1)
 
     @staticmethod

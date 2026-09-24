@@ -53,7 +53,7 @@ class MultimodalMemoryStore:
         self.ttl_compact_seconds = ttl_compact_days * 86400
 
         self._entries: Dict[str, Dict[str, Any]] = {}
-        self._lock = None  # asyncio lock for thread safety
+        self._lock: Optional[Any] = None  # asyncio lock for thread safety
 
     def _get_lock(self):
         if self._lock is None:

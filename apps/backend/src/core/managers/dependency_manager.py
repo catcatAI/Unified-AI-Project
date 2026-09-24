@@ -24,7 +24,7 @@ from core.utils import safe_error
 try:
     import yaml
 except ImportError:
-    yaml = None
+    yaml = None  # type: ignore[assignment]
 
 
 # Configure logging

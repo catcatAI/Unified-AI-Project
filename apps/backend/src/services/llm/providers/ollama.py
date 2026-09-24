@@ -76,8 +76,8 @@ class OllamaBackend(BaseLLMBackend):
             ) as response:
                 if response.status == 200:
                     text = ""
-                    async for line in response.content:
-                        line = line.decode("utf-8").strip()
+                    async for chunk in response.content:
+                        line = chunk.decode("utf-8").strip()
                         if line:
                             try:
                                 data = json.loads(line)

@@ -193,7 +193,7 @@ class ContentFilter:
         return issues
 
     def _check_pii(self, content: str) -> Tuple[List[Dict[str, Any]], str]:
-        issues = []
+        issues: List[Dict[str, Any]] = []
         sanitized = content
         if not self.config["pii_detection"]:
             return issues, sanitized
@@ -263,7 +263,7 @@ class ContentFilter:
     def get_filter_stats(self) -> Dict[str, Any]:
         if not self.filter_log:
             return {"total_filters": 0}
-        actions = {}
+        actions: Dict[str, int] = {}
         for entry in self.filter_log:
             action = entry["action"]
             actions[action] = actions.get(action, 0) + 1

@@ -57,7 +57,7 @@ def compute_spatial_influence_factor(dimensions: Dict[str, Any], source: str, ta
     numerator = _get_spatial_config("influence_factor_numerator", 25.0)
     influence_factor = numerator / (distance**2 + softening)
 
-    return max(0.5, min(2.0, influence_factor))
+    return float(max(0.5, min(2.0, influence_factor)))
 
 
 def perform_spatial_reasoning(
@@ -99,7 +99,7 @@ def perform_spatial_reasoning(
 def get_dimension_value(dimensions: Dict[str, Any], dim_name: str) -> float:
     """獲取維度的「標量解析」(取 X 軸作為結果)"""
     if dim_name in dimensions:
-        return dimensions[dim_name].coordinate[0]
+        return float(dimensions[dim_name].coordinate[0])
     return 0.0
 
 
@@ -227,7 +227,7 @@ def _get_spatial_config(key: str, default: Any) -> Any:
         try:
             from app_config_loader import get_formula_config
         except ImportError:
-            get_formula_config = lambda d: {}
+            get_formula_config = lambda d: {}  # type: ignore[assignment]
 
         spatial_conf = get_formula_config("spatial")
         return spatial_conf.get("gravity", {}).get(key, default)

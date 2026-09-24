@@ -15,7 +15,7 @@ class RetryPolicy:
     backoff_factor: float = 2.0
 
     async def execute(self, func: Callable, *args, **kwargs) -> Any:
-        last_exception = None
+        last_exception: Optional[BaseException] = None
         delay = self.base_delay
         for attempt in range(self.max_retries):
             try:
@@ -26,6 +26,7 @@ class RetryPolicy:
                     logger.warning(f"Retry {attempt + 1}/{self.max_retries} failed: {e}")
                     await asyncio.sleep(delay)
                     delay = min(delay * self.backoff_factor, self.max_delay)
+        assert last_exception is not None  # max_retries >= 1 保证至少一次迭代
         raise last_exception
 
 

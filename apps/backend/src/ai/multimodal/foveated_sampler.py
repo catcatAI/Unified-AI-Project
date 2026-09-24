@@ -334,7 +334,7 @@ class FoveatedSampler:
             c00 * (1 - wx) * (1 - wy) + c10 * wx * (1 - wy) + c01 * (1 - wx) * wy + c11 * wx * wy
         )
 
-        return sampled.astype(np.uint8)
+        return np.asarray(sampled, dtype=np.uint8)
 
     def _compute_density(self, coords: np.ndarray, h: int, w: int) -> np.ndarray:
         """計算採樣密度圖 (用於視覺化/除錯)"""

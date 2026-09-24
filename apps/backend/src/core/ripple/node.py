@@ -74,7 +74,9 @@ class RippleNode:
 
     @property
     def description(self) -> str:
-        return f"{self.operator.value}({self.result:.1f}) step={self.cascade_step}"
+        return getattr(self, "_description_override", None) or (
+            f"{self.operator.value}({self.result:.1f}) step={self.cascade_step}"
+        )
 
     def get_effect(self, axis: str) -> float:
         mapping = {
@@ -148,7 +150,8 @@ class RippleNode:
             )
             nodes.append(child)
             if step >= 97 and (self.overload_triggered or self.fear_triggered):
-                child.description = f"Feedback: {child.operator.value} step={step}"
+                # 標記回饋邊——覆寫唯讀 description property 的正當擴充點
+                object.__setattr__(child, "_description_override", f"Feedback: {child.operator.value} step={step}")
         return nodes
 
 

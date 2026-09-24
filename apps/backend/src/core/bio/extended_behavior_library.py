@@ -164,7 +164,7 @@ class ExtendedBehaviorLibrary:
     ) -> float:
         """Get dynamic threshold value from manager or return default"""
         if self._dynamic_params_manager and self._dynamic_params_enabled:
-            return self._dynamic_params_manager.get_parameter(param_name, context)
+            return float(self._dynamic_params_manager.get_parameter(param_name, context))
         return default_value
 
     def _get_emotion_threshold(

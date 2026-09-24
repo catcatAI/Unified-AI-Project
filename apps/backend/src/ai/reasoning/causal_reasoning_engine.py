@@ -379,7 +379,7 @@ class CausalReasoningEngine:
         dy = sum((yi - my) ** 2 for yi in y) ** 0.5
         if dx == 0 or dy == 0:
             return 0.0
-        return num / (dx * dy)
+        return float(num / (dx * dy))
 
     def _granger_test(self, cause: str, effect: str, data: Dict[str, Any]) -> Optional[float]:
         """Granger causality: does 'cause' temporally precede 'effect'?
@@ -407,7 +407,7 @@ class CausalReasoningEngine:
         f_stat = ((rss_r - rss_u) / lag) / (rss_u / t)
         if not math.isfinite(f_stat) or f_stat < 0:
             return 0.0
-        return min(1.0, 1.0 - 1.0 / (1.0 + f_stat * 0.05))
+        return float(min(1.0, 1.0 - 1.0 / (1.0 + f_stat * 0.05)))
 
     @staticmethod
     def _rss_restricted(y: List[float], lag: int) -> float:

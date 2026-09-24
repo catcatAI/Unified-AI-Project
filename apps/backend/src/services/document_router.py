@@ -271,11 +271,11 @@ async def _try_local_processing(
     try:
         from ai.garden.garden_engine import GARDENEngine
 
-        engine = GARDENEngine.get_shared()
+        garden = GARDENEngine.get_shared()
         file_summaries = []
         for f in files[:5]:
             content = await _read_file_content(f)
-            result = engine.process(content[:2000])
+            result = garden.process(content[:2000])
             if result:
                 file_summaries.append(f"{f.name}: {result[:200]}")
         if file_summaries:
@@ -379,10 +379,10 @@ async def _learn_from_llm_output(
 
         # Shared instance: learned associations accumulate across documents
         # (was: learned into a throwaway engine and discarded).
-        engine = GARDENEngine.get_shared()
+        garden: Any = GARDENEngine.get_shared()
         for f in files[:3]:
             content = await _read_file_content(f)
-            engine.learn_from_interaction(content[:1000], llm_output[:1000], confidence=0.5)
+            garden.learn_from_interaction(content[:1000], llm_output[:1000], confidence=0.5)
     except Exception as e:
         logger.warning(
             "GARDEN learn_from_interaction failed in document_router: %s", e, exc_info=True

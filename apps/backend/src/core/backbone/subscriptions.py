@@ -97,8 +97,10 @@ class CNSDomainSync:
             return False
         try:
             if self.state.unsubscribe is not None:
-                did = self.state.unsubscribe(
-                    domain, self._callbacks.get(domain) or self._default_callback
+                did = bool(
+                    self.state.unsubscribe(
+                        domain, self._callbacks.get(domain) or self._default_callback
+                    )
                 )
             else:  # pragma: no cover - 無 unsubscribe API 時僅清本地狀態
                 did = False

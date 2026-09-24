@@ -59,7 +59,7 @@ class ED3NLearningIntegration:
         try:
             loop = asyncio.get_running_loop()
             future = asyncio.run_coroutine_threadsafe(lm.fact_extractor.extract_facts(text), loop)
-            return future.result()
+            return [dict(item) for item in future.result()]
         except RuntimeError:
             return asyncio.run(lm.fact_extractor.extract_facts(text))
         except Exception as e:

@@ -203,6 +203,9 @@ class DictionaryClassifier:
 
         if best_score < 0.5:
             self._ensure_match_tables()
+            if self._match_tables is None:  # 防禦：建表失敗時不比對
+                return best_key, best_score
+            assert self._match_tables is not None  # 208 行已檢查；窄化供 mypy 使用
             alpha_token_keys, substring_pairs, rank = self._match_tables
             # Invert the scan: only keywords actually present in the text are
             # candidates (exactly the set any_keyword() would accept), so we avoid
@@ -210,9 +213,14 @@ class DictionaryClassifier:
             # Tie-break preserves the original keyword_index insertion order.
             best_pair = None  # (score, -rank, keyword, keys)
             for token in set(re.findall(r"[a-zA-Z]+", text_lower)):
-                keys = alpha_token_keys.get(token)
-                if keys:
-                    pair = (self._keyword_score(text_lower, token), -rank[token], token, keys)
+                token_keys = alpha_token_keys.get(token)
+                if token_keys:
+                    pair = (
+                        self._keyword_score(text_lower, token),
+                        -rank[token],
+                        token,
+                        token_keys,
+                    )
                     if best_pair is None or pair > best_pair:
                         best_pair = pair
             for keyword, keys in substring_pairs:

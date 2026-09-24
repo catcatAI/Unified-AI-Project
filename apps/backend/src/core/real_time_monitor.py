@@ -103,7 +103,7 @@ class MouseData:
     @property
     def velocity(self) -> float:
         """Calculate velocity magnitude"""
-        return (self.velocity_x**2 + self.velocity_y**2) ** 0.5
+        return float((self.velocity_x**2 + self.velocity_y**2) ** 0.5)
 
     @property
     def screen_region(self) -> str:
@@ -579,7 +579,9 @@ class SystemStateMonitor:
                 self.current_state = state
                 self._state_history.append(state)
                 if len(self._state_history) > _MAX_STATE_HISTORY:
-                    self._state_history = self._state_history[-_MAX_STATE_HISTORY:]
+                    self._state_history = deque(
+                    list(self._state_history)[-_MAX_STATE_HISTORY:], maxlen=100
+                )
 
                 # Notify callbacks
                 for callback in self._callbacks:
@@ -878,7 +880,9 @@ class UserActivityMonitor:
         self._last_input_time = datetime.now()
         self._input_events.append(datetime.now())
         if len(self._input_events) > _MAX_INPUT_EVENTS:
-            self._input_events = self._input_events[-_MAX_INPUT_EVENTS:]
+            self._input_events = deque(
+                list(self._input_events)[-_MAX_INPUT_EVENTS:], maxlen=1000
+            )
 
     def register_callback(self, callback: Callable[[UserActivityData], None]) -> None:
         """Register activity change callback"""

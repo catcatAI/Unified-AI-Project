@@ -89,7 +89,7 @@ class PluginManager:
 
     def list_plugins(self, enabled_only: bool = False) -> List[Dict[str, Any]]:
         """List all registered plugins, optionally filtering by enabled."""
-        plugins = self._plugins.values()
+        plugins: Any = self._plugins.values()
         if enabled_only:
             plugins = [p for p in plugins if p.enabled]
         return [

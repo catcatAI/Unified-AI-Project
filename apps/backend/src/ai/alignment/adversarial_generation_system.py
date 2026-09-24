@@ -121,7 +121,7 @@ class AdversarialGenerationSystem:
         if not self._evaluation_history:
             return 1.0
         scores = [e["robustness_score"] for e in self._evaluation_history]
-        return round(sum(scores) / len(scores), 3)
+        return float(round(sum(scores) / len(scores), 3))
 
 
 __all__ = ["AdversarialGenerationSystem"]

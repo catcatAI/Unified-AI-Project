@@ -73,7 +73,7 @@ class VisualDecoder:
         texture = self._synthesize_texture(latent)
         img = img + texture
         img = np.clip(img, 0, 255).astype(np.uint8)
-        return img
+        return np.asarray(img, dtype=np.uint8)
 
     def decode_to_pil(self, latent: np.ndarray) -> Image.Image:
         """Decode latent vector to PIL Image."""

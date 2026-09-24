@@ -70,7 +70,8 @@ class UnifiedMemoryCoordinator:
     def evaluate_rules(self, context: Dict[str, Any]) -> Optional[str]:
         """Evaluate LU rules against current context."""
         if self.logic_unit:
-            return self.logic_unit.evaluate(context)
+            verdict = self.logic_unit.evaluate(context)
+            return str(verdict) if verdict is not None else None
         return None
 
     def get_stats(self) -> Dict[str, Any]:

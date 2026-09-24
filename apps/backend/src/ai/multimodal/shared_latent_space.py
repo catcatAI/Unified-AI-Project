@@ -73,7 +73,7 @@ class SharedLatentSpace:
             return np.zeros(self._latent_dim, dtype=np.float32)
         latent = proj["W"] @ features + proj["b"]
         self._embedding_cache[modality] = latent
-        return latent
+        return np.asarray(latent)
 
     @staticmethod
     def _l2_normalize(v: np.ndarray) -> np.ndarray:
@@ -120,7 +120,7 @@ class SharedLatentSpace:
                 save_data[f"{name}__b"] = proj["b"].copy()
             save_data["__version"] = np.asarray(self.version)
             save_data["__created_at"] = np.asarray(self._meta_epoch())
-            np.savez(path, **save_data)
+            np.savez(path, **save_data)  # type: ignore[arg-type]  # numpy stubs 缺 **kwds 參數
             logger.info(
                 "SharedLatentSpace weights saved to %s (%d modalities)",
                 path,
@@ -325,7 +325,7 @@ class SharedLatentSpace:
         epochs: int = 10,
         lr: float = 0.01,
         margin: float = 0.5,
-    ) -> Dict[str, float]:
+    ) -> Dict[str, Any]:
         """Train projection weights using contrastive loss.
 
         Args:
@@ -339,14 +339,16 @@ class SharedLatentSpace:
             dict with final loss and epoch history.
         """
         if epochs == 0 or (not pos_pairs and not neg_pairs):
-            return {"final_loss": 0.0, "history": []}
+            history_empty: List[Any] = []
+            return {"final_loss": 0.0, "history": history_empty}
         history = []
         for epoch in range(epochs):
             loss = self._train_epoch(pos_pairs, neg_pairs, lr, margin)
             history.append(loss)
             if epoch % 5 == 0 or epoch == epochs - 1:
                 logger.debug("Contrastive epoch %d/%d: loss=%.4f", epoch + 1, epochs, loss)
-        return {"final_loss": float(history[-1]), "history": history}
+        history_out: List[Any] = list(history)
+        return {"final_loss": float(history[-1]), "history": history_out}
 
     def _train_epoch(
         self, pos_pairs: List[Pair], neg_pairs: List[Pair], lr: float, margin: float

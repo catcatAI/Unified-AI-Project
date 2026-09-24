@@ -131,7 +131,7 @@ class Ed3nDictionaryAdapter(_BaseDictionaryAdapter):
         if not keys:
             return []
         lookup = getattr(self.inner, "lookup", None)
-        entry_map = {}
+        entry_map: Dict[Any, Any] = {}
         if callable(lookup):
             try:
                 entry_map = lookup(keys) or {}

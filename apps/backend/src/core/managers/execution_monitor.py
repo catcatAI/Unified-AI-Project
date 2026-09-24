@@ -26,6 +26,7 @@ import signal
 import subprocess
 import threading
 import time
+from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from enum import Enum
@@ -218,7 +219,7 @@ class ExecutionMonitor:
                     ["echo", "test"],
                     capture_output=True,
                     timeout=timeout_value("terminal_test", 5.0),
-                    creationflags=subprocess.CREATE_NO_WINDOW,
+                    creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
                 )
             else:  # Unix/Linux
                 subprocess.run(
@@ -375,7 +376,7 @@ class ExecutionMonitor:
                 cwd=cwd,
                 env=env,
                 shell=shell,
-                creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0) if os.name == "nt" else 0,
             )
 
             # 等待執行完成或超時
@@ -431,7 +432,7 @@ class ExecutionMonitor:
         return result
 
     @contextmanager
-    def timeout_context(self, timeout: float) -> None:
+    def timeout_context(self, timeout: float) -> Iterator[None]:
         """
         超時上下文管理器
 

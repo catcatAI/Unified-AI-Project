@@ -171,7 +171,7 @@ class HardwareProbe:
         )
         for tier_name, config in sorted_tiers:
             if score >= config.get("score_threshold", 0):
-                return tier_name
+                return str(tier_name)
         return "Low"
 
     def get_performance_constants(self) -> Dict[str, Any]:

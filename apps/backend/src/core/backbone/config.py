@@ -31,10 +31,10 @@ try:  # 延遲導入
     from core.system.config.magic_numbers import compute_int as _mb_compute_int
     from core.system.config.magic_numbers import compute_mode as _mb_compute_mode
 except Exception:  # pragma: no cover - 最小安裝降級
-    _mb_compute_mode = None
-    _mb_compute_bool = None
-    _mb_compute_int = None
-    _mb_compute_float = None
+    _mb_compute_mode = None  # type: ignore[assignment]
+    _mb_compute_bool = None  # type: ignore[assignment]
+    _mb_compute_int = None  # type: ignore[assignment]
+    _mb_compute_float = None  # type: ignore[assignment]
 
 
 class BackboneConfig:

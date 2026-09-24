@@ -76,7 +76,7 @@ class CreativeWritingAgent:
         if hasattr(self, "llm_interface") and self.llm_interface is not None:
             response = await self.llm_interface.chat_completion(params)
             if hasattr(response, "content"):
-                return response.content
+                return str(response.content)
             return str(response)
         return ""
 
@@ -84,7 +84,7 @@ class CreativeWritingAgent:
         if hasattr(self, "llm_interface") and self.llm_interface is not None:
             response = await self.llm_interface.chat_completion(params)
             if hasattr(response, "content"):
-                return response.content
+                return str(response.content)
             return str(response)
         return ""
 

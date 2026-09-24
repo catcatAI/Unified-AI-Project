@@ -329,7 +329,7 @@ class LogicUnit:
         """
         try:
             # 简单表达式直接存储
-            self._condition_cache[rule_id] = condition
+            self._condition_cache[rule_id] = condition  # type: ignore[assignment]
         except (
             Exception
         ) as e:  # broad exception acceptable: compilation failures are non-critical, warn and continue

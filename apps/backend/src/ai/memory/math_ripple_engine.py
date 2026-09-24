@@ -784,7 +784,7 @@ class MathRippleEngine:
 
         self._configure_depth(expr, auto_detect, force_depth, force_algo)
 
-        ripples = []
+        ripples: List[RippleEffect] = []
         tokens = self._tokenize(expr)
 
         i = 0

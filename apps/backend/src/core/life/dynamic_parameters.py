@@ -73,7 +73,7 @@ class ParameterState:
             distance = sum((a - b) ** 2 for a, b in zip(current_coord, self.spatial_anchor)) ** 0.5
             gravity = 1.0 / (max(1.0, distance) * self.inertia_mass)
             direction = 1.0 if sum(current_coord) > sum(self.spatial_anchor) else -1.0
-            return gravity * direction * self.volatility
+            return float(gravity * direction * self.volatility)
         except Exception:
             logger.debug("DynamicParams gravity calculation error", exc_info=True)
             return 0.0

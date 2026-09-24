@@ -1,7 +1,7 @@
 import logging
 import operator
 from collections import deque
-from typing import Optional
+from typing import Any, Optional
 
 from .models import ModuleDescriptor
 
@@ -99,7 +99,7 @@ class DependencyResolver:
             "<": operator.lt,
             "==": operator.eq,
         }
-        op = operator.eq
+        op: Any = operator.eq
         ver = constraint
         for prefix in (">=", "<=", ">", "<", "=="):
             if constraint.startswith(prefix):
@@ -112,7 +112,8 @@ class DependencyResolver:
             max_len = max(len(actual_parts), len(ver_parts))
             actual_parts = actual_parts + (0,) * (max_len - len(actual_parts))
             ver_parts = ver_parts + (0,) * (max_len - len(ver_parts))
-            return op(actual_parts, ver_parts)
+            result: bool = bool(op(actual_parts, ver_parts))
+            return result
         except (ValueError, TypeError):
             logger.warning(
                 f"Version constraint check failed for actual={actual}, ver={ver}", exc_info=True

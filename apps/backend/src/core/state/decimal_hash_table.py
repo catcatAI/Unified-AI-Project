@@ -89,7 +89,7 @@ class DecimalHashTable:
         value_str = str(value)
         data = f"{key}:{value_str}".encode("utf-8")
         hash_bytes = hashlib.sha256(data).digest()[:8]
-        hash_int = struct.unpack(">Q", hash_bytes)[0]
+        hash_int: int = struct.unpack(">Q", hash_bytes)[0]
         return hash_int
 
     def set(self, key: str, value: float) -> int:
@@ -194,7 +194,7 @@ class DecimalHashTable:
 
         combined = "".join(str(h) for h in self.hash_chain[-100:])
         fingerprint_bytes = hashlib.sha256(combined.encode()).digest()[:8]
-        fingerprint = struct.unpack(">Q", fingerprint_bytes)[0]
+        fingerprint: int = struct.unpack(">Q", fingerprint_bytes)[0]
 
         return fingerprint
 

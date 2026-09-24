@@ -165,7 +165,7 @@ class HSPVersionManager:
         try:
             converted_message = converter(message)
             logger.debug(f"消息版本转换成功: {from_version} -> {to_version}")
-            return converted_message
+            return dict(converted_message)
         except (
             Exception
         ) as e:  # broad exception acceptable: version conversion may raise various errors
@@ -426,26 +426,27 @@ class HSPCompatibilityChecker:
 
     def generate_compatibility_report(self, versions: List[str]) -> Dict[str, Any]:
         """生成兼容性报告"""
+        matrix: Dict[str, Dict[str, Any]] = {}
         report = {
             "generated_at": datetime.now().isoformat(),
             "versions": versions,
-            "compatibility_matrix": {},
+            "compatibility_matrix": matrix,
             "issues": [],
             "summary": "",
         }
 
         # 生成兼容性矩阵
         for from_ver in versions:
-            report["compatibility_matrix"][from_ver] = {}
+            matrix[from_ver] = {}
             for to_ver in versions:
                 compatibility = self.version_manager.get_compatibility(from_ver, to_ver)
                 if compatibility:
-                    report["compatibility_matrix"][from_ver][to_ver] = {
+                    matrix[from_ver][to_ver] = {
                         "compatible": compatibility.is_compatible,
                         "conversion_needed": compatibility.conversion_needed,
                     }
                 else:
-                    report["compatibility_matrix"][from_ver][to_ver] = {
+                    matrix[from_ver][to_ver] = {
                         "compatible": False,
                         "conversion_needed": False,
                         "error": "未找到兼容性信息",
@@ -457,7 +458,7 @@ class HSPCompatibilityChecker:
             1
             for from_ver in versions
             for to_ver in versions
-            if report["compatibility_matrix"][from_ver][to_ver].get("compatible", False)
+            if matrix[from_ver][to_ver].get("compatible", False)
         )
 
         report["summary"] = {

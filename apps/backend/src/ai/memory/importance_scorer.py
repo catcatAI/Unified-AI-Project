@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -44,11 +44,12 @@ class ImportanceScorer:
             return " ".join(ImportanceScorer._coerce(value) for value in content.values())
         return str(content)
 
-    def calculate(self, content: Any, metadata: Dict[str, Any] = None) -> float:
+    def calculate(self, content: Any, metadata: Optional[Dict[str, Any]] = None) -> float:
         """Return importance score in ``[0, 1]`` for ``content`` + ``metadata``."""
         text = self._coerce(content)
         try:
-            result = self._scorer.calculate(text, metadata or {})
+            # HAM scorer 可能為 sync 或 async 實作；兩者都正規化為 float。
+            result: Any = self._scorer.calculate(text, metadata or {})
             if hasattr(result, "__await__"):
                 result = asyncio.run(result)
             score = float(result)

@@ -8,7 +8,7 @@ import asyncio
 import logging
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import AsyncIterator
+from typing import AsyncIterator, Optional
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -613,7 +613,7 @@ def _register_backbone() -> None:
 
     bb = get_backbone()
 
-    def _try(name: str, fn, *, kind: str = "module", key: str = None) -> None:
+    def _try(name: str, fn, *, kind: str = "module", key: Optional[str] = None) -> None:
         key = key or name
         try:
             obj = fn()

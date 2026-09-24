@@ -6,7 +6,7 @@ import hashlib
 import logging
 import re
 import zlib
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from cryptography.fernet import Fernet, InvalidToken
 
@@ -112,10 +112,10 @@ class HAMDataProcessor:
     @staticmethod
     def _extract_keywords(text: str, top_n: int = 5) -> list:
         words = re.findall(r"\b[a-zA-Z\u4e00-\u9fff]{3,}\b", text.lower())
-        word_freq = {}
+        word_freq: Dict[str, int] = {}
         for word in words:
             word_freq[word] = word_freq.get(word, 0) + 1
-        keywords = []
+        keywords: List[str] = []
         for word, freq in sorted(word_freq.items(), key=lambda x: x[1], reverse=True):
             if word not in HAMDataProcessor._STOP_WORDS and len(keywords) < top_n:
                 keywords.append(word)
@@ -140,7 +140,7 @@ class HAMDataProcessor:
             sentence = sentence.strip()
             if len(sentence) < 10 or len(sentence) > 300:
                 continue
-            score = 0
+            score: float = 0
             if any(keyword in sentence.lower() for keyword in keywords):
                 score += 2
             if len(sentence.split()) > 5:

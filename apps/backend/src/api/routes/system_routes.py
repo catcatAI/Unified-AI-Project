@@ -76,6 +76,7 @@ async def system_discovery() -> Dict[str, Any]:
             "active": (
                 llm_svc.active_backend_type.name
                 if getattr(llm_svc, "active_backend_type", None) is not None
+                and llm_svc.active_backend_type is not None
                 else None
             ),
             "backends": backends_list,

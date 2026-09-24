@@ -30,13 +30,13 @@ class AlignmentManager:
 
     def check_alignment(self, action: Any) -> bool:
         score = self.get_alignment_score(action)
-        return score >= self.constraints["required_value_alignment"]
+        return bool(score >= self.constraints["required_value_alignment"])
 
     def get_alignment_score(self, action: Any) -> float:
         if not isinstance(action, dict):
             action = {"action": str(action)}
-        base = self.constraints["required_value_alignment"]
-        risk = action.get("risk", 0.0)
+        base: float = self.constraints["required_value_alignment"]
+        risk: float = action.get("risk", 0.0)
         adjustment = (1.0 - risk) * 0.2
         score = min(1.0, base + adjustment)
         self.alignment_history.append({"action": action, "score": score})

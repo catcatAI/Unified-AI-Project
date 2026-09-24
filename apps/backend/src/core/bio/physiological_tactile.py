@@ -58,7 +58,6 @@ if __name__ == "__main__":
             response = await system.process_stimulus(stimulus)
             logger.info(f"   感知强度: {response.perceived_intensity:.2f}")
             logger.info(f"   激活受体数: {response.activated_receptors}")
-            logger.info()
 
     def _demo_receptor_status(system):
         logger.info("手掌受体状态 / Hand receptor status:")

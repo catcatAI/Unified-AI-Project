@@ -93,7 +93,7 @@ class ChainValidator:
     def _compute_stats(self, chain: Any) -> Dict[str, Any]:
         node_list = list(getattr(chain, "nodes", []))
         layers = sorted(set(str(getattr(n, "layer", "")) for n in node_list))
-        layer_counts = {}
+        layer_counts: Dict[str, int] = {}
         for n in node_list:
             layer_key = str(getattr(n, "layer", ""))
             layer_counts[layer_key] = layer_counts.get(layer_key, 0) + 1

@@ -5,7 +5,7 @@ import json
 import logging
 import os
 from datetime import datetime
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Set, Tuple
 
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes, serialization
@@ -49,7 +49,7 @@ class HSPSecurityManager:
 
         # 非对称密钥对(用于签名和身份认证)
         self.private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
-        self.public_key = self.private_key.public_key()
+        self.public_key: Any = self.private_key.public_key()
 
         logger.debug("密钥设置完成")
 
@@ -163,14 +163,14 @@ class HSPSecurityManager:
     def decrypt_message(self, encrypted_message: bytes) -> Dict[str, Any]:
         """解密消息"""
         if not self.encryption_enabled:
-            return json.loads(encrypted_message.decode("utf-8"))
+            return dict(json.loads(encrypted_message.decode("utf-8")))
 
         try:
             decrypted_message = self.cipher_suite.decrypt(encrypted_message)
             message = json.loads(decrypted_message.decode("utf-8"))
 
             logger.debug("消息解密成功")
-            return message
+            return dict(message)
 
         except (
             Exception
@@ -217,7 +217,7 @@ class HSPSecurityManager:
             encoding=serialization.Encoding.PEM,
             format=serialization.PublicFormat.SubjectPublicKeyInfo,
         )
-        return pem.decode("utf-8")
+        return str(pem.decode("utf-8"))
 
     def load_public_key_from_pem(self, pem_data: str) -> None:
         """从PEM数据加载公钥"""
@@ -229,8 +229,8 @@ class HSPSecurityContext:
 
     def __init__(self, security_manager: HSPSecurityManager) -> None:
         self.security_manager = security_manager
-        self.authenticated_senders = set()
-        self.active_sessions = {}
+        self.authenticated_senders: Set[str] = set()
+        self.active_sessions: Dict[str, Dict[str, Any]] = {}
 
     def authenticate_and_process_message(
         self, message: Dict[str, Any]
@@ -337,7 +337,7 @@ if __name__ == "__main__":
     }
 
     # 安全处理消息
-    sender_id = test_message["sender_ai_id"]
+    sender_id = str(test_message["sender_ai_id"])
     secured_message = security_context.secure_message(test_message, sender_id)
     logger.info("安全处理后的消息: ", json.dumps(secured_message, indent=2, ensure_ascii=False))
 

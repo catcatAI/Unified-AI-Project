@@ -112,7 +112,9 @@ class VisionPipeline:
             # 1. Open and resize image
             img = Image.open(io.BytesIO(image_data)).convert("RGB")
             original_size = img.size
-            img_resized = img.resize((self.INPUT_SIZE, self.INPUT_SIZE), Image.LANCZOS)
+            img_resized = img.resize(
+                (self.INPUT_SIZE, self.INPUT_SIZE), Image.Resampling.LANCZOS
+            )
             arr = np.asarray(img_resized, dtype=np.float32)
 
             # 2. Encode → feature vector (256-dim)
@@ -190,18 +192,21 @@ class VisionPipeline:
     def encode_only(self, image_data: bytes) -> np.ndarray:
         """Encode image to feature vector only (bypasses full pipeline)."""
         encoder = self._get_encoder()
-        return encoder.encode(image_data)
+        features: np.ndarray = encoder.encode(image_data)
+        return features
 
     def decode_latent_to_pil(self, latent: np.ndarray) -> Image.Image:
         """Decode a latent vector to a PIL Image."""
         decoder = self._get_decoder()
-        return decoder.decode_to_pil(latent)
+        image: Image.Image = decoder.decode_to_pil(latent)
+        return image
 
     def get_latent(self, image_data: bytes) -> np.ndarray:
         """Encode and project to latent only."""
         ls = self._get_latent_space()
         feat = self.encode_only(image_data)
-        return ls.project("vision", feat)
+        latent: np.ndarray = ls.project("vision", feat)
+        return latent
 
     @staticmethod
     def _hash_image(image_data: bytes) -> str:
@@ -247,7 +252,8 @@ class VisionPipeline:
         if mse < 1e-10:
             return 100.0
         max_pixel = 255.0
-        return 20 * np.log10(max_pixel / np.sqrt(mse))
+        psnr: float = 20 * np.log10(max_pixel / np.sqrt(mse))
+        return psnr
 
     def get_stats(self) -> Dict[str, Any]:
         """Return pipeline statistics."""

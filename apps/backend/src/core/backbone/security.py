@@ -86,7 +86,7 @@ class SecurityLayer:
         headers = scope.get("headers") or []
         for key, value in headers:
             if key.lower() == b"authorization":
-                return value.decode("utf-8", errors="ignore")
+                return str(value.decode("utf-8", errors="ignore"))
         return None
 
     def check_authorization(self, scope: Dict[str, Any], path: str) -> Optional[int]:
@@ -139,7 +139,7 @@ class SecurityLayer:
                 reasons = list({str(i.get("type", "risk")) for i in issues})
                 masked = getattr(result, "sanitized_content", None)
                 if masked:
-                    return masked
+                    return str(masked)
                 return f"[風險內容已阻擋:{','.join(reasons)}]"
         except Exception as exc:
             logger.debug("SecurityLayer filter failed: %s", exc, exc_info=True)
@@ -288,7 +288,7 @@ class SecurityFilterMiddleware:
 def _content_type_from_message(message: Dict[str, Any]) -> str:
     for key, value in message.get("headers", []):
         if key.lower() == b"content-type":
-            return value.decode("utf-8", errors="ignore")
+            return str(value.decode("utf-8", errors="ignore"))
     return "application/octet-stream"
 
 

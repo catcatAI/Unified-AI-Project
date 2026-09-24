@@ -302,7 +302,7 @@ class ImportanceScorer:
 
             # Apply exponential decay
             decay = self._time_decay_factor**age_days
-            return max(self.TIME_DECAY_FLOOR, decay)
+            return float(max(self.TIME_DECAY_FLOOR, decay))
 
         except (
             Exception

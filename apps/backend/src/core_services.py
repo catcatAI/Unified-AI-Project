@@ -8,7 +8,7 @@ from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_OPERATIONAL_CONFIGS = {}
+DEFAULT_OPERATIONAL_CONFIGS: Dict[str, Dict[str, Any]] = {}
 
 
 class _Services:

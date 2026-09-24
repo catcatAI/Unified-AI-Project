@@ -52,7 +52,8 @@ class MultimodalSimilarityService:
             return None
         self._latent_space.project("vision", vec)
         self._items[item_id] = "vision"
-        return vec.tolist()
+        vec_list: List[float] = vec.tolist()
+        return vec_list
 
     async def encode_audio(self, audio_data: bytes, item_id: str) -> Optional[List[float]]:
         """Encode audio and register in latent space."""
@@ -61,7 +62,8 @@ class MultimodalSimilarityService:
             return None
         self._latent_space.project("audio", vec)
         self._items[item_id] = "audio"
-        return vec.tolist()
+        vec_list: List[float] = vec.tolist()
+        return vec_list
 
     def decode_to_image(self, item_id: str) -> Optional[Image.Image]:
         """Decode a previously encoded item's latent back to a PIL Image.
@@ -88,7 +90,8 @@ class MultimodalSimilarityService:
         if latent is None:
             return None
         wav = self._audio_decoder.decode(latent)
-        return wav.tolist()
+        wav_list: List[float] = wav.tolist()
+        return wav_list
 
     def compare(self, item_a: str, item_b: str) -> float:
         """Compare two items via cross-modal similarity in latent space."""
@@ -96,7 +99,8 @@ class MultimodalSimilarityService:
         mod_b = self._items.get(item_b)
         if mod_a is None or mod_b is None:
             return 0.0
-        return self._latent_space.similarity(mod_a, mod_b)
+        similarity: float = self._latent_space.similarity(mod_a, mod_b)
+        return similarity
 
     def get_embedding(self, item_id: str) -> Optional[List[float]]:
         """Get the latent embedding for a previously encoded item."""
@@ -106,7 +110,8 @@ class MultimodalSimilarityService:
         emb = self._latent_space.get_embedding(modality)
         if emb is None:
             return None
-        return emb.tolist()
+        emb_list: List[float] = emb.tolist()
+        return emb_list
 
     def load_weights(self, weights_path: str) -> bool:
         """Load trained weights from a .npz file into SharedLatentSpace and decoders.
@@ -167,7 +172,7 @@ class MultimodalSimilarityService:
                 "audio_decoder_b": self._audio_decoder._b.copy(),
             }
             Path(weights_path).parent.mkdir(parents=True, exist_ok=True)
-            np.savez(weights_path, **save_data)
+            np.savez(weights_path, **save_data)  # type: ignore[arg-type]  # numpy stubs 缺 **kwds 參數
             logger.info("Weights saved to %s", weights_path)
             return True
         except Exception as e:

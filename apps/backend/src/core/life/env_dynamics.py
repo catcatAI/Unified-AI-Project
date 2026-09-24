@@ -11,4 +11,5 @@ class EnvironmentDynamics:
         self.config = config or {}
 
     def get_dynamic_threshold(self, key: str, default: float = 0.0) -> float:
-        return self.config.get(key, default)
+        threshold: float = self.config.get(key, default)
+        return threshold

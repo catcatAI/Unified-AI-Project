@@ -188,10 +188,10 @@ class EmotionSystem:
         # 實施 v6.0 標準的權重投影
         base = 0.5
         impact = self.emotion_value_impact.get(state.primary_emotion, {}).get(dimension, 0.0)
-        return max(0.0, min(1.0, base + impact * state.emotion_intensity))
+        return float(max(0.0, min(1.0, base + impact * state.emotion_intensity)))
 
     def _calculate_overall_value(self, scores) -> float:
-        return sum(scores.values()) / len(scores)
+        return float(sum(scores.values()) / len(scores))
 
     def _generate_value_reasoning(self, action, context, scores) -> str:
         return (
@@ -199,7 +199,7 @@ class EmotionSystem:
         )
 
     def _calculate_value_confidence(self, action, context, state) -> float:
-        return (state.emotion_intensity + 0.8) / 2.0
+        return float((state.emotion_intensity + 0.8) / 2.0)
 
     def analyze_empathy(self, target_entity: str, context: Dict[str, Any]) -> EmpathyAnalysis:
         """
@@ -473,7 +473,7 @@ class EmotionSystem:
         if had_error or response_success is False:
             self.apply_influence("interaction_feedback", "stress", 0.6 * trend_multiplier, 1.0)
             self.apply_influence("interaction_feedback", "fear", 0.3 * trend_multiplier, 0.8)
-        elif engagement_ratio > 2.0 and response_success is not False:
+        elif engagement_ratio > 2.0 and response_success is not False:  # type: ignore[comparison-overlap]
             intensity = min(1.0, engagement_ratio / 5.0) * min(1.0, trend_multiplier)
             self.apply_influence("interaction_feedback", "dopamine", intensity, 1.0)
             self.apply_influence(

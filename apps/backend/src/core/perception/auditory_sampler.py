@@ -81,7 +81,7 @@ class AuditorySampler:
             return {"status": "idle"}
 
         avg_intensity = np.mean([p.intensity for p in self.particles])
-        source_counts = {}
+        source_counts: Dict[str, int] = {}
         for p in self.particles:
             source_counts[p.source_type.name] = source_counts.get(p.source_type.name, 0) + 1
 

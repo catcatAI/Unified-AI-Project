@@ -60,7 +60,8 @@ class LlamaCppBackend(BaseLLMBackend):
                     data = await response.json()
                     models = data.get("data") or []
                     if models:
-                        return models[0].get("id") or models[0].get("model")
+                        mid = models[0].get("id") or models[0].get("model")
+                        return str(mid) if mid is not None else None
         except Exception as e:
             logger.warning(f"llama.cpp model fetch failed: {e}", exc_info=True)
         return None
@@ -99,9 +100,9 @@ class LlamaCppBackend(BaseLLMBackend):
                     return LLMResponse(
                         text="",
                         backend="llama.cpp",
-                        model=self.model,
+                        model=self.model or "unknown",
                         error=f"HTTP {response.status}: {text[:200]}",
                     )
         except Exception as e:
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
-            return LLMResponse(text="", backend="llama.cpp", model=self.model, error=safe_error(e))
+            return LLMResponse(text="", backend="llama.cpp", model=self.model or "unknown", error=safe_error(e))

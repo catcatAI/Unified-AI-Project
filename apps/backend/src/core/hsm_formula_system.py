@@ -23,7 +23,7 @@ from __future__ import annotations
 import logging
 import random
 import uuid
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 from core.system.config.magic_numbers import cache_value, llm_param, threshold_value
 
@@ -75,7 +75,7 @@ class HSMFormulaSystem:
         if not self.cognitive_gaps:
             return 0.0
         pressures = [g.calculate_pressure() for g in self.cognitive_gaps.values()]
-        return sum(pressures) / len(pressures)
+        return float(sum(pressures) / len(pressures))
 
     def calculate_hsm(self) -> float:
         return self.calculate_c_gap() * self.get_e_m2()
@@ -198,7 +198,7 @@ class ExplorationEvent:
         self.data = data or {}
         self.triggered_by = triggered_by or event_type
         self.random_seed = random_seed
-        self.discoveries = []
+        self.discoveries: List[Dict[str, Any]] = []
 
     def to_dict(self) -> dict:
         return {"event_id": self.event_id, "event_type": self.event_type, "data": self.data}

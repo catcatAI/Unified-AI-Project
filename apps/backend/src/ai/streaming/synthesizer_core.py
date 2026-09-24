@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 from collections import deque
+from typing import Deque
 from dataclasses import dataclass
 from typing import Dict, List, Optional
 
@@ -101,7 +102,7 @@ class StreamSynthesizer:
         self.generated_buffer.append(token)
 
     def _find_best_match(
-        self, target: StreamToken, candidates: List[StreamToken]
+        self, target: StreamToken, candidates: "Deque[StreamToken]"
     ) -> Optional[StreamToken]:
         """Find best matching predicted token for retrieved content."""
         if not candidates:

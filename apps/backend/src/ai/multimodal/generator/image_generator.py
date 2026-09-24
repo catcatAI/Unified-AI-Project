@@ -187,7 +187,7 @@ class ImageGenerator:
         if self._encoder is not None:
             embs = self._encoder.encode_text([text])
             if embs is not None and len(embs) > 0:
-                return embs[0]
+                return np.asarray(embs[0], dtype=np.float32)
 
         # Fallback: random embedding (for testing without CLIP)
         rng = np.random.default_rng(hash(text) % (2**31))

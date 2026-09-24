@@ -125,7 +125,8 @@ class VisionResponseGenerator:
         entry = self._dictionary.entries.get(key)
         if entry is None:
             return None
-        return entry.surface_forms.get(language) or entry.surface_forms.get("en")
+        value = entry.surface_forms.get(language) or entry.surface_forms.get("en")
+        return str(value) if value is not None else None
 
     def _extract_concept_from_label(self, label: str) -> str:
         """Extract the core concept from a CLIP label.

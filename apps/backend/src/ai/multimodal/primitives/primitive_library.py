@@ -1,7 +1,7 @@
 """Primitive library - stores and manages visual primitives."""
 
 import logging
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -170,11 +170,12 @@ class PrimitiveLibrary:
 
     def save(self, path: str):
         """Save library to file."""
-        data = {"embedding_dim": self._embedding_dim, "primitives": {}}
+        primitives_map: Dict[str, Any] = {}
+        data: Dict[str, Any] = {"embedding_dim": self._embedding_dim, "primitives": primitives_map}
         for name, prim in self._primitives.items():
             # Convert DrawingInstructions to dict
             params = prim["params"]
-            data["primitives"][name] = {
+            primitives_map[name] = {
                 "params": {
                     "background_color": params.background_color,
                     "canvas_size": params.canvas_size,

@@ -63,7 +63,9 @@ class KnowledgePipeline:
         self._grounded = grounded_knowledge
         self._planner = planning_engine
 
-    async def query(self, text: str, context: Dict[str, Any] = None) -> Optional[Dict[str, Any]]:
+    async def query(
+        self, text: str, context: Optional[Dict[str, Any]] = None
+    ) -> Optional[Dict[str, Any]]:
         """依序查詢所有數據源，返回第一個有效答案。
 
         Returns:

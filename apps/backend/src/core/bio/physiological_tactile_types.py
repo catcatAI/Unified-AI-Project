@@ -187,7 +187,7 @@ class TactileResponse:
 
 # Live2D Integration Mapping
 # Maps 18 body parts to Live2D parameter changes
-BODY_TO_LIVE2D_MAPPING = {
+BODY_TO_LIVE2D_MAPPING: Dict[str, Dict[str, Dict[str, Tuple[float, float]]]] = {
     "top_of_head": {
         "pat": {"ParamAngleX": (-15, 15), "ParamAngleY": (-10, 10), "ParamHairSwing": (0, 0.8)},
         "stroke": {"ParamHairSwing": (0, 0.5), "ParamHairFront": (-0.3, 0.3)},

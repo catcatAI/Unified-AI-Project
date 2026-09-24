@@ -118,7 +118,7 @@ class BehaviorFeedbackLoop:
 
         self.behavior_patterns: Dict[str, BehaviorPattern] = {}
 
-        self.strategy_parameters: Dict[str, float] = {
+        self.strategy_parameters: Dict[str, Any] = {
             "greet_threshold": 60.0,
             "comfort_sensitivity": 0.7,
             "interaction_frequency": 0.5,

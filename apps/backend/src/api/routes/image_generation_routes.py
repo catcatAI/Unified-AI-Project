@@ -159,7 +159,7 @@ def _encode_text_with_clip(text: str) -> np.ndarray:
         result = encoder.encode_text([text])
         if result is None:
             return np.zeros(512, dtype=np.float32)
-        return result[0].astype(np.float32)
+        return np.asarray(result[0], dtype=np.float32)
     except Exception as e:
         logger.warning("CLIP encoding failed: %s, using zeros", e)
         return np.zeros(512, dtype=np.float32)

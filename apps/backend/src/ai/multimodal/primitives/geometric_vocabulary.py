@@ -13,7 +13,7 @@ import logging
 import math
 import os
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -208,7 +208,7 @@ class GeometricVocabulary:
         """Analyze which primitive types contribute most to a visual word."""
         from .primitive_types import N_ARCS, N_CIRCLES, N_LINES, N_PLANES, N_POINTS
 
-        sig = {}
+        sig: Dict[str, Any] = {}
         off = 5  # skip header
 
         # Points: [off:off + N_POINTS*5]
@@ -366,7 +366,7 @@ class GeometricVocabulary:
 
         # Use a visual word as base, then add noise
         if concept.visual_word_ids:
-            word_id = rng.choice(concept.visual_word_ids)
+            word_id = int(rng.choice(concept.visual_word_ids))
             vw = self.get_visual_word(word_id)
             if vw is not None:
                 vec = vw.center.copy()

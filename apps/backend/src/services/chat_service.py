@@ -9,7 +9,7 @@ import asyncio
 import io
 import logging
 import os
-from typing import Optional
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -301,9 +301,10 @@ class ChatService:
             return merged_context
         try:
             lang = merged_context.get("language", "")
-            return self._cultural_context.enrich_context(
+            enriched = self._cultural_context.enrich_context(
                 merged_context, user_message, language_code=lang
             )
+            return dict(enriched) if isinstance(enriched, dict) else merged_context
         except Exception as e:
             logger.warning("Cultural context enrichment skipped: %s", e, exc_info=True)
         return merged_context
@@ -446,7 +447,7 @@ class ChatService:
             from core.tools.web_search_tool import WebSearchTool
 
             tool = WebSearchTool()
-            ws_cfg = {}
+            ws_cfg: Dict[str, Any] = {}
             try:
                 from core.system.config.tiered_loader import get_config
 
@@ -548,7 +549,7 @@ class ChatService:
             logger.warning("Continuous learning interaction failed: %s", e)
 
     async def _process_garden_learning(
-        self, user_message: str, response, context: dict = None
+        self, user_message: str, response, context: Optional[dict] = None
     ) -> None:
         if not self._garden_engine:
             return
@@ -670,11 +671,13 @@ class ChatService:
             if not hasattr(self._llm_service, "generate_text"):
                 logger.warning("ChatService.generate_text: LLM service has no generate_text method")
                 return None
-            return await self._llm_service.generate_text(
-                prompt=prompt,
-                max_tokens=max_tokens,
-                temperature=temperature,
-                system_prompt=system_prompt,
+            return str(
+                await self._llm_service.generate_text(
+                    prompt=prompt,
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                    system_prompt=system_prompt,
+                )
             )
         except Exception as e:
             logger.warning("ChatService.generate_text failed: %s", e)

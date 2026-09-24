@@ -16,7 +16,7 @@ import logging
 try:
     import numpy as np
 except ImportError:
-    np = None
+    np = None  # type: ignore[assignment]
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, Optional

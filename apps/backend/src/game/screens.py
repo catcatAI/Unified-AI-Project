@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Dict
+
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical, VerticalScroll
@@ -159,7 +161,7 @@ class CharacterSelectScreen(Screen):
         sk_bonus = apply_token_skill_bonus(tokens)
         sk = min(50 + sk_bonus, 100)
 
-        cats = {}
+        cats: Dict[str, int] = {}
         for t in tokens:
             cat = t.get("category", "unknown")
             cats[cat] = cats.get(cat, 0) + 1

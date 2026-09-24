@@ -81,7 +81,7 @@ class GeometricRecognizer:
         # Resize to target size if needed
         if img_float.shape[0] != self._canvas_size[1] or img_float.shape[1] != self._canvas_size[0]:
             pil = Image.fromarray((img_float * 255).astype(np.uint8))
-            pil = pil.resize(self._canvas_size, Image.LANCZOS)
+            pil = pil.resize(self._canvas_size, Image.Resampling.LANCZOS)
             img_float = np.array(pil, dtype=np.float32) / 255.0
 
         # Step 1: Extract features via optimization
@@ -96,7 +96,7 @@ class GeometricRecognizer:
         class_scores = self._compute_class_scores(opt_vec)
 
         # Step 4: Predict
-        predicted_class = max(class_scores, key=class_scores.get)
+        predicted_class = max(class_scores, key=lambda k: class_scores[k])
         confidence = class_scores[predicted_class]
 
         elapsed = time.time() - t0
@@ -176,6 +176,8 @@ class GeometricRecognizer:
             else self._vocabulary.CLASSES
         )
         scores = {name: 0.0 for name in class_names}
+        if all_labels is None:  # 防禦：訓練資料缺失時退回 fallback
+            return self._fallback_scores()
         for idx in nearest_indices:
             label = int(all_labels[idx])
             if 0 <= label < len(class_names):
@@ -208,7 +210,7 @@ class GeometricRecognizer:
         class_scores = self._compute_class_scores(params)
 
         # Predict
-        predicted_class = max(class_scores, key=class_scores.get)
+        predicted_class = max(class_scores, key=lambda k: class_scores[k])
         confidence = class_scores[predicted_class]
 
         return {

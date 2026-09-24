@@ -130,7 +130,7 @@ class ReconstructionCycle:
 
         z = self._ls.project(modality, features)
         f_hat = decoder._W @ z + decoder._b
-        return f_hat
+        return np.asarray(f_hat)
 
     def reconstruction_error(self, modality: str, features: np.ndarray) -> float:
         """Compute MSE between original and reconstructed features."""
@@ -303,7 +303,7 @@ class ReconstructionCycle:
         decoder._b_featmap -= lr * d_b_featmap
         decoder._tex_kernels -= lr * d_tex_kernels
 
-        return total_loss / n
+        return float(total_loss / n)
 
     def train_wavetable_step(
         self, latents: np.ndarray, target_waveforms: np.ndarray, lr: float = 0.001
@@ -500,7 +500,7 @@ class ReconstructionCycle:
         decoder._W_noise -= lr * d_W_noise
         decoder._b_noise -= lr * d_b_noise
 
-        return total_loss / n
+        return float(total_loss / n)
 
 
 class CrossModalSynthesizer:

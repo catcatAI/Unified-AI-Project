@@ -36,6 +36,7 @@ class NPC:
     tokens: list[dict] = field(default_factory=list)
     current_location: str = ""
     is_alive: bool = True
+    _lang: str = "zh"
 
     def get_current_activity(self, hour: int = 12) -> str:
         for r in self.routines:

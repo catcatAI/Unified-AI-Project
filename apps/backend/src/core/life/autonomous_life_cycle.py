@@ -192,7 +192,7 @@ class AutonomousLifeCycle:
         )  # 1 minute (was 300s/5min, §8.6 #8)
 
         # Behavior executor for dispatching decisions to real actions
-        self._behavior_executor: BehaviorExecutor = BehaviorExecutor()
+        self._behavior_executor: Any = BehaviorExecutor()
 
         # Callbacks
         self._phase_callbacks: List[Callable[[LifePhase, LifePhase], None]] = []
@@ -212,7 +212,7 @@ class AutonomousLifeCycle:
         self._interaction_count: int = 0
 
         # Life Essence accumulation system (generational iteration & deep personality)
-        self._life_essence = None  # lazy init via _get_life_essence()
+        self._life_essence: Optional[Any] = None  # lazy init via _get_life_essence()
 
         # Auto-load persisted state
         if self._persist_path and os.path.exists(self._persist_path):
@@ -277,15 +277,17 @@ class AutonomousLifeCycle:
     ) -> float:
         """Get dynamic decision confidence threshold"""
         if self._dynamic_params_manager and self._dynamic_params_enabled:
-            return self._dynamic_params_manager.get_parameter(
-                "decision_confidence_threshold", context
+            return float(
+                self._dynamic_params_manager.get_parameter(
+                    "decision_confidence_threshold", context
+                )
             )
         return 0.7  # Default threshold
 
     def _get_risk_tolerance(self, context: Optional[Dict[str, float]] = None) -> float:
         """Get dynamic risk tolerance"""
         if self._dynamic_params_manager and self._dynamic_params_enabled:
-            return self._dynamic_params_manager.get_parameter("risk_tolerance", context)
+            return float(self._dynamic_params_manager.get_parameter("risk_tolerance", context))
         return 0.5  # Default risk tolerance
 
     def _initialize_knowledge_domains(self) -> None:
@@ -744,7 +746,7 @@ class AutonomousLifeCycle:
             phase=decision.phase.name,
         )
 
-        success = result.get("status") == "completed"
+        success = bool(result.get("status") == "completed")
         if success:
             logger.info(f"🧭 [LifeCycle] Executed exploration: {decision.decision_id}")
         state_store.emit_event(
@@ -772,7 +774,7 @@ class AutonomousLifeCycle:
             gray_zone_id=decision.expected_outcome.get("gray_zone_id", "unknown"),
         )
 
-        success = result.get("status") == "completed"
+        success = bool(result.get("status") == "completed")
         if success:
             logger.info(f"🔄 [LifeCycle] Executed coexistence: {decision.decision_id}")
         state_store.emit_event(
@@ -800,7 +802,7 @@ class AutonomousLifeCycle:
             phase=decision.phase.name,
         )
 
-        success = result.get("status") == "completed"
+        success = bool(result.get("status") == "completed")
         if success:
             logger.info(f"🏗️ [LifeCycle] Executed construction: {decision.decision_id}")
         state_store.emit_event(
@@ -828,7 +830,7 @@ class AutonomousLifeCycle:
             phase=decision.phase.name,
         )
 
-        success = result.get("status") == "completed"
+        success = bool(result.get("status") == "completed")
         if success:
             logger.info(f"📊 [LifeCycle] Executed reallocation: {decision.decision_id}")
         state_store.emit_event(
@@ -1182,8 +1184,8 @@ class AutonomousLifeCycle:
             logger.debug(f"[AutonomousLifeCycle] No state file at {path}, starting fresh")
             return
         try:
-            with open(path, "r", encoding="utf-8") as f:
-                state = json.load(f)
+            with open(path, "r", encoding="utf-8") as fh:
+                state = json.load(fh)
             self.explorations_triggered = state.get("explorations_triggered", 0)
             self.coexistence_activated = state.get("coexistence_activated", 0)
             self.decisions_made = state.get("decisions_made", 0)
@@ -1210,7 +1212,9 @@ class AutonomousLifeCycle:
                 )
 
             # Re-inject behavior executor type stats by replaying synthetic executions
-            for dt, stats in state.get("behavior_executor_type_stats", {}).items():
+            behavior_stats = state.get("behavior_executor_type_stats", {})
+            assert isinstance(behavior_stats, dict)  # json 物件契約；窄化供 mypy 使用
+            for dt, stats in behavior_stats.items():
                 s = int(stats.get("success", 0))
                 f = int(stats.get("fail", 0))
                 if hasattr(self._behavior_executor, "_type_success"):

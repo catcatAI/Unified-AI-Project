@@ -73,7 +73,7 @@ class AudioWaveformDecoder:
 
         peak = max(np.abs(waveform).max(), 1e-8)
         waveform = waveform / peak
-        return waveform.astype(np.float32)
+        return np.asarray(waveform, dtype=np.float32)
 
     def _synthesize_wavetable(
         self,

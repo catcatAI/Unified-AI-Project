@@ -20,7 +20,7 @@
 
 import logging
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 
 # 启用存储层导入
 from .storage.base import Context
@@ -171,7 +171,7 @@ class ContextManager:
             results = []
 
             # 获取所有上下文ID
-            all_context_ids = set()
+            all_context_ids: Set[str] = set()
 
             # 从内存存储获取上下文ID
             memory_context_ids = self.memory_storage.list_contexts()

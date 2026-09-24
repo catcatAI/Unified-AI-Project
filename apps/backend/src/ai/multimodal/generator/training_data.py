@@ -93,7 +93,7 @@ class TrainingDataGenerator:
             if img_array.ndim != 3 or img_array.shape[2] != 3:
                 return None
             img_pil = Image.fromarray(img_array.astype(np.uint8))
-            img_pil = img_pil.resize((224, 224), Image.LANCZOS)
+            img_pil = img_pil.resize((224, 224), Image.Resampling.LANCZOS)
             if self._encoder is None:
                 return None
             clip_vec = self._encoder.encode_from_pil(img_pil)
@@ -112,8 +112,8 @@ class TrainingDataGenerator:
                 prim_name, _ = similar[0]
                 prim_emb = self._library.get_embedding(prim_name)
                 if prim_emb is not None:
-                    return prim_emb
-                return self._project_clip(clip_vec)
+                    return np.asarray(prim_emb, dtype=np.float32)
+                return np.asarray(self._project_clip(clip_vec), dtype=np.float32)
             return np.zeros(128, dtype=np.float32)
         return self._project_clip(clip_vec)
 

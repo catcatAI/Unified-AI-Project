@@ -33,4 +33,5 @@ class SignedCommunicationMiddleware(BaseHTTPMiddleware):
             logger.debug("SignedCommunicationMiddleware initialized with Key B")
 
     async def dispatch(self, request: Request, call_next) -> Response:
-        return await call_next(request)
+        response: Response = await call_next(request)
+        return response

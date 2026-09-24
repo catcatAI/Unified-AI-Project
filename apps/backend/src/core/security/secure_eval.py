@@ -279,7 +279,7 @@ def safe_eval(
     expression: str,
     context: Optional[Dict[str, Any]] = None,
     max_nodes: int = 500,
-    _safe_operators: Optional[Dict[type, Any]] = None,
+    _safe_operators: Optional[Dict[Any, Any]] = None,
     _safe_names: Optional[Dict[str, Any]] = None,
 ) -> "EvalResult":
     """

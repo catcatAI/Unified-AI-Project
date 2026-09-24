@@ -101,7 +101,8 @@ class EntropyRule(InfluenceRule):
         total = sum(abs(v) for v in src_vals) or 1.0
         probs = [abs(v) / total for v in src_vals]
         entropy = -sum(p * math.log(p + 1e-10) for p in probs) / math.log(len(probs))
-        return base_strength * (1.0 + self._weight * entropy)
+        strength: float = base_strength * (1.0 + self._weight * entropy)
+        return strength
 
 
 class MemoryRule(InfluenceRule):
@@ -115,8 +116,9 @@ class MemoryRule(InfluenceRule):
         base_strength: float,
         context: Optional[Dict[str, Any]] = None,
     ) -> float:
-        trend = (context or {}).get("history_trend", 0.0)
-        return base_strength * (1.0 + self._weight * trend)
+        trend: float = (context or {}).get("history_trend", 0.0)
+        adjusted: float = base_strength * (1.0 + self._weight * trend)
+        return adjusted
 
 
 class WeightRule(InfluenceRule):

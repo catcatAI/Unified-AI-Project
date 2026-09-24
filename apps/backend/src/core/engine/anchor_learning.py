@@ -317,7 +317,7 @@ class AnchorLearningEngine:
         sims = self.get_all_similarities(vector)
         if not sims:
             return ""
-        return max(sims, key=sims.get)
+        return max(sims, key=lambda k: sims[k])
 
     def get_learning_report(self) -> Dict[str, Any]:
         """獲取學習狀態報告"""

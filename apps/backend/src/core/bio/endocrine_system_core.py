@@ -84,7 +84,7 @@ class EndocrineSystem:
         try:
             from app_config_loader import get_formula_config
         except ImportError:
-            get_formula_config = lambda d: {}
+            get_formula_config = lambda d: {}  # type: ignore[assignment]
 
         self.formula_config = get_formula_config("biological")
         self.config = config or {}

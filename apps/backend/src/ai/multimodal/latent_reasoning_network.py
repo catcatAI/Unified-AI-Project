@@ -592,7 +592,7 @@ class LatentReasoningNetwork:
         return unique
 
     def _relu(self, x: np.ndarray) -> np.ndarray:
-        return np.maximum(0, x)
+        return np.asarray(np.maximum(0, x))
 
     def _relu_grad(self, x: np.ndarray) -> np.ndarray:
         return (x > 0).astype(np.float32)
@@ -616,14 +616,14 @@ class LatentReasoningNetwork:
 
         # Layer 3: hidden → vocab
         logits = self._W3 @ h2 + self._b3
-        return logits
+        return np.asarray(logits)
 
     def _softmax(self, logits: np.ndarray, temperature: float = 1.0) -> np.ndarray:
         """Softmax with temperature."""
         scaled = logits / temperature
         shifted = scaled - np.max(scaled)
         exp = np.exp(shifted)
-        return exp / np.sum(exp)
+        return np.asarray(exp / np.sum(exp))
 
     def generate(self, latent: np.ndarray, max_tokens: int = 20, temperature: float = 0.8) -> str:
         """Generate text from a latent vector (autoregressive).

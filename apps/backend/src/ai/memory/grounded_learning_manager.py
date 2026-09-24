@@ -103,7 +103,10 @@ class GroundedLearningManager:
                 continue
             task = asyncio.create_task(self._verify_one(claim))
             self._in_flight[claim.claim_key] = task
-            task.add_done_callback(lambda t, k=claim.claim_key: self._in_flight.pop(k, None))
+            def _cleanup(task: "asyncio.Task[None]", k: str = claim.claim_key) -> None:
+                self._in_flight.pop(k, None)
+
+            task.add_done_callback(_cleanup)
         return added
 
     async def _verify_one(self, claim: GroundedClaim) -> None:

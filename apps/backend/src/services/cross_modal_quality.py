@@ -33,8 +33,8 @@ class CrossModalQualityDashboard:
         self._max_history = max_history
         self._vision_log_path = vision_log_path
         self._audio_log_path = audio_log_path
-        self._vision_monitor = None
-        self._audio_monitor = None
+        self._vision_monitor: Optional[Any] = None
+        self._audio_monitor: Optional[Any] = None
 
     # --- Lazy initialization ---
 

@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 _MAX_PROCESSING_HISTORY = 500
 
 try:
-    import pytesseract  # type: ignore[import-untyped]
+    import pytesseract
 
     PYTESSERACT_AVAILABLE = True
 except ImportError:
@@ -157,7 +157,7 @@ class VisionService:
         try:
             from io import BytesIO
 
-            import pyautogui  # type: ignore[import-untyped]
+            import pyautogui
 
             screenshot = pyautogui.screenshot()
             img_byte_arr = BytesIO()

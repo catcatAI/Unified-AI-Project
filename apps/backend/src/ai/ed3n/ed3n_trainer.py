@@ -249,7 +249,7 @@ class ED3NTrainer:
                     "samples": m.samples,
                     "duration_ms": m.duration_ms,
                 }
-            return str(m)
+            return {"repr": str(m)}
 
         state = {
             "training_history": [_serialize(m) for m in self.training_history],
@@ -467,7 +467,7 @@ class SequenceTrainer:
                 if random.random() < self.scheduled_sampling_prob:
                     context.append(target_key)
                 else:
-                    predicted = max(activations, key=activations.get) if activations else target_key
+                    predicted = max(activations, key=lambda k: activations[k]) if activations else target_key
                     context.append(predicted)
 
                 if len(context) > limit_value("ai.ed3n.sequence.context_window", 8):
@@ -594,7 +594,7 @@ class JointTrainer:
         )
         self.history.append(
             {
-                "phase": "joint",
+                "phase": "joint",  # type: ignore[dict-item]
                 "loss": combined.loss,
                 "accuracy": combined.accuracy,
                 "anchor_loss": anchor_loss,

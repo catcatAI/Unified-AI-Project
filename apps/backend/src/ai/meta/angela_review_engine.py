@@ -194,7 +194,7 @@ class DesignReviewer:
         )
 
     def _check_layer_coverage(self) -> List[ReviewFinding]:
-        findings = []
+        findings: List[ReviewFinding] = []
         for layer_id, info in MATRIX_LAYERS.items():
             keywords = info["keywords"]
             layer_files = []
@@ -220,7 +220,7 @@ class DesignReviewer:
         return findings
 
     def _check_dimension_usage(self) -> List[ReviewFinding]:
-        findings = []
+        findings: List[ReviewFinding] = []
         for dim_id, info in MATRIX_DIMENSIONS.items():
             if dim_id in ("ζ", "η"):
                 continue
@@ -248,7 +248,7 @@ class DesignReviewer:
         return findings
 
     def _check_design_doc_completeness(self) -> List[ReviewFinding]:
-        findings = []
+        findings: List[ReviewFinding] = []
         design_doc = self._docs / "COMPREHENSIVE_DESIGN_STANDARD.md"
         if not design_doc.exists():
             findings.append(
@@ -262,7 +262,7 @@ class DesignReviewer:
 
         text = design_doc.read_text(encoding="utf-8", errors="ignore")
         for layer_id, info in MATRIX_LAYERS.items():
-            if layer_id not in str(text) and info["name"] not in text:
+            if layer_id not in str(text) and str(info["name"]) not in str(text):
                 findings.append(
                     ReviewFinding(
                         severity=Severity.MEDIUM,
@@ -274,7 +274,7 @@ class DesignReviewer:
         return findings
 
     def _check_architecture_compliance(self) -> List[ReviewFinding]:
-        findings = []
+        findings: List[ReviewFinding] = []
         ideal_arch = self._docs / "IDEAL_ARCHITECTURE.md"
         if ideal_arch.exists():
             text = ideal_arch.read_text(encoding="utf-8", errors="ignore")
@@ -305,7 +305,7 @@ class DesignReviewer:
         return findings
 
     def _check_module_layer_alignment(self) -> List[ReviewFinding]:
-        findings = []
+        findings: List[ReviewFinding] = []
         for py_file in self._src.rglob("*.py"):
             if "__pycache__" in str(py_file):
                 continue
@@ -414,7 +414,7 @@ class CodeReviewer:
         return files
 
     def _check_matrix_annotation(self, text: str, rel: str) -> List[ReviewFinding]:
-        findings = []
+        findings: List[ReviewFinding] = []
         if "ANGELA-MATRIX:" not in text:
             findings.append(
                 ReviewFinding(
@@ -447,7 +447,7 @@ class CodeReviewer:
         return findings
 
     def _check_bare_except(self, text: str, rel: str) -> List[ReviewFinding]:
-        findings = []
+        findings: List[ReviewFinding] = []
         lines = text.split("\n")
         for i, line in enumerate(lines, 1):
             stripped = line.strip()
@@ -476,7 +476,7 @@ class CodeReviewer:
         return findings
 
     def _check_stub_pass(self, text: str, rel: str) -> List[ReviewFinding]:
-        findings = []
+        findings: List[ReviewFinding] = []
         lines = text.split("\n")
         for i, line in enumerate(lines, 1):
             stripped = line.strip()
@@ -496,7 +496,7 @@ class CodeReviewer:
         return findings
 
     def _check_function_length(self, text: str, rel: str) -> List[ReviewFinding]:
-        findings = []
+        findings: List[ReviewFinding] = []
         try:
             tree = ast.parse(text)
         except SyntaxError:
@@ -519,7 +519,7 @@ class CodeReviewer:
         return findings
 
     def _check_import_patterns(self, text: str, rel: str) -> List[ReviewFinding]:
-        findings = []
+        findings: List[ReviewFinding] = []
         lines = text.split("\n")
         for i, line in enumerate(lines, 1):
             stripped = line.strip()
@@ -537,7 +537,7 @@ class CodeReviewer:
         return findings
 
     def _check_file_length(self, text: str, rel: str) -> List[ReviewFinding]:
-        findings = []
+        findings: List[ReviewFinding] = []
         lines = text.split("\n")
         if len(lines) > self.MAX_FILE_LINES:
             findings.append(
@@ -616,7 +616,7 @@ class MDReviewer:
         return files
 
     def _check_version_consistency(self, md_files: List[Path]) -> List[ReviewFinding]:
-        findings = []
+        findings: List[ReviewFinding] = []
         version_file = self._root / "VERSION"
         if not version_file.exists():
             return findings
@@ -644,7 +644,7 @@ class MDReviewer:
         return findings
 
     def _check_test_count_accuracy(self, md_files: List[Path]) -> List[ReviewFinding]:
-        findings = []
+        findings: List[ReviewFinding] = []
         test_count_pattern = re.compile(r"(\d{3,5})\s*(?:tests?|測試)")
         for md in md_files:
             try:
@@ -667,7 +667,7 @@ class MDReviewer:
         return findings
 
     def _check_broken_links(self, md_files: List[Path]) -> List[ReviewFinding]:
-        findings = []
+        findings: List[ReviewFinding] = []
         link_pattern = re.compile(r"\]\(([^)]+\.md)\)")
         for md in md_files:
             try:
@@ -692,7 +692,7 @@ class MDReviewer:
         return findings
 
     def _check_doc_coverage(self, md_files: List[Path]) -> List[ReviewFinding]:
-        findings = []
+        findings: List[ReviewFinding] = []
         critical_modules = [
             "apps/backend/src/core/engine/state_matrix.py",
             "apps/backend/src/ai/core/execution_gate.py",
@@ -779,7 +779,7 @@ class ConsistencyReviewer:
         )
 
     def _check_design_vs_code(self) -> List[ReviewFinding]:
-        findings = []
+        findings: List[ReviewFinding] = []
         design_doc = self._docs / "COMPREHENSIVE_DESIGN_STANDARD.md"
         if not design_doc.exists():
             return findings
@@ -815,7 +815,7 @@ class ConsistencyReviewer:
         return findings
 
     def _check_code_vs_md(self) -> List[ReviewFinding]:
-        findings = []
+        findings: List[ReviewFinding] = []
         docs_text = self._collect_docs_text()
 
         key_classes = self._extract_key_classes()
@@ -832,7 +832,7 @@ class ConsistencyReviewer:
         return findings
 
     def _check_interface_consistency(self) -> List[ReviewFinding]:
-        findings = []
+        findings: List[ReviewFinding] = []
         try:
             from ai.core.execution_gate import ExecutionGate
 
@@ -964,7 +964,7 @@ class TrainingReviewer:
         )
 
     def _check_pipeline_structure(self) -> List[ReviewFinding]:
-        findings = []
+        findings: List[ReviewFinding] = []
         pipeline_file = self._src / "ai" / "multimodal" / "training_pipeline.py"
         if not pipeline_file.exists():
             findings.append(
@@ -990,7 +990,7 @@ class TrainingReviewer:
         return findings
 
     def _check_trainer_interfaces(self) -> List[ReviewFinding]:
-        findings = []
+        findings: List[ReviewFinding] = []
         trainer_file = self._src / "ai" / "ed3n" / "ed3n_trainer.py"
         if not trainer_file.exists():
             findings.append(
@@ -1014,7 +1014,7 @@ class TrainingReviewer:
         return findings
 
     def _check_training_scripts(self) -> List[ReviewFinding]:
-        findings = []
+        findings: List[ReviewFinding] = []
         scripts_dir = self._root / "scripts"
         if not scripts_dir.exists():
             return findings

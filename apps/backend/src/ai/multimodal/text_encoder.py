@@ -10,7 +10,7 @@ in a shared 64-dim latent space.
 import logging
 import subprocess
 import sys
-from typing import List, Optional
+from typing import Any, List, Optional
 
 import numpy as np
 
@@ -66,8 +66,8 @@ class TextEncoder:
     def __init__(self, feature_dim: Optional[int] = None):
         self._feature_dim = feature_dim or self.FEATURE_DIM
         self._clip_available = False
-        self._model = None
-        self._processor = None
+        self._model: Optional[Any] = None
+        self._processor: Optional[Any] = None
 
     def _get_clip(self):
         """Lazy-load CLIP model and processor."""
@@ -86,7 +86,7 @@ class TextEncoder:
             self._processor = CLIPProcessor.from_pretrained(model_name)
             self._model.eval()
             if torch.cuda.is_available():
-                self._model = self._model.cuda()
+                self._model = self._model.cuda()  # type: ignore[call-arg]
             self._clip_available = True
             logger.info("TextEncoder: CLIP loaded (%s)", model_name)
         except Exception as e:
@@ -108,7 +108,7 @@ class TextEncoder:
         vecs = self.encode_batch([text])
         if vecs is None or len(vecs) == 0:
             return np.zeros(self._feature_dim, dtype=np.float32)
-        return vecs[0]
+        return np.asarray(vecs[0], dtype=np.float32)
 
     def encode_batch(self, texts: List[str]) -> Optional[np.ndarray]:
         """Encode a batch of text strings into 512-dim feature vectors.
@@ -140,7 +140,7 @@ class TextEncoder:
             vecs = text_features.cpu().numpy().astype(np.float32)
             norms = np.linalg.norm(vecs, axis=1, keepdims=True)
             norms[norms == 0] = 1.0
-            return vecs / norms
+            return np.asarray(vecs / norms, dtype=np.float32)
         except Exception as e:
             logger.warning("TextEncoder encode_batch failed: %s", e, exc_info=True)
             return None

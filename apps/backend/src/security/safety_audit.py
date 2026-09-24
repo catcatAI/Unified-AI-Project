@@ -251,8 +251,8 @@ class SafetyAudit:
         if not entries:
             return {"total_events": 0}
 
-        severity_counts = {}
-        type_counts = {}
+        severity_counts: Dict[str, int] = {}
+        type_counts: Dict[str, int] = {}
         for entry in entries:
             sev = entry.severity.value
             severity_counts[sev] = severity_counts.get(sev, 0) + 1

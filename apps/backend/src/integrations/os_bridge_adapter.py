@@ -41,7 +41,7 @@ class OSBridgeAdapter:
             stdout, stderr = await process.communicate()
 
             if stdout:
-                return json.loads(stdout.decode("utf-8"))
+                return dict(json.loads(stdout.decode("utf-8")))
             return {"status": "error", "message": stderr.decode("utf-8")}
         except Exception as e:
             logger.warning(f"_execute_async failed for {command}: {e}", exc_info=True)
@@ -59,22 +59,22 @@ class OSBridgeAdapter:
                 timeout=timeout_value("os_bridge.execute", 10),
             )
             if result.stdout:
-                return json.loads(result.stdout)
+                return dict(json.loads(result.stdout))
             return {"status": "error", "message": result.stderr}
         except Exception as e:
             logger.warning(f"_execute failed for {command}: {e}", exc_info=True)
             return {"status": "error", "message": safe_error(e)}
 
-    async def get_summary(self) -> str:
+    async def get_summary(self) -> dict:
         """Get the summary by self."""
         return await self._execute_async("summary")
 
-    async def take_action(self, action_name, args=None) -> str:
+    async def take_action(self, action_name, args=None) -> dict:
         """Execute the take action operation."""
         task = [{"name": action_name, "args": args or []}]
         return await self._execute_async("task", json.dumps(task))
 
-    async def get_screen_text(self) -> str:
+    async def get_screen_text(self) -> dict:
         """Get the screen text by self."""
         return await self._execute_async("ocr")
 

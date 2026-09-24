@@ -144,7 +144,7 @@ class HormoneKinetics:
         t_half = half_life or self.half_lives.get(hormone_type, 1.0)
 
         # Exponential decay formula
-        remaining = initial_level * (0.5 ** (time_hours / t_half))
+        remaining: float = initial_level * (0.5 ** (time_hours / t_half))
 
         return remaining
 
@@ -208,7 +208,7 @@ class HormoneKinetics:
         if effective_kd == 0:
             return 1.0 if hormone_level > 0 else 0.0
 
-        occupancy = (hormone_level**n) / ((effective_kd**n) + (hormone_level**n))
+        occupancy: float = (hormone_level**n) / ((effective_kd**n) + (hormone_level**n))
 
         return min(1.0, max(0.0, occupancy))
 
