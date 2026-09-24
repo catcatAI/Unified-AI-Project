@@ -26,53 +26,56 @@
 
 ```json
 {
-  "id": "唯一标识符",
-  "type": "消息类型",
-  "sender": "发送者ID",
-  "receiver": "接收者ID",
-  "payload": "消息内容",
-  "timestamp": "时间戳"
+  "message_id": "UUID",
+  "message_type": "HSP::Fact_v0.1",
+  "sender_ai_id": "发送者 DID/URI",
+  "recipient_ai_id": "接收者 DID/URI 或主题 URI",
+  "payload": { "...": "消息内容" },
+  "timestamp_sent": "ISO 8601 UTC",
+  "communication_pattern": "publish"
 }
 ```
+
+> 完整欄位定義見 `apps/backend/src/core/hsp/types.py` 的 `HSPMessageEnvelope`。
 
 ## 🛠️ 快速使用
 
 ### 基本使用
 
 ```python
-from apps.backend.src.integrations.enhanced_rovo_dev_connector import EnhancedRovoDevConnector
+from core.hsp.connector import HSPConnector
 
-# 創建連接（啟用fallback協議）
-connector = EnhancedRovoDevConnector(
-    config={'atlassian': {'api_token': 'your_token', 'user_email': 'your_email', 'domain': 'your_domain'}},
-    retry_config=None, # 使用默認重試配置
-    endpoint_configs=None # 使用默認端點配置
-)
-async with connector: # 使用異步上下文管理器
-    # 發送事實
-    fact_payload = {
-        "id": "fact_001",
-        "statement_type": "natural_language",
-        "statement_nl": "這是一個測試事實",
-        "source_ai_id": "my_ai_agent",
-        "timestamp_created": "2024-01-01T00:00:00Z",
-        "confidence_score": 0.9
+# 創建連接（mock_mode=True 可離線測試；fallback 備用協議預設啟用）
+connector = HSPConnector(ai_id="my_ai_agent", broker_address="localhost", broker_port=1883)
+
+await connector.connect()
+try:
+    # 發布意見（publish_opinion 會自動建立 HSPMessageEnvelope 並走 fallback 鏈）
+    opinion_payload = {
+        "belief_holder_ai_id": "my_ai_agent",
+        "justification_type": "text",
+        "justification": "根據多次觀測，玩家偏好挖掘直線通道",
     }
-    success = await connector.publish_fact(fact_payload, "hsp/knowledge/facts/test")
+    success = await connector.publish_opinion(opinion_payload)
+    # 預設 topic：hsp/knowledge/opinions/{ai_id}
+finally:
+    await connector.disconnect()
 ```
 
 ### 接收消息
 
 ```python
-# 设置消息处理器
-@connector.on_message
-async def handle_message(message):
-    if message.type == "REQUEST":
-        # 处理请求
-        result = process_request(message.payload)
-        # 发送响应
-        await connector.send_response(message.id, result)
+# 顯式註冊回調（簽名：payload, sender_ai_id, envelope）
+async def handle_task_request(task_payload, sender_ai_id, envelope):
+    print(f"收到來自 {sender_ai_id} 的任務：{task_payload.get('request_id')}")
+
+connector.register_on_task_request_callback(handle_task_request)
+# 事實訊息同理：connector.register_on_fact_callback(handle_fact)
 ```
+
+> 其他回調：`register_on_capability_advertisement_callback`、
+> `register_on_task_result_callback`、`register_on_acknowledgement_callback`、
+> `register_on_connect_callback` 等（見 `core/hsp/connector.py`）。
 
 ## 🔧 常见用例
 
@@ -141,21 +144,16 @@ A: 主要支持 MQTT，並提供 HTTP、文件、內存等備用協議。
 _这是 HSP 的简化入门指南。完整技术细节请参考
 [HSP 规范](hsp-specification/01-overview-and-concepts.md)。_
 
-## Known Issues（與代碼連結的潛在不一致）
+## 歷史 Known Issues（已解決 2026-09-24）
 
-- Import 路徑示例可能不正確：
-  - 文檔：`from apps.backend.src.integrations.enhanced_rovo_dev_connector import EnhancedRovoDevConnector`
-  - 代碼現狀：`from src.integrations.enhanced_rovo_dev_connector import EnhancedRovoDevConnector`
-  - 建議：統一為以 `src` 為根的匯入路徑，以匹配運行時包佈局。
-- 訊息處理裝飾器示例可能不適用：
-  - 文檔示例使用 `@connector.on_message`
-    裝飾器；目前後端連接器以回調註冊（例如在 `HSPConnector` 透過
-    `register_on_*_callback` 或由 `MessageBridge` 轉發）為主。
-  - 建議：將示例改為顯式註冊回調的形式，或連結到實際 API 範例（如
-    `HSPConnector.register_on_capability_advertisement_callback(...)`）。
-- 訊息結構示例與 HSPMessageEnvelope 欄位命名：
-  - 文檔示例使用通用字段（id/type/sender/receiver/timestamp）。實作中
-    `HSPMessageEnvelope` 使用例如
-    `message_id/sender_id/recipient_id/message_type/timestamp_sent/payload`
-    等欄位。
-  - 建議：在快速入門中加註對應關係，避免新手混淆。
+以下三項文檔-代碼不一致已修復，範例已對齊真實 API：
+
+- ✅ Import 路徑：統一為
+  `from core.hsp.connector import HSPConnector`（`apps.backend.src.*`
+  前綴不匹配運行時包佈局；`EnhancedRovoDevConnector` 已從 `integrations/`
+  移除，canonical 連接器為 `core/hsp/connector.py`）。
+- ✅ 訊息接收：改為顯式回調註冊（`register_on_*_callback`，簽名
+  `(payload, sender_ai_id, envelope)`）；屬性式 `@connector.on_message`
+  裝飾器不存在。
+- ✅ 訊息結構：示例已改用 `HSPMessageEnvelope`
+  真實欄位（`message_id`/`sender_ai_id`/`recipient_ai_id`/`message_type`/`timestamp_sent`/`payload`）。

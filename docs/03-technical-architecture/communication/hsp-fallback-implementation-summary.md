@@ -51,17 +51,17 @@ Unified-AI-Project/
 1. **Fallback集成**:
 
    ```python
-   from apps.backend.src.integrations.enhanced_rovo_dev_connector import EnhancedRovoDevConnector
+   from core.hsp.connector import HSPConnector
 
-   # 創建連接（啟用fallback協議）
-   connector = EnhancedRovoDevConnector(
-       config={'atlassian': {'api_token': 'your_token', 'user_email': 'your_email', 'domain': 'your_domain'}},
-       retry_config=None, # 使用默認重試配置
-       endpoint_configs=None # 使用默認端點配置
-   )
-   async with connector: # 使用異步上下文管理器
-       # 在此執行操作，連接器會自動啟動和關閉
-       pass
+   # 創建連接（enable_fallback 預設啟用；MQTT 不可用時自動降級 HTTP/文件/內存協議）
+   connector = HSPConnector(ai_id="my_ai_agent", broker_address="localhost", broker_port=1883)
+
+   await connector.connect()
+   try:
+       # 在此執行操作（publish_opinion / register_on_task_request_callback 等）
+       ...
+   finally:
+       await connector.disconnect()
    ```
 
 2. **狀態監控**:

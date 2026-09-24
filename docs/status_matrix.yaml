@@ -19,7 +19,7 @@ meta:
   version: "2.0.0"
   language: zh-TW
   generated_view: docs/STATUS_MATRIX.md
-  last_sync: "2026-09-21"
+  last_sync: "2026-09-24"
 
 features:
   - id: main-flow-e2e
@@ -251,10 +251,11 @@ features:
       - scripts/run_luanti_agent.py
     tests:
       - tests/ai/multimodal/test_policy_training.py
+      - tests/ai/multimodal/test_game_agent_integration.py
       - tests/ai/multimodal/test_game_memory_persistence.py
       - tests/core/test_autonomous_life_cycle.py
-    evidence: R71 識別/記憶/好奇心＋R74 行為克隆訓練閉環（hold-out 學習門、權重持久化、啟動載入、推論信心可觀測）；驗證指令見 INVOCATION_MATRIX（wired 故不列）；live 樣本待玩家在線累積；20 FPS 仍 ❌（10Hz＋2s poller）
-    last_verified: "2026-09-21"
+    evidence: R71 識別/記憶/好奇心＋R74 行為克隆訓練閉環（hold-out 學習門、權重持久化、啟動載入、推論信心可觀測）；驗證指令見 INVOCATION_MATRIX（wired 故不列）；live 樣本待玩家在線累積；20 FPS 仍 ❌（10Hz＋2s poller）；R90 死路徑 #18 修復：_encode_visual 接真實 VisualEncoder（原 np.random 佔位＋128/256 維度錯位），41 tests 契約鎖定
+    last_verified: "2026-09-24"
 
   - id: benchmark-harness
     domain: 基準與驗收

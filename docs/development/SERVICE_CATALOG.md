@@ -149,13 +149,13 @@ Directory exists but contains no files. Candidates for cleanup.
 
 ## Integration Services
 
-| Service                    | File                                          | Status      |
-| -------------------------- | --------------------------------------------- | ----------- |
-| `GoogleDriveService`       | `integrations/google_drive_service.py`        | ✅          |
-| `AtlassianBridge`          | `integrations/atlassian_bridge.py`            | 🟡 skeleton |
-| `EnhancedRovoDevConnector` | `integrations/enhanced_rovo_dev_connector.py` | 🟡 skeleton |
-| `OSBridgeAdapter`          | `integrations/os_bridge_adapter.py`           | ✅          |
-| `WebSearchTool`            | `core/tools/web_search_tool.py`               | ✅          |
+| Service                    | File                                          | Status                                                                                                           |
+| -------------------------- | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `GoogleDriveService`       | `integrations/google_drive_service.py`        | ✅                                                                                                               |
+| `AtlassianBridge`          | `integrations/atlassian_bridge.py`            | 🗑️ 已移除——2026-09-24 核對磁碟無此檔且零代碼引用；相關文檔（atlassian-bridge.md、rovo-dev-agent.md）僅存歷史描述 |
+| `EnhancedRovoDevConnector` | `integrations/enhanced_rovo_dev_connector.py` | 🗑️ 已移除——HSP 連接器 canonical 為 `core/hsp/connector.py` 的 `HSPConnector`；勿再引用舊路徑                     |
+| `OSBridgeAdapter`          | `integrations/os_bridge_adapter.py`           | ✅                                                                                                               |
+| `WebSearchTool`            | `core/tools/web_search_tool.py`               | ✅                                                                                                               |
 
 ## Config/Infrastructure
 
