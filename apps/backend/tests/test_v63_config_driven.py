@@ -561,7 +561,8 @@ class TestModelREPLCommand:
 
         response = _handle_model_command("list", None)
         assert isinstance(response, str)
-        assert "Available models" in response or "LLM routing error" in response
+        # repl.py 實際輸出為 title-case「Available Models」（section 標題）
+        assert "Available Models" in response or "LLM routing error" in response
 
     def test_model_stats_command(self):
         """REPL /model stats 返回統計"""

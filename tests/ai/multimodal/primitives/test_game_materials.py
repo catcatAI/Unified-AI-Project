@@ -123,8 +123,8 @@ class TestMaterial:
         img = Material(name="wood", size=48).render()
         assert img.mode == "RGBA"
         assert img.size == (48, 48)
-        # 形狀區域內有不透明像素
-        pixels_with_alpha = sum(1 for px in img.getdata() if px[3] == 255)
+        # 形狀區域內有不透明像素（getdata 於 Pillow 14 移除，改用 alpha 通道直方圖）
+        pixels_with_alpha = img.getchannel("A").histogram()[255]
         assert pixels_with_alpha > 0
 
 

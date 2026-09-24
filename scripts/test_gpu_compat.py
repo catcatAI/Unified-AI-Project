@@ -7,7 +7,7 @@ import sys
 import os
 import time
 
-def test_wgpu():
+def check_wgpu():
     """Test wgpu (WebGPU via Vulkan/DX12)"""
     try:
         import wgpu
@@ -23,7 +23,7 @@ def test_wgpu():
     except Exception as e:
         return False, str(e)
 
-def test_kompute():
+def check_kompute():
     """Test kompute (Vulkan compute)"""
     try:
         import kp
@@ -34,7 +34,7 @@ def test_kompute():
     except Exception as e:
         return False, str(e)
 
-def test_torch_subprocess():
+def check_torch_subprocess():
     """Test torch in subprocess with timeout"""
     script = '''
 import sys
@@ -68,7 +68,7 @@ except Exception as e:
     except Exception as e:
         return False, str(e)
 
-def test_numpy_gpu():
+def check_numpy_gpu():
     """Test if numpy can use any GPU acceleration"""
     try:
         import numpy as np
@@ -110,10 +110,10 @@ def main():
     
     # Run tests
     tests = [
-        ("wgpu (Vulkan/DX12)", test_wgpu),
-        ("kompute (Vulkan)", test_kompute),
-        ("torch (subprocess 20s)", test_torch_subprocess),
-        ("numpy GPU support", test_numpy_gpu),
+        ("wgpu (Vulkan/DX12)", check_wgpu),
+        ("kompute (Vulkan)", check_kompute),
+        ("torch (subprocess 20s)", check_torch_subprocess),
+        ("numpy GPU support", check_numpy_gpu),
     ]
     
     results = {}

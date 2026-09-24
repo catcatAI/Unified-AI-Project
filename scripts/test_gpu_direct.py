@@ -8,7 +8,7 @@ import time
 import json
 import os
 
-def test_opencl():
+def check_opencl():
     """Test OpenCL via pyopencl"""
     try:
         import pyopencl as cl
@@ -32,7 +32,7 @@ def test_opencl():
     except Exception as e:
         return False, str(e)
 
-def test_cuda_direct():
+def check_cuda_direct():
     """Test CUDA via direct DLL loading (no torch)"""
     try:
         # Try to load nvcuda.dll directly
@@ -74,7 +74,7 @@ def test_cuda_direct():
     except Exception as e:
         return False, str(e)
 
-def test_intel_gpu():
+def check_intel_gpu():
     """Test Intel GPU via igdcl64.dll"""
     try:
         import ctypes
@@ -100,7 +100,7 @@ def test_intel_gpu():
     except Exception as e:
         return False, str(e)
 
-def test_subprocess_gpu():
+def check_subprocess_gpu():
     """Test GPU via subprocess (torch in separate process)"""
     try:
         script = """
@@ -140,10 +140,10 @@ def main():
     print("=" * 60)
     
     tests = [
-        ("OpenCL (pyopencl)", test_opencl),
-        ("CUDA (nvidia-smi)", test_cuda_direct),
-        ("Intel GPU (DLL)", test_intel_gpu),
-        ("torch (subprocess)", test_subprocess_gpu),
+        ("OpenCL (pyopencl)", check_opencl),
+        ("CUDA (nvidia-smi)", check_cuda_direct),
+        ("Intel GPU (DLL)", check_intel_gpu),
+        ("torch (subprocess)", check_subprocess_gpu),
     ]
     
     results = {}

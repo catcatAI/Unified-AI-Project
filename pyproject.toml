@@ -119,10 +119,19 @@ python_files = ['test_*.py', '*_test.py']
 python_classes = ['Test*']
 python_functions = ['test_*']
 filterwarnings = [
-    # Let DeprecationWarning through so deprecated API usage is visible
-    # during test runs. Individual noisy entries can be added below.
-    # 'ignore::DeprecationWarning',  # removed: hide real deprecation issues
-    # 'ignore::PendingDeprecationWarning',  # removed
+    # 讓 DeprecationWarning 可見（不全域忽略），僅定向壓制第三方/既有聲明噪音。
+    "ignore:ai\\.ed3n\\.dictionary_layer growth is deprecated.*:DeprecationWarning",
+    "ignore:ai\\.garden recall/templates growth is deprecated.*:DeprecationWarning",
+    # PyTorch 舊式 __array_wrap__ 簽名（numpy 2.0 棄用）——torch/_tensor.py 本體問題，
+    # 專案源碼無自訂 __array_wrap__，等待 torch 官方更新
+    "ignore:__array_wrap__ must accept context and return_scalar.*:DeprecationWarning",
+    # pynvml 已棄用（torch/cuda 引用）——等待 torch 更新
+    "ignore:The pynvml package is deprecated.*:FutureWarning",
+    # speech_recognition 依賴 aifc/audioop（Python 3.13 移除）——上游未跟進
+    "ignore:'aifc' is deprecated and slated for removal in Python 3.13:DeprecationWarning",
+    "ignore:'audioop' is deprecated and slated for removal in Python 3.13:DeprecationWarning",
+    # fastapi testclient 內部 import 觸發 starlette 棄用警告（site-packages，專案碼無法修）
+    "ignore:Using `httpx` with `starlette.testclient` is deprecated",
 ]
 addopts = [
     '-v',

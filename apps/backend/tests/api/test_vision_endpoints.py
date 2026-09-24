@@ -36,7 +36,7 @@ def test_vision_sampling_structure_and_consistency():
 def test_vision_perceive_returns_next_focus_and_memory_stats():
     client = TestClient(app)
     img = b"\x89PNG\r\n" + (b"\x00" * 1024)
-    r = client.post("/api/v1/vision/perceive", data=img, headers={"Content-Type": "application/octet-stream"})
+    r = client.post("/api/v1/vision/perceive", content=img, headers={"Content-Type": "application/octet-stream"})
     assert r.status_code == 200
     j = r.json()
 

@@ -8,7 +8,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 _MOCKED_MODULES = (
-    "core.perception.auditory_sampler",
     "core.perception.auditory_memory",
     "core.perception.auditory_attention",
     "core.sync.realtime_sync",
@@ -28,6 +27,13 @@ _AUDIO_SERVICE_MODULES = (
 def _mock_audio_dependencies():
     """Inject MagicMock stand-ins for heavy perception deps for the duration of
     a single test only, restoring the real ``sys.modules`` state afterwards.
+
+    ``core.perception.auditory_sampler`` is intentionally NOT mocked: it is a
+    lightweight numpy-only simulator, and mocking it used to make
+    ``sample_audio_stream`` return a MagicMock container that iterates as
+    empty — ``register_user_voice`` then averaged an empty sequence,
+    emitting numpy NaN RuntimeWarnings and asserting success on a no-op.
+    With the real sampler the tests exercise the actual feature extraction.
 
     Injecting the mocks at import time (module scope) leaks MagicMocks into
     ``sys.modules`` for the whole pytest session, causing later tests that rely

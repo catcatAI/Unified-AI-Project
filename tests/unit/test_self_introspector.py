@@ -26,6 +26,7 @@ class TestSelfIntrospector:
         import asyncio
 
         assert asyncio.iscoroutine(result)
+        result.close()  # 顯式關閉未 await 的協程，避免 never-awaited 孤兒 RuntimeWarning
 
     def test_get_introspection_prompt_injection_returns_string(self):
         instance = SelfIntrospector()

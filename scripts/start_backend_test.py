@@ -15,7 +15,14 @@ _PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
-from scripts._server_helper import start_server, stop_server, wait_for_server, test_health, test_chat
+# 底線別名：避免 test_health/test_chat 被 pytest 誤認為測試函數收集
+from scripts._server_helper import (
+    start_server,
+    stop_server,
+    wait_for_server,
+    test_chat as _test_chat,
+    test_health as _test_health,
+)
 
 WAIT_SECONDS=10.0
 
@@ -38,12 +45,12 @@ def main():
 
     # Health check
     print("--- Health Check ---")
-    ok, data = test_health()
+    ok, data = _test_health()
     print(f"{'✅' if ok else '❌'} {data}\n")
 
     # Chat test
     print("--- Chat Test ---")
-    ok, data = test_chat("hello")
+    ok, data = _test_chat("hello")
     print(f"{'✅' if ok else '❌'} {str(data)[:500]}\n")
 
     # Stop

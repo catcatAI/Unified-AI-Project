@@ -88,7 +88,8 @@ class TestVisualDecoderWeights:
 class TestAudioWaveformDecoderWeights:
 
     @pytest.fixture(scope="class")
-    def decoder_with_weights(self):
+    @classmethod
+    def decoder_with_weights(cls, request):
         decoder = AudioWaveformDecoder()
         ok = load_default_audio_decoder_weights(decoder)
         if not ok:
@@ -188,7 +189,8 @@ class TestTextureBenchmark:
     """Benchmark texture training on real CIFAR-10 images (if available)."""
 
     @pytest.fixture(scope="class")
-    def cifar_images(self):
+    @classmethod
+    def cifar_images(cls, request):
         pytest.importorskip("scipy.ndimage")
         pytest.importorskip("ai.multimodal.data_loader")
         from ai.multimodal.data_loader import CIFAR10Loader

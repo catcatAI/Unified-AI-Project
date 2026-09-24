@@ -38,6 +38,10 @@ pytestmark = [
 @dataclass
 class TestMetrics:
     """测试指标数据类"""
+
+    # pytest 誤收集防護：這是資料類別而非測試類（避免 PytestCollectionWarning）
+    __test__ = False
+
     test_name: str
     start_time: float
     end_time: Optional[float] = None

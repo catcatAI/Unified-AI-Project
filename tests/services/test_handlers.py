@@ -605,7 +605,6 @@ class TestVisionHandler:
 # =============================================================================
 
 
-@pytest.mark.asyncio
 class TestHandlersInit:
     """Test handlers/__init__.py exports."""
 
