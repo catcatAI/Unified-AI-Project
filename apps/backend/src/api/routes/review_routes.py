@@ -56,25 +56,6 @@ async def get_full_review():
     }
 
 
-@router.get("/review/{dimension}")
-async def get_dimension_review(dimension: str):
-    """执行指定维度的审查。
-
-    维度: design, code, markdown, consistency, training
-    """
-    engine = _get_engine()
-    if engine is None:
-        raise HTTPException(status_code=503, detail="Review engine not available")
-    try:
-        report = engine.run_review(dimension)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    return {
-        "success": True,
-        "report": report.to_dict(),
-    }
-
-
 @router.get("/review/score")
 async def get_composite_score():
     """获取综合评分（所有维度的加权平均）。"""
@@ -100,6 +81,30 @@ async def get_review_summary():
         "success": True,
         "summary": engine.generate_summary(reports),
         "composite_score": engine.get_composite_score(reports),
+    }
+
+
+# Catch-all MUST stay last: a `/review/{dimension}` declared above the literal
+# routes shadows them, and Starlette resolves in declaration order. That bug made
+# GET /review/score and GET /review/summary answer HTTP 400
+# ("Unknown review dimension: score") while both were documented as live and no
+# test exercised real routing (tests called the handler functions directly).
+@router.get("/review/{dimension}")
+async def get_dimension_review(dimension: str):
+    """执行指定维度的审查。
+
+    维度: design, code, markdown, consistency, training
+    """
+    engine = _get_engine()
+    if engine is None:
+        raise HTTPException(status_code=503, detail="Review engine not available")
+    try:
+        report = engine.run_review(dimension)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return {
+        "success": True,
+        "report": report.to_dict(),
     }
 
 
