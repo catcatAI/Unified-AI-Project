@@ -326,6 +326,18 @@ def test_unified_facade_delegates(tmp_path: Path) -> None:
     assert unified.search("繁體中文")["ok"] is True
 
 
+def test_facade_without_providers_still_shows_apps(tmp_path: Path) -> None:
+    """回歸：lifespan 組裝方式 UnifiedWorkspace(ws, GlobalContextTree())
+    下，樹必須仍能看到應用會話分支（否則 focus('apps') 404）。"""
+    unified = UnifiedWorkspace(
+        _make_workspace(tmp_path), GlobalContextTree()  # 樹無 providers 注入
+    )
+    view = unified.focus("apps")
+    assert view.get("error") is None
+    assert "應用程式" in view["text"]
+    assert "假應用" in view["text"]
+
+
 @pytest.mark.asyncio
 async def test_unified_facade_session_loop(tmp_path: Path) -> None:
     providers = _global_providers(tmp_path)

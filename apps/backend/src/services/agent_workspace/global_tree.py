@@ -47,21 +47,30 @@ class GlobalContextTree:
 
     def __init__(self, providers: Optional[GlobalContextProviders] = None) -> None:
         self._external_providers = providers
+        self._fallback_workspace: Optional[AgentWorkspace] = None
         self._tree: Optional[ContextTree] = None
 
     # ---------- 資料來源解析 ----------
 
+    def set_workspace_fallback(self, workspace: AgentWorkspace) -> None:
+        """接線：providers 未注入 workspace 時，以門面持有的工作區為後備。
+
+        修「UnifiedWorkspace(ws, GlobalContextTree())」組裝方式下樹看不到
+        應用會話分支（focus('apps') 404）的內外落差。
+        """
+        self._fallback_workspace = workspace
+
     def _providers(self) -> GlobalContextProviders:
         """解析資料來源：外部注入優先，其次 backbone registry，最後單例降級。"""
         if self._external_providers is not None:
-            return self._external_providers
+            return self._apply_fallback(self._external_providers)
         providers = GlobalContextProviders()
         try:
             from core.backbone import get_backbone
 
             cached = get_backbone().get_module("context.global_tree_providers")
             if isinstance(cached, GlobalContextProviders):
-                return cached
+                return self._apply_fallback(cached)
         except Exception as exc:  # backbone 缺席時優雅降級
             logger.debug("backbone providers lookup skipped: %s", exc)
         try:
@@ -70,6 +79,11 @@ class GlobalContextTree:
             providers.context_manager = get_context_manager()
         except Exception as exc:
             logger.warning("ContextManager unavailable: %s", exc)
+        return self._apply_fallback(providers)
+
+    def _apply_fallback(self, providers: GlobalContextProviders) -> GlobalContextProviders:
+        if providers.workspace is None and self._fallback_workspace is not None:
+            providers.workspace = self._fallback_workspace
         return providers
 
     def _dialogue_manager(self, providers: GlobalContextProviders) -> Any:
@@ -378,6 +392,8 @@ class UnifiedWorkspace:
     def __init__(self, workspace: AgentWorkspace, tree: GlobalContextTree) -> None:
         self.workspace = workspace
         self.global_tree = tree
+        # 接線：確保樹能掛載同一份會話狀態（否則 focus('apps') 會 404）
+        tree.set_workspace_fallback(workspace)
 
     # ---------- 全域上下文視圖 ----------
 
