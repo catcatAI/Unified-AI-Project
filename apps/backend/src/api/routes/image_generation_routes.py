@@ -6,6 +6,12 @@ import logging
 import os
 
 import numpy as np
+from ai.multimodal.generator.gvv_generator import (
+    encode_text_with_clip as _encode_text_with_clip,
+    generate_image as _generate_image,
+    get_gvv as _get_gvv,
+    gvv_initialized as _gvv_initialized,
+)
 from core.utils import safe_error
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -65,60 +71,7 @@ class InterpolateResponse(BaseModel):
     metrics: dict
 
 
-_gvv_state = None
 _three_layer_state = None
-
-
-def _get_gvv():
-    """Lazy-initialize the GVV pipeline with concept space."""
-    global _gvv_state
-    if _gvv_state is not None:
-        return _gvv_state
-
-    try:
-        from ai.multimodal.primitives.concept_mapper import ConceptMapper
-        from ai.multimodal.primitives.concept_space import ConceptSpaceMapper
-        from ai.multimodal.primitives.geometric_vocabulary import GeometricVocabulary
-        from ai.multimodal.primitives.instance_optimizer import InstanceOptimizer
-
-        models_dir = os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "models")
-        vocab_path = os.path.join(models_dir, "geometric_vocabulary.json")
-        mapper_path = os.path.join(models_dir, "concept_mapper.json")
-        concept_space_path = os.path.join(models_dir, "concept_space.json")
-
-        if not os.path.exists(vocab_path):
-            logger.error("Vocabulary not found at %s", vocab_path)
-            return None
-
-        vocabulary = GeometricVocabulary.load(vocab_path)
-        if os.path.exists(mapper_path):
-            mapper = ConceptMapper.load(vocabulary, mapper_path)
-        else:
-            mapper = ConceptMapper(vocabulary)
-
-        if os.path.exists(concept_space_path):
-            concept_space = ConceptSpaceMapper.load(concept_space_path)
-            mapper.set_concept_space(concept_space)
-            logger.info("Loaded concept space mapping")
-        else:
-            logger.warning("Concept space not found at %s", concept_space_path)
-
-        optimizer = InstanceOptimizer(vocabulary, mapper, (128, 128))
-
-        _gvv_state = {
-            "vocabulary": vocabulary,
-            "concept_mapper": mapper,
-            "optimizer": optimizer,
-        }
-        logger.info(
-            "Loaded GVV pipeline (vocab=%d words, %d concepts)",
-            len(vocabulary._visual_words),
-            len(vocabulary._concept_distributions),
-        )
-        return _gvv_state
-    except Exception as e:
-        logger.error("Failed to initialize GVV pipeline: %s", e)
-        return None
 
 
 def _get_three_layer():
@@ -147,79 +100,34 @@ def _get_three_layer():
         return None
 
 
-def _encode_text_with_clip(text: str) -> np.ndarray:
-    """Encode text using CLIP. Returns 512-dim vector."""
-    try:
-        from ai.multimodal.semantic_visual import SemanticVisualEncoder
-
-        encoder = SemanticVisualEncoder()
-        if not encoder.is_available:
-            logger.warning("CLIP not available, using zeros")
-            return np.zeros(512, dtype=np.float32)
-        result = encoder.encode_text([text])
-        if result is None:
-            return np.zeros(512, dtype=np.float32)
-        return np.asarray(result[0], dtype=np.float32)
-    except Exception as e:
-        logger.warning("CLIP encoding failed: %s, using zeros", e)
-        return np.zeros(512, dtype=np.float32)
-
-
 @router.post("/image/generate", response_model=GenerateImageResponse)
 async def image_generate(request: GenerateImageRequest):
     """Generate an image from text using the GVV pipeline.
 
-    Pipeline: text → CLIP → concept space → ConceptMapper → vocabulary init → optimize → render
+    Pipeline: text → CLIP → concept space → ConceptMapper → vocabulary init →
+    optimize → render. The pipeline itself is owned by
+    ai.multimodal.generator.gvv_generator so the chat path can reach the same
+    engine (see services/handlers/image_generation_handler.py).
     """
-    gvv = _get_gvv()
-    if gvv is None:
-        raise HTTPException(status_code=503, detail="GVV pipeline not available")
-
     try:
-        from ai.multimodal.primitives.primitive_types import DrawingInstructions
-        from ai.multimodal.primitives.primitive_renderer import PrimitiveRenderer
-
-        concept_mapper = gvv["concept_mapper"]
-        optimizer = gvv["optimizer"]
-
-        clip_vec = _encode_text_with_clip(request.text)
-
-        mapping = concept_mapper.map_text_to_primitives(clip_vec)
-        concept_name = mapping["concept"]
-
-        result = optimizer.optimize_from_text(
-            clip_vec,
-            n_iterations=request.num_iterations,
-            lr=request.learning_rate,
+        result = _generate_image(
+            request.text,
+            canvas_size=request.canvas_size,
+            num_iterations=request.num_iterations,
+            learning_rate=request.learning_rate,
         )
-
-        size = (request.canvas_size, request.canvas_size)
-        # R87 死路徑 #13：此前 import 不存在的 render_primitives_from_vector——
-        # 端點通過 503 檢查後必然 AttributeError。改用既有管線組件：
-        # optimized vector → DrawingInstructions.from_vector → PrimitiveRenderer.render。
-        instructions = DrawingInstructions.from_vector(result["vector"], size)
-        img = PrimitiveRenderer(size).render(instructions)
-
-        metrics = {
-            "concept": concept_name,
-            "similarity": mapping["similarity"],
-            "iterations": result["iterations"],
-            "final_loss": result["final_loss"],
-        }
-
-        buf = io.BytesIO()
-        img.save(buf, format="PNG")
-        img_base64 = base64.b64encode(buf.getvalue()).decode("utf-8")
-
-        return GenerateImageResponse(
-            image_base64=img_base64,
-            width=img.size[0],
-            height=img.size[1],
-            metrics=metrics,
-        )
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
-        logger.error("Image generation failed: %s", e)
+        logger.error("Image generation failed: %s", e, exc_info=True)
         raise HTTPException(status_code=500, detail=safe_error(e))
+
+    return GenerateImageResponse(
+        image_base64=result["image_base64"],
+        width=result["width"],
+        height=result["height"],
+        metrics=result["metrics"],
+    )
 
 
 @router.post("/image/recognize", response_model=RecognizeImageResponse)
@@ -377,7 +285,7 @@ async def image_status():
     GVV or ThreeLayerVisual. First request may show unavailable if
     models have not been initialized by a prior /generate call.
     """
-    gvv = _get_gvv() if _gvv_state is not None else None
+    gvv = _get_gvv() if _gvv_initialized() else None
     three_layer = _get_three_layer() if _three_layer_state is not None else None
     has_concept_space = False
     if gvv:

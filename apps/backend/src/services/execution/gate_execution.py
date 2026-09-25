@@ -72,7 +72,7 @@ _HANDLER_TO_INTENT = {
 # no entry in ExecutionGate.HANDLER_MAP (that map is keyed by QueryType). They
 # are resolved through IntentRegistry, which carries the executable handler id in
 # `metadata["handler_id"]` — data, not a regex in the service layer.
-_REGISTRY_DISPATCH_INTENTS = ("learning",)
+_REGISTRY_DISPATCH_INTENTS = ("learning", "image_generation")
 # IntentRegistry confidence is keyword-density (matched chars / total chars), so
 # a short imperative lands around 0.2-0.3. The same 0.1 floor the gate already
 # uses for IntentRegistry confirmation is too weak here; 0.2 plus the pattern's
@@ -295,8 +295,8 @@ class GateExecutionOwner:
 
     def _registry_handler_for(
         self, user_message: str, categories: Tuple[str, ...]
-    ) -> Optional[str]:
-        """Resolve an executable ModelBus handler id from IntentRegistry.
+    ) -> Optional[Tuple[str, str]]:
+        """Resolve (intent_name, handler_id) from IntentRegistry.
 
         ``IntentPattern.handler`` is a class name that nothing can dispatch, so
         the executable id lives in ``metadata["handler_id"]``. Returns None when
@@ -323,7 +323,7 @@ class GateExecutionOwner:
             required = (pattern.metadata or {}).get("require_keywords") or []
             if required and not any(kw in user_message for kw in required):
                 continue
-            return str(handler_id)
+            return str(name), str(handler_id)
         return None
 
     async def _registry_dispatch(
@@ -337,16 +337,17 @@ class GateExecutionOwner:
         """
         if not model_bus:
             return None
-        handler_id = self._registry_handler_for(
+        resolved = self._registry_handler_for(
             user_message, _REGISTRY_DISPATCH_INTENTS
         )
-        if not handler_id:
+        if not resolved:
             return None
+        intent_name, handler_id = resolved
         from ai.core.execution_gate import ExecutionGate
 
         gate = ExecutionGate(model_bus=model_bus)
         decision = gate.decide_agent_execution(
-            intent="learning",
+            intent=intent_name,
             agent_name=handler_id,
             user_message=user_message,
         )

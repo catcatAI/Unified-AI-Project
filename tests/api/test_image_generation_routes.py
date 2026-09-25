@@ -16,6 +16,15 @@ from fastapi import HTTPException
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "apps/backend/src"))
 
 
+def _raise_runtime(message: str):
+    """Build a callable that raises RuntimeError(message) when called."""
+
+    def _inner(*_args, **_kwargs):
+        raise RuntimeError(message)
+
+    return _inner
+
+
 @pytest.mark.asyncio
 class TestImageGenerationRoutes:
     """Verify route registration and structure."""
@@ -69,14 +78,55 @@ class TestImageGenerationRoutes:
 class TestImageGenerationModels:
     """Verify behavior when models are unavailable."""
 
-    async def test_generate_image_fails_without_gvv(self):
-        """POST /image/generate returns 503 when GVV pipeline not available."""
-        from api.routes.image_generation_routes import GenerateImageRequest, image_generate
+    async def test_generate_image_fails_when_pipeline_unavailable(self, monkeypatch):
+        """POST /image/generate returns 503 when the GVV pipeline is unavailable.
 
-        req = GenerateImageRequest(text="test", canvas_size=128)
+        NOTE: this test used to pass *because* the route could never load the
+        pipeline — its models_dir resolved to apps/models (one level too high),
+        so every real call was a 503. The unavailability is now injected
+        explicitly so the degradation contract stays covered independently of
+        whether the model files are present on the machine running the tests.
+        """
+        import api.routes.image_generation_routes as routes
+
+        monkeypatch.setattr(
+            routes,
+            "_generate_image",
+            _raise_runtime("GVV pipeline not available"),
+        )
+        req = routes.GenerateImageRequest(text="test", canvas_size=128)
         with pytest.raises(HTTPException) as exc_info:
-            await image_generate(req)
+            await routes.image_generate(req)
         assert exc_info.value.status_code == 503
+
+    async def test_generate_image_uses_the_pipeline_owner(self, monkeypatch):
+        """The route delegates to gvv_generator instead of an inline pipeline."""
+        import api.routes.image_generation_routes as routes
+
+        seen = {}
+
+        def _fake_generate(text, canvas_size, num_iterations, learning_rate):
+            seen.update(
+                text=text,
+                canvas_size=canvas_size,
+                num_iterations=num_iterations,
+                learning_rate=learning_rate,
+            )
+            return {
+                "image_base64": "QUJD",
+                "width": 32,
+                "height": 32,
+                "metrics": {"concept": "circle"},
+            }
+
+        monkeypatch.setattr(routes, "_generate_image", _fake_generate)
+        req = routes.GenerateImageRequest(text="a red circle", canvas_size=32)
+        result = await routes.image_generate(req)
+
+        assert seen["text"] == "a red circle"
+        assert seen["canvas_size"] == 32
+        assert result.image_base64 == "QUJD"
+        assert result.metrics["concept"] == "circle"
 
     async def test_recognize_image_fails_without_gvv(self):
         """POST /image/recognize returns 503 when GVV pipeline not available."""
@@ -111,12 +161,17 @@ class TestImageGenerationModels:
 
         result = await image_status()
         assert isinstance(result, dict)
-        # Status should report no models available
         assert "gvv_available" in result
         assert "three_layer_available" in result
-        # Both should be False in test environment
-        assert result["gvv_available"] is False
-        assert result["three_layer_available"] is False
+        assert result["pipeline"] == "gvv"
+        # Availability must reflect the real state of the pipeline owner, not a
+        # hardcoded False: the model files ARE present in this repo, and status
+        # must not trigger lazy initialization either.
+        from ai.multimodal.generator import gvv_generator
+
+        assert result["gvv_available"] is gvv_generator.gvv_initialized()
+        assert isinstance(result["vocab_size"], int)
+        assert isinstance(result["concept_count"], int)
 
 
 @pytest.mark.asyncio

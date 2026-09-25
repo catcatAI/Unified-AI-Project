@@ -1122,6 +1122,7 @@ class AngelaLLMService:
             from services.handlers.learning_handler import LearningHandler
             from services.handlers.system_command_handler import SystemCommandHandler
             from services.handlers.task_manager_handler import TaskManagerHandler
+            from services.handlers.image_generation_handler import ImageGenerationHandler
             from services.handlers.vision_handler import VisionHandler
             from services.handlers.web_search_handler import WebSearchHandler
 
@@ -1134,6 +1135,9 @@ class AngelaLLMService:
             bus.register_handler("system_cmd", SystemCommandHandler(), ["system"])
             bus.register_handler("task_mgr", TaskManagerHandler(), ["task"])
             bus.register_handler("vision", VisionHandler(), ["vision"])
+            bus.register_handler(
+                "image_generate", ImageGenerationHandler(), ["image_generation"]
+            )
             bus.register_handler("learning", LearningHandler(), ["learn", "remember"])
             bus.register_handler(
                 "civil",
@@ -1171,7 +1175,7 @@ class AngelaLLMService:
                 ],
             )
             logger.info(
-                "Model Bus handlers registered: file_ops, web_search, code_exec, system_cmd, task_mgr, vision, learning, civil"
+                "Model Bus handlers registered: file_ops, web_search, code_exec, system_cmd, task_mgr, vision, image_generate, learning, civil"
             )
         except Exception as e:
             logger.warning(f"Model Bus handler registration skipped: {e}")

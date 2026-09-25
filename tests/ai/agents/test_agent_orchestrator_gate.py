@@ -44,14 +44,20 @@ def test_read_class_agent_auto_executes():
     assert decision.action == "auto_execute"
 
 
-def test_create_class_agent_auto_executes_when_clear():
+@pytest.mark.parametrize("intent", ["image_generate", "image_generation"])
+def test_create_class_agent_auto_executes_when_clear(intent):
+    """Both owner vocabularies for image generation must map to the same action.
+
+    The gate is the single mapping point from any intent vocabulary to an action
+    class; a missing key shows up only as a silent reject at runtime.
+    """
     from ai.core.execution_gate import ExecutionGate
 
     # "create" is reversible (0.9) — outputs can be deleted — so a clear
     # generation request runs without a confirmation round trip.
     decision = ExecutionGate().decide_agent_execution(
-        intent="image_generate",
-        agent_name="image_generation_agent",
+        intent=intent,
+        agent_name="image_generation_handler",
         user_message="生成一張城市夜景的圖片",
     )
     assert decision.action == "auto_execute"

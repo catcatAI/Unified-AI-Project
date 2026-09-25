@@ -129,6 +129,15 @@ _AGENT_INTENT_ACTIONS = {
     "vision": "read",
     "audio": "read",
     "nlp": "read",
+    # Chat-side image generation. The vocabulary is only 50 geometric words /
+    # 10 concepts, so this produces an abstract primitive composition — still a
+    # real artifact, but the caller must not imply photorealism.
+    # Two spellings exist because two owners name this intent: IntentRegistry
+    # ("image_generation", dispatched via metadata.handler_id) and
+    # AgentOrchestrator.classify_intent ("image_generate"). This map is the one
+    # place that turns any owner's vocabulary into an action class, so it accepts
+    # both instead of leaving the gap to be rediscovered as a silent reject.
+    "image_generation": "create",
     "image_generate": "create",
     # User-taught facts: additive and reversible (can be forgotten) → create.
     # Reached via IntentRegistry metadata["handler_id"] (see gate_execution).
