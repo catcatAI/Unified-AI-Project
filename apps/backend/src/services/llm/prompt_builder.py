@@ -21,10 +21,152 @@ _DICTIONARY_MAX_CHARS = 800
 _CONVERSATION_MEMORY_MAX_CHARS = 800
 _WEB_SEARCH_MAX_CHARS = 1200
 
+# 提示總量守門：以 token 估算為單位（CJK 感知的跨模型保守近似）
+DEFAULT_PROMPT_TOKEN_BUDGET = 6000
+# 模型視窗中預留給「提示」的比例（其餘留給輸出與對話餘裕）
+_PROMPT_WINDOW_RATIO = 0.55
+# 稽核註記的保留空間（tokens）——裁剪目標預先扣除，讓註記不擠爆預算
+_NOTE_RESERVE_TOKENS = 160
+# 已知模型的 context_window（字首比對；未知模型用 DEFAULT）
+MODEL_CONTEXT_WINDOWS = {
+    "phi": 2048,
+    "qwen2.5-coder": 4096,
+    "qwen": 4096,
+    "deepseek-r1": 8192,
+}
+DEFAULT_MODEL_CONTEXT_WINDOW = 8192
+# system 訊息內不可裁剪的區段字首
+_PROTECTED_SYSTEM_SECTIONS = ("SAFETY INSTRUCTION", "Context Budget Note")
+
+# 超窗遙測：累計計數器（供學習／監控讀取）
+_budget_telemetry: Dict[str, int] = {
+    "events": 0,
+    "dropped_messages": 0,
+    "truncated_messages": 0,
+    "trimmed_system_sections": 0,
+    "freed_chars": 0,
+}
+
 # 工作區全貌 TTL 快取（秒）——避免每次對話重建全域樹
 _WORKSPACE_CACHE_TTL = 20.0
 _workspace_overview_cache = ""
 _workspace_overview_cache_time = 0.0
+
+
+def estimate_tokens(text: str) -> int:
+    """CJK 感知的 token 估算：中文字約 1 字 1 token，其他約 4 字元 1 token。"""
+    if not text:
+        return 0
+    cjk = sum(1 for ch in text if "\u4e00" <= ch <= "\u9fff")
+    return cjk + (len(text) - cjk) // 4
+
+
+def _resolve_prompt_token_budget(context: Dict[str, Any]) -> int:
+    """提示 token 預算解析（優先序）：
+
+    1. 環境變數 ANGELA_PROMPT_TOKEN_BUDGET（維運覆寫）
+    2. context["_prompt_token_budget"]（呼叫端明確指定）
+    3. context["_model_context_window"] × _PROMPT_WINDOW_RATIO（按模型動態）
+    4. config system/llm.prompt_token_budget
+    5. DEFAULT_PROMPT_TOKEN_BUDGET
+    """
+    env = os.environ.get("ANGELA_PROMPT_TOKEN_BUDGET", "")
+    if env.isdigit() and int(env) > 0:
+        return int(env)
+    explicit = context.get("_prompt_token_budget")
+    if isinstance(explicit, (int, float)) and explicit > 0:
+        return int(explicit)
+    window = context.get("_model_context_window")
+    if isinstance(window, (int, float)) and window > 0:
+        return int(window * _PROMPT_WINDOW_RATIO)
+    try:
+        cfg = _get_llm_config("prompt_token_budget")
+    except (TypeError, ValueError):
+        cfg = None
+    if isinstance(cfg, (int, float)) and cfg > 0:
+        return int(cfg)
+    return DEFAULT_PROMPT_TOKEN_BUDGET
+
+
+def resolve_model_window(model_name: str) -> int:
+    """依模型名稱字首解析 context_window（未知模型回保守預設）。"""
+    name = str(model_name or "").strip().lower()
+    if not name:
+        return DEFAULT_MODEL_CONTEXT_WINDOW
+    for prefix, window in sorted(
+        MODEL_CONTEXT_WINDOWS.items(), key=lambda kv: -len(kv[0])
+    ):
+        if name.startswith(prefix):
+            return window
+    return DEFAULT_MODEL_CONTEXT_WINDOW
+
+
+def _trim_system_sections(content: str, deficit_tokens: int) -> tuple:
+    """system 訊息內部裁剪：保護開頭核心段落與安全指令區段，
+    其餘 [Tag] 區段由大至小整段捨棄；仍不足則砍半最大區段。
+    回傳（新內容, 釋放字元數, 捨棄區段數）。"""
+    parts = content.split("\n\n[")
+    if len(parts) <= 1:
+        return content, 0, 0  # 無區段結構，不可裁
+
+    def droppable() -> List[int]:
+        out = []
+        for i, part in enumerate(parts[1:], start=1):
+            if part.startswith(_PROTECTED_SYSTEM_SECTIONS):
+                continue
+            out.append(i)
+        return out
+
+    freed_chars = 0
+    dropped = 0
+    # 先整段捨棄（由大至小）
+    while deficit_tokens > 0:
+        candidates = droppable()
+        if not candidates:
+            break
+        biggest = max(candidates, key=lambda i: len(parts[i]))
+        deficit_tokens -= estimate_tokens("\n\n[" + parts[biggest])
+        freed_chars += len(parts[biggest])
+        parts.pop(biggest)
+        dropped += 1
+    # 仍不足：砍半最大區段
+    while deficit_tokens > 0:
+        candidates = droppable()
+        if not candidates:
+            break
+        biggest = max(candidates, key=lambda i: len(parts[i]))
+        if len(parts[biggest]) < 80:
+            break
+        halved = parts[biggest][: len(parts[biggest]) // 2] + "…（已截斷）"
+        deficit_tokens -= estimate_tokens(parts[biggest]) - estimate_tokens(halved)
+        freed_chars += len(parts[biggest]) - len(halved)
+        parts[biggest] = halved
+        dropped += 1
+    # 最後手段：核心本身超額（小模型連身分都裝不下）——按行精簡，
+    # 保留前幾行「她是誰」的身分精華，捨棄狀態樣板等細節
+    if deficit_tokens > 0 and len(parts[0]) > 400:
+        lines = [ln for ln in parts[0].splitlines() if ln.strip()]
+        keep: List[str] = []
+        used = 0
+        for ln in lines:
+            cost = estimate_tokens(ln) + 1
+            if used + cost > 400 and keep:
+                break
+            keep.append(ln)
+            used += cost
+        trimmed_core = "\n".join(keep) + "\n…（核心提示已精簡）"
+        freed_now = estimate_tokens(parts[0]) - estimate_tokens(trimmed_core)
+        if freed_now > 0:  # 只有真的變小才計入，避免死循環
+            deficit_tokens -= freed_now
+            freed_chars += len(parts[0]) - len(trimmed_core)
+            parts[0] = trimmed_core
+            dropped += 1
+    return "\n\n[".join(parts), freed_chars, dropped
+
+
+def get_prompt_budget_stats() -> Dict[str, int]:
+    """超窗遙測唯讀副本（供監控／學習器讀取）。"""
+    return dict(_budget_telemetry)
 
 
 def _get_autonomous_lifecycle():
@@ -132,43 +274,97 @@ def _append_workspace_overview(messages: List[Dict], context: Dict) -> None:
 
 
 def _enforce_prompt_budget(messages: List[Dict], context: Dict) -> Dict[str, int]:
-    """總量守門（最後一道關卡）：提示總字元數不得超過預算。
+    """總量守門（最後一道關卡）：提示 token 估算不得超過預算。
 
-    超額時從尾端（最後注入＝最舊資訊）整塊捨棄，直到回到預算內：
-    - 保護：最終 user 訊息、system 訊息（含安全指令與核心提示）。
-    - 捨棄後在系統提示附上稽核註記（dropped_blocks/freed_chars），
-      讓 Angela 知道上下文被裁剪過——內外一致，不靜默消失。
+    兩段式裁剪，直到回到預算內：
+      1. 最舊優先驅逐：system 與最終 user 之間的訊息由舊到新捨棄——
+         歷史與較早的補充區塊先走，最新注入的補充區塊（與當前問題
+         最相關）留到最後。
+      2. 最後手段：仍超額時反覆砍半「最終 user 訊息」
+         （使用者貼超長文件的真实情境），附截斷標記；
+         system（核心提示／安全指令）一律神聖不可砍。
+    裁剪發生時在系統提示附稽核註記——Angela 會知道上下文被裁過，
+    不靜默消失；同時累計遙測計數器。
     """
-    try:
-        budget_chars = int(_get_llm_config("prompt_char_budget", 24000) or 24000)
-    except (TypeError, ValueError):
-        budget_chars = 24000
-    total = sum(len(m.get("content", "")) for m in messages)
-    stats = {"total_chars": total, "budget_chars": budget_chars, "dropped_blocks": 0, "freed_chars": 0}
-    if total <= budget_chars:
+    budget_tokens = _resolve_prompt_token_budget(context)
+    # 裁剪目標預扣註記保留量——讓稽核註記本身不擠爆預算
+    total = sum(estimate_tokens(str(m.get("content", ""))) for m in messages)
+    target = budget_tokens - (_NOTE_RESERVE_TOKENS if total > budget_tokens else 0)
+    stats: Dict[str, int] = {
+        "budget_tokens": budget_tokens,
+        "total_tokens": total,
+        "dropped_messages": 0,
+        "truncated_messages": 0,
+        "trimmed_system_sections": 0,
+        "freed_chars": 0,
+    }
+    if total <= budget_tokens:
         return stats
-    final_user_idx = len(messages) - 1
-    # 從倒數第二條往前（最後注入的區塊先捨），保護 system 與最終 user
-    for idx in range(len(messages) - 2, -1, -1):
-        if total <= budget_chars:
-            break
+
+    # ── 階段 1：最舊優先驅逐（保護 system 與最終 user） ──
+    idx = 1
+    while total > target and idx < len(messages) - 1:
         msg = messages[idx]
-        if msg.get("role") == "system" or idx == final_user_idx:
-            continue  # 保護：核心提示／安全指令／摘要指令／最終 user
+        if msg.get("role") == "system":
+            idx += 1
+            continue
         content = str(msg.get("content", ""))
         messages.pop(idx)
-        total -= len(content)
-        stats["dropped_blocks"] += 1
+        total -= estimate_tokens(content)
+        stats["dropped_messages"] += 1
         stats["freed_chars"] += len(content)
-    if stats["dropped_blocks"]:
+
+    # ── 階段 2：砍半最終 user 訊息（貼超長文件情境） ──
+    while total > target and messages:
+        final_msg = messages[-1]
+        content = str(final_msg.get("content", ""))
+        if len(content) <= 80:  # 太短再砍已無意義——交由 system 區段裁剪
+            break
+        halved = content[: len(content) // 2] + "…（已截斷）"
+        total -= estimate_tokens(content) - estimate_tokens(halved)
+        final_msg["content"] = halved
+        stats["truncated_messages"] += 1
+        stats["freed_chars"] += len(content) - len(halved)
+
+    # ── 階段 3：system 內部區段裁剪（system 本身超額時的唯一手段） ──
+    while total > target:
+        deficit = total - target
+        before = estimate_tokens(str(messages[0].get("content", "")))
+        new_content, freed, dropped = _trim_system_sections(
+            str(messages[0].get("content", "")), deficit
+        )
+        if dropped == 0:
+            break  # 無可裁區段（核心＋安全指令本身超額）——誠實上報
+        messages[0]["content"] = new_content
+        total -= before - estimate_tokens(new_content)
+        stats["trimmed_system_sections"] += dropped
+        stats["freed_chars"] += freed
+
+    stats["total_tokens"] = sum(estimate_tokens(str(m.get("content", ""))) for m in messages)
+
+    # ── 遙測＋稽核註記 ──
+    trimmed = stats["dropped_messages"] + stats["truncated_messages"] + stats["trimmed_system_sections"]
+    if trimmed:
+        _budget_telemetry["events"] += 1
+        for key in ("dropped_messages", "truncated_messages", "trimmed_system_sections", "freed_chars"):
+            _budget_telemetry[key] += stats[key]
+        logger.warning(
+            "提示超出 token 預算（%d/%d）：驅逐 %d 則、截斷 %d 則、system 區段 -%d",
+            stats["total_tokens"],
+            budget_tokens,
+            stats["dropped_messages"],
+            stats["truncated_messages"],
+            stats["trimmed_system_sections"],
+        )
         messages[0]["content"] += (
             f"\n\n[Context Budget Note]\n"
-            f"- dropped_blocks: {stats['dropped_blocks']}\n"
-            f"- freed_chars: {stats['freed_chars']}\n"
-            f"- budget_chars: {budget_chars}\n"
-            "（部分上下文區塊因超出預算被裁剪；如需細節請向使用者確認或分次處理）"
+            f"- budget_tokens: {budget_tokens}\n"
+            f"- total_tokens: {stats['total_tokens']}\n"
+            f"- dropped_messages: {stats['dropped_messages']}\n"
+            f"- truncated_messages: {stats['truncated_messages']}\n"
+            f"- trimmed_system_sections: {stats['trimmed_system_sections']}\n"
+            "（部分上下文因超出預算被裁剪；如需細節請向使用者確認或分次處理）"
         )
-    stats["total_chars"] = sum(len(m.get("content", "")) for m in messages)
     return stats
 
 
@@ -636,7 +832,10 @@ def _append_image_analysis(messages: List[Dict], context: Dict) -> None:
 def _append_history(messages: List[Dict], context: Dict) -> None:
     history = context.get("history", [])
     for h in history[-10:]:
-        messages.append({"role": h.get("role", "assistant"), "content": h.get("content", "")})
+        # 單則上限：超長歷史訊息在源頭就截斷（總量守門前的第一道防線）
+        messages.append(
+            {"role": h.get("role", "assistant"), "content": str(h.get("content", ""))[:800]}
+        )
 
 
 def _append_retrieved_context(messages: List[Dict], context: Dict) -> None:
@@ -898,12 +1097,14 @@ def _append_draft_response(messages: List[Dict], context: Dict) -> None:
 
 
 __all__ = [
-    "_get_llm_config",
     "_enforce_prompt_budget",
+    "_get_llm_config",
     "_get_workspace_overview",
     "construct_angela_prompt",
+    "estimate_tokens",
     "get_autonomous_decisions",
     "get_biological_state",
     "get_formula_summaries",
+    "get_prompt_budget_stats",
     "get_theta_state",
 ]

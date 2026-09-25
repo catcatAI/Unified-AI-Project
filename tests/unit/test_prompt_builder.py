@@ -68,59 +68,238 @@ class TestGetFormulaSummaries:
         assert "生命強度" in result or "活躍認知" in result or "CDM" in result
 
 
+class TestEstimateTokens:
+    """CJK 感知的 token 估算。"""
+
+    def test_cjk_one_char_one_token(self):
+        from services.llm.prompt_builder import estimate_tokens
+
+        assert estimate_tokens("中文測試") == 4
+        assert estimate_tokens("中" * 100) == 100
+
+    def test_ascii_four_chars_per_token(self):
+        from services.llm.prompt_builder import estimate_tokens
+
+        assert estimate_tokens("abcd" * 25) == 25
+
+    def test_empty(self):
+        from services.llm.prompt_builder import estimate_tokens
+
+        assert estimate_tokens("") == 0
+        assert estimate_tokens("  ") == 0
+
+
 class TestPromptBudgetGate:
-    """總量守門：單區塊各自截斷之外的最後一道關卡。"""
+    """總量守門：token 估算制＋三階段裁剪（區塊→歷史→截斷）。"""
 
-    def _oversized_messages(self, n_blocks: int = 8, block_chars: int = 6000):
-        from services.llm.prompt_builder import _enforce_prompt_budget
-
+    def _build(self, n_blocks=5, block_chars=6000, history=None):
         messages = [{"role": "system", "content": "核心提示" * 10}]
         for i in range(n_blocks):
             messages.append({"role": "user", "content": f"[Block {i}] " + "x" * block_chars})
+        for h in history or []:
+            messages.append(h)
         messages.append({"role": "user", "content": "<user_message>請回答</user_message>"})
-        context: dict = {}
-        stats = _enforce_prompt_budget(messages, context)
-        return messages, stats
+        return messages
 
-    @patch("services.llm.prompt_builder._get_llm_config", return_value=12000)
-    def test_budget_trims_oldest_blocks_first(self, mock_cfg):
-        messages, stats = self._oversized_messages()
-        total = sum(len(m["content"]) for m in messages)
-        assert total <= 12000 + 500  # 預算內（系統註記有餘裕）
-        assert stats["dropped_blocks"] > 0
-        assert stats["freed_chars"] > 0
-        # 最終 user 訊息保留
+    @patch("services.llm.prompt_builder._get_llm_config", return_value=None)
+    def test_eviction_oldest_first_keeps_newest_block(self, mock_cfg):
+        from services.llm.prompt_builder import _enforce_prompt_budget
+
+        messages = self._build(n_blocks=6)
+        stats = _enforce_prompt_budget(messages, {"_prompt_token_budget": 3000})
+        assert stats["budget_tokens"] == 3000
+        assert stats["dropped_messages"] > 0
+        # 最舊的 Block0 先被驅逐
+        assert not any("[Block 0]" in m["content"] for m in messages[1:-1])
+        # 最新的補充區塊（與當前問題最相關）存留
+        assert any("[Block 5]" in m["content"] for m in messages[1:-1])
         assert messages[-1]["content"] == "<user_message>請回答</user_message>"
-        # system 訊息保留且附稽核註記
         assert "[Context Budget Note]" in messages[0]["content"]
 
-    @patch("services.llm.prompt_builder._get_llm_config", return_value=12000)
-    def test_budget_protects_system_and_final_user(self, mock_cfg):
+    @patch("services.llm.prompt_builder._get_llm_config", return_value=None)
+    def test_history_dropped_oldest_first(self, mock_cfg):
+        from services.llm.prompt_builder import _enforce_prompt_budget
+
+        history = [
+            {"role": "user", "content": f"舊訊息{i}" + "y" * 900} for i in range(4)
+        ]
+        messages = self._build(n_blocks=0, history=history)
+        stats = _enforce_prompt_budget(messages, {"_prompt_token_budget": 600})
+        assert stats["dropped_messages"] >= 1
+        # 存留下來的歷史應是最新的
+        remaining = [m["content"] for m in messages[1:-1]]
+        assert any("舊訊息3" in c for c in remaining)
+        assert not any("舊訊息0" in c for c in remaining)
+
+    @patch("services.llm.prompt_builder._get_llm_config", return_value=None)
+    def test_final_message_halved_as_last_resort(self, mock_cfg):
+        from services.llm.prompt_builder import _enforce_prompt_budget
+
+        # 無中間訊息可驅逐——超長的最終 user 訊息（貼大文件情境）被砍半
+        messages = [
+            {"role": "system", "content": "S" * 200},
+            {"role": "user", "content": "z" * 8000},
+        ]
+        stats = _enforce_prompt_budget(messages, {"_prompt_token_budget": 700})
+        assert stats["truncated_messages"] >= 1
+        assert "…（已截斷）" in messages[-1]["content"]
+        # system 原文完整保留（不被砍），僅附加稽核註記
+        assert messages[0]["content"].startswith("S" * 200)
+        assert "[Context Budget Note]" in messages[0]["content"]
+
+    @patch("services.llm.prompt_builder._get_llm_config", return_value=None)
+    def test_system_never_evicted_under_extreme_budget(self, mock_cfg):
         from services.llm.prompt_builder import _enforce_prompt_budget
 
         messages = [
-            {"role": "system", "content": "S" * 5000},
-            {"role": "user", "content": "A" * 5000},
-            {"role": "user", "content": "B" * 5000},
+            {"role": "system", "content": "核心" * 300},
+            {"role": "user", "content": "x" * 3000},
             {"role": "user", "content": "final"},
         ]
-        stats = _enforce_prompt_budget(messages, {})
-        roles = [m["role"] for m in messages]
-        assert roles[0] == "system"
-        assert messages[-1]["content"] == "final"
-        assert stats["dropped_blocks"] >= 1
-
-    @patch("services.llm.prompt_builder._get_llm_config", return_value=500000)
-    def test_under_budget_no_drops_no_note(self, mock_cfg):
-        messages, stats = self._oversized_messages(n_blocks=2)
-        assert stats["dropped_blocks"] == 0
-        assert "[Context Budget Note]" not in messages[0]["content"]
+        _enforce_prompt_budget(messages, {"_prompt_token_budget": 10})
+        assert messages[0]["role"] == "system"  # system 永遠在場
 
     @patch("services.llm.prompt_builder._get_llm_config", return_value=None)
-    def test_invalid_budget_falls_back_to_default(self, mock_cfg):
-        messages, stats = self._oversized_messages(n_blocks=8, block_chars=6000)
-        # 預設 24000：48k 的區塊量會被裁
-        assert stats["dropped_blocks"] > 0
+    def test_under_budget_no_drops_no_note(self, mock_cfg):
+        from services.llm.prompt_builder import _enforce_prompt_budget
+
+        messages = self._build(n_blocks=2)
+        stats = _enforce_prompt_budget(messages, {"_prompt_token_budget": 6000})
+        assert stats["dropped_messages"] == 0
+        assert stats["truncated_messages"] == 0
+        assert "[Context Budget Note]" not in messages[0]["content"]
+
+    def test_env_override_budget(self):
+        from services.llm.prompt_builder import _resolve_prompt_token_budget
+
+        with patch.dict("os.environ", {"ANGELA_PROMPT_TOKEN_BUDGET": "1234"}):
+            assert _resolve_prompt_token_budget({}) == 1234
+
+    @patch("services.llm.prompt_builder._get_llm_config", return_value=None)
+    def test_model_window_dynamic_budget(self, mock_cfg):
+        from services.llm.prompt_builder import _resolve_prompt_token_budget
+
+        # 2048 窗 × 0.55 ≈ 1126；env 未設、無明確指定時按模型動態
+        budget = _resolve_prompt_token_budget({"_model_context_window": 2048})
+        assert budget == int(2048 * 0.55)
+
+    @patch("services.llm.prompt_builder._get_llm_config", return_value=None)
+    def test_small_window_model_trims_aggressively(self, mock_cfg):
+        from services.llm.prompt_builder import _enforce_prompt_budget
+
+        messages = self._build(n_blocks=4)
+        stats = _enforce_prompt_budget(messages, {"_model_context_window": 2048})
+        assert stats["budget_tokens"] == int(2048 * 0.55)
+        assert stats["dropped_messages"] > 0
+
+    @patch("services.llm.prompt_builder._get_llm_config", return_value=None)
+    def test_telemetry_counts_events(self, mock_cfg):
+        from services.llm.prompt_builder import (
+            _enforce_prompt_budget,
+            get_prompt_budget_stats,
+        )
+
+        before = get_prompt_budget_stats()["events"]
+        messages = self._build(n_blocks=5)
+        _enforce_prompt_budget(messages, {"_prompt_token_budget": 1500})
+        after = get_prompt_budget_stats()
+        assert after["events"] == before + 1
+        assert after["dropped_messages"] >= 1
+
+    @patch("services.llm.prompt_builder._get_llm_config", return_value=None)
+    def test_invalid_budget_config_ignored(self, mock_cfg):
+        from services.llm.prompt_builder import _resolve_prompt_token_budget
+
+        mock_cfg.return_value = "not-a-number"
+        assert _resolve_prompt_token_budget({}) == 6000
+
+    def test_history_single_message_capped_at_source(self):
+        from services.llm.prompt_builder import construct_angela_prompt
+
+        context = {
+            "state_for_llm": None,
+            "history": [{"role": "user", "content": "h" * 5000}],
+        }
+        with patch("services.llm.prompt_builder._get_llm_config", return_value={}):
+            result = construct_angela_prompt("hi", context)
+        history_msg = result[1]
+        assert len(history_msg["content"]) == 800
+
+
+class TestModelWindowResolution:
+    def test_known_model_prefixes(self):
+        from services.llm.prompt_builder import resolve_model_window
+
+        assert resolve_model_window("phi:latest") == 2048
+        assert resolve_model_window("qwen2.5-coder:latest") == 4096
+        assert resolve_model_window("deepseek-r1:latest") == 8192
+
+    def test_unknown_model_conservative_default(self):
+        from services.llm.prompt_builder import resolve_model_window
+
+        assert resolve_model_window("mystery-model") == 8192
+        assert resolve_model_window("") == 8192
+
+
+class TestSystemSectionTrimming:
+    """system 本身超額時：保護核心與安全指令，其餘區段由大至小捨。"""
+
+    def _trim(self, system_content, budget):
+        from services.llm.prompt_builder import _enforce_prompt_budget
+
+        messages = [
+            {"role": "system", "content": system_content},
+            {"role": "user", "content": "final"},
+        ]
+        stats = _enforce_prompt_budget(messages, {"_prompt_token_budget": budget})
+        return messages, stats
+
+    @patch("services.llm.prompt_builder._get_llm_config", return_value=None)
+    def test_oversized_system_trims_sections_keeps_safety(self, mock_cfg):
+        from services.llm.prompt_builder import estimate_tokens
+
+        system = (
+            "核心提示\n\n"
+            "[Context Overview]\n" + "o" * 4000 + "\n\n"
+            "[Verified Knowledge]\n" + "k" * 4000 + "\n\n"
+            "[SAFETY INSTRUCTION — MANDATORY]\n保持安全\n\n"
+            "[Web Search Results]\n" + "w" * 4000
+        )
+        messages, stats = self._trim(system, 3000)
+        assert stats["trimmed_system_sections"] >= 1
+        assert "[SAFETY INSTRUCTION" in messages[0]["content"]
+        assert "[Context Budget Note]" in messages[0]["content"]
+        total = sum(estimate_tokens(m["content"]) for m in messages)
+        assert total <= 3000  # 註記預扣後仍不超預算
+
+    @patch("services.llm.prompt_builder._get_llm_config", return_value=None)
+    def test_note_reserve_keeps_total_within_budget(self, mock_cfg):
+        from services.llm.prompt_builder import _enforce_prompt_budget, estimate_tokens
+
+        messages = [{"role": "system", "content": "核心提示" * 10}]
+        for i in range(3):
+            messages.append({"role": "user", "content": f"[Block {i}] " + "x" * 6000})
+        messages.append({"role": "user", "content": "<user_message>請回答</user_message>"})
+        stats = _enforce_prompt_budget(messages, {"_prompt_token_budget": 2000})
+        assert stats["total_tokens"] <= 2000
+
+    @patch("services.llm.prompt_builder._get_llm_config", return_value=None)
+    def test_small_window_end_to_end_fits(self, mock_cfg):
+        """煙霧測試回歸：2048 窗小模型不再收到 4 倍超額的提示。"""
+        from services.llm.prompt_builder import construct_angela_prompt, estimate_tokens
+
+        context = {
+            "state_for_llm": None,
+            "history": [{"role": "user", "content": "h" * 800} for _ in range(10)],
+            "grounded_context": "知" * 1500,
+            "web_search_context": "網" * 1200,
+            "workspace_overview": "🔒 全貌 [root]" + "\n  🔒 節點" * 30,
+            "_model_context_window": 2048,
+        }
+        with patch("services.llm.prompt_builder._get_llm_config", return_value={}):
+            result = construct_angela_prompt("q", context)
+        total = sum(estimate_tokens(m["content"]) for m in result)
+        assert total <= int(2048 * 0.55)
 
 
 class TestWorkspaceOverviewInjection:

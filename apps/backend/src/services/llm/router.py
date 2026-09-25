@@ -1099,10 +1099,24 @@ class AngelaLLMService:
     def _construct_angela_prompt(
         self, user_message: str, context: Dict[str, Any]
     ) -> List[Dict[str, str]]:
-        """Wrapper — delegates to standalone function for A3 split compatibility"""
+        """Wrapper — delegates to standalone function for A3 split compatibility.
+
+        把當前模型的 context_window 注入 context（鍵 _model_context_window），
+        供提示總量守門按模型動態計算預算——2048 窗的小模型自動收緊。
+        """
         nv = None
         if self.__class__._neuro_vocab_instance is not None:
             nv = self.__class__._neuro_vocab_instance[0]
+        if "_model_context_window" not in context:
+            backend = self.active_backend
+            model_name = str(getattr(backend, "model_name", "") or "")
+            if not model_name:
+                model_name = str(
+                    (self.config.get("active_model") or self.config.get("model") or "")
+                )
+            from services.llm.prompt_builder import resolve_model_window
+
+            context["_model_context_window"] = resolve_model_window(model_name)
         return construct_angela_prompt(user_message, context, neuro_vocabulary=nv)
 
     async def generate_response_full(
