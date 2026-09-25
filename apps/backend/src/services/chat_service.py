@@ -171,10 +171,16 @@ class ChatService:
             logger.warning("ED3N learning integration init skipped: %s", e)
         # Initialize VectorMemoryStore for semantic memory retrieval (Phase 5.3)
         try:
-            from ai.memory.vector_store import VectorMemoryStore
+            from ai.memory.vector_store import get_vector_store
 
-            self._vector_store = VectorMemoryStore()
-            logger.info("VectorStore initialized with %d vectors", self._vector_store.vector_count)
+            # Single-owner accessor: ChatService and every other writer (e.g.
+            # LearningHandler persisting a user-taught fact) share one store.
+            self._vector_store = get_vector_store()
+            logger.info(
+                "VectorStore initialized (backend=%s, %d vectors)",
+                getattr(self._vector_store, "backend_type", "?"),
+                getattr(self._vector_store, "vector_count", 0),
+            )
         except Exception as e:
             logger.warning("VectorStore init skipped: %s", e)
         # Initialize HAM memory for template-based retrieval (Phase 5.3)

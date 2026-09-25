@@ -436,3 +436,42 @@ class VectorMemoryStore:
 
     def __bool__(self) -> bool:
         return True
+
+
+# =============================================================================
+# Single-owner accessor.
+#
+# WHY: the store used to be constructible from anywhere and was in practice only
+# reachable through ChatService._vector_store. Anything else that needed to
+# persist a long-term memory (e.g. LearningHandler storing a user-taught fact)
+# had no legitimate path, so those writes silently became no-ops. One process
+# = one store, reached through this accessor.
+# =============================================================================
+
+_VECTOR_STORE_SINGLETON: Optional[VectorMemoryStore] = None
+
+
+def get_vector_store() -> Optional[VectorMemoryStore]:
+    """Return the process-wide VectorMemoryStore, creating it on first use.
+
+    Returns None when the backend cannot be initialized (callers must degrade,
+    never fabricate a successful write).
+    """
+    global _VECTOR_STORE_SINGLETON
+    if _VECTOR_STORE_SINGLETON is None:
+        try:
+            _VECTOR_STORE_SINGLETON = VectorMemoryStore()
+            logger.info(
+                "VectorMemoryStore singleton created (backend=%s)",
+                _VECTOR_STORE_SINGLETON.backend_type,
+            )
+        except Exception as exc:  # pragma: no cover - backend/FS failure
+            logger.warning("VectorMemoryStore singleton init failed: %s", exc, exc_info=True)
+            return None
+    return _VECTOR_STORE_SINGLETON
+
+
+def reset_vector_store_singleton() -> None:
+    """Drop the singleton (test isolation; the next call rebuilds it)."""
+    global _VECTOR_STORE_SINGLETON
+    _VECTOR_STORE_SINGLETON = None

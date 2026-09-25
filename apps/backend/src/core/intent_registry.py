@@ -159,6 +159,38 @@ _DEFAULT_PATTERNS: List[Dict[str, Any]] = [
         ],
         "priority": 4,
         "handler": "LearningHandler",
+        # handler_id: the ModelBus handler id this intent dispatches to. The
+        # "handler" field above is a human-readable class name and was never
+        # resolvable to anything executable, which is why a user-taught fact
+        # ("請記住 X") never reached LearningHandler and the model only *said*
+        # it remembered. ExecutionGate resolves this id and authorizes it.
+        "metadata": {
+            "handler_id": "learning",
+            # Storing a fact needs an explicit "remember/teach me" verb. The
+            # keyword list also holds nouns (設定 / 偏好 / 學習) that describe a
+            # topic, not an instruction — without this gate 「設定檔在哪」 would
+            # be stored as a taught fact.
+            "require_keywords": [
+                "記住",
+                "记住",
+                "記得",
+                "记得",
+                "记住這",
+                "请记住",
+                "請記住",
+                "教我",
+                "教會",
+                "教会",
+                "學會",
+                "学会",
+                "幫我記",
+                "帮我记",
+                "remember",
+                "learn",
+                "teach",
+                "memorize",
+            ],
+        },
         "category": "learning",
     },
     {

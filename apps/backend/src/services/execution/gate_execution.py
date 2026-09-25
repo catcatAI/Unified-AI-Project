@@ -68,6 +68,17 @@ _HANDLER_TO_INTENT = {
     "vision": "vision",
 }
 
+# Intents whose *only* implementation is a ModelBus handler and therefore have
+# no entry in ExecutionGate.HANDLER_MAP (that map is keyed by QueryType). They
+# are resolved through IntentRegistry, which carries the executable handler id in
+# `metadata["handler_id"]` — data, not a regex in the service layer.
+_REGISTRY_DISPATCH_INTENTS = ("learning",)
+# IntentRegistry confidence is keyword-density (matched chars / total chars), so
+# a short imperative lands around 0.2-0.3. The same 0.1 floor the gate already
+# uses for IntentRegistry confirmation is too weak here; 0.2 plus the pattern's
+# own require_keywords list keeps 「設定檔在哪」 out of the memory store.
+_REGISTRY_MIN_CONFIDENCE = 0.2
+
 
 class TTLSessionManager:
     """Bounded, TTL-expiring session store (single shared instance)."""
@@ -282,6 +293,85 @@ class GateExecutionOwner:
             error=error,
         )
 
+    def _registry_handler_for(
+        self, user_message: str, categories: Tuple[str, ...]
+    ) -> Optional[str]:
+        """Resolve an executable ModelBus handler id from IntentRegistry.
+
+        ``IntentPattern.handler`` is a class name that nothing can dispatch, so
+        the executable id lives in ``metadata["handler_id"]``. Returns None when
+        the intent is unknown, too weak, or declares no handler id — the caller
+        then falls through to normal generation rather than guessing.
+        """
+        try:
+            from core.intent_registry import IntentRegistry
+
+            registry = IntentRegistry()
+        except Exception as exc:  # pragma: no cover - registry is optional
+            logger.debug("IntentRegistry unavailable: %s", exc)
+            return None
+        for category in categories:
+            name, confidence = registry.detect(user_message, category=category)
+            if not name or confidence < _REGISTRY_MIN_CONFIDENCE:
+                continue
+            pattern = registry.get_pattern(name)
+            if not pattern:
+                continue
+            handler_id = (pattern.metadata or {}).get("handler_id")
+            if not handler_id:
+                continue
+            required = (pattern.metadata or {}).get("require_keywords") or []
+            if required and not any(kw in user_message for kw in required):
+                continue
+            return str(handler_id)
+        return None
+
+    async def _registry_dispatch(
+        self, user_message: str, context: Dict[str, Any], model_bus: Any
+    ) -> Optional[GateOutcome]:
+        """Execute a handler that only IntentRegistry can name (e.g. learning).
+
+        The gate still authorizes the action (``decide_agent_execution``), so a
+        rejected/confirm-worthy action never runs, and the real outcome is
+        reported instead of letting the model claim success.
+        """
+        if not model_bus:
+            return None
+        handler_id = self._registry_handler_for(
+            user_message, _REGISTRY_DISPATCH_INTENTS
+        )
+        if not handler_id:
+            return None
+        from ai.core.execution_gate import ExecutionGate
+
+        gate = ExecutionGate(model_bus=model_bus)
+        decision = gate.decide_agent_execution(
+            intent="learning",
+            agent_name=handler_id,
+            user_message=user_message,
+        )
+        if decision.action == "confirm_then_execute":
+            self.store_pending(
+                str(context.get("session_id") or "repl::default"),
+                context,
+                {
+                    "kind": "registry_handler",
+                    "handler": handler_id,
+                    "intent": "learning",
+                    "original_query": user_message,
+                },
+            )
+            return GateOutcome(
+                action=OUTCOME_CONFIRM,
+                message=decision.confirm_message,
+                handler=handler_id,
+                confidence=1.0,
+                decision=decision,
+            )
+        if decision.action != "auto_execute":
+            return None
+        return await self.execute_handler(handler_id, user_message, context, model_bus)
+
     # ------------------------------------------------------------------
     # Full request pass
     # ------------------------------------------------------------------
@@ -302,6 +392,16 @@ class GateExecutionOwner:
                 )
                 if outcome is not None:
                     return outcome
+
+            # Intents that exist only as a registered handler (user-taught
+            # facts) must be dispatched here: QueryClassifier files them under
+            # command/greeting, which decide() treats as non-actionable, so the
+            # handler used to be unreachable and the model only pretended.
+            registry_outcome = await self._registry_dispatch(
+                user_message, context, model_bus
+            )
+            if registry_outcome is not None:
+                return registry_outcome
 
             plan, decision = self.plan_and_decide(user_message, context, model_bus)
 

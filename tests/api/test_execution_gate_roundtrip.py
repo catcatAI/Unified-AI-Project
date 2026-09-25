@@ -126,3 +126,72 @@ def _async_return(value):
         return value
 
     return _inner
+
+
+class TestLearningIntentDispatch:
+    """A user-taught fact must actually reach LearningHandler.
+
+    Regression: the classifier files 「請記住 X」 under command/greeting, which
+    ExecutionGate treats as non-actionable, so LearningHandler (registered as the
+    ModelBus handler "learning") was never dispatched and the model answered
+    "我记下了" while nothing was stored.
+    """
+
+    def test_intent_registry_declares_an_executable_handler_id(self):
+        from core.intent_registry import IntentRegistry
+
+        registry = IntentRegistry()
+        name, confidence = registry.detect("請記住：我的貓叫小咪", category="learning")
+        assert name == "learning"
+        # confidence is keyword density; the executable gate is 0.2 + the
+        # pattern's require_keywords verb (asserted in the dispatch test).
+        assert confidence >= 0.2
+        pattern = registry.get_pattern(name)
+        assert pattern is not None
+        assert pattern.metadata.get("handler_id") == "learning"
+
+    @pytest.mark.asyncio
+    async def test_owner_dispatches_learning_handler(self):
+        from ai.core.execution_gate import ExecutionGate
+        from services.execution.gate_execution import (
+            OUTCOME_EXECUTED,
+            get_gate_execution_owner,
+        )
+
+        ExecutionGate().reset_feedback_stats()
+        bus = _FakeModelBus()
+        context: dict = {}
+        outcome = await get_gate_execution_owner().process(
+            "請記住：我的貓叫小咪", context, "learning-1", bus
+        )
+
+        assert outcome.action == OUTCOME_EXECUTED
+        assert outcome.handler == "learning"
+        assert bus.calls == [("learning", "請記住：我的貓叫小咪")], "fact must be stored"
+
+    @pytest.mark.asyncio
+    async def test_learning_still_goes_through_the_gate(self):
+        from ai.core.execution_gate import ExecutionGate
+        from services.execution.gate_execution import get_gate_execution_owner
+
+        ExecutionGate().reset_feedback_stats()
+        bus = _FakeModelBus()
+        context: dict = {}
+        await get_gate_execution_owner().process(
+            "請記住：我的貓叫小咪", context, "learning-2", bus
+        )
+        stats = ExecutionGate().get_feedback_stats()
+        assert stats["learning"]["success"] == 1, "gate feedback must be recorded"
+
+    @pytest.mark.asyncio
+    async def test_plain_chat_is_not_hijacked_by_learning_dispatch(self):
+        from ai.core.execution_gate import ExecutionGate
+        from services.execution.gate_execution import get_gate_execution_owner
+
+        ExecutionGate().reset_feedback_stats()
+        bus = _FakeModelBus()
+        outcome = await get_gate_execution_owner().process(
+            "幫我查一下最新的 Python 版本", {}, "learning-3", bus
+        )
+        assert outcome.action == "none"
+        assert bus.calls == []

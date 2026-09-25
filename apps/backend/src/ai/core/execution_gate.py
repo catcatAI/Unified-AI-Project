@@ -130,6 +130,9 @@ _AGENT_INTENT_ACTIONS = {
     "audio": "read",
     "nlp": "read",
     "image_generate": "create",
+    # User-taught facts: additive and reversible (can be forgotten) → create.
+    # Reached via IntentRegistry metadata["handler_id"] (see gate_execution).
+    "learning": "create",
 }
 
 
