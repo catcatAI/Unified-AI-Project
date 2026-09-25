@@ -79,3 +79,12 @@ def test_training_priority_queue_orders_execution():
     drained = tc.drain_priority_queue()
     assert [d["sample"]["input"] for d in drained] == ["high", "mid", "low"]
     assert tc.pending_training_count() == 0
+
+
+def test_dispatch_leaves_training_work_for_coordinator_owner():
+    tc = TrainingCoordinator()
+
+    decision = dispatch({"text": "訓練這個模式"}, training_coordinator=tc)
+
+    assert decision.intent is DispatchIntent.TRAIN
+    assert tc.pending_training_count() == 1

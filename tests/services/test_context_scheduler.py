@@ -27,6 +27,46 @@ def _msg(role: str, content: str) -> Dict[str, str]:
 # ---------- 分配計畫 ----------
 
 
+class TestQueryPreprocessingPlan:
+    def test_identity_is_planned_llm_first(self):
+        from ai.core.query_classifier import ROUTE_LLM_FIRST
+
+        plan = ContextScheduler().plan_query("自我介紹一下")
+        assert plan.route_hint == ROUTE_LLM_FIRST
+        assert plan.allow_context_enrichment is False
+        assert plan.allow_knowledge_pipeline is False
+        assert plan.allow_specialized_agents is False
+
+    def test_capability_is_planned_for_runtime_catalog(self):
+        from ai.core.query_classifier import ROUTE_CAPABILITY_CATALOG
+
+        plan = ContextScheduler().plan_query("你有啥能力？")
+        assert plan.route_hint == ROUTE_CAPABILITY_CATALOG
+        assert plan.allow_knowledge_pipeline is False
+
+    def test_deterministic_request_keeps_local_knowledge_enabled(self):
+        plan = ContextScheduler().plan_query("1+1等于多少")
+        assert plan.route_hint == "balanced"
+        assert plan.allow_context_enrichment is True
+        assert plan.allow_knowledge_pipeline is True
+        assert plan.allow_specialized_agents is True
+
+    def test_explicit_definition_keeps_knowledge_pipeline_enabled(self):
+        plan = ContextScheduler().plan_query("高興的意思")
+        assert plan.route_hint == "balanced"
+        assert plan.allow_knowledge_pipeline is True
+
+    def test_ambiguous_short_text_does_not_enable_dictionary_shortcut(self):
+        plan = ContextScheduler().plan_query("嗯嗯")
+        assert plan.route_hint == "balanced"
+        assert plan.allow_knowledge_pipeline is False
+
+    def test_plan_is_written_to_shared_context(self):
+        context: Dict[str, Any] = {}
+        plan = ContextScheduler().plan_query("自我介紹一下", context)
+        assert context["_preprocessing_plan"] == plan.to_dict()
+
+
 class TestAllocationPlan:
     def test_protects_system_and_final_user(self):
         scheduler = ContextScheduler()
@@ -184,6 +224,26 @@ class TestLlmDigest:
 
         text_hash = hashlib.sha1(text.encode("utf-8")).hexdigest()[:16]
         assert scheduler.ledger.cache_get("conv1", text_hash) == "小模型摘要：三條要點"
+
+    @pytest.mark.asyncio
+    async def test_lazy_service_factory_is_awaited(self, tmp_path: Path):
+        scheduler = ContextScheduler(ledger_dir=tmp_path / "ledger")
+
+        class FakeResponse:
+            text = "由共享服務產生的摘要"
+
+        class FakeLLM:
+            async def chat_completion(self, messages, **kwargs):
+                return FakeResponse()
+
+        async def get_service():
+            return FakeLLM()
+
+        with patch("services.llm.router.get_llm_service", new=get_service):
+            digest = await scheduler.digest_with_llm("跨輪上下文", "conv1")
+
+        assert digest == "由共享服務產生的摘要"
+        assert scheduler.stats()["llm_digests"] == 1
 
     @pytest.mark.asyncio
     async def test_no_llm_returns_none_extractive_remains(self, tmp_path: Path):

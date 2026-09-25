@@ -20,7 +20,7 @@ import random
 import re
 import time
 from collections import OrderedDict
-from typing import TYPE_CHECKING, Any, Callable, Coroutine, Dict, List, NamedTuple, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Coroutine, Dict, List, NamedTuple, Optional, Tuple, cast
 
 from core.interfaces.protocols import ChatMessage, ChatResponse, LLMResponse
 from core.interfaces.service_registry import get_registry
@@ -71,9 +71,14 @@ from core.system.state_store.global_store import state_store
 
 # Prompt builder utilities
 from services.llm.prompt_builder import (
+    _enforce_prompt_budget,
     construct_angela_prompt,
     get_biological_state,
     get_formula_summaries,
+)
+from services.llm.capability_catalog import (
+    build_capability_snapshot,
+    render_capability_response,
 )
 from services.llm.providers.anthropic import AnthropicAPIBackend
 
@@ -138,6 +143,18 @@ LLM_MAX_RETRIES: int = 2  # up to 3 total attempts
 LLM_RETRY_BASE_DELAY: float = 1.0  # seconds
 LLM_RETRY_MAX_DELAY: float = 8.0
 LLM_RETRY_JITTER: float = 0.5
+_NON_RETRYABLE_ERROR_MARKERS = (
+    "maximum context length",
+    "context_length_exceeded",
+    "context length exceeded",
+    "prompt is too long",
+    "too many tokens",
+)
+
+
+def _is_non_retryable_llm_error(error: str) -> bool:
+    normalized = str(error or "").lower()
+    return any(marker in normalized for marker in _NON_RETRYABLE_ERROR_MARKERS)
 
 
 async def _call_with_retry(
@@ -155,12 +172,16 @@ async def _call_with_retry(
                 if attempt > 0:
                     logger.info(f"[retry] {label} succeeded on attempt {attempt + 1}")
                 return response
-            # Response has error set; retry unless exhausted
             last_error = response.error if response else "empty response"
             if response is None:
                 raise asyncio.TimeoutError("empty response")
+            if _is_non_retryable_llm_error(last_error):
+                logger.warning(f"[{label}] non-retryable backend error: {last_error}")
+                return response
         except (asyncio.TimeoutError, Exception) as e:
             last_error = safe_error(e)
+            if _is_non_retryable_llm_error(last_error):
+                raise
             if attempt < max_retries:
                 delay = min(
                     base_delay * (2**attempt) + random.random() * LLM_RETRY_JITTER,
@@ -467,6 +488,59 @@ class AngelaLLMService:
         while len(self._response_cache) > max_size:
             self._response_cache.popitem(last=False)
 
+    def _get_preprocessing_plan(self, user_message: str, context: Dict[str, Any]) -> Any:
+        from services.llm.context_scheduler import QueryPreprocessingPlan, get_context_scheduler
+
+        existing = context.get("_preprocessing_plan")
+        if isinstance(existing, dict):
+            return QueryPreprocessingPlan(**existing)
+        return get_context_scheduler().plan_query(user_message, context)
+
+    async def _submit_waiting(
+        self,
+        coro: Coroutine[Any, Any, Any],
+        timeout: float,
+        label: str,
+        raise_on_timeout: bool = False,
+    ) -> Any:
+        from core.waiting_scheduler import get_waiting_scheduler
+
+        try:
+            result = await get_waiting_scheduler().submit(coro, timeout=timeout, label=label)
+        except (ImportError, AttributeError):
+            result = await asyncio.wait_for(coro, timeout=timeout)
+        if result is None and raise_on_timeout:
+            raise asyncio.TimeoutError(f"WaitingScheduler returned no result for {label}")
+        return result
+
+    async def _submit_backend_call(
+        self,
+        backend: Any,
+        *,
+        prompt: str,
+        messages: List[Dict[str, str]],
+        temperature: float,
+        max_tokens: int,
+        timeout: float,
+        label: str,
+        **kwargs: Any,
+    ) -> Optional[LLMResponse]:
+        return cast(
+            Optional[LLMResponse],
+            await self._submit_waiting(
+                backend.generate(
+                    prompt=prompt,
+                    messages=messages,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    **kwargs,
+                ),
+                timeout=timeout,
+                label=label,
+                raise_on_timeout=True,
+            ),
+        )
+
     async def generate_response(
         self, user_message: str, context: Optional[Dict[str, Any]] = None
     ) -> LLMResponse:
@@ -475,7 +549,12 @@ class AngelaLLMService:
         Cache hits are marked via metadata["cached"]=True so callers/tests
         can detect them.
         """
+        from ai.core.query_classifier import ROUTE_CAPABILITY_CATALOG
+
         context = context or {}
+        preprocessing_plan = self._get_preprocessing_plan(user_message, context)
+        if preprocessing_plan.route_hint == ROUTE_CAPABILITY_CATALOG:
+            return await self.generate_response_full(user_message, context)
         cache_key = self._response_cache_key(user_message, context)
         # None 鍵＝不可緩存（與舊傳 None→miss 同結果，顯式短路）。
         if cache_key is None:
@@ -489,6 +568,24 @@ class AngelaLLMService:
         response = await self.generate_response_full(user_message, context)
         self._response_cache_put(cache_key, response)
         return response
+
+    def _capability_response(self, user_message: str) -> LLMResponse:
+        snapshot = build_capability_snapshot(self)
+        text = render_capability_response(snapshot)
+        return LLMResponse(
+            text=text,
+            backend="capability-catalog",
+            model="runtime-registry",
+            confidence=0.99,
+            metadata={
+                "route": "capability-catalog",
+                "source": "runtime_registry",
+                "query": user_message,
+                "agent_count": len(snapshot.get("agents", [])),
+                "backend_count": len(snapshot.get("backends", [])),
+                "handler_count": len(snapshot.get("handlers", [])),
+            },
+        )
 
     def _init_response_system(self) -> None:
         """初始化 P0-2 响应组合与匹配系统"""
@@ -741,6 +838,9 @@ class AngelaLLMService:
             base_url=base_url or LLAMACPP_HOST,
             model=model_name,
             timeout=config.get("timeout", LLM_REQUEST_TIMEOUT),
+            context_window=config.get(
+                "context_window", config.get("context_length", config.get("n_ctx", 4096))
+            ),
         )
         logger.info(f"已注冊 llama.cpp 後端: {model_name} (硬件自適應 need={need}GB)")
 
@@ -870,11 +970,16 @@ class AngelaLLMService:
         deployment = self.config.get("deployment") or {}
         selection = (deployment.get("selection") or "available").lower()
         for backend_type, backend in self.backends.items():
-            if await backend.check_health():
+            if await self._submit_waiting(
+                backend.check_health(),
+                timeout=timeout_value("llm.health_check", 5.0),
+                label=f"health:{backend_type.value}",
+            ):
                 available.append(backend_type)
                 logger.info(f"✓ {backend_type.value} 後端可用")
             elif selection == "available":
                 logger.info(f"✗ {backend_type.value} 後端健康檢查失敗，從可用清單移除")
+                await backend.close()
         if selection == "available":
             self.backends = {bt: b for bt, b in self.backends.items() if bt in available}
 
@@ -978,16 +1083,30 @@ class AngelaLLMService:
             self.active_backend_type = backend_type
             break
 
+    def _resolve_query_type_for_bus(self, query: str) -> str:
+        """Resolve a query type through the shared ContextScheduler owner.
+
+        ModelBus must never build its own QueryClassifier; the scheduler plan is
+        the single ingest-time classification used across the whole chat path.
+        """
+        return str(self._get_preprocessing_plan(query, {}).query_type)
+
     async def _init_model_bus(self):
         try:
-            self.model_bus = ModelBus(meta_controller=self.meta_controller)
+            self.model_bus = ModelBus(
+                meta_controller=self.meta_controller,
+                query_type_resolver=self._resolve_query_type_for_bus,
+            )
             self.query_classifier = QueryClassifier()
 
             # Legacy ED3N/GARDEN bus registration removed — those backends
             # are no longer registered (see PROJECT_CLEANUP_PLAN §B). Only
             # register what actually exists.
 
-            if self.active_backend:
+            if (
+                self.active_backend
+                and getattr(self.active_backend_type, "value", None) in self._CLOUD_PROVIDERS
+            ):
                 self.model_bus.register_cloud(self.active_backend)
 
             self._register_model_bus_handlers()
@@ -1109,14 +1228,21 @@ class AngelaLLMService:
             nv = self.__class__._neuro_vocab_instance[0]
         if "_model_context_window" not in context:
             backend = self.active_backend
-            model_name = str(getattr(backend, "model_name", "") or "")
-            if not model_name:
-                model_name = str(
-                    (self.config.get("active_model") or self.config.get("model") or "")
-                )
-            from services.llm.prompt_builder import resolve_model_window
+            backend_window = getattr(backend, "context_window", None)
+            if not (
+                isinstance(backend_window, (int, float))
+                and not isinstance(backend_window, bool)
+                and backend_window > 0
+            ):
+                model_name = str(getattr(backend, "model_name", "") or "")
+                if not model_name:
+                    model_name = str(
+                        (self.config.get("active_model") or self.config.get("model") or "")
+                    )
+                from services.llm.prompt_builder import resolve_model_window
 
-            context["_model_context_window"] = resolve_model_window(model_name)
+                backend_window = resolve_model_window(model_name)
+            context["_model_context_window"] = int(backend_window)
         return construct_angela_prompt(user_message, context, neuro_vocabulary=nv)
 
     async def generate_response_full(
@@ -1136,6 +1262,31 @@ class AngelaLLMService:
                 confidence=0.5,
                 metadata={"fallback": True, "tier": "empty-input"},
             )
+
+        from ai.core.query_classifier import (
+            ROUTE_CAPABILITY_CATALOG,
+            ROUTE_LLM_FIRST,
+        )
+
+        preprocessing_plan = self._get_preprocessing_plan(user_message, context)
+        if preprocessing_plan.route_hint == ROUTE_CAPABILITY_CATALOG:
+            return self._capability_response(user_message)
+        if preprocessing_plan.route_hint == ROUTE_LLM_FIRST:
+            # Identity questions must be answered in Angela's own voice, so the
+            # dictionary/template/knowledge layers are skipped. The ModelBus
+            # pre-match is NOT skipped: it owns the personality/reflex drafts,
+            # the high-confidence direct hit, and the medium-confidence
+            # draft_response that feeds the LLM refinement pipeline
+            # (see _try_model_bus_match). Skipping it silently disabled
+            # refinement for every "你是誰"-class input.
+            if getattr(self, "model_bus", None):
+                bus_result = await self._try_model_bus_match(user_message, context)
+                if bus_result is not None:
+                    return bus_result
+            return await self._route_step_main_llm(user_message, context, start_time)
+
+        if context.get("force_llm") is True:
+            return await self._route_step_main_llm(user_message, context, start_time)
 
         if self._use_routing_engine:
             # 路由清單驅動：連接器依 manifest 順序接通資訊流
@@ -1263,7 +1414,11 @@ class AngelaLLMService:
                         ),
                     ):
                         try:
-                            healthy = await self.backends[bt].check_health()
+                            healthy = await self._submit_waiting(
+                                self.backends[bt].check_health(),
+                                timeout=timeout_value("llm.health_check", 5.0),
+                                label=f"health:{bt.value}",
+                            )
                         except Exception:
                             healthy = False
                         if healthy:
@@ -1271,11 +1426,14 @@ class AngelaLLMService:
                                 user_message, context
                             )
                             msgs = self._construct_angela_prompt(user_message, context)
-                            resp = await self.backends[bt].generate(
+                            resp = await self._submit_backend_call(
+                                self.backends[bt],
                                 prompt=msgs[-1]["content"],
                                 messages=msgs,
                                 temperature=fparams.temperature,
                                 max_tokens=fparams.max_tokens,
+                                timeout=fparams.timeout,
+                                label=f"fusion:{bt.value}",
                                 context=context,
                             )
                             if resp and resp.text and resp.text.strip():
@@ -1634,7 +1792,11 @@ class AngelaLLMService:
 
         async def _rank(bt):
             try:
-                ok = await self.backends[bt].check_health()
+                ok = await self._submit_waiting(
+                    self.backends[bt].check_health(),
+                    timeout=timeout_value("llm.health_check", 5.0),
+                    label=f"health:{bt.value}",
+                )
             except Exception:
                 ok = False
             return ok
@@ -1661,11 +1823,14 @@ class AngelaLLMService:
                 logger.info(f"[fusion] open-domain → {bt.value} (unified context carried)")
                 try:
                     msgs = self._construct_angela_prompt(user_message, context)
-                    resp = await self.backends[bt].generate(
+                    resp = await self._submit_backend_call(
+                        self.backends[bt],
                         prompt=msgs[-1]["content"],
                         messages=msgs,
                         temperature=gen_params.temperature,
                         max_tokens=gen_params.max_tokens,
+                        timeout=gen_params.timeout,
+                        label=f"cloud-fusion:{bt.value}",
                         context=context,
                     )
                     if resp and resp.text and resp.text.strip():
@@ -1704,7 +1869,16 @@ class AngelaLLMService:
 
         start_time = time.time()
         try:
-            result = await garden_backend.generate(user_message, context=context)
+            result = await self._submit_backend_call(
+                garden_backend,
+                prompt=user_message,
+                messages=[{"role": "user", "content": user_message}],
+                temperature=0.7,
+                max_tokens=512,
+                timeout=timeout_value("llm.neural_bridge", 30.0),
+                label="neural-bridge",
+                context=context,
+            )
         except Exception as e:
             logger.warning(f"NeuralBridge route failed: {e}", exc_info=True)
             return None
@@ -2130,10 +2304,10 @@ class AngelaLLMService:
         self, user_message: str, context: Dict[str, Any]
     ) -> Optional[LLMResponse]:
         """Try Model Bus for capability-based routing, returns None if unavailable or fails"""
-        if self.model_bus and self.query_classifier:
+        if self.model_bus:
             try:
-                classify_result = self.query_classifier.classify(user_message)
-                query_type = classify_result.primary_type.value
+                plan = self._get_preprocessing_plan(user_message, context)
+                query_type = plan.query_type
                 decision = await self.model_bus.route(user_message, query_type, context)
                 if decision.selected_model != "none":
                     result = decision.results.get(decision.selected_model)
@@ -2619,61 +2793,51 @@ class AngelaLLMService:
         context["_actual_routing_mode"] = routing_mode
         return None, GenerationParams(gen_timeout, gen_temperature, gen_max_tokens)
 
+    async def _upgrade_digested_context(
+        self, messages: List[Dict[str, str]], context: Dict[str, Any]
+    ) -> None:
+        if not (context.get("llm_context_digest") is True or context.get("force_llm") is True):
+            return
+        try:
+            from services.llm.context_scheduler import get_context_scheduler
+
+            conversation_id = str(
+                context.get("conversation_id") or context.get("session_id") or "default"
+            )
+            scheduler = get_context_scheduler()
+            for message in messages:
+                content = str(message.get("content", ""))
+                if "[Digested Context]" not in content:
+                    continue
+                digest = await scheduler.digest_with_llm(content, conversation_id, llm_service=self)
+                if digest:
+                    message["content"] = f"[Digested Context — LLM]\n{digest}"
+        except Exception as exc:
+            logger.debug("LLM context digest upgrade skipped: %s", exc)
+
     async def _call_llm_backend(
         self, user_message: str, context: Dict[str, Any], params: GenerationParams
     ) -> LLMResponse:
+        context["_completion_token_reserve"] = params.max_tokens
         messages = self._construct_angela_prompt(user_message, context)
+        await self._upgrade_digested_context(messages, context)
+        _enforce_prompt_budget(messages, context)
 
         async def _do_call() -> Optional[LLMResponse]:
             backend = self.active_backend
             if backend is None:
                 raise RuntimeError("No LLM backend available")
-            response: Optional[LLMResponse]
-            coro: Optional[Coroutine[Any, Any, Optional[LLMResponse]]] = None
-            try:
-                from core.waiting_scheduler import get_waiting_scheduler
-
-                scheduler = get_waiting_scheduler()
-
-                coro = backend.generate(
-                    prompt=messages[-1]["content"],
-                    messages=messages,
-                    temperature=params.temperature,
-                    max_tokens=params.max_tokens,
-                )
-
-                try:
-                    response = await scheduler.submit(
-                        coro,
-                        timeout=params.timeout,
-                        label=f"llm:{self.active_backend_type.value if self.active_backend_type else 'gen'}",
-                    )
-                except BaseException:
-                    # submit 拋出任意例外時協程可能未被消費，關閉防孤兒
-                    # （已被消費/已完成的協程 close 為 no-op，安全）
-                    coro.close()
-                    raise
-
-                if response is None:
-                    raise asyncio.TimeoutError(
-                        "WaitingScheduler returned empty response (timeout/error)"
-                    )
-
-            except (ImportError, AttributeError) as e:
-                if coro is not None:
-                    coro.close()  # 保險：此路徑協程通常未被建立或已消費，close 為 no-op
-                logger.warning(f"WaitingScheduler 調度失敗，回退至直接調用: {e}", exc_info=True)
-                response = await asyncio.wait_for(
-                    backend.generate(
-                        prompt=messages[-1]["content"],
-                        messages=messages,
-                        temperature=params.temperature,
-                        max_tokens=params.max_tokens,
-                    ),
-                    timeout=params.timeout,
-                )
-
-            return response
+            backend_type = getattr(self, "active_backend_type", None)
+            label = f"llm:{backend_type.value if backend_type else 'gen'}"
+            return await self._submit_backend_call(
+                backend,
+                prompt=messages[-1]["content"],
+                messages=messages,
+                temperature=params.temperature,
+                max_tokens=params.max_tokens,
+                timeout=params.timeout,
+                label=label,
+            )
 
         backend_type = getattr(self, "active_backend_type", None)
         label = f"{backend_type.value if backend_type else 'gen'}"
@@ -2787,14 +2951,14 @@ class AngelaLLMService:
                 if backend_name.lower() in bname_str or bname_str in backend_name.lower():
                     try:
                         full_prompt = self._construct_angela_prompt(user_message, context)
-                        response = await asyncio.wait_for(
-                            bobj.generate(
-                                prompt=full_prompt[-1]["content"],
-                                messages=full_prompt,
-                                temperature=llm_param("llm.generation.temperature", 0.7),
-                                max_tokens=512,
-                            ),
+                        response = await self._submit_backend_call(
+                            bobj,
+                            prompt=full_prompt[-1]["content"],
+                            messages=full_prompt,
+                            temperature=llm_param("llm.generation.temperature", 0.7),
+                            max_tokens=512,
                             timeout=timeout_value("llm.fallback_chain", 30.0),
+                            label=f"fallback:{btype.name}",
                         )
                         # Backends signal failure by RETURNING an error
                         # response, not by raising — so a non-empty success is
@@ -2802,7 +2966,7 @@ class AngelaLLMService:
                         # fall through to the next backend, or the chain would
                         # hand the caller an error/empty answer instead of a
                         # real fallback.
-                        if not response.error and getattr(response, "text", None):
+                        if response is not None and not response.error and response.text:
                             self.active_backend = bobj
                             logger.info(f"[Fallback] Switched to {btype.name}")
                             return response
@@ -3087,14 +3251,14 @@ class AngelaLLMService:
             backend = self.active_backend
             if backend is None:
                 raise RuntimeError("No LLM backend available")
-            return await asyncio.wait_for(
-                backend.generate(
-                    prompt=messages[-1]["content"],
-                    messages=messages,
-                    temperature=temperature,
-                    max_tokens=max_tokens,
-                ),
+            return await self._submit_backend_call(
+                backend,
+                prompt=messages[-1]["content"],
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
                 timeout=timeout_value("llm.generate_text", 60.0),
+                label="generate_text",
             )
 
         try:
@@ -3157,14 +3321,14 @@ class AngelaLLMService:
                 backend = self.active_backend
                 if backend is None:
                     raise RuntimeError("No LLM backend available")
-                return await asyncio.wait_for(
-                    backend.generate(
-                        prompt=converted_messages[-1]["content"],
-                        messages=converted_messages,
-                        temperature=temperature,
-                        max_tokens=max_tokens,
-                    ),
+                return await self._submit_backend_call(
+                    backend,
+                    prompt=converted_messages[-1]["content"],
+                    messages=converted_messages,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
                     timeout=timeout_value("llm.generate_text", 60.0),
+                    label="chat_completion",
                 )
 
             chat_resp = await _call_with_retry(_do_chat, label="chat_completion")
@@ -3264,13 +3428,16 @@ async def angela_llm_response(
     history: Optional[List[Dict[str, str]]] = None,
     user_name: str = "朋友",
     origin: str = "Human",
+    force_llm: bool = False,
 ) -> str:
     """
     生成 Angela 的回應（便捷接口 - 2030 Standard）
     """
     service = await get_llm_service()
 
-    context = {"history": history or [], "user_name": user_name, "origin": origin}
+    context: Dict[str, Any] = {"history": history or [], "user_name": user_name, "origin": origin}
+    if force_llm:
+        context["force_llm"] = True
 
     response = await service.generate_response(user_message, context)
 

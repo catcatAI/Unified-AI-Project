@@ -21,10 +21,17 @@ import signal
 import json
 import traceback
 import re
+import warnings
 from pathlib import Path
 from typing import Optional, Tuple, List
 import logging
 logger = logging.getLogger(__name__)
+
+warnings.filterwarnings(
+    "ignore",
+    message=r"The pynvml package is deprecated.*",
+    category=FutureWarning,
+)
 
 
 class SecurityError(Exception):
@@ -198,7 +205,7 @@ def _load_env_file(env_file: Path) -> None:
                     value = value[1:-1]
                 
                 # Set environment variable
-                os.environ[key] = value
+                os.environ.setdefault(key, value)
                 logger.debug(f"Loaded environment variable: {key}")
                 
     except SecurityError:
@@ -258,7 +265,9 @@ def wait_for_server(port=8000, timeout=360, progress: Optional[ProgressDisplay] 
         
         if progress:
             elapsed = time.time() - start
-            progress.update(int((elapsed / timeout) * 30), f"等待后端启动 ({elapsed:.1f}s/{timeout}s)", "loading")
+            ratio = elapsed / timeout if timeout > 0 else 0.0
+            step = min(49, 30 + int(ratio * 20))
+            progress.update(step, f"等待后端启动 ({elapsed:.1f}s/{timeout}s)", "loading")
         
         time.sleep(check_interval)
     
@@ -638,6 +647,7 @@ def main():
     )
     parser.add_argument("--api-only", action="store_true", help="只启动后端")
     parser.add_argument("--desktop-only", action="store_true", help="只启动桌面")
+    parser.add_argument("--repl", action="store_true", help="启动终端 REPL 对话")
     parser.add_argument("--install-shortcut", action="store_true", help="创建桌面快捷方式")
     parser.add_argument("--health-check", action="store_true", help="运行健康检查")
     parser.add_argument(
@@ -654,6 +664,8 @@ def main():
     )
 
     args = parser.parse_args()
+    if args.repl and (args.api_only or args.desktop_only):
+        parser.error("--repl 不能与 --api-only/--desktop-only 同时使用")
 
     print("=" * 60)
     print("🌟 Angela AI 一键启动器 v6.3.0")
@@ -734,6 +746,22 @@ def main():
         print("请检查日志文件获取更多信息并联系系统管理员。")
         print("启动已安全终止。")
         return 1
+
+    if args.repl:
+        backend_path = str(launcher.project_root / "apps" / "backend")
+        src_path = str(launcher.project_root / "apps" / "backend" / "src")
+        if backend_path not in sys.path:
+            sys.path.insert(0, backend_path)
+        if src_path not in sys.path:
+            sys.path.insert(0, src_path)
+        try:
+            from cli.repl import run_repl_mode
+
+            run_repl_mode()
+        except Exception as e:
+            print(f"❌ REPL 啟動失敗: {e}")
+            return 1
+        return 0
 
     backend_proc=None
     desktop_proc=None

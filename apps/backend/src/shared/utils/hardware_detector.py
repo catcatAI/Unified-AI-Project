@@ -74,7 +74,7 @@ class SystemHardwareProbe:
 
     def detect(self) -> HardwareProfile:
         """Execute full hardware detection."""
-        logger.info("Initializing unified hardware detection...")
+        logger.debug("Initializing unified hardware detection...")
 
         # 1. CPU Detection
         cpu_cores_phys = psutil.cpu_count(logical=False) if psutil else 1
@@ -180,8 +180,10 @@ class SystemHardwareProbe:
                 if lines and lines[0]:
                     parts = lines[0].split(",")
                     return AcceleratorType.NVIDIA, parts[0].strip(), int(parts[1].strip())
-        except Exception:
-            logger.warning("nvidia-smi not available or failed", exc_info=True)
+        except FileNotFoundError:
+            logger.debug("nvidia-smi is not installed; trying other accelerators")
+        except Exception as e:
+            logger.warning("nvidia-smi failed: %s", e, exc_info=True)
 
         # 2. Apple Metal
         if self.platform_name == "darwin":
@@ -194,8 +196,10 @@ class SystemHardwareProbe:
             )
             if result.returncode == 0:
                 return AcceleratorType.AMD, "AMD GPU", 0
-        except Exception:
-            logger.warning("rocm-smi not available or failed", exc_info=True)
+        except FileNotFoundError:
+            logger.debug("rocm-smi is not installed; trying other accelerators")
+        except Exception as e:
+            logger.warning("rocm-smi failed: %s", e, exc_info=True)
 
         # 3b. Intel Arc (Linux, spec-driven via PCI device ID + glxinfo VRAM)
         if self.platform_name == "linux":

@@ -86,6 +86,21 @@ class TestResponseModeSelector:
         assert result.mode == "1:1"
         assert result.route == "llm"
 
+    def test_default_router_is_awaited(self, monkeypatch, router):
+        calls = []
+
+        async def get_service():
+            calls.append(1)
+            return router
+
+        monkeypatch.setattr("services.llm.router.get_llm_service", get_service)
+        selector = ResponseModeSelector()
+
+        result = asyncio.run(selector.respond("hi", {}, mode="1:1"))
+
+        assert result.text == "fixed answer"
+        assert calls == [1]
+
     def test_mode_layered(self, router, pipeline):
         selector = ResponseModeSelector(router=router, pipeline=pipeline)
 

@@ -6,6 +6,7 @@ Tests for HardwareProfile — hardware scenario detection + frequency tables (§
 # ANGELA-MATRIX: [L2] [β] [C] [L1]
 # =============================================================================
 
+import logging
 import os
 from unittest.mock import patch
 
@@ -125,6 +126,13 @@ class TestHardwareProfile:
         """ANGELA_HARDWARE_PROFILE env var should force scenario."""
         profile = HardwareProfile()
         assert profile.scenario == HardwareScenario.SERVER_CLOUD
+
+    @patch.dict(os.environ, {"ANGELA_HARDWARE_PROFILE": "auto"}, clear=False)
+    def test_auto_env_uses_detection_without_warning(self, caplog) -> None:
+        with caplog.at_level(logging.WARNING):
+            profile = HardwareProfile()
+        assert profile.scenario in HardwareScenario
+        assert "unknown env value: auto" not in caplog.text
 
     @patch.dict(os.environ, {"CI": "true"}, clear=False)
     def test_ci_detection(self) -> None:

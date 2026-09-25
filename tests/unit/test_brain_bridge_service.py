@@ -51,6 +51,23 @@ class TestBrainBridgeService:
         assert status["brain"]["intelligence"] == 0.8
 
     @patch("services.brain_bridge_service.SystemHardwareProbe")
+    def test_hardware_probe_is_cached(self, mock_probe):
+        from services.brain_bridge_service import BrainBridgeService
+
+        mock_digital_life = MagicMock()
+        mock_probe.return_value.detect.return_value = MagicMock(
+            performance_tier="high",
+            ai_capability_score=95,
+            accelerator_type=MagicMock(value="intel"),
+        )
+        instance = BrainBridgeService(digital_life=mock_digital_life)
+
+        instance.get_current_status()
+        instance.get_current_status()
+
+        mock_probe.return_value.detect.assert_called_once()
+
+    @patch("services.brain_bridge_service.SystemHardwareProbe")
     @pytest.mark.asyncio
     async def test_start_stop(self, mock_probe):
         from services.brain_bridge_service import BrainBridgeService

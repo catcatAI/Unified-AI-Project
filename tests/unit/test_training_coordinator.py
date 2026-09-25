@@ -151,3 +151,91 @@ class TestTrainingCoordinator:
         for i in range(10):
             await tc.record_training("test", "model-v1", 1, 0.9, [{"input": f"sample_{i}"}])
         assert len(tc._seen_hashes["test"]) <= 5
+
+    @pytest.mark.asyncio
+    async def test_eda_episode_queue_deduplicates_and_drains(self):
+        from ai.core.training_coordinator import TrainingCoordinator
+
+        tc = TrainingCoordinator()
+        episode = {"fingerprint": "a" * 64, "workflow": "pcb", "outcome": {"eligible": True}}
+
+        assert await tc.enqueue_eda_episode(episode) is True
+        assert await tc.enqueue_eda_episode(episode) is False
+        assert tc.pending_eda_episode_count() == 1
+        assert await tc.drain_eda_episodes() == [episode]
+        assert tc.pending_eda_episode_count() == 0
+
+    @pytest.mark.asyncio
+    async def test_eda_episode_queue_evicts_oldest(self):
+        from ai.core.training_coordinator import TrainingCoordinator
+
+        tc = TrainingCoordinator(max_eda_episodes=2)
+        for index in range(3):
+            episode = {"fingerprint": str(index) * 64, "index": index}
+            assert await tc.enqueue_eda_episode(episode) is True
+
+        drained = await tc.drain_eda_episodes()
+        assert [item["index"] for item in drained] == [1, 2]
+
+    @pytest.mark.asyncio
+    async def test_eda_episode_queue_survives_save_and_load(self, tmp_path):
+        from ai.core.training_coordinator import TrainingCoordinator
+
+        first = TrainingCoordinator()
+        episode = {"fingerprint": "b" * 64, "workflow": "pcb"}
+        logic_episode = {"fingerprint": "c" * 64, "kind": "logic_gate_episode"}
+        assert await first.enqueue_eda_episode(episode) is True
+        assert await first.enqueue_logic_episode(logic_episode) is True
+        state_path = tmp_path / "training.json"
+        first.save(str(state_path))
+
+        second = TrainingCoordinator()
+        second.load(str(state_path))
+        assert await second.enqueue_eda_episode(episode) is False
+        assert await second.enqueue_logic_episode(logic_episode) is False
+        assert second.pending_eda_episode_count() == 1
+        assert second.pending_logic_episode_count() == 1
+
+    @pytest.mark.asyncio
+    async def test_logic_episode_queue_deduplicates_and_drains(self):
+        from ai.core.training_coordinator import TrainingCoordinator
+
+        coordinator = TrainingCoordinator()
+        episode = {"fingerprint": "c" * 64, "kind": "logic_gate_episode"}
+
+        assert await coordinator.enqueue_logic_episode(episode) is True
+        assert await coordinator.enqueue_logic_episode(episode) is False
+        assert coordinator.pending_logic_episode_count() == 1
+        assert await coordinator.drain_logic_episodes() == [episode]
+
+    @pytest.mark.asyncio
+    async def test_logic_episode_is_excluded_from_model_batches(self):
+        from ai.core.training_coordinator import TrainingCoordinator
+
+        coordinator = TrainingCoordinator()
+        batches = await coordinator.deconflict_samples(
+            [{"domain": "logic_gate_episode", "input": "xnor"}]
+        )
+
+        assert not batches["ed3n"]
+        assert not batches["garden"]
+
+    @pytest.mark.asyncio
+    async def test_eda_episode_is_excluded_from_model_batches(self):
+        from ai.core.training_coordinator import TrainingCoordinator
+
+        tc = TrainingCoordinator()
+        batches = await tc.deconflict_samples(
+            [
+                {"domain": "knowledge", "input": "datasheet"},
+                {"domain": "eda_episode", "input": "pcb"},
+            ]
+        )
+
+        assert len(batches["ed3n"]) == 1
+        assert len(batches["garden"]) == 1
+        assert all(
+            sample.get("domain") != "eda_episode"
+            for samples in batches.values()
+            for sample in samples
+        )

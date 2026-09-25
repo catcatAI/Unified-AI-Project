@@ -125,7 +125,7 @@ class ResponseModeSelector:
     async def _respond_1to1(
         self, user_message: str, context: Optional[Dict[str, Any]]
     ) -> ResponseResult:
-        router = self._get_router()
+        router = await self._get_router()
         response = await router.generate_response(user_message, context or {})
         text = getattr(response, "text", str(response))
         return ResponseResult(
@@ -236,7 +236,7 @@ class ResponseModeSelector:
         if self.pipeline is not None:
             return await self._respond_layered(user_message, context, stream_mode=True)
 
-        router = self._get_router()
+        router = await self._get_router()
         response = await router.generate_response(user_message, context or {})
         text = getattr(response, "text", str(response))
         tokens = [t for t in text.split(" ") if t]
@@ -255,7 +255,7 @@ class ResponseModeSelector:
         self, mode: str, user_message: str, context: Optional[Dict[str, Any]]
     ) -> ResponseResult:
         try:
-            router = self._get_router()
+            router = await self._get_router()
             response = await router.generate_response(user_message, context or {})
             text = getattr(response, "text", str(response))
             return ResponseResult(mode=mode, text=text, route="fallback")
@@ -263,11 +263,11 @@ class ResponseModeSelector:
             logger.warning("response fallback failed: %s", exc)
             return ResponseResult(mode=mode, text="", route="error", metadata={"error": str(exc)})
 
-    def _get_router(self) -> Any:
+    async def _get_router(self) -> Any:
         if self.router is None:
             from services.llm.router import get_llm_service
 
-            self.router = get_llm_service()
+            self.router = await get_llm_service()
         return self.router
 
     def _get_pipeline(self) -> Any:

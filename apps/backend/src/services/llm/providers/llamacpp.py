@@ -23,30 +23,39 @@ class LlamaCppBackend(BaseLLMBackend):
         base_url: str = LLAMACPP_HOST,
         model: Optional[str] = None,
         timeout: float = LLM_REQUEST_TIMEOUT,
+        context_window: int = 4096,
     ):
         super().__init__()
         self.base_url = base_url.rstrip("/")
         self.model = model
         self.timeout = timeout
+        try:
+            self.context_window = int(context_window)
+        except (TypeError, ValueError):
+            self.context_window = 4096
+        if self.context_window <= 0:
+            self.context_window = 4096
 
     async def check_health(self) -> bool:
-        """Check health.
-
-        llama.cpp server exposes /health (200 = ok) and /v1/models; /api/tags is
-        an Ollama-only endpoint. Using /health so the backend is actually
-        selected when a llama.cpp server is running.
-        """
-        try:
-            session = self._get_session()
-            async with session.get(
-                f"{self.base_url}/health", timeout=aiohttp.ClientTimeout(total=5)
-            ) as response:
-                if response.status == 200:
-                    if not self.model:
-                        self.model = await self._fetch_model_name()
+        """Check the OpenAI-compatible model endpoint, with legacy health fallback."""
+        session = self._get_session()
+        for endpoint in ("/v1/models", "/health"):
+            try:
+                async with session.get(
+                    f"{self.base_url}{endpoint}", timeout=aiohttp.ClientTimeout(total=5)
+                ) as response:
+                    if response.status != 200:
+                        continue
+                    if endpoint == "/v1/models" and not self.model:
+                        data = await response.json()
+                        models = data.get("data", []) if isinstance(data, dict) else []
+                        if models:
+                            model_id = models[0].get("id") or models[0].get("model")
+                            if model_id:
+                                self.model = str(model_id)
                     return True
-        except Exception as e:
-            logger.warning(f"llama.cpp health check failed: {e}", exc_info=True)
+            except Exception as exc:
+                logger.debug("llama.cpp health probe %s failed: %s", endpoint, exc)
         return False
 
     async def _fetch_model_name(self) -> Optional[str]:

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Angela in-game autonomy stack (local only, no cloud):
-#   1. llama.cpp server :8080  (local LLM decider, Qwen2.5-1.5B-Q4 gguf)
+#   1. llama.cpp server :8080  (local LLM decider, Gemma 4 E2B Q4_0 GGUF)
 #   2. run_angela.py          (agent loop + bridge :30003)
 # Luanti server :30000 stays manual (flatpak/GUI varies per machine):
 #   flatpak run org.luanti.luanti --server --gameid minetest_game \
@@ -10,19 +10,21 @@
 set -u
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PY="$ROOT/.venv/bin/python"
-MODEL="$ROOT/data/models/qwen2.5-1.5b-instruct-q4_k_m.gguf"
+MODEL="${GEMMA_MODEL:-$HOME/.cache/huggingface/hub/models--google--gemma-4-E2B-it-qat-q4_0-gguf/snapshots/675cff42a74c774d6cb76f76d8eacb49b48c9b93/gemma-4-E2B_q4_0-it.gguf}"
+MODEL_ALIAS="gemma-4-E2B-it"
 
 health() { curl -s --max-time 3 "$1" >/dev/null 2>&1; }
 
 if [ ! -f "$MODEL" ]; then
   echo "Missing model: $MODEL"
-  echo "Download: curl -L -o $MODEL https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q4_k_m.gguf"
+  echo "Set GEMMA_MODEL to an existing Gemma 4 E2B GGUF path; automatic download is disabled."
   exit 1
 fi
 
 if ! health http://127.0.0.1:8080/v1/models; then
   echo "[1/2] starting llama.cpp server :8080 ..."
-  "$PY" -m llama_cpp.server --model "$MODEL" --host 127.0.0.1 --port 8080 \
+  "$PY" -m llama_cpp.server --model "$MODEL" --model_alias "$MODEL_ALIAS" \
+    --host 127.0.0.1 --port 8080 \
     --n_ctx 4096 --n_threads 6 >/tmp/llama-server.log 2>&1 &
   for _ in $(seq 1 30); do
     health http://127.0.0.1:8080/v1/models && break

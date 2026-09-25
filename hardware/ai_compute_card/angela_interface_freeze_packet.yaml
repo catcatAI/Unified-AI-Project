@@ -1,0 +1,132 @@
+schema_version: ai-compute-card-interface-freeze-packet/1
+status: pending_angela_decisions
+owner: angela
+support_owner: environment_support
+purpose: separate_given_initial_conditions_from_angela_design_decisions_before_l2_validation
+source_of_truth:
+  task_contract: hardware/ai_compute_card/ai_compute_card_task.yaml
+  concept_fixture: hardware/ai_compute_card/concept_design.yaml
+  component_registry: hardware/ai_compute_card/component_registry.yaml
+  reference_model: apps/backend/src/ai/hardware/ai_card_reference.py
+  terminology_rule: project_map_and_context_labels_are_not_compute_card_memory_levels
+known_initial_conditions:
+  scope:
+    software_only: true
+    physical_hardware_required: false
+    automatic_tool_installation: false
+    automatic_component_ordering: false
+    environment_support_may_select_product_architecture: false
+  ownership:
+    product_architecture: angela
+    chip_microarchitecture: angela
+    compute_partitioning: angela
+    cache_mapping: angela
+    component_selection: angela
+    environment_and_validation: environment_support
+  host_link:
+    interface: PCIe
+    generation: 5
+    lanes: 16
+    endpoint: true
+    raw_signaling_gbps_each_direction: 512
+    payload_encoding: 128b/130b
+    payload_gbps_each_direction: 504.123
+    payload_gbs_each_direction: 63.015
+    performance_target_gbs: 50
+    optional_generation_6: angela_decision_required
+  compute_contract:
+    main_compute:
+      role: input_output
+      partitions: 16
+      fabric_width_bits: 16384
+      target_clock_mhz: 250
+      raw_bandwidth_gbps: 4096
+      raw_bandwidth_gbs: 512
+      bandwidth_derivation: width_bits_x_clock_hz_divided_by_1e9_then_8_for_gbs
+    secondary_compute:
+      role: sparse_hot_weight_update
+      update_width_bits: 1024
+      partitions: 16
+      partition_width_bits: 64
+      target_clock_mhz: 250
+      raw_bandwidth_gbps: 256
+      raw_bandwidth_gbs: 32
+      bandwidth_derivation: width_bits_x_clock_hz_divided_by_1e9_then_8_for_gbs
+      mapping: pending_angela_interface_freeze
+    baseline_tile: 16x16-INT8-MAC
+    accumulation_width_bits: 32
+  hierarchy:
+    die_l1:
+      scope: self_developed_die_internal_cache
+      target_mb: 32
+      implementation: self_developed_cache
+    card_l2:
+      scope: purchased_card_memory
+      target_capacity_gb: 64
+      implementation: purchased_memory
+    host_l3:
+      scope: outside_card_pcie_boundary
+      interface: PCIe
+      role: host_access_boundary
+      target: host_memory_or_storage
+  protocol_contracts:
+    dma: tiled_with_credit_backpressure
+    weight_update: credit_backpressure_sequence_counter_crc_commit
+    weight_update_atomicity: required
+    firmware: signed
+    iommu_compatibility: required_for_production_target
+  budgets:
+    prototype_board_power_w: 300
+    preferred_board_power_w: 350
+    prototype_bom_cap_usd: 3000
+    price_status: quote_required
+    over_cap_policy: block_and_require_scope_review
+  terminology_guard:
+    die_l1_is_not_project_map_l1: true
+    card_l2_is_not_context_block_l2: true
+    host_l3_is_not_software_layer_l3: true
+    labels_are_not_interchangeable: true
+pending_angela_decisions:
+  - id: die_l1_interface
+    question: What exact data type, byte order, address map, partition ownership, and reset semantics connect main/secondary compute to die L1?
+    required_answer_fields: [data_types, endianness, address_map, partition_ownership, reset_semantics, update_commit_rules]
+    blocks: [L2, L3, L4]
+  - id: microarchitecture
+    question: What compute microarchitecture, scheduling model, clock/reset strategy, and exception behavior implement the frozen interface?
+    required_answer_fields: [pipeline, scheduling, clock_reset, exceptions, coherency]
+    blocks: [HDL, synthesis, timing]
+  - id: card_l2_selection
+    question: Which purchased memory, controller, package, and card-level topology are approved for L2?
+    required_answer_fields: [part_number, topology, controller, package, capacity, thermal_evidence]
+    blocks: [schematic, PCB, power_thermal, BOM]
+  - id: host_l3_contract
+    question: Which PCIe CEM, electrical, reset, FLR, IOMMU, and host-memory/storage contract is approved?
+    required_answer_fields: [CEM, electrical_constraints, reset_FLR, IOMMU, DMA_address_model, host_API]
+    blocks: [PCIe_validation, host_driver, board_validation]
+  - id: thermal_and_form_factor
+    question: Which mechanical, connector, airflow, and thermal envelope is approved for the prototype?
+    required_answer_fields: [form_factor, power_connector, cooling, airflow, temperature_limits, sensor_plan]
+    blocks: [mechanical_design, power_thermal_signoff]
+  - id: acceptance_priority
+    question: Which tradeoff order governs performance, cost, power, and schedule when evidence conflicts?
+    required_answer_fields: [priority_order, non_negotiable_requirements, acceptable_deferred_scope]
+    blocks: [architecture_acceptance, component_acceptance]
+validation_evidence_not_initial_conditions:
+  - manufacturer_and_distributor_quotes
+  - memory_controller_and_package_feasibility
+  - PCIe_electrical_CEM_and_thermal_analysis
+  - HDL_gate_level_simulation
+  - synthesis_static_timing_and_area
+  - board_power_thermal_measurement
+  - firmware_security_and_IOMMU_test_report
+freeze_record:
+  status: pending_angela_input
+  frozen_by: null
+  frozen_at: null
+  decision_ids_frozen: []
+  evidence_refs: []
+  environment_support_may_fill_missing_architecture: false
+next_environment_action:
+  action: wait_for_angela_decision_answers
+  then: record_freeze_and_run_L2_existing_eda_checks
+  forbidden_until_freeze: [component_ordering, physical_fabrication, architecture_completion_claim]

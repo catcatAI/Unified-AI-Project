@@ -30,6 +30,12 @@ from .arithmetic_learner import (
     _label_mul,
     _label_sub,
 )
+from .boolean_gate_learner import (
+    BooleanGateLearner,
+    GateExample,
+    run_active_logic_gate_experiment,
+    run_logic_gate_experiment,
+)
 from .gate_router import (
     get_arithmetic_learner,
     set_arithmetic_learner,
@@ -38,6 +44,10 @@ from .gate_router import (
 
 __all__ = [
     "ArithmeticLearner",
+    "BooleanGateLearner",
+    "GateExample",
+    "run_active_logic_gate_experiment",
+    "run_logic_gate_experiment",
     "CellSample",
     "DigitRepresentation",
     "LogicSample",

@@ -38,6 +38,7 @@ class AgentAdapter:
         "WebSearch": ("search", None),
         "CodeUnderstanding": ("analyze_code", "explain_code"),
         "DataAnalysis": ("analyze_dataset", "generate_report"),
+        "Eda": ("run_experiment", "probe_tools"),
         "VisionProcessing": ("analyze_image", "detect_objects"),
         "AudioProcessing": ("transcribe_audio", "analyze_audio"),
         "KnowledgeGraph": ("query_graph", "add_entity"),
@@ -199,6 +200,7 @@ _AGENT_CLASSES: Dict[str, Tuple[str, str]] = {
         "CodeUnderstandingAgent",
     ),
     "data_analysis_agent": ("ai.agents.specialized.data_analysis_agent", "DataAnalysisAgent"),
+    "eda_agent": ("ai.agents.specialized.eda_agent", "EdaAgent"),
     "vision_processing_agent": (
         "ai.agents.specialized.vision_processing_agent",
         "VisionProcessingAgent",
@@ -214,7 +216,11 @@ _AGENT_CLASSES: Dict[str, Tuple[str, str]] = {
 }
 
 
-def register_specialized_agents(agent_manager: Any, state_manager: Any = None) -> int:
+def register_specialized_agents(
+    agent_manager: Any,
+    state_manager: Any = None,
+    training_coordinator: Any = None,
+) -> int:
     """
     Import, instantiate, adapt, and register all specialized agents with AgentManager.
 
@@ -227,7 +233,10 @@ def register_specialized_agents(agent_manager: Any, state_manager: Any = None) -
         try:
             module = importlib.import_module(module_path)
             agent_class = getattr(module, class_name)
-            agent_instance = agent_class(agent_id=agent_id)
+            agent_kwargs: Dict[str, Any] = {"agent_id": agent_id}
+            if class_name == "EdaAgent" and training_coordinator is not None:
+                agent_kwargs["training_coordinator"] = training_coordinator
+            agent_instance = agent_class(**agent_kwargs)
             adapter = AgentAdapter(agent_instance, agent_id=agent_id)
             agent_manager.agents[agent_id] = adapter
             registered += 1

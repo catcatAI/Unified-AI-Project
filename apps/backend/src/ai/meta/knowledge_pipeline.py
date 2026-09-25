@@ -75,6 +75,14 @@ class KnowledgePipeline:
             return None
 
         text = text.strip()
+        query_context = context or {}
+        plan = query_context.get("_preprocessing_plan")
+        if not isinstance(plan, dict):
+            from services.llm.context_scheduler import get_context_scheduler
+
+            plan = get_context_scheduler().plan_query(text, query_context).to_dict()
+        if not bool(plan.get("allow_knowledge_pipeline", True)):
+            return None
         if len(text) > 4000:
             text = text[:4000]
 
@@ -90,7 +98,7 @@ class KnowledgePipeline:
 
         for source_name, handler in steps:
             try:
-                result = await handler(text, context or {})
+                result = await handler(text, query_context)
                 if result and result.get("answer"):
                     result["source"] = source_name
                     logger.debug(
@@ -127,11 +135,11 @@ class KnowledgePipeline:
             if not is_weather:
                 return None
             weather = await self._weather.get_weather(location if location else "Taipei")
-            if weather and not weather.get("error"):
+            if weather and weather.get("description") not in (None, "", "unknown"):
                 desc = weather.get("description", "")
-                temp = weather.get("temp_c", "?")
+                temp = weather.get("temperature_c", "?")
                 humidity = weather.get("humidity", "?")
-                wind = weather.get("wind_kph", "?")
+                wind = weather.get("wind_speed_kmph", "?")
                 loc = weather.get("location", location or "台北")
                 if loc == "Taipei":
                     loc = "台北"
@@ -188,6 +196,8 @@ class KnowledgePipeline:
             if not is_dict_query or not query:
                 return None
             results = engine.dictionary.encode_soft(query)
+            min_score = getattr(engine.dictionary, "MIN_ENCODE_SCORE", 0.25)
+            results = {key: score for key, score in results.items() if score >= min_score}
             if results:
                 top_keys = sorted(results.keys(), key=lambda k: results[k], reverse=True)[:5]
                 entries = engine.dictionary.lookup(top_keys)
@@ -320,6 +330,8 @@ class KnowledgePipeline:
         # Bare short-string translation only when it looks like a LOOKUP:
         # single word / short noun phrase. Questions, greetings and
         # chit-chat must NOT be hijacked (measured: "你好呀" -> "你好 = hello").
+        if re.search(r"[\u4e00-\u9fff]", t) and len(t) > 4:
+            return False, ""
         if len(t) <= 10 and re.match(r"^[\w\s\-\u4e00-\u9fff]+$", t):
             question_marks = ("?", "？", "吗", "嗎", "呢")
             greetings = (

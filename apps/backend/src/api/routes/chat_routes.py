@@ -25,6 +25,12 @@ from core.utils import safe_error
 from fastapi import APIRouter, Body, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import StreamingResponse
 from services.document_router import try_intent_routing as _try_intent_routing
+from services.execution.gate_execution import (
+    TTLSessionManager as _GateTTLSessionManager,
+)
+from services.execution.gate_execution import (
+    sessions as _gate_sessions,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -70,67 +76,10 @@ def _spawn_background_task(coro, description: str = "") -> asyncio.Task:
     return task
 
 
-class TTLSessionManager:
-    def __init__(self):
-        self._sessions: Dict[str, Dict[str, Any]] = {}
-        self._lock = threading.Lock()
-        self._config = (
-            _angela_cfg.get_authority("angela_core", {}).get("session_manager", {})
-            if _angela_cfg
-            else {}
-        )
-        self._ttl = self._config.get("ttl_seconds", 3600)
-        self._max_sessions = self._config.get("max_sessions", 1000)
-        self._last_purge = time.time()
-
-    def _try_purge(self) -> None:
-        """Lazy purge — runs O(n) scan at most once per 60s."""
-        now = time.time()
-        if now - self._last_purge < 60.0:
-            return
-        self._last_purge = now
-        cutoff = datetime.now() - timedelta(seconds=self._ttl)
-        expired = [
-            sid
-            for sid, s in self._sessions.items()
-            if s.get("created_at") and datetime.fromisoformat(s["created_at"]) < cutoff
-        ]
-        for sid in expired:
-            del self._sessions[sid]
-        if len(self._sessions) > self._max_sessions:
-            sorted_sessions = sorted(
-                self._sessions.items(), key=lambda x: x[1].get("created_at", "")
-            )
-            for sid, _ in sorted_sessions[: len(sorted_sessions) - self._max_sessions]:
-                del self._sessions[sid]
-
-    def get(self, session_id: str) -> Optional[Dict[str, Any]]:
-        with self._lock:
-            self._try_purge()
-            return self._sessions.get(session_id)
-
-    def set(self, session_id: str, data: Dict[str, Any]) -> None:
-        with self._lock:
-            self._try_purge()
-            if len(self._sessions) >= self._max_sessions:
-                oldest = min(
-                    self._sessions.keys(), key=lambda k: self._sessions[k].get("created_at", "")
-                )
-                del self._sessions[oldest]
-            self._sessions[session_id] = data
-
-    def __contains__(self, session_id: str) -> bool:
-        with self._lock:
-            self._try_purge()
-            return session_id in self._sessions
-
-    def items(self) -> list:
-        with self._lock:
-            self._try_purge()
-            return list(self._sessions.items())
-
-
-sessions = TTLSessionManager()
+# Session store: owned by services.execution.gate_execution so the HTTP route and
+# the REPL / ChatService path share ONE gate + session owner.
+TTLSessionManager = _GateTTLSessionManager
+sessions = _gate_sessions
 
 # Latest pipeline response, captured so _handle_chat_request can persist the turn.
 # Bounded to prevent unbounded memory growth (matches TTLSessionManager max_sessions).
@@ -759,6 +708,60 @@ async def _build_chat_context(
         logger.warning(f"LifeEssence injection unavailable: {e}", exc_info=True)
 
 
+def _gate_execution_response(
+    *,
+    executed: bool,
+    handler_id: str,
+    action_result: Any,
+    error: str,
+    schema_ver: str,
+    session_id: str,
+) -> Dict[str, Any]:
+    """Report the outcome of a user-confirmed action.
+
+    The gate executed the action, so the user must be told what happened —
+    including failures. Returning None here previously let the LLM answer a
+    request whose side effect had already been applied (or lost).
+    """
+    if executed:
+        detail = ""
+        if isinstance(action_result, dict):
+            payload = action_result.get("result")
+            if isinstance(payload, dict):
+                detail = str(
+                    payload.get("message")
+                    or payload.get("status")
+                    or payload.get("path")
+                    or ""
+                )
+            elif payload:
+                detail = str(payload)
+        elif isinstance(action_result, str):
+            detail = action_result.strip()
+        text = f"已執行：{handler_id}。" + (f"（{detail}）" if detail else "")
+        source = "gate_executed"
+        hit_source = "gate_executed"
+    else:
+        text = f"執行失敗：{handler_id}。" + (f"原因：{error}" if error else "")
+        source = "gate_execute_failed"
+        hit_source = "gate_execute_failed"
+        logger.warning("Confirmed action failed: handler=%s error=%s", handler_id, error)
+    return {
+        "response_text": text,
+        "response": text,
+        "source": source,
+        "schema_version": schema_ver,
+        "truncation_message": "",
+        "emotion": "neutral",
+        "emotion_confidence": 0.5,
+        "emotion_intensity": 0.5,
+        "hit_score": 1.0 if executed else 0.0,
+        "hit_source": hit_source,
+        "route": f"gate:{handler_id}",
+        "session_id": session_id,
+    }
+
+
 async def _handle_execution_gate(
     user_message: str,
     chat_svc: Any,
@@ -766,160 +769,94 @@ async def _handle_execution_gate(
     schema_ver: str,
     session_id: str,
 ) -> Optional[Dict[str, Any]]:
-    """Run execution gate: intent classification → decide auto/confirm/reject.
-    Returns a response dict if gate short-circuits (confirm or reject), else None."""
+    """Delegate to the shared execution-gate owner and shape its response.
+
+    GateExecutionOwner is the single owner of "may this action run"; this
+    wrapper only translates the transport-neutral GateOutcome into the route
+    response dict. Returns a response dict when the gate short-circuits
+    (confirm / cancel / executed / failed), else None.
+    """
+    from services.execution.gate_execution import (
+        OUTCOME_AGENT_EXECUTED,
+        OUTCOME_CANCEL,
+        OUTCOME_CONFIRM,
+        OUTCOME_EXECUTED,
+        GateExecutionOwner,
+    )
+
     try:
-        from ai.core.execution_gate import ExecutionGate
-        from ai.core.query_classifier import QueryClassifier
+        from ai.agents.agent_orchestrator import AgentOrchestrator
 
-        # Handle pending action from previous turn (persisted on the session so
-        # confirm/cancel round-trips survive across requests).
-        pending = context.pop("pending_action", None)
-        if pending is None:
-            session_data = sessions.get(session_id) or {}
-            pending = session_data.pop("pending_action", None)
-            sessions.set(session_id, session_data)  # clear persisted state
-        if pending:
-            msg_lower = user_message.strip().lower()
-            confirm_words = {
-                "\u597d",
-                "\u662f",
-                "\u786e\u8ba4",
-                "ok",
-                "yes",
-                "sure",
-                "\u786e\u5b9a",
-                "\u5bf9",
-            }
-            cancel_words = {
-                "\u4e0d\u8981",
-                "\u53d6\u6d88",
-                "\u7b97\u4e86",
-                "no",
-                "cancel",
-                "skip",
-                "\u4e0d\u7528",
-            }
+        if (
+            AgentOrchestrator.is_eda_execution_request(user_message)
+            or AgentOrchestrator.is_ai_card_request(user_message)
+            or (
+                context.get("_eda_followup") is True
+                and AgentOrchestrator.is_eda_followup_request(user_message)
+            )
+        ):
+            context["eda_request"] = True
+            return None
+    except Exception as exc:  # pragma: no cover - defensive
+        logger.warning("EDA request detection failed: %s", exc, exc_info=True)
 
-            if msg_lower in confirm_words:
-                handler_id = pending.get("handler")
-                if handler_id and chat_svc and chat_svc.model_bus:
-                    try:
-                        action_result = await chat_svc.model_bus.execute_handler(
-                            handler_id, pending.get("original_query", user_message), context
-                        )
-                        context["last_action_result"] = action_result
-                        context["continuation_count"] = 0
-                        # Record confirm-path success for ExecutionGate C³ feedback loop (C³ 6.0)
-                        try:
-                            ExecutionGate().record_result(handler_id, True)
-                        except Exception:
-                            logger.warning(
-                                "Failed to record execution gate success feedback", exc_info=True
-                            )
-                    except Exception as e:
-                        logger.warning(f"Execution gate handler failed: {e}")
-                        # Record confirm-path failure for ExecutionGate C³ feedback loop
-                        try:
-                            ExecutionGate().record_result(handler_id, False)
-                        except Exception:
-                            logger.warning(
-                                "Failed to record execution gate failure feedback", exc_info=True
-                            )
-            elif msg_lower in cancel_words:
-                return {
-                    "response_text": "\u597d\u7684\uff0c\u4e0d\u6267\u884c\u3002\u8fd8\u6709\u4ec0\u4e48\u9700\u8981\u5e2e\u5fd9\u7684\u5417\uff1f",
-                    "response": "\u597d\u7684\uff0c\u4e0d\u6267\u884c\u3002\u8fd8\u6709\u4ec0\u4e48\u9700\u8981\u5e2e\u5fd9\u7684\u5417\uff1f",
-                    "source": "gate_cancel",
-                    "schema_version": schema_ver,
-                    "truncation_message": "",
-                    "emotion": "neutral",
-                    "emotion_confidence": 0.5,
-                    "emotion_intensity": 0.5,
-                    "session_id": session_id,
-                }
+    model_bus = getattr(chat_svc, "model_bus", None) if chat_svc else None
+    owner = GateExecutionOwner(session_store=sessions)
+    outcome = await owner.process(user_message, context, session_id, model_bus)
+    # Mark the context so downstream services (ChatService) do not run a second
+    # gate pass for the same request.
+    context["_gate_processed"] = True
+    if not outcome.is_terminal:
+        return None
 
-        # Intent classification + Execution gate decision
-        classifier = _get_query_classifier()
-        classify_result = classifier.classify(user_message)
-        context["_classify_result_type"] = classify_result.primary_type.value
-        context["_classify_result_confidence"] = classify_result.confidence
-        context["_classify_result_action"] = classify_result.action_type
-        gate = ExecutionGate(model_bus=chat_svc.model_bus if chat_svc else None)
-        decision = gate.decide(
-            query_type=classify_result.primary_type.value,
-            action_type=classify_result.action_type,
-            user_message=user_message,
-            confidence=classify_result.confidence,
-            context=context,
+    if outcome.action in (OUTCOME_EXECUTED, OUTCOME_AGENT_EXECUTED):
+        return _gate_execution_response(
+            executed=True,
+            handler_id=outcome.handler or "",
+            action_result=outcome.result,
+            error=outcome.error,
+            schema_ver=schema_ver,
+            session_id=session_id,
         )
-
-        if decision.action == "auto_execute":
-            # Gate through IntentRegistry: only auto-execute if IntentRegistry agrees
-            _ir_confirms = True
-            try:
-                from core.intent_registry import IntentRegistry
-
-                ir = IntentRegistry()
-                ir_name, ir_conf = ir.detect(user_message)
-                if ir_name and ir_conf >= 0.1:
-                    handler_to_ir = {
-                        "file_ops": "file_op",
-                        "web_search": "web_search",
-                        "code_exec": "code",
-                        "task_mgr": "task",
-                        "vision": "vision",
-                    }
-                    expected_ir = handler_to_ir.get(decision.handler) if decision.handler else None
-                    if expected_ir and ir_name != expected_ir:
-                        _ir_confirms = False
-            except Exception as e:
-                logger.warning("IntentRegistry gate failed in execution gate: %s", e, exc_info=True)
-            if _ir_confirms and decision.handler and chat_svc and chat_svc.model_bus:
-                try:
-                    action_result = await chat_svc.model_bus.execute_handler(
-                        decision.handler, user_message, context
-                    )
-                    context["last_action_result"] = action_result
-                    context["continuation_count"] = 0
-                    gate.record_result(decision.handler, True)
-                except Exception as e:
-                    logger.warning(f"Execution gate auto-execute failed: {e}")
-                    gate.record_result(decision.handler, False)
-            else:
-                # IntentRegistry didn't confirm — inject as context enrichment, skip execution
-                context["last_action_result"] = None
-                context["_gate_ir_mismatch"] = True
-        elif decision.action == "confirm_then_execute":
-            pending_action = {
-                "handler": decision.handler,
-                "action_type": decision.action_type,
-                "original_query": decision.original_query,
-            }
-            context["pending_action"] = pending_action
-            session_data = sessions.get(session_id) or {}
-            session_data["pending_action"] = pending_action
-            sessions.set(session_id, session_data)
-            return {
-                "response_text": decision.confirm_message,
-                "response": decision.confirm_message,
-                "source": "gate_confirm",
-                "schema_version": schema_ver,
-                "truncation_message": "",
-                "emotion": "neutral",
-                "emotion_confidence": classify_result.confidence,
-                "emotion_intensity": 0.5,
-                "hit_score": classify_result.confidence,
-                "hit_source": "gate_confirm",
-                "route": classify_result.primary_type.value,
-                "session_id": session_id,
-            }
-        else:
-            # reject: clear action result, continue to LLM
-            context["last_action_result"] = None
-    except Exception as e:
-        logger.warning(f"Execution gate unavailable: {e}", exc_info=True)
-    return None
+    if outcome.action == OUTCOME_CANCEL:
+        return {
+            "response_text": outcome.message,
+            "response": outcome.message,
+            "source": "gate_cancel",
+            "schema_version": schema_ver,
+            "truncation_message": "",
+            "emotion": "neutral",
+            "emotion_confidence": 0.5,
+            "emotion_intensity": 0.5,
+            "hit_score": 0.0,
+            "hit_source": "gate_cancel",
+            "route": "gate_cancel",
+            "session_id": session_id,
+        }
+    if outcome.action == OUTCOME_CONFIRM:
+        return {
+            "response_text": outcome.message,
+            "response": outcome.message,
+            "source": "gate_confirm",
+            "schema_version": schema_ver,
+            "truncation_message": "",
+            "emotion": "neutral",
+            "emotion_confidence": outcome.confidence,
+            "emotion_intensity": 0.5,
+            "hit_score": outcome.confidence,
+            "hit_source": "gate_confirm",
+            "route": outcome.query_type,
+            "session_id": session_id,
+        }
+    # failed / agent_failed — never hide a failed side effect behind the LLM
+    return _gate_execution_response(
+        executed=False,
+        handler_id=outcome.handler or "",
+        action_result=None,
+        error=outcome.error,
+        schema_ver=schema_ver,
+        session_id=session_id,
+    )
 
 
 # Module-level singleton caches for AgentManager + AgentOrchestrator
@@ -943,12 +880,14 @@ async def _try_agent_routing(
         from ai.agents.agent_adapter import register_specialized_agents
         from ai.agents.agent_manager import AgentManager
         from ai.agents.agent_orchestrator import AgentOrchestrator
-        from ai.core.query_classifier import QueryClassifier, QueryType
+        from ai.core.query_classifier import QueryType
 
         try:
             from api.lifespan import get_agent_manager as _lifespan_get_agent_manager
+            from api.lifespan import get_training_coordinator as _get_training_coordinator
         except ImportError:
             _lifespan_get_agent_manager = None  # type: ignore[assignment]
+            _get_training_coordinator = None  # type: ignore[assignment]
 
         # Reuse the classification already computed by _handle_execution_gate
         # (stored on context) to avoid classifying the same message twice per
@@ -959,10 +898,21 @@ async def _try_agent_routing(
             primary_type_name = str(cached_type)
             confidence = float(cached_conf) if cached_conf is not None else 0.0
         else:
-            classifier = _get_query_classifier()
-            classify_result = classifier.classify(user_message)
-            primary_type_name = classify_result.primary_type.value
-            confidence = classify_result.confidence
+            from services.llm.context_scheduler import get_context_scheduler
+
+            plan = get_context_scheduler().plan_query(user_message, context)
+            primary_type_name = plan.query_type
+            confidence = plan.confidence
+
+        eda_request = AgentOrchestrator.is_eda_execution_request(user_message)
+        ai_card_request = AgentOrchestrator.is_ai_card_request(user_message)
+        eda_followup = (
+            context.get("_eda_followup") is True
+            and AgentOrchestrator.is_eda_followup_request(user_message)
+        )
+        if eda_request or ai_card_request or eda_followup:
+            primary_type_name = "eda"
+            confidence = max(confidence, 0.8)
 
         # Only route non-actionable intents (execution gate handles actionable ones)
         actionable = {
@@ -992,6 +942,7 @@ async def _try_agent_routing(
                 QueryType.COMMAND,
             )
         }
+        agent_types.add("eda")
         if primary_type_name not in agent_types and confidence < 0.3:
             return None
 
@@ -1002,7 +953,13 @@ async def _try_agent_routing(
             _agent_manager_instance = _lifespan_get_agent_manager()
         if _agent_manager_instance is None:
             _agent_manager_instance = AgentManager(enable_process_agents=False, enable_router=False)
-            register_specialized_agents(_agent_manager_instance)
+            training_coordinator = (
+                _get_training_coordinator() if _get_training_coordinator is not None else None
+            )
+            register_specialized_agents(
+                _agent_manager_instance,
+                training_coordinator=training_coordinator,
+            )
             _agent_orchestrator_instance = AgentOrchestrator(agent_manager=_agent_manager_instance)
             logger.info("AgentManager/AgentOrchestrator singletons initialized")
         elif _agent_orchestrator_instance is None:
@@ -1018,6 +975,48 @@ async def _try_agent_routing(
         route_result = await orchestrator.route_task(user_message, context)
 
         primary = route_result.get("results", [{}])[0] if route_result.get("results") else {}
+
+        # ExecutionGate blocked the specialized agent (irreversible action needs
+        # explicit confirmation). Surface the confirmation instead of silently
+        # falling through to the LLM, mirroring the handler gate flow above.
+        gate_action = primary.get("gate_action")
+        if gate_action in ("confirm_then_execute", "reject"):
+            confirm_text = primary.get("confirm_message") or (
+                "這個操作需要你確認後我才會執行："
+                f"{user_message}"
+            )
+            if gate_action == "confirm_then_execute":
+                pending = {
+                    "kind": "agent",
+                    "agent": primary.get("agent"),
+                    "intent": primary.get("intent"),
+                    "original_query": user_message,
+                }
+                context["pending_action"] = pending
+                session_data = sessions.get(session_id) or {}
+                session_data["pending_action"] = pending
+                sessions.set(session_id, session_data)
+                return {
+                    "response_text": confirm_text,
+                    "response": confirm_text,
+                    "source": "gate_confirm",
+                    "schema_version": schema_ver,
+                    "truncation_message": "",
+                    "emotion": "neutral",
+                    "emotion_confidence": 0.5,
+                    "emotion_intensity": 0.5,
+                    "hit_score": 0.0,
+                    "hit_source": "gate_confirm",
+                    "route": "agent_gate_confirm",
+                    "session_id": session_id,
+                }
+            logger.info(
+                "ExecutionGate rejected agent %s: %s",
+                primary.get("agent"),
+                primary.get("gate_reason"),
+            )
+            return None
+
         agent_result = primary.get("result")
         if agent_result and isinstance(agent_result, dict) and agent_result.get("result"):
             inner = agent_result["result"]
@@ -1539,8 +1538,8 @@ async def _handle_chat_request(
     # the messages persisted for this session so past turns are not lost.
     # A copy is passed downstream so pipeline mutations never alias the
     # persisted session messages.
+    session = sessions.get(session_id) or {}
     if not history:
-        session = sessions.get(session_id) or {}
         history = list(session.get("messages", []))
     result = None
     try:
@@ -1614,7 +1613,7 @@ async def _run_chat_pipeline(
     max_len = chat_cfg.get("max_message_length", 4000)
     schema_ver = chat_cfg.get("response_schema_version", "2.0")
     trunc_msg = chat_cfg.get("truncation_message", "...\uff08\u622a\u65ad\uff09")
-    timeout = chat_cfg.get("http_timeout", 30.0)
+    timeout = chat_cfg.get("http_timeout", 60.0)
     flow_source = chat_cfg.get("default_flow", "angela_chat_service")
 
     # Step 1: Validate and truncate input
@@ -1630,6 +1629,16 @@ async def _run_chat_pipeline(
     context: Dict[str, Any] = {"user_name": user_name}
     if extra_context:
         context.update(extra_context)
+    try:
+        from ai.agents.agent_orchestrator import AgentOrchestrator
+
+        if any(
+            AgentOrchestrator.is_ai_card_request(str(item.get("content", "")))
+            for item in history
+        ):
+            context["_eda_followup"] = True
+    except Exception as exc:
+        logger.debug("EDA follow-up context detection unavailable: %s", exc)
 
     # Step 2.5: Main-line dispatch hook — judges whether this input is a
     # generation request vs a learning signal vs training data, and (when a

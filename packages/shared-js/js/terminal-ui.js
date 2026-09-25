@@ -112,10 +112,17 @@ class TerminalUI {
     this.container.classList.add('terminal-hidden')
   }
 
-  /** Register global Ctrl+` toggle. Call once after construction */
+  /** Register terminal keyboard shortcuts. Call once after construction */
   registerGlobalShortcut() {
     if (this._keyHandler) return
     this._keyHandler = (e) => {
+      const plusKey = e.key === '+' || e.code === 'NumpadAdd'
+      if (e.ctrlKey && !e.altKey && this.isVisible && plusKey) {
+        e.preventDefault()
+        this.input.focus()
+        return
+      }
+
       if (e.ctrlKey && e.key === '`') {
         e.preventDefault()
         this.toggle()

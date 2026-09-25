@@ -81,6 +81,28 @@ class TestWeatherService:
         assert result["country"] == "Japan"
 
     @patch("services.weather_service.aiohttp.ClientSession")
+    def test_get_weather_accepts_non_json_content_type(self, mock_session_cls):
+        json_data = {
+            "current_condition": [
+                {
+                    "temp_C": "20",
+                    "weatherDesc": [{"value": "Clear"}],
+                    "humidity": "60",
+                    "windspeedKmph": "8",
+                }
+            ],
+            "nearest_area": [{"areaName": [{"value": "Osaka"}], "country": [{"value": "Japan"}]}],
+        }
+        session = self._mock_aiohttp(status=200, json_data=json_data)
+        mock_session_cls.return_value = session
+
+        result = asyncio.run(WeatherService().get_weather("Osaka"))
+        response = session.get.return_value.__aenter__.return_value
+
+        assert result["location"] == "Osaka"
+        response.json.assert_awaited_once_with(content_type=None)
+
+    @patch("services.weather_service.aiohttp.ClientSession")
     def test_caching_returns_cached_result(self, mock_session_cls):
         json_data = {
             "current_condition": [

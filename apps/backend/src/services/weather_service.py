@@ -50,7 +50,7 @@ class WeatherService:
                     if resp.status != 200:
                         logger.warning("Weather API returned status %d", resp.status)
                         return self._offline_result()
-                    data = await resp.json()
+                    data = await resp.json(content_type=None)
                     result = self._parse_wttr_response(data)
                     self._cache = result
                     self._cache_time = now

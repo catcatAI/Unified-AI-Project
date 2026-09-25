@@ -1,0 +1,177 @@
+schema_version: ai-compute-card-concept/1
+status: environment_support_fixture
+name: Angela-PCIe-AI-Accelerator-Validation-Fixture
+purpose: parameterized software validation fixture before project AI freezes the product architecture
+owner: angela
+support_owner: environment_support
+ownership:
+  angela_owns: [chip_microarchitecture, compute_partitioning, cache_mapping, component_selection, product_acceptance]
+  environment_support_owns: [tool_environment, reference_models, fixtures, golden_data, artifact_reproducibility]
+  environment_support_must_not_claim: [final_architecture, component_selection, fabrication_readiness, timing_signoff]
+hierarchy:
+  die:
+    boundary: self_developed_chip
+    main_compute:
+      role: input_output
+      partitions: 16
+      fabric_width_bits: 16384
+    secondary_compute:
+      role: sparse_hot_weight_update
+      input_width_bits: 1024
+      cache_partitions: 16
+      partition_width_bits: 64
+      mapping: angela_interface_freeze_required
+    l1_cache:
+      scope: die_internal
+      implementation: self_developed_cache
+      target_mb: 32
+  card:
+    boundary: card_external_to_die
+    l2_memory:
+      scope: card
+      implementation: purchased_memory
+      target_capacity_gb: 64
+    electronics:
+      selection_owner: angela
+  host:
+    boundary: outside_card
+    l3:
+      scope: outside_card
+      interface: PCIe
+      role: host_access_boundary
+      target: host_memory_or_storage
+terminology_guard:
+  project_map_labels: software_project_structure_and_tooling_labels
+  context_block_labels: software_context_categories
+  compute_card_labels:
+    die_l1: self_developed_die_internal_cache
+    card_l2: purchased_card_memory
+    host_l3: outside_card_pcie_boundary
+  labels_are_not_interchangeable: true
+architecture:
+  fixture_only: true
+  host_link: PCIe-Gen5-x16-endpoint
+  host_dma: dual-direction-tile-dma-with-credits
+  host_bandwidth:
+    gen5_signaling_rate_gbps_per_lane: 32
+    raw_gbps_each_direction: 512
+    payload_encoding: 128b/130b
+    effective_gbs_each_direction: 63.015
+    performance_target_gbs: 50
+  internal_main_fabric:
+    width_bits: 16384
+    target_clock_mhz: 250
+    raw_bandwidth_gbps: 4096
+    raw_bandwidth_gbs: 512
+    bandwidth_derivation: width_bits_x_clock_hz_divided_by_1e9_then_8_for_gbs
+    transport: internal-chip-fabric-not-raw-PCIe
+    consumers: [compute_tiles, activation_cache, weight_cache, dma_ingress, dma_egress]
+  weight_update_fabric:
+    width_bits: 1024
+    target_clock_mhz: 250
+    raw_bandwidth_gbps: 256
+    raw_bandwidth_gbs: 32
+    bandwidth_derivation: width_bits_x_clock_hz_divided_by_1e9_then_8_for_gbs
+    transport: die_internal_secondary_compute_to_l1_cache
+    partition_count: 16
+    partition_width_bits: 64
+    mapping_owner: angela
+    consumers: [l1_weight_cache]
+  compute:
+    tile: 16x16-INT8-MAC
+    planned_tile_count: 64
+    planned_mac_count: 16384
+    numeric_modes: [INT8, INT16, FP16, FP32-research]
+    peak_performance: calculate-after-cycle-accurate-model
+  memory:
+    l1:
+      scope: die_internal
+      on_chip_cache_mb: 32
+      cache_partition:
+        activation_cache_mb: 8
+        weight_working_set_mb: 16
+        staging_buffers_mb: 8
+    l2:
+      scope: card_external_to_die
+      external_prototype: 2x32GB-DDR5-ECC-RDIMM
+      external_capacity_gb: 64
+    l3:
+      scope: outside_card
+      interface: PCIe
+      role: host_access_boundary
+      target: host_memory_or_storage
+    optional_hbm: angela_may_evaluate_as_l2_candidate
+  dma:
+    descriptors: ring-buffer-with-head-tail
+    tile_size_bytes: 1048576
+    credit_limit: implementation-dependent
+    error_reporting: completion-status-and-crc
+  power_thermal:
+    board_power_target_w: 300
+    board_power_max_w: 350
+    cooling: passive-heatsink-host-airflow
+    telemetry: [rail-power, die-temperature, memory-temperature, inlet, outlet]
+    protection: [thermal-throttle, watchdog, power-fault, emergency-shutdown]
+  mechanical:
+    form_factor: FHFL-10.5-inch-dual-slot
+    pcie_power: CEM-12VHPWR-or-12V-2x6
+  software:
+    host_api: descriptor-DMA-and-event-ring
+    weight_update_api: sequence-commit-and-rollback
+    cache_policy: explicit-replaceable-regions
+    security: IOMMU-compatible-IOVA-and-signed-firmware
+cost_envelope:
+  prototype_bom_cap_usd: 3000
+  pricing_status: quote_required
+  rule: candidate-exceeding-cap-is-blocked-not-estimated
+power_budget_planning_only:
+  compute_and_fpga_w: 105
+  memory_w: 75
+  pcie_and_retimers_w: 25
+  power_conversion_loss_w: 35
+  cooling_and_board_w: 20
+  measurement_and_safety_headroom_w: 40
+  total_w: 300
+validation_plan:
+  L1:
+    - Python bandwidth and DMA model
+    - cache partition and aliasing checks
+    - weight-update atomicity and CRC model
+    - power/thermal budget calculator
+    - cost envelope with unknown-price states
+  L2:
+    - KiCad schematic/PCB/DRC/Gerber
+    - ngspice selected power/signal paths
+    - KLayout/Magic memory or layout fixture
+  L3:
+    - deferred until HDL toolchain decision
+  L4:
+    - deferred until synthesis and static timing are available
+environment_reference_fixtures:
+  selection_owner: angela
+  entries_are_not_selected: true
+  prototype_fpga:
+    silicon: Intel-Agilex-7-M-or-AMD-Versal-AI-Core
+    memory: DDR5-ECC
+    risk: device-resource-and-price-uncertainty
+  performance_research:
+    silicon: AMD-Versal-HBM
+    memory: integrated-HBM-plus-DDR5
+    risk: likely-exceeds-prototype-cost-cap
+  benchmark_reference:
+    silicon: NVIDIA-H100-PCIe-or-AMD-MI300X
+    purpose: performance-and-thermal-comparison-only
+    build_target: false
+non_goals:
+  - physical_fabrication
+  - account_control
+  - automatic_ordering
+  - claiming_250MHz_without_static_timing
+  - claiming_peak_TOPS_without_cycle-accurate-accounting
+  - selecting_product_architecture_or_components_on_behalf_of_angela
+decision_gates:
+  - angela_interface_freeze_recorded
+  - component_registry_sources_verified
+  - pcie_and_power_connectors_selected
+  - memory_controller_and_package_feasible
+  - L1_and_L2_software_acceptance_pass

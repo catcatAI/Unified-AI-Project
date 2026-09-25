@@ -82,6 +82,13 @@ class GlobalContextTree:
         return self._apply_fallback(providers)
 
     def _apply_fallback(self, providers: GlobalContextProviders) -> GlobalContextProviders:
+        if providers.agent_manager is None:
+            try:
+                from core.backbone import get_backbone
+
+                providers.agent_manager = get_backbone().get_module("agent_manager")
+            except Exception as exc:
+                logger.debug("agent manager context lookup skipped: %s", exc)
         if providers.workspace is None and self._fallback_workspace is not None:
             providers.workspace = self._fallback_workspace
         return providers
@@ -169,24 +176,48 @@ class GlobalContextTree:
 
     def _agents_node(self, providers: GlobalContextProviders) -> Optional[ContextNode]:
         am = providers.agent_manager
-        collabs: Dict[str, Any] = getattr(am, "collaborations", {}) or {}
-        if am is None or not collabs:
+        collaborations: Dict[str, Any] = getattr(am, "collaborations", {}) or {}
+        registered: Dict[str, Any] = getattr(am, "agents", {}) or {}
+        if am is None or (not collaborations and not registered):
             return None
         node = ContextNode(
             id="ctx:agents",
             label="代理協作上下文",
             kind="context_section",
-            summary=f"{len(collabs)} 個協作",
+            summary=f"{len(registered)} 個已註冊代理／{len(collaborations)} 個協作",
         )
-        node.children.extend(
-            ContextNode(
-                id=f"ctx:collab:{cid}",
-                label=f"協作 {cid}",
-                kind="collaboration",
-                summary=str(getattr(c, "status", "")),
+        for cid, collaboration in list(collaborations.items())[:20]:
+            node.children.append(
+                ContextNode(
+                    id=f"ctx:collab:{cid}",
+                    label=f"協作 {cid}",
+                    kind="collaboration",
+                    summary=str(getattr(collaboration, "status", "")),
+                )
             )
-            for cid, c in list(collabs.items())[:20]
-        )
+        for agent_id, adapter in list(registered.items())[:20]:
+            status: Dict[str, Any] = {}
+            try:
+                getter = getattr(adapter, "get_status", None)
+                if callable(getter):
+                    value = getter()
+                    if isinstance(value, dict):
+                        status = value
+            except Exception as exc:
+                logger.debug("agent status unavailable for %s: %s", agent_id, exc)
+            agent_status = status.get("agent_status", {})
+            enabled = agent_status.get("enabled") if isinstance(agent_status, dict) else None
+            summary = "已註冊" if enabled is None else ("已啟用" if enabled else "已停用")
+            capabilities = status.get("available_methods", [])
+            node.children.append(
+                ContextNode(
+                    id=f"ctx:agent:{agent_id}",
+                    label=f"代理 {agent_id}",
+                    kind="agent",
+                    summary=summary,
+                    preview=[str(item) for item in capabilities[:8]],
+                )
+            )
         return node
 
     def _dialogue_node(self, providers: GlobalContextProviders) -> Optional[ContextNode]:

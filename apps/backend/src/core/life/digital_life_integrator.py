@@ -430,22 +430,25 @@ class DigitalLifeIntegrator:
 
         # 3. High-Level Cognition (Optional/Graceful)
         try:
-            from ai.memory.ham_memory.ham_manager import HAMMemoryManager
-            from services.angela_llm_service import get_llm_service
+            if os.environ.get("ANGELA_REPL_MODE") == "1":
+                logger.info("  [Cognition] LLM Decision Loop disabled in REPL mode.")
+            else:
+                from ai.memory.ham_memory.ham_manager import HAMMemoryManager
+                from services.angela_llm_service import get_llm_service
 
-            llm_service = await get_llm_service()
-            memory_manager = HAMMemoryManager(core_storage_filename="angela_conversations.json")
+                llm_service = await get_llm_service()
+                memory_manager = HAMMemoryManager(core_storage_filename="angela_conversations.json")
 
-            # Decide loop
-            self.llm_decision_loop = LLMDecisionLoop(
-                llm_service=llm_service,
-                state_manager=self.state_matrix,
-                memory_manager=memory_manager,
-                user_monitor=self.user_monitor,
-                broadcast_callback=self.broadcast_callback,
-            )
-            await self.llm_decision_loop.start()
-            logger.info("  [Cognition] LLM Decision Loop active.")
+                # Decide loop
+                self.llm_decision_loop = LLMDecisionLoop(
+                    llm_service=llm_service,
+                    state_manager=self.state_matrix,
+                    memory_manager=memory_manager,
+                    user_monitor=self.user_monitor,
+                    broadcast_callback=self.broadcast_callback,
+                )
+                await self.llm_decision_loop.start()
+                logger.info("  [Cognition] LLM Decision Loop active.")
         except Exception as e:
             # broad except acceptable: LLM failure is optional, graceful degradation
             logger.error(

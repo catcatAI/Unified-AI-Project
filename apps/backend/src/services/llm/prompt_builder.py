@@ -27,6 +27,7 @@ DEFAULT_PROMPT_TOKEN_BUDGET = 6000
 _PROMPT_WINDOW_RATIO = 0.55
 # 稽核註記的保留空間（tokens）——裁剪目標預先扣除，讓註記不擠爆預算
 _NOTE_RESERVE_TOKENS = 160
+_CONTEXT_SAFETY_RESERVE = 128
 # 已知模型的 context_window（字首比對；未知模型用 DEFAULT）
 MODEL_CONTEXT_WINDOWS = {
     "phi": 2048,
@@ -72,21 +73,36 @@ def _resolve_prompt_token_budget(context: Dict[str, Any]) -> int:
     5. DEFAULT_PROMPT_TOKEN_BUDGET
     """
     env = os.environ.get("ANGELA_PROMPT_TOKEN_BUDGET", "")
-    if env.isdigit() and int(env) > 0:
-        return int(env)
     explicit = context.get("_prompt_token_budget")
-    if isinstance(explicit, (int, float)) and explicit > 0:
-        return int(explicit)
     window = context.get("_model_context_window")
-    if isinstance(window, (int, float)) and window > 0:
-        return int(window * _PROMPT_WINDOW_RATIO)
-    try:
-        cfg = _get_llm_config("prompt_token_budget")
-    except (TypeError, ValueError):
-        cfg = None
-    if isinstance(cfg, (int, float)) and cfg > 0:
-        return int(cfg)
-    return DEFAULT_PROMPT_TOKEN_BUDGET
+
+    if env.isdigit() and int(env) > 0:
+        budget = int(env)
+    elif isinstance(explicit, (int, float)) and explicit > 0:
+        budget = int(explicit)
+    elif isinstance(window, (int, float)) and window > 0:
+        budget = int(window * _PROMPT_WINDOW_RATIO)
+    else:
+        try:
+            cfg = _get_llm_config("prompt_token_budget")
+        except (TypeError, ValueError):
+            cfg = None
+        if isinstance(cfg, (int, float)) and cfg > 0:
+            budget = int(cfg)
+        else:
+            budget = DEFAULT_PROMPT_TOKEN_BUDGET
+
+    completion_reserve = context.get("_completion_token_reserve")
+    if (
+        isinstance(window, (int, float))
+        and window > 0
+        and isinstance(completion_reserve, (int, float))
+        and completion_reserve > 0
+    ):
+        max_prompt = int(window) - int(completion_reserve) - _CONTEXT_SAFETY_RESERVE
+        if max_prompt > 0:
+            budget = min(budget, max_prompt)
+    return max(1, int(budget))
 
 
 def resolve_model_window(model_name: str) -> int:
@@ -380,7 +396,7 @@ def _enforce_prompt_budget(messages: List[Dict], context: Dict) -> Dict[str, int
             "freed_chars",
         ):
             _budget_telemetry[key] += stats[key]
-        logger.warning(
+        logger.info(
             "提示超出 token 預算（%d/%d）：消化 %d 則、驅逐 %d 則、截斷 %d 則、system 區段 -%d",
             stats["total_tokens"],
             budget_tokens,
@@ -434,16 +450,16 @@ def get_biological_state(context=None) -> str:
 
 
 _formula_cache = None
-_formula_cache_time = 0
+_formula_cache_time: float = 0
 _FORMULA_CACHE_TTL = 60
 
 # Short-TTL caches for state report blocks: dedups recomputation within a single
 # request cycle (LLM call + fallback retries) while keeping the state fresh
 # across turns. Mirrors the _formula_cache pattern above.
 _theta_state_cache = None
-_theta_state_cache_time = 0
+_theta_state_cache_time: float = 0
 _autonomous_cache = None
-_autonomous_cache_time = 0
+_autonomous_cache_time: float = 0
 _STATE_CACHE_TTL = 2
 
 # Module-level formula singletons (avoid creating fresh instances each time)
@@ -685,9 +701,9 @@ def construct_angela_prompt(
     _append_document_context(messages, context)
     _append_knowledge_context(messages, context)
     _append_web_search_context(messages, context)
-    _enforce_prompt_budget(messages, context)
 
     messages.append({"role": "user", "content": f"<user_message>{user_message}</user_message>"})
+    _enforce_prompt_budget(messages, context)
 
     return messages
 

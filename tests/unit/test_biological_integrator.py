@@ -281,3 +281,17 @@ class TestInitialize:
         integrator._running = True
         await integrator.initialize()
         integrator.tactile_system.initialize.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_shutdown_idempotent(self, integrator):
+        integrator._running = True
+        integrator.tactile_system.shutdown = AsyncMock()
+        integrator.endocrine_system.shutdown = AsyncMock()
+        integrator.nervous_system.shutdown = AsyncMock()
+        integrator.neuroplasticity_system.shutdown = AsyncMock()
+        integrator.emotional_system.shutdown = AsyncMock()
+
+        await integrator.shutdown()
+        await integrator.shutdown()
+
+        integrator.endocrine_system.shutdown.assert_awaited_once()

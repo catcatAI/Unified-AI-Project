@@ -112,13 +112,13 @@ def classify_dispatch(text: str) -> DispatchDecision:
     sub_type = "unknown"
     confidence = 0.0
     try:
-        from ai.core.query_classifier import QueryClassifier
+        from services.llm.context_scheduler import get_context_scheduler
 
-        result = QueryClassifier().classify(text)
-        sub_type = result.primary_type.value
-        confidence = result.confidence
+        plan = get_context_scheduler().plan_query(text)
+        sub_type = plan.query_type
+        confidence = plan.confidence
     except Exception as exc:  # pragma: no cover - defensive
-        logger.debug("QueryClassifier unavailable for dispatch: %s", exc)
+        logger.debug("ContextScheduler unavailable for dispatch: %s", exc)
 
     lowered = text.lower()
     if any(h in lowered for h in _TRAIN_HINTS):
@@ -201,20 +201,6 @@ def dispatch(
                     sample=action.payload.get("sample", {}),
                     priority=action.payload.get("priority", 0.0),
                 )
-                # drain_priority_queue() has no other caller in the codebase —
-                # without this the heap would accumulate queued training samples
-                # forever (unbounded memory growth + silently swallowed training
-                # requests).  Drain it inline and hand the samples to the LEARN
-                # path so a TRAIN request actually trains something.
-                for item in training_coordinator.drain_priority_queue():
-                    payload = item.get("sample") or {}
-                    if learn_fn is not None and payload:
-                        try:
-                            learn_fn(payload)
-                        except Exception as exc:  # pragma: no cover - defensive
-                            logger.warning(
-                                "Priority-queue learn failed (ignored): %s", exc, exc_info=True
-                            )
             elif action.action is ActionType.LEARN and learn_fn is not None:
                 learn_fn(action.payload)
     except Exception as exc:  # pragma: no cover - defensive

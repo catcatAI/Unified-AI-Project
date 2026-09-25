@@ -15,6 +15,8 @@ const {
 const path = require('path')
 const fs = require('fs')
 const log = require('electron-log')
+log.transports.console.level = 'info'
+log.transports.file.level = 'debug'
 const securityManager = require('./js/security-manager')
 const TrayManager = require('./js/tray-manager')
 const WebSocket = require('./js/websocket-wrapper')
@@ -152,7 +154,7 @@ app.whenReady().then(async () => {
   ]
 
   protocol.registerFileProtocol('local', (request, callback) => {
-    log.info('[Main] Local protocol request:', request.url)
+    log.debug('[Main] Local protocol request:', request.url)
 
     let urlPath = request.url
 
@@ -166,7 +168,7 @@ app.whenReady().then(async () => {
       return
     }
 
-    log.info('[Main] Decoded URL:', urlPath)
+    log.debug('[Main] Decoded URL:', urlPath)
 
     // Handle local://, local:///, local://// etc. formats (variable slashes)
     // After decoding, we need to remove the 'local:' prefix and any leading slashes
@@ -191,7 +193,7 @@ app.whenReady().then(async () => {
     const normalizedPath = path.normalize(urlPath)
     const filePath = path.resolve(appDir, normalizedPath)
 
-    log.info('[Main] Local protocol resolved:', urlPath, '->', filePath)
+    log.debug('[Main] Local protocol resolved:', urlPath, '->', filePath)
 
     // SECURITY: Verify path is within allowed directories
     const isAllowed = ALLOWED_DIRECTORIES.some((allowedDir) => {
@@ -580,15 +582,24 @@ function createMainWindow() {
   mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
     if (mainWindow.isDestroyed()) return
     if (message.includes('[Renderer]')) return
+    if (level >= 3) {
+      log.error(`[Renderer] ${message}`)
+      return
+    }
+    if (level === 2) {
+      log.warn(`[Renderer] ${message}`)
+      return
+    }
+
     const now = Date.now()
     if (now - _consoleLastLog > 5000) {
       if (_consoleCount > 10)
-        log.warn(`[Renderer] ... ${_consoleCount} suppressed console messages`)
+        log.debug(`[Renderer] ... ${_consoleCount} suppressed console messages`)
       _consoleCount = 0
       _consoleLastLog = now
     }
     _consoleCount++
-    if (_consoleCount <= 10) log.info(`[Renderer] ${message}`)
+    if (_consoleCount <= 10) log.debug(`[Renderer] ${message}`)
   })
 
   // Wait for ready-to-show before showing
@@ -1501,7 +1512,11 @@ function connectWebSocket(url, sessionInfo) {
 
       try {
         const message = JSON.parse(data.toString())
-        log.info('[WebSocket] Received:', message)
+        if (message.type === 'state_update') {
+          log.debug('[WebSocket] Received state_update')
+        } else {
+          log.info('[WebSocket] Received:', message)
+        }
 
         // Handle 'connected' message - this is the session confirmation
         if (message.type === 'connected') {
@@ -1620,7 +1635,12 @@ function sendWebSocketMessage(message) {
 
   try {
     wsClient.send(JSON.stringify(message))
-    log.info('[Main] WebSocket send SUCCESS:', message.type || 'unknown')
+    const messageType = message.type || 'unknown'
+    if (messageType === 'state_update') {
+      log.debug('[Main] WebSocket state_update sent')
+    } else {
+      log.info('[Main] WebSocket send SUCCESS:', messageType)
+    }
     return true
   } catch (error) {
     log.error('[WebSocket] Failed to send message:', error)

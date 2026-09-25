@@ -7,6 +7,7 @@ Hardware Profile — 硬體檢測與自適應配置。
 檢測 GPU/CPU/記憶體/OS，為 Backbone 自動選擇最佳引擎實現。
 """
 
+import importlib.util
 import logging
 import os
 import platform
@@ -248,21 +249,11 @@ class HardwareProfile:
 
     @staticmethod
     def _check_torch() -> bool:
-        try:
-            import torch
-
-            return True
-        except ImportError:
-            return False
+        return importlib.util.find_spec("torch") is not None
 
     @staticmethod
     def _check_chromadb() -> bool:
-        try:
-            import chromadb
-
-            return True
-        except ImportError:
-            return False
+        return importlib.util.find_spec("chromadb") is not None
 
     @staticmethod
     def get_tier(hw: Dict[str, Any]) -> str:

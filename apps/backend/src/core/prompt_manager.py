@@ -8,6 +8,7 @@ import json
 import logging
 import os
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
@@ -115,6 +116,32 @@ class PromptManager:
 
         logger.info(f"Loaded {total} total prompt templates from {directory}")
         return total
+
+    def load_flat_locales(self, directory: Optional[str] = None) -> int:
+        locale_dir = Path(
+            directory or self._config_dir or (Path(__file__).parent / "i18n" / "locales")
+        )
+        locale_files = {"en": "prompts.en-US.json", "zh": "prompts.zh-CN.json"}
+        merged: Dict[str, Dict[str, str]] = {}
+
+        for language, filename in locale_files.items():
+            filepath = locale_dir / filename
+            try:
+                with filepath.open("r", encoding="utf-8") as handle:
+                    data = json.load(handle)
+            except (OSError, json.JSONDecodeError) as exc:
+                logger.warning("Failed to load prompt locale %s: %s", filepath, exc)
+                continue
+            for key, value in data.items():
+                if isinstance(value, str):
+                    merged.setdefault(key, {})[language] = value
+
+        for key, templates in merged.items():
+            self.register(PromptTemplate(key=key, templates=templates))
+
+        if merged:
+            logger.debug("Loaded %d localized prompt templates", len(merged))
+        return len(merged)
 
     def _register_defaults(self) -> None:
         """Register default Angela identity and system prompts."""
@@ -645,7 +672,9 @@ def get_prompt_manager() -> PromptManager:
     """Get or create the default PromptManager."""
     global _default_manager
     if _default_manager is None:
-        _default_manager = PromptManager()
+        manager = PromptManager()
+        manager.load_flat_locales()
+        _default_manager = manager
     return _default_manager
 
 

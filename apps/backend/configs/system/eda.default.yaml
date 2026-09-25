@@ -1,0 +1,52 @@
+# =============================================================================
+# ANGELA-MATRIX: [L2] [β] [C] [L1]
+# =============================================================================
+enabled: true
+output_root: data/eda_runs
+timeout: 30
+probe_timeout_seconds: 15
+max_output_bytes: 1048576
+max_input_bytes: 268435456
+max_sweep_points: 32
+collect_learning_episodes: true
+tools:
+  ngspice:
+    command: ngspice
+    version_args:
+      - -v
+  klayout:
+    command: klayout
+    version_args:
+      - -v
+    layers:
+      metal1: 49
+      via1: 50
+  magic:
+    command: magic
+    version_args: []
+  kicad:
+    command: kicad-cli
+    version_args:
+      - version
+    mode: cli
+  easyeda:
+    command: ""
+    mode: file_bridge
+  jlcone:
+    command: /usr/bin/jlcone
+    mode: gui
+    version_file: /opt/JLCONE/version
+  iverilog:
+    command: iverilog
+    version_args:
+      - -V
+  verilator:
+    command: verilator
+    version_args:
+      - --version
+  yosys:
+    command: yosys
+    version_args:
+      - -V
+magic:
+  tech: scmos

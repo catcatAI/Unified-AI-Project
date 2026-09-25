@@ -199,6 +199,44 @@ async def test_history_falls_back_to_session_messages(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_explicit_history_still_persists_session_turn(monkeypatch):
+    sessions.set(
+        "sess-memory-test-6",
+        {
+            "created_at": "2026-08-03T00:00:00",
+            "origin": "Human",
+            "user_name": "Tester",
+            "messages": [
+                {"role": "user", "content": "earlier turn", "timestamp": "t1"},
+                {"role": "assistant", "content": "earlier answer", "timestamp": "t2"},
+            ],
+        },
+    )
+
+    async def fake_pipeline(*args, **kwargs):
+        return {
+            "response_text": "follow-up answer",
+            "response": "follow-up answer",
+            "source": "test",
+            "schema_version": "2.0",
+            "session_id": "sess-memory-test-6",
+        }
+
+    monkeypatch.setattr("api.routes.chat_routes._run_chat_pipeline", fake_pipeline)
+
+    await _handle_chat_request(
+        "follow-up turn",
+        "Tester",
+        history=[{"role": "user", "content": "earlier turn"}],
+        session_id="sess-memory-test-6",
+    )
+
+    messages = sessions.get("sess-memory-test-6")["messages"]
+    assert len(messages) == 4
+    assert messages[-1]["content"] == "follow-up answer"
+
+
+@pytest.mark.asyncio
 async def test_history_bounded_to_80_messages(monkeypatch):
     """Session history is capped so unbounded growth is impossible."""
     sessions.set(

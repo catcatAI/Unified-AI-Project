@@ -258,7 +258,7 @@ class ED3NEngine:
         Can be called at application startup (e.g. lifespan, background task).
         Returns the number of entries loaded.
         """
-        if self._external_dicts_loaded:
+        if self._external_dicts_loaded or self._dict_load_attempted:
             return 0
         count = 0
         try:

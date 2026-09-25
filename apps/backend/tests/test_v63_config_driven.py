@@ -274,6 +274,7 @@ class TestREPLCommands:
         assert intent == "system"
         assert response is not None
         assert "REPL" in response or "Commands" in response
+        assert "eda_agent" in response
 
     def test_repl_help_short(self):
         """REPL /h 命令（簡寫）"""

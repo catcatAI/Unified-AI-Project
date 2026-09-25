@@ -125,6 +125,10 @@ class TestGlobalStateStore:
         state = self.store.get_state()
         assert "neuro_vocabulary" in state
 
+    def test_routing_domain_registered(self):
+        state = self.store.get_state()
+        assert "routing" in state
+
     def test_load_domain_restores_state(self):
         from core.interfaces.persistence import JsonFileStateStore
 

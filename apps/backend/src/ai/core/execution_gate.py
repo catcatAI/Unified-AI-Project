@@ -111,6 +111,27 @@ _IRREVERSIBLE_ACTIONS = frozenset({"system", "execute", "delete", "send", "clean
 # clean（清理）同 delete：可能刪檔，必須走確認分支而非分數拒絕
 # （否則 file/clean 0.08 分永遠 reject，清理能力在主流程等於死亡）。
 
+# Specialized-agent intents → the action class the gate scores them as.
+# AgentOrchestrator routes these intents; ExecutionGate is the single owner of
+# "may this action run", so the orchestrator must not decide this on its own.
+_AGENT_INTENT_ACTIONS = {
+    "file_read": "read",
+    "file_write": "write",
+    "file_delete": "delete",
+    "code_execute": "execute",
+    "code_understand": "read",
+    "web_search": "search",
+    "knowledge_query": "read",
+    "creative_write": "create",
+    "data_analysis": "read",
+    "eda": "create",
+    "plan_create": "create",
+    "vision": "read",
+    "audio": "read",
+    "nlp": "read",
+    "image_generate": "create",
+}
+
 
 @dataclass
 class GateDecision:
@@ -488,6 +509,117 @@ class ExecutionGate:
             action="reject",
             score=score,
             reason=f"exec_score={score} < confirm={effective_confirm} (fb_adj={fb_adj})",
+            original_query=user_message,
+        )
+
+    def decide_agent_execution(
+        self,
+        intent: str,
+        agent_name: str,
+        user_message: str,
+        confidence: float = 1.0,
+    ) -> GateDecision:
+        """Decide whether a specialized agent may run.
+
+        Specialized agents (AgentOrchestrator) have no ModelBus handler, so
+        ``decide()`` cannot resolve them via HANDLER_MAP. This is the same
+        reversibility x impact x clarity policy, keyed on the agent intent, and
+        it is the ONLY place that authorizes specialized-agent execution.
+
+        ``read``-class intents (knowledge/vision/analysis/search) auto-execute;
+        ``create``-class intents (creative/EDA/plan/image-gen) also
+        auto-execute but are scored so vague wording can require confirmation;
+        irreversible classes always require explicit confirmation.
+        """
+        action_type = _AGENT_INTENT_ACTIONS.get(intent)
+        if action_type is None:
+            return GateDecision(
+                action="reject",
+                score=0.0,
+                reason=f"unmapped_agent_intent_{intent}",
+                original_query=user_message,
+            )
+
+        score = self._calculate_exec_score(
+            action_type, user_message, intent, confidence
+        )
+        fb_adj = self._get_feedback_adjustment(agent_name)
+        effective_auto = round(self.AUTO_EXECUTE - fb_adj, 3)
+        effective_confirm = round(self.CONFIRM_THRESHOLD - fb_adj, 3)
+
+        if action_type in _IRREVERSIBLE_ACTIONS:
+            return GateDecision(
+                action="confirm_then_execute",
+                score=score,
+                handler=agent_name,
+                action_type=action_type,
+                reason=f"irreversible ({action_type}) requires confirmation",
+                confirm_message=self._build_confirm(action_type, user_message),
+                impact_info=self._describe_impact(action_type, user_message),
+                original_query=user_message,
+            )
+
+        if score >= effective_auto:
+            return GateDecision(
+                action="auto_execute",
+                score=score,
+                handler=agent_name,
+                action_type=action_type,
+                reason=(
+                    f"exec_score={score} >= auto={effective_auto} "
+                    f"(fb_adj={fb_adj}) for agent {agent_name}"
+                ),
+                original_query=user_message,
+            )
+
+        if score >= effective_confirm:
+            return GateDecision(
+                action="confirm_then_execute",
+                score=score,
+                handler=agent_name,
+                action_type=action_type,
+                reason=(
+                    f"exec_score={score} in [{effective_confirm}, {effective_auto}) "
+                    f"for agent {agent_name}"
+                ),
+                confirm_message=self._build_confirm(action_type, user_message),
+                impact_info=self._describe_impact(action_type, user_message),
+                original_query=user_message,
+            )
+
+        return GateDecision(
+            action="reject",
+            score=score,
+            handler=agent_name,
+            action_type=action_type,
+            reason=(
+                f"exec_score={score} < confirm={effective_confirm} for agent {agent_name}"
+            ),
+            original_query=user_message,
+        )
+
+    def confirm_agent_execution(
+        self, intent: str, agent_name: str, user_message: str
+    ) -> GateDecision:
+        """Authorize a previously-confirmed specialized-agent execution.
+
+        The caller must have obtained explicit user confirmation for the exact
+        original query. Unknown intents are still rejected.
+        """
+        action_type = _AGENT_INTENT_ACTIONS.get(intent)
+        if action_type is None:
+            return GateDecision(
+                action="reject",
+                score=0.0,
+                reason=f"unmapped_agent_intent_{intent}",
+                original_query=user_message,
+            )
+        return GateDecision(
+            action="auto_execute",
+            score=1.0,
+            handler=agent_name,
+            action_type=action_type,
+            reason="explicit user confirmation",
             original_query=user_message,
         )
 

@@ -13,7 +13,7 @@ from typing import Any, Dict
 
 import pytest
 
-from services.agent_workspace.agent import AgentWorkspace
+from services.agent_workspace.agent import AgentWorkspace, EdaWorkspaceAdapter
 from services.agent_workspace.app_session import (
     AppAdapter,
     AppSessionManager,
@@ -45,6 +45,32 @@ class FakeAdapter(AppAdapter):
         return {"ok": True, "nuked": True}
 
 
+class FakeEdaAgent:
+    agent_id = "eda_agent"
+    capabilities = [{"name": "ai_card_reference", "version": "0.1.0"}]
+
+    def get_status(self) -> Dict[str, Any]:
+        return {"enabled": True, "learning_episodes": {"coordinator_wired": True}}
+
+    async def probe_tools(self, **_: Any) -> Dict[str, Any]:
+        return {"status": "ok", "tools": {"ngspice": {"available": True}}}
+
+    async def run_ai_card_reference_experiment(self) -> Dict[str, Any]:
+        return {"status": "reference_verified_pending_angela_interface_freeze"}
+
+    def get_ai_card_interface_packet(self) -> Dict[str, Any]:
+        return {
+            "ok": True,
+            "packet": {
+                "status": "pending_angela_decisions",
+                "pending_angela_decisions": [{"id": "die_l1_interface"}],
+            },
+        }
+
+    def get_hardware_standards(self, query: str = "") -> Dict[str, Any]:
+        return {"status": "ok", "query": query, "count": 1, "standards": []}
+
+
 def _make_manager(tmp_path: Path) -> AppSessionManager:
     return AppSessionManager(
         adapters={"fake": FakeAdapter()},
@@ -57,9 +83,7 @@ def _make_manager(tmp_path: Path) -> AppSessionManager:
 
 def _sample_tree() -> ContextTree:
     leaf_a = ContextNode(id="a1", label="節點A1", kind="item", summary="摘要A1")
-    leaf_b = ContextNode(
-        id="b1", label="節點B1", kind="item", commands=["poke"], readonly=False
-    )
+    leaf_b = ContextNode(id="b1", label="節點B1", kind="item", commands=["poke"], readonly=False)
     group = ContextNode(id="grp", label="群組", kind="app", children=[leaf_a, leaf_b])
     root = ContextNode(id="root", label="根", kind="workspace", children=[group])
     return ContextTree(root=root, view_budget=4000, children_limit=12)
@@ -241,6 +265,45 @@ async def test_workspace_act_updates_tree_dirty_state(tmp_path: Path) -> None:
     assert "dirty" in overview_text
 
 
+@pytest.mark.asyncio
+async def test_eda_adapter_resolves_existing_agent_lazily(tmp_path: Path) -> None:
+    state: Dict[str, Any] = {"agent": None}
+    ws = AgentWorkspace(
+        session_manager=AppSessionManager(
+            adapters={"eda": EdaWorkspaceAdapter(lambda: state["agent"])},
+            log_path=tmp_path / "learning_log.jsonl",
+        )
+    )
+
+    unavailable = await ws.read_app("eda")
+    assert unavailable["ok"] is False
+
+    state["agent"] = FakeEdaAgent()
+    opened = await ws.open_app("eda", purpose="AI 計算卡 reference")
+    assert opened["commands"] == [
+        "probe_tools",
+        "run_ai_card_reference",
+        "read_interface_packet",
+        "search_hardware_standards",
+    ]
+
+    state_result = await ws.read_app("eda")
+    assert state_result["ok"] is True
+    assert state_result["state"]["agent_id"] == "eda_agent"
+
+    result = await ws.act("eda", "run_ai_card_reference")
+    assert result["ok"] is True
+    assert result["result"]["result"]["status"].startswith("reference_verified")
+
+    packet_result = await ws.act("eda", "read_interface_packet")
+    assert packet_result["ok"] is True
+    assert packet_result["result"]["result"]["packet"]["status"] == "pending_angela_decisions"
+
+    standards_result = await ws.act("eda", "search_hardware_standards", {"query": "AXI"})
+    assert standards_result["ok"] is True
+    assert standards_result["result"]["result"]["query"] == "AXI"
+
+
 # ---------- 全域上下文樹（五類上下文統一治理） ----------
 
 
@@ -259,6 +322,14 @@ class _StubConv:
 class _StubTool:
     def __init__(self, name: str) -> None:
         self.name = name
+
+
+class _StubAgentAdapter:
+    def get_status(self) -> Dict[str, Any]:
+        return {
+            "agent_status": {"enabled": True},
+            "available_methods": ["probe_tools", "run_ai_card_reference_experiment"],
+        }
 
 
 def _global_providers(tmp_path: Path) -> GlobalContextProviders:
@@ -291,6 +362,19 @@ def test_global_overview_covers_all_context_kinds(tmp_path: Path) -> None:
     assert "記憶上下文" in text
     assert "對話上下文" in text
     assert "應用程式" in text  # 代理工作區會話掛同一棵樹
+
+
+def test_global_overview_exposes_registered_eda_agent() -> None:
+    agent_manager = type("AgentManager", (), {})()
+    agent_manager.agents = {"eda_agent": _StubAgentAdapter()}
+    agent_manager.collaborations = {}
+    tree = GlobalContextTree(providers=GlobalContextProviders(agent_manager=agent_manager))
+
+    overview = tree.overview()
+    assert "代理 eda_agent" in overview["text"]
+    focused = tree.focus("ctx:agent:eda_agent")
+    assert focused["node_id"] == "ctx:agent:eda_agent"
+    assert "run_ai_card_reference_experiment" in focused["text"]
 
 
 def test_global_overview_absent_sections_degrade(tmp_path: Path) -> None:

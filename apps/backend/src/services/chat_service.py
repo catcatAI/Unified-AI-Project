@@ -39,6 +39,7 @@ class ChatService:
         self._knowledge_pipeline = None
         self._vector_store_disabled = False
         self._vector_store_recent_fail = False
+        self._repl_eda_context = False
 
     def _spawn_background_task(self, coro) -> asyncio.Task:
         """Create a fire-and-forget task while keeping a strong reference.
@@ -224,7 +225,7 @@ class ChatService:
                 self._spawn_background_task(
                     asyncio.to_thread(lambda: ED3NEngine.get_shared(load_trained=True).warm_up())
                 )
-            logger.info("ED3N dictionary warm-up scheduled (460k entries)")
+                logger.info("ED3N dictionary warm-up scheduled (460k entries)")
         except Exception as e:
             logger.debug("ED3N warm-up skipped: %s", e)
 
@@ -244,6 +245,53 @@ class ChatService:
         if self._ed3n_learning_integration:
             self._ham_sync_task = asyncio.create_task(self._ham_sync_loop())
 
+    async def _try_repl_hardware_agent(
+        self, user_message: str, context: Dict[str, Any]
+    ) -> Optional[Any]:
+        if context.get("conversation_path") != "repl":
+            return None
+        try:
+            from ai.agents.agent_orchestrator import AgentOrchestrator
+
+            is_ai_card = AgentOrchestrator.is_ai_card_request(user_message)
+            is_followup = self._repl_eda_context and AgentOrchestrator.is_eda_followup_request(
+                user_message
+            )
+            if not (AgentOrchestrator.is_eda_request(user_message) or is_followup):
+                self._repl_eda_context = False
+                return None
+            if is_followup:
+                context["_eda_followup"] = True
+            from api.lifespan import get_agent_manager
+
+            manager = get_agent_manager()
+            if manager is None:
+                return None
+            route_result = await AgentOrchestrator(agent_manager=manager).route_task(
+                user_message, context
+            )
+            primary = route_result.get("results", [{}])[0]
+            agent_result = primary.get("result") or {}
+            inner = agent_result.get("result") if isinstance(agent_result, dict) else None
+            if not isinstance(inner, dict):
+                return None
+            if inner.get("status") in {"error", "unavailable", "failed"}:
+                return None
+            text = inner.get("message") or str(inner)
+            self._repl_eda_context = bool(is_ai_card or is_followup)
+            from core.interfaces.protocols import LLMResponse
+
+            return LLMResponse(
+                text=text,
+                backend="specialized_agent",
+                model=primary.get("agent", "agent"),
+                confidence=0.9,
+                metadata={"agent": primary.get("agent", "agent")},
+            )
+        except Exception as exc:
+            logger.warning("REPL hardware agent routing unavailable: %s", exc)
+            return None
+
     async def generate_response(
         self, user_message: str, user_name: str = "", context: Optional[dict] = None
     ):
@@ -251,19 +299,38 @@ class ChatService:
         if not self._initialized:
             await self.initialize()
 
+        from services.llm.context_scheduler import get_context_scheduler
+
         merged_context = context or {}
         merged_context.setdefault("user_name", user_name)
 
-        merged_context = self._inject_cultural_context(merged_context, user_message)
-        merged_context = await self._inject_memory_context(merged_context, user_message)
-        merged_context, mm_adapter = await self._inject_multimodal_context(
-            merged_context, user_message
-        )
-        merged_context = self._inject_grounded_context(merged_context, user_message)
-        merged_context = await self._maybe_search_and_ground(user_message, merged_context)
+        # ExecutionGate ownership lives at the request entry point:
+        # api.routes.chat_routes._handle_chat_request → _handle_execution_gate
+        # (shared by the HTTP route and the REPL through GateExecutionOwner).
+        # ChatService only generates text; it never executes side effects, so a
+        # direct caller cannot bypass the gate by reaching this method.
+        preprocessing_plan = get_context_scheduler().plan_query(user_message, merged_context)
+
+        if preprocessing_plan.allow_context_enrichment:
+            merged_context = self._inject_cultural_context(merged_context, user_message)
+            merged_context = await self._inject_memory_context(merged_context, user_message)
+            merged_context, mm_adapter = await self._inject_multimodal_context(
+                merged_context, user_message
+            )
+            merged_context = self._inject_grounded_context(merged_context, user_message)
+            merged_context = await self._maybe_search_and_ground(user_message, merged_context)
+        else:
+            mm_adapter = None
+
+        if preprocessing_plan.allow_specialized_agents:
+            hardware_response = await self._try_repl_hardware_agent(
+                user_message, merged_context
+            )
+            if hardware_response is not None:
+                return hardware_response
 
         # Pre-LLM knowledge lookup (§X #268): try local data sources first
-        if self._knowledge_pipeline:
+        if self._knowledge_pipeline and preprocessing_plan.allow_knowledge_pipeline:
             try:
                 local_answer = await self._knowledge_pipeline.query(user_message, merged_context)
                 if local_answer and local_answer.get("answer"):

@@ -138,69 +138,141 @@ def _get_llm_svc():
 # ═══════════════════════════════════════════════════════════════════
 
 
+def _response_text(response: Any) -> str:
+    if isinstance(response, dict):
+        value = response.get("text") or response.get("response")
+        if value:
+            return str(value)
+    value = getattr(response, "text", response)
+    return str(value)
+
+
 def run_repl_mode() -> None:
     """Execute the run repl mode operation."""
-    from core.system.config.network_defaults import DEFAULT_HOST, get_server_bind
-
-    bind_host, bind_port = get_server_bind()
-    server_thread = threading.Thread(target=_run_uvicorn_in_thread, daemon=True)
-    server_thread.start()
-    print(f"[REPL] Backend starting on http://{DEFAULT_HOST}:{bind_port} ...")
-    time.sleep(_cfg_get("cli.repl.startup_delay", 3.0))
-    asyncio.run(_run_repl())
+    os.environ.setdefault("ANGELA_REPL_MODE", "1")
+    try:
+        asyncio.run(_run_repl())
+    except KeyboardInterrupt:
+        return
 
 
-def _run_uvicorn_in_thread() -> None:
-    """Run uvicorn in thread."""
+def _build_uvicorn_server() -> Any:
     import uvicorn
     from core.system.config.network_defaults import get_server_bind
     from services.main_api_server import app
 
     bind_host, bind_port = get_server_bind()
-    uvicorn.run(app, host=bind_host, port=bind_port, log_level="warning")
+    config = uvicorn.Config(app, host=bind_host, port=bind_port, log_level="warning")
+    return uvicorn.Server(config)
+
+
+async def _wait_for_server(server: Any, server_task: asyncio.Task[Any]) -> None:
+    timeout = float(_cfg_get("cli.repl.startup_timeout", 90.0))
+    deadline = time.monotonic() + timeout
+    while not server.started:
+        if server_task.done():
+            await server_task
+            raise RuntimeError("REPL backend exited before becoming ready")
+        if time.monotonic() >= deadline:
+            raise TimeoutError(f"REPL backend startup timed out after {timeout:.0f}s")
+        await asyncio.sleep(0.05)
+
+
+async def _read_repl_input(server_task: asyncio.Task[Any]) -> Optional[str]:
+    loop = asyncio.get_running_loop()
+    future: asyncio.Future[Optional[str]] = loop.create_future()
+
+    def deliver(value: Optional[str]) -> None:
+        if not future.done():
+            future.set_result(value)
+
+    def read_input() -> None:
+        try:
+            value: Optional[str] = input("\n💬  你: ")
+        except (EOFError, KeyboardInterrupt):
+            value = None
+        if not loop.is_closed():
+            loop.call_soon_threadsafe(deliver, value)
+
+    threading.Thread(target=read_input, daemon=True).start()
+    done, _ = await asyncio.wait(
+        {future, server_task},
+        return_when=asyncio.FIRST_COMPLETED,
+    )
+    if server_task in done:
+        future.cancel()
+        await server_task
+        return None
+    return future.result()
 
 
 async def _run_repl() -> None:
-    """Run repl."""
     from api.lifespan import _get_chat_service
 
-    logging.disable(logging.WARNING)
+    server = _build_uvicorn_server()
+    server_task = asyncio.create_task(server.serve(), name="REPL-Uvicorn")
+    # The REPL uses the SAME chat pipeline as the HTTP route, so execution
+    # gating, agent routing and session memory behave identically. Calling
+    # ChatService directly previously bypassed ExecutionGate entirely (the model
+    # answered "Done!" for actions that never ran).
+    from api.routes.chat_routes import _handle_chat_request
 
-    print("[REPL] Angela brain initializing...")
-    service = await _get_chat_service()
-    await service.initialize()
+    repl_session_id = f"repl::{os.getpid()}"
+    repl_history: list[Dict[str, str]] = []
+    try:
+        bind_host, bind_port = server.config.host, server.config.port
+        print(f"[REPL] Backend starting on http://{bind_host}:{bind_port} ...")
+        await _wait_for_server(server, server_task)
 
-    # ── Boot status banner ──
-    _print_boot_status(service)
+        print("[REPL] Angela brain initializing...")
+        service = await _get_chat_service()
+        _print_boot_status(service)
 
-    loop = asyncio.get_running_loop()
-    cmd_history: list[str] = []
-    while True:
-        try:
-            user_input = await loop.run_in_executor(None, lambda: input("\n💬  你: "))
-        except (EOFError, KeyboardInterrupt):
-            print("\n[REPL] Shutting down...")
-            break
+        cmd_history: list[str] = []
+        while True:
+            user_input = await _read_repl_input(server_task)
+            if user_input is None:
+                print("\n[REPL] Good bye!")
+                break
 
-        text = user_input.strip()
-        if text.lower() in ("exit", "quit"):
-            print("[REPL] Good bye!")
-            break
-        if not text:
-            continue
-
-        if text.startswith("/") or text.startswith(":"):
-            intent_name, response_text = _handle_repl_command(text, service, cmd_history)
-            if response_text is not None:
-                print(f"💬 Angela [{intent_name}]: {response_text}")
+            text = user_input.strip()
+            if text.lower() in ("exit", "quit"):
+                print("[REPL] Good bye!")
+                break
+            if not text:
                 continue
 
-        print("💬 Angela: ", end="", flush=True)
-        response = await service.generate_response(text)
-        print(getattr(response, "text", response))
-        cmd_history.append(text)
-        if len(cmd_history) > 100:
-            cmd_history = cmd_history[-100:]
+            if text.startswith("/") or text.startswith(":"):
+                intent_name, response_text = _handle_repl_command(text, service, cmd_history)
+                if response_text is not None:
+                    print(f"💬 Angela [{intent_name}]: {response_text}")
+                    continue
+
+            print("💬 Angela: ", end="", flush=True)
+            response = await _handle_chat_request(
+                user_message=text,
+                user_name="user",
+                history=list(repl_history),
+                session_id=repl_session_id,
+                origin="repl",
+                extra_context={"conversation_path": "repl"},
+            )
+            print(_response_text(response))
+            repl_history.append({"role": "user", "content": text})
+            repl_history.append(
+                {
+                    "role": "assistant",
+                    "content": _response_text(response),
+                }
+            )
+            if len(repl_history) > 40:
+                repl_history = repl_history[-40:]
+            cmd_history.append(text)
+            if len(cmd_history) > 100:
+                cmd_history = cmd_history[-100:]
+    finally:
+        server.should_exit = True
+        await server_task
 
 
 def _print_boot_status(service: Any) -> None:
@@ -211,9 +283,14 @@ def _print_boot_status(service: Any) -> None:
     llm_svc = _get_llm_svc()
     if llm_svc and getattr(llm_svc, "is_available", False):
         active = getattr(llm_svc, "active_backend", None)
+        active_name = (
+            getattr(active, "name", None)
+            or getattr(active, "model", None)
+            or type(active).__name__
+        )
         backends = list(getattr(llm_svc, "backends", {}).keys())
         mode = getattr(llm_svc, "llm_mode", "unknown")
-        print(f"  LLM:      {_badge(f'{active} (mode={mode})', True)}")
+        print(f"  LLM:      {_badge(f'{active_name} (mode={mode})', True)}")
         print(f"            Backends: {backends}")
     else:
         print(f"  LLM:      {_badge('No backend available', False)}")
@@ -225,7 +302,10 @@ def _print_boot_status(service: Any) -> None:
         )
 
     # Memory
-    if hasattr(service, "memory_manager") and service.memory_manager:
+    memory_backend = getattr(service, "_ham_memory", None) or getattr(
+        service, "_vector_store", None
+    )
+    if memory_backend:
         print(f"  Memory:   {_badge('initialized', True)}")
     else:
         print(f"  Memory:   {_badge('not initialized', False)}")
@@ -233,7 +313,9 @@ def _print_boot_status(service: Any) -> None:
 
     # State
     try:
-        sm = service.state_matrix
+        from api.lifespan import get_digital_life
+
+        sm = getattr(get_digital_life(), "state_matrix", None)
         alpha = getattr(sm, "alpha", None)
         energy = alpha.values.get("energy", 0.5) if alpha and hasattr(alpha, "values") else 0.5
         print(f"  State:    {_bar(energy)} (α.energy)")
@@ -333,6 +415,9 @@ def _build_help_text() -> str:
     /model stats           Show usage statistics
     /model auto            Enable auto-routing
     /route, /r             LLM routing detail + deployment mode
+
+  🧰 Hardware & Agents
+    EDA / AI card       Natural-language requests route to the eda_agent
 
   🧩 Config & Intents
     /config, /cfg          Config summary (mode, intents, providers, thresholds)
@@ -1127,3 +1212,7 @@ def _handle_drive_command(args: str) -> str:
         return "❌ 無法連接後端，請先啟動伺服器（launch_angela.bat --repl）"
     except Exception as e:
         return f"❌ Drive 錯誤：{e}"
+
+
+if __name__ == "__main__":
+    run_repl_mode()

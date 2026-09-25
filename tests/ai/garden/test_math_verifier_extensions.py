@@ -180,6 +180,12 @@ class TestEvaluateLogicEnglish:
     def test_xor_true_true(self):
         assert evaluate_logic("xor True True") == "false"
 
+    def test_xnor_true_true(self):
+        assert evaluate_logic("xnor True True") == "true"
+
+    def test_xnor_true_false(self):
+        assert evaluate_logic("xnor True False") == "false"
+
     def test_complex(self):
         result = evaluate_logic("(true and false) or true")
         assert result == "true"

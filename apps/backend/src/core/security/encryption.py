@@ -14,6 +14,7 @@
 import hashlib
 import hmac
 import logging
+import os
 import secrets
 from typing import Any, Dict, Optional, Union
 
@@ -41,25 +42,27 @@ class EncryptionUtils:
 
     def _setup_encryption_keys(self) -> None:
         """设置加密密钥"""
-        # 从环境变量或配置获取密钥
-        encryption_key = self.config.get("encryption_key")
-        if not encryption_key:
-            # 生成新密钥(生产环境应该从安全存储获取)
-            if FERNET_AVAILABLE:
-                encryption_key = Fernet.generate_key()
-            else:
-                encryption_key = secrets.token_bytes(32)
-            logger.warning("生成了新的加密密钥, 生产环境应该使用预定义的密钥")
-
-        # 设置Fernet加密器
         self.fernet: Optional[Fernet] = None
-        if FERNET_AVAILABLE:
+        if not FERNET_AVAILABLE:
+            logger.debug("Fernet is unavailable; encryption operations are disabled")
+            return
+
+        encryption_key = self.config.get("encryption_key") or os.getenv("ENCRYPTION_KEY")
+        if not encryption_key:
+            logger.debug("Fernet encryption key is not configured")
+            return
+
+        try:
             self.fernet = Fernet(encryption_key)
+        except (TypeError, ValueError) as exc:
+            logger.error("Invalid Fernet encryption key: %s", exc)
 
     def encrypt(self, data: Union[str, bytes]) -> bytes:
         """加密数据(使用Fernet)"""
-        if not FERNET_AVAILABLE or self.fernet is None:
+        if not FERNET_AVAILABLE:
             raise ValueError("Fernet not available")
+        if self.fernet is None:
+            raise ValueError("Fernet encryption key is not configured")
 
         if isinstance(data, str):
             data = data.encode("utf-8")
@@ -68,8 +71,10 @@ class EncryptionUtils:
 
     def decrypt(self, encrypted_data: bytes) -> bytes:
         """解密数据(使用Fernet)"""
-        if not FERNET_AVAILABLE or self.fernet is None:
+        if not FERNET_AVAILABLE:
             raise ValueError("Fernet not available")
+        if self.fernet is None:
+            raise ValueError("Fernet encryption key is not configured")
 
         return self.fernet.decrypt(encrypted_data)
 

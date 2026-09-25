@@ -4,6 +4,7 @@ from services.agent_workspace.agent import (
     AgentWorkspace,
     BrowserAgent,
     DesktopAgent,
+    EdaWorkspaceAdapter,
     build_default_workspace,
 )
 from services.agent_workspace.app_session import (
@@ -15,6 +16,7 @@ from services.agent_workspace.context_tree import ContextNode, ContextTree
 from services.agent_workspace.global_tree import (
     GlobalContextProviders,
     GlobalContextTree,
+    UnifiedWorkspace,
 )
 
 __all__ = [
@@ -26,7 +28,9 @@ __all__ = [
     "ContextNode",
     "ContextTree",
     "DesktopAgent",
+    "EdaWorkspaceAdapter",
     "GlobalContextProviders",
     "GlobalContextTree",
+    "UnifiedWorkspace",
     "build_default_workspace",
 ]

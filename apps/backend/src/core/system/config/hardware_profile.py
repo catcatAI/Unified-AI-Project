@@ -281,10 +281,10 @@ class HardwareProfile:
         compute; only the physical hardware matters.
         """
         # 1. Env override (explicit user choice wins)
-        env_override = os.environ.get("ANGELA_HARDWARE_PROFILE")
-        if env_override:
+        env_override = os.environ.get("ANGELA_HARDWARE_PROFILE", "").strip()
+        if env_override and env_override.lower() != "auto":
             try:
-                detected = HardwareScenario(env_override)
+                detected = HardwareScenario(env_override.lower())
                 logger.info("HardwareProfile: using env override: %s", detected.value)
                 return detected
             except ValueError:

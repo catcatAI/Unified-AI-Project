@@ -191,6 +191,39 @@ class TestPromptBudgetGate:
         budget = _resolve_prompt_token_budget({"_model_context_window": 2048})
         assert budget == int(2048 * 0.55)
 
+    def test_completion_reserve_caps_explicit_budget(self):
+        from services.llm.prompt_builder import _resolve_prompt_token_budget
+
+        with patch.dict("os.environ", {}, clear=True):
+            budget = _resolve_prompt_token_budget(
+                {
+                    "_model_context_window": 4096,
+                    "_completion_token_reserve": 1024,
+                    "_prompt_token_budget": 6000,
+                }
+            )
+        assert budget == 4096 - 1024 - 128
+
+    @patch("services.llm.prompt_builder._get_llm_config", return_value={})
+    def test_construct_enforces_budget_after_final_user_message(self, mock_cfg):
+        from services.llm.prompt_builder import construct_angela_prompt, estimate_tokens
+
+        context = {
+            "state_for_llm": None,
+            "history": [{"role": "user", "content": "歷" * 800} for _ in range(10)],
+            "_model_context_window": 4096,
+        }
+        with patch.dict("os.environ", {}, clear=True):
+            with patch(
+                "services.llm.context_scheduler.get_context_scheduler",
+                side_effect=ImportError("disabled"),
+            ):
+                result = construct_angela_prompt("喵？", context)
+        total = sum(estimate_tokens(m["content"]) for m in result)
+        assert total <= int(4096 * 0.55)
+        assert result[-1]["role"] == "user"
+        assert "喵？" in result[-1]["content"]
+
     @patch("services.llm.prompt_builder._get_llm_config", return_value=None)
     def test_small_window_model_trims_aggressively(self, mock_cfg):
         from services.llm.prompt_builder import _enforce_prompt_budget

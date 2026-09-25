@@ -41,6 +41,12 @@ class TestContentFilter:
         assert result.action == FilterAction.WARN
         assert result.safety_level == SafetyLevel.RISKY
 
+    def test_allows_hardware_die_terminology(self):
+        cf = ContentFilter()
+        result = cf.filter_content("die/cache partition and die_internal_l1 scope")
+        assert result.action == FilterAction.PASS
+        assert result.safety_level == SafetyLevel.SAFE
+
     def test_safe_content_passes(self):
         cf = ContentFilter()
         result = cf.filter_content("hello, how are you today?")

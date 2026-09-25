@@ -27,6 +27,16 @@ _INTENT_CAPABILITIES: Dict[str, List[str]] = {
     "knowledge_query": ["knowledge_graph", "query_graph"],
     "creative_write": ["creative_writing", "generate_text"],
     "data_analysis": ["data_analysis", "analyze_data"],
+    "eda": [
+        "eda_generate",
+        "eda_explore",
+        "eda_probe",
+        "eda_magic_check",
+        "eda_learn",
+        "logic_gate_learn",
+        "logic_gate_verify",
+        "rtl_generate",
+    ],
     "plan_create": ["planning", "create_plan"],
     "vision": ["vision_processing", "analyze_image"],
     "audio": ["audio_processing", "transcribe"],
@@ -52,6 +62,7 @@ _INTENT_AGENTS: Dict[str, str] = {
     "knowledge_query": "knowledge_graph_agent",
     "creative_write": "creative_writing_agent",
     "data_analysis": "data_analysis_agent",
+    "eda": "eda_agent",
     "plan_create": "planning_agent",
     "audio": "audio_processing_agent",
     "nlp": "nlp_processing_agent",
@@ -67,10 +78,19 @@ class AgentOrchestrator:
     4. Chains agent outputs when needed
     """
 
-    def __init__(self, agent_manager=None, model_bus=None) -> None:
+    def __init__(self, agent_manager=None, model_bus=None, execution_gate=None) -> None:
         self._agent_manager = agent_manager
         self._model_bus = model_bus
         self._agent_cache: Dict[str, Any] = {}
+        # ExecutionGate owns "may this action run". It is injected by the
+        # caller (chat path) so the orchestrator never decides execution policy
+        # on its own; a local instance is the defensive default for standalone
+        # / script usage.
+        if execution_gate is None:
+            from ai.core.execution_gate import ExecutionGate
+
+            execution_gate = ExecutionGate(model_bus=model_bus)
+        self._execution_gate = execution_gate
 
     @property
     def model_bus(self):
@@ -81,9 +101,99 @@ class AgentOrchestrator:
     def model_bus(self, value) -> None:
         self._model_bus = value
 
+    @staticmethod
+    def is_ai_card_request(user_message: str) -> bool:
+        return bool(
+            re.search(
+                r"(?:\b(?:ai[- ]?card|compute[- ]?card|hardware[- ]engineer)\b|"
+                r"AI\s*計算卡|計算卡|硬體工程|硬件工程|硬體設計|硬件设计)",
+                user_message or "",
+                re.IGNORECASE,
+            )
+        )
+
+    @staticmethod
+    def is_eda_followup_request(user_message: str) -> bool:
+        return bool(
+            re.search(
+                r"(?:剛才|刚才|上述|這個結果|这个结果|繼續|继续|follow[- ]?up)",
+                user_message or "",
+                re.IGNORECASE,
+            )
+        )
+
+    @staticmethod
+    def is_eda_request(user_message: str) -> bool:
+        if AgentOrchestrator.is_ai_card_request(user_message):
+            return True
+        return bool(
+            re.search(
+                r"(?:\b(?:ngspice|spice|magic|klayout|kicad|easyeda|jlcone|jlcpcb|gds|oasis|netlist|pcb|gerber|bom|drc|vLSI|layout|pcie|verilog|systemverilog|rtl|hdl|iverilog|verilator|yosys)\b|"
+                r"EDA|積體電路|電路模擬|电路模拟|晶片|布局|佈局|電路板|电路板)",
+                user_message or "",
+                re.IGNORECASE,
+            )
+        )
+
+    @staticmethod
+    def is_hardware_standards_request(user_message: str) -> bool:
+        if not AgentOrchestrator.is_eda_request(user_message):
+            return False
+        return bool(
+            re.search(
+                r"(?:標準|标准|規範|规范|协议|協定|specification|standard|protocol|"
+                r"查詢|查询|研究|research|look\s*up|source|來源|来源)",
+                user_message or "",
+                re.IGNORECASE,
+            )
+            and re.search(
+                r"(?:\bpcie\b|\baxi\b|\baxI4\b|systemverilog|\bverilog\b|"
+                r"ieee\s*1800|jedec|ddr5|hbm|cem|hdmi|usb\s*pd)",
+                user_message or "",
+                re.IGNORECASE,
+            )
+        )
+
+    @staticmethod
+    def is_rtl_generation_request(user_message: str) -> bool:
+        if not AgentOrchestrator.is_eda_request(user_message):
+            return False
+        return bool(
+            re.search(
+                r"(?:\b(?:rtl|hdl|verilog|systemverilog|iverilog|verilator|yosys)\b|"
+                r"生成|產生|建立|创建|輸出|输出|generate|create|emit|write)",
+                user_message or "",
+                re.IGNORECASE,
+            )
+            and re.search(
+                r"(?:\b(?:rtl|hdl|verilog|systemverilog)\b|"
+                r"生成|產生|建立|创建|輸出|输出|generate|create|emit|write)",
+                user_message or "",
+                re.IGNORECASE,
+            )
+        )
+
+    @staticmethod
+    def is_eda_execution_request(user_message: str) -> bool:
+        if not AgentOrchestrator.is_eda_request(user_message):
+            return False
+        return bool(
+            re.search(
+                r"(?:執行|运行|運行|跑|模擬|模拟|生成|建立|创建|創建|設計|设计|"
+                r"匯出|导出|檢查|检查|驗證|验证|探測|探测|準備|准备|交給|交给|交付|轉交|转交|"
+                r"\b(?:run|execute|simulate|generate|create|design|export|check|"
+                r"verify|probe|prepare|handoff|hand-off|build|make|render)\b)",
+                user_message or "",
+                re.IGNORECASE,
+            )
+        )
+
     def classify_intent(self, user_message: str) -> str:
         """Classify user message into an intent category via regex sub-classification."""
         lower = user_message.lower()
+
+        if self.is_eda_request(user_message):
+            return "eda"
 
         # NOTE: IntentRegistry is intentionally NOT used as a short-circuit
         # gate here. Its density scoring is too coarse for routing (e.g. "搜尋
@@ -219,13 +329,31 @@ class AgentOrchestrator:
         Route a user message to the appropriate agent(s).
         Returns {intent, agent, result, subtasks}.
         """
-        subtasks = self.decompose_task(user_message)
+        force_eda_followup = bool(
+            context
+            and context.get("_eda_followup") is True
+            and self.is_eda_followup_request(user_message)
+        )
+        if force_eda_followup:
+            subtasks = [
+                {
+                    "intent": "eda",
+                    "message": user_message,
+                    "priority": 1,
+                    "agent": "eda_agent",
+                }
+            ]
+        else:
+            subtasks = self.decompose_task(user_message)
 
+        confirmed_agent = (context or {}).get("_gate_confirmed_agent")
+        confirmed_intent = (context or {}).get("_gate_confirmed_intent")
         results: List[Dict[str, Any]] = []
         for task in subtasks:
-            intent = task["intent"]
-            agent_name = task["agent"]
-            message = task["message"]
+            intent = str(task["intent"])
+            agent_value = task.get("agent")
+            agent_name = agent_value if isinstance(agent_value, str) else None
+            message = str(task.get("message", ""))
 
             if intent == "general":
                 results.append(
@@ -245,6 +373,40 @@ class AgentOrchestrator:
                         "agent": None,
                         "result": None,
                         "note": "No agent mapped for intent",
+                    }
+                )
+                continue
+
+            # Execution policy is owned by ExecutionGate: it decides whether this
+            # specialized agent may run, require confirmation, or be rejected.
+            # Only "auto_execute" reaches the ModelBus handler / AgentManager.
+            if confirmed_agent == agent_name and confirmed_intent == intent:
+                gate_decision = self._execution_gate.confirm_agent_execution(
+                    intent=intent,
+                    agent_name=agent_name,
+                    user_message=message,
+                )
+            else:
+                gate_decision = self._execution_gate.decide_agent_execution(
+                    intent=intent,
+                    agent_name=agent_name,
+                    user_message=message,
+                )
+            if gate_decision.action != "auto_execute":
+                results.append(
+                    {
+                        "intent": intent,
+                        "agent": agent_name,
+                        "result": {
+                            "type": "execution_gate",
+                            "success": False,
+                            "result": None,
+                            "error": gate_decision.reason,
+                        },
+                        "message": message,
+                        "gate_action": gate_decision.action,
+                        "gate_reason": gate_decision.reason,
+                        "confirm_message": gate_decision.confirm_message,
                     }
                 )
                 continue
@@ -290,6 +452,14 @@ class AgentOrchestrator:
                         "text": message,
                         "content": message,
                     }
+                    if agent_name == "eda_agent" and self.is_rtl_generation_request(message):
+                        agent_task["method"] = "run_rtl_experiment"
+                    elif agent_name == "eda_agent" and self.is_hardware_standards_request(message):
+                        agent_task["method"] = "get_hardware_standards"
+                    elif agent_name == "eda_agent" and (
+                        self.is_ai_card_request(message) or force_eda_followup
+                    ):
+                        agent_task["method"] = "run_ai_card_reference_experiment"
                     agent_result = await self._agent_manager.execute_agent(agent_name, agent_task)
                     result = {
                         "type": agent_name,
@@ -301,6 +471,11 @@ class AgentOrchestrator:
                     logger.warning(
                         f"AgentManager execution failed for {agent_name}: {e}", exc_info=True
                     )
+
+            if isinstance(result, dict):
+                self._execution_gate.record_result(
+                    agent_name, bool(result.get("success"))
+                )
 
             results.append(
                 {

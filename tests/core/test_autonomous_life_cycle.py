@@ -11,6 +11,30 @@ from core.life.autonomous_life_cycle import AutonomousLifeCycle, FormulaMetrics,
 from core.system.config.magic_numbers import lifecycle_value
 
 
+@pytest.fixture(autouse=True)
+def _isolated_lifecycle_state(monkeypatch, tmp_path):
+    """Keep lifecycle tests off the live shared state file.
+
+    AutonomousLifeCycle() defaults to data/autonomous_lifecycle_state.json —
+    the cross-process runtime state. Reading it made assertions depend on how
+    many turns the server had run (config-driven thresholds, phase defaults),
+    so a running instance flipped 7 tests. Point the class used by this module
+    at a per-test tmp file; the default-path binding itself stays covered by
+    test_default_constructor_binds_shared_path.
+    """
+    import sys
+
+    module = sys.modules[__name__]
+    state_file = tmp_path / "autonomous_lifecycle_state.json"
+
+    class _IsolatedAutonomousLifeCycle(AutonomousLifeCycle):
+        def __init__(self, config=None, persist_path=state_file):
+            super().__init__(config=config, persist_path=persist_path)
+
+    monkeypatch.setattr(module, "AutonomousLifeCycle", _IsolatedAutonomousLifeCycle)
+    yield
+
+
 @pytest.fixture
 def metrics():
     return FormulaMetrics(
@@ -564,10 +588,12 @@ class TestCrossProcessStateSharing:
     def test_default_constructor_binds_shared_path(self):
         # 預設建構（主 server / agent 的實際用法）綁定共享檔路徑，
         # 建構時 auto-load 既有狀態（load 行為由 roundtrip 測試覆蓋）
+        # 本檔的 autouse fixture 會把類別預設值換成 tmp 路徑，故這裡直接驗證
+        # 生產類別的預設參數仍指向共享狀態檔（隔離只作用於測試）。
         from core.life import autonomous_life_cycle as alc_mod
 
-        lc = AutonomousLifeCycle()
-        assert lc._persist_path == alc_mod._DEFAULT_STATE_PATH
+        defaults = alc_mod.AutonomousLifeCycle.__init__.__defaults__ or ()
+        assert alc_mod._DEFAULT_STATE_PATH in defaults
 
     def test_persist_none_disables_loading(self, tmp_path):
         # persist_path=None 維持「停用持久化」語意（既有測試依賴此隔離）

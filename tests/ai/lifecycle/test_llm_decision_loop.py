@@ -382,6 +382,13 @@ class TestMakeDecision:
         assert recorded.action == "greet"
         assert recorded.executed
 
+    async def test_make_decision_respects_cooldown(self, decision_loop):
+        decision_loop.decision_cooldown = 60.0
+        await decision_loop._make_decision()
+        await decision_loop._make_decision()
+        assert decision_loop.llm_service.chat_completion.await_count == 1
+        assert len(decision_loop.decision_history) == 1
+
     async def test_make_decision_uses_fallback_when_no_chat_completion(
         self, mock_state_manager, mock_memory_manager, user_monitor
     ):
@@ -404,6 +411,22 @@ class TestMakeDecision:
         decision_loop.llm_service.chat_completion.return_value = mock_response
         await decision_loop._make_decision()
         assert len(decision_loop.decision_history) == 1
+
+    async def test_make_decision_accepts_fenced_json(self, decision_loop):
+        mock_response = MagicMock()
+        mock_response.content = "```json\n" + json.dumps(
+            {
+                "action": "greet",
+                "message": "Hello from fenced JSON",
+                "priority": "medium",
+                "reason": "test",
+                "confidence": 0.8,
+            }
+        ) + "\n```"
+        decision_loop.llm_service.chat_completion.return_value = mock_response
+        await decision_loop._make_decision()
+        assert decision_loop.decision_history[0].action == "greet"
+        assert decision_loop.decision_history[0].message == "Hello from fenced JSON"
 
     async def test_execute_decision_handles_llm_exception_gracefully(self, decision_loop):
         decision_loop.llm_service.chat_completion.side_effect = Exception("LLM error")

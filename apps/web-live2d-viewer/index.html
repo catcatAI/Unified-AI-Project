@@ -1605,7 +1605,9 @@
         const terminal = new TerminalUI({
           onSend: (text) => {
             if (app.backendWebSocket && app.backendWebSocket.connected) {
-              app.backendWebSocket.sendMessage(text)
+              app.backendWebSocket.sendMessage(text).then((r) => {
+                if (r && r.response) terminal.writeResponse(r.response)
+              })
             } else if (app.apiClient) {
               app.apiClient.sendMessage(text).then((r) => {
                 if (r && r.response) terminal.writeResponse(r.response)
@@ -1615,12 +1617,6 @@
         })
         terminal.registerGlobalShortcut()
         window._terminal = terminal
-
-        if (app.backendWebSocket) {
-          app.backendWebSocket.on('angela_response', (data) => {
-            if (data && data.response) terminal.writeResponse(data.response)
-          })
-        }
 
         const btn = document.getElementById('btn-terminal')
         if (btn) btn.addEventListener('click', () => terminal.toggle())

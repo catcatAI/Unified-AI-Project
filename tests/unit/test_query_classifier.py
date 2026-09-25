@@ -71,6 +71,32 @@ class TestQueryClassifier:
         result = classifier.classify("什么是人工智能")
         assert result.primary_type == QueryType.KNOWLEDGE
 
+    def test_classify_explicit_definition_as_knowledge(self):
+        from ai.core.query_classifier import QueryClassifier, QueryType
+
+        result = QueryClassifier().classify("高興的意思")
+        assert result.primary_type == QueryType.KNOWLEDGE
+
+    def test_classify_capability_question_variants(self):
+        from ai.core.query_classifier import (
+            ROUTE_CAPABILITY_CATALOG,
+            QueryClassifier,
+            QueryType,
+        )
+
+        classifier = QueryClassifier()
+        for text in ("你會啥？", "你有啥能力？", "你有哪些能力？"):
+            result = classifier.classify(text)
+            assert result.primary_type == QueryType.KNOWLEDGE, text
+            assert result.route_hint == ROUTE_CAPABILITY_CATALOG, text
+
+    def test_classify_identity_is_llm_first(self):
+        from ai.core.query_classifier import ROUTE_LLM_FIRST, QueryClassifier, QueryType
+
+        result = QueryClassifier().classify("自我介紹一下")
+        assert result.primary_type == QueryType.GREETING
+        assert result.route_hint == ROUTE_LLM_FIRST
+
     def test_classify_knowledge_english(self):
         from ai.core.query_classifier import QueryClassifier, QueryType
 

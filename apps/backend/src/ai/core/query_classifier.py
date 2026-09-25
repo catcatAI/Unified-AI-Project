@@ -55,6 +55,7 @@ class QueryResult:
     secondary_type: Optional[QueryType] = None
     secondary_confidence: float = 0.0
     reason: str = ""
+    route_hint: str = ""
 
 
 # =============================================================================
@@ -252,6 +253,24 @@ _WORD_BOUNDARY_END = r"(?:[\s，。！？,.\s]|$)"
 # audio（聽）、command（祈使句首設計）、greeting（你好誤傷「跟你好朋友」）。
 _WORD_BOUNDARY_CJK = r"(?:^|[\s，。！？,.\s一-鿿])"
 
+ROUTE_CAPABILITY_CATALOG = "capability_catalog"
+ROUTE_LLM_FIRST = "llm_first"
+
+_IDENTITY_INTENT = re.compile(
+    r"(?:自我介紹|自我介绍|介紹自己|介绍自己|介紹一下你自己|介绍一下你自己|"
+    r"你是誰|你是谁|你叫什麼|你叫什么|你的名字|"
+    r"\b(?:introduce yourself|who are you|what's your name)\b)",
+    re.IGNORECASE,
+)
+_CAPABILITY_INTENT = re.compile(
+    r"(?:你|妳|自己|angela).{0,5}(?:会啥|會啥|会什么|會什麼|"
+    r"有啥能力|有什麼能力|有什么能力|有哪些能力|"
+    r"能做什么|能做什麼|能干什么|能幹什麼|能幹嘛|"
+    r"可以做什么|可以做什麼|可以干什么|可以幹嘛)"
+    r"|\b(?:what can you do|what are your capabilities|your capabilities)\b",
+    re.IGNORECASE,
+)
+
 # Static tables are pure data (never mutated) — build once per process and share
 # across instances instead of recompiling ~25 regexes per construction.
 _CLASSIFIER_PATTERNS: Optional[List[Tuple[QueryType, Pattern, float]]] = None
@@ -321,17 +340,6 @@ class QueryClassifier:
                 ),
                 0.9,
             ),
-            (
-                QueryType.GREETING,
-                re.compile(
-                    r"(自我介紹|自我介绍|介紹自己|介绍自己|"
-                    r"你是誰|你是谁|你叫什麼|你叫什么|你的名字|"
-                    r"做個?自我|做一?個?自我|來一?個?自我|来一?个?自我|"
-                    r"\b(introduce\s+yourself|who\s+are\s+you|what's\s+your\s+name)\b)",
-                    re.IGNORECASE,
-                ),
-                0.85,
-            ),
         ]
 
     @staticmethod
@@ -376,6 +384,7 @@ class QueryClassifier:
                     _WORD_BOUNDARY_CJK + r"(什么是|是什么|是什麼|what\s+is|how\s+(does|do|can|to)|"
                     r"why\s+(is|does|do|can)|"
                     r"\b(define|explain)\b|"
+                    r".+?的?意思|.+?的?翻譯|.+?的?翻译|"
                     r"怎麼回|怎么回|多少|how\s+many|what\s+are)",
                     re.IGNORECASE,
                 ),
@@ -396,17 +405,6 @@ class QueryClassifier:
                 QueryType.KNOWLEDGE,
                 re.compile(
                     _WORD_BOUNDARY_CJK + r"(天氣|天气|氣溫|气温|温度|溫度|weather|temperature)",
-                    re.IGNORECASE,
-                ),
-                0.7,
-            ),
-            (
-                QueryType.KNOWLEDGE,
-                re.compile(
-                    _WORD_BOUNDARY_CJK + r"(能做|可以做|可以幫|能幫|可以帮|能幫我|可以幫我|"
-                    r"你的能力|你的功能|你會什麼|你会什么|你能做|你可以做|"
-                    r"介紹你的|介绍你的|能做什麼|能做什么|可以做什么|可以做什麼|"
-                    r"能做啥|能幹嘛|能幹什麼|能干什么|可以幹嘛|可以干什么)",
                     re.IGNORECASE,
                 ),
                 0.7,
@@ -646,13 +644,17 @@ class QueryClassifier:
         """
         分类使用者输入。
         返回 QueryResult 包含 primary_type, confidence, actionability, action_type,
-        secondary_type, secondary_confidence, reason
+        secondary_type, secondary_confidence, reason, route_hint
         """
         text = text.strip()
         if not text:
             return QueryResult(QueryType.UNKNOWN, 0.0, 0.0, "none", reason="empty_input")
 
         has_negation = any_keyword(text, _NEGATION_WORDS)
+
+        semantic_result = self._classify_semantic_intent(text, has_negation)
+        if semantic_result is not None:
+            return semantic_result
 
         # Step 1: 长文字启发式
         result = self._classify_by_length(text, has_negation)
@@ -704,6 +706,33 @@ class QueryClassifier:
 
         # Step 8: 回传 UNKNOWN
         return QueryResult(QueryType.UNKNOWN, 0.3, 0.0, "none", reason="no_match_fallback")
+
+    def _classify_semantic_intent(
+        self, text: str, has_negation: bool
+    ) -> Optional[QueryResult]:
+        if _CAPABILITY_INTENT.search(text):
+            return QueryResult(
+                primary_type=QueryType.KNOWLEDGE,
+                confidence=self._adjust_confidence(
+                    QueryType.KNOWLEDGE, text, 0.9, True, has_negation
+                ),
+                actionability=0.0,
+                action_type="none",
+                reason="capability_intent",
+                route_hint=ROUTE_CAPABILITY_CATALOG,
+            )
+        if _IDENTITY_INTENT.search(text):
+            return QueryResult(
+                primary_type=QueryType.GREETING,
+                confidence=self._adjust_confidence(
+                    QueryType.GREETING, text, 0.9, True, has_negation
+                ),
+                actionability=0.0,
+                action_type="none",
+                reason="identity_intent",
+                route_hint=ROUTE_LLM_FIRST,
+            )
+        return None
 
     def _classify_by_length(self, text: str, has_negation: bool) -> Optional[QueryResult]:
         if len(text) > limit_value("ai.query_classifier.max_direct_len", 200):

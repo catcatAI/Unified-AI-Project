@@ -35,6 +35,20 @@ _ACTION_KEYWORDS = (
 )
 
 
+def _keyword_in(haystack: str, keyword: str) -> bool:
+    """Match an action keyword.
+
+    CJK keywords match as plain substrings (no word boundaries in Chinese), but
+    ASCII keywords use ``\\b`` boundaries so "opencode" in a path or a word does
+    not register as the "open" action.
+    """
+    if not keyword:
+        return False
+    if keyword.isascii():
+        return re.search(rf"\b{re.escape(keyword)}\b", haystack) is not None
+    return keyword in haystack
+
+
 def _looks_like_path(tok: str) -> bool:
     """Heuristic: does this token look like a file path?"""
     if not tok:
@@ -171,13 +185,7 @@ class FileOperationHandler:
             return params
         lower = text.lower()
 
-        # 1. Action keywords
-        for action, kws in _ACTION_KEYWORDS:
-            if any(k in lower for k in kws):
-                params["action"] = action
-                break
-
-        # 2. Content (write/append): everything after a content marker
+        # 0. Content (write/append): everything after a content marker
         content = None
         for sep in ("內容是", "内容是", "內容:", "内容:", "content:", "with content"):
             if sep in lower:
@@ -188,21 +196,39 @@ class FileOperationHandler:
         if content is not None:
             params["content"] = content
 
-        # 3. Path: first path-like token, excluding action keywords and the
-        #    content portion.
+        # 1. Path: first path-like token, excluding action keywords and the
+        #    content portion. Computed BEFORE the action scan so a path such as
+        #    /tmp/opencode_probe/x.txt cannot supply the action keyword "open"
+        #    and silently turn a delete into a read.
         work = text
         if content is not None:
             for sep in ("內容是", "内容是", "內容:", "内容:", "content:", "with content"):
                 if sep in work:
                     work = work.split(sep, 1)[0]
                     break
-        for tok in re.findall(r"[^\s`'\"，。！？!?,;；]+(?:\.[^\s`'\"，。！？!?,;；]+)?", work):
-            t = tok.strip("`'\"")
-            if _looks_like_path(t):
-                params["path"] = t
-                break
+        tokens = re.findall(r"[^\s`'\"，。！？!?,;；]+(?:\.[^\s`'\"，。！？!?,;；]+)?", work)
+        path_tokens = [tok.strip("`'\"") for tok in tokens if _looks_like_path(tok)]
+        for candidate in path_tokens:
+            params["path"] = candidate
+            break
 
-        # 4. Target name (rename/move): token after 為/为/成/到/to
+        # 2. Action keywords — scanned on the text with path tokens removed, and
+        #    ASCII keywords are matched on word boundaries.
+        action_scan = " ".join(
+            tok.strip("`'\"") for tok in tokens if tok.strip("`'\"") not in path_tokens
+        ).lower()
+        for action, kws in _ACTION_KEYWORDS:
+            if any(_keyword_in(action_scan, kw) for kw in kws):
+                params["action"] = action
+                break
+        if "action" not in params:
+            # Fall back to the full text so a path-only request still resolves.
+            for action, kws in _ACTION_KEYWORDS:
+                if any(k in lower for k in kws):
+                    params["action"] = action
+                    break
+
+        # 3. Target name (rename/move): token after 為/为/成/到/to
         if params.get("action") in ("rename", "move"):
             for sep in ("為", "为", "成", "到", " to "):
                 if sep in text:

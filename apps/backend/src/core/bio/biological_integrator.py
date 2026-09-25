@@ -288,6 +288,8 @@ class BiologicalIntegrator:
 
     async def shutdown(self) -> None:
         """Shutdown all biological systems"""
+        if not self._running:
+            return
         self._running = False
 
         if self._integration_task:

@@ -180,8 +180,14 @@ class ContentFilter:
     def _check_toxicity(self, content: str) -> List[Dict[str, Any]]:
         issues = []
         content_lower = content.lower()
+        technical_die = re.compile(
+            r"\bdie(?=\s*(?:[/_\-]|(?:internal|external|layer|area|stack|boundary)))"
+        )
         for keyword in self.TOXIC_KEYWORDS:
-            if keyword in content_lower:
+            candidate = content_lower
+            if keyword == "die":
+                candidate = technical_die.sub("", candidate)
+            if keyword in candidate:
                 issues.append(
                     {
                         "type": "toxicity",

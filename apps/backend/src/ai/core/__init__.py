@@ -9,6 +9,7 @@ P28: TrainingCoordinator (domain training orchestration).
 """
 
 from ai.core.dictionary_classifier import DictionaryClassifier, get_dictionary_classifier
+from ai.core.eda_episode import EDA_EPISODE_SCHEMA_VERSION, build_eda_episode, evaluate_eda_result
 from ai.core.execution_gate import ExecutionGate, GateDecision
 from ai.core.model_bus import ModelBus, ModelCapability, ModelRouteResult, RouteDecision
 from ai.core.query_classifier import QueryClassifier, QueryResult, QueryType
@@ -23,6 +24,9 @@ from ai.core.unicode_utils import (
 )
 
 __all__ = [
+    "EDA_EPISODE_SCHEMA_VERSION",
+    "build_eda_episode",
+    "evaluate_eda_result",
     "DictionaryClassifier",
     "get_dictionary_classifier",
     "GateDecision",

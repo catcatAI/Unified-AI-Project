@@ -1,0 +1,231 @@
+schema_version: ai-compute-card-task/1
+status: environment_support_pending_angela_interface_freeze
+supersedes: mvu-reference-spec/1
+owner: angela
+support_owner: environment_support
+objective: provide a software-only validation environment for the project AI PCIe compute-card design
+ownership:
+  angela_owns:
+    - chip_microarchitecture
+    - main_and_secondary_compute_partitioning
+    - die_internal_cache_mapping
+    - purchased_memory_and_component_selection
+    - product_architecture_and_acceptance
+  environment_support_owns:
+    - reproducible_tool_environment
+    - parameterized_reference_models
+    - test_fixtures_and_golden_data
+    - artifact_capture_and_reproducibility
+  human_approval_required_for:
+    - new_tool_installation
+    - component_ordering
+    - physical_fabrication
+environment:
+  software_only: true
+  physical_hardware_required: false
+  install_new_tools: false
+  allowed_tools: [python, pytest, ngspice, klayout, magic, kicad-cli, existing-python-eda-agent]
+  output_root: data/eda_runs
+  validation_artifact_format: manifest-and-json
+terminology_guard:
+  project_map_labels:
+    meaning: software_project_structure_and_tooling_labels
+    not_compute_card_memory_levels: true
+  context_block_labels:
+    meaning: software_context_categories
+    not_compute_card_memory_levels: true
+  compute_card_hierarchy:
+    die_l1: self_developed_die_internal_cache
+    card_l2: purchased_card_memory
+    host_l3: outside_card_pcie_boundary_to_host_memory_or_storage
+  labels_must_not_be_inferred_from_prefix: true
+architecture_contract:
+  die:
+    boundary: self_developed_chip
+    main_compute:
+      role: input_output
+      partitions: 16
+      fabric_width_bits: 16384
+      implementation_owner: angela
+    secondary_compute:
+      role: sparse_hot_weight_update
+      input_width_bits: 1024
+      cache_partitions: 16
+      partition_width_bits: 64
+      mapping_owner: angela
+    l1_cache:
+      scope: die_internal
+      implementation: self_developed_cache
+      target_mb: 32
+      implementation_owner: angela
+  card:
+    boundary: card_external_to_die
+    l2_memory:
+      scope: card
+      implementation: purchased_memory
+      target_capacity_gb: 64
+      selection_owner: angela
+    electronics:
+      scope: card
+      selection_owner: angela
+  host:
+    boundary: outside_card
+    l3:
+      scope: outside_card
+      interface: PCIe
+      role: host_access_boundary
+      target: host_memory_or_storage
+requirements:
+  card:
+    form_factor: FHFL-10.5-inch-dual-slot
+    host_interface: PCIe-Gen5-x16-endpoint
+    optional_host_interface: PCIe-Gen6-x16-research-option
+    pcie_power: 12VHPWR-or-12V-2x6
+    bar_and_dma: required
+    flr_reset: required
+    iommu_compatibility: required-for-production-target
+    signed_firmware: required
+  host_bandwidth:
+    gen5_signaling_rate_gbps_per_lane: 32
+    gen5_x16_raw_gbps_each_direction: 512
+    gen5_x16_payload_encoding: 128b/130b
+    gen5_x16_payload_gbps_each_direction: 504.123
+    gen5_x16_effective_gbs_each_direction: 63.015
+    gen5_x16_bidirectional_effective_gbs: 126.031
+    dma_transfer_model: tiled_with_credit_backpressure
+    performance_target_gbs: 50
+    note: Raw signaling and encoded payload units are separate; do not label Gbps as GB/s.
+  internal_main_datapath:
+    width_bits: 16384
+    direction: bidirectional
+    role: die_internal_main_compute_input_output
+    implementation_owner: angela
+    target_clock_mhz: 250
+    raw_bandwidth_gbps_at_target_clock: 4096
+    raw_bandwidth_gbs_at_target_clock: 512
+    note: Derived as width_bits × clock_Hz / 1e9 for Gbps; divide by 8 for GB/s. This is an internal logical fabric, not a raw PCIe wire width.
+  weight_hot_update:
+    width_bits: 1024
+    direction: die_internal_secondary_compute_to_l1_cache
+    target_clock_mhz: 250
+    raw_bandwidth_gbps_at_target_clock: 256
+    raw_bandwidth_gbs_at_target_clock: 32
+    write_protocol: credit_backpressure_sequence_counter_crc_commit
+    atomicity: required
+  memory:
+    l1:
+      scope: die_internal
+      implementation: self_developed_cache
+      target_mb: 32
+      preferred_mb: 64
+    l2:
+      scope: card_external_to_die
+      implementation: purchased_memory
+      prototype: 2x32GB-DDR5-ECC-RDIMM
+      target_capacity_gb: 64
+    l3:
+      scope: outside_card
+      interface: PCIe
+      role: host_access_boundary
+      target: host_memory_or_storage
+    cache_types: [activation_cache, weight_working_set, staging_buffer, metadata]
+  compute:
+    main_unit:
+      role: input_output
+      partitions: 16
+      implementation_owner: angela
+    secondary_unit:
+      role: sparse_hot_weight_update
+      update_input_width_bits: 1024
+      l1_partition_count: 16
+      l1_partition_width_bits: 64
+      implementation_owner: angela
+    baseline_tile: 16x16-INT8-MAC
+    supported_numeric_modes: [INT8, INT16, FP16, FP32-research]
+    weight_format: signed-INT8-Q-format-to-be-declared
+    accumulation_width_bits: 32
+    output_format: INT16-or-FP16-to-be-declared
+  power_and_thermal:
+    prototype_max_board_power_w: 300
+    preferred_max_board_power_w: 350
+    power_management: [per-rail-telemetry, thermal-throttle, watchdog, emergency-power-cutoff]
+    cooling: passive-heatsink-with-host-airflow
+    temperature_sensors: [compute-die, hbm-or-ddr, power-stage, inlet, outlet]
+  cost:
+    currency: USD
+    prototype_bom_cap: 3000
+    cost_scope: [pcb, compute-silicon-or-fpga, memory, power, cooling, mechanical, connectors]
+    excluded: [server, oscilloscope, lab-equipment, taxes, NRE]
+    over_cap_policy: mark_blocked_and_require_rfq_or_scope_reduction
+    price_status: distributor_and_manufacturer_quote_required
+acceptance_levels:
+  L0: specification_and_interface_contract
+  L1: python_reference_model_and_pytest
+  L2: existing_eda_checks_and_power_thermal_analysis
+  L3: hdl_gate_level_simulation
+  L4: synthesis_static_timing_and_board_validation
+current_target: L1_support_until_angela_interface_freeze
+acceptance:
+  L0:
+    - all_widths_have_units_and_endianness
+    - all_external_links_have_protocol_and_bandwidth
+    - every_requirement_has_an_owner_and_evidence_target
+    - unresolved_interfaces_are_explicitly_blockers
+  L1:
+    - dma_tile_model_meets_bandwidth_and_credit_rules
+    - cache_partition_model_has_no_aliasing_or_overwrite_violation
+    - weight_update_is_atomic_and_bounded
+    - power_thermal_envelope_is_calculated
+    - cost_model_reports_unknown_prices_without_guessing
+  L2:
+    - kicad_can_produce_pcb_drc_and_gerber
+    - ngspice_can_check_selected_power_or_signal_paths
+    - magic_klayout_can_check_any_custom_memory_or_layout_fixture
+    - no_physical_board_required
+  L3:
+    - gate_level_waveform_matches_reference_model
+    - backpressure_and_reset_are_exercised
+  L4:
+    - timing_power_area_reports_exist
+    - no_250MHz_or_fpga_claim_without_evidence
+required_outputs:
+  - angela_interface_freeze_record
+  - parameterized_hierarchy_fixture
+  - interface_and_register_contract
+  - validation_data_contract
+  - component_registry_with_sources
+  - cost_envelope_with_quote_status
+  - power_thermal_budget
+  - software_validation_report
+  - unresolved_blockers_and_risks
+validation_data_contract:
+  status: support_fixture_pending_angela_schema
+  schema_owner: angela
+  environment_support_can_provide:
+    - deterministic_input_output_golden_vectors
+    - main_compute_x16_partition_vectors
+    - sparse_weight_update_hit_miss_vectors
+    - cache_alias_and_reset_cases
+    - DMA_backpressure_and_crc_cases
+    - power_thermal_synthetic_profiles
+    - failure_injection_and_reset_traces
+  no_product_dataset_selection: true
+component_selection_policy:
+  selection_owner: angela
+  environment_role: source_capture_and_validation_only
+  entries_are_not_selected: true
+  source_priority: [manufacturer_datasheet, manufacturer_product_page, standard_body, authorized_distributor]
+  required_fields: [part_number, revision, package, interface, power, thermal, lifecycle, price_quote_date, source_url, confidence]
+  do_not_purchase_without_human_approval: true
+  do_not_treat_generic_web_summary_as_verified: true
+review_gates:
+  - name: angela_interface_freeze
+    required_before: architecture_or_component_claims
+  - name: spec_review
+    required_before: component_selection
+  - name: source_verification
+    required_before: bom_commit
+  - name: power_thermal_review
+    required_before: mechanical_design
+  - name: software_acceptance
+    required_before: any_hardware_claim

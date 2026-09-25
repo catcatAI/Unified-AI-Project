@@ -1,3 +1,4 @@
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -51,6 +52,71 @@ class TestChatServiceGenerateResponse:
         )
         result = await chat_service.generate_response("hello", "User")
         assert result.text == "Hello!"
+
+    async def test_capability_question_skips_knowledge_pipeline(self, chat_service):
+        from core.interfaces.protocols import LLMResponse
+
+        chat_service._llm_service.generate_response = AsyncMock(
+            return_value=LLMResponse(text="runtime catalog")
+        )
+        chat_service._knowledge_pipeline = MagicMock()
+        chat_service._knowledge_pipeline.query = AsyncMock(
+            return_value={"answer": "stale template"}
+        )
+
+        result = await chat_service.generate_response("你會啥？", "User")
+
+        assert result.text == "runtime catalog"
+        chat_service._knowledge_pipeline.query.assert_not_awaited()
+
+    async def test_identity_question_reaches_llm_without_dictionary_shortcut(self, chat_service):
+        from core.interfaces.protocols import LLMResponse
+
+        chat_service._llm_service.generate_response = AsyncMock(
+            return_value=LLMResponse(text="Angela 的自我介紹")
+        )
+        chat_service._knowledge_pipeline = MagicMock()
+        chat_service._knowledge_pipeline.query = AsyncMock(
+            return_value={"answer": "一下 = ..."}
+        )
+
+        result = await chat_service.generate_response("自我介紹一下", "User")
+
+        assert result.text == "Angela 的自我介紹"
+        chat_service._knowledge_pipeline.query.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_repl_hardware_request_uses_registered_agent(self, chat_service, monkeypatch):
+        calls = []
+
+        class FakeManager:
+            async def execute_agent(self, agent_id, task):
+                calls.append((agent_id, task))
+                return SimpleNamespace(
+                    success=True,
+                    result_data={"status": "partial", "message": "reference pending"},
+                    error=None,
+                )
+
+        monkeypatch.setattr("api.lifespan.get_agent_manager", lambda: FakeManager())
+        result = await chat_service.generate_response(
+            "請執行 AI 計算卡 software-only reference",
+            context={"conversation_path": "repl"},
+        )
+
+        assert result.backend == "specialized_agent"
+        assert result.text == "reference pending"
+        assert calls[0][0] == "eda_agent"
+        assert calls[0][1]["method"] == "run_ai_card_reference_experiment"
+
+        followup = await chat_service.generate_response(
+            "請繼續整理剛才的結果。",
+            context={"conversation_path": "repl"},
+        )
+        assert followup.backend == "specialized_agent"
+        assert calls[1][0] == "eda_agent"
+        assert calls[1][1]["method"] == "run_ai_card_reference_experiment"
+        chat_service._llm_service.generate_response.assert_not_called()
 
     async def test_generate_response_no_llm_raises(self):
         from apps.backend.src.services.chat_service import ChatService

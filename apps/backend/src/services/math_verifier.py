@@ -450,7 +450,7 @@ def evaluate_logic(text: str) -> Optional[str]:
             return None
 
     # ---- English path ----
-    if not re.search(r"\b(true|false|and|or|not|nor|nand|xor)\b", t):
+    if not re.search(r"\b(true|false|and|or|not|nor|nand|xor|xnor)\b", t):
         return None
 
     # Bare boolean keywords ("true", "false") without operators are NOT

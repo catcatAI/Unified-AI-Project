@@ -284,7 +284,7 @@ class AngelaAutonomousAgent:
             enabled=True,
             provider="llamacpp",
             base_url="http://127.0.0.1:8080/v1",
-            model="data/models/qwen2.5-1.5b-instruct-q4_k_m.gguf",
+            model="gemma-4-E2B-it",
             timeout_sec=60.0,
             max_tokens=512,
             temperature=0.4,

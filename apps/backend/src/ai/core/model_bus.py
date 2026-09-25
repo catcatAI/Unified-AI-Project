@@ -7,7 +7,7 @@ import inspect
 import logging
 import time
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from core.system.config.magic_numbers import confidence_value, latency_value, timeout_value
 from core.utils import safe_error
@@ -71,12 +71,15 @@ class ModelBus:
     """
 
     def __init__(
-        self, default_timeout: float = 30.0, meta_controller: Optional[Any] = None
+        self,
+        default_timeout: float = 30.0,
+        meta_controller: Optional[Any] = None,
+        query_type_resolver: Optional[Callable[[str], str]] = None,
     ) -> None:
         self._registry: Dict[str, Tuple[Any, ModelCapability]] = {}
         self._handlers: Dict[str, Any] = {}
         self._handler_map: Dict[str, str] = {}
-        self._query_classifier: Any = None
+        self._query_type_resolver = query_type_resolver
         self._meta_controller = meta_controller
         self.default_timeout = timeout_value("ai.model_bus.default_timeout", default_timeout)
 
@@ -261,9 +264,17 @@ class ModelBus:
     ) -> RouteDecision:
         """Route query through best model(s) for the given type."""
         if query_type == "auto":
-            classifier = self._get_classifier()
-            classify_result = classifier.classify(query)
-            query_type = classify_result.primary_type.value
+            # ModelBus owns model selection, not intent classification. Callers
+            # that still pass "auto" must inject the shared preprocessing owner
+            # (ContextScheduler) as a resolver instead of ModelBus building its
+            # own QueryClassifier.
+            if self._query_type_resolver is None:
+                raise ValueError(
+                    "ModelBus.route(query_type='auto') requires an injected "
+                    "query_type_resolver; the shared ContextScheduler owns "
+                    "query classification."
+                )
+            query_type = self._query_type_resolver(query)
 
         handler_name = self._ROUTE_HANDLERS.get(query_type, "_handle_fanout")
         if query_type in self._handler_map:
@@ -500,14 +511,6 @@ class ModelBus:
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
-
-    def _get_classifier(self) -> Any:
-        """Lazy-import and cache the query classifier."""
-        if self._query_classifier is None:
-            from ai.core.query_classifier import QueryClassifier
-
-            self._query_classifier = QueryClassifier()
-        return self._query_classifier
 
     def _resolve_candidates(self, query_type: str) -> List[str]:
         """Map a query type to an ordered list of candidate model IDs."""

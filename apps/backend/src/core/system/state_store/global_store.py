@@ -40,6 +40,7 @@ class GlobalStateStore:
             "zeta": {},  # Consciousness Flow
             "environment": {},
             "hardware": {},
+            "routing": {},
             "neuro_vocabulary": {},  # C6 數值→語意映射
         }
         self._subscribers: Dict[str, List[Callable]] = {k: [] for k in self._states.keys()}

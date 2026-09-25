@@ -188,6 +188,9 @@ async def broadcast_state_updates() -> None:
     _prev_bio_signature = ""
     while True:
         try:
+            if not manager.active_connections:
+                await asyncio.sleep(_interval)
+                continue
             if _bio_integrator is None:
                 try:
                     from core.bio.biological_integrator import BiologicalIntegrator

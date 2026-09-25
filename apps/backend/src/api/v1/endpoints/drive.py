@@ -46,10 +46,16 @@ def _safe_drive_dest(folder: Path, file_name: str) -> Path:
     `folder` MUST already be a validated Path (obtained via
     _get_safe_drive_folder).  Strips directory components from
     file_name to prevent traversal.
+
+    Both sides are canonicalized with ``resolve()`` before the containment
+    check: the whitelist folder may be built from a relative ``__file__`` (or
+    contain symlinks), and comparing a resolved dest against an unresolved
+    folder would spuriously fail with HTTP 400.
     """
     safe_name = Path(file_name).name or "unnamed_file"
-    dest = (folder / safe_name).resolve()
-    if not (dest == folder or dest.is_relative_to(folder)):
+    root = folder.resolve()
+    dest = (root / safe_name).resolve()
+    if not (dest == root or dest.is_relative_to(root)):
         raise HTTPException(status_code=400, detail="Invalid file name")
     return dest
 

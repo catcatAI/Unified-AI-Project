@@ -280,7 +280,7 @@ class BackendWebSocketClient {
         this._handleWallpaperObjectInjection(data)
         break
       case 'chat_response':
-        this._handleChatResponse(data)
+        this._handleChatResponse(message)
         break
       case 'echo':
         console.log('Received echo (keep-alive):', message)
@@ -1294,8 +1294,12 @@ class BackendWebSocketClient {
     return this.connected
   }
 
-  _handleChatResponse(data) {
-    if (!data) return
+  _handleChatResponse(message) {
+    if (!message) return
+
+    const data =
+      message.data && typeof message.data === 'object' ? { ...message, ...message.data } : message
+    const content = data.content || data.response || ''
 
     console.log(
       '[BackendWebSocket] _handleChatResponse called, data:',
@@ -1304,7 +1308,7 @@ class BackendWebSocketClient {
 
     // 觸發事件 (供 UI 顯示)
     this._fireEvent('angela_response', {
-      response: data.content || data.response || '',
+      response: content,
       session_id: data.session_id,
       timestamp: data.timestamp,
     })
@@ -1317,7 +1321,7 @@ class BackendWebSocketClient {
       this._pendingResponses.delete(data.message_id)
       pending.resolve({
         success: true,
-        response: data.content || data.response || '',
+        response: content,
       })
     }
   }

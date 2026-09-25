@@ -4,7 +4,14 @@ Centralizes logging configuration to prevent 'log-jacking' by submodules.
 """
 
 import logging
+import warnings
 from pathlib import Path
+
+warnings.filterwarnings(
+    "ignore",
+    message=r"The pynvml package is deprecated.*",
+    category=FutureWarning,
+)
 
 
 def setup_logging(level=logging.INFO, log_file="backend.log") -> logging.Logger:
@@ -34,6 +41,7 @@ def setup_logging(level=logging.INFO, log_file="backend.log") -> logging.Logger:
 
     # Console handler
     console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.WARNING)
     console_handler.setFormatter(
         logging.Formatter("%(asctime)s - %(levelname)s - %(message)s", datefmt="%H:%M:%S")
     )

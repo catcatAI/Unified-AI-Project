@@ -211,6 +211,10 @@ class IntentManager:
         """
         if bridge is None:
             return
+        retrieve_memories = getattr(bridge, "retrieve_by_spatial_proximity", None)
+        if not callable(retrieve_memories):
+            logger.debug("Memory bridge does not support spatial proximity queries")
+            return
         for dimension, dim_state in state.items():
             if not isinstance(dim_state, dict):
                 continue
@@ -219,7 +223,7 @@ class IntentManager:
                 continue
             x, y, z = coord[0], coord[1], coord[2]
             try:
-                memories = bridge.retrieve_by_spatial_proximity(x, y, z, radius=5.0)
+                memories = retrieve_memories(x, y, z, radius=5.0)
             except Exception as exc:
                 logger.warning(f"Bridge proximity query failed for {dimension}: {exc}")
                 memories = []

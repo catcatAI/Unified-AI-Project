@@ -9,6 +9,7 @@ LLM 決策循環
 import asyncio
 import json
 import logging
+import re
 import time
 from dataclasses import dataclass
 from datetime import datetime
@@ -33,6 +34,26 @@ from .user_monitor import UserMonitor, UserState
 
 
 logger = logging.getLogger(__name__)
+
+
+def _parse_llm_json(response_text: str) -> Dict[str, Any]:
+    candidates = [response_text.strip()]
+    fenced = re.fullmatch(
+        r"```(?:json)?\s*(.*?)\s*```",
+        response_text.strip(),
+        flags=re.IGNORECASE | re.DOTALL,
+    )
+    if fenced:
+        candidates.append(fenced.group(1))
+
+    for candidate in candidates:
+        try:
+            parsed = json.loads(candidate)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(parsed, dict):
+            return parsed
+    raise ValueError("LLM response is not a JSON object")
 
 
 class DecisionAction:
@@ -120,6 +141,8 @@ class LLMDecisionLoop:
 
         self.is_running = False
         self._decision_task: Optional[asyncio.Task] = None
+        self._last_decision_at: Optional[float] = None
+        self.decision_cooldown = timing_value("ai.llm_decision_loop.decision_cooldown", 60.0)
 
         # 決策歷史
         self.decision_history: List[Decision] = []
@@ -206,6 +229,14 @@ class LLMDecisionLoop:
             # 2. 檢查是否需要決策
             if not self._should_make_decision(state):
                 return
+
+            now = time.monotonic()
+            if (
+                self._last_decision_at is not None
+                and now - self._last_decision_at < self.decision_cooldown
+            ):
+                return
+            self._last_decision_at = now
 
             # 3. 獲取用戶狀態
             user_state = self.user_monitor.get_user_state()
@@ -411,14 +442,12 @@ class LLMDecisionLoop:
             else:
                 return self._fallback_decision()
             try:
-                decision: Dict[str, Any] = json.loads(response_text)
-                return decision
-            except (
-                Exception
-            ) as e:  # broad exception acceptable: JSON parsing of LLM response may fail for various formats
+                return _parse_llm_json(response_text)
+            except ValueError as e:
                 logger.warning(
-                    f"Failed to parse LLM response as JSON: {e}. Raw: {response_text}",
-                    exc_info=True,
+                    "Failed to parse LLM response as JSON: %s. Raw: %s",
+                    e,
+                    response_text[:500],
                 )
                 return self._fallback_decision()
 

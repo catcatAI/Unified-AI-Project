@@ -16,6 +16,7 @@
   `[Digested Context]` 區塊（有界），仍不足才降級到既有裁剪階段。
 
 對外介面：
+- ``plan_query``：統一產生 preprocessing / routing hints
 - ``digest_overflow_sync``：同步、確定性（預算守門直接使用）
 - ``digest_with_llm``：非同步、小模型升級品質（ router 於啟用時呼叫）
 """
@@ -40,6 +41,7 @@ DEFAULT_DIGEST_TOKENS = 300
 DIGEST_WORKER_WINDOW = 800
 # 消化帳本預設位置（與學習日誌同屬 data/agent_workspace/）
 DEFAULT_LEDGER_DIR = Path("data/agent_workspace/context_ledger")
+LOCAL_KNOWLEDGE_QUERY_TYPES = frozenset({"math", "logic", "knowledge", "search"})
 
 
 @dataclass
@@ -61,6 +63,32 @@ class AllocationPlan:
     digested_indices: List[int] = field(default_factory=list)
     chunks: List[DigestChunk] = field(default_factory=list)
     digest_tokens: int = DEFAULT_DIGEST_TOKENS
+
+
+@dataclass(frozen=True)
+class QueryPreprocessingPlan:
+    query_type: str
+    confidence: float
+    action_type: str
+    actionability: float
+    route_hint: str
+    allow_context_enrichment: bool
+    allow_knowledge_pipeline: bool
+    allow_specialized_agents: bool
+    reason: str
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "query_type": self.query_type,
+            "confidence": self.confidence,
+            "action_type": self.action_type,
+            "actionability": self.actionability,
+            "route_hint": self.route_hint,
+            "allow_context_enrichment": self.allow_context_enrichment,
+            "allow_knowledge_pipeline": self.allow_knowledge_pipeline,
+            "allow_specialized_agents": self.allow_specialized_agents,
+            "reason": self.reason,
+        }
 
 
 class ContextLedger:
@@ -129,7 +157,49 @@ class ContextScheduler:
             "digest_events": 0,
             "cache_hits": 0,
             "llm_digests": 0,
+            "query_plans": 0,
         }
+
+    def plan_query(
+        self,
+        text: str,
+        context: Optional[Dict[str, Any]] = None,
+        classifier: Any = None,
+    ) -> QueryPreprocessingPlan:
+        if context is not None and isinstance(context.get("_preprocessing_plan"), dict):
+            return QueryPreprocessingPlan(**context["_preprocessing_plan"])
+        from ai.core.query_classifier import (
+            ROUTE_CAPABILITY_CATALOG,
+            ROUTE_LLM_FIRST,
+            QueryClassifier,
+        )
+
+        active_classifier = classifier
+        if not isinstance(active_classifier, QueryClassifier):
+            active_classifier = QueryClassifier()
+        result = active_classifier.classify(text)
+        route_hint = result.route_hint or "balanced"
+        bypass_pre_llm = route_hint in (ROUTE_CAPABILITY_CATALOG, ROUTE_LLM_FIRST)
+        allow_knowledge = (
+            not bypass_pre_llm
+            and result.primary_type.value in LOCAL_KNOWLEDGE_QUERY_TYPES
+            and result.confidence >= 0.6
+        )
+        plan = QueryPreprocessingPlan(
+            query_type=result.primary_type.value,
+            confidence=result.confidence,
+            action_type=result.action_type,
+            actionability=result.actionability,
+            route_hint=route_hint,
+            allow_context_enrichment=not bypass_pre_llm,
+            allow_knowledge_pipeline=allow_knowledge,
+            allow_specialized_agents=not bypass_pre_llm,
+            reason=result.reason,
+        )
+        if context is not None:
+            context["_preprocessing_plan"] = plan.to_dict()
+        self._stats["query_plans"] += 1
+        return plan
 
     # ---------- 分配計畫 ----------
 
@@ -250,18 +320,20 @@ class ContextScheduler:
 
     # ---------- 非同步升級（小模型／ED3N 工作者） ----------
 
-    async def digest_with_llm(self, text: str, conversation_id: str) -> Optional[str]:
+    async def digest_with_llm(
+        self, text: str, conversation_id: str, llm_service: Any = None
+    ) -> Optional[str]:
         """用小模型（無後端時自動落到專案自創的 ED3N）升級消化品質。
 
         成功時寫回帳本快取——下一輪同內容直接使用高品質摘要；
         失敗時回 None（萃取結果仍在，不影響運行）。
         """
-        svc = self._llm_service
+        svc = llm_service or self._llm_service
         if svc is None:
             try:
                 from services.llm.router import get_llm_service
 
-                svc = get_llm_service()
+                svc = await get_llm_service()
             except Exception as exc:
                 logger.debug("llm service unavailable for digest: %s", exc)
                 return None
@@ -314,5 +386,6 @@ __all__ = [
     "DEFAULT_DIGEST_TOKENS",
     "DIGEST_WORKER_WINDOW",
     "DigestChunk",
+    "QueryPreprocessingPlan",
     "get_context_scheduler",
 ]

@@ -123,6 +123,13 @@ class TestPromptManager:
         assert "Angela" in result
         assert "digital life" in result
 
+    def test_flat_locale_prompts_are_loaded(self):
+        mgr = PromptManager()
+        count = mgr.load_flat_locales()
+        assert count > 0
+        assert mgr.get("angela.current_state", "en") == "Current state"
+        assert mgr.get("angela.rule_greet_idle", "zh")
+
     def test_default_angela_identity_zh(self):
         """Default Angela identity template has Chinese version."""
         mgr = get_prompt_manager()

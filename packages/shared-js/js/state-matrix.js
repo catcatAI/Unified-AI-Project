@@ -198,6 +198,7 @@ class StateMatrix4D {
     this.live2DManager = null
     this.websocket = null
     this._lastExpression = null
+    this._suppressOutbound = false
 
     // 啟動歷史清理定時器（每5分鐘清理一次）
     this._startHistoryCleanupTimer()
@@ -327,7 +328,7 @@ class StateMatrix4D {
 
     this.applyLive2DChanges(dimensionName, changes)
 
-    if (this.websocket && this.websocket.isConnected()) {
+    if (!this._suppressOutbound && this.websocket && this.websocket.isConnected()) {
       this._throttledSendStateUpdate(dimensionName, changes)
     }
   }
@@ -1478,40 +1479,46 @@ class StateMatrix4D {
     // Update state matrix from backend data
     if (!data) return
 
-    if (data.alpha) {
-      this.updateAlpha(data.alpha)
-    }
+    const previousSuppressOutbound = this._suppressOutbound
+    this._suppressOutbound = true
+    try {
+      if (data.alpha) {
+        this.updateAlpha(data.alpha)
+      }
 
-    if (data.beta) {
-      this.updateBeta(data.beta)
-    }
+      if (data.beta) {
+        this.updateBeta(data.beta)
+      }
 
-    if (data.gamma) {
-      this.updateGamma(data.gamma)
-    }
+      if (data.gamma) {
+        this.updateGamma(data.gamma)
+      }
 
-    if (data.delta) {
-      this.updateDelta(data.delta)
-    }
+      if (data.delta) {
+        this.updateDelta(data.delta)
+      }
 
-    if (data.epsilon) {
-      this.updateEpsilon(data.epsilon)
-    }
+      if (data.epsilon) {
+        this.updateEpsilon(data.epsilon)
+      }
 
-    if (data.theta) {
-      this.updateTheta(data.theta)
-    }
+      if (data.theta) {
+        this.updateTheta(data.theta)
+      }
 
-    if (data.zeta) {
-      this.updateZeta(data.zeta)
-    }
+      if (data.zeta) {
+        this.updateZeta(data.zeta)
+      }
 
-    if (data.eta) {
-      this.updateEta(data.eta)
-    }
+      if (data.eta) {
+        this.updateEta(data.eta)
+      }
 
-    if (data.timestamp) {
-      this.lastUpdate = data.timestamp
+      if (data.timestamp) {
+        this.lastUpdate = data.timestamp
+      }
+    } finally {
+      this._suppressOutbound = previousSuppressOutbound
     }
   }
 }

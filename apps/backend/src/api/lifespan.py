@@ -183,6 +183,16 @@ def get_action_executor():
 _agent_workspace_instance = None
 
 
+def _get_registered_eda_agent():
+    manager = get_agent_manager()
+    if manager is None:
+        return None
+    registered = manager.get_agent("eda_agent")
+    if registered is None:
+        return None
+    return getattr(registered, "agent", registered)
+
+
 def get_agent_workspace():
     """統一上下文門面：全域上下文樹（五類上下文）＋應用會話閉環＋學習日誌。
 
@@ -194,12 +204,25 @@ def get_agent_workspace():
         return _agent_workspace_instance
     try:
         from services.agent_workspace import build_default_workspace
-        from services.agent_workspace.global_tree import GlobalContextTree, UnifiedWorkspace
+        from services.agent_workspace.global_tree import (
+            GlobalContextProviders,
+            GlobalContextTree,
+            UnifiedWorkspace,
+        )
 
         ws = build_default_workspace(
             desktop_interaction=get_desktop_interaction(),
+            eda_agent_provider=_get_registered_eda_agent,
         )
-        _agent_workspace_instance = UnifiedWorkspace(ws, GlobalContextTree())
+        _agent_workspace_instance = UnifiedWorkspace(
+            ws,
+            GlobalContextTree(
+                GlobalContextProviders(
+                    workspace=ws,
+                    agent_manager=get_agent_manager(),
+                )
+            ),
+        )
         return _agent_workspace_instance
     except Exception as e:
         logger.warning(f"AgentWorkspace not available: {e}")
@@ -509,7 +532,6 @@ def _try_init_session_manager():
 
 def _try_start_broadcast():
     """Start WebSocket state broadcast background task."""
-    from core.system.live_logger import info as _li
     from core.system.live_logger import warn as _lw
 
     try:
@@ -517,7 +539,7 @@ def _try_start_broadcast():
 
         task = asyncio.create_task(broadcast_state_updates())
         task.add_done_callback(lambda t: None)
-        _li("Broadcast state update task started")
+        logger.debug("Broadcast state update task started")
         return task
     except Exception as e:
         _lw(f"Broadcast start failed: {e}")
@@ -530,7 +552,6 @@ def _try_wire_dli_broadcast():
     Without this wiring, proactive actions (greet/comfort/remind/share/question)
     from LLMDecisionLoop and ProactiveInteractionSystem never reach frontend clients.
     """
-    from core.system.live_logger import info as _li
     from core.system.live_logger import warn as _lw
 
     try:
@@ -561,11 +582,11 @@ def _try_wire_dli_broadcast():
                 # Access _broadcast_callback directly — this is the sole wiring point
                 # from the application layer into the autonomy system's behavior dispatch.
                 lc._behavior_executor._broadcast_callback = _dli_broadcast
-                _li("BehaviorExecutor broadcast_callback wired to WebSocket")
+                logger.debug("BehaviorExecutor broadcast_callback wired to WebSocket")
         except Exception as e:
             _lw(f"BehaviorExecutor broadcast wiring failed: {e}")
 
-        _li("DLI broadcast_callback wired to WebSocket")
+        logger.debug("DLI broadcast_callback wired to WebSocket")
     except Exception as e:
         _lw(f"DLI broadcast wiring failed: {e}")
 
@@ -584,14 +605,6 @@ def _try_warm_ed3n():
 
 async def _shutdown_services(broadcast_task, module_manager):
     """Gracefully shut down all services on application exit."""
-    try:
-        from services.llm.router import _llm_service as _llm
-
-        if _llm is not None:
-            await _llm.shutdown()
-            logger.info("[LLM] Backend HTTP sessions closed")
-    except Exception as e:
-        logger.warning(f"[LLM] Shutdown skipped: {e}", exc_info=True)
     if _agent_manager_instance is not None:
         try:
             _agent_manager_instance.shutdown_all_agents()
@@ -610,6 +623,11 @@ async def _shutdown_services(broadcast_task, module_manager):
             logger.info("[BrainBridge] BrainBridgeService stopped")
         except Exception as e:
             logger.warning(f"[BrainBridge] Shutdown error: {e}")
+    if _chat_service_instance is not None:
+        try:
+            await _chat_service_instance.shutdown()
+        except Exception as e:
+            logger.warning(f"[ChatService] Shutdown error: {e}")
     if _digital_life_instance is not None:
         try:
             await _digital_life_instance.shutdown()
@@ -617,6 +635,11 @@ async def _shutdown_services(broadcast_task, module_manager):
         except Exception as e:
             logger.warning(f"[DLI] Shutdown error: {e}")
     if _training_coordinator_instance is not None:
+        try:
+            await _training_coordinator_instance.stop_training_worker()
+            logger.info("[TrainingCoordinator] Worker stopped")
+        except Exception as e:
+            logger.warning(f"[TrainingCoordinator] Worker stop failed: {e}")
         try:
             _training_coordinator_instance.save("data/training_coordinator.json")
             logger.info("[TrainingCoordinator] State saved")
@@ -652,6 +675,14 @@ async def _shutdown_services(broadcast_task, module_manager):
             logger.info("[ModuleManager] Module system shut down cleanly")
         except Exception as e:
             logger.error(f"[ModuleManager] Shutdown error: {e}", exc_info=True)
+    try:
+        from services.llm.router import _llm_service as _llm
+
+        if _llm is not None:
+            await _llm.shutdown()
+            logger.info("[LLM] Backend HTTP sessions closed")
+    except Exception as e:
+        logger.warning(f"[LLM] Shutdown skipped: {e}", exc_info=True)
     if _metrics_handler is not None:
         metric_data = _metrics_handler.get_metrics()
         logger.info("[Plugin] Shutdown — hook invocation counts: %s", metric_data["counts"])
@@ -777,6 +808,16 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     _try_init_crisis()
     _try_init_causal_reasoning()
     _try_init_session_manager()
+    # TrainingCoordinator owns training execution: its worker dispatches queued
+    # samples to the processors registered by each domain owner. Started here so
+    # ingest-time enqueues are actually consumed by their owner.
+    try:
+        await get_training_coordinator().start_training_worker()
+    except Exception:
+        logger.warning(
+            "[TrainingCoordinator] Worker start skipped — samples stay queued",
+            exc_info=True,
+        )
     _broadcast_task = _try_start_broadcast()
     _try_warm_ed3n()
     # Pre-initialize lifecycle singleton during startup (lazy creates it on first use)
@@ -822,17 +863,16 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     yield
 
-    await _shutdown_services(_broadcast_task, _module_manager)
-    # Stop heartbeat on shutdown
     try:
         hb_inst = get_metabolic_heartbeat()
         await hb_inst.stop()
     except Exception as err:
         logger.warning(f"Heartbeat stop on shutdown skipped: {err}", exc_info=True)
-    # Stop proactive interaction system on shutdown
     if _proactive_instance is not None:
         try:
             await _proactive_instance.stop()
             logger.info("[ProactiveInteractionSystem] Stopped during shutdown")
         except Exception as err:
             logger.warning(f"Proactive stop on shutdown skipped: {err}", exc_info=True)
+
+    await _shutdown_services(_broadcast_task, _module_manager)

@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Any, Dict, Optional
 if TYPE_CHECKING:
     from core.life.digital_life_integrator import DigitalLifeIntegrator
 from core.system.config.async_io import async_json_dump
-from shared.utils.hardware_detector import SystemHardwareProbe
+from shared.utils.hardware_detector import HardwareProfile, SystemHardwareProbe
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +28,7 @@ class BrainBridgeService:
         self.digital_life = digital_life
         self.metrics_path = Path(metrics_path)
         self.hardware_detector = SystemHardwareProbe()
+        self._hardware_profile: Optional[HardwareProfile] = None
         self._running = False
         self._task: Optional[asyncio.Task] = None
         self._update_interval = (
@@ -84,7 +85,9 @@ class BrainBridgeService:
         """Return the bridged metrics for API consumption"""
         brain_summary = self.digital_life.get_formula_metrics()
         bio_state = self.digital_life.biological_integrator.get_biological_state()
-        hw_profile = self.hardware_detector.detect()
+        if self._hardware_profile is None:
+            self._hardware_profile = self.hardware_detector.detect()
+        hw_profile = self._hardware_profile
 
         return {
             "brain": brain_summary,

@@ -16,7 +16,7 @@ AI 的使用流程：
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Callable, Dict, Optional
 
 from services.agent_workspace.app_session import (
     AppAdapter,
@@ -39,12 +39,8 @@ class DesktopAgent(AppAdapter):
         super().__init__()
         self._interaction = interaction
         self.register(ActionSpec("state", "讀取桌面狀態（檔案數／雜亂度）"), self._state)
-        self.register(
-            ActionSpec("organize", "依類別整理桌面檔案", dangerous=True), self._organize
-        )
-        self.register(
-            ActionSpec("cleanup", "清理 N 天前的舊檔案", dangerous=True), self._cleanup
-        )
+        self.register(ActionSpec("organize", "依類別整理桌面檔案", dangerous=True), self._organize)
+        self.register(ActionSpec("cleanup", "清理 N 天前的舊檔案", dangerous=True), self._cleanup)
 
     async def _state(self, params: Dict[str, Any]) -> Dict[str, Any]:
         if self._interaction is None:
@@ -82,9 +78,7 @@ class BrowserAgent(AppAdapter):
         self._controller = controller
         self.register(ActionSpec("search", "搜尋關鍵字並回傳結果摘要"), self._search)
         self.register(ActionSpec("extract", "擷取指定網頁內容"), self._extract)
-        self.register(
-            ActionSpec("add_bookmark", "新增書籤", dangerous=True), self._add_bookmark
-        )
+        self.register(ActionSpec("add_bookmark", "新增書籤", dangerous=True), self._add_bookmark)
 
     async def _search(self, params: Dict[str, Any]) -> Dict[str, Any]:
         if self._controller is None:
@@ -115,6 +109,97 @@ class BrowserAgent(AppAdapter):
             return {"ok": False, "error": "缺少 url"}
         bookmark = self._controller.add_bookmark(url=url, title=title)
         return {"ok": True, "bookmark_id": getattr(bookmark, "id", None)}
+
+
+# ANGELA-MATRIX: L6 [βγδ] [A] [L3]
+class EdaWorkspaceAdapter(AppAdapter):
+    """把既有 EdaAgent 暴露到統一工作區，不建立第二份 EDA 實例。"""
+
+    app_id = "eda"
+    label = "硬體設計工程"
+
+    def __init__(self, agent_provider: Optional[Callable[[], Any]] = None) -> None:
+        super().__init__()
+        self._agent_provider = agent_provider
+        self.register(
+            ActionSpec("probe_tools", "探測目前可用的本機 EDA 工具"),
+            self._probe_tools,
+        )
+        self.register(
+            ActionSpec(
+                "run_ai_card_reference",
+                "執行 AI 計算卡 software-only reference 與可重播 episode",
+            ),
+            self._run_ai_card_reference,
+        )
+        self.register(
+            ActionSpec(
+                "read_interface_packet",
+                "讀取 Angela interface-freeze 決策包與待凍結項目",
+            ),
+            self._read_interface_packet,
+        )
+        self.register(
+            ActionSpec(
+                "search_hardware_standards",
+                "查詢官方硬體與驗證標準來源、版本與适用范围",
+            ),
+            self._search_hardware_standards,
+        )
+
+    def _get_agent(self) -> Any:
+        if self._agent_provider is None:
+            return None
+        try:
+            return self._agent_provider()
+        except Exception as exc:
+            logger.warning("EDA agent provider unavailable: %s", exc)
+            return None
+
+    @staticmethod
+    def _normalize_result(result: Dict[str, Any]) -> Dict[str, Any]:
+        status = str(result.get("status", "")).lower()
+        ok = result.get("ok")
+        if ok is None:
+            ok = status not in {"error", "unavailable"}
+        return {"ok": bool(ok), "result": result}
+
+    async def read_state(self) -> Dict[str, Any]:
+        agent = self._get_agent()
+        if agent is None:
+            return {"ok": False, "error": "EDA agent 尚未由 AgentManager 註冊"}
+        status = agent.get_status() if hasattr(agent, "get_status") else {}
+        return {
+            "ok": True,
+            "agent_id": getattr(agent, "agent_id", "eda_agent"),
+            "status": status,
+            "capabilities": list(getattr(agent, "capabilities", [])),
+        }
+
+    async def _probe_tools(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        agent = self._get_agent()
+        if agent is None:
+            return {"ok": False, "error": "EDA agent 尚未由 AgentManager 註冊"}
+        return self._normalize_result(await agent.probe_tools())
+
+    async def _run_ai_card_reference(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        agent = self._get_agent()
+        if agent is None:
+            return {"ok": False, "error": "EDA agent 尚未由 AgentManager 註冊"}
+        return self._normalize_result(await agent.run_ai_card_reference_experiment())
+
+    async def _read_interface_packet(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        agent = self._get_agent()
+        if agent is None:
+            return {"ok": False, "error": "EDA agent 尚未由 AgentManager 註冊"}
+        return self._normalize_result(agent.get_ai_card_interface_packet())
+
+    async def _search_hardware_standards(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        agent = self._get_agent()
+        if agent is None:
+            return {"ok": False, "error": "EDA agent 尚未由 AgentManager 註冊"}
+        query = str(params.get("query", "")).strip()
+        return self._normalize_result(agent.get_hardware_standards(query))
 
 
 class AgentWorkspace:
@@ -168,15 +253,15 @@ class AgentWorkspace:
             if record is not None:
                 state_summary = f"開啟中（{record.state}，op={record.op_count}）"
             apps_node.children.append(
-                    ContextNode(
-                        id=f"app:{app['app_id']}",
-                        label=app["label"],
-                        kind="app",
-                        summary=state_summary,
-                        commands=["open"],
-                        readonly=False,
-                    )
+                ContextNode(
+                    id=f"app:{app['app_id']}",
+                    label=app["label"],
+                    kind="app",
+                    summary=state_summary,
+                    commands=["open"],
+                    readonly=False,
                 )
+            )
             if record is not None:
                 adapter = self.sessions._adapters.get(app["app_id"])
                 if adapter is not None:
@@ -204,7 +289,9 @@ class AgentWorkspace:
 
     # ---------- 會話閉環（同時刷新樹） ----------
 
-    async def open_app(self, app_id: str, purpose: str = "", source: str = "teaching") -> Dict[str, Any]:
+    async def open_app(
+        self, app_id: str, purpose: str = "", source: str = "teaching"
+    ) -> Dict[str, Any]:
         result = await self.sessions.open_app(app_id, purpose=purpose, source=source)
         self._rebuild_tree()
         return result
@@ -244,12 +331,14 @@ def build_default_workspace(
     log_path: Any = DEFAULT_LOG_PATH,
     desktop_interaction: Any = None,
     browser_controller: Any = None,
+    eda_agent_provider: Optional[Callable[[], Any]] = None,
 ) -> AgentWorkspace:
     """以 DI getters 的單例組出預設工作區（能力缺失時降級為空 adapter 也可註冊）。"""
     manager = AppSessionManager(
         adapters={
             "desktop": DesktopAgent(desktop_interaction),
             "browser": BrowserAgent(browser_controller),
+            "eda": EdaWorkspaceAdapter(eda_agent_provider),
         },
         log_path=log_path,
     )
