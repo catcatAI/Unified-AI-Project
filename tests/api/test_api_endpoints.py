@@ -168,7 +168,17 @@ class TestOpsAPI:
 class TestDesktopAPI:
     @pytest.fixture(autouse=True)
     def setup_mocks(self):
-        from api.lifespan import get_action_executor, get_desktop_interaction
+        import tempfile
+        from pathlib import Path
+
+        from api.lifespan import (
+            get_action_executor,
+            get_agent_workspace,
+            get_desktop_interaction,
+        )
+        from services.agent_workspace.agent import DesktopAgent
+        from services.agent_workspace.app_session import AppSessionManager
+        from services.agent_workspace.global_tree import UnifiedWorkspace
 
         self.mock_interaction = MagicMock()
         self.mock_interaction.get_desktop_state.return_value = MagicMock(
@@ -183,8 +193,23 @@ class TestDesktopAPI:
             return_value={"status": "ok", "action_id": "act_1"}
         )
 
+        # 假工作區（隔離學習日誌到 tmp）——桌面端點走會話閉環的合約驗證
+        manager = AppSessionManager(
+            adapters={"desktop": DesktopAgent(self.mock_interaction)},
+            log_path=Path(tempfile.mkdtemp()) / "learning_log.jsonl",
+        )
+        from services.agent_workspace.agent import AgentWorkspace
+
+        self.mock_workspace = UnifiedWorkspace(
+            AgentWorkspace(session_manager=manager),
+            __import__(
+                "services.agent_workspace.global_tree", fromlist=["GlobalContextTree"]
+            ).GlobalContextTree(),
+        )
+
         app.dependency_overrides[get_desktop_interaction] = lambda: self.mock_interaction
         app.dependency_overrides[get_action_executor] = lambda: self.mock_executor
+        app.dependency_overrides[get_agent_workspace] = lambda: self.mock_workspace
         yield
         app.dependency_overrides.clear()
 
@@ -198,20 +223,38 @@ class TestDesktopAPI:
         assert data["state"]["clutter_level"] == 0.5
 
     @pytest.mark.asyncio
-    @patch("api.routes.desktop_routes.get_desktop_interaction")
-    async def test_desktop_organize(self, mock_get_di, client):
-        mock_get_di.return_value = self.mock_interaction
-        resp = await client.post("/api/v1/desktop/organize")
-        assert resp.status_code == 200
-        assert resp.json()["success"] is True
+    async def test_desktop_organize_two_phase_confirm(self, client):
+        """桌面整理改走會話閉環：第一次呼叫回確認門，confirm=True 才執行。"""
+        resp1 = await client.post("/api/v1/desktop/organize")
+        assert resp1.status_code == 200
+        body1 = resp1.json()
+        assert body1["success"] is False
+        assert body1["confirm_required"] is True
+        assert body1["status"] == "pending_confirmation"
+        self.mock_interaction.organize_desktop.assert_not_called()
+
+        resp2 = await client.post("/api/v1/desktop/organize", json={"confirm": True})
+        assert resp2.status_code == 200
+        body2 = resp2.json()
+        assert body2["success"] is True
+        assert body2["session_loop"] is True
+        self.mock_interaction.organize_desktop.assert_awaited_once()
 
     @pytest.mark.asyncio
-    @patch("api.routes.desktop_routes.get_desktop_interaction")
-    async def test_desktop_cleanup(self, mock_get_di, client):
-        mock_get_di.return_value = self.mock_interaction
-        resp = await client.post("/api/v1/desktop/cleanup?days_old=30")
-        assert resp.status_code == 200
-        assert resp.json()["success"] is True
+    async def test_desktop_cleanup_two_phase_confirm(self, client):
+        """桌面清理同樣走兩段式確認門。"""
+        resp1 = await client.post("/api/v1/desktop/cleanup?days_old=30")
+        assert resp1.status_code == 200
+        body1 = resp1.json()
+        assert body1["confirm_required"] is True
+
+        resp2 = await client.post(
+            "/api/v1/desktop/cleanup?days_old=30", json={"confirm": True}
+        )
+        assert resp2.status_code == 200
+        body2 = resp2.json()
+        assert body2["success"] is True
+        self.mock_interaction.cleanup_desktop.assert_awaited_once()
 
     @pytest.mark.asyncio
     async def test_actions_status(self, client):

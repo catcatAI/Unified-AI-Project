@@ -8,6 +8,7 @@ import asyncio
 import logging
 from contextlib import asynccontextmanager
 from datetime import datetime
+from pathlib import Path
 from typing import AsyncIterator, Optional
 
 from fastapi import FastAPI
@@ -140,6 +141,24 @@ def get_desktop_interaction():
         return _desktop_interaction_instance
     except Exception as e:
         logger.warning(f"DesktopInteraction not available: {e}")
+        return None
+
+
+_browser_controller_instance = None
+
+
+def get_browser_controller():
+    """Lazy import for browser controller (cached singleton)."""
+    global _browser_controller_instance
+    if _browser_controller_instance is not None:
+        return _browser_controller_instance
+    try:
+        from core.engine.browser_controller import BrowserController
+
+        _browser_controller_instance = BrowserController()
+        return _browser_controller_instance
+    except Exception as e:
+        logger.warning(f"BrowserController not available: {e}")
         return None
 
 
@@ -382,7 +401,10 @@ async def _try_start_agents():
         from ai.agents.agent_manager import AgentManager
 
         _agent_manager_instance = AgentManager(enable_router=False)
-        count = register_specialized_agents(_agent_manager_instance)
+        count = register_specialized_agents(
+            _agent_manager_instance,
+            training_coordinator=get_training_coordinator(),
+        )
         logger.info(f"[AgentManager] Initialized with {count} specialized agents")
     except Exception as e:
         logger.warning(f"[AgentManager] Initialization failed: {e}")
@@ -447,6 +469,9 @@ def get_training_coordinator():
                 max_examples_per_domain=100,
                 max_hashes_per_domain=10000,
             )
+            state_path = Path("data/training_coordinator.json")
+            if state_path.is_file():
+                _training_coordinator_instance.load(str(state_path))
             logger.info("[TrainingCoordinator] Initialized — domain training orchestration ready")
         except Exception as e:
             logger.warning(f"[TrainingCoordinator] Initialization failed: {e}")
@@ -590,8 +615,15 @@ async def _shutdown_services(broadcast_task, module_manager):
             await _digital_life_instance.shutdown()
             logger.info("[DLI] DigitalLifeIntegrator shut down")
         except Exception as e:
-            logger.warning(f"[DLI] DigitalLifeIntegrator shutdown error: {e}")
+            logger.warning(f"[DLI] Shutdown error: {e}")
+    if _training_coordinator_instance is not None:
+        try:
+            _training_coordinator_instance.save("data/training_coordinator.json")
+            logger.info("[TrainingCoordinator] State saved")
+        except Exception as e:
+            logger.warning(f"[TrainingCoordinator] State save skipped: {e}")
     # Lifecycle state save: server-side life growth (decisions, phase) is
+
     # written back to the shared JSON so the game agent process picks it up
     # on next start (save_state previously had zero callers repo-wide).
     try:

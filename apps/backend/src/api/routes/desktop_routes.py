@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Any, Dict
 
 from api.lifespan import (
     get_action_executor,
+    get_agent_workspace,
     get_desktop_interaction,
     get_digital_life,
     get_tactile_service,
@@ -21,6 +22,7 @@ from fastapi import APIRouter, Body, Depends, HTTPException
 
 if TYPE_CHECKING:
     from core.life.digital_life_integrator import DigitalLifeIntegrator
+    from services.agent_workspace import UnifiedWorkspace
 
 logger = logging.getLogger(__name__)
 
@@ -48,44 +50,62 @@ async def desktop_state(
 
 @router.post("/desktop/organize")
 async def desktop_organize(
+    body: Dict[str, Any] = Body(default={}),
     interaction: DesktopInteraction = Depends(get_desktop_interaction),
+    workspace: "UnifiedWorkspace" = Depends(get_agent_workspace),
 ) -> dict:
-    """Execute the desktop organize operation."""
+    """桌面整理——統一經代理工作區會話閉環執行（非旁路）。
+
+    危險操作：第一次呼叫回 pending_confirmation，需 confirm=True 重送。
+    每次呼叫（成敗）皆寫入學習日誌（source="api"）。
+    """
     if interaction is None:
         raise HTTPException(503, "DesktopInteraction not available")
-    ops = await interaction.organize_desktop()
-    return {
-        "success": True,
-        "operations": [
-            {
-                "source": str(op.get("source_path", "")),
-                "destination": str(op.get("target_path", "")),
-                "category": op.get("operation_type", ""),
-            }
-            for op in ops
-        ],
-    }
+    if workspace is None:
+        raise HTTPException(503, "AgentWorkspace not available")
+    confirm = bool(body.get("confirm", False))
+    if workspace.workspace.sessions.get_session("desktop") is None:
+        opened = await workspace.open_app("desktop", purpose="API 桌面整理", source="api")
+        if not opened.get("ok"):
+            return {"success": False, **opened}
+    result = await workspace.act("desktop", "organize", confirm=confirm, source="api")
+    if result.get("status") == "pending_confirmation":
+        return {"success": False, **result}
+    if not result.get("ok"):
+        return {"success": False, **result}
+    moved = int(result.get("result", {}).get("moved", 0))
+    return {"success": True, "moved": moved, "operations": [], "session_loop": True}
 
 
 @router.post("/desktop/cleanup")
 async def desktop_cleanup(
-    days_old: int = 30,
+    body: Dict[str, Any] = Body(default={}),
     interaction: DesktopInteraction = Depends(get_desktop_interaction),
+    workspace: "UnifiedWorkspace" = Depends(get_agent_workspace),
 ) -> dict:
-    """Execute the desktop cleanup operation."""
+    """桌面清理——統一經代理工作區會話閉環執行（非旁路）。
+
+    危險操作：第一次呼叫回 pending_confirmation，需 confirm=True 重送。
+    """
     if interaction is None:
         raise HTTPException(503, "DesktopInteraction not available")
-    ops = await interaction.cleanup_desktop(days_old=days_old)
-    return {
-        "success": True,
-        "operations": [
-            {
-                "source": str(op.source) if hasattr(op, "source") else "",
-                "category": op.category if hasattr(op, "category") else "",
-            }
-            for op in ops
-        ],
-    }
+    if workspace is None:
+        raise HTTPException(503, "AgentWorkspace not available")
+    confirm = bool(body.get("confirm", False))
+    days_old = int(body.get("days_old", 30))
+    if workspace.workspace.sessions.get_session("desktop") is None:
+        opened = await workspace.open_app("desktop", purpose="API 桌面清理", source="api")
+        if not opened.get("ok"):
+            return {"success": False, **opened}
+    result = await workspace.act(
+        "desktop", "cleanup", params={"days_old": days_old}, confirm=confirm, source="api"
+    )
+    if result.get("status") == "pending_confirmation":
+        return {"success": False, **result}
+    if not result.get("ok"):
+        return {"success": False, **result}
+    cleaned = int(result.get("result", {}).get("cleaned", 0))
+    return {"success": True, "cleaned": cleaned, "operations": [], "session_loop": True}
 
 
 @router.get("/actions/status")

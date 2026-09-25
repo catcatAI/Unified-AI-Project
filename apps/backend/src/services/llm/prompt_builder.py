@@ -1069,16 +1069,26 @@ def _append_crisis_safety(messages: List[Dict], context: Dict) -> None:
 def _append_document_context(messages: List[Dict], context: Dict) -> None:
     """Append generic document processing context to system prompt.
 
-    Tells the LLM about DesktopInteraction availability for file operations.
+    執行路徑正確化：桌面／檔案操作一律經代理工作區會話閉環
+    （open→act→save→close，危險操作過確認門，全程記學習日誌）——
+    不再引導 LLM 以為可以直接呼叫底層 DesktopInteraction（旁路錯置）。
     Document task results from the tiered processor are injected as context.
     """
     desktop = context.get("desktop_interaction")
     intent_result = context.get("_intent_result")
-    if not desktop and not intent_result:
+    workspace_ready = bool(context.get("workspace_overview")) or (
+        _get_workspace_overview() != ""
+    )
+    if not desktop and not intent_result and not workspace_ready:
         return
     block = "\n\n---\n[File System & Document Processing]"
     if desktop:
-        block += "\n- DesktopInteraction is available for read/write file operations."
+        block += (
+            "\n- 檔案／桌面操作可用，但必須經代理工作區會話閉環執行："
+            "先 overview 全貌定位 → focus 到應用層 → open 開啟會話 → "
+            "act 執行指令（危險操作如 organize/cleanup/delete 需 confirm=True "
+            "重送）→ save 保存 → close 關閉。禁止直接呼叫底層 DesktopInteraction。"
+        )
     if intent_result:
         text = intent_result.get("response_text", "")
         if len(text) > 500:

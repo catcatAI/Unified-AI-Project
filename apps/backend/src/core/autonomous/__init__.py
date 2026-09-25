@@ -420,15 +420,26 @@ async def initialize_all_systems() -> dict:
     from core.life.digital_life_integrator import DigitalLifeIntegrator
     from core.life.self_generation import SelfGeneration
 
+    # 執行面元件統一取用 lifespan 單例——避免與 API 端／代理工作區
+    # 各自為政的平行實例（錯置：同一桌面、兩份操作面）。
+    from api.lifespan import (
+        get_action_executor,
+        get_browser_controller,
+        get_desktop_interaction,
+    )
+
+    _desktop = get_desktop_interaction()
+    _browser = get_browser_controller()
+    _executor = get_action_executor()
     systems = {
         "physiological_tactile": PhysiologicalTactileSystem(),
         "endocrine_system": EndocrineSystem(),
         "autonomic_nervous_system": AutonomicNervousSystem(),
         "neuroplasticity": NeuroplasticitySystem(),
         "emotional_blending": EmotionalBlendingSystem(),
-        "action_executor": ActionExecutor(),
-        "desktop_interaction": DesktopInteraction(),
-        "browser_controller": BrowserController(),
+        "action_executor": _executor if _executor is not None else ActionExecutor(),
+        "desktop_interaction": _desktop if _desktop is not None else DesktopInteraction(),
+        "browser_controller": _browser if _browser is not None else BrowserController(),
         "audio_system": AudioSystem(),
         "desktop_presence": DesktopPresence(),
         "live2d_integration": Live2DIntegration(),

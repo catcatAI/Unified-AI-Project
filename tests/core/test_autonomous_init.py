@@ -29,6 +29,29 @@ class TestGetSystemInfo:
 
 
 class TestInitializeAllSystems:
+    def _patch_getters(self, monkeypatch):
+        """initialize_all_systems 現統一取用 lifespan 單例（執行面三元件）。
+
+        測試必須 stub 這三個 getter（而非底層類別），否則真 getter 會把
+        stub 實例快取進 lifespan 單例，污染後續 DI 測試。
+        """
+        import api.lifespan as lifespan_mod
+
+        def _mock_system():
+            system = MagicMock()
+            system.initialize = AsyncMock()
+            return system
+
+        monkeypatch.setattr(
+            lifespan_mod, "get_desktop_interaction", lambda: _mock_system()
+        )
+        monkeypatch.setattr(
+            lifespan_mod, "get_browser_controller", lambda: _mock_system()
+        )
+        monkeypatch.setattr(
+            lifespan_mod, "get_action_executor", lambda: _mock_system()
+        )
+
     def test_returns_all_systems(self, monkeypatch):
         # Avoid real heavy initialization: stub system constructors with mocks
         # that expose initialize() as an async no-op.
@@ -63,6 +86,7 @@ class TestInitializeAllSystems:
         }
         for module_name, class_name in modules.items():
             monkeypatch.setattr(f"{module_name}.{class_name}", _mock_system, raising=False)
+        self._patch_getters(monkeypatch)
 
         systems = asyncio.run(initialize_all_systems())
         assert isinstance(systems, dict)
@@ -101,6 +125,7 @@ class TestInitializeAllSystems:
         }
         for module_name, class_name in modules.items():
             monkeypatch.setattr(f"{module_name}.{class_name}", _mock_system, raising=False)
+        self._patch_getters(monkeypatch)
 
         systems = asyncio.run(initialize_all_systems())
         assert all(isinstance(k, str) for k in systems.keys())
