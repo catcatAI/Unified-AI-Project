@@ -69,6 +69,25 @@ _INTENT_AGENTS: Dict[str, str] = {
 }
 
 
+def dispatchable_agent_ids() -> frozenset[str]:
+    """Agent ids a chat message can actually reach.
+
+    Ownership: this module owns the intent→agent dispatch table, so it is the
+    only place that can answer "can a user trigger this agent?". The capability
+    catalog used to list every registered agent as if it were usable, which made
+    Angela advertise e.g. fantasy_dm_agent — no intent maps to it, so no message
+    can ever select it.
+
+    Handler-backed ids (file_ops, web_search, …) are ModelBus handlers, not
+    AgentManager agents, and are excluded here; the catalog checks them against
+    ExecutionGate instead.
+    """
+    ids = {value for value in _INTENT_AGENTS.values() if value.endswith("_agent")}
+    # The EDA follow-up path is hard-coded rather than table-driven.
+    ids.add("eda_agent")
+    return frozenset(ids)
+
+
 class AgentOrchestrator:
     """
     Intelligent task router that:

@@ -27,7 +27,10 @@ class TestRuntimeCapabilityCatalog:
             def get_status(self):
                 return {"agent_status": {"enabled": True, "available_methods": ["analyze"]}}
 
-        manager = SimpleNamespace(agents={"vision_agent": Adapter()})
+        # Use a real dispatchable agent id: the catalog now intersects the
+        # registry with the orchestrator's dispatch table, so a made-up id would
+        # (correctly) be reported as unreachable.
+        manager = SimpleNamespace(agents={"vision_processing_agent": Adapter()})
         monkeypatch.setattr("api.lifespan.get_agent_manager", lambda: manager)
         monkeypatch.setattr(
             "services.llm.capability_catalog._collect_core_modules",
@@ -41,14 +44,20 @@ class TestRuntimeCapabilityCatalog:
         service = SimpleNamespace(
             backends={"local": SimpleNamespace(model="test-model")},
             active_backend_type=SimpleNamespace(value="local"),
-            model_bus=SimpleNamespace(_handler_map={"file_ops": object()}),
+            model_bus=SimpleNamespace(
+                _handlers={"file_ops": object()},
+                _handler_map={"file": "file_ops"},
+            ),
         )
         snapshot = build_capability_snapshot(service)
 
-        assert snapshot["agents"][0]["id"] == "vision_agent"
+        assert snapshot["agents"][0]["id"] == "vision_processing_agent"
         assert snapshot["agents"][0]["capabilities"] == ["vision", "audio"]
         assert snapshot["backends"][0]["active"] is True
-        assert snapshot["handlers"] == ["file_ops"]
+        # handlers are now reported as {id, intents, dispatchable}
+        assert [item["id"] for item in snapshot["handlers"]] == ["file_ops"]
+        assert snapshot["handlers"][0]["intents"] == ["file"]
+        assert snapshot["handlers"][0]["dispatchable"] is True
         assert snapshot["core_modules"] == ["digital_life_instance"]
         assert snapshot["services"] == ["global_state_store"]
 
@@ -61,6 +70,7 @@ class TestRuntimeCapabilityCatalog:
                         "state": "registered",
                         "capabilities": ["eda_probe", "rtl_generate"],
                         "methods": [],
+                        "dispatchable": True,
                     }
                 ],
                 "backends": [],
@@ -73,7 +83,7 @@ class TestRuntimeCapabilityCatalog:
         assert "eda_agent" in response
         assert "eda_probe" in response
         assert "global_intelligence" not in response
-        assert "未啟用的功能我不會說成已可用" in response
+        assert "未啟用或無入口的功能我不會說成已可用" in response
 
 
 class TestCapabilityRouterShortCircuit:
@@ -88,10 +98,11 @@ class TestCapabilityRouterShortCircuit:
             lambda _service: {
                 "agents": [
                     {
-                        "id": "runtime_agent",
+                        "id": "eda_agent",
                         "state": "registered",
                         "capabilities": ["actual_task"],
                         "methods": [],
+                        "dispatchable": True,
                     }
                 ],
                 "backends": [],
@@ -106,3 +117,82 @@ class TestCapabilityRouterShortCircuit:
         assert response.backend == "capability-catalog"
         assert "actual_task" in response.text
         assert service.stats["total_requests"] == 1
+
+
+class TestCatalogHonesty:
+    """The catalog must never advertise something a user cannot reach.
+
+    Verified against the live runtime before the fix: the capability answer
+    listed fantasy_dm_agent (3 capabilities), web_search_agent and
+    vision_processing_agent, yet no intent maps to any of them, so no message
+    could ever select them.
+    """
+
+    def test_unregistered_but_reachable_ids_are_the_reference(self):
+        from ai.agents.agent_orchestrator import dispatchable_agent_ids
+
+        reachable = dispatchable_agent_ids()
+        assert "eda_agent" in reachable
+        assert "knowledge_graph_agent" in reachable
+        # Registered at boot (agent_adapter) but nothing selects them:
+        for dead in ("fantasy_dm_agent", "web_search_agent", "vision_processing_agent"):
+            assert dead not in reachable, f"{dead} must not be advertised as usable"
+
+    def test_unreachable_agents_are_labelled_not_listed(self):
+        response = render_capability_response(
+            {
+                "agents": [
+                    {
+                        "id": "eda_agent",
+                        "state": "registered",
+                        "capabilities": ["eda_probe"],
+                        "methods": [],
+                        "dispatchable": True,
+                    },
+                    {
+                        "id": "fantasy_dm_agent",
+                        "state": "registered",
+                        "capabilities": ["create_character"],
+                        "methods": [],
+                        "dispatchable": False,
+                    },
+                ],
+                "backends": [],
+                "handlers": [],
+                "services": [],
+                "core_modules": [],
+            }
+        )
+        assert "可從對話直接觸發的專業代理（1）" in response
+        assert "已註冊但沒有對話入口" in response
+        assert "fantasy_dm_agent" in response, "must be disclosed, just not as usable"
+        # create_character must not appear as a usable capability
+        usable_line = response.split("• 已註冊但沒有對話入口")[0]
+        assert "create_character" not in usable_line
+
+    def test_handlers_report_reachability(self):
+        response = render_capability_response(
+            {
+                "agents": [],
+                "backends": [],
+                "handlers": [
+                    {"id": "file_ops", "intents": ["file"], "dispatchable": True},
+                    {"id": "orphan_handler", "intents": [], "dispatchable": False},
+                ],
+                "services": [],
+                "core_modules": [],
+            }
+        )
+        assert "可呼叫的工具／handlers：file_ops" in response
+        assert "無法被路由到的 handler：orphan_handler" in response
+
+    def test_gate_reports_every_dispatchable_handler(self):
+        from ai.core.execution_gate import ExecutionGate
+
+        reachable = ExecutionGate.dispatchable_handler_ids()
+        # QueryType-keyed handlers
+        for handler in ("file_ops", "web_search", "code_exec", "vision", "civil"):
+            assert handler in reachable
+        # registry-dispatched handlers
+        for handler in ("learning", "image_generate"):
+            assert handler in reachable

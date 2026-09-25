@@ -225,6 +225,29 @@ class ExecutionGate:
     }
 
     @classmethod
+    def dispatchable_handler_ids(cls) -> frozenset[str]:
+        """ModelBus handler ids some request path can actually execute.
+
+        Sources of a dispatchable handler id:
+          1. HANDLER_MAP — QueryType-keyed, the main gate path.
+          2. IntentRegistry ``metadata["handler_id"]`` — intents that have no
+             QueryType of their own (learning, image_generation).
+        The capability catalog uses this so it never advertises a registered
+        handler that nothing can reach.
+        """
+        ids = set(cls.HANDLER_MAP.values())
+        try:
+            from core.intent_registry import IntentRegistry
+
+            for pattern in IntentRegistry().patterns:
+                handler_id = (pattern.metadata or {}).get("handler_id")
+                if handler_id:
+                    ids.add(str(handler_id))
+        except Exception as exc:  # pragma: no cover - registry is optional
+            logger.debug("IntentRegistry unavailable for handler reachability: %s", exc)
+        return frozenset(ids)
+
+    @classmethod
     def handler_accepts(cls, handler_id: str, action_type: str) -> bool:
         """末端反代判定：handler 是否接受此動作。未知 handler 保守拒絕。"""
         accepted = cls.HANDLER_ACTION_CONTRACT.get(handler_id)

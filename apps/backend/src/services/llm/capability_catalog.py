@@ -45,6 +45,28 @@ def _agent_methods(entry: Any, status: Dict[str, Any]) -> List[str]:
     return [str(value).strip() for value in values if str(value).strip()]
 
 
+def _dispatchable_agent_ids() -> set:
+    """Agent ids a chat message can reach (the orchestrator owns that table)."""
+    try:
+        from ai.agents.agent_orchestrator import dispatchable_agent_ids
+
+        return set(dispatchable_agent_ids())
+    except Exception as exc:
+        logger.debug("agent reachability unavailable: %s", exc)
+        return set()
+
+
+def _dispatchable_handler_ids() -> set:
+    """ModelBus handler ids some request path can execute (gate owns that)."""
+    try:
+        from ai.core.execution_gate import ExecutionGate
+
+        return set(ExecutionGate.dispatchable_handler_ids())
+    except Exception as exc:
+        logger.debug("handler reachability unavailable: %s", exc)
+        return set()
+
+
 def _collect_agents() -> List[Dict[str, Any]]:
     try:
         from api.lifespan import get_agent_manager
@@ -57,6 +79,8 @@ def _collect_agents() -> List[Dict[str, Any]]:
     registered = getattr(manager, "agents", None)
     if not isinstance(registered, dict):
         return []
+
+    dispatchable = _dispatchable_agent_ids()
 
     result: List[Dict[str, Any]] = []
     for agent_id, entry in sorted(registered.items(), key=lambda item: str(item[0])):
@@ -74,6 +98,10 @@ def _collect_agents() -> List[Dict[str, Any]]:
                 "state": state,
                 "capabilities": capabilities,
                 "methods": methods,
+                # Registered != reachable. An agent with no dispatching intent
+                # can never be selected by a user message, so advertising its
+                # capabilities as usable is a lie the user can act on.
+                "dispatchable": str(agent_id) in dispatchable,
             }
         )
     return result
@@ -99,15 +127,30 @@ def _collect_backends(llm_service: Any) -> List[Dict[str, Any]]:
     return result
 
 
-def _collect_handlers(llm_service: Any) -> List[str]:
+def _collect_handlers(llm_service: Any) -> List[Dict[str, Any]]:
+    """Registered handlers with their intent aliases and reachability."""
     bus = getattr(llm_service, "model_bus", None)
-    handler_map = getattr(bus, "_handler_map", None)
-    if isinstance(handler_map, dict):
-        return sorted(str(key) for key in handler_map)
     handlers = getattr(bus, "_handlers", None)
-    if isinstance(handlers, dict):
-        return sorted(str(key) for key in handlers)
-    return []
+    handler_map = getattr(bus, "_handler_map", None)
+    if not isinstance(handlers, dict):
+        return []
+    dispatchable = _dispatchable_handler_ids()
+
+    intents: Dict[str, List[str]] = {}
+    if isinstance(handler_map, dict):
+        for intent, handler_id in handler_map.items():
+            intents.setdefault(str(handler_id), []).append(str(intent))
+
+    result: List[Dict[str, Any]] = []
+    for handler_id in sorted(handlers):
+        result.append(
+            {
+                "id": str(handler_id),
+                "intents": sorted(intents.get(str(handler_id), [])),
+                "dispatchable": str(handler_id) in dispatchable,
+            }
+        )
+    return result
 
 
 def _collect_registered_services() -> List[str]:
@@ -178,16 +221,40 @@ def render_capability_response(snapshot: Dict[str, Any]) -> str:
         lines.append(f"• 語言模型：{_format_names(details)}；目前 active={active}")
 
     agents = snapshot.get("agents", [])
-    if agents:
-        lines.append(f"• 已註冊專業代理（{len(agents)}）：")
-        for item in agents:
+    usable = [item for item in agents if item.get("dispatchable")]
+    if usable:
+        lines.append(f"• 可從對話直接觸發的專業代理（{len(usable)}）：")
+        for item in usable:
             values = item.get("capabilities") or item.get("methods") or []
             suffix = f"（{item.get('state', 'registered')}，{len(values)} 項）"
             lines.append(f"  - {item.get('id', 'unknown')}{suffix}：{_format_names(values)}")
+    unreachable = [item for item in agents if not item.get("dispatchable")]
+    if unreachable:
+        # Registered but nothing maps an intent to them. Saying them out loud
+        # without this label is how Angela ends up promising a feature she can
+        # never run.
+        names = _format_names([str(item.get("id", "unknown")) for item in unreachable])
+        lines.append(
+            f"• 已註冊但沒有對話入口（我不會主動使用）：{names}"
+        )
 
     handlers = snapshot.get("handlers", [])
-    if handlers:
-        lines.append(f"• 已註冊工具／handlers：{_format_names(handlers)}")
+    handler_names = [
+        item["id"] if isinstance(item, dict) else str(item)
+        for item in handlers
+        if not isinstance(item, dict) or item.get("dispatchable", True)
+    ]
+    dead_handlers = [
+        item["id"]
+        for item in handlers
+        if isinstance(item, dict) and not item.get("dispatchable", True)
+    ]
+    if handler_names:
+        lines.append(f"• 可呼叫的工具／handlers：{_format_names(handler_names)}")
+    if dead_handlers:
+        lines.append(
+            f"• 已註冊但無法被路由到的 handler：{_format_names(sorted(dead_handlers))}"
+        )
 
     core_modules = snapshot.get("core_modules", [])
     if core_modules:
@@ -199,5 +266,5 @@ def render_capability_response(snapshot: Dict[str, Any]) -> str:
 
     if len(lines) == 1:
         return "目前這個 runtime 尚未註冊可盤點的能力；我不會把未啟用的功能說成已可用。"
-    lines.append("清單每次提問都重新讀取；未啟用的功能我不會說成已可用。")
+    lines.append("清單每次提問都重新讀取；未啟用或無入口的功能我不會說成已可用。")
     return "\n".join(lines)
