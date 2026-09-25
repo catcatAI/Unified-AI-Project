@@ -106,7 +106,11 @@ class TestPromptBudgetGate:
         from services.llm.prompt_builder import _enforce_prompt_budget
 
         messages = self._build(n_blocks=6)
-        stats = _enforce_prompt_budget(messages, {"_prompt_token_budget": 3000})
+        with patch(
+            "services.llm.context_scheduler.get_context_scheduler",
+            side_effect=ImportError("disabled"),
+        ):
+            stats = _enforce_prompt_budget(messages, {"_prompt_token_budget": 3000})
         assert stats["budget_tokens"] == 3000
         assert stats["dropped_messages"] > 0
         # 最舊的 Block0 先被驅逐
@@ -124,7 +128,11 @@ class TestPromptBudgetGate:
             {"role": "user", "content": f"舊訊息{i}" + "y" * 900} for i in range(4)
         ]
         messages = self._build(n_blocks=0, history=history)
-        stats = _enforce_prompt_budget(messages, {"_prompt_token_budget": 600})
+        with patch(
+            "services.llm.context_scheduler.get_context_scheduler",
+            side_effect=ImportError("disabled"),
+        ):
+            stats = _enforce_prompt_budget(messages, {"_prompt_token_budget": 600})
         assert stats["dropped_messages"] >= 1
         # 存留下來的歷史應是最新的
         remaining = [m["content"] for m in messages[1:-1]]
@@ -188,7 +196,13 @@ class TestPromptBudgetGate:
         from services.llm.prompt_builder import _enforce_prompt_budget
 
         messages = self._build(n_blocks=4)
-        stats = _enforce_prompt_budget(messages, {"_model_context_window": 2048})
+        with patch(
+            "services.llm.context_scheduler.get_context_scheduler",
+            side_effect=ImportError("disabled"),
+        ):
+            stats = _enforce_prompt_budget(
+                messages, {"_model_context_window": 2048}
+            )
         assert stats["budget_tokens"] == int(2048 * 0.55)
         assert stats["dropped_messages"] > 0
 

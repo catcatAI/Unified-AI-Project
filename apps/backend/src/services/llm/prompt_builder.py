@@ -41,6 +41,7 @@ _PROTECTED_SYSTEM_SECTIONS = ("SAFETY INSTRUCTION", "Context Budget Note")
 # 超窗遙測：累計計數器（供學習／監控讀取）
 _budget_telemetry: Dict[str, int] = {
     "events": 0,
+    "digested_messages": 0,
     "dropped_messages": 0,
     "truncated_messages": 0,
     "trimmed_system_sections": 0,
@@ -293,6 +294,7 @@ def _enforce_prompt_budget(messages: List[Dict], context: Dict) -> Dict[str, int
     stats: Dict[str, int] = {
         "budget_tokens": budget_tokens,
         "total_tokens": total,
+        "digested_messages": 0,
         "dropped_messages": 0,
         "truncated_messages": 0,
         "trimmed_system_sections": 0,
@@ -300,6 +302,25 @@ def _enforce_prompt_budget(messages: List[Dict], context: Dict) -> Dict[str, int
     }
     if total <= budget_tokens:
         return stats
+
+    # ── 階段 0：非破壞性消化（模型陣列排程器——優先於任何裁剪） ──
+    # 把中段訊息交給消化工作者（自創萃取／小模型）壓成有界摘要，
+    # 保留資訊而非刪除；帳本保證跨輪一致。
+    try:
+        from services.llm.context_scheduler import get_context_scheduler
+
+        conv_id = str(
+            context.get("conversation_id") or context.get("session_id") or "default"
+        )
+        digest_result = get_context_scheduler().digest_overflow_sync(
+            messages, budget_tokens, conv_id
+        )
+        if digest_result.get("digested"):
+            stats["digested_messages"] = int(digest_result["digested"])
+            stats["freed_chars"] += int(digest_result.get("freed_chars", 0))
+            total = sum(estimate_tokens(str(m.get("content", ""))) for m in messages)
+    except Exception as exc:  # 排程器缺席時直接進入裁剪階段
+        logger.debug("context scheduler unavailable, falling back to trim: %s", exc)
 
     # ── 階段 1：最舊優先驅逐（保護 system 與最終 user） ──
     idx = 1
@@ -343,15 +364,27 @@ def _enforce_prompt_budget(messages: List[Dict], context: Dict) -> Dict[str, int
     stats["total_tokens"] = sum(estimate_tokens(str(m.get("content", ""))) for m in messages)
 
     # ── 遙測＋稽核註記 ──
-    trimmed = stats["dropped_messages"] + stats["truncated_messages"] + stats["trimmed_system_sections"]
+    trimmed = (
+        stats["digested_messages"]
+        + stats["dropped_messages"]
+        + stats["truncated_messages"]
+        + stats["trimmed_system_sections"]
+    )
     if trimmed:
         _budget_telemetry["events"] += 1
-        for key in ("dropped_messages", "truncated_messages", "trimmed_system_sections", "freed_chars"):
+        for key in (
+            "digested_messages",
+            "dropped_messages",
+            "truncated_messages",
+            "trimmed_system_sections",
+            "freed_chars",
+        ):
             _budget_telemetry[key] += stats[key]
         logger.warning(
-            "提示超出 token 預算（%d/%d）：驅逐 %d 則、截斷 %d 則、system 區段 -%d",
+            "提示超出 token 預算（%d/%d）：消化 %d 則、驅逐 %d 則、截斷 %d 則、system 區段 -%d",
             stats["total_tokens"],
             budget_tokens,
+            stats["digested_messages"],
             stats["dropped_messages"],
             stats["truncated_messages"],
             stats["trimmed_system_sections"],
@@ -360,10 +393,11 @@ def _enforce_prompt_budget(messages: List[Dict], context: Dict) -> Dict[str, int
             f"\n\n[Context Budget Note]\n"
             f"- budget_tokens: {budget_tokens}\n"
             f"- total_tokens: {stats['total_tokens']}\n"
+            f"- digested_messages: {stats['digested_messages']}\n"
             f"- dropped_messages: {stats['dropped_messages']}\n"
             f"- truncated_messages: {stats['truncated_messages']}\n"
             f"- trimmed_system_sections: {stats['trimmed_system_sections']}\n"
-            "（部分上下文因超出預算被裁剪；如需細節請向使用者確認或分次處理）"
+            "（部分上下文因超出預算被消化或裁剪；如需細節請向使用者確認或分次處理）"
         )
     return stats
 
