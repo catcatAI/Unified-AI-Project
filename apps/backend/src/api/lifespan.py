@@ -161,6 +161,26 @@ def get_action_executor():
         return None
 
 
+_agent_workspace_instance = None
+
+
+def get_agent_workspace():
+    """代理工作區單例：樹狀上下文＋應用會話閉環＋學習日誌。"""
+    global _agent_workspace_instance
+    if _agent_workspace_instance is not None:
+        return _agent_workspace_instance
+    try:
+        from services.agent_workspace import build_default_workspace
+
+        _agent_workspace_instance = build_default_workspace(
+            desktop_interaction=get_desktop_interaction(),
+        )
+        return _agent_workspace_instance
+    except Exception as e:
+        logger.warning(f"AgentWorkspace not available: {e}")
+        return None
+
+
 _vision_service_instance = None
 
 
