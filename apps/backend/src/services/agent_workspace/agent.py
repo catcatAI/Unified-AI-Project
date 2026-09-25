@@ -139,6 +139,23 @@ class AgentWorkspace:
     def _rebuild_tree(self) -> None:
         """依當前可用應用與開啟中會話重建上下文樹。"""
         root = ContextNode(id="root", label="代理工作區", kind="workspace")
+        root.children.append(self.build_sessions_root())
+        root.children.append(
+            ContextNode(
+                id="learning_log",
+                label="學習日誌",
+                kind="log",
+                summary="教學／探索／成敗皆為學習資料",
+            )
+        )
+        self.tree = ContextTree(
+            root=root,
+            view_budget=self.tree._budget if hasattr(self, "tree") else 4000,
+            children_limit=self.tree._children_limit if hasattr(self, "tree") else 12,
+        )
+
+    def build_sessions_root(self) -> ContextNode:
+        """應用會話子樹（id 固定 "apps"）——全域上下文樹掛載同一份狀態。"""
         apps_node = ContextNode(
             id="apps",
             label="應用程式",
@@ -173,20 +190,7 @@ class AgentWorkspace:
                             readonly=False,
                         )
                     )
-        root.children.append(apps_node)
-        root.children.append(
-            ContextNode(
-                id="learning_log",
-                label="學習日誌",
-                kind="log",
-                summary="教學／探索／成敗皆為學習資料",
-            )
-        )
-        self.tree = ContextTree(
-            root=root,
-            view_budget=self.tree._budget if hasattr(self, "tree") else 4000,
-            children_limit=self.tree._children_limit if hasattr(self, "tree") else 12,
-        )
+        return apps_node
 
     def overview(self, max_depth: int = 3) -> Dict[str, Any]:
         """全貌視圖（唯讀）。"""

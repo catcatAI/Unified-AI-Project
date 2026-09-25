@@ -127,7 +127,10 @@ class ContextTree:
                 "text": "",
             }
         node = path[-1]
-        lines: List[str] = ["路徑: " + " → ".join(f"{n.label}[{n.id}]" for n in path), ""]
+        lines: List[str] = ["路徑: " + " → ".join(f"{n.label}[{n.id}]" for n in path)]
+        if node.summary:
+            lines.append(f"摘要: {node.summary}")
+        lines.append("")
         if node.commands:
             lines.append(f"可用指令: {', '.join(node.commands)}")
         else:

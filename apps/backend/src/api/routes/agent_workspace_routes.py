@@ -15,7 +15,7 @@ from api.lifespan import get_agent_workspace
 from fastapi import APIRouter, Body, Depends, HTTPException
 
 if TYPE_CHECKING:
-    from services.agent_workspace import AgentWorkspace
+    from services.agent_workspace.global_tree import UnifiedWorkspace
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ router = APIRouter()
 
 @router.get("/agent/context/overview")
 async def agent_context_overview(
-    workspace: "AgentWorkspace" = Depends(get_agent_workspace),
+    workspace: "UnifiedWorkspace" = Depends(get_agent_workspace),
 ) -> dict:
     """AI 不清楚狀況時的全貌（唯讀樹狀）。"""
     if workspace is None:
@@ -35,7 +35,7 @@ async def agent_context_overview(
 @router.get("/agent/context/focus/{node_id}")
 async def agent_context_focus(
     node_id: str,
-    workspace: "AgentWorkspace" = Depends(get_agent_workspace),
+    workspace: "UnifiedWorkspace" = Depends(get_agent_workspace),
 ) -> dict:
     """切換到執行器視圖：只顯示當前樹狀分層＋該層指令白名單。"""
     if workspace is None:
@@ -46,10 +46,22 @@ async def agent_context_focus(
     return result
 
 
+@router.get("/agent/context/search")
+async def agent_context_search(
+    query: str,
+    limit: int = 10,
+    workspace: "UnifiedWorkspace" = Depends(get_agent_workspace),
+) -> dict:
+    """跨五類上下文的全域搜尋（工具／模型／代理／對話／記憶）。"""
+    if workspace is None:
+        raise HTTPException(503, "AgentWorkspace not available")
+    return workspace.search(query, limit=limit)
+
+
 @router.post("/agent/session/open")
 async def agent_session_open(
     body: Dict[str, Any] = Body(default={}),
-    workspace: "AgentWorkspace" = Depends(get_agent_workspace),
+    workspace: "UnifiedWorkspace" = Depends(get_agent_workspace),
 ) -> dict:
     """開啟應用會話。"""
     if workspace is None:
@@ -65,7 +77,7 @@ async def agent_session_open(
 @router.post("/agent/session/read")
 async def agent_session_read(
     body: Dict[str, Any] = Body(default={}),
-    workspace: "AgentWorkspace" = Depends(get_agent_workspace),
+    workspace: "UnifiedWorkspace" = Depends(get_agent_workspace),
 ) -> dict:
     """讀取應用當前狀態（AI 識別）。"""
     if workspace is None:
@@ -79,7 +91,7 @@ async def agent_session_read(
 @router.post("/agent/session/act")
 async def agent_session_act(
     body: Dict[str, Any] = Body(default={}),
-    workspace: "AgentWorkspace" = Depends(get_agent_workspace),
+    workspace: "UnifiedWorkspace" = Depends(get_agent_workspace),
 ) -> dict:
     """執行會話指令（危險指令回 pending_confirmation，需 confirm=True 重送）。"""
     if workspace is None:
@@ -97,7 +109,7 @@ async def agent_session_act(
 @router.post("/agent/session/save")
 async def agent_session_save(
     body: Dict[str, Any] = Body(default={}),
-    workspace: "AgentWorkspace" = Depends(get_agent_workspace),
+    workspace: "UnifiedWorkspace" = Depends(get_agent_workspace),
 ) -> dict:
     """保存會話。"""
     if workspace is None:
@@ -111,7 +123,7 @@ async def agent_session_save(
 @router.post("/agent/session/close")
 async def agent_session_close(
     body: Dict[str, Any] = Body(default={}),
-    workspace: "AgentWorkspace" = Depends(get_agent_workspace),
+    workspace: "UnifiedWorkspace" = Depends(get_agent_workspace),
 ) -> dict:
     """關閉會話（有未保存變更時需 confirm=True）。"""
     if workspace is None:
@@ -126,7 +138,7 @@ async def agent_session_close(
 @router.get("/agent/learning")
 async def agent_learning_tail(
     limit: int = 20,
-    workspace: "AgentWorkspace" = Depends(get_agent_workspace),
+    workspace: "UnifiedWorkspace" = Depends(get_agent_workspace),
 ) -> dict:
     """學習日誌尾端：教學、自主探索、成功與失敗都是學習資料。"""
     if workspace is None:

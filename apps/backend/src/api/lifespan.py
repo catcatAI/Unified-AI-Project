@@ -165,16 +165,22 @@ _agent_workspace_instance = None
 
 
 def get_agent_workspace():
-    """代理工作區單例：樹狀上下文＋應用會話閉環＋學習日誌。"""
+    """統一上下文門面：全域上下文樹（五類上下文）＋應用會話閉環＋學習日誌。
+
+    上下文系統是整個專案的核心（ai/context/），樹狀治理覆蓋工具／模型／
+    代理／對話／記憶全部上下文，而非只有代理工作區。
+    """
     global _agent_workspace_instance
     if _agent_workspace_instance is not None:
         return _agent_workspace_instance
     try:
         from services.agent_workspace import build_default_workspace
+        from services.agent_workspace.global_tree import GlobalContextTree, UnifiedWorkspace
 
-        _agent_workspace_instance = build_default_workspace(
+        ws = build_default_workspace(
             desktop_interaction=get_desktop_interaction(),
         )
+        _agent_workspace_instance = UnifiedWorkspace(ws, GlobalContextTree())
         return _agent_workspace_instance
     except Exception as e:
         logger.warning(f"AgentWorkspace not available: {e}")

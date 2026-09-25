@@ -20,6 +20,11 @@ from services.agent_workspace.app_session import (
     ActionSpec,
 )
 from services.agent_workspace.context_tree import ContextNode, ContextTree
+from services.agent_workspace.global_tree import (
+    GlobalContextProviders,
+    GlobalContextTree,
+    UnifiedWorkspace,
+)
 
 
 class FakeAdapter(AppAdapter):
@@ -234,3 +239,101 @@ async def test_workspace_act_updates_tree_dirty_state(tmp_path: Path) -> None:
     assert result["ok"] is True
     overview_text = ws.overview()["text"]
     assert "dirty" in overview_text
+
+
+# ---------- 全域上下文樹（五類上下文統一治理） ----------
+
+
+class _StubMem:
+    def __init__(self, content: str, memory_type: str) -> None:
+        self.content = content
+        self.memory_type = memory_type
+
+
+class _StubConv:
+    def __init__(self, messages: int, key_points: int) -> None:
+        self.messages = [object()] * messages
+        self.context_summary = type("S", (), {"key_points": ["p"] * key_points})()
+
+
+class _StubTool:
+    def __init__(self, name: str) -> None:
+        self.name = name
+
+
+def _global_providers(tmp_path: Path) -> GlobalContextProviders:
+    ws = _make_workspace(tmp_path)
+    tm = type("TM", (), {})()
+    tm.categories = {"cat1": type("C", (), {"name": "程式工具", "tools": []})()}
+    tm.tools = {"t1": _StubTool("程式產生器")}
+    mm = type("MM", (), {})()
+    mm.memories = {
+        "m1": _StubMem("使用者喜歡繁體中文", "short_term"),
+        "m2": _StubMem("專案採 monorepo 架構", "long_term"),
+    }
+    dm = type("DM", (), {})()
+    dm.conversations = {"conv_001": _StubConv(messages=12, key_points=3)}
+    return GlobalContextProviders(
+        tool_manager=tm,
+        memory_manager=mm,
+        dialogue_manager=dm,
+        workspace=ws,
+    )
+
+
+def test_global_overview_covers_all_context_kinds(tmp_path: Path) -> None:
+    tree = GlobalContextTree(providers=_global_providers(tmp_path))
+    view = tree.overview()
+    assert view["readonly"] is True
+    text = view["text"]
+    assert "AI 系統上下文" in text
+    assert "工具上下文" in text
+    assert "記憶上下文" in text
+    assert "對話上下文" in text
+    assert "應用程式" in text  # 代理工作區會話掛同一棵樹
+
+
+def test_global_overview_absent_sections_degrade(tmp_path: Path) -> None:
+    providers = GlobalContextProviders(workspace=_make_workspace(tmp_path))
+    tree = GlobalContextTree(providers=providers)
+    text = tree.overview()["text"]
+    assert "工具上下文" not in text
+    assert "應用程式" in text
+
+
+def test_global_focus_dialogue_layer(tmp_path: Path) -> None:
+    tree = GlobalContextTree(providers=_global_providers(tmp_path))
+    view = tree.focus("ctx:dialogue")
+    assert "對話 conv_001" in view["text"]
+    conv_view = tree.focus("ctx:conv:conv_001")
+    assert "12 則訊息" in conv_view["text"]
+
+
+def test_global_search_across_contexts(tmp_path: Path) -> None:
+    tree = GlobalContextTree(providers=_global_providers(tmp_path))
+    result = tree.search("繁體中文")
+    assert result["ok"] is True
+    types = {r["type"] for r in result["results"]}
+    assert "memory" in types
+    tool_result = tree.search("程式")
+    assert any(r["type"] == "tool" for r in tool_result["results"])
+
+
+def test_unified_facade_delegates(tmp_path: Path) -> None:
+    providers = _global_providers(tmp_path)
+    unified = UnifiedWorkspace(providers.workspace, GlobalContextTree(providers=providers))
+    assert "AI 系統上下文" in unified.overview()["text"]
+    assert unified.search("繁體中文")["ok"] is True
+
+
+@pytest.mark.asyncio
+async def test_unified_facade_session_loop(tmp_path: Path) -> None:
+    providers = _global_providers(tmp_path)
+    unified = UnifiedWorkspace(providers.workspace, GlobalContextTree(providers=providers))
+    opened = await unified.open_app("fake")
+    assert opened["ok"] is True
+    # 開啟會話後，全域樹也看得到（同一份狀態）
+    assert "會話" in unified.overview()["text"]
+    assert (await unified.act("fake", "nuke"))["status"] == "pending_confirmation"
+    assert (await unified.save_app("fake"))["ok"] is True
+    assert (await unified.close_app("fake"))["ok"] is True

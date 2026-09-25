@@ -12,6 +12,10 @@ from services.agent_workspace.app_session import (
     AppSessionManager,
 )
 from services.agent_workspace.context_tree import ContextNode, ContextTree
+from services.agent_workspace.global_tree import (
+    GlobalContextProviders,
+    GlobalContextTree,
+)
 
 __all__ = [
     "ActionSpec",
@@ -22,5 +26,7 @@ __all__ = [
     "ContextNode",
     "ContextTree",
     "DesktopAgent",
+    "GlobalContextProviders",
+    "GlobalContextTree",
     "build_default_workspace",
 ]
