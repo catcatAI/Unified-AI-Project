@@ -123,7 +123,7 @@ class AgentWorkspace:
     def __init__(
         self,
         session_manager: Optional[AppSessionManager] = None,
-        view_budget: int = 4000,
+        view_budget: int = 8000,
         children_limit: int = 12,
     ) -> None:
         self.sessions = session_manager or AppSessionManager()
@@ -150,7 +150,7 @@ class AgentWorkspace:
         )
         self.tree = ContextTree(
             root=root,
-            view_budget=self.tree._budget if hasattr(self, "tree") else 4000,
+            view_budget=self.tree._budget if hasattr(self, "tree") else 8000,
             children_limit=self.tree._children_limit if hasattr(self, "tree") else 12,
         )
 

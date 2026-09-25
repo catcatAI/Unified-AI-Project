@@ -118,15 +118,17 @@ class GlobalContextTree:
             kind="context_section",
             summary=f"{len(cats)} 個工具分類",
         )
-        node.children.extend(
-            ContextNode(
-                id=f"ctx:tool_cat:{cid}",
-                label=str(getattr(cat, "name", cid)),
-                kind="tool_category",
-                summary=f"{len(getattr(cat, 'tools', []) or [])} 個工具",
+        for cid, cat in list(cats.items())[:20]:
+            tools = list(getattr(cat, "tools", []) or [])
+            node.children.append(
+                ContextNode(
+                    id=f"ctx:tool_cat:{cid}",
+                    label=str(getattr(cat, "name", cid)),
+                    kind="tool_category",
+                    summary=f"{len(tools)} 個工具",
+                    preview=[str(getattr(t, "name", "")) for t in tools[:8]],
+                )
             )
-            for cid, cat in list(cats.items())[:20]
-        )
         return node
 
     def _models_node(self, providers: GlobalContextProviders) -> Optional[ContextNode]:
@@ -186,7 +188,7 @@ class GlobalContextTree:
         )
         for cid, conv in list(convs.items())[:20]:
             summary_obj = getattr(conv, "context_summary", None)
-            n_points = len(getattr(summary_obj, "key_points", []) or [])
+            key_points = list(getattr(summary_obj, "key_points", []) or [])
             node.children.append(
                 ContextNode(
                     id=f"ctx:conv:{cid}",
@@ -194,8 +196,9 @@ class GlobalContextTree:
                     kind="conversation",
                     summary=(
                         f"{len(getattr(conv, 'messages', []) or [])} 則訊息"
-                        + (f"｜{n_points} 個重點" if n_points else "")
+                        + (f"｜{len(key_points)} 個重點" if key_points else "")
                     ),
+                    preview=[str(kp) for kp in key_points[:5]],
                 )
             )
         return node
@@ -212,17 +215,21 @@ class GlobalContextTree:
             summary=f"{len(memories)} 則記憶",
         )
         by_type: Dict[str, int] = {}
+        samples: Dict[str, List[str]] = {}
         for mem in list(memories.values()):
-            by_type[str(getattr(mem, "memory_type", "?"))] = (
-                by_type.get(str(getattr(mem, "memory_type", "?")), 0) + 1
-            )
+            mem_type = str(getattr(mem, "memory_type", "?"))
+            by_type[mem_type] = by_type.get(mem_type, 0) + 1
+            if len(samples.setdefault(mem_type, [])) < 8:
+                content = str(getattr(mem, "content", ""))
+                samples[mem_type].append(content[:60])
         for mem_type, count in sorted(by_type.items()):
             node.children.append(
                 ContextNode(
                     id=f"ctx:memory:{mem_type}",
-                    label=f"{mem_type}",
+                    label=mem_type,
                     kind="memory_group",
                     summary=f"{count} 則",
+                    preview=samples.get(mem_type, []),
                 )
             )
         ctxm = self._ctxm(providers)

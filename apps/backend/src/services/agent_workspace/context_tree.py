@@ -18,10 +18,12 @@ from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
-# 單一視圖的字元預算（約等於 1k tokens 的可讀上下文）
-DEFAULT_VIEW_BUDGET = 4000
+# 單一視圖的字元預算（第二道防線；主要約束是 MAX_VIEW_LINES 行數上限）
+DEFAULT_VIEW_BUDGET = 8000
 # 單層最多展開的子節點數（超出摺疊，需下鑽）
 DEFAULT_CHILDREN_LIMIT = 12
+# 單一視圖的行數上限：全貌與執行器視圖都不得超過（保護 LLM 注意力）
+MAX_VIEW_LINES = 100
 
 
 @dataclass
@@ -36,6 +38,7 @@ class ContextNode:
     commands: List[str] = field(default_factory=list)  # 該節點可執行的指令白名單
     readonly: bool = True  # 全貌視圖一律唯讀；執行視圖由節點性質決定
     meta: Dict[str, Any] = field(default_factory=dict)
+    preview: List[str] = field(default_factory=list)  # 內容採樣（執行器視圖顯示的資料樣本）
 
     def find(self, node_id: str) -> Optional["ContextNode"]:
         if self.id == node_id:
@@ -73,46 +76,59 @@ class ContextTree:
     # ---------- 全貌視圖（唯讀） ----------
 
     def overview(self, max_depth: int = 3) -> Dict[str, Any]:
-        """樹狀全貌（唯讀）：節點摘要＋摺疊計數，不含任何執行指令。"""
+        """樹狀全貌（唯讀）：節點摘要＋摺疊計數，不含任何執行指令。
+
+        行數上限 MAX_VIEW_LINES：超過時略去整支分支並標記（不粗暴切字元），
+        引導 AI 用 focus 下鑽；字元預算為第二道防線。
+        """
         lines: List[str] = []
-        truncated = self._render_overview(self.root, depth=0, max_depth=max_depth, lines=lines)
+        omitted = 0
+
+        def render(node: ContextNode, depth: int, max_depth: int) -> bool:
+            nonlocal omitted
+            if depth > max_depth:
+                return False
+            if len(lines) >= MAX_VIEW_LINES - 2:  # 保留標記行
+                omitted += 1
+                return True
+            indent = "  " * depth
+            # 🔧＝有指令白名單且非唯讀（聚焦後可執行）；否則唯讀 🔒
+            flag = "🔧" if node.commands and not node.readonly else "🔒"
+            suffix = f" — {node.summary}" if node.summary else ""
+            lines.append(f"{indent}{flag} {node.label} [{node.id}]{suffix}")
+            rendered = 0
+            hidden = 0
+            truncated_any = False
+            for child in node.children:
+                if rendered >= self._children_limit:
+                    hidden += 1
+                    continue
+                if render(child, depth + 1, max_depth):
+                    truncated_any = True
+                rendered += 1
+            if hidden:
+                lines.append(f"{indent}  …還有 {hidden} 個子節點（下鑽查看）")
+                truncated_any = True
+            return truncated_any
+
+        truncated = render(self.root, 0, max_depth)
+        if omitted:
+            lines.append(f"…（超過 {MAX_VIEW_LINES} 行上限，略去 {omitted} 個分支——請用 focus 下鑽）")
+            truncated = True
         view = "\n".join(lines)
         if len(view) > self._budget:
             lines = lines[: max(1, self._budget // 80)]
             lines.append("…（全貌超過上下文預算，請用更精確的定位）")
             view = "\n".join(lines)
+            truncated = True
         return {
             "view": "overview",
             "readonly": True,
             "truncated": truncated,
+            "lines": len(view.splitlines()),
             "text": view,
             "budget_chars": self._budget,
         }
-
-    def _render_overview(
-        self, node: ContextNode, depth: int, max_depth: int, lines: List[str]
-    ) -> bool:
-        if depth > max_depth:
-            return False
-        indent = "  " * depth
-        # 🔧＝有指令白名單且非唯讀（聚焦後可執行）；否則唯讀 🔒
-        flag = "🔧" if node.commands and not node.readonly else "🔒"
-        suffix = f" — {node.summary}" if node.summary else ""
-        lines.append(f"{indent}{flag} {node.label} [{node.id}]{suffix}")
-        rendered = 0
-        hidden = 0
-        truncated_any = False
-        for child in node.children:
-            if rendered >= self._children_limit:
-                hidden += 1
-                continue
-            if self._render_overview(child, depth + 1, max_depth, lines):
-                truncated_any = True
-            rendered += 1
-        if hidden:
-            lines.append(f"{indent}  …還有 {hidden} 個子節點（下鑽查看）")
-            truncated_any = True
-        return truncated_any
 
     # ---------- 執行器視圖（分層） ----------
 
@@ -145,6 +161,11 @@ class ContextTree:
             hidden = len(node.children) - min(len(node.children), self._children_limit)
             if hidden:
                 lines.append(f"  …還有 {hidden} 個子節點")
+        if node.preview:
+            lines.append("")
+            lines.append("內容採樣:")
+            for sample in node.preview[:8]:
+                lines.append(f"  {sample[:60]}")
         view = "\n".join(lines)
         if len(view) > self._budget:
             view = view[: self._budget] + "\n…（超出上下文預算）"
@@ -153,6 +174,7 @@ class ContextTree:
             "node_id": node.id,
             "readonly": node.readonly,
             "commands": list(node.commands),
+            "lines": len(view.splitlines()),
             "text": view,
             "budget_chars": self._budget,
         }

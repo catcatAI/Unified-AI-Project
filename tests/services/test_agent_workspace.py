@@ -337,3 +337,33 @@ async def test_unified_facade_session_loop(tmp_path: Path) -> None:
     assert (await unified.act("fake", "nuke"))["status"] == "pending_confirmation"
     assert (await unified.save_app("fake"))["ok"] is True
     assert (await unified.close_app("fake"))["ok"] is True
+
+
+# ---------- 上下文體積治理（100 行上限＋內容採樣） ----------
+
+
+def test_overview_never_exceeds_100_lines() -> None:
+    # 200 個子節點、放寬 children_limit，強迫原始輸出遠超 100 行
+    kids = [
+        ContextNode(id=f"k{i}", label=f"子節點{i}", kind="item", summary="短摘要")
+        for i in range(200)
+    ]
+    root = ContextNode(id="root", label="根", kind="workspace", children=kids)
+    view = ContextTree(root=root, children_limit=300).overview()
+    assert view["lines"] <= 102  # 上限＋標記行
+    assert "行上限" in view["text"]
+    assert view["truncated"] is True
+
+
+def test_focus_memory_group_shows_content_preview(tmp_path: Path) -> None:
+    tree = GlobalContextTree(providers=_global_providers(tmp_path))
+    view = tree.focus("ctx:memory:short_term")
+    assert "內容採樣" in view["text"]
+    assert "使用者喜歡繁體中文" in view["text"]
+
+
+def test_view_reports_line_count(tmp_path: Path) -> None:
+    tree = GlobalContextTree(providers=_global_providers(tmp_path))
+    ov = tree.overview()
+    assert ov["lines"] == len(ov["text"].splitlines())
+    assert ov["lines"] <= 100
