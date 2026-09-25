@@ -15,6 +15,17 @@ logger = logging.getLogger(__name__)
 _autonomous_lifecycle = None
 _theta_router = None
 
+# 區塊級截斷上限（單一區塊過大會稀釋注意力並擠壓視窗）
+_GROUNDED_MAX_CHARS = 1500
+_DICTIONARY_MAX_CHARS = 800
+_CONVERSATION_MEMORY_MAX_CHARS = 800
+_WEB_SEARCH_MAX_CHARS = 1200
+
+# 工作區全貌 TTL 快取（秒）——避免每次對話重建全域樹
+_WORKSPACE_CACHE_TTL = 20.0
+_workspace_overview_cache = ""
+_workspace_overview_cache_time = 0.0
+
 
 def _get_autonomous_lifecycle():
     """Return the shared AutonomousLifeCycle singleton from lifespan.
@@ -73,6 +84,92 @@ def _get_llm_config(key: str, default: Any = None) -> Any:
     except (ImportError, FileNotFoundError, KeyError, AttributeError):
         logger.warning(f"_get_llm_config({key}) failed, using default", exc_info=True)
         return default
+
+
+def _get_workspace_overview() -> str:
+    """全域上下文樹全貌（唯讀、≤100 行）——讓 Angela 看見系統實際持有的上下文。
+
+    內外一致性：提示裡呈現的全貌與 ai/context/ 五類上下文＋會話閉環
+    是同一份資料。任何失敗都回空字串——缺席分支不進提示，避免噪音。
+    """
+    global _workspace_overview_cache, _workspace_overview_cache_time
+    if _workspace_overview_cache and (time.time() - _workspace_overview_cache_time) < _WORKSPACE_CACHE_TTL:
+        return _workspace_overview_cache
+    try:
+        from api.lifespan import get_agent_workspace
+
+        facade = get_agent_workspace()
+        if facade is None:
+            return ""
+        tree = getattr(facade, "global_tree", None)
+        view = tree.overview() if tree is not None else facade.overview()
+        text = str(view.get("text", "")).strip()
+        if text:
+            _workspace_overview_cache = text
+            _workspace_overview_cache_time = time.time()
+        return text
+    except Exception as e:
+        logger.debug("workspace overview unavailable: %s", e)
+        return ""
+
+
+def _append_workspace_overview(messages: List[Dict], context: Dict) -> None:
+    """把全域上下文樹全貌注入系統提示（唯讀；執行需走會話閉環）。
+
+    chat 管線可用 context["workspace_overview"] 注入同一請求內一致的快照。
+    """
+    supplied = context.get("workspace_overview")
+    if isinstance(supplied, str) and supplied.strip():
+        overview_text = supplied.strip()
+    else:
+        overview_text = _get_workspace_overview()
+    if not overview_text:
+        return
+    messages[0]["content"] += (
+        f"\n\n[System Context Overview — read-only]\n{overview_text}\n"
+        "（以上為系統目前持有的上下文全貌——唯讀；執行需經代理工作區會話閉環）"
+    )
+
+
+def _enforce_prompt_budget(messages: List[Dict], context: Dict) -> Dict[str, int]:
+    """總量守門（最後一道關卡）：提示總字元數不得超過預算。
+
+    超額時從尾端（最後注入＝最舊資訊）整塊捨棄，直到回到預算內：
+    - 保護：最終 user 訊息、system 訊息（含安全指令與核心提示）。
+    - 捨棄後在系統提示附上稽核註記（dropped_blocks/freed_chars），
+      讓 Angela 知道上下文被裁剪過——內外一致，不靜默消失。
+    """
+    try:
+        budget_chars = int(_get_llm_config("prompt_char_budget", 24000) or 24000)
+    except (TypeError, ValueError):
+        budget_chars = 24000
+    total = sum(len(m.get("content", "")) for m in messages)
+    stats = {"total_chars": total, "budget_chars": budget_chars, "dropped_blocks": 0, "freed_chars": 0}
+    if total <= budget_chars:
+        return stats
+    final_user_idx = len(messages) - 1
+    # 從倒數第二條往前（最後注入的區塊先捨），保護 system 與最終 user
+    for idx in range(len(messages) - 2, -1, -1):
+        if total <= budget_chars:
+            break
+        msg = messages[idx]
+        if msg.get("role") == "system" or idx == final_user_idx:
+            continue  # 保護：核心提示／安全指令／摘要指令／最終 user
+        content = str(msg.get("content", ""))
+        messages.pop(idx)
+        total -= len(content)
+        stats["dropped_blocks"] += 1
+        stats["freed_chars"] += len(content)
+    if stats["dropped_blocks"]:
+        messages[0]["content"] += (
+            f"\n\n[Context Budget Note]\n"
+            f"- dropped_blocks: {stats['dropped_blocks']}\n"
+            f"- freed_chars: {stats['freed_chars']}\n"
+            f"- budget_chars: {budget_chars}\n"
+            "（部分上下文區塊因超出預算被裁剪；如需細節請向使用者確認或分次處理）"
+        )
+    stats["total_chars"] = sum(len(m.get("content", "")) for m in messages)
+    return stats
 
 
 def get_biological_state(context=None) -> str:
@@ -351,12 +448,14 @@ def construct_angela_prompt(
     _append_causal_insights(messages, context)
     _append_emotional_behavior(messages, context)
     _append_modality_state(messages, context)
+    _append_workspace_overview(messages, context)
     _append_awareness_injection(messages, context)
     _append_crisis_safety(messages, context)
     _append_draft_response(messages, context)
     _append_document_context(messages, context)
     _append_knowledge_context(messages, context)
     _append_web_search_context(messages, context)
+    _enforce_prompt_budget(messages, context)
 
     messages.append({"role": "user", "content": f"<user_message>{user_message}</user_message>"})
 
@@ -766,13 +865,13 @@ def _append_knowledge_context(messages: List[Dict], context: Dict) -> None:
     block = ""
     grounded = context.get("grounded_context")
     if grounded:
-        block += f"\n\n[Verified Knowledge]\n{grounded}"
+        block += f"\n\n[Verified Knowledge]\n{str(grounded)[:_GROUNDED_MAX_CHARS]}"
     dictionary = context.get("dictionary_context")
     if dictionary:
-        block += f"\n\n[Dictionary]\n{dictionary}"
+        block += f"\n\n[Dictionary]\n{str(dictionary)[:_DICTIONARY_MAX_CHARS]}"
     memory = context.get("conversation_memory")
     if memory:
-        block += f"\n\n[Conversation Memory]\n{memory}"
+        block += f"\n\n[Conversation Memory]\n{str(memory)[:_CONVERSATION_MEMORY_MAX_CHARS]}"
     if block:
         messages[0]["content"] += block
 
@@ -782,7 +881,7 @@ def _append_web_search_context(messages: List[Dict], context: Dict) -> None:
     web = context.get("web_search_context")
     if not web:
         return
-    block = f"\n\n[Web Search Results]\n{web}"
+    block = f"\n\n[Web Search Results]\n{str(web)[:_WEB_SEARCH_MAX_CHARS]}"
     messages[0]["content"] += block
 
 
@@ -800,9 +899,11 @@ def _append_draft_response(messages: List[Dict], context: Dict) -> None:
 
 __all__ = [
     "_get_llm_config",
+    "_enforce_prompt_budget",
+    "_get_workspace_overview",
+    "construct_angela_prompt",
+    "get_autonomous_decisions",
     "get_biological_state",
     "get_formula_summaries",
-    "get_autonomous_decisions",
     "get_theta_state",
-    "construct_angela_prompt",
 ]

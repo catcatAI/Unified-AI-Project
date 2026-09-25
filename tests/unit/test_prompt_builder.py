@@ -68,6 +68,126 @@ class TestGetFormulaSummaries:
         assert "生命強度" in result or "活躍認知" in result or "CDM" in result
 
 
+class TestPromptBudgetGate:
+    """總量守門：單區塊各自截斷之外的最後一道關卡。"""
+
+    def _oversized_messages(self, n_blocks: int = 8, block_chars: int = 6000):
+        from services.llm.prompt_builder import _enforce_prompt_budget
+
+        messages = [{"role": "system", "content": "核心提示" * 10}]
+        for i in range(n_blocks):
+            messages.append({"role": "user", "content": f"[Block {i}] " + "x" * block_chars})
+        messages.append({"role": "user", "content": "<user_message>請回答</user_message>"})
+        context: dict = {}
+        stats = _enforce_prompt_budget(messages, context)
+        return messages, stats
+
+    @patch("services.llm.prompt_builder._get_llm_config", return_value=12000)
+    def test_budget_trims_oldest_blocks_first(self, mock_cfg):
+        messages, stats = self._oversized_messages()
+        total = sum(len(m["content"]) for m in messages)
+        assert total <= 12000 + 500  # 預算內（系統註記有餘裕）
+        assert stats["dropped_blocks"] > 0
+        assert stats["freed_chars"] > 0
+        # 最終 user 訊息保留
+        assert messages[-1]["content"] == "<user_message>請回答</user_message>"
+        # system 訊息保留且附稽核註記
+        assert "[Context Budget Note]" in messages[0]["content"]
+
+    @patch("services.llm.prompt_builder._get_llm_config", return_value=12000)
+    def test_budget_protects_system_and_final_user(self, mock_cfg):
+        from services.llm.prompt_builder import _enforce_prompt_budget
+
+        messages = [
+            {"role": "system", "content": "S" * 5000},
+            {"role": "user", "content": "A" * 5000},
+            {"role": "user", "content": "B" * 5000},
+            {"role": "user", "content": "final"},
+        ]
+        stats = _enforce_prompt_budget(messages, {})
+        roles = [m["role"] for m in messages]
+        assert roles[0] == "system"
+        assert messages[-1]["content"] == "final"
+        assert stats["dropped_blocks"] >= 1
+
+    @patch("services.llm.prompt_builder._get_llm_config", return_value=500000)
+    def test_under_budget_no_drops_no_note(self, mock_cfg):
+        messages, stats = self._oversized_messages(n_blocks=2)
+        assert stats["dropped_blocks"] == 0
+        assert "[Context Budget Note]" not in messages[0]["content"]
+
+    @patch("services.llm.prompt_builder._get_llm_config", return_value=None)
+    def test_invalid_budget_falls_back_to_default(self, mock_cfg):
+        messages, stats = self._oversized_messages(n_blocks=8, block_chars=6000)
+        # 預設 24000：48k 的區塊量會被裁
+        assert stats["dropped_blocks"] > 0
+
+
+class TestWorkspaceOverviewInjection:
+    """內外一致性：Angela 的提示應呈現系統實際持有的上下文全貌。"""
+
+    def test_context_snapshot_overrides_lazy_fetch(self):
+        from services.llm.prompt_builder import construct_angela_prompt
+
+        context = {
+            "state_for_llm": None,
+            "workspace_overview": "🔒 AI 系統上下文 [root]\n  🔒 記憶上下文 [ctx:memory] — 3 則記憶",
+        }
+        with patch("services.llm.prompt_builder._get_llm_config", return_value={}):
+            result = construct_angela_prompt("你好", context)
+        system = result[0]["content"]
+        assert "[System Context Overview — read-only]" in system
+        assert "ctx:memory" in system
+        assert "唯讀" in system
+
+    def test_absent_overview_adds_no_noise(self):
+        from services.llm.prompt_builder import construct_angela_prompt
+
+        context = {"state_for_llm": None, "workspace_overview": None}
+        with patch("services.llm.prompt_builder._get_llm_config", return_value={}):
+            with patch(
+                "services.llm.prompt_builder._get_workspace_overview", return_value=""
+            ):
+                result = construct_angela_prompt("你好", context)
+        assert "[System Context Overview" not in result[0]["content"]
+
+    def test_empty_snapshot_falls_back_to_lazy_fetch(self):
+        from services.llm.prompt_builder import construct_angela_prompt
+
+        context = {"state_for_llm": None, "workspace_overview": "   "}
+        with patch("services.llm.prompt_builder._get_llm_config", return_value={}):
+            with patch(
+                "services.llm.prompt_builder._get_workspace_overview",
+                return_value="🔒 全貌 [root]",
+            ):
+                result = construct_angela_prompt("你好", context)
+        assert "🔒 全貌 [root]" in result[0]["content"]
+
+
+class TestUnboundedBlockTruncation:
+    """曾經完全未截斷的三個區塊，現在有上限。"""
+
+    def _system_content(self, context):
+        from services.llm.prompt_builder import construct_angela_prompt
+
+        with patch("services.llm.prompt_builder._get_llm_config", return_value={}):
+            result = construct_angela_prompt("hi", {"state_for_llm": None, **context})
+        return result[0]["content"]
+
+    def test_grounded_context_truncated(self):
+        content = self._system_content({"grounded_context": "知" * 9000})
+        assert "知" * 9000 not in content
+        assert "知" * 1500 in content
+
+    def test_web_search_truncated(self):
+        content = self._system_content({"web_search_context": "網" * 9000})
+        assert "網" * 9000 not in content
+
+    def test_dictionary_truncated(self):
+        content = self._system_content({"dictionary_context": "詞" * 9000})
+        assert "詞" * 9000 not in content
+
+
 class TestConstructAngelaPrompt:
     @patch("services.llm.prompt_builder.get_biological_state", return_value="")
     @patch("services.llm.prompt_builder.get_formula_summaries", return_value="")
