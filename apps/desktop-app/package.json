@@ -7,7 +7,10 @@
     "start": "electron .",
     "dev": "electron . --dev",
     "build": "electron-builder",
-    "test": "echo \"Tests coming soon\""
+    "test": "echo \"Tests coming soon\"",
+    "prestart": "python3 ../../scripts/sync_shared_js.py --surface desktop",
+    "predev": "python3 ../../scripts/sync_shared_js.py --surface desktop",
+    "prebuild": "python3 ../../scripts/sync_shared_js.py --surface desktop"
   },
   "keywords": [
     "angela",
@@ -35,7 +38,10 @@
     },
     "files": [
       "electron_app/**/*",
-      "package.json"
+      "package.json",
+      "!**/diagnose-coordinates.html",
+      "!**/test-detection.html",
+      "!**/test-character-touch.html"
     ],
     "win": {
       "target": "nsis",

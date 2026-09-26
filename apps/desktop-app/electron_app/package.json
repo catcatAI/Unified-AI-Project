@@ -11,7 +11,14 @@
     "build:win": "electron-builder --win",
     "build:mac": "electron-builder --mac",
     "build:linux": "electron-builder --linux",
-    "postinstall": "electron-builder install-app-deps"
+    "postinstall": "electron-builder install-app-deps",
+    "prestart": "python3 ../../scripts/sync_shared_js.py --surface desktop",
+    "predev": "python3 ../../scripts/sync_shared_js.py --surface desktop",
+    "prebuild": "python3 ../../scripts/sync_shared_js.py --surface desktop",
+    "prebuild:dir": "python3 ../../scripts/sync_shared_js.py --surface desktop",
+    "prebuild:win": "python3 ../../scripts/sync_shared_js.py --surface desktop",
+    "prebuild:mac": "python3 ../../scripts/sync_shared_js.py --surface desktop",
+    "prebuild:linux": "python3 ../../scripts/sync_shared_js.py --surface desktop"
   },
   "author": "Angela AI Development Team",
   "license": "MIT",

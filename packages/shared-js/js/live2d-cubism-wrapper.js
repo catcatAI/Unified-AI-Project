@@ -115,7 +115,14 @@ class Live2DCubismWrapper {
     // 所有源都失敗，嘗試加載fallback
     try {
       console.log('所有CDN源失敗，嘗試加載本地fallback...')
-      await this._loadScript('../libs/live2d-fallback.js', null)
+      // The path is resolved against the *document* (a dynamically injected
+      // script.src), not against this file. The previous '../libs/…' resolved
+      // to apps/<app>/libs/, which does not exist, so the last-resort fallback
+      // 404'd and window.loadLocalLive2DSDK was never even defined.
+      await this._loadScript('./libs/live2d-fallback.js', null)
+      if (typeof window.loadLocalLive2DSDK !== 'function') {
+        throw new Error('live2d-fallback.js loaded but loadLocalLive2DSDK is undefined')
+      }
       await window.loadLocalLive2DSDK()
       console.log('成功加載本地fallback SDK')
       return
