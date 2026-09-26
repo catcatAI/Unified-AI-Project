@@ -22,10 +22,18 @@
     script.onload = function () {
       console.log('✅ Enhanced Hardware Detection module loaded successfully')
 
-      // 如果应用已初始化，替换硬件检测器
-      if (typeof window.AngelaApp !== 'undefined' && window.angelaAppInstance) {
+      // app.js exposes the instance as window.angelaApp — window.AngelaApp is
+      // the class and window.angelaAppInstance was never set by anything, so the
+      // swap below could not run even when the module loaded.
+      const instance = window.angelaApp || window.angelaAppInstance
+      if (instance && typeof window.EnhancedHardwareDetector === 'function') {
         console.log('🔄 Replacing hardware detector in existing app')
-        window.angelaAppInstance.hardwareDetector = new window.EnhancedHardwareDetector()
+        instance.hardwareDetector = new window.EnhancedHardwareDetector()
+      } else {
+        console.warn(
+          '⚠️ Enhanced detector loaded but no live app instance found; ' +
+            'keeping the standard detector'
+        )
       }
     }
 

@@ -14,7 +14,12 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "apps" / "backend" / "src"
 def export_openapi_spec():
     """Export the OpenAPI specification to a static file."""
     try:
-        from main import app
+        # services.main_api_server:app is the shipping server (package.json
+        # dev:backend, Dockerfile, run_angela.py all use it). `main:app` is a
+        # parallel legacy app that includes only api/router.py — it serves 0 of
+        # the 7 atlassian endpoints, so exporting from it published an OpenAPI
+        # document that misrepresented the real API surface.
+        from services.main_api_server import app
 
         # Get the OpenAPI schema
         openapi_schema = app.openapi()

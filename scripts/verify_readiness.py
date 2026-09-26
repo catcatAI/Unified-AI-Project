@@ -18,6 +18,7 @@ Runs 10 categories of verification:
 
 Exit code: 0 = ready, 1 = issues found
 """
+
 import importlib
 import os
 import re
@@ -31,42 +32,57 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "apps/backend"))
 sys.path.insert(0, str(PROJECT_ROOT / "apps/backend/src"))
 
-PASS=0
-FAIL=0
-WARN=0
+PASS = 0
+FAIL = 0
+WARN = 0
 TOTAL_START = time.time()
 
 
-def check(name: str, ok: bool, detail: str="") -> None:
+def check(name: str, ok: bool, detail: str = "") -> None:
     global PASS, FAIL, WARN
     if ok:
         PASS += 1
-        status="✅"
+        status = "✅"
     elif detail and "warning" in detail.lower():
         WARN += 1
-        status="⚠️"
-        ok=True  # Treat warnings as pass for exit code
+        status = "⚠️"
+        ok = True  # Treat warnings as pass for exit code
     else:
         FAIL += 1
-        status="❌"
+        status = "❌"
     d = f" — {detail}" if detail else ""
     print(f"  {status} {name}{d}")
 
 
 def run_pytest() -> dict:
     """Run pytest and return summary."""
-    result={"total": 0, "passed": 0, "failed": 0, "errors": 0, "warnings": 0}
+    result = {"total": 0, "passed": 0, "failed": 0, "errors": 0, "warnings": 0}
     try:
         output = subprocess.run(
-            [sys.executable, "-m", "pytest", "tests/", "--tb=line", "--no-header", "-q",
-             "--ignore=tests/ai", "--ignore=tests/benchmarks", "-p", "no:cacheprovider"],
-            capture_output=True, text=True, timeout=300, cwd=str(PROJECT_ROOT),
+            [
+                sys.executable,
+                "-m",
+                "pytest",
+                "tests/",
+                "--tb=line",
+                "--no-header",
+                "-q",
+                "--ignore=tests/ai",
+                "--ignore=tests/benchmarks",
+                "-p",
+                "no:cacheprovider",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=300,
+            cwd=str(PROJECT_ROOT),
         )
         stdout = output.stdout
         stderr = output.stderr
 
         # Parse pytest summary line
         import re
+
         summary = stdout.strip().split("\n")[-1] if stdout.strip() else ""
         m = re.search(r"(\d+)\s+passed", summary)
         result["passed"] = int(m.group(1)) if m else 0
@@ -102,7 +118,7 @@ print("\n━━━ T1: TEST SUITE HEALTH ━━━")
 test_dir = PROJECT_ROOT / "tests"
 
 # Anti-patterns: broad except + pytest.skip
-anti_patterns=[]
+anti_patterns = []
 for f in sorted(test_dir.rglob("*.py")):
     try:
         text = f.read_text(encoding="utf-8", errors="ignore")
@@ -129,19 +145,22 @@ else:
     if pytest_result["failed"] + pytest_result["errors"] == 0:
         check("pytest: all passed", True, f"{pytest_result['passed']}/{pytest_result['total']}")
     else:
-        check("pytest: failures", False,
-              f"{pytest_result['failed']} failed, {pytest_result['errors']} errors, "
-              f"{pytest_result['passed']}/{pytest_result['total']} passed")
+        check(
+            "pytest: failures",
+            False,
+            f"{pytest_result['failed']} failed, {pytest_result['errors']} errors, "
+            f"{pytest_result['passed']}/{pytest_result['total']} passed",
+        )
 
 # ============================================================================
 # T2: Server Startup
 # ============================================================================
 print("\n━━━ T2: SERVER STARTUP ━━━")
 try:
-    from unittest.mock import MagicMock, patch
-
     # Check if main already imported (from pytest run)
     import sys
+    from unittest.mock import MagicMock, patch
+
     if "main" in sys.modules:
         del sys.modules["main"]
         # Clean slate for route module caches that might have side effects
@@ -150,29 +169,39 @@ try:
             del sys.modules[key]
 
     import main as main_module
+
     main_module.validate_security_configuration = lambda: True
 
     # Clear the ABCKeyManager singleton
     if hasattr(main_module, "km"):
         main_module.km = MagicMock()
-        main_module.km.has_key.return_value=True
-        main_module.km.get_key.return_value="test-key"
+        main_module.km.has_key.return_value = True
+        main_module.km.get_key.return_value = "test-key"
 
-    app = main_module.create_app()
+    # Audit the shipping app, not the legacy one (see export_openapi.py): the
+    # legacy app omits the atlassian routes, so a readiness report built from it
+    # silently under-reports the real API surface.
+    from services.main_api_server import app as production_app
 
-    routes=[]
+    app = production_app
+
+    routes = []
     for route in app.routes:
         if hasattr(route, "methods") and hasattr(route, "path"):
             for m in route.methods:
                 if m in ("GET", "POST", "PUT", "DELETE", "PATCH"):
                     routes.append(f"{m} {route.path}")
 
-    doc_routes=[r for r in routes if "/docs" in r or "/openapi" in r or "/redoc" in r]
-    api_routes=[r for r in routes if "/api/" in r or r.startswith("GET /health")]
-    check("Server creates without errors", True, f"{len(routes)} routes ({len(api_routes)} API, {len(doc_routes)} docs)")
+    doc_routes = [r for r in routes if "/docs" in r or "/openapi" in r or "/redoc" in r]
+    api_routes = [r for r in routes if "/api/" in r or r.startswith("GET /health")]
+    check(
+        "Server creates without errors",
+        True,
+        f"{len(routes)} routes ({len(api_routes)} API, {len(doc_routes)} docs)",
+    )
 except Exception as e:
     check("Server startup", False, str(e)[:200])
-    app=None
+    app = None
 
 # ============================================================================
 # T3: Endpoint Integrity
@@ -180,8 +209,18 @@ except Exception as e:
 print("\n━━━ T3: ENDPOINT INTEGRITY ━━━")
 
 if app is not None:
-    api_routes=[(m, p) for p in routes for m in [p.split()[0]] if "/api/" in p.split(" ", 1)[-1] or p.startswith("GET /health")]
-    api_routes_clean=[(m.split()[0] if " " in m else m, p.split(" ", 1)[1] if " " in p else p) for p in routes for m in [p.split()[0]] if True]
+    api_routes = [
+        (m, p)
+        for p in routes
+        for m in [p.split()[0]]
+        if "/api/" in p.split(" ", 1)[-1] or p.startswith("GET /health")
+    ]
+    api_routes_clean = [
+        (m.split()[0] if " " in m else m, p.split(" ", 1)[1] if " " in p else p)
+        for p in routes
+        for m in [p.split()[0]]
+        if True
+    ]
 
     # Re-parse properly
     api_routes_clean = set()
@@ -190,12 +229,24 @@ if app is not None:
         if len(parts) == 2:
             api_routes_clean.add((parts[0], parts[1]))
 
-    check("API endpoints registered", len(api_routes_clean) >= 80, f"{len(api_routes_clean)} endpoints")
+    check(
+        "API endpoints registered",
+        len(api_routes_clean) >= 80,
+        f"{len(api_routes_clean)} endpoints",
+    )
 
     # Verify no deprecated/removed endpoints remain
-    bad_patterns=["angela/chat", "/dialogue", "vision/analyze", "generate-image", "mobile/test",
-                    "encode-with-retry", "decode-with-fallback", "train-with-checkpoint"]
-    remaining_bad=[(m, p) for m, p in api_routes_clean if any(b in p for b in bad_patterns)]
+    bad_patterns = [
+        "angela/chat",
+        "/dialogue",
+        "vision/analyze",
+        "generate-image",
+        "mobile/test",
+        "encode-with-retry",
+        "decode-with-fallback",
+        "train-with-checkpoint",
+    ]
+    remaining_bad = [(m, p) for m, p in api_routes_clean if any(b in p for b in bad_patterns)]
     if remaining_bad:
         for m, p in remaining_bad:
             check(f"Removed endpoint: {m} {p}", False)
@@ -208,7 +259,7 @@ if app is not None:
 print("\n━━━ T4: IMPORT HEALTH ━━━")
 
 # Import individual modules in a fresh process to verify
-key_modules=[
+key_modules = [
     "ai.ed3n.ed3n_engine",
     "ai.garden.garden_engine",
     "ai.memory.ham_memory.ham_manager",
@@ -250,17 +301,24 @@ api_client = PROJECT_ROOT / "packages/shared-js/js/api-client.js"
 if api_client.exists():
     text = api_client.read_text(encoding="utf-8", errors="ignore")
     paths_found = re.findall(r"'([^']*(?:/api/v1/[^']*|/health)[^']*)'", text)
-    mismatched=[]
+    mismatched = []
     for p in paths_found:
-        found=False
+        found = False
         for m_test in ["GET", "POST"]:
             if (m_test, p) in backend_paths:
-                found=True
+                found = True
                 break
         if not found:
             mismatched.append(p)
-    check("api-client.js paths match", len(mismatched) == 0,
-          f"{len(paths_found)} paths, {len(mismatched)} mismatched" if mismatched else f"{len(paths_found)} paths OK")
+    check(
+        "api-client.js paths match",
+        len(mismatched) == 0,
+        (
+            f"{len(paths_found)} paths, {len(mismatched)} mismatched"
+            if mismatched
+            else f"{len(paths_found)} paths OK"
+        ),
+    )
     for p in mismatched:
         check(f"  Mismatch: {p}", False)
 
@@ -269,18 +327,25 @@ mm_client = PROJECT_ROOT / "apps/desktop-app/electron_app/js/multimodal-client.j
 if mm_client.exists():
     text = mm_client.read_text(encoding="utf-8", errors="ignore")
     paths_found = re.findall(r"'([^']*(?:/multimodal/[^']*|/health)[^']*)'", text)
-    mismatched=[]
+    mismatched = []
     for p in paths_found:
         api_p = f"/api/v1{p}" if not p.startswith("/api/v1") else p
-        found=False
+        found = False
         for m_test in ["GET", "POST"]:
             if (m_test, api_p) in backend_paths:
-                found=True
+                found = True
                 break
         if not found:
             mismatched.append(api_p)
-    check("multimodal-client.js paths match", len(mismatched) == 0,
-          f"{len(paths_found)} paths, {len(mismatched)} mismatched" if mismatched else f"{len(paths_found)} paths OK")
+    check(
+        "multimodal-client.js paths match",
+        len(mismatched) == 0,
+        (
+            f"{len(paths_found)} paths, {len(mismatched)} mismatched"
+            if mismatched
+            else f"{len(paths_found)} paths OK"
+        ),
+    )
     for p in mismatched:
         check(f"  Mismatch: {p}", False)
 
@@ -291,6 +356,7 @@ print("\n━━━ T6: LEARNING PIPELINE ━━━")
 
 try:
     from ai.ed3n.ed3n_engine import ED3NEngine
+
     ed3n = ED3NEngine.get_shared()
     dict_count = len(ed3n.dictionary.entries) if hasattr(ed3n, "dictionary") else 0
     check("ED3NEngine", dict_count > 0, f"{dict_count} dictionary entries")
@@ -299,6 +365,7 @@ except Exception as e:
 
 try:
     from ai.ed3n.continuous_learning import ContinuousLearningPipeline
+
     clp = ContinuousLearningPipeline()
     check("ContinuousLearningPipeline", clp is not None)
 except Exception as e:
@@ -306,6 +373,7 @@ except Exception as e:
 
 try:
     from ai.garden.garden_engine import GARDENEngine
+
     garden = GARDENEngine()
     check("GARDENEngine", True)
 except Exception as e:
@@ -313,6 +381,7 @@ except Exception as e:
 
 try:
     from ai.reasoning.causal_reasoning_engine import CausalReasoningEngine
+
     cre = CausalReasoningEngine()
     cre.retrospective_warm_start()
     rels = cre.get_relationships()
@@ -327,8 +396,9 @@ print("\n━━━ T7: SESSION MANAGEMENT ━━━")
 
 try:
     from api.routes.chat_routes import TTLSessionManager
+
     sm = TTLSessionManager()
-    test_sid="verify-test-session"
+    test_sid = "verify-test-session"
     sm.set(test_sid, {"created_at": "2026-07-13T00:00:00", "user_name": "Verify"})
     retrieved = sm.get(test_sid)
     check("Session set/get", retrieved and retrieved.get("user_name") == "Verify")
@@ -343,15 +413,21 @@ print("\n━━━ T8: PERSISTENCE ━━━")
 
 try:
     from ai.memory.ham_memory.ham_manager import HAMMemoryManager
+
     ham = HAMMemoryManager()
     stats = ham.get_stats()
     check("HAMMemoryManager", True, f"mem_file={ham.memory_file.name}")
-    check("HAMMemoryManager stats", "template_count" in stats, f"template_count={stats.get('template_count', 'N/A')}")
+    check(
+        "HAMMemoryManager stats",
+        "template_count" in stats,
+        f"template_count={stats.get('template_count', 'N/A')}",
+    )
 except Exception as e:
     check("HAMMemoryManager", False, str(e)[:120])
 
 try:
     from ai.memory.vector_store import VectorMemoryStore
+
     vms = VectorMemoryStore()
     check("VectorMemoryStore", True, f"backend={vms.backend}" if hasattr(vms, "backend") else "OK")
 except Exception as e:
@@ -364,14 +440,17 @@ print("\n━━━ T9: ERROR HANDLING ━━━")
 
 try:
     from core.utils import safe_error
+
     result = safe_error(Exception("Test " * 50))
     check("safe_error truncation", len(result) < 500, f"{len(result)} chars")
 except Exception as e:
     check("safe_error", False, str(e)[:120])
 
 try:
-    from shared.network_resilience import CircuitBreaker
     import inspect
+
+    from shared.network_resilience import CircuitBreaker
+
     sig = inspect.signature(CircuitBreaker.__init__)
     params = list(sig.parameters.keys())[1:]
     cb = CircuitBreaker(failure_threshold=5, recovery_timeout=30)
@@ -392,6 +471,7 @@ if services_init.exists():
 
 try:
     from core.hsp.connector import HSPConnector
+
     check("HSPConnector import", True)
 except Exception as e:
     check("HSPConnector import", False, str(e)[:120])

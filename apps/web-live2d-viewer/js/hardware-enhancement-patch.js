@@ -26,8 +26,27 @@
   }
 
   // 增强硬件检测器原型
+  //
+  // Returns true when the patch was applied.
+  //
+  // WHY the guard: app.js assigns SystemProfileManager as `hardwareDetector`,
+  // and that class exposes initialize()/_detectHardware() — it has NO detect().
+  // `detector.detect.bind(detector)` therefore threw a TypeError inside the
+  // async initializer, so the whole enhancement silently died as an unhandled
+  // rejection and every caller afterwards failed too. Skip honestly instead.
   function enhanceHardwareDetector(detector) {
-    if (!detector) return
+    if (!detector) return false
+
+    if (
+      typeof detector.detect !== 'function' ||
+      typeof detector._assessCapabilities !== 'function'
+    ) {
+      console.warn(
+        '[HW-Patch] detector exposes neither detect() nor _assessCapabilities(); ' +
+          'hardware enhancement skipped (standard detection stays active)'
+      )
+      return false
+    }
 
     // 保存原始方法
     const originalDetect = detector.detect.bind(detector)
@@ -218,11 +237,11 @@
     const app = await waitForAppInitialization()
 
     if (app && app.hardwareDetector) {
-      // 增强现有的硬件检测器
-      enhanceHardwareDetector(app.hardwareDetector)
+      // 增强现有的硬件检测器（未套用時標準偵測仍然有效）
+      const patched = enhanceHardwareDetector(app.hardwareDetector)
 
-      // 如果已经完成初始化，重新检测硬件
-      if (app.isInitialized) {
+      // 如果已经完成初始化，重新检测硬件（僅在 patch 真的套用時）
+      if (patched && app.isInitialized) {
         console.log('🔄 Re-running enhanced hardware detection...')
         const newProfile = await app.hardwareDetector.detect()
         app.hardwareDetector.profile = newProfile

@@ -306,3 +306,83 @@ class TestSharedGlobalsAreExported:
         assert "sync_shared_js.py" in viewer_fn
         assert "--surface" in viewer_fn and "web" in viewer_fn
         assert "return None" in viewer_fn, "must refuse to serve a broken page"
+
+
+class TestBootstrappablePages:
+    """A page that constructs a class must load the file that defines it.
+
+    WHY: both front-ends ended their script list and then ran
+    ``new AngelaApp()`` — but *no* <script> tag referenced any file defining
+    ``AngelaApp`` (``index.js`` is only a platform helper). Every module-level
+    script 404-check passed, because nothing referenced a missing file; the
+    breakage was a *missing* reference, which no asset test could see. The app
+    could not start in development or in a packaged build.
+    """
+
+    # Globals each entry point instantiates in its inline bootstrap.
+    REQUIRED_GLOBALS = {"AngelaApp"}
+
+    DEFINERS = {
+        "AngelaApp": ROOT / "packages/shared-js/js/app.js",
+    }
+
+    @pytest.mark.parametrize(
+        "page",
+        [
+            ROOT / "apps/desktop-app/electron_app/index.html",
+            ROOT / "apps/web-live2d-viewer/index.html",
+        ],
+        ids=["desktop", "web"],
+    )
+    def test_every_constructed_global_is_loaded_before_use(self, page):
+        text = page.read_text(encoding="utf-8")
+        for src in _SCRIPT_SRC.findall(text):
+            target = (page.parent / src.split("?")[0]).resolve()
+            if target.is_file():
+                target.read_text(encoding="utf-8", errors="ignore")
+
+        inline = text[text.rindex("</script>") - 4000 :]
+        for symbol in self.REQUIRED_GLOBALS:
+            if f"new {symbol}(" not in inline:
+                continue  # this page does not construct it
+            definer = self.DEFINERS[symbol]
+            assert any(
+                str(definer.name) in src for src in _SCRIPT_SRC.findall(text)
+            ), (
+                f"{page.name} constructs `new {symbol}()` but never loads a script "
+                f"named {definer.name} — ReferenceError at startup"
+            )
+
+    @pytest.mark.parametrize(
+        "page",
+        [
+            ROOT / "apps/desktop-app/electron_app/index.html",
+            ROOT / "apps/web-live2d-viewer/index.html",
+        ],
+        ids=["desktop", "web"],
+    )
+    def test_app_js_is_loaded_after_its_dependencies(self, page):
+        """app.js uses other modules inside its constructor, so order matters."""
+        text = page.read_text(encoding="utf-8")
+        sources = [src.split("?")[0] for src in _SCRIPT_SRC.findall(text)]
+        names = [os.path.basename(s) for s in sources]
+        assert "app.js" in names, f"{page.name} never loads app.js"
+        app_index = names.index("app.js")
+        for dependency in (
+            "live2d-manager.js",
+            "input-handler.js",
+            "audio-handler.js",
+            "haptic-handler.js",
+            "wallpaper-handler.js",
+            "unified-display-matrix.js",
+        ):
+            if dependency in names:
+                assert names.index(dependency) < app_index, (
+                    f"{dependency} must load before app.js (its constructor uses it)"
+                )
+
+    def test_shared_index_js_is_only_a_platform_helper(self):
+        """Guards against mistaking index.js for the app entry point again."""
+        text = (SOURCE_DIR / "index.js").read_text(encoding="utf-8")
+        assert "class AngelaApp" not in text
+        assert "require(" not in text and "import " not in text

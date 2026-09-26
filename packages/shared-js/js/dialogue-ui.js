@@ -284,6 +284,20 @@ class DialogueUI {
     }
   }
 
+  /**
+   * Show a message Angela initiated (proactive greet / comfort / remind / …).
+   *
+   * WHY this exists: app.js `_handleAngelaAction` calls
+   * `this.dialogueUI.showAngelaMessage(message)` for the five proactive actions
+   * the LLM decision loop broadcasts, but the class only had the generic
+   * addMessage() — so even once the file is loaded the call would have thrown a
+   * TypeError and aborted the rest of the handler (expressions and motions).
+   */
+  showAngelaMessage(text, neuroBlend = null) {
+    if (!text) return null
+    return this.addMessage('angela', String(text), 'proactive', neuroBlend)
+  }
+
   addMessage(sender, text, source, neuroBlend) {
     const messagesContainer = document.getElementById('dialogue-messages')
     const messageDiv = document.createElement('div')

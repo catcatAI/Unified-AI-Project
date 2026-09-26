@@ -46,7 +46,24 @@ except ImportError as e:
 
     DEFAULT_OPERATIONAL_CONFIGS = {}
 
-from .error_handler import error_handler
+# Loaded as a *sibling* module, deliberately avoiding the package name.
+#
+# WHY: two different packages in this repo are both called `cli` —
+# `apps/backend/src/cli` (the backend CLI) and `packages/cli/cli` (this one) —
+# and the backend's wins on sys.path. So `from cli.error_handler import …`
+# resolved to the backend's `cli` package and raised "No module named
+# 'cli.error_handler'", while a relative import raised "attempted relative
+# import with no known parent package" when package.json runs this file as a
+# script (`python3 cli/main.py`). Either way the entire HSP CLI was unrunnable.
+# A flat sibling import is unambiguous in all three invocation styles
+# (script, `python3 -m cli.main`, installed console script).
+import os as _os
+import sys as _sys
+
+_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+import error_handler as _error_handler  # noqa: E402  (path set up immediately above)
+
+error_handler = _error_handler.error_handler
 
 cli_ai_id = f"did:hsp:cli_ai_instance_{uuid.uuid4().hex[:6]}"
 
@@ -454,12 +471,18 @@ async def main_cli_logic():
                 "fallback_config": {},
             }
         }
-        await initialize_services(
+        # core_services.initialize_services is SYNC (returns None); only the
+        # mock fallback above is async. Awaiting it unconditionally raised
+        # "object NoneType can't be used in 'await' expression" — so the HSP CLI
+        # died on startup in the real environment even with the import fixed.
+        _init_result = initialize_services(
             config=config,
             ai_id=cli_ai_id,
             use_mock_ham=True,
             operational_configs=DEFAULT_OPERATIONAL_CONFIGS,
         )
+        if inspect.isawaitable(_init_result):
+            await _init_result
         services = get_services()
         service_discovery_module = services.get("service_discovery")
         if service_discovery_module:
@@ -506,7 +529,10 @@ async def main_cli_logic():
             error_handler.log_info("CLI: Initiating service shutdown...")
             if service_discovery_module:
                 service_discovery_module.stop_cleanup_task()
-            await shutdown_services()
+            # Same sync/async duality as initialize_services above.
+        _shutdown_result = shutdown_services()
+        if inspect.isawaitable(_shutdown_result):
+            await _shutdown_result
             print("CLI: Exiting.")
             error_handler.log_info("CLI: Exiting.")
     except Exception as e:

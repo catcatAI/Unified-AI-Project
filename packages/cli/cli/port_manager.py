@@ -138,55 +138,70 @@ class PortManager:
         print("=" * 40)
 
 
-def main():
+def main(argv=None):
+    # argv is injectable so the no-argument behaviour the pnpm scripts rely on
+    # is testable without spawning a subprocess.
+    argv = list(sys.argv[1:] if argv is None else argv)
     pm = PortManager()
 
-    if len(sys.argv) < 2:
-        print("Usage: python port_manager.py [command] [service_name]")
+    if not argv:
+        print("Usage: python3 port_manager.py [command] [service_name]")
         print("Commands:")
         print("  info          - Show port information")
-        print("  check [port]  - Check if port is in use")
-        print("  kill [port]   - Kill process on port")
-        print("  kill-service [service] - Kill existing service process")
-        print("  get-port [service] - Get port for service")
+        print("  check [port]  - Check one port, or every service port when omitted")
+        print("  kill <port>   - Kill process on port (port is required)")
+        print("  kill-service <service> - Kill existing service process (name required)")
+        print("  get-port [service]      - Get port (all services when omitted)")
         return
 
-    command = sys.argv[1]
+    command = argv[0]
 
     if command == "info":
         pm.print_port_info()
     elif command == "check":
-        if len(sys.argv) < 3:
-            print("Usage: python port_manager.py check [port]")
+        # `pnpm port-check` runs this with no arguments, which used to print a
+        # usage line and return — a "check" that checks nothing. No argument now
+        # means "check every configured service port".
+        if len(argv) < 2:
+            for service, port in sorted(pm.get_all_ports().items()):
+                in_use = pm.check_port_in_use(port)
+                print(f"{service:20} {port} {'in use' if in_use else 'available'}")
             return
-        port = int(sys.argv[2])
+        port = int(argv[1])
         in_use = pm.check_port_in_use(port)
         print(f"Port {port} is {'in use' if in_use else 'available'}")
     elif command == "kill":
-        if len(sys.argv) < 3:
-            print("Usage: python port_manager.py kill [port]")
+        # No default port on purpose: killing "the" port without being told which
+        # one could take down the running backend.
+        if len(argv) < 2:
+            print("Usage: python3 port_manager.py kill <port>  (a port is required)")
             return
-        port = int(sys.argv[2])
+        port = int(argv[1])
         success = pm.kill_process_by_port(port)
         if success:
             print(f"Successfully killed process on port {port}")
         else:
             print(f"Failed to kill process on port {port}")
     elif command == "kill-service":
-        if len(sys.argv) < 3:
-            print("Usage: python port_manager.py kill-service [service]")
+        # Without a service name there is nothing safe to kill — list what could
+        # be targeted instead of silently doing nothing.
+        if len(argv) < 2:
+            print("Usage: python3 port_manager.py kill-service <service>")
+            print("Known services: " + ", ".join(sorted(pm.get_all_ports())))
             return
-        service_name = sys.argv[2]
+        service_name = argv[1]
         success = pm.kill_existing_process(service_name)
         if success:
             print(f"Successfully killed existing process for {service_name}")
         else:
             print(f"Failed to kill existing process for {service_name}")
     elif command == "get-port":
-        if len(sys.argv) < 3:
-            print("Usage: python port_manager.py get-port [service]")
+        # `pnpm port-get` runs with no service; list them all.
+        if len(argv) < 2:
+            for service, port in sorted(pm.get_all_ports().items()):
+                print(f"{service}: {port}")
             return
-        service_name = sys.argv[2]
+        service_name = argv[1]
         port = pm.get_port(service_name)
         if port:
             print(f"Port for {service_name}: {port}")
@@ -194,7 +209,7 @@ def main():
             print(f"Unknown service: {service_name}")
     else:
         print(f"Unknown command: {command}")
-        print("Usage: python port_manager.py [command] [service_name]")
+        print("Usage: python3 port_manager.py [command] [service_name]")
 
 
 if __name__ == "__main__":

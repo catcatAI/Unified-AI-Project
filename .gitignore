@@ -206,3 +206,7 @@ CMakeFiles/
 # scripts/sync_shared_js.py; never commit these).
 apps/desktop-app/electron_app/libs/shared-js/
 apps/web-live2d-viewer/js/shared-js/
+
+# Generated OpenAPI export (apps/backend/scripts/export_openapi.py) — a build
+# artifact, not source.
+docs/api/
