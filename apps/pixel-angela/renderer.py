@@ -85,6 +85,25 @@ class AngelaClient(QThread):
             payload = {"type": "chat_message", "data": {"content": text, "user_name": "User"}}
             await self.ws.send(json.dumps(payload))
 
+    async def send_event(self, payload):
+        """Send an arbitrary event.
+
+        WHY: the renderer used `self.client.ws.send(...)` directly, which throws
+        when the socket is absent or mid-reconnect (AttributeError on a missing
+        attribute, RuntimeError on a closing socket) and left the exception
+        unhandled inside the Qt event handler.
+        """
+        ws = getattr(self, "ws", None)
+        if ws is None:
+            print("⚠️ [Network] send_event dropped (not connected)")
+            return False
+        try:
+            await ws.send(json.dumps(payload))
+            return True
+        except Exception as e:
+            print(f"⚠️ [Network] send_event failed: {e}")
+            return False
+
 
 
 class AngelaRenderer(QWidget):
@@ -92,6 +111,8 @@ class AngelaRenderer(QWidget):
         super().__init__()
         self.state = {"stress": 0.0, "emotion": "neutral"}
         self.bubble_stack = []
+        # Pixel Physics 開關（選單可切換）。True = 驅動 DNA 動態與呼吸位移。
+        self.physics_enabled = True
         try:
             self.dna = AngelaDNA()
         except Exception as e:
@@ -134,9 +155,11 @@ class AngelaRenderer(QWidget):
         pixmap = QPixmap(32, 32)
         pixmap.fill(Qt.GlobalColor.transparent)
         p = QPainter(pixmap)
-        p.setBrush(QColor(42, 75, 140)); p.setPen(Qt.PenStyle.NoPen)
+        p.setBrush(QColor(42, 75, 140))
+        p.setPen(Qt.PenStyle.NoPen)
         p.drawRect(4, 4, 24, 24)
-        p.setPen(QColor(255, 255, 255)); p.setFont(QFont("Arial", 14, QFont.Weight.Bold))
+        p.setPen(QColor(255, 255, 255))
+        p.setFont(QFont("Arial", 14, QFont.Weight.Bold))
         p.drawText(pixmap.rect(), Qt.AlignmentFlag.AlignCenter, "A")
         p.end()
         self.tray.setIcon(QIcon(pixmap))
@@ -144,13 +167,56 @@ class AngelaRenderer(QWidget):
         self.tray.show()
 
     def _init_tiered_menu(self):
+        """右鍵選單。
+
+        WHY most items are gone: 6 of the 7 items here were created with
+        addAction(...) and never connected to anything, so a user clicking them
+        got no reaction at all. Two of them have a real, local implementation
+        and are wired below; the rest are removed because nothing behind them
+        exists:
+          - "LLM Control"  : the backend has no WebSocket message for it. LLM
+            switching is only reachable over HTTP (POST /api/v1/llm/switch),
+            and this renderer only speaks WebSocket. It needs either a
+            WS message or an HTTP client here before it can come back.
+          - "RAG Knowledge" : no backend toggle and no local RAG view exists.
+          - "Bionics Dynamics": soft_body_engine.AngelaMetabolism exists in this
+            package but the renderer never instantiates it, and the backend has
+            no toggle for it (it only pushes biological_event outbound).
+          - "Angela Core"  : no target; there is no core window/overlay here.
+        Re-add an item only together with the thing it would drive.
+        """
         self.menu = QMenu()
-        ai = self.menu.addMenu("AI"); ai.addAction("LLM Control"); ai.addAction("RAG Knowledge")
-        al = self.menu.addMenu("AL"); al.addAction("Bionics Dynamics"); al.addAction("Pixel Physics")
-        soul = self.menu.addMenu("Soul"); soul.addAction("Angela Core")
-        ui = self.menu.addMenu("UI"); ui.addAction("Default Render")
+
+        al = self.menu.addMenu("AL")
+        self._pixel_physics_action = al.addAction("Pixel Physics")
+        self._pixel_physics_action.setCheckable(True)
+        self._pixel_physics_action.setChecked(True)
+        self._pixel_physics_action.triggered.connect(self._on_toggle_pixel_physics)
+
+        ui = self.menu.addMenu("UI")
+        ui.addAction("Default Render").triggered.connect(self._on_reset_render)
+
         self.menu.addSeparator()
         self.menu.addAction("Exit").triggered.connect(QApplication.instance().quit)
+
+    def _on_toggle_pixel_physics(self, enabled):
+        """Pixel Physics 開關：關閉後不再驅動 DNA 動態與呼吸位移。"""
+        self.physics_enabled = bool(enabled)
+        print(f"{'🧬' if self.physics_enabled else '⏸️'} [UI] Pixel Physics {'ON' if self.physics_enabled else 'OFF'}")
+
+    def _on_reset_render(self):
+        """Default Render：回到預設位置、清空氣泡、重置情緒狀態。"""
+        self.physics_enabled = True
+        if hasattr(self, "_pixel_physics_action"):
+            self._pixel_physics_action.setChecked(True)
+        self.angela_pos = QPointF(200, self.ground_y)
+        self.target_pos = QPointF(200, self.ground_y)
+        self.current_y = self.ground_y
+        self.breath_phase = 0.0
+        self.bubble_stack.clear()
+        self.state = {"stress": 0.0, "emotion": "neutral"}
+        self.update()
+        print("🎨 [UI] Render reset to defaults")
 
     def _on_tray_activated(self, reason):
         if reason == QSystemTrayIcon.ActivationReason.Trigger: self.show_native_input()
@@ -164,8 +230,12 @@ class AngelaRenderer(QWidget):
         local_y = int(pos.y() - ay)
         
         # 2. [Task N.9.3] 體素探針檢測 (Voxel Hit-Test)
+        # `stiffness` used to be bound only inside the bounds check and read in
+        # the enclosing branch — correct today only because is_hit can never be
+        # true without it. Bind it up front so the two cannot drift apart.
         is_hit = False
-        if 0 <= local_x < 128 and 0 <= local_y < 384:
+        stiffness = 0.0
+        if 0 <= local_x < UIConfig.ANGELA_WIDTH and 0 <= local_y < UIConfig.ANGELA_HEIGHT:
             stiffness = float(self.dna.get_stiffness_at(local_x, local_y)) if self.dna else 0.0
             if stiffness > 0:
                 is_hit = True
@@ -176,13 +246,14 @@ class AngelaRenderer(QWidget):
             if event.button() == Qt.MouseButton.LeftButton:
                 self.add_new_bubble("(觸摸反應)", "Angela")
                 # 發送觸覺事件到後端
-                asyncio.run_coroutine_threadsafe(
-                    self.client.ws.send(json.dumps({
-                        "type": "tactile_event",
-                        "data": {"x": local_x, "y": local_y, "stiffness": stiffness}
-                    })), 
-                    self.client.event_loop
-                )
+                if self.client.event_loop is not None:
+                    asyncio.run_coroutine_threadsafe(
+                        self.client.send_event({
+                            "type": "tactile_event",
+                            "data": {"x": local_x, "y": local_y, "stiffness": stiffness}
+                        }),
+                        self.client.event_loop
+                    )
             elif event.button() == Qt.MouseButton.RightButton:
                 self.menu.exec(event.globalPosition().toPoint())
         else:
@@ -218,6 +289,16 @@ class AngelaRenderer(QWidget):
         if len(self.bubble_stack) > 3: self.bubble_stack.pop(0)
 
     def physics_and_render_loop(self):
+        if not self.physics_enabled:
+            # Pixel Physics 關閉：位置與呼吸位移維持現狀，仍重繪（氣泡/狀態要更新）
+            for bubble in self.bubble_stack:
+                target_bubble_x = self.angela_pos.x() + (UIConfig.ANGELA_WIDTH // 2)
+                target_bubble_y = self.current_y - 40
+                diff = QPointF(target_bubble_x, target_bubble_y) - bubble["current_pos"]
+                bubble["current_pos"] += diff * 0.1
+            self.update()
+            return
+
         self.breath_phase += 0.1
         self.current_y = self.ground_y + np.sin(self.breath_phase) * 3.0
         dx = (self.target_pos.x() - self.angela_pos.x()) * 0.2
@@ -249,13 +330,17 @@ class AngelaRenderer(QWidget):
         self.input_win.setWindowFlags(Qt.WindowType.Tool | Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
         self.input_win.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.input_win.setAttribute(Qt.WidgetAttribute.WA_InputMethodEnabled)
-        layout = QVBoxLayout(); self.entry = QLineEdit()
+        layout = QVBoxLayout()
+        self.entry = QLineEdit()
         self.entry.setPlaceholderText("意識通訊中...")
         self.entry.setStyleSheet("background: white; color: black; border: 2px solid #2A4B8C; border-radius: 8px; padding: 8px; font-weight: bold;")
         self.entry.returnPressed.connect(self.confirm_user_input)
-        layout.addWidget(self.entry); self.input_win.setLayout(layout)
+        layout.addWidget(self.entry)
+        self.input_win.setLayout(layout)
         self.input_win.move(int(self.screen_w // 2 - 100), int(self.screen_h - 150))
-        self.input_win.show(); self.input_win.activateWindow(); self.entry.setFocus()
+        self.input_win.show()
+        self.input_win.activateWindow()
+        self.entry.setFocus()
 
     def confirm_user_input(self):
         text = self.entry.text().strip()
@@ -292,8 +377,10 @@ class AngelaRenderer(QWidget):
             text_rect = metrics.boundingRect(constrain_rect, Qt.TextFlag.TextWordWrap, bubble["text"])
             bw, bh = text_rect.width() + 24, text_rect.height() + 14
             bx, by = int(bubble["current_pos"].x() - (bw // 2)), int(bubble["current_pos"].y() - bh - offset_y)
-            painter.setBrush(bg_color); painter.drawRoundedRect(QRect(bx, by, bw, bh), UIConfig.BUBBLE_CORNER_RADIUS, UIConfig.BUBBLE_CORNER_RADIUS)
-            painter.setPen(QColor(0, 0, 0)); painter.drawText(QRect(bx + 12, by + 7, bw - 24, bh - 14), Qt.TextFlag.TextWordWrap | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop, bubble["text"])
+            painter.setBrush(bg_color)
+            painter.drawRoundedRect(QRect(bx, by, bw, bh), UIConfig.BUBBLE_CORNER_RADIUS, UIConfig.BUBBLE_CORNER_RADIUS)
+            painter.setPen(QColor(0, 0, 0))
+            painter.drawText(QRect(bx + 12, by + 7, bw - 24, bh - 14), Qt.TextFlag.TextWordWrap | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop, bubble["text"])
             offset_y += bh + 10
 
 if __name__ == "__main__":
