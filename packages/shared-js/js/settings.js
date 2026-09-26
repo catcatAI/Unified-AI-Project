@@ -565,6 +565,83 @@ document.addEventListener('DOMContentLoaded', () => {
       window.electronAPI.window.setIgnoreMouseEvents(!settings.showClickRegions)
     }
 
+    const app = window.angelaApp
+
+    // ---- haptics: the handler has had setEnabled() since the menu work, and the
+    // settings page had no way to reach it.
+    if (app && app.hapticHandler) {
+      if (typeof app.hapticHandler.setEnabled === 'function') {
+        app.hapticHandler.setEnabled(!!settings.enableHaptics)
+      } else {
+        console.warn('[Settings] hapticHandler.setEnabled unavailable; haptics unchanged')
+      }
+    }
+
+    // ---- model scale: UDM owns userScale (0.5-3.0); the slider is 0.5-2.
+    if (app && app.udm && typeof app.udm.setUserScale === 'function') {
+      const scale = parseFloat(settings.modelScale)
+      if (Number.isFinite(scale) && scale > 0) {
+        app.udm.setUserScale(scale)
+      }
+    }
+
+    // ---- frame rate + render quality. These are two independent choices, so they
+    // go through setPerformanceTargets() rather than one of the five fixed
+    // profiles, which would have forced one to override the other.
+    if (app && app.performanceManager) {
+      const manager = app.performanceManager
+      if (typeof manager.setPerformanceTargets === 'function') {
+        manager.setPerformanceTargets({
+          fps: parseInt(settings.frameRate, 10),
+          quality: settings.renderQuality,
+        })
+      } else {
+        console.warn('[Settings] setPerformanceTargets unavailable; performance unchanged')
+      }
+    }
+
+    // ---- wallpaper mode: main.js keeps the authoritative mode (tray + IPC), and
+    // the renderer's WallpaperHandler needs it too — the same two places the
+    // tray menu writes to.
+    if (settings.wallpaperMode) {
+      if (window.electronAPI && window.electronAPI.wallpaper) {
+        window.electronAPI.wallpaper.setMode(settings.wallpaperMode).catch?.((err) => {
+          console.warn('[Settings] wallpaper.setMode failed:', err)
+        })
+      }
+      if (app && app.wallpaperHandler) {
+        if (typeof app.wallpaperHandler.setRenderingMode === 'function') {
+          app.wallpaperHandler.setRenderingMode(settings.wallpaperMode)
+        } else {
+          console.warn('[Settings] WallpaperHandler.setRenderingMode unavailable')
+        }
+      }
+    }
+
+    // ---- backend address: main.js stores backendIP for the tray, and the
+    // renderer's own WebSocket needs the new URL. Both were saved and unused, so
+    // changing the IP in the UI did nothing at all.
+    const backendIp = (settings.backendIp || '').trim()
+    const backendPort = parseInt(settings.backendPort, 10)
+    if (backendIp && Number.isFinite(backendPort)) {
+      const url = `ws://${backendIp}:${backendPort}/ws`
+      if (window.electronAPI && window.electronAPI.backend) {
+        window.electronAPI.backend.setIP(backendIp).catch?.((err) => {
+          console.warn('[Settings] backend.setIP failed:', err)
+        })
+      }
+      const ws = app && app.backendWebSocket
+      if (ws && typeof ws.connect === 'function') {
+        try {
+          ws.connect(url)
+        } catch (err) {
+          console.warn('[Settings] backend reconnect failed:', err)
+        }
+      } else {
+        console.warn('[Settings] no backend WebSocket to reconnect')
+      }
+    }
+
     // Auto-start was only being saved: setAutoStartup() exists in main.js for
     // win32/darwin/linux and nothing ever called it.
     if (window.electronAPI && window.electronAPI.autostart) {

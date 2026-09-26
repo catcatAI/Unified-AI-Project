@@ -763,6 +763,55 @@ class PerformanceManager {
     console.log(`Performance mode changed to: ${mode} (${settings.description})`)
   }
 
+  /**
+   * Apply an explicit frame rate / quality choice from the settings page.
+   *
+   * WHY this exists: the settings page offers a frame rate (30/60/120) and a
+   * quality level, but the only entry point was setPerformanceMode(), which snaps
+   * both to one of five fixed profiles — so the two settings could never be
+   * honoured independently, and `frameRate` was collected and then thrown away.
+   * The three fields this writes are the same ones setPerformanceMode() writes and
+   * the same ones applyPerformanceSettings() consumes.
+   *
+   * @param {object} options
+   * @param {number} [options.fps] target frame rate
+   * @param {string} [options.quality] low | medium | high
+   * @returns {object} the applied values, or null when nothing was usable
+   */
+  setPerformanceTargets({ fps, quality } = {}) {
+    const applied = {}
+
+    const wantedFps = Number(fps)
+    if (Number.isFinite(wantedFps) && wantedFps > 0) {
+      this.targetFPS = wantedFps
+      applied.fps = wantedFps
+    }
+
+    const effectsByQuality = { low: 1, medium: 2, high: 3 }
+    const wantedQuality = String(quality || '').toLowerCase()
+    if (wantedQuality in effectsByQuality) {
+      this.effectsLevel = effectsByQuality[wantedQuality]
+      // Resolution follows quality, using the same ladder the fixed profiles use.
+      const resolutionByQuality = { low: 0.6, medium: 0.75, high: 1.0 }
+      this.resolutionScale = resolutionByQuality[wantedQuality]
+      applied.quality = wantedQuality
+      applied.effects = this.effectsLevel
+      applied.resolution = this.resolutionScale
+    }
+
+    if (Object.keys(applied).length === 0) {
+      console.warn('[PerformanceManager] setPerformanceTargets called with nothing usable', {
+        fps,
+        quality,
+      })
+      return null
+    }
+
+    this.applyPerformanceSettings()
+    console.log('[PerformanceManager] targets applied:', applied)
+    return applied
+  }
+
   setWallpaperMode(mode) {
     const validModes = ['2D', '2.5D', '3D']
     if (!validModes.includes(mode)) {

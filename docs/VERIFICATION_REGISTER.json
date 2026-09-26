@@ -6,7 +6,9 @@
     "claim": "這個改動宣稱做了什麼（一句話）",
     "why_unverified": "為何本機驗不了（環境限制，不是『沒空』）",
     "how_to_verify": "人工驗證步驟，夠具體到別人能照做",
-    "files": ["涉及的檔案路徑"],
+    "files": [
+      "涉及的檔案路徑"
+    ],
     "status": "unverified | verified | wont_verify",
     "verified_how": "status=verified 時必填：什麼環境、什麼結果",
     "added": "YYYY-MM-DD"
@@ -75,6 +77,31 @@
       ],
       "status": "verified",
       "verified_how": "本機實測：python3 cli/main.py --help 正常輸出 usage 並優雅關閉服務，無 await 錯誤；另見 tests/tools/test_cli_tooling.py::test_hsp_cli_help_runs",
+      "added": "2026-09-26"
+    },
+    {
+      "id": "settings-group-a-wired",
+      "area": "settings",
+      "claim": "設定頁的 haptics / modelScale / frameRate+renderQuality / wallpaperMode / backendIp+backendPort 會真正套用（不再只是存檔）",
+      "why_unverified": "applySettingsToApplication 的呼叫鏈可用靜態與 node 行為測試驗證，但「設定視窗勾選後桌面版實際反應」需要啟動 Electron，本機無顯示器",
+      "how_to_verify": "啟動桌面版 → 設定 → 逐項修改並儲存 → 確認：關閉 haptics 後觸控不再震動；模型縮放改變；FPS/品質反映在效能模式；桌布模式切換；後端 IP/埠變更後 WebSocket 重新連線到新位址",
+      "files": [
+        "packages/shared-js/js/settings.js",
+        "packages/shared-js/js/performance-manager.js"
+      ],
+      "status": "unverified",
+      "added": "2026-09-26"
+    },
+    {
+      "id": "settings-remaining-inert",
+      "area": "settings",
+      "claim": "尚有設定只存檔不套用（待續批次處理）：sensitivity、idleMode、clickIntensity、touchIntensity、emotionIntensity、captureSystemAudio、windowOpacity、ttsEngine/ttsVoice/speechRate/speechPitch/speechLanguage、wallpaperEffect、autoSwitchFallback、debugMode、enableCluster/clusterRole/clusterMemoization/clusterIntegerOnly/nodeName",
+      "why_unverified": "這些尚未接上消費端；cluster 類需要後端子系統（目前只有 /api/v1/system/cluster/status），需先做產品決策",
+      "how_to_verify": "每項接上後，把對應條目從本清單移除並在提交說明裡指出實際消費端",
+      "files": [
+        "packages/shared-js/js/settings.js"
+      ],
+      "status": "unverified",
       "added": "2026-09-26"
     }
   ]
