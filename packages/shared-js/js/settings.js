@@ -618,6 +618,26 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
+    // ---- auto-switch on low performance. PerformanceManager already owns a real
+    // FPS watchdog (autoAdjustPerformance -> downgradePerformance/upgradePerformance
+    // with cooldowns and a stability lock) and already had setAutoAdjust(); the
+    // checkbox simply never called it.
+    if (app && app.performanceManager) {
+      if (typeof app.performanceManager.setAutoAdjust === 'function') {
+        app.performanceManager.setAutoAdjust(!!settings.autoSwitchFallback)
+      } else {
+        console.warn('[Settings] setAutoAdjust unavailable; auto-switch unchanged')
+      }
+    }
+
+    // ---- idle mode: the detector is real now (it plays the idle motion after
+    // idleTimeout of no input); this is the switch that governs it.
+    if (app && typeof app.setIdleDetectionEnabled === 'function') {
+      app.setIdleDetectionEnabled(!!settings.idleMode)
+    } else {
+      console.warn('[Settings] setIdleDetectionEnabled unavailable; idle mode unchanged')
+    }
+
     // ---- window opacity. The main window is created transparent (needed for
     // click-through), which is also what setOpacity() requires; the slider had no
     // bridge to the window at all.

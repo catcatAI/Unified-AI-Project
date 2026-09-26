@@ -43,6 +43,9 @@ class AngelaApp {
     this.currentModel = null
     this.idleTimer = null
     this.idleTimeout = 60000
+    this.idleDetectionEnabled = true
+    this.isIdle = false
+    this._lastUserActivity = null
     this.loadingProgress = 0 // 加载进度 0-100
 
     // 初始化顺序追蹤
@@ -1307,8 +1310,74 @@ class AngelaApp {
     // 模型加载逻辑
   }
 
+  /**
+   * Idle detection: play the idle motion after a period without input.
+   *
+   * WHY this is no longer a stub: `idleTimer`, `idleTimeout` and the teardown
+   * that clears the timer were all already here, and `live2dManager` already
+   * supports an `idle` motion — but nothing ever started the timer, so the
+   * settings page's "Enable autonomous behaviors when idle" checkbox described a
+   * behaviour that could not happen. This is the autonomous behaviour itself: a
+   * low-cost idle animation, and nothing more. Genuine backend-driven idle
+   * behaviour would need a proactive endpoint the backend does not expose, and is
+   * deliberately not faked here.
+   */
   _setupIdleDetection() {
-    // 空闲检测
+    if (this._idleActivityHandler) return
+
+    this._idleMotion = 'idle'
+    this._idleActivityHandler = () => this._noteUserActivity()
+
+    for (const event of ['mousemove', 'mousedown', 'keydown', 'wheel', 'touchstart']) {
+      window.addEventListener(event, this._idleActivityHandler, { passive: true })
+    }
+
+    this._noteUserActivity()
+  }
+
+  /** Record activity and (re)arm the idle timer. */
+  _noteUserActivity() {
+    this._lastUserActivity = Date.now()
+    this.isIdle = false
+    if (this.idleTimer) {
+      clearTimeout(this.idleTimer)
+      this.idleTimer = null
+    }
+    if (this.idleDetectionEnabled === false) {
+      return
+    }
+    this.idleTimer = setTimeout(() => this._enterIdle(), this.idleTimeout)
+  }
+
+  _enterIdle() {
+    this.idleTimer = null
+    this.isIdle = true
+    console.log('[App] Idle: playing the idle motion')
+    try {
+      if (this.live2dManager && typeof this.live2dManager.startMotion === 'function') {
+        this.live2dManager.startMotion(this._idleMotion)
+      }
+    } catch (error) {
+      console.warn('[App] idle motion failed:', error)
+    }
+    window.dispatchEvent(new CustomEvent('angela:idle', { detail: { idle: true } }))
+  }
+
+  /** Enable or disable the idle behaviour at runtime (settings page). */
+  setIdleDetectionEnabled(enabled) {
+    this.idleDetectionEnabled = !!enabled
+    if (this.idleDetectionEnabled) {
+      this._noteUserActivity()
+    } else if (this.idleTimer) {
+      clearTimeout(this.idleTimer)
+      this.idleTimer = null
+      this.isIdle = false
+    }
+    return this.idleDetectionEnabled
+  }
+
+  isUserIdle() {
+    return this.isIdle === true
   }
 
   async _syncWithBackend() {

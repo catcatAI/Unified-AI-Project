@@ -169,6 +169,8 @@ REQUIRED_CALLS = {
     "windowOpacity": "window.setOpacity(",
     "captureSystemAudio": "systemAudio.start(",
     "debugMode": "debug.setLogLevel(",
+    "autoSwitchFallback": "setAutoAdjust(",
+    "idleMode": "setIdleDetectionEnabled(",
 }
 
 
@@ -213,6 +215,18 @@ def _apply_body() -> str:
     return tail
 
 
+def _strip_whole_line_comments(text: str) -> str:
+    """Remove `//` comments that start a line.
+
+    A guard must not be satisfied by prose. "already had setAutoAdjust(); the
+    checkbox simply never called it" — a comment explaining the very defect — was
+    enough to keep a guard green after the real call was deleted. Only whole-line
+    comments are stripped, so a `//` inside a string literal ('ws://...') is left
+    alone.
+    """
+    return "\n".join("" if line.lstrip().startswith("//") else line for line in text.split("\n"))
+
+
 def _despaced(text: str) -> str:
     """Strip all whitespace so prettier's line breaks cannot hide a call.
 
@@ -229,7 +243,7 @@ def _despaced(text: str) -> str:
 def test_setting_is_actually_applied(setting, call):
     """A collected-but-unapplied setting is the defect class this file exists for."""
     assert f"s.{setting}" in SETTINGS_JS, f"{setting} is no longer collected"
-    body = _despaced(_apply_body())
+    body = _despaced(_strip_whole_line_comments(_apply_body()))
     assert _despaced(call) in body, f"{setting} is saved but {call} is never called"
     # Also reference the value inside the apply body: several settings share one
     # call, so deleting just this setting's argument left both checks above green
@@ -479,3 +493,121 @@ def test_emotion_change_without_an_intensity_falls_back_instead_of_zeroing():
     )
     out = run_node(script, "app.js", "AngelaApp")
     assert out["ParamEmotionIntensity"] == 0.5, "missing intensity must not read as 0"
+
+
+# --------------------------------------------------------------------------- #
+# AngelaApp idle detection
+# --------------------------------------------------------------------------- #
+def _idle_app(script_body: str) -> dict:
+    """Run idle-detection code with a controllable clock and event target."""
+    script = textwrap.dedent(
+        f"""
+        global.window = {{
+          listeners: {{}},
+          events: [],
+          addEventListener(name, fn) {{ (this.listeners[name] = this.listeners[name] || []).push(fn) }},
+          removeEventListener(name, fn) {{
+            const list = this.listeners[name] || []
+            const i = list.indexOf(fn)
+            if (i >= 0) list.splice(i, 1)
+          }},
+          dispatchEvent(e) {{ this.events.push(e && e.type) }},
+        }}
+        global.CustomEvent = function (type, init) {{ this.type = type; this.detail = (init || {{}}).detail }}
+        global.setTimeout = (fn) => {{ global.__timer = fn; return 1 }}
+        global.clearTimeout = () => {{ global.__timer = null }}
+        const app = Object.create(cls.prototype)
+        app.idleTimer = null
+        app.idleTimeout = 60000
+        app.idleDetectionEnabled = true
+        app.isIdle = false
+        app.live2dManager = {{ motions: [], startMotion(m) {{ this.motions.push(m) }} }}
+        {script_body}
+        """
+    )
+    return run_node(script, "app.js", "AngelaApp")
+
+
+def test_idle_detection_plays_the_idle_motion_after_the_timeout():
+    out = _idle_app(
+        "app._setupIdleDetection()\n"
+        "const armed = global.__timer !== null\n"
+        "if (global.__timer) global.__timer()\n"
+        "return { armed, isIdle: app.isUserIdle(), motions: app.live2dManager.motions }"
+    )
+    assert out["armed"] is True, "the detector must arm a timer"
+    assert out["isIdle"] is True
+    assert out["motions"] == ["idle"]
+
+
+def test_activity_rearms_the_timer_and_leaves_idle():
+    out = _idle_app(
+        "app._setupIdleDetection()\n"
+        "if (global.__timer) global.__timer()\n"
+        "const afterIdle = app.isUserIdle()\n"
+        "app._noteUserActivity()\n"
+        "return { afterIdle, afterActivity: app.isUserIdle(), rearmed: global.__timer !== null }"
+    )
+    assert out["afterIdle"] is True
+    assert out["afterActivity"] is False
+    assert out["rearmed"] is True
+
+
+def test_disabling_idle_detection_clears_the_pending_timer():
+    out = _idle_app(
+        "app._setupIdleDetection()\n"
+        "const enabled = app.setIdleDetectionEnabled(false)\n"
+        "return { enabled, timer: global.__timer, isIdle: app.isUserIdle() }"
+    )
+    assert out["enabled"] is False
+    assert out["timer"] is None, "a disabled detector must not fire later"
+    assert out["isIdle"] is False
+
+
+def test_disabled_detector_does_not_arm_on_activity():
+    out = _idle_app(
+        "app.idleDetectionEnabled = false\n"
+        "app._noteUserActivity()\n"
+        # `|| null`: JSON.stringify drops undefined keys, so an unarmed timer
+        # would otherwise come back as a missing key instead of a null.
+        "return { timer: global.__timer || null }"
+    )
+    assert out["timer"] is None
+
+
+def test_idle_emits_a_dom_event():
+    out = _idle_app(
+        "app._setupIdleDetection()\n"
+        "if (global.__timer) global.__timer()\n"
+        "return { events: global.window.events.slice() }"
+    )
+    assert out["events"] == ["angela:idle"]
+
+
+def test_teardown_removes_the_activity_listeners():
+    out = _idle_app(
+        "app._setupIdleDetection()\n"
+        "const before = Object.keys(global.window.listeners).length\n"
+        "app._idleActivityHandler = null\n"
+        "return { before }"
+    )
+    assert out["before"] == 5, "mousemove/mousedown/keydown/wheel/touchstart must be observed"
+
+
+# --------------------------------------------------------------------------- #
+# PerformanceManager.setAutoAdjust — the watchdog switch
+# --------------------------------------------------------------------------- #
+def test_set_auto_adjust_toggles_the_watchdog_flag():
+    """The settings checkbox reaches the real FPS watchdog switch."""
+    script = textwrap.dedent(
+        """
+        const pm = Object.create(cls.prototype)
+        pm.autoAdjustEnabled = true
+        pm.setAutoAdjust(false)
+        const off = pm.autoAdjustEnabled
+        pm.setAutoAdjust(true)
+        return { off, on: pm.autoAdjustEnabled }
+        """
+    )
+    result = run_node(script, "performance-manager.js", "PerformanceManager")
+    assert result == {"off": False, "on": True}

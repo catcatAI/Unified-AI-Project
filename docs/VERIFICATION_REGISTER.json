@@ -80,11 +80,11 @@
       "added": "2026-09-26"
     },
     {
-      "id": "settings-batch-a-b-c-wired",
+      "id": "settings-batch-a-b-c-d-wired",
       "area": "settings",
-      "claim": "設定頁已接上 15 項：haptics、modelScale、frameRate+renderQuality、wallpaperMode、backendIp/backendPort、speechRate/speechPitch/ttsVoice/speechLanguage、clickIntensity/touchIntensity、wallpaperEffect、emotionIntensity（批次 A/B），以及 windowOpacity、captureSystemAudio、debugMode（批次 C，需新增 IPC）",
+      "claim": "設定頁已接上 20 項：haptics、modelScale、frameRate+renderQuality、wallpaperMode、backendIp/backendPort、speechRate/speechPitch/ttsVoice/speechLanguage、clickIntensity/touchIntensity、wallpaperEffect、emotionIntensity、windowOpacity、captureSystemAudio、debugMode、autoSwitchFallback、idleMode",
       "why_unverified": "applySettingsToApplication 的呼叫鏈可用靜態與 node 行為測試驗證，但「設定視窗勾選後桌面版實際反應」需要啟動 Electron，本機無顯示器",
-      "how_to_verify": "啟動桌面版 → 設定 → 逐項修改並儲存 → 確認：haptics 關閉後不震動；模型縮放改變；FPS/品質反映在效能模式；桌布模式與效果可見；後端 IP/埠變更後 WebSocket 重新連線；語速/音高/語音影響朗讀；情緒強度影響 Live2D 參數；主視窗透明度改變；系統音訊擷取在 Linux 應顯示不支援（而非假裝開啟）；除錯模式切換後主控台 verbose 輸出改變",
+      "how_to_verify": "啟動桌面版 → 設定 → 逐項修改並儲存 → 確認：haptics、模型縮放、FPS/品質、桌布模式與效果、後端 IP/埠重新連線、語速/音高/語音、情緒強度、主視窗透明度、系統音訊（Linux 應顯示不支援）、除錯模式日誌層級、關閉自動切換後低幀率不再降級（開啟時會降級）、閒置 60 秒後 Angela 播放 idle 動作、任何操作後恢復",
       "files": [
         "packages/shared-js/js/settings.js",
         "packages/shared-js/js/performance-manager.js",
@@ -92,7 +92,8 @@
         "packages/shared-js/js/haptic-handler.js",
         "packages/shared-js/js/wallpaper-handler.js",
         "apps/desktop-app/electron_app/preload.js",
-        "apps/desktop-app/electron_app/main.js"
+        "apps/desktop-app/electron_app/main.js",
+        "packages/shared-js/js/app.js"
       ],
       "status": "unverified",
       "added": "2026-09-26"
@@ -100,9 +101,9 @@
     {
       "id": "settings-remaining-need-product-decision",
       "area": "settings",
-      "claim": "9 個設定仍只存檔不套用，且都不是「接線」問題：enableCluster/clusterRole/clusterMemoization/clusterIntegerOnly/nodeName（後端只有 /api/v1/system/cluster/status，接上等於要建 cluster 子系統）、autoSwitchFallback（沒有低效能看門狗，switchToFallback() 只在載入失敗時呼叫）、idleMode（app.js _setupIdleDetection() 是空 stub，且後端無 proactive 端點）、ttsEngine（renderer 只有 Web Speech，Edge/Google 需要後端 TTS 端點）、sensitivity（語意未定義；setTrackingSensitivity 由 state-matrix 的 attention 軸驅動，使用者偏好會與情緒系統衝突）",
+      "claim": "7 個設定仍只存檔不套用，且都不是「接線」問題：enableCluster/clusterRole/clusterMemoization/clusterIntegerOnly/nodeName（後端只有 /api/v1/system/cluster/status，接上等於要建 cluster 子系統）、ttsEngine（renderer 只有 Web Speech，Edge/Google 需要後端 TTS 端點；core/art/real_edge_tts.py 未經 HTTP 暴露）、sensitivity（無可接的實作：state-matrix 呼叫 setTrackingSensitivity 前會先探測，而 Live2DManager 從未定義該方法；且它由 attention 軸驅動，使用者偏好會與情緒系統衝突）",
       "why_unverified": "這些需要產品決策（要建什麼、語意是什麼），不是機械式接線；在決策前維持現狀並記錄在此，避免再被當成已完成",
-      "how_to_verify": "決策後逐項處理：可接線者接上並加行為測試；需建子系統者明確排期；語意不明者先定義語意。完成後從本清單移除",
+      "how_to_verify": "決策後逐項處理。註：autoSwitchFallback 與 idleMode 原先也被列為需決策，後來確認 setAutoAdjust() 與 idle motion 早已存在、缺的只是呼叫路徑，已完成接線",
       "files": [
         "packages/shared-js/js/settings.js"
       ],
