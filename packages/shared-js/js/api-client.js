@@ -430,3 +430,12 @@ class AngelaAPIClient {
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = AngelaAPIClient
 }
+
+// A classic <script> has no `module`, so module.exports never runs and the
+// symbol would stay invisible to every `window.AngelaAPIClient` reader. Assign both
+// (same pattern as settings-manager.js) so the desktop preload-less renderer
+// and the web viewer see the same globals.
+
+if (typeof window !== 'undefined') {
+  window.AngelaAPIClient = AngelaAPIClient
+}

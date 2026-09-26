@@ -472,3 +472,12 @@ class I18nManager {
 }
 
 const i18n = new I18nManager()
+
+// A classic <script> has no `module`, so module.exports never runs and the
+// symbol would stay invisible to every `window.i18n` reader. Assign both
+// (same pattern as settings-manager.js) so the desktop preload-less renderer
+// and the web viewer see the same globals.
+
+if (typeof window !== 'undefined') {
+  window.i18n = i18n
+}

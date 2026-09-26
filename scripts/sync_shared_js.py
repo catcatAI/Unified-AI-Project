@@ -133,7 +133,8 @@ def verify(surface: str, check_only: bool) -> int:
             failures.append(f"{entry}: missing HTML entry point")
             continue
         with open(html_path, encoding="utf-8") as fh:
-            sources = _SCRIPT_SRC.findall(fh.read())
+            # "?v=3" is a cache-busting suffix, not part of the path.
+            sources = [raw.split("?")[0] for raw in _SCRIPT_SRC.findall(fh.read())]
         for src in sources:
             if src.startswith(("http://", "https://", "//", "data:")):
                 continue

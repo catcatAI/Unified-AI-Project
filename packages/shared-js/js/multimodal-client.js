@@ -181,3 +181,12 @@ class MultimodalAPIClient {
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = MultimodalAPIClient
 }
+
+// A classic <script> has no `module`, so module.exports never runs and the
+// symbol would stay invisible to every `window.MultimodalAPIClient` reader. Assign both
+// (same pattern as settings-manager.js) so the desktop preload-less renderer
+// and the web viewer see the same globals.
+
+if (typeof window !== 'undefined') {
+  window.MultimodalAPIClient = MultimodalAPIClient
+}

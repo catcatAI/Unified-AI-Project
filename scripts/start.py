@@ -51,6 +51,21 @@ def start_web_viewer():
         logger.warning("Web viewer not found at %s", web_dir)
         return None
 
+    # The viewer's shared modules must exist *inside* the served directory:
+    # `python -m http.server` cannot serve ../.. , so a page referencing
+    # ../../packages/shared-js/js/… loaded nothing and every shared global
+    # (AngelaApp, TerminalUI, AngelaAPIClient, …) was undefined. Sync first and
+    # refuse to start a server that would only serve a broken page.
+    sync = subprocess.run(
+        [sys.executable, os.path.join(ROOT, "scripts", "sync_shared_js.py"), "--surface", "web"],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+    )
+    if sync.returncode != 0:
+        logger.error("Web viewer asset check failed:\n%s", sync.stdout or sync.stderr)
+        return None
+
     proc = subprocess.Popen(
         [sys.executable, "-m", "http.server", "8080"],
         cwd=web_dir,

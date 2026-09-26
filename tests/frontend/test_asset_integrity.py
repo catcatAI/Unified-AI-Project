@@ -32,9 +32,8 @@ SYNC_SCRIPT = ROOT / "scripts" / "sync_shared_js.py"
 SOURCE_DIR = ROOT / "packages" / "shared-js" / "js"
 _SCRIPT_SRC = re.compile(r'<script[^>]+src="([^"]+)"', re.IGNORECASE)
 
-# Surfaces whose assets are vendored by scripts/sync_shared_js.py. "web" joins
-# this list once its index.html stops reaching out of its own directory.
-WIRED_SURFACES = ("desktop",)
+# Surfaces whose assets are vendored by scripts/sync_shared_js.py.
+WIRED_SURFACES = ("desktop", "web")
 
 SURFACES = {
     "desktop": (
@@ -153,7 +152,7 @@ class TestFrontendAssetIntegrity:
     def test_check_mode_is_side_effect_free(self):
         """--check must verify without writing, so CI can use it."""
         result = subprocess.run(
-            [sys.executable, str(SYNC_SCRIPT), "--check", "--surface", "desktop"],
+            [sys.executable, str(SYNC_SCRIPT), "--check"],
             cwd=str(ROOT),
             capture_output=True,
             text=True,
@@ -259,3 +258,51 @@ class TestPackagedAppCanBoot:
         )
         assert any("electron_app/**/*" in g for g in package["build"]["files"])
         assert (ROOT / "apps/desktop-app/electron_app/libs/shared-js").is_dir()
+
+
+class TestSharedGlobalsAreExported:
+    """A classic <script> has no `module`, so `module.exports` never runs.
+
+    Seven shared modules were read as `window.<symbol>` by the surfaces while
+    only assigning `module.exports`. In a renderer that left every one of them
+    undefined — the web viewer's chat panel and the whole multimodal panel were
+    dead because `unified-shell.js` bails on `if (window.AngelaAPIClient)`.
+    """
+
+    def _shared_modules(self):
+        return sorted(SOURCE_DIR.glob("*.js"))
+
+    def _window_symbols_read_by_surfaces(self):
+        import re as _re
+
+        readers = {}
+        for base in (ROOT / "apps/web-live2d-viewer", ROOT / "apps/desktop-app/electron_app"):
+            for path in list(base.rglob("*.js")) + list(base.rglob("*.html")):
+                text = path.read_text(encoding="utf-8", errors="ignore")
+                for match in _re.finditer(r"window\.([A-Za-z_$][\w$]*)", text):
+                    readers.setdefault(match.group(1), set()).add(str(path))
+        return readers
+
+    def test_every_window_symbol_read_from_a_shared_module_is_assigned(self):
+        import re as _re
+
+        readers = self._window_symbols_read_by_surfaces()
+        missing = []
+        for module in self._shared_modules():
+            text = module.read_text(encoding="utf-8", errors="ignore")
+            declared = set(
+                _re.findall(r"^(?:class|function|const|let|var)\s+([A-Za-z_$][\w$]*)", text, _re.M)
+            )
+            for symbol in sorted(declared & readers.keys()):
+                if not _re.search(rf"window\.{_re.escape(symbol)}\s*=", text):
+                    missing.append(f"{module.name}: {symbol} (read as window.{symbol})")
+        assert not missing, "shared modules never assigned to window:\n" + "\n".join(missing)
+
+    def test_viewer_launcher_verifies_assets_before_serving(self):
+        """scripts/start.py serves this directory; a broken page must not boot."""
+        source = (ROOT / "scripts" / "start.py").read_text(encoding="utf-8")
+        viewer_fn = source[source.index("def start_web_viewer"):]
+        viewer_fn = viewer_fn[: viewer_fn.index("def main")]
+        assert "sync_shared_js.py" in viewer_fn
+        assert "--surface" in viewer_fn and "web" in viewer_fn
+        assert "return None" in viewer_fn, "must refuse to serve a broken page"
