@@ -255,43 +255,46 @@ class TestRendererEventChannels:
             f"{unlisted}"
         )
 
-    def test_document_which_allowed_channels_have_no_sender(self):
-        """Records the known gap instead of pretending the events exist.
+    def _producers(self) -> set:
+        """Every channel the main process actually pushes to a renderer.
 
-        As of this commit the Electron main process sends exactly one renderer
-        event ('open-tab'), so the other allowlisted channels have no producer.
-        Wiring them is a design decision, not a mechanical fix, so this test
-        documents the set and fails loudly if a new unsent subscription appears
-        or an old one is retired without updating the note.
+        The first version of this audit only looked for `webContents.send(...)`
+        and concluded that the main process sends a single event. That was wrong:
+        main.js also pushes through sendToMainWindow()/sendToWindow() helpers, so
+        the four websocket-* channels looked dead when they are the busiest
+        events in the app. Any scan of this kind has to follow the indirection.
         """
-        sent = set(
-            re.findall(
-                r"webContents\.send\(\s*'([^']+)'", self.MAIN.read_text(encoding="utf-8")
-            )
-        )
-        unsent = sorted(self._allowlist() - sent)
-        assert unsent == [
-            "always-on-top-changed",
-            "backend-ip-changed",
-            "click-through-regions-updated",
-            "module-toggle",
-            "performance-auto-adjust",
-            "performance-mode-changed",
-            "plugins-changed",
-            "reload-model",
-            "render-mode",
-            "screen-changed",
-            "theme-changed",
-            "wallpaper-inject-object",
-            "wallpaper-mode-changed",
-            "websocket-connected",
-            "websocket-disconnected",
-            "websocket-error",
-            "websocket-message",
-            "websocket-send-result",
-            "window-ready",
-        ], (
-            "the set of allowlisted-but-unsent renderer events changed; update this "
-            "record when a sender is added or a channel retired"
-        )
+        found = set()
+        for f in sorted((ROOT / "apps/desktop-app/electron_app").rglob("*.js")):
+            if "/libs/" in str(f):
+                continue  # vendored shared-js copy
+            text = f.read_text(encoding="utf-8", errors="ignore")
+            for pattern in (
+                r"webContents\.send\(\s*'([^']+)'",
+                r"sendToMainWindow\(\s*'([^']+)'",
+                r"sendToWindow\([^,]+,\s*'([^']+)'",
+                r"\.send\(\s*'([\w-]+)'",
+            ):
+                found.update(re.findall(pattern, text))
+        return found
 
+    def test_every_subscription_has_a_producer(self):
+        """A subscribed channel nobody sends is a listener that cannot run."""
+        dead = {
+            channel: sorted(files)
+            for channel, files in self._subscriptions().items()
+            if channel not in self._producers()
+        }
+        assert not dead, f"subscribed renderer events with no main-process sender: {dead}"
+
+    def test_every_allowlisted_channel_is_either_sent_or_documented(self):
+        """The allowlist may exceed reality, but not silently.
+
+        `performance-auto-adjust` and `websocket-send-result` are allowlisted and
+        have neither a sender nor a subscriber today. They are recorded here so
+        the pair cannot grow unnoticed.
+        """
+        unused = sorted(self._allowlist() - self._producers())
+        assert unused == ["performance-auto-adjust", "websocket-send-result"], (
+            "allowlisted channels with no sender changed; update this record"
+        )
