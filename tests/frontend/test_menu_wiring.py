@@ -215,3 +215,83 @@ class TestIpcBridgeCompleteness:
             "auto-start is read and saved but never applied to the OS — the original defect"
         )
 
+
+class TestRendererEventChannels:
+    """electronAPI.on() silently drops any channel outside preload's allowlist.
+
+    WHY: preload.js guards its generic `on(channel, cb)` with a validChannels
+    list and simply returns when the channel is not in it — no error, no log.
+    wallpaper-handler.js subscribed to 'hardware-update', which was neither
+    allowlisted nor ever sent by the main process, so the handler could not run
+    while appearing to be live hardware adaptation.
+    """
+
+    PRELOAD = ROOT / "apps/desktop-app/electron_app/preload.js"
+    MAIN = ROOT / "apps/desktop-app/electron_app/main.js"
+
+    def _allowlist(self) -> set:
+        preload = self.PRELOAD.read_text(encoding="utf-8")
+        block = re.search(r"const validChannels = \[(.*?)\]", preload, re.S)
+        assert block, "preload.js no longer has a validChannels allowlist"
+        return set(re.findall(r"'([^']+)'", block.group(1)))
+
+    def _subscriptions(self) -> dict:
+        found = {}
+        for f in sorted((ROOT / "packages/shared-js/js").glob("*.js")):
+            text = f.read_text(encoding="utf-8", errors="ignore")
+            for channel in re.findall(r"electronAPI\??\.on\(\s*'([^']+)'", text):
+                found.setdefault(channel, set()).add(f.name)
+        return found
+
+    def test_every_subscription_is_allowlisted(self):
+        """A non-allowlisted subscription is a guaranteed no-op."""
+        unlisted = {
+            channel: sorted(files)
+            for channel, files in self._subscriptions().items()
+            if channel not in self._allowlist()
+        }
+        assert not unlisted, (
+            "electronAPI.on() ignores these channels, so the listeners never run: "
+            f"{unlisted}"
+        )
+
+    def test_document_which_allowed_channels_have_no_sender(self):
+        """Records the known gap instead of pretending the events exist.
+
+        As of this commit the Electron main process sends exactly one renderer
+        event ('open-tab'), so the other allowlisted channels have no producer.
+        Wiring them is a design decision, not a mechanical fix, so this test
+        documents the set and fails loudly if a new unsent subscription appears
+        or an old one is retired without updating the note.
+        """
+        sent = set(
+            re.findall(
+                r"webContents\.send\(\s*'([^']+)'", self.MAIN.read_text(encoding="utf-8")
+            )
+        )
+        unsent = sorted(self._allowlist() - sent)
+        assert unsent == [
+            "always-on-top-changed",
+            "backend-ip-changed",
+            "click-through-regions-updated",
+            "module-toggle",
+            "performance-auto-adjust",
+            "performance-mode-changed",
+            "plugins-changed",
+            "reload-model",
+            "render-mode",
+            "screen-changed",
+            "theme-changed",
+            "wallpaper-inject-object",
+            "wallpaper-mode-changed",
+            "websocket-connected",
+            "websocket-disconnected",
+            "websocket-error",
+            "websocket-message",
+            "websocket-send-result",
+            "window-ready",
+        ], (
+            "the set of allowlisted-but-unsent renderer events changed; update this "
+            "record when a sender is added or a channel retired"
+        )
+

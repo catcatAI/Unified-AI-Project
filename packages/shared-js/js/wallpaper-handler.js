@@ -70,14 +70,12 @@ class WallpaperHandler {
     window.addEventListener('resize', this._boundResize)
 
     // Listen for hardware changes
-    if (window.electronAPI) {
-      this._hwUpdateHandler = (data) => {
-        if (this.autoAdjustEnabled) {
-          this._adjustToHardware(data.tier)
-        }
-      }
-      window.electronAPI.on('hardware-update', this._hwUpdateHandler)
-    }
+    // WHY there is no 'hardware-update' subscription any more: nothing in the
+    // Electron main process ever sent that channel, and it is not in preload.js's
+    // validChannels allowlist either, so electronAPI.on() dropped the callback on
+    // the floor — the handler could never run while looking as if live hardware
+    // adaptation was wired. Adapt-on-start is real and still happens, in
+    // _detectHardwareTier() below, which reads the detected profile directly.
 
     console.log('Wallpaper Handler initialized')
   }
@@ -561,10 +559,7 @@ class WallpaperHandler {
       window.removeEventListener('mousemove', this._parallaxHandler)
       this._parallaxHandler = null
     }
-    if (this._hwUpdateHandler && window.electronAPI) {
-      window.electronAPI.off?.('hardware-update', this._hwUpdateHandler)
-      this._hwUpdateHandler = null
-    }
+    // (the former 'hardware-update' listener is gone with the subscription)
   }
 }
 
