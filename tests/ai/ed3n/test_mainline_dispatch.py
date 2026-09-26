@@ -59,11 +59,23 @@ def test_plan_actions_generate_only_forward():
 
 def test_plan_actions_train_is_multi_action():
     env = build_envelope({"text": "訓練這個模式", "time": "08/12,18:30"})
-    actions = plan_actions(env)
+    actions = plan_actions(env, response_text="好，我會記住這個模式。")
     types = {a.action for a in actions}
     assert ActionType.FORWARD in types
     assert ActionType.LEARN in types
     assert ActionType.TRAIN in types
+
+
+def test_plan_actions_omits_train_without_a_response():
+    """A training sample needs the assistant's reply to be learnable.
+
+    The old contract emitted TRAIN with {"input": …, "time": …} only, so the
+    queue filled with rows no trainer could act on. See
+    tests/ai/core/test_training_processors.py for the full contract.
+    """
+    env = build_envelope({"text": "訓練這個模式", "time": "08/12,18:30"})
+    types = {a.action for a in plan_actions(env)}
+    assert ActionType.TRAIN not in types
 
 
 def test_dispatch_attaches_intent():
@@ -84,7 +96,20 @@ def test_training_priority_queue_orders_execution():
 def test_dispatch_leaves_training_work_for_coordinator_owner():
     tc = TrainingCoordinator()
 
-    decision = dispatch({"text": "訓練這個模式"}, training_coordinator=tc)
+    decision = dispatch(
+        {"text": "訓練這個模式"},
+        training_coordinator=tc,
+        response_text="好，我會記住這個模式。",
+    )
 
     assert decision.intent is DispatchIntent.TRAIN
     assert tc.pending_training_count() == 1
+
+
+def test_dispatch_skips_untrainable_sample():
+    tc = TrainingCoordinator()
+
+    decision = dispatch({"text": "訓練這個模式"}, training_coordinator=tc)
+
+    assert decision.intent is DispatchIntent.TRAIN
+    assert tc.pending_training_count() == 0, "input-only samples must not be queued"

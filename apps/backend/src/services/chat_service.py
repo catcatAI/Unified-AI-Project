@@ -584,6 +584,25 @@ class ChatService:
         若 backbone 單例可用則經 `backbone.trigger_learning()` 依序執行
         已註冊 learners；否則 fallback 到原本的內嵌觸發（保持行為不倒退）。
         """
+        # Mainline dispatch: an explicit "train me" request becomes a *trainable*
+        # (input, output) sample in the TrainingCoordinator queue. Before this,
+        # dispatch() had no production caller at all, so the priority queue never
+        # received anything and the "sorted training execution" path was
+        # unreachable end to end.
+        try:
+            from services.mainline_dispatcher import dispatch as _mainline_dispatch
+            from services.mainline_dispatcher import DispatchIntent as _DispatchIntent
+
+            decision = _mainline_dispatch(
+                {"text": user_message},
+                training_coordinator=self._training_coordinator,
+                response_text=response.text,
+            )
+            if decision.intent is _DispatchIntent.TRAIN:
+                self._apply_training_outcome(response, merged_context)
+        except Exception as exc:
+            logger.debug("Mainline dispatch failed (non-fatal): %s", exc, exc_info=True)
+
         try:
             from core.backbone import get_backbone
 
@@ -596,6 +615,46 @@ class ChatService:
             return
         await self._process_continuous_learning(user_message, response, merged_context)
         await self._process_garden_learning(user_message, response)
+
+    def _apply_training_outcome(self, response, merged_context: dict) -> None:
+        """Tell the user the truth about a "train me" request.
+
+        A queued sample is not a trained model. With the legacy learners off (the
+        default) the sample is accepted and delivered, but nothing learns — so the
+        reply must say so instead of letting the LLM imply it learned.
+        """
+        status = self.learning_status()
+        merged_context["_training_requested"] = True
+        merged_context["_training_effective"] = status["active"]
+        merged_context["_training_status"] = status
+        if status["active"]:
+            note = "（已加入訓練佇列，會由持續學習消化。）"
+        else:
+            note = (
+                "（注意：持續學習目前未啟用，這則訊息只會被記錄，"
+                f"不會真的訓練模型；設定 {status['enable_env']}=1 可啟用。）"
+            )
+        text = getattr(response, "text", "") or ""
+        if text and note not in text:
+            try:
+                response.text = f"{text.rstrip()}\n{note}"
+            except Exception as exc:  # pragma: no cover - defensive
+                logger.debug("Could not append training note: %s", exc)
+
+    def learning_status(self) -> Dict[str, Any]:
+        """Which learners are actually able to learn right now.
+
+        The legacy ED3N pipeline and the legacy GARDEN engine are both opt-in
+        (``ANGELA_LEGACY_ED3N=1``; the unified engine is the text core now), so in
+        a default run both learners are registered but inert. Anything that
+        claims "I learned from that" must consult this instead of assuming.
+        """
+        return {
+            "continuous": self._continuous_learning is not None,
+            "garden": self._garden_engine is not None,
+            "active": bool(self._continuous_learning or self._garden_engine),
+            "enable_env": "ANGELA_LEGACY_ED3N",
+        }
 
     async def _process_continuous_learning(
         self, user_message: str, response, merged_context: dict

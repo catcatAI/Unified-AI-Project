@@ -809,10 +809,16 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     _try_init_causal_reasoning()
     _try_init_session_manager()
     # TrainingCoordinator owns training execution: its worker dispatches queued
-    # samples to the processors registered by each domain owner. Started here so
-    # ingest-time enqueues are actually consumed by their owner.
+    # samples to the processors registered by each domain owner. Without a
+    # processor every sample was deferred forever, so the processors are
+    # registered here — before the worker starts — pointing at the trainer that
+    # already owns learning (ContinuousLearningPipeline).
     try:
-        await get_training_coordinator().start_training_worker()
+        _coordinator = get_training_coordinator()
+        from ai.core.training_processors import register_default_processors
+
+        register_default_processors(_coordinator)
+        await _coordinator.start_training_worker()
     except Exception:
         logger.warning(
             "[TrainingCoordinator] Worker start skipped — samples stay queued",

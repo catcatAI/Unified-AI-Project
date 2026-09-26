@@ -149,11 +149,16 @@ def _priority_for(envelope: InputEnvelope, decision: DispatchDecision) -> float:
 def plan_actions(
     envelope: InputEnvelope,
     decision: Optional[DispatchDecision] = None,
+    response_text: Optional[str] = None,
 ) -> List[Action]:
     """Map a dispatch decision to concrete actions.
 
     GENERATE -> FORWARD only. LEARN/TRAIN additionally append their action so a
     single input can both generate AND be learned/trained (multi-action set).
+
+    A TRAIN action carries the (input, output) pair when the caller has the
+    assistant's reply; without it only FORWARD/LEARN are produced, because an
+    input-only sample cannot be trained on.
     """
     if decision is None:
         decision = classify_dispatch(envelope.text)
@@ -165,17 +170,23 @@ def plan_actions(
                 {"text": envelope.text, "time": envelope.time},
             )
         )
-    if decision.intent == DispatchIntent.TRAIN:
+    if decision.intent == DispatchIntent.TRAIN and response_text:
         actions.append(
             Action(
                 ActionType.TRAIN,
                 {
                     "domain": decision.sub_type or "general",
-                    "sample": {"input": envelope.text, "time": envelope.time},
+                    "sample": {
+                        "input": envelope.text,
+                        "output": response_text,
+                        "time": envelope.time,
+                    },
                     "priority": _priority_for(envelope, decision),
                 },
             )
         )
+    elif decision.intent == DispatchIntent.TRAIN:
+        logger.debug("TRAIN intent without response text — no training action emitted")
     return actions
 
 
@@ -183,23 +194,44 @@ def dispatch(
     request: Dict[str, Any],
     training_coordinator: Optional[Any] = None,
     learn_fn: Optional[Any] = None,
+    response_text: Optional[str] = None,
 ) -> DispatchDecision:
     """Best-effort ingest dispatch.
 
     Builds the envelope, classifies, and performs the non-generative actions
     (enqueue training / call learn_fn) without ever raising into the caller's
     response path. Returns the decision for observability.
+
+    ``response_text`` is REQUIRED for a sample to be trainable: the queue feeds a
+    trainer, and a trainer needs the pair (user text, Angela's reply). Without the
+    reply the sample used to be enqueued anyway, which filled the priority queue
+    with un-trainable rows that no processor could ever act on — the "sorted
+    training execution" feature therefore looked alive and was not. An incomplete
+    sample is now counted and dropped instead of pretending.
     """
     envelope = build_envelope(request)
     decision = classify_dispatch(envelope.text)
     try:
-        actions = plan_actions(envelope, decision)
+        actions = plan_actions(envelope, decision, response_text=response_text)
         for action in actions:
             if action.action is ActionType.TRAIN and training_coordinator is not None:
+                sample = action.payload.get("sample", {})
+                if not sample.get("output"):
+                    logger.info(
+                        "Skipping untrainable sample for domain=%s (no assistant output)",
+                        action.payload.get("domain", "general"),
+                    )
+                    continue
                 training_coordinator.enqueue(
                     domain=action.payload.get("domain", "general"),
-                    sample=action.payload.get("sample", {}),
+                    sample=sample,
                     priority=action.payload.get("priority", 0.0),
+                )
+                logger.info(
+                    "Queued training sample (domain=%s, %d chars in / %d chars out)",
+                    action.payload.get("domain", "general"),
+                    len(str(sample.get("input", ""))),
+                    len(str(sample.get("output", ""))),
                 )
             elif action.action is ActionType.LEARN and learn_fn is not None:
                 learn_fn(action.payload)
