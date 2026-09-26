@@ -98,11 +98,11 @@
       "added": "2026-09-26"
     },
     {
-      "id": "settings-remaining-inert",
+      "id": "settings-remaining-need-product-decision",
       "area": "settings",
-      "claim": "尚有設定只存檔不套用（待續批次）：sensitivity、idleMode、ttsEngine、autoSwitchFallback、enableCluster、clusterRole、clusterMemoization、clusterIntegerOnly、nodeName",
-      "why_unverified": "這些尚未接上消費端；cluster 類需要後端子系統（目前只有 /api/v1/system/cluster/status），需先做產品決策",
-      "how_to_verify": "每項接上後從本清單移除並在提交說明指出實際消費端。cluster 五項需產品決策：後端只有 /api/v1/system/cluster/status，接上等於要建子系統而非接線",
+      "claim": "9 個設定仍只存檔不套用，且都不是「接線」問題：enableCluster/clusterRole/clusterMemoization/clusterIntegerOnly/nodeName（後端只有 /api/v1/system/cluster/status，接上等於要建 cluster 子系統）、autoSwitchFallback（沒有低效能看門狗，switchToFallback() 只在載入失敗時呼叫）、idleMode（app.js _setupIdleDetection() 是空 stub，且後端無 proactive 端點）、ttsEngine（renderer 只有 Web Speech，Edge/Google 需要後端 TTS 端點）、sensitivity（語意未定義；setTrackingSensitivity 由 state-matrix 的 attention 軸驅動，使用者偏好會與情緒系統衝突）",
+      "why_unverified": "這些需要產品決策（要建什麼、語意是什麼），不是機械式接線；在決策前維持現狀並記錄在此，避免再被當成已完成",
+      "how_to_verify": "決策後逐項處理：可接線者接上並加行為測試；需建子系統者明確排期；語意不明者先定義語意。完成後從本清單移除",
       "files": [
         "packages/shared-js/js/settings.js"
       ],
