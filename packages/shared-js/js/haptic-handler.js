@@ -440,6 +440,20 @@ class HapticHandler {
     this.isEnabled = false
   }
 
+  /**
+   * 開關介面（選單與 app.js 的 module-toggle 都呼叫這個）。
+   *
+   * WHY: callers had been probing for setEnabled and always found nothing, so
+   * the Tactile System checkbox could never take effect.
+   */
+  setEnabled(enabled) {
+    this.isEnabled = Boolean(enabled)
+    if (!this.isEnabled) {
+      this.stopAll?.()
+    }
+    return this.isEnabled
+  }
+
   shutdown() {
     for (const [deviceId] of this.connectedDevices) {
       this.disconnectDevice(deviceId)

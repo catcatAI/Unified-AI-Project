@@ -55,9 +55,11 @@ class TrayManager {
       { id: 'settings', label: '设置', click: () => this._onSettings() },
       { id: 'about', label: '关于', click: () => this._onAbout() },
       { type: 'separator' },
-      { id: 'start', label: '启动Angela', click: () => this._onStart() },
-      { id: 'stop', label: '停止Angela', click: () => this._onStop() },
-      { type: 'separator' },
+      // NOTE: 「启动Angela」/「停止Angela」 were removed on purpose. The Electron
+      // main process does not own the backend lifecycle (run_angela.py starts
+      // it), so those two items could never do anything — a menu entry that
+      // silently does nothing is exactly the defect class being fixed. Put
+      // backend supervision here first, then re-add them.
       { id: 'restart', label: '重启', click: () => this._onRestart() },
       { type: 'separator' },
       { id: 'quit', label: '退出', click: () => this._onQuit() },
@@ -84,7 +86,17 @@ class TrayManager {
           id: item.id,
           label: item.label,
           type: 'normal',
-          click: () => this._handleItemClick(item),
+          // Honour the item's own click handler. Previously every item's `click`
+          // arrow was discarded and replaced with _handleItemClick(item), which
+          // looks up `callbacks[item.id]` — the menu id ('show', 'hide', …),
+          // while main.js registers the handler names ('showWindow',
+          // 'hideWindow', …). 7 of 9 tray items therefore did nothing at all,
+          // even though _onShowWindow() and friends existed and were correct.
+          // The id-based dispatch stays as the fallback for items that do not
+          // bring their own handler.
+          click: item.click
+            ? () => this._handleItemClick(item, item.click)
+            : () => this._handleItemClick(item),
         }
       })
 
@@ -103,13 +115,21 @@ class TrayManager {
   /**
    * 处理菜单项点击
    * @param {Object} item - 菜单项
+   * @param {Function} [itemClick] - 菜单项自带的处理器（优先使用）
    */
-  _handleItemClick(item) {
+  _handleItemClick(item, itemClick) {
     console.log('[TrayManager] Menu item clicked:', item.id)
 
-    // 调用回调
-    if (this.callbacks[item.id]) {
+    // 菜单项自带的处理器
+    if (typeof itemClick === 'function') {
+      itemClick()
+    } else if (this.callbacks[item.id]) {
+      // 回退：按菜单 id 查回调
       this.callbacks[item.id]()
+    } else {
+      console.warn(
+        `[TrayManager] No handler for menu item "${item.id}" — registering one does nothing`
+      )
     }
 
     // 调用通用回调

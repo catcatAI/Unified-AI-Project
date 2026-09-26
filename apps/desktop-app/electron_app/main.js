@@ -298,6 +298,261 @@ app.on('before-quit', (e) => {
 /**
  * Create the main desktop pet window
  */
+/**
+ * 右鍵選單樣板 —— createMainWindow 與 Toggle Frame 共用。
+ *
+ * WHY: the Toggle Frame item used to rebuild the BrowserWindow and attach
+ * nothing, so the right-click menu died with the old window. Both paths now
+ * call one builder instead of keeping two copies of a 200-line template.
+ */
+function buildContextMenuTemplate() {
+  return Menu.buildFromTemplate([
+    {
+      label: 'Show/Hide Angela',
+      click: () => {
+        if (mainWindow.isVisible()) {
+          mainWindow.hide()
+        } else {
+          mainWindow.show()
+          mainWindow.focus()
+        }
+      },
+    },
+    { type: 'separator' },
+    {
+      label: 'Settings',
+      click: () => {
+        createSettingsWindow()
+      },
+    },
+    {
+      label: 'Reload Model',
+      click: () => {
+        sendToMainWindow('reload-model')
+      },
+    },
+    { type: 'separator' },
+    {
+      label: 'Toggle Always on Top',
+      click: () => {
+        const current = mainWindow.isAlwaysOnTop()
+        mainWindow.setAlwaysOnTop(!current)
+        sendToMainWindow('always-on-top-changed', { alwaysOnTop: !current })
+      },
+    },
+    {
+      label: 'Toggle Frame',
+      click: () => {
+        const { BrowserWindow } = require('electron')
+        const bounds = mainWindow.getBounds()
+        const wasFrameless = mainWindow.isFrameless()
+        const wasAlwaysOnTop = mainWindow.isAlwaysOnTop()
+        mainWindow.destroy()
+        const newWin = new BrowserWindow({
+          x: bounds.x,
+          y: bounds.y,
+          width: bounds.width,
+          height: bounds.height,
+          frame: wasFrameless,
+          transparent: !wasFrameless,
+          alwaysOnTop: wasAlwaysOnTop,
+          skipTaskbar: false,
+          acceptFirstMouse: true,
+          show: false,
+          webPreferences: {
+            preload: require('path').join(__dirname, 'preload.js'),
+            contextIsolation: true,
+            nodeIntegration: false,
+            sandbox: false, // Live2D needs it (see createMainWindow)
+            webSecurity: true,
+            webgl: true,
+            enableWebGL2: true,
+            hardwareAcceleration: 'force',
+            experimentalFeatures: true,
+            devTools: true,
+          },
+        })
+        newWin.setMinimumSize(200, 300)
+
+        // WHY: this handler used to replace the window and attach nothing.
+        // The destroyed window's listeners died with it, so one use of this
+        // menu item permanently removed the right-click menu
+        // (context-menu), the window-ready IPC and plugin watcher
+        // (ready-to-show) and window-position persistence (moved).
+        attachContextMenu(newWin)
+        newWin.webContents.on('did-finish-load', () => {
+          log.info('[Window] Page loaded successfully (frame toggled)')
+        })
+        newWin.on('ready-to-show', () => {
+          newWin.show()
+          newWin.setAlwaysOnTop(true)
+          newWin.focus()
+          sendToMainWindow('window-ready', {
+            bounds: safeMainWindowCall((w) => w.getBounds()) || newWin.getBounds(),
+          })
+          startPluginWatcher()
+        })
+        newWin.on('moved', () => {
+          const newBounds = newWin.getBounds()
+          log.info('[Window] Window moved to:', newBounds)
+          saveWindowPosition(newBounds)
+        })
+
+        newWin.loadFile(require('path').join(__dirname, 'index.html'))
+        mainWindow = newWin
+      },
+    },
+    { type: 'separator' },
+    {
+      label: 'Rendering Mode',
+      submenu: [
+        {
+          label: 'Live2D (Animated)',
+          type: 'radio',
+          checked: true,
+          click: () => setRenderMode('live2d'),
+        },
+        {
+          label: 'Static Image (Stand-in)',
+          type: 'radio',
+          checked: false,
+          click: () => setRenderMode('fallback'),
+        },
+      ],
+    },
+    { type: 'separator' },
+    {
+      label: 'Performance Mode',
+      submenu: [
+        {
+          label: 'Lite',
+          type: 'radio',
+          checked: currentPerformanceMode === 'lite',
+          click: () => setPerformanceMode('lite'),
+        },
+        {
+          label: 'Standard',
+          type: 'radio',
+          checked: currentPerformanceMode === 'standard',
+          click: () => setPerformanceMode('standard'),
+        },
+        {
+          label: 'Extended',
+          type: 'radio',
+          checked: currentPerformanceMode === 'extended',
+          click: () => setPerformanceMode('extended'),
+        },
+        {
+          label: 'Ultra',
+          type: 'radio',
+          checked: currentPerformanceMode === 'ultra',
+          click: () => setPerformanceMode('ultra'),
+        },
+      ],
+    },
+    {
+      label: 'Wallpaper Mode',
+      submenu: [
+        {
+          label: '2D (Basic)',
+          type: 'radio',
+          checked: currentWallpaperMode === '2D',
+          click: () => setWallpaperMode('2D'),
+        },
+        {
+          label: '2.5D (Parallax)',
+          type: 'radio',
+          checked: currentWallpaperMode === '2.5D',
+          click: () => setWallpaperMode('2.5D'),
+        },
+        {
+          label: '3D (Full)',
+          type: 'radio',
+          checked: currentWallpaperMode === '3D',
+          click: () => setWallpaperMode('3D'),
+        },
+      ],
+    },
+    { type: 'separator' },
+    {
+      label: 'Modules',
+      submenu: [
+        {
+          label: 'Vision System',
+          type: 'checkbox',
+          checked: moduleStates.vision,
+          click: (item) => toggleModule('vision', item.checked),
+        },
+        {
+          label: 'Audio System',
+          type: 'checkbox',
+          checked: moduleStates.audio,
+          click: (item) => toggleModule('audio', item.checked),
+        },
+        {
+          label: 'Tactile System',
+          type: 'checkbox',
+          checked: moduleStates.tactile,
+          click: (item) => toggleModule('tactile', item.checked),
+        },
+        {
+          label: 'Action Executor',
+          type: 'checkbox',
+          checked: moduleStates.action,
+          click: (item) => toggleModule('action', item.checked),
+        },
+      ],
+    },
+    { type: 'separator' },
+    {
+      label: 'Auto-startup',
+      type: 'checkbox',
+      checked: getAutoStartupStatus(),
+      click: (item) => {
+        const currentStatus = getAutoStartupStatus()
+        setAutoStartup(!currentStatus)
+        createTray() // Refresh tray menu
+      },
+    },
+    { type: 'separator' },
+    {
+      label: 'Multimodal Panel',
+      click: () => {
+        createMultimodalWindow()
+      },
+    },
+    { type: 'separator' },
+    {
+      label: 'Restart',
+      click: () => {
+        app.relaunch()
+        app.exit()
+      },
+    },
+    {
+      label: 'Quit',
+      click: () => {
+        app.quit()
+      },
+    },
+  ])
+}
+
+/**
+ * 把右鍵選單掛到某個視窗（安全檢查 + 錯誤記錄）。
+ */
+function attachContextMenu(win) {
+  win.webContents.on('context-menu', (event, params) => {
+    event.preventDefault()
+    try {
+      const contextMenu = buildContextMenuTemplate()
+      contextMenu.popup({ window: win })
+    } catch (error) {
+      log.error('[ContextMenu] Error showing context menu:', error.message)
+    }
+  })
+}
+
 function createMainWindow() {
   const { width, height } = screen.getPrimaryDisplay().workAreaSize
 
@@ -362,214 +617,8 @@ function createMainWindow() {
   })
 
   // Add right-click context menu for main window
-  mainWindow.webContents.on('context-menu', (event, params) => {
-    event.preventDefault()
-
-    // Safety check
-    if (!mainWindow || mainWindow.isDestroyed()) {
-      log.warn('[ContextMenu] mainWindow is null or destroyed')
-      return
-    }
-
-    try {
-      const contextMenu = Menu.buildFromTemplate([
-        {
-          label: 'Show/Hide Angela',
-          click: () => {
-            if (mainWindow.isVisible()) {
-              mainWindow.hide()
-            } else {
-              mainWindow.show()
-              mainWindow.focus()
-            }
-          },
-        },
-        { type: 'separator' },
-        {
-          label: 'Settings',
-          click: () => {
-            createSettingsWindow()
-          },
-        },
-        {
-          label: 'Reload Model',
-          click: () => {
-            sendToMainWindow('reload-model')
-          },
-        },
-        { type: 'separator' },
-        {
-          label: 'Toggle Always on Top',
-          click: () => {
-            const current = mainWindow.isAlwaysOnTop()
-            mainWindow.setAlwaysOnTop(!current)
-            sendToMainWindow('always-on-top-changed', { alwaysOnTop: !current })
-          },
-        },
-        {
-          label: 'Toggle Frame',
-          click: () => {
-            const { BrowserWindow } = require('electron')
-            const bounds = mainWindow.getBounds()
-            const wasFrameless = mainWindow.isFrameless()
-            mainWindow.destroy()
-            const newWin = new BrowserWindow({
-              x: bounds.x,
-              y: bounds.y,
-              width: bounds.width,
-              height: bounds.height,
-              frame: wasFrameless,
-              transparent: !wasFrameless,
-              webPreferences: {
-                preload: require('path').join(__dirname, 'preload.js'),
-                contextIsolation: true,
-                nodeIntegration: false,
-              },
-            })
-            newWin.loadFile(require('path').join(__dirname, 'index.html'))
-            mainWindow = newWin
-          },
-        },
-        { type: 'separator' },
-        {
-          label: 'Rendering Mode',
-          submenu: [
-            {
-              label: 'Live2D (Animated)',
-              type: 'radio',
-              checked: true,
-              click: () => setRenderMode('live2d'),
-            },
-            {
-              label: 'Static Image (Stand-in)',
-              type: 'radio',
-              checked: false,
-              click: () => setRenderMode('fallback'),
-            },
-          ],
-        },
-        { type: 'separator' },
-        {
-          label: 'Performance Mode',
-          submenu: [
-            {
-              label: 'Lite',
-              type: 'radio',
-              checked: currentPerformanceMode === 'lite',
-              click: () => setPerformanceMode('lite'),
-            },
-            {
-              label: 'Standard',
-              type: 'radio',
-              checked: currentPerformanceMode === 'standard',
-              click: () => setPerformanceMode('standard'),
-            },
-            {
-              label: 'Extended',
-              type: 'radio',
-              checked: currentPerformanceMode === 'extended',
-              click: () => setPerformanceMode('extended'),
-            },
-            {
-              label: 'Ultra',
-              type: 'radio',
-              checked: currentPerformanceMode === 'ultra',
-              click: () => setPerformanceMode('ultra'),
-            },
-          ],
-        },
-        {
-          label: 'Wallpaper Mode',
-          submenu: [
-            {
-              label: '2D (Basic)',
-              type: 'radio',
-              checked: currentWallpaperMode === '2D',
-              click: () => setWallpaperMode('2D'),
-            },
-            {
-              label: '2.5D (Parallax)',
-              type: 'radio',
-              checked: currentWallpaperMode === '2.5D',
-              click: () => setWallpaperMode('2.5D'),
-            },
-            {
-              label: '3D (Full)',
-              type: 'radio',
-              checked: currentWallpaperMode === '3D',
-              click: () => setWallpaperMode('3D'),
-            },
-          ],
-        },
-        { type: 'separator' },
-        {
-          label: 'Modules',
-          submenu: [
-            {
-              label: 'Vision System',
-              type: 'checkbox',
-              checked: moduleStates.vision,
-              click: (item) => toggleModule('vision', item.checked),
-            },
-            {
-              label: 'Audio System',
-              type: 'checkbox',
-              checked: moduleStates.audio,
-              click: (item) => toggleModule('audio', item.checked),
-            },
-            {
-              label: 'Tactile System',
-              type: 'checkbox',
-              checked: moduleStates.tactile,
-              click: (item) => toggleModule('tactile', item.checked),
-            },
-            {
-              label: 'Action Executor',
-              type: 'checkbox',
-              checked: moduleStates.action,
-              click: (item) => toggleModule('action', item.checked),
-            },
-          ],
-        },
-        { type: 'separator' },
-        {
-          label: 'Auto-startup',
-          type: 'checkbox',
-          checked: getAutoStartupStatus(),
-          click: (item) => {
-            const currentStatus = getAutoStartupStatus()
-            setAutoStartup(!currentStatus)
-            createTray() // Refresh tray menu
-          },
-        },
-        { type: 'separator' },
-        {
-          label: 'Multimodal Panel',
-          click: () => {
-            createMultimodalWindow()
-          },
-        },
-        { type: 'separator' },
-        {
-          label: 'Restart',
-          click: () => {
-            app.relaunch()
-            app.exit()
-          },
-        },
-        {
-          label: 'Quit',
-          click: () => {
-            app.quit()
-          },
-        },
-      ])
-
-      contextMenu.popup(mainWindow)
-    } catch (error) {
-      log.error('[ContextMenu] Error showing context menu:', error.message)
-    }
-  })
+  // Add right-click context menu for main window
+  attachContextMenu(mainWindow)
 
   // Log any page load errors
   mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
@@ -659,6 +708,31 @@ function createTray() {
 
     trayManager.on('settings', () => {
       ipcMain.emit('settings-open') // Or call the function directly
+    })
+
+    // 「关于」/「重启」 had tray items and _onAbout()/_onRestart() handlers in
+    // tray-manager, but nothing ever registered these callbacks — so the items
+    // logged a line and did nothing.
+    trayManager.on('about', () => {
+      const { dialog } = require('electron')
+      const pkg = require('../package.json')
+      dialog.showMessageBox({
+        type: 'info',
+        title: '关于 Angela AI',
+        message: `Angela AI ${pkg.version}`,
+        detail: [
+          `Electron ${process.versions.electron}`,
+          `Chrome ${process.versions.chrome}`,
+          `Node ${process.versions.node}`,
+          `Backend: ${backendIP || '(not configured)'}`,
+        ].join('\n'),
+        buttons: ['好'],
+      })
+    })
+
+    trayManager.on('restart', () => {
+      app.relaunch()
+      app.exit()
     })
 
     trayManager.on('quit', () => {

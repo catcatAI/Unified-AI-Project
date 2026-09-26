@@ -1,0 +1,162 @@
+"""
+Every tray / context-menu item must reach a real handler.
+
+WHY: the desktop menus were full of items that did nothing, and nothing failed
+loudly:
+
+  * ``tray-manager.js:updateMenu()`` replaced each item's own ``click`` arrow
+    with ``_handleItemClick(item)``, which looks up ``callbacks[item.id]`` — the
+    *menu id* ('show', 'hide', 'about', 'start', 'stop', 'restart') — while
+    ``main.js`` registers the *handler names* ('showWindow', 'hideWindow', …).
+    7 of 9 tray items were dead even though ``_onShowWindow()`` and friends
+    existed and were correct.
+  * Five main-process context-menu channels (``reload-model``,
+    ``always-on-top-changed``, ``performance-mode-changed``,
+    ``wallpaper-mode-changed``, ``module-toggle``) were sent to the renderer,
+    which had no listener anywhere.
+  * ``hapticHandler`` has no ``setEnabled()``, although ``app.js`` probes for
+    exactly that name — so the Tactile checkbox could never apply.
+  * ``toggleModule`` returned ``true`` unconditionally, reporting success for
+    modules that have no switch at all.
+"""
+
+import re
+from pathlib import Path
+
+import pytest
+
+ROOT = Path(__file__).resolve().parents[2]
+TRAY = ROOT / "apps/desktop-app/electron_app/js/tray-manager.js"
+MAIN = ROOT / "apps/desktop-app/electron_app/main.js"
+APP = ROOT / "packages/shared-js/js/app.js"
+HAPTIC = ROOT / "packages/shared-js/js/haptic-handler.js"
+PRELOAD = ROOT / "apps/desktop-app/electron_app/preload.js"
+
+# 「启动Angela」/「停止Angela」 are intentionally gone: the Electron main process
+# does not own the backend lifecycle, so they could never do anything.
+TRAY_ITEMS = ("show", "hide", "settings", "about", "restart", "quit")
+HANDLER_NAMES = ("showWindow", "hideWindow", "settings", "about", "restart", "quit")
+UNIMPLEMENTABLE_ITEMS = ("start", "stop")
+MENU_CHANNELS = (
+    "reload-model",
+    "always-on-top-changed",
+    "performance-mode-changed",
+    "wallpaper-mode-changed",
+    "module-toggle",
+)
+
+
+class TestTrayMenu:
+    def test_every_default_item_brings_its_own_click_handler(self):
+        """The template must not drop item.click."""
+        text = TRAY.read_text(encoding="utf-8")
+        build = text[text.index("const template = items.map"): text.index("Menu.buildFromTemplate")]
+        assert "item.click" in build, (
+            "updateMenu() must call the item's own click handler; replacing it with "
+            "callbacks[item.id] silently disabled every item whose id differs from "
+            "the registered callback name"
+        )
+
+    def test_dispatch_prefers_item_handler_and_falls_back_to_id(self):
+        text = TRAY.read_text(encoding="utf-8")
+        dispatch = text[text.index("_handleItemClick(item, itemClick) {"):]
+        dispatch = dispatch[: dispatch.index("\n  }\n")]
+        assert "typeof itemClick === 'function'" in dispatch
+        assert "this.callbacks[item.id]" in dispatch
+        # A missing handler must be visible in the log, not a silent no-op.
+        assert "console.warn" in dispatch
+
+    def test_all_default_items_have_a_click_handler(self):
+        text = TRAY.read_text(encoding="utf-8")
+        defaults = text[text.index("_createDefaultMenu() {"): text.index("this.updateMenu(menuItems)")]
+        for item_id in TRAY_ITEMS:
+            entry = re.search(rf"id: '{item_id}',[^\n]*", defaults)
+            assert entry, f"tray item {item_id!r} missing"
+            assert "click:" in entry.group(0), f"tray item {item_id!r} has no click handler"
+
+    @pytest.mark.parametrize("handler", HANDLER_NAMES)
+    def test_main_registers_the_handler_the_default_items_reach(self, handler):
+        """Every advertised item must have a registered callback behind it."""
+        text = MAIN.read_text(encoding="utf-8")
+        assert f"trayManager.on('{handler}'" in text, f"main.js never registers {handler!r}"
+
+    @pytest.mark.parametrize("item", UNIMPLEMENTABLE_ITEMS)
+    def test_unimplementable_items_are_not_advertised(self, item):
+        """A menu entry that cannot work must not be offered."""
+        text = TRAY.read_text(encoding="utf-8")
+        defaults = text[text.index("_createDefaultMenu() {"): text.index("this.updateMenu(menuItems)")]
+        assert f"id: '{item}'" not in defaults, (
+            f"tray still offers {item!r} although the Electron main process does "
+            "not own the backend lifecycle"
+        )
+
+
+class TestContextMenuChannels:
+    @pytest.mark.parametrize("channel", MENU_CHANNELS)
+    def test_main_sends_a_channel_the_renderer_handles(self, channel):
+        main = MAIN.read_text(encoding="utf-8")
+        app = APP.read_text(encoding="utf-8")
+        assert f"'{channel}'" in main, f"main.js does not send {channel!r}"
+        assert f"'{channel}'" in app, f"app.js has no listener for {channel!r}"
+
+    @pytest.mark.parametrize("channel", MENU_CHANNELS)
+    def test_channel_is_allowed_by_the_preload_bridge(self, channel):
+        """preload drops channels outside validChannels — silently."""
+        preload = PRELOAD.read_text(encoding="utf-8")
+        block = preload[preload.index("const validChannels = ["):]
+        block = block[: block.index("]")]
+        assert f"'{channel}'" in block, f"preload would drop {channel!r}"
+
+    @pytest.mark.parametrize(
+        "channel,target",
+        [
+            ("performance-mode-changed", "setPerformanceMode"),
+            ("wallpaper-mode-changed", "setRenderingMode"),
+            ("reload-model", "switchToLive2D"),
+        ],
+    )
+    def test_handler_calls_a_method_that_actually_exists(self, channel, target):
+        app = APP.read_text(encoding="utf-8")
+        handler = app[app.index(f"'{channel}'"):]
+        handler = handler[: handler.index("\n    })")]
+        assert target in handler, f"{channel} does not use the real {target}()"
+
+    def test_module_toggle_warns_when_a_module_has_no_switch(self):
+        app = APP.read_text(encoding="utf-8")
+        toggle = app[app.index("_setupMainMenuChannels() {"): app.index("_setupKeyboardShortcuts() {")]
+        assert "module-toggle" in toggle
+        assert "warn('module-toggle'" in toggle, "a module without a switch must be reported"
+
+
+class TestModuleToggleHonesty:
+    def test_toggle_module_does_not_always_return_true(self):
+        app = APP.read_text(encoding="utf-8")
+        block = app[app.index("this.toggleModule = (module, enabled) => {"):]
+        block = block[: block.index("\n    }\n")]
+        assert "return true //" not in block
+        # Every branch must be able to report "not applied".
+        assert block.count("return false") >= 2
+
+    def test_haptic_handler_exposes_set_enabled(self):
+        text = HAPTIC.read_text(encoding="utf-8")
+        assert "  setEnabled(enabled)" in text, (
+            "app.js probes for hapticHandler.setEnabled; without it the Tactile "
+            "System checkbox silently does nothing"
+        )
+
+
+class TestToggleFrameKeepsTheWindowWired:
+    def test_toggle_frame_re_attaches_the_lost_listeners(self):
+        main = MAIN.read_text(encoding="utf-8")
+        block = main[main.index("label: 'Toggle Frame'"):]
+        block = block[: block.index("mainWindow = newWin")]
+        for marker in ("attachContextMenu(newWin)", "ready-to-show", "on('moved'", "setMinimumSize"):
+            assert marker in block, f"Toggle Frame lost {marker}"
+
+    def test_context_menu_template_is_shared_not_duplicated(self):
+        main = MAIN.read_text(encoding="utf-8")
+        assert main.count("Menu.buildFromTemplate([") == 1, (
+            "the context-menu template must exist once; a second copy drifts"
+        )
+        assert "function buildContextMenuTemplate()" in main
+        assert main.count("attachContextMenu(") >= 3  # definition + both call sites

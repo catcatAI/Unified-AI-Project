@@ -773,23 +773,38 @@ class AngelaApp {
    * 设置占位方法（供 PerformanceManager 等在完全初始化前调用）
    */
   _setupPlaceholderMethods() {
-    // toggleModule - 切换模块启用状态
+    /**
+     * toggleModule - 切换模块启用状态
+     *
+     * WHY the return value matters: this used to `return true // 始终返回成功`
+     * even when the target component was missing or had no setEnabled(), so the
+     * Modules menu checkboxes reported success while changing nothing. It now
+     * returns whether the toggle was actually applied, and the caller (the
+     * module-toggle IPC handler) logs the modules that have no switch yet.
+     */
     this.toggleModule = (module, enabled) => {
       console.log(`[App] toggleModule called: ${module} = ${enabled}`)
-      // 实际实现可以延迟到这里
       switch (module) {
-        case 'audio':
-          if (this.audioHandler && typeof this.audioHandler.setEnabled === 'function') {
-            this.audioHandler.setEnabled(enabled)
+        case 'audio': {
+          const handler = this.audioHandler
+          if (handler && typeof handler.setEnabled === 'function') {
+            handler.setEnabled(enabled)
+            return true
           }
-          break
-        case 'tactile':
-          if (this.hapticHandler && typeof this.hapticHandler.setEnabled === 'function') {
-            this.hapticHandler.setEnabled(enabled)
+          return false
+        }
+        case 'tactile': {
+          const handler = this.hapticHandler
+          if (handler && typeof handler.setEnabled === 'function') {
+            handler.setEnabled(enabled)
+            return true
           }
-          break
+          return false
+        }
+        default:
+          // vision / action 尚無可切換的開關，明確回報未套用。
+          return false
       }
-      return true // 始终返回成功，避免抛错
     }
     console.log('[App] Placeholder methods set')
   }
@@ -1157,6 +1172,71 @@ class AngelaApp {
 
     // 設置鍵盤快捷鍵
     this._setupKeyboardShortcuts()
+
+    // 主行程右鍵選單送出的 channel（reload-model / performance / wallpaper /
+    // always-on-top / module-toggle）先前無人監聽，選單是死的。
+    this._setupMainMenuChannels()
+  }
+
+  /**
+   * 主行程選單的 IPC 收尾。
+   *
+   * WHY: main.js 的右鍵選單送出 reload-model / always-on-top-changed /
+   * performance-mode-changed / wallpaper-mode-changed / module-toggle 五個
+   * channel，但整個 renderer 沒有任何一處監聽——選單點下去完全沒有反應，而且
+   * 因為沒有 listener，連錯誤都不會出現。這裡把每個 channel 接到「真的存在」
+   * 的元件上；元件不存在時明確記錄，而不是假裝成功。
+   */
+  _setupMainMenuChannels() {
+    if (typeof window.electronAPI === 'undefined' || !window.electronAPI.on) {
+      return
+    }
+
+    const warn = (channel, detail) => console.warn(`[App] "${channel}" 收到但無法套用：${detail}`)
+
+    window.electronAPI.on('reload-model', async () => {
+      if (!this.live2dManager) return warn('reload-model', 'Live2DManager 未初始化')
+      // loadModel() 只是記住路徑的 stub；真正會重新載入的是 switchToLive2D()。
+      if (typeof this.live2dManager.switchToLive2D !== 'function') {
+        return warn('reload-model', 'switchToLive2D 不存在')
+      }
+      await this.live2dManager.switchToLive2D()
+      this.showStatus?.('已重新載入模型', 2000)
+    })
+
+    window.electronAPI.on('always-on-top-changed', (payload) => {
+      // main.js 已經套用 setAlwaysOnTop，這裡只保留狀態供 UI 使用。
+      this.alwaysOnTop = Boolean(payload?.alwaysOnTop)
+    })
+
+    window.electronAPI.on('performance-mode-changed', (mode) => {
+      if (
+        !this.performanceManager ||
+        typeof this.performanceManager.setPerformanceMode !== 'function'
+      ) {
+        return warn('performance-mode-changed', 'PerformanceManager 未就緒')
+      }
+      this.performanceManager.setPerformanceMode(mode)
+      this.showStatus?.(`效能模式：${mode}`, 2000)
+    })
+
+    window.electronAPI.on('wallpaper-mode-changed', (mode) => {
+      if (!this.wallpaperHandler || typeof this.wallpaperHandler.setRenderingMode !== 'function') {
+        return warn('wallpaper-mode-changed', 'WallpaperHandler 未就緒')
+      }
+      this.wallpaperHandler.setRenderingMode(mode)
+      this.showStatus?.(`桌布模式：${mode}`, 2000)
+    })
+
+    window.electronAPI.on('module-toggle', ({ module, enabled } = {}) => {
+      if (typeof this.toggleModule !== 'function') {
+        return warn('module-toggle', 'toggleModule 未定義')
+      }
+      const applied = this.toggleModule(module, enabled)
+      if (!applied) {
+        warn('module-toggle', `模組 "${module}" 沒有可切換的開關（${module}）`)
+      }
+    })
   }
 
   /**
