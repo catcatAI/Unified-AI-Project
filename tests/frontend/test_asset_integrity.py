@@ -381,6 +381,31 @@ class TestBootstrappablePages:
                     f"{dependency} must load before app.js (its constructor uses it)"
                 )
 
+    def test_no_page_loads_a_second_copy_of_the_dialogue_panel(self):
+        """dialogue-ui.js builds its own panel; the page already has one.
+
+        Loading it injected a second panel, duplicated four ids
+        (#btn-send, #btn-toggle-dialogue, #dialogue-input, #dialogue-messages)
+        and — because getElementById returns the first match and the injected
+        container is appended last — re-bound its handlers to the page's own
+        send/toggle buttons, so one click could send twice.
+        """
+        for page in (
+            ROOT / "apps/desktop-app/electron_app/index.html",
+            ROOT / "apps/web-live2d-viewer/index.html",
+        ):
+            assert "dialogue-ui.js" not in page.read_text(encoding="utf-8"), (
+                f"{page.name} loads dialogue-ui.js on top of its own dialogue panel"
+            )
+
+    def test_proactive_speech_renders_in_the_real_panel(self):
+        """_handleAngelaAction must not depend on the unloaded DialogueUI class."""
+        source = (SOURCE_DIR / "app.js").read_text(encoding="utf-8")
+        assert "addDialogueMessage('angela', message)" in source
+        assert "this.dialogueUI" not in source.replace(
+            "//    `this.dialogueUI` was always null: no page loaded dialogue-ui.js, and", ""
+        ), "app.js still routes proactive speech through the never-loaded class"
+
     def test_shared_index_js_is_only_a_platform_helper(self):
         """Guards against mistaking index.js for the app entry point again."""
         text = (SOURCE_DIR / "index.js").read_text(encoding="utf-8")

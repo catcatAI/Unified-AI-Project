@@ -29,14 +29,12 @@ class AngelaApp {
     this.backendWebSocket = null
     this.apiClient = null
     this.hardwareDetector = null
-    this.dialogueUI = null
 
     // UI 元素
     this.loadingOverlay = document.getElementById('loading-overlay')
     this.loadingText = document.getElementById('loading-text')
     this.progressBarFill = document.getElementById('progress-bar-fill')
     this.statusBar = document.getElementById('status-bar')
-    this.controls = document.getElementById('controls')
 
     // 状态
     this.isInitialized = false
@@ -70,7 +68,6 @@ class AngelaApp {
       wallpaperHandler: [], // 無依賴
       pluginManager: [], // 無依賴
       performanceMonitor: [], // 無依賴
-      dialogueUI: [], // 無依賴
     }
 
     this.initialize()
@@ -157,8 +154,10 @@ class AngelaApp {
       this.incrementLoadingProgress(5, 'Initializing plugins and monitor...')
 
       // 10. UI 组件 (95%)
-      await this._initializeDialogueUI()
-      this.incrementLoadingProgress(5, 'Initializing dialogue UI...')
+      //    The dialogue panel is markup in index.html (#dialogue-messages), bound
+      //    in _setupUIControls below. There is no dialogue-ui.js component: no
+      //    page ever loaded it, and loading it would inject a duplicate panel and
+      //    double-bind this page's own #btn-send / #btn-toggle-dialogue.
 
       // 11. 最终设置 (100%)
       this._setupUIControls()
@@ -346,7 +345,6 @@ class AngelaApp {
       'wallpaperHandler',
       'pluginManager',
       'performanceMonitor',
-      'dialogueUI',
     ]
 
     for (const component of requiredComponents) {
@@ -436,13 +434,26 @@ class AngelaApp {
 
   _updateSecurityBadge(isSecure) {
     const badge = document.getElementById('security-badge')
-    if (badge) {
-      badge.className = isSecure ? 'secure' : 'unsecure'
-      badge.querySelector('.text').textContent = isSecure
-        ? 'Security: Verified'
-        : 'Security: Fallback'
-      badge.querySelector('.icon').textContent = isSecure ? '🛡️' : '⚠️'
+    if (!badge) {
+      // No page ships a #security-badge element, so the Electron security
+      // handshake result was computed and then dropped on the floor.
+      console.warn(
+        `[App] Security handshake: ${isSecure ? 'verified' : 'fallback'} ` +
+          '(no #security-badge element to display it)'
+      )
+      return
     }
+    // The child lookups are optional: a bare #security-badge element (no .text /
+    // .icon child) used to throw a TypeError here and abort the caller.
+    const textEl = badge.querySelector('.text')
+    const iconEl = badge.querySelector('.icon')
+    if (textEl) {
+      textEl.textContent = isSecure ? 'Security: Verified' : 'Security: Fallback'
+    }
+    if (iconEl) {
+      iconEl.textContent = isSecure ? '🛡️' : '⚠️'
+    }
+    badge.className = isSecure ? 'secure' : 'unsecure'
   }
 
   async _initializeI18n() {
@@ -615,6 +626,14 @@ class AngelaApp {
     const scaleUp = document.getElementById('scale-up-btn')
     const scaleDown = document.getElementById('scale-down-btn')
 
+    // WHY the count matters: this used to log "Scale buttons bound"
+    // unconditionally, even when neither element exists — no page ships a scale
+    // control, so the log asserted a wiring that was not there.
+    const bound = (scaleUp ? 1 : 0) + (scaleDown ? 1 : 0)
+    if (bound === 0) {
+      console.warn('[App] No scale controls in this page; model scale is not adjustable from the UI')
+    }
+
     if (scaleUp) {
       scaleUp.onclick = () => {
         if (this.udm) {
@@ -633,7 +652,7 @@ class AngelaApp {
       }
     }
 
-    console.log('[App] Scale buttons bound')
+    console.log(`[App] Scale buttons bound: ${bound}/2`)
   }
 
   _initializeStateMatrix() {
@@ -758,17 +777,6 @@ class AngelaApp {
     this.performanceMonitor.startCollecting()
   }
 
-  async _initializeDialogueUI() {
-    this.updateLoadingText('Initializing dialogue UI...')
-    try {
-      if (typeof DialogueUI !== 'undefined') {
-        this.dialogueUI = new DialogueUI(this.apiClient)
-      }
-    } catch (e) {
-      console.warn('[App] DialogueUI init failed:', e)
-    }
-  }
-
   /**
    * 设置占位方法（供 PerformanceManager 等在完全初始化前调用）
    */
@@ -837,9 +845,13 @@ class AngelaApp {
     const action = data.action
     const message = data.message
 
-    // 1. 显示对话气泡（如果 DialogueUI 可用）
-    if (this.dialogueUI && message) {
-      this.dialogueUI.showAngelaMessage(message)
+    // 1. 显示对话气泡
+    //    `this.dialogueUI` was always null: no page loaded dialogue-ui.js, and
+    //    loading it would have injected a duplicate panel and double-bound this
+    //    page's own #btn-send / #btn-toggle-dialogue. The page's real panel is
+    //    #dialogue-messages.
+    if (message) {
+      this.addDialogueMessage('angela', message)
     }
 
     // 2. 触发 Live2D 动作和表情
@@ -1013,6 +1025,42 @@ class AngelaApp {
 
   // ========== UI 设置 ==========
 
+  /**
+   * Render a message into the dialogue panel that index.html actually provides
+   * (#dialogue-messages).
+   *
+   * WHY this is a method and not a closure: _handleAngelaAction needs it to show
+   * the five proactive actions (greet / comfort / remind / share / question),
+   * but the renderer used to be a local function inside _setupUIControls, so the
+   * only way to reach it was through the never-loaded dialogue-ui.js — which
+   * meant proactive speech bubbles never appeared at all.
+   */
+  addDialogueMessage(sender, text) {
+    const messagesContainer = document.getElementById('dialogue-messages')
+    if (!messagesContainer || !text) return null
+
+    const messageDiv = document.createElement('div')
+    messageDiv.className = `message ${sender}`
+
+    const time = new Date().toLocaleTimeString('zh-TW', {
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+
+    const div = document.createElement('div')
+    div.textContent = String(text)
+    const escaped = div.innerHTML
+
+    messageDiv.innerHTML = `
+                <div class="message-text">${escaped}</div>
+                <div class="message-time">${time}</div>
+            `
+
+    messagesContainer.appendChild(messageDiv)
+    messagesContainer.scrollTop = messagesContainer.scrollHeight
+    return messageDiv
+  }
+
   _setupUIControls() {
     document.getElementById('btn-settings')?.addEventListener('click', () => {
       window.electronAPI?.settings?.open()
@@ -1046,31 +1094,7 @@ class AngelaApp {
     })
 
     // Add message to display
-    const addMessage = (sender, text) => {
-      if (!messagesContainer) return
-
-      const messageDiv = document.createElement('div')
-      messageDiv.className = `message ${sender}`
-
-      const time = new Date().toLocaleTimeString('zh-TW', {
-        hour: '2-digit',
-        minute: '2-digit',
-      })
-
-      const escapeHtml = (str) => {
-        const div = document.createElement('div')
-        div.textContent = str
-        return div.innerHTML
-      }
-
-      messageDiv.innerHTML = `
-                <div class="message-text">${escapeHtml(text)}</div>
-                <div class="message-time">${time}</div>
-            `
-
-      messagesContainer.appendChild(messageDiv)
-      messagesContainer.scrollTop = messagesContainer.scrollHeight
-    }
+    const addMessage = (sender, text) => this.addDialogueMessage(sender, text)
 
     const sendMessage = () => {
       const message = dialogueInput?.value?.trim()
@@ -1444,7 +1468,6 @@ class AngelaApp {
       this.loadingText = null
       this.progressBarFill = null
       this.statusBar = null
-      this.controls = null
 
       console.log('[AngelaApp] All resources cleaned up successfully')
     } catch (error) {
