@@ -805,7 +805,26 @@ class FullTrainingPipeline:
 
         Phase 1: Contrastive pre-training of SharedLatentSpace.
         Phase 2: Reconstruction fine-tuning of decoders.
+
+        Honours `compute.multimodal_train`, which was declared in
+        system/compute.default.yaml and documented as an integrated per-feature
+        toggle while nothing consulted it: setting the feature to `off` still ran
+        the whole pipeline. The refusal is explicit rather than a silent no-op, so
+        a caller can tell the difference between "trained" and "skipped".
         """
+        try:
+            from core.system.config.magic_numbers import compute_bool
+        except Exception:  # pragma: no cover - config unavailable
+            compute_bool = None  # type: ignore[assignment]
+
+        if compute_bool is not None and not compute_bool("multimodal_train"):
+            logger.info("Multimodal training skipped: compute.multimodal_train is off")
+            return {
+                "status": "skipped",
+                "reason": "compute.multimodal_train is off",
+                "phases": {},
+            }
+
         logger.info("=== Phase 1: Contrastive training ===")
         pos_pairs, neg_pairs = self._contrastive.generate_pairs(contrastive_pairs)
         contrastive_result = self._ls.train(

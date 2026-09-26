@@ -69,7 +69,22 @@ class SystemMonitor:
         logger.info("系统监控器 初始化完成")
 
     def _init_gpu_monitoring(self) -> bool:
-        """Init gpu monitoring."""
+        """Init gpu monitoring.
+
+        `compute.gpu_accelerator` was declared in system/compute.default.yaml and
+        listed as an integrated per-feature toggle, but no code ever consulted it:
+        setting it to `off` still called nvmlInit() and polled the GPU. The switch
+        is honoured here, at the one place GPU monitoring starts.
+        """
+        try:
+            from core.system.config.magic_numbers import compute_bool
+        except Exception:  # pragma: no cover - config unavailable
+            compute_bool = None  # type: ignore[assignment]
+
+        if compute_bool is not None and not compute_bool("gpu_accelerator", default=False):
+            logger.info("GPU monitoring disabled by compute.gpu_accelerator")
+            return False
+
         if pynvml is None:
             return False
         try:

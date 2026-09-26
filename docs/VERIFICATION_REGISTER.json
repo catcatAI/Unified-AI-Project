@@ -109,6 +109,32 @@
       ],
       "status": "unverified",
       "added": "2026-09-26"
+    },
+    {
+      "id": "config-unhonoured-sections",
+      "area": "other",
+      "claim": "設定檔中宣告但無任何程式消費的區段，已逐條記錄於 tests/test_config_coverage.py::UNHONOURED_SECTIONS（含原因），其中 system/llm routing.policy.complexity_* 與 system/core command_triggers.* 對應的功能從未被實作",
+      "why_unverified": "本項為靜態分析結論，非執行期行為：無法在此環境示範缺少的路由策略或指令觸發功能",
+      "how_to_verify": "若實作 complexity 路由或 command triggers，請從 UNHONOURED_SECTIONS 移除對應條目，測試會強制同步；新增未接線的設定則會直接失敗",
+      "files": [
+        "apps/backend/configs/system/llm.default.yaml",
+        "apps/backend/configs/system/core.default.yaml",
+        "tests/test_config_coverage.py"
+      ],
+      "status": "unverified",
+      "added": "2026-09-26"
+    },
+    {
+      "id": "ai-name-config-mismatch",
+      "area": "other",
+      "claim": "system/core.default.yaml 宣告 ai_name: Miko，但程式碼 9 處硬編碼 'Angela'，該設定從未被讀取",
+      "why_unverified": "這是產品命名決策：套用設定會把對外名稱從 Angela 改成 Miko，需使用者決定",
+      "how_to_verify": "決定後：若採單一來源，讓程式讀 ai_name（預設維持 Angela），並更新 YAML；若維持 Angela，將 YAML 改為 Angela 使設定與實作一致",
+      "files": [
+        "apps/backend/configs/system/core.default.yaml"
+      ],
+      "status": "unverified",
+      "added": "2026-09-26"
     }
   ]
 }

@@ -81,6 +81,15 @@ def _get_three_layer():
         return _three_layer_state
 
     try:
+        # `compute.three_layer_visual` was declared and documented as an
+        # integrated toggle, but nothing consulted it — turning the feature off
+        # still loaded the model on first use.
+        from core.system.config.magic_numbers import compute_bool
+
+        if not compute_bool("three_layer_visual"):
+            logger.info("ThreeLayerVisual disabled by compute.three_layer_visual")
+            return None
+
         from ai.multimodal.three_layer_visual import ThreeLayerVisual
 
         models_dir = os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "models")
