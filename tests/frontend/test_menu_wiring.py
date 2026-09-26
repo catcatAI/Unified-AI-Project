@@ -160,3 +160,58 @@ class TestToggleFrameKeepsTheWindowWired:
         )
         assert "function buildContextMenuTemplate()" in main
         assert main.count("attachContextMenu(") >= 3  # definition + both call sites
+
+
+class TestIpcBridgeCompleteness:
+    """Every ipcMain handler must be reachable, or it is not a feature.
+
+    WHY: main.js implemented setAutoStartup()/getAutoStartupStatus() for
+    win32/darwin/linux and exposed `autostart-set` / `autostart-get`, but
+    preload.js never exposed a bridge to them. The "Start Angela at login"
+    checkbox in settings.html therefore saved a value that nothing applied — a
+    fully implemented feature with no usable path, which no asset or menu test
+    could see.
+    """
+
+    PRELOAD = ROOT / "apps/desktop-app/electron_app/preload.js"
+    MAIN = ROOT / "apps/desktop-app/electron_app/main.js"
+
+    def _handlers(self) -> set:
+        return set(
+            re.findall(
+                r"ipcMain\.(?:on|handle)\(\s*'([^']+)'", self.MAIN.read_text(encoding="utf-8")
+            )
+        )
+
+    def _invoked(self) -> set:
+        return set(
+            re.findall(
+                r"ipcRenderer\.(?:invoke|send)\(\s*'([^']+)'",
+                self.PRELOAD.read_text(encoding="utf-8"),
+            )
+        )
+
+    def test_no_renderer_invocation_lacks_a_main_handler(self):
+        """Otherwise every such call rejects with 'No handler registered'."""
+        orphans = self._invoked() - self._handlers()
+        assert not orphans, f"preload invokes channels main.js never handles: {sorted(orphans)}"
+
+    def test_autostart_handlers_have_a_bridge(self):
+        preload = self.PRELOAD.read_text(encoding="utf-8")
+        assert "autostart-set" in self._handlers() and "autostart-get" in self._handlers()
+        assert "autostart: {" in preload, "preload exposes no autostart namespace"
+        assert "ipcRenderer.invoke('autostart-get')" in preload
+        assert "ipcRenderer.invoke('autostart-set'" in preload
+
+    def test_settings_page_actually_applies_auto_start(self):
+        source = (ROOT / "packages/shared-js/js/settings.js").read_text(encoding="utf-8")
+        # The calls are prettier-wrapped across lines, so match with a regex.
+        call = r"electronAPI\.autostart\s*\.\s*(get|set)\s*\("
+        calls = re.findall(call, source)
+        assert "get" in calls, (
+            "the checkbox must reflect the real login-item state, not just the last saved value"
+        )
+        assert "set" in calls, (
+            "auto-start is read and saved but never applied to the OS — the original defect"
+        )
+

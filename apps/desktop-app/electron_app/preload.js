@@ -82,6 +82,18 @@ contextBridge.exposeInMainWorld('electronAPI', {
     reset: () => ipcRenderer.invoke('settings-reset'),
   },
 
+  // Auto-start (login item)
+  // WHY this bridge exists: main.js has implemented setAutoStartup() and
+  // getAutoStartupStatus() for win32/darwin/linux and exposed them as the
+  // `autostart-set` / `autostart-get` handlers, but preload.js exposed no way to
+  // reach them — so the "Start Angela at login" checkbox in settings.html saved a
+  // value that nothing ever applied. The handler count in main.js was the only
+  // evidence the feature existed.
+  autostart: {
+    get: () => ipcRenderer.invoke('autostart-get'),
+    set: (enable) => ipcRenderer.invoke('autostart-set', enable),
+  },
+
   // Audio system
   audio: {
     getDevices: () => ipcRenderer.invoke('audio-get-devices'),

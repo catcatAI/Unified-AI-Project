@@ -123,7 +123,20 @@ document.addEventListener('DOMContentLoaded', () => {
     if (alwaysOnTop) alwaysOnTop.checked = settings.alwaysOnTop || false
 
     const autoStart = document.getElementById('auto-start')
-    if (autoStart) autoStart.checked = settings.autoStart || false
+    if (autoStart) {
+      // Show what the OS actually has registered, not just what we last saved:
+      // the login item can also be changed outside the app.
+      if (window.electronAPI && window.electronAPI.autostart) {
+        window.electronAPI.autostart
+          .get()
+          .then((enabled) => {
+            autoStart.checked = !!enabled
+          })
+          .catch((err) => console.warn('[Settings] autostart status unavailable:', err))
+      } else {
+        autoStart.checked = settings.autoStart || false
+      }
+    }
 
     const windowOpacity = document.getElementById('window-opacity')
     if (windowOpacity) {
@@ -550,6 +563,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.electronAPI && window.electronAPI.window) {
       window.electronAPI.window.setAlwaysOnTop(settings.alwaysOnTop)
       window.electronAPI.window.setIgnoreMouseEvents(!settings.showClickRegions)
+    }
+
+    // Auto-start was only being saved: setAutoStartup() exists in main.js for
+    // win32/darwin/linux and nothing ever called it.
+    if (window.electronAPI && window.electronAPI.autostart) {
+      window.electronAPI.autostart
+        .set(!!settings.autoStart)
+        .catch((err) => console.warn('[Settings] failed to apply auto-start:', err))
     }
 
     if (window.angelaApp && window.angelaApp.live2dManager) {
