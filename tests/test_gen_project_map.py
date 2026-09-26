@@ -4,6 +4,7 @@ Hermetic: tmp_path 自建迷你樹，不依賴倉庫內容。
 """
 
 import importlib.util
+import json
 import os
 
 import pytest
@@ -364,3 +365,112 @@ def test_module_query_no_match(tmp_path, monkeypatch):
         ["gen_project_map.py", "--root", str(tmp_path), "--module", "nonexistent_xyz"],
     )
     assert mod.main() == 1
+
+
+class TestVerificationRegister:
+    """運行期未驗證登錄：讓「CI 證明不了的事」變成工具輸出裡看得見的事實。
+
+    WHY: claims that need a GUI (Electron menus, settings switches, proactive
+    speech bubbles) used to live only as source comments — hidden. The register
+    is a data file the project-map tool renders, and the loader validates it: a
+    "verified" entry with no evidence is exactly the kind of unsupported claim
+    this project keeps removing.
+
+    Hermetic, like the rest of this file: registers are built in tmp_path.
+    """
+
+    ENTRY = (
+        '{"id": "gui-thing", "area": "settings", "claim": "a switch applies",'
+        ' "why_unverified": "no display in CI",'
+        ' "how_to_verify": "flip the switch and watch the effect",'
+        ' "files": ["a.js"], "status": "unverified"}'
+    )
+
+    def _reg(self, tmp_path, body):
+        path = tmp_path / "reg.json"
+        path.write_text(body, encoding="utf-8")
+        return str(path)
+
+    def test_missing_register_is_empty_not_an_error(self, tmp_path):
+        mod = load_tool()
+        assert mod.load_register(str(tmp_path / "nope.json")) == []
+
+    def test_valid_entry_loads(self, tmp_path):
+        mod = load_tool()
+        body = '{"entries": [' + self.ENTRY + "]}"
+        entries = mod.load_register(self._reg(tmp_path, body))
+        assert [e["id"] for e in entries] == ["gui-thing"]
+
+    def test_verified_entry_must_carry_evidence(self, tmp_path):
+        mod = load_tool()
+        body = json.dumps(
+            {
+                "entries": [
+                    {
+                        "id": "x",
+                        "area": "other",
+                        "claim": "c",
+                        "why_unverified": "w",
+                        "how_to_verify": "h",
+                        "status": "verified",
+                    }
+                ]
+            }
+        )
+        with pytest.raises(ValueError, match="verified_how"):
+            mod.load_register(self._reg(tmp_path, body))
+
+    def test_missing_required_key_is_rejected(self, tmp_path):
+        mod = load_tool()
+        with pytest.raises(ValueError, match="缺"):
+            mod.load_register(self._reg(tmp_path, '{"entries": [{"id": "x"}]}'))
+
+    def test_invalid_status_is_rejected(self, tmp_path):
+        mod = load_tool()
+        body = self.ENTRY.replace('"status": "unverified"', '"status": "probably"')
+        path = self._reg(tmp_path, '{"entries": [' + body + "]}")
+        with pytest.raises(ValueError, match="status"):
+            mod.load_register(path)
+
+    def test_duplicate_ids_are_rejected(self, tmp_path):
+        mod = load_tool()
+        body = '{"entries": [' + self.ENTRY + ", " + self.ENTRY + "]}"
+        with pytest.raises(ValueError, match="重複"):
+            mod.load_register(self._reg(tmp_path, body))
+
+    def test_counts_cover_every_entry(self, tmp_path):
+        mod = load_tool()
+        body = '{"entries": [' + self.ENTRY + "]}"
+        entries = mod.load_register(self._reg(tmp_path, body))
+        assert sum(mod.register_counts(entries).values()) == len(entries)
+
+    def test_block_renders_the_unverified_claim(self, tmp_path):
+        mod = load_tool()
+        body = '{"entries": [' + self.ENTRY + "]}"
+        entries = mod.load_register(self._reg(tmp_path, body))
+        block = "\n".join(mod.block_verification(entries))
+        assert "區塊五" in block
+        assert "a switch applies" in block
+        assert "no display in CI" in block
+        assert "flip the switch and watch the effect" in block
+
+    def test_empty_register_says_so_explicitly(self, tmp_path):
+        mod = load_tool()
+        block = "\n".join(mod.block_verification([]))
+        assert "區塊五" in block
+        assert "（空）" in block
+
+    def test_diag_reports_unverified_count(self):
+        mod = load_tool()
+        diag = "\n".join(
+            mod.render_diag(
+                "ok", 10, 10000, {}, [], {}, "", reg={"unverified": 3, "verified": 1}
+            )
+        )
+        assert "unverified_runtime: 3" in diag
+        assert "verify_runtime_claims: 3" in diag
+
+    def test_diag_stays_silent_when_register_is_clean(self):
+        mod = load_tool()
+        diag = "\n".join(mod.render_diag("ok", 10, 10000, {}, [], {}, ""))
+        assert "unverified_runtime" not in diag

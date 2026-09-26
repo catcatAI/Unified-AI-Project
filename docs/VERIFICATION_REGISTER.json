@@ -1,0 +1,81 @@
+{
+  "$comment": "運行期未驗證登錄。gen_project_map.py 讀取並渲染成『區塊五』。條目存在的唯一理由是：這個環境沒有顯示器/桌面 session，聲稱無法在 CI 裡誠實驗證。誰真的跑過就把 status 改成 verified 並填 verified_how。不要刪條目來讓數字好看。",
+  "$schema": {
+    "id": "stable kebab-case identifier",
+    "area": "settings | menu | ipc | agent | training | other",
+    "claim": "這個改動宣稱做了什麼（一句話）",
+    "why_unverified": "為何本機驗不了（環境限制，不是『沒空』）",
+    "how_to_verify": "人工驗證步驟，夠具體到別人能照做",
+    "files": ["涉及的檔案路徑"],
+    "status": "unverified | verified | wont_verify",
+    "verified_how": "status=verified 時必填：什麼環境、什麼結果",
+    "added": "YYYY-MM-DD"
+  },
+  "entries": [
+    {
+      "id": "settings-autostart",
+      "area": "settings",
+      "claim": "設定頁的「開機自動啟動」會經 preload 的 autostart 橋接真正呼叫 main.js 的 setAutoStartup()（win32/darwin/linux）",
+      "why_unverified": "需要啟動 Electron 桌面程式並檢查 OS 登入項；本機無顯示器，無法點擊設定頁",
+      "how_to_verify": "啟動桌面版 → 設定 → 勾選「開機自動啟動」→ 確認作業系統登入項出現/消失（Linux: ~/.config/autostart/angela-ai.desktop；macOS: 系統設定「登入項」；Windows: 登錄檔 Run）",
+      "files": [
+        "apps/desktop-app/electron_app/preload.js",
+        "apps/desktop-app/electron_app/main.js",
+        "packages/shared-js/js/settings.js"
+      ],
+      "status": "unverified",
+      "added": "2026-09-26"
+    },
+    {
+      "id": "frontend-angela-app-loads",
+      "area": "other",
+      "claim": "桌面版與 web viewer 現在都會載入 app.js，AngelaApp 可被 new 出來（先前完全沒有任何 script 引用它）",
+      "why_unverified": "需要 Electron / 瀏覽器載入頁面；本機無 GUI，僅能靜態驗證 script src 與順序",
+      "how_to_verify": "開啟桌面版，開發者工具主控台不應出現 ReferenceError: AngelaApp is not defined，且視窗狀態列應由載入流程更新",
+      "files": [
+        "apps/desktop-app/electron_app/index.html",
+        "apps/web-live2d-viewer/index.html"
+      ],
+      "status": "unverified",
+      "added": "2026-09-26"
+    },
+    {
+      "id": "frontend-proactive-bubbles",
+      "area": "other",
+      "claim": "Angela 主動發話（greet/comfort/remind/share/question）會把氣泡渲染進設定頁既有的 #dialogue-messages 面板",
+      "why_unverified": "需要後端推播 proactive action 且前端可見；本機無 GUI 可觀察畫面",
+      "how_to_verify": "讓後端觸發任一 proactive action（例：情緒路由到 comfort），確認對話面板出現該則訊息而非只有 Live2D 動作",
+      "files": [
+        "packages/shared-js/js/app.js"
+      ],
+      "status": "unverified",
+      "added": "2026-09-26"
+    },
+    {
+      "id": "webviewer-hardware-enhancement",
+      "area": "other",
+      "claim": "hardware-enhancement-patch.js 在偵測器缺少 detect()/_assessCapabilities() 時會如實跳過並記錄警告，而不是丟出未處理異常",
+      "why_unverified": "需要 web viewer 實際載入並觀察 console；本機無 GUI",
+      "how_to_verify": "開啟 web viewer → console 應出現 [HW-Patch] ... skipped 警告，且後續初始化不中斷",
+      "files": [
+        "apps/web-live2d-viewer/js/hardware-enhancement-patch.js",
+        "apps/web-live2d-viewer/js/hardware-integration.js"
+      ],
+      "status": "unverified",
+      "added": "2026-09-26"
+    },
+    {
+      "id": "cli-hsp-sync-init",
+      "area": "other",
+      "claim": "HSP CLI 可在真實（同步）core_services 路徑下啟動，--help 不再因 await None 而死",
+      "why_unverified": "已於本機以 python3 cli/main.py --help 實測通過；此條保留作為迴歸錨點",
+      "how_to_verify": "cd packages/cli && python3 cli/main.py --help",
+      "files": [
+        "packages/cli/cli/main.py"
+      ],
+      "status": "verified",
+      "verified_how": "本機實測：python3 cli/main.py --help 正常輸出 usage 並優雅關閉服務，無 await 錯誤；另見 tests/tools/test_cli_tooling.py::test_hsp_cli_help_runs",
+      "added": "2026-09-26"
+    }
+  ]
+}

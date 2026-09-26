@@ -127,7 +127,86 @@ def grade_orphan(rel, gated):
     return "L1"
 
 
-def render_diag(status, total, budget, usage, over_domains, counts, top_block, status_verify=None):
+# 運行期未驗證登錄（P2）：有些聲稱（例如 Electron 選單、設定開關、proactive 氣泡）
+# 在 CI 沒有顯示器/桌面 session 的環境裡無法誠實驗證。過去這些只能寫成 .py 註解，
+# 等於把「未驗證」藏起來；現在改成獨立資料檔，由本工具渲染成區塊五，任何人跑
+# gen_project_map.py 都看得到餘額。誰真的跑過就把 status 改成 verified 並填
+# verified_how——不要刪條目來讓數字好看。
+REGISTER_DEFAULT = "docs/VERIFICATION_REGISTER.json"
+REQUIRED_ENTRY_KEYS = ("id", "area", "claim", "why_unverified", "how_to_verify", "status")
+VALID_STATUS = ("unverified", "verified", "wont_verify")
+
+
+def load_register(path):
+    """讀登錄；缺失視為空，損壞或違反 schema 則拋出（工具自身錯誤 → exit 2）。
+
+    驗證而非信任：status=verified 必須有 verified_how，否則「已驗證」又是一個
+    沒有證據的說法——那正是本專案要消滅的那類問題。
+    """
+    if not os.path.isfile(path):
+        return []
+    import json
+
+    with open(path, encoding="utf-8") as fh:
+        data = json.load(fh)
+    entries = data.get("entries", []) if isinstance(data, dict) else data
+    if not isinstance(entries, list):
+        raise ValueError("VERIFICATION_REGISTER: 'entries' 必須是陣列")
+    seen = set()
+    for i, e in enumerate(entries):
+        if not isinstance(e, dict):
+            raise ValueError(f"VERIFICATION_REGISTER: 第 {i} 條不是物件")
+        missing = [k for k in REQUIRED_ENTRY_KEYS if not e.get(k)]
+        if missing:
+            raise ValueError(f"VERIFICATION_REGISTER: 條目 {e.get('id', i)} 缺 {missing}")
+        if e["status"] not in VALID_STATUS:
+            raise ValueError(f"VERIFICATION_REGISTER: {e['id']} status 非法：{e['status']}")
+        if e["status"] == "verified" and not e.get("verified_how"):
+            raise ValueError(f"VERIFICATION_REGISTER: {e['id']} 標為 verified 卻沒寫 verified_how")
+        if e["id"] in seen:
+            raise ValueError(f"VERIFICATION_REGISTER: 重複 id {e['id']}")
+        seen.add(e["id"])
+    return entries
+
+
+def register_counts(entries):
+    out = {"unverified": 0, "verified": 0, "wont_verify": 0}
+    for e in entries:
+        out[e["status"]] = out.get(e["status"], 0) + 1
+    return out
+
+
+def block_verification(entries):
+    """區塊五：運行期未驗證登錄。空登錄也要有一行，讓「沒有待驗證項」是明確事實。"""
+    lines = ["## 區塊五：運行期未驗證登錄（CI 說不出口的部分）", ""]
+    c = register_counts(entries)
+    lines.append(
+        f"- 狀態：未驗證 {c.get('unverified', 0)}、已驗證 {c.get('verified', 0)}、"
+        f"不驗證 {c.get('wont_verify', 0)}（資料檔：`{REGISTER_DEFAULT}`）"
+    )
+    if not entries:
+        lines.append("- （空）所有聲稱都能在無 GUI 環境驗證。")
+        lines.append("")
+        return lines
+    lines.append("")
+    for e in sorted(entries, key=lambda x: (x["status"] != "unverified", x["area"], x["id"])):
+        mark = {"unverified": "⏳", "verified": "✅", "wont_verify": "🚫"}[e["status"]]
+        lines.append(f"### {mark} `{e['id']}`（{e['area']}）")
+        lines.append(f"- 宣稱：{e['claim']}")
+        if e["status"] == "verified":
+            lines.append(f"- 已驗證：{e.get('verified_how', '')}")
+        else:
+            lines.append(f"- 為何未驗證：{e['why_unverified']}")
+            lines.append(f"- 人工驗證：{e['how_to_verify']}")
+        if e.get("files"):
+            lines.append("- 涉及：" + "、".join(f"`{f}`" for f in e["files"]))
+        lines.append("")
+    return lines
+
+
+def render_diag(
+    status, total, budget, usage, over_domains, counts, top_block, status_verify=None, reg=None
+):
     """固定機器可讀尾段（CI 只依賴退出碼 + 本段鍵名；鍵名穩定，勿改）。"""
     lines = ["## DIAG", "", f"status: {status}", f"total: {total}", f"budget: {budget}"]
     lines.append("domains:")
@@ -141,6 +220,11 @@ def render_diag(status, total, budget, usage, over_domains, counts, top_block, s
         lines.append(f"status_matrix: {status_verify.get('ok', 0)}/{status_verify['total']} ok")
         for p in status_verify.get("problems", [])[:5]:
             lines.append(f"  - {p}")
+    if reg:
+        lines.append(
+            f"unverified_runtime: {reg.get('unverified', 0)}"
+            f" (verified {reg.get('verified', 0)}, wont_verify {reg.get('wont_verify', 0)})"
+        )
     lines.append("actions:")
     acts = []
     if over_domains:
@@ -149,6 +233,8 @@ def render_diag(status, total, budget, usage, over_domains, counts, top_block, s
         acts.append(f"reduce_output: {top_block}")
     if counts.get("L1", 0):
         acts.append(f"review_L1_orphans: {counts['L1']}")
+    if reg and reg.get("unverified"):
+        acts.append(f"verify_runtime_claims: {reg['unverified']} 項待人工驗證")
     lines.append(f"  - {acts[0]}" if acts else "  - none")
     for a in acts[1:]:
         lines.append(f"  - {a}")
@@ -1126,6 +1212,11 @@ def main():
         help="查詢模式：輸出匹配模組的實時 callers/callees/tests/defs，不寫檔",
     )
     ap.add_argument("--limit", type=int, default=5, help="查詢模式最多顯示檔數")
+    ap.add_argument(
+        "--register",
+        default=REGISTER_DEFAULT,
+        help="運行期未驗證登錄（JSON）；缺失視為空，損壞則 exit 2",
+    )
     args = ap.parse_args()
     if args.module:
         return cmd_module(args)
@@ -1142,16 +1233,23 @@ def main():
         b2 = block_collisions(root, files)
         b4 = block_structure(root, files, trees)
         b3 = block_behavior(root, files)
+        reg_path = args.register
+        if not os.path.isabs(reg_path):
+            reg_path = os.path.join(root, reg_path)
+        register = load_register(reg_path)
+        b5 = block_verification(register)
     except Exception as e:
         print(f"TOOL ERROR: {e}")
         return 2
-    body = b1 + b2 + b4 + b3
+    body = b1 + b2 + b4 + b3 + b5
     counts = {
         "區塊一依賴": len(b1),
         "區塊二碰撞": len(b2),
         "區塊四結構": len(b4),
         "區塊三行為": len(b3),
+        "區塊五未驗證": len(b5),
     }
+    reg_counts = register_counts(register)
     total = len(body)
     # 預算只計三區塊行數；頁首與 ## DIAG 尾段不計（門檻穩定）。
     top_block = max(counts.items(), key=lambda kv: kv[1])[0]
@@ -1184,6 +1282,7 @@ def main():
         dict(_LAST_ORPHAN_COUNTS),
         top_block if failed else "",
         status_verify=dict(_LAST_STATUS_VERIFY),
+        reg=reg_counts,
     )
     # 趨勢：歷史只記三區塊行數+孤兒+分域（與預算同口徑）；TREND 段不計入預算。
     trend = []
