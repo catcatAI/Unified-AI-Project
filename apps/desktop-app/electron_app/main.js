@@ -1110,6 +1110,78 @@ ipcMain.handle('window-get-bounds', () => {
   return mainWindow.getBounds()
 })
 
+// Window opacity. The main window is created with transparent: true (needed for
+// background click-through), which is also the requirement for setOpacity() — on
+// an opaque window Electron silently does nothing. The settings page collected a
+// windowOpacity slider with no way to reach the window at all.
+ipcMain.handle('window-set-opacity', (event, opacity) => {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    return { success: false, error: 'Main window not available' }
+  }
+  const value = Number(opacity)
+  if (!Number.isFinite(value) || value <= 0 || value > 1) {
+    log.warn('[window-set-opacity] rejected out-of-range value:', opacity)
+    return { success: false, error: 'opacity must be within (0, 1]' }
+  }
+  mainWindow.setOpacity(value)
+  return { success: true, opacity: value }
+})
+
+ipcMain.handle('window-get-opacity', () => {
+  if (!mainWindow || mainWindow.isDestroyed()) return null
+  // getOpacity() exists on Windows and Linux; elsewhere report 1 rather than
+  // pretending to know.
+  return typeof mainWindow.getOpacity === 'function' ? mainWindow.getOpacity() : 1
+})
+
+// System-audio capture. Chromium only exposes an audio track for a *display*
+// source, and on Linux system (loopback) audio is not available at all, so this
+// reports the platform honestly instead of returning an empty stream.
+ipcMain.handle('system-audio-start', async () => {
+  if (process.platform === 'linux') {
+    return {
+      success: false,
+      reason: 'unsupported_platform',
+      error: 'Chromium does not expose system (loopback) audio on Linux',
+    }
+  }
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    return { success: false, error: 'Main window not available' }
+  }
+  try {
+    const { desktopCapturer } = require('electron')
+    const sources = await desktopCapturer.getSources({
+      types: ['screen'],
+      fetchWindowIcons: false,
+    })
+    if (!sources || sources.length === 0) {
+      return { success: false, error: 'No capturable screen source found' }
+    }
+    return { success: true, sourceId: sources[0].id, sourceName: sources[0].name }
+  } catch (error) {
+    log.error('[system-audio-start] failed:', error)
+    return { success: false, error: error.message }
+  }
+})
+
+// Debug logging level. The settings page had a "Debug Mode" checkbox that
+// changed nothing; electron-log is already the process logger, so the level is a
+// real switch.
+ipcMain.handle('debug-set-log-level', (event, level) => {
+  const allowed = ['error', 'warn', 'info', 'verbose', 'debug']
+  const value = String(level || '').toLowerCase()
+  if (!allowed.includes(value)) {
+    return { success: false, error: `log level must be one of ${allowed.join(', ')}` }
+  }
+  log.transports.file.level = value
+  log.transports.console.level = value
+  return { success: true, level: value }
+})
+
+ipcMain.handle('debug-get-log-level', () => {
+  return log.transports.file.level
+})
+
 ipcMain.on('window-set-bounds', (event, bounds) => {
   if (!mainWindow || mainWindow.isDestroyed()) return
   mainWindow.setBounds(bounds)

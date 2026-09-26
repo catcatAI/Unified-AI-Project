@@ -80,14 +80,19 @@
       "added": "2026-09-26"
     },
     {
-      "id": "settings-batch-a-b-wired",
+      "id": "settings-batch-a-b-c-wired",
       "area": "settings",
-      "claim": "設定頁已接上：haptics、modelScale、frameRate+renderQuality、wallpaperMode、backendIp/backendPort（批次 A）與 speechRate/speechPitch/ttsVoice/speechLanguage、clickIntensity/touchIntensity、wallpaperEffect、emotionIntensity（批次 B）",
+      "claim": "設定頁已接上 15 項：haptics、modelScale、frameRate+renderQuality、wallpaperMode、backendIp/backendPort、speechRate/speechPitch/ttsVoice/speechLanguage、clickIntensity/touchIntensity、wallpaperEffect、emotionIntensity（批次 A/B），以及 windowOpacity、captureSystemAudio、debugMode（批次 C，需新增 IPC）",
       "why_unverified": "applySettingsToApplication 的呼叫鏈可用靜態與 node 行為測試驗證，但「設定視窗勾選後桌面版實際反應」需要啟動 Electron，本機無顯示器",
-      "how_to_verify": "啟動桌面版 → 設定 → 逐項修改並儲存 → 確認：haptics 關閉後不震動；模型縮放改變；FPS/品質反映在效能模式；桌布模式與效果（blur/darken/grayscale）可見；後端 IP/埠變更後 WebSocket 重新連線；語速/音高/語音影響朗讀；情緒強度影響 Live2D 參數",
+      "how_to_verify": "啟動桌面版 → 設定 → 逐項修改並儲存 → 確認：haptics 關閉後不震動；模型縮放改變；FPS/品質反映在效能模式；桌布模式與效果可見；後端 IP/埠變更後 WebSocket 重新連線；語速/音高/語音影響朗讀；情緒強度影響 Live2D 參數；主視窗透明度改變；系統音訊擷取在 Linux 應顯示不支援（而非假裝開啟）；除錯模式切換後主控台 verbose 輸出改變",
       "files": [
         "packages/shared-js/js/settings.js",
-        "packages/shared-js/js/performance-manager.js"
+        "packages/shared-js/js/performance-manager.js",
+        "packages/shared-js/js/audio-handler.js",
+        "packages/shared-js/js/haptic-handler.js",
+        "packages/shared-js/js/wallpaper-handler.js",
+        "apps/desktop-app/electron_app/preload.js",
+        "apps/desktop-app/electron_app/main.js"
       ],
       "status": "unverified",
       "added": "2026-09-26"
@@ -95,7 +100,7 @@
     {
       "id": "settings-remaining-inert",
       "area": "settings",
-      "claim": "尚有設定只存檔不套用（待續批次）：sensitivity、idleMode、captureSystemAudio、windowOpacity、ttsEngine、autoSwitchFallback、debugMode、enableCluster/clusterRole/clusterMemoization/clusterIntegerOnly/nodeName",
+      "claim": "尚有設定只存檔不套用（待續批次）：sensitivity、idleMode、ttsEngine、autoSwitchFallback、enableCluster、clusterRole、clusterMemoization、clusterIntegerOnly、nodeName",
       "why_unverified": "這些尚未接上消費端；cluster 類需要後端子系統（目前只有 /api/v1/system/cluster/status），需先做產品決策",
       "how_to_verify": "每項接上後從本清單移除並在提交說明指出實際消費端。cluster 五項需產品決策：後端只有 /api/v1/system/cluster/status，接上等於要建子系統而非接線",
       "files": [

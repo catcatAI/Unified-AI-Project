@@ -618,6 +618,60 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
+    // ---- window opacity. The main window is created transparent (needed for
+    // click-through), which is also what setOpacity() requires; the slider had no
+    // bridge to the window at all.
+    const windowOpacity = parseFloat(settings.windowOpacity)
+    if (window.electronAPI && window.electronAPI.window) {
+      if (Number.isFinite(windowOpacity) && windowOpacity > 0 && windowOpacity <= 1) {
+        window.electronAPI.window
+          .setOpacity(windowOpacity)
+          .then((res) => {
+            if (res && res.success === false) {
+              console.warn('[Settings] window opacity rejected:', res.error)
+            }
+          })
+          .catch((err) => console.warn('[Settings] failed to set window opacity:', err))
+      }
+    }
+
+    // ---- system audio capture. Chromium only offers an audio track for a display
+    // source, and not at all on Linux; the handler reports that honestly, so the
+    // checkbox must surface the refusal instead of pretending to be on.
+    if (window.electronAPI && window.electronAPI.systemAudio) {
+      if (settings.captureSystemAudio) {
+        window.electronAPI.systemAudio
+          .start()
+          .then((res) => {
+            if (res && res.success) {
+              showNotification('系統音訊擷取已啟用', 'success')
+            } else {
+              const reason =
+                res && res.reason === 'unsupported_platform'
+                  ? '此平台不支援系統音訊擷取（Linux）'
+                  : `系統音訊擷取未啟用：${(res && res.error) || '未知原因'}`
+              showNotification(reason, 'error')
+            }
+          })
+          .catch((err) => console.warn('[Settings] system audio capture failed:', err))
+      } else {
+        showNotification('系統音訊擷取已關閉', 'info')
+      }
+    }
+
+    // ---- debug mode: electron-log is already the process logger, so the checkbox
+    // is a real level switch rather than a stored boolean nothing reads.
+    if (window.electronAPI && window.electronAPI.debug) {
+      window.electronAPI.debug
+        .setLogLevel(settings.debugMode ? 'debug' : 'info')
+        .then((res) => {
+          if (res && res.success === false) {
+            console.warn('[Settings] log level rejected:', res.error)
+          }
+        })
+        .catch((err) => console.warn('[Settings] failed to set log level:', err))
+    }
+
     // ---- speech: speak() took its options per call, so the rate/pitch/voice
     // sliders had nothing to write to. These are now persisted defaults that any
     // utterance picks up, and a per-call option still wins.

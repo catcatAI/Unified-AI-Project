@@ -27,6 +27,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.invoke('window-set-ignore-mouse-events', ignore, options),
     setClickThroughRegions: (regions) => ipcRenderer.invoke('set-click-through-regions', regions),
     setBounds: (bounds) => ipcRenderer.send('window-set-bounds', bounds),
+    // Window opacity. Requires a transparent window, which main.js creates.
+    setOpacity: (opacity) => ipcRenderer.invoke('window-set-opacity', opacity),
+    getOpacity: () => ipcRenderer.invoke('window-get-opacity'),
   },
 
   // Live2D model management
@@ -92,6 +95,18 @@ contextBridge.exposeInMainWorld('electronAPI', {
   autostart: {
     get: () => ipcRenderer.invoke('autostart-get'),
     set: (enable) => ipcRenderer.invoke('autostart-set', enable),
+  },
+
+  // System (loopback) audio capture. Reports unsupported_platform on Linux
+  // rather than handing back a silent stream.
+  systemAudio: {
+    start: () => ipcRenderer.invoke('system-audio-start'),
+  },
+
+  // Debug logging level, applied to electron-log in the main process.
+  debug: {
+    setLogLevel: (level) => ipcRenderer.invoke('debug-set-log-level', level),
+    getLogLevel: () => ipcRenderer.invoke('debug-get-log-level'),
   },
 
   // Audio system

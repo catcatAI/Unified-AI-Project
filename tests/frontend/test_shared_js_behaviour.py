@@ -165,6 +165,10 @@ REQUIRED_CALLS = {
     "touchIntensity": "setIntensityScale(",
     "wallpaperEffect": "wallpaperHandler.setEffect(",
     "emotionIntensity": "app.emotionIntensity",
+    # batch C
+    "windowOpacity": "window.setOpacity(",
+    "captureSystemAudio": "systemAudio.start(",
+    "debugMode": "debug.setLogLevel(",
 }
 
 
@@ -209,15 +213,28 @@ def _apply_body() -> str:
     return tail
 
 
+def _despaced(text: str) -> str:
+    """Strip all whitespace so prettier's line breaks cannot hide a call.
+
+    `window.electronAPI.window\n          .setOpacity(x)` contains neither
+    "window.setOpacity(" nor "window .setOpacity(" after a naive squash — the
+    receiver and the method are separated by the bridge object. Removing
+    whitespace entirely matches the call expression itself, which is what these
+    guards mean to assert.
+    """
+    return re.sub(r"\s+", "", text)
+
+
 @pytest.mark.parametrize("setting,call", sorted(REQUIRED_CALLS.items()))
 def test_setting_is_actually_applied(setting, call):
     """A collected-but-unapplied setting is the defect class this file exists for."""
     assert f"s.{setting}" in SETTINGS_JS, f"{setting} is no longer collected"
-    assert call in _apply_body(), f"{setting} is saved but {call} is never called"
+    body = _despaced(_apply_body())
+    assert _despaced(call) in body, f"{setting} is saved but {call} is never called"
     # Also reference the value inside the apply body: several settings share one
     # call, so deleting just this setting's argument left both checks above green
     # while the slider stopped doing anything.
-    assert f"settings.{setting}" in _apply_body(), (
+    assert f"settings.{setting}" in body, (
         f"{setting} is collected but never read while applying settings"
     )
 

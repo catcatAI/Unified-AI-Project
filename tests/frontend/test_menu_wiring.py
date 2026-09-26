@@ -298,3 +298,79 @@ class TestRendererEventChannels:
         assert unused == ["performance-auto-adjust", "websocket-send-result"], (
             "allowlisted channels with no sender changed; update this record"
         )
+
+
+class TestNewIpcSurfacesAreComplete:
+    """The batch-C IPC additions must be wired end to end, not just declared.
+
+    WHY: main.js gained window-set-opacity / window-get-opacity /
+    system-audio-start / debug-set-log-level / debug-get-log-level, and preload
+    gained the matching bridges. A bridge with no handler rejects with "No handler
+    registered", and a handler with no bridge is exactly the dead-end that
+    autostart was.
+    """
+
+    PRELOAD = ROOT / "apps/desktop-app/electron_app/preload.js"
+    MAIN = ROOT / "apps/desktop-app/electron_app/main.js"
+    SETTINGS = ROOT / "packages/shared-js/js/settings.js"
+
+    NEW_CHANNELS = [
+        "window-set-opacity",
+        "window-get-opacity",
+        "system-audio-start",
+        "debug-set-log-level",
+        "debug-get-log-level",
+    ]
+
+    def test_every_new_channel_is_handled_in_main(self):
+        handled = set(
+            re.findall(r"ipcMain\.(?:on|handle)\(\s*'([^']+)'", self.MAIN.read_text(encoding="utf-8"))
+        )
+        missing = [c for c in self.NEW_CHANNELS if c not in handled]
+        assert not missing, f"declared in preload but never handled: {missing}"
+
+    def test_every_new_channel_has_a_preload_bridge(self):
+        preload = self.PRELOAD.read_text(encoding="utf-8")
+        for channel in self.NEW_CHANNELS:
+            assert channel in preload, f"{channel} has no preload bridge"
+
+    def test_opacity_requires_a_transparent_window(self):
+        """setOpacity() is a no-op on an opaque window — the reason it can work here."""
+        main = self.MAIN.read_text(encoding="utf-8")
+        assert "transparent: true" in main, (
+            "window.setOpacity() silently does nothing unless the window is transparent"
+        )
+
+    def test_system_audio_reports_linux_instead_of_returning_silence(self):
+        main = self.MAIN.read_text(encoding="utf-8")
+        body = main.split("ipcMain.handle('system-audio-start'", 1)[1]
+        assert "unsupported_platform" in body.split("})", 1)[0], (
+            "Linux has no loopback audio; the handler must say so rather than "
+            "handing the renderer a silent stream"
+        )
+
+    def test_log_level_is_validated(self):
+        body = self.MAIN.read_text(encoding="utf-8")
+        body = body.split("ipcMain.handle('debug-set-log-level'", 1)[1].split("})", 1)[0]
+        assert "allowed" in body and "success: false" in body
+
+    # The settings page calls the preload *bridge*, not the channel name — the
+    # channel string only exists in preload.js and main.js.
+    @pytest.mark.parametrize(
+        "channel,bridge_call",
+        [
+            ("window-set-opacity", "window.setOpacity("),
+            ("system-audio-start", "systemAudio.start("),
+            ("debug-set-log-level", "debug.setLogLevel("),
+        ],
+    )
+    def test_settings_page_calls_the_bridge(self, channel, bridge_call):
+        preload = self.PRELOAD.read_text(encoding="utf-8")
+        assert channel in preload, f"{channel} is not bridged in preload.js"
+        # The renderer is prettier-formatted, so a call can be wrapped as
+        # `window.electronAPI.systemAudio\n        .start()`; compare without
+        # whitespace rather than against a literal that formatting can break.
+        settings = re.sub(r"\s+", "", self.SETTINGS.read_text(encoding="utf-8"))
+        assert re.sub(r"\s+", "", bridge_call) in settings, (
+            f"the settings page never calls {bridge_call}"
+        )
