@@ -24,6 +24,8 @@
 class HapticHandler {
   constructor(unifiedDisplayMatrix = null) {
     this.isInitialized = false
+    // User preference from the settings page (clickIntensity / touchIntensity).
+    this.intensityScale = 1.0
 
     this.udm = unifiedDisplayMatrix // 统一显示矩阵
 
@@ -163,6 +165,29 @@ class HapticHandler {
    * @param {object} touchInfo - 触摸信息 { position, intensity }
    * @returns {object} - 触觉结果
    */
+  /**
+   * Scale every haptic effect, 0..1.
+   *
+   * WHY: clickIntensity / touchIntensity were collected by the settings page and
+   * had no consumer at all. trigger() multiplied a caller-supplied baseIntensity
+   * by the UDM area/dpi factors, so a user preference could not be expressed
+   * without every caller knowing about it.
+   */
+  setIntensityScale(scale) {
+    const value = Number(scale)
+    if (!Number.isFinite(value) || value < 0 || value > 1) {
+      console.warn('[HapticHandler] intensity scale out of range, ignoring:', scale)
+      return this.intensityScale
+    }
+    this.intensityScale = value
+    console.log('[HapticHandler] intensity scale set to', value)
+    return this.intensityScale
+  }
+
+  getIntensityScale() {
+    return this.intensityScale
+  }
+
   trigger(bodyPart, baseIntensity = 1.0, touchInfo = {}) {
     try {
       // 使用 UDM 计算触觉强度
@@ -184,13 +209,16 @@ class HapticHandler {
       // 获取触觉模式
       const pattern = this._getPattern(bodyPart, finalIntensity)
 
+      // 使用者強度偏好（設定頁）套用於最終強度
+      const scaledIntensity = pattern.intensity * this.intensityScale
+
       // 触发振动
-      this.vibrate(pattern.duration, pattern.intensity)
+      this.vibrate(pattern.duration, scaledIntensity)
 
       return {
         bodyPart,
         duration: pattern.duration,
-        intensity: pattern.intensity,
+        intensity: scaledIntensity,
         timestamp: Date.now(),
       }
     } catch (error) {

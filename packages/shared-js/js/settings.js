@@ -618,6 +618,54 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
+    // ---- speech: speak() took its options per call, so the rate/pitch/voice
+    // sliders had nothing to write to. These are now persisted defaults that any
+    // utterance picks up, and a per-call option still wins.
+    if (app && app.audioHandler) {
+      if (typeof app.audioHandler.setSpeechDefaults === 'function') {
+        app.audioHandler.setSpeechDefaults({
+          rate: parseFloat(settings.speechRate),
+          pitch: parseFloat(settings.speechPitch),
+          voice: settings.ttsVoice || null,
+          lang: settings.speechLanguage || null,
+        })
+      } else {
+        console.warn('[Settings] setSpeechDefaults unavailable; speech unchanged')
+      }
+      // The label is "Language for speech recognition", and this is the setter
+      // for exactly that.
+      if (settings.speechLanguage && typeof app.audioHandler.setSpeechLanguage === 'function') {
+        app.audioHandler.setSpeechLanguage(settings.speechLanguage)
+      }
+    }
+
+    // ---- haptic intensity preference (clickIntensity / touchIntensity)
+    if (app && app.hapticHandler && typeof app.hapticHandler.setIntensityScale === 'function') {
+      // Both sliders are 0..1 multipliers; when only one is chosen it wins,
+      // because it is the more specific of the two.
+      const click = parseFloat(settings.clickIntensity)
+      const touch = parseFloat(settings.touchIntensity)
+      const chosen = Number.isFinite(click) ? click : Number.isFinite(touch) ? touch : null
+      if (chosen !== null) {
+        app.hapticHandler.setIntensityScale(chosen)
+      }
+    }
+
+    // ---- wallpaper effect (none / blur / darken / grayscale)
+    if (app && app.wallpaperHandler) {
+      if (typeof app.wallpaperHandler.setEffect === 'function') {
+        app.wallpaperHandler.setEffect(settings.wallpaperEffect)
+      } else {
+        console.warn('[Settings] WallpaperHandler.setEffect unavailable')
+      }
+    }
+
+    // ---- emotion intensity: a 0..1 preference over the state matrix's own value
+    const emotionIntensity = parseFloat(settings.emotionIntensity)
+    if (app && Number.isFinite(emotionIntensity)) {
+      app.emotionIntensity = Math.min(1, Math.max(0, emotionIntensity))
+    }
+
     // ---- backend address: main.js stores backendIP for the tray, and the
     // renderer's own WebSocket needs the new URL. Both were saved and unused, so
     // changing the IP in the UI did nothing at all.

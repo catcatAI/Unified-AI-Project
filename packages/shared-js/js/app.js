@@ -38,6 +38,8 @@ class AngelaApp {
 
     // 状态
     this.isInitialized = false
+    // Settings-page preference for ParamEmotionIntensity (see _handleEmotionChanged).
+    this.emotionIntensity = 1.0
     this.currentModel = null
     this.idleTimer = null
     this.idleTimeout = 60000
@@ -941,8 +943,16 @@ class AngelaApp {
       this.live2dManager.setExpression(expression)
 
       // 更新情绪强度参数
+      // `emotionIntensity` comes from the settings page; without it the slider
+      // was collected and never used. The emotion system's own 0..1 intensity is
+      // scaled by the user's 0..1 preference, so the preference can only soften
+      // or amplify, never invert the state Angela is actually in.
       if (this.live2dManager.setParameter) {
-        this.live2dManager.setParameter('ParamEmotionIntensity', data.intensity || 0.5)
+        const raw = Number(data.intensity)
+        const base = Number.isFinite(raw) ? raw : 0.5
+        const preference = Number(this.emotionIntensity)
+        const scale = Number.isFinite(preference) ? Math.min(1, Math.max(0, preference)) : 1
+        this.live2dManager.setParameter('ParamEmotionIntensity', base * scale)
       }
     }
   }

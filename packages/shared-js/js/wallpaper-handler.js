@@ -29,6 +29,7 @@ class WallpaperHandler {
     this.systemWallpaper = null
     this.userWallpaper = null
     this.renderingMode = '2D' // 預設 2D
+    this.effect = 'none' // 設定頁的桌布效果
     this.modeledObjects = [] // 被建模的物體
 
     // Canvas for composition
@@ -289,6 +290,46 @@ class WallpaperHandler {
     return newObject.id
   }
 
+  // CSS filters per effect. 'none' is an empty filter rather than a special
+  // case, so switching back to None actually clears the previous effect.
+  static EFFECT_FILTERS = {
+    none: '',
+    blur: 'blur(8px)',
+    darken: 'brightness(0.55)',
+    grayscale: 'grayscale(1)',
+  }
+
+  /**
+   * Apply a visual effect to the rendered wallpaper.
+   *
+   * WHY: the settings page offered none/blur/darken/grayscale and had no way to
+   * apply any of them — the value was saved and never read. The composition
+   * canvas is created in initialize(), so the filter is applied to whichever
+   * canvas exists now and re-applied by renderComposition() on later frames.
+   */
+  setEffect(effect) {
+    const name = String(effect || 'none').toLowerCase()
+    if (!(name in WallpaperHandler.EFFECT_FILTERS)) {
+      console.warn('[WallpaperHandler] unknown effect, using none:', effect)
+      this.effect = 'none'
+    } else {
+      this.effect = name
+    }
+    this._applyEffectFilter()
+    return this.effect
+  }
+
+  getEffect() {
+    return this.effect || 'none'
+  }
+
+  _applyEffectFilter() {
+    const canvas = this.compositionCanvas
+    if (!canvas || !canvas.style) return false
+    canvas.style.filter = WallpaperHandler.EFFECT_FILTERS[this.effect || 'none']
+    return true
+  }
+
   renderComposition() {
     if (!this.compositionContext) return
 
@@ -297,6 +338,10 @@ class WallpaperHandler {
 
     // Clear canvas
     this.compositionContext.clearRect(0, 0, width, height)
+
+    // Re-assert the effect: initialize() may have created this canvas after the
+    // user picked one.
+    this._applyEffectFilter()
 
     // 1. 繪製背景桌布
     const activeWallpaper = this._getActiveWallpaper()

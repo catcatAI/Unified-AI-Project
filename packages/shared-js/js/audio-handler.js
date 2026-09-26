@@ -29,6 +29,7 @@
 
 class AudioHandler {
   constructor() {
+    this.speechDefaults = { rate: 1, pitch: 1, voice: null, lang: null }
     this.isInitialized = false
 
     this.audioContext = null
@@ -552,6 +553,36 @@ class AudioHandler {
     }, 1000)
   }
 
+  /**
+   * Persist speech defaults for speak().
+   *
+   * WHY: speak() took rate/pitch/voice/lang per call, so the settings page's
+   * speechRate / speechPitch / ttsVoice / speechLanguage had nothing to write to —
+   * every value was collected, saved, and then ignored on the next utterance.
+   * A per-call option still wins, so callers stay in control.
+   */
+  setSpeechDefaults({ rate, pitch, voice, lang } = {}) {
+    const before = { ...this.speechDefaults }
+    if (rate !== undefined && Number.isFinite(Number(rate))) {
+      this.speechDefaults.rate = Math.min(2, Math.max(0.5, Number(rate)))
+    }
+    if (pitch !== undefined && Number.isFinite(Number(pitch))) {
+      this.speechDefaults.pitch = Math.min(2, Math.max(0.5, Number(pitch)))
+    }
+    if (typeof voice === 'string' && voice) {
+      this.speechDefaults.voice = voice
+    }
+    if (typeof lang === 'string' && lang) {
+      this.speechDefaults.lang = lang
+    }
+    console.log('[AudioHandler] speech defaults updated:', before, '->', this.speechDefaults)
+    return { ...this.speechDefaults }
+  }
+
+  getSpeechDefaults() {
+    return { ...this.speechDefaults }
+  }
+
   speak(text, options = {}) {
     if (!this.synthesis) {
       console.warn('Speech synthesis not available')
@@ -563,16 +594,18 @@ class AudioHandler {
 
     const utterance = new SpeechSynthesisUtterance(text)
 
-    // Set options
-    utterance.rate = options.rate || 1
-    utterance.pitch = options.pitch || 1
+    // Set options — a per-call option wins over the persisted settings default.
+    const defaults = this.speechDefaults || {}
+    utterance.rate = options.rate || defaults.rate || 1
+    utterance.pitch = options.pitch || defaults.pitch || 1
     utterance.volume = options.volume || 1
-    utterance.lang = options.lang || 'en-US'
+    utterance.lang = options.lang || defaults.lang || 'en-US'
 
     // Select voice from cached voices
     const voices = this.availableVoices || []
-    if (options.voice) {
-      const voice = voices.find((v) => v.name === options.voice)
+    const wantedVoice = options.voice || defaults.voice
+    if (wantedVoice) {
+      const voice = voices.find((v) => v.name === wantedVoice)
       if (voice) {
         utterance.voice = voice
       }
