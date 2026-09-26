@@ -214,16 +214,30 @@ class AngelaApp {
   }
 
   // ========== 事件處理 ==========
+  //
+  // ONE definition per handler. This class previously defined
+  // _handleClick/_handleDrag/_handleHover twice — the second set (at the bottom
+  // of the file) shadowed the first and expected a hit-test result
+  // (`data.bodyPart`), while InputHandler actually calls
+  // onClick(MouseEvent) / onDrag(dragState) / onHover(region, position)
+  // (input-handler.js:86,105,157). The shadowing versions therefore read
+  // `undefined` for every interaction: clicking, dragging and hovering Angela
+  // did nothing at all.
+  //
+  // UnifiedDisplayMatrix.handleClick() already reports the hit to StateMatrix4D
+  // internally (unified-display-matrix.js:400-408), so the click path must not
+  // report it a second time. Drag and hover have no such UDM entry point, so
+  // they go through handleTouch() and report themselves.
 
   _handleClick(e) {
     if (!this.udm) return
 
-    const clientX = e.clientX || (e.position ? e.position.x : 0)
-    const clientY = e.clientY || (e.position ? e.position.y : 0)
+    const clientX = e?.clientX || (e?.position ? e.position.x : 0)
+    const clientY = e?.clientY || (e?.position ? e.position.y : 0)
 
     const result = this.udm.handleClick(clientX, clientY)
 
-    if (result.success && result.bodyPart) {
+    if (result?.success && result.bodyPart) {
       console.log(`[App] Clicked on: ${result.bodyPart.name}`)
 
       // Show visual feedback
@@ -234,11 +248,25 @@ class AngelaApp {
   }
 
   _handleDrag(dragData) {
-    // Drag handling logic can be implemented here if needed
+    if (!this.udm || !dragData) return
+
+    const x = dragData.x ?? dragData.position?.x ?? 0
+    const y = dragData.y ?? dragData.position?.y ?? 0
+    const result = this.udm.handleTouch(x, y, 'stroke')
+
+    if (result?.success && result.bodyPart) {
+      this.stateMatrix?.handleInteraction('drag', { part: result.bodyPart.name })
+    }
   }
 
   _handleHover(region, pos) {
-    // Hover handling logic can be implemented here if needed
+    // Hover is deliberately light: report the region so the state matrix can
+    // track attention, without triggering haptics or expressions.
+    if (!region) return
+    const name = region.name || region.id
+    if (name) {
+      this.stateMatrix?.handleInteraction('hover', { part: name })
+    }
   }
 
   /**
@@ -960,23 +988,6 @@ class AngelaApp {
     if (this.hapticHandler) {
       this.hapticHandler.trigger(data.intensity || 0.5)
     }
-  }
-
-  _handleClick(data, coords) {
-    if (data?.bodyPart) {
-      // 触摸检测结果
-      this.stateMatrix?.handleInteraction('click', { part: data.bodyPart })
-    }
-  }
-
-  _handleDrag(data, coords) {
-    if (data?.bodyPart) {
-      this.stateMatrix?.handleInteraction('drag', { part: data.bodyPart })
-    }
-  }
-
-  _handleHover(data, coords) {
-    // 悬停处理
   }
 
   _handleSpeechRecognized(text) {

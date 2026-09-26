@@ -1229,13 +1229,20 @@ class UnifiedDisplayMatrix {
   }
 
   /**
-   * 修改后的handleTouch方法 - 添加到队列
+   * Queue a touch for batched processing.
+   *
+   * WHY this is not called handleTouch: it used to be, which shadowed the real
+   * 192-line handleTouch above (coordinate transform, body-part detection,
+   * haptics, expression, StateMatrix4D update). Because the later definition
+   * wins in a class body, handleClick() and character-touch-detector.js were
+   * both getting `{queued: true}` with no bodyPart — clicking Angela produced no
+   * hit test, no expression and no state update. The queue is for callers that
+   * explicitly want batching; handleTouch stays synchronous and returns the real
+   * result every existing caller already expects.
    */
-  handleTouch(screenX, screenY, touchType = 'pat') {
-    // 添加到队列
+  enqueueTouch(screenX, screenY, touchType = 'pat') {
     const touchId = this._addToTouchQueue(screenX, screenY, touchType)
 
-    // 返回队列ID
     return {
       success: true,
       queued: true,
