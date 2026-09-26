@@ -17,6 +17,7 @@
 
 import logging
 import os
+import re
 from typing import Any, Dict, List, Optional
 
 from PIL import Image
@@ -42,6 +43,44 @@ class VisionProcessingAgent:
     def is_available(self) -> Dict[str, bool]:
         """Check which backends are available."""
         return {"pytesseract": PYTESSERACT_AVAILABLE}
+
+    # Mirrors the three conventions VisionHandler._extract_image_path accepts, so
+    # a path embedded in the message is found the same way in both paths. The
+    # duplication is pinned by a test that asserts both extractors agree — if one
+    # gains a convention the other must follow.
+    _IMAGE_RE = re.compile(r"[\w\\/:.\-]+\.(?:png|jpg|jpeg|gif|bmp|webp|svg)", re.IGNORECASE)
+    _OCR_HINTS = re.compile(r"(文字|文本|字|ocr|text|lettering|word|words)", re.IGNORECASE)
+
+    def extract_image_path(self, prompt: str) -> Optional[str]:
+        """First image path in the text. Pure string work — no file access."""
+        m = re.search(r"```(?:image|img|pic)?\s*\n(.*?)```", prompt or "", re.DOTALL)
+        if m:
+            candidate = m.group(1).strip().split("\n")[0].strip()
+            if candidate:
+                return candidate
+        m = re.search(r"`([^`]+\.(?:png|jpg|jpeg|gif|bmp|webp|svg))`", prompt or "", re.IGNORECASE)
+        if m:
+            return m.group(1)
+        m = self._IMAGE_RE.search(prompt or "")
+        return m.group(0) if m else None
+
+    def handle_request(self, prompt: str, image_path: Optional[str] = None) -> Dict[str, Any]:
+        """Read text out of the image, or list what is in it.
+
+        WHY this exists: `image_detail` maps to this agent, but the router passes
+        the message under generic keys while this class needs an `image_path`.
+        Without this entry point every request came back "No image path provided".
+        """
+        text = (prompt or "").strip()
+        path = image_path or self.extract_image_path(text)
+        if not path:
+            return {
+                "status": "error",
+                "message": "No image path found; attach the image or name its file",
+            }
+        if self._OCR_HINTS.search(text):
+            return self.extract_text(path)
+        return self.detect_objects(path)
 
     def analyze_image(self, image_path: str) -> Dict[str, Any]:
         """Analyze image and return dimensions, format, analysis result."""

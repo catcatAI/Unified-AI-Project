@@ -128,15 +128,23 @@ class TestCatalogHonesty:
     could ever select them.
     """
 
-    def test_unregistered_but_reachable_ids_are_the_reference(self):
+    def test_registered_but_unreachable_ids_are_the_reference(self):
+        """Reachability is the reference the catalog is compared against.
+
+        This test used to assert that fantasy_dm / web_search /
+        vision_processing were NOT reachable — which was the honest state while no
+        intent selected them. They now have intents (`roleplay`,
+        `web_research`, `image_detail`), so the premise is inverted: the three must
+        be reachable, and the honesty requirement moves to "every registered agent
+        id is either dispatchable or explicitly labelled".
+        """
         from ai.agents.agent_orchestrator import dispatchable_agent_ids
 
         reachable = dispatchable_agent_ids()
         assert "eda_agent" in reachable
         assert "knowledge_graph_agent" in reachable
-        # Registered at boot (agent_adapter) but nothing selects them:
-        for dead in ("fantasy_dm_agent", "web_search_agent", "vision_processing_agent"):
-            assert dead not in reachable, f"{dead} must not be advertised as usable"
+        for wired in ("fantasy_dm_agent", "web_search_agent", "vision_processing_agent"):
+            assert wired in reachable, f"{wired} has an intent and must be dispatchable"
 
     def test_unreachable_agents_are_labelled_not_listed(self):
         response = render_capability_response(

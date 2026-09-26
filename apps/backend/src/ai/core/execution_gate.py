@@ -129,6 +129,12 @@ _AGENT_INTENT_ACTIONS = {
     "vision": "read",
     "audio": "read",
     "nlp": "read",
+    # Roleplay / research / image-detail intents. Without an entry here the gate
+    # has no verdict for them, so the new intents would have been rejected
+    # before ever reaching their agent.
+    "roleplay": "create",
+    "web_research": "search",
+    "image_detail": "read",
     # Chat-side image generation. The vocabulary is only 50 geometric words /
     # 10 concepts, so this produces an abstract primitive composition — still a
     # real artifact, but the caller must not imply photorealism.

@@ -35,16 +35,21 @@ class AgentAdapter:
     _METHOD_MAP: Dict[str, tuple] = {
         "CreativeWriting": ("generate_story", "generate_poem"),
         "ImageGeneration": ("generate_image", None),
-        "WebSearch": ("search", None),
+        # handle_request first for the three agents that gained a roleplay /
+        # research / image-detail intent: the router only supplies the raw user
+        # message, and each of these classes needs to decide which of its own
+        # methods that message means (fetch vs search, OCR vs objects, scenario
+        # vs character sheet).
+        "WebSearch": ("handle_request", "search"),
+        "VisionProcessing": ("handle_request", "analyze_image"),
+        "FantasyDM": ("handle_request", "generate_scenario"),
         "CodeUnderstanding": ("analyze_code", "explain_code"),
         "DataAnalysis": ("analyze_dataset", "generate_report"),
         "Eda": ("run_experiment", "probe_tools"),
-        "VisionProcessing": ("analyze_image", "detect_objects"),
         "AudioProcessing": ("transcribe_audio", "analyze_audio"),
         "KnowledgeGraph": ("query_graph", "add_entity"),
         "NLPProcessing": ("analyze_sentiment", "summarize_text"),
         "Planning": ("create_plan", None),
-        "FantasyDM": ("generate_scenario", "create_character"),
     }
 
     def __init__(self, agent: Any, agent_id: Optional[str] = None):

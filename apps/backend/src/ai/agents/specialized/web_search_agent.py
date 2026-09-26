@@ -15,6 +15,7 @@
 # =============================================================================
 
 import logging
+import re
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -49,6 +50,31 @@ class WebSearchAgent:
     def is_available(self) -> bool:
         """Check if web search backend is available."""
         return REQUESTS_AVAILABLE
+
+    _URL_RE = re.compile(r"https?://[^\s\)\]}>\"']+", re.IGNORECASE)
+
+    def extract_url(self, prompt: str) -> Optional[str]:
+        """First http(s) URL in the text, if any. Pure string work — no network."""
+        m = self._URL_RE.search(prompt or "")
+        return m.group(0) if m else None
+
+    def handle_request(self, prompt: str) -> Dict[str, Any]:
+        """Accept a natural-language request: fetch a named page, else search.
+
+        WHY this exists: `web_research` maps to this agent, but the router passes
+        the message under generic keys while this class needs a `url` for
+        fetch_content() and a `query` for search(). Deciding which one the user
+        meant is web-search vocabulary, so it belongs here rather than in the
+        router.
+        """
+        text = (prompt or "").strip()
+        if not text:
+            return {"status": "error", "message": "No request provided"}
+
+        url = self.extract_url(text)
+        if url:
+            return self.fetch_content(url)
+        return self.search(text)
 
     def search(self, query: str, num_results: int = 5) -> Dict[str, Any]:
         """Perform a web search via DuckDuckGo HTML interface."""

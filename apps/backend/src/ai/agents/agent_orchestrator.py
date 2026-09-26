@@ -66,6 +66,12 @@ _INTENT_AGENTS: Dict[str, str] = {
     "plan_create": "planning_agent",
     "audio": "audio_processing_agent",
     "nlp": "nlp_processing_agent",
+    # Registered but previously unreachable: no intent mapped to them, so the
+    # capability catalog reported them as registered-but-not-dispatchable and no
+    # chat message could ever select them.
+    "roleplay": "fantasy_dm_agent",
+    "web_research": "web_search_agent",
+    "image_detail": "vision_processing_agent",
 }
 
 
@@ -237,6 +243,46 @@ class AgentOrchestrator:
         # first so "查詢知識圖譜" routes to knowledge_query, not web_search.
         if re.search(r"(知識圖譜|知識庫|knowledge graph|knowledge base|圖譜|knowledge)", lower):
             return "knowledge_query"
+
+        # Roleplay / tabletop RPG. Checked before creative_write because
+        # 「幫我寫一個關於龍的冒險故事」 is a campaign request, not a writing
+        # request — and FantasyDMAgent is the component that owns the rules
+        # (difficulty by level, class/race stat blocks, DC resolution).
+        # NOTE: `lower` is already lowercased, so the latin alternatives must be
+        # written in lower case — "TRPG" here would never have matched.
+        if re.search(
+            r"(跑團|桌上遊戲|角色扮演|\btrpg\b|\brpg\b|地下城|副本|奇幻|"
+            r"冒險|冒險者|法師|戰士|盜賊|矮人|精靈|龍騎|牧師|"
+            r"\broleplay\b|\bdungeon master\b|\bdm\b|\bcampaign\b|"
+            r"\broll initiative\b|\bcharacter sheet\b|\bcreate (a )?character\b)",
+            lower,
+        ):
+            return "roleplay"
+
+        # Web research: fetching and summarising a specific page, which
+        # WebSearchAgent does with fetch_content(). Checked before web_search so
+        # 「抓取這個網址的內容」 reaches the agent instead of the plain handler.
+        if re.search(
+            r"(抓取|擷取|爬取|抓这个|抓這個|"
+            r"\b(fetch|scrape|crawl|spider)\b|"
+            r"網址|網頁內容|網站內容|這個網頁|這個網站|該網頁|"
+            r"\bthis (url|page|site|link|article)\b|\bthe url\b)",
+            lower,
+        ):
+            return "web_research"
+
+        # Image detail: reading text out of an image or listing what is in it.
+        # VisionProcessingAgent owns extract_text()/detect_objects(); plain
+        # 「看這張圖」 stays with the vision handler.
+        if re.search(
+            r"(圖(片|中|裡|里)?.{0,2}的?文字|照片(中|裡|里)?.{0,2}的?文字|"
+            r"圖(片|中|裡|里)?.{0,2}中的人物|"
+            r"圖(片|中|裡|里)?.{0,2}有什麼|照片(中|裡|里)?.{0,2}有什麼|"
+            r"\b(ocr|extract text|text in the (image|photo)|"
+            r"objects? in the (image|photo))\b)",
+            lower,
+        ):
+            return "image_detail"
 
         # Web search
         if re.search(r"(搜索|搜尋|查詢|search|find|lookup|google|web)", lower):
@@ -492,9 +538,7 @@ class AgentOrchestrator:
                     )
 
             if isinstance(result, dict):
-                self._execution_gate.record_result(
-                    agent_name, bool(result.get("success"))
-                )
+                self._execution_gate.record_result(agent_name, bool(result.get("success")))
 
             results.append(
                 {
