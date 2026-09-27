@@ -143,11 +143,14 @@ backends:
 
 # Routing policy + fallback chain (migrated from llm_providers.default.yaml).
 routing:
-      # ── complexity_* not consumed by code ──
-      # The router has no complexity-based backend selection: it reads
-      # context['complexity'] only for logging. These three entries describe
-      # intended behaviour, not current behaviour. Recorded in
-      # tests/test_config_coverage.py::UNHONOURED_SECTIONS.
+      # ── this whole policy map is not consumed by code ──
+      # services/llm/router.py assigns `self._angela_routing = routing.get("policy")`
+      # at line 355 and never reads it; backend selection uses the router's own
+      # logic, and context['complexity'] is only logged. So math/code/task/general
+      # and the complexity_* entries describe intended behaviour, not current
+      # behaviour. Implementing policy-driven selection is a design decision, not a
+      # wiring fix, so it is recorded in
+      # tests/test_config_coverage.py::UNHONOURED_SECTIONS and asserted there.
   policy:
     math: "unified-1g"
     code: "ollama-llama3"

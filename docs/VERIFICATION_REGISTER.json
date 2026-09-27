@@ -113,9 +113,9 @@
     {
       "id": "config-unhonoured-sections",
       "area": "other",
-      "claim": "設定檔中宣告但無任何程式消費的區段，已逐條記錄於 tests/test_config_coverage.py::UNHONOURED_SECTIONS（含原因），其中 system/llm routing.policy.complexity_* 與 system/core command_triggers.* 對應的功能從未被實作",
+      "claim": "設定檔中宣告但無任何程式消費的項目，已逐條記錄於 tests/test_config_coverage.py::UNHONOURED_SECTIONS（含原因），並在對應 YAML 宣告處加上註解。其中 system/llm 的整個 routing.policy map 是死的：router.py:355 把 self._angela_routing 指派後從未讀取，因此 math/code/task/general 與 complexity_* 全都未被使用",
       "why_unverified": "本項為靜態分析結論，非執行期行為：無法在此環境示範缺少的路由策略或指令觸發功能",
-      "how_to_verify": "若實作 complexity 路由或 command triggers，請從 UNHONOURED_SECTIONS 移除對應條目，測試會強制同步；新增未接線的設定則會直接失敗",
+      "how_to_verify": "實作 complexity 路由後，移除對應註解與清單條目，test_routing_policy_map_is_either_used_or_documented 會要求同步",
       "files": [
         "apps/backend/configs/system/llm.default.yaml",
         "apps/backend/configs/system/core.default.yaml",
