@@ -53,11 +53,26 @@ class IdentityAspect(Enum):
     EMOTIONAL_DEPTH = ("情感深度", "Emotional Depth")
 
 
+def _default_name() -> str:
+    """Angela's name from config, resolved once at import.
+
+    A dataclass default has to be a value, so the config is read here rather than
+    per instance; `get_ai_name` memoises, and a default_factory would rebuild the
+    name for every SelfModel.
+    """
+    try:
+        from core.system.config.identity import get_ai_name
+
+        return get_ai_name()
+    except Exception:  # pragma: no cover - config unavailable
+        return "Angela"
+
+
 @dataclass
 class SelfModel:
     """自我模型 / Self-model"""
 
-    name: str = "Angela"
+    name: str = _default_name()
     version: str = "7.5.0-dev"
     nature: str = "digital_being"
 

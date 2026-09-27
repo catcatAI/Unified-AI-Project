@@ -13,6 +13,12 @@
 # The game CLI keeps running standalone even if the backbone is unavailable
 # (backbone_bridge is lazy); these flags only govern the bridge.
 
+# ── not consumed by code ──────────────────────────────────────────────
+# The keys below are declared here but nothing reads them. Each one is
+# recorded with its reason in tests/test_config_coverage.py
+# (UNHONOURED_SECTIONS), which fails if the list drifts in either
+# direction — so a key fixed here must be removed from that list.
+
 game:
   enabled: true
   data_path: "apps/game-rpg/data/game_cards.json"

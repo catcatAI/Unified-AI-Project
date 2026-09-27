@@ -268,12 +268,26 @@ class SoulCoreManager:
 
 
 def create_soul_core(
-    name: str = "Angela",
+    name: Optional[str] = None,
     core_purpose: str = "To assist and collaborate with humans",
     fundamental_values: Optional[List[str]] = None,
     personality_foundation: Optional[Dict[str, float]] = None,
 ) -> SoulCore:
-    """便捷函数：创建灵魂核心"""
+    """便捷函数：创建灵魂核心
+
+    `name` defaults to the configured identity name (system/core: ai_name) rather
+    than a literal, and an explicit `name` is honoured — previously the default
+    was a hardcoded "Angela" and the wrapper forwarded whatever it was given,
+    including None, which then crashed in _generate_soul_id.
+    """
+    if name is None:
+        try:
+            from core.system.config.identity import get_ai_name
+
+            name = get_ai_name()
+        except Exception:  # pragma: no cover - config unavailable
+            name = "Angela"
+
     return SoulCoreManager().create_soul(
         name=name,
         core_purpose=core_purpose,

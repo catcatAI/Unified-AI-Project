@@ -127,10 +127,25 @@
     {
       "id": "ai-name-config-mismatch",
       "area": "other",
-      "claim": "system/core.default.yaml 宣告 ai_name: Miko，但程式碼 9 處硬編碼 'Angela'，該設定從未被讀取",
+      "claim": "ai_name 設為 Angela，並成為單一來源：core/system/config/identity.get_ai_name() 供 SelfModel 與 create_soul_core 使用（後者原本接受 name 參數卻忽略它）",
       "why_unverified": "這是產品命名決策：套用設定會把對外名稱從 Angela 改成 Miko，需使用者決定",
       "how_to_verify": "決定後：若採單一來源，讓程式讀 ai_name（預設維持 Angela），並更新 YAML；若維持 Angela，將 YAML 改為 Angela 使設定與實作一致",
       "files": [
+        "apps/backend/configs/system/core.default.yaml"
+      ],
+      "status": "verified",
+      "added": "2026-09-26",
+      "verified_how": "本機實測：get_ai_name() 與 SelfModel().name 皆為 'Angela'；create_soul_core() 使用設定名，create_soul_core(name='TestSoul') 正確傳入。另確認不動 angela_agent.py 的 'Angela'（那是遊戲玩家名）與字典的 Angela 詞條",
+      "status_note": "已由使用者決定命名為 Angela"
+    },
+    {
+      "id": "environment-limits-what-cannot-be-verified",
+      "area": "other",
+      "claim": "本環境的硬體/軟體限制決定了哪些項目無法驗證或無法實作，分三類：(A) 已處理；(B) 需先有功能/子系統，無法只靠接線完成；(C) 環境硬體限制，無論程式碼為何都無法在此驗證",
+      "why_unverified": "分類本身是本機偵測結果，非執行期行為。A=已修復並測試；B=需產品決策（cluster 子系統、command triggers、複雜度路由、後端 TTS 端點）；C=本機無 GPU（無 /dev/nvidia*）、未安裝 Electron（node_modules/electron 不存在，僅有失效的符號連結）、無 cluster 對等節點、llama.cpp 伺服器不由本專案啟動",
+      "how_to_verify": "C 類需在有 GPU 的機器或安裝 Electron 後驗證：python3 scripts/gen_project_map.py 會顯示本條；安裝 Electron 後可依各條 how_to_verify 逐項改為 verified",
+      "files": [
+        "apps/desktop-app/electron_app/package.json",
         "apps/backend/configs/system/core.default.yaml"
       ],
       "status": "unverified",

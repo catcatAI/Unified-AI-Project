@@ -24,7 +24,10 @@ system:
       playful: { "text_ending": " (playfully) ✨" }
       sad_response: { "text_ending": " (with a sigh)" }
 
-ai_name: Miko # Or a new unified name, TBD
+# The single source for Angela's name. Read via
+# core.system.config.identity.get_ai_name(); the same string used to be
+# hardcoded in several modules, so this key was dead.
+ai_name: Angela
 
 # ED3N core_network propagation knobs actually read by core_network.py
 # (2026-09-03: ed3n.default.yaml's max_spike_hops/spike_decay do NOT match
@@ -37,6 +40,9 @@ ai:
     propagation_cutoff: 0.05
 
 # Settings from MikoAI's config.yaml
+# ── not consumed by code ──
+# The memory modules size themselves; this limit is documentation only.
+# Recorded in tests/test_config_coverage.py::UNHONOURED_SECTIONS.
 memory_manager:
   short_term_memory_limit: 10 # Short-term memory limit in conversation turns
 
@@ -56,6 +62,10 @@ core_systems:
   #   api_key: ${API_KEY} # API keys should be managed via .env
 
 # Command triggers for special functionalities
+# ── not consumed by code ──
+# No command-trigger feature exists. The prefixes below were declared and
+# never implemented, so a message starting with them behaves like ordinary
+# text. Recorded in tests/test_config_coverage.py::UNHONOURED_SECTIONS.
 command_triggers:
   complex_project: "project:"
   manual_delegation: "!delegate_to"
@@ -72,6 +82,11 @@ command_triggers:
 # are planned to be part of configs/personality_profiles/miko_base.json
 # and will be handled in step 3.
 
+# ── partially not consumed by code ──
+# api_server / execution_monitor / learning_thresholds / timeouts entries
+# are declared but unread: host and port come from ANGELA_SERVER_HOST /
+# ANGELA_SERVER_PORT and the CLI, and the monitor takes its own arguments.
+# Recorded in tests/test_config_coverage.py::UNHONOURED_SECTIONS.
 operational_configs:
   timeouts:
     llm_general_request: 60 # Default timeout for general LLM requests in seconds

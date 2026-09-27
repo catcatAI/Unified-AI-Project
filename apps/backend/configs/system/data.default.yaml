@@ -11,6 +11,10 @@ data:
   root: "" # empty = auto-detect
 
   # Subdirectories (relative to root, or absolute paths)
+  # ── not consumed by code ──
+  # Directories are created from data.root; this map documents the layout
+  # rather than driving it. Recorded in
+  # tests/test_config_coverage.py::UNHONOURED_SECTIONS.
   subdirs:
     dictionaries: "dictionaries"
     corpus: "raw_datasets/corpus"

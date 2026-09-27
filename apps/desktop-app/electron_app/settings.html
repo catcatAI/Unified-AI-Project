@@ -132,6 +132,29 @@
         margin-top: 4px;
       }
 
+      /* Marks a control whose value is stored but not applied, so the page stops
+         implying a capability the build does not have. */
+      .setting-note {
+        font-size: 12px;
+        color: #b9770e;
+        background: #fdf6e3;
+        border-left: 3px solid #f0b429;
+        padding: 8px 10px;
+        margin: 8px 0 4px;
+        line-height: 1.5;
+      }
+
+      .setting-note code {
+        font-size: 11px;
+        background: transparent;
+      }
+
+      .setting-control input:disabled,
+      .setting-control select:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+
       .setting-control {
         display: flex;
         align-items: center;
@@ -378,13 +401,18 @@
                 <p>How quickly Angela responds to interactions</p>
               </div>
               <div class="setting-control">
-                <select id="sensitivity">
+                <select id="sensitivity" disabled>
                   <option value="low">Low</option>
                   <option value="medium" selected>Medium</option>
                   <option value="high">High</option>
                 </select>
               </div>
             </div>
+            <p class="setting-note">
+              Undefined for now: the value that drives Live2D tracking comes from the
+              state matrix's attention axis, so a user preference here would fight the
+              emotion system rather than complement it.
+            </p>
           </div>
         </div>
 
@@ -499,13 +527,18 @@
                 <p>Choose the text-to-speech engine</p>
               </div>
               <div class="setting-control">
-                <select id="tts-engine">
+                <select id="tts-engine" disabled>
                   <option value="browser">Browser (Web Speech API)</option>
                   <option value="edge">Microsoft Edge TTS</option>
                   <option value="google">Google Cloud TTS</option>
                 </select>
               </div>
             </div>
+            <p class="setting-note">
+              Only the browser engine is available: the Edge and Google Cloud options
+              need a backend TTS endpoint, which does not exist yet. Rate, pitch and
+              voice below do work.
+            </p>
             <div class="setting-item">
               <div class="setting-label">
                 <label>Voice</label>
@@ -811,13 +844,18 @@
 
           <div class="setting-group">
             <h3>Cluster Deployment (Legacy/Experimental)</h3>
+            <p class="setting-note">
+              Unavailable in this build: these values are stored but not applied — the
+              backend exposes only <code>/api/v1/system/cluster/status</code>, with no
+              cluster subsystem to configure.
+            </p>
             <div class="setting-item">
               <div class="setting-label">
                 <label>Enable Cluster Mode</label>
                 <p>Enable (L0~L11) × (4~8) matrix distributed computing</p>
               </div>
               <div class="setting-control">
-                <input type="checkbox" id="enable-cluster" />
+                <input type="checkbox" id="enable-cluster" disabled />
               </div>
             </div>
             <div class="setting-item">
@@ -826,7 +864,7 @@
                 <p>Master handles distribution, Worker handles calculation</p>
               </div>
               <div class="setting-control">
-                <select id="cluster-role">
+                <select id="cluster-role" disabled>
                   <option value="auto">Auto Detect</option>
                   <option value="master">Master</option>
                   <option value="worker">Worker</option>
@@ -839,7 +877,7 @@
                 <p>Reduce latency by transmitting only integers between nodes</p>
               </div>
               <div class="setting-control">
-                <input type="checkbox" id="cluster-integer-only" checked />
+                <input type="checkbox" id="cluster-integer-only" disabled checked />
               </div>
             </div>
             <div class="setting-item">
@@ -848,7 +886,7 @@
                 <p>Store decimal values on workers to maintain precision</p>
               </div>
               <div class="setting-control">
-                <input type="checkbox" id="cluster-memoization" checked />
+                <input type="checkbox" id="cluster-memoization" disabled checked />
               </div>
             </div>
             <div class="setting-item">
@@ -857,7 +895,7 @@
                 <p>Identifier for this node in the cluster</p>
               </div>
               <div class="setting-control">
-                <input type="text" id="node-name" placeholder="Angela-Node-1" />
+                <input type="text" id="node-name" disabled placeholder="Angela-Node-1" />
               </div>
             </div>
           </div>

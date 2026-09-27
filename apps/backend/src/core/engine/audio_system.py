@@ -124,7 +124,7 @@ class Subtitle:
     text: str
     start_time: float
     end_time: float
-    speaker: str = "Angela"
+    speaker: str = "Angela"  # see core.system.config.identity.get_ai_name()
     style: str = "default"
     emotion_indicator: Optional[str] = None
 

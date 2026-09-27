@@ -154,14 +154,16 @@ UNHONOURED_SECTIONS = {
         "backends.google-gemini": "iterated by the provider factory, never by name",
     },
     "system/core": {
-        "ai_name": (
-            "config says `Miko`, the code hardcodes 'Angela' in 9 places; adopting "
-            "it would rename the product, which is a user decision, not a config fix"
-        ),
         "ai.core_network": "ED3N keeps its own network constants; these are a second source",
-        "command_triggers.complex_project": "no command-trigger feature exists to consume it",
-        "command_triggers.manual_delegation": "no command-trigger feature exists to consume it",
-        "command_triggers.context_analysis": "no command-trigger feature exists to consume it",
+        "command_triggers.complex_project": (
+            "no command-trigger feature exists; noted in system/core.default.yaml"
+        ),
+        "command_triggers.manual_delegation": (
+            "no command-trigger feature exists; noted in system/core.default.yaml"
+        ),
+        "command_triggers.context_analysis": (
+            "no command-trigger feature exists; noted in system/core.default.yaml"
+        ),
         "memory_manager.short_term_memory_limit": "memory modules size themselves",
         "operational_configs.api_server": "host/port come from the CLI and env",
         "operational_configs.learning_thresholds": "the learning loop uses its own constants",
@@ -188,10 +190,12 @@ UNHONOURED_SECTIONS = {
     "system/keys": {"firebase.credentials_path": "no Firebase integration is wired"},
     "system/timing": {"timing.loop": "loop sleeps read their own keys"},
     "system/game": {
-        "game.mount_card_dictionary": "duplicated by compute.game; one of the two is dead",
-        "game.mount_free_matrix": "duplicated by compute.game; one of the two is dead",
-        "game.mount_axes": "duplicated by compute.game; one of the two is dead",
-        "game.max_cards": "duplicated by compute.game; one of the two is dead",
+        "game.mount_card_dictionary": (
+            "the game module resolves its own paths/constants; noted in game.default.yaml"
+        ),
+        "game.mount_free_matrix": "as mount_card_dictionary; noted in game.default.yaml",
+        "game.mount_axes": "as mount_card_dictionary; noted in game.default.yaml",
+        "game.max_cards": "as mount_card_dictionary; noted in game.default.yaml",
         "game.dictionary_modality": "the game module has no consumer",
         "game.axis_registry_name": "the game module has no consumer",
         "game.supplement_path": "the game module has no consumer",
@@ -293,3 +297,78 @@ def test_gates_default_to_the_configured_value_not_a_hardcoded_off():
         ), f"{feature} defaults to disabled; system/compute.default.yaml declares auto"
     # gpu_accelerator is declared `off` in this repo, so False is correct here.
     assert magic_numbers.compute_bool("gpu_accelerator", default=False) is False
+
+
+# --------------------------------------------------------------------------- #
+# Identity: one name, one source
+# --------------------------------------------------------------------------- #
+def test_configured_ai_name_is_angela():
+    """The user decided the name; the config must agree with the decision."""
+    from core.system.config.identity import get_ai_name
+
+    assert get_ai_name() == "Angela"
+
+
+def test_identity_accessor_follows_the_config(monkeypatch):
+    from core.system.config import identity, tiered_loader
+
+    original = identity.get_ai_name()
+    try:
+        tiered_loader._cache.pop("system/core", None)
+        identity.clear_cache()
+        config = tiered_loader.get_config("system/core")
+        config["ai_name"] = "TestName"
+        identity.clear_cache()
+        assert identity.get_ai_name() == "TestName"
+    finally:
+        tiered_loader._cache.pop("system/core", None)
+        config = tiered_loader.get_config("system/core")
+        if config is not None:
+            config["ai_name"] = original
+        identity.clear_cache()
+
+
+def test_self_model_resolves_its_name_at_import(monkeypatch):
+    """The mechanism, not the value.
+
+    Asserting `SelfModel().name == "Angela"` cannot tell a config read from a
+    hardcoded "Angela" — the mutation that reverted it to a literal passed. So the
+    accessor is stubbed to a different name and the module reloaded: only a real
+    config read produces it.
+    """
+    import importlib
+
+    from core.life import cyber_identity
+    from core.system.config import identity
+
+    monkeypatch.setattr(identity, "get_ai_name", lambda *a, **k: "ZZZ_Config_Name")
+    identity.clear_cache()
+    try:
+        reloaded = importlib.reload(cyber_identity)
+        assert reloaded.SelfModel().name == "ZZZ_Config_Name"
+    finally:
+        monkeypatch.undo()
+        identity.clear_cache()
+        importlib.reload(cyber_identity)
+
+
+def test_create_soul_core_honours_an_explicit_name():
+    """It used to accept `name` and pass a hardcoded literal instead."""
+    from core.metamorphosis.soul_core import create_soul_core
+
+    assert create_soul_core().identity.name == "Angela"
+    assert create_soul_core(name="TestSoul").identity.name == "TestSoul"
+
+
+def test_name_is_not_read_from_a_reentrant_live_check():
+    """`angela_agent.py` uses "Angela" as a *game player* name.
+
+    It looks like an identity literal and is not one. A future sweep that
+    "consolidates" every occurrence of the string would break game filtering, so
+    the exception is pinned here.
+    """
+    agent = (SRC / "ai/autonomous/angela_agent.py").read_text(encoding="utf-8")
+    assert 'player == "Angela"' in agent, (
+        "the game-player comparison changed; it must not be routed through the " "identity config"
+    )
+    assert "get_ai_name" not in agent

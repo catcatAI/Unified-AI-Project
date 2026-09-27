@@ -143,6 +143,11 @@ backends:
 
 # Routing policy + fallback chain (migrated from llm_providers.default.yaml).
 routing:
+      # ── complexity_* not consumed by code ──
+      # The router has no complexity-based backend selection: it reads
+      # context['complexity'] only for logging. These three entries describe
+      # intended behaviour, not current behaviour. Recorded in
+      # tests/test_config_coverage.py::UNHONOURED_SECTIONS.
   policy:
     math: "unified-1g"
     code: "ollama-llama3"
