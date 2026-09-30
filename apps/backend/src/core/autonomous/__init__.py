@@ -397,6 +397,13 @@ def get_system_info() -> dict:
 
 async def initialize_all_systems() -> dict:
     """Initialize all autonomous systems for Angela AI."""
+    # 執行面元件統一取用 lifespan 單例——避免與 API 端／代理工作區
+    # 各自為政的平行實例（錯置：同一桌面、兩份操作面）。
+    from api.lifespan import (
+        get_action_executor,
+        get_browser_controller,
+        get_desktop_interaction,
+    )
     from core.bio.autonomic_nervous_system import AutonomicNervousSystem
     from core.bio.biological_integrator import BiologicalIntegrator
     from core.bio.emotional_blending import EmotionalBlendingSystem
@@ -419,14 +426,6 @@ async def initialize_all_systems() -> dict:
     from core.life.cyber_identity import CyberIdentity
     from core.life.digital_life_integrator import DigitalLifeIntegrator
     from core.life.self_generation import SelfGeneration
-
-    # 執行面元件統一取用 lifespan 單例——避免與 API 端／代理工作區
-    # 各自為政的平行實例（錯置：同一桌面、兩份操作面）。
-    from api.lifespan import (
-        get_action_executor,
-        get_browser_controller,
-        get_desktop_interaction,
-    )
 
     _desktop = get_desktop_interaction()
     _browser = get_browser_controller()

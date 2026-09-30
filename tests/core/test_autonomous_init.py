@@ -42,15 +42,9 @@ class TestInitializeAllSystems:
             system.initialize = AsyncMock()
             return system
 
-        monkeypatch.setattr(
-            lifespan_mod, "get_desktop_interaction", lambda: _mock_system()
-        )
-        monkeypatch.setattr(
-            lifespan_mod, "get_browser_controller", lambda: _mock_system()
-        )
-        monkeypatch.setattr(
-            lifespan_mod, "get_action_executor", lambda: _mock_system()
-        )
+        monkeypatch.setattr(lifespan_mod, "get_desktop_interaction", lambda: _mock_system())
+        monkeypatch.setattr(lifespan_mod, "get_browser_controller", lambda: _mock_system())
+        monkeypatch.setattr(lifespan_mod, "get_action_executor", lambda: _mock_system())
 
     def test_returns_all_systems(self, monkeypatch):
         # Avoid real heavy initialization: stub system constructors with mocks
