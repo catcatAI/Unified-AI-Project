@@ -96,9 +96,9 @@ pnpm install class-variance-authority
 
 ```bash
 # 設置加密金鑰
-export MIKO_HAM_KEY="jhSMKpG03Z_CHKPLoHZSbvljIRA23ILegbeH2ev6G10="
+export MIKO_HAM_KEY="<REDACTED-44CHAR-FERNET-KEY>"
 # 或創建 .env 文件
-echo "MIKO_HAM_KEY=jhSMKpG03Z_CHKPLoHZSbvljIRA23ILegbeH2ev6G10=" > apps/backend/.env
+echo "MIKO_HAM_KEY=<REDACTED-44CHAR-FERNET-KEY>" > apps/backend/.env
 ```
 
 ### 第二優先級 (本週內)
@@ -186,7 +186,7 @@ pnpm install class-variance-authority
 
 # 3. 設置環境變數
 cd ../../apps/backend
-echo "MIKO_HAM_KEY=jhSMKpG03Z_CHKPLoHZSbvljIRA23ILegbeH2ev6G10=" > .env
+echo "MIKO_HAM_KEY=<REDACTED-44CHAR-FERNET-KEY>" > .env
 
 # 4. 重新測試
 cd ../..

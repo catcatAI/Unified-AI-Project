@@ -1,0 +1,35 @@
+# gitleaksignore — fingerprints verified as false positives on 2026-09-29.
+# Format: file:rule:startline
+#
+# apps/backend/src/ai/ed3n/config/classifier_training.json:
+#   `"key": "cls_*"` are classifier rule IDs (zh/en surface-form training
+#   corpus), not credentials.
+apps/backend/src/ai/ed3n/config/classifier_training.json:generic-api-key:1879
+apps/backend/src/ai/ed3n/config/classifier_training.json:generic-api-key:1893
+apps/backend/src/ai/ed3n/config/classifier_training.json:generic-api-key:1907
+apps/backend/src/ai/ed3n/config/classifier_training.json:generic-api-key:1991
+apps/backend/src/ai/ed3n/config/classifier_training.json:generic-api-key:2009
+apps/backend/src/ai/ed3n/config/classifier_training.json:generic-api-key:2027
+apps/backend/src/ai/ed3n/config/classifier_training.json:generic-api-key:2041
+apps/backend/src/ai/ed3n/config/classifier_training.json:generic-api-key:2059
+apps/backend/src/ai/ed3n/config/classifier_training.json:generic-api-key:2077
+apps/backend/src/ai/ed3n/config/classifier_training.json:generic-api-key:2096
+apps/backend/src/ai/ed3n/config/classifier_training.json:generic-api-key:2114
+apps/backend/src/ai/ed3n/config/classifier_training.json:generic-api-key:2132
+apps/backend/src/ai/ed3n/config/classifier_training.json:generic-api-key:2146
+apps/backend/src/ai/ed3n/config/classifier_training.json:generic-api-key:2164
+apps/backend/src/ai/ed3n/config/classifier_training.json:generic-api-key:2182
+apps/backend/src/ai/ed3n/config/classifier_training.json:generic-api-key:2200
+apps/backend/src/ai/ed3n/config/classifier_training.json:generic-api-key:2218
+apps/backend/src/ai/ed3n/config/classifier_training.json:generic-api-key:2232
+apps/backend/src/ai/ed3n/config/classifier_training.json:generic-api-key:2246
+apps/backend/src/ai/ed3n/config/classifier_training.json:generic-api-key:2260
+apps/backend/src/ai/ed3n/config/classifier_training.json:generic-api-key:2274
+apps/backend/src/ai/ed3n/config/classifier_training.json:generic-api-key:2288
+apps/backend/src/ai/ed3n/config/classifier_training.json:generic-api-key:2302
+apps/backend/src/ai/ed3n/config/classifier_training.json:generic-api-key:2316
+#
+# docs/03-technical-architecture/api/multi-llm-api.md:
+#   `your-api-key` / `your-jwt-token` are doc placeholders for curl examples.
+docs/03-technical-architecture/api/multi-llm-api.md:curl-auth-header:353
+docs/03-technical-architecture/api/multi-llm-api.md:curl-auth-header:365

@@ -42,7 +42,7 @@ pnpm install class-variance-authority
 
 # 3. 設置環境變數
 cd ../../apps/backend
-echo "MIKO_HAM_KEY=jhSMKpG03Z_CHKPLoHZSbvljIRA23ILegbeH2ev6G10=" > .env
+echo "MIKO_HAM_KEY=<REDACTED-44CHAR-FERNET-KEY>" > .env
 ```
 
 ### 第二步：全面路徑檢查

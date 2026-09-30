@@ -16,12 +16,12 @@ Drive 整合與 LLM 對話管線之間的資料流。
 
 ### 1.1 `GOOGLE_API_KEY` — 死配置
 
-| 項目                       | 狀態                                                                      |
-| -------------------------- | ------------------------------------------------------------------------- |
-| `.env` 中有定義            | ✅ `GOOGLE_API_KEY=AQ.Ab8RN6ITZjGVl_zCufRZfiuACQiIwEtPJpdRKqcMlVzHUeF9ew` |
-| 被任何 Python 程式碼讀取   | ❌ **零次** — `os.environ.get("GOOGLE_API_KEY")` 不存在於任何 `.py` 檔案  |
-| 被 `key_validator.py` 驗證 | ✅ 列在 `MIN_KEY_LENGTHS` 和 `validate_all_keys()` 的清單中               |
-| 驗證結果是否被消費         | ❌ 僅檢查格式，驗證結果無人使用                                           |
+| 項目                       | 狀態                                                                     |
+| -------------------------- | ------------------------------------------------------------------------ |
+| `.env` 中有定義            | ✅ `GOOGLE_API_KEY=<REDACTED>`                                           |
+| 被任何 Python 程式碼讀取   | ❌ **零次** — `os.environ.get("GOOGLE_API_KEY")` 不存在於任何 `.py` 檔案 |
+| 被 `key_validator.py` 驗證 | ✅ 列在 `MIN_KEY_LENGTHS` 和 `validate_all_keys()` 的清單中              |
+| 驗證結果是否被消費         | ❌ 僅檢查格式，驗證結果無人使用                                          |
 
 **結論：`GOOGLE_API_KEY` 是歷史遺留的死配置。沒有任何程式碼實際使用它。**
 
