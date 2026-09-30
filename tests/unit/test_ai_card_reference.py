@@ -60,13 +60,13 @@ def test_sparse_update_preserves_unselected_bytes() -> None:
     assert result["partition_width_bits"] == 64
     assert result["selected_bytes"] == 16
     assert result["unselected_bytes_unchanged"] is True
-    assert result["mapping_status"] == "project_ai_interface_freeze_required"
+    assert result["mapping_status"] == "project_ai_decision_pending"
 
 
 def test_design_verification_passes_software_usable_checks() -> None:
     result = AiCardReferenceModel().design_verification()
 
-    assert result["status"] == "reference_verified_pending_angela_interface_freeze"
+    assert result["status"] == "reference_verified_acceptance_check_pending"
     assert result["technical_checks_pass"] is True
     assert result["gates"]["physical_hardware"] is False
     assert result["gates"]["hdl_gate_level"] is False

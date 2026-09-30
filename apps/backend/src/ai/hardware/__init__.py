@@ -3,6 +3,13 @@
 # =============================================================================
 
 from .ai_card_reference import AiCardReferenceConfig, AiCardReferenceModel
+from .cim_primitives import Canvas
+from .cim_strip_reference import (
+    CimStripConfig,
+    CimStripError,
+    CimStripReferenceModel,
+    load_cim_strip_measurement,
+)
 from .mvu_reference import (
     AxiLiteRegisterMap,
     MvuReferenceConfig,
@@ -22,6 +29,10 @@ __all__ = [
     "AiCardReferenceConfig",
     "AiCardReferenceModel",
     "AxiLiteRegisterMap",
+    "Canvas",
+    "CimStripConfig",
+    "CimStripError",
+    "CimStripReferenceModel",
     "HardwareStandard",
     "MvuReferenceConfig",
     "MvuReferenceModel",
@@ -30,6 +41,7 @@ __all__ = [
     "generate_mvu_header_projection",
     "generate_mvu_header_projection_testbench",
     "get_standard",
+    "load_cim_strip_measurement",
     "search_standards",
     "Sram32KbDualPort",
     "WavefrontController",

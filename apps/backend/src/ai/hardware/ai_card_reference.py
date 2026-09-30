@@ -430,7 +430,7 @@ class AiCardReferenceModel:
             "unselected_bytes_unchanged": unselected_unchanged,
             "updated_payload_hex": bytes(updated).hex(),
             "crc32": f"{zlib.crc32(updated) & 0xFFFFFFFF:08x}",
-            "mapping_status": "project_ai_interface_freeze_required",
+            "mapping_status": "project_ai_decision_pending",
             "used_llm": False,
         }
 
@@ -463,7 +463,7 @@ class AiCardReferenceModel:
         }
         return {
             "status": (
-                "reference_verified_pending_angela_interface_freeze"
+                "reference_verified_acceptance_check_pending"
                 if all(technical_checks.values())
                 else "partial"
             ),
@@ -471,7 +471,7 @@ class AiCardReferenceModel:
             "technical_checks": technical_checks,
             "technical_checks_pass": all(technical_checks.values()),
             "gates": {
-                "angela_interface_freeze": False,
+                "acceptance_check": False,
                 "hdl_gate_level": False,
                 "physical_hardware": False,
             },
@@ -480,7 +480,7 @@ class AiCardReferenceModel:
                 "sparse_update": sparse_update,
             },
             "blockers": [
-                "Angela must freeze the exact main/secondary-to-L1 mapping",
+                "the main/secondary-to-L1 mapping has not passed the acceptance check",
                 "numeric and protocol reference does not prove RTL or physical implementation",
             ],
         }
@@ -565,7 +565,7 @@ class AiCardReferenceModel:
             "weight_updates": weight_updates,
             "checks": checks,
             "blockers": [
-                "angela must freeze the die/cache partition interface before implementation claims",
+                "the die/cache partition interface has not passed the acceptance check",
                 "component prices and lifecycle are not quoted",
                 "exact FPGA/ASIC package and memory controller are not selected",
                 "PCIe electrical/CEM and thermal design are not simulated",

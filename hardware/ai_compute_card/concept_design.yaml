@@ -5,9 +5,18 @@ purpose: parameterized software validation fixture before project AI freezes the
 owner: angela
 support_owner: environment_support
 ownership:
-  angela_owns: [chip_microarchitecture, compute_partitioning, cache_mapping, component_selection, product_acceptance]
-  environment_support_owns: [tool_environment, reference_models, fixtures, golden_data, artifact_reproducibility]
-  environment_support_must_not_claim: [final_architecture, component_selection, fabrication_readiness, timing_signoff]
+  angela_owns:
+    [
+      chip_microarchitecture,
+      compute_partitioning,
+      cache_mapping,
+      component_selection,
+      product_acceptance,
+    ]
+  environment_support_owns:
+    [tool_environment, reference_models, fixtures, golden_data, artifact_reproducibility]
+  environment_support_must_not_claim:
+    [final_architecture, component_selection, fabrication_readiness, timing_signoff]
 hierarchy:
   die:
     boundary: self_developed_chip

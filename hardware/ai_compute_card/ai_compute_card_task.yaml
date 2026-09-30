@@ -1,5 +1,5 @@
 schema_version: ai-compute-card-task/1
-status: environment_support_pending_angela_interface_freeze
+status: environment_support_pending_acceptance_check
 supersedes: mvu-reference-spec/1
 owner: angela
 support_owner: environment_support
@@ -164,7 +164,7 @@ acceptance_levels:
   L2: existing_eda_checks_and_power_thermal_analysis
   L3: hdl_gate_level_simulation
   L4: synthesis_static_timing_and_board_validation
-current_target: L1_support_until_angela_interface_freeze
+current_target: L1_support_until_acceptance_check_passes
 acceptance:
   L0:
     - all_widths_have_units_and_endianness
@@ -214,8 +214,21 @@ component_selection_policy:
   selection_owner: angela
   environment_role: source_capture_and_validation_only
   entries_are_not_selected: true
-  source_priority: [manufacturer_datasheet, manufacturer_product_page, standard_body, authorized_distributor]
-  required_fields: [part_number, revision, package, interface, power, thermal, lifecycle, price_quote_date, source_url, confidence]
+  source_priority:
+    [manufacturer_datasheet, manufacturer_product_page, standard_body, authorized_distributor]
+  required_fields:
+    [
+      part_number,
+      revision,
+      package,
+      interface,
+      power,
+      thermal,
+      lifecycle,
+      price_quote_date,
+      source_url,
+      confidence,
+    ]
   do_not_purchase_without_human_approval: true
   do_not_treat_generic_web_summary_as_verified: true
 review_gates:
