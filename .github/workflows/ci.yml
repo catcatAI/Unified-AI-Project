@@ -73,11 +73,22 @@ jobs:
       - name: Security scan (bandit)
         run: |
           pip install bandit
-          bandit -r apps/backend/src -ll
-      - name: Security scan (safety)
+          bandit -r apps/backend/src -ll -c pyproject.toml
+      - name: Security scan (pip-audit)
         run: |
-          pip install safety
-          safety check
+          # safety's `check` command was removed upstream (exit 64) and its
+          # replacement `scan` requires interactive login, so it can never pass
+          # unattended. pip-audit is the maintained, auth-free equivalent.
+          pip install -U setuptools pip-audit
+          # The --ignore-vuln list is packages with NO upstream fix yet
+          # (chromadb/diskcache/nltk); CI still fails on any NEW vulnerability.
+          pip-audit \
+            --ignore-vuln PYSEC-2026-311 \
+            --ignore-vuln PYSEC-2026-3813 \
+            --ignore-vuln PYSEC-2026-3814 \
+            --ignore-vuln PYSEC-2026-3815 \
+            --ignore-vuln PYSEC-2026-2447 \
+            --ignore-vuln PYSEC-2026-3740
       - name: Tests (Python)
         run: |
           pytest tests/ --timeout=60 --cov=apps/backend/src --cov-report=term-missing -q
@@ -117,8 +128,9 @@ jobs:
         run: |
           COLLECTED=$(python -m pytest tests/ --collect-only -q 2>&1 | grep -oP '\d+(?= tests collected)' | tail -1)
           echo "Collected: $COLLECTED"
-          # Allow ±50 drift (new tests land frequently); alert only on large drift
-          if [ "$COLLECTED" -lt 5000 ] || [ "$COLLECTED" -gt 6000 ]; then
+          # Window tracks the real suite size (6673 as of 2026-09-28); it is a
+          # mass-loss/duplication alarm, not a per-commit precision gate.
+          if [ "$COLLECTED" -lt 6000 ] || [ "$COLLECTED" -gt 7500 ]; then
             echo "⚠️ Test count $COLLECTED outside expected 5000-6000 window — check README/AGENTS sync"
           else
             echo "✅ Test count $COLLECTED in expected window"
