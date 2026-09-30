@@ -51,8 +51,8 @@ importers:
   apps/crystal-cards:
     dependencies:
       ws:
-        specifier: ^8.21.0
-        version: 8.21.0
+        specifier: ^8.21.3
+        version: 8.21.3
     devDependencies:
       electron:
         specifier: ^28.0.0
@@ -64,8 +64,8 @@ importers:
   apps/desktop-app:
     dependencies:
       ws:
-        specifier: ^8.20.1
-        version: 8.21.0
+        specifier: ^8.21.3
+        version: 8.21.3
     devDependencies:
       electron:
         specifier: ^41.10.3
@@ -86,8 +86,8 @@ importers:
         specifier: ^5.0.0
         version: 5.4.4
       ws:
-        specifier: ^8.20.1
-        version: 8.21.0
+        specifier: ^8.21.3
+        version: 8.21.3
     devDependencies:
       electron:
         specifier: ^41.10.3
@@ -2206,8 +2206,8 @@ packages:
   wrappy@1.0.2:
     resolution: {integrity: sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==}
 
-  ws@8.21.0:
-    resolution: {integrity: sha512-Vsp28b7DRcimFQvrqu2Wek3z1iYxDCWqHYB8Qsnk/S4RfaCQzPGPyBNuVjJV3cd6UiKtUtp6sNM77gWvzcCH+g==}
+  ws@8.21.3:
+    resolution: {integrity: sha512-201TZ/kPWxoPr/OKWjquZR1SWKXcvxdH+e1xrx89b3YbmzLMFCLfnaG1HFIgWzJOEWZ7MvpK++odZufgYR50Rw==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       bufferutil: ^4.0.1
@@ -4631,7 +4631,7 @@ snapshots:
 
   wrappy@1.0.2: {}
 
-  ws@8.21.0: {}
+  ws@8.21.3: {}
 
   xmlbuilder@15.1.1: {}
 
