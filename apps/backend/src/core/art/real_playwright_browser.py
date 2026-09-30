@@ -303,7 +303,7 @@ class AngelaRealBrowser:
                 () => {
                     const img = document.querySelector('img');
                     if (!img) return { error: 'No image found' };
-                    
+
                     return {
                         width: img.naturalWidth,
                         height: img.naturalHeight,

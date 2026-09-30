@@ -1,5 +1,5 @@
 # Technical Debt Report
-**Generated:** 2026-02-17  
+**Generated:** 2026-02-17
 **Project:** Unified-AI-Project (Angela AI)
 
 ---
@@ -32,9 +32,9 @@ This report documents **278 technical debt items** identified across the Angela 
 ## Critical Issues (Immediate Attention Required)
 
 ### 1. ToolDispatcher is Stub Implementation
-**File:** [`apps/backend/src/core/tools/tool_dispatcher.py:9`](./apps/backend/src/core/tools/tool_dispatcher.py)  
-**Impact:** Tool routing not functional - critical system component  
-**Effort:** 24 hours  
+**File:** [`apps/backend/src/core/tools/tool_dispatcher.py:9`](./apps/backend/src/core/tools/tool_dispatcher.py)
+**Impact:** Tool routing not functional - critical system component
+**Effort:** 24 hours
 **Recommendation:** Implement full tool dispatching logic with proper routing and error handling
 
 ```python
@@ -45,9 +45,9 @@ logger.warning(f"ToolDispatcher STUB received request for {tool_name}")
 ---
 
 ### 2. Error Handler Not Implemented
-**File:** [`apps/backend/src/core/error/error_handler.py:75`](./apps/backend/src/core/error/error_handler.py)  
-**Impact:** Error handling not functional across the system  
-**Effort:** 8 hours  
+**File:** [`apps/backend/src/core/error/error_handler.py:75`](./apps/backend/src/core/error/error_handler.py)
+**Impact:** Error handling not functional across the system
+**Effort:** 8 hours
 **Recommendation:** Implement error handling, recovery, and logging logic
 
 ```python
@@ -62,13 +62,13 @@ raise NotImplementedError
 ### Core Infrastructure
 
 #### 1. HSP Fallback Protocols are Stubs
-**File:** [`apps/backend/src/core/hsp/fallback/fallback_protocols.py`](./apps/backend/src/core/hsp/fallback/fallback_protocols.py)  
-**Impact:** No fallback communication mechanisms available  
+**File:** [`apps/backend/src/core/hsp/fallback/fallback_protocols.py`](./apps/backend/src/core/hsp/fallback/fallback_protocols.py)
+**Impact:** No fallback communication mechanisms available
 **Effort:** 20 hours
 
 All three fallback protocols are stubs:
 - InMemoryProtocol
-- FileBasedProtocol  
+- FileBasedProtocol
 - HTTPProtocol
 
 **Recommendation:** Implement actual fallback protocols for resilient communication
@@ -76,8 +76,8 @@ All three fallback protocols are stubs:
 ---
 
 #### 2. System Tray Manager Not Implemented
-**File:** [`apps/backend/src/core/desktop/tray_manager.py:50`](./apps/backend/src/core/desktop/tray_manager.py)  
-**Impact:** System tray functionality not available  
+**File:** [`apps/backend/src/core/desktop/tray_manager.py:50`](./apps/backend/src/core/desktop/tray_manager.py)
+**Impact:** System tray functionality not available
 **Effort:** 12 hours
 
 Four methods raise NotImplementedError:
@@ -93,8 +93,8 @@ Four methods raise NotImplementedError:
 ### AI Systems
 
 #### 3. Memory Importance Scorer Returns Hardcoded Values
-**File:** [`apps/backend/src/ai/memory/importance_scorer.py:9`](./apps/backend/src/ai/memory/importance_scorer.py)  
-**Impact:** Memory importance not properly evaluated  
+**File:** [`apps/backend/src/ai/memory/importance_scorer.py:9`](./apps/backend/src/ai/memory/importance_scorer.py)
+**Impact:** Memory importance not properly evaluated
 **Effort:** 12 hours
 
 ```python
@@ -110,8 +110,8 @@ return 0.5  # Default / placeholder importance score
 ---
 
 #### 4. HAM Memory Utilities are Placeholders
-**File:** [`apps/backend/src/ai/memory/ham_utils.py:13`](./apps/backend/src/ai/memory/ham_utils.py)  
-**Impact:** HAM memory operations not functional  
+**File:** [`apps/backend/src/ai/memory/ham_utils.py:13`](./apps/backend/src/ai/memory/ham_utils.py)
+**Impact:** HAM memory operations not functional
 **Effort:** 16 hours
 
 **Recommendation:** Implement actual HAM memory operations for:
@@ -122,8 +122,8 @@ return 0.5  # Default / placeholder importance score
 ---
 
 #### 5. Advanced Language Features are Placeholders
-**File:** [`apps/backend/src/ai/memory/ham_data_processor.py:67`](./apps/backend/src/ai/memory/ham_data_processor.py)  
-**Impact:** Limited language processing capabilities  
+**File:** [`apps/backend/src/ai/memory/ham_data_processor.py:67`](./apps/backend/src/ai/memory/ham_data_processor.py)
+**Impact:** Limited language processing capabilities
 **Effort:** 20 hours
 
 Current placeholder implementations:
@@ -141,8 +141,8 @@ Current placeholder implementations:
 ### Tools & Services
 
 #### 6. Image Generation Returns Placeholder URLs
-**File:** [`apps/backend/src/tools/image_generation_tool.py:32`](./apps/backend/src/tools/image_generation_tool.py)  
-**Impact:** No actual image generation  
+**File:** [`apps/backend/src/tools/image_generation_tool.py:32`](./apps/backend/src/tools/image_generation_tool.py)
+**Impact:** No actual image generation
 **Effort:** 20 hours
 
 ```python
@@ -160,8 +160,8 @@ Current placeholder implementations:
 ### Fragmenta Modules
 
 #### 7. VisionToneInverter is Placeholder
-**File:** [`apps/backend/src/modules_fragmenta/vision_tone_inverter.py:7`](./apps/backend/src/modules_fragmenta/vision_tone_inverter.py)  
-**Impact:** Vision tone inversion not functional  
+**File:** [`apps/backend/src/modules_fragmenta/vision_tone_inverter.py:7`](./apps/backend/src/modules_fragmenta/vision_tone_inverter.py)
+**Impact:** Vision tone inversion not functional
 **Effort:** 16 hours
 
 ```python
@@ -176,8 +176,8 @@ processed_visual_data["tone_adjustment_note"] = f"Placeholder: Tone inverted to 
 ---
 
 #### 8. ElementLayer is Placeholder
-**File:** [`apps/backend/src/modules_fragmenta/element_layer.py:7`](./apps/backend/src/modules_fragmenta/element_layer.py)  
-**Impact:** Element processing not functional  
+**File:** [`apps/backend/src/modules_fragmenta/element_layer.py:7`](./apps/backend/src/modules_fragmenta/element_layer.py)
+**Impact:** Element processing not functional
 **Effort:** 16 hours
 
 **Recommendation:** Implement actual element layer processing logic for Fragmenta system
@@ -187,8 +187,8 @@ processed_visual_data["tone_adjustment_note"] = f"Placeholder: Tone inverted to 
 ### AI Operations
 
 #### 9. Predictive Maintenance is Placeholder
-**File:** [`apps/backend/src/ai/ops/predictive_maintenance.py:30`](./apps/backend/src/ai/ops/predictive_maintenance.py)  
-**Impact:** Predictive maintenance not functional  
+**File:** [`apps/backend/src/ai/ops/predictive_maintenance.py:30`](./apps/backend/src/ai/ops/predictive_maintenance.py)
+**Impact:** Predictive maintenance not functional
 **Effort:** 24 hours
 
 **Recommendation:** Implement ML-based:
@@ -199,8 +199,8 @@ processed_visual_data["tone_adjustment_note"] = f"Placeholder: Tone inverted to 
 ---
 
 #### 10. Performance Optimizer is Placeholder
-**File:** [`apps/backend/src/ai/ops/performance_optimizer.py:30`](./apps/backend/src/ai/ops/performance_optimizer.py)  
-**Impact:** Performance optimization not functional  
+**File:** [`apps/backend/src/ai/ops/performance_optimizer.py:30`](./apps/backend/src/ai/ops/performance_optimizer.py)
+**Impact:** Performance optimization not functional
 **Effort:** 20 hours
 
 **Recommendation:** Implement actual profiling and optimization algorithms:
@@ -211,8 +211,8 @@ processed_visual_data["tone_adjustment_note"] = f"Placeholder: Tone inverted to 
 ---
 
 #### 11. AI Ops Anomaly Detection is Simple Threshold
-**File:** [`apps/backend/src/ai/ops/ai_ops_engine.py:39`](./apps/backend/src/ai/ops/ai_ops_engine.py)  
-**Impact:** Limited anomaly detection capabilities  
+**File:** [`apps/backend/src/ai/ops/ai_ops_engine.py:39`](./apps/backend/src/ai/ops/ai_ops_engine.py)
+**Impact:** Limited anomaly detection capabilities
 **Effort:** 16 hours
 
 ```python
@@ -229,8 +229,8 @@ processed_visual_data["tone_adjustment_note"] = f"Placeholder: Tone inverted to 
 ### Economy & Deprecated Code
 
 #### 12. Deprecated Transaction Method Incomplete
-**File:** [`apps/backend/src/economy/economy_manager.py:36`](./apps/backend/src/economy/economy_manager.py)  
-**Impact:** Incomplete transaction processing logic  
+**File:** [`apps/backend/src/economy/economy_manager.py:36`](./apps/backend/src/economy/economy_manager.py)
+**Impact:** Incomplete transaction processing logic
 **Effort:** 2 hours
 
 ```python
@@ -256,7 +256,7 @@ def process_transaction(self, transaction_data: Dict[str, Any]) -> bool:
 - [`apps/backend/src/ai/context/tool_context.py`](./apps/backend/src/ai/context/tool_context.py) - Incomplete imports
 - [`apps/backend/src/ai/context/model_context.py`](./apps/backend/src/ai/context/model_context.py) - Incomplete imports
 
-**Impact:** Context system not fully functional  
+**Impact:** Context system not fully functional
 **Total Effort:** ~16 hours
 
 **Recommendation:** Complete module structure and fix all imports to make context system operational
@@ -278,7 +278,7 @@ Multiple files use deprecated Keras API:
 os.environ['TF_USE_LEGACY_KERAS'] = '1'
 ```
 
-**Impact:** Using deprecated Keras API  
+**Impact:** Using deprecated Keras API
 **Total Effort:** ~16 hours
 
 **Recommendation:** Migrate to Keras 3.0 API across all modules
@@ -437,10 +437,10 @@ Create issues for all Critical and High-priority items with:
 ```markdown
 ## Technical Debt Item
 
-**File:** [path/to/file.py:line](link)  
-**Severity:** Critical/High/Medium/Low  
-**Module:** ModuleName  
-**Estimated Effort:** Xh  
+**File:** [path/to/file.py:line](link)
+**Severity:** Critical/High/Medium/Low
+**Module:** ModuleName
+**Estimated Effort:** Xh
 
 ### Current State
 Brief description of current placeholder/stub/incomplete implementation
@@ -536,6 +536,6 @@ With systematic execution of the recommended action plan, the project can achiev
 
 ---
 
-**Report Generated:** 2026-02-17  
-**Next Review:** 2026-02-24 (Weekly)  
+**Report Generated:** 2026-02-17
+**Next Review:** 2026-02-24 (Weekly)
 **Contact:** Technical Debt Working Group

@@ -19,9 +19,9 @@ Cubism Web Framework および Live2D Cubism Core と組み合わせて使用し
 
 ## Cubism 5.3新機能や過去バージョンとの互換性について
 
-本 SDK はCubism 5.3に対応した製品です。  
+本 SDK はCubism 5.3に対応した製品です。
 Cubism 5.3 Editorに搭載された新機能のSDK対応については
-[こちら](https://docs.live2d.com/cubism-sdk-manual/cubism-5-3-new-functions/)をご確認ください。  
+[こちら](https://docs.live2d.com/cubism-sdk-manual/cubism-5-3-new-functions/)をご確認ください。
 過去バージョンのCubism
 SDKとの互換性については
 [こちら](https://docs.live2d.com/cubism-sdk-manual/compatibility-with-cubism-5-3/)をご確認ください。

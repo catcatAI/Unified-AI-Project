@@ -64,7 +64,7 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-where python >nul 2>&1  
+where python >nul 2>&1
 if %errorlevel% neq 0 (
     echo [ERROR] Python not installed
     echo [%date% %time%] Python not installed >> "%LOG_FILE%" 2>nul

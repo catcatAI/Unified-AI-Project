@@ -1,9 +1,9 @@
 # Angela AI v6.2.0 - Technical Specification
 
-**Document Version**: 1.0.0  
-**Created**: 2026-02-20  
-**Project Version**: 6.2.0  
-**Status**: Implementation Ready  
+**Document Version**: 1.0.0
+**Created**: 2026-02-20
+**Project Version**: 6.2.0
+**Status**: Implementation Ready
 **Based On**: [requirements.md](./requirements.md)
 
 ---
@@ -46,8 +46,8 @@ class AngelaLLMService:
     def __init__(self, config, dependencies):
         self.config = config
         self.dependencies = dependencies
-        
-    async def process(self, input): 
+
+    async def process(self, input):
         # Async-first API design
         pass
 ```
@@ -72,7 +72,7 @@ from pydantic import BaseSettings
 class AppConfig(BaseSettings):
     llm_backend: str = "openai"
     openai_api_key: str = ""
-    
+
     class Config:
         env_file = ".env"
 ```
@@ -106,12 +106,12 @@ except LLMError as e:
    - Use existing `unified_auto_fixer.py` framework
    - Parse `remaining_errors.json` for error locations
    - Run `flake8 apps/backend/src tests/` to identify all issues
-   
+
 2. **Systematic Fixes**
    - Priority 1: SyntaxError and IndentationError (blocks execution)
    - Priority 2: Import errors (breaks module loading)
    - Priority 3: Type errors and warnings (improves reliability)
-   
+
 3. **Verification**
    - Run `pytest tests/` after each batch fix
    - Ensure test pass rate > 90%
@@ -162,12 +162,12 @@ class LLMBackend(Enum):
    ```python
    # File: apps/backend/src/services/llm_backends/openai_backend.py
    from openai import AsyncOpenAI
-   
+
    class OpenAIBackend(BaseLLMBackend):
        def __init__(self, api_key: str, model: str = "gpt-4"):
            self.client = AsyncOpenAI(api_key=api_key)
            self.model = model
-       
+
        async def generate(self, prompt: str, **kwargs) -> LLMResponse:
            response = await self.client.chat.completions.create(
                model=self.model,
@@ -185,12 +185,12 @@ class LLMBackend(Enum):
    ```python
    # File: apps/backend/src/services/llm_backends/anthropic_backend.py
    from anthropic import AsyncAnthropic
-   
+
    class AnthropicBackend(BaseLLMBackend):
        def __init__(self, api_key: str, model: str = "claude-3-5-sonnet-20241022"):
            self.client = AsyncAnthropic(api_key=api_key)
            self.model = model
-       
+
        async def generate(self, prompt: str, **kwargs) -> LLMResponse:
            response = await self.client.messages.create(
                model=self.model,
@@ -208,12 +208,12 @@ class LLMBackend(Enum):
    ```python
    # File: apps/backend/src/services/llm_backends/gemini_backend.py
    import google.generativeai as genai
-   
+
    class GeminiBackend(BaseLLMBackend):
        def __init__(self, api_key: str, model: str = "gemini-pro"):
            genai.configure(api_key=api_key)
            self.model = genai.GenerativeModel(model)
-       
+
        async def generate(self, prompt: str, **kwargs) -> LLMResponse:
            response = await self.model.generate_content_async(prompt)
            return LLMResponse(
@@ -230,18 +230,18 @@ class LLMBackend(Enum):
        def __init__(self, backends: List[BaseLLMBackend]):
            self.backends = backends
            self.current_index = 0
-       
+
        async def generate(self, prompt: str, **kwargs) -> LLMResponse:
            for i in range(len(self.backends)):
                backend = self.backends[self.current_index]
                self.current_index = (self.current_index + 1) % len(self.backends)
-               
+
                try:
                    return await backend.generate(prompt, **kwargs)
                except Exception as e:
                    logger.warning(f"Backend {backend} failed: {e}, trying next...")
                    continue
-           
+
            raise LLMError("All backends failed")
    ```
 
@@ -254,14 +254,14 @@ class LLMBackend(Enum):
    # File: apps/backend/src/ai/semantics/tokenizer.py
    import jieba
    import jieba.posseg as pseg
-   
+
    class SemanticTokenizer:
        def __init__(self):
            jieba.initialize()
-       
+
        def tokenize(self, text: str) -> List[str]:
            return list(jieba.cut(text))
-       
+
        def tokenize_with_pos(self, text: str) -> List[Tuple[str, str]]:
            return [(word, flag) for word, flag in pseg.cut(text)]
    ```
@@ -270,14 +270,14 @@ class LLMBackend(Enum):
    ```python
    # File: apps/backend/src/ai/semantics/embedder.py
    from sentence_transformers import SentenceTransformer
-   
+
    class SemanticEmbedder:
        def __init__(self, model_name: str = "paraphrase-multilingual-MiniLM-L12-v2"):
            self.model = SentenceTransformer(model_name)
-       
+
        def embed(self, texts: List[str]) -> np.ndarray:
            return self.model.encode(texts, convert_to_numpy=True)
-       
+
        def similarity(self, text1: str, text2: str) -> float:
            emb1 = self.embed([text1])[0]
            emb2 = self.embed([text2])[0]
@@ -297,25 +297,25 @@ class LLMBackend(Enum):
                "emotion": ["开心", "难过", "生气", "害怕", "happy", "sad", "angry"],
            }
            self._build_intent_embeddings()
-       
+
        def _build_intent_embeddings(self):
            self.intent_embeddings = {}
            for intent, templates in self.intent_templates.items():
                self.intent_embeddings[intent] = self.embedder.embed(templates)
-       
+
        def recognize(self, text: str) -> str:
            text_emb = self.embedder.embed([text])[0]
            best_intent = "unknown"
            best_score = 0.0
-           
+
            for intent, embeddings in self.intent_embeddings.items():
-               scores = [np.dot(text_emb, emb) / (np.linalg.norm(text_emb) * np.linalg.norm(emb)) 
+               scores = [np.dot(text_emb, emb) / (np.linalg.norm(text_emb) * np.linalg.norm(emb))
                         for emb in embeddings]
                max_score = max(scores)
                if max_score > best_score:
                    best_score = max_score
                    best_intent = intent
-           
+
            return best_intent if best_score > 0.5 else "unknown"
    ```
 
@@ -332,16 +332,16 @@ class AngelaLLMService:
         self.tokenizer = SemanticTokenizer()
         self.embedder = SemanticEmbedder()
         self.intent_recognizer = IntentRecognizer(self.embedder)
-    
+
     async def process_message(self, user_input: str) -> str:
         # NEW: Real semantic processing
         tokens = self.tokenizer.tokenize(user_input)
         intent = self.intent_recognizer.recognize(user_input)
-        
+
         # OLD: Hardcoded keyword matching (REMOVE THIS)
         # if "hello" in user_input.lower():
         #     return "Hello!"
-        
+
         # NEW: LLM-based response generation
         context = await self._build_context(user_input, intent)
         response = await self.llm_backend.generate(context)
@@ -362,23 +362,23 @@ class AngelaLLMService:
    async def _build_context(self, user_input: str, intent: str) -> str:
        # Retrieve relevant memories
        memories = await self.ham_manager.query_engine.query_by_text(
-           user_input, 
+           user_input,
            top_k=5,
            importance_threshold=0.6
        )
-       
+
        # Build context
        context_parts = [
            "You are Angela, a friendly AI companion.",
            f"User's intent: {intent}",
            f"User's message: {user_input}",
        ]
-       
+
        if memories:
            context_parts.append("Relevant past experiences:")
            for mem in memories:
                context_parts.append(f"- {mem.abstracted_data}")
-       
+
        return "\n".join(context_parts)
    ```
 
@@ -387,7 +387,7 @@ class AngelaLLMService:
    # File: apps/backend/src/services/angela_llm_service.py
    async def process_message(self, user_input: str) -> str:
        # ... process message ...
-       
+
        # Store interaction as memory
        await self.ham_manager.store_experience(
            raw_data=user_input,
@@ -399,7 +399,7 @@ class AngelaLLMService:
                "importance_score": self._calculate_importance(user_input, intent),
            }
        )
-       
+
        return response
    ```
 
@@ -440,7 +440,7 @@ class AngelaLLMService:
            this.frameInterval = 1000 / this.targetFPS;
            this.lastFrameTime = 0;
        }
-       
+
        _getTargetFPS(mode) {
            const modes = {
                'very_low': 30,
@@ -451,19 +451,19 @@ class AngelaLLMService:
            };
            return modes[mode] || 60;
        }
-       
+
        update(currentTime) {
            if (currentTime - this.lastFrameTime < this.frameInterval) {
                requestAnimationFrame((t) => this.update(t));
                return;
            }
-           
+
            this.lastFrameTime = currentTime;
-           
+
            // Update Live2D model
            this.model.update();
            this.model.draw();
-           
+
            requestAnimationFrame((t) => this.update(t));
        }
    }
@@ -473,18 +473,18 @@ class AngelaLLMService:
    ```javascript
    // File: apps/desktop-app/electron_app/main.js
    const { systemPreferences } = require('electron');
-   
+
    function detectHardwareProfile() {
        const totalMemory = os.totalmem() / (1024 ** 3); // GB
        const cpuCount = os.cpus().length;
-       
+
        if (totalMemory < 4) return 'very_low';
        if (totalMemory < 8) return 'low';
        if (totalMemory < 16) return 'medium';
        if (totalMemory < 32) return 'high';
        return 'ultra';
    }
-   
+
    const performanceMode = detectHardwareProfile();
    ```
 
@@ -499,20 +499,20 @@ class AngelaLLMService:
                dominance: 0.5  // γ: 0 to 1
            };
        }
-       
+
        updateEmotion(userInput, llmResponse) {
            // Use LLM to analyze emotional content
            const sentiment = this._analyzeSentiment(llmResponse);
-           
+
            // Update emotional state with decay
            this.emotionalState.valence = 0.9 * this.emotionalState.valence + 0.1 * sentiment.valence;
            this.emotionalState.arousal = 0.9 * this.emotionalState.arousal + 0.1 * sentiment.arousal;
            this.emotionalState.dominance = 0.9 * this.emotionalState.dominance + 0.1 * sentiment.dominance;
        }
-       
+
        getExpression() {
            const { valence, arousal } = this.emotionalState;
-           
+
            if (valence > 0.6 && arousal > 0.6) return 'happy';
            if (valence < -0.6 && arousal > 0.6) return 'angry';
            if (valence < -0.6 && arousal < 0.4) return 'sad';
@@ -535,16 +535,16 @@ class AngelaLLMService:
    class ABCKeyManager:
        def __init__(self):
            self.rotation_interval_days = 30
-       
+
        async def rotate_key(self, key_type: str):
            new_key = Fernet.generate_key()
-           
+
            # Re-encrypt all data with new key
            await self._reencrypt_data(key_type, new_key)
-           
+
            # Update key in secure storage
            await self._update_key_storage(key_type, new_key)
-           
+
            logger.info(f"Rotated {key_type} key successfully")
    ```
 
@@ -555,7 +555,7 @@ class AngelaLLMService:
        async def sync_to_device(self, device_id: str, data: Dict):
            # Encrypt with device-specific key (Key C)
            encrypted = self.key_manager.encrypt_for_device(device_id, data)
-           
+
            # Send via WebSocket
            await self.ws_manager.send_to_device(device_id, encrypted)
    ```
@@ -712,13 +712,13 @@ async def get_memories(
     """Retrieve memories with semantic search"""
     if query:
         memories = await ham_manager.query_engine.query_by_text(
-            query, 
+            query,
             top_k=limit,
             importance_threshold=importance_threshold
         )
     else:
         memories = await ham_manager.get_recent_memories(user_id, limit)
-    
+
     return [MemoryResponse.from_ham_memory(m) for m in memories]
 ```
 
@@ -938,22 +938,22 @@ import time
 async def test_llm_response_time():
     """Verify LLM response < 2 seconds"""
     service = AngelaLLMService()
-    
+
     start = time.time()
     response = await service.process_message("Hello, Angela!")
     elapsed = time.time() - start
-    
+
     assert elapsed < 2.0, f"Response took {elapsed}s, expected <2s"
 
 @pytest.mark.asyncio
 async def test_memory_retrieval_time():
     """Verify memory retrieval < 100ms"""
     manager = HAMMemoryManager()
-    
+
     start = time.time()
     memories = await manager.query_engine.query_by_text("test query", top_k=5)
     elapsed = (time.time() - start) * 1000  # Convert to ms
-    
+
     assert elapsed < 100, f"Retrieval took {elapsed}ms, expected <100ms"
 ```
 
@@ -966,17 +966,17 @@ describe('Live2D Performance', () => {
     it('should maintain 60 FPS in high mode', async () => {
         const manager = new Live2DManager('high');
         const frames = [];
-        
+
         for (let i = 0; i < 300; i++) {  // 5 seconds at 60 FPS
             const start = performance.now();
             manager.update();
             const end = performance.now();
             frames.push(end - start);
         }
-        
+
         const avgFrameTime = frames.reduce((a, b) => a + b) / frames.length;
         const fps = 1000 / avgFrameTime;
-        
+
         expect(fps).toBeGreaterThanOrEqual(55);  // Allow 5 FPS tolerance
     });
 });
@@ -1227,7 +1227,7 @@ from apps.backend.src.services.llm_backends.openai_backend import OpenAIBackend
 async def test_openai_generate():
     backend = OpenAIBackend(api_key="test-key", model="gpt-4")
     response = await backend.generate("Hello!")
-    
+
     assert response.text is not None
     assert response.model == "gpt-4"
     assert response.backend == "openai"
@@ -1243,11 +1243,11 @@ from apps.backend.src.services.angela_llm_service import AngelaLLMService
 @pytest.mark.asyncio
 async def test_conversation_with_memory():
     service = AngelaLLMService()
-    
+
     # First interaction
     response1 = await service.process_message("My name is Alice")
     assert "Alice" in response1 or "alice" in response1.lower()
-    
+
     # Second interaction - should remember
     response2 = await service.process_message("What's my name?")
     assert "Alice" in response2 or "alice" in response2.lower()
@@ -1266,9 +1266,9 @@ async def test_conversation_with_memory():
 
 ---
 
-**Document Status**: Ready for Planning Phase  
-**Next Step**: Create detailed implementation plan (plan.md)  
-**Estimated Timeline**: 6-8 weeks  
+**Document Status**: Ready for Planning Phase
+**Next Step**: Create detailed implementation plan (plan.md)
+**Estimated Timeline**: 6-8 weeks
 **Team Size**: 2-4 developers
 
 **Sign-off**:

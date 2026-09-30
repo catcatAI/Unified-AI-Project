@@ -15,7 +15,7 @@ if (Test-Path $toolPath) {
 } else {
     # 嘗試執行批處理版本
     $batchToolPath = Join-Path $scriptDir "tools\update-docs.bat"
-    
+
     if (Test-Path $batchToolPath) {
         Write-Host "找到批處理版本的工具，正在啟動..." -ForegroundColor Yellow
         & $batchToolPath

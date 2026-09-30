@@ -1,7 +1,7 @@
 # Lint and Type Check Report
 
-**Date**: 2026-02-17  
-**Task**: Run All Lint and Type Checks  
+**Date**: 2026-02-17
+**Task**: Run All Lint and Type Checks
 **Status**: Completed with Findings
 
 ---
@@ -30,8 +30,8 @@ The codebase has significant code quality issues across both Python and JavaScri
 
 ### 1. Flake8 Results (Python Linting)
 
-**Execution Time**: 88.6 seconds  
-**Exit Code**: 1 (errors found)  
+**Execution Time**: 88.6 seconds
+**Exit Code**: 1 (errors found)
 **Total Issues**: 14,516
 
 #### Critical Issues (Must Fix)
@@ -89,8 +89,8 @@ The codebase has significant code quality issues across both Python and JavaScri
 
 ### 2. Black Results (Python Formatting)
 
-**Execution Time**: 126.4 seconds (TIMEOUT)  
-**Exit Code**: Killed (timeout)  
+**Execution Time**: 126.4 seconds (TIMEOUT)
+**Exit Code**: Killed (timeout)
 **Status**: Would reformat 120+ files
 
 #### Files Requiring Reformatting (Sample)
@@ -116,8 +116,8 @@ The codebase has significant code quality issues across both Python and JavaScri
 
 ### 3. Isort Results (Import Sorting)
 
-**Execution Time**: 31.9 seconds  
-**Exit Code**: 1 (errors found)  
+**Execution Time**: 31.9 seconds
+**Exit Code**: 1 (errors found)
 **Files with Issues**: 658
 
 #### Categories of Files
@@ -145,15 +145,15 @@ ERROR: apps/backend/src/services/main_api_server.py
 
 ### 4. Mypy Results (Type Checking)
 
-**Execution Time**: 182.3 seconds (TIMEOUT)  
-**Exit Code**: Killed (timeout)  
+**Execution Time**: 182.3 seconds (TIMEOUT)
+**Exit Code**: Killed (timeout)
 **Status**: Configuration Error
 
 #### Configuration Issue
 
 **Error**: `pyproject.toml: [mypy]: python_version: Python 3.8 is not supported (must be 3.9 or higher)`
 
-**Root Cause**: 
+**Root Cause**:
 - `pyproject.toml` specifies `python_version = "3.8"`
 - Current mypy version requires Python 3.9+
 - System is running Python 3.12.10
@@ -165,14 +165,14 @@ Update `pyproject.toml` to specify `python_version = "3.9"` or higher
 
 ### 5. JavaScript/TypeScript Linting (ESLint)
 
-**Execution Time**: 5.9 seconds  
-**Exit Code**: 2 (configuration error)  
+**Execution Time**: 5.9 seconds
+**Exit Code**: 2 (configuration error)
 **Status**: Configuration Bug
 
 #### Configuration Error
 
-**File**: `eslint.config.mjs`  
-**Line**: 7  
+**File**: `eslint.config.mjs`
+**Line**: 7
 **Error**: `ReferenceError: dirname is not defined`
 
 **Current Code**:
@@ -235,7 +235,7 @@ The `--ext` flag is deprecated in ESLint 9+ with flat config. Should be:
    ```bash
    # Fix whitespace, blank lines, indentation
    black apps/backend/src tests/
-   
+
    # Fix import sorting
    isort apps/backend/src tests/
    ```
@@ -262,7 +262,7 @@ The `--ext` flag is deprecated in ESLint 9+ with flat config. Should be:
 ## Next Steps
 
 1. **Fix Configuration Errors** (ESLint, Mypy) - Estimated: 15 minutes
-2. **Run Auto-formatters** (Black, isort) - Estimated: 5 minutes  
+2. **Run Auto-formatters** (Black, isort) - Estimated: 5 minutes
 3. **Fix Critical Errors** (E999, F821) - Estimated: 2-4 hours
 4. **Re-run Full Lint Suite** - Estimated: 10 minutes
 5. **Address Remaining Issues** - Estimated: 8-16 hours

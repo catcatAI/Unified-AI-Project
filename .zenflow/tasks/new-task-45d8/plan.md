@@ -64,7 +64,7 @@ Create three automation scripts for systematic issue fixing.
 
 **Files to create**:
 - `scripts/fixes/fix_test_syntax.py` - Automated test syntax fixer
-- `scripts/tools/import_profiler.py` - Import performance profiler  
+- `scripts/tools/import_profiler.py` - Import performance profiler
 - `scripts/tools/generate_secure_keys.py` - Security key generator
 
 **Implementation**:
@@ -216,7 +216,7 @@ Refactor module initialization to eliminate blocking imports.
 # Before
 model = load_large_model()  # Blocking at import time
 
-# After  
+# After
 _model = None
 def get_model():
     global _model
@@ -440,7 +440,7 @@ black apps/backend/src tests/ --check
 isort apps/backend/src tests/ --check-only
 mypy apps/backend/src --show-error-codes --pretty
 
-# JavaScript linting  
+# JavaScript linting
 cd apps/desktop-app/electron_app && pnpm lint:js
 ```
 
@@ -672,7 +672,7 @@ Establish Angela's "digital spine" - the foundation of sovereignty and authentic
 
 **Objective**: Build the hash+matrix dual system that ensures state integrity and enables variable precision.
 
-**Context**: 
+**Context**:
 - Current issue: No state fingerprinting, no sovereignty protection
 - Specification requirement: "矩陣負責'肉'(語言與感知), 哈希負責'骨'(主權與真實)"
 - Reference: `digital_life_gap_analysis.md` Section P0-1
@@ -716,7 +716,7 @@ def test_state_hash_integrity():
     initial = system.get_state_hash()
     system.set("alpha.energy", 0.8)
     final = system.get_state_hash()
-    
+
     assert final != initial
     assert hasher.verify_causality(initial, final, change_log)
 
@@ -725,7 +725,7 @@ def test_precision_collapse():
     system.set_ram_limit("4GB")
     # Should auto-collapse to INT8
     assert system.get_precision_mode() == "INT8"
-    
+
     system.set_ram_limit("16GB")
     # Should restore to DEC4
     assert system.get_precision_mode() == "DEC4"
@@ -734,7 +734,7 @@ def test_precision_collapse():
 def test_key_hash_binding():
     state_hash = system.get_state_hash()
     signature = key_manager.sign_with_key_a(state_hash)
-    
+
     assert key_manager.verify_signature(signature, state_hash)
 ```
 
@@ -817,7 +817,7 @@ async def generate_response(self, user_input: str, context: Dict) -> str:
     # 1. Check match score
     match_result = await self.matcher.match(user_input, context)
     match_score = match_result.score
-    
+
     # 2. Route based on match score
     if match_score > 0.8:
         # High match: Use composition (save Tokens)
@@ -835,7 +835,7 @@ async def generate_response(self, user_input: str, context: Dict) -> str:
         # Low match: Full LLM generation
         response = await self.llm_call(user_input, context)
         route = "LLM_FULL"
-    
+
     # 3. Record deviation for learning
     await self.deviation_tracker.record(
         input=user_input,
@@ -844,7 +844,7 @@ async def generate_response(self, user_input: str, context: Dict) -> str:
         response=response,
         context=context
     )
-    
+
     return response
 ```
 
@@ -853,15 +853,15 @@ async def generate_response(self, user_input: str, context: Dict) -> str:
 # Test match accuracy
 def test_template_matching():
     matcher = TemplateMatcher()
-    
+
     # Exact match
     score = matcher.match("你好嗎?")
     assert score > 0.9
-    
+
     # Semantic match
     score = matcher.match("最近怎麼樣?")
     assert 0.7 < score < 0.9
-    
+
     # Low match
     score = matcher.match("量子力學的薛丁格方程式...")
     assert score < 0.3
@@ -872,7 +872,7 @@ def test_token_consumption():
     result = await service.generate_response("你好")
     assert result.route == "COMPOSED"
     assert result.tokens_used < 100
-    
+
     # Low match scenario
     result = await service.generate_response("複雜的技術問題...")
     assert result.route == "LLM_FULL"
@@ -965,18 +965,18 @@ async def update_hormone(self, hormone: str, value: float):
         module="endocrine_system",
         action="hormone_update"
     )
-    
+
     # Record old state
     tracer.record(trace_id, "hormone", hormone)
     tracer.record(trace_id, "old_value", self.hormones[hormone])
     tracer.record(trace_id, "new_value", value)
-    
+
     # Execute action
     self.hormones[hormone] = value
-    
+
     # Finish trace (link to parent action)
     tracer.finish(trace_id, parent=current_action_id)
-    
+
     # Return trace ID for downstream linking
     return trace_id
 ```
@@ -990,29 +990,29 @@ def test_causal_chain_complete():
         body_part="HANDS",
         intensity=5.0
     )
-    
+
     # Retrieve causal chain
     chain = tracer.get_chain(action_id)
-    
+
     # Verify chain completeness
     assert len(chain.nodes) >= 3  # L1 → L3 → L6 minimum
     assert chain.has_layer("L1")  # Tactile perception
     assert chain.has_layer("L6")  # Live2D response
-    
+
     # Verify chain validity
     assert validator.validate_chain(chain) == True
 
 # Test trace overhead
 def test_trace_performance():
     start = time.time()
-    
+
     for i in range(1000):
         trace_id = tracer.start("L1", "test", "benchmark")
         tracer.record(trace_id, "data", i)
         tracer.finish(trace_id)
-    
+
     elapsed = time.time() - start
-    
+
     # Tracing should add < 1% CPU overhead
     assert elapsed < 0.1  # < 0.1ms per trace
 ```

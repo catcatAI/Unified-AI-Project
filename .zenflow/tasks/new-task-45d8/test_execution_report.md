@@ -1,7 +1,7 @@
 # Test Execution Report
 
-**Date**: 2026-02-17  
-**Task**: Run Full Test Suite and Generate Coverage  
+**Date**: 2026-02-17
+**Task**: Run Full Test Suite and Generate Coverage
 **Execution Time**: 447.47 seconds (7 minutes 27 seconds)
 
 ---
@@ -26,7 +26,7 @@ The test suite could not be fully executed due to extensive syntax errors and im
 ### 1. Module Import Errors
 
 **Missing Module**: `core.hsp.payloads`
-- **Affected files**: 
+- **Affected files**:
   - `tests/ai/dialogue/test_project_coordinator.py`
   - Multiple other test files importing from AI subsystems
 - **Root cause**: Import chain: `content_analyzer_module.py:19` → `from core.hsp.payloads import HSPFactPayload`
@@ -127,7 +127,7 @@ NameError: name 'LogicModelResult' is not defined
 | Tools | 8 | 3 | 62% |
 | Root Tests | 45 | 26 | 42% |
 
-**Most impacted**: CLI (0%), HSP (7%), Core AI (18%), Integration (0%)  
+**Most impacted**: CLI (0%), HSP (7%), Core AI (18%), Integration (0%)
 **Least impacted**: Tools (62%), Root Tests (42%)
 
 ---
@@ -334,7 +334,7 @@ NameError: name 'LogicModelResult' is not defined
 4. 🔧 **Required**: Fix 5 critical syntax errors (cli/__init__.py, conftest.py files, test_cli.py)
 5. 🔄 **Re-run**: Execute this step again after fixes
 
-**Estimated effort to fix blocking issues**: 30-60 minutes  
+**Estimated effort to fix blocking issues**: 30-60 minutes
 **Expected result after fixes**: ~80% test collection success, baseline coverage measurable
 
 ---
@@ -348,5 +348,5 @@ Full pytest output saved to: `C:\Users\catai\AppData\Local\Temp\zencoder-logs\to
 pytest tests/ -v --cov=apps/backend/src --cov-report=html --cov-report=term --timeout=60
 ```
 
-**Exit code**: 2 (test collection errors)  
+**Exit code**: 2 (test collection errors)
 **Duration**: 447.47 seconds (7m 27s)

@@ -431,7 +431,7 @@ class LLMGameInterface:
 
 輸出：
 - exploration_weight_delta: 探索權重調整 (-0.2 到 0.2)
-- risk_tolerance_delta: 風險容忍調整 (-0.2 到 0.2)  
+- risk_tolerance_delta: 風險容忍調整 (-0.2 到 0.2)
 - new_priority_goals: 新優先目標列表 (可選)
 
 原則：

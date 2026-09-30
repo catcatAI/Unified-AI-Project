@@ -138,8 +138,8 @@ Save to `{@artifacts_path}/plan.md`.
 
 ### [x] Task 1.1: Fix Syntax and Indentation Errors
 <!-- chat-id: d48bdf06-9350-42e6-8c85-09cb71b38ec5 -->
-**Owner**: 2号 (Implementation Developer)  
-**Estimated Time**: 3-4 days  
+**Owner**: 2号 (Implementation Developer)
+**Estimated Time**: 3-4 days
 **References**: spec.md § 2.1
 
 Fix all 106 syntax errors and indentation errors identified in `remaining_errors.json`.
@@ -169,9 +169,9 @@ python scripts/unified_auto_fixer.py --check
 
 ### [!] Task 1.2: Achieve 90% Test Pass Rate
 <!-- chat-id: 044011ea-589d-4850-8a69-ebfb3591b9e0 -->
-**Owner**: 2号 (Implementation Developer)  
-**Estimated Time**: 2-3 days (REVISED: 3-4 days due to extensive corruption)  
-**References**: spec.md § 2.1  
+**Owner**: 2号 (Implementation Developer)
+**Estimated Time**: 2-3 days (REVISED: 3-4 days due to extensive corruption)
+**References**: spec.md § 2.1
 **Status**: ⚠️ **BLOCKED** - Requires user decision on approach
 
 Fix broken tests and ensure test suite passes at >90% rate.
@@ -233,8 +233,8 @@ pytest --cov=apps/backend/src --cov-report=html --cov-report=term-missing
 
 ### [ ] Task 1.3: Standardize Code Formatting
 <!-- chat-id: 26187ada-ed80-4c36-8208-2493c882d320 -->
-**Owner**: 2号 (Implementation Developer)  
-**Estimated Time**: 1 day  
+**Owner**: 2号 (Implementation Developer)
+**Estimated Time**: 1 day
 **References**: spec.md § 2.1, AGENTS.MD
 
 Apply Black and isort formatting to entire codebase.
@@ -267,8 +267,8 @@ pre-commit run --all-files
 
 ### [ ] Task 2.1: Implement LLM Backend Base Classes
 <!-- chat-id: 883e1601-c707-4019-b291-53c5d031dd2a -->
-**Owner**: 2号 (Implementation Developer)  
-**Estimated Time**: 1 day  
+**Owner**: 2号 (Implementation Developer)
+**Estimated Time**: 1 day
 **References**: spec.md § 2.2.1
 
 Create base classes and data models for LLM backends.
@@ -300,8 +300,8 @@ pytest tests/test_llm_backends/test_base_backend.py -v
 
 ### [ ] Task 2.2: Implement OpenAI GPT-4 Backend
 <!-- chat-id: df951cac-3598-456b-b289-d3df9d09ba43 -->
-**Owner**: 2号 (Implementation Developer)  
-**Estimated Time**: 2 days  
+**Owner**: 2号 (Implementation Developer)
+**Estimated Time**: 2 days
 **References**: spec.md § 2.2.1
 
 Integrate OpenAI GPT-4 as an LLM backend.
@@ -339,8 +339,8 @@ OPENAI_API_KEY=sk-... pytest tests/integration/test_openai_live.py -v
 
 ### [ ] Task 2.3: Implement Anthropic Claude Backend
 <!-- chat-id: b06df3dd-dd7d-4e93-9b56-61c5c524bad1 -->
-**Owner**: 2号 (Implementation Developer)  
-**Estimated Time**: 2 days  
+**Owner**: 2号 (Implementation Developer)
+**Estimated Time**: 2 days
 **References**: spec.md § 2.2.1
 
 Integrate Anthropic Claude as an LLM backend.
@@ -376,8 +376,8 @@ ANTHROPIC_API_KEY=sk-ant-... pytest tests/integration/test_anthropic_live.py -v
 
 ### [ ] Task 2.4: Implement Google Gemini Backend
 <!-- chat-id: 10b5ddcf-dd84-4a1d-baf4-bc9a7f5b75f6 -->
-**Owner**: 2号 (Implementation Developer)  
-**Estimated Time**: 2 days  
+**Owner**: 2号 (Implementation Developer)
+**Estimated Time**: 2 days
 **References**: spec.md § 2.2.1
 
 Integrate Google Gemini as an LLM backend.
@@ -414,8 +414,8 @@ GEMINI_API_KEY=... pytest tests/integration/test_gemini_live.py -v
 
 ### [ ] Task 2.5: Implement LLM Load Balancer
 <!-- chat-id: fb252910-cca6-4815-a40c-4f744fa53124 -->
-**Owner**: 3号 (Research/Optimization)  
-**Estimated Time**: 2 days  
+**Owner**: 3号 (Research/Optimization)
+**Estimated Time**: 2 days
 **References**: spec.md § 2.2.1
 
 Create a load balancer to distribute requests across multiple LLM backends with fallback.
@@ -449,8 +449,8 @@ pytest tests/test_llm_backends/test_load_balancer.py -v
 
 ### [ ] Task 2.6: Implement Semantic Understanding System
 <!-- chat-id: 0bf50a80-330a-490b-87d4-65e047559789 -->
-**Owner**: 3号 (Research/Optimization)  
-**Estimated Time**: 3-4 days  
+**Owner**: 3号 (Research/Optimization)
+**Estimated Time**: 3-4 days
 **References**: spec.md § 2.2.2
 
 Build semantic understanding pipeline with tokenization, embedding, and intent recognition.
@@ -496,8 +496,8 @@ pytest tests/test_semantics/test_intent_recognizer.py::test_accuracy -v
 
 ### [ ] Task 2.7: Refactor AngelaLLMService - Remove All Hardcoding
 <!-- chat-id: a9fd749b-96d1-46f6-910d-630b245600a1 -->
-**Owner**: 2号 (Implementation Developer)  
-**Estimated Time**: 3-4 days  
+**Owner**: 2号 (Implementation Developer)
+**Estimated Time**: 3-4 days
 **References**: spec.md § 2.2.2
 
 Refactor `AngelaLLMService` to use real LLM backends and semantic understanding, removing all hardcoded responses.
@@ -544,8 +544,8 @@ flake8 apps/backend/src/services/angela_llm_service.py
 
 ### [ ] Task 2.8: Create End-to-End Conversation Tests
 <!-- chat-id: d354d48c-a1ea-40dd-b34f-0a2b2802c653 -->
-**Owner**: 4号 (QA/Release Manager)  
-**Estimated Time**: 2 days  
+**Owner**: 4号 (QA/Release Manager)
+**Estimated Time**: 2 days
 **References**: spec.md § 2.2, § 6.1
 
 Create comprehensive end-to-end tests for real conversations.
@@ -586,8 +586,8 @@ pytest tests/integration/test_end_to_end_conversation.py -v --durations=0
 
 ### [ ] Task 3.1: Integrate Memory Retrieval into LLM Context
 <!-- chat-id: bc6989ca-d326-4de1-ac4e-b0b16aa298dd -->
-**Owner**: 2号 (Implementation Developer)  
-**Estimated Time**: 2-3 days  
+**Owner**: 2号 (Implementation Developer)
+**Estimated Time**: 2-3 days
 **References**: spec.md § 2.3
 
 Enhance context building to include relevant memories from HAM system.
@@ -623,8 +623,8 @@ pytest tests/integration/test_memory_aware_conversation.py -v
 
 ### [ ] Task 3.2: Implement Automatic Memory Storage
 <!-- chat-id: 5164fa22-afe7-4488-8682-9304435ddc23 -->
-**Owner**: 2号 (Implementation Developer)  
-**Estimated Time**: 2 days  
+**Owner**: 2号 (Implementation Developer)
+**Estimated Time**: 2 days
 **References**: spec.md § 2.3
 
 Automatically store all conversations as memories in HAM system.
@@ -662,8 +662,8 @@ python -c "from apps.backend.src.ai.memory.ham_memory.ham_manager import HAMMemo
 
 ### [ ] Task 3.3: Create Memory Template Library
 <!-- chat-id: 0297fbb6-c144-4401-8f75-676c908bd899 -->
-**Owner**: 3号 (Research/Optimization)  
-**Estimated Time**: 2 days  
+**Owner**: 3号 (Research/Optimization)
+**Estimated Time**: 2 days
 **References**: spec.md § 2.3
 
 Build a library of memory templates for common patterns (preferences, facts, etc.).
@@ -699,8 +699,8 @@ pytest tests/test_memory_template_library.py -v
 
 ### [ ] Task 3.4: Optimize Memory Retrieval Performance
 <!-- chat-id: 981e3cd5-bba7-40ee-9d02-204fe9108090 -->
-**Owner**: 3号 (Research/Optimization)  
-**Estimated Time**: 2-3 days  
+**Owner**: 3号 (Research/Optimization)
+**Estimated Time**: 2-3 days
 **References**: spec.md § 2.3, § 6.4
 
 Optimize HAM memory retrieval to achieve <100ms latency.
@@ -739,8 +739,8 @@ python benchmarks/memory_retrieval_benchmark.py
 
 ### [ ] Task 4.1: Implement FPS Optimization and Performance Modes
 <!-- chat-id: b8a46e13-53f8-48c5-b070-313a22d2899f -->
-**Owner**: 3号 (Research/Optimization)  
-**Estimated Time**: 3 days  
+**Owner**: 3号 (Research/Optimization)
+**Estimated Time**: 3 days
 **References**: spec.md § 2.4
 
 Optimize Live2D rendering to achieve 60 FPS (high mode) and 30 FPS (low mode).
@@ -780,8 +780,8 @@ npm start -- --performance-mode=low
 
 ### [ ] Task 4.2: Implement Hardware Auto-Detection
 <!-- chat-id: d297d07c-ecb7-41d2-b826-28c8f28e65c2 -->
-**Owner**: 2号 (Implementation Developer)  
-**Estimated Time**: 2 days  
+**Owner**: 2号 (Implementation Developer)
+**Estimated Time**: 2 days
 **References**: spec.md § 2.4
 
 Automatically detect hardware capabilities and select optimal performance mode.
@@ -816,8 +816,8 @@ npm test -- --hardware=16gb
 
 ### [ ] Task 4.3: Implement Emotion System
 <!-- chat-id: 070905e2-b966-471a-af75-150dd5a13c97 -->
-**Owner**: 2号 (Implementation Developer)  
-**Estimated Time**: 3 days  
+**Owner**: 2号 (Implementation Developer)
+**Estimated Time**: 3 days
 **References**: spec.md § 2.4
 
 Create emotion system with valence, arousal, dominance model.
@@ -853,8 +853,8 @@ cd apps/desktop-app/electron_app && npm test -- emotion-system
 
 ### [ ] Task 4.4: Integrate Emotion System with Live2D
 <!-- chat-id: 98c6a365-7ae4-4ea8-9484-53a3fc345b77 -->
-**Owner**: 2号 (Implementation Developer)  
-**Estimated Time**: 2 days  
+**Owner**: 2号 (Implementation Developer)
+**Estimated Time**: 2 days
 **References**: spec.md § 2.4
 
 Connect emotion system to Live2D expression rendering.
@@ -890,8 +890,8 @@ npm start
 
 ### [ ] Task 5.1: Implement Key Rotation Mechanism
 <!-- chat-id: eec1e61d-fad5-4893-ac7f-764d5c3f0716 -->
-**Owner**: 2号 (Implementation Developer)  
-**Estimated Time**: 2 days  
+**Owner**: 2号 (Implementation Developer)
+**Estimated Time**: 2 days
 **References**: spec.md § 2.5
 
 Implement automatic key rotation for A/B/C keys every 30 days.
@@ -929,8 +929,8 @@ python -c "from apps.backend.src.security.abc_key_manager_enhanced import ABCKey
 
 ### [ ] Task 5.2: Enhance Multi-Device Sync
 <!-- chat-id: 94c41c8a-ca34-4dc3-97df-f71f81b90470 -->
-**Owner**: 2号 (Implementation Developer)  
-**Estimated Time**: 2 days  
+**Owner**: 2号 (Implementation Developer)
+**Estimated Time**: 2 days
 **References**: spec.md § 2.5
 
 Improve multi-device synchronization for memories and state.
@@ -966,8 +966,8 @@ pytest tests/test_device_sync.py -v
 
 ### [ ] Task 5.3: Security Audit and Vulnerability Fixes
 <!-- chat-id: 2553acca-4ea6-4405-9c1c-49300b9cd2d4 -->
-**Owner**: 4号 (QA/Release Manager)  
-**Estimated Time**: 2-3 days  
+**Owner**: 4号 (QA/Release Manager)
+**Estimated Time**: 2-3 days
 **References**: spec.md § 2.5
 
 Conduct security audit and fix identified vulnerabilities.
@@ -1003,8 +1003,8 @@ grep -r "API_KEY.*=" apps/
 
 ### [ ] Task 5.4: Update Documentation and Deployment Guide
 <!-- chat-id: 29b82825-229a-4546-8098-962a58a9892e -->
-**Owner**: 4号 (QA/Release Manager)  
-**Estimated Time**: 2 days  
+**Owner**: 4号 (QA/Release Manager)
+**Estimated Time**: 2 days
 **References**: spec.md § 10
 
 Update all documentation to reflect new features and architecture.
@@ -1041,7 +1041,7 @@ Update all documentation to reflect new features and architecture.
 
 ### [ ] Task 6.1: Full System Integration Test
 <!-- chat-id: b2775c72-e710-4616-93e7-bba3652c5c7a -->
-**Owner**: 4号 (QA/Release Manager)  
+**Owner**: 4号 (QA/Release Manager)
 **Estimated Time**: 2 days
 
 Run comprehensive integration tests across all phases.
@@ -1091,7 +1091,7 @@ mypy apps/backend/src
 
 ### [ ] Task 6.2: Sign-Off and Deployment
 <!-- chat-id: 93024baf-7d21-49ab-adb1-640e9403e4a8 -->
-**Owner**: 1号 (Project Lead)  
+**Owner**: 1号 (Project Lead)
 **Estimated Time**: 1 day
 
 Final review and approval for deployment.

@@ -6,7 +6,7 @@ This package contains comprehensive test suites for Angela AI v7.5.0-dev core au
 
 Test Modules:
 - test_physiological_tactile.py: Physiological tactile system tests
-- test_endocrine_system.py: Endocrine system and hormone regulation tests  
+- test_endocrine_system.py: Endocrine system and hormone regulation tests
 - test_neuroplasticity.py: Neuroplasticity and memory tests
 - test_action_executor.py: Action execution and queue tests
 - test_desktop_interaction.py: Desktop interaction and file operations tests

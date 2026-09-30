@@ -11,7 +11,7 @@
 
 Angela AI is a cross-platform digital life system aimed at creating an "alive" virtual companion. This project includes a backend AI engine (FastAPI), a desktop application (Electron + Live2D), a mobile bridge (React Native), and a Web Live2D viewer.
 
-**Current Reality**: The project is in a state of high structural complexity with mixed functional maturity. 
+**Current Reality**: The project is in a state of high structural complexity with mixed functional maturity.
 - The **Backend API** (using `AngelaLLMService`) is well-architected and theoretically supports multiple LLM backends (OpenAI, Ollama, LlamaCpp).
 - The **Agent Matrix** (specialized agents like `NLPProcessingAgent`) is currently "pseudo-intelligent," utilizing simple keyword matching or truncated stubs.
 - The **Test Suite** is severely broken with approximately 238 files containing basic Python syntax errors (likely from a failed automated refactoring process).

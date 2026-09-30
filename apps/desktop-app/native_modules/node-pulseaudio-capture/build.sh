@@ -106,7 +106,7 @@ if [ ${#MISSING_DEPS[@]} -gt 0 ]; then
     log "或者运行以下一键安装命令:"
     log "  sudo apt-get update && sudo apt-get install -y ${MISSING_DEPS[*]}"
     log ""
-    
+
     # 询问是否自动安装
     read -p "是否自动安装依赖? (需要sudo权限) [y/N] " -n 1 -r
     echo
@@ -211,7 +211,7 @@ if [ -f "$MODULE_PATH" ]; then
     log "   大小: $MODULE_SIZE"
     log ""
     log "验证模块..."
-    
+
     # 尝试加载模块验证
     if node -e "try { require('./${MODULE_PATH}'); console.log('模块加载成功'); } catch(e) { console.error('模块加载失败:', e.message); process.exit(1); }" >> "$LOG_FILE" 2>&1; then
         log_success "模块验证成功"
@@ -219,7 +219,7 @@ if [ -f "$MODULE_PATH" ]; then
         log_warning "模块验证失败，但文件已生成"
         log "这可能是正常的，模块可能在运行时加载"
     fi
-    
+
     log ""
     log "========================================="
     log "  编译完成！"
