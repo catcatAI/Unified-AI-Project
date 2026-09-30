@@ -245,7 +245,9 @@ class SoulCoreManager:
     def _generate_soul_id(self, name: str) -> str:
         """生成灵魂ID / Generate soul ID"""
         timestamp = datetime.now().isoformat()
-        random_seed = hashlib.md5(f"{name}{timestamp}".encode()).hexdigest()[:8]
+        random_seed = hashlib.md5(f"{name}{timestamp}".encode(), usedforsecurity=False).hexdigest()[
+            :8
+        ]
         return f"soul_{name.lower()}_{random_seed}"
 
     def create_from_essence(self, essence: Dict[str, Any], new_version: str) -> Optional[SoulCore]:

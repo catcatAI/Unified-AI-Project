@@ -46,7 +46,9 @@ def get_ai_name(refresh: bool = False) -> str:
         if isinstance(raw, str) and raw.strip():
             name = raw.strip()
         elif raw is not None:
-            logger.warning("ai_name in system/core is not a usable string (%r); using %s", raw, name)
+            logger.warning(
+                "ai_name in system/core is not a usable string (%r); using %s", raw, name
+            )
     except Exception as exc:  # pragma: no cover - config unavailable
         logger.warning("Could not read ai_name from config (%s); using %s", exc, name)
 

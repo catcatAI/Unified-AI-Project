@@ -1,12 +1,12 @@
 # Compositional Image Generation - Implementation Summary
 
-> **⚠️ STATUS: Phase 1 only (2026-06-25)**  
-> This document describes **Phase 1** (5 core primitives files). Phase 2 added
-> **9 GVV pipeline files** (concept_mapper, concept_space, geometric_vocabulary,
-> instance_optimizer, vocabulary_expander, differentiable_renderer,
-> learnable_decomposer, decomposer, pixel_refiner) — totaling **14 source
-> files** with ~62 tests. See [ARCHITECTURE.md §6](../ARCHITECTURE.md) for the
-> current GVV pipeline description.
+> **⚠️ STATUS: Phase 1 only (2026-06-25)** This document describes **Phase 1**
+> (5 core primitives files). Phase 2 added **9 GVV pipeline files**
+> (concept_mapper, concept_space, geometric_vocabulary, instance_optimizer,
+> vocabulary_expander, differentiable_renderer, learnable_decomposer,
+> decomposer, pixel_refiner) — totaling **14 source files** with ~62 tests. See
+> [ARCHITECTURE.md §6](../ARCHITECTURE.md) for the current GVV pipeline
+> description.
 >
 > **⚠️ Honest assessment (2026-06-28)**: The pipeline architecture is complete
 > but **all neural weights are random** (SequenceGenerator RNN, VisualDecoder

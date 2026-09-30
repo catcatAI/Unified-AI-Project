@@ -49,7 +49,9 @@ ALPACA_URL = "https://raw.githubusercontent.com/tatsu-lab/stanford_alpaca/main/a
 # Alpaca-Data-Cleaned — a cleaned/respell of the same format (CC BY-NC 4.0, 51K
 # turns). Merging the two grows the real daily-dialogue/commonsense pool while
 # keeping the same instruction/input/output schema that train_pipeline reads.
-CLEANED_URL = "https://raw.githubusercontent.com/gururise/AlpacaDataCleaned/main/alpaca_data_cleaned.json"
+CLEANED_URL = (
+    "https://raw.githubusercontent.com/gururise/AlpacaDataCleaned/main/alpaca_data_cleaned.json"
+)
 
 CORPORA = (("alpaca", ALPACA_URL), ("cleaned", CLEANED_URL))
 
@@ -140,7 +142,9 @@ def _build_merged(parts: list) -> None:
             merged.append(item)
     with open(OUT_PATH, "w", encoding="utf-8") as f:
         json.dump(merged, f, ensure_ascii=False)
-    logger.info("Merged %d unique real turns from %d corpora -> %s", len(merged), len(parts), OUT_PATH)
+    logger.info(
+        "Merged %d unique real turns from %d corpora -> %s", len(merged), len(parts), OUT_PATH
+    )
     return len(merged)
 
 
@@ -178,7 +182,9 @@ def main() -> int:
             logger.warning("Existing file invalid (%s); re-downloading.", e)
             os.remove(OUT_PATH)
         else:
-            logger.info("Merged dataset already present (%d entries). Use --force to re-download.", n)
+            logger.info(
+                "Merged dataset already present (%d entries). Use --force to re-download.", n
+            )
             return 0
 
     parts = []

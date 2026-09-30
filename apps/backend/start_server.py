@@ -1,6 +1,8 @@
-from src.services.main_api_server import app
-import uvicorn
 import logging
+
+import uvicorn
+from src.services.main_api_server import app
+
 logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":

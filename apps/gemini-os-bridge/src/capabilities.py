@@ -1,16 +1,18 @@
 import logging
 import os
-import pyautogui
-import pyperclip
-import psutil
-import pygetwindow as gw
 import re
 import time
 from datetime import datetime
+
+import psutil
+import pyautogui
+import pygetwindow as gw
+import pyperclip
 from PIL import Image
 
 logging.basicConfig(level=logging.INFO, format="[OSBridge] %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
+
 
 class OSCapabilities:
     def __init__(self, workspace_dir="context_storage"):
@@ -43,7 +45,7 @@ class OSCapabilities:
         if exc_type:
             print(f"    [Guard] Task aborted due to error: {exc_val}")
             self.take_screenshot("fatal_error_state.png")
-        return False # Propagate error
+        return False  # Propagate error
 
     def backup_clipboard(self):
         """Backs up the current clipboard content."""
@@ -79,7 +81,7 @@ class OSCapabilities:
 
     def close_tab(self):
         """Closes the current browser tab."""
-        pyautogui.hotkey('ctrl', 'w')
+        pyautogui.hotkey("ctrl", "w")
         return True
 
     def focus_terminal(self):
@@ -94,12 +96,20 @@ class OSCapabilities:
         """Removes noise, excessive whitespace, and non-informative lines."""
         if not text:
             return ""
-        
+
         # Remove navigation noise lines (common in web captures)
-        lines = text.split('\n')
+        lines = text.split("\n")
         cleaned_lines = []
-        noise_keywords = ["跳至主內容", "無障礙說明", "意見回饋", "Privacy", "Terms", "Sign in", "Log in"]
-        
+        noise_keywords = [
+            "跳至主內容",
+            "無障礙說明",
+            "意見回饋",
+            "Privacy",
+            "Terms",
+            "Sign in",
+            "Log in",
+        ]
+
         for line in lines:
             line = line.strip()
             if not line:
@@ -107,10 +117,10 @@ class OSCapabilities:
             if any(keyword in line for keyword in noise_keywords):
                 continue
             cleaned_lines.append(line)
-            
+
         # Join and collapse multiple newlines
         content = "\n".join(cleaned_lines)
-        content = re.sub(r'\n{3,}', '\n\n', content)
+        content = re.sub(r"\n{3,}", "\n\n", content)
         return content
 
     def cleanup_save_dialogs(self):
@@ -131,7 +141,7 @@ class OSCapabilities:
         start = time.time()
         # Common titles for "Save As" across languages/browsers
         save_titles = ["Save As", "另存新檔", "儲存圖片", "另存影像", "儲存檔案"]
-        
+
         print(f"    [Capability] Waiting for save dialog (Timeout: {timeout}s)...")
         while time.time() - start < timeout:
             all_windows = gw.getAllTitles()
@@ -143,14 +153,14 @@ class OSCapabilities:
                         win.activate()
                         time.sleep(1.5)
                         pyperclip.copy(target_path)
-                        pyautogui.hotkey('ctrl', 'v')
+                        pyautogui.hotkey("ctrl", "v")
                         time.sleep(1)
-                        pyautogui.press('enter')
+                        pyautogui.press("enter")
                         return True
                     except Exception as e:
                         print(f"    [Capability] Error focusing dialog: {e}")
             time.sleep(1)
-        
+
         # Diagnostic step: return currently open titles if failed
         return {"error": "Dialog not found", "open_titles": [t for t in gw.getAllTitles() if t]}
 
@@ -176,21 +186,21 @@ class OSCapabilities:
         """Cycles through tabs and closes those matching task_keywords if they are duplicates."""
         if not self.focus_window(browser_title_part):
             return "Browser not found"
-        
+
         seen_titles = []
         closed_count = 0
-        task_found_count = {} # Track how many times each task keyword is seen
-        
+        task_found_count = {}  # Track how many times each task keyword is seen
+
         print(f"    [Cleanup] Starting tab scan (Max: {max_tabs})...")
-        
+
         for _ in range(max_tabs):
             time.sleep(1)
             current_title = gw.getActiveWindowTitle()
-            
+
             # Stop if we've cycled back to a title we've processed (or if title is empty)
             if not current_title or current_title in seen_titles:
                 break
-            
+
             is_task_tab = False
             for kw in task_keywords:
                 if kw.lower() in current_title.lower():
@@ -201,13 +211,13 @@ class OSCapabilities:
                         self.close_tab()
                         closed_count += 1
                         is_task_tab = True
-                        break # Tab is closed, don't add to seen_titles yet
-            
+                        break  # Tab is closed, don't add to seen_titles yet
+
             if not is_task_tab:
                 seen_titles.append(current_title)
                 # Move to next tab
-                pyautogui.hotkey('ctrl', 'tab')
-        
+                pyautogui.hotkey("ctrl", "tab")
+
         return {"scanned": len(seen_titles) + closed_count, "closed": closed_count}
 
     def get_all_window_titles(self):
@@ -222,9 +232,9 @@ class OSCapabilities:
     def list_active_windows(self):
         """Lists names of currently active/open windows (basic implementation)."""
         processes = []
-        for proc in psutil.process_iter(['name']):
+        for proc in psutil.process_iter(["name"]):
             try:
-                processes.append(proc.info['name'])
+                processes.append(proc.info["name"])
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 pass
         return list(set(processes))
@@ -278,18 +288,19 @@ class OSCapabilities:
         try:
             import pytesseract
             from pytesseract import Output
+
             screenshot = pyautogui.screenshot()
             # Get detailed OCR data including bounding boxes
             data = pytesseract.image_to_data(screenshot, lang=OCR_LANG, output_type=Output.DICT)
-            
+
             count = 0
-            for i in range(len(data['text'])):
-                if target_text.lower() in data['text'][i].lower():
+            for i in range(len(data["text"])):
+                if target_text.lower() in data["text"][i].lower():
                     count += 1
                     if count == occurrence:
                         # Calculate center of the text bounding box
-                        x = data['left'][i] + data['width'][i] // 2
-                        y = data['top'][i] + data['height'][i] // 2
+                        x = data["left"][i] + data["width"][i] // 2
+                        y = data["top"][i] + data["height"][i] // 2
                         print(f"    [Vision] Found '{target_text}' at ({x}, {y}). Clicking...")
                         pyautogui.click(x, y)
                         return True
@@ -302,14 +313,16 @@ class OSCapabilities:
         """Extracts text from a screenshot or specific region (requires Tesseract)."""
         try:
             import pytesseract
+
             screenshot = pyautogui.screenshot(region=region)
-            text = pytesseract.image_to_string(screenshot, lang='chi_tra+eng')
+            text = pytesseract.image_to_string(screenshot, lang="chi_tra+eng")
             return text
         except Exception as e:
             msg = str(e)
             if "tesseract is not installed" in msg.lower() or "not found" in msg.lower():
                 return "OCR Error: Tesseract-OCR not found. Please install it or set tesseract_cmd path in capabilities.py."
             return f"OCR Error: {msg}"
+
 
 if __name__ == "__main__":
     os_cap = OSCapabilities()

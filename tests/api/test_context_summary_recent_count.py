@@ -29,13 +29,9 @@ def _make_fake_service() -> MagicMock:
     svc = MagicMock()
     for axis in _STATE_AXES:
         getattr(svc.state_matrix, axis).values = {"x": 0.5}
-    svc.eta_state = SimpleNamespace(
-        execution_count=2, success_rate=0.9, structural_drift=0.05
-    )
+    svc.eta_state = SimpleNamespace(execution_count=2, success_rate=0.9, structural_drift=0.05)
     svc.memory_manager = MagicMock()
-    svc.memory_manager.query_core_memory = AsyncMock(
-        return_value=[object() for _ in range(3)]
-    )
+    svc.memory_manager.query_core_memory = AsyncMock(return_value=[object() for _ in range(3)])
     return svc
 
 

@@ -8,19 +8,22 @@ This gives us:
 - Recognition: image → PCA → classify (87%)
 - Generation: PCA latent → decoder → image (learned rendering)
 """
-import sys
+
 import os
+import sys
 import time
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'apps', 'backend', 'src'))
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"))
+
+import glob
 
 import numpy as np
-import glob
 from PIL import Image
 
-CIFAR_DIR="D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
-CLASSES=["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
-LATENT_DIM=128
-IMG_DIM=3072
+CIFAR_DIR = "D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
+CLASSES = ["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
+LATENT_DIM = 128
+IMG_DIM = 3072
 
 
 class PCAEncoder:
@@ -28,16 +31,16 @@ class PCAEncoder:
 
     def __init__(self, latent_dim=128):
         self.latent_dim = latent_dim
-        self.mean=None
-        self.projection=None  # (latent_dim, 3072)
+        self.mean = None
+        self.projection = None  # (latent_dim, 3072)
 
     def fit(self, images):
         """Fit PCA on training images."""
         self.mean = images.mean(axis=0)
         centered = images - self.mean
         U, S, Vt = np.linalg.svd(centered, full_matrices=False)
-        self.projection = Vt[:self.latent_dim]  # (latent_dim, 3072)
-        explained = (S[:self.latent_dim] ** 2).sum() / (S ** 2).sum()
+        self.projection = Vt[: self.latent_dim]  # (latent_dim, 3072)
+        explained = (S[: self.latent_dim] ** 2).sum() / (S**2).sum()
         print(f"PCA: {self.latent_dim} dims explain {explained:.1%} variance")
 
     def encode(self, images):
@@ -73,17 +76,17 @@ class SimpleDecoder:
 
         for epoch in range(n_epochs):
             perm = np.random.permutation(n)
-            total_loss=0.0
-            n_batches=0
+            total_loss = 0.0
+            n_batches = 0
 
             for i in range(0, n, batch_size):
-                idx = perm[i:i+batch_size]
+                idx = perm[i : i + batch_size]
                 x = latent[idx]
                 y = images[idx]
                 bs = len(x)
 
                 # Forward
-                recon=self.decode(x)
+                recon = self.decode(x)
                 loss = np.mean((recon - y) ** 2)
 
                 # Backward: dL/dW = (recon - y)^T @ x / bs
@@ -108,13 +111,13 @@ class Classifier:
     """Linear classifier: latent → class."""
 
     def __init__(self, latent_dim, n_classes):
-        self.W=None
-        self.b=None
+        self.W = None
+        self.b = None
         self.n_classes = n_classes
 
     def fit(self, latent, labels):
         """Solve linear regression."""
-        n_classes=self.n_classes
+        n_classes = self.n_classes
         Y = np.zeros((len(latent), n_classes), dtype=np.float32)
         for i, l in enumerate(labels):
             Y[i, l] = 1.0
@@ -129,8 +132,8 @@ class Classifier:
 
 
 def load_cifar(n_per_class=None):
-    images=[]
-    labels=[]
+    images = []
+    labels = []
     for ci, cls in enumerate(CLASSES):
         cls_dir = os.path.join(CIFAR_DIR, cls)
         files = sorted(glob.glob(os.path.join(cls_dir, "*.npy")))
@@ -170,7 +173,7 @@ def main():
     preds, _ = classifier.predict(test_latent)
     correct = np.sum(preds == test_labels)
     print(f"Held-out accuracy: {correct}/{len(test_labels)} = {correct/len(test_labels):.1%}")
-    per_class={c: [0, 0] for c in CLASSES}
+    per_class = {c: [0, 0] for c in CLASSES}
     for i in range(len(test_labels)):
         cls = CLASSES[test_labels[i]]
         per_class[cls][1] += 1
@@ -187,12 +190,12 @@ def main():
 
     # Test reconstruction
     print("\n=== Reconstruction Quality ===")
-    output_dir="data/multimodal/gvv/learned_test"
+    output_dir = "data/multimodal/gvv/learned_test"
     os.makedirs(output_dir, exist_ok=True)
 
-    total_mse=0.0
+    total_mse = 0.0
     for i in range(10):
-        recon = decoder.decode(test_latent[i:i+1]).reshape(32, 32, 3)
+        recon = decoder.decode(test_latent[i : i + 1]).reshape(32, 32, 3)
         orig = test_imgs[i].reshape(32, 32, 3)
         mse = np.mean((recon - orig) ** 2)
         total_mse += mse
@@ -212,7 +215,7 @@ def main():
         class_centers[c] = train_latent[mask].mean(axis=0)
 
     for ci, cls in enumerate(CLASSES):
-        gen = decoder.decode(class_centers[ci:ci+1]).reshape(32, 32, 3)
+        gen = decoder.decode(class_centers[ci : ci + 1]).reshape(32, 32, 3)
         gen_pil = Image.fromarray((gen * 255).astype(np.uint8))
         gen_pil.save(os.path.join(output_dir, f"gen_{cls}.png"))
         print(f"  Generated {cls}")

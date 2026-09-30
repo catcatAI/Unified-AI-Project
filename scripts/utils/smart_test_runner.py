@@ -64,11 +64,7 @@ def run_tests(pytest_args=None) -> int:
 
     try:
         process = subprocess.Popen(
-            cmd,
-            cwd=PROJECT_ROOT,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
+            cmd, cwd=PROJECT_ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
         )
 
         stdout, stderr = process.communicate()

@@ -195,6 +195,9 @@ class WeightMigration:
                 try:
                     return np.array(value, dtype=np.float32).flatten()
                 except Exception:
+                    logger.debug(
+                        "Attribute %r not array-convertible; trying next", key, exc_info=True
+                    )
                     continue
 
         logger.warning("No weights found in engine")

@@ -1,28 +1,32 @@
 """Perceptual Loss - fast version (no re-id in loss)."""
-import sys
+
 import os
+import sys
 import time
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'apps', 'backend', 'src'))
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"))
+
+import glob
 
 import numpy as np
-import glob
 from PIL import Image
 
-CIFAR_DIR="D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
-CLASSES=["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
-IMG_DIM=3072
-LATENT_DIM=128
-OUTPUT_DIR="data/multimodal/gvv/perceptual_test"
+CIFAR_DIR = "D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
+CLASSES = ["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
+IMG_DIM = 3072
+LATENT_DIM = 128
+OUTPUT_DIR = "data/multimodal/gvv/perceptual_test"
 
 
 def load_cifar(n_per_class=50):
-    images, labels=[], []
+    images, labels = [], []
     for ci, cls in enumerate(CLASSES):
         cls_dir = os.path.join(CIFAR_DIR, cls)
         files = sorted(glob.glob(os.path.join(cls_dir, "*.npy")))[:n_per_class]
         for f in files:
             arr = np.load(f)
-            if arr.ndim == 3: arr = arr.reshape(-1)
+            if arr.ndim == 3:
+                arr = arr.reshape(-1)
             images.append(arr.astype(np.float32) / 255.0)
             labels.append(ci)
     return np.array(images), np.array(labels)
@@ -35,7 +39,7 @@ def main():
 
     all_imgs, all_labels = load_cifar(50)
     rng = np.random.default_rng(42)
-    train_idx, test_idx=[], []
+    train_idx, test_idx = [], []
     for c in range(10):
         idxs = np.where(all_labels == c)[0]
         rng.shuffle(idxs)
@@ -59,10 +63,14 @@ def main():
         def __init__(self):
             super().__init__()
             self.net = nn.Sequential(
-                nn.Linear(LATENT_DIM, 256), nn.ReLU(),
-                nn.Linear(256, 512), nn.ReLU(),
-                nn.Linear(512, IMG_DIM), nn.Sigmoid(),
+                nn.Linear(LATENT_DIM, 256),
+                nn.ReLU(),
+                nn.Linear(256, 512),
+                nn.ReLU(),
+                nn.Linear(512, IMG_DIM),
+                nn.Sigmoid(),
             )
+
         def forward(self, x):
             return self.net(x)
 
@@ -73,7 +81,7 @@ def main():
         for epoch in range(25):
             perm = torch.randperm(len(X_train))
             for i in range(0, len(X_train), 64):
-                idx = perm[i:i+64]
+                idx = perm[i : i + 64]
                 x, y = X_train[idx], Y_train[idx]
                 loss = loss_fn(decoder(x), y)
                 opt.zero_grad()
@@ -93,6 +101,7 @@ def main():
 
     # MSE + Edge sharpness
     print("=== MSE + Edge ===")
+
     def edge_loss(r, o):
         mse = F.mse_loss(r, o)
         r2d = r.view(-1, 32, 32, 3).permute(0, 3, 1, 2)
@@ -100,10 +109,12 @@ def main():
         dy = r2d[:, :, 1:, :] - r2d[:, :, :-1, :]
         edge = -(torch.mean(dx**2) + torch.mean(dy**2))
         return mse + 0.5 * edge
+
     dec_edge, recon_edge = train_and_eval("MSE+Edge", edge_loss)
 
     # MSE + Edge + Variance
     print("=== MSE + Edge + Variance ===")
+
     def full_loss(r, o):
         mse = F.mse_loss(r, o)
         r2d = r.view(-1, 32, 32, 3).permute(0, 3, 1, 2)
@@ -112,6 +123,7 @@ def main():
         edge = -(torch.mean(dx**2) + torch.mean(dy**2))
         var = -torch.mean(torch.var(r, dim=1))
         return mse + 0.5 * edge + 0.1 * var
+
     dec_full, recon_full = train_and_eval("MSE+Edge+Var", full_loss)
 
     # Save
@@ -121,7 +133,7 @@ def main():
         m = (recon_mse[i].reshape(32, 32, 3) * 255).astype(np.uint8)
         e = (recon_edge[i].reshape(32, 32, 3) * 255).astype(np.uint8)
         f = (recon_full[i].reshape(32, 32, 3) * 255).astype(np.uint8)
-        combo = Image.new('RGB', (128, 32))
+        combo = Image.new("RGB", (128, 32))
         combo.paste(Image.fromarray(orig), (0, 0))
         combo.paste(Image.fromarray(m), (32, 0))
         combo.paste(Image.fromarray(e), (64, 0))
@@ -142,7 +154,7 @@ def main():
         m = (gen_mse[ci].reshape(32, 32, 3) * 255).astype(np.uint8)
         e = (gen_edge[ci].reshape(32, 32, 3) * 255).astype(np.uint8)
         f = (gen_full[ci].reshape(32, 32, 3) * 255).astype(np.uint8)
-        combo = Image.new('RGB', (96, 32))
+        combo = Image.new("RGB", (96, 32))
         combo.paste(Image.fromarray(m), (0, 0))
         combo.paste(Image.fromarray(e), (32, 0))
         combo.paste(Image.fromarray(f), (64, 0))

@@ -71,17 +71,22 @@ class RoutingEngine:
             fn = self._connectors.get(step.connector)
             if fn is None:
                 outcomes.append(
-                    StepOutcome(step=step.name, connector=step.connector,
-                                outcome="error", elapsed_ms=0.0,
-                                error="connector not registered")
+                    StepOutcome(
+                        step=step.name,
+                        connector=step.connector,
+                        outcome="error",
+                        elapsed_ms=0.0,
+                        error="connector not registered",
+                    )
                 )
                 logger.error("[routing] connector %r not registered", step.connector)
                 continue
 
             if hops >= self._max_hops and step.kind != "terminal":
                 outcomes.append(
-                    StepOutcome(step=step.name, connector=step.connector,
-                                outcome="budget", elapsed_ms=0.0)
+                    StepOutcome(
+                        step=step.name, connector=step.connector, outcome="budget", elapsed_ms=0.0
+                    )
                 )
                 continue
 
@@ -90,10 +95,13 @@ class RoutingEngine:
                 response = await fn(user_message, context)
             except Exception as exc:  # noqa: BLE001 — 單步故障不拖垮整輪路由
                 outcomes.append(
-                    StepOutcome(step=step.name, connector=step.connector,
-                                outcome="error",
-                                elapsed_ms=(time.perf_counter() - t0) * 1000,
-                                error=str(exc))
+                    StepOutcome(
+                        step=step.name,
+                        connector=step.connector,
+                        outcome="error",
+                        elapsed_ms=(time.perf_counter() - t0) * 1000,
+                        error=str(exc),
+                    )
                 )
                 logger.warning("[routing] step %s error: %s", step.name, exc)
                 continue
@@ -101,16 +109,22 @@ class RoutingEngine:
             hops += 1
             elapsed = (time.perf_counter() - t0) * 1000
             if response is not None:
-                outcomes.append(StepOutcome(step=step.name, connector=step.connector,
-                                            outcome="hit", elapsed_ms=elapsed))
+                outcomes.append(
+                    StepOutcome(
+                        step=step.name, connector=step.connector, outcome="hit", elapsed_ms=elapsed
+                    )
+                )
                 md = response.metadata or {}
                 md["routing_trace"] = [o.step for o in outcomes]
                 md["routing_hops"] = hops
                 response.metadata = md
                 self._record(outcomes, total_ms=(time.time() - start) * 1000)
                 return response
-            outcomes.append(StepOutcome(step=step.name, connector=step.connector,
-                                        outcome="miss", elapsed_ms=elapsed))
+            outcomes.append(
+                StepOutcome(
+                    step=step.name, connector=step.connector, outcome="miss", elapsed_ms=elapsed
+                )
+            )
 
         # 清單沒有任何 terminal 接住（配置錯誤）——最後的誠實防線
         logger.error("[routing] manifest exhausted without terminal hit")
@@ -120,8 +134,7 @@ class RoutingEngine:
             backend="routing-engine",
             model="manifest-exhausted",
             confidence=0.3,
-            metadata={"routing_trace": [o.step for o in outcomes],
-                      "routing": "exhausted"},
+            metadata={"routing_trace": [o.step for o in outcomes], "routing": "exhausted"},
         )
 
     # ---------- 觀測與學習 ----------
@@ -129,9 +142,7 @@ class RoutingEngine:
     def _record(self, outcomes: List[StepOutcome], total_ms: float) -> None:
         """上報逐步遙測：事件（即時）＋持久狀態（學習回饋用）。"""
         for o in outcomes:
-            bucket = self._stats.setdefault(
-                o.step, {"hit": 0, "miss": 0, "error": 0, "budget": 0}
-            )
+            bucket = self._stats.setdefault(o.step, {"hit": 0, "miss": 0, "error": 0, "budget": 0})
             if o.outcome in bucket:
                 bucket[o.outcome] += 1
 
@@ -149,9 +160,7 @@ class RoutingEngine:
             routing_state = state_store.get_state("routing")
             steps_state = routing_state.get("steps", {})
             for o in outcomes:
-                b = steps_state.setdefault(
-                    o.step, {"hit": 0, "miss": 0, "error": 0, "budget": 0}
-                )
+                b = steps_state.setdefault(o.step, {"hit": 0, "miss": 0, "error": 0, "budget": 0})
                 if o.outcome in b:
                     b[o.outcome] += 1
             state_store.update_state(

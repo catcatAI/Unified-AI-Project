@@ -50,7 +50,9 @@ class TestTrayMenu:
     def test_every_default_item_brings_its_own_click_handler(self):
         """The template must not drop item.click."""
         text = TRAY.read_text(encoding="utf-8")
-        build = text[text.index("const template = items.map"): text.index("Menu.buildFromTemplate")]
+        build = text[
+            text.index("const template = items.map") : text.index("Menu.buildFromTemplate")
+        ]
         assert "item.click" in build, (
             "updateMenu() must call the item's own click handler; replacing it with "
             "callbacks[item.id] silently disabled every item whose id differs from "
@@ -59,7 +61,7 @@ class TestTrayMenu:
 
     def test_dispatch_prefers_item_handler_and_falls_back_to_id(self):
         text = TRAY.read_text(encoding="utf-8")
-        dispatch = text[text.index("_handleItemClick(item, itemClick) {"):]
+        dispatch = text[text.index("_handleItemClick(item, itemClick) {") :]
         dispatch = dispatch[: dispatch.index("\n  }\n")]
         assert "typeof itemClick === 'function'" in dispatch
         assert "this.callbacks[item.id]" in dispatch
@@ -68,7 +70,9 @@ class TestTrayMenu:
 
     def test_all_default_items_have_a_click_handler(self):
         text = TRAY.read_text(encoding="utf-8")
-        defaults = text[text.index("_createDefaultMenu() {"): text.index("this.updateMenu(menuItems)")]
+        defaults = text[
+            text.index("_createDefaultMenu() {") : text.index("this.updateMenu(menuItems)")
+        ]
         for item_id in TRAY_ITEMS:
             entry = re.search(rf"id: '{item_id}',[^\n]*", defaults)
             assert entry, f"tray item {item_id!r} missing"
@@ -84,7 +88,9 @@ class TestTrayMenu:
     def test_unimplementable_items_are_not_advertised(self, item):
         """A menu entry that cannot work must not be offered."""
         text = TRAY.read_text(encoding="utf-8")
-        defaults = text[text.index("_createDefaultMenu() {"): text.index("this.updateMenu(menuItems)")]
+        defaults = text[
+            text.index("_createDefaultMenu() {") : text.index("this.updateMenu(menuItems)")
+        ]
         assert f"id: '{item}'" not in defaults, (
             f"tray still offers {item!r} although the Electron main process does "
             "not own the backend lifecycle"
@@ -103,7 +109,7 @@ class TestContextMenuChannels:
     def test_channel_is_allowed_by_the_preload_bridge(self, channel):
         """preload drops channels outside validChannels — silently."""
         preload = PRELOAD.read_text(encoding="utf-8")
-        block = preload[preload.index("const validChannels = ["):]
+        block = preload[preload.index("const validChannels = [") :]
         block = block[: block.index("]")]
         assert f"'{channel}'" in block, f"preload would drop {channel!r}"
 
@@ -117,13 +123,15 @@ class TestContextMenuChannels:
     )
     def test_handler_calls_a_method_that_actually_exists(self, channel, target):
         app = APP.read_text(encoding="utf-8")
-        handler = app[app.index(f"'{channel}'"):]
+        handler = app[app.index(f"'{channel}'") :]
         handler = handler[: handler.index("\n    })")]
         assert target in handler, f"{channel} does not use the real {target}()"
 
     def test_module_toggle_warns_when_a_module_has_no_switch(self):
         app = APP.read_text(encoding="utf-8")
-        toggle = app[app.index("_setupMainMenuChannels() {"): app.index("_setupKeyboardShortcuts() {")]
+        toggle = app[
+            app.index("_setupMainMenuChannels() {") : app.index("_setupKeyboardShortcuts() {")
+        ]
         assert "module-toggle" in toggle
         assert "warn('module-toggle'" in toggle, "a module without a switch must be reported"
 
@@ -131,7 +139,7 @@ class TestContextMenuChannels:
 class TestModuleToggleHonesty:
     def test_toggle_module_does_not_always_return_true(self):
         app = APP.read_text(encoding="utf-8")
-        block = app[app.index("this.toggleModule = (module, enabled) => {"):]
+        block = app[app.index("this.toggleModule = (module, enabled) => {") :]
         block = block[: block.index("\n    }\n")]
         assert "return true //" not in block
         # Every branch must be able to report "not applied".
@@ -148,16 +156,21 @@ class TestModuleToggleHonesty:
 class TestToggleFrameKeepsTheWindowWired:
     def test_toggle_frame_re_attaches_the_lost_listeners(self):
         main = MAIN.read_text(encoding="utf-8")
-        block = main[main.index("label: 'Toggle Frame'"):]
+        block = main[main.index("label: 'Toggle Frame'") :]
         block = block[: block.index("mainWindow = newWin")]
-        for marker in ("attachContextMenu(newWin)", "ready-to-show", "on('moved'", "setMinimumSize"):
+        for marker in (
+            "attachContextMenu(newWin)",
+            "ready-to-show",
+            "on('moved'",
+            "setMinimumSize",
+        ):
             assert marker in block, f"Toggle Frame lost {marker}"
 
     def test_context_menu_template_is_shared_not_duplicated(self):
         main = MAIN.read_text(encoding="utf-8")
-        assert main.count("Menu.buildFromTemplate([") == 1, (
-            "the context-menu template must exist once; a second copy drifts"
-        )
+        assert (
+            main.count("Menu.buildFromTemplate([") == 1
+        ), "the context-menu template must exist once; a second copy drifts"
         assert "function buildContextMenuTemplate()" in main
         assert main.count("attachContextMenu(") >= 3  # definition + both call sites
 
@@ -208,12 +221,12 @@ class TestIpcBridgeCompleteness:
         # The calls are prettier-wrapped across lines, so match with a regex.
         call = r"electronAPI\.autostart\s*\.\s*(get|set)\s*\("
         calls = re.findall(call, source)
-        assert "get" in calls, (
-            "the checkbox must reflect the real login-item state, not just the last saved value"
-        )
-        assert "set" in calls, (
-            "auto-start is read and saved but never applied to the OS — the original defect"
-        )
+        assert (
+            "get" in calls
+        ), "the checkbox must reflect the real login-item state, not just the last saved value"
+        assert (
+            "set" in calls
+        ), "auto-start is read and saved but never applied to the OS — the original defect"
 
 
 class TestRendererEventChannels:
@@ -251,8 +264,7 @@ class TestRendererEventChannels:
             if channel not in self._allowlist()
         }
         assert not unlisted, (
-            "electronAPI.on() ignores these channels, so the listeners never run: "
-            f"{unlisted}"
+            "electronAPI.on() ignores these channels, so the listeners never run: " f"{unlisted}"
         )
 
     def _producers(self) -> set:
@@ -295,9 +307,10 @@ class TestRendererEventChannels:
         the pair cannot grow unnoticed.
         """
         unused = sorted(self._allowlist() - self._producers())
-        assert unused == ["performance-auto-adjust", "websocket-send-result"], (
-            "allowlisted channels with no sender changed; update this record"
-        )
+        assert unused == [
+            "performance-auto-adjust",
+            "websocket-send-result",
+        ], "allowlisted channels with no sender changed; update this record"
 
 
 class TestNewIpcSurfacesAreComplete:
@@ -324,7 +337,9 @@ class TestNewIpcSurfacesAreComplete:
 
     def test_every_new_channel_is_handled_in_main(self):
         handled = set(
-            re.findall(r"ipcMain\.(?:on|handle)\(\s*'([^']+)'", self.MAIN.read_text(encoding="utf-8"))
+            re.findall(
+                r"ipcMain\.(?:on|handle)\(\s*'([^']+)'", self.MAIN.read_text(encoding="utf-8")
+            )
         )
         missing = [c for c in self.NEW_CHANNELS if c not in handled]
         assert not missing, f"declared in preload but never handled: {missing}"
@@ -337,9 +352,9 @@ class TestNewIpcSurfacesAreComplete:
     def test_opacity_requires_a_transparent_window(self):
         """setOpacity() is a no-op on an opaque window — the reason it can work here."""
         main = self.MAIN.read_text(encoding="utf-8")
-        assert "transparent: true" in main, (
-            "window.setOpacity() silently does nothing unless the window is transparent"
-        )
+        assert (
+            "transparent: true" in main
+        ), "window.setOpacity() silently does nothing unless the window is transparent"
 
     def test_system_audio_reports_linux_instead_of_returning_silence(self):
         main = self.MAIN.read_text(encoding="utf-8")
@@ -371,6 +386,6 @@ class TestNewIpcSurfacesAreComplete:
         # `window.electronAPI.systemAudio\n        .start()`; compare without
         # whitespace rather than against a literal that formatting can break.
         settings = re.sub(r"\s+", "", self.SETTINGS.read_text(encoding="utf-8"))
-        assert re.sub(r"\s+", "", bridge_call) in settings, (
-            f"the settings page never calls {bridge_call}"
-        )
+        assert (
+            re.sub(r"\s+", "", bridge_call) in settings
+        ), f"the settings page never calls {bridge_call}"

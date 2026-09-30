@@ -6,14 +6,15 @@
 智能开发服务器运行器 - 在启动开发服务器时自动检测和修复错误
 """
 
+import logging
 import os
-import sys
-import subprocess
 import re
+import subprocess
+import sys
 import time
 from pathlib import Path
 from typing import List
-import logging
+
 logger = logging.getLogger(__name__)
 
 # 项目根目录
@@ -26,6 +27,7 @@ sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(SRC_DIR))
 
+
 def setup_environment():
     """设置环境"""
     print("🔧 设置开发环境...")
@@ -34,7 +36,7 @@ def setup_environment():
         sys.path.insert(0, str(PROJECT_ROOT))
     if str(SRC_DIR) not in sys.path:
         sys.path.insert(0, str(SRC_DIR))
-        
+
     # 激活虚拟环境
     venv_path = PROJECT_ROOT / "venv"
     if venv_path.exists():
@@ -43,8 +45,9 @@ def setup_environment():
             os.environ["PATH"] = f"{venv_path / 'Scripts'}{os.pathsep}{os.environ['PATH']}"
         else:
             os.environ["PATH"] = f"{venv_path / 'bin'}{os.pathsep}{os.environ['PATH']}"
-    
+
     print("✅ 环境设置完成")
+
 
 def check_environment():
     """检查基础环境"""
@@ -53,11 +56,12 @@ def check_environment():
         # 检查Python环境和依赖包
         import fastapi
         import uvicorn
+
         # 使用导入的模块以避免未使用导入的警告
         _ = fastapi.__version__
         _ = uvicorn.__version__
         print("✅ Python环境检查通过")
-        
+
         # 验证必要的环境变量
         required_vars: List[str] = []
         missing_vars: List[str] = [var for var in required_vars if var not in os.environ]
@@ -65,7 +69,7 @@ def check_environment():
             print(f"⚠️ 缺少环境变量, {missing_vars}")
         else:
             print("✅ 环境变量检查通过")
-        
+
         # 检查配置文件完整性
         config_files = ["configs/config.yaml"]
         missing_configs = [f for f in config_files if not (PROJECT_ROOT / f).exists()]
@@ -73,7 +77,7 @@ def check_environment():
             print(f"⚠️ 缺少配置文件, {missing_configs}")
         else:
             print("✅ 配置文件检查通过")
-            
+
         return True
     except ImportError as e:
         print(f"❌ Python环境检查失败, 缺少必要的依赖包 {e}")
@@ -82,8 +86,10 @@ def check_environment():
     except Exception as e:
         print(f"❌ 环境检查失败, {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def initialize_core_services():
     """初始化核心服务"""
@@ -91,24 +97,28 @@ def initialize_core_services():
     try:
         # 初始化HAM内存管理
         from apps.backend.src.ai.memory.ham_memory import HAMMemoryManager
+
         ham_manager = HAMMemoryManager()
         # 使用ham_manager执行一些基本操作以避免未使用变量警告
         _stats = ham_manager.get_stats()
         print(f"✅ HAM内存管理初始化完成,模板数, {_stats['template_count']}")
-        
+
         # 初始化LLM服务接口
         from apps.backend.src.services.angela_llm_service import AngelaLLMService
+
         llm_service = AngelaLLMService()
         # 使用llm_service执行一些基本操作以避免未使用变量警告
         available_backends = [b.value for b in llm_service.backends.keys()]
         print(f"✅ LLM服务初始化完成,可用后端, {available_backends}")
-        
+
         return True
     except Exception as e:
         print(f"❌ 核心服务初始化失败, {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def start_core_components():
     """启动核心组件"""
@@ -116,19 +126,20 @@ def start_core_components():
     try:
         # 初始化HSP连接器
         from apps.backend.src.core.hsp.connector import HSPConnector
+
         hsp_connector = HSPConnector(
-            ai_id="did,hsp,api_server_ai",
-            broker_address="localhost",
-            broker_port=1883
+            ai_id="did,hsp,api_server_ai", broker_address="localhost", broker_port=1883
         )
         print("✅ HSP连接器初始化完成")
-        
+
         return True
     except Exception as e:
         print(f"❌ 核心组件启动失败, {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def load_functional_modules():
     """加载功能模块"""
@@ -136,18 +147,23 @@ def load_functional_modules():
     try:
         # 加载宠物系统
         from apps.backend.src.pet.pet_manager import PetManager
-        pet_manager = PetManager("pet1", {"initial_personality": {"curiosity": 0.7, "playfulness": 0.8}})
+
+        pet_manager = PetManager(
+            "pet1", {"initial_personality": {"curiosity": 0.7, "playfulness": 0.8}}
+        )
         print("✅ 宠物系统初始化完成")
         # 使用pet_manager执行一些基本操作以避免未使用变量警告
         print(f"✅ 宠物系统初始化完成,宠物ID, {pet_manager.pet_id}")
-        
+
         return True
     except Exception as e:
         print(f"⚠️ 功能模块加载失败, {e}")
         import traceback
+
         traceback.print_exc()
         # 功能模块失败不影响核心服务
         return True
+
 
 def start_full_services():
     """启动完整服务"""
@@ -159,8 +175,10 @@ def start_full_services():
     except Exception as e:
         print(f"❌ 完整服务启动失败, {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def health_check_services():
     """健康检查服务"""
@@ -168,8 +186,8 @@ def health_check_services():
     try:
         # 导入健康检查服务
         sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
-        from apps.backend.scripts.health_check_service import quick_health_check, full_health_check
-        
+        from apps.backend.scripts.health_check_service import full_health_check, quick_health_check
+
         # 执行快速健康检查
         if quick_health_check():
             print("✅ 快速健康检查通过")
@@ -186,8 +204,10 @@ def health_check_services():
     except Exception as e:
         print(f"❌ 服务健康检查失败, {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def check_layer_dependencies():
     """检查层间依赖关系"""
@@ -195,27 +215,29 @@ def check_layer_dependencies():
     try:
         # 检查第0层到第1层的依赖
         print("✅ 第0层到第1层依赖检查通过")
-        
+
         # 检查第1层到第2层的依赖
         print("✅ 第1层到第2层依赖检查通过")
-        
+
         # 检查第2层到第3层的依赖
         print("✅ 第2层到第3层依赖检查通过")
-        
+
         # 检查第3层到第4层的依赖
         print("✅ 第3层到第4层依赖检查通过")
-        
+
         return True
     except Exception as e:
         print(f"❌ 层间依赖检查失败, {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def start_services_layered():
     """分层启动服务"""
     print("🚀 开始分层启动服务...")
-    
+
     # 第0层, 基础环境检查
     print("📋 第0层, 基础环境检查")
     try:
@@ -226,14 +248,16 @@ def start_services_layered():
     except Exception as e:
         print(f"❌ 环境检查时发生错误, {e}")
         import traceback
+
         traceback.print_exc()
         return False
-    
+
     # 预启动服务 - 快速检查与预启动所有功能
     print("⚡ 预启动服务")
     try:
         sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
         from apps.backend.scripts.health_check_service import prelaunch_services
+
         if not prelaunch_services():
             print("❌ 预启动服务失败")
             return False
@@ -241,9 +265,10 @@ def start_services_layered():
     except Exception as e:
         print(f"❌ 预启动服务时发生错误, {e}")
         import traceback
+
         traceback.print_exc()
         return False
-    
+
     # 第1层, 核心服务初始化
     print("🔧 第1层, 核心服务初始化")
     try:
@@ -254,9 +279,10 @@ def start_services_layered():
     except Exception as e:
         print(f"❌ 核心服务初始化时发生错误, {e}")
         import traceback
+
         traceback.print_exc()
         return False
-    
+
     # 第2层, 核心组件启动
     print("⚙️ 第2层, 核心组件启动")
     try:
@@ -267,9 +293,10 @@ def start_services_layered():
     except Exception as e:
         print(f"❌ 核心组件启动时发生错误, {e}")
         import traceback
+
         traceback.print_exc()
         return False
-    
+
     # 第3层, 功能模块加载
     print("🔌 第3层, 功能模块加载")
     try:
@@ -280,16 +307,17 @@ def start_services_layered():
     except Exception as e:
         print(f"⚠️ 功能模块加载时发生错误, {e}")
         import traceback
+
         traceback.print_exc()
         # 功能模块失败不影响核心服务
-    
+
     # 检查层间依赖关系
     print("🔗 检查层间依赖关系")
     if not check_layer_dependencies():
         print("❌ 层间依赖检查失败")
         return False
     print("✅ 层间依赖检查通过")
-    
+
     # 第4层, 完整服务启动
     print("🌐 第4层, 完整服务启动")
     try:
@@ -300,25 +328,27 @@ def start_services_layered():
     except Exception as e:
         print(f"❌ 完整服务启动时发生错误, {e}")
         import traceback
+
         traceback.print_exc()
         return False
-    
+
     # 服务健康检查
     print("🩺 服务健康检查")
     if not health_check_services():
         print("❌ 服务健康检查失败")
         return False
     print("✅ 服务健康检查通过")
-    
+
     return True
+
 
 def detect_dev_errors(stderr_output: str, stdout_output: str) -> List[str]:
     """检测开发服务器启动错误"""
     errors: List[str] = []
-    
+
     # 合并输出
     full_output = (stdout_output or "") + (stderr_output or "")
-    
+
     # 检测导入错误
     import_error_patterns = [
         r"ModuleNotFoundError, No module named '([^']+)'",
@@ -326,50 +356,54 @@ def detect_dev_errors(stderr_output: str, stdout_output: str) -> List[str]:
         r"ImportError, No module named '([^']+)'",
         r"NameError, name '([^']+)' is not defined",
     ]
-    
+
     for pattern in import_error_patterns:
         matches = re.findall(pattern, full_output)
         for match in matches:
             if match not in errors:
                 errors.append(match)
-    
+
     # 检测路径错误
     path_error_patterns = [
         r"No module named 'core_ai",
         r"No module named 'hsp",
         r"from \.\.core_ai",
     ]
-    
+
     for pattern in path_error_patterns:
         if re.search(pattern, full_output):
             errors.append("path_error")
-            
+
     # 检测Uvicorn错误
     if "uvicorn" in full_output.lower() and "error" in full_output.lower():
         errors.append("uvicorn_error")
-        
+
     # 检测端口占用错误
     if "Address already in use" in full_output:
         errors.append("port_in_use")
-        
+
     return errors
+
 
 def run_auto_fix():
     """运行自动修复工具"""
     print("🔍 检测到导入错误,正在自动修复...")
-    
+
     try:
         # 导入并运行增强版修复工具
         sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
         from apps.backend.scripts.advanced_auto_fix import AdvancedImportFixer
+
         fixer = AdvancedImportFixer()
         results = fixer.fix_all_files()
-        
+
         # 保存修复报告
         fixer.save_report()
-        
+
         if results.files_fixed > 0:
-            print(f"✅ 自动修复完成,修复了 {results.files_fixed} 个文件,共 {results.fixes_applied} 处修复")
+            print(
+                f"✅ 自动修复完成,修复了 {results.files_fixed} 个文件,共 {results.fixes_applied} 处修复"
+            )
             return True
         else:
             print("⚠️ 未发现需要修复的问题")
@@ -377,25 +411,28 @@ def run_auto_fix():
     except Exception as e:
         print(f"❌ 自动修复时出错, {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def start_chroma_server():
     """启动ChromaDB服务器"""
     print("🚀 启动ChromaDB服务器...")
-    
+
     try:
         # 启动ChromaDB服务器作为后台进程
         chroma_process = subprocess.Popen(
-            ["python", "start_chroma_server.py"], cwd= PROJECT_ROOT,
-    stdout=subprocess.PIPE,
+            ["python", "start_chroma_server.py"],
+            cwd=PROJECT_ROOT,
+            stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-text = True
+            text=True,
         )
-        
+
         # 等待服务器启动
         time.sleep(10)
-        
+
         # 检查进程是否仍在运行
         if chroma_process.poll() is None:
             print("✅ ChromaDB服务器启动成功")
@@ -405,39 +442,46 @@ text = True
             stdout, stderr = chroma_process.communicate()
             print(f"❌ ChromaDB服务器启动失败, {stderr}")
             return None
-            
+
     except Exception as e:
         print(f"❌ 启动ChromaDB服务器时出错, {e}")
         return None
+
 
 def start_uvicorn_server(max_retries=3):
     """启动Uvicorn服务器"""
     for attempt in range(max_retries):
         print(f"🚀 尝试启动Uvicorn服务器 (尝试 {attempt + 1}/{max_retries})...")
-        
+
         try:
             # 构建命令
             cmd = [
-                sys.executable, "-m", "uvicorn", 
-                "src.services.main_api_server,app", 
-                "--reload", "--host", "127.0.0.1", "--port", "8000"
+                sys.executable,
+                "-m",
+                "uvicorn",
+                "src.services.main_api_server,app",
+                "--reload",
+                "--host",
+                "127.0.0.1",
+                "--port",
+                "8000",
             ]
-            
+
             print(f"执行命令, {' '.join(cmd)}")
-            
+
             # 启动Uvicorn服务器
             uvicorn_process = subprocess.Popen(
                 cmd,
-cwd = PROJECT_ROOT,
-    stdout=subprocess.PIPE,
+                cwd=PROJECT_ROOT,
+                stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
-text = True,
-env = {**os.environ, "PYTHONPATH": str(PROJECT_ROOT)}
+                text=True,
+                env={**os.environ, "PYTHONPATH": str(PROJECT_ROOT)},
             )
-            
+
             # 等待更长时间让服务器启动
             time.sleep(30)
-            
+
             # 检查进程是否仍在运行
             if uvicorn_process.poll() is None:
                 print("✅ Uvicorn服务器启动成功")
@@ -452,31 +496,33 @@ env = {**os.environ, "PYTHONPATH": str(PROJECT_ROOT)}
                     time.sleep(5)
                 else:
                     return None, stderr
-                
+
         except Exception as e:
             print(f"❌ 启动Uvicorn服务器时出错, {e}")
             import traceback
+
             traceback.print_exc()
             if attempt < max_retries - 1:
                 print("等待5秒后重试...")
                 time.sleep(5)
             else:
                 return None, str(e)
-    
+
     # 如果循环结束还没有返回,返回默认值
     return None, ""
+
 
 def run_dev_server():
     """运行开发服务器"""
     setup_environment()
-    
+
     # 使用分层启动策略
     print("🚀 开始分层启动服务...")
     if not start_services_layered():
         print("❌ 分层启动服务失败")
         return 1
     print("✅ 分层启动服务完成")
-    
+
     # 启动ChromaDB服务器
     print("🚀 启动ChromaDB服务器...")
     chroma_process = start_chroma_server()
@@ -484,21 +530,21 @@ def run_dev_server():
         print("✅ ChromaDB服务器启动成功")
     else:
         print("⚠️ ChromaDB服务器启动失败,继续启动Uvicorn服务器...")
-    
+
     # 启动Uvicorn服务器
     print("🚀 启动Uvicorn服务器...")
     uvicorn_process, error_output = start_uvicorn_server()
-    
+
     # 检查Uvicorn是否启动成功
     if uvicorn_process is None:
         print("❌ Uvicorn服务器启动失败")
-        
+
         # 检测错误
         errors = detect_dev_errors(error_output, "")
-        
+
         if errors:
             print(f"🔧 检测到错误, {errors}")
-            
+
             # 运行自动修复
             if run_auto_fix():
                 print("🔄 修复完成,重新启动开发服务器...")
@@ -527,18 +573,19 @@ def run_dev_server():
                         stdout, stderr = uvicorn_process.communicate()
                         error_output = (stdout or "") + (stderr or "")
                         print(f"错误输出, {error_output}")
-                        
+
                         # 运行运行时自动修复
                         print("🔧 尝试运行时自动修复...")
                         sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
                         from apps.backend.scripts.runtime_auto_fix import RuntimeAutoFixer
+
                         fixer = RuntimeAutoFixer()
                         fixer.setup_environment()
-                        
+
                         # 创建一个模拟的进程来传递错误信息
                         import subprocess
                         from typing import Optional, Tuple
-                        
+
                         class MockProcess:
                             def __init__(self, output: str) -> None:
                                 self.output = output
@@ -546,15 +593,19 @@ def run_dev_server():
                                 self.stderr = None
                                 self.returncode: int = 1  # 表示进程有错误退出
                                 self.pid: int = 12345  # 添加pid属性
-                            
-                            def communicate(self, timeout: Optional[float] = None) -> Tuple[str, str]:
+
+                            def communicate(
+                                self, timeout: Optional[float] = None
+                            ) -> Tuple[str, str]:
                                 return "", self.output()
+
                             # 添加poll方法以兼容subprocess.Popen接口()
                             def poll(self) -> Optional[int]:
                                 return 0  # 表示进程已完成
-                                
+
                             def wait(self, timeout: Optional[float] = None) -> int:
                                 return self.returncode
+
                             def terminate(self) -> None:
                                 pass
 
@@ -585,12 +636,13 @@ def run_dev_server():
                 uvicorn_process.terminate()
         return 0
 
+
 def main() -> None:
     """主函数"""
     print("🚀 开始启动Unified AI Project后端服务...")
     print(f"📁 项目根目录, {PROJECT_ROOT}")
     print(f"📁 源代码目录, {SRC_DIR}")
-    
+
     # 运行开发服务器
     try:
         exit_code = run_dev_server()
@@ -605,8 +657,10 @@ def main() -> None:
     except Exception as e:
         print(f"❌ 启动过程中发生未预期的错误, {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

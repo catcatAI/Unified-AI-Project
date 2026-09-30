@@ -11,13 +11,13 @@ Usage:
 """
 
 import argparse
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"))
 
-from ai.multimodal.training_pipeline import FullTrainingPipeline
 from ai.multimodal.data_loader import RealDataProvider
+from ai.multimodal.training_pipeline import FullTrainingPipeline
 
 
 def main():
@@ -26,13 +26,15 @@ def main():
     parser.add_argument("--pairs", type=int, default=50)
     parser.add_argument("--recon-epochs", type=int, default=10)
     parser.add_argument("--recon-samples", type=int, default=50)
-    parser.add_argument("--texture-steps", type=int, default=500,
-                        help="Gradient steps for texture training")
+    parser.add_argument(
+        "--texture-steps", type=int, default=500, help="Gradient steps for texture training"
+    )
     parser.add_argument("--wavetable-steps", type=int, default=200)
     parser.add_argument("--texture-lr", type=float, default=0.001)
     parser.add_argument("--lr", type=float, default=0.01)
-    parser.add_argument("--max-samples", type=int, default=5000,
-                        help="Max images to encode from CIFAR-10")
+    parser.add_argument(
+        "--max-samples", type=int, default=5000, help="Max images to encode from CIFAR-10"
+    )
     args = parser.parse_args()
 
     print("=" * 60)
@@ -72,7 +74,9 @@ def main():
 
     # 5. Phase 3b: Wavetable training
     print("\n=== Phase 3b: Wavetable branch training ===")
-    wt_result = pipeline.train_wavetable(batch_size=4, steps=args.wavetable_steps, lr=args.texture_lr)
+    wt_result = pipeline.train_wavetable(
+        batch_size=4, steps=args.wavetable_steps, lr=args.texture_lr
+    )
     print(f"  Wavetable final loss: {wt_result['final_loss']:.6f}")
 
     # 6. Save all weights to joint p29_trained.npz (both visual + audio)
@@ -81,7 +85,7 @@ def main():
     joint_path = os.path.join(save_dir, "p29_trained.npz")
 
     # Collect visual decoder weights
-    vd_weights={
+    vd_weights = {
         "visual_decoder_W": pipeline._visual_decoder._W,
         "visual_decoder_b": pipeline._visual_decoder._b,
         "texture_W_hidden": pipeline._visual_decoder._W_hidden,
@@ -92,7 +96,7 @@ def main():
     }
     # Collect audio decoder weights
     ad = pipeline._audio_decoder
-    ad_weights={
+    ad_weights = {
         "audio_decoder_W": ad._W,
         "audio_decoder_b": ad._b,
         "audio_W_hidden": ad._W_hidden,
@@ -104,18 +108,21 @@ def main():
     }
     # Merge and save
     import numpy as np
-    all_weights={**vd_weights, **ad_weights}
+
+    all_weights = {**vd_weights, **ad_weights}
     np.savez(joint_path, **all_weights)
     print(f"\n✅ Saved joint weights ({len(all_weights)} arrays) to {joint_path}")
 
     # 7. Verify both decoders load from joint file
     from ai.multimodal.visual_decoder import VisualDecoder, load_default_visual_decoder_weights
+
     vd = VisualDecoder()
     load_default_visual_decoder_weights(vd)
     w = vd.get_projection()
     print(f"  VisualDecoder load verification: W sum={w[0].sum():.2f}")
 
     from ai.multimodal.audio_decoder import AudioWaveformDecoder, load_default_audio_decoder_weights
+
     ad_check = AudioWaveformDecoder()
     ok = load_default_audio_decoder_weights(ad_check)
     print(f"  AudioDecoder load verification: {'OK' if ok else 'FAILED'}")

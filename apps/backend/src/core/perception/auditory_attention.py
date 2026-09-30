@@ -58,9 +58,7 @@ class AuditoryAttentionController:
             if priority > highest_priority:
                 highest_priority = priority
                 candidate: Optional[str] = (
-                    source.profile_id
-                    if hasattr(source, "profile_id")
-                    else source.get("profile_id")
+                    source.profile_id if hasattr(source, "profile_id") else source.get("profile_id")
                 )
                 best_source_id = str(candidate) if candidate is not None else None
 

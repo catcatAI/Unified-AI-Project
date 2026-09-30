@@ -104,6 +104,7 @@ def step_initialize_knowledge(bb):
     # Initialize ED3N dictionary (242k entries)
     try:
         from ai.ed3n.ed3n_engine import ED3NEngine
+
         engine = ED3NEngine.get_shared(load_trained=True)
         stats = engine.dictionary.get_stats()
         logger.info("  ED3N dictionary: %d entries", stats.get("entry_count", 0))
@@ -113,6 +114,7 @@ def step_initialize_knowledge(bb):
     # Initialize GARDEN
     try:
         from ai.garden.garden_engine import GARDENEngine
+
         garden = GARDENEngine(compatibility_mode=True)
         garden.load_presets()
         logger.info("  GARDEN: OK")
@@ -156,25 +158,38 @@ def step_initialize_knowledge_graph():
             importer.entities[key] = {"surface": surface, "relations": {}, "category": cat}
 
         isa_relations = [
-            ("pen", "tool"), ("pencil", "tool"), ("eraser", "tool"), ("ruler", "tool"),
-            ("paper", "medium"), ("ink", "material"),
-            ("writing", "action"), ("drawing", "action"), ("reading", "action"),
-            ("book", "medium"), ("notebook", "medium"),
+            ("pen", "tool"),
+            ("pencil", "tool"),
+            ("eraser", "tool"),
+            ("ruler", "tool"),
+            ("paper", "medium"),
+            ("ink", "material"),
+            ("writing", "action"),
+            ("drawing", "action"),
+            ("reading", "action"),
+            ("book", "medium"),
+            ("notebook", "medium"),
         ]
         for entity, category in isa_relations:
             importer._add_triple(entity, "isa", category, weight=0.85)
 
         usedfor_relations = [
-            ("pen", "writing"), ("pen", "drawing"),
-            ("pencil", "writing"), ("pencil", "sketching"),
-            ("ink", "writing"), ("ink", "drawing"),
+            ("pen", "writing"),
+            ("pen", "drawing"),
+            ("pencil", "writing"),
+            ("pencil", "sketching"),
+            ("ink", "writing"),
+            ("ink", "drawing"),
         ]
         for tool, action in usedfor_relations:
             importer._add_triple(tool, "usedfor", action, weight=0.75)
 
         requires_relations = [
-            ("writing", "pen"), ("writing", "paper"), ("writing", "ink"),
-            ("drawing", "pen"), ("drawing", "paper"),
+            ("writing", "pen"),
+            ("writing", "paper"),
+            ("writing", "ink"),
+            ("drawing", "pen"),
+            ("drawing", "paper"),
         ]
         for action, req in requires_relations:
             importer._add_triple(action, "requires", req, weight=0.80)
@@ -186,13 +201,18 @@ def step_initialize_knowledge_graph():
         os.makedirs(ckpt_dir, exist_ok=True)
         kg_path = os.path.join(ckpt_dir, "knowledge_graph.json")
         with open(kg_path, "w", encoding="utf-8") as f:
-            json.dump({
-                "entities": importer.entities,
-                "triples": [
-                    {"subject": s, "relation": r, "object": o, "weight": w}
-                    for s, r, o, w in importer.triples
-                ],
-            }, f, indent=2, ensure_ascii=False)
+            json.dump(
+                {
+                    "entities": importer.entities,
+                    "triples": [
+                        {"subject": s, "relation": r, "object": o, "weight": w}
+                        for s, r, o, w in importer.triples
+                    ],
+                },
+                f,
+                indent=2,
+                ensure_ascii=False,
+            )
         logger.info("  Saved: %s", kg_path)
 
     except Exception as e:
@@ -258,9 +278,7 @@ def _run_script(script_name, *extra_args, timeout=None):
     logger.info("Running %s ...", script_name)
     logger.info("=" * 60)
     try:
-        result = subprocess.run(
-            cmd, cwd=ROOT, capture_output=True, text=True, timeout=timeout
-        )
+        result = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, timeout=timeout)
         for line in result.stdout.strip().splitlines()[-15:]:
             logger.info("  [%s] %s", script_name, line)
         if result.returncode != 0:

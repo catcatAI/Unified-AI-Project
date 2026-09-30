@@ -6,6 +6,7 @@
 W01-B 大正浪漫線（故事線 SL-06 大正浪漫與鋼鐵殉葬），
 非 SL-10 魔女學府。
 """
+
 import json
 import sys
 from pathlib import Path

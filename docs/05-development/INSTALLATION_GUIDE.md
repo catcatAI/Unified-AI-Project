@@ -333,5 +333,4 @@ Redistributable，下载：https://aka.ms/vs/17/release/vc_redist.x64.exe
 
 ---
 
-_更新日期_: 2026-02-02  
-_作者_: CatCatAI Development Team
+_更新日期_: 2026-02-02 _作者_: CatCatAI Development Team

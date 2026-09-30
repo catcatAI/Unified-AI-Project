@@ -50,7 +50,9 @@ def _methods_in(text: str, start: int, end: int) -> Dict[str, List[int]]:
     line_offset = text[:start].count("\n")
     found: Dict[str, List[int]] = {}
     for match in _METHOD.finditer(body):
-        found.setdefault(match.group(1), []).append(line_offset + body[: match.start()].count("\n") + 1)
+        found.setdefault(match.group(1), []).append(
+            line_offset + body[: match.start()].count("\n") + 1
+        )
     return found
 
 
@@ -61,9 +63,7 @@ def test_no_duplicate_methods_within_a_class(module: Path):
     for class_name, start, end in _class_sections(text):
         for method, lines in _methods_in(text, start, end).items():
             if len(lines) > 1:
-                offenders.append(
-                    f"{module.name}: {class_name}.{method} defined at lines {lines}"
-                )
+                offenders.append(f"{module.name}: {class_name}.{method} defined at lines {lines}")
     assert not offenders, "shadowed methods (the later definition silently wins):\n" + "\n".join(
         offenders
     )
@@ -79,7 +79,7 @@ def test_touch_pipeline_methods_are_present_once():
     handle_pos = text.index("  handleTouch(")
     queue_pos = text.index("  enqueueTouch(")
     assert handle_pos < queue_pos
-    real_body = text[handle_pos:text.index("\n  }", handle_pos)]
+    real_body = text[handle_pos : text.index("\n  }", handle_pos)]
     for marker in ("screenToCanvas", "bodyPart", "haptic", "expression"):
         assert marker.lower() in real_body.lower(), f"handleTouch lost {marker!r}"
 
@@ -95,13 +95,13 @@ def test_app_interaction_handlers_match_the_input_handler_contract():
     for method in ("_handleClick", "_handleDrag", "_handleHover"):
         assert app.count(f"  {method}(") == 1, f"{method} must be defined exactly once"
 
-    click = app[app.index("  _handleClick("): app.index("  _handleDrag(")]
+    click = app[app.index("  _handleClick(") : app.index("  _handleDrag(")]
     assert "udm.handleClick" in click, "click must run the UDM hit test"
     assert "bodyPart" in click
 
-    drag = app[app.index("  _handleDrag("): app.index("  _handleHover(")]
+    drag = app[app.index("  _handleDrag(") : app.index("  _handleHover(")]
     assert "handleTouch" in drag, "drag must go through the touch pipeline"
 
-    hover = app[app.index("  _handleHover("):]
+    hover = app[app.index("  _handleHover(") :]
     hover = hover[: hover.index("\n  }\n") + 4]
     assert "handleInteraction" in hover, "hover must reach the state matrix"

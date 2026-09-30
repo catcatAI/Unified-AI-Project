@@ -46,9 +46,7 @@ class TestExecutionGateConfirmRoundTrip:
         assert first["source"] == "gate_confirm"
         assert chat_svc.model_bus.calls == [], "must not execute before confirmation"
 
-        second = await chat_routes._handle_execution_gate(
-            "好", chat_svc, {}, "1.0", session_id
-        )
+        second = await chat_routes._handle_execution_gate("好", chat_svc, {}, "1.0", session_id)
 
         assert second is not None
         assert second["source"] == "gate_executed"
@@ -91,9 +89,7 @@ class TestExecutionGateConfirmRoundTrip:
             "刪除 /tmp/angela_gate_probe4", chat_svc, {}, "1.0", session_id
         )
         chat_svc.model_bus = None
-        result = await chat_routes._handle_execution_gate(
-            "好", chat_svc, {}, "1.0", session_id
-        )
+        result = await chat_routes._handle_execution_gate("好", chat_svc, {}, "1.0", session_id)
 
         assert result is not None
         assert result["source"] == "gate_execute_failed"
@@ -113,9 +109,7 @@ class TestExecutionGateConfirmRoundTrip:
             "刪除 /tmp/angela_gate_probe3", chat_svc, {}, "1.0", session_id
         )
         await chat_routes._handle_execution_gate("好", chat_svc, {}, "1.0", session_id)
-        third = await chat_routes._handle_execution_gate(
-            "好", chat_svc, {}, "1.0", session_id
-        )
+        third = await chat_routes._handle_execution_gate("好", chat_svc, {}, "1.0", session_id)
 
         assert len(chat_svc.model_bus.calls) == 1, "confirmation must not be replayable"
         assert third is None or third.get("source") != "gate_confirm"
@@ -177,9 +171,7 @@ class TestLearningIntentDispatch:
         ExecutionGate().reset_feedback_stats()
         bus = _FakeModelBus()
         context: dict = {}
-        await get_gate_execution_owner().process(
-            "請記住：我的貓叫小咪", context, "learning-2", bus
-        )
+        await get_gate_execution_owner().process("請記住：我的貓叫小咪", context, "learning-2", bus)
         stats = ExecutionGate().get_feedback_stats()
         assert stats["learning"]["success"] == 1, "gate feedback must be recorded"
 

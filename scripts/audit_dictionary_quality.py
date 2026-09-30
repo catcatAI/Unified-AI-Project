@@ -38,6 +38,7 @@ def audit_file(path):
             # 流式：逐行找 key（簡化，適用 JSON array）
             # 為保守，仍嘗試 json.load 但提醒
             import gc
+
             gc.collect()
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)

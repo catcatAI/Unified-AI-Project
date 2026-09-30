@@ -417,7 +417,9 @@ class VisionService:
                 # _detect_objects returns non-spatial image properties; derive a
                 # deterministic bounding box from the label so distinct labels map
                 # to stable, distinct positions (no insecure randomness).
-                digest = int(hashlib.md5(str(obj["label"]).encode()).hexdigest(), 16)
+                digest = int(
+                    hashlib.md5(str(obj["label"]).encode(), usedforsecurity=False).hexdigest(), 16
+                )
                 x0 = digest % 100
                 y0 = (digest // 100) % 100
                 bbox = [x0, y0, x0 + 10, y0 + 10]
@@ -498,7 +500,7 @@ class VisionService:
 
     def _generate_processing_id(self, image_data: bytes) -> str:
         """生成唯一的處理ID"""
-        hash_object = hashlib.md5(image_data)
+        hash_object = hashlib.md5(image_data, usedforsecurity=False)
         return f"vision_{hash_object.hexdigest()[:8]}_{datetime.now().strftime('%H%M%S')}"
 
     async def _generate_image_caption(self, image_data: bytes, context: Dict[str, Any]) -> str:
@@ -546,7 +548,10 @@ class VisionService:
             ]
             # Attempt cluster distribution with real image hash as feature vector
             try:
-                feature_hash = [ord(c) / 255.0 for c in hashlib.md5(image_data).hexdigest()[:64]]
+                feature_hash = [
+                    ord(c) / 255.0
+                    for c in hashlib.md5(image_data, usedforsecurity=False).hexdigest()[:64]
+                ]
                 await cluster_manager.distribute_task("Vision", feature_hash)
             except Exception:
                 logger.warning("Cluster distribution failed", exc_info=True)
@@ -811,8 +816,8 @@ class VisionService:
 
             img1 = Image.open(BytesIO(image_data1)).convert("RGB").resize((16, 16))
             img2 = Image.open(BytesIO(image_data2)).convert("RGB").resize((16, 16))
-            h1 = hashlib.md5(img1.tobytes()).hexdigest()
-            h2 = hashlib.md5(img2.tobytes()).hexdigest()
+            h1 = hashlib.md5(img1.tobytes(), usedforsecurity=False).hexdigest()
+            h2 = hashlib.md5(img2.tobytes(), usedforsecurity=False).hexdigest()
             matching_bits = sum(c1 == c2 for c1, c2 in zip(h1, h2))
             similarity = matching_bits / len(h1)
             return {

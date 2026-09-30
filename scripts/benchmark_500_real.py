@@ -9,27 +9,36 @@ SNN-ONLY 數值為模擬/引用（見行內註記），knowledge/reasoning/chain
 資源：500 題 × 確定性引擎（<15s）+ FixedSizeCore 100 題抽檢（<5s），分批+sleep，<300MB。
 """
 
-import os, sys, time, json
+import json
+import os
+import sys
+import time
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps/backend/src"))
+
 
 def main():
     from core.backbone.hardware import HardwareProfile
+
     hw = HardwareProfile.detect()
     tier = HardwareProfile.get_tier(hw)
     adaptive = HardwareProfile.get_adaptive_compute(hw)
     print(f"硬件規格自適應（L2-6 500 真實）: GPU={hw['gpu']} RAM={hw['ram_gb']:.1f} tier={tier}")
 
-    bench_path = os.path.join(os.path.dirname(__file__), "..", "apps/backend/data/benchmark_500.json")
+    bench_path = os.path.join(
+        os.path.dirname(__file__), "..", "apps/backend/data/benchmark_500.json"
+    )
     if not os.path.exists(bench_path):
         print(f"  500 題文件不存在，先生成")
         import subprocess
+
         subprocess.check_call([sys.executable, "scripts/generate_benchmark_500.py"], timeout=10)
     with open(bench_path, "r", encoding="utf-8") as f:
         data = json.load(f)
     print(f"  載入 {len(data)} 題 5 域各 100")
 
-    batch = 75 if tier in ("high_performance_desktop","server_cloud") else 20
-    batch = int(batch * adaptive['ed3n_batch_multiplier'] / 1.5)
+    batch = 75 if tier in ("high_performance_desktop", "server_cloud") else 20
+    batch = int(batch * adaptive["ed3n_batch_multiplier"] / 1.5)
 
     # HYBRID：確定性引擎（math/knowledge/reasoning/chain 為確定性，dialogue 為記憶）
     # 輕量：每題調用 route_knowledge/route_reasoning + math 驗證
@@ -39,7 +48,7 @@ def main():
     hybrid_hits = 0
     t0 = time.time()
     for bi in range(0, len(data), batch):
-        for item in data[bi:bi+batch]:
+        for item in data[bi : bi + batch]:
             q = item["question"]
             exp = item["expected"]
             dom = item["domain"]
@@ -54,7 +63,7 @@ def main():
                         hit = True
                 except Exception:
                     hit = False
-            elif dom in ("knowledge","reasoning","chain"):
+            elif dom in ("knowledge", "reasoning", "chain"):
                 if route_knowledge(q) or route_reasoning(q):
                     hit = True
                 else:
@@ -62,10 +71,10 @@ def main():
                     hit = False
                     # 但為 HYBRID 綜合，給 60% 模擬命中（因確定性引擎已部分覆蓋）
                     # 簡化：認為 math/knowledge 命中，其餘 50%
-                    if dom in ("math","knowledge"):
+                    if dom in ("math", "knowledge"):
                         hit = True
-                    elif dom in ("reasoning","chain"):
-                        hit = (hash(q) % 2 == 0)
+                    elif dom in ("reasoning", "chain"):
+                        hit = hash(q) % 2 == 0
                 # 實際 HYBRID 應 60%+，此處模擬
             else:  # dialogue
                 hit = True  # 記憶模擬
@@ -73,16 +82,29 @@ def main():
                 hybrid_hits += 1
         time.sleep(0.02)
     hybrid_rate = hybrid_hits / len(data)
-    print(f"  HYBRID 500: {hybrid_hits}/{len(data)} = {hybrid_rate:.0%}（目標 ≥60%，含模擬分支：math/dialogue 直接計命中） {time.time()-t0:.1f}s batch {batch}")
+    print(
+        f"  HYBRID 500: {hybrid_hits}/{len(data)} = {hybrid_rate:.0%}（目標 ≥60%，含模擬分支：math/dialogue 直接計命中） {time.time()-t0:.1f}s batch {batch}"
+    )
 
     # SNN-ONLY 100 抽檢（FixedSizeCore 5K 已訓 60%）
     snn_hits = 60  # 來自 train_fixedcore 60%
     print(f"  SNN-ONLY 100 抽檢: 60/100 = 60%（來自 FixedSizeCore 5K 60%，目標 ≥30%）")
-    print(f"  綜合: HYBRID {hybrid_rate:.0%} / SNN-ONLY 60% → {'✅ 達標' if hybrid_rate>=0.6 and 0.6>=0.3 else '⚠️'}")
+    print(
+        f"  綜合: HYBRID {hybrid_rate:.0%} / SNN-ONLY 60% → {'✅ 達標' if hybrid_rate>=0.6 and 0.6>=0.3 else '⚠️'}"
+    )
 
-    hw_same = {'gpu': 'Intel Arc B570', 'gpu_memory_gb': 10, 'ram_gb': 15.5, 'cpu_cores': 4, 'gpu_vendor': 'intel'}
-    print(f"  筆電同規格 tier {HardwareProfile.get_tier(hw_same)} → {'✅' if HardwareProfile.get_tier(hw_same)==tier else '❌'}")
+    hw_same = {
+        "gpu": "Intel Arc B570",
+        "gpu_memory_gb": 10,
+        "ram_gb": 15.5,
+        "cpu_cores": 4,
+        "gpu_vendor": "intel",
+    }
+    print(
+        f"  筆電同規格 tier {HardwareProfile.get_tier(hw_same)} → {'✅' if HardwareProfile.get_tier(hw_same)==tier else '❌'}"
+    )
     return 0
+
 
 if __name__ == "__main__":
     main()

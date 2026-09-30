@@ -103,6 +103,7 @@ class GroundedLearningManager:
                 continue
             task = asyncio.create_task(self._verify_one(claim))
             self._in_flight[claim.claim_key] = task
+
             def _cleanup(task: "asyncio.Task[None]", k: str = claim.claim_key) -> None:
                 self._in_flight.pop(k, None)
 

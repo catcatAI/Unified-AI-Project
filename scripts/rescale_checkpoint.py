@@ -1,5 +1,8 @@
 """Rescale row-normalized checkpoint so max incoming signal is ~0.5."""
-import numpy as np, json
+
+import json
+
+import numpy as np
 
 npy_path = r"D:\Projects\Unified-AI-Project\data\checkpoints\garden_checkpoint\snn.pt.npy"
 json_path = r"D:\Projects\Unified-AI-Project\data\checkpoints\garden_checkpoint\snn.json"
@@ -39,7 +42,9 @@ incoming2 = live_scaled[active_idx].sum(axis=0) / len(active_idx)
 print(f"After: max_incoming={incoming2.max():.6f}")
 print(f"After: weights max={live_scaled.max():.6f}, mean={live_scaled.mean():.6f}")
 row_check = np.abs(live_scaled).sum(axis=1)
-print(f"After row sums: min={row_check.min():.4f} max={row_check.max():.4f} mean={row_check.mean():.4f}")
+print(
+    f"After row sums: min={row_check.min():.4f} max={row_check.max():.4f} mean={row_check.mean():.4f}"
+)
 print(f"Neurons above 0.3: {(incoming2 > 0.3).sum()}")
 print(f"Neurons above 0.1: {(incoming2 > 0.1).sum()}")
 

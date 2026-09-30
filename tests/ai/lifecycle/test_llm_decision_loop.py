@@ -414,15 +414,19 @@ class TestMakeDecision:
 
     async def test_make_decision_accepts_fenced_json(self, decision_loop):
         mock_response = MagicMock()
-        mock_response.content = "```json\n" + json.dumps(
-            {
-                "action": "greet",
-                "message": "Hello from fenced JSON",
-                "priority": "medium",
-                "reason": "test",
-                "confidence": 0.8,
-            }
-        ) + "\n```"
+        mock_response.content = (
+            "```json\n"
+            + json.dumps(
+                {
+                    "action": "greet",
+                    "message": "Hello from fenced JSON",
+                    "priority": "medium",
+                    "reason": "test",
+                    "confidence": 0.8,
+                }
+            )
+            + "\n```"
+        )
         decision_loop.llm_service.chat_completion.return_value = mock_response
         await decision_loop._make_decision()
         assert decision_loop.decision_history[0].action == "greet"

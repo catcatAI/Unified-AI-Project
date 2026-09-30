@@ -234,9 +234,7 @@ def render_capability_response(snapshot: Dict[str, Any]) -> str:
         # without this label is how Angela ends up promising a feature she can
         # never run.
         names = _format_names([str(item.get("id", "unknown")) for item in unreachable])
-        lines.append(
-            f"• 已註冊但沒有對話入口（我不會主動使用）：{names}"
-        )
+        lines.append(f"• 已註冊但沒有對話入口（我不會主動使用）：{names}")
 
     handlers = snapshot.get("handlers", [])
     handler_names = [
@@ -252,9 +250,7 @@ def render_capability_response(snapshot: Dict[str, Any]) -> str:
     if handler_names:
         lines.append(f"• 可呼叫的工具／handlers：{_format_names(handler_names)}")
     if dead_handlers:
-        lines.append(
-            f"• 已註冊但無法被路由到的 handler：{_format_names(sorted(dead_handlers))}"
-        )
+        lines.append(f"• 已註冊但無法被路由到的 handler：{_format_names(sorted(dead_handlers))}")
 
     core_modules = snapshot.get("core_modules", [])
     if core_modules:

@@ -130,9 +130,7 @@ def _load_state(slug: str) -> dict:
 
 def _save_state(slug: str, state: dict) -> None:
     (CORPUS_DIR / slug).mkdir(parents=True, exist_ok=True)
-    _state_path(slug).write_text(
-        json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
+    _state_path(slug).write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def _resume_read(url: str, path: Path, offset: int, max_bytes: int, seg_boundary: bool) -> int:
@@ -186,11 +184,20 @@ def download_source(slug: str, target: int) -> dict:
 
     if done:
         logger.info("%s: already at %d bytes, skip", kind, offset)
-        return {"slug": slug, "name": kind, "bytes": offset, "segments": len(segments), "done": True}
+        return {
+            "slug": slug,
+            "name": kind,
+            "bytes": offset,
+            "segments": len(segments),
+            "done": True,
+        }
 
     logger.info(
         "%s: resume global byte %d, %d segment(s) on disk, target %d",
-        kind, offset, len(segments), target,
+        kind,
+        offset,
+        len(segments),
+        target,
     )
     t0 = time.time()
     while offset < target:
@@ -218,19 +225,28 @@ def download_source(slug: str, target: int) -> dict:
         )
         logger.info(
             "%s: segment %s -> +%d bytes (now %d)",
-            kind, seg_name, received, offset,
+            kind,
+            seg_name,
+            received,
+            offset,
         )
 
     done = offset >= target
     logger.info(
         "%s: done=%s total %d bytes in %.1fs (target %d)",
-        kind, done, offset, time.time() - t0, target,
+        kind,
+        done,
+        offset,
+        time.time() - t0,
+        target,
     )
     return {"slug": slug, "name": kind, "bytes": offset, "segments": len(segments), "done": done}
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument("sources", nargs="*", help="wiki_zh|wiki_ja|wiki_en|tatoeba|all")
     parser.add_argument("--target-gb", type=float, default=None)
     parser.add_argument("--dry-run", action="store_true")
@@ -255,7 +271,9 @@ def main() -> int:
                 req = urllib.request.Request(url, method="HEAD", headers={"User-Agent": "ED3N/1.0"})
                 with urllib.request.urlopen(req, timeout=30) as resp:
                     size = int(resp.headers.get("Content-Length", 0)) or fallback
-                    logger.info("dry-run OK: %s (%s MB) -> %s", kind, round(size / 1024**2, 1), slug)
+                    logger.info(
+                        "dry-run OK: %s (%s MB) -> %s", kind, round(size / 1024**2, 1), slug
+                    )
             except Exception as e:  # noqa: BLE001 - connectivity probe
                 logger.error("dry-run FAILED: %s (%s)", slug, e)
                 ok = False
@@ -290,7 +308,15 @@ def main() -> int:
             # Also ensure report has an entry for hans/hant derived from zh
             if not any(r["slug"] == slug for r in report):
                 zh_bytes = next((r["bytes"] for r in report if r["slug"] == "wiki_zh"), 0)
-                report.append({"slug": slug, "name": SOURCES[slug][0], "bytes": zh_bytes, "segments": 0, "done": False})
+                report.append(
+                    {
+                        "slug": slug,
+                        "name": SOURCES[slug][0],
+                        "bytes": zh_bytes,
+                        "segments": 0,
+                        "done": False,
+                    }
+                )
 
     total = sum(r["bytes"] for r in report)
     print()
@@ -298,7 +324,9 @@ def main() -> int:
     for r in report:
         logger.info(
             "  %-8s %7.1f MB  %s",
-            r["slug"], r["bytes"] / 1024**2, "full" if r["done"] else "partial",
+            r["slug"],
+            r["bytes"] / 1024**2,
+            "full" if r["done"] else "partial",
         )
     logger.info("  TOTAL     %6.2f GB (target %.1f GB)", total / 1024**3, target / 1024**3)
     return 0

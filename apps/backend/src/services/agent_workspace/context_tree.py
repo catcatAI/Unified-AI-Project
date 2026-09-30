@@ -113,7 +113,9 @@ class ContextTree:
 
         truncated = render(self.root, 0, max_depth)
         if omitted:
-            lines.append(f"…（超過 {MAX_VIEW_LINES} 行上限，略去 {omitted} 個分支——請用 focus 下鑽）")
+            lines.append(
+                f"…（超過 {MAX_VIEW_LINES} 行上限，略去 {omitted} 個分支——請用 focus 下鑽）"
+            )
             truncated = True
         view = "\n".join(lines)
         if len(view) > self._budget:

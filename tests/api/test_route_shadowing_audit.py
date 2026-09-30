@@ -98,7 +98,9 @@ class TestNoShadowedEndpoints:
                         f"{method} {path} declared by {endpoint_name}() "
                         f"but served by {served.endpoint.__name__}()"
                     )
-        assert not shadowed, "shadowed endpoints (unreachable despite being declared):\n" + "\n".join(
+        assert (
+            not shadowed
+        ), "shadowed endpoints (unreachable despite being declared):\n" + "\n".join(
             sorted(shadowed)
         )
 
@@ -118,12 +120,8 @@ class TestNoShadowedEndpoints:
             methods = getattr(route, "methods", None)
             if not methods:
                 continue
-            method_key = next(
-                (m for m in sorted(methods) if m not in ("HEAD", "OPTIONS")), ""
-            )
-            shape = tuple(
-                "*" if "{" in seg else seg for seg in route.path.strip("/").split("/")
-            )
+            method_key = next((m for m in sorted(methods) if m not in ("HEAD", "OPTIONS")), "")
+            shape = tuple("*" if "{" in seg else seg for seg in route.path.strip("/").split("/"))
             if not shape or not method_key:
                 continue
             entry = (index, method_key, shape, route.path)
@@ -146,6 +144,8 @@ class TestNoShadowedEndpoints:
                         f"{lit_method} {lit_path} (index {lit_index}) is shadowed by "
                         f"{p_path} (index {p_index})"
                     )
-        assert not offenders, "literal routes declared after a {param} route that can match them:\n" + "\n".join(
+        assert (
+            not offenders
+        ), "literal routes declared after a {param} route that can match them:\n" + "\n".join(
             sorted(set(offenders))
         )

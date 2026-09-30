@@ -7,18 +7,18 @@ Skips calls that already contain exc_info.
 Skips test files (*/tests/*, test_*.py).
 """
 
-import re
 import os
+import re
 import sys
 from pathlib import Path
 
-SRC_DIR = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(
-    r"D:\Projects\Unified-AI-Project\apps\backend\src"
+SRC_DIR = (
+    Path(sys.argv[1])
+    if len(sys.argv) > 1
+    else Path(r"D:\Projects\Unified-AI-Project\apps\backend\src")
 )
 
-RE_LINE = re.compile(
-    r'^(\s*)(?:self\.)?(logger|logging)\.(error|warning|critical)\s*\((.*)\)\s*$'
-)
+RE_LINE = re.compile(r"^(\s*)(?:self\.)?(logger|logging)\.(error|warning|critical)\s*\((.*)\)\s*$")
 
 
 def fix_line(line: str) -> str | None:

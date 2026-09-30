@@ -112,9 +112,7 @@ class VisionPipeline:
             # 1. Open and resize image
             img = Image.open(io.BytesIO(image_data)).convert("RGB")
             original_size = img.size
-            img_resized = img.resize(
-                (self.INPUT_SIZE, self.INPUT_SIZE), Image.Resampling.LANCZOS
-            )
+            img_resized = img.resize((self.INPUT_SIZE, self.INPUT_SIZE), Image.Resampling.LANCZOS)
             arr = np.asarray(img_resized, dtype=np.float32)
 
             # 2. Encode → feature vector (256-dim)
@@ -213,7 +211,7 @@ class VisionPipeline:
         """Generate a content-based hash for caching."""
         import hashlib
 
-        return hashlib.md5(image_data).hexdigest()
+        return hashlib.md5(image_data, usedforsecurity=False).hexdigest()
 
     @staticmethod
     def _compute_ssim(img1: np.ndarray, img2: np.ndarray) -> float:

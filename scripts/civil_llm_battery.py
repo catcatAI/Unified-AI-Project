@@ -24,14 +24,15 @@ def run_comp(comp, kw, flags=None):
     cmd += ["--json", json.dumps(kw)]
     p = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
     o = p.stdout
-    return json.loads(o[o.index("{"):o.rindex("}") + 1])
+    return json.loads(o[o.index("{") : o.rindex("}") + 1])
 
 
 def run_derive(tpl, over):
     p = subprocess.run(
-        [sys.executable, "scripts/civil_derive.py", "--template", tpl,
-         "--json", json.dumps(over)],
-        capture_output=True, text=True, timeout=60,
+        [sys.executable, "scripts/civil_derive.py", "--template", tpl, "--json", json.dumps(over)],
+        capture_output=True,
+        text=True,
+        timeout=60,
     )
     o = p.stdout
     m = re.search(r"\{[^{}]*\"results\"[^{}]*\}", o, re.S)
@@ -79,8 +80,7 @@ def main():
                 if ok:
                     break
                 fb = f"{info}，調整重出JSON"
-            hist += [{"role": "assistant", "content": t},
-                     {"role": "user", "content": fb}]
+            hist += [{"role": "assistant", "content": t}, {"role": "user", "content": fb}]
         log.append({"q": qid, "traj": traj})
         passed = any(x.get("pass") for x in traj)
         print(f"{qid}: {'PASS' if passed else 'FAIL'} {json.dumps(traj, ensure_ascii=False)[:300]}")
@@ -94,8 +94,9 @@ def main():
         return bool(r.get("axial_ok")), f"N_Rd={r.get('N_Rd_kN')}"
 
     def chk_shear(p):
-        r = run_comp("beam", {"b": 300, "d": 450, "As": 1256,
-                              "V_Ed_kN": 150, "Asw_s": p.get("Asw_s", 0)})
+        r = run_comp(
+            "beam", {"b": 300, "d": 450, "As": 1256, "V_Ed_kN": 150, "Asw_s": p.get("Asw_s", 0)}
+        )
         return bool(r.get("shear_ok")), f"V_Rds={r.get('V_Rds_kN')}"
 
     def chk_parapet(p):
@@ -105,16 +106,30 @@ def main():
         ok = req <= a <= 3 * req
         return ok, f"As={a} req={req}"
 
-    loop("Q1-beam", "设计RC梁抗弯M_Ed=400kNm，截面b=300d=500。只输出JSON如{\"b\":0,\"d\":0,\"As\":0}", chk_beam)
-    loop("Q2-column", "设计RC柱轴压N_Ed=2000kN，截面300x300。只输出JSON如{\"As\":0}", chk_col)
-    loop("Q3-shear", "设计RC梁剪力V_Ed=150kN，b=300d=450。只输出JSON如{\"Asw_s\":0}（每mm箍筋面积）", chk_shear)
-    loop("Q4-parapet", "设计护栏悬臂，顶部水平力F=20kN作用800mm高，墙厚250mm。只输出JSON如{\"As\":0}（每米配筋mm2）", chk_parapet)
-    t5 = ask(m, [{"role": "user",
-                "content": "100米单跨钢筋混凝土梁桥行不行？一句话为什么，只说结论"}])
+    loop(
+        "Q1-beam",
+        '设计RC梁抗弯M_Ed=400kNm，截面b=300d=500。只输出JSON如{"b":0,"d":0,"As":0}',
+        chk_beam,
+    )
+    loop("Q2-column", '设计RC柱轴压N_Ed=2000kN，截面300x300。只输出JSON如{"As":0}', chk_col)
+    loop(
+        "Q3-shear",
+        '设计RC梁剪力V_Ed=150kN，b=300d=450。只输出JSON如{"Asw_s":0}（每mm箍筋面积）',
+        chk_shear,
+    )
+    loop(
+        "Q4-parapet",
+        '设计护栏悬臂，顶部水平力F=20kN作用800mm高，墙厚250mm。只输出JSON如{"As":0}（每米配筋mm2）',
+        chk_parapet,
+    )
+    t5 = ask(
+        m, [{"role": "user", "content": "100米单跨钢筋混凝土梁桥行不行？一句话为什么，只说结论"}]
+    )
     log.append({"q": "Q5-span", "resp": t5[:200]})
     print("Q5-span:", t5[:200])
-    json.dump(log, open("/tmp/battery_log.json", "w", encoding="utf-8"),
-              ensure_ascii=False, indent=1)
+    json.dump(
+        log, open("/tmp/battery_log.json", "w", encoding="utf-8"), ensure_ascii=False, indent=1
+    )
     print("log -> /tmp/battery_log.json")
     return 0
 

@@ -229,10 +229,9 @@ async def endpoint(system_manager = Depends(get_system_manager)):
 
 ---
 
-**Report Generated**: 2026-02-01  
-**Status**: 🟡 **75% Production Ready**  
-**Critical Issues**: 5/5 addressed (4 fixed, 1 pending user action)  
-**Action Required**: Rotate API key immediately, complete remaining fixes
+**Report Generated**: 2026-02-01 **Status**: 🟡 **75% Production Ready**
+**Critical Issues**: 5/5 addressed (4 fixed, 1 pending user action) **Action
+Required**: Rotate API key immediately, complete remaining fixes
 
 ---
 

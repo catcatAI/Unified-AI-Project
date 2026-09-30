@@ -1,7 +1,6 @@
 # ANGELA-MATRIX: L2 [βγδ] [A] [L3+]
 
 import pytest
-
 from ai.meta.knowledge_pipeline import KnowledgePipeline
 
 

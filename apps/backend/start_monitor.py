@@ -20,19 +20,22 @@ from core.system.security_monitor import ABCKeyManager
 # 配置日誌
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('monitor.log'),
-        logging.StreamHandler()
-    ]
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.FileHandler("monitor.log"), logging.StreamHandler()],
 )
 logger = logging.getLogger("AngelaMonitor")
+
 
 def main():
     logger.info("🚀 啟動 Angela 安全監控器...")
     km = ABCKeyManager()
-    logger.info(f"Security keys OK: KeyA={bool(km.get_key('KeyA'))}, KeyB={bool(km.get_key('KeyB'))}")
-    logger.info("SecurityTrayMonitor was removed in a previous refactor. Security validation complete.")
+    logger.info(
+        f"Security keys OK: KeyA={bool(km.get_key('KeyA'))}, KeyB={bool(km.get_key('KeyB'))}"
+    )
+    logger.info(
+        "SecurityTrayMonitor was removed in a previous refactor. Security validation complete."
+    )
+
 
 if __name__ == "__main__":
     main()

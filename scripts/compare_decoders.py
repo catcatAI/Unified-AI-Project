@@ -1,22 +1,25 @@
 """Compare decoder sizes on PCA 128 dims."""
-import sys
+
 import os
+import sys
 import time
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'apps', 'backend', 'src'))
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"))
+
+import glob
 
 import numpy as np
-import glob
 from PIL import Image
 
-CIFAR_DIR="D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
-CLASSES=["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
-IMG_DIM=3072
-LATENT_DIM=128
-OUTPUT_BASE="data/multimodal/gvv/decoder_compare"
+CIFAR_DIR = "D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
+CLASSES = ["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
+IMG_DIM = 3072
+LATENT_DIM = 128
+OUTPUT_BASE = "data/multimodal/gvv/decoder_compare"
 
 
 def load_cifar(n_per_class=50):
-    images, labels=[], []
+    images, labels = [], []
     for ci, cls in enumerate(CLASSES):
         cls_dir = os.path.join(CIFAR_DIR, cls)
         files = sorted(glob.glob(os.path.join(cls_dir, "*.npy")))[:n_per_class]
@@ -37,7 +40,7 @@ def main():
     all_imgs, all_labels = load_cifar(50)
 
     rng = np.random.default_rng(42)
-    train_idx, test_idx=[], []
+    train_idx, test_idx = [], []
     for c in range(10):
         idxs = np.where(all_labels == c)[0]
         rng.shuffle(idxs)
@@ -60,20 +63,20 @@ def main():
     X_test = torch.tensor(test_latent, dtype=torch.float32)
 
     # Decoder configs
-    configs={
+    configs = {
         "small_2layer": [256, 512],
         "large_3layer": [512, 1024, 1024],
         "xlarge_4layer": [512, 1024, 1024, 1024],
     }
 
-    results={}
+    results = {}
 
     for name, hidden_dims in configs.items():
         print(f"\n{'='*50}")
         print(f"=== {name}: {hidden_dims} ===")
         print(f"{'='*50}")
 
-        layers=[]
+        layers = []
         in_dim = LATENT_DIM
         for h in hidden_dims:
             layers.extend([nn.Linear(in_dim, h), nn.ReLU()])
@@ -87,16 +90,16 @@ def main():
         optimizer = torch.optim.Adam(decoder.parameters(), lr=0.001)
         criterion = nn.MSELoss()
 
-        batch_size=64
-        n_epochs=50
+        batch_size = 64
+        n_epochs = 50
         t0 = time.time()
 
         for epoch in range(n_epochs):
             perm = torch.randperm(len(X_train))
-            total_loss=0.0
-            n_batches=0
+            total_loss = 0.0
+            n_batches = 0
             for i in range(0, len(X_train), batch_size):
-                idx = perm[i:i+batch_size]
+                idx = perm[i : i + batch_size]
                 x, y = X_train[idx], Y_train[idx]
                 recon = decoder(x)
                 loss = criterion(recon, y)
@@ -124,7 +127,7 @@ def main():
         for i in range(10):
             orig = (test_imgs[i].reshape(32, 32, 3) * 255).astype(np.uint8)
             recon = (test_recon[i].reshape(32, 32, 3) * 255).astype(np.uint8)
-            combo = Image.new('RGB', (64, 32))
+            combo = Image.new("RGB", (64, 32))
             combo.paste(Image.fromarray(orig), (0, 0))
             combo.paste(Image.fromarray(recon), (32, 0))
             combo.save(os.path.join(out_dir, f"pair_{i}.png"))
@@ -140,7 +143,7 @@ def main():
             img = (gen[ci].reshape(32, 32, 3) * 255).astype(np.uint8)
             Image.fromarray(img).save(os.path.join(out_dir, f"gen_{cls}.png"))
 
-        results[name] = {'mse': total_mse, 'params': n_params, 'time': train_time}
+        results[name] = {"mse": total_mse, "params": n_params, "time": train_time}
 
     # Summary
     print(f"\n{'='*60}")
@@ -148,7 +151,7 @@ def main():
     print(f"{'='*60}")
     print(f"{'Config':<20} {'Params':<12} {'MSE':<10} {'Time':<10}")
     print("-" * 55)
-    for name, r in sorted(results.items(), key=lambda x: x[1]['mse']):
+    for name, r in sorted(results.items(), key=lambda x: x[1]["mse"]):
         print(f"{name:<20} {r['params']:<12,} {r['mse']:<10.4f} {r['time']:<10.0f}s")
     print(f"\nImages → {OUTPUT_BASE}/")
 

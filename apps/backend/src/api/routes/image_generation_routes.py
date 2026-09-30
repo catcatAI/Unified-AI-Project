@@ -6,12 +6,10 @@ import logging
 import os
 
 import numpy as np
-from ai.multimodal.generator.gvv_generator import (
-    encode_text_with_clip as _encode_text_with_clip,
-    generate_image as _generate_image,
-    get_gvv as _get_gvv,
-    gvv_initialized as _gvv_initialized,
-)
+from ai.multimodal.generator.gvv_generator import encode_text_with_clip as _encode_text_with_clip
+from ai.multimodal.generator.gvv_generator import generate_image as _generate_image
+from ai.multimodal.generator.gvv_generator import get_gvv as _get_gvv
+from ai.multimodal.generator.gvv_generator import gvv_initialized as _gvv_initialized
 from core.utils import safe_error
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel

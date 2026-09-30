@@ -375,7 +375,9 @@ class ExecutionMonitor:
                 text=True,
                 cwd=cwd,
                 env=env,
-                shell=shell,
+                # Opt-in passthrough (default False); no in-tree caller passes
+                # shell=True and command input is operator-trusted.
+                shell=shell,  # nosec B602
                 creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0) if os.name == "nt" else 0,
             )
 

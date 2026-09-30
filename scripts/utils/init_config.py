@@ -6,12 +6,14 @@ Angela AI - Configuration Initialization Script
 帮助用户设置 .env 文件并生成安全密钥。
 """
 
-import os
-import sys
-import shutil
-from pathlib import Path
-from cryptography.fernet import Fernet
 import logging
+import os
+import shutil
+import sys
+from pathlib import Path
+
+from cryptography.fernet import Fernet
+
 logger = logging.getLogger(__name__)
 
 # Add src to sys.path for short-form imports
@@ -51,17 +53,17 @@ def copy_env_example() -> bool:
     """复制 .env.example 到 .env"""
     env_example = Path.cwd() / ".env.example"
     env_file = Path.cwd() / ".env"
-    
+
     if env_file.exists():
         response = input(f"{env_file} 已存在，是否覆盖？:")
-        if response.lower() != 'y':
+        if response.lower() != "y":
             print_info("跳过 .env 文件创建")
             return False
-    
+
     if not env_example.exists():
         print_error(f"找不到 .env.example 文件: {env_example}")
         return False
-    
+
     shutil.copy(env_example, env_file)
     print_success(f"已创建 .env 文件: {env_file}")
     return True
@@ -70,29 +72,29 @@ def copy_env_example() -> bool:
 def update_env_file_with_keys() -> bool:
     """更新 .env 文件中的密钥"""
     env_file = Path.cwd() / ".env"
-    
+
     if not env_file.exists():
         print_error(f".env 文件不存在: {env_file}")
         return False
-    
+
     # 生成密钥
     key_a = generate_secure_key()
     key_b = generate_secure_key()
     key_c = generate_secure_key()
-    
+
     # 读取文件内容
-    with open(env_file, 'r', encoding='utf-8') as f:
+    with open(env_file, "r", encoding="utf-8") as f:
         content = f.read()
-    
+
     # 替换密钥占位符
     content = content.replace("your_key_a_minimum_32_chars", key_a)
     content = content.replace("your_key_b_minimum_32_chars", key_b)
     content = content.replace("your_key_c_minimum_32_chars", key_c)
-    
+
     # 写回文件
-    with open(env_file, 'w', encoding='utf-8') as f:
+    with open(env_file, "w", encoding="utf-8") as f:
         f.write(content)
-    
+
     print_success("已生成安全密钥并更新 .env 文件")
     print_info("密钥已生成:")
     print(f"  - ANGELA_KEY_A: {key_a[:16]}...")
@@ -103,15 +105,15 @@ def update_env_file_with_keys() -> bool:
 
 def create_directories() -> bool:
     """创建必要的目录"""
-    directories=[
+    directories = [
         "logs",
         "data",
         "data/vector_db",
         "model_cache",
         "test_data",
     ]
-    
-    success=True
+
+    success = True
     for dir_name in directories:
         dir_path = Path.cwd() / dir_name
         if not dir_path.exists():
@@ -119,28 +121,28 @@ def create_directories() -> bool:
             print_success(f"已创建目录: {dir_name}")
         else:
             print_info(f"目录已存在: {dir_name}")
-    
+
     return success
 
 
 def validate_config() -> bool:
     """验证配置"""
     try:
-        from core.config_validator import ConfigValidator
         from core.config_loader import AngelaConfig
-        
+        from core.config_validator import ConfigValidator
+
         print_info("正在验证配置...")
-        
+
         # 验证环境变量
         validator = ConfigValidator()
         env_ok = validator.validate_environment()
         for err in validator.get_errors():
             print_error(f"  - {err}")
-        
+
         if not env_ok:
             print_error("环境变量验证失败")
             return False
-        
+
         # 尝试加载配置
         config = AngelaConfig()
         config_data = config.get_authority("system", {})
@@ -148,15 +150,15 @@ def validate_config() -> bool:
         cfg_ok = cfg_validator.validate_config()
         for err in cfg_validator.get_errors():
             print_error(f"  - {err}")
-        
+
         print_success("配置验证通过")
         return True
-        
+
     except ImportError as e:
         print_error(f"无法导入配置模块: {e}")
         return False
     except Exception as e:
-        logger.error(f'Error in {__name__}: {e}', exc_info=True)
+        logger.error(f"Error in {__name__}: {e}", exc_info=True)
         print_error(f"配置验证出错: {e}")
 
         return False
@@ -165,34 +167,34 @@ def validate_config() -> bool:
 def main():
     """主函数"""
     print_header("Angela AI - 配置初始化")
-    
+
     # 检查当前目录
     if not (Path.cwd() / ".env.example").exists():
         print_error("请在项目根目录运行此脚本")
         print_info("当前目录:", Path.cwd())
         sys.exit(1)
-    
-    steps=[
+
+    steps = [
         ("创建 .env 文件", copy_env_example),
         ("生成安全密钥", update_env_file_with_keys),
         ("创建必要目录", create_directories),
         ("验证配置", validate_config),
     ]
-    
-    all_success=True
+
+    all_success = True
     for step_name, step_func in steps:
         print_info(f"\n步骤: {step_name}")
         try:
             if not step_func():
-                all_success=False
+                all_success = False
         except Exception as e:
-            logger.error(f'Error in {__name__}: {e}', exc_info=True)
+            logger.error(f"Error in {__name__}: {e}", exc_info=True)
             print_error(f"{step_name} 失败: {e}")
 
-            all_success=False
-    
+            all_success = False
+
     print_header("初始化完成")
-    
+
     if all_success:
         print_success("所有步骤完成！")
         print_info("\n下一步:")

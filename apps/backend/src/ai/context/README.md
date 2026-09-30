@@ -235,17 +235,28 @@ pytest tests/core_ai/context/test_context_system.py -v
 
 ## 配置
 
-上下文系统的配置可以通过环境变量或配置文件进行：
+上下文系统只有两个环境变量，其余都是构造函数参数：
+
+```bash
+# .env
+CONTEXT_STORAGE_DIR=./context_storage   # DiskStorage 的默认存储目录（与代码默认一致）
+CONTEXT_MEMORY_MAX_SIZE=1000            # MemoryStorage 的默认 max_size（与代码默认一致）
+```
+
+解析顺序是「显式参数 > 环境变量 > 代码默认值」，因此测试与内嵌用法不受环境影响：
 
 ```python
-# 存储配置
-CONTEXT_STORAGE_DIR = "./context_storage"
-CONTEXT_MEMORY_MAX_SIZE = 1000
-
-# 性能配置
-CONTEXT_CACHE_ENABLED = True
-CONTEXT_COMPRESSION_ENABLED = False
+DiskStorage()                                  # 读 CONTEXT_STORAGE_DIR
+DiskStorage(storage_dir="/tmp/ctx")            # 显式参数优先
+MemoryStorage()                                # 读 CONTEXT_MEMORY_MAX_SIZE
+MemoryStorage(max_size=100)                    # 显式参数优先
 ```
+
+本节此前列出过 `CONTEXT_CACHE_ENABLED`、`CONTEXT_COMPRESSION_ENABLED` 等开关，但
+`ai/context` 里没有对应实现（缓存上限由 `MemoryStorage.max_size` 决定，压缩是
+`ai.context.utils.compress_context_data()`
+的调用方选择），这些开关在任何地方都不会被读取，已从 `.env.example`
+与本文件移除，以免设定后毫无效果。
 
 ## API参考
 

@@ -682,18 +682,17 @@ navigator.hid.requestDevice({ filters: [...] })
 
 ### 1. Windows 點擊穿透問題
 
-**問題**: `setIgnoreMouseEvents` 在某些版本不穩定  
-**解決**: 使用 `WM_NCHITTEST` 原生模組
+**問題**: `setIgnoreMouseEvents` 在某些版本不穩定 **解決**: 使用 `WM_NCHITTEST`
+原生模組
 
 ### 2. macOS 視窗層級問題
 
-**問題**: 視窗無法正確顯示在桌布上方  
-**解決**: 設置 `NSWindowLevel = kCGOverlayWindowLevel`
+**問題**: 視窗無法正確顯示在桌布上方 **解決**: 設置
+`NSWindowLevel = kCGOverlayWindowLevel`
 
 ### 3. Linux 異步渲染問題
 
-**問題**: WebGL 在某些合成器上有延遲  
-**解決**: 使用 EGL 並啟用 `vsync`
+**問題**: WebGL 在某些合成器上有延遲 **解決**: 使用 EGL 並啟用 `vsync`
 
 ---
 
@@ -744,6 +743,4 @@ navigator.hid.requestDevice({ filters: [...] })
 
 ---
 
-**版本**: 1.0.0  
-**最後更新**: 2026-02-04  
-**狀態**: Draft
+**版本**: 1.0.0 **最後更新**: 2026-02-04 **狀態**: Draft

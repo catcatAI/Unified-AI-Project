@@ -1,5 +1,4 @@
 import pytest
-
 from ai.hardware.mvu_reference import MvuReferenceModel
 from ai.hardware.rtl_generator import (
     generate_mvu_header_projection,

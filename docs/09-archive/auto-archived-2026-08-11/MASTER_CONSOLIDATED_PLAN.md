@@ -1,12 +1,11 @@
 # 全量合併任務總計畫 — Master Consolidated Plan
 
-> **代碼審計日期**: 2026-06-10  
-> **最後更新**: 2026-06-11 — Phase 4 Priority 4
-> (Q1-Q12) 全部完成 + 多維審計修正  
-> **基於實際代碼驗證**, 合併 Phase 8 v1 / Phase 8 Corrected v2 / Phase 9  
-> **取代以下過時文件**: PHASE_8_DEBT_CLEANUP.md, PHASE_8_CORRECTED.md,
-> PHASE_9_CONSISTENCY_PLAN.md (現已歸檔至 docs/09-archive/)  
-> **最終目標**: 架構一致性 62.6% → 85%+, 版本一致性 31% → 100%
+> **代碼審計日期**: 2026-06-10 **最後更新**: 2026-06-11 — Phase 4 Priority 4
+> (Q1-Q12) 全部完成 + 多維審計修正 **基於實際代碼驗證**, 合併 Phase 8 v1 / Phase
+> 8 Corrected v2 / Phase 9 **取代以下過時文件**: PHASE_8_DEBT_CLEANUP.md,
+> PHASE_8_CORRECTED.md, PHASE_9_CONSISTENCY_PLAN.md
+> (現已歸檔至 docs/09-archive/) **最終目標**: 架構一致性 62.6% →
+> 85%+, 版本一致性 31% → 100%
 
 ---
 
@@ -63,8 +62,8 @@
 ### ~~S2. 修復 CHANGELOG v7.x 虛構版本~~ ✅ 已完成
 
 CHANGELOG 中 [7.4.0], [7.3.0], [7.2.0], [7.1.1] 已全部標註
-`— Internal/Unreleased`。  
-`AGENTS.md` 已新增「Version Governance Rules」章節（4 條規則）。
+`— Internal/Unreleased`。 `AGENTS.md` 已新增「Version Governance
+Rules」章節（4 條規則）。
 
 執行: 2026-05-25
 
@@ -77,11 +76,10 @@ step。檢查 9 個關鍵版本位置，不一致則 fail。
 
 ### ~~S4. 合併 `config/` 與 `configs/` 雙目錄~~ ✅ 已完成
 
-`angela_config.yaml` 存在於兩個目錄 — 已確認衝突並解決。  
-已將 `config/` 的獨有文件 (`angela_config.json`, `credentials.example.json`,
-`mcp.json`, `project-config/`) 遷移至 `configs/`。  
-無任何 Python 源碼引用 `config/` 路徑。CI 檢查已更新為 `configs/`。  
-`config/` 已刪除。
+`angela_config.yaml` 存在於兩個目錄 — 已確認衝突並解決。已將 `config/`
+的獨有文件 (`angela_config.json`, `credentials.example.json`, `mcp.json`,
+`project-config/`) 遷移至 `configs/`。無任何 Python 源碼引用 `config/`
+路徑。CI 檢查已更新為 `configs/`。 `config/` 已刪除。
 
 執行: 2026-05-25
 
@@ -320,10 +318,9 @@ core/
 ### ~~B1. 移除 50 個 `logging.basicConfig` 保留 ≤1 個~~ ✅ 已完成
 
 代碼審計: 49 處 `logging.basicConfig`，其中 47 處已在
-`if __name__ == "__main__"` 保護下。  
-僅 2 處非 guarded 已修復: `agent_manager_extensions.py:172` 加入 guard,
-`key_generator.py:61` 間接由 `main()` 保護 OK。  
-`main_api_server.py` 已透過 `setup_logging()` 統一管理。
+`if __name__ == "__main__"` 保護下。僅 2 處非 guarded 已修復:
+`agent_manager_extensions.py:172` 加入 guard, `key_generator.py:61` 間接由
+`main()` 保護 OK。 `main_api_server.py` 已透過 `setup_logging()` 統一管理。
 
 執行: 2026-05-25
 
@@ -331,35 +328,33 @@ core/
 
 代碼審計: 3 個有害 factory 的原始檔案 (`ai/execution/execution_monitor.py`,
 `core/managers/service_monitor.py`,
-`core/managers/resource_manager.py`) 已全部被刪除。  
-13 個休眠資產仍在碼中，但已被鑑定為「待激活」而非「有害」。無需進一步清理。
+`core/managers/resource_manager.py`) 已全部被刪除。13 個休眠資產仍在碼中，但已被鑑定為「待激活」而非「有害」。無需進一步清理。
 
 執行: 2026-05-25
 
 ### ~~B3. 啟動副作用隔離 (`sys.path`, module-level init)~~ ✅ 已完成
 
 `main_api_server.py` 中 `sys.path.insert()` 和 `setup_logging()` 已包裝進
-`_ensure_src_in_path()` 和 `_init_logging()` 函數。  
-原本截斷的 `logger` 定義已移到函數前，避免
+`_ensure_src_in_path()` 和 `_init_logging()` 函數。原本截斷的 `logger`
+定義已移到函數前，避免
 `UnboundLocalError`。模塊級別初始化的兩行調用仍然存在，但職責清晰。
 
 執行: 2026-05-25
 
 ### ~~B4. 修 middleware 命名 `Encrypted` → `Signed`~~ ✅ 已完成
 
-`security_middleware.py` 中的 class 早已命名為
-`SignedCommunicationMiddleware`。  
+`security_middleware.py` 中的 class 早已命名為 `SignedCommunicationMiddleware`。
 `apps/backend/main.py` 仍引用舊名 `EncryptedCommunicationMiddleware`
-— 已更新 import 及使用處。  
-`tests/scripts/test_angela_complete.py` 中的引用也已更新。
+— 已更新 import 及使用處。 `tests/scripts/test_angela_complete.py`
+中的引用也已更新。
 
 執行: 2026-05-25
 
 ### ~~B5. Endpoints lazy loading~~ ✅ 已完成
 
 代碼審計: `api/v1/endpoints/__init__.py` 已有 `include_endpoint_routers()`
-函數實現 lazy import。  
-僅保留 `from . import pet, economy` 兩行 eager import 供向後兼容。無需變更。
+函數實現 lazy import。僅保留 `from . import pet, economy` 兩行 eager
+import 供向後兼容。無需變更。
 
 執行: 2026-05-25
 
@@ -367,11 +362,12 @@ core/
 
 代碼審計確認: `StatePersistence` protocol 已在
 `core/interfaces/persistence.py`（含
-`save_state`/`load_state`/`delete_state`/`list_keys`）。  
+`save_state`/`load_state`/`delete_state`/`list_keys`）。
 `state_matrix_adapter.py` 與 `metacognitive_capabilities_engine.py`
-均已完整實現全部 4 個 protocol 方法。  
-新增 `JsonFileStateStore` 具體實現（`persistence.py`）作為共享存儲後端。  
-`config_loader.py:load_state_config()` 為不同職責（配置加載），`state_matrix_api.py`
+均已完整實現全部 4 個 protocol 方法。新增 `JsonFileStateStore`
+具體實現（`persistence.py`）作為共享存儲後端。
+`config_loader.py:load_state_config()`
+為不同職責（配置加載），`state_matrix_api.py`
 為 API 消費者，非 persistence 實現。
 
 | 審計項目                                                     | 狀態                                          |

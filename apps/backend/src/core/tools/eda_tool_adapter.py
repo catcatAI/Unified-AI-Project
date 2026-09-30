@@ -234,7 +234,8 @@ class EdaToolAdapter:
         transport = getattr(process, "_transport", None)
         if transport is not None:
             transport.close()
-            setattr(process, "_transport", None)
+            # typeshed 未宣告 Process 的私有 _transport 屬性（執行期存在）
+        process._transport = None  # type: ignore[attr-defined]
 
     async def _run(
         self,

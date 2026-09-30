@@ -76,9 +76,7 @@ class TestChatServiceGenerateResponse:
             return_value=LLMResponse(text="Angela 的自我介紹")
         )
         chat_service._knowledge_pipeline = MagicMock()
-        chat_service._knowledge_pipeline.query = AsyncMock(
-            return_value={"answer": "一下 = ..."}
-        )
+        chat_service._knowledge_pipeline.query = AsyncMock(return_value={"answer": "一下 = ..."})
 
         result = await chat_service.generate_response("自我介紹一下", "User")
 

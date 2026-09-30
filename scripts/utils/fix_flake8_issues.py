@@ -6,6 +6,7 @@ Safe fixes only:
   - E401: multiple imports on one line -> split into separate lines
   - Bug fixes: sys.executable(), self.project_root()
 """
+
 import os
 import re
 from pathlib import Path
@@ -25,7 +26,7 @@ def fix_e401(content: str, filepath: str) -> str:
         stripped = line.strip()
         if re.match(r"^import\s+\w+(?:\s*,\s*\w+)+", stripped):
             indent = line[: len(line) - len(line.lstrip())]
-            modules = re.split(r"\s*,\s*", stripped[len("import "):])
+            modules = re.split(r"\s*,\s*", stripped[len("import ") :])
             if len(modules) > 1:
                 new_lines.append(f"{indent}import {modules[0]}")
                 for mod in modules[1:]:

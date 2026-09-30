@@ -14,10 +14,9 @@
 
 # 測試改善路線圖 v1.0
 
-> **目標**: 去重（Deduplicate）、泛化（Generalize）、提升精密度（Precision）與有效性（Effectiveness）  
-> **範圍**:
-> 493 個測試檔案（tests/ + apps/backend/tests/）  
-> **起點**: ~120 個僅含 import 測試的最小檔案 → 整合為參數化測試
+> **目標**: 去重（Deduplicate）、泛化（Generalize）、提升精密度（Precision）與有效性（Effectiveness）
+> **範圍**: 493 個測試檔案（tests/ + apps/backend/tests/） **起點**:
+> ~120 個僅含 import 測試的最小檔案 → 整合為參數化測試
 
 ---
 

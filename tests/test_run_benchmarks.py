@@ -145,6 +145,30 @@ class TestBackends:
         ok, _ = tool.score_item(item, answer)
         assert ok
 
+    @pytest.mark.asyncio
+    async def test_native_bus_injects_query_type_resolver(self):
+        """ModelBus.route("auto") refuses to build its own QueryClassifier, so the
+        harness must inject the same owner production uses
+        (services/llm/router.py::_resolve_query_type_for_bus).
+
+        Without it every route() call raises and the knowledge suites silently
+        degrade to 0% — which the CI --gate-native step then reports as a
+        capability collapse rather than a wiring bug.
+        """
+        backend = tool.NativeBackend()
+        backend._ensure()
+        item = tool.BenchItem(
+            id="t",
+            q="What is the capital of France?",
+            suite="knowledge_mc",
+            metric="exact-match",
+            ground_truth="Paris",
+        )
+        answer = await backend.answer(item)
+        assert answer.strip(), "native knowledge path returned nothing"
+        ok, _ = tool.score_item(item, answer)
+        assert ok
+
 
 # ---------------------------------------------------------------- code scoring
 

@@ -3,7 +3,6 @@
 from types import SimpleNamespace
 
 import pytest
-
 from services.llm.capability_catalog import (
     build_capability_snapshot,
     render_capability_response,
@@ -12,8 +11,10 @@ from services.llm.capability_catalog import (
 
 class TestRuntimeCapabilityCatalog:
     def test_snapshot_uses_runtime_registries(self, monkeypatch):
-        from services.llm.capability_catalog import _collect_core_modules
-        from services.llm.capability_catalog import _collect_registered_services
+        from services.llm.capability_catalog import (
+            _collect_core_modules,
+            _collect_registered_services,
+        )
 
         class Agent:
             capabilities = [

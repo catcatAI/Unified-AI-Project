@@ -562,6 +562,4 @@ for await (const chunk of client.streamGenerate(
 
 ---
 
-_文檔版本: 1.0_  
-_最後更新: 2025年8月_  
-_維護者: Unified AI Project 團隊_
+_文檔版本: 1.0_ _最後更新: 2025年8月_ _維護者: Unified AI Project 團隊_

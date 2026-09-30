@@ -20,9 +20,7 @@ class TestImageGenerationIntent:
         from core.intent_registry import IntentRegistry
 
         registry = IntentRegistry()
-        name, confidence = registry.detect(
-            "生成一張貓咪的圖片", category="image_generation"
-        )
+        name, confidence = registry.detect("生成一張貓咪的圖片", category="image_generation")
         assert name == "image_generation"
         assert confidence >= 0.2
         pattern = registry.get_pattern(name)
@@ -66,9 +64,7 @@ class TestImageGenerationHandler:
         def _boom(*_a, **_k):
             raise RuntimeError("GVV pipeline not available")
 
-        monkeypatch.setattr(
-            "ai.multimodal.generator.gvv_generator.generate_image", _boom
-        )
+        monkeypatch.setattr("ai.multimodal.generator.gvv_generator.generate_image", _boom)
         text = await mod.ImageGenerationHandler().handle("生成一張貓咪的圖片")
         assert "不可用" in text
         assert "pic" not in text.lower() or "抽象畫" in text
@@ -120,9 +116,7 @@ class TestImageGenerationDispatch:
                 return {"type": handler_id, "success": True, "result": "generated"}
 
         bus = _Bus()
-        outcome = await get_gate_execution_owner().process(
-            "生成一張貓咪的圖片", {}, "img-1", bus
-        )
+        outcome = await get_gate_execution_owner().process("生成一張貓咪的圖片", {}, "img-1", bus)
 
         assert outcome.action == OUTCOME_EXECUTED
         assert outcome.handler == "image_generate"
@@ -164,9 +158,7 @@ class TestImageGenerationDispatch:
                 return {"type": handler_id, "success": True, "result": "ok"}
 
         bus = _Bus()
-        await get_gate_execution_owner().process(
-            "分析這張貓咪圖片", {}, "img-3", bus
-        )
+        await get_gate_execution_owner().process("分析這張貓咪圖片", {}, "img-3", bus)
         assert "image_generate" not in bus.calls
 
 

@@ -1231,6 +1231,7 @@ class AngelaAutonomousAgent:
                 try:
                     fired = bool(trigger(self.current_state))
                 except Exception:
+                    logger.debug("Reflex trigger %s raised; skipping tick", bid, exc_info=True)
                     continue
                 if fired:
                     self._last_reflex[bid] = self.tick_count

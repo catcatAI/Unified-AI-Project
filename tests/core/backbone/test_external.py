@@ -4,6 +4,8 @@
 
 """外部閘道測試（§5.5.1 步驟 B3/B4 — call_external + 成對排程套用）。"""
 
+import asyncio
+
 import pytest
 from core.backbone.external import ExternalBackend, ExternalGateway
 
@@ -110,7 +112,7 @@ class TestExternalGateway:
     async def test_timeout_marks_pair_error(self, bb):
         provider = _FakeProvider()
         bb.register_external("llm.openai", provider)
-        with pytest.raises(Exception):
+        with pytest.raises(asyncio.TimeoutError):
             await bb.call_external("llm.openai", "slow", timeout=0.01, retries=0)
         pairs = bb.io.by_kind("external")
         assert pairs and pairs[0]["status"] in ("ERROR", "ORPHAN")
@@ -153,7 +155,7 @@ class TestExternalGateway:
 
     @pytest.mark.asyncio
     async def test_circuit_breaker(self):
-        from shared.network_resilience import CircuitBreaker
+        from shared.network_resilience import CircuitBreaker, CircuitBreakerOpenError
 
         gateway = ExternalGateway(circuit_breaker=CircuitBreaker(failure_threshold=2))
 
@@ -165,8 +167,8 @@ class TestExternalGateway:
         for _ in range(2):
             with pytest.raises(RuntimeError):
                 await gateway.call_external("bad", "boom", retries=0)
-        # 熔斷開啟：CircuitBreaker 拋 Exception（非 RuntimeError）
-        with pytest.raises(Exception):
+        # 熔斷開啟：失敗達 threshold=2，第三次呼叫立即被熔斷器拒絕
+        with pytest.raises(CircuitBreakerOpenError):
             await gateway.call_external("bad", "boom", retries=0)
 
     def test_external_names(self, bb):

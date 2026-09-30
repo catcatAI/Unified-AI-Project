@@ -1,9 +1,12 @@
-import requests
-import sys
 import logging
+import sys
+
+import requests
+
 logger = logging.getLogger(__name__)
 
-BASE_URL="http://127.0.0.1:8000/api/v1/drive"
+BASE_URL = "http://127.0.0.1:8000/api/v1/drive"
+
 
 def get_url():
     try:
@@ -27,6 +30,7 @@ def get_url():
     except Exception as e:
         print(f"Failed: {e}", file=sys.stderr)
         sys.exit(1)
+
 
 if __name__ == "__main__":
     get_url()

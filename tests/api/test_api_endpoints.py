@@ -248,9 +248,7 @@ class TestDesktopAPI:
         body1 = resp1.json()
         assert body1["confirm_required"] is True
 
-        resp2 = await client.post(
-            "/api/v1/desktop/cleanup?days_old=30", json={"confirm": True}
-        )
+        resp2 = await client.post("/api/v1/desktop/cleanup?days_old=30", json={"confirm": True})
         assert resp2.status_code == 200
         body2 = resp2.json()
         assert body2["success"] is True

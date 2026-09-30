@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Clean up old backup directories beyond a retention period."""
 
-import shutil
 import logging
-from pathlib import Path
+import shutil
 from datetime import datetime, timedelta
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 

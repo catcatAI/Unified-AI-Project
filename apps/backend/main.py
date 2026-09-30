@@ -15,22 +15,26 @@ Unified AI Project - 后端主入口点
 Level 5 AGI 后端服务主程序 - 生产就绪版本
 """
 
-import uvicorn
+import asyncio
 import logging
 import os
 import sys
-import asyncio
-from pathlib import Path
-from datetime import datetime
 from contextlib import asynccontextmanager
-from typing import List, Dict, Any
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Body
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List
+
+import uvicorn
+from fastapi import Body, FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+
 
 # Security error handling
 class SecurityError(Exception):
     """Security-related errors."""
+
     pass
+
 
 # 添加项目路径
 project_root = Path(__file__).parent
@@ -39,12 +43,14 @@ sys.path.insert(0, str(project_root / "src"))
 
 # [Phase 8 Activation] 啟動統一日誌系統
 from core.logging.setup import setup_logging
+
 setup_logging(level=logging.INFO, log_file="backend_main.log")
 logger = logging.getLogger(__name__)
 
 # [Phase 7 P0] 載入 i18n locale 檔案
 try:
     from src.core.i18n.i18n_manager import _default_manager as i18n_manager
+
     locale_dir = str(Path(__file__).parent / "src" / "core" / "i18n" / "locales")
     i18n_count = i18n_manager.load_from_locale_dir(locale_dir)
     logger.info(f"✅ i18n 載入完成: {i18n_count} 筆翻譯")
@@ -54,6 +60,7 @@ except Exception as e:
 # 初始化密鑰管理器與中間件
 from core.system.security_monitor import ABCKeyManager
 from src.shared.security_middleware import SignedCommunicationMiddleware
+
 
 def validate_security_configuration():
     """Validate security configuration before startup."""
@@ -66,6 +73,7 @@ def validate_security_configuration():
     except Exception as e:
         logger.error(f"Security configuration validation failed: {e}")
         raise
+
 
 # Initialize key manager only after validation
 validate_security_configuration()
@@ -115,18 +123,20 @@ async def lifespan(app: FastAPI):
 
     # 初始化硬體感知部署與集群管理器
     try:
-        from src.core.system.bootstrap import get_bootstrap_manager
         from core.system.cluster_manager import ClusterManager, NodeType
+        from src.core.system.bootstrap import get_bootstrap_manager
 
         # 1. 正規化引導與硬體偵測 (替代已棄用的 DeploymentManager)
         bootstrap = get_bootstrap_manager()
         state = bootstrap.run_full_bootstrap()
-        
+
         # 2. 初始化集群管理器 (適配 bootstrap 狀態)
         # 注意: 目前預設為 MASTER 節點，未來可由 bootstrap 狀態擴展
-        node_type = NodeType.MASTER 
+        node_type = NodeType.MASTER
         cluster = ClusterManager(node_type=node_type)
-        logger.info(f"✅ 正規化引導完成: Tier={state['hardware']['performance_tier']}, 節點類型={node_type.value}")
+        logger.info(
+            f"✅ 正規化引導完成: Tier={state['hardware']['performance_tier']}, 節點類型={node_type.value}"
+        )
 
     except ImportError as e:
         logger.warning(f"引導或集群模組不可用: {e}")
@@ -147,7 +157,7 @@ async def lifespan(app: FastAPI):
 
     # 初始化实时同步系统
     try:
-        from src.core.sync.realtime_sync import sync_manager, SyncEvent
+        from src.core.sync.realtime_sync import SyncEvent, sync_manager
 
         await sync_manager.initialize()
 
@@ -367,9 +377,7 @@ def main():
     """主函数"""
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Unified AI Project - Level 5 AGI Backend"
-    )
+    parser = argparse.ArgumentParser(description="Unified AI Project - Level 5 AGI Backend")
     parser.add_argument("--host", default="127.0.0.1", help="主机地址")
     parser.add_argument("--port", type=int, default=8000, help="端口号")
     parser.add_argument("--reload", action="store_true", help="开发模式热重载")
@@ -390,9 +398,7 @@ def main():
 
     if args.reload:
         # 开发模式
-        uvicorn.run(
-            app, host=args.host, port=args.port, reload=True, log_level=args.log_level
-        )
+        uvicorn.run(app, host=args.host, port=args.port, reload=True, log_level=args.log_level)
     else:
         # 生产模式
         uvicorn.run(

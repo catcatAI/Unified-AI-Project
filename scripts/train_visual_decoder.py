@@ -10,8 +10,8 @@ Usage:
 """
 
 import argparse
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"))
 
@@ -25,8 +25,12 @@ def main():
     parser.add_argument("--contrastive-pairs", type=int, default=20)
     parser.add_argument("--recon-epochs", type=int, default=10)
     parser.add_argument("--recon-samples", type=int, default=10)
-    parser.add_argument("--texture-steps", type=int, default=100,
-                        help="Gradient steps for texture training (default: 100, was 50)")
+    parser.add_argument(
+        "--texture-steps",
+        type=int,
+        default=100,
+        help="Gradient steps for texture training (default: 100, was 50)",
+    )
     parser.add_argument("--texture-lr", type=float, default=0.001)
     parser.add_argument("--lr", type=float, default=0.01)
     args = parser.parse_args()
@@ -64,6 +68,7 @@ def main():
 
     # Verify
     from ai.multimodal.visual_decoder import VisualDecoder, load_default_visual_decoder_weights
+
     vd = VisualDecoder()
     load_default_visual_decoder_weights(vd)
     w = vd.get_projection()

@@ -91,8 +91,8 @@ class TTLSessionManager:
         try:
             from core.config_loader import get_angela_config
 
-            session_cfg = get_angela_config().get_authority("angela_core", {}).get(
-                "session_manager", {}
+            session_cfg = (
+                get_angela_config().get_authority("angela_core", {}).get("session_manager", {})
             )
             ttl_seconds = int(session_cfg.get("ttl_seconds", ttl_seconds))
             max_sessions = int(session_cfg.get("max_sessions", max_sessions))
@@ -181,7 +181,9 @@ class GateExecutionOwner:
     # ------------------------------------------------------------------
     # Pending confirmations
     # ------------------------------------------------------------------
-    def store_pending(self, session_id: str, context: Dict[str, Any], pending: Dict[str, Any]) -> None:
+    def store_pending(
+        self, session_id: str, context: Dict[str, Any], pending: Dict[str, Any]
+    ) -> None:
         context["pending_action"] = pending
         session_data = self._sessions.get(session_id) or {}
         session_data["pending_action"] = pending
@@ -337,9 +339,7 @@ class GateExecutionOwner:
         """
         if not model_bus:
             return None
-        resolved = self._registry_handler_for(
-            user_message, _REGISTRY_DISPATCH_INTENTS
-        )
+        resolved = self._registry_handler_for(user_message, _REGISTRY_DISPATCH_INTENTS)
         if not resolved:
             return None
         intent_name, handler_id = resolved
@@ -398,9 +398,7 @@ class GateExecutionOwner:
             # facts) must be dispatched here: QueryClassifier files them under
             # command/greeting, which decide() treats as non-actionable, so the
             # handler used to be unreachable and the model only pretended.
-            registry_outcome = await self._registry_dispatch(
-                user_message, context, model_bus
-            )
+            registry_outcome = await self._registry_dispatch(user_message, context, model_bus)
             if registry_outcome is not None:
                 return registry_outcome
 
@@ -454,7 +452,9 @@ class GateExecutionOwner:
         """Confirm / cancel a previously requested action. None → keep going."""
         msg_lower = user_message.strip().lower()
         if msg_lower in CANCEL_WORDS:
-            return GateOutcome(action=OUTCOME_CANCEL, message="好的，不執行。還有什麼需要幫忙的嗎？")
+            return GateOutcome(
+                action=OUTCOME_CANCEL, message="好的，不執行。還有什麼需要幫忙的嗎？"
+            )
         if msg_lower not in CONFIRM_WORDS:
             return None
 
@@ -512,9 +512,7 @@ class GateExecutionOwner:
             logger.warning(
                 "Confirmed agent execution failed for %s: %s", agent_name, exc, exc_info=True
             )
-            return GateOutcome(
-                action=OUTCOME_AGENT_FAILED, handler=agent_name, error=str(exc)
-            )
+            return GateOutcome(action=OUTCOME_AGENT_FAILED, handler=agent_name, error=str(exc))
 
 
 _owner: Optional[GateExecutionOwner] = None

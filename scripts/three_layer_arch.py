@@ -3,25 +3,28 @@
 Uses torch autograd for fast decoder training (no finite differences).
 Shows concept space captures geometric essence of each class.
 """
-import sys
+
 import os
+import sys
 import time
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'apps', 'backend', 'src'))
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"))
+
+import glob
 
 import numpy as np
-import glob
 from PIL import Image
 
-CIFAR_DIR="D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
-CLASSES=["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
-LATENT_DIM=128
-IMG_DIM=3072
-OUTPUT_DIR="data/multimodal/gvv/three_layer_test"
+CIFAR_DIR = "D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
+CLASSES = ["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
+LATENT_DIM = 128
+IMG_DIM = 3072
+OUTPUT_DIR = "data/multimodal/gvv/three_layer_test"
 
 
 def load_cifar(n_per_class=50):
-    images=[]
-    labels=[]
+    images = []
+    labels = []
     for ci, cls in enumerate(CLASSES):
         cls_dir = os.path.join(CIFAR_DIR, cls)
         files = sorted(glob.glob(os.path.join(cls_dir, "*.npy")))[:n_per_class]
@@ -44,8 +47,8 @@ def main():
 
     # Stratified split
     rng = np.random.default_rng(42)
-    train_idx=[]
-    test_idx=[]
+    train_idx = []
+    test_idx = []
     for c in range(10):
         idxs = np.where(all_labels == c)[0]
         rng.shuffle(idxs)
@@ -64,7 +67,7 @@ def main():
     t0 = time.time()
     U, S, Vt = np.linalg.svd(centered, full_matrices=False)
     proj = Vt[:LATENT_DIM]
-    explained = (S[:LATENT_DIM] ** 2).sum() / (S ** 2).sum()
+    explained = (S[:LATENT_DIM] ** 2).sum() / (S**2).sum()
     print(f"PCA: {LATENT_DIM} dims, {explained:.1%} variance ({time.time()-t0:.1f}s)")
 
     train_latent = centered @ proj.T
@@ -75,8 +78,9 @@ def main():
     Y = np.zeros((len(train_latent), 10), dtype=np.float32)
     for i, l in enumerate(train_labels):
         Y[i, l] = 1.0
-    W_clf = np.linalg.solve(train_latent.T @ train_latent + 1e-4 * np.eye(LATENT_DIM),
-                            train_latent.T @ Y)
+    W_clf = np.linalg.solve(
+        train_latent.T @ train_latent + 1e-4 * np.eye(LATENT_DIM), train_latent.T @ Y
+    )
     preds = np.argmax(test_latent @ W_clf, axis=1)
     correct = np.sum(preds == test_labels)
     print(f"Recognition: {correct}/{len(test_labels)} = {correct/len(test_labels):.1%}")
@@ -95,6 +99,7 @@ def main():
                 nn.Linear(512, IMG_DIM),
                 nn.Sigmoid(),
             )
+
         def forward(self, x):
             return self.net(x)
 
@@ -108,17 +113,17 @@ def main():
     X_test = torch.tensor(test_latent, dtype=torch.float32)
 
     # Train
-    batch_size=64
-    n_epochs=100
+    batch_size = 64
+    n_epochs = 100
     t0 = time.time()
 
     for epoch in range(n_epochs):
         perm = torch.randperm(len(X_train))
-        total_loss=0.0
-        n_batches=0
+        total_loss = 0.0
+        n_batches = 0
 
         for i in range(0, len(X_train), batch_size):
-            idx = perm[i:i+batch_size]
+            idx = perm[i : i + batch_size]
             x = X_train[idx]
             y = Y_train[idx]
 
@@ -145,14 +150,18 @@ def main():
     with torch.no_grad():
         test_recon = decoder(X_test).numpy()
 
-    total_mse=0.0
+    total_mse = 0.0
     for i in range(10):
         orig = test_imgs[i].reshape(32, 32, 3)
         recon = test_recon[i].reshape(32, 32, 3)
         mse = np.mean((recon - orig) ** 2)
         total_mse += mse
-        Image.fromarray((orig * 255).astype(np.uint8)).save(os.path.join(OUTPUT_DIR, f"orig_{i}.png"))
-        Image.fromarray((recon * 255).astype(np.uint8)).save(os.path.join(OUTPUT_DIR, f"recon_{i}.png"))
+        Image.fromarray((orig * 255).astype(np.uint8)).save(
+            os.path.join(OUTPUT_DIR, f"orig_{i}.png")
+        )
+        Image.fromarray((recon * 255).astype(np.uint8)).save(
+            os.path.join(OUTPUT_DIR, f"recon_{i}.png")
+        )
         print(f"  Image {i}: MSE={mse:.4f}")
     print(f"Average MSE: {total_mse/10:.4f}")
 
@@ -169,24 +178,29 @@ def main():
 
     for ci, cls in enumerate(CLASSES):
         gen = gen_from_centers[ci].reshape(32, 32, 3)
-        Image.fromarray((gen * 255).astype(np.uint8)).save(os.path.join(OUTPUT_DIR, f"gen_{cls}.png"))
+        Image.fromarray((gen * 255).astype(np.uint8)).save(
+            os.path.join(OUTPUT_DIR, f"gen_{cls}.png")
+        )
         print(f"  Generated {cls}")
 
     # === Generate from interpolation ===
     print("\n=== Interpolation: airplane → cat ===")
-    n_interp=10
+    n_interp = 10
     airplane_center = class_centers[0]
     cat_center = class_centers[3]
     alphas = np.linspace(0, 1, n_interp)
-    interp_vecs = np.array([alpha * cat_center + (1 - alpha) * airplane_center for alpha in alphas],
-                           dtype=np.float32)
+    interp_vecs = np.array(
+        [alpha * cat_center + (1 - alpha) * airplane_center for alpha in alphas], dtype=np.float32
+    )
 
     with torch.no_grad():
         interp_gen = decoder(torch.tensor(interp_vecs)).numpy()
 
     for i in range(n_interp):
         gen = interp_gen[i].reshape(32, 32, 3)
-        Image.fromarray((gen * 255).astype(np.uint8)).save(os.path.join(OUTPUT_DIR, f"interp_{i}.png"))
+        Image.fromarray((gen * 255).astype(np.uint8)).save(
+            os.path.join(OUTPUT_DIR, f"interp_{i}.png")
+        )
     print(f"  Saved {n_interp} interpolation images")
 
     # === Random generation ===
@@ -195,8 +209,14 @@ def main():
         z = rng.standard_normal(LATENT_DIM).astype(np.float32)
         z = z / np.linalg.norm(z) * np.sqrt(LATENT_DIM)
         with torch.no_grad():
-            gen = decoder(torch.tensor(z.reshape(1, -1), dtype=torch.float32)).numpy()[0].reshape(32, 32, 3)
-        Image.fromarray((gen * 255).astype(np.uint8)).save(os.path.join(OUTPUT_DIR, f"gen_random_{i}.png"))
+            gen = (
+                decoder(torch.tensor(z.reshape(1, -1), dtype=torch.float32))
+                .numpy()[0]
+                .reshape(32, 32, 3)
+            )
+        Image.fromarray((gen * 255).astype(np.uint8)).save(
+            os.path.join(OUTPUT_DIR, f"gen_random_{i}.png")
+        )
     print("Generated 5 random images")
 
     # === Visualize PCA components as "learned primitives" ===
@@ -204,7 +224,9 @@ def main():
     for i in range(10):
         comp = proj[i].reshape(32, 32, 3)
         comp = (comp - comp.min()) / (comp.max() - comp.min() + 1e-8)
-        Image.fromarray((comp * 255).astype(np.uint8)).save(os.path.join(OUTPUT_DIR, f"pca_comp_{i}.png"))
+        Image.fromarray((comp * 255).astype(np.uint8)).save(
+            os.path.join(OUTPUT_DIR, f"pca_comp_{i}.png")
+        )
     print("Saved 10 PCA components")
 
     print(f"\nAll images → {OUTPUT_DIR}/")

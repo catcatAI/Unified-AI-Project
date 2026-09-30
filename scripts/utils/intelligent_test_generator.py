@@ -61,7 +61,9 @@ class IntelligentTestGenerator:
 
         # 1) Functions (sync + async) at module level → standalone test functions
         for node in tree.body:
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and not node.name.startswith("_"):
+            if isinstance(
+                node, (ast.FunctionDef, ast.AsyncFunctionDef)
+            ) and not node.name.startswith("_"):
                 self.generated_tests.append(
                     self._build_function_test(module_name, node, top_imports, optional_imports)
                 )

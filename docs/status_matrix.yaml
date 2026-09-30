@@ -19,7 +19,7 @@ meta:
   version: "2.0.0"
   language: zh-TW
   generated_view: docs/STATUS_MATRIX.md
-  last_sync: "2026-09-24"
+  last_sync: "2026-09-28"
 
 features:
   - id: main-flow-e2e
@@ -185,15 +185,15 @@ features:
 
   - id: mypy-debt
     domain: mypy 型別債
-    claim: 收斂中（棘輪門鎖定）
+    claim: apps/backend/src 零錯誤（棘輪鎖定 0，禁止新增）
     status: verified
     implementation:
       - pyproject.toml
       - scripts/mypy_budget_gate.py
       - scripts/mypy_budget.txt
     verify_command: python scripts/mypy_budget_gate.py
-    evidence: 門機制可驗證；基線 344（R88 鎖定；歷史 559→540→518→497→476→432→405→402→391→344）；新增債 CI 直接紅燈
-    last_verified: "2026-09-22"
+    evidence: 門機制可驗證；棘輪基線已清零 0（歷史 559→540→518→497→476→432→405→402→391→344→0）；mypy 實測 722 個 source files 全綠（no issues found）；新增債 CI 直接紅燈
+    last_verified: "2026-09-28"
 
   - id: flake8
     domain: flake8

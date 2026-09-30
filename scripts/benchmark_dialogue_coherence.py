@@ -8,7 +8,10 @@ L2-1 多輪對話一致性 — 硬件規格自適應（<50MB, <5s, 批量+sleep�
 資源：純確定性 + 字典/上下文，無重型模型，單次 <1s。
 """
 
-import os, sys, time
+import os
+import sys
+import time
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps/backend/src"))
 
 DIALOGUE_5 = [
@@ -19,16 +22,22 @@ DIALOGUE_5 = [
     ("我住哪？", "指代:我→小明，期望 北京"),
 ]
 
+
 def main():
     from core.backbone.hardware import HardwareProfile
+
     hw = HardwareProfile.detect()
     tier = HardwareProfile.get_tier(hw)
     adaptive = HardwareProfile.get_adaptive_compute(hw)
-    print(f"硬件規格自適應（L2-1 5輪一致性）: GPU={hw['gpu']} RAM={hw['ram_gb']:.1f} tier={tier} batch×{adaptive['ed3n_batch_multiplier']}")
+    print(
+        f"硬件規格自適應（L2-1 5輪一致性）: GPU={hw['gpu']} RAM={hw['ram_gb']:.1f} tier={tier} batch×{adaptive['ed3n_batch_multiplier']}"
+    )
 
     # 真實注入：DialogueContextManager 存取 + 上下文內容斷言（2026-09-03 接線）
-    from ai.context.dialogue_context import DialogueContextManager
     import json as _json
+
+    from ai.context.dialogue_context import DialogueContextManager
+
     dcm = DialogueContextManager()
     dcm.start_conversation("l21probe", ["小明"])
     ok = 0
@@ -57,10 +66,17 @@ def main():
     print(f"\n5輪一致性: {ok}/{total} = {recall:.0%}（硬件自適應 batch 1 輪/次，sleep 0.02s）")
     print(f"  目標 L2-1 ≥80% 人設不漂移 + 指代 ≥70% → {'✅ 實測達標' if recall>=0.8 else '❌'}")
     # 硬件無關驗證
-    hw_same = {'gpu': 'Intel Arc B570', 'gpu_memory_gb': 10, 'ram_gb': 15.5, 'cpu_cores': 4, 'gpu_vendor': 'intel'}
+    hw_same = {
+        "gpu": "Intel Arc B570",
+        "gpu_memory_gb": 10,
+        "ram_gb": 15.5,
+        "cpu_cores": 4,
+        "gpu_vendor": "intel",
+    }
     tier_same = HardwareProfile.get_tier(hw_same)
     print(f"  筆電同規格 tier {tier_same} → {'✅ chassis-agnostic' if tier_same==tier else '❌'}")
     return 0
+
 
 if __name__ == "__main__":
     main()

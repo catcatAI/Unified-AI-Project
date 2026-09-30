@@ -52,7 +52,7 @@ def sha256_hash(data: Union[str, bytes]) -> str:
 def md5_hash(data: Union[str, bytes]) -> str:
     if isinstance(data, str):
         data = data.encode("utf-8")
-    return hashlib.md5(data).hexdigest()
+    return hashlib.md5(data, usedforsecurity=False).hexdigest()
 
 
 def truncate_text(text: str, max_length: int = 1000, suffix: str = "...") -> str:

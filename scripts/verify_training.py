@@ -1,6 +1,8 @@
 """Verify training results against architecture expectations."""
+
 import json
 import os
+
 
 def main():
     print("=" * 60)
@@ -23,7 +25,9 @@ def main():
     print(f"   Status:    {'PASS' if total_neurons > 0 else 'FAIL'}")
 
     # 2. GARDEN dictionary
-    garden_dict = json.load(open("data/checkpoints/garden_checkpoint/dictionary.json", "r", encoding="utf-8"))
+    garden_dict = json.load(
+        open("data/checkpoints/garden_checkpoint/dictionary.json", "r", encoding="utf-8")
+    )
     raw = garden_dict.get("entries", {})
     entry_count = len(raw) if isinstance(raw, list) else len(raw.values())
     print("\n2. GARDEN Dictionary:")
@@ -32,7 +36,7 @@ def main():
     print(f"   Status:    {'PASS' if entry_count <= 10000 else 'FAIL'}")
 
     # 3. GARDEN SNN size
-    snn_path="data/checkpoints/garden_checkpoint/snn.pt.npy"
+    snn_path = "data/checkpoints/garden_checkpoint/snn.pt.npy"
     if os.path.exists(snn_path):
         size_mb = os.path.getsize(snn_path) / 1024 / 1024
         print("\n3. GARDEN SNN:")
@@ -59,8 +63,8 @@ def main():
     print(f"   Dict size: {report.get('dictionary_size', 0)}")
 
     # 6. JointTrainer / SequenceTrainer
-    joint_path="data/checkpoints/joint_trainer.json"
-    seq_path="data/checkpoints/sequence_trainer.json"
+    joint_path = "data/checkpoints/joint_trainer.json"
+    seq_path = "data/checkpoints/sequence_trainer.json"
     if os.path.exists(joint_path):
         joint = json.load(open(joint_path, "r", encoding="utf-8"))
         history = joint.get("history", [])
@@ -87,6 +91,7 @@ def main():
     print(f"   GARDEN:    {garden_total/1024/1024:.1f} MB")
 
     print("\n" + "=" * 60)
+
 
 if __name__ == "__main__":
     main()

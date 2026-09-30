@@ -7,16 +7,22 @@
 import re
 import subprocess
 
-QWEN = ("/home/cxuo/.cache/huggingface/hub/models--Qwen--Qwen2.5-0.5B-Instruct-GGUF"
-        "/snapshots/9217f5db79a29953eb74d5343926648285ec7e67"
-        "/qwen2.5-0.5b-instruct-q4_k_m.gguf")
-GEMMA = ("/home/cxuo/.cache/huggingface/hub/models--google--gemma-4-E2B-it-qat-q4_0-gguf"
-         "/snapshots/675cff42a74c774d6cb76f76d8eacb49b48c9b93"
-         "/gemma-4-E2B_q4_0-it.gguf")
+QWEN = (
+    "/home/cxuo/.cache/huggingface/hub/models--Qwen--Qwen2.5-0.5B-Instruct-GGUF"
+    "/snapshots/9217f5db79a29953eb74d5343926648285ec7e67"
+    "/qwen2.5-0.5b-instruct-q4_k_m.gguf"
+)
+GEMMA = (
+    "/home/cxuo/.cache/huggingface/hub/models--google--gemma-4-E2B-it-qat-q4_0-gguf"
+    "/snapshots/675cff42a74c774d6cb76f76d8eacb49b48c9b93"
+    "/gemma-4-E2B_q4_0-it.gguf"
+)
 
-PROMPT = ("写Blender Python脚本：清空场景，建两个相交的盒子当马路"
-          "（A路30长8宽0.5高放原点，B路8长30宽0.5高放原点），"
-          "再建4个小盒子当匝道放四角(15,15,0)等。只输出代码，不要解释")
+PROMPT = (
+    "写Blender Python脚本：清空场景，建两个相交的盒子当马路"
+    "（A路30长8宽0.5高放原点，B路8长30宽0.5高放原点），"
+    "再建4个小盒子当匝道放四角(15,15,0)等。只输出代码，不要解释"
+)
 
 PROMPT_SCAFFOLDED = """Blender Python只许用这几行（X长Y宽Z高），第一行必須是 import bpy：
 import bpy
@@ -66,17 +72,23 @@ def grade(name, model_path, threads, toks, prompt=None, need=6, hist=None):
     try:
         compile(code, "<exam>", "exec")
     except SyntaxError as e:
-        return {"model": name, "score": 0, "note": f"語法錯: {e}",
-                "msgs": msgs + [{"role": "assistant", "content": txt}],
-                "code": code}
-    probe = ("\nimport bpy\nprint('EXAM-OBJ:' + str(len(bpy.data.objects)))\n"
-             "import json as _j\nprint('EXAM-DIMS:' + _j.dumps("
-             "{o.name: [round(v,1) for v in o.dimensions] for o in bpy.data.objects}))\n")
+        return {
+            "model": name,
+            "score": 0,
+            "note": f"語法錯: {e}",
+            "msgs": msgs + [{"role": "assistant", "content": txt}],
+            "code": code,
+        }
+    probe = (
+        "\nimport bpy\nprint('EXAM-OBJ:' + str(len(bpy.data.objects)))\n"
+        "import json as _j\nprint('EXAM-DIMS:' + _j.dumps("
+        "{o.name: [round(v,1) for v in o.dimensions] for o in bpy.data.objects}))\n"
+    )
     with open(f"/tmp/model_exam_{name}.py", "a", encoding="utf-8") as f:
         f.write(probe)
-    code2, out = run(["blender", "--background", "--python",
-                      f"/tmp/model_exam_{name}.py"], 300)
+    code2, out = run(["blender", "--background", "--python", f"/tmp/model_exam_{name}.py"], 300)
     import json as _json
+
     nobjs, dims = 0, {}
     for line in out.splitlines():
         if "EXAM-OBJ:" in line:
@@ -90,16 +102,27 @@ def grade(name, model_path, threads, toks, prompt=None, need=6, hist=None):
             except Exception:
                 pass
     if nobjs == 0:
-        return {"model": name, "score": 20, "note": "可解析不可運行",
-                "msgs": msgs + [{"role": "assistant", "content": txt}],
-                "code": code, "nobjs": 0, "dims": {}}
+        return {
+            "model": name,
+            "score": 20,
+            "note": "可解析不可運行",
+            "msgs": msgs + [{"role": "assistant", "content": txt}],
+            "code": code,
+            "nobjs": 0,
+            "dims": {},
+        }
     s_obj = 25 if nobjs >= need else round(25 * nobjs / need)
     road_ok = any(abs(d[0] - 30) < 1 and abs(d[1] - 8) < 1 for d in dims.values())
     s_dim = 25 if road_ok else 0
-    return {"model": name, "score": 20 + 30 + s_obj + s_dim,
-            "note": f"{nobjs} 物件，路尺寸{'對' if road_ok else '錯'}",
-            "msgs": msgs + [{"role": "assistant", "content": txt}],
-            "code": code, "nobjs": nobjs, "dims": dims}
+    return {
+        "model": name,
+        "score": 20 + 30 + s_obj + s_dim,
+        "note": f"{nobjs} 物件，路尺寸{'對' if road_ok else '錯'}",
+        "msgs": msgs + [{"role": "assistant", "content": txt}],
+        "code": code,
+        "nobjs": nobjs,
+        "dims": dims,
+    }
 
 
 def main():
@@ -109,8 +132,7 @@ def main():
     ap.add_argument("--who", default="both", choices=["qwen", "gemma", "both"])
     ap.add_argument("--prompt", default="bare", choices=["bare", "scaff"])
     ap.add_argument("--task", default="roads", choices=["roads", "ich"])
-    ap.add_argument("--retry", type=int, default=0,
-                    help="失敗自動回灌（執行反饋），最多 N 次")
+    ap.add_argument("--retry", type=int, default=0, help="失敗自動回灌（執行反饋），最多 N 次")
     args = ap.parse_args()
     out = []
     if args.task == "ich":
@@ -131,11 +153,9 @@ def main():
         m = __import__("re").search(r"(\d+) 物件", note)
         n = int(m.group(1)) if m else 0
         if "尺寸錯" in note:
-            return (f"上版 {n} 物件但路尺寸錯（要 A 路 30x8x0.5）。"
-                    "只輸出修正後完整代碼。")
+            return f"上版 {n} 物件但路尺寸錯（要 A 路 30x8x0.5）。" "只輸出修正後完整代碼。"
         if n < need:
-            return (f"上版只建出 {n} 物件，需要 {need}（2 路+匝道）。"
-                    "只輸出修正後完整代碼。")
+            return f"上版只建出 {n} 物件，需要 {need}（2 路+匝道）。" "只輸出修正後完整代碼。"
         return ""
 
     def run_loop(name, path, threads, toks):

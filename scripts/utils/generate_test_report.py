@@ -13,8 +13,7 @@ from pathlib import Path
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -22,7 +21,7 @@ logger = logging.getLogger(__name__)
 class TestReportGenerator:
     """测试报告生成器"""
 
-    def __init__(self, report_dir: str="test_reports") -> None:
+    def __init__(self, report_dir: str = "test_reports") -> None:
         """
         初始化测试报告生成器
 
@@ -32,7 +31,7 @@ class TestReportGenerator:
         self.report_dir = Path(report_dir)
         self.report_dir.mkdir(exist_ok=True)
 
-    def generate_html_report(self, test_results: Dict[str, Any], output_file: str=None) -> str:
+    def generate_html_report(self, test_results: Dict[str, Any], output_file: str = None) -> str:
         """
         生成HTML测试报告
 
@@ -43,17 +42,20 @@ class TestReportGenerator:
         Returns: str 生成的HTML报告路径
         """
         if output_file is None:
-            output_file=self.report_dir / f"integration_test_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
+            output_file = (
+                self.report_dir
+                / f"integration_test_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
+            )
         else:
             output_file = Path(output_file)
 
-        html_content=self._generate_html_content(test_results)
+        html_content = self._generate_html_content(test_results)
 
         try:
-            with open(output_file, "w", encoding='utf-8') as f:
+            with open(output_file, "w", encoding="utf-8") as f:
                 f.write(html_content)
 
-            with open(output_file, "w", encoding='utf-8') as f:
+            with open(output_file, "w", encoding="utf-8") as f:
                 f.write(html_content)
             logger.info(f"HTML report generated: {output_file}")
             return str(output_file)
@@ -272,21 +274,21 @@ class TestReportGenerator:
             tree = ET.parse(xml_file)
             root = tree.getroot()
 
-            test_results={
+            test_results = {
                 "timestamp": datetime.now().isoformat(),
                 "summary": {},
-                "test_cases": []
+                "test_cases": [],
             }
 
             # 解析测试套件
             for testsuite in root.findall(".//testsuite"):
                 # 解析测试用例
                 for testcase in testsuite.findall("testcase"):
-                    est_case_data={
+                    est_case_data = {
                         "name": testcase.get("name", ""),
                         "module": testcase.get("classname", ""),
                         "duration": float(testcase.get("time", 0)),
-                        "outcome": "passed"
+                        "outcome": "passed",
                     }
 
                     # 检查是否有失败或错误
@@ -312,7 +314,9 @@ class TestReportGenerator:
             logger.error(f"Error parsing JUnit XML file {xml_file} {e}")
             return {}
 
-    def generate_performance_report(self, benchmark_results: Dict[str, Any], output_file: str=None) -> str:
+    def generate_performance_report(
+        self, benchmark_results: Dict[str, Any], output_file: str = None
+    ) -> str:
         """
         生成性能测试报告
 
@@ -323,14 +327,17 @@ class TestReportGenerator:
         Returns: str 生成的性能报告路径
         """
         if output_file is None:
-            output_file=self.report_dir / f"performance_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
+            output_file = (
+                self.report_dir
+                / f"performance_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
+            )
         else:
             output_file = Path(output_file)
 
-        html_content=self._generate_performance_html_content(benchmark_results)
+        html_content = self._generate_performance_html_content(benchmark_results)
 
         try:
-            with open(output_file, "w", encoding='utf-8') as f:
+            with open(output_file, "w", encoding="utf-8") as f:
                 f.write(html_content)
             logger.info(f"Performance report generated: {output_file}")
             return str(output_file)
@@ -426,7 +433,7 @@ class TestReportGenerator:
             <tbody>
 """
 
-    # 添加基准测试结果
+        # 添加基准测试结果
         for benchmark in benchmarks:
             name = benchmark.get("name", "Unknown")
             stats = benchmark.get("stats", {})
@@ -462,90 +469,82 @@ class TestReportGenerator:
 
 
 def main() -> None:
-        """主函数"""
-        import argparse
+    """主函数"""
+    import argparse
 
-        parser = argparse.ArgumentParser(description="Test Report Generator")
-        parser.add_argument(
-            "action",
-            choices=["html", "performance", "parse-xml"],
-            help="Action to perform"
-        )
-        parser.add_argument(
-            "--input",
-            help="Input file (XML for parse-xml, JSON for performance)"
-        )
-        parser.add_argument(
-            "--output",
-            help="Output HTML file path"
-        )
+    parser = argparse.ArgumentParser(description="Test Report Generator")
+    parser.add_argument(
+        "action", choices=["html", "performance", "parse-xml"], help="Action to perform"
+    )
+    parser.add_argument("--input", help="Input file (XML for parse-xml, JSON for performance)")
+    parser.add_argument("--output", help="Output HTML file path")
 
-        args = parser.parse_args()
+    args = parser.parse_args()
 
-        # 创建报告生成器
-        report_generator = TestReportGenerator()
+    # 创建报告生成器
+    report_generator = TestReportGenerator()
 
-        # 执行操作
-        if args.action == "html":
-            # 生成HTML报告(需要测试结果数据)
-            test_results={
-                "timestamp": datetime.now().isoformat(),
-                "summary": {},
-                "test_cases": [
-                    {
-                        "name": "test_agent_lifecycle_integration",
-                        "module": "test_ai_agent_integration",
-                        "outcome": "passed",
-                        "duration": 0.123
-                    },
-                    {
-                        "name": "test_hsp_message_publish_integration",
-                        "module": "test_hsp_protocol_integration",
-                        "outcome": "failed",
-                        "duration": 0.456,
-                        "error_message": "Connection timeout"
-                    }
-                ]
-            }
-            report_generator.generate_html_report(test_results, args.output)
+    # 执行操作
+    if args.action == "html":
+        # 生成HTML报告(需要测试结果数据)
+        test_results = {
+            "timestamp": datetime.now().isoformat(),
+            "summary": {},
+            "test_cases": [
+                {
+                    "name": "test_agent_lifecycle_integration",
+                    "module": "test_ai_agent_integration",
+                    "outcome": "passed",
+                    "duration": 0.123,
+                },
+                {
+                    "name": "test_hsp_message_publish_integration",
+                    "module": "test_hsp_protocol_integration",
+                    "outcome": "failed",
+                    "duration": 0.456,
+                    "error_message": "Connection timeout",
+                },
+            ],
+        }
+        report_generator.generate_html_report(test_results, args.output)
 
-        elif args.action == "performance":
-            # 生成性能报告
-            if not args.input:
-                print("Error: --input is required for performance action")
-                sys.exit(1)
+    elif args.action == "performance":
+        # 生成性能报告
+        if not args.input:
+            print("Error: --input is required for performance action")
+            sys.exit(1)
 
+        try:
+            with open(args.input, "r", encoding="utf-8") as f:
+                benchmark_results = json.load(f)
+            report_generator.generate_performance_report(benchmark_results, args.output)
+        except Exception as e:
+            print(f"Error reading benchmark results: {e}")
+            sys.exit(1)
+
+    elif args.action == "parse-xml":
+        # 解析JUnit XML文件
+        if not args.input:
+            print("Error: --input is required for parse-xml action")
+            sys.exit(1)
+
+        test_results = report_generator.parse_junit_xml(args.input)
+        if test_results:
+            output_file = args.output or "parsed_test_results.json"
             try:
-                with open(args.input, "r", encoding='utf-8') as f:
-                    benchmark_results = json.load(f)
-                report_generator.generate_performance_report(benchmark_results, args.output)
+                with open(output_file, "w", encoding="utf-8") as f:
+                    json.dump(test_results, f, indent=2, ensure_ascii=False)
+                print(f"Parsed test results saved to: {output_file}")
             except Exception as e:
-                print(f"Error reading benchmark results: {e}")
+                print(f"Error saving parsed results: {e}")
                 sys.exit(1)
-
-        elif args.action == "parse-xml":
-            # 解析JUnit XML文件
-            if not args.input:
-                print("Error: --input is required for parse-xml action")
-                sys.exit(1)
-
-            test_results = report_generator.parse_junit_xml(args.input)
-            if test_results:
-                output_file = args.output or "parsed_test_results.json"
-                try:
-                    with open(output_file, "w", encoding='utf-8') as f:
-                        json.dump(test_results, f, indent=2, ensure_ascii=False)
-                    print(f"Parsed test results saved to: {output_file}")
-                except Exception as e:
-                    print(f"Error saving parsed results: {e}")
-                    sys.exit(1)
-            else:
-                print("Failed to parse test results")
-                sys.exit(1)
+        else:
+            print("Failed to parse test results")
+            sys.exit(1)
 
 
 if __name__ == "__main__":
     main()
 
 # 添加pytest标记,防止被误认为测试类
-TestReportGenerator.__test__=False
+TestReportGenerator.__test__ = False

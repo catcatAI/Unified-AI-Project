@@ -44,7 +44,7 @@ def import_json(dictionary: DictionaryLayer, path: Path) -> int:
         return 0
 
     # Filter out entries that already exist
-    bulk=[e for e in entries_data if e.get("key") and e["key"] not in dictionary.entries]
+    bulk = [e for e in entries_data if e.get("key") and e["key"] not in dictionary.entries]
     if not bulk:
         return 0
     return dictionary.bulk_add_entries(bulk)
@@ -82,7 +82,11 @@ def main():
     parser = argparse.ArgumentParser(description="Import dictionaries into ED3N")
     parser.add_argument("files", nargs="*", help="JSON files to import")
     parser.add_argument("--engine", action="store_true", help="Create ED3NEngine after import")
-    parser.add_argument("--train", action="store_true", help="Train CoreNetwork on dictionary relations (implies --engine)")
+    parser.add_argument(
+        "--train",
+        action="store_true",
+        help="Train CoreNetwork on dictionary relations (implies --engine)",
+    )
     parser.add_argument("--test", action="store_true", help="Run sample queries after import")
     parser.add_argument(
         "--test-queries",
@@ -92,12 +96,12 @@ def main():
     )
     args = parser.parse_args()
     if args.train:
-        args.engine=True
+        args.engine = True
 
     # Determine which files to import
     dict_dir = ROOT / "data" / "dictionaries"
     if args.files:
-        files=[Path(f) for f in args.files]
+        files = [Path(f) for f in args.files]
     else:
         files = sorted(dict_dir.glob("*.json"))
 
@@ -109,7 +113,7 @@ def main():
     dictionary = DictionaryLayer(max_entries=500000)
     dictionary.load_preset_responses()  # load built-in presets first
 
-    total=0
+    total = 0
     for f in files:
         if not f.exists():
             logger.warning("File not found: %s", f)
@@ -140,27 +144,33 @@ def main():
             logger.info("Starting relation-based co-occurrence training …")
             trainer = ED3NTrainer(engine)
             max_examples = limit_value("train.relation.max_examples", 2000)
-            examples: list=[]
-            processed=0
+            examples: list = []
+            processed = 0
             t0 = time.perf_counter()
             for key, entry in dictionary.entries.items():
                 if not entry.relations:
                     continue
-                text = entry.surface_forms.get("en") or next(iter(entry.surface_forms.values()), key)
+                text = entry.surface_forms.get("en") or next(
+                    iter(entry.surface_forms.values()), key
+                )
                 for rel_type, targets in entry.relations.items():
                     for tgt_key in targets:
                         if tgt_key not in dictionary.entries:
                             continue
                         tgt_entry = dictionary.entries[tgt_key]
-                        tgt_text = tgt_entry.surface_forms.get("en") or next(iter(tgt_entry.surface_forms.values()), tgt_key)
-                        examples.append(TrainingExample(
-                            input_text=text,
-                            expected_output=tgt_text,
-                            input_keys=[key],
-                            output_keys=[tgt_key],
-                            relation_pairs=[(key, rel_type, tgt_key)],
-                            confidence=entry.confidence * 0.8,
-                        ))
+                        tgt_text = tgt_entry.surface_forms.get("en") or next(
+                            iter(tgt_entry.surface_forms.values()), tgt_key
+                        )
+                        examples.append(
+                            TrainingExample(
+                                input_text=text,
+                                expected_output=tgt_text,
+                                input_keys=[key],
+                                output_keys=[tgt_key],
+                                relation_pairs=[(key, rel_type, tgt_key)],
+                                confidence=entry.confidence * 0.8,
+                            )
+                        )
                         processed += 1
                         if processed % 500 == 0:
                             logger.info("  ... built %d training examples", processed)
@@ -175,8 +185,15 @@ def main():
                 t1 = time.perf_counter()
                 metrics = trainer.train_network_phase(examples)
                 train_elapsed = time.perf_counter() - t1
-                logger.info("Trained on %d relation examples in %.1fs (build=%.1fs, train=%.1fs, loss=%.4f, acc=%.4f)",
-                            len(examples), build_elapsed + train_elapsed, build_elapsed, train_elapsed, metrics.loss, metrics.accuracy)
+                logger.info(
+                    "Trained on %d relation examples in %.1fs (build=%.1fs, train=%.1fs, loss=%.4f, acc=%.4f)",
+                    len(examples),
+                    build_elapsed + train_elapsed,
+                    build_elapsed,
+                    train_elapsed,
+                    metrics.loss,
+                    metrics.accuracy,
+                )
             else:
                 logger.warning("No relation examples found for training")
 

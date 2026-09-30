@@ -16,22 +16,22 @@ verifying all system components work together correctly.
 Usage:
     # 运行所有测试
     python run_integration_tests.py
-    
+
     # 运行完整测试套件（包括慢测试）
     python run_integration_tests.py --full
-    
+
     # 只运行快速测试
     python run_integration_tests.py --quick
-    
+
     # 生成HTML报告
     python run_integration_tests.py --report
-    
+
     # 列出所有测试文件
     python run_integration_tests.py --list
-    
+
     # 使用pytest直接运行
     pytest tests/integration/ -v
-    
+
     # 运行特定测试类别
     pytest tests/integration/test_full_system_integration.py -v -m system_integration
     pytest tests/integration/test_end_to_end_scenarios.py -v -m e2e
@@ -50,5 +50,5 @@ Version: 7.5.0-dev
 Date: 2026-02-02
 """
 
-__version__ = '7.5.0-dev'
-__author__ = 'Angela AI Development Team'
+__version__ = "7.5.0-dev"
+__author__ = "Angela AI Development Team"

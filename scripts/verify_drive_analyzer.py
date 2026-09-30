@@ -1,9 +1,12 @@
-import requests
-import sys
 import logging
+import sys
+
+import requests
+
 logger = logging.getLogger(__name__)
 
-API_URL="http://127.0.0.1:8000/api/v1"
+API_URL = "http://127.0.0.1:8000/api/v1"
+
 
 def verify_drive_status():
     print("=== Google Drive Integration Verification ===\n")
@@ -12,7 +15,7 @@ def verify_drive_status():
         status = requests.get(f"{API_URL}/drive/status", timeout=10).json()
         print(f"Status: {status.get('status')}")
         print(f"Authenticated: {status.get('authenticated')}")
-        quota = status.get('quota', {})
+        quota = status.get("quota", {})
         if quota:
             print(f"User: {quota.get('user', 'N/A')}")
             print(f"Storage: {quota.get('used', 'N/A')} / {quota.get('total', 'N/A')}")

@@ -23,45 +23,38 @@ endpoints still exist under /api/.... This report covers both for clarity.
 
 ## Health and System
 
-- GET `/`  
-  Root welcome. Returns a welcome message.
+- GET `/` Root welcome. Returns a welcome message.
 
-- GET `/api/v1/health`  
-  Overall health and basic services status.
+- GET `/api/v1/health` Overall health and basic services status.
 
-- GET `/api/v1/system/services`  
-  Extended system service list/status (if implemented in your branch).
+- GET `/api/v1/system/services` Extended system service list/status (if
+  implemented in your branch).
 
-- GET `/api/v1/system/metrics/detailed`  
-  Detailed metrics (CPU, Memory, Disk, Network). Uses real psutil values.
+- GET `/api/v1/system/metrics/detailed` Detailed metrics (CPU, Memory, Disk,
+  Network). Uses real psutil values.
 
 Proxy via Next.js: `/api/py/api/v1/health`, `/api/py/api/v1/system/services`,
 `/api/py/api/v1/system/metrics/detailed`
 
 ## AI Chat and Sessions
 
-- POST `/api/v1/session/start`  
-  Starts a new session. Returns `session_id` and greeting.
+- POST `/api/v1/session/start` Starts a new session. Returns `session_id` and
+  greeting.
 
-- POST `/api/v1/chat`  
-  Body: `{ text, user_id, session_id }`  
-  Returns generated response text and metadata.
+- POST `/api/v1/chat` Body: `{ text, user_id, session_id }` Returns generated
+  response text and metadata.
 
 Proxy: `/api/py/api/v1/session/start`, `/api/py/api/v1/chat`
 
 ## Code, Search, Image
 
-- POST `/api/v1/code`  
-  Body: `{ code, language }` (also accepts `{ query }` as code).  
-  Returns code analysis result.
+- POST `/api/v1/code` Body: `{ code, language }` (also accepts `{ query }` as
+  code). Returns code analysis result.
 
-- POST `/api/v1/search`  
-  Body: `{ query }`  
-  Returns structured search results.
+- POST `/api/v1/search` Body: `{ query }` Returns structured search results.
 
-- POST `/api/v1/image`  
-  Body: `{ prompt, style }`  
-  Returns generated image info or placeholder URL.
+- POST `/api/v1/image` Body: `{ prompt, style }` Returns generated image info or
+  placeholder URL.
 
 Proxy: `/api/py/api/v1/code`, `/api/py/api/v1/search`, `/api/py/api/v1/image`
 
@@ -70,28 +63,23 @@ Proxy: `/api/py/api/v1/code`, `/api/py/api/v1/search`, `/api/py/api/v1/image`
 These endpoints shell out to `acli.exe` via the bridge and return parsed
 results.
 
-- GET `/api/v1/atlassian/status`  
-  Returns: `{ acli_available, version, path }`.
+- GET `/api/v1/atlassian/status` Returns: `{ acli_available, version, path }`.
 
-- GET `/api/v1/atlassian/jira/projects`  
-  Returns list of projects (JSON-parsed ACLI output).
+- GET `/api/v1/atlassian/jira/projects` Returns list of projects (JSON-parsed
+  ACLI output).
 
-- GET `/api/v1/atlassian/jira/issues`  
-  Query params: `jql` (optional), `limit` (default 50).  
-  Returns list of issues.
+- GET `/api/v1/atlassian/jira/issues` Query params: `jql` (optional), `limit`
+  (default 50). Returns list of issues.
 
-- POST `/api/v1/atlassian/jira/issue`  
-  Body: `{ project_key, summary, description?, issue_type?, priority?, labels? }`
+- POST `/api/v1/atlassian/jira/issue` Body:
+  `{ project_key, summary, description?, issue_type?, priority?, labels? }`
   - `priority`: e.g. High/Medium/Low (string)
-  - `labels`: comma-separated string or array of strings  
-    Creates a Jira issue.
+  - `labels`: comma-separated string or array of strings Creates a Jira issue.
 
-- GET `/api/v1/atlassian/confluence/spaces`  
-  Returns list of Confluence spaces.
+- GET `/api/v1/atlassian/confluence/spaces` Returns list of Confluence spaces.
 
-- GET `/api/v1/atlassian/confluence/search`  
-  Query params: `query`, `limit` (default 25).  
-  Searches Confluence content.
+- GET `/api/v1/atlassian/confluence/search` Query params: `query`, `limit`
+  (default 25). Searches Confluence content.
 
 Proxy: `/api/py/api/v1/atlassian/...`
 

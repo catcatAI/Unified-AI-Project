@@ -2,9 +2,11 @@
 DEPRECATED: This script uses the OLD architecture.
 For GVV architecture, see test_gvv_quick.py
 """
-import sys
-import os
+
 import json
+import os
+import sys
+
 import numpy as np
 from PIL import Image
 
@@ -13,10 +15,11 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps", "backen
 from ai.multimodal.primitives.decomposer import decompose_spatial as decompose_enhanced
 from ai.multimodal.primitives.primitive_encoder import PrimitiveEncoder
 from ai.multimodal.primitives.primitive_renderer import PrimitiveRenderer
+
 try:
     from ai.multimodal.primitives.pixel_refiner import PixelRefiner
 except ImportError:
-    PixelRefiner=None
+    PixelRefiner = None
 from ai.multimodal.evaluation.generation_evaluator import GenerationEvaluator
 
 
@@ -24,7 +27,7 @@ def main():
     data_dir = os.path.join(os.path.dirname(__file__), "..", "data", "multimodal", "cifar10")
     idx = json.load(open(os.path.join(data_dir, "index.json")))
 
-    images, labels=[], []
+    images, labels = [], []
     for cls in idx["classes"][:5]:
         cls_dir = os.path.join(data_dir, cls)
         for f in sorted(os.listdir(cls_dir))[:4]:
@@ -35,7 +38,7 @@ def main():
     print(f"Loaded {len(images)} images")
 
     # 1. Decompose
-    instructions=[decompose_enhanced(img) for img in images]
+    instructions = [decompose_enhanced(img) for img in images]
 
     # 2. Train encoder
     encoder = PrimitiveEncoder()
@@ -43,7 +46,7 @@ def main():
 
     # 3. Generate rough images (direct encode→decode, no generator)
     renderer = PrimitiveRenderer((128, 128))
-    rough_images=[]
+    rough_images = []
     for i in range(len(images)):
         enc = encoder.encode(instructions[i])
         decoded = encoder.decode(enc)
@@ -51,7 +54,7 @@ def main():
         rough_images.append(rough)
 
     # 4. Train PixelRefiner
-    target_images=[Image.fromarray(img).resize((128, 128), Image.LANCZOS) for img in images]
+    target_images = [Image.fromarray(img).resize((128, 128), Image.LANCZOS) for img in images]
     refiner = PixelRefiner(hidden_dim=1024, img_size=128)
     result = refiner.train(rough_images, target_images, epochs=50, lr=0.005, batch_size=8)
     print(f"Refiner loss: {result['final_loss']:.6f}")
@@ -78,9 +81,11 @@ def main():
         comparison.paste(refined, (256, 0))
         comparison.save(os.path.join(save_dir, f"{i:02d}_{labels[i]}.png"))
 
-        print(f"  [{i}] {labels[i]}: "
-              f"A_bright={rough_m['mean_brightness']:.2f} B_bright={refined_m['mean_brightness']:.2f} orig={orig_m['mean_brightness']:.2f} | "
-              f"A_sim={rough_sim:.2f} B_sim={refined_sim:.2f}")
+        print(
+            f"  [{i}] {labels[i]}: "
+            f"A_bright={rough_m['mean_brightness']:.2f} B_bright={refined_m['mean_brightness']:.2f} orig={orig_m['mean_brightness']:.2f} | "
+            f"A_sim={rough_sim:.2f} B_sim={refined_sim:.2f}"
+        )
 
     # Save
     model_dir = os.path.join(os.path.dirname(__file__), "..", "data", "multimodal", "weights")

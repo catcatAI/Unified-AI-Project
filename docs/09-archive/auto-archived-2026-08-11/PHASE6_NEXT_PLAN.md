@@ -1,10 +1,9 @@
 # Phase 6+ 計畫: Quality Finishing
 
-> **⚠️ STATUS: MOSTLY COMPLETE (2026-06-25)**  
-> P6-1, P6-2, P6-4, P7-1, P7-2 ✅ all done. P6-3 (magic number migration) ✅
-> **ALL DONE** (formula coefficients migrated in §X #54, ~0 remain). This plan
-> is superseded by the MASTER_TASK_MAP for tracking remaining work.  
-> **Last active**: 2026-05-30
+> **⚠️ STATUS: MOSTLY COMPLETE (2026-06-25)** P6-1, P6-2, P6-4, P7-1, P7-2 ✅
+> all done. P6-3 (magic number migration) ✅ **ALL DONE** (formula coefficients
+> migrated in §X #54, ~0 remain). This plan is superseded by the MASTER_TASK_MAP
+> for tracking remaining work. **Last active**: 2026-05-30
 
 > **基於**: 2026-05-30 全面審計 — 53/53 MASTER 計畫完成，READ ME
 > 6 項過時聲明已修正 **目標**: 解決真正殘留的架構缺口（非 README 過時項目）
@@ -122,8 +121,8 @@ stubs 替換為委派 FileOperationHandler └── 53 tests pass
 
 ⬜ Week 3-4: P6-3 Magic Number 遷移 (進行中，階段性完成) ├── ✅
 configs/standard/behavior/thresholds.default.yaml — 行為閾值 ├── ✅
-configs/system/timing.default.yaml — 計時/LLM 參數  
-├── ✅ core/system/config/magic_numbers.py — 集中存取 helper ├──
+configs/system/timing.default.yaml — 計時/LLM 參數 ├── ✅
+core/system/config/magic_numbers.py — 集中存取 helper ├──
 ✅ 遷移 extended_behavior_library.py 中 27 個 threshold 值 ├──
 ⬜ 剩餘 ~120 個 magic numbers (分散在 core/ + services/ + ai/)
 └── 驗收: 階段性完成，其餘可持續遷移

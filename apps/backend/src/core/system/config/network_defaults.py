@@ -22,7 +22,7 @@ GOOGLE_API_BASE: str = "https://generativelanguage.googleapis.com/v1beta"
 # Server bind address/port (ANGELA_SERVER_HOST / ANGELA_SERVER_PORT override).
 # Single source of truth for every uvicorn.run() entry point so CLI, REPL and
 # __main__ can never drift apart.
-SERVER_BIND_HOST: str = "0.0.0.0"
+SERVER_BIND_HOST: str = "0.0.0.0"  # nosec B104 - documented bind-all default
 SERVER_PORT: int = 8000
 
 # Loopback hosts trusted for security-sensitive local-only endpoints.
@@ -56,6 +56,22 @@ def get_cors_origins() -> list:
         if origins:
             return origins
     return DEFAULT_CORS_ORIGINS
+
+
+OLLAMA_BASE_URL_ENV = "OLLAMA_BASE_URL"
+
+
+def get_ollama_base_url() -> str:
+    """Resolve the Ollama endpoint.
+
+    Priority: OLLAMA_BASE_URL env > OLLAMA_HOST. `.env.example` and
+    `configs/system/keys.default.yaml` both describe the env override, so it has
+    to be read here rather than only in a comment: running Ollama on another
+    machine is the normal case this switch exists for.
+    """
+    import os
+
+    return os.getenv(OLLAMA_BASE_URL_ENV, "").strip() or OLLAMA_HOST
 
 
 def get_server_bind() -> tuple:
@@ -108,6 +124,8 @@ BACKEND_PRIORITY: Dict[str, int] = {
 
 __all__ = [
     "DEFAULT_HOST",
+    "OLLAMA_BASE_URL_ENV",
+    "get_ollama_base_url",
     "SERVER_BIND_HOST",
     "SERVER_PORT",
     "LOCAL_TRUSTED_HOSTS",

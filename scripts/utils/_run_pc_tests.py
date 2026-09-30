@@ -4,6 +4,7 @@ Uses importlib.util to bypass ai.dialogue package import chain
 (which has a 11s+ import time due to slow dependencies.
 Direct file load takes ~2s.
 """
+
 import importlib.util
 import time
 
@@ -24,16 +25,14 @@ from unittest.mock import AsyncMock, MagicMock
 
 # Direct file load (bypasses ai.dialogue package init)
 pc_spec = importlib.util.spec_from_file_location(
-    "project_coordinator",
-    str(Path(src) / "ai" / "dialogue" / "project_coordinator.py")
+    "project_coordinator", str(Path(src) / "ai" / "dialogue" / "project_coordinator.py")
 )
 pc_module = importlib.util.module_from_spec(pc_spec)
 pc_spec.loader.exec_module(pc_module)
 ProjectCoordinator = pc_module.ProjectCoordinator
 
 db_spec = importlib.util.spec_from_file_location(
-    "document_builder",
-    str(Path(src) / "ai" / "dialogue" / "document_builder.py")
+    "document_builder", str(Path(src) / "ai" / "dialogue" / "document_builder.py")
 )
 db_module = importlib.util.module_from_spec(db_spec)
 db_spec.loader.exec_module(db_module)
@@ -64,12 +63,16 @@ assert cleaned[0] == "["
 print("  OK: JSON cleaned")
 
 print("Test 5: _integrate_subtask_results fallback")
-coord.prompts={}
-results={0: "Result A", 1: "Result B"}
+coord.prompts = {}
+results = {0: "Result A", 1: "Result B"}
 llm_mock = AsyncMock()
 llm_mock.generate_text = AsyncMock(return_value="整合結果")
+
+
 async def test_integrate():
     return await coord._integrate_subtask_results("原始請求", results, llm_mock)
+
+
 loop_int = asyncio.new_event_loop()
 result_text = loop_int.run_until_complete(test_integrate())
 loop_int.close()
@@ -77,8 +80,12 @@ assert result_text == "整合結果"
 print("  OK: integrate fallback works")
 
 print("Test 6: DocumentBuilder init")
+
+
 async def mock_llm(prompt, **kwargs):
     return "test output"
+
+
 builder = DocumentBuilder(llm_generate_fn=mock_llm, max_segments=4, tokens_per_segment=256)
 print(f"  OK: max_segments={builder.max_segments}, tokens_per_segment={builder.tokens_per_segment}")
 
@@ -101,8 +108,12 @@ assert result is None
 print("  OK: returns None when no library")
 
 print("Test 10: _load_fantasy_codex (no memory)")
+
+
 async def test_codex():
     return await builder._load_fantasy_codex("生成角色")
+
+
 loop_cx = asyncio.new_event_loop()
 result = loop_cx.run_until_complete(test_codex())
 loop_cx.close()
@@ -110,51 +121,77 @@ assert result == {}
 print("  OK: returns {} when no memory_manager")
 
 print("Test 11: build() with basic LLM")
+
+
 async def slow_llm(prompt, **kwargs):
     await asyncio.sleep(0.05)
     return "Generated content"
+
+
 builder2 = DocumentBuilder(llm_generate_fn=slow_llm, max_segments=2, tokens_per_segment=128)
 builder2._update_eta = MagicMock()
 builder2.eta_state = MagicMock()
+
+
 async def test_build():
     return await builder2.build("生成測試", complexity=0.3)
+
+
 loop = asyncio.new_event_loop()
 result = loop.run_until_complete(asyncio.wait_for(test_build(), timeout=5.0))
 loop.close()
 print(f"  OK: build returned {len(result.segments)} segments")
 
 print("Test 12: build() with segment failure")
-attempt={"count": 0}
+attempt = {"count": 0}
+
+
 async def flaky_llm(prompt, **kwargs):
     attempt["count"] += 1
     if attempt["count"] == 1:
         raise RuntimeError("Segment 0 failed")
     return "Recovery success"
+
+
 builder3 = DocumentBuilder(llm_generate_fn=flaky_llm, max_segments=4, tokens_per_segment=64)
 builder3._update_eta = MagicMock()
 builder3.eta_state = MagicMock()
+
+
 async def test_flaky():
     return await builder3.build("測試", complexity=0.3)
+
+
 loop2 = asyncio.new_event_loop()
 result = loop2.run_until_complete(asyncio.wait_for(test_flaky(), timeout=5.0))
 loop2.close()
 print(f"  OK: build with failure: {result.successful_segments}/{result.total_segments} succeeded")
 
 print("Test 13: build() with segment timeout")
+
+
 async def hung_llm(prompt, **kwargs):
     await asyncio.sleep(2.0)
     return "Should not reach"
+
+
 builder4 = DocumentBuilder(llm_generate_fn=hung_llm, max_segments=2, tokens_per_segment=64)
-builder4._segment_timeout_seconds=0.5
+builder4._segment_timeout_seconds = 0.5
 builder4._update_eta = MagicMock()
 builder4.eta_state = MagicMock()
+
+
 async def test_timeout():
     return await builder4.build("測試超時", complexity=0.3)
+
+
 loop3 = asyncio.new_event_loop()
 result = loop3.run_until_complete(asyncio.wait_for(test_timeout(), timeout=3.0))
 loop3.close()
 assert result.successful_segments <= 1
-print(f"  OK: build with timeout: {result.successful_segments}/{result.total_segments} succeeded (timeout=0.5s)")
+print(
+    f"  OK: build with timeout: {result.successful_segments}/{result.total_segments} succeeded (timeout=0.5s)"
+)
 
 print("Test 14: _update_eta method")
 builder5 = DocumentBuilder(llm_generate_fn=mock_llm)

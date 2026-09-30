@@ -49,7 +49,9 @@ def main():
     m2 = back.modelspace()
     ncirc = sum(1 for _ in m2.query("CIRCLE"))
     ntxt = sum(1 for _ in m2.query("TEXT"))
-    print(f"回流驗證：CIRCLE {ncirc}（期望 {n_bar}），TEXT {ntxt} {'✅' if ncirc == n_bar else '❌'}")
+    print(
+        f"回流驗證：CIRCLE {ncirc}（期望 {n_bar}），TEXT {ntxt} {'✅' if ncirc == n_bar else '❌'}"
+    )
     return 0 if ncirc == n_bar else 1
 
 

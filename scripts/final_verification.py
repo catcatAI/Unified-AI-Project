@@ -8,7 +8,11 @@
 資源：500 題分批 + 關聯 + 對比，總 <30s，<300MB。
 """
 
-import os, sys, subprocess, time, json
+import json
+import os
+import subprocess
+import sys
+import time
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps/backend/src"))
 

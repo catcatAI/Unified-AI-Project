@@ -74,9 +74,7 @@ class TestDispatcherProducesTrainableSamples:
 
         env = build_envelope({"text": "訓練我"})
         without = {a.action for a in plan_actions(env)}
-        with_output = {
-            a.action for a in plan_actions(env, response_text="收到。")
-        }
+        with_output = {a.action for a in plan_actions(env, response_text="收到。")}
         assert ActionType.TRAIN not in without
         assert ActionType.TRAIN in with_output
 
@@ -152,16 +150,13 @@ class TestProcessorsAreRegistered:
 
         source = Path(__file__).resolve()
         backend_src = Path(os.path.join(REPO_ROOT, "apps", "backend", "src"))
-        processor = (backend_src / "ai/core/training_processors.py").read_text(
-            encoding="utf-8"
-        )
+        processor = (backend_src / "ai/core/training_processors.py").read_text(encoding="utf-8")
         # Ignore prose (the module docstring explains why): only *calls* matter.
         code_lines = re.findall(
             r"^\s*(?:from|import)\s+.*ContinuousLearningPipeline.*$", processor, re.M
         ) + re.findall(r"^\s*\w*\.?_?continuous_learning_pipeline\w*\s*\(.*$", processor, re.M)
         assert not code_lines, (
-            "the processor must not call the opt-in legacy pipeline: "
-            f"{code_lines}"
+            "the processor must not call the opt-in legacy pipeline: " f"{code_lines}"
         )
         chat_service = (backend_src / "services/chat_service.py").read_text(encoding="utf-8")
         assert 'ANGELA_LEGACY_ED3N") == "1"' in chat_service, (
@@ -211,18 +206,16 @@ class TestProductionWiring:
         source = open(
             os.path.join(BACKEND_SRC, "services", "chat_service.py"), encoding="utf-8"
         ).read()
-        learning = source[source.index("async def _process_learning"):]
+        learning = source[source.index("async def _process_learning") :]
         learning = learning[: learning.index("async def _process_continuous_learning")]
-        assert "mainline_dispatcher" in learning, (
-            "nothing produced queue samples in production before this"
-        )
+        assert (
+            "mainline_dispatcher" in learning
+        ), "nothing produced queue samples in production before this"
         assert "response_text=response.text" in learning
 
     def test_lifespan_registers_processors_before_starting_the_worker(self):
-        source = open(
-            os.path.join(BACKEND_SRC, "api", "lifespan.py"), encoding="utf-8"
-        ).read()
-        block = source[source.index("TrainingCoordinator owns training execution"):]
+        source = open(os.path.join(BACKEND_SRC, "api", "lifespan.py"), encoding="utf-8").read()
+        block = source[source.index("TrainingCoordinator owns training execution") :]
         block = block[: block.index("except Exception:")]
         assert "register_default_processors" in block
         assert block.index("register_default_processors") < block.index(

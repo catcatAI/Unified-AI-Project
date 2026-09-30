@@ -876,7 +876,7 @@ class NeuroAutoSelector:
                             available.append(AutoBackendChoice(name))
                         except ValueError:
                             logger.warning("Invalid AutoBackendChoice name", exc_info=True)
-                except (ConnectionError, TimeoutError, OSError):
+                except OSError:
                     logger.warning(
                         "Failed to check backend health for %s", backend_type, exc_info=True
                     )

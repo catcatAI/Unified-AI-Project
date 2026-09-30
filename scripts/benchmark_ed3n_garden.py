@@ -17,7 +17,7 @@ import logging
 import os
 import sys
 import time
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(message)s")
@@ -31,7 +31,7 @@ class BenchmarkCase:
     domain: str
     question: str
     expected: str
-    evaluator: str="exact"  # exact|contains|math
+    evaluator: str = "exact"  # exact|contains|math
 
 
 @dataclass
@@ -46,7 +46,7 @@ class BenchmarkResult:
 
 # --- Test Sets ---
 
-MATH_CASES=[
+MATH_CASES = [
     BenchmarkCase("math", "1 + 1 = ?", "2", "math"),
     BenchmarkCase("math", "2 + 3 * 4 = ?", "14", "math"),
     BenchmarkCase("math", "100 / 25 = ?", "4", "math"),
@@ -54,7 +54,7 @@ MATH_CASES=[
     BenchmarkCase("math", "3 * 7 = ?", "21", "math"),
 ]
 
-KNOWLEDGE_CASES=[
+KNOWLEDGE_CASES = [
     BenchmarkCase("knowledge", "What color is the sky?", "blue", "contains"),
     BenchmarkCase("knowledge", "What is the opposite of hot?", "cold", "contains"),
     BenchmarkCase("knowledge", "What animal says meow?", "cat", "contains"),
@@ -62,33 +62,56 @@ KNOWLEDGE_CASES=[
     BenchmarkCase("knowledge", "What planet is known as the Red Planet?", "Mars", "contains"),
 ]
 
-REASONING_CASES=[
-    BenchmarkCase("reasoning", "A is taller than B. B is taller than C. Who is tallest?", "A", "contains"),
+REASONING_CASES = [
+    BenchmarkCase(
+        "reasoning", "A is taller than B. B is taller than C. Who is tallest?", "A", "contains"
+    ),
     # Clean syllogism: valid inference from stated (true) premise => "yes".
     # The earlier "penguin" case was a trick question requiring real-world
     # knowledge (penguins cannot fly) that a *symbolic* reasoner cannot have;
     # it is now covered by the LLM path instead.
-    BenchmarkCase("reasoning", "All mammals are animals. A dog is a mammal. Is a dog an animal?", "yes", "contains"),
+    BenchmarkCase(
+        "reasoning",
+        "All mammals are animals. A dog is a mammal. Is a dog an animal?",
+        "yes",
+        "contains",
+    ),
     BenchmarkCase("reasoning", "If today is Monday, what day is tomorrow?", "Tuesday", "contains"),
     BenchmarkCase("reasoning", "John has 3 apples. He gives 1 away. How many left?", "2", "math"),
-    BenchmarkCase("reasoning", "Which is heavier: 1kg of feathers or 1kg of steel?", "same", "contains"),
+    BenchmarkCase(
+        "reasoning", "Which is heavier: 1kg of feathers or 1kg of steel?", "same", "contains"
+    ),
 ]
 
 # Relational-chain cases using NOVEL comparators that the regex-based symbolic
 # reasoner does NOT cover. These exercise the offline CoreNetwork transitive
 # closure (Stage 1.6b), proving genuine multi-hop graph reasoning beyond the
 # fixed pattern matcher.
-CHAIN_CASES=[
-    BenchmarkCase("chain", "X is warmer than Y. Y is warmer than Z. Who is warmest?", "X", "contains"),
-    BenchmarkCase("chain", "P is colder than Q. Q is colder than R. Who is coldest?", "P", "contains"),
-    BenchmarkCase("chain", "X is richer than Y. Y is richer than Z. Who is poorest?", "Z", "contains"),
-    BenchmarkCase("chain", "M is shorter than N. N is shorter than O. Who is shortest?", "M", "contains"),
-    BenchmarkCase("chain", "Alpha is faster than Beta. Beta is faster than Gamma. Who is slowest?", "Gamma", "contains"),
+CHAIN_CASES = [
+    BenchmarkCase(
+        "chain", "X is warmer than Y. Y is warmer than Z. Who is warmest?", "X", "contains"
+    ),
+    BenchmarkCase(
+        "chain", "P is colder than Q. Q is colder than R. Who is coldest?", "P", "contains"
+    ),
+    BenchmarkCase(
+        "chain", "X is richer than Y. Y is richer than Z. Who is poorest?", "Z", "contains"
+    ),
+    BenchmarkCase(
+        "chain", "M is shorter than N. N is shorter than O. Who is shortest?", "M", "contains"
+    ),
+    BenchmarkCase(
+        "chain",
+        "Alpha is faster than Beta. Beta is faster than Gamma. Who is slowest?",
+        "Gamma",
+        "contains",
+    ),
 ]
 
 
 def _load_ed3n():
     from ai.ed3n.ed3n_engine import ED3NEngine
+
     e = ED3NEngine()
     e.load_presets()
     return e
@@ -96,12 +119,13 @@ def _load_ed3n():
 
 def _load_garden():
     from ai.garden.garden_engine import GARDENEngine
+
     e = GARDENEngine()
     return e
 
 
 def math_eval(engine, question: str) -> Optional[str]:
-    if hasattr(engine, '_try_math_eval'):
+    if hasattr(engine, "_try_math_eval"):
         return engine._try_math_eval(question)
     return None
 
@@ -131,9 +155,11 @@ def score_response(response: str, expected: str, evaluator: str) -> bool:
     return False
 
 
-def run_benchmark(engine, cases: List[BenchmarkCase], process_fn: Callable, engine_name: str) -> BenchmarkResult:
+def run_benchmark(
+    engine, cases: List[BenchmarkCase], process_fn: Callable, engine_name: str
+) -> BenchmarkResult:
     domain = cases[0].domain if cases else "unknown"
-    passed=0
+    passed = 0
     total = len(cases)
     times: List[float] = []
     samples: List[dict] = []
@@ -143,19 +169,21 @@ def run_benchmark(engine, cases: List[BenchmarkCase], process_fn: Callable, engi
         try:
             response = process_fn(engine, case.question)
         except Exception as e:
-            response=""
+            response = ""
         elapsed = (time.time() - t0) * 1000
         times.append(elapsed)
         correct = score_response(response, case.expected, case.evaluator)
         if correct:
             passed += 1
-        samples.append({
-            "question": case.question,
-            "expected": case.expected,
-            "response": response[:100],
-            "correct": correct,
-            "time_ms": round(elapsed, 1),
-        })
+        samples.append(
+            {
+                "question": case.question,
+                "expected": case.expected,
+                "response": response[:100],
+                "correct": correct,
+                "time_ms": round(elapsed, 1),
+            }
+        )
 
     accuracy = passed / total if total > 0 else 0.0
     avg_time = sum(times) / len(times) if times else 0.0
@@ -174,11 +202,13 @@ def print_report(results: List[BenchmarkResult], engine_name: str) -> None:
     print(f"\n{'='*60}")
     print(f"  Benchmark Report: {engine_name}")
     print(f"{'='*60}")
-    overall_passed=0
-    overall_total=0
+    overall_passed = 0
+    overall_total = 0
     for r in results:
-        status="✅" if r.accuracy >= 0.6 else "❌" if r.accuracy < 0.3 else "⚠️"
-        print(f"  {status} {r.domain:12s}: {r.passed:2d}/{r.total:2d} ({r.accuracy*100:5.1f}%)  avg {r.avg_time_ms:6.1f}ms")
+        status = "✅" if r.accuracy >= 0.6 else "❌" if r.accuracy < 0.3 else "⚠️"
+        print(
+            f"  {status} {r.domain:12s}: {r.passed:2d}/{r.total:2d} ({r.accuracy*100:5.1f}%)  avg {r.avg_time_ms:6.1f}ms"
+        )
         overall_passed += r.passed
         overall_total += r.total
     overall_acc = overall_passed / overall_total if overall_total > 0 else 0.0
@@ -196,7 +226,7 @@ def main():
 
     all_cases = MATH_CASES + KNOWLEDGE_CASES + REASONING_CASES + CHAIN_CASES
 
-    engines=[]
+    engines = []
     if args.engine in ("ed3n", "both"):
         try:
             e = _load_ed3n()
@@ -218,10 +248,10 @@ def main():
         sys.exit(1)
 
     for name, engine, process_fn in engines:
-        domains={}
+        domains = {}
         for case in all_cases:
             domains.setdefault(case.domain, []).append(case)
-        results=[]
+        results = []
         for domain_cases in domains.values():
             results.append(run_benchmark(engine, domain_cases, process_fn, name))
         print_report(results, name)
@@ -230,19 +260,22 @@ def main():
             for r in results:
                 print(f"  --- {r.domain} details ---")
                 for s in r.samples:
-                    mark="✅" if s["correct"] else "❌"
+                    mark = "✅" if s["correct"] else "❌"
                     print(f"  {mark} Q: {s['question']}")
                     print(f"       Expected: {s['expected']}")
                     print(f"       Got:      {s['response'][:80]}")
                 print()
 
     if args.output:
-        report={"timestamp": time.time(), "engines:": {}}
+        report = {"timestamp": time.time(), "engines:": {}}
         for name, engine, process_fn in engines:
-            domains={}
+            domains = {}
             for case in all_cases:
                 domains.setdefault(case.domain, []).append(case)
-            results=[run_benchmark(engine, domain_cases, process_fn, name) for domain_cases in domains.values()]
+            results = [
+                run_benchmark(engine, domain_cases, process_fn, name)
+                for domain_cases in domains.values()
+            ]
             report["engines:"][name] = {r.domain: asdict(r) for r in results}
         os.makedirs(os.path.dirname(args.output) or ".", exist_ok=True)
         with open(args.output, "w", encoding="utf-8") as f:

@@ -4,6 +4,7 @@
 覆蓋：四系譜軸碼解析、文件權威分類表、文本特例表、五維度親和力、
 機制種族推導、裝備／消耗品／任務交互判定、數值加乘、顯示輔助。
 """
+
 import os
 import sys
 
@@ -12,7 +13,6 @@ import pytest
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import axis_system as ax
-
 
 # ═══════════════════════════════════════════════════════════════════════════
 # 技能卡軸譜學習（批次 32）
@@ -98,6 +98,7 @@ class TestCombatAxis:
 # 1. 軸碼解析
 # =============================================================================
 
+
 class TestParseAxisCode:
     def test_species_s_h_p(self):
         r = ax.parse_axis_code("物種", "S-H-P")
@@ -162,31 +163,39 @@ class TestAxisCodeFromToken:
 # 2. 文件權威分類表 + 文本特例表
 # =============================================================================
 
+
 class TestAuthoritativeAxes:
-    @pytest.mark.parametrize("cid,lineage,code", [
-        ("CC-35", "AI", "F3-A3-O0"),
-        ("CC-31", "AI", "F1-A2-O1"),
-        ("C16", "義體人", "C2-H2-B2"),
-        ("CC-36", "神話種", "D2-O1-M1"),
-        ("CC-05", "神話種", "D3-O1-M2"),
-        ("CC-49", "物種", "S-H-P"),
-        ("CC-52", "物種", "N-C-P"),
-    ])
+    @pytest.mark.parametrize(
+        "cid,lineage,code",
+        [
+            ("CC-35", "AI", "F3-A3-O0"),
+            ("CC-31", "AI", "F1-A2-O1"),
+            ("C16", "義體人", "C2-H2-B2"),
+            ("CC-36", "神話種", "D2-O1-M1"),
+            ("CC-05", "神話種", "D3-O1-M2"),
+            ("CC-49", "物種", "S-H-P"),
+            ("CC-52", "物種", "N-C-P"),
+        ],
+    )
     def test_authoritative(self, cid, lineage, code):
         card = {"card_id": cid, "stats": {}, "tokens": []}
         assert ax.resolve_card_axis(card)[:2] == (lineage, code)
 
-    @pytest.mark.parametrize("cid,lineage,code", [
-        ("CC-19", "AI", "F1-A1-O0"),      # 機械妖精：防空砲化身，非人形載體
-        ("CC-24", "神話種", "D3-O1-M1"),  # 維爾：共振文明使者，晶體節肢物質顯形
-    ])
+    @pytest.mark.parametrize(
+        "cid,lineage,code",
+        [
+            ("CC-19", "AI", "F1-A1-O0"),  # 機械妖精：防空砲化身，非人形載體
+            ("CC-24", "神話種", "D3-O1-M1"),  # 維爾：共振文明使者，晶體節肢物質顯形
+        ],
+    )
     def test_text_derived(self, cid, lineage, code):
         card = {"card_id": cid, "stats": {}, "tokens": []}
         assert ax.resolve_card_axis(card)[:2] == (lineage, code)
 
     def test_card_token_fallback(self):
         card = {
-            "card_id": "ZZ-01", "stats": {"race": "測試"},
+            "card_id": "ZZ-01",
+            "stats": {"race": "測試"},
             "tokens": [{"name": "分類系譜", "value": "物種｜ S-S-P"}],
         }
         assert ax.resolve_card_axis(card)[:2] == ("物種", "S-S-P")
@@ -198,7 +207,8 @@ class TestAuthoritativeAxes:
     def test_authoritative_beats_token(self):
         # 權威表優先於卡片 token（token 曾污染：CC-45/46 被誤填 神話種）
         card = {
-            "card_id": "CC-45", "stats": {},
+            "card_id": "CC-45",
+            "stats": {},
             "tokens": [{"name": "分類系譜", "value": "神話種｜ D1-O1-M2"}],
         }
         assert ax.resolve_card_axis(card)[:2] == ("物種", "F-C-P")
@@ -207,6 +217,7 @@ class TestAuthoritativeAxes:
 # =============================================================================
 # 3. 五維度親和力
 # =============================================================================
+
 
 class TestAffinity:
     def test_human_baseline(self):
@@ -241,6 +252,7 @@ class TestAffinity:
 # 4. 機制種族推導
 # =============================================================================
 
+
 class TestMechanicRace:
     def test_dragon(self):
         axes = ax.parse_axis_code("物種", "F-H-P")
@@ -261,6 +273,7 @@ class TestMechanicRace:
     def test_witch_detect_race(self):
         # 無軸譜角色（準大魔女）走 detect_race 文本規則 → 術士
         from sim_systems import detect_race
+
         assert detect_race([], text_race="人類（魔女學府畢業生，準大魔女）") == "術士"
 
     def test_dragon_with_witch_school(self):
@@ -272,6 +285,7 @@ class TestMechanicRace:
 # =============================================================================
 # 5. 交互判定引擎
 # =============================================================================
+
 
 class TestInteraction:
     def setup_method(self):
@@ -344,6 +358,7 @@ class TestInteraction:
 # 6. 數值加乘與顯示
 # =============================================================================
 
+
 class TestStatsAndDisplay:
     def test_stat_modifiers_shape(self):
         aff = ax.affinity_vector(None, None)
@@ -358,7 +373,10 @@ class TestStatsAndDisplay:
         assert ax.stat_modifiers(spirit)["sp"] > ax.stat_modifiers(phys)["sp"]
 
     def test_axis_display(self):
-        assert ax.axis_display("物種", "S-H-P", ax.parse_axis_code("物種", "S-H-P")) == "物種｜ S-H-P（標準種、類人型、純血）"
+        assert (
+            ax.axis_display("物種", "S-H-P", ax.parse_axis_code("物種", "S-H-P"))
+            == "物種｜ S-H-P（標準種、類人型、純血）"
+        )
         assert ax.axis_display(None, None, None) == "其他｜ 人類基線"
 
     def test_affinity_display_contains_dims(self):
@@ -375,9 +393,11 @@ class TestStatsAndDisplay:
 # 7. MECH_AFFINITY_BOOST 完整性
 # =============================================================================
 
+
 class TestBoost:
     def test_all_buckets_present(self):
         from sim_systems import RACE_DATA
+
         for bucket in RACE_DATA:
             assert bucket in ax.MECH_AFFINITY_BOOST, f"缺少 {bucket} 的親和力補強"
 
@@ -395,44 +415,58 @@ class TestBoost:
 # 8. 好感度任務門檻（批次 35）
 # =============================================================================
 
+
 class TestRelationshipQuestGates:
     """NPC giver 的支線任務都該有好感度門檻——不同好感度解鎖不同任務分支。"""
 
     def _q(self, qid):
         import sim_systems
+
         return next(q for q in sim_systems.QUESTS if q["id"] == qid)
 
     def test_npc_side_quests_have_relationship_gate(self):
         import sim_systems
+
         npc_gated = 0
         for q in sim_systems.QUESTS:
             giver = q.get("giver", "")
             if q.get("type") == "side" and giver and giver != "系統":
                 reqs = (q.get("conditions", {}) or {}).get("required_relationships", {}) or {}
-                assert reqs.get(giver, 0) > 0, (
-                    "支線任務 %s 由 %s 給出但無好感度門檻" % (q["id"], giver)
+                assert reqs.get(giver, 0) > 0, "支線任務 %s 由 %s 給出但無好感度門檻" % (
+                    q["id"],
+                    giver,
                 )
                 npc_gated += 1
         assert npc_gated >= 4  # 紅×2、小狐丸×2、小蒼蘭×1 等
 
     def test_quest_gate_matches_giver(self):
         import sim_systems
+
         for q in sim_systems.QUESTS:
             giver = q.get("giver", "")
             if giver and giver != "系統":
                 reqs = (q.get("conditions", {}) or {}).get("required_relationships", {}) or {}
                 for npc in reqs:
-                    assert npc == giver, (
-                        "任務 %s 的好感度門檻對象 %s 與 giver %s 不符"
-                        % (q["id"], npc, giver)
+                    assert npc == giver, "任務 %s 的好感度門檻對象 %s 與 giver %s 不符" % (
+                        q["id"],
+                        npc,
+                        giver,
                     )
 
     def test_low_relationship_blocks_quest(self):
         from character_system import check_quest_eligibility
+
         q = self._q("SQ-02")
-        char = {"level": 5, "race": "人類", "mechanic_race": "人類",
-                "reputation": 0, "relationships": {"小狐丸": 10},
-                "completed_quests": [], "token_list": [], "axis": {}}
+        char = {
+            "level": 5,
+            "race": "人類",
+            "mechanic_race": "人類",
+            "reputation": 0,
+            "relationships": {"小狐丸": 10},
+            "completed_quests": [],
+            "token_list": [],
+            "axis": {},
+        }
         ok, reason = check_quest_eligibility(char, q)
         assert not ok
         assert "好感度不足" in reason
@@ -451,6 +485,7 @@ class TestRelationshipQuestGates:
 # 9. 載具軸譜（批次 36）
 # =============================================================================
 
+
 class TestVehicleAxis:
     """載具依 fuel 類型判定誰能騎：魔法→能量/靈性、龍→龍族、機動→機械。"""
 
@@ -460,7 +495,8 @@ class TestVehicleAxis:
     def _char(self, energy=0.17, spirit=0.17, mech=0.12, race="貓娘", mrace="獸娘"):
         return {
             "axis": {"affinity": {"能量": energy, "靈性": spirit, "機械": mech}},
-            "race": race, "mechanic_race": mrace,
+            "race": race,
+            "mechanic_race": mrace,
         }
 
     def test_vehicle_axis_mapping(self):
@@ -501,6 +537,7 @@ class TestVehicleAxis:
         """每地點的載具都該掛到場景物件（原本 18 種載具是永遠拿不到的死資料）。"""
         import sim_systems
         from game_data import expand_game
+
         expand_game()
         veh_by_loc = {}
         for loc, objs in sim_systems.SCENE_OBJECTS.items():
@@ -509,8 +546,10 @@ class TestVehicleAxis:
                     veh_by_loc[loc] = o.get("vehicle_type", "")
         for loc, vname in sim_systems.VEHICLE_LOCATIONS.items():
             assert vname in sim_systems.VEHICLES, "載具 %s 不在 VEHICLES" % vname
-            assert veh_by_loc.get(loc) == vname, (
-                "地點 %s 應掛載載具 %s，實際 %s" % (loc, vname, veh_by_loc.get(loc))
+            assert veh_by_loc.get(loc) == vname, "地點 %s 應掛載載具 %s，實際 %s" % (
+                loc,
+                vname,
+                veh_by_loc.get(loc),
             )
         # 至少掛載 20 個地點（遠多於手寫 3 個）
         assert len(veh_by_loc) >= 20
@@ -522,10 +561,19 @@ class TestNpcHomeVsCardText:
     def test_key_npc_homes_match_card_text(self):
         """卡片文本明載地點的 NPC，排程基地必須落在文本提到的地點。"""
         import json
+
         import sim_systems
         from game_data import expand_game
+
         expand_game()
-        cards = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data', 'game_cards.json'), encoding='utf-8'))['cards']
+        cards = json.load(
+            open(
+                os.path.join(
+                    os.path.dirname(os.path.abspath(__file__)), "..", "data", "game_cards.json"
+                ),
+                encoding="utf-8",
+            )
+        )["cards"]
         wm = sim_systems.WORLD_MAP
         misses = []
         for c in cards:
@@ -549,6 +597,7 @@ class TestNpcHomeVsCardText:
         """無地點資訊的 NPC 依種族/職業常理歸屬地（艦娘→港鎮、人魚→聲吶站、軌道管家→軌道站）。"""
         import sim_systems
         from game_data import expand_game
+
         expand_game()
         scheds = sim_systems.NPC_SCHEDULES
         # 海艦娘：卡洛夫角（港鎮）；星艦原型是太空船 → 軌道站
@@ -578,6 +627,7 @@ class TestWorldLineLocations:
         """48 個可探索地點全有世界線標記。"""
         import sim_systems
         from game_data import expand_game
+
         expand_game()
         wl = sim_systems.LOCATION_WORLD_LINES
         assert len(wl) == len(sim_systems.WORLD_MAP)
@@ -588,6 +638,7 @@ class TestWorldLineLocations:
         """W03/W04/夢境層 地點只能從迴廊進入，不能從 W01 直接走路到。"""
         import sim_systems
         from game_data import expand_game
+
         expand_game()
         wl = sim_systems.LOCATION_WORLD_LINES
         bad = []
@@ -607,6 +658,7 @@ class TestWorldLineLocations:
         """迴廊樞紐連通 W01/W03/W04/夢境層。"""
         import sim_systems
         from game_data import expand_game
+
         expand_game()
         corridor = sim_systems.WORLD_MAP.get("迴廊", {})
         dests = set(corridor.values())
@@ -625,15 +677,16 @@ class TestWorldLineEntryGates:
     def test_corridor_hub_is_free(self):
         """迴廊是連接各世界線的橋樑，Lv1 即可進入。"""
         from sim_systems import check_entry_requirement
+
         ok, _ = check_entry_requirement("迴廊", {"level": 1})
         assert ok
 
     def test_w03_w04_require_level(self):
         """W03 軌道站/W04 廢土需 Lv6，玻璃荒漠（靈爆核心）Lv8。"""
         from sim_systems import check_entry_requirement
+
         ch = {"level": 1}
-        for loc in ("軌道居住站大學院", "鏽蝕城邦", "熒光沼澤",
-                    "高密度大氣結晶行星", "綻放混成園"):
+        for loc in ("軌道居住站大學院", "鏽蝕城邦", "熒光沼澤", "高密度大氣結晶行星", "綻放混成園"):
             ok, _ = check_entry_requirement(loc, ch)
             assert not ok, "%s Lv1 不該進入" % loc
         assert check_entry_requirement("鏽蝕城邦", {"level": 6})[0]
@@ -648,13 +701,15 @@ class TestWorldLineEntryGates:
         任務 giver 可達性：W02 村莊經迴廊樞紐 Lv1 可達（無門檻），
         W03/W04 有等級門檻（Lv6），任務自然被世界線入口閘門分級。"""
         import sim_systems
-        from game_data import expand_game, ALL_NPCS
+        from game_data import ALL_NPCS, expand_game
+
         expand_game()
         wl = sim_systems.LOCATION_WORLD_LINES
         cross_line = [
-            n for n in sim_systems.NPC_SCHEDULES
-            if ALL_NPCS.get(n, {}).get("location") and
-            wl.get(ALL_NPCS[n]["location"], "W01") not in ("W01",)
+            n
+            for n in sim_systems.NPC_SCHEDULES
+            if ALL_NPCS.get(n, {}).get("location")
+            and wl.get(ALL_NPCS[n]["location"], "W01") not in ("W01",)
         ]
         assert cross_line, "應存在跨線 NPC"
         offenders = []
@@ -662,23 +717,26 @@ class TestWorldLineEntryGates:
             home_wl = wl.get(ALL_NPCS[name]["location"], "W01")
             if home_wl in ("迴廊", "W01+迴廊"):
                 continue  # 樞紐通行者（文本允許跨線）
-            for (st, et, _a, l, _m) in sim_systems.NPC_SCHEDULES[name]:
+            for st, et, _a, l, _m in sim_systems.NPC_SCHEDULES[name]:
                 if wl.get(l, "W01") != home_wl:
                     offenders.append((name, home_wl, l))
         assert not offenders, "跨線社交（應留在自家世界線）：%s" % offenders[:6]
         # W02 村莊可達性：小吉鎮經迴廊樞紐 Lv1 可進、大根莖村由小吉鎮連通
         # （任務 giver 小吉/雞頭四 的任務鏈不卡死）
         w02 = sim_systems.WORLD_MAP.get("小吉鎮", {})
-        assert w02.get("enter") == "迴廊" or "迴廊" in str(w02.get("enter")), \
-            "小吉鎮（W02）應經迴廊樞紐進入"
+        assert w02.get("enter") == "迴廊" or "迴廊" in str(
+            w02.get("enter")
+        ), "小吉鎮（W02）應經迴廊樞紐進入"
         d02 = sim_systems.WORLD_MAP.get("大根莖村", {})
-        assert "小吉鎮" in str(d02.get("west") or d02.get("east") or ""), \
-            "大根莖村（W02）應由小吉鎮連通"
+        assert "小吉鎮" in str(
+            d02.get("west") or d02.get("east") or ""
+        ), "大根莖村（W02）應由小吉鎮連通"
 
     def test_corridor_hub_has_explorable_content(self):
         """迴廊樞紐 Lv1 可進——需有場景物件讓低等玩家有探索內容（不只折返）。"""
         import sim_systems
         from game_data import expand_game
+
         expand_game()
         objs = sim_systems.SCENE_OBJECTS.get("迴廊", [])
         assert len(objs) >= 3, "迴廊應有世界法則碎片/數據流等探索物件"
@@ -688,6 +746,7 @@ class TestWorldLineEntryGates:
         （V3.4：零靈子聚合度、靈子/電子設備無法運作）。"""
         import sim_systems
         from game_data import expand_game
+
         expand_game()
         wl = sim_systems.LOCATION_WORLD_LINES
         assert wl.get("小吉鎮") == "W02"
@@ -709,12 +768,13 @@ class TestWorldLineEntryGates:
         """W02 絕對無魔村莊商店不得販賣魔法/電子道具（死亡庫存）——
         小吉/雞頭四 offers 中任何道具在家鄉使用時不得完全失效。"""
         import sim_systems
-        from game_data import expand_game, ALL_NPCS
+        from game_data import ALL_NPCS, expand_game
+
         expand_game()
         for nm in ("小吉", "雞頭四"):
             home = ALL_NPCS.get(nm, {}).get("location", "")
             assert home in ("小吉鎮", "大根莖村")
-            for o in (ALL_NPCS.get(nm, {}).get("offers") or []):
+            for o in ALL_NPCS.get(nm, {}).get("offers") or []:
                 idf = sim_systems.ITEM_CATALOG.get(o, {})
                 if not idf:
                     continue
@@ -725,6 +785,7 @@ class TestWorldLineEntryGates:
         """get_item_world_category 名稱關鍵字：靈子系→magic、電子/機械系→tech，
         天然療傷草藥（靈芝）不受誤傷。"""
         import sim_systems
+
         assert sim_systems.get_item_world_category({}, "靈子電池") == "magic"
         assert sim_systems.get_item_world_category({}, "精密機械零件") == "tech"
         assert sim_systems.get_item_world_category({}, "靈芝") == "natural"
@@ -736,7 +797,8 @@ class TestWorldLineEntryGates:
         只取標題段、描述取第一句），且 W02 giver 任務獎勵不得為 magic/tech
         道具（絕對無魔世界線拿到也用不了）。"""
         import sim_systems
-        from game_data import expand_game, ALL_NPCS
+        from game_data import ALL_NPCS, expand_game
+
         expand_game()
         wl = sim_systems.LOCATION_WORLD_LINES
         item_names = set(sim_systems.ITEM_CATALOG)
@@ -760,8 +822,9 @@ class TestWorldLineEntryGates:
         的時間並同步對齊隱藏在文本外的整體時鐘（移動/渡水/傳送/衝刺
         皆應呼叫 _sync_clock_to_location）。"""
         import sim_systems
-        from game_data import expand_game
         import world_clock as wc
+        from game_data import expand_game
+
         expand_game()
         # 每條世界線的曆法應與文本一致（V3.4：W02 琥珀紀元/W03 星曆/W04 灰燼）
         _wl_clock = {
@@ -773,8 +836,11 @@ class TestWorldLineEntryGates:
         }
         # 夢境層（墮落之城）曆法名含「墮落之城」即可（實際為「墮落之城內部年」）
         _wl_to_clock = {
-            "W02": "W02", "W03": "W03", "W04": "W04",
-            "夢境層": "SL-04", "迴廊": "CORRIDOR",
+            "W02": "W02",
+            "W03": "W03",
+            "W04": "W04",
+            "夢境層": "SL-04",
+            "迴廊": "CORRIDOR",
         }
         _wl_map = sim_systems.LOCATION_WORLD_LINES
         for _loc in _wl_map:
@@ -783,21 +849,26 @@ class TestWorldLineEntryGates:
                 continue
             _clock_id = _wl_to_clock[_wl]
             _cal = wc.get_calendar(_clock_id)
-            assert _wl_clock[_wl] in _cal, \
-                "%s(%s) 應含 %s，實際 %s" % (_loc, _clock_id, _wl_clock[_wl], _cal)
+            assert _wl_clock[_wl] in _cal, "%s(%s) 應含 %s，實際 %s" % (
+                _loc,
+                _clock_id,
+                _wl_clock[_wl],
+                _cal,
+            )
 
     def test_world_line_rules_scales(self):
         """世界線魔法/電子倍率依 V3.4：W03 電子最高精度+靈子低落、
         W04 電子損壞；地點級聚合度修正（聖十字校園低、玻璃荒漠極高）。"""
         import sim_systems
         from game_data import expand_game
+
         expand_game()
         _w, fx = sim_systems.get_world_line_effect("軌道居住站大學院")
-        assert fx.get("magic_scale") == 0.5   # 靈子不足效能低落
-        assert fx.get("tech_scale") == 1.5    # 電子最高精度
+        assert fx.get("magic_scale") == 0.5  # 靈子不足效能低落
+        assert fx.get("tech_scale") == 1.5  # 電子最高精度
         _w, fx = sim_systems.get_world_line_effect("玻璃荒漠")
-        assert fx.get("magic_scale") == 2.0   # 靈爆核心 >100ppm
-        assert fx.get("tech_scale") == 0.2    # 電子大量損壞
+        assert fx.get("magic_scale") == 2.0  # 靈爆核心 >100ppm
+        assert fx.get("tech_scale") == 0.2  # 電子大量損壞
         # 地點級聚合度：聖十字校園靈波吸收層降低靈子
         _w, fx = sim_systems.get_world_line_effect("聖十字校園")
         assert fx.get("magic_scale") < 1.0
@@ -806,6 +877,7 @@ class TestWorldLineEntryGates:
         """載具世界線分類：魔法掃帚 magic、機車 tech、馬/小舟 natural。"""
         import sim_systems
         from game_data import expand_game
+
         expand_game()
         assert sim_systems.get_vehicle_world_category(sim_systems.VEHICLES["魔法掃帚"]) == "magic"
         assert sim_systems.get_vehicle_world_category(sim_systems.VEHICLES["機車"]) == "tech"
@@ -821,11 +893,19 @@ class TestWorldLineEntryGates:
         普通武器不受影響。"""
         import sim_systems
         from game_data import expand_game
+
         expand_game()
         ch = {"race": "人類", "mechanic_race": "人類", "token_list": [], "level": 1}
         em = sim_systems.EquipmentManager(ch)
-        em.equip("right_hand", {"name": "炎帝之劍", "durability": 100,
-                                "current_durability": 100, "stat_multipliers": {"atk": 0.5}})
+        em.equip(
+            "right_hand",
+            {
+                "name": "炎帝之劍",
+                "durability": 100,
+                "current_durability": 100,
+                "stat_multipliers": {"atk": 0.5},
+            },
+        )
         b = em.get_stat_bonuses("小吉鎮")
         assert b.get("atk", 0) == 0.0, "W02 絕對無魔魔法武器應失效"
         b = em.get_stat_bonuses("軌道居住站大學院")
@@ -834,8 +914,15 @@ class TestWorldLineEntryGates:
         assert abs(b.get("atk", 0) - 1.0) < 1e-6, "玻璃荒漠靈爆核心魔法武器應增強"
         # 普通武器不受世界線影響
         em2 = sim_systems.EquipmentManager(ch)
-        em2.equip("right_hand", {"name": "鐵劍", "durability": 100,
-                                 "current_durability": 100, "stat_multipliers": {"atk": 0.3}})
+        em2.equip(
+            "right_hand",
+            {
+                "name": "鐵劍",
+                "durability": 100,
+                "current_durability": 100,
+                "stat_multipliers": {"atk": 0.3},
+            },
+        )
         b = em2.get_stat_bonuses("小吉鎮")
         assert abs(b.get("atk", 0) - 0.3) < 1e-6, "普通武器不受世界線影響"
 
@@ -844,6 +931,7 @@ class TestWorldLineEntryGates:
         不再直連小吉鎮（跨線邊全經迴廊）。"""
         import sim_systems
         from game_data import expand_game
+
         expand_game()
         wl = sim_systems.LOCATION_WORLD_LINES
         assert sim_systems.WORLD_MAP.get("小吉鎮", {}).get("enter") == "迴廊"
@@ -869,6 +957,7 @@ class TestWorldLineEntryGates:
         夢境層 = 概念構成（暗影/幽靈/元素）；S07 熒光沼澤 = 變異兩棲生物）。"""
         import sim_systems
         from game_data import expand_game
+
         expand_game()
         le = sim_systems.LOCATION_ENEMIES
         assert "螢光獵手" in le.get("熒光沼澤", []), "熒光沼澤應有螢光獵手（變異兩棲生物）"
@@ -876,8 +965,9 @@ class TestWorldLineEntryGates:
         assert "拾荒王" in le.get("鏽蝕城邦", []), "鏽蝕城邦應有拾荒王"
         assert "站內巡邏無人機" in le.get("軌道居住站大學院", []), "W03 應有機械系敵人"
         for loc in ("高密度大氣結晶行星", "綻放混成園"):
-            assert any(n in le.get(loc, []) for n in ("暗影靈", "幽靈", "元素核心")), \
-                f"夢境層 {loc} 應有概念構成系敵人"
+            assert any(
+                n in le.get(loc, []) for n in ("暗影靈", "幽靈", "元素核心")
+            ), f"夢境層 {loc} 應有概念構成系敵人"
         # 這些地點不該再有隨機/影之敵
         for loc in ("熒光沼澤", "玻璃荒漠", "鏽蝕城邦", "軌道居住站大學院"):
             assert not any("之影" in n for n in le.get(loc, [])), f"{loc} 不應有影之敵"
@@ -890,11 +980,15 @@ class TestWorldLineEntryGates:
         （野狼/哥布林/野豬等，HP<120/ATK<30）可遭遇、可探索，但不得有強敵。"""
         import sim_systems
         from game_data import expand_game
+
         expand_game()
-        strong_kw = ("凶暴", "兇暴", "遠古", "深淵", "灰燼", "拾荒", "螢光",
-                     "無人機", "維修機械")
+        strong_kw = ("凶暴", "兇暴", "遠古", "深淵", "灰燼", "拾荒", "螢光", "無人機", "維修機械")
         for loc in ("便利店", "聖十字校園", "鏡湖", "清溪河"):
-            bad = [n for n in sim_systems.LOCATION_ENEMIES.get(loc, []) if any(k in n for k in strong_kw)]
+            bad = [
+                n
+                for n in sim_systems.LOCATION_ENEMIES.get(loc, [])
+                if any(k in n for k in strong_kw)
+            ]
             assert not bad, f"安全區 {loc} 出現強敵: {bad}"
         # W02 村落：有普通級荒野敵（可遭遇/探索）但不得有強敵
         emap = {e["name"]: e for e in sim_systems.ENEMIES}
@@ -904,14 +998,16 @@ class TestWorldLineEntryGates:
             for n in pool:
                 assert not any(k in n for k in strong_kw), f"{loc} 出現強敵: {n}"
                 _e = emap.get(n, {})
-                assert (_e.get("hp") or 0) < 120 and (_e.get("atk") or 0) < 30, \
-                    f"{loc} 出現數值強敵: {n}"
+                assert (_e.get("hp") or 0) < 120 and (
+                    _e.get("atk") or 0
+                ) < 30, f"{loc} 出現數值強敵: {n}"
 
     def test_all_map_locations_have_enemy_pools(self):
         """批次 50 + 58：所有地圖地點都有敵人群可遭遇（探索不落空）——
         含 W02 琥珀紀元村落（批次 58 修復空盪世界線）。"""
         import sim_systems
         from game_data import expand_game
+
         expand_game()
         empty = []
         for loc in sim_systems.WORLD_MAP:
@@ -920,8 +1016,12 @@ class TestWorldLineEntryGates:
         assert not empty, f"無敵人群的地圖地點: {empty}"
         # 敵人群不得引用不存在的敵人
         emap = {e["name"] for e in sim_systems.ENEMIES}
-        ghost = [(loc, n) for loc, pool in sim_systems.LOCATION_ENEMIES.items()
-                 for n in pool if n not in emap]
+        ghost = [
+            (loc, n)
+            for loc, pool in sim_systems.LOCATION_ENEMIES.items()
+            for n in pool
+            if n not in emap
+        ]
         assert not ghost, f"幽靈敵人: {ghost}"
 
     def test_w02_villages_have_scene_objects(self):
@@ -929,12 +1029,14 @@ class TestWorldLineEntryGates:
         （原實作 locations_for_objects 只有 W01 地點，W02 完全空盪）。"""
         import sim_systems
         from game_data import expand_game
+
         expand_game()
         for loc in ("小吉鎮", "大根莖村"):
             objs = sim_systems.SCENE_OBJECTS.get(loc, [])
             assert objs, f"{loc} 應有場景物件（批次 58 修復空盪世界線）"
-            assert any(o.get("type") in ("container", "workstation") for o in objs), \
-                f"{loc} 場景物件應含可互動容器/工作台"
+            assert any(
+                o.get("type") in ("container", "workstation") for o in objs
+            ), f"{loc} 場景物件應含可互動容器/工作台"
 
     def test_relax_locations_no_strong_enemies(self):
         """批次 51：休閒/商業/住宅場所（市集/溫泉/圖書館/學府/校園/便利店
@@ -942,10 +1044,23 @@ class TestWorldLineEntryGates:
         ——文明場所出現遠古虎/大地靈違反文本常理；影之敵（演出設計）豁免。"""
         import sim_systems
         from game_data import expand_game
+
         expand_game()
-        relax = ("便利店", "聖十字校園", "鏡湖", "清溪河", "小吉鎮", "大根莖村",
-                 "中央大圖書館", "煙雲溫泉湖", "西翼大市集", "農學院", "魔女學府",
-                 "聖十字環形堡壘校園", "直播控制室")
+        relax = (
+            "便利店",
+            "聖十字校園",
+            "鏡湖",
+            "清溪河",
+            "小吉鎮",
+            "大根莖村",
+            "中央大圖書館",
+            "煙雲溫泉湖",
+            "西翼大市集",
+            "農學院",
+            "魔女學府",
+            "聖十字環形堡壘校園",
+            "直播控制室",
+        )
         emap = {e["name"]: e for e in sim_systems.ENEMIES}
         bad = []
         for loc in relax:
@@ -953,8 +1068,11 @@ class TestWorldLineEntryGates:
                 if "之影" in n:
                     continue
                 e = emap.get(n, {})
-                if (any(k in n for k in ("遠古", "凶暴", "兇暴", "深淵"))
-                        or (e.get("hp") or 0) >= 120 or (e.get("atk") or 0) >= 30):
+                if (
+                    any(k in n for k in ("遠古", "凶暴", "兇暴", "深淵"))
+                    or (e.get("hp") or 0) >= 120
+                    or (e.get("atk") or 0) >= 30
+                ):
                     bad.append((loc, n))
         assert not bad, f"休閒場所出現強敵: {bad}"
 
@@ -963,25 +1081,38 @@ class TestWorldLineEntryGates:
         會產生「小無（Xiǎ之影」這種缺右括號的名字）。"""
         import sim_systems
         from game_data import expand_game
+
         expand_game()
         shadows = [e["name"] for e in sim_systems.ENEMIES if "之影" in e["name"]]
         assert shadows, "應有影之敵"
         bad = [s for s in shadows if "（" in s or "(" in s]
         assert not bad, f"影之敵名稱含殘留括號: {bad}"
         # 演出場景刻意保留影之敵（演出對戰），普通場景不得污染
-        perf = [loc for loc in sim_systems.LOCATION_ENEMIES if any(
-            k in loc for k in ("舞台", "演唱會", "直播", "模式"))]
-        assert any(any("之影" in n for n in sim_systems.LOCATION_ENEMIES.get(loc, [])) for loc in perf), \
-            "演出場景應保留影之敵"
+        perf = [
+            loc
+            for loc in sim_systems.LOCATION_ENEMIES
+            if any(k in loc for k in ("舞台", "演唱會", "直播", "模式"))
+        ]
+        assert any(
+            any("之影" in n for n in sim_systems.LOCATION_ENEMIES.get(loc, [])) for loc in perf
+        ), "演出場景應保留影之敵"
 
     def test_w04_enemy_stats_present(self):
         """批次 43：新增 W03/W04 專屬敵人有完整數值（世界線錨定實證）。"""
         import sim_systems
         from game_data import expand_game
+
         expand_game()
         names = {e["name"]: e for e in sim_systems.ENEMIES}
-        for n in ("灰燼行者", "灰燼行者長", "螢光獵手", "沼澤變異體", "拾荒王",
-                  "站內巡邏無人機", "軌道站維修機械"):
+        for n in (
+            "灰燼行者",
+            "灰燼行者長",
+            "螢光獵手",
+            "沼澤變異體",
+            "拾荒王",
+            "站內巡邏無人機",
+            "軌道站維修機械",
+        ):
             e = names.get(n)
             assert e, f"缺少 W03/W04 敵人: {n}"
             assert e["hp"] > 0 and e["atk"] > 0 and e["exp"] > 0, f"{n} 數值不完整"
@@ -991,8 +1122,10 @@ class TestWorldLineEntryGates:
         ITEM_CATALOG——否則商店固定只賣 5 種，語境庫存（艦娘裝備/神話道具/
         義體/極地裝備等）是死資料。"""
         import json
+
         import sim_systems
         from game_data import expand_game
+
         expand_game()
         cat = sim_systems.ITEM_CATALOG
         missing = {}
@@ -1008,16 +1141,19 @@ class TestWorldLineEntryGates:
         乾糧是 natural（不受世界線影響）。"""
         import sim_systems
         from game_data import expand_game
+
         expand_game()
         cat = sim_systems.ITEM_CATALOG
         assert sim_systems.get_item_world_category(cat["靈子電池"], "靈子電池") == "magic"
         assert sim_systems.get_item_world_category(cat["12.7cm連装砲"], "12.7cm連装砲") == "tech"
         assert sim_systems.get_item_world_category(cat["神諭碎片"], "神諭碎片") == "magic"
         assert sim_systems.get_item_world_category(cat["魔力補充藥水"], "魔力補充藥水") == "magic"
-        assert sim_systems.get_item_world_category(cat["乾糧（高密度）"], "乾糧（高密度）") == "natural"
+        assert (
+            sim_systems.get_item_world_category(cat["乾糧（高密度）"], "乾糧（高密度）")
+            == "natural"
+        )
         # 世界線效果：靈子電池在 W02 失效、W03 減半
-        m, blk = sim_systems.world_line_consumable_effect(
-            "小吉鎮", cat["靈子電池"], "靈子電池")
+        m, blk = sim_systems.world_line_consumable_effect("小吉鎮", cat["靈子電池"], "靈子電池")
         assert m == 0.0 and blk, "W02 絕對無魔下靈子電池應失效"
 
     def test_no_wl_enemy_leak_anywhere(self):
@@ -1025,12 +1161,27 @@ class TestWorldLineEntryGates:
         不得洩漏到任何 W01 地點（含場景卡建立的地點，如珊瑚台）。"""
         import sim_systems
         from game_data import expand_game
+
         expand_game()
         wl = sim_systems.LOCATION_WORLD_LINES
-        targets = ("熒光沼澤", "玻璃荒漠", "鏽蝕城邦", "鏽蝕城邦地下",
-                   "軌道居住站大學院", "高密度大氣結晶行星", "綻放混成園")
-        wl_names = ("灰燼行者", "灰燼行者長", "螢光獵手", "沼澤變異體", "拾荒王",
-                    "站內巡邏無人機", "軌道站維修機械")
+        targets = (
+            "熒光沼澤",
+            "玻璃荒漠",
+            "鏽蝕城邦",
+            "鏽蝕城邦地下",
+            "軌道居住站大學院",
+            "高密度大氣結晶行星",
+            "綻放混成園",
+        )
+        wl_names = (
+            "灰燼行者",
+            "灰燼行者長",
+            "螢光獵手",
+            "沼澤變異體",
+            "拾荒王",
+            "站內巡邏無人機",
+            "軌道站維修機械",
+        )
         leak = []
         for loc, names in sim_systems.LOCATION_ENEMIES.items():
             if loc in targets:
@@ -1046,9 +1197,22 @@ class TestWorldLineEntryGates:
         影之敵（非家鄉指派）不得存在。"""
         import sim_systems
         from game_data import expand_game
+
         expand_game()
-        perf_kw = ("舞台", "演唱會", "模式", "瞬間", "盲區", "更衣室", "直播",
-                   "控制室", "核心室", "體育場", "競技", "演出")
+        perf_kw = (
+            "舞台",
+            "演唱會",
+            "模式",
+            "瞬間",
+            "盲區",
+            "更衣室",
+            "直播",
+            "控制室",
+            "核心室",
+            "體育場",
+            "競技",
+            "演出",
+        )
         home_map = getattr(sim_systems, "SHADOW_HOME_MAP", {}) or {}
         bad = []
         for loc, names in sim_systems.LOCATION_ENEMIES.items():
@@ -1060,9 +1224,11 @@ class TestWorldLineEntryGates:
                     bad.append(f"{loc}:{n}")
         assert not bad, f"非家鄉指派的影之敵污染普通場景: {bad}"
         # 演出場景保留影之敵
-        assert any(any("之影" in n for n in sim_systems.LOCATION_ENEMIES.get(loc, []))
-                   for loc in sim_systems.LOCATION_ENEMIES if any(k in loc for k in perf_kw)), \
-            "演出場景應保留影之敵"
+        assert any(
+            any("之影" in n for n in sim_systems.LOCATION_ENEMIES.get(loc, []))
+            for loc in sim_systems.LOCATION_ENEMIES
+            if any(k in loc for k in perf_kw)
+        ), "演出場景應保留影之敵"
 
     def test_card_shadow_enemies_encounterable(self):
         """批次 52：卡片影之敵（X之影/深淵X之影）不得是死資料——
@@ -1070,9 +1236,22 @@ class TestWorldLineEntryGates:
         且任一場所的影之敵不得超過其非影敵（文明場所遭遇以場所主題為主）。"""
         import sim_systems
         from game_data import expand_game
+
         expand_game()
-        perf_kw = ("舞台", "演唱會", "模式", "瞬間", "盲區", "更衣室", "直播",
-                   "控制室", "核心室", "體育場", "競技", "演出")
+        perf_kw = (
+            "舞台",
+            "演唱會",
+            "模式",
+            "瞬間",
+            "盲區",
+            "更衣室",
+            "直播",
+            "控制室",
+            "核心室",
+            "體育場",
+            "競技",
+            "演出",
+        )
         placed = {n for pool in sim_systems.LOCATION_ENEMIES.values() for n in pool}
         all_shadows = [e["name"] for e in sim_systems.ENEMIES if "之影" in e["name"]]
         unplaced = [n for n in all_shadows if n not in placed]
@@ -1084,8 +1263,9 @@ class TestWorldLineEntryGates:
             pool = sim_systems.LOCATION_ENEMIES.get(home, [])
             nonshadow = len([x for x in pool if "之影" not in x])
             shadowcnt = len([x for x in pool if "之影" in x])
-            assert (home in ("小吉鎮", "大根莖村") or shadowcnt >= nonshadow), \
-                f"普通版影之敵 {n}@{home} 未放置且未達上限"
+            assert (
+                home in ("小吉鎮", "大根莖村") or shadowcnt >= nonshadow
+            ), f"普通版影之敵 {n}@{home} 未放置且未達上限"
         # 影之敵不得淹沒非演出場所的遭遇池（演出場景是暗影對戰場地，豁免）；
         # 無非影敵的場所（角色家鄉即挑戰點）最多 1 個影之敵。
         for loc, pool in sim_systems.LOCATION_ENEMIES.items():
@@ -1093,8 +1273,9 @@ class TestWorldLineEntryGates:
                 continue
             nonshadow = len([x for x in pool if "之影" not in x])
             shadowcnt = len([x for x in pool if "之影" in x])
-            assert shadowcnt <= max(1, nonshadow), \
-                f"{loc} 影之敵({shadowcnt})超過非影敵({nonshadow})"
+            assert shadowcnt <= max(
+                1, nonshadow
+            ), f"{loc} 影之敵({shadowcnt})超過非影敵({nonshadow})"
         # 家鄉指派的一致性：SHADOW_HOME_MAP 的每個條目都真的在該地點池中
         home_map = getattr(sim_systems, "SHADOW_HOME_MAP", {}) or {}
         for loc, names in home_map.items():
@@ -1109,6 +1290,7 @@ class TestWorldLineEntryGates:
         （哥布林/森狼/野豬/巨熊/大鹿/虎/狼）必須掉木材。"""
         import sim_systems
         from game_data import expand_game
+
         expand_game()
         cat = sim_systems.ITEM_CATALOG
         assert "木材" in cat, "木材必須存在於 ITEM_CATALOG"
@@ -1116,16 +1298,20 @@ class TestWorldLineEntryGates:
         assert wood_droppers, "沒有任何敵人掉木材——SQ-09 永不可完成"
         # 森林系基底敵人至少有一個掉木材
         keys = ("哥布林", "森狼", "野豬", "巨熊", "大鹿", "虎")
-        assert any(any(k in n for k in keys) for n in wood_droppers), \
-            f"森林系敵人應掉木材: {wood_droppers}"
+        assert any(
+            any(k in n for k in keys) for n in wood_droppers
+        ), f"森林系敵人應掉木材: {wood_droppers}"
         # 全任務 collect 目標都至少有獲取路徑（商店/掉落/配方）
-        shop_items = {it for n, nd in sim_systems.NPC_METADATA.items()
-                      for it in nd.get("offers", [])}
+        shop_items = {
+            it for n, nd in sim_systems.NPC_METADATA.items() for it in nd.get("offers", [])
+        }
         loot_items = {it for e in sim_systems.ENEMIES for it in e.get("loot", [])}
         recipe_items = {r.get("result_item") or r.get("result") for r in sim_systems.RECIPES}
-        recipe_items |= {ing.get("item") if isinstance(ing, dict) else ing
-                         for r in sim_systems.RECIPES
-                         for ing in r.get("ingredients", []) or r.get("materials", [])}
+        recipe_items |= {
+            ing.get("item") if isinstance(ing, dict) else ing
+            for r in sim_systems.RECIPES
+            for ing in r.get("ingredients", []) or r.get("materials", [])
+        }
         unobtainable = []
         for q in sim_systems.QUESTS:
             for obj in q.get("objectives", []):
@@ -1140,9 +1326,13 @@ class TestWorldLineEntryGates:
         giver_location 與 defeat/goto 目標地點必須存在於地圖。"""
         import sim_systems
         from game_data import expand_game
+
         expand_game()
-        loc_set = (set(sim_systems.WORLD_MAP) | set(sim_systems.LOCATION_ENEMIES)
-                   | set(sim_systems.LOCATION_VIBES))
+        loc_set = (
+            set(sim_systems.WORLD_MAP)
+            | set(sim_systems.LOCATION_ENEMIES)
+            | set(sim_systems.LOCATION_VIBES)
+        )
         enemy_set = {e["name"] for e in sim_systems.ENEMIES}
         npc_set = set(sim_systems.NPC_METADATA)
         problems = []
@@ -1160,7 +1350,9 @@ class TestWorldLineEntryGates:
                         problems.append(f"defeat 目標敵人不存在: {en} ({q.get('id')})")
                 elif obj.get("type") == "goto":
                     if obj.get("location") and obj.get("location") not in loc_set:
-                        problems.append(f"goto 目標地點不存在: {obj.get('location')} ({q.get('id')})")
+                        problems.append(
+                            f"goto 目標地點不存在: {obj.get('location')} ({q.get('id')})"
+                        )
         assert not problems, "\n".join(problems[:12])
 
     def test_flying_and_water_vehicle_abilities(self):
@@ -1168,8 +1360,9 @@ class TestWorldLineEntryGates:
         必須有對應能力——飛行載具可飛越水域、船可渡水。騎乘時
         get_water_routes 需開通水域路線；非飛行/渡水載具（腳踏車）不得。"""
         import sim_systems
-        from game_data import expand_game
         from character_system import generate_character_from_card, init_skills, mount_vehicle
+        from game_data import expand_game
+
         expand_game()
         abilities = sim_systems.VEHICLE_ABILITIES
         # 飛行載具
@@ -1180,7 +1373,15 @@ class TestWorldLineEntryGates:
             assert "渡水" in abilities.get(vn, {}), f"{vn} 應有渡水能力"
         # 騎乘飛行載具 → 水域路線開通
         import json
-        cards = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data', 'game_cards.json'), encoding='utf-8'))["cards"]
+
+        cards = json.load(
+            open(
+                os.path.join(
+                    os.path.dirname(os.path.abspath(__file__)), "..", "data", "game_cards.json"
+                ),
+                encoding="utf-8",
+            )
+        )["cards"]
         ch = generate_character_from_card(next(c for c in cards if c["card_id"] == "CC-01"))
         init_skills(ch)
         ch.setdefault("vehicles", {})["熱氣球"] = {"owned": True, "fuel": "fire"}
@@ -1201,6 +1402,7 @@ class TestWorldLineEntryGates:
         生物/人力（馬/腳踏車/船）→ natural。"""
         import sim_systems
         from game_data import expand_game
+
         expand_game()
         v = sim_systems.VEHICLES
         assert sim_systems.get_vehicle_world_category(v["魔法掃帚"]) == "magic"
@@ -1217,17 +1419,17 @@ class TestWorldLineEntryGates:
         否定子句內的關鍵字不得觸發能力（東 雲 純血魔女曾被誤判可飛行）；
         真天使（否定的是位階非翅膀）仍可飛行。"""
         from axis_system import movement_abilities
+
         # 否定語境：純血魔女明言非龍娘/妖精等亞種 → 不得因「妖精」字眼飛
-        m = movement_abilities(
-            text_race="魔女（まじょ）——純血術式適應體，非龍娘/獸人/妖精等亞種")
+        m = movement_abilities(text_race="魔女（まじょ）——純血術式適應體，非龍娘/獸人/妖精等亞種")
         assert not m.get("fly"), f"否定子句誤觸發飛行: {m}"
         # 真天使（無大天使位階是位階否定，非翅膀否定）→ 可飛行
         m2 = movement_abilities(
-            text_race="天使（第三環・醫療專責／非戰鬥型，無大天使位階，無熾天使權能）")
+            text_race="天使（第三環・醫療專責／非戰鬥型，無大天使位階，無熾天使權能）"
+        )
         assert m2.get("fly"), f"真天使應可飛行: {m2}"
         # 、/／ 是列表分隔符不中斷否定範圍（「非A、B、C」整串否定）
-        m3 = movement_abilities(
-            text_race="魔女——純血術式適應體，非龍娘、獸人、妖精等亞種")
+        m3 = movement_abilities(text_race="魔女——純血術式適應體，非龍娘、獸人、妖精等亞種")
         assert not m3.get("fly"), f"、分隔的否定列表誤觸發飛行: {m3}"
         # 不/未 單字不視為否定（未來型天使/不具人形的妖精仍為天使/妖精）
         assert movement_abilities(text_race="未來型天使（試作）").get("fly")
@@ -1246,9 +1448,11 @@ class TestWorldLineEntryGates:
         玩家進去就回不來或根本進不去）。"""
         import sim_systems
         from game_data import expand_game
+
         expand_game()
         wm = sim_systems.WORLD_MAP
         from collections import deque
+
         start = "聖十字校園"
         reach = {start}
         q = deque([start])
@@ -1273,21 +1477,37 @@ class TestWorldLineEntryGates:
 # 10. 演出場景內容（批次 48）
 # =============================================================================
 
+
 class TestPerformanceScenes:
     """SC-20 星光舞台演出場景稽核：載具不得誤停（漁船/熱氣球塞進舞台）、
     須有舞台設備物件（主舞台/音響塔/導播台）、偶像團 NPC 依文本歸位。"""
 
-    _PERF_KW = ("舞台", "演唱會", "模式", "瞬間", "盲區", "更衣室", "直播",
-                "控制室", "核心室", "體育場", "異常")
+    _PERF_KW = (
+        "舞台",
+        "演唱會",
+        "模式",
+        "瞬間",
+        "盲區",
+        "更衣室",
+        "直播",
+        "控制室",
+        "核心室",
+        "體育場",
+        "異常",
+    )
 
     def test_no_vehicles_parked_in_performance_scenes(self):
         """演出場景不得被載具 fallback 隨機指派（原缺陷：星光舞台=漁船、
         演唱會模式=熱氣球、伺服器核心室=雪橇——與演出語境完全無關）。"""
         import sim_systems
         from game_data import expand_game
+
         expand_game()
-        bad = [(loc, vn) for loc, vn in sim_systems.VEHICLE_LOCATIONS.items()
-               if any(k in loc for k in self._PERF_KW)]
+        bad = [
+            (loc, vn)
+            for loc, vn in sim_systems.VEHICLE_LOCATIONS.items()
+            if any(k in loc for k in self._PERF_KW)
+        ]
         assert not bad, f"演出場景誤停載具: {bad}"
 
     def test_performance_scenes_have_stage_equipment(self):
@@ -1295,6 +1515,7 @@ class TestPerformanceScenes:
         而非被交通工具塞滿。"""
         import sim_systems
         from game_data import expand_game
+
         expand_game()
         objs = [o.get("name", "") for o in sim_systems.SCENE_OBJECTS.get("星光舞台", [])]
         stage_kw = ("主舞台", "音響", "導播台", "燈光", "麥克風", "舞台")
@@ -1308,31 +1529,41 @@ class TestPerformanceScenes:
         """跨線場景的載具應符語境：熒光沼澤（沼澤）不得停腳踏車。"""
         import sim_systems
         from game_data import expand_game
+
         expand_game()
         assert sim_systems.VEHICLE_LOCATIONS.get("熒光沼澤") != "腳踏車", "熒光沼澤不該停腳踏車"
-        assert sim_systems.VEHICLE_LOCATIONS.get("軌道居住站大學院") != "自行車", \
-            "軌道站不該停自行車（太空站）"
+        assert (
+            sim_systems.VEHICLE_LOCATIONS.get("軌道居住站大學院") != "自行車"
+        ), "軌道站不該停自行車（太空站）"
 
     def test_idol_group_npcs_at_star_stage(self):
         """文本（CC-30/31/47）：特戰偶像團、台灣AI小N、呃咔屬星光舞台
         演出區域——主要排程地點須在星光舞台。"""
         import sim_systems
         from game_data import expand_game
+
         expand_game()
-        for name, expect in (("特戰偶像團", "星光舞台"), ("台灣AI小N", "星光舞台"),
-                             ("呃咔", "星光舞台"), ("奶油泡芙", "西翼大市集")):
+        for name, expect in (
+            ("特戰偶像團", "星光舞台"),
+            ("台灣AI小N", "星光舞台"),
+            ("呃咔", "星光舞台"),
+            ("奶油泡芙", "西翼大市集"),
+        ):
             nd = sim_systems.NPC_METADATA.get(name)
             assert nd, f"NPC {name} 不存在"
             sched = sim_systems.NPC_SCHEDULES.get(name, [])
             assert sched, f"NPC {name} 無排程"
             main = sched[0][3]
             assert main == expect, f"{name} 主要排程地 {main} ≠ {expect}"
-            assert main in sim_systems.WORLD_MAP, f"{name} 的基地 {main} 不在可探索地圖（玩家無法到達）"
+            assert (
+                main in sim_systems.WORLD_MAP
+            ), f"{name} 的基地 {main} 不在可探索地圖（玩家無法到達）"
 
     def test_idol_group_reachable_at_work_hours(self):
         """10 點（工作時段）在星光舞台能遇到偶像團（排程查詢）。"""
         import sim_systems
         from game_data import expand_game
+
         expand_game()
         found = []
         for name in ("特戰偶像團", "台灣AI小N", "呃咔"):
@@ -1346,6 +1577,7 @@ class TestPerformanceScenes:
         （演唱會門票/簽名海報/特戰偶像團周邊等演出語境商品）。"""
         import sim_systems
         from game_data import expand_game
+
         expand_game()
         cat = sim_systems.ITEM_CATALOG
         for n in ("特戰偶像團", "呃咔", "奶油泡芙"):
@@ -1356,6 +1588,7 @@ class TestPerformanceScenes:
 # =============================================================================
 # 11. 任務可達性與平衡（批次 49）
 # =============================================================================
+
 
 class TestQuestReachabilityBalance:
     """任務稽核：giver 排程時段可達、獎勵曲線不倒掛、
@@ -1375,6 +1608,7 @@ class TestQuestReachabilityBalance:
         玩家在白天/傍晚造訪不會撲空。"""
         import sim_systems
         from game_data import expand_game
+
         expand_game()
         probs = []
         for q in sim_systems.QUESTS:
@@ -1397,8 +1631,10 @@ class TestQuestReachabilityBalance:
     def test_quest_reward_curve_no_inversion(self):
         """任務獎勵曲線：同級任務 EXP 差異 ≤3 倍、高級任務不低於低級 2 倍。"""
         import collections
+
         import sim_systems
         from game_data import expand_game
+
         expand_game()
         by_level = collections.defaultdict(list)
         for q in sim_systems.QUESTS:
@@ -1415,8 +1651,7 @@ class TestQuestReachabilityBalance:
         for lv, items in by_level.items():
             exps = [e for _i, e in items if e > 0]
             if len(exps) >= 2:
-                assert max(exps) / min(exps) <= 3.0, (
-                    f"Lv{lv} 同級 EXP 差過大: {items}")
+                assert max(exps) / min(exps) <= 3.0, f"Lv{lv} 同級 EXP 差過大: {items}"
         for lv in sorted(by_level):
             for lv2 in sorted(by_level):
                 if lv2 > lv:
@@ -1429,6 +1664,7 @@ class TestQuestReachabilityBalance:
         Lv1 任務不該叫玩家打 HP150 的古代守衛。"""
         import sim_systems
         from game_data import expand_game
+
         expand_game()
         enemy_map = {e["name"]: e for e in sim_systems.ENEMIES}
         probs = []
@@ -1450,6 +1686,7 @@ class TestQuestReachabilityBalance:
         （含跨午夜時段如 SQ-08 18-6——小狐丸 18-22 西翼大市集）。"""
         import sim_systems
         from game_data import expand_game
+
         expand_game()
         probs = []
         for q in sim_systems.QUESTS:
@@ -1471,6 +1708,7 @@ class TestQuestReachabilityBalance:
         Lv1 任務不該要玩家去需 Lv6 的 W03/W04。"""
         import sim_systems
         from game_data import expand_game
+
         expand_game()
         wl = sim_systems.LOCATION_WORLD_LINES
         entry = sim_systems.ENTRY_REQUIREMENTS
@@ -1492,6 +1730,7 @@ class TestQuestReachabilityBalance:
         治療藥水 40G 對 Lv1-3 任務約 50G 平均獎勵可負擔。"""
         import sim_systems
         from game_data import expand_game
+
         expand_game()
         cat = sim_systems.ITEM_CATALOG
         assert cat["治療藥水"]["value"] <= 60, "治療藥水不該過貴"

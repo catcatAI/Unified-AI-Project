@@ -60,5 +60,5 @@ const root = '../../packages/shared-js/js/'
 
 ## Dependencies
 
-Runtime: none (vanilla ES6, loaded as `<script>` tags).  
-Test: `echo "No tests yet"` — see `package.json`.
+Runtime: none (vanilla ES6, loaded as `<script>` tags). Test:
+`echo "No tests yet"` — see `package.json`.

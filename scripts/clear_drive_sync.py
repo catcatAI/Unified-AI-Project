@@ -1,11 +1,13 @@
-import sqlite3
+import logging
 import os
+import sqlite3
 import sys
 from pathlib import Path
-import logging
+
 logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
 
 def clear_sync():
     db_path = PROJECT_ROOT / "data" / "drive_sync.db"
@@ -19,7 +21,7 @@ def clear_sync():
         print("Cancelled.")
         return
 
-    conn=None
+    conn = None
     try:
         conn = sqlite3.connect(str(db_path))
         cursor = conn.cursor()
@@ -36,6 +38,7 @@ def clear_sync():
     finally:
         if conn:
             conn.close()
+
 
 if __name__ == "__main__":
     clear_sync()

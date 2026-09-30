@@ -124,9 +124,7 @@ class TestPromptBudgetGate:
     def test_history_dropped_oldest_first(self, mock_cfg):
         from services.llm.prompt_builder import _enforce_prompt_budget
 
-        history = [
-            {"role": "user", "content": f"舊訊息{i}" + "y" * 900} for i in range(4)
-        ]
+        history = [{"role": "user", "content": f"舊訊息{i}" + "y" * 900} for i in range(4)]
         messages = self._build(n_blocks=0, history=history)
         with patch(
             "services.llm.context_scheduler.get_context_scheduler",
@@ -233,9 +231,7 @@ class TestPromptBudgetGate:
             "services.llm.context_scheduler.get_context_scheduler",
             side_effect=ImportError("disabled"),
         ):
-            stats = _enforce_prompt_budget(
-                messages, {"_model_context_window": 2048}
-            )
+            stats = _enforce_prompt_budget(messages, {"_model_context_window": 2048})
         assert stats["budget_tokens"] == int(2048 * 0.55)
         assert stats["dropped_messages"] > 0
 
@@ -371,9 +367,7 @@ class TestWorkspaceOverviewInjection:
 
         context = {"state_for_llm": None, "workspace_overview": None}
         with patch("services.llm.prompt_builder._get_llm_config", return_value={}):
-            with patch(
-                "services.llm.prompt_builder._get_workspace_overview", return_value=""
-            ):
+            with patch("services.llm.prompt_builder._get_workspace_overview", return_value=""):
                 result = construct_angela_prompt("你好", context)
         assert "[System Context Overview" not in result[0]["content"]
 

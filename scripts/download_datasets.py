@@ -56,17 +56,17 @@ except Exception:
     OUT_DIR = ROOT / "data" / "dictionaries"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
-TIMEOUT=300  # generous timeout for weak connections
+TIMEOUT = 300  # generous timeout for weak connections
 
 
-def _urlretrieve(url: str, dest: Path, desc: str="") -> None:
+def _urlretrieve(url: str, dest: Path, desc: str = "") -> None:
     """Download *url* to *dest* with simple progress output."""
     logger.info("Downloading %s …", desc or url)
     req = urllib.request.Request(url, headers={"User-Agent": "ED3N-Dataset-Downloader/1.0"})
     with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
         total = int(resp.headers.get("Content-Length", 0))
-        chunk_size=64 * 1024
-        downloaded=0
+        chunk_size = 64 * 1024
+        downloaded = 0
         with open(dest, "wb") as f:
             while True:
                 chunk = resp.read(chunk_size)
@@ -86,7 +86,7 @@ def _urlretrieve(url: str, dest: Path, desc: str="") -> None:
 # CC-CEDICT
 # ---------------------------------------------------------------------------
 
-CC_CEDICT_URL="https://www.mdbg.net/chinese/export/cedict/cedict_1_0_ts_utf-8_mdbg.txt.gz"
+CC_CEDICT_URL = "https://www.mdbg.net/chinese/export/cedict/cedict_1_0_ts_utf-8_mdbg.txt.gz"
 CC_CEDICT_GZ = OUT_DIR / "cedict_1_0_ts_utf-8_mdbg.txt.gz"
 
 
@@ -160,7 +160,7 @@ def convert_cedict(gz_path: Path) -> Path:
             duplicate_en.add(en_key)
             duplicate_zh.add(zh)
 
-            entry={
+            entry = {
                 "key": f"cedict_{dedup_key}",
                 "surface_forms": sf,
                 "contexts": [{"context_id": "cedict", "pinyin": pinyin}] if pinyin else None,
@@ -170,11 +170,15 @@ def convert_cedict(gz_path: Path) -> Path:
             entries.append(entry)
 
     out_path = OUT_DIR / "cedict.json"
-    data={"version": "2.0", "source": "CC-CEDICT", "entries": entries}
+    data = {"version": "2.0", "source": "CC-CEDICT", "entries": entries}
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=1)
-    logger.info("CC-CEDICT: %d entries written to %s (%.1fMB)",
-                len(entries), out_path, out_path.stat().st_size / (1024 * 1024))
+    logger.info(
+        "CC-CEDICT: %d entries written to %s (%.1fMB)",
+        len(entries),
+        out_path,
+        out_path.stat().st_size / (1024 * 1024),
+    )
     return out_path
 
 
@@ -187,7 +191,7 @@ def process_cedict() -> Path:
 # JMdict (Japanese-English)
 # ---------------------------------------------------------------------------
 
-JMDICT_URL="http://ftp.edrdg.org/pub/Nihongo/JMdict_e.gz"
+JMDICT_URL = "http://ftp.edrdg.org/pub/Nihongo/JMdict_e.gz"
 JMDICT_GZ = OUT_DIR / "JMdict_e.gz"
 
 
@@ -242,11 +246,13 @@ def convert_jmdict(gz_path: Path) -> Path:
 
         dedup_key, _ = count_suffix_key(en_key, key_counts)
 
-        entry={
+        entry = {
             "key": f"jmdict_{dedup_key}",
             "surface_forms": sf,
             "contexts": (
-                [{"context_id": "jmdict", "reading": reading}] if reading and reading != ja else None
+                [{"context_id": "jmdict", "reading": reading}]
+                if reading and reading != ja
+                else None
             ),
             "relations": {},
             "confidence": 1.0,
@@ -254,11 +260,15 @@ def convert_jmdict(gz_path: Path) -> Path:
         entries.append(entry)
 
     out_path = OUT_DIR / "jmdict.json"
-    data={"version": "2.0", "source": "JMdict", "entries": entries}
+    data = {"version": "2.0", "source": "JMdict", "entries": entries}
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=1)
-    logger.info("JMdict: %d entries written to %s (%.1fMB)",
-                len(entries), out_path, out_path.stat().st_size / (1024 * 1024))
+    logger.info(
+        "JMdict: %d entries written to %s (%.1fMB)",
+        len(entries),
+        out_path,
+        out_path.stat().st_size / (1024 * 1024),
+    )
     return out_path
 
 
@@ -271,7 +281,7 @@ def process_jmdict() -> Path:
 # WordNet 3.1
 # ---------------------------------------------------------------------------
 
-WN_URL="https://wordnetcode.princeton.edu/3.0/WordNet-3.0.tar.gz"
+WN_URL = "https://wordnetcode.princeton.edu/3.0/WordNet-3.0.tar.gz"
 WN_TGZ = OUT_DIR / "WordNet-3.0.tar.gz"
 WN_DIR = OUT_DIR / "WordNet-3.0"
 
@@ -296,9 +306,9 @@ def _parse_wn_line(line: str) -> dict | None:
     if len(tokens) < 4:
         return None
         # tokens[0] = offset, [1] = lex_footnote, [2] = synset_type, [3] = word_count
-    word_count = int(tokens[3], 16) if re.match(r'^[0-9a-fA-F]+$', tokens[3]) else 0
+    word_count = int(tokens[3], 16) if re.match(r"^[0-9a-fA-F]+$", tokens[3]) else 0
     lemmas: list[str] = []
-    idx=4
+    idx = 4
     for _ in range(word_count):
         if idx < len(tokens):
             lemmas.append(tokens[idx].replace("_", " "))
@@ -307,7 +317,7 @@ def _parse_wn_line(line: str) -> dict | None:
         return None
 
     pos_code = tokens[2]
-    pos_map={"n": "noun", "v": "verb", "a": "adj", "s": "adj", "r": "adv"}
+    pos_map = {"n": "noun", "v": "verb", "a": "adj", "s": "adj", "r": "adv"}
     pos = pos_map.get(pos_code, "unknown")
 
     return {"lemma": lemmas[0], "lemmas": lemmas, "pos": pos, "gloss": gloss, "offset": tokens[0]}
@@ -336,7 +346,7 @@ def convert_wordnet(tgz_path: Path) -> Path:
 
     for pos_file in sorted(data_dir.glob("data.*")):
         pos_name = pos_file.suffix[1:]  # n, v, a, r
-        pos_map_full={"n": "noun", "v": "verb", "a": "adj", "r": "adv"}
+        pos_map_full = {"n": "noun", "v": "verb", "a": "adj", "r": "adv"}
         pos_full = pos_map_full.get(pos_name, "unknown")
 
         logger.info("  Parsing data.%s …", pos_name)
@@ -364,7 +374,7 @@ def convert_wordnet(tgz_path: Path) -> Path:
                 # Add synonyms as relations
                 rels: dict[str, list[str]] = {}
                 if len(lemmas) > 1:
-                    syn_keys=[]
+                    syn_keys = []
                     for s in lemmas[1:]:
                         sk = s.lower().replace(" ", "_")
                         sk = re.sub(r"[^a-z0-9_]", "", sk)
@@ -373,7 +383,7 @@ def convert_wordnet(tgz_path: Path) -> Path:
                     if syn_keys:
                         rels["synonym"] = syn_keys[:10]  # limit to avoid bloat
 
-                entry={
+                entry = {
                     "key": f"wn_{pos_full}_{dedup_key}",
                     "surface_forms": sf,
                     "contexts": [{"context_id": "wordnet", "pos": pos_full, "gloss": defn}],
@@ -383,11 +393,15 @@ def convert_wordnet(tgz_path: Path) -> Path:
                 entries.append(entry)
 
     out_path = OUT_DIR / "wordnet.json"
-    data={"version": "2.0", "source": "WordNet-3.0", "entries": entries}
+    data = {"version": "2.0", "source": "WordNet-3.0", "entries": entries}
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=1)
-    logger.info("WordNet: %d entries written to %s (%.1fMB)",
-                len(entries), out_path, out_path.stat().st_size / (1024 * 1024))
+    logger.info(
+        "WordNet: %d entries written to %s (%.1fMB)",
+        len(entries),
+        out_path,
+        out_path.stat().st_size / (1024 * 1024),
+    )
     return out_path
 
 
@@ -400,9 +414,7 @@ def process_wordnet() -> Path:
 # Korean-English Dictionary (KOEDict)
 # ---------------------------------------------------------------------------
 
-KOEDICT_URL = (
-    "https://raw.githubusercontent.com/mhagiwara/cc-kedict/master/kedict.yml"
-)
+KOEDICT_URL = "https://raw.githubusercontent.com/mhagiwara/cc-kedict/master/kedict.yml"
 KOEDICT_TXT = OUT_DIR / "kedict.yml"
 
 
@@ -473,18 +485,26 @@ def convert_koedict(yaml_path: Path) -> Path:
                     entry = {
                         "key": f"koedict_{dedup_key}",
                         "surface_forms": sf,
-                        "contexts": ([{"context_id": "koedict", "romaja": cur_romaja}] if cur_romaja else [{"context_id": "koedict"}]),
+                        "contexts": (
+                            [{"context_id": "koedict", "romaja": cur_romaja}]
+                            if cur_romaja
+                            else [{"context_id": "koedict"}]
+                        ),
                         "relations": {},
                         "confidence": 1.0,
                     }
                     entries.append(entry)
 
     out_path = OUT_DIR / "koedict.json"
-    data={"version": "2.0", "source": "KOEDict", "entries": entries}
+    data = {"version": "2.0", "source": "KOEDict", "entries": entries}
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=1)
-    logger.info("KOEDict: %d entries written to %s (%.1fMB)",
-                len(entries), out_path, out_path.stat().st_size / (1024 * 1024))
+    logger.info(
+        "KOEDict: %d entries written to %s (%.1fMB)",
+        len(entries),
+        out_path,
+        out_path.stat().st_size / (1024 * 1024),
+    )
     return out_path
 
 
@@ -497,7 +517,7 @@ def process_koedict() -> Path:
 # CIFAR-10 (multimodal image dataset)
 # ---------------------------------------------------------------------------
 
-CIFAR10_URL="https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz"
+CIFAR10_URL = "https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz"
 CIFAR10_TGZ = OUT_DIR.parent / "multimodal" / "cifar-10-python.tar.gz"
 CIFAR10_DIR = OUT_DIR.parent / "multimodal" / "cifar-10-batches-py"
 CIFAR10_OUT = OUT_DIR.parent / "multimodal" / "cifar10"
@@ -517,6 +537,7 @@ def download_cifar10() -> Path:
 def _unpickle_cifar10(filepath: Path) -> dict:
     """Unpickle a CIFAR-10 batch file."""
     import pickle
+
     with open(filepath, "rb") as f:
         data = pickle.load(f, encoding="bytes")
     return data
@@ -525,6 +546,7 @@ def _unpickle_cifar10(filepath: Path) -> dict:
 def convert_cifar10(tgz_path: Path) -> Path:
     """Extract CIFAR-10 and save images as .npy files organized by class."""
     import tarfile
+
     import numpy as np
 
     logger.info("Extracting CIFAR-10 …")
@@ -539,10 +561,20 @@ def convert_cifar10(tgz_path: Path) -> Path:
     CIFAR10_OUT.mkdir(parents=True, exist_ok=True)
 
     # Class names for CIFAR-10
-    class_names=["airplane", "automobile", "bird", "cat", "deer",
-                   "dog", "frog", "horse", "ship", "truck"]
+    class_names = [
+        "airplane",
+        "automobile",
+        "bird",
+        "cat",
+        "deer",
+        "dog",
+        "frog",
+        "horse",
+        "ship",
+        "truck",
+    ]
 
-    batch_files=[
+    batch_files = [
         CIFAR10_DIR / "data_batch_1",
         CIFAR10_DIR / "data_batch_2",
         CIFAR10_DIR / "data_batch_3",
@@ -550,7 +582,7 @@ def convert_cifar10(tgz_path: Path) -> Path:
         CIFAR10_DIR / "data_batch_5",
     ]
 
-    all_images=[]  # List of (image_bytes, label) tuples
+    all_images = []  # List of (image_bytes, label) tuples
     for bf in batch_files:
         if not bf.exists():
             continue
@@ -569,7 +601,7 @@ def convert_cifar10(tgz_path: Path) -> Path:
             all_images.append((img.astype(np.uint8), label, class_name))
 
     # Also save a combined index for fast loading
-    index={
+    index = {
         "total": len(all_images),
         "classes": class_names,
         "class_counts": {cn: sum(1 for _, _, cn_ in all_images if cn_ == cn) for cn in class_names},
@@ -577,8 +609,12 @@ def convert_cifar10(tgz_path: Path) -> Path:
     with open(CIFAR10_OUT / "index.json", "w") as f:
         json.dump(index, f, indent=1)
 
-    logger.info("CIFAR-10: %d images saved to %s (%d classes)",
-                len(all_images), CIFAR10_OUT, len(class_names))
+    logger.info(
+        "CIFAR-10: %d images saved to %s (%d classes)",
+        len(all_images),
+        CIFAR10_OUT,
+        len(class_names),
+    )
     return CIFAR10_OUT
 
 
@@ -591,7 +627,7 @@ def process_cifar10() -> Path:
 # ESC-50 (multimodal audio dataset)
 # ---------------------------------------------------------------------------
 
-ESC50_URL="https://github.com/karoldvl/ESC-50/archive/master.zip"
+ESC50_URL = "https://github.com/karoldvl/ESC-50/archive/master.zip"
 ESC50_ZIP = OUT_DIR.parent / "multimodal" / "ESC-50-master.zip"
 ESC50_DIR = OUT_DIR.parent / "multimodal" / "ESC-50-master"
 ESC50_OUT = OUT_DIR.parent / "multimodal" / "esc50"
@@ -626,26 +662,29 @@ def convert_esc50(zip_path: Path) -> Path:
     ESC50_OUT.mkdir(parents=True, exist_ok=True)
 
     import csv
-    entries=[]
+
+    entries = []
     with open(meta_path, "r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
-            entries.append({
-                "filename": row["filename"],
-                "category": row["category"],
-                "class_id": int(row["target"]),
-                "fold": int(row["fold"]),
-            })
+            entries.append(
+                {
+                    "filename": row["filename"],
+                    "category": row["category"],
+                    "class_id": int(row["target"]),
+                    "fold": int(row["fold"]),
+                }
+            )
 
     # Group by category
-    categories={}
+    categories = {}
     for e in entries:
         cat = e["category"]
         if cat not in categories:
             categories[cat] = []
         categories[cat].append(e)
 
-    saved=0
+    saved = 0
     for cat, cat_entries in categories.items():
         cat_dir = ESC50_OUT / cat.replace(" ", "_")
         cat_dir.mkdir(exist_ok=True)
@@ -659,7 +698,7 @@ def convert_esc50(zip_path: Path) -> Path:
                 rf.write(str(wav_path.resolve()))
             saved += 1
 
-    index={
+    index = {
         "total": saved,
         "categories": list(categories.keys()),
         "category_counts": {c: len(v) for c, v in categories.items()},
@@ -667,8 +706,9 @@ def convert_esc50(zip_path: Path) -> Path:
     with open(ESC50_OUT / "index.json", "w") as f:
         json.dump(index, f, indent=1)
 
-    logger.info("ESC-50: %d audio clips indexed in %s (%d classes)",
-                saved, ESC50_OUT, len(categories))
+    logger.info(
+        "ESC-50: %d audio clips indexed in %s (%d classes)", saved, ESC50_OUT, len(categories)
+    )
     return ESC50_OUT
 
 
@@ -681,7 +721,7 @@ def process_esc50() -> Path:
 # Main
 # ---------------------------------------------------------------------------
 
-MULTIMODAL_DATASETS={"cifar10", "esc50"}
+MULTIMODAL_DATASETS = {"cifar10", "esc50"}
 
 
 def show_stats(path: Path) -> None:
@@ -696,14 +736,19 @@ def show_stats(path: Path) -> None:
             for e in entries:
                 for lang in e.get("surface_forms", {}):
                     lang_counts[lang] = lang_counts.get(lang, 0) + 1
-            lang_summary=", ".join(f"{k}={v}" for k, v in sorted(lang_counts.items()))
+            lang_summary = ", ".join(f"{k}={v}" for k, v in sorted(lang_counts.items()))
             logger.info("  %s: %d entries (%s)", path.name, len(entries), lang_summary)
         else:
             logger.info("  %s: %d entries", path.name, len(entries))
     elif (path / "index.json").exists():
         with open(path / "index.json", "r") as f:
             idx = json.load(f)
-        logger.info("  %s: %d samples, classes=%s", path.name, idx["total"], idx.get("classes", idx.get("categories", [])))
+        logger.info(
+            "  %s: %d samples, classes=%s",
+            path.name,
+            idx["total"],
+            idx.get("classes", idx.get("categories", [])),
+        )
 
 
 def main():
@@ -711,7 +756,7 @@ def main():
 
     # "all" means lexical only; "all-multimodal" means multimodal only
     if datasets == ["all"]:
-        datasets=["cedict", "jmdict", "wordnet", "koedict"]
+        datasets = ["cedict", "jmdict", "wordnet", "koedict"]
     elif datasets == ["all-multimodal"]:
         datasets = list(MULTIMODAL_DATASETS)
 
@@ -742,7 +787,9 @@ def main():
 
     print()
     if any(k in ("cifar10", "esc50") for k in results):
-        logger.info("Multimodal datasets ready. Use 'python -m ai.multimodal.data_loader' to verify.")
+        logger.info(
+            "Multimodal datasets ready. Use 'python -m ai.multimodal.data_loader' to verify."
+        )
     logger.info("Done.")
 
 

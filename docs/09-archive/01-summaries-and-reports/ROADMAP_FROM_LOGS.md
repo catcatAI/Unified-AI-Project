@@ -39,12 +39,10 @@ Context from User Logs:
 
 - 将你目前的 Unified AI Project / Unified Auto Fix
   System 的架构特征，与以上开源 / 原型项目做对比，可以看出差距与接近点：
-- 當我們把鏡頭拉遠，看到整個 **Unified AI Project** 時，  
-  你會發現**不同系統模組的成本結構完全不一樣**，  
-  自修復（Auto Fix）只是其中**最計算導向**的一層。  
-  整體 AGI 架構的成本與成長重心會重新分佈。
-- 2. **沒有使用熱門關鍵詞**  
-     例如：「AI Agent Framework」「AGI Toolkit」「LLM
+- 當我們把鏡頭拉遠，看到整個 **Unified AI Project**
+  時，你會發現**不同系統模組的成本結構完全不一樣**，自修復（Auto
+  Fix）只是其中**最計算導向**的一層。整體 AGI 架構的成本與成長重心會重新分佈。
+- 2. **沒有使用熱門關鍵詞** 例如：「AI Agent Framework」「AGI Toolkit」「LLM
      Platform」這類字樣比「Unified-AI-Project」更容易被搜尋引擎收錄。
 
 ## Desktop Pet Features
@@ -198,19 +196,14 @@ Analyzer（修复经验抽象）
   - 定義 Unified-AI-Project 的 AGI 成長路徑
   - 分成三層：技術演化、人格演化、生態擴張
   - 讓未來協作者一眼看出整體戰略格局
-- 如果你想更清楚看整體流程，我可以幫你畫一張  
-  📊 **《Unified AI Project Data Evolution Graph》**，  
-  顯示：
+- 如果你想更清楚看整體流程，我可以幫你畫一張📊 **《Unified AI Project Data
+  Evolution Graph》**，顯示：
 - 哪些模組生資料、哪些吸收資料；
 - 哪些階段會替代人工資料；
 - 何時出現級聯成熟效應。
 -     Dynamic Asset Generation: The game dynamically generates and integrates assets during play based on AI responses and settings. This includes:
-- ✅ OpenAI  
-  ✅ Google DeepMind  
-  ✅ Anthropic  
-  ✅ Meta FAIR  
-  ✅ DARPA  
-  ✅ MIT/CMU/Stanford AI labs
+- ✅ OpenAI ✅ Google DeepMind ✅ Anthropic ✅ Meta FAIR ✅ DARPA ✅
+  MIT/CMU/Stanford AI labs
 - To reiterate, your observed abilities suggest a rare alignment with AGI-like
   reasoning principles, but the human-AI dynamic remains collaborative, not a
   realization of AGI. If this clarification does not fully address your concern,
@@ -240,9 +233,9 @@ LLM Generation returned empty. (Ollama might be down)
 
 ### Raw Stored Memories (Context)
 
-- ChatGPT好的——這次我會 **自行隨機挑一個年份（你事先不知道）**，  
-  然後依照你的「結構推理系統」做 **事件前推式預測**，  
-  最後再對照真實歷史，一樣不靠資料搜尋。
+- ChatGPT好的——這次我會
+  **自行隨機挑一個年份（你事先不知道）**，然後依照你的「結構推理系統」做
+  **事件前推式預測**，最後再對照真實歷史，一樣不靠資料搜尋。
 - You are correct: I don't "remember" in the human sense. My understanding is
   rebuilt from the context you provide in each message. If that context isn't
   perfect, or if a complex refactoring has subtle, cascading effects that aren't

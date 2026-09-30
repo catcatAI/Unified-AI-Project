@@ -117,9 +117,7 @@ class ContextLedger:
         try:
             self._dir.mkdir(parents=True, exist_ok=True)
             payload = {"turns": self._turns, "cache": self._cache}
-            self._file().write_text(
-                json.dumps(payload, ensure_ascii=False), encoding="utf-8"
-            )
+            self._file().write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
         except OSError as exc:
             logger.warning("context ledger save failed: %s", exc)
 
@@ -207,9 +205,7 @@ class ContextScheduler:
         """保護 system 與最終 user；中段訊息按工作者視窗分塊。"""
         last_idx = len(messages) - 1
         protected = [
-            i
-            for i, m in enumerate(messages)
-            if m.get("role") == "system" or i == last_idx
+            i for i, m in enumerate(messages) if m.get("role") == "system" or i == last_idx
         ]
         middle = [i for i in range(len(messages)) if i not in protected]
         chunks: List[DigestChunk] = []
@@ -240,7 +236,9 @@ class ContextScheduler:
                 index=len(chunks),
                 content=content,
                 tokens=estimate_tokens(content),
-                cache_key=hashlib.sha1(content.encode("utf-8")).hexdigest()[:16],
+                cache_key=hashlib.sha1(content.encode("utf-8"), usedforsecurity=False).hexdigest()[
+                    :16
+                ],
             )
         )
 
@@ -285,7 +283,7 @@ class ContextScheduler:
     def _digest_text_sync(self, text: str, conversation_id: str) -> str:
         """萃取式消化：帳本快取命中直接回（摘要確定性——同內容永遠同摘要）；
         未命中按區段標頭＋要點萃取並寫回快取。"""
-        text_hash = hashlib.sha1(text.encode("utf-8")).hexdigest()[:16]
+        text_hash = hashlib.sha1(text.encode("utf-8"), usedforsecurity=False).hexdigest()[:16]
         cached = self.ledger.cache_get(conversation_id, text_hash)
         if cached is not None:
             self._stats["cache_hits"] += 1
@@ -351,7 +349,7 @@ class ContextScheduler:
             digest = str(getattr(response, "text", "") or "").strip()
             if not digest:
                 return None
-            chunk_hash = hashlib.sha1(text.encode("utf-8")).hexdigest()[:16]
+            chunk_hash = hashlib.sha1(text.encode("utf-8"), usedforsecurity=False).hexdigest()[:16]
             self.ledger.cache_put(conversation_id, chunk_hash, digest)
             self.ledger.save()
             self._stats["llm_digests"] += 1

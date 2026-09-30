@@ -12,20 +12,21 @@ CLIP ViT-B/32（本地快取，CPU）編碼真實 CIFAR-10 500 圖（10 類各 5
 import os
 import sys
 import time
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps/backend/src"))
 
 
 def main():
     import numpy as np
-
     from core.backbone.hardware import HardwareProfile
+
     hw = HardwareProfile.detect()
     tier = HardwareProfile.get_tier(hw)
     print(f"真實 MSE 500 硬件規格自適應: GPU={hw['gpu']} RAM={hw['ram_gb']:.1f} tier={tier}")
 
+    import PIL.Image
     import torch
     from transformers import CLIPModel, CLIPProcessor
-    import PIL.Image
 
     model_id = "openai/clip-vit-base-patch32"
     model = CLIPModel.from_pretrained(model_id, local_files_only=True)
@@ -47,13 +48,14 @@ def main():
     for bi in range(0, len(files), batch):
         try:
             import psutil
+
             if psutil.virtual_memory().percent > 85:
                 print(f"  ⚠️ RAM {psutil.virtual_memory().percent:.1f}% >85% 暫停 1s")
                 time.sleep(1)
         except Exception:
             pass
         imgs = []
-        for _, fp in files[bi:bi + batch]:
+        for _, fp in files[bi : bi + batch]:
             arr = np.load(fp)
             imgs.append(PIL.Image.fromarray(arr.astype("uint8")))
         inp = proc(images=imgs, return_tensors="pt")
@@ -78,7 +80,9 @@ def main():
     mse_te = float(((Xte - rec_te) ** 2).mean())
     var = float(((Xte - mu) ** 2).mean())
     print(f"  訓練重建 MSE(400): {mse_tr:.4f}")
-    print(f"  Held-out 重建 MSE(100): {mse_te:.4f}（基線方差 {var:.4f}，保留 {1 - mse_te/var:.1%}）")
+    print(
+        f"  Held-out 重建 MSE(100): {mse_te:.4f}（基線方差 {var:.4f}，保留 {1 - mse_te/var:.1%}）"
+    )
     print("  ✅ 首個真實 held-out MSE（非模擬算術值）")
     return 0
 

@@ -57,16 +57,69 @@ ASSOC_DIMS_30 = {
 }
 
 ASSOC_ENTITIES_60 = [
-    "Alice", "Bob", "Carol", "Dave", "Eve", "Frank", "Grace", "Heidi",
-    "Ivan", "Judy", "Karl", "Laura", "Mike", "Nina", "Oscar", "Paula",
-    "Tom", "Jerry", "Spike", "Tyke", "Butch", "Tweety", "Sylvester",
-    "elephant", "mouse", "whale", "ant", "giraffe", "rabbit", "turtle",
-    "mountain", "hill", "building", "tree", "car", "bicycle", "train",
-    "cheetah", "snail", "eagle", "sloth", "professor", "student", "billionaire",
+    "Alice",
+    "Bob",
+    "Carol",
+    "Dave",
+    "Eve",
+    "Frank",
+    "Grace",
+    "Heidi",
+    "Ivan",
+    "Judy",
+    "Karl",
+    "Laura",
+    "Mike",
+    "Nina",
+    "Oscar",
+    "Paula",
+    "Tom",
+    "Jerry",
+    "Spike",
+    "Tyke",
+    "Butch",
+    "Tweety",
+    "Sylvester",
+    "elephant",
+    "mouse",
+    "whale",
+    "ant",
+    "giraffe",
+    "rabbit",
+    "turtle",
+    "mountain",
+    "hill",
+    "building",
+    "tree",
+    "car",
+    "bicycle",
+    "train",
+    "cheetah",
+    "snail",
+    "eagle",
+    "sloth",
+    "professor",
+    "student",
+    "billionaire",
     # 新增 18（中文人名/常見物）
-    "小明", "小红", "小刚", "李雷", "韩梅", "张三", "李四", "王五",
-    "泰山", "黄河", "长城", "故宫", "熊猫", "老虎", "狮子", "鲸鱼",
-    "飞机", "高铁",
+    "小明",
+    "小红",
+    "小刚",
+    "李雷",
+    "韩梅",
+    "张三",
+    "李四",
+    "王五",
+    "泰山",
+    "黄河",
+    "长城",
+    "故宫",
+    "熊猫",
+    "老虎",
+    "狮子",
+    "鲸鱼",
+    "飞机",
+    "高铁",
 ]
 
 
@@ -76,12 +129,14 @@ def generate_batch(count, dims, entities):
     for _ in range(count):
         dim, (tmpl_a, tmpl_b) = random.choice(dims_list)
         a, b = random.sample(entities, 2)
-        batch.append({
-            "input": tmpl_a.format(a=a, b=b),
-            "output": tmpl_b.format(a=a, b=b),
-            "domain": "association",
-            "relation": dim,
-        })
+        batch.append(
+            {
+                "input": tmpl_a.format(a=a, b=b),
+                "output": tmpl_b.format(a=a, b=b),
+                "domain": "association",
+                "relation": dim,
+            }
+        )
     return batch
 
 
@@ -96,7 +151,9 @@ def stream_write(path, total, batch_size):
 
     os.makedirs(os.path.dirname(path), exist_ok=True)
     batches = (total + batch_size - 1) // batch_size
-    print(f"Generating {total} association samples in {batches} batches of {batch_size} (dims=30, entities=60)")
+    print(
+        f"Generating {total} association samples in {batches} batches of {batch_size} (dims=30, entities=60)"
+    )
 
     # 流式寫 JSON array：手動寫 [ ... ] 避免持有全量
     with open(path, "w", encoding="utf-8") as f:
@@ -107,7 +164,7 @@ def stream_write(path, total, batch_size):
             batch = generate_batch(cur, dims, entities)
             for j, sample in enumerate(batch):
                 # 寫入，批次間加逗號
-                is_last = (bi == batches - 1 and j == len(batch) - 1)
+                is_last = bi == batches - 1 and j == len(batch) - 1
                 json.dump(sample, f, ensure_ascii=False)
                 if not is_last:
                     f.write(",\n")

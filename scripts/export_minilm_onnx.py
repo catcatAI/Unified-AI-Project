@@ -24,9 +24,7 @@ import time
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--model", default="paraphrase-multilingual-MiniLM-L12-v2"
-    )
+    parser.add_argument("--model", default="paraphrase-multilingual-MiniLM-L12-v2")
     parser.add_argument("--max-length", type=int, default=32)
     parser.add_argument(
         "--out",
@@ -65,9 +63,7 @@ def main() -> int:
             self.inner = inner
 
         def forward(self, input_ids, attention_mask):
-            return self.inner(
-                input_ids=input_ids, attention_mask=attention_mask
-            ).last_hidden_state
+            return self.inner(input_ids=input_ids, attention_mask=attention_mask).last_hidden_state
 
     wrapped = _KwWrapper(core).eval()
 

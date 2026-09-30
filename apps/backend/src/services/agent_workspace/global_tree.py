@@ -376,9 +376,7 @@ class GlobalContextTree:
                     {
                         "type": "memory",
                         "id": mid,
-                        "summary": f"{content[:60]}…"
-                        if len(content) > 60
-                        else content,
+                        "summary": f"{content[:60]}…" if len(content) > 60 else content,
                     }
                 )
             if len(out) >= limit:
@@ -388,9 +386,9 @@ class GlobalContextTree:
     def _search_conversations(
         self, providers: GlobalContextProviders, q: str, limit: int
     ) -> List[Dict[str, Any]]:
-        convs: Dict[str, Any] = getattr(
-            self._dialogue_manager(providers), "conversations", {}
-        ) or {}
+        convs: Dict[str, Any] = (
+            getattr(self._dialogue_manager(providers), "conversations", {}) or {}
+        )
         out: List[Dict[str, Any]] = []
         for cid, conv in convs.items():
             if q in str(cid).lower():
@@ -439,7 +437,9 @@ class UnifiedWorkspace:
 
     # ---------- 會話閉環（委派） ----------
 
-    async def open_app(self, app_id: str, purpose: str = "", source: str = "teaching") -> Dict[str, Any]:
+    async def open_app(
+        self, app_id: str, purpose: str = "", source: str = "teaching"
+    ) -> Dict[str, Any]:
         return await self.workspace.open_app(app_id, purpose=purpose, source=source)
 
     async def read_app(self, app_id: str) -> Dict[str, Any]:

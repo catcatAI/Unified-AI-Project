@@ -4,10 +4,10 @@ Runs key benchmarks and saves results as baseline.
 """
 
 import json
-import time
 import sys
-from pathlib import Path
+import time
 from datetime import datetime
+from pathlib import Path
 
 
 def run_benchmark(name, func, iterations=100):

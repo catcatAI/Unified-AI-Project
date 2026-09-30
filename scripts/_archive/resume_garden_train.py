@@ -8,6 +8,7 @@ resumes from ``garden_batch_done`` and persists after every 500-sample batch.
 
 Usage:  TRAIN_NO_CORPUS=1 python scripts/resume_garden_train.py
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -17,6 +18,8 @@ import time
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+
+import json  # noqa: E402
 
 from scripts.train_pipeline import (  # noqa: E402
     CKPT_DIR,
@@ -29,7 +32,6 @@ from scripts.train_pipeline import (  # noqa: E402
     _step5_train_garden,
     is_deterministic_match,
 )
-import json  # noqa: E402
 
 
 def main() -> None:

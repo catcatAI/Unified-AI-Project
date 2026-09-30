@@ -12,17 +12,18 @@ Usage:
   2. Run this script: python3 apps/crystal-cards/ai-player-client.py
 """
 
-import json
-import time
-import sys
-import os
 import base64
-import urllib.request
+import json
+import os
+import sys
+import time
 import urllib.error
+import urllib.request
 from pathlib import Path
 
 try:
     import websocket
+
     HAS_WS = True
 except ImportError:
     HAS_WS = False
@@ -30,8 +31,10 @@ except ImportError:
     print("   Install: pip install websocket-client")
 
 try:
-    from PIL import Image
     import io
+
+    from PIL import Image
+
     HAS_PIL = True
 except ImportError:
     HAS_PIL = False
@@ -161,10 +164,12 @@ class AngelaVisionClient:
                 '"reason": "brief explanation"}'
             )
 
-            data = json.dumps({
-                "message": prompt,
-                "context": {"source": "crystal-cards-vision", "screenshot": b64_data[:1000]},
-            }).encode()
+            data = json.dumps(
+                {
+                    "message": prompt,
+                    "context": {"source": "crystal-cards-vision", "screenshot": b64_data[:1000]},
+                }
+            ).encode()
 
             req = urllib.request.Request(
                 f"{ANGELA_HTTP_URL}/chat/unified",
@@ -195,10 +200,12 @@ class AngelaVisionClient:
                 "Respond with just the index number."
             )
 
-            data = json.dumps({
-                "message": prompt,
-                "context": {"source": "crystal-cards-dialogue"},
-            }).encode()
+            data = json.dumps(
+                {
+                    "message": prompt,
+                    "context": {"source": "crystal-cards-dialogue"},
+                }
+            ).encode()
 
             req = urllib.request.Request(
                 f"{ANGELA_HTTP_URL}/chat/unified",
@@ -374,10 +381,12 @@ def run_ai_player():
         # Day summary
         state = game.get_state()
         if state and "error" not in state:
-            print(f"  📊 HP={state.get('hp', '?')} SAN={state.get('sanity', '?')} "
-                  f"Gold={state.get('gold', '?')} Knowledge={state.get('knowledge', '?')} "
-                  f"Board={len(state.get('boardCards', []))} "
-                  f"Sidebar={len(state.get('sidebarCards', []))}")
+            print(
+                f"  📊 HP={state.get('hp', '?')} SAN={state.get('sanity', '?')} "
+                f"Gold={state.get('gold', '?')} Knowledge={state.get('knowledge', '?')} "
+                f"Board={len(state.get('boardCards', []))} "
+                f"Sidebar={len(state.get('sidebarCards', []))}"
+            )
 
     print("\n═══ AI Player Finished ═══")
 

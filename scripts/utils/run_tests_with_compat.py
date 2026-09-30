@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 def run_tests_with_compat() -> bool:
     """运行测试并解决兼容性问题"""
-    os.environ['TF_USE_LEGACY_KERAS'] = '1'
+    os.environ["TF_USE_LEGACY_KERAS"] = "1"
 
     project_root = os.path.dirname(os.path.abspath(__file__))
 
@@ -22,12 +22,7 @@ def run_tests_with_compat() -> bool:
     print(f"TF_USE_LEGACY_KERAS={os.environ.get('TF_USE_LEGACY_KERAS', 'not set')}")
 
     try:
-        cmd=[
-            sys.executable, "-m", "pytest",
-            "apps/backend/tests/",
-            "-v",
-            "--tb=short"
-        ]
+        cmd = [sys.executable, "-m", "pytest", "apps/backend/tests/", "-v", "--tb=short"]
 
         result = subprocess.run(cmd, cwd=project_root)
         return result.returncode == 0

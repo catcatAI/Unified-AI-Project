@@ -1,19 +1,16 @@
 # Angela 卡片導入管道與聊天系統整合計畫 v2
 
-> **⚠️ STATUS: EXECUTED (2026-06-25)**  
-> ModuleManager (M0-M5, 6 files, 100 tests) implemented. Card pipeline wired.
-> IntentRegistry + ChatService integration complete. All 25 review issues (6
-> HIGH) addressed.  
-> **Superseded by**: ModuleManager code at
-> `apps/backend/src/core/system/module_manager/`.
+> **⚠️ STATUS: EXECUTED (2026-06-25)** ModuleManager (M0-M5, 6 files, 100 tests)
+> implemented. Card pipeline wired. IntentRegistry + ChatService integration
+> complete. All 25 review issues (6 HIGH) addressed. **Superseded by**:
+> ModuleManager code at `apps/backend/src/core/system/module_manager/`.
 
 > **目標**: ModuleManager 驅動的架構接線 — card pipeline + ChatService +
-> IntentRegistry + LLM 在統一模組系統下協作  
-> **基於**: 代碼審計（2026-05-30）+ ModuleManager 設計（`docs/03-technical-architecture/design/MODULE_MANAGER_SYSTEM.md`）  
-> **審計**:
-> 25 個問題（6 HIGH）已在設計階段標記，非等到執行才發現  
-> **狀態**: ✅ 全部完成 — M0-M3 (ModuleManager 核心 + card_pipeline +
-> intent_registry + cross-system dep) + Phase 2 (ChatService 接線) + Phase 3
+> IntentRegistry + LLM 在統一模組系統下協作 **基於**: 代碼審計（2026-05-30）+
+> ModuleManager 設計（`docs/03-technical-architecture/design/MODULE_MANAGER_SYSTEM.md`）
+> **審計**: 25 個問題（6 HIGH）已在設計階段標記，非等到執行才發現 **狀態**:
+> ✅ 全部完成 — M0-M3 (ModuleManager 核心 + card_pipeline + intent_registry +
+> cross-system dep) + Phase 2 (ChatService 接線) + Phase 3
 > (cross-system 依賴注入) 全部完成，76+21 tests pass。
 
 ---

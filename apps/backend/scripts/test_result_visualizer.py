@@ -1,14 +1,17 @@
 import json
+import logging
 import os
 from pathlib import Path
-from typing import Dict, Any, List
-import logging
+from typing import Any, Dict, List
+
 logger = logging.getLogger(__name__)
+
 
 class ResultVisualizer:
     """
     A placeholder class for visualizing test results.
     """
+
     def __init__(self, results_dir: str = "test_results", reports_dir: str = "test_reports"):
         self.results_dir = Path(results_dir)
         self.reports_dir = Path(reports_dir)
@@ -20,17 +23,21 @@ class ResultVisualizer:
         """
         filepath = self.results_dir / filename
         if filepath.exists():
-            with open(filepath, 'r', encoding='utf-8') as f:
+            with open(filepath, "r", encoding="utf-8") as f:
                 return json.load(f)
         return {}
 
-    def visualize_test_distribution(self, test_results: Dict[str, Any], output_filename: str) -> None:
+    def visualize_test_distribution(
+        self, test_results: Dict[str, Any], output_filename: str
+    ) -> None:
         """
         Simulates visualizing test distribution and saving to a file.
         """
-        print(f"Simulating visualization of test distribution to {self.reports_dir / output_filename}")
+        print(
+            f"Simulating visualization of test distribution to {self.reports_dir / output_filename}"
+        )
         # Create a dummy file to simulate output
-        with open(self.reports_dir / output_filename, 'w') as f:
+        with open(self.reports_dir / output_filename, "w") as f:
             f.write("Dummy image content")
 
     def generate_html_report(self, test_results: Dict[str, Any], output_filename: str) -> None:
@@ -49,5 +56,5 @@ class ResultVisualizer:
         </body>
         </html>
         """
-        with open(self.reports_dir / output_filename, 'w', encoding='utf-8') as f:
+        with open(self.reports_dir / output_filename, "w", encoding="utf-8") as f:
             f.write(html_content)

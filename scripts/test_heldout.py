@@ -1,30 +1,35 @@
 """Test recognition on held-out CIFAR-10 images (not used for vocabulary)."""
-import sys
+
 import os
+import sys
 import time
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'apps', 'backend', 'src'))
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"))
+
+import glob
 
 import numpy as np
-import glob
-from PIL import Image
 from ai.multimodal.primitives.differentiable_renderer import DifferentiableRenderer
-from ai.multimodal.primitives.primitive_types import TOTAL_DIM
 from ai.multimodal.primitives.geometric_vocabulary import GeometricVocabulary
+from ai.multimodal.primitives.primitive_types import TOTAL_DIM
 from ai.multimodal.recognition.geometric_recognizer import GeometricRecognizer
+from PIL import Image
 
-CIFAR_DIR="D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
-CLASSES=["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
-N_TEST=100  # 10 per class
-N_ITERS=12
+CIFAR_DIR = "D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
+CLASSES = ["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
+N_TEST = 100  # 10 per class
+N_ITERS = 12
 
 
 def load_test_images(n_per_class=10, skip_first=50):
     """Load images starting from skip_first (to avoid training images)."""
-    images=[]
-    labels=[]
+    images = []
+    labels = []
     for ci, cls in enumerate(CLASSES):
         cls_dir = os.path.join(CIFAR_DIR, cls)
-        files = sorted(glob.glob(os.path.join(cls_dir, "*.npy")))[skip_first:skip_first+n_per_class]
+        files = sorted(glob.glob(os.path.join(cls_dir, "*.npy")))[
+            skip_first : skip_first + n_per_class
+        ]
         for f in files:
             arr = np.load(f)
             if arr.shape == (3072,):
@@ -42,8 +47,8 @@ def optimize_one(target, renderer):
     vec = np.random.uniform(0.2, 0.8, TOTAL_DIM).astype(np.float32)
     vec[0:3] = target.mean(axis=(0, 1))
     best_vec = vec.copy()
-    best_loss = float('inf')
-    eps=0.015
+    best_loss = float("inf")
+    eps = 0.015
 
     for it in range(N_ITERS):
         rendered = renderer.render(vec)
@@ -80,8 +85,8 @@ def main():
     # Optimize test images and recognize
     print(f"\nOptimizing + recognizing {len(images)} test images...")
     renderer = DifferentiableRenderer((128, 128))
-    correct=0
-    per_class={c: [0, 0] for c in CLASSES}
+    correct = 0
+    per_class = {c: [0, 0] for c in CLASSES}
     t_start = time.time()
 
     for i in range(len(images)):

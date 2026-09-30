@@ -16,7 +16,9 @@ def setup_module(module):
 def test_audio_scan_basic_response_structure():
     client = TestClient(app)
     payload = b"\x00" * 2048
-    resp = client.post("/api/v1/audio/scan", content=payload, headers={"Content-Type": "application/octet-stream"})
+    resp = client.post(
+        "/api/v1/audio/scan", content=payload, headers={"Content-Type": "application/octet-stream"}
+    )
     assert resp.status_code == 200
     data = resp.json()
 
@@ -44,7 +46,11 @@ def test_audio_scan_basic_response_structure():
 def test_audio_register_user_returns_profile():
     client = TestClient(app)
     payload = b"\x01" * 1024
-    resp = client.post("/api/v1/audio/register_user", content=payload, headers={"Content-Type": "application/octet-stream"})
+    resp = client.post(
+        "/api/v1/audio/register_user",
+        content=payload,
+        headers={"Content-Type": "application/octet-stream"},
+    )
     assert resp.status_code == 200
     data = resp.json()
 

@@ -198,7 +198,5 @@ Get-WmiObject -Class Win32_LogicalDisk
 
 ---
 
-**文件版本**: v1.0  
-**完成日期**: 2025年8月23日  
-**負責人**: AI Assistant  
+**文件版本**: v1.0 **完成日期**: 2025年8月23日 **負責人**: AI Assistant
 **專案狀態**: 準備就緒，可開始訓練

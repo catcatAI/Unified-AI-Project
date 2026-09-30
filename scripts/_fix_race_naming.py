@@ -2,10 +2,13 @@
 Fix 15 NPC_METADATA vs card race naming inconsistencies.
 Updates game_cards.json stats.race to the more detailed/correct version.
 """
+
 import json
 import os
 
-CARDS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "apps", "game-rpg", "data", "game_cards.json")
+CARDS_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "..", "apps", "game-rpg", "data", "game_cards.json"
+)
 
 # Mapping: (npc_name) -> correct_race
 # Based on analysis of card vs metadata differences
@@ -25,34 +28,34 @@ _RACE_FIXES = {
     "冬": "人類（實證主義·冬）",
 }
 
-with open(CARDS_PATH, 'r', encoding='utf-8') as f:
+with open(CARDS_PATH, "r", encoding="utf-8") as f:
     gc = json.load(f)
 
 fixed_cards = []
 
-for card in gc['cards']:
-    cid = card['card_id']
-    name = card.get('name', '')
-    stats = card.get('stats', {})
-    old_race = stats.get('race', '')
-    
+for card in gc["cards"]:
+    cid = card["card_id"]
+    name = card.get("name", "")
+    stats = card.get("stats", {})
+    old_race = stats.get("race", "")
+
     if not old_race:
         continue
-    
+
     for npc_name, correct_race in _RACE_FIXES.items():
         if npc_name in name or name in npc_name:
-            if old_race != correct_race and card.get('card_type') == '角色卡':
-                stats['race'] = correct_race
+            if old_race != correct_race and card.get("card_type") == "角色卡":
+                stats["race"] = correct_race
                 fixed_cards.append((cid, name, old_race, correct_race))
                 break
 
-with open(CARDS_PATH, 'w', encoding='utf-8') as f:
+with open(CARDS_PATH, "w", encoding="utf-8") as f:
     json.dump(gc, f, ensure_ascii=False, indent=2)
 
 print("=== RACE NAMING FIX REPORT ===")
 if fixed_cards:
     print(f"Fixed {len(fixed_cards)} cards:")
     for cid, name, old, new in fixed_cards:
-        print(f"  {cid} {name[:20]}: \"{old}\" → \"{new}\"")
+        print(f'  {cid} {name[:20]}: "{old}" → "{new}"')
 else:
     print("No cards needed fixing.")

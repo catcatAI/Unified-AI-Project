@@ -1,6 +1,8 @@
-import sys
 import os
+import sys
+
 import numpy as np
+
 sys.path.insert(0, os.path.join("apps", "backend", "src"))
 from ai.multimodal.primitives.differentiable_renderer import DifferentiableRenderer
 from PIL import Image
@@ -18,23 +20,23 @@ vec[8] = 0.0
 vec[9] = 0.0
 
 # Green plane
-off=5 + 15*5 + 10*8
+off = 5 + 15 * 5 + 10 * 8
 vec[off] = 0.5
-vec[off+1] = 0.5
-vec[off+2] = 0.3
-vec[off+3] = 0.3
-vec[off+4] = 0.0
-vec[off+5] = 0.5
-vec[off+6] = 0.0
+vec[off + 1] = 0.5
+vec[off + 2] = 0.3
+vec[off + 3] = 0.3
+vec[off + 4] = 0.0
+vec[off + 5] = 0.5
+vec[off + 6] = 0.0
 
 # Red circle
-off2 = off + 5*9
+off2 = off + 5 * 9
 vec[off2] = 0.5
-vec[off2+1] = 0.5
-vec[off2+2] = 0.2
-vec[off2+3] = 1.0
-vec[off2+4] = 0.0
-vec[off2+5] = 0.0
+vec[off2 + 1] = 0.5
+vec[off2 + 2] = 0.2
+vec[off2 + 3] = 1.0
+vec[off2 + 4] = 0.0
+vec[off2 + 5] = 0.0
 
 img_arr = renderer.render(vec)
 print("Shape:", img_arr.shape, "Range:", img_arr.min(), "-", img_arr.max())

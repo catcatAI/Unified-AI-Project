@@ -126,7 +126,11 @@ class FallbackConfigLoader:
     def is_fallback_enabled(self) -> bool:
         """检查是否启用fallback协议"""
         fallback_config = self.get_fallback_config()
-        return bool(fallback_config.get("enabled", True)) if isinstance(fallback_config, dict) else True
+        return (
+            bool(fallback_config.get("enabled", True))
+            if isinstance(fallback_config, dict)
+            else True
+        )
 
     def get_protocol_config(self, protocol_name: str) -> Dict[str, Any]:
         """获取特定协议的配置"""

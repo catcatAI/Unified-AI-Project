@@ -31,7 +31,7 @@ _DEFAULT_DIMS = 32
 
 def _keyword_to_dims(word: str, dims: int) -> List[int]:
     """Map a word to a set of dimension indices using hash."""
-    h = hashlib.md5(word.encode("utf-8")).digest()
+    h = hashlib.md5(word.encode("utf-8"), usedforsecurity=False).digest()
     n_activations = max(1, (h[0] % 5) + 1)
     indices: List[int] = []
     for i in range(n_activations):

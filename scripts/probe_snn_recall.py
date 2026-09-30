@@ -40,16 +40,18 @@ def probe():
     # 輕量初始化：不載入大權重，僅測 threshold 邏輯
     qa = SemanticQA()
     # 注入最小知識對（用於探測相似度路徑，不依賴大模型）
-    qa.learn([
-        ("What color is the sky?", "blue"),
-        ("What is the opposite of hot?", "cold"),
-        ("How many days in a week?", "7"),
-        ("What animal says meow?", "cat"),
-        ("What planet is Red Planet?", "Mars"),
-        ("How many wheels does a bicycle have?", "2"),
-        ("天空是什么颜色?", "blue"),
-        ("猫怎么叫?", "meow"),
-    ])
+    qa.learn(
+        [
+            ("What color is the sky?", "blue"),
+            ("What is the opposite of hot?", "cold"),
+            ("How many days in a week?", "7"),
+            ("What animal says meow?", "cat"),
+            ("What planet is Red Planet?", "Mars"),
+            ("How many wheels does a bicycle have?", "2"),
+            ("天空是什么颜色?", "blue"),
+            ("猫怎么叫?", "meow"),
+        ]
+    )
 
     ok = 0
     total = 0

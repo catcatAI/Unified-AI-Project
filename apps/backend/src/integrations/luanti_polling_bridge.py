@@ -175,7 +175,7 @@ class PollingBridge:
 
         self._runner = web.AppRunner(app)
         await self._runner.setup()
-        self._site = web.TCPSite(self._runner, "0.0.0.0", self.http_port)
+        self._site = web.TCPSite(self._runner, "0.0.0.0", self.http_port)  # nosec B104
         await self._site.start()
 
         logger.info(f"Polling bridge started on http://0.0.0.0:{self.http_port}")

@@ -37,6 +37,9 @@ _INSTRUCTION_PREFIX = re.compile(
     r"(?:的|一個|一隻)?\s*",
 )
 
+# Trailing punctuation removed after prefix stripping (B005: multi-char strip).
+_TRAILING_PUNCT = re.compile(r"[ 的。．.，,、!！?？：:]+$")
+
 
 class ImageGenerationHandler:
     """Generates an image from the chat text and persists the PNG."""
@@ -77,7 +80,7 @@ class ImageGenerationHandler:
     def _subject(text: str) -> str:
         """Extract the subject from a generation request."""
         cleaned = _INSTRUCTION_PREFIX.sub("", (text or "").strip())
-        cleaned = cleaned.strip(" 的。．.，,、!！?？：: ")
+        cleaned = _TRAILING_PUNCT.sub("", cleaned)
         cleaned = re.sub(r"^(?:一張|一隻|一個)\s*", "", cleaned)
         return cleaned.strip()
 
@@ -85,7 +88,9 @@ class ImageGenerationHandler:
         """Write the PNG next to the runtime data. Returns "" on failure."""
         try:
             os.makedirs(self._output_dir, exist_ok=True)
-            digest = hashlib.sha1(f"{subject}|{image_base64[:64]}".encode("utf-8")).hexdigest()[:12]
+            digest = hashlib.sha1(
+                f"{subject}|{image_base64[:64]}".encode("utf-8"), usedforsecurity=False
+            ).hexdigest()[:12]
             safe = re.sub(r"[^\w\-]+", "_", subject)[:32] or "image"
             path = os.path.join(self._output_dir, f"{safe}_{digest}.png")
             with open(path, "wb") as fh:

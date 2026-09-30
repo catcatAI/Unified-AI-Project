@@ -4,37 +4,36 @@
 专门用于检查和修复项目中的集成问题
 """
 
-import sys
-from pathlib import Path
 import logging
 import re
+import sys
 from datetime import datetime
-from typing import Dict, Any, List
+from pathlib import Path
+from typing import Any, Dict, List
 
 # 添加项目根目录到路径
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 # 配置日志
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
+
 
 class IntegrationFixer:
     """集成问题检查和修复器"""
 
     def __init__(self, project_root: Path = None) -> None:
         self.project_root = project_root or PROJECT_ROOT
-        self.backup_dir = self.project_root / "backup" / f"integration_fix_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        self.backup_dir = (
+            self.project_root
+            / "backup"
+            / f"integration_fix_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        )
         self.backup_dir.mkdir(parents=True, exist_ok=True)
 
         # 集成模块列表
-        self.integration_modules = [
-            "hsp",
-            "atlassian",
-            "rovo_dev",
-            "confluence",
-            "jira"
-        ]
+        self.integration_modules = ["hsp", "atlassian", "rovo_dev", "confluence", "jira"]
 
         # 新增：需要检查的文件列表
         self.critical_files = [
@@ -57,6 +56,7 @@ class IntegrationFixer:
 
             # 复制文件
             import shutil
+
             shutil.copy2(file_path, backup_file_path)
             return backup_file_path
         except Exception as e:
@@ -70,54 +70,57 @@ class IntegrationFixer:
 
         try:
             # 检查HSP连接器文件
-            hsp_connector_path = self.project_root / "apps" / "backend" / "src" / "hsp" / "connector.py"
+            hsp_connector_path = (
+                self.project_root / "apps" / "backend" / "src" / "hsp" / "connector.py"
+            )
             if hsp_connector_path.exists():
-                with open(hsp_connector_path, 'r', encoding='utf-8') as f:
+                with open(hsp_connector_path, "r", encoding="utf-8") as f:
                     content = f.read()
 
                 # 检查协程调用问题
                 if "async def" in content and "await" not in content:
-                    issues.append({
-                        "type": "async_warning",
-                        "file": str(hsp_connector_path),
-                        "description": "发现可能的协程未await问题"
-                    })
+                    issues.append(
+                        {
+                            "type": "async_warning",
+                            "file": str(hsp_connector_path),
+                            "description": "发现可能的协程未await问题",
+                        }
+                    )
 
                 # 检查MQTT客户端导入
                 if "import paho.mqtt.client" not in content:
-                    issues.append({
-                        "type": "import_error",
-                        "file": str(hsp_connector_path),
-                        "description": "MQTT客户端未正确导入"
-                    })
+                    issues.append(
+                        {
+                            "type": "import_error",
+                            "file": str(hsp_connector_path),
+                            "description": "MQTT客户端未正确导入",
+                        }
+                    )
 
                 # 检查HSP协议相关配置
                 if "HSP_PROTOCOL_VERSION" not in content:
-                    issues.append({
-                        "type": "config_error",
-                        "file": str(hsp_connector_path),
-                        "description": "HSP协议版本未配置"
-                    })
+                    issues.append(
+                        {
+                            "type": "config_error",
+                            "file": str(hsp_connector_path),
+                            "description": "HSP协议版本未配置",
+                        }
+                    )
             else:
-                issues.append({
-                    "type": "file_missing",
-                    "file": str(hsp_connector_path),
-                    "description": "HSP连接器文件不存在"
-                })
+                issues.append(
+                    {
+                        "type": "file_missing",
+                        "file": str(hsp_connector_path),
+                        "description": "HSP连接器文件不存在",
+                    }
+                )
 
         except Exception as e:
             logger.error(f"检查HSP集成时出错, {e}")
-            issues.append({
-                "type": "check_error",
-                "description": f"检查HSP集成时出错, {e}"
-            })
+            issues.append({"type": "check_error", "description": f"检查HSP集成时出错, {e}"})
 
         logger.info(f"HSP集成问题检查完成,发现 {len(issues)} 个问题")
-        return {
-            "module": "hsp",
-            "issues": issues,
-            "status": "completed"
-        }
+        return {"module": "hsp", "issues": issues, "status": "completed"}
 
     def check_atlassian_integration(self) -> Dict[str, Any]:
         """检查Atlassian集成问题"""
@@ -130,58 +133,59 @@ class IntegrationFixer:
                 "apps/backend/src/integrations/atlassian_bridge.py",
                 "apps/backend/src/integrations/confluence_integration.py",
                 "apps/backend/src/integrations/jira_integration.py",
-                "apps/backend/src/integrations/enhanced_rovo_dev_connector.py"
+                "apps/backend/src/integrations/enhanced_rovo_dev_connector.py",
             ]
 
             for file_path in atlassian_files:
                 full_path = self.project_root / file_path
                 if full_path.exists():
-                    with open(full_path, 'r', encoding='utf-8') as f:
+                    with open(full_path, "r", encoding="utf-8") as f:
                         content = f.read()
 
                     # 检查配置导入
                     if "from config" in content and "from apps.backend.config" not in content:
-                        issues.append({
-                            "type": "import_error",
-                            "file": str(full_path),
-                            "description": "配置文件导入路径不正确"
-                        })
+                        issues.append(
+                            {
+                                "type": "import_error",
+                                "file": str(full_path),
+                                "description": "配置文件导入路径不正确",
+                            }
+                        )
 
                     # 检查认证相关代码
                     if "api_token" in content and "self.api_token" not in content:
-                        issues.append({
-                            "type": "config_error",
-                            "file": str(full_path),
-                            "description": "API令牌未正确初始化"
-                        })
+                        issues.append(
+                            {
+                                "type": "config_error",
+                                "file": str(full_path),
+                                "description": "API令牌未正确初始化",
+                            }
+                        )
 
                     # 检查Atlassian API连接
                     if "AtlassianAPI" in content and "initialize_connection" not in content:
-                        issues.append({
-                            "type": "connection_error",
-                            "file": str(full_path),
-                            "description": "Atlassian API连接未正确初始化"
-                        })
+                        issues.append(
+                            {
+                                "type": "connection_error",
+                                "file": str(full_path),
+                                "description": "Atlassian API连接未正确初始化",
+                            }
+                        )
                 else:
-                    issues.append({
-                        "type": "file_missing",
-                        "file": str(full_path),
-                        "description": "Atlassian集成文件不存在"
-                    })
+                    issues.append(
+                        {
+                            "type": "file_missing",
+                            "file": str(full_path),
+                            "description": "Atlassian集成文件不存在",
+                        }
+                    )
 
         except Exception as e:
             logger.error(f"检查Atlassian集成时出错, {e}")
-            issues.append({
-                "type": "check_error",
-                "description": f"检查Atlassian集成时出错, {e}"
-            })
+            issues.append({"type": "check_error", "description": f"检查Atlassian集成时出错, {e}"})
 
         logger.info(f"Atlassian集成问题检查完成,发现 {len(issues)} 个问题")
-        return {
-            "module": "atlassian",
-            "issues": issues,
-            "status": "completed"
-        }
+        return {"module": "atlassian", "issues": issues, "status": "completed"}
 
     def check_content_analysis(self) -> Dict[str, Any]:
         """检查内容分析模块问题"""
@@ -190,57 +194,66 @@ class IntegrationFixer:
 
         try:
             # 检查内容分析模块文件
-            ca_path = self.project_root / "apps" / "backend" / "src" / "core_ai" / "learning" / "content_analyzer_module.py"
+            ca_path = (
+                self.project_root
+                / "apps"
+                / "backend"
+                / "src"
+                / "core_ai"
+                / "learning"
+                / "content_analyzer_module.py"
+            )
             if ca_path.exists():
-                with open(ca_path, 'r', encoding='utf-8') as f:
+                with open(ca_path, "r", encoding="utf-8") as f:
                     content = f.read()
 
                 # 检查实体提取相关代码
                 if "nx_graph.number_of_nodes()" in content:
                     # 检查是否有对应的实体计数逻辑
-                    if "len(kg_data[\"entities\"])" in content:
+                    if 'len(kg_data["entities"])' in content:
                         # 这可能是一个断言失败的问题
-                        issues.append({
-                            "type": "logic_error",
-                            "file": str(ca_path),
-                            "description": "实体计数逻辑可能存在不一致"
-                        })
+                        issues.append(
+                            {
+                                "type": "logic_error",
+                                "file": str(ca_path),
+                                "description": "实体计数逻辑可能存在不一致",
+                            }
+                        )
 
                 # 检查关系提取相关代码
                 if "relationship" in content and "found_relationship" in content:
-                    issues.append({
-                        "type": "logic_error",
-                        "file": str(ca_path),
-                        "description": "关系提取逻辑可能需要优化"
-                    })
+                    issues.append(
+                        {
+                            "type": "logic_error",
+                            "file": str(ca_path),
+                            "description": "关系提取逻辑可能需要优化",
+                        }
+                    )
 
                 # 检查内容分析模块的导入问题
                 if "from learning" in content:
-                    issues.append({
-                        "type": "import_error",
-                        "file": str(ca_path),
-                        "description": "使用了绝对导入路径"
-                    })
+                    issues.append(
+                        {
+                            "type": "import_error",
+                            "file": str(ca_path),
+                            "description": "使用了绝对导入路径",
+                        }
+                    )
             else:
-                issues.append({
-                    "type": "file_missing",
-                    "file": str(ca_path),
-                    "description": "内容分析模块文件不存在"
-                })
+                issues.append(
+                    {
+                        "type": "file_missing",
+                        "file": str(ca_path),
+                        "description": "内容分析模块文件不存在",
+                    }
+                )
 
         except Exception as e:
             logger.error(f"检查内容分析模块时出错, {e}")
-            issues.append({
-                "type": "check_error",
-                "description": f"检查内容分析模块时出错, {e}"
-            })
+            issues.append({"type": "check_error", "description": f"检查内容分析模块时出错, {e}"})
 
         logger.info(f"内容分析模块问题检查完成,发现 {len(issues)} 个问题")
-        return {
-            "module": "content_analysis",
-            "issues": issues,
-            "status": "completed"
-        }
+        return {"module": "content_analysis", "issues": issues, "status": "completed"}
 
     def fix_hsp_integration(self, issues: List[Dict[str, Any]]) -> bool:
         """修复HSP集成问题"""
@@ -248,12 +261,14 @@ class IntegrationFixer:
         fixed_count = 0
 
         try:
-            hsp_connector_path = self.project_root / "apps" / "backend" / "src" / "hsp" / "connector.py"
+            hsp_connector_path = (
+                self.project_root / "apps" / "backend" / "src" / "hsp" / "connector.py"
+            )
             if hsp_connector_path.exists():
                 # 备份文件
                 self.backup_file(hsp_connector_path)
 
-                with open(hsp_connector_path, 'r', encoding='utf-8') as f:
+                with open(hsp_connector_path, "r", encoding="utf-8") as f:
                     content = f.read()
 
                 original_content = content
@@ -264,8 +279,11 @@ class IntegrationFixer:
                         # 更精确的修复逻辑
                         # 查找可能需要await的协程调用
                         async_calls = [
-                            "publish_fact", "send_ack", "connect_to_broker",
-                            "subscribe_to_topic", "unsubscribe_from_topic"
+                            "publish_fact",
+                            "send_ack",
+                            "connect_to_broker",
+                            "subscribe_to_topic",
+                            "unsubscribe_from_topic",
                         ]
                         for call in async_calls:
                             pattern = rf"(\b{call}\s*\()"
@@ -276,7 +294,7 @@ class IntegrationFixer:
                 content = re.sub(
                     r"import paho\.mqtt\.client as mqtt",
                     "import paho.mqtt.client as mqtt  # MQTT客户端",
-    content
+                    content,
                 )
 
                 # 添加HSP协议版本配置
@@ -284,12 +302,12 @@ class IntegrationFixer:
                     # 在文件顶部添加配置
                     content = content.replace(
                         '"""',
-                        '"""\n\n# HSP协议配置\nHSP_PROTOCOL_VERSION = "1.0"\nHSP_DEFAULT_TIMEOUT = 30'
+                        '"""\n\n# HSP协议配置\nHSP_PROTOCOL_VERSION = "1.0"\nHSP_DEFAULT_TIMEOUT = 30',
                     )
 
                 # 如果内容有变化,写入文件
                 if content != original_content:
-                    with open(hsp_connector_path, 'w', encoding='utf-8') as f:
+                    with open(hsp_connector_path, "w", encoding="utf-8") as f:
                         f.write(content)
                     fixed_count += 1
                     logger.info("✓ HSP集成问题修复完成")
@@ -315,7 +333,7 @@ class IntegrationFixer:
                 "apps/backend/src/integrations/atlassian_bridge.py",
                 "apps/backend/src/integrations/confluence_integration.py",
                 "apps/backend/src/integrations/jira_integration.py",
-                "apps/backend/src/integrations/enhanced_rovo_dev_connector.py"
+                "apps/backend/src/integrations/enhanced_rovo_dev_connector.py",
             ]
 
             for file_path in atlassian_files:
@@ -324,7 +342,7 @@ class IntegrationFixer:
                     # 备份文件
                     self.backup_file(full_path)
 
-                    with open(full_path, 'r', encoding='utf-8') as f:
+                    with open(full_path, "r", encoding="utf-8") as f:
                         content = f.read()
 
                     original_content = content
@@ -332,10 +350,7 @@ class IntegrationFixer:
                     # 修复配置导入问题
                     for issue in issues:
                         if issue["type"] == "import_error" and issue["file"] == str(full_path):
-                            content = content.replace(
-                                "from config",
-                                "from apps.backend.config"
-                            )
+                            content = content.replace("from config", "from apps.backend.config")
 
                     # 修复API令牌初始化问题
                     if "self.api_token = None" not in content and "api_token" in content:
@@ -344,11 +359,12 @@ class IntegrationFixer:
                             r"def __init__\(self.*?\) -> None,",
                             "def __init__(self, config = None) -> None,\n        self.api_token == config.get('api_token') if config else None\n        self.domain == config.get('domain') if config else None",
                             content,
-                            flags=re.DOTALL())
+                            flags=re.DOTALL(),
+                        )
 
                     # 如果内容有变化,写入文件
                     if content != original_content:
-                        with open(full_path, 'w', encoding='utf-8') as f:
+                        with open(full_path, "w", encoding="utf-8") as f:
                             f.write(content)
                         fixed_count += 1
                         logger.info(f"✓ {file_path} 修复完成")
@@ -368,12 +384,20 @@ class IntegrationFixer:
         fixed_count = 0
 
         try:
-            ca_path = self.project_root / "apps" / "backend" / "src" / "core_ai" / "learning" / "content_analyzer_module.py"
+            ca_path = (
+                self.project_root
+                / "apps"
+                / "backend"
+                / "src"
+                / "core_ai"
+                / "learning"
+                / "content_analyzer_module.py"
+            )
             if ca_path.exists():
                 # 备份文件
                 self.backup_file(ca_path)
 
-                with open(ca_path, 'r', encoding='utf-8') as f:
+                with open(ca_path, "r", encoding="utf-8") as f:
                     content = f.read()
 
                 original_content = content
@@ -386,22 +410,20 @@ class IntegrationFixer:
                         if "实体计数逻辑可能存在不一致" in issue["description"]:
                             # 添加更准确的实体计数逻辑
                             content = re.sub(
-                            r"nx_graph\.number_of_nodes\(\)",
-                            "# 获取实体节点数量\nentity_nodes = [n for n, attrs in nx_graph.nodes(data=True) if attrs.get('type') == 'entity']\nlen(entity_nodes)",
-                            content
+                                r"nx_graph\.number_of_nodes\(\)",
+                                "# 获取实体节点数量\nentity_nodes = [n for n, attrs in nx_graph.nodes(data=True) if attrs.get('type') == 'entity']\nlen(entity_nodes)",
+                                content,
                             )
 
                     # 修复导入问题
                     elif issue["type"] == "import_error":
                         content = re.sub(
-                            r"from apps\.backend\.src\.core_ai\.learning",
-                            "from .",
-    content
+                            r"from apps\.backend\.src\.core_ai\.learning", "from .", content
                         )
 
                 # 如果内容有变化,写入文件
                 if content != original_content:
-                    with open(ca_path, 'w', encoding='utf-8') as f:
+                    with open(ca_path, "w", encoding="utf-8") as f:
                         f.write(content)
                     fixed_count += 1
                     logger.info("✓ 内容分析模块问题修复完成")
@@ -432,11 +454,7 @@ class IntegrationFixer:
     def fix_all_integrations(self, check_results: List[Dict[str, Any]]) -> Dict[str, bool]:
         """修复所有集成问题"""
         logger.info("开始修复所有集成问题...")
-        fix_results = {
-            "hsp": False,
-            "atlassian": False,
-            "content_analysis": False
-        }
+        fix_results = {"hsp": False, "atlassian": False, "content_analysis": False}
 
         # 修复各个集成模块的问题
         for result in check_results:
@@ -460,12 +478,23 @@ class IntegrationFixer:
         try:
             # 运行相关测试
             import subprocess
-            result = subprocess.run([
-                "python", "-m", "pytest",
-                "tests/hsp/",
-                "tests/integration/test_atlassian_integration.py",
-                "--tb=short", "-v", "--disable-warnings"
-            ], cwd=self.project_root, capture_output=True, text=True, timeout=300)
+
+            result = subprocess.run(
+                [
+                    "python",
+                    "-m",
+                    "pytest",
+                    "tests/hsp/",
+                    "tests/integration/test_atlassian_integration.py",
+                    "--tb=short",
+                    "-v",
+                    "--disable-warnings",
+                ],
+                cwd=self.project_root,
+                capture_output=True,
+                text=True,
+                timeout=300,
+            )
 
             if result.returncode == 0:
                 logger.info("✓ 集成测试通过")
@@ -475,7 +504,7 @@ class IntegrationFixer:
                 logger.warning(f"错误输出, {result.stdout[-1000:]}")
                 # 保存详细的测试结果
                 test_result_file = self.project_root / "integration_test_results.txt"
-                with open(test_result_file, 'w', encoding='utf-8') as f:
+                with open(test_result_file, "w", encoding="utf-8") as f:
                     f.write(result.stdout())
                     f.write("\n\nSTDERR,\n")
                     f.write(result.stderr())
@@ -488,6 +517,7 @@ class IntegrationFixer:
         except Exception as e:
             logger.error(f"✗ 验证修复效果时出错, {e}")
             return False
+
 
 def main() -> None:
     """主函数"""
@@ -505,8 +535,8 @@ def main() -> None:
     total_issues = 0
     for result in check_results:
         print(f"  {result['module']} {len(result['issues'])} 个问题")
-        total_issues += len(result['issues'])
-        for issue in result['issues']:
+        total_issues += len(result["issues"])
+        for issue in result["issues"]:
             print(f"    - {issue['description']}")
 
     if total_issues > 0:
@@ -530,6 +560,7 @@ def main() -> None:
         print("\n  没有发现集成问题")
 
     print("\n=集成问题检查和修复完成 ===")
+
 
 if __name__ == "__main__":
     main()

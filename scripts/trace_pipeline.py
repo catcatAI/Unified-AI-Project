@@ -1,5 +1,8 @@
 """Trace the full encode -> SNN -> decode pipeline."""
-import os, sys
+
+import os
+import sys
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"))
 
 from ai.garden.garden_engine import GARDENEngine
@@ -8,6 +11,7 @@ e = GARDENEngine(compatibility_mode=True)
 ckpt = os.path.join(os.path.dirname(__file__), "..", "data", "checkpoints", "garden_checkpoint")
 if os.path.isdir(ckpt):
     e.load(ckpt)
+
 
 def trace(label, text):
     print(f"\n{'='*60}")
@@ -45,8 +49,10 @@ def trace(label, text):
 
     # Step 5: what anchored_decode gives
     from ai.garden.garden_engine import _anchored_decode
+
     anchored = _anchored_decode(snn_out, input_keys, e.dictionary)
     print(f"\n[5] anchored_decode() -> {anchored!r}")
+
 
 # Test with a math question
 trace("MATH", "1+1=?")

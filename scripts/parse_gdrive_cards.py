@@ -15,8 +15,16 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 EXPORT_DIR = Path(__file__).resolve().parent.parent / "apps" / "game-rpg" / "data" / "gdrive_export"
-OUTPUT_MD = Path(__file__).resolve().parent.parent / "apps" / "crystal-cards" / "game-data" / "gdrive-inventory.md"
-OUTPUT_JSON = Path(__file__).resolve().parent.parent / "apps" / "game-rpg" / "data" / "gdrive_cards.json"
+OUTPUT_MD = (
+    Path(__file__).resolve().parent.parent
+    / "apps"
+    / "crystal-cards"
+    / "game-data"
+    / "gdrive-inventory.md"
+)
+OUTPUT_JSON = (
+    Path(__file__).resolve().parent.parent / "apps" / "game-rpg" / "data" / "gdrive_cards.json"
+)
 
 # ─── Classification patterns ───
 CARD_TYPE_PATTERNS = [

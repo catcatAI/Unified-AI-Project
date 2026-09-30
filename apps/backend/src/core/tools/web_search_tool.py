@@ -42,6 +42,12 @@ class WebSearchTool:
         self.provider = ws.get("provider", "duckduckgo")
         self.ddg_url = ws.get("ddg_url", _DDG_URL)
         self.wiki_api = ws.get("wiki_api", _WIKI_API)
+        # Only http(s) endpoints are reachable: a config-supplied file:// or
+        # custom-scheme URL would otherwise be opened verbatim by urlopen.
+        if not self.ddg_url.startswith(("http://", "https://")):
+            self.ddg_url = _DDG_URL
+        if not self.wiki_api.startswith(("http://", "https://")):
+            self.wiki_api = _WIKI_API
         self.user_agent = ws.get("user_agent", DEFAULT_USER_AGENT)
         self.max_results = ws.get("max_results", 5)
         self.timeout = ws.get("timeout", 10)
@@ -70,7 +76,9 @@ class WebSearchTool:
                     "Content-Type": "application/x-www-form-urlencoded",
                 },
             )
-            with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+            with urllib.request.urlopen(
+                req, timeout=self.timeout
+            ) as resp:  # nosec B310 - scheme-validated in __init__
                 html_text = resp.read().decode("utf-8", errors="replace")
             results: List[Dict[str, Any]] = []
             # R29：舊正則要求 rel="nofollow"+<span> 標題，實測 DDG Lite
@@ -110,7 +118,9 @@ class WebSearchTool:
             )
             url = f"{self.wiki_api}?{params}"
             req = urllib.request.Request(url, headers={"User-Agent": self.user_agent})
-            with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+            with urllib.request.urlopen(
+                req, timeout=self.timeout
+            ) as resp:  # nosec B310 - scheme-validated in __init__
                 data = json.loads(resp.read().decode())
             results = []
             for item in data.get("query", {}).get("search", []):

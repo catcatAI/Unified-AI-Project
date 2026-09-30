@@ -47,7 +47,6 @@ def _find_models_dir() -> Optional[str]:
     return None
 
 
-
 def get_gvv() -> Optional[Dict[str, Any]]:
     """Lazy-initialize (process-wide) the GVV pipeline with concept space."""
     global _GVV_STATE
@@ -62,9 +61,7 @@ def get_gvv() -> Optional[Dict[str, Any]]:
 
         models_dir = _find_models_dir()
         if models_dir is None:
-            logger.error(
-                "models/%s not found (searched upward from %s)", _VOCAB_FILENAME, __file__
-            )
+            logger.error("models/%s not found (searched upward from %s)", _VOCAB_FILENAME, __file__)
             return None
 
         vocab_path = os.path.join(models_dir, "geometric_vocabulary.json")

@@ -1,7 +1,7 @@
 """ai.context.utils 工具函数测试"""
 
 import pytest
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet, InvalidToken
 
 from apps.backend.src.ai.context.storage.base import Context, ContextStatus, ContextType
 from apps.backend.src.ai.context.utils import (
@@ -67,7 +67,7 @@ class TestEncryptDecrypt:
         key1 = Fernet.generate_key()
         key2 = Fernet.generate_key()
         encrypted = encrypt_context_data(b"data", key1)
-        with pytest.raises(Exception):
+        with pytest.raises(InvalidToken):
             decrypt_context_data(encrypted, key2)
 
 

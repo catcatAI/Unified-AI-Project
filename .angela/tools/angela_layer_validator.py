@@ -35,15 +35,16 @@ Angela Matrix: [L1-L6] [ARCH] Layer Architecture Validator
 - 本工具: 专门验证Angela的6层生命架构实现
 """
 
+import argparse
+import json
+import logging
 import os
 import re
-import json
-import argparse
-from pathlib import Path
-from datetime import datetime
-from typing import Dict, List, Optional, Set, Tuple
 from dataclasses import dataclass
-import logging
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional, Set, Tuple
+
 logger = logging.getLogger(__name__)
 
 # Angela配置
@@ -188,9 +189,8 @@ class LayerValidator:
                 return 0.9  # 基本完成
 
         except Exception as e:
-            logger.error(f'Error in angela_layer_validator.py: {e}', exc_info=True)
+            logger.error(f"Error in angela_layer_validator.py: {e}", exc_info=True)
             return 0.0
-
 
     def validate_all_layers(self) -> Dict[str, Dict]:
         """验证所有层"""
@@ -242,9 +242,7 @@ class LayerValidator:
 
         for pattern in layer.get("key_files", []):
             if "*" in pattern:
-                files.extend(
-                    [str(f.relative_to(self.root)) for f in self.root.glob(pattern)]
-                )
+                files.extend([str(f.relative_to(self.root)) for f in self.root.glob(pattern)])
             else:
                 files.append(pattern)
 
@@ -272,9 +270,8 @@ class LayerValidator:
             return False
 
         except Exception as e:
-            logger.error(f'Error in angela_layer_validator.py: {e}', exc_info=True)
+            logger.error(f"Error in angela_layer_validator.py: {e}", exc_info=True)
             return False
-
 
     def generate_architecture_report(self) -> Dict:
         """生成架构健康报告"""
@@ -287,18 +284,14 @@ class LayerValidator:
             1 for r in validation_results.values() if r.get("completeness", 0) > 0.8
         )
         partial_layers = sum(
-            1
-            for r in validation_results.values()
-            if 0.4 < r.get("completeness", 0) <= 0.8
+            1 for r in validation_results.values() if 0.4 < r.get("completeness", 0) <= 0.8
         )
         missing_layers = sum(
             1 for r in validation_results.values() if r.get("completeness", 0) <= 0.4
         )
 
         # 计算整体健康度
-        total_completeness = sum(
-            r.get("completeness", 0) for r in validation_results.values()
-        )
+        total_completeness = sum(r.get("completeness", 0) for r in validation_results.values())
         overall_health = total_completeness / total_layers
 
         return {
@@ -320,21 +313,15 @@ class LayerValidator:
         recommendations = []
 
         # 按完成度排序
-        sorted_layers = sorted(
-            results.items(), key=lambda x: x[1].get("completeness", 0)
-        )
+        sorted_layers = sorted(results.items(), key=lambda x: x[1].get("completeness", 0))
 
         for layer_id, result in sorted_layers:
             completeness = result.get("completeness", 0)
 
             if completeness < 0.3:
-                recommendations.append(
-                    f"🔴 {layer_id} ({result['name']}): 严重缺失，需要立即实现"
-                )
+                recommendations.append(f"🔴 {layer_id} ({result['name']}): 严重缺失，需要立即实现")
             elif completeness < 0.6:
-                recommendations.append(
-                    f"🟡 {layer_id} ({result['name']}): 部分实现，需要继续完善"
-                )
+                recommendations.append(f"🟡 {layer_id} ({result['name']}): 部分实现，需要继续完善")
             elif result.get("missing_files"):
                 recommendations.append(
                     f"🟢 {layer_id} ({result['name']}): 基本实现，但缺少文件: {', '.join(result['missing_files'][:3])}"
@@ -361,13 +348,13 @@ Angela Matrix: [L1-L6] [ARCH]
 示例:
     # 验证所有层
     python .angela/tools/angela_layer_validator.py validate
-    
+
     # 验证特定层
     python .angela/tools/angela_layer_validator.py validate --layer L2
-    
+
     # 检查层间依赖
     python .angela/tools/angela_layer_validator.py dependencies
-    
+
     # 生成完整报告
     python .angela/tools/angela_layer_validator.py report --output angela_arch_report.json
 
@@ -379,9 +366,7 @@ Angela Matrix: [L1-L6] [ARCH]
 
     # validate 命令
     val_parser = subparsers.add_parser("validate", help="验证层")
-    val_parser.add_argument(
-        "--layer", choices=["L1", "L2", "L3", "L4", "L5", "L6"], help="特定层"
-    )
+    val_parser.add_argument("--layer", choices=["L1", "L2", "L3", "L4", "L5", "L6"], help="特定层")
 
     # dependencies 命令
     dep_parser = subparsers.add_parser("dependencies", help="检查层间依赖")
@@ -427,9 +412,7 @@ Angela Matrix: [L1-L6] [ARCH]
 
                 print(f"\n{status_icon} {layer_id}: {result['name']}")
                 print(f"   完成度: {result['completeness'] * 100:.1f}%")
-                print(
-                    f"   文件: {len(result['existing_files'])}/{len(result['expected_files'])}"
-                )
+                print(f"   文件: {len(result['existing_files'])}/{len(result['expected_files'])}")
 
     elif args.command == "dependencies":
         issues = validator.check_layer_dependencies()
@@ -437,9 +420,7 @@ Angela Matrix: [L1-L6] [ARCH]
         if issues:
             print(f"\n发现 {len(issues)} 个依赖问题:")
             for issue in issues:
-                icon = {"error": "❌", "warning": "⚠️", "info": "ℹ️"}.get(
-                    issue["severity"], "•"
-                )
+                icon = {"error": "❌", "warning": "⚠️", "info": "ℹ️"}.get(issue["severity"], "•")
                 print(f"  {icon} [{issue['layer']}] {issue['message']}")
         else:
             print("\n✅ 层间依赖关系正常")

@@ -24,7 +24,10 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any, Callable, Dict, List, Optional
+
+logger = logging.getLogger(__name__)
 
 
 class RegistryError(RuntimeError):
@@ -200,6 +203,7 @@ def _safe_modality(obj: Any) -> Optional[str]:
             try:
                 raw = raw()
             except Exception:
+                logger.debug("modality accessor failed for %r", obj, exc_info=True)
                 continue
         if raw:
             return str(raw)
@@ -291,6 +295,7 @@ class DictionaryRegistry(_BaseRegistry):
             try:
                 hits = q(input_data, top_k=top_k, **kwargs) or []
             except Exception:
+                logger.debug("query from %r failed; skipping", name, exc_info=True)
                 continue
             for hit in _normalize_hit(hits):
                 hit["name"] = name
@@ -314,6 +319,7 @@ class DictionaryRegistry(_BaseRegistry):
                 keys = fn(input_data, **kwargs)
                 out[name] = keys if isinstance(keys, list) else [keys]
             except Exception:
+                logger.debug("key extraction from %r failed", name, exc_info=True)
                 continue
         return out
 
@@ -410,6 +416,7 @@ class TranslatorRegistry(_BaseRegistry):
                 if rule.can_translate(source, target, direction):
                     return rule
             except Exception:
+                logger.debug("translator rule %r failed", rule, exc_info=True)
                 continue
         return None
 

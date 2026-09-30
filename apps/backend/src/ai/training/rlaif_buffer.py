@@ -92,8 +92,10 @@ class RLAIFBuffer:
             scored.append((prompt, vec, score))
         # Pair adjacent as win/lose
         for i in range(0, len(scored) - 1, 2):
-            win, lose = (scored[i], scored[i + 1]) if scored[i][2] >= scored[i + 1][2] else (
-                (scored[i + 1], scored[i])
+            win, lose = (
+                (scored[i], scored[i + 1])
+                if scored[i][2] >= scored[i + 1][2]
+                else ((scored[i + 1], scored[i]))
             )
             if abs(win[2] - lose[2]) < 1e-6:
                 continue

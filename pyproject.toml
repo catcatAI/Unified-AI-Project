@@ -48,7 +48,10 @@ known_third_party = ['fastapi', 'uvicorn', 'pydantic', 'numpy', 'pandas', 'torch
 # bandit - Python 安全静态分析
 exclude_dirs = ['tests', 'venv', '.venv', 'build', 'dist', 'node_modules', 'migrations']
 # 允许项目风格: B101(assert), B110(broad except), B311(random), B403(pickle)
-skips = ['B101', 'B110', 'B311', 'B403', 'B404', 'B601']
+# 审计噪音（2026-09-28 逐条复核）: B105/B107 — 误报于 token/"pass" 比较、配置键与
+# concept_token 默认值，仓库内无真实凭据; B603 — subprocess 列表传参是安全模式;
+# B607 — PATH 相对程序名保持跨平台可移植性。
+skips = ['B101', 'B110', 'B311', 'B403', 'B404', 'B601', 'B105', 'B107', 'B603', 'B607']
 
 [tool.safety]
 # safety - Python 依赖安全审计

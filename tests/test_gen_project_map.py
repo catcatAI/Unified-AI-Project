@@ -463,9 +463,7 @@ class TestVerificationRegister:
     def test_diag_reports_unverified_count(self):
         mod = load_tool()
         diag = "\n".join(
-            mod.render_diag(
-                "ok", 10, 10000, {}, [], {}, "", reg={"unverified": 3, "verified": 1}
-            )
+            mod.render_diag("ok", 10, 10000, {}, [], {}, "", reg={"unverified": 3, "verified": 1})
         )
         assert "unverified_runtime: 3" in diag
         assert "verify_runtime_claims: 3" in diag

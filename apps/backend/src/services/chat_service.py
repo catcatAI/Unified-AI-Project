@@ -329,9 +329,7 @@ class ChatService:
             mm_adapter = None
 
         if preprocessing_plan.allow_specialized_agents:
-            hardware_response = await self._try_repl_hardware_agent(
-                user_message, merged_context
-            )
+            hardware_response = await self._try_repl_hardware_agent(user_message, merged_context)
             if hardware_response is not None:
                 return hardware_response
 
@@ -590,8 +588,8 @@ class ChatService:
         # received anything and the "sorted training execution" path was
         # unreachable end to end.
         try:
-            from services.mainline_dispatcher import dispatch as _mainline_dispatch
             from services.mainline_dispatcher import DispatchIntent as _DispatchIntent
+            from services.mainline_dispatcher import dispatch as _mainline_dispatch
 
             decision = _mainline_dispatch(
                 {"text": user_message},

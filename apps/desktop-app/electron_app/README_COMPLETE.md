@@ -597,6 +597,4 @@ MIT License
 
 ---
 
-**最後更新**: 2026-02-05  
-**版本**: 1.0.0  
-**維護者**: Angela AI Development Team
+**最後更新**: 2026-02-05 **版本**: 1.0.0 **維護者**: Angela AI Development Team

@@ -30,7 +30,7 @@ class ParameterExtractor:
         self.repo_id = repo_id
 
     def download_model_parameters(
-        self, filename: str, cache_dir: str = "model_cache"
+        self, filename: str, cache_dir: str = "model_cache", revision: Optional[str] = None
     ) -> Optional[str]:
         """
         从Hugging Face Hub下载模型参数
@@ -38,6 +38,7 @@ class ParameterExtractor:
         Args:
             filename: 参数文件名
             cache_dir: 缓存目录
+            revision: HF 仓库修订；生产环境应固定为 commit sha 以保证供应链可复现
 
         Returns:
             下载文件路径
@@ -50,7 +51,9 @@ class ParameterExtractor:
             os.makedirs(cache_dir)
 
         try:
-            return hf_hub_download(repo_id=self.repo_id, filename=filename, cache_dir=cache_dir)
+            return hf_hub_download(
+                repo_id=self.repo_id, filename=filename, cache_dir=cache_dir, revision=revision
+            )
         except (
             Exception
         ) as e:  # broad exception acceptable: HF download may raise various network or HF Hub exceptions

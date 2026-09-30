@@ -709,7 +709,7 @@ class MathRippleEngine:
         """
         import re
 
-        cleaned = text.strip().rstrip("??!!。.")
+        cleaned = re.sub(r"[??!!。.]+$", "", text.strip())
 
         # FIRST: Convert Chinese numbers to Arabic
         # (do this BEFORE operator replacement to avoid spaces breaking up

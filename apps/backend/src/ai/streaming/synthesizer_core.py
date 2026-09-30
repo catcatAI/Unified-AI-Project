@@ -8,9 +8,8 @@ from __future__ import annotations
 
 import asyncio
 from collections import deque
-from typing import Deque
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import Deque, Dict, List, Optional
 
 from .token_stream import StreamToken, TokenStream, TokenType
 

@@ -1,7 +1,6 @@
 # ANGELA-MATRIX: [L3] [β] [B] [L0]
 
 import pytest
-
 from services.llm.providers.llamacpp import LlamaCppBackend
 
 
@@ -32,9 +31,7 @@ class _Session:
 
 @pytest.mark.asyncio
 async def test_health_prefers_openai_compatible_model_endpoint(monkeypatch) -> None:
-    session = _Session(
-        [_Response(200, {"data": [{"id": "qwen-local"}]})]
-    )
+    session = _Session([_Response(200, {"data": [{"id": "qwen-local"}]})])
     backend = LlamaCppBackend(model=None)
     monkeypatch.setattr(backend, "_get_session", lambda: session)
 

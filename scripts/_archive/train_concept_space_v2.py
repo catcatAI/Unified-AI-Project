@@ -1,26 +1,31 @@
 """Improved concept space training with more data and center loss."""
-import sys
-import os
-import time
+
 import io
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'apps', 'backend', 'src'))
+import os
+import sys
+import time
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"))
+
+import glob
 
 import numpy as np
-import glob
-from PIL import Image
-from ai.multimodal.semantic_visual import SemanticVisualEncoder
 from ai.multimodal.primitives.concept_space import ConceptSpaceMapper
+from ai.multimodal.semantic_visual import SemanticVisualEncoder
+from PIL import Image
 
-CIFAR_DIR="D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
-CLASSES=["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
+CIFAR_DIR = "D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
+CLASSES = ["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
 
 
 def load_images(n_per_class=100, skip_first=0):
-    images=[]
-    labels=[]
+    images = []
+    labels = []
     for ci, cls in enumerate(CLASSES):
         cls_dir = os.path.join(CIFAR_DIR, cls)
-        files = sorted(glob.glob(os.path.join(cls_dir, "*.npy")))[skip_first:skip_first+n_per_class]
+        files = sorted(glob.glob(os.path.join(cls_dir, "*.npy")))[
+            skip_first : skip_first + n_per_class
+        ]
         for f in files:
             arr = np.load(f)
             if arr.shape == (3072,):
@@ -34,9 +39,9 @@ def load_images(n_per_class=100, skip_first=0):
 
 
 def encode_images(encoder, images, batch_size=16):
-    all_vecs=[]
+    all_vecs = []
     for i in range(0, len(images), batch_size):
-        batch = images[i:i+batch_size]
+        batch = images[i : i + batch_size]
         for img in batch:
             buf = io.BytesIO()
             img.save(buf, format="PNG")
@@ -55,6 +60,7 @@ def main():
     print("Loading CLIP encoder...")
     encoder = SemanticVisualEncoder()
     from ai.multimodal.semantic_visual import _lazy_init_clip
+
     model, processor = _lazy_init_clip()
     if model is None:
         print("CLIP failed to load!")
@@ -98,19 +104,19 @@ def main():
 
     # Test on training set
     print("\n=== Training Set Accuracy ===")
-    correct=0
+    correct = 0
     for i in range(len(train_clip)):
-        pred_idx, conf = mapper.predict(train_clip[i:i+1])
+        pred_idx, conf = mapper.predict(train_clip[i : i + 1])
         if pred_idx == train_labels[i]:
             correct += 1
     print(f"Training: {correct}/{len(train_clip)} = {correct/len(train_clip):.1%}")
 
     # Test on held-out set
     print("\n=== Held-Out Test Set Accuracy ===")
-    correct=0
-    per_class={c: [0, 0] for c in CLASSES}
+    correct = 0
+    per_class = {c: [0, 0] for c in CLASSES}
     for i in range(len(test_clip)):
-        pred_idx, conf = mapper.predict(test_clip[i:i+1])
+        pred_idx, conf = mapper.predict(test_clip[i : i + 1])
         pred = CLASSES[pred_idx]
         actual = CLASSES[test_labels[i]]
         per_class[actual][1] += 1

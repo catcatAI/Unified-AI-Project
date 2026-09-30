@@ -26,10 +26,15 @@ def main():
 
     ap = argparse.ArgumentParser(description="SLS real contrastive (visual/audio)")
     ap.add_argument("--modality", choices=["visual", "audio"], default="visual")
-    ap.add_argument("--checkpoint", default=None,
-                    help="save trained SLS weights (default: data/checkpoints/sls_<modality>.npz; empty string disables)")
+    ap.add_argument(
+        "--checkpoint",
+        default=None,
+        help="save trained SLS weights (default: data/checkpoints/sls_<modality>.npz; empty string disables)",
+    )
     ap.add_argument("--epochs", type=int, default=10)
-    ap.add_argument("--hard-pairs", default="", help="e.g. '3,5': extra pairs focused on these classes")
+    ap.add_argument(
+        "--hard-pairs", default="", help="e.g. '3,5': extra pairs focused on these classes"
+    )
     ap.add_argument("--hard-extra", type=int, default=1000)
     ap.add_argument("--margin", type=float, default=0.5)
     ap.add_argument("--cache", default="", help="embedding cache path override")
@@ -37,6 +42,7 @@ def main():
     mod = "vision" if args.modality == "visual" else "audio"
 
     from core.backbone.hardware import HardwareProfile
+
     hw = HardwareProfile.detect()
     print(f"SLS 真實對比[{args.modality}] 硬件規格自適應: GPU={hw['gpu']} RAM={hw['ram_gb']:.1f}")
 
@@ -71,7 +77,9 @@ def main():
         pools = {c: [k for k in range(len(tr)) if ytr[k] == c] for c in hp}
         extra_p, extra_n = 0, 0
         guard = 0
-        while (extra_p < args.hard_extra or extra_n < args.hard_extra) and guard < args.hard_extra * 20:
+        while (
+            extra_p < args.hard_extra or extra_n < args.hard_extra
+        ) and guard < args.hard_extra * 20:
             guard += 1
             c1, c2 = hp[rng.randint(len(hp))], hp[rng.randint(len(hp))]
             if not pools[c1] or not pools[c2]:
@@ -89,7 +97,9 @@ def main():
 
     t0 = time.time()
     rep = sls.train(pos, neg, epochs=args.epochs, lr=0.01, margin=args.margin)
-    print(f"  SLS 訓練 {args.epochs} epoch ({time.time()-t0:.1f}s) final_loss {rep.get('final_loss')}")
+    print(
+        f"  SLS 訓練 {args.epochs} epoch ({time.time()-t0:.1f}s) final_loss {rep.get('final_loss')}"
+    )
 
     Zte = np.array([sls.project(mod, v) for v in Xte])
     Zte /= np.linalg.norm(Zte, axis=1, keepdims=True) + 1e-9
@@ -103,14 +113,18 @@ def main():
         for j2 in range(i + 1, n):
             (same if yte[i] == yte[j2] else cross).append(float(d[j2]))
     import statistics
+
     s, c, r = statistics.mean(same), statistics.mean(cross), hits / n
-    print(f"  SLS held-out({len(te)})：同類距 {s:.3f} 跨類距 {c:.3f} top1 召回 {r:.0%}（線性基線 0.326/82%）")
+    print(
+        f"  SLS held-out({len(te)})：同類距 {s:.3f} 跨類距 {c:.3f} top1 召回 {r:.0%}（線性基線 0.326/82%）"
+    )
 
     # 存檔接線：訓後存權重，重置後加載驗往返（P1 模式；存檔在忽略區）
     ckpt = args.checkpoint
     if ckpt is None:
-        ckpt = os.path.join(os.path.dirname(__file__), "..", "data/checkpoints",
-                            f"sls_{args.modality}.npz")
+        ckpt = os.path.join(
+            os.path.dirname(__file__), "..", "data/checkpoints", f"sls_{args.modality}.npz"
+        )
     if ckpt:
         try:
             ok_save = sls.save_weights(ckpt)
@@ -120,8 +134,10 @@ def main():
             v0 = sls.project(mod, Xte[0])
             v0n = v0 / (np.linalg.norm(v0) + 1e-9)  # Zte 存的是歸一後，對齊再比
             same_proj = bool(np.allclose(v0n, Zte[0], atol=1e-5))
-            print(f"   Checkpoint: save={ok_save} load={ok_load} "
-                  f"({os.path.getsize(ckpt)//1024}KB) roundtrip={'✅' if same_proj else '❌'}")
+            print(
+                f"   Checkpoint: save={ok_save} load={ok_load} "
+                f"({os.path.getsize(ckpt)//1024}KB) roundtrip={'✅' if same_proj else '❌'}"
+            )
         except Exception as e:
             print(f"   Checkpoint ❌: {e}")
     return 0

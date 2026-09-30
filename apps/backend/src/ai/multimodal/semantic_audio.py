@@ -70,9 +70,13 @@ def _lazy_init_whisper():
         from transformers import WhisperFeatureExtractor, WhisperModel, WhisperProcessor
 
         model_name = "openai/whisper-tiny"  # Smallest Whisper for speed
-        _WHISPER_MODEL = WhisperModel.from_pretrained(model_name)
-        _WHISPER_PROCESSOR = WhisperProcessor.from_pretrained(model_name)
-        _WHISPER_FEATURE_EXTRACTOR = WhisperFeatureExtractor.from_pretrained(model_name)
+        # Supply-chain pin: immutable commit sha (HF repo HEAD as of 2026-09-28).
+        _REVISION = "169d4a4341b33bc18d8881c4b69c2e104e1cc0af"
+        _WHISPER_MODEL = WhisperModel.from_pretrained(model_name, revision=_REVISION)
+        _WHISPER_PROCESSOR = WhisperProcessor.from_pretrained(model_name, revision=_REVISION)
+        _WHISPER_FEATURE_EXTRACTOR = WhisperFeatureExtractor.from_pretrained(
+            model_name, revision=_REVISION
+        )
         _WHISPER_MODEL.eval()
         if torch.cuda.is_available():
             _WHISPER_MODEL = _WHISPER_MODEL.cuda()  # type: ignore[call-arg]

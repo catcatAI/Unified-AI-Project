@@ -81,9 +81,22 @@ def main():
     with open(macro, "w", encoding="utf-8") as f:
         f.write(RENDER_MACRO)
     cx, cy, cz = args.center.split(",")
-    code, out = run(["blender", "--background", "--python", macro, "--",
-                     args.blend, os.path.abspath(args.outdir), cx, cy, cz,
-                     str(args.dist)], 600)
+    code, out = run(
+        [
+            "blender",
+            "--background",
+            "--python",
+            macro,
+            "--",
+            args.blend,
+            os.path.abspath(args.outdir),
+            cx,
+            cy,
+            cz,
+            str(args.dist),
+        ],
+        600,
+    )
     n_ok = out.count("RENDER-OK:")
     print(f"視圖：{n_ok}/4")
     for line in out.splitlines():
@@ -91,6 +104,7 @@ def main():
             print("  " + line.strip()[:100])
     if args.plan:
         import json as _json
+
         import ezdxf
 
         spec = _json.loads(args.plan)
@@ -98,13 +112,11 @@ def main():
         msp = doc.modelspace()
         for r in spec.get("rects", []):
             x, y, w, h = r["x"], r["y"], r["w"], r["h"]
-            msp.add_lwpolyline([(x, y), (x + w, y), (x + w, y + h), (x, y + h)],
-                               close=True)
+            msp.add_lwpolyline([(x, y), (x + w, y), (x + w, y + h), (x, y + h)], close=True)
             if r.get("label"):
                 msp.add_text(r["label"], height=0.8).set_placement((x, y + h + 0.5))
         for d in spec.get("dims", []):
-            msp.add_linear_dim(base=(d["x"], d["y"]), p1=tuple(d["p1"]),
-                               p2=tuple(d["p2"])).render()
+            msp.add_linear_dim(base=(d["x"], d["y"]), p1=tuple(d["p1"]), p2=tuple(d["p2"])).render()
         path = os.path.join(args.outdir, "plan.dxf")
         doc.saveas(path)
         back = ezdxf.readfile(path)

@@ -82,10 +82,13 @@ class TestAngelaConfigManagerLearning:
         cfg = get_angela_config()
 
         test_intent = f"_test_intent_{int(time.time())}"
-        result = cfg.learn("intent_pattern", {
-            "intent": test_intent,
-            "keywords": ["test_keyword_1", "test_keyword_2"],
-        })
+        result = cfg.learn(
+            "intent_pattern",
+            {
+                "intent": test_intent,
+                "keywords": ["test_keyword_1", "test_keyword_2"],
+            },
+        )
 
         learned = cfg.get_learned("patterns", {})
         patterns = learned.get("intent_patterns", {})
@@ -96,11 +99,14 @@ class TestAngelaConfigManagerLearning:
         from core.config_loader import get_angela_config
 
         cfg = get_angela_config()
-        result = cfg.learn("route_success", {
-            "provider": "TestBackend",
-            "intent": "test_general",
-            "latency_ms": 150.0,
-        })
+        result = cfg.learn(
+            "route_success",
+            {
+                "provider": "TestBackend",
+                "intent": "test_general",
+                "latency_ms": 150.0,
+            },
+        )
 
         learned = cfg.get_learned("routes", {})
         success_routes = learned.get("successful_routes", {})
@@ -111,11 +117,14 @@ class TestAngelaConfigManagerLearning:
         from core.config_loader import get_angela_config
 
         cfg = get_angela_config()
-        result = cfg.learn("route_fail", {
-            "provider": "TestBackend",
-            "intent": "test_fail",
-            "error": "timeout",
-        })
+        result = cfg.learn(
+            "route_fail",
+            {
+                "provider": "TestBackend",
+                "intent": "test_fail",
+                "error": "timeout",
+            },
+        )
         assert result is True
 
     def test_get_learned_stats(self):
@@ -139,10 +148,13 @@ class TestAngelaConfigManagerLearning:
         authority_intents = cfg.get_authority("angela_core", {}).get("intents", {})
 
         for intent_name in authority_intents:
-            result = cfg.learn("intent_pattern", {
-                "intent": intent_name,
-                "keywords": ["hacker_keyword"],
-            })
+            result = cfg.learn(
+                "intent_pattern",
+                {
+                    "intent": intent_name,
+                    "keywords": ["hacker_keyword"],
+                },
+            )
             assert result is False, f"Authority intent {intent_name} should not be overwritten"
 
 
@@ -226,7 +238,16 @@ class TestAngelaLLMServiceConfigDriven:
         from core.config_loader import get_angela_config
 
         cfg = get_angela_config()
-        expected_intents = ["math", "code", "task", "file_op", "web_search", "learning", "character_card", "document"]
+        expected_intents = [
+            "math",
+            "code",
+            "task",
+            "file_op",
+            "web_search",
+            "learning",
+            "character_card",
+            "document",
+        ]
 
         missing = []
         for intent in expected_intents:
@@ -263,6 +284,7 @@ class TestREPLCommands:
     def test_repl_command_handler_exists(self):
         """_handle_repl_command 函數存在"""
         import cli.repl as api_server
+
         assert hasattr(api_server, "_handle_repl_command")
         assert callable(api_server._handle_repl_command)
 
@@ -293,6 +315,7 @@ class TestREPLCommands:
 
 if __name__ == "__main__":
     import subprocess
+
     result = subprocess.run(
         ["python", "-m", "pytest", __file__, "-v", "--tb=short"],
         capture_output=False,
@@ -444,8 +467,11 @@ class TestTickleReflexSystem:
 
         async def run_trigger():
             result = await reflex.trigger_tickles(
-                body_part="neck", intensity=0.7, duration_seconds=6.0,
-                origin="Human", state_matrix=sm
+                body_part="neck",
+                intensity=0.7,
+                duration_seconds=6.0,
+                origin="Human",
+                state_matrix=sm,
             )
             return result
 
@@ -467,8 +493,11 @@ class TestTickleReflexSystem:
 
         async def run_trigger():
             result = await reflex.trigger_tickles(
-                body_part="shoulders", intensity=0.5, duration_seconds=1.0,
-                origin="Human", state_matrix=sm
+                body_part="shoulders",
+                intensity=0.5,
+                duration_seconds=1.0,
+                origin="Human",
+                state_matrix=sm,
             )
             return result
 
@@ -494,6 +523,7 @@ class TestAnchorLearningSuggestConfig:
         """suggest_config_update 方法存在"""
         try:
             from core.engine.anchor_learning import AnchorLearningEngine
+
             assert hasattr(AnchorLearningEngine, "suggest_config_update")
         except ImportError:
             pass
@@ -505,6 +535,7 @@ class TestBuildAnchorContext:
     def test_build_anchor_context_returns_string(self):
         """build_anchor_context 返回自然語境字符串"""
         from core.config_loader import get_angela_config
+
         cfg = get_angela_config()
         mock_state = {
             "axes": {
@@ -526,6 +557,7 @@ class TestBuildAnchorContext:
     def test_anchor_context_falls_back_on_missing_data(self):
         """build_anchor_context 在缺失數據時返回空字符串"""
         from core.config_loader import get_angela_config
+
         cfg = get_angela_config()
         result = cfg.build_anchor_context({})
         assert isinstance(result, str)
@@ -533,6 +565,7 @@ class TestBuildAnchorContext:
     def test_interpret_axis_returns_string(self):
         """_interpret_axis 返回自然語境"""
         from core.config_loader import get_angela_config
+
         cfg = get_angela_config()
         axis_data = {"values": {"comfort": 0.8}}
         axis_rules = {
@@ -553,6 +586,7 @@ class TestModelREPLCommand:
     def test_model_command_handler_exists(self):
         """_handle_model_command 函數存在"""
         import cli.repl as api_server
+
         assert hasattr(api_server, "_handle_model_command")
         assert callable(api_server._handle_model_command)
 
@@ -575,6 +609,7 @@ class TestModelREPLCommand:
     def test_tickle_command_handler_exists(self):
         """_handle_tickle_command 函數存在"""
         import cli.repl as api_server
+
         assert hasattr(api_server, "_handle_tickle_command")
 
     def test_tickle_no_args_returns_usage(self):
@@ -591,14 +626,18 @@ class TestTickleIntensityThresholdFix:
     def test_intense_threshold_is_060(self):
         """intense 閾值應為 0.60（MD 定義）"""
         from core.config_loader import get_angela_config
+
         cfg = get_angela_config()
         tickle = cfg.get_tickle_config()
         thresholds = tickle.get("intensity_thresholds", {})
-        assert thresholds.get("intense") == 0.60, f"intense should be 0.60, got {thresholds.get('intense')}"
+        assert (
+            thresholds.get("intense") == 0.60
+        ), f"intense should be 0.60, got {thresholds.get('intense')}"
 
     def test_intense_level_classification(self):
         """intensity >= 0.60 應被分類為 intense"""
         from core.life.tickle_reflex_system import get_reflex_system
+
         reflex = get_reflex_system()
         assert reflex.get_intensity_level(0.6) == "intense"
         assert reflex.get_intensity_level(0.65) == "intense"
@@ -611,11 +650,13 @@ class TestGoogleDriveIntegration:
     def test_drive_service_class_exists(self):
         """GoogleDriveService 類存在"""
         from integrations.google_drive_service import GoogleDriveService
+
         assert GoogleDriveService is not None
 
     def test_drive_service_factory(self):
         """GoogleDriveService._create returns new instance each time"""
         from integrations.google_drive_service import GoogleDriveService
+
         s1 = GoogleDriveService._create()
         s2 = GoogleDriveService._create()
         assert s1 is not s2
@@ -623,6 +664,7 @@ class TestGoogleDriveIntegration:
     def test_drive_service_is_authenticated_without_token(self):
         """無有效 token 時返回 False"""
         from integrations.google_drive_service import GoogleDriveService
+
         GoogleDriveService._instance = None
         svc = GoogleDriveService()
         result = svc.is_authenticated()
@@ -633,9 +675,11 @@ class TestGoogleDriveIntegration:
         from pathlib import Path
 
         from integrations.google_drive_service import GoogleDriveService
+
         cred_path = Path(__file__).parent.parent / "config" / "credentials.json"
         if not cred_path.exists():
             import pytest
+
             pytest.skip("credentials.json not found")
         GoogleDriveService._instance = None
         svc = GoogleDriveService()
@@ -646,18 +690,21 @@ class TestGoogleDriveIntegration:
     def test_drive_repl_command_handler_exists(self):
         """REPL /drive 命令存在"""
         import cli.repl as api_server
+
         assert hasattr(api_server, "_handle_drive_command")
         assert callable(api_server._handle_drive_command)
 
     def test_drive_repl_help_shows_drive_command(self):
         """help 文案中包含 drive 命令"""
         from cli.repl import _build_help_text
+
         help_text = _build_help_text()
         assert "drive" in help_text.lower()
 
     def test_drive_intent_keywords_in_config(self):
         """google_drive intent 在 angela_core.yaml 中"""
         from core.config_loader import get_angela_config
+
         cfg = get_angela_config()
         kws = cfg.get_intent_keywords("google_drive")
         assert len(kws) > 0
@@ -668,6 +715,7 @@ class TestGoogleDriveIntegration:
         import asyncio
 
         from services.chat_service import AngelaChatService
+
         svc = AngelaChatService()
         assert hasattr(svc, "_detect_drive_intent")
         assert callable(svc._detect_drive_intent)
@@ -679,6 +727,7 @@ class TestGoogleDriveIntegration:
     def test_deduplication_class_exists(self):
         """DriveDeduplication 類存在"""
         from api.v1.endpoints.drive import DriveDeduplication
+
         d = DriveDeduplication()
         assert hasattr(d, "should_download")
         assert hasattr(d, "record_sync")
@@ -686,5 +735,6 @@ class TestGoogleDriveIntegration:
     def test_document_parser_class_exists(self):
         """DocumentParser 類存在"""
         from api.v1.endpoints.drive import DocumentParser
+
         p = DocumentParser()
         assert hasattr(p, "parse_document")

@@ -32,25 +32,45 @@ def main():
     ap.add_argument("--pier_h", type=float, default=8.0)
     args = ap.parse_args()
     L, W = args.L, args.W
-    report = {"geometry": {"A": [0, 0, 0], "B": [10, 0, 0], "C": [0, 100, 0],
-                           "D": [10, 100, 0], "deck": [W, L], "span_m": L}}
+    report = {
+        "geometry": {
+            "A": [0, 0, 0],
+            "B": [10, 0, 0],
+            "C": [0, 100, 0],
+            "D": [10, 100, 0],
+            "deck": [W, L],
+            "span_m": L,
+        }
+    }
 
     # 1) 構件驗算（墩/護欄/支座）
-    _, o1 = run([PY, os.path.join(SCRIPTS, "civil_components.py"),
-                 "--component", "column",
-                 "--json", json.dumps({"b": 2000, "h": 2000, "As": 20000,
-                                       "N_Ed_kN": 12000})], 60)
-    _, o2 = run([PY, os.path.join(SCRIPTS, "civil_derive.py"),
-                 "--template", "parapet"], 60)
-    _, o3 = run([PY, os.path.join(SCRIPTS, "civil_derive.py"),
-                 "--template", "bearing"], 60)
+    _, o1 = run(
+        [
+            PY,
+            os.path.join(SCRIPTS, "civil_components.py"),
+            "--component",
+            "column",
+            "--json",
+            json.dumps({"b": 2000, "h": 2000, "As": 20000, "N_Ed_kN": 12000}),
+        ],
+        60,
+    )
+    _, o2 = run([PY, os.path.join(SCRIPTS, "civil_derive.py"), "--template", "parapet"], 60)
+    _, o3 = run([PY, os.path.join(SCRIPTS, "civil_derive.py"), "--template", "bearing"], 60)
     report["pier"] = '"axial_ok": true' in o1
     report["parapet"] = '"bending_ok": true' in o2
     report["bearing"] = '"bearing_ok": true' in o3
-    _, o4 = run([PY, os.path.join(SCRIPTS, "civil_components.py"),
-                 "--component", "beam",
-                 "--json", json.dumps({"b": 8000, "d": 2000, "As": 50000,
-                                       "L": L * 1000})], 60)
+    _, o4 = run(
+        [
+            PY,
+            os.path.join(SCRIPTS, "civil_components.py"),
+            "--component",
+            "beam",
+            "--json",
+            json.dumps({"b": 8000, "d": 2000, "As": 50000, "L": L * 1000}),
+        ],
+        60,
+    )
     report["span_gate"] = "span_feasible_rc" in o4 and '"span_feasible_rc": true' in o4
 
     # 2) Blender 整橋：橋面 + 4 墩 + 2 護欄 + 4 支座
@@ -100,12 +120,22 @@ def main():
     )
     with open("/tmp/fc_bridge.py", "w", encoding="utf-8") as f:
         f.write(fcmacro)
-    code, out = run(["flatpak", "run", "--filesystem=/tmp", "org.freecad.FreeCAD",
-                     "--console", "/tmp/fc_bridge.py"], 400)
+    code, out = run(
+        [
+            "flatpak",
+            "run",
+            "--filesystem=/tmp",
+            "org.freecad.FreeCAD",
+            "--console",
+            "/tmp/fc_bridge.py",
+        ],
+        400,
+    )
     report["freecad"] = "FC-BRIDGE" in out
     print(json.dumps(report, ensure_ascii=False, indent=1))
-    ok = all([report["pier"], report["parapet"], report["bearing"],
-              report["blender"], report["freecad"]])
+    ok = all(
+        [report["pier"], report["parapet"], report["bearing"], report["blender"], report["freecad"]]
+    )
     print("BRIDGE-V1:", "✅（除跨度門）" if ok else "❌", "| span_gate:", report["span_gate"])
     return 0
 

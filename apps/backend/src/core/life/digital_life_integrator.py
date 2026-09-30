@@ -34,7 +34,9 @@ from ai.lifecycle.user_monitor import UserMonitor
 from core.bio import biological_integrator as _bio_integrator_mod
 from core.bio import memory_neuroplasticity_bridge as _memory_bridge_mod
 from core.bio.biological_integrator import BiologicalIntegrator  # noqa: F401  (type 匯出)
-from core.bio.memory_neuroplasticity_bridge import MemoryNeuroplasticityBridge  # noqa: F401  (type 匯出)
+from core.bio.memory_neuroplasticity_bridge import (  # noqa: F401  (type 匯出)
+    MemoryNeuroplasticityBridge,
+)
 from core.engine import action_executor as _action_executor_mod
 from core.engine.action_executor import ActionExecutor  # noqa: F401  (type 匯出)
 from core.engine.state_matrix import StateMatrix4D

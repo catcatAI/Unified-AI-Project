@@ -18,8 +18,8 @@ sync_card_deck.py — 一鍵從 Google Drive 拉取「卡片堆」所有 .gdoc �
 """
 
 import json
-import sys
 import os
+import sys
 from pathlib import Path
 
 # ─── Paths ───
@@ -27,7 +27,9 @@ BACKEND_ROOT = Path(__file__).resolve().parent.parent / "apps" / "backend"
 CREDENTIALS_PATH = BACKEND_ROOT / "config" / "credentials.json"
 TOKEN_PATH = BACKEND_ROOT / "data" / "google_tokens.json"
 EXPORT_DIR = Path(__file__).resolve().parent.parent / "apps" / "game-rpg" / "data" / "gdrive_export"
-OUTPUT_JSON = Path(__file__).resolve().parent.parent / "apps" / "game-rpg" / "data" / "game_cards.json"
+OUTPUT_JSON = (
+    Path(__file__).resolve().parent.parent / "apps" / "game-rpg" / "data" / "game_cards.json"
+)
 
 SCOPES = [
     "https://www.googleapis.com/auth/drive.readonly",
@@ -90,11 +92,15 @@ def get_credentials():
 
 def find_card_deck_folder(service):
     """Find the '卡片堆' folder on Google Drive."""
-    results = service.files().list(
-        q=f"name='{CARD_DECK_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false",
-        fields="files(id, name, parents)",
-        pageSize=10,
-    ).execute()
+    results = (
+        service.files()
+        .list(
+            q=f"name='{CARD_DECK_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false",
+            fields="files(id, name, parents)",
+            pageSize=10,
+        )
+        .execute()
+    )
 
     folders = results.get("files", [])
     if not folders:
@@ -134,11 +140,15 @@ def list_gdoc_files(service, folder_id):
             break
 
     # Also check subfolders
-    subfolders = service.files().list(
-        q=f"'{folder_id}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false",
-        fields="files(id,name)",
-        pageSize=100,
-    ).execute()
+    subfolders = (
+        service.files()
+        .list(
+            q=f"'{folder_id}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false",
+            fields="files(id,name)",
+            pageSize=100,
+        )
+        .execute()
+    )
 
     for subfolder in subfolders.get("files", []):
         sub_files = list_gdoc_files(service, subfolder["id"])
@@ -150,9 +160,7 @@ def list_gdoc_files(service, folder_id):
 def download_gdoc(service, file_id, file_name, dest_dir):
     """Export a Google Doc as plain text and save locally."""
     try:
-        content = service.files().export(
-            fileId=file_id, mimeType="text/plain"
-        ).execute()
+        content = service.files().export(fileId=file_id, mimeType="text/plain").execute()
 
         if isinstance(content, bytes):
             text = content.decode("utf-8", errors="replace")

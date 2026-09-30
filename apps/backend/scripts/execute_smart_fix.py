@@ -4,21 +4,22 @@
 执行完整的智能修复流程,包括问题检测、修复、验证和报告生成
 """
 
-import sys
-import subprocess
 import json
 import logging
-from pathlib import Path
+import subprocess
+import sys
 from datetime import datetime
-from typing import Dict, Any, List, Literal, Optional
+from pathlib import Path
+from typing import Any, Dict, List, Literal, Optional
 
 # 添加项目根目录到路径
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 # 配置日志
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
+
 
 class SmartFixExecutor:
     """智能修复执行器"""
@@ -38,9 +39,13 @@ class SmartFixExecutor:
                 logger.error(f"智能自动修复脚本不存在, {smart_fix_script}")
                 return False
 
-            result = subprocess.run([
-                "python", str(smart_fix_script), "--all"
-            ], cwd=self.project_root, capture_output=True, text=True, timeout=600)
+            result = subprocess.run(
+                ["python", str(smart_fix_script), "--all"],
+                cwd=self.project_root,
+                capture_output=True,
+                text=True,
+                timeout=600,
+            )
 
             if result.returncode == 0:
                 logger.info("✓ 智能自动修复执行完成")
@@ -61,14 +66,20 @@ class SmartFixExecutor:
         logger.info("开始运行集成问题修复器...")
         try:
             # 导入并运行集成问题修复工具
-            integration_fix_script = self.project_root / "apps" / "backend" / "scripts" / "integration_fixer.py"
+            integration_fix_script = (
+                self.project_root / "apps" / "backend" / "scripts" / "integration_fixer.py"
+            )
             if not integration_fix_script.exists():
                 logger.error(f"集成问题修复脚本不存在, {integration_fix_script}")
                 return False
 
-            result = subprocess.run([
-                "python", str(integration_fix_script)
-            ], cwd=self.project_root, capture_output=True, text=True, timeout=600)
+            result = subprocess.run(
+                ["python", str(integration_fix_script)],
+                cwd=self.project_root,
+                capture_output=True,
+                text=True,
+                timeout=600,
+            )
 
             if result.returncode == 0:
                 logger.info("✓ 集成问题修复执行完成")
@@ -92,7 +103,7 @@ class SmartFixExecutor:
             "passed": 0,
             "failed": 0,
             "errors": [],  # type: List[str]
-            "output": ""
+            "output": "",
         }
 
         # 明确指定 errors 列表的类型
@@ -100,11 +111,13 @@ class SmartFixExecutor:
 
         try:
             # 运行后端测试
-            result = subprocess.run([
-                "python", "-m", "pytest",
-                "--tb=short", "-v", "--maxfail=5"
-            ], cwd=self.project_root / "apps" / "backend",
-capture_output = True, text=True, timeout=1200)
+            result = subprocess.run(
+                ["python", "-m", "pytest", "--tb=short", "-v", "--maxfail=5"],
+                cwd=self.project_root / "apps" / "backend",
+                capture_output=True,
+                text=True,
+                timeout=1200,
+            )
 
             test_results["output"] = result.stdout
             if result.returncode == 0:
@@ -112,11 +125,12 @@ capture_output = True, text=True, timeout=1200)
                 test_results["success"] = True
 
                 # 解析测试结果
-                lines = result.stdout.split('\n')
+                lines = result.stdout.split("\n")
                 for line in lines:
                     if "passed" in line and "failed" in line:
                         # 提取通过和失败的测试数量
                         import re
+
                         passed_match = re.search(r"(\d+) passed", line)
                         failed_match = re.search(r"(\d+) failed", line)
                         if passed_match:
@@ -149,13 +163,22 @@ capture_output = True, text=True, timeout=1200)
                 "total_tests": test_results["passed"] + test_results["failed"],
                 "passed_tests": test_results["passed"],
                 "failed_tests": test_results["failed"],
-                "success_rate": 0 if (test_results["passed"] + test_results["failed"]) == 0 else test_results["passed"] / (test_results["passed"] + test_results["failed"]) * 100,
-            }
+                "success_rate": (
+                    0
+                    if (test_results["passed"] + test_results["failed"]) == 0
+                    else test_results["passed"]
+                    / (test_results["passed"] + test_results["failed"])
+                    * 100
+                ),
+            },
         }
 
         # 保存报告
-        report_file = self.reports_dir / f"smart_fix_execution_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-        with open(report_file, 'w', encoding='utf-8') as f:
+        report_file = (
+            self.reports_dir
+            / f"smart_fix_execution_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        )
+        with open(report_file, "w", encoding="utf-8") as f:
             json.dump(report_data, f, ensure_ascii=False, indent=2)
 
         logger.info(f"执行报告已保存到, {report_file}")
@@ -190,8 +213,10 @@ capture_output = True, text=True, timeout=1200)
         print(f"测试总数, {test_results['passed'] + test_results['failed']}")
         print(f"通过测试, {test_results['passed']}")
         print(f"失败测试, {test_results['failed']}")
-        if test_results['passed'] + test_results['failed'] > 0:
-            success_rate = test_results['passed'] / (test_results['passed'] + test_results['failed']) * 100
+        if test_results["passed"] + test_results["failed"] > 0:
+            success_rate = (
+                test_results["passed"] / (test_results["passed"] + test_results["failed"]) * 100
+            )
             print(f"成功率, {success_rate:.2f}%")
         print(f"执行报告, {report_file}")
 
@@ -201,6 +226,7 @@ capture_output = True, text=True, timeout=1200)
         else:
             print("✗ 部分测试失败,请检查错误信息")
             return False
+
 
 def main() -> Literal[0, 1]:
     """主函数"""
@@ -218,6 +244,7 @@ def main() -> Literal[0, 1]:
     else:
         print("\n❌ 智能修复流程执行失败,请查看详细日志")
         return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

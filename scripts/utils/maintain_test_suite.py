@@ -31,13 +31,13 @@ class TestSuiteMaintainer:
             "files_with_issues": 0,
             "import_issues": [],
             "untested_source_files": [],
-            "detailed_analysis": []
+            "detailed_analysis": [],
         }
 
     def run_maintenance(self):
         """Run the full maintenance process."""
         print("Running test suite maintenance...")
-        report=self.generate_test_health_report()
+        report = self.generate_test_health_report()
         print(f"Test Suite Health Report: {report}")
 
 

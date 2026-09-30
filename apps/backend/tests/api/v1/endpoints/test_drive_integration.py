@@ -38,9 +38,9 @@ def mock_dependencies():
     except Exception:
         pass
 
-    with patch("ai.memory.ham_memory.ham_manager.HAMMemoryManager", return_value=mock_ham), \
-         patch(f"{drive_module}.DriveDeduplication") as MockDriveDeduplication, \
-         patch(f"{drive_module}.DocumentParser") as MockDocumentParser:
+    with patch("ai.memory.ham_memory.ham_manager.HAMMemoryManager", return_value=mock_ham), patch(
+        f"{drive_module}.DriveDeduplication"
+    ) as MockDriveDeduplication, patch(f"{drive_module}.DocumentParser") as MockDocumentParser:
 
         mock_deduplication_instance = MockDriveDeduplication.return_value
         mock_deduplication_instance.should_download.return_value = True
@@ -68,7 +68,7 @@ def sample_file_metadata():
         "mimeType": "text/plain",
         "modifiedTime": "2026-01-01T10:00:00Z",
         "size": "1234",
-        "webViewLink": "http://example.com/view/file123"
+        "webViewLink": "http://example.com/view/file123",
     }
 
 
@@ -80,8 +80,7 @@ def test_sync_files_new_file_success(mock_dependencies, sample_file_metadata):
 
     with tempfile.TemporaryDirectory() as tmpdir:
         response = client.post(
-            "/api/v1/drive/files/sync",
-            json={"file_ids": ["file123"], "folder_path": tmpdir}
+            "/api/v1/drive/files/sync", json={"file_ids": ["file123"], "folder_path": tmpdir}
         )
 
     assert response.status_code == 200
@@ -94,7 +93,9 @@ def test_sync_files_new_file_success(mock_dependencies, sample_file_metadata):
     assert data["files"][0]["memorized"] is True
 
     mock_svc.get_file_metadata.assert_called_with("file123")
-    mock_dependencies["mock_deduplication_instance"].should_download.assert_called_with(sample_file_metadata)
+    mock_dependencies["mock_deduplication_instance"].should_download.assert_called_with(
+        sample_file_metadata
+    )
     mock_svc.download_file.assert_called()
     mock_dependencies["mock_deduplication_instance"].record_sync.assert_called()
     mock_dependencies["mock_document_parser_instance"].parse_document.assert_called()
@@ -106,10 +107,7 @@ async def test_sync_files_skip_unchanged_file(mock_dependencies, sample_file_met
     mock_dependencies["mock_deduplication_instance"].should_download.return_value = False
     mock_dependencies["mock_drive_service"].get_file_metadata.return_value = sample_file_metadata
 
-    response = client.post(
-        "/api/v1/drive/files/sync",
-        json={"file_ids": ["file123"]}
-    )
+    response = client.post("/api/v1/drive/files/sync", json={"file_ids": ["file123"]})
 
     assert response.status_code == 200
     data = response.json()
@@ -118,7 +116,9 @@ async def test_sync_files_skip_unchanged_file(mock_dependencies, sample_file_met
     assert data["skipped"] == 1
     assert data["memorized_count"] == 0
 
-    mock_dependencies["mock_deduplication_instance"].should_download.assert_called_with(sample_file_metadata)
+    mock_dependencies["mock_deduplication_instance"].should_download.assert_called_with(
+        sample_file_metadata
+    )
     mock_dependencies["mock_drive_service"].download_file.assert_not_called()
     mock_dependencies["mock_ham"].store_conversation_async.assert_not_called()
 
@@ -130,7 +130,7 @@ async def test_sync_files_download_failure(mock_dependencies, sample_file_metada
 
     response = client.post(
         "/api/v1/drive/files/sync",
-        json={"file_ids": ["file123"], "folder_path": "data/drive_downloads"}
+        json={"file_ids": ["file123"], "folder_path": "data/drive_downloads"},
     )
 
     assert response.status_code == 200
@@ -147,17 +147,33 @@ async def test_sync_files_download_failure(mock_dependencies, sample_file_metada
 
 async def test_sync_files_memorize_different_types(mock_dependencies, sample_file_metadata):
     """Test syncing and memorizing different file types (PDF, CSV)."""
-    pdf_metadata = {**sample_file_metadata, "id": "pdf456", "name": "report.pdf", "mimeType": "application/pdf"}
-    csv_metadata = {**sample_file_metadata, "id": "csv789", "name": "data.csv", "mimeType": "text/csv"}
+    pdf_metadata = {
+        **sample_file_metadata,
+        "id": "pdf456",
+        "name": "report.pdf",
+        "mimeType": "application/pdf",
+    }
+    csv_metadata = {
+        **sample_file_metadata,
+        "id": "csv789",
+        "name": "data.csv",
+        "mimeType": "text/csv",
+    }
 
     mock_dependencies["mock_drive_service"].download_file.return_value = True
-    mock_dependencies["mock_drive_service"].get_file_metadata.side_effect = [pdf_metadata, csv_metadata]
+    mock_dependencies["mock_drive_service"].get_file_metadata.side_effect = [
+        pdf_metadata,
+        csv_metadata,
+    ]
     mock_dependencies["mock_deduplication_instance"].should_download.return_value = True
-    mock_dependencies["mock_document_parser_instance"].parse_document.side_effect = ["PDF content", "CSV content"]
+    mock_dependencies["mock_document_parser_instance"].parse_document.side_effect = [
+        "PDF content",
+        "CSV content",
+    ]
 
     response = client.post(
         "/api/v1/drive/files/sync",
-        json={"file_ids": ["pdf456", "csv789"], "folder_path": "data/drive_downloads"}
+        json={"file_ids": ["pdf456", "csv789"], "folder_path": "data/drive_downloads"},
     )
 
     assert response.status_code == 200

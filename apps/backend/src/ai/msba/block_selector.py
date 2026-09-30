@@ -194,7 +194,7 @@ class _SimpleEmbedder:
 
         result = [0.0] * 64
         for i, ch in enumerate(text):
-            h = int(hashlib.md5(ch.encode()).hexdigest(), 16)
+            h = int(hashlib.md5(ch.encode(), usedforsecurity=False).hexdigest(), 16)
             idx = h % 64
             result[idx] += 1.0
         # Normalize

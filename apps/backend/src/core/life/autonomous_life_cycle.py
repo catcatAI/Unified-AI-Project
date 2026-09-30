@@ -278,9 +278,7 @@ class AutonomousLifeCycle:
         """Get dynamic decision confidence threshold"""
         if self._dynamic_params_manager and self._dynamic_params_enabled:
             return float(
-                self._dynamic_params_manager.get_parameter(
-                    "decision_confidence_threshold", context
-                )
+                self._dynamic_params_manager.get_parameter("decision_confidence_threshold", context)
             )
         return 0.7  # Default threshold
 

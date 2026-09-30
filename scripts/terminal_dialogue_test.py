@@ -4,6 +4,7 @@ Runs real conversational turns through ED3NEngine.process() (the same path the
 chat service uses for neural/reflex/knowledge/relational-chain stages) plus the
 deterministic knowledge engine. Verifies end-to-end behavior from the terminal.
 """
+
 import asyncio
 import sys
 
@@ -20,14 +21,14 @@ async def main() -> None:
     print("ED3N TERMINAL DIALOGUE TEST")
     print("=" * 70)
 
-    turns=[
-        "what color is the sky",                       # knowledge: sky->blue
-        "what is the red planet",                      # knowledge: mars
-        "who is taller, a or c",                        # relational chain A>B>C
+    turns = [
+        "what color is the sky",  # knowledge: sky->blue
+        "what is the red planet",  # knowledge: mars
+        "who is taller, a or c",  # relational chain A>B>C
         "if a is taller than b and b is taller than c, who is tallest",  # paraphrase
-        "hello",                                        # reflex
-        "2 + 2",                                        # math engine
-        "what is the meaning of life",                  # open-domain -> fallback
+        "hello",  # reflex
+        "2 + 2",  # math engine
+        "what is the meaning of life",  # open-domain -> fallback
     ]
 
     for t in turns:
@@ -38,7 +39,13 @@ async def main() -> None:
     print("\n" + "=" * 70)
     print("DETERMINISTIC KNOWLEDGE ENGINE (direct)")
     print("=" * 70)
-    for q in ["what sound does a cat make", "what day comes after monday", "what is the opposite of hot", "month after march", "next tuesday"]:
+    for q in [
+        "what sound does a cat make",
+        "what day comes after monday",
+        "what is the opposite of hot",
+        "month after march",
+        "next tuesday",
+    ]:
         r = route_knowledge(q)
         print(f"\nQ> {q}")
         print(f"KB> {r!r}")

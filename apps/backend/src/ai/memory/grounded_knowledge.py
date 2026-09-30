@@ -91,7 +91,7 @@ def normalize_claim(text: str) -> str:
 
 def claim_key(text: str) -> str:
     """Stable hash key for a claim (after normalization)."""
-    return hashlib.sha1(normalize_claim(text).encode("utf-8")).hexdigest()
+    return hashlib.sha1(normalize_claim(text).encode("utf-8"), usedforsecurity=False).hexdigest()
 
 
 def tokens_of(text: str) -> set:

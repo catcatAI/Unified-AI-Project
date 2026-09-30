@@ -1,8 +1,14 @@
 """Verify SNN fix: different inputs should produce different outputs."""
-import sys, time, numpy as np
+
+import sys
+import time
+
+import numpy as np
+
 sys.path.insert(0, r"D:\Projects\Unified-AI-Project\apps\backend\src")
 
-from ai.garden.snn_core import TensorSNNCore, DEFAULT_THRESHOLD
+from ai.garden.snn_core import DEFAULT_THRESHOLD, TensorSNNCore
+
 
 def main():
     print("=== SNN Fix Verification ===")
@@ -29,17 +35,30 @@ def main():
     # Simulate Hebbian training with new defaults (target=0.35, decay=0.001)
     print("\n--- Training with new parameters ---")
     for epoch in range(5):
-        d1 = snn.hebbian_update(["m1", "m2", "op1", "m3", "op5"], ["m1", "m2", "op1", "m3", "op5"],
-                                lr=0.05, target_strength=0.35, weight_decay=0.001)
-        d2 = snn.hebbian_update(["true", "false", "or"], ["true", "false", "or"],
-                                lr=0.05, target_strength=0.35, weight_decay=0.001)
-        d3 = snn.hebbian_update(["hello"], ["hello"],
-                                lr=0.05, target_strength=0.35, weight_decay=0.001)
+        d1 = snn.hebbian_update(
+            ["m1", "m2", "op1", "m3", "op5"],
+            ["m1", "m2", "op1", "m3", "op5"],
+            lr=0.05,
+            target_strength=0.35,
+            weight_decay=0.001,
+        )
+        d2 = snn.hebbian_update(
+            ["true", "false", "or"],
+            ["true", "false", "or"],
+            lr=0.05,
+            target_strength=0.35,
+            weight_decay=0.001,
+        )
+        d3 = snn.hebbian_update(
+            ["hello"], ["hello"], lr=0.05, target_strength=0.35, weight_decay=0.001
+        )
 
     stats = snn.get_stats()
-    print(f"After training: density={stats['matrix_density']*100:.1f}%, "
-          f"mean_weight={stats['mean_weight']:.4f}, "
-          f"hebbian={stats['total_hebbian_updates']}")
+    print(
+        f"After training: density={stats['matrix_density']*100:.1f}%, "
+        f"mean_weight={stats['mean_weight']:.4f}, "
+        f"hebbian={stats['total_hebbian_updates']}"
+    )
 
     # Test forward with different inputs
     print("\n--- Forward pass tests ---")
@@ -66,40 +85,56 @@ def main():
     overlap_23 = len(set(r2.keys()) & set(r3.keys()))
 
     print(f"\n--- Differentiation check ---")
-    print(f"math vs logic overlap:  {overlap_12}/{min(len(r1), len(r2))} "
-          f"({overlap_12/max(1,min(len(r1),len(r2)))*100:.0f}%)")
-    print(f"math vs greeting overlap: {overlap_13}/{min(len(r1), len(r3))} "
-          f"({overlap_13/max(1,min(len(r1),len(r3)))*100:.0f}%)")
-    print(f"logic vs greeting overlap: {overlap_23}/{min(len(r2), len(r3))} "
-          f"({overlap_23/max(1,min(len(r2),len(r3)))*100:.0f}%)")
+    print(
+        f"math vs logic overlap:  {overlap_12}/{min(len(r1), len(r2))} "
+        f"({overlap_12/max(1,min(len(r1),len(r2)))*100:.0f}%)"
+    )
+    print(
+        f"math vs greeting overlap: {overlap_13}/{min(len(r1), len(r3))} "
+        f"({overlap_13/max(1,min(len(r1),len(r3)))*100:.0f}%)"
+    )
+    print(
+        f"logic vs greeting overlap: {overlap_23}/{min(len(r2), len(r3))} "
+        f"({overlap_23/max(1,min(len(r2),len(r3)))*100:.0f}%)"
+    )
 
     # Test with loaded (saturated) checkpoint
     print("\n--- Loading existing saturated checkpoint ---")
     snn2 = TensorSNNCore(max_vocab=10000, connection_budget=50000)
     snn2.load(r"D:\Projects\Unified-AI-Project\data\checkpoints\garden_checkpoint\snn.pt")
     stats2 = snn2.get_stats()
-    print(f"Before reset: density={stats2['matrix_density']*100:.1f}%, "
-          f"mean_weight={stats2['mean_weight']:.4f}")
+    print(
+        f"Before reset: density={stats2['matrix_density']*100:.1f}%, "
+        f"mean_weight={stats2['mean_weight']:.4f}"
+    )
 
     r_old_math = snn2.forward(["m1", "m2", "op1"])
     r_old_logic = snn2.forward(["true", "false", "or"])
     overlap_old = len(set(r_old_math.keys()) & set(r_old_logic.keys()))
     total_active = max(len(r_old_math), 1)
-    print(f"Before reset: math vs logic overlap={overlap_old}/{total_active} "
-          f"({overlap_old/total_active*100:.0f}%) — SAME output = saturated")
+    print(
+        f"Before reset: math vs logic overlap={overlap_old}/{total_active} "
+        f"({overlap_old/total_active*100:.0f}%) — SAME output = saturated"
+    )
 
     # Reset and test
     snn2.reset_for_retrain()
     stats3 = snn2.get_stats()
-    print(f"\nAfter reset: density={stats3['matrix_density']*100:.1f}%, "
-          f"mean_weight={stats3['mean_weight']:.4f}")
+    print(
+        f"\nAfter reset: density={stats3['matrix_density']*100:.1f}%, "
+        f"mean_weight={stats3['mean_weight']:.4f}"
+    )
 
     r_new_math = snn2.forward(["m1", "m2", "op1"])
     r_new_logic = snn2.forward(["true", "false", "or"])
     overlap_new = len(set(r_new_math.keys()) & set(r_new_logic.keys()))
     total_new = max(min(len(r_new_math), len(r_new_logic)), 1)
-    print(f"After reset: math vs logic overlap={overlap_new}/{total_new} "
-          f"({overlap_new/total_new*100:.0f}%)" if total_new > 0 else "After reset: no active neurons")
+    print(
+        f"After reset: math vs logic overlap={overlap_new}/{total_new} "
+        f"({overlap_new/total_new*100:.0f}%)"
+        if total_new > 0
+        else "After reset: no active neurons"
+    )
 
 
 if __name__ == "__main__":

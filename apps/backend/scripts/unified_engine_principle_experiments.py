@@ -18,6 +18,7 @@ Requires enwik9 (1GB) at the given path. Baseline result: hard backoff = 2.331
 on 90MB train / 20KB held-out; all other variants are worse (see
 docs/03-technical-architecture/UNIFIED_AI_NEXT.md).
 """
+
 import argparse
 import math
 import random
@@ -166,7 +167,7 @@ def eval_bpc(m, method, seg):
     n = len(seg)
     logits = getattr(m, "_logits", None) if method == "learned" else None
     for i in range(n):
-        ctx = seg[max(0, i - 8):i]
+        ctx = seg[max(0, i - 8) : i]
         if method == "hard":
             d = m.hard_backoff(ctx)
         elif method == "entropy":
@@ -184,7 +185,7 @@ def learn_logits(m, seg):
     rng = np.zeros(5, np.float64)
     for _ in range(300):
         i = random.randint(8, len(seg) - 1)
-        ctx = seg[max(0, i - 8):i]
+        ctx = seg[max(0, i - 8) : i]
         dists = [m.order_dist(ctx, o) for o in (5, 4, 3, 2, 1)]
         dists = [d for d in dists if d is not None]
         if len(dists) < 2:

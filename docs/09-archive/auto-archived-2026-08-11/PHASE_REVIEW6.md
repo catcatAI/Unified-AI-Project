@@ -5,9 +5,8 @@
 > assessment: 6.0/10 with LLM, **3.0/10 native only** (trained). See
 > MASTER_TASK_MAP.md §X Summary for honest industry comparison. This document is
 > retained for historical task tracking only. **分析範圍**: P30-P44
-> (多模態管線框架 + 語意編碼器框架 + ED3N 接線, 259 多模態測試)  
-> **專案版本**: 7.5.0-dev  
-> **方向修正**: P39-P41（LLM API 橋接）已移除——違背真實多模態目標  
+> (多模態管線框架 + 語意編碼器框架 + ED3N 接線, 259 多模態測試) **專案版本**:
+> 7.5.0-dev **方向修正**: P39-P41（LLM API 橋接）已移除——違背真實多模態目標
 > **v33.7 語意理解驗證完成**: CLIP 512-dim raw vector 相似度測試通過:
 > chicken↔chicken=1.0, chicken↔dog=0.75, chicken↔car=0.63.
 > SemanticKeyMapper 新增 `mode="raw"` 支援 512-dim
@@ -70,9 +69,9 @@
 ## 1. 測試健康度 ✅ 9.0/10
 
 > **⚠️ 數據校正 (v33.5 審計)**: 以下數據基於 2026-06-22 實際 `pytest --co`
-> 收集結果，非歷史累計。  
-> ¹ 2026-06-26 環境驗證: `pytest tests/ --collect-only -q` 回傳 **4,261 tests /
-> 33 skipped**。4,920 為 2026-06-22 環境值，可能受 torch/chromadb 可用性影響。
+> 收集結果，非歷史累計。¹ 2026-06-26 環境驗證: `pytest tests/ --collect-only -q`
+> 回傳 **4,261 tests / 33
+> skipped**。4,920 為 2026-06-22 環境值，可能受 torch/chromadb 可用性影響。
 
 | 指標                    | 數值                                                                | 狀態                                           |
 | ----------------------- | ------------------------------------------------------------------- | ---------------------------------------------- |

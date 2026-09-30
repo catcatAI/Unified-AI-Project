@@ -3,12 +3,13 @@
 Angela AI 系統全面 API 測試腳本
 """
 
-import requests
-from pathlib import Path
 import json
-import time
-from typing import Dict, List, Tuple
 import logging
+import time
+from pathlib import Path
+from typing import Dict, List, Tuple
+
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -175,7 +176,9 @@ class APITester:
         # 6. 移動端（僅保留 /api/v1/mobile/test）
         print("\n【6/8】移動端測試")
         print("-" * 80)
-        success, response, status = self.test_endpoint("POST", "/api/v1/mobile/test", {"data": "test"})
+        success, response, status = self.test_endpoint(
+            "POST", "/api/v1/mobile/test", {"data": "test"}
+        )
         print(f"POST /api/v1/mobile/test: {status}")
 
         # 7. AI 代理
@@ -245,7 +248,9 @@ if __name__ == "__main__":
     results = tester.run_all_tests()
 
     # 保存結果到 JSON 文件
-    with open(Path.home() / "Desktop" / "api_comprehensive_test_results.json", "w", encoding="utf-8") as f:
+    with open(
+        Path.home() / "Desktop" / "api_comprehensive_test_results.json", "w", encoding="utf-8"
+    ) as f:
         json.dump(results, f, ensure_ascii=False, indent=2)
 
     print(f"\n詳細結果已保存到: {Path.home() / 'Desktop' / 'api_comprehensive_test_results.json'}")

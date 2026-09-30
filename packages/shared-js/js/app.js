@@ -636,7 +636,9 @@ class AngelaApp {
     // control, so the log asserted a wiring that was not there.
     const bound = (scaleUp ? 1 : 0) + (scaleDown ? 1 : 0)
     if (bound === 0) {
-      console.warn('[App] No scale controls in this page; model scale is not adjustable from the UI')
+      console.warn(
+        '[App] No scale controls in this page; model scale is not adjustable from the UI'
+      )
     }
 
     if (scaleUp) {

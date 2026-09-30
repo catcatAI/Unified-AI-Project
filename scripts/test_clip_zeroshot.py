@@ -1,25 +1,30 @@
 """Test CLIP zero-shot classification on held-out CIFAR-10."""
-import sys
-import os
-import time
+
 import io
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'apps', 'backend', 'src'))
+import os
+import sys
+import time
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"))
+
+import glob
 
 import numpy as np
-import glob
-from PIL import Image
 from ai.multimodal.semantic_visual import SemanticVisualEncoder
+from PIL import Image
 
-CIFAR_DIR="D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
-CLASSES=["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
+CIFAR_DIR = "D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
+CLASSES = ["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
 
 
 def load_test_images(n_per_class=10, skip_first=50):
-    images=[]
-    labels=[]
+    images = []
+    labels = []
     for ci, cls in enumerate(CLASSES):
         cls_dir = os.path.join(CIFAR_DIR, cls)
-        files = sorted(glob.glob(os.path.join(cls_dir, "*.npy")))[skip_first:skip_first+n_per_class]
+        files = sorted(glob.glob(os.path.join(cls_dir, "*.npy")))[
+            skip_first : skip_first + n_per_class
+        ]
         for f in files:
             arr = np.load(f)
             if arr.shape == (3072,):
@@ -38,6 +43,7 @@ def main():
 
     # Force load
     from ai.multimodal.semantic_visual import _lazy_init_clip
+
     model, processor = _lazy_init_clip()
     if model is None:
         print("CLIP failed to load!")
@@ -48,7 +54,7 @@ def main():
     print(f"Loaded {len(images)} images")
 
     # Create text prompts
-    text_prompts=[f"a photo of a {cls}" for cls in CLASSES]
+    text_prompts = [f"a photo of a {cls}" for cls in CLASSES]
 
     print("Encoding text prompts...")
     text_vecs = encoder.encode_text(text_prompts)
@@ -58,8 +64,8 @@ def main():
     print(f"Text vectors shape: {text_vecs.shape}")
 
     print("\nClassifying images...")
-    correct=0
-    per_class={c: [0, 0] for c in CLASSES}
+    correct = 0
+    per_class = {c: [0, 0] for c in CLASSES}
     t_start = time.time()
 
     for i, (img, label) in enumerate(zip(images, labels)):
@@ -88,7 +94,9 @@ def main():
     acc = correct / len(images)
     elapsed = time.time() - t_start
     print("\n=== CLIP Zero-Shot Results ===")
-    print(f"Overall: {correct}/{len(images)} = {acc:.1%} ({elapsed:.0f}s, {elapsed/len(images):.1f}s/img)")
+    print(
+        f"Overall: {correct}/{len(images)} = {acc:.1%} ({elapsed:.0f}s, {elapsed/len(images):.1f}s/img)"
+    )
     for cls in CLASSES:
         c, t = per_class[cls]
         print(f"  {cls:12s}: {c}/{t} = {c/t:.1%}" if t > 0 else f"  {cls}: 0")

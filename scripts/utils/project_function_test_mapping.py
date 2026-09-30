@@ -25,10 +25,7 @@ class FunctionTestMapper:
 
     def create_function_test_mapping(self) -> Dict:
         """Create a mapping between source functions and test functions."""
-        return {
-            "source_files": {},
-            "test_files": {}
-        }
+        return {"source_files": {}, "test_files": {}}
 
     def generate_coverage_report(self, mapping: Dict) -> Dict:
         """Generate a coverage report."""
@@ -39,14 +36,14 @@ class FunctionTestMapper:
             "total_classes": 0,
             "total_tests": 0,
             "matched_tests": 0,
-            "unmatched_tests": []
+            "unmatched_tests": [],
         }
 
     def run_mapper(self):
         """Run the function-test mapper."""
         print("Running function-test mapper...")
-        mapping=self.create_function_test_mapping()
-        coverage=self.generate_coverage_report(mapping)
+        mapping = self.create_function_test_mapping()
+        coverage = self.generate_coverage_report(mapping)
         print(f"Mapping Results: {coverage}")
 
 

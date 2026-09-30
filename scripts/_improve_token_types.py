@@ -2,11 +2,14 @@
 Improve token type assignment by adding more keyword rules.
 Target: reduce general from ~32% to <20% by better matching.
 """
+
 import json
 import os
 import re
 
-CARDS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "apps", "game-rpg", "data", "game_cards.json")
+CARDS_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "..", "apps", "game-rpg", "data", "game_cards.json"
+)
 
 # ── Expanded type rules ─────────────────────────────────────────────
 # These are ADDITIONAL patterns found in the general analysis
@@ -65,7 +68,7 @@ _EXACT_TYPE_OVERRIDES = {
     "概念性連續攻擊": "combat",
     "概念性防禦": "defense",
     "CC-02": "reference",
-    "CC-03": "reference", 
+    "CC-03": "reference",
     "CC-04": "reference",
     "身體": "body",
     "體重": "body",
@@ -97,49 +100,49 @@ def improved_token_type(name: str, value: str, old_type: str) -> str:
     # 1. Exact override
     if name in _EXACT_TYPE_OVERRIDES:
         return _EXACT_TYPE_OVERRIDES[name]
-    
+
     text = name.lower() + " " + str(value).lower()
-    
+
     # 2. Additional rules
     for ttype, keywords in _ADDITIONAL_RULES:
         for kw in keywords:
             if kw in text:
                 return ttype
-    
+
     # 3. Keep original if not improved
     return old_type
 
 
 # ── Main ────────────────────────────────────────────────────────────
 
-with open(CARDS_PATH, 'r', encoding='utf-8') as f:
+with open(CARDS_PATH, "r", encoding="utf-8") as f:
     gc = json.load(f)
 
 changes = {}
-for card in gc['cards']:
-    for t in card.get('tokens', []):
+for card in gc["cards"]:
+    for t in card.get("tokens", []):
         if isinstance(t, dict):
-            old_type = t.get('type', '')
-            name = t.get('name', '')
-            value = t.get('value', '')
-            
-            if old_type == 'general':
+            old_type = t.get("type", "")
+            name = t.get("name", "")
+            value = t.get("value", "")
+
+            if old_type == "general":
                 new_type = improved_token_type(name, value, old_type)
-                if new_type != 'general':
-                    t['type'] = new_type
+                if new_type != "general":
+                    t["type"] = new_type
                     changes[old_type] = changes.get(old_type, 0) + 1
 
-with open(CARDS_PATH, 'w', encoding='utf-8') as f:
+with open(CARDS_PATH, "w", encoding="utf-8") as f:
     json.dump(gc, f, ensure_ascii=False, indent=2)
 
 # Count remaining
 remaining_general = 0
 by_new_type = {}
-for card in gc['cards']:
-    for t in card.get('tokens', []):
+for card in gc["cards"]:
+    for t in card.get("tokens", []):
         if isinstance(t, dict):
-            ttype = t.get('type', '')
-            if ttype == 'general':
+            ttype = t.get("type", "")
+            if ttype == "general":
                 remaining_general += 1
             else:
                 by_new_type[ttype] = by_new_type.get(ttype, 0) + 1

@@ -22,12 +22,14 @@ import time
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelname)s %(message)s")
 logger = logging.getLogger("QuickTrain")
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src")))
+sys.path.insert(
+    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"))
+)
 
+from ai.core.model_bus import ModelBus
 from ai.ed3n.ed3n_engine import ED3NEngine
 from ai.ed3n.ed3n_trainer import ED3NTrainer
 from ai.garden.garden_engine import GARDENEngine
-from ai.core.model_bus import ModelBus
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "apps/backend/data/raw_datasets")
 CKPT_DIR = os.path.join(os.path.dirname(__file__), "..", "data/checkpoints")
@@ -63,15 +65,17 @@ def train_ed3n(engine: ED3NEngine, trainer: ED3NTrainer, samples: list, label: s
             inp = s.get("input", s.get("problem", s.get("question", s.get("text", ""))))
             out = s.get("output", s.get("answer", s.get("response", s.get("result", ""))))
             if inp and out:
-                examples.append(TrainingExample(
-                    input_text=str(inp),
-                    expected_output=str(out),
-                    input_keys=[],
-                    output_keys=[],
-                    relation_pairs=[],
-                    confidence=float(s.get("confidence", 0.8)),
-                    metadata={"domain": s.get("domain", "general"), "source": "quick_train"},
-                ))
+                examples.append(
+                    TrainingExample(
+                        input_text=str(inp),
+                        expected_output=str(out),
+                        input_keys=[],
+                        output_keys=[],
+                        relation_pairs=[],
+                        confidence=float(s.get("confidence", 0.8)),
+                        metadata={"domain": s.get("domain", "general"), "source": "quick_train"},
+                    )
+                )
 
     if not examples:
         return {"status": "skipped", "reason": "no valid samples"}
@@ -106,7 +110,9 @@ def main():
 
     # Step 2: Load training data (small subset for quick verification)
     logger.info("Step 2: Loading training data...")
-    arithmetic = load_json_dataset(os.path.join(DATA_DIR, "arithmetic_train_dataset.json"), limit=500)
+    arithmetic = load_json_dataset(
+        os.path.join(DATA_DIR, "arithmetic_train_dataset.json"), limit=500
+    )
     logic = load_json_dataset(os.path.join(DATA_DIR, "logic_train.json"), limit=500)
     logger.info("  Arithmetic samples: %d", len(arithmetic))
     logger.info("  Logic samples: %d", len(logic))

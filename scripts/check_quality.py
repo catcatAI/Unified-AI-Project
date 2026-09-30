@@ -1,9 +1,11 @@
 """Quick quality check on trained models."""
+
 import json
 import os
 import sys
 
 CKPT = os.path.join(os.path.dirname(__file__), "..", "data", "checkpoints")
+
 
 def main():
     # ED3N stats
@@ -38,10 +40,10 @@ def main():
         if isinstance(raw_entries, dict):
             entries = raw_entries
         else:
-            entries={e.get("key", str(i)): e for i, e in enumerate(raw_entries)}
+            entries = {e.get("key", str(i)): e for i, e in enumerate(raw_entries)}
         print(f"  Dictionary entries: {len(entries)}")
         # Count Chinese vs English entries
-        zh_count=0
+        zh_count = 0
         for e in entries.values():
             forms = e.get("surface_forms", {})
             if isinstance(forms, dict):
@@ -90,6 +92,7 @@ def main():
         print("\n=== SequenceTrainer ===")
         print(f"  Total steps:  {seq.get('total_steps', 'N/A')}")
         print(f"  Best accuracy: {seq.get('best_accuracy', 'N/A')}")
+
 
 if __name__ == "__main__":
     main()

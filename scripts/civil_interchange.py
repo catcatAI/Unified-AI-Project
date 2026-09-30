@@ -35,26 +35,33 @@ def analyze():
     balance = {k: v["out"] == v["in"] for k, v in g.items()}
     cap = {k: (v["out"] + v["in"]) * SPEC["ramp_cap_pcu"] for k, v in g.items()}
     geo_ok = SPEC["tightest_loop_R"] >= SPEC["min_loop_R"]
-    return {"total_ramps": total, "balance": balance,
-            "capacity_pcu": cap, "geometry_ok": geo_ok,
-            "truth_imbalanced": sorted(k for k, v in balance.items() if not v)}
+    return {
+        "total_ramps": total,
+        "balance": balance,
+        "capacity_pcu": cap,
+        "geometry_ok": geo_ok,
+        "truth_imbalanced": sorted(k for k, v in balance.items() if not v),
+    }
 
 
 def ask_model(model_path, prompt, n_ctx, threads, n_tok=400):
     from llama_cpp import Llama
 
     m = Llama(model_path, n_ctx=n_ctx, n_threads=threads, verbose=False)
-    r = m.create_chat_completion([{"role": "user", "content": prompt}],
-                                 max_tokens=n_tok)
+    r = m.create_chat_completion([{"role": "user", "content": prompt}], max_tokens=n_tok)
     return r["choices"][0]["message"]["content"]
 
 
-QWEN = ("/home/cxuo/.cache/huggingface/hub/models--Qwen--Qwen2.5-0.5B-Instruct-GGUF"
-        "/snapshots/9217f5db79a29953eb74d5343926648285ec7e67"
-        "/qwen2.5-0.5b-instruct-q4_k_m.gguf")
-GEMMA = ("/home/cxuo/.cache/huggingface/hub/models--google--gemma-4-E2B-it-qat-q4_0-gguf"
-         "/snapshots/675cff42a74c774d6cb76f76d8eacb49b48c9b93"
-         "/gemma-4-E2B_q4_0-it.gguf")
+QWEN = (
+    "/home/cxuo/.cache/huggingface/hub/models--Qwen--Qwen2.5-0.5B-Instruct-GGUF"
+    "/snapshots/9217f5db79a29953eb74d5343926648285ec7e67"
+    "/qwen2.5-0.5b-instruct-q4_k_m.gguf"
+)
+GEMMA = (
+    "/home/cxuo/.cache/huggingface/hub/models--google--gemma-4-E2B-it-qat-q4_0-gguf"
+    "/snapshots/675cff42a74c774d6cb76f76d8eacb49b48c9b93"
+    "/gemma-4-E2B_q4_0-it.gguf"
+)
 
 
 def main():
@@ -63,8 +70,10 @@ def main():
     args = ap.parse_args()
     truth = analyze()
     print(json.dumps(truth, ensure_ascii=False, indent=1))
-    print(f"真值：共 {truth['total_ramps']} 條匝道；不平衡組 {truth['truth_imbalanced']}；"
-          f"幾何 {'✅' if truth['geometry_ok'] else '❌ R55<60'}")
+    print(
+        f"真值：共 {truth['total_ramps']} 條匝道；不平衡組 {truth['truth_imbalanced']}；"
+        f"幾何 {'✅' if truth['geometry_ok'] else '❌ R55<60'}"
+    )
     spec_text = (
         "某互通立交：A高架2出3入，B高架4出4入，A平面1入2出，B平面6出6入，"
         "共28條匝道；最緊環道半徑55米（規範最小60米）。"

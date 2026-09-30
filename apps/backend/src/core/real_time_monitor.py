@@ -590,8 +590,8 @@ class SystemStateMonitor:
                 self._state_history.append(state)
                 if len(self._state_history) > _MAX_STATE_HISTORY:
                     self._state_history = deque(
-                    list(self._state_history)[-_MAX_STATE_HISTORY:], maxlen=100
-                )
+                        list(self._state_history)[-_MAX_STATE_HISTORY:], maxlen=100
+                    )
 
                 # Notify callbacks
                 for callback in self._callbacks:
@@ -879,7 +879,7 @@ class UserActivityMonitor:
                 except FileNotFoundError:
                     pass
 
-        except (subprocess.TimeoutExpired, FileNotFoundError, OSError) as e:
+        except (subprocess.TimeoutExpired, OSError) as e:
             logger.debug("Active window detection failed on %s: %s", system, e)
 
         return None
@@ -889,9 +889,7 @@ class UserActivityMonitor:
         self._last_input_time = datetime.now()
         self._input_events.append(datetime.now())
         if len(self._input_events) > _MAX_INPUT_EVENTS:
-            self._input_events = deque(
-                list(self._input_events)[-_MAX_INPUT_EVENTS:], maxlen=1000
-            )
+            self._input_events = deque(list(self._input_events)[-_MAX_INPUT_EVENTS:], maxlen=1000)
 
     def register_callback(self, callback: Callable[[UserActivityData], None]) -> None:
         """Register activity change callback"""

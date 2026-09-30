@@ -210,9 +210,7 @@ class TestR85DeadPathFixes:
             ):
                 if name in importlib.sys.modules:
                     mod = importlib.import_module(name)
-                    assert "_bio_integrator_mod" in vars(
-                        mod
-                    ), f"{name} 缺少模組屬性動態解析匯入"
+                    assert "_bio_integrator_mod" in vars(mod), f"{name} 缺少模組屬性動態解析匯入"
             # 3. 視窗內直接建構——動態解析永遠拿到 patch 後的源模組屬性；
             #    此處源模組是 mock factory，所以拿到的會是 mock（這是 patch 的
             #    正確語意！）；teardown 後（下一個測試）再驗證自動還原

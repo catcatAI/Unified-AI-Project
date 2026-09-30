@@ -1,15 +1,18 @@
 import pytest
+
 pytest.skip("Integration script - requires live backend server", allow_module_level=True)
 
-import sys
 import logging
+import sys
+
 try:
     import requests
 except ImportError:
-    requests=None
+    requests = None
 logger = logging.getLogger(__name__)
 
-BASE_URL="http://127.0.0.1:8000/api/v1/drive"
+BASE_URL = "http://127.0.0.1:8000/api/v1/drive"
+
 
 def test_drive_integration():
     if requests is None:
@@ -25,7 +28,9 @@ def test_drive_integration():
         print(f"   Status: {status.get('status')}, Authenticated: {status.get('authenticated')}")
 
         if not status.get("authenticated"):
-            print("\n❌ Not authenticated. Run get_drive_auth_url.py and exchange_drive_code.py first.")
+            print(
+                "\n❌ Not authenticated. Run get_drive_auth_url.py and exchange_drive_code.py first."
+            )
             print("   Then run this script again to test file operations.")
             return False
 
@@ -46,15 +51,17 @@ def test_drive_integration():
         # 4. Sync (if files exist)
         if files:
             print("\n4. Syncing files...")
-            file_ids=[f["id"] for f in files[:2]]
+            file_ids = [f["id"] for f in files[:2]]
             sync_res = requests.post(
                 f"{BASE_URL}/files/sync",
                 json={"file_ids": file_ids, "folder_path": "data/drive_downloads"},
                 timeout=60,
             )
             result = sync_res.json()
-            print(f"   Synced: {result.get('synced')}, Skipped: {result.get('skipped')}, "
-                  f"Memorized: {result.get('memorized_count')}")
+            print(
+                f"   Synced: {result.get('synced')}, Skipped: {result.get('skipped')}, "
+                f"Memorized: {result.get('memorized_count')}"
+            )
 
         # 5. Analyze
         print("\n5. Analyzing files...")
@@ -75,6 +82,7 @@ def test_drive_integration():
     except Exception as e:
         print(f"❌ Test failed: {e}")
         return False
+
 
 if __name__ == "__main__":
     ok = test_drive_integration()

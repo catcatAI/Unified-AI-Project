@@ -359,7 +359,7 @@ def _eval_safe(expr: str, values: Dict[str, float]) -> Optional[float]:
     env: Dict[str, Any] = dict(values)
     env.update({"abs": abs, "max": max, "min": min})
     try:
-        result = eval(expr, allowed, env)  # noqa: S307 - whitelisted names only
+        result = eval(expr, allowed, env)  # nosec B307 - whitelisted names only
         return float(result) if isinstance(result, (int, float)) else None
     except Exception:  # noqa: BLE001 - any eval failure = not solvable
         return None

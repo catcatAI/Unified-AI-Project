@@ -8,12 +8,14 @@ Issues fixed:
 """
 
 import json
-import sys
 import os
+import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'apps', 'backend', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"))
 
-CARD_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "apps", "game-rpg", "data", "game_cards.json")
+CARD_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "..", "apps", "game-rpg", "data", "game_cards.json"
+)
 
 # =============================================================================
 # Ability type inference rules
@@ -22,25 +24,69 @@ CARD_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "apps
 # Rule priority: first match wins
 _ABILITY_TYPE_RULES = [
     # Combat / attack
-    (["戰鬥", "攻擊", "戰技", "格鬥", "劍術", "刀術", "射擊", "破壞", "殲滅",
-      "鋼鐵破砕", "暗殺", "獵殺", "暴擊"], "combat"),
+    (
+        [
+            "戰鬥",
+            "攻擊",
+            "戰技",
+            "格鬥",
+            "劍術",
+            "刀術",
+            "射擊",
+            "破壞",
+            "殲滅",
+            "鋼鐵破砕",
+            "暗殺",
+            "獵殺",
+            "暴擊",
+        ],
+        "combat",
+    ),
     # Passive / inherent
-    (["天生特質", "核心能力", "核心矛盾", "核心優勢", "特殊設定", "概念永恆",
-      "概念性", "不屈意志", "被動", "痛覺遲鈍", "特殊能力", "能力環境",
-      "使命", "世界建構"], "passive"),
+    (
+        [
+            "天生特質",
+            "核心能力",
+            "核心矛盾",
+            "核心優勢",
+            "特殊設定",
+            "概念永恆",
+            "概念性",
+            "不屈意志",
+            "被動",
+            "痛覺遲鈍",
+            "特殊能力",
+            "能力環境",
+            "使命",
+            "世界建構",
+        ],
+        "passive",
+    ),
     # Knowledge / intelligence
-    (["推理", "知識", "研究", "解析", "情報", "AI公式", "數據處理", "感知",
-      "時之眼", "共鳴", "核心目的"], "knowledge"),
+    (
+        [
+            "推理",
+            "知識",
+            "研究",
+            "解析",
+            "情報",
+            "AI公式",
+            "數據處理",
+            "感知",
+            "時之眼",
+            "共鳴",
+            "核心目的",
+        ],
+        "knowledge",
+    ),
     # Magic / element
-    (["魔法", "魔", "元素", "咒", "術式", "符文", "龍鱗", "天賦型態",
-      "能量感知"], "magic"),
+    (["魔法", "魔", "元素", "咒", "術式", "符文", "龍鱗", "天賦型態", "能量感知"], "magic"),
     # Support / healing
     (["輔助", "治癒", "恢復", "護盾", "支援", "手作", "交涉"], "輔助"),
     # Special / unique
     (["特殊技能", "事件觸發", "機制", "角色定位", "創作輔助", "特殊"], "special"),
     # Craft
-    (["製作", "工匠", "鍛造", "工藝", "料理", "烹飪", "採集", "合成",
-      "修理", "手作"], "craft"),
+    (["製作", "工匠", "鍛造", "工藝", "料理", "烹飪", "採集", "合成", "修理", "手作"], "craft"),
     # Social
     (["社交", "交易", "交涉", "表演", "歌唱", "音樂", "說服", "服務"], "social"),
     # Tech
@@ -74,6 +120,7 @@ _DESCRIPTION_ENRICHMENTS = {
 # Main fix logic
 # =============================================================================
 
+
 def _infer_ability_type(name: str) -> str:
     """Infer ability type from name using keyword rules."""
     text = name.lower()
@@ -83,19 +130,20 @@ def _infer_ability_type(name: str) -> str:
                 return atype
     return "passive"  # Default fallback
 
+
 def main():
     print("=== Ability Type & Description Fix ===")
     print()
-    
+
     with open(CARD_PATH, "r", encoding="utf-8") as f:
         gc = json.load(f)
-    
+
     # ---------------------------------------------------------------
     # Fix 1: Missing ability types
     # ---------------------------------------------------------------
     fixed_types = 0
     still_missing = 0
-    
+
     for c in gc["cards"]:
         cid = c.get("card_id", "?")
         for a in c.get("abilities", []):
@@ -105,55 +153,58 @@ def main():
                     inferred = _infer_ability_type(a.get("name", ""))
                     a["type"] = inferred
                     fixed_types += 1
-    
+
     print(f"Fixed ability types: {fixed_types}")
-    
+
     # Verify no remaining missing
     for c in gc["cards"]:
         for a in c.get("abilities", []):
             if isinstance(a, dict):
                 if not a.get("type", "") or a.get("type") == "?":
                     still_missing += 1
-    
+
     print(f"Still missing: {still_missing}")
     print()
-    
+
     # ---------------------------------------------------------------
     # Fix 2: Short card descriptions
     # ---------------------------------------------------------------
     fixed_descs = 0
     still_short = 0
-    
+
     for c in gc["cards"]:
         cid = c.get("card_id", "?")
         desc = c.get("description", "")
-        
+
         if len(desc) < 100 and c.get("card_type") == "角色卡":
             if cid in _DESCRIPTION_ENRICHMENTS:
                 c["description"] = _DESCRIPTION_ENRICHMENTS[cid]
                 fixed_descs += 1
-                print(f"  Enriched: {cid} {c.get('name','?')[:20]} ({len(desc)} → {len(_DESCRIPTION_ENRICHMENTS[cid])} chars)")
+                print(
+                    f"  Enriched: {cid} {c.get('name','?')[:20]} ({len(desc)} → {len(_DESCRIPTION_ENRICHMENTS[cid])} chars)"
+                )
             else:
                 still_short += 1
-    
+
     print()
     print(f"Enriched descriptions: {fixed_descs}")
     print(f"Still short (<100 chars): {still_short}")
     print()
-    
+
     # ---------------------------------------------------------------
     # Save
     # ---------------------------------------------------------------
     with open(CARD_PATH, "w", encoding="utf-8") as f:
         json.dump(gc, f, ensure_ascii=False, indent=2)
-    
+
     print("Saved to game_cards.json")
-    
+
     # Summary
     print()
     print("=== Summary ===")
     print(f"  Ability types fixed: {fixed_types}")
     print(f"  Descriptions enriched: {fixed_descs}")
+
 
 if __name__ == "__main__":
     main()

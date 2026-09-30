@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """AI Models CLI — multi-LLM command-line interface."""
 
-import asyncio
 import argparse
+import asyncio
 import json
 import logging
 import os
@@ -78,14 +78,22 @@ class AIModelsCLI:
         for model_id, info in summary.get("models", {}).items():
             stats = info.get("usage_stats", {})
             if stats.get("total_requests", 0) > 0:
-                print(f"  {model_id}: {stats['total_requests']} req, "
-                      f"${stats.get('total_cost', 0):.4f}, "
-                      f"{stats.get('average_latency', 0):.2f}s avg")
+                print(
+                    f"  {model_id}: {stats['total_requests']} req, "
+                    f"${stats.get('total_cost', 0):.4f}, "
+                    f"{stats.get('average_latency', 0):.2f}s avg"
+                )
 
-    async def single_query(self, query: str, model: Optional[str] = None,
-                           system: Optional[str] = None,
-                           max_tokens: int = 4096, temperature: float = 0.7,
-                           stream: bool = False, verbose: bool = False) -> None:
+    async def single_query(
+        self,
+        query: str,
+        model: Optional[str] = None,
+        system: Optional[str] = None,
+        max_tokens: int = 4096,
+        temperature: float = 0.7,
+        stream: bool = False,
+        verbose: bool = False,
+    ) -> None:
         if not self.service:
             await self.initialize()
         model_id = model or self.service.default_model()
@@ -97,26 +105,31 @@ class AIModelsCLI:
         messages.append(ChatMessage(role="user", content=query))
         if stream:
             async for chunk in self.service.stream_completion(
-                messages, model_id=model_id,
-                max_tokens=max_tokens, temperature=temperature
+                messages, model_id=model_id, max_tokens=max_tokens, temperature=temperature
             ):
                 print(chunk, end="", flush=True)
             print()
         else:
             response = await self.service.chat_completion(
-                messages, model_id=model_id,
-                max_tokens=max_tokens, temperature=temperature
+                messages, model_id=model_id, max_tokens=max_tokens, temperature=temperature
             )
             print(response.content)
             if verbose:
-                print(f"\nTokens: {getattr(response, 'usage', {})}  "
-                      f"Cost: ${getattr(response, 'cost', 0):.4f}  "
-                      f"Latency: {getattr(response, 'latency', 0):.2f}s")
+                print(
+                    f"\nTokens: {getattr(response, 'usage', {})}  "
+                    f"Cost: ${getattr(response, 'cost', 0):.4f}  "
+                    f"Latency: {getattr(response, 'latency', 0):.2f}s"
+                )
 
-    async def chat(self, model: Optional[str] = None,
-                   system: Optional[str] = None,
-                   max_tokens: int = 4096, temperature: float = 0.7,
-                   stream: bool = False, verbose: bool = False) -> None:
+    async def chat(
+        self,
+        model: Optional[str] = None,
+        system: Optional[str] = None,
+        max_tokens: int = 4096,
+        temperature: float = 0.7,
+        stream: bool = False,
+        verbose: bool = False,
+    ) -> None:
         if not self.service:
             await self.initialize()
         model_id = model or self.service.default_model()
@@ -145,26 +158,31 @@ class AIModelsCLI:
             messages.append(ChatMessage(role="user", content=user_input))
             if stream:
                 async for chunk in self.service.stream_completion(
-                    messages, model_id=model_id,
-                    max_tokens=max_tokens, temperature=temperature
+                    messages, model_id=model_id, max_tokens=max_tokens, temperature=temperature
                 ):
                     print(chunk, end="", flush=True)
                 print()
             else:
                 response = await self.service.chat_completion(
-                    messages, model_id=model_id,
-                    max_tokens=max_tokens, temperature=temperature
+                    messages, model_id=model_id, max_tokens=max_tokens, temperature=temperature
                 )
                 print(response.content)
                 if verbose:
-                    print(f"\nTokens: {getattr(response, 'usage', {})}  "
-                          f"Cost: ${getattr(response, 'cost', 0):.4f}  "
-                          f"Latency: {getattr(response, 'latency', 0):.2f}s")
+                    print(
+                        f"\nTokens: {getattr(response, 'usage', {})}  "
+                        f"Cost: ${getattr(response, 'cost', 0):.4f}  "
+                        f"Latency: {getattr(response, 'latency', 0):.2f}s"
+                    )
             messages.append(ChatMessage(role="assistant", content=response.content))
 
-    async def compare_models(self, query: str, models: Optional[List[str]] = None,
-                             max_tokens: int = 1024, temperature: float = 0.7,
-                             verbose: bool = False) -> None:
+    async def compare_models(
+        self,
+        query: str,
+        models: Optional[List[str]] = None,
+        max_tokens: int = 1024,
+        temperature: float = 0.7,
+        verbose: bool = False,
+    ) -> None:
         if not self.service:
             await self.initialize()
         model_ids = models or self.service.get_available_models()[:3]
@@ -176,16 +194,17 @@ class AIModelsCLI:
             try:
                 messages = [ChatMessage(role="user", content=query)]
                 response = await self.service.chat_completion(
-                    messages, model_id=model_id,
-                    max_tokens=max_tokens, temperature=temperature
+                    messages, model_id=model_id, max_tokens=max_tokens, temperature=temperature
                 )
-                results.append({
-                    "model": model_id,
-                    "response": response.content,
-                    "usage": getattr(response, "usage", {}),
-                    "cost": getattr(response, "cost", 0),
-                    "latency": getattr(response, "latency", 0),
-                })
+                results.append(
+                    {
+                        "model": model_id,
+                        "response": response.content,
+                        "usage": getattr(response, "usage", {}),
+                        "cost": getattr(response, "cost", 0),
+                        "latency": getattr(response, "latency", 0),
+                    }
+                )
                 print(f"\n--- {model_id} ---")
                 print(response.content[:500])
             except Exception as e:
@@ -244,20 +263,29 @@ async def main() -> None:
             await cli.usage_stats()
         elif args.command == "query":
             await cli.single_query(
-                args.query, model=args.model, system=args.system,
-                max_tokens=args.max_tokens, temperature=args.temperature,
-                stream=args.stream, verbose=args.verbose,
+                args.query,
+                model=args.model,
+                system=args.system,
+                max_tokens=args.max_tokens,
+                temperature=args.temperature,
+                stream=args.stream,
+                verbose=args.verbose,
             )
         elif args.command == "chat":
             await cli.chat(
-                model=args.model, system=args.system,
-                max_tokens=args.max_tokens, temperature=args.temperature,
-                stream=args.stream, verbose=args.verbose,
+                model=args.model,
+                system=args.system,
+                max_tokens=args.max_tokens,
+                temperature=args.temperature,
+                stream=args.stream,
+                verbose=args.verbose,
             )
         elif args.command == "compare":
             await cli.compare_models(
-                args.query, models=args.models,
-                max_tokens=args.max_tokens, temperature=args.temperature,
+                args.query,
+                models=args.models,
+                max_tokens=args.max_tokens,
+                temperature=args.temperature,
                 verbose=args.verbose,
             )
         else:

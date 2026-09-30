@@ -6,26 +6,27 @@ This is the correct approach:
 3. Train on CIFAR-10 to match target images
 """
 
-import sys
-import os
 import json
+import os
+import sys
 import time
+
 import numpy as np
 from PIL import Image
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"))
 
-from ai.multimodal.primitives.learnable_decomposer import LearnableDecomposer
-from ai.multimodal.primitives.differentiable_renderer import DifferentiableRenderer
-from ai.multimodal.primitives.primitive_types import TOTAL_DIM
 from ai.multimodal.evaluation.generation_evaluator import GenerationEvaluator
+from ai.multimodal.primitives.differentiable_renderer import DifferentiableRenderer
+from ai.multimodal.primitives.learnable_decomposer import LearnableDecomposer
+from ai.multimodal.primitives.primitive_types import TOTAL_DIM
 
 
 def main():
     data_dir = os.path.join(os.path.dirname(__file__), "..", "data", "multimodal", "cifar10")
     idx = json.load(open(os.path.join(data_dir, "index.json")))
 
-    images, labels=[], []
+    images, labels = [], []
     for cls in idx["classes"]:
         cls_dir = os.path.join(data_dir, cls)
         for f in sorted(os.listdir(cls_dir))[:5]:
@@ -38,11 +39,13 @@ def main():
     # CLIP embeddings
     print("CLIP encoding...", flush=True)
     from ai.multimodal.semantic_visual import SemanticVisualEncoder
+
     clip_model = SemanticVisualEncoder()
-    clip_embs=[]
+    clip_embs = []
     for img_arr in images:
         pil = Image.fromarray(img_arr).resize((224, 224), Image.LANCZOS)
         import io
+
         buf = io.BytesIO()
         pil.save(buf, format="PNG")
         emb = clip_model.encode(buf.getvalue())
@@ -51,8 +54,10 @@ def main():
     print("CLIP done: %s" % str(clip_embs.shape), flush=True)
 
     # Target images (128x128 float)
-    target_arrs=[np.array(Image.fromarray(img).resize((128, 128), Image.LANCZOS),
-                            dtype=np.float32) / 255.0 for img in images]
+    target_arrs = [
+        np.array(Image.fromarray(img).resize((128, 128), Image.LANCZOS), dtype=np.float32) / 255.0
+        for img in images
+    ]
 
     # Differentiable renderer
     renderer = DifferentiableRenderer((128, 128))
@@ -65,14 +70,14 @@ def main():
     for clip_emb in clip_embs:
         decomposer.update_clip_stats(clip_emb)
 
-    epochs=100
-    lr=0.001
-    losses=[]
+    epochs = 100
+    lr = 0.001
+    losses = []
     t0 = time.time()
 
     for epoch in range(epochs):
         indices = np.random.permutation(len(clip_embs))
-        epoch_loss=0.0
+        epoch_loss = 0.0
 
         for idx in indices:
             clip_emb = clip_embs[idx]
@@ -86,7 +91,7 @@ def main():
 
             # Pixel loss
             error = rendered - target
-            loss = float(np.mean(error ** 2))
+            loss = float(np.mean(error**2))
             epoch_loss += loss
 
             # Backprop: d(loss)/d(pred_vec) through differentiable renderer
@@ -97,7 +102,7 @@ def main():
 
             # Simple approximation: treat each param independently
             d_vec = np.zeros(TOTAL_DIM, dtype=np.float32)
-            eps=0.01
+            eps = 0.01
 
             # Probe each dimension (too slow for 263 dims, do subset)
             probe_dims = np.random.choice(TOTAL_DIM, size=30, replace=False)
@@ -141,7 +146,9 @@ def main():
 
     # Evaluate
     evaluator = GenerationEvaluator()
-    pil_renderer = __import__("ai.multimodal.primitives.primitive_renderer", fromlist=["PrimitiveRenderer"]).PrimitiveRenderer((128, 128))
+    pil_renderer = __import__(
+        "ai.multimodal.primitives.primitive_renderer", fromlist=["PrimitiveRenderer"]
+    ).PrimitiveRenderer((128, 128))
     save_dir = os.path.join(os.path.dirname(__file__), "..", "data", "multimodal", "samples_e2e")
     os.makedirs(save_dir, exist_ok=True)
 
@@ -149,6 +156,7 @@ def main():
     for i in range(min(15, len(images))):
         pred_vec, _ = decomposer.forward(clip_embs[i])
         from ai.multimodal.primitives.primitive_types import DrawingInstructions
+
         instructions = DrawingInstructions.from_vector(pred_vec)
         rendered_pil = pil_renderer.render(instructions)
         rendered_diff = Image.fromarray((renderer.render(pred_vec) * 255).astype(np.uint8))
@@ -163,9 +171,15 @@ def main():
         comp.paste(rendered_pil, (256, 0))
         comp.save(os.path.join(save_dir, "%02d_%s.png" % (i, labels[i])))
 
-        print("  [%d] %s: diff_sim=%.2f pil_sim=%.2f" % (i, labels[i], sim_diff, sim_pil), flush=True)
+        print(
+            "  [%d] %s: diff_sim=%.2f pil_sim=%.2f" % (i, labels[i], sim_diff, sim_pil), flush=True
+        )
 
-    decomposer.save(os.path.join(os.path.dirname(__file__), "..", "data", "multimodal", "weights", "decomposer_e2e.json"))
+    decomposer.save(
+        os.path.join(
+            os.path.dirname(__file__), "..", "data", "multimodal", "weights", "decomposer_e2e.json"
+        )
+    )
     print("Saved", flush=True)
 
 

@@ -707,9 +707,7 @@ class QueryClassifier:
         # Step 8: 回传 UNKNOWN
         return QueryResult(QueryType.UNKNOWN, 0.3, 0.0, "none", reason="no_match_fallback")
 
-    def _classify_semantic_intent(
-        self, text: str, has_negation: bool
-    ) -> Optional[QueryResult]:
+    def _classify_semantic_intent(self, text: str, has_negation: bool) -> Optional[QueryResult]:
         if _CAPABILITY_INTENT.search(text):
             return QueryResult(
                 primary_type=QueryType.KNOWLEDGE,

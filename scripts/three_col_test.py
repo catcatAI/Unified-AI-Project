@@ -1,5 +1,10 @@
 """Direct SNN-ONLY test - no GARDENEngine process/generate."""
-import sys, time, numpy as np
+
+import sys
+import time
+
+import numpy as np
+
 sys.path.insert(0, r"D:\Projects\Unified-AI-Project\apps\backend\src")
 
 from ai.garden.garden_engine import GARDENEngine
@@ -22,8 +27,10 @@ g = GARDENEngine(compatibility_mode=True)
 g.load(r"D:\Projects\Unified-AI-Project\data\checkpoints\garden_checkpoint")
 snn = g.snn
 stats = snn.get_stats()
-print(f"SNN: V={stats['vocab_size']}, density={stats['matrix_density']*100:.1f}%, "
-      f"hebbian={stats['total_hebbian_updates']}, steps={stats['total_steps']}")
+print(
+    f"SNN: V={stats['vocab_size']}, density={stats['matrix_density']*100:.1f}%, "
+    f"hebbian={stats['total_hebbian_updates']}, steps={stats['total_steps']}"
+)
 print(f"Dict: {len(g.dictionary.entries)} entries\n")
 
 snn_hits = 0
@@ -50,9 +57,12 @@ for query, domain in TEST_QUERIES:
                     break
     snn_str = " ".join(words[:8])
     has_activation = "+" if out_keys else "x"
-    if out_keys: snn_hits += 1
+    if out_keys:
+        snn_hits += 1
 
-    print(f"[{has_activation}] {query:20s} ({domain:8s}) encode={len(keys):2d} valid={len(valid_keys):2d} "
-          f"snn_out={len(out_keys):3d} -> {snn_str[:50]}  ({elapsed:.3f}s)")
+    print(
+        f"[{has_activation}] {query:20s} ({domain:8s}) encode={len(keys):2d} valid={len(valid_keys):2d} "
+        f"snn_out={len(out_keys):3d} -> {snn_str[:50]}  ({elapsed:.3f}s)"
+    )
 
 print(f"\nSNN-ONLY activation: {snn_hits}/{total} ({snn_hits/total*100:.0f}%)")

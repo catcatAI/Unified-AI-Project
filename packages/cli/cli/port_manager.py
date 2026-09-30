@@ -3,14 +3,15 @@
 Unified Port Manager - 统一管理所有应用的端口配置
 """
 
-import os
-import sys
 import json
-import psutil
-import socket
-from typing import Dict, List, Optional
-from pathlib import Path
 import logging
+import os
+import socket
+import sys
+from pathlib import Path
+from typing import Dict, List, Optional
+
+import psutil
 
 logger = logging.getLogger(__name__)
 
@@ -34,15 +35,15 @@ class PortManager:
     def check_port_in_use(self, port: int) -> bool:
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-                sock.bind(('localhost', port))
+                sock.bind(("localhost", port))
                 return False
         except OSError:
             return True
 
     def find_process_by_port(self, port: int) -> Optional[psutil.Process]:
-        for proc in psutil.process_iter(['pid', 'name', 'connections']):
+        for proc in psutil.process_iter(["pid", "name", "connections"]):
             try:
-                for conn in proc.info['connections']:
+                for conn in proc.info["connections"]:
                     if conn.laddr.port == port:
                         return proc
             except (psutil.NoSuchProcess, psutil.AccessDenied, TypeError):
@@ -72,7 +73,7 @@ class PortManager:
     def save_pid(self, service_name: str, pid: int) -> bool:
         try:
             pid_file = self.PID_FILE_DIR / f"{service_name.lower()}.pid"
-            with open(pid_file, 'w') as f:
+            with open(pid_file, "w") as f:
                 f.write(str(pid))
             return True
         except Exception as e:
@@ -83,7 +84,7 @@ class PortManager:
         try:
             pid_file = self.PID_FILE_DIR / f"{service_name.lower()}.pid"
             if pid_file.exists():
-                with open(pid_file, 'r') as f:
+                with open(pid_file, "r") as f:
                     return int(f.read().strip())
             return None
         except Exception as e:

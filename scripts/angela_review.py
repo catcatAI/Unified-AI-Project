@@ -70,6 +70,7 @@ def main(argv: list) -> int:
         reviewer = AngelaReviewEngine()._reviewers.get("code")
         if reviewer:
             from ai.meta.angela_review_engine import CodeReviewer
+
             report = CodeReviewer(SRC_ROOT).review(target_files=args.files)
             reports = {"code": report}
         else:

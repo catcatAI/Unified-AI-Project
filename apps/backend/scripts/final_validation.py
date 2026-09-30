@@ -6,14 +6,16 @@
 最终验证脚本 - 验证所有已知问题是否已解决
 """
 
+import logging
 import sys
 from pathlib import Path
-import logging
+
 logger = logging.getLogger(__name__)
 
 # 项目根目录
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 SRC_DIR = PROJECT_ROOT / "apps" / "backend" / "src"
+
 
 def setup_environment():
     """设置环境"""
@@ -27,6 +29,7 @@ def setup_environment():
     print(f"源代码目录, {SRC_DIR}")
     print(f"Python路径, {sys.path[:3]}...")  # 只显示前3个路径
 
+
 def test_original_problem_imports() -> None:
     """测试原始问题中的导入"""
     print("\n=测试原始问题中的导入 ===")
@@ -35,6 +38,7 @@ def test_original_problem_imports() -> None:
     print("\n1. 测试HSPConnector导入,")
     try:
         from apps.backend.src.core.hsp.connector import HSPConnector
+
         print("✓ HSPConnector 导入成功")
     except ImportError as e:
         print(f"✗ HSPConnector 导入失败, {e}")
@@ -66,12 +70,14 @@ def test_original_problem_imports() -> None:
 
     return success_count == len(core_ai_modules)
 
+
 def test_core_services() -> None:
     """测试核心服务导入"""
     print("\n=测试核心服务导入 ===")
 
     try:
         from apps.backend.src.core.hsp.connector import HSPConnector
+
         print("✓ HSPConnector 导入成功")
         return True
     except ImportError as e:
@@ -81,12 +87,14 @@ def test_core_services() -> None:
         print(f"✗ 核心服务导入时出错, {e}")
         return False
 
+
 def test_main_api_server() -> None:
     """测试主API服务器导入"""
     print("\n=测试主API服务器导入 ===")
 
     try:
         from apps.backend.src.services.main_api_server import MainApiServer
+
         print("✓ 主API服务器导入成功")
         return True
     except ImportError as e:
@@ -96,12 +104,14 @@ def test_main_api_server() -> None:
         print(f"✗ 主API服务器导入时出错, {e}")
         return False
 
+
 def test_dialogue_manager_hsp_connector() -> None:
     """测试DialogueManager中的HSPConnector"""
     print("\n=测试HSPConnector导入 ===")
 
     try:
         from apps.backend.src.core.hsp.connector import HSPConnector
+
         print("✓ HSPConnector 导入成功")
         return True
 
@@ -112,6 +122,7 @@ def test_dialogue_manager_hsp_connector() -> None:
         print(f"✗ 测试HSPConnector时出错, {e}")
         return False
 
+
 def run_comprehensive_import_test():
     """运行综合导入测试"""
     print("\n=运行综合导入测试 ===")
@@ -121,12 +132,10 @@ def run_comprehensive_import_test():
         # Core 模块
         "core.hsp.connector",
         "core.hsp.types",
-
         # AI 模块
         "ai.memory.ham_memory",
         "ai.ed3n.ed3n_engine",
         "ai.garden.garden_engine",
-
         # Services 模块
         "apps.backend.src.services.main_api_server",
         "apps.backend.src.services.angela_llm_service",
@@ -157,6 +166,7 @@ def run_comprehensive_import_test():
 
     return True
 
+
 def main() -> None:
     """主函数"""
     print("=== Unified AI Project 最终验证脚本 ===")
@@ -177,7 +187,7 @@ def main() -> None:
     for test_name, test_func in tests:
         print(f"\n{'='*50}")
         print(f"运行 {test_name}")
-        print('='*50)
+        print("=" * 50)
         try:
             result = test_func()
             results.append((test_name, result))
@@ -192,7 +202,7 @@ def main() -> None:
     # 输出总结
     print(f"\n{'='*50}")
     print("最终验证总结")
-    print('='*50)
+    print("=" * 50)
     passed = sum(1 for _, result in results if result)
     total = len(results)
 
@@ -208,6 +218,7 @@ def main() -> None:
     else:
         print(f"\n❌ {total - passed} 个测试失败。请检查上述错误。")
         return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

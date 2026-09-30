@@ -11,17 +11,22 @@ import json
 import operator
 import os
 
-DB = os.path.join(
-    os.path.dirname(__file__), "..", "data", "materials", "civil_materials.json"
-)
-TPL = os.path.join(
-    os.path.dirname(__file__), "..", "data", "materials", "civil_templates.json"
-)
+DB = os.path.join(os.path.dirname(__file__), "..", "data", "materials", "civil_materials.json")
+TPL = os.path.join(os.path.dirname(__file__), "..", "data", "materials", "civil_templates.json")
 
-OPS = {ast.Add: operator.add, ast.Sub: operator.sub, ast.Mult: operator.mul,
-       ast.Div: operator.truediv, ast.Pow: operator.pow, ast.USub: operator.neg,
-       ast.GtE: operator.ge, ast.LtE: operator.le, ast.Gt: operator.gt,
-       ast.Lt: operator.lt, ast.Eq: operator.eq}
+OPS = {
+    ast.Add: operator.add,
+    ast.Sub: operator.sub,
+    ast.Mult: operator.mul,
+    ast.Div: operator.truediv,
+    ast.Pow: operator.pow,
+    ast.USub: operator.neg,
+    ast.GtE: operator.ge,
+    ast.LtE: operator.le,
+    ast.Gt: operator.gt,
+    ast.Lt: operator.lt,
+    ast.Eq: operator.eq,
+}
 
 
 def safe_eval(expr, ns):
@@ -70,9 +75,12 @@ def run_template(tpl, db, overrides):
     for c in tpl.get("checks", []):
         checks[c["name"]] = bool(safe_eval(c["expr"], ns))
     out = {k: trace[k] for k in tpl.get("outputs", []) if k in trace}
-    return {"inputs": {k: ns[k] for k in tpl.get("inputs", {})},
-            "results": out, "checks": checks,
-            "assumptions": tpl.get("assumptions", [])}
+    return {
+        "inputs": {k: ns[k] for k in tpl.get("inputs", {})},
+        "results": out,
+        "checks": checks,
+        "assumptions": tpl.get("assumptions", []),
+    }
 
 
 def main():
@@ -86,9 +94,13 @@ def main():
     for t in tpls:
         if args.template and t["name"] != args.template:
             continue
-        print(json.dumps({"template": t["name"],
-                          **run_template(t, db, over.get(t["name"], {}))},
-                         ensure_ascii=False, indent=1))
+        print(
+            json.dumps(
+                {"template": t["name"], **run_template(t, db, over.get(t["name"], {}))},
+                ensure_ascii=False,
+                indent=1,
+            )
+        )
     return 0
 
 

@@ -110,9 +110,7 @@ def resolve_model_window(model_name: str) -> int:
     name = str(model_name or "").strip().lower()
     if not name:
         return DEFAULT_MODEL_CONTEXT_WINDOW
-    for prefix, window in sorted(
-        MODEL_CONTEXT_WINDOWS.items(), key=lambda kv: -len(kv[0])
-    ):
+    for prefix, window in sorted(MODEL_CONTEXT_WINDOWS.items(), key=lambda kv: -len(kv[0])):
         if name.startswith(prefix):
             return window
     return DEFAULT_MODEL_CONTEXT_WINDOW
@@ -252,7 +250,10 @@ def _get_workspace_overview() -> str:
     是同一份資料。任何失敗都回空字串——缺席分支不進提示，避免噪音。
     """
     global _workspace_overview_cache, _workspace_overview_cache_time
-    if _workspace_overview_cache and (time.time() - _workspace_overview_cache_time) < _WORKSPACE_CACHE_TTL:
+    if (
+        _workspace_overview_cache
+        and (time.time() - _workspace_overview_cache_time) < _WORKSPACE_CACHE_TTL
+    ):
         return _workspace_overview_cache
     try:
         from api.lifespan import get_agent_workspace
@@ -325,9 +326,7 @@ def _enforce_prompt_budget(messages: List[Dict], context: Dict) -> Dict[str, int
     try:
         from services.llm.context_scheduler import get_context_scheduler
 
-        conv_id = str(
-            context.get("conversation_id") or context.get("session_id") or "default"
-        )
+        conv_id = str(context.get("conversation_id") or context.get("session_id") or "default")
         digest_result = get_context_scheduler().digest_overflow_sync(
             messages, budget_tokens, conv_id
         )
@@ -1092,9 +1091,7 @@ def _append_document_context(messages: List[Dict], context: Dict) -> None:
     """
     desktop = context.get("desktop_interaction")
     intent_result = context.get("_intent_result")
-    workspace_ready = bool(context.get("workspace_overview")) or (
-        _get_workspace_overview() != ""
-    )
+    workspace_ready = bool(context.get("workspace_overview")) or (_get_workspace_overview() != "")
     if not desktop and not intent_result and not workspace_ready:
         return
     block = "\n\n---\n[File System & Document Processing]"

@@ -1,15 +1,18 @@
 """Rebuild vocabulary with 50 visual words and test recognition."""
-import sys
+
 import os
+import sys
 import time
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'apps', 'backend', 'src'))
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"))
 
 import numpy as np
 from ai.multimodal.primitives.geometric_vocabulary import GeometricVocabulary
 from ai.multimodal.recognition.geometric_recognizer import GeometricRecognizer
 
-CIFAR_DIR="D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
-CLASSES=["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
+CIFAR_DIR = "D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
+CLASSES = ["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
+
 
 def main():
     vectors = np.load(os.path.join(CIFAR_DIR, "optimized_vectors.npy"))
@@ -21,7 +24,9 @@ def main():
     t0 = time.time()
     vocab = GeometricVocabulary(n_visual_words=50)
     vocab.build_from_optimized(vectors, labels)
-    print(f"Vocabulary built in {time.time()-t0:.1f}s: {len(vocab._visual_words)} words, {len(vocab._concept_distributions)} concepts")
+    print(
+        f"Vocabulary built in {time.time()-t0:.1f}s: {len(vocab._visual_words)} words, {len(vocab._concept_distributions)} concepts"
+    )
 
     vocab.save("models/geometric_vocabulary.json")
     print("Saved to models/geometric_vocabulary.json")
@@ -29,8 +34,8 @@ def main():
     # Test recognition
     print("\nTesting recognition...")
     recognizer = GeometricRecognizer(vocab)
-    correct=0
-    per_class={c: [0, 0] for c in CLASSES}
+    correct = 0
+    per_class = {c: [0, 0] for c in CLASSES}
     for i in range(len(vectors)):
         result = recognizer.recognize_from_vector(vectors[i])
         pred = result["predicted_class"]

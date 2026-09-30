@@ -7,6 +7,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 
 logger = logging.getLogger(__name__)
 
@@ -293,7 +294,7 @@ class CivilModelHandler:
                 "--L",
                 str(p["L"]),
                 "--out",
-                "/tmp/girder_chat.stl",
+                os.path.join(tempfile.gettempdir(), "girder_chat.stl"),
             ],
             240,
         )
@@ -315,7 +316,7 @@ class CivilModelHandler:
                 "--L",
                 str(p["L"]),
                 "--out",
-                "/tmp/girder_chat.step",
+                os.path.join(tempfile.gettempdir(), "girder_chat.step"),
             ],
             500,
         )

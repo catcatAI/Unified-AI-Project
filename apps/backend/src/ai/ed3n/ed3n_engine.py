@@ -974,7 +974,7 @@ class ED3NEngine:
                 # adequate for the lower-bound path until full CLIP encodings
                 # are available for every dictionary entry)
                 rng = np.random.default_rng(
-                    int(hashlib.md5(key.encode("utf-8")).hexdigest()[:8], 16)
+                    int(hashlib.md5(key.encode("utf-8"), usedforsecurity=False).hexdigest()[:8], 16)
                 )
                 latent = rng.normal(0, 0.1, 64).astype(np.float32)
                 self._semantic_key_mapper.index_key(key, structural_latent=latent)

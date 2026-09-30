@@ -151,7 +151,9 @@ class RippleNode:
             nodes.append(child)
             if step >= 97 and (self.overload_triggered or self.fear_triggered):
                 # 標記回饋邊——覆寫唯讀 description property 的正當擴充點
-                object.__setattr__(child, "_description_override", f"Feedback: {child.operator.value} step={step}")
+                object.__setattr__(
+                    child, "_description_override", f"Feedback: {child.operator.value} step={step}"
+                )
         return nodes
 
 

@@ -12,6 +12,7 @@ Mirrors the training pipeline (same data loading + step functions) but:
   - forces a fresh run (no resume of the full pass),
   - prints analysis metrics after each GARDEN learn_batch.
 """
+
 # =============================================================================
 # ANGELA-MATRIX: [L3] [β] [B] [L5]
 # =============================================================================
@@ -25,8 +26,13 @@ import sys
 import time
 from typing import Dict, List, Optional
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src")))
-os.environ.setdefault("ANGELA_CONFIG_ROOT", os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "configs"))
+sys.path.insert(
+    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"))
+)
+os.environ.setdefault(
+    "ANGELA_CONFIG_ROOT",
+    os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "configs"),
+)
 
 _TP_PATH = os.path.join(os.path.dirname(__file__), "train_pipeline.py")
 _spec = importlib.util.spec_from_file_location("train_pipeline", _TP_PATH)
@@ -100,12 +106,12 @@ def main() -> None:
     for model_id in batches:
         original = len(batches[model_id])
         batches[model_id] = [
-            s
-            for s in batches[model_id]
-            if not tp.is_deterministic_match(s["input"], s["output"])
+            s for s in batches[model_id] if not tp.is_deterministic_match(s["input"], s["output"])
         ]
         det_filtered[model_id] = original - len(batches[model_id])
-        print(f"  {model_id:15s} -> det-filtered {det_filtered[model_id]} ({original} -> {len(batches[model_id])})")
+        print(
+            f"  {model_id:15s} -> det-filtered {det_filtered[model_id]} ({original} -> {len(batches[model_id])})"
+        )
 
     # ---- ED3N training ----
     print("\n=== ED3N training ===")

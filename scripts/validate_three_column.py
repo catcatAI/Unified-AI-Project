@@ -63,7 +63,7 @@ def load_datasets() -> Dict[str, List[Tuple[str, str]]]:
     # Arithmetic test (2k).
     cp = os.path.join(DATA_DIR, "arithmetic_test_dataset.csv")
     if os.path.exists(cp):
-        rows=[]
+        rows = []
         with open(cp, "r", encoding="utf-8") as f:
             for row in csv.DictReader(f):
                 rows.append((row["problem"], row["answer"]))
@@ -73,9 +73,7 @@ def load_datasets() -> Dict[str, List[Tuple[str, str]]]:
     lp = os.path.join(DATA_DIR, "logic_test.json")
     if os.path.exists(lp):
         data = _load_json(lp)
-        out["logic"] = [
-            (d["proposition"], str(d["answer"]).lower()) for d in data
-        ]
+        out["logic"] = [(d["proposition"], str(d["answer"]).lower()) for d in data]
 
     return out
 
@@ -103,6 +101,7 @@ def score(output: Optional[str], expected: str) -> bool:
 # ---------------------------------------------------------------------------
 # Column modes -> monkeypatch functions
 # ---------------------------------------------------------------------------
+
 
 def _stub_return_none(self, *args, **kwargs):
     return None
@@ -154,10 +153,11 @@ def apply_mode(engine, mode: str, engine_kind: str) -> None:
             engine.snn.forward = lambda *a, **k: None
 
 
-def run_column(engine, mode: str, engine_kind: str,
-               cases: List[Tuple[str, str]]) -> Tuple[int, int, float]:
+def run_column(
+    engine, mode: str, engine_kind: str, cases: List[Tuple[str, str]]
+) -> Tuple[int, int, float]:
     apply_mode(engine, mode, engine_kind)
-    passed=0
+    passed = 0
     total = len(cases)
     t0 = time.time()
     for inp, expected in cases:
@@ -165,7 +165,7 @@ def run_column(engine, mode: str, engine_kind: str,
             out = engine.process(inp)
         except Exception as e:
             logger.debug("process error in %s/%s: %s", engine_kind, mode, e)
-            out=""
+            out = ""
         if score(out, expected):
             passed += 1
     elapsed = time.time() - t0
@@ -180,14 +180,19 @@ def run_column(engine, mode: str, engine_kind: str,
 def main() -> None:
     ap = argparse.ArgumentParser(description="Three-column validation harness")
     ap.add_argument("--engine", choices=["ed3n", "garden", "both"], default="both")
-    ap.add_argument("--sample", type=int, default=150,
-                    help="Max cases sampled per domain (default 150; statistical "
-                         "margin <8%%). Use --full to run every case.")
-    ap.add_argument("--full", action="store_true",
-                    help="Run the entire in-repo dataset (can be slow: 11k "
-                         "reasoning cases x 3 columns).")
-    ap.add_argument("--output", "-o", default="",
-                    help="Write JSON report to this path")
+    ap.add_argument(
+        "--sample",
+        type=int,
+        default=150,
+        help="Max cases sampled per domain (default 150; statistical "
+        "margin <8%%). Use --full to run every case.",
+    )
+    ap.add_argument(
+        "--full",
+        action="store_true",
+        help="Run the entire in-repo dataset (can be slow: 11k " "reasoning cases x 3 columns).",
+    )
+    ap.add_argument("--output", "-o", default="", help="Write JSON report to this path")
     args = ap.parse_args()
 
     datasets = load_datasets()
@@ -206,7 +211,7 @@ def main() -> None:
 
     CKPT_DIR = os.path.join(ROOT, "data", "checkpoints")
 
-    engines_to_run=[]
+    engines_to_run = []
     if args.engine in ("ed3n", "both"):
         from ai.ed3n.ed3n_engine import ED3NEngine
 
@@ -240,8 +245,10 @@ def main() -> None:
             logger.debug("Warmup failed (benign): %s", exc)
         engines_to_run.append(("garden", e))
 
-    report: Dict[str, object] = {"datasets": {k: len(v) for k, v in datasets.items()},
-                                 "engines": {}}
+    report: Dict[str, object] = {
+        "datasets": {k: len(v) for k, v in datasets.items()},
+        "engines": {},
+    }
 
     for kind, engine in engines_to_run:
         print(f"\n{'=' * 70}")
@@ -257,15 +264,27 @@ def main() -> None:
             # This avoids re-loading sentence-transformers 9 times.
             originals = {}
             if kind == "ed3n":
-                patch_names = ["_stage_reflex", "_stage_math", "_stage_reasoning",
-                               "_stage_knowledge", "_stage_chain_reasoning",
-                               "_try_logic_eval",
-                               "_stage_network_forward", "_stage_anchored_decode",
-                               "_stage_cycling", "_stage_validate"]
+                patch_names = [
+                    "_stage_reflex",
+                    "_stage_math",
+                    "_stage_reasoning",
+                    "_stage_knowledge",
+                    "_stage_chain_reasoning",
+                    "_try_logic_eval",
+                    "_stage_network_forward",
+                    "_stage_anchored_decode",
+                    "_stage_cycling",
+                    "_stage_validate",
+                ]
             else:
-                patch_names = ["_try_math_eval", "_try_reasoning", "_try_chain_reasoning",
-                               "_try_knowledge", "_try_logic_eval",
-                               "_single_step_process"]
+                patch_names = [
+                    "_try_math_eval",
+                    "_try_reasoning",
+                    "_try_chain_reasoning",
+                    "_try_knowledge",
+                    "_try_logic_eval",
+                    "_single_step_process",
+                ]
             for name in patch_names:
                 if hasattr(engine, name):
                     originals[name] = getattr(engine, name)
@@ -304,14 +323,16 @@ def main() -> None:
                 "det_carry": round(carry * 100, 2),
                 "n": len(cases),
             }
-            print(f"  {dom:12s} | {hp:5d}/{ht:<2d} | {dp:5d}/{dt:<2d} | {sp:5d}/{st:<2d} | {carry*100:7.1f}%")
+            print(
+                f"  {dom:12s} | {hp:5d}/{ht:<2d} | {dp:5d}/{dt:<2d} | {sp:5d}/{st:<2d} | {carry*100:7.1f}%"
+            )
 
         eng_report["domains"] = dom_summary
         report["engines"][kind] = eng_report
 
         # Aggregate over all domains (weighted by case count).
         tot = sum(d["n"] for d in dom_summary.values())
-        agg={"hybrid": 0.0, "deterministic": 0.0, "snn_only": 0.0}
+        agg = {"hybrid": 0.0, "deterministic": 0.0, "snn_only": 0.0}
         for d in dom_summary.values():
             w = d["n"] / tot
             agg["hybrid"] += d["hybrid"] * w
@@ -320,9 +341,11 @@ def main() -> None:
         agg["det_carry"] = agg["hybrid"] - agg["snn_only"]
         eng_report["aggregate"] = {k: round(v, 2) for k, v in agg.items()}
         print("  " + "-" * 62)
-        print(f"  AGGREGATE (weighted) | HYBRID {agg['hybrid']:.1f}% | "
-              f"DET-ONLY {agg['deterministic']:.1f}% | SNN-ONLY {agg['snn_only']:.1f}% | "
-              f"DET-CARRY {agg['det_carry']:.1f}%")
+        print(
+            f"  AGGREGATE (weighted) | HYBRID {agg['hybrid']:.1f}% | "
+            f"DET-ONLY {agg['deterministic']:.1f}% | SNN-ONLY {agg['snn_only']:.1f}% | "
+            f"DET-CARRY {agg['det_carry']:.1f}%"
+        )
 
     print("\n" + "=" * 70)
     print("  INTERPRETATION")

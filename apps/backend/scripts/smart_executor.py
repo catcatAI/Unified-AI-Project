@@ -3,17 +3,19 @@
 智能执行器 - 在执行命令时自动检测错误并调用修复工具
 """
 
-import sys
-import subprocess
+import logging
 import re
+import subprocess
+import sys
 from pathlib import Path
 from typing import List
-import logging
+
 logger = logging.getLogger(__name__)
 
 # 项目根目录
 PROJECT_ROOT = Path(__file__).parent.parent
 SRC_DIR = PROJECT_ROOT / "src"
+
 
 def setup_environment():
     """设置环境"""
@@ -22,6 +24,7 @@ def setup_environment():
         sys.path.insert(0, str(PROJECT_ROOT))
     if str(SRC_DIR) not in sys.path:
         sys.path.insert(0, str(SRC_DIR))
+
 
 def detect_import_errors(stderr_output: str) -> List[str]:
     """检测导入错误"""
@@ -38,6 +41,7 @@ def detect_import_errors(stderr_output: str) -> List[str]:
             return matches
     return []
 
+
 def detect_path_errors(stderr_output: str) -> bool:
     """检测路径错误"""
     path_error_patterns = [
@@ -51,6 +55,7 @@ def detect_path_errors(stderr_output: str) -> bool:
             return True
     return False
 
+
 def run_auto_fix():
     """运行自动修复工具"""
     print("🔍 检测到导入错误,正在自动修复...")
@@ -61,6 +66,7 @@ def run_auto_fix():
     except Exception as e:
         print(f"❌ 自动修复时出错, {e}")
         return False
+
 
 def execute_command(command, auto_fix=True):
     """执行命令并处理错误
@@ -79,10 +85,10 @@ def execute_command(command, auto_fix=True):
             command,
             shell=True,  # nosec B602 — local diagnostic script, PROJECT_ROOT cwd only
             cwd=PROJECT_ROOT,
-    stdout=subprocess.PIPE,
+            stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-text = True,
-            encoding='utf-8'
+            text=True,
+            encoding="utf-8",
         )
 
         # 获取输出
@@ -125,6 +131,7 @@ text = True,
         print(f"❌ 执行命令时出错, {e}")
         return 1
 
+
 def main() -> None:
     """主函数"""
     setup_environment()
@@ -138,6 +145,7 @@ def main() -> None:
     # 执行命令
     exit_code = execute_command(command, auto_fix)
     sys.exit(exit_code)
+
 
 if __name__ == "__main__":
     main()

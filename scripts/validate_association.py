@@ -47,7 +47,7 @@ class AssocAdapter:
         self.kind = kind
         self.net = network
 
-    def add_edge(self, a: str, b: str, weight: float=1.0) -> None:
+    def add_edge(self, a: str, b: str, weight: float = 1.0) -> None:
         if self.kind == "ed3n":
             # Use the DIRECTED API so directionality is preserved (add_relation
             # is bidirectional and would mask directional/perturbation tests).
@@ -99,9 +99,9 @@ def build_garden() -> AssocAdapter:
 def metric_directional(builder, chain: List[str]) -> float:
     """For each edge A->B, forward([A]) must activate B above a baseline and
     forward([B]) must NOT activate A strongly (directionality)."""
-    correct=0
-    total=0
-    baseline=0.0
+    correct = 0
+    total = 0
+    baseline = 0.0
     for i in range(len(chain) - 1):
         a, b = chain[i], chain[i + 1]
         adj = builder()
@@ -141,7 +141,7 @@ def metric_ranking(builder, chain: List[str]) -> float:
         adj.register(chain[i + 1])
         adj.add_edge(chain[i], chain[i + 1], weight=1.0)
 
-    reach={}
+    reach = {}
     for node in chain:
         acts = adj.query([node])
         reach[node] = sum(1 for n in chain if n != node and acts.get(n, 0.0) > 0.0)
@@ -178,7 +178,7 @@ def run_engine(builder, label: str, deep: bool = False) -> Dict[str, float]:
     # Use a 3-node chain (A>B>C) for the structural metrics: this tests
     # WHETHER transitive/ranking association works, independent of each engine's
     # raw propagation depth (a separate concern, not the association ability).
-    chain=["A", "B", "C"]
+    chain = ["A", "B", "C"]
     results: Dict[str, float] = {}
     t0 = time.time()
 
@@ -188,15 +188,15 @@ def run_engine(builder, label: str, deep: bool = False) -> Dict[str, float]:
     results["perturbation"] = round(metric_perturbation(builder, "X", "Y"), 3)
 
     # Aggregate association capability (equal-weight mean of the 4 metrics).
-    results["association_capability"] = round(
-        sum(results.values()) / 4.0, 3
-    )
+    results["association_capability"] = round(sum(results.values()) / 4.0, 3)
     results["elapsed_s"] = round(time.time() - t0, 2)
-    print(f"  [{label}] directional={results['directional']} "
-          f"transitive={results['transitive']} ranking={results['ranking']} "
-          f"perturbation={results['perturbation']} "
-          f"=> association_capability={results['association_capability']} "
-          f"({results['elapsed_s']}s)")
+    print(
+        f"  [{label}] directional={results['directional']} "
+        f"transitive={results['transitive']} ranking={results['ranking']} "
+        f"perturbation={results['perturbation']} "
+        f"=> association_capability={results['association_capability']} "
+        f"({results['elapsed_s']}s)"
+    )
 
     # L1-2 deep metrics (optional, for 2→4 out-gate: deep_chain ≥90%)
     if deep:
@@ -225,12 +225,13 @@ def run_engine(builder, label: str, deep: bool = False) -> Dict[str, float]:
             results["branching"] = 0.0
         # Noisy: 10% random extra edges should not break transitive
         import random as _rnd
+
         _rnd.seed(42)
         adj2 = builder()
         for i in range(len(deep_chain) - 1):
             adj2.register(deep_chain[i])
-            adj2.register(deep_chain[i+1])
-            adj2.add_edge(deep_chain[i], deep_chain[i+1], 1.0)
+            adj2.register(deep_chain[i + 1])
+            adj2.add_edge(deep_chain[i], deep_chain[i + 1], 1.0)
         # add 5 noisy random edges
         for _ in range(5):
             a, b = _rnd.sample(deep_chain, 2)
@@ -245,11 +246,17 @@ def run_engine(builder, label: str, deep: bool = False) -> Dict[str, float]:
 def main() -> None:
     ap = argparse.ArgumentParser(description="Neural association validation harness")
     ap.add_argument("--engine", choices=["ed3n", "garden", "both"], default="both")
-    ap.add_argument("--deep", action="store_true", help="Include L1-2 deep_chain/branching/noisy (slow, ~10s for GARDEN)")
-    ap.add_argument("--output", "-o", default="",
-                    help="Write JSON report to this path")
-    ap.add_argument("--checkpoint", default="",
-                    help="ED3N checkpoint from train_pilot_association to verify trained-edge reachability (default: data/checkpoints/association_pilot.json if present; missing file skips)")
+    ap.add_argument(
+        "--deep",
+        action="store_true",
+        help="Include L1-2 deep_chain/branching/noisy (slow, ~10s for GARDEN)",
+    )
+    ap.add_argument("--output", "-o", default="", help="Write JSON report to this path")
+    ap.add_argument(
+        "--checkpoint",
+        default="",
+        help="ED3N checkpoint from train_pilot_association to verify trained-edge reachability (default: data/checkpoints/association_pilot.json if present; missing file skips)",
+    )
     args = ap.parse_args()
 
     print("=" * 70)
@@ -277,8 +284,12 @@ def main() -> None:
     print("  mirroring, so no knowledge is baked into the weights.")
 
     # 門消費存檔：若 P1 訓練存檔存在，加載後驗證訓練邊可達（缺檔跳過，不影響既有指標）
-    ckpt = args.checkpoint or os.path.join(os.path.dirname(__file__), "..", "data/checkpoints/association_pilot.json")
-    data_path = os.path.join(os.path.dirname(__file__), "..", "apps/backend/data/raw_datasets/association_train.json")
+    ckpt = args.checkpoint or os.path.join(
+        os.path.dirname(__file__), "..", "data/checkpoints/association_pilot.json"
+    )
+    data_path = os.path.join(
+        os.path.dirname(__file__), "..", "apps/backend/data/raw_datasets/association_train.json"
+    )
     if os.path.exists(ckpt) and os.path.exists(data_path):
         try:
             with open(data_path, "r", encoding="utf-8") as f:
@@ -286,11 +297,14 @@ def main() -> None:
             w = s0["input"].split()
             pa, pb = w[0], w[-1].rstrip(".")
             from ai.ed3n.ed3n_engine import ED3NEngine
+
             feng = ED3NEngine()
             feng.load(ckpt)
             facts = feng.network.forward([pa]) if hasattr(feng, "network") else []
             hit = pb in facts if isinstance(facts, dict) else (pb in list(facts))
-            print(f"  checkpoint_trained_edge: {pa}->{pb} reachable={hit} {'✅' if hit else '❌'} ({os.path.getsize(ckpt)//1024}KB)")
+            print(
+                f"  checkpoint_trained_edge: {pa}->{pb} reachable={hit} {'✅' if hit else '❌'} ({os.path.getsize(ckpt)//1024}KB)"
+            )
             report["checkpoint_trained_edge"] = bool(hit)
         except Exception as e:
             print(f"  checkpoint_trained_edge ❌: {e}")

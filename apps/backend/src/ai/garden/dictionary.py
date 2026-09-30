@@ -107,7 +107,9 @@ class _OnnxEncoder:
         # Tokenizer ships beside the model (exported by
         # scripts/export_minilm_onnx.py) — fully offline, no hub lookups.
         tok_dir = onnx_path.replace(".onnx", "-tokenizer")
-        self._tok = AutoTokenizer.from_pretrained(tok_dir, local_files_only=True)
+        self._tok = AutoTokenizer.from_pretrained(
+            tok_dir, local_files_only=True
+        )  # nosec B615 - local dir only, no hub download
         self._max_length = max_length
         self.input_names = {i.name for i in self._sess.get_inputs()}
 
@@ -434,7 +436,7 @@ class _STEncoder:
             self._backend = "torch"
             # Cache once loaded successfully
             self._model_cache[model_name] = self
-        except (ImportError, Exception) as e:
+        except Exception as e:
             raise ImportError(f"sentence_transformers not available: {e}")
         logger.info(
             "GARDEN: loaded SentenceTransformer model '%s' (backend=%s)",

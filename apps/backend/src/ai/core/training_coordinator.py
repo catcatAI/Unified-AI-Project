@@ -112,7 +112,6 @@ class TrainingCoordinator:
             "dropped": 0,
         }
 
-
     async def assign_domain(self, domain: str) -> Optional[str]:
         if domain == "eda_episode":
             return None
@@ -338,11 +337,7 @@ class TrainingCoordinator:
         queue (deferred) so ownership stays explicit instead of being silently
         dropped; processor exceptions drop only that sample.
         """
-        batch_size = (
-            WORKER_BATCH_DEFAULT
-            if limit is None
-            else max(0, int(limit))
-        )
+        batch_size = WORKER_BATCH_DEFAULT if limit is None else max(0, int(limit))
         deferred: List[Dict[str, Any]] = []
         stats = {"processed": 0, "deferred": 0, "failed": 0, "dropped": 0}
         for item in self.drain_priority_queue(batch_size):

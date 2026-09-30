@@ -15,10 +15,10 @@ import numpy as np
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
 
 class PerformanceBenchmarkFramework:
     """性能基准测试框架"""
@@ -42,7 +42,7 @@ class PerformanceBenchmarkFramework:
             "timeout_seconds": 300,
             "cpu_monitoring": True,
             "memory_monitoring": True,
-            "disk_monitoring": True
+            "disk_monitoring": True,
         }
 
         self._init_database()
@@ -113,13 +113,19 @@ class PerformanceBenchmarkFramework:
             "name": name,
             "function": func,
             "config": kwargs,
-            "registered_at": datetime.now().isoformat()
+            "registered_at": datetime.now().isoformat(),
         }
 
         logger.info(f"Registered benchmark, {name}")
         return benchmark_info
 
-    def run_benchmark(self, benchmark_info: Dict[str, Any], iterations: Optional[int] = None, warmup: Optional[int] = None, tags: Optional[List[str]] = None) -> Dict[str, Any]:
+    def run_benchmark(
+        self,
+        benchmark_info: Dict[str, Any],
+        iterations: Optional[int] = None,
+        warmup: Optional[int] = None,
+        tags: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
         """
         运行基准测试
 
@@ -137,7 +143,9 @@ class PerformanceBenchmarkFramework:
         config = benchmark_info.get("config", {})
 
         # 使用默认值
-        iterations = iterations or config.get("iterations", self.benchmark_config["default_iterations"])
+        iterations = iterations or config.get(
+            "iterations", self.benchmark_config["default_iterations"]
+        )
         warmup = warmup or config.get("warmup", self.benchmark_config["warmup_iterations"])
         timeout = config.get("timeout", self.benchmark_config["timeout_seconds"])
 
@@ -150,7 +158,7 @@ class PerformanceBenchmarkFramework:
                 for i in range(warmup):
                     func()
 
-            # 监控系统资源
+                # 监控系统资源
                 monitor = SystemResourceMonitor()
             monitor.start_monitoring()
 
@@ -175,7 +183,7 @@ class PerformanceBenchmarkFramework:
 
             # 计算统计信息
             benchmark_result = self._calculate_benchmark_stats(
-    name, execution_times, resource_stats, tags
+                name, execution_times, resource_stats, tags
             )
 
             # 保存结果到数据库
@@ -190,11 +198,16 @@ class PerformanceBenchmarkFramework:
                 "name": name,
                 "status": "failed",
                 "error": str(e),
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
-    def _calculate_benchmark_stats(self, name: str, execution_times: List[float],
-                                  resource_stats: Dict[str, Any], tags: Optional[List[str]] = None) -> Dict[str, Any]:
+    def _calculate_benchmark_stats(
+        self,
+        name: str,
+        execution_times: List[float],
+        resource_stats: Dict[str, Any],
+        tags: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
         """
         计算基准测试统计信息
 
@@ -208,11 +221,7 @@ class PerformanceBenchmarkFramework:
             Dict, 统计信息
         """
         if not execution_times:
-            return {
-                "name": name,
-                "status": "no_data",
-                "timestamp": datetime.now().isoformat()
-            }
+            return {"name": name, "status": "no_data", "timestamp": datetime.now().isoformat()}
 
         # 计算基本统计信息
         times_array = np.array(execution_times)
@@ -227,8 +236,10 @@ class PerformanceBenchmarkFramework:
             "median_time": float(np.median(times_array)),
             "std_dev": float(np.std(times_array)),
             "total_time": float(np.sum(times_array)),
-            "ops_per_second": len(execution_times) / np.sum(times_array) if np.sum(times_array) > 0 else 0,
-                "tags": tags or [],
+            "ops_per_second": (
+                len(execution_times) / np.sum(times_array) if np.sum(times_array) > 0 else 0
+            ),
+            "tags": tags or [],
         }
 
         # 合并资源统计信息
@@ -248,28 +259,31 @@ class PerformanceBenchmarkFramework:
             cursor = conn.cursor()
 
             # 插入基准测试历史记录
-            cursor.execute("""
-                INSERT INTO benchmark_history 
-                (name, timestamp, iterations, min_time, max_time, mean_time, median_time, 
+            cursor.execute(
+                """
+                INSERT INTO benchmark_history
+                (name, timestamp, iterations, min_time, max_time, mean_time, median_time,
                  std_dev, total_time, ops_per_second, cpu_usage, memory_usage, disk_io_read, disk_io_write, tags)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                result["name"],
-                result["timestamp"],
-                result.get("iterations", 0),
-                result.get("min_time", 0),
-                result.get("max_time", 0),
-                result.get("mean_time", 0),
-                result.get("median_time", 0),
-                result.get("std_dev", 0),
-                result.get("total_time", 0),
-                result.get("ops_per_second", 0),
-                result.get("cpu_usage", 0),
-                result.get("memory_usage", 0),
-                result.get("disk_io_read", 0),
-                result.get("disk_io_write", 0),
-                ",".join(result.get("tags", []))
-            ))
+            """,
+                (
+                    result["name"],
+                    result["timestamp"],
+                    result.get("iterations", 0),
+                    result.get("min_time", 0),
+                    result.get("max_time", 0),
+                    result.get("mean_time", 0),
+                    result.get("median_time", 0),
+                    result.get("std_dev", 0),
+                    result.get("total_time", 0),
+                    result.get("ops_per_second", 0),
+                    result.get("cpu_usage", 0),
+                    result.get("memory_usage", 0),
+                    result.get("disk_io_read", 0),
+                    result.get("disk_io_write", 0),
+                    ",".join(result.get("tags", [])),
+                ),
+            )
 
             benchmark_id = cursor.lastrowid
             conn.commit()
@@ -279,7 +293,9 @@ class PerformanceBenchmarkFramework:
         except Exception as e:
             logger.error(f"Error saving benchmark result, {e}")
 
-    def get_benchmark_history(self, name: Optional[str] = None, limit: int = 100) -> List[Dict[str, Any]]:
+    def get_benchmark_history(
+        self, name: Optional[str] = None, limit: int = 100
+    ) -> List[Dict[str, Any]]:
         """
         获取基准测试历史记录
 
@@ -295,16 +311,22 @@ class PerformanceBenchmarkFramework:
             cursor = conn.cursor()
 
             if name:
-                cursor.execute("""
-                    SELECT * FROM benchmark_history 
-                    WHERE name = ? 
+                cursor.execute(
+                    """
+                    SELECT * FROM benchmark_history
+                    WHERE name = ?
                     ORDER BY timestamp DESC LIMIT ?
-                """, (name, limit))
+                """,
+                    (name, limit),
+                )
             else:
-                cursor.execute("""
-                    SELECT * FROM benchmark_history 
+                cursor.execute(
+                    """
+                    SELECT * FROM benchmark_history
                     ORDER BY timestamp DESC LIMIT ?
-                """, (limit))
+                """,
+                    (limit),
+                )
 
             rows = cursor.fetchall()
             columns = [description[0] for description in cursor.description]
@@ -322,7 +344,9 @@ class PerformanceBenchmarkFramework:
             logger.error(f"Error retrieving benchmark history, {e}")
             return []
 
-    def compare_benchmarks(self, name: str, baseline_commit: str, current_commit: str) -> Dict[str, Any]:
+    def compare_benchmarks(
+        self, name: str, baseline_commit: str, current_commit: str
+    ) -> Dict[str, Any]:
         """
         比较两个版本的基准测试结果
 
@@ -339,17 +363,23 @@ class PerformanceBenchmarkFramework:
             cursor = conn.cursor()
 
             # 获取基线结果
-            cursor.execute("""
-                SELECT mean_time, std_dev FROM benchmark_history 
+            cursor.execute(
+                """
+                SELECT mean_time, std_dev FROM benchmark_history
                 WHERE name = ? AND commit_hash = ?, ORDER BY timestamp DESC LIMIT 1
-            """, (name, baseline_commit))
+            """,
+                (name, baseline_commit),
+            )
             baseline_result = cursor.fetchone()
 
             # 获取当前结果
-            cursor.execute("""
-                SELECT mean_time, std_dev FROM benchmark_history 
+            cursor.execute(
+                """
+                SELECT mean_time, std_dev FROM benchmark_history
                 WHERE name = ? AND commit_hash = ?, ORDER BY timestamp DESC LIMIT 1
-            """, (name, current_commit))
+            """,
+                (name, current_commit),
+            )
             current_result = cursor.fetchone()
 
             conn.close()
@@ -370,15 +400,13 @@ class PerformanceBenchmarkFramework:
                 "baseline_mean": baseline_mean,
                 "current_mean": current_mean,
                 "performance_change_percent": performance_change,
-                "is_significant": abs(performance_change) > 5  # 5%变化认为是显著的
+                "is_significant": abs(performance_change) > 5,  # 5%变化认为是显著的
             }
 
         except Exception as e:
             logger.error(f"Error comparing benchmarks, {e}")
-            return {
-                "status": "error",
-                "message": str(e)
-            }
+            return {"status": "error", "message": str(e)}
+
 
 class SystemResourceMonitor:
     """系统资源监控器"""
@@ -406,17 +434,14 @@ class SystemResourceMonitor:
             Dict, 统计信息
         """
         # 在实际实现中,这里会返回真实的系统资源统计信息
-        return {
-            "cpu_usage": 0.0,
-            "memory_usage": 0.0,
-            "disk_io_read": 0.0,
-            "disk_io_write": 0.0
-        }
+        return {"cpu_usage": 0.0, "memory_usage": 0.0, "disk_io_read": 0.0, "disk_io_write": 0.0}
+
 
 def main() -> None:
     """主函数"""
     framework = PerformanceBenchmarkFramework()
     logger.info("Performance benchmark framework initialized")
+
 
 if __name__ == "__main__":
     main()

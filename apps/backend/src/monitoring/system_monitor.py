@@ -91,7 +91,7 @@ class SystemMonitor:
             pynvml.nvmlInit()
             logger.info("GPU监控初始化成功")
             return True
-        except (ImportError, Exception) as e:
+        except Exception as e:
             logger.warning(f"GPU监控初始化失败: {e}", exc_info=True)
             return False
 

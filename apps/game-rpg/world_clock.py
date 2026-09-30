@@ -70,6 +70,7 @@ def reload():
 # World line queries
 # ══════════════════════════════════════════════════════════════
 
+
 def get_active_world_line() -> str:
     """Get the currently active world line id (e.g. 'W01-A')."""
     clock = _load_clock()
@@ -136,6 +137,7 @@ def get_time_flow_ratio(wl_id: str | None = None) -> float | None:
 # Core time accessors (world-line aware; default = active line)
 # ══════════════════════════════════════════════════════════════
 
+
 def get_current_year(wl_id: str | None = None) -> int | None:
     """Get the current year of a world line (None if the line has no fixed time)."""
     return get_world_line(wl_id).get("current_year")
@@ -174,9 +176,9 @@ def set_current_time(year: int | None, month: int = 1, day: int = 1, wl_id: str 
     if ratio and ratio > 0 and old_year is not None and year is not None:
         master = clock.get("master_clock", {})
         if master:
-            master["current_year"] = int(round(
-                master.get("current_year", year) + (year - old_year) / ratio
-            ))
+            master["current_year"] = int(
+                round(master.get("current_year", year) + (year - old_year) / ratio)
+            )
 
 
 def save():
@@ -189,6 +191,7 @@ def save():
 # ══════════════════════════════════════════════════════════════
 # Master clock conversion (hidden, text-external)
 # ══════════════════════════════════════════════════════════════
+
 
 def _master_base() -> tuple[int | None, int | None]:
     """Return (master_current_year, line_current_year) base pair."""
@@ -236,6 +239,7 @@ def format_master_year(master_year: int) -> str:
 # Era detection (world-line aware)
 # ══════════════════════════════════════════════════════════════
 
+
 def get_eras(wl_id: str | None = None) -> list[dict]:
     """Get all era definitions of a world line."""
     return get_world_line(wl_id).get("eras", [])
@@ -268,6 +272,7 @@ def get_era_name_en(year: int | None = None, wl_id: str | None = None) -> str:
 # Event queries (world-line aware; get_event* by id/name search all lines)
 # ══════════════════════════════════════════════════════════════
 
+
 def get_all_events(wl_id: str | None = None) -> list[dict]:
     """Get all major world events of a world line (default: active line)."""
     return get_world_line(wl_id).get("events", [])
@@ -288,8 +293,11 @@ def get_events_by_year(year: int, wl_id: str | None = None) -> list[dict]:
 
 def get_events_in_range(start_year: int, end_year: int, wl_id: str | None = None) -> list[dict]:
     """Get events in a year range (inclusive) on a world line."""
-    return [e for e in get_all_events(wl_id)
-            if e.get("year") is not None and start_year <= e["year"] <= end_year]
+    return [
+        e
+        for e in get_all_events(wl_id)
+        if e.get("year") is not None and start_year <= e["year"] <= end_year
+    ]
 
 
 def get_events_by_era(era_id: str, wl_id: str | None = None) -> list[dict]:
@@ -301,19 +309,19 @@ def get_events_before(year: int, wl_id: str | None = None) -> list[dict]:
     """Get events that happened before a given year on a world line."""
     if year is None:
         return []
-    return [e for e in get_all_events(wl_id)
-            if e.get("year") is not None and e["year"] < year]
+    return [e for e in get_all_events(wl_id) if e.get("year") is not None and e["year"] < year]
 
 
 def get_events_after(year: int, wl_id: str | None = None) -> list[dict]:
     """Get events that happened after a given year on a world line."""
     if year is None:
         return []
-    return [e for e in get_all_events(wl_id)
-            if e.get("year") is not None and e["year"] > year]
+    return [e for e in get_all_events(wl_id) if e.get("year") is not None and e["year"] > year]
 
 
-def event_has_occurred(event_id: str, current_year: int | None = None, wl_id: str | None = None) -> bool:
+def event_has_occurred(
+    event_id: str, current_year: int | None = None, wl_id: str | None = None
+) -> bool:
     """Check if a specific event has occurred by the current year (of a world line)."""
     if current_year is None:
         current_year = get_current_year(wl_id)
@@ -344,6 +352,7 @@ def get_event_by_name(name: str) -> dict | None:
 # Start time selection & past event resolution (world-line aware)
 # ══════════════════════════════════════════════════════════════
 
+
 def get_era_start_year_options(wl_id: str | None = None) -> list[dict]:
     """Get curated start year options by era for the given world line.
 
@@ -357,28 +366,34 @@ def get_era_start_year_options(wl_id: str | None = None) -> list[dict]:
     current = line.get("current_year")
 
     if current is None:
-        return [{
-            "label": "當前（時間錨點不固定）",
-            "year": None,
-            "desc": f"{line.get('name', wl_id)}沒有固定曆法，時間由敘事決定。",
-        }]
+        return [
+            {
+                "label": "當前（時間錨點不固定）",
+                "year": None,
+                "desc": f"{line.get('name', wl_id)}沒有固定曆法，時間由敘事決定。",
+            }
+        ]
 
-    options = [{
-        "label": f"當前（{calendar} {current}年）",
-        "year": current,
-        "desc": "現在。",
-    }]
+    options = [
+        {
+            "label": f"當前（{calendar} {current}年）",
+            "year": current,
+            "desc": "現在。",
+        }
+    ]
     seen = {current}
     for e in sorted(line.get("events", []), key=lambda x: x.get("year") or 0, reverse=True):
         ey = e.get("year")
         if ey is None or ey >= current or ey in seen:
             continue
         seen.add(ey)
-        options.append({
-            "label": f"{e.get('name', '?')}（{calendar} {ey}年）",
-            "year": ey,
-            "desc": (e.get("description") or "")[:60],
-        })
+        options.append(
+            {
+                "label": f"{e.get('name', '?')}（{calendar} {ey}年）",
+                "year": ey,
+                "desc": (e.get("description") or "")[:60],
+            }
+        )
         if len(options) >= 5:
             break
     return options
@@ -409,8 +424,13 @@ def resolve_past_events(start_year: int, seed: str = "", wl_id: str | None = Non
 
         # Base favorable probability: 65%, adjusted by event type
         type_bonus = {
-            "disaster": -0.1, "war": -0.05, "world_forming": 0.0,
-            "discovery": 0.1, "technological": 0.1, "political": 0.05, "cultural": 0.15,
+            "disaster": -0.1,
+            "war": -0.05,
+            "world_forming": 0.0,
+            "discovery": 0.1,
+            "technological": 0.1,
+            "political": 0.05,
+            "cultural": 0.15,
         }
         favorable_threshold = max(0.3, min(0.85, 0.65 + type_bonus.get(etype, 0.0)))
         favorable = rng_val < favorable_threshold
@@ -435,6 +455,7 @@ def resolve_past_events(start_year: int, seed: str = "", wl_id: str | None = Non
 # ══════════════════════════════════════════════════════════════
 # Character time queries (world-line aware, from game_cards.json)
 # ══════════════════════════════════════════════════════════════
+
 
 def get_card(card_id: str) -> dict | None:
     """Get a card by its ID from game_cards.json."""
@@ -518,7 +539,9 @@ def get_character_death_year(card_id: str) -> int | None:
     return None
 
 
-def get_character_age(card_id: str, at_year: int | None = None, wl_id: str | None = None) -> int | None:
+def get_character_age(
+    card_id: str, at_year: int | None = None, wl_id: str | None = None
+) -> int | None:
     """Calculate a character's age at a given year (default: their world line's current year).
 
     Returns None if the character's timeline is unfixed (迴廊原生種) or they are
@@ -560,7 +583,9 @@ def is_character_alive(card_id: str, at_year: int | None = None, wl_id: str | No
     return at_year >= birth
 
 
-def get_character_life_stage(card_id: str, at_year: int | None = None, wl_id: str | None = None) -> dict | None:
+def get_character_life_stage(
+    card_id: str, at_year: int | None = None, wl_id: str | None = None
+) -> dict | None:
     """Get the current life stage of a character at a given year.
 
     Returns the life_stage entry whose year range contains at_year; on timeless
@@ -586,7 +611,9 @@ def get_character_life_stage(card_id: str, at_year: int | None = None, wl_id: st
     return None
 
 
-def get_character_status_summary(card_id: str, at_year: int | None = None, wl_id: str | None = None) -> dict:
+def get_character_status_summary(
+    card_id: str, at_year: int | None = None, wl_id: str | None = None
+) -> dict:
     """Get a comprehensive status summary for a character.
 
     Defaults to the character's own world line and that line's current year, so
@@ -664,6 +691,7 @@ def get_character_status_summary(card_id: str, at_year: int | None = None, wl_id
 # Time advancement (world-line aware)
 # ══════════════════════════════════════════════════════════════
 
+
 def advance_time(hours: int = 1, wl_id: str | None = None) -> dict:
     """Advance a world line's clock by a number of hours (default: active line).
 
@@ -686,10 +714,17 @@ def advance_time(hours: int = 1, wl_id: str | None = None) -> dict:
     if line.get("current_year") is None:
         # Timeless line (迴廊/多元): no calendar to advance
         return {
-            "day_passed": False, "month_passed": False, "year_passed": False,
-            "new_year": None, "new_month": None, "new_day": None,
-            "era_changed": False, "new_era": None, "events_triggered": [],
-            "world_line": wl_id, "timeless": True,
+            "day_passed": False,
+            "month_passed": False,
+            "year_passed": False,
+            "new_year": None,
+            "new_month": None,
+            "new_day": None,
+            "era_changed": False,
+            "new_era": None,
+            "events_triggered": [],
+            "world_line": wl_id,
+            "timeless": True,
         }
 
     days_per_month = line.get("days_per_month", 30)
@@ -774,6 +809,7 @@ def advance_time(hours: int = 1, wl_id: str | None = None) -> dict:
 # Season helpers
 # ══════════════════════════════════════════════════════════════
 
+
 def get_season(year: int | None = None, month: int | None = None, wl_id: str | None = None) -> str:
     """Get the season name for a given year and month."""
     if month is None:
@@ -788,7 +824,9 @@ def get_season(year: int | None = None, month: int | None = None, wl_id: str | N
     return "春"  # Default
 
 
-def get_season_en(year: int | None = None, month: int | None = None, wl_id: str | None = None) -> str:
+def get_season_en(
+    year: int | None = None, month: int | None = None, wl_id: str | None = None
+) -> str:
     if month is None:
         month = get_current_month(wl_id)
     if month is None:
@@ -804,6 +842,7 @@ def get_season_en(year: int | None = None, month: int | None = None, wl_id: str 
 # ══════════════════════════════════════════════════════════════
 # Landmark queries
 # ══════════════════════════════════════════════════════════════
+
 
 def get_landmark(name: str) -> dict | None:
     """Get information about a world landmark."""
@@ -830,8 +869,13 @@ def get_landmark_age(name: str, at_year: int | None = None) -> int | None:
 # Timeline display (world-line aware)
 # ══════════════════════════════════════════════════════════════
 
-def format_date(year: int | None = None, month: int | None = None, day: int | None = None,
-                wl_id: str | None = None) -> str:
+
+def format_date(
+    year: int | None = None,
+    month: int | None = None,
+    day: int | None = None,
+    wl_id: str | None = None,
+) -> str:
     """Format a date using a world line's own calendar, e.g. '西曆 1965年3月15日'."""
     line = get_world_line(wl_id)
     calendar = line.get("calendar", "西曆")
@@ -845,8 +889,12 @@ def format_date(year: int | None = None, month: int | None = None, day: int | No
     return f"{calendar} {y}年{m}月{d}日"
 
 
-def format_era_date(year: int | None = None, month: int | None = None, day: int | None = None,
-                    wl_id: str | None = None) -> str:
+def format_era_date(
+    year: int | None = None,
+    month: int | None = None,
+    day: int | None = None,
+    wl_id: str | None = None,
+) -> str:
     """Format with era prefix: '冷戰時期·西曆 1965年3月15日'.
     Timeless lines (迴廊/多元) return just their calendar label."""
     if get_current_year(wl_id) is None:
@@ -856,8 +904,12 @@ def format_era_date(year: int | None = None, month: int | None = None, day: int 
     return f"{era_name}·{date}"
 
 
-def print_timeline(start_year: int | None = None, end_year: int | None = None,
-                   max_events: int = 20, wl_id: str | None = None):
+def print_timeline(
+    start_year: int | None = None,
+    end_year: int | None = None,
+    max_events: int = 20,
+    wl_id: str | None = None,
+):
     """Print a formatted timeline of events for a world line."""
     line = get_world_line(wl_id)
     wl_name = line.get("name", wl_id or get_active_world_line())
@@ -905,6 +957,7 @@ def print_timeline(start_year: int | None = None, end_year: int | None = None,
 # Integrated time string for game display (world-line aware)
 # ══════════════════════════════════════════════════════════════
 
+
 def get_full_time_string(hour: int = 8, wl_id: str | None = None) -> str:
     """Get a full time string for game display: world line, era, season, date, period."""
     line = get_world_line(wl_id)
@@ -918,10 +971,18 @@ def get_full_time_string(hour: int = 8, wl_id: str | None = None) -> str:
 
     # Chinese time period
     periods = {
-        0: "子時·深夜", 2: "丑時·凌晨", 4: "寅時·黎明",
-        6: "卯時·清晨", 8: "辰時·早晨", 10: "巳時·近午",
-        12: "午時·正午", 14: "未時·午後", 16: "申時·傍晚",
-        18: "酉時·黃昏", 20: "戌時·夜晚", 22: "亥時·深夜",
+        0: "子時·深夜",
+        2: "丑時·凌晨",
+        4: "寅時·黎明",
+        6: "卯時·清晨",
+        8: "辰時·早晨",
+        10: "巳時·近午",
+        12: "午時·正午",
+        14: "未時·午後",
+        16: "申時·傍晚",
+        18: "酉時·黃昏",
+        20: "戌時·夜晚",
+        22: "亥時·深夜",
     }
     period = periods.get(hour // 2 * 2, f"{hour}:00")
 

@@ -22,6 +22,7 @@ class MockAgent(BaseAgent):
     satisfying the abstract method requirements.
     The actual mock objects will be attached during test setup.
     """
+
     async def perceive(self, task):
         # This will be replaced by a mock in the test function
         await asyncio.sleep(0)

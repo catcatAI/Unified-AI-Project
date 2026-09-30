@@ -1,28 +1,32 @@
 """Edge sharpness post-processing comparison."""
-import sys
+
 import os
+import sys
 import time
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'apps', 'backend', 'src'))
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"))
+
+import glob
 
 import numpy as np
-import glob
 from PIL import Image, ImageFilter
 
-CIFAR_DIR="D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
-CLASSES=["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
-IMG_DIM=3072
-LATENT_DIM=128
-OUTPUT_DIR="data/multimodal/gvv/sharpness_test"
+CIFAR_DIR = "D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
+CLASSES = ["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
+IMG_DIM = 3072
+LATENT_DIM = 128
+OUTPUT_DIR = "data/multimodal/gvv/sharpness_test"
 
 
 def load_cifar(n_per_class=50):
-    images, labels=[], []
+    images, labels = [], []
     for ci, cls in enumerate(CLASSES):
         cls_dir = os.path.join(CIFAR_DIR, cls)
         files = sorted(glob.glob(os.path.join(cls_dir, "*.npy")))[:n_per_class]
         for f in files:
             arr = np.load(f)
-            if arr.ndim == 3: arr = arr.reshape(-1)
+            if arr.ndim == 3:
+                arr = arr.reshape(-1)
             images.append(arr.astype(np.float32) / 255.0)
             labels.append(ci)
     return np.array(images), np.array(labels)
@@ -44,7 +48,7 @@ def main():
 
     all_imgs, all_labels = load_cifar(50)
     rng = np.random.default_rng(42)
-    train_idx, test_idx=[], []
+    train_idx, test_idx = [], []
     for c in range(10):
         idxs = np.where(all_labels == c)[0]
         rng.shuffle(idxs)
@@ -68,10 +72,14 @@ def main():
         def __init__(self):
             super().__init__()
             self.net = nn.Sequential(
-                nn.Linear(LATENT_DIM, 256), nn.ReLU(),
-                nn.Linear(256, 512), nn.ReLU(),
-                nn.Linear(512, IMG_DIM), nn.Sigmoid(),
+                nn.Linear(LATENT_DIM, 256),
+                nn.ReLU(),
+                nn.Linear(256, 512),
+                nn.ReLU(),
+                nn.Linear(512, IMG_DIM),
+                nn.Sigmoid(),
             )
+
         def forward(self, x):
             return self.net(x)
 
@@ -83,7 +91,7 @@ def main():
     for epoch in range(10):
         perm = torch.randperm(len(X_train))
         for i in range(0, len(X_train), 64):
-            idx = perm[i:i+64]
+            idx = perm[i : i + 64]
             x, y = X_train[idx], Y_train[idx]
             loss = F.mse_loss(decoder(x), y)
             opt.zero_grad()
@@ -110,6 +118,7 @@ def main():
         img = img_arr.reshape(32, 32, 3)
         pil = Image.fromarray((img * 255).astype(np.uint8))
         from PIL import ImageEnhance
+
         enhancer = ImageEnhance.Contrast(pil)
         enhanced = enhancer.enhance(factor)
         return np.array(enhanced).astype(np.float32) / 255.0
@@ -126,6 +135,7 @@ def main():
         img = img_arr.reshape(32, 32, 3)
         pil = Image.fromarray((img * 255).astype(np.uint8))
         from PIL import ImageEnhance
+
         enhancer = ImageEnhance.Contrast(pil)
         enhanced = enhancer.enhance(1.3)
         sharp = enhanced.filter(ImageFilter.UnsharpMask(radius=1, percent=120, threshold=2))
@@ -147,13 +157,15 @@ def main():
         raw_img = (raw.reshape(32, 32, 3) * 255).astype(np.uint8)
         enh_img = (enhanced.reshape(32, 32, 3) * 255).astype(np.uint8)
 
-        combo = Image.new('RGB', (96, 32))
+        combo = Image.new("RGB", (96, 32))
         combo.paste(Image.fromarray(orig_img), (0, 0))
         combo.paste(Image.fromarray(raw_img), (32, 0))
         combo.paste(Image.fromarray(enh_img), (64, 0))
         combo.save(os.path.join(OUTPUT_DIR, f"compare_{i}.png"))
 
-        print(f"  Image {i}: raw_sharp={sharp_raw:.4f} enhanced_sharp={sharp_enhanced:.4f} (orig={sharp_orig:.4f})")
+        print(
+            f"  Image {i}: raw_sharp={sharp_raw:.4f} enhanced_sharp={sharp_enhanced:.4f} (orig={sharp_orig:.4f})"
+        )
 
     # Class centers
     print("\n=== Class Centers ===")
@@ -170,11 +182,13 @@ def main():
         enhanced = combined_enhance(raw)
         m = (raw.reshape(32, 32, 3) * 255).astype(np.uint8)
         e = (enhanced.reshape(32, 32, 3) * 255).astype(np.uint8)
-        combo = Image.new('RGB', (64, 32))
+        combo = Image.new("RGB", (64, 32))
         combo.paste(Image.fromarray(m), (0, 0))
         combo.paste(Image.fromarray(e), (32, 0))
         combo.save(os.path.join(OUTPUT_DIR, f"class_{cls}.png"))
-        print(f"  {cls}: raw_sharp={sharpness_score(raw):.4f} enhanced_sharp={sharpness_score(enhanced):.4f}")
+        print(
+            f"  {cls}: raw_sharp={sharpness_score(raw):.4f} enhanced_sharp={sharpness_score(enhanced):.4f}"
+        )
 
     print(f"\nImages → {OUTPUT_DIR}/")
 

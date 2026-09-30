@@ -69,8 +69,10 @@ def _lazy_init_clip():
         from transformers import CLIPModel, CLIPProcessor
 
         model_name = "openai/clip-vit-base-patch32"
-        _CLIP_MODEL = CLIPModel.from_pretrained(model_name)
-        _CLIP_PROCESSOR = CLIPProcessor.from_pretrained(model_name)
+        # Supply-chain pin: immutable commit sha (HF repo HEAD as of 2026-09-28).
+        _REVISION = "3d74acf9a28c67741b2f4f2ea7635f0aaf6f0268"
+        _CLIP_MODEL = CLIPModel.from_pretrained(model_name, revision=_REVISION)
+        _CLIP_PROCESSOR = CLIPProcessor.from_pretrained(model_name, revision=_REVISION)
         _CLIP_MODEL.eval()
         if torch.cuda.is_available():
             _CLIP_MODEL = _CLIP_MODEL.cuda()  # type: ignore[call-arg]

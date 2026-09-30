@@ -284,9 +284,7 @@ def _print_boot_status(service: Any) -> None:
     if llm_svc and getattr(llm_svc, "is_available", False):
         active = getattr(llm_svc, "active_backend", None)
         active_name = (
-            getattr(active, "name", None)
-            or getattr(active, "model", None)
-            or type(active).__name__
+            getattr(active, "name", None) or getattr(active, "model", None) or type(active).__name__
         )
         backends = list(getattr(llm_svc, "backends", {}).keys())
         mode = getattr(llm_svc, "llm_mode", "unknown")
@@ -976,7 +974,7 @@ def _handle_eval_command(args: str) -> str:
     if not args:
         return "Usage: /eval <python-expression>\nExample: /eval 2 + 2"
     try:
-        result = eval(args)
+        result = eval(args)  # nosec B307 - local /eval command, same trust as shell
         return f"→ {result}"
     except Exception as e:
         return f"Eval error: {e}"

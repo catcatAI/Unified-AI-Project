@@ -138,5 +138,4 @@ if not defined choice goto invalid_input
 
 ---
 
-_检查日期: 2025-08-23_  
-_状态: 生产就绪_ ✅
+_检查日期: 2025-08-23_ _状态: 生产就绪_ ✅

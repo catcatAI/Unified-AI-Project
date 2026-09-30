@@ -16,14 +16,16 @@ L1-4 Hold-out gap validation — 輕量評估（CPU-only, <50MB, <2s）
   - 超時 10s，記憶體峰值 <50MB
 """
 
+import hashlib
 import json
 import os
 import sys
-import hashlib
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"))
 
-DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "data", "raw_datasets", "logic_train.json")
+DATA_PATH = os.path.join(
+    os.path.dirname(__file__), "..", "apps", "backend", "data", "raw_datasets", "logic_train.json"
+)
 
 
 def split_holdout(items, train_ratio=0.8):

@@ -18,6 +18,7 @@ def test_speech_to_text_mock_and_processing_id_format():
     result = svc.speech_to_text.__wrapped__ if hasattr(svc.speech_to_text, "__wrapped__") else None
     # run coro
     import asyncio
+
     got = asyncio.run(svc.speech_to_text(data, language="en-US"))
 
     assert set(["text", "confidence", "processing_id"]).issubset(got.keys())

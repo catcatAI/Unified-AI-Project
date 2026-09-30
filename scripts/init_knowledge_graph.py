@@ -29,7 +29,9 @@ import sys
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelname)s %(message)s")
 logger = logging.getLogger("InitKG")
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src")))
+sys.path.insert(
+    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"))
+)
 
 
 def generate_concept_graph():
@@ -51,19 +53,16 @@ def generate_concept_graph():
         ("ink", "材料", {"zh": "墨水", "en": "ink"}),
         ("eraser", "工具", {"zh": "橡皮擦", "en": "eraser"}),
         ("ruler", "工具", {"zh": "尺", "en": "ruler"}),
-
         # Writing actions
         ("writing", "動作", {"zh": "寫字", "en": "writing"}),
         ("drawing", "動作", {"zh": "畫畫", "en": "drawing"}),
         ("reading", "動作", {"zh": "閱讀", "en": "reading"}),
         ("sketching", "動作", {"zh": "素描", "en": "sketching"}),
-
         # Categories
         ("tool", "類別", {"zh": "工具", "en": "tool"}),
         ("medium", "類別", {"zh": "介質", "en": "medium"}),
         ("material", "類別", {"zh": "材料", "en": "material"}),
         ("action", "類別", {"zh": "動作", "en": "action"}),
-
         # Office supplies
         ("book", "物品", {"zh": "書", "en": "book"}),
         ("notebook", "物品", {"zh": "筆記本", "en": "notebook"}),
@@ -170,7 +169,9 @@ def store_grounded_facts(importer):
             store.record_verification(
                 claim.claim_key,
                 status=VerificationStatus.VERIFIED,
-                sources=[SourceRef(url="", title="init_knowledge_graph", snippet=f"weight={weight}")],
+                sources=[
+                    SourceRef(url="", title="init_knowledge_graph", snippet=f"weight={weight}")
+                ],
                 confidence=weight,
             )
             fact_count += 1
@@ -209,19 +210,24 @@ def main():
     # Save KGImporter state
     kg_path = "data/checkpoints/knowledge_graph.json"
     with open(kg_path, "w", encoding="utf-8") as f:
-        json.dump({
-            "entities": importer.entities,
-            "triples": [
-                {"subject": s, "relation": r, "object": o, "weight": w}
-                for s, r, o, w in importer.triples
-            ],
-        }, f, indent=2, ensure_ascii=False)
+        json.dump(
+            {
+                "entities": importer.entities,
+                "triples": [
+                    {"subject": s, "relation": r, "object": o, "weight": w}
+                    for s, r, o, w in importer.triples
+                ],
+            },
+            f,
+            indent=2,
+            ensure_ascii=False,
+        )
     logger.info("  Saved: %s", kg_path)
 
     # Step 5: Verify
     logger.info("Step 5: Verification...")
-    from ai.meta.knowledge_pipeline import KnowledgePipeline
     from ai.ed3n.ed3n_engine import ED3NEngine
+    from ai.meta.knowledge_pipeline import KnowledgePipeline
     from services.math_verifier import MathVerifier
     from services.weather_service import WeatherService
 

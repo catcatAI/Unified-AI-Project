@@ -3,31 +3,27 @@
 启动 ChromaDB 服务端
 """
 
-import subprocess
-import os
-import sys
 import logging
+import os
+import subprocess
+import sys
+
 logger = logging.getLogger(__name__)
+
 
 def start_chroma_server():
     """
     启动 ChromaDB 服务端
     """
     print("启动 ChromaDB 服务端...")
-    
+
     # 设置数据存储路径
     chroma_db_path = os.path.join(os.getcwd(), "chroma_db")
     os.makedirs(chroma_db_path, exist_ok=True)
-    
+
     # 使用标准ChromaDB命令启动服务器
-    cmd = [
-        "chroma",
-        "run",
-        "--path", chroma_db_path,
-        "--host", "localhost",
-        "--port", "8001"
-    ]
-    
+    cmd = ["chroma", "run", "--path", chroma_db_path, "--host", "localhost", "--port", "8001"]
+
     try:
         subprocess.run(cmd, check=True)
     except subprocess.CalledProcessError as e:
@@ -36,6 +32,7 @@ def start_chroma_server():
     except FileNotFoundError:
         print("未找到 chroma 命令,请确保已安装标准的 chromadb 包")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     start_chroma_server()

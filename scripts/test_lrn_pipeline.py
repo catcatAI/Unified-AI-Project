@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Test latent → LRN → text pipeline."""
+
 import numpy as np
-from ai.multimodal.shared_latent_space import SharedLatentSpace
 from ai.multimodal.latent_reasoning_network import LatentReasoningNetwork
+from ai.multimodal.shared_latent_space import SharedLatentSpace
 
 print("Testing latent -> LRN -> text pipeline...")
 
@@ -24,7 +25,7 @@ text = lrn.generate(latent, max_tokens=5)
 print(f"Generated text: {text}")
 
 # Train LRN on some examples
-examples=[
+examples = [
     ("the sky is blue", "blue"),
     ("what color is the sky", "blue"),
     ("how many days in a week", "seven"),

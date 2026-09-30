@@ -103,7 +103,7 @@ class CrossModalRouter:
 
     def _make_cache_key(self, modality: str, data: bytes, mode: str) -> str:
         """Generate a deterministic cache key."""
-        return hashlib.md5(f"{modality}:{mode}:".encode() + data).hexdigest()
+        return hashlib.md5(f"{modality}:{mode}:".encode() + data, usedforsecurity=False).hexdigest()
 
     def _cache_get(self, key: str) -> Optional[Dict[str, Any]]:
         if key in self._cache:

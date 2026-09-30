@@ -1,15 +1,21 @@
 """Test: what if we match tokens individually instead of whole text?"""
-import os, sys
+
+import os
+import sys
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"))
 
 from ai.garden.garden_engine import GARDENEngine
 
+
 def tokenize(text):
     """Split text into atomic tokens."""
     import re
+
     # Split on whitespace and punctuation, keep each token
     tokens = re.findall(r"[a-zA-Z0-9]+|[^\s]", text)
     return tokens
+
 
 def encode_individual(text):
     """Match each token individually against the dictionary."""
@@ -25,6 +31,7 @@ def encode_individual(text):
             if keys:
                 all_keys.extend(keys)
     return all_keys
+
 
 def main():
     for text in tests:
@@ -55,8 +62,13 @@ def main():
             print(f"SNN output top5:")
             for k, v in sorted_out:
                 entry = e.dictionary.entries.get(k)
-                sf = entry.surface_forms.get("zh") or entry.surface_forms.get("en") or k if entry else "???"
+                sf = (
+                    entry.surface_forms.get("zh") or entry.surface_forms.get("en") or k
+                    if entry
+                    else "???"
+                )
                 print(f"  {k}: {v:.3f} -> {sf}")
+
 
 if __name__ == "__main__":
     e = GARDENEngine(compatibility_mode=True)

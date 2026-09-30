@@ -2,11 +2,10 @@
 
 ## 全景混合增量訓練計畫
 
-> **Version**: 1.0  
-> **Status**: Draft  
-> **Scope**: All project-internal model/data sources × all training systems  
-> **Excluded**: External LLM backends (Ollama/OpenAI/Anthropic/Google),
-> FOREST/BIOME/ECOSYSTEM tiers (not implemented)
+> **Version**: 1.0 **Status**: Draft **Scope**: All project-internal model/data
+> sources × all training systems **Excluded**: External LLM backends
+> (Ollama/OpenAI/Anthropic/Google), FOREST/BIOME/ECOSYSTEM tiers (not
+> implemented)
 
 ---
 

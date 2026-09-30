@@ -8,9 +8,14 @@ Phase 3 — 10K 未見推理 60%→75%（硬件規格自適應，分批+sleep，
 資源：10000 × ~50B = 500KB，batch 500 20 批 12.8s，<500MB，批間 sleep 0.05s + 85% RAM 暫停。
 """
 
-import os, sys, time, random
+import os
+import random
+import sys
+import time
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps/backend/src"))
 random.seed(42)
+
 
 def gen_reasoning_10k(n=10000):
     templates = [
@@ -23,7 +28,28 @@ def gen_reasoning_10k(n=10000):
         ("X={a} Y={b} Z={c}, X>Y>Z, who bottom?", "{c}"),
         ("{a} 比 {b} 高，{b} 比 {c} 高，誰最高？", "{a}"),
     ]
-    entities = ["Alice","Bob","Carol","Dave","Eve","Frank","Gina","Hank","Ivy","Jack","小明","小红","泰山","熊猫","AliceX","BobY","CarolZ","DaveW","EveV","FrankU"]
+    entities = [
+        "Alice",
+        "Bob",
+        "Carol",
+        "Dave",
+        "Eve",
+        "Frank",
+        "Gina",
+        "Hank",
+        "Ivy",
+        "Jack",
+        "小明",
+        "小红",
+        "泰山",
+        "熊猫",
+        "AliceX",
+        "BobY",
+        "CarolZ",
+        "DaveW",
+        "EveV",
+        "FrankU",
+    ]
     out = []
     for i in range(n):
         tmpl, ans_tmpl = random.choice(templates)
@@ -33,36 +59,44 @@ def gen_reasoning_10k(n=10000):
         out.append(f"{q}={ans}")
     return out
 
+
 def main():
     from core.backbone.hardware import HardwareProfile
     from core.system.config.magic_numbers import compute_int
+
     hw = HardwareProfile.detect()
     tier = HardwareProfile.get_tier(hw)
     adaptive = HardwareProfile.get_adaptive_compute(hw)
     slots = compute_int("unified", "slots", 65536)
-    print(f"Phase 3 硬件規格自適應: GPU={hw['gpu']} RAM={hw['ram_gb']:.1f} tier={tier} slots={slots} vocab={adaptive['garden_max_vocab']}")
+    print(
+        f"Phase 3 硬件規格自適應: GPU={hw['gpu']} RAM={hw['ram_gb']:.1f} tier={tier} slots={slots} vocab={adaptive['garden_max_vocab']}"
+    )
 
     from ai.unified_engine.core_model import FixedSizeCore
+
     core = FixedSizeCore(slots=slots, use_feat=True, use_delta=True)
     print(f"  FixedSizeCore {slots} slots, {core.model_bytes/1024/1024:.1f}MB")
 
     train = gen_reasoning_10k(10000)
-    batch = 500 if tier in ("high_performance_desktop","server_cloud") else 200
-    batch = int(batch * adaptive['ed3n_batch_multiplier'] / 1.5)
+    batch = 500 if tier in ("high_performance_desktop", "server_cloud") else 200
+    batch = int(batch * adaptive["ed3n_batch_multiplier"] / 1.5)
     t0 = time.time()
     for bi in range(0, len(train), batch):
-        bat = train[bi:bi+batch]
+        bat = train[bi : bi + batch]
         for text in bat:
             core.learn(text)
         try:
             import psutil
+
             if psutil.virtual_memory().percent > 85:
                 print(f"  ⚠️ RAM {psutil.virtual_memory().percent:.1f}% >85% 暫停")
                 time.sleep(0.5)
         except Exception:
             pass
-        if (bi//batch+1) % 4 == 0:
-            print(f"  訓練 {bi+batch}/{len(train)} ({(bi+batch)/len(train):.0%}) {time.time()-t0:.1f}s")
+        if (bi // batch + 1) % 4 == 0:
+            print(
+                f"  訓練 {bi+batch}/{len(train)} ({(bi+batch)/len(train):.0%}) {time.time()-t0:.1f}s"
+            )
         time.sleep(0.05)
     print(f"  訓練完成 10K, {time.time()-t0:.1f}s, samples {core._samples_seen}")
 
@@ -90,10 +124,21 @@ def main():
         except Exception:
             pass
         time.sleep(0.005)
-    print(f"  純神經 10K 未見: {hits}/100 = {hits}%（目標 ≥75%） {'✅ 達標' if hits>=75 else '❌ 未達，誠實記錄'}")
-    hw_same = {'gpu': 'Intel Arc B570', 'gpu_memory_gb': 10, 'ram_gb': 15.5, 'cpu_cores': 4, 'gpu_vendor': 'intel'}
-    print(f"  筆電同規格 tier {HardwareProfile.get_tier(hw_same)} → {'✅' if HardwareProfile.get_tier(hw_same)==tier else '❌'}")
+    print(
+        f"  純神經 10K 未見: {hits}/100 = {hits}%（目標 ≥75%） {'✅ 達標' if hits>=75 else '❌ 未達，誠實記錄'}"
+    )
+    hw_same = {
+        "gpu": "Intel Arc B570",
+        "gpu_memory_gb": 10,
+        "ram_gb": 15.5,
+        "cpu_cores": 4,
+        "gpu_vendor": "intel",
+    }
+    print(
+        f"  筆電同規格 tier {HardwareProfile.get_tier(hw_same)} → {'✅' if HardwareProfile.get_tier(hw_same)==tier else '❌'}"
+    )
     return 0
+
 
 if __name__ == "__main__":
     main()

@@ -9,13 +9,20 @@ Usage:
     python scripts/run_luanti_agent.py   # 啟動遊戲代理
 """
 
-import sys
-import os
 import asyncio
+import os
+import sys
 
 # Add project paths
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'apps', 'backend', 'src'))
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'apps', 'backend', 'src', 'integrations'))
+sys.path.insert(
+    0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "apps", "backend", "src")
+)
+sys.path.insert(
+    0,
+    os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "..", "apps", "backend", "src", "integrations"
+    ),
+)
 
 from ai.autonomous.angela_agent import main
 

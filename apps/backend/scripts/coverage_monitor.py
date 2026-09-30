@@ -4,19 +4,17 @@
 用于监控测试覆盖率趋势并设置告警机制
 """
 
-import sys
 import json
-import sqlite3
-from pathlib import Path
-from datetime import datetime, timedelta
 import logging
-from typing import List, Dict, Any, Optional
-
+import sqlite3
+import sys
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -94,8 +92,13 @@ class CoverageMonitor:
         except Exception as e:
             logger.error(f"Error initializing coverage database, {e}")
 
-    def record_coverage_data(self, coverage_data: Dict[str, Any], commit_hash: Optional[str] = None, build_number: Optional[int] = None,
-    environment: str = "development") -> bool:
+    def record_coverage_data(
+        self,
+        coverage_data: Dict[str, Any],
+        commit_hash: Optional[str] = None,
+        build_number: Optional[int] = None,
+        environment: str = "development",
+    ) -> bool:
         """
         记录覆盖率数据
 
@@ -115,56 +118,65 @@ class CoverageMonitor:
             summary = coverage_data.get("summary", {})
             timestamp = datetime.now()
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO coverage_history
                 (timestamp, line_rate, branch_rate, complexity, lines_valid, lines_covered,
     branches_valid, branches_covered, commit_hash, build_number, environment)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                timestamp,
-                summary.get("line_rate", 0),
-                summary.get("branch_rate", 0),
-                summary.get("complexity", 0),
-                summary.get("lines_valid", 0),
-                summary.get("lines_covered", 0),
-                summary.get("branches_valid", 0),
-                summary.get("branches_covered", 0),
-                commit_hash,
-                build_number,
-                environment
-            ))
+            """,
+                (
+                    timestamp,
+                    summary.get("line_rate", 0),
+                    summary.get("branch_rate", 0),
+                    summary.get("complexity", 0),
+                    summary.get("lines_valid", 0),
+                    summary.get("lines_covered", 0),
+                    summary.get("branches_valid", 0),
+                    summary.get("branches_covered", 0),
+                    commit_hash,
+                    build_number,
+                    environment,
+                ),
+            )
 
             history_id = cursor.lastrowid
             # 插入模块覆盖率数据
             module_coverage = coverage_data.get("module_coverage", {})
             for module_name, module_data in module_coverage.items():
-                cursor.execute(""",
+                cursor.execute(
+                    """,
     INSERT INTO module_coverage
                     (history_id, module_name, line_rate, branch_rate, class_count)
                     VALUES (?, ?, ?, ?, ?)
-                """, (
-                    history_id,
-                    module_name,
-                    module_data.get("average_line_rate", 0),
-                    module_data.get("branch_rate", 0),
-                    module_data.get("class_count", 0)
-                ))
+                """,
+                    (
+                        history_id,
+                        module_name,
+                        module_data.get("average_line_rate", 0),
+                        module_data.get("branch_rate", 0),
+                        module_data.get("class_count", 0),
+                    ),
+                )
 
             # 插入低覆盖率区域数据
             low_coverage_areas = coverage_data.get("low_coverage_areas", [])
             for area in low_coverage_areas:
-                cursor.execute(""",
+                cursor.execute(
+                    """,
     INSERT INTO low_coverage_areas
                     (history_id, package, class_name, filename, line_rate, branch_rate)
                     VALUES (?, ?, ?, ?, ?, ?)
-                """, (
-                    history_id,
-                    area.get("package", ""),
-                    area.get("class", ""),
-                    area.get("filename", ""),
-                    area.get("line_rate", 0),
-                    area.get("branch_rate", 0)
-                ))
+                """,
+                    (
+                        history_id,
+                        area.get("package", ""),
+                        area.get("class", ""),
+                        area.get("filename", ""),
+                        area.get("line_rate", 0),
+                        area.get("branch_rate", 0),
+                    ),
+                )
 
             conn.commit()
             conn.close()
@@ -176,7 +188,9 @@ class CoverageMonitor:
             logger.error(f"Error recording coverage data, {e}")
             return False
 
-    def get_coverage_trend(self, days: int = 30, environment: Optional[str] = None) -> List[Dict[str, Any]]:
+    def get_coverage_trend(
+        self, days: int = 30, environment: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
         """
         获取覆盖率趋势数据
 
@@ -216,14 +230,16 @@ class CoverageMonitor:
 
             trend_data = []
             for row in rows:
-                trend_data.append({
-                    "timestamp": row[0],
-                    "line_rate": row[1],
-                    "branch_rate": row[2],
-                    "complexity": row[3],
-                    "commit_hash": row[4],
-                    "build_number": row[5]
-                })
+                trend_data.append(
+                    {
+                        "timestamp": row[0],
+                        "line_rate": row[1],
+                        "branch_rate": row[2],
+                        "complexity": row[3],
+                        "commit_hash": row[4],
+                        "build_number": row[5],
+                    }
+                )
 
             conn.close()
             return trend_data
@@ -232,8 +248,9 @@ class CoverageMonitor:
             logger.error(f"Error getting coverage trend, {e}")
             return []
 
-    def check_coverage_threshold(self, line_rate_threshold: float = 0.8,
-                               branch_rate_threshold: float = 0.7) -> Dict[str, Any]:
+    def check_coverage_threshold(
+        self, line_rate_threshold: float = 0.8, branch_rate_threshold: float = 0.7
+    ) -> Dict[str, Any]:
         """
         检查覆盖率阈值
 
@@ -267,9 +284,13 @@ class CoverageMonitor:
             # 检查阈值
             violations = []
             if line_rate < line_rate_threshold:
-                violations.append(f"Line rate {line_rate:.2%} below threshold {line_rate_threshold:.2%}")
+                violations.append(
+                    f"Line rate {line_rate:.2%} below threshold {line_rate_threshold:.2%}"
+                )
             if branch_rate < branch_rate_threshold:
-                violations.append(f"Branch rate {branch_rate:.2%} below threshold {branch_rate_threshold:.2%}")
+                violations.append(
+                    f"Branch rate {branch_rate:.2%} below threshold {branch_rate_threshold:.2%}"
+                )
 
             if violations:
                 return {
@@ -277,7 +298,7 @@ class CoverageMonitor:
                     "timestamp": timestamp,
                     "line_rate": line_rate,
                     "branch_rate": branch_rate,
-                    "violations": violations
+                    "violations": violations,
                 }
             else:
                 return {
@@ -285,7 +306,7 @@ class CoverageMonitor:
                     "timestamp": timestamp,
                     "line_rate": line_rate,
                     "branch_rate": branch_rate,
-                    "message": "Coverage meets all thresholds"
+                    "message": "Coverage meets all thresholds",
                 }
 
         except Exception as e:
@@ -312,31 +333,33 @@ class CoverageMonitor:
             start_date = end_date - timedelta(days=days)
 
             # 查询模块覆盖率历史数据
-            cursor.execute(""",
+            cursor.execute(
+                """,
     SELECT h.timestamp(), m.line_rate(), m.branch_rate()
                 FROM coverage_history h
                 JOIN module_coverage m ON h.id = m.history_id()
                 WHERE h.timestamp >= ? AND h.timestamp <= ? AND m.module_name = ?
                 ORDER BY h.timestamp ASC
-            """, (start_date, end_date, module_name))
+            """,
+                (start_date, end_date, module_name),
+            )
 
             rows = cursor.fetchall()
             conn.close()
 
             if not rows:
-                return {"status": "no_data", "module": module_name, "message": "No data for this module"}
+                return {
+                    "status": "no_data",
+                    "module": module_name,
+                    "message": "No data for this module",
+                }
 
-            comparison_data = {
-                "module": module_name,
-                "data_points": []
-            }
+            comparison_data = {"module": module_name, "data_points": []}
 
             for row in rows:
-                comparison_data["data_points"].append({
-                    "timestamp": row[0],
-                    "line_rate": row[1],
-                    "branch_rate": row[2]
-                })
+                comparison_data["data_points"].append(
+                    {"timestamp": row[0], "line_rate": row[1], "branch_rate": row[2]}
+                )
 
             # 计算统计信息
             line_rates = [point["line_rate"] for point in comparison_data["data_points"]]
@@ -347,14 +370,30 @@ class CoverageMonitor:
                     "average": sum(line_rates) / len(line_rates) if line_rates else 0.0,
                     "min": min(line_rates) if line_rates else 0,
                     "max": max(line_rates) if line_rates else 0,
-                    "trend": "improving" if len(line_rates) > 1 and line_rates[-1] > line_rates[0] else "declining" if len(line_rates) > 1 and line_rates[-1] < line_rates[0] else "stable",
+                    "trend": (
+                        "improving"
+                        if len(line_rates) > 1 and line_rates[-1] > line_rates[0]
+                        else (
+                            "declining"
+                            if len(line_rates) > 1 and line_rates[-1] < line_rates[0]
+                            else "stable"
+                        )
+                    ),
                 },
                 "branch_rate": {
-                "current": branch_rates[-1] if branch_rates else 0,
-                "average": sum(branch_rates) / len(branch_rates) if branch_rates else 0.0,
-                "min": min(branch_rates) if branch_rates else 0,
-                "max": max(branch_rates) if branch_rates else 0,
-                    "trend": "improving" if len(branch_rates) > 1 and branch_rates[-1] > branch_rates[0] else "declining" if len(branch_rates) > 1 and branch_rates[-1] < branch_rates[0] else "stable",
+                    "current": branch_rates[-1] if branch_rates else 0,
+                    "average": sum(branch_rates) / len(branch_rates) if branch_rates else 0.0,
+                    "min": min(branch_rates) if branch_rates else 0,
+                    "max": max(branch_rates) if branch_rates else 0,
+                    "trend": (
+                        "improving"
+                        if len(branch_rates) > 1 and branch_rates[-1] > branch_rates[0]
+                        else (
+                            "declining"
+                            if len(branch_rates) > 1 and branch_rates[-1] < branch_rates[0]
+                            else "stable"
+                        )
+                    ),
                 },
             }
 
@@ -375,7 +414,10 @@ class CoverageMonitor:
         Returns, str 生成的报告路径
         """
         if output_file is None:
-            output_file = str(self.project_root / f"coverage_trend_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
+            output_file = str(
+                self.project_root
+                / f"coverage_trend_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            )
         else:
             output_file = str(Path(output_file))
 
@@ -409,18 +451,36 @@ class CoverageMonitor:
                 "average": sum(line_rates) / len(line_rates) if line_rates else 0.0,
                 "min": min(line_rates) if line_rates else 0,
                 "max": max(line_rates) if line_rates else 0,
-                "trend": "improving" if len(line_rates) > 1 and line_rates[-1] > line_rates[0] else "declining" if len(line_rates) > 1 and line_rates[-1] < line_rates[0] else "stable",
+                "trend": (
+                    "improving"
+                    if len(line_rates) > 1 and line_rates[-1] > line_rates[0]
+                    else (
+                        "declining"
+                        if len(line_rates) > 1 and line_rates[-1] < line_rates[0]
+                        else "stable"
+                    )
+                ),
             }
-            report_data["summary"]["branch_rate"] = {
-                "current": branch_rates[-1] if branch_rates else 0,
+            report_data["summary"]["branch_rate"] = (
+                {
+                    "current": branch_rates[-1] if branch_rates else 0,
                     "average": sum(branch_rates) / len(branch_rates) if branch_rates else 0.0,
                     "min": min(branch_rates) if branch_rates else 0,
                     "max": max(branch_rates) if branch_rates else 0,
-                    "trend": "improving" if len(branch_rates) > 1 and branch_rates[-1] > branch_rates[0] else "declining" if len(branch_rates) > 1 and branch_rates[-1] < branch_rates[0] else "stable",
+                    "trend": (
+                        "improving"
+                        if len(branch_rates) > 1 and branch_rates[-1] > branch_rates[0]
+                        else (
+                            "declining"
+                            if len(branch_rates) > 1 and branch_rates[-1] < branch_rates[0]
+                            else "stable"
+                        )
+                    ),
                 },
+            )
 
         try:
-            with open(output_file, "w", encoding='utf-8') as f:
+            with open(output_file, "w", encoding="utf-8") as f:
                 json.dump(report_data, f, indent=2, ensure_ascii=False)
             logger.info(f"Trend report generated, {output_file}")
             return output_file
@@ -445,10 +505,13 @@ class CoverageMonitor:
             cutoff_date = datetime.now() - timedelta(days=days_to_keep)
 
             # 删除旧的覆盖率历史数据
-            cursor.execute("""
+            cursor.execute(
+                """
                 DELETE FROM coverage_history
     WHERE timestamp < ?
-            """, (cutoff_date))
+            """,
+                (cutoff_date),
+            )
 
             deleted_count = cursor.rowcount()
             # 外键约束会自动删除相关的模块覆盖率和低覆盖率区域数据
@@ -471,7 +534,7 @@ def main() -> None:
     parser.add_argument(
         "action",
         choices=["record", "trend", "threshold", "module-comparison", "report", "cleanup"],
-    help="Action to perform"
+        help="Action to perform",
     )
     parser.add_argument(
         "--data-file",
@@ -487,17 +550,9 @@ def main() -> None:
         "--module",
         help="Module name for comparison",
     )
+    parser.add_argument("--threshold-line", type=float, default=0.8, help="Line coverage threshold")
     parser.add_argument(
-        "--threshold-line",
-        type=float,
-    default=0.8,
-        help="Line coverage threshold"
-    )
-    parser.add_argument(
-        "--threshold-branch",
-        type=float,
-    default=0.7,
-        help="Branch coverage threshold"
+        "--threshold-branch", type=float, default=0.7, help="Branch coverage threshold"
     )
     parser.add_argument(
         "--output",
@@ -521,7 +576,7 @@ def main() -> None:
             sys.exit(1)
 
         try:
-            with open(args.data_file, "r", encoding='utf-8') as f:
+            with open(args.data_file, "r", encoding="utf-8") as f:
                 coverage_data = json.load(f)
 
             success = monitor.record_coverage_data(coverage_data)
@@ -535,7 +590,7 @@ def main() -> None:
         if trend_data:
             if args.output:
                 try:
-                    with open(args.output, "w", encoding='utf-8') as f:
+                    with open(args.output, "w", encoding="utf-8") as f:
                         json.dump(trend_data, f, indent=2, ensure_ascii=False)
                     print(f"Trend data saved to, {args.output}")
                 except Exception as e:
@@ -544,8 +599,10 @@ def main() -> None:
             else:
                 print(f"Coverage trend for last {args.days} days:")
                 for point in trend_data:
-                    print(f"  {point['timestamp']} Line Rate {point['line_rate']:.2%} "
-                          f"Branch Rate {point['branch_rate']:.2%}")
+                    print(
+                        f"  {point['timestamp']} Line Rate {point['line_rate']:.2%} "
+                        f"Branch Rate {point['branch_rate']:.2%}"
+                    )
         else:
             print("No trend data available")
             sys.exit(1)
@@ -578,12 +635,16 @@ def main() -> None:
         else:
             print(f"Coverage comparison for module, {args.module}")
             stats = comparison_data["statistics"]
-            print(f"  Line Rate - Current, {stats['line_rate']['current']:.2%} "
-                  f"Average, {stats['line_rate']['average']:.2%} "
-                  f"Trend, {stats['line_rate']['trend']}")
-            print(f"  Branch Rate - Current, {stats['branch_rate']['current']:.2%} "
-                  f"Average, {stats['branch_rate']['average']:.2%} "
-                  f"Trend, {stats['branch_rate']['trend']}")
+            print(
+                f"  Line Rate - Current, {stats['line_rate']['current']:.2%} "
+                f"Average, {stats['line_rate']['average']:.2%} "
+                f"Trend, {stats['line_rate']['trend']}"
+            )
+            print(
+                f"  Branch Rate - Current, {stats['branch_rate']['current']:.2%} "
+                f"Average, {stats['branch_rate']['average']:.2%} "
+                f"Trend, {stats['branch_rate']['trend']}"
+            )
 
     elif args.action == "report":
         report_file = monitor.generate_trend_report(args.days, args.output)
@@ -596,6 +657,7 @@ def main() -> None:
     elif args.action == "cleanup":
         success = monitor.cleanup_old_data(args.keep_days)
         sys.exit(0 if success else 1)
+
 
 if __name__ == "__main__":
     main()

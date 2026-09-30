@@ -20,7 +20,6 @@ fastapi_testclient = pytest.importorskip("fastapi.testclient")
 
 from fastapi import FastAPI  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
-
 from services.websocket_manager import websocket_handler  # noqa: E402
 
 

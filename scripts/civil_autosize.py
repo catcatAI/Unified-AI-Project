@@ -17,9 +17,16 @@ import civil_components as cc
 
 
 def load_db():
-    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                           "..", "data", "materials", "civil_materials.json"),
-              encoding="utf-8") as f:
+    with open(
+        os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "..",
+            "data",
+            "materials",
+            "civil_materials.json",
+        ),
+        encoding="utf-8",
+    ) as f:
         return json.load(f)
 
 
@@ -89,9 +96,21 @@ def main():
     ap.add_argument("--check", default="")
     args = ap.parse_args()
     db = load_db()
-    print(json.dumps(size(db, args.component, args.vary, args.lo, args.hi,
-                          json.loads(args.json), args.check or None),
-                     ensure_ascii=False, indent=1))
+    print(
+        json.dumps(
+            size(
+                db,
+                args.component,
+                args.vary,
+                args.lo,
+                args.hi,
+                json.loads(args.json),
+                args.check or None,
+            ),
+            ensure_ascii=False,
+            indent=1,
+        )
+    )
     return 0
 
 

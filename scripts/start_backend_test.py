@@ -7,8 +7,8 @@ Usage::
     python scripts/start_backend_test.py
 """
 
-import sys
 import os
+import sys
 
 # Add project root to sys.path so we can import _server_helper
 _PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -19,12 +19,14 @@ if _PROJECT_ROOT not in sys.path:
 from scripts._server_helper import (
     start_server,
     stop_server,
+)
+from scripts._server_helper import test_chat as _test_chat
+from scripts._server_helper import test_health as _test_health
+from scripts._server_helper import (
     wait_for_server,
-    test_chat as _test_chat,
-    test_health as _test_health,
 )
 
-WAIT_SECONDS=10.0
+WAIT_SECONDS = 10.0
 
 
 def main():

@@ -1,27 +1,30 @@
 """Scale vocabulary: optimize 500 CIFAR-10 images, build vocabulary, test recognition."""
-import sys
+
 import os
+import sys
 import time
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'apps', 'backend', 'src'))
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"))
+
+import glob
 
 import numpy as np
-import glob
-from PIL import Image
 from ai.multimodal.primitives.differentiable_renderer import DifferentiableRenderer
-from ai.multimodal.primitives.primitive_types import DrawingInstructions, TOTAL_DIM
 from ai.multimodal.primitives.geometric_vocabulary import GeometricVocabulary
+from ai.multimodal.primitives.primitive_types import TOTAL_DIM, DrawingInstructions
 from ai.multimodal.recognition.geometric_recognizer import GeometricRecognizer
+from PIL import Image
 
-CIFAR_DIR="D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
-CLASSES=["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
-N_ITERS=12
-LR=0.008
-N_PROBES=8
+CIFAR_DIR = "D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
+CLASSES = ["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
+N_ITERS = 12
+LR = 0.008
+N_PROBES = 8
 
 
 def load_images_per_class(n_per_class=50):
-    images=[]
-    labels=[]
+    images = []
+    labels = []
     for ci, cls in enumerate(CLASSES):
         cls_dir = os.path.join(CIFAR_DIR, cls)
         files = sorted(glob.glob(os.path.join(cls_dir, "*.npy")))[:n_per_class]
@@ -42,8 +45,8 @@ def optimize_one(target, renderer):
     vec = np.random.uniform(0.2, 0.8, TOTAL_DIM).astype(np.float32)
     vec[0:3] = target.mean(axis=(0, 1))
     best_vec = vec.copy()
-    best_loss = float('inf')
-    eps=0.015
+    best_loss = float("inf")
+    eps = 0.015
 
     for it in range(N_ITERS):
         rendered = renderer.render(vec)
@@ -71,15 +74,15 @@ def optimize_one(target, renderer):
 
 
 def main():
-    n_per_class=50
+    n_per_class = 50
     total = n_per_class * 10
     print(f"Loading {total} CIFAR-10 images ({n_per_class}/class)...")
     images, labels = load_images_per_class(n_per_class)
     print(f"Loaded {len(images)} images")
 
     renderer = DifferentiableRenderer((128, 128))
-    optimized_vecs=[]
-    losses=[]
+    optimized_vecs = []
+    losses = []
     t_start = time.time()
 
     for i in range(len(images)):
@@ -89,7 +92,9 @@ def main():
         losses.append(opt_loss)
         elapsed = time.time() - t0
         if (i + 1) % 10 == 0:
-            print(f"  [{i+1}/{len(images)}] loss={opt_loss:.4f} ({elapsed:.1f}s/img, total={time.time()-t_start:.0f}s)")
+            print(
+                f"  [{i+1}/{len(images)}] loss={opt_loss:.4f} ({elapsed:.1f}s/img, total={time.time()-t_start:.0f}s)"
+            )
 
     # Save optimized vectors
     np.save(os.path.join(CIFAR_DIR, "optimized_vectors.npy"), np.array(optimized_vecs))
@@ -99,17 +104,20 @@ def main():
     # Build vocabulary
     print("\nBuilding vocabulary...")
     from ai.multimodal.primitives.geometric_vocabulary import GeometricVocabulary
+
     vocab = GeometricVocabulary()
-    class_names=[CLASSES[l] for l in labels]
+    class_names = [CLASSES[l] for l in labels]
     params_array = np.array(optimized_vecs, dtype=np.float32)
     vocab.build_from_optimized(params_array, class_names)
     vocab.save("models/geometric_vocabulary.json")
-    print(f"Vocabulary: {len(vocab._visual_words)} words, {len(vocab._concept_distributions)} concepts")
+    print(
+        f"Vocabulary: {len(vocab._visual_words)} words, {len(vocab._concept_distributions)} concepts"
+    )
 
     # Test recognition
     print("\nTesting recognition...")
     recognizer = GeometricRecognizer(vocab)
-    correct=0
+    correct = 0
     for i in range(len(images)):
         result = recognizer.recognize(images[i], n_iterations=5)
         if result["predicted_class"] == CLASSES[labels[i]]:

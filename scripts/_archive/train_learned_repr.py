@@ -12,21 +12,24 @@ Training:
 
 This is what the user wants: learned primitives, not fixed geometric types.
 """
-import sys
+
 import os
+import sys
 import time
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'apps', 'backend', 'src'))
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"))
+
+import glob
 
 import numpy as np
-import glob
 from PIL import Image
 
-CIFAR_DIR="D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
-CLASSES=["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
-LATENT_DIM=128
-HIDDEN_DIM=256
-N_CLASSES=10
-IMG_DIM=32 * 32 * 3  # 3072
+CIFAR_DIR = "D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
+CLASSES = ["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
+LATENT_DIM = 128
+HIDDEN_DIM = 256
+N_CLASSES = 10
+IMG_DIM = 32 * 32 * 3  # 3072
 
 
 class LearnedRepresentation:
@@ -73,13 +76,13 @@ class LearnedRepresentation:
 
     def encode(self, x):
         """Image → latent space (the learned primitives)."""
-        h=self.relu(x @ self.enc_W1.T + self.enc_b1)
+        h = self.relu(x @ self.enc_W1.T + self.enc_b1)
         latent = h @ self.enc_W2.T + self.enc_b2
         return latent
 
     def decode(self, latent):
         """Latent → image (generation)."""
-        h=self.relu(latent @ self.dec_W1.T + self.dec_b1)
+        h = self.relu(latent @ self.dec_W1.T + self.dec_b1)
         out = h @ self.dec_W2.T + self.dec_b2
         return 1.0 / (1.0 + np.exp(-np.clip(out, -10, 10)))  # sigmoid
 
@@ -90,13 +93,22 @@ class LearnedRepresentation:
 
     def forward(self, x):
         """Full forward pass: image → latent → reconstructed image + class."""
-        latent=self.encode(x)
-        recon=self.decode(latent)
-        probs=self.classify(latent)
+        latent = self.encode(x)
+        recon = self.decode(latent)
+        probs = self.classify(latent)
         return latent, recon, probs
 
-    def train(self, train_images, train_labels, n_epochs=50, lr=0.001,
-              batch_size=64, recon_weight=1.0, cls_weight=0.5, verbose=True):
+    def train(
+        self,
+        train_images,
+        train_labels,
+        n_epochs=50,
+        lr=0.001,
+        batch_size=64,
+        recon_weight=1.0,
+        cls_weight=0.5,
+        verbose=True,
+    ):
         """Train the learned representation.
 
         Loss = recon_weight * MSE(recon, original) + cls_weight * CrossEntropy(pred, label)
@@ -112,19 +124,19 @@ class LearnedRepresentation:
 
         for epoch in range(n_epochs):
             perm = np.random.permutation(n)
-            total_loss=0.0
-            total_recon=0.0
-            total_cls=0.0
-            correct=0
+            total_loss = 0.0
+            total_recon = 0.0
+            total_cls = 0.0
+            correct = 0
 
             for i in range(0, n, batch_size):
-                batch_idx = perm[i:i+batch_size]
+                batch_idx = perm[i : i + batch_size]
                 x = train_images[batch_idx]
                 y = train_labels[batch_idx]
                 bs = len(x)
 
                 # Forward
-                latent, recon, probs=self.forward(x)
+                latent, recon, probs = self.forward(x)
 
                 # Losses
                 recon_loss = np.mean((recon - x) ** 2)
@@ -141,27 +153,38 @@ class LearnedRepresentation:
                 correct += np.sum(pred == y)
 
                 # Backward (finite differences on small subset of params)
-                eps=0.005
-                n_probe=30
-                params=[
-                    ('enc_W1', self.enc_W1), ('enc_b1', self.enc_b1),
-                    ('enc_W2', self.enc_W2), ('enc_b2', self.enc_b2),
-                    ('dec_W1', self.dec_W1), ('dec_b1', self.dec_b1),
-                    ('dec_W2', self.dec_W2), ('dec_b2', self.dec_b2),
-                    ('clf_W', self.clf_W), ('clf_b', self.clf_b),
+                eps = 0.005
+                n_probe = 30
+                params = [
+                    ("enc_W1", self.enc_W1),
+                    ("enc_b1", self.enc_b1),
+                    ("enc_W2", self.enc_W2),
+                    ("enc_b2", self.enc_b2),
+                    ("dec_W1", self.dec_W1),
+                    ("dec_b1", self.dec_b1),
+                    ("dec_W2", self.dec_W2),
+                    ("dec_b2", self.dec_b2),
+                    ("clf_W", self.clf_W),
+                    ("clf_b", self.clf_b),
                 ]
 
                 for name, param in params:
                     flat = param.ravel()
-                    probe_idx = np.random.choice(param.size, min(n_probe, param.size), replace=False)
+                    probe_idx = np.random.choice(
+                        param.size, min(n_probe, param.size), replace=False
+                    )
                     for idx in probe_idx:
                         old = flat[idx]
                         flat[idx] = old + eps
-                        _, r_plus, p_plus=self.forward(x)
-                        l_plus = recon_weight * np.mean((r_plus - x)**2) + cls_weight * (-np.mean(np.sum(y_onehot * np.log(p_plus + 1e-8), axis=1)))
+                        _, r_plus, p_plus = self.forward(x)
+                        l_plus = recon_weight * np.mean((r_plus - x) ** 2) + cls_weight * (
+                            -np.mean(np.sum(y_onehot * np.log(p_plus + 1e-8), axis=1))
+                        )
                         flat[idx] = old - eps
-                        _, r_minus, p_minus=self.forward(x)
-                        l_minus = recon_weight * np.mean((r_minus - x)**2) + cls_weight * (-np.mean(np.sum(y_onehot * np.log(p_minus + 1e-8), axis=1)))
+                        _, r_minus, p_minus = self.forward(x)
+                        l_minus = recon_weight * np.mean((r_minus - x) ** 2) + cls_weight * (
+                            -np.mean(np.sum(y_onehot * np.log(p_minus + 1e-8), axis=1))
+                        )
                         flat[idx] = old
                         grad = (l_plus - l_minus) / (2 * eps)
                         flat[idx] -= lr * grad
@@ -177,42 +200,50 @@ class LearnedRepresentation:
             elapsed = time.time() - t_start
 
             if verbose and (epoch + 1) % 10 == 0:
-                print(f"  Epoch {epoch+1}/{n_epochs}: loss={avg_loss:.4f} "
-                      f"recon={avg_recon:.4f} cls={avg_cls:.4f} "
-                      f"train_acc={acc:.1%} ({elapsed:.0f}s)")
+                print(
+                    f"  Epoch {epoch+1}/{n_epochs}: loss={avg_loss:.4f} "
+                    f"recon={avg_recon:.4f} cls={avg_cls:.4f} "
+                    f"train_acc={acc:.1%} ({elapsed:.0f}s)"
+                )
 
     def generate(self, latent=None, class_idx=None):
         """Generate an image from a latent vector or class index."""
         if latent is None:
             if class_idx is not None:
                 # Generate from class center
-                latent=self._class_centers[class_idx]
+                latent = self._class_centers[class_idx]
             else:
                 latent = np.random.randn(self.latent_dim).astype(np.float32)
         return self.decode(latent.reshape(1, -1)).reshape(32, 32, 3)
 
     def save(self, path):
-        data={
-            'latent_dim': self.latent_dim,
-            'hidden_dim': self.hidden_dim,
-            'enc_W1': self.enc_W1.tolist(), 'enc_b1': self.enc_b1.tolist(),
-            'enc_W2': self.enc_W2.tolist(), 'enc_b2': self.enc_b2.tolist(),
-            'dec_W1': self.dec_W1.tolist(), 'dec_b1': self.dec_b1.tolist(),
-            'dec_W2': self.dec_W2.tolist(), 'dec_b2': self.dec_b2.tolist(),
-            'clf_W': self.clf_W.tolist(), 'clf_b': self.clf_b.tolist(),
+        data = {
+            "latent_dim": self.latent_dim,
+            "hidden_dim": self.hidden_dim,
+            "enc_W1": self.enc_W1.tolist(),
+            "enc_b1": self.enc_b1.tolist(),
+            "enc_W2": self.enc_W2.tolist(),
+            "enc_b2": self.enc_b2.tolist(),
+            "dec_W1": self.dec_W1.tolist(),
+            "dec_b1": self.dec_b1.tolist(),
+            "dec_W2": self.dec_W2.tolist(),
+            "dec_b2": self.dec_b2.tolist(),
+            "clf_W": self.clf_W.tolist(),
+            "clf_b": self.clf_b.tolist(),
         }
-        if hasattr(self, '_class_centers') and self._class_centers is not None:
-            data['class_centers'] = self._class_centers.tolist()
-        os.makedirs(os.path.dirname(path) or '.', exist_ok=True)
-        with open(path, 'w') as f:
+        if hasattr(self, "_class_centers") and self._class_centers is not None:
+            data["class_centers"] = self._class_centers.tolist()
+        os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+        with open(path, "w") as f:
             import json
+
             json.dump(data, f)
         print(f"Saved to {path}")
 
 
 def load_cifar():
-    images=[]
-    labels=[]
+    images = []
+    labels = []
     for ci, cls in enumerate(CLASSES):
         cls_dir = os.path.join(CIFAR_DIR, cls)
         files = sorted(glob.glob(os.path.join(cls_dir, "*.npy")))
@@ -242,8 +273,15 @@ def main():
 
     # Train
     model = LearnedRepresentation(latent_dim=LATENT_DIM, hidden_dim=HIDDEN_DIM)
-    model.train(train_imgs, train_labels, n_epochs=50, lr=0.001,
-                batch_size=64, recon_weight=1.0, cls_weight=0.5)
+    model.train(
+        train_imgs,
+        train_labels,
+        n_epochs=50,
+        lr=0.001,
+        batch_size=64,
+        recon_weight=1.0,
+        cls_weight=0.5,
+    )
 
     # Compute class centers in latent space
     latent_train = model.encode(train_imgs)
@@ -259,7 +297,7 @@ def main():
     preds = np.argmax(probs, axis=1)
     correct = np.sum(preds == test_labels)
     print(f"Overall: {correct}/{len(test_labels)} = {correct/len(test_labels):.1%}")
-    per_class={c: [0, 0] for c in CLASSES}
+    per_class = {c: [0, 0] for c in CLASSES}
     for i in range(len(test_labels)):
         cls = CLASSES[test_labels[i]]
         per_class[cls][1] += 1
@@ -271,7 +309,7 @@ def main():
 
     # Test generation
     print("\n=== Generation (decode from latent) ===")
-    output_dir="data/multimodal/gvv/learned_test"
+    output_dir = "data/multimodal/gvv/learned_test"
     os.makedirs(output_dir, exist_ok=True)
 
     # Generate from class centers
@@ -294,7 +332,7 @@ def main():
     print("\n=== Reconstruction quality (first 5 test images) ===")
     for i in range(5):
         orig = test_imgs[i].reshape(32, 32, 3)
-        recon = model.decode(latent_test[i:i+1]).reshape(32, 32, 3)
+        recon = model.decode(latent_test[i : i + 1]).reshape(32, 32, 3)
         mse = np.mean((orig - recon) ** 2)
         orig_pil = Image.fromarray((orig * 255).astype(np.uint8))
         recon_pil = Image.fromarray((recon * 255).astype(np.uint8))

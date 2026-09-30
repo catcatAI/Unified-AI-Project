@@ -581,9 +581,7 @@ class ExecutionGate:
                 original_query=user_message,
             )
 
-        score = self._calculate_exec_score(
-            action_type, user_message, intent, confidence
-        )
+        score = self._calculate_exec_score(action_type, user_message, intent, confidence)
         fb_adj = self._get_feedback_adjustment(agent_name)
         effective_auto = round(self.AUTO_EXECUTE - fb_adj, 3)
         effective_confirm = round(self.CONFIRM_THRESHOLD - fb_adj, 3)
@@ -633,9 +631,7 @@ class ExecutionGate:
             score=score,
             handler=agent_name,
             action_type=action_type,
-            reason=(
-                f"exec_score={score} < confirm={effective_confirm} for agent {agent_name}"
-            ),
+            reason=(f"exec_score={score} < confirm={effective_confirm} for agent {agent_name}"),
             original_query=user_message,
         )
 

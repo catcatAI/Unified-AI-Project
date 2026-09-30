@@ -1,9 +1,12 @@
-import requests
-import sys
 import logging
+import sys
+
+import requests
+
 logger = logging.getLogger(__name__)
 
-BASE_URL="http://127.0.0.1:8000/api/v1/drive"
+BASE_URL = "http://127.0.0.1:8000/api/v1/drive"
+
 
 def exchange_code(code):
     try:
@@ -23,6 +26,7 @@ def exchange_code(code):
     except Exception as e:
         print(f"Error: {e}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:

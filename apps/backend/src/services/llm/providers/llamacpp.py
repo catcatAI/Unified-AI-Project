@@ -114,4 +114,6 @@ class LlamaCppBackend(BaseLLMBackend):
                     )
         except Exception as e:
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
-            return LLMResponse(text="", backend="llama.cpp", model=self.model or "unknown", error=safe_error(e))
+            return LLMResponse(
+                text="", backend="llama.cpp", model=self.model or "unknown", error=safe_error(e)
+            )

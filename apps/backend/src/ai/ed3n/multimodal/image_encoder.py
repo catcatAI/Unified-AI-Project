@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 def _stable_hash(text: str) -> int:
     """Deterministic cross-process hash (Python's hash() is salted per process)."""
-    return int(hashlib.md5(text.encode("utf-8")).hexdigest()[:8], 16)
+    return int(hashlib.md5(text.encode("utf-8"), usedforsecurity=False).hexdigest()[:8], 16)
 
 
 class ImageEncoder:

@@ -4,6 +4,7 @@
 R17/R18 是 category=repair、repair_all=True 的修復服務配方：
 消耗配方材料直接修復裝備，不應把不存在的「修復服務」物品塞進物品欄。
 """
+
 import pytest
 import sim_systems
 
@@ -107,7 +108,9 @@ class TestMagicCraftAxis:
 
     def _char(self, energy, spirit):
         return {
-            "axis": {"affinity": {"物質": 0.3, "能量": energy, "靈性": spirit, "機械": 0.1, "資訊": 0.1}},
+            "axis": {
+                "affinity": {"物質": 0.3, "能量": energy, "靈性": spirit, "機械": 0.1, "資訊": 0.1}
+            },
         }
 
     def test_low_energy_blocked(self):
@@ -130,6 +133,7 @@ class TestMagicCraftAxis:
     def test_high_spirit_passes(self):
         """低能量但高靈性（靈體）也可製作靈力藥。"""
         from axis_system import check_craft_axis
+
         ch = self._char(0.2, 0.75)
         ok, why = check_craft_axis(ch, {"result_item": "靈力藥"})
         assert ok
@@ -137,6 +141,7 @@ class TestMagicCraftAxis:
     def test_magic_tags_detection(self):
         """魔法判定：tags 標 magic/elemental 或名稱含魔力/法杖等。"""
         from axis_system import is_magic_craft
+
         assert is_magic_craft("魔力藥水", ["consumable"])
         assert is_magic_craft("炎帝之劍", ["elemental", "magic"])
         assert not is_magic_craft("治療藥水", ["consumable"])

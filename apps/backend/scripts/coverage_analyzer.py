@@ -4,20 +4,18 @@
 用于分析、统计和报告集成测试的代码覆盖率
 """
 
-import sys
-import subprocess
 import json
-import xml.etree.ElementTree as ET
-from pathlib import Path
 import logging
-from typing import List, Dict, Any
+import subprocess
+import sys
+import xml.etree.ElementTree as ET
 from datetime import datetime
-
+from pathlib import Path
+from typing import Any, Dict, List
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -36,7 +34,9 @@ class CoverageAnalyzer:
         self.coverage_file = self.project_root / "coverage.xml"
         self.coverage_data = None
 
-    def run_coverage_analysis(self, source_dirs: List[str] = None, output_format: str = "xml") -> bool:
+    def run_coverage_analysis(
+        self, source_dirs: List[str] = None, output_format: str = "xml"
+    ) -> bool:
         """
         运行覆盖率分析
 
@@ -61,35 +61,21 @@ class CoverageAnalyzer:
                 "-m",
                 "pytest",
                 "tests/integration/",
-                "--tb=short"
+                "--tb=short",
             ]
 
             # 运行测试并收集覆盖率数据
-            result = subprocess.run(
-                cmd,
-    cwd=self.project_root,
-capture_output = True,
-text = True
-            )
+            result = subprocess.run(cmd, cwd=self.project_root, capture_output=True, text=True)
 
             if result.returncode != 0:
                 logger.error(f"Coverage analysis failed, {result.stderr}")
                 return False
 
             # 生成覆盖率报告
-            report_cmd = [
-                sys.executable,
-                "-m",
-                "coverage",
-                "report",
-                "-m"
-            ]
+            report_cmd = [sys.executable, "-m", "coverage", "report", "-m"]
 
             report_result = subprocess.run(
-                report_cmd,
-    cwd=self.project_root,
-capture_output = True,
-text = True
+                report_cmd, cwd=self.project_root, capture_output=True, text=True
             )
 
             if report_result.returncode != 0:
@@ -114,21 +100,9 @@ text = True
     def _generate_xml_report(self) -> None:
         """生成XML格式的覆盖率报告"""
         try:
-            cmd = [
-                sys.executable,
-                "-m",
-                "coverage",
-                "xml",
-                "-o",
-                str(self.coverage_file)
-            ]
+            cmd = [sys.executable, "-m", "coverage", "xml", "-o", str(self.coverage_file)]
 
-            result = subprocess.run(
-                cmd,
-    cwd=self.project_root,
-capture_output = True,
-text = True
-            )
+            result = subprocess.run(cmd, cwd=self.project_root, capture_output=True, text=True)
 
             if result.returncode != 0:
                 logger.error(f"XML report generation failed, {result.stderr}")
@@ -142,21 +116,9 @@ text = True
         """生成HTML格式的覆盖率报告"""
         try:
             html_dir = self.project_root / "htmlcov"
-            cmd = [
-                sys.executable,
-                "-m",
-                "coverage",
-                "html",
-                "-d",
-                str(html_dir)
-            ]
+            cmd = [sys.executable, "-m", "coverage", "html", "-d", str(html_dir)]
 
-            result = subprocess.run(
-                cmd,
-    cwd=self.project_root,
-capture_output = True,
-text = True
-            )
+            result = subprocess.run(cmd, cwd=self.project_root, capture_output=True, text=True)
 
             if result.returncode != 0:
                 logger.error(f"HTML report generation failed, {result.stderr}")
@@ -169,19 +131,9 @@ text = True
     def _generate_json_report(self) -> None:
         """生成JSON格式的覆盖率报告"""
         try:
-            cmd = [
-                sys.executable,
-                "-m",
-                "coverage",
-                "json"
-            ]
+            cmd = [sys.executable, "-m", "coverage", "json"]
 
-            result = subprocess.run(
-                cmd,
-    cwd=self.project_root,
-capture_output = True,
-text = True
-            )
+            result = subprocess.run(cmd, cwd=self.project_root, capture_output=True, text=True)
 
             if result.returncode != 0:
                 logger.error(f"JSON report generation failed, {result.stderr}")
@@ -218,8 +170,8 @@ text = True
                     "branches_valid": int(root.get("branches-valid", 0)),
                     "branches_covered": int(root.get("branches-covered", 0)),
                     "branch_rate": float(root.get("branch-rate", 0)),
-                    "complexity": float(root.get("complexity", 0))
-                }
+                    "complexity": float(root.get("complexity", 0)),
+                },
             }
 
             # 解析源代码路径
@@ -232,10 +184,7 @@ text = True
             packages_elem = root.find("packages")
             if packages_elem is not None:
                 for package_elem in packages_elem.findall("package"):
-                    package_data = {
-                        "name": package_elem.get("name", ""),
-                        "classes": []
-                    }
+                    package_data = {"name": package_elem.get("name", ""), "classes": []}
 
                     # 解析类信息
                     for class_elem in package_elem.findall("classes/class"):
@@ -246,7 +195,7 @@ text = True
                             "branch_rate": float(class_elem.get("branch-rate", 0)),
                             "complexity": float(class_elem.get("complexity", 0)),
                             "methods": [],
-                            "lines": []
+                            "lines": [],
                         }
 
                         # 解析方法信息
@@ -259,19 +208,24 @@ text = True
                                     "line_rate": float(method_elem.get("line-rate", 0)),
                                     "branch_rate": float(method_elem.get("branch-rate", 0)),
                                     "complexity": float(method_elem.get("complexity", 0)),
-                                    "lines": []
+                                    "lines": [],
                                 }
 
                                 # 解析方法行信息
                                 lines_elem = method_elem.find("lines")
                                 if lines_elem is not None:
                                     for line_elem in lines_elem.findall("line"):
-                                        method_data["lines"].append({
-                                            "number": int(line_elem.get("number", 0)),
-                                            "hits": int(line_elem.get("hits", 0)),
-                                            "branch": line_elem.get("branch", "false") == "true",
-                                            "condition_coverage": line_elem.get("condition-coverage", "")
-                                        })
+                                        method_data["lines"].append(
+                                            {
+                                                "number": int(line_elem.get("number", 0)),
+                                                "hits": int(line_elem.get("hits", 0)),
+                                                "branch": line_elem.get("branch", "false")
+                                                == "true",
+                                                "condition_coverage": line_elem.get(
+                                                    "condition-coverage", ""
+                                                ),
+                                            }
+                                        )
 
                                 class_data["methods"].append(method_data)
 
@@ -279,12 +233,16 @@ text = True
                         lines_elem = class_elem.find("lines")
                         if lines_elem is not None:
                             for line_elem in lines_elem.findall("line"):
-                                class_data["lines"].append({
-                                    "number": int(line_elem.get("number", 0)),
-                                    "hits": int(line_elem.get("hits", 0)),
-                                    "branch": line_elem.get("branch", "false") == "true",
-                                    "condition_coverage": line_elem.get("condition-coverage", "")
-                                })
+                                class_data["lines"].append(
+                                    {
+                                        "number": int(line_elem.get("number", 0)),
+                                        "hits": int(line_elem.get("hits", 0)),
+                                        "branch": line_elem.get("branch", "false") == "true",
+                                        "condition_coverage": line_elem.get(
+                                            "condition-coverage", ""
+                                        ),
+                                    }
+                                )
 
                         package_data["classes"].append(class_data)
 
@@ -327,7 +285,7 @@ text = True
                     module_coverage[module_name] = {
                         "line_rate_sum": 0,
                         "class_count": 0,
-                        "total_line_rate": 0
+                        "total_line_rate": 0,
                     }
 
                 module_coverage[module_name]["line_rate_sum"] += class_data.get("line_rate", 0)
@@ -370,13 +328,15 @@ text = True
             for class_data in package.get("classes", []):
                 line_rate = class_data.get("line_rate", 0)
                 if line_rate < threshold:
-                    low_coverage_areas.append({
-                        "package": package_name,
-                        "class": class_data.get("name", ""),
-                        "filename": class_data.get("filename", ""),
-                        "line_rate": line_rate,
-                        "branch_rate": class_data.get("branch_rate", 0)
-                    })
+                    low_coverage_areas.append(
+                        {
+                            "package": package_name,
+                            "class": class_data.get("name", ""),
+                            "filename": class_data.get("filename", ""),
+                            "line_rate": line_rate,
+                            "branch_rate": class_data.get("branch_rate", 0),
+                        }
+                    )
 
         # 按行覆盖率排序
         low_coverage_areas.sort(key=lambda x: x["line_rate"])
@@ -415,11 +375,11 @@ text = True
             "coverage_summary": self.coverage_data.get("summary", {}),
             "module_coverage": module_coverage,
             "low_coverage_areas": low_coverage_areas,
-            "recommendations": self._generate_recommendations(low_coverage_areas)
+            "recommendations": self._generate_recommendations(low_coverage_areas),
         }
 
         try:
-            with open(output_file, "w", encoding='utf-8') as f:
+            with open(output_file, "w", encoding="utf-8") as f:
                 json.dump(report_data, f, indent=2, ensure_ascii=False)
             logger.info(f"Coverage analysis report generated, {output_file}")
             return str(output_file)
@@ -477,13 +437,10 @@ def main() -> None:
     parser.add_argument(
         "action",
         choices=["analyze", "report", "low-coverage", "recommend"],
-    help="Action to perform"
+        help="Action to perform",
     )
     parser.add_argument(
-        "--source-dirs",
-        nargs="+",
-        default=["src"],
-    help="Source directories to analyze"
+        "--source-dirs", nargs="+", default=["src"], help="Source directories to analyze"
     )
     parser.add_argument(
         "--format",
@@ -531,9 +488,10 @@ def main() -> None:
         if low_coverage_areas:
             print(f"Found {len(low_coverage_areas)} low coverage areas,")
             for area in low_coverage_areas:
-                print(f"  - {area['package']}.{area['class']} "
-                      f"Line Rate {area['line_rate']:2%} ",
-    f"Branch Rate {area['branch_rate']:2%}")
+                print(
+                    f"  - {area['package']}.{area['class']} " f"Line Rate {area['line_rate']:2%} ",
+                    f"Branch Rate {area['branch_rate']:2%}",
+                )
         else:
             print("No low coverage areas found")
 

@@ -52,30 +52,30 @@ def main():
     # --- 結構安全 40 ---
     # 弦桿：M=wL²/8，w=人行5kPa×3.5m + 自重估20kN/m，兩片桁架分擔
     w = (5.0 * W + 20.0) / 2.0
-    Mmax = w * L ** 2 / 8.0
+    Mmax = w * L**2 / 8.0
     d = 3.0
     N_ch = Mmax / d
-    r = comp("steel", {"A": 12000.0, "Iy": 2.0e8, "L": 4000.0, "N_Ed_kN": N_ch},
-             ["--steel", "S355"])
+    r = comp(
+        "steel", {"A": 12000.0, "Iy": 2.0e8, "L": 4000.0, "N_Ed_kN": N_ch}, ["--steel", "S355"]
+    )
     s_chord = 15 if r.get("buckling_ok") else 0
     score["chord_15"] = s_chord
     notes.append(f"弦桿 N={N_ch:.0f}kN Nb={r.get('N_b_Rd_kN')}")
     Vmax = w * L / 2.0
-    r2 = comp("steel", {"A": 5000.0, "Iy": 5.0e7, "L": 4500.0,
-                        "N_Ed_kN": Vmax / 2.0}, ["--steel", "S355"])
+    r2 = comp(
+        "steel", {"A": 5000.0, "Iy": 5.0e7, "L": 4500.0, "N_Ed_kN": Vmax / 2.0}, ["--steel", "S355"]
+    )
     s_diag = 10 if r2.get("buckling_ok") else 0
     score["diag_10"] = s_diag
     notes.append(f"腹桿 N={Vmax/2:.0f}kN Nb={r2.get('N_b_Rd_kN')}")
     # 板帶：1m 寬簡支於橫梁？按單向板跨 3.5m（兩桁架間距）5kPa
-    r3 = comp("slab", {"h": 150.0, "As": 500.0,
-                       "M_Ed_kNm": 5.0 * 3.5 ** 2 / 8.0})
+    r3 = comp("slab", {"h": 150.0, "As": 500.0, "M_Ed_kNm": 5.0 * 3.5**2 / 8.0})
     s_slab = 10 if r3.get("bending_ok") else 0
     score["slab_10"] = s_slab
     notes.append(f"板 M_Ed={5.0*3.5**2/8.0:.1f} ok={r3.get('bending_ok')}")
     # 墩台：端部反力 R=wL/2 每端兩點
     R = w * L / 2.0 / 2.0
-    r4 = comp("column", {"b": 800, "h": 800, "As": 4000,
-                         "N_Ed_kN": R + 500})
+    r4 = comp("column", {"b": 800, "h": 800, "As": 4000, "N_Ed_kN": R + 500})
     s_pier = 5 if r4.get("axial_ok") else 0
     score["pier_5"] = s_pier
     notes.append(f"墩 R={R:.0f}kN N_Rd={r4.get('N_Rd_kN')}")
@@ -184,11 +184,14 @@ def main():
         s_dxf = 3  # 截面級圖紙有；天橋平面圖未出，故不滿分
     score["dxf_5"] = s_dxf
     notes.append("圖紙：截面級有（3/5），天橋平面圖缺")
-    notes.append("假設：簡支 Warren 桁；人行 5kPa；C30/B500B；S355 桁架；評分滿分 100（含 2 分圖紙上限）")
+    notes.append(
+        "假設：簡支 Warren 桁；人行 5kPa；C30/B500B；S355 桁架；評分滿分 100（含 2 分圖紙上限）"
+    )
 
     total = sum(score.values())
-    print(json.dumps({"score": score, "total": total, "notes": notes},
-                     ensure_ascii=False, indent=1))
+    print(
+        json.dumps({"score": score, "total": total, "notes": notes}, ensure_ascii=False, indent=1)
+    )
     print(f"天橋評分：{total}/100")
     return 0
 

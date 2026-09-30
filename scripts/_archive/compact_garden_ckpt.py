@@ -37,7 +37,9 @@ import sys
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "apps/backend/src"))
+sys.path.insert(
+    0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "apps/backend/src")
+)
 
 
 def _peak_mb() -> float:
@@ -88,7 +90,12 @@ def main() -> None:
     # 3. Extract sub-matrix in ONE vectorized pass (peak ~1 GB, no full copy).
     idx_arr = torch.tensor(keep_indices, dtype=torch.long)
     sub = W.index_select(0, idx_arr).index_select(1, idx_arr).contiguous()
-    logging.info("Sub-matrix: %s (%.0f MB), peak=%.0fMB", tuple(sub.shape), sub.numel() * 4 / 2**20, _peak_mb())
+    logging.info(
+        "Sub-matrix: %s (%.0f MB), peak=%.0fMB",
+        tuple(sub.shape),
+        sub.numel() * 4 / 2**20,
+        _peak_mb(),
+    )
 
     # 4. Rebuild registry maps to the kept keys.
     new_key_to_idx = {key: i for i, key in enumerate(keys[i] for i in keep_indices)}

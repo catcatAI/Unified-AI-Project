@@ -46,9 +46,10 @@ print('FC-BEAM: %d objects -> %s' % (len(doc.Objects), '{args.out}'))
         f.write(macro)
     t0 = __import__("time").time()
     p = subprocess.run(
-        ["flatpak", "run", "--filesystem=/tmp", "org.freecad.FreeCAD",
-         "--console", FC_MACRO],
-        capture_output=True, text=True, timeout=300,
+        ["flatpak", "run", "--filesystem=/tmp", "org.freecad.FreeCAD", "--console", FC_MACRO],
+        capture_output=True,
+        text=True,
+        timeout=300,
     )
     print(f"  flatpak exit {p.returncode} ({__import__('time').time()-t0:.1f}s)")
     for line in (p.stdout + p.stderr).splitlines():
@@ -69,9 +70,17 @@ print('FC-BEAM: %d objects -> %s' % (len(doc.Objects), '{args.out}'))
     with open("/tmp/fc_check.py", "w", encoding="utf-8") as f:
         f.write(check)
     q = subprocess.run(
-        ["flatpak", "run", "--filesystem=/tmp", "org.freecad.FreeCAD",
-         "--console", "/tmp/fc_check.py"],
-        capture_output=True, text=True, timeout=300,
+        [
+            "flatpak",
+            "run",
+            "--filesystem=/tmp",
+            "org.freecad.FreeCAD",
+            "--console",
+            "/tmp/fc_check.py",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=300,
     )
     ok = False
     for line in (q.stdout + q.stderr).splitlines():

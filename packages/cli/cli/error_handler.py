@@ -2,8 +2,8 @@ import logging
 import sys
 import traceback
 from datetime import datetime
-from pathlib import Path
 from enum import Enum
+from pathlib import Path
 
 
 class ErrorType(Enum):
@@ -17,26 +17,24 @@ class ErrorType(Enum):
 
 class CLIErrorHandler:
     def __init__(self, log_file_path=None):
-        self.logger = logging.getLogger('unified_ai_cli')
+        self.logger = logging.getLogger("unified_ai_cli")
         self.logger.setLevel(logging.DEBUG)
 
         if log_file_path:
             log_path = Path(log_file_path)
             log_path.parent.mkdir(parents=True, exist_ok=True)
         else:
-            log_dir = Path(__file__).parent.parent / 'logs'
+            log_dir = Path(__file__).parent.parent / "logs"
             log_dir.mkdir(parents=True, exist_ok=True)
             log_path = log_dir / f"cli_{datetime.now().strftime('%Y%m%d')}.log"
 
-        file_handler = logging.FileHandler(log_path, encoding='utf-8')
+        file_handler = logging.FileHandler(log_path, encoding="utf-8")
         file_handler.setLevel(logging.DEBUG)
 
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setLevel(logging.INFO)
 
-        formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-        )
+        formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
         file_handler.setFormatter(formatter)
         console_handler.setFormatter(formatter)
 
@@ -133,17 +131,22 @@ class CLIErrorHandler:
 
         if suggest_solution:
             if response.status_code == 401:
-                print("Suggestion: Check your API credentials and authentication token.",
-                      file=sys.stderr)
+                print(
+                    "Suggestion: Check your API credentials and authentication token.",
+                    file=sys.stderr,
+                )
             elif response.status_code == 403:
-                print("Suggestion: You may not have permission to access this resource.",
-                      file=sys.stderr)
+                print(
+                    "Suggestion: You may not have permission to access this resource.",
+                    file=sys.stderr,
+                )
             elif response.status_code == 404:
-                print("Suggestion: The requested resource was not found.",
-                      file=sys.stderr)
+                print("Suggestion: The requested resource was not found.", file=sys.stderr)
             elif response.status_code >= 500:
-                print("Suggestion: The server encountered an error. Please try again later.",
-                      file=sys.stderr)
+                print(
+                    "Suggestion: The server encountered an error. Please try again later.",
+                    file=sys.stderr,
+                )
 
         return {
             "success": False,

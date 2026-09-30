@@ -33,7 +33,7 @@ logger = logging.getLogger("seed_vector_store")
 
 # Batch size for numpy bulk_add_memories — 5000 entries per call
 # Each call is ~0.4s, so 100 batches of 5000 = ~40s for all 460K
-BATCH_SIZE=5000
+BATCH_SIZE = 5000
 
 # ---------------------------------------------------------------------------
 # Dictionary file discovery
@@ -70,8 +70,16 @@ def _iter_semantic_parts(entry: dict) -> List[str]:
             parts.append(s)
 
     # Context fields with semantic meaning
-    semantic_keys={"pinyin", "reading", "pos", "definition",
-                     "gloss", "example", "meaning", "note"}
+    semantic_keys = {
+        "pinyin",
+        "reading",
+        "pos",
+        "definition",
+        "gloss",
+        "example",
+        "meaning",
+        "note",
+    }
     contexts = entry.get("contexts", [])
     if isinstance(contexts, list):
         for ctx in contexts:
@@ -106,9 +114,9 @@ def _flush_batch(store, batch: List[Tuple[str, str, dict]]) -> int:
         return len(batch)
         # Fallback: chromadb batch insert
     if store.collection is not None:
-        ids=[b[0] for b in batch]
-        docs=[b[1] for b in batch]
-        metas=[b[2] for b in batch]
+        ids = [b[0] for b in batch]
+        docs = [b[1] for b in batch]
+        metas = [b[2] for b in batch]
         store.collection.add(documents=docs, metadatas=metas, ids=ids)
         return len(batch)
     return 0
@@ -122,7 +130,7 @@ def _flush_batch(store, batch: List[Tuple[str, str, dict]]) -> int:
 def seed_vector_store(
     limit: Optional[int] = None,
     source_filter: Optional[str] = None,
-    dry_run: bool=False,
+    dry_run: bool = False,
 ) -> int:
     """Entry point — seeds the VectorMemoryStore.
 
@@ -130,14 +138,14 @@ def seed_vector_store(
     """
     # Force numpy backend by temporarily disabling chromadb
     import ai.memory.vector_store as vs_module
+
     _old_chromadb = vs_module._lazy_chromadb
     vs_module._lazy_chromadb = lambda: None
 
     from ai.memory.vector_store import VectorMemoryStore
 
     store = VectorMemoryStore()
-    logger.info("Backend: %s (existing vectors: %d)",
-                store.backend_type, store.vector_count)
+    logger.info("Backend: %s (existing vectors: %d)", store.backend_type, store.vector_count)
 
     # Load existing keys for dedup
     seen_keys: Set[str] = set()
@@ -149,8 +157,8 @@ def seed_vector_store(
                 seen_keys.add(k)
         logger.info("  Loaded %d existing keys from numpy backend", len(seen_keys))
 
-    total_imported=0
-    total_skipped=0
+    total_imported = 0
+    total_skipped = 0
     batch: List[Tuple[str, str, dict]] = []
 
     def _commit_batch():
@@ -159,7 +167,7 @@ def seed_vector_store(
             return
         _flush_batch(store, batch)
         logger.info("  Batch %d committed", len(batch))
-        batch=[]
+        batch = []
 
     for fname, label in DICT_SOURCES.items():
         if source_filter and source_filter.lower() not in fname:
@@ -173,13 +181,13 @@ def seed_vector_store(
         with open(filepath, "r", encoding="utf-8") as f:
             raw = json.load(f)
 
-        items: list=[]
+        items: list = []
         if isinstance(raw, list):
             items = raw
         elif isinstance(raw, dict):
             items = raw.get("entries", raw.get("dictionary", []))
 
-        file_count=0
+        file_count = 0
         t_file = time.time()
         for entry in items:
             if not isinstance(entry, dict):
@@ -194,12 +202,12 @@ def seed_vector_store(
             seen_keys.add(entry_key)
 
             parts = _iter_semantic_parts(entry)
-            content=" ".join(p.strip() for p in parts if p.strip())
+            content = " ".join(p.strip() for p in parts if p.strip())
             if not content.strip():
                 total_skipped += 1
                 continue
 
-            metadata={
+            metadata = {
                 "source": label,
                 "key": entry_key or "",
                 "confidence": _get_entry_confidence(entry),
@@ -227,9 +235,13 @@ def seed_vector_store(
         # Commit remaining batch for this file
         _commit_batch()
         elapsed = time.time() - t_file
-        logger.info("  %s: %d entries in %.1fs (%d/s)",
-                    label, file_count, elapsed,
-                    int(file_count / elapsed) if elapsed > 0 else 0)
+        logger.info(
+            "  %s: %d entries in %.1fs (%d/s)",
+            label,
+            file_count,
+            elapsed,
+            int(file_count / elapsed) if elapsed > 0 else 0,
+        )
 
     if not dry_run:
         # Capture count BEFORE restoring chromadb (numpy backend)
@@ -239,12 +251,15 @@ def seed_vector_store(
         logger.info("Persisting to disk...")
         # Restore chromadb
         vs_module._lazy_chromadb = _old_chromadb
-        logger.info("Seeding complete: %d new entries (skipped %d dups). Total vectors: %d",
-                     total_imported, total_skipped, final_count)
+        logger.info(
+            "Seeding complete: %d new entries (skipped %d dups). Total vectors: %d",
+            total_imported,
+            total_skipped,
+            final_count,
+        )
     else:
         vs_module._lazy_chromadb = _old_chromadb
-        logger.info("Dry-run: %d would be imported, %d skipped",
-                     total_imported, total_skipped)
+        logger.info("Dry-run: %d would be imported, %d skipped", total_imported, total_skipped)
 
     return total_imported
 
@@ -255,23 +270,27 @@ def seed_vector_store(
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Seed VectorMemoryStore with dictionary data"
-    )
+    parser = argparse.ArgumentParser(description="Seed VectorMemoryStore with dictionary data")
     parser.add_argument(
-        "--dry-run", action="store_true",
+        "--dry-run",
+        action="store_true",
         help="Show what would be imported without actually storing",
     )
     parser.add_argument(
-        "--limit", type=int, default=None,
+        "--limit",
+        type=int,
+        default=None,
         help="Maximum entries to import (default: all)",
     )
     parser.add_argument(
-        "--source", type=str, default=None,
+        "--source",
+        type=str,
+        default=None,
         help="Source: cedict, jmdict, or wordnet",
     )
     parser.add_argument(
-        "--info", action="store_true",
+        "--info",
+        action="store_true",
         help="Show available sources and exit",
     )
 

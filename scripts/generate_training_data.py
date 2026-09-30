@@ -16,15 +16,16 @@ import random
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger("GenData")
 
-DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..",
-                                        "apps/backend/data/raw_datasets"))
+DATA_DIR = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "apps/backend/data/raw_datasets")
+)
 
 
 # ---------------------------------------------------------------------------
 # 1. Boolean logic generators
 # ---------------------------------------------------------------------------
 
-BOOL_OPS={
+BOOL_OPS = {
     "and": lambda a, b: a and b,
     "or": lambda a, b: a or b,
     "xor": lambda a, b: a != b,
@@ -33,7 +34,7 @@ BOOL_OPS={
 }
 
 # Natural-language patterns for each operator
-PATTERNS_CN={
+PATTERNS_CN = {
     "and": [
         "{0} 和 {1} 是否都成立",
         "{0} 与 {1} 同时为真",
@@ -62,7 +63,7 @@ PATTERNS_CN={
     ],
 }
 
-PATTERNS_EN={
+PATTERNS_EN = {
     "and": [
         "{0} and {1}",
         "both {0} and {1}",
@@ -91,20 +92,47 @@ PATTERNS_EN={
 }
 
 # Atomic propositions in CN/EN
-ATOMS_CN=[
-    "今天天气好", "明天会下雨", "太阳从东边升起", "水是液体",
-    "地球是圆的", "月亮绕着地球转", "猫是哺乳动物", "鱼会游泳",
-    "鸟会飞", "温度高于零度", "速度大于零", "压力正常",
-    "电源已接通", "信号强度足够", "门是开着的", "灯是亮的",
-    "程序已启动", "数据已备份", "网络已连接", "用户已登录",
+ATOMS_CN = [
+    "今天天气好",
+    "明天会下雨",
+    "太阳从东边升起",
+    "水是液体",
+    "地球是圆的",
+    "月亮绕着地球转",
+    "猫是哺乳动物",
+    "鱼会游泳",
+    "鸟会飞",
+    "温度高于零度",
+    "速度大于零",
+    "压力正常",
+    "电源已接通",
+    "信号强度足够",
+    "门是开着的",
+    "灯是亮的",
+    "程序已启动",
+    "数据已备份",
+    "网络已连接",
+    "用户已登录",
 ]
-ATOMS_EN=[
-    "the sky is blue", "water is wet", "the sun is hot",
-    "gravity exists", "light travels fast", "sound needs a medium",
-    "energy is conserved", "entropy increases", "the earth orbits the sun",
-    "plants need sunlight", "oxygen supports combustion", "hydrogen is flammable",
-    "the system is online", "the database is ready", "the cache is warm",
-    "the queue is empty", "the job is complete", "the file exists",
+ATOMS_EN = [
+    "the sky is blue",
+    "water is wet",
+    "the sun is hot",
+    "gravity exists",
+    "light travels fast",
+    "sound needs a medium",
+    "energy is conserved",
+    "entropy increases",
+    "the earth orbits the sun",
+    "plants need sunlight",
+    "oxygen supports combustion",
+    "hydrogen is flammable",
+    "the system is online",
+    "the database is ready",
+    "the cache is warm",
+    "the queue is empty",
+    "the job is complete",
+    "the file exists",
 ]
 
 
@@ -139,8 +167,8 @@ def gen_logic_sample() -> dict:
     return {"proposition": proposition, "answer": answer}
 
 
-def gen_logic_samples(count: int=10000) -> list:
-    samples=[gen_logic_sample() for _ in range(count)]
+def gen_logic_samples(count: int = 10000) -> list:
+    samples = [gen_logic_sample() for _ in range(count)]
     logger.info("Generated %d boolean logic samples", len(samples))
     return samples
 
@@ -149,7 +177,7 @@ def gen_logic_samples(count: int=10000) -> list:
 # 2. Expanded knowledge data (add to the template-based generator in pipeline)
 # ---------------------------------------------------------------------------
 
-EXTRA_KNOWLEDGE_CN=[
+EXTRA_KNOWLEDGE_CN = [
     ("什么是算法", "算法是解决特定问题的步骤序列"),
     ("什么是数据库", "数据库是结构化存储和管理数据的系统"),
     ("什么是操作系统", "操作系统是管理计算机硬件和软件资源的程序"),
@@ -197,11 +225,14 @@ EXTRA_KNOWLEDGE_CN=[
     ("什么是5G", "5G是第五代移动通信技术"),
 ]
 
-EXTRA_KNOWLEDGE_EN=[
+EXTRA_KNOWLEDGE_EN = [
     ("what is an algorithm", "An algorithm is a sequence of steps to solve a problem"),
     ("what is a database", "A database is a structured system for storing data"),
     ("what is an operating system", "An OS manages computer hardware and software"),
-    ("what is a programming language", "A programming language formally communicates with computers"),
+    (
+        "what is a programming language",
+        "A programming language formally communicates with computers",
+    ),
     ("what is a variable", "A variable is a named memory location that stores data"),
     ("what is a function", "A function is a reusable block of code"),
     ("what is a class", "A class is a blueprint for creating objects"),
@@ -253,34 +284,38 @@ EXTRA_KNOWLEDGE_EN=[
 # 3. Write logic_train.json
 # ---------------------------------------------------------------------------
 
+
 def write_logic_train(samples: list, path: str):
     with open(path, "w", encoding="utf-8") as f:
         json.dump(samples, f, ensure_ascii=False, indent=2)
-    logger.info("Wrote %d logic samples to %s (%.1f KB)",
-                len(samples), path, os.path.getsize(path) / 1024)
+    logger.info(
+        "Wrote %d logic samples to %s (%.1f KB)", len(samples), path, os.path.getsize(path) / 1024
+    )
 
 
 # ---------------------------------------------------------------------------
 # 4. Write expanded knowledge data as separate file for the pipeline to load
 # ---------------------------------------------------------------------------
 
+
 def write_knowledge_extra(path: str):
-    pairs=[]
+    pairs = []
     for inp, out in EXTRA_KNOWLEDGE_CN:
         pairs.append({"input": inp, "output": out, "domain": "knowledge"})
     for inp, out in EXTRA_KNOWLEDGE_EN:
         pairs.append({"input": inp, "output": out, "domain": "knowledge"})
     with open(path, "w", encoding="utf-8") as f:
         json.dump(pairs, f, ensure_ascii=False, indent=2)
-    logger.info("Wrote %d knowledge pairs to %s (%.1f KB)",
-                len(pairs), path, os.path.getsize(path) / 1024)
+    logger.info(
+        "Wrote %d knowledge pairs to %s (%.1f KB)", len(pairs), path, os.path.getsize(path) / 1024
+    )
 
 
 # ---------------------------------------------------------------------------
 # 5. Write expanded math data (more variety)
 # ---------------------------------------------------------------------------
 
-MATH_TEMPLATES=[
+MATH_TEMPLATES = [
     "what is {a} {op} {b}",
     "calculate {a} {op} {b}",
     "{a} {op} {b}",
@@ -288,7 +323,7 @@ MATH_TEMPLATES=[
     "{a} {op} {b} =",
 ]
 
-MATH_OPS=[
+MATH_OPS = [
     ("+", lambda a, b: a + b),
     ("-", lambda a, b: a - b),
     ("*", lambda a, b: a * b),
@@ -296,8 +331,8 @@ MATH_OPS=[
 ]
 
 
-def gen_math_samples(count: int=20000) -> list:
-    samples=[]
+def gen_math_samples(count: int = 20000) -> list:
+    samples = []
     for _ in range(count):
         op_sym, op_fn = random.choice(MATH_OPS)
         if op_sym == "/":
@@ -320,13 +355,14 @@ def gen_math_samples(count: int=20000) -> list:
 
 
 def write_math_extra(path: str, samples: list):
-    existing=[]
+    existing = []
     if os.path.exists(path):
         with open(path, encoding="utf-8") as f:
             existing = json.load(f)
     combined = existing + samples
-    logger.info("Math dataset: %d existing + %d new = %d total",
-                len(existing), len(samples), len(combined))
+    logger.info(
+        "Math dataset: %d existing + %d new = %d total", len(existing), len(samples), len(combined)
+    )
     with open(path, "w", encoding="utf-8") as f:
         json.dump(combined, f, ensure_ascii=False, indent=2)
 
@@ -337,24 +373,63 @@ def write_math_extra(path: str, samples: list):
 #    supervised examples so the ED3N/GARDEN networks can learn analogous patterns.
 # ---------------------------------------------------------------------------
 
-NAMES=["Alice", "Bob", "Carol", "Dan", "Eve", "Frank", "Grace", "Heidi",
-         "Ivan", "Judy", "Mallory", "Niaj", "Olivia", "Peggy", "Rupert", "Sybil",
-         "Trent", "Victor", "Walter", "Yvonne"]
+NAMES = [
+    "Alice",
+    "Bob",
+    "Carol",
+    "Dan",
+    "Eve",
+    "Frank",
+    "Grace",
+    "Heidi",
+    "Ivan",
+    "Judy",
+    "Mallory",
+    "Niaj",
+    "Olivia",
+    "Peggy",
+    "Rupert",
+    "Sybil",
+    "Trent",
+    "Victor",
+    "Walter",
+    "Yvonne",
+]
 
-WEEKDAYS=["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-WEEKDAYS_ZH=["星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日"]
+WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+WEEKDAYS_ZH = ["星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日"]
 
-CATS=[("bird", "birds", "fly"), ("mammal", "mammals", "are warm-blooded"),
-        ("fish", "fish", "live in water"), ("insect", "insects", "have six legs"),
-        ("reptile", "reptiles", "are cold-blooded"), ("dog", "dogs", "are loyal"),
-        ("cat", "cats", "are independent"), ("tree", "trees", "produce oxygen")]
-MEMBERS=["a robin", "a sparrow", "a parrot", "a salmon", "a tuna", "an ant",
-           "a beetle", "a lizard", "a snake", "a husky", "a poodle", "an oak",
-           "a pine", "a Fido", "a Whiskers"]
+CATS = [
+    ("bird", "birds", "fly"),
+    ("mammal", "mammals", "are warm-blooded"),
+    ("fish", "fish", "live in water"),
+    ("insect", "insects", "have six legs"),
+    ("reptile", "reptiles", "are cold-blooded"),
+    ("dog", "dogs", "are loyal"),
+    ("cat", "cats", "are independent"),
+    ("tree", "trees", "produce oxygen"),
+]
+MEMBERS = [
+    "a robin",
+    "a sparrow",
+    "a parrot",
+    "a salmon",
+    "a tuna",
+    "an ant",
+    "a beetle",
+    "a lizard",
+    "a snake",
+    "a husky",
+    "a poodle",
+    "an oak",
+    "a pine",
+    "a Fido",
+    "a Whiskers",
+]
 
 
-def gen_transitive_samples(count: int=3000) -> list:
-    samples=[]
+def gen_transitive_samples(count: int = 3000) -> list:
+    samples = []
     for _ in range(count):
         n = random.randint(3, 5)
         # random ordering of names
@@ -364,7 +439,7 @@ def gen_transitive_samples(count: int=3000) -> list:
         random.shuffle(ranks)
         height = dict(zip(people, ranks))
         # build statements: a > b consistently with ranks
-        stmts=[]
+        stmts = []
         for i in range(n):
             for j in range(i + 1, n):
                 a, b = people[i], people[j]
@@ -374,28 +449,34 @@ def gen_transitive_samples(count: int=3000) -> list:
                     stmts.append(f"{b} is taller than {a}.")
         random.shuffle(stmts)
         tallest = max(height, key=lambda k: height[k])
-        q_en=" ".join(stmts) + " Who is the tallest?"
-        q_zh=" ".join(stmts) + " 谁最高？"
+        q_en = " ".join(stmts) + " Who is the tallest?"
+        q_zh = " ".join(stmts) + " 谁最高？"
         question = random.choice([q_en, q_zh])
-        samples.append({"input": question,
-                        "output": f"{tallest} is the tallest." if "谁" not in question else f"{tallest} 最高。",
-                        "domain": "reasoning"})
+        samples.append(
+            {
+                "input": question,
+                "output": (
+                    f"{tallest} is the tallest." if "谁" not in question else f"{tallest} 最高。"
+                ),
+                "domain": "reasoning",
+            }
+        )
     logger.info("Generated %d transitive reasoning samples", len(samples))
     return samples
 
 
-def gen_syllogism_samples(count: int=3000) -> list:
-    samples=[]
+def gen_syllogism_samples(count: int = 3000) -> list:
+    samples = []
     for _ in range(count):
         cat_sing, cat_plur, prop = random.choice(CATS)
         member = random.choice(MEMBERS)
         # positive: all X have prop; member is an X -> yes
-        q_en = (f"All {cat_plur} {prop}. {member.capitalize()} is a {cat_sing}. "
-                f"Is {member} {prop}?")
-        a_en="yes"
-        q_zh = (f"所有{cat_plur}都{prop}。{member}是一只{cat_sing}。"
-                f"{member}是否{prop}？")
-        a_zh="是"
+        q_en = (
+            f"All {cat_plur} {prop}. {member.capitalize()} is a {cat_sing}. " f"Is {member} {prop}?"
+        )
+        a_en = "yes"
+        q_zh = f"所有{cat_plur}都{prop}。{member}是一只{cat_sing}。" f"{member}是否{prop}？"
+        a_zh = "是"
         if random.random() < 0.5:
             samples.append({"input": q_en, "output": a_en, "domain": "reasoning"})
         else:
@@ -404,8 +485,8 @@ def gen_syllogism_samples(count: int=3000) -> list:
     return samples
 
 
-def gen_calendar_samples(count: int=2000) -> list:
-    samples=[]
+def gen_calendar_samples(count: int = 2000) -> list:
+    samples = []
     for _ in range(count):
         idx = random.randint(0, 6)
         today = WEEKDAYS[idx]
@@ -421,16 +502,15 @@ def gen_calendar_samples(count: int=2000) -> list:
     return samples
 
 
-def gen_quantity_samples(count: int=2000) -> list:
-    samples=[]
+def gen_quantity_samples(count: int = 2000) -> list:
+    samples = []
     for _ in range(count):
         have = random.randint(1, 20)
         give = random.randint(1, have)
         left = have - give
-        q_en = (f"{NAMES[0]} has {have} apples. {NAMES[0]} gives {give} away. "
-                f"How many left?")
+        q_en = f"{NAMES[0]} has {have} apples. {NAMES[0]} gives {give} away. " f"How many left?"
         a_en = str(left)
-        q_zh = (f"{NAMES[0]}有{have}个苹果，给了别人{give}个，还剩几个？")
+        q_zh = f"{NAMES[0]}有{have}个苹果，给了别人{give}个，还剩几个？"
         a_zh = str(left)
         if random.random() < 0.5:
             samples.append({"input": q_en, "output": a_en, "domain": "reasoning"})
@@ -440,16 +520,21 @@ def gen_quantity_samples(count: int=2000) -> list:
     return samples
 
 
-def gen_mass_trick_samples(count: int=1000) -> list:
-    samples=[]
-    things=[("feathers", "steel"), ("cotton", "iron"), ("wood", "stone"),
-              ("paper", "lead"), ("water", "mercury")]
+def gen_mass_trick_samples(count: int = 1000) -> list:
+    samples = []
+    things = [
+        ("feathers", "steel"),
+        ("cotton", "iron"),
+        ("wood", "stone"),
+        ("paper", "lead"),
+        ("water", "mercury"),
+    ]
     for _ in range(count):
         a, b = random.choice(things)
         q_en = f"Which is heavier: 1kg of {a} or 1kg of {b}?"
-        a_en="same"
+        a_en = "same"
         q_zh = f"1公斤{a}和1公斤{b}哪个更重？"
-        a_zh="一样重"
+        a_zh = "一样重"
         if random.random() < 0.5:
             samples.append({"input": q_en, "output": a_en, "domain": "reasoning"})
         else:
@@ -460,7 +545,7 @@ def gen_mass_trick_samples(count: int=1000) -> list:
 
 def generate_reasoning_data() -> list:
     """Generate structured reasoning training samples across 5 pattern families."""
-    samples=[]
+    samples = []
     samples += gen_transitive_samples(3000)
     samples += gen_syllogism_samples(3000)
     samples += gen_calendar_samples(2000)
@@ -473,8 +558,12 @@ def generate_reasoning_data() -> list:
 def write_reasoning_train(samples: list, path: str):
     with open(path, "w", encoding="utf-8") as f:
         json.dump(samples, f, ensure_ascii=False, indent=2)
-    logger.info("Wrote %d reasoning samples to %s (%.1f KB)",
-                len(samples), path, os.path.getsize(path) / 1024)
+    logger.info(
+        "Wrote %d reasoning samples to %s (%.1f KB)",
+        len(samples),
+        path,
+        os.path.getsize(path) / 1024,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -483,7 +572,7 @@ def write_reasoning_train(samples: list, path: str):
 #    queries to the correct subsystem (math / knowledge / reasoning / search).
 # ---------------------------------------------------------------------------
 
-TOOLS=[
+TOOLS = [
     ("calculator", "computes arithmetic expressions", "calc(2 + 3)"),
     ("search", "looks up information on the web", "search(weather today)"),
     ("reminder", "sets a timed reminder", "reminder(15m take break)"),
@@ -494,7 +583,7 @@ TOOLS=[
     ("note", "saves a note", "note(buy milk)"),
 ]
 
-DOMAIN_ROUTES=[
+DOMAIN_ROUTES = [
     ("calculate the integral of x squared", "math"),
     ("what is 15 times 23", "math"),
     ("who was the first president", "knowledge"),
@@ -508,17 +597,17 @@ DOMAIN_ROUTES=[
 
 def generate_tooluse_data() -> list:
     """Generate tool-use intent + domain-routing training samples."""
-    samples=[]
+    samples = []
     # Tool-use: "<request>" -> "tool: <name> -> <intent>"
     for _ in range(4000):
         name, desc, intent = random.choice(TOOLS)
-        req_templates_en=[
+        req_templates_en = [
             f"please use the {name} to {desc}",
             f"can you {intent}",
             f"I need you to {desc}, use {name}",
             f"run {name} for me",
         ]
-        req_templates_zh=[
+        req_templates_zh = [
             f"请用{name}帮我{desc}",
             f"帮我调用{name}",
             f"使用{name}：{intent}",
@@ -541,8 +630,12 @@ def generate_tooluse_data() -> list:
 def write_tooluse_train(samples: list, path: str):
     with open(path, "w", encoding="utf-8") as f:
         json.dump(samples, f, ensure_ascii=False, indent=2)
-    logger.info("Wrote %d tool-use samples to %s (%.1f KB)",
-                len(samples), path, os.path.getsize(path) / 1024)
+    logger.info(
+        "Wrote %d tool-use samples to %s (%.1f KB)",
+        len(samples),
+        path,
+        os.path.getsize(path) / 1024,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -555,7 +648,7 @@ def write_tooluse_train(samples: list, path: str):
 # A->C emerges via spike propagation) without baking knowledge facts into the
 # neural weights.
 
-ASSOC_DIMS={
+ASSOC_DIMS = {
     "taller": ("{a} is taller than {b}.", "{b} is shorter than {a}."),
     "shorter": ("{a} is shorter than {b}.", "{b} is taller than {a}."),
     "heavier": ("{a} is heavier than {b}.", "{b} is lighter than {a}."),
@@ -572,17 +665,55 @@ ASSOC_DIMS={
     "colder": ("{a} is colder than {b}.", "{b} is hotter than {a}."),
 }
 
-ASSOC_ENTITIES=[
-    "Alice", "Bob", "Carol", "Dave", "Eve", "Frank", "Grace", "Heidi",
-    "Ivan", "Judy", "Karl", "Laura", "Mike", "Nina", "Oscar", "Paula",
-    "Tom", "Jerry", "Spike", "Tyke", "Butch", "Tweety", "Sylvester",
-    "elephant", "mouse", "whale", "ant", "giraffe", "rabbit", "turtle",
-    "mountain", "hill", "building", "tree", "car", "bicycle", "train",
-    "cheetah", "snail", "eagle", "sloth", "professor", "student", "billionaire",
+ASSOC_ENTITIES = [
+    "Alice",
+    "Bob",
+    "Carol",
+    "Dave",
+    "Eve",
+    "Frank",
+    "Grace",
+    "Heidi",
+    "Ivan",
+    "Judy",
+    "Karl",
+    "Laura",
+    "Mike",
+    "Nina",
+    "Oscar",
+    "Paula",
+    "Tom",
+    "Jerry",
+    "Spike",
+    "Tyke",
+    "Butch",
+    "Tweety",
+    "Sylvester",
+    "elephant",
+    "mouse",
+    "whale",
+    "ant",
+    "giraffe",
+    "rabbit",
+    "turtle",
+    "mountain",
+    "hill",
+    "building",
+    "tree",
+    "car",
+    "bicycle",
+    "train",
+    "cheetah",
+    "snail",
+    "eagle",
+    "sloth",
+    "professor",
+    "student",
+    "billionaire",
 ]
 
 
-def generate_association_data(count: int=12000) -> list:
+def generate_association_data(count: int = 12000) -> list:
     """Generate pairwise relational association samples for SNN training.
 
     Each sample is a single directional relation between two entities, so the
@@ -590,17 +721,19 @@ def generate_association_data(count: int=12000) -> list:
     many such pairs over a shared ranking (A>B, B>C, ...) yields a transitive
     chain in the neural graph without storing the fact in the KB.
     """
-    samples=[]
+    samples = []
     dims = list(ASSOC_DIMS.items())
     for _ in range(count):
         dim, (tmpl_a, tmpl_b) = random.choice(dims)
         a, b = random.sample(ASSOC_ENTITIES, 2)
-        samples.append({
-            "input": tmpl_a.format(a=a, b=b),
-            "output": tmpl_b.format(a=a, b=b),
-            "domain": "association",
-            "relation": dim,
-        })
+        samples.append(
+            {
+                "input": tmpl_a.format(a=a, b=b),
+                "output": tmpl_b.format(a=a, b=b),
+                "domain": "association",
+                "relation": dim,
+            }
+        )
     logger.info("Total association samples: %d", len(samples))
     return samples
 
@@ -608,13 +741,18 @@ def generate_association_data(count: int=12000) -> list:
 def write_association_train(samples: list, path: str):
     with open(path, "w", encoding="utf-8") as f:
         json.dump(samples, f, ensure_ascii=False, indent=2)
-    logger.info("Wrote %d association samples to %s (%.1f KB)",
-                len(samples), path, os.path.getsize(path) / 1024)
+    logger.info(
+        "Wrote %d association samples to %s (%.1f KB)",
+        len(samples),
+        path,
+        os.path.getsize(path) / 1024,
+    )
 
 
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+
 
 def main():
     os.makedirs(DATA_DIR, exist_ok=True)
@@ -655,7 +793,9 @@ def main():
     logger.info("  arithmetic_train:    +20,000 math samples")
     logger.info("  reasoning_train:     %d reasoning samples" % len(reasoning_samples))
     logger.info("  tooluse_train:       %d tool-use/domain-routing samples" % len(tooluse_samples))
-    logger.info("  association_train:   %d relational association samples" % len(association_samples))
+    logger.info(
+        "  association_train:   %d relational association samples" % len(association_samples)
+    )
 
 
 if __name__ == "__main__":

@@ -5,36 +5,36 @@ Phase 6-9: Build vocabulary, train concept mapper, test generation + recognition
 
 Usage: python scripts/train_gvv.py
 """
-import sys
-import os
-import time
-import json
+
 import glob
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'apps', 'backend', 'src'))
+import json
+import os
+import sys
+import time
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"))
 
 import numpy as np
+from ai.multimodal.primitives.concept_mapper import ConceptMapper
+from ai.multimodal.primitives.differentiable_renderer import DifferentiableRenderer
+from ai.multimodal.primitives.geometric_vocabulary import GeometricVocabulary
+from ai.multimodal.primitives.instance_optimizer import InstanceOptimizer
+from ai.multimodal.primitives.primitive_renderer import PrimitiveRenderer
+from ai.multimodal.primitives.primitive_types import TOTAL_DIM, DrawingInstructions
+from ai.multimodal.recognition.geometric_recognizer import GeometricRecognizer
 from PIL import Image
 
-from ai.multimodal.primitives.geometric_vocabulary import GeometricVocabulary
-from ai.multimodal.primitives.concept_mapper import ConceptMapper
-from ai.multimodal.primitives.instance_optimizer import InstanceOptimizer
-from ai.multimodal.recognition.geometric_recognizer import GeometricRecognizer
-from ai.multimodal.primitives.differentiable_renderer import DifferentiableRenderer
-from ai.multimodal.primitives.primitive_renderer import PrimitiveRenderer
-from ai.multimodal.primitives.primitive_types import DrawingInstructions, TOTAL_DIM
-
-CIFAR_DIR="D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
-CLASSES=["airplane", "automobile", "bird", "cat", "deer",
-           "dog", "frog", "horse", "ship", "truck"]
-MODEL_DIR="D:/Projects/Unified-AI-Project/models"
-DATA_DIR="D:/Projects/Unified-AI-Project/data/multimodal/gvv"
+CIFAR_DIR = "D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
+CLASSES = ["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
+MODEL_DIR = "D:/Projects/Unified-AI-Project/models"
+DATA_DIR = "D:/Projects/Unified-AI-Project/data/multimodal/gvv"
 CANVAS_SIZE = (128, 128)
 
 
 def load_cifar_images(n_per_class=10):
     """Load n images per class from CIFAR-10."""
-    images=[]
-    labels=[]
+    images = []
+    labels = []
     for ci, cls in enumerate(CLASSES):
         cls_dir = os.path.join(CIFAR_DIR, cls)
         files = sorted(glob.glob(os.path.join(cls_dir, "*.npy")))[:n_per_class]
@@ -63,7 +63,7 @@ def optimize_all_images(images, labels, n_iterations=20):
         return opt_vecs, opt_labels
 
     renderer = DifferentiableRenderer(CANVAS_SIZE)
-    optimized=[]
+    optimized = []
 
     print(f"Optimizing {len(images)} images ({n_iterations} iterations each)...")
     t0 = time.time()
@@ -75,9 +75,9 @@ def optimize_all_images(images, labels, n_iterations=20):
 
         # Pixel MSE optimization
         best_vec = vec.copy()
-        best_loss = float('inf')
-        eps=0.015
-        n_probes=8
+        best_loss = float("inf")
+        eps = 0.015
+        n_probes = 8
 
         for it in range(n_iterations):
             rendered = renderer.render(vec)
@@ -119,15 +119,17 @@ def build_concept_embeddings():
     """Build CLIP embeddings for concept names."""
     try:
         from ai.multimodal.semantic_visual import SemanticVisualEncoder
+
         encoder = SemanticVisualEncoder()
     except Exception:
         print("CLIP unavailable, using random embeddings for concepts")
         rng = np.random.default_rng(42)
         return {cls: rng.random(512).astype(np.float32) for cls in CLASSES}
 
-    embeddings={}
+    embeddings = {}
     for cls in CLASSES:
         import io
+
         # Create a simple image with the concept name
         # For now, use a placeholder — in production, encode the text
         # CLIP text encoding requires tokenizer, which may not be available
@@ -141,7 +143,7 @@ def evaluate_generation(optimizer, concept_mapper, images, labels, n_eval=10):
     print("\n=== Generation Evaluation ===")
     pil_renderer = PrimitiveRenderer(CANVAS_SIZE)
 
-    sims=[]
+    sims = []
     for i in range(min(n_eval, len(images))):
         # Generate from concept
         concept_name = CLASSES[labels[i]]
@@ -155,16 +157,17 @@ def evaluate_generation(optimizer, concept_mapper, images, labels, n_eval=10):
 
         # Optimize for this specific image
         result = optimizer.optimize_for_image(
-            images[i], concept_name=concept_name,
-            n_iterations=20, verbose=False
+            images[i], concept_name=concept_name, n_iterations=20, verbose=False
         )
 
         # Compute pixel similarity
         rendered_arr = np.array(result["rendered"], dtype=np.float32) / 255.0
         orig_arr = images[i]
         mse = float(np.mean((rendered_arr - orig_arr) ** 2))
-        cos_sim = float(np.dot(rendered_arr.flatten(), orig_arr.flatten()) /
-                        (np.linalg.norm(rendered_arr.flatten()) * np.linalg.norm(orig_arr.flatten()) + 1e-8))
+        cos_sim = float(
+            np.dot(rendered_arr.flatten(), orig_arr.flatten())
+            / (np.linalg.norm(rendered_arr.flatten()) * np.linalg.norm(orig_arr.flatten()) + 1e-8)
+        )
 
         sims.append(cos_sim)
 
@@ -186,7 +189,7 @@ def evaluate_recognition(recognizer, images, labels, n_eval=20):
     """Evaluate image recognition."""
     print("\n=== Recognition Evaluation ===")
 
-    correct=0
+    correct = 0
     total = min(n_eval, len(images))
 
     for i in range(total):
@@ -198,8 +201,10 @@ def evaluate_recognition(recognizer, images, labels, n_eval=20):
             correct += 1
 
         if (i + 1) % 5 == 0:
-            print(f"  [{i+1}/{total}] actual={actual} predicted={predicted} "
-                  f"conf={result['confidence']:.3f}")
+            print(
+                f"  [{i+1}/{total}] actual={actual} predicted={predicted} "
+                f"conf={result['confidence']:.3f}"
+            )
 
     accuracy = correct / total
     print(f"Recognition accuracy: {correct}/{total} = {accuracy:.2%}")
@@ -248,13 +253,15 @@ def main():
 
     # 8. Summary
     print("\n=== Summary ===")
-    print(f"Vocabulary: {len(vocab.get_visual_words())} visual words, "
-          f"{len(vocab._concept_distributions)} concepts")
+    print(
+        f"Vocabulary: {len(vocab.get_visual_words())} visual words, "
+        f"{len(vocab._concept_distributions)} concepts"
+    )
     print(f"Generation cosine similarity: {gen_sim:.4f}")
     print(f"Recognition accuracy: {rec_acc:.2%}")
 
     # Save results
-    results={
+    results = {
         "n_visual_words": len(vocab.get_visual_words()),
         "n_concepts": len(vocab._concept_distributions),
         "generation_cos_sim": float(gen_sim),

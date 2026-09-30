@@ -196,10 +196,7 @@ class SecurityAudit:
                 "timestamp": self.audit_results["timestamp"],
             },
             "vulnerabilities_by_severity": {
-                k: [
-                    {"file": v["file"], "line": v["line"], "type": v["type"]}
-                    for v in vals
-                ]
+                k: [{"file": v["file"], "line": v["line"], "type": v["type"]} for v in vals]
                 for k, vals in vulns_by_sev.items()
             },
             "recommendations": self.audit_results["recommendations"],

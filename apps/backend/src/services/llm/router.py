@@ -20,7 +20,18 @@ import random
 import re
 import time
 from collections import OrderedDict
-from typing import TYPE_CHECKING, Any, Callable, Coroutine, Dict, List, NamedTuple, Optional, Tuple, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Coroutine,
+    Dict,
+    List,
+    NamedTuple,
+    Optional,
+    Tuple,
+    cast,
+)
 
 from core.interfaces.protocols import ChatMessage, ChatResponse, LLMResponse
 from core.interfaces.service_registry import get_registry
@@ -33,8 +44,8 @@ from core.system.config.network_defaults import (
     DEFAULT_OPENAI_MODEL,
     LLAMACPP_HOST,
     LLM_REQUEST_TIMEOUT,
-    OLLAMA_HOST,
     OPENAI_API_BASE,
+    get_ollama_base_url,
 )
 from core.utils import any_keyword, safe_error
 
@@ -68,6 +79,10 @@ from ai.meta.priority_negotiator import (
     meta_calibration_voter,
 )
 from core.system.state_store.global_store import state_store
+from services.llm.capability_catalog import (
+    build_capability_snapshot,
+    render_capability_response,
+)
 
 # Prompt builder utilities
 from services.llm.prompt_builder import (
@@ -75,10 +90,6 @@ from services.llm.prompt_builder import (
     construct_angela_prompt,
     get_biological_state,
     get_formula_summaries,
-)
-from services.llm.capability_catalog import (
-    build_capability_snapshot,
-    render_capability_response,
 )
 from services.llm.providers.anthropic import AnthropicAPIBackend
 
@@ -371,9 +382,7 @@ class AngelaLLMService:
 
         self._routing_engine = RoutingEngine()
         self._routing_manifest = RouteManifest()
-        self._use_routing_engine = (
-            os.environ.get("ANGELA_ROUTING_ENGINE", "1") != "0"
-        )
+        self._use_routing_engine = os.environ.get("ANGELA_ROUTING_ENGINE", "1") != "0"
         self._register_route_connectors()
 
     # ------------------------------------------------------------------
@@ -442,7 +451,8 @@ class AngelaLLMService:
         }
         try:
             ctx_hash = hashlib.md5(
-                json.dumps(relevant, sort_keys=True, default=str).encode("utf-8")
+                json.dumps(relevant, sort_keys=True, default=str).encode("utf-8"),
+                usedforsecurity=False,
             ).hexdigest()[:8]
         except Exception:
             ctx_hash = "noc"
@@ -702,7 +712,7 @@ class AngelaLLMService:
         return {
             "ollama": {
                 "provider": "ollama",
-                "base_url": OLLAMA_HOST,
+                "base_url": get_ollama_base_url(),
                 "model_name": DEFAULT_OLLAMA_MODEL,
                 "enabled": True,
             },
@@ -856,7 +866,7 @@ class AngelaLLMService:
                 logger.info(f"跳過 Ollama {model_name}（硬件不足，需 {need}GB）")
                 return
             self.backends[LLMBackend.OLLAMA] = OllamaBackend(
-                base_url=base_url or OLLAMA_HOST,
+                base_url=base_url or get_ollama_base_url(),
                 model=model_name or DEFAULT_OLLAMA_MODEL,
                 api_key=api_key,
                 timeout=config.get("timeout", LLM_REQUEST_TIMEOUT),
@@ -1119,10 +1129,10 @@ class AngelaLLMService:
             from services.handlers.civil_model_handler import CivilModelHandler
             from services.handlers.code_execution_handler import CodeExecutionHandler
             from services.handlers.file_operation_handler import FileOperationHandler
+            from services.handlers.image_generation_handler import ImageGenerationHandler
             from services.handlers.learning_handler import LearningHandler
             from services.handlers.system_command_handler import SystemCommandHandler
             from services.handlers.task_manager_handler import TaskManagerHandler
-            from services.handlers.image_generation_handler import ImageGenerationHandler
             from services.handlers.vision_handler import VisionHandler
             from services.handlers.web_search_handler import WebSearchHandler
 
@@ -1135,9 +1145,7 @@ class AngelaLLMService:
             bus.register_handler("system_cmd", SystemCommandHandler(), ["system"])
             bus.register_handler("task_mgr", TaskManagerHandler(), ["task"])
             bus.register_handler("vision", VisionHandler(), ["vision"])
-            bus.register_handler(
-                "image_generate", ImageGenerationHandler(), ["image_generation"]
-            )
+            bus.register_handler("image_generate", ImageGenerationHandler(), ["image_generation"])
             bus.register_handler("learning", LearningHandler(), ["learn", "remember"])
             bus.register_handler(
                 "civil",
@@ -1310,15 +1318,11 @@ class AngelaLLMService:
         # Deterministic math: prefer Pipeline's pre-verified result;
         # fall back to MathVerifier when Pipeline context is unavailable
         # (e.g. direct Router calls without Pipeline).
-        pipeline_math_result = await self._pipeline_math_response(
-            user_message, context, start_time
-        )
+        pipeline_math_result = await self._pipeline_math_response(user_message, context, start_time)
         if pipeline_math_result is not None:
             return pipeline_math_result
 
-        math_backup_result = await self._math_backup_response(
-            user_message, context, start_time
-        )
+        math_backup_result = await self._math_backup_response(user_message, context, start_time)
         if math_backup_result is not None:
             return math_backup_result
 
@@ -1533,23 +1537,17 @@ class AngelaLLMService:
     async def _connector_pipeline_math(
         self, user_message: str, context: Dict[str, Any]
     ) -> Optional[LLMResponse]:
-        return await self._pipeline_math_response(
-            user_message, context, self._route_start(context)
-        )
+        return await self._pipeline_math_response(user_message, context, self._route_start(context))
 
     async def _connector_math_backup(
         self, user_message: str, context: Dict[str, Any]
     ) -> Optional[LLMResponse]:
-        return await self._math_backup_response(
-            user_message, context, self._route_start(context)
-        )
+        return await self._math_backup_response(user_message, context, self._route_start(context))
 
     async def _connector_template_match(
         self, user_message: str, context: Dict[str, Any]
     ) -> Optional[LLMResponse]:
-        return await self._try_template_match(
-            user_message, context, self._route_start(context)
-        )
+        return await self._try_template_match(user_message, context, self._route_start(context))
 
     async def _connector_ensemble(
         self, user_message: str, context: Dict[str, Any]
@@ -1559,16 +1557,12 @@ class AngelaLLMService:
     async def _connector_memory_retrieval(
         self, user_message: str, context: Dict[str, Any]
     ) -> Optional[LLMResponse]:
-        return await self._try_memory_retrieval(
-            user_message, context, self._route_start(context)
-        )
+        return await self._try_memory_retrieval(user_message, context, self._route_start(context))
 
     async def _connector_knowledge(
         self, user_message: str, context: Dict[str, Any]
     ) -> Optional[LLMResponse]:
-        return await self._try_knowledge(
-            user_message, context, self._route_start(context)
-        )
+        return await self._try_knowledge(user_message, context, self._route_start(context))
 
     async def _connector_neural_bridge(
         self, user_message: str, context: Dict[str, Any]
@@ -1578,9 +1572,7 @@ class AngelaLLMService:
     async def _connector_main_llm(
         self, user_message: str, context: Dict[str, Any]
     ) -> Optional[LLMResponse]:
-        return await self._route_step_main_llm(
-            user_message, context, self._route_start(context)
-        )
+        return await self._route_step_main_llm(user_message, context, self._route_start(context))
 
     async def _connector_fallback(
         self, user_message: str, context: Dict[str, Any]
@@ -1778,8 +1770,8 @@ class AngelaLLMService:
         # deterministic layers / QA shapes stay on unified
         if _re.search(r"\d\s*[+\-*/^]|(true|false)\b|=", text):
             return None
-        if getattr(self, "semantic_qa", None) is not None:
-            semantic_qa = getattr(self, "semantic_qa")
+        semantic_qa = getattr(self, "semantic_qa", None)
+        if semantic_qa is not None:
             try:
                 if semantic_qa.answer(text.rstrip("?？= ")) is not None:
                     return None

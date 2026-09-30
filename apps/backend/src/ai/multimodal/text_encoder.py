@@ -82,8 +82,10 @@ class TextEncoder:
             from transformers import CLIPModel, CLIPProcessor
 
             model_name = "openai/clip-vit-base-patch32"
-            self._model = CLIPModel.from_pretrained(model_name)
-            self._processor = CLIPProcessor.from_pretrained(model_name)
+            # Supply-chain pin: immutable commit sha (HF repo HEAD as of 2026-09-28).
+            _REVISION = "3d74acf9a28c67741b2f4f2ea7635f0aaf6f0268"
+            self._model = CLIPModel.from_pretrained(model_name, revision=_REVISION)
+            self._processor = CLIPProcessor.from_pretrained(model_name, revision=_REVISION)
             self._model.eval()
             if torch.cuda.is_available():
                 self._model = self._model.cuda()  # type: ignore[call-arg]

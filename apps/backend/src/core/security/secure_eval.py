@@ -327,7 +327,7 @@ def safe_eval(
 
     try:
         code = compile(tree, "<safe_eval>", "eval")
-        result = eval(code, {"__builtins__": {}}, names)
+        result = eval(code, {"__builtins__": {}}, names)  # nosec B307 - AST whitelist sandbox
         return EvalResult(success=True, result=result, expression=expression)
     except (
         ValueError,

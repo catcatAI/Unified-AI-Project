@@ -9,7 +9,9 @@ MMLU 100 中 STEM/人文/社科 75 題因知識庫僅 81 條目未命中（25%�
 資源：20 條新增 + 100 題重測，<1s，<50MB。
 """
 
-import os, sys, time
+import os
+import sys
+import time
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps/backend/src"))
 

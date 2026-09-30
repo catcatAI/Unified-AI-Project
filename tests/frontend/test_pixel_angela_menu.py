@@ -34,7 +34,9 @@ WIRED_LABELS = ("Pixel Physics", "Default Render", "Exit")
 
 
 def _menu_source() -> str:
-    return SOURCE[SOURCE.index("def _init_tiered_menu(self):"): SOURCE.index("def _on_tray_activated")]
+    return SOURCE[
+        SOURCE.index("def _init_tiered_menu(self):") : SOURCE.index("def _on_tray_activated")
+    ]
 
 
 def _add_action_labels() -> list:
@@ -84,12 +86,12 @@ class TestPixelAngelaMenu:
         assert label in _add_action_labels()
 
     def test_pixel_physics_toggles_real_renderer_state(self):
-        handler = SOURCE[SOURCE.index("def _on_toggle_pixel_physics"):]
+        handler = SOURCE[SOURCE.index("def _on_toggle_pixel_physics") :]
         handler = handler[: handler.index("def _on_reset_render")]
         assert "self.physics_enabled" in handler
 
     def test_physics_loop_honours_the_flag(self):
-        loop = SOURCE[SOURCE.index("def physics_and_render_loop"):]
+        loop = SOURCE[SOURCE.index("def physics_and_render_loop") :]
         loop = loop[: loop.index("def show_native_input")]
         assert "if not self.physics_enabled:" in loop, (
             "the flag must short-circuit the physics integration, otherwise the "
@@ -98,7 +100,7 @@ class TestPixelAngelaMenu:
         assert "self.dna.apply_dynamics" in loop
 
     def test_default_render_resets_real_state(self):
-        handler = SOURCE[SOURCE.index("def _on_reset_render"):]
+        handler = SOURCE[SOURCE.index("def _on_reset_render") :]
         handler = handler[: handler.index("def _on_tray_activated")]
         for field in ("angela_pos", "bubble_stack", "state", "physics_enabled"):
             assert field in handler, f"Default Render does not reset {field}"
@@ -110,15 +112,15 @@ class TestPixelAngelaMenu:
 class TestPixelAngelaTactilePath:
     def test_stiffness_is_bound_before_use(self):
         """stiffness used to be bound inside the bounds check and read outside."""
-        press = SOURCE[SOURCE.index("def mousePressEvent"):]
+        press = SOURCE[SOURCE.index("def mousePressEvent") :]
         press = press[: press.index("def update_state")]
-        assert re.search(r"stiffness\s*=\s*0\.0", press), (
-            "stiffness must be initialised before the hit-test branch reads it"
-        )
+        assert re.search(
+            r"stiffness\s*=\s*0\.0", press
+        ), "stiffness must be initialised before the hit-test branch reads it"
 
     def test_tactile_send_goes_through_the_client(self):
         """Reaching into client.ws raises when the socket is reconnecting."""
-        press = SOURCE[SOURCE.index("def mousePressEvent"):]
+        press = SOURCE[SOURCE.index("def mousePressEvent") :]
         press = press[: press.index("def update_state")]
         assert "self.client.ws.send(" not in press, "must not touch client.ws directly"
         assert "self.client.send_event(" in press

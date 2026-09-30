@@ -481,7 +481,9 @@ class CodeExecutionHandler:
             )
 
         def _run_exec():
-            exec(code, restricted_globals)
+            # Code-execution tool: _validate_code_safety() already vetted the
+            # snippet and builtins are whitelist-only — exec is the feature.
+            exec(code, restricted_globals)  # nosec B102
 
         try:
             sys.stdout = captured_out

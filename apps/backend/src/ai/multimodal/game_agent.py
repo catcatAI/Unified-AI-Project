@@ -17,17 +17,21 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Literal, Optional, Tuple
 
 import numpy as np
-from PIL import Image
 from integrations.luanti_connector import (
     GameSnapshot,
     LuantiConfig,
     LuantiConnector,
     SyncLuantiConnector,
 )
+from PIL import Image
 
-from .foveated_sampler import FoveatedSampler, SamplingConfig, SamplingStrategy, create_sampler_from_config
+from .foveated_sampler import (
+    FoveatedSampler,
+    SamplingConfig,
+    SamplingStrategy,
+    create_sampler_from_config,
+)
 from .game_memory_bridge import GameMemoryBridge, MockHAMManager
-from .visual_encoder import VisualEncoder
 from .game_planner import GamePlanner, GoalManager, GoalType, PlannerConfig, PlanningContext
 from .game_policy import GamePolicy, PolicyConfig, PolicyOutput
 from .game_strategy import GameStrategy, StrategyConfig
@@ -41,6 +45,7 @@ from .game_structs import (
 from .game_task_executor import ExecutorConfig, GameTaskExecutor, SkillContext
 from .llm_game_interface import LLMConfig, LLMGameInterface, RuleBasedFallback
 from .skill_selector import SelectorConfig, SkillSelector
+from .visual_encoder import VisualEncoder
 
 logger = logging.getLogger(__name__)
 
@@ -446,9 +451,7 @@ class GameAgent:
             self._state.visual.features = self._visual_encoder.encode_from_pil(img)
         except Exception as e:
             logger.error("Visual encoding failed, falling back to zeros: %s", e)
-            self._state.visual.features = np.zeros(
-                self.config.policy_latent_dim, dtype=np.float32
-            )
+            self._state.visual.features = np.zeros(self.config.policy_latent_dim, dtype=np.float32)
         finally:
             self._pending_frame = None
 
@@ -574,7 +577,10 @@ class GameAgent:
                 self._state.proprioception.position if self._state.proprioception else (0, 0, 0)
             ),
             action="tick",
-            context={"tick": self._tick, "goals": [g.value for g, _, _ in self._goal_manager.active_goals]},
+            context={
+                "tick": self._tick,
+                "goals": [g.value for g, _, _ in self._goal_manager.active_goals],
+            },
             outcome={"actions": list(self._pending_actions.keys())},
             reward=0.0,
             tags=["tick"],

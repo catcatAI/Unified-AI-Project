@@ -23,7 +23,9 @@ CACHE = {"visual": "data/.cache/clip_emb_500.npz", "audio": "data/.cache/whisper
 def get_embeddings(modality="visual", per_class=50):
     import numpy as np
 
-    cache = f"data/.cache/clip_emb_{10 * per_class}.npz" if modality == "visual" else CACHE[modality]
+    cache = (
+        f"data/.cache/clip_emb_{10 * per_class}.npz" if modality == "visual" else CACHE[modality]
+    )
     if modality == "audio":
         # 音頻恆全 50 類；per_class 截每類條數（ESC 每類僅 40）
         pc = max(1, min(per_class, 40))
@@ -42,7 +44,6 @@ def _encode_audio(cache, per_class=40):
     import csv
 
     import numpy as np
-
     import torch
     from scipy.io import wavfile
     from scipy.signal import resample
@@ -61,6 +62,7 @@ def _encode_audio(cache, per_class=40):
         for fp in files:
             try:
                 import psutil
+
                 if psutil.virtual_memory().percent > 85:
                     print("  ⚠️ RAM >85% 暫停 1s")
                     time.sleep(1)
@@ -86,10 +88,9 @@ def _encode_audio(cache, per_class=40):
 
 def _encode_visual(cache, per_class=50):
     import numpy as np
-
+    import PIL.Image
     import torch
     from transformers import CLIPModel, CLIPProcessor
-    import PIL.Image
 
     model_id = "openai/clip-vit-base-patch32"
     model = CLIPModel.from_pretrained(model_id, local_files_only=True)
@@ -105,13 +106,16 @@ def _encode_visual(cache, per_class=50):
         for bi in range(0, len(names), 16):
             try:
                 import psutil
+
                 if psutil.virtual_memory().percent > 85:
                     print("  ⚠️ RAM >85% 暫停 1s")
                     time.sleep(1)
             except Exception:
                 pass
-            imgs = [PIL.Image.fromarray(np.load(os.path.join(cdir, f)).astype("uint8"))
-                    for f in names[bi:bi + 16]]
+            imgs = [
+                PIL.Image.fromarray(np.load(os.path.join(cdir, f)).astype("uint8"))
+                for f in names[bi : bi + 16]
+            ]
             inp = proc(images=imgs, return_tensors="pt")
             with torch.no_grad():
                 v = model.get_image_features(**inp).pooler_output.numpy()
@@ -138,6 +142,7 @@ def metrics(Z, y):
         for j2 in range(i + 1, n):
             (same if y[i] == y[j2] else cross).append(float(d[j2]))
     import statistics
+
     return statistics.mean(same), statistics.mean(cross), hits / n
 
 
@@ -153,6 +158,7 @@ def main():
     args = ap.parse_args()
 
     from core.backbone.hardware import HardwareProfile
+
     hw = HardwareProfile.detect()
     print(f"真實對比訓練[{args.modality}] 硬件規格自適應: GPU={hw['gpu']} RAM={hw['ram_gb']:.1f}")
 
@@ -178,8 +184,8 @@ def main():
         grad = np.zeros_like(W)
         loss = 0.0
         for i in range(0, len(Zn), 40):
-            a = Zn[i:i + 40]
-            pos_m = (ytr[i:i + 40, None] == ytr[None, :])
+            a = Zn[i : i + 40]
+            pos_m = ytr[i : i + 40, None] == ytr[None, :]
             neg_m = ~pos_m
             for k in range(len(a)):
                 pi = np.where(pos_m[k])[0]
@@ -201,7 +207,7 @@ def main():
             print(f"  iter {it+1}/{iters} loss {loss:.1f} ({time.time()-t0:.1f}s)")
     print(f"  訓練 {iters} 步 ({time.time()-t0:.1f}s)")
 
-    Zte = (Xte @ W)
+    Zte = Xte @ W
     Zte /= np.linalg.norm(Zte, axis=1, keepdims=True) + 1e-9
     s1, c1, r1 = metrics(Zte, yte)
     print(f"  訓練後 held-out({len(te)})：同類距 {s1:.3f} 跨類距 {c1:.3f} top1 召回 {r1:.0%}")

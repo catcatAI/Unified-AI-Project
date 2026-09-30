@@ -1,9 +1,7 @@
 # Angela AI — 理想架構規範（Target Architecture）
 
-**版本**: 1.0.0  
-**最後更新**: 2026-06-25 (v2 — §2.2/§4.4 實際狀態同步;
-creation/optimization/tools 已移除)  
-**狀態**: Target / Blueprint  
+**版本**: 1.0.0 **最後更新**: 2026-06-25 (v2 — §2.2/§4.4 實際狀態同步;
+creation/optimization/tools 已移除) **狀態**: Target / Blueprint
 **目的**: 定義 Unified AI
 Project 應有的理想狀態 — 完整、全面、細節、細緻的架構規範
 

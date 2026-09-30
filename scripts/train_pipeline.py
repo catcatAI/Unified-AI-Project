@@ -1812,9 +1812,7 @@ def _ensure_daily_data() -> None:
             [sys.executable, script], capture_output=True, text=True, timeout=600
         ).returncode
         if code != 0:
-            logger.warning(
-                "Daily-dialogue auto-download failed; training continues without it."
-            )
+            logger.warning("Daily-dialogue auto-download failed; training continues without it.")
     except Exception as e:  # noqa: BLE001 - network/timer failures must not abort training
         logger.warning("Daily-dialogue auto-download skipped: %s", e)
 

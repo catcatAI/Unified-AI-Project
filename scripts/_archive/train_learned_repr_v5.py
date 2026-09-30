@@ -5,26 +5,29 @@ This gives us:
 - Recognition: image → CLIP → classify (90%)
 - Generation: CLIP latent → decoder → image (learned)
 """
-import sys
-import os
-import time
+
 import io
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'apps', 'backend', 'src'))
+import os
+import sys
+import time
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"))
+
+import glob
 
 import numpy as np
-import glob
-from PIL import Image
 from ai.multimodal.semantic_visual import SemanticVisualEncoder
+from PIL import Image
 
-CIFAR_DIR="D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
-CLASSES=["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
-IMG_DIM=32 * 32 * 3
-CLIP_DIM=512
+CIFAR_DIR = "D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
+CLASSES = ["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
+IMG_DIM = 32 * 32 * 3
+CLIP_DIM = 512
 
 
 def load_cifar(n_per_class=50):
-    images=[]
-    labels=[]
+    images = []
+    labels = []
     for ci, cls in enumerate(CLASSES):
         cls_dir = os.path.join(CIFAR_DIR, cls)
         files = sorted(glob.glob(os.path.join(cls_dir, "*.npy")))[:n_per_class]
@@ -39,7 +42,7 @@ def load_cifar(n_per_class=50):
 
 def encode_images(encoder, pil_images):
     """Encode PIL images with CLIP."""
-    vecs=[]
+    vecs = []
     for i, img in enumerate(pil_images):
         buf = io.BytesIO()
         img.save(buf, format="PNG")
@@ -54,6 +57,7 @@ def main():
     print("Loading CLIP...")
     clip_encoder = SemanticVisualEncoder()
     from ai.multimodal.semantic_visual import _lazy_init_clip
+
     model, _ = _lazy_init_clip()
     if model is None:
         print("CLIP failed!")
@@ -65,8 +69,8 @@ def main():
 
     # Stratified split
     rng = np.random.default_rng(42)
-    train_idx=[]
-    test_idx=[]
+    train_idx = []
+    test_idx = []
     for c in range(10):
         idxs = np.where(all_labels == c)[0]
         rng.shuffle(idxs)
@@ -79,10 +83,14 @@ def main():
 
     # Convert to PIL for CLIP encoding
     print("Converting to PIL...")
-    train_pil=[Image.fromarray((img.reshape(32, 32, 3) * 255).astype(np.uint8)).resize((224, 224))
-                 for img in train_imgs]
-    test_pil=[Image.fromarray((img.reshape(32, 32, 3) * 255).astype(np.uint8)).resize((224, 224))
-                for img in test_imgs]
+    train_pil = [
+        Image.fromarray((img.reshape(32, 32, 3) * 255).astype(np.uint8)).resize((224, 224))
+        for img in train_imgs
+    ]
+    test_pil = [
+        Image.fromarray((img.reshape(32, 32, 3) * 255).astype(np.uint8)).resize((224, 224))
+        for img in test_imgs
+    ]
 
     # Encode with CLIP
     print("Encoding training images with CLIP...")
@@ -98,15 +106,14 @@ def main():
     Y = np.zeros((len(train_clip), 10), dtype=np.float32)
     for i, l in enumerate(train_labels):
         Y[i, l] = 1.0
-    W_clf = np.linalg.solve(train_clip.T @ train_clip + 1e-4 * np.eye(CLIP_DIM),
-                            train_clip.T @ Y)
+    W_clf = np.linalg.solve(train_clip.T @ train_clip + 1e-4 * np.eye(CLIP_DIM), train_clip.T @ Y)
     preds = np.argmax(test_clip @ W_clf, axis=1)
     correct = np.sum(preds == test_labels)
     print(f"Recognition: {correct}/{len(test_labels)} = {correct/len(test_labels):.1%}")
 
     # Decoder: CLIP features → image (analytical solution)
     print("\n=== Decoder (analytical: CLIP → image) ===")
-    reg=10.0
+    reg = 10.0
     CtC = train_clip.T @ train_clip + reg * np.eye(CLIP_DIM)
     CtI = train_clip.T @ train_imgs  # (512, 3072)
     W_dec = np.linalg.solve(CtC, CtI).T  # (3072, 512)
@@ -114,18 +121,22 @@ def main():
 
     # Test reconstruction
     print("\n=== Reconstruction ===")
-    output_dir="data/multimodal/gvv/learned_test"
+    output_dir = "data/multimodal/gvv/learned_test"
     os.makedirs(output_dir, exist_ok=True)
 
-    total_mse=0.0
+    total_mse = 0.0
     for i in range(10):
         raw = test_clip[i] @ W_dec.T + b_dec
         recon = np.clip(raw, 0, 1).reshape(32, 32, 3)
         orig = test_imgs[i].reshape(32, 32, 3)
         mse = np.mean((recon - orig) ** 2)
         total_mse += mse
-        Image.fromarray((orig * 255).astype(np.uint8)).save(os.path.join(output_dir, f"orig_{i}.png"))
-        Image.fromarray((recon * 255).astype(np.uint8)).save(os.path.join(output_dir, f"recon_{i}.png"))
+        Image.fromarray((orig * 255).astype(np.uint8)).save(
+            os.path.join(output_dir, f"orig_{i}.png")
+        )
+        Image.fromarray((recon * 255).astype(np.uint8)).save(
+            os.path.join(output_dir, f"recon_{i}.png")
+        )
         print(f"  Image {i}: MSE={mse:.4f}")
     print(f"Average MSE: {total_mse/10:.4f}")
 
@@ -136,7 +147,9 @@ def main():
         center = train_clip[mask].mean(axis=0)
         raw = center @ W_dec.T + b_dec
         gen = np.clip(raw, 0, 1).reshape(32, 32, 3)
-        Image.fromarray((gen * 255).astype(np.uint8)).save(os.path.join(output_dir, f"gen_{cls}.png"))
+        Image.fromarray((gen * 255).astype(np.uint8)).save(
+            os.path.join(output_dir, f"gen_{cls}.png")
+        )
         print(f"  Generated {cls}")
 
     # Random generation
@@ -145,7 +158,9 @@ def main():
         z = z / np.linalg.norm(z) * np.sqrt(CLIP_DIM)
         raw = z @ W_dec.T + b_dec
         gen = np.clip(raw, 0, 1).reshape(32, 32, 3)
-        Image.fromarray((gen * 255).astype(np.uint8)).save(os.path.join(output_dir, f"gen_random_{i}.png"))
+        Image.fromarray((gen * 255).astype(np.uint8)).save(
+            os.path.join(output_dir, f"gen_random_{i}.png")
+        )
     print("Generated 5 random images")
     print(f"\nAll → {output_dir}/")
 

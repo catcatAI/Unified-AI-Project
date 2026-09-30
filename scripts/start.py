@@ -36,8 +36,17 @@ def start_backend(host="127.0.0.1", port=8000):
     backend_dir = os.path.join(ROOT, "apps", "backend")
 
     proc = subprocess.Popen(
-        [sys.executable, "-m", "uvicorn", "src.services.main_api_server:app",
-         "--host", host, "--port", str(port), "--reload"],
+        [
+            sys.executable,
+            "-m",
+            "uvicorn",
+            "src.services.main_api_server:app",
+            "--host",
+            host,
+            "--port",
+            str(port),
+            "--reload",
+        ],
         cwd=backend_dir,
     )
     logger.info("Backend PID: %d", proc.pid)

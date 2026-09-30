@@ -104,7 +104,7 @@ class AudioService:
 
     def _generate_processing_id(self, audio_data: bytes) -> str:
         """Generate a stable processing id (audio_<hash>_<time>)."""
-        hash_object = hashlib.md5(audio_data if audio_data else b"")
+        hash_object = hashlib.md5(audio_data if audio_data else b"", usedforsecurity=False)
         return f"audio_{hash_object.hexdigest()[:8]}_{datetime.now().strftime('%H%M%S')}"
 
     async def scan_and_identify(self, audio_data: bytes, duration: float = 1.0) -> dict:

@@ -4,12 +4,13 @@
 測試 API 的響應時間和並發處理能力
 """
 
-import requests
-import time
-import threading
-from datetime import datetime
-from concurrent.futures import ThreadPoolExecutor
 import logging
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
+
+import requests
 
 logger = logging.getLogger(__name__)
 

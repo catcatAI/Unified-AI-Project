@@ -1,9 +1,7 @@
 # Hardware-Adaptive Triple-Constraint Plan — 全硬件自適應三約束閉環計劃
 
-> **Version:** 7.5.0-dev  
-> **Date:** 2026-09-01  
-> **Principle:** 智能↑ / 算力↓
-> / 體積↓ 三約束帕累托最優, 最小單位深度優化, 全硬件自適應, 零偽裝  
+> **Version:** 7.5.0-dev **Date:** 2026-09-01 **Principle:** 智能↑ / 算力↓
+> / 體積↓ 三約束帕累托最優, 最小單位深度優化, 全硬件自適應, 零偽裝
 > **Verification Gates:**
 > `pytest 5432 + flake 0 + benchmark 20/20 + du -sh + git 0`
 > 每步前三重檢查, 單步可逆 `git restore`

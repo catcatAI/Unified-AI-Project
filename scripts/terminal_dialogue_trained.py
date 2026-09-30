@@ -4,8 +4,8 @@ Loads the trained weights (ed3n_full.json / garden_checkpoint) WITHOUT resetting
 to presets, so this exercises exactly what train_pipeline.py produced.
 """
 
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"))
 
@@ -22,8 +22,10 @@ def build_engine():
     e = ED3NEngine()
     if os.path.isfile(ED3N_CK):
         e.load(ED3N_CK)
-        print(f"[ED3N] loaded TRAINED checkpoint: dict={len(e.dictionary.entries)} "
-              f"reflex={len(e.reflex.patterns)} conns={e.network._conn_count}")
+        print(
+            f"[ED3N] loaded TRAINED checkpoint: dict={len(e.dictionary.entries)} "
+            f"reflex={len(e.reflex.patterns)} conns={e.network._conn_count}"
+        )
     else:
         e.load_presets()
         print("[ED3N] WARNING: trained checkpoint missing, loaded PRESETS only")
@@ -34,8 +36,10 @@ def build_garden():
     g = GARDENEngine(compatibility_mode=True)
     if os.path.isdir(GARDEN_CK):
         g.load(GARDEN_CK)
-        print(f"[GARDEN] loaded TRAINED checkpoint: dict={len(g.dictionary.entries)} "
-              f"snn_vocab={g.snn.vocab_size}")
+        print(
+            f"[GARDEN] loaded TRAINED checkpoint: dict={len(g.dictionary.entries)} "
+            f"snn_vocab={g.snn.vocab_size}"
+        )
     else:
         g.load_presets()
         print("[GARDEN] WARNING: trained checkpoint missing, loaded PRESETS only")

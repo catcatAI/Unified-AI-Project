@@ -1,6 +1,8 @@
 """Quick SNN-ONLY test after retraining with fixed encode."""
-import time
+
 import sys
+import time
+
 import numpy as np
 
 sys.path.insert(0, "D:\\Projects\\Unified-AI-Project\\apps\\backend\\src")
@@ -16,8 +18,10 @@ def main():
     stats = snn.get_stats()
     print(f"GARDEN loaded in {time.time()-t0:.1f}s")
     print(f"Dict: {len(g.dictionary.entries)} entries")
-    print(f"SNN: V={snn.vocab_size}, density={stats.get('density', 0)*100:.2f}%, "
-          f"total_steps={stats.get('total_steps', 0)}, hebbian_updates={stats.get('total_hebbian_updates', 0)}")
+    print(
+        f"SNN: V={snn.vocab_size}, density={stats.get('density', 0)*100:.2f}%, "
+        f"total_steps={stats.get('total_steps', 0)}, hebbian_updates={stats.get('total_hebbian_updates', 0)}"
+    )
 
     test_cases = [
         "2+3=5",
@@ -44,7 +48,9 @@ def main():
                         if form:
                             words.append(form.split()[0])
                             break
-            print(f"[{query:20s}] encode={str(keys[:6]):50s} snn_active={len(active_idx):4d} snn_out={' '.join(words[:8])}")
+            print(
+                f"[{query:20s}] encode={str(keys[:6]):50s} snn_active={len(active_idx):4d} snn_out={' '.join(words[:8])}"
+            )
         else:
             print(f"[{query:20s}] encode={keys} -> no indices")
         print(f"  ({time.time()-t1:.3f}s)")

@@ -9,6 +9,7 @@ the full growing vocabulary in one shot.
 
 Usage:  TRAIN_NO_CORPUS=1 python scripts/resume_garden_tail.py
 """
+
 from __future__ import annotations
 
 import asyncio

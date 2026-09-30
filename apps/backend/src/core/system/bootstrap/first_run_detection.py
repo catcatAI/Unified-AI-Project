@@ -43,8 +43,12 @@ def _probe_local_http(host: str, timeout: float = 1.0) -> bool:
     try:
         import urllib.request
 
+        # Only http(s) probes may reach urlopen: a file:// or custom-scheme
+        # string must never be opened verbatim.
+        if not host.startswith(("http://", "https://")):
+            return False
         req = urllib.request.Request(host, method="GET")
-        with urllib.request.urlopen(req, timeout=timeout):
+        with urllib.request.urlopen(req, timeout=timeout):  # nosec B310 - scheme checked above
             return True
     except Exception:
         return False

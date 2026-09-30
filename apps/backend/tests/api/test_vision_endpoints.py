@@ -36,7 +36,9 @@ def test_vision_sampling_structure_and_consistency():
 def test_vision_perceive_returns_next_focus_and_memory_stats():
     client = TestClient(app)
     img = b"\x89PNG\r\n" + (b"\x00" * 1024)
-    r = client.post("/api/v1/vision/perceive", content=img, headers={"Content-Type": "application/octet-stream"})
+    r = client.post(
+        "/api/v1/vision/perceive", content=img, headers={"Content-Type": "application/octet-stream"}
+    )
     assert r.status_code == 200
     j = r.json()
 
@@ -50,8 +52,18 @@ def test_vision_control_post_get_match():
     client = TestClient(app)
     rp = client.post("/api/v1/vision/control", json={"enabled": False})
     assert rp.status_code == 200
-    assert rp.json() == {"status": "success", "module": "vision", "enabled": False, "requested": False}
+    assert rp.json() == {
+        "status": "success",
+        "module": "vision",
+        "enabled": False,
+        "requested": False,
+    }
 
     rg = client.get("/api/v1/vision/control", params={"enabled": True})
     assert rg.status_code == 200
-    assert rg.json() == {"status": "success", "module": "vision", "enabled": True, "requested": True}
+    assert rg.json() == {
+        "status": "success",
+        "module": "vision",
+        "enabled": True,
+        "requested": True,
+    }

@@ -1,5 +1,8 @@
 """Check what's actually in the dictionary."""
-import os, sys
+
+import os
+import sys
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"))
 
 from ai.garden.garden_engine import GARDENEngine
@@ -21,8 +24,27 @@ for i, (k, v) in enumerate(list(entries.items())[:30]):
 
 # Check if any entry contains numbers, operators, or logic keywords
 print("\n--- Searching for math/logic/reasoning tokens ---")
-keywords = ["1", "2", "3", "+", "-", "*", "/", "=", "?", "true", "false", "and", "or", "not",
-            "taller", "shorter", "who", "what", "how"]
+keywords = [
+    "1",
+    "2",
+    "3",
+    "+",
+    "-",
+    "*",
+    "/",
+    "=",
+    "?",
+    "true",
+    "false",
+    "and",
+    "or",
+    "not",
+    "taller",
+    "shorter",
+    "who",
+    "what",
+    "how",
+]
 for kw in keywords:
     found = []
     for k, v in entries.items():

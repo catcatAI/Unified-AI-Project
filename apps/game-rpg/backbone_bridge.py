@@ -31,11 +31,11 @@ if _GAME_DIR not in sys.path:
 logger = logging.getLogger("game.backbone_bridge")
 
 try:
+    from ai.multimodal.shared_latent_space import SharedLatentSpace
     from core.backbone import get_backbone
     from core.backbone.axes import AxesRegistry
     from core.backbone.datasets import register_game_cards as _register_game_cards
     from core.backbone.dicts import InMemoryDictionary
-    from ai.multimodal.shared_latent_space import SharedLatentSpace
 
     _BACKBONE_AVAILABLE = True
 except Exception as exc:  # pragma: no cover - 環境無 backbone 時遊戲照跑
@@ -77,8 +77,8 @@ class GameBackboneBridge:
 
     def _bootstrap(self) -> None:
         try:
-            import game_data
             import axis_system
+            import game_data
 
             # 1) 卡片字典：以 card_id → name+description 掛載
             cards = game_data._ALL_CARDS
@@ -89,9 +89,7 @@ class GameBackboneBridge:
                     if not cid:
                         continue
                     text = " ".join(
-                        str(card.get(k, ""))
-                        for k in ("name", "description")
-                        if card.get(k)
+                        str(card.get(k, "")) for k in ("name", "description") if card.get(k)
                     ).strip()
                     if text:
                         self.card_dictionary.register_entry(cid, text)

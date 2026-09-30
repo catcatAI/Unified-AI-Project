@@ -19,10 +19,10 @@ import logging
 from typing import Any, Callable, Dict, Optional
 
 from services.agent_workspace.app_session import (
+    DEFAULT_LOG_PATH,
+    ActionSpec,
     AppAdapter,
     AppSessionManager,
-    ActionSpec,
-    DEFAULT_LOG_PATH,
 )
 from services.agent_workspace.context_tree import ContextNode, ContextTree
 
@@ -135,7 +135,7 @@ class EdaWorkspaceAdapter(AppAdapter):
         self.register(
             ActionSpec(
                 "read_interface_packet",
-                "讀取 Angela interface-freeze 決策包與待凍結項目",
+                "讀取 AI 計算卡決策包與待驗證項目",
             ),
             self._read_interface_packet,
         )

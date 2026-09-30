@@ -1,27 +1,31 @@
 """Train Three-Layer Visual Architecture on CIFAR-10."""
-import sys
+
 import os
+import sys
 import time
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'apps', 'backend', 'src'))
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"))
+
+import glob
 
 import numpy as np
-import glob
-from PIL import Image
 from ai.multimodal.three_layer_visual import ThreeLayerVisual
+from PIL import Image
 
-CIFAR_DIR="D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
-CLASSES=["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
-OUTPUT_DIR="data/multimodal/gvv/three_layer_train"
+CIFAR_DIR = "D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
+CLASSES = ["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
+OUTPUT_DIR = "data/multimodal/gvv/three_layer_train"
 
 
 def load_cifar(n_per_class=50):
-    images, labels=[], []
+    images, labels = [], []
     for ci, cls in enumerate(CLASSES):
         cls_dir = os.path.join(CIFAR_DIR, cls)
         files = sorted(glob.glob(os.path.join(cls_dir, "*.npy")))[:n_per_class]
         for f in files:
             arr = np.load(f)
-            if arr.ndim == 3: arr = arr.reshape(-1)
+            if arr.ndim == 3:
+                arr = arr.reshape(-1)
             images.append(arr.astype(np.float32) / 255.0)
             labels.append(ci)
     return np.array(images), np.array(labels)
@@ -49,7 +53,7 @@ def main():
     for i in range(20):
         orig = (images[i].reshape(32, 32, 3) * 255).astype(np.uint8)
         rec = (recon[i].reshape(32, 32, 3) * 255).astype(np.uint8)
-        combo = Image.new('RGB', (64, 32))
+        combo = Image.new("RGB", (64, 32))
         combo.paste(Image.fromarray(orig), (0, 0))
         combo.paste(Image.fromarray(rec), (32, 0))
         combo.save(os.path.join(OUTPUT_DIR, f"recon_{i}.png"))

@@ -82,8 +82,7 @@ console.log('__RESULT__' + JSON.stringify(out === undefined ? null : out))
 # PerformanceManager.setPerformanceTargets
 # --------------------------------------------------------------------------- #
 def _pm_call(expr: str) -> dict:
-    script = textwrap.dedent(
-        f"""
+    script = textwrap.dedent(f"""
         const pm = Object.create(cls.prototype)
         pm.targetFPS = 45
         pm.effectsLevel = 2
@@ -94,8 +93,7 @@ def _pm_call(expr: str) -> dict:
         return {{ applied: {expr}, state: {{ targetFPS: pm.targetFPS,
           effectsLevel: pm.effectsLevel, resolutionScale: pm.resolutionScale }},
           appliedCount: pm.appliedCount }}
-        """
-    )
+        """)
     return run_node(script, "performance-manager.js", "PerformanceManager")
 
 
@@ -248,17 +246,16 @@ def test_setting_is_actually_applied(setting, call):
     # Also reference the value inside the apply body: several settings share one
     # call, so deleting just this setting's argument left both checks above green
     # while the slider stopped doing anything.
-    assert f"settings.{setting}" in body, (
-        f"{setting} is collected but never read while applying settings"
-    )
+    assert (
+        f"settings.{setting}" in body
+    ), f"{setting} is collected but never read while applying settings"
 
 
 # --------------------------------------------------------------------------- #
 # AudioHandler speech defaults
 # --------------------------------------------------------------------------- #
 def _audio_call(script_body: str) -> dict:
-    script = textwrap.dedent(
-        f"""
+    script = textwrap.dedent(f"""
         global.navigator = {{}}
         global.window = global.window || {{}}
         const h = Object.create(cls.prototype)
@@ -273,8 +270,7 @@ def _audio_call(script_body: str) -> dict:
           h.lastUtterance = this
         }}
         {script_body}
-        """
-    )
+        """)
     return run_node(script, "audio-handler.js", "AudioHandler")
 
 
@@ -321,8 +317,7 @@ def test_speech_defaults_reject_junk_without_corrupting_state():
 # HapticHandler intensity scale
 # --------------------------------------------------------------------------- #
 def _haptic_call(script_body: str) -> dict:
-    script = textwrap.dedent(
-        f"""
+    script = textwrap.dedent(f"""
         global.navigator = {{ vibrate: () => {{}} }}
         global.window = global.window || {{}}
         const h = Object.create(cls.prototype)
@@ -335,8 +330,7 @@ def _haptic_call(script_body: str) -> dict:
           return {{ duration: 30, intensity: intensity }}
         }}
         {script_body}
-        """
-    )
+        """)
     return run_node(script, "haptic-handler.js", "HapticHandler")
 
 
@@ -375,15 +369,13 @@ def test_haptic_intensity_scale_rejects_out_of_range_values():
 # WallpaperHandler effect
 # --------------------------------------------------------------------------- #
 def _wallpaper_call(script_body: str) -> dict:
-    script = textwrap.dedent(
-        f"""
+    script = textwrap.dedent(f"""
         global.window = global.window || {{}}
         const w = Object.create(cls.prototype)
         w.effect = 'none'
         w.compositionCanvas = {{ style: {{}} }}
         {script_body}
-        """
-    )
+        """)
     return run_node(script, "wallpaper-handler.js", "WallpaperHandler")
 
 
@@ -444,8 +436,7 @@ def test_wallpaper_effect_is_reapplied_on_render():
 # AngelaApp._handleEmotionChanged — the emotionIntensity preference
 # --------------------------------------------------------------------------- #
 def _app_emotion_call(preference, data_intensity=0.8) -> dict:
-    script = textwrap.dedent(
-        f"""
+    script = textwrap.dedent(f"""
         const app = Object.create(cls.prototype)
         app.emotionIntensity = {preference}
         const applied = {{}}
@@ -455,8 +446,7 @@ def _app_emotion_call(preference, data_intensity=0.8) -> dict:
         }}
         app._handleEmotionChanged({{ new_emotion: 'happy', intensity: {data_intensity} }})
         return applied
-        """
-    )
+        """)
     return run_node(script, "app.js", "AngelaApp")
 
 
@@ -478,8 +468,7 @@ def test_emotion_expression_still_maps_normally():
 
 
 def test_emotion_change_without_an_intensity_falls_back_instead_of_zeroing():
-    script = textwrap.dedent(
-        """
+    script = textwrap.dedent("""
         const app = Object.create(cls.prototype)
         app.emotionIntensity = 1.0
         const applied = {}
@@ -489,8 +478,7 @@ def test_emotion_change_without_an_intensity_falls_back_instead_of_zeroing():
         }
         app._handleEmotionChanged({ new_emotion: 'calm' })
         return applied
-        """
-    )
+        """)
     out = run_node(script, "app.js", "AngelaApp")
     assert out["ParamEmotionIntensity"] == 0.5, "missing intensity must not read as 0"
 
@@ -500,8 +488,7 @@ def test_emotion_change_without_an_intensity_falls_back_instead_of_zeroing():
 # --------------------------------------------------------------------------- #
 def _idle_app(script_body: str) -> dict:
     """Run idle-detection code with a controllable clock and event target."""
-    script = textwrap.dedent(
-        f"""
+    script = textwrap.dedent(f"""
         global.window = {{
           listeners: {{}},
           events: [],
@@ -523,8 +510,7 @@ def _idle_app(script_body: str) -> dict:
         app.isIdle = false
         app.live2dManager = {{ motions: [], startMotion(m) {{ this.motions.push(m) }} }}
         {script_body}
-        """
-    )
+        """)
     return run_node(script, "app.js", "AngelaApp")
 
 
@@ -599,15 +585,13 @@ def test_teardown_removes_the_activity_listeners():
 # --------------------------------------------------------------------------- #
 def test_set_auto_adjust_toggles_the_watchdog_flag():
     """The settings checkbox reaches the real FPS watchdog switch."""
-    script = textwrap.dedent(
-        """
+    script = textwrap.dedent("""
         const pm = Object.create(cls.prototype)
         pm.autoAdjustEnabled = true
         pm.setAutoAdjust(false)
         const off = pm.autoAdjustEnabled
         pm.setAutoAdjust(true)
         return { off, on: pm.autoAdjustEnabled }
-        """
-    )
+        """)
     result = run_node(script, "performance-manager.js", "PerformanceManager")
     assert result == {"off": False, "on": True}

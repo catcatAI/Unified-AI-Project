@@ -45,6 +45,20 @@ def load_yaml(path):
         return yaml.safe_load(f)
 
 
+def mypy_budget():
+    """讀棘輪預算（scripts/mypy_budget.txt 為唯一真相源）；讀不到回 None。
+
+    「誠實缺口」若把預算寫死，棘輪收緊後就會變成假宣稱（實際發生過：文字
+    停留在 540，而門檻早已鎖在 0）——所以直接讀門檻檔。
+    """
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "mypy_budget.txt")
+    try:
+        with open(path, encoding="utf-8") as f:
+            return int(f.read().strip())
+    except (OSError, ValueError):
+        return None
+
+
 def load_map_tool():
     """載入 gen_project_map（同目錄 importlib），複用其 AST 解析（單一事實源）。"""
     import importlib.util
@@ -299,7 +313,10 @@ def render_md(root, data):
     """YAML → STATUS_MATRIX.md（生成視圖）。"""
     features = data.get("features") or []
     meta = data.get("meta") or {}
-    today = datetime.date.today()
+    # 快照日期取自 YAML 的 meta.last_sync（單一真相源），不用 wall-clock：
+    # 生成視圖必須是 YAML 的純函式，否則 CI 的「generate 後
+    # git diff --exit-code docs/STATUS_MATRIX.md」每逢跨日必紅。
+    snapshot = str(meta.get("last_sync") or datetime.date.today())
     lines = [
         "<!--",
         "  本檔由 scripts/gen_status_matrix.py 自 docs/status_matrix.yaml 生成。",
@@ -315,7 +332,7 @@ def render_md(root, data):
         "每列必須附驗證指令與日期；無法附者降回 `claimed`。",
         "> 「架構完成度」≠「模型能力完成度」：確定性能力與神經泛化分開計分"
         "（見 INTELLIGENCE_ASSESSMENT）。",
-        f"> 狀態快照：{today}（由 YAML 同步）。核對："
+        f"> 狀態快照：{snapshot}（由 YAML 同步）。核對："
         "`python scripts/gen_status_matrix.py check`（0 通過 / 1 違規）。",
         "",
         "| 領域 | Claim（宣稱） | Implementation（實作） | 狀態 | 驗證指令／證據 | 最後驗證 |",
@@ -338,6 +355,14 @@ def render_md(root, data):
     lines += render_pipeline_md(data)
     lines += render_tree_md(data)
     lines += render_lifecycle_md(data)
+    budget = mypy_budget()
+    mypy_gap = (
+        f"4. **mypy 棘輪鎖定於 {budget}** — `scripts/mypy_budget_gate.py`；"
+        "新增型別債 CI 直接紅燈。"
+        if budget is not None
+        else "4. **mypy 棘輪鎖定** — `scripts/mypy_budget_gate.py`（預算檔未讀到）；"
+        "新增型別債 CI 直接紅燈。"
+    )
     lines += [
         "",
         "## 誠實缺口（正式版判斷依據）",
@@ -345,7 +370,7 @@ def render_md(root, data):
         "1. **路由重複決策**（Pipeline/Router/ModelBus 各自分類）— 架構債，最高優先收斂。",
         "2. **學習品質未證明** — 「字典增長」≠「能力增長」；需 hold-out 前後測成為常態門。",
         "3. **Dashboard E2E** — 新面板僅 wired，缺自動化瀏覽器測試。",
-        "4. **mypy 540** — 棘輪門鎖定（`scripts/mypy_budget_gate.py`）；新增型別債 CI 直接紅燈。",
+        mypy_gap,
         "5. **公開 benchmark** — angela_bench 115 題管線與 CI 回歸門已建（`scripts/run_benchmarks.py --gate-native`）；跨 AI 對比待外部 LLM 端點實際接入跑分。",
         "6. **Luanti policy** — 訓練管線已通（hold-out 學習門鎖測試）；live 樣本待玩家在線累積；20 FPS 仍 ❌（10Hz＋2s poller）。",
         "7. **EmotionSystem 跨進程不共享** — 遊戲 agent 與主 server 生命階段已透過共享 lifecycle JSON 互通（R71c），情緒狀態仍各自 in-memory。",

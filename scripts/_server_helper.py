@@ -9,19 +9,19 @@ Usage:
     from scripts._server_helper import start_server, test_health, test_chat
 """
 
-import os
-import sys
-import time
 import json
+import os
 import subprocess
+import sys
 import threading
-import urllib.request
+import time
 import urllib.error
+import urllib.request
 from pathlib import Path
-from typing import Optional, Tuple, Dict, Any, List
-
+from typing import Any, Dict, List, Optional, Tuple
 
 # ---- Path resolution ----
+
 
 def get_project_root() -> Path:
     """Return the project root directory."""
@@ -35,11 +35,12 @@ def get_src_path() -> Path:
 
 # ---- Server lifecycle ----
 
+
 def start_server(
-    host: str="127.0.0.1",
-    port: int=8000,
-    wait_seconds: float=30.0,
-    log_level: str="info",
+    host: str = "127.0.0.1",
+    port: int = 8000,
+    wait_seconds: float = 30.0,
+    log_level: str = "info",
 ) -> subprocess.Popen:
     """Start the backend server using uvicorn.
 
@@ -49,13 +50,17 @@ def start_server(
     Returns the Popen object so the caller can terminate it later.
     """
     backend_dir = get_project_root() / "apps" / "backend"
-    cmd=[
+    cmd = [
         sys.executable,
-        "-m", "uvicorn",
+        "-m",
+        "uvicorn",
         "src.services.main_api_server:app",
-        "--host", host,
-        "--port", str(port),
-        "--log-level", log_level,
+        "--host",
+        host,
+        "--port",
+        str(port),
+        "--log-level",
+        log_level,
     ]
 
     proc = subprocess.Popen(
@@ -73,14 +78,12 @@ def start_server(
     # Check if the process died during startup
     exit_code = proc.poll()
     if exit_code is not None:
-        raise RuntimeError(
-            f"Server exited during startup with code {exit_code}.\n{output[-1000:]}"
-        )
+        raise RuntimeError(f"Server exited during startup with code {exit_code}.\n{output[-1000:]}")
 
     return proc
 
 
-def stop_server(proc: subprocess.Popen, timeout: float=5.0) -> None:
+def stop_server(proc: subprocess.Popen, timeout: float = 5.0) -> None:
     """Gracefully stop a server process."""
     proc.terminate()
     try:
@@ -93,7 +96,7 @@ def stop_server(proc: subprocess.Popen, timeout: float=5.0) -> None:
 def _read_output_until(
     proc: subprocess.Popen,
     marker: str,
-    timeout: float=10.0,
+    timeout: float = 10.0,
 ) -> str:
     """Read server output until a marker appears or timeout.
 
@@ -126,10 +129,10 @@ def _read_output_until(
 
 
 def wait_for_server(
-    host: str="127.0.0.1",
-    port: int=8000,
-    timeout: float=40.0,
-    interval: float=1.0,
+    host: str = "127.0.0.1",
+    port: int = 8000,
+    timeout: float = 40.0,
+    interval: float = 1.0,
 ) -> bool:
     """Wait until the server is accepting connections.
 
@@ -141,17 +144,18 @@ def wait_for_server(
             req = urllib.request.Request(f"http://{host}:{port}/api/v1/ops/health")
             urllib.request.urlopen(req, timeout=2)
             return True
-        except (urllib.error.URLError, ConnectionError, OSError):
+        except (urllib.error.URLError, OSError):
             time.sleep(interval)
     return False
 
 
 # ---- Endpoint tests ----
 
+
 def test_health(
-    host: str="127.0.0.1",
-    port: int=8000,
-    timeout: float=5.0,
+    host: str = "127.0.0.1",
+    port: int = 8000,
+    timeout: float = 5.0,
 ) -> Tuple[bool, Dict[str, Any]]:
     """Test the health endpoint. Returns (ok, data)."""
     try:
@@ -164,10 +168,10 @@ def test_health(
 
 
 def test_chat(
-    message: str="hello",
-    host: str="127.0.0.1",
-    port: int=8000,
-    timeout: float=15.0,
+    message: str = "hello",
+    host: str = "127.0.0.1",
+    port: int = 8000,
+    timeout: float = 15.0,
 ) -> Tuple[bool, Dict[str, Any]]:
     """Test the chat endpoint. Returns (ok, data)."""
     try:
@@ -186,10 +190,14 @@ def test_chat(
 
 # ---- LLM config inspection ----
 
+
 def get_llm_config() -> Dict[str, Any]:
     """Load the LLM config YAML and return providers with their enabled status."""
     import yaml
-    config_path = get_project_root() / "apps" / "backend" / "configs" / "system" / "llm.default.yaml"
+
+    config_path = (
+        get_project_root() / "apps" / "backend" / "configs" / "system" / "llm.default.yaml"
+    )
     try:
         with open(config_path, encoding="utf-8") as f:
             return yaml.safe_load(f) or {}

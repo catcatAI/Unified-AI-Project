@@ -1,6 +1,7 @@
 import sys
+
 sys.path.insert(0, r"D:\Projects\Unified-AI-Project\apps\backend\src")
-from ai.garden.snn_core import TensorSNNCore, DEFAULT_THRESHOLD
+from ai.garden.snn_core import DEFAULT_THRESHOLD, TensorSNNCore
 
 if __name__ == "__main__":
     print("SNN import OK, threshold=%s" % DEFAULT_THRESHOLD)

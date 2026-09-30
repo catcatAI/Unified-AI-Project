@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """pytest bootstrap: make apps/game-rpg modules importable by absolute name."""
+
 import os
 import sys
 

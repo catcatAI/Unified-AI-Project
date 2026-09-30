@@ -1,14 +1,12 @@
 # Angela Module Manager System
 
-> **Design Date**: 2026-05-30  
-> **Status**: Implemented — M0-M5 core (6 source files + 100 tests) deployed. M1
-> (card_pipeline) + M2 (intent_registry) + M5 (vision, audio, tactile,
-> google_drive) modules active under `modules/`. wiring.py integration via
-> `initialize_module_manager()` in lifespan startup. Phase 5: version
-> negotiation + unplug + hotplug rollback.  
+> **Design Date**: 2026-05-30 **Status**: Implemented — M0-M5 core (6 source
+> files + 100 tests) deployed. M1 (card_pipeline) + M2 (intent_registry) + M5
+> (vision, audio, tactile, google_drive) modules active under `modules/`.
+> wiring.py integration via `initialize_module_manager()` in lifespan startup.
+> Phase 5: version negotiation + unplug + hotplug rollback.
 > **解决的问题**: 耦合集中度 35/100、共享可變狀態 35/100、God module 35/100 — 見
-> `MODULARITY_ANALYSIS.md`  
-> **與 8D Matrix 的關係**:
+> `MODULARITY_ANALYSIS.md` **與 8D Matrix 的關係**:
 > 8D 管理 Angela 的執行時狀態；ModuleManager 管理程式碼的架構接線。兩者互補。
 
 ---

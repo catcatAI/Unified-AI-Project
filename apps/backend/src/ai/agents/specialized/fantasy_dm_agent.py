@@ -59,7 +59,7 @@ class FantasyDMAgent:
         "mage": "mage",
         "wizard": "mage",
         "盜賊": "rogue",
-        "盜賊": "rogue",
+        "盗贼": "rogue",
         "rogue": "rogue",
         "thief": "rogue",
         "牧師": "cleric",

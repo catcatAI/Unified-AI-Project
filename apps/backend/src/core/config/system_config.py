@@ -18,7 +18,8 @@ def get_system_config() -> Dict[str, Any]:
     return {
         "environment": os.getenv("ENVIRONMENT", "development"),
         "debug": os.getenv("DEBUG", "true").lower() == "true",
-        "host": os.getenv("HOST", "0.0.0.0"),
+        # Bind-all is the intentional default for LAN/Docker; HOST narrows it.
+        "host": os.getenv("HOST", "0.0.0.0"),  # nosec B104
         "port": int(os.getenv("PORT", "8000")),
         "log_level": os.getenv("LOG_LEVEL", "INFO"),
         # AI运维系统配置

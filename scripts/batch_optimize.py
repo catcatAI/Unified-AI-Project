@@ -3,30 +3,32 @@ Batch direct optimization of CIFAR-10 images using differentiable renderer.
 Uses lightweight finite differences (10 probes, 15 iterations).
 For training the decomposer on optimized vectors.
 """
-import sys
-import os
-import time
+
 import json
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'apps', 'backend', 'src'))
+import os
+import sys
+import time
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"))
+
+import glob
 
 import numpy as np
-import glob
 from ai.multimodal.primitives.differentiable_renderer import DifferentiableRenderer
-from ai.multimodal.primitives.primitive_types import DrawingInstructions, TOTAL_DIM
 from ai.multimodal.primitives.primitive_renderer import PrimitiveRenderer
+from ai.multimodal.primitives.primitive_types import TOTAL_DIM, DrawingInstructions
 
-CIFAR_DIR="D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
-CLASSES=["airplane", "automobile", "bird", "cat", "deer",
-           "dog", "frog", "horse", "ship", "truck"]
-NUM_IMAGES=50
-N_ITERS=15
-LR=0.008
-N_PROBES=10
+CIFAR_DIR = "D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
+CLASSES = ["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
+NUM_IMAGES = 50
+N_ITERS = 15
+LR = 0.008
+N_PROBES = 10
 
 
 def load_random_images(n):
-    all_files=[]
-    all_labels=[]
+    all_files = []
+    all_labels = []
     for ci, cls in enumerate(CLASSES):
         cls_dir = os.path.join(CIFAR_DIR, cls)
         files = sorted(glob.glob(os.path.join(cls_dir, "*.npy")))
@@ -35,8 +37,8 @@ def load_random_images(n):
             all_labels.append(ci)
 
     indices = np.random.choice(len(all_files), n, replace=False)
-    images=[]
-    labels=[]
+    images = []
+    labels = []
     for idx in indices:
         arr = np.load(all_files[idx])
         if arr.shape == (3072,):
@@ -45,6 +47,7 @@ def load_random_images(n):
             arr = arr.transpose(1, 2, 0)
             # Resize to 128x128
         from PIL import Image
+
         pil_img = Image.fromarray(arr).resize((128, 128), Image.LANCZOS)
         arr = np.array(pil_img, dtype=np.float32) / 255.0
         images.append(arr)
@@ -57,8 +60,8 @@ def optimize_one(target, renderer):
     vec[0:3] = target.mean(axis=(0, 1))
 
     best_vec = vec.copy()
-    best_loss = float('inf')
-    eps=0.015
+    best_loss = float("inf")
+    eps = 0.015
 
     for it in range(N_ITERS):
         rendered = renderer.render(vec)
@@ -98,8 +101,8 @@ def main():
     diff_renderer = DifferentiableRenderer((128, 128))
     pil_renderer = PrimitiveRenderer((128, 128))
 
-    optimized_vecs=[]
-    losses=[]
+    optimized_vecs = []
+    losses = []
     t_start = time.time()
 
     for i in range(NUM_IMAGES):
@@ -112,16 +115,20 @@ def main():
         # Compute PIL similarity for reporting
         instructions = DrawingInstructions.from_vector(opt_vec, canvas_size=(128, 128))
         rendered_pil = pil_renderer.render(instructions)
-        orig_pil = __import__('PIL').Image.fromarray((images[i] * 255).astype(np.uint8))
+        orig_pil = __import__("PIL").Image.fromarray((images[i] * 255).astype(np.uint8))
 
         # Cosine similarity
         r_arr = np.array(rendered_pil, dtype=np.float32).flatten()
         o_arr = np.array(orig_pil, dtype=np.float32).flatten()
-        cos_sim = float(np.dot(r_arr, o_arr) / (np.linalg.norm(r_arr) * np.linalg.norm(o_arr) + 1e-8))
+        cos_sim = float(
+            np.dot(r_arr, o_arr) / (np.linalg.norm(r_arr) * np.linalg.norm(o_arr) + 1e-8)
+        )
 
         if (i + 1) % 5 == 0:
             total_elapsed = time.time() - t_start
-            print(f"  [{i+1}/{NUM_IMAGES}] loss={opt_loss:.4f} cos_sim={cos_sim:.4f} ({elapsed:.1f}s/img, total={total_elapsed:.0f}s)")
+            print(
+                f"  [{i+1}/{NUM_IMAGES}] loss={opt_loss:.4f} cos_sim={cos_sim:.4f} ({elapsed:.1f}s/img, total={total_elapsed:.0f}s)"
+            )
 
     # Save
     save_dir = os.path.join(CIFAR_DIR)

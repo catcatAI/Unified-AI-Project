@@ -11,26 +11,23 @@ documentation claims.
 ### 2.1 As a Developer
 
 **I want** the project documentation to accurately reflect the actual codebase
-structure  
-**So that** I can successfully set up and contribute to the project without
-confusion
+structure **So that** I can successfully set up and contribute to the project
+without confusion
 
 ### 2.2 As a User
 
-**I want** all referenced files and resources to exist  
-**So that** I can follow the installation instructions without encountering
-missing file errors
+**I want** all referenced files and resources to exist **So that** I can follow
+the installation instructions without encountering missing file errors
 
 ### 2.3 As a Project Maintainer
 
-**I want** proper licensing and legal documentation  
-**So that** the project complies with open-source standards and protects
-contributors
+**I want** proper licensing and legal documentation **So that** the project
+complies with open-source standards and protects contributors
 
 ### 2.4 As a Developer
 
-**I want** consistent version information across all documentation  
-**So that** I know which version I'm working with
+**I want** consistent version information across all documentation **So that** I
+know which version I'm working with
 
 ## 3. Acceptance Criteria
 

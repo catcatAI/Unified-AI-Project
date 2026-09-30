@@ -1,4 +1,5 @@
 import json
+
 with open(r"D:\Projects\Unified-AI-Project\data\checkpoints\garden_checkpoint\snn.json") as f:
     meta = json.load(f)
 idx_to_key = meta["idx_to_key"]
@@ -11,8 +12,11 @@ for k in ["m0", "m1", "m2", "m3", "m5", "op1", "op5", "true", "false", "or", "no
     else:
         print(f"  {k}: NOT IN VOCAB")
 # Check what surface forms map to
-import sys; sys.path.insert(0, r"D:\Projects\Unified-AI-Project\apps\backend\src")
+import sys
+
+sys.path.insert(0, r"D:\Projects\Unified-AI-Project\apps\backend\src")
 from ai.garden.garden_engine import GARDENEngine
+
 g = GARDENEngine(compatibility_mode=True)
 g.load(r"D:\Projects\Unified-AI-Project\data\checkpoints\garden_checkpoint")
 for q in ["2+3=5", "true OR false", "hello"]:

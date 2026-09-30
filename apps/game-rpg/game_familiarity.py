@@ -133,19 +133,19 @@ def get_revealed_info(character, npc_name, npc_metadata):
     info["race"] = race or "不明"
 
     if level >= 2:
-        desc = (npc_metadata.get("description", "") if npc_metadata else "")
+        desc = npc_metadata.get("description", "") if npc_metadata else ""
         info["role_hint"] = desc[:80] if desc else ""
         info["offers"] = (npc_metadata.get("offers", []) if npc_metadata else [])[:3]
 
     if level >= 3:
-        info["description"] = (npc_metadata.get("description", "") if npc_metadata else "")
-        ab_details = (npc_metadata.get("ability_details", []) if npc_metadata else [])
+        info["description"] = npc_metadata.get("description", "") if npc_metadata else ""
+        ab_details = npc_metadata.get("ability_details", []) if npc_metadata else []
         info["abilities"] = [a.get("name", "") for a in ab_details if isinstance(a, dict)]
         info["archetype"] = ARCHETYPE_LABELS.get(arch, "旅人")
 
     if level >= 4:
-        info["token_categories"] = (npc_metadata.get("token_categories", []) if npc_metadata else [])
-        info["location"] = (npc_metadata.get("location", "") if npc_metadata else "")
+        info["token_categories"] = npc_metadata.get("token_categories", []) if npc_metadata else []
+        info["location"] = npc_metadata.get("location", "") if npc_metadata else ""
 
     if level >= 5:
         info["secrets_unlocked"] = True

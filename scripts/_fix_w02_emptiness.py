@@ -11,10 +11,18 @@ LOCATION_ENEMIES 無鍵（0 種敵人）。玩家經迴廊到 W02 後什麼都�
 2. W02 村莊敵人群補中世紀系（野狼/哥布林/野豬/毒蛇/大蜘蛛/森狼）——
    數量值均為普通等級（HP<120、ATK<30），符合《琥珀紀元》硬核中世紀語境
 """
+
 import json
 import os
 
-PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "apps", "game-rpg", "data", "game_supplement.json")
+PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    "..",
+    "apps",
+    "game-rpg",
+    "data",
+    "game_supplement.json",
+)
 with open(PATH, "r", encoding="utf-8") as f:
     sup = json.load(f)
 

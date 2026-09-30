@@ -7,7 +7,6 @@ from typing import Any, Dict, List
 from unittest.mock import patch
 
 import pytest
-
 from services.llm.context_scheduler import (
     ContextLedger,
     ContextScheduler,
@@ -183,15 +182,11 @@ class TestLedgerPersistence:
             "services.llm.context_scheduler.get_context_scheduler",
             return_value=scheduler,
         ):
-            with patch(
-                "services.llm.prompt_builder._get_llm_config", return_value=None
-            ):
+            with patch("services.llm.prompt_builder._get_llm_config", return_value=None):
                 messages = [_sys("核心提示" * 5)]
                 for i in range(6):
                     # CJK 密度高：每塊 ~800 tokens × 6 ≈ 4800 > 預算 2000
-                    messages.append(
-                        _msg("user", f"[Block {i}]\n" + "內容描述" * 200)
-                    )
+                    messages.append(_msg("user", f"[Block {i}]\n" + "內容描述" * 200))
                 messages.append(_msg("user", "<user_message>請回答</user_message>"))
                 _enforce_prompt_budget(messages, {"_prompt_token_budget": 2000})
         digest_msgs = [m for m in messages if "[Digested Context]" in m["content"]]
@@ -302,9 +297,7 @@ class TestGateIntegration:
         def _boom():
             raise ImportError("scheduler missing")
 
-        with patch(
-            "services.llm.context_scheduler.get_context_scheduler", side_effect=_boom
-        ):
+        with patch("services.llm.context_scheduler.get_context_scheduler", side_effect=_boom):
             messages = [_sys("核心提示" * 5)]
             for i in range(4):
                 messages.append(_msg("user", "x" * 4000))
@@ -323,9 +316,7 @@ class TestGateIntegration:
             "services.llm.context_scheduler.get_context_scheduler",
             return_value=scheduler,
         ):
-            with patch(
-                "services.llm.prompt_builder._get_llm_config", return_value=None
-            ):
+            with patch("services.llm.prompt_builder._get_llm_config", return_value=None):
                 before = get_prompt_budget_stats()["events"]
                 messages = [_sys("核心提示" * 5)]
                 for i in range(5):

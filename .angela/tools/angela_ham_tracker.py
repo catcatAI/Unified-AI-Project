@@ -46,15 +46,16 @@ Angela Matrix: [L2:MEM] [HAM] Memory System Tracker
     - 本工具(angela_ham_tracker): 专门为Angela的HAM系统设计
 """
 
-import os
-import json
-import hashlib
 import argparse
-from pathlib import Path
-from datetime import datetime
-from typing import Dict, List, Optional, Set, Tuple
-from dataclasses import dataclass, asdict
+import hashlib
+import json
 import logging
+import os
+from dataclasses import asdict, dataclass
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional, Set, Tuple
+
 logger = logging.getLogger(__name__)
 
 # Angela项目配置
@@ -177,9 +178,7 @@ class HAMTracker:
             # 检查关联记忆是否存在
             for assoc_id in entry.associated_memories:
                 if assoc_id not in self.db["memories"]:
-                    issues.append(
-                        f"记忆 {entry.memory_id} 关联的记忆 {assoc_id} 不存在"
-                    )
+                    issues.append(f"记忆 {entry.memory_id} 关联的记忆 {assoc_id} 不存在")
 
         # 检查是否有孤立记忆
         all_memory_ids = set(self.db["memories"].keys())
@@ -227,9 +226,7 @@ class HAMTracker:
             "health_score": self._calculate_health_score(memory),
         }
 
-    def _calculate_network_depth(
-        self, memory_id: str, visited: Set[str], depth: int = 0
-    ) -> int:
+    def _calculate_network_depth(self, memory_id: str, visited: Set[str], depth: int = 0) -> int:
         """计算关联网络深度"""
         if memory_id in visited or depth > 10:
             return depth
@@ -245,9 +242,7 @@ class HAMTracker:
         max_depth = depth
         for assoc_id in associated:
             if assoc_id in self.db["memories"]:
-                child_depth = self._calculate_network_depth(
-                    assoc_id, visited.copy(), depth + 1
-                )
+                child_depth = self._calculate_network_depth(assoc_id, visited.copy(), depth + 1)
                 max_depth = max(max_depth, child_depth)
 
         return max_depth
@@ -336,9 +331,7 @@ class HAMTracker:
         # 检查低访问记忆
         low_access = [m for m in memories if m.access_count < 5]
         if len(low_access) > len(memories) * 0.5:
-            recommendations.append(
-                f"发现 {len(low_access)} 个低访问记忆，建议进行记忆整合"
-            )
+            recommendations.append(f"发现 {len(low_access)} 个低访问记忆，建议进行记忆整合")
 
         # 检查孤立记忆
         orphaned = [m for m in memories if not m.associated_memories]
@@ -366,13 +359,13 @@ Angela Matrix: [L2:MEM] [HAM]
 示例:
     # 扫描HAM存储
     python .angela/tools/angela_ham_tracker.py scan
-    
+
     # 验证完整性
     python .angela/tools/angela_ham_tracker.py verify
-    
+
     # 分析特定记忆
     python .angela/tools/angela_ham_tracker.py analyze --memory-id <id>
-    
+
     # 生成报告
     python .angela/tools/angela_ham_tracker.py report --output ham_report.json
 

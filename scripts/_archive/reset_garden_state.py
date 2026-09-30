@@ -13,4 +13,7 @@ with open(path, "w") as f:
     json.dump(state, f, indent=2)
 
 print("Reset: completed_steps=[4], garden_batch_done=0")
-print("ED3N preserved: epochs=%s, samples=%s" % (state.get("ed3n_epochs_done"), state.get("ed3n_samples")))
+print(
+    "ED3N preserved: epochs=%s, samples=%s"
+    % (state.get("ed3n_epochs_done"), state.get("ed3n_samples"))
+)

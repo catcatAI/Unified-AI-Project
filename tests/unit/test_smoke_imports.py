@@ -98,7 +98,7 @@ def _try_import_class(module_path, class_name):
     try:
         mod = importlib.import_module(module_path)
         return getattr(mod, class_name, None)
-    except (ImportError, AttributeError, ModuleNotFoundError):
+    except (ImportError, AttributeError):
         return None
 
 

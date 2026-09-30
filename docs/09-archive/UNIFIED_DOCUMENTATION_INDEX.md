@@ -1,8 +1,8 @@
 # Unified AI Project 文档索引
 
-> ⚠️ **此文档已过时 (DEPRECATED) — 最后更新 2026-05-18**  
-> 约 60%+ 的链接指向不存在的文件。  
-> 请使用 **[docs/INDEX.md](../INDEX.md)**（当前索引）和
+> ⚠️ **此文档已过时 (DEPRECATED) — 最后更新 2026-05-18**
+> 约 60%+ 的链接指向不存在的文件。请使用
+> **[docs/INDEX.md](../INDEX.md)**（当前索引）和
 > **[docs/COMPREHENSIVE_REPAIR_ROADMAP.md](../COMPREHENSIVE_REPAIR_ROADMAP.md)**（修复路线图）作为最新替代。
 
 ---

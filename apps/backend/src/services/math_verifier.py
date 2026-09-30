@@ -182,7 +182,7 @@ class MathVerifier:
                             is_correct=True,
                             explanation=f"計算結果: {result}",
                         )
-                    except (ZeroDivisionError, Exception):
+                    except Exception:
                         logger.warning(
                             "Math evaluation failed for expression: %s", message, exc_info=True
                         )
@@ -443,7 +443,7 @@ def evaluate_logic(text: str) -> Optional[str]:
             tokens = re.findall(r"\b\w+\b", expr)
             if all(t in ("True", "False", "and", "or", "not") for t in tokens):
                 try:
-                    result = eval(expr, {"__builtins__": {}}, {})  # noqa: S307
+                    result = eval(expr, {"__builtins__": {}}, {})  # nosec B307
                     return "true" if result else "false"
                 except Exception:
                     return None
@@ -507,7 +507,7 @@ def evaluate_logic(text: str) -> Optional[str]:
     tokens = re.findall(r"\b\w+\b", expr)
     if all(t in ("True", "False", "and", "or", "not") for t in tokens):
         try:
-            result = eval(expr, {"__builtins__": {}}, {})  # noqa: S307
+            result = eval(expr, {"__builtins__": {}}, {})  # nosec B307
             return "true" if result else "false"
         except Exception:
             return None

@@ -3,7 +3,10 @@ patch_game_data.py — Surgically patches game_data.py NPC generation.
 Replaces fabricated merchant inventory and round-robin location assignment
 with lore-accurate logic derived from card tokens.
 """
-import re, pathlib, sys
+
+import pathlib
+import re
+import sys
 
 TARGET = pathlib.Path(__file__).resolve().parent.parent / "apps" / "game-rpg" / "game_data.py"
 src = TARGET.read_text(encoding="utf-8")
@@ -12,13 +15,13 @@ src = TARGET.read_text(encoding="utf-8")
 # PATCH 1: Add _CHAR_SUPP_CARDS + IGNORED_CARD_TYPES after _MECHANISM_CARDS line
 # ─────────────────────────────────────────────────────────────────────────────
 OLD_CARD_TYPES = '_MECHANISM_CARDS = _cards_by_type("通用機制卡")'
-NEW_CARD_TYPES = '''_MECHANISM_CARDS = _cards_by_type("通用機制卡")
+NEW_CARD_TYPES = """_MECHANISM_CARDS = _cards_by_type("通用機制卡")
 _CHAR_SUPP_CARDS = _cards_by_type("角色補充卡")   # Supplement cards that patch base chars
 
 # Meta/design-only cards: no gameplay simulation role
 IGNORED_CARD_TYPES = frozenset([
     "元公式卡", "元設定卡", "創作工具卡", "安全詞庫卡", "專案管理卡"
-])'''
+])"""
 
 if OLD_CARD_TYPES in src:
     src = src.replace(OLD_CARD_TYPES, NEW_CARD_TYPES, 1)
@@ -218,7 +221,7 @@ if OLD_NPC_SECTION_START in src:
 else:
     print("[PATCH 2] SKIP — pattern not found, checking variants...")
     # Try matching just the section comment
-    alt_marker = '# 6. NPC GENERATION — 59 character cards → interactive NPCs'
+    alt_marker = "# 6. NPC GENERATION — 59 character cards → interactive NPCs"
     if alt_marker in src:
         print("  Found alt marker, patching inline...")
     else:
@@ -227,7 +230,7 @@ else:
 # ─────────────────────────────────────────────────────────────────────────────
 # PATCH 3: Replace generate_all_npcs() body
 # ─────────────────────────────────────────────────────────────────────────────
-OLD_GENERATE_NPCS = '''def generate_all_npcs() -> Dict[str, dict]:
+OLD_GENERATE_NPCS = """def generate_all_npcs() -> Dict[str, dict]:
     npcs = {}
     for i, card in enumerate(_CHARACTER_CARDS):
         cid = card.get("card_id", f"CC-{i:02d}")
@@ -247,7 +250,7 @@ OLD_GENERATE_NPCS = '''def generate_all_npcs() -> Dict[str, dict]:
         tokens = card.get("tokens", [])
         token_cats = {t.get("category") for t in tokens}
         lore_toks = _tokens_by_cat(card, "lore")
-        
+
         # Archetype: check specific categories before combat+vitality default
         if "mechanism" in token_cats:
             archetype = "engineer"
@@ -263,7 +266,7 @@ OLD_GENERATE_NPCS = '''def generate_all_npcs() -> Dict[str, dict]:
             archetype = "warrior"
         else:
             archetype = "default"
-        
+
         offers = []
         if "craft" in token_cats:
             offers.extend(["鐵劍","皮甲","治療藥水","匕首","鋼刀","鐵甲","護身符"])
@@ -273,7 +276,7 @@ OLD_GENERATE_NPCS = '''def generate_all_npcs() -> Dict[str, dict]:
             offers.extend(["神秘地圖","書信","古老鑰匙","記憶水晶","古代硬幣"])
         if not offers:
             offers = ["乾糧","草藥","木柄","空瓶","麻繩"]
-        
+
         # Build description from stats + lore tokens + key tokens + abilities
         stats = card.get("stats", {})
         role_desc = stats.get("role定位", "")
@@ -327,9 +330,9 @@ OLD_GENERATE_NPCS = '''def generate_all_npcs() -> Dict[str, dict]:
             "offers": offers[:8],
             "gives_quests": "social" in token_cats or "knowledge" in token_cats or "craft" in token_cats,
             "quest_type": "side",
-            "raw_tokens": len(tokens),'''
+            "raw_tokens": len(tokens),"""
 
-NEW_GENERATE_NPCS = '''def generate_all_npcs() -> Dict[str, dict]:
+NEW_GENERATE_NPCS = """def generate_all_npcs() -> Dict[str, dict]:
     # Build supplement card patch map: name -> list of supplement cards
     _supp_map: Dict[str, list] = {}
     for sc in _CHAR_SUPP_CARDS:
@@ -462,7 +465,7 @@ NEW_GENERATE_NPCS = '''def generate_all_npcs() -> Dict[str, dict]:
             "is_merchant": archetype == "merchant" or bool(offers),
             "gives_quests": "social" in token_cats or "knowledge" in token_cats or "craft" in token_cats,
             "quest_type": "side",
-            "raw_tokens": len(tokens),'''
+            "raw_tokens": len(tokens),"""
 
 if OLD_GENERATE_NPCS in src:
     src = src.replace(OLD_GENERATE_NPCS, NEW_GENERATE_NPCS, 1)

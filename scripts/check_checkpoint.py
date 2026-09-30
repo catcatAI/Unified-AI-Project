@@ -1,5 +1,9 @@
 """Reconstruct original checkpoint from saved weights + JSON metadata."""
-import numpy as np, json, os
+
+import json
+import os
+
+import numpy as np
 
 npy_path = r"D:\Projects\Unified-AI-Project\data\checkpoints\garden_checkpoint\snn.pt.npy"
 json_path = r"D:\Projects\Unified-AI-Project\data\checkpoints\garden_checkpoint\snn.json"

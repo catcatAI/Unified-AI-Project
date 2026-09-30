@@ -9,8 +9,10 @@ CARD_DATA_PATH = os.path.join(_GAME_DATA_DIR, "game_cards.json")
 # ANSI color codes (INTERFACE_TERMINAL.md § 色彩)
 # =============================================================================
 
+
 class C:
     """ANSI color constants for terminal output."""
+
     RED = "\033[31m"
     GREEN = "\033[32m"
     YELLOW = "\033[33m"
@@ -30,39 +32,14 @@ class C:
 
 SYMBOL_PORTRAITS = {
     "default": (
-        "   ╔═╗  ╔═╗\n"
-        "   ║█║  ║█║\n"
-        "   ╚═╝  ╚═╝\n"
-        "    ╔═╗ \n"
-        "    ║█║ \n"
-        "    ╚═╝ "
+        "   ╔═╗  ╔═╗\n" "   ║█║  ║█║\n" "   ╚═╝  ╚═╝\n" "    ╔═╗ \n" "    ║█║ \n" "    ╚═╝ "
     ),
-    "warrior": (
-        "   ╔═╗  ╔═╗\n"
-        "   ║█║  ║█║\n"
-        "   ║█║  ║█║\n"
-        "   ╚═╝  ╚═╝"
-    ),
-    "mage": (
-        "   ╔═╗  ╔═╗\n"
-        "   ║█║  ║█║\n"
-        "    ║█║   \n"
-        "   ╚═╝  ╚═╝"
-    ),
+    "warrior": ("   ╔═╗  ╔═╗\n" "   ║█║  ║█║\n" "   ║█║  ║█║\n" "   ╚═╝  ╚═╝"),
+    "mage": ("   ╔═╗  ╔═╗\n" "   ║█║  ║█║\n" "    ║█║   \n" "   ╚═╝  ╚═╝"),
     "merchant": (
-        "   ╔═╗  ╔═╗\n"
-        "   ║@║  ║@║\n"
-        "   ╚═╝  ╚═╝\n"
-        "    ╔═╗ \n"
-        "    ║█║ \n"
-        "    ╚═╝ "
+        "   ╔═╗  ╔═╗\n" "   ║@║  ║@║\n" "   ╚═╝  ╚═╝\n" "    ╔═╗ \n" "    ║█║ \n" "    ╚═╝ "
     ),
-    "npc": (
-        "   ╔═╗  ╔═╗\n"
-        "   ║█║  ║█║\n"
-        "   ║█║  ║█║\n"
-        "   ╚═╝  ╚═╝"
-    ),
+    "npc": ("   ╔═╗  ╔═╗\n" "   ║█║  ║█║\n" "   ║█║  ║█║\n" "   ╚═╝  ╚═╝"),
 }
 
 EMOTION_FACES = {
@@ -75,80 +52,84 @@ EMOTION_FACES = {
 }
 
 SYMBOLS = {
-    "CC-01": "🔮",   # 織織 (Zhī Zhī)
-    "CC-02": "🔮",   # 壞壞米亞 (The Ch
-    "CC-03": "🔮",   # 星辰米亞 (The St
-    "CC-04": "🔮",   # 純真米亞 (The In
-    "CC-05": "🔮",   # 惡意精靈 (The Ma
-    "CC-06": "🔮",   # 楓
-    "CC-07": "🔮",   # 亞瑟 (Arthur)
-    "CC-08": "🔮",   # 概念調味師
-    "CC-09": "🔮",   # 安潔莉卡
-    "CC-10": "🔮",   # 靜子
-    "CC-11": "🔮",   # 米米
-    "CC-12": "🔮",   # 艾比 (Abby)
-    "CC-16": "🔮",   # 無限
-    "CC-17": "🔮",   # 左間小蒼蘭
-    "CC-18": "🔮",   # 小狐丸
-    "CC-19": "🔮",   # 晴空
-    "CC-20": "🔮",   # 米拉
-    "CC-21": "🔮",   # 千島 雉（ちしま きじ）
-    "CC-22": "🔮",   # 千島 忠臣（ちしま ただ
-    "CC-23": "🔮",   # 記憶者
-    "CC-28": "⚔️",   # 味道者
-    "CC-29": "⚔️",   # 溫度者
-    "CC-30": "⚔️",   # 濕度者
-    "CC-31": "⚙️",   # 空間者
-    "CC-32": "⚔️",   # 雲龍院 晴空（うんりゅう
-    "CC-33": "⚔️",   # 東 雲（しののめ くも）
-    "CC-34": "⚔️",   # 萊姆（ライム）
-    "CC-35": "⚔️",   # 輝夜（かぐや）
-    "CC-36": "🔮",   # 輝夜姬
-    "CC-38": "⚔️",   # 晞咕萊雅（Xigulay
-    "CC-39": "⚔️",   # 暈咔繆露（Yunkami
-    "CC-40": "⚔️",   # 髂審芬蒂（Kashinf
-    "CC-41": "⚔️",   # 芬喀涅（Fenkani）
-    "CC-42": "⚔️",   # 喪咕 雪禍咪 閃雷（通稱
-    "CC-43": "⚔️",   # 猞妒蝕津
-    "CC-44": "⚔️",   # 猞妒忌依
-    "CC-45": "🔧",   # 奶油泡芙（自稱）
-    "CC-46": "📜",   # 司萌
-    "CC-47": "📜",   # 呃咔
-    "CC-48": "⚔️",   # 鈿乾 芊蒔
-    "CC-49": "📜",   # 晞吶（Xina）
-    "CC-50": "⚔️",   # 翎翾（Líng Xuān
-    "CC-51": "⚔️",   # 夜鈴（Yè Líng）
-    "CC-52": "🔮",   # 煦掠（Xù Lüè）
-    "CC-53": "🔮",   # 小無（Xiǎo Wú）
-    "CC-54": "🔧",   # 嚶鳴（Yīng Míng
-    "CC-55": "📜",   # 蓋婭（Gaia）
-    "CC-56": "🔮",   # 塞勒涅（Selene）
-    "CC-57": "⚔️",   # 
-    "CC-58": "⚔️",   # 
-    "CC-59": "⚔️",   # 
-    "CC-61": "🔮",   # 藤真 佐和（Fujima
-    "CC-62": "⚔️",   # 汐見 琴音（Shiomi
-    "CC-63": "🔧",   # 啮輪·鋼須
-    "CC-64": "⚔️",   # 暗爪·刃尾
-    "CC-65": "🔧",   # 深痕 · 裂脊
-    "CC-66": "📜",   # 漣 · 迴聲
-    "CC-67": "🔧",   # 沫 · 彩衣
-    "CCK-01": "🔮",   # 克洛諾斯
+    "CC-01": "🔮",  # 織織 (Zhī Zhī)
+    "CC-02": "🔮",  # 壞壞米亞 (The Ch
+    "CC-03": "🔮",  # 星辰米亞 (The St
+    "CC-04": "🔮",  # 純真米亞 (The In
+    "CC-05": "🔮",  # 惡意精靈 (The Ma
+    "CC-06": "🔮",  # 楓
+    "CC-07": "🔮",  # 亞瑟 (Arthur)
+    "CC-08": "🔮",  # 概念調味師
+    "CC-09": "🔮",  # 安潔莉卡
+    "CC-10": "🔮",  # 靜子
+    "CC-11": "🔮",  # 米米
+    "CC-12": "🔮",  # 艾比 (Abby)
+    "CC-16": "🔮",  # 無限
+    "CC-17": "🔮",  # 左間小蒼蘭
+    "CC-18": "🔮",  # 小狐丸
+    "CC-19": "🔮",  # 晴空
+    "CC-20": "🔮",  # 米拉
+    "CC-21": "🔮",  # 千島 雉（ちしま きじ）
+    "CC-22": "🔮",  # 千島 忠臣（ちしま ただ
+    "CC-23": "🔮",  # 記憶者
+    "CC-28": "⚔️",  # 味道者
+    "CC-29": "⚔️",  # 溫度者
+    "CC-30": "⚔️",  # 濕度者
+    "CC-31": "⚙️",  # 空間者
+    "CC-32": "⚔️",  # 雲龍院 晴空（うんりゅう
+    "CC-33": "⚔️",  # 東 雲（しののめ くも）
+    "CC-34": "⚔️",  # 萊姆（ライム）
+    "CC-35": "⚔️",  # 輝夜（かぐや）
+    "CC-36": "🔮",  # 輝夜姬
+    "CC-38": "⚔️",  # 晞咕萊雅（Xigulay
+    "CC-39": "⚔️",  # 暈咔繆露（Yunkami
+    "CC-40": "⚔️",  # 髂審芬蒂（Kashinf
+    "CC-41": "⚔️",  # 芬喀涅（Fenkani）
+    "CC-42": "⚔️",  # 喪咕 雪禍咪 閃雷（通稱
+    "CC-43": "⚔️",  # 猞妒蝕津
+    "CC-44": "⚔️",  # 猞妒忌依
+    "CC-45": "🔧",  # 奶油泡芙（自稱）
+    "CC-46": "📜",  # 司萌
+    "CC-47": "📜",  # 呃咔
+    "CC-48": "⚔️",  # 鈿乾 芊蒔
+    "CC-49": "📜",  # 晞吶（Xina）
+    "CC-50": "⚔️",  # 翎翾（Líng Xuān
+    "CC-51": "⚔️",  # 夜鈴（Yè Líng）
+    "CC-52": "🔮",  # 煦掠（Xù Lüè）
+    "CC-53": "🔮",  # 小無（Xiǎo Wú）
+    "CC-54": "🔧",  # 嚶鳴（Yīng Míng
+    "CC-55": "📜",  # 蓋婭（Gaia）
+    "CC-56": "🔮",  # 塞勒涅（Selene）
+    "CC-57": "⚔️",  #
+    "CC-58": "⚔️",  #
+    "CC-59": "⚔️",  #
+    "CC-61": "🔮",  # 藤真 佐和（Fujima
+    "CC-62": "⚔️",  # 汐見 琴音（Shiomi
+    "CC-63": "🔧",  # 啮輪·鋼須
+    "CC-64": "⚔️",  # 暗爪·刃尾
+    "CC-65": "🔧",  # 深痕 · 裂脊
+    "CC-66": "📜",  # 漣 · 迴聲
+    "CC-67": "🔧",  # 沫 · 彩衣
+    "CCK-01": "🔮",  # 克洛諾斯
 }
 BODY_PARTS = [
-    ("head", "頭部"), ("torso", "軀幹"), ("left_arm", "左上臂"),
-    ("right_arm", "右上臂"), ("left_leg", "左腿"), ("right_leg", "右腿"),
+    ("head", "頭部"),
+    ("torso", "軀幹"),
+    ("left_arm", "左上臂"),
+    ("right_arm", "右上臂"),
+    ("left_leg", "左腿"),
+    ("right_leg", "右腿"),
 ]
 
 # Race keyword detection for auto-injecting race token categories
 # Maps race category → list of keywords to search in token names/values
 _RACE_KEYWORDS = {
-    "naval": ["艦","naval","ship","砲","魚雷","連裝","戰艦","航母","驅逐"],
-    "beast": ["獸","beast","狼","爪","尾","毛皮","牙","fur","claw","tail"],
-    "draconic": ["龍","dragon","draconic","鱗","翼膜","吐息"],
-    "mechanism": ["機械","mechan","robot","機","義體","gear","steam"],
-    "element": ["炎","冰","氷","雷","風","element","魔","咒","杖","術","mana","core"],
-    "spiritual": ["精靈","spirit","靈","ghost","幽","angel","天使"],
+    "naval": ["艦", "naval", "ship", "砲", "魚雷", "連裝", "戰艦", "航母", "驅逐"],
+    "beast": ["獸", "beast", "狼", "爪", "尾", "毛皮", "牙", "fur", "claw", "tail"],
+    "draconic": ["龍", "dragon", "draconic", "鱗", "翼膜", "吐息"],
+    "mechanism": ["機械", "mechan", "robot", "機", "義體", "gear", "steam"],
+    "element": ["炎", "冰", "氷", "雷", "風", "element", "魔", "咒", "杖", "術", "mana", "core"],
+    "spiritual": ["精靈", "spirit", "靈", "ghost", "幽", "angel", "天使"],
 }
 
 RED_BAR = "█"
@@ -160,6 +141,7 @@ EMPTY_BAR = "·"
 # =============================================================================
 # Level-up system (NUMERICAL_SYSTEMS.md)
 # =============================================================================
+
 
 def exp_needed_for_level(level: int) -> int:
     """exp_to_next = 100 + (level - 1) * 50 per NUMERICAL_SYSTEMS.md"""
@@ -192,7 +174,9 @@ def gain_exp(character, amount: int) -> list:
     return messages
 
 
-def gain_exp_with_skills(character, xp_amount: int, skill_cat: str = "", skill_amount: int = 5) -> list:
+def gain_exp_with_skills(
+    character, xp_amount: int, skill_cat: str = "", skill_amount: int = 5
+) -> list:
     """Gain EXP and (optionally) skill EXP. Returns combined messages."""
     msgs = list(gain_exp(character, xp_amount))
     if skill_cat:
@@ -203,6 +187,7 @@ def gain_exp_with_skills(character, xp_amount: int, skill_cat: str = "", skill_a
 # =============================================================================
 # Symbol portrait generation (CHARACTER_SYSTEM.md)
 # =============================================================================
+
 
 def get_portrait(character) -> str:
     """Return ASCII symbol portrait based on character's archetype."""
@@ -278,6 +263,7 @@ def _resolve_start_location(card) -> str:
     （如神社、月球、彩紋礁），回退到聖十字校園（遊戲起點），保持可玩性。
     """
     from sim_systems import WORLD_MAP
+
     stats = card.get("stats", {}) or {}
     loc = str(stats.get("location") or "").strip()
     if not loc:
@@ -306,72 +292,227 @@ def _resolve_start_location(card) -> str:
 def _auto_categorize_token(name: str, value: str) -> str:
     """Auto-assign a category to a token if it doesn't have one.
     This ensures new cards with missing category field still work correctly.
-    
+
     NOTE: Priority order is designed to match scripts/_fix_card_tokens.py
     for consistency. First-match wins.
     """
     text = (name + " " + str(value)).lower()
-    
+
     # Priority order: vitality (HP/body) → combat → craft → knowledge → social → element → energy → exploration
     # This matches the character_system.py stat calculation expectation
-    
-    vitality_kw = ["體力", "生命", "活力", "體質", "耐久", "hp", "vitality", "恢復",
-                    "治癒", "復活", "護盾", "防禦", "defense", "健康", "耐力",
-                    "傷", "痛", "疲勞", "流血", "身體", "感官", "生理", "體能"]
+
+    vitality_kw = [
+        "體力",
+        "生命",
+        "活力",
+        "體質",
+        "耐久",
+        "hp",
+        "vitality",
+        "恢復",
+        "治癒",
+        "復活",
+        "護盾",
+        "防禦",
+        "defense",
+        "健康",
+        "耐力",
+        "傷",
+        "痛",
+        "疲勞",
+        "流血",
+        "身體",
+        "感官",
+        "生理",
+        "體能",
+    ]
     for kw in vitality_kw:
         if kw in text:
             return "vitality"
-    
-    combat_kw = ["戰鬥", "攻", "戰", "武", "兵", "劍", "刀", "槍", "弓", "attack", "combat",
-                 "格鬥", "近戰", "遠程", "射擊", "暗殺", "獵殺", "戰技", "破壞",
-                 "戰術", "暴擊", "殺", "殲滅"]
+
+    combat_kw = [
+        "戰鬥",
+        "攻",
+        "戰",
+        "武",
+        "兵",
+        "劍",
+        "刀",
+        "槍",
+        "弓",
+        "attack",
+        "combat",
+        "格鬥",
+        "近戰",
+        "遠程",
+        "射擊",
+        "暗殺",
+        "獵殺",
+        "戰技",
+        "破壞",
+        "戰術",
+        "暴擊",
+        "殺",
+        "殲滅",
+    ]
     for kw in combat_kw:
         if kw in text:
             return "combat"
-    
-    craft_kw = ["製作", "工匠", "鍛造", "工藝", "craft", "製造", "合成", "修理", "料理",
-                 "烹飪", "採集", "挖礦", "建築", "材料", "工具", "手工", "零件"]
+
+    craft_kw = [
+        "製作",
+        "工匠",
+        "鍛造",
+        "工藝",
+        "craft",
+        "製造",
+        "合成",
+        "修理",
+        "料理",
+        "烹飪",
+        "採集",
+        "挖礦",
+        "建築",
+        "材料",
+        "工具",
+        "手工",
+        "零件",
+    ]
     for kw in craft_kw:
         if kw in text:
             return "craft"
-    
-    knowledge_kw = ["知識", "研究", "學習", "閱讀", "智慧", "情報", "解析",
-                     "實驗", "教學", "教育", "術式", "咒", "符文", "科學"]
+
+    knowledge_kw = [
+        "知識",
+        "研究",
+        "學習",
+        "閱讀",
+        "智慧",
+        "情報",
+        "解析",
+        "實驗",
+        "教學",
+        "教育",
+        "術式",
+        "咒",
+        "符文",
+        "科學",
+    ]
     for kw in knowledge_kw:
         if kw in text:
             return "knowledge"
-    
-    social_kw = ["社交", "人際", "溝通", "交易", "商", "貿易", "social", "charisma",
-                  "關係", "交涉", "說服", "表演", "歌唱", "音樂", "聲望", "服務"]
+
+    social_kw = [
+        "社交",
+        "人際",
+        "溝通",
+        "交易",
+        "商",
+        "貿易",
+        "social",
+        "charisma",
+        "關係",
+        "交涉",
+        "說服",
+        "表演",
+        "歌唱",
+        "音樂",
+        "聲望",
+        "服務",
+    ]
     for kw in social_kw:
         if kw in text:
             return "social"
-    
-    element_kw = ["元素", "火", "炎", "水", "冰", "風", "雷", "電", "土", "光", "闇", "暗",
-                   "element", "神性", "神力", "龍", "精靈", "魔法", "魔力", "mana"]
+
+    element_kw = [
+        "元素",
+        "火",
+        "炎",
+        "水",
+        "冰",
+        "風",
+        "雷",
+        "電",
+        "土",
+        "光",
+        "闇",
+        "暗",
+        "element",
+        "神性",
+        "神力",
+        "龍",
+        "精靈",
+        "魔法",
+        "魔力",
+        "mana",
+    ]
     for kw in element_kw:
         if kw in text:
             return "element"
-    
-    energy_kw = ["能量", "能源", "動力", "靈力", "內力", "法力", "energy", "power",
-                  "靈子", "氣", "精神", "意志", "蒸氣", "共鳴", "迴廊"]
+
+    energy_kw = [
+        "能量",
+        "能源",
+        "動力",
+        "靈力",
+        "內力",
+        "法力",
+        "energy",
+        "power",
+        "靈子",
+        "氣",
+        "精神",
+        "意志",
+        "蒸氣",
+        "共鳴",
+        "迴廊",
+    ]
     for kw in energy_kw:
         if kw in text:
             return "energy"
-    
-    explore_kw = ["探索", "探險", "冒險", "旅行", "移動", "地圖", "發現", "搜索", "速度",
-                   "敏捷", "飛行", "奔跑", "騎乘", "exploration", "adventure",
-                   "野外", "洞穴", "隱匿", "潛行"]
+
+    explore_kw = [
+        "探索",
+        "探險",
+        "冒險",
+        "旅行",
+        "移動",
+        "地圖",
+        "發現",
+        "搜索",
+        "速度",
+        "敏捷",
+        "飛行",
+        "奔跑",
+        "騎乘",
+        "exploration",
+        "adventure",
+        "野外",
+        "洞穴",
+        "隱匿",
+        "潛行",
+    ]
     for kw in explore_kw:
         if kw in text:
             return "exploration"
-    
+
     # Extended fallback rules (matches scripts/_improve_token_types.py)
     # These patterns don't map to the 8 main mechanic categories
     # but provide more specific types for display/lore purposes
-    
-    mechanism_kw = ["機制", "系統", "引擎", "法則", "模塊", "模組", "程序", "protocol",
-                     "規則", "條款", "規章"]
+
+    mechanism_kw = [
+        "機制",
+        "系統",
+        "引擎",
+        "法則",
+        "模塊",
+        "模組",
+        "程序",
+        "protocol",
+        "規則",
+        "條款",
+        "規章",
+    ]
     for kw in mechanism_kw:
         if kw in text:
             return "mechanism"
@@ -407,7 +548,7 @@ def _auto_categorize_token(name: str, value: str) -> str:
     for kw in connection_kw:
         if kw in text:
             return "connection"
-    
+
     return "general"
 
 
@@ -416,14 +557,14 @@ def generate_character_from_card(card):
     tokens = list(card.get("tokens", []))  # Copy to avoid mutating shared card list
     stats = card.get("stats", {})
     abilities = card.get("abilities", [])
-    
+
     # Auto-assign category for tokens missing it (future-proofing)
     for t in tokens:
         if isinstance(t, dict) and not t.get("category"):
             tname = t.get("name", t.get("id", ""))
             tval = t.get("value", "")
             t["category"] = _auto_categorize_token(tname, tval)
-    
+
     token_categories = {}
     for t in tokens:
         cat = t.get("category", "unknown")
@@ -438,22 +579,35 @@ def generate_character_from_card(card):
     energy_tokens = [t for t in tokens if t.get("category") == "energy"]
     exploration_tokens = [t for t in tokens if t.get("category") == "exploration"]
 
-    max_hp = 80 + len(vitality_tokens) * 15 + int(stats.get("hp_bonus", 0)) + (1 if combat_tokens else 0) * 10
+    max_hp = (
+        80
+        + len(vitality_tokens) * 15
+        + int(stats.get("hp_bonus", 0))
+        + (1 if combat_tokens else 0) * 10
+    )
     max_sp = 30 + len(energy_tokens) * 8 + len(element_tokens) * 5
     atk = 5 + len(combat_tokens) * 3 + len(vitality_tokens) * 1 + int(stats.get("atk_bonus", 0))
     defense = 3 + len(vitality_tokens) * 2 + int(stats.get("def_bonus", 0))
     spd = 4 + len(exploration_tokens) * 2 + int(stats.get("spd_bonus", 0))
-    karma = 5 + len(social_tokens) * 2 + len(knowledge_tokens) * 1 + int(stats.get("karma_bonus", 0))
+    karma = (
+        5 + len(social_tokens) * 2 + len(knowledge_tokens) * 1 + int(stats.get("karma_bonus", 0))
+    )
     craft_skill = len(craft_tokens) * 3 + int(stats.get("craft_bonus", 0))
 
     # 軸譜解析（文本權威）：文件分類表 → 卡片 token → 文本推導（不再用 token 猜種族）
     from axis_system import (
-        resolve_card_axis, affinity_vector, stat_modifiers as axis_stat_mods,
-        mechanic_race_from_axis, body_parts_from_axis, axis_display,
         MECH_AFFINITY_BOOST,
+        affinity_vector,
+        axis_display,
+        body_parts_from_axis,
+        mechanic_race_from_axis,
+        resolve_card_axis,
     )
+    from axis_system import stat_modifiers as axis_stat_mods
     from sim_systems import (
-        detect_race, RACE_DATA, get_race_body_parts,
+        RACE_DATA,
+        detect_race,
+        get_race_body_parts,
     )
 
     axis_lineage, axis_code, axis_axes = resolve_card_axis(card)
@@ -461,23 +615,27 @@ def generate_character_from_card(card):
     species_code = axis_code
     species_axes = axis_axes
     axis_affinity = affinity_vector(axis_lineage, axis_axes)
-    
+
     # Build token name/value text for race keyword detection
-    _token_text = " ".join(str(t.get("name","")) + " " + str(t.get("value","")) for t in tokens).lower()
-    _card_name = card.get("name","").lower()
+    _token_text = " ".join(
+        str(t.get("name", "")) + " " + str(t.get("value", "")) for t in tokens
+    ).lower()
+    _card_name = card.get("name", "").lower()
     _all_text = _token_text + " " + _card_name
-    
+
     # Inject race category tokens based on keyword detection
     # （有分類系譜時不需注入——文本權威已決定機制種族，避免 auto token 污染）
-    _existing_cats = {t.get("category","") for t in tokens}
+    _existing_cats = {t.get("category", "") for t in tokens}
     if not species_lineage:
         for race_cat, keywords in _RACE_KEYWORDS.items():
             if race_cat not in _existing_cats:
                 for kw in keywords:
                     if kw in _all_text:
-                        tokens.append({"category": race_cat, "name": f"{race_cat}_auto", "value": ""})
+                        tokens.append(
+                            {"category": race_cat, "name": f"{race_cat}_auto", "value": ""}
+                        )
                         break
-    
+
     # 種族（文本權威）：卡片 stats.race 的原文種族（如「狐娘（北極狐亞種）」「天空龍娘」）
     # 完整保留為 character["race"]；機制種族 detect_race 僅是遊戲抽象（RACE_DATA 身體部位／
     # 裝備槽／戰鬥加成）——三軸文件明言各分類系譜各有自己的尺，不能硬套同一把尺，
@@ -488,9 +646,12 @@ def generate_character_from_card(card):
         mechanic_race = mechanic_race_from_axis(axis_lineage, axis_axes, stats_race)
     else:
         # 未分類（純人類等）：以文本關鍵字偵測為輔（人類/艦娘/魔女/機械妖精等）
-        mechanic_race = detect_race(tokens, species_lineage=species_lineage,
-                                    card_id=card.get("card_id", ""),
-                                    text_race=stats_race)
+        mechanic_race = detect_race(
+            tokens,
+            species_lineage=species_lineage,
+            card_id=card.get("card_id", ""),
+            text_race=stats_race,
+        )
         # 未分類角色（無軸譜）：依機制種族補強五維度親和力——
         # 艦娘/機械可交互機械維度、術士可用魔導器（人類基線不足）
         for _dim, _boost in (MECH_AFFINITY_BOOST.get(mechanic_race) or {}).items():
@@ -506,10 +667,12 @@ def generate_character_from_card(card):
     defense = max(1, int(defense * _amods["defense"]))
     spd = max(1, int(spd * _amods["spd"]))
     karma = max(1, int(karma * _amods["karma"]))
-    
+
     # Build body parts from race data (mechanic race)
     _axis_body = body_parts_from_axis(axis_lineage, axis_axes)
-    body_part_ids = _axis_body if (axis_lineage and axis_axes) else get_race_body_parts(mechanic_race)
+    body_part_ids = (
+        _axis_body if (axis_lineage and axis_axes) else get_race_body_parts(mechanic_race)
+    )
     rd = RACE_DATA.get(mechanic_race, RACE_DATA["人類"])
     body_parts = {}
     # Use actual BODY_PARTS names for base parts
@@ -598,8 +761,12 @@ def create_blank_character(name="旅人"):
         "level": 1,
         "gold": 50,
         "body_parts": {
-            pid: {"name": name, "hp": 100 // 6 + (1 if i < 100 % 6 else 0),
-                  "max_hp": 100 // 6 + (1 if i < 100 % 6 else 0), "condition": "完好"}
+            pid: {
+                "name": name,
+                "hp": 100 // 6 + (1 if i < 100 % 6 else 0),
+                "max_hp": 100 // 6 + (1 if i < 100 % 6 else 0),
+                "condition": "完好",
+            }
             for i, (pid, name) in enumerate(BODY_PARTS)
         },
         "relationships": {},
@@ -649,30 +816,98 @@ def display_character_sheet(character):
     symbol = _get_symbol(character)
     lines.append("")
     lines.append(C.CYAN + "┌" + "─" * 32 + "┐" + C.RESET)
-    lines.append(C.CYAN + "│  " + C.BOLD + "%s %s" % (symbol, character["name"]) + C.RESET + " " * max(0, 26 - len(character["name"])) + C.CYAN + "│" + C.RESET)
+    lines.append(
+        C.CYAN
+        + "│  "
+        + C.BOLD
+        + "%s %s" % (symbol, character["name"])
+        + C.RESET
+        + " " * max(0, 26 - len(character["name"]))
+        + C.CYAN
+        + "│"
+        + C.RESET
+    )
     if character.get("card_id"):
         lines.append(C.CYAN + "│  ID: %s" % character["card_id"].ljust(29) + C.CYAN + "│" + C.RESET)
-    lines.append(C.CYAN + "│  種族: %s" % str(character.get("race_label", character.get("race","人類")))[:24].ljust(24) + C.CYAN + "│" + C.RESET)
+    lines.append(
+        C.CYAN
+        + "│  種族: %s"
+        % str(character.get("race_label", character.get("race", "人類")))[:24].ljust(24)
+        + C.CYAN
+        + "│"
+        + C.RESET
+    )
     _ax = character.get("axis", {}) or {}
     if _ax.get("display"):
-        lines.append(C.CYAN + ("│  軸譜: %s" % _ax["display"][:26]).ljust(30) + C.CYAN + "│" + C.RESET)
+        lines.append(
+            C.CYAN + ("│  軸譜: %s" % _ax["display"][:26]).ljust(30) + C.CYAN + "│" + C.RESET
+        )
         _aff = _ax.get("affinity") or {}
-        _aff_str = " ".join("%s%.0f" % (k, _aff.get(k, 0) * 100) for k in ("物質", "靈性", "機械", "能量", "資訊"))
+        _aff_str = " ".join(
+            "%s%.0f" % (k, _aff.get(k, 0) * 100) for k in ("物質", "靈性", "機械", "能量", "資訊")
+        )
         lines.append(C.CYAN + ("│  親和: %s" % _aff_str[:26]).ljust(30) + C.CYAN + "│" + C.RESET)
     # 軸譜行已含系譜＋代碼＋標籤（例如「物種｜S-S-P（標準種、類人型、純血）」）
     # species_lineage/species_code 保留於資料中供機制使用，不再重複顯示。
-    lines.append(C.CYAN + ("│  Lv.%d  EXP:%d/%d" % (character["level"], character["exp"], exp_needed_for_level(character["level"]))).ljust(30) + C.CYAN + "│" + C.RESET)
+    lines.append(
+        C.CYAN
+        + (
+            "│  Lv.%d  EXP:%d/%d"
+            % (character["level"], character["exp"], exp_needed_for_level(character["level"]))
+        ).ljust(30)
+        + C.CYAN
+        + "│"
+        + C.RESET
+    )
     lines.append(C.CYAN + "├" + "─" * 32 + "┤" + C.RESET)
     # HP bar
     hp_ratio = character["hp"] / character["max_hp"] if character["max_hp"] > 0 else 0
     hp_bar = _ansi_bar(hp_ratio, 20, C.RED)
-    lines.append(C.CYAN + "│  " + C.RED + "HP" + C.RESET + ":%3d/%d" % (character["hp"], character["max_hp"]) + " " * max(0, 18 - len(str(character["hp"]) + str(character["max_hp"]))) + C.RED + hp_bar + C.RESET + C.CYAN + "│" + C.RESET)
+    lines.append(
+        C.CYAN
+        + "│  "
+        + C.RED
+        + "HP"
+        + C.RESET
+        + ":%3d/%d" % (character["hp"], character["max_hp"])
+        + " " * max(0, 18 - len(str(character["hp"]) + str(character["max_hp"])))
+        + C.RED
+        + hp_bar
+        + C.RESET
+        + C.CYAN
+        + "│"
+        + C.RESET
+    )
     # SP bar
     sp_ratio = character["sp"] / character["max_sp"] if character["max_sp"] > 0 else 0
     sp_bar = _ansi_bar(sp_ratio, 20, C.BLUE)
-    lines.append(C.CYAN + "│  " + C.BLUE + "SP" + C.RESET + ":%3d/%d" % (character["sp"], character["max_sp"]) + " " * max(0, 18 - len(str(character["sp"]) + str(character["max_sp"]))) + C.BLUE + sp_bar + C.RESET + C.CYAN + "│" + C.RESET)
+    lines.append(
+        C.CYAN
+        + "│  "
+        + C.BLUE
+        + "SP"
+        + C.RESET
+        + ":%3d/%d" % (character["sp"], character["max_sp"])
+        + " " * max(0, 18 - len(str(character["sp"]) + str(character["max_sp"])))
+        + C.BLUE
+        + sp_bar
+        + C.RESET
+        + C.CYAN
+        + "│"
+        + C.RESET
+    )
     # Stats line
-    lines.append(C.CYAN + "│  " + C.BOLD + "ATK:%3d  DEF:%3d" % (character["atk"], character["defense"]) + C.RESET + "  SPD:%d  KRM:%d" % (character.get("spd", 0), character.get("karma", 0)) + C.CYAN + "│" + C.RESET)
+    lines.append(
+        C.CYAN
+        + "│  "
+        + C.BOLD
+        + "ATK:%3d  DEF:%3d" % (character["atk"], character["defense"])
+        + C.RESET
+        + "  SPD:%d  KRM:%d" % (character.get("spd", 0), character.get("karma", 0))
+        + C.CYAN
+        + "│"
+        + C.RESET
+    )
     # Skill line
     skills = character.get("skills", {})
     skill_str = ", ".join("%s Lv.%d" % (k, v.get("level", 1)) for k, v in skills.items())
@@ -680,13 +915,38 @@ def display_character_sheet(character):
         skill_display = skill_str[:28]
     else:
         skill_display = "(無技能)"
-    lines.append(C.CYAN + "│  " + C.GREEN + skill_display.ljust(30) + C.RESET + C.CYAN + "│" + C.RESET)
+    lines.append(
+        C.CYAN + "│  " + C.GREEN + skill_display.ljust(30) + C.RESET + C.CYAN + "│" + C.RESET
+    )
     lines.append(C.CYAN + "├" + "─" * 32 + "┤" + C.RESET)
     gold = character.get("gold", 0)
     rep = character.get("reputation", 0)
     rel_count = len(character.get("relationships", {}))
-    lines.append(C.CYAN + "│  " + C.YELLOW + "黃金:%d" % gold + C.RESET + "  " + C.MAGENTA + "聲望:%d" % rep + C.RESET + "  NPC:%d人" % rel_count + C.CYAN + "│" + C.RESET)
-    lines.append(C.CYAN + "│  部位:" + " ".join("%s%d" % (k[0].upper(), v["hp"]) for k, v in list(character["body_parts"].items())[:3]) + C.CYAN + "│" + C.RESET)
+    lines.append(
+        C.CYAN
+        + "│  "
+        + C.YELLOW
+        + "黃金:%d" % gold
+        + C.RESET
+        + "  "
+        + C.MAGENTA
+        + "聲望:%d" % rep
+        + C.RESET
+        + "  NPC:%d人" % rel_count
+        + C.CYAN
+        + "│"
+        + C.RESET
+    )
+    lines.append(
+        C.CYAN
+        + "│  部位:"
+        + " ".join(
+            "%s%d" % (k[0].upper(), v["hp"]) for k, v in list(character["body_parts"].items())[:3]
+        )
+        + C.CYAN
+        + "│"
+        + C.RESET
+    )
     lines.append(C.CYAN + "└" + "─" * 32 + "┘" + C.RESET)
     lines.append("")
     return "\n".join(lines)
@@ -727,9 +987,10 @@ def display_body_parts(character):
             cond = "失去機能"
             cond_color = C.RED + C.BOLD
         bar = _ansi_bar(ratio, 10, cond_color)
-        lines.append("  %s %s %d/%d %s [%s%s%s]" % (
-            part_id, part_name, hp, mx,
-            bar, cond_color, cond, C.RESET))
+        lines.append(
+            "  %s %s %d/%d %s [%s%s%s]"
+            % (part_id, part_name, hp, mx, bar, cond_color, cond, C.RESET)
+        )
     return "\n".join(lines)
 
 
@@ -828,6 +1089,7 @@ def display_relationships(character):
 # Quest tracking state helpers
 # =============================================================================
 
+
 def init_quest_state(character):
     """Initialize quest tracking in character state."""
     if "quests" not in character:
@@ -857,6 +1119,7 @@ def accept_quest(character, quest):
 def advance_quest_objective(character, quest_id, obj_type, obj_target, amount=1):
     """Advance progress on a quest objective. Returns True if just completed."""
     from sim_systems import QUESTS
+
     qs = character.get("quests", {})
     q = qs.get(quest_id)
     if not q or q["status"] != "active":
@@ -876,6 +1139,7 @@ def advance_quest_objective(character, quest_id, obj_type, obj_target, amount=1)
 def check_quest_completion(character, quest_id):
     """Check if all objectives of a quest are met."""
     from sim_systems import QUESTS
+
     qs = character.get("quests", {})
     q = qs.get(quest_id)
     if not q:
@@ -900,6 +1164,7 @@ def check_quest_completion(character, quest_id):
 def complete_quest(character, quest_id):
     """Mark a quest as completed and give rewards."""
     from sim_systems import QUESTS, get_item_def
+
     qs = character.get("quests", {})
     quest_def = next((qq for qq in QUESTS if qq["id"] == quest_id), None)
     if not quest_def or quest_id not in qs:
@@ -922,6 +1187,7 @@ def complete_quest(character, quest_id):
 def get_active_quests(character):
     """Get list of active quests with progress info."""
     from sim_systems import QUESTS
+
     qs = character.get("quests", {})
     result = []
     for qid, qdata in qs.items():
@@ -937,15 +1203,16 @@ def check_quest_eligibility(character, quest, current_hour=None):
     Returns (bool, reason_string).
     """
     from sim_systems import QUESTS
+
     if quest is None:
         return False, "任務不存在"
     conds = quest.get("conditions", {})
-    
+
     # Check level
     req_lv = conds.get("required_level", 0)
     if req_lv > 0 and character.get("level", 1) < req_lv:
         return False, "等級不足 (需要 Lv.%d)" % req_lv
-    
+
     # Check race（required_race 是機制分類值；mechanic_race 或文本種族含該詞皆算符合，
     # 如「天空龍娘」文本 → TASK-03 龍族任務）
     req_race = conds.get("required_race", "")
@@ -965,18 +1232,19 @@ def check_quest_eligibility(character, quest, current_hour=None):
         dims = ax_cond.get("維度", {})
         if dims:
             from axis_system import evaluate_quest
+
             _aff = _axis.get("affinity")
             if not _aff:
                 return False, "軸譜不明"
             _ok_ax, _dep, _missing = evaluate_quest(_aff, {"維度": dims})
             if not _ok_ax:
                 return False, "軸譜親和力不足 (需要 %s)" % "、".join(_missing)
-    
+
     # Check reputation
     req_rep = conds.get("required_reputation", 0)
     if req_rep > 0 and character.get("reputation", 0) < req_rep:
         return False, "聲望不足 (需要 %d)" % req_rep
-    
+
     # Check relationships
     req_rels = conds.get("required_relationships", {})
     if req_rels:
@@ -984,8 +1252,12 @@ def check_quest_eligibility(character, quest, current_hour=None):
         for npc_name, needed_val in req_rels.items():
             current_val = rels.get(npc_name, 0)
             if current_val < needed_val:
-                return False, "好感度不足 (%s 需要 %d, 目前 %d)" % (npc_name, needed_val, current_val)
-    
+                return False, "好感度不足 (%s 需要 %d, 目前 %d)" % (
+                    npc_name,
+                    needed_val,
+                    current_val,
+                )
+
     # Check prerequisite quests
     req_quests = conds.get("required_quests", [])
     if req_quests:
@@ -995,7 +1267,7 @@ def check_quest_eligibility(character, quest, current_hour=None):
                 qdef = next((qq for qq in QUESTS if qq["id"] == rq), None)
                 title = qdef["title"] if qdef else rq
                 return False, "需要先完成「%s」" % title
-    
+
     # Check required tokens
     req_tokens = conds.get("required_tokens", [])
     if req_tokens:
@@ -1003,7 +1275,7 @@ def check_quest_eligibility(character, quest, current_hour=None):
         for tok in req_tokens:
             if tok not in token_cats:
                 return False, "需要 [%s] 類別特質" % tok
-    
+
     # Check time availability
     time_avail = conds.get("time_available", {})
     if time_avail:
@@ -1018,7 +1290,7 @@ def check_quest_eligibility(character, quest, current_hour=None):
             # Wrap-around (e.g. 18:00~6:00)
             if not (current_hour >= start_h or current_hour < end_h):
                 return False, "現在不是接取時間 (%d:00~%d:00)" % (start_h, end_h)
-    
+
     # Check required skills
     req_skill = conds.get("required_skill", {})
     if req_skill:
@@ -1027,7 +1299,7 @@ def check_quest_eligibility(character, quest, current_hour=None):
             cur_level = skills.get(sname, {}).get("level", 0)
             if cur_level < slevel:
                 return False, "技能等級不足 (%s Lv.%d)" % (sname, slevel)
-    
+
     return True, ""
 
 
@@ -1037,6 +1309,7 @@ def get_available_quests(character):
     Returns list of (quest_def, reason_if_not_available_or_None).
     """
     from sim_systems import QUESTS
+
     qs = character.get("quests", {})
     completed = character.get("completed_quests", [])
     current_hour = character.get("hour", 8)
@@ -1057,6 +1330,7 @@ def get_available_quests(character):
 # =============================================================================
 # Vehicle state
 # =============================================================================
+
 
 def init_vehicle_state(character):
     if "vehicles" not in character:
@@ -1138,6 +1412,7 @@ def get_skill_modifier(character, skill_category: str) -> int:
 # Reputation system effects (SIMULATION_SYSTEMS.md / WORLDS_AND_STORY.md)
 # =============================================================================
 
+
 def get_reputation_tier(reputation: int) -> str:
     if reputation < -10:
         return "敵意"
@@ -1164,6 +1439,7 @@ def modify_reputation(character, amount: int):
 
 SAVE_FILE = os.path.join(_GAME_DATA_DIR, "save_game.json")
 
+
 def save_game(character):
     """Save character state to JSON file."""
     try:
@@ -1173,23 +1449,25 @@ def save_game(character):
         # Convert body_parts for serialization
         save_data = dict(character)
         # Remove non-serializable if any
-        with open(SAVE_FILE, 'w', encoding='utf-8') as f:
+        with open(SAVE_FILE, "w", encoding="utf-8") as f:
             json.dump(save_data, f, ensure_ascii=False, indent=2)
         return True
     except Exception as e:
-        print('  Save failed:', e)
+        print("  Save failed:", e)
         return False
+
 
 def load_game():
     """Load character state from JSON file."""
     try:
         if not os.path.exists(SAVE_FILE):
             return None
-        with open(SAVE_FILE, 'r', encoding='utf-8') as f:
+        with open(SAVE_FILE, "r", encoding="utf-8") as f:
             data = json.load(f)
         return data
     except Exception:
         return None
+
 
 def delete_save():
     """Delete save file."""

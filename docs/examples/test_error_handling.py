@@ -4,10 +4,11 @@
 測試 API 的錯誤處理能力
 """
 
-import requests
 import json
-from datetime import datetime
 import logging
+from datetime import datetime
+
+import requests
 
 logger = logging.getLogger(__name__)
 

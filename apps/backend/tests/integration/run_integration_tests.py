@@ -27,51 +27,48 @@ from pathlib import Path
 
 class TestRunner:
     """测试运行器"""
-    
+
     def __init__(self):
         self.test_dir = Path(__file__).parent
         self.backend_dir = self.test_dir.parent.parent
         self.results = {}
-        
+
     def discover_tests(self):
         """发现所有测试文件"""
         test_files = [
-            'test_full_system_integration.py',
-            'test_end_to_end_scenarios.py',
-            'test_performance_benchmarks.py',
-            'test_error_recovery.py',
-            'test_digital_life_compliance.py',
+            "test_full_system_integration.py",
+            "test_end_to_end_scenarios.py",
+            "test_performance_benchmarks.py",
+            "test_error_recovery.py",
+            "test_digital_life_compliance.py",
         ]
         return [self.test_dir / f for f in test_files]
-    
+
     def run_test_file(self, test_file: Path, markers: str = None):
         """运行单个测试文件"""
         print(f"\n{'='*70}")
         print(f"Running: {test_file.name}")
         print(f"{'='*70}")
-        
+
         cmd = [
-            sys.executable, '-m', 'pytest',
+            sys.executable,
+            "-m",
+            "pytest",
             str(test_file),
-            '-v',
-            '--tb=short',
+            "-v",
+            "--tb=short",
         ]
-        
+
         if markers:
-            cmd.extend(['-m', markers])
-        
+            cmd.extend(["-m", markers])
+
         try:
-            result = subprocess.run(
-                cmd,
-                cwd=self.backend_dir,
-                capture_output=False,
-                text=True
-            )
+            result = subprocess.run(cmd, cwd=self.backend_dir, capture_output=False, text=True)
             return result.returncode == 0
         except Exception as e:
             print(f"Error running {test_file.name}: {e}")
             return False
-    
+
     def run_all_tests(self, full: bool = False, quick: bool = False):
         """运行所有测试"""
         print(f"\n{'='*70}")
@@ -80,33 +77,33 @@ class TestRunner:
         print(f"Start Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print(f"Test Directory: {self.test_dir}")
         print(f"{'='*70}\n")
-        
+
         test_files = self.discover_tests()
-        
+
         markers = None
         if quick:
-            markers = 'not slow'
+            markers = "not slow"
         elif not full:
-            markers = 'not slow'
-        
+            markers = "not slow"
+
         passed = 0
         failed = 0
-        
+
         for test_file in test_files:
             if test_file.exists():
                 success = self.run_test_file(test_file, markers)
-                self.results[test_file.name] = 'PASSED' if success else 'FAILED'
+                self.results[test_file.name] = "PASSED" if success else "FAILED"
                 if success:
                     passed += 1
                 else:
                     failed += 1
             else:
                 print(f"Warning: {test_file.name} not found")
-                self.results[test_file.name] = 'NOT_FOUND'
+                self.results[test_file.name] = "NOT_FOUND"
                 failed += 1
-        
+
         return passed, failed
-    
+
     def generate_report(self):
         """生成测试报告"""
         print(f"\n{'='*70}")
@@ -114,15 +111,15 @@ class TestRunner:
         print(f"{'='*70}")
         print(f"End Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print(f"\nResults:")
-        
+
         for test_name, result in self.results.items():
-            status_icon = '✓' if result == 'PASSED' else '✗' if result == 'FAILED' else '?'
+            status_icon = "✓" if result == "PASSED" else "✗" if result == "FAILED" else "?"
             print(f"  {status_icon} {test_name:45s} : {result}")
-        
-        passed = sum(1 for r in self.results.values() if r == 'PASSED')
-        failed = sum(1 for r in self.results.values() if r == 'FAILED')
+
+        passed = sum(1 for r in self.results.values() if r == "PASSED")
+        failed = sum(1 for r in self.results.values() if r == "FAILED")
         total = len(self.results)
-        
+
         print(f"\n{'='*70}")
         print(f"SUMMARY:")
         print(f"  Total Tests: {total}")
@@ -130,10 +127,10 @@ class TestRunner:
         print(f"  Failed: {failed}")
         print(f"  Success Rate: {passed/total*100:.1f}%" if total > 0 else "  N/A")
         print(f"{'='*70}")
-        
+
         return passed, failed
-    
-    def generate_html_report(self, output_file: str = 'integration_test_report.html'):
+
+    def generate_html_report(self, output_file: str = "integration_test_report.html"):
         """生成HTML报告"""
         html_content = f"""
 <!DOCTYPE html>
@@ -193,7 +190,7 @@ class TestRunner:
         <h1>Angela AI v6.0 - Integration Test Report</h1>
         <p>Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
     </div>
-    
+
     <div class="summary">
         <h2>Executive Summary</h2>
         <div class="metric">
@@ -209,21 +206,23 @@ class TestRunner:
             <strong>Success Rate:</strong> {sum(1 for r in self.results.values() if r == 'PASSED')/len(self.results)*100:.1f}%
         </div>
     </div>
-    
+
     <h2>Test Details</h2>
 """
-        
+
         for test_name, result in self.results.items():
-            css_class = 'passed' if result == 'PASSED' else 'failed' if result == 'FAILED' else 'not-found'
+            css_class = (
+                "passed" if result == "PASSED" else "failed" if result == "FAILED" else "not-found"
+            )
             status_class = f"status-{result.lower().replace('_', '-')}"
-            
+
             html_content += f"""
     <div class="test-result {css_class}">
         <h3>{test_name}</h3>
         <p>Status: <span class="{status_class}">{result}</span></p>
     </div>
 """
-        
+
         html_content += """
     <div class="summary" style="margin-top: 40px;">
         <h2>Test Suite Description</h2>
@@ -238,47 +237,49 @@ class TestRunner:
 </body>
 </html>
 """
-        
+
         output_path = self.test_dir / output_file
-        with open(output_path, 'w', encoding='utf-8') as f:
+        with open(output_path, "w", encoding="utf-8") as f:
             f.write(html_content)
-        
+
         print(f"\nHTML report generated: {output_path}")
         return output_path
 
 
 def main():
     """主函数"""
-    parser = argparse.ArgumentParser(description='Run Angela AI v6.0 Integration Tests')
-    parser.add_argument('--full', action='store_true', help='Run full test suite including slow tests')
-    parser.add_argument('--quick', action='store_true', help='Run only quick tests')
-    parser.add_argument('--report', action='store_true', help='Generate HTML report')
-    parser.add_argument('--list', action='store_true', help='List all test files')
-    
+    parser = argparse.ArgumentParser(description="Run Angela AI v6.0 Integration Tests")
+    parser.add_argument(
+        "--full", action="store_true", help="Run full test suite including slow tests"
+    )
+    parser.add_argument("--quick", action="store_true", help="Run only quick tests")
+    parser.add_argument("--report", action="store_true", help="Generate HTML report")
+    parser.add_argument("--list", action="store_true", help="List all test files")
+
     args = parser.parse_args()
-    
+
     runner = TestRunner()
-    
+
     if args.list:
         print("Test Files:")
         for test_file in runner.discover_tests():
             exists = "✓" if test_file.exists() else "✗"
             print(f"  {exists} {test_file.name}")
         return
-    
+
     # 运行测试
     passed, failed = runner.run_all_tests(full=args.full, quick=args.quick)
-    
+
     # 生成报告
     runner.generate_report()
-    
+
     # 生成HTML报告
     if args.report:
         runner.generate_html_report()
-    
+
     # 返回退出码
     sys.exit(0 if failed == 0 else 1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -57,7 +57,7 @@ def _find_spec_fast(module_name: str) -> Optional[bool]:
         if getattr(spec, "loader", None) is not None:
             return True
         return None
-    except (ImportError, ValueError, ModuleNotFoundError):
+    except (ImportError, ValueError):
         return False
     except Exception:
         logger.debug("find_spec failed for %r", module_name, exc_info=True)

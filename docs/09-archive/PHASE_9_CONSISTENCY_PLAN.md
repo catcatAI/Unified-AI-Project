@@ -1,11 +1,10 @@
 # [DEPRECATED] Phase 9 — 架構一致性與版本治理（Architecture Consistency & Governance）
 
-> **⚠️ 已被 `MASTER_CONSOLIDATED_PLAN.md` 取代 (2026-05-25)**  
+> **⚠️ 已被 `MASTER_CONSOLIDATED_PLAN.md` 取代 (2026-05-25)**
 > 此文件已被合併至全量計畫。請參閱 `MASTER_CONSOLIDATED_PLAN.md`。
 
-> **基於**: `docs/FULL_ARCHITECTURE_ANALYSIS.md` §7 關鍵發現、§8 改進建議  
-> **審計日期**: 2026-05-25  
-> **當前架構一致性評分**: 62.6% — **目標**: 85%+
+> **基於**: `docs/FULL_ARCHITECTURE_ANALYSIS.md` §7 關鍵發現、§8 改進建議
+> **審計日期**: 2026-05-25 **當前架構一致性評分**: 62.6% — **目標**: 85%+
 
 ---
 

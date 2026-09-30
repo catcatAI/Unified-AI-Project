@@ -7,9 +7,10 @@
 
 """
 
-import requests
-import time
 import logging
+import time
+
+import requests
 
 logger = logging.getLogger(__name__)
 

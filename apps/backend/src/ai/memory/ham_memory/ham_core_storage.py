@@ -102,7 +102,8 @@ class HAMCoreStorage:
             data_to_save = {
                 "memories": {
                     # TypedDict 本身無 to_dict；json.dumps 需要純 dict——直接轉換
-                    k: dict(v) for k, v in core_memory_store.items()
+                    k: dict(v)
+                    for k, v in core_memory_store.items()
                 },
                 "next_memory_id": next_memory_id,
             }
@@ -130,7 +131,9 @@ class HAMCoreStorage:
         Returns the current disk usage of the storage directory in GB.
         """
         if self.resource_awareness_service:
-            return float(self.resource_awareness_service.get_available_disk_space_gb(self.storage_dir))
+            return float(
+                self.resource_awareness_service.get_available_disk_space_gb(self.storage_dir)
+            )
 
         try:
             import shutil

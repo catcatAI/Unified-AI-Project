@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import tempfile
 from dataclasses import dataclass, field
 from typing import Any, Dict, Optional
 
@@ -19,7 +20,7 @@ class InMemoryProtocol:
 
 
 class FileBasedProtocol:
-    def __init__(self, base_path: str = "/tmp"):
+    def __init__(self, base_path: str = tempfile.gettempdir()):
         self.base_path = base_path
         os.makedirs(base_path, exist_ok=True)
 

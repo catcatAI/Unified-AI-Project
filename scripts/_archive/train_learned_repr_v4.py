@@ -1,21 +1,24 @@
 """Learned Representation v4: PCA encoder + linear decoder."""
-import sys
+
 import os
+import sys
 import time
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'apps', 'backend', 'src'))
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"))
+
+import glob
 
 import numpy as np
-import glob
 from PIL import Image
 
-CIFAR_DIR="D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
-CLASSES=["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
-LATENT_DIM=64
+CIFAR_DIR = "D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
+CLASSES = ["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
+LATENT_DIM = 64
 
 
 def load_cifar(n_per_class=50):
-    images=[]
-    labels=[]
+    images = []
+    labels = []
     for ci, cls in enumerate(CLASSES):
         cls_dir = os.path.join(CIFAR_DIR, cls)
         files = sorted(glob.glob(os.path.join(cls_dir, "*.npy")))[:n_per_class]
@@ -35,8 +38,8 @@ def main():
 
     # Stratified split
     rng = np.random.default_rng(42)
-    train_idx=[]
-    test_idx=[]
+    train_idx = []
+    test_idx = []
     for c in range(10):
         idxs = np.where(all_labels == c)[0]
         rng.shuffle(idxs)
@@ -55,7 +58,7 @@ def main():
     t0 = time.time()
     U, S, Vt = np.linalg.svd(centered, full_matrices=False)
     proj = Vt[:LATENT_DIM]  # (64, 3072)
-    explained = (S[:LATENT_DIM] ** 2).sum() / (S ** 2).sum()
+    explained = (S[:LATENT_DIM] ** 2).sum() / (S**2).sum()
     print(f"PCA: {LATENT_DIM} dims, {explained:.1%} variance ({time.time()-t0:.1f}s)")
 
     train_latent = centered @ proj.T  # (400, 64)
@@ -74,8 +77,9 @@ def main():
     Y = np.zeros((len(train_latent_n), 10), dtype=np.float32)
     for i, l in enumerate(train_labels):
         Y[i, l] = 1.0
-    W_clf = np.linalg.solve(train_latent_n.T @ train_latent_n + 1e-4 * np.eye(LATENT_DIM),
-                            train_latent_n.T @ Y)
+    W_clf = np.linalg.solve(
+        train_latent_n.T @ train_latent_n + 1e-4 * np.eye(LATENT_DIM), train_latent_n.T @ Y
+    )
     preds = np.argmax(test_latent_n @ W_clf, axis=1)
     correct = np.sum(preds == test_labels)
     print(f"Recognition: {correct}/{len(test_labels)} = {correct/len(test_labels):.1%}")
@@ -84,7 +88,7 @@ def main():
     print("\n=== Linear Decoder (analytical) ===")
     # Solve: W_dec @ latent ≈ image → W_dec = image @ latent^+ (pseudoinverse)
     # W_dec = (image^T @ latent) @ (latent^T @ latent + reg)^{-1}
-    reg=1.0
+    reg = 1.0
     LtL = train_latent.T @ train_latent + reg * np.eye(LATENT_DIM)
     LtX = train_latent.T @ train_imgs  # (64, 3072)
     W_dec = np.linalg.solve(LtL, LtX).T  # (3072, 64)
@@ -92,19 +96,23 @@ def main():
 
     # Test reconstruction
     print("\n=== Reconstruction ===")
-    output_dir="data/multimodal/gvv/learned_test"
+    output_dir = "data/multimodal/gvv/learned_test"
     os.makedirs(output_dir, exist_ok=True)
 
-    total_mse=0.0
+    total_mse = 0.0
     for i in range(10):
         raw = test_latent[i] @ W_dec.T + b_dec
-        recon=1.0 / (1.0 + np.exp(-np.clip(raw, -10, 10)))
+        recon = 1.0 / (1.0 + np.exp(-np.clip(raw, -10, 10)))
         recon = recon.reshape(32, 32, 3)
         orig = test_imgs[i].reshape(32, 32, 3)
         mse = np.mean((recon - orig) ** 2)
         total_mse += mse
-        Image.fromarray((orig * 255).astype(np.uint8)).save(os.path.join(output_dir, f"orig_{i}.png"))
-        Image.fromarray((recon * 255).astype(np.uint8)).save(os.path.join(output_dir, f"recon_{i}.png"))
+        Image.fromarray((orig * 255).astype(np.uint8)).save(
+            os.path.join(output_dir, f"orig_{i}.png")
+        )
+        Image.fromarray((recon * 255).astype(np.uint8)).save(
+            os.path.join(output_dir, f"recon_{i}.png")
+        )
         print(f"  Image {i}: MSE={mse:.4f}")
     print(f"Average MSE: {total_mse/10:.4f}")
 
@@ -114,9 +122,11 @@ def main():
         mask = train_labels == ci
         center = train_latent[mask].mean(axis=0)
         raw = center @ W_dec.T + b_dec
-        gen=1.0 / (1.0 + np.exp(-np.clip(raw, -10, 10)))
+        gen = 1.0 / (1.0 + np.exp(-np.clip(raw, -10, 10)))
         gen = gen.reshape(32, 32, 3)
-        Image.fromarray((gen * 255).astype(np.uint8)).save(os.path.join(output_dir, f"gen_{cls}.png"))
+        Image.fromarray((gen * 255).astype(np.uint8)).save(
+            os.path.join(output_dir, f"gen_{cls}.png")
+        )
         print(f"  Generated {cls}")
 
     # Random generation
@@ -124,9 +134,11 @@ def main():
         z = rng.standard_normal(LATENT_DIM).astype(np.float32)
         z = z / np.linalg.norm(z)
         raw = z @ W_dec.T + b_dec
-        gen=1.0 / (1.0 + np.exp(-np.clip(raw, -10, 10)))
+        gen = 1.0 / (1.0 + np.exp(-np.clip(raw, -10, 10)))
         gen = gen.reshape(32, 32, 3)
-        Image.fromarray((gen * 255).astype(np.uint8)).save(os.path.join(output_dir, f"gen_random_{i}.png"))
+        Image.fromarray((gen * 255).astype(np.uint8)).save(
+            os.path.join(output_dir, f"gen_random_{i}.png")
+        )
     print("Generated 5 random images")
     print(f"\nAll → {output_dir}/")
 

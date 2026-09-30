@@ -1,4 +1,5 @@
 import os
+import sqlite3
 import sys
 
 import pytest
@@ -33,7 +34,7 @@ class TestLearningLogDBInit:
         from apps.backend.src.ai.meta.learning_log_db import LearningLogDB
 
         invalid_path = str(tmp_path / "nonexistent" / "subdir" / "test.db")
-        with pytest.raises(Exception):
+        with pytest.raises(sqlite3.Error):
             LearningLogDB(invalid_path)
 
 

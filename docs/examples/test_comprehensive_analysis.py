@@ -8,13 +8,14 @@ Angela AI 系統深入分析腳本
 """
 
 import asyncio
-import aiohttp
 import json
+import logging
 import time
 import traceback
 from datetime import datetime
-from typing import Dict, List, Any
-import logging
+from typing import Any, Dict, List
+
+import aiohttp
 
 logger = logging.getLogger(__name__)
 

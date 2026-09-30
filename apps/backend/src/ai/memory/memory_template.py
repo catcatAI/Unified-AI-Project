@@ -373,7 +373,7 @@ def generate_template_id(content: str) -> str:
     """生成模板 ID"""
     import hashlib
 
-    content_hash = hashlib.md5(content.encode()).hexdigest()[:8]
+    content_hash = hashlib.md5(content.encode(), usedforsecurity=False).hexdigest()[:8]
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     return f"tpl_{timestamp}_{content_hash}"
 

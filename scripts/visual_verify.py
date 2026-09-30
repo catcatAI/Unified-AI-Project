@@ -1,19 +1,21 @@
 """Visual verification: render images from concept space → primitives → image."""
-import sys
+
 import os
+import sys
 import time
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'apps', 'backend', 'src'))
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"))
 
 import numpy as np
-from PIL import Image
-from ai.multimodal.primitives.geometric_vocabulary import GeometricVocabulary
-from ai.multimodal.primitives.concept_space import ConceptSpaceMapper
 from ai.multimodal.primitives.concept_mapper import ConceptMapper
+from ai.multimodal.primitives.concept_space import ConceptSpaceMapper
+from ai.multimodal.primitives.geometric_vocabulary import GeometricVocabulary
 from ai.multimodal.primitives.primitive_renderer import PrimitiveRenderer
 from ai.multimodal.primitives.primitive_types import DrawingInstructions
+from PIL import Image
 
-CLASSES=["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
-OUTPUT_DIR="data/multimodal/gvv/visual_test"
+CLASSES = ["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
+OUTPUT_DIR = "data/multimodal/gvv/visual_test"
 
 
 def main():
@@ -62,7 +64,8 @@ def main():
     # Test 4: Load actual CIFAR-10 images for comparison
     print("\n=== Test 4: Actual CIFAR-10 images ===")
     import glob
-    cifar_dir="D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
+
+    cifar_dir = "D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
     for ci, cls in enumerate(CLASSES):
         cls_dir = os.path.join(cifar_dir, cls)
         files = sorted(glob.glob(os.path.join(cls_dir, "*.npy")))[:3]

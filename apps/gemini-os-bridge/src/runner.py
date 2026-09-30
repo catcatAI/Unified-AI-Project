@@ -1,11 +1,13 @@
 import logging
 import time
-import pyperclip
+
 import pyautogui
-from src.config import GLOBAL_DELAY, WINDOW_WAIT_TIMEOUT, BROWSER_LOAD_WAIT, MAX_CAPTURE_CHARS
+import pyperclip
 from src.capabilities import OSCapabilities
+from src.config import BROWSER_LOAD_WAIT, GLOBAL_DELAY, MAX_CAPTURE_CHARS, WINDOW_WAIT_TIMEOUT
 
 logger = logging.getLogger(__name__)
+
 
 class RobustTaskRunner:
     def __init__(self):
@@ -22,8 +24,10 @@ class RobustTaskRunner:
             self.os_cap.cleanup_save_dialogs()
 
             # Check if we already have a window related to this query
-            if self.os_cap.is_content_open(query.split()[0]): # Check for first keyword
-                print(f"[Runner] Detected existing window for '{query}'. Focusing instead of opening new.")
+            if self.os_cap.is_content_open(query.split()[0]):  # Check for first keyword
+                print(
+                    f"[Runner] Detected existing window for '{query}'. Focusing instead of opening new."
+                )
                 self.os_cap.focus_window(query.split()[0])
                 time.sleep(GLOBAL_DELAY)
             else:
@@ -41,24 +45,24 @@ class RobustTaskRunner:
 
                 # 2. Search
                 pyperclip.copy(query)
-                pyautogui.hotkey('ctrl', 't')
+                pyautogui.hotkey("ctrl", "t")
                 time.sleep(GLOBAL_DELAY * 2)
-                pyautogui.hotkey('ctrl', 'v')
+                pyautogui.hotkey("ctrl", "v")
                 time.sleep(GLOBAL_DELAY)
-                pyautogui.press('enter')
+                pyautogui.press("enter")
 
             # 3. Layered Verification
             print(f"[Runner] Waiting {BROWSER_LOAD_WAIT}s for stability...")
             time.sleep(BROWSER_LOAD_WAIT)
-            
+
             # Action: Capture content
-            pyautogui.hotkey('ctrl', 'a')
+            pyautogui.hotkey("ctrl", "a")
             time.sleep(GLOBAL_DELAY)
-            pyautogui.hotkey('ctrl', 'c')
+            pyautogui.hotkey("ctrl", "c")
             time.sleep(GLOBAL_DELAY * 2)
-            
+
             final_content = pyperclip.paste()
-            
+
             # Check if content changed/loaded
             if len(final_content) < 500 or final_content == query:
                 print("[Runner] Primary verification failed. Attempting vision check...")
@@ -66,12 +70,14 @@ class RobustTaskRunner:
                 raise Exception(f"Stability check failed: Content too short. Proof: {err_path}")
 
             # 4. Success & Cleanup
-            print(f"[Runner] Search successful (Captured {len(final_content)} chars). Cleaning up...")
+            print(
+                f"[Runner] Search successful (Captured {len(final_content)} chars). Cleaning up..."
+            )
             self.os_cap.close_tab()
-            
+
             if focus_back:
                 self.os_cap.focus_terminal()
-            
+
             return self.os_cap.clean_text(final_content)[:MAX_CAPTURE_CHARS]
 
         except Exception as e:
@@ -79,6 +85,7 @@ class RobustTaskRunner:
             if focus_back:
                 self.os_cap.focus_terminal()
             return f"Error: {str(e)}"
+
 
 if __name__ == "__main__":
     # Test run

@@ -1,21 +1,24 @@
 """Three-Layer Architecture: Compare PCA dimensions (128/256/512/3072)."""
-import sys
+
 import os
+import sys
 import time
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'apps', 'backend', 'src'))
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"))
+
+import glob
 
 import numpy as np
-import glob
 from PIL import Image
 
-CIFAR_DIR="D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
-CLASSES=["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
-IMG_DIM=3072
-OUTPUT_BASE="data/multimodal/gvv/pca_compare"
+CIFAR_DIR = "D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
+CLASSES = ["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
+IMG_DIM = 3072
+OUTPUT_BASE = "data/multimodal/gvv/pca_compare"
 
 
 def load_cifar(n_per_class=50):
-    images, labels=[], []
+    images, labels = [], []
     for ci, cls in enumerate(CLASSES):
         cls_dir = os.path.join(CIFAR_DIR, cls)
         files = sorted(glob.glob(os.path.join(cls_dir, "*.npy")))[:n_per_class]
@@ -37,7 +40,7 @@ def main():
     print(f"Total: {len(all_imgs)}")
 
     rng = np.random.default_rng(42)
-    train_idx, test_idx=[], []
+    train_idx, test_idx = [], []
     for c in range(10):
         idxs = np.where(all_labels == c)[0]
         rng.shuffle(idxs)
@@ -54,11 +57,11 @@ def main():
     t0 = time.time()
     U, S, Vt = np.linalg.svd(centered, full_matrices=False)
     pca_time = time.time() - t0
-    explained_all = (S ** 2).sum()
+    explained_all = (S**2).sum()
     print(f"SVD done: {pca_time:.1f}s")
 
-    dims_to_test=[128, 256, 512, 3072]
-    results={}
+    dims_to_test = [128, 256, 512, 3072]
+    results = {}
 
     for LATENT_DIM in dims_to_test:
         if LATENT_DIM > len(S):
@@ -80,8 +83,9 @@ def main():
         Y = np.zeros((len(train_latent), 10), dtype=np.float32)
         for i, l in enumerate(train_labels):
             Y[i, l] = 1.0
-        W_clf = np.linalg.solve(train_latent.T @ train_latent + 1e-4 * np.eye(LATENT_DIM),
-                                train_latent.T @ Y)
+        W_clf = np.linalg.solve(
+            train_latent.T @ train_latent + 1e-4 * np.eye(LATENT_DIM), train_latent.T @ Y
+        )
         preds = np.argmax(test_latent @ W_clf, axis=1)
         acc = np.sum(preds == test_labels) / len(test_labels)
         print(f"Recognition: {acc:.1%}")
@@ -98,6 +102,7 @@ def main():
                     nn.Linear(512, IMG_DIM),
                     nn.Sigmoid(),
                 )
+
             def forward(self, x):
                 return self.net(x)
 
@@ -108,16 +113,16 @@ def main():
         X_train = torch.tensor(train_latent, dtype=torch.float32)
         Y_train = torch.tensor(train_imgs, dtype=torch.float32)
 
-        batch_size=64
-        n_epochs=100
+        batch_size = 64
+        n_epochs = 100
         t0 = time.time()
 
         for epoch in range(n_epochs):
             perm = torch.randperm(len(X_train))
-            total_loss=0.0
-            n_batches=0
+            total_loss = 0.0
+            n_batches = 0
             for i in range(0, len(X_train), batch_size):
-                idx = perm[i:i+batch_size]
+                idx = perm[i : i + batch_size]
                 x, y = X_train[idx], Y_train[idx]
                 recon = decoder(x)
                 loss = criterion(recon, y)
@@ -149,7 +154,7 @@ def main():
             orig = (test_imgs[i].reshape(32, 32, 3) * 255).astype(np.uint8)
             recon = (test_recon[i].reshape(32, 32, 3) * 255).astype(np.uint8)
             # Side by side: original | reconstruction
-            combo = Image.new('RGB', (64, 32))
+            combo = Image.new("RGB", (64, 32))
             combo.paste(Image.fromarray(orig), (0, 0))
             combo.paste(Image.fromarray(recon), (32, 0))
             combo.save(os.path.join(out_dir, f"pair_{i}.png"))
@@ -166,10 +171,10 @@ def main():
             Image.fromarray(img).save(os.path.join(out_dir, f"gen_{cls}.png"))
 
         results[LATENT_DIM] = {
-            'mse': total_mse,
-            'acc': acc,
-            'variance': explained,
-            'train_time': train_time,
+            "mse": total_mse,
+            "acc": acc,
+            "variance": explained,
+            "train_time": train_time,
         }
 
     # Summary
@@ -179,7 +184,9 @@ def main():
     print(f"{'Dims':<8} {'Variance':<12} {'MSE':<10} {'Acc':<8} {'Time':<10}")
     print("-" * 50)
     for d, r in results.items():
-        print(f"{d:<8} {r['variance']:<12.2%} {r['mse']:<10.4f} {r['acc']:<8.1%} {r['train_time']:<10.0f}s")
+        print(
+            f"{d:<8} {r['variance']:<12.2%} {r['mse']:<10.4f} {r['acc']:<8.1%} {r['train_time']:<10.0f}s"
+        )
     print(f"\nImages → {OUTPUT_BASE}/")
 
 

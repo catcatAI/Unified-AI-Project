@@ -12,19 +12,20 @@ Usage:
     python run_angela.py --health-check    # 健康检查
 """
 
-import sys
-import os
-import subprocess
 import argparse
-import time
-import signal
 import json
-import traceback
+import logging
+import os
 import re
+import signal
+import subprocess
+import sys
+import time
+import traceback
 import warnings
 from pathlib import Path
-from typing import Optional, Tuple, List
-import logging
+from typing import List, Optional, Tuple
+
 logger = logging.getLogger(__name__)
 
 warnings.filterwarnings(
@@ -36,6 +37,7 @@ warnings.filterwarnings(
 
 class SecurityError(Exception):
     """Security-related errors."""
+
     pass
 
 
@@ -43,32 +45,36 @@ class SecurityError(Exception):
 # 进度显示工具
 # ============================================
 
+
 class ProgressDisplay:
     """进度显示器 - 使用 live_logger 实现单行动态更新"""
 
-    def __init__(self, total_steps: int=100):
+    def __init__(self, total_steps: int = 100):
         self.total_steps = total_steps
-        self.current_step=0
+        self.current_step = 0
         self._last_pct = -1
 
-    def update(self, step: int, message: str, stat: str="info") -> None:
+    def update(self, step: int, message: str, stat: str = "info") -> None:
         from core.system.live_logger import status, status_done
+
         self.current_step = step
         percent = min(100, int((step / self.total_steps) * 100))
         if percent == self._last_pct and stat not in ("error",):
             return
         self._last_pct = percent
-        bar="█" * (percent // 2) + "░" * (50 - percent // 2)
+        bar = "█" * (percent // 2) + "░" * (50 - percent // 2)
         status(f"[{bar}] {percent:3d}% {message}")
         if stat in ("success", "error"):
             status_done(f"[{bar}] {percent:3d}% {'✅' if stat == 'success' else '❌'} {message}")
 
     def finish(self, message: str) -> None:
         from core.system.live_logger import status_done
+
         status_done(f"[{'█' * 50}] 100% ✅ {message}")
 
     def error(self, message: str) -> None:
         from core.system.live_logger import err
+
         err(f"{message}")
 
 
@@ -76,60 +82,61 @@ class ProgressDisplay:
 # 错误恢复工具
 # ============================================
 
+
 class ErrorRecovery:
     """错误恢复管理器"""
-    
+
     def __init__(self, project_root: Path):
         self.project_root = project_root
         self.log_file = project_root / "logs" / "launcher.log"
         self.error_log_file = project_root / "logs" / "launcher_errors.json"
         self._ensure_log_dir()
-    
+
     def _ensure_log_dir(self) -> None:
         """确保日志目录存在"""
         self.log_file.parent.mkdir(parents=True, exist_ok=True)
-    
-    def log_error(self, component: str, error: Exception, context: dict=None) -> None:
+
+    def log_error(self, component: str, error: Exception, context: dict = None) -> None:
         """记录错误"""
-        error_entry={
+        error_entry = {
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
             "component": component,
             "error_type": type(error).__name__,
             "error_message": str(error),
             "context": context or {},
         }
-        
+
         # 写入错误日志文件
-        errors=self._load_errors()
+        errors = self._load_errors()
         errors.append(error_entry)
-        
-        with open(self.error_log_file, 'w', encoding='utf-8') as f:
+
+        with open(self.error_log_file, "w", encoding="utf-8") as f:
             json.dump(errors[-100:], f, indent=2, ensure_ascii=False)
-        
+
         # 写入详细日志
-        with open(self.log_file, 'a', encoding='utf-8') as f:
+        with open(self.log_file, "a", encoding="utf-8") as f:
             f.write(f"\n{'=' * 60}\n")
             f.write(f"ERROR at {error_entry['timestamp']}\n")
             f.write(f"Component: {component}\n")
             f.write(f"Error: {error_entry['error_type']}: {error_entry['error_message']}\n")
             f.write(f"Context: {json.dumps(context, indent=2)}\n")
             f.write(traceback.format_exc())
-    
+
     def _load_errors(self) -> List[dict]:
         """加载错误历史"""
         if self.error_log_file.exists():
             try:
-                with open(self.error_log_file, 'r', encoding='utf-8') as f:
+                with open(self.error_log_file, "r", encoding="utf-8") as f:
                     return json.load(f)
             except Exception as e:
-                logger.error(f'Error in {__name__}: {e}', exc_info=True)
+                logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 pass
 
         return []
-    
+
     def suggest_recovery(self, component: str) -> List[str]:
         """建议恢复方案"""
-        suggestions={
+        suggestions = {
             "backend": [
                 "检查 Python 依赖是否已安装",
                 "运行: pip install -r requirements.txt",
@@ -153,61 +160,68 @@ class ErrorRecovery:
                 "或修改配置文件中的端口号",
             ],
         }
-        return suggestions.get(component, ["检查日志文件获取更多信息", "尝试重启系统", "联系技术支持"])
+        return suggestions.get(
+            component, ["检查日志文件获取更多信息", "尝试重启系统", "联系技术支持"]
+        )
 
 
 # ============================================
 # 启动器
 # ============================================
 
+
 def _load_env_file(env_file: Path) -> None:
     """安全地加载 .env 文件"""
     if not env_file.exists():
         logger.warning(f"Environment file not found: {env_file}")
         return
-    
+
     try:
         # Validate file path to prevent directory traversal
         project_root = env_file.parent.parent
         if not _validate_env_file_path(env_file, project_root):
             raise SecurityError(f"Invalid environment file path: {env_file}")
-        
-        with open(env_file, 'r', encoding='utf-8') as f:
+
+        with open(env_file, "r", encoding="utf-8") as f:
             for line_num, line in enumerate(f, 1):
                 line = line.strip()
-                if not line or line.startswith('#'):
+                if not line or line.startswith("#"):
                     continue
-                
-                if '=' not in line:
+
+                if "=" not in line:
                     logger.warning(f"Skipping invalid line {line_num} in {env_file}: no '=' found")
                     continue
-                
-                parts = line.split('=', 1)
+
+                parts = line.split("=", 1)
                 if len(parts) != 2:
-                    logger.warning(f"Skipping invalid line {line_num} in {env_file}: malformed key-value pair")
+                    logger.warning(
+                        f"Skipping invalid line {line_num} in {env_file}: malformed key-value pair"
+                    )
                     continue
-                
+
                 key, value = parts
                 key = key.strip()
                 value = value.strip()
-                
+
                 # Validate key
                 if not _validate_env_key(key):
                     logger.warning(f"Skipping invalid key '{key}' in line {line_num} of {env_file}")
                     continue
-                
+
                 # Remove inline comments safely
-                if '#' in value:
-                    value = value.split('#', 1)[0].strip()
-                
+                if "#" in value:
+                    value = value.split("#", 1)[0].strip()
+
                 # Remove quotes safely
-                if (value.startswith('"') and value.endswith('"')) or (value.startswith("'") and value.endswith("'")):
+                if (value.startswith('"') and value.endswith('"')) or (
+                    value.startswith("'") and value.endswith("'")
+                ):
                     value = value[1:-1]
-                
+
                 # Set environment variable
                 os.environ.setdefault(key, value)
                 logger.debug(f"Loaded environment variable: {key}")
-                
+
     except SecurityError:
         raise
     except Exception as e:
@@ -229,23 +243,29 @@ def _validate_env_key(key: str) -> bool:
     """Validate environment variable key."""
     if not key or len(key) > 100:
         return False
-    
+
     # Allow only alphanumeric, underscore, and hyphen
-    return bool(re.match(r'^[a-zA-Z0-9_-]+$', key))
+    return bool(re.match(r"^[a-zA-Z0-9_-]+$", key))
 
 
 class SecurityError(Exception):
     """Security-related errors."""
+
     pass
 
 
-def wait_for_server(port=8000, timeout=360, progress: Optional[ProgressDisplay] = None, proc: Optional[subprocess.Popen] = None) -> bool:
+def wait_for_server(
+    port=8000,
+    timeout=360,
+    progress: Optional[ProgressDisplay] = None,
+    proc: Optional[subprocess.Popen] = None,
+) -> bool:
     """等待服务器启动, 若进程提前崩溃则立刻返回"""
     import socket
 
     start = time.time()
-    check_interval=0.5
-    
+    check_interval = 0.5
+
     while time.time() - start < timeout:
         if proc is not None and proc.poll() is not None:
             logger.error(f"Backend process crashed unexpectedly with exit code {proc.returncode}")
@@ -259,41 +279,41 @@ def wait_for_server(port=8000, timeout=360, progress: Optional[ProgressDisplay] 
             if result == 0:
                 return True
         except Exception as e:
-            logger.error(f'Error in {__name__}: {e}', exc_info=True)
+            logger.error(f"Error in {__name__}: {e}", exc_info=True)
             pass
 
-        
         if progress:
             elapsed = time.time() - start
             ratio = elapsed / timeout if timeout > 0 else 0.0
             step = min(49, 30 + int(ratio * 20))
             progress.update(step, f"等待后端启动 ({elapsed:.1f}s/{timeout}s)", "loading")
-        
+
         time.sleep(check_interval)
-    
+
     return False
 
 
 class Launcher:
     def __init__(self):
         self.project_root = Path(__file__).resolve().parent.parent
-        self.backend_dir=self.project_root / "apps" / "backend"
-        self.electron_dir=self.project_root / "apps" / "desktop-app" / "electron_app"
-        self.mode="user"  # Default mode
+        self.backend_dir = self.project_root / "apps" / "backend"
+        self.electron_dir = self.project_root / "apps" / "desktop-app" / "electron_app"
+        self.mode = "user"  # Default mode
         self.progress = ProgressDisplay(total_steps=100)
         self.recovery = ErrorRecovery(self.project_root)
-        self.pid_file=self.project_root / ".angela_backend.pid"
-        
+        self.pid_file = self.project_root / ".angela_backend.pid"
+
         # 加载 .env 文件
-        env_file=self.project_root / ".env"
+        env_file = self.project_root / ".env"
         if env_file.exists():
             _load_env_file(env_file)
         elif (self.project_root / ".env.example").exists():
-             _load_env_file(self.project_root / ".env.example")
-    
+            _load_env_file(self.project_root / ".env.example")
+
     def check_port_available(self, port: int) -> bool:
         """检查端口是否可用"""
         import socket
+
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(1)
@@ -301,15 +321,16 @@ class Launcher:
             sock.close()
             return result != 0
         except Exception as e:
-            logger.error(f'Error in {__name__}: {e}', exc_info=True)
+            logger.error(f"Error in {__name__}: {e}", exc_info=True)
             return False
 
     def _kill_port_process(self, port: int) -> bool:
         """强制终止占用指定端口的进程"""
         try:
             import psutil
-            killed=False
-            for conn in psutil.net_connections(kind='inet'):
+
+            killed = False
+            for conn in psutil.net_connections(kind="inet"):
                 if conn.laddr.port == port and conn.pid:
                     try:
                         proc = psutil.Process(conn.pid)
@@ -317,34 +338,38 @@ class Launcher:
                         logger.warning(f"Killing process {proc.pid} ({proc_name}) on port {port}")
                         proc.kill()
                         proc.wait(timeout=5)
-                        killed=True
+                        killed = True
                     except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
                         logger.warning(f"Could not kill process {conn.pid}: {e}")
             return killed
         except ImportError:
             # Fallback: use netstat + taskkill on Windows
-            if sys.platform == 'win32':
+            if sys.platform == "win32":
                 try:
                     result = subprocess.run(
-                        ['powershell', '-Command',
-                         f'Get-NetTCPConnection -LocalPort {port} -ErrorAction SilentlyContinue | '
-                         f'Select-Object -ExpandProperty OwningProcess | '
-                         f'ForEach-Object {{ Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }}'],
-                        capture_output=True, text=True, timeout=10
+                        [
+                            "powershell",
+                            "-Command",
+                            f"Get-NetTCPConnection -LocalPort {port} -ErrorAction SilentlyContinue | "
+                            f"Select-Object -ExpandProperty OwningProcess | "
+                            f"ForEach-Object {{ Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }}",
+                        ],
+                        capture_output=True,
+                        text=True,
+                        timeout=10,
                     )
                     return True
                 except Exception as e:
-                    logger.error(f'Failed to kill port {port} process via PowerShell: {e}')
+                    logger.error(f"Failed to kill port {port} process via PowerShell: {e}")
             return False
 
-    
     def check_dependencies(self, quiet: bool = False) -> Tuple[bool, List[str]]:
         """检查核心依赖是否安装"""
         if not quiet:
             self.progress.update(5, "检查环境依赖...")
-        
-        missing=[]
-        required_packages={
+
+        missing = []
+        required_packages = {
             "fastapi": "FastAPI",
             "uvicorn": "Uvicorn",
             "psutil": "psutil",
@@ -355,35 +380,37 @@ class Launcher:
             "cpuinfo": "py-cpuinfo",
             "cryptography": "cryptography",
         }
-        
+
         for module, name in required_packages.items():
             try:
                 __import__(module)
             except ImportError:
                 missing.append(name)
-        
+
         if missing:
             if not quiet:
                 self.progress.error(f"缺失关键组件: {', '.join(missing)}")
             return False, missing
-        
+
         if not quiet:
             self.progress.update(10, "环境依赖检查完成", "success")
         return True, []
-    
+
     def check_python_version(self, quiet: bool = False) -> bool:
         """检查 Python 版本"""
         version = sys.version_info
         if version < (3, 10):
             if not quiet:
-                self.progress.error(f"Python 版本过低: {version.major}.{version.minor}, 需要 >= 3.10")
+                self.progress.error(
+                    f"Python 版本过低: {version.major}.{version.minor}, 需要 >= 3.10"
+                )
             return False
         return True
-    
+
     def install_dependencies(self, missing: List[str]) -> bool:
         """自动安装缺失的依赖"""
         self.progress.update(8, f"自动安装缺失依赖 ({len(missing)} 个)...")
-        req_file=self.project_root / "requirements.txt"
+        req_file = self.project_root / "requirements.txt"
         if not req_file.exists():
             self.progress.error("找不到 requirements.txt")
             return False
@@ -391,7 +418,9 @@ class Launcher:
         try:
             result = subprocess.run(
                 [sys.executable, "-m", "pip", "install", "-r", str(req_file), "--quiet"],
-                capture_output=True, text=True, timeout=300,
+                capture_output=True,
+                text=True,
+                timeout=300,
             )
             if result.returncode != 0:
                 self.progress.error(f"自动安装失败: {result.stderr.strip()[:200]}")
@@ -399,6 +428,7 @@ class Launcher:
 
             # Refresh sys.path to pick up newly installed packages
             import importlib
+
             importlib.invalidate_caches()
 
             self.progress.update(10, "依赖安装完成", "success")
@@ -415,21 +445,17 @@ class Launcher:
         """检查 Node.js 是否安装"""
         try:
             result = subprocess.run(
-                ["node", "--version"],
-                capture_output=True,
-                text=True,
-                timeout=5
+                ["node", "--version"], capture_output=True, text=True, timeout=5
             )
             return result.returncode == 0
         except Exception as e:
-            logger.error(f'Error in {__name__}: {e}', exc_info=True)
+            logger.error(f"Error in {__name__}: {e}", exc_info=True)
             return False
 
-    
     def start_backend(self) -> Optional[subprocess.Popen]:
         """启动后端"""
         self.progress.update(20, "启动后端 API...")
-        
+
         # P0 Fix: 启动前检查端口是否被占用，自动清理僵尸进程
         if not self.check_port_available(8000):
             logger.warning("Port 8000 already in use, attempting to free it...")
@@ -438,13 +464,15 @@ class Launcher:
             time.sleep(1.5)  # Wait for OS to release the port
             if not self.check_port_available(8000):
                 self.progress.error("Port 8000 仍被占用，无法启动后端")
-                self.recovery.log_error("backend", Exception("Port 8000 still in use after cleanup"))
+                self.recovery.log_error(
+                    "backend", Exception("Port 8000 still in use after cleanup")
+                )
                 return None
             logger.info("Port 8000 freed successfully.")
-        
+
         try:
             python = sys.executable
-            cmd=[
+            cmd = [
                 python,
                 "-m",
                 "uvicorn",
@@ -454,35 +482,35 @@ class Launcher:
                 "--port",
                 "8000",
             ]
-            
+
             if self.mode == "user":
                 cmd.extend(["--log-level", "warning"])
-            
+
             env = os.environ.copy()
             src_path = str(self.backend_dir / "src")
             if "PYTHONPATH" in env:
                 env["PYTHONPATH"] = src_path + os.pathsep + env["PYTHONPATH"]
             else:
                 env["PYTHONPATH"] = src_path
-            
+
             if sys.platform == "win32":
                 creation_flags = subprocess.CREATE_NEW_CONSOLE if self.mode == "dev" else 0
             else:
-                creation_flags=0
-            
+                creation_flags = 0
+
             proc = subprocess.Popen(
                 cmd,
                 cwd=str(self.backend_dir),
                 creationflags=creation_flags,
                 env=env,
             )
-            
+
             self.progress.update(30, "后端启动中...", "loading")
-            
+
             if wait_for_server(8000, progress=self.progress, proc=proc):
                 self.progress.update(50, "后端已就绪", "success")
                 try:
-                    self.pid_file.write_text(str(proc.pid), encoding='utf-8')
+                    self.pid_file.write_text(str(proc.pid), encoding="utf-8")
                 except Exception as e:
                     logger.debug("PID file write failed (non-critical): %s", e)
                 return proc
@@ -490,42 +518,49 @@ class Launcher:
                 crashed = proc.poll() is not None
                 if crashed:
                     self.progress.error(f"后端进程崩溃（退出码 {proc.returncode}）")
-                    self.recovery.log_error("backend", Exception(f"Backend process crashed with exit code {proc.returncode}"))
+                    self.recovery.log_error(
+                        "backend",
+                        Exception(f"Backend process crashed with exit code {proc.returncode}"),
+                    )
                 else:
                     self.progress.error("后端启动超时")
                     self.recovery.log_error("backend", Exception("Backend startup timeout"))
                 return None
-            
+
         except Exception as e:
-            logger.error(f'Error in {__name__}: {e}', exc_info=True)
+            logger.error(f"Error in {__name__}: {e}", exc_info=True)
             self.progress.error(f"后端启动失败: {e}")
 
             self.recovery.log_error("backend", e, {"mode": self.mode})
             return None
-    
+
     def start_desktop(self) -> Optional[subprocess.Popen]:
         """启动桌面应用"""
         self.progress.update(60, "启动桌面应用...")
-        
+
         if not self.electron_dir.exists():
             self.progress.update(70, "桌面应用不存在", "warning")
             return None
-        
+
         # 检查 Node.js
         if not self.check_node_installed():
             self.progress.error("Node.js 未安装")
             self.recovery.log_error("desktop", Exception("Node.js not installed"))
             return None
-        
+
         try:
             if sys.platform == "win32":
-                electron=self.electron_dir / "node_modules" / ".bin" / "electron.cmd"
+                electron = self.electron_dir / "node_modules" / ".bin" / "electron.cmd"
                 if not electron.exists():
                     self.progress.update(70, "请先安装桌面依赖", "warning")
                     return None
-                
-                creation_flags = subprocess.CREATE_NEW_CONSOLE if self.mode == "dev" else subprocess.CREATE_NO_WINDOW
-                
+
+                creation_flags = (
+                    subprocess.CREATE_NEW_CONSOLE
+                    if self.mode == "dev"
+                    else subprocess.CREATE_NO_WINDOW
+                )
+
                 proc = subprocess.Popen(
                     [str(electron), str(self.electron_dir)],
                     cwd=str(self.electron_dir),
@@ -533,26 +568,26 @@ class Launcher:
                 )
             else:
                 proc = subprocess.Popen(["npm", "start"], cwd=str(self.electron_dir))
-            
+
             self.progress.update(80, "桌面应用已启动", "success")
             return proc
-            
+
         except Exception as e:
-            logger.error(f'Error in {__name__}: {e}', exc_info=True)
+            logger.error(f"Error in {__name__}: {e}", exc_info=True)
             self.progress.error(f"桌面启动失败: {e}")
 
             self.recovery.log_error("desktop", e)
             return None
-    
+
     def create_shortcut(self) -> bool:
         """创建快捷方式"""
         self.progress.update(20, "创建桌面快捷方式...")
-        
+
         try:
             if sys.platform != "win32":
                 self.progress.update(30, "快捷方式仅支持 Windows", "warning")
                 return False
-            
+
             from win32com.client import Dispatch
 
             desktop = os.path.join(os.path.expandvars("%USERPROFILE%"), "Desktop")
@@ -563,34 +598,36 @@ class Launcher:
             sc.Targetpath = sys.executable
             sc.Arguments = f'"{self.project_root / "scripts" / "run_angela.py"}'
             sc.WorkingDirectory = str(self.project_root)
-            sc.Description="Angela AI - 桌面数字生命"
+            sc.Description = "Angela AI - 桌面数字生命"
             sc.save()
 
             self.progress.finish(f"快捷方式已创建: {shortcut_path}")
             return True
 
         except Exception as e:
-            logger.error(f'Error in {__name__}: {e}', exc_info=True)
+            logger.error(f"Error in {__name__}: {e}", exc_info=True)
             self.progress.error(f"快捷方式创建失败: {e}")
 
             self.recovery.log_error("shortcut", e)
             return False
-    
-    def shutdown(self, backend_proc: Optional[subprocess.Popen], desktop_proc: Optional[subprocess.Popen]) -> None:
+
+    def shutdown(
+        self, backend_proc: Optional[subprocess.Popen], desktop_proc: Optional[subprocess.Popen]
+    ) -> None:
         """关闭所有进程"""
         self.progress.update(95, "正在关闭...", "loading")
-        
+
         for proc in [desktop_proc, backend_proc]:
             if proc:
                 try:
                     proc.terminate()
                     proc.wait(timeout=5)
                 except Exception as e:
-                    logger.error(f'Error in {__name__}: {e}', exc_info=True)
+                    logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 try:
                     proc.kill()
                 except Exception as e2:
-                    logger.error(f'Error in {__name__}: {e2}', exc_info=True)
+                    logger.error(f"Error in {__name__}: {e2}", exc_info=True)
 
         # Clean up PID file
         try:
@@ -599,16 +636,15 @@ class Launcher:
         except Exception as pid_err:
             logger.debug("PID file cleanup failed (non-critical): %s", pid_err)
 
-        
         self.progress.finish("已关闭")
-    
+
     def run_health_check(self) -> bool:
         """运行健康检查"""
         print("\n" + "=" * 60)
         print("🔍 Angela AI 健康检查")
         print("=" * 60)
-        
-        checks=[
+
+        checks = [
             ("Python 版本", lambda: self.check_python_version(quiet=True), True),
             ("Python 依赖", lambda: self.check_dependencies(quiet=True)[0], True),
             ("Node.js 安装", self.check_node_installed, True),
@@ -616,26 +652,26 @@ class Launcher:
             ("后端目录存在", lambda: self.backend_dir.exists(), True),
             ("桌面目录存在", lambda: self.electron_dir.exists(), False),
         ]
-        
-        all_pass=True
+
+        all_pass = True
         for name, check_func, required in checks:
             try:
                 result = check_func()
-                icon="✅" if result else "❌"
+                icon = "✅" if result else "❌"
                 print(f"{icon} {name}")
                 if required and not result:
-                    all_pass=False
+                    all_pass = False
             except Exception as e:
                 print(f"❌ {name} (检查失败: {e})")
                 if required:
-                    all_pass=False
-        
+                    all_pass = False
+
         print("=" * 60)
         if all_pass:
             print("✅ 所有检查通过！")
         else:
             print("⚠️  发现问题，请根据上述提示进行修复")
-        
+
         print()
         return all_pass
 
@@ -651,17 +687,20 @@ def main():
     parser.add_argument("--install-shortcut", action="store_true", help="创建桌面快捷方式")
     parser.add_argument("--health-check", action="store_true", help="运行健康检查")
     parser.add_argument(
-        "--timeout", type=int, default=0, metavar="SEC",
-        help="测试用：N秒后自动关闭（默认0=无限运行，等待 Ctrl+C）"
+        "--timeout",
+        type=int,
+        default=0,
+        metavar="SEC",
+        help="测试用：N秒后自动关闭（默认0=无限运行，等待 Ctrl+C）",
     )
     parser.add_argument(
-        "--mode", type=str, choices=["user", "dev"], default="user",
-        help="运行模式: user (简洁/普通用户), dev (详细/开发者)"
+        "--mode",
+        type=str,
+        choices=["user", "dev"],
+        default="user",
+        help="运行模式: user (简洁/普通用户), dev (详细/开发者)",
     )
-    parser.add_argument(
-        "--auto-repair", action="store_true",
-        help="自动修复缺失依赖，不询问"
-    )
+    parser.add_argument("--auto-repair", action="store_true", help="自动修复缺失依赖，不询问")
 
     args = parser.parse_args()
     if args.repl and (args.api_only or args.desktop_only):
@@ -676,14 +715,14 @@ def main():
 
     if args.health_check:
         return 0 if launcher.run_health_check() else 1
-    
+
     if args.install_shortcut:
         return 0 if launcher.create_shortcut() else 1
-    
+
     # 检查 Python 版本
     if not launcher.check_python_version():
         return 1
-    
+
     # 检查依赖
     deps_ok, missing = launcher.check_dependencies()
     if not deps_ok:
@@ -697,7 +736,7 @@ def main():
             try:
                 response = input("是否自动安装缺失依赖? (Y/n): ").strip().lower()
             except (EOFError, KeyboardInterrupt):
-                response="y"
+                response = "y"
             if response == "" or response == "y":
                 if not launcher.install_dependencies(missing):
                     return 1
@@ -716,7 +755,7 @@ def main():
             sys.path.insert(0, backend_path)
         if src_path not in sys.path:
             sys.path.insert(0, src_path)
-            
+
         from core.security.key_validator import validate_system_keys
 
         keys_valid, key_results = validate_system_keys()
@@ -763,8 +802,8 @@ def main():
             return 1
         return 0
 
-    backend_proc=None
-    desktop_proc=None
+    backend_proc = None
+    desktop_proc = None
 
     if not args.desktop_only:
         backend_proc = launcher.start_backend()
@@ -787,6 +826,7 @@ def main():
     if backend_proc or desktop_proc:
         launcher.progress.finish("Angela AI 启动完成！")
         from core.system.live_logger import status
+
         timeout = args.timeout
         print("\n" + "=" * 60)
         if timeout > 0:
@@ -808,9 +848,11 @@ def main():
                     time.sleep(1)
         except KeyboardInterrupt:
             from core.system.live_logger import info as _li
+
             _li("收到 Ctrl+C，正在关闭...")
         else:
             from core.system.live_logger import info as _li
+
             _li(f"测试超时（{timeout}秒），正在关闭...")
 
         launcher.shutdown(backend_proc, desktop_proc)

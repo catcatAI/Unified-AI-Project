@@ -147,7 +147,9 @@ class AppSessionManager:
 
     # ---------- 閉環：open → read → act → save → close ----------
 
-    async def open_app(self, app_id: str, purpose: str = "", source: str = "teaching") -> Dict[str, Any]:
+    async def open_app(
+        self, app_id: str, purpose: str = "", source: str = "teaching"
+    ) -> Dict[str, Any]:
         """開啟應用會話。"""
         adapter = self._adapters.get(app_id)
         if adapter is None:
@@ -189,7 +191,10 @@ class AppSessionManager:
             return {"ok": False, "error": f"會話未開啟：{app_id}"}
         if not adapter.has(action):
             self._log(f"act:{action}", app_id, "failed", "白名單外指令", source)
-            return {"ok": False, "error": f"此層無指令 {action}；可用：{[s.name for s in adapter.specs()]}"}
+            return {
+                "ok": False,
+                "error": f"此層無指令 {action}；可用：{[s.name for s in adapter.specs()]}",
+            }
         if adapter.is_dangerous(action) and not confirm:
             # 確認門：第一次只回 pending_confirmation，不執行
             self._log(f"act:{action}", app_id, "pending", "危險操作待確認", source)

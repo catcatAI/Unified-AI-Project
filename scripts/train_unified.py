@@ -35,11 +35,13 @@ import sys
 import time
 from typing import Dict, List, Optional
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src")))
+sys.path.insert(
+    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"))
+)
 
 from ai.unified_engine.trainer import (  # noqa: E402
-    _answers_match,
     _answer_of,
+    _answers_match,
     _query_of,
     evaluate_generalisation,
     measure_generation_fidelity,

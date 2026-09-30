@@ -7,6 +7,14 @@ from typing import Any, Callable, Dict, Optional
 logger = logging.getLogger(__name__)
 
 
+class CircuitBreakerOpenError(Exception):
+    """Raised when a call is rejected because the circuit breaker is open.
+
+    Dedicated type (B017-adjacent hygiene): callers can catch precisely instead
+    of matching a bare ``Exception``; message text is kept for compat.
+    """
+
+
 @dataclass
 class RetryPolicy:
     max_retries: int = 3
@@ -43,7 +51,7 @@ class CircuitBreaker:
             if time.time() - self._last_failure_time > self.recovery_timeout:
                 self._state = "half-open"
             else:
-                raise Exception("Circuit breaker is open")
+                raise CircuitBreakerOpenError("Circuit breaker is open")
         try:
             result = await func(*args, **kwargs)
             self._failure_count = 0

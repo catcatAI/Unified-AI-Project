@@ -25,9 +25,17 @@ def run(cmd, timeout):
 
 def steel(grade, A, Iy, L, N):
     code, out = run(
-        [PY, os.path.join(SCRIPTS, "civil_components.py"), "--component", "steel",
-         "--steel", grade,
-         "--json", json.dumps({"A": A, "Iy": Iy, "L": L, "N_Ed_kN": N})], 60,
+        [
+            PY,
+            os.path.join(SCRIPTS, "civil_components.py"),
+            "--component",
+            "steel",
+            "--steel",
+            grade,
+            "--json",
+            json.dumps({"A": A, "Iy": Iy, "L": L, "N_Ed_kN": N}),
+        ],
+        60,
     )
     i, j = out.index("{"), out.rindex("}") + 1
     return json.loads(out[i:j])
@@ -39,25 +47,30 @@ def main():
     ap.add_argument("--depth", type=float, default=7.0)
     ap.add_argument("--panels", type=int, default=10)
     ap.add_argument("--width", type=float, default=8.0)
-    ap.add_argument("--w-kNm", type=float, default=65.0,
-                    help="per-truss uniform load kN/m (deck DL+LL share)")
+    ap.add_argument(
+        "--w-kNm", type=float, default=65.0, help="per-truss uniform load kN/m (deck DL+LL share)"
+    )
     args = ap.parse_args()
     L, d = args.span, args.depth
     # 整體彎矩 → 弦桿軸力（兩片桁架，每片 w）
-    Mmax = args.w_kNm * L ** 2 / 8.0
+    Mmax = args.w_kNm * L**2 / 8.0
     N_chord = Mmax / d
     print(f"整體：Mmax={Mmax:.0f}kNm，弦桿軸力={N_chord:.0f}kN (d={d}m)")
     # 弦桿試配：SHS500x25（A=47500, I=1.79e9），節間長為壓桿計算長度
     panel_L = L / args.panels * 1000.0
     r = steel("S355", 47500.0, 1.79e9, panel_L, N_chord)
-    print(f"弦桿 SHS500x25 L={panel_L/1000:.0f}m：Nb={r['N_b_Rd_kN']:.0f} "
-          f"{'✅' if r.get('buckling_ok') else '❌'}")
+    print(
+        f"弦桿 SHS500x25 L={panel_L/1000:.0f}m：Nb={r['N_b_Rd_kN']:.0f} "
+        f"{'✅' if r.get('buckling_ok') else '❌'}"
+    )
     # 腹桿：支座剪力 V/2（45°腹桿軸力≈V/√2/2，保守取 V/2）
     Vmax = args.w_kNm * L / 2.0
     N_diag = Vmax / 2.0
     r2 = steel("S355", 12000.0, 2.0e8, panel_L * 1.2, N_diag)
-    print(f"腹桿 SHS250x12 L={panel_L*1.2/1000:.1f}m：Nb={r2['N_b_Rd_kN']:.0f} "
-          f"{'✅' if r2.get('buckling_ok') else '❌'}")
+    print(
+        f"腹桿 SHS250x12 L={panel_L*1.2/1000:.1f}m：Nb={r2['N_b_Rd_kN']:.0f} "
+        f"{'✅' if r2.get('buckling_ok') else '❌'}"
+    )
 
     # Blender：兩片桁架（上下弦+腹桿圓柱）+ 橋面板
     W = args.width
@@ -106,8 +119,10 @@ def main():
         if "TRUSS-V2" in line:
             print(line.strip()[:60])
     import json as _j
-    print(_j.dumps({"chord_ok": bool(r.get("buckling_ok")),
-                    "diag_ok": bool(r2.get("buckling_ok"))}))
+
+    print(
+        _j.dumps({"chord_ok": bool(r.get("buckling_ok")), "diag_ok": bool(r2.get("buckling_ok"))})
+    )
     return 0
 
 

@@ -2,24 +2,20 @@ import json
 import os
 import time
 
+
 class WorkflowManager:
     def __init__(self, state_file="workflow_state.json"):
         self.state_file = state_file
-        self.state = {
-            "current_step": 0,
-            "tasks": [],
-            "context": {},
-            "status": "idle"
-        }
+        self.state = {"current_step": 0, "tasks": [], "context": {}, "status": "idle"}
         self.load_state()
 
     def load_state(self):
         if os.path.exists(self.state_file):
-            with open(self.state_file, 'r', encoding='utf-8') as f:
+            with open(self.state_file, "r", encoding="utf-8") as f:
                 self.state = json.load(f)
 
     def save_state(self):
-        with open(self.state_file, 'w', encoding='utf-8') as f:
+        with open(self.state_file, "w", encoding="utf-8") as f:
             json.dump(self.state, f, indent=4, ensure_ascii=False)
 
     def set_tasks(self, tasks):

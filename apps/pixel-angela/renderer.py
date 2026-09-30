@@ -1,17 +1,18 @@
-import sys
-import os
-import numpy as np
+import asyncio
 import ctypes
 import json
-import asyncio
-import time
 import math
+import os
 import random
+import sys
+import time
 from datetime import datetime
-from PyQt6.QtWidgets import QApplication, QWidget, QLineEdit, QVBoxLayout, QMenu, QSystemTrayIcon
-from PyQt6.QtCore import Qt, QTimer, QThread, pyqtSignal, QRect, QPoint, QPointF
-from PyQt6.QtGui import QPainter, QColor, QFont, QGuiApplication, QImage, QIcon, QPixmap
+
+import numpy as np
 import websockets
+from PyQt6.QtCore import QPoint, QPointF, QRect, Qt, QThread, QTimer, pyqtSignal
+from PyQt6.QtGui import QColor, QFont, QGuiApplication, QIcon, QImage, QPainter, QPixmap
+from PyQt6.QtWidgets import QApplication, QLineEdit, QMenu, QSystemTrayIcon, QVBoxLayout, QWidget
 
 # 2030 Unified Integration: Add biology-core to path
 _current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -19,14 +20,16 @@ _core_path = os.path.abspath(os.path.join(_current_dir, "../../packages/biology-
 if _core_path not in sys.path:
     sys.path.insert(0, _core_path)
 
-from ui_config import UIConfig
 from dna_body import AngelaDNA
+from ui_config import UIConfig
 
 # 移除 make_window_transparent，因為在 Windows 11 下 DwmExtendFrameIntoClientArea 會產生額外的玻璃/黑色背景，
 # 造成「兩個背景」的視覺異常。PyQt 的 WA_TranslucentBackground 已經足夠實現完全透明。
 
+
 class AngelaClient(QThread):
     state_updated = pyqtSignal(dict)
+
     def __init__(self):
         super().__init__()
         self.event_loop = None
@@ -45,17 +48,15 @@ class AngelaClient(QThread):
                 self._reconnect_attempt += 1
                 delay = min(UIConfig.WS_RECONNECT_DELAY * (2 ** (self._reconnect_attempt - 1)), 60)
                 delay += random.random() * 2
-                print(f"🔄 [Network] Reconnecting: {e} (attempt {self._reconnect_attempt}, retry in {delay:.0f}s)")
+                print(
+                    f"🔄 [Network] Reconnecting: {e} (attempt {self._reconnect_attempt}, retry in {delay:.0f}s)"
+                )
                 time.sleep(delay)
 
     async def _listen(self):
         ws_url = os.environ.get("ANGELA_WS_URL", "ws://127.0.0.1:8000/ws")
         async with websockets.connect(ws_url, open_timeout=30) as ws:
-            handshake = {
-                "session_id": "",
-                "client_type": "pixel-angela",
-                "client_version": "1.0.0"
-            }
+            handshake = {"session_id": "", "client_type": "pixel-angela", "client_version": "1.0.0"}
             await ws.send(json.dumps(handshake))
             raw = await asyncio.wait_for(ws.recv(), timeout=10)
             resp = json.loads(raw)
@@ -72,7 +73,7 @@ class AngelaClient(QThread):
                 self.state_updated.emit(json.loads(msg))
 
     async def _send_heartbeat(self):
-        while self._running and hasattr(self, 'ws'):
+        while self._running and hasattr(self, "ws"):
             try:
                 await self.ws.send(json.dumps({"type": "heartbeat"}))
                 await asyncio.sleep(30)
@@ -81,7 +82,7 @@ class AngelaClient(QThread):
                 break
 
     async def send_msg(self, text):
-        if hasattr(self, 'ws'):
+        if hasattr(self, "ws"):
             payload = {"type": "chat_message", "data": {"content": text, "user_name": "User"}}
             await self.ws.send(json.dumps(payload))
 
@@ -105,7 +106,6 @@ class AngelaClient(QThread):
             return False
 
 
-
 class AngelaRenderer(QWidget):
     def __init__(self):
         super().__init__()
@@ -119,33 +119,37 @@ class AngelaRenderer(QWidget):
             print(f"⚠️ [DNA] Failed to initialize AngelaDNA: {e}. Using placeholder.")
             self.dna = None
         self.breath_phase = 0.0
-        
+
         # 1. 系統幾何
         screen = QGuiApplication.primaryScreen().availableGeometry()
         self.screen_w, self.screen_h = screen.width(), screen.height()
         self.ground_y = screen.y() + screen.height() - UIConfig.ANGELA_HEIGHT
-        
+
         # 2. 全螢幕透明設置 (開啟點擊穿透)
-        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.Tool)
+        self.setWindowFlags(
+            Qt.WindowType.FramelessWindowHint
+            | Qt.WindowType.WindowStaysOnTopHint
+            | Qt.WindowType.Tool
+        )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground)
         # 移除 WA_TransparentForMouseEvents，讓主視窗負責所有事件，
         # 依靠 Windows 預設的 alpha 通道穿透機制，達成「點擊透明處穿透」的效果！
-        
+
         # 取消調用 DWM API，避免產生系統級的第二重背景
         self.setGeometry(0, 0, self.screen_w, self.screen_h)
-        
+
         self.angela_pos = QPointF(200, self.ground_y)
         self.target_pos = QPointF(200, self.ground_y)
         self.current_y = self.ground_y
-        
+
         self._init_system_tray()
         self._init_tiered_menu()
-        
+
         self.client = AngelaClient()
         self.client.state_updated.connect(self.update_state)
         self.client.start()
-        
+
         self.timer = QTimer()
         self.timer.timeout.connect(self.physics_and_render_loop)
         self.timer.start(UIConfig.RENDER_INTERVAL)
@@ -202,7 +206,9 @@ class AngelaRenderer(QWidget):
     def _on_toggle_pixel_physics(self, enabled):
         """Pixel Physics 開關：關閉後不再驅動 DNA 動態與呼吸位移。"""
         self.physics_enabled = bool(enabled)
-        print(f"{'🧬' if self.physics_enabled else '⏸️'} [UI] Pixel Physics {'ON' if self.physics_enabled else 'OFF'}")
+        print(
+            f"{'🧬' if self.physics_enabled else '⏸️'} [UI] Pixel Physics {'ON' if self.physics_enabled else 'OFF'}"
+        )
 
     def _on_reset_render(self):
         """Default Render：回到預設位置、清空氣泡、重置情緒狀態。"""
@@ -219,16 +225,17 @@ class AngelaRenderer(QWidget):
         print("🎨 [UI] Render reset to defaults")
 
     def _on_tray_activated(self, reason):
-        if reason == QSystemTrayIcon.ActivationReason.Trigger: self.show_native_input()
+        if reason == QSystemTrayIcon.ActivationReason.Trigger:
+            self.show_native_input()
 
     def mousePressEvent(self, event):
         pos = event.position()
         ax, ay = int(self.angela_pos.x()), int(self.current_y)
-        
+
         # 1. 座標轉換：計算相對於體素矩陣(128x384)的局部座標
         local_x = int(pos.x() - ax)
         local_y = int(pos.y() - ay)
-        
+
         # 2. [Task N.9.3] 體素探針檢測 (Voxel Hit-Test)
         # `stiffness` used to be bound only inside the bounds check and read in
         # the enclosing branch — correct today only because is_hit can never be
@@ -248,11 +255,13 @@ class AngelaRenderer(QWidget):
                 # 發送觸覺事件到後端
                 if self.client.event_loop is not None:
                     asyncio.run_coroutine_threadsafe(
-                        self.client.send_event({
-                            "type": "tactile_event",
-                            "data": {"x": local_x, "y": local_y, "stiffness": stiffness}
-                        }),
-                        self.client.event_loop
+                        self.client.send_event(
+                            {
+                                "type": "tactile_event",
+                                "data": {"x": local_x, "y": local_y, "stiffness": stiffness},
+                            }
+                        ),
+                        self.client.event_loop,
                     )
             elif event.button() == Qt.MouseButton.RightButton:
                 self.menu.exec(event.globalPosition().toPoint())
@@ -265,8 +274,10 @@ class AngelaRenderer(QWidget):
         msg_type = new_state.get("type")
         if msg_type == "state_update":
             data = new_state.get("data", {})
-            if "gamma" in data: self.state["emotion"] = data["gamma"].get("dominant_emotion", "neutral")
-            if "alpha" in data: self.state["stress"] = data["alpha"].get("stress", 0.0)
+            if "gamma" in data:
+                self.state["emotion"] = data["gamma"].get("dominant_emotion", "neutral")
+            if "alpha" in data:
+                self.state["stress"] = data["alpha"].get("stress", 0.0)
             if "spatial" in data:
                 spatial = data["spatial"]
                 self.target_pos.setX(float(spatial.get("x", self.angela_pos.x())))
@@ -284,9 +295,14 @@ class AngelaRenderer(QWidget):
         self.update()
 
     def add_new_bubble(self, text, origin):
-        new_bubble = {"text": text, "origin": origin, "current_pos": QPointF(self.angela_pos.x(), self.current_y)}
+        new_bubble = {
+            "text": text,
+            "origin": origin,
+            "current_pos": QPointF(self.angela_pos.x(), self.current_y),
+        }
         self.bubble_stack.append(new_bubble)
-        if len(self.bubble_stack) > 3: self.bubble_stack.pop(0)
+        if len(self.bubble_stack) > 3:
+            self.bubble_stack.pop(0)
 
     def physics_and_render_loop(self):
         if not self.physics_enabled:
@@ -303,7 +319,7 @@ class AngelaRenderer(QWidget):
         self.current_y = self.ground_y + np.sin(self.breath_phase) * 3.0
         dx = (self.target_pos.x() - self.angela_pos.x()) * 0.2
         self.angela_pos.setX(self.angela_pos.x() + dx)
-        
+
         # [Task N.12.9/10] 驅動精細解剖動態 (脊椎與五指)
         if self.dna is not None:
             try:
@@ -311,13 +327,13 @@ class AngelaRenderer(QWidget):
                     self.breath_phase,
                     theta_matrix=self.state.get("theta_matrix"),
                     finger_matrix=self.state.get("finger_matrix"),
-                    ear_twitch=math.sin(self.breath_phase * 2.0) * 2.0
+                    ear_twitch=math.sin(self.breath_phase * 2.0) * 2.0,
                 )
             except KeyboardInterrupt:
                 raise
             except Exception as e:
                 print(f"⚠️ [Physics] apply_dynamics error: {e}")
-        
+
         for bubble in self.bubble_stack:
             target_bubble_x = self.angela_pos.x() + (UIConfig.ANGELA_WIDTH // 2)
             target_bubble_y = self.current_y - 40
@@ -327,13 +343,19 @@ class AngelaRenderer(QWidget):
 
     def show_native_input(self):
         self.input_win = QWidget()
-        self.input_win.setWindowFlags(Qt.WindowType.Tool | Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
+        self.input_win.setWindowFlags(
+            Qt.WindowType.Tool
+            | Qt.WindowType.FramelessWindowHint
+            | Qt.WindowType.WindowStaysOnTopHint
+        )
         self.input_win.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.input_win.setAttribute(Qt.WidgetAttribute.WA_InputMethodEnabled)
         layout = QVBoxLayout()
         self.entry = QLineEdit()
         self.entry.setPlaceholderText("意識通訊中...")
-        self.entry.setStyleSheet("background: white; color: black; border: 2px solid #2A4B8C; border-radius: 8px; padding: 8px; font-weight: bold;")
+        self.entry.setStyleSheet(
+            "background: white; color: black; border: 2px solid #2A4B8C; border-radius: 8px; padding: 8px; font-weight: bold;"
+        )
         self.entry.returnPressed.connect(self.confirm_user_input)
         layout.addWidget(self.entry)
         self.input_win.setLayout(layout)
@@ -355,14 +377,14 @@ class AngelaRenderer(QWidget):
         painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_Source)
         painter.fillRect(self.rect(), QColor(0, 0, 0, 0))
         painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceOver)
-        
+
         ax, ay = int(self.angela_pos.x()), int(self.current_y)
         if self.dna is not None:
             pixel_data = self.dna.get_render_ready_matrix()
             h, w, c = pixel_data.shape
             qimg = QImage(pixel_data.data, w, h, w * c, QImage.Format.Format_RGBA8888)
             painter.drawImage(ax, ay, qimg)
-        
+
         offset_y = 0
         max_bubble_w = min(300, self.screen_w - 40)
         for bubble in reversed(self.bubble_stack):
@@ -374,14 +396,25 @@ class AngelaRenderer(QWidget):
             painter.setFont(font)
             metrics = painter.fontMetrics()
             constrain_rect = QRect(0, 0, max_bubble_w, 1000)
-            text_rect = metrics.boundingRect(constrain_rect, Qt.TextFlag.TextWordWrap, bubble["text"])
+            text_rect = metrics.boundingRect(
+                constrain_rect, Qt.TextFlag.TextWordWrap, bubble["text"]
+            )
             bw, bh = text_rect.width() + 24, text_rect.height() + 14
-            bx, by = int(bubble["current_pos"].x() - (bw // 2)), int(bubble["current_pos"].y() - bh - offset_y)
+            bx, by = int(bubble["current_pos"].x() - (bw // 2)), int(
+                bubble["current_pos"].y() - bh - offset_y
+            )
             painter.setBrush(bg_color)
-            painter.drawRoundedRect(QRect(bx, by, bw, bh), UIConfig.BUBBLE_CORNER_RADIUS, UIConfig.BUBBLE_CORNER_RADIUS)
+            painter.drawRoundedRect(
+                QRect(bx, by, bw, bh), UIConfig.BUBBLE_CORNER_RADIUS, UIConfig.BUBBLE_CORNER_RADIUS
+            )
             painter.setPen(QColor(0, 0, 0))
-            painter.drawText(QRect(bx + 12, by + 7, bw - 24, bh - 14), Qt.TextFlag.TextWordWrap | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop, bubble["text"])
+            painter.drawText(
+                QRect(bx + 12, by + 7, bw - 24, bh - 14),
+                Qt.TextFlag.TextWordWrap | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop,
+                bubble["text"],
+            )
             offset_y += bh + 10
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

@@ -1,9 +1,11 @@
 import json
-from pathlib import Path
 import logging
+from pathlib import Path
+
 logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
 
 def check_last_memories():
     store_path = PROJECT_ROOT / "data" / "vector_store" / "default_collection.json"
@@ -15,12 +17,13 @@ def check_last_memories():
         memories = json.load(f)
 
     print(f"Total memories: {len(memories)}")
-    
+
     for i, m in enumerate(memories[-5:]):
-        doc = m.get('document', '')
+        doc = m.get("document", "")
         print(f"\n[Index {len(memories)-5+i}] ID: {m.get('id', 'N/A')}")
         print(f"Metadata: {m.get('metadata', {})}")
         print(f"Snippet: {doc[:50]}...")
+
 
 if __name__ == "__main__":
     check_last_memories()

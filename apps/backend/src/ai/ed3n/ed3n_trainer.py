@@ -467,7 +467,11 @@ class SequenceTrainer:
                 if random.random() < self.scheduled_sampling_prob:
                     context.append(target_key)
                 else:
-                    predicted = max(activations, key=lambda k: activations[k]) if activations else target_key
+                    predicted = (
+                        max(activations, key=lambda k: activations[k])
+                        if activations
+                        else target_key
+                    )
                     context.append(predicted)
 
                 if len(context) > limit_value("ai.ed3n.sequence.context_window", 8):

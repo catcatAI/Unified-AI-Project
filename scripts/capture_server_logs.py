@@ -7,28 +7,33 @@ Usage::
     python scripts/capture_server_logs.py
 """
 
-import sys
 import os
+import sys
 
 _PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
-from scripts._server_helper import get_project_root, get_src_path, _read_output_until
 import subprocess
+
+from scripts._server_helper import _read_output_until, get_project_root, get_src_path
 
 BACKEND_DIR = get_project_root() / "apps" / "backend"
 SRC = get_src_path()
 
 print("=== Capturing Server Startup Logs ===\n")
 
-cmd=[
+cmd = [
     sys.executable,
-    "-m", "uvicorn",
+    "-m",
+    "uvicorn",
     "src.services.main_api_server:app",
-    "--host", "127.0.0.1",
-    "--port", "8000",
-    "--log-level", "info",
+    "--host",
+    "127.0.0.1",
+    "--port",
+    "8000",
+    "--log-level",
+    "info",
 ]
 
 proc = subprocess.Popen(
@@ -50,9 +55,11 @@ print(output)
 if proc.poll() is None:
     print("\nServer still running. Testing endpoints...")
     import time
+
     time.sleep(1)  # let uvicorn finish binding
 
     import urllib.request
+
     try:
         req = urllib.request.Request("http://127.0.0.1:8000/api/v1/ops/health")
         resp = urllib.request.urlopen(req, timeout=3)

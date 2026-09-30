@@ -25,10 +25,9 @@ def review_client(monkeypatch):
     Uses the real router (not the individual handlers) so declaration order —
     and therefore path shadowing — is exercised.
     """
+    import api.routes.review_routes as review_routes
     import httpx
     from fastapi import FastAPI
-
-    import api.routes.review_routes as review_routes
 
     class _StubReport:
         def __init__(self, dimension: str) -> None:
@@ -48,8 +47,7 @@ def review_client(monkeypatch):
         def run_review(self, dimension: str):
             if dimension not in self.DIMENSIONS:
                 raise ValueError(
-                    f"Unknown review dimension: {dimension}. "
-                    f"Available: {list(self.DIMENSIONS)}"
+                    f"Unknown review dimension: {dimension}. " f"Available: {list(self.DIMENSIONS)}"
                 )
             return _StubReport(dimension)
 

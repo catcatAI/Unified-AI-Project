@@ -349,7 +349,7 @@ class ContinuousLearningPipeline:
         try:
             with open(path, "r", encoding="utf-8") as f:
                 state = json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError, OSError) as e:
+        except (json.JSONDecodeError, OSError) as e:
             logger.warning(
                 "ContinuousLearningPipeline: failed to load checkpoint %s: %s; " "starting fresh",
                 path,

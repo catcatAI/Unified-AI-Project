@@ -21,11 +21,7 @@ def run_command(command, cwd=None, capture_output=True):
     print(f"Executing: {' '.join(command) if isinstance(command, list) else command}")
     try:
         result = subprocess.run(
-            command,
-            cwd=cwd,
-            capture_output=capture_output,
-            text=True,
-            check=False
+            command, cwd=cwd, capture_output=capture_output, text=True, check=False
         )
         return result
     except Exception as e:
@@ -45,7 +41,7 @@ def run_integration_tests(test_type="all", markers=None, parallel=False) -> dict
     """运行集成测试"""
     print(f"Running integration tests (type: {test_type})...")
 
-    cmd=[sys.executable, "-m", "pytest"]
+    cmd = [sys.executable, "-m", "pytest"]
 
     if test_type == "all":
         cmd.extend(["tests/integration/", "-v"])
@@ -67,7 +63,7 @@ def run_integration_tests(test_type="all", markers=None, parallel=False) -> dict
         "return_code": result.returncode if result else -1,
         "execution_time": end_time - start_time,
         "stdout": result.stdout if result else "",
-        "stderr": result.stderr if result else ""
+        "stderr": result.stderr if result else "",
     }
 
 
@@ -77,12 +73,10 @@ def generate_test_report(test_results, output_dir="test_reports") -> None:
 
     Path(output_dir).mkdir(exist_ok=True)
 
-    report_data={
+    report_data = {
         "timestamp": datetime.now().isoformat(),
         "test_results": test_results,
-        "summary": {
-            "execution_time": test_results.get("execution_time", 0)
-        }
+        "summary": {"execution_time": test_results.get("execution_time", 0)},
     }
 
     report_file = Path(output_dir) / f"integration_test_report_{int(time.time())}.json"
@@ -107,9 +101,7 @@ def main() -> int:
             return 1
 
     test_results = run_integration_tests(
-        test_type=args.type,
-        markers=args.markers,
-        parallel=args.parallel
+        test_type=args.type, markers=args.markers, parallel=args.parallel
     )
 
     generate_test_report(test_results)

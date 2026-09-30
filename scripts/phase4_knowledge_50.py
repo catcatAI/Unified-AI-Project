@@ -8,7 +8,10 @@ Phase 4 — MMLU 65%→75% 50 條（硬件規格自適應，分批+sleep，<100M
 資源：50 條 × ~50B = 2.5KB，<1s，<50MB，批間 sleep 0.02s。
 """
 
-import os, sys, time
+import os
+import sys
+import time
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps/backend/src"))
 
 # 30 條新增（社科/STEM 缺口）
@@ -45,8 +48,10 @@ NEW_30 = {
     "discoverer_america": {"discoverer": "Columbus", "answer": "Columbus"},
 }
 
+
 def main():
     from core.backbone.hardware import HardwareProfile
+
     hw = HardwareProfile.detect()
     tier = HardwareProfile.get_tier(hw)
     adaptive = HardwareProfile.get_adaptive_compute(hw)
@@ -61,6 +66,7 @@ def main():
     # 實際寫入（內存）
     try:
         from ai.knowledge_base import _KNOWLEDGE
+
         added = 0
         for k, v in NEW_30.items():
             if k not in _KNOWLEDGE:
@@ -69,6 +75,7 @@ def main():
         print(f"  實際寫入 {added}/30 條（內存，持久化需寫 source）")
         # 測試 3 條新增
         from ai.knowledge_base import route_knowledge
+
         for q in ["Capital of USA?", "Who invented lightbulb?", "What is H2O?"]:
             ans = route_knowledge(q)
             print(f"  '{q}' → {ans} {'✅' if ans else '❌'}")
@@ -77,9 +84,18 @@ def main():
         print(f"  寫入 fallback: {e}")
 
     print(f"  Phase 4 50 條預期 65%→75% 達標 <75% 目標，硬件自適應 ✅")
-    hw_same = {'gpu': 'Intel Arc B570', 'gpu_memory_gb': 10, 'ram_gb': 15.5, 'cpu_cores': 4, 'gpu_vendor': 'intel'}
-    print(f"  筆電同規格 tier {HardwareProfile.get_tier(hw_same)} → {'✅' if HardwareProfile.get_tier(hw_same)==tier else '❌'}")
+    hw_same = {
+        "gpu": "Intel Arc B570",
+        "gpu_memory_gb": 10,
+        "ram_gb": 15.5,
+        "cpu_cores": 4,
+        "gpu_vendor": "intel",
+    }
+    print(
+        f"  筆電同規格 tier {HardwareProfile.get_tier(hw_same)} → {'✅' if HardwareProfile.get_tier(hw_same)==tier else '❌'}"
+    )
     return 0
+
 
 if __name__ == "__main__":
     main()

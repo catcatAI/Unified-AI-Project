@@ -57,7 +57,7 @@ class HAMMemoryManager:
             try:
                 with open(self.memory_file, "r", encoding="utf-8") as f:
                     self._data = json.load(f)
-            except (json.JSONDecodeError, FileNotFoundError, IOError):
+            except (json.JSONDecodeError, IOError):
                 self._data = {"templates": [], "conversations": [], "metadata": {}}
 
     def _write_to_disk(self) -> None:
@@ -71,7 +71,7 @@ class HAMMemoryManager:
             return
         try:
             self._write_to_disk()
-        except (IOError, OSError, TypeError) as e:
+        except (OSError, TypeError) as e:
             logger.warning(f"HAMMemoryManager save failed: {e}")
 
     async def save_async(self) -> None:
@@ -84,7 +84,7 @@ class HAMMemoryManager:
             return
         try:
             await asyncio.to_thread(self._write_to_disk)
-        except (IOError, OSError, TypeError) as e:
+        except (OSError, TypeError) as e:
             logger.warning(f"HAMMemoryManager async save failed: {e}")
 
     def _enforce_cap(self, bucket: str) -> None:

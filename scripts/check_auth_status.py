@@ -1,9 +1,12 @@
-import os
-import requests
 import logging
+import os
+
+import requests
+
 logger = logging.getLogger(__name__)
 
 BASE_URL = os.environ.get("ANGELA_API_URL", "http://127.0.0.1:8000")
+
 
 def check_auth():
     url = f"{BASE_URL}/api/v1/drive/auth/status"
@@ -15,6 +18,7 @@ def check_auth():
         print(f"Cannot connect to backend at {BASE_URL}. Is it running?")
     except Exception as e:
         print(f"Error: {e}")
+
 
 if __name__ == "__main__":
     check_auth()

@@ -13,8 +13,7 @@ from typing import Any, Dict, List
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger, Any = logging.getLogger(__name__)
 
@@ -30,27 +29,24 @@ class ContinuousTestImprovement:
             project_root: 项目根目录
         """
         self.project_root = Path(project_root) if project_root else Path(__file__).parent.parent
-        self.scripts_dir=self.project_root / "scripts"
-        self.reports_dir=self.project_root / "test_reports"
+        self.scripts_dir = self.project_root / "scripts"
+        self.reports_dir = self.project_root / "test_reports"
         self.reports_dir.mkdir(exist_ok=True)
 
     # 改进系统配置
-    self.improvement_config={
+    self.improvement_config = {
         "monitoring": {
             "interval_hours": 24,
             "coverage_threshold": 0.85,
             "pass_rate_threshold": 0.95,
-            "max_slow_tests": 5
+            "max_slow_tests": 5,
         },
-        "analysis": {
-            "trend_days": 30,
-            "historical_data_days": 90
-        },
+        "analysis": {"trend_days": 30, "historical_data_days": 90},
         "improvement": {
             "auto_generate_recommendations": True,
             "auto_create_issues": False,
-            "max_recommendations": 10
-        }
+            "max_recommendations": 10,
+        },
     }
 
     def run_continuous_improvement_cycle(self) -> Dict[str, Any]:
@@ -63,10 +59,7 @@ class ContinuousTestImprovement:
         logger.info("Starting continuous test improvement cycle...")
         cycle_start_time = datetime.now()
 
-        cycle_results={
-            "timestamp": cycle_start_time.isoformat(),
-            "phases": {}
-        }
+        cycle_results = {"timestamp": cycle_start_time.isoformat(), "phases": {}}
 
         try:
             # 1. 运行测试并收集覆盖率数据
@@ -79,25 +72,31 @@ class ContinuousTestImprovement:
             cycle_results["phases"]["trend_analysis"] = self._analyze_test_trends()
 
             # 4. 生成改进建议
-            cycle_results["phases"]["improvement_recommendations"] = self._generate_improvement_recommendations()
+            cycle_results["phases"][
+                "improvement_recommendations"
+            ] = self._generate_improvement_recommendations()
 
             # 5. 实施自动改进措施
-            cycle_results["phases"]["automatic_improvements"] = self._implement_automatic_improvements(
-                cycle_results["phases"]["improvement_recommendations"]
+            cycle_results["phases"]["automatic_improvements"] = (
+                self._implement_automatic_improvements(
+                    cycle_results["phases"]["improvement_recommendations"]
+                )
             )
 
             cycle_end_time = datetime.now()
             cycle_results["duration"] = (cycle_end_time - cycle_start_time).total_seconds()
             cycle_results["status"] = "completed"
 
-            logger.info(f"Continuous test improvement cycle completed in {cycle_results['duration']:.2f} seconds")
+            logger.info(
+                f"Continuous test improvement cycle completed in {cycle_results['duration']:.2f} seconds"
+            )
 
         except Exception as e:
             logger.error(f"Error in continuous test improvement cycle, {e}")
             cycle_results["status"] = "failed"
             cycle_results["error"] = str(e)
 
-    # 保存周期结果
+        # 保存周期结果
         self._save_cycle_results(cycle_results)
 
         return cycle_results
@@ -113,7 +112,7 @@ class ContinuousTestImprovement:
 
         try:
             # 运行集成测试并收集覆盖率
-            cmd=[
+            cmd = [
                 sys.executable,
                 "-m",
                 "pytest",
@@ -121,7 +120,7 @@ class ContinuousTestImprovement:
                 "-v",
                 "--cov=src",
                 "--cov-report=xml:coverage.xml",
-                "--junitxml=test_results.xml"
+                "--junitxml=test_results.xml",
             ]
 
             result = subprocess.run(
@@ -129,18 +128,20 @@ class ContinuousTestImprovement:
                 cwd=self.project_root,
                 capture_output=True,
                 text=True,
-                timeout=3600  # 1小时超时
+                timeout=3600,  # 1小时超时
             )
 
-            execution_result={
+            execution_result = {
                 "success": result.returncode == 0,
                 "return_code": result.returncode,
                 "stdout": result.stdout,
                 "stderr": result.stderr,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
-            logger.info(f"Test execution {'succeeded' if execution_result['success'] else 'failed'}")
+            logger.info(
+                f"Test execution {'succeeded' if execution_result['success'] else 'failed'}"
+            )
             return execution_result
 
         except subprocess.TimeoutExpired:
@@ -148,15 +149,11 @@ class ContinuousTestImprovement:
             return {
                 "success": False,
                 "error": "Test execution timed out",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
         except Exception as e:
             logger.error(f"Error running tests, {e}")
-            return {
-                "success": False,
-                "error": str(e),
-                "timestamp": datetime.now().isoformat()
-            }
+            return {"success": False, "error": str(e), "timestamp": datetime.now().isoformat()}
 
     def _analyze_test_quality(self) -> Dict[str, Any]:
         """
@@ -169,49 +166,38 @@ class ContinuousTestImprovement:
 
         try:
             # 调用测试质量评估器
-            quality_assessor_script=self.scripts_dir / "test_quality_assessor.py"
+            quality_assessor_script = self.scripts_dir / "test_quality_assessor.py"
             if not quality_assessor_script.exists():
                 ogger.warning("Test quality assessor script not found")
                 return {"status": "skipped", "reason": "Script not found"}
 
-            cmd=[
-                sys.executable,
-                str(quality_assessor_script),
-                "assess"
-            ]
+            cmd = [sys.executable, str(quality_assessor_script), "assess"]
 
-            result = subprocess.run(
-                cmd,
-    cwd=self.project_root,
-                capture_output=True,
-                text=True
-            )
+            result = subprocess.run(cmd, cwd=self.project_root, capture_output=True, text=True)
 
             if result.returncode != 0:
                 logger.error(f"Test quality analysis failed, {result.stderr}")
                 return {
                     "status": "failed",
                     "error": result.stderr,
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now().isoformat(),
                 }
 
             # 解析质量评估结果
-            quality_metrics=self._parse_quality_assessment()
+            quality_metrics = self._parse_quality_assessment()
 
-            logger.info(f"Test quality analysis completed. Overall score: {quality_metrics.get('overall_score', 0):.2f}")
+            logger.info(
+                f"Test quality analysis completed. Overall score: {quality_metrics.get('overall_score', 0):.2f}"
+            )
             return {
                 "status": "completed",
                 "metrics": quality_metrics,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
         except Exception as e:
             logger.error(f"Error analyzing test quality, {e}")
-            return {
-                "status": "failed",
-                "error": str(e),
-                "timestamp": datetime.now().isoformat()
-            }
+            return {"status": "failed", "error": str(e), "timestamp": datetime.now().isoformat()}
 
     def _parse_quality_assessment(self) -> Dict[str, Any]:
         """
@@ -231,22 +217,16 @@ class ContinuousTestImprovement:
                 "pass_rate": 0.92,
                 "total_tests": 150,
                 "passed_tests": 138,
-                "failed_tests": 12
+                "failed_tests": 12,
             },
-            "test_coverage": {
-                "score": 0.78,
-                "line_rate": 0.81,
-                "branch_rate": 0.72
-            },
+            "test_coverage": {"score": 0.78, "line_rate": 0.81, "branch_rate": 0.72},
             "test_structure": {
                 "score": 0.88,
                 "total_test_files": 12,
                 "total_test_classes": 12,
-                "total_test_methods": 150
+                "total_test_methods": 150,
             },
-            "test_maintainability": {
-                "score": 0.85
-            }
+            "test_maintainability": {"score": 0.85},
         }
 
     def _analyze_test_trends(self) -> Dict[str, Any]:
@@ -260,49 +240,40 @@ class ContinuousTestImprovement:
 
         try:
             # 调用覆盖率监控器
-            coverage_monitor_script=self.scripts_dir / "coverage_monitor.py"
+            coverage_monitor_script = self.scripts_dir / "coverage_monitor.py"
             if not coverage_monitor_script.exists():
                 ogger.warning("Coverage monitor script not found")
                 return {"status": "skipped", "reason": "Script not found"}
 
             # 生成趋势报告
-            cmd=[
+            cmd = [
                 sys.executable,
                 str(coverage_monitor_script),
                 "report",
                 "--days",
-                str(self.improvement_config["analysis"]["trend_days"])
+                str(self.improvement_config["analysis"]["trend_days"]),
             ]
 
-            result = subprocess.run(
-                cmd,
-    cwd=self.project_root,
-                capture_output=True,
-                text=True
-            )
+            result = subprocess.run(cmd, cwd=self.project_root, capture_output=True, text=True)
 
             if result.returncode != 0:
                 logger.error(f"Test trend analysis failed, {result.stderr}")
                 return {
                     "status": "failed",
                     "error": result.stderr,
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now().isoformat(),
                 }
 
             logger.info("Test trend analysis completed")
             return {
                 "status": "completed",
                 "report_file": "coverage_trend_report.json",  # 实际文件名由脚本生成
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
         except Exception as e:
             logger.error(f"Error analyzing test trends, {e}")
-            return {
-                "status": "failed",
-                "error": str(e),
-                "timestamp": datetime.now().isoformat()
-            }
+            return {"status": "failed", "error": str(e), "timestamp": datetime.now().isoformat()}
 
     def _generate_improvement_recommendations(self) -> Dict[str, Any]:
         """
@@ -315,50 +286,37 @@ class ContinuousTestImprovement:
 
         try:
             # 调用测试质量评估器获取建议
-            quality_assessor_script=self.scripts_dir / "test_quality_assessor.py"
+            quality_assessor_script = self.scripts_dir / "test_quality_assessor.py"
             if not quality_assessor_script.exists():
                 ogger.warning("Test quality assessor script not found")
                 return {"status": "skipped", "reason": "Script not found"}
 
-            cmd=[
-                sys.executable,
-                str(quality_assessor_script),
-                "recommend"
-            ]
+            cmd = [sys.executable, str(quality_assessor_script), "recommend"]
 
-            result = subprocess.run(
-                cmd,
-    cwd=self.project_root,
-                capture_output=True,
-                text=True
-            )
+            result = subprocess.run(cmd, cwd=self.project_root, capture_output=True, text=True)
 
             if result.returncode != 0:
                 logger.error(f"Failed to generate recommendations, {result.stderr}")
                 return {
                     "status": "failed",
                     "error": result.stderr,
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now().isoformat(),
                 }
 
             # 解析建议(这里简化处理)
-            recommendations=self._parse_recommendations(result.stdout)
+            recommendations = self._parse_recommendations(result.stdout)
 
             logger.info(f"Generated {len(recommendations)} improvement recommendations")
             return {
                 "status": "completed",
                 "recommendations": recommendations,
                 "count": len(recommendations),
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
         except Exception as e:
             logger.error(f"Error generating improvement recommendations, {e}")
-            return {
-                "status": "failed",
-                "error": str(e),
-                "timestamp": datetime.now().isoformat()
-            }
+            return {"status": "failed", "error": str(e), "timestamp": datetime.now().isoformat()}
 
     def _parse_recommendations(self, output: str, strategy: str) -> List[str]:
         """
@@ -371,11 +329,11 @@ class ContinuousTestImprovement:
             List: 改进建议列表
         """
         # 这里简化处理,实际项目中可能需要解析具体的输出格式
-        recommendations=[
+        recommendations = [
             "Improve test pass rate by fixing failed tests",
             "Increase line coverage to 85% by adding missing tests",
             "Optimize slow tests to reduce execution time",
-            "Improve naming of poorly named tests for better readability"
+            "Improve naming of poorly named tests for better readability",
         ]
         return recommendations
 
@@ -395,15 +353,17 @@ class ContinuousTestImprovement:
             return {
                 "status": "skipped",
                 "reason": "Automatic improvements disabled",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
         try:
             recommendations = recommendations_result.get("recommendations", [])
-            improvements_made=[]
+            improvements_made = []
             # 实施简单的自动改进措施
-            for recommendation in recommendations[:self.improvement_config["improvement"]["max_recommendations"]]:
-                improvement=self._implement_single_improvement(recommendation, "auto")
+            for recommendation in recommendations[
+                : self.improvement_config["improvement"]["max_recommendations"]
+            ]:
+                improvement = self._implement_single_improvement(recommendation, "auto")
                 if improvement:
                     improvements_made.append(improvement)
 
@@ -412,16 +372,12 @@ class ContinuousTestImprovement:
                 "status": "completed",
                 "improvements": improvements_made,
                 "count": len(improvements_made),
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
         except Exception as e:
             logger.error(f"Error implementing automatic improvements, {e}")
-            return {
-                "status": "failed",
-                "error": str(e),
-                "timestamp": datetime.now().isoformat()
-            }
+            return {"status": "failed", "error": str(e), "timestamp": datetime.now().isoformat()}
 
     def _implement_single_improvement(self, recommendation: str, strategy: str) -> Dict[str, Any]:
         """
@@ -436,34 +392,34 @@ class ContinuousTestImprovement:
         # 这里简化处理,实际项目中可能需要更复杂的逻辑
         logger.info(f"Implementing improvement: {recommendation}")
 
-    # 模拟实施过程
+        # 模拟实施过程
         if "fixing failed tests" in recommendation.lower():
             return {
                 "type": "test_fix",
                 "description": "Created issue to fix failed tests",
                 "status": "pending",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
         elif "increase line coverage" in recommendation.lower():
             return {
                 "type": "coverage_improvement",
                 "description": "Generated template for missing tests",
                 "status": "pending",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
         elif "optimize slow tests" in recommendation.lower():
             return {
                 "type": "performance_optimization",
                 "description": "Identified candidates for optimization",
                 "status": "pending",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
         elif "improve naming" in recommendation.lower():
             return {
                 "type": "code_quality",
                 "description": "Generated refactoring suggestions",
                 "status": "pending",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
         return None
@@ -477,11 +433,11 @@ class ContinuousTestImprovement:
         """
         try:
             # 生成文件名
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            results_file=self.reports_dir / f"improvement_cycle_{timestamp}.json"
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            results_file = self.reports_dir / f"improvement_cycle_{timestamp}.json"
 
             # 保存结果
-            with open(results_file, "w", encoding='utf-8') as f:
+            with open(results_file, "w", encoding="utf-8") as f:
                 json.dump(cycle_results, f, indent=2, ensure_ascii=False)
 
             logger.info(f"Improvement cycle results saved to, {results_file}")
@@ -498,10 +454,10 @@ class ContinuousTestImprovement:
         # 这里可以设置定时任务或监控服务
         # 实际项目中可能需要使用cron、systemd定时器或其他调度系统
 
-        monitoring_config={
+        monitoring_config = {
             "schedule": f"0 */{self.improvement_config['monitoring']['interval_hours']} * * *",
             "command": f"{sys.executable} {__file__} run-cycle",
-            "description": "Unified AI Project Continuous Test Improvement"
+            "description": "Unified AI Project Continuous Test Improvement",
         }
 
         logger.info("Continuous monitoring setup completed")
@@ -515,19 +471,21 @@ class ContinuousTestImprovement:
             output_file: 输出文件路径
 
         Returns: str 生成的仪表板路径
-    """
+        """
         if output_file is None:
-            output_file=self.reports_dir / f"improvement_dashboard_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
+            output_file = (
+                self.reports_dir
+                / f"improvement_dashboard_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
+            )
         else:
             output_file = Path(output_file)
 
         # 生成HTML仪表板
-        dashboard_content=self._generate_dashboard_html()
+        dashboard_content = self._generate_dashboard_html()
 
         try:
 
-
-            with open(output_file, "w", encoding='utf-8') as f:
+            with open(output_file, "w", encoding="utf-8") as f:
                 f.write(dashboard_content)
             logger.info(f"Improvement dashboard generated: {output_file}")
             return str(output_file)
@@ -537,9 +495,9 @@ class ContinuousTestImprovement:
 
     def _generate_dashboard_html(self) -> str:
         """
-        生成仪表板HTML内容
+                生成仪表板HTML内容
 
-Returns: str HTML内容
+        Returns: str HTML内容
         """
         html_template = f"""
 <!DOCTYPE html>
@@ -682,12 +640,9 @@ def main() -> None:
     parser.add_argument(
         "action",
         choices=["run-cycle", "setup-monitoring", "dashboard", "recommend"],
-        help="Action to perform"
+        help="Action to perform",
     )
-    parser.add_argument(
-        "--output",
-        help="Output file for dashboard"
-    )
+    parser.add_argument("--output", help="Output file for dashboard")
     args = parser.parse_args()
 
     # 创建持续改进系统
@@ -700,7 +655,9 @@ def main() -> None:
             print("Continuous improvement cycle completed successfully")
         else:
 
-            print(f"Continuous improvement cycle failed, {cycle_results.get('error', 'Unknown error')}")
+            print(
+                f"Continuous improvement cycle failed, {cycle_results.get('error', 'Unknown error')}"
+            )
             sys.exit(1)
 
     elif args.action == "setup-monitoring":

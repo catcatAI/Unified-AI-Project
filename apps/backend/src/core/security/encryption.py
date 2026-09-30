@@ -108,7 +108,7 @@ class EncryptionUtils:
         elif algorithm == "sha512":
             hash_obj = hashlib.sha512(data)
         elif algorithm == "md5":
-            hash_obj = hashlib.md5(data)
+            hash_obj = hashlib.md5(data, usedforsecurity=False)
         else:
             raise ValueError(f"不支持的哈希算法: {algorithm}")
 

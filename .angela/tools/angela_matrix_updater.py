@@ -45,15 +45,16 @@ Matrix评估。
     python .angela/tools/angela_matrix_updater.py report
 """
 
+import argparse
+import json
+import logging
 import os
 import re
-import json
-import argparse
-from pathlib import Path
-from datetime import datetime
-from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
-import logging
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
+
 logger = logging.getLogger(__name__)
 
 # Angela配置
@@ -151,10 +152,7 @@ class MatrixAnalyzer:
         if "autonomous" in path_str or "endocrine" in path_str or "tactile" in path_str:
             return "L1"
         elif (
-            "memory" in path_str
-            or "ham" in path_str
-            or "cdm" in path_str
-            or "lu_logic" in path_str
+            "memory" in path_str or "ham" in path_str or "cdm" in path_str or "lu_logic" in path_str
         ):
             return "L2"
         elif "identity" in path_str or "self_" in path_str:
@@ -179,9 +177,7 @@ class MatrixAnalyzer:
 
         return "L0"  # 默认为L0
 
-    def _calculate_beta(
-        self, content: str, comment_lines: int, total_lines: int
-    ) -> float:
+    def _calculate_beta(self, content: str, comment_lines: int, total_lines: int) -> float:
         """计算功能完整度 (β)"""
         if total_lines == 0:
             return 0.0
@@ -207,9 +203,7 @@ class MatrixAnalyzer:
 
         return min(1.0, max(0.0, beta))
 
-    def _calculate_gamma(
-        self, content: str, code_lines: int, total_lines: int
-    ) -> float:
+    def _calculate_gamma(self, content: str, code_lines: int, total_lines: int) -> float:
         """计算代码完整度 (γ)"""
         if total_lines == 0:
             return 0.0
@@ -321,7 +315,9 @@ class MatrixUpdater:
             has_matrix = MATRIX_PATTERN.search(content)
 
             # 生成新的Matrix标记
-            new_matrix = f"Angela Matrix: [{metrics.alpha}] [{metrics.category}] {metrics.description}\n"
+            new_matrix = (
+                f"Angela Matrix: [{metrics.alpha}] [{metrics.category}] {metrics.description}\n"
+            )
             new_matrix += f"α: {metrics.alpha} | β: {metrics.beta:.2f} | γ: {metrics.gamma:.2f} | δ: {metrics.delta:.2f}"
 
             if dry_run:
@@ -339,11 +335,7 @@ class MatrixUpdater:
 
                 # 找到合适的插入位置
                 for i, line in enumerate(lines):
-                    if (
-                        line.startswith("#")
-                        or line.startswith('"""')
-                        or line.startswith("'''")
-                    ):
+                    if line.startswith("#") or line.startswith('"""') or line.startswith("'''"):
                         insert_pos = i + 1
                     elif line.strip() and not line.startswith("#"):
                         break
@@ -368,10 +360,7 @@ class MatrixUpdater:
 
         for py_file in self.root.rglob("*.py"):
             # 排除不需要的文件
-            if any(
-                x in str(py_file)
-                for x in ["__pycache__", ".git", "venv", "node_modules"]
-            ):
+            if any(x in str(py_file) for x in ["__pycache__", ".git", "venv", "node_modules"]):
                 continue
 
             files.append(py_file)
@@ -419,7 +408,7 @@ class MatrixUpdater:
                 results["files"].append(file_info)
 
             except Exception as e:
-                logger.error(f'Error in angela_matrix_updater.py: {e}', exc_info=True)
+                logger.error(f"Error in angela_matrix_updater.py: {e}", exc_info=True)
                 results["invalid_matrix"] += 1
 
                 print(f"警告: 无法验证 {filepath}: {e}")
@@ -450,9 +439,11 @@ class MatrixUpdater:
             "coverage_percentage": round(coverage, 2),
             "layer_distribution": layer_stats,
             "recommendations": [
-                f"建议为 {validation['without_matrix']} 个文件添加Matrix标记"
-                if validation["without_matrix"] > 0
-                else "所有文件都有Matrix标记 ✓"
+                (
+                    f"建议为 {validation['without_matrix']} 个文件添加Matrix标记"
+                    if validation["without_matrix"] > 0
+                    else "所有文件都有Matrix标记 ✓"
+                )
             ],
         }
 
@@ -467,16 +458,16 @@ Angela Matrix: [META] [UTIL]
 示例:
     # 更新所有文件的Matrix标记
     python .angela/tools/angela_matrix_updater.py update --all
-    
+
     # 预览更新（不实际修改）
     python .angela/tools/angela_matrix_updater.py update --all --dry-run
-    
+
     # 更新特定文件
     python .angela/tools/angela_matrix_updater.py update --file path/to/file.py
-    
+
     # 验证Matrix覆盖率
     python .angela/tools/angela_matrix_updater.py validate
-    
+
     # 生成覆盖率报告
     python .angela/tools/angela_matrix_updater.py report --output matrix_coverage.json
 

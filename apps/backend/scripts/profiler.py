@@ -7,8 +7,8 @@ import argparse
 import cProfile
 import pstats
 import sys
-from pathlib import Path
 from io import StringIO
+from pathlib import Path
 
 
 def profile_imports():

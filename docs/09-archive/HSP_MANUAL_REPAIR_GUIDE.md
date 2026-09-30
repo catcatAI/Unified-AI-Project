@@ -2,10 +2,8 @@
 
 ## 📋 修復指導概覽
 
-**修復目標**: HSP協議系統完全修復  
-**基於分析**: HSP_SYSTEM_DETAILED_ANALYSIS.md  
-**修復模式**: 手動修復，保持真實系統完整性  
-**優先級**: P0 (阻塞性問題)
+**修復目標**: HSP協議系統完全修復 **基於分析**: HSP_SYSTEM_DETAILED_ANALYSIS.md
+**修復模式**: 手動修復，保持真實系統完整性 **優先級**: P0 (阻塞性問題)
 
 ## 🔧 具體修復步驟
 
@@ -13,10 +11,9 @@
 
 #### 1.1 問題定位
 
-**文件**: `apps/backend/src/core/hsp/types.py`  
-**行號**: 第17行  
-**問題**: `lass HSPMessage(TypedDict, total=False):`  
-**修復**: `class HSPMessage(TypedDict, total=False):`
+**文件**: `apps/backend/src/core/hsp/types.py` **行號**: 第17行 **問題**:
+`lass HSPMessage(TypedDict, total=False):` **修復**:
+`class HSPMessage(TypedDict, total=False):`
 
 #### 1.2 修復操作
 
@@ -194,6 +191,5 @@ except Exception as e:
 
 ---
 
-**修復指導完成**: 2025年10月12日  
-**模式**: 手動修復，保持真實系統完整性  
+**修復指導完成**: 2025年10月12日 **模式**: 手動修復，保持真實系統完整性
 **下一步**: 執行具體修復步驟，然後進行完整驗證

@@ -25,12 +25,8 @@ from core.utils import safe_error
 from fastapi import APIRouter, Body, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import StreamingResponse
 from services.document_router import try_intent_routing as _try_intent_routing
-from services.execution.gate_execution import (
-    TTLSessionManager as _GateTTLSessionManager,
-)
-from services.execution.gate_execution import (
-    sessions as _gate_sessions,
-)
+from services.execution.gate_execution import TTLSessionManager as _GateTTLSessionManager
+from services.execution.gate_execution import sessions as _gate_sessions
 
 logger = logging.getLogger(__name__)
 
@@ -330,8 +326,8 @@ def _get_msba_pipeline():
 
     def _factory():
         try:
-            from ai.msba.pipeline import MSBAPipeline
             from ai.msba.block_factory import create_all_blocks
+            from ai.msba.pipeline import MSBAPipeline
 
             blocks = create_all_blocks()
             return MSBAPipeline(blocks=blocks)
@@ -729,10 +725,7 @@ def _gate_execution_response(
             payload = action_result.get("result")
             if isinstance(payload, dict):
                 detail = str(
-                    payload.get("message")
-                    or payload.get("status")
-                    or payload.get("path")
-                    or ""
+                    payload.get("message") or payload.get("status") or payload.get("path") or ""
                 )
             elif payload:
                 detail = str(payload)
@@ -906,10 +899,9 @@ async def _try_agent_routing(
 
         eda_request = AgentOrchestrator.is_eda_execution_request(user_message)
         ai_card_request = AgentOrchestrator.is_ai_card_request(user_message)
-        eda_followup = (
-            context.get("_eda_followup") is True
-            and AgentOrchestrator.is_eda_followup_request(user_message)
-        )
+        eda_followup = context.get(
+            "_eda_followup"
+        ) is True and AgentOrchestrator.is_eda_followup_request(user_message)
         if eda_request or ai_card_request or eda_followup:
             primary_type_name = "eda"
             confidence = max(confidence, 0.8)
@@ -982,8 +974,7 @@ async def _try_agent_routing(
         gate_action = primary.get("gate_action")
         if gate_action in ("confirm_then_execute", "reject"):
             confirm_text = primary.get("confirm_message") or (
-                "這個操作需要你確認後我才會執行："
-                f"{user_message}"
+                "這個操作需要你確認後我才會執行：" f"{user_message}"
             )
             if gate_action == "confirm_then_execute":
                 pending = {
@@ -1633,8 +1624,7 @@ async def _run_chat_pipeline(
         from ai.agents.agent_orchestrator import AgentOrchestrator
 
         if any(
-            AgentOrchestrator.is_ai_card_request(str(item.get("content", "")))
-            for item in history
+            AgentOrchestrator.is_ai_card_request(str(item.get("content", ""))) for item in history
         ):
             context["_eda_followup"] = True
     except Exception as exc:
@@ -1671,17 +1661,15 @@ async def _run_chat_pipeline(
     # All inputs enter MSBA — lightweight inputs use fewer blocks.
     # Adds fused representation + NeuroBlender 9D vector to context.
     try:
-        from ai.msba.pipeline import MSBAPipeline
         from ai.msba.block_factory import create_all_blocks
         from ai.msba.neuroblender_bridge import NeuroBlenderBridge
+        from ai.msba.pipeline import MSBAPipeline
 
         _msba = _get_msba_pipeline()
         if _msba is not None:
             import asyncio as _asyncio
 
-            _fused = _asyncio.ensure_future(
-                _msba.process(user_message)
-            )
+            _fused = _asyncio.ensure_future(_msba.process(user_message))
             # Non-blocking: schedule and continue; result used in Step 10
             context["_msba_task"] = _fused
             context["_msba_bridge"] = NeuroBlenderBridge()
@@ -1830,15 +1818,9 @@ async def _run_chat_pipeline(
                     from ai.msba.types import FusedRepresentation
 
                     if hasattr(_msba_output, "primary"):
-                        _blender_vec = _msba_bridge.fused_to_blender_vector(
-                            _msba_output
-                        )
-                        context["msba_blender_9d"] = (
-                            _msba_bridge.blender_to_context(_blender_vec)
-                        )
-                        context["msba_dominant"] = (
-                            _msba_bridge.get_dominant_dimension(_blender_vec)
-                        )
+                        _blender_vec = _msba_bridge.fused_to_blender_vector(_msba_output)
+                        context["msba_blender_9d"] = _msba_bridge.blender_to_context(_blender_vec)
+                        context["msba_dominant"] = _msba_bridge.get_dominant_dimension(_blender_vec)
                 except Exception as _e:
                     logger.debug("MSBA->NeuroBlender conversion skipped: %s", _e)
         except asyncio.TimeoutError:

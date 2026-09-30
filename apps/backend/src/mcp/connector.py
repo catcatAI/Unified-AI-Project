@@ -160,9 +160,7 @@ class MCPConnector:
             client.subscribe("mcp/broadcast")
             client.subscribe(f"mcp/unicast/{self.ai_id}")
         else:
-            logger.warning(
-                f"MCPConnector failed to connect, reason code {reason_code}"
-            )
+            logger.warning(f"MCPConnector failed to connect, reason code {reason_code}")
             self.is_connected = False
             self.mcp_available = False
 

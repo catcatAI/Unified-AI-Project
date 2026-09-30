@@ -7,8 +7,8 @@ Usage::
     python scripts/check_backend_startup.py
 """
 
-import sys
 import os
+import sys
 import traceback
 
 _PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -16,8 +16,13 @@ if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
 from scripts._server_helper import (
-    get_src_path, get_project_root, start_server, stop_server,
-    wait_for_server, test_health, get_llm_config,
+    get_llm_config,
+    get_project_root,
+    get_src_path,
+    start_server,
+    stop_server,
+    test_health,
+    wait_for_server,
 )
 
 SRC = str(get_src_path())
@@ -29,6 +34,7 @@ print("=== Backend Startup Check ===\n")
 print("[1/5] Importing main_api_server...")
 try:
     from services.main_api_server import app
+
     print(f"  ✅ App imported. Routes: {len(app.routes)}")
 except Exception as e:
     print(f"  ❌ {e}")
@@ -37,7 +43,7 @@ except Exception as e:
 
 # Step 2: Import key services
 print("\n[2/5] Importing key services...")
-services=[
+services = [
     ("LLM Router", "services.llm.router", "AngelaLLMService"),
     ("Chat Service", "services.chat_service", "ChatService"),
     ("Model Bus", "ai.core.model_bus", "ModelBus"),
@@ -61,10 +67,11 @@ for name, provider in cfg.get("providers", {}).items():
 
 # Step 4: Check port
 import socket
+
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 result = sock.connect_ex(("127.0.0.1", 8000))
 sock.close()
-port_status="in use" if result == 0 else "available"
+port_status = "in use" if result == 0 else "available"
 print(f"\n[4/5] Port 8000: {port_status}")
 
 # Step 5: Start server and test

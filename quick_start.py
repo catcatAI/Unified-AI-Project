@@ -5,14 +5,16 @@ Angela AI Quick Start Script
 """
 
 import os
-import sys
 import subprocess
+import sys
 from pathlib import Path
+
 
 def print_header():
     print("=" * 60)
     print("🌟 Angela AI 快速启动向导")
     print("=" * 60)
+
 
 def check_python():
     """检查 Python 版本"""
@@ -24,6 +26,7 @@ def check_python():
     print(f"✅ Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}")
     return True
 
+
 def check_env_file():
     """检查 .env 文件"""
     print("\n🔍 检查配置文件...")
@@ -32,6 +35,7 @@ def check_env_file():
         if Path(".env.example").exists():
             print("⚠️  .env 不存在，正在从 .env.example 创建...")
             import shutil
+
             shutil.copy(".env.example", ".env")
             print("✅ 已创建 .env，请编辑其中的配置（密钥、API Key 等）")
             return False
@@ -40,6 +44,7 @@ def check_env_file():
             return False
     print("✅ .env 存在")
     return True
+
 
 def check_dependencies():
     """检查核心依赖"""
@@ -51,13 +56,14 @@ def check_dependencies():
             __import__(mod)
         except ImportError:
             missing.append(mod)
-    
+
     if missing:
         print(f"❌ 缺失依赖: {', '.join(missing)}")
         print("请运行: pip install -r requirements.txt")
         return False
     print("✅ 核心依赖已安装")
     return True
+
 
 def check_node():
     """检查 Node.js"""
@@ -73,12 +79,14 @@ def check_node():
     print("请安装 Node.js >= 18 (https://nodejs.org/)")
     return False
 
+
 def run_health_check():
     """运行健康检查"""
     print("\n🔍 运行健康检查...")
     try:
-        result = subprocess.run([sys.executable, "scripts/utils/health_check.py"], 
-                              capture_output=True, text=True)
+        result = subprocess.run(
+            [sys.executable, "scripts/utils/health_check.py"], capture_output=True, text=True
+        )
         print(result.stdout)
         if result.stderr:
             print(result.stderr)
@@ -87,15 +95,16 @@ def run_health_check():
         print(f"❌ 健康检查失败: {e}")
         return False
 
+
 def main():
     print_header()
-    
+
     all_ok = True
     all_ok &= check_python()
     all_ok &= check_env_file()
     all_ok &= check_dependencies()
     all_ok &= check_node()
-    
+
     if not all_ok:
         print("\n⚠️  环境检查未通过，请根据上述提示修复")
         print("\n📚 常用修复命令:")
@@ -103,11 +112,11 @@ def main():
         print("  cp .env.example .env")
         print("  # 编辑 .env 填入密钥和 API Key")
         return 1
-    
+
     # 运行健康检查
     if not run_health_check():
         return 1
-    
+
     print("\n" + "=" * 60)
     print("✅ 环境检查全部通过！")
     print("=" * 60)
@@ -118,6 +127,7 @@ def main():
     print("\n📚 更多帮助:")
     print("  python run_angela.py --help")
     return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())

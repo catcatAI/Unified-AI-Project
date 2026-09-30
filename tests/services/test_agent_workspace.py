@@ -12,12 +12,11 @@ from pathlib import Path
 from typing import Any, Dict
 
 import pytest
-
 from services.agent_workspace.agent import AgentWorkspace, EdaWorkspaceAdapter
 from services.agent_workspace.app_session import (
+    ActionSpec,
     AppAdapter,
     AppSessionManager,
-    ActionSpec,
 )
 from services.agent_workspace.context_tree import ContextNode, ContextTree
 from services.agent_workspace.global_tree import (
@@ -56,14 +55,14 @@ class FakeEdaAgent:
         return {"status": "ok", "tools": {"ngspice": {"available": True}}}
 
     async def run_ai_card_reference_experiment(self) -> Dict[str, Any]:
-        return {"status": "reference_verified_pending_angela_interface_freeze"}
+        return {"status": "reference_verified_acceptance_check_pending"}
 
     def get_ai_card_interface_packet(self) -> Dict[str, Any]:
         return {
             "ok": True,
             "packet": {
-                "status": "pending_angela_decisions",
-                "pending_angela_decisions": [{"id": "die_l1_interface"}],
+                "status": "decision_verification_pending",
+                "pending_decisions": [{"id": "die_l1_interface"}],
             },
         }
 
@@ -297,7 +296,9 @@ async def test_eda_adapter_resolves_existing_agent_lazily(tmp_path: Path) -> Non
 
     packet_result = await ws.act("eda", "read_interface_packet")
     assert packet_result["ok"] is True
-    assert packet_result["result"]["result"]["packet"]["status"] == "pending_angela_decisions"
+    assert packet_result["result"]["result"]["packet"]["status"] == (
+        "decision_verification_pending"
+    )
 
     standards_result = await ws.act("eda", "search_hardware_standards", {"query": "AXI"})
     assert standards_result["ok"] is True

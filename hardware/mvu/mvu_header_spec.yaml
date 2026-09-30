@@ -10,7 +10,8 @@ research_sources:
     verified_facts: [Gen5_32_GT_per_s, x16_raw_512_Gbps_each_direction, 128b_over_130b_encoding]
   - name: Arm_AMBA_AXI4_Lite_Protocol_Specification
     url: https://developer.arm.com/documentation/ihi0022/
-    verified_facts: [AXI4_Lite_is_control_register_style, data_width_is_a_bus_contract_not_a_memory_capacity]
+    verified_facts:
+      [AXI4_Lite_is_control_register_style, data_width_is_a_bus_contract_not_a_memory_capacity]
 scope:
   unit: one_configured_mvu_sram_instance
   die_l1_mapping: unresolved

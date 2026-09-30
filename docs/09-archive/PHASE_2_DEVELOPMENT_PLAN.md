@@ -1,11 +1,10 @@
 # [DEPRECATED] Phase 2 Development Plan: "Spark of Life"
 
-> **⚠️ 此計劃已過時 (最後更新 2026-01-14)**  
-> 引用的技術棧 (Three.js, Next.js
-> Frontend) 和架構 (HybridBrain) 已不存在或已重構。  
-> 所有活躍計劃請見: [MASTER_CONSOLIDATED_PLAN.md](MASTER_CONSOLIDATED_PLAN.md),
+> **⚠️ 此計劃已過時 (最後更新 2026-01-14)** 引用的技術棧 (Three.js, Next.js
+> Frontend) 和架構 (HybridBrain) 已不存在或已重構。所有活躍計劃請見:
+> [MASTER_CONSOLIDATED_PLAN.md](MASTER_CONSOLIDATED_PLAN.md),
 > [MASTER_FINALIZATION_PLAN.md](MASTER_FINALIZATION_PLAN.md),
-> [COMPREHENSIVE_AUDIT_REPORT.md](COMPREHENSIVE_AUDIT_REPORT.md)  
+> [COMPREHENSIVE_AUDIT_REPORT.md](COMPREHENSIVE_AUDIT_REPORT.md)
 > 保留僅供歷史參考。
 
 ## 1. 核心目標 (Core Objectives)

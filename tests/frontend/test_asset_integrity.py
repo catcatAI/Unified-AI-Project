@@ -108,9 +108,7 @@ class TestFrontendAssetIntegrity:
                 if any(os.path.basename(src).endswith(opt) for opt in OPTIONAL):
                     continue
                 missing.append(f"{name}/{entry}: {src}")
-        assert not missing, "unresolvable <script src> (window will hang):\n" + "\n".join(
-            missing
-        )
+        assert not missing, "unresolvable <script src> (window will hang):\n" + "\n".join(missing)
 
     def test_vendored_copies_match_their_source(self):
         drifted = []
@@ -176,9 +174,7 @@ def _simulate_packaged(files_globs, root: Path) -> set:
             candidates.add(os.path.relpath(os.path.join(dirpath, name), root))
 
     def matches(rel: str, glob: str) -> bool:
-        return fnmatch.fnmatch(rel, glob) or (
-            glob.endswith("/**/*") and rel.startswith(glob[:-5])
-        )
+        return fnmatch.fnmatch(rel, glob) or (glob.endswith("/**/*") and rel.startswith(glob[:-5]))
 
     shipped = set()
     for rel in candidates:
@@ -207,9 +203,7 @@ class TestPackagedAppCanBoot:
 
         staging = tmp_path / "pkg"
         staging.mkdir()
-        shutil.copytree(
-            app_root / "electron_app", staging / "electron_app", symlinks=False
-        )
+        shutil.copytree(app_root / "electron_app", staging / "electron_app", symlinks=False)
         (staging / "package.json").write_text(
             (app_root / "package.json").read_text(encoding="utf-8"), encoding="utf-8"
         )
@@ -244,18 +238,20 @@ class TestPackagedAppCanBoot:
     def test_unreferenced_diagnostic_pages_are_not_shipped(self):
         """Those pages are unreachable and load modules from outside the app."""
         app_root = ROOT / "apps/desktop-app"
-        globs = json.loads(
-            (app_root / "package.json").read_text(encoding="utf-8")
-        )["build"]["files"]
+        globs = json.loads((app_root / "package.json").read_text(encoding="utf-8"))["build"][
+            "files"
+        ]
         negations = [g[1:] for g in globs if g.startswith("!")]
-        for page in ("diagnose-coordinates.html", "test-detection.html", "test-character-touch.html"):
+        for page in (
+            "diagnose-coordinates.html",
+            "test-detection.html",
+            "test-character-touch.html",
+        ):
             assert any(page in g for g in negations), f"{page} would be shipped"
 
     def test_shared_modules_are_inside_the_packaged_subtree(self):
         """The vendored copy must live under electron_app/ to be packaged."""
-        package = json.loads(
-            (ROOT / "apps/desktop-app/package.json").read_text(encoding="utf-8")
-        )
+        package = json.loads((ROOT / "apps/desktop-app/package.json").read_text(encoding="utf-8"))
         assert any("electron_app/**/*" in g for g in package["build"]["files"])
         assert (ROOT / "apps/desktop-app/electron_app/libs/shared-js").is_dir()
 
@@ -301,7 +297,7 @@ class TestSharedGlobalsAreExported:
     def test_viewer_launcher_verifies_assets_before_serving(self):
         """scripts/start.py serves this directory; a broken page must not boot."""
         source = (ROOT / "scripts" / "start.py").read_text(encoding="utf-8")
-        viewer_fn = source[source.index("def start_web_viewer"):]
+        viewer_fn = source[source.index("def start_web_viewer") :]
         viewer_fn = viewer_fn[: viewer_fn.index("def main")]
         assert "sync_shared_js.py" in viewer_fn
         assert "--surface" in viewer_fn and "web" in viewer_fn
@@ -346,9 +342,7 @@ class TestBootstrappablePages:
             if f"new {symbol}(" not in inline:
                 continue  # this page does not construct it
             definer = self.DEFINERS[symbol]
-            assert any(
-                str(definer.name) in src for src in _SCRIPT_SRC.findall(text)
-            ), (
+            assert any(str(definer.name) in src for src in _SCRIPT_SRC.findall(text)), (
                 f"{page.name} constructs `new {symbol}()` but never loads a script "
                 f"named {definer.name} — ReferenceError at startup"
             )
@@ -377,9 +371,9 @@ class TestBootstrappablePages:
             "unified-display-matrix.js",
         ):
             if dependency in names:
-                assert names.index(dependency) < app_index, (
-                    f"{dependency} must load before app.js (its constructor uses it)"
-                )
+                assert (
+                    names.index(dependency) < app_index
+                ), f"{dependency} must load before app.js (its constructor uses it)"
 
     def test_no_page_loads_a_second_copy_of_the_dialogue_panel(self):
         """dialogue-ui.js builds its own panel; the page already has one.
@@ -394,9 +388,9 @@ class TestBootstrappablePages:
             ROOT / "apps/desktop-app/electron_app/index.html",
             ROOT / "apps/web-live2d-viewer/index.html",
         ):
-            assert "dialogue-ui.js" not in page.read_text(encoding="utf-8"), (
-                f"{page.name} loads dialogue-ui.js on top of its own dialogue panel"
-            )
+            assert "dialogue-ui.js" not in page.read_text(
+                encoding="utf-8"
+            ), f"{page.name} loads dialogue-ui.js on top of its own dialogue panel"
 
     def test_proactive_speech_renders_in_the_real_panel(self):
         """_handleAngelaAction must not depend on the unloaded DialogueUI class."""

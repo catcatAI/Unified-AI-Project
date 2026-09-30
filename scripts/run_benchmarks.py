@@ -157,6 +157,22 @@ class NaiveBackend:
         return token
 
 
+def _resolve_query_type(query: str) -> str:
+    """Resolve a query type through the shared ContextScheduler owner.
+
+    ModelBus.route(query_type="auto") deliberately refuses to build its own
+    QueryClassifier — the scheduler plan is the single ingest-time
+    classification used across the whole chat path. Production injects that
+    owner in services/llm/router.py::_resolve_query_type_for_bus; the harness
+    must inject the same one, otherwise every ``route(q, "auto")`` call raises
+    "requires an injected query_type_resolver" and the native knowledge suites
+    silently score 0%.
+    """
+    from services.llm.context_scheduler import get_context_scheduler
+
+    return str(get_context_scheduler().plan_query(query, {}).query_type)
+
+
 class NativeBackend:
     """專案原生堆疊：QueryClassifier 路由 → ModelBus（ED3N + GARDEN）
     → 確定性數學引擎 → 沙箱執行。無外部 LLM。"""
@@ -174,7 +190,7 @@ class NativeBackend:
         from ai.ed3n.ed3n_engine import ED3NEngine
         from ai.garden.garden_engine import GARDENEngine
 
-        bus = ModelBus()
+        bus = ModelBus(query_type_resolver=_resolve_query_type)
         bus.register_ed3n(ED3NEngine())
         bus.register_garden(GARDENEngine())
         NativeBackend._bus = bus

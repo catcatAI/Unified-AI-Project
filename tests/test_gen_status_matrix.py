@@ -184,6 +184,32 @@ def test_render_md_contains_rows(tmp_path):
     assert "status_matrix.yaml" in text  # 真相源指回
 
 
+def test_render_md_snapshot_date_comes_from_yaml(tmp_path):
+    """快照日期必須取自 YAML 的 meta.last_sync，不能用 wall-clock。
+
+    CI 的 freshness 步驟是「生成後 git diff --exit-code
+    docs/STATUS_MATRIX.md」；若日期取自當下時間，這個步驟每逢跨日必紅。
+    """
+    mod = load_tool()
+    (tmp_path / "a.py").write_text("x=1", encoding="utf-8")
+    data = yaml.safe_load(open(write_yaml(tmp_path, VALID_MIN), encoding="utf-8"))
+    data.setdefault("meta", {})["last_sync"] = "2026-01-02"
+    text = "\n".join(mod.render_md(str(tmp_path), data))
+    assert "狀態快照：2026-01-02" in text
+
+
+def test_generated_view_is_fresh_and_deterministic():
+    """committed MD 必須等於現在生成的內容（= CI freshness 閘），
+    且同一份 YAML 連兩次生成必須逐字相同。"""
+    mod = load_tool()
+    root = os.path.abspath(REPO_ROOT)
+    data = mod.load_yaml(os.path.join(root, "docs", "status_matrix.yaml"))
+    generated = "\n".join(mod.render_md(root, data))
+    assert generated == "\n".join(mod.render_md(root, data)), "生成有時間依賴"
+    on_disk = open(os.path.join(root, "docs", "STATUS_MATRIX.md"), encoding="utf-8").read()
+    assert on_disk == generated, "STATUS_MATRIX.md 已過期：重跑 gen_status_matrix.py"
+
+
 def test_main_check_mode_rc(tmp_path, monkeypatch):
     mod = load_tool()
     (tmp_path / "a.py").write_text("x=1", encoding="utf-8")

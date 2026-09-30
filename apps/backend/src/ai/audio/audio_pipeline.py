@@ -199,7 +199,7 @@ class AudioPipeline:
         """Generate a content-based hash for caching."""
         import hashlib
 
-        return hashlib.md5(audio_data).hexdigest()
+        return hashlib.md5(audio_data, usedforsecurity=False).hexdigest()
 
     @staticmethod
     def _detect_duration(audio_data: bytes) -> float:

@@ -100,7 +100,9 @@ async def agent_session_act(
     action = str(body.get("action", "")).strip()
     if not app_id or not action:
         raise HTTPException(422, "缺少 app_id 或 action")
-    params: Optional[Dict[str, Any]] = body.get("params") if isinstance(body.get("params"), dict) else None
+    params: Optional[Dict[str, Any]] = (
+        body.get("params") if isinstance(body.get("params"), dict) else None
+    )
     confirm = bool(body.get("confirm", False))
     source = str(body.get("source", "exploration"))
     return await workspace.act(app_id, action, params=params, confirm=confirm, source=source)

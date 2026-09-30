@@ -33,8 +33,8 @@ def main():
         f"硬件規格自適應（L1-6 真實對比 1000）: GPU={hw['gpu']} RAM={hw['ram_gb']:.1f} tier={tier}"
     )
 
-    from ai.multimodal.shared_latent_space import SharedLatentSpace
     import numpy as np
+    from ai.multimodal.shared_latent_space import SharedLatentSpace
 
     epochs = 5 if tier in ("high_performance_desktop", "server_cloud") else 2
     total = 1000

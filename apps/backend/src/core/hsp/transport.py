@@ -10,11 +10,9 @@ import logging
 from abc import ABC, abstractmethod
 from enum import Enum
 from multiprocessing import Queue
-from typing import Any, Callable, Optional
+from typing import TYPE_CHECKING, Any, Callable, Optional
 
 from core.system.config.magic_numbers import loop_sleep
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from core.hsp.external.external_connector import ExternalConnector

@@ -4,10 +4,15 @@
 import json
 import logging
 import time
+from typing import Optional
 
 import aiohttp
 from core.interfaces.protocols import LLMResponse
-from core.system.config.network_defaults import DEFAULT_OLLAMA_MODEL, OLLAMA_HOST, OLLAMA_TIMEOUT
+from core.system.config.network_defaults import (
+    DEFAULT_OLLAMA_MODEL,
+    OLLAMA_TIMEOUT,
+    get_ollama_base_url,
+)
 from core.utils import safe_error
 
 from .base import BaseLLMBackend
@@ -20,13 +25,16 @@ class OllamaBackend(BaseLLMBackend):
 
     def __init__(
         self,
-        base_url: str = OLLAMA_HOST,
+        base_url: Optional[str] = None,
         model: str = DEFAULT_OLLAMA_MODEL,
         api_key: str = "",
         timeout: float = OLLAMA_TIMEOUT,
     ):
         super().__init__()
-        self.base_url = base_url.rstrip("/")
+        # Resolved at construction, not at import: OLLAMA_BASE_URL is documented
+        # as the way to point this at another host, and an import-time default
+        # argument would freeze the value before anyone set it.
+        self.base_url = (base_url or get_ollama_base_url()).rstrip("/")
         self.model = model
         self.api_key = api_key
         self.timeout = timeout

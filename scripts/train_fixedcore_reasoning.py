@@ -8,9 +8,14 @@ L2-3 FixedSizeCore 5K — 硬件規格自適應（分批+sleep，<300MB）
 資源：500 樣本/批，slots 65536 259MB → 5K 約 2.5s，<300MB。
 """
 
-import os, sys, time, random
+import os
+import random
+import sys
+import time
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps/backend/src"))
 random.seed(42)
+
 
 def gen_reasoning_5k(n=5000):
     templates = [
@@ -19,14 +24,39 @@ def gen_reasoning_5k(n=5000):
         ("{a} > {b} > {c}, who is smallest?", "{c}"),
         ("{a}, {b}, {c} 中 {a} 最聰明，誰最笨？", "{c}"),
         ("If {a} is older than {b}, {b} older than {c}, is {a} older than {c}? ", "yes"),
-        ("If {a} is older than {b}, is {b} older than {a}? ", "no"),        ("{a} higher than {b}, {b} higher than {c}, who top?", "{a}"),
+        ("If {a} is older than {b}, is {b} older than {a}? ", "no"),
+        ("{a} higher than {b}, {b} higher than {c}, who top?", "{a}"),
         ("X={a} Y={b} Z={c}, X>Y>Z, who bottom?", "{c}"),
         # 2026-09-03 探針對齊增補（泛化實驗）：序數 / 4 跳鏈 / 否定比較
         ("The first is taller than second, second taller than third, which is top?", "first"),
         ("{a} > {b} > {c}, {b} > {d}, who smallest?", "{d}"),
         ("{a} is not as short as {b}, {b} not as short as {c}, who shortest?", "{c}"),
     ]
-    entities = ["Alice","Bob","Carol","Dave","Eve","Frank","Gina","Hank","Ivy","Jack","小明","小红","泰山","熊猫","AliceX","BobY","CarolZ","Tom","Jerry","Spike","first","second","third"]
+    entities = [
+        "Alice",
+        "Bob",
+        "Carol",
+        "Dave",
+        "Eve",
+        "Frank",
+        "Gina",
+        "Hank",
+        "Ivy",
+        "Jack",
+        "小明",
+        "小红",
+        "泰山",
+        "熊猫",
+        "AliceX",
+        "BobY",
+        "CarolZ",
+        "Tom",
+        "Jerry",
+        "Spike",
+        "first",
+        "second",
+        "third",
+    ]
     out = []
     for i in range(n):
         tmpl, ans_tmpl = random.choice(templates)
@@ -35,6 +65,7 @@ def gen_reasoning_5k(n=5000):
         ans = ans_tmpl.format(a=a, b=b, c=c, d=d)
         out.append(f"{q}={ans}")
     return out
+
 
 TEST_100 = [
     ("The first is higher than second, second higher than third, which is top?", "first"),
@@ -45,30 +76,36 @@ TEST_100 = [
 ] * 20
 TEST_100 = TEST_100[:100]
 
+
 def main():
     from core.backbone.hardware import HardwareProfile
     from core.system.config.magic_numbers import compute_int
+
     hw = HardwareProfile.detect()
     tier = HardwareProfile.get_tier(hw)
     adaptive = HardwareProfile.get_adaptive_compute(hw)
     slots = compute_int("unified", "slots", 65536)
-    print(f"硬件規格自適應（FixedSizeCore 5K）: GPU={hw['gpu']} RAM={hw['ram_gb']:.1f} tier={tier} slots={slots} usable={adaptive['usable_ram_gb']}GB")
+    print(
+        f"硬件規格自適應（FixedSizeCore 5K）: GPU={hw['gpu']} RAM={hw['ram_gb']:.1f} tier={tier} slots={slots} usable={adaptive['usable_ram_gb']}GB"
+    )
 
     from ai.unified_engine.core_model import FixedSizeCore
+
     core = FixedSizeCore(slots=slots, use_feat=True, use_delta=True)
     print(f"  FixedSizeCore {slots} slots, model_bytes {core.model_bytes/1024/1024:.1f}MB")
 
     train = gen_reasoning_5k(5000)
-    batch = 500 if tier in ("high_performance_desktop","server_cloud") else 200
-    batch = int(batch * adaptive['ed3n_batch_multiplier'] / 1.5)
+    batch = 500 if tier in ("high_performance_desktop", "server_cloud") else 200
+    batch = int(batch * adaptive["ed3n_batch_multiplier"] / 1.5)
     t0 = time.time()
     for bi in range(0, len(train), batch):
-        bat = train[bi:bi+batch]
+        bat = train[bi : bi + batch]
         for text in bat:
             core.learn(text)
         # 資源守護
         try:
             import psutil
+
             if psutil.virtual_memory().percent > 85:
                 print(f"  ⚠️ RAM {psutil.virtual_memory().percent:.1f}% >85% 暫停")
                 time.sleep(0.5)
@@ -77,8 +114,10 @@ def main():
                 break
         except Exception:
             pass
-        if (bi//batch+1) % 2 == 0:
-            print(f"  訓練 {bi+batch}/{len(train)} ({(bi+batch)/len(train):.0%}) {time.time()-t0:.1f}s")
+        if (bi // batch + 1) % 2 == 0:
+            print(
+                f"  訓練 {bi+batch}/{len(train)} ({(bi+batch)/len(train):.0%}) {time.time()-t0:.1f}s"
+            )
         time.sleep(0.05)
     print(f"  訓練完成 5K, {time.time()-t0:.1f}s, samples {core._samples_seen}")
 
@@ -121,6 +160,7 @@ def main():
     # 與字節峰軟指標對照，探測已訓權重的真實位置記憶
     try:
         from probe_reasoning_unseen import UNSEEN_REASONING
+
         pos_hits = 0
         for pq, pexp in UNSEEN_REASONING:
             eb = pexp.encode("utf-8")
@@ -132,14 +172,17 @@ def main():
                     ok = False
                     break
             pos_hits += 1 if ok else 0
-        print(f"  位置精確(硬): {pos_hits}/{len(UNSEEN_REASONING)} = {pos_hits/len(UNSEEN_REASONING):.0%}")
+        print(
+            f"  位置精確(硬): {pos_hits}/{len(UNSEEN_REASONING)} = {pos_hits/len(UNSEEN_REASONING):.0%}"
+        )
     except Exception as e:
         print(f"  位置精確(硬) 跳過: {e}")
 
     # 自回歸解碼探測：gram_dist 貪心逐字節（prefix=q+"="，步數=len(答案)），精確比對
     try:
-        from probe_reasoning_unseen import UNSEEN_REASONING as _U2
         import numpy as _np
+        from probe_reasoning_unseen import UNSEEN_REASONING as _U2
+
         dec_hits = 0
         for pq, pexp in _U2:
             eb = pexp.encode("utf-8")
@@ -159,10 +202,19 @@ def main():
         print(f"  ✅ 提升至 {hits}%（硬件自適應）")
     else:
         print(f"  ⚠️ 仍 {hits}% 未達 50%，需調特徵 n-gram / 5K→10K / 不同模板（框架已證可訓）")
-    hw_same = {'gpu': 'Intel Arc B570', 'gpu_memory_gb': 10, 'ram_gb': 15.5, 'cpu_cores': 4, 'gpu_vendor': 'intel'}
-    print(f"  筆電同規格 tier {HardwareProfile.get_tier(hw_same)} → {'✅' if HardwareProfile.get_tier(hw_same)==tier else '❌'}")
+    hw_same = {
+        "gpu": "Intel Arc B570",
+        "gpu_memory_gb": 10,
+        "ram_gb": 15.5,
+        "cpu_cores": 4,
+        "gpu_vendor": "intel",
+    }
+    print(
+        f"  筆電同規格 tier {HardwareProfile.get_tier(hw_same)} → {'✅' if HardwareProfile.get_tier(hw_same)==tier else '❌'}"
+    )
     print(f"  RAM {psutil.virtual_memory().percent:.1f}% 用後，訓練可控")
     return 0
+
 
 if __name__ == "__main__":
     main()

@@ -62,8 +62,14 @@ class RouteManifest:
     def to_dict(self) -> Dict[str, object]:
         return {
             "steps": [
-                {"name": s.name, "connector": s.connector, "kind": s.kind,
-                 "tier": s.tier, "priority": s.priority, "enabled": s.enabled}
+                {
+                    "name": s.name,
+                    "connector": s.connector,
+                    "kind": s.kind,
+                    "tier": s.tier,
+                    "priority": s.priority,
+                    "enabled": s.enabled,
+                }
                 for s in self._plan
             ]
         }

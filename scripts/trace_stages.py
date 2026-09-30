@@ -1,5 +1,9 @@
 """Trace which stages handle test inputs in HYBRID mode."""
-import os, sys, json
+
+import json
+import os
+import sys
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"))
 
 from ai.garden.garden_engine import GARDENEngine
@@ -12,9 +16,15 @@ if os.path.isdir(ckpt):
 # Wrap each stage to trace calls
 trace = []
 orig = {}
-for name in ("_try_math_eval", "_try_logic_eval", "_try_reasoning",
-             "_try_chain_reasoning", "_try_knowledge"):
+for name in (
+    "_try_math_eval",
+    "_try_logic_eval",
+    "_try_reasoning",
+    "_try_chain_reasoning",
+    "_try_knowledge",
+):
     orig[name] = getattr(e, name)
+
 
 def make_wrapper(stage_name, original):
     def wrapper(text):
@@ -22,10 +32,17 @@ def make_wrapper(stage_name, original):
         hit = result is not None
         trace.append((stage_name, text[:50], hit))
         return result
+
     return wrapper
 
-for name in ("_try_math_eval", "_try_logic_eval", "_try_reasoning",
-             "_try_chain_reasoning", "_try_knowledge"):
+
+for name in (
+    "_try_math_eval",
+    "_try_logic_eval",
+    "_try_reasoning",
+    "_try_chain_reasoning",
+    "_try_knowledge",
+):
     setattr(e, name, make_wrapper(name, orig[name]))
 
 # Test cases from each dataset
@@ -36,6 +53,7 @@ test_cases = []
 csv_path = os.path.join(DATA_DIR, "arithmetic_test_dataset.csv")
 if os.path.exists(csv_path):
     import csv
+
     with open(csv_path, "r", encoding="utf-8") as f:
         for row in csv.DictReader(f):
             test_cases.append(("math", row["problem"], row["answer"]))
@@ -71,5 +89,7 @@ for domain, inp, expected in test_cases:
     print(f"  Got:      {result[:60]}")
     print(f"  Stages called: {[s for s, _, _ in trace]}")
     print(f"  Stages hit:    {stages_hit}")
-    snn_ran = not any(h for s, _, h in trace if s in ("math", "logic", "reasoning", "chain", "knowledge") and h)
+    snn_ran = not any(
+        h for s, _, h in trace if s in ("math", "logic", "reasoning", "chain", "knowledge") and h
+    )
     print(f"  SNN would run: {snn_ran}")
