@@ -22,13 +22,24 @@ from .base import Context, ContextStatus, ContextType, Storage
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_STORAGE_DIR = "./context_storage"
+STORAGE_DIR_ENV = "CONTEXT_STORAGE_DIR"
+
+
+def resolve_storage_dir(storage_dir: Optional[str] = None) -> str:
+    """解析儲存目錄: 明確參數 > CONTEXT_STORAGE_DIR > DEFAULT_STORAGE_DIR。
+
+    這個環境變數在 .env.example 有記載, 所以它必須真的被讀到。
+    """
+    return storage_dir or os.getenv(STORAGE_DIR_ENV, "").strip() or DEFAULT_STORAGE_DIR
+
 
 class DiskStorage(Storage):
     """磁盘存储实现"""
 
-    def __init__(self, storage_dir: str = "./context_storage") -> None:
+    def __init__(self, storage_dir: Optional[str] = None) -> None:
         """初始化磁盘存储"""
-        self.storage_dir = storage_dir
+        self.storage_dir = resolve_storage_dir(storage_dir)
         # 确保存储目录存在
         os.makedirs(self.storage_dir, exist_ok=True)
 

@@ -71,7 +71,8 @@ EXCLUDED = {
     "TESTING": "test-suite internal",
     "TEST_MODE": "test-suite internal",
     "TESTING_MODE": "documented above as a real switch",
-    "DEBUG": "generic; the project uses DEBUG_MODE",
+    "DEBUG": "legacy; read only by the deprecated core/config/system_config.py (0 imports)",
+    "LOG_LEVEL": "legacy; read only by the deprecated core/config/system_config.py (0 imports)",
     "ENVIRONMENT": "generic; the project uses UNIFIED_AI_ENV",
     "PROJECT_ROOT": "generic; the project uses ANGELA_PROJECT_ROOT",
     "HOST": "generic; the project uses ANGELA_SERVER_HOST",
@@ -279,6 +280,112 @@ def test_no_real_secrets_are_committed():
         assert (
             looks_like_placeholder
         ), f"{name} looks like a real credential rather than a placeholder: {value!r}"
+
+
+# --------------------------------------------------------------------------- #
+# The other direction: a documented switch that nothing reads
+# --------------------------------------------------------------------------- #
+# The checks above make the code's switches discoverable. This one catches the
+# mirror-image failure, which is invisible at runtime and has survived several
+# audits: the template documented `BACKEND_HOST`/`BACKEND_PORT` while the code read
+# `ANGELA_SERVER_HOST`/`ANGELA_SERVER_PORT`; it listed fourteen `CONTEXT_*`
+# switches for features that do not exist; and it offered `STABLE_DIFFUSION_URL`
+# while the image path read `ANGELA_SD_API_URL`. Setting any of them did nothing,
+# and nothing said so.
+#
+# Only consumer roots are indexed. `tests/` is excluded on purpose: a test that
+# calls `monkeypatch.setenv("ANGELA_TESTING", "true")` mentions the name while
+# nothing reads it, which is precisely the failure being caught.
+CONSUMER_ROOTS = (
+    "apps/backend/src",
+    "packages/shared-js",
+    "scripts",
+    "apps/desktop-app/electron_app",
+    "apps/web-live2d-viewer/js",
+    "apps/web-dashboard/src",
+)
+CONSUMER_FILES = ("docker-compose.yml", "Dockerfile", "package.json", "pyproject.toml")
+CONSUMER_SUFFIXES = frozenset(
+    {
+        ".py",
+        ".js",
+        ".mjs",
+        ".cjs",
+        ".ts",
+        ".tsx",
+        ".json",
+        ".yml",
+        ".yaml",
+        ".toml",
+        ".sh",
+        ".ps1",
+        ".bat",
+        ".cmd",
+    }
+)
+# YAML, shell and Dockerfile comments start with "#" unambiguously, and an inline
+# comment is how the trap was set: `keys.default.yaml` carried
+# `base_url: "OLLAMA_BASE_URL_PLACEHOLDER" # Environment variable: OLLAMA_BASE_URL`
+# and that comment was the setting's only appearance anywhere. Python and JS are
+# left alone here because "#" inside a string is data, not a comment.
+INLINE_COMMENT_SUFFIXES = frozenset({".yml", ".yaml", ".sh", ".ps1", ".bat", ".cmd", ".toml"})
+
+# Documented for a runtime this repository does not own. Each needs a reason.
+DOCUMENTED_FOR_ANOTHER_RUNTIME = {
+    "NODE_ENV": "read by Node and Next.js themselves; project code never looks at it",
+}
+
+
+def _consumer_blob() -> str:
+    """Every line of code/config that could read a variable, comments removed."""
+    root = _repo_root()
+    paths = []
+    for relative in CONSUMER_ROOTS:
+        directory = root / relative
+        if directory.is_dir():
+            paths.extend(p for p in directory.rglob("*") if p.is_file())
+    paths.extend(root / name for name in CONSUMER_FILES if (root / name).is_file())
+
+    lines = []
+    for path in paths:
+        if "__pycache__" in path.parts or path.suffix not in CONSUMER_SUFFIXES:
+            continue
+        try:
+            text = path.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            continue
+        inline = path.suffix in INLINE_COMMENT_SUFFIXES or path.name == "Dockerfile"
+        for line in text.splitlines():
+            if inline and " #" in line:
+                line = line.split(" #", 1)[0]
+            if line.strip().startswith("#"):
+                continue
+            lines.append(line)
+    return "\n".join(lines)
+
+
+def test_every_documented_env_var_is_read_by_something(documented):
+    """A knob nobody reads is a promise the template cannot keep.
+
+    Either wire it up or take it out of the template; leaving it in costs the next
+    operator the time it takes to discover the switch is inert. One entry is
+    exempted above with its reason.
+    """
+    blob = _consumer_blob()
+    dead = sorted(
+        name
+        for name in documented
+        if name not in DOCUMENTED_FOR_ANOTHER_RUNTIME and name not in blob
+    )
+    assert not dead, (
+        "these variables are documented in .env.example but nothing under the "
+        f"consumer roots reads them: {dead}"
+    )
+
+
+def test_exempted_documented_vars_all_carry_a_reason():
+    for name, reason in DOCUMENTED_FOR_ANOTHER_RUNTIME.items():
+        assert len(reason) > 20, f"{name} is exempted from the coverage contract without a reason"
 
 
 def test_python_is_not_required_in_the_template():

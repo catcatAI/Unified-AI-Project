@@ -71,7 +71,9 @@ def _init_logging() -> None:
     """Initialize the unified logging system (called once at module init)."""
     from core.logging.setup import setup_logging
 
-    setup_logging(level=logging.INFO, log_file="angela_ai.log")
+    # No explicit level: ANGELA_LOG_LEVEL is documented as the switch, and a
+    # hardcoded INFO here made the documented setting do nothing.
+    setup_logging(log_file="angela_ai.log")
 
 
 # Module-level initialization

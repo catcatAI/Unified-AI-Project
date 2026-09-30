@@ -13,6 +13,7 @@ Angela Matrix Annotation:
 # =============================================================================
 
 import logging
+import os
 from collections import OrderedDict
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -21,13 +22,43 @@ from .base import Context, ContextType, Storage
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_MAX_SIZE = 1000
+MAX_SIZE_ENV = "CONTEXT_MEMORY_MAX_SIZE"
+
+
+def resolve_max_size(max_size: Optional[int] = None) -> int:
+    """解析快取上限: 明確參數 > CONTEXT_MEMORY_MAX_SIZE > DEFAULT_MAX_SIZE。
+
+    這個環境變數在 .env.example 有記載, 所以它必須真的被讀到。數值不合法時
+    退回預設值而不是拋錯: 這段程式在 ContextManager 建構時執行, 一個 .env 裡
+    的手誤不該把整個管理器在啟動時打壞。
+    """
+    if max_size is not None:
+        return max_size
+    raw = os.getenv(MAX_SIZE_ENV, "").strip()
+    if not raw:
+        return DEFAULT_MAX_SIZE
+    try:
+        value = int(raw)
+    except ValueError:
+        logger.warning(
+            "%s=%r is not an integer; falling back to %d", MAX_SIZE_ENV, raw, DEFAULT_MAX_SIZE
+        )
+        return DEFAULT_MAX_SIZE
+    if value <= 0:
+        logger.warning(
+            "%s=%d is not positive; falling back to %d", MAX_SIZE_ENV, value, DEFAULT_MAX_SIZE
+        )
+        return DEFAULT_MAX_SIZE
+    return value
+
 
 class MemoryStorage(Storage):
     """内存存储实现, 使用LRU缓存策略"""
 
-    def __init__(self, max_size: int = 1000) -> None:
+    def __init__(self, max_size: Optional[int] = None) -> None:
         """初始化内存存储"""
-        self.max_size = max_size
+        self.max_size = resolve_max_size(max_size)
         self._storage: OrderedDict[str, Context] = OrderedDict()
 
     def save_context(self, context: Context) -> bool:
