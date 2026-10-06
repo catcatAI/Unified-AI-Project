@@ -1,0 +1,275 @@
+schema_version: ai-compute-card-secondary-compute-draft/1
+status: draft_awaiting_acceptance_check
+owner: angela
+purpose: >-
+  Weight-update path analysed with the secondary compute as the axis: what the
+  frozen contracts already fix, where the two reference models disagree, and a
+  consolidated register of every open question this analysis converged to.
+  Every claim carries its source. Reasoning input for the acceptance check;
+  it settles no pending decision by itself.
+sources:
+  task_contract: hardware/ai_compute_card/ai_compute_card_task.yaml
+  freeze_packet: hardware/ai_compute_card/angela_interface_freeze_packet.yaml
+  concept_fixture: hardware/ai_compute_card/concept_design.yaml
+  cim_draft: hardware/ai_compute_card/cim_freeze_draft.yaml
+  card_reference: apps/backend/src/ai/hardware/ai_card_reference.py
+  mvu_reference: apps/backend/src/ai/hardware/mvu_reference.py
+  cell_library_evidence: /home/cxuo/chip/design/VERIFIED_COMPARE.md
+thesis:
+  weights_home: die_l1_logical_home
+  writer: secondary_compute
+  reader: main_compute_read_port_only
+  model: >-
+    Weights live at die L1; the secondary compute is the only writer (1024-bit
+    fabric, consumers = [l1_weight_cache] only); the main compute only reads.
+    The update path is digital end to end (host -> secondary -> 1024b fabric ->
+    L1 write port: int8 deltas, hit masks, CRC32, sequence+commit). Cell
+    programmability is not part of the interface contract. What sits behind the
+    L1 write port (digital tile SRAM vs strip-array cells) is the engine choice.
+  neutrality_qualification: >-
+    Fabric widths, partition count and protocol are engine-neutral. The
+    die_l1_interface fields address_map and partition_ownership are NOT: if
+    weights home in strip cells, the L1 write port IS the cell write path and
+    the address map must describe cell addressing. See corrections.P5.
+  engine_choice_status: undecided_pending_freeze
+verified_claims:
+  - claim: secondary compute = 1024b, 16 partitions x 64b, role
+      sparse_hot_weight_update, mapping field still pending_decision_answer
+    source: hardware/ai_compute_card/angela_interface_freeze_packet.yaml:46-55
+  - claim: weight_update_fabric transport = die_internal_secondary_compute_to_l1_cache,
+      consumers = [l1_weight_cache] only
+    source: hardware/ai_compute_card/concept_design.yaml:78-88
+  - claim: mvu models the two roles as a digital dual-port SRAM - read_port_a
+      feeds the PE (main), write_port_b applies deltas (secondary)
+    source: apps/backend/src/ai/hardware/mvu_reference.py:175,182,461-489
+  - claim: one card-reference sparse transaction = 128B payload + 16 x 8-bit
+      hit masks + 128 int8 deltas, weight clamp to [-128,127], CRC32 over the
+      updated image
+    source: apps/backend/src/ai/hardware/ai_card_reference.py:380-435
+  - claim: mvu aggregate side bandwidth is declared as 16 banks x 64b/cycle =
+      1024b, i.e. width-isomorphic with the update fabric
+    source: apps/backend/src/ai/hardware/mvu_reference.py:552-566
+  - claim: max_delta = floor(0.0588 x 127) = 7 and max_modified_bits =
+      floor(total_bits x 0.03125) = 3.125% are mvu config properties
+    source: apps/backend/src/ai/hardware/mvu_reference.py:36,67-68,79-80
+  - claim: task acceptance L1 requires weight_update_is_atomic_and_bounded
+    source: hardware/ai_compute_card/ai_compute_card_task.yaml:177
+  - claim: D02 6T SRAM cell is in the verified standard-cell library
+      (array 9.9229 um2/bit, status 0/0)
+    source: /home/cxuo/chip/design/VERIFIED_COMPARE.md:676,860
+  - claim: mvu already carries draft die_l1_interface material - address map
+      [14:0] bank/word/byte, hard/soft reset semantics, commit predicate
+      posedge(clock) && port_b_we && bit_mask != 0, requires_rtl_review true
+    source: apps/backend/src/ai/hardware/mvu_reference.py:636-655
+corrections:
+  P1:
+    title: mvu is width-isomorphic, not format-isomorphic
+    detail: >-
+      Both shapes are 16 x 64b per beat, but the wire formats differ three
+      ways. mvu: each 64b word holds four int8 weights in the low 32 bits
+      (high 32 reserved), a 32-bit delta over four byte lanes, a 32-bit mask
+      with 8-bit per-lane subfields, delta clamped to +/-7 then weight to
+      +/-127. Card reference: all eight bytes of each 64b partition are
+      weights, one mask bit per byte, 128 int8 deltas with NO +/-7 bound
+      (weight clamp only). mvu itself flags the mapping as unresolved
+      (issue delta_encoding warning) and its run() contract states the model's
+      chosen interpretation, not a settled header spec.
+    sources:
+      - apps/backend/src/ai/hardware/mvu_reference.py:96-107,196-218,720-723
+      - apps/backend/src/ai/hardware/ai_card_reference.py:386-414
+    consequence: >-
+      Format reconciliation is a die_l1_interface.data_types sub-question,
+      not settled ground. Present it to the acceptance check as an open
+      conflict.
+  P2:
+    title: the small-step numbers are mvu-only, not frozen contract
+    detail: >-
+      max_delta=7 and 3.125% live in MvuReferenceConfig. The freeze packet's
+      weight_update contract is credit+sequence+CRC+commit with no plasticity
+      clamp; the card reference accepts full int8 deltas. Bounded itself IS
+      required (task acceptance L1), so the gap is that the two references
+      implement different notions of bounded and neither is named in the
+      freeze packet.
+    sources:
+      - hardware/ai_compute_card/angela_interface_freeze_packet.yaml:72-77
+      - hardware/ai_compute_card/ai_compute_card_task.yaml:177
+      - apps/backend/src/ai/hardware/ai_card_reference.py:399-414
+    consequence: >-
+      Sufficiency of 1/16 bandwidth cannot rest on the clamp. Without a
+      workload/traffic model the 1/16 figure stays a budget rationale, not a
+      sufficiency claim.
+  P3:
+    title: host DMA does share the main fabric
+    detail: >-
+      The pipeline sketch said DMA runs separately and occupies neither
+      fabric. The fixture lists dma_ingress and dma_egress among the main
+      fabric consumers (credit-based tiled DMA). DMA never touches the
+      secondary fabric (its only consumer is l1_weight_cache) - that half of
+      the claim holds.
+    source: hardware/ai_compute_card/concept_design.yaml:70-77,113-117
+  P4:
+    title: frozen cache policy is explicit regions, not dirty writeback
+    detail: >-
+      The sketch assumed dirty L1 blocks write back to disk periodically.
+      The frozen software contract is explicit-replaceable-regions
+      (software-managed), and the hierarchy holds no disk: card L2 is
+      purchased 2x32GB DDR5, and host_l3 is where host memory_or_storage
+      (disk) lives, outside the card. Reframe: which purchased memory
+      (card_l2_selection) and does the policy admit writeback at all.
+    sources:
+      - hardware/ai_compute_card/concept_design.yaml:127-131
+      - hardware/ai_compute_card/angela_interface_freeze_packet.yaml:63-71
+  P5:
+    title: engine choice is contract-neutral for widths, not for addressability
+    detail: >-
+      Accepting the engine-neutral claim for fabric widths and protocol. The
+      qualification: die_l1_interface requires address_map and
+      partition_ownership. Under the CIM baseline the L1 weight partition IS
+      strip residency (cim_draft answers weight_residency_per_die_kb as part
+      of the die L1 decision), so the write port becomes the cell write path
+      and cell addressing / write behaviour enters the address map. The engine
+      choice therefore ripples into Q3 fields even though the 1024b contract
+      itself does not change.
+    sources:
+      - hardware/ai_compute_card/angela_interface_freeze_packet.yaml:90-101
+      - hardware/ai_compute_card/cim_freeze_draft.yaml:56-67
+  P6:
+    title: cim_draft weight-capacity numbers are three-way inconsistent
+    detail: >-
+      cells_per_die 131072 (= 16KB, weights_per_die_kb) at the measured
+      9.1733um2/cell needs 1.20mm2 of strip; die_area_budget.strip_cells is
+      0.4mm2 (holds ~5.3KB); the capacity table (12.97KB at die_1p5mm2) uses a
+      65% array fraction (0.975mm2) while the budget implies 27%. Three
+      numbers - 5.3 / 12.97 / 16 KB - coexist in one file. Additionally the
+      freeze packet floorplan_notes still carries the superseded 0.42um2 math
+      (16MB ~ 57mm2 feasible), which its own single_die_correction (16MB =
+      1231.22mm2) invalidated. Any engine decision must first re-derive these.
+    sources:
+      - hardware/ai_compute_card/cim_freeze_draft.yaml:14-19,37-40,293-298
+      - hardware/ai_compute_card/angela_interface_freeze_packet.yaml:281-292,345-353
+      - hardware/ai_compute_card/cim_freeze_draft.yaml:299-306
+  P7:
+    title: die_l1_interface draft coverage is partial with two live conflicts
+    detail: >-
+      Covered so far: endianness (mvu little), partition width (16x64b),
+      reset semantics and commit predicate (mvu draft, requires_rtl_review),
+      sequence+CRC+commit (task/freeze). Not covered or conflicting:
+      (a) data_types - P1 format conflict; (b) address_map - mvu AXI window
+      has a live blocker (axi_sram_window, spec_window_complete False) and no
+      strip-cell addressing; (c) update_commit_rules - concept promises
+      sequence-commit-and-ROLLBACK while the card reference reports
+      rollback_implemented false and the freeze packet omits rollback
+      entirely; (d) bounded definition - P2.
+    sources:
+      - apps/backend/src/ai/hardware/mvu_reference.py:108-113,361,648-655
+      - hardware/ai_compute_card/concept_design.yaml:129
+      - apps/backend/src/ai/hardware/ai_card_reference.py:331-332
+  P8:
+    title: secondary compute role grows under the CIM draft
+    detail: >-
+      The CIM draft names the digital sequencer as secondary compute and
+      gives it three duties: address weights, drive input words, sequence
+      sense events. Driving input words overlaps the main fabric's
+      input_output role in the freeze packet. The role boundary belongs in
+      microarchitecture / partition_ownership before RTL.
+    sources:
+      - hardware/ai_compute_card/cim_freeze_draft.yaml:49-51
+      - hardware/ai_compute_card/angela_interface_freeze_packet.yaml:37-45
+  P9:
+    title: mvu issue statuses are static strings; at least one is stale
+    detail: >-
+      fixed_point_weight_range is still listed as a blocker although its
+      resolution (int8 format, W_max=127, integer clamp) is implemented in
+      config; axi_sram_window is genuinely open (spec_window_complete False).
+      run() flips to partial while any static blocker exists, so the status
+      field overstates the open set until issues() becomes data-driven.
+    sources:
+      - apps/backend/src/ai/hardware/mvu_reference.py:114-119,361,678
+      - apps/backend/src/ai/hardware/mvu_reference.py:35-36,67-68
+capacity_analysis:
+  question: does capacity discriminate the two engines at the current process
+  strip_int8_16kb_mm2: 1.20
+  digital_6t_16kb_array_only_mm2: 1.30
+  method: >-
+    Same bit count (131072 cells x 8 bits vs 131072 6T cells) at measured
+    densities 9.1733um2/cell (strip, freeze packet single_die_correction) and
+    9.9229um2/bit (D02 array, VERIFIED_COMPARE:676). Digital figure is array
+    only, before periphery.
+  conclusion: >-
+    At KB scale per die the two engines cost about the same area, so capacity
+    does not pick the engine. MB scale fits neither on sky130 (strip 16MB =
+    1231mm2 measured; 16MB digital SRAM worse at ~18um2/bit incl periphery),
+    which is why MB-scale L1 is an end-state milestone. The real discriminators
+    are risk: strip has a DRC-clean fixture but geometry-fused cells (no
+    programmability, no sense chain) while the digital path has a verified D02
+    cell and a Python model but no weight-cache macro at all. Neither option
+    has a laid-out, programmable, timing-checked weight store.
+proposed_pipeline:
+  status: proposal_for_microarchitecture_pending_decision
+  diagram:
+    - secondary: receive hot update -> 1024b fabric -> L1 write port
+      basis: contract
+    - secondary: stage k+1 weights while main computes k
+      basis: proposal_not_in_any_contract
+    - main: L1 read port -> MAC engine -> outputs for k
+      basis: contract_role
+    - store: explicit region replacement, no assumed dirty writeback
+      basis: contract_software_explicit-replaceable-regions
+    - io: host DMA shares the main fabric with credits
+      basis: contract
+  snapshot_swap_note: >-
+    Group-boundary snapshot swap is a double-buffer scheme; it belongs to the
+    microarchitecture decision (pipeline, scheduling) and depends on the
+    engine (strip pass boundaries vs tile cycles). Keep as sketch.
+consolidated_open_register:
+  - id: engine_behind_l1
+    freeze_ids: [cim_strip_array_plan, microarchitecture]
+    stands: >-
+      cim_draft already proposes strip_array_is_the_main_compute with a
+      digital sequencer as secondary; accepting it makes 2T select cell
+      programmability mandatory (still_open), and forces re-derivation of the
+      P6 area numbers first. Digital tile alternative has no weight-cache
+      macro, only D02 cell + mvu model.
+    next: re-derive capacity/area (P6), then acceptance check on the draft's
+      main_compute_topology line
+  - id: bank_to_tile_mapping
+    mvu_issues: [weight_bus_width, activation_bus_width]
+    stands: >-
+      16384b forward bus vs 2048b tile still unmapped; mvu unresolved_scope
+      also lists forward bank-to-PE layout and MVU instance count vs die L1.
+    next: define mapping in mvu_reference and mark reserved bits; final form
+      depends on engine_behind_l1 for the strip case
+  - id: die_l1_interface
+    freeze_ids: [die_l1_interface]
+    stands: >-
+      Draft material exists (mvu address_map/reset/commit, task protocol) but
+      P1 format conflict, P2 bounded definition, P7 rollback conflict and the
+      axi_sram_window blocker all live inside its six required fields.
+    next: reconcile the two wire formats and name bounded/rollback scope;
+      flip mvu issue statuses to data-driven (P9)
+  - id: update_traffic_sufficiency
+    stands: >-
+      No workload model exists; 1/16 fabric width is sized by contract, not
+      validated against traffic. Depends on bounded being defined first.
+    next: keep as budget rationale; measure after a workload exists
+  - id: card_l2_selection_and_writeback
+    freeze_ids: [card_l2_selection]
+    stands: >-
+      Disk placement already answered by the hierarchy (host L3, outside the
+      card); residue = which purchased memory, and whether the policy admits
+      the writeback the pipeline sketch assumed (P4).
+    next: component quotes, then confirm cache policy wording
+  - id: untouched_existing
+    freeze_ids: [host_l3_contract, thermal_and_form_factor, acceptance_priority]
+    stands: outside this axis; unchanged by this analysis
+    next: none from this draft
+  - id: cim_acceptance_blockers
+    stands: >-
+      real sense chain at 50ns and 0.3V rail die layout remain
+      blocking_decision; engine acceptance cannot close without them.
+    next: sense-chain fixture work in the chip domain
+explicit_non_claims:
+  - no pending decision is answered or frozen by this file
+  - no bandwidth sufficiency claim; no timing, no RTL, no silicon claim
+  - pipeline double-buffer and snapshot swap are proposals, not contracts
+  - capacity figures follow P6 and must be re-derived before use
