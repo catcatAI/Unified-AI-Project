@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import yaml
 from core.facts import Fact, Report, Verdict, adjudicate, adjudicate_chain
@@ -18,7 +19,7 @@ from core.facts import Fact, Report, Verdict, adjudicate, adjudicate_chain
 SPEC_PATH = Path(__file__).resolve().parents[2] / "hardware/edge_card/edge_card_spec.yaml"
 
 
-def _load_spec() -> dict:
+def _load_spec() -> Any:
     return yaml.safe_load(SPEC_PATH.read_text(encoding="utf-8"))
 
 
