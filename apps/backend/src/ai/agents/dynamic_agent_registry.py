@@ -27,6 +27,12 @@ class RegisteredAgent:
 
 logger = logging.getLogger(__name__)
 
+# Crash-grade bounds: the registry ingests unauthenticated capability
+# advertisements, so both dimensions must be capped. Normal scale (tens of
+# agents) never touches these limits; they only stop flood-driven OOM.
+MAX_REGISTERED_AGENTS = 10000
+MAX_CAPABILITIES_PER_AGENT = 1000
+
 
 class DynamicAgentRegistry:
     """
@@ -97,6 +103,25 @@ class DynamicAgentRegistry:
                 agent = self.registered_agents[agent_id]
                 logger.info(f"Agent {agent.agent_name} ({agent_id}) marked as inactive")
 
+            self._enforce_capacity()
+
+    def _enforce_capacity(self) -> None:
+        """Evict oldest entries when the registry exceeds its hard cap.
+
+        Must be called with `registry_lock` held. Inactive agents go first
+        (oldest `last_seen`), then oldest overall. Normal scale never hits
+        the cap, so observable behavior is unchanged outside floods.
+        """
+        while len(self.registered_agents) > MAX_REGISTERED_AGENTS:
+            inactive = [aid for aid, a in self.registered_agents.items() if a.status != "active"]
+            pool = inactive or list(self.registered_agents)
+            oldest = min(pool, key=lambda aid: self.registered_agents[aid].last_seen)
+            evicted = self.registered_agents.pop(oldest)
+            logger.warning(
+                f"Registry over cap ({MAX_REGISTERED_AGENTS}), evicted "
+                f"{evicted.agent_name} ({oldest}, status={evicted.status})"
+            )
+
     async def _handle_capability_advertisement(
         self,
         capability_payload: HSPCapabilityAdvertisementPayload,
@@ -124,6 +149,7 @@ class DynamicAgentRegistry:
                 logger.info(
                     f"New agent registered: {agent_name} ({agent_id}) with capability {capability_id}"
                 )
+                self._enforce_capacity()
 
                 # Notify discovery callbacks
                 for callback in self.discovery_callbacks:
@@ -147,6 +173,8 @@ class DynamicAgentRegistry:
 
                 if not existing_capability:
                     agent.capabilities.append(dict(capability_payload))
+                    if len(agent.capabilities) > MAX_CAPABILITIES_PER_AGENT:
+                        agent.capabilities = agent.capabilities[-MAX_CAPABILITIES_PER_AGENT:]
                     agent.metadata["capability_count"] = len(agent.capabilities)
                     logger.info(
                         f"Updated agent {agent_name} ({agent_id}) with new capability {capability_id}"
@@ -172,12 +200,13 @@ class DynamicAgentRegistry:
             self.registered_agents[agent_id] = RegisteredAgent(
                 agent_id=agent_id,
                 agent_name=agent_name,
-                capabilities=capabilities,
+                capabilities=list(capabilities)[-MAX_CAPABILITIES_PER_AGENT:],
                 registration_time=time.time(),
                 last_seen=time.time(),
                 status="active",
                 metadata=metadata or {},
             )
+            self._enforce_capacity()
             logger.info(f"Agent manually registered: {agent_name} ({agent_id})")
 
     async def unregister_agent(self, agent_id: str) -> None:

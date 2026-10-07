@@ -124,6 +124,9 @@ class BaseAgent:
         self.alignment_system: Optional[Any] = None
         # Background task reference (prevent GC and enable exception logging)
         self._queue_worker_task: Optional[asyncio.Task] = None
+        # Consecutive degraded-restart failures for bounded backoff. Healthy
+        # operation (first restart) still waits exactly agent_restart_delay.
+        self._degraded_restart_failures = 0
         self.initialize_basic()
 
     def initialize_basic(self) -> None:
@@ -468,17 +471,27 @@ class BaseAgent:
             await self._handle_system_degraded()
 
     async def _handle_system_degraded(self) -> None:
-        """Handle system degraded state."""
+        """Handle system degraded state.
+
+        Restart delay backs off exponentially with consecutive failures
+        (capped at 5 minutes) so a start()-crashes-immediately agent degrades
+        to sparse retries instead of a ~5s restart-bomb. A successful restart
+        resets the streak, so healthy operation is unchanged.
+        """
         logger.warning(f"[{self.agent_id}] System is in degraded state")
 
         # Attempt to cleanup and restart if possible
         try:
             await self.stop()
             # Wait a moment before attempting restart
-            await asyncio.sleep(loop_sleep("agent_restart_delay", 5.0))
+            base_delay = loop_sleep("agent_restart_delay", 5.0)
+            delay = min(base_delay * (2**self._degraded_restart_failures), 300.0)
+            await asyncio.sleep(delay)
             await self.start()
+            self._degraded_restart_failures = 0
             logger.info(f"[{self.agent_id}] System restarted from degraded state")
         except Exception as restart_error:
+            self._degraded_restart_failures += 1
             # Use standardized error hierarchy for restart errors
             restart_error_obj = InitializationError(
                 f"[{self.agent_id}] Failed to restart system: {restart_error}",

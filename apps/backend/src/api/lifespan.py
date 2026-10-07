@@ -538,7 +538,15 @@ def _try_start_broadcast():
         from services.websocket_manager import broadcast_state_updates
 
         task = asyncio.create_task(broadcast_state_updates())
-        task.add_done_callback(lambda t: None)
+
+        def _log_broadcast_end(t: asyncio.Task) -> None:
+            if t.cancelled():
+                return
+            exc = t.exception()
+            if exc is not None:
+                logger.error(f"[Broadcast] State broadcast task died: {exc}", exc_info=exc)
+
+        task.add_done_callback(_log_broadcast_end)
         logger.debug("Broadcast state update task started")
         return task
     except Exception as e:
@@ -684,8 +692,12 @@ async def _shutdown_services(broadcast_task, module_manager):
     except Exception as e:
         logger.warning(f"[LLM] Shutdown skipped: {e}", exc_info=True)
     if _metrics_handler is not None:
-        metric_data = _metrics_handler.get_metrics()
-        logger.info("[Plugin] Shutdown — hook invocation counts: %s", metric_data["counts"])
+        try:
+            metric_data = _metrics_handler.get_metrics()
+        except Exception as e:
+            logger.warning(f"[Plugin] Shutdown metrics skipped: {e}", exc_info=True)
+        else:
+            logger.info("[Plugin] Shutdown — hook invocation counts: %s", metric_data["counts"])
 
 
 def _register_backbone() -> None:

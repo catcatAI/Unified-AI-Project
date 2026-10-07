@@ -62,6 +62,10 @@ class BehaviorExecutor:
             "decision_type": decision_type,
         }
         self._results.append(result)
+        # Bound memory: per-type counters (not this list) drive feedback, and
+        # the only reader uses len(); keep the recent window.
+        if len(self._results) > 10000:
+            self._results = self._results[-5000:]
 
         # Track per-type success/fail
         if success:

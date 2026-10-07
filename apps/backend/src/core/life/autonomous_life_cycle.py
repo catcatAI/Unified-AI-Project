@@ -316,47 +316,60 @@ class AutonomousLifeCycle:
             self.active_cognition.add_order_baseline(order_type, stability, flexibility)
 
     async def _lifecycle_loop(self) -> None:
-        """Main autonomous life cycle loop"""
+        """Main autonomous life cycle loop.
+
+        One bad tick must not kill autonomy forever: unexpected errors are
+        logged and the loop continues on the next interval. Cancellation
+        (BaseException) still propagates to shutdown.
+        """
         while self._running:
-            # Update all metrics
-            metrics = self._update_metrics()
+            try:
+                await self._lifecycle_tick()
+            except Exception as e:
+                logger.error(f"[LifeCycle] Lifecycle tick failed, continuing: {e}", exc_info=True)
+                await asyncio.sleep(self._decision_interval)
 
-            # Make life decisions based on metrics
-            decision = self._evaluate_and_decide(metrics)
+    async def _lifecycle_tick(self) -> None:
+        """One autonomous tick, extracted so the loop stays survivable."""
+        # Update all metrics
+        metrics = self._update_metrics()
 
-            if decision:
-                self._record_decision(decision)
-                # Execute the decision: dispatch to real downstream behaviors
-                success = await self._execute_decision(decision)
-                if success:
-                    self.executions_succeeded += 1
-                else:
-                    self.executions_failed += 1
-                    logger.warning(f"Decision {decision.decision_id} execution failed")
-                # Notify execution callbacks
-                for callback in self._execution_callbacks:
-                    try:
-                        callback(decision, success)
-                    except Exception as e:
-                        logger.error(f"Error in execution callback: {e}", exc_info=True)
+        # Make life decisions based on metrics
+        decision = self._evaluate_and_decide(metrics)
 
-            # Check for phase transitions
-            await self._check_phase_transition(metrics)
-
-            # Check for generational bloom (LifeEssence accumulation)
-            le = self._get_life_essence()
-            if le and le.should_bloom():
+        if decision:
+            self._record_decision(decision)
+            # Execute the decision: dispatch to real downstream behaviors
+            success = await self._execute_decision(decision)
+            if success:
+                self.executions_succeeded += 1
+            else:
+                self.executions_failed += 1
+                logger.warning(f"Decision {decision.decision_id} execution failed")
+            # Notify execution callbacks
+            for callback in self._execution_callbacks:
                 try:
-                    summary = self.get_lifecycle_summary()
-                    le.bloom(summary)
-                    logger.info(
-                        f"[LifeCycle] 🌸 Generational bloom at generation {le.generation}, "
-                        f"tendencies: {le.get_all_blended_tendencies()}"
-                    )
+                    callback(decision, success)
                 except Exception as e:
-                    logger.warning(f"[LifeCycle] Generational bloom failed: {e}")
+                    logger.error(f"Error in execution callback: {e}", exc_info=True)
 
-            await asyncio.sleep(self._decision_interval)
+        # Check for phase transitions
+        await self._check_phase_transition(metrics)
+
+        # Check for generational bloom (LifeEssence accumulation)
+        le = self._get_life_essence()
+        if le and le.should_bloom():
+            try:
+                summary = self.get_lifecycle_summary()
+                le.bloom(summary)
+                logger.info(
+                    f"[LifeCycle] Generational bloom at generation {le.generation}, "
+                    f"tendencies: {le.get_all_blended_tendencies()}"
+                )
+            except Exception as e:
+                logger.warning(f"[LifeCycle] Generational bloom failed: {e}")
+
+        await asyncio.sleep(self._decision_interval)
 
     def _update_metrics(self) -> FormulaMetrics:
         """Update all formula metrics"""
@@ -657,6 +670,10 @@ class AutonomousLifeCycle:
         """Record a life decision"""
         self.decision_history.append(decision)
         self.decisions_made += 1
+        # Bound memory: readers only use recent slices (<= 100); same
+        # 10000 -> 5000 convention as metrics_history in this file.
+        if len(self.decision_history) > 10000:
+            self.decision_history = self.decision_history[-5000:]
 
         # Record essence trace for life accumulation
         le = self._get_life_essence()

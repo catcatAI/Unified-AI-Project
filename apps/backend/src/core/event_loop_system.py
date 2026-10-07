@@ -649,14 +649,21 @@ class EventLoopSystem:
             event.status = EventStatus.FAILED
 
     async def _metrics_collector(self) -> None:
-        """Collect and update metrics periodically"""
+        """Collect and update metrics periodically.
+
+        Metrics must never kill the event loop: unexpected errors are logged
+        and collection continues. Cancellation still propagates.
+        """
         while self._running:
-            if self._latency_samples:
-                self.metrics["average_latency_ms"] = sum(self._latency_samples) / len(
-                    self._latency_samples
-                )
-                self.metrics["max_latency_ms"] = max(self._latency_samples)
-                self._latency_samples.clear()
+            try:
+                if self._latency_samples:
+                    self.metrics["average_latency_ms"] = sum(self._latency_samples) / len(
+                        self._latency_samples
+                    )
+                    self.metrics["max_latency_ms"] = max(self._latency_samples)
+                    self._latency_samples.clear()
+            except Exception as e:
+                logger.error(f"[EventLoopSystem] Metrics collection failed: {e}", exc_info=True)
 
             await asyncio.sleep(loop_sleep("metrics_interval", 1.0))  # Update every second
 

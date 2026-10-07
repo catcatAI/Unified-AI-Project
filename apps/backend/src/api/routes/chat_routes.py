@@ -1189,6 +1189,10 @@ def _inject_causal_predictions(context: Dict[str, Any]) -> None:
 # causality can fire (requires >= 5 samples per variable).
 _CAUSAL_BUFFERS: Dict[str, Dict[str, List[float]]] = {}
 _CAUSAL_BUFFER_MAX_SESSIONS = 200  # Evict oldest when exceeded
+# Per-variable cap: a single long session must not grow its series without
+# bound (200 sessions x 3 vars x 1000 floats ≈ 5MB worst case). Granger needs
+# >= 5 samples; 1000 keeps 200x headroom.
+_CAUSAL_BUFFER_MAX_SAMPLES = 1000
 _CAUSAL_BUFFERS_LOCK = threading.Lock()
 
 # TemporalState bridge for causal ingest_temporal_state() (C³ 4.0)
@@ -1219,6 +1223,14 @@ def _get_causal_buffer(session_id: str) -> Dict[str, List[float]]:
         return _CAUSAL_BUFFERS[session_id]
 
 
+def _trim_causal_series(buf: Dict[str, List[float]]) -> None:
+    """Trim per-session series to the sample cap (keeps the recent window)."""
+    for key in ("msg_lengths", "resp_lengths", "engagement_ratios"):
+        series = buf[key]
+        if len(series) > _CAUSAL_BUFFER_MAX_SAMPLES:
+            del series[: len(series) - _CAUSAL_BUFFER_MAX_SAMPLES]
+
+
 def _fire_causal_learning(response_text: str, user_message: str, session_id: str) -> None:
     """Accumulate temporal data and learn causal relationships per session.
 
@@ -1238,6 +1250,7 @@ def _fire_causal_learning(response_text: str, user_message: str, session_id: str
         buf["msg_lengths"].append(msg_len)
         buf["resp_lengths"].append(resp_len)
         buf["engagement_ratios"].append(engagement)
+        _trim_causal_series(buf)
 
         # Emotion feedback loop: interaction outcome → emotional state adjustment
         try:

@@ -409,3 +409,27 @@ def test_session_eviction_when_max_exceeded():
     assert len(_CAUSAL_BUFFERS) == _CAUSAL_BUFFER_MAX_SESSIONS
     assert "session_0" not in _CAUSAL_BUFFERS, "oldest session should be evicted"
     assert f"session_{_CAUSAL_BUFFER_MAX_SESSIONS + 4}" in _CAUSAL_BUFFERS
+
+
+def test_series_trimmed_to_sample_cap():
+    """A single long session must not grow its series without bound."""
+    from api.routes.chat_routes import _CAUSAL_BUFFER_MAX_SAMPLES, _trim_causal_series
+
+    buf = {
+        "msg_lengths": [1.0] * (_CAUSAL_BUFFER_MAX_SAMPLES + 100),
+        "resp_lengths": [2.0] * (_CAUSAL_BUFFER_MAX_SAMPLES + 100),
+        "engagement_ratios": [0.5] * 10,
+    }
+    _trim_causal_series(buf)
+    assert len(buf["msg_lengths"]) == _CAUSAL_BUFFER_MAX_SAMPLES
+    assert len(buf["resp_lengths"]) == _CAUSAL_BUFFER_MAX_SAMPLES
+    assert buf["engagement_ratios"] == [0.5] * 10
+    # Recent window kept, oldest dropped
+    buf2 = {
+        "msg_lengths": [float(i) for i in range(_CAUSAL_BUFFER_MAX_SAMPLES + 10)],
+        "resp_lengths": [1.0] * (_CAUSAL_BUFFER_MAX_SAMPLES + 10),
+        "engagement_ratios": [1.0] * (_CAUSAL_BUFFER_MAX_SAMPLES + 10),
+    }
+    _trim_causal_series(buf2)
+    assert buf2["msg_lengths"][0] == 10.0
+    assert buf2["msg_lengths"][-1] == float(_CAUSAL_BUFFER_MAX_SAMPLES + 9)

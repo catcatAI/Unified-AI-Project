@@ -261,9 +261,16 @@ class CyberIdentity:
                 logger.debug("Reflection task cancelled during shutdown")
 
     async def _reflection_loop(self) -> None:
-        """Background self-reflection loop"""
+        """Background self-reflection loop.
+
+        One bad reflection must not kill the loop: unexpected errors are
+        logged and the loop continues. Cancellation still propagates.
+        """
         while self._running:
-            await self._perform_self_reflection()
+            try:
+                await self._perform_self_reflection()
+            except Exception as e:
+                logger.error(f"[CyberIdentity] Reflection failed, continuing: {e}", exc_info=True)
             await asyncio.sleep(self._reflection_interval)
 
     async def _perform_self_reflection(self) -> None:

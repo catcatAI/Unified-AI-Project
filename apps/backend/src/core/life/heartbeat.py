@@ -183,8 +183,11 @@ class MetabolicHeartbeat:
         if self._running:
             return
         logger.info("💓 [Heartbeat] Starting MetabolicHeartbeat...")
-        self._running = True
+        # Initialize BEFORE flipping _running: a failed init must not poison
+        # the singleton (otherwise the next start() early-returns and the
+        # heartbeat never runs).
         await self.bio_integrator.initialize()
+        self._running = True
         logger.info("💓 [Heartbeat] BioIntegrator initialized.")
         # 啟動雙重循環：1. 生物/代謝循環 2. 小腦/神經整合循環
         self._task = asyncio.create_task(self._run_loop())
@@ -220,7 +223,10 @@ class MetabolicHeartbeat:
                 await self._integration_task
             except asyncio.CancelledError:
                 pass
-        await self.bio_integrator.shutdown()
+        try:
+            await self.bio_integrator.shutdown()
+        except Exception as e:
+            logger.warning(f"BioIntegrator shutdown failed: {e}", exc_info=True)
         logger.info("🛑 Heartbeat stopped.")
 
     async def _run_loop(self) -> None:

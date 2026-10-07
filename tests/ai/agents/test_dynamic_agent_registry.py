@@ -204,3 +204,36 @@ class TestDynamicAgentRegistry:
         assert count == 5
         all_agents = await registry.get_all_agents()
         assert len(all_agents) == 5
+
+    async def test_registry_capacity_evicts_oldest(self, registry):
+        """Floods must not OOM: over-cap registrations evict oldest first."""
+        from ai.agents.dynamic_agent_registry import MAX_REGISTERED_AGENTS
+
+        for i in range(MAX_REGISTERED_AGENTS):
+            registry.registered_agents[f"old_{i}"] = RegisteredAgent(
+                agent_id=f"old_{i}",
+                agent_name="Old",
+                capabilities=[],
+                registration_time=float(i),
+                last_seen=float(i),
+                status="inactive",
+            )
+        await registry.register_agent_manually(
+            agent_id="new_one", agent_name="New", capabilities=[]
+        )
+        assert len(registry.registered_agents) == MAX_REGISTERED_AGENTS
+        assert "old_0" not in registry.registered_agents
+        assert "new_one" in registry.registered_agents
+
+    async def test_capabilities_per_agent_bounded(self, registry):
+        """One agent advertising infinite capabilities must not OOM."""
+        from ai.agents.dynamic_agent_registry import MAX_CAPABILITIES_PER_AGENT
+
+        for i in range(MAX_CAPABILITIES_PER_AGENT + 10):
+            await registry._handle_capability_advertisement(
+                {"ai_id": "flood", "agent_name": "Flood", "capability_id": f"cap_{i}"},
+                "flood",
+                {},
+            )
+        agent = registry.registered_agents["flood"]
+        assert len(agent.capabilities) == MAX_CAPABILITIES_PER_AGENT

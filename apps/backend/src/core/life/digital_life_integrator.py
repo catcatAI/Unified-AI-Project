@@ -617,19 +617,35 @@ class DigitalLifeIntegrator:
         self._update_active_time()
 
     async def _life_cycle_loop(self) -> None:
-        """Main life cycle management loop"""
+        """Main life cycle management loop.
+
+        One bad tick must not kill the integrator: unexpected errors are
+        logged and the loop continues. Cancellation still propagates.
+        """
         while self._running:
-            await self._check_activity_status()
-            await self._process_life_cycle_transitions()
-            await self._update_statistics()
-            await self._update_dynamic_parameters()
-            await self._update_intent_state()
+            try:
+                await self._check_activity_status()
+                await self._process_life_cycle_transitions()
+                await self._update_statistics()
+                await self._update_dynamic_parameters()
+                await self._update_intent_state()
+            except Exception as e:
+                logger.error(
+                    f"[DigitalLife] Life cycle tick failed, continuing: {e}", exc_info=True
+                )
             await asyncio.sleep(loop_sleep("lifecycle_check", 10.0))  # Check every 10 seconds
 
     async def _health_check_loop(self) -> None:
-        """System health monitoring loop"""
+        """System health monitoring loop.
+
+        The health probe itself must not kill the monitor: unexpected errors
+        are logged and the loop continues. Cancellation still propagates.
+        """
         while self._running:
-            await self._check_system_health()
+            try:
+                await self._check_system_health()
+            except Exception as e:
+                logger.error(f"[DigitalLife] Health check failed, continuing: {e}", exc_info=True)
             # 5. Perform Self-Introspection
             try:
                 state_analysis = self.state_matrix.get_analysis()

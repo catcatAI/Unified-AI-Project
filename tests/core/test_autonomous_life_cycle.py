@@ -601,3 +601,58 @@ class TestCrossProcessStateSharing:
 
         lc = AutonomousLifeCycle(persist_path=None)
         assert lc._persist_path is None
+
+
+class TestCrashGuards:
+    """Autonomy must survive bad ticks and bound its memory (no OOM)."""
+
+    def test_decision_history_bounded(self):
+        from datetime import datetime
+
+        from core.life.autonomous_life_cycle import LifeDecision
+
+        alc = AutonomousLifeCycle(persist_path=None)
+        for i in range(10001):
+            alc._record_decision(
+                LifeDecision(
+                    decision_id=f"d{i}",
+                    timestamp=datetime.now(),
+                    phase=LifePhase.EXPLORATION,
+                    triggered_by="test",
+                    decision_type="exploration",
+                    rationale="cap test",
+                    expected_outcome={},
+                    confidence=0.5,
+                )
+            )
+        assert len(alc.decision_history) == 5000
+        assert alc.decision_history[0].decision_id == "d5001"
+        assert alc.decisions_made == 10001
+
+    async def test_lifecycle_loop_survives_bad_tick(self, monkeypatch):
+        import asyncio
+
+        alc = AutonomousLifeCycle(persist_path=None)
+        alc._decision_interval = 0.01
+        calls = {"n": 0}
+
+        async def flaky_tick():
+            calls["n"] += 1
+            if calls["n"] == 1:
+                raise RuntimeError("boom")
+            alc._running = False
+
+        monkeypatch.setattr(alc, "_lifecycle_tick", flaky_tick)
+        alc._running = True
+        await alc._lifecycle_loop()
+        assert calls["n"] == 2
+
+    def test_behavior_results_bounded(self):
+        import asyncio
+
+        be = BehaviorExecutor()
+        be._results = [{"i": i} for i in range(10000)]
+        asyncio.run(be.execute(decision_type="exploration"))
+        assert len(be._results) == 5000
+        stats = be.get_type_stats()
+        assert stats["exploration"]["success"] + stats["exploration"]["fail"] == 1

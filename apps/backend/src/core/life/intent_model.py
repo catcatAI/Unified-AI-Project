@@ -10,6 +10,9 @@ from core.system.state_store.global_store import state_store
 logger = logging.getLogger(__name__)
 
 _OUTCOME_HISTORY_MAX = 20
+# Backstop: update_intents() decay-prunes, but a caller that bulk-adds without
+# ticking must not grow the list without bound.
+MAX_INTENTS = 10000
 
 
 class IntentCategory(Enum):
@@ -89,6 +92,8 @@ class IntentManager:
 
     def add_intent(self, intent: SelfIntent) -> None:
         self.intents.append(intent)
+        if len(self.intents) > MAX_INTENTS:
+            self.intents = self.intents[-MAX_INTENTS:]
 
     def update_intents(self, delta_time: float) -> None:
         remaining = []

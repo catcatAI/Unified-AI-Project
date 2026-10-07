@@ -117,3 +117,16 @@ class TestMetabolicHeartbeat:
         hb._handle_cns_event("emotion.updated", {"arousal": 0.5, "valence": 0.5})
         health = hb.get_system_health()
         assert health["system_health"] > 0
+
+    async def test_failed_init_does_not_poison_singleton(self):
+        """A failed bio init must not flip _running: the next start() retries."""
+        from unittest.mock import AsyncMock, Mock
+
+        from core.life.heartbeat import MetabolicHeartbeat
+
+        hb = MetabolicHeartbeat()
+        hb.bio_integrator = Mock()
+        hb.bio_integrator.initialize = AsyncMock(side_effect=RuntimeError("no bio"))
+        with pytest.raises(RuntimeError, match="no bio"):
+            await hb.start()
+        assert hb._running is False

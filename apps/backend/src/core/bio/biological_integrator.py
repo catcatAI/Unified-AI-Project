@@ -441,10 +441,17 @@ class BiologicalIntegrator:
         )
 
     async def _integration_loop(self) -> None:
-        """Background loop for system integration - Configurable"""
+        """Background loop for system integration - Configurable.
+
+        One bad tick must not kill integration: unexpected errors are logged
+        and the loop continues. Cancellation still propagates.
+        """
         while self._running:
-            await self._apply_homeostasis()
-            await self._synchronize_states()
+            try:
+                await self._apply_homeostasis()
+                await self._synchronize_states()
+            except Exception as e:
+                logger.error(f"[Bio] Integration tick failed, continuing: {e}", exc_info=True)
             await asyncio.sleep(self._update_interval)  # Configurable update interval
 
     async def _apply_homeostasis(self) -> None:

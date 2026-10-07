@@ -292,6 +292,27 @@ class TestAgentLifecycle:
         await base_agent.stop()
         assert base_agent.is_running is False
 
+    async def test_degraded_restart_backs_off_on_repeat_failure(self, base_agent, monkeypatch):
+        """Consecutive degraded-restart failures must space out, then reset on success."""
+        from unittest.mock import AsyncMock
+
+        delays = []
+
+        async def fake_sleep(seconds):
+            delays.append(seconds)
+
+        monkeypatch.setattr(asyncio, "sleep", fake_sleep)
+        base_agent.stop = AsyncMock()
+        base_agent.start = AsyncMock(side_effect=RuntimeError("start boom"))
+        await base_agent._handle_system_degraded()
+        await base_agent._handle_system_degraded()
+        assert base_agent._degraded_restart_failures == 2
+        assert delays[1] > delays[0] >= 0
+
+        base_agent.start = AsyncMock()
+        await base_agent._handle_system_degraded()
+        assert base_agent._degraded_restart_failures == 0
+
     async def test_start_with_mock_connector(self, base_agent):
         """Test start succeeds when hsp_connector is pre-configured."""
         base_agent.hsp_connector = AsyncMock()
