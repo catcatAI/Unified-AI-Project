@@ -36,7 +36,9 @@ What is kept
 """
 
 import shutil
+import subprocess
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -334,3 +336,350 @@ class TestDocumentedToolOverrides:
         resolved = cim_toolchain.find_magic_tech()
         assert resolved != missing
         assert resolved is None or resolved.is_file()
+
+
+class TestGateAndReportSerialization:
+    """Gate/GateReport must round-trip: the report is the contract consumers read."""
+
+    def test_gate_as_dict_exposes_every_field(self) -> None:
+        gate = Gate("drc_clean", "silent empty extraction", False, "DRC errors = 3")
+        assert gate.as_dict() == {
+            "name": "drc_clean",
+            "guards_against": "silent empty extraction",
+            "passed": False,
+            "detail": "DRC errors = 3",
+        }
+
+    def test_report_as_dict_lists_failed_gate_names(self) -> None:
+        report = GateReport()
+        report.add(Gate("a", "x", True, "ok"))
+        report.add(Gate("b", "y", False, "no"))
+        payload = report.as_dict()
+        assert payload["ok"] is False
+        assert [gate["name"] for gate in payload["gates"]] == ["a", "b"]
+        assert payload["failed"] == ["b"]
+        assert len(report.failures) == 1 and report.failures[0].name == "b"
+
+    def test_report_summary_marks_failed_gates_with_their_guard(self) -> None:
+        report = GateReport()
+        report.add(Gate("a", "x", True, "ok"))
+        report.add(Gate("b", "the thing that broke", False, "no"))
+        text = report.summary()
+        assert "[PASS] a" in text
+        assert "[FAIL] b" in text
+        assert "guards: the thing that broke" in text
+        assert "BLOCKED" in text
+
+    def test_empty_report_is_never_ok(self) -> None:
+        assert GateReport().ok is False
+
+
+class TestRunDrcAndExtractBranches:
+    """The magic runner must distinguish every failure shape, not just success."""
+
+    @staticmethod
+    def _fake_magic(monkeypatch: pytest.MonkeyPatch, stdout: str) -> list[str]:
+        commands: list[str] = []
+
+        def run(cmd, capture_output, text, timeout, cwd):  # noqa: ANN001
+            commands.append(cmd[-1])
+            return SimpleNamespace(stdout=stdout, stderr="")
+
+        monkeypatch.setattr(cim_verify, "find_magic", lambda: "/usr/bin/magic")
+        monkeypatch.setattr(
+            cim_verify,
+            "subprocess",
+            SimpleNamespace(run=run, TimeoutExpired=subprocess.TimeoutExpired),
+        )
+        return commands
+
+    def test_magic_timeout_is_reported_verbatim(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        monkeypatch.setattr(cim_verify, "find_magic", lambda: "/usr/bin/magic")
+
+        def run(*_args, **_kwargs):
+            raise subprocess.TimeoutExpired(cmd="magic", timeout=900)
+
+        monkeypatch.setattr(
+            cim_verify,
+            "subprocess",
+            SimpleNamespace(run=run, TimeoutExpired=subprocess.TimeoutExpired),
+        )
+        drc, spice, raw = cim_verify._run_drc_and_extract("<< end >>", tmp_path)
+        assert (drc, spice, raw) == (None, "", "magic timed out")
+
+    def test_missing_drc_box_returns_raw_output_and_any_netlist(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        (tmp_path / "block.spice").write_text("* extracted netlist\n", encoding="utf-8")
+        self._fake_magic(monkeypatch, "drc said something unrelated")
+        drc, spice, raw = cim_verify._run_drc_and_extract("<< end >>", tmp_path)
+        assert drc is None
+        assert spice == "* extracted netlist\n"
+        assert raw == "drc said something unrelated"
+
+    def test_degenerate_drc_box_is_rejected(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        self._fake_magic(monkeypatch, "DRC_BOX 0 0 0 100\nDRC_TOTAL 0")
+        drc, _spice, _raw = cim_verify._run_drc_and_extract("<< end >>", tmp_path)
+        assert drc is None
+
+    def test_well_formed_drc_output_is_parsed(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        (tmp_path / "block.spice").write_text("* netlist\n", encoding="utf-8")
+        self._fake_magic(monkeypatch, "DRC_BOX 0 0 100 100\nDRC_TOTAL 2")
+        drc, spice, raw = cim_verify._run_drc_and_extract("<< end >>", tmp_path)
+        assert drc == 2
+        assert spice == "* netlist\n"
+        assert "DRC_TOTAL 2" in raw
+
+
+class TestSpineGateWithFakeNgspice:
+    """The weight-ratio gate is the one that failed last; every branch is pinned.
+
+    ngspice itself is stubbed at the module's own subprocess binding, so the
+    deck construction, output parsing and ratio math are all exercised without
+    a simulator and without touching the shared stdlib module.
+    """
+
+    @staticmethod
+    def _device(index: int, drain: str, gate: str, source: str) -> str:
+        return (
+            f"X{index} {drain} {gate} {source} VSUBS "
+            f"sky130_fd_pr__nfet_01v8 w=1.0 l=0.15\n"
+        )
+
+    @staticmethod
+    def _install_fake_ngspice(
+        monkeypatch: pytest.MonkeyPatch, stdout: str
+    ) -> list[Path]:
+        decks: list[Path] = []
+
+        def run(cmd, capture_output, text, timeout):  # noqa: ANN001
+            decks.append(Path(cmd[2]))
+            return SimpleNamespace(stdout=stdout, stderr="")
+
+        monkeypatch.setattr(cim_verify, "find_ngspice", lambda: "/usr/bin/ngspice")
+        monkeypatch.setattr(
+            cim_verify,
+            "subprocess",
+            SimpleNamespace(run=run, TimeoutExpired=subprocess.TimeoutExpired),
+        )
+        return decks
+
+    def test_no_devices_is_an_error_not_a_skip(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        self._install_fake_ngspice(monkeypatch, "")
+        outcome = simulate_spine("* nothing", (1, 2), tmp_path)
+        assert outcome == {"status": "error", "reason": "no devices to simulate"}
+
+    def test_a_single_spine_cannot_be_weighed(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        self._install_fake_ngspice(monkeypatch, "")
+        netlist = self._device(0, "SP", "G", "S") + self._device(1, "SP", "G", "S")
+        outcome = simulate_spine(netlist, (1, 2), tmp_path)
+        assert outcome["status"] == "error"
+        assert "only 1 spine(s) with 2+ cells" in outcome["reason"]
+
+    def test_spine_with_mixed_word_lines_is_rejected(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        self._install_fake_ngspice(monkeypatch, "")
+        netlist = (
+            self._device(0, "SP1", "G0", "S1")
+            + self._device(1, "SP1", "G1", "S1")
+            + self._device(2, "SP2", "G2", "S2")
+            + self._device(3, "SP2", "G2", "S2")
+            + self._device(4, "SP2", "G2", "S2")
+        )
+        outcome = simulate_spine(netlist, (1, 2), tmp_path)
+        assert outcome["status"] == "error"
+        assert "spine SP1 has 2 gates" in outcome["reason"]
+
+    def test_ratio_gate_measures_the_binary_ladder(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        netlist = (
+            self._device(0, "SP1", "G0", "S1")
+            + self._device(1, "SP1", "G0", "S1")
+            + self._device(2, "SP2", "G1", "S2")
+            + self._device(3, "SP2", "G1", "S2")
+            + self._device(4, "SP2", "G1", "S2")
+            + self._device(5, "SP2", "G1", "S2")
+        )
+        stdout = "@vdd0[i] = 1.0e-06\n@vdd1[i] = 2.0e-06\n"
+        decks = self._install_fake_ngspice(monkeypatch, stdout)
+        library = tmp_path / "models.spice"
+        library.write_text("* model library\n", encoding="utf-8")
+
+        outcome = simulate_spine(netlist, (1, 2, 4, 8), library)
+
+        assert outcome["status"] == "ok"
+        assert outcome["spine_cell_counts"] == [2, 4]
+        assert outcome["currents_a"] == [1.0e-06, 2.0e-06]
+        assert outcome["ratios"] == [1.0, 2.0]
+        assert outcome["expected"] == [1.0, 2.0]
+        assert outcome["worst_error_percent"] == 0.0
+        assert outcome["sane_current"] is True
+
+        # The generated deck must really drive the extracted spines.
+        deck = decks[0].read_text(encoding="utf-8")
+        assert ".include " + library.as_posix() in deck
+        assert ".subckt anfet d g s b l=1 w=1" in deck
+        assert "vdd0 SP1 0 0.3" in deck
+        assert "vg0 G0 0 1.0" in deck
+        assert "vsrc0 S1 0 0" in deck
+        assert "print @vdd0[i]" in deck
+
+    def test_ngspice_timeout_is_reported(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        def run(*_args, **_kwargs):
+            raise subprocess.TimeoutExpired(cmd="ngspice", timeout=600)
+
+        monkeypatch.setattr(cim_verify, "find_ngspice", lambda: "/usr/bin/ngspice")
+        monkeypatch.setattr(
+            cim_verify,
+            "subprocess",
+            SimpleNamespace(run=run, TimeoutExpired=subprocess.TimeoutExpired),
+        )
+        netlist = (
+            self._device(0, "SP1", "G1", "S1")
+            + self._device(1, "SP1", "G1", "S1")
+            + self._device(2, "SP2", "G2", "S2")
+            + self._device(3, "SP2", "G2", "S2")
+        )
+        outcome = simulate_spine(netlist, (1, 2), tmp_path)
+        assert outcome == {"status": "error", "reason": "ngspice timed out"}
+
+    def test_a_singular_matrix_names_the_floating_net_problem(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        self._install_fake_ngspice(monkeypatch, "Error: singular matrix")
+        netlist = (
+            self._device(0, "SP1", "G1", "S1")
+            + self._device(1, "SP1", "G1", "S1")
+            + self._device(2, "SP2", "G2", "S2")
+            + self._device(3, "SP2", "G2", "S2")
+        )
+        outcome = simulate_spine(netlist, (1, 2), tmp_path)
+        assert outcome["status"] == "error"
+        assert "singular matrix" in outcome["reason"]
+
+    def test_missing_spine_currents_are_an_error(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        self._install_fake_ngspice(monkeypatch, "@vdd0[i] = 1.0e-06\n")
+        netlist = (
+            self._device(0, "SP1", "G1", "S1")
+            + self._device(1, "SP1", "G1", "S1")
+            + self._device(2, "SP2", "G2", "S2")
+            + self._device(3, "SP2", "G2", "S2")
+        )
+        outcome = simulate_spine(netlist, (1, 2), tmp_path)
+        assert outcome == {
+            "status": "error",
+            "reason": "read 1 of 2 spine currents",
+        }
+
+    def test_a_dead_spine_is_not_a_weight(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        self._install_fake_ngspice(monkeypatch, "@vdd0[i] = 0.0\n@vdd1[i] = 1.0e-06\n")
+        netlist = (
+            self._device(0, "SP1", "G1", "S1")
+            + self._device(1, "SP1", "G1", "S1")
+            + self._device(2, "SP2", "G2", "S2")
+            + self._device(3, "SP2", "G2", "S2")
+        )
+        outcome = simulate_spine(netlist, (1, 2), tmp_path)
+        assert outcome["status"] == "error"
+        assert "smallest spine carries 0.0 A" in outcome["reason"]
+
+    def test_verify_weights_passes_an_exact_binary_response(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        netlist = (
+            self._device(0, "SP1", "G0", "S1")
+            + self._device(1, "SP1", "G0", "S1")
+            + self._device(2, "SP2", "G1", "S2")
+            + self._device(3, "SP2", "G1", "S2")
+            + self._device(4, "SP2", "G1", "S2")
+            + self._device(5, "SP2", "G1", "S2")
+        )
+        self._install_fake_ngspice(monkeypatch, "@vdd0[i] = 1.0e-06\n@vdd1[i] = 2.0e-06\n")
+        report = verify_weights(netlist, (1, 2, 4, 8), tmp_path)
+        assert report.ok is True
+        gate = gate_named(report, "weight_ratio")
+        assert gate.passed is True
+        assert "worst error +0.0000%" in gate.detail
+
+    def test_verify_weights_fails_a_non_binary_response(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        netlist = (
+            self._device(0, "SP1", "G0", "S1")
+            + self._device(1, "SP1", "G0", "S1")
+            + self._device(2, "SP2", "G1", "S2")
+            + self._device(3, "SP2", "G1", "S2")
+            + self._device(4, "SP2", "G1", "S2")
+            + self._device(5, "SP2", "G1", "S2")
+        )
+        self._install_fake_ngspice(monkeypatch, "@vdd0[i] = 1.0e-06\n@vdd1[i] = 3.0e-06\n")
+        report = verify_weights(netlist, (1, 2, 4, 8), tmp_path)
+        gate = gate_named(report, "weight_ratio")
+        assert gate.passed is False
+        assert "vs [1.0, 2.0], worst error +50.0000%" in gate.detail
+
+    def test_verify_weights_folds_a_failed_outcome_into_the_report(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        self._install_fake_ngspice(monkeypatch, "")
+        report = verify_weights("* no devices", (1, 2), tmp_path)
+        assert report.ok is False
+        gate = gate_named(report, "weight_ratio")
+        assert gate.passed is False
+        assert gate.detail == "error: no devices to simulate"
+
+
+class TestCanvasRejectsDegenerateRectangles:
+    """A zero-area rect must be dropped, not emitted as an invalid magic rect."""
+
+    def test_zero_area_rect_is_ignored(self) -> None:
+        canvas = Canvas()
+        canvas.rect("ndiff", 10, 10, 10, 20)
+        canvas.rect("ndiff", 10, 10, 20, 10)
+        canvas.rect("ndiff", 20, 20, 10, 10)
+        assert canvas.layers["ndiff"] == []
+
+    def test_positive_area_rect_is_kept(self) -> None:
+        canvas = Canvas()
+        canvas.rect("ndiff", 10, 10, 20, 30)
+        assert canvas.layers["ndiff"] == ["rect 10 10 20 30"]
+
+
+class TestFindMagicTechEnvOverride:
+    """find_magic_tech must honour a real override and reject a fake one."""
+
+    def test_existing_override_is_returned_verbatim(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        tech = tmp_path / "sky130A.tech"
+        tech.write_text("* tech\n", encoding="utf-8")
+        monkeypatch.setenv(cim_toolchain.MAGIC_TECH_ENV, str(tech))
+        assert cim_toolchain.find_magic_tech() == tech
+
+    def test_no_candidates_anywhere_returns_none(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.delenv(cim_toolchain.MAGIC_TECH_ENV, raising=False)
+        monkeypatch.setenv(cim_toolchain.VOLARE_ROOT_ENV, str(tmp_path / "empty"))
+        monkeypatch.setattr(
+            cim_toolchain, "DEFAULT_VOLARE_VERSIONS", tmp_path / "no-versions"
+        )
+        assert cim_toolchain.find_magic_tech() is None

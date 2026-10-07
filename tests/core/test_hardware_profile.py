@@ -136,7 +136,13 @@ class TestHardwareProfile:
 
     @patch.dict(os.environ, {"CI": "true"}, clear=False)
     def test_ci_detection(self) -> None:
-        """CI env should map to LOW_POWER_DEVICE."""
+        """CI env should map to LOW_POWER_DEVICE.
+
+        CI's own pytest step exports ANGELA_HARDWARE_PROFILE; detection gives
+        the explicit env override priority over CI heuristics, so the test
+        must remove it to exercise the CI branch (patch.dict restores on exit).
+        """
+        os.environ.pop("ANGELA_HARDWARE_PROFILE", None)
         profile = HardwareProfile()
         assert profile.scenario == HardwareScenario.LOW_POWER_DEVICE
 

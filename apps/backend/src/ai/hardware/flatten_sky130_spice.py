@@ -41,29 +41,43 @@ _SUBST = re.compile(r"\{([^{}]+)\}")
 # deterministic base term, or to nothing.
 _MC_TOKEN = re.compile(r"\bMC_\w+_SWITCH\b|\bAGAUSS\b|\bAUNIF\b|\bLUNIF\b|\bUNIF\b")
 _MC_PREFIX = re.compile(r"^\s*([^{}]*?)\s*\+\s*MC_\w+_SWITCH\b")
+_PARAM_KEYWORD = re.compile(r"^\.param\b\s*", re.IGNORECASE)
+
+
+def _param_assignment(line: str) -> Tuple[str, str] | None:
+    """Extract ``name = value`` from a ``.param`` line or a ``+`` continuation.
+
+    The assignment on the ``.param`` line itself is easy to lose: the keyword
+    must be stripped before matching, or the whole primary assignment is
+    silently dropped and only ``+`` continuation lines are ever captured.
+    """
+    body = line.strip()
+    if body.startswith("+"):
+        body = body[1:].lstrip()
+    body = _PARAM_KEYWORD.sub("", body, count=1)
+    match = _PARAM_LINE.match(body) if body else None
+    if match:
+        return match.group(1), match.group(2)
+    return None
 
 
 def read_params(path: Path) -> Dict[str, str]:
     """Collect ``.param`` assignments from a file, joining ``+`` continuations."""
     params: Dict[str, str] = {}
-    current: List[str] = []
+    in_block = False
     for raw in path.read_text(encoding="utf-8", errors="replace").splitlines():
         if _PARAM_BLOCK.match(raw):
-            current = [raw]
+            assignment = _param_assignment(raw)
+            if assignment:
+                params[assignment[0]] = assignment[1]
+            in_block = True
             continue
-        if raw.lstrip().startswith("+") and current:
-            current.append(raw)
+        if raw.lstrip().startswith("+") and in_block:
+            assignment = _param_assignment(raw)
+            if assignment:
+                params[assignment[0]] = assignment[1]
             continue
-        for line in current:
-            body = line.lstrip().lstrip("+").strip()
-            match = _PARAM_LINE.match(body)
-            if match:
-                params[match.group(1)] = match.group(2)
-        current = []
-    for line in current:
-        match = _PARAM_LINE.match(line.lstrip().lstrip("+").strip())
-        if match:
-            params[match.group(1)] = match.group(2)
+        in_block = False
     return params
 
 
@@ -156,9 +170,6 @@ def flatten(
         in_card = False
         for raw in collapse_monte_carlo(raw_text).splitlines():
             text = substitute(raw, params)
-            for missing in _SUBST.findall(text):
-                if missing not in unresolved:
-                    unresolved.append(missing)
             if text.strip().lower().startswith(".model"):
                 in_card = True
                 cards += 1
@@ -172,10 +183,10 @@ def flatten(
                 # because the surviving header carries no binning at all.
                 stripped = text.lstrip()
                 if stripped.startswith("+") or stripped.startswith("*"):
-                    lines.append(text)
+                    pass
+                else:
+                    in_card = False
                     continue
-                in_card = False
-                continue
             else:
                 # The PDK also ships .subckt wrappers whose device lines
                 # reference {l}, {w}, {ad} and friends. Those are neither
@@ -184,6 +195,12 @@ def flatten(
                 # beside them. The known-good flattened reference contains
                 # nothing but model cards.
                 continue
+            # Unresolved braces only matter on lines that survive into the deck:
+            # a dropped subckt line's {l}/{w} geometry is expected to be
+            # unresolved and must not fail the whole run.
+            for missing in _SUBST.findall(text):
+                if missing not in unresolved:
+                    unresolved.append(missing)
             lines.append(text)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text("\n".join(lines) + "\n", encoding="utf-8")

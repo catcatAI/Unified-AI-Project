@@ -8,14 +8,14 @@
 
 | 位置                                                                                                                                                                                                                                                                           | 是什麼                                                                                        | 域       | 狀態                 |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- | -------- | -------------------- |
-| `hardware/`（本目錄）                                                                                                                                                                                                                                                          | 板卡/系統級設計規格 YAML（PCIe AI 卡、MVU）                                                   | 設計規格 | 活的正本             |
+| `hardware/`（本目錄）                                                                                                                                                                                                                                                          | 板卡/系統級設計規格 YAML（PCIe AI 卡、MVU、Gen4×1 小計算卡）                                  | 設計規格 | 活的正本             |
 | `apps/backend/src/ai/agents/specialized/eda_agent.py`                                                                                                                                                                                                                          | **EDA/硬件代理**（執行實驗、凍結包驗證的 agent）                                              | 代理代碼 | 活                   |
 | `apps/backend/src/ai/hardware/`                                                                                                                                                                                                                                                | 代理的函式庫：CIM 體系、MVU 參考模型、RTL 產生、標準目錄、sky130 SPICE 工具鏈與版圖驗證閘     | 代理代碼 | 活                   |
 | `apps/backend/src/core/tools/eda_tool_adapter.py`                                                                                                                                                                                                                              | EDA 工具適配器（工作區、工具偵測、artifact 落盤）                                             | 工具     | 活                   |
 | `apps/backend/src/core/hardware/`                                                                                                                                                                                                                                              | **本機硬體**偵測/調度（GPU、HAL、compute matrix）                                             | 運行時   | 活，與芯片設計無關   |
 | `data/eda_runs/`                                                                                                                                                                                                                                                               | EDA 運行工作區歷史（**gitignored**；每 run 含 manifest+輸入 stub+輸出）                       | 運行數據 | 可再生成，非設計正本 |
 | `scripts/run_mvu_reference.py`、`hardware_intelligence_report.py`、`verify_hardware_tiers.py`                                                                                                                                                                                  | 硬件相關腳本                                                                                  | 腳本     | 活                   |
-| `tests/unit/test_{cim_verify,cim_strip_reference,mvu_reference,rtl_generator,ai_card_reference,ai_card_interface_packet,card_architecture_audit,hardware_standards_catalog,eda_episode}*.py`、`tests/ai/agents/test_eda_agent.py`、`tests/core/tools/test_eda_tool_adapter.py` | 硬件域測試                                                                                    | 測試     | 活                   |
+| `tests/unit/test_{cim_verify,cim_strip_reference,mvu_reference,rtl_generator,ai_card_reference,ai_card_interface_packet,card_architecture_audit,edge_card_spec,hardware_standards_catalog,eda_episode}*.py`、`tests/ai/agents/test_eda_agent.py`、`tests/core/tools/test_eda_tool_adapter.py` | 硬件域測試                                                                                    | 測試     | 活                   |
 | `/home/cxuo/chip`（**repo 外**）                                                                                                                                                                                                                                               | 晶體管級 sky130 標準格版圖（`design/` 正確堆 / `research/` 研究堆，見該處 `design/INDEX.md`） | 版圖設計 | 活                   |
 | `docs/PROJECT_MAP_GENERATED.md`                                                                                                                                                                                                                                                | 生成的目錄地圖（含本目錄統計）                                                                | 生成物   | 勿手改               |
 
@@ -29,12 +29,17 @@
 | `ai_compute_card/secondary_compute_draft.yaml`        | 以副計算為軸的權重更新路徑分析：每個主張附出處、9 項前論修正（P1-P9）、與 freeze packet/mvu 合併後的開放問題清冊 | `draft_awaiting_acceptance_check`                                                                         |
 | `ai_compute_card/concept_design.yaml`                 | 驗證用參數化 fixture（**不是**產品架構定案）                                                                     | `environment_support_fixture`                                                                             |
 | `ai_compute_card/component_registry.yaml`             | 來源蒐集/驗證用零件註冊表（**未選型**：`entries_are_not_selected: true`）                                        | 註冊表角色明示                                                                                            |
-| `ai_compute_card/DERIVED_ESTIMATES.md` | 本輪對話推導的性能/鏈路/成本整理（**分析文件**，非定案） | 以 yaml 凍結值為輸入 |
+| `ai_compute_card/DERIVED_ESTIMATES.md`                | 本輪對話推導的性能/鏈路/成本整理（**分析文件**，非定案）                                                         | 以 yaml 凍結值為輸入                                                                                      |
+| `edge_card/edge_card_spec.yaml`                       | **小計算卡規格**：PCIe Gen4×1 端點、跑 Gemma 4 E2B 級（Orin NX 16GB 基線、槽供電 ≤35W）       | `draft_awaiting_acceptance_check`                                                                         |
 | `mvu/mvu_header_spec.yaml`                            | 使用者提供的 MVU header（`mvu_config.vh`）候選                                                                   | `user_provided_candidate_not_frozen`                                                                      |
 | `mvu/mvu_reference_spec.yaml`                         | 舊 MVU 參考規格                                                                                                  | `superseded_reference_only`，`superseded_by: ai_compute_card_task.yaml`（保留僅供追溯，**無程式碼引用**） |
 
 狀態欄位皆為 `*_pending` / `draft` / `candidate` —— **全部未定案**；定案流程以
 `angela_interface_freeze_packet.yaml` 的驗收為準。
+
+> `edge_card/` 是**兄弟產品線**（外購模組的小卡，近期產品），與
+> `ai_compute_card/` 的自研矽大卡互不回答問題：大卡 freeze packet 的
+> 10 項 pending_decision **不由 edge_card 規格凍結或作答**。
 
 ## 3. 與 `/home/cxuo/chip` 的邊界（三個合法接點，勿破壞）
 
@@ -80,13 +85,12 @@
 
 文件英文統用 `die`/`package`/`chip`，中文務必分清，不可互換：
 
-| 英文 | 中文 | 定義 | 關鍵參數（cim_freeze_draft / freeze_packet） |
-|---|---|---|---|
-| `die` | **晶粒** | 單一晶圓切片，最小運算單元 | 1.5 mm² 目標、權重駐留 16 KB、16384 MAC/pass、L1 32 MB |
+| 英文      | 中文                               | 定義                                  | 關鍵參數（cim_freeze_draft / freeze_packet）                      |
+| --------- | ---------------------------------- | ------------------------------------- | ----------------------------------------------------------------- |
+| `die`     | **晶粒**                           | 單一晶圓切片，最小運算單元            | 1.5 mm² 目標、權重駐留 16 KB、16384 MAC/pass、L1 32 MB            |
 | `package` | **封裝**（對外一顆「晶片」的實體） | 16 顆晶粒共封裝（wire-bond MCM 草案） | 權重 256 KB、262144 MAC/pass、d2d 48 pin、熱管+針腳母頭（雙基板） |
-| card | **板子** | PCIe 加速卡 | 4–16 封裝、L2 = 2×32GB DDR5、300 W |
-| host | **主機** | PCIe 外 | DDR5/PCIe 之外 |
+| card      | **板子**                           | PCIe 加速卡                           | 4–16 封裝、L2 = 2×32GB DDR5、300 W                                |
+| host      | **主機**                           | PCIe 外                               | DDR5/PCIe 之外                                                    |
 
-> 舊習慣「die=晶片」是錯的：一顆對外晶片 = 一個封裝 = 16 顆晶粒。
-> YAML 內現有 key（`die_l1`、`dies_per_package`、`die_area_*`）是英文 key，
-> 保留不改（被程式碼引用）；閱讀時一律對照本表。
+> 舊習慣「die=晶片」是錯的：一顆對外晶片 = 一個封裝 =
+> 16 顆晶粒。YAML 內現有 key（`die_l1`、`dies_per_package`、`die_area_*`）是英文 key，保留不改（被程式碼引用）；閱讀時一律對照本表。
