@@ -98,6 +98,11 @@ class TestComparisons:
     def test_default_tolerance_is_zero(self) -> None:
         assert Fact("a", 1.0, 1.0, "ge").tol == 0.0
 
+    def test_nan_fails_closed(self) -> None:
+        nan = float("nan")
+        assert adjudicate([Fact("nan_ge", nan, 1.0, "ge")]).ok is False
+        assert adjudicate([Fact("nan_le", nan, 1.0, "le")]).ok is False
+
 
 class TestFirstChainEdgeCardEnvelope:
     """首條鏈：edge 卡 envelope 三 verdict 經解讀器重裁（數值同 spec 測試）。"""

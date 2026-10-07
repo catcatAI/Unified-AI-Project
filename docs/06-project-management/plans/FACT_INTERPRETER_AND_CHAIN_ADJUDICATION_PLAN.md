@@ -123,6 +123,12 @@ model 生成，漂移即 CI 紅燈。
 
 ## 7. 實作現況
 
-- P0 進行中：`apps/backend/src/core/facts/`（見該目錄） +
-  `tests/core/test_fact_interpreter.py`
-  首條鏈（edge 卡 envelope 三 verdict 經解讀器重裁）。
+- P0 完成：`apps/backend/src/core/facts/`
+  （schema/interpreter/adapters，`tol/measured_at/segment`、adjudicate 全家桶 + 三形狀適配 + 合併/缺段/新鮮度 helper，覆蓋率 100%）+
+  `tests/core/test_fact_interpreter.py`（31 測試：語義、首條鏈、適配器實審、缺段點名、容差、NaN 閉合）+
+  `scripts/check_fact_gates.py` 四域合併門。
+- P1 完成三條活鏈：對話回應（`test_chat_ui_contract.py`）、監控面板（`test_cluster_ui_contract.py`）、維運狀態（`test_ops_ui_contract.py`），皆磁碟錨點 + 真 payload + 解讀器裁決。
+- P2 完成引用門：`tests/unit/test_edge_card_refs.py`（來源 ID 閉合 +
+  internal 路徑存在 + 解讀器三重裁決）。
+- 待辦：地圖 `chain` 自動展開、runtime
+  envelope（桌面 GPU/LLM 路由）、MLIR 下沉（等 Orin 證據）。
