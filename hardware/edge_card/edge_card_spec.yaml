@@ -250,6 +250,12 @@ performance_budget:
     derived_e2b_mobile_range: [51.2, 60.5] # 102.4 * eff / 1.1
     target_e2b_mobile_min: 30
     target_basis: derived floor minus KV/sampling/serving overhead; measure at L1
+    cycle_simulation_note: >-
+      the ranges above are BANDWIDTH-ONLY bounds (they assume free compute);
+      the structural cycle simulation (cycle_simulation, 2026-10-07) shows the
+      card is compute-bound at 25 GMAC/s - 5.93 tok/s at 32K with mac_array at
+      100% while memory sits at 11% - so decode does not follow these numbers
+      until silicon provides >= 63.3 GMAC/s dense (see cycle_simulation.refutes).
   prefill_tok_s:
     derived_1k_tokens_note: >-
       ~2 * 2.3e9 * 1000 = 4.6 TFLOP/1K tokens plus PLE/attention overhead;
@@ -500,6 +506,137 @@ host_proxy_simulation:
       [16.8, 19.9] is kept as the conservative floor
     - prefill 905 tok/s is host-specific and NOT projected; the card's prefill
       budget stays the Orin INT8 analytic bound (>= 800 tok/s target)
+    - "decode_bound_vs_target_15: PASS is a BANDWIDTH-only verdict; the structural
+      cycle simulation (cycle_simulation, 2026-10-07) shows the card is
+      compute-bound at 25 GMAC/s (5.93 tok/s), so this PASS does not carry to
+      decode reality - see cycle_simulation.refutes"
+cycle_simulation:
+  kind: structural_discrete_event_not_l1
+  date: 2026-10-07
+  rerun: .venv/bin/python scripts/sim_edge_card_cycle.py --json out.json
+  source: scripts/sim_edge_card_cycle.py
+  engine: apps/backend/src/ai/hardware/edge_card_sim.py
+  model: google/gemma-4-E2B-it QAT Q4_0 GGUF (local snapshot, 3.350 GB, 541 tensors)
+  method:
+    - "card executed, not extrapolated: LPDDR5 / INT8 MAC / SRAM queue / PCIe Gen4 x1
+      are discrete-event servers at the spec's bit widths and clocks"
+    - one decode step cut into 591 items straight from the GGUF tensor table
+      (exact bytes from tensor offsets, MACs from tensor dims, KV int8 @32K,
+      tied lm_head streams full token_embd, layers 0-14 own KV -> 15 writes)
+    - hop-by-hop engine checks every hop against physical ceilings, SRAM bounds,
+      dependency ordering, and progress (dt==0 no-progress watchdog)
+    - a run counts only if checkpoints replay bit-identically (digest) AND the
+      workload totals are consumed EXACTLY at each token boundary
+  checkpoints_hops: [16, 100, 1000, 10000] # all PASS: 0 violations, replay equal
+  gate:
+    min_tok_s: 5.5 # regression floor: measured 5.93; fails loud if the engine drifts
+  measured: # mac_convention=2 -> conservative 2 ops/MAC -> 25 GMAC/s
+    tokens: 5
+    hops: 13108
+    decode_tok_s: 5.93
+    per_token_ms: 168.72
+    utilization: { mac_array: 1.000, mem_service: 0.112, pcie: 0.000 }
+    bottleneck: mac_array # COMPUTE-BOUND
+    ops_per_token: { total: 4.218e+9, weights: 2.280e+9, attention: 1.938e+9 }
+    bytes_per_token: { reads: 1.649e+9, writes: 9216, pcie: 8 }
+    violations: 0
+    replay_identical: true
+    workload_exact: true
+  long_run: # extended validation: no drift over 52k hops / 20 tokens
+    run: ".venv/bin/python scripts/sim_edge_card_cycle.py --checkpoints 16,100,1000,10000,50000 --tokens 20"
+    hops: 52453
+    tokens: 20
+    checkpoints: [16, 100, 1000, 10000, 50000] # all replay bit-identical, 0 violations
+    violations: 0
+    replay_equal_all_checkpoints: true
+    workload_exact: true # integer retire counters - exact by construction (was
+    # float accumulation, found drifting at ~52k hops by this very run, then fixed)
+    per_token_ms_range: [168.71, 168.76] # slight creep = KV growth on full-attn layers
+  sensitivity:
+    mac_convention_1_tok_s: 11.85 # 50 GMAC/s reading of the "50 TOPS" headline
+    needed_gmac_s_for_15_at_32k: 63.3
+    weights_only_floor_gmac_s: 34.2 # ctx->0 floor = 68 dense TOPS @2ops/MAC
+    conclusion: >-
+      the 15 tok/s decode target is unreachable with 50 dense TOPS (25 GMAC/s)
+      at ANY context, because the weights-only floor alone needs 34.2 GMAC/s.
+      At the optimistic 50 GMAC/s reading it needs >= 63.3 GMAC/s at 32K, i.e.
+      context below ~18K to fit 50 GMAC/s. MTP / speculative decoding does not
+      change this: dense decode is compute-bound, so MACs scale with emitted
+      tokens - only weight BYTES amortize, which would matter only on a
+      bandwidth-bound card.
+  balance_study: # module-carrier balance sweep (2026-10-07): SKU x TOPS reading x ctx
+    source: scripts/sim_edge_card_sweep.py
+    rerun: ".venv/bin/python scripts/sim_edge_card_sweep.py --json out.json"
+    context: >-
+      the card is a Jetson Orin NX module carrier: compute, LPDDR5 and the
+      PCIe endpoint live in the purchased module, so the balance knobs are
+      module SKU, nvpmodel power mode, TOPS counting convention and context
+      length - not array sizing. Every point is the structural engine's
+      measured steady rate (2 tokens per point, cross-checked against the
+      cycle runner's baseline within 2%).
+    ctx_order: [8192, 16384, 32768]
+    real_modes_tok_s: # {mode: [8K, 16K, 32K]} - c2 = 2ops/MAC, c1 = ops reading
+      nx8_25w_c2: [6.23, 5.34, 4.15] # 8GB SKU dense35@25W
+      nx16_25w_c2: [8.90, 7.63, 5.93] # 16GB dense50@25W = spec baseline
+      nx8_25w_c1: [12.46, 10.68, 8.30] # 8GB SKU ops reading
+      nx16_25w_c1: [17.79, 15.24, 11.85] # 16GB dense50@25W ops reading
+      nx16_40w_c2: [13.89, 11.90, 9.25] # MAXN-SUPER dense78@40W
+      nx16_40w_c1: [27.66, 23.71, 18.45] # MAXN-SUPER ops reading
+    meets_target: # >= 15 tok/s reached at these ctx
+      nx16_25w_c1: [8192, 16384] # 25W + ctx<=16K + ops reading: ZERO BOM change
+      nx16_40w_c1: [8192, 16384, 32768] # 40W mode + ops reading: meets at 32K
+      c2_reading_reaches_nothing: true # under 2ops/MAC no mode reaches 15 anywhere
+    memory:
+      max_real_mode_ops_ns: 78 # biggest purchasable mode (MAXN SUPER)
+      bind_point_ops_ns_32k: 222.6 # analytic: 87.04 B/ns x 2.558 ops/B (Q4)
+      roofline_tok_s_at_32k: 52.8 # a ~223 ops/ns class module saturates LPDDR5
+      real_mode_util_range: [0.079, 0.468] # 8GB@32K .. 40W@8K, never even half
+      probes_mem_util_at_32k: { r100: 0.447, r150: 0.644, r222_6: 0.770, r445_2: 0.929 }
+      conclusion: >-
+        idle LPDDR5 is structural, not a tuning miss: Q4 arithmetic intensity
+        (2.558 ops/byte) means memory saturates only above ~223 ops/ns
+        (~445 TOPS-class) while the largest Orin NX mode is 78 - the 445.2
+        probe already shows the trade (mem 92.9%, mac falls to 46.5%, tok/s
+        49.0 converging on the 52.8 roofline asymptote). Utilizing memory
+        fully is outside this product's envelope and cost class; the
+        headroom is what makes 15 tok/s cheap once compute suffices.
+    pcie:
+      decode_util_at_15_tok_s: 6.1e-08 # 8 B/token: a token stream by design
+      load_s_at_payload: 1.70 # 3.35 GB / 1.969 GB/s Gen4 x1
+      load_s_at_achievable_1_6: 2.09 # spec achievable floor, >=85% TLP efficiency
+      load_budget_s: 5
+      load_verdict: PASS # this is where x1 IS utilized (~100% / 85% duty)
+      role: load + hot-reload + token/control stream; decode never needs more
+    recommendation:
+      gate: "L1 devkit benchmark (TOPS convention + real MFU) picks the branch; no BOM moves before it"
+      option_a: "25W + ctx<=16K, zero BOM change - meets 15 iff TOPS is ops-counted (15.24 @16K)"
+      option_b: "40W MAXN SUPER, same module SKU - meets 15 at 32K iff ops-counted (18.45); carrier needs VDD_IN>=8V path + cooling L2; board 50W <= 75W slot available"
+      option_c: "8GB SKU cost-down - 4.15..12.46 tok/s, never meets 15; lower tier only"
+      anti_goal: "chasing memory utilization needs >223 ops/ns; not this product"
+    cost_frame: >-
+      no prices anywhere (quote required by policy): option A = 0 BOM delta
+      (devkit time only), option B = same module + cooling/power-path rework
+      under the 75W slot, option C = cheaper SKU with the weaker numbers
+      above. Every option keeps the Gen4 x1 edge and the Orin NX family.
+    status: candidate_pending_l1_benchmark_and_l2_thermal
+  refutes:
+    - claim: >-
+        performance_budget.decode_tok_s.derived_e2b_q4_0_range [23.5, 27.7] tok/s
+        (and the [16.8, 19.9] file-stream range) as a decode forecast
+      why: >-
+        those are pure-bandwidth derivations assuming free compute; the structural
+        sim measures mac_array at 100% while memory sits at 11%, so the bandwidth
+        bound does not bind. The arithmetic stays in performance_budget (verified
+        by tests/unit/test_edge_card_spec.py) but decode reality is compute-bound
+        until silicon provides >= 63.3 GMAC/s dense.
+  caveats:
+    - L0 structural simulation of THIS spec's configuration, not L1 silicon measurement
+    - mac_convention=2 (conservative) and =1 (optimistic) both reported; neither
+      reaches 15 tok/s at 32K
+    - conservative starve accounting pauses compute when staged bytes run out;
+      at measured mac util 1.000 the pauses did not bind on the bottleneck
+    - prefill not simulated here; prefill budget remains the analytic bound
+      in performance_budget.prefill_tok_s
 explicit_non_claims:
   - no measured performance numbers on the target hardware yet (host-proxy simulation
     numbers exist above and are labelled as such); card decode/prefill figures remain

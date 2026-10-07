@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 import yaml
 
 SPEC_PATH = Path(__file__).resolve().parents[2] / "hardware/edge_card/edge_card_spec.yaml"
@@ -263,6 +264,73 @@ def test_host_proxy_simulation_block_is_labelled_and_gated() -> None:
     assert any("Orin NX devkit" in c for c in sim["caveats"])
 
 
+def test_cycle_simulation_block_is_labelled_gated_and_honest() -> None:
+    """結構仿真的結論必須自洽，且誠實標示 compute-bound 反證。"""
+    spec = _load_spec()
+    sim = spec["cycle_simulation"]
+
+    assert sim["kind"] == "structural_discrete_event_not_l1"
+    assert sim["rerun"].startswith(".venv/bin/python scripts/sim_edge_card_cycle.py")
+    assert sim["checkpoints_hops"] == [16, 100, 1000, 10000]
+    measured = sim["measured"]
+    assert measured["bottleneck"] == "mac_array", "spec claims a compute-bound card"
+    assert measured["utilization"]["mac_array"] >= 0.99
+    assert measured["utilization"]["mem_service"] < 0.5
+    assert measured["violations"] == 0
+    assert measured["replay_identical"] is True
+    assert measured["workload_exact"] is True
+    # gate must be consistent with the measured number (floor below measurement)
+    assert sim["gate"]["min_tok_s"] <= measured["decode_tok_s"]
+    # honest refutation of the bandwidth-only decode range
+    assert any("derived_e2b_q4_0_range" in refutes["claim"] for refutes in sim["refutes"])
+    # ops split must add up to the total per token
+    ops = measured["ops_per_token"]
+    assert ops["weights"] + ops["attention"] == pytest.approx(ops["total"], rel=1e-3)
+    # neither mac convention reaches the 15 tok/s target at 32K
+    target = spec["performance_budget"]["decode_tok_s"]["target_e2b_q4_0_min"]
+    assert measured["decode_tok_s"] < target
+    assert sim["sensitivity"]["mac_convention_1_tok_s"] < target
+    # long-run (52k hops) must stay clean and exactly accounted
+    long_run = sim["long_run"]
+    assert long_run["hops"] >= 50000
+    assert long_run["violations"] == 0
+    assert long_run["replay_equal_all_checkpoints"] is True
+    assert long_run["workload_exact"] is True
+    lo, hi = long_run["per_token_ms_range"]
+    assert 0 < lo <= hi < 2 * measured["per_token_ms"]
+
+
+def test_balance_study_answers_memory_pcie_and_cost() -> None:
+    """平衡掃描的結論必須可重推：記憶體閒置是結構性的、PCIe 負載過門檻、成本有框。"""
+    spec = _load_spec()
+    bal = spec["cycle_simulation"]["balance_study"]
+    assert bal["source"].endswith("sim_edge_card_sweep.py")
+    assert bal["status"] == "candidate_pending_l1_benchmark_and_l2_thermal"
+
+    mem = bal["memory"]
+    # 記憶體飽和點遠超任何可購模組 -> 閒置是物理，不是調校失誤
+    assert mem["max_real_mode_ops_ns"] < mem["bind_point_ops_ns_32k"]
+    assert mem["bind_point_ops_ns_32k"] > 200
+    assert mem["real_mode_util_range"][1] < 0.5  # 真模組點連一半都用不到
+    probes = mem["probes_mem_util_at_32k"]
+    assert probes["r100"] < probes["r150"] < probes["r222_6"] < probes["r445_2"] < 1.0
+    # 頻寬天花板與 bind point 一致（roofline = bind ops/ns / ops/token）
+    roof = mem["roofline_tok_s_at_32k"]
+    assert mem["bind_point_ops_ns_32k"] * 1e9 / roof == pytest.approx(4.218e9, rel=1e-3)
+
+    pc = bal["pcie"]
+    assert pc["load_verdict"] == "PASS"
+    assert pc["load_s_at_payload"] <= pc["load_budget_s"]
+    assert pc["load_s_at_achievable_1_6"] <= pc["load_budget_s"]
+    assert pc["decode_util_at_15_tok_s"] < 1e-6  # token stream，非吞吐通道
+
+    meets = bal["meets_target"]
+    assert set(meets) == {"nx16_25w_c1", "nx16_40w_c1", "c2_reading_reaches_nothing"}
+    assert meets["c2_reading_reaches_nothing"] is True
+    assert 32768 not in meets["nx16_25w_c1"] and 32768 in meets["nx16_40w_c1"]
+    assert "quote" in bal["cost_frame"]
+
+
 def test_spec_top_level_schema_is_complete() -> None:
     """刪除或改名頂層段必須變紅，而不是靜默通過。
 
@@ -292,6 +360,7 @@ def test_spec_top_level_schema_is_complete() -> None:
         "sources",
         "explicit_non_claims",
         "host_proxy_simulation",
+        "cycle_simulation",
     }
     missing = required - set(spec)
     assert not missing, f"spec 缺頂層段: {sorted(missing)}"
@@ -314,6 +383,9 @@ def test_spec_declared_paths_exist_on_disk() -> None:
     repo = SPEC_PATH.parents[2]
     sim = spec["host_proxy_simulation"]
     assert (repo / sim["source"]).is_file(), sim["source"]
+    cycle = spec["cycle_simulation"]
+    assert (repo / cycle["source"]).is_file(), cycle["source"]
+    assert (repo / cycle["engine"]).is_file(), cycle["engine"]
     assert (repo / "hardware/edge_card/edge_card_spec.yaml").resolve() == SPEC_PATH.resolve()
 
 
