@@ -688,6 +688,43 @@ class TestSessionManagerHeartbeat:
         assert sm.get(session.client_id) is None
         ws.close.assert_awaited()
 
+    async def test_heartbeat_monitor_survives_transient_failure(self, monkeypatch):
+        """A flaky unregister must not kill the monitor or leak its task entry."""
+        from services.connection_session import SessionManager
+
+        sm = SessionManager(heartbeat_interval=0.05, heartbeat_timeout=0.3)
+        ws = _mock_ws()
+        session = await sm.register(ws)
+        session.last_heartbeat = datetime.now() - timedelta(seconds=1)
+
+        real_unregister = sm.unregister
+        calls = {"n": 0}
+
+        async def flaky_unregister(client_id, reason=""):
+            calls["n"] += 1
+            raise RuntimeError("transient store hiccup")
+
+        monkeypatch.setattr(sm, "unregister", flaky_unregister)
+        await asyncio.sleep(0.3)
+
+        # The monitor survived repeated transient errors: still tracked and
+        # running, session still present for the retry (no orphan, no leak).
+        assert calls["n"] >= 2
+        task = sm._heartbeat_tasks.get(session.client_id)
+        assert task is not None and not task.done()
+        assert sm.get(session.client_id) is not None
+
+        # A healthy retry cleans up normally afterwards. (The monitor
+        # cancels itself through unregister, so poll for disappearance
+        # instead of awaiting the self-cancelled task.)
+        monkeypatch.setattr(sm, "unregister", real_unregister)
+        for _ in range(100):
+            if sm.get(session.client_id) is None:
+                break
+            await asyncio.sleep(0.02)
+        assert sm.get(session.client_id) is None
+        assert session.client_id not in sm._heartbeat_tasks
+
     async def test_increment_sequence(self):
         """increment_sequence increases sequence number."""
         from services.connection_session import SessionManager

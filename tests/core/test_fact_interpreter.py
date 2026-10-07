@@ -41,7 +41,11 @@ class TestVerdictStatus:
             "unit": "GB",
             "source": "src",
             "evidence": "ev",
+            "segment": "",
         }
+
+    def test_segment_defaults_empty(self) -> None:
+        assert Verdict("a", True, 1.0, 1.0).segment == ""
 
 
 class TestReportIsTheOnlyGate:
@@ -187,3 +191,32 @@ class TestGateAdapter:
         report = from_gate_report(gates)
         assert report.ok is True
         assert report.as_dict()["failed"] == []
+
+
+class TestLabeledChainAndInfo:
+    """段標籤定位 + 衝突降級（計畫 §3.2 後兩語義）。"""
+
+    def test_labeled_chain_locates_segment(self) -> None:
+        from core.facts import adjudicate_labeled_chain
+
+        report = adjudicate_labeled_chain(
+            {
+                "serialized": [Fact("json_ok", 1.0, 1.0, "ge")],
+                "rendered": [Fact("dom_ok", 0.0, 1.0, "ge")],
+            }
+        )
+        assert report.ok is False
+        assert [v.id for v in report.failed] == ["dom_ok"]
+        assert report.failed[0].segment == "rendered"
+        assert [v.segment for v in report.verdicts] == ["serialized", "rendered"]
+
+    def test_mark_info_downgrades_without_blocking(self) -> None:
+        from core.facts import adjudicate, mark_info
+
+        optimistic = Fact("decode_optimistic", 10.0, 15.0, "ge")
+        assert adjudicate([optimistic]).ok is False
+        downgraded = mark_info(optimistic)
+        assert downgraded.must_pass is False
+        report = adjudicate([downgraded])
+        assert report.ok is True
+        assert report.verdicts[0].status == "INFO"

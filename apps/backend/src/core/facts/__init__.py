@@ -8,7 +8,14 @@ Python 繼續寫邏輯，裁決只認這裡的輸出。形狀沿
 """
 
 from .adapters import from_gate_report
-from .interpreter import Report, Verdict, adjudicate, adjudicate_chain
+from .interpreter import (
+    Report,
+    Verdict,
+    adjudicate,
+    adjudicate_chain,
+    adjudicate_labeled_chain,
+    mark_info,
+)
 from .schema import Compare, Fact
 
 __all__ = [
@@ -18,5 +25,7 @@ __all__ = [
     "Verdict",
     "adjudicate",
     "adjudicate_chain",
+    "adjudicate_labeled_chain",
     "from_gate_report",
+    "mark_info",
 ]

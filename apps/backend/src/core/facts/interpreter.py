@@ -11,8 +11,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import List, Optional, Sequence
+from dataclasses import dataclass, field, replace
+from typing import List, Mapping, Optional, Sequence
 
 from .schema import Fact, Verdict
 
@@ -95,3 +95,24 @@ def adjudicate_chain(segments: Sequence[Sequence[Fact]]) -> Report:
         for fact in facts:
             report.add(_evaluate(fact))
     return report
+
+
+def adjudicate_labeled_chain(segments: Mapping[str, Sequence[Fact]]) -> Report:
+    """帶段標籤的鏈式裁決：失敗段直接讀 `verdict.segment` 定位。
+
+    Mapping 保持插入順序，verdict 順序與段展開順序一致。
+    """
+    report = Report()
+    for label, facts in segments.items():
+        for fact in facts:
+            verdict = _evaluate(fact)
+            report.add(replace(verdict, segment=label))
+    return report
+
+
+def mark_info(fact: Fact) -> Fact:
+    """把事實降為 INFO（只記錄，不擋門）：衝突時保守方當 gate、另一方經此降級。
+
+    如 full-file 保守 bound 當門、active-weights 樂觀 bound 記 INFO。
+    """
+    return replace(fact, must_pass=False)

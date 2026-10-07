@@ -32,7 +32,11 @@ class Fact:
 
 @dataclass(frozen=True)
 class Verdict:
-    """一條已裁決的事實。`passed=None` 表 INFO（只記錄，不擋門）。"""
+    """一條已裁決的事實。`passed=None` 表 INFO（只記錄，不擋門）。
+
+    `segment` 標註 verdict 所屬鏈段（如 UI 五段的 rendered），空字串表
+    不分段；定位失敗段時直接讀它，不必回查輸入順序。
+    """
 
     id: str
     passed: Optional[bool]
@@ -41,6 +45,7 @@ class Verdict:
     unit: str = ""
     source: str = ""
     evidence: str = ""
+    segment: str = ""
 
     @property
     def status(self) -> str:
@@ -58,4 +63,5 @@ class Verdict:
             "unit": self.unit,
             "source": self.source,
             "evidence": self.evidence,
+            "segment": self.segment,
         }

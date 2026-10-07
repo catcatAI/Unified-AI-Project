@@ -288,8 +288,13 @@ class SessionManager:
             except asyncio.CancelledError:
                 break
             except Exception as e:
+                # Survive transient failures (e.g. a flaky unregister): the
+                # sleep at the top of the loop paces retries, and the task
+                # entry stays valid while this task lives. Breaking here used
+                # to orphan the session unmonitored AND leak the done task in
+                # _heartbeat_tasks.
                 logger.error(f"[SessionManager] Heartbeat monitor error: {e}", exc_info=True)
-                break
+                continue
 
     async def send_to_session(self, session_id: str, message: dict, buffer: bool = True) -> int:
         """
