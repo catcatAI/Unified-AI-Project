@@ -65,8 +65,10 @@ def _evaluate(fact: Fact) -> Verdict:
         )
     if fact.compare == "ge":
         passed: Optional[bool] = fact.value >= fact.target
-    else:
+    elif fact.compare == "le":
         passed = fact.value <= fact.target
+    else:
+        raise ValueError(f"unknown compare for fact {fact.id!r}: {fact.compare!r}")
     return Verdict(
         id=fact.id,
         passed=passed,

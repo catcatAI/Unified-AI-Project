@@ -13,6 +13,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+import pytest
 import yaml
 from core.facts import Fact, Report, Verdict, adjudicate, adjudicate_chain
 
@@ -79,6 +80,10 @@ class TestComparisons:
         assert adjudicate([Fact("ge", 0.0, 1.0, "ge")]).ok is False
         assert adjudicate([Fact("le", 1.0, 2.0, "le")]).ok is True
         assert adjudicate([Fact("le", 3.0, 2.0, "le")]).ok is False
+
+    def test_unknown_compare_fails_closed(self) -> None:
+        with pytest.raises(ValueError, match="unknown compare"):
+            adjudicate([Fact("bad", 1.0, 2.0, "gt")])  # type: ignore[arg-type]
 
 
 class TestFirstChainEdgeCardEnvelope:
