@@ -92,3 +92,84 @@ def test_ref_closure_adjudicated() -> None:
         ]
     )
     assert report.ok is True, report.summary()
+
+
+# -----------------------------------------------------------------------------
+# 硬體文檔引用普查：零引用文檔必須點名在冊，新增即紅燈
+# -----------------------------------------------------------------------------
+_KNOWN_UNREFERENCED = frozenset(
+    {
+        # 長期自研矽計畫文檔：程式未讀，決策依據，刪改需人類覆核
+        "ai_compute_card_task",
+        "component_registry",
+        "concept_design",
+        "secondary_compute_draft",
+        "mvu_reference_spec",
+        "DERIVED_ESTIMATES",
+    }
+)
+_SCAN_ROOTS = ("apps/backend/src", "tests", "scripts", "packages/shared-js/js")
+_SCAN_SUFFIXES = (".py", ".js", ".yaml")
+
+
+def _referenced_stems() -> set:
+    """倉內程式實際出現過的硬體文檔 stem 集合（子字串匹配）。"""
+    haystacks = []
+    for root in _SCAN_ROOTS:
+        base = REPO / root
+        if not base.is_dir():
+            continue
+        for path in base.rglob("*"):
+            if path.suffix not in _SCAN_SUFFIXES or not path.is_file():
+                continue
+            try:
+                haystacks.append(path.read_text(encoding="utf-8", errors="replace"))
+            except OSError:
+                continue
+    corpus = "\n".join(haystacks)
+    stems = set()
+    for doc in (REPO / "hardware").rglob("*"):
+        if doc.suffix not in (".yaml", ".md") or not doc.is_file() or doc.name == "README.md":
+            continue
+        stem = doc.stem
+        if stem in corpus:
+            stems.add(stem)
+    return stems
+
+
+def test_hardware_docs_referenced_or_listed() -> None:
+    """每份硬體文檔要麼被程式引用，要麼點名在冊；新增零引用文檔即紅燈。"""
+    docs = set()
+    for doc in (REPO / "hardware").rglob("*"):
+        if doc.suffix not in (".yaml", ".md") or not doc.is_file() or doc.name == "README.md":
+            continue
+        docs.add(doc.stem)
+    unreferenced = docs - _referenced_stems()
+    # 子集關係蘊含雙向：新增零引用即紅；已知項被引用化後自動除名，無需改表。
+    assert unreferenced <= _KNOWN_UNREFERENCED, f"新增零引用文檔需點名: {sorted(unreferenced)}"
+
+
+def test_hardware_census_adjudicated() -> None:
+    """普查經解讀器裁決：未知零引用數為 0 才綠。"""
+    from core.facts import Fact, adjudicate
+
+    docs = set()
+    for doc in (REPO / "hardware").rglob("*"):
+        if doc.suffix not in (".yaml", ".md") or not doc.is_file() or doc.name == "README.md":
+            continue
+        docs.add(doc.stem)
+    unknown = (docs - _referenced_stems()) - _KNOWN_UNREFERENCED
+    report = adjudicate(
+        [
+            Fact(
+                "refs.no_unknown_unreferenced_docs",
+                float(len(unknown)),
+                0.0,
+                "le",
+                "count",
+                "hardware/ census",
+                f"unknown={sorted(unknown)}",
+            )
+        ]
+    )
+    assert report.ok is True, report.summary()
