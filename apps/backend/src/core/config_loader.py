@@ -285,8 +285,10 @@ class AngelaConfig:
             try:
                 rendered: str = template.format(overall_summary=overall_summary, **contexts)
                 return rendered
-            except (KeyError, IndexError, ValueError):
-                pass
+            except (KeyError, IndexError, ValueError) as e:
+                logger.debug(
+                    f"prompt template render failed, using fallback join: {e}", exc_info=True
+                )
         parts = [v for v in contexts.values() if v]
         if overall_summary:
             parts.append(overall_summary)

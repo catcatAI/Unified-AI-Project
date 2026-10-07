@@ -208,3 +208,100 @@ def test_open_items_carry_risk_and_blocking_level() -> None:
         assert item["risk"] in {"low", "medium", "high"}
         assert item["blocks"] in {"L0", "L1", "L2", "L3", "L4"}
         assert item["question"].strip()
+
+
+# -----------------------------------------------------------------------------
+# host-proxy simulation (scripts/sim_edge_card_software.py) evidence
+# -----------------------------------------------------------------------------
+def test_measured_gguf_file_backs_the_envelope() -> None:
+    spec = _load_spec()
+    primary = spec["model_target"]["primary"]
+    envelope = spec["model_target"]["working_set_gb"]
+
+    file_gb = primary["weights_gb_gguf_measured"]
+    assert file_gb == 3.35
+    assert file_gb > primary["weights_gb"]["q4_0"], "full GGUF file > table figure"
+    measured = file_gb + envelope["kv_cache_budget_gb"]["value"] + envelope["os_reserve_gb"]
+    assert round(measured, 2) == envelope["e2b_q4_0_32k_gguf_measured"] == 5.85
+    assert measured <= 8, "conservative full-file envelope must fit the 8GB floor SKU"
+
+
+def test_gguf_file_stream_bound_recomputation() -> None:
+    budget = _load_spec()["performance_budget"]
+    file_gb = _load_spec()["model_target"]["primary"]["weights_gb_gguf_measured"]
+    bw = budget["decode_assumptions"]["memory_bandwidth_gbs"]
+    eta_min, eta_max = budget["decode_assumptions"]["stream_efficiency_range"]
+    decode = budget["decode_tok_s"]
+
+    low = round(bw * eta_min / file_gb, 1)
+    high = round(bw * eta_max / file_gb, 1)
+    assert [low, high] == decode["derived_e2b_q4_0_gguf_file_stream_range"] == [16.8, 19.9]
+    assert low >= decode["target_e2b_q4_0_min"], "conservative bound must still clear target"
+    assert (
+        decode["eta_needed_for_target_on_full_file"]
+        == round(decode["target_e2b_q4_0_min"] * file_gb / bw, 3)
+        == 0.491
+    )
+
+
+def test_host_proxy_simulation_block_is_labelled_and_gated() -> None:
+    spec = _load_spec()
+    sim = spec["host_proxy_simulation"]
+
+    assert sim["kind"] == "host_proxy_not_l1"
+    assert sim["source"].startswith("scripts/sim_edge_card_software.py")
+    assert sim["rerun"].startswith(".venv/bin/python scripts/sim_edge_card_software.py")
+    assert sim["verdicts"] == {
+        "envelope_vs_8gb_floor": "PASS",
+        "decode_bound_vs_target_15": "PASS",
+        "load_vs_target_5s": "PASS",
+    }
+    assert sim["measured"]["decode_tok_s"] > 0
+    assert sim["measured"]["prefill_tok_s"] > 0
+    assert sim["projections"]["envelope_gb"] <= 8
+    assert len(sim["caveats"]) >= 3, "proxy limits must be stated, not implied"
+    assert any("Orin NX devkit" in c for c in sim["caveats"])
+
+
+def test_spec_provenance_and_projection_keys_are_complete() -> None:
+    """Every measured number must carry its source and recompute cleanly.
+
+    Guards against transcription drift: the GGUF source, the cross-check, the
+    envelope-others list, and the simulation projections must all exist and
+    agree with the performance budget they were derived from.
+    """
+    spec = _load_spec()
+    primary = spec["model_target"]["primary"]
+    budget = spec["performance_budget"]
+    sim = spec["host_proxy_simulation"]
+
+    assert primary["weights_gb_source"] == "src_google_gemma_memory"
+    assert spec["sources"][primary["weights_gb_source"]]["url"]
+    cross = primary["measured_cross_check"]
+    assert cross["gguf_q4_k_m_text_gib"] == 2.89
+    assert cross["source"] == "src_gemma4_webgpu"
+    assert spec["sources"][cross["source"]]["url"]
+
+    others = {item["id"]: item for item in spec["model_target"]["envelope_others"]}
+    assert others["google/gemma-4-E4B-it"]["weights_gb_q4_0"] == 4.5
+    assert others["gemma-4-12B-and-similar-<=12b-dense"]["weights_gb_q4_0"] == 6.7
+
+    assert spec["sources"]["src_hf_gguf"]["type"] == "manufacturer_artifact"
+    assert "huggingface.co" in spec["sources"]["src_hf_gguf"]["url"]
+
+    projections = sim["projections"]
+    assert (
+        projections["decode_file_stream_bound_tok_s"]
+        == budget["decode_tok_s"]["derived_e2b_q4_0_gguf_file_stream_range"]
+    )
+    assert (
+        projections["eta_needed_for_target"]
+        == budget["decode_tok_s"]["eta_needed_for_target_on_full_file"]
+    )
+    assert (
+        projections["envelope_gb"]
+        == spec["model_target"]["working_set_gb"]["e2b_q4_0_32k_gguf_measured"]
+    )
+    file_gb = primary["weights_gb_gguf_measured"]
+    payload_gbs = spec["host_interface"]["payload_gbs_each_direction"]
+    assert projections["load_from_host_s"] == round(file_gb / payload_gbs, 2) == 1.7

@@ -45,7 +45,9 @@ def _add_action_labels() -> list:
 
 class TestPixelAngelaMenu:
     def test_menu_definition_is_parseable(self):
-        ast.parse(SOURCE)
+        tree = ast.parse(SOURCE)
+        names = {node.name for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)}
+        assert "_init_tiered_menu" in names
 
     def test_every_advertised_action_is_connected(self):
         """An addAction without .triggered.connect(...) is a dead menu item.

@@ -10,13 +10,13 @@ from apps.backend.src.core.tracing.opentelemetry_middleware import (
 
 class TestOpenTelemetryMiddleware:
     def test_init_tracing_no_crash(self):
-        init_tracing(service_name="test-service")
+        assert init_tracing(service_name="test-service") is None
 
     def test_instrument_app_no_crash(self):
         class FakeApp:
             pass
 
-        instrument_app(FakeApp())
+        assert instrument_app(FakeApp()) is None
 
     def test_get_tracer_returns_none_if_unavailable(self):
         tracer = get_tracer("test")

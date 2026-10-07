@@ -30,7 +30,6 @@ import argparse
 import json
 import statistics
 import time
-from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import numpy as np
@@ -57,23 +56,20 @@ def find_gguf() -> Path:
     return candidates[0]
 
 
-def stream_bandwidth_gbs(threads: int = 6, per_thread_mb: int = 256, iters: int = 16) -> float:
-    """Multi-threaded read bandwidth: each thread streams its own src->dst copies (GIL released)."""
-    n = per_thread_mb * 1024 * 1024 // 8
-    srcs = [np.ones(n, dtype=np.float64) for _ in range(threads)]
-    dsts = [np.empty_like(a) for a in srcs]
+def stream_bandwidth_gbs(reps: int = 3) -> float:
+    """Single-thread read bandwidth: np.sum over a 128 MB array, median of `reps`.
 
-    def work(i: int) -> float:
-        for _ in range(iters):
-            np.copyto(dsts[i], srcs[i])
-        return float(dsts[i][0])
-
-    with ThreadPoolExecutor(max_workers=threads) as pool:
+    Deliberately single-threaded (and disclosed as such): this box's DRAM
+    configuration is unknown and Python-level threading adds GIL noise, so the
+    number is an anchor for the demand-product INFO line, not a gate.
+    """
+    arr = np.random.rand(128 * 1024 * 1024 // 8)  # 128 MB, > L3
+    rates = []
+    for _ in range(reps):
         t0 = time.perf_counter()
-        list(pool.map(work, range(threads)))
-        dt = time.perf_counter() - t0
-    read_bytes = threads * iters * srcs[0].nbytes
-    return read_bytes / dt / 1e9
+        float(np.sum(arr))
+        rates.append(arr.nbytes / (time.perf_counter() - t0) / 1e9)
+    return statistics.median(rates)
 
 
 def measure_llama(gguf: Path, n_threads: int, samples: int) -> dict:
@@ -87,15 +83,18 @@ def measure_llama(gguf: Path, n_threads: int, samples: int) -> dict:
     for _ in range(2):  # warmup: fault in weight pages, settle allocator
         list(llm(PROMPT, max_tokens=8, temperature=0.0, seed=42, stream=True))
     prefill_times, deltas, prompt_tokens = [], [], 0
-    for _ in range(samples):
+    for sample in range(samples):
+        # unique suffix defeats llama.cpp KV prefix reuse, so prefill is really measured
+        run_prompt = f"{PROMPT}\n(scene {sample + 1})"
+        prompt_tokens = len(llm.tokenize(run_prompt.encode("utf-8"), add_bos=True))
         t0 = time.perf_counter()
         times: list[float] = []
-        for _chunk in llm(PROMPT, max_tokens=MEASURE_TOKENS, temperature=0.0, seed=42, stream=True):
+        for _chunk in llm(
+            run_prompt, max_tokens=MEASURE_TOKENS, temperature=0.0, seed=42, stream=True
+        ):
             times.append(time.perf_counter() - t0)
         if len(times) < 8:
             raise RuntimeError(f"stream ended early ({len(times)} tokens)")
-        usage = llm.tokenize(PROMPT.encode("utf-8"), add_bos=True)
-        prompt_tokens = len(usage)
         prefill_times.append(times[0])
         run_deltas = [times[i + 1] - times[i] for i in range(len(times) - 1)]
         deltas.extend(run_deltas[1:-1])
@@ -118,7 +117,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--json", type=Path, default=None, help="write machine-readable results")
     parser.add_argument("--threads", type=int, default=6, help="physical cores on the i5-12400F")
-    parser.add_argument("--samples", type=int, default=2, help="differential timing repeats")
+    parser.add_argument("--samples", type=int, default=2, help="stream timing repeats")
     args = parser.parse_args()
 
     spec = yaml.safe_load(SPEC_PATH.read_text(encoding="utf-8"))
@@ -138,7 +137,7 @@ def main() -> int:
     bandwidth = spec["performance_budget"]["decode_assumptions"]["memory_bandwidth_gbs"]
 
     # ---- measured host numbers -------------------------------------------------
-    host_bw_gbs = stream_bandwidth_gbs(threads=args.threads)
+    host_bw_gbs = stream_bandwidth_gbs()
     llama = measure_llama(gguf, n_threads=args.threads, samples=args.samples)
 
     # ---- projections to the card ----------------------------------------------
@@ -148,7 +147,7 @@ def main() -> int:
         round(bandwidth * eta_max / file_gb, 1),
     ]
     eta_needed = round(target_decode * file_gb / bandwidth, 3)
-    ratio_projected = round(llama["decode_tok_s"] * bandwidth / host_bw_gbs, 1)
+    demand_gbs = round(llama["decode_tok_s"] * file_gb, 1)
     load_from_host_s = round(file_gb / payload_gbs, 2)
     load_from_nvme_s = round(file_gb / 1.6, 2)
     prefill_ideal = round(2 * 2.3e9 * 1000 / (50e12 * 0.4), 3)  # s/1K tokens at 0.4 MFU
@@ -178,10 +177,10 @@ def main() -> int:
             "pass": decode_bound[0] >= target_decode,
         },
         {
-            "item": "decode_host_ratio_projected",
-            "value": ratio_projected,
-            "unit": "tok/s",
-            "target": f"reference for {target_decode} (cpu-bound caveat)",
+            "item": "implied_stream_demand_vs_host_bw",
+            "value": demand_gbs,
+            "unit": "GB/s",
+            "target": f"vs host {host_bw_gbs:.1f} GB/s st-read (INFO: < = full-file streaming)",
             "pass": None,
         },
         {
@@ -216,7 +215,7 @@ def main() -> int:
         "projections": {
             "decode_file_stream_bound": decode_bound,
             "eta_needed_for_target": eta_needed,
-            "decode_host_ratio_projected": ratio_projected,
+            "implied_stream_demand_gbs": demand_gbs,
             "envelope_gb": round(envelope_gb, 2),
             "load_from_host_s": load_from_host_s,
             "prefill_ideal_s_per_1k": prefill_ideal,
@@ -228,7 +227,7 @@ def main() -> int:
     print("EDGE CARD HOST-PROXY SIMULATION (NOT L1 - x86 CPU, not Orin NX)")
     print("=" * 72)
     print(f"model           : {gguf.name} ({file_gb:.3f} GB)")
-    print(f"host bandwidth  : {host_bw_gbs:.1f} GB/s (mt-copy read, {args.threads} threads)")
+    print(f"host bandwidth  : {host_bw_gbs:.1f} GB/s (single-thread np.sum, 128MB)")
     print(
         f"prefill         : {llama['prefill_tok_s']:.1f} tok/s "
         f"({llama['prompt_tokens']} tokens, {llama['prefill_s']:.2f} s, n_threads={llama['n_threads']})"
@@ -236,7 +235,9 @@ def main() -> int:
     print(f"decode          : {llama['decode_tok_s']:.2f} tok/s (host CPU)")
     print(f"orin bound      : {decode_bound} tok/s (102.4 GB/s x eta[{eta_min},{eta_max}] / file)")
     print(f"eta needed      : {eta_needed}  (target {target_decode} tok/s on file streaming)")
-    print(f"ratio projected : {ratio_projected} tok/s (host tok/s scaled by 102.4/host_bw)")
+    print(
+        f"stream demand   : {demand_gbs} GB/s implied by host decode x file (vs host {host_bw_gbs:.1f})"
+    )
     print(f"envelope        : {file_gb:.2f} + {kv_gb} KV + {os_gb} OS = {envelope_gb:.2f} GB")
     print(f"load time       : {load_from_host_s} s over Gen4 x1 ({payload_gbs} GB/s)")
     print("-" * 72)

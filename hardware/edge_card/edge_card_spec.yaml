@@ -68,11 +68,11 @@ compute:
       passive+fan envelope this card commits to; spec caps the product at
       the 25W mode.
     module_input_voltage_v: [5, 20]
-    junction_temp_c: {min: -25, max: 105, slowdown: 99}
+    junction_temp_c: { min: -25, max: 105, slowdown: 99 }
   option_sku:
     part: NVIDIA-Jetson-Orin-NX-8GB
     same_carrier: true
-    int8_tops: {dense_maxn_25w: 35, sparse_maxn_25w: 70}
+    int8_tops: { dense_maxn_25w: 35, sparse_maxn_25w: 70 }
     memory_gb: 8
     memory_bandwidth_gbs: 102.4
   rejected_compute_candidates:
@@ -157,7 +157,7 @@ memory:
 storage:
   interface: M2-Key-M-2230
   bus: pcie-nvme-on-orin-c7-x2
-  capacity_gb: {min: 256, target: 512}
+  capacity_gb: { min: 256, target: 512 }
   holds: [jetson-linux-os, model-library, service-logs]
   recovery_path: USB-RCM (forced recovery), no SD socket on card
   boot: nvme-primary
@@ -183,11 +183,18 @@ model_target:
       mobile_qat: 1.1
       mobile_qat_text_only: 0.84
     weights_gb_source: src_google_gemma_memory
+    weights_gb_gguf_measured: 3.35
+    weights_gb_gguf_measured_note: >-
+      official google QAT Q4_0 GGUF file as stored on disk (3,349,516,256 B,
+      snapshot dated 2026-09-11); larger than the table's 2.9 GB because the
+      file also carries the multimodal towers (vision/audio) and metadata
+      that text-only decode does not stream per token. Envelope math below
+      uses the larger full-file number where marked conservative.
     measured_cross_check:
       gguf_q4_k_m_text_gib: 2.89
       note: independent measured text-only size agrees with the Google table order
       source: src_gemma4_webgpu
-  envelope_others:  # "等" from the product decision
+  envelope_others: # "等" from the product decision
     - id: google/gemma-4-E4B-it
       effective_params_b: 4.5
       weights_gb_q4_0: 4.5
@@ -209,14 +216,21 @@ model_target:
       5.7GB streamed per token drops decode below the15 tok/s target at
       102GB/s (see performance_budget), so SFP8 is a quality option, not
       the default.
-  working_set_gb:  # derived, re-checked by tests/unit/test_edge_card_spec.py
+  working_set_gb: # derived, re-checked by tests/unit/test_edge_card_spec.py
     formula: weights + kv_cache + os_reserve
-    kv_cache_budget_gb: {value: 1.5, context: 32K, precision: int8, basis: order-of-magnitude from Gemma 4 tech report Table 3 (+KV @32K); measure at L1}
+    kv_cache_budget_gb:
+      {
+        value: 1.5,
+        context: 32K,
+        precision: int8,
+        basis: order-of-magnitude from Gemma 4 tech report Table 3 (+KV @32K); measure at L1,
+      }
     os_reserve_gb: 1.0
     e2b_q4_0_32k: 5.4
+    e2b_q4_0_32k_gguf_measured: 5.85 # 3.35 full file + 1.5 KV + 1.0 OS (conservative)
     e4b_q4_0_32k: 7.0
     twelve_b_q4_0_32k: 9.2
-    fits_module_memory: {floor_8gb: e2b, baseline_16gb: [e2b, e4b, twelve_b-stretch]}
+    fits_module_memory: { floor_8gb: e2b, baseline_16gb: [e2b, e4b, twelve_b-stretch] }
 
 # =============================================================================
 # Performance budget (derived; targets measured at L1)
@@ -226,10 +240,12 @@ performance_budget:
     memory_bandwidth_gbs: 102.4
     stream_efficiency_range: [0.55, 0.65]
     stream_efficiency_basis: llama.cpp-class weight streaming on Jetson; assumption to validate at L1
-    e2b_q4_0_weights_read_gb: 2.4   # quantized weights (Google's 2.9 includes ~20% load overhead)
+    e2b_q4_0_weights_read_gb: 2.4 # quantized weights (Google's 2.9 includes ~20% load overhead)
     e2b_mobile_weights_read_gb: 1.1
   decode_tok_s:
-    derived_e2b_q4_0_range: [23.5, 27.7]   # 102.4 * eff / 2.4
+    derived_e2b_q4_0_range: [23.5, 27.7] # 102.4 * eff / 2.4 (active text weights)
+    derived_e2b_q4_0_gguf_file_stream_range: [16.8, 19.9] # 102.4 * eff / 3.35 (whole-file, conservative)
+    eta_needed_for_target_on_full_file: 0.491 # 15 tok/s needs eta >= 0.491 at file 3.35 GB
     target_e2b_q4_0_min: 15
     derived_e2b_mobile_range: [51.2, 60.5] # 102.4 * eff / 1.1
     target_e2b_mobile_min: 30
@@ -261,11 +277,12 @@ power_and_thermal:
     tdp_cap: 35
     cap_derivation: 25 + 3 + 2 + 5 = 35 <= 75 slot budget
   default_mode: 25W-MAXN
-  low_power_profile: {mode_w: 15, note: perf targets derate ~30%; same board, nvpmodel switch}
+  low_power_profile: { mode_w: 15, note: perf targets derate ~30%; same board, nvpmodel switch }
   cooling: single-slot-heatsink-plus-fan
   airflow_lfm_min_with_fan: 200
   sensors: [module-ina-power, module-thermal-zones, carrier-pmic-temp]
-  thermal_targets: {module_tj_max_c: 90, ambient_c: 40, steady_state: sustained-decode-without-throttle}
+  thermal_targets:
+    { module_tj_max_c: 90, ambient_c: 40, steady_state: sustained-decode-without-throttle }
   power_management: [nvpmodel-modes, thermal-throttle, watchdog, epflr-reset]
 
 # =============================================================================
@@ -448,8 +465,45 @@ sources:
     what: component selection rules (official source before selection, no price without quote, human approval before purchase)
     url: hardware/ai_compute_card/ai_compute_card_task.yaml
     type: internal_spec
+  src_hf_gguf:
+    what: official google QAT Q4_0 GGUF of gemma-4-E2B (file measured at 3.35 GB in local HF cache snapshot 675cff42)
+    url: https://huggingface.co/google/gemma-4-E2B-it-qat-q4_0-gguf
+    type: manufacturer_artifact
+host_proxy_simulation:
+  kind: host_proxy_not_l1
+  date: 2026-10-07
+  rerun: .venv/bin/python scripts/sim_edge_card_software.py --json out.json
+  source: scripts/sim_edge_card_software.py
+  host: Intel-i5-12400F-6P-cores / llama-cpp-python-0.3.35 / n_threads=6 / single-threaded DRAM anchor only
+  model: google/gemma-4-E2B-it QAT Q4_0 GGUF (local snapshot, 3.350 GB)
+  measured:
+    gguf_file_gb: 3.35
+    decode_tok_s: 13.19
+    prefill_tok_s: 905.2
+    prefill_prompt_tokens: 161
+    host_read_gbs_single_thread: 18.0
+    host_stream_demand_implied_gbs: 44.2 # decode tok/s x full file (upper-bound traffic model)
+  projections:
+    envelope_gb: 5.85
+    decode_file_stream_bound_tok_s: [16.8, 19.9]
+    eta_needed_for_target: 0.491
+    load_from_host_s: 1.7
+  verdicts:
+    envelope_vs_8gb_floor: PASS
+    decode_bound_vs_target_15: PASS
+    load_vs_target_5s: PASS
+  caveats:
+    - x86 CPU proxy only; L1 targets still require an Orin NX devkit
+    - host decode 13.19 tok/s exceeds what full-file streaming allows at the host's
+      single-thread-class bandwidth, so the active-text-weights model (~2.4 GB,
+      excludes vision/audio towers) is the better anchor; the full-file bound
+      [16.8, 19.9] is kept as the conservative floor
+    - prefill 905 tok/s is host-specific and NOT projected; the card's prefill
+      budget stays the Orin INT8 analytic bound (>= 800 tok/s target)
 explicit_non_claims:
-  - no measured performance numbers yet; decode/prefill figures are budgets with stated assumptions
+  - no measured performance numbers on the target hardware yet (host-proxy simulation
+    numbers exist above and are labelled as such); card decode/prefill figures remain
+    budgets with stated assumptions until L1 on an Orin NX devkit
   - no prices anywhere in this file (quote required by policy)
   - no physical board, no fabrication, no component order placed by this file
   - no answer or freeze of any angela_interface_freeze_packet pending_decision

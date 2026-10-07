@@ -45,16 +45,16 @@ class HardwareProfile:
             import psutil
 
             return float(psutil.virtual_memory().total / (1024**3))
-        except ImportError:
-            pass
+        except ImportError as e:
+            logger.debug(f"psutil unavailable, trying /proc/meminfo: {e}", exc_info=True)
         try:
             with open("/proc/meminfo", "r") as f:
                 for line in f:
                     if line.startswith("MemTotal"):
                         kb = int(line.split()[1])
                         return kb / (1024**2)
-        except (FileNotFoundError, ValueError):
-            pass
+        except (FileNotFoundError, ValueError) as e:
+            logger.debug(f"/proc/meminfo unavailable, using 4GB default: {e}", exc_info=True)
         return 4.0
 
     @staticmethod
@@ -152,8 +152,8 @@ class HardwareProfile:
                                             vram_mb = int(m2.group(1))
                                             result["gpu_memory_gb"] = round(vram_mb / 1024, 1)
                                             break
-                            except Exception:
-                                pass
+                            except Exception as e:
+                                logger.debug(f"glxinfo VRAM refinement failed: {e}", exc_info=True)
                             logger.debug(f"Detected Intel Arc via device ID {dev_id}: {result}")
                             return result
                     # Fallback: string match for Arc without device ID
@@ -172,8 +172,8 @@ class HardwareProfile:
                     result["gpu_vendor"] = "amd"
                     result["gpu_memory_gb"] = 8
                     return result
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"lspci -nn GPU detection failed: {e}", exc_info=True)
 
         # Legacy lspci without -nn (fallback)
         try:
@@ -190,8 +190,8 @@ class HardwareProfile:
                         result["gpu_memory_gb"] = 8
                     result["gpu_vendor"] = "intel"
                     return result
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"legacy lspci GPU detection failed: {e}", exc_info=True)
 
         # 3) glxinfo renderer + Video memory (Mesa - accurate VRAM)
         try:
@@ -232,8 +232,8 @@ class HardwareProfile:
                     result["gpu_vendor"] = "nvidia"
                 if result["gpu"]:
                     return result
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"glxinfo GPU detection failed: {e}", exc_info=True)
 
         # 4) /dev/dri existence (last resort)
         try:

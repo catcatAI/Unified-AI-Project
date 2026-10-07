@@ -79,10 +79,10 @@ class TestBlockCoordinator:
     def test_hebbian_update(self):
         engine = MockEngine()
         coord = BlockCoordinator(engine, "test")
-        coord.hebbian_update({"a": 1.0}, {"b": 1.0})
-        # No assertion needed, just verify no exception
+        assert coord.hebbian_update({"a": 1.0}, {"b": 1.0}) is None
+        assert coord.engine is engine
 
     def test_hebbian_update_no_engine(self):
         coord = BlockCoordinator(None, "test")
-        coord.hebbian_update({"a": 1.0}, {"b": 1.0})
-        # No assertion needed
+        assert coord.hebbian_update({"a": 1.0}, {"b": 1.0}) is None
+        assert coord.engine is None

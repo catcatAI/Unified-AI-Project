@@ -625,8 +625,8 @@ class Backbone:
                 try:
                     out[key] = res.info()
                     continue
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"training resource info() failed for {key}: {e}", exc_info=True)
             out[key] = {"mounted": wrapper.is_mounted()}
         return out
 
@@ -811,13 +811,13 @@ class Backbone:
         if self._mounts is not None:
             try:
                 self._mounts.clear()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"backbone clear mounts failed: {e}", exc_info=True)
         if self._pairs is not None:
             try:
                 self._pairs.clear()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"backbone clear pairs failed: {e}", exc_info=True)
         self._config_obj = None
         self._memory_registry = None
         self._translator = None
@@ -832,8 +832,8 @@ class Backbone:
         if self._dataset_registry is not None:
             try:
                 self._dataset_registry = None
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"backbone clear dataset registry failed: {e}", exc_info=True)
 
 
 # 全域單例

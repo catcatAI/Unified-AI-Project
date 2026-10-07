@@ -86,6 +86,9 @@ class TestCharacterDetection:
     def test_is_english_dominant_pure_cjk(self):
         assert not is_english_dominant("\u65e5\u672c\u8a9e")
 
+    def test_is_english_dominant_no_alpha_returns_true(self):
+        assert is_english_dominant("12345 !!!") is True
+
 
 class TestCjkRadical:
     def test_radical_known(self):
@@ -97,3 +100,9 @@ class TestCjkRadical:
 
     def test_radical_empty(self):
         assert cjk_radical("") == ""
+
+    def test_hira_to_kata_passthrough_for_non_hiragana(self):
+        from ai.core.unicode_utils import _hira_to_kata
+
+        assert _hira_to_kata("A") == "A"
+        assert _hira_to_kata("\u30a2") == "\u30a2"

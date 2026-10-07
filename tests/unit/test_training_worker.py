@@ -144,6 +144,7 @@ class TestTrainingWorker:
         await tc.start_training_worker(interval=0.01)
         await tc.stop_training_worker()
         await tc.stop_training_worker()
+        assert tc._worker_task is None
 
     @pytest.mark.asyncio
     async def test_dispatch_respects_priority_order(self):

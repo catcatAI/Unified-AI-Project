@@ -243,20 +243,19 @@ def cjk_radical(char: str) -> str:
     """
     if not char or not is_cjk(char):
         return ""
-    try:
-        name = unicodedata.name(char, "")
-        if "RADICAL" in name:
-            return name.split()[-1]
-        for part in name.split():
-            if part in ("KANGXI", "CJK"):
-                continue
-        if "\u2f00" <= char <= "\u2fd5":
-            return char
-        if name:
-            name = name.removeprefix("CJK UNIFIED IDEOGRAPH-")
-            name = name.removeprefix("CJK COMPATIBILITY IDEOGRAPH-")
-    except (ValueError, TypeError):
-        logger.debug("Failed to look up radical for character %s", char)
+    # NOTE: is_cjk() is true only for CJK Unified Ideographs (U+4E00-9FFF,
+    # U+3400-4DBF), whose unicodedata names are "CJK UNIFIED IDEOGRAPH-XXXX"
+    # and never contain "RADICAL". Kangxi radicals (U+2F00-2FD5) fail the
+    # is_cjk() guard above and return "" early, and unicodedata.name(char, "")
+    # with a default never raises, so the former RADICAL/Kangxi/except
+    # branches were unreachable dead code and have been removed.
+    name = unicodedata.name(char, "")
+    for part in name.split():
+        if part in ("KANGXI", "CJK"):
+            continue
+    if name:
+        name = name.removeprefix("CJK UNIFIED IDEOGRAPH-")
+        name = name.removeprefix("CJK COMPATIBILITY IDEOGRAPH-")
     return _RADICAL_TABLE.get(char, "")
 
 

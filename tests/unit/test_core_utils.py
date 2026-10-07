@@ -6,6 +6,10 @@ from typing import Any, Dict
 import pytest
 from core.utils import (
     Timer,
+    _match_cjk_kw,
+    _match_english_kw,
+    all_keywords,
+    any_keyword,
     chunk_list,
     deep_merge,
     extract_emails,
@@ -13,6 +17,7 @@ from core.utils import (
     format_duration,
     md5_hash,
     now_timestamp,
+    safe_error,
     safe_json_parse,
     sha256_hash,
     truncate_text,
@@ -176,3 +181,46 @@ class TestTimer:
     def test_timer_no_label(self):
         t = Timer()
         assert t.label == ""
+
+    def test_timer_with_label_logs_without_error(self):
+        with Timer("labelled") as t:
+            time.sleep(0.001)
+        assert t.elapsed >= 0
+
+
+class TestSafeError:
+    def test_strips_windows_and_unix_paths(self):
+        err = ValueError(r"C:\secret\file.txt and /etc/passwd failed")
+        msg = safe_error(err)
+        assert "C:\\secret" not in msg
+        assert "/etc/passwd" not in msg
+        assert "<path>" in msg
+
+    def test_redacts_long_tokens_and_truncates(self):
+        err = ValueError("key=" + "A" * 30 + " tail")
+        assert "<token>" in safe_error(err)
+        long_err = ValueError("word " * 100)
+        msg = safe_error(long_err, max_length=100)
+        assert len(msg) == 103
+        assert msg.endswith("...")
+
+
+class TestKeywordMatching:
+    def test_english_word_boundary(self):
+        assert _match_english_kw("the cat sat", "cat") is True
+        assert _match_english_kw("category theory", "cat") is False
+        assert _match_cjk_kw("自然語言處理", "語言") is True
+
+    def test_any_keyword_mixed(self):
+        assert any_keyword("the cat sat", ["dog", "cat"]) is True
+        assert any_keyword("category theory", ["cat"]) is False
+        assert any_keyword("自然語言", ["", "語言"]) is True
+        assert any_keyword("nothing here", ["dog", "語言"]) is False
+
+    def test_all_keywords_mixed(self):
+        assert all_keywords("the cat sat", ("cat", "sat")) is True
+        assert all_keywords("the cat sat", ("cat", "dog")) is False
+        assert all_keywords("自然語言處理", ("自然", "處理")) is True
+        assert all_keywords("自然語言", ("自然", "missing")) is False
+        assert all_keywords("自然語言", ("自然", "不存在")) is False
+        assert all_keywords("anything", ("",)) is True

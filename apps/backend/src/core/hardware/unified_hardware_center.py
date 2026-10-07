@@ -119,8 +119,8 @@ class HardwareDetector:
                             if line.startswith("model name"):
                                 cpu_name = line.split(":", 1)[-1].strip()
                                 break
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"/proc/cpuinfo read failed, using platform name: {e}", exc_info=True)
 
             # GPU mapping
             gpu_name = spec.get("gpu") or ""
@@ -148,8 +148,8 @@ class HardwareDetector:
                 total_mb = int(vm.total / 1024 / 1024)
                 avail_mb = int(vm.available / 1024 / 1024)
                 percent = vm.percent
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"psutil memory read failed, using spec values: {e}", exc_info=True)
 
             return HardwareProfile(
                 cpu=CPUInfo(
