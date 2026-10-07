@@ -17,7 +17,12 @@ Compare = Literal["ge", "le"]
 
 @dataclass(frozen=True)
 class Fact:
-    """一條待裁決的事實。"""
+    """一條待裁決的事實。
+
+    `tol` 為絕對容差（浮點重算抖動用）：ge 判 `value >= target - tol`，
+    le 判 `value <= target + tol`。預設 0，與既有行為一致。
+    `measured_at` 為 ISO 日期（`YYYY-MM-DD`）或空字串（未知即不判過期）。
+    """
 
     id: str
     value: float
@@ -27,6 +32,8 @@ class Fact:
     source: str = ""
     evidence: str = ""
     must_pass: bool = True
+    tol: float = 0.0
+    measured_at: str = ""
     extra: Any = None
 
 

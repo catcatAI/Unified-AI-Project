@@ -89,6 +89,15 @@ class TestComparisons:
         with pytest.raises(ValueError, match="unknown compare"):
             adjudicate([Fact("bad", 1.0, 2.0, "gt")])  # type: ignore[arg-type]
 
+    def test_tolerance_bridges_float_jitter(self) -> None:
+        assert adjudicate([Fact("ge", 14.999, 15.0, "ge", tol=0.01)]).ok is True
+        assert adjudicate([Fact("ge", 14.9, 15.0, "ge", tol=0.01)]).ok is False
+        assert adjudicate([Fact("le", 8.001, 8.0, "le", tol=0.01)]).ok is True
+        assert adjudicate([Fact("le", 8.1, 8.0, "le", tol=0.01)]).ok is False
+
+    def test_default_tolerance_is_zero(self) -> None:
+        assert Fact("a", 1.0, 1.0, "ge").tol == 0.0
+
 
 class TestFirstChainEdgeCardEnvelope:
     """首條鏈：edge 卡 envelope 三 verdict 經解讀器重裁（數值同 spec 測試）。"""
@@ -276,3 +285,106 @@ class TestMissingSegments:
 
         report = adjudicate([Fact("a", 1.0, 1.0, "ge")])
         assert missing_segments(report, ["rendered"]) == ["rendered"]
+
+
+class TestMergeReports:
+    """多報告合併為單一全倉裁決（組合面）。"""
+
+    def test_merge_preserves_order_and_ok(self) -> None:
+        from core.facts import adjudicate, merge_reports
+
+        widths = adjudicate([Fact("w", 2.0, 1.0, "ge")])
+        heights = adjudicate([Fact("h", 0.0, 1.0, "ge")])
+        merged = merge_reports(widths, heights)
+        assert [v.id for v in merged.verdicts] == ["w", "h"]
+        assert merged.ok is False
+        assert [v.id for v in merged.failed] == ["h"]
+
+    def test_merge_empty_is_not_ok(self) -> None:
+        from core.facts import merge_reports
+
+        assert merge_reports().ok is False
+
+
+class TestSimVerdictsAdapter:
+    """第四形狀收斂：sim 腳本 `--json` 輸出轉錄（含 INFO 與髒輸入）。"""
+
+    def _results(self) -> dict:
+        return {
+            "verdicts": [
+                {
+                    "item": "envelope_vs_8gb_floor",
+                    "value": 5.85,
+                    "unit": "GB",
+                    "target": "<= 8 GB floor SKU",
+                    "pass": True,
+                },
+                {
+                    "item": "decode_host_ratio_projected",
+                    "value": 44.2,
+                    "unit": "GB/s",
+                    "target": "INFO",
+                    "pass": None,
+                },
+                {
+                    "item": "load_vs_target_5s",
+                    "value": 9.9,
+                    "unit": "s",
+                    "target": "<= 5 s",
+                    "pass": False,
+                },
+            ]
+        }
+
+    def test_transcribes_without_recomputing(self) -> None:
+        from core.facts import from_sim_verdicts
+
+        report = from_sim_verdicts(self._results())
+        assert [v.id for v in report.verdicts] == [
+            "envelope_vs_8gb_floor",
+            "decode_host_ratio_projected",
+            "load_vs_target_5s",
+        ]
+        assert report.verdicts[0].passed is True
+        assert report.verdicts[1].status == "INFO"
+        assert report.verdicts[2].passed is False
+        assert report.ok is False
+        assert "5.85 GB" in report.verdicts[0].evidence
+
+    def test_dirty_inputs_do_not_break_adjudication(self) -> None:
+        from core.facts import from_sim_verdicts
+
+        assert from_sim_verdicts({}).verdicts == []
+        assert from_sim_verdicts({"verdicts": "nope"}).verdicts == []
+        report = from_sim_verdicts({"verdicts": ["nope", {"item": "x", "value": "abc"}]})
+        assert len(report.verdicts) == 1
+        assert report.verdicts[0].value == 0.0
+
+
+class TestStaleness:
+    """時間面：量測新鮮度（判新鮮，不判對錯）。"""
+
+    def test_fresh_and_stale_split(self) -> None:
+        from core.facts import stale_facts
+
+        facts = [
+            Fact("fresh", 1.0, 1.0, "ge", measured_at="2026-10-01"),
+            Fact("old", 1.0, 1.0, "ge", measured_at="2026-08-01"),
+            Fact("unknown", 1.0, 1.0, "ge"),
+        ]
+        assert stale_facts(facts, 30, "2026-10-07") == ["old"]
+        assert stale_facts(facts, 90, "2026-10-07") == []
+
+    def test_bad_dates_fail_closed_or_flagged(self) -> None:
+        from core.facts import stale_facts
+
+        with pytest.raises(ValueError, match="bad today"):
+            stale_facts([], 30, "not-a-date")
+        flagged = stale_facts([Fact("bad", 1.0, 1.0, "ge", measured_at="nope")], 30, "2026-10-07")
+        assert flagged == ["bad"]
+
+    def test_negative_budget_disables_check(self) -> None:
+        from core.facts import stale_facts
+
+        facts = [Fact("old", 1.0, 1.0, "ge", measured_at="2020-01-01")]
+        assert stale_facts(facts, -1, "2026-10-07") == []

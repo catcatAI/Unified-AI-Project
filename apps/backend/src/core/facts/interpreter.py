@@ -64,9 +64,9 @@ def _evaluate(fact: Fact) -> Verdict:
             evidence=fact.evidence,
         )
     if fact.compare == "ge":
-        passed: Optional[bool] = fact.value >= fact.target
+        passed: Optional[bool] = fact.value >= fact.target - fact.tol
     elif fact.compare == "le":
-        passed = fact.value <= fact.target
+        passed = fact.value <= fact.target + fact.tol
     else:
         raise ValueError(f"unknown compare for fact {fact.id!r}: {fact.compare!r}")
     return Verdict(
@@ -118,6 +118,17 @@ def mark_info(fact: Fact) -> Fact:
     return replace(fact, must_pass=False)
 
 
+def merge_reports(*reports: Report) -> Report:
+    """合併多個 verdict 向量為單一全倉裁決（gate + audit + edge 三合一）。
+
+    順序即參數順序；空集合回傳空 Report（`ok` 為 False，不謊報全綠）。
+    """
+    merged = Report()
+    for report in reports:
+        merged.verdicts.extend(report.verdicts)
+    return merged
+
+
 def missing_segments(report: Report, expected: Sequence[str]) -> List[str]:
     """列出 verdict 向量缺席的鏈段（鏈缺段即判定不完整）。
 
@@ -126,3 +137,30 @@ def missing_segments(report: Report, expected: Sequence[str]) -> List[str]:
     """
     present = {v.segment for v in report.verdicts if v.segment}
     return [seg for seg in expected if seg not in present]
+
+
+def stale_facts(facts: Sequence[Fact], max_age_days: int, today: str) -> List[str]:
+    """列出量測過期的事實 id（量測會腐爛，判新鮮度不判對錯）。
+
+    `today` 與 `measured_at` 皆為 ISO 日期（`YYYY-MM-DD`）；`measured_at`
+    為空表未知、不列入；`max_age_days` 為負表不過期檢查。純函數，`today`
+    由呼叫方注入以保證確定性。回傳過期 id 清單（空表全新鮮）。
+    """
+    from datetime import date as _date
+
+    try:
+        current = _date.fromisoformat(today)
+    except ValueError:
+        raise ValueError(f"bad today for staleness check: {today!r}")
+    stale: List[str] = []
+    for fact in facts:
+        if not fact.measured_at:
+            continue
+        try:
+            measured = _date.fromisoformat(fact.measured_at)
+        except ValueError:
+            stale.append(fact.id)
+            continue
+        if max_age_days >= 0 and (current - measured).days > max_age_days:
+            stale.append(fact.id)
+    return stale

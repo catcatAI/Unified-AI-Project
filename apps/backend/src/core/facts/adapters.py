@@ -17,6 +17,14 @@ from .interpreter import Report
 from .schema import Verdict
 
 
+def _to_float(value: Any) -> float:
+    """寬容轉數值：sim 腳本保證數字，髒輸入記 0.0 不炸門。"""
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.0
+
+
 def from_gate_report(report: GateReport) -> Report:
     """把 CIM gate 報告轉成事實 verdict 向量（順序、ok 語義保留）。"""
     out = Report()
@@ -75,4 +83,35 @@ def from_audit_corrections(corrections: Sequence[Mapping[str, Any]]) -> Report:
             evidence=f"{blocking} blocking corrections",
         )
     )
+    return out
+
+
+def from_sim_verdicts(results: Mapping[str, Any]) -> Report:
+    """把 host-proxy sim 腳本的 `--json` 輸出轉成 verdict 向量（第四形狀收斂）。
+
+    sim 的 verdict 形狀 `{item, value, unit, target(人類字串), pass}` 中，
+    `pass` 已是腳本算好的判定（含 None=INFO），此處忠實轉錄不重算；
+    數值進 value，`target` 人類字串進 evidence（Verdict.target 放 0.0 佔位）。
+    """
+    out = Report()
+    verdicts = results.get("verdicts", [])
+    if not isinstance(verdicts, list):
+        return out
+    for item in verdicts:
+        if not isinstance(item, Mapping):
+            continue
+        passed = item.get("pass", None)
+        if passed is not None:
+            passed = bool(passed)
+        out.add(
+            Verdict(
+                id=str(item.get("item", "unnamed_sim_verdict")),
+                passed=passed,
+                value=_to_float(item.get("value", 0.0)),
+                target=0.0,
+                unit=str(item.get("unit", "")),
+                source="sim_edge_card_software",
+                evidence=f"{item.get('value', '?')} {item.get('unit', '')} | target: {item.get('target', '?')}",
+            )
+        )
     return out
