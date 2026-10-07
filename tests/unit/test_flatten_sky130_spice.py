@@ -17,7 +17,6 @@ import sys
 from pathlib import Path
 
 import pytest
-
 from ai.hardware.flatten_sky130_spice import (
     collapse_monte_carlo,
     flatten,
@@ -192,8 +191,7 @@ def test_flatten_drops_subckt_wrappers_wholesale(tmp_path: Path) -> None:
     models.write_text(
         ".subckt sky130_fd_pr__nfet_01v8 d g s b\n"
         "m1 d g s b sky130_fd_pr__nfet_01v8__model l={l} w={w} ad={ad}\n"
-        ".ends\n"
-        + MODEL_FILE,
+        ".ends\n" + MODEL_FILE,
         encoding="utf-8",
     )
 

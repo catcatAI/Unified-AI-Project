@@ -12,9 +12,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 import ai.hardware.ai_card_reference as ai_card_reference
+import pytest
 from ai.hardware.ai_card_reference import AiCardReferenceConfig, AiCardReferenceModel
 
 # -----------------------------------------------------------------------------
@@ -80,9 +79,7 @@ def test_config_defaults_the_cache_partition_map() -> None:
 def test_cache_report_rejects_a_negative_partition() -> None:
     import dataclasses
 
-    config = dataclasses.replace(
-        AiCardReferenceConfig(), cache_partitions_mb={"activation": -1}
-    )
+    config = dataclasses.replace(AiCardReferenceConfig(), cache_partitions_mb={"activation": -1})
     with pytest.raises(ValueError, match="non-negative"):
         AiCardReferenceModel(config).cache_report()
 
@@ -251,7 +248,9 @@ def test_config_rejects_mismatched_secondary_update_partitions() -> None:
 
     base = AiCardReferenceConfig()
     # 32 weight_update_width_bits = 8 partitions * 4 bits/partition
-    with pytest.raises(ValueError, match="secondary update partitions must exactly cover the update bus"):
+    with pytest.raises(
+        ValueError, match="secondary update partitions must exactly cover the update bus"
+    ):
         dataclasses.replace(
             base,
             weight_update_width_bits=32,
@@ -276,3 +275,16 @@ def test_simulate_dma_rejects_negative_credits() -> None:
     model = AiCardReferenceModel()
     with pytest.raises(ValueError, match="DMA credit limit must be positive"):
         model.simulate_dma(tile_count=1, credits=-1)
+
+
+def test_pcie_effective_gbps_raises_when_uninitialized() -> None:
+    """The pcie_effective_gbps guard must be able to fire, not just pass.
+
+    __post_init__ always derives the bandwidth, so the None branch is only
+    reachable by clearing the field after construction (e.g. a partially
+    unpickled config). Pin it so the defensive raise cannot silently vanish.
+    """
+    config = AiCardReferenceConfig()
+    object.__setattr__(config, "pcie_effective_gbps_each_direction", None)
+    with pytest.raises(RuntimeError, match="was not initialized"):
+        _ = config.pcie_effective_gbps

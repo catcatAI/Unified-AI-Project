@@ -11,7 +11,6 @@ that depend on a feasible operating point existing.
 from __future__ import annotations
 
 import pytest
-
 from ai.hardware.card_architecture_audit import (
     ClaimedArchitecture,
     audit,
@@ -74,3 +73,36 @@ def test_audit_does_not_invent_an_area_correction_when_density_is_measured() -> 
     # The draft claims literature density, so this correction MUST be present;
     # flipping the claim to measured density must make the branch a no-op.
     assert "area_conclusions_rest_on_literature_density" in correction_ids
+
+
+def test_audit_omits_area_correction_when_densities_are_measured(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The area pass branch must be taken when nothing rests on literature.
+
+    die_area_budget reports area_rests_on_unmeasured_density=False only when
+    both SRAM and digital densities are measured in this repository. The
+    defaults are bound at def time, so patch die_area_budget itself to return
+    the measured area and drive audit() through the `pass` branch.
+    """
+    import ai.hardware.card_architecture_audit as audit_module
+    from ai.hardware.card_architecture_audit import Density, die_area_budget
+
+    measured_sram = Density(
+        um2_per_element=0.127,
+        provenance="test-measured",
+        measured_in_this_repository=True,
+    )
+    measured_digital = Density(
+        um2_per_element=0.30,
+        provenance="test-measured",
+        measured_in_this_repository=True,
+    )
+    measured_area = die_area_budget(
+        ClaimedArchitecture(), sram=measured_sram, digital=measured_digital
+    )
+    assert measured_area["area_rests_on_unmeasured_density"] is False
+    monkeypatch.setattr(audit_module, "die_area_budget", lambda claimed, *a, **k: measured_area)
+    result = audit(ClaimedArchitecture())
+    correction_ids = {item["id"] for item in result["corrections"]}
+    assert "area_conclusions_rest_on_literature_density" not in correction_ids

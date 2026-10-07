@@ -1,0 +1,456 @@
+schema_version: edge-card-spec/1
+status: draft_awaiting_acceptance_check
+owner: angela
+retrieved_at: null
+purpose: >-
+  Board-level specification for the small compute card (小計算卡): a
+  slot-powered PCIe Gen4 x1 endpoint that runs Gemma 4 E2B-class multimodal
+  LLMs on-card. Product decision requested and locked by the user
+  (2026-10-07); all remaining choices below were made by angela under the
+  same delegation ("其他你能決定的你定"). This file is the spec of record
+  for the edge_card subsystem; component ordering and physical fabrication
+  still require human approval.
+relationship_to_ai_compute_card:
+  line: sibling_product_line
+  detail: >-
+    hardware/ai_compute_card is the long-term self-developed-silicon program
+    (CIM dies, 16384b fabric, 300W FHFL card). This edge card is a near-term
+    product built from purchased compute silicon; it does not consume
+    angela_interface_freeze_packet contracts and none of the ten
+    pending_decisions are answered or frozen by this file.
+  out_of_scope_for: angela_interface_freeze_packet
+  shared_conventions:
+    - acceptance_levels_style
+    - component_selection_requires_official_sources
+    - no_price_claim_without_quote
+
+# =============================================================================
+# Product decision (locked)
+# =============================================================================
+product_decision:
+  decision_date: 2026-10-07
+  decided_by: user
+  form_factor: pcie_add_in_card
+  host_link: PCIe-Gen4-x1-endpoint
+  headline_workload: google/gemma-4-E2B-it and equivalents (see model_target)
+  delegated_choices:
+    decided_by: angela
+    items:
+      - compute module = NVIDIA Jetson Orin NX 16GB (8GB SKU option)
+      - module power capped at 25W (MAXN); board TDP cap 35W; slot-powered only
+      - on-card OS + inference service; host is a client, not the runner
+      - primary quantization Q4_0 / mobile QAT (SFP8 supported, not targeted)
+      - single-slot active cooling; full-height bracket primary, low-profile bracket in box
+      - default context 32K tokens (128K capability reserved to the 16GB SKU)
+
+# =============================================================================
+# Compute
+# =============================================================================
+compute:
+  module:
+    part: NVIDIA-Jetson-Orin-NX-16GB
+    module_size_mm: [69.6, 45.0]
+    connector: SO-DIMM-260
+    cpu: 6x Arm Cortex-A78AE v8.2
+    gpu: Ampere-1024-CUDA-32-TensorCore
+    int8_tops:
+      dense_maxn_25w: 50
+      sparse_maxn_25w: 100
+      dense_maxn_super_40w: 78
+      sparse_maxn_super_40w: 157
+    memory_gb: 16
+    memory_type: LPDDR5-128bit
+    memory_bandwidth_gbs: 102.4
+    supported_power_modes_w: [10, 15, 25, 40]
+    selected_default_mode_w: 25
+    maxn_super_out_of_scope_reason: >-
+      40W MAXN_SUPER needs >=8V VDD_IN and cooling beyond the single-slot
+      passive+fan envelope this card commits to; spec caps the product at
+      the 25W mode.
+    module_input_voltage_v: [5, 20]
+    junction_temp_c: {min: -25, max: 105, slowdown: 99}
+  option_sku:
+    part: NVIDIA-Jetson-Orin-NX-8GB
+    same_carrier: true
+    int8_tops: {dense_maxn_25w: 35, sparse_maxn_25w: 70}
+    memory_gb: 8
+    memory_bandwidth_gbs: 102.4
+  rejected_compute_candidates:
+    - id: jetson-orin-nano-8gb
+      reason: >-
+        PCIe speed ceiling is Gen3, not Gen4. The Orin Nano Series Modules
+        Data Sheet v1.7 (2026-02-20) corrected earlier Gen4 references:
+        "Jetson Orin Nano series modules support up to Gen3 data transfer
+        rates". The product decision names PCIe4, so Nano is out even though
+        it is cheaper and has a documented endpoint mode.
+      source: src_orin_nano_ds
+    - id: discrete-gpu-low-end
+      reason: >-
+        Commercial GPU cost and vendor-locked software stack (same rationale
+        recorded in component_registry.yaml for reference accelerators);
+        buys no design ownership for this project.
+      source: src_component_registry
+    - id: fpga-path-agilex-versal
+      reason: >-
+        Registered in component_registry as prototype_fpga_path only: no
+        turnkey LLM runtime, multi-year enablement. Revisit when the
+        self-developed MVU/CIM line needs a pre-silicon carrier, not for
+        this product.
+      source: src_component_registry
+    - id: hailo-or-other-edge-npu
+      reason: >-
+        Not carried to selection: would need a datasheet round proving
+        Gen4-capable PCIe endpoint mode plus a mature LLM runtime; none
+        verified against component selection_policy sources yet.
+      source: src_selection_policy
+
+# =============================================================================
+# Host interface
+# =============================================================================
+host_interface:
+  connector: pcie_edge_x1
+  gen: 4.0
+  lanes: 1
+  signaling_rate_gbps_per_lane: 16
+  payload_encoding: 128b/130b
+  payload_gbps_each_direction: 15.754
+  payload_gbs_each_direction: 1.969
+  payload_derivation: 16 GT/s * 128/130 / 8 bits_per_byte = 1.969231 GB/s
+  achievable_dma_gbs_each_direction_min: 1.6
+  achievable_basis: ">=85% TLP efficiency typical; to be measured at L3"
+  endpoint_mechanism:
+    controller: orin-pcie-c4
+    controller_properties: up-to-x4-dual-mode-root-port-or-endpoint
+    module_speed_cap: gen4
+    lane_routing: >-
+      C4 lane0 only is routed to the x1 edge fingers (lanes1-3 NC on card).
+      Width negotiation is standard PCIe: an x4-capable endpoint in an x1
+      slot trains x1, same as any commercial x4 card in an x1 slot.
+    ep_activation: >-
+      Software-activated after boot on Jetson Linux (echo 1 > controllers/
+      14160000.pcie-ep/start) with ODMDATA hsio-uphy-config-41.
+    flr: required
+    msi: required
+    iommu_compatibility: required-for-host-driver
+  host_visible_channel:
+    description: >-
+      Vendor-specific endpoint function (BAR0 control mailbox + doorbell +
+      MSI; payload via DMA ring buffers in host memory). NVIDIA's shipped
+      pci-epf-dma-test is explicitly a trivial demonstration driver; the
+      production endpoint function driver is our L3 deliverable.
+    protocol_spec_status: separate_freeze_work_item
+  model_load_paths:
+    host_to_card_gbs: 1.6
+    e2b_q4_0_load_seconds_from_host_max: 5
+    on_card_nvme: preferred (weights + OS on M.2, loaded to LPDDR5 at service start)
+
+# =============================================================================
+# Memory & storage
+# =============================================================================
+memory:
+  module_lpddr5_gb: 16
+  role: card_L2_equivalent_purchased_memory
+  hierarchy_note: >-
+    die_l1/card_l2/host_l3 labels of ai_compute_card do not map onto this
+    single-SoC card; there is no self-developed die. The module LPDDR5 is the
+    only working memory and the M.2 NVMe is capacity, not cache.
+storage:
+  interface: M2-Key-M-2230
+  bus: pcie-nvme-on-orin-c7-x2
+  capacity_gb: {min: 256, target: 512}
+  holds: [jetson-linux-os, model-library, service-logs]
+  recovery_path: USB-RCM (forced recovery), no SD socket on card
+  boot: nvme-primary
+
+# =============================================================================
+# Model target & envelope
+# =============================================================================
+model_target:
+  primary:
+    id: google/gemma-4-E2B-it
+    released: 2026-04-02
+    license: Apache-2.0
+    effective_params_b: 2.3
+    dense: true
+    context_native: 128K
+    context_card_default: 32K
+    multimodal: [image-in, text-out]
+    extras: [mtp-draft-model-for-speculative-decoding, per-layer-embeddings, vocab-262144]
+    weights_gb:
+      bf16: 11.4
+      sfp8: 5.7
+      q4_0: 2.9
+      mobile_qat: 1.1
+      mobile_qat_text_only: 0.84
+    weights_gb_source: src_google_gemma_memory
+    measured_cross_check:
+      gguf_q4_k_m_text_gib: 2.89
+      note: independent measured text-only size agrees with the Google table order
+      source: src_gemma4_webgpu
+  envelope_others:  # "等" from the product decision
+    - id: google/gemma-4-E4B-it
+      effective_params_b: 4.5
+      weights_gb_q4_0: 4.5
+      fits: baseline-16GB-sku
+      source: src_google_gemma_memory
+    - id: gemma-4-12B-and-similar-<=12b-dense
+      weights_gb_q4_0: 6.7
+      fits: stretch-goal-16gb-sku-at-32k
+      source: src_google_gemma_memory
+  excluded_by_size:
+    - id: gemma-4-26B-A4B
+      weights_gb_q4_0: 14.4
+      why: exceeds 16GB working-set envelope with KV; out of card scope
+      source: src_google_gemma_memory
+  quantization_policy:
+    primary_formats: [Q4_0, mobile-QAT]
+    supported_not_targeted: [SFP8]
+    reason_sfp8_not_targeted: >-
+      5.7GB streamed per token drops decode below the15 tok/s target at
+      102GB/s (see performance_budget), so SFP8 is a quality option, not
+      the default.
+  working_set_gb:  # derived, re-checked by tests/unit/test_edge_card_spec.py
+    formula: weights + kv_cache + os_reserve
+    kv_cache_budget_gb: {value: 1.5, context: 32K, precision: int8, basis: order-of-magnitude from Gemma 4 tech report Table 3 (+KV @32K); measure at L1}
+    os_reserve_gb: 1.0
+    e2b_q4_0_32k: 5.4
+    e4b_q4_0_32k: 7.0
+    twelve_b_q4_0_32k: 9.2
+    fits_module_memory: {floor_8gb: e2b, baseline_16gb: [e2b, e4b, twelve_b-stretch]}
+
+# =============================================================================
+# Performance budget (derived; targets measured at L1)
+# =============================================================================
+performance_budget:
+  decode_assumptions:
+    memory_bandwidth_gbs: 102.4
+    stream_efficiency_range: [0.55, 0.65]
+    stream_efficiency_basis: llama.cpp-class weight streaming on Jetson; assumption to validate at L1
+    e2b_q4_0_weights_read_gb: 2.4   # quantized weights (Google's 2.9 includes ~20% load overhead)
+    e2b_mobile_weights_read_gb: 1.1
+  decode_tok_s:
+    derived_e2b_q4_0_range: [23.5, 27.7]   # 102.4 * eff / 2.4
+    target_e2b_q4_0_min: 15
+    derived_e2b_mobile_range: [51.2, 60.5] # 102.4 * eff / 1.1
+    target_e2b_mobile_min: 30
+    target_basis: derived floor minus KV/sampling/serving overhead; measure at L1
+  prefill_tok_s:
+    derived_1k_tokens_note: >-
+      ~2 * 2.3e9 * 1000 = 4.6 TFLOP/1K tokens plus PLE/attention overhead;
+      at 50 dense INT8 TOPS with 0.4 MFU -> ~0.23s -> ~4300 tok/s ideal.
+    target_e2b_min: 800
+    target_basis: conservative floor for long-context prefill incl. memory-bound attention; measure at L1
+  host_link:
+    cold_load_e2b_q4_0_from_host_s_max: 5
+    steady_state_host_traffic: token stream + control only (tokens are bytes-scale)
+
+# =============================================================================
+# Power & thermal
+# =============================================================================
+power_and_thermal:
+  slot_power:
+    connector: pcie-slot-12v
+    auxiliary_connector: none
+    slot_available_12v_w: 75
+    slot_3v3_available_w: 75
+  board_budget_w:
+    module_maxn: 25
+    m2_nvme: 3
+    fan: 2
+    rails_and_conversion_overhead: 5
+    tdp_cap: 35
+    cap_derivation: 25 + 3 + 2 + 5 = 35 <= 75 slot budget
+  default_mode: 25W-MAXN
+  low_power_profile: {mode_w: 15, note: perf targets derate ~30%; same board, nvpmodel switch}
+  cooling: single-slot-heatsink-plus-fan
+  airflow_lfm_min_with_fan: 200
+  sensors: [module-ina-power, module-thermal-zones, carrier-pmic-temp]
+  thermal_targets: {module_tj_max_c: 90, ambient_c: 40, steady_state: sustained-decode-without-throttle}
+  power_management: [nvpmodel-modes, thermal-throttle, watchdog, epflr-reset]
+
+# =============================================================================
+# Mechanical
+# =============================================================================
+mechanical:
+  bracket_full_height: primary (ships with card)
+  bracket_low_profile: included-in-box (same PCB, cut to low-profile height)
+  pcb_height_mm_max: 64.4
+  pcb_length_mm_max: 170
+  slots_occupied: 1
+  component_height_mm_max: 17
+  stack: [so-dimm-module-horizontal, m2-2230-horizontal, fin-stack-with-40mm-fan]
+  module_thermal_interface: module-top-plate-to-heatsink per Jetson thermal design guide
+  keepouts: [pcie-finger-keepout, bracket-air-exit]
+
+# =============================================================================
+# Software
+# =============================================================================
+software:
+  card_side:
+    os: Jetson-Linux-L4T-with-pcie-endpoint-support-r36_5+
+    boot: uefi-or-cboot-from-nvme
+    endpoint_driver: custom-pci-epf-vendor-function (mailbox+dma+msi)
+    inference_runtime_primary: llama.cpp-cuda
+    inference_runtime_candidate: tensorrt-llm
+    service: openai-compatible-token-streaming-api-over-shared-memory-queues
+    model_management: [pull-from-host-over-pcie, load-from-nvme, hot-reload]
+  host_side:
+    driver: linux-mbox-driver-first
+    clients: [cli, python-sdk]
+    windows_host: deferred (open item)
+  validation_note: >-
+    L1 software numbers are produced on an Orin NX devkit (same module) before
+    any carrier fabrication; devkit cannot exercise the x1 edge or the custom
+    endpoint function (those are L3/L4 on real silicon).
+
+# =============================================================================
+# Acceptance levels (style mirrors ai_compute_card_task.yaml)
+# =============================================================================
+acceptance_levels:
+  L0: specification_and_interface_contract
+  L1: software_validation_on_devkit
+  L2: carrier_schematic_power_thermal_and_mechanical_analysis
+  L3: endpoint_driver_and_host_link_validation
+  L4: board_validation_sustained_workload
+current_target: L0_spec_review_then_L1_development_kit_validation
+acceptance:
+  L0:
+    - all_links_have_units_encoding_and_derived_bandwidth
+    - model_target_carries_sources_and_working_set_fits_module_memory
+    - every_requirement_has_an_owner_and_evidence_target
+    - rejected_candidates_record_why
+  L1:
+    - gemma4_e2b_q4_0_decode_ge_target_on_devkit_25w_mode
+    - gemma4_e2b_prefill_ge_target_at_4k_context
+    - working_set_and_kv_fit_within_module_memory_at_32k
+    - no_price_or_throughput_claim_presented_as_measured
+  L2:
+    - kicad_can_produce_pcb_drc_and_gerber
+    - power_tree_efficiency_and_35w_cap_verified_by_analysis
+    - single_slot_thermal_solution_verified_at_40c_ambient_200lfm
+    - no_physical_board_required
+  L3:
+    - gen4_x1_link_trains_and_dma_ge_1_6gbs_each_direction
+    - mailbox_protocol_conformance_and_msi_under_load
+    - flr_reset_recovers_endpoint_without_host_reboot
+    - uphy_c4_ep_and_c7_nvme_run_concurrently (open risk, see open_items)
+  L4:
+    - board_power_within_35w_and_module_tj_within_90c_sustained_24h
+    - decode_and_prefill_targets_met_on_card_end_to_end
+    - host_token_streaming_meets_latency_budget
+component_selection_policy:
+  selection_owner: angela
+  entries_follow: hardware/ai_compute_card/component_registry.yaml rules
+  do_not_purchase_without_human_approval: true
+  price_status_default: quote_required
+human_approval_required_for:
+  - component_ordering
+  - physical_fabrication
+  - carrier_pcb_fab_and_assembly
+
+# =============================================================================
+# Open items (blocking or carry-risk)
+# =============================================================================
+open_items:
+  - id: uphy_concurrency
+    risk: high
+    blocks: L3
+    question: >-
+      Does hsio-uphy-config-41 leave C7 (x2, on-card NVMe) usable while C4
+      runs endpoint mode? Devkit precedent runs C4+C7 as root ports
+      together, but the endpoint ODMDATA path is documented for C4 alone.
+      Fallback: boot from USB-storage or shrink to C9 x1 NVMe if legal.
+  - id: c4_ep_link_speed
+    risk: medium
+    blocks: L3
+    question: Confirm C4 endpoint trains Gen4 x1 on the carrier (docs state
+      Orin NX supports up to Gen4; per-mode speed at EP to be measured).
+  - id: vdd_in_wiring
+    risk: low
+    blocks: L2
+    question: >-
+      Feed VDD_IN directly from slot 12V (in-range 5-20V per Orin NX data
+      sheet); strap MODULE_ID correctly so the module is not forced into the
+      legacy 5V-only behavior (Product Design Guide DG-10931-001).
+  - id: mailbox_protocol_freeze
+    risk: medium
+    blocks: L3
+    question: Register/descriptor/doorbell contract needs its own freeze
+      record before the endpoint driver hardens.
+  - id: quotes
+    risk: low
+    blocks: L4
+    question: Module, M.2 SSD, PCB, thermal, fan, brackets — all quote
+      required (no prices in this file by policy).
+  - id: host_driver_scope
+    risk: low
+    blocks: L3
+    question: Linux-first confirmed; Windows host driver deferred by
+      decision, revisit on demand.
+
+# =============================================================================
+# Sources
+# =============================================================================
+sources:
+  src_orin_nx_ds:
+    what: "Orin NX memory/TOPS/modes/PCIe controllers/VDD_IN (16GB: 102GB/s, dense50@25W, Gen4, C4 dual-mode)"
+    url: https://static.generation-robots.com/media/Jetson-Orin-NX-Series-Modules-Datasheet.pdf
+    doc: DS-10712-001_v1.7 (2026-02-20)
+    type: manufacturer_datasheet
+  src_orin_nano_ds:
+    what: Orin Nano PCIe ceiling corrected to Gen3 (rejection evidence for Nano)
+    url: https://static6.arrow.com/aropdfconversion/4ebf6ae5346ea85b5fb07e006ab80f9929f5810e/son-orin-nano-series-modules-datasheet_ds-11105-001_v1.7.pdf
+    doc: DS-11105-001_v1.7 (2026-02-20)
+    type: manufacturer_datasheet
+  src_l4t_endpoint:
+    what: Jetson Linux PCIe endpoint mode procedure (Orin series, C4 address, sysfs start)
+    url: https://docs.nvidia.com/jetson/archives/r36.5/DeveloperGuide/SD/Communications/PcieEndpointMode.html
+    type: vendor_documentation
+  src_l4t_nx_nano:
+    what: Orin NX/Nano PCIe controllers (C4 up-to-x4 dual mode RP/EP, NX Gen4 / Nano Gen3, hsio-uphy-config-41, NVMe paths)
+    url: https://docs.nvidia.com/jetson/archives/r39.2.1/DeveloperGuide/HR/JetsonModuleAdaptationAndBringUp/JetsonOrinNxNanoSeries.html
+    type: vendor_documentation
+  src_orin_power_modes:
+    what: nvpmodel power mode tables (Orin NX/Nano, MAXN_SUPER availability)
+    url: https://docs.nvidia.com/jetson/archives/r35.6.1/DeveloperGuide/SD/PlatformPowerAndPerformance/JetsonOrinNanoSeriesJetsonOrinNxSeriesAndJetsonAgxOrinSeries.html
+    type: vendor_documentation
+  src_google_gemma_memory:
+    what: "Gemma 4 inference memory table (E2B: BF16 11.4 / SFP8 5.7 / Q4_0 2.9 / Mobile 1.1 GB incl. 20% overhead; E4B 4.5; 12B 6.7; 26B 14.4)"
+    url: https://ai.google.dev/gemma/docs/core
+    type: manufacturer_documentation
+  src_gemma4_report:
+    what: Gemma 4 family architecture (effective 2.3B E2B dense, vocab 262144, per-layer embeddings, int8 KV @32K footprint table)
+    url: https://arxiv.org/pdf/2607.02770v1
+    type: technical_report
+  src_gemma4_variants:
+    what: Gemma 4 release date 2026-04-02, family lineup incl. E2B, Apache-2.0, 128K context
+    url: https://gemma4.online/models
+    type: secondary_aggregator
+    verification: cross-check_against_google_and_report
+  src_gemma4_webgpu:
+    what: measured Q4_K_M text-only E2B weights = 2.89 GiB (independent cross-check)
+    url: https://github.com/tylerstraub/gemma4-webgpu/blob/main/docs/architecture.md
+    type: third_party_measurement
+  src_qat_release:
+    what: Gemma 4 QAT checkpoints 2026-06-05 (mobile format ~1GB E2B)
+    url: https://7minai.com/news/gemma-4-qat-models
+    type: secondary_aggregator
+    verification: cites_google_release_and_marktechpost
+  src_pcie_cem:
+    what: PCIe CEM power/slot classes and lane width negotiation
+    url: https://pcisig.com/PCIExpress/Specs/CEM/CardElectromechanical_5.0
+    type: standard_body
+  src_component_registry:
+    what: existing candidate registry (fpga = prototype path, GPUs = benchmark reference only, selection rules)
+    url: hardware/ai_compute_card/component_registry.yaml
+    type: internal_spec
+  src_selection_policy:
+    what: component selection rules (official source before selection, no price without quote, human approval before purchase)
+    url: hardware/ai_compute_card/ai_compute_card_task.yaml
+    type: internal_spec
+explicit_non_claims:
+  - no measured performance numbers yet; decode/prefill figures are budgets with stated assumptions
+  - no prices anywhere in this file (quote required by policy)
+  - no physical board, no fabrication, no component order placed by this file
+  - no answer or freeze of any angela_interface_freeze_packet pending_decision
+  - endpoint Gen4 x1 training is designed-for, not yet demonstrated

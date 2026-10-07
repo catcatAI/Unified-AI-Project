@@ -16,9 +16,8 @@ import subprocess
 from pathlib import Path
 from types import SimpleNamespace
 
-import pytest
-
 import ai.hardware.cim_weight_strip as weight_strip
+import pytest
 from ai.hardware.cim_weight_strip import (
     WeightStripGeometry,
     build_strip,
@@ -27,7 +26,6 @@ from ai.hardware.cim_weight_strip import (
     spine_topology,
     tile_strips,
 )
-
 
 # -----------------------------------------------------------------------------
 # geometry properties
@@ -98,9 +96,7 @@ def test_extract_reports_skipped_when_only_the_tech_is_missing(
     assert result == {"status": "skipped", "reason": "magic_or_tech_missing"}
 
 
-def test_extract_reports_a_magic_timeout(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_extract_reports_a_magic_timeout(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.setattr(weight_strip, "find_magic", lambda: "/usr/bin/magic")
     monkeypatch.setattr(weight_strip, "find_magic_tech", lambda: tmp_path / "sky130A.tech")
 

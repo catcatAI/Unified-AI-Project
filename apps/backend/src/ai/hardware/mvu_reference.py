@@ -311,12 +311,10 @@ class PeArray16x16:
         if any(len(row) != self.config.pe_columns for row in activation):
             raise ValueError("each activation row must contain 16 values")
         required_bank_bytes = (
-            (self.config.pe_rows - 1) // 4
-        ) * 8 + ((self.config.pe_rows - 1) % 4) + 1
+            ((self.config.pe_rows - 1) // 4) * 8 + ((self.config.pe_rows - 1) % 4) + 1
+        )
         if any(len(bank) < required_bank_bytes for bank in banks):
-            raise ValueError(
-                "each SRAM bank must provide one weight byte per PE output row"
-            )
+            raise ValueError("each SRAM bank must provide one weight byte per PE output row")
 
 
 class PlasticityEngine:

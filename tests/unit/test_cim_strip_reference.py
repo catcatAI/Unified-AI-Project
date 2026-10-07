@@ -21,19 +21,20 @@ from types import SimpleNamespace
 
 import pytest
 from ai.hardware.cim_strip_reference import (
+    _MODEL_LIBRARY_ENV,
     MEASUREMENT_PROVENANCE,
     SUPERSEDED_WEIGHT_RESPONSE,
     WEIGHT_RESPONSE_MEASUREMENT,
     CimStripConfig,
     CimStripError,
     CimStripReferenceModel,
-    build_weight_response_deck,
-    evaluate_weight_response,
-    _MODEL_LIBRARY_ENV,
+    DotProductVector,
     _interpolate_id_a,
     _max_straight_line_deviation,
     build_dot_product_deck,
+    build_weight_response_deck,
     evaluate_dot_product_case,
+    evaluate_weight_response,
     find_sky130_model_library,
     load_cim_strip_measurement,
     parse_weight_response_outputs,
@@ -41,7 +42,6 @@ from ai.hardware.cim_strip_reference import (
     simulate_weight_response,
     sky130_device_token,
     weight_to_cell_counts,
-    DotProductVector,
 )
 
 
@@ -846,12 +846,8 @@ def test_run_functional_dot_product_test_skips_without_a_library(
     vector = DotProductVector(input_bits=(1, 0), strip_weights=((7, 0),), label="v")
     monkeypatch.setattr(strip_ref.shutil, "which", lambda name: "/usr/bin/ngspice")
     monkeypatch.delenv(_MODEL_LIBRARY_ENV, raising=False)
-    monkeypatch.setattr(
-        strip_ref, "find_sky130_model_library", lambda: None
-    )
-    outcome = asyncio.run(
-        run_functional_dot_product_test(tmp_path, [vector], model_library=None)
-    )
+    monkeypatch.setattr(strip_ref, "find_sky130_model_library", lambda: None)
+    outcome = asyncio.run(run_functional_dot_product_test(tmp_path, [vector], model_library=None))
     assert outcome["status"] == "skipped"
     assert outcome["reason"] == "sky130_model_library_not_found"
     assert "ANGELA_SKY130_SPICE_LIBRARY" in outcome["hint"]
@@ -1056,9 +1052,7 @@ def test_device_token_detection_covers_both_packagings(tmp_path: Path) -> None:
     assert sky130_device_token(subckt) == "sky130_fd_pr__nfet_01v8"
 
     binned = tmp_path / "binned.spice"
-    binned.write_text(
-        ".model sky130_fd_pr__nfet_01v8__model.0 nmos\n", encoding="utf-8"
-    )
+    binned.write_text(".model sky130_fd_pr__nfet_01v8__model.0 nmos\n", encoding="utf-8")
     assert sky130_device_token(binned) == "sky130_fd_pr__nfet_01v8__model"
 
     unreadable = tmp_path / "missing.spice"
@@ -1067,3 +1061,33 @@ def test_device_token_detection_covers_both_packagings(tmp_path: Path) -> None:
     plain = tmp_path / "plain.spice"
     plain.write_text("* nothing known\n", encoding="utf-8")
     assert sky130_device_token(plain) is None
+
+
+def test_model_library_lookup_finds_a_volare_candidate(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A volare glob hit with a real device token must be returned."""
+    import ai.hardware.cim_strip_reference as strip_ref
+
+    candidate = tmp_path / "sky130.lib.spice"
+    candidate.write_text(".model sky130_fd_pr__nfet_01v8__model nmos\n", encoding="utf-8")
+    monkeypatch.delenv(_MODEL_LIBRARY_ENV, raising=False)
+    monkeypatch.setattr(strip_ref, "_VOLARE_GLOBS", (str(candidate),))
+    assert find_sky130_model_library() == candidate
+
+
+def test_build_weight_response_deck_rejects_an_empty_bin_list(tmp_path: Path) -> None:
+    """At least one weight bin is required; an empty request must fail closed."""
+    library = tmp_path / "sky130.lib.spice"
+    library.write_text(".model sky130_fd_pr__nfet_01v8__model nmos\n", encoding="utf-8")
+    with pytest.raises(CimStripError, match="at least one weight bin"):
+        build_weight_response_deck(library, cells_per_bin=())
+
+
+def test_parse_outputs_skips_a_weight_file_without_a_reading(tmp_path: Path) -> None:
+    """A w*.txt file with no parseable current must be skipped, not crash."""
+    (tmp_path / "w0000.txt").write_text("v(i) = 1.0e-06\n", encoding="utf-8")
+    (tmp_path / "wBAD.txt").write_text("nothing to parse here\n", encoding="utf-8")
+    measured = parse_weight_response_outputs(tmp_path)
+    assert measured["idle"] == 1.0e-06
+    assert "wBAD" not in measured

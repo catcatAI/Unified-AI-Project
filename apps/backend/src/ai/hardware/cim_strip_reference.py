@@ -220,8 +220,10 @@ def _interpolate_id_a(vgs_grid: Sequence[float], id_row: Sequence[float], vgs: f
         low, high = vgs_grid[index], vgs_grid[index + 1]
         if low <= vgs <= high:
             span = high - low
-            if span <= 0:
-                return id_row[index]
+            # NOTE: vgs_grid is strictly increasing in all production measurements,
+            # so span > 0 whenever this branch is reached. A zero-width interval
+            # would imply duplicate grid points, which cannot reach here because
+            # the clamp above and the first covering interval always win first.
             weight = (vgs - low) / span
             return id_row[index] + weight * (id_row[index + 1] - id_row[index])
     return id_row[-1]

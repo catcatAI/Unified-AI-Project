@@ -12,7 +12,6 @@ branch of the AXI-Lite software view.
 from __future__ import annotations
 
 import pytest
-
 from ai.hardware.mvu_reference import (
     AxiLiteRegisterMap,
     MvuReferenceConfig,
@@ -323,3 +322,15 @@ def test_header_recalculation_rejects_non_positive_clock() -> None:
         model.header_recalculation(clock_mhz=0)
     with pytest.raises(ValueError, match="clock_mhz must be positive"):
         model.header_recalculation(clock_mhz=-1)
+
+
+def test_write_json_round_trips_a_reference_packet(tmp_path) -> None:
+    """write_json must persist the run() packet and return the path."""
+    import json
+
+    model = MvuReferenceModel()
+    out = tmp_path / "nested" / "mvu.json"
+    assert model.write_json(out) == out
+    payload = json.loads(out.read_text(encoding="utf-8"))
+    assert payload["schema_version"] == "mvu-reference/1"
+    assert "contract" in payload and "metrics" in payload

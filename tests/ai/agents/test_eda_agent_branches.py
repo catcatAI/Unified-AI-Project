@@ -13,9 +13,8 @@ from __future__ import annotations
 from types import SimpleNamespace
 from typing import Any, Dict
 
-import pytest
-
 import ai.agents.specialized.eda_agent as eda_agent_module
+import pytest
 from ai.agents.specialized.eda_agent import EdaAgent, _query_numbers
 from ai.core.training_coordinator import TrainingCoordinator
 from core.tools.eda_tool_adapter import EdaToolAdapter
@@ -29,8 +28,8 @@ def _agent(tmp_path, **agent_kwargs: Any) -> EdaAgent:
 
 def _tool_facade(original: Any, breaking_run) -> Any:
     """Adapter facade that keeps every real method but breaks _run()."""
-    import types as _types
     import inspect as _inspect
+    import types as _types
 
     facade = _types.SimpleNamespace(**vars(original))
     facade.enabled = True
@@ -163,6 +162,7 @@ async def test_run_rtl_experiment_fail_closed(tmp_path) -> None:
 
 async def test_run_card_architecture_audit_fail_closed(tmp_path) -> None:
     agent = _agent(tmp_path)
+
     class BoomAudit:
         def audit(self, claimed) -> dict:
             raise RuntimeError("audit exploded")
@@ -295,9 +295,7 @@ async def test_record_learning_episode_reports_a_duplicate_and_a_failure(
     coordinator = FlakyCoordinator()
     config: Dict[str, Any] = {"enabled": True, "collect_learning_episodes": True}
     adapter = EdaToolAdapter(config=config, output_root=tmp_path)
-    agent = EdaAgent(
-        agent_id="episode_dup", adapter=adapter, training_coordinator=coordinator
-    )
+    agent = EdaAgent(agent_id="episode_dup", adapter=adapter, training_coordinator=coordinator)
     first = await agent._record_learning_episode(
         workflow="wf",
         parameters={},
@@ -356,6 +354,7 @@ async def test_record_learning_episode_survives_an_artifact_write_failure(
         artifacts=[],
         workspace=workspace,
     )
+
     # To force the OSError path, patch the bound method on the instance used
     # inside _record_learning_episode.
     def broken_write(*_args: object, **_kwargs: object) -> str:

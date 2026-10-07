@@ -11,7 +11,6 @@ firing, a wrong constant ships without a check. These tests keep each one live.
 from __future__ import annotations
 
 import pytest
-
 from ai.hardware.mvu_reference import MvuReferenceModel
 from ai.hardware.rtl_generator import _integer, generate_mvu_header_projection
 from ai.hardware.standards_catalog import search_standards

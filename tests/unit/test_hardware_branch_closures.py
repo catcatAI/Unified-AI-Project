@@ -13,11 +13,9 @@ from __future__ import annotations
 from pathlib import Path
 from types import SimpleNamespace
 
-import pytest
-
-import ai.hardware.cim_verify as cim_verify
 import ai.hardware.cim_strip_reference as strip_ref
-from ai.hardware.cim_verify import GateReport, simulate_spine, verify_block
+import ai.hardware.cim_verify as cim_verify
+import pytest
 from ai.hardware.cim_strip_reference import (
     _MODEL_LIBRARY_ENV,
     DotProductVector,
@@ -25,7 +23,7 @@ from ai.hardware.cim_strip_reference import (
     run_functional_dot_product_test,
     simulate_weight_response,
 )
-
+from ai.hardware.cim_verify import GateReport, simulate_spine, verify_block
 
 # -----------------------------------------------------------------------------
 # cim_verify residual branches
@@ -70,17 +68,14 @@ def test_giant_net_gate_can_fail(monkeypatch: pytest.MonkeyPatch, tmp_path: Path
     # columns gate sees a single array net whose cells make the "largest net"
     # comparison meaningful, and the giant-net gate must not bless it.
     netlist = "".join(
-        f"X{i} NET GW S VSUBS sky130_fd_pr__nfet_01v8 w=0.42 l=0.15\n"
-        for i in range(12)
+        f"X{i} NET GW S VSUBS sky130_fd_pr__nfet_01v8 w=0.42 l=0.15\n" for i in range(12)
     )
     monkeypatch.setattr(
         cim_verify,
         "_run_drc_and_extract",
         lambda mag_text, workdir, timeout_s=900.0: (0, netlist, "DRC_TOTAL 0"),
     )
-    report = verify_block(
-        "<mag>", expected_transistors=12, expected_columns=6, workdir=tmp_path
-    )
+    report = verify_block("<mag>", expected_transistors=12, expected_columns=6, workdir=tmp_path)
     gate = next(g for g in report.gates if g.name == "no_giant_net")
     assert gate.passed is False, report.summary()
     assert "12 of 12" in gate.detail
@@ -202,7 +197,9 @@ def test_run_functional_dot_product_test_passes_with_fake_ngspice_outputs(
     monkeypatch.setattr(strip_ref.shutil, "which", lambda name: "/usr/bin/ngspice")
     monkeypatch.setattr(strip_ref, "find_sky130_model_library", lambda: _library(tmp_path))
     monkeypatch.setattr(
-        strip_ref, "build_dot_product_deck", lambda *a, **k: ("* deck", ["case0_cal.txt", "case0_s0.txt"])
+        strip_ref,
+        "build_dot_product_deck",
+        lambda *a, **k: ("* deck", ["case0_cal.txt", "case0_s0.txt"]),
     )
     monkeypatch.setattr(strip_ref.asyncio, "create_subprocess_exec", fake_exec)
 
@@ -281,7 +278,9 @@ def test_run_functional_dot_product_flags_nan_strip_current(
     monkeypatch.setattr(strip_ref.shutil, "which", lambda name: "/usr/bin/ngspice")
     monkeypatch.setattr(strip_ref, "find_sky130_model_library", lambda: _library(tmp_path))
     monkeypatch.setattr(
-        strip_ref, "build_dot_product_deck", lambda *a, **k: ("* deck", ["case0_cal.txt", "case0_s0.txt"])
+        strip_ref,
+        "build_dot_product_deck",
+        lambda *a, **k: ("* deck", ["case0_cal.txt", "case0_s0.txt"]),
     )
     monkeypatch.setattr(strip_ref.asyncio, "create_subprocess_exec", fake_exec)
 
