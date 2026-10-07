@@ -12,13 +12,16 @@ the SAME structural engine as sim_edge_card_cycle.py and answers, with
 numbers:
 
   * which (mode, ctx) combinations reach the spec decode target (15 tok/s),
+    including the 15W low-power profile (derived from the spec's own ~30%
+    derate note) and the 16GB SKU's reserved 128K context capability,
   * how much LPDDR5 utilization each point produces, and the arithmetic
     intensity point where memory WOULD bind (~222 ops/ns at 32K - far above
     any Orin NX mode, which is why memory sits idle by physics, not by
     misconfiguration),
-  * what PCIe Gen4 x1 is actually for: the load path (fully utilized,
-    1.7-2.1 s of a 5 s budget) - decode carries only 8 B/token, so decode
-    utilization is a category error, not a design miss.
+  * what PCIe Gen4 x1 / the M.2 NVMe are actually for: every cold-load path
+    (host payload, host achievable DMA, on-card NVMe, hypothetical faster
+    device) against the 5 s budget - decode carries only 8 B/token, so
+    decode utilization is a category error, not a design miss.
 
 A cross-check pins the baseline point (nx16_25w_c2 @32K) to the cycle
 runner's measured 5.93 tok/s, so this tool cannot silently drift.
@@ -48,6 +51,7 @@ from ai.hardware.edge_card_sim import (  # noqa: E402
     Engine,
     build_decode_workload,
     read_gguf_structure,
+    run_prefload,
     workload_totals,
 )
 
@@ -59,17 +63,61 @@ GGUF_DEFAULT = (
 )
 
 # module modes: dense INT8 TOPS straight from edge_card_spec.yaml
-# (option_sku = 8GB/35, primary = 16GB/50 @25W, super = 16GB/78 @40W);
-# c2 = conservative 2 ops/MAC reading, c1 = ops reading of the same number.
-REAL_MODES: dict[str, tuple[float, int, str]] = {
-    "nx8_25w_c2": (35.0, 2, "Orin-NX-8GB dense35@25W, 2ops/MAC"),
-    "nx16_25w_c2": (50.0, 2, "Orin-NX-16GB dense50@25W, 2ops/MAC (spec baseline)"),
-    "nx8_25w_c1": (35.0, 1, "Orin-NX-8GB dense35@25W, ops reading"),
-    "nx16_25w_c1": (50.0, 1, "Orin-NX-16GB dense50@25W, ops reading"),
-    "nx16_40w_c2": (78.0, 2, "Orin-NX-16GB MAXN-SUPER dense78@40W, 2ops/MAC"),
-    "nx16_40w_c1": (78.0, 1, "Orin-NX-16GB MAXN-SUPER dense78@40W, ops reading"),
+# (option_sku = 8GB/35, primary = 16GB/50 @25W, super = 16GB/78 @40W;
+# 15W profile = 25W x 0.7, derived from power_and_thermal.low_power_profile's
+# own "~30% derate" note - label says derived). c2 = conservative 2 ops/MAC
+# reading, c1 = ops reading of the same number. ctxs: the 8GB SKU stops at
+# 32K (128K capability is reserved to the 16GB SKU per model_target).
+REAL_MODES: dict[str, dict] = {
+    "nx8_25w_c2": {
+        "tops": 35.0,
+        "conv": 2,
+        "ctxs": (8192, 16384, 32768),
+        "label": "Orin-NX-8GB dense35@25W, 2ops/MAC",
+    },
+    "nx16_25w_c2": {
+        "tops": 50.0,
+        "conv": 2,
+        "ctxs": (8192, 16384, 32768, 131072),
+        "label": "Orin-NX-16GB dense50@25W, 2ops/MAC (spec baseline)",
+    },
+    "nx8_25w_c1": {
+        "tops": 35.0,
+        "conv": 1,
+        "ctxs": (8192, 16384, 32768),
+        "label": "Orin-NX-8GB dense35@25W, ops reading",
+    },
+    "nx16_25w_c1": {
+        "tops": 50.0,
+        "conv": 1,
+        "ctxs": (8192, 16384, 32768, 131072),
+        "label": "Orin-NX-16GB dense50@25W, ops reading",
+    },
+    "nx16_15w_c2": {
+        "tops": 35.0,
+        "conv": 2,
+        "ctxs": (8192, 16384, 32768, 131072),
+        "label": "Orin-NX-16GB 15W profile (derived 35 dense), 2ops/MAC",
+    },
+    "nx16_15w_c1": {
+        "tops": 35.0,
+        "conv": 1,
+        "ctxs": (8192, 16384, 32768, 131072),
+        "label": "Orin-NX-16GB 15W profile (derived 35 dense), ops reading",
+    },
+    "nx16_40w_c2": {
+        "tops": 78.0,
+        "conv": 2,
+        "ctxs": (8192, 16384, 32768, 131072),
+        "label": "Orin-NX-16GB MAXN-SUPER dense78@40W, 2ops/MAC",
+    },
+    "nx16_40w_c1": {
+        "tops": 78.0,
+        "conv": 1,
+        "ctxs": (8192, 16384, 32768, 131072),
+        "label": "Orin-NX-16GB MAXN-SUPER dense78@40W, ops reading",
+    },
 }
-CTXS = (8192, 16384, 32768)
 
 
 def make_cfg(tops: float, conv: int) -> CardConfig:
@@ -130,6 +178,37 @@ def pcie_analytics(structure: dict) -> dict[str, float | bool]:
     }
 
 
+def load_paths(structure: dict, cfg: CardConfig) -> dict[str, float | bool]:
+    """Every cold-load path the component review asks about, vs the 5s budget.
+
+    host payload  = Gen4 x1 theoretical payload rate (1.969 B/ns)
+    host achievable = spec floor 1.6 GB/s (>=85% TLP efficiency)
+    nvme spec     = engine run_prefload: M.2 device rate min(1.6, LPDDR5 write)
+    nvme hypothetical = faster device class at 2.4 GB/s, still bounded by
+    the module's own memory write - shows the ceiling storage upgrades can
+    ever reach (LPDDR5 write at 87 B/ns never binds, so the device rate IS
+    the limit until it exceeds ~87).
+    """
+    file_b = structure["file_size"]
+    budget_s = 5.0
+    host_payload_s = file_b / cfg.pcie_bytes_per_ns / 1e9
+    host_ach_s = file_b / 1.6 / 1e9
+    nvme_s = run_prefload(structure, cfg, file_b) / 1e9
+    nvme_fast_s = file_b / min(2.4, cfg.mem_service_bytes_per_ns) / 1e9
+    worst = max(host_payload_s, host_ach_s, nvme_s, nvme_fast_s)
+    return {
+        "file_bytes": file_b,
+        "host_pcie_payload_s": host_payload_s,
+        "host_pcie_achievable_s": host_ach_s,
+        "nvme_spec_1_6_s": nvme_s,
+        "nvme_hypothetical_2_4_s": nvme_fast_s,
+        "budget_s": budget_s,
+        "worst_case_s": worst,
+        "margin_s": budget_s - worst,
+        "all_pass": worst <= budget_s,
+    }
+
+
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p = argparse.ArgumentParser(description="edge card balance sweep")
     p.add_argument("--gguf", type=Path, default=GGUF_DEFAULT, help="GGUF model file")
@@ -160,6 +239,7 @@ def main(argv: list[str] | None = None) -> int:
     base_cfg = CardConfig()
     bind = memory_bind_point(structure, base_cfg, 32768)
     pcie = pcie_analytics(structure)
+    loads = load_paths(structure, base_cfg)
     print(f"gguf: {structure['file_size']:,} B, {len(structure['tensors'])} tensors")
     print(
         f"memory bind point @32K: {bind['ops_ns']:.1f} ops/ns "
@@ -172,12 +252,27 @@ def main(argv: list[str] | None = None) -> int:
         f"vs budget {pcie['load_budget_s']:.0f}s -> "
         f"{'PASS' if pcie['load_pass'] else 'FAIL'} (this is where x1 is utilized)"
     )
+    print(
+        "load paths (component review): "
+        + ", ".join(
+            f"{k}={loads[k]:.2f}s"
+            for k in (
+                "host_pcie_payload_s",
+                "host_pcie_achievable_s",
+                "nvme_spec_1_6_s",
+                "nvme_hypothetical_2_4_s",
+            )
+        )
+        + f" vs {loads['budget_s']:.0f}s budget -> "
+        f"{'PASS' if loads['all_pass'] else 'FAIL'} "
+        f"(worst {loads['worst_case_s']:.2f}s, margin {loads['margin_s']:.2f}s)"
+    )
 
     points: list[dict] = []
     print(f"\n{'mode':14s} {'ctx':>6s} {'tok/s':>7s} {'mac':>6s} {'mem':>6s} {'pcie':>8s}  verdict")
-    for mode, (tops, conv, _label) in REAL_MODES.items():
-        cfg = make_cfg(tops, conv)
-        for ctx in CTXS:
+    for mode, mode_spec in REAL_MODES.items():
+        cfg = make_cfg(mode_spec["tops"], mode_spec["conv"])
+        for ctx in mode_spec["ctxs"]:
             r = run_point(structure, cfg, ctx, args.tokens)
             r["mode"] = mode
             r["class"] = "real_module"
@@ -231,6 +326,7 @@ def main(argv: list[str] | None = None) -> int:
         "points": points,
         "memory_bind_point_32k": bind,
         "pcie": pcie,
+        "load_paths": loads,
         "meets_target_modes_any_ctx": meets,
         "meets_target_modes_32k": meets_32k,
         "baseline_cross_check": {

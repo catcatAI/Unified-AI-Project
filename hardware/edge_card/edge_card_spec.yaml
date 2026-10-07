@@ -372,6 +372,178 @@ human_approval_required_for:
   - carrier_pcb_fab_and_assembly
 
 # =============================================================================
+# Component review - what in the BOM can move the numbers (research pass)
+# =============================================================================
+component_review:
+  date: 2026-10-07
+  status: candidate_pending_human_approval_and_l2
+  purpose: >-
+    Standard parts, custom parts and carrier layout decisions reviewed for
+    actual leverage on the spec numbers. Every "moves the numbers" claim is
+    either measured by scripts/sim_edge_card_sweep.py (rerun this file's
+    rerun line) or explicitly marked as not-moving-them. No prices by
+    policy (quote_required); no ordering without human approval
+    (human_approval_required_for).
+  rerun: .venv/bin/python scripts/sim_edge_card_sweep.py
+  standard_parts:
+    - part_class: compute-module
+      current: NVIDIA-Jetson-Orin-NX-16GB (SO-DIMM-260); the 8GB option SKU shares the same carrier
+      upgrade_path: >-
+        none inside the envelope - compute TOPS, LPDDR5 bandwidth and the
+        PCIe controllers are fixed by the module purchase (compute.module,
+        compute.option_sku)
+      source: src_orin_nx_ds
+    - part_class: cooling
+      current: >-
+        single-slot fin stack plus 40mm fan, 200 lfm minimum, component
+        height capped at 17mm (power_and_thermal.cooling, mechanical)
+      upgrade: >-
+        larger fin stack / higher-LFM fan (still standard parts, still one
+        slot) is the only standard-part change that moves decode: it is
+        what unlocks the 40W MAXN_SUPER profile - see
+        simulation.power_ladder (11.85 -> 18.45 tok/s at 32K, ops reading)
+      constraint: >-
+        the >=8V VDD_IN precondition of the 40W mode is already met by the
+        planned 12V feed (layout_review.vdd_in_feed, zero added parts);
+        what remains is thermal L2 at 40C ambient / 200 lfm and a re-check
+        of the low-profile bracket cut, which shares the same PCB
+      source: src_orin_power_modes
+    - part_class: nvme-ssd
+      current: >-
+        M.2 Key-M 2230, 256GB min / 512GB target, spec'd 1.6 GB/s, on
+        module controller C7 x2 (storage)
+      upgrade: >-
+        capacity class only - speed upgrades do not move any spec number:
+        every cold-load path already passes with >=2.9s margin
+        (simulation.load_paths), bounded by device rate until it exceeds
+        the LPDDR5 write ceiling
+      source: src_l4t_nx_nano
+    - part_class: host-link
+      current: >-
+        PCIe CEM Gen4 x1 edge fingers, >=1.6 GB/s achievable each direction
+        (host_interface)
+      upgrade: >-
+        layout/SI quality moves only load time (1.70s payload ceiling vs
+        2.09s achievable floor); decode carries 8 B/token so decode never
+        sees the link - any spend here buys seconds nobody needs
+      source: src_pcie_cem
+    - part_class: power-path
+      current: >-
+        slot 12V and 3.3V each up to 75W available; board self-capped at
+        35W = 25 + 3 + 2 + 5 (power_and_thermal.board_budget_w)
+      upgrade: >-
+        none needed at 25W; even the 40W profile tops out at 50W board
+        (40 + 3 + 2 + 5) against the same 75W slot figure - the upgrade
+        here is a decision, not a part
+      source: src_pcie_cem
+    - part_class: everything-else-purchasable
+      status: >-
+        module, M.2 SSD, PCB, thermal parts, fan, brackets are all
+        quote_required and gated (open_items.quotes) - no price claim is
+        made anywhere in this file
+      source: src_selection_policy
+  custom_parts:
+    - what: carrier PCB itself
+      detail: >-
+        KiCad design; L2 gate is kicad_can_produce_pcb_drc_and_gerber
+        (acceptance_levels.L2); the same PCB serves full-height and
+        low-profile brackets (mechanical.bracket_low_profile)
+    - what: pci-epf vendor endpoint function (mailbox + doorbell + DMA ring + MSI)
+      detail: >-
+        custom endpoint driver work; gated by open_items.mailbox_protocol_freeze
+        before hardening, then acceptance_levels.L3 conformance
+      source: src_l4t_endpoint
+    - what: ODM/overlay configuration (hsio-uphy-config-41 and friends)
+      detail: >-
+        configuration, not a purchased part; C4-endpoint plus C7-NVMe
+        concurrency is the open high-risk item (open_items.uphy_concurrency)
+      source: src_l4t_nx_nano
+  layout_review:
+    vdd_in_feed:
+      decision: >-
+        feed module VDD_IN directly from the slot 12V rail with MODULE_ID
+        strapped per the Product Design Guide (open_items.vdd_in_wiring)
+      why: >-
+        module input range is 5-20V, so 12V is in range with large margin;
+        the feed keeps VDD_IN near 12V, satisfying the >=8V precondition
+        of the 40W profile with zero added parts, and 12V already carries
+        >=4x the 35W board budget
+      source: src_orin_nx_ds
+    pcie_lane:
+      decision: >-
+        short controlled-impedance Gen4 x1 route honoring the CEM finger
+        and bracket-air-exit keepouts (mechanical.keepouts)
+      evidence: >-
+        trains-Gen4 is an L3 measurement (open_items.c4_ep_link_speed); the
+        simulation assumes the >=1.6 GB/s achievable floor, never the 1.969
+        payload ceiling
+      source: src_pcie_cem
+    uphy_concurrency:
+      decision: >-
+        routing cannot fix this - it is an ODMDATA/firmware question
+        (open_items.uphy_concurrency); recorded fallbacks are USB-storage
+        boot or a C9 x1 NVMe path
+      source: src_l4t_nx_nano
+    thermal_path:
+      decision: >-
+        module top-plate to fin stack per the Jetson thermal design guide
+        (mechanical.module_thermal_interface), air exiting through the
+        bracket keepout
+      gate: >-
+        single_slot_thermal_solution_verified_at_40c_ambient_200lfm
+        (acceptance_levels.L2) is the gate any 40W cooling upgrade must
+        clear
+      source: src_orin_power_modes
+  simulation:
+    rerun_note: >-
+      measured by scripts/sim_edge_card_sweep.py on 2026-10-07; baseline
+      cross-check against the cycle runner held (5.93 tok/s, OK)
+    load_paths_s:
+      host_pcie_payload: 1.70
+      host_pcie_achievable_1_6: 2.09
+      nvme_spec_1_6: 2.09
+      nvme_hypothetical_2_4: 1.40
+      budget: 5
+      worst_case: 2.09
+      margin: 2.91
+      verdict: PASS
+      reading: >-
+        storage and host-link upgrades cannot buy meaningful time - the 5s
+        gate has ~2.9s headroom on every path, including a hypothetical
+        faster device (still capped by LPDDR5 write at 87 B/ns)
+    power_ladder_tok_s_at_32k:
+      w15_derived: { c2: 4.15, c1: 8.30 }
+      w25_default: { c2: 5.93, c1: 11.85 }
+      w40_maxn_super: { c2: 9.25, c1: 18.45 }
+      note: >-
+        the 15W rows derive from power_and_thermal.low_power_profile's own
+        "~30% derate" note (50 x 0.7 = 35 dense, labeled derived); only
+        w40_maxn_super.c1 reaches the 15 tok/s target at 32K
+    ctx_128k_16gb_sku_tok_s:
+      w15_derived: { c2: 1.78, c1: 3.55 }
+      w25_default: { c2: 2.54, c1: 5.07 }
+      w40_maxn_super: { c2: 3.96, c1: 7.91 }
+      reading: >-
+        the 16GB SKU's reserved 128K capability (model_target) is not a
+        15 tok/s capability - the best point is 7.91 (40W, ops reading)
+        and 5.07 at the 25W default; the 8GB SKU is excluded by capacity,
+        so the sweep skips 128K rows for nx8 modes
+    meets_target:
+      at_32k: [nx16_40w_c1]
+      at_or_below_16k: [nx16_25w_c1, nx16_40w_c1]
+      reading: >-
+        consistent with balance_study options A and B - extending the ladder
+        to 15W and to 128K surfaced no third option
+  conclusion: >-
+    the improvements that move the spec numbers are (1) a cooling uplift to
+    unlock the 40W profile - same module, standard fan/fin parts, gated at
+    L2 thermal - and (2) the 12V VDD_IN layout decision that makes that
+    profile electrically legal at zero part cost. Everything else (faster
+    NVMe, better link efficiency, the 15W profile, 128K context) either is
+    already under budget or moves the wrong direction; the 15W ladder and
+    128K rows are recorded so nobody has to re-ask them.
+
+# =============================================================================
 # Open items (blocking or carry-risk)
 # =============================================================================
 open_items:
@@ -393,8 +565,10 @@ open_items:
     blocks: L2
     question: >-
       Feed VDD_IN directly from slot 12V (in-range 5-20V per Orin NX data
-      sheet); strap MODULE_ID correctly so the module is not forced into the
-      legacy 5V-only behavior (Product Design Guide DG-10931-001).
+      sheet); strap MODULE_ID correctly so the module is not forced into
+      the legacy 5V-only behavior (Product Design Guide DG-10931-001).
+      This same feed is what satisfies the >=8V VDD_IN precondition of
+      the 40W MAXN_SUPER profile (component_review.layout_review).
   - id: mailbox_protocol_freeze
     risk: medium
     blocks: L3

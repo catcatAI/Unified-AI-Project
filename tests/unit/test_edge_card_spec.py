@@ -331,6 +331,70 @@ def test_balance_study_answers_memory_pcie_and_cost() -> None:
     assert "quote" in bal["cost_frame"]
 
 
+def test_component_review_leverage_and_simulated_numbers() -> None:
+    """元件回顧必須把「能提升的」與「不能提升的」都用掃描數字釘死。"""
+    spec = _load_spec()
+    cr = spec["component_review"]
+    target = float(spec["performance_budget"]["decode_tok_s"]["target_e2b_q4_0_min"])
+    assert cr["status"] == "candidate_pending_human_approval_and_l2"
+    assert cr["rerun"].endswith("sim_edge_card_sweep.py")
+
+    classes = {p["part_class"] for p in cr["standard_parts"]}
+    assert {"compute-module", "cooling", "nvme-ssd", "host-link", "power-path"} <= classes
+    for part in cr["standard_parts"]:
+        assert part.get("source") in spec["sources"], f"未定義來源: {part.get('source')}"
+    cooling = next(p for p in cr["standard_parts"] if p["part_class"] == "cooling")
+    assert "40W" in cooling["upgrade"] and "unlock" in cooling["upgrade"]
+    assert cr["custom_parts"] and cr["layout_review"]
+    assert set(cr["layout_review"]) == {
+        "vdd_in_feed",
+        "pcie_lane",
+        "uphy_concurrency",
+        "thermal_path",
+    }
+    for item in cr["custom_parts"]:
+        if "source" in item:
+            assert item["source"] in spec["sources"]
+
+    # 載入路徑：每條都過 5s，且升級天花板有限（改善空間就是那麼多秒）
+    lp = cr["simulation"]["load_paths_s"]
+    assert lp["verdict"] == "PASS"
+    paths = [
+        lp["host_pcie_payload"],
+        lp["host_pcie_achievable_1_6"],
+        lp["nvme_spec_1_6"],
+        lp["nvme_hypothetical_2_4"],
+    ]
+    assert max(paths) <= lp["budget"]
+    assert lp["worst_case"] == pytest.approx(max(paths), abs=0.01)
+    assert lp["margin"] == pytest.approx(lp["budget"] - lp["worst_case"], abs=0.01)
+    assert lp["margin"] >= 2.8  # 存儲/鏈路升級買不到有意義的時間
+    assert lp["nvme_hypothetical_2_4"] < lp["nvme_spec_1_6"]  # 更快裝置更快，但差距有限
+
+    # 功率階梯：15W < 25W < 40W，唯一達標點 = 40W c1；c2 口徑全滅
+    lad = cr["simulation"]["power_ladder_tok_s_at_32k"]
+    for conv in ("c1", "c2"):
+        assert lad["w15_derived"][conv] < lad["w25_default"][conv] < lad["w40_maxn_super"][conv]
+    assert lad["w40_maxn_super"]["c1"] >= target
+    assert lad["w25_default"]["c1"] < target and lad["w25_default"]["c2"] < target
+    # 與已提交的 balance_study 同口徑數字一致（25W/40W 非新測，是同一引擎）
+    bal = spec["cycle_simulation"]["balance_study"]
+    assert lad["w25_default"]["c2"] == pytest.approx(bal["real_modes_tok_s"]["nx16_25w_c2"][2])
+    assert lad["w25_default"]["c1"] == pytest.approx(bal["real_modes_tok_s"]["nx16_25w_c1"][2])
+    assert lad["w40_maxn_super"]["c1"] == pytest.approx(bal["real_modes_tok_s"]["nx16_40w_c1"][2])
+
+    # 128K：每一點都比 32K 慢，且最好點也不達 15 -> 「能力非速率」的讀法成立
+    k128 = cr["simulation"]["ctx_128k_16gb_sku_tok_s"]
+    for mode_key in ("w15_derived", "w25_default", "w40_maxn_super"):
+        for conv in ("c1", "c2"):
+            assert k128[mode_key][conv] < lad[mode_key][conv]
+    assert max(k128["w40_maxn_super"].values()) < target
+
+    meets = cr["simulation"]["meets_target"]
+    assert set(meets["at_32k"]) <= set(meets["at_or_below_16k"])
+    assert meets["at_32k"] == ["nx16_40w_c1"]
+
+
 def test_spec_top_level_schema_is_complete() -> None:
     """刪除或改名頂層段必須變紅，而不是靜默通過。
 
@@ -361,6 +425,7 @@ def test_spec_top_level_schema_is_complete() -> None:
         "explicit_non_claims",
         "host_proxy_simulation",
         "cycle_simulation",
+        "component_review",
     }
     missing = required - set(spec)
     assert not missing, f"spec 缺頂層段: {sorted(missing)}"
