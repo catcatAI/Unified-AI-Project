@@ -7,7 +7,7 @@ Python 繼續寫邏輯，裁決只認這裡的輸出。形狀沿
 `ai.hardware.cim_verify.GateReport`（ verdict 向量 + ok 唯一接受口）。
 """
 
-from .adapters import from_gate_report
+from .adapters import from_audit_corrections, from_gate_report
 from .interpreter import (
     Report,
     Verdict,
@@ -15,6 +15,7 @@ from .interpreter import (
     adjudicate_chain,
     adjudicate_labeled_chain,
     mark_info,
+    missing_segments,
 )
 from .schema import Compare, Fact
 
@@ -26,6 +27,8 @@ __all__ = [
     "adjudicate",
     "adjudicate_chain",
     "adjudicate_labeled_chain",
+    "from_audit_corrections",
     "from_gate_report",
     "mark_info",
+    "missing_segments",
 ]

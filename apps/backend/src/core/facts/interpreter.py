@@ -116,3 +116,13 @@ def mark_info(fact: Fact) -> Fact:
     如 full-file 保守 bound 當門、active-weights 樂觀 bound 記 INFO。
     """
     return replace(fact, must_pass=False)
+
+
+def missing_segments(report: Report, expected: Sequence[str]) -> List[str]:
+    """列出 verdict 向量缺席的鏈段（鏈缺段即判定不完整）。
+
+    呼應「中間條件全列入」：鏈宣告五段、verdict 只有四段時，
+    缺的那段就是下一個要補的判定，而不是一句全綠。
+    """
+    present = {v.segment for v in report.verdicts if v.segment}
+    return [seg for seg in expected if seg not in present]

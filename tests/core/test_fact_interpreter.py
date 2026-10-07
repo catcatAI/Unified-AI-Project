@@ -220,3 +220,59 @@ class TestLabeledChainAndInfo:
         report = adjudicate([downgraded])
         assert report.ok is True
         assert report.verdicts[0].status == "INFO"
+
+
+class TestAuditAdapterOnRealAudit:
+    """第三套形狀收斂：真實 audit() 輸出經適配器不斷鍵、不炸門。"""
+
+    def test_real_audit_converts_with_blocking_gate(self) -> None:
+        from ai.hardware.card_architecture_audit import ClaimedArchitecture, audit
+        from core.facts import from_audit_corrections
+
+        result = audit(ClaimedArchitecture())
+        report = from_audit_corrections(result["corrections"])
+        assert len(report.verdicts) == len(result["corrections"]) + 1
+        gate = report.verdicts[-1]
+        assert gate.id == "no_blocking_corrections"
+        n_blocking = sum(1 for c in result["corrections"] if c.get("severity") == "blocking")
+        assert gate.value == float(n_blocking)
+        assert report.ok is (n_blocking == 0)
+        infos = [v for v in report.verdicts[:-1] if v.status == "INFO"]
+        assert len(infos) == len(result["corrections"])
+
+    def test_missing_keys_do_not_break_adjudication(self) -> None:
+        from core.facts import from_audit_corrections
+
+        report = from_audit_corrections([{"id": "half_baked"}])
+        assert report.ok is True
+        assert "half_baked" in report.verdicts[0].id
+
+
+class TestMissingSegments:
+    """鏈缺段即判定不完整：缺哪段直接點名。"""
+
+    def test_complete_chain_has_no_missing(self) -> None:
+        from core.facts import adjudicate_labeled_chain, missing_segments
+
+        report = adjudicate_labeled_chain(
+            {
+                "serialized": [Fact("a", 1.0, 1.0, "ge")],
+                "rendered": [Fact("b", 1.0, 1.0, "ge")],
+            }
+        )
+        assert missing_segments(report, ["serialized", "rendered"]) == []
+
+    def test_missing_segment_is_named(self) -> None:
+        from core.facts import adjudicate_labeled_chain, missing_segments
+
+        report = adjudicate_labeled_chain({"serialized": [Fact("a", 1.0, 1.0, "ge")]})
+        assert missing_segments(report, ["serialized", "transported", "rendered"]) == [
+            "transported",
+            "rendered",
+        ]
+
+    def test_unsegmented_verdicts_count_as_missing(self) -> None:
+        from core.facts import adjudicate, missing_segments
+
+        report = adjudicate([Fact("a", 1.0, 1.0, "ge")])
+        assert missing_segments(report, ["rendered"]) == ["rendered"]
