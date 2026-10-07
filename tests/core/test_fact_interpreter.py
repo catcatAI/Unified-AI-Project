@@ -152,3 +152,33 @@ class TestFirstChainEdgeCardEnvelope:
         report = adjudicate_chain([[Fact("good", 1.0, 2.0, "le")], [Fact("bad", 9.0, 2.0, "le")]])
         assert report.ok is False
         assert [v.id for v in report.failed] == ["bad"]
+
+
+class TestGateAdapter:
+    """CIM GateReport → facts Report：順序與 ok 語義保留，證據帶出處。"""
+
+    def test_mixed_gates_convert_with_evidence(self) -> None:
+        from ai.hardware.cim_verify import Gate, GateReport
+        from core.facts import from_gate_report
+
+        gates = GateReport()
+        gates.add(Gate("drc_clean", "empty extraction", True, "DRC errors = 0"))
+        gates.add(Gate("weight_ratio", "inexpressible ratio", False, "worst +5.0%"))
+        assert gates.ok is False
+
+        report = from_gate_report(gates)
+        assert [v.id for v in report.verdicts] == ["drc_clean", "weight_ratio"]
+        assert report.ok is False
+        assert [v.id for v in report.failed] == ["weight_ratio"]
+        assert "empty extraction" in report.verdicts[0].evidence
+        assert report.verdicts[0].source == "cim_verify"
+
+    def test_all_pass_gates_stay_ok(self) -> None:
+        from ai.hardware.cim_verify import Gate, GateReport
+        from core.facts import from_gate_report
+
+        gates = GateReport()
+        gates.add(Gate("a", "x", True, "ok"))
+        report = from_gate_report(gates)
+        assert report.ok is True
+        assert report.as_dict()["failed"] == []

@@ -263,6 +263,60 @@ def test_host_proxy_simulation_block_is_labelled_and_gated() -> None:
     assert any("Orin NX devkit" in c for c in sim["caveats"])
 
 
+def test_spec_top_level_schema_is_complete() -> None:
+    """刪除或改名頂層段必須變紅，而不是靜默通過。
+
+    中間條件全列入判定的一半：先保證條件本身存在，再談數值對不對。
+    """
+    spec = _load_spec()
+    required = {
+        "schema_version",
+        "status",
+        "owner",
+        "product_decision",
+        "compute",
+        "host_interface",
+        "memory",
+        "storage",
+        "model_target",
+        "performance_budget",
+        "power_and_thermal",
+        "mechanical",
+        "software",
+        "acceptance_levels",
+        "current_target",
+        "acceptance",
+        "component_selection_policy",
+        "human_approval_required_for",
+        "open_items",
+        "sources",
+        "explicit_non_claims",
+        "host_proxy_simulation",
+    }
+    missing = required - set(spec)
+    assert not missing, f"spec 缺頂層段: {sorted(missing)}"
+    assert set(spec["acceptance_levels"]) == {"L0", "L1", "L2", "L3", "L4"}
+    assert set(spec["host_proxy_simulation"]) >= {
+        "kind",
+        "date",
+        "rerun",
+        "source",
+        "measured",
+        "projections",
+        "verdicts",
+        "caveats",
+    }
+
+
+def test_spec_declared_paths_exist_on_disk() -> None:
+    """spec 寫的路徑必須真實存在；腳本指的 spec 也必須是這一份。"""
+    spec = _load_spec()
+    repo = SPEC_PATH.parents[2]
+    sim = spec["host_proxy_simulation"]
+    assert (repo / sim["source"]).is_file(), sim["source"]
+    assert (repo / "hardware/edge_card/edge_card_spec.yaml").resolve() == SPEC_PATH.resolve()
+
+
 def test_spec_provenance_and_projection_keys_are_complete() -> None:
     """Every measured number must carry its source and recompute cleanly.
 
