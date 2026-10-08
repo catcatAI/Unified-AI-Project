@@ -35,7 +35,7 @@ from typing import (
 
 from core.interfaces.protocols import ChatMessage, ChatResponse, LLMResponse
 from core.interfaces.service_registry import get_registry
-from core.system.config.magic_numbers import llm_param, timeout_value
+from core.system.config.magic_numbers import lifecycle_value, llm_param, timeout_value
 from core.system.config.network_defaults import (
     ANTHROPIC_API_BASE,
     DEFAULT_ANTHROPIC_MODEL,
@@ -102,16 +102,46 @@ from services.llm.providers.openai import OpenAIAPIBackend
 from services.llm.providers.registry import LLMBackend
 from services.llm.providers.unified import UnifiedBackend
 
-# PriorityNegotiator singleton — registered once at import time
+# PriorityNegotiator singleton — registered once at import time.
+# Voter weights are config-overridable (lifecycle_value) with identical
+# defaults, so behavior is unchanged unless an operator tunes them.
 _negotiator = PriorityNegotiator()
-_negotiator.register_voter("lifecycle", lifecycle_voter, weight_fn=lambda ctx: 0.8)
-_negotiator.register_voter("emotional", emotional_voter, weight_fn=lambda ctx: 0.7)
-_negotiator.register_voter("intent", intent_voter, weight_fn=lambda ctx: 0.6)
-_negotiator.register_voter("angela_emotion", angela_emotion_voter, weight_fn=lambda ctx: 0.9)
-_negotiator.register_voter("causal", causal_voter, weight_fn=lambda ctx: 0.5)
-_negotiator.register_voter("meta_calibration", meta_calibration_voter, weight_fn=lambda ctx: 0.4)
-_negotiator.register_voter("heartbeat", heartbeat_voter, weight_fn=lambda ctx: 0.3)
-_negotiator.register_voter("dli_state", dli_state_voter, weight_fn=lambda ctx: 0.4)
+_negotiator.register_voter(
+    "lifecycle",
+    lifecycle_voter,
+    weight_fn=lambda ctx: lifecycle_value("voter_weight.lifecycle", 0.8),
+)
+_negotiator.register_voter(
+    "emotional",
+    emotional_voter,
+    weight_fn=lambda ctx: lifecycle_value("voter_weight.emotional", 0.7),
+)
+_negotiator.register_voter(
+    "intent", intent_voter, weight_fn=lambda ctx: lifecycle_value("voter_weight.intent", 0.6)
+)
+_negotiator.register_voter(
+    "angela_emotion",
+    angela_emotion_voter,
+    weight_fn=lambda ctx: lifecycle_value("voter_weight.angela_emotion", 0.9),
+)
+_negotiator.register_voter(
+    "causal", causal_voter, weight_fn=lambda ctx: lifecycle_value("voter_weight.causal", 0.5)
+)
+_negotiator.register_voter(
+    "meta_calibration",
+    meta_calibration_voter,
+    weight_fn=lambda ctx: lifecycle_value("voter_weight.meta_calibration", 0.4),
+)
+_negotiator.register_voter(
+    "heartbeat",
+    heartbeat_voter,
+    weight_fn=lambda ctx: lifecycle_value("voter_weight.heartbeat", 0.3),
+)
+_negotiator.register_voter(
+    "dli_state",
+    dli_state_voter,
+    weight_fn=lambda ctx: lifecycle_value("voter_weight.dli_state", 0.4),
+)
 
 # 簡單日誌設置
 if __name__ == "__main__":
