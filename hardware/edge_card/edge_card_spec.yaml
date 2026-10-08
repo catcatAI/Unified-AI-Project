@@ -71,7 +71,7 @@ design_drawings:
         +- clients: cli / python-sdk (windows host deferred: open_items.host_driver_scope)
         v
       == PCIe CEM Gen4 x1 edge fingers: payload 1.969 GB/s each direction,
-         achievable >= 1.6 GB/s (85% TLP, measured at L3) =
+         achievable >= 1.6 GB/s (85% TLP, to be measured at L3) =
          load model 3.35 GB: 1.70s payload / 2.09s achievable <= 5s budget
         steady state: token + control stream only (decode = 8 B/token)
         sidebands: PRSNT# A1-B17 strap / REFCLK 100M host-source / PERST# in
@@ -127,7 +127,7 @@ design_drawings:
 
       protection: thermal throttle (Tj target 90C, silicon slowdown 99C),
         watchdog, EPFLR reset; sensors = module INA power + thermal zones
-        + carrier PMIC temp (power_and_thermal.sensors)
+        + carrier PMIC temp + NVMe SMART + fan tach (power_and_thermal.sensors)
   thermal_path:
     backs:
       - power_and_thermal
@@ -151,6 +151,8 @@ design_drawings:
       gap: the M.2 zone sits opposite the fan with no direct heat path yet
         -> open_items.nvme_thermal_path (prove nvme_headroom at L2 or redesign)
       envelope: single slot / PCB height 64.4mm / component height <= 17mm
+      module path theta budget: <=2.0 K/W @25W / <=1.25 K/W @40W
+        = (90 - 40) / 25 and (90 - 40) / 40 (thermal_targets)
       steady state: sustained decode without throttle
       sensors: module INA power / module thermal zones / carrier PMIC temp
         / NVMe SMART temp (software) / fan tach (power_and_thermal.sensors)
@@ -214,7 +216,8 @@ design_drawings:
 
       MEASURED @25W, 32K (cycle_simulation.measured):
         3.56 tok/s, 281.19 ms/token, mac util 1.000 / mem 0.067 -> COMPUTE-BOUND
-        bind point 222.6 ops/ns vs card max 19 ops/ns -> mem util 2.9-11.4%
+        bind point 222.6 ops/ns vs card max 19 MAC/ns (38 ops/ns @40W)
+          -> engine mem util 2.9-11.4% (full-sweep measured)
         (idle LPDDR5 is structural, balance_study.memory; roofline 52.8 tok/s
          unreachable; prefill stays analytic: ideal ~2600, target >=800 tok/s)
 
@@ -1149,7 +1152,7 @@ cycle_simulation:
       any_mode_any_ctx: [] # under confirmed MAC=2 + GPU-only, nothing reaches 15
       best_point: "nx16_40w_c2 @8K = 6.77 tok/s (44% of target)"
     memory:
-      max_real_mode_ops_ns: 19 # biggest purchasable GPU MAC rate (MAXN 38 dense / 2)
+      max_real_mode_mac_ns: 19 # biggest purchasable GPU MAC rate: 40W 38 dense TOPS / 2 ops per MAC = 19 MAC/ns
       bind_point_ops_ns_32k: 222.6 # analytic: 87.04 B/ns x 2.558 ops/B (Q4)
       roofline_tok_s_at_32k: 52.8 # a ~223 ops/ns class module saturates LPDDR5
       real_mode_util_range: [0.029, 0.114] # nx16_15W@131K .. 40W@8K full sweep, never an eighth

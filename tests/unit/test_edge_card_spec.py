@@ -320,8 +320,10 @@ def test_balance_study_answers_memory_pcie_and_cost() -> None:
 
     mem = bal["memory"]
     # 記憶體飽和點遠超任何可購模組 -> 閒置是物理，不是調校失誤
-    assert mem["max_real_mode_ops_ns"] == 19  # MAXN GPU 38 dense / 2 ops/MAC
-    assert mem["max_real_mode_ops_ns"] < mem["bind_point_ops_ns_32k"]
+    # 單位鎖：19 是 MAC/ns（40W 38 dense TOPS / 2），與 bind 的 ops/ns 不可混名
+    assert mem["max_real_mode_mac_ns"] == 19
+    assert 2 * mem["max_real_mode_mac_ns"] == 38  # = 40W dense TOPS，換算回 ops
+    assert 2 * mem["max_real_mode_mac_ns"] < mem["bind_point_ops_ns_32k"]
     assert mem["bind_point_ops_ns_32k"] > 200
     # 全量掃描範圍（15 個實模態點）：min 必須是 nx16_15W@131072 而非任何子集
     assert mem["real_mode_util_range"] == [0.029, 0.114]
@@ -791,6 +793,7 @@ def test_audit_diagram_strings_match_owning_fields() -> None:
     spec = _load_spec()
     dd = spec["design_drawings"]
     sp = spec["power_and_thermal"]["slot_power"]
+    tt = spec["power_and_thermal"]["thermal_targets"]
 
     pt_d = dd["power_tree"]["diagram"]
     assert f"12V cap 5.5A ({sp['slot_available_12v_w']}W)" in pt_d
@@ -809,3 +812,25 @@ def test_audit_diagram_strings_match_owning_fields() -> None:
     assert "open_items.nvme_thermal_path" in th_d
     assert "nvme-headroom" in th_d or "nvme_headroom" in th_d
     assert "fan tach" in th_d
+
+    # 熱路徑 theta 預算行 = 現算值（(Tj-amb)/25 與 (Tj-amb)/40）
+    tj = tt["module_tj_max_c"]
+    amb = tt["ambient_c"]
+    theta = tt["module_path_theta_max_k_w"]
+    assert f"<={theta['at_25w']} K/W @25W / <={theta['at_40w']} K/W @40W" in th_d
+    assert (
+        round((tj - amb) / spec["power_and_thermal"]["board_budget_w"]["module_maxn"], 2)
+        == theta["at_25w"]
+    )
+    assert (
+        round((tj - amb) / max(spec["compute"]["module"]["supported_power_modes_w"]), 2)
+        == theta["at_40w"]
+    )
+
+    # 2026-10-09 單位修正回歸鎖：MAC/ns 不得再被寫成 ops/ns；感測器清單不得過期
+    dp_d = dd["decode_datapath"]["diagram"]
+    bal_mem = spec["cycle_simulation"]["balance_study"]["memory"]
+    assert f"{bal_mem['max_real_mode_mac_ns']} MAC/ns (38 ops/ns @40W)" in dp_d
+    assert "19 ops/ns" not in dp_d
+    assert "NVMe SMART + fan tach" in pt_d
+    assert "to be measured at L3" in sys_d  # L3 尚未量測，圖不得寫成已完成
