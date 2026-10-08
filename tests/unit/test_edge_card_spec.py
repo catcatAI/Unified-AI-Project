@@ -437,6 +437,130 @@ def test_compute_tops_split_gpu_dla_and_convention() -> None:
     assert "attention" in dl["reason"] and "softmax" in dl["reason"]
 
 
+def test_design_drawings_back_every_numbered_block() -> None:
+    """帶數字的段必須有圖；圖內數字必須與欄位值一致（同步鎖）。
+
+    擋的就是「數值已出現、被當成實際設計，卻沒有完整設計圖」：圖缺失、
+    backs 指到不存在的路徑、段內指標斷鏈、或圖與擁有欄位脫鉤，都要變紅。
+    圖內數字一律從 spec 欄位現算比對，不寫死第二份。
+    """
+    spec = _load_spec()
+    dd = spec["design_drawings"]
+    expected_backs = {
+        "system_interconnect": [
+            "product_decision",
+            "host_interface",
+            "compute.module",
+            "compute.option_sku",
+            "memory",
+            "storage",
+        ],
+        "power_tree": ["power_and_thermal", "component_review.layout_review.vdd_in_feed"],
+        "thermal_path": [
+            "power_and_thermal",
+            "compute.module.junction_temp_c",
+            "mechanical",
+            "component_review.layout_review.thermal_path",
+        ],
+        "mechanical_views": ["mechanical", "component_review.layout_review"],
+        "decode_datapath": [
+            "cycle_simulation.method",
+            "cycle_simulation.measured",
+            "performance_budget",
+            "model_target.working_set_gb",
+        ],
+    }
+    assert set(expected_backs) <= set(dd)
+    assert dd["status"] and dd["convention"]
+
+    for name, backs in expected_backs.items():
+        block = dd[name]
+        assert block["backs"] == backs, name
+        assert block["status"], name
+        assert block["diagram"].strip(), name
+        for path in backs:
+            node: object = spec
+            for part in path.split("."):
+                assert isinstance(node, dict) and part in node, f"{name}: bad backs {path}"
+                node = node[part]
+
+    # 段內指標存在且指向真圖（刪指標或斷鏈要變紅）
+    assert spec["host_interface"]["design_drawing"] == "design_drawings.system_interconnect"
+    assert spec["power_and_thermal"]["design_drawings"] == [
+        "design_drawings.power_tree",
+        "design_drawings.thermal_path",
+    ]
+    assert spec["mechanical"]["design_drawing"] == "design_drawings.mechanical_views"
+    assert spec["performance_budget"]["design_drawing"] == "design_drawings.decode_datapath"
+    assert spec["cycle_simulation"]["design_drawing"] == "design_drawings.decode_datapath"
+    for path in (
+        "host_interface.design_drawing",
+        "mechanical.design_drawing",
+        "performance_budget.design_drawing",
+        "cycle_simulation.design_drawing",
+    ):
+        node = spec
+        for part in path.split("."):
+            node = node[part]
+        assert str(node).startswith("design_drawings."), f"{path} -> {node}"
+        assert str(node).split(".", 1)[1] in dd, f"{path} -> {node} not a drawing"
+
+    # 系統互連圖：鏈路/頻寬/模組關鍵數字
+    comp = spec["compute"]["module"]
+    sys_d = dd["system_interconnect"]["diagram"]
+    assert str(spec["host_interface"]["payload_gbs_each_direction"]) in sys_d
+    assert str(comp["memory_bandwidth_gbs"]) in sys_d
+    assert str(comp["decode_usable_dense_tops"]) in sys_d
+    assert comp["connector"] in sys_d
+    assert "[1,8192]" in sys_d  # DLA softmax cap = why the DLA share is excluded
+
+    # 電源樹：預算拆解式與槽預算必須逐字重複（現算）
+    budget = spec["power_and_thermal"]["board_budget_w"]
+    pt_d = dd["power_tree"]["diagram"]
+    decomposition = (
+        f"{budget['module_maxn']} (module) + {budget['m2_nvme']} + {budget['fan']}"
+        f" + {budget['rails_and_conversion_overhead']} = {budget['tdp_cap']} W cap"
+        f" <= {spec['power_and_thermal']['slot_power']['slot_available_12v_w']} W slot"
+    )
+    assert decomposition in pt_d, decomposition
+    mode_40 = max(comp["supported_power_modes_w"])
+    unlocked = mode_40 + budget["m2_nvme"] + budget["fan"] + budget["rails_and_conversion_overhead"]
+    assert f"{unlocked} W" in pt_d  # 40W branch = 50 W board
+    tt = spec["power_and_thermal"]["thermal_targets"]
+    assert str(tt["module_tj_max_c"]) in pt_d
+    assert str(comp["junction_temp_c"]["slowdown"]) in pt_d
+
+    # 散熱圖：風量/環溫/Tj 目標與矽極限
+    th_d = dd["thermal_path"]["diagram"]
+    assert str(spec["power_and_thermal"]["airflow_lfm_min_with_fan"]) in th_d
+    assert str(tt["ambient_c"]) in th_d
+    assert str(tt["module_tj_max_c"]) in th_d
+    assert str(comp["junction_temp_c"]["max"]) in th_d
+
+    # 機械圖：外型尺寸/高度/keepout 名/雙支架
+    mech = spec["mechanical"]
+    mv_d = dd["mechanical_views"]["diagram"]
+    assert str(mech["pcb_height_mm_max"]) in mv_d
+    assert str(mech["pcb_length_mm_max"]) in mv_d
+    assert str(mech["component_height_mm_max"]) in mv_d
+    for keepout in mech["keepouts"]:
+        assert keepout in mv_d, keepout
+    assert "low-profile" in mv_d and "full-height" in mv_d
+
+    # 解碼數據路徑圖：實測速率/伺服器鏈/每 token 量
+    cyc = spec["cycle_simulation"]
+    meas = cyc["measured"]
+    bal = cyc["balance_study"]
+    dp_d = dd["decode_datapath"]["diagram"]
+    assert str(meas["decode_tok_s"]) in dp_d
+    assert str(meas["per_token_ms"]) in dp_d
+    assert str(bal["memory"]["bind_point_ops_ns_32k"]) in dp_d
+    assert str(bal["memory"]["roofline_tok_s_at_32k"]) in dp_d
+    assert "4.218" in dp_d and "4.218" in f"{meas['ops_per_token']['total']:.3e}"
+    assert "1.649" in dp_d and "1.649" in f"{meas['bytes_per_token']['reads']:.3e}"
+    assert any("591" in step for step in cyc["method"]) and "591" in dp_d
+
+
 def test_spec_top_level_schema_is_complete() -> None:
     """刪除或改名頂層段必須變紅，而不是靜默通過。
 
@@ -468,6 +592,7 @@ def test_spec_top_level_schema_is_complete() -> None:
         "host_proxy_simulation",
         "cycle_simulation",
         "component_review",
+        "design_drawings",
     }
     missing = required - set(spec)
     assert not missing, f"spec 缺頂層段: {sorted(missing)}"

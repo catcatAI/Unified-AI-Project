@@ -3,7 +3,7 @@
 ## Overview
 
 This directory contains the Unified AI Project test suite. Tests are organized
-by domain. **7,042 tests collected** (tests/; re-verified 2026-10-08).
+by domain. **7,044 tests collected** (tests/; re-verified 2026-10-08).
 
 Historical executed run (pre-cleanup, ~2026-07-14): 4,544 passed, 185 failed, 39
 errors, 85 skipped, 2 xfailed. The failures below explain the 185/39.

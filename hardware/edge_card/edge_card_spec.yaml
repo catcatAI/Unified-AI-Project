@@ -44,6 +44,170 @@ product_decision:
       - default context 32K tokens (128K capability reserved to the 16GB SKU)
 
 # =============================================================================
+# Design drawings (L0) - every number-carrying block below names its drawing
+# =============================================================================
+design_drawings:
+  status: l0_drawings_backing_the_numbers_in_this_file
+  convention: >-
+    Five ASCII diagrams (repo diagram convention), one per physical/logical
+    domain. Each entry carries backs (the section paths whose numbers it draws)
+    and a status marking how far the drawing goes; a drawing never introduces
+    a number its owning sections do not state, and the numbers it repeats are
+    re-locked against the owning fields by tests/unit/test_edge_card_spec.py
+    (test_design_drawings_back_every_numbered_block).
+  system_interconnect:
+    backs:
+      - product_decision
+      - host_interface
+      - compute.module
+      - compute.option_sku
+      - memory
+      - storage
+    status: complete_for_l0_wiring_facts_from_datasheets
+    diagram: |-
+      HOST PC
+        +- linux-mbox driver: BAR0 control mailbox + doorbell + MSI
+        +- clients: cli / python-sdk (windows host deferred: open_items.host_driver_scope)
+        v
+      == PCIe CEM Gen4 x1 edge fingers: payload 1.969 GB/s each direction,
+         achievable >= 1.6 GB/s (85% TLP, measured at L3) =
+         load model 3.35 GB: 1.70s payload / 2.09s achievable <= 5s budget
+        steady state: token + control stream only (decode = 8 B/token)
+        v
+      CARRIER PCB (custom part; L2 gate = kicad DRC + gerber)
+        +- C4 controller lane0 only -> x1 fingers (lanes 1-3 NC on card)
+        +- EP mode: sysfs start + ODMDATA hsio-uphy-config-41
+        |    (open risk: C4 endpoint + C7 NVMe concurrency, open_items.uphy_concurrency)
+        +- FLR required / MSI required / IOMMU compat required for host driver
+        +- slot 12V -> module VDD_IN direct feed (in-range 5-20V; >=8V unlocks 40W)
+        +- keepouts: pcie-finger-keepout, bracket-air-exit
+        v
+      [Jetson Orin NX 16GB, SO-DIMM-260, 69.6 x 45.0 mm]
+        +- CPU: 6x Arm Cortex-A78AE
+        +- GPU: 1024 CUDA / 32 Tensor Cores = the ONLY decode-usable compute
+        |    GPU-only dense 30 TOPS @25W, MAC=2 -> 15 GMAC/s (40W mode: 38 -> 19)
+        |    2x NVDLA (20 dense TOPS) EXCLUDED: no attention layer, softmax cap [1,8192]
+        +- LPDDR5 16GB 128-bit: 102.4 GB/s raw (87.04 B/ns serviced)
+        +- C7 x2 -> M.2 NVMe (below) / C4 -> edge (above)
+        v
+      [M.2 Key-M 2230 NVMe, 256 min / 512 target GB]
+        +- holds Jetson Linux OS + model library (3.35 GB) + logs; boot primary
+        +- recovery: USB forced-recovery (no SD socket on card)
+      variant: 8GB SKU = same carrier, GPU dense 25 @765MHz, 1x NVDLA, no 128K ctx
+      cooling cross-cut: 40mm fan -> fin stack -> module top plate -> bracket exit
+  power_tree:
+    backs:
+      - power_and_thermal
+      - component_review.layout_review.vdd_in_feed
+    status: complete_for_l0_except_3v3_logic_allocation_at_l2
+    diagram: |-
+      PCIe slot (CEM): 12V up to 75W available / 3.3V up to 75W available
+        (board budget below derives from the 12V feed only; any 3.3V logic load
+         is sized inside L2 power-tree analysis, acceptance_levels.L2)
+        |
+        v  slot 12V rail (component_review.layout_review.vdd_in_feed: direct feed)
+        +--> module VDD_IN (module input range 5-20V; 12V in range with margin)
+        |      +- nvpmodel modes [10, 15, 25, 40] W; default = 25W MAXN
+        |      +- >=8V VDD_IN precondition of 40W MAXN_SUPER satisfied by this feed
+        |      +- MODULE_ID strap per Product Design Guide (open_items.vdd_in_wiring)
+        +--> M.2 NVMe rail ............................ 3 W
+        +--> 40mm fan ................................ 2 W
+        +--> rails & conversion overhead ............. 5 W
+
+      default 25W board: 25 (module) + 3 + 2 + 5 = 35 W cap <= 75 W slot
+      40W profile:       40 (module) + 3 + 2 + 5 = 50 W     <= 75 W slot
+                         (cooling-unlocked branch; same rail, zero added parts)
+      low-power: 15W mode via nvpmodel (same board; perf targets derate ~30%)
+
+      protection: thermal throttle (Tj target 90C, silicon slowdown 99C),
+        watchdog, EPFLR reset; sensors = module INA power + thermal zones
+        + carrier PMIC temp (power_and_thermal.sensors)
+  thermal_path:
+    backs:
+      - power_and_thermal
+      - compute.module.junction_temp_c
+      - mechanical
+      - component_review.layout_review.thermal_path
+    status: complete_for_l0_path_and_targets_fin_geometry_at_l2
+    diagram: |-
+      ambient target <= 40C (power_and_thermal.thermal_targets)
+        |
+        v
+      [40mm fan] -- >=200 lfm --> [fin stack] --TIM--> [Orin NX module top plate]
+                                                            |
+                                                            v
+                                silicon limits: Tj target 90C sustained (product),
+                                slowdown at 99C, absolute max 105C (compute.module)
+                                                            |
+                                                            v
+                    warm air -> bracket-air-exit keepout -> exhaust
+
+      envelope: single slot / PCB height 64.4mm / component height <= 17mm
+      steady state: sustained decode without throttle
+      sensors: module INA power / module thermal zones / carrier PMIC temp
+      gate: L2 single_slot_thermal_solution_verified_at_40c_ambient_200lfm
+            = the condition for the 40W cooling-unlock branch (power_tree)
+  mechanical_views:
+    backs:
+      - mechanical
+      - component_review.layout_review
+    status: zone_sketch_exact_xy_is_the_kicad_l2_deliverable
+    diagram: |-
+      PLAN VIEW (top, zones; exact XY is the KiCad L2 deliverable):
+      ┌────────────────────────────────────────────────────────────────────────────┐
+      │bracket side (bracket-air-exit) <--- carrier PCB ---> front side            │
+      │                                                                            │
+      │ [40mm fan + fin stack]  [Orin NX SO-DIMM-260]  [M.2 Key-M 2230]            │
+      │ exhaust -> bracket       69.6 x 45.0 horizontal  horizontal                │
+      │                                                                            │
+      │carrier PCB: 64.4 (H) x 170.0 (L) mm, 1 slot, comp height <=17mm            │
+      │                                                                            │
+      │BOTTOM EDGE: PCIe Gen4 x1 edge fingers (pcie-finger-keepout),               │
+      │             key notch per PCIe CEM; lanes 1-3 NC on card                   │
+      └────────────────────────────────────────────────────────────────────────────┘
+      SIDE VIEW (component stack):
+      ┌────────────────────────────────────────────────────────────────────────────┐
+      │component height envelope <= 17mm                                           │
+      │                                                                            │
+      │ [fan + fin stack]--TIM--[Orin NX on SO-DIMM, horizontal]                   │
+      │ [M.2 2230 horizontal, under module zone]                                   │
+      │ =========================================================                  │
+      │ [carrier PCB] ......... [PCIe edge fingers, bottom]                        │
+      │                                                                            │
+      │brackets: full-height = primary (ships); low-profile in box                 │
+      │          (same PCB, cut height - mechanical.bracket_low_profile)           │
+      └────────────────────────────────────────────────────────────────────────────┘
+  decode_datapath:
+    backs:
+      - cycle_simulation.method
+      - cycle_simulation.measured
+      - performance_budget
+      - model_target.working_set_gb
+    status: complete_engine_topology_matching_edge_card_sim
+    diagram: |-
+      RESIDENT WEIGHTS
+        NVMe 3.35 GB (Q4_0 GGUF) --C7 x2--> LPDDR5 16GB
+          cold load: 1.70s payload / 2.09s achievable <= 5s budget
+        (host path optional: Gen4 x1 achievable >=1.6 GB/s)
+
+      PER DECODE TOKEN: 591 GGUF items / 4.218 GMAC / reads 1.649 GB / writes 9216 B
+        for layer 0..34 (35-layer GQA decoder):
+          attention (KV int8 @32K; layers 0-14 write own KV -> 15 writes/token)
+            -> MLP -> PLE (per-layer embeddings)
+        tied lm_head streams full token_embd -> sample -> 8 B/token over PCIe x1
+
+      DISCRETE-EVENT SERVERS (cycle_simulation.method, engine=edge_card_sim.py)
+        [LPDDR5 87.04 B/ns] -> [SRAM queue, conservative starve] -> [MAC array
+        15 MAC/ns = GPU Tensor Core dense30 / MAC=2]
+        PCIe x1 1.969 GB/s sits outside decode (util ~0; carries 8 B/token)
+
+      MEASURED @25W, 32K (cycle_simulation.measured):
+        3.56 tok/s, 281.19 ms/token, mac util 1.000 / mem 0.067 -> COMPUTE-BOUND
+        bind point 222.6 ops/ns vs card max 19 ops/ns -> mem util 4.1-11.4%
+        (idle LPDDR5 is structural, balance_study.memory; roofline 52.8 tok/s
+         unreachable; prefill stays analytic: ideal ~2600, target >=800 tok/s)
+
+# =============================================================================
 # Compute
 # =============================================================================
 compute:
@@ -180,6 +344,7 @@ host_interface:
     host_to_card_gbs: 1.6
     e2b_q4_0_load_seconds_from_host_max: 5
     on_card_nvme: preferred (weights + OS on M.2, loaded to LPDDR5 at service start)
+  design_drawing: design_drawings.system_interconnect
 
 # =============================================================================
 # Memory & storage
@@ -304,6 +469,7 @@ performance_budget:
   host_link:
     cold_load_e2b_q4_0_from_host_s_max: 5
     steady_state_host_traffic: token stream + control only (tokens are bytes-scale)
+  design_drawing: design_drawings.decode_datapath
 
 # =============================================================================
 # Power & thermal
@@ -329,6 +495,9 @@ power_and_thermal:
   thermal_targets:
     { module_tj_max_c: 90, ambient_c: 40, steady_state: sustained-decode-without-throttle }
   power_management: [nvpmodel-modes, thermal-throttle, watchdog, epflr-reset]
+  design_drawings:
+    - design_drawings.power_tree
+    - design_drawings.thermal_path
 
 # =============================================================================
 # Mechanical
@@ -343,6 +512,7 @@ mechanical:
   stack: [so-dimm-module-horizontal, m2-2230-horizontal, fin-stack-with-40mm-fan]
   module_thermal_interface: module-top-plate-to-heatsink per Jetson thermal design guide
   keepouts: [pcie-finger-keepout, bracket-air-exit]
+  design_drawing: design_drawings.mechanical_views
 
 # =============================================================================
 # Software
@@ -381,6 +551,7 @@ acceptance:
     - model_target_carries_sources_and_working_set_fits_module_memory
     - every_requirement_has_an_owner_and_evidence_target
     - rejected_candidates_record_why
+    - design_drawings_exist_and_reconciled_with_owning_fields
   L1:
     - gemma4_e2b_q4_0_decode_ge_target_on_devkit_25w_mode
     - gemma4_e2b_prefill_ge_target_at_4k_context
@@ -751,6 +922,7 @@ cycle_simulation:
   rerun: .venv/bin/python scripts/sim_edge_card_cycle.py --json out.json
   source: scripts/sim_edge_card_cycle.py
   engine: apps/backend/src/ai/hardware/edge_card_sim.py
+  design_drawing: design_drawings.decode_datapath
   model: google/gemma-4-E2B-it QAT Q4_0 GGUF (local snapshot, 3.350 GB, 541 tensors)
   method:
     - "card executed, not extrapolated: LPDDR5 / INT8 MAC / SRAM queue / PCIe Gen4 x1
