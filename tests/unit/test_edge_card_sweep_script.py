@@ -32,11 +32,12 @@ def sweep():
 
 
 def test_real_modes_carry_per_sku_context_policy(sweep) -> None:
-    """8GB SKU 止於 32K（容量），16GB 才有 128K；15W 明標 derived。"""
+    """8GB SKU 止於 32K（容量），16GB 才有 128K；15W 明標 derived；只留 MAC=2。"""
     modes = sweep.REAL_MODES
     for name, m in modes.items():
         assert {"tops", "conv", "ctxs", "label"} <= set(m)
-        assert m["tops"] > 0 and m["conv"] in (1, 2)
+        assert m["tops"] > 0
+        assert m["conv"] == 2, "MAC=2 已事實確認，c1/1-op 行不得回魂"
         assert 32768 in m["ctxs"]
         if name.startswith("nx8_"):
             assert max(m["ctxs"]) == 32768, f"{name} 不得含 128K"
@@ -46,7 +47,11 @@ def test_real_modes_carry_per_sku_context_policy(sweep) -> None:
             assert "derived" in m["label"], "15W 必須標 derived"
     # 15W 推導 = 25W 檔 x 0.7（spec low_power_profile 的 derate 註記）
     assert modes["nx16_15w_c2"]["tops"] == pytest.approx(modes["nx16_25w_c2"]["tops"] * 0.7)
-    assert modes["nx16_15w_c1"]["tops"] == pytest.approx(modes["nx16_25w_c1"]["tops"] * 0.7)
+    # GPU dense 隨時脈線性：nx8 預設 765MHz、MAXN 1173MHz 對 918MHz 基準
+    # （abs=0.5：NVIDIA 公表值取整，38 vs 精確時脈推算 38.33）
+    base = modes["nx16_25w_c2"]["tops"]
+    assert modes["nx8_25w_c2"]["tops"] == pytest.approx(base * 765 / 918, abs=0.5)
+    assert modes["nx16_40w_c2"]["tops"] == pytest.approx(base * 1173 / 918, abs=0.5)
 
 
 def test_load_paths_arithmetic_and_budget(sweep) -> None:
@@ -91,3 +96,32 @@ def test_memory_bind_point_above_every_real_mode(sweep) -> None:
     max_real_ops_ns = max(m["tops"] / m["conv"] for m in sweep.REAL_MODES.values())
     assert bind["ops_ns"] > max_real_ops_ns * 2  # 留兩倍餘裕給未來模組
     assert bind["ops_ns"] == pytest.approx(222.6, rel=0.01)  # spec 記載的 bind point
+
+
+def test_real_mode_point_satisfies_physical_bounds(sweep) -> None:
+    """物理性不變量：單點模擬時間必須落在 analytic 下界與 +5% 內。
+
+    下界 = max(算力時間, 記憶體時間)——離散事件引擎不可能快過任一伺服器的
+    串行時間；真模組點 compute-bound，所以也不該超過下界太多（probe 點會
+    因 SRAM 節流鬆，這裡只測真模式）。
+    """
+    gguf = (
+        Path.home()
+        / ".cache/huggingface/hub/models--google--gemma-4-E2B-it-qat-q4_0-gguf"
+        / "snapshots/675cff42a74c774d6cb76f76d8eacb49b48c9b93"
+        / "gemma-4-E2B_q4_0-it.gguf"
+    )
+    if not gguf.is_file():
+        pytest.skip("GGUF artifact not present on this machine")
+    structure = sweep.read_gguf_structure(gguf)
+    cfg = sweep.make_cfg(30.0, 2)  # GPU dense30 @25W, MAC=2
+    ctx = 32768
+    totals = sweep.workload_totals(sweep.build_decode_workload(structure, cfg, ctx, 0, 0))
+    r = sweep.run_point(structure, cfg, ctx, 2)
+    assert not r["violations"]
+    t = 1.0 / r["tok_s"]
+    compute_s = totals["ops"] / (cfg.mac_per_ns * 1e9)
+    mem_s = totals["reads"] / (cfg.mem_service_bytes_per_ns * 1e9)
+    floor_s = max(compute_s, mem_s)
+    assert t >= floor_s * 0.999, f"快過物理下界: {t:.4f}s < {floor_s:.4f}s"
+    assert t <= floor_s * 1.05, f"超出 analytic 上界: {t:.4f}s > {floor_s:.4f}s"

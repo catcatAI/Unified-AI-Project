@@ -53,11 +53,38 @@ compute:
     connector: SO-DIMM-260
     cpu: 6x Arm Cortex-A78AE v8.2
     gpu: Ampere-1024-CUDA-32-TensorCore
-    int8_tops:
+    int8_tops: # module totals as published (GPU + DLA combined) - NOT decode-usable
       dense_maxn_25w: 50
       sparse_maxn_25w: 100
       dense_maxn_super_40w: 78
       sparse_maxn_super_40w: 157
+    gpu_tc_int8_tops: # GPU Tensor Cores only = decode-usable compute
+      dense_25w_918mhz: 30
+      sparse_25w_918mhz: 60
+      dense_maxn_super_1173mhz: 38
+      sparse_maxn_super_1173mhz: 77
+      source: src_jetson_orin_page
+      derivation: >-
+        module minus DLA closes on every figure (50-20=30, 100-40=60,
+        78-40=38, 157-80=77) and clock scaling agrees (30 x 1173/918 = 38);
+        NVIDIA's GPU Tensor Core row for Orin NX states 38 dense / 77
+        sparse directly
+    dla_int8_tops_excluded: # 2x NVDLA 2.0 - CNN-only, cannot run decode
+      dense_25w: 20
+      dense_maxn_super_40w: 40
+      sparse_25w: 40
+      sparse_maxn_super_40w: 80
+      source: src_dla_layers
+      reason: >-
+        DLA's supported layers are conv/FC/activation/pooling/batchnorm/LRN
+        - no attention layer, no layernorm, softmax capped at [1,8192] with
+        axis <= 1024 - so the 35-layer GQA decoder cannot execute there;
+        DLA TOPS never enter decode math
+    decode_usable_dense_tops: 30 # GPU-only @25W: what every simulation uses
+    tops_convention: >-
+      MAC=2 (TOPS count 2 ops per MAC): NVIDIA's own rows show INT8 dense
+      exactly 2x FP16 dense on the same Tensor Cores (38 vs 19 for Orin NX)
+      (src_jetson_orin_page); the 1-op/c1 reading is retired
     memory_gb: 16
     memory_type: LPDDR5-128bit
     memory_bandwidth_gbs: 102.4
@@ -72,7 +99,17 @@ compute:
   option_sku:
     part: NVIDIA-Jetson-Orin-NX-8GB
     same_carrier: true
-    int8_tops: { dense_maxn_25w: 35, sparse_maxn_25w: 70 }
+    int8_tops: { dense_maxn_25w: 35, sparse_maxn_25w: 70 } # module incl 1x DLA
+    gpu_tc_int8_tops: # same GPU silicon as 16GB, lower default clock
+      dense_25w_765mhz: 25
+      sparse_25w_765mhz: 50
+      dense_maxn_super_1173mhz: 38
+      source: src_jetson_orin_page
+    dla_int8_tops_excluded: # 1x NVDLA on the 8GB SKU
+      dense_25w: 10
+      sparse_25w: 20
+      source: src_dla_layers
+    decode_usable_dense_tops: 25
     memory_gb: 8
     memory_bandwidth_gbs: 102.4
   rejected_compute_candidates:
@@ -253,13 +290,15 @@ performance_budget:
     cycle_simulation_note: >-
       the ranges above are BANDWIDTH-ONLY bounds (they assume free compute);
       the structural cycle simulation (cycle_simulation, 2026-10-07) shows the
-      card is compute-bound at 25 GMAC/s - 5.93 tok/s at 32K with mac_array at
-      100% while memory sits at 11% - so decode does not follow these numbers
-      until silicon provides >= 63.3 GMAC/s dense (see cycle_simulation.refutes).
+      card is compute-bound at 15 GMAC/s (GPU-only dense30, MAC=2) - 3.56
+      tok/s at 32K with mac_array at 100% while memory sits at 7% - so decode
+      does not follow these numbers until silicon provides >= 63.3 GMAC/s
+      dense (see cycle_simulation.refutes).
   prefill_tok_s:
     derived_1k_tokens_note: >-
       ~2 * 2.3e9 * 1000 = 4.6 TFLOP/1K tokens plus PLE/attention overhead;
-      at 50 dense INT8 TOPS with 0.4 MFU -> ~0.23s -> ~4300 tok/s ideal.
+      at 30 dense INT8 TOPS (GPU-only @25W, MAC=2) with 0.4 MFU -> ~0.38s
+      -> ~2600 tok/s ideal.
     target_e2b_min: 800
     target_basis: conservative floor for long-context prefill incl. memory-bound attention; measure at L1
   host_link:
@@ -401,7 +440,7 @@ component_review:
         larger fin stack / higher-LFM fan (still standard parts, still one
         slot) is the only standard-part change that moves decode: it is
         what unlocks the 40W MAXN_SUPER profile - see
-        simulation.power_ladder (11.85 -> 18.45 tok/s at 32K, ops reading)
+        simulation.power_ladder (3.56 -> 4.50 tok/s at 32K, GPU-only MAC=2)
       constraint: >-
         the >=8V VDD_IN precondition of the 40W mode is already met by the
         planned 12V feed (layout_review.vdd_in_feed, zero added parts);
@@ -496,8 +535,9 @@ component_review:
       source: src_orin_power_modes
   simulation:
     rerun_note: >-
-      measured by scripts/sim_edge_card_sweep.py on 2026-10-07; baseline
-      cross-check against the cycle runner held (5.93 tok/s, OK)
+      measured by scripts/sim_edge_card_sweep.py on 2026-10-07 with the
+      corrected inputs (GPU-only dense, MAC=2); baseline cross-check against
+      the cycle runner held (3.56 tok/s, OK)
     load_paths_s:
       host_pcie_payload: 1.70
       host_pcie_achievable_1_6: 2.09
@@ -511,37 +551,44 @@ component_review:
         storage and host-link upgrades cannot buy meaningful time - the 5s
         gate has ~2.9s headroom on every path, including a hypothetical
         faster device (still capped by LPDDR5 write at 87 B/ns)
-    power_ladder_tok_s_at_32k:
-      w15_derived: { c2: 4.15, c1: 8.30 }
-      w25_default: { c2: 5.93, c1: 11.85 }
-      w40_maxn_super: { c2: 9.25, c1: 18.45 }
+    power_ladder_tok_s_at_32k: # GPU-only dense, MAC=2 confirmed
+      w15_derived: 2.49
+      w25_default: 3.56
+      w40_maxn_super: 4.50
       note: >-
         the 15W rows derive from power_and_thermal.low_power_profile's own
-        "~30% derate" note (50 x 0.7 = 35 dense, labeled derived); only
-        w40_maxn_super.c1 reaches the 15 tok/s target at 32K
-    ctx_128k_16gb_sku_tok_s:
-      w15_derived: { c2: 1.78, c1: 3.55 }
-      w25_default: { c2: 2.54, c1: 5.07 }
-      w40_maxn_super: { c2: 3.96, c1: 7.91 }
+        "~30% derate" note applied to GPU-only dense (30 x 0.7 = 21 dense,
+        labeled derived). Pre-correction values (11.85/18.45 at c1,
+        5.93/9.25 at c2) were wrong twice over: module totals included DLA
+        TOPS the decoder cannot use, and c1 used a 1-op reading that
+        NVIDIA's INT8=2x-FP16 rows refute (src_jetson_orin_page). No row
+        reaches the 15 tok/s target.
+    ctx_128k_16gb_sku_tok_s: # GPU-only dense, MAC=2
+      w15_derived: 1.07
+      w25_default: 1.52
+      w40_maxn_super: 1.93
       reading: >-
         the 16GB SKU's reserved 128K capability (model_target) is not a
-        15 tok/s capability - the best point is 7.91 (40W, ops reading)
-        and 5.07 at the 25W default; the 8GB SKU is excluded by capacity,
-        so the sweep skips 128K rows for nx8 modes
+        rate capability - the best point is 1.93 (40W) and 1.52 at the 25W
+        default; the 8GB SKU is excluded by capacity, so the sweep skips
+        128K rows for nx8 modes
     meets_target:
-      at_32k: [nx16_40w_c1]
-      at_or_below_16k: [nx16_25w_c1, nx16_40w_c1]
+      at_32k: []
+      at_or_below_16k: []
       reading: >-
-        consistent with balance_study options A and B - extending the ladder
-        to 15W and to 128K surfaced no third option
+        no GPU-only dense point reaches 15 tok/s anywhere in the sweep -
+        best anywhere = 6.77 (40W @8K); the cooling lever still moves the
+        numbers (+26% at 32K) but no configuration hits the target
   conclusion: >-
     the improvements that move the spec numbers are (1) a cooling uplift to
     unlock the 40W profile - same module, standard fan/fin parts, gated at
-    L2 thermal - and (2) the 12V VDD_IN layout decision that makes that
-    profile electrically legal at zero part cost. Everything else (faster
-    NVMe, better link efficiency, the 15W profile, 128K context) either is
-    already under budget or moves the wrong direction; the 15W ladder and
-    128K rows are recorded so nobody has to re-ask them.
+    L2 thermal (3.56 -> 4.50 tok/s at 32K, +26%) - and (2) the 12V VDD_IN
+    layout decision that makes that profile electrically legal at zero part
+    cost. Everything else (faster NVMe, better link efficiency, the 15W
+    profile, 128K context) either is already under budget or moves the wrong
+    direction; no dense configuration reaches the 15 tok/s target on this
+    silicon (cycle_simulation.sensitivity) - that is a product decision, not
+    a parts decision.
 
 # =============================================================================
 # Open items (blocking or carry-risk)
@@ -590,10 +637,24 @@ open_items:
 # =============================================================================
 sources:
   src_orin_nx_ds:
-    what: "Orin NX memory/TOPS/modes/PCIe controllers/VDD_IN (16GB: 102GB/s, dense50@25W, Gen4, C4 dual-mode)"
+    what: "Orin NX memory/TOPS/modes/PCIe controllers/VDD_IN (16GB: 102GB/s, module dense50@25W incl DLA, Gen4, C4 dual-mode)"
     url: https://static.generation-robots.com/media/Jetson-Orin-NX-Series-Modules-Datasheet.pdf
     doc: DS-10712-001_v1.7 (2026-02-20)
     type: manufacturer_datasheet
+  src_jetson_orin_page:
+    what: >-
+      NVIDIA GPU Tensor Core rows: Orin NX 38 dense/77 sparse INT8 TOPS and
+      19 dense/38 sparse FP16 TFLOPs (INT8 dense = exactly 2x FP16 dense on
+      the same cores -> TOPS count 2 ops/MAC); module 157 sparse total
+    url: https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/jetson-orin
+    type: manufacturer_documentation
+  src_dla_layers:
+    what: >-
+      TensorRT DLA supported layers/restrictions (conv/FC/activation/
+      pooling/batchnorm/LRN; no attention, no layernorm, softmax dims
+      capped) - DLA is CNN-only and cannot host a transformer decoder
+    url: https://docs.nvidia.com/deeplearning/tensorrt/latest/inference-library/dla-layer-restrictions.html
+    type: vendor_documentation
   src_orin_nano_ds:
     what: Orin Nano PCIe ceiling corrected to Gen3 (rejection evidence for Nano)
     url: https://static6.arrow.com/aropdfconversion/4ebf6ae5346ea85b5fb07e006ab80f9929f5810e/son-orin-nano-series-modules-datasheet_ds-11105-001_v1.7.pdf
@@ -682,8 +743,8 @@ host_proxy_simulation:
       budget stays the Orin INT8 analytic bound (>= 800 tok/s target)
     - "decode_bound_vs_target_15: PASS is a BANDWIDTH-only verdict; the structural
       cycle simulation (cycle_simulation, 2026-10-07) shows the card is
-      compute-bound at 25 GMAC/s (5.93 tok/s), so this PASS does not carry to
-      decode reality - see cycle_simulation.refutes"
+      compute-bound at 15 GMAC/s (GPU-only dense30, 3.56 tok/s), so this PASS
+      does not carry to decode reality - see cycle_simulation.refutes"
 cycle_simulation:
   kind: structural_discrete_event_not_l1
   date: 2026-10-07
@@ -694,6 +755,9 @@ cycle_simulation:
   method:
     - "card executed, not extrapolated: LPDDR5 / INT8 MAC / SRAM queue / PCIe Gen4 x1
       are discrete-event servers at the spec's bit widths and clocks"
+    - compute = GPU Tensor Cores only (dense30 @25W, MAC=2 confirmed); the
+      module-topline DLA share (20/40 dense) is excluded - CNN-only silicon
+      that cannot run a transformer decoder (compute.module, src_dla_layers)
     - one decode step cut into 591 items straight from the GGUF tensor table
       (exact bytes from tensor offsets, MACs from tensor dims, KV int8 @32K,
       tied lm_head streams full token_embd, layers 0-14 own KV -> 15 writes)
@@ -703,77 +767,82 @@ cycle_simulation:
       workload totals are consumed EXACTLY at each token boundary
   checkpoints_hops: [16, 100, 1000, 10000] # all PASS: 0 violations, replay equal
   gate:
-    min_tok_s: 5.5 # regression floor: measured 5.93; fails loud if the engine drifts
-  measured: # mac_convention=2 -> conservative 2 ops/MAC -> 25 GMAC/s
+    min_tok_s: 3.3 # regression floor: measured 3.56; fails loud if the engine drifts
+  measured: # GPU-only dense30 @25W, MAC=2 -> 15 MAC/ns (DLA excluded)
     tokens: 5
-    hops: 13108
-    decode_tok_s: 5.93
-    per_token_ms: 168.72
-    utilization: { mac_array: 1.000, mem_service: 0.112, pcie: 0.000 }
+    hops: 12588
+    decode_tok_s: 3.56
+    per_token_ms: 281.19
+    utilization: { mac_array: 1.000, mem_service: 0.067, pcie: 0.000 }
     bottleneck: mac_array # COMPUTE-BOUND
     ops_per_token: { total: 4.218e+9, weights: 2.280e+9, attention: 1.938e+9 }
     bytes_per_token: { reads: 1.649e+9, writes: 9216, pcie: 8 }
     violations: 0
     replay_identical: true
     workload_exact: true
-  long_run: # extended validation: no drift over 52k hops / 20 tokens
+  long_run: # extended validation: no drift over 50k hops / 20 tokens
     run: ".venv/bin/python scripts/sim_edge_card_cycle.py --checkpoints 16,100,1000,10000,50000 --tokens 20"
-    hops: 52453
+    hops: 50373
     tokens: 20
     checkpoints: [16, 100, 1000, 10000, 50000] # all replay bit-identical, 0 violations
     violations: 0
     replay_equal_all_checkpoints: true
     workload_exact: true # integer retire counters - exact by construction (was
     # float accumulation, found drifting at ~52k hops by this very run, then fixed)
-    per_token_ms_range: [168.71, 168.76] # slight creep = KV growth on full-attn layers
+    per_token_ms_range: [281.19, 281.26] # slight creep = KV growth on full-attn layers
   sensitivity:
-    mac_convention_1_tok_s: 11.85 # 50 GMAC/s reading of the "50 TOPS" headline
+    tops_convention_resolved: mac_2 # TOPS = 2 ops/MAC: INT8 dense = exactly 2x FP16 dense on the same Tensor Cores (38 vs 19, src_jetson_orin_page)
+    c1_reading_retired_tok_s: 7.11 # 1-op reading of GPU dense30 - invalid; pre-correction 11.85/18.45 also wrongly counted DLA TOPS
     needed_gmac_s_for_15_at_32k: 63.3
+    gpu_dense_gmac_s: { w25: 15, w40_maxn_super: 19 } # decode-usable compute
     weights_only_floor_gmac_s: 34.2 # ctx->0 floor = 68 dense TOPS @2ops/MAC
     conclusion: >-
-      the 15 tok/s decode target is unreachable with 50 dense TOPS (25 GMAC/s)
-      at ANY context, because the weights-only floor alone needs 34.2 GMAC/s.
-      At the optimistic 50 GMAC/s reading it needs >= 63.3 GMAC/s at 32K, i.e.
-      context below ~18K to fit 50 GMAC/s. MTP / speculative decoding does not
-      change this: dense decode is compute-bound, so MACs scale with emitted
-      tokens - only weight BYTES amortize, which would matter only on a
-      bandwidth-bound card.
+      15 tok/s is unreachable on this silicon at ANY context under the
+      confirmed convention: it needs 63.3 GMAC/s at 32K and 34.2 GMAC/s
+      even at ctx->0, while the GPU (the only decode-usable compute) gives
+      15 GMAC/s @25W and 19 GMAC/s @MAXN_SUPER. The module-topline readings
+      (50/78 dense) counted the 2x NVDLA share (20/40 dense) that cannot
+      run a transformer decoder (src_dla_layers). Sparse 2:4 would double
+      the GPU (30/38.5 GMAC/s) but still misses 63.3 at 32K, needs a
+      2:4-pruned checkpoint + TRT-LLM path that does not exist for Gemma 4
+      QAT (unverified, L1 item), and MTP/speculative decoding does not help
+      a compute-bound decode (MACs scale with emitted tokens - only weight
+      BYTES amortize, which would matter only on a bandwidth-bound card).
   balance_study: # module-carrier balance sweep (2026-10-07): SKU x TOPS reading x ctx
     source: scripts/sim_edge_card_sweep.py
     rerun: ".venv/bin/python scripts/sim_edge_card_sweep.py --json out.json"
     context: >-
       the card is a Jetson Orin NX module carrier: compute, LPDDR5 and the
       PCIe endpoint live in the purchased module, so the balance knobs are
-      module SKU, nvpmodel power mode, TOPS counting convention and context
-      length - not array sizing. Every point is the structural engine's
-      measured steady rate (2 tokens per point, cross-checked against the
-      cycle runner's baseline within 2%).
+      module SKU, nvpmodel power mode and context length. The TOPS counting
+      convention is no longer a knob: MAC=2 is fact-confirmed and decode
+      uses GPU-only dense TOPS with the DLA share excluded (compute.module).
+      Every point is the structural engine's measured steady rate (2 tokens
+      per point, cross-checked against the cycle runner's baseline within 2%).
     ctx_order: [8192, 16384, 32768]
-    real_modes_tok_s: # {mode: [8K, 16K, 32K]} - c2 = 2ops/MAC, c1 = ops reading
-      nx8_25w_c2: [6.23, 5.34, 4.15] # 8GB SKU dense35@25W
-      nx16_25w_c2: [8.90, 7.63, 5.93] # 16GB dense50@25W = spec baseline
-      nx8_25w_c1: [12.46, 10.68, 8.30] # 8GB SKU ops reading
-      nx16_25w_c1: [17.79, 15.24, 11.85] # 16GB dense50@25W ops reading
-      nx16_40w_c2: [13.89, 11.90, 9.25] # MAXN-SUPER dense78@40W
-      nx16_40w_c1: [27.66, 23.71, 18.45] # MAXN-SUPER ops reading
-    meets_target: # >= 15 tok/s reached at these ctx
-      nx16_25w_c1: [8192, 16384] # 25W + ctx<=16K + ops reading: ZERO BOM change
-      nx16_40w_c1: [8192, 16384, 32768] # 40W mode + ops reading: meets at 32K
-      c2_reading_reaches_nothing: true # under 2ops/MAC no mode reaches 15 anywhere
+    real_modes_tok_s: # {mode: [8K, 16K, 32K]} - GPU-only dense, MAC=2
+      nx8_25w_c2: [4.45, 3.81, 2.96] # 8GB SKU GPU dense25@25W (765MHz)
+      nx16_25w_c2: [5.34, 4.58, 3.56] # 16GB GPU dense30@25W = spec baseline
+      nx16_15w_c2: [3.74, 3.20, 2.49] # derived GPU dense21 (25W x 0.7)
+      nx16_40w_c2: [6.77, 5.80, 4.50] # MAXN-SUPER GPU dense38
+    meets_target:
+      any_mode_any_ctx: [] # under confirmed MAC=2 + GPU-only, nothing reaches 15
+      best_point: "nx16_40w_c2 @8K = 6.77 tok/s (44% of target)"
     memory:
-      max_real_mode_ops_ns: 78 # biggest purchasable mode (MAXN SUPER)
+      max_real_mode_ops_ns: 19 # biggest purchasable GPU MAC rate (MAXN 38 dense / 2)
       bind_point_ops_ns_32k: 222.6 # analytic: 87.04 B/ns x 2.558 ops/B (Q4)
       roofline_tok_s_at_32k: 52.8 # a ~223 ops/ns class module saturates LPDDR5
-      real_mode_util_range: [0.079, 0.468] # 8GB@32K .. 40W@8K, never even half
+      real_mode_util_range: [0.041, 0.114] # 8GB@32K .. 40W@8K, never even an eighth
       probes_mem_util_at_32k: { r100: 0.447, r150: 0.644, r222_6: 0.770, r445_2: 0.929 }
       conclusion: >-
         idle LPDDR5 is structural, not a tuning miss: Q4 arithmetic intensity
         (2.558 ops/byte) means memory saturates only above ~223 ops/ns
-        (~445 TOPS-class) while the largest Orin NX mode is 78 - the 445.2
-        probe already shows the trade (mem 92.9%, mac falls to 46.5%, tok/s
-        49.0 converging on the 52.8 roofline asymptote). Utilizing memory
-        fully is outside this product's envelope and cost class; the
-        headroom is what makes 15 tok/s cheap once compute suffices.
+        (~445 TOPS-class) while the biggest GPU MAC rate purchasable is 19 -
+        the 445.2 probe already shows the trade (mem 92.9%, mac falls to
+        46.5%, tok/s 49.0 converging on the 52.8 roofline asymptote). And
+        the idle bandwidth cannot be spent anyway: no purchasable mode
+        supplies the compute the target needs (sensitivity), so the headroom
+        stays headroom.
     pcie:
       decode_util_at_15_tok_s: 6.1e-08 # 8 B/token: a token stream by design
       load_s_at_payload: 1.70 # 3.35 GB / 1.969 GB/s Gen4 x1
@@ -782,11 +851,12 @@ cycle_simulation:
       load_verdict: PASS # this is where x1 IS utilized (~100% / 85% duty)
       role: load + hot-reload + token/control stream; decode never needs more
     recommendation:
-      gate: "L1 devkit benchmark (TOPS convention + real MFU) picks the branch; no BOM moves before it"
-      option_a: "25W + ctx<=16K, zero BOM change - meets 15 iff TOPS is ops-counted (15.24 @16K)"
-      option_b: "40W MAXN SUPER, same module SKU - meets 15 at 32K iff ops-counted (18.45); carrier needs VDD_IN>=8V path + cooling L2; board 50W <= 75W slot available"
-      option_c: "8GB SKU cost-down - 4.15..12.46 tok/s, never meets 15; lower tier only"
-      anti_goal: "chasing memory utilization needs >223 ops/ns; not this product"
+      gate: "human product decision: the technical branch is closed by facts"
+      fact_resolved: "MAC=2 + GPU-only dense confirmed (src_jetson_orin_page, src_dla_layers); no SKU x power x ctx combination reaches 15 dense"
+      option_a: "accept the honest rates: 3.56 (25W @32K) .. 6.77 (40W @8K); cooling unlock remains the only lever (+26% at 32K)"
+      option_b: "revisit target/model/silicon - smaller model, different module class, or discovery of a 2:4-sparse checkpoint + TRT-LLM path (none exists for Gemma 4 QAT); product decision, human-gated"
+      option_c: "8GB SKU cost-down: 2.96..4.45 tok/s (same GPU at 765MHz), never meets 15; capacity tier only"
+      anti_goal: "chasing memory utilization (>223 ops/ns) or reviving the retired 1-op reading - both refuted"
     cost_frame: >-
       no prices anywhere (quote required by policy): option A = 0 BOM delta
       (devkit time only), option B = same module + cooling/power-path rework
@@ -799,14 +869,16 @@ cycle_simulation:
         (and the [16.8, 19.9] file-stream range) as a decode forecast
       why: >-
         those are pure-bandwidth derivations assuming free compute; the structural
-        sim measures mac_array at 100% while memory sits at 11%, so the bandwidth
+        sim measures mac_array at 100% while memory sits at 7%, so the bandwidth
         bound does not bind. The arithmetic stays in performance_budget (verified
-        by tests/unit/test_edge_card_spec.py) but decode reality is compute-bound
-        until silicon provides >= 63.3 GMAC/s dense.
+        by tests/unit/test_edge_card_spec.py) but decode reality is compute-bound:
+        the GPU provides 15 GMAC/s @25W (19 @MAXN_SUPER) against the 63.3
+        GMAC/s the target needs at 32K.
   caveats:
     - L0 structural simulation of THIS spec's configuration, not L1 silicon measurement
-    - mac_convention=2 (conservative) and =1 (optimistic) both reported; neither
-      reaches 15 tok/s at 32K
+    - "TOPS convention resolved by fact (MAC=2, GPU-only dense,
+      src_jetson_orin_page): the retired 1-op reading and the DLA-inclusive
+      module topline both overstate decode compute"
     - conservative starve accounting pauses compute when staged bytes run out;
       at measured mac util 1.000 the pauses did not bind on the bottleneck
     - prefill not simulated here; prefill budget remains the analytic bound

@@ -286,10 +286,10 @@ def test_cycle_simulation_block_is_labelled_gated_and_honest() -> None:
     # ops split must add up to the total per token
     ops = measured["ops_per_token"]
     assert ops["weights"] + ops["attention"] == pytest.approx(ops["total"], rel=1e-3)
-    # neither mac convention reaches the 15 tok/s target at 32K
+    # 沒有任何口徑/配置在 32K 達 15（c1 已被事實作廢，其值也遠低於目標）
     target = spec["performance_budget"]["decode_tok_s"]["target_e2b_q4_0_min"]
     assert measured["decode_tok_s"] < target
-    assert sim["sensitivity"]["mac_convention_1_tok_s"] < target
+    assert sim["sensitivity"]["c1_reading_retired_tok_s"] < target
     # long-run (52k hops) must stay clean and exactly accounted
     long_run = sim["long_run"]
     assert long_run["hops"] >= 50000
@@ -309,6 +309,7 @@ def test_balance_study_answers_memory_pcie_and_cost() -> None:
 
     mem = bal["memory"]
     # 記憶體飽和點遠超任何可購模組 -> 閒置是物理，不是調校失誤
+    assert mem["max_real_mode_ops_ns"] == 19  # MAXN GPU 38 dense / 2 ops/MAC
     assert mem["max_real_mode_ops_ns"] < mem["bind_point_ops_ns_32k"]
     assert mem["bind_point_ops_ns_32k"] > 200
     assert mem["real_mode_util_range"][1] < 0.5  # 真模組點連一半都用不到
@@ -325,9 +326,9 @@ def test_balance_study_answers_memory_pcie_and_cost() -> None:
     assert pc["decode_util_at_15_tok_s"] < 1e-6  # token stream，非吞吐通道
 
     meets = bal["meets_target"]
-    assert set(meets) == {"nx16_25w_c1", "nx16_40w_c1", "c2_reading_reaches_nothing"}
-    assert meets["c2_reading_reaches_nothing"] is True
-    assert 32768 not in meets["nx16_25w_c1"] and 32768 in meets["nx16_40w_c1"]
+    # 事實關閉：MAC=2 + GPU-only 下，掃描內無任何點達 15；最好點要記帳
+    assert meets["any_mode_any_ctx"] == []
+    assert "nx16_40w_c2" in meets["best_point"] and "6.77" in meets["best_point"]
     assert "quote" in bal["cost_frame"]
 
 
@@ -371,28 +372,69 @@ def test_component_review_leverage_and_simulated_numbers() -> None:
     assert lp["margin"] >= 2.8  # 存儲/鏈路升級買不到有意義的時間
     assert lp["nvme_hypothetical_2_4"] < lp["nvme_spec_1_6"]  # 更快裝置更快，但差距有限
 
-    # 功率階梯：15W < 25W < 40W，唯一達標點 = 40W c1；c2 口徑全滅
+    # 功率階梯（GPU-only dense、MAC=2 已證實）：15W < 25W < 40W，且全滅不達 15
     lad = cr["simulation"]["power_ladder_tok_s_at_32k"]
-    for conv in ("c1", "c2"):
-        assert lad["w15_derived"][conv] < lad["w25_default"][conv] < lad["w40_maxn_super"][conv]
-    assert lad["w40_maxn_super"]["c1"] >= target
-    assert lad["w25_default"]["c1"] < target and lad["w25_default"]["c2"] < target
+    assert lad["w15_derived"] < lad["w25_default"] < lad["w40_maxn_super"] < target
     # 與已提交的 balance_study 同口徑數字一致（25W/40W 非新測，是同一引擎）
     bal = spec["cycle_simulation"]["balance_study"]
-    assert lad["w25_default"]["c2"] == pytest.approx(bal["real_modes_tok_s"]["nx16_25w_c2"][2])
-    assert lad["w25_default"]["c1"] == pytest.approx(bal["real_modes_tok_s"]["nx16_25w_c1"][2])
-    assert lad["w40_maxn_super"]["c1"] == pytest.approx(bal["real_modes_tok_s"]["nx16_40w_c1"][2])
+    assert lad["w25_default"] == pytest.approx(bal["real_modes_tok_s"]["nx16_25w_c2"][2])
+    assert lad["w40_maxn_super"] == pytest.approx(bal["real_modes_tok_s"]["nx16_40w_c2"][2])
 
     # 128K：每一點都比 32K 慢，且最好點也不達 15 -> 「能力非速率」的讀法成立
     k128 = cr["simulation"]["ctx_128k_16gb_sku_tok_s"]
     for mode_key in ("w15_derived", "w25_default", "w40_maxn_super"):
-        for conv in ("c1", "c2"):
-            assert k128[mode_key][conv] < lad[mode_key][conv]
-    assert max(k128["w40_maxn_super"].values()) < target
+        assert k128[mode_key] < lad[mode_key]
+    assert max(k128[m] for m in ("w15_derived", "w25_default", "w40_maxn_super")) < target
 
     meets = cr["simulation"]["meets_target"]
     assert set(meets["at_32k"]) <= set(meets["at_or_below_16k"])
-    assert meets["at_32k"] == ["nx16_40w_c1"]
+    assert meets["at_32k"] == [] and meets["at_or_below_16k"] == []
+
+
+def test_compute_tops_split_gpu_dla_and_convention() -> None:
+    """模組 TOPS = GPU + DLA 逐項閉合；解碼只認 GPU；MAC=2 口徑有事實出處。
+
+    舊錯（本輪 bug-hunt 抓到）：模組 50/78 被當成可解碼算力——其實含 DLA
+    20/40（CNN-only，跑不了 transformer），且 c1 以 1-op/MAC 讀 TOPS——
+    NVIDIA 自家 INT8 dense = 2x FP16 dense 反證。此測把修訂釘死。
+    """
+    spec = _load_spec()
+    mod = spec["compute"]["module"]
+    sku = spec["compute"]["option_sku"]
+    mt, gt, dl = mod["int8_tops"], mod["gpu_tc_int8_tops"], mod["dla_int8_tops_excluded"]
+
+    # 模組口徑 = GPU + DLA，四個數字逐項閉合（16GB，2x NVDLA）
+    assert mt["dense_maxn_25w"] == gt["dense_25w_918mhz"] + dl["dense_25w"]
+    assert mt["sparse_maxn_25w"] == gt["sparse_25w_918mhz"] + dl["sparse_25w"]
+    assert mt["dense_maxn_super_40w"] == gt["dense_maxn_super_1173mhz"] + dl["dense_maxn_super_40w"]
+    assert (
+        mt["sparse_maxn_super_40w"] == gt["sparse_maxn_super_1173mhz"] + dl["sparse_maxn_super_40w"]
+    )
+
+    # 8GB SKU：模組 35/70 = GPU + 1x DLA（10/20）
+    smt, sgt = sku["int8_tops"], sku["gpu_tc_int8_tops"]
+    sdl = sku["dla_int8_tops_excluded"]
+    assert smt["dense_maxn_25w"] == sgt["dense_25w_765mhz"] + sdl["dense_25w"]
+    assert smt["sparse_maxn_25w"] == sgt["sparse_25w_765mhz"] + sdl["sparse_25w"]
+
+    # 解碼只用 GPU 份，且嚴格小於模組口徑
+    assert mod["decode_usable_dense_tops"] == gt["dense_25w_918mhz"]
+    assert gt["dense_25w_918mhz"] < mt["dense_maxn_25w"]
+    assert sku["decode_usable_dense_tops"] == sgt["dense_25w_765mhz"]
+
+    # 時脈比例閉合：GPU dense 隨時脈線性（30 @918MHz -> 38 @1173MHz；
+    # 同顆 GPU 在 nx8 預設 765MHz = 25）——抓口徑/單位回歸
+    assert gt["dense_maxn_super_1173mhz"] == pytest.approx(
+        gt["dense_25w_918mhz"] * 1173 / 918, abs=0.5
+    )
+    assert sgt["dense_25w_765mhz"] == pytest.approx(gt["dense_25w_918mhz"] * 765 / 918, abs=0.5)
+
+    # 口徑結論與 DLA 排除都有事實出處（src 懸空由 test_edge_card_refs 把關）
+    assert "MAC=2" in mod["tops_convention"]
+    assert "src_jetson_orin_page" in mod["tops_convention"]
+    assert gt["source"] in spec["sources"]
+    assert dl["source"] in spec["sources"]
+    assert "attention" in dl["reason"] and "softmax" in dl["reason"]
 
 
 def test_spec_top_level_schema_is_complete() -> None:

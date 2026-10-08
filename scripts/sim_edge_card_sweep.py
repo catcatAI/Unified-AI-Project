@@ -4,10 +4,11 @@
 # =============================================================================
 """Balance sweep for the edge card: compute x context x memory x PCIe.
 
-The card is a Jetson Orin NX module carrier: compute (dense INT8 TOPS),
-LPDDR5 bandwidth and capacity live inside the purchased module, so the real
-balance knobs are module SKU, nvpmodel power mode, the TOPS counting
-convention, and the context length. This script sweeps those knobs through
+The card is a Jetson Orin NX module carrier: compute (GPU Tensor Core dense
+INT8 TOPS - the decode-usable share, DLA excluded), LPDDR5 bandwidth and
+capacity live inside the purchased module, so the real balance knobs are
+module SKU, nvpmodel power mode, and the context length. This script sweeps
+those knobs through
 the SAME structural engine as sim_edge_card_cycle.py and answers, with
 numbers:
 
@@ -24,7 +25,8 @@ numbers:
     decode utilization is a category error, not a design miss.
 
 A cross-check pins the baseline point (nx16_25w_c2 @32K) to the cycle
-runner's measured 5.93 tok/s, so this tool cannot silently drift.
+runner's measured tok/s (spec cycle_simulation.measured), so this tool
+cannot silently drift.
 
 Usage:
   .venv/bin/python scripts/sim_edge_card_sweep.py [--json out.json]
@@ -62,60 +64,38 @@ GGUF_DEFAULT = (
     / "gemma-4-E2B_q4_0-it.gguf"
 )
 
-# module modes: dense INT8 TOPS straight from edge_card_spec.yaml
-# (option_sku = 8GB/35, primary = 16GB/50 @25W, super = 16GB/78 @40W;
-# 15W profile = 25W x 0.7, derived from power_and_thermal.low_power_profile's
-# own "~30% derate" note - label says derived). c2 = conservative 2 ops/MAC
-# reading, c1 = ops reading of the same number. ctxs: the 8GB SKU stops at
+# decode-usable GPU Tensor Core dense INT8 TOPS, MAC=2 confirmed
+# (module totals minus DLA - DLA is CNN-only and cannot decode; the old
+# c1/1-op reading rows are retired: NVIDIA's INT8 dense is exactly 2x its
+# FP16 dense on the same cores). nx16: GPU 30 dense @918MHz (25W),
+# 38 @1173MHz (MAXN SUPER); nx8: same GPU at 765MHz default = 25 dense;
+# 15W profile = 25W x 0.7 derived from power_and_thermal.low_power_profile's
+# own "~30% derate" note - label says derived. ctxs: the 8GB SKU stops at
 # 32K (128K capability is reserved to the 16GB SKU per model_target).
 REAL_MODES: dict[str, dict] = {
     "nx8_25w_c2": {
-        "tops": 35.0,
+        "tops": 25.0,
         "conv": 2,
         "ctxs": (8192, 16384, 32768),
-        "label": "Orin-NX-8GB dense35@25W, 2ops/MAC",
+        "label": "Orin-NX-8GB GPU dense25@25W (765MHz), 2ops/MAC",
     },
     "nx16_25w_c2": {
-        "tops": 50.0,
+        "tops": 30.0,
         "conv": 2,
         "ctxs": (8192, 16384, 32768, 131072),
-        "label": "Orin-NX-16GB dense50@25W, 2ops/MAC (spec baseline)",
-    },
-    "nx8_25w_c1": {
-        "tops": 35.0,
-        "conv": 1,
-        "ctxs": (8192, 16384, 32768),
-        "label": "Orin-NX-8GB dense35@25W, ops reading",
-    },
-    "nx16_25w_c1": {
-        "tops": 50.0,
-        "conv": 1,
-        "ctxs": (8192, 16384, 32768, 131072),
-        "label": "Orin-NX-16GB dense50@25W, ops reading",
+        "label": "Orin-NX-16GB GPU dense30@25W (module50-DLA20), 2ops/MAC (spec baseline)",
     },
     "nx16_15w_c2": {
-        "tops": 35.0,
+        "tops": 21.0,
         "conv": 2,
         "ctxs": (8192, 16384, 32768, 131072),
-        "label": "Orin-NX-16GB 15W profile (derived 35 dense), 2ops/MAC",
-    },
-    "nx16_15w_c1": {
-        "tops": 35.0,
-        "conv": 1,
-        "ctxs": (8192, 16384, 32768, 131072),
-        "label": "Orin-NX-16GB 15W profile (derived 35 dense), ops reading",
+        "label": "Orin-NX-16GB 15W profile (derived 21 GPU dense), 2ops/MAC",
     },
     "nx16_40w_c2": {
-        "tops": 78.0,
+        "tops": 38.0,
         "conv": 2,
         "ctxs": (8192, 16384, 32768, 131072),
-        "label": "Orin-NX-16GB MAXN-SUPER dense78@40W, 2ops/MAC",
-    },
-    "nx16_40w_c1": {
-        "tops": 78.0,
-        "conv": 1,
-        "ctxs": (8192, 16384, 32768, 131072),
-        "label": "Orin-NX-16GB MAXN-SUPER dense78@40W, ops reading",
+        "label": "Orin-NX-16GB GPU dense38@MAXN-SUPER (1173MHz), 2ops/MAC",
     },
 }
 

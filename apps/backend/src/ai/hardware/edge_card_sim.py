@@ -20,9 +20,15 @@ bit-identical (deterministic digest).
 Deliberate modelling choices (all are config, not hidden magic):
   * LPDDR5 service rate = raw rate x mem_util (refresh/bank-turnaround loss;
     raw physical rate is also enforced as a hard ceiling).
-  * dense TOPS convention: spec's "50 dense INT8 TOPS @25W" is read
-    conservatively as 2 ops per MAC -> mac_per_ns = 25 (override via
+  * dense TOPS convention: TOPS count 2 ops per MAC (FMA), fact-confirmed
+    against NVIDIA's GPU Tensor Core rows (INT8 dense = exactly 2x FP16
+    dense on the same cores) -> mac_per_ns = dense_tops / 2 (override via
     `mac_convention`).
+  * decode-usable compute is GPU Tensor Cores ONLY: the module datasheet's
+    "50 dense @25W / 78 dense @MAXN_SUPER" totals include 2x NVDLA TOPS
+    (20/40 dense) - CNN-only silicon that cannot run a transformer decoder
+    (no attention/layernorm layer support). Default `int8_dense_tops` is
+    therefore 30 (= 50 - 20 DLA), not 50.
   * KV element bytes default to int8 (spec's @32K budget), f16 via config.
   * The tied lm_head streams the full token_embd matrix each token (no
     top-k shortcut assumed), which is the conservative real path.
@@ -144,8 +150,9 @@ class CardConfig:
     lpddr5_width_bit: int = 128
     lpddr5_data_rate_mts: int = 6400
     mem_util: float = 0.85
-    # --- compute: dense 50 INT8 TOPS @25W, conservative 2 ops per MAC
-    int8_dense_tops: float = 50.0
+    # --- compute: GPU-only dense INT8 @25W = 30 (module 50 - DLA 20, DLA
+    # cannot decode transformers); TOPS = 2 ops/MAC per NVIDIA convention
+    int8_dense_tops: float = 30.0
     mac_convention: int = 2
     # --- host link: PCIe Gen4 x1, 128b/130b @16GT/s -> 1.969231 B/ns payload
     pcie_payload_gbs: float = 1.969231

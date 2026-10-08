@@ -251,7 +251,8 @@ def main() -> int:
         f"(= {2 * weight_ops * target_tok_s / 1e9:.0f} dense TOPS @2ops/MAC)"
     )
 
-    # mac_convention=1 sensitivity (50 GMAC/s read of the "50 TOPS" headline)
+    # retired 1-op reading (fact-refuted: TOPS count 2 ops/MAC per NVIDIA's
+    # own INT8:FP16 ratio) - kept only so the gap between readings is visible
     from dataclasses import replace
 
     cfg1 = replace(cfg, mac_convention=1)
