@@ -130,12 +130,18 @@ def main() -> int:
     base_disp = {p: dispersion(v) for p, v in base_texts.items()}
 
     mean_diffs = []
+    per_probe = [
+        {"probe": probe, "base": round(base_disp[probe], 4), "diffs": []}
+        for probe, _ in TEST_PROBES
+    ]
     for alpha in ALPHAS:
         diffs = []
-        for probe, paraphrases in TEST_PROBES:
+        for entry, (probe, paraphrases) in zip(per_probe, TEST_PROBES):
             variants = [probe, *paraphrases]
             steered = [generate(v, alpha) for v in variants]
-            diffs.append(dispersion(steered) - base_disp[probe])
+            diff = dispersion(steered) - base_disp[probe]
+            diffs.append(diff)
+            entry["diffs"].append(round(diff, 4))
         mean_diffs.append(sum(diffs) / len(diffs))
 
     rep = generate(TEST_PROBES[0][0], None)
@@ -170,6 +176,7 @@ def main() -> int:
                 {
                     "alphas": ALPHAS,
                     "mean_diffs": mean_diffs,
+                    "per_probe": per_probe,
                     "deterministic": deterministic,
                     "verdict": report.as_dict(),
                 },
