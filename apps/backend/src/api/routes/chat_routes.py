@@ -1231,6 +1231,26 @@ def _trim_causal_series(buf: Dict[str, List[float]]) -> None:
             del series[: len(series) - _CAUSAL_BUFFER_MAX_SAMPLES]
 
 
+def _log_loop_signal(response_text: str, session_id: str) -> None:
+    """Observability only: log when a response enters a repetition loop.
+
+    Never alters, blocks, or retries the response. Research verdict (E2/E6):
+    the loop detector is validated, but no proven transmission shaft exists —
+    so production monitors instead of intervening.
+    """
+    try:
+        from ai.attention.degeneracy import detect_loop
+
+        if response_text and detect_loop(response_text):
+            logger.warning(
+                "Loop detected in response (session=%s, len=%d)",
+                session_id,
+                len(response_text),
+            )
+    except Exception as e:
+        logger.debug(f"Loop monitor skipped: {e}", exc_info=True)
+
+
 def _fire_causal_learning(response_text: str, user_message: str, session_id: str) -> None:
     """Accumulate temporal data and learn causal relationships per session.
 
@@ -1904,6 +1924,7 @@ async def _run_chat_pipeline(
         )
     context["continuation_count"] = context.get("continuation_count", 0) + 1
     _fire_causal_learning(response_text, user_message, session_id)
+    _log_loop_signal(response_text, session_id)
 
     # Step 10c: Online self-learning — teach dictionary classifier from LLM response
     try:

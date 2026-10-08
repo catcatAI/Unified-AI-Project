@@ -433,3 +433,22 @@ def test_series_trimmed_to_sample_cap():
     _trim_causal_series(buf2)
     assert buf2["msg_lengths"][0] == 10.0
     assert buf2["msg_lengths"][-1] == float(_CAUSAL_BUFFER_MAX_SAMPLES + 9)
+
+
+def test_log_loop_signal_warns_on_loop_and_never_alters(caplog):
+    """Loop monitor is observe-only: warns on loops, silent otherwise, never raises."""
+    import logging
+
+    from api.routes.chat_routes import _log_loop_signal
+
+    with caplog.at_level(logging.WARNING, logger="api.routes.chat_routes"):
+        assert _log_loop_signal("AB AB AB AB AB AB", "sess-loop") is None
+    assert any("Loop detected" in r.message and "sess-loop" in r.message for r in caplog.records)
+
+    caplog.clear()
+    with caplog.at_level(logging.WARNING, logger="api.routes.chat_routes"):
+        assert _log_loop_signal("a normal diverse response here", "sess-ok") is None
+    assert not [r for r in caplog.records if "Loop detected" in r.message]
+
+    # Degenerate inputs must not raise either.
+    assert _log_loop_signal("", "sess-empty") is None
