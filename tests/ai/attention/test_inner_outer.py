@@ -43,6 +43,24 @@ def test_softmax_rejects_empty_directly() -> None:
         _softmax([])
 
 
+class TestAttentionInwardness:
+    """真頭內聚度：近期質量佔比，短前綴全算近期。"""
+
+    def test_mass_on_recent_window(self) -> None:
+        from ai.attention.inner_outer import attention_inwardness
+
+        assert attention_inwardness([0.1, 0.1, 0.4, 0.4], recent_k=2) == pytest.approx(0.8)
+        assert attention_inwardness([0.5, 0.5], recent_k=8) == pytest.approx(1.0)
+
+    def test_rejects_bad_inputs(self) -> None:
+        from ai.attention.inner_outer import attention_inwardness
+
+        with pytest.raises(ValueError, match="recent_k must be positive"):
+            attention_inwardness([0.5, 0.5], recent_k=0)
+        with pytest.raises(ValueError, match="must not be empty"):
+            attention_inwardness([], recent_k=8)
+
+
 def test_allocate_is_numerically_stable() -> None:
     module = InnerOuterAttention()
     alloc = module.allocate([1000.0, 999.0], [998.0], state_gain=0.0)

@@ -39,6 +39,19 @@ def _softmax(scores: Sequence[float]) -> List[float]:
     return [e / total for e in exps]
 
 
+def attention_inwardness(weights: Sequence[float], recent_k: int = 8) -> float:
+    """真頭內聚度：查詢位置對最近 recent_k 個鍵的注意力質量佔比。
+
+    `weights` 為單步單頭（或已平均）的鍵分佈（和為 1）；`recent_k <= 0`
+    報錯。短前綴（len <= k）時全質量皆算近期，迴圈早期不低估。
+    """
+    if recent_k <= 0:
+        raise ValueError("recent_k must be positive")
+    if not weights:
+        raise ValueError("weights must not be empty")
+    return sum(weights[-recent_k:])
+
+
 @dataclass
 class InnerOuterAttention:
     """內外注意力分配器與內聚動力學。
