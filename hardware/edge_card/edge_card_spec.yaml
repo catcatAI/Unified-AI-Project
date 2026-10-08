@@ -59,6 +59,7 @@ design_drawings:
     backs:
       - product_decision
       - host_interface
+      - clocking_and_noise
       - compute.module
       - compute.option_sku
       - memory
@@ -73,6 +74,10 @@ design_drawings:
          achievable >= 1.6 GB/s (85% TLP, measured at L3) =
          load model 3.35 GB: 1.70s payload / 2.09s achievable <= 5s budget
         steady state: token + control stream only (decode = 8 B/token)
+        sidebands: PRSNT# A1-B17 strap / REFCLK 100M host-source / PERST# in
+          -> cold boot: card boots Jetson, then host rescan (software.host_side)
+          WAKE# + 3.3Vaux + SMBus + CLKREQ# + edge JTAG all NC; hot-plug off
+          (host_interface.edge_sidebands)
         v
       CARRIER PCB (custom part; L2 gate = kicad DRC + gerber)
         +- C4 controller lane0 only -> x1 fingers (lanes 1-3 NC on card)
@@ -101,7 +106,8 @@ design_drawings:
       - component_review.layout_review.vdd_in_feed
     status: complete_for_l0_except_3v3_logic_allocation_at_l2
     diagram: |-
-      PCIe slot (CEM): 12V up to 75W available / 3.3V up to 75W available
+      PCIe slot, 75W-class (CEM Power Supply Rail Requirements, src_cem_rails):
+        12V cap 5.5A (66W) / 3.3V cap 3.0A (9.9W) / combined <= 75W
         (board budget below derives from the 12V feed only; any 3.3V logic load
          is sized inside L2 power-tree analysis, acceptance_levels.L2)
         |
@@ -114,8 +120,8 @@ design_drawings:
         +--> 40mm fan ................................ 2 W
         +--> rails & conversion overhead ............. 5 W
 
-      default 25W board: 25 (module) + 3 + 2 + 5 = 35 W cap <= 75 W slot
-      40W profile:       40 (module) + 3 + 2 + 5 = 50 W     <= 75 W slot
+      default 25W board: 25 (module) + 3 + 2 + 5 = 35 W cap <= 66 W slot 12V (2.9A <= 5.5A)
+      40W profile:       40 (module) + 3 + 2 + 5 = 50 W     <= 66 W slot 12V (4.2A <= 5.5A)
                          (cooling-unlocked branch; same rail, zero added parts)
       low-power: 15W mode via nvpmodel (same board; perf targets derate ~30%)
 
@@ -142,9 +148,12 @@ design_drawings:
                                                             v
                     warm air -> bracket-air-exit keepout -> exhaust
 
+      gap: the M.2 zone sits opposite the fan with no direct heat path yet
+        -> open_items.nvme_thermal_path (prove nvme_headroom at L2 or redesign)
       envelope: single slot / PCB height 64.4mm / component height <= 17mm
       steady state: sustained decode without throttle
       sensors: module INA power / module thermal zones / carrier PMIC temp
+        / NVMe SMART temp (software) / fan tach (power_and_thermal.sensors)
       gate: L2 single_slot_thermal_solution_verified_at_40c_ambient_200lfm
             = the condition for the 40W cooling-unlock branch (power_tree)
   mechanical_views:
@@ -175,6 +184,7 @@ design_drawings:
       │ [carrier PCB] ......... [PCIe edge fingers, bottom]                        │
       │                                                                            │
       │brackets: full-height = primary (ships); low-profile in box                 │
+      │  cutouts: USB-C (storage.recovery_path) + EP-ready LED (bracket_cutouts)   │
       │          (same PCB, cut height - mechanical.bracket_low_profile)           │
       └────────────────────────────────────────────────────────────────────────────┘
   decode_datapath:
@@ -334,6 +344,16 @@ host_interface:
     flr: required
     msi: required
     iommu_compatibility: required-for-host-driver
+  edge_sidebands:
+    prsnt_strap: card shorts PRSNT1# (A1) to PRSNT2# (B17, the farthest present pin for x1) - presence detection needs it even without hot-plug
+    perst: input from the host; the card boots Jetson Linux from NVMe and starts the EPF afterwards, so BIOS-time enumeration can miss it - discovery is the host-driver rescan flow (software.host_side.card_discovery)
+    refclk: 100 MHz differential supplied by the slot (host is the source and does the AC-coupling); the carrier routes it to the module and adds no clock of its own (clocking_and_noise)
+    wake_and_aux: not a wakeup card - WAKE# and 3.3Vaux are NC (the 20mA non-wakeup aux budget stays unused; power_and_thermal.power_integrity)
+    smb: NC - no VPD and no SMBus client on this card
+    clkreq: NC - L1 substates unused
+    jtag_edge: NC - the slot JTAG pins stay unconnected; bring-up reaches the module via the carrier debug header instead (mechanical.debug_access)
+    hot_plug: not supported - cold insertion only, surprise removal unsupported; host powers the card and rescans after EP ready
+    source: src_pcie_cem
   host_visible_channel:
     description: >-
       Vendor-specific endpoint function (BAR0 control mailbox + doorbell +
@@ -362,7 +382,7 @@ storage:
   bus: pcie-nvme-on-orin-c7-x2
   capacity_gb: { min: 256, target: 512 }
   holds: [jetson-linux-os, model-library, service-logs]
-  recovery_path: USB-RCM (forced recovery), no SD socket on card
+  recovery_path: USB forced-recovery through the bracket USB-C (mechanical.bracket_cutouts.rcm_usb_c), no SD socket on card
   boot: nvme-primary
 
 # =============================================================================
@@ -479,22 +499,55 @@ power_and_thermal:
   slot_power:
     connector: pcie-slot-12v
     auxiliary_connector: none
-    slot_available_12v_w: 75
-    slot_3v3_available_w: 75
+    slot_class_required: 75w-class (12V >= 5.5A-capable; some x1/server slots are 25W-class and cannot feed the 35W board - check the host)
+    slot_available_12v_w: 66 # CEM 75W-slot 12V supply current cap 5.5A x 12V (src_cem_rails)
+    slot_3v3_available_w: 9.9 # CEM 3.3V supply current cap 3.0A x 3.3V (src_cem_rails)
+    slot_combined_max_w: 75 # 12V + 3.3V draws together cannot exceed 75W (src_cem_excursions)
   board_budget_w:
     module_maxn: 25
     m2_nvme: 3
     fan: 2
     rails_and_conversion_overhead: 5
     tdp_cap: 35
-    cap_derivation: 25 + 3 + 2 + 5 = 35 <= 75 slot budget
+    cap_derivation: 25 + 3 + 2 + 5 = 35 <= 66 (12V 5.5A cap) and <= 75 combined slot budget
+  power_integrity:
+    rail_limits_75w_slot:
+      12v_max_a: 5.5
+      12v_max_w: 66
+      3v3_max_a: 3.0
+      3v3_max_w: 9.9
+      aux_wakeup_max_ma: 375
+      aux_nonwakeup_max_ma: 20 # this card is non-wakeup (host_interface.edge_sidebands): aux stays unused
+      combined_max_w: 75
+    card_bulk_caps_max_uf: { 12v: 2000, 3v3: 1000, aux: 150 }
+    max_current_slew_a_per_us: 0.1 # CEM card-side slew cap - the module's load steps must be smoothed inside the feed
+    excursions: >-
+      CEM 5.0+ lets the 12V rail excursion within the excursion table (after
+      Set_Slot_Power_Limit); 3.3V and 3.3Vaux get none (src_cem_excursions) -
+      the board budget above is steady-state by construction and the module's
+      own VDD_IN bulk absorbs decode step loads inside the slew cap
+    sequencing: slot ramps are host-side; module rails are sequenced by the module PMIC (the carrier adds no sequencing circuit)
+    l2_gate: decoupling selection inside the bulk-cap limits plus PDN check in the KiCad power-tree analysis (acceptance_levels.L2)
+    sources: [src_cem_rails, src_cem_excursions]
   default_mode: 25W-MAXN
   low_power_profile: { mode_w: 15, note: perf targets derate ~30%; same board, nvpmodel switch }
   cooling: single-slot-heatsink-plus-fan
+  cooling_fan: 40mm 4-pin PWM + tach, driven from the module fan header (sensors.fan-tach-rpm)
   airflow_lfm_min_with_fan: 200
-  sensors: [module-ina-power, module-thermal-zones, carrier-pmic-temp]
+  sensors:
+    [
+      module-ina-power,
+      module-thermal-zones,
+      carrier-pmic-temp,
+      nvme-smart-temp-via-software,
+      fan-tach-rpm,
+    ]
   thermal_targets:
-    { module_tj_max_c: 90, ambient_c: 40, steady_state: sustained-decode-without-throttle }
+    module_tj_max_c: 90
+    ambient_c: 40
+    nvme_headroom: ">=10 C below the chosen SSD's datasheet max operating temp at 40 C ambient (part not chosen yet: open_items.nvme_thermal_path)"
+    module_path_theta_max_k_w: { at_25w: 2.0, at_40w: 1.25 } # (90-40)/25 and (90-40)/40 - the L2 heatsink must beat the value for whichever profile ships
+    steady_state: sustained-decode-without-throttle
   power_management: [nvpmodel-modes, thermal-throttle, watchdog, epflr-reset]
   design_drawings:
     - design_drawings.power_tree
@@ -513,7 +566,36 @@ mechanical:
   stack: [so-dimm-module-horizontal, m2-2230-horizontal, fin-stack-with-40mm-fan]
   module_thermal_interface: module-top-plate-to-heatsink per Jetson thermal design guide
   keepouts: [pcie-finger-keepout, bracket-air-exit]
+  bracket_cutouts:
+    rcm_usb_c: USB-C receptacle (USB2 device wiring to module USB0) for forced recovery - the storage.recovery_path decision made this mandatory; the cutout must land inside the low-profile envelope too, because both brackets ship
+    ep_ready_led: 1x indicator lit once the endpoint function is up (GPIO assigned at L2) - makes the cold-boot rescan observable from the rear
+  debug_access: [uart-console-header] # module UART pins on a 4-pin header for bring-up; JTAG reaches the module through the SODIMM
   design_drawing: design_drawings.mechanical_views
+
+# =============================================================================
+# Clocking, noise, EMI
+# =============================================================================
+clocking_and_noise:
+  status: constraints_for_the_l2_layout_gate
+  clock_sources:
+    local_oscillator_on_carrier: none - the carrier generates no clocks at all
+    slot_refclk: 100 MHz differential from the slot (host-source); host-side spread-spectrum rides along and C4 PHY compliance covers it
+    m2_refclk: Orin C7 refclk-out feeds the M.2 socket - no local clock part either
+    open: whether C4 endpoint mode listens to the slot REFCLK or an internal clock is an L3 confirmation (open_items.ep_refclk_source)
+  switching_noise:
+    domains: [fan-pwm-driver, 3.3v-rail]
+    rule: >-
+      direct slot-3.3V feed means zero carrier-side switching spectrum; if L2
+      instead picks a local 12V->3.3V buck (open_items.three_v_three_allocation),
+      its switch node and loop area stay away from the REFCLK and PCIe finger
+      paths and its ripple stays inside the L2 rail budget
+    lpddr: none - LPDDR5 lives on the module, the carrier routes no DRAM (no DDR noise domain here)
+  emi_esd:
+    bracket_bond: bracket screws bond to chassis metal; signal reference stays the slot ground fingers (CEM geometry provides the return path)
+    plane_rules: no reference-plane split under the PCIe pair or the REFCLK finger-to-module path (KiCad DRC item at L2)
+    usb_esd: the bracket USB-C port (mechanical.bracket_cutouts.rcm_usb_c) carries an ESD protection array chosen at L2 (IEC 61000-4-2 class)
+    emissions_scope: system-level EMC belongs to the host's certification; this card carries a pre-compliance check of its own at L4 (acceptance.L4)
+  source: src_pcie_cem
 
 # =============================================================================
 # Software
@@ -531,6 +613,12 @@ software:
     driver: linux-mbox-driver-first
     clients: [cli, python-sdk]
     windows_host: deferred (open item)
+    card_discovery: >-
+      cold-boot sequence: BIOS time may not see the endpoint because Jetson
+      Linux boots from NVMe and the EPF starts afterwards; after EP ready the
+      host driver probes, asserts slot PERST# effect, rescans the bus and the
+      endpoint enumerates (and MSI trains) in that window - no hot-plug,
+      surprise removal unsupported (host_interface.edge_sidebands)
   validation_note: >-
     L1 software numbers are produced on an Orin NX devkit (same module) before
     any carrier fabrication; devkit cannot exercise the x1 edge or the custom
@@ -561,17 +649,21 @@ acceptance:
   L2:
     - kicad_can_produce_pcb_drc_and_gerber
     - power_tree_efficiency_and_35w_cap_verified_by_analysis
+    - cem_rail_limits_and_bulk_caps_satisfied_at_35w_and_40w (power_and_thermal.power_integrity)
+    - nvme_headroom_and_module_theta_budget_proven_at_40c (thermal_targets, open_items.nvme_thermal_path)
     - single_slot_thermal_solution_verified_at_40c_ambient_200lfm
     - no_physical_board_required
   L3:
     - gen4_x1_link_trains_and_dma_ge_1_6gbs_each_direction
     - mailbox_protocol_conformance_and_msi_under_load
     - flr_reset_recovers_endpoint_without_host_reboot
+    - cold_boot_discovery_via_rescan_after_ep_ready (software.host_side.card_discovery)
     - uphy_c4_ep_and_c7_nvme_run_concurrently (open risk, see open_items)
   L4:
     - board_power_within_35w_and_module_tj_within_90c_sustained_24h
     - decode_and_prefill_targets_met_on_card_end_to_end
     - host_token_streaming_meets_latency_budget
+    - emissions_pre_compliance_scan_bracket_assembled (clocking_and_noise.emi_esd)
 component_selection_policy:
   selection_owner: angela
   entries_follow: hardware/ai_compute_card/component_registry.yaml rules
@@ -640,13 +732,14 @@ component_review:
       source: src_pcie_cem
     - part_class: power-path
       current: >-
-        slot 12V and 3.3V each up to 75W available; board self-capped at
-        35W = 25 + 3 + 2 + 5 (power_and_thermal.board_budget_w)
+        CEM 75W-class slot rails: 12V 5.5A cap (66W) + 3.3V 3.0A cap (9.9W),
+        combined <=75W; board self-capped at 35W = 25 + 3 + 2 + 5 drawn from
+        the 12V feed (power_and_thermal.board_budget_w, power_integrity)
       upgrade: >-
         none needed at 25W; even the 40W profile tops out at 50W board
-        (40 + 3 + 2 + 5) against the same 75W slot figure - the upgrade
+        (40 + 3 + 2 + 5 = 4.2A) inside the 5.5A/66W 12V cap - the upgrade
         here is a decision, not a part
-      source: src_pcie_cem
+      source: src_cem_rails
     - part_class: everything-else-purchasable
       status: >-
         module, M.2 SSD, PCB, thermal parts, fan, brackets are all
@@ -677,8 +770,9 @@ component_review:
       why: >-
         module input range is 5-20V, so 12V is in range with large margin;
         the feed keeps VDD_IN near 12V, satisfying the >=8V precondition
-        of the 40W profile with zero added parts, and 12V already carries
-        >=4x the 35W board budget
+        of the 40W profile with zero added parts, and the CEM 12V cap
+        (5.5A / 66W, src_cem_rails) holds 1.9x headroom over the 35W board
+        draw (2.9A) and 1.3x over the 50W 40W-profile draw (4.2A)
       source: src_orin_nx_ds
     pcie_lane:
       decision: >-
@@ -803,6 +897,29 @@ open_items:
     blocks: L3
     question: Linux-first confirmed; Windows host driver deferred by
       decision, revisit on demand.
+  - id: nvme_thermal_path
+    risk: medium
+    blocks: L2
+    question: >-
+      M.2 sits opposite the fan with no direct heat path; the chosen SSD's
+      SMART temp must hold >=10 C below its datasheet max at 40 C ambient
+      (thermal_targets.nvme_headroom) or the stack gets a heat spreader /
+      the socket moves - part not chosen until this closes.
+  - id: three_v_three_allocation
+    risk: low
+    blocks: L2
+    question: >-
+      Direct slot-3.3V feed covers up to 3.0A/9.9W (power_integrity); any
+      carrier-side 3.3V logic load is sized in the KiCad power-tree pass.
+      If the budget exceeds what the slot 3.3V rail can carry, L2 flips
+      to a local 12V->3.3V buck (clocking_and_noise.switching_noise).
+  - id: ep_refclk_source
+    risk: low
+    blocks: L3
+    question: >-
+      Confirm at L3 whether C4 endpoint mode listens to the slot 100 MHz
+      REFCLK or an internal module clock (docs imply host-source; the card
+      routes it regardless, clocking_and_noise.clock_sources).
 
 # =============================================================================
 # Sources
@@ -882,6 +999,17 @@ sources:
     what: official google QAT Q4_0 GGUF of gemma-4-E2B (file measured at 3.35 GB in local HF cache snapshot 675cff42)
     url: https://huggingface.co/google/gemma-4-E2B-it-qat-q4_0-gguf
     type: manufacturer_artifact
+  src_cem_rails:
+    what: CEM Power Supply Rail Requirements per slot class - 75W-class 12V
+      cap 5.5A (66W), 3.3V cap 3.0A (9.9W), aux 375/20 mA, card bulk cap
+      limits (2000/1000/150 uF), slot classes 10/25/75W
+    url: https://enterprise-support.nvidia.com/s/article/MLNX2-117-1944kn
+    type: industry_standard_summary
+  src_cem_excursions:
+    what: CEM Add-in Card Power Excursions - 12V excursion table and
+      Set_Slot_Power_Limit interplay; 3.3V/3.3Vaux have no excursion table
+    url: https://edc.intel.com/content/www/us/en/design/ipla/software-development-platforms/client/platforms/alder-lake-desktop/atx-version-3-0-multi-rail-desktop-platform-power-supply-design-guide/2.1/pcie-add-in-card-power-excursions
+    type: industry_standard_summary
 host_proxy_simulation:
   kind: host_proxy_not_l1
   date: 2026-10-07
@@ -1052,8 +1180,8 @@ cycle_simulation:
     cost_frame: >-
       no prices anywhere (quote required by policy): option A = 0 BOM delta
       (devkit time only), option B = same module + cooling/power-path rework
-      under the 75W slot, option C = cheaper SKU with the weaker numbers
-      above. Every option keeps the Gen4 x1 edge and the Orin NX family.
+      inside the slot's combined 75W limit, option C = cheaper SKU with the
+      weaker numbers above. Every option keeps the Gen4 x1 edge and the Orin NX family.
     status: candidate_pending_l1_benchmark_and_l2_thermal
   refutes:
     - claim: >-

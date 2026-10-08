@@ -177,8 +177,11 @@ def test_power_budget_sums_to_cap_within_slot() -> None:
     summed += budget["rails_and_conversion_overhead"]
 
     assert summed == budget["tdp_cap"] == 35
-    assert budget["tdp_cap"] <= power["slot_power"]["slot_available_12v_w"] == 75
-    assert power["slot_power"]["auxiliary_connector"] == "none"
+    sp = power["slot_power"]
+    assert budget["tdp_cap"] <= sp["slot_available_12v_w"] == 66  # CEM 75W-class 12V 5.5A cap
+    assert sp["slot_3v3_available_w"] == 9.9  # CEM 3.3V 3.0A cap
+    assert sp["slot_combined_max_w"] == 75  # 合計上限是獨立條款（5.5A*12+3.0A*3.3 四捨五入即 75）
+    assert sp["auxiliary_connector"] == "none"
     assert power["default_mode"] == "25W-MAXN"
     assert power["cooling"] == "single-slot-heatsink-plus-fan"
 
@@ -460,6 +463,7 @@ def test_design_drawings_back_every_numbered_block() -> None:
         "system_interconnect": [
             "product_decision",
             "host_interface",
+            "clocking_and_noise",
             "compute.module",
             "compute.option_sku",
             "memory",
@@ -593,6 +597,7 @@ def test_spec_top_level_schema_is_complete() -> None:
         "model_target",
         "performance_budget",
         "power_and_thermal",
+        "clocking_and_noise",
         "mechanical",
         "software",
         "acceptance_levels",
@@ -677,3 +682,130 @@ def test_spec_provenance_and_projection_keys_are_complete() -> None:
     file_gb = primary["weights_gb_gguf_measured"]
     payload_gbs = spec["host_interface"]["payload_gbs_each_direction"]
     assert projections["load_from_host_s"] == round(file_gb / payload_gbs, 2) == 1.7
+
+
+# -----------------------------------------------------------------------------
+# CEM 電氣 / 側帶 / 時鐘雜訊 / 熱收斂 — 2026-10-09 全域缺口審計的同步鎖
+# -----------------------------------------------------------------------------
+def test_cem_rail_limits_recompute_from_source_facts() -> None:
+    """槽供電上限必須是 CEM 鐵證的現算值，不是把 75W 貼到每條軌上。"""
+    spec = _load_spec()
+    sp = spec["power_and_thermal"]["slot_power"]
+    pi = spec["power_and_thermal"]["power_integrity"]
+
+    assert sp["slot_available_12v_w"] == 66 == 5.5 * 12
+    assert sp["slot_3v3_available_w"] == 9.9 == round(3.0 * 3.3, 1)
+    assert sp["slot_combined_max_w"] == 75
+    assert pi["rail_limits_75w_slot"]["12v_max_a"] == 5.5
+    assert pi["rail_limits_75w_slot"]["3v3_max_a"] == 3.0
+    assert pi["rail_limits_75w_slot"]["combined_max_w"] == 75
+    assert pi["card_bulk_caps_max_uf"] == {"12v": 2000, "3v3": 1000, "aux": 150}
+    assert pi["max_current_slew_a_per_us"] == 0.1
+    assert pi["sources"] == ["src_cem_rails", "src_cem_excursions"]
+    assert "src_cem_rails" in spec["sources"]
+    assert "src_cem_excursions" in spec["sources"]
+    assert spec["sources"]["src_cem_rails"]["url"].startswith("https://")
+    assert spec["sources"]["src_cem_excursions"]["url"].startswith("https://")
+
+    # 板預算（含 40W 分支）必須落在 12V 5.5A 上限內，且 3.3V 側不被預算誤用
+    budget = spec["power_and_thermal"]["board_budget_w"]
+    overhead = budget["m2_nvme"] + budget["fan"] + budget["rails_and_conversion_overhead"]
+    modes = spec["compute"]["module"]["supported_power_modes_w"]
+    assert budget["tdp_cap"] == budget["module_maxn"] + overhead == 35
+    assert max(modes) + overhead <= sp["slot_available_12v_w"]
+    assert budget["tdp_cap"] <= sp["slot_available_12v_w"]
+    assert "66" in budget["cap_derivation"] and "75" in budget["cap_derivation"]
+
+
+def test_edge_sidebands_presence_refclk_and_nc_policy() -> None:
+    """x1 側帶齊全：PRSBNT 綁帶、PERST/REFCLK 政策、NC 清單、冷插禁熱插。"""
+    spec = _load_spec()
+    sb = spec["host_interface"]["edge_sidebands"]
+    assert "A1" in sb["prsnt_strap"] and "B17" in sb["prsnt_strap"]
+    assert "rescan" in sb["perst"]
+    assert "100 MHz" in sb["refclk"]
+    assert "NC" in sb["wake_and_aux"] and "NC" in sb["smb"] and "NC" in sb["clkreq"]
+    assert "NC" in sb["jtag_edge"]
+    assert "not supported" in sb["hot_plug"] and "cold" in sb["hot_plug"]
+    assert sb["source"] in spec["sources"]
+
+    disc = spec["software"]["host_side"]["card_discovery"]
+    assert "rescan" in disc and "NVMe" in disc and "cold-boot" in disc
+
+
+def test_clocking_and_noise_rules_exist() -> None:
+    """載板無本地時鐘、buck 有條件、EMI/ESD 有歸屬——都是 L2 佈局門檻。"""
+    spec = _load_spec()
+    cn = spec["clocking_and_noise"]
+    cs = cn["clock_sources"]
+    assert cs["local_oscillator_on_carrier"].startswith("none")
+    assert "100 MHz" in cs["slot_refclk"]
+    assert "open_items.ep_refclk_source" in cs["open"]
+    assert cn["switching_noise"]["domains"] == ["fan-pwm-driver", "3.3v-rail"]
+    assert "three_v_three_allocation" in cn["switching_noise"]["rule"]
+    assert cn["switching_noise"]["lpddr"].startswith("none")
+    assert cn["emi_esd"]["bracket_bond"] and cn["emi_esd"]["plane_rules"]
+    assert "61000-4-2" in cn["emi_esd"]["usb_esd"]
+    assert "acceptance.L4" in cn["emi_esd"]["emissions_scope"]
+    assert cn["source"] in spec["sources"]
+
+
+def test_thermal_nvme_headroom_and_theta_budget_recompute() -> None:
+    """散熱：theta 預算現算自 Tj/環境/功率，NVMe 熱缺口掛 open_items。"""
+    spec = _load_spec()
+    pt = spec["power_and_thermal"]
+    tt = pt["thermal_targets"]
+    tj = tt["module_tj_max_c"]
+    amb = tt["ambient_c"]
+    budget = pt["board_budget_w"]
+    modes = spec["compute"]["module"]["supported_power_modes_w"]
+    assert tt["module_path_theta_max_k_w"] == {
+        "at_25w": round((tj - amb) / budget["module_maxn"], 2),
+        "at_40w": round((tj - amb) / max(modes), 2),
+    }
+    assert "nvme_thermal_path" in tt["nvme_headroom"]
+    assert "nvme-smart-temp-via-software" in pt["sensors"]
+    assert "fan-tach-rpm" in pt["sensors"]
+    assert "40mm 4-pin PWM" in pt["cooling_fan"]
+    ids = [item["id"] for item in spec["open_items"]]
+    assert {"nvme_thermal_path", "three_v_three_allocation", "ep_refclk_source"} <= set(ids)
+
+
+def test_bracket_cutouts_recovery_and_acceptance_closure() -> None:
+    """支架開孔 ↔ recovery 路徑互指；審計新增的驗收項必須在位。"""
+    spec = _load_spec()
+    cuts = spec["mechanical"]["bracket_cutouts"]
+    assert {"rcm_usb_c", "ep_ready_led"} <= set(cuts)
+    assert "bracket_cutouts.rcm_usb_c" in spec["storage"]["recovery_path"]
+    assert "uart-console-header" in spec["mechanical"]["debug_access"]
+
+    acc = spec["acceptance"]
+    assert any("cem_rail_limits" in item for item in acc["L2"])
+    assert any("nvme_headroom" in item for item in acc["L2"])
+    assert any("cold_boot_discovery" in item for item in acc["L3"])
+    assert any("emissions_pre_compliance" in item for item in acc["L4"])
+
+
+def test_audit_diagram_strings_match_owning_fields() -> None:
+    """三張圖的新行（CEM 軌/側帶/支架開孔/NVMe 缺口）與擁有欄位同字。"""
+    spec = _load_spec()
+    dd = spec["design_drawings"]
+    sp = spec["power_and_thermal"]["slot_power"]
+
+    pt_d = dd["power_tree"]["diagram"]
+    assert f"12V cap 5.5A ({sp['slot_available_12v_w']}W)" in pt_d
+    assert f"3.3V cap 3.0A ({sp['slot_3v3_available_w']}W)" in pt_d
+    assert "combined <= 75W" in pt_d
+    assert "<= 66 W slot 12V" in pt_d  # 35W 與 40W 分支都收斂到 5.5A 上限
+
+    sys_d = dd["system_interconnect"]["diagram"]
+    assert "PRSNT# A1-B17" in sys_d and "REFCLK 100M host-source" in sys_d
+    assert "hot-plug off" in sys_d
+
+    mv_d = dd["mechanical_views"]["diagram"]
+    assert "cutouts: USB-C" in mv_d and "EP-ready LED" in mv_d
+
+    th_d = dd["thermal_path"]["diagram"]
+    assert "open_items.nvme_thermal_path" in th_d
+    assert "nvme-headroom" in th_d or "nvme_headroom" in th_d
+    assert "fan tach" in th_d
