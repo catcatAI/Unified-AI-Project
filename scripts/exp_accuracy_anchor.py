@@ -41,18 +41,66 @@ PERSONA = "You are Angela, a consistent AI companion who remembers context. "
 
 # (probe, paraphrases, required keywords-lowercase: ANY match counts correct)
 PROBES = [
-    ("How many minutes are in an hour?", ["An hour contains how many minutes?", "Convert one hour to minutes."], ["60", "sixty"]),
-    ("What is H2O?", ["What does H2O stand for?", "Name the chemical formula of water."], ["water", "hydrogen"]),
-    ("What season comes after winter?", ["Which season follows winter?", "After winter, what season is next?"], ["spring"]),
-    ("How many days are in a leap year?", ["A leap year has how many days?", "Count the days in a leap year."], ["366"]),
-    ("What do birds build to live in?", ["Where do birds live?", "What structures do birds build?"], ["nest"]),
-    ("What planet do we live on?", ["Which planet is our home?", "Name the planet we inhabit."], ["earth"]),
-    ("How many colors are in a rainbow?", ["Count the colors of the rainbow.", "A rainbow shows how many colors?"], ["7", "seven"]),
-    ("What do you call a baby dog?", ["What is a baby dog called?", "Name the young of a dog."], ["puppy", "pup"]),
-    ("How many seconds are in a minute?", ["A minute contains how many seconds?", "Convert a minute to seconds."], ["60", "sixty"]),
-    ("What is the opposite of hot?", ["What is hot the opposite of?", "Name the antonym of hot."], ["cold"]),
-    ("How many sides does a triangle have?", ["A triangle has how many sides?", "Count a triangle's sides."], ["3", "three"]),
-    ("How many wheels does a car have?", ["A car has how many wheels?", "Count a car's wheels."], ["4", "four"]),
+    (
+        "How many minutes are in an hour?",
+        ["An hour contains how many minutes?", "Convert one hour to minutes."],
+        ["60", "sixty"],
+    ),
+    (
+        "What is H2O?",
+        ["What does H2O stand for?", "Name the chemical formula of water."],
+        ["water", "hydrogen"],
+    ),
+    (
+        "What season comes after winter?",
+        ["Which season follows winter?", "After winter, what season is next?"],
+        ["spring"],
+    ),
+    (
+        "How many days are in a leap year?",
+        ["A leap year has how many days?", "Count the days in a leap year."],
+        ["366"],
+    ),
+    (
+        "What do birds build to live in?",
+        ["Where do birds live?", "What structures do birds build?"],
+        ["nest"],
+    ),
+    (
+        "What planet do we live on?",
+        ["Which planet is our home?", "Name the planet we inhabit."],
+        ["earth"],
+    ),
+    (
+        "How many colors are in a rainbow?",
+        ["Count the colors of the rainbow.", "A rainbow shows how many colors?"],
+        ["7", "seven"],
+    ),
+    (
+        "What do you call a baby dog?",
+        ["What is a baby dog called?", "Name the young of a dog."],
+        ["puppy", "pup"],
+    ),
+    (
+        "How many seconds are in a minute?",
+        ["A minute contains how many seconds?", "Convert a minute to seconds."],
+        ["60", "sixty"],
+    ),
+    (
+        "What is the opposite of hot?",
+        ["What is hot the opposite of?", "Name the antonym of hot."],
+        ["cold"],
+    ),
+    (
+        "How many sides does a triangle have?",
+        ["A triangle has how many sides?", "Count a triangle's sides."],
+        ["3", "three"],
+    ),
+    (
+        "How many wheels does a car have?",
+        ["A car has how many wheels?", "Count a car's wheels."],
+        ["4", "four"],
+    ),
 ]
 
 DIRECTION_PROBES = [
@@ -78,10 +126,9 @@ def main() -> int:
 
     import numpy as np
     import torch
+    from core.facts import Fact, adjudicate
     from sentence_transformers import SentenceTransformer
     from transformers import AutoModelForCausalLM, AutoTokenizer
-
-    from core.facts import Fact, adjudicate
 
     tok = AutoTokenizer.from_pretrained(QWEN, local_files_only=True)
     model = AutoModelForCausalLM.from_pretrained(QWEN, local_files_only=True, dtype=torch.float32)
@@ -113,7 +160,9 @@ def main() -> int:
         if alpha is not None:
 
             def _steer(_m, _i, out):
-                shift = alpha * direction.to(out[0].device if isinstance(out, tuple) else out.device)
+                shift = alpha * direction.to(
+                    out[0].device if isinstance(out, tuple) else out.device
+                )
                 if isinstance(out, tuple):
                     return (out[0] + shift,) + out[1:]
                 return out + shift
@@ -123,7 +172,7 @@ def main() -> int:
             inp = tok(prompt, return_tensors="pt")
             with torch.no_grad():
                 out = model.generate(**inp, max_new_tokens=MAX_TOKENS, do_sample=False)
-            return tok.decode(out[0][inp["input_ids"].shape[1]:], skip_special_tokens=True)
+            return tok.decode(out[0][inp["input_ids"].shape[1] :], skip_special_tokens=True)
         finally:
             if handle is not None:
                 handle.remove()
@@ -149,40 +198,70 @@ def main() -> int:
         acc_s = len(steered_ok) / len(variants)
         con_p = mean_pairwise(plain_ok)
         con_s = mean_pairwise(steered_ok)
-        rows.append({"probe": probe, "acc_plain": round(acc_p, 3), "acc_steered": round(acc_s, 3),
-                     "con_plain": round(con_p, 3) if con_p is not None else None,
-                     "con_steered": round(con_s, 3) if con_s is not None else None})
+        rows.append(
+            {
+                "probe": probe,
+                "acc_plain": round(acc_p, 3),
+                "acc_steered": round(acc_s, 3),
+                "con_plain": round(con_p, 3) if con_p is not None else None,
+                "con_steered": round(con_s, 3) if con_s is not None else None,
+            }
+        )
 
     rep = generate(PROBES[0][0], None)
     deterministic = generate(PROBES[0][0], None) == rep
 
     mean_acc_p = sum(r["acc_plain"] for r in rows) / len(rows)
     mean_acc_s = sum(r["acc_steered"] for r in rows) / len(rows)
-    both = [(r["con_plain"], r["con_steered"]) for r in rows
-            if r["con_plain"] is not None and r["con_steered"] is not None]
+    both = [
+        (r["con_plain"], r["con_steered"])
+        for r in rows
+        if r["con_plain"] is not None and r["con_steered"] is not None
+    ]
     mean_con_diff = (sum(s - p for p, s in both) / len(both)) if both else 0.0
 
     report = adjudicate(
         [
             Fact("e6.determinism", float(deterministic), 1.0, "ge", "bool", "seed-repeat", ""),
-            Fact("e6.accuracy_kept", mean_acc_s - mean_acc_p, 0.0, "ge", "rate", "anchor",
-                 f"plain={mean_acc_p:.3f} steered={mean_acc_s:.3f}"),
-            Fact("e6.correct_consistency_kept", mean_con_diff, 0.0, "ge", "cosine", "anchor",
-                 f"n={len(both)}/12 both-correct"),
+            Fact(
+                "e6.accuracy_kept",
+                mean_acc_s - mean_acc_p,
+                0.0,
+                "ge",
+                "rate",
+                "anchor",
+                f"plain={mean_acc_p:.3f} steered={mean_acc_s:.3f}",
+            ),
+            Fact(
+                "e6.correct_consistency_kept",
+                mean_con_diff,
+                0.0,
+                "ge",
+                "cosine",
+                "anchor",
+                f"n={len(both)}/12 both-correct",
+            ),
         ]
     )
     print("=" * 72)
     print("E6 accuracy-anchored steering (12 probes, L12 a=2.0)")
     print("=" * 72)
     for r in rows:
-        print(f"acc {r['acc_plain']:.2f}->{r['acc_steered']:.2f} con {r['con_plain']}->{r['con_steered']} :: {r['probe'][:36]}")
+        print(
+            f"acc {r['acc_plain']:.2f}->{r['acc_steered']:.2f} con {r['con_plain']}->{r['con_steered']} :: {r['probe'][:36]}"
+        )
     print(f"deterministic: {deterministic}, elapsed_min={(time.time()-t_start)/60:.1f}")
     print(report.summary())
     print("=" * 72)
     if args.json:
-        args.json.write_text(json.dumps({"rows": rows, "deterministic": deterministic,
-                                         "verdict": report.as_dict()},
-                                        indent=2, ensure_ascii=False), encoding="utf-8")
+        args.json.write_text(
+            json.dumps(
+                {"rows": rows, "deterministic": deterministic, "verdict": report.as_dict()},
+                indent=2,
+                ensure_ascii=False,
+            ),
+            encoding="utf-8",
+        )
         print(f"json -> {args.json}")
     if not deterministic:
         return 1
