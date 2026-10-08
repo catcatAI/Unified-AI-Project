@@ -40,9 +40,11 @@
 
 ## 2. 分階段
 
-- **P0（本輪）：** 文檔數字同步（tests/README 兩處）＋ `file_ops limits`
-  接線（`max_file_size_mb`
-  進兩條寫入路徑，拒絕有明確訊息）＋ 2 個 mock-only 弱測試補行為斷言。驗收：相關測試綠、flake8/black/isort/mypy 全 clean。
+- **P0（已執行）：** 文檔數字同步（tests/README 兩處，7,079）＋
+  `file_ops limits` 接線（`max_file_size_mb`
+  進兩條寫入路徑，拒絕有明確訊息）＋ 2 個 mock-only 弱測試補行為斷言＋
+  `agent_workspace_routes`
+  首個專屬測試檔（22 測試，路由檔 100%）。驗收：相關測試綠、flake8/black/isort/mypy 全 clean。
 - **P1（後續）：** 薄弱檔按域補測（先
   `agent_workspace_routes`、`core/bio`、`core/engine` 的冒烟級）；`file_ops`
   剩餘 limits（batch/confirm/trash）接線或標棄用；更多 UI 合約鏈。
