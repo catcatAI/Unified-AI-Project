@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from core.i18n.i18n_manager import t
+from core.system.config.magic_numbers import max_file_write_mb
 from core.utils import safe_error as _safe_error
 
 logger = logging.getLogger(__name__)
@@ -267,6 +268,11 @@ class FileOperationHandler:
     def _write(self, target: Path, content: str = "", **kw) -> str:
         if target.is_dir():
             return t("file_ops.cannot_write_dir", path=str(target))
+        limit_mb = max_file_write_mb()
+        size = len(content.encode("utf-8"))
+        if size > limit_mb * 1024 * 1024:
+            logger.warning("Refusing oversized write to %s (%d bytes)", target, size)
+            return t("file_ops.file_too_large", path=str(target), limit_mb=limit_mb)
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(content, encoding="utf-8")
         return t("file_ops.written", chars=len(content), path=str(target))
@@ -274,6 +280,15 @@ class FileOperationHandler:
     def _append(self, target: Path, content: str = "", **kw) -> str:
         if target.is_dir():
             return t("file_ops.cannot_append_dir", path=str(target))
+        limit_mb = max_file_write_mb()
+        try:
+            existing = target.stat().st_size if target.exists() else 0
+        except OSError:
+            existing = 0
+        size = existing + len(content.encode("utf-8"))
+        if size > limit_mb * 1024 * 1024:
+            logger.warning("Refusing oversized append to %s (%d bytes)", target, size)
+            return t("file_ops.file_too_large", path=str(target), limit_mb=limit_mb)
         target.parent.mkdir(parents=True, exist_ok=True)
         with open(target, "a", encoding="utf-8") as f:
             f.write(content)

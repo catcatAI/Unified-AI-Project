@@ -121,6 +121,7 @@
     "unsupported_action": "Unsupported operation: {action}. Available operations: {actions}",
     "permission_denied": "Insufficient permissions: {path}",
     "operation_failed": "Operation failed: {error}",
+    "file_too_large": "File exceeds size limit ({limit_mb} MB): {path}",
     "file_exists": "File already exists: {path}",
     "file_created": "File created: {path}",
     "file_not_found": "File does not exist: {path}",

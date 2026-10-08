@@ -213,6 +213,23 @@ def batch_value(key: str, default: int = 10) -> int:
     return _safe_int(_get(key, default), default)
 
 
+def max_file_write_mb(default: int = 50) -> int:
+    """Single-write size cap for file operations, in megabytes.
+
+    Reads ``standard.behavior.file_ops.limits.max_file_size_mb`` (default 50).
+    Both write paths (DesktopInteraction.create_file and FileOperationHandler
+    _write/_append) refuse above this size instead of filling the disk.
+    Falls back to the default if config is unavailable or invalid.
+    """
+    try:
+        value = _safe_int(
+            _get("standard.behavior.file_ops.limits.max_file_size_mb", default), default
+        )
+    except Exception:
+        return default
+    return value if value > 0 else default
+
+
 def llm_param(key: str, default: float = 0.7) -> float:
     return _safe_float(_get(key, default), default)
 

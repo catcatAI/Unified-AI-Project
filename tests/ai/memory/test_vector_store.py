@@ -244,6 +244,7 @@ class TestVectorMemoryStoreChromadbBackend:
         with patch("ai.memory.vector_store._lazy_chromadb", return_value=mock_chromadb):
             with tempfile.TemporaryDirectory() as tmpdir:
                 store = VectorMemoryStore(persist_directory=tmpdir)
+                assert store.collection is not None
                 await store.add_memory("mem1", "hello", {"k": "v"})
                 collection = (
                     mock_chromadb.PersistentClient.return_value.get_or_create_collection.return_value

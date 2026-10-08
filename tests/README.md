@@ -3,7 +3,7 @@
 ## Overview
 
 This directory contains the Unified AI Project test suite. Tests are organized
-by domain. **7,044 tests collected** (tests/; re-verified 2026-10-08).
+by domain. **7,057 tests collected** (tests/; re-verified 2026-10-08).
 
 Historical executed run (pre-cleanup, ~2026-07-14): 4,544 passed, 185 failed, 39
 errors, 85 skipped, 2 xfailed. The failures below explain the 185/39.
@@ -121,17 +121,20 @@ Key aspects to verify during testing:
 
 ## Current Test State
 
-| Domain      | Test Count |
-| ----------- | ---------- |
-| AI core     | ~400       |
-| GARDEN      | ~125       |
-| Multimodal  | ~211       |
-| Security    | ~100+      |
-| Services    | ~200+      |
-| Integration | ~150+      |
-| Training    | ~100+      |
-| Other       | ~3,000+    |
-| **Total**   | **5,432**  |
+**7,057 tests collected** (tests/; re-verified 2026-10-08 — same number as the
+header; domain breakdown below is a historical 2026-07 snapshot).
+
+| Domain                       | Test Count |
+| ---------------------------- | ---------- |
+| AI core                      | ~400       |
+| GARDEN                       | ~125       |
+| Multimodal                   | ~211       |
+| Security                     | ~100+      |
+| Services                     | ~200+      |
+| Integration                  | ~150+      |
+| Training                     | ~100+      |
+| Other                        | ~3,000+    |
+| **Total (2026-07 snapshot)** | **5,432**  |
 
 ## Known Test Failure Categories (2026-07-14 Audit)
 

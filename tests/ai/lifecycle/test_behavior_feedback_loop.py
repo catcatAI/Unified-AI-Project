@@ -496,8 +496,14 @@ class TestStoreLearningResults:
     async def test_store_learning_results_calls_memory_manager(
         self, feedback_loop, mock_memory_manager
     ):
+        import json
+
         await feedback_loop._store_learning_results()
         mock_memory_manager.store_experience.assert_called_once()
+        kwargs = mock_memory_manager.store_experience.call_args[1]
+        assert kwargs["data_type"] == "behavior_learning"
+        payload = json.loads(kwargs["raw_data"])
+        assert "patterns" in payload and "strategy_parameters" in payload
 
     async def test_store_learning_results_without_memory_method(
         self, feedback_loop, mock_memory_manager

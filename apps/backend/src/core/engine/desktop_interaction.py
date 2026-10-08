@@ -35,7 +35,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Set
 
 from core.system.config.async_io import async_write_file, async_write_text
-from core.system.config.magic_numbers import loop_sleep, timeout_value
+from core.system.config.magic_numbers import loop_sleep, max_file_write_mb, timeout_value
 from core.utils import safe_error
 
 logger = logging.getLogger(__name__)
@@ -700,6 +700,18 @@ class DesktopInteraction:
 
             if not _is_safe_path(file_path, [self.desktop_path, self.organized_path]):
                 logger.error("Refusing to create file outside allowed roots: %s", file_path)
+                return None
+
+            file_path.parent.mkdir(parents=True, exist_ok=True)
+
+            limit_mb = max_file_write_mb()
+            if len(content.encode("utf-8")) > limit_mb * 1024 * 1024:
+                logger.error(
+                    "Refusing to create oversized file %s (%d bytes > %d MB limit)",
+                    file_path,
+                    len(content.encode("utf-8")),
+                    limit_mb,
+                )
                 return None
 
             await async_write_text(file_path, content)

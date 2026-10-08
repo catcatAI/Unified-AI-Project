@@ -121,6 +121,7 @@
     "unsupported_action": "（檔案操作）不支援的操作：{action}。可用操作：{actions}",
     "permission_denied": "（檔案操作）權限不足：{path}",
     "operation_failed": "（檔案操作）操作失敗：{error}",
+    "file_too_large": "（檔案操作）檔案超過大小上限（{limit_mb} MB）：{path}",
     "file_exists": "（檔案操作）檔案已存在：{path}",
     "file_created": "（檔案操作）已建立檔案：{path}",
     "file_not_found": "（檔案操作）檔案不存在：{path}",
