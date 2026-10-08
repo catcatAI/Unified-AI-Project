@@ -262,6 +262,10 @@ def test_host_proxy_simulation_block_is_labelled_and_gated() -> None:
     assert sim["projections"]["envelope_gb"] <= 8
     assert len(sim["caveats"]) >= 3, "proxy limits must be stated, not implied"
     assert any("Orin NX devkit" in c for c in sim["caveats"])
+    # 汙染重跑要留痕：頻寬錨崩落是「內容競爭、非壞數據」的證據，不得覆寫閒置數字
+    rr = sim["rerun_2026_10_08"]
+    assert rr["status"] == "contaminated_do_not_compare"
+    assert "12.8" in rr["evidence"], "bandwidth collapse (18.0 -> 12.8) must be recorded"
 
 
 def test_cycle_simulation_block_is_labelled_gated_and_honest() -> None:
@@ -271,6 +275,10 @@ def test_cycle_simulation_block_is_labelled_gated_and_honest() -> None:
 
     assert sim["kind"] == "structural_discrete_event_not_l1"
     assert sim["rerun"].startswith(".venv/bin/python scripts/sim_edge_card_cycle.py")
+    # 仿真重驗要留痕：圖背後的數字有日期化的重跑證據
+    verified = sim["verified"]
+    assert str(verified["date"]) >= "2026-10-08", "fresh rerun verification must be recorded"
+    assert "zero drift" in verified["result"]
     assert sim["checkpoints_hops"] == [16, 100, 1000, 10000]
     measured = sim["measured"]
     assert measured["bottleneck"] == "mac_array", "spec claims a compute-bound card"
@@ -312,6 +320,8 @@ def test_balance_study_answers_memory_pcie_and_cost() -> None:
     assert mem["max_real_mode_ops_ns"] == 19  # MAXN GPU 38 dense / 2 ops/MAC
     assert mem["max_real_mode_ops_ns"] < mem["bind_point_ops_ns_32k"]
     assert mem["bind_point_ops_ns_32k"] > 200
+    # 全量掃描範圍（15 個實模態點）：min 必須是 nx16_15W@131072 而非任何子集
+    assert mem["real_mode_util_range"] == [0.029, 0.114]
     assert mem["real_mode_util_range"][1] < 0.5  # 真模組點連一半都用不到
     probes = mem["probes_mem_util_at_32k"]
     assert probes["r100"] < probes["r150"] < probes["r222_6"] < probes["r445_2"] < 1.0
@@ -466,6 +476,7 @@ def test_design_drawings_back_every_numbered_block() -> None:
         "decode_datapath": [
             "cycle_simulation.method",
             "cycle_simulation.measured",
+            "cycle_simulation.balance_study",
             "performance_budget",
             "model_target.working_set_gb",
         ],
@@ -558,6 +569,9 @@ def test_design_drawings_back_every_numbered_block() -> None:
     assert str(bal["memory"]["roofline_tok_s_at_32k"]) in dp_d
     assert "4.218" in dp_d and "4.218" in f"{meas['ops_per_token']['total']:.3e}"
     assert "1.649" in dp_d and "1.649" in f"{meas['bytes_per_token']['reads']:.3e}"
+    # 記憶體利用率範圍：圖文必須與 balance_study 欄位同值（修過一次子集 min）
+    lo, hi = bal["memory"]["real_mode_util_range"]
+    assert f"{lo * 100:.1f}-{hi * 100:.1f}%" in dp_d
     assert any("591" in step for step in cyc["method"]) and "591" in dp_d
 
 

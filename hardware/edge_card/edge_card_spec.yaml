@@ -181,6 +181,7 @@ design_drawings:
     backs:
       - cycle_simulation.method
       - cycle_simulation.measured
+      - cycle_simulation.balance_study
       - performance_budget
       - model_target.working_set_gb
     status: complete_engine_topology_matching_edge_card_sim
@@ -203,7 +204,7 @@ design_drawings:
 
       MEASURED @25W, 32K (cycle_simulation.measured):
         3.56 tok/s, 281.19 ms/token, mac util 1.000 / mem 0.067 -> COMPUTE-BOUND
-        bind point 222.6 ops/ns vs card max 19 ops/ns -> mem util 4.1-11.4%
+        bind point 222.6 ops/ns vs card max 19 ops/ns -> mem util 2.9-11.4%
         (idle LPDDR5 is structural, balance_study.memory; roofline 52.8 tok/s
          unreachable; prefill stays analytic: ideal ~2600, target >=800 tok/s)
 
@@ -884,6 +885,16 @@ sources:
 host_proxy_simulation:
   kind: host_proxy_not_l1
   date: 2026-10-07
+  rerun_2026_10_08:
+    status: contaminated_do_not_compare
+    evidence: >-
+      three same-day reruns while the box ran concurrent experiments (load average up
+      to 5.19): the host bandwidth anchor fell 18.0 -> 16.9 -> 12.8 GB/s and prefill
+      fell 905.2 -> 54.4 -> 16.8 tok/s (decode 13.19 -> 12.85 -> 4.76) while every
+      hard gate still passed; the idle-machine physics still check out (3.35 GB /
+      18.0 GB/s = 0.186 s ~= 866 tok/s for 161 tokens, consistent with the recorded
+      905.2), so the drift is contention, not a bad recording
+    decision: keep the 2026-10-07 idle-run numbers below; re-run on an idle box to refresh
   rerun: .venv/bin/python scripts/sim_edge_card_software.py --json out.json
   source: scripts/sim_edge_card_software.py
   host: Intel-i5-12400F-6P-cores / llama-cpp-python-0.3.35 / n_threads=6 / single-threaded DRAM anchor only
@@ -919,6 +930,15 @@ host_proxy_simulation:
 cycle_simulation:
   kind: structural_discrete_event_not_l1
   date: 2026-10-07
+  verified:
+    date: 2026-10-08
+    result: >-
+      zero drift from a fresh rerun of cycle (3.56 tok/s, 12588 hops, per-token
+      281.19-281.26 ms, replay identical), long-run (50373 hops, 0 violations)
+      and the full sweep (15 real-module points, 4 probes, load paths
+      1.70/2.09/1.40 s, baseline cross-check OK); real_mode_util_range was
+      corrected this date from the subset minimum 0.041 to the full-sweep 0.029
+      (nx16_15W @131072) - every other diagram-backed number reproduced as recorded
   rerun: .venv/bin/python scripts/sim_edge_card_cycle.py --json out.json
   source: scripts/sim_edge_card_cycle.py
   engine: apps/backend/src/ai/hardware/edge_card_sim.py
@@ -1004,7 +1024,7 @@ cycle_simulation:
       max_real_mode_ops_ns: 19 # biggest purchasable GPU MAC rate (MAXN 38 dense / 2)
       bind_point_ops_ns_32k: 222.6 # analytic: 87.04 B/ns x 2.558 ops/B (Q4)
       roofline_tok_s_at_32k: 52.8 # a ~223 ops/ns class module saturates LPDDR5
-      real_mode_util_range: [0.041, 0.114] # 8GB@32K .. 40W@8K, never even an eighth
+      real_mode_util_range: [0.029, 0.114] # nx16_15W@131K .. 40W@8K full sweep, never an eighth
       probes_mem_util_at_32k: { r100: 0.447, r150: 0.644, r222_6: 0.770, r445_2: 0.929 }
       conclusion: >-
         idle LPDDR5 is structural, not a tuning miss: Q4 arithmetic intensity
