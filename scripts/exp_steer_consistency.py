@@ -14,7 +14,7 @@
 - 誠實邊界：方向本身由 prompt 對比提煉（文獻標準做法）；測的是該方向在推理時
   的因果效應，不是方向的「非提示詞純度」。
 
-用法: `.venv/bin/python scripts/exp_steer_consistency.py [--json out.json]`
+用法: `.venv/bin/python scripts/exp_steer_consistency.py [--json out.json] [--model SNAPSHOT]`
 退出碼：0 預測成立；1 不成立/推理失敗。
 """
 
@@ -90,6 +90,9 @@ def _last_token_vec(model, tok, text: str):
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--json", type=Path, default=None)
+    parser.add_argument(
+        "--model", type=str, default=None, help="HF snapshot dir (default: Qwen2.5-0.5B-Instruct)"
+    )
     args = parser.parse_args()
 
     import numpy as np
@@ -98,8 +101,11 @@ def main() -> int:
     from sentence_transformers import SentenceTransformer
     from transformers import AutoModelForCausalLM, AutoTokenizer
 
-    tok = AutoTokenizer.from_pretrained(QWEN, local_files_only=True)
-    model = AutoModelForCausalLM.from_pretrained(QWEN, local_files_only=True, dtype=torch.float32)
+    snapshot = args.model or QWEN
+    tok = AutoTokenizer.from_pretrained(snapshot, local_files_only=True)
+    model = AutoModelForCausalLM.from_pretrained(
+        snapshot, local_files_only=True, dtype=torch.float32
+    )
     model.eval()
     st_model = SentenceTransformer(MINILM, local_files_only=True)
 

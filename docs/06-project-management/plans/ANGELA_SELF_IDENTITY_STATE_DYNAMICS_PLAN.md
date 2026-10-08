@@ -102,6 +102,12 @@
 - E2真頭 round 2（已執行，**陰性**，`scripts/exp_head_sink.py`，全新 12
   prompt 零重疊）：句首匯質量（前 4 鍵）loop 0.449 vs 非 loop 0.507，gap
   -0.058。確定性成立，兩組皆非空。分層描述表（僅報告、不裁決）：24 層多為負向，L02/L22/L23 等少數正向；n_loop=3 下全屬軼事，無一層可稱 loop 檢測器。定論：全局均值類度量（近期質量、匯質量）用盡；剩餘路徑為 induction-head 級電路分析（超本輪範圍，設門待辦）。
+- 「初始狀態太健康」假設（已執行，**否決**）：Qwen2.5-0.5B base（同三腳本加
+  `--model`
+  參數，預設仍為 Instruct，行為不變）重跑 E2-head 與 E4，預註冊 base 效應量絕對值更大。實測 E2-head
+  |gap| base 0.032 < instruct 0.067；E4 |mean diff| base 0.091 < instruct
+  0.102（3/6 正）。量級更小而非更大，假設否決。事後一瞥（非定論）：instruction
+  tuning 可能放大擾動響應（更聽話故擾動傳得更遠），與直覺反向，僅供後續設門參考。
 - E4 steering
   pilot（已執行，**陰性**，`scripts/exp_steer_consistency.py`）：Qwen2.5-0.5B 上人格方向（6 對比探針，末 token 第 12 層均值差）以 α=2.0 干預 6 全新探針 ×
   3 改寫（MiniLM 餘弦一致性，預註冊 ≥5/6 正且均值差 >

@@ -14,7 +14,7 @@
 - 誠實邊界：測的是 0.5B 通用 transformer 的內聚-loop 共生，
   不是 Angela、不是 Gemma；是機制證據，不是身份證據。
 
-用法: `.venv/bin/python scripts/exp_head_inwardness.py [--json out.json]`
+用法: `.venv/bin/python scripts/exp_head_inwardness.py [--json out.json] [--model SNAPSHOT]`
 退出碼：0 預測成立；1 不成立/空組/推理失敗。
 """
 
@@ -71,6 +71,9 @@ def _score_completion(attentions, n_generated: int) -> float:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--json", type=Path, default=None)
+    parser.add_argument(
+        "--model", type=str, default=None, help="HF snapshot dir (default: Qwen2.5-0.5B-Instruct)"
+    )
     args = parser.parse_args()
 
     import torch
@@ -78,9 +81,10 @@ def main() -> int:
     from core.facts import Fact, adjudicate
     from transformers import AutoModelForCausalLM, AutoTokenizer
 
-    tok = AutoTokenizer.from_pretrained(SNAPSHOT, local_files_only=True)
+    snapshot = args.model or SNAPSHOT
+    tok = AutoTokenizer.from_pretrained(snapshot, local_files_only=True)
     model = AutoModelForCausalLM.from_pretrained(
-        SNAPSHOT, local_files_only=True, dtype=torch.float32, attn_implementation="eager"
+        snapshot, local_files_only=True, dtype=torch.float32, attn_implementation="eager"
     )
     model.eval()
 
