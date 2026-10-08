@@ -98,3 +98,33 @@ def test_loop_entry_needs_consecutive_streak() -> None:
     locked = module.iterate(RECENT, ANCHORS, state_gain=0.0)
     assert module.loop_entry(locked) is True
     assert module.loop_entry([]) is False
+
+
+class TestDegeneracyDetector:
+    """退化檢測器：同一 3-gram 連三即 loop，空輸入防呆。"""
+
+    def test_trigrams_shape(self) -> None:
+        from ai.attention.degeneracy import trigrams
+
+        assert trigrams("a b c d") == ["a b c", "b c d"]
+        assert trigrams("a b") == []
+
+    def test_detect_loop_positive(self) -> None:
+        from ai.attention.degeneracy import detect_loop
+
+        assert detect_loop("AB AB AB AB AB AB") is True
+        assert detect_loop("one two three one two three one two three") is True
+
+    def test_detect_loop_negative(self) -> None:
+        from ai.attention.degeneracy import detect_loop
+
+        assert detect_loop("the cat sat on the mat quietly now") is False
+        assert detect_loop("") is False
+        assert detect_loop("a b") is False
+        assert detect_loop("AB AB x AB AB") is False
+
+    def test_loop_rate(self) -> None:
+        from ai.attention.degeneracy import loop_rate
+
+        assert loop_rate([]) == 0.0
+        assert loop_rate(["AB AB AB AB AB AB", "clean text here now please"]) == 0.5
