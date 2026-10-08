@@ -52,6 +52,19 @@ def attention_inwardness(weights: Sequence[float], recent_k: int = 8) -> float:
     return sum(weights[-recent_k:])
 
 
+def attention_sink_mass(weights: Sequence[float], sink_k: int = 4) -> float:
+    """匯質量：查詢位置對最初 sink_k 個鍵（含 BOS）的注意力質量佔比。
+
+    與內聚度互補：低熵延續若把質量沉向句首，此值在 loop 組更高。
+    `sink_k <= 0` 或空分佈報錯（與內聚度同樣的 fail-closed）。
+    """
+    if sink_k <= 0:
+        raise ValueError("sink_k must be positive")
+    if not weights:
+        raise ValueError("weights must not be empty")
+    return sum(weights[:sink_k])
+
+
 @dataclass
 class InnerOuterAttention:
     """內外注意力分配器與內聚動力學。

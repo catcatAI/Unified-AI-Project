@@ -61,6 +61,24 @@ class TestAttentionInwardness:
             attention_inwardness([], recent_k=8)
 
 
+class TestAttentionSinkMass:
+    """匯質量：句首質量佔比，與內聚度互補，空防呆同規格。"""
+
+    def test_mass_on_first_positions(self) -> None:
+        from ai.attention.inner_outer import attention_sink_mass
+
+        assert attention_sink_mass([0.5, 0.1, 0.2, 0.2], sink_k=1) == pytest.approx(0.5)
+        assert attention_sink_mass([0.5, 0.1, 0.2, 0.2], sink_k=4) == pytest.approx(1.0)
+
+    def test_rejects_bad_inputs(self) -> None:
+        from ai.attention.inner_outer import attention_sink_mass
+
+        with pytest.raises(ValueError, match="sink_k must be positive"):
+            attention_sink_mass([0.5, 0.5], sink_k=0)
+        with pytest.raises(ValueError, match="must not be empty"):
+            attention_sink_mass([], sink_k=4)
+
+
 def test_allocate_is_numerically_stable() -> None:
     module = InnerOuterAttention()
     alloc = module.allocate([1000.0, 999.0], [998.0], state_gain=0.0)
