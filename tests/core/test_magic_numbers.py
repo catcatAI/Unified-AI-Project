@@ -28,10 +28,11 @@ class TestMagicNumbers:
         assert val is not None
 
     def test_loop_sleep_default(self):
+        from core.system.config.hardware_profile import HardwareProfile
         from core.system.config.magic_numbers import loop_sleep
 
         val = loop_sleep("nonexistent", 0.5)
-        assert val == 0.5
+        assert val == HardwareProfile().apply_multiplier(0.5)
 
     def test_timeout_value_default(self):
         from core.system.config.magic_numbers import timeout_value

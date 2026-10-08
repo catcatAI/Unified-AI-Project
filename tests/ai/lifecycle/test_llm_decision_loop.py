@@ -471,9 +471,12 @@ class TestShouldMakeDecision:
         assert decision_loop._should_make_decision(state) is False
 
     def test_should_make_decision_when_offline_and_long(self, decision_loop, user_monitor):
+        from core.system.config.magic_numbers import timing_value
+
         user_monitor.user_state.online = False
         state = {"dummy": True}
-        decision_loop.user_monitor.get_idle_time = MagicMock(return_value=700)
+        threshold = timing_value("ai.llm_decision_loop.idle_decision_threshold", 600.0)
+        decision_loop.user_monitor.get_idle_time = MagicMock(return_value=threshold + 100)
         assert decision_loop._should_make_decision(state) is True
 
 
@@ -495,18 +498,24 @@ class TestFallbackDecision:
             assert fallback["reason"] == "檢測到用戶返回"
 
     def test_fallback_when_idle_and_negative_emotion(self, decision_loop, user_monitor):
+        from core.system.config.magic_numbers import timing_value
+
         user_monitor.user_state.online = True
         user_monitor.user_state.emotion = "sad"
+        comfort_at = timing_value("ai.llm_decision_loop.comfort_idle_threshold", 60.0)
         with patch.object(user_monitor, "detect_return", return_value=False):
-            with patch.object(user_monitor, "get_idle_time", return_value=90):
+            with patch.object(user_monitor, "get_idle_time", return_value=comfort_at + 30):
                 fallback = decision_loop._fallback_decision()
                 assert fallback["action"] == "comfort"
                 assert fallback["priority"] == "medium"
 
     def test_fallback_when_long_idle(self, decision_loop, user_monitor):
+        from core.system.config.magic_numbers import timing_value
+
         user_monitor.user_state.online = True
+        greet_at = timing_value("ai.llm_decision_loop.greet_idle_threshold", 120.0)
         with patch.object(user_monitor, "detect_return", return_value=False):
-            with patch.object(user_monitor, "get_idle_time", return_value=130):
+            with patch.object(user_monitor, "get_idle_time", return_value=greet_at + 10):
                 fallback = decision_loop._fallback_decision()
                 assert fallback["action"] == "greet"
                 assert fallback["priority"] == "low"

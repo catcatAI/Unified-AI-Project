@@ -185,6 +185,30 @@ class TestQualityMetrics:
         assert report["ssim"] > 0.99
 
 
+def _fresh_pipeline():
+    """Isolated pipeline: private latent space, immune to cross-test pollution.
+
+    FullTrainingPipeline() without args binds the process-wide shared latent
+    space singleton, whose projections prior tests keep training — making SSIM
+    trajectories order-dependent. An isolated instance (same 5 modalities)
+    plus a fixed seed makes these tests deterministic.
+    """
+    from ai.multimodal.shared_latent_space import SharedLatentSpace
+    from ai.multimodal.training_pipeline import FullTrainingPipeline
+
+    np.random.seed(1234)
+    latent_space = SharedLatentSpace(latent_dim=64)
+    for name, dim in (
+        ("vision", 256),
+        ("audio", 128),
+        ("text", 512),
+        ("vision_semantic", 512),
+        ("audio_semantic", 384),
+    ):
+        latent_space.register_modality(name, dim)
+    return FullTrainingPipeline(latent_space=latent_space)
+
+
 class TestTextureBenchmark:
     """Benchmark texture training on real CIFAR-10 images (if available)."""
 
@@ -211,9 +235,9 @@ class TestTextureBenchmark:
         return images
 
     def test_texture_training_reduces_loss_on_real_data(self, cifar_images):
-        from ai.multimodal.training_pipeline import FullTrainingPipeline, TextureTrainer
+        from ai.multimodal.training_pipeline import TextureTrainer
 
-        pipeline = FullTrainingPipeline()
+        pipeline = _fresh_pipeline()
         trainer = TextureTrainer(pipeline._reconstruction, pipeline._visual_decoder)
         result = trainer.train_on_real(cifar_images, steps=3, lr=0.01)
         after_loss = result["final_loss"]
@@ -223,9 +247,9 @@ class TestTextureBenchmark:
         assert len(result["history"]) == 3
 
     def test_ssim_improves_after_real_texture_training(self, cifar_images):
-        from ai.multimodal.training_pipeline import FullTrainingPipeline, TextureTrainer
+        from ai.multimodal.training_pipeline import TextureTrainer
 
-        pipeline = FullTrainingPipeline()
+        pipeline = _fresh_pipeline()
         trainer = TextureTrainer(pipeline._reconstruction, pipeline._visual_decoder)
         img = cifar_images[0]
         feats = pipeline._visual_encoder.encode(img)

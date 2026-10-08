@@ -54,6 +54,19 @@ _CONFIG_ACCESSORS = [
 ]
 
 
+# Accessors that scale their return by the hardware profile multiplier, so the
+# fallback expectation must be scaled too (profile-agnostic, not hardcoded).
+_HW_SCALED_ACCESSORS = {"loop_sleep", "heartbeat_value", "timing_value"}
+
+
+def _scaled_default(func_name: str, default: int | float) -> float:
+    if func_name not in _HW_SCALED_ACCESSORS:
+        return default
+    from core.system.config.hardware_profile import HardwareProfile
+
+    return HardwareProfile().apply_multiplier(float(default))
+
+
 @pytest.mark.parametrize(
     "module_path,func_name,default,real_key",
     _CONFIG_ACCESSORS,
@@ -68,8 +81,9 @@ def test_config_accessor_fallback(
 
     module = importlib.import_module(module_path)
     func = getattr(module, func_name)
-    # Fallback behavior
-    assert func("nonexistent", default) == default, f"{func_name} did not return default {default}"
+    # Fallback behavior (scaled for hardware-aware accessors)
+    expected = _scaled_default(func_name, default)
+    assert func("nonexistent", default) == expected, f"{func_name} did not return default {default}"
     # Real key existence (if known)
     if real_key is not None:
         val = func(real_key)

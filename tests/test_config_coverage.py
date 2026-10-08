@@ -285,10 +285,18 @@ def test_three_layer_visual_off_loads_no_model(compute_off):
     assert routes._get_three_layer() is None
 
 
-def test_gates_default_to_the_configured_value_not_a_hardcoded_off():
+def test_gates_default_to_the_configured_value_not_a_hardcoded_off(monkeypatch):
     """A regression here would make the features permanently off (or permanently on)."""
     from core.system.config import magic_numbers
+    from core.system.config.hardware_profile import HardwareProfile, HardwareScenario
 
+    # Pin a high-performance profile: this test verifies the YAML-declared
+    # default mapping (auto->allowed, off->denied), not the battery state.
+    monkeypatch.setattr(
+        magic_numbers,
+        "_HARDWARE_PROFILE",
+        HardwareProfile(scenario=HardwareScenario.HIGH_PERFORMANCE_DESKTOP),
+    )
     # The declared default in YAML is `auto` for these three, so an unset config
     # must not read as disabled.
     for feature in ("multimodal_train", "three_layer_visual"):

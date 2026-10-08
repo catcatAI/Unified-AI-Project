@@ -93,9 +93,15 @@ class TestReconstructionTrainer:
             assert "history" in result[mod]
 
 
+def _force_multimodal_train_on(monkeypatch):
+    """Pin the compute gate on: training-path tests must not depend on battery state."""
+    monkeypatch.setattr("core.system.config.magic_numbers.compute_bool", lambda *a, **k: True)
+
+
 class TestFullTrainingPipeline:
 
-    def test_run_returns_both_phases(self, pipeline):
+    def test_run_returns_both_phases(self, pipeline, monkeypatch):
+        _force_multimodal_train_on(monkeypatch)
         result = pipeline.run(
             contrastive_epochs=2, contrastive_pairs=5, recon_epochs=2, recon_samples=3, lr=0.01
         )
@@ -104,14 +110,24 @@ class TestFullTrainingPipeline:
         assert "final_loss" in result["contrastive"]
         assert result["contrastive"]["final_loss"] > 0
 
+    def test_run_refuses_explicitly_when_feature_off(self, pipeline, monkeypatch):
+        """The off path is an explicit skipped dict, not a silent no-op."""
+        monkeypatch.setattr("core.system.config.magic_numbers.compute_bool", lambda *a, **k: False)
+        result = pipeline.run(
+            contrastive_epochs=1, contrastive_pairs=1, recon_epochs=1, recon_samples=1
+        )
+        assert result["status"] == "skipped"
+        assert "contrastive" not in result
+
     def test_evaluate_returns_modalities(self, pipeline):
         result = pipeline.evaluate(n_samples=3)
         for mod in ["vision", "audio"]:
             assert mod in result
             assert "avg_reconstruction_loss" in result[mod]
 
-    def test_run_with_no_epochs_still_returns(self, pipeline):
+    def test_run_with_no_epochs_still_returns(self, pipeline, monkeypatch):
         """Edge case: zero epochs should still return valid dicts."""
+        _force_multimodal_train_on(monkeypatch)
         result = pipeline.run(
             contrastive_epochs=1, contrastive_pairs=2, recon_epochs=1, recon_samples=2, lr=0.01
         )

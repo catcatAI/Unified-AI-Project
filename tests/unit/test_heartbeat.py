@@ -21,9 +21,10 @@ class TestMetabolicHeartbeat:
 
     def test_instantiation_default_interval(self):
         from core.life.heartbeat import MetabolicHeartbeat
+        from core.system.config.hardware_profile import HardwareProfile
 
         instance = MetabolicHeartbeat()
-        assert instance.update_interval == 30.0
+        assert instance.update_interval == HardwareProfile().apply_multiplier(30.0)
 
     def test_initial_position(self):
         from core.life.heartbeat import MetabolicHeartbeat
