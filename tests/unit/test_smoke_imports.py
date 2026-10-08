@@ -90,6 +90,23 @@ _SMOKE_MODULES = [
     ("core.maturity.maturity_system", "MaturityManager", {}),
     # Merged from tests/services/test_multimodal_integration.py (§X #134)
     ("services.multimodal_service", "MultimodalService", {}),
+    # Gap-closure audit (previously zero test references; all verified
+    # importable + instantiable with no required args)
+    ("core.life.life_essence", "LifeEssence", {}),
+    ("core.bio.physiological_tactile_analysis", "TrajectoryAnalyzer", {}),
+    ("ai.multimodal.latent_reasoning_network", "LatentReasoningNetwork", {}),
+    ("core.bio.physiological_tactile_system", "PhysiologicalTactileSystem", {}),
+    ("core.bio.endocrine_system_core", "EndocrineSystem", {}),
+    ("core.sync.cloud_sync", "SyncQueue", {}),
+    ("core.hsp.mqtt_subscription_manager", "MQTTSubscriptionManager", {}),
+    ("core.bio.trauma_memory", "TraumaMemorySystem", {}),
+    ("core.metamorphosis.body_adapter", "BodyAdapter", {}),
+    ("core.bio.hormone_kinetics", "HormoneKinetics", {}),
+    ("core.bio.explicit_implicit_learning", "ExplicitImplicitLearning", {}),
+    ("core.bio.skill_acquisition", "SkillAcquisition", {}),
+    ("core.bio.habit_formation", "HabitFormation", {}),
+    ("ai.multimodal.primitives.primitive_diffusion", "PrimitiveDiffusion", {}),
+    ("core.perception.perception_engine", "PerceptionEngine", {}),
 ]
 
 

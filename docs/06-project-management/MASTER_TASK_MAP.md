@@ -4115,4 +4115,15 @@ test files with zero pytest assertions.
   IMPROVEMENT_ROADMAP.md §1.1).
 - **Test count**: **4,448 — 0 errors** (20 intent registry tests pass).
 
+### Gap-closure round (2026-10-08)
+
+- Three-way audit (coverage gaps / dead config+orphan scripts / frontend+docs):
+  7,045 collected at audit time.
+- P0 executed: `file_ops limits` wired (`max_file_write_mb`, default 50) into
+  both write paths with refusal messages; 4 mock-only weak tests hardened with
+  behavioral asserts; `agent_workspace_routes` first dedicated file (22 tests,
+  route file 100%); 15 zero-reference modules added to smoke imports (+30); docs
+  synced (tests/README, AGENTS.md authoritative count).
+- **Test count**: **7,111 collected (tests/) — 0 errors**.
+
 [//]: # 'End of MASTER_TASK_MAP'

@@ -79,7 +79,16 @@ class TestApplyEmotionToBiology:
     async def test_neutral_no_call(self, mock_bio):
         from api.routes.chat_routes import _apply_emotion_to_biology
 
-        await _apply_emotion_to_biology("neutral", 0.5, mock_bio)
+        assert await _apply_emotion_to_biology("neutral", 0.5, mock_bio) is None
+        mock_bio.process_stress_event.assert_not_awaited()
+        mock_bio.process_relaxation_event.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_unknown_emotion_no_call(self, mock_bio):
+        """Closed-world mapping: unlisted emotions must not trigger anything."""
+        from api.routes.chat_routes import _apply_emotion_to_biology
+
+        assert await _apply_emotion_to_biology("nostalgia", 0.9, mock_bio) is None
         mock_bio.process_stress_event.assert_not_awaited()
         mock_bio.process_relaxation_event.assert_not_awaited()
 

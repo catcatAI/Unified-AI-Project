@@ -82,6 +82,15 @@ class TestReasoningSystemInit:
         for node in sensitive_nodes:
             mock_space.add_symbol.assert_any_call(node, "Constraint_Node", {"risk_level": "High"})
 
+    def test_sensitive_nodes_really_land_in_symbolic_space(self):
+        """Same seeding against the real space: nodes exist with High risk."""
+        rs = ReasoningSystem()
+        nodes = rs.symbolic_space._nodes
+        for name in ["Harm", "Violence", "Deception", "Policy_Violation", "Unethical"]:
+            assert name in nodes, name
+            assert nodes[name]["type"] == "Constraint_Node"
+            assert nodes[name]["properties"]["risk_level"] == "High"
+
 
 class TestAddConstraint:
     @patch("ai.alignment.reasoning_system._SimpleSymbolicSpace")
