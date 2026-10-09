@@ -1924,6 +1924,114 @@ class AngelaLLMService:
         self.stats["total_response_time"] += response_time_ms
         return result
 
+    # Stopwords excluded from fact-overlap matching: matching on these alone
+    # would hijack unrelated queries ("你好嗎" must not recall cat facts).
+    _FACT_MATCH_STOPWORDS = frozenset(
+        ["什麼", "怎麼", "如何", "嗎", "呢", "是", "的", "有", "在", "了", "我", "請", "請問"]
+    )
+
+    async def _query_taught_facts(self, user_message: str) -> List[Dict[str, Any]]:
+        """Direct wider lookup for taught facts (top-50, prefix-filtered).
+
+        The chat-time top-3 semantic hits are dominated by near-duplicate
+        conversation echoes, which bury the fact below the cutoff (measured:
+        rank 49/50 at distance 0.483 vs echoes at 0.26). This targeted
+        re-query exists only to find LearningHandler facts and returns []
+        on any failure (fail-open to templates).
+        """
+        try:
+            from ai.memory.vector_store import get_vector_store
+
+            store = get_vector_store()
+            if store is None:
+                return []
+            results = await store.semantic_search(user_message, 50)
+            docs = (results.get("documents") or [[]])[0]
+            distances = (results.get("distances") or [[]])[0]
+            out = []
+            for i, doc in enumerate(docs):
+                if not isinstance(doc, str) or not doc.startswith("User taught Angela:"):
+                    continue
+                try:
+                    relevance = max(0.0, 1.0 - float(distances[i]))
+                except (IndexError, TypeError, ValueError):
+                    relevance = 0.5
+                out.append({"role": "long_term_memory", "content": doc, "relevance": relevance})
+            return out
+        except Exception as e:
+            logger.debug(f"Taught-fact lookup skipped: {e}")
+            return []
+
+    async def _recall_user_fact(
+        self, user_message: str, context: Dict[str, Any], start_time: float
+    ) -> Optional[LLMResponse]:
+        """Answer from retrieved long-term user facts when one clearly matches.
+
+        Closes the learn/recall loop for the no-LLM path: retrieved_context
+        (RAG user_fact entries) previously only reached LLM prompts, so
+        template-routed follow-ups answered from generic social templates
+        while the fact sat unused. Only fires on a shared non-stopword chunk
+        (len>=2) with a long_term_memory entry; otherwise returns None and the
+        pipeline proceeds exactly as before.
+        """
+        try:
+            entries = list(context.get("retrieved_context") or [])
+            entries.extend(await self._query_taught_facts(user_message))
+            # Only LearningHandler-taught facts (stable "User taught Angela:"
+            # storage prefix). Conversation history shares the long_term_memory
+            # role and would otherwise self-match the query text itself.
+            facts = [
+                e
+                for e in entries
+                if isinstance(e, dict)
+                and e.get("role") == "long_term_memory"
+                and isinstance(e.get("content"), str)
+                and e["content"].startswith("User taught Angela:")
+            ]
+            if not facts or not user_message:
+                return None
+            lowered = user_message.strip().lower()
+            chunks = [lowered[i : i + 2] for i in range(len(lowered) - 1)]
+            chunks = [c for c in chunks if len(c) >= 2 and c not in self._FACT_MATCH_STOPWORDS]
+            if not chunks:
+                return None
+            best = None
+            for entry in facts:
+                content = entry.get("content")
+                if not content or not isinstance(content, str):
+                    continue
+                lowered_content = content.lower()
+                if any(c in lowered_content for c in chunks):
+                    relevance = entry.get("relevance", 0.5)
+                    try:
+                        relevance = float(relevance)
+                    except (TypeError, ValueError):
+                        relevance = 0.5
+                    if best is None or relevance > best[0]:
+                        best = (relevance, content)
+            if best is None:
+                return None
+            _, content = best
+            fact = content
+            prefix = "User taught Angela:"
+            if fact.startswith(prefix):
+                fact = fact[len(prefix) :].strip()
+            response_time = (time.time() - start_time) * 1000
+            return ChatResponse(
+                text=f"我記得：{fact}",
+                backend="memory",
+                model="user-fact-recall",
+                tokens_used=50,
+                response_time_ms=response_time,
+                confidence=0.9,
+                hit_score=0.9,
+                hit_source="user_fact",
+                route="COMPOSED",
+            )
+        except Exception as e:
+            logger.debug(f"User fact recall skipped: {e}")
+            return None
+
     async def _try_template_match(
         self, user_message: str, context: Dict[str, Any], start_time: float
     ) -> Optional[LLMResponse]:
@@ -1931,6 +2039,10 @@ class AngelaLLMService:
             model_bus_result = await self._try_model_bus_match(user_message, context)
             if model_bus_result is not None:
                 return model_bus_result
+
+        fact_result = await self._recall_user_fact(user_message, context, start_time)
+        if fact_result is not None:
+            return fact_result
 
         if not hasattr(self, "template_matcher") or not self.template_matcher:
             return None

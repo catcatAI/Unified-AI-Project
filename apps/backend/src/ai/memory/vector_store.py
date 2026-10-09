@@ -26,8 +26,31 @@ logger = logging.getLogger(__name__)
 
 _chromadb: Any = None
 
-# Default storage directory
-_DEFAULT_PERSIST_DIR = os.path.join(os.environ.get("VECTOR_STORE_PATH", "data/vector_store"))
+
+# Default storage directory (CWD-independent: anchored to the backend data
+# dir so servers launched from the repo root and from apps/backend share one
+# store; explicit VECTOR_STORE_PATH still wins). A relative default previously
+# split-brained into ./data/vector_store vs ./apps/backend/data/vector_store
+# depending on launch cwd, silently orphaning taught facts.
+def _default_persist_dir() -> str:
+    try:
+        from core.data_config import get_vector_store_dir
+
+        return os.fspath(get_vector_store_dir())
+    except Exception:
+        pass
+    explicit = os.environ.get("VECTOR_STORE_PATH")
+    if explicit:
+        return os.path.abspath(explicit)
+    try:
+        from path_config import DATA_DIR
+
+        return os.fspath(DATA_DIR / "vector_store")
+    except Exception:
+        return os.path.abspath("data/vector_store")
+
+
+_DEFAULT_PERSIST_DIR = _default_persist_dir()
 
 # Embedding dimension for numpy backend (hashing trick)
 _NUMPY_EMBED_DIM = 512
