@@ -1,0 +1,62 @@
+schema_version: mvu-header-recalculation/1
+status: user_provided_candidate_not_frozen
+source:
+  file_name: mvu_config.vh
+  source_kind: user_provided_header
+  frozen: false
+research_sources:
+  - name: PCI-SIG_PCI_Express_Base_Specification_5.0
+    url: https://pcisig.com/PCIExpress/Specs/Base/_5.0_1.0
+    verified_facts: [Gen5_32_GT_per_s, x16_raw_512_Gbps_each_direction, 128b_over_130b_encoding]
+  - name: Arm_AMBA_AXI4_Lite_Protocol_Specification
+    url: https://developer.arm.com/documentation/ihi0022/
+    verified_facts:
+      [AXI4_Lite_is_control_register_style, data_width_is_a_bus_contract_not_a_memory_capacity]
+scope:
+  unit: one_configured_mvu_sram_instance
+  die_l1_mapping: unresolved
+  mvu_instance_count: unresolved
+declared:
+  total_sram_size_bytes: 32768
+  sub_bank_count: 16
+  sub_bank_size_bytes: 2048
+  wavefront_cycles: 16
+  int8_width_bits: 8
+  forward_bus_width_bits: 16384
+  mac_array_size: 256
+  plasticity_bus_width_bits: 64
+  delta_w_width_bits: 32
+  hit_mask_width_bits: 32
+  delta_w_max_bound: 7
+  delta_w_min_bound: -7
+  system_endianness: little
+  axi_address_width_bits: 32
+  axi_data_width_bits: 32
+  csr_base_address: 0x00000000
+  sram_base_address: 0x00001000
+  csr_offsets:
+    control: 0x00000000
+    status: 0x00000004
+    cycle_counter: 0x00000008
+  address_decode:
+    bank_select_bits: [14, 11]
+    word_select_bits: [10, 3]
+    byte_select_bits: [2, 0]
+  reset:
+    hard_reset_clears: [csr, control_fsm, counters, sram]
+    soft_reset_clears: [control_fsm, counters]
+    soft_reset_retains: [sram_weights]
+  commit:
+    edge: posedge_clock
+    write_enable: port_b_we
+    nonzero_mask_required: true
+    ownership_gate_declared_in_macro: false
+    reset_gate_declared_in_macro: false
+unresolved:
+  - mvu_instance_count_and_die_l1_mapping
+  - clock_frequency_is_not_declared_by_header
+  - forward_bank_to_pe_weight_layout
+  - side_packet_replication_or_aggregation_scope
+  - numeric_q_format_and_accumulator_contract
+  - axi_transaction_behavior_beyond_address_and_data_widths
+  - ownership_and_reset_conditions_in_commit_implementation

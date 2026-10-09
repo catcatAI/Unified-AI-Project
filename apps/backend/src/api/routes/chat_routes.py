@@ -2016,7 +2016,12 @@ def _build_math_response(
 
 @router.get("/security/sync-key-c")
 async def sync_key_c(request: Request) -> dict:
-    """Log a diagnostic message."""
+    """Report Key C availability without ever returning key material.
+
+    Loopback-only existence check: returns {"key_available": True} when the
+    key manager holds Key C. Callers must handle absence via their own
+    fallback — the key value itself is never placed in the response body.
+    """
     from core.system.config.network_defaults import LOCAL_TRUSTED_HOSTS
 
     client_host = request.client.host if request.client else ""

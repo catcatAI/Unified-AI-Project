@@ -30,6 +30,51 @@ class TestLifespanServiceGetters:
 
 
 @pytest.mark.asyncio
+class TestChatServiceRetry:
+    """A failed init must not poison the singleton: next call retries."""
+
+    async def test_failed_init_not_cached(self, monkeypatch):
+        import api.lifespan as lifespan
+
+        class BoomService:
+            async def initialize(self):
+                raise RuntimeError("init boom")
+
+        saved = lifespan._chat_service_instance
+        lifespan._chat_service_instance = None
+        monkeypatch.setattr("services.chat_service.ChatService", BoomService, raising=False)
+        try:
+            with pytest.raises(RuntimeError, match="init boom"):
+                await lifespan._get_chat_service()
+            assert lifespan._chat_service_instance is None
+        finally:
+            lifespan._chat_service_instance = saved
+
+    async def test_retry_after_failure(self, monkeypatch):
+        import api.lifespan as lifespan
+
+        attempts = {"n": 0}
+
+        class FlakyService:
+            async def initialize(self):
+                attempts["n"] += 1
+                if attempts["n"] == 1:
+                    raise RuntimeError("first boom")
+
+        saved = lifespan._chat_service_instance
+        lifespan._chat_service_instance = None
+        monkeypatch.setattr("services.chat_service.ChatService", FlakyService, raising=False)
+        try:
+            with pytest.raises(RuntimeError):
+                await lifespan._get_chat_service()
+            svc = await lifespan._get_chat_service()
+            assert isinstance(svc, FlakyService)
+            assert attempts["n"] == 2
+        finally:
+            lifespan._chat_service_instance = saved
+
+
+@pytest.mark.asyncio
 class TestDigitalLifeStartup:
     """_try_start_digital_life must actually initialize the DLI singleton."""
 

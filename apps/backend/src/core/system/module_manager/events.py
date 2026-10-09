@@ -29,11 +29,18 @@ class EventBus:
                 del self._subscribers[event]
 
     def emit(self, event: str, **data) -> None:
-        """Execute the emit operation."""
+        """Execute the emit operation.
+
+        One failing handler must not starve later handlers (mirrors the CNS
+        global_store fan-out): each failure is logged and delivery continues.
+        """
         handlers = self._subscribers.get(event)
         if handlers is not None:
-            for handler in handlers:
-                handler(**data)
+            for handler in list(handlers):
+                try:
+                    handler(**data)
+                except Exception as e:
+                    logger.error(f"Event handler failed for {event}: {e}", exc_info=True)
 
     def clear(self) -> None:
         """Clear all entries."""

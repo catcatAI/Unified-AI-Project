@@ -676,5 +676,10 @@ async def websocket_handler(websocket: WebSocket) -> None:
             else None
         )
     )
+    # Symmetric cleanup with disconnect(): drop our ws->client mapping here too,
+    # otherwise _sessions_by_ws grows per connection. Safe unconditionally: this
+    # frame still references our websocket object, so its id() cannot have been
+    # reused by another live connection.
+    manager._sessions_by_ws.pop(id(websocket), None)
     async with _session_history_lock:
         _session_history.pop(session_id, None)

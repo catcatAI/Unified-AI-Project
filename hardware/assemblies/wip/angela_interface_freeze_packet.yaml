@@ -1,0 +1,383 @@
+schema_version: ai-compute-card-interface-freeze-packet/1
+status: decision_verification_pending
+owner: angela
+support_owner: environment_support
+purpose: separate_given_initial_conditions_from_angela_design_decisions_before_l2_validation
+source_of_truth:
+  task_contract: hardware/ai_compute_card/ai_compute_card_task.yaml
+  concept_fixture: hardware/ai_compute_card/concept_design.yaml
+  component_registry: hardware/ai_compute_card/component_registry.yaml
+  reference_model: apps/backend/src/ai/hardware/ai_card_reference.py
+  terminology_rule: project_map_and_context_labels_are_not_compute_card_memory_levels
+known_initial_conditions:
+  scope:
+    software_only: true
+    physical_hardware_required: false
+    automatic_tool_installation: false
+    automatic_component_ordering: false
+    environment_support_may_select_product_architecture: false
+  ownership:
+    product_architecture: angela
+    chip_microarchitecture: angela
+    compute_partitioning: angela
+    cache_mapping: angela
+    component_selection: angela
+    environment_and_validation: environment_support
+  host_link:
+    interface: PCIe
+    generation: 5
+    lanes: 16
+    endpoint: true
+    raw_signaling_gbps_each_direction: 512
+    payload_encoding: 128b/130b
+    payload_gbps_each_direction: 504.123
+    payload_gbs_each_direction: 63.015
+    performance_target_gbs: 50
+    optional_generation_6: angela_decision_required
+  compute_contract:
+    main_compute:
+      role: input_output
+      partitions: 16
+      fabric_width_bits: 16384
+      target_clock_mhz: 250
+      raw_bandwidth_gbps: 4096
+      raw_bandwidth_gbs: 512
+      bandwidth_derivation: width_bits_x_clock_hz_divided_by_1e9_then_8_for_gbs
+    secondary_compute:
+      role: sparse_hot_weight_update
+      update_width_bits: 1024
+      partitions: 16
+      partition_width_bits: 64
+      target_clock_mhz: 250
+      raw_bandwidth_gbps: 256
+      raw_bandwidth_gbs: 32
+      bandwidth_derivation: width_bits_x_clock_hz_divided_by_1e9_then_8_for_gbs
+      mapping: pending_decision_answer
+    baseline_tile: 16x16-INT8-MAC
+    accumulation_width_bits: 32
+  hierarchy:
+    die_l1:
+      scope: self_developed_die_internal_cache
+      target_mb: 32
+      implementation: self_developed_cache
+    card_l2:
+      scope: purchased_card_memory
+      target_capacity_gb: 64
+      implementation: purchased_memory
+    host_l3:
+      scope: outside_card_pcie_boundary
+      interface: PCIe
+      role: host_access_boundary
+      target: host_memory_or_storage
+  protocol_contracts:
+    dma: tiled_with_credit_backpressure
+    weight_update: credit_backpressure_sequence_counter_crc_commit
+    weight_update_atomicity: required
+    firmware: signed
+    iommu_compatibility: required_for_production_target
+  budgets:
+    prototype_board_power_w: 300
+    preferred_board_power_w: 350
+    prototype_bom_cap_usd: 3000
+    price_status: quote_required
+    over_cap_policy: block_and_require_scope_review
+  terminology_guard:
+    die_l1_is_not_project_map_l1: true
+    card_l2_is_not_context_block_l2: true
+    host_l3_is_not_software_layer_l3: true
+    labels_are_not_interchangeable: true
+pending_decisions:
+  - id: die_l1_interface
+    question: What exact data type, byte order, address map, partition ownership, and reset semantics connect main/secondary compute to die L1?
+    required_answer_fields:
+      [
+        data_types,
+        endianness,
+        address_map,
+        partition_ownership,
+        reset_semantics,
+        update_commit_rules,
+      ]
+    blocks: [L2, L3, L4]
+  - id: microarchitecture
+    question: What compute microarchitecture, scheduling model, clock/reset strategy, and exception behavior implement the frozen interface?
+    required_answer_fields: [pipeline, scheduling, clock_reset, exceptions, coherency]
+    blocks: [HDL, synthesis, timing]
+  - id: card_l2_selection
+    question: Which purchased memory, controller, package, and card-level topology are approved for L2?
+    required_answer_fields: [part_number, topology, controller, package, capacity, thermal_evidence]
+    blocks: [schematic, PCB, power_thermal, BOM]
+  - id: host_l3_contract
+    question: Which PCIe CEM, electrical, reset, FLR, IOMMU, and host-memory/storage contract is approved?
+    required_answer_fields:
+      [CEM, electrical_constraints, reset_FLR, IOMMU, DMA_address_model, host_API]
+    blocks: [PCIe_validation, host_driver, board_validation]
+  - id: thermal_and_form_factor
+    question: Which mechanical, connector, airflow, and thermal envelope is approved for the prototype?
+    required_answer_fields:
+      [form_factor, power_connector, cooling, airflow, temperature_limits, sensor_plan]
+    blocks: [mechanical_design, power_thermal_signoff]
+  - id: acceptance_priority
+    question: Which tradeoff order governs performance, cost, power, and schedule when evidence conflicts?
+    required_answer_fields: [priority_order, non_negotiable_requirements, acceptable_deferred_scope]
+    blocks: [architecture_acceptance, component_acceptance]
+  - id: cim_strip_array_plan
+    question: "CIM floorplan sized to the CURRENT sky130 process (achievable now): how many parallel compute narrow-band strips (DOT4-proven topology), what per-strip input slice width (current-baseline word, e.g. 256-2048 bits), and what MAC budget? The frozen 16384-bit/250MHz fabric figures are end-state scale references and must not force the current strip design."
+    required_answer_fields:
+      [
+        strip_count_current,
+        strip_input_width_bits_current,
+        mac_budget_current,
+        main_compute_topology,
+        strip_form_factor,
+        weight_residency_mb_current,
+        end_state_scale_reference,
+      ]
+    planning_evidence: cim_planning_evidence
+    blocks: [transistor_level_design, L2_layout_fixtures]
+  - id: die_l1_sky130_feasibility
+    question: "Current-process baseline (sky130): confirm the die L1 design target as a KB-scale activation cache (128-512KB) plus in-strip weight residency (MB-scale, ~3.6mm^2/MB), and reassign the frozen 32MB die-L1 figure to end_state_milestones so it no longer blocks current transistor-level design."
+    required_answer_fields:
+      [
+        activation_cache_kb_baseline,
+        weight_residency_mb_current,
+        end_state_reassignment_ack,
+        node_assumption,
+        blocker_resolution,
+      ]
+    planning_evidence: cim_planning_evidence
+    blocks: [transistor_level_design, L2_layout_fixtures]
+  - id: cim_package_topology
+    question: "Cheap-first co-package (current process): 16 small dies per MCM (wire-bond, MPW shuttle), 32-64 parallel die-to-die signal lines per die (no SerDes), 8-16 package-exit lines to the board; die area target ~1.5mm2. Is this topology and these line counts approved?"
+    required_answer_fields:
+      [
+        dies_per_package,
+        die_area_mm2,
+        d2d_signal_count,
+        d2d_protocol,
+        package_exit_signal_count,
+        package_type,
+        tapeout_mode,
+      ]
+    planning_evidence: cim_planning_evidence
+    blocks: [transistor_level_design, pad_ring_design, L2_layout_fixtures]
+  - id: cim_sensing_chain
+    question: "Current-process v1 sense chain: comparator-class sensing (current mirror + reference) at 4-6 effective bits per strip, ADC upgrades deferred to the end state. What per-strip area budget and calibration plan apply now?"
+    required_answer_fields:
+      [
+        sense_element_v1,
+        effective_bits_v1,
+        adc_upgrade_path,
+        per_strip_area_budget,
+        calibration_plan,
+      ]
+    planning_evidence: cim_planning_evidence
+    blocks: [transistor_level_design, L2]
+cim_planning_evidence:
+  status: environment_measured_fixture_only
+  claims_bound: L2_fixture_not_product_architecture
+  reproducible_by: ai.hardware.cim_strip_reference.CimStripReferenceModel
+  fixture: >-
+    generated strip cells from ai.hardware.cim_weight_strip.build_strip, sky130A;
+    magic DRC 0 errors and KLayout sky130A_mr.drc 0 items, measured 2026-09-29.
+    The chip workspace DOT4L.mag the ngspice figures below were taken from is a
+    separate file and is not clean: 217 magic errors, 122 KLayout errors on the
+    same date, so those figures are simulations of an extracted netlist rather
+    than a DRC-clean layout claim
+  evidence_correction:
+    superseded_fixture: DOT4
+    reason: >-
+      The measurements previously recorded here were the FIRST strip fixture,
+      which used a different transistor width per weight bin
+      (W=0.42/0.84/1.68/3.36um) and therefore measured a non-linear weight
+      response. That fixture was superseded by the gate-strapped one, whose
+      results were never recorded in this packet, so the packet described a
+      defect the current design has already fixed. The figures below are the
+      current fixture; the superseded ones are retained in the model
+      (SUPERSEDED_WEIGHT_RESPONSE) so the fixed defect stays quantified.
+  ngspice_tt_measurements:
+    fixture: DOT4L
+    topology: 15 identical nfet unit cells, W=0.42um L=0.15um, gate-strapped
+      in parallel as 1/2/4/8 per weight bit, shared drain spine at 1.8V
+    single_hot_currents_a: [1.965196e-4, 3.930391e-4, 7.860782e-4, 1.572156e-3]
+    weight_ratio_measured: [1, 2.0, 4.0, 8.0]
+    weight_ratio_max_relative_error_frac: 5.1e-7
+    kcl_sum_word_1111_a: 2.947793e-3
+    kcl_relative_error_frac: 3.4e-8
+    weight_linearity_within_1_lsb_at_5_bits: true
+    conclusion: >-
+      Current-summed addition is physically exact and identical parallel cells
+      give an exact 1:2:4:8 weight response. This gate is SATISFIED, not
+      pending; the earlier "requires same-bin gate strapping" wording described
+      the superseded fixture and has been removed.
+  ngspice_reduced_rail_recheck:
+    operating_point: 0.3V array rail, 1.0V input swing
+    status: pass
+    weight_ratio_measured: [1, 2.0, 4.0, 7.9999979]
+    weight_ratio_max_relative_error_frac: 2.5e-7
+    kcl_relative_error_frac: 1.4e-7
+    single_hot_bin0_a: 1.972398e-05
+    idle_a: 4.576681e-12
+    reproducible_by: EdaAgent.verify_cim_weight_response.reduced_rail_cross_check
+    note: >-
+      The 1.8V figures above are the drafted rail the validated design replaces.
+      This re-check runs the identical deck at the design point so the linearity
+      claim is not carried over from an abandoned operating point.
+    limitation: >-
+      Identical parallel cells add by construction in SPICE, so this shows the
+      cell still conducts a usable, ratio-preserving current at the reduced
+      point; it does not cover mismatch, corners or the sense chain.
+  device_characteristic_measured:
+    method: ngspice .dc sweep of Vg, drain held at Vds, W=0.42u L=0.15u, 27C
+    id_ua_at_vgs_1p8_by_vds_v:
+      "0.30": 120.4
+      "0.60": 162.9
+      "1.20": 182.9
+      "1.80": 196.5
+    max_iv_curvature_frac_of_swing: 0.285
+    note: >-
+      The cell is not saturated at 1.8V; current keeps rising with Vds. The
+      weight response is exact because the cells are identical, not because
+      they saturate.
+  power_and_energy_findings:
+    status: blocking_gap_found_in_current_process_design
+    derived_from: measured unit cell current, not assumed
+    unit_cell_power_mw:
+      vds_1p8_vgs_1p8: 0.354
+      vds_0p3_vgs_1p8: 0.036
+    dominant_lever: >-
+      Array power is Icell*Vds with Icell set by the input gate voltage, so the
+      drain rail is the dominant lever. Lowering the rail from 1.8V to 0.3V cuts
+      cell power about 9.8x for only about 1.63x less current, and remains
+      feasible once the read-swing and sense-chain noise-floor limits are
+      applied. The drafted 1.8V rail is therefore a choice, not a physical
+      limit.
+    drafted_energy_pj_per_mac: 707
+    drafted_tops_per_w: 1.41
+    digital_sky130_baseline_pj_per_mac: 10
+    published_analog_cim_1b_pj_per_mac: 0.98
+    published_analog_cim_7b_pj_per_mac: 119
+    package_power_w_expected: 185.5
+    card_power_w_at_4_packages: 741.8
+    card_budget_w: 300
+    card_budget_multiple: 2.4728
+    finding: >-
+      At 707pJ/MAC the current CIM configuration costs about 70x more per MAC
+      than same-process digital logic and about 6x more than a published 65nm
+      analog CIM macro at 7/4/7b, so the topology currently inverts the value
+      proposition that motivated CIM. Published analog CIM only wins in the
+      low-bit regime (1/2/1b), which is why a bit-slicing plan is required.
+    root_cause_is_configuration_not_process:
+      note: >-
+        The blockers above are configuration choices, not limits of sky130. A
+        gate-checked current-process operating point exists; see
+        cim_freeze_draft.validated_current_process_design and
+        CimStripReferenceModel.recommended_design.
+      operating_point: 0.3V array rail, 1.0V input swing, 50ns sense window
+      outcome: 0.594pJ/MAC on 12.5W per card, 8.36 noise-limited bits
+      binding_constraint: >-
+        the sense window, because energy per MAC is linear in it; the assumed
+        comparator power and input gate capacitance are not load-bearing
+  floorplan_notes:
+    strip_count_semantics: parallel strips share one input word; x8 strips = 16384 MACs = frozen planned_mac_count
+    weight_residency: int8 weight = 8 unit cells (1:2:...:128 gate-strapped); ~0.42um^2/cell -> 1MB ~ 3.6mm^2 on sky130; 16MB weight working set ~ 57mm^2 strip area (feasible as in-strip storage)
+    activation_sram: sky130 SRAM ~18um^2/bit; 8MB ~ 1150mm^2 infeasible on self-developed die; KB-scale activation cache is the CIM-consistent scale
+    card_level: single die with 16 strip-field partitions baseline; multi-die needs die-to-die link (PCIe 63GB/s cannot feed 512GB/s internal fabric)
+    package_tiering: cheap-first current baseline = 16-die wire-bond MCM co-package, parallel d2d bus (32-64 lines/die, no SerDes), 8-16 package-exit lines, ~1.5mm2 dies on MPW shuttle; the co-package IS the compute narrow band between memory and processor
+    die_area_self_inconsistency: >-
+      The drafted cell count (131072 cells x 0.42um^2 = 0.055mm2) occupies only
+      14% of the draft's own 0.4mm2 per-die strip area budget, a 7.27x
+      underfill. Filling the stated budget reaches the 16MB working set in about
+      9 packages (~211mm2 of silicon) instead of 64 packages (~1536mm2), which
+      the drafted card scaling of 4-16 packages could never reach at 1-4MB.
+  baseline_tiering:
+    principle: design_targets_must_be_achievable_on_the_current_process; end_state_numbers_must_not_constrain_current_design
+    current_process_baseline_sky130:
+      strip_field_cim_die: true
+      activation_cache: 128-512KB
+      weight_residency: up to ~16MB in-strip (~57mm^2)
+      unit_cell: L=0.15um same-bin gate strapping
+      sensing: comparator 4-6 bit
+      scope: L2 fixtures, DRC/SPICE proof, no fabrication claim
+    end_state_milestones:
+      items:
+        [
+          32MB die L1,
+          16384-bit 250MHz fabric fully loaded,
+          64 digital MAC tiles,
+          HBM option,
+          multi-die card,
+        ]
+      requires: advanced node or purchased silicon decision
+      must_not_block_current_design: true
+validation_evidence_not_initial_conditions:
+  - manufacturer_and_distributor_quotes
+  - memory_controller_and_package_feasibility
+  - PCIe_electrical_CEM_and_thermal_analysis
+  - HDL_gate_level_simulation
+  - synthesis_static_timing_and_area
+  - board_power_thermal_measurement
+  - firmware_security_and_IOMMU_test_report
+freeze_record:
+  status: acceptance_check_pending
+  frozen_by: null
+  frozen_at: null
+  decision_ids_frozen: []
+  evidence_refs: []
+  environment_support_may_fill_missing_architecture: false
+next_environment_action:
+  action: run_acceptance_check_and_judge_decision_passability
+  then: record_passable_decision_and_run_L2_existing_eda_checks
+  forbidden_until_decision_passes:
+    [component_ordering, physical_fabrication, architecture_completion_claim]
+single_die_correction:
+  status: measured_layout_replaces_the_claimed_cell_area
+  why_this_block_exists: >-
+    The packet's area model used 0.42 um^2 per unit cell, which is the bare
+    device W*L. A tile that magic actually DRC-checks and extracts measures
+    9.1733 um^2 per cell (20.0 x 13.76 um over 30 extracted nfets, magic DRC 0
+    errors and KLayout 0 items, measured 2026-09-29), 21.8x more, because
+    contacts, spacing and routing are not free. Every capacity figure derived
+    from the old number is therefore wrong by that factor, and the single-die
+    question has to be re-asked. The 10.20 um^2 figure this block used to quote
+    came from cim_cell_layout, a 32-cell fixture that has since been deleted,
+    and is not the density of the layout that passes DRC today.
+  single_die_answer:
+    one_megabyte_of_int8_weights_mm2: 76.95
+    sixteen_megabytes_of_int8_weights_mm2: 1231.22
+    measured_density_um2_per_cell: 9.1733
+    verdict: >-
+      not reachable on a single die at this process. The 16-die co-package
+      tiering is not a cheap way around this; it is the only way the frozen
+      capacity targets are reachable at all, so the co-package is retained and
+      is no longer optional scope.
+  verified_design_status:
+    array_layout: magic DRC 0 errors
+    array_layout_recheck: >-
+      re-measured 2026-09-29 on the generated 2-copy tile: magic drc list count
+      total over the whole cell = 0, KLayout sky130A_mr.drc on the exported GDS
+      = 0 items
+    extraction: >-
+      30 nfets, W=0.42um L=0.15um, 4 drain spines per strip sized 8/4/2/1
+      cells (8 spines across the 2-copy tile), 1 ground; the 32-nfet figure
+      quoted here before came from the deleted cim_cell_layout fixture
+    extracted_netlist_simulation: >-
+      passes; the extracted strip holds its 1:2:4:8 weight ratio to 0.0001
+      percent worst error (cim_verify.simulate_spine). The earlier "popcount
+      decode, worst relative error 6.2e-8" line came from the deleted
+      cim_cell_layout fixture and no code in this repository produces it any
+      more
+    int8_functional: >-
+      passes; 6 matrix-vector cases over 15605 simulated cells return exact
+      integer dot products, worst relative error 2.8e-7, hand-checked cases
+      19 / 255 / 0 / 200
+  pdk_finding:
+    min_characterised_nfet_width_um: 1.255
+    drafted_cell_width_um: 0.42
+    note: >-
+      the drafted cell width is below the sky130 characterised range, so corner
+      numbers for it do not exist; a width the PDK covers costs about 3x the area
+  not_proven:
+    - weight programmability (the verified cell is geometry-fused)
+    - sense chain, sequencer, pad ring, power grid
+    - timing closure, corner behaviour, fabrication readiness

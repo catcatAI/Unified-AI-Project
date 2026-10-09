@@ -50,6 +50,23 @@ def test_event_bus_no_handlers():
     assert "nonexistent.event" not in bus._subscribers
 
 
+def test_event_bus_failing_handler_does_not_starve_rest():
+    """One raising handler must not block later handlers or the publisher."""
+    bus = EventBus()
+    results = []
+
+    def bad(**data):
+        raise RuntimeError("boom")
+
+    def good(**data):
+        results.append("good")
+
+    bus.on("test.event", bad)
+    bus.on("test.event", good)
+    bus.emit("test.event")  # must not raise
+    assert results == ["good"]
+
+
 def test_event_bus_clear():
     bus = EventBus()
     results = []

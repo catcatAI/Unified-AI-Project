@@ -1,0 +1,1305 @@
+schema_version: edge-card-spec/1
+status: draft_awaiting_acceptance_check
+owner: angela
+retrieved_at: null
+purpose: >-
+  Board-level specification for the small compute card (小計算卡): a
+  slot-powered PCIe Gen4 x1 endpoint that runs Gemma 4 E2B-class multimodal
+  LLMs on-card. Product decision requested and locked by the user
+  (2026-10-07); all remaining choices below were made by angela under the
+  same delegation ("其他你能決定的你定"). This file is the spec of record
+  for the edge_card subsystem; component ordering and physical fabrication
+  still require human approval.
+relationship_to_ai_compute_card:
+  line: sibling_product_line
+  detail: >-
+    hardware/assemblies/wip/ai_compute_card is the long-term self-developed-silicon program
+    (CIM dies, 16384b fabric, 300W FHFL card). This edge card is a near-term
+    product built from purchased compute silicon; it does not consume
+    angela_interface_freeze_packet contracts and none of the ten
+    pending_decisions are answered or frozen by this file.
+  out_of_scope_for: angela_interface_freeze_packet
+  shared_conventions:
+    - acceptance_levels_style
+    - component_selection_requires_official_sources
+    - no_price_claim_without_quote
+
+# =============================================================================
+# Product decision (locked)
+# =============================================================================
+product_decision:
+  decision_date: 2026-10-07
+  decided_by: user
+  form_factor: pcie_add_in_card
+  host_link: PCIe-Gen4-x1-endpoint
+  headline_workload: google/gemma-4-E2B-it and equivalents (see model_target)
+  board_family: # 2026-10-09 user proposal: one carrier per lane-width family
+    proposed_by: user
+    proposed_on: 2026-10-09
+    resolved_by: angela
+    decision: >-
+      Separate carriers sharing the module, not one widened PCB: the
+      manufactured lineup is edge_x1 (primary - host_link above stays
+      PCIe-Gen4-x1-endpoint) plus edge_x4 (derivation). Both boards are
+      drawn and locked at L0 as of 2026-10-09 (edge_x1 170 mm, edge_x4
+      185 mm - mechanical.x4_length_derivation); build order is x1 first
+      and x4 is commissioned separately. x2/x8/x16 slots are served by the
+      CEM fit-and-negotiate rule below; no x8/x16 board exists because the
+      orin-pcie-c4 endpoint caps at x4 (host_interface.board_variants).
+  delegated_choices:
+    decided_by: angela
+    items:
+      - compute module = NVIDIA Jetson Orin NX 16GB (8GB SKU option)
+      - module power capped at 25W (MAXN); board TDP cap 35W; slot-powered only
+      - on-card OS + inference service; host is a client, not the runner
+      - primary quantization Q4_0 / mobile QAT (SFP8 supported, not targeted)
+      - single-slot active cooling; full-height bracket primary, low-profile bracket in box
+      - default context 32K tokens (128K capability reserved to the 16GB SKU)
+
+# =============================================================================
+# Design drawings (L0) - every number-carrying block below names its drawing
+# =============================================================================
+design_drawings:
+  status: l0_drawings_backing_the_numbers_in_this_file
+  convention: >-
+    Five ASCII diagrams (repo diagram convention), one per physical/logical
+    domain. Each entry carries backs (the section paths whose numbers it draws)
+    and a status marking how far the drawing goes; a drawing never introduces
+    a number its owning sections do not state, and the numbers it repeats are
+    re-locked against the owning fields by tests/unit/test_edge_card_spec.py
+    (test_design_drawings_back_every_numbered_block).
+  system_interconnect:
+    backs:
+      - product_decision
+      - host_interface
+      - clocking_and_noise
+      - compute.module
+      - compute.option_sku
+      - memory
+      - storage
+    status: complete_for_l0_wiring_facts_from_datasheets
+    diagram: |-
+      HOST PC
+        +- linux-mbox driver: BAR0 control mailbox + doorbell + MSI
+        +- clients: cli / python-sdk (windows host deferred: open_items.host_driver_scope)
+        v
+      == PCIe CEM Gen4 x1 edge fingers: payload 1.969 GB/s each direction,
+         achievable >= 1.6 GB/s (85% TLP, to be measured at L3) =
+         load model 3.35 GB: 1.70s payload / 2.09s achievable <= 5s budget
+        steady state: token + control stream only (decode = 8 B/token)
+        sidebands: PRSNT# A1-B17 strap / REFCLK 100M host-source / PERST# in
+          -> cold boot: card boots Jetson, then host rescan (software.host_side)
+          WAKE# + 3.3Vaux + SMBus + CLKREQ# + edge JTAG all NC; hot-plug off
+          (host_interface.edge_sidebands)
+        v
+      CARRIER PCB (custom part; L2 gate = kicad DRC + gerber)
+        +- C4 controller lane0 only -> x1 fingers (lanes 1-3 NC on card)
+        +- x4 derivation: lanes1-3 -> x4 fingers = payload 7.876 GB/s/dir,
+        |    cold load 0.43s payload / 0.52s achievable (board_variants)
+        +- EP mode: sysfs start + ODMDATA hsio-uphy-config-41
+        |    (open risk: C4 endpoint + C7 NVMe concurrency, open_items.uphy_concurrency)
+        +- FLR required / MSI required / IOMMU compat required for host driver
+        +- slot 12V -> module VDD_IN direct feed (in-range 5-20V; >=8V unlocks 40W)
+        +- keepouts: pcie-finger-keepout, bracket-air-exit
+        v
+      [Jetson Orin NX 16GB, SO-DIMM-260, 69.6 x 45.0 mm]
+        +- CPU: 6x Arm Cortex-A78AE
+        +- GPU: 1024 CUDA / 32 Tensor Cores = the ONLY decode-usable compute
+        |    GPU-only dense 30 TOPS @25W, MAC=2 -> 15 GMAC/s (40W mode: 38 -> 19)
+        |    2x NVDLA (20 dense TOPS) EXCLUDED: no attention layer, softmax cap [1,8192]
+        +- LPDDR5 16GB 128-bit: 102.4 GB/s raw (87.04 B/ns serviced)
+        +- C7 x2 -> M.2 NVMe (below) / C4 -> edge (above)
+        v
+      [M.2 Key-M 2230 NVMe, 256 min / 512 target GB]
+        +- holds Jetson Linux OS + model library (3.35 GB) + logs; boot primary
+        +- recovery: USB forced-recovery (no SD socket on card)
+      variant: 8GB SKU = same carrier, GPU dense 25 @765MHz, 1x NVDLA, no 128K ctx
+      cooling cross-cut: 40mm fan -> fin stack -> module top plate -> bracket exit
+  power_tree:
+    backs:
+      - power_and_thermal
+      - component_review.layout_review.vdd_in_feed
+    status: complete_for_l0_except_3v3_logic_allocation_at_l2
+    diagram: |-
+      PCIe slot, 75W-class (CEM Power Supply Rail Requirements, src_cem_rails):
+        12V cap 5.5A (66W) / 3.3V cap 3.0A (9.9W) / combined <= 75W
+        (board budget below derives from the 12V feed only; any 3.3V logic load
+         is sized inside L2 power-tree analysis, acceptance_levels.L2)
+        |
+        v  slot 12V rail (component_review.layout_review.vdd_in_feed: direct feed)
+        +--> module VDD_IN (module input range 5-20V; 12V in range with margin)
+        |      +- nvpmodel modes [10, 15, 25, 40] W; default = 25W MAXN
+        |      +- >=8V VDD_IN precondition of 40W MAXN_SUPER satisfied by this feed
+        |      +- MODULE_ID strap per Product Design Guide (open_items.vdd_in_wiring)
+        +--> M.2 NVMe rail ............................ 3 W
+        +--> 40mm fan ................................ 2 W
+        +--> rails & conversion overhead ............. 5 W
+
+      default 25W board: 25 (module) + 3 + 2 + 5 = 35 W cap <= 66 W slot 12V (2.9A <= 5.5A)
+      40W profile:       40 (module) + 3 + 2 + 5 = 50 W     <= 66 W slot 12V (4.2A <= 5.5A)
+                         (cooling-unlocked branch; same rail, zero added parts)
+      low-power: 15W mode via nvpmodel (same board; perf targets derate ~30%)
+
+      protection: thermal throttle (Tj target 90C, silicon slowdown 99C),
+        watchdog, EPFLR reset; sensors = module INA power + thermal zones
+        + carrier PMIC temp + NVMe SMART + fan tach (power_and_thermal.sensors)
+  thermal_path:
+    backs:
+      - power_and_thermal
+      - compute.module.junction_temp_c
+      - mechanical
+      - component_review.layout_review.thermal_path
+    status: complete_for_l0_path_and_targets_fin_geometry_at_l2
+    diagram: |-
+      ambient target <= 40C (power_and_thermal.thermal_targets)
+        |
+        v
+      [40mm fan] -- >=200 lfm --> [fin stack] --TIM--> [Orin NX module top plate]
+                                                            |
+                                                            v
+                                silicon limits: Tj target 90C sustained (product),
+                                slowdown at 99C, absolute max 105C (compute.module)
+                                                            |
+                                                            v
+                    warm air -> bracket-air-exit keepout -> exhaust
+
+      gap: the M.2 zone sits opposite the fan with no direct heat path yet
+        -> open_items.nvme_thermal_path (prove nvme_headroom at L2 or redesign)
+      envelope: single slot / PCB height 64.4mm / component height <= 17mm
+      module path theta budget: <=2.0 K/W @25W / <=1.25 K/W @40W
+        = (90 - 40) / 25 and (90 - 40) / 40 (thermal_targets)
+      steady state: sustained decode without throttle
+      sensors: module INA power / module thermal zones / carrier PMIC temp
+        / NVMe SMART temp (software) / fan tach (power_and_thermal.sensors)
+      gate: L2 single_slot_thermal_solution_verified_at_40c_ambient_200lfm
+            = the condition for the 40W cooling-unlock branch (power_tree)
+  mechanical_views:
+    backs:
+      - mechanical
+      - component_review.layout_review
+    status: zone_sketch_exact_xy_is_the_kicad_l2_deliverable
+    diagram: |-
+      PLAN VIEW (top, zones; exact XY is the KiCad L2 deliverable):
+      ┌────────────────────────────────────────────────────────────────────────────┐
+      │bracket side (bracket-air-exit) <--- carrier PCB ---> front side            │
+      │                                                                            │
+      │ [40mm fan + fin stack]  [Orin NX SO-DIMM-260]  [M.2 Key-M 2230]            │
+      │ exhaust -> bracket       69.6 x 45.0 horizontal  horizontal                │
+      │                                                                            │
+      │carrier PCB: 64.4 (H) x 170.0 (L) mm, 1 slot, comp height <=17mm            │
+      │                                                                            │
+      │BOTTOM EDGE: PCIe Gen4 x1 edge fingers (pcie-finger-keepout),               │
+      │             key notch per PCIe CEM; lanes 1-3 NC on card                   │
+      │x4 variant: x4 fingers (B=39.4), PCB 185.0 (L), lanes1-3 routed             │
+      └────────────────────────────────────────────────────────────────────────────┘
+      SIDE VIEW (component stack):
+      ┌────────────────────────────────────────────────────────────────────────────┐
+      │component height envelope <= 17mm                                           │
+      │                                                                            │
+      │ [fan + fin stack]--TIM--[Orin NX on SO-DIMM, horizontal]                   │
+      │ [M.2 2230 horizontal, under module zone]                                   │
+      │ =========================================================                  │
+      │ [carrier PCB] ......... [PCIe edge fingers, bottom]                        │
+      │                                                                            │
+      │brackets: full-height = primary (ships); low-profile in box                 │
+      │  cutouts: USB-C (storage.recovery_path) + EP-ready LED (bracket_cutouts)   │
+      │          (same PCB, cut height - mechanical.bracket_low_profile)           │
+      └────────────────────────────────────────────────────────────────────────────┘
+  decode_datapath:
+    backs:
+      - cycle_simulation.method
+      - cycle_simulation.measured
+      - cycle_simulation.balance_study
+      - performance_budget
+      - model_target.working_set_gb
+    status: complete_engine_topology_matching_edge_card_sim
+    diagram: |-
+      RESIDENT WEIGHTS
+        NVMe 3.35 GB (Q4_0 GGUF) --C7 x2--> LPDDR5 16GB
+          cold load: 1.70s payload / 2.09s achievable <= 5s budget
+        (host path optional: Gen4 x1 achievable >=1.6 GB/s)
+
+      PER DECODE TOKEN: 591 GGUF items / 4.218 GMAC / reads 1.649 GB / writes 9216 B
+        for layer 0..34 (35-layer GQA decoder):
+          attention (KV int8 @32K; layers 0-14 write own KV -> 15 writes/token)
+            -> MLP -> PLE (per-layer embeddings)
+        tied lm_head streams full token_embd -> sample -> 8 B/token over PCIe x1
+
+      DISCRETE-EVENT SERVERS (cycle_simulation.method, engine=edge_card_sim.py)
+        [LPDDR5 87.04 B/ns] -> [SRAM queue, conservative starve] -> [MAC array
+        15 MAC/ns = GPU Tensor Core dense30 / MAC=2]
+        PCIe x1 1.969 GB/s sits outside decode (util ~0; carries 8 B/token)
+
+      MEASURED @25W, 32K (cycle_simulation.measured):
+        3.56 tok/s, 281.19 ms/token, mac util 1.000 / mem 0.067 -> COMPUTE-BOUND
+        bind point 222.6 ops/ns vs card max 19 MAC/ns (38 ops/ns @40W)
+          -> engine mem util 2.9-11.4% (full-sweep measured)
+        (idle LPDDR5 is structural, balance_study.memory; roofline 52.8 tok/s
+         unreachable; prefill stays analytic: ideal ~2600, target >=800 tok/s)
+
+# =============================================================================
+# Compute
+# =============================================================================
+compute:
+  module:
+    part: NVIDIA-Jetson-Orin-NX-16GB
+    module_size_mm: [69.6, 45.0]
+    connector: SO-DIMM-260
+    cpu: 6x Arm Cortex-A78AE v8.2
+    gpu: Ampere-1024-CUDA-32-TensorCore
+    int8_tops: # module totals as published (GPU + DLA combined) - NOT decode-usable
+      dense_maxn_25w: 50
+      sparse_maxn_25w: 100
+      dense_maxn_super_40w: 78
+      sparse_maxn_super_40w: 157
+    gpu_tc_int8_tops: # GPU Tensor Cores only = decode-usable compute
+      dense_25w_918mhz: 30
+      sparse_25w_918mhz: 60
+      dense_maxn_super_1173mhz: 38
+      sparse_maxn_super_1173mhz: 77
+      source: src_jetson_orin_page
+      derivation: >-
+        module minus DLA closes on every figure (50-20=30, 100-40=60,
+        78-40=38, 157-80=77) and clock scaling agrees (30 x 1173/918 = 38);
+        NVIDIA's GPU Tensor Core row for Orin NX states 38 dense / 77
+        sparse directly
+    dla_int8_tops_excluded: # 2x NVDLA 2.0 - CNN-only, cannot run decode
+      dense_25w: 20
+      dense_maxn_super_40w: 40
+      sparse_25w: 40
+      sparse_maxn_super_40w: 80
+      source: src_dla_layers
+      reason: >-
+        DLA's supported layers are conv/FC/activation/pooling/batchnorm/LRN
+        - no attention layer, no layernorm, softmax capped at [1,8192] with
+        axis <= 1024 - so the 35-layer GQA decoder cannot execute there;
+        DLA TOPS never enter decode math
+    decode_usable_dense_tops: 30 # GPU-only @25W: what every simulation uses
+    tops_convention: >-
+      MAC=2 (TOPS count 2 ops per MAC): NVIDIA's own rows show INT8 dense
+      exactly 2x FP16 dense on the same Tensor Cores (38 vs 19 for Orin NX)
+      (src_jetson_orin_page); the 1-op/c1 reading is retired
+    memory_gb: 16
+    memory_type: LPDDR5-128bit
+    memory_bandwidth_gbs: 102.4
+    supported_power_modes_w: [10, 15, 25, 40]
+    selected_default_mode_w: 25
+    maxn_super_out_of_scope_reason: >-
+      40W MAXN_SUPER needs >=8V VDD_IN and cooling beyond the single-slot
+      passive+fan envelope this card commits to; spec caps the product at
+      the 25W mode.
+    module_input_voltage_v: [5, 20]
+    junction_temp_c: { min: -25, max: 105, slowdown: 99 }
+  option_sku:
+    part: NVIDIA-Jetson-Orin-NX-8GB
+    same_carrier: true
+    int8_tops: { dense_maxn_25w: 35, sparse_maxn_25w: 70 } # module incl 1x DLA
+    gpu_tc_int8_tops: # same GPU silicon as 16GB, lower default clock
+      dense_25w_765mhz: 25
+      sparse_25w_765mhz: 50
+      dense_maxn_super_1173mhz: 38
+      source: src_jetson_orin_page
+    dla_int8_tops_excluded: # 1x NVDLA on the 8GB SKU
+      dense_25w: 10
+      sparse_25w: 20
+      source: src_dla_layers
+    decode_usable_dense_tops: 25
+    memory_gb: 8
+    memory_bandwidth_gbs: 102.4
+  rejected_compute_candidates:
+    - id: jetson-orin-nano-8gb
+      reason: >-
+        PCIe speed ceiling is Gen3, not Gen4. The Orin Nano Series Modules
+        Data Sheet v1.7 (2026-02-20) corrected earlier Gen4 references:
+        "Jetson Orin Nano series modules support up to Gen3 data transfer
+        rates". The product decision names PCIe4, so Nano is out even though
+        it is cheaper and has a documented endpoint mode.
+      source: src_orin_nano_ds
+    - id: discrete-gpu-low-end
+      reason: >-
+        Commercial GPU cost and vendor-locked software stack (same rationale
+        recorded in component_registry.yaml for reference accelerators);
+        buys no design ownership for this project.
+      source: src_component_registry
+    - id: fpga-path-agilex-versal
+      reason: >-
+        Registered in component_registry as prototype_fpga_path only: no
+        turnkey LLM runtime, multi-year enablement. Revisit when the
+        self-developed MVU/CIM line needs a pre-silicon carrier, not for
+        this product.
+      source: src_component_registry
+    - id: hailo-or-other-edge-npu
+      reason: >-
+        Not carried to selection: would need a datasheet round proving
+        Gen4-capable PCIe endpoint mode plus a mature LLM runtime; none
+        verified against component selection_policy sources yet.
+      source: src_selection_policy
+
+# =============================================================================
+# Host interface
+# =============================================================================
+host_interface:
+  connector: pcie_edge_x1
+  gen: 4.0
+  lanes: 1
+  signaling_rate_gbps_per_lane: 16
+  payload_encoding: 128b/130b
+  payload_gbps_each_direction: 15.754
+  payload_gbs_each_direction: 1.969
+  payload_derivation: 16 GT/s * 128/130 / 8 bits_per_byte = 1.969231 GB/s
+  achievable_dma_gbs_each_direction_min: 1.6
+  achievable_basis: ">=85% TLP efficiency typical; to be measured at L3"
+  endpoint_mechanism:
+    controller: orin-pcie-c4
+    controller_properties: up-to-x4-dual-mode-root-port-or-endpoint
+    module_speed_cap: gen4
+    lane_routing: >-
+      C4 lane0 only is routed to the x1 edge fingers (lanes1-3 NC on card).
+      Width negotiation is standard PCIe: an x4-capable endpoint in an x1
+      slot trains x1, same as any commercial x4 card in an x1 slot.
+    ep_activation: >-
+      Software-activated after boot on Jetson Linux (echo 1 > controllers/
+      14160000.pcie-ep/start) with ODMDATA hsio-uphy-config-41.
+    flr: required
+    msi: required
+    iommu_compatibility: required-for-host-driver
+  board_variants:
+    decided: 2026-10-09 user proposal (one board per edge width), feasibility resolved by angela
+    why_not_one_board: >-
+      CEM edge-finger length is fixed at manufacture, so one PCB cannot serve
+      both x1 and wider slots; each width is its own carrier while the compute
+      module, cooling and brackets stay common (relationship_to_ai_compute_card
+      is where >x4 endpoint silicon would live, not here).
+    primary: edge_x1 (this spec; product_decision.host_link)
+    edge_x4:
+      status: l0_locked_commissioned_separately
+      delta_from_x1: >-
+        route C4 lanes1-3 to the x4 edge fingers (edge_x1 leaves them NC) and
+        strap PRSNT1# to B33, the x4 farthest-present pin (edge_x1 straps B17);
+        module, cooling, brackets and power tree unchanged.
+      payload_gbs_each_direction: 7.876 # 4 * 1.969
+      achievable_dma_gbs_each_direction_min: 6.4 # 4 * 1.6
+      model_load_s:
+        payload: 0.43 # 3.35 GB / 7.876 GB/s
+        achievable: 0.52 # 3.35 GB / 6.4 GB/s
+      benefit: >-
+        cold model load only (1.70s payload -> 0.43s, same 5s budget);
+        steady-state decode stays 8 B/token outside the link (decode_datapath)
+      mechanical:
+        pcb_length_mm_max: 185 # mechanical.x4_length_derivation (184.0 -> 185 grid)
+        finger_zone_total_b_mm: 39.4 # src_cem_edge_dims
+      thermal_note: >-
+        fan+fin shift forward with the longer finger keepout, so the exhaust
+        duct to the bracket grows ~15 mm vs edge_x1; verify duct loss at this
+        variant's own L2 (edge_x1 thermal path unchanged).
+    slot_coverage: # CEM fit rule - a smaller edge fits every larger slot and trains to the card width
+      x1: edge_x1
+      x2: edge_x1 - CEM defines no x2 card edge; the x1 card trains x1 in an x2 slot
+      x4: edge_x1 (trains x1) or edge_x4 (trains x4)
+      x8: edge_x4 (trains x4) - no x8 board, endpoint caps at x4
+      x16: edge_x4 (trains x4) - no x16 board, same ceiling so wider fingers gain nothing
+    rejected:
+      edge_x8_and_x16: >-
+        endpoint_mechanism.controller_properties is up-to-x4; x8/x16 fingers
+        would train x4 anyway - mechanical cost, zero bandwidth gain. A >x4
+        endpoint is a different product line, not a carrier variant
+        (relationship_to_ai_compute_card).
+    source: src_pcie_cem
+  edge_sidebands:
+    prsnt_strap: card shorts PRSNT1# (A1) to PRSNT2# (B17, the farthest present pin for x1) - presence detection needs it even without hot-plug
+    perst: input from the host; the card boots Jetson Linux from NVMe and starts the EPF afterwards, so BIOS-time enumeration can miss it - discovery is the host-driver rescan flow (software.host_side.card_discovery)
+    refclk: 100 MHz differential supplied by the slot (host is the source and does the AC-coupling); the carrier routes it to the module and adds no clock of its own (clocking_and_noise)
+    wake_and_aux: not a wakeup card - WAKE# and 3.3Vaux are NC (the 20mA non-wakeup aux budget stays unused; power_and_thermal.power_integrity)
+    smb: NC - no VPD and no SMBus client on this card
+    clkreq: NC - L1 substates unused
+    jtag_edge: NC - the slot JTAG pins stay unconnected; bring-up reaches the module via the carrier debug header instead (mechanical.debug_access)
+    hot_plug: not supported - cold insertion only, surprise removal unsupported; host powers the card and rescans after EP ready
+    source: src_pcie_cem
+  host_visible_channel:
+    description: >-
+      Vendor-specific endpoint function (BAR0 control mailbox + doorbell +
+      MSI; payload via DMA ring buffers in host memory). NVIDIA's shipped
+      pci-epf-dma-test is explicitly a trivial demonstration driver; the
+      production endpoint function driver is our L3 deliverable.
+    protocol_spec_status: separate_freeze_work_item
+  model_load_paths:
+    host_to_card_gbs: 1.6
+    e2b_q4_0_load_seconds_from_host_max: 5
+    on_card_nvme: preferred (weights + OS on M.2, loaded to LPDDR5 at service start)
+  design_drawing: design_drawings.system_interconnect
+
+# =============================================================================
+# Memory & storage
+# =============================================================================
+memory:
+  module_lpddr5_gb: 16
+  role: card_L2_equivalent_purchased_memory
+  hierarchy_note: >-
+    die_l1/card_l2/host_l3 labels of ai_compute_card do not map onto this
+    single-SoC card; there is no self-developed die. The module LPDDR5 is the
+    only working memory and the M.2 NVMe is capacity, not cache.
+storage:
+  interface: M2-Key-M-2230
+  bus: pcie-nvme-on-orin-c7-x2
+  capacity_gb: { min: 256, target: 512 }
+  holds: [jetson-linux-os, model-library, service-logs]
+  recovery_path: USB forced-recovery through the bracket USB-C (mechanical.bracket_cutouts.rcm_usb_c), no SD socket on card
+  boot: nvme-primary
+
+# =============================================================================
+# Model target & envelope
+# =============================================================================
+model_target:
+  primary:
+    id: google/gemma-4-E2B-it
+    released: 2026-04-02
+    license: Apache-2.0
+    effective_params_b: 2.3
+    dense: true
+    context_native: 128K
+    context_card_default: 32K
+    multimodal: [image-in, text-out]
+    extras: [mtp-draft-model-for-speculative-decoding, per-layer-embeddings, vocab-262144]
+    weights_gb:
+      bf16: 11.4
+      sfp8: 5.7
+      q4_0: 2.9
+      mobile_qat: 1.1
+      mobile_qat_text_only: 0.84
+    weights_gb_source: src_google_gemma_memory
+    weights_gb_gguf_measured: 3.35
+    weights_gb_gguf_measured_note: >-
+      official google QAT Q4_0 GGUF file as stored on disk (3,349,516,256 B,
+      snapshot dated 2026-09-11); larger than the table's 2.9 GB because the
+      file also carries the multimodal towers (vision/audio) and metadata
+      that text-only decode does not stream per token. Envelope math below
+      uses the larger full-file number where marked conservative.
+    measured_cross_check:
+      gguf_q4_k_m_text_gib: 2.89
+      note: independent measured text-only size agrees with the Google table order
+      source: src_gemma4_webgpu
+  envelope_others: # "等" from the product decision
+    - id: google/gemma-4-E4B-it
+      effective_params_b: 4.5
+      weights_gb_q4_0: 4.5
+      fits: baseline-16GB-sku
+      source: src_google_gemma_memory
+    - id: gemma-4-12B-and-similar-<=12b-dense
+      weights_gb_q4_0: 6.7
+      fits: stretch-goal-16gb-sku-at-32k
+      source: src_google_gemma_memory
+  excluded_by_size:
+    - id: gemma-4-26B-A4B
+      weights_gb_q4_0: 14.4
+      why: exceeds 16GB working-set envelope with KV; out of card scope
+      source: src_google_gemma_memory
+  quantization_policy:
+    primary_formats: [Q4_0, mobile-QAT]
+    supported_not_targeted: [SFP8]
+    reason_sfp8_not_targeted: >-
+      5.7GB streamed per token drops decode below the15 tok/s target at
+      102GB/s (see performance_budget), so SFP8 is a quality option, not
+      the default.
+  working_set_gb: # derived, re-checked by tests/unit/test_edge_card_spec.py
+    formula: weights + kv_cache + os_reserve
+    kv_cache_budget_gb:
+      {
+        value: 1.5,
+        context: 32K,
+        precision: int8,
+        basis: order-of-magnitude from Gemma 4 tech report Table 3 (+KV @32K); measure at L1,
+      }
+    os_reserve_gb: 1.0
+    e2b_q4_0_32k: 5.4
+    e2b_q4_0_32k_gguf_measured: 5.85 # 3.35 full file + 1.5 KV + 1.0 OS (conservative)
+    e4b_q4_0_32k: 7.0
+    twelve_b_q4_0_32k: 9.2
+    fits_module_memory: { floor_8gb: e2b, baseline_16gb: [e2b, e4b, twelve_b-stretch] }
+
+# =============================================================================
+# Performance budget (derived; targets measured at L1)
+# =============================================================================
+performance_budget:
+  decode_assumptions:
+    memory_bandwidth_gbs: 102.4
+    stream_efficiency_range: [0.55, 0.65]
+    stream_efficiency_basis: llama.cpp-class weight streaming on Jetson; assumption to validate at L1
+    e2b_q4_0_weights_read_gb: 2.4 # quantized weights (Google's 2.9 includes ~20% load overhead)
+    e2b_mobile_weights_read_gb: 1.1
+  decode_tok_s:
+    derived_e2b_q4_0_range: [23.5, 27.7] # 102.4 * eff / 2.4 (active text weights)
+    derived_e2b_q4_0_gguf_file_stream_range: [16.8, 19.9] # 102.4 * eff / 3.35 (whole-file, conservative)
+    eta_needed_for_target_on_full_file: 0.491 # 15 tok/s needs eta >= 0.491 at file 3.35 GB
+    target_e2b_q4_0_min: 15
+    derived_e2b_mobile_range: [51.2, 60.5] # 102.4 * eff / 1.1
+    target_e2b_mobile_min: 30
+    target_basis: derived floor minus KV/sampling/serving overhead; measure at L1
+    cycle_simulation_note: >-
+      the ranges above are BANDWIDTH-ONLY bounds (they assume free compute);
+      the structural cycle simulation (cycle_simulation, 2026-10-07) shows the
+      card is compute-bound at 15 GMAC/s (GPU-only dense30, MAC=2) - 3.56
+      tok/s at 32K with mac_array at 100% while memory sits at 7% - so decode
+      does not follow these numbers until silicon provides >= 63.3 GMAC/s
+      dense (see cycle_simulation.refutes).
+  prefill_tok_s:
+    derived_1k_tokens_note: >-
+      ~2 * 2.3e9 * 1000 = 4.6 TFLOP/1K tokens plus PLE/attention overhead;
+      at 30 dense INT8 TOPS (GPU-only @25W, MAC=2) with 0.4 MFU -> ~0.38s
+      -> ~2600 tok/s ideal.
+    target_e2b_min: 800
+    target_basis: conservative floor for long-context prefill incl. memory-bound attention; measure at L1
+  host_link:
+    cold_load_e2b_q4_0_from_host_s_max: 5
+    steady_state_host_traffic: token stream + control only (tokens are bytes-scale)
+  design_drawing: design_drawings.decode_datapath
+
+# =============================================================================
+# Power & thermal
+# =============================================================================
+power_and_thermal:
+  slot_power:
+    connector: pcie-slot-12v
+    auxiliary_connector: none
+    slot_class_required: 75w-class (12V >= 5.5A-capable; some x1/server slots are 25W-class and cannot feed the 35W board - check the host)
+    slot_available_12v_w: 66 # CEM 75W-slot 12V supply current cap 5.5A x 12V (src_cem_rails)
+    slot_3v3_available_w: 9.9 # CEM 3.3V supply current cap 3.0A x 3.3V (src_cem_rails)
+    slot_combined_max_w: 75 # 12V + 3.3V draws together cannot exceed 75W (src_cem_excursions)
+  board_budget_w:
+    module_maxn: 25
+    m2_nvme: 3
+    fan: 2
+    rails_and_conversion_overhead: 5
+    tdp_cap: 35
+    cap_derivation: 25 + 3 + 2 + 5 = 35 <= 66 (12V 5.5A cap) and <= 75 combined slot budget
+  power_integrity:
+    rail_limits_75w_slot:
+      12v_max_a: 5.5
+      12v_max_w: 66
+      3v3_max_a: 3.0
+      3v3_max_w: 9.9
+      aux_wakeup_max_ma: 375
+      aux_nonwakeup_max_ma: 20 # this card is non-wakeup (host_interface.edge_sidebands): aux stays unused
+      combined_max_w: 75
+    card_bulk_caps_max_uf: { 12v: 2000, 3v3: 1000, aux: 150 }
+    max_current_slew_a_per_us: 0.1 # CEM card-side slew cap - the module's load steps must be smoothed inside the feed
+    excursions: >-
+      CEM 5.0+ lets the 12V rail excursion within the excursion table (after
+      Set_Slot_Power_Limit); 3.3V and 3.3Vaux get none (src_cem_excursions) -
+      the board budget above is steady-state by construction and the module's
+      own VDD_IN bulk absorbs decode step loads inside the slew cap
+    sequencing: slot ramps are host-side; module rails are sequenced by the module PMIC (the carrier adds no sequencing circuit)
+    l2_gate: decoupling selection inside the bulk-cap limits plus PDN check in the KiCad power-tree analysis (acceptance_levels.L2)
+    sources: [src_cem_rails, src_cem_excursions]
+  default_mode: 25W-MAXN
+  low_power_profile: { mode_w: 15, note: perf targets derate ~30%; same board, nvpmodel switch }
+  cooling: single-slot-heatsink-plus-fan
+  cooling_fan: 40mm 4-pin PWM + tach, driven from the module fan header (sensors.fan-tach-rpm)
+  airflow_lfm_min_with_fan: 200
+  sensors:
+    [
+      module-ina-power,
+      module-thermal-zones,
+      carrier-pmic-temp,
+      nvme-smart-temp-via-software,
+      fan-tach-rpm,
+    ]
+  thermal_targets:
+    module_tj_max_c: 90
+    ambient_c: 40
+    nvme_headroom: ">=10 C below the chosen SSD's datasheet max operating temp at 40 C ambient (part not chosen yet: open_items.nvme_thermal_path)"
+    module_path_theta_max_k_w: { at_25w: 2.0, at_40w: 1.25 } # (90-40)/25 and (90-40)/40 - the L2 heatsink must beat the value for whichever profile ships
+    steady_state: sustained-decode-without-throttle
+  power_management: [nvpmodel-modes, thermal-throttle, watchdog, epflr-reset]
+  design_drawings:
+    - design_drawings.power_tree
+    - design_drawings.thermal_path
+
+# =============================================================================
+# Mechanical
+# =============================================================================
+mechanical:
+  bracket_full_height: primary (ships with card)
+  bracket_low_profile: included-in-box (same PCB, cut to low-profile height)
+  pcb_height_mm_max: 64.4
+  pcb_length_mm_max: 170
+  pcb_length_mm_max_x4: 185
+  edge_finger_zone_mm: # CEM card-edge A/B dims (src_cem_edge_dims)
+    x1: { total_b: 25.4, span_a: 20.3 }
+    x4: { total_b: 39.4, span_a: 34.3 }
+  x4_length_derivation: >-
+    170 + (39.4 - 25.4) = 184.0 -> round up to 185 mm on a 5 mm grid; the rear
+    zones (finger keepout, fan+fin, exhaust duct) shift forward, height/stack/
+    brackets/power unchanged
+  slots_occupied: 1
+  component_height_mm_max: 17
+  stack: [so-dimm-module-horizontal, m2-2230-horizontal, fin-stack-with-40mm-fan]
+  module_thermal_interface: module-top-plate-to-heatsink per Jetson thermal design guide
+  keepouts: [pcie-finger-keepout, bracket-air-exit]
+  bracket_cutouts:
+    rcm_usb_c: USB-C receptacle (USB2 device wiring to module USB0) for forced recovery - the storage.recovery_path decision made this mandatory; the cutout must land inside the low-profile envelope too, because both brackets ship
+    ep_ready_led: 1x indicator lit once the endpoint function is up (GPIO assigned at L2) - makes the cold-boot rescan observable from the rear
+  debug_access: [uart-console-header] # module UART pins on a 4-pin header for bring-up; JTAG reaches the module through the SODIMM
+  design_drawing: design_drawings.mechanical_views
+
+# =============================================================================
+# Clocking, noise, EMI
+# =============================================================================
+clocking_and_noise:
+  status: constraints_for_the_l2_layout_gate
+  clock_sources:
+    local_oscillator_on_carrier: none - the carrier generates no clocks at all
+    slot_refclk: 100 MHz differential from the slot (host-source); host-side spread-spectrum rides along and C4 PHY compliance covers it
+    m2_refclk: Orin C7 refclk-out feeds the M.2 socket - no local clock part either
+    open: whether C4 endpoint mode listens to the slot REFCLK or an internal clock is an L3 confirmation (open_items.ep_refclk_source)
+  switching_noise:
+    domains: [fan-pwm-driver, 3.3v-rail]
+    rule: >-
+      direct slot-3.3V feed means zero carrier-side switching spectrum; if L2
+      instead picks a local 12V->3.3V buck (open_items.three_v_three_allocation),
+      its switch node and loop area stay away from the REFCLK and PCIe finger
+      paths and its ripple stays inside the L2 rail budget
+    lpddr: none - LPDDR5 lives on the module, the carrier routes no DRAM (no DDR noise domain here)
+  emi_esd:
+    bracket_bond: bracket screws bond to chassis metal; signal reference stays the slot ground fingers (CEM geometry provides the return path)
+    plane_rules: no reference-plane split under the PCIe pair or the REFCLK finger-to-module path (KiCad DRC item at L2)
+    usb_esd: the bracket USB-C port (mechanical.bracket_cutouts.rcm_usb_c) carries an ESD protection array chosen at L2 (IEC 61000-4-2 class)
+    emissions_scope: system-level EMC belongs to the host's certification; this card carries a pre-compliance check of its own at L4 (acceptance.L4)
+  source: src_pcie_cem
+
+# =============================================================================
+# Software
+# =============================================================================
+software:
+  card_side:
+    os: Jetson-Linux-L4T-with-pcie-endpoint-support-r36_5+
+    boot: uefi-or-cboot-from-nvme
+    endpoint_driver: custom-pci-epf-vendor-function (mailbox+dma+msi)
+    inference_runtime_primary: llama.cpp-cuda
+    inference_runtime_candidate: tensorrt-llm
+    service: openai-compatible-token-streaming-api-over-shared-memory-queues
+    model_management: [pull-from-host-over-pcie, load-from-nvme, hot-reload]
+  host_side:
+    driver: linux-mbox-driver-first
+    clients: [cli, python-sdk]
+    windows_host: deferred (open item)
+    card_discovery: >-
+      cold-boot sequence: BIOS time may not see the endpoint because Jetson
+      Linux boots from NVMe and the EPF starts afterwards; after EP ready the
+      host driver probes, asserts slot PERST# effect, rescans the bus and the
+      endpoint enumerates (and MSI trains) in that window - no hot-plug,
+      surprise removal unsupported (host_interface.edge_sidebands)
+  validation_note: >-
+    L1 software numbers are produced on an Orin NX devkit (same module) before
+    any carrier fabrication; devkit cannot exercise the x1 edge or the custom
+    endpoint function (those are L3/L4 on real silicon).
+
+# =============================================================================
+# Acceptance levels (style mirrors ai_compute_card_task.yaml)
+# =============================================================================
+acceptance_levels:
+  L0: specification_and_interface_contract
+  L1: software_validation_on_devkit
+  L2: carrier_schematic_power_thermal_and_mechanical_analysis
+  L3: endpoint_driver_and_host_link_validation
+  L4: board_validation_sustained_workload
+current_target: L0_spec_review_then_L1_development_kit_validation
+acceptance:
+  L0:
+    - all_links_have_units_encoding_and_derived_bandwidth
+    - model_target_carries_sources_and_working_set_fits_module_memory
+    - every_requirement_has_an_owner_and_evidence_target
+    - rejected_candidates_record_why
+    - design_drawings_exist_and_reconciled_with_owning_fields
+  L1:
+    - gemma4_e2b_q4_0_decode_ge_target_on_devkit_25w_mode
+    - gemma4_e2b_prefill_ge_target_at_4k_context
+    - working_set_and_kv_fit_within_module_memory_at_32k
+    - no_price_or_throughput_claim_presented_as_measured
+  L2:
+    - kicad_can_produce_pcb_drc_and_gerber
+    - power_tree_efficiency_and_35w_cap_verified_by_analysis
+    - cem_rail_limits_and_bulk_caps_satisfied_at_35w_and_40w (power_and_thermal.power_integrity)
+    - nvme_headroom_and_module_theta_budget_proven_at_40c (thermal_targets, open_items.nvme_thermal_path)
+    - single_slot_thermal_solution_verified_at_40c_ambient_200lfm
+    - no_physical_board_required
+  L3:
+    - gen4_x1_link_trains_and_dma_ge_1_6gbs_each_direction
+    - mailbox_protocol_conformance_and_msi_under_load
+    - flr_reset_recovers_endpoint_without_host_reboot
+    - cold_boot_discovery_via_rescan_after_ep_ready (software.host_side.card_discovery)
+    - uphy_c4_ep_and_c7_nvme_run_concurrently (open risk, see open_items)
+  L4:
+    - board_power_within_35w_and_module_tj_within_90c_sustained_24h
+    - decode_and_prefill_targets_met_on_card_end_to_end
+    - host_token_streaming_meets_latency_budget
+    - emissions_pre_compliance_scan_bracket_assembled (clocking_and_noise.emi_esd)
+component_selection_policy:
+  selection_owner: angela
+  entries_follow: hardware/components/component_registry.yaml rules
+  do_not_purchase_without_human_approval: true
+  price_status_default: quote_required
+human_approval_required_for:
+  - component_ordering
+  - physical_fabrication
+  - carrier_pcb_fab_and_assembly
+
+# =============================================================================
+# Component review - what in the BOM can move the numbers (research pass)
+# =============================================================================
+component_review:
+  date: 2026-10-07
+  status: candidate_pending_human_approval_and_l2
+  purpose: >-
+    Standard parts, custom parts and carrier layout decisions reviewed for
+    actual leverage on the spec numbers. Every "moves the numbers" claim is
+    either measured by scripts/sim_edge_card_sweep.py (rerun this file's
+    rerun line) or explicitly marked as not-moving-them. No prices by
+    policy (quote_required); no ordering without human approval
+    (human_approval_required_for).
+  rerun: .venv/bin/python scripts/sim_edge_card_sweep.py
+  standard_parts:
+    - part_class: compute-module
+      current: NVIDIA-Jetson-Orin-NX-16GB (SO-DIMM-260); the 8GB option SKU shares the same carrier
+      upgrade_path: >-
+        none inside the envelope - compute TOPS, LPDDR5 bandwidth and the
+        PCIe controllers are fixed by the module purchase (compute.module,
+        compute.option_sku)
+      source: src_orin_nx_ds
+    - part_class: cooling
+      current: >-
+        single-slot fin stack plus 40mm fan, 200 lfm minimum, component
+        height capped at 17mm (power_and_thermal.cooling, mechanical)
+      upgrade: >-
+        larger fin stack / higher-LFM fan (still standard parts, still one
+        slot) is the only standard-part change that moves decode: it is
+        what unlocks the 40W MAXN_SUPER profile - see
+        simulation.power_ladder (3.56 -> 4.50 tok/s at 32K, GPU-only MAC=2)
+      constraint: >-
+        the >=8V VDD_IN precondition of the 40W mode is already met by the
+        planned 12V feed (layout_review.vdd_in_feed, zero added parts);
+        what remains is thermal L2 at 40C ambient / 200 lfm and a re-check
+        of the low-profile bracket cut, which shares the same PCB
+      source: src_orin_power_modes
+    - part_class: nvme-ssd
+      current: >-
+        M.2 Key-M 2230, 256GB min / 512GB target, spec'd 1.6 GB/s, on
+        module controller C7 x2 (storage)
+      upgrade: >-
+        capacity class only - speed upgrades do not move any spec number:
+        every cold-load path already passes with >=2.9s margin
+        (simulation.load_paths), bounded by device rate until it exceeds
+        the LPDDR5 write ceiling
+      source: src_l4t_nx_nano
+    - part_class: host-link
+      current: >-
+        PCIe CEM Gen4 x1 edge fingers, >=1.6 GB/s achievable each direction
+        (host_interface)
+      upgrade: >-
+        layout/SI quality moves only load time (1.70s payload ceiling vs
+        2.09s achievable floor); decode carries 8 B/token so decode never
+        sees the link - any spend here buys seconds nobody needs
+      source: src_pcie_cem
+    - part_class: power-path
+      current: >-
+        CEM 75W-class slot rails: 12V 5.5A cap (66W) + 3.3V 3.0A cap (9.9W),
+        combined <=75W; board self-capped at 35W = 25 + 3 + 2 + 5 drawn from
+        the 12V feed (power_and_thermal.board_budget_w, power_integrity)
+      upgrade: >-
+        none needed at 25W; even the 40W profile tops out at 50W board
+        (40 + 3 + 2 + 5 = 4.2A) inside the 5.5A/66W 12V cap - the upgrade
+        here is a decision, not a part
+      source: src_cem_rails
+    - part_class: everything-else-purchasable
+      status: >-
+        module, M.2 SSD, PCB, thermal parts, fan, brackets are all
+        quote_required and gated (open_items.quotes) - no price claim is
+        made anywhere in this file
+      source: src_selection_policy
+  custom_parts:
+    - what: carrier PCB itself
+      detail: >-
+        KiCad design; L2 gate is kicad_can_produce_pcb_drc_and_gerber
+        (acceptance_levels.L2); the same PCB serves full-height and
+        low-profile brackets (mechanical.bracket_low_profile)
+    - what: pci-epf vendor endpoint function (mailbox + doorbell + DMA ring + MSI)
+      detail: >-
+        custom endpoint driver work; gated by open_items.mailbox_protocol_freeze
+        before hardening, then acceptance_levels.L3 conformance
+      source: src_l4t_endpoint
+    - what: ODM/overlay configuration (hsio-uphy-config-41 and friends)
+      detail: >-
+        configuration, not a purchased part; C4-endpoint plus C7-NVMe
+        concurrency is the open high-risk item (open_items.uphy_concurrency)
+      source: src_l4t_nx_nano
+  layout_review:
+    vdd_in_feed:
+      decision: >-
+        feed module VDD_IN directly from the slot 12V rail with MODULE_ID
+        strapped per the Product Design Guide (open_items.vdd_in_wiring)
+      why: >-
+        module input range is 5-20V, so 12V is in range with large margin;
+        the feed keeps VDD_IN near 12V, satisfying the >=8V precondition
+        of the 40W profile with zero added parts, and the CEM 12V cap
+        (5.5A / 66W, src_cem_rails) holds 1.9x headroom over the 35W board
+        draw (2.9A) and 1.3x over the 50W 40W-profile draw (4.2A)
+      source: src_orin_nx_ds
+    pcie_lane:
+      decision: >-
+        short controlled-impedance Gen4 x1 route honoring the CEM finger
+        and bracket-air-exit keepouts (mechanical.keepouts)
+      evidence: >-
+        trains-Gen4 is an L3 measurement (open_items.c4_ep_link_speed); the
+        simulation assumes the >=1.6 GB/s achievable floor, never the 1.969
+        payload ceiling
+      source: src_pcie_cem
+    uphy_concurrency:
+      decision: >-
+        routing cannot fix this - it is an ODMDATA/firmware question
+        (open_items.uphy_concurrency); recorded fallbacks are USB-storage
+        boot or a C9 x1 NVMe path
+      source: src_l4t_nx_nano
+    thermal_path:
+      decision: >-
+        module top-plate to fin stack per the Jetson thermal design guide
+        (mechanical.module_thermal_interface), air exiting through the
+        bracket keepout
+      gate: >-
+        single_slot_thermal_solution_verified_at_40c_ambient_200lfm
+        (acceptance_levels.L2) is the gate any 40W cooling upgrade must
+        clear
+      source: src_orin_power_modes
+  simulation:
+    rerun_note: >-
+      measured by scripts/sim_edge_card_sweep.py on 2026-10-07 with the
+      corrected inputs (GPU-only dense, MAC=2); baseline cross-check against
+      the cycle runner held (3.56 tok/s, OK)
+    load_paths_s:
+      host_pcie_payload: 1.70
+      host_pcie_achievable_1_6: 2.09
+      nvme_spec_1_6: 2.09
+      nvme_hypothetical_2_4: 1.40
+      budget: 5
+      worst_case: 2.09
+      margin: 2.91
+      verdict: PASS
+      reading: >-
+        storage and host-link upgrades cannot buy meaningful time - the 5s
+        gate has ~2.9s headroom on every path, including a hypothetical
+        faster device (still capped by LPDDR5 write at 87 B/ns)
+    power_ladder_tok_s_at_32k: # GPU-only dense, MAC=2 confirmed
+      w15_derived: 2.49
+      w25_default: 3.56
+      w40_maxn_super: 4.50
+      note: >-
+        the 15W rows derive from power_and_thermal.low_power_profile's own
+        "~30% derate" note applied to GPU-only dense (30 x 0.7 = 21 dense,
+        labeled derived). Pre-correction values (11.85/18.45 at c1,
+        5.93/9.25 at c2) were wrong twice over: module totals included DLA
+        TOPS the decoder cannot use, and c1 used a 1-op reading that
+        NVIDIA's INT8=2x-FP16 rows refute (src_jetson_orin_page). No row
+        reaches the 15 tok/s target.
+    ctx_128k_16gb_sku_tok_s: # GPU-only dense, MAC=2
+      w15_derived: 1.07
+      w25_default: 1.52
+      w40_maxn_super: 1.93
+      reading: >-
+        the 16GB SKU's reserved 128K capability (model_target) is not a
+        rate capability - the best point is 1.93 (40W) and 1.52 at the 25W
+        default; the 8GB SKU is excluded by capacity, so the sweep skips
+        128K rows for nx8 modes
+    meets_target:
+      at_32k: []
+      at_or_below_16k: []
+      reading: >-
+        no GPU-only dense point reaches 15 tok/s anywhere in the sweep -
+        best anywhere = 6.77 (40W @8K); the cooling lever still moves the
+        numbers (+26% at 32K) but no configuration hits the target
+  conclusion: >-
+    the improvements that move the spec numbers are (1) a cooling uplift to
+    unlock the 40W profile - same module, standard fan/fin parts, gated at
+    L2 thermal (3.56 -> 4.50 tok/s at 32K, +26%) - and (2) the 12V VDD_IN
+    layout decision that makes that profile electrically legal at zero part
+    cost. Everything else (faster NVMe, better link efficiency, the 15W
+    profile, 128K context) either is already under budget or moves the wrong
+    direction; no dense configuration reaches the 15 tok/s target on this
+    silicon (cycle_simulation.sensitivity) - that is a product decision, not
+    a parts decision.
+
+# =============================================================================
+# Open items (blocking or carry-risk)
+# =============================================================================
+open_items:
+  - id: uphy_concurrency
+    risk: high
+    blocks: L3
+    question: >-
+      Does hsio-uphy-config-41 leave C7 (x2, on-card NVMe) usable while C4
+      runs endpoint mode? Devkit precedent runs C4+C7 as root ports
+      together, but the endpoint ODMDATA path is documented for C4 alone.
+      Fallback: boot from USB-storage or shrink to C9 x1 NVMe if legal.
+  - id: c4_ep_link_speed
+    risk: medium
+    blocks: L3
+    question: Confirm C4 endpoint trains Gen4 x1 on the carrier (docs state
+      Orin NX supports up to Gen4; per-mode speed at EP to be measured).
+  - id: vdd_in_wiring
+    risk: low
+    blocks: L2
+    question: >-
+      Feed VDD_IN directly from slot 12V (in-range 5-20V per Orin NX data
+      sheet); strap MODULE_ID correctly so the module is not forced into
+      the legacy 5V-only behavior (Product Design Guide DG-10931-001).
+      This same feed is what satisfies the >=8V VDD_IN precondition of
+      the 40W MAXN_SUPER profile (component_review.layout_review).
+  - id: mailbox_protocol_freeze
+    risk: medium
+    blocks: L3
+    question: Register/descriptor/doorbell contract needs its own freeze
+      record before the endpoint driver hardens.
+  - id: quotes
+    risk: low
+    blocks: L4
+    question: Module, M.2 SSD, PCB, thermal, fan, brackets — all quote
+      required (no prices in this file by policy).
+  - id: host_driver_scope
+    risk: low
+    blocks: L3
+    question: Linux-first confirmed; Windows host driver deferred by
+      decision, revisit on demand.
+  - id: nvme_thermal_path
+    risk: medium
+    blocks: L2
+    question: >-
+      M.2 sits opposite the fan with no direct heat path; the chosen SSD's
+      SMART temp must hold >=10 C below its datasheet max at 40 C ambient
+      (thermal_targets.nvme_headroom) or the stack gets a heat spreader /
+      the socket moves - part not chosen until this closes.
+  - id: three_v_three_allocation
+    risk: low
+    blocks: L2
+    question: >-
+      Direct slot-3.3V feed covers up to 3.0A/9.9W (power_integrity); any
+      carrier-side 3.3V logic load is sized in the KiCad power-tree pass.
+      If the budget exceeds what the slot 3.3V rail can carry, L2 flips
+      to a local 12V->3.3V buck (clocking_and_noise.switching_noise).
+  - id: ep_refclk_source
+    risk: low
+    blocks: L3
+    question: >-
+      Confirm at L3 whether C4 endpoint mode listens to the slot 100 MHz
+      REFCLK or an internal module clock (docs imply host-source; the card
+      routes it regardless, clocking_and_noise.clock_sources).
+
+# =============================================================================
+# Sources
+# =============================================================================
+sources:
+  src_orin_nx_ds:
+    what: "Orin NX memory/TOPS/modes/PCIe controllers/VDD_IN (16GB: 102GB/s, module dense50@25W incl DLA, Gen4, C4 dual-mode)"
+    url: https://static.generation-robots.com/media/Jetson-Orin-NX-Series-Modules-Datasheet.pdf
+    doc: DS-10712-001_v1.7 (2026-02-20)
+    type: manufacturer_datasheet
+  src_jetson_orin_page:
+    what: >-
+      NVIDIA GPU Tensor Core rows: Orin NX 38 dense/77 sparse INT8 TOPS and
+      19 dense/38 sparse FP16 TFLOPs (INT8 dense = exactly 2x FP16 dense on
+      the same cores -> TOPS count 2 ops/MAC); module 157 sparse total
+    url: https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/jetson-orin
+    type: manufacturer_documentation
+  src_dla_layers:
+    what: >-
+      TensorRT DLA supported layers/restrictions (conv/FC/activation/
+      pooling/batchnorm/LRN; no attention, no layernorm, softmax dims
+      capped) - DLA is CNN-only and cannot host a transformer decoder
+    url: https://docs.nvidia.com/deeplearning/tensorrt/latest/inference-library/dla-layer-restrictions.html
+    type: vendor_documentation
+  src_orin_nano_ds:
+    what: Orin Nano PCIe ceiling corrected to Gen3 (rejection evidence for Nano)
+    url: https://static6.arrow.com/aropdfconversion/4ebf6ae5346ea85b5fb07e006ab80f9929f5810e/son-orin-nano-series-modules-datasheet_ds-11105-001_v1.7.pdf
+    doc: DS-11105-001_v1.7 (2026-02-20)
+    type: manufacturer_datasheet
+  src_l4t_endpoint:
+    what: Jetson Linux PCIe endpoint mode procedure (Orin series, C4 address, sysfs start)
+    url: https://docs.nvidia.com/jetson/archives/r36.5/DeveloperGuide/SD/Communications/PcieEndpointMode.html
+    type: vendor_documentation
+  src_l4t_nx_nano:
+    what: Orin NX/Nano PCIe controllers (C4 up-to-x4 dual mode RP/EP, NX Gen4 / Nano Gen3, hsio-uphy-config-41, NVMe paths)
+    url: https://docs.nvidia.com/jetson/archives/r39.2.1/DeveloperGuide/HR/JetsonModuleAdaptationAndBringUp/JetsonOrinNxNanoSeries.html
+    type: vendor_documentation
+  src_orin_power_modes:
+    what: nvpmodel power mode tables (Orin NX/Nano, MAXN_SUPER availability)
+    url: https://docs.nvidia.com/jetson/archives/r35.6.1/DeveloperGuide/SD/PlatformPowerAndPerformance/JetsonOrinNanoSeriesJetsonOrinNxSeriesAndJetsonAgxOrinSeries.html
+    type: vendor_documentation
+  src_google_gemma_memory:
+    what: "Gemma 4 inference memory table (E2B: BF16 11.4 / SFP8 5.7 / Q4_0 2.9 / Mobile 1.1 GB incl. 20% overhead; E4B 4.5; 12B 6.7; 26B 14.4)"
+    url: https://ai.google.dev/gemma/docs/core
+    type: manufacturer_documentation
+  src_gemma4_report:
+    what: Gemma 4 family architecture (effective 2.3B E2B dense, vocab 262144, per-layer embeddings, int8 KV @32K footprint table)
+    url: https://arxiv.org/pdf/2607.02770v1
+    type: technical_report
+  src_gemma4_variants:
+    what: Gemma 4 release date 2026-04-02, family lineup incl. E2B, Apache-2.0, 128K context
+    url: https://gemma4.online/models
+    type: secondary_aggregator
+    verification: cross-check_against_google_and_report
+  src_gemma4_webgpu:
+    what: measured Q4_K_M text-only E2B weights = 2.89 GiB (independent cross-check)
+    url: https://github.com/tylerstraub/gemma4-webgpu/blob/main/docs/architecture.md
+    type: third_party_measurement
+  src_qat_release:
+    what: Gemma 4 QAT checkpoints 2026-06-05 (mobile format ~1GB E2B)
+    url: https://7minai.com/news/gemma-4-qat-models
+    type: secondary_aggregator
+    verification: cites_google_release_and_marktechpost
+  src_pcie_cem:
+    what: PCIe CEM power/slot classes and lane width negotiation
+    url: https://pcisig.com/PCIExpress/Specs/CEM/CardElectromechanical_5.0
+    type: standard_body
+  src_cem_edge_dims:
+    what: >-
+      PCIe CEM card-edge form-fit dimensions as published by connector makers -
+      contact counts 36/64/98/164 at 1.00 mm pitch (x1/x4/x8/x16) and
+      finger-zone lengths A/B (x1 20.30/25.40, x4 34.30/39.40 mm)
+    url: https://suddendocs.samtec.com/catalog_english/pciec.pdf
+    type: industry_standard_summary
+    cross_check: TE and Amphenol CEM connector datasheets (36/64/98/164 positions, 1.00 mm pitch)
+  src_component_registry:
+    what: existing candidate registry (fpga = prototype path, GPUs = benchmark reference only, selection rules)
+    url: hardware/components/component_registry.yaml
+    type: internal_spec
+  src_selection_policy:
+    what: component selection rules (official source before selection, no price without quote, human approval before purchase)
+    url: hardware/assemblies/wip/ai_compute_card/ai_compute_card_task.yaml
+    type: internal_spec
+  src_hf_gguf:
+    what: official google QAT Q4_0 GGUF of gemma-4-E2B (file measured at 3.35 GB in local HF cache snapshot 675cff42)
+    url: https://huggingface.co/google/gemma-4-E2B-it-qat-q4_0-gguf
+    type: manufacturer_artifact
+  src_cem_rails:
+    what: CEM Power Supply Rail Requirements per slot class - 75W-class 12V
+      cap 5.5A (66W), 3.3V cap 3.0A (9.9W), aux 375/20 mA, card bulk cap
+      limits (2000/1000/150 uF), slot classes 10/25/75W
+    url: https://enterprise-support.nvidia.com/s/article/MLNX2-117-1944kn
+    type: industry_standard_summary
+  src_cem_excursions:
+    what: CEM Add-in Card Power Excursions - 12V excursion table and
+      Set_Slot_Power_Limit interplay; 3.3V/3.3Vaux have no excursion table
+    url: https://edc.intel.com/content/www/us/en/design/ipla/software-development-platforms/client/platforms/alder-lake-desktop/atx-version-3-0-multi-rail-desktop-platform-power-supply-design-guide/2.1/pcie-add-in-card-power-excursions
+    type: industry_standard_summary
+host_proxy_simulation:
+  kind: host_proxy_not_l1
+  date: 2026-10-07
+  rerun_2026_10_08:
+    status: contaminated_do_not_compare
+    evidence: >-
+      three same-day reruns while the box ran concurrent experiments (load average up
+      to 5.19): the host bandwidth anchor fell 18.0 -> 16.9 -> 12.8 GB/s and prefill
+      fell 905.2 -> 54.4 -> 16.8 tok/s (decode 13.19 -> 12.85 -> 4.76) while every
+      hard gate still passed; the idle-machine physics still check out (3.35 GB /
+      18.0 GB/s = 0.186 s ~= 866 tok/s for 161 tokens, consistent with the recorded
+      905.2), so the drift is contention, not a bad recording
+    decision: keep the 2026-10-07 idle-run numbers below; re-run on an idle box to refresh
+  rerun_2026_10_09:
+    status: gates_reproduced_host_anchors_contention_drift
+    evidence: >-
+      all hard gates PASS again (envelope 5.85 GB, stream-bound [16.8, 19.9]
+      tok/s, eta 0.491, load 1.7 s - the projections reproduced exactly);
+      host anchors read 14.3 GB/s / 499.8 / 12.06 tok/s vs the idle 2026-10-07
+      18.0 / 905.2 / 13.19 - same contention-drift class as the 10-08 note,
+      informational anchors only, no gate depends on them
+  rerun: .venv/bin/python scripts/sim_edge_card_software.py --json out.json
+  source: scripts/sim_edge_card_software.py
+  host: Intel-i5-12400F-6P-cores / llama-cpp-python-0.3.35 / n_threads=6 / single-threaded DRAM anchor only
+  model: google/gemma-4-E2B-it QAT Q4_0 GGUF (local snapshot, 3.350 GB)
+  measured:
+    gguf_file_gb: 3.35
+    decode_tok_s: 13.19
+    prefill_tok_s: 905.2
+    prefill_prompt_tokens: 161
+    host_read_gbs_single_thread: 18.0
+    host_stream_demand_implied_gbs: 44.2 # decode tok/s x full file (upper-bound traffic model)
+  projections:
+    envelope_gb: 5.85
+    decode_file_stream_bound_tok_s: [16.8, 19.9]
+    eta_needed_for_target: 0.491
+    load_from_host_s: 1.7
+  verdicts:
+    envelope_vs_8gb_floor: PASS
+    decode_bound_vs_target_15: PASS
+    load_vs_target_5s: PASS
+  caveats:
+    - x86 CPU proxy only; L1 targets still require an Orin NX devkit
+    - host decode 13.19 tok/s exceeds what full-file streaming allows at the host's
+      single-thread-class bandwidth, so the active-text-weights model (~2.4 GB,
+      excludes vision/audio towers) is the better anchor; the full-file bound
+      [16.8, 19.9] is kept as the conservative floor
+    - prefill 905 tok/s is host-specific and NOT projected; the card's prefill
+      budget stays the Orin INT8 analytic bound (>= 800 tok/s target)
+    - "decode_bound_vs_target_15: PASS is a BANDWIDTH-only verdict; the structural
+      cycle simulation (cycle_simulation, 2026-10-07) shows the card is
+      compute-bound at 15 GMAC/s (GPU-only dense30, 3.56 tok/s), so this PASS
+      does not carry to decode reality - see cycle_simulation.refutes"
+cycle_simulation:
+  kind: structural_discrete_event_not_l1
+  date: 2026-10-07
+  verified:
+    date: 2026-10-08
+    result: >-
+      zero drift from a fresh rerun of cycle (3.56 tok/s, 12588 hops, per-token
+      281.19-281.26 ms, replay identical), long-run (50373 hops, 0 violations)
+      and the full sweep (15 real-module points, 4 probes, load paths
+      1.70/2.09/1.40 s, baseline cross-check OK); real_mode_util_range was
+      corrected this date from the subset minimum 0.041 to the full-sweep 0.029
+      (nx16_15W @131072) - every other diagram-backed number reproduced as recorded
+  rerun_2026_10_09:
+    status: reproduced
+    result: >-
+      full sweep re-run (19 points = 15 real + 4 probes) PASS in 22.2 s;
+      baseline cross-check 3.56 vs 3.56 OK; every committed diagram number
+      (3.56 tok/s @25W/32K, 6.77 @40W/8K, util range 2.9-11.4%, load
+      1.70/2.09 s) reproduced as recorded - no anomalies
+  rerun: .venv/bin/python scripts/sim_edge_card_cycle.py --json out.json
+  source: scripts/sim_edge_card_cycle.py
+  engine: apps/backend/src/ai/hardware/edge_card_sim.py
+  design_drawing: design_drawings.decode_datapath
+  model: google/gemma-4-E2B-it QAT Q4_0 GGUF (local snapshot, 3.350 GB, 541 tensors)
+  method:
+    - "card executed, not extrapolated: LPDDR5 / INT8 MAC / SRAM queue / PCIe Gen4 x1
+      are discrete-event servers at the spec's bit widths and clocks"
+    - compute = GPU Tensor Cores only (dense30 @25W, MAC=2 confirmed); the
+      module-topline DLA share (20/40 dense) is excluded - CNN-only silicon
+      that cannot run a transformer decoder (compute.module, src_dla_layers)
+    - one decode step cut into 591 items straight from the GGUF tensor table
+      (exact bytes from tensor offsets, MACs from tensor dims, KV int8 @32K,
+      tied lm_head streams full token_embd, layers 0-14 own KV -> 15 writes)
+    - hop-by-hop engine checks every hop against physical ceilings, SRAM bounds,
+      dependency ordering, and progress (dt==0 no-progress watchdog)
+    - a run counts only if checkpoints replay bit-identically (digest) AND the
+      workload totals are consumed EXACTLY at each token boundary
+  checkpoints_hops: [16, 100, 1000, 10000] # all PASS: 0 violations, replay equal
+  gate:
+    min_tok_s: 3.3 # regression floor: measured 3.56; fails loud if the engine drifts
+  measured: # GPU-only dense30 @25W, MAC=2 -> 15 MAC/ns (DLA excluded)
+    tokens: 5
+    hops: 12588
+    decode_tok_s: 3.56
+    per_token_ms: 281.19
+    utilization: { mac_array: 1.000, mem_service: 0.067, pcie: 0.000 }
+    bottleneck: mac_array # COMPUTE-BOUND
+    ops_per_token: { total: 4.218e+9, weights: 2.280e+9, attention: 1.938e+9 }
+    bytes_per_token: { reads: 1.649e+9, writes: 9216, pcie: 8 }
+    violations: 0
+    replay_identical: true
+    workload_exact: true
+  long_run: # extended validation: no drift over 50k hops / 20 tokens
+    run: ".venv/bin/python scripts/sim_edge_card_cycle.py --checkpoints 16,100,1000,10000,50000 --tokens 20"
+    hops: 50373
+    tokens: 20
+    checkpoints: [16, 100, 1000, 10000, 50000] # all replay bit-identical, 0 violations
+    violations: 0
+    replay_equal_all_checkpoints: true
+    workload_exact: true # integer retire counters - exact by construction (was
+    # float accumulation, found drifting at ~52k hops by this very run, then fixed)
+    per_token_ms_range: [281.19, 281.26] # slight creep = KV growth on full-attn layers
+  sensitivity:
+    tops_convention_resolved: mac_2 # TOPS = 2 ops/MAC: INT8 dense = exactly 2x FP16 dense on the same Tensor Cores (38 vs 19, src_jetson_orin_page)
+    c1_reading_retired_tok_s: 7.11 # 1-op reading of GPU dense30 - invalid; pre-correction 11.85/18.45 also wrongly counted DLA TOPS
+    needed_gmac_s_for_15_at_32k: 63.3
+    gpu_dense_gmac_s: { w25: 15, w40_maxn_super: 19 } # decode-usable compute
+    weights_only_floor_gmac_s: 34.2 # ctx->0 floor = 68 dense TOPS @2ops/MAC
+    conclusion: >-
+      15 tok/s is unreachable on this silicon at ANY context under the
+      confirmed convention: it needs 63.3 GMAC/s at 32K and 34.2 GMAC/s
+      even at ctx->0, while the GPU (the only decode-usable compute) gives
+      15 GMAC/s @25W and 19 GMAC/s @MAXN_SUPER. The module-topline readings
+      (50/78 dense) counted the 2x NVDLA share (20/40 dense) that cannot
+      run a transformer decoder (src_dla_layers). Sparse 2:4 would double
+      the GPU (30/38.5 GMAC/s) but still misses 63.3 at 32K, needs a
+      2:4-pruned checkpoint + TRT-LLM path that does not exist for Gemma 4
+      QAT (unverified, L1 item), and MTP/speculative decoding does not help
+      a compute-bound decode (MACs scale with emitted tokens - only weight
+      BYTES amortize, which would matter only on a bandwidth-bound card).
+  balance_study: # module-carrier balance sweep (2026-10-07): SKU x TOPS reading x ctx
+    source: scripts/sim_edge_card_sweep.py
+    rerun: ".venv/bin/python scripts/sim_edge_card_sweep.py --json out.json"
+    context: >-
+      the card is a Jetson Orin NX module carrier: compute, LPDDR5 and the
+      PCIe endpoint live in the purchased module, so the balance knobs are
+      module SKU, nvpmodel power mode and context length. The TOPS counting
+      convention is no longer a knob: MAC=2 is fact-confirmed and decode
+      uses GPU-only dense TOPS with the DLA share excluded (compute.module).
+      Every point is the structural engine's measured steady rate (2 tokens
+      per point, cross-checked against the cycle runner's baseline within 2%).
+    ctx_order: [8192, 16384, 32768]
+    real_modes_tok_s: # {mode: [8K, 16K, 32K]} - GPU-only dense, MAC=2
+      nx8_25w_c2: [4.45, 3.81, 2.96] # 8GB SKU GPU dense25@25W (765MHz)
+      nx16_25w_c2: [5.34, 4.58, 3.56] # 16GB GPU dense30@25W = spec baseline
+      nx16_15w_c2: [3.74, 3.20, 2.49] # derived GPU dense21 (25W x 0.7)
+      nx16_40w_c2: [6.77, 5.80, 4.50] # MAXN-SUPER GPU dense38
+    meets_target:
+      any_mode_any_ctx: [] # under confirmed MAC=2 + GPU-only, nothing reaches 15
+      best_point: "nx16_40w_c2 @8K = 6.77 tok/s (44% of target)"
+    memory:
+      max_real_mode_mac_ns: 19 # biggest purchasable GPU MAC rate: 40W 38 dense TOPS / 2 ops per MAC = 19 MAC/ns
+      bind_point_ops_ns_32k: 222.6 # analytic: 87.04 B/ns x 2.558 ops/B (Q4)
+      roofline_tok_s_at_32k: 52.8 # a ~223 ops/ns class module saturates LPDDR5
+      real_mode_util_range: [0.029, 0.114] # nx16_15W@131K .. 40W@8K full sweep, never an eighth
+      probes_mem_util_at_32k: { r100: 0.447, r150: 0.644, r222_6: 0.770, r445_2: 0.929 }
+      conclusion: >-
+        idle LPDDR5 is structural, not a tuning miss: Q4 arithmetic intensity
+        (2.558 ops/byte) means memory saturates only above ~223 ops/ns
+        (~445 TOPS-class) while the biggest GPU MAC rate purchasable is 19 -
+        the 445.2 probe already shows the trade (mem 92.9%, mac falls to
+        46.5%, tok/s 49.0 converging on the 52.8 roofline asymptote). And
+        the idle bandwidth cannot be spent anyway: no purchasable mode
+        supplies the compute the target needs (sensitivity), so the headroom
+        stays headroom.
+    pcie:
+      decode_util_at_15_tok_s: 6.1e-08 # 8 B/token: a token stream by design
+      load_s_at_payload: 1.70 # 3.35 GB / 1.969 GB/s Gen4 x1
+      load_s_at_achievable_1_6: 2.09 # spec achievable floor, >=85% TLP efficiency
+      load_budget_s: 5
+      load_verdict: PASS # this is where x1 IS utilized (~100% / 85% duty)
+      role: load + hot-reload + token/control stream; decode never needs more
+    recommendation:
+      gate: "human product decision: the technical branch is closed by facts"
+      fact_resolved: "MAC=2 + GPU-only dense confirmed (src_jetson_orin_page, src_dla_layers); no SKU x power x ctx combination reaches 15 dense"
+      option_a: "accept the honest rates: 3.56 (25W @32K) .. 6.77 (40W @8K); cooling unlock remains the only lever (+26% at 32K)"
+      option_b: "revisit target/model/silicon - smaller model, different module class, or discovery of a 2:4-sparse checkpoint + TRT-LLM path (none exists for Gemma 4 QAT); product decision, human-gated"
+      option_c: "8GB SKU cost-down: 2.96..4.45 tok/s (same GPU at 765MHz), never meets 15; capacity tier only"
+      anti_goal: "chasing memory utilization (>223 ops/ns) or reviving the retired 1-op reading - both refuted"
+    cost_frame: >-
+      no prices anywhere (quote required by policy): option A = 0 BOM delta
+      (devkit time only), option B = same module + cooling/power-path rework
+      inside the slot's combined 75W limit, option C = cheaper SKU with the
+      weaker numbers above. Every option keeps the Gen4 x1 edge and the Orin NX family.
+    status: candidate_pending_l1_benchmark_and_l2_thermal
+  refutes:
+    - claim: >-
+        performance_budget.decode_tok_s.derived_e2b_q4_0_range [23.5, 27.7] tok/s
+        (and the [16.8, 19.9] file-stream range) as a decode forecast
+      why: >-
+        those are pure-bandwidth derivations assuming free compute; the structural
+        sim measures mac_array at 100% while memory sits at 7%, so the bandwidth
+        bound does not bind. The arithmetic stays in performance_budget (verified
+        by tests/unit/test_edge_card_spec.py) but decode reality is compute-bound:
+        the GPU provides 15 GMAC/s @25W (19 @MAXN_SUPER) against the 63.3
+        GMAC/s the target needs at 32K.
+  caveats:
+    - L0 structural simulation of THIS spec's configuration, not L1 silicon measurement
+    - "TOPS convention resolved by fact (MAC=2, GPU-only dense,
+      src_jetson_orin_page): the retired 1-op reading and the DLA-inclusive
+      module topline both overstate decode compute"
+    - conservative starve accounting pauses compute when staged bytes run out;
+      at measured mac util 1.000 the pauses did not bind on the bottleneck
+    - prefill not simulated here; prefill budget remains the analytic bound
+      in performance_budget.prefill_tok_s
+explicit_non_claims:
+  - no measured performance numbers on the target hardware yet (host-proxy simulation
+    numbers exist above and are labelled as such); card decode/prefill figures remain
+    budgets with stated assumptions until L1 on an Orin NX devkit
+  - no prices anywhere in this file (quote required by policy)
+  - no physical board, no fabrication, no component order placed by this file
+  - no answer or freeze of any angela_interface_freeze_packet pending_decision
+  - endpoint Gen4 x1 training is designed-for, not yet demonstrated

@@ -1202,7 +1202,10 @@ class BackendWebSocketClient {
       console.log(`[BackendWebSocket] Clearing ${this._pendingResponses.size} pending responses`)
       for (const [messageId, pending] of this._pendingResponses.entries()) {
         clearTimeout(pending.timeout)
-        pending.reject(new Error('Connection closed'))
+        // Pending entries only carry resolve (see sendMessage/requestFullState);
+        // guard so disconnect-with-inflight-requests cannot throw.
+        if (typeof pending.reject === 'function') pending.reject(new Error('Connection closed'))
+        else pending.resolve({ success: false, response: 'Connection closed' })
       }
       this._pendingResponses.clear()
       this._pendingResponses = null

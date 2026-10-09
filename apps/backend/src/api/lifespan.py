@@ -94,6 +94,9 @@ async def _get_chat_service():
             await _chat_service_instance.initialize()
         except Exception as e:
             logger.error(f"Failed to initialize chat service: {e}", exc_info=True)
+            # Don't cache the broken instance: the next call retries instead of
+            # serving every future request from a half-initialized singleton.
+            _chat_service_instance = None
             raise
     return _chat_service_instance
 
