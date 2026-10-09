@@ -64,6 +64,25 @@ class TestQueryClassifier:
         result = classifier.classify("1+1等于多少")
         assert result.primary_type == QueryType.MATH
 
+    @pytest.mark.parametrize(
+        "query",
+        [
+            "12乘以12等於多少",
+            "12乘以12是多少",
+            "100除以4等於多少",
+            "12加13是多少",
+            "20減5等於多少",
+            "7乘8等於多少",
+        ],
+    )
+    def test_classify_verbal_chinese_math(self, query):
+        """Chinese verbal arithmetic must route to MATH, not KNOWLEDGE
+        (live probe: 12乘以12等於多少 went to knowledge -> honest-no-answer)."""
+        from ai.core.query_classifier import QueryClassifier, QueryType
+
+        result = QueryClassifier().classify(query)
+        assert result.primary_type == QueryType.MATH
+
     def test_classify_knowledge(self):
         from ai.core.query_classifier import QueryClassifier, QueryType
 

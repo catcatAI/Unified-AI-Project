@@ -349,8 +349,9 @@ class QueryClassifier:
                 QueryType.MATH,
                 re.compile(
                     r"(\d+\s*[\+\-\*\/]\s*\d+|"
+                    r"\d+\s*(?:乘以|乘上|除以|加上|減去|减去|加|減|减|乘|除)\s*\d+|"
                     r"(?:三|四|五|六|七|八|九|十|百|千|万)\s*(?:加|减|乘|除)\s*(?:三|四|五|六|七|八|九|十|百|千|万)|"
-                    r"等于|等于多少|計算|计算|加法|减法|乘法|除法|"
+                    r"等于|等于多少|等於|等於多少|計算|计算|加法|减法|乘法|除法|"
                     r"\b(plus|minus|times|divided\s*by|calculate|solve|equation)\b)",
                     re.IGNORECASE,
                 ),
