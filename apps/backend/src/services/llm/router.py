@@ -342,6 +342,13 @@ class AngelaLLMService:
         )
         self.is_available = False
 
+        # Backends pruned by the startup health check (enabled in config but
+        # unhealthy at boot, e.g. llama.cpp server started after Angela).
+        # _maybe_revive_backends() re-probes them on the request path so a
+        # late-starting LLM is picked up without a server restart.
+        self._pruned_backends: Dict[Any, Any] = {}
+        self._last_revive_check: float = 0.0
+
         # [auto] LLM mode (deployment.mode / settings.llm_mode)
         deployment = self.config.get("deployment") or {}
         settings = self.config.get("settings") or {}
@@ -1020,6 +1027,8 @@ class AngelaLLMService:
             elif selection == "available":
                 logger.info(f"✗ {backend_type.value} 後端健康檢查失敗，從可用清單移除")
                 await backend.close()
+                # Keep the instance for late revival (sessions re-open lazily).
+                self._pruned_backends[backend_type] = backend
         if selection == "available":
             self.backends = {bt: b for bt, b in self.backends.items() if bt in available}
 
@@ -1039,6 +1048,55 @@ class AngelaLLMService:
         logger.info(f"Angela LLM 服務初始化完成，使用 {backend_name} 後端")
         logger.info(f"可用後端: {[b.value for b in available]}")
         return True
+
+    # Min seconds between late-revival probes (bounds request-path cost).
+    _REVIVE_INTERVAL_S = 60.0
+
+    async def _maybe_revive_backends(self) -> bool:
+        """Re-probe startup-pruned backends; re-add any that became healthy.
+
+        Called at the top of the LLM generation path so an LLM server started
+        after Angela (e.g. llama.cpp / ollama) is picked up without restart.
+        Throttled to one probe round per _REVIVE_INTERVAL_S; concurrent
+        health checks so the added latency stays near a single timeout.
+        Returns True if at least one backend was revived.
+        """
+        if not self._pruned_backends:
+            return False
+        now = time.time()
+        if now - self._last_revive_check < self._REVIVE_INTERVAL_S:
+            return False
+        self._last_revive_check = now
+
+        async def _probe(item) -> Optional[Any]:
+            btype, backend = item
+            try:
+                healthy = await self._submit_waiting(
+                    backend.check_health(),
+                    timeout=timeout_value("llm.health_check", 5.0),
+                    label=f"revive:{btype.value if hasattr(btype, 'value') else btype}",
+                )
+            except Exception as exc:
+                logger.debug("Backend revive probe failed: %s", exc)
+                return None
+            return btype if healthy else None
+
+        results = await asyncio.gather(
+            *(_probe(item) for item in list(self._pruned_backends.items()))
+        )
+        revived = [btype for btype in results if btype is not None]
+        for btype in revived:
+            self.backends[btype] = self._pruned_backends.pop(btype)
+            logger.info(f"✓ {btype.value} 後端晚啟動復活，已加回可用清單")
+        if revived:
+            self._pick_best_backend(list(self.backends.keys()))
+            self.is_available = True
+            try:
+                await self._init_model_bus()
+            except Exception as exc:
+                logger.debug("Model bus re-init after revive skipped: %s", exc)
+            return True
+        return False
 
     def _pick_best_backend(self, available):
         # Priority is driven by each backend's `priority` in config
@@ -1807,11 +1865,21 @@ class AngelaLLMService:
                     return None
             except Exception as _e:
                 logger.debug("semantic_qa check failed: %s", _e)
-        # pick best non-unified backend
+        # pick best non-unified backend (compare the backend's CATEGORY —
+        # local/cloud — against the mode gate, not the provider name:
+        # "llamacpp" in {"local"} is always False, which silently disabled
+        # the whole fusion path for every deployment mode).
+        allowed = self._allowed_types()
+
+        def _backend_category(bt) -> str:
+            if bt in (LLMBackend.ED3N, LLMBackend.GARDEN, LLMBackend.UNIFIED, LLMBackend.LOCAL):
+                return "local"
+            return "cloud" if bt.value in self._CLOUD_PROVIDERS else "local"
+
         candidates = [
             bt
             for bt in self.backends
-            if bt != LLMBackend.UNIFIED and bt.value in self._allowed_types()
+            if bt != LLMBackend.UNIFIED and _backend_category(bt) in allowed
         ]
         if not candidates:
             return None
@@ -1931,13 +1999,14 @@ class AngelaLLMService:
     )
 
     async def _query_taught_facts(self, user_message: str) -> List[Dict[str, Any]]:
-        """Direct wider lookup for taught facts (top-50, prefix-filtered).
+        """Direct facts-only lookup for taught facts (prefix-filtered).
 
         The chat-time top-3 semantic hits are dominated by near-duplicate
-        conversation echoes, which bury the fact below the cutoff (measured:
-        rank 49/50 at distance 0.483 vs echoes at 0.26). This targeted
-        re-query exists only to find LearningHandler facts and returns []
-        on any failure (fail-open to templates).
+        conversation echoes, which bury the fact below any fixed cutoff —
+        and the rank decays as history grows (measured 49/50, worsening).
+        The store-side where_document filter restricts ranking to taught
+        facts so cutoff width no longer matters. Returns [] on any failure
+        (fail-open to templates).
         """
         try:
             from ai.memory.vector_store import get_vector_store
@@ -1945,7 +2014,12 @@ class AngelaLLMService:
             store = get_vector_store()
             if store is None:
                 return []
-            results = await store.semantic_search(user_message, 50)
+            # Facts-only ranking: width covers the whole fact set (dozens
+            # today) so near-duplicate fact phrasings ("我的X叫Y" x N) are
+            # decided by the overlap filter below, not by vector rank.
+            results = await store.semantic_search(
+                user_message, 200, {"$contains": "User taught Angela:"}
+            )
             docs = (results.get("documents") or [[]])[0]
             distances = (results.get("distances") or [[]])[0]
             out = []
@@ -1990,6 +2064,16 @@ class AngelaLLMService:
             ]
             if not facts or not user_message:
                 return None
+            # Deterministic math wins over fuzzy memory: a math-shaped query
+            # sharing one coincidental bigram with a fact ("一百加二十是多少"
+            # vs "…一百度") must compute, not recall. (Live hijack 2026-10-09.)
+            try:
+                from ai.core.query_classifier import QueryClassifier, QueryType
+
+                if QueryClassifier().classify(user_message).primary_type == QueryType.MATH:
+                    return None
+            except Exception:
+                pass
             lowered = user_message.strip().lower()
             chunks = [lowered[i : i + 2] for i in range(len(lowered) - 1)]
             chunks = [c for c in chunks if len(c) >= 2 and c not in self._FACT_MATCH_STOPWORDS]
@@ -2001,14 +2085,21 @@ class AngelaLLMService:
                 if not content or not isinstance(content, str):
                     continue
                 lowered_content = content.lower()
-                if any(c in lowered_content for c in chunks):
-                    relevance = entry.get("relevance", 0.5)
-                    try:
-                        relevance = float(relevance)
-                    except (TypeError, ValueError):
-                        relevance = 0.5
-                    if best is None or relevance > best[0]:
-                        best = (relevance, content)
+                # Overlap COUNT decides (primary): among near-duplicate fact
+                # phrasings ("我的X叫Y" x N) every candidate shares 我的, so a
+                # boolean any-match degrades to pure vector relevance and a
+                # stale fact can outrank the right one (live: cat beat fox).
+                overlap = sum(1 for c in chunks if c in lowered_content)
+                if overlap == 0:
+                    continue
+                relevance = entry.get("relevance", 0.5)
+                try:
+                    relevance = float(relevance)
+                except (TypeError, ValueError):
+                    relevance = 0.5
+                key = (overlap, relevance)
+                if best is None or key > best[0]:
+                    best = (key, content)
             if best is None:
                 return None
             _, content = best
@@ -3018,6 +3109,13 @@ class AngelaLLMService:
 
     async def _generate_with_llm(self, user_message: str, context: Dict[str, Any]) -> LLMResponse:
         start_time = time.time()
+
+        # Late-starting LLM servers (pruned at boot) get one throttled
+        # re-probe per minute on the live path — no restart needed.
+        try:
+            await self._maybe_revive_backends()
+        except Exception as exc:
+            logger.debug("Backend revive skipped: %s", exc)
 
         early, gen_params = await self._prepare_generation_context(user_message, context)
         if early is not None:

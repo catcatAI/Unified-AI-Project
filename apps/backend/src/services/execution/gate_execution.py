@@ -314,7 +314,7 @@ class GateExecutionOwner:
             return None
         for category in categories:
             name, confidence = registry.detect(user_message, category=category)
-            if not name or confidence < _REGISTRY_MIN_CONFIDENCE:
+            if not name:
                 continue
             pattern = registry.get_pattern(name)
             if not pattern:
@@ -323,7 +323,15 @@ class GateExecutionOwner:
             if not handler_id:
                 continue
             required = (pattern.metadata or {}).get("require_keywords") or []
-            if required and not any(kw in user_message for kw in required):
+            has_verb = any(kw in user_message for kw in required) if required else False
+            if required and not has_verb:
+                continue
+            # Density confidence is query-length-normalized, so a longer fact
+            # dilutes a single explicit verb below the floor ("記住，水的沸點是
+            # 一百度" scored 0.18 < 0.2 while the shorter fox/dog teaches scored
+            # exactly 0.2). An explicit require-verb IS the authorization — it
+            # bypasses the density floor; without it the floor still applies.
+            if confidence < _REGISTRY_MIN_CONFIDENCE and not has_verb:
                 continue
             return str(name), str(handler_id)
         return None

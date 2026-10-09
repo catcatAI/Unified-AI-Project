@@ -126,15 +126,61 @@ async def test_recall_user_fact_falls_back_to_direct_query(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_query_taught_facts_searches_wide_and_filters_prefix(monkeypatch):
-    """Direct lookup uses top-50 (facts rank ~49 under echoes) and keeps prefix only."""
+async def test_recall_prefers_higher_overlap_over_relevance(monkeypatch):
+    """Near-duplicate facts: 狐狸(4 chunks) beats 貓(1 chunk) despite lower relevance."""
+    from unittest.mock import AsyncMock
+
+    service = _recall_service()
+    monkeypatch.setattr(service, "_query_taught_facts", AsyncMock(return_value=[]))
+    context = {
+        "retrieved_context": [
+            {
+                "role": "long_term_memory",
+                "content": "User taught Angela: 我的貓叫咪咪",
+                "relevance": 0.95,
+            },
+            {
+                "role": "long_term_memory",
+                "content": "User taught Angela: 我的狐狸叫小白",
+                "relevance": 0.50,
+            },
+        ]
+    }
+    result = await service._recall_user_fact("我的狐狸叫什麼名字？", context, 0.0)
+    assert result is not None
+    assert "小白" in result.text
+
+
+@pytest.mark.asyncio
+async def test_recall_yields_to_deterministic_math(monkeypatch):
+    """Math-shaped queries compute even when a fact shares a bigram (一百/一百度)."""
+    from unittest.mock import AsyncMock
+
+    service = _recall_service()
+    monkeypatch.setattr(service, "_query_taught_facts", AsyncMock(return_value=[]))
+    context = {
+        "retrieved_context": [
+            {
+                "role": "long_term_memory",
+                "content": "User taught Angela: 水的沸點是一百度",
+                "relevance": 0.99,
+            }
+        ]
+    }
+    assert await service._recall_user_fact("一百加二十是多少", context, 0.0) is None
+
+
+@pytest.mark.asyncio
+async def test_query_taught_facts_searches_facts_only_and_filters_prefix(monkeypatch):
+    """Direct lookup restricts ranking to taught facts store-side (echo-proof)."""
     from unittest.mock import AsyncMock
 
     service = _recall_service()
     seen = {}
 
-    async def fake_search(query, k):
+    async def fake_search(query, k, where_document=None):
         seen["k"] = k
+        seen["where"] = where_document
         return {
             "documents": [["User: hi\nAngela: hi", "User taught Angela: 我的鳥叫啾啾"]],
             "distances": [[0.26, 0.48]],
@@ -144,8 +190,53 @@ async def test_query_taught_facts_searches_wide_and_filters_prefix(monkeypatch):
     store.semantic_search = fake_search
     monkeypatch.setattr("ai.memory.vector_store.get_vector_store", lambda: store)
     results = await service._query_taught_facts("我的鳥叫什麼名字？")
-    assert seen["k"] == 50
+    assert seen["where"] == {"$contains": "User taught Angela:"}
     assert [r["content"] for r in results] == ["User taught Angela: 我的鳥叫啾啾"]
+
+
+@pytest.mark.asyncio
+async def test_maybe_revive_backends_readds_healthy():
+    """A backend pruned at boot (LLM started later) revives on the live path."""
+    from unittest.mock import AsyncMock
+
+    class _FakeBackendType:
+        value = "late-llm"
+
+    service = _recall_service()
+    fake = _FakeBackendType()
+    fake.check_health = AsyncMock(return_value=True)
+    service._pruned_backends = {fake: fake}
+    service._last_revive_check = 0.0
+    service.backends = {}
+
+    async def fake_submit(coro, **kwargs):
+        return await coro
+
+    service._submit_waiting = fake_submit
+    service._pick_best_backend = lambda available: setattr(service, "active_backend_type", fake)
+    service._init_model_bus = AsyncMock()
+
+    assert await service._maybe_revive_backends() is True
+    assert service.backends == {fake: fake}
+    assert service._pruned_backends == {}
+    assert service.is_available is True
+
+
+@pytest.mark.asyncio
+async def test_maybe_revive_backends_throttled_and_empty():
+    from unittest.mock import AsyncMock
+
+    service = _recall_service()
+    service._pruned_backends = {}
+    service._last_revive_check = 0.0
+    assert await service._maybe_revive_backends() is False
+
+    service._pruned_backends = {"x": AsyncMock()}
+    service._last_revive_check = 9999999999.0
+    service.backends = {}
+    service._submit_waiting = AsyncMock()
+    assert await service._maybe_revive_backends() is False
+    service._submit_waiting.assert_not_called()
 
 
 @pytest.mark.asyncio

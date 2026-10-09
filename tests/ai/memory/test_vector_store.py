@@ -60,6 +60,23 @@ class TestNumpyBackendCRUD:
         assert results == {}
 
     @pytest.mark.asyncio
+    async def test_search_where_document_restricts_to_matching(self, backend):
+        await backend.add_memory("echo", "User: 你好\nAngela: 你好呀")
+        await backend.add_memory("fact", "User taught Angela: 你好嗎")
+        results = await backend.semantic_search(
+            "你好", limit=5, where_document={"$contains": "User taught Angela:"}
+        )
+        assert results["ids"][0] == ["fact"]
+
+    @pytest.mark.asyncio
+    async def test_search_where_document_no_match_returns_empty(self, backend):
+        await backend.add_memory("echo", "User: 你好\nAngela: 你好呀")
+        results = await backend.semantic_search(
+            "你好", limit=5, where_document={"$contains": "User taught Angela:"}
+        )
+        assert results == {}
+
+    @pytest.mark.asyncio
     async def test_add_memory_no_metadata_numpy(self, backend):
         await backend.add_memory("id1", "content")
         assert len(backend) == 1

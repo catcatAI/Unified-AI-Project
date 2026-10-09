@@ -236,12 +236,37 @@ class _NumpyBackend:
             self.vectors = grown
         self._dirty = True
 
-    async def semantic_search(self, query: str, limit: int = 10) -> Dict[str, Any]:
+    async def semantic_search(
+        self, query: str, limit: int = 10, where_document: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         self._flush_pending()
         if len(self.ids) == 0:
             return {}
         qvec = self._embed(query)
         sims = self.vectors @ qvec
+        needle = None
+        if isinstance(where_document, dict):
+            needle = where_document.get("$contains")
+        if needle:
+            # Restrict ranking to matching documents (taught-fact lookup):
+            # conversation echoes otherwise bury facts below any fixed cutoff
+            # as history grows (measured rank 49/50 and decaying). Non-matching
+            # rows are dropped entirely (not -inf: they must not occupy top-n
+            # slots when fewer matches than limit exist).
+            kept = [
+                (i, float(s))
+                for i, (s, doc) in enumerate(zip(sims.tolist(), self.documents))
+                if needle in (doc or "")
+            ]
+            if not kept:
+                return {}
+            order = sorted(range(len(kept)), key=lambda k: -kept[k][1])
+            picked = [kept[k][0] for k in order[:limit]]
+            return {
+                "ids": [[self.ids[i] for i in picked]],
+                "documents": [[self.documents[i] for i in picked]],
+                "distances": [[float(1.0 - sims.tolist()[i]) for i in picked]],
+            }
         n = min(limit, len(sims))
         if n == 0:
             return {}
@@ -362,12 +387,15 @@ class _ChromadbBackend:
             ids=[memory_id],
         )
 
-    async def semantic_search(self, query: str, limit: int = 10) -> Dict[str, Any]:
+    async def semantic_search(
+        self, query: str, limit: int = 10, where_document: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         # chromadb's collection.query is a blocking I/O call — offload to a
         # worker thread so the caller's asyncio.wait_for can actually bound it.
-        result = await asyncio.to_thread(
-            self.collection.query, query_texts=[query], n_results=limit
-        )
+        kwargs: Dict[str, Any] = {"query_texts": [query], "n_results": limit}
+        if where_document:
+            kwargs["where_document"] = where_document
+        result = await asyncio.to_thread(self.collection.query, **kwargs)
         return dict(result)
 
 
@@ -427,9 +455,11 @@ class VectorMemoryStore:
         if self._numpy_backend is not None:
             await self._numpy_backend.add_memory(memory_id, content, metadata)
 
-    async def semantic_search(self, query: str, limit: int = 10) -> Dict[str, Any]:
+    async def semantic_search(
+        self, query: str, limit: int = 10, where_document: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         if self._numpy_backend is not None:
-            return await self._numpy_backend.semantic_search(query, limit)
+            return await self._numpy_backend.semantic_search(query, limit, where_document)
         return {}
 
     def persist(self) -> None:
