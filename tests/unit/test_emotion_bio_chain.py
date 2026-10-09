@@ -163,6 +163,9 @@ class TestInjectEmotionBehavioralContext:
             patches["bio"],
         )
         patches["bio"].process_stress_event.assert_awaited_once()
+        args, kwargs = patches["bio"].process_stress_event.call_args
+        assert args[0] == pytest.approx(0.3 * 0.8 * 2.0)
+        assert kwargs.get("duration", 15.0) == 15.0
 
     @pytest.mark.asyncio
     async def test_bio_not_called_when_none(self, patches):
@@ -175,6 +178,7 @@ class TestInjectEmotionBehavioralContext:
             None,
         )
         patches["bio"].process_stress_event.assert_not_awaited()
+        assert "emotional_behavior" in context
 
     @pytest.mark.asyncio
     async def test_behavioral_context_injected(self, patches):

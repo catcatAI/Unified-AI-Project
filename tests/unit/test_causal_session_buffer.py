@@ -94,6 +94,7 @@ def test_fire_causal_learning_skips_when_no_response(mock_get_causal):
 
     _fire_causal_learning("", "some query", "session_empty")
     mock_causal.learn.assert_not_called()
+    assert "session_empty" not in _CAUSAL_BUFFERS
 
 
 @patch("api.routes.chat_routes.get_causal_reasoning")
