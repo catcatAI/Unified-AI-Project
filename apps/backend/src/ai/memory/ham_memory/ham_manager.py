@@ -15,6 +15,50 @@ from utils.text_utils import char_bigrams as _char_bigrams_util
 
 logger = logging.getLogger(__name__)
 
+# Content markers that make a stored template UNSERVABLE as an answer.
+# Measured live 2026-10-09: unverified LLM/fallback generations fossilized
+# into the template pool and replayed verbatim (greetings for recall
+# questions, "I'm Gemma" identity leaks, destructive-action claims,
+# prompt echoes, honest refusals). Retrieval must skip these even if their
+# keywords score high (fossilized keywords self-match the same query).
+_UNSERVABLE_CONTENT_MARKERS = (
+    "i'm gemma",
+    "i am gemma",
+    "as gemma",
+    "redirecting you to look up",
+    "haven't been able to find the information",
+    "還沒有足夠",
+    "目前還沒有足夠",
+    "幫不上忙",
+    "暫時無法",
+    "沒有答案",
+    # Destructive-action claims replay "done" for deletes that may never
+    # have executed ("Got it! Deleting the files …").
+    "got it! deleting",
+    "deleting the files",
+)
+
+
+def is_unservable_template(content: Any, keywords: Any = None) -> bool:
+    """True when a stored template must never be served as an answer.
+
+    Covers content classes that are never valid answers regardless of the
+    query (refusals, identity leaks, destructive-action claims, prompt
+    echoes). Greeting-for-wrong-question poison is NOT covered here — a
+    greeting is a fine answer to a greeting — it is removed by the purge
+    (keyword analysis) and stopped at store time (verified-only gate).
+    """
+    text = content if isinstance(content, str) else str(content or "")
+    lowered = text.strip().lower()
+    if not lowered or lowered.startswith("{"):
+        return True
+    if any(m in lowered for m in _UNSERVABLE_CONTENT_MARKERS):
+        return True
+    if lowered.startswith("user:"):
+        # Prompt echo fossilized as an answer ("User: X\nAngela: …").
+        return True
+    return False
+
 
 class HAMMemoryManager:
     """Minimal JSON-backed hierarchical associative memory manager."""
@@ -153,11 +197,24 @@ class HAMMemoryManager:
                 "on",
                 "at",
                 "for",
+                # Generic meta words from a fossilized filler template
+                # ("User, the question you're asking is about the current
+                # state…"): without these, any English query containing
+                # "question" matches that template and gets served garbage.
+                "question",
+                "asking",
+                "asked",
+                "current",
+                "state",
+                "about",
+                "re",
             }
         )
 
         scored = []
         for tpl in candidates:
+            if is_unservable_template(tpl.get("content", "")):
+                continue
             keywords = tpl.get("keywords", [])
             if not keywords:
                 continue

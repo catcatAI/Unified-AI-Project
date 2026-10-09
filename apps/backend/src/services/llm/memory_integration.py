@@ -112,6 +112,17 @@ class MemoryIntegration:
                 if not template_content or template_content.strip().startswith("{"):
                     return None
 
+                # Poisoned-template guard (defense in depth; HAM also filters):
+                # fossilized refusals/echoes/identity-leaks must never serve.
+                try:
+                    from ai.memory.ham_memory.ham_manager import is_unservable_template
+
+                    if is_unservable_template(template_content):
+                        logger.info("Skipped unservable memory template id=%s", template_id)
+                        return None
+                except Exception:
+                    pass
+
                 return ChatResponse(
                     text=template_content,
                     backend="memory-template",

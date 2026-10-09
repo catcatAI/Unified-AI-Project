@@ -87,5 +87,46 @@ async def test_ham_memory_types():
     assert sample["content"] == "Test content"
 
 
+class TestUnservableTemplateGuard:
+    """Fossilized garbage must never be served (live poison 2026-10-09)."""
+
+    def _manager(self, tmp_path):
+        from ai.memory.ham_memory.ham_manager import HAMMemoryManager
+
+        m = HAMMemoryManager(memory_file=str(tmp_path / "ham.json"), auto_save=False)
+        return m
+
+    def test_is_unservable_markers(self):
+        from ai.memory.ham_memory.ham_manager import is_unservable_template
+
+        assert is_unservable_template("User, the question redirecting you to look up x")
+        assert is_unservable_template("User: foo\nAngela: bar")
+        assert is_unservable_template("Hi there! I'm Gemma 4, cute AI")
+        assert is_unservable_template("Got it! Deleting the files /tmp/x")
+        assert is_unservable_template("User，這個問題我目前還沒有足夠的知識")
+        assert not is_unservable_template("光合作用是植物利用阳光合成有机物的过程。")
+        assert not is_unservable_template("我是Angela AI，很高兴认识你！")
+
+    @pytest.mark.asyncio
+    async def test_retrieve_skips_unservable(self, tmp_path):
+        m = self._manager(tmp_path)
+        m._data["templates"] = [
+            {
+                "content": "User, the question you're asking redirecting you to look up y.",
+                "id": "poison",
+                "keywords": ["如果下雨那麼地會濕", "現在下雨了", "地濕嗎"],
+            },
+            {
+                "content": "真正的答案",
+                "id": "good",
+                "keywords": ["如果下雨那麼地會濕", "現在下雨了"],
+            },
+        ]
+        results = await m.retrieve_response_templates("如果下雨那麼地會濕，現在下雨了，地濕嗎？")
+        ids = [tpl.get("id") for tpl, _ in results]
+        assert "poison" not in ids
+        assert "good" in ids
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
