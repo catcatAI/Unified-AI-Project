@@ -20,7 +20,7 @@ and at token boundaries:
 
 It also prints the CardConfig frequency/bit-width table, dual-resource
 utilization (memory vs MAC array vs PCIe), and compares the measured
-decode rate against hardware/edge_card/edge_card_spec.yaml's
+decode rate against hardware/assemblies/done/edge_card/edge_card_spec.yaml's
 performance_budget.decode_tok_s targets - honestly: a compute-bound
 result refutes a bandwidth-derived target and is reported as such, never
 rounded up.
@@ -42,7 +42,7 @@ from pathlib import Path
 import yaml
 
 REPO = Path(__file__).resolve().parents[1]
-SPEC_PATH = REPO / "hardware/edge_card/edge_card_spec.yaml"
+SPEC_PATH = REPO / "hardware/assemblies/done/edge_card/edge_card_spec.yaml"
 sys.path.insert(0, str(REPO / "apps/backend/src"))
 
 from ai.hardware.edge_card_sim import (  # noqa: E402

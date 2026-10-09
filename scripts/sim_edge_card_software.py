@@ -6,7 +6,7 @@
 
 Loads the card's target model (google gemma-4-E2B QAT Q4_0 GGUF from the
 local Hugging Face cache) with llama.cpp on THIS machine's CPU and re-derives
-every headline budget in hardware/edge_card/edge_card_spec.yaml with real
+every headline budget in hardware/assemblies/done/edge_card/edge_card_spec.yaml with real
 measured numbers:
 
   envelope  measured GGUF size + KV + OS vs the 8/16 GB module floors
@@ -37,7 +37,7 @@ import yaml
 from llama_cpp import Llama
 
 REPO = Path(__file__).resolve().parents[1]
-SPEC_PATH = REPO / "hardware/edge_card/edge_card_spec.yaml"
+SPEC_PATH = REPO / "hardware/assemblies/done/edge_card/edge_card_spec.yaml"
 HF_HUB = Path.home() / ".cache/huggingface/hub"
 
 PROMPT = ("Write a short story about a robot learning to paint. " * 14).strip()

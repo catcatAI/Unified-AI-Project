@@ -1,0 +1,20 @@
+schema_version: edge-component-card/1
+id: m2-key-m-2230-module-class
+status: complete  # 介面等級完成；具體 SSD 零件選型未完成（components/wip/m2_ssd_part_selection.yaml）
+role: edge_card 的儲存介面等級（卡上 NVMe 走 Orin C7 x2）
+what: M.2 Key-M 2230 socket 介面等級元件卡（22mm 寬 x 30mm 長模組區）
+facts:
+  interface: M2-Key-M-2230
+  bus: pcie-nvme-on-orin-c7-x2
+  capacity_gb: { min: 256, target: 512 }
+  holds: [jetson-linux-os, model-library, service-logs]
+  boot: nvme-primary
+  recovery_path: USB forced-recovery through bracket USB-C（無 SD socket）
+  thermal_caveat: >-
+    M.2 區在風扇對側、無直達熱路；選型被 open_items.nvme_thermal_path 擋住，
+    本卡只鎖介面等級，不鎖零件
+consumer_of_truth: hardware/assemblies/done/edge_card/edge_card_spec.yaml (storage)
+sources:
+  - https://docs.nvidia.com/jetson/archives/r39.2.1/DeveloperGuide/HR/JetsonModuleAdaptationAndBringUp/JetsonOrinNxNanoSeries.html
+copied_into:
+  - hardware/assemblies/done/edge_card/components/m2_2230_module_class.yaml

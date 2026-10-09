@@ -17,7 +17,9 @@ import pytest
 import yaml
 from core.facts import Fact, Report, Verdict, adjudicate, adjudicate_chain
 
-SPEC_PATH = Path(__file__).resolve().parents[2] / "hardware/edge_card/edge_card_spec.yaml"
+SPEC_PATH = (
+    Path(__file__).resolve().parents[2] / "hardware/assemblies/done/edge_card/edge_card_spec.yaml"
+)
 
 
 def _load_spec() -> Any:

@@ -2,7 +2,7 @@
 # ANGELA-MATRIX: [L6] [βγδ] [A] [L3]
 # =============================================================================
 
-"""Structural discrete-event simulator for the edge card (hardware/edge_card).
+"""Structural discrete-event simulator for the edge card (hardware/assemblies/done/edge_card).
 
 Unlike bandwidth-ratio extrapolations, this module *executes* the card: the
 model is partitioned by bit-width and clock into the simulated components

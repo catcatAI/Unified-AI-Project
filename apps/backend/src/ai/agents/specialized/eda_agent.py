@@ -221,7 +221,7 @@ class EdaAgent:
     def get_ai_card_interface_packet(self) -> Dict[str, Any]:
         packet_path = (
             Path(__file__).resolve().parents[6]
-            / "hardware/ai_compute_card/angela_interface_freeze_packet.yaml"
+            / "hardware/assemblies/wip/ai_compute_card/angela_interface_freeze_packet.yaml"
         )
         try:
             import yaml
@@ -794,7 +794,7 @@ class EdaAgent:
                 "interface_freeze_packet": {
                     "status": packet.get("status", "unavailable"),
                     "pending_decision_count": len(pending_decisions),
-                    "path": "hardware/ai_compute_card/angela_interface_freeze_packet.yaml",
+                    "path": "hardware/assemblies/wip/ai_compute_card/angela_interface_freeze_packet.yaml",
                 },
                 "next_owner": "angela",
                 "completion_claim_allowed": False,

@@ -1,0 +1,24 @@
+schema_version: edge-package-manifest/1
+assembly: edge_card
+level: L0  # 本層完成定義：規格+圖+仿真自洽；L1-L4 是產品驗收流程，非工作區完成度
+packaged_on: 2026-10-09
+rule: >-
+  完成組件自含打包：元件卡從完成元件庫（hardware/components/done/）複製而來，
+  不跨區引用；未完成元件一律不打包（見 hardware/README.md 打包規則）。
+components:
+  - source: hardware/components/done/compute_module_orin_nx.yaml
+    copy: components/compute_module_orin_nx.yaml
+    why: 兩版小板共用的運算模組（L0 規格 compute.module 的元件級事實卡）
+  - source: hardware/components/done/m2_2230_module_class.yaml
+    copy: components/m2_2230_module_class.yaml
+    why: 卡上 NVMe 介面等級（具體 SSD 選型未完成，不入包——wip/m2_ssd_part_selection）
+  - source: hardware/components/done/cooling_fan_40mm.yaml
+    copy: components/cooling_fan_40mm.yaml
+    why: 單槽主動散熱風扇（兩版共用同一風道設計）
+not_packaged:
+  - hardware/components/wip/m2_ssd_part_selection.yaml  # blocked: nvme_thermal_path
+  - hardware/components/wip/chip/cim_freeze_draft.yaml  # 芯片側草案，本組件不使用自研矽
+  - hardware/components/wip/chip/mvu_header_spec.yaml
+verification:
+  sims: [cycle_sweep, host_proxy]  # 詳見 simulation_report.md（2026-10-09 重跑）
+  tests: tests/unit/test_edge_card_spec.py, tests/unit/test_edge_card_refs.py

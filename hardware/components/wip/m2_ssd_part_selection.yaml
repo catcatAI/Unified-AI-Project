@@ -1,0 +1,11 @@
+schema_version: edge-component-card/1
+id: m2-ssd-part-selection
+status: blocked
+role: edge_card 的 M.2 NVMe 具體零件（等級已定，選型未完成）
+what: 2230 NVMe SSD 具體型號選型——未完成，禁止被打包進完成組件
+blocked_by: open_items.nvme_thermal_path（M.2 無直達熱路；SMART 溫度須 >=10C 頭隙才定型）
+must_hold: >-
+  SMART temp >= 10 C below datasheet max at 40 C ambient；不滿足則加熱擴散片
+  或移 socket，之後才選型
+consumer_of_truth: hardware/assemblies/done/edge_card/edge_card_spec.yaml (open_items.nvme_thermal_path)
+not_copied_because: status != complete（打包規則 #3：wip 禁入 done 打包）

@@ -476,10 +476,14 @@ async def test_recorded_reduced_rail_evidence_matches_the_simulation(
     """
     import yaml
 
-    hardware_dir = Path(__file__).resolve().parents[3] / "hardware/ai_compute_card"
-    draft = yaml.safe_load((hardware_dir / "cim_freeze_draft.yaml").read_text(encoding="utf-8"))
+    hardware_dir = Path(__file__).resolve().parents[3] / "hardware"
+    draft = yaml.safe_load(
+        (hardware_dir / "components/wip/chip/cim_freeze_draft.yaml").read_text(encoding="utf-8")
+    )
     packet = yaml.safe_load(
-        (hardware_dir / "angela_interface_freeze_packet.yaml").read_text(encoding="utf-8")
+        (
+            hardware_dir / "assemblies/wip/ai_compute_card/angela_interface_freeze_packet.yaml"
+        ).read_text(encoding="utf-8")
     )
 
     adapter = EdaToolAdapter(config={"enabled": True}, output_root=tmp_path)

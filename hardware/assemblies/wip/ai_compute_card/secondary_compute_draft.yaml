@@ -8,10 +8,10 @@ purpose: >-
   Every claim carries its source. Reasoning input for the acceptance check;
   it settles no pending decision by itself.
 sources:
-  task_contract: hardware/ai_compute_card/ai_compute_card_task.yaml
-  freeze_packet: hardware/ai_compute_card/angela_interface_freeze_packet.yaml
-  concept_fixture: hardware/ai_compute_card/concept_design.yaml
-  cim_draft: hardware/ai_compute_card/cim_freeze_draft.yaml
+  task_contract: hardware/assemblies/wip/ai_compute_card/ai_compute_card_task.yaml
+  freeze_packet: hardware/assemblies/wip/ai_compute_card/angela_interface_freeze_packet.yaml
+  concept_fixture: hardware/assemblies/wip/ai_compute_card/concept_design.yaml
+  cim_draft: hardware/components/wip/chip/cim_freeze_draft.yaml
   card_reference: apps/backend/src/ai/hardware/ai_card_reference.py
   mvu_reference: apps/backend/src/ai/hardware/mvu_reference.py
   cell_library_evidence: /home/cxuo/chip/design/VERIFIED_COMPARE.md
@@ -35,10 +35,10 @@ thesis:
 verified_claims:
   - claim: secondary compute = 1024b, 16 partitions x 64b, role
       sparse_hot_weight_update, mapping field still pending_decision_answer
-    source: hardware/ai_compute_card/angela_interface_freeze_packet.yaml:46-55
+    source: hardware/assemblies/wip/ai_compute_card/angela_interface_freeze_packet.yaml:46-55
   - claim: weight_update_fabric transport = die_internal_secondary_compute_to_l1_cache,
       consumers = [l1_weight_cache] only
-    source: hardware/ai_compute_card/concept_design.yaml:78-88
+    source: hardware/assemblies/wip/ai_compute_card/concept_design.yaml:78-88
   - claim: mvu models the two roles as a digital dual-port SRAM - read_port_a
       feeds the PE (main), write_port_b applies deltas (secondary)
     source: apps/backend/src/ai/hardware/mvu_reference.py:175,182,461-489
@@ -53,7 +53,7 @@ verified_claims:
       floor(total_bits x 0.03125) = 3.125% are mvu config properties
     source: apps/backend/src/ai/hardware/mvu_reference.py:36,67-68,79-80
   - claim: task acceptance L1 requires weight_update_is_atomic_and_bounded
-    source: hardware/ai_compute_card/ai_compute_card_task.yaml:177
+    source: hardware/assemblies/wip/ai_compute_card/ai_compute_card_task.yaml:177
   - claim: D02 6T SRAM cell is in the verified standard-cell library
       (array 9.9229 um2/bit, status 0/0)
     source: /home/cxuo/chip/design/VERIFIED_COMPARE.md:676,860
@@ -91,8 +91,8 @@ corrections:
       implement different notions of bounded and neither is named in the
       freeze packet.
     sources:
-      - hardware/ai_compute_card/angela_interface_freeze_packet.yaml:72-77
-      - hardware/ai_compute_card/ai_compute_card_task.yaml:177
+      - hardware/assemblies/wip/ai_compute_card/angela_interface_freeze_packet.yaml:72-77
+      - hardware/assemblies/wip/ai_compute_card/ai_compute_card_task.yaml:177
       - apps/backend/src/ai/hardware/ai_card_reference.py:399-414
     consequence: >-
       Sufficiency of 1/16 bandwidth cannot rest on the clamp. Without a
@@ -106,7 +106,7 @@ corrections:
       fabric consumers (credit-based tiled DMA). DMA never touches the
       secondary fabric (its only consumer is l1_weight_cache) - that half of
       the claim holds.
-    source: hardware/ai_compute_card/concept_design.yaml:70-77,113-117
+    source: hardware/assemblies/wip/ai_compute_card/concept_design.yaml:70-77,113-117
   P4:
     title: frozen cache policy is explicit regions, not dirty writeback
     detail: >-
@@ -117,8 +117,8 @@ corrections:
       (disk) lives, outside the card. Reframe: which purchased memory
       (card_l2_selection) and does the policy admit writeback at all.
     sources:
-      - hardware/ai_compute_card/concept_design.yaml:127-131
-      - hardware/ai_compute_card/angela_interface_freeze_packet.yaml:63-71
+      - hardware/assemblies/wip/ai_compute_card/concept_design.yaml:127-131
+      - hardware/assemblies/wip/ai_compute_card/angela_interface_freeze_packet.yaml:63-71
   P5:
     title: engine choice is contract-neutral for widths, not for addressability
     detail: >-
@@ -131,8 +131,8 @@ corrections:
       choice therefore ripples into Q3 fields even though the 1024b contract
       itself does not change.
     sources:
-      - hardware/ai_compute_card/angela_interface_freeze_packet.yaml:90-101
-      - hardware/ai_compute_card/cim_freeze_draft.yaml:56-67
+      - hardware/assemblies/wip/ai_compute_card/angela_interface_freeze_packet.yaml:90-101
+      - hardware/components/wip/chip/cim_freeze_draft.yaml:56-67
   P6:
     title: cim_draft weight-capacity numbers are three-way inconsistent
     detail: >-
@@ -145,9 +145,9 @@ corrections:
       (16MB ~ 57mm2 feasible), which its own single_die_correction (16MB =
       1231.22mm2) invalidated. Any engine decision must first re-derive these.
     sources:
-      - hardware/ai_compute_card/cim_freeze_draft.yaml:14-19,37-40,293-298
-      - hardware/ai_compute_card/angela_interface_freeze_packet.yaml:281-292,345-353
-      - hardware/ai_compute_card/cim_freeze_draft.yaml:299-306
+      - hardware/components/wip/chip/cim_freeze_draft.yaml:14-19,37-40,293-298
+      - hardware/assemblies/wip/ai_compute_card/angela_interface_freeze_packet.yaml:281-292,345-353
+      - hardware/components/wip/chip/cim_freeze_draft.yaml:299-306
   P7:
     title: die_l1_interface draft coverage is partial with two live conflicts
     detail: >-
@@ -162,7 +162,7 @@ corrections:
       entirely; (d) bounded definition - P2.
     sources:
       - apps/backend/src/ai/hardware/mvu_reference.py:108-113,361,648-655
-      - hardware/ai_compute_card/concept_design.yaml:129
+      - hardware/assemblies/wip/ai_compute_card/concept_design.yaml:129
       - apps/backend/src/ai/hardware/ai_card_reference.py:331-332
   P8:
     title: secondary compute role grows under the CIM draft
@@ -173,8 +173,8 @@ corrections:
       input_output role in the freeze packet. The role boundary belongs in
       microarchitecture / partition_ownership before RTL.
     sources:
-      - hardware/ai_compute_card/cim_freeze_draft.yaml:49-51
-      - hardware/ai_compute_card/angela_interface_freeze_packet.yaml:37-45
+      - hardware/components/wip/chip/cim_freeze_draft.yaml:49-51
+      - hardware/assemblies/wip/ai_compute_card/angela_interface_freeze_packet.yaml:37-45
   P9:
     title: mvu issue statuses are static strings; at least one is stale
     detail: >-

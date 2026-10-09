@@ -10,7 +10,9 @@ from ai.hardware.mvu_reference import (
     WavefrontController,
 )
 
-HEADER_SPEC_PATH = Path(__file__).resolve().parents[2] / "hardware/mvu/mvu_header_spec.yaml"
+HEADER_SPEC_PATH = (
+    Path(__file__).resolve().parents[2] / "hardware/components/wip/chip/mvu_header_spec.yaml"
+)
 
 
 def test_reference_config_exposes_spec_blockers() -> None:

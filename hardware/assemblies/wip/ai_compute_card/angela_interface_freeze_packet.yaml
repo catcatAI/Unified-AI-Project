@@ -4,9 +4,9 @@ owner: angela
 support_owner: environment_support
 purpose: separate_given_initial_conditions_from_angela_design_decisions_before_l2_validation
 source_of_truth:
-  task_contract: hardware/ai_compute_card/ai_compute_card_task.yaml
-  concept_fixture: hardware/ai_compute_card/concept_design.yaml
-  component_registry: hardware/ai_compute_card/component_registry.yaml
+  task_contract: hardware/assemblies/wip/ai_compute_card/ai_compute_card_task.yaml
+  concept_fixture: hardware/assemblies/wip/ai_compute_card/concept_design.yaml
+  component_registry: hardware/components/component_registry.yaml
   reference_model: apps/backend/src/ai/hardware/ai_card_reference.py
   terminology_rule: project_map_and_context_labels_are_not_compute_card_memory_levels
 known_initial_conditions:

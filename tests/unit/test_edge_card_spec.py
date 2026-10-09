@@ -2,7 +2,7 @@
 # ANGELA-MATRIX: [L6] [βγδ] [A] [L3]
 # =============================================================================
 
-"""Audit tests for hardware/edge_card/edge_card_spec.yaml.
+"""Audit tests for hardware/assemblies/done/edge_card/edge_card_spec.yaml.
 
 The spec is a decision record written before any hardware exists, so these
 tests re-derive every committed number (link payload, working-set envelope,
@@ -12,12 +12,15 @@ trusting the transcribed digits.
 
 from __future__ import annotations
 
+import math
 from pathlib import Path
 
 import pytest
 import yaml
 
-SPEC_PATH = Path(__file__).resolve().parents[2] / "hardware/edge_card/edge_card_spec.yaml"
+SPEC_PATH = (
+    Path(__file__).resolve().parents[2] / "hardware/assemblies/done/edge_card/edge_card_spec.yaml"
+)
 
 
 def _load_spec() -> dict:
@@ -96,6 +99,22 @@ def test_board_variants_family_within_x4_ceiling() -> None:
 
     assert bv["primary"].startswith("edge_x1")
     assert spec["product_decision"]["host_link"] == "PCIe-Gen4-x1-endpoint"
+
+    # 兩版小板 L0 鎖定（2026-10-09）：x4 板長 = x1 + CEM 手指差，現算不寫死
+    assert bv["edge_x4"]["status"] == "l0_locked_commissioned_separately"
+    mech = spec["mechanical"]
+    zone = mech["edge_finger_zone_mm"]
+    growth = zone["x4"]["total_b"] - zone["x1"]["total_b"]
+    assert round(growth, 1) == 14.0
+    derived = mech["pcb_length_mm_max"] + growth
+    assert round(derived, 1) == 184.0
+    assert mech["pcb_length_mm_max_x4"] == math.ceil(derived / 5) * 5 == 185
+    assert bv["edge_x4"]["mechanical"]["pcb_length_mm_max"] == mech["pcb_length_mm_max_x4"]
+    assert bv["edge_x4"]["mechanical"]["finger_zone_total_b_mm"] == zone["x4"]["total_b"]
+    assert "duct" in bv["edge_x4"]["thermal_note"]
+    mv_d = spec["design_drawings"]["mechanical_views"]["diagram"]
+    assert str(mech["pcb_length_mm_max_x4"]) in mv_d
+    assert str(zone["x4"]["total_b"]) in mv_d
 
     x4 = bv["edge_x4"]
     assert (
@@ -694,13 +713,15 @@ def test_spec_top_level_schema_is_complete() -> None:
 def test_spec_declared_paths_exist_on_disk() -> None:
     """spec 寫的路徑必須真實存在；腳本指的 spec 也必須是這一份。"""
     spec = _load_spec()
-    repo = SPEC_PATH.parents[2]
+    repo = SPEC_PATH.parents[4]
     sim = spec["host_proxy_simulation"]
     assert (repo / sim["source"]).is_file(), sim["source"]
     cycle = spec["cycle_simulation"]
     assert (repo / cycle["source"]).is_file(), cycle["source"]
     assert (repo / cycle["engine"]).is_file(), cycle["engine"]
-    assert (repo / "hardware/edge_card/edge_card_spec.yaml").resolve() == SPEC_PATH.resolve()
+    assert (
+        repo / "hardware/assemblies/done/edge_card/edge_card_spec.yaml"
+    ).resolve() == SPEC_PATH.resolve()
 
 
 def test_spec_provenance_and_projection_keys_are_complete() -> None:

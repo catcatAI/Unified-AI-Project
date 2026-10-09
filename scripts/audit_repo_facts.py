@@ -182,7 +182,9 @@ def main() -> int:
     )
 
     # ---- 4. edge 引用閉合 ----
-    spec_text = (REPO / "hardware/edge_card/edge_card_spec.yaml").read_text(encoding="utf-8")
+    spec_text = (REPO / "hardware/assemblies/done/edge_card/edge_card_spec.yaml").read_text(
+        encoding="utf-8"
+    )
     spec = yaml.safe_load(spec_text)
     defined = set(spec["sources"])
     used = set(re.findall(r"src_[a-z0-9_]+", spec_text))

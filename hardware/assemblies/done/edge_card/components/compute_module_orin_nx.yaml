@@ -1,0 +1,24 @@
+schema_version: edge-component-card/1
+id: compute-module-orin-nx-16gb
+status: complete
+role: edge_card 變體（edge_x1 / edge_x4 共用）的運算模組
+what: NVIDIA Jetson Orin NX 16GB SO-DIMM-260 模組（外購件，兩版小板共用同一模組）
+facts:
+  module_size_mm: [69.6, 45.0]
+  connector: SO-DIMM-260
+  memory: 16GB LPDDR5 102.4 GB/s raw
+  gpu: Ampere 1024 CUDA / 32 Tensor Cores（GPU-only dense 30 TOPS @25W，38 @40W）
+  cpu: 6x Arm Cortex-A78AE
+  pcie_controllers:
+    c4: up-to-x4 dual-mode root-port-or-endpoint（Gen4）——小卡 edge 走這條
+    c7: x2（on-card NVMe）
+  power_modes_w: [10, 15, 25, 40]
+  module_input_range_v: [5, 20]  # slot 12V 直餵在範圍內；>=8V 解鎖 40W
+  junction_temp_c: { target: 90, slowdown: 99, max: 105 }
+consumer_of_truth: hardware/assemblies/done/edge_card/edge_card_spec.yaml (compute.module)
+sources:
+  - https://static.generation-robots.com/media/Jetson-Orin-NX-Series-Modules-Datasheet.pdf (DS-10712-001_v1.7)
+  - https://docs.nvidia.com/jetson/archives/r39.2.1/DeveloperGuide/HR/JetsonModuleAdaptationAndBringUp/JetsonOrinNxNanoSeries.html
+  - https://docs.nvidia.com/jetson/archives/r35.6.1/DeveloperGuide/SD/PlatformPowerAndPerformance/JetsonOrinNanoSeriesJetsonOrinNxSeriesAndJetsonAgxOrinSeries.html
+copied_into:
+  - hardware/assemblies/done/edge_card/components/compute_module_orin_nx.yaml

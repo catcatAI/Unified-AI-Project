@@ -7,7 +7,7 @@ from ai.hardware.ai_card_reference import AiCardReferenceModel
 
 PACKET_PATH = (
     Path(__file__).resolve().parents[2]
-    / "hardware/ai_compute_card/angela_interface_freeze_packet.yaml"
+    / "hardware/assemblies/wip/ai_compute_card/angela_interface_freeze_packet.yaml"
 )
 
 
@@ -134,7 +134,7 @@ def test_packet_power_findings_match_the_derived_model() -> None:
 
 
 CIM_DRAFT_PATH = (
-    Path(__file__).resolve().parents[2] / "hardware/ai_compute_card/cim_freeze_draft.yaml"
+    Path(__file__).resolve().parents[2] / "hardware/components/wip/chip/cim_freeze_draft.yaml"
 )
 
 

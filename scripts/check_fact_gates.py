@@ -32,7 +32,9 @@ def _edge_facts():
     import yaml
     from core.facts import Fact
 
-    spec = yaml.safe_load((REPO / "hardware/edge_card/edge_card_spec.yaml").read_text())
+    spec = yaml.safe_load(
+        (REPO / "hardware/assemblies/done/edge_card/edge_card_spec.yaml").read_text()
+    )
     primary = spec["model_target"]["primary"]
     envelope = spec["model_target"]["working_set_gb"]
     budget = spec["performance_budget"]

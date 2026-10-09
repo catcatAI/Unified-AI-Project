@@ -17,7 +17,7 @@ from pathlib import Path
 import yaml
 
 REPO = Path(__file__).resolve().parents[2]
-SPEC_PATH = REPO / "hardware/edge_card/edge_card_spec.yaml"
+SPEC_PATH = REPO / "hardware/assemblies/done/edge_card/edge_card_spec.yaml"
 _SRC_TOKEN = re.compile(r"src_[a-z0-9_]+")
 
 

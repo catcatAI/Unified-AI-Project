@@ -1,0 +1,17 @@
+schema_version: edge-component-card/1
+id: cooling-fan-40mm-4pin-pwm
+status: complete
+role: edge_card 單槽主動散熱的風扇元件（兩版小板共用）
+what: 40mm 4-pin PWM + tach 風扇，由模組風扇座驅動
+facts:
+  size_mm: 40
+  control: 4-pin PWM + tach（sensors.fan-tach-rpm）
+  drive_source: module fan header（載板無風扇驅動電路）
+  airflow_requirement: ">= 200 lfm 系統級（整機風道驗收線，非風扇單體銘牌）"
+  board_budget_w: 2
+  path: fan -> fin stack -> module top plate -> bracket exit
+consumer_of_truth: hardware/assemblies/done/edge_card/edge_card_spec.yaml (power_and_thermal)
+sources:
+  - hardware/assemblies/done/edge_card/edge_card_spec.yaml (power_and_thermal.cooling*)
+copied_into:
+  - hardware/assemblies/done/edge_card/components/cooling_fan_40mm.yaml
