@@ -73,6 +73,9 @@ class TestQueryClassifier:
             "12加13是多少",
             "20減5等於多少",
             "7乘8等於多少",
+            "十五乘以十三是多少",
+            "一百加二十是多少",
+            "十乘以二等於多少",
         ],
     )
     def test_classify_verbal_chinese_math(self, query):
