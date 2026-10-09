@@ -916,3 +916,106 @@ def test_audit_diagram_strings_match_owning_fields() -> None:
     assert "19 ops/ns" not in dp_d
     assert "NVMe SMART + fan tach" in pt_d
     assert "to be measured at L3" in sys_d  # L3 尚未量測，圖不得寫成已完成
+
+
+# -----------------------------------------------------------------------------
+# 2026-10-09 網路搜尋審計缺口補齊（B1-B10 + C3）——L2 佈局約束 / 法規路徑 / 設計驗證區聲明
+# -----------------------------------------------------------------------------
+def test_signal_integrity_constraints_for_l2_layout() -> None:
+    """SI 缺口（85Ω / AC 耦合 / 損耗預算 / skew / via）必須是數值化 L2 佈局門檻。"""
+    spec = _load_spec()
+    si = spec["clocking_and_noise"]["signal_integrity"]
+
+    # B1: 85Ω 差動阻抗（卡緣→連接器區），chip-to-chip 100Ω
+    assert "85 ohm" in si["diff_impedance"] and "100 ohm" in si["diff_impedance"]
+    # B2: 卡上 TX AC 耦合電容距 CEM 連接器 400 mils（=10.16mm，現算）
+    assert "400 mils" in si["ac_coupling"]
+    assert "10.16" in si["ac_coupling"]
+    assert round(400 * 0.0254, 2) == 10.16
+    # B3: Gen4 全鏈路 28dB = 卡 8dB + 系統板 20dB → 卡 PCB 預算 5dB @8GHz Nyquist
+    assert "28 dB" in si["channel_loss_budget"] and "8 dB" in si["channel_loss_budget"]
+    assert "20 dB" in si["channel_loss_budget"] and "5 dB" in si["channel_loss_budget"]
+    assert "8 GHz" in si["channel_loss_budget"]
+    # B4: intra-pair skew <=5 mils（現算 0.127mm）、每 lane <=6 via pairs、邊緣到晶片 4 吋
+    assert si["intra_pair_skew_max_mm"] == 0.127 == round(5 * 0.0254, 3)
+    assert si["via_pairs_max_on_lane"] == 6
+    assert si["edge_to_chip_trace_max_mm"] == 101.6 == round(4 * 25.4, 1)
+    # 出處閉合
+    assert set(si["sources"]) <= set(spec["sources"])
+    assert {
+        "src_ti_pcie_layout",
+        "src_ti_precision_labs_pcie",
+        "src_pcie_gen4_compliance",
+        "src_fcc_part15b",
+        "src_pci_sig_compliance",
+        "src_orin_design_guide",
+    } <= set(spec["sources"])
+
+
+def test_edge_finger_finish_hard_gold_and_bevel() -> None:
+    """B5: 卡緣觸點硬金+鎳、插入邊倒角——L2 fab 圖要求，非選型。"""
+    finish = _load_spec()["mechanical"]["edge_finger_finish"]
+    assert "hard gold" in finish and "bevel" in finish
+    assert "L2" in finish and "src_pcie_cem" in finish
+
+
+def test_power_budget_mode_split_and_sys_reset_gate() -> None:
+    """B6/B7: 25W 與 40W 模式的板預算拆分 + SYS_RESET* 載板供電閘。"""
+    spec = _load_spec()
+    budget = spec["power_and_thermal"]["board_budget_w"]
+    sp = spec["power_and_thermal"]["slot_power"]
+    overhead = budget["m2_nvme"] + budget["fan"] + budget["rails_and_conversion_overhead"]
+    modes = spec["compute"]["module"]["supported_power_modes_w"]
+
+    # 兩模式各自的 cap 現算，且都收斂在 12V 5.5A/66W 上限內
+    assert budget["tdp_cap"] == budget["module_maxn"] + overhead == 35
+    assert budget["tdp_cap_40w_mode"] == max(modes) + overhead == 50
+    assert budget["tdp_cap_40w_mode"] <= sp["slot_available_12v_w"] == 66
+    assert budget["tdp_cap_40w_mode"] <= sp["slot_combined_max_w"] == 75
+    assert "40 + 3 + 2 + 5 = 50" in budget["cap_40w_derivation"]
+
+    # B6: SYS_RESET* 閘是載板佈局/bring-up 規則，出處為 Orin 產品設計指南
+    seq = spec["power_and_thermal"]["power_integrity"]["sequencing"]
+    assert "SYS_RESET*" in seq and "src_orin_design_guide" in seq
+
+
+def test_aspm_clkreq_aux_and_module_id_policy() -> None:
+    """B8/B10/C3: ASPM/CLKREQ# 刻意 NC+替代路徑、3.3Vaux 0mA、MODULE_ID pull-up 建議。"""
+    spec = _load_spec()
+    sb = spec["host_interface"]["edge_sidebands"]
+
+    # B8: CLKREQ# NC 是刻意決策（compute 卡常開），並記錄日後接線的替代路徑
+    assert "NC" in sb["clkreq"] and "deliberate decision" in sb["clkreq"]
+    assert "CLKREQ#" in sb["clkreq"] and "Revisit path" in sb["clkreq"]
+    # B10: 3.3Vaux 明說 0mA（不與 power_integrity 的 aux 限流表混淆）
+    assert "0 mA" in sb["wake_and_aux"] and "NC" in sb["wake_and_aux"]
+    # C3: MODULE_ID pull-up 建議電壓（3.3V）寫進既有 vdd_in_wiring 開放項
+    vdd = next(item for item in spec["open_items"] if item["id"] == "vdd_in_wiring")
+    assert "MODULE_ID" in vdd["question"] and "3.3V" in vdd["question"]
+    assert "src_orin_design_guide" in vdd["question"]
+
+
+def test_regulatory_path_and_development_stage_declared() -> None:
+    """B9 法規路徑（FCC/CE/材料/PCI-SIG 選項）+ 「設計驗證區、未實體開發」聲明必須在位。"""
+    spec = _load_spec()
+    reg = spec["regulatory"]
+
+    assert "Class B" in reg["emissions"] and "EN 55032" in reg["emissions"]
+    assert "src_fcc_part15b" in reg["emissions"]
+    assert "IEC 61000-4-2" in reg["esd_immunity"]
+    assert "UL94V-0" in reg["materials"] and "RoHS" in reg["materials"]
+    assert (
+        "optional" in reg["pcie_compliance"] and "src_pci_sig_compliance" in reg["pcie_compliance"]
+    )
+    assert reg["status"] == "declared_at_l0_executed_never"
+
+    l4 = spec["acceptance"]["L4"]
+    for marker in ("regulatory_path_executed", "esd_immunity_iec_61000_4_2", "vibration_and_shock"):
+        assert any(marker in item for item in l4), marker
+
+    # 工作區標記：設計與設計驗證區，實體開發未開始
+    ds = spec["development_stage"]
+    assert ds["phase"] == "design_and_design_verification"
+    assert ds["physical_development"] == "not_started"
+    assert "human_approval_required_for" in ds["boundary"]
+    assert "physical board" in ds["boundary"]

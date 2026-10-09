@@ -4129,5 +4129,7 @@ test files with zero pytest assertions.
   2026-10-09; +1 concurrent).
 - **Test count**: **7,130 collected (tests/) — 0 errors** (2026-10-09; +12
   hardware workspace locks `test_hardware_workspace.py`, +6 concurrent).
+- **Test count**: **7,148 collected (tests/) — 0 errors** (2026-10-09; +5
+  edge_card spec gap-closure tests — B1-B10 + C3 audit gaps, +13 concurrent).
 
 [//]: # 'End of MASTER_TASK_MAP'

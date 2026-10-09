@@ -3,6 +3,9 @@
 > 範圍：兩版小板 **edge_x1（170mm）** 與
 > **edge_x4（185mm）**，L0 圖文鎖定後的全量重跑。數字正本是
 > `edge_card_spec.yaml`；本檔是「跑過什麼、結果、異常、沒跑什麼」的記錄。重跑命令在各節。
+>
+> **區性**：這是**設計驗證**記錄（軟體仿真/現算），屬「設計與設計驗證區」——未在任何實物上量測；L1-L4 的實體驗證一項都未做（spec
+> `development_stage`，硬件工作區聲明見 hardware/README.md）。
 
 ## 0. 變體差異（只差這四樣，其餘逐字相同）
 
@@ -87,13 +90,17 @@
 
 ## 6. 未完成清單（本層做不了、不得宣稱完成的）
 
-| 項                                       | 層           | 擋誰                                      |
-| ---------------------------------------- | ------------ | ----------------------------------------- |
-| L1：Orin devkit 上 C4 EP 訓練 + DMA 驅動 | L1/L3        | c4_ep_link_speed、mailbox_protocol_freeze |
-| SI/PI 場解算（85Ω、loss budget、眼圖）   | L2           | KiCad + 解算器                            |
-| CFD/流阻與鰭片幾何                       | L2           | single_slot_thermal 閘                    |
-| M.2 SSD 具體選型                         | L2           | nvme_thermal_path（→ wip 元件卡）         |
-| 實測 BER/發射/ESD                        | L3/L4        | acceptance.L3/L4                          |
-| x4 變體排風道驗證                        | x4 自己的 L2 | thermal_note（spec board_variants）       |
+| 項                                           | 層           | 擋誰                                                 |
+| -------------------------------------------- | ------------ | ---------------------------------------------------- |
+| L1：Orin devkit 上 C4 EP 訓練 + DMA 驅動     | L1/L3        | c4_ep_link_speed、mailbox_protocol_freeze            |
+| SI/PI 場解算（85Ω、loss budget、眼圖）       | L2           | KiCad + 解算器                                       |
+| CFD/流阻與鰭片幾何                           | L2           | single_slot_thermal 閘                               |
+| M.2 SSD 具體選型                             | L2           | nvme_thermal_path（→ wip 元件卡）                    |
+| 實測 BER/發射/ESD                            | L3/L4        | acceptance.L3/L4                                     |
+| x4 變體排風道驗證                            | x4 自己的 L2 | thermal_note（spec board_variants）                  |
+| 卡緣製程（硬金+倒角）fab 圖要求              | L2           | mechanical.edge_finger_finish                        |
+| SYS_RESET* 閘 / MODULE_ID pull-up 佈局確認   | L2           | power_integrity.sequencing、open_items.vdd_in_wiring |
+| 法規執行（FCC SDoC、CE、材料聲明、ESD 注入） | L4           | acceptance.L4（regulatory）                          |
+| PCI-SIG compliance（可選，量產才需要）       | L4 之後      | regulatory.pcie_compliance（optional）               |
 
 **原則**：以上任何一項未過，本目錄**不改口**為「產品完成」——工作區的「done」只指 L0 定義完成（圖文自洽+仿真重現+打包自含），L1-L4 是產品流程。

@@ -82,7 +82,7 @@ pre-commit run --all-files
 
 > 📌 **NOTE CHAIN IS A HISTORICAL CHANGELOG**: Every test count embedded below
 > (5,085 / 4,717 / 4,734 / … / 5,432 / …) is a dated milestone at the time of
-> that NOTE. The current authoritative count is **7,130 collected (tests/), 0
+> that NOTE. The current authoritative count is **7,148 collected (tests/), 0
 > errors** (re-verified 2026-10-09).
 
 > ✅ **NOTE (Updated 2026-06-29)**: Extended session now **158+ commits** (Jun

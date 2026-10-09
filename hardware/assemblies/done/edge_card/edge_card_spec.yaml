@@ -1,6 +1,15 @@
 schema_version: edge-card-spec/1
 status: draft_awaiting_acceptance_check
 owner: angela
+development_stage: # workspace scope marker - design & design-verification only
+  phase: design_and_design_verification
+  physical_development: not_started
+  boundary: >-
+    this spec, its drawings, simulations and audits are the DESIGN record
+    (hardware/ workspace = 設計與設計驗證區); no physical board has been
+    fabricated, no components ordered, no lab measurement exists. The
+    physical-development gap is declared, not hidden - see
+    human_approval_required_for and explicit_non_claims
 retrieved_at: null
 purpose: >-
   Board-level specification for the small compute card (小計算卡): a
@@ -409,9 +418,17 @@ host_interface:
     prsnt_strap: card shorts PRSNT1# (A1) to PRSNT2# (B17, the farthest present pin for x1) - presence detection needs it even without hot-plug
     perst: input from the host; the card boots Jetson Linux from NVMe and starts the EPF afterwards, so BIOS-time enumeration can miss it - discovery is the host-driver rescan flow (software.host_side.card_discovery)
     refclk: 100 MHz differential supplied by the slot (host is the source and does the AC-coupling); the carrier routes it to the module and adds no clock of its own (clocking_and_noise)
-    wake_and_aux: not a wakeup card - WAKE# and 3.3Vaux are NC (the 20mA non-wakeup aux budget stays unused; power_and_thermal.power_integrity)
+    wake_and_aux: >-
+      not a wakeup card - WAKE# and 3.3Vaux are NC and the card draws 0 mA
+      from the aux rail (the 20mA non-wakeup aux budget stays unused;
+      power_and_thermal.power_integrity.rail_limits_75w_slot.aux_nonwakeup_max_ma)
     smb: NC - no VPD and no SMBus client on this card
-    clkreq: NC - L1 substates unused
+    clkreq: >-
+      NC - deliberate decision, not an oversight: this is a compute card whose
+      endpoint stays active for the whole host session, so L1 substates and
+      CLKREQ#-gated refclk are unused by design (ASPM off). Revisit path: if a
+      future requirement wants host link power management, the carrier gets a
+      CLKREQ# route at L2 - today it is unconnected
     jtag_edge: NC - the slot JTAG pins stay unconnected; bring-up reaches the module via the carrier debug header instead (mechanical.debug_access)
     hot_plug: not supported - cold insertion only, surprise removal unsupported; host powers the card and rescans after EP ready
     source: src_pcie_cem
@@ -571,6 +588,13 @@ power_and_thermal:
     rails_and_conversion_overhead: 5
     tdp_cap: 35
     cap_derivation: 25 + 3 + 2 + 5 = 35 <= 66 (12V 5.5A cap) and <= 75 combined slot budget
+    tdp_cap_40w_mode: 50
+    cap_40w_derivation: >-
+      40 + 3 + 2 + 5 = 50 <= 66 (12V 5.5A cap) and <= 75 combined slot
+      budget - the 40W MAXN_SUPER profile raises only the module term
+      (power_management low_power_profile / nvpmodel switch), the board
+      splits the cap by mode: 35W cap at the default 25W MAXN mode, 50W
+      cap when 40W mode is enabled
   power_integrity:
     rail_limits_75w_slot:
       12v_max_a: 5.5
@@ -587,7 +611,13 @@ power_and_thermal:
       Set_Slot_Power_Limit); 3.3V and 3.3Vaux get none (src_cem_excursions) -
       the board budget above is steady-state by construction and the module's
       own VDD_IN bulk absorbs decode step loads inside the slew cap
-    sequencing: slot ramps are host-side; module rails are sequenced by the module PMIC (the carrier adds no sequencing circuit)
+    sequencing: >-
+      slot ramps are host-side; module rails are sequenced by the module PMIC
+      (the carrier adds no sequencing circuit). The host must not enable its
+      carrier-side 12V/3.3V loads before SYS_RESET* releases the module
+      (Product Design Guide DG-10931-001 sequencing guidance, src_orin_design_guide)
+      - on this card the load behind that gate is the VDD_IN feed itself, so
+      the rule is a carrier layout/bringup note, not extra circuitry
     l2_gate: decoupling selection inside the bulk-cap limits plus PDN check in the KiCad power-tree analysis (acceptance_levels.L2)
     sources: [src_cem_rails, src_cem_excursions]
   default_mode: 25W-MAXN
@@ -626,6 +656,11 @@ mechanical:
   edge_finger_zone_mm: # CEM card-edge A/B dims (src_cem_edge_dims)
     x1: { total_b: 25.4, span_a: 20.3 }
     x4: { total_b: 39.4, span_a: 34.3 }
+  edge_finger_finish: >-
+    contact fingers plated hard gold over nickel and the insertion edge
+    beveled, per CEM card-edge geometry (src_pcie_cem) - finish and bevel
+    are fab-drawing requirements carried at L2 (acceptance.L2), not part
+    selections
   x4_length_derivation: >-
     170 + (39.4 - 25.4) = 184.0 -> round up to 185 mm on a 5 mm grid; the rear
     zones (finger keepout, fan+fin, exhaust duct) shift forward, height/stack/
@@ -663,7 +698,29 @@ clocking_and_noise:
     bracket_bond: bracket screws bond to chassis metal; signal reference stays the slot ground fingers (CEM geometry provides the return path)
     plane_rules: no reference-plane split under the PCIe pair or the REFCLK finger-to-module path (KiCad DRC item at L2)
     usb_esd: the bracket USB-C port (mechanical.bracket_cutouts.rcm_usb_c) carries an ESD protection array chosen at L2 (IEC 61000-4-2 class)
-    emissions_scope: system-level EMC belongs to the host's certification; this card carries a pre-compliance check of its own at L4 (acceptance.L4)
+    emissions_scope: system-level EMC belongs to the host's certification; this card carries a pre-compliance check of its own at L4 (acceptance.L4, regulatory)
+  signal_integrity:
+    status: l2_layout_constraints_from_the_pcie_gen4_stackup_rules
+    diff_impedance: >-
+      85 ohm nominal differential from the edge fingers through the connector
+      region (CEM add-in-card requirement, 70-100 ohm window at 8 GT/s;
+      TI layout guides 85 +/-20% at the connector, 100 +/-20% chip-to-chip,
+      src_pcie_cem src_ti_pcie_layout src_ti_precision_labs_pcie); 100 ohm
+      chip-to-chip past the AC-coupling caps
+    ac_coupling: >-
+      this card's TX lanes carry their AC-coupling capacitors on the card,
+      placed within 400 mils (10.16 mm) of the CEM connector (TI Precision
+      Labs add-in-card placement rule; REFCLK coupling is the host's,
+      src_ti_precision_labs_pcie)
+    channel_loss_budget: >-
+      Gen4 full-channel budget is 28 dB = add-in card 8 dB (incl. ~3 dB
+      package) + system board 20 dB, so the card's own PCB budget is 5 dB
+      at the 8 GHz Nyquist frequency (LeCroy PCIe 4.0 electrical test
+      guidance, src_pcie_gen4_compliance) - a KiCad stackup check at L2
+    intra_pair_skew_max_mm: 0.127 # 5 mils intra-pair, TI layout guides (src_ti_pcie_layout)
+    via_pairs_max_on_lane: 6 # <=6 via pairs per TX/RX lane, 1 dB each at Gen4 (src_ti_precision_labs_pcie)
+    edge_to_chip_trace_max_mm: 101.6 # 4 inches edge-finger to add-in-card chip (src_ti_precision_labs_pcie)
+    sources: [src_pcie_cem, src_ti_pcie_layout, src_ti_precision_labs_pcie, src_pcie_gen4_compliance]
   source: src_pcie_cem
 
 # =============================================================================
@@ -733,6 +790,38 @@ acceptance:
     - decode_and_prefill_targets_met_on_card_end_to_end
     - host_token_streaming_meets_latency_budget
     - emissions_pre_compliance_scan_bracket_assembled (clocking_and_noise.emi_esd)
+    - regulatory_path_executed_before_any_sale_sdoc_fcc_class_b_and_ce_declared (regulatory)
+    - esd_immunity_iec_61000_4_2_injection_on_bracket_usb_c (regulatory.esd_immunity)
+    - vibration_and_shock_packaging_test_on_physically_built_units (regulatory.transport)
+# =============================================================================
+# Regulatory - path declared at L0, executed only at L4 (never claimed now)
+# =============================================================================
+regulatory:
+  scope: >-
+    add-in card inside a certified host chassis: the host system carries the
+    final emission certification; this card defines its own pre-compliance
+    and materials path (status: design-phase declarations, nothing executed
+    or claimed yet - development_stage)
+  emissions: >-
+    FCC Part 15 Subpart B Class B via Supplier's Declaration of Conformity
+    (peripheral device in a PC chassis) and CE EMC EN 55032 / EN 55035,
+    run as pre-compliance scans at L4 (src_fcc_part15b)
+  esd_immunity: >-
+    IEC 61000-4-2 class ESD protection on the bracket USB-C (injection test
+    at L4, clocking_and_noise.emi_esd.usb_esd)
+  materials: >-
+    UL94V-0 flammability rating for the carrier PCB and connector
+    materials; RoHS and REACH conformity carried by supplier declarations
+    at L4
+  pcie_compliance: >-
+    optional - PCI-SIG Integrators List testing (Compliance Workshop or
+    Authorized Test Lab such as Granite River Labs, CBB/CLB CEM fixtures,
+    PCI-SIG SigTest software) only if this card is ever commercialized;
+    not required to close any acceptance level (src_pci_sig_compliance)
+  transport: >-
+    vibration and shock packaging test only once physical units exist
+    (no such units exist yet - development_stage)
+  status: declared_at_l0_executed_never
 component_selection_policy:
   selection_owner: angela
   entries_follow: hardware/components/component_registry.yaml rules
@@ -948,7 +1037,10 @@ open_items:
     question: >-
       Feed VDD_IN directly from slot 12V (in-range 5-20V per Orin NX data
       sheet); strap MODULE_ID correctly so the module is not forced into
-      the legacy 5V-only behavior (Product Design Guide DG-10931-001).
+      the legacy 5V-only behavior (Product Design Guide DG-10931-001,
+      src_orin_design_guide) - recommended pull-up voltage for the strap is
+      the carrier's 3.3V rail (the design guide leaves the rail to the
+      carrier designer; confirm against the guide's strap table at L2).
       This same feed is what satisfies the >=8V VDD_IN precondition of
       the 40W MAXN_SUPER profile (component_review.layout_review).
   - id: mailbox_protocol_freeze
@@ -1087,6 +1179,49 @@ sources:
       Set_Slot_Power_Limit interplay; 3.3V/3.3Vaux have no excursion table
     url: https://edc.intel.com/content/www/us/en/design/ipla/software-development-platforms/client/platforms/alder-lake-desktop/atx-version-3-0-multi-rail-desktop-platform-power-supply-design-guide/2.1/pcie-add-in-card-power-excursions
     type: industry_standard_summary
+  src_ti_pcie_layout:
+    what: >-
+      TI High-Speed PCB Layout for PCIe Gen 5 (SNLA426) - add-in-card 85 ohm
+      differential impedance requirement, intra-pair skew within 5 mils,
+      TX AC-coupling capacitors required
+    url: https://www.ti.com/lit/an/snla426/snla426.pdf
+    type: vendor_application_note
+  src_ti_precision_labs_pcie:
+    what: >-
+      TI Precision Labs PCIe board layout recommendations - 85 +/-20% ohm at
+      the connector / 100 +/-20% chip-to-chip, add-in-card AC coupling caps
+      within 400 mils of the CEM connector, max 6 via pairs on the lane
+      (1 dB each at Gen4), edge-finger to chip trace limited to 4 inches
+    url: https://www.ti.com.cn/content/dam/videos/external-videos/en-us/8/3816841626001/6287846626001.mp4/subassets/pcie_board_layout_guidelines.pdf
+    type: vendor_training_material
+  src_pcie_gen4_compliance:
+    what: >-
+      Teledyne LeCroy "10 Steps to Successful PCI Express 4.0 Electrical
+      Testing" - Gen4 channel loss budget 28 dB total = 8 dB add-in card
+      (incl. 3 dB package) + 20 dB system board, defined at 8 GHz Nyquist
+    url: https://www.teledynelecroy.com/doc/docview.aspx?id=13664
+    type: test_equipment_vendor_guidance
+  src_fcc_part15b:
+    what: >-
+      47 CFR Part 15 Subpart B (Unintentional Radiators) - Class B personal
+      computers and peripherals authorized via Supplier's Declaration of
+      Conformity (SDoC) or Certification; radiated emission limits at 3 m
+    url: https://www.ecfr.gov/current/title-47/chapter-I/subchapter-A/part-15/subpart-B
+    type: regulation
+  src_pci_sig_compliance:
+    what: >-
+      PCI-SIG Compliance Program - Compliance Workshops, Authorized Test Lab
+      program (Granite River Labs et al.), CBB/CLB CEM test fixtures and
+      Integrators List for add-in cards; optional path for this card
+    url: https://pcisig.com/developers/compliance-program
+    type: standard_body
+  src_orin_design_guide:
+    what: >-
+      Jetson Orin NX / Orin Nano Series Product Design Guide DG-10931-001 -
+      carrier power sequencing guidance (SYS_RESET* gating, VDD_IN feed),
+      MODULE_ID strapping (5V-only legacy behavior), layout rules
+    url: https://developer.nvidia.com/downloads/jetson-orin-nx-series-nano-series-design-guide
+    type: manufacturer_datasheet
 host_proxy_simulation:
   kind: host_proxy_not_l1
   date: 2026-10-07

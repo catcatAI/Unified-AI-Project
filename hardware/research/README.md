@@ -5,3 +5,5 @@
 - `DERIVED_ESTIMATES.md` — 對話推導的性能/鏈路/成本整理（分析文件）
 - `mvu_reference_spec.yaml` — 舊 MVU 參考規格（`superseded_by`
   ai_compute_card_task）
+
+> **區性**：本工作區是**設計與設計驗證區**——研究區只放分析文件；見 hardware/README.md 區性聲明（未進行任何實體開發）。
