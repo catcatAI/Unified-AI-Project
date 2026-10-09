@@ -107,6 +107,9 @@ _SMOKE_MODULES = [
     ("core.bio.habit_formation", "HabitFormation", {}),
     ("ai.multimodal.primitives.primitive_diffusion", "PrimitiveDiffusion", {}),
     ("core.perception.perception_engine", "PerceptionEngine", {}),
+    # Gap-closure round 2 (previously zero test references; verified clean)
+    ("ai.agents.specialized.nlp_processing_agent", "NLPProcessingAgent", {}),
+    ("ai.agents.specialized.planning_agent", "PlanningAgent", {}),
 ]
 
 

@@ -43,66 +43,37 @@ def test_knowledge_graph_agent_init(knowledge_graph_agent: KnowledgeGraphAgent):
 async def test_knowledge_graph_agent_perform_entity_linking(
     knowledge_graph_agent: KnowledgeGraphAgent,
 ):
-    """Test the entity linking functionality."""
-    params = {"text": "Apple Inc. is a technology company based in Cupertino, California."}
-    # Mock the underlying method that uses the LLM
-    knowledge_graph_agent._perform_entity_linking = MagicMock(
-        return_value={
-            "entities": [
-                {"text": "Apple Inc.", "start": 0, "end": 9, "kb_id": "Q312", "confidence": 0.99}
-            ],
-            "total_entities": 1,
-        }
+    """Test the entity linking functionality (real substring matcher, no mock)."""
+    knowledge_graph_agent.add_entity("Apple Inc.", {"kind": "company"})
+    result = knowledge_graph_agent._perform_entity_linking(
+        {"text": "Apple Inc. is a technology company based in Cupertino, California."}
     )
-    result = knowledge_graph_agent._perform_entity_linking(params)
-    assert "entities" in result
-    assert result["total_entities"] >= 1
+    assert len(result["mentions"]) == 1
+    assert result["mentions"][0]["entity"] == "Apple Inc."
+    assert result["mentions"][0]["position"] == 0
 
 
 async def test_knowledge_graph_agent_extract_relationships(
     knowledge_graph_agent: KnowledgeGraphAgent,
 ):
-    """Test the relationship extraction functionality."""
-    params = {"text": "John is a software engineer."}
-    knowledge_graph_agent._extract_relationships = MagicMock(
-        return_value={
-            "relationships": [
-                {
-                    "subject": "John",
-                    "predicate": "is_a",
-                    "object": "software engineer",
-                    "confidence": 0.9,
-                }
-            ],
-            "total_relationships": 1,
-        }
+    """Test the relationship extraction functionality (real matcher, no mock)."""
+    knowledge_graph_agent.add_entity("John", {})
+    knowledge_graph_agent.add_entity("Acme", {})
+    knowledge_graph_agent._relations.append(
+        {"source": "John", "target": "Acme", "type": "works_at"}
     )
-    result = knowledge_graph_agent._extract_relationships(params)
-    assert "relationships" in result
-    assert result["total_relationships"] >= 1
+    result = knowledge_graph_agent._extract_relationships("John joined Acme yesterday.")
+    assert result == [{"source": "John", "target": "Acme", "type": "works_at"}]
 
 
 async def test_knowledge_graph_agent_query_knowledge_graph(
     knowledge_graph_agent: KnowledgeGraphAgent,
 ):
-    """Test the knowledge graph query functionality."""
-    params = {"query": "What is the capital of France?"}
-    knowledge_graph_agent._query_knowledge_graph = MagicMock(
-        return_value={
-            "results": [
-                {
-                    "entity": "Paris",
-                    "property": "is_capital_of",
-                    "value": "France",
-                    "confidence": 1.0,
-                }
-            ],
-            "total_results": 1,
-        }
-    )
-    result = knowledge_graph_agent._query_knowledge_graph(params)
-    assert "results" in result
-    assert result["total_results"] >= 1
+    """Test graph query via the real query_graph (the mocked name never existed)."""
+    knowledge_graph_agent.add_entity("Paris", {"country": "France"})
+    result = knowledge_graph_agent.query_graph("paris")
+    assert result["status"] == "success"
+    assert [r["entity"] for r in result["results"]] == ["Paris"]
 
 
 async def test_handle_task_request_entity_linking(knowledge_graph_agent: KnowledgeGraphAgent):

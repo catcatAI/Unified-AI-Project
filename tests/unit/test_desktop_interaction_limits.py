@@ -31,3 +31,15 @@ def test_create_refuses_oversized(tmp_path, monkeypatch):
     interaction = _interaction(tmp_path)
     assert asyncio.run(interaction.create_file("big.txt", "x" * 100)) is None
     assert not (tmp_path / "desktop" / "big.txt").exists()
+
+
+def test_wallpaper_refuses_non_image(tmp_path):
+    interaction = _interaction(tmp_path)
+    script = tmp_path / "evil.sh"
+    script.write_text("#!/bin/sh\n", encoding="utf-8")
+    assert asyncio.run(interaction.set_wallpaper(script)) is False
+
+
+def test_wallpaper_missing_returns_false(tmp_path):
+    interaction = _interaction(tmp_path)
+    assert asyncio.run(interaction.set_wallpaper(tmp_path / "nope.png")) is False

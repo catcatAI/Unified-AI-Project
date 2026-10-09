@@ -789,6 +789,19 @@ class DesktopInteraction:
         try:
             if not image_path.exists():
                 return False
+            # Refuse non-files and non-image suffixes before any platform
+            # command sees the path (macOS/Linux interpolate it into shell).
+            if not image_path.is_file() or image_path.suffix.lower() not in {
+                ".png",
+                ".jpg",
+                ".jpeg",
+                ".bmp",
+                ".webp",
+                ".gif",
+                ".svg",
+            }:
+                logger.error("Refusing wallpaper outside image files: %s", image_path)
+                return False
 
             # Platform-specific wallpaper setting
             import platform

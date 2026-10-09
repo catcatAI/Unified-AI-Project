@@ -33,6 +33,13 @@ class VisionHandler:
         if not mime_type or not mime_type.startswith("image/"):
             return f"（視覺分析）不支援的圖片格式：{mime_type}"
         try:
+            from services.handlers.file_operation_handler import _is_safe_path as _roots_ok
+
+            if not _roots_ok(target):
+                return f"（視覺分析）路徑不在允許範圍：{image_path}"
+        except Exception as e:
+            logger.warning(f"Vision path fence unavailable: {e}", exc_info=True)
+        try:
             image_data = await asyncio.to_thread(target.read_bytes)
             # Delegate to the shared VisionService for real analysis. The old
             # model_bus.execute_handler("vision", ...) branch was dead code — it

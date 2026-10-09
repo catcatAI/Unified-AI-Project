@@ -599,6 +599,31 @@ class TestVisionHandler:
         assert isinstance(result, str)
         assert "圖片" in result or "vision" in result.lower()
 
+    async def test_handle_refuses_outside_allowed_roots(self, tmp_path, monkeypatch):
+        """Paths outside the file_ops roots must be refused before any read."""
+        import services.handlers.file_operation_handler as handler_mod
+        from services.handlers.vision_handler import VisionHandler
+
+        outside = tmp_path / "secret.png"
+        outside.write_bytes(b"\x89PNG\r\n\x1a\n" + b"0" * 64)
+        monkeypatch.setattr(handler_mod, "_ALLOWED_ROOTS", [])
+        handler = VisionHandler()
+        result = await handler.handle(f"分析圖片 {outside}", "vision")
+        assert "不在允許範圍" in result
+        assert "secret.png" in result
+
+    async def test_handle_allows_inside_allowed_roots(self, tmp_path, monkeypatch):
+        """Paths inside roots proceed to analysis/fallback (no refusal)."""
+        import services.handlers.file_operation_handler as handler_mod
+        from services.handlers.vision_handler import VisionHandler
+
+        inside = tmp_path / "ok.png"
+        inside.write_bytes(b"\x89PNG\r\n\x1a\n" + b"0" * 64)
+        monkeypatch.setattr(handler_mod, "_ALLOWED_ROOTS", [tmp_path])
+        handler = VisionHandler()
+        result = await handler.handle(f"分析圖片 {inside}", "vision")
+        assert "不在允許範圍" not in result
+
 
 # =============================================================================
 # LearningHandler tests
