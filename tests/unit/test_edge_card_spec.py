@@ -84,6 +84,67 @@ def test_pcie_gen4_x1_payload_derivation() -> None:
     assert host["achievable_dma_gbs_each_direction_min"] <= payload_gbs
 
 
+def test_board_variants_family_within_x4_ceiling() -> None:
+    """分板家族（2026-10-09）：x1 主板 + x4 衍生，slot 覆蓋規則，x8/x16 因 C4 上限拒絕。
+
+    擋的是「家族拍腦袋擴張」：x4 數字必須從 x1 欄位現算、slot 覆蓋必須符合
+    CEM 小邊插大槽規則、上限必須釘在 up-to-x4——加 x8/x16 板或動 B17 綁帶即紅。
+    """
+    spec = _load_spec()
+    host = spec["host_interface"]
+    bv = host["board_variants"]
+
+    assert bv["primary"].startswith("edge_x1")
+    assert spec["product_decision"]["host_link"] == "PCIe-Gen4-x1-endpoint"
+
+    x4 = bv["edge_x4"]
+    assert (
+        x4["payload_gbs_each_direction"]
+        == round(4 * host["payload_gbs_each_direction"], 3)
+        == 7.876
+    )
+    assert (
+        x4["achievable_dma_gbs_each_direction_min"]
+        == 4 * host["achievable_dma_gbs_each_direction_min"]
+        == 6.4
+    )
+
+    file_gb = spec["model_target"]["primary"]["weights_gb_gguf_measured"]
+    loads = x4["model_load_s"]
+    assert loads["payload"] == round(file_gb / x4["payload_gbs_each_direction"], 2) == 0.43
+    assert (
+        loads["achievable"]
+        == round(file_gb / x4["achievable_dma_gbs_each_direction_min"], 2)
+        == 0.52
+    )
+    assert loads["payload"] < host["model_load_paths"]["e2b_q4_0_load_seconds_from_host_max"]
+
+    cov = bv["slot_coverage"]
+    assert set(cov) == {"x1", "x2", "x4", "x8", "x16"}
+    assert cov["x1"].startswith("edge_x1") and cov["x2"].startswith("edge_x1")
+    assert cov["x4"].startswith("edge_x1")
+    assert cov["x8"].startswith("edge_x4") and cov["x16"].startswith("edge_x4")
+
+    # 上限鐵律：C4 up-to-x4 → x8/x16 板拒絕；x4 走 B33、x1 的 B17 綁帶不動
+    assert host["endpoint_mechanism"]["controller_properties"].startswith("up-to-x4")
+    rej = bv["rejected"]["edge_x8_and_x16"]
+    assert "up-to-x4" in rej and "relationship_to_ai_compute_card" in rej
+    assert "B33" in x4["delta_from_x1"] and "B17" in x4["delta_from_x1"]
+    sb = host["edge_sidebands"]["prsnt_strap"]
+    assert "B17" in sb and "B33" not in sb
+
+    # 圖文同步：x4 數字畫進系統互連圖（帶數字段必須有圖）
+    sys_d = spec["design_drawings"]["system_interconnect"]["diagram"]
+    assert str(x4["payload_gbs_each_direction"]) in sys_d
+    assert str(loads["payload"]) in sys_d and str(loads["achievable"]) in sys_d
+    assert "x4 derivation" in sys_d
+
+    bf = spec["product_decision"]["board_family"]
+    assert bf["proposed_by"] == "user" and bf["resolved_by"] == "angela"
+    for token in ("edge_x1", "edge_x4", "host_interface.board_variants"):
+        assert token in bf["decision"]
+
+
 def test_rejected_orin_nano_records_gen3_reason() -> None:
     spec = _load_spec()
     rejected = {c["id"]: c for c in spec["compute"]["rejected_compute_candidates"]}

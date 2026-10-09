@@ -33,6 +33,17 @@ product_decision:
   form_factor: pcie_add_in_card
   host_link: PCIe-Gen4-x1-endpoint
   headline_workload: google/gemma-4-E2B-it and equivalents (see model_target)
+  board_family: # 2026-10-09 user proposal: one carrier per lane-width family
+    proposed_by: user
+    proposed_on: 2026-10-09
+    resolved_by: angela
+    decision: >-
+      Separate carriers sharing the module, not one widened PCB: the
+      manufactured lineup is edge_x1 (primary - host_link above stays
+      PCIe-Gen4-x1-endpoint) plus edge_x4 (derivation, commissioned on
+      demand). x2/x8/x16 slots are served by the CEM fit-and-negotiate
+      rule below; no x8/x16 board exists because the orin-pcie-c4
+      endpoint caps at x4 (host_interface.board_variants).
   delegated_choices:
     decided_by: angela
     items:
@@ -81,6 +92,8 @@ design_drawings:
         v
       CARRIER PCB (custom part; L2 gate = kicad DRC + gerber)
         +- C4 controller lane0 only -> x1 fingers (lanes 1-3 NC on card)
+        +- x4 derivation: lanes1-3 -> x4 fingers = payload 7.876 GB/s/dir,
+        |    cold load 0.43s payload / 0.52s achievable (board_variants)
         +- EP mode: sysfs start + ODMDATA hsio-uphy-config-41
         |    (open risk: C4 endpoint + C7 NVMe concurrency, open_items.uphy_concurrency)
         +- FLR required / MSI required / IOMMU compat required for host driver
@@ -347,6 +360,45 @@ host_interface:
     flr: required
     msi: required
     iommu_compatibility: required-for-host-driver
+  board_variants:
+    decided: 2026-10-09 user proposal (one board per edge width), feasibility resolved by angela
+    why_not_one_board: >-
+      CEM edge-finger length is fixed at manufacture, so one PCB cannot serve
+      both x1 and wider slots; each width is its own carrier while the compute
+      module, cooling and brackets stay common (relationship_to_ai_compute_card
+      is where >x4 endpoint silicon would live, not here).
+    primary: edge_x1 (this spec; product_decision.host_link)
+    edge_x4:
+      status: defined_commission_on_demand
+      delta_from_x1: >-
+        route C4 lanes1-3 to the x4 edge fingers (edge_x1 leaves them NC) and
+        strap PRSNT1# to B33, the x4 farthest-present pin (edge_x1 straps B17);
+        module, cooling, brackets and power tree unchanged.
+      payload_gbs_each_direction: 7.876 # 4 * 1.969
+      achievable_dma_gbs_each_direction_min: 6.4 # 4 * 1.6
+      model_load_s:
+        payload: 0.43 # 3.35 GB / 7.876 GB/s
+        achievable: 0.52 # 3.35 GB / 6.4 GB/s
+      benefit: >-
+        cold model load only (1.70s payload -> 0.43s, same 5s budget);
+        steady-state decode stays 8 B/token outside the link (decode_datapath)
+      layout_status: >-
+        the longer x4 finger zone grows pcie-finger-keepout along the bottom
+        edge; whether the 170 mm PCB absorbs it or the x4 board lengthens is
+        fixed when this variant is commissioned (its own L2, not edge_x1's).
+    slot_coverage: # CEM fit rule - a smaller edge fits every larger slot and trains to the card width
+      x1: edge_x1
+      x2: edge_x1 - CEM defines no x2 card edge; the x1 card trains x1 in an x2 slot
+      x4: edge_x1 (trains x1) or edge_x4 (trains x4)
+      x8: edge_x4 (trains x4) - no x8 board, endpoint caps at x4
+      x16: edge_x4 (trains x4) - no x16 board, same ceiling so wider fingers gain nothing
+    rejected:
+      edge_x8_and_x16: >-
+        endpoint_mechanism.controller_properties is up-to-x4; x8/x16 fingers
+        would train x4 anyway - mechanical cost, zero bandwidth gain. A >x4
+        endpoint is a different product line, not a carrier variant
+        (relationship_to_ai_compute_card).
+    source: src_pcie_cem
   edge_sidebands:
     prsnt_strap: card shorts PRSNT1# (A1) to PRSNT2# (B17, the farthest present pin for x1) - presence detection needs it even without hot-plug
     perst: input from the host; the card boots Jetson Linux from NVMe and starts the EPF afterwards, so BIOS-time enumeration can miss it - discovery is the host-driver rescan flow (software.host_side.card_discovery)
