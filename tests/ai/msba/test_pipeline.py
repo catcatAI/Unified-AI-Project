@@ -82,5 +82,6 @@ class TestMSBAPipeline:
             dimensions=["emotional"],
             seed_verdicts={"emotional": "confirm"},
         )
-        # Should not raise
+        # Should not raise, and must record the seed verdict
         pipeline._post_process("result", fused, SeedResult(), None)
+        assert "emotional" in pipeline.block_selector.block_history
