@@ -4127,7 +4127,7 @@ test files with zero pytest assertions.
 - **Test count**: **7,111 collected (tests/) — 0 errors** (round close).
 - **Test count**: **7,112 collected (tests/) — 0 errors** (re-verified
   2026-10-09; +1 concurrent).
-- **Test count**: **7,124 collected (tests/) — 0 errors** (2026-10-09; +12
-  hardware workspace locks `test_hardware_workspace.py`).
+- **Test count**: **7,130 collected (tests/) — 0 errors** (2026-10-09; +12
+  hardware workspace locks `test_hardware_workspace.py`, +6 concurrent).
 
 [//]: # 'End of MASTER_TASK_MAP'
