@@ -16,6 +16,7 @@ DEFAULT_PLAN: List[StepSpec] = [
     # tier 0：快取層（前置哨兵，總是最先）
     StepSpec(name="pipeline_math", connector="pipeline_math", tier=0, priority=0),
     StepSpec(name="math_backup", connector="math_backup", tier=0, priority=1),
+    StepSpec(name="clock", connector="clock", tier=0, priority=2),
     # tier 1：高確定性確定路徑
     StepSpec(name="template_match", connector="template_match", tier=1, priority=0),
     StepSpec(name="ensemble", connector="ensemble", tier=1, priority=1),

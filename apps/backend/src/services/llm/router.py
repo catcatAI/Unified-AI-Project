@@ -102,6 +102,32 @@ from services.llm.providers.openai import OpenAIAPIBackend
 from services.llm.providers.registry import LLMBackend
 from services.llm.providers.unified import UnifiedBackend
 
+
+def clock_query_kind(text: str) -> Optional[str]:
+    """Classify a time/date question: "time", "date", "both", or None.
+
+    Module-level so the API pipeline (agent routing runs BEFORE the router
+    engine) can skip agent handling for clock queries and let the
+    deterministic clock step answer. Tight patterns only: bare 時間 must
+    not match (時間管理 etc.).
+    """
+    t = (text or "").strip()
+    wants_time = bool(re.search(r"(幾點|几点|几点了|幾點了)", t))
+    wants_date = bool(re.search(r"(今天.*(幾號|几号|星期|日期|幾月|几月)|今天是)", t))
+    if wants_time and wants_date:
+        return "both"
+    if wants_time:
+        return "time"
+    if wants_date:
+        return "date"
+    return None
+
+
+def is_clock_query(text: str) -> bool:
+    """True when clock_query_kind() is not None (compat alias)."""
+    return clock_query_kind(text) is not None
+
+
 # PriorityNegotiator singleton — registered once at import time.
 # Voter weights are config-overridable (lifecycle_value) with identical
 # defaults, so behavior is unchanged unless an operator tunes them.
@@ -1414,6 +1440,10 @@ class AngelaLLMService:
         if math_backup_result is not None:
             return math_backup_result
 
+        clock_result = await self._clock_response(user_message, context, start_time)
+        if clock_result is not None:
+            return clock_result
+
         ensemble_result = await self._try_ensemble(user_message, context)
         if ensemble_result is not None:
             return ensemble_result
@@ -1607,6 +1637,7 @@ class AngelaLLMService:
         register = self._routing_engine.register
         register("pipeline_math", self._connector_pipeline_math)
         register("math_backup", self._connector_math_backup)
+        register("clock", self._connector_clock)
         register("template_match", self._connector_template_match)
         register("ensemble", self._connector_ensemble)
         register("memory_retrieval", self._connector_memory_retrieval)
@@ -1631,6 +1662,11 @@ class AngelaLLMService:
         self, user_message: str, context: Dict[str, Any]
     ) -> Optional[LLMResponse]:
         return await self._math_backup_response(user_message, context, self._route_start(context))
+
+    async def _connector_clock(
+        self, user_message: str, context: Dict[str, Any]
+    ) -> Optional[LLMResponse]:
+        return await self._clock_response(user_message, context, self._route_start(context))
 
     async def _connector_template_match(
         self, user_message: str, context: Dict[str, Any]
@@ -1716,6 +1752,41 @@ class AngelaLLMService:
             except Exception as exc:
                 logger.debug(f"MathVerifier backup failed: {exc}")
         return None
+
+    async def _clock_response(
+        self, user_message: str, context: Dict[str, Any], start_time: float
+    ) -> Optional[LLMResponse]:
+        """確定性時鐘備援：時間問題直接報時，不經模糊 composer（後者曾吐英文碎片）。"""
+        from datetime import datetime
+
+        text = user_message.strip()
+        kind = clock_query_kind(text)
+        if kind is None:
+            return None
+        wants_time = kind in ("time", "both")
+        wants_date = kind in ("date", "both")
+        try:
+            now = datetime.now()
+            weekday = "一二三四五六日"[now.weekday()]
+            parts = []
+            if wants_date:
+                parts.append(f"今天是{now.month}月{now.day}日星期{weekday}")
+            if wants_time:
+                parts.append(f"現在{now.hour}點{now.minute:02d}分")
+            response_time = (time.time() - start_time) * 1000
+            self._update_stats(response_time)
+            return LLMResponse(
+                text="，".join(parts),
+                backend="deterministic-clock",
+                model="system-clock",
+                tokens_used=0,
+                response_time_ms=response_time,
+                confidence=0.99,
+                metadata={"clock": True},
+            )
+        except Exception as exc:
+            logger.debug(f"Clock response failed: {exc}")
+            return None
 
     async def _try_knowledge(
         self, user_message: str, context: Dict[str, Any], start_time: float
@@ -3256,6 +3327,25 @@ class AngelaLLMService:
         try:
             # 只有当回應质量较高时才存储
             if response.confidence < 0.5:
+                return
+
+            # Verified-only fossilization (measured live 2026-10-09): every
+            # response reaching this LLM_FULL path is an unverified
+            # generation, and auto-fossilizing them poisoned the template
+            # pool with greetings-for-recall-questions, "I'm Gemma" identity
+            # leaks, destructive-action claims, prompt echoes and refusals —
+            # all replayed verbatim later with high TF-IDF scores. Fallback
+            # responses are never storable. A curated caller may still store
+            # by marking metadata {"verified": True}.
+            md_verified = getattr(response, "metadata", None)
+            verified = isinstance(md_verified, dict) and md_verified.get("verified") is True
+            if str(getattr(response, "backend", "")) == "local-fallback" or str(
+                getattr(response, "model", "")
+            ) in ("honest-no-answer", "empty-input"):
+                logger.debug("Skipped template storage for fallback response")
+                return
+            if not verified:
+                logger.debug("Skipped template storage for unverified generation")
                 return
 
             # Never memorize statistical-core guesses: their confidence is

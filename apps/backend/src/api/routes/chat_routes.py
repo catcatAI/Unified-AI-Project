@@ -897,6 +897,18 @@ async def _try_agent_routing(
             primary_type_name = plan.query_type
             confidence = plan.confidence
 
+        # Deterministic clock owns time/date questions: the knowledge agent
+        # would otherwise answer with dictionary translation fragments
+        # ("the present"). Skip agent handling so the router's clock step
+        # answers (live probe 2026-10-09).
+        try:
+            from services.llm.router import clock_query_kind
+
+            if clock_query_kind(user_message) is not None:
+                return None
+        except Exception:
+            pass
+
         eda_request = AgentOrchestrator.is_eda_execution_request(user_message)
         ai_card_request = AgentOrchestrator.is_ai_card_request(user_message)
         eda_followup = context.get(
@@ -1487,7 +1499,14 @@ def _format_chat_response(
     # bus, or a cloud LLM). The internal ``route`` field is unreliable for the
     # non-LLM paths (template/memory/knowledge/model_bus never set it and fall
     # back to the default "llm"), so derive an accurate route from ``backend``.
-    _backend = getattr(llm_response, "backend", None) or "unknown"
+    # llm_response may be a plain dict (knowledge_pipeline / agent early
+    # returns); getattr on a dict always misses and every such answer showed
+    # backend "unknown", hiding the true source (live 2026-10-09: a
+    # dictionary translation served as backend unknown). Read dict keys too.
+    if isinstance(llm_response, dict):
+        _backend = llm_response.get("backend") or "unknown"
+    else:
+        _backend = getattr(llm_response, "backend", None) or "unknown"
     _route_map = {
         "knowledge": "knowledge",
         "knowledge_base": "knowledge",

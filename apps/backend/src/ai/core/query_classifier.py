@@ -251,7 +251,12 @@ _WORD_BOUNDARY_END = r"(?:[\s，。！？,.\s]|$)"
 # （你覺得/快排函數/台北天氣）永遠看不見；civil 已先行驗證此做法。
 # 單字鍵誤傷高的類型維持原邊界：creative（寫/作）、vision（看）、
 # audio（聽）、command（祈使句首設計）、greeting（你好誤傷「跟你好朋友」）。
-_WORD_BOUNDARY_CJK = r"(?:^|[\s，。！？,.\s一-鿿])"
+_WORD_BOUNDARY_CJK = r"(?:^|[\s，。！？,.\s一-鿿a-zA-Z0-9])"
+# NOTE: ASCII alphanumerics are boundary chars so glued mixed-script queries
+# match CJK keywords ("python函數", "GPT模型", "API文檔"): without this the
+# char before a CJK keyword must be start/space/punct/CJK, and "n函" never
+# matches. Pure-ASCII alternatives keep their own \b, so no English
+# false-positive class is introduced (CJK keywords can't occur in ASCII words).
 
 ROUTE_CAPABILITY_CATALOG = "capability_catalog"
 ROUTE_LLM_FIRST = "llm_first"
@@ -514,8 +519,9 @@ class QueryClassifier:
                     r"调试|重构|优化|实现|"
                     r"程式|代碼|函數|變數|迴圈|陣列|物件|"
                     r"除錯|重構|優化|實作|"
+                    r"寫.{0,3}(函數|函数|程序|程式|代碼|代码|腳本|脚本|python|java|class|def)|"
                     r"\b(code|program|script|debug|bug|function|variable|"
-                    r"loop|array|refactor|implement)\b)",
+                    r"loop|array|refactor|implement|python|java|golang|rust)\b)",
                     re.IGNORECASE,
                 ),
                 0.8,
@@ -829,6 +835,15 @@ class QueryClassifier:
         # file 通用動詞，function 才是領域信號；無檔案實體時 file 讓位 code。
         if any(m[0] == QueryType.CODE for m in matches) and not _FILE_SPECIFIC.search(text):
             matches = [m for m in matches if m[0] != QueryType.FILE]
+
+        # 寫碼意圖優先（R13 同構）：MATH 僅靠裸「計算」類動詞命中、且無數字
+        # 無符號時，屬動詞誤中——「寫一個python函數計算費波那契」要的是寫碼，
+        # 不是算術（活體曾判 MATH→答不出）。有數字/符號時 MATH 不讓位。
+        if any(m[0] == QueryType.CODE for m in matches) and any(
+            m[0] == QueryType.MATH for m in matches
+        ):
+            if not re.search(r"\d|[+\-*/^%()=]", text):
+                matches = [m for m in matches if m[0] != QueryType.MATH]
         if matches:
             primary = matches[0]
             secondary = (

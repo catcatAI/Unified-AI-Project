@@ -171,6 +171,53 @@ async def test_recall_yields_to_deterministic_math(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_store_template_skips_fallback_and_unverified():
+    """Fallbacks and unverified generations must never fossilize (template poison)."""
+    from unittest.mock import AsyncMock
+
+    from core.interfaces.protocols import LLMResponse
+
+    service = _recall_service()
+    service.memory_manager = AsyncMock()
+    fallback = LLMResponse(
+        text="User，目前還沒有足夠的知識", backend="local-fallback", model="honest"
+    )
+    await service._store_response_as_template("問題", fallback, {})
+    gen = LLMResponse(text="光合作用是植物的過程。", backend="llama.cpp", model="qwen")
+    gen.confidence = 0.9
+    await service._store_response_as_template("什麼是光合作用", gen, {})
+    service.memory_manager.store_template.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_clock_response_answers_time_and_date():
+    """Deterministic clock: 幾點/今天幾號 never reach fuzzy composers."""
+    import time as _time
+
+    service = _recall_service()
+    service.stats = {"total_requests": 1, "total_response_time": 0.0, "memory_hits": 0}
+    start = _time.time()
+    time_resp = await service._clock_response("現在幾點", {}, start)
+    assert time_resp is not None
+    assert "點" in time_resp.text and "分" in time_resp.text
+    assert time_resp.backend == "deterministic-clock"
+    date_resp = await service._clock_response("今天幾號", {}, start)
+    assert date_resp is not None and "月" in date_resp.text and "日" in date_resp.text
+    assert await service._clock_response("你好", {}, start) is None
+    assert await service._clock_response("時間管理怎麼做", {}, start) is None
+
+
+def test_manifest_contains_clock_connector():
+    """Routing-engine path must include the clock step (not legacy-only)."""
+    from services.llm.routing.manifest import DEFAULT_PLAN
+
+    names = [s.name for s in DEFAULT_PLAN]
+    assert "clock" in names
+    assert names.index("clock") < names.index("template_match")
+    assert DEFAULT_PLAN[-1].kind == "terminal"
+
+
+@pytest.mark.asyncio
 async def test_query_taught_facts_searches_facts_only_and_filters_prefix(monkeypatch):
     """Direct lookup restricts ranking to taught facts store-side (echo-proof)."""
     from unittest.mock import AsyncMock

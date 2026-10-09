@@ -86,6 +86,36 @@ class TestQueryClassifier:
         result = QueryClassifier().classify(query)
         assert result.primary_type == QueryType.MATH
 
+    @pytest.mark.parametrize(
+        "query",
+        [
+            "寫一個python函數計算費波那契數列",
+            "用python寫個排序函數",
+            "幫我寫一段java代碼",
+        ],
+    )
+    def test_classify_code_writing_beats_bare_calculate(self, query):
+        """寫碼意圖優先：裸計算動詞不得劫持 CODE（活體 MATH 誤判）。"""
+        from ai.core.query_classifier import QueryClassifier, QueryType
+
+        result = QueryClassifier().classify(query)
+        assert result.primary_type == QueryType.CODE
+
+    @pytest.mark.parametrize(
+        ("query", "expected"),
+        [
+            ("計算12乘以3", "math"),
+            ("用python算1+1", "math"),
+            ("三分球怎麼投", "knowledge"),
+            ("寫一封信", "creative"),
+        ],
+    )
+    def test_classify_code_guard_does_not_overreach(self, query, expected):
+        """有數字守 MATH；寫信/三分球不進 CODE 誤區。"""
+        from ai.core.query_classifier import QueryClassifier
+
+        assert QueryClassifier().classify(query).primary_type.value == expected
+
     def test_classify_knowledge(self):
         from ai.core.query_classifier import QueryClassifier, QueryType
 

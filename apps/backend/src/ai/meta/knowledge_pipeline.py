@@ -333,7 +333,37 @@ class KnowledgePipeline:
         if re.search(r"[\u4e00-\u9fff]", t) and len(t) > 4:
             return False, ""
         if len(t) <= 10 and re.match(r"^[\w\s\-\u4e00-\u9fff]+$", t):
-            question_marks = ("?", "？", "吗", "嗎", "呢")
+            # Interrogative markers: a bare lookup never contains these; any
+            # of them makes the input a QUESTION, not a word to translate.
+            # Missing 幾點/多少 let "現在幾點" hijack to "the present"
+            # (live 2026-10-09) instead of reaching the clock step.
+            question_marks = (
+                "?",
+                "？",
+                "吗",
+                "嗎",
+                "呢",
+                "幾點",
+                "几点",
+                "多少",
+                "幾號",
+                "几号",
+                "什麼",
+                "什么",
+                "誰",
+                "谁",
+                "怎麼",
+                "怎么",
+                "如何",
+                "多久",
+                "何時",
+                "何时",
+                "為何",
+                "为何",
+                "為什麼",
+                "为什么",
+                "哪",
+            )
             greetings = (
                 "你好",
                 "您好",
