@@ -2103,14 +2103,26 @@ async def sync_key_c(request: Request) -> dict:
 
 @router.post("/session/start")
 async def start_session(request: Optional[Dict[str, Any]] = Body(default=None)) -> dict:
-    """Execute the start session operation."""
-    session_id = f"sess-{uuid.uuid4().hex[:8]}"
+    """Execute the start session operation.
+
+    Legacy compat route: session ids are namespaced tenant::persona like the
+    unified route (audit 2026-10-10) so reusing an id across tenants/personas
+    cannot collide. Old sess-* ids already stored keep working (lookup is by
+    exact id in /send).
+    """
+    request = request or {}
+    tenant_id = request.get("tenant_id", "default")
+    persona_id = request.get("persona_id", "angela")
+    session_id = f"sess-{tenant_id}::{persona_id}::{uuid.uuid4().hex[:8]}"
     sessions.set(
         session_id,
         {
             "created_at": datetime.now().isoformat(),
             "messages": [],
-            "user_name": (request or {}).get("user_name", "User"),
+            "user_name": request.get("user_name", request.get("user_id", "User")),
+            "user_id": request.get("user_id") or request.get("user_name", "User"),
+            "tenant_id": tenant_id,
+            "persona_id": persona_id,
         },
     )
     return {
@@ -2131,8 +2143,19 @@ async def send_message(session_id: str, request: Dict[str, Any] = Body(...)) -> 
     if session is None:
         raise HTTPException(status_code=404, detail="Session not found")
     user_name = session.get("user_name", "User")
+    # Carry the session's namespaced identity downstream so legacy sessions
+    # get the same tenant/persona isolation as unified ones.
+    legacy_context = {
+        "user_id": session.get("user_id", user_name),
+        "tenant_id": session.get("tenant_id", "default"),
+        "persona_id": session.get("persona_id", "angela"),
+    }
     return await _handle_chat_request(
-        user_message, user_name, session.get("messages", []), session_id
+        user_message,
+        user_name,
+        session.get("messages", []),
+        session_id,
+        extra_context=legacy_context,
     )
 
 
@@ -2141,13 +2164,19 @@ async def unified_chat(request: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """Execute the unified chat operation."""
     user_message = request.get("message", request.get("text", ""))
     mode = request.get("mode", "1:1")
+    # Identity rule (audit 2026-10-10): user_id is the stable key and wins
+    # when both are sent; user_name is display-only. The old order read
+    # user_name first, so a display name overwrote the identity in logs,
+    # context and session classification (multi-tenant hazard). Single-field
+    # clients (user_name only) behave exactly as before.
+    user_id = request.get("user_id") or request.get("user_name", "User")
     context = {
-        "user_id": request.get("user_name", request.get("user_id", "User")),
+        "user_id": user_id,
         "tenant_id": request.get("tenant_id", "default"),
         "persona_id": request.get("persona_id", "angela"),
         "client_id": request.get("origin", request.get("client_id", "desktop")),
     }
-    user_name = request.get("user_name", context["user_id"])
+    user_name = request.get("user_name", user_id)
     history = request.get("history", [])
     # Bound history to prevent OOM from attacker-controlled large arrays
     if isinstance(history, list) and len(history) > 100:
@@ -2170,7 +2199,10 @@ async def unified_chat(request: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     response["mode"] = mode
     response["migration_note"] = (
         "Use /api/v1/chat/unified for multi-persona isolation; "
-        "legacy /dialogue and /angela/chat removed in v7.5.0."
+        "legacy /dialogue and /angela/chat removed in v7.5.0. "
+        "Compat routes still served: /session/start|/session/{id}/send "
+        "(now tenant::persona-namespaced), /chat/stream, /chat/with-image, "
+        "/chat/with-audio."
     )
     return response
 
@@ -2188,7 +2220,9 @@ async def chat_stream(request: Dict[str, Any] = Body(...)) -> StreamingResponse:
     """
     user_message = request.get("message", request.get("text", ""))
     mode = request.get("mode", "1:1")
-    user_name = request.get("user_name", request.get("user_id", "User"))
+    # Same identity rule as unified_chat (audit 2026-10-10): id wins.
+    user_id = request.get("user_id") or request.get("user_name", "User")
+    user_name = request.get("user_name", user_id)
     history = request.get("history", [])
     if isinstance(history, list) and len(history) > 100:
         history = history[-100:]
@@ -2198,6 +2232,12 @@ async def chat_stream(request: Dict[str, Any] = Body(...)) -> StreamingResponse:
     )
     origin = request.get("origin", request.get("client_id", "desktop"))
     token_queue: asyncio.Queue = asyncio.Queue()
+    extra_context = {
+        "user_id": user_id,
+        "tenant_id": request.get("tenant_id", "default"),
+        "persona_id": request.get("persona_id", "angela"),
+        "client_id": origin,
+    }
 
     def _token_callback(piece: str) -> None:
         try:
@@ -2205,7 +2245,7 @@ async def chat_stream(request: Dict[str, Any] = Body(...)) -> StreamingResponse:
         except Exception:
             pass
 
-    extra_context = {"_stream_callback": _token_callback}
+    extra_context["_stream_callback"] = _token_callback
 
     async def _event_gen() -> AsyncGenerator[str, None]:
         from services.llm.stream_judge import StreamJudgeWindow
