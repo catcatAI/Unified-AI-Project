@@ -38,6 +38,9 @@ logger = logging.getLogger(__name__)
 # Per-session conversation history (max 30 messages per session)
 _session_history: Dict[str, list] = {}  # session_id -> list of {"role": str, "content": str}
 _MAX_HISTORY = 30
+# Cap on distinct sessions: per-session lists are trimmed, but abandoned
+# session keys leaked forever (audit 2026-10-10).
+_MAX_SESSIONS = 1000
 _session_history_lock = asyncio.Lock()
 
 
@@ -426,6 +429,9 @@ async def _handle_chat_message(websocket: WebSocket, data: dict, session_id: str
         async with _session_history_lock:
             if session_id not in _session_history:
                 _session_history[session_id] = []
+                # Evict oldest sessions first (dicts preserve insertion order).
+                while len(_session_history) > _MAX_SESSIONS:
+                    _session_history.pop(next(iter(_session_history)))
             _session_history[session_id].append({"role": "user", "content": user_message})
             _session_history[session_id].append(
                 {"role": "assistant", "content": chat_res.get("response_text", "")}

@@ -144,7 +144,11 @@ class UnifiedBackend(BaseLLMBackend):
     async def generate(self, prompt: str, **kwargs) -> LLMResponse:
         start = time.time()
         try:
-            engine = self._get_engine()
+            # First-call checkpoint load (100s MB npz+JSON) must not block
+            # the event loop (audit 2026-10-10); cached afterwards.
+            import asyncio as _asyncio
+
+            engine = await _asyncio.to_thread(self._get_engine)
             user_text = self._strip_wrapper(prompt)
             text = await self._run_in_thread(engine, user_text)
             if not text or text == user_text:

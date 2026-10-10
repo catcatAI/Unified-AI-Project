@@ -106,8 +106,9 @@ class KnowledgePipeline:
                     )
                     return result
             except Exception as e:
-                logger.debug("[KnowledgePipeline] %s failed: %s", source_name, e)
-                continue
+                # A crashing source (not a miss) must be visible per-source,
+                # or one broken import silently disables a whole layer.
+                logger.warning("[KnowledgePipeline] %s failed: %s", source_name, e)
 
         return None
 

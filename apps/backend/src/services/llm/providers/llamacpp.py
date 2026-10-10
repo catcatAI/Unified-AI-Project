@@ -150,13 +150,17 @@ class LlamaCppBackend(BaseLLMBackend):
             except Exception as exc:
                 logger.debug("stream_callback failed: %s", exc)
 
+        # Defensive caps (audit 2026-10-10): total wall so a wedged server
+        # can't hold our worker forever; chunk cap so a runaway stream can't
+        # grow memory without bound (max_tokens normally bounds this anyway).
         chunks: list = []
+        truncated = False
         try:
             session = self._get_session()
             async with session.post(
                 f"{self.base_url}/v1/chat/completions",
                 json=payload,
-                timeout=aiohttp.ClientTimeout(total=None, sock_read=30),
+                timeout=aiohttp.ClientTimeout(total=600, sock_read=30),
             ) as response:
                 if response.status != 200:
                     text = await response.text()
@@ -183,9 +187,14 @@ class LlamaCppBackend(BaseLLMBackend):
                     except Exception:
                         continue
                     if piece:
-                        chunks.append(piece)
+                        if len(chunks) < 4096:
+                            chunks.append(piece)
+                        else:
+                            truncated = True
                         await _emit(piece)
             text = "".join(chunks)
+            if truncated:
+                text += "…[truncated]"
             return LLMResponse(
                 text=text,
                 backend="llama.cpp",

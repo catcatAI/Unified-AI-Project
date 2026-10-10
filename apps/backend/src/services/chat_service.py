@@ -352,7 +352,9 @@ class ChatService:
                         "hit_source": local_answer.get("source", "local"),
                     }
             except Exception as e:
-                logger.debug("KnowledgePipeline query failed: %s", e)
+                # Whole-pipeline failure (not a mere miss) must be visible:
+                # silent fallback to LLM hallucination hides regressions.
+                logger.warning("KnowledgePipeline query failed: %s", e, exc_info=True)
 
         response = await self._llm_service.generate_response(user_message, merged_context)
         if response is None:

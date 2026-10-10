@@ -169,8 +169,18 @@ class LifeEssence:
     def __init__(
         self,
         generation: int = 0,
-        persist_path: Optional[str] = "data/life_essence_state.json",
+        persist_path: Optional[str] = None,
     ):
+        # Default state path anchored to the repo data root (not CWD):
+        # a relative default split-brains across launch dirs (audit 2026-10-10,
+        # same class as the vector-store split).
+        if persist_path is None:
+            try:
+                from core.data_config import get_data_root
+
+                persist_path = str(get_data_root() / "life_essence_state.json")
+            except Exception:
+                persist_path = "data/life_essence_state.json"
         self._generation = generation
         self._persist_path = persist_path
 

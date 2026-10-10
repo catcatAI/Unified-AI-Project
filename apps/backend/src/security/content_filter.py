@@ -101,10 +101,16 @@ class ContentFilter:
         "address": r"\d{1,5}\s\w+\s(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Drive|Dr|Court|Ct)\b",
     }
 
+    # Bounded in-memory log: append-only growth is a slow leak and makes
+    # get_filter_stats() O(n) (audit 2026-10-10). deque keeps newest 1000.
+    _FILTER_LOG_MAXLEN = 1000
+
     def __init__(self, config: Optional[Dict[str, Any]] = None):
+        from collections import deque
+
         self.config = {**self.DEFAULT_CONFIG, **(config or {})}
         self.custom_rules: List[Callable[[str], Tuple[bool, str]]] = []
-        self.filter_log: List[Dict[str, Any]] = []
+        self.filter_log: Any = deque(maxlen=self._FILTER_LOG_MAXLEN)
         self._load_custom_rules()
         logger.debug("ContentFilter initialized")
 

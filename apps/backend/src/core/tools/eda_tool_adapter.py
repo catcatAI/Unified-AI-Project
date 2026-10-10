@@ -90,7 +90,18 @@ class EdaToolAdapter:
         configured_root = output_root or self.config.get("output_root", "data/eda_runs")
         self.output_root = Path(configured_root).expanduser()
         if not self.output_root.is_absolute():
-            self.output_root = (Path.cwd() / self.output_root).resolve()
+            # Anchor relative roots to the repo data root, not CWD: EDA run
+            # outputs otherwise scatter per launch dir (audit 2026-10-10).
+            # get_data_root() already ends in /data, so strip a leading data/.
+            try:
+                from core.data_config import get_data_root
+
+                rel = self.output_root
+                if rel.parts and rel.parts[0] == "data":
+                    rel = Path(*rel.parts[1:])
+                self.output_root = (get_data_root() / rel).resolve()
+            except Exception:
+                self.output_root = (Path.cwd() / self.output_root).resolve()
         self.timeout = self._positive_float(
             self.config.get("timeout", timeout_value("system.eda.timeout", 30.0)),
             timeout_value("system.eda.timeout", 30.0),

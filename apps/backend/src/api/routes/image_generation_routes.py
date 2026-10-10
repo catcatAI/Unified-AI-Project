@@ -117,7 +117,12 @@ async def image_generate(request: GenerateImageRequest):
     engine (see services/handlers/image_generation_handler.py).
     """
     try:
-        result = _generate_image(
+        # Sync CLIP→optimize→render loop must not block the event loop
+        # (audit 2026-10-10: +10-60s starvation per request).
+        import asyncio as _asyncio
+
+        result = await _asyncio.to_thread(
+            _generate_image,
             request.text,
             canvas_size=request.canvas_size,
             num_iterations=request.num_iterations,

@@ -6,6 +6,14 @@ import pytest
 from core.tools.eda_tool_adapter import EdaToolAdapter
 
 
+def test_default_output_root_is_cwd_independent() -> None:
+    """Relative default anchors to repo data root, not CWD (split-brain audit)."""
+    from core.data_config import get_data_root
+
+    adapter = EdaToolAdapter(config={"enabled": False})
+    assert adapter.output_root == (get_data_root() / "eda_runs").resolve()
+
+
 def test_rc_netlist_is_bounded_and_deterministic(tmp_path: Path) -> None:
     adapter = EdaToolAdapter(output_root=tmp_path)
 

@@ -350,6 +350,9 @@ class FragmentComposer:
     def _assemble_fragments(self, fragments: List[Fragment], context: Dict[str, Any]) -> str:
         """组装片段为完整响应"""
         if not fragments:
+            # Empty pool means template misconfig/failed load: log loudly so
+            # the fallback ramble isn't mistaken for composed output.
+            logger.warning("Composer assembled with zero fragments (misconfig?)")
             return _get_ed3n().process("compose_fallback", context=context or {}, depth="shallow")
 
         parts: List[str] = []
