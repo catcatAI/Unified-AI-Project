@@ -156,11 +156,31 @@ class MathVerifier:
             r"\d+\s*[\+\-\*\/\%]\s*\d+",
             r"(?:計算|求解|解方程|sum|calculate|compute)",
             r"[\=\?]\s*\d+",
+            # Chinese verbal operators (audit 2026-10-10): without these the
+            # deterministic layer skips verbal math and it falls to LLM/honest.
+            # Safe to widen: verify() rejects non-computable text anyway.
+            r"\d+\s*(?:乘以|乘上|除以|加上|減去|减去|加|減|减|乘|除)\s*\d+",
+            r"[零一二两三四五六七八九十百千万〇壹贰叁肆伍陆柒捌玖]+\s*(?:乘以|乘上|除以|加上|減去|减去|加|減|减|乘|除)",
         ]
         return any(re.search(p, text) for p in math_patterns)
 
     def verify(self, message: str, user_name: str = "") -> "MathVerifyResult":
         """Verify a math expression by computing ground truth."""
+        # Chinese-aware single source of truth first: symbolic extraction
+        # below cannot parse verbal operators (乘以/加…), so verbal math
+        # always failed here even though compute_arithmetic() solves it
+        # (audit 2026-10-10: 12乘以12 fell through to LLM).
+        try:
+            _result = compute_arithmetic(message)
+        except Exception:
+            _result = None
+        if _result is not None:
+            _expr = _normalize_expr(message)
+            return MathVerifyResult(
+                response_text=f"{_expr} = {_result}",
+                is_correct=True,
+                explanation=f"計算結果: {_result}",
+            )
         extracted = self._extractor.extract(message)
         if extracted is None:
             # Check for simple numbers (e.g., "what is 5+3?")
@@ -397,6 +417,13 @@ def _normalize_expr(text: str) -> str:
     converted = convert_chinese_math(expr)
     expr = converted if converted is not None else expr
     expr = re.sub(r"^[=等于是\s]+", "", expr).strip()
+    # Trailing Chinese question tails (是多少/等於多少/多少/嗎…) would leak
+    # into "expr = result" display text (audit 2026-10-10: "12*12=多少=144").
+    expr = re.sub(
+        r"(是多少|等于多少|等於多少|等於几|等于几|是多少|多少|等於|等于|是幾|是几|幾|几|嗎|吗|呢)\s*$",
+        "",
+        expr,
+    ).strip()
     expr = re.sub(r"[=？?！!。.\s]+$", "", expr).strip()
     return expr
 

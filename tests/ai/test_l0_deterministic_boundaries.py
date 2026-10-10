@@ -7,6 +7,7 @@
 確保 L0 20/20 不回退。全部為純函數呼叫，無重型模型載入，單檔 <0.5s。
 """
 
+import pytest
 from ai.knowledge_base import route_knowledge
 from ai.symbolic_reasoner import route_reasoning
 
@@ -124,3 +125,22 @@ class TestMathVerifierSmoke:
         result = MathVerifier().verify("12*13等於多少")
         assert result.is_correct is True
         assert result.response_text is not None and "156" in result.response_text
+
+    @pytest.mark.parametrize(
+        ("query", "answer"),
+        [
+            ("12乘以12等於多少", "144"),
+            ("十五乘以十三是多少", "195"),
+            ("100除以4等於多少", "25"),
+        ],
+    )
+    def test_verbal_chinese_math_verifies_deterministically(self, query, answer):
+        """Verbal math must compute, not fall to LLM (audit 2026-10-10)."""
+        from services.math_verifier import MathVerifier
+
+        verifier = MathVerifier()
+        assert verifier.is_math_message(query) is True
+        result = verifier.verify(query)
+        assert result.is_correct is True
+        assert answer in (result.response_text or "")
+        assert "多少" not in (result.response_text or "")

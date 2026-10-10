@@ -647,12 +647,23 @@ async def _build_chat_context(
     if history and len(history) > 0:
         try:
             ed3n = _get_ed3n_engine()
-            query_keys = set(ed3n.dictionary.encode(user_message))
+            # Per-request memo: encode() scans the 460k-entry index; history
+            # repeats content across turns and within a turn (audit 2026-10-10).
+            _encode_memo: Dict[str, set] = {}
+
+            def _encode_cached(text: str) -> set:
+                hit = _encode_memo.get(text)
+                if hit is None:
+                    hit = set(ed3n.dictionary.encode(text))
+                    _encode_memo[text] = hit
+                return hit
+
+            query_keys = _encode_cached(user_message)
             for entry in history:
                 content = entry.get("content", "")
                 if not content:
                     continue
-                entry_keys = set(ed3n.dictionary.encode(content))
+                entry_keys = _encode_cached(content)
                 overlap = len(query_keys & entry_keys)
                 if overlap > 0:
                     retrieved_ctx.append({**entry, "relevance": float(overlap)})
@@ -1952,6 +1963,14 @@ async def _run_chat_pipeline(
             or llm_response.get("response_text")
             or ""
         )
+        if not response_text and llm_response.get("error"):
+            # Error dicts without text must not become silent empty replies
+            # (audit 2026-10-10): surface honestly instead of HTTP 200 + "".
+            logger.warning(
+                "Chat dict response carried error without text: %s",
+                str(llm_response.get("error"))[:200],
+            )
+            response_text = "抱歉，剛才的處理遇到問題，請再說一次。"
     else:
         response_text = (
             llm_response.text
@@ -2041,6 +2060,8 @@ def _build_math_response(
         "response_text": verification.response_text,
         "response": verification.response_text,
         "source": "dual_rail",
+        "backend": "deterministic-math",
+        "model": "dual-rail-verifier",
         "schema_version": schema_version,
         "truncation_message": truncation_message,
         "emotion": emotion,
@@ -2233,6 +2254,12 @@ async def chat_stream(request: Dict[str, Any] = Body(...)) -> StreamingResponse:
                 yield f"data: {json.dumps({'error': str(exc)[:200]})}\n\n"
                 return
             final_text = (result or {}).get("response_text", "")
+            final_backend = (result or {}).get("backend", "unknown")
+            # Never report success on an empty answer (audit 2026-10-10: a
+            # failed pipeline yielded done:true with blank text and no signal).
+            if not (final_text or "").strip() and final_backend == "unknown":
+                yield f"data: {json.dumps({'error': 'empty response'})}\n\n"
+                return
             try:
                 consistency = judge.finalize(final_text)
             except Exception:
@@ -2240,7 +2267,7 @@ async def chat_stream(request: Dict[str, Any] = Body(...)) -> StreamingResponse:
             final = {
                 "done": True,
                 "response_text": final_text,
-                "backend": (result or {}).get("backend", "unknown"),
+                "backend": final_backend,
                 "judge_consistency": consistency,
             }
             yield f"data: {json.dumps(final, ensure_ascii=False)}\n\n"
@@ -2283,7 +2310,9 @@ async def chat_with_image(
             if encoder.is_available:
                 ed3n = ED3NEngine.get_shared()
                 if len(ed3n.dictionary.entries) < 100:
-                    ed3n.load_external_dictionaries()
+                    # 132MB sync load would block the event loop for seconds
+                    # (audit 2026-10-10): offload like the vector-store I/O.
+                    await asyncio.to_thread(ed3n.load_external_dictionaries)
 
                 from ai.multimodal.semantic_key_mapper import SemanticKeyMapper
 

@@ -1808,7 +1808,11 @@ class AngelaLLMService:
         """無 Pipeline 上下文時，直接以 MathVerifier 驗證的確定性數學備援。"""
         import re as _re_math
 
-        if _re_math.search(r"\d\s*[+\-*/^%()\s]+\d", user_message):
+        if _re_math.search(
+            r"\d\s*[+\-*/^%()\s]+\d"
+            r"|\d+\s*(?:乘以|乘上|除以|加上|減去|减去|加|減|减|乘|除)\s*\d+",
+            user_message,
+        ):
             try:
                 from services.math_verifier import MathVerifier
 
@@ -1828,7 +1832,7 @@ class AngelaLLMService:
                         metadata={"math": True, "source": "backup"},
                     )
             except Exception as exc:
-                logger.debug(f"MathVerifier backup failed: {exc}")
+                logger.warning(f"MathVerifier backup failed: {exc}", exc_info=True)
         return None
 
     async def _clock_response(
@@ -1960,10 +1964,10 @@ class AngelaLLMService:
                     if hit is not None and hit[1] >= 0.80:
                         # High-confidence semantic QA -> skip memory, let unified handle
                         return None
-                except Exception:
-                    pass
-        except Exception:
-            pass
+                except Exception as exc:
+                    logger.warning("Semantic QA gate failed: %s", exc, exc_info=True)
+        except Exception as exc:
+            logger.debug("Semantic QA gate unavailable: %s", exc)
         try:
             memory_response = await self.memory_integration.try_memory_retrieval(
                 user_message, context

@@ -138,6 +138,27 @@ class TestQueryClassifier:
 
         assert QueryClassifier().classify(query).primary_type.value == expected
 
+    @pytest.mark.parametrize(
+        "query",
+        [
+            "講講量子力學",
+            "談談黑洞",
+            "介紹一下光合作用",
+        ],
+    )
+    def test_classify_topical_talk_is_knowledge(self, query):
+        """講講/談談/介紹＋主題 → KNOWLEDGE (was unknown → neuro-blender ramble)."""
+        from ai.core.query_classifier import QueryClassifier, QueryType
+
+        assert QueryClassifier().classify(query).primary_type == QueryType.KNOWLEDGE
+
+    @pytest.mark.parametrize("query", ["說說話", "聊聊天"])
+    def test_classify_chitchat_reduplication_not_knowledge(self, query):
+        """說說話/聊聊天 stays chitchat (small-talk templates may answer)."""
+        from ai.core.query_classifier import QueryClassifier, QueryType
+
+        assert QueryClassifier().classify(query).primary_type != QueryType.KNOWLEDGE
+
     def test_classify_knowledge(self):
         from ai.core.query_classifier import QueryClassifier, QueryType
 

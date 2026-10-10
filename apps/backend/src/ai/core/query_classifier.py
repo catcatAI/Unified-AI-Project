@@ -393,6 +393,7 @@ class QueryClassifier:
                     r"why\s+(is|does|do|can)|"
                     r"\b(define|explain)\b|"
                     r".+?的?意思|.+?的?翻譯|.+?的?翻译|"
+                    r"(?:講講|談談|介紹|介绍|說說|说说|聊聊)(?!話|话|天)|"
                     r"怎麼回|怎么回|多少|how\s+many|what\s+are)",
                     re.IGNORECASE,
                 ),
