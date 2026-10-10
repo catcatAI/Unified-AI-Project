@@ -575,7 +575,22 @@ async def test_mount_handler_parse_and_list() -> None:
     assert h._parse_action("掛載文件") == ("mount", "文件")
     assert h._parse_action("卸載shell") == ("unmount", "shell")
     assert h._parse_action("有哪些應用") == ("list", "")
+    assert h._parse_action("代理狀態如何") == ("inspect", "")
+    assert h._parse_action("會話開著嗎") == ("inspect", "")
+    assert h._parse_action("系統狀態如何") is None
     assert h._parse_action("你好") is None
+
+
+async def test_mount_handler_inspect_reports_sessions(tmp_path: Path) -> None:
+    from services.handlers.workspace_mount_handler import WorkspaceMountHandler
+
+    h = WorkspaceMountHandler()
+    ws = _make_workspace(tmp_path)
+    text = h._inspect(ws)
+    assert "可用應用" in text and "fake" in text and "未開啟" in text
+    await ws.open_app("fake")
+    text2 = h._inspect(ws)
+    assert "開啟中" in text2
 
 
 def test_mount_intent_detected_with_verb_bypass() -> None:

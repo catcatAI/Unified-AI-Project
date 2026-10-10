@@ -34,6 +34,8 @@ class WorkspaceMountHandler:
         if workspace is None:
             return "（掛載）代理工作區不可用。"
         try:
+            if action[0] == "inspect":
+                return self._inspect(workspace)
             if action[0] == "list":
                 apps = self._available(workspace)
                 if not apps:
@@ -81,8 +83,42 @@ class WorkspaceMountHandler:
             logger.debug(f"available_apps failed: {exc}")
         return []
 
+    def _inspect(self, workspace: object) -> str:
+        """Agent self-inspection: mounted apps + open sessions + health."""
+        try:
+            inner = getattr(workspace, "workspace", workspace)
+            sessions = getattr(inner, "sessions", None)
+            apps = list(sessions.available_apps()) if sessions is not None else []
+            lines = [f"可用應用 {len(apps)} 個："]
+            for a in apps:
+                record = sessions.get_session(a.get("app_id", "")) if sessions else None
+                if record is not None:
+                    state = getattr(record, "state", "?")
+                    ops = getattr(record, "op_count", 0)
+                    lines.append(
+                        f"- {a.get('app_id')}（{a.get('label')}）：會話開啟中（{state}，op={ops}）"
+                    )
+                else:
+                    lines.append(f"- {a.get('app_id')}（{a.get('label')}）：未開啟")
+            try:
+                ov = workspace.overview(max_depth=1)
+                lines.append(f"工作區：{str(ov)[:120]}")
+            except Exception:
+                pass
+            return "（自檢）\n" + "\n".join(lines)
+        except Exception as e:
+            logger.warning(f"[WorkspaceMountHandler] inspect failed: {e}", exc_info=True)
+            return f"（自檢）查詢失敗：{e}"
+
     def _parse_action(self, text: str) -> Optional[tuple]:
         t = (text or "").strip()
+        if re.search(
+            r"(代理狀態|代理健康|代理正常|會話狀態|会话状态|會話開著|会话开着"
+            r"|agent status|agent health)",
+            t,
+            re.IGNORECASE,
+        ):
+            return ("inspect", "")
         if re.search(r"(有哪些|列出|可用|查看).{0,4}(應用|应用|app)", t, re.IGNORECASE):
             return ("list", "")
         want_unmount = any(k in t for k in _UNMOUNT_RES)
