@@ -9,7 +9,7 @@ slots:
     backend: llamacpp
     base_url: http://127.0.0.1:8080
     model: gemma-4-E2B-it
-    n_gpu_layers: 0 # Vulkan 後端 segfault（dmesg 實錘），純CPU才穩
+    n_gpu_layers: 0 # Arc B570 在但 Vulkan segfault＋强制offload更慢，純CPU才穩（見分析3.5）
     n_ctx: 3072
   executor:
     backend: llamacpp-qwen

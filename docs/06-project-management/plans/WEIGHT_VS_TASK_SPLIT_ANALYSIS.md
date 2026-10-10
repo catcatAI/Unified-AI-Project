@@ -33,6 +33,17 @@
 - 槽位 → 生成配置（温度/長度/超時）＋ 未來 adapter 路徑（現 null）
 - 真 adapter 到位之日：填路徑即插即用，拆分器、Runner、評測全不動。
 
+## 3.5 GPU 實測裁決（2026-10-10，用戶提示有卡後加測）
+
+- 卡存在：Intel Arc B570（8086:e20c，Xe，~10GB，`/dev/dri` 就緒），
+  Vulkan ICD（intel_icd/intel_hasvk）就緒，wheel 自帶 `libggml-vulkan.so`。
+- 但：默認 offload 直接 segfault（dmesg）；强制 `n_gpu_layers=99` 後
+  無 Vulkan 初始化字樣、比純 CPU 還慢（3.56s vs 2.66s，同 qwen 同 prompt）——
+  等於靜默回退或壞路徑。
+- 裁決：**現棧 GPU 不可用**，`n_gpu_layers=0` 純 CPU 指令維持；
+  真要用卡需 SYCL/oneAPI 自編譯或 IPEX（數小時工程，另立項）。
+  真權重訓練同樣卡在這裡（無可用加速）。
+
 ## 4. 預設裁決
 
 - [x] 進預設：任務拆全套＋軟權重配置（`configs/presets/` 三件：dual_model、
