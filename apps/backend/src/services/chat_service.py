@@ -13,6 +13,59 @@ from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
+# Response models that must never be Hebbian-learned (they teach refusal
+# patterns, not knowledge). Mirrors the template verified-only gate.
+_NON_LEARNING_MODELS = frozenset(
+    {
+        "honest-no-answer",
+        "honest-cannot-do",
+        "empty-input",
+        "manifest-exhausted",
+        # Emotion-glued fragments (same exclusion as template fossilization).
+        # support-template stays learnable: empathy associations are the
+        # point of emotional learning, unlike canned refusals.
+        "neuro-blender",
+    }
+)
+
+
+def _should_garden_learn(user_message: Any, response: Any) -> bool:
+    """Gate live chat turns out of GARDEN Hebbian learning.
+
+    Every turn used to bake (user_message, response.text) with default
+    confidence 0.7 — including refusals, fallbacks, rambles and errors
+    (audit 2026-10-10: the live twin of the template-poison loop).
+    Returns False for anything not worth learning; failures never block.
+    """
+
+    def _field(name: str) -> Any:
+        if isinstance(response, dict):
+            return response.get(name)
+        return getattr(response, name, None)
+
+    try:
+        text = _field("text") or ""
+        if not isinstance(text, str) or not text.strip():
+            return False
+        if _field("error"):
+            return False
+        model = str(_field("model") or "")
+        if model in _NON_LEARNING_MODELS:
+            return False
+        backend = str(_field("backend") or "")
+        if backend == "local-fallback" and len(text.strip()) < 20:
+            return False
+        try:
+            from ai.memory.ham_memory.ham_manager import is_unservable_template
+
+            if is_unservable_template(text):
+                return False
+        except Exception:
+            pass
+        return True
+    except Exception:
+        return True
+
 
 class ChatService:
     """聊天服務 — 透過 AngelaLLMService 生成回應。"""
@@ -684,6 +737,8 @@ class ChatService:
         self, user_message: str, response, context: Optional[dict] = None
     ) -> None:
         if not self._garden_engine:
+            return
+        if not _should_garden_learn(user_message, response):
             return
         try:
             if self._training_coordinator:

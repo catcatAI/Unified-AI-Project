@@ -376,12 +376,15 @@ async def _learn_from_llm_output(
 
     try:
         from ai.garden.garden_engine import GARDENEngine
+        from services.chat_service import _should_garden_learn
 
         # Shared instance: learned associations accumulate across documents
         # (was: learned into a throwaway engine and discarded).
         garden: Any = GARDENEngine.get_shared()
         for f in files[:3]:
             content = await _read_file_content(f)
+            if not _should_garden_learn(content[:1000], {"text": llm_output[:1000]}):
+                continue
             garden.learn_from_interaction(content[:1000], llm_output[:1000], confidence=0.5)
     except Exception as e:
         logger.warning(

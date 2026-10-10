@@ -224,3 +224,50 @@ class TestChatServiceMultimodalOutput:
         assert result.text == "multimodal response"
         # Metadata may or may not contain generated content depending on
         # retrieval success; we just verify no exception is raised
+
+
+class TestGardenLearnGate:
+    """Live turns must not bake refusals/fallbacks/errors into GARDEN."""
+
+    def _resp(self, **kwargs):
+        base = {
+            "text": "光合作用是植物的過程。",
+            "backend": "llama.cpp",
+            "model": "qwen",
+            "error": "",
+        }
+        base.update(kwargs)
+        return SimpleNamespace(**base)
+
+    def test_good_answer_learns(self):
+        from apps.backend.src.services.chat_service import _should_garden_learn
+
+        assert _should_garden_learn("光合作用是什麼", self._resp()) is True
+
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"text": ""},
+            {"text": "   "},
+            {"error": "boom"},
+            {"model": "honest-no-answer"},
+            {"model": "honest-cannot-do"},
+            {"model": "neuro-blender"},
+            {"text": "User，這個問題我目前還沒有足夠的知識"},
+        ],
+    )
+    def test_garbage_never_learns(self, kwargs):
+        from apps.backend.src.services.chat_service import _should_garden_learn
+
+        assert _should_garden_learn("隨便問", self._resp(**kwargs)) is False
+
+    async def test_process_skips_garden_call(self, chat_service):
+        from unittest.mock import AsyncMock
+
+        chat_service._garden_engine = SimpleNamespace(learn_from_interaction=AsyncMock())
+        bad = self._resp(model="honest-no-answer")
+        await chat_service._process_garden_learning("隨便問", bad)
+        chat_service._garden_engine.learn_from_interaction.assert_not_called()
+        good = self._resp()
+        await chat_service._process_garden_learning("光合作用是什麼", good)
+        chat_service._garden_engine.learn_from_interaction.assert_called_once()
