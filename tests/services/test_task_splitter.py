@@ -48,6 +48,17 @@ def test_ready_pieces_respect_dependencies():
     assert {p.piece_id for p in plan.ready_pieces({"p1", "p2"})} == {"p1", "p2", "verify"}
 
 
+def test_preset_loader_reads_pack_and_falls_back():
+    from services.preset_loader import framing_for, kind_params, load_preset
+
+    assert load_preset("no-such-preset") == {}
+    micro = framing_for("micro_act")
+    assert "code_shape" in micro and "{part}" in micro["code_shape"]
+    think_params = kind_params("think")
+    assert think_params.get("slot") == "thinker"
+    assert kind_params("nope") == {}
+
+
 def test_bare_build_without_code_context_stays_whole():
     """建車身、建車頂 (no code nouns) is not a code task — stays think+verify."""
     kinds = [p.kind for p in TaskSplitter().split("建車身、建車頂").pieces]

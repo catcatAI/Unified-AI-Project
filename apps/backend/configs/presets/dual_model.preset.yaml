@@ -1,0 +1,47 @@
+# 雙模型預設（thinker/executor 分流＋權重配置映射層）
+# 實測結論（2026-10-10）：gemma-4-E2B-it 難題夠聰明但慢＋偶倒；
+# qwen2.5-0.5b 單片快穩但複合不行。按任務難度分流，壞槽降級＋revive兜底。
+# 真權重拆分（LoRA/adapter/MoE）需GPU＋訓練，現無基建——此檔保留
+# adapters 插槽，未來訓練產物即插即用，拆分器不需改。
+version: 1
+slots:
+  thinker:
+    backend: llamacpp
+    base_url: http://127.0.0.1:8080
+    model: gemma-4-E2B-it
+    n_gpu_layers: 0 # Vulkan 後端 segfault（dmesg 實錘），純CPU才穩
+    n_ctx: 3072
+  executor:
+    backend: llamacpp-qwen
+    base_url: http://127.0.0.1:8081
+    model: qwen2.5-0.5b-instruct
+    n_gpu_layers: 0
+    n_ctx: 2048
+per_kind_params:
+  # 按件種類的生成配置（軟權重控制：温度/長度/上下文）。
+  think:
+    slot: thinker
+    temperature: 0.3
+    max_tokens: 512
+    timeout: 600
+  micro-act:
+    slot: executor
+    temperature: 0.3
+    max_tokens: 220
+    timeout: 200
+  deterministic:
+    slot: none # solver/bridge，不經LLM
+    timeout: 30
+  verify:
+    slot: agent # shell/files 跑驗證，不經LLM
+    timeout: 300
+adapters:
+  # 真權重拆分插槽：有訓練產物填路徑，無則 null（現況）。
+  thinker: null
+  executor: null
+  status: research # research → ready（需GPU＋steering陽性證據，現 E4 陰性為主）
+policy:
+  health_cache_seconds: 60
+  demote_on_failure: true
+  revive_enabled: true
+  supervisor: /home/cxuo/.local/share/opencode/supervise_shim.sh # env側，崩潰自拉

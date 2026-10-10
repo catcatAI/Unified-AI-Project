@@ -56,6 +56,8 @@ class TaskManagerHandler:
 
     async def handle(self, text: str, intent: str = "task") -> str:
         action, payload = self._parse(text)
+        if action == "plan":
+            return await asyncio.to_thread(self._plan, payload)
         if action == "create":
             return await asyncio.to_thread(self._create, payload)
         elif action == "list":
@@ -99,10 +101,37 @@ class TaskManagerHandler:
             if m:
                 return "update", {"id": int(m.group(1)), "title": m.group(2).strip()}
             return "update", {"title": text}
+        if any_keyword(
+            text, ("拆解任務", "拆分任務", "規劃任務", "拆成步驟", "怎麼拆", "plan task")
+        ):
+            target = text
+            for verb in ("拆解任務", "拆分任務", "規劃任務", "拆成步驟", "怎麼拆", "plan task"):
+                target = re.sub(verb, "", target, flags=re.IGNORECASE)
+            target = re.sub(r"^[：:，,、\s]+", "", target).strip()
+            return "plan", {"goal": target or text}
         # If query mentions tasks but no specific action → show task list
         if any_keyword(text, ("任務", "task", "待辦", "todo")):
             return "list", {}
         return "create", {"title": text}
+
+    def _plan(self, payload: Dict[str, Any]) -> str:
+        """Capability split of a task goal (TaskSplitter): pieces + mounts."""
+        from services.task_splitter import TaskSplitter
+
+        goal = str(payload.get("goal", "") or "").strip()
+        if not goal:
+            return "（規劃）請告訴我要拆解什麼任務。"
+        plan = TaskSplitter().split(goal)
+        if not plan.pieces:
+            return "（規劃）任務為空，無法拆解。"
+        lines = [f"（規劃）{goal} → {len(plan.pieces)} 步："]
+        for piece in plan.pieces:
+            lines.append(
+                f"- {piece.piece_id} [{piece.kind}/{piece.capability}] " f"{piece.prompt[:60]}"
+            )
+        if plan.mounts_needed:
+            lines.append(f"需掛載：{','.join(plan.mounts_needed)}")
+        return "\n".join(lines)
 
     def _create(self, payload: Dict[str, Any]) -> str:
         title = payload.get("title", "").strip()

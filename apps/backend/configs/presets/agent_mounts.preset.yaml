@@ -1,0 +1,30 @@
+# 代理掛載預設（主AI按需掛應用＋外部工作區映射）
+# 實測（2026-10-10）：mount/open/act/confirm/unmount 全通；chip直達。
+version: 1
+mountable_kinds:
+  - shell # 命令執行：run恆危險，需confirm；cwd監禁＋denylist＋超時＋截斷
+  - files # 文件操作：list/read安全，write危險；路徑監禁＋大小上限
+protected_builtin:
+  - desktop
+  - browser
+  - eda
+roots:
+  # 與 DesktopInteraction._ALLOWED_ROOTS 同源（漂移時以該處為準）。
+  - $HOME
+  - $ANGELA_WORKSPACE
+  - /tmp
+external_workspaces:
+  # 外部工作區映射（files agent可直達，主AI可查）。
+  chip:
+    path: /home/cxuo/chip
+    kind: magic-vlsi # .gds/.mag/.ext
+    note: 206 entries (A01~)，EDA工具鏈 ngspice/klayout/magic/kicad-cli 可用
+  unity_car:
+    path: /home/cxuo/unity_car_proj
+    kind: unity6 # 6000.6.5f1，batchmode無頭
+    note: SimpleCarScene.unity（車身車頂三輪，第四輪待修）
+policy:
+  dangerous_requires_confirm: true
+  shell_timeout_max: 300
+  file_read_max_bytes: 65536
+  file_write_max_bytes: 1048576

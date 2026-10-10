@@ -1,0 +1,19 @@
+# 執行包絡預設（proven micro framings，2026-10-10 實測）
+# 核心發現：弱執行器怕上下文——完整brief反降質（qwen胡編localScaleArray）；
+# 無背景＋單方法形狀必中（BuildBody一次寫對）；代碼片要方法形，描述片要短。
+# 每條都是活體打過的，改前先重測。
+version: 1
+micro_act:
+  code_shape: "只輸出一個完整方法，無前言：{part}"
+  plain_shape: "{head}只輸出這一件交付物，零前言後語：{part}"
+  anchor_max_chars: 60
+  part_max_chars: 220
+think:
+  shape: "{brief}\n請給出完成該目標的方案要點（分條列出，每條一件交付物）。\n目標：{goal}"
+  max_tokens: 512
+verify:
+  shape: "{brief}\n驗證：檢查上述交付物是否達成目標「{goal}」，列出不通過項（空即通過）。驗證手段：編譯/運行/文件存在性檢查。"
+rules:
+  - 短片優先：單交付物＋顯式I/O＋零前言（qwen包絡）。
+  - 背景只留一行錨（目標前60字），連貫走ledger不走prompt。
+  - 複合先拆（、/和/plus），片超包絡遞歸再拆，不硬試。

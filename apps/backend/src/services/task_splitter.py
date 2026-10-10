@@ -281,23 +281,39 @@ class TaskSplitter:
 
     def _micro_prompt(self, brief: str, part: str) -> str:
         part = part.strip()
-        if len(part) > _MICRO_MAX_CHARS:
-            part = part[:_MICRO_MAX_CHARS]
+        max_chars = _MICRO_MAX_CHARS
+        code_shape = "只輸出一個完整方法，無前言：{part}"
+        plain_shape = "{head}只輸出這一件交付物，零前言後語：{part}"
+        anchor_max = 60
+        try:
+            from services.preset_loader import framing_for
+
+            preset = framing_for("micro_act") or {}
+            max_chars = int(preset.get("part_max_chars", max_chars))
+            code_shape = str(preset.get("code_shape", code_shape))
+            plain_shape = str(preset.get("plain_shape", plain_shape))
+            anchor_max = int(preset.get("anchor_max_chars", anchor_max))
+        except Exception:
+            pass
+        if len(part) > max_chars:
+            part = part[:max_chars]
         # Weak executors drown in context: the full brief degrades them
         # (measured: qwen nails bare micro-tasks, spams with briefed ones).
         # One-line topic anchor only; coherence rides the ledger, not the prompt.
         anchor = ""
         for line in brief.splitlines():
             if line.startswith("目標："):
-                anchor = line[:60]
+                anchor = line[:anchor_max]
                 break
         # Code pieces: weak executors need a singular METHOD shape with no
         # background at all — any context (even one anchor line) flips them
         # into narrating specs instead of writing (measured 3 rounds).
-        if any(n in part for n in _CODE_NOUNS):
-            return f"只輸出一個完整方法，無前言：{part}"
+        # Code-context comes from the part OR the goal brief (verb-propagated
+        # tails like 建車頂 carry no noun themselves).
+        if any(n in part for n in _CODE_NOUNS) or any(n in brief for n in _CODE_NOUNS):
+            return code_shape.format(part=part)
         head = f"背景：{anchor}\n" if anchor else ""
-        return f"{head}只輸出這一件交付物，零前言後語：{part}"
+        return plain_shape.format(head=head, part=part)
 
     def _think_prompt(self, brief: str, goal: str) -> str:
         return f"{brief}\n請給出完成該目標的方案要點（分條列出，每條一件交付物）。\n目標：{goal}"
