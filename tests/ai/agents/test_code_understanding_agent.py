@@ -28,6 +28,18 @@ def test_analyze_code_flags_syntax_error():
     assert result["has_syntax_errors"] is True
 
 
+def test_analyze_natural_language_is_error_not_garbage():
+    """Single-line NL (misrouted write request) must refuse, not 'Analyzed 1 lines'."""
+    result = _agent().analyze_code("用最短的Unity C#代碼建一個Cube車身", "python")
+    assert result["status"] == "error"
+    assert result["line_count"] == 0
+
+
+def test_analyze_fenced_code_still_works():
+    result = _agent().analyze_code("```python\nx = 1\n```", "python")
+    assert result["status"] == "success"
+
+
 def test_code_review_empty_is_error():
     result = _agent().code_review("", "python")
     assert result["status"] == "error"

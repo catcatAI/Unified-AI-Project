@@ -218,6 +218,92 @@ def test_manifest_contains_clock_connector():
 
 
 @pytest.mark.asyncio
+async def test_recall_ignores_storage_prefix_chunks(monkeypatch):
+    """English queries share 'us/ta/al' with the storage prefix — must not recall."""
+    from unittest.mock import AsyncMock
+
+    service = _recall_service()
+    monkeypatch.setattr(service, "_query_taught_facts", AsyncMock(return_value=[]))
+    context = {
+        "retrieved_context": [
+            {
+                "role": "long_term_memory",
+                "content": "User taught Angela: AsyncIO 的基本用法",
+                "relevance": 0.9,
+            }
+        ]
+    }
+    assert (
+        await service._recall_user_fact("Status: shell is already available", context, 0.0) is None
+    )
+
+
+@pytest.mark.asyncio
+async def test_recall_english_query_still_matches(monkeypatch):
+    """Legit English recall works via 4-grams (CJK bigrams don't apply)."""
+    from unittest.mock import AsyncMock
+
+    service = _recall_service()
+    monkeypatch.setattr(service, "_query_taught_facts", AsyncMock(return_value=[]))
+    context = {
+        "retrieved_context": [
+            {
+                "role": "long_term_memory",
+                "content": "User taught Angela: my dog is called Bobby",
+                "relevance": 0.7,
+            }
+        ]
+    }
+    result = await service._recall_user_fact("what is my dog called", context, 0.0)
+    assert result is not None
+    assert "Bobby" in result.text
+
+
+@pytest.mark.asyncio
+async def test_ignorance_template_never_blocks_llm(monkeypatch):
+    """不好意思-templates must fall through instead of blocking generation."""
+    from types import SimpleNamespace
+    from unittest.mock import AsyncMock
+
+    from services.llm.router import _KNOWN_FALLBACK_RESPONSES
+
+    assert "不好意思，这个我不太确定..." in _KNOWN_FALLBACK_RESPONSES
+    service = _recall_service()
+    service.stats = {"total_requests": 1, "total_response_time": 0.0, "memory_hits": 0}
+    service.model_bus = None
+    service.template_matcher = SimpleNamespace(
+        match=lambda *a, **k: SimpleNamespace(
+            score=0.95, template_content="不好意思，这个我不太确定..."
+        )
+    )
+    monkeypatch.setattr(service, "_query_taught_facts", AsyncMock(return_value=[]))
+    monkeypatch.setattr(service, "_recall_user_fact", AsyncMock(return_value=None))
+    result = await service._try_template_match("xyzzy_frobnicator_123", {}, 0.0)
+    assert result is None
+
+
+@pytest.mark.asyncio
+async def test_fallback_task_gets_honest_cannot_do():
+    """Task-shaped fallback: honest inability, never small-talk (Unity case)."""
+    service = _recall_service()
+    service.model_bus = None
+    result = await service._fallback_response(
+        "寫Unity Editor腳本只輸出代碼", {"_classify_result_type": "code"}
+    )
+    assert result.model == "honest-cannot-do"
+    assert "做不到" in result.text
+
+
+@pytest.mark.asyncio
+async def test_fallback_chitchat_keeps_smalltalk():
+    """Greetings still get templates, not honest-cannot-do."""
+    service = _recall_service()
+    service.model_bus = None
+    result = await service._fallback_response("你好", {"_classify_result_type": "greeting"})
+    assert result.model != "honest-cannot-do"
+
+
+@pytest.mark.asyncio
 async def test_query_taught_facts_searches_facts_only_and_filters_prefix(monkeypatch):
     """Direct lookup restricts ranking to taught facts store-side (echo-proof)."""
     from unittest.mock import AsyncMock

@@ -42,6 +42,20 @@ class CodeUnderstandingAgent:
                 "has_syntax_errors": False,
                 "structure": {},
             }
+        stripped = code.strip()
+        if "```" not in stripped and "`" not in stripped and "\n" not in code:
+            # Single-line natural language (a code-WRITE request misrouted
+            # here): analyzing it yields "Analyzed 1 lines" garbage that
+            # routing serves as the answer. Refuse so routing falls back
+            # to LLM generation (live 2026-10-10).
+            return {
+                "status": "error",
+                "message": "No code in message",
+                "line_count": 0,
+                "language": language,
+                "has_syntax_errors": False,
+                "structure": {},
+            }
         lines = code.splitlines()
         line_count = len(lines)
         has_syntax_errors = False

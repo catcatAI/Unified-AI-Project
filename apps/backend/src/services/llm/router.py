@@ -184,6 +184,13 @@ _KNOWN_FALLBACK_RESPONSES = frozenset(
         "抱歉，我无法理解这些步骤。",
         "Sorry, I didn't understand what you meant.",
         "Sorry, I couldn't understand what you meant.",
+        # Ignorance templates (templates_data.json [17]/[18]): serving "I
+        # don't know" from a template blocks the LLM/fallback chain that
+        # could actually answer (live 2026-10-10: Unity code request).
+        "不好意思，这个我不太确定...",
+        "不好意思，這個我不太確定...",
+        "抱歉，这个我帮不了你...不过我可以陪你一起想！",
+        "抱歉，這個我幫不了你...不過我可以陪你一起想！",
     }
 )
 
@@ -1248,8 +1255,8 @@ class AngelaLLMService:
             from services.handlers.system_command_handler import SystemCommandHandler
             from services.handlers.task_manager_handler import TaskManagerHandler
             from services.handlers.vision_handler import VisionHandler
-            from services.handlers.workspace_mount_handler import WorkspaceMountHandler
             from services.handlers.web_search_handler import WebSearchHandler
+            from services.handlers.workspace_mount_handler import WorkspaceMountHandler
 
             bus = self.model_bus
             if bus is None:
@@ -2071,6 +2078,12 @@ class AngelaLLMService:
         ["什麼", "怎麼", "如何", "嗎", "呢", "是", "的", "有", "在", "了", "我", "請", "請問"]
     )
 
+    # Weak ASCII 4-grams excluded for the same reason (any English query
+    # shares "that"/"with" with some fact eventually).
+    _FACT_MATCH_ASCII_STOPWORDS = frozenset(
+        ["that", "this", "with", "have", "what", "when", "where", "which", "your", "from"]
+    )
+
     async def _query_taught_facts(self, user_message: str) -> List[Dict[str, Any]]:
         """Direct facts-only lookup for taught facts (prefix-filtered).
 
@@ -2148,8 +2161,27 @@ class AngelaLLMService:
             except Exception:
                 pass
             lowered = user_message.strip().lower()
+            # CJK bigrams carry word-level meaning in 2 chars; ASCII needs
+            # longer windows (" a"/"us" match everything — live 2026-10-10:
+            # an English relay recalled the AsyncIO fact). ASCII runs below
+            # 4 chars contribute nothing.
+            import re as _re_chunks
+
             chunks = [lowered[i : i + 2] for i in range(len(lowered) - 1)]
             chunks = [c for c in chunks if len(c) >= 2 and c not in self._FACT_MATCH_STOPWORDS]
+            for run in _re_chunks.findall(r"[a-z0-9]{4,}", lowered):
+                for i in range(len(run) - 3):
+                    gram = run[i : i + 4]
+                    if gram not in self._FACT_MATCH_ASCII_STOPWORDS:
+                        chunks.append(gram)
+            # Keep 2-char chunks only when they carry a CJK char: pure
+            # ASCII/punct bigrams (" a", "us") match everything across
+            # languages — ASCII is covered by the 4-grams above instead.
+            chunks = [
+                c
+                for c in chunks
+                if _re_chunks.search(r"[\u4e00-\u9fff]", c or "") or len(c or "") >= 4
+            ]
             if not chunks:
                 return None
             best = None
@@ -2158,11 +2190,17 @@ class AngelaLLMService:
                 if not content or not isinstance(content, str):
                     continue
                 lowered_content = content.lower()
+                # Match against the FACT PART only: the storage prefix
+                # ("user taught angela:") contributes matchable ASCII chunks
+                # ("us", "ta", "al"…) so any English query self-matches every
+                # fact (live: English relay recalled AsyncIO fact).
+                fact_part = lowered_content.split("user taught angela:", 1)
+                haystack = fact_part[-1] if len(fact_part) > 1 else lowered_content
                 # Overlap COUNT decides (primary): among near-duplicate fact
                 # phrasings ("我的X叫Y" x N) every candidate shares 我的, so a
                 # boolean any-match degrades to pure vector relevance and a
                 # stale fact can outrank the right one (live: cat beat fox).
-                overlap = sum(1 for c in chunks if c in lowered_content)
+                overlap = sum(1 for c in chunks if c in haystack)
                 if overlap == 0:
                     continue
                 relevance = entry.get("relevance", 0.5)
@@ -2386,6 +2424,10 @@ class AngelaLLMService:
                                     import random as _rand3
 
                                     _ch = _rand3.choice(_tpls)
+                                    if (_ch.content or "").strip() in _KNOWN_FALLBACK_RESPONSES:
+                                        # Ignorance template must never block
+                                        # the LLM/fallback chain: try next pattern.
+                                        break
                                     _rt2 = (time.time() - start_time) * 1000
                                     self.stats["composed_responses"] += 1
                                     return ChatResponse(
@@ -2414,6 +2456,12 @@ class AngelaLLMService:
             tmpl_cfg = _get_llm_config("template_match", {})
             composed_thresh = tmpl_cfg.get("composed", 0.8)
             hybrid_thresh = tmpl_cfg.get("hybrid", 0.5)
+
+            # Ignorance templates ("I don't know") must never win over the
+            # LLM/fallback chain that could actually answer.
+            if (match_result.template_content or "").strip() in _KNOWN_FALLBACK_RESPONSES:
+                logger.debug("Skipped ignorance template match; falling through")
+                return None
 
             if match_score > composed_thresh:
                 return await self._build_composed_response(
@@ -2777,6 +2825,50 @@ class AngelaLLMService:
                 model="honest-no-answer",
                 confidence=0.4,
                 metadata={"fallback": True, "tier": "honest"},
+            )
+
+        # Tier 1.6: task-shaped inputs that survived everything must get an
+        # honest "can't do" — never small-talk. looks_like_question only
+        # covers questions, so imperative tasks ("寫Unity腳本", "講講量子力學")
+        # fell to Tier 2/3 rambles ("嗨！好久不見") instead (live 2026-10-10).
+        # Chit-chat types (greeting/reflex/opinion/unknown) keep Tier 2/3.
+        _task_types = frozenset(
+            {
+                "code",
+                "execute",
+                "file",
+                "task",
+                "system",
+                "knowledge",
+                "creative",
+                "logic",
+                "search",
+                "vision",
+                "audio",
+                "civil",
+                "command",
+                "math",
+            }
+        )
+        _qtype = str(context.get("_classify_result_type") or "").lower()
+        if not _qtype:
+            try:
+                from ai.core.query_classifier import QueryClassifier
+
+                _qr = QueryClassifier().classify(user_message)
+                _qtype = str(getattr(_qr.primary_type, "value", _qr.primary_type) or "").lower()
+            except Exception:
+                _qtype = ""
+        if _qtype in _task_types:
+            _backends = getattr(self, "backends", None) or {}
+            _has_llm = any(getattr(_bt, "value", str(_bt)) != "unified" for _bt in _backends)
+            _why = "（沒有可用的語言模型）" if not _has_llm else "（目前的能力無法完成）"
+            return LLMResponse(
+                text=f"{context.get('user_name', '你')}，這個任務我目前做不到{_why}。",
+                backend="local-fallback",
+                model="honest-cannot-do",
+                confidence=0.4,
+                metadata={"fallback": True, "tier": "honest-task"},
             )
 
         # Tier 2: NeuroBlender (smalltalk only — never for negative emotion)
