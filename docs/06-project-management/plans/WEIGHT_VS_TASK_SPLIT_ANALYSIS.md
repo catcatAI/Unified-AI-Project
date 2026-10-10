@@ -33,16 +33,17 @@
 - 槽位 → 生成配置（温度/長度/超時）＋ 未來 adapter 路徑（現 null）
 - 真 adapter 到位之日：填路徑即插即用，拆分器、Runner、評測全不動。
 
-## 3.5 GPU 實測裁決（2026-10-10，用戶提示有卡後加測）
+## 3.5 GPU 實測裁決（2026-10-10，用戶提示有卡後加測＋修正）
 
-- 卡存在：Intel Arc B570（8086:e20c，Xe，~10GB，`/dev/dri` 就緒），
-  Vulkan ICD（intel_icd/intel_hasvk）就緒，wheel 自帶 `libggml-vulkan.so`。
-- 但：默認 offload 直接 segfault（dmesg）；强制 `n_gpu_layers=99` 後
-  無 Vulkan 初始化字樣、比純 CPU 還慢（3.56s vs 2.66s，同 qwen 同 prompt）——
-  等於靜默回退或壞路徑。
-- 裁決：**現棧 GPU 不可用**，`n_gpu_layers=0` 純 CPU 指令維持；
-  真要用卡需 SYCL/oneAPI 自編譯或 IPEX（數小時工程，另立項）。
-  真權重訓練同樣卡在這裡（無可用加速）。
+- 卡：Intel Arc B570（8086:e20c，Xe，~10GB，`/dev/dri` 就緒），
+  Vulkan ICD 就緒，wheel 自帶 `libggml-vulkan.so`。`gputop` 見 927M 駐留。
+- 初判錯誤（已更正）：默認 offload segfault＋强制 99 更慢——當時是
+  **抓錯 device**（llvmpipe/hasvk 混在 ICD 堆裡）＋ supervisor 搶埠導致
+  CPU 實例頂掉 VK 實例，測的全是 CPU。
+- 正解：`GGML_VK_VISIBLE_DEVICES=0` 釘住 ANV B570＋`n_gpu_layers=99`：
+  gemma ~70-100t/s（CPU ~5-15t/s），8連發全活無新 segfault。
+- 裁決：**GPU 可用，預設切 GPU 槽**（Mesa 25.2；26.1+ 據報更快，未測）。
+  SYCL/oneAPI 暫不需要。真權重訓練仍需另立項（無訓練基建），但推理加速已兌現。
 
 ## 4. 預設裁決
 

@@ -9,13 +9,18 @@ slots:
     backend: llamacpp
     base_url: http://127.0.0.1:8080
     model: gemma-4-E2B-it
-    n_gpu_layers: 0 # Arc B570 在但 Vulkan segfault＋强制offload更慢，純CPU才穩（見分析3.5）
+    # Arc B570 經 GGML_VK_VISIBLE_DEVICES=0 釘住 ANV 後穩定加速（~70-100t/s，
+    # CPU 僅 ~5-15t/s）。之前崩潰是抓錯 device（llvmpipe/hasvk），非卡不行。
+    # Mesa 25.2 可用；26.1+ 據報更快（未測）。
+    n_gpu_layers: 99
+    vk_visible_devices: "0"
     n_ctx: 3072
   executor:
     backend: llamacpp-qwen
     base_url: http://127.0.0.1:8081
     model: qwen2.5-0.5b-instruct
-    n_gpu_layers: 0
+    n_gpu_layers: 99
+    vk_visible_devices: "0"
     n_ctx: 2048
 per_kind_params:
   # 按件種類的生成配置（軟權重控制：温度/長度/上下文）。
