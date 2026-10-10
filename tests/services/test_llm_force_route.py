@@ -152,6 +152,28 @@ async def test_recall_prefers_higher_overlap_over_relevance(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_recall_yields_to_handler_backed_intent(monkeypatch):
+    """Imperatives with handler verbs reach handlers, not recall (chip compose case)."""
+    from unittest.mock import AsyncMock
+
+    service = _recall_service()
+    monkeypatch.setattr(service, "_query_taught_facts", AsyncMock(return_value=[]))
+    context = {
+        "retrieved_context": [
+            {
+                "role": "long_term_memory",
+                "content": "User taught Angela: chip目錄有54個cell",
+                "relevance": 0.99,
+            }
+        ]
+    }
+    assert await service._recall_user_fact("組裝一個chip查看代理", context, 0.0) is None
+    # Plain question on the same fact still recalls.
+    result = await service._recall_user_fact("chip目錄有幾個cell", context, 0.0)
+    assert result is not None and "54" in result.text
+
+
+@pytest.mark.asyncio
 async def test_recall_yields_to_deterministic_math(monkeypatch):
     """Math-shaped queries compute even when a fact shares a bigram (一百/一百度)."""
     from unittest.mock import AsyncMock

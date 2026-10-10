@@ -538,6 +538,20 @@ class AgentWorkspace:
         self._rebuild_tree()
         return result
 
+    def compose_app(self, app_id: str, module_ids: List[str], label: str = "") -> Dict[str, Any]:
+        """Compose an agent from config modules (puzzle assembly) and mount it."""
+        from services.agent_workspace.modules import compose_agent
+
+        try:
+            adapter = compose_agent(app_id.strip(), list(module_ids or []), label.strip())
+        except ValueError as exc:
+            return {"ok": False, "error": str(exc)}
+        result = self.sessions.mount_adapter(adapter, source="compose")
+        self._rebuild_tree()
+        if isinstance(result, dict) and result.get("ok"):
+            result["modules"] = getattr(adapter, "module_ids", [])
+        return result
+
     async def close_app(self, app_id: str, confirm: bool = False) -> Dict[str, Any]:
         result = await self.sessions.close_app(app_id, confirm=confirm)
         self._rebuild_tree()

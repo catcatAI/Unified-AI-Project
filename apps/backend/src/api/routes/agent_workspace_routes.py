@@ -154,6 +154,51 @@ async def agent_app_mount(
     return workspace.mount_app(kind, app_id=app_id, label=label)
 
 
+@router.post("/agent/app/compose")
+async def agent_app_compose(
+    body: Dict[str, Any] = Body(default={}),
+    workspace: "UnifiedWorkspace" = Depends(get_agent_workspace),
+) -> dict:
+    """拼裝代理：按模塊id組出新應用並掛載（免手寫adapter）。"""
+    if workspace is None:
+        raise HTTPException(503, "AgentWorkspace not available")
+    app_id = str(body.get("app_id", "")).strip()
+    modules = body.get("modules", [])
+    label = str(body.get("label", "")).strip()
+    if not app_id:
+        raise HTTPException(422, "缺少 app_id")
+    if not isinstance(modules, list) or not modules:
+        raise HTTPException(422, "缺少 modules（可用模塊見 /agent/app/modules）")
+    return workspace.compose_app(app_id, [str(m) for m in modules], label=label)
+
+
+@router.get("/agent/app/modules")
+async def agent_app_modules(
+    workspace: "UnifiedWorkspace" = Depends(get_agent_workspace),
+) -> dict:
+    """列出可拼裝的配置模塊（主AI選件用）。"""
+    if workspace is None:
+        raise HTTPException(503, "AgentWorkspace not available")
+    try:
+        from services.agent_workspace.modules import MODULE_REGISTRY
+
+        return {
+            "ok": True,
+            "modules": [
+                {
+                    "id": m.module_id,
+                    "label": m.label,
+                    "base": m.base,
+                    "actions": m.actions,
+                    "prompt": m.prompt,
+                }
+                for m in MODULE_REGISTRY.values()
+            ],
+        }
+    except Exception as exc:
+        raise HTTPException(500, f"模塊庫不可用：{exc}")
+
+
 @router.post("/agent/app/unmount")
 async def agent_app_unmount(
     body: Dict[str, Any] = Body(default={}),

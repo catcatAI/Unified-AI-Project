@@ -578,7 +578,50 @@ async def test_mount_handler_parse_and_list() -> None:
     assert h._parse_action("代理狀態如何") == ("inspect", "")
     assert h._parse_action("會話開著嗎") == ("inspect", "")
     assert h._parse_action("系統狀態如何") is None
+    assert h._parse_action("配置文件在哪") is None
+    assert h._parse_action("怎麼掛載shell") is None
+    assert h._parse_action("不要卸載shell") is None
+    assert h._parse_action("把shell掛上嗎") == ("mount", "shell")
+    assert h._parse_action("配置一個Unity代理") == ("configure", "Unity")
+    assert h._parse_action("組裝chip代理") == ("configure", "chip")
     assert h._parse_action("你好") is None
+
+
+def test_suggest_modules_maps_tasks() -> None:
+    from services.agent_workspace.modules import suggest_modules
+
+    assert "shell-unity" in suggest_modules("用Unity建模小車")
+    assert "files-ro" in suggest_modules("看看chip目錄")
+    assert suggest_modules("你好") == []
+
+
+async def test_compose_agent_puzzle_assembly(tmp_path: Path) -> None:
+    from services.agent_workspace.agent import AgentWorkspace
+    from services.agent_workspace.modules import compose_agent
+
+    adapter = compose_agent("unity-dev", ["shell-unity", "files-rw"], "Unity開發")
+    assert adapter.app_id == "unity-dev"
+    assert {s.name for s in adapter.specs()} == {"run", "list", "read", "write"}
+    ws = AgentWorkspace(session_manager=_make_mount_manager(tmp_path))
+    assert ws.sessions.mount_adapter(adapter, source="test")["ok"] is True
+    await ws.open_app("unity-dev")
+    # collision / unknown rejected
+    with pytest.raises(ValueError):
+        compose_agent("x", ["shell-exec", "shell-unity"])
+    with pytest.raises(ValueError):
+        compose_agent("x", ["nope"])
+
+
+async def test_workspace_compose_mounts_and_runs(tmp_path: Path) -> None:
+    ws = AgentWorkspace(session_manager=_make_mount_manager(tmp_path))
+    result = ws.compose_app("chip-reader", ["files-ro"], "chip隻讀")
+    assert result["ok"] is True
+    assert result["modules"] == ["files-ro"]
+    await ws.open_app("chip-reader")
+    # read-only: no write action registered
+    assert (await ws.act("chip-reader", "write", {}, confirm=True))["ok"] is False
+    state = await ws.read_app("chip-reader")
+    assert state["ok"] is True
 
 
 async def test_mount_handler_inspect_reports_sessions(tmp_path: Path) -> None:

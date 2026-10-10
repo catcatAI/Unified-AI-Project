@@ -2229,6 +2229,21 @@ class AngelaLLMService:
                     return None
             except Exception:
                 pass
+            # Handler-backed intents win over recall: an imperative with an
+            # explicit verb ("組裝一個chip查看代理", "記住我的狗叫旺財") must
+            # reach its handler, not recall a loosely overlapping fact
+            # (live 2026-10-10: chip recall ate a compose request on "chip").
+            try:
+                from services.execution.gate_execution import (
+                    _REGISTRY_DISPATCH_INTENTS,
+                    GateExecutionOwner,
+                )
+
+                owner = GateExecutionOwner.__new__(GateExecutionOwner)
+                if owner._registry_handler_for(user_message, _REGISTRY_DISPATCH_INTENTS):
+                    return None
+            except Exception:
+                pass
             lowered = user_message.strip().lower()
             # CJK bigrams carry word-level meaning in 2 chars; ASCII needs
             # longer windows (" a"/"us" match everything — live 2026-10-10:

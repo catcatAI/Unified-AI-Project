@@ -22,6 +22,14 @@ from services.agent_workspace.global_tree import (
     GlobalContextTree,
     UnifiedWorkspace,
 )
+from services.agent_workspace.modules import (
+    MODULE_REGISTRY,
+    ComposedAdapter,
+    ConfigModule,
+    compose_agent,
+    register_module,
+    suggest_modules,
+)
 
 __all__ = [
     "ActionSpec",
@@ -32,13 +40,19 @@ __all__ = [
     "ContextNode",
     "ContextTree",
     "DesktopAgent",
+    "ComposedAdapter",
+    "ConfigModule",
     "EdaWorkspaceAdapter",
     "FilesAdapter",
     "GlobalContextProviders",
     "GlobalContextTree",
     "MOUNT_KIND_ALIASES",
     "MOUNT_KIND_REGISTRY",
+    "MODULE_REGISTRY",
     "ShellAdapter",
+    "compose_agent",
+    "register_module",
+    "suggest_modules",
     "UnifiedWorkspace",
     "build_default_workspace",
 ]
