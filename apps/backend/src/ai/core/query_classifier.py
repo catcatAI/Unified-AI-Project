@@ -340,7 +340,8 @@ class QueryClassifier:
                     r"(你好|早安|早上好|上午好|中午好|下午好|午安|晚上好|晚安|"
                     r"再见|拜拜|谢谢|感謝|感谢|謝謝你|谢谢你|謝謝|谢谢您|"
                     r"不客氣|不客气|沒關係|没关系|不客气|别客气|"
-                    r"\b(hello|hi|hey|good\s*morning|good\s*afternoon|good\s*evening|good\s*bye|thanks?|bye)\b)",
+                    r"\b(hello|hi|hey|good\s*morning|good\s*afternoon|good\s*evening|good\s*bye|thanks?|bye|how\s+are\s+you)\b|"
+                    r"(你好嗎|你好吗|最近怎麼樣|最近怎么样|近來可好|近来可好))",
                     re.IGNORECASE,
                 ),
                 0.9,

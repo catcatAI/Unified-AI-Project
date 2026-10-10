@@ -2170,7 +2170,10 @@ async def chat_stream(request: Dict[str, Any] = Body(...)) -> StreamingResponse:
     extra_context = {"_stream_callback": _token_callback}
 
     async def _event_gen() -> AsyncGenerator[str, None]:
+        from services.llm.stream_judge import StreamJudgeWindow
+
         yield ": stream open\n\n"
+        judge = StreamJudgeWindow()
         task = asyncio.ensure_future(
             _handle_chat_request(
                 user_message=user_message,
@@ -2187,6 +2190,15 @@ async def chat_stream(request: Dict[str, Any] = Body(...)) -> StreamingResponse:
                 try:
                     item = await asyncio.wait_for(token_queue.get(), timeout=45.0)
                     yield f"data: {json.dumps(item, ensure_ascii=False)}\n\n"
+                    # Phase 2: judge on the rolling window (never blocks
+                    # generation — this runs in the endpoint loop, not the
+                    # provider callback). Lock events ride the same stream.
+                    try:
+                        verdict = judge.feed(str(item.get("token", "")))
+                        if verdict is not None:
+                            yield f"data: {json.dumps(verdict, ensure_ascii=False)}\n\n"
+                    except Exception:
+                        pass
                 except asyncio.TimeoutError:
                     if task.done():
                         break
@@ -2203,10 +2215,16 @@ async def chat_stream(request: Dict[str, Any] = Body(...)) -> StreamingResponse:
             except Exception as exc:
                 yield f"data: {json.dumps({'error': str(exc)[:200]})}\n\n"
                 return
+            final_text = (result or {}).get("response_text", "")
+            try:
+                consistency = judge.finalize(final_text)
+            except Exception:
+                consistency = {}
             final = {
                 "done": True,
-                "response_text": (result or {}).get("response_text", ""),
+                "response_text": final_text,
                 "backend": (result or {}).get("backend", "unknown"),
+                "judge_consistency": consistency,
             }
             yield f"data: {json.dumps(final, ensure_ascii=False)}\n\n"
         finally:

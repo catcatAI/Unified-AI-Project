@@ -10,5 +10,11 @@ backends:
     timeout: 120
   ollama-llama3:
     enabled: false
+  llamacpp-qwen:
+    enabled: true
+    base_url: http://127.0.0.1:8081
+    model_name: qwen2.5-0.5b-instruct
+    context_window: 2048
+    timeout: 120
 settings:
   preferred_backend: llamacpp

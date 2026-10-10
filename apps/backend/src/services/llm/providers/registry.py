@@ -8,6 +8,7 @@ class LLMBackend(Enum):
     """支援的 LLM 後端"""
 
     LLAMA_CPP = "llamacpp"
+    LLAMA_CPP_QWEN = "llamacpp-qwen"
     OLLAMA = "ollama"
     OPENAI = "openai"
     ANTHROPIC = "anthropic"

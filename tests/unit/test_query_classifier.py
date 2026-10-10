@@ -57,6 +57,28 @@ class TestQueryClassifier:
         result = classifier.classify("hello")
         assert result.primary_type == QueryType.GREETING
 
+    @pytest.mark.parametrize(
+        "query",
+        [
+            "how are you",
+            "how are you doing today",
+            "你好嗎",
+        ],
+    )
+    def test_classify_greeting_phatic(self, query):
+        """Phatic check-ins are greetings (live: how-are-you went unknown→gemma)."""
+        from ai.core.query_classifier import QueryClassifier, QueryType
+
+        assert QueryClassifier().classify(query).primary_type == QueryType.GREETING
+
+    def test_classify_recent_phatic_regex_intent(self):
+        """最近怎麼樣 regex→greeting (dictionary 怎麼→knowledge wins full classify;
+        live coverage comes from the SOCIAL exact map, not here)."""
+        from ai.core.query_classifier import QueryClassifier, QueryType
+
+        result = QueryClassifier()._classify_by_regex("最近怎麼樣", False)
+        assert result is not None and result.primary_type == QueryType.GREETING
+
     def test_classify_math(self):
         from ai.core.query_classifier import QueryClassifier, QueryType
 

@@ -260,6 +260,26 @@ async def test_recall_english_query_still_matches(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_emotion_template_yields_to_factual_query(monkeypatch):
+    """Factual queries skip emotion templates (physics got random curiosity)."""
+    from unittest.mock import AsyncMock
+
+    service = _recall_service()
+    service.stats = {
+        "total_requests": 1,
+        "total_response_time": 0.0,
+        "memory_hits": 0,
+        "composed_responses": 0,
+    }
+    service.model_bus = None
+    service.template_matcher = None
+    monkeypatch.setattr(service, "_query_taught_facts", AsyncMock(return_value=[]))
+    monkeypatch.setattr(service, "_recall_user_fact", AsyncMock(return_value=None))
+    result = await service._try_template_match("解釋為什麼天空是藍色的，兩句話", {}, 0.0)
+    assert result is None
+
+
+@pytest.mark.asyncio
 async def test_ignorance_template_never_blocks_llm(monkeypatch):
     """不好意思-templates must fall through instead of blocking generation."""
     from types import SimpleNamespace

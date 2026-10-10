@@ -92,6 +92,14 @@ backends:
     model_name: "llama-3-8b-instruct"
     timeout: 120
     note: "Local llama.cpp server (start manually)."
+  llamacpp-qwen:
+    type: local
+    provider: llama_cpp_qwen
+    enabled: false
+    base_url: "http://localhost:8081"
+    model_name: "qwen2.5-0.5b-instruct"
+    timeout: 120
+    note: "Second local slot: fast small executor for chitchat (dual-model Phase 3)."
   ollama-llama3:
     type: local
     provider: ollama

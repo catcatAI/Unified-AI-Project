@@ -196,6 +196,7 @@ _KNOWN_FALLBACK_RESPONSES = frozenset(
 
 _BACKEND_FACTORIES: Dict[str, str] = {
     "llama_cpp": "_init_llamacpp",
+    "llama_cpp_qwen": "_init_llamacpp_qwen",
     "ollama": "_init_ollama",
     "openai": "_init_openai",
     "anthropic": "_init_anthropic",
@@ -381,6 +382,9 @@ class AngelaLLMService:
         # late-starting LLM is picked up without a server restart.
         self._pruned_backends: Dict[Any, Any] = {}
         self._last_revive_check: float = 0.0
+        # Dual-model executor health cache (Phase 3 slice).
+        self._qwen_last_check: float = 0.0
+        self._qwen_healthy: bool = False
 
         # [auto] LLM mode (deployment.mode / settings.llm_mode)
         deployment = self.config.get("deployment") or {}
@@ -907,6 +911,27 @@ class AngelaLLMService:
     def _init_llamacpp(
         self, backend_id: str, base_url: str, model_name: str, api_key: str, config: dict
     ) -> None:
+        self._init_llamacpp_slot(
+            LLMBackend.LLAMA_CPP, backend_id, base_url, model_name, api_key, config
+        )
+
+    def _init_llamacpp_qwen(
+        self, backend_id: str, base_url: str, model_name: str, api_key: str, config: dict
+    ) -> None:
+        """Second local model slot (executor: fast small model for chitchat)."""
+        self._init_llamacpp_slot(
+            LLMBackend.LLAMA_CPP_QWEN, backend_id, base_url, model_name, api_key, config
+        )
+
+    def _init_llamacpp_slot(
+        self,
+        slot: Any,
+        backend_id: str,
+        base_url: str,
+        model_name: str,
+        api_key: str,
+        config: dict,
+    ) -> None:
         # L2-5: Qwen2-0.5B Q4 ~0.8GB, Phi-3-mini 3.8B Q4 ~2.2GB；硬件自適應門檻
         # 模型名含 0.5b/7b 時分別檢查 0.8/4.5 GB，默認 1.0GB
         need = 0.8 if "0.5" in model_name else (4.5 if "7b" in model_name.lower() else 1.0)
@@ -914,7 +939,7 @@ class AngelaLLMService:
         if os.environ.get("ANGELA_FORCE_LOCAL") != "1" and not self._is_local_model_feasible(need):
             logger.info(f"跳過 llama.cpp {model_name}（硬件不足，需 {need}GB）")
             return
-        self.backends[LLMBackend.LLAMA_CPP] = LlamaCppBackend(
+        self.backends[slot] = LlamaCppBackend(
             base_url=base_url or LLAMACPP_HOST,
             model=model_name,
             timeout=config.get("timeout", LLM_REQUEST_TIMEOUT),
@@ -1130,6 +1155,50 @@ class AngelaLLMService:
                 logger.debug("Model bus re-init after revive skipped: %s", exc)
             return True
         return False
+
+    async def _demote_unhealthy_active(self, context: Dict[str, Any]) -> bool:
+        """Health-probe the just-failed backend; demote it if down.
+
+        Returns True when a demotion happened (active backend switched or
+        cleared). The demoted instance is kept in _pruned_backends so the
+        throttled revive path re-adds it without a restart.
+        """
+        used_type = context.get("_used_backend_type") or getattr(self, "active_backend_type", None)
+        if used_type is None:
+            return False
+        backend = (getattr(self, "backends", None) or {}).get(used_type)
+        if backend is None:
+            return False
+        try:
+            healthy = await self._submit_waiting(
+                backend.check_health(),
+                timeout=timeout_value("llm.health_check", 5.0),
+                label=f"demote:{getattr(used_type, 'value', used_type)}",
+            )
+        except Exception:
+            healthy = False
+        if healthy:
+            return False
+        self._pruned_backends[used_type] = self.backends.pop(used_type, None) or backend
+        try:
+            if getattr(used_type, "value", "") == "llamacpp-qwen":
+                self._qwen_healthy = False
+                self._qwen_last_check = time.time()
+        except Exception:
+            pass
+        remaining = list(self.backends.keys())
+        if remaining:
+            self._pick_best_backend(remaining)
+        else:
+            self.active_backend = None
+            self.active_backend_type = None
+            self.is_available = False
+        logger.warning(
+            "Backend %s unhealthy after failure; demoted (%d remain)",
+            getattr(used_type, "value", used_type),
+            len(remaining),
+        )
+        return True
 
     def _pick_best_backend(self, available):
         # Priority is driven by each backend's `priority` in config
@@ -2259,6 +2328,13 @@ class AngelaLLMService:
                 "你好": ("greeting_general", "greeting"),
                 "hello": ("greeting_general", "greeting"),
                 "hi": ("greeting_general", "greeting"),
+                "how are you": ("greeting_general", "greeting"),
+                "你好嗎": ("greeting_general", "greeting"),
+                "你好吗": ("greeting_general", "greeting"),
+                "最近怎麼樣": ("greeting_general", "greeting"),
+                "最近怎么样": ("greeting_general", "greeting"),
+                "近來可好": ("greeting_general", "greeting"),
+                "近来可好": ("greeting_general", "greeting"),
                 "早安": ("greeting_morning", "greeting"),
                 "早上好": ("greeting_morning", "greeting"),
                 "晚安": ("farewell_sleep", "farewell"),
@@ -2360,6 +2436,31 @@ class AngelaLLMService:
                             _emotion_cat = _emotion_to_category.get(_detected)
                     except Exception:
                         pass
+                    if _emotion_cat:
+                        # Emotion templates serve feelings, not questions: a
+                        # factual/task query with incidental emotion words
+                        # ("為什麼天空是藍色的" → curious) must fall through to
+                        # knowledge/LLM layers instead of a random curiosity
+                        # template (live 2026-10-10: physics got "我在想你呀").
+                        try:
+                            _eq = QueryClassifier().classify(user_message)
+                            _eqt = str(
+                                getattr(_eq.primary_type, "value", _eq.primary_type) or ""
+                            ).lower()
+                            if _eqt in (
+                                "knowledge",
+                                "code",
+                                "math",
+                                "logic",
+                                "file",
+                                "task",
+                                "system",
+                                "execute",
+                                "search",
+                            ):
+                                _emotion_cat = None
+                        except Exception:
+                            pass
                     if _emotion_cat:
                         try:
                             _cat_e = ResponseCategory(_emotion_cat)
@@ -3209,6 +3310,55 @@ class AngelaLLMService:
         except Exception as exc:
             logger.debug("LLM context digest upgrade skipped: %s", exc)
 
+    # Query types cheap enough for the small executor model (fast replies;
+    # anything else stays on the thinker). Slice of Phase 3 dual-model.
+    _LIGHT_QUERY_TYPES = frozenset({"greeting", "reflex"})
+
+    async def _select_light_backend(self, user_message: str) -> tuple:
+        """Return (backend, backend_type) for simple chitchat when the executor
+        slot is registered and recently healthy; else (None, None) to keep the
+        active (thinker) backend. Health is cached 60s; never blocks requests.
+        """
+        try:
+            qwen_type = LLMBackend.LLAMA_CPP_QWEN
+        except Exception:
+            return None, None
+        if qwen_type not in getattr(self, "backends", {}):
+            return None, None
+        try:
+            from ai.core.query_classifier import QueryClassifier
+
+            primary = QueryClassifier().classify(user_message).primary_type
+            qtype = str(getattr(primary, "value", primary) or "").lower()
+        except Exception:
+            return None, None
+        if qtype not in self._LIGHT_QUERY_TYPES:
+            return None, None
+        # Greetings carrying a question ("hi, what is X") still need the
+        # thinker: length doesn't decide, question markers do.
+        import re as _re_light
+
+        if _re_light.search(
+            r"[?？]|what|who|when|where|why|how|which|什麼|什么|多少|幾點|几点|怎麼|怎么|如何|嗎|吗|呢|多少|是否|能否",
+            user_message,
+            _re_light.IGNORECASE,
+        ):
+            return None, None
+        now = time.time()
+        if now - getattr(self, "_qwen_last_check", 0.0) > 60.0:
+            self._qwen_last_check = now
+            try:
+                self._qwen_healthy = await self._submit_waiting(
+                    self.backends[qwen_type].check_health(),
+                    timeout=timeout_value("llm.health_check", 5.0),
+                    label="health:llamacpp-qwen",
+                )
+            except Exception:
+                self._qwen_healthy = False
+        if not getattr(self, "_qwen_healthy", False):
+            return None, None
+        return self.backends[qwen_type], qwen_type
+
     async def _call_llm_backend(
         self, user_message: str, context: Dict[str, Any], params: GenerationParams
     ) -> LLMResponse:
@@ -3217,11 +3367,20 @@ class AngelaLLMService:
         await self._upgrade_digested_context(messages, context)
         _enforce_prompt_budget(messages, context)
 
+        light_backend, light_type = await self._select_light_backend(user_message)
+        if light_backend is not None:
+            logger.info("Dual-model: simple query → executor (qwen)")
+
         async def _do_call() -> Optional[LLMResponse]:
-            backend = self.active_backend
+            backend = light_backend if light_backend is not None else self.active_backend
             if backend is None:
                 raise RuntimeError("No LLM backend available")
-            backend_type = getattr(self, "active_backend_type", None)
+            backend_type = (
+                light_type
+                if light_backend is not None
+                else getattr(self, "active_backend_type", None)
+            )
+            context["_used_backend_type"] = backend_type
             label = f"llm:{backend_type.value if backend_type else 'gen'}"
             stream_cb = context.get("_stream_callback")
             call_timeout = params.timeout
@@ -3271,6 +3430,13 @@ class AngelaLLMService:
                 logger.warning(f"LLM 回應錯誤: {response.error}")
             else:
                 logger.warning("LLM 回應為空，觸發 fallback")
+            # Resilience: a backend that just failed gets one health probe; if
+            # it is down it is demoted now (not left active forever failing
+            # every request). Revive re-adds it when healthy again.
+            try:
+                await self._demote_unhealthy_active(context)
+            except Exception as exc:
+                logger.debug("Backend demote skipped: %s", exc)
             if self._angela_fallback_chain:
                 return await self._try_fallback_chain(
                     user_message, context, self._angela_fallback_chain
@@ -3308,6 +3474,10 @@ class AngelaLLMService:
         except asyncio.TimeoutError:
             logger.warning("LLM generation timeout", exc_info=True)
             self._record_route_learning(context, "timeout", gen_params.timeout * 1000)
+            try:
+                await self._demote_unhealthy_active(context)
+            except Exception as exc:
+                logger.debug("Backend demote on timeout skipped: %s", exc)
             if (
                 self.llm_mode == "auto"
                 and self.auto_selector is not None
