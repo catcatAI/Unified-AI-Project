@@ -9,6 +9,7 @@ import asyncio
 import io
 import logging
 import os
+import time
 from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
@@ -90,9 +91,16 @@ class ChatService:
         )
         self._cultural_context = None
         self._knowledge_pipeline = None
-        self._vector_store_disabled = False
+        self._vector_store_backoff_until = 0.0
         self._vector_store_recent_fail = False
         self._repl_eda_context = False
+
+    def _vector_store_backoff_active(self) -> bool:
+        """True while vector enrichment backs off after a failure."""
+        try:
+            return time.time() < float(self._vector_store_backoff_until or 0.0)
+        except Exception:
+            return False
 
     def _spawn_background_task(self, coro) -> asyncio.Task:
         """Create a fire-and-forget task while keeping a strong reference.
@@ -436,16 +444,16 @@ class ChatService:
         return merged_context
 
     async def _inject_memory_context(self, merged_context: dict, user_message: str) -> dict:
-        if self._vector_store is not None and not self._vector_store_disabled:
+        if self._vector_store is not None and not self._vector_store_backoff_active():
             try:
                 # Vector search is an enrichment only — never block the answer
                 # path. Some backends (e.g. chromadb PersistentClient) are
                 # pathologically slow to query in certain environments, so bind
                 # it tightly and degrade gracefully when it overruns. On timeout
-                # the backend is permanently disabled for this process: the
-                # underlying thread keeps occupying the chromadb worker lock even
-                # after the awaited future is cancelled, so any later retry only
-                # queues behind it and wedges the answer path again.
+                # the backend backs off (not permanent: a transient stall must
+                # not kill semantic memory for the process lifetime). The
+                # underlying thread keeps the worker lock even after cancel,
+                # so the backoff window (5min) lets it drain before retrying.
                 vs_results = await asyncio.wait_for(
                     self._vector_store.semantic_search(user_message, 3),
                     timeout=1.0,
@@ -478,16 +486,16 @@ class ChatService:
                         existing = merged_context.get("retrieved_context") or []
                         merged_context["retrieved_context"] = existing + rag_entries
             except asyncio.TimeoutError:
-                self._vector_store_disabled = True
+                self._vector_store_backoff_until = time.time() + 300.0
                 self._vector_store_recent_fail = True
                 logger.warning(
-                    "VectorStore query exceeded 1.0s budget; disabling vector "
-                    "enrichment for this process to keep the answer path responsive"
+                    "VectorStore query exceeded 1.0s budget; backing off vector "
+                    "enrichment for 5min to keep the answer path responsive"
                 )
             except Exception as e:
-                self._vector_store_disabled = True
+                self._vector_store_backoff_until = time.time() + 300.0
                 self._vector_store_recent_fail = True
-                logger.warning("VectorStore query failed; disabling: %s", e, exc_info=True)
+                logger.warning("VectorStore query failed; backing off: %s", e, exc_info=True)
         if self._ham_memory is not None:
             try:
                 ham_results = await self._ham_memory.retrieve_response_templates(

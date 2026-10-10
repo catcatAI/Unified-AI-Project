@@ -226,6 +226,30 @@ class TestChatServiceMultimodalOutput:
         # retrieval success; we just verify no exception is raised
 
 
+class TestVectorStoreBackoff:
+    """Transient stalls back off (5min), never permanently disable (audit)."""
+
+    def _svc(self):
+        from apps.backend.src.services.chat_service import ChatService
+
+        service = object.__new__(ChatService)
+        service._vector_store_backoff_until = 0.0
+        service._vector_store_recent_fail = False
+        return service
+
+    def test_no_backoff_initially(self):
+        assert self._svc()._vector_store_backoff_active() is False
+
+    def test_backoff_expires(self):
+        import time
+
+        service = self._svc()
+        service._vector_store_backoff_until = time.time() + 300.0
+        assert service._vector_store_backoff_active() is True
+        service._vector_store_backoff_until = time.time() - 1.0
+        assert service._vector_store_backoff_active() is False
+
+
 class TestGardenLearnGate:
     """Live turns must not bake refusals/fallbacks/errors into GARDEN."""
 

@@ -1249,17 +1249,23 @@ def _get_causal_temporal_state():
 
 
 def _get_causal_buffer(session_id: str) -> Dict[str, List[float]]:
-    """Get or create a temporal buffer for the given session."""
+    """Get or create a temporal buffer for the given session (true LRU)."""
     with _CAUSAL_BUFFERS_LOCK:
-        if session_id not in _CAUSAL_BUFFERS:
-            if len(_CAUSAL_BUFFERS) >= _CAUSAL_BUFFER_MAX_SESSIONS:
-                oldest = next(iter(_CAUSAL_BUFFERS))
-                del _CAUSAL_BUFFERS[oldest]
-            _CAUSAL_BUFFERS[session_id] = {
-                "msg_lengths": [],
-                "resp_lengths": [],
-                "engagement_ratios": [],
-            }
+        if session_id in _CAUSAL_BUFFERS:
+            # Touch on access: eviction must drop the least-RECENTLY-used,
+            # not least-recently-inserted (audit 2026-10-10). Plain dicts
+            # have no move_to_end: pop + reinsert instead.
+            buf = _CAUSAL_BUFFERS.pop(session_id)
+            _CAUSAL_BUFFERS[session_id] = buf
+            return buf
+        if len(_CAUSAL_BUFFERS) >= _CAUSAL_BUFFER_MAX_SESSIONS:
+            oldest = next(iter(_CAUSAL_BUFFERS))
+            del _CAUSAL_BUFFERS[oldest]
+        _CAUSAL_BUFFERS[session_id] = {
+            "msg_lengths": [],
+            "resp_lengths": [],
+            "engagement_ratios": [],
+        }
         return _CAUSAL_BUFFERS[session_id]
 
 

@@ -45,6 +45,21 @@ def test_get_causal_buffer_separate_sessions():
     assert buf_b["msg_lengths"] == []
 
 
+def test_eviction_is_lru_not_fifo(monkeypatch):
+    """Touching a session must protect it (audit 2026-10-10: was FIFO)."""
+    import api.routes.chat_routes as routes
+
+    _reset_buffers()
+    monkeypatch.setattr(routes, "_CAUSAL_BUFFER_MAX_SESSIONS", 2)
+    _get_causal_buffer("old-idle")
+    _get_causal_buffer("newcomer")
+    _get_causal_buffer("old-idle")  # touch → most-recently-used
+    _get_causal_buffer("third")
+    assert "old-idle" in routes._CAUSAL_BUFFERS
+    assert "newcomer" not in routes._CAUSAL_BUFFERS
+    assert "third" in routes._CAUSAL_BUFFERS
+
+
 @patch("api.routes.chat_routes.get_causal_reasoning")
 def test_fire_causal_learning_single_call(mock_get_causal):
     _reset_buffers()

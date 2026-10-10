@@ -344,6 +344,18 @@ async def _try_llm_processing(
 async def _learn_from_llm_output(
     task_type: str, source_dir: str, files: List[Path], llm_output: str
 ) -> None:
+    # Never bake garbage: first-task LLM output replays verbatim on ≥50%
+    # file overlap (audit 2026-10-10). Same bar as the GARDEN learn gate.
+    try:
+        from ai.memory.ham_memory.ham_manager import is_unservable_template
+
+        if is_unservable_template(llm_output):
+            logger.debug("Skipped baking unservable LLM output as example")
+            return
+    except Exception:
+        pass
+    if not (llm_output or "").strip():
+        return
     op = _OPERATIONS.get(task_type, _OPERATIONS["summarize"])
     examples = _load_examples()
     if task_type not in examples:
