@@ -231,11 +231,20 @@ class GateExecutionOwner:
 
     @staticmethod
     def _is_code_write_request(plan: Any, user_message: str) -> bool:
-        """True for code-WRITE requests (no executable code in the message)."""
+        """True for code-WRITE requests (no executable code in the message).
+
+        Kept for unit compat; the live gate keys on the resolved handler
+        (see process()) since EXECUTE-planned write requests need it too.
+        """
         qt = getattr(plan, "query_type", "")
         qts = getattr(qt, "value", str(qt or "")).lower()
         if qts != "code":
             return False
+        return GateExecutionOwner._has_no_executable_code(user_message)
+
+    @staticmethod
+    def _has_no_executable_code(user_message: str) -> bool:
+        """True when the message carries no fenced/inline/multiline code."""
         text = (user_message or "").strip()
         if not text or "\n" in text:
             return False
@@ -448,10 +457,15 @@ class GateExecutionOwner:
             # a confirm prompt followed by "specify code". When an LLM backend
             # is available, fall through so the model WRITES the code instead
             # (live 2026-10-10: gemma writes correct fibonacci, gate blocked).
-            # Fenced/inline/multiline code keeps the execute path.
+            # Fenced/inline/multiline code keeps the execute path. Keyed on
+            # the resolved HANDLER (code_exec), not the plan type: a Unity
+            # build script ("建車身…存檔") plans as EXECUTE but still needs
+            # code written first (live 2026-10-10). System handlers
+            # (system_cmd: 關機 etc.) never bypass.
             if decision.action in ("auto_execute", "confirm_then_execute"):
                 if (
-                    self._is_code_write_request(plan, user_message)
+                    getattr(decision, "handler", "") == "code_exec"
+                    and self._has_no_executable_code(user_message)
                     and self._llm_generation_available()
                 ):
                     context["last_action_result"] = None

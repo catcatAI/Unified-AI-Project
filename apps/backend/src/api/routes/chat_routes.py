@@ -980,6 +980,23 @@ async def _try_agent_routing(
 
         primary = route_result.get("results", [{}])[0] if route_result.get("results") else {}
 
+        # Code-WRITE requests must reach the LLM, not a code agent's confirm
+        # gate: there is no code to run yet (mirrors the execution-gate
+        # bypass; live 2026-10-10 Unity script blocked here instead).
+        try:
+            from services.execution.gate_execution import GateExecutionOwner
+
+            _agent_name = str(primary.get("agent", "") or "").lower()
+            if (
+                "code" in _agent_name
+                and GateExecutionOwner._has_no_executable_code(user_message)
+                and GateExecutionOwner._llm_generation_available()
+            ):
+                logger.debug("Agent routing skipped for code-write request")
+                return None
+        except Exception:
+            pass
+
         # ExecutionGate blocked the specialized agent (irreversible action needs
         # explicit confirmation). Surface the confirmation instead of silently
         # falling through to the LLM, mirroring the handler gate flow above.
