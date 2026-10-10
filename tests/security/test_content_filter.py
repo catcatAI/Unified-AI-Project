@@ -28,6 +28,21 @@ class TestContentFilter:
         assert result.safety_level == SafetyLevel.UNSAFE
         assert any(i["type"] == "toxicity" for i in result.issues)
 
+    @pytest.mark.parametrize(
+        "text",
+        [
+            "eda（硬體設計工程）：probe_tools,run_ai_card_reference",
+            "skill issue troubleshooting",
+            "dielectric layer stacking",
+        ],
+    )
+    def test_legit_technical_words_not_blocked(self, text):
+        """Word-boundary matching: probe≠rob, skill≠kill (live: EDA list blocked)."""
+        from security.content_filter import FilterAction
+
+        cf = ContentFilter()
+        assert cf.filter_content(text).action == FilterAction.PASS
+
     def test_detects_email_pii(self):
         cf = ContentFilter()
         result = cf.filter_content("contact me at test@example.com")

@@ -187,7 +187,10 @@ class ContentFilter:
             candidate = content_lower
             if keyword == "die":
                 candidate = technical_die.sub("", candidate)
-            if keyword in candidate:
+            # Word-boundary match: bare substring flags legit words
+            # ("probe_tools" contains "rob", "skill" contains "kill").
+            # Same convention as the query classifier's English keywords.
+            if re.search(r"(?<![a-zA-Z])" + re.escape(keyword) + r"(?![a-zA-Z])", candidate):
                 issues.append(
                     {
                         "type": "toxicity",
