@@ -229,6 +229,37 @@ class GateExecutionOwner:
         )
         return plan, decision
 
+    @staticmethod
+    def _is_code_write_request(plan: Any, user_message: str) -> bool:
+        """True for code-WRITE requests (no executable code in the message)."""
+        qt = getattr(plan, "query_type", "")
+        qts = getattr(qt, "value", str(qt or "")).lower()
+        if qts != "code":
+            return False
+        text = (user_message or "").strip()
+        if not text or "\n" in text:
+            return False
+        if "```" in text or "`" in text:
+            return False
+        return True
+
+    @staticmethod
+    def _llm_generation_available() -> bool:
+        """True when the router has a live non-unified backend (no init side effects)."""
+        try:
+            import services.llm.router as _router_mod
+
+            svc = getattr(_router_mod, "_llm_service", None)
+            if svc is None:
+                return False
+            backends = getattr(svc, "backends", None) or {}
+            for btype in backends:
+                if getattr(btype, "value", str(btype)) != "unified":
+                    return True
+            return False
+        except Exception:
+            return False
+
     def _intent_registry_confirms(self, user_message: str, handler: Optional[str]) -> bool:
         """Second opinion before auto-execute; failures never block execution."""
         if not handler:
@@ -411,6 +442,20 @@ class GateExecutionOwner:
                 return registry_outcome
 
             plan, decision = self.plan_and_decide(user_message, context, model_bus)
+
+            # Code-WRITE requests carry no code (no fences/backticks, single
+            # line): there is nothing to execute, and gating them only yields
+            # a confirm prompt followed by "specify code". When an LLM backend
+            # is available, fall through so the model WRITES the code instead
+            # (live 2026-10-10: gemma writes correct fibonacci, gate blocked).
+            # Fenced/inline/multiline code keeps the execute path.
+            if decision.action in ("auto_execute", "confirm_then_execute"):
+                if (
+                    self._is_code_write_request(plan, user_message)
+                    and self._llm_generation_available()
+                ):
+                    context["last_action_result"] = None
+                    return GateOutcome(action=OUTCOME_NONE, plan=plan, decision=decision)
 
             if decision.action == "auto_execute":
                 if self._intent_registry_confirms(user_message, decision.handler):
