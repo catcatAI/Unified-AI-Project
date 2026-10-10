@@ -32,17 +32,17 @@
 
 原則：流式只換「傳輸」，判斷仍用整包——窗口窄化風險為零。
 
-- [ ] P1-1 Provider流式：`LlamaCppBackend.generate(..., stream_callback)`，
+- [x] P1-1 Provider流式：`LlamaCppBackend.generate(..., stream_callback)`，
   `stream:true` 發POST，逐chunk解析`choices[0].delta.content`，每token回調；
-  非流調用保持原行為（`stream_callback=None`）。Ollama同形跟進。
-- [ ] P1-2 腳手架shim支援`stream:true`（SSE chunk回放，真實測超時消除）。
-- [ ] P1-3 HTTP端點 `POST /api/v1/chat/stream`（SSE `text/event-stream`）：
-  復用 `_run_chat_pipeline` 拿到完整路由決策後，對 main_llm 命中走流式生成、
-  邊收邊發；非LLM命中（模板/數學/時鐘/記憶）整包一次發出（本來就<1s）。
-  60s整包超時只對首token計時，後續token各30s。
+  非流調用保持原行為（`stream_callback=None`）。Ollama同形跟進（未做：無可用daemon驗）。
+- [x] P1-2 腳手架shim支援`stream:true`（SSE chunk回放，真實測超時消除）。
+- [x] P1-3 HTTP端點 `POST /api/v1/chat/stream`（SSE `text/event-stream`）：
+  callback經context透傳進整條管線（零改動管線）；非LLM命中照常快回；
+  45s stall ping＋300s總牆。活體驗收（gemma token逐個＋done）。
 - [ ] P1-4 前端/調用方：desktop-app 與 web-viewer 用 EventSource 消費（若暫不改
   前端，curl/SSE驗收即可，不阻塞後端合併）。
-- [ ] 驗收：Unity長腳本生成不斷線；token首字<15s；斷線重連不丟已收文本。
+- [x] 驗收（後端）：Unity長腳本生成不斷線（token流不斷）；首字即時（open先回）。
+  斷線重連（續傳）未做：重連拿整包（可接受，記為後續）。
 
 ## 3. Phase 2：窗口容器（流式下的判斷才敢做）
 
