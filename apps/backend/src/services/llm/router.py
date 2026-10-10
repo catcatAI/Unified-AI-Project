@@ -3223,14 +3223,21 @@ class AngelaLLMService:
                 raise RuntimeError("No LLM backend available")
             backend_type = getattr(self, "active_backend_type", None)
             label = f"llm:{backend_type.value if backend_type else 'gen'}"
+            stream_cb = context.get("_stream_callback")
+            call_timeout = params.timeout
+            if stream_cb is not None:
+                # Streaming: tokens arrive progressively; the total wall must
+                # cover slow CPU inference (HTTP 60s wall is what SSE avoids).
+                call_timeout = max(float(call_timeout or 0), 600.0)
             return await self._submit_backend_call(
                 backend,
                 prompt=messages[-1]["content"],
                 messages=messages,
                 temperature=params.temperature,
                 max_tokens=params.max_tokens,
-                timeout=params.timeout,
+                timeout=call_timeout,
                 label=label,
+                **({"stream_callback": stream_cb} if stream_cb is not None else {}),
             )
 
         backend_type = getattr(self, "active_backend_type", None)

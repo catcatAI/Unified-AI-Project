@@ -2137,6 +2137,85 @@ async def unified_chat(request: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     return response
 
 
+@router.post("/chat/stream")
+async def chat_stream(request: Dict[str, Any] = Body(...)) -> StreamingResponse:
+    """SSE streaming chat: tokens are emitted as the LLM generates them.
+
+    Reuses the full pipeline (_handle_chat_request) unchanged: a
+    ``_stream_callback`` rides extra_context into the router, which invokes
+    it per generated token (Phase 1: transport streaming only — routing
+    judgments still use the full text, so accuracy is unchanged). Non-LLM
+    answers (template/math/clock/memory) arrive as one final event.
+    Events: {"token": str}… then {"done": true, "response_text", "backend"}.
+    """
+    user_message = request.get("message", request.get("text", ""))
+    mode = request.get("mode", "1:1")
+    user_name = request.get("user_name", request.get("user_id", "User"))
+    history = request.get("history", [])
+    if isinstance(history, list) and len(history) > 100:
+        history = history[-100:]
+    session_id = request.get(
+        "session_id",
+        f"{request.get('tenant_id', 'default')}::{request.get('persona_id', 'angela')}::{uuid.uuid4().hex[:8]}",
+    )
+    origin = request.get("origin", request.get("client_id", "desktop"))
+    token_queue: asyncio.Queue = asyncio.Queue()
+
+    def _token_callback(piece: str) -> None:
+        try:
+            token_queue.put_nowait({"token": piece})
+        except Exception:
+            pass
+
+    extra_context = {"_stream_callback": _token_callback}
+
+    async def _event_gen() -> AsyncGenerator[str, None]:
+        yield ": stream open\n\n"
+        task = asyncio.ensure_future(
+            _handle_chat_request(
+                user_message=user_message,
+                user_name=user_name,
+                history=history,
+                session_id=session_id,
+                origin=origin,
+                extra_context=extra_context,
+                mode=mode,
+            )
+        )
+        try:
+            while True:
+                try:
+                    item = await asyncio.wait_for(token_queue.get(), timeout=45.0)
+                    yield f"data: {json.dumps(item, ensure_ascii=False)}\n\n"
+                except asyncio.TimeoutError:
+                    if task.done():
+                        break
+                    yield ": ping\n\n"
+                    continue
+                if task.done() and token_queue.empty():
+                    break
+            try:
+                result = await asyncio.wait_for(task, timeout=300.0)
+            except asyncio.TimeoutError:
+                task.cancel()
+                yield f"data: {json.dumps({'error': 'overall timeout'})}\n\n"
+                return
+            except Exception as exc:
+                yield f"data: {json.dumps({'error': str(exc)[:200]})}\n\n"
+                return
+            final = {
+                "done": True,
+                "response_text": (result or {}).get("response_text", ""),
+                "backend": (result or {}).get("backend", "unknown"),
+            }
+            yield f"data: {json.dumps(final, ensure_ascii=False)}\n\n"
+        finally:
+            if not task.done():
+                task.cancel()
+
+    return StreamingResponse(_event_gen(), media_type="text/event-stream")
+
+
 @router.post("/chat/with-image")
 async def chat_with_image(
     message: str = Form(default=""),
