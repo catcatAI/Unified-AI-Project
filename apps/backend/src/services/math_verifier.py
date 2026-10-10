@@ -193,6 +193,14 @@ class MathVerifier:
             )
 
         expr, result = extracted
+        if result is None:
+            # Extracted shape but not computable (e.g. code "Cube(2,0.5,1)"):
+            # reporting "expr = None" as correct poisons answers (live 2026-10-10).
+            return MathVerifyResult(
+                response_text=None,
+                is_correct=False,
+                explanation="表達式無法計算",
+            )
         return MathVerifyResult(
             response_text=f"{expr} = {result}",
             is_correct=True,

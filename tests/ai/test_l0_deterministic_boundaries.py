@@ -108,3 +108,19 @@ class TestMathVerifierSmoke:
         assert out is not None
         # Should contain 2 (exact format may vary)
         assert "2" in str(out)
+
+    def test_code_shaped_text_is_not_verified(self):
+        """Cube(2,0.5,1) extracts shape but computes None → must NOT verify
+        (live 2026-10-10: served 'Cube(2,0.5,1) = None' as math answer)."""
+        from services.math_verifier import MathVerifier
+
+        result = MathVerifier().verify("建Cube(2,0.5,1)車身")
+        assert result.is_correct is False
+        assert result.response_text is None
+
+    def test_plain_arithmetic_still_verifies(self):
+        from services.math_verifier import MathVerifier
+
+        result = MathVerifier().verify("12*13等於多少")
+        assert result.is_correct is True
+        assert result.response_text is not None and "156" in result.response_text

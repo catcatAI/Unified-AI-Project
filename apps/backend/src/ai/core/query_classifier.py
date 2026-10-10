@@ -520,7 +520,7 @@ class QueryClassifier:
                     r"调试|重构|优化|实现|"
                     r"程式|代碼|函數|變數|迴圈|陣列|物件|"
                     r"除錯|重構|優化|實作|"
-                    r"寫.{0,3}(函數|函数|程序|程式|代碼|代码|腳本|脚本|python|java|class|def)|"
+                    r"寫.{0,3}(函數|函数|程序|程式|代碼|代码|腳本|脚本|類|类|方法|python|java|class|def)|"
                     r"\b(code|program|script|debug|bug|function|variable|"
                     r"loop|array|refactor|implement|python|java|golang|rust)\b)",
                     re.IGNORECASE,
