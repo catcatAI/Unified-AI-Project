@@ -41,6 +41,39 @@ def test_non_code_plan_never_bypassed():
     assert GateExecutionOwner._is_code_write_request(_plan("code"), "") is False
 
 
+@pytest.mark.parametrize(
+    "text",
+    [
+        "直接輸出完整Unity C#代碼，不要任何前言",
+        "寫一個Unity類建車身",
+        "幫我生成排序函數",
+        "繼續，直接給完整代碼",
+    ],
+)
+def test_message_level_write_detected(text):
+    assert GateExecutionOwner.is_code_write_request(text) is True
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "關機",
+        "刪除/tmp舊檔",
+        "寫一封信",
+        "執行 ```python\nprint(1)\n```",
+        "第一個字符就是```csharp加上代碼",
+    ],
+)
+def test_message_level_write_rejected(text):
+    assert GateExecutionOwner.is_code_write_request(text) is False
+
+
+def test_lone_fence_mention_is_not_code():
+    """'第一個字符就是```csharp' is an instruction, not a carried block."""
+    assert GateExecutionOwner._has_no_executable_code("第一個字符就是```csharp輸出代碼") is True
+    assert GateExecutionOwner._has_no_executable_code("執行 ```python\nprint(1)\n```") is False
+
+
 def test_llm_availability_no_side_effects(monkeypatch):
     import services.llm.router as router_mod
 

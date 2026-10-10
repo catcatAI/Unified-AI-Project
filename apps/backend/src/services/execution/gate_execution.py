@@ -229,6 +229,61 @@ class GateExecutionOwner:
         )
         return plan, decision
 
+    # Message-level code-WRITE signals (shared by all three gates: owner,
+    # agent-routing, understand-agent). A WRITE request names code as the
+    # deliverable (verb + noun) but carries no code itself.
+    _WRITE_VERBS = (
+        "寫",
+        "写",
+        "輸出",
+        "输出",
+        "生成",
+        "產生",
+        "产生",
+        "給出",
+        "给出",
+        "給",
+        "给",
+        "write",
+        "generate",
+        "give",
+        "output",
+        "produce",
+    )
+    _CODE_NOUNS = (
+        "代碼",
+        "代码",
+        "函數",
+        "函数",
+        "函式",
+        "類",
+        "类",
+        "方法",
+        "method",
+        "腳本",
+        "脚本",
+        "代碼塊",
+        "代码段",
+        "snippet",
+        "c#",
+        "csharp",
+        "python",
+        "java",
+    )
+
+    @staticmethod
+    def is_code_write_request(user_message: str) -> bool:
+        """True when the message asks for code to be WRITTEN (none carried)."""
+        text = (user_message or "").strip()
+        if not text:
+            return False
+        lowered = text.lower()
+        if not any(v in lowered for v in GateExecutionOwner._WRITE_VERBS):
+            return False
+        if not any(n in lowered for n in GateExecutionOwner._CODE_NOUNS):
+            return False
+        return GateExecutionOwner._has_no_executable_code(text)
+
     @staticmethod
     def _is_code_write_request(plan: Any, user_message: str) -> bool:
         """True for code-WRITE requests (no executable code in the message).
@@ -244,11 +299,18 @@ class GateExecutionOwner:
 
     @staticmethod
     def _has_no_executable_code(user_message: str) -> bool:
-        """True when the message carries no fenced/inline/multiline code."""
+        """True when the message carries no fenced/inline/multiline code.
+
+        A lone code-fence MENTION ("第一個字符就是```csharp") is an instruction,
+        not a block: only paired fences (open+close) count.
+        """
         text = (user_message or "").strip()
         if not text or "\n" in text:
             return False
-        if "```" in text or "`" in text:
+        if text.count("```") >= 2:
+            return False
+        single = text.replace("```", "")
+        if single.count("`") >= 2:
             return False
         return True
 
@@ -463,11 +525,7 @@ class GateExecutionOwner:
             # code written first (live 2026-10-10). System handlers
             # (system_cmd: 關機 etc.) never bypass.
             if decision.action in ("auto_execute", "confirm_then_execute"):
-                if (
-                    getattr(decision, "handler", "") == "code_exec"
-                    and self._has_no_executable_code(user_message)
-                    and self._llm_generation_available()
-                ):
+                if self.is_code_write_request(user_message) and self._llm_generation_available():
                     context["last_action_result"] = None
                     return GateOutcome(action=OUTCOME_NONE, plan=plan, decision=decision)
 
