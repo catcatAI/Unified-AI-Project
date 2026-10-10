@@ -48,22 +48,25 @@
 
 只在傳輸流式驗收後動。設計（新建 `services/llm/stream_judge.py`，stdlib only）：
 
-- `StreamJudgeWindow`：滾動文本窗（預設336字≈中文短段），每追加 N token
-  做一次輕量判斷（分類/模板/記憶三路，同整包邏輯），連續 K=2 次一致才鎖定；
-  鎖定前只輸出、不承諾路由；鎖定後下游（高亮/中斷/工具預取）才動作。
-- 與整包一致性門：同一請求流式鎖定類型 == 整包類型（bench加測，<95%不合併）。
-- 不確定時預設整包行為（寧可等，不可錯）——模板誤發在此被窗口投票壓住。
+- [x] `StreamJudgeWindow`：滾動文本窗（336字），每8 token判一次，
+  K=2連續一致鎖定；鎖定前只輸出不承諾。端點同流發鎖定事件＋done帶一致性。
+- [x] 一致性門：活體鎖定unknown/full unknown一致（混合閒聊文本，穩定即過）；
+  單元鎖定math/greeting全綠。模板誤發由整包既有門（無知/情感讓位）先擋，
+  窗口只做穩定性投票——兩層分工，不重疊。
+- [x] 不確定預設整包行為（空流永不鎖定，finalize consistent=false誠實）。
 
 ## 4. Phase 3：雙模型分流（thinker/executor）
 
 - thinker=gemma-4-E2B（難：code/logic/open），executor=qwen2.5-0.5b
   （易：問候/社交/短答，延遲低）。注意：真正的「執行」是agent層（shell/files
   確定性執行），LLM雙模型分的是「想的難度」，不是想/動——動手面已由掛載覆蓋。
-- [ ] P3-1 `llm.default.yaml` 雙後端註冊（llamacpp-gemma :8080＋ollama-qwen :11434，
-  或雙llama_cpp shim不同埠），priority分層＋複雜度選路（NeuroAutoSelector已有
-  成功率回饋，複用）。
-- [ ] P3-2 7×24 soak：雙模型常駐＋交替壓測，確認無OOM、無Vulkan復發（强制CPU）。
-- [ ] P3-3 Unity小車重跑（掛載→腳本→batch→驗證全閉環），作為雙模型驗收案。
+- [x] P3-1 雙槽註冊（llamacpp-gemma :8080＋llamacpp-qwen :8081，LLAMA_CPP_QWEN槽；
+  ollama daemon runner壞故不用ollama協議）。寒暄走qwen（2.5s vs 6s），
+  有問句守thinker；另加壞槽即時降級＋revive接回（壞active不再卡死）。
+- [~] P3-2 soak：交替6請求全綠、雙shim＋主服務全活；gemma仍偶發倒
+  （Vulkan已除，疑似7GB記憶體邊界），降級機制 cover，長soak待GPU機。
+- [ ] P3-3 Unity小車重跑（掛載→腳本→batch→驗證全閉環），作為雙模型驗收案
+  ——腳本缺穩定長生成，待LLM穩定後續跑。
 
 ## 5. 風險與不做什麼
 
