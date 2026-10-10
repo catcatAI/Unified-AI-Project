@@ -983,13 +983,13 @@ async def _try_agent_routing(
         # Code-WRITE requests must reach the LLM, not a code agent's confirm
         # gate: there is no code to run yet (mirrors the execution-gate
         # bypass; live 2026-10-10 Unity script blocked here instead).
+        # Message-level detection (not agent-name): the blocking agent varies
+        # (code/understand/task...) while the request shape is constant.
         try:
             from services.execution.gate_execution import GateExecutionOwner
 
-            _agent_name = str(primary.get("agent", "") or "").lower()
             if (
-                "code" in _agent_name
-                and GateExecutionOwner._has_no_executable_code(user_message)
+                GateExecutionOwner.is_code_write_request(user_message)
                 and GateExecutionOwner._llm_generation_available()
             ):
                 logger.debug("Agent routing skipped for code-write request")
