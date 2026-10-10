@@ -16,7 +16,11 @@ AI 的使用流程：
 from __future__ import annotations
 
 import logging
-from typing import Any, Callable, Dict, Optional
+import os
+import shlex
+import subprocess
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional
 
 from services.agent_workspace.app_session import (
     DEFAULT_LOG_PATH,
@@ -109,6 +113,200 @@ class BrowserAgent(AppAdapter):
             return {"ok": False, "error": "缺少 url"}
         bookmark = self._controller.add_bookmark(url=url, title=title)
         return {"ok": True, "bookmark_id": getattr(bookmark, "id", None)}
+
+
+# ---------- 可動態掛載的應用（白名單種類） ----------
+
+_MOUNT_ROOTS: List[Path] = [
+    Path.home(),
+    Path(os.environ.get("ANGELA_WORKSPACE", os.getcwd())),
+    Path("/tmp"),
+]
+
+# Shell denylist: obvious destructors blocked even after confirmation.
+_SHELL_DENY = (
+    "rm -rf /",
+    "mkfs",
+    " dd ",
+    ":(){",
+    "shutdown",
+    "reboot",
+    "halt",
+    "poweroff",
+    "iptables",
+    "> /dev/sd",
+)
+
+
+def _is_mount_safe_path(target: Path) -> bool:
+    """Jail paths under mount roots (mirrors DesktopInteraction._is_safe_path)."""
+    try:
+        resolved = target.resolve()
+    except Exception:
+        return False
+    for root in _MOUNT_ROOTS:
+        try:
+            resolved.relative_to(root.resolve())
+            return True
+        except ValueError:
+            continue
+    return False
+
+
+class ShellAdapter(AppAdapter):
+    """受控命令執行（開發／維運操作）。run 恆為危險指令，需 confirm=True。
+
+    Safety: confirm gate (framework) + cwd jail + denylist + timeout +
+    output truncation. No interactive commands.
+    """
+
+    app_id = "shell"
+    label = "命令執行"
+
+    def __init__(self, workdir: Any = None) -> None:
+        super().__init__()
+        self._workdir = Path(str(workdir or os.environ.get("ANGELA_WORKSPACE", os.getcwd())))
+        self.register(
+            ActionSpec("run", "執行 shell 指令（需確認，有超時與輸出截斷）", dangerous=True),
+            self._run,
+        )
+
+    async def _run(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        cmd = str(params.get("cmd", "") or "").strip()
+        if not cmd:
+            return {"ok": False, "error": "缺少 cmd"}
+        lowered = f" {cmd.lower()} "
+        if any(d.strip().lower() in lowered for d in _SHELL_DENY if d.strip()):
+            return {"ok": False, "error": "拒絕危險指令"}
+        explicit_cwd = str(params.get("cwd", "") or "").strip()
+        cwd = Path(explicit_cwd) if explicit_cwd else Path(self._workdir)
+        if not cwd.is_absolute():
+            cwd = Path(os.getcwd()) / cwd
+        if not (cwd.exists() and cwd.is_dir()):
+            if explicit_cwd:
+                return {"ok": False, "error": f"工作目錄不存在：{cwd}"}
+            # Default workdir (e.g. ANGELA_WORKSPACE=./workspace) missing:
+            # fall back to the process cwd instead of failing every run.
+            cwd = Path(os.getcwd())
+        if not _is_mount_safe_path(cwd):
+            return {"ok": False, "error": f"工作目錄越界：{cwd}"}
+        try:
+            timeout = float(params.get("timeout", 60))
+        except (TypeError, ValueError):
+            timeout = 60.0
+        timeout = min(max(timeout, 1.0), 300.0)
+        try:
+            proc = await _run_shell(cmd, str(cwd), timeout)
+        except Exception as exc:
+            return {"ok": False, "error": f"執行失敗：{exc}"}
+        return proc
+
+
+async def _run_shell(cmd: str, cwd: str, timeout: float) -> Dict[str, Any]:
+    """Blocking subprocess offloaded to a worker thread (keeps loop responsive)."""
+    import asyncio as _asyncio
+
+    def _call() -> Dict[str, Any]:
+        try:
+            done = subprocess.run(
+                cmd,
+                shell=True,
+                cwd=cwd,
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+            )
+        except subprocess.TimeoutExpired:
+            return {"ok": False, "error": f"超時（>{timeout:.0f}s）"}
+        out = (done.stdout or "")[-4000:]
+        err = (done.stderr or "")[-1000:]
+        return {
+            "ok": done.returncode == 0,
+            "returncode": done.returncode,
+            "stdout": out,
+            "stderr": err,
+        }
+
+    return await _asyncio.to_thread(_call)
+
+
+class FilesAdapter(AppAdapter):
+    """沙盒文件操作（list/read 安全，write 危險需確認），路徑監禁。"""
+
+    app_id = "files"
+    label = "文件操作"
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.register(ActionSpec("list", "列出目錄（限監禁範圍）"), self._list)
+        self.register(ActionSpec("read", "讀取文字檔（64KB 上限）"), self._read)
+        self.register(
+            ActionSpec("write", "寫入文字檔（1MB 上限，需確認）", dangerous=True),
+            self._write,
+        )
+
+    async def _list(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        path = Path(str(params.get("path", "") or ""))
+        if not _is_mount_safe_path(path):
+            return {"ok": False, "error": f"路徑越界：{path}"}
+        try:
+            if not path.is_dir():
+                return {"ok": False, "error": f"非目錄：{path}"}
+            names = sorted(p.name for p in path.iterdir())[:200]
+            return {"ok": True, "path": str(path), "entries": names, "count": len(names)}
+        except Exception as exc:
+            return {"ok": False, "error": f"列舉失敗：{exc}"}
+
+    async def _read(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        path = Path(str(params.get("path", "") or ""))
+        if not _is_mount_safe_path(path):
+            return {"ok": False, "error": f"路徑越界：{path}"}
+        try:
+            if not path.is_file():
+                return {"ok": False, "error": f"非檔案：{path}"}
+            if path.stat().st_size > 65536:
+                return {"ok": False, "error": "檔案過大（>64KB）"}
+            return {
+                "ok": True,
+                "path": str(path),
+                "content": path.read_text(encoding="utf-8", errors="replace"),
+            }
+        except Exception as exc:
+            return {"ok": False, "error": f"讀取失敗：{exc}"}
+
+    async def _write(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        path = Path(str(params.get("path", "") or ""))
+        content = str(params.get("content", "") or "")
+        if not _is_mount_safe_path(path):
+            return {"ok": False, "error": f"路徑越界：{path}"}
+        if len(content.encode("utf-8")) > 1048576:
+            return {"ok": False, "error": "內容過大（>1MB）"}
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(content, encoding="utf-8")
+            return {"ok": True, "path": str(path), "bytes": len(content.encode("utf-8"))}
+        except Exception as exc:
+            return {"ok": False, "error": f"寫入失敗：{exc}"}
+
+
+# 可掛載種類白名單：主 AI 只能掛這些，任意類別永遠進不來。
+MOUNT_KIND_REGISTRY: Dict[str, Any] = {
+    "shell": ShellAdapter,
+    "files": FilesAdapter,
+}
+
+# 中文別名（主 AI 意圖解析用）。
+MOUNT_KIND_ALIASES: Dict[str, str] = {
+    "shell": "shell",
+    "終端": "shell",
+    "命令行": "shell",
+    "命令列": "shell",
+    "終端機": "shell",
+    "files": "files",
+    "文件": "files",
+    "檔案": "files",
+    "文件操作": "files",
+}
 
 
 # ANGELA-MATRIX: L6 [βγδ] [A] [L3]
@@ -318,6 +516,28 @@ class AgentWorkspace:
         self._rebuild_tree()
         return result
 
+    def mount_app(self, kind: str, app_id: str = "", label: str = "") -> Dict[str, Any]:
+        """Mount a whitelisted app kind at runtime (main AI mounts as needed)."""
+        key = MOUNT_KIND_ALIASES.get(str(kind or "").strip().lower(), "")
+        if not key:
+            return {
+                "ok": False,
+                "error": f"不可掛載種類：{kind}；可用：{sorted(MOUNT_KIND_REGISTRY)}",
+            }
+        adapter = MOUNT_KIND_REGISTRY[key]()
+        if app_id.strip():
+            adapter.app_id = app_id.strip()
+        if label.strip():
+            adapter.label = label.strip()
+        result = self.sessions.mount_adapter(adapter, source="workspace")
+        self._rebuild_tree()
+        return result
+
+    def unmount_app(self, app_id: str) -> Dict[str, Any]:
+        result = self.sessions.unmount_adapter(app_id, source="workspace")
+        self._rebuild_tree()
+        return result
+
     async def close_app(self, app_id: str, confirm: bool = False) -> Dict[str, Any]:
         result = await self.sessions.close_app(app_id, confirm=confirm)
         self._rebuild_tree()
@@ -341,5 +561,6 @@ def build_default_workspace(
             "eda": EdaWorkspaceAdapter(eda_agent_provider),
         },
         log_path=log_path,
+        protected_ids={"desktop", "browser", "eda"},
     )
     return AgentWorkspace(session_manager=manager)

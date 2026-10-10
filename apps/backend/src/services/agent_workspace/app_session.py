@@ -121,11 +121,53 @@ class AppSessionManager:
         self,
         adapters: Optional[Dict[str, AppAdapter]] = None,
         log_path: Path = DEFAULT_LOG_PATH,
+        protected_ids: Optional[set] = None,
     ) -> None:
         self._adapters: Dict[str, AppAdapter] = adapters or {}
         self._log_path = log_path
+        # Built-in adapters (DI-injected at boot) cannot be unmounted:
+        # re-mounting them would lose their injected controllers.
+        self._protected_ids: set = set(protected_ids or ())
         self._sessions: Dict[str, SessionRecord] = {}
         self._counter = 0
+
+    # ---------- 動態掛載 ----------
+
+    def mount_adapter(self, adapter: AppAdapter, source: str = "api") -> Dict[str, Any]:
+        """Mount an application adapter at runtime (main AI mounts apps as needed).
+
+        Only AppAdapter instances are accepted — arbitrary classes/code can
+        never be registered here. Re-mounting an existing id is rejected so a
+        live session's adapter cannot be swapped under it.
+        """
+        app_id = str(getattr(adapter, "app_id", "") or "").strip()
+        if not app_id:
+            return {"ok": False, "error": "adapter 缺少 app_id"}
+        if not isinstance(adapter, AppAdapter):
+            return {"ok": False, "error": "只能掛載 AppAdapter 實例"}
+        if app_id in self._adapters:
+            return {"ok": False, "error": f"已掛載：{app_id}"}
+        self._adapters[app_id] = adapter
+        self._log("mount", app_id, "ok", getattr(adapter, "label", app_id), source)
+        return {
+            "ok": True,
+            "app_id": app_id,
+            "label": getattr(adapter, "label", app_id),
+            "commands": [s.name for s in adapter.specs()],
+        }
+
+    def unmount_adapter(self, app_id: str, source: str = "api") -> Dict[str, Any]:
+        """Unmount a runtime-mounted adapter. Built-ins and open sessions block."""
+        app_id = str(app_id or "").strip()
+        if app_id in self._protected_ids:
+            return {"ok": False, "error": f"內建應用不可卸載：{app_id}"}
+        if app_id not in self._adapters:
+            return {"ok": False, "error": f"無此應用：{app_id}"}
+        if app_id in self._sessions:
+            return {"ok": False, "error": f"會話開啟中，請先 close：{app_id}"}
+        del self._adapters[app_id]
+        self._log("unmount", app_id, "ok", "已卸載", source)
+        return {"ok": True, "unmounted": app_id}
 
     # ---------- 查詢 ----------
 

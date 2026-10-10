@@ -72,7 +72,7 @@ _HANDLER_TO_INTENT = {
 # no entry in ExecutionGate.HANDLER_MAP (that map is keyed by QueryType). They
 # are resolved through IntentRegistry, which carries the executable handler id in
 # `metadata["handler_id"]` — data, not a regex in the service layer.
-_REGISTRY_DISPATCH_INTENTS = ("learning", "image_generation")
+_REGISTRY_DISPATCH_INTENTS = ("learning", "image_generation", "app_mount")
 # IntentRegistry confidence is keyword-density (matched chars / total chars), so
 # a short imperative lands around 0.2-0.3. The same 0.1 floor the gate already
 # uses for IntentRegistry confirmation is too weak here; 0.2 plus the pattern's

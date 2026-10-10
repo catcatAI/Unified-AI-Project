@@ -460,6 +460,12 @@ class UnifiedWorkspace:
     async def save_app(self, app_id: str) -> Dict[str, Any]:
         return await self.workspace.save_app(app_id)
 
+    def mount_app(self, kind: str, app_id: str = "", label: str = "") -> Dict[str, Any]:
+        return self.workspace.mount_app(kind, app_id=app_id, label=label)
+
+    def unmount_app(self, app_id: str) -> Dict[str, Any]:
+        return self.workspace.unmount_app(app_id)
+
     async def close_app(self, app_id: str, confirm: bool = False) -> Dict[str, Any]:
         return await self.workspace.close_app(app_id, confirm=confirm)
 

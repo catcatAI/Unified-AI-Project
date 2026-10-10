@@ -1248,6 +1248,7 @@ class AngelaLLMService:
             from services.handlers.system_command_handler import SystemCommandHandler
             from services.handlers.task_manager_handler import TaskManagerHandler
             from services.handlers.vision_handler import VisionHandler
+            from services.handlers.workspace_mount_handler import WorkspaceMountHandler
             from services.handlers.web_search_handler import WebSearchHandler
 
             bus = self.model_bus
@@ -1261,6 +1262,7 @@ class AngelaLLMService:
             bus.register_handler("vision", VisionHandler(), ["vision"])
             bus.register_handler("image_generate", ImageGenerationHandler(), ["image_generation"])
             bus.register_handler("learning", LearningHandler(), ["learn", "remember"])
+            bus.register_handler("workspace", WorkspaceMountHandler(), ["mount", "workspace"])
             bus.register_handler(
                 "civil",
                 CivilModelHandler(),

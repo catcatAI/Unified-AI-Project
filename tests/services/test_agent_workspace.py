@@ -464,3 +464,132 @@ def test_view_reports_line_count(tmp_path: Path) -> None:
     ov = tree.overview()
     assert ov["lines"] == len(ov["text"].splitlines())
     assert ov["lines"] <= 100
+
+
+# ---------- 動態掛載（主 AI 按需掛應用） ----------
+
+
+def _make_mount_manager(tmp_path: Path) -> AppSessionManager:
+    return AppSessionManager(
+        adapters={"fake": FakeAdapter()},
+        log_path=tmp_path / "learning_log.jsonl",
+        protected_ids={"fake"},
+    )
+
+
+async def test_mount_and_unmount_lifecycle(tmp_path: Path) -> None:
+    from services.agent_workspace.agent import FilesAdapter, ShellAdapter
+
+    mgr = _make_mount_manager(tmp_path)
+    assert [a["app_id"] for a in mgr.available_apps()] == ["fake"]
+    r = mgr.mount_adapter(ShellAdapter(), source="test")
+    assert r["ok"] is True and r["app_id"] == "shell"
+    assert r["commands"] == ["run"]
+    # 重複掛載拒絕（活會話 adapter 不可被替換）
+    dup = mgr.mount_adapter(ShellAdapter(), source="test")
+    assert dup["ok"] is False
+    # 非 adapter 拒絕
+    assert mgr.mount_adapter(object(), source="test")["ok"] is False  # type: ignore[arg-type]
+    # 開啟中會話擋卸載
+    await mgr.open_app("shell")
+    assert mgr.unmount_adapter("shell")["ok"] is False
+    await mgr.close_app("shell", confirm=True)
+    assert mgr.unmount_adapter("shell")["ok"] is True
+    # 內建受保護
+    assert mgr.unmount_adapter("fake")["ok"] is False
+    # 未知應用
+    assert mgr.unmount_adapter("ghost")["ok"] is False
+    assert mgr.mount_adapter(FilesAdapter(), source="test")["ok"] is True
+
+
+async def test_files_adapter_jail_and_roundtrip(tmp_path: Path) -> None:
+    from services.agent_workspace.agent import FilesAdapter
+
+    mgr = _make_mount_manager(tmp_path)
+    mgr.mount_adapter(FilesAdapter(), source="test")
+    await mgr.open_app("files")
+    target = tmp_path / "note.txt"
+    w = await mgr.act("files", "write", {"path": str(target), "content": "hi"}, confirm=True)
+    assert w["ok"] is True
+    # 危險寫入需確認
+    assert (await mgr.act("files", "write", {"path": str(target), "content": "x"}))["ok"] is False
+    r = await mgr.act("files", "read", {"path": str(target)})
+    assert r["result"]["content"] == "hi"
+    # 越界拒絕（讀 /etc 不得成功）
+    bad = await mgr.act("files", "read", {"path": "/etc/hostname"})
+    assert bad["ok"] is False or bad["result"].get("ok") is False
+    # 白名單外拒絕
+    assert (await mgr.act("files", "delete", {}))["ok"] is False
+
+
+async def test_shell_adapter_run_and_deny(tmp_path: Path) -> None:
+    from services.agent_workspace.agent import ShellAdapter
+
+    mgr = _make_mount_manager(tmp_path)
+    mgr.mount_adapter(ShellAdapter(workdir=str(tmp_path)), source="test")
+    await mgr.open_app("shell")
+    # 未確認不執行
+    assert (await mgr.act("shell", "run", {"cmd": "echo hi"}))["ok"] is False
+    ok = await mgr.act("shell", "run", {"cmd": "echo hi"}, confirm=True)
+    assert ok["ok"] is True
+    assert "hi" in ok["result"]["stdout"]
+    # 拒絕明顯破壞性指令（adapter 層拒絕，原樣回傳）
+    deny = await mgr.act("shell", "run", {"cmd": "rm -rf / tmp"}, confirm=True)
+    assert deny["ok"] is False
+    assert "拒絕" in deny.get("error", "")
+    # cwd 越界拒絕（失敗原樣回傳，無 result 包裝）
+    jail = await mgr.act("shell", "run", {"cmd": "echo hi", "cwd": "/proc"}, confirm=True)
+    assert jail["ok"] is False
+    assert "越界" in jail.get("error", "")
+    # 缺省工作目錄不存在時回落進程 cwd（.env ANGELA_WORKSPACE=./workspace 未建）
+    from services.agent_workspace.agent import ShellAdapter as _Shell
+
+    mgr2 = _make_mount_manager(tmp_path)
+    mgr2.mount_adapter(_Shell(workdir=str(tmp_path / "no-such-dir")), source="test")
+    await mgr2.open_app("shell")
+    fb = await mgr2.act("shell", "run", {"cmd": "echo fallback-ok"}, confirm=True)
+    assert fb["ok"] is True
+    assert "fallback-ok" in fb["result"]["stdout"]
+    # 顯式 cwd 不存在則明確報錯
+    missing = await mgr2.act(
+        "shell", "run", {"cmd": "echo hi", "cwd": "/tmp/no-such-dir-xyz"}, confirm=True
+    )
+    assert missing["ok"] is False
+    assert "不存在" in missing.get("error", "")
+
+
+async def test_workspace_mount_rebuilds_tree(tmp_path: Path) -> None:
+    ws = AgentWorkspace(session_manager=_make_mount_manager(tmp_path))
+    assert "shell" not in [a["app_id"] for a in ws.sessions.available_apps()]
+    assert ws.mount_app("shell")["ok"] is True
+    assert "shell" in [a["app_id"] for a in ws.sessions.available_apps()]
+    assert ws.mount_app("not-a-kind")["ok"] is False
+    assert ws.unmount_app("shell")["ok"] is True
+
+
+async def test_mount_handler_parse_and_list() -> None:
+    from services.handlers.workspace_mount_handler import WorkspaceMountHandler
+
+    h = WorkspaceMountHandler()
+    assert h._parse_action("把shell掛上") == ("mount", "shell")
+    assert h._parse_action("掛載文件") == ("mount", "文件")
+    assert h._parse_action("卸載shell") == ("unmount", "shell")
+    assert h._parse_action("有哪些應用") == ("list", "")
+    assert h._parse_action("你好") is None
+
+
+def test_mount_intent_detected_with_verb_bypass() -> None:
+    """長句掛載請求：動詞繞過密度門檻（learning 0.18 案同構）。"""
+    from core.intent_registry import IntentRegistry
+
+    name, conf = IntentRegistry().detect(
+        "請幫我把shell終端掛載到代理上好嗎謝謝", category="app_mount"
+    )
+    assert name == "app_mount"
+
+    from ai.core.execution_gate import ExecutionGate
+
+    decision = ExecutionGate(model_bus=None).decide_agent_execution(
+        intent="app_mount", agent_name="workspace", user_message="掛載shell"
+    )
+    assert decision.action in ("auto_execute", "confirm_then_execute")

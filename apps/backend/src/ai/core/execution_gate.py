@@ -148,6 +148,9 @@ _AGENT_INTENT_ACTIONS = {
     # User-taught facts: additive and reversible (can be forgotten) → create.
     # Reached via IntentRegistry metadata["handler_id"] (see gate_execution).
     "learning": "create",
+    # App mount/unmount: additive and reversible (re-mountable; open sessions
+    # block unmount) → create. Mounted actions keep their own confirm gates.
+    "app_mount": "create",
 }
 
 

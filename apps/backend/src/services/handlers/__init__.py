@@ -55,6 +55,12 @@ try:
 except ImportError:
     LearningHandler = None
 
+WorkspaceMountHandler: Any
+try:
+    from services.handlers.workspace_mount_handler import WorkspaceMountHandler
+except ImportError:
+    WorkspaceMountHandler = None
+
 CivilModelHandler: Any
 try:
     from services.handlers.civil_model_handler import CivilModelHandler

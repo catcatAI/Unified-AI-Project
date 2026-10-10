@@ -144,6 +144,47 @@ _DEFAULT_PATTERNS: List[Dict[str, Any]] = [
         "category": "search",
     },
     {
+        "name": "app_mount",
+        "keywords": [
+            "掛載",
+            "掛上",
+            "裝載",
+            "卸載",
+            "卸下",
+            "卸载",
+            "挂载",
+            "有哪些應用",
+            "有哪些应用",
+            "可用應用",
+            "可用应用",
+            "mount",
+            "unmount",
+        ],
+        "priority": 4,
+        "handler": "WorkspaceMountHandler",
+        "metadata": {
+            "handler_id": "workspace",
+            # Mounting needs an explicit mount/unmount verb or a list-apps
+            # question — without this gate "上傳應用" would mount things.
+            "require_keywords": [
+                "掛載",
+                "掛上",
+                "裝載",
+                "卸載",
+                "卸下",
+                "卸载",
+                "挂载",
+                "有哪些應用",
+                "有哪些应用",
+                "可用應用",
+                "可用应用",
+                "mount",
+                "unmount",
+            ],
+        },
+        "category": "app_mount",
+    },
+    {
         "name": "learning",
         "keywords": [
             "記住",

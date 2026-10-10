@@ -1,8 +1,9 @@
 """代理工作區 API：樹狀上下文（全貌唯讀／執行器分層）＋應用會話閉環。
 
-- GET  /agent/context/overview          全貌視圖（唯讀）
+- GET  /agent/context/overview          全貌視圖（唯讀樹狀）。
 - GET  /agent/context/focus/{node_id}  執行器視圖（當層＋指令白名單）
 - POST /agent/session/open|read|act|save|close  會話生命週期
+- POST /agent/app/mount|unmount         動態掛載／卸載應用（主 AI 按需掛載）
 - GET  /agent/learning                  學習日誌尾端（教學／探索／成敗皆為學習資料）
 """
 
@@ -135,6 +136,36 @@ async def agent_session_close(
         raise HTTPException(422, "缺少 app_id")
     confirm = bool(body.get("confirm", False))
     return await workspace.close_app(app_id, confirm=confirm)
+
+
+@router.post("/agent/app/mount")
+async def agent_app_mount(
+    body: Dict[str, Any] = Body(default={}),
+    workspace: "UnifiedWorkspace" = Depends(get_agent_workspace),
+) -> dict:
+    """動態掛載應用（僅白名單種類：shell／files）。掛後即可 open→act 操作。"""
+    if workspace is None:
+        raise HTTPException(503, "AgentWorkspace not available")
+    kind = str(body.get("kind", "")).strip()
+    if not kind:
+        raise HTTPException(422, "缺少 kind（可用：shell、files）")
+    app_id = str(body.get("app_id", "")).strip()
+    label = str(body.get("label", "")).strip()
+    return workspace.mount_app(kind, app_id=app_id, label=label)
+
+
+@router.post("/agent/app/unmount")
+async def agent_app_unmount(
+    body: Dict[str, Any] = Body(default={}),
+    workspace: "UnifiedWorkspace" = Depends(get_agent_workspace),
+) -> dict:
+    """卸載動態掛載的應用（內建 desktop／browser／eda 不可卸載，會話須先關）。"""
+    if workspace is None:
+        raise HTTPException(503, "AgentWorkspace not available")
+    app_id = str(body.get("app_id", "")).strip()
+    if not app_id:
+        raise HTTPException(422, "缺少 app_id")
+    return workspace.unmount_app(app_id)
 
 
 @router.get("/agent/learning")
