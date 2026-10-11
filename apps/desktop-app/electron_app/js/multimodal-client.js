@@ -36,6 +36,9 @@ class MultimodalAPIClient {
       body: form,
       signal: AbortSignal.timeout(30000),
     })
+    if (!res.ok) {
+      throw new Error(`Multimodal API HTTP ${res.status}`)
+    }
     return res.json()
   }
 
@@ -50,6 +53,9 @@ class MultimodalAPIClient {
       body: form,
       signal: AbortSignal.timeout(30000),
     })
+    if (!res.ok) {
+      throw new Error(`Multimodal API HTTP ${res.status}`)
+    }
     return res.json()
   }
 
@@ -63,6 +69,9 @@ class MultimodalAPIClient {
       body: form,
       signal: AbortSignal.timeout(15000),
     })
+    if (!res.ok) {
+      throw new Error(`Multimodal API HTTP ${res.status}`)
+    }
     return res.json()
   }
 
@@ -77,6 +86,9 @@ class MultimodalAPIClient {
       body: form,
       signal: AbortSignal.timeout(15000),
     })
+    if (!res.ok) {
+      throw new Error(`Multimodal API HTTP ${res.status}`)
+    }
     return res.json()
   }
 
@@ -92,6 +104,9 @@ class MultimodalAPIClient {
       body: form,
       signal: AbortSignal.timeout(120000),
     })
+    if (!res.ok) {
+      throw new Error(`Multimodal API HTTP ${res.status}`)
+    }
     return res.json()
   }
 
@@ -106,6 +121,9 @@ class MultimodalAPIClient {
       body: form,
       signal: AbortSignal.timeout(30000),
     })
+    if (!res.ok) {
+      throw new Error(`Multimodal API HTTP ${res.status}`)
+    }
     return res.json()
   }
 
@@ -119,6 +137,9 @@ class MultimodalAPIClient {
       body: form,
       signal: AbortSignal.timeout(60000),
     })
+    if (!res.ok) {
+      throw new Error(`Multimodal API HTTP ${res.status}`)
+    }
     return res.json()
   }
 
@@ -140,6 +161,9 @@ class MultimodalAPIClient {
       body: form,
       signal: AbortSignal.timeout(30000),
     })
+    if (!res.ok) {
+      throw new Error(`Multimodal API HTTP ${res.status}`)
+    }
     return res.json()
   }
 
@@ -148,6 +172,9 @@ class MultimodalAPIClient {
     const res = await fetch(`${this.apiBase}/multimodal/quality/dashboard`, {
       signal: AbortSignal.timeout(10000),
     })
+    if (!res.ok) {
+      throw new Error(`Multimodal API HTTP ${res.status}`)
+    }
     return res.json()
   }
 
@@ -156,6 +183,9 @@ class MultimodalAPIClient {
     const res = await fetch(`${this.apiBase}/multimodal/items`, {
       signal: AbortSignal.timeout(5000),
     })
+    if (!res.ok) {
+      throw new Error(`Multimodal API HTTP ${res.status}`)
+    }
     return res.json()
   }
 
@@ -165,6 +195,9 @@ class MultimodalAPIClient {
       method: 'POST',
       signal: AbortSignal.timeout(5000),
     })
+    if (!res.ok) {
+      throw new Error(`Multimodal API HTTP ${res.status}`)
+    }
     return res.json()
   }
 
@@ -173,6 +206,9 @@ class MultimodalAPIClient {
     const res = await fetch(`${this.apiBase}/multimodal/health`, {
       signal: AbortSignal.timeout(5000),
     })
+    if (!res.ok) {
+      throw new Error(`Multimodal API HTTP ${res.status}`)
+    }
     return res.json()
   }
 }

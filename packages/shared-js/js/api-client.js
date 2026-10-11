@@ -183,8 +183,8 @@ class AngelaAPIClient {
           message: message,
           user_id: 'desktop_user',
           session_id: this.getSessionId(),
-          tenant_id: 'default_tenant',
-          persona_id: 'angela_desktop',
+          tenant_id: 'default',
+          persona_id: 'angela',
           client_id: 'desktop_electron',
         }),
         signal: AbortSignal.timeout(this.timeouts.chat),
@@ -216,6 +216,85 @@ class AngelaAPIClient {
         emotion: 'confused',
         timestamp: new Date().toISOString(),
       }
+    }
+  }
+
+  /**
+   * Stream message to Angela via SSE (POST /api/v1/chat/stream).
+   * Falls back to sendMessage when streaming is unavailable.
+   * @param {string} message - User message
+   * @param {function} onToken - called per token chunk (string)
+   * @returns {Promise<Object>} final {success, response, backend}
+   */
+  async sendMessageStream(message, onToken) {
+    const validation = this._validateMessage(message)
+    if (!validation.valid) {
+      return { success: false, response: `Error: ${validation.error}` }
+    }
+    const streamPath = (this.unifiedChatPath || '/api/v1/chat/unified').replace(
+      /\/chat\/unified$/,
+      '/chat/stream'
+    )
+    try {
+      const response = await fetch(`${this.baseURL}${streamPath}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: message,
+          user_id: 'desktop_user',
+          session_id: this.getSessionId(),
+          tenant_id: 'default',
+          persona_id: 'angela',
+          client_id: 'desktop_electron',
+        }),
+        signal: AbortSignal.timeout(this.timeouts.chat * 10 || 300000),
+      })
+      if (!response.ok || !response.body) {
+        throw new Error(`HTTP ${response.status}`)
+      }
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let buf = ''
+      let fullText = ''
+      let backend = 'unknown'
+      for (;;) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buf += decoder.decode(value, { stream: true })
+        const parts = buf.split('\n\n')
+        buf = parts.pop()
+        for (const part of parts) {
+          const line = part.trim()
+          if (!line.startsWith('data:')) continue
+          const payload = line.slice(5).trim()
+          if (!payload || payload === '[DONE]') continue
+          let event
+          try {
+            event = JSON.parse(payload)
+          } catch (e) {
+            continue
+          }
+          if (event.token && typeof onToken === 'function') {
+            try {
+              onToken(event.token)
+            } catch (e) {
+              /* consumer error must not break the stream */
+            }
+            fullText += event.token
+          }
+          if (event.done) {
+            if (event.response_text) fullText = event.response_text
+            if (event.backend) backend = event.backend
+          }
+          if (event.error) {
+            throw new Error(event.error)
+          }
+        }
+      }
+      return { success: true, response: fullText, backend: backend }
+    } catch (error) {
+      console.error('Stream failed, falling back to sendMessage:', error)
+      return this.sendMessage(message)
     }
   }
 
