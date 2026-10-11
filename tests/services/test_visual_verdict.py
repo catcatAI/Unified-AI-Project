@@ -1,7 +1,13 @@
 # ANGELA-MATRIX: [L3] [β] [B] [L2]
 """VisualVerdict: supermajority or silence. No slogans."""
 
-from services.visual_verdict import adjudicate, adjudicate_label
+from services.visual_verdict import (
+    ASK_SCOPE,
+    adjudicate,
+    adjudicate_label,
+    is_degenerate,
+    repetition_score,
+)
 
 
 def test_unanimous_decides():
@@ -36,3 +42,30 @@ def test_identity_franchise_soup_abstains():
 def test_identity_normalizes_case_and_space():
     r = adjudicate_label(["Fate/Grand Order", "fate/grand  order", "Fate/Grand Order"])
     assert r["status"] == "decided"
+
+
+def test_identity_out_of_scope_locally():
+    # Mechanism, not hope: nobody local is asked who-this-is.
+    assert ASK_SCOPE["identity"] == ()
+
+
+def test_degenerate_single_word_list_reply():
+    # Real SmolVLM output on 001 (asked 3-word list, answered one).
+    assert is_degenerate("Girl.", "For each character left to right: boy or girl?") is True
+
+
+def test_degenerate_single_noun_describe_reply():
+    # Real SmolVLM output on 001 (asked rightmost detail, answered "Hair.").
+    assert is_degenerate("Hair.", "Describe only the rightmost character.") is True
+
+
+def test_degenerate_copypaste_dupes():
+    # Real SmolVLM shape on 001: numbered items, same sentence twice.
+    ans = "1. Girl with dark hair. 2. Blonde haired boy with blonde hair. 3. Blonde haired boy with blonde hair."
+    assert repetition_score(ans) >= 0.3
+    assert is_degenerate(ans, "List each person.") is True
+
+
+def test_fluent_answers_survive():
+    ans = "Three characters stand side by side under cherry trees holding dango."
+    assert is_degenerate(ans, "Describe the image.") is False

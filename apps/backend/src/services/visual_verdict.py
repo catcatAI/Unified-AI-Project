@@ -22,6 +22,72 @@ logger = logging.getLogger(__name__)
 COUNT_BAR = 2.0 / 3.0
 LABEL_BAR = 2.0 / 3.0
 
+# Competence scope (2026-10-11, blind-001 lessons). Small local VLMs are
+# not asked what they cannot do — this stops confabulation at the source
+# instead of filtering it afterwards:
+# - identity (which work / who): abstain by design, teach path only.
+#   Proven twice: SAO + FGO-franchise-soup on the same image.
+# - count: track-level only. Region votes (whole-image/crop CLIP probes)
+#   double-count straddlers (001: 2+2 halves -> "four") — distribution
+#   reference, never count votes.
+ASK_SCOPE = {
+    "count": ("vlm",),  # continuity-bearing counters only
+    "describe": ("vlm", "clip"),
+    "gender": ("vlm", "clip"),
+    "identity": (),  # nobody local: abstain, teach path fills it
+}
+
+
+def repetition_score(answer: str) -> float:
+    """Sentence-level copy-paste fraction (confabulation shape).
+
+    Strips list markers first ("2. X" vs "3. X" are the same sentence said
+    twice — the real SmolVLM shape), then counts exact + near dupes
+    (word-Jaccard >= 0.75).
+    """
+    import re as _re
+
+    raw = [s.strip().lower() for s in _re.split(r"[.!?\n]+", answer or "")]
+    sents = [_re.sub(r"^[\d\s\-\*\.、\)\]]+", "", s).strip() for s in raw]
+    sents = [s for s in sents if len(s) > 8]
+    if len(sents) < 2:
+        return 0.0
+
+    def _jacc(a: str, b: str) -> float:
+        wa, wb = set(a.split()), set(b.split())
+        union = wa | wb
+        return len(wa & wb) / max(len(union), 1)
+
+    dupes = 0
+    for i in range(len(sents)):
+        for j in range(i):
+            if sents[i] == sents[j] or _jacc(sents[i], sents[j]) >= 0.75:
+                dupes += 1
+                break
+    return dupes / len(sents)
+
+
+def is_degenerate(answer: str, question: str) -> bool:
+    """Collapsed answers carry no signal and must not become votes.
+
+    Observed shapes: single-word reply to a list task ("Girl."), single
+    noun for a describe task ("Hair."), sentence-level copy-paste
+    (SmolVLM's duplicated blondes).
+    """
+    text = (answer or "").strip()
+    if not text:
+        return True
+    words = text.split()
+    q = (question or "").lower()
+    wants_list = any(k in q for k in ("list", "each", "left to right", "逐", "每"))
+    if wants_list and len(words) <= 3:
+        return True
+    if ("describ" in q or "wearing" in q or "穿" in q or "描述" in q) and len(words) <= 3:
+        return True
+    if repetition_score(text) >= 0.3:
+        return True
+    return False
+
 
 def _norm_label(label: str) -> str:
     return " ".join(str(label).strip().lower().split())
