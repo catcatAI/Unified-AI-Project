@@ -90,6 +90,44 @@ def _color_distance(a: Tuple[int, int, int], b: Tuple[int, int, int]) -> float:
     return ((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2) ** 0.5
 
 
+def aesthetics(image_data: bytes) -> Dict[str, Any]:
+    """Deterministic aesthetic signals (no taste, just measurements).
+
+    - colorfulness: saturation spread 0..1 (gray mud scores ~0).
+    - balance: 1 - normalized centroid offset (centered mass scores high).
+    - brightness: mean luminance 0..1 (too dark/bright flagged).
+    - complexity: distinct-blob count capped (blank=1, photo≈hundreds).
+    Each is a measurement, not a verdict; callers set their own bars.
+    """
+    img = _load_rgb(image_data, 64)
+    if img is None:
+        return {"colorfulness": 0.0, "balance": 0.0, "brightness": 0.0, "complexity": 1}
+    import math as _math
+
+    px = list(img.getdata())
+    n = max(len(px), 1)
+    # Brightness (luminance mean).
+    lum = [0.299 * r + 0.587 * g + 0.114 * b for r, g, b in px]
+    brightness = round(sum(lum) / (n * 255.0), 3)
+    # Colorfulness: mean saturation distance from gray axis, normalized.
+    sat = [max(abs(r - g), abs(g - b), abs(b - r)) for r, g, b in px]
+    colorfulness = round(min(sum(sat) / (n * 255.0) * 2.0, 1.0), 3)
+    # Balance: colorful-mass centroid offset from center (symmetry proxy).
+    wsum = sum(sat) or 1.0
+    w, h = img.size
+    cx = sum(x * s for (x, _y), s in zip([(i % w, i // w) for i in range(n)], sat))
+    cy = sum(y * s for (_x, y), s in zip([(i % w, i // w) for i in range(n)], sat))
+    off = _math.hypot(cx / wsum / w - 0.5, cy / wsum / h - 0.5) * 2.0
+    balance = round(max(0.0, 1.0 - min(off, 1.0)), 3)
+    complexity = len(color_blobs(image_data))
+    return {
+        "colorfulness": colorfulness,
+        "balance": balance,
+        "brightness": brightness,
+        "complexity": complexity,
+    }
+
+
 def palette_match(
     image_data: bytes, spec: List[Tuple[str, Tuple[int, int, int]]]
 ) -> Dict[str, Any]:
@@ -130,6 +168,14 @@ def judge_render(
             "blank": True,
         }
     lines = [f"檢出 {len(blobs)} 個色塊，最大 {top['color']} 佔{top['fraction']:.0%}."]
+    try:
+        _aes = aesthetics(image_data)
+        lines.append(
+            f"美學量測：鮮艷{_aes['colorfulness']:.2f}、均衡{_aes['balance']:.2f}、"
+            f"亮度{_aes['brightness']:.2f}。"
+        )
+    except Exception:
+        pass
     if spec:
         pm = palette_match(image_data, spec)
         lines.append(

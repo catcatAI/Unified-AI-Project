@@ -52,6 +52,17 @@ def test_palette_match_scores_red_car():
     assert bad["score"] == 0.0
 
 
+def test_aesthetics_separates_gray_from_colorful():
+    from services.visual_qa import aesthetics
+
+    gray = aesthetics(_png((128, 128, 128)))
+    assert gray["colorfulness"] < 0.1
+    assert gray["brightness"] == pytest.approx(0.5, abs=0.05)
+    vivid = aesthetics(_two_block())
+    assert vivid["colorfulness"] > 0.3
+    assert vivid["complexity"] >= 2
+
+
 def test_judge_passes_with_palette():
     spec = [("red", (200, 30, 30)), ("black", (20, 20, 20))]
     verdict = judge_render(

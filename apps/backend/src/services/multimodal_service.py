@@ -90,7 +90,6 @@ class MultimodalService:
         self._decoders: Dict[str, Any] = {}
         # 延遲單例先預聲明（R24）：否則 getter 回傳全是 Any，污染全部調用方。
         self._latent_space: Optional["SharedLatentSpace"] = None
-        self._bridge: Optional["MultimodalBridge"] = None
         self._rag_engine: Optional["MultimodalRAGEngine"] = None
         self._pipeline: Optional["FullTrainingPipeline"] = None
         self._vision_pipeline: Optional["VisionPipeline"] = None
@@ -155,13 +154,6 @@ class MultimodalService:
 
             self._latent_space = get_shared_latent_space(latent_dim=self.LATENT_DIM)
         return self._latent_space
-
-    def _get_bridge(self) -> "MultimodalBridge":
-        if self._bridge is None:
-            from ai.multimodal.multimodal_bridge import MultimodalBridge
-
-            self._bridge = MultimodalBridge()
-        return self._bridge
 
     def _get_rag_engine(self) -> "MultimodalRAGEngine":
         if self._rag_engine is None:
