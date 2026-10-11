@@ -32,6 +32,23 @@ def test_excludes_question_only():
     assert extract_claims(text) == []
 
 
+def test_excludes_chinese_interrogatives_without_question_mark():
+    """Probe questions fossilized as verified facts (live 2026-10-10)."""
+    for query in [
+        "12乘以12等於多少",
+        "水的沸點是幾度",
+        "誰是孔子",
+        "天空為什麼是藍色的",
+        "現在幾點",
+    ]:
+        assert extract_claims(query) == [], query
+
+
+def test_factual_chinese_claim_still_extracts():
+    text = "甲烷的化學式是 CH4。"
+    assert any("CH4" in c for c in extract_claims(text))
+
+
 def test_caps_number_of_claims():
     sentences = ". ".join(
         f"Element number {i} is a real chemical substance discovered in history." for i in range(20)

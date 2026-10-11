@@ -49,7 +49,14 @@ _NEG_PREFIX = re.compile(
     re.IGNORECASE,
 )
 
-_QUESTION_RE = re.compile(r"[?？]$")
+# Questions are never claims (audit 2026-10-10: probe questions like
+# "12乘以12等於多少" fossilized as verified facts and self-answered).
+# Interrogative markers anywhere in the sentence disqualify, not just a
+# trailing ? (same set as the knowledge-pipeline lookup guard).
+_QUESTION_RE = re.compile(
+    r"[?？]|嗎|吗|呢|幾點|几点|多少|幾號|几号|什麼|什么|誰|谁|怎麼|怎么|如何|多久|"
+    r"何時|何时|為何|为何|為什麼|为什么|是否|能否|哪裡|哪里|哪儿|是不是"
+)
 
 # anchors: capitalized token, digit, quoted term, or a domain keyword
 _ANCHOR_TOKEN_RE = re.compile(r"[A-Z][a-zA-Z0-9]+|[\d][\d.,:%]*")
