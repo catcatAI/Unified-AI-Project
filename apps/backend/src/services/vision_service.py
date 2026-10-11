@@ -546,6 +546,31 @@ class VisionService:
                 {"label": f"resolution_{w}x{h}", "confidence": 0.95, "property": "resolution"},
                 {"label": f"color_mode_{mode}", "confidence": 0.95, "property": "color_mode"},
             ]
+            # Real region proposals from color segmentation (audit 2026-10-11):
+            # file metadata is NOT object detection; bounded boxes of large
+            # non-background blobs are. Capped at 5, confidence by size.
+            try:
+                from services.visual_qa import color_blobs
+
+                for i, blob in enumerate(color_blobs(image_data)[:6]):
+                    if i == 0 and (blob.get("fraction") or 0) >= 0.98:
+                        continue  # background itself is not an object
+                    if (blob.get("fraction") or 0) < 0.01:
+                        continue
+                    x0, y0, x1, y1 = blob.get("bbox", (0, 0, 0, 0))
+                    properties.append(
+                        {
+                            "label": f"region_{i}",
+                            "confidence": round(min(0.5 + blob.get("fraction", 0), 0.9), 2),
+                            "property": "region",
+                            "color": list(blob.get("color", (0, 0, 0))),
+                            "bbox": [x0, y0, x1, y1],
+                        }
+                    )
+                    if len(properties) >= 8:
+                        break
+            except Exception as exc:
+                logger.debug(f"Region proposals skipped: {exc}")
             # Attempt cluster distribution with real image hash as feature vector
             try:
                 feature_hash = [

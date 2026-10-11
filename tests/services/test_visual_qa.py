@@ -63,6 +63,15 @@ def test_aesthetics_separates_gray_from_colorful():
     assert vivid["complexity"] >= 2
 
 
+def test_foveal_palette_weights_center():
+    from services.visual_qa import foveal_palette
+
+    palette = foveal_palette(_two_block())
+    assert palette, "sampler must produce votes"
+    assert abs(sum(p["weight"] for p in palette) - 1.0) < 0.05
+    assert all(len(p["color"]) == 3 for p in palette)
+
+
 def test_judge_passes_with_palette():
     spec = [("red", (200, 30, 30)), ("black", (20, 20, 20))]
     verdict = judge_render(

@@ -90,6 +90,44 @@ def _color_distance(a: Tuple[int, int, int], b: Tuple[int, int, int]) -> float:
     return ((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2) ** 0.5
 
 
+def foveal_palette(
+    image_data: bytes, center: Tuple[float, float] = (0.5, 0.5), count: int = 500
+) -> List[Dict[str, Any]]:
+    """Attention-weighted dominant colors via the foveated particle sampler.
+
+    Uses the project's own VisualSampler (core/perception): 500 Gaussian
+    particles around the fixation point, intensity-weighted color votes.
+    Answers "how much looking": focused sensing instead of full scans —
+    what the eye does, and what the old sampler was built for but never
+    wired into judgments until now.
+    """
+    img = _load_rgb(image_data, 96)
+    if img is None:
+        return []
+    try:
+        import numpy as _np
+        from core.perception.visual_sampler import VisualSampler
+    except Exception:
+        return []
+    try:
+        sampler = VisualSampler()
+        sampler.generate_cloud(count=count, center=center)
+        arr = _np.asarray(img).astype(float)
+        h, w, _ = arr.shape
+        votes: Dict[Tuple[int, int, int], float] = {}
+        for p in sampler.particles:
+            px = min(int(p.x * (w - 1)), w - 1)
+            py = min(int(p.y * (h - 1)), h - 1)
+            color = _quantize((int(arr[py, px, 0]), int(arr[py, px, 1]), int(arr[py, px, 2])))
+            votes[color] = votes.get(color, 0.0) + float(p.intensity)
+        total = sum(votes.values()) or 1.0
+        ranked = sorted(votes.items(), key=lambda kv: -kv[1])[:5]
+        return [{"color": list(c), "weight": round(v / total, 3)} for c, v in ranked]
+    except Exception as exc:
+        logger.debug(f"Foveal palette failed: {exc}")
+        return []
+
+
 def aesthetics(image_data: bytes) -> Dict[str, Any]:
     """Deterministic aesthetic signals (no taste, just measurements).
 
