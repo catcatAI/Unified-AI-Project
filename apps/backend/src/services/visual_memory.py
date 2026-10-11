@@ -46,17 +46,23 @@ def _quantize(px: Tuple[int, int, int], step: int = 24) -> Tuple[int, int, int]:
     return (px[0] // step * step, px[1] // step * step, px[2] // step * step)
 
 
-def _signature(palette: List[Tuple[Tuple[int, int, int], float]]) -> Dict[Tuple[int, int, int], float]:
+def _signature(
+    palette: List[Tuple[Tuple[int, int, int], float]],
+) -> Dict[Tuple[int, int, int], float]:
     total = sum(w for _, w in palette) or 1.0
     return {c: w / total for c, w in palette}
 
 
-def _sig_distance(a: Dict[Tuple[int, int, int], float], b: Dict[Tuple[int, int, int], float]) -> float:
+def _sig_distance(
+    a: Dict[Tuple[int, int, int], float], b: Dict[Tuple[int, int, int], float]
+) -> float:
     union = set(a) | set(b)
     return sum(abs(a.get(c, 0.0) - b.get(c, 0.0)) for c in union) / 2.0
 
 
-def _crop_palette(img: Any, box: Tuple[int, int, int, int]) -> List[Tuple[Tuple[int, int, int], float]]:
+def _crop_palette(
+    img: Any, box: Tuple[int, int, int, int]
+) -> List[Tuple[Tuple[int, int, int], float]]:
     """Dominant quantized colors inside box (relative 0..1 coords)."""
     w, h = img.size
     x0, y0, x1, y1 = (int(box[0] * w), int(box[1] * h), int(box[2] * w), int(box[3] * h))
@@ -82,7 +88,9 @@ def _structure(img: Any, box: Tuple[int, int, int, int]) -> str:
     return "busy"
 
 
-def _boxes_overlap(a: Tuple[float, float, float, float], b: Tuple[float, float, float, float]) -> bool:
+def _boxes_overlap(
+    a: Tuple[float, float, float, float], b: Tuple[float, float, float, float]
+) -> bool:
     return not (a[2] < b[0] or b[2] < a[0] or a[3] < b[1] or b[3] < a[1])
 
 
@@ -91,7 +99,12 @@ class ObjectTrack:
 
     _next_id = 0
 
-    def __init__(self, palette: List[Tuple[Tuple[int, int, int], float]], box: Tuple[float, ...], structure: str):
+    def __init__(
+        self,
+        palette: List[Tuple[Tuple[int, int, int], float]],
+        box: Tuple[float, ...],
+        structure: str,
+    ):
         ObjectTrack._next_id += 1
         self.id = ObjectTrack._next_id
         self.signature = _signature(palette)
@@ -99,13 +112,25 @@ class ObjectTrack:
         self.structures: List[str] = [structure]
         self.fixations = 1
 
-    def matches(self, palette: List[Tuple[Tuple[int, int, int], float]], box: Tuple[float, ...]) -> bool:
-        return _boxes_overlap(self.box, box) and _sig_distance(self.signature, _signature(palette)) < SIG_DISTANCE_BAR
+    def matches(
+        self, palette: List[Tuple[Tuple[int, int, int], float]], box: Tuple[float, ...]
+    ) -> bool:
+        return (
+            _boxes_overlap(self.box, box)
+            and _sig_distance(self.signature, _signature(palette)) < SIG_DISTANCE_BAR
+        )
 
-    def absorb(self, palette: List[Tuple[Tuple[int, int, int], float]], box: Tuple[float, ...], structure: str) -> None:
+    def absorb(
+        self,
+        palette: List[Tuple[Tuple[int, int, int], float]],
+        box: Tuple[float, ...],
+        structure: str,
+    ) -> None:
         sig = _signature(palette)
         for color, weight in sig.items():
-            self.signature[color] = (self.signature.get(color, 0.0) * self.fixations + weight) / (self.fixations + 1)
+            self.signature[color] = (self.signature.get(color, 0.0) * self.fixations + weight) / (
+                self.fixations + 1
+            )
         self.box = (
             min(self.box[0], box[0]),
             min(self.box[1], box[1]),
@@ -160,7 +185,7 @@ def scan(image_data: bytes, grid: int = 3) -> Dict[str, Any]:
             if structure in ("edge", "busy"):
                 hot.append(box)
     # Zoomed revisits: quarter-window fixations inside hot cells.
-    for (x0, y0, x1, y1) in hot:
+    for x0, y0, x1, y1 in hot:
         qw, qh = (x1 - x0) / 2.0, (y1 - y0) / 2.0
         for dy in (0, 1):
             for dx in (0, 1):

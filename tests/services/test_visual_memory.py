@@ -5,7 +5,6 @@ import io
 
 import pytest
 from PIL import Image
-
 from services.visual_memory import scan
 
 
