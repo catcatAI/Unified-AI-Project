@@ -269,6 +269,17 @@ class GateExecutionOwner:
         "csharp",
         "python",
         "java",
+        # Unity/object nouns (audit 2026-10-11: repair requests naming only
+        # Cube/Cylinder never matched, so write-bypass never fired for them).
+        "cube",
+        "cylinder",
+        "sphere",
+        "gameobject",
+        "monobehaviour",
+        "prefab",
+        "scene",
+        "場景",
+        "场景",
     )
 
     @staticmethod
@@ -280,7 +291,9 @@ class GateExecutionOwner:
         lowered = text.lower()
         if not any(v in lowered for v in GateExecutionOwner._WRITE_VERBS):
             return False
-        if not any(n in lowered for n in GateExecutionOwner._CODE_NOUNS):
+        # Case-insensitive: nouns carry capitals (Cylinder/GameObject) while
+        # the text is lowered (audit 2026-10-11: Unity repair never matched).
+        if not any(n.lower() in lowered for n in GateExecutionOwner._CODE_NOUNS):
             return False
         return GateExecutionOwner._has_no_executable_code(text)
 

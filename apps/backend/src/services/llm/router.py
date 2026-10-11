@@ -2334,6 +2334,19 @@ class AngelaLLMService:
         if fact_result is not None:
             return fact_result
 
+        # Code-WRITE requests skip ALL template layers (social/keyword/emotion/
+        # pattern/matcher): template keywords self-match inside code requests
+        # ("修好的" contains "好的" → affirmation ramble) and block generation
+        # (live 2026-10-11 Unity repair). Same write-yield rule as recall,
+        # gate and agent routing.
+        try:
+            from services.execution.gate_execution import GateExecutionOwner
+
+            if GateExecutionOwner.is_code_write_request(user_message):
+                return None
+        except Exception:
+            pass
+
         if not hasattr(self, "template_matcher") or not self.template_matcher:
             return None
         try:

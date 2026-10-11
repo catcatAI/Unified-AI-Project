@@ -68,6 +68,12 @@ def test_message_level_write_rejected(text):
     assert GateExecutionOwner.is_code_write_request(text) is False
 
 
+def test_ascii_nouns_match_case_insensitively():
+    """Cube/Cylinder/C# must match lowered text (live: Unity repair never fired)."""
+    assert GateExecutionOwner.is_code_write_request("只輸出修好的for循環段建Cylinder") is True
+    assert GateExecutionOwner.is_code_write_request("寫GameObject方法") is True
+
+
 def test_lone_fence_mention_is_not_code():
     """'第一個字符就是```csharp' is an instruction, not a carried block."""
     assert GateExecutionOwner._has_no_executable_code("第一個字符就是```csharp輸出代碼") is True
