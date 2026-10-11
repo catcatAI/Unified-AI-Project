@@ -72,6 +72,35 @@ def test_foveal_palette_weights_center():
     assert all(len(p["color"]) == 3 for p in palette)
 
 
+def test_visual_field_multiscale_structure():
+    from services.visual_qa import visual_field
+
+    field = visual_field(_two_block())
+    assert len(field["scales"]) == 3
+    assert [s["name"] for s in field["scales"]] == ["fovea", "mid", "periphery"]
+    assert 0.0 <= field["detail"] <= 1.0
+    assert 0.0 < field["coverage"] <= 1.0
+    for scale in field["scales"]:
+        assert abs(sum(p["weight"] for p in scale["palette"]) - 1.0) < 0.05
+
+
+def test_visual_field_detail_sees_small_region():
+    try:
+        from PIL import Image, ImageDraw
+    except ImportError:
+        pytest.skip("PIL unavailable")
+    from services.visual_qa import visual_field
+
+    # Tiny colored patch: periphery mush misses it, fovea on it must diverge.
+    img = Image.new("RGB", (96, 96), (240, 240, 240))
+    draw = ImageDraw.Draw(img)
+    draw.rectangle([44, 44, 52, 52], fill=(200, 30, 30))
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    field = visual_field(buf.getvalue())
+    assert field["detail"] > 0.0, "fine scale must diverge from gist on small detail"
+
+
 def test_judge_passes_with_palette():
     spec = [("red", (200, 30, 30)), ("black", (20, 20, 20))]
     verdict = judge_render(

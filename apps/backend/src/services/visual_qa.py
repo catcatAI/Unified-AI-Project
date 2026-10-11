@@ -90,6 +90,21 @@ def _color_distance(a: Tuple[int, int, int], b: Tuple[int, int, int]) -> float:
     return ((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2) ** 0.5
 
 
+def _sample_at(
+    arr: Any, sampler: Any, center: Tuple[float, float], spread: float, count: int
+) -> Dict[Tuple[int, int, int], float]:
+    """One fixation: Gaussian cloud votes, intensity-weighted."""
+    sampler.generate_cloud(count=count, center=center, spread=spread)
+    h, w, _ = arr.shape
+    votes: Dict[Tuple[int, int, int], float] = {}
+    for p in sampler.particles:
+        px = min(int(p.x * (w - 1)), w - 1)
+        py = min(int(p.y * (h - 1)), h - 1)
+        color = _quantize((int(arr[py, px, 0]), int(arr[py, px, 1]), int(arr[py, px, 2])))
+        votes[color] = votes.get(color, 0.0) + float(p.intensity)
+    return votes
+
+
 def foveal_palette(
     image_data: bytes, center: Tuple[float, float] = (0.5, 0.5), count: int = 500
 ) -> List[Dict[str, Any]]:
@@ -98,8 +113,7 @@ def foveal_palette(
     Uses the project's own VisualSampler (core/perception): 500 Gaussian
     particles around the fixation point, intensity-weighted color votes.
     Answers "how much looking": focused sensing instead of full scans —
-    what the eye does, and what the old sampler was built for but never
-    wired into judgments until now.
+    what the eye does, and what the old sampler was wired into judgments for.
     """
     img = _load_rgb(image_data, 96)
     if img is None:
@@ -111,15 +125,8 @@ def foveal_palette(
         return []
     try:
         sampler = VisualSampler()
-        sampler.generate_cloud(count=count, center=center)
         arr = _np.asarray(img).astype(float)
-        h, w, _ = arr.shape
-        votes: Dict[Tuple[int, int, int], float] = {}
-        for p in sampler.particles:
-            px = min(int(p.x * (w - 1)), w - 1)
-            py = min(int(p.y * (h - 1)), h - 1)
-            color = _quantize((int(arr[py, px, 0]), int(arr[py, px, 1]), int(arr[py, px, 2])))
-            votes[color] = votes.get(color, 0.0) + float(p.intensity)
+        votes = _sample_at(arr, sampler, center, 0.2, count)
         total = sum(votes.values()) or 1.0
         ranked = sorted(votes.items(), key=lambda kv: -kv[1])[:5]
         return [{"color": list(c), "weight": round(v / total, 3)} for c, v in ranked]
@@ -164,6 +171,91 @@ def aesthetics(image_data: bytes) -> Dict[str, Any]:
         "brightness": brightness,
         "complexity": complexity,
     }
+
+
+# Default visual field: fovea (dense detail) + mid (context) + periphery
+# (gist). Different densities cover different areas with different detail
+# control — composed, they are a visual field (2026-10-11).
+DEFAULT_FIELD_SCALES = (
+    {"center": (0.5, 0.5), "spread": 0.12, "count": 600, "name": "fovea"},
+    {"center": (0.5, 0.5), "spread": 0.30, "count": 300, "name": "mid"},
+    {"center": (0.5, 0.5), "spread": 0.60, "count": 100, "name": "periphery"},
+)
+
+
+def visual_field(
+    image_data: bytes,
+    scales: Optional[List[Dict[str, Any]]] = None,
+    fixations: Optional[List[Tuple[float, float]]] = None,
+) -> Dict[str, Any]:
+    """Multi-scale foveated field: one sampler, several densities, one verdict.
+
+    Each scale votes its own palette; fine scales resolve detail (small text,
+    wheel spokes), coarse scales hold gist. Detail verdict: the smallest
+    scale whose top colors diverge from the periphery sees structure the
+    gist misses — that divergence IS the detail signal.
+    fixations optionally recenters all scales (multi-fixation coverage).
+    """
+    img = _load_rgb(image_data, 96)
+    if img is None:
+        return {"scales": [], "detail": 0.0, "coverage": 0.0}
+    try:
+        import numpy as _np
+        from core.perception.visual_sampler import VisualSampler
+    except Exception:
+        return {"scales": [], "detail": 0.0, "coverage": 0.0}
+    try:
+        sampler = VisualSampler()
+        arr = _np.asarray(img).astype(float)
+        h, w, _ = arr.shape
+        centers = fixations or [(0.5, 0.5)]
+        scale_defs = scales or list(DEFAULT_FIELD_SCALES)
+        scale_out: List[Dict[str, Any]] = []
+        for sdef in scale_defs:
+            votes: Dict[Tuple[int, int, int], float] = {}
+            for center in centers:
+                part = _sample_at(
+                    arr,
+                    sampler,
+                    center,
+                    float(sdef.get("spread", 0.3)),
+                    int(sdef.get("count", 300)),
+                )
+                for color, weight in part.items():
+                    votes[color] = votes.get(color, 0.0) + weight
+            total = sum(votes.values()) or 1.0
+            ranked = sorted(votes.items(), key=lambda kv: -kv[1])[:4]
+            scale_out.append(
+                {
+                    "name": str(sdef.get("name", "?")),
+                    "spread": float(sdef.get("spread", 0.3)),
+                    "palette": [
+                        {"color": list(c), "weight": round(v / total, 3)} for c, v in ranked
+                    ],
+                }
+            )
+
+        # Detail: palette divergence of finest vs coarsest (L1/2 over the
+        # union of top colors, weight-aware). Set-Jaccard was tried first —
+        # too brittle: one stray peripheral particle flips the verdict.
+        # 0 = same mush everywhere, →1 = fine structure the gist misses.
+        detail = 0.0
+        if len(scale_out) >= 2:
+            fine = {tuple(p["color"]): p["weight"] for p in scale_out[0]["palette"]}
+            coarse = {tuple(p["color"]): p["weight"] for p in scale_out[-1]["palette"]}
+            union = set(fine) | set(coarse)
+            l1 = sum(abs(fine.get(c, 0.0) - coarse.get(c, 0.0)) for c in union)
+            detail = round(l1 / 2.0, 3)
+        # Coverage: fraction of image area touched by any particle (approx by
+        # widest spread's disc area, capped at 1).
+        widest = max(float(s.get("spread", 0.3)) for s in scale_defs)
+        import math as _math
+
+        coverage = round(min(_math.pi * (widest**2) * len(centers), 1.0), 3)
+        return {"scales": scale_out, "detail": detail, "coverage": coverage}
+    except Exception as exc:
+        logger.debug(f"Visual field failed: {exc}")
+        return {"scales": [], "detail": 0.0, "coverage": 0.0}
 
 
 def palette_match(
@@ -212,6 +304,15 @@ def judge_render(
             f"美學量測：鮮艷{_aes['colorfulness']:.2f}、均衡{_aes['balance']:.2f}、"
             f"亮度{_aes['brightness']:.2f}。"
         )
+    except Exception:
+        pass
+    try:
+        _field = visual_field(image_data)
+        if _field["scales"]:
+            lines.append(
+                f"視域：三尺度注視（fovea/mid/periphery）覆蓋{_field['coverage']:.0%}，"
+                f"細節度{_field['detail']:.2f}。"
+            )
     except Exception:
         pass
     if spec:
