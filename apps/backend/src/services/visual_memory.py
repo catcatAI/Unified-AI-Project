@@ -104,6 +104,7 @@ class ObjectTrack:
         palette: List[Tuple[Tuple[int, int, int], float]],
         box: Tuple[float, ...],
         structure: str,
+        ground: Tuple[int, int, int] = (0, 0, 0),
     ):
         ObjectTrack._next_id += 1
         self.id = ObjectTrack._next_id
@@ -111,6 +112,26 @@ class ObjectTrack:
         self.box = box
         self.structures: List[str] = [structure]
         self.fixations = 1
+        self.ground = ground
+
+    @property
+    def area(self) -> float:
+        return max(self.box[2] - self.box[0], 0.0) * max(self.box[3] - self.box[1], 0.0)
+
+    @property
+    def ground_texture(self) -> bool:
+        # Textured backdrop: ground-colored on top AND grown to full span in
+        # some axis. Computed live (tracks grow through absorbs). A cell that
+        # merely CONTAINS an object on ground is not this (partial span).
+        if not self.signature:
+            return False
+        top = max(self.signature.items(), key=lambda kv: kv[1])[0]
+        spans = (self.box[2] - self.box[0]) >= 0.99 or (self.box[3] - self.box[1]) >= 0.99
+        return top == self.ground and spans
+
+    @property
+    def is_object(self) -> bool:
+        return not self.ground_texture and self.area >= MIN_OBJECT_FRACTION
 
     def matches(
         self, palette: List[Tuple[Tuple[int, int, int], float]], box: Tuple[float, ...]
@@ -148,8 +169,12 @@ def scan(image_data: bytes, grid: int = 3) -> Dict[str, Any]:
     """
     img = _load(192, image_data)
     if img is None:
-        return {"tracks": [], "ground": None, "fixations": 0}
-    w, h = img.size
+        return {"tracks": [], "objects": [], "ground": None, "fixations": 0}
+    # Zoom reads the FULL-resolution image (capped for memory): coarse pass
+    # sees gist at 192, revisits read real pixels. Fake zoom (same 192px,
+    # smaller window) was audit-flagged 2026-10-11 — thin structures only
+    # exist at full res.
+    hires = _load(1024, image_data) or img
     full = _crop_palette(img, (0, 0, 1, 1))
     ground = full[0][0] if full else (0, 0, 0)
 
@@ -157,20 +182,21 @@ def scan(image_data: bytes, grid: int = 3) -> Dict[str, Any]:
     tracks: List[ObjectTrack] = []
     fixations = 0
 
-    def _fixate(box: Tuple[float, float, float, float]) -> None:
+    def _fixate(box: Tuple[float, float, float, float], source: Any = None) -> None:
         nonlocal fixations
         fixations += 1
-        pal = _crop_palette(img, box)
+        canvas = source or img
+        pal = _crop_palette(canvas, box)
         if not pal:
             return
-        structure = _structure(img, box)
+        structure = _structure(canvas, box)
         if structure == "flat" and pal[0][0] == ground:
             return  # ground residue, not a thing
         for track in tracks:
             if track.matches(pal, box):
                 track.absorb(pal, box, structure)
                 return
-        tracks.append(ObjectTrack(pal, box, structure))
+        tracks.append(ObjectTrack(pal, box, structure, ground=ground))
 
     cell = 1.0 / grid
     hot: List[Tuple[float, float, float, float]] = []
@@ -184,21 +210,32 @@ def scan(image_data: bytes, grid: int = 3) -> Dict[str, Any]:
             structure = _structure(img, box)
             if structure in ("edge", "busy"):
                 hot.append(box)
-    # Zoomed revisits: quarter-window fixations inside hot cells.
+    # Zoomed revisits: quarter-window fixations inside hot cells, read
+    # from the full-resolution canvas (real zoom, not smaller window).
     for x0, y0, x1, y1 in hot:
         qw, qh = (x1 - x0) / 2.0, (y1 - y0) / 2.0
         for dy in (0, 1):
             for dx in (0, 1):
-                _fixate((x0 + dx * qw, y0 + dy * qh, x0 + (dx + 1) * qw, y0 + (dy + 1) * qh))
+                _fixate(
+                    (x0 + dx * qw, y0 + dy * qh, x0 + (dx + 1) * qw, y0 + (dy + 1) * qh),
+                    source=hires,
+                )
 
-    objects = [
-        {
+    def _dump(t: ObjectTrack) -> Dict[str, Any]:
+        return {
             "id": t.id,
             "fixations": t.fixations,
             "box": [round(v, 3) for v in t.box],
             "top_color": list(max(t.signature.items(), key=lambda kv: kv[1])[0]),
             "structures": t.structures,
+            "ground_texture": t.ground_texture,
         }
-        for t in tracks
-    ]
-    return {"tracks": objects, "ground": list(ground), "fixations": fixations}
+
+    # Residue keeps everything (visual context); objects exclude textured
+    # ground and sub-fragment slivers. Count = len(objects), not blobs.
+    return {
+        "tracks": [_dump(t) for t in tracks],
+        "objects": [_dump(t) for t in tracks if t.is_object],
+        "ground": list(ground),
+        "fixations": fixations,
+    }

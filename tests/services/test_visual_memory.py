@@ -19,7 +19,7 @@ def test_two_separated_squares_are_two_tracks():
     img.paste(Image.new("RGB", (30, 30), (200, 30, 30)), (20, 80))
     img.paste(Image.new("RGB", (30, 30), (200, 30, 30)), (140, 80))
     result = scan(_png(img))
-    assert len(result["tracks"]) == 2, result["tracks"]
+    assert len(result["objects"]) == 2, result["tracks"]
 
 
 def test_one_square_seen_twice_is_one_track():
@@ -28,11 +28,31 @@ def test_one_square_seen_twice_is_one_track():
     img = Image.new("RGB", (192, 192), (240, 240, 240))
     img.paste(Image.new("RGB", (50, 50), (200, 30, 30)), (70, 70))
     result = scan(_png(img))
-    assert len(result["tracks"]) == 1, result["tracks"]
-    assert result["tracks"][0]["fixations"] >= 2
+    assert len(result["objects"]) == 1, result["tracks"]
+    assert result["objects"][0]["fixations"] >= 2
 
 
 def test_blank_is_zero_tracks():
     img = Image.new("RGB", (192, 192), (240, 240, 240))
     result = scan(_png(img))
-    assert result["tracks"] == []
+    assert result["objects"] == []
+
+
+def test_textured_ground_is_residue_not_object():
+    # Busy but ground-colored (the track-7 case from blind 001): kept in
+    # residue, excluded from the object count.
+    import random
+
+    random.seed(7)
+    img = Image.new("RGB", (192, 192), (240, 240, 240))
+    px = img.load()
+    for y in range(128, 192):
+        for x in range(192):
+            # Sparse dark speckle on ground: top stays ground, structure busy.
+            if random.random() < 0.15:
+                v = 200 + random.randint(0, 16)
+                px[x, y] = (v, v, v)
+    result = scan(_png(img))
+    ground_tracks = [t for t in result["tracks"] if t["ground_texture"]]
+    assert ground_tracks, "textured band must leave residue"
+    assert all(t not in result["objects"] for t in ground_tracks)

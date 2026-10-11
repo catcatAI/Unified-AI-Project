@@ -118,11 +118,33 @@ class DictionaryClassifier:
                     self._keyword_index[sf_lower].append(key)
         self._match_tables = None  # rebuild inverted lookup from new index
 
-    def _load_training_data(self):
-        """Load classifier training data and merge into dictionary."""
-        training_path = os.path.join(
+    @staticmethod
+    def _training_path(for_write: bool = False) -> str:
+        """Runtime writes go to the data root; the tree copy is read-only.
+
+        Root-cause fix (2026-10-11): learn(persist=True) rewrote the source
+        tree, so every test run dirtied classifier_training.json. Writes now
+        land in get_data_root(); reads prefer the data copy, fall back to
+        the bundled file.
+        """
+        bundled = os.path.join(
             os.path.dirname(__file__), "..", "ed3n", "config", "classifier_training.json"
         )
+        try:
+            from core.data_config import get_data_root
+
+            data_path = os.path.join(str(get_data_root()), "classifier_training.json")
+        except Exception:
+            data_path = None
+        if for_write:
+            return data_path or bundled
+        if data_path and os.path.exists(data_path):
+            return data_path
+        return bundled
+
+    def _load_training_data(self):
+        """Load classifier training data and merge into dictionary."""
+        training_path = self._training_path()
         if not os.path.exists(training_path):
             logger.warning("Training data not found: %s", training_path)
             return
@@ -420,10 +442,8 @@ class DictionaryClassifier:
         return key
 
     def _persist_training_data(self):
-        """Persist current training data to classifier_training.json."""
-        training_path = os.path.join(
-            os.path.dirname(__file__), "..", "ed3n", "config", "classifier_training.json"
-        )
+        """Persist current training data to classifier_training.json (data root)."""
+        training_path = self._training_path(for_write=True)
         try:
             data = {
                 "version": "1.1",

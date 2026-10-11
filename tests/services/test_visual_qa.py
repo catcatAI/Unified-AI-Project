@@ -63,6 +63,43 @@ def test_aesthetics_separates_gray_from_colorful():
     assert vivid["complexity"] >= 2
 
 
+@pytest.mark.xfail(
+    strict=True, reason="seam anti-alias rows split into sliver blobs; merger pending"
+)
+def test_clean_edges_do_not_split_blobs():
+    # Known FAIL (calibration 2026-10-11): a clean 50/50 split yields 4 blobs
+    # (two 0.02 seam slivers), not 2. strict=True forces marker removal on fix.
+    try:
+        from PIL import Image
+    except ImportError:
+        pytest.skip("PIL unavailable")
+    img = Image.new("RGB", (96, 96), color=(200, 30, 30))
+    part = Image.new("RGB", (48, 96), color=(20, 20, 20))
+    img.paste(part, (48, 0))
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    blobs = color_blobs(buf.getvalue())
+    assert len(blobs) == 2
+
+
+@pytest.mark.xfail(
+    strict=True, reason="48px downscale erases sub-2% structures; full-res ladder pending"
+)
+def test_thin_structures_survive_downscale():
+    # Known FAIL (calibration 2026-10-11): a 2px line leaves no blob at all.
+    try:
+        from PIL import Image, ImageDraw
+    except ImportError:
+        pytest.skip("PIL unavailable")
+    img = Image.new("RGB", (96, 96), color=(240, 240, 240))
+    draw = ImageDraw.Draw(img)
+    draw.line([0, 48, 96, 48], fill=(200, 30, 30), width=2)
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    blobs = color_blobs(buf.getvalue())
+    assert any(tuple(b["color"]) == (192, 24, 24) for b in blobs)
+
+
 def test_foveal_palette_weights_center():
     from services.visual_qa import foveal_palette
 
