@@ -96,22 +96,47 @@ def _touch(a: List[float], b: List[float]) -> bool:
     return not (a[2] < b[0] or b[2] < a[0] or a[3] < b[1] or b[3] < a[1])
 
 
+# Probe margin below this = abstention (coin flips must not merge or count).
+MARGIN_BAR = 0.2
+
+
+def gate_decision(decision: Optional[str], margin: float) -> Optional[str]:
+    """Weak probes abstain instead of joining groups."""
+    if decision is None:
+        return None
+    return decision if margin >= MARGIN_BAR else None
+
+
 def merge_by_decision(tracks: List[Dict[str, Any]]) -> List[List[Dict[str, Any]]]:
     """Group touching tracks that share the same person-decision.
 
     Pure (probe outcomes injected as track['decision']). One group = one
     persistent thing = counted once. Straddlers merge instead of doubling.
+    Abstained (None-decision) tracks never merge — an unanswered question
+    must not move the count either way.
     """
     groups: List[List[Dict[str, Any]]] = []
     for track in tracks:
+        decision = track.get("decision")
         placed = False
-        for group in groups:
-            if group[0].get("decision") == track.get("decision") and any(
-                _touch(track["box"], member["box"]) for member in group
-            ):
-                group.append(track)
-                placed = True
-                break
+        if decision is not None:
+            for group in groups:
+                if group[0].get("decision") == decision and any(
+                    _touch(track["box"], member["box"]) for member in group
+                ):
+                    group.append(track)
+                    placed = True
+                    break
         if not placed:
             groups.append([track])
     return groups
+
+
+def group_box(group: List[Dict[str, Any]]) -> List[float]:
+    """Union box of a group (for group-level referee crops)."""
+    return [
+        min(m["box"][0] for m in group),
+        min(m["box"][1] for m in group),
+        max(m["box"][2] for m in group),
+        max(m["box"][3] for m in group),
+    ]
