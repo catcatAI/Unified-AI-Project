@@ -96,6 +96,84 @@ def _touch(a: List[float], b: List[float]) -> bool:
     return not (a[2] < b[0] or b[2] < a[0] or a[3] < b[1] or b[3] < a[1])
 
 
+def clip_embed(crop_png: bytes) -> Optional[List[float]]:
+    """Appearance vector of one crop (for re-id, not classification)."""
+    snap = _clip_snapshot()
+    if snap is None or _PILImage is None:
+        return None
+    try:
+        import torch
+        from transformers import CLIPModel, CLIPProcessor
+
+        model = CLIPModel.from_pretrained(snap)
+        proc = CLIPProcessor.from_pretrained(snap)
+        img = _PILImage.open(io.BytesIO(crop_png)).convert("RGB")
+        inp = proc(images=img, return_tensors="pt")
+        with torch.no_grad():
+            vec = model.get_image_features(**inp)[0].flatten()
+        vec = vec / vec.norm()
+        flat = vec.tolist()
+        return flat if flat and isinstance(flat[0], float) else None
+    except Exception as exc:
+        logger.debug(f"CLIP embed failed: {exc}")
+        return None
+
+
+def size_band(box: List[float]) -> int:
+    """Log-area bucket: person vs its doll share looks, never size."""
+    import math as _math
+
+    area = max(box[2] - box[0], 0.0) * max(box[3] - box[1], 0.0)
+    return int(round(_math.log2(max(area, 1e-6)) * 2.0))
+
+
+def _cosine(a: List[float], b: List[float]) -> float:
+    import math as _math
+
+    dot = sum(x * y for x, y in zip(a, b))
+    na = _math.sqrt(sum(x * x for x in a)) or 1.0
+    nb = _math.sqrt(sum(y * y for y in b)) or 1.0
+    return dot / (na * nb)
+
+
+def link_subjects(items: List[Dict[str, Any]], sim_bar: float = 0.9) -> List[List[Dict[str, Any]]]:
+    """Re-id grouping: same decision + same looks + same size = one subject.
+
+    Pure (embeddings injected as item['emb']). Replaces box-touch chaining:
+    touching boxes of different subjects must NOT merge (the giant-group
+    pathology), while distant boxes of one subject SHOULD (mirrored pairs).
+    Person vs its doll: same looks, different size band -> two subjects.
+    """
+    parent = list(range(len(items)))
+
+    def _find(i: int) -> int:
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+
+    def _union(i: int, j: int) -> None:
+        parent[_find(i)] = _find(j)
+
+    for i in range(len(items)):
+        for j in range(i + 1, len(items)):
+            a, b = items[i], items[j]
+            if a.get("decision") != b.get("decision"):
+                continue
+            if a.get("decision") is None:
+                continue
+            if a.get("emb") is None or b.get("emb") is None:
+                continue
+            if size_band(a["box"]) != size_band(b["box"]):
+                continue
+            if _cosine(a["emb"], b["emb"]) >= sim_bar:
+                _union(i, j)
+    groups: Dict[int, List[Dict[str, Any]]] = {}
+    for i, item in enumerate(items):
+        groups.setdefault(_find(i), []).append(item)
+    return list(groups.values())
+
+
 # Probe margin below this = abstention (coin flips must not merge or count).
 MARGIN_BAR = 0.2
 
@@ -140,3 +218,40 @@ def group_box(group: List[Dict[str, Any]]) -> List[float]:
         max(m["box"][2] for m in group),
         max(m["box"][3] for m in group),
     ]
+
+
+def _quadrants(box: List[float]) -> List[List[float]]:
+    x0, y0, x1, y1 = box
+    mx, my = (x0 + x1) / 2.0, (y0 + y1) / 2.0
+    return [
+        [x0, y0, mx, my],
+        [mx, y0, x1, my],
+        [x0, my, mx, y1],
+        [mx, my, x1, y1],
+    ]
+
+
+def zoom_probe(
+    image_data: bytes,
+    box: List[float],
+    probe_fn: Any,
+    depth: int = 1,
+) -> List[Dict[str, Any]]:
+    """Recursive semantic zoom: probe the box; on weak verdicts, split and
+    probe quadrants (the saccade principle one level down).
+
+    probe_fn(crop_png) -> (decision, margin). Returns leaf verdicts with
+    sub-boxes. Grid cells are not objects — sub-cell structures (dolls,
+    hats inside a mask-read cell) only appear here.
+    """
+    crop = crop_for_track(image_data, box, max_side=512)
+    if crop is None:
+        return []
+    decision, margin = probe_fn(crop)
+    gated = gate_decision(decision, margin)
+    leaves = [{"box": list(box), "decision": gated, "margin": margin}]
+    if depth > 0 and gated is None:
+        # Weak whole-box verdict: look inside instead of abstaining blind.
+        for quad in _quadrants(list(box)):
+            leaves.extend(zoom_probe(image_data, quad, probe_fn, depth - 1))
+    return leaves
