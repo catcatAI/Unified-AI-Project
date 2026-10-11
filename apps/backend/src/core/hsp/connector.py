@@ -620,6 +620,18 @@ class HSPConnector:
             file_config = protocols_config.get("file", {})
             if file_config.get("enabled", True) and self.fallback_manager:
                 base_path = file_config.get("base_path", "data/fallback_comm")
+                # Anchor relative paths to the repo data root, not CWD
+                # (audit 2026-10-11: same split-brain class as vector store).
+                if not os.path.isabs(str(base_path)):
+                    try:
+                        from core.data_config import get_data_root
+
+                        rel = Path(str(base_path))
+                        if rel.parts and rel.parts[0] == "data":
+                            rel = Path(*rel.parts[1:])
+                        base_path = str(get_data_root() / rel)
+                    except Exception:
+                        pass
                 file_protocol = FileBasedProtocol(base_path=base_path)
                 priority = file_config.get("priority", 2)
                 self.fallback_manager.add_protocol(file_protocol, priority=priority)

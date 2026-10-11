@@ -350,7 +350,12 @@ class AngelaAPIClient {
    */
   async getStatus() {
     try {
-      const response = await fetch(`${this.baseURL}/api/v1/ops/status`)
+      const response = await fetch(`${this.baseURL}/api/v1/ops/status`, {
+        signal: AbortSignal.timeout(10000),
+      })
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`)
+      }
       const data = await response.json()
       return {
         success: true,

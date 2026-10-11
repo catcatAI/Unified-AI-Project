@@ -101,6 +101,20 @@ class UnifiedShell {
     this._appendMessage(messages, 'user', text)
     input.value = ''
     try {
+      // Prefer streaming (progressive bubble); fall back to blocking call.
+      if (typeof this.apiClient.sendMessageStream === 'function') {
+        const bubble = this._appendMessage(messages, 'angela', '…')
+        const data = await this.apiClient.sendMessageStream(text, (tok) => {
+          const cur = bubble.textContent === '…' ? '' : bubble.textContent
+          bubble.textContent = cur + tok
+          messages.scrollTop = messages.scrollHeight
+        })
+        if (data?.response) bubble.textContent = data.response
+        else if (bubble.textContent === '…' || !bubble.textContent) {
+          bubble.textContent = '（無回應）'
+        }
+        return
+      }
       const data = await this.apiClient.sendMessage(text)
       this._appendMessage(messages, 'angela', data?.response || data?.content || '（無回應）')
     } catch (err) {
@@ -114,6 +128,7 @@ class UnifiedShell {
     div.textContent = text
     container.appendChild(div)
     container.scrollTop = container.scrollHeight
+    return div
   }
 
   // ========== System monitor (real ops/status + cluster) ==========
@@ -604,7 +619,13 @@ class UnifiedShell {
         }),
         signal: AbortSignal.timeout(8000),
       })
+      if (!res.ok) {
+        throw new Error(`開局被拒（HTTP ${res.status}）：場景可能不屬於該世界`)
+      }
       const data = await res.json()
+      if (!data.session_id || !data.state) {
+        throw new Error('開局回應缺 session_id/state')
+      }
       this.gameSessionId = data.session_id
       this._renderGameState(data.state)
     } catch (err) {

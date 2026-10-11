@@ -383,7 +383,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const url = `http://${ip}:${port}/api/v1/system/cluster/status`
 
     try {
-      const response = await fetch(url)
+      const response = await fetch(url, { signal: AbortSignal.timeout(10000) })
       if (!response.ok) throw new Error('Backend unreachable')
       const data = await response.json()
 

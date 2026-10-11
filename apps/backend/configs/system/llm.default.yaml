@@ -105,7 +105,7 @@ backends:
     provider: ollama
     enabled: true
     base_url: "http://localhost:11434"
-    model_name: "qwen3.5:0.8b"
+    model_name: "qwen2.5:0.5b"
     api_key_env: "OLLAMA_API_KEY"
     timeout: 120
     note: "Local Ollama backend (needs `ollama serve`). Bearer token if OLLAMA_API_KEY set."
