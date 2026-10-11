@@ -870,6 +870,11 @@ def _append_image_analysis(messages: List[Dict], context: Dict) -> None:
         analysis = json.dumps(analysis, ensure_ascii=False, indent=2)[:2000]
     else:
         analysis = str(analysis)[:2000]
+    # Measured visuals first: deterministic CLIP/blob summary the model must
+    # see before file metadata (otherwise it describes metadata, not content).
+    measurements = str(image_analysis.get("visual_measurements") or "").strip()
+    if measurements:
+        analysis = f"【實測所見】\n{measurements}\n\n{analysis}"
     messages[0]["content"] += f"""
 
 {prompt('angela.image_analysis')}

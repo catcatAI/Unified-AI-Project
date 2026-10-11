@@ -2341,11 +2341,47 @@ async def chat_with_image(
 
     clip_response = None
     image_data = None
+    image_is_blank = False
+    _visual_concepts_text = ""
     if file and file.content_type and file.content_type.startswith("image/"):
         try:
             image_data = await file.read()
             if len(image_data) > 10 * 1024 * 1024:
                 raise HTTPException(status_code=413, detail="Image too large (>10MB limit)")
+
+            # Blank-image gate (audit 2026-10-11): CLIP scores noise ~0.22 on
+            # blank renders, above the 0.15 template threshold, yielding
+            # "我看到兔子在跳" for empty frames. A single ≥98% blob means no
+            # content — skip CLIP/vision ornamentation for it.
+            try:
+                from services.visual_qa import color_blobs
+
+                _blobs = color_blobs(image_data)
+                image_is_blank = len(_blobs) == 1 and (_blobs[0].get("fraction") or 0) >= 0.98
+            except Exception:
+                image_is_blank = False
+
+            # QA questions answered deterministically BEFORE CLIP templates:
+            # weak CLIP hits (0.22 noise) otherwise compose echoes.
+            if _is_visual_qa_question(message):
+                _qa = _visual_qa_response(image_data, session_id)
+                if _qa is not None:
+                    return _qa
+
+            # Describe/explain requests need vision+LLM, not a CLIP one-liner:
+            # "我看到人描述這張圖裡有什麼" is an echo, not a description.
+            import re as _re_desc
+
+            if _re_desc.search(
+                r"(描述|解釋|解释|說說|说说|介紹|介绍|講講|讲讲|告訴我|告诉我|"
+                r"這是什麼|这是什么|裡有什麼|里有什么)",
+                message or "",
+            ):
+                image_is_blank = False  # fall through to vision+chat below
+                # Skip the CLIP template block entirely for these.
+                _skip_clip_template = True
+            else:
+                _skip_clip_template = False
 
             from ai.ed3n.ed3n_engine import ED3NEngine
             from ai.multimodal.concept_library import ConceptLibrary
@@ -2370,8 +2406,23 @@ async def chat_with_image(
                 )
                 library.build()
 
-                results = library.classify(image_data, top_k=1)
-                if results and results[0]["confidence"] > 0.15:
+                results = library.classify(image_data, top_k=3)
+                # Stash concepts for the LLM prompt even when the template
+                # path is skipped: measurements must reach generation.
+                # (Injected into context below; context doesn't exist yet here.)
+                try:
+                    _visual_concepts_text = "、".join(
+                        f"{r.get('concept_name')}({float(r.get('confidence', 0)):.2f})"
+                        for r in (results or [])[:3]
+                    )
+                except Exception:
+                    _visual_concepts_text = ""
+                if (
+                    results
+                    and results[0]["confidence"] > 0.15
+                    and not image_is_blank
+                    and not _skip_clip_template
+                ):
                     generator = VisionResponseGenerator(dictionary=ed3n.dictionary)
                     for cname, info in library._concepts.items():
                         generator.register_concept(cname, info["dict_key"], info["labels"])
@@ -2392,6 +2443,19 @@ async def chat_with_image(
             "confidence": results[0]["confidence"],
         }
 
+    # Blank frames short-circuit everything: no CLIP/vision/LLM layer can
+    # say anything true about an empty render except that it is empty.
+    if image_is_blank:
+        return {
+            "response": "（圖像質檢）畫面近乎空白，疑似渲染失敗或鏡頭沒對準物體。",
+            "response_text": "（圖像質檢）畫面近乎空白，疑似渲染失敗或鏡頭沒對準物體。",
+            "source": "visual-qa",
+            "schema_version": "2.0",
+            "session_id": session_id,
+            "backend": "deterministic-visual",
+            "model": "visual-qa",
+        }
+
     image_context = None
     if file and file.content_type and file.content_type.startswith("image/"):
         try:
@@ -2406,7 +2470,31 @@ async def chat_with_image(
                         "question": message or "描述這張圖片",
                     }
                 )
+                # Measurements FIRST in the dict: the prompt builder dumps
+                # image_analysis whole but truncates at 2000 chars, so anything
+                # appended last never reaches the model (live 2026-10-11).
+                # Assertive sentences, not data dumps: small models skim JSON
+                # fields but follow plain assertions.
+                _seen_bits: List[str] = []
+                if _visual_concepts_text:
+                    _concepts = [
+                        c.strip() for c in str(_visual_concepts_text).split("、") if c.strip()
+                    ]
+                    if _concepts:
+                        _seen_bits.append("圖中看起來像" + _concepts[0].split("(")[0] + "。")
+                try:
+                    from services.visual_qa import color_blobs as _cb
+
+                    _blobs = _cb(image_data)[:3]
+                    if _blobs:
+                        _top = _blobs[0]
+                        _seen_bits.append(
+                            f"畫面以{_top['color']}色為主（佔{_top['fraction']:.0%}）。"
+                        )
+                except Exception:
+                    pass
                 image_context = {
+                    "visual_measurements": ("\n".join(_seen_bits) if _seen_bits else ""),
                     "filename": file.filename,
                     "analysis": analysis,
                     "image_data": image_data,
@@ -2418,15 +2506,58 @@ async def chat_with_image(
     context: Dict[str, Any] = {"user_name": user_name}
     if image_context:
         context["image_analysis"] = image_context
+    # Measurements ride the user message too: system-context JSON gets
+    # skimmed, but user text gets attention (live 2026-10-11: two rounds of
+    # metadata-only descriptions despite measurements in prompt).
+    _vm = ""
+    if isinstance(image_context, dict):
+        _vm = str(image_context.get("visual_measurements") or "").strip()
+    _user_message = message or "我上傳了一張圖片"
+    if _vm:
+        _user_message = f"{_user_message}\n【實測所見】{_vm}"
 
     return await _handle_chat_request(
-        user_message=message or "我上傳了一張圖片",
+        user_message=_user_message,
         user_name=user_name,
         history=history,
         session_id=session_id,
         origin="Human",
         extra_context=context if image_context else None,
     )
+
+
+def _is_visual_qa_question(message: str) -> bool:
+    """Quality/inspection questions get measured verdicts, never templates."""
+    import re as _re_qa
+
+    return bool(
+        _re_qa.search(
+            r"(檢查|检查|質量|质量|品質|品质|怎麼樣|怎么样|如何|評價|评价|"
+            r"看一下|看看|分析一下|合格|好不好|品質如何)",
+            message or "",
+        )
+    )
+
+
+def _visual_qa_response(image_data: bytes, session_id: str) -> "Optional[Dict[str, Any]]":
+    """Deterministic visual QA verdict dict, or None to continue pipeline."""
+    try:
+        from services.visual_qa import judge_render
+
+        verdict = judge_render(image_data if isinstance(image_data, bytes) else b"")
+        if verdict.get("verdict"):
+            return {
+                "response": f"（圖像質檢）{verdict['verdict']}",
+                "response_text": f"（圖像質檢）{verdict['verdict']}",
+                "source": "visual-qa",
+                "schema_version": "2.0",
+                "session_id": session_id,
+                "backend": "deterministic-visual",
+                "model": "visual-qa",
+            }
+    except Exception as exc:
+        logger.debug(f"Visual QA skipped: {exc}")
+    return None
 
 
 @router.post("/chat/with-audio")
