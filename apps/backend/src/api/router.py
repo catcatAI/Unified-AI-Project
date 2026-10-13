@@ -26,13 +26,61 @@ def health_check() -> dict:
     return {"status": "healthy"}
 
 
-@router.get("/api/v1/system/emergency")
+# Heavy compute features suspended when emergency text-only mode is active.
+# Kept explicit (not derived from YAML keys) so the contract is reviewable.
+_EMERGENCY_DISABLED_FEATURES = (
+    "ed3n_snn",
+    "garden_snn",
+    "three_layer_visual",
+    "semantic_visual",
+    "semantic_audio",
+    "multimodal_train",
+    "gpu_accelerator",
+)
+
+
+@router.post("/api/v1/system/emergency")
 def trigger_emergency_mode() -> dict:
-    """強制進入緊急純文字模式，關閉所有重型組件。"""
+    """強制進入緊急純文字模式，關閉所有重型組件。
+
+    Sets a process-wide runtime override in magic_numbers so every
+    compute_bool/compute_mode call site flips without a restart (init-time
+    consumers pick it up on next construction). This used to be a GET that
+    claimed "emergency_active" while changing nothing.
+    """
+    from core.system.config.magic_numbers import set_emergency_compute
+
+    set_emergency_compute({f: "off" for f in _EMERGENCY_DISABLED_FEATURES})
+    logger.warning("Emergency text-only mode ON; suspended: %s", _EMERGENCY_DISABLED_FEATURES)
     return {
         "status": "emergency_active",
         "action": "Visual/Audio components suspended",
         "mode": "text-only",
+        "disabled_features": list(_EMERGENCY_DISABLED_FEATURES),
+    }
+
+
+@router.post("/api/v1/system/emergency/clear")
+def clear_emergency_mode() -> dict:
+    """Clear emergency text-only mode (restore YAML compute config)."""
+    from core.system.config.magic_numbers import clear_emergency_compute
+
+    clear_emergency_compute()
+    logger.info("Emergency text-only mode cleared; YAML compute config restored")
+    return {"status": "emergency_cleared", "mode": "config-default"}
+
+
+@router.get("/api/v1/system/emergency")
+def emergency_mode_status() -> dict:
+    """Report whether emergency text-only mode is currently active."""
+    from core.system.config.magic_numbers import get_emergency_override
+
+    override = get_emergency_override()
+    active = bool(override)
+    return {
+        "status": "emergency_active" if active else "emergency_inactive",
+        "mode": "text-only" if active else "config-default",
+        "disabled_features": sorted(override),
     }
 
 

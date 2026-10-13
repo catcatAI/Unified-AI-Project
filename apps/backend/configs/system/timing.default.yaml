@@ -21,6 +21,22 @@ timing:
     retry_operation: 0.1
     backup_operation: 0.1
     max_wait: 30.0
+    # 2026-10-13 §X #143 keys: code called loop_sleep(<name>) but the YAML
+    # keys never existed, so every one of these silently used its inline
+    # default and the "migrated to config" claim was unverifiable.
+    agent_restart_delay: 5.0 # base_agent.py backoff base
+    transport_retry: 1.0 # hsp/transport.py reconnect pause
+    cloud_sync_upload: 0.1 # cloud_sync.py upload pacing
+    cluster_task_distribute: 0.1 # cluster_manager.py dispatch pacing
+    ws_broadcast_retry: 5.0 # websocket_manager.py failed-broadcast retry
+    ws_broadcast_interval: 1.0 # websocket_manager.py broadcast cadence
+    hsp_process_message: 0.1 # hsp/versioning.py synthetic processing pause
+    fallback_retry_backoff: 0.2 # hsp/fallback manager pause between protocol rotations
+
+  retry:
+    # 2026-10-13: same §X #143 gap — retry_value() keys with no YAML entry.
+    agent_task_retries: 3 # base_agent.py task retry budget
+    router_health_retries: 5 # agent_manager.py router probe retries
 
   timeout:
     short: 5.0
@@ -33,6 +49,7 @@ timing:
     shutdown: 10.0
     queue_dequeue: 0.001
     llm: 60.0
+    action_timeout: 30.0 # engine/action_executor.py autonomous action budget
 
   llm:
     default_temperature: 0.7
@@ -42,6 +59,13 @@ timing:
     project_temperature: 0.5
     project_max_tokens: 1024
     generate_timeout: 60.0
+    # 2026-10-13: timeout_value("llm.<name>") call sites in services/llm/router.py
+    # previously resolved to nothing (keys absent) — values below match the
+    # inline defaults the code had been silently using.
+    health_check: 5.0
+    generate_text: 60.0
+    neural_bridge: 30.0
+    fallback_chain: 30.0
 
   heartbeat:
     max_interval: 60.0

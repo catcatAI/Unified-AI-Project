@@ -275,6 +275,44 @@ class TestDesktopAPI:
         assert data["success"] is True
         assert data["result"]["status"] == "ok"
 
+    @pytest.mark.asyncio
+    async def test_actions_execute_failure_reflected(self, client):
+        """A FAILURE ExecutionResult must surface as success=False.
+
+        The old endpoint returned {"success": True, ...} unconditionally, so
+        callers could never distinguish a failed autonomous action.
+        """
+        self.mock_executor.handle_autonomous_action = AsyncMock(
+            return_value={"status": "failure", "success": False, "error_message": "boom"}
+        )
+        resp = await client.post(
+            "/api/v1/actions/execute",
+            json={"type": "file_operation", "parameters": {"action": "delete"}},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["success"] is False
+        assert data["result"]["error_message"] == "boom"
+
+    @pytest.mark.asyncio
+    async def test_actions_execute_priority_string_mapped_to_int(self, client):
+        """ "high" must arrive at the executor as int 3, not the string.
+
+        handle_autonomous_action declares priority: int = 5; forwarding the
+        raw string would break comparisons inside ActionExecutionBridge.
+        """
+        self.mock_executor.handle_autonomous_action = AsyncMock(
+            return_value={"status": "ok", "action_id": "act_2"}
+        )
+        resp = await client.post(
+            "/api/v1/actions/execute",
+            json={"type": "general", "parameters": {}, "priority": "high"},
+        )
+        assert resp.status_code == 200
+        _, _, priority = self.mock_executor.handle_autonomous_action.await_args.args
+        assert isinstance(priority, int)
+        assert priority == 3
+
 
 # =============================================================================
 # Other V1 Status stubs (7 endpoints)

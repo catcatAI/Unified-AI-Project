@@ -119,6 +119,13 @@ async def actions_status(
     return {"success": True, "stats": stats}
 
 
+# String priorities accepted by the HTTP API → numeric priority (1-10, lower
+# = more urgent) used by handle_autonomous_action/ActionExecutionBridge.
+# The old code forwarded "normal"/"high" strings straight into an int
+# parameter, and always returned success=True even on FAILURE results.
+_PRIORITY_STRINGS = {"critical": 1, "urgent": 1, "high": 3, "normal": 5, "medium": 5, "low": 7}
+
+
 @router.post("/actions/execute")
 async def actions_execute(
     action_data: Dict[str, Any] = Body(...),
@@ -129,9 +136,23 @@ async def actions_execute(
         raise HTTPException(503, "ActionExecutor not available")
     action_type = action_data.get("type", "general")
     parameters = action_data.get("parameters", {})
-    priority = action_data.get("priority", "normal")
+    raw_priority = action_data.get("priority", "normal")
+    if isinstance(raw_priority, bool) or not isinstance(raw_priority, int):
+        priority = _PRIORITY_STRINGS.get(str(raw_priority).lower(), 5)
+    else:
+        priority = max(1, min(10, raw_priority))
     result = await executor.handle_autonomous_action(action_type, parameters, priority)
-    return {"success": True, "result": result}
+    # Real path returns ExecutionResult (has .to_dict()); tests/mocks may
+    # return a plain dict. Reflect the actual outcome instead of claiming
+    # success unconditionally.
+    if hasattr(result, "to_dict"):
+        payload = result.to_dict()
+    elif isinstance(result, dict):
+        payload = result
+    else:
+        payload = {"status": "unknown", "raw": str(result)}
+    ok = bool(payload.get("success", payload.get("status") == "ok"))
+    return {"success": ok, "result": payload}
 
 
 @router.post("/tactile/touch")

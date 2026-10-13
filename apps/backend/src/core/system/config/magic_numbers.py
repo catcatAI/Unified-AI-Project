@@ -16,6 +16,29 @@ _MAGIC_CACHE: Dict[str, Any] = {}
 _HARDWARE_PROFILE: Optional[Any] = None  # lazy-loaded HardwareProfile singleton
 _SUFFIX_LEAF_INDEX: Optional[Tuple[int, Dict[str, Any]]] = None  # (id(config), {key: value})
 
+# Runtime emergency override: feature -> "on"/"off". Checked BEFORE the YAML
+# config in compute_mode(), so /api/v1/system/emergency can take effect on
+# every per-call consumer (garden_engine, dictionary, training_pipeline, ...)
+# without a restart. Init-time consumers (snn_core._enabled) pick it up on
+# next construction — documented behaviour, not a silent half-workaround.
+_EMERGENCY_OVERRIDE: Dict[str, str] = {}
+
+
+def set_emergency_compute(features: Dict[str, str]) -> None:
+    """Set (or replace) the runtime emergency compute override map."""
+    _EMERGENCY_OVERRIDE.clear()
+    _EMERGENCY_OVERRIDE.update(features)
+
+
+def clear_emergency_compute() -> None:
+    """Clear the runtime emergency compute override (back to YAML config)."""
+    _EMERGENCY_OVERRIDE.clear()
+
+
+def get_emergency_override() -> Dict[str, str]:
+    """Return a copy of the active emergency override map (empty = none)."""
+    return dict(_EMERGENCY_OVERRIDE)
+
 
 def _get_hardware_profile() -> Optional["HardwareProfile"]:
     """Lazy-load and cache HardwareProfile singleton.
@@ -364,6 +387,10 @@ def _get_compute_config() -> Dict[str, Any]:
 
 def compute_mode(feature: str, default: str = "auto") -> str:
     """Get compute mode for a specific feature: 'auto', 'on', or 'off'."""
+    # Emergency override (runtime, process-wide) wins over YAML config.
+    emergency = _EMERGENCY_OVERRIDE.get(feature)
+    if emergency is not None:
+        return emergency
     config = _get_compute_config()
     # Check feature-specific mode first
     feature_cfg = config.get(feature, {})

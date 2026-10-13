@@ -408,3 +408,93 @@ def test_routing_policy_map_is_either_used_or_documented():
         "policy-driven selection is a design decision, so until then the file must "
         "state the truth"
     )
+
+
+# --------------------------------------------------------------------------- #
+# 3. The §X #143 "hardcoded sleep migration" claim
+# --------------------------------------------------------------------------- #
+# §X #143 in AGENTS.md said six production files were migrated "from
+# asyncio.sleep(HARDCODED) to loop_sleep(CONFIG_KEY, DEFAULT)" and that "new
+# config keys [were] added". The code side was true — the call sites do call
+# loop_sleep — but the YAML side was a lie: none of the named keys existed in
+# any config file, so every call silently used its inline default and the
+# "config-driven" claim was unverifiable. These tests make the claim checkable.
+_X143_KEYS = {
+    # loop_sleep keys (timing.default.yaml: timing.loop.*)
+    "agent_restart_delay": 5.0,
+    "transport_retry": 1.0,
+    "cloud_sync_upload": 0.1,
+    "cluster_task_distribute": 0.1,
+    "ws_broadcast_retry": 5.0,
+    "ws_broadcast_interval": 1.0,
+    "hsp_process_message": 0.1,
+    # retry_value keys (timing.default.yaml: timing.retry.*)
+    "agent_task_retries": 3,
+    "router_health_retries": 5,
+    # timeout_value keys added at the same audit (2026-10-13)
+    "action_timeout": 30.0,
+    "llm.health_check": 5.0,
+    "llm.generate_text": 60.0,
+    "llm.neural_bridge": 30.0,
+    "llm.fallback_chain": 30.0,
+}
+
+
+def test_x143_migrated_keys_exist_in_yaml():
+    """Every key §X #143 claimed was migrated must actually resolve.
+
+    A default-only resolution is the exact failure mode being pinned: the
+    accessor's inline fallback hides a missing YAML entry, so the claim
+    "config-driven" would be unfalsifiable. The YAML value must equal the
+    documented default.
+    """
+    from core.system.config import magic_numbers as mn
+
+    mn._MAGIC_CACHE.clear()
+    mn._SUFFIX_LEAF_INDEX = None
+    for key, expected in _X143_KEYS.items():
+        resolved = mn._get(key, "<MISSING>")
+        assert resolved != "<MISSING>", (
+            f"config key {key!r} does not exist in any YAML file — the "
+            f"call site still falls back to its inline default, so this is "
+            f"not config-driven"
+        )
+        assert (
+            resolved == expected
+        ), f"config key {key!r} = {resolved!r} but code/docs pin {expected!r}"
+
+
+_ACCESSOR_KEY_RE = re.compile(r'(loop_sleep|timeout_value|retry_value)\(\s*"([^"]+)"')
+# Ratchet: how many accessor keys still resolve only to inline defaults.
+# Lowering this number (by adding the YAML entries) is the goal; raising it
+# reintroduces the §X #143 failure mode.
+_MAX_INLINE_DEFAULT_KEYS = 73
+
+
+def test_inline_default_key_count_can_only_shrink():
+    """Sweep every loop_sleep/timeout_value/retry_value call site.
+
+    Keys with no YAML entry keep working via their inline defaults — that is
+    the documented interim state — but their *number* is budgeted so the
+    gap can only close, never silently widen again (mypy-budget pattern).
+    """
+    from core.system.config import magic_numbers as mn
+
+    mn._MAGIC_CACHE.clear()
+    mn._SUFFIX_LEAF_INDEX = None
+    missing = set()
+    for path in SRC.rglob("*.py"):
+        if "__pycache__" in str(path):
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        for match in _ACCESSOR_KEY_RE.finditer(text):
+            key = match.group(2)
+            if mn._get(key, "<MISSING>") == "<MISSING>":
+                missing.add(key)
+    assert len(missing) <= _MAX_INLINE_DEFAULT_KEYS, (
+        f"{len(missing)} accessor keys resolve only to inline defaults "
+        f"(budget {_MAX_INLINE_DEFAULT_KEYS}); new keys must be added to "
+        f"apps/backend/configs/system/timing.default.yaml (or wherever they "
+        f"belong), not just given an inline default. Newly missing: "
+        f"{sorted(missing)[:20]}"
+    )
