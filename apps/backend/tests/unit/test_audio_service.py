@@ -27,19 +27,6 @@ def test_speech_to_text_mock_and_processing_id_format():
     assert got["processing_id"].startswith("audio_")
 
 
-@pytest.mark.skip(
-    reason="_generate_demo_speech_audio was intentionally removed as legacy fake "
-    "audio generation; real TTS is provided by text_to_speech (edge-tts)."
-)
-def test_generate_demo_speech_audio_wav_signature():
-    svc = AudioService()
-    wav = svc._generate_demo_speech_audio("test text")
-    assert isinstance(wav, (bytes, bytearray))
-    # Check RIFF/WAVE signature
-    assert wav[:4] == b"RIFF"
-    assert b"WAVE" in wav[:16]
-
-
 def test_attention_controller_prefers_higher_intensity_and_user():
     ctl = AuditoryAttentionController()
 

@@ -8,15 +8,21 @@ import pytest
 from apps.backend.src.core.system.module_manager import ModuleManager
 from apps.backend.src.core.system.module_manager.models import ModuleStatus
 
+_MODULES_DIR = Path(__file__).resolve().parent.parent.parent.parent / "apps/backend/src/modules"
+_skip_no_modules = pytest.mark.skipif(
+    not _MODULES_DIR.is_dir(),
+    reason="apps/backend/src/modules/ does not exist — no modules to scan; "
+    "live-admin tests re-enable when modules ship",
+)
+
 
 class TestHealthReport:
 
     @pytest.fixture
     def real_manager(self):
-        mod_path = Path(__file__).resolve().parent.parent.parent.parent / "apps/backend/src/modules"
-        return ModuleManager(scan_paths=[mod_path])
+        return ModuleManager(scan_paths=[_MODULES_DIR])
 
-    @pytest.mark.skip("ModuleManager health report: expected modules not found at scan path")
+    @_skip_no_modules
     async def test_health_report_structure(self, real_manager):
         await real_manager.start()
         report = real_manager.get_health_report()
@@ -108,13 +114,9 @@ class TestAdminEndpointLogic:
             assert mod_name in response["graph"]
         await m.stop()
 
-    @pytest.mark.skip(
-        "apps/backend/src/modules/ does not exist — no modules to scan; "
-        "ModuleManager detail endpoint has no live module to report on"
-    )
+    @_skip_no_modules
     async def test_admin_module_detail_shape(self):
-        mod_path = Path(__file__).resolve().parent.parent.parent.parent / "apps/backend/src/modules"
-        m = ModuleManager(scan_paths=[mod_path])
+        m = ModuleManager(scan_paths=[_MODULES_DIR])
         await m.start()
         entry = m.get_module("card_pipeline")
 

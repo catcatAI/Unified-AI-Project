@@ -11,8 +11,9 @@ ANGELA-MATRIX: [L6] [αβγδ] [C] [L5]
 
 WARNING: These stress tests take ~55s standalone and stall the full
 test suite under a combined run (each MultimodalService init re-builds
-the visual/audio encoders + latent space). Skipped by default to keep
-the suite green; run explicitly with `--run-slow` if needed.
+the visual/audio encoders + latent space). Skipped by default via the
+slow_stress marker (see tests/conftest.py pytest_collection_modifyitems);
+run explicitly with `--run-slow` when needed.
 """
 
 import asyncio
@@ -25,9 +26,7 @@ import numpy as np
 import pytest
 
 pytestmark = [
-    pytest.mark.skip(
-        reason="SLOW STRESS TEST: ~55s standalone, stalls full suite (real encoder init); run explicitly when needed"
-    ),
+    pytest.mark.slow_stress,
     pytest.mark.slow,
 ]
 

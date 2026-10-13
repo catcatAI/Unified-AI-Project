@@ -142,10 +142,10 @@ class TestComponentFailureRecovery:
                 metrics.degraded_mode_activated = True
                 metrics.success = True
 
-                print(f"✓ Perception component failure recovery:")
-                print(f"  - Detection time: {metrics.detection_time_ms:.2f}ms")
-                print(f"  - Recovery time: {metrics.recovery_time_ms:.2f}ms")
-                print(f"  - Degraded mode: ✓")
+                print("✓ Perception component failure recovery:")
+                print("  - Detection time: {metrics.detection_time_ms:.2f}ms")
+                print("  - Recovery time: {metrics.recovery_time_ms:.2f}ms")
+                print("  - Degraded mode: ✓")
 
         except Exception as e:
             metrics.success = False
@@ -203,81 +203,14 @@ class TestComponentFailureRecovery:
                 metrics.degraded_mode_activated = True
                 metrics.success = True
 
-                print(f"✓ Emotional component failure recovery:")
-                print(f"  - Default emotion applied: ✓")
-                print(f"  - Core function preserved: ✓")
+                print("✓ Emotional component failure recovery:")
+                print("  - Default emotion applied: ✓")
+                print("  - Core function preserved: ✓")
 
         except Exception as e:
             metrics.success = False
             metrics.error_message = str(e)
             raise
-
-
-class TestNetworkInterruptionRecovery:
-    """
-    网络中断恢复测试
-
-    测试网络相关功能的中断恢复
-    """
-
-    @pytest.mark.skip(
-        reason="Stale test: services.main_api_server.MainApiServer class no longer exists (module exposes app instance)"
-    )
-    async def test_api_service_reconnection(self):
-        """
-        测试API服务重连
-
-        验证：
-        - 连接断开被检测
-        - 自动重连机制
-        - 请求队列管理
-        """
-        metrics = RecoveryMetrics(
-            test_name="test_api_service_reconnection", failure_type="network_disconnect"
-        )
-
-        with patch(
-            "services.main_api_server.MainApiServer.is_connected",
-            create=True,
-            new_callable=AsyncMock,
-        ) as mock_connected, patch(
-            "services.main_api_server.MainApiServer.reconnect", create=True, new_callable=AsyncMock
-        ) as mock_reconnect, patch(
-            "services.main_api_server.MainApiServer.queue_request",
-            create=True,
-            new_callable=AsyncMock,
-        ) as mock_queue:
-
-            # 模拟连接断开
-            mock_connected.return_value = False
-            mock_reconnect.return_value = {"reconnected": True, "attempts": 2}
-            mock_queue.return_value = {"queued": True, "queue_position": 1}
-
-            detection_start = time.perf_counter()
-
-            # 检测断开
-            is_connected = await mock_connected()
-            assert is_connected is False
-
-            detection_end = time.perf_counter()
-            metrics.detection_time_ms = (detection_end - detection_start) * 1000
-
-            # 重连
-            recovery_start = time.perf_counter()
-            reconnect_result = await mock_reconnect()
-            recovery_end = time.perf_counter()
-            metrics.recovery_time_ms = (recovery_end - recovery_start) * 1000
-
-            # 验证重连
-            assert reconnect_result["reconnected"] is True
-            assert metrics.recovery_time_ms < 5000.0  # 5秒内重连
-
-            metrics.success = True
-
-            print(f"✓ API service reconnection:")
-            print(f"  - Detection time: {metrics.detection_time_ms:.2f}ms")
-            print(f"  - Reconnection time: {metrics.recovery_time_ms:.2f}ms")
-            print(f"  - Reconnection attempts: {reconnect_result['attempts']}")
 
 
 class TestDataCorruptionRecovery:
@@ -341,25 +274,9 @@ class TestDataCorruptionRecovery:
             metrics.degraded_mode_activated = True
             metrics.success = True
 
-            print(f"✓ Configuration corruption recovery:")
-            print(f"  - Default config loaded: ✓")
-            print(f"  - System operational: ✓")
-
-
-class TestDegradedModeOperation:
-    """
-    降级模式测试
-
-    测试系统在降级模式下的运行
-    """
-
-
-class TestSystemResilience:
-    """
-    系统韧性测试
-
-    测试系统整体韧性
-    """
+            print("✓ Configuration corruption recovery:")
+            print("  - Default config loaded: ✓")
+            print("  - System operational: ✓")
 
 
 # =============================================================================

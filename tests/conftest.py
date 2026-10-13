@@ -45,9 +45,34 @@ def _reset_emotion_threshold_adjustment():
     reset()
 
 
+def pytest_addoption(parser):
+    parser.addoption(
+        "--run-slow",
+        action="store_true",
+        default=False,
+        help="run slow stress tests marked pytest.mark.slow_stress "
+        "(e.g. tests/benchmarks/test_multimodal_stress.py, ~55s standalone)",
+    )
+
+
+def pytest_collection_modifyitems(config, items):
+    if config.getoption("--run-slow"):
+        return
+    skip_slow_stress = pytest.mark.skip(
+        reason="slow stress test (~55s, stalls combined run); rerun with --run-slow"
+    )
+    for item in items:
+        if "slow_stress" in item.keywords:
+            item.add_marker(skip_slow_stress)
+
+
 def pytest_configure(config):
     config.addinivalue_line("markers", "benchmark: mark tests for benchmarking")
     config.addinivalue_line("markers", "performance: mark tests for performance benchmarking")
+    config.addinivalue_line(
+        "markers",
+        "slow_stress: multi-minute stress tests; deselected unless --run-slow",
+    )
     # Prevent ED3NEngine from lazy-loading the full external dictionary
     # (hundreds of thousands of entries) on every test's first process() call.
     # Tests exercise presets/reflex logic, not the production dictionary corpus.
