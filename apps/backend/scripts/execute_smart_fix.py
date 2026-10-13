@@ -30,36 +30,14 @@ class SmartFixExecutor:
         self.reports_dir.mkdir(exist_ok=True)
 
     def run_smart_auto_fix(self) -> bool:
-        """运行智能自动修复"""
-        logger.info("开始运行智能自动修复...")
-        try:
-            # 导入并运行智能自动修复工具
-            smart_fix_script = self.project_root / "scripts" / "enhanced_auto_fix.py"
-            if not smart_fix_script.exists():
-                logger.error(f"智能自动修复脚本不存在, {smart_fix_script}")
-                return False
+        """智能自动修复已随自动修复系统在 v6.0.4 一并移除。
 
-            result = subprocess.run(
-                ["python", str(smart_fix_script), "--all"],
-                cwd=self.project_root,
-                capture_output=True,
-                text=True,
-                timeout=600,
-            )
-
-            if result.returncode == 0:
-                logger.info("✓ 智能自动修复执行完成")
-                return True
-            else:
-                logger.error(f"✗ 智能自动修复执行失败, {result.stderr}")
-                return False
-
-        except subprocess.TimeoutExpired:
-            logger.error("✗ 智能自动修复执行超时")
-            return False
-        except Exception as e:
-            logger.error(f"✗ 运行智能自动修复时出错, {e}")
-            return False
+        `enhanced_auto_fix.py` 不存在（见 scripts/README.md 的历史说明）；
+        旧版实作每次都检查该档案 -> 不存在 -> 回传 False，让整个修复流程在第
+        一步就中止。现在明确回报不可用，由呼叫端决定跳过该步骤。
+        """
+        logger.info("智能自动修复工具已于 v6.0.4 移除,跳过")
+        return False
 
     def run_integration_fixer(self) -> bool:
         """运行集成问题修复器"""
@@ -74,7 +52,7 @@ class SmartFixExecutor:
                 return False
 
             result = subprocess.run(
-                ["python", str(integration_fix_script)],
+                [sys.executable, str(integration_fix_script)],
                 cwd=self.project_root,
                 capture_output=True,
                 text=True,
@@ -112,7 +90,7 @@ class SmartFixExecutor:
         try:
             # 运行后端测试
             result = subprocess.run(
-                ["python", "-m", "pytest", "--tb=short", "-v", "--maxfail=5"],
+                [sys.executable, "-m", "pytest", "--tb=short", "-v", "--maxfail=5"],
                 cwd=self.project_root / "apps" / "backend",
                 capture_output=True,
                 text=True,
@@ -188,11 +166,10 @@ class SmartFixExecutor:
         """执行完整的修复流程"""
         logger.info("=== 开始执行完整的智能修复流程 ===")
 
-        # 1. 运行智能自动修复
+        # 1. 运行智能自动修复（工具已移除：跳过这一步，不应中止整个流程）
         print("\n1. 运行智能自动修复...")
         if not self.run_smart_auto_fix():
-            logger.error("智能自动修复执行失败")
-            return False
+            logger.warning("智能自动修复不可用（工具已于 v6.0.4 移除）,继续后续步骤")
 
         # 2. 运行集成问题修复
         print("\n2. 运行集成问题修复...")

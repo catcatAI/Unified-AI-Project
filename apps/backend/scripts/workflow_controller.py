@@ -126,16 +126,25 @@ class WorkflowController:
         """
         print("[WORKFLOW] 在不同终端中运行测试和修复流程")
 
-        # 创建PowerShell脚本来启动并行任务
+        # $projectRoot 必须是「包含 scripts/ 的目录」（apps/backend）。
+        # 旧版指向仓库根目录，于是下面每个 `scripts/<tool>.py` 都解析到不存在的路径。
+        backend_root = Path(__file__).parent.parent
+        # `python` 在只提供 `python3` 的机器上不存在（见 tests/tools/test_cli_tooling.py
+        # 的刻意约定），产生的命令必须使用真正存在的解释器。
+        interpreter = "python3"
+        # error_analyzer.py 读的是 test_results/latest_test_results.json；
+        # 旧版等待循环检查的是另一个档名，因此永远不触发分析。
+        results_file = "test_results/latest_test_results.json"
+        # 专用测试执行器 scripts/test_runner.py 已不存在；这一步骤本来就只是跑 pytest。
         ps_script = f"""
 # 测试-修复工作流程启动脚本
-$projectRoot = "{Path(__file__).parent.parent.parent.parent}"
+$projectRoot = "{backend_root}"
 
 # 启动测试终端
 Start-Process powershell -ArgumentList @(
     "-NoExit",
     "-Command",
-    "Set-Location '$projectRoot'; Write-Host '[TERMINAL 1] 测试执行终端' -ForegroundColor Green; python scripts/test_runner.py {pytest_args or ''}"
+    "Set-Location '$projectRoot'; Write-Host '[TERMINAL 1] 测试执行终端' -ForegroundColor Green; {interpreter} -m pytest {pytest_args or ''}"
 )
 
 # 等待测试启动
@@ -145,7 +154,7 @@ Start-Sleep -Seconds 2
 Start-Process powershell -ArgumentList @(
     "-NoExit",
     "-Command",
-    "Set-Location '$projectRoot'; Write-Host '[TERMINAL 2] 错误分析和修复终端' -ForegroundColor Yellow; Write-Host '等待测试结果...' -ForegroundColor Cyan; while($true) {{ if(Test-Path 'test_results.json') {{ python scripts/error_analyzer.py; if((Get-Content 'error_report.json' | ConvertFrom-Json).total_errors -gt 0) {{ python scripts/fix_executor.py }} }}; Start-Sleep -Seconds 5 }}"
+    "Set-Location '$projectRoot'; Write-Host '[TERMINAL 2] 错误分析和修复终端' -ForegroundColor Yellow; Write-Host '等待测试结果...' -ForegroundColor Cyan; while($true) {{ if(Test-Path '{results_file}') {{ {interpreter} scripts/error_analyzer.py; if((Get-Content 'error_report.json' | ConvertFrom-Json).total_errors -gt 0) {{ {interpreter} scripts/fix_executor.py }} }}; Start-Sleep -Seconds 5 }}"
 )
 """
 

@@ -57,15 +57,14 @@ def detect_path_errors(stderr_output: str) -> bool:
 
 
 def run_auto_fix():
-    """运行自动修复工具"""
-    print("🔍 检测到导入错误,正在自动修复...")
+    """自动修复钩子 —— 工具已随自动修复系统在 v6.0.4 一并移除。
 
-    try:
-        print("⚠️ advanced_auto_fix 模块不存在,跳过自动修复")
-        return False
-    except Exception as e:
-        print(f"❌ 自动修复时出错, {e}")
-        return False
+    `advanced_auto_fix` 模组不存在（见 scripts/README.md 的历史说明），
+    因此这里永远回传 False。旧版实作把这段包在 try/except 里，但 try 不可能
+    抛错，那个 except 是死分支。
+    """
+    print("⚠️ 自动修复工具已于 v6.0.4 移除,跳过自动修复")
+    return False
 
 
 def execute_command(command, auto_fix=True):

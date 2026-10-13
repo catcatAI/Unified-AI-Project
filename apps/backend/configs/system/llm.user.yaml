@@ -18,3 +18,5 @@ backends:
     timeout: 120
 settings:
   preferred_backend: llamacpp
+deployment:
+  mode: local+llm

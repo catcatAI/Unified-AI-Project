@@ -7,7 +7,7 @@ import json
 import logging
 import os
 import sys
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -84,6 +84,48 @@ class AIModelsCLI:
                     f"{stats.get('average_latency', 0):.2f}s avg"
                 )
 
+    async def _emit_response(
+        self,
+        messages: List[Any],
+        model_id: str,
+        max_tokens: int,
+        temperature: float,
+        stream: bool,
+    ) -> Tuple[Any, str]:
+        """Print one completion and return ``(response, text)``.
+
+        ``--stream`` used to call ``self.service.stream_completion()``
+        unconditionally, but ``AngelaLLMService`` never implemented it — every
+        ``--stream`` invocation died with AttributeError. Probe for the method
+        and degrade to buffered ``chat_completion`` instead, matching the
+        guarded fallback already used by ``ModelEnsemble.streaming_ensemble``.
+
+        ``response`` is None on the streamed path (there is no single response
+        object); ``text`` always carries the assistant's reply so callers can
+        keep the conversation history intact either way.
+        """
+        stream_method = getattr(self.service, "stream_completion", None)
+        if stream and callable(stream_method):
+            chunks: List[str] = []
+            async for chunk in stream_method(
+                messages, model_id=model_id, max_tokens=max_tokens, temperature=temperature
+            ):
+                chunks.append(str(chunk))
+                print(chunk, end="", flush=True)
+            print()
+            return None, "".join(chunks)
+        if stream:
+            print(
+                "[stream] stream_completion() unavailable on this service; "
+                "using buffered output",
+                file=sys.stderr,
+            )
+        response = await self.service.chat_completion(
+            messages, model_id=model_id, max_tokens=max_tokens, temperature=temperature
+        )
+        print(response.content)
+        return response, response.content
+
     async def single_query(
         self,
         query: str,
@@ -103,23 +145,15 @@ class AIModelsCLI:
         if system:
             messages.append(ChatMessage(role="system", content=system))
         messages.append(ChatMessage(role="user", content=query))
-        if stream:
-            async for chunk in self.service.stream_completion(
-                messages, model_id=model_id, max_tokens=max_tokens, temperature=temperature
-            ):
-                print(chunk, end="", flush=True)
-            print()
-        else:
-            response = await self.service.chat_completion(
-                messages, model_id=model_id, max_tokens=max_tokens, temperature=temperature
+        response, _text = await self._emit_response(
+            messages, model_id, max_tokens, temperature, stream
+        )
+        if verbose and response is not None:
+            print(
+                f"\nTokens: {getattr(response, 'usage', {})}  "
+                f"Cost: ${getattr(response, 'cost', 0):.4f}  "
+                f"Latency: {getattr(response, 'latency', 0):.2f}s"
             )
-            print(response.content)
-            if verbose:
-                print(
-                    f"\nTokens: {getattr(response, 'usage', {})}  "
-                    f"Cost: ${getattr(response, 'cost', 0):.4f}  "
-                    f"Latency: {getattr(response, 'latency', 0):.2f}s"
-                )
 
     async def chat(
         self,
@@ -156,24 +190,19 @@ class AIModelsCLI:
             if not user_input:
                 continue
             messages.append(ChatMessage(role="user", content=user_input))
-            if stream:
-                async for chunk in self.service.stream_completion(
-                    messages, model_id=model_id, max_tokens=max_tokens, temperature=temperature
-                ):
-                    print(chunk, end="", flush=True)
-                print()
-            else:
-                response = await self.service.chat_completion(
-                    messages, model_id=model_id, max_tokens=max_tokens, temperature=temperature
+            response, text = await self._emit_response(
+                messages, model_id, max_tokens, temperature, stream
+            )
+            if verbose and response is not None:
+                print(
+                    f"\nTokens: {getattr(response, 'usage', {})}  "
+                    f"Cost: ${getattr(response, 'cost', 0):.4f}  "
+                    f"Latency: {getattr(response, 'latency', 0):.2f}s"
                 )
-                print(response.content)
-                if verbose:
-                    print(
-                        f"\nTokens: {getattr(response, 'usage', {})}  "
-                        f"Cost: ${getattr(response, 'cost', 0):.4f}  "
-                        f"Latency: {getattr(response, 'latency', 0):.2f}s"
-                    )
-            messages.append(ChatMessage(role="assistant", content=response.content))
+            # The streamed path used to drop the turn entirely, so every later
+            # request saw only user messages. Record it either way.
+            if text:
+                messages.append(ChatMessage(role="assistant", content=text))
 
     async def compare_models(
         self,

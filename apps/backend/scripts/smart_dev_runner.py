@@ -386,34 +386,14 @@ def detect_dev_errors(stderr_output: str, stdout_output: str) -> List[str]:
 
 
 def run_auto_fix():
-    """运行自动修复工具"""
-    print("🔍 检测到导入错误,正在自动修复...")
+    """自动修复钩子 —— 工具已随自动修复系统在 v6.0.4 一并移除。
 
-    try:
-        # 导入并运行增强版修复工具
-        sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
-        from apps.backend.scripts.advanced_auto_fix import AdvancedImportFixer
-
-        fixer = AdvancedImportFixer()
-        results = fixer.fix_all_files()
-
-        # 保存修复报告
-        fixer.save_report()
-
-        if results.files_fixed > 0:
-            print(
-                f"✅ 自动修复完成,修复了 {results.files_fixed} 个文件,共 {results.fixes_applied} 处修复"
-            )
-            return True
-        else:
-            print("⚠️ 未发现需要修复的问题")
-            return False
-    except Exception as e:
-        print(f"❌ 自动修复时出错, {e}")
-        import traceback
-
-        traceback.print_exc()
-        return False
+    `advanced_auto_fix` 模组不存在（见 scripts/README.md 的历史说明）。
+    旧版实作每次都会 import 失败、印出与真正失败原因无关的 traceback，
+    再回传 False；改成明确回传 False，呼叫端行为不变但不再制造误导性输出。
+    """
+    print("⚠️ 自动修复工具已于 v6.0.4 移除,跳过自动修复")
+    return False
 
 
 def start_chroma_server():
@@ -423,7 +403,7 @@ def start_chroma_server():
     try:
         # 启动ChromaDB服务器作为后台进程
         chroma_process = subprocess.Popen(
-            ["python", "start_chroma_server.py"],
+            [sys.executable, "start_chroma_server.py"],
             cwd=PROJECT_ROOT,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -574,52 +554,15 @@ def run_dev_server():
                         error_output = (stdout or "") + (stderr or "")
                         print(f"错误输出, {error_output}")
 
-                        # 运行运行时自动修复
-                        print("🔧 尝试运行时自动修复...")
-                        sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
-                        from apps.backend.scripts.runtime_auto_fix import RuntimeAutoFixer
-
-                        fixer = RuntimeAutoFixer()
-                        fixer.setup_environment()
-
-                        # 创建一个模拟的进程来传递错误信息
-                        import subprocess
-                        from typing import Optional, Tuple
-
-                        class MockProcess:
-                            def __init__(self, output: str) -> None:
-                                self.output = output
-                                self.stdout = None
-                                self.stderr = None
-                                self.returncode: int = 1  # 表示进程有错误退出
-                                self.pid: int = 12345  # 添加pid属性
-
-                            def communicate(
-                                self, timeout: Optional[float] = None
-                            ) -> Tuple[str, str]:
-                                return "", self.output()
-
-                            # 添加poll方法以兼容subprocess.Popen接口()
-                            def poll(self) -> Optional[int]:
-                                return 0  # 表示进程已完成
-
-                            def wait(self, timeout: Optional[float] = None) -> int:
-                                return self.returncode
-
-                            def terminate(self) -> None:
-                                pass
-
-                            def kill(self) -> None:
-                                pass
-
-                        mock_process = MockProcess(error_output)  # noqa
-                        if fixer.monitor_and_fix(mock_process):
-                            print("🔄 运行时修复完成,重新启动开发服务器...")
-                            time.sleep(1)
-                            return run_dev_server()
-                        else:
-                            print("❌ 运行时自动修复失败")
-                            return 1
+                        # 运行时自动修复工具（runtime_auto_fix.py）已随自动修复
+                        # 系统在 v6.0.4 移除，这里没有可用的救援手段，直接回报原始
+                        # 失败。旧版实作会 import 一个不存在的模组，让使用者看到与
+                        # uvicorn 退出原因无关的 traceback。
+                        print(
+                            "❌ 无法自动恢复：运行时自动修复工具已于 v6.0.4 移除，"
+                            "请见上方错误输出"
+                        )
+                        return 1
                     else:
                         print("✅ Uvicorn服务器正常退出")
                         break

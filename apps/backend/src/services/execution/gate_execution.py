@@ -276,6 +276,35 @@ class GateExecutionOwner:
         "sphere",
         "gameobject",
         "monobehaviour",
+        # Loop/structure nouns (audit 2026-10-12): "只輸出修好的for循環段"
+        # carries a write verb but no noun, so the write-bypass never fired and
+        # a canned small-talk template answered the code request. Chinese loop
+        # wording is what a repair follow-up actually looks like.
+        # NOTE: only phrase forms for the ASCII entries — bare "for"/"while"/
+        # "sort" are ordinary prose words, so "write the report for tomorrow"
+        # was classified as a code write request. The Chinese nouns below are
+        # already unambiguous enough to cover the motivating cases on their own.
+        "循環",
+        "循环",
+        "迴圈",
+        "回圈",
+        "for loop",
+        "while loop",
+        "foreach loop",
+        "陣列",
+        "数组",
+        "array",
+        "變數",
+        "变量",
+        "variable",
+        "function",
+        "排序",
+        "正則",
+        "正则",
+        "regex",
+        "code",
+        "程式碼",
+        "程式码",
         "prefab",
         "scene",
         "場景",

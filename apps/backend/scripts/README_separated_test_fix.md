@@ -23,11 +23,11 @@ graph TD
 
 ## 组件说明
 
-### 1. 测试执行器 (test_runner.py)
+### 1. 测试执行（`python3 -m pytest`）
 
 - 负责运行测试并收集结果
-- 将测试结果保存到 `test_results.json` 文件中
 - 在终端中显示测试输出
+- 专用的 `test_runner.py` 已不存在；这一步本来就只是跑 pytest，直接调用即可
 
 ### 2. 错误分析器 (error_analyzer.py)
 
@@ -53,10 +53,7 @@ graph TD
 - 协调整个测试-修复流程
 - 支持在不同终端中运行测试和修复
 
-### 5. 增强版自动修复工具 (enhanced_auto_fix.py)
-
-- 提供更多自动修复功能
-- 专门针对特定类型的错误进行修复
+> 早前还有一个「增强版自动修复工具」(`enhanced_auto_fix.py`)，已随整个自动修复系统在 v6.0.4 一并移除，不应再被引用。
 
 ## 使用方法
 
@@ -64,7 +61,7 @@ graph TD
 
 ```bash
 cd apps/backend
-python scripts/workflow_controller.py
+python3 scripts/workflow_controller.py
 ```
 
 ### 方法2: 在不同终端中运行（推荐用于开发）
@@ -78,7 +75,7 @@ powershell -ExecutionPolicy Bypass -File scripts/start_separate_terminals.ps1
 
 ```bash
 cd apps/backend
-python scripts/workflow_controller.py --separate-terminals
+python3 scripts/workflow_controller.py --separate-terminals
 ```
 
 ### 方法3: 分别运行各组件
@@ -87,15 +84,15 @@ python scripts/workflow_controller.py --separate-terminals
 
 ```bash
 cd apps/backend
-python scripts/test_runner.py
+python3 -m pytest
 ```
 
 2. 在第二个终端中分析错误和执行修复：
 
 ```bash
 cd apps/backend
-python scripts/error_analyzer.py
-python scripts/fix_executor.py
+python3 scripts/error_analyzer.py
+python3 scripts/fix_executor.py
 ```
 
 ## 错误类型和修复策略
