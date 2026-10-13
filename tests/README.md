@@ -3,7 +3,7 @@
 ## Overview
 
 This directory contains the Unified AI Project test suite. Tests are organized
-by domain. **7,148 tests collected** (tests/; re-verified 2026-10-09).
+by domain. **7,458 tests collected** (tests/; re-verified 2026-10-13).
 
 Historical executed run (pre-cleanup, ~2026-07-14): 4,544 passed, 185 failed, 39
 errors, 85 skipped, 2 xfailed. The failures below explain the 185/39.
@@ -19,18 +19,15 @@ tests/
 ├── core/             # Core system tests (state matrix, formulas, etc.)
 ├── desktop/          # Desktop interaction tests
 ├── desktop-app/      # Electron desktop app tests
-├── fragmenta/        # Fragmenta module tests
 ├── integration/      # Integration tests
 ├── logs/             # Test log output
 ├── mcp/              # MCP connector tests
 ├── models/           # Model tests
-├── modules_fragmenta/# Fragmenta submodule tests
 ├── performance/      # Performance tests
 ├── pet/              # Pet system tests
 ├── security/         # Security tests
 ├── services/         # Service layer tests
 ├── shared/           # Shared module tests
-├── test_data/        # Test fixtures and data
 ├── test_output_data/ # Test output artifacts
 ├── test_results/     # Test result files
 ├── tools/            # Tool tests
@@ -121,7 +118,7 @@ Key aspects to verify during testing:
 
 ## Current Test State
 
-**7,148 tests collected** (tests/; re-verified 2026-10-09 — same number as the
+**7,458 tests collected** (tests/; re-verified 2026-10-13 — same number as the
 header; domain breakdown below is a historical 2026-07 snapshot).
 
 | Domain                       | Test Count |

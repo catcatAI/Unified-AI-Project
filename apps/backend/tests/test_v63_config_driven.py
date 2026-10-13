@@ -315,9 +315,10 @@ class TestREPLCommands:
 
 if __name__ == "__main__":
     import subprocess
+    import sys
 
     result = subprocess.run(
-        ["python", "-m", "pytest", __file__, "-v", "--tb=short"],
+        [sys.executable, "-m", "pytest", __file__, "-v", "--tb=short"],
         capture_output=False,
     )
 
