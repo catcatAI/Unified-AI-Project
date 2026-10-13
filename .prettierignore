@@ -62,8 +62,13 @@ apps/desktop-app/CubismSdkForWeb-5-r.5/
 
 # 生成檔（工具輸出與 prettier 重摺打架，重排造成無意義 diff）
 pnpm-lock.yaml
+# Next.js 自動生成（檔頭註明 should not be edited；`next dev` 每次啟動重寫成
+# Next 原生風格，與 .prettierrc 衝突，format 後下次 dev 又變髒）
+apps/*/next-env.d.ts
 docs/PROJECT_MAP_GENERATED.md
 docs/STATUS_MATRIX.md
+# 自足預覽頁：內嵌 4 張 700×900 PNG 的 base64（整檔 4.4MB），重排只會重摺 base64 行
+models/angela_clay/gallery.html
 
 # 執行期變異資料檔（runtime json.dump 擁有格式；重排後下次測試又髒）
 apps/backend/src/ai/ed3n/config/classifier_training.json
