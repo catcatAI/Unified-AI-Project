@@ -4,18 +4,26 @@
 評分（100）：可解析 20＋可運行 30＋物件數對 25＋尺寸對 25。
 """
 
+import os
+
+_HF_HUB = os.environ.get("HF_HUB_CACHE") or os.path.join(
+    os.path.expanduser("~"), ".cache", "huggingface", "hub"
+)
+
 import re
 import subprocess
 
-QWEN = (
-    "/home/cxuo/.cache/huggingface/hub/models--Qwen--Qwen2.5-0.5B-Instruct-GGUF"
-    "/snapshots/9217f5db79a29953eb74d5343926648285ec7e67"
-    "/qwen2.5-0.5b-instruct-q4_k_m.gguf"
+QWEN = os.path.join(
+    _HF_HUB,
+    "models--Qwen--Qwen2.5-0.5B-Instruct-GGUF",
+    "/snapshots/9217f5db79a29953eb74d5343926648285ec7e67",
+    "/qwen2.5-0.5b-instruct-q4_k_m.gguf",
 )
-GEMMA = (
-    "/home/cxuo/.cache/huggingface/hub/models--google--gemma-4-E2B-it-qat-q4_0-gguf"
-    "/snapshots/675cff42a74c774d6cb76f76d8eacb49b48c9b93"
-    "/gemma-4-E2B_q4_0-it.gguf"
+GEMMA = os.path.join(
+    _HF_HUB,
+    "models--google--gemma-4-E2B-it-qat-q4_0-gguf",
+    "/snapshots/675cff42a74c774d6cb76f76d8eacb49b48c9b93",
+    "/gemma-4-E2B_q4_0-it.gguf",
 )
 
 PROMPT = (

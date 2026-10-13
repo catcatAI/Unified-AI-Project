@@ -10,7 +10,7 @@
 set -u
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PY="$ROOT/.venv/bin/python"
-MODEL="${GEMMA_MODEL:-$HOME/.cache/huggingface/hub/models--google--gemma-4-E2B-it-qat-q4_0-gguf/snapshots/675cff42a74c774d6cb76f76d8eacb49b48c9b93/gemma-4-E2B_q4_0-it.gguf}"
+MODEL="${GEMMA_MODEL:-${HF_HUB_CACHE:-$HOME/.cache/huggingface/hub}/models--google--gemma-4-E2B-it-qat-q4_0-gguf/snapshots/675cff42a74c774d6cb76f76d8eacb49b48c9b93/gemma-4-E2B_q4_0-it.gguf}"
 MODEL_ALIAS="gemma-4-E2B-it"
 
 health() { curl -s --max-time 3 "$1" >/dev/null 2>&1; }

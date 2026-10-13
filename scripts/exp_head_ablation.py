@@ -22,6 +22,10 @@ from __future__ import annotations
 import argparse
 import json
 import os
+
+_HF_HUB = os.environ.get("HF_HUB_CACHE") or os.path.join(
+    os.path.expanduser("~"), ".cache", "huggingface", "hub"
+)
 import random
 import sys
 import time
@@ -29,9 +33,10 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps/backend/src"))
 
-SNAPSHOT = (
-    "/home/cxuo/.cache/huggingface/hub/models--Qwen--Qwen2.5-0.5B-Instruct"
-    "/snapshots/7ae557604adf67be50417f59c2c2f167def9a775"
+SNAPSHOT = os.path.join(
+    _HF_HUB,
+    "models--Qwen--Qwen2.5-0.5B-Instruct",
+    "/snapshots/7ae557604adf67be50417f59c2c2f167def9a775",
 )
 MAX_TOKENS = 30
 RECENT_K = 8

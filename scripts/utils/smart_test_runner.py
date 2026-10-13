@@ -56,7 +56,10 @@ def run_tests(pytest_args=None) -> int:
 
     setup_environment()
 
-    cmd = ["python", "-m", "pytest", "--tb=short", "-v"]
+    # sys.executable, not "python": the latter is absent on hosts that only
+    # ship `python3` (this dev box and the CI runners) and the runner then died
+    # with exit 127 before pytest was ever reached.
+    cmd = [sys.executable, "-m", "pytest", "--tb=short", "-v"]
     if pytest_args:
         cmd.extend(pytest_args.split())
 

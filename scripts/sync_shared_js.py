@@ -25,6 +25,7 @@ Usage
     python3 scripts/sync_shared_js.py            # vendor + verify all surfaces
     python3 scripts/sync_shared_js.py --check    # verify only, no writes
     python3 scripts/sync_shared_js.py --surface desktop
+    python3 scripts/sync_shared_js.py --surface desktop --surface web   # repeatable
 """
 
 import argparse
@@ -198,12 +199,16 @@ def main(argv: Optional[List[str]] = None) -> int:
     )
     parser.add_argument(
         "--surface",
+        action="append",
         choices=sorted(SURFACES),
-        help="restrict to one surface (default: all)",
+        help="restrict to a surface; repeatable (default: all)",
     )
     args = parser.parse_args(argv)
 
-    surfaces = [args.surface] if args.surface else sorted(SURFACES)
+    # Repeatable: ``--surface desktop --surface web`` vendors both. With the old
+    # store action only the last flag won, so the desktop copies silently went
+    # unvendored and drifted behind packages/shared-js.
+    surfaces = list(dict.fromkeys(args.surface)) if args.surface else sorted(SURFACES)
     if not args.check:
         ensure_gitignore()
 

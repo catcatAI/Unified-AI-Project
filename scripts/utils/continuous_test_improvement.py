@@ -8,6 +8,7 @@ import json
 import logging
 import subprocess
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -15,13 +16,13 @@ from typing import Any, Dict, List
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
-logger, Any = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class ContinuousTestImprovement:
     """持续测试改进系统"""
 
-    def __init__(self, project_root, str=None) -> None:
+    def __init__(self, project_root=None, output_file: str = None) -> None:
         """
         初始化持续测试改进系统
 
@@ -33,21 +34,24 @@ class ContinuousTestImprovement:
         self.reports_dir = self.project_root / "test_reports"
         self.reports_dir.mkdir(exist_ok=True)
 
-    # 改进系统配置
-    self.improvement_config = {
-        "monitoring": {
-            "interval_hours": 24,
-            "coverage_threshold": 0.85,
-            "pass_rate_threshold": 0.95,
-            "max_slow_tests": 5,
-        },
-        "analysis": {"trend_days": 30, "historical_data_days": 90},
-        "improvement": {
-            "auto_generate_recommendations": True,
-            "auto_create_issues": False,
-            "max_recommendations": 10,
-        },
-    }
+        # 改进系统配置
+        # 這段原本落在 class body（縮排比方法少一級），`self` 在類別命名空間裡
+        # 不存在，import 時直接 NameError——整個模組從此無法載入
+        # （audit 2026-10-12）。改為 __init__ 的實例屬性。
+        self.improvement_config = {
+            "monitoring": {
+                "interval_hours": 24,
+                "coverage_threshold": 0.85,
+                "pass_rate_threshold": 0.95,
+                "max_slow_tests": 5,
+            },
+            "analysis": {"trend_days": 30, "historical_data_days": 90},
+            "improvement": {
+                "auto_generate_recommendations": True,
+                "auto_create_issues": False,
+                "max_recommendations": 10,
+            },
+        }
 
     def run_continuous_improvement_cycle(self) -> Dict[str, Any]:
         """
@@ -168,7 +172,7 @@ class ContinuousTestImprovement:
             # 调用测试质量评估器
             quality_assessor_script = self.scripts_dir / "test_quality_assessor.py"
             if not quality_assessor_script.exists():
-                ogger.warning("Test quality assessor script not found")
+                logger.warning("Test quality assessor script not found")
                 return {"status": "skipped", "reason": "Script not found"}
 
             cmd = [sys.executable, str(quality_assessor_script), "assess"]
@@ -242,7 +246,7 @@ class ContinuousTestImprovement:
             # 调用覆盖率监控器
             coverage_monitor_script = self.scripts_dir / "coverage_monitor.py"
             if not coverage_monitor_script.exists():
-                ogger.warning("Coverage monitor script not found")
+                logger.warning("Coverage monitor script not found")
                 return {"status": "skipped", "reason": "Script not found"}
 
             # 生成趋势报告
@@ -288,7 +292,7 @@ class ContinuousTestImprovement:
             # 调用测试质量评估器获取建议
             quality_assessor_script = self.scripts_dir / "test_quality_assessor.py"
             if not quality_assessor_script.exists():
-                ogger.warning("Test quality assessor script not found")
+                logger.warning("Test quality assessor script not found")
                 return {"status": "skipped", "reason": "Script not found"}
 
             cmd = [sys.executable, str(quality_assessor_script), "recommend"]
@@ -695,4 +699,4 @@ if __name__ == "__main__":
     main()
 
 # 添加pytest标记,防止被误认为测试类
-ContinuousTestImprovement.__test_False
+ContinuousTestImprovement.__test__ = False

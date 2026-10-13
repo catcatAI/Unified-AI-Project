@@ -1,11 +1,16 @@
 """Quick SNN-ONLY test after retraining with fixed encode."""
 
+import os
 import sys
 import time
 
 import numpy as np
 
-sys.path.insert(0, "D:\\Projects\\Unified-AI-Project\\apps\\backend\\src")
+# Repo-relative: the old hard-coded D:\Projects\... only existed on the
+# original author's Windows machine (audit 2026-10-13 — script was unrunnable
+# anywhere else). Resolve from this file instead.
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(_REPO_ROOT, "apps", "backend", "src"))
 
 from ai.garden.garden_engine import GARDENEngine
 
@@ -13,7 +18,7 @@ from ai.garden.garden_engine import GARDENEngine
 def main():
     t0 = time.time()
     g = GARDENEngine(compatibility_mode=True)
-    g.load("D:\\Projects\\Unified-AI-Project\\data\\checkpoints\\garden_checkpoint")
+    g.load(os.path.join(_REPO_ROOT, "data", "checkpoints", "garden_checkpoint"))
     snn = g.snn
     stats = snn.get_stats()
     print(f"GARDEN loaded in {time.time()-t0:.1f}s")

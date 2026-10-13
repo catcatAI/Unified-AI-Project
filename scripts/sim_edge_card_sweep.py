@@ -38,9 +38,14 @@ from __future__ import annotations
 import argparse
 import dataclasses
 import json
+import os
 import sys
 import time
 from pathlib import Path
+
+_HF_HUB = os.environ.get("HF_HUB_CACHE") or os.path.join(
+    os.path.expanduser("~"), ".cache", "huggingface", "hub"
+)
 
 import yaml
 
@@ -58,8 +63,8 @@ from ai.hardware.edge_card_sim import (  # noqa: E402
 )
 
 GGUF_DEFAULT = (
-    Path.home()
-    / ".cache/huggingface/hub/models--google--gemma-4-E2B-it-qat-q4_0-gguf"
+    Path(_HF_HUB)
+    / "models--google--gemma-4-E2B-it-qat-q4_0-gguf"
     / "snapshots/675cff42a74c774d6cb76f76d8eacb49b48c9b93"
     / "gemma-4-E2B_q4_0-it.gguf"
 )

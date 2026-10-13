@@ -101,8 +101,6 @@ Unified-AI-Project.
 - **`run_test_subprocess.py`**: Run tests in subprocess
 - **`run_tests_with_compat.py`**: Run tests with compatibility mode
 - **`smart_test_runner.py`**: Smart test runner with analytics
-- **`_run_pc_tests.py`**: Private PC test runner
-- **`_run_pc_tests_file.py`**: Private PC test file runner
 
 ## tools/
 

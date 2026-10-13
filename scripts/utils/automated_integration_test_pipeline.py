@@ -240,11 +240,16 @@ class AutomatedIntegrationTestPipeline:
             ]
 
             # 添加测试类型标记
-            #             test_types=self.pipeline_config["testing"]["test_types"]
+            # 原本三行被註解掉一半：test_types 賦值、system_integration、
+            # 以及 `elif "performance"` 全没了，只剩 `cmd.extend(["-m",
+            # "performance"])` 掛在 `if "system"` 分支底下——結果跑 system
+            # 測試卻帶 performance 標記，而 test_types 本身也未定義
+            # （NameError）。audit 2026-10-12。
+            test_types = self.pipeline_config["testing"]["test_types"]
 
             if "system" in test_types:
-                #                 cmd.extend(["-m", "system_integration"])
-                #             elif "performance" in test_types,:
+                cmd.extend(["-m", "system_integration"])
+            elif "performance" in test_types:
                 cmd.extend(["-m", "performance"])
 
             elif "all" not in test_types:
@@ -382,10 +387,11 @@ class AutomatedIntegrationTestPipeline:
 
         try:
             # 运行环境管理脚本
-            #             env_manager_script=self.scripts_dir / "test_environment_manager.py"
+            # env_manager_script 的賦值也被註解掉了，下面却直接 .exists()
+            # ——一進 cleanup 就 NameError，環境永遠不會被清理。
+            env_manager_script = self.scripts_dir / "test_environment_manager.py"
             if not env_manager_script.exists():
-                #                 logger.warning("Environment manager script not found, skipping environment cleanup")
-                #
+                logger.warning("Environment manager script not found, skipping environment cleanup")
                 return True
 
             cmd = [
@@ -410,27 +416,19 @@ class AutomatedIntegrationTestPipeline:
             return True
 
         except subprocess.TimeoutExpired:
-            #
-
             logger.error("Environment cleanup timed out")
+            return False
+        except Exception as e:
+            logger.error(f"Error cleaning up test environment, {e}")
             return False
 
 
-#         except Exception as e:
-#
-
-#             logger.error(f"Error cleaning up test environment, {e}")
-#             return False
-
-
-#
 def main() -> None:
-    #     """主函数"""
+    """主函数"""
 
-    #     import argparse
-    #
+    import argparse
 
-    #     parser = argparse.ArgumentParser(description="Automated Integration Test Pipeline")
+    parser = argparse.ArgumentParser(description="Automated Integration Test Pipeline")
     parser.add_argument("--config", help="Pipeline configuration file (JSON)")
     parser.add_argument(
         "--test-types",
@@ -487,4 +485,4 @@ if __name__ == "__main__":
     main()
 
 # 添加pytest标记,防止被误认为测试类
-AutomatedIntegrationTestPipeline.__test_False
+AutomatedIntegrationTestPipeline.__test__ = False

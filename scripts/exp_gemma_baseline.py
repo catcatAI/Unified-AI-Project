@@ -17,15 +17,20 @@ from __future__ import annotations
 import argparse
 import json
 import os
+
+_HF_HUB = os.environ.get("HF_HUB_CACHE") or os.path.join(
+    os.path.expanduser("~"), ".cache", "huggingface", "hub"
+)
 import sys
 import time
 from pathlib import Path
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps/backend/src"))
 
-GGUF = (
-    "/home/cxuo/.cache/huggingface/hub/models--google--gemma-4-E2B-it-qat-q4_0-gguf"
-    "/snapshots/675cff42a74c774d6cb76f76d8eacb49b48c9b93/gemma-4-E2B_q4_0-it.gguf"
+GGUF = os.path.join(
+    _HF_HUB,
+    "models--google--gemma-4-E2B-it-qat-q4_0-gguf",
+    "/snapshots/675cff42a74c774d6cb76f76d8eacb49b48c9b93/gemma-4-E2B_q4_0-it.gguf",
 )
 MAX_TOKENS = 30
 SEED = 42
@@ -93,9 +98,10 @@ def main() -> int:
     from llama_cpp import Llama
     from sentence_transformers import SentenceTransformer
 
-    MINILM = (
-        "/home/cxuo/.cache/huggingface/hub/models--sentence-transformers--paraphrase-multilingual-MiniLM-L12-v2"
-        "/snapshots/e8f8c211226b894fcb81acc59f3b34ba3efd5f42"
+    MINILM = os.path.join(
+        _HF_HUB,
+        "models--sentence-transformers--paraphrase-multilingual-MiniLM-L12-v2",
+        "/snapshots/e8f8c211226b894fcb81acc59f3b34ba3efd5f42",
     )
     llm = Llama(model_path=GGUF, n_ctx=512, n_threads=6, verbose=False)
     st_model = SentenceTransformer(MINILM, local_files_only=True)

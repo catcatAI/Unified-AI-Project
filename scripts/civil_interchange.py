@@ -12,6 +12,12 @@
 評分 100：清點 20＋平衡判定 30＋幾何 20＋容量 15＋形式 15（人工）。
 """
 
+import os
+
+_HF_HUB = os.environ.get("HF_HUB_CACHE") or os.path.join(
+    os.path.expanduser("~"), ".cache", "huggingface", "hub"
+)
+
 import argparse
 import json
 
@@ -52,15 +58,17 @@ def ask_model(model_path, prompt, n_ctx, threads, n_tok=400):
     return r["choices"][0]["message"]["content"]
 
 
-QWEN = (
-    "/home/cxuo/.cache/huggingface/hub/models--Qwen--Qwen2.5-0.5B-Instruct-GGUF"
-    "/snapshots/9217f5db79a29953eb74d5343926648285ec7e67"
-    "/qwen2.5-0.5b-instruct-q4_k_m.gguf"
+QWEN = os.path.join(
+    _HF_HUB,
+    "models--Qwen--Qwen2.5-0.5B-Instruct-GGUF",
+    "/snapshots/9217f5db79a29953eb74d5343926648285ec7e67",
+    "/qwen2.5-0.5b-instruct-q4_k_m.gguf",
 )
-GEMMA = (
-    "/home/cxuo/.cache/huggingface/hub/models--google--gemma-4-E2B-it-qat-q4_0-gguf"
-    "/snapshots/675cff42a74c774d6cb76f76d8eacb49b48c9b93"
-    "/gemma-4-E2B_q4_0-it.gguf"
+GEMMA = os.path.join(
+    _HF_HUB,
+    "models--google--gemma-4-E2B-it-qat-q4_0-gguf",
+    "/snapshots/675cff42a74c774d6cb76f76d8eacb49b48c9b93",
+    "/gemma-4-E2B_q4_0-it.gguf",
 )
 
 

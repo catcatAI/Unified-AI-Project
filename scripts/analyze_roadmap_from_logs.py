@@ -17,11 +17,27 @@ from ai.memory.vector_store import VectorMemoryStore as VectorStore
 
 
 async def main():
+    # HybridBrain 在目前程式庫裡並不存在（見檔頭註解），這個腳本從
+    # 2026-09 起就無法執行，但 scripts/ACTIVE_SCRIPTS.md 仍列它為 active，
+    # 於是每次執行都第 24 行以難懂的 NameError 收場。這裡改成明確的前置
+    # 檢查，讓失敗原因一眼可見（audit 2026-10-12）。
+    raise SystemExit(
+        "[ABORT] analyze_roadmap_from_logs.py requires HybridBrain, which does "
+        "not exist in this codebase. The LLM-analysis path needs "
+        "re-implementation (or the entry removed from scripts/ACTIVE_SCRIPTS.md)."
+    )
+
+
+async def _legacy_analyze(brain):
+    """從日誌萃取 roadmap 的主流程。
+
+    brain 以參數傳入而非自己 new：HybridBrain 尚未實作，寫成
+    `brain = HybridBrain()` 只會得到一個未知名稱。等 HybridBrain 落地，
+    由 main() 建好實例後呼叫即可，不必改動下面的分析邏輯。
+    """
     print("[INFO] Initializing Brain and Memory...")
     # Force real LLM for analysis
     os.environ["USE_MOCK_LLM"] = "false"
-
-    brain = HybridBrain()
 
     # We use the Brain's chat capability which likely uses the Orchestrator or direct RAG?
     # Actually, let's use the VectorStore directly to get chunks, then Brain to summarize.

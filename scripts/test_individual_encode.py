@@ -33,8 +33,18 @@ def encode_individual(text):
     return all_keys
 
 
-def main():
-    for text in tests:
+# 診斷輸入：比較「整句編碼」與「逐 token 編碼」兩條路徑。
+# 原本 `main()` 用了未定義的 `tests`，腳本一跑就 NameError；允許用命令列
+# 參數覆蓋（audit 2026-10-12）。
+_DEFAULT_TESTS = [
+    "Angela 今天很開心",
+    "hello world",
+    "how are you today",
+]
+
+
+def main(tests=None):
+    for text in sys.argv[1:] or tests or _DEFAULT_TESTS:
         print(f"\n{'='*60}")
         print(f"Input: {text}")
         tokens = tokenize(text)
@@ -59,7 +69,7 @@ def main():
             # Test SNN with individual keys
             snn_out = e.snn.forward(keys_individual)
             sorted_out = sorted(snn_out.items(), key=lambda x: x[1], reverse=True)[:5]
-            print(f"SNN output top5:")
+            print("SNN output top5:")
             for k, v in sorted_out:
                 entry = e.dictionary.entries.get(k)
                 sf = (

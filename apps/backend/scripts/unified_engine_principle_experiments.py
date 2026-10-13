@@ -21,15 +21,23 @@ docs/03-technical-architecture/UNIFIED_AI_NEXT.md).
 
 import argparse
 import math
+import os
 import random
 import sys
 import time
 
 import numpy as np
 
+# Repo-relative: the old literal pointed at /home/covo/... (non-existent user)
+# so this script could never import on any real checkout (audit 2026-10-13).
 sys.path.insert(
     0,
-    "/home/covo/文件/GitHub/Unified-AI-Project/apps/backend/src",
+    os.path.join(
+        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+        "apps",
+        "backend",
+        "src",
+    ),
 )
 from ai.unified_engine.core_model import _vectorised_hash
 

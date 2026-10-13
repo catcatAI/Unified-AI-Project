@@ -5,15 +5,22 @@ Q1 梁彎矩（手算 2044）/ Q2 柱軸壓（手算 1287）/ Q3 剪力箍筋（
 Q4 護欄遷移（手算 195，±安全側判定）/ Q5 定性（人工閱卷）。
 """
 
+import os
+
+_HF_HUB = os.environ.get("HF_HUB_CACHE") or os.path.join(
+    os.path.expanduser("~"), ".cache", "huggingface", "hub"
+)
+
 import json
 import re
 import subprocess
 import sys
 
-MODEL = (
-    "/home/cxuo/.cache/huggingface/hub/models--Qwen--Qwen2.5-0.5B-Instruct-GGUF"
-    "/snapshots/9217f5db79a29953eb74d5343926648285ec7e67"
-    "/qwen2.5-0.5b-instruct-q4_k_m.gguf"
+MODEL = os.path.join(
+    _HF_HUB,
+    "models--Qwen--Qwen2.5-0.5B-Instruct-GGUF",
+    "/snapshots/9217f5db79a29953eb74d5343926648285ec7e67",
+    "/qwen2.5-0.5b-instruct-q4_k_m.gguf",
 )
 
 

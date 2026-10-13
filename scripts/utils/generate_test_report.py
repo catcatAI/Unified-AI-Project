@@ -10,6 +10,7 @@ import sys
 import xml.etree.ElementTree as ET
 from datetime import datetime
 from pathlib import Path
+from typing import Any, Dict
 
 # 配置日志
 logging.basicConfig(
@@ -281,10 +282,20 @@ class TestReportGenerator:
             }
 
             # 解析测试套件
-            for testsuite in root.findall(".//testsuite"):
+            # `root.findall(".//testsuite")` 只找 root 的「子孫」，而
+            # pytest/junitxml 產生的根元素常常自己就是 <testsuite>（外面沒有
+            # <testsuites> 包一層），於是永遠走訪不到任何 testcase，回傳空
+            # 清單——報表看起來像「全綠但什麼都沒測」（audit 2026-10-12）。
+            suites = root.findall(".//testsuite")
+            if root.tag == "testsuite" and root not in suites:
+                suites.insert(0, root)
+            for testsuite in suites:
                 # 解析测试用例
                 for testcase in testsuite.findall("testcase"):
-                    est_case_data = {
+                    # 舊檔把變數名打成 `est_case_data`，後面的 `test_case_data`
+                    # 每次引用都拋 NameError，卻被下面的 broad except 吞成
+                    # `return {}`——JUnit 解析永遠安靜地失敗（audit 2026-10-12）。
+                    test_case_data = {
                         "name": testcase.get("name", ""),
                         "module": testcase.get("classname", ""),
                         "duration": float(testcase.get("time", 0)),
