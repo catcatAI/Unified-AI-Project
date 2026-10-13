@@ -231,14 +231,22 @@ class TestRegisterBackboneResilience:
 
         import builtins
 
+        get_backbone_called = []
+
         def fake_import(name, *args, **kwargs):
             if name == "core.backbone":
                 raise ImportError("blocked")
             return real_import(name, *args, **kwargs)
 
+        import core.backbone as cb
+
+        monkeypatch.setattr(
+            cb, "get_backbone", lambda: get_backbone_called.append(True) or object()
+        )
         monkeypatch.setattr(builtins, "__import__", fake_import)
-        # 不該拋例外
-        L._register_backbone()
+        # 不該拋例外；import 被擋 → get_backbone 不可達 → 未被呼叫
+        assert L._register_backbone() is None
+        assert get_backbone_called == []
 
 
 def test_lifespan_module_imports():

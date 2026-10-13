@@ -49,8 +49,8 @@ def garden_adapter():
         d.add_entry("g1", surface_forms={"zh": "你好"})
         d.add_entry("g2", surface_forms={"zh": "學習"})
         return GardenDictionaryAdapter(d)
-    except Exception as exc:  # pragma: no cover - 環境缺依賴
-        pytest.skip(f"VectorDictionary unavailable: {exc}")
+    except ImportError as exc:  # pragma: no cover - 環境缺依賴
+        pytest.skip(f"VectorDictionary not importable: {exc}")
 
 
 class TestProtocol:

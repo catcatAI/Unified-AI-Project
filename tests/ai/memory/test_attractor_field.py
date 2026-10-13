@@ -21,8 +21,8 @@ try:
         GradientResult,
         MemoryAttractor,
     )
-except ImportError:
-    pytest.skip("MemoryAttractor not available (stub module)", allow_module_level=True)
+except ImportError as exc:
+    pytest.skip(f"ai.memory.attractor_field not importable: {exc}", allow_module_level=True)
 
 
 class TestMemoryAttractor:

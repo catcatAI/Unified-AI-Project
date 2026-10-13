@@ -121,14 +121,15 @@ class TestDeterministicMatchRecordsTemplates:
     def setup_method(self):
         _TEMPLATES.clear()
 
-    def test_math_match_records_template(self):
-        is_deterministic_match("What is 178 + 101", "279")
-        # may or may not be stored depending on output wrapping
-        assert "math" in _TEMPLATES or True
+    def test_math_match_detected(self):
+        # is_deterministic_match 記錄 match record；bare "279" 輸出不入
+        # _TEMPLATES（與 TestLearnTemplate.test_math_bare_output_skipped 同語義）
+        assert is_deterministic_match("What is 178 + 101", "279") is True
+        assert "math" not in _TEMPLATES
 
     def test_no_match_no_template(self):
         before = dict(_TEMPLATES)
-        is_deterministic_match("What is the meaning of life", "42")
+        assert is_deterministic_match("What is the meaning of life", "42") is False
         assert _TEMPLATES == before
 
 
