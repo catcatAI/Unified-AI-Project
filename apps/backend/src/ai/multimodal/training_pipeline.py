@@ -1049,8 +1049,11 @@ class FullTrainingPipeline:
         audio_losses = []
 
         for step in range(steps):
-            # Generate random target latent
-            target_latent = np.random.randn(64).astype(np.float32)
+            # Generate random targets in each encoder's own output space
+            # (the encoder output is feature_dim-dim; the 64-dim shared latent
+            # is produced later by SharedLatentSpace, not by the encoder).
+            v_target = np.random.randn(self._visual_encoder.feature_dim).astype(np.float32)
+            a_target = np.random.randn(self._audio_encoder.feature_dim).astype(np.float32)
 
             # Train visual encoder with random image
             dummy_image = np.random.randint(0, 255, (64, 64, 3), dtype=np.uint8)
@@ -1063,12 +1066,12 @@ class FullTrainingPipeline:
             img.save(buf, format="PNG")
             img_bytes = buf.getvalue()
 
-            v_loss = self._visual_encoder.train_step(img_bytes, target_latent, lr=lr)
+            v_loss = self._visual_encoder.train_step(img_bytes, v_target, lr=lr)
             visual_losses.append(v_loss)
 
             # Train audio encoder with random audio
             dummy_audio = np.random.randn(16000).astype(np.float32)
-            a_loss = self._audio_encoder.train_step(dummy_audio.tobytes(), target_latent, lr=lr)
+            a_loss = self._audio_encoder.train_step(dummy_audio.tobytes(), a_target, lr=lr)
             audio_losses.append(a_loss)
 
         result = {

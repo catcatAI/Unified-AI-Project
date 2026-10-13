@@ -43,6 +43,11 @@ class VisualEncoder:
         self._projection: Optional[np.ndarray] = None
         self._cnn_filters: Optional[np.ndarray] = None
 
+    @property
+    def feature_dim(self) -> int:
+        """Output dimension of this encoder's feature vector."""
+        return self._feature_dim
+
     def _build_filters(self) -> np.ndarray:
         """Build Gabor-like filter bank: (N, H, W) where N = orientations × scales."""
         if self._cnn_filters is not None:
@@ -127,6 +132,14 @@ class VisualEncoder:
 
     def encode_from_pil(self, img: Image.Image) -> np.ndarray:
         """Encode a PIL Image into a feature vector."""
+        return self._project_if_needed(self._extract_raw(img))
+
+    def _extract_raw(self, img: Image.Image) -> np.ndarray:
+        """Concatenate the hand-crafted feature groups before projection.
+
+        Kept separate from projection so ``train_step`` can back-propagate
+        through the projection matrix using the true input features.
+        """
         img = img.resize((self.INPUT_SIZE, self.INPUT_SIZE), Image.Resampling.LANCZOS)
         arr = np.asarray(img, dtype=np.float32)
 
@@ -136,9 +149,7 @@ class VisualEncoder:
         features.extend(self._edge_histogram(arr))
         features.extend(self._texture_stats(arr))
         features.extend(self._spatial_layout(arr))
-
-        raw = np.array(features, dtype=np.float32)
-        return self._project_if_needed(raw)
+        return np.array(features, dtype=np.float32)
 
     def _color_histogram(self, arr: np.ndarray) -> list:
         """Per-channel color histogram (32 bins per channel)."""
@@ -191,20 +202,30 @@ class VisualEncoder:
         return features
 
     def _project_if_needed(self, raw: np.ndarray) -> np.ndarray:
-        """Project to FEATURE_DIM or pad if raw is smaller."""
-        if len(raw) == self._feature_dim:
-            return raw
-        if len(raw) < self._feature_dim:
-            padded = np.zeros(self._feature_dim, dtype=np.float32)
-            padded[: len(raw)] = raw
-            return padded
+        """Project to FEATURE_DIM through the learnable projection matrix.
+
+        The matrix is initialised so its output is numerically identical to the
+        historical identity / zero-pad behaviour: ``encode()`` stays stable while
+        the projection becomes trainable by ``train_step``.
+        """
         if self._projection is None or self._projection.shape[1] != len(raw):
-            rng = np.random.default_rng(42)
-            self._projection = rng.normal(
-                0, 1 / np.sqrt(len(raw)), (self._feature_dim, len(raw))
-            ).astype(np.float32)
+            self._projection = self._init_projection(len(raw))
         result: np.ndarray = self._projection @ raw
         return result
+
+    def _init_projection(self, n_raw: int) -> np.ndarray:
+        """Build W with shape ``(feature_dim, n_raw)``.
+
+        - ``n_raw > feature_dim``: seeded random down-projection (unchanged).
+        - ``n_raw <= feature_dim``: identity extension — raw in the leading
+          slots and zeros after, exactly reproducing the old pad output.
+        """
+        if n_raw > self._feature_dim:
+            rng = np.random.default_rng(42)
+            return rng.normal(0, 1 / np.sqrt(n_raw), (self._feature_dim, n_raw)).astype(np.float32)
+        w = np.zeros((self._feature_dim, n_raw), dtype=np.float32)
+        w[:n_raw, :] = np.eye(n_raw, dtype=np.float32)
+        return w
 
     def train_step(
         self, image_data: bytes, target_latent: Optional[np.ndarray], lr: float = 0.001
@@ -216,45 +237,64 @@ class VisualEncoder:
 
         Args:
             image_data: Raw image bytes
-            target_latent: Target latent vector (64-dim)
+            target_latent: Target latent vector. Any length is accepted and
+                adapted to the encoder output dimension (zero-padded or
+                truncated), so a 64-dim SharedLatentSpace target and a
+                ``feature_dim``-dim target both work.
             lr: Learning rate
 
         Returns:
             Training loss (MSE)
         """
-        # Encode image to get raw features
+        # Extract raw features (pre-projection) for the gradient
         try:
             img = Image.open(io.BytesIO(image_data)).convert("RGB")
-            features_opt = self.encode_from_pil(img)
+            raw = self._extract_raw(img)
         except Exception:
             return 0.0
-        if features_opt is None or np.all(features_opt == 0):
+        if raw.size == 0 or np.all(raw == 0):
             return 0.0
-        features: np.ndarray = features_opt
 
-        # Project to feature space (already done in encode_from_pil)
-        projected: np.ndarray = features
+        # Ensure the projection matrix exists and run it forward
+        projected: np.ndarray = self._project_if_needed(raw)
+        assert self._projection is not None
 
         # Compute loss: MSE between projected and target
-        if target_latent is not None:
-            target_trimmed = target_latent[: self._feature_dim]
-        else:
-            target_trimmed = np.zeros(self._feature_dim)
-        diff = projected - target_trimmed
+        target = self._adapt_target(target_latent)
+        diff = projected - target
         loss = float(np.mean(diff**2))
 
-        # Gradient: d(loss)/d(projection) = 2 * diff @ features.T
-        # Update projection: W -= lr * grad
-        grad: np.ndarray = 2.0 * np.outer(diff, features) / self._feature_dim
-        assert self._projection is not None
-        self._projection -= lr * grad
+        # Gradient: d(mean((W @ raw - target)^2)) / dW = 2 * outer(diff, raw) / N
+        # LMS normalisation divides it by the input energy, which keeps `lr`
+        # scale-free: the raw feature families differ by ~3 orders of magnitude
+        # (0-1 colour histogram vs 0-255 CNN statistics), so a fixed lr would
+        # diverge on the visual encoder while converging on the audio one.
+        grad: np.ndarray = 2.0 * np.outer(diff, raw) / self._feature_dim
+        energy = float(np.dot(raw, raw)) + 1e-8
+        self._projection -= lr * grad * (self._feature_dim / energy)
 
-        # Gradient clipping
-        norm = np.linalg.norm(self._projection)
-        if norm > 10.0:
-            self._projection = self._projection / (norm / 10.0)
+        # Gradient clipping. The identity/random initialisation already has
+        # norm sqrt(min(feature_dim, len(raw))), so the cap has to scale with
+        # the encoder width — a fixed 10 silently destroys the identity map
+        # for feature_dim >= 101.
+        cap = max(10.0, float(np.sqrt(self._feature_dim)))
+        norm = float(np.linalg.norm(self._projection))
+        if norm > cap:
+            self._projection = self._projection * (cap / norm)
 
         return loss
+
+    def _adapt_target(self, target_latent: Optional[np.ndarray]) -> np.ndarray:
+        """Reshape a caller-supplied target to the encoder output dimension."""
+        if target_latent is None:
+            return np.zeros(self._feature_dim, dtype=np.float32)
+        tgt = np.asarray(target_latent, dtype=np.float32).ravel()
+        if tgt.shape[0] == self._feature_dim:
+            return tgt
+        out = np.zeros(self._feature_dim, dtype=np.float32)
+        n = min(int(tgt.shape[0]), self._feature_dim)
+        out[:n] = tgt[:n]
+        return out
 
     def reset_projection(self) -> None:
         self._projection = None

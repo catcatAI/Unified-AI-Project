@@ -59,6 +59,52 @@ def test_emotion_event_exploratory_lowers_threshold():
     assert adj < 0, "exploratory 路由應降低閾值"
 
 
+def test_emotion_system_fallback_is_reachable(monkeypatch):
+    """Path 2 死路徑回歸測試：無注入、無事件時應回退查 EmotionSystem。
+
+    歷史缺陷：_emotion_threshold_adjustment() 用 importlib 匯入 ``api.lifespan``
+    再取 ``get_emotion_system()`` / ``_get_emotion_system()``——但 lifespan
+    兩者都沒有，於是第三條路徑永遠取不到實例（adj 恆為 0），且每次呼叫都白白
+    import 整個 app。修復：在 lifespan 補上 get_emotion_system()（走 backbone
+    同一個 module key，和 chat_routes 共用同一個實例）。
+    """
+    from api.lifespan import get_emotion_system
+
+    semantic_qa.reset_emotion_threshold_adjustment()
+    saved_event = semantic_qa._LATEST_EMOTION_EVENT
+    semantic_qa._LATEST_EMOTION_EVENT = None
+    try:
+        es = get_emotion_system()
+        assert es is not None, "lifespan no longer exposes the EmotionSystem"
+
+        monkeypatch.setattr(
+            es,
+            "get_emotion_summary",
+            lambda: {
+                "dominant_emotion": "fear",
+                "intensity": 0.8,
+                "arousal": 0.7,
+                "valence": -0.6,
+            },
+        )
+        assert semantic_qa._emotion_threshold_adjustment() > 0
+
+        monkeypatch.setattr(
+            es,
+            "get_emotion_summary",
+            lambda: {
+                "dominant_emotion": "joy",
+                "intensity": 0.8,
+                "arousal": 0.7,
+                "valence": 0.6,
+            },
+        )
+        assert semantic_qa._emotion_threshold_adjustment() < 0
+    finally:
+        semantic_qa._LATEST_EMOTION_EVENT = saved_event
+        semantic_qa.reset_emotion_threshold_adjustment()
+
+
 def test_subscription_is_idempotent():
     """重複訂閱不應重複註冊 callback."""
     semantic_qa._ensure_emotion_event_subscription()

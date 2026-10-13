@@ -377,3 +377,38 @@ class TestSequenceTrainer:
             "seq_b_stop",
         ]:
             assert key in data, f"Missing key: {key}"
+
+
+class TestPhase0EncoderTraining:
+    """Phase 0 (``train_encoders``) used to raise ``ValueError: operands could
+    not be broadcast together with shapes (256,) (64,)`` on the first step,
+    which aborted ``run_full`` before Phase 1 ever ran."""
+
+    def test_train_encoders_returns_finite_losses(self, pipeline):
+        result = pipeline.train_encoders(steps=3, lr=0.001)
+        assert set(result) == {"visual_loss", "audio_loss"}
+        assert np.isfinite(result["visual_loss"])
+        assert np.isfinite(result["audio_loss"])
+        # 0.0 would mean the step bailed out early on a guard
+        assert result["visual_loss"] > 0.0
+        assert result["audio_loss"] > 0.0
+
+    def test_train_encoders_honours_custom_encoder_widths(self):
+        """The old code always fed a 64-dim target, so any encoder whose output
+        was not 64-dim crashed on the first step."""
+        from ai.multimodal.audio_encoder_spectral import AudioSpectralEncoder
+        from ai.multimodal.training_pipeline import FullTrainingPipeline
+        from ai.multimodal.visual_encoder import VisualEncoder
+
+        pipeline = FullTrainingPipeline(
+            visual_encoder=VisualEncoder(feature_dim=64),
+            audio_encoder=AudioSpectralEncoder(feature_dim=256),
+        )
+        assert pipeline._visual_encoder.feature_dim == 64
+        assert pipeline._audio_encoder.feature_dim == 256
+
+        result = pipeline.train_encoders(steps=3, lr=0.001)
+        assert np.isfinite(result["visual_loss"])
+        assert np.isfinite(result["audio_loss"])
+        assert result["visual_loss"] > 0.0
+        assert result["audio_loss"] > 0.0

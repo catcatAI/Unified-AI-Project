@@ -61,6 +61,21 @@ class TestBlockCoordinator:
         result = coord.compute({"a": 1.0}, seed_projection={"a": 0.5})
         assert "a" in result
 
+    def test_compute_seed_activates_unmatched_sources(self):
+        """回歸鎖定：seed 結果算完就被丟掉（seed 路徑形同空轉），冷啟動區塊
+        永遠拿不到候選答案的活化值。"""
+        engine = MockEngine()
+        coord = BlockCoordinator(engine, "test")
+        result = coord.compute({"a": 0.0}, seed_projection={"b": 1.0})
+        assert result["b"] == pytest.approx(0.8)
+
+    def test_compute_query_activation_beats_seed(self):
+        """查詢自身的活化不得被 seed 覆蓋。"""
+        engine = MockEngine()
+        coord = BlockCoordinator(engine, "test")
+        result = coord.compute({"a": 1.0}, seed_projection={"a": 0.1})
+        assert result["a"] == pytest.approx(0.8)
+
     def test_compute_no_engine(self):
         coord = BlockCoordinator(None, "test")
         result = coord.compute({"a": 1.0})

@@ -1274,7 +1274,6 @@ class GARDENEngine:
         resp_quality = min(
             1.0, len(current_output) / limit_value("ai.garden.engine.quality_ref_len", 50)
         )
-        cycle_penalty_weight = confidence_value("ai.garden.engine.cycle_penalty_weight", 0.2)
         key_ratio_weight = confidence_value("ai.garden.engine.key_ratio_weight", 0.5)
         quality_weight = confidence_value("ai.garden.engine.quality_weight", 0.3)
         base_confidence = limit_value("ai.garden.engine.confidence_base", 20) / 100.0

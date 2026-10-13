@@ -277,12 +277,28 @@ class FoveatedSampler:
         dist_to_focus = np.sqrt((x_idx - fx) ** 2 + (y_idx - fy) ** 2)
         focus_weight = np.exp(-(dist_to_focus**2) / (2 * (self.config.fovea_radius**2)))
 
-        # 綜合權重
+        # 綜合權重：顯著性 + 焦點高斯
         weight = 0.5 * saliency + 0.5 * focus_weight
 
-        # 根據權重分配採樣點 (簡化：用權重調整 log-polar)
-        # 這裡為演示，實際可用更複雜的分配演算法
-        return self._log_polar_mapping(h, w, focus_xy)
+        # 依權重分配採樣點 (importance sampling)：權重越高，落在該區域的
+        # 採樣點越多；輸出預算固定為 output_size，與其他策略一致。
+        flat_weight = np.asarray(weight, dtype=np.float64).ravel()
+        total_weight = float(flat_weight.sum())
+        if total_weight <= 0.0 or not np.isfinite(total_weight):
+            # 權重退化 (全零/非有限) 時退回均勻採樣
+            return self._uniform_mapping(h, w)
+
+        cdf = np.cumsum(flat_weight)
+        cdf /= cdf[-1]
+        n_samples = out_h * out_w
+        # 分層取樣：每個輸出格點取所屬權重區間的中點 (確定性、可重現)
+        strata = (np.arange(n_samples, dtype=np.float64) + 0.5) / n_samples
+        flat_idx = np.searchsorted(cdf, strata)
+        np.clip(flat_idx, 0, flat_weight.size - 1, out=flat_idx)
+        idx_y, idx_x = np.unravel_index(flat_idx, (h, w))
+        src_x = idx_x.astype(np.float32).reshape(out_h, out_w)
+        src_y = idx_y.astype(np.float32).reshape(out_h, out_w)
+        return np.stack([src_x, src_y], axis=-1)
 
     def _uniform_mapping(self, h: int, w: int) -> np.ndarray:
         """均勻採樣 (基準比較)"""

@@ -154,6 +154,18 @@ def set_emotion_threshold_adjustment(adj: float) -> None:
     _EMOTION_ADJ = max(-0.10, min(0.10, float(adj)))
 
 
+def reset_emotion_threshold_adjustment() -> None:
+    """清除上一輪注入的閾值增量，回到 state_store 事件路徑 (Path 1).
+
+    `_EMOTION_ADJ` 是行程級全域，且 Path 0 讓它優先於事件路徑：一旦某輪注入
+    非零值便永遠壓過後續的 emotion.behavioral_adjustment 事件。生產環境每輪都會
+    重新注入，所以那是刻意的；但呼叫端／測試需要一個明確的歸零入口（同
+    ExecutionGate.reset_feedback_stats 的先例），否則一次注入會污染整個行程。
+    """
+    global _EMOTION_ADJ
+    _EMOTION_ADJ = 0.0
+
+
 # ONNX int8 encoder (reuses garden/dictionary export, 2.1x CPU, multilingual).
 # Lazy singleton: None = not probed, False = unavailable (fallback to hash).
 _ONNX_ENCODER: Optional[object] = None

@@ -188,6 +188,33 @@ class GameStrategy:
         elif event_type == "combat_loss":
             self.stats.combat_losses += 1
 
+    @staticmethod
+    def _snapshot_proprioception(prop: Any) -> Dict[str, Any]:
+        """把 proprioception 壓成關鍵數值快照 (可直接存入 _history)."""
+        snapshot: Dict[str, Any] = {}
+        for key in (
+            "health",
+            "max_health",
+            "hunger",
+            "max_hunger",
+            "breath",
+            "yaw",
+            "pitch",
+            "is_on_ground",
+            "is_in_water",
+            "is_in_lava",
+        ):
+            value = getattr(prop, key, None)
+            if value is not None:
+                snapshot[key] = value
+        position = getattr(prop, "position", None)
+        if position is not None:
+            snapshot["position"] = tuple(float(p) for p in position)
+        wielded_item = getattr(prop, "wielded_item", None)
+        if wielded_item:
+            snapshot["wielded_item"] = wielded_item
+        return snapshot
+
     def _record_anomaly(self, reason: str, data: Dict):
         """記錄異常模式"""
         key = f"{reason}:{data.get('context', '')}"
@@ -210,8 +237,8 @@ class GameStrategy:
 
         if state and hasattr(state, "proprioception") and state.proprioception:
             prop = state.proprioception
-            # 記錄當前狀態快照
-            pass
+            # 記錄當前狀態快照 (供長期趨勢／死亡螺旋分析)
+            self.record_event("state_snapshot", self._snapshot_proprioception(prop))
 
         self._adjust_weights()
         self._save_weights()

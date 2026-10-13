@@ -82,15 +82,27 @@ class BlockCoordinator:
             )
             return input_projection  # Degradation
 
+        activations = self._to_hit_activations(input_result)
+
+        # The seed answer is a candidate reply expressed in this block's own
+        # space: let it light up hit sources the query never mentioned (a
+        # cold-start block has no query overlap at all). Query activations
+        # always win, so query-driven routing is unchanged.
         if seed_projection:
             try:
-                seed_result = self._call_engine(seed_projection)
-            except Exception:
-                seed_result = {}
-        else:
-            seed_result = {}
+                seed_activations = self._to_hit_activations(self._call_engine(seed_projection))
+            except Exception as e:
+                logger.debug(
+                    "BlockCoordinator[%s] seed engine failed: %s",
+                    self.block_id,
+                    e,
+                )
+                seed_activations = {}
+            for key, value in seed_activations.items():
+                if not activations.get(key):
+                    activations[key] = value
 
-        return self._to_hit_activations(input_result)
+        return activations
 
     def _call_engine(self, projection: Dict[str, float]) -> Any:
         """Call the underlying SNN engine's forward method."""

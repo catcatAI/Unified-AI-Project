@@ -35,6 +35,11 @@ class AudioSpectralEncoder:
         self._feature_dim = feature_dim or self.FEATURE_DIM
         self._projection: Optional[np.ndarray] = None
 
+    @property
+    def feature_dim(self) -> int:
+        """Output dimension of this encoder's feature vector."""
+        return self._feature_dim
+
     def encode(self, audio_data: bytes) -> np.ndarray:
         """Encode raw audio bytes (WAV or raw PCM) into a feature vector."""
         if not audio_data:
@@ -87,7 +92,15 @@ class AudioSpectralEncoder:
             return np.array([], dtype=np.float32)
 
     def _encode_samples(self, samples: np.ndarray) -> np.ndarray:
-        """Extract spectral features from audio samples."""
+        """Extract spectral features from audio samples (projected)."""
+        return self._project_if_needed(self._extract_raw(samples))
+
+    def _extract_raw(self, samples: np.ndarray) -> np.ndarray:
+        """Compute the raw spectral feature vector before projection.
+
+        Kept separate from projection so ``train_step`` can back-propagate
+        through the projection matrix using the true input features.
+        """
         if len(samples) < 2:
             return np.zeros(self._feature_dim, dtype=np.float32)
 
@@ -139,8 +152,7 @@ class AudioSpectralEncoder:
         attn_features = self._temporal_attention(magnitude)
         features.extend(attn_features)
 
-        raw = np.array(features, dtype=np.float32)
-        return self._project_if_needed(raw)
+        return np.array(features, dtype=np.float32)
 
     def _stft(self, samples: np.ndarray) -> np.ndarray:
         """Simple STFT using numpy."""
@@ -264,18 +276,30 @@ class AudioSpectralEncoder:
         return result
 
     def _project_if_needed(self, raw: np.ndarray) -> np.ndarray:
-        """Project to target dimension if needed."""
-        if len(raw) <= self._feature_dim:
-            padded = np.zeros(self._feature_dim, dtype=np.float32)
-            padded[: len(raw)] = raw
-            return padded
+        """Project to FEATURE_DIM through the learnable projection matrix.
+
+        The matrix is initialised so its output is numerically identical to the
+        historical zero-pad behaviour: ``encode()`` stays stable while the
+        projection becomes trainable by ``train_step``.
+        """
         if self._projection is None or self._projection.shape[1] != len(raw):
-            rng = np.random.default_rng(42)
-            self._projection = rng.normal(
-                0, 1 / np.sqrt(len(raw)), (self._feature_dim, len(raw))
-            ).astype(np.float32)
+            self._projection = self._init_projection(len(raw))
         result: np.ndarray = self._projection @ raw
         return result
+
+    def _init_projection(self, n_raw: int) -> np.ndarray:
+        """Build W with shape ``(feature_dim, n_raw)``.
+
+        - ``n_raw > feature_dim``: seeded random down-projection (unchanged).
+        - ``n_raw <= feature_dim``: identity extension — raw in the leading
+          slots and zeros after, exactly reproducing the old pad output.
+        """
+        if n_raw > self._feature_dim:
+            rng = np.random.default_rng(42)
+            return rng.normal(0, 1 / np.sqrt(n_raw), (self._feature_dim, n_raw)).astype(np.float32)
+        w = np.zeros((self._feature_dim, n_raw), dtype=np.float32)
+        w[:n_raw, :] = np.eye(n_raw, dtype=np.float32)
+        return w
 
     def train_step(
         self, audio_data: bytes, target_latent: Optional[np.ndarray], lr: float = 0.001
@@ -287,43 +311,62 @@ class AudioSpectralEncoder:
 
         Args:
             audio_data: Raw audio bytes (PCM/WAV)
-            target_latent: Target latent vector (64-dim)
+            target_latent: Target latent vector. Any length is accepted and
+                adapted to the encoder output dimension (zero-padded or
+                truncated), so a 64-dim SharedLatentSpace target and a
+                ``feature_dim``-dim target both work.
             lr: Learning rate
 
         Returns:
             Training loss (MSE)
         """
-        # Extract spectral features
+        # Extract raw features (pre-projection) for the gradient
         if not audio_data:
             return 0.0
         try:
             samples = self._decode_audio(audio_data)
-            features = self._encode_samples(samples)
+            raw = self._extract_raw(samples)
         except Exception:
             return 0.0
-        if features is None or np.all(features == 0):
+        if raw.size == 0 or np.all(raw == 0):
             return 0.0
 
-        # Project to feature space (already done in _encode_samples)
-        projected = features
+        # Ensure the projection matrix exists and run it forward
+        projected = self._project_if_needed(raw)
+        assert self._projection is not None
 
         # Compute loss: MSE between projected and target
-        if target_latent is not None:
-            target_trimmed = target_latent[: self._feature_dim]
-        else:
-            target_trimmed = np.zeros(self._feature_dim)
-        diff = projected - target_trimmed
+        target = self._adapt_target(target_latent)
+        diff = projected - target
         loss = float(np.mean(diff**2))
 
-        # Gradient: d(loss)/d(projection) = 2 * diff @ features.T
-        # Update projection: W -= lr * grad
-        grad: np.ndarray = 2.0 * np.outer(diff, features) / self._feature_dim
-        assert self._projection is not None
-        self._projection -= lr * grad
+        # Gradient: d(mean((W @ raw - target)^2)) / dW = 2 * outer(diff, raw) / N
+        # LMS normalisation divides it by the input energy, which keeps `lr`
+        # scale-free: the raw feature families differ by orders of magnitude,
+        # so an unnormalised step diverges for some inputs and not others.
+        grad: np.ndarray = 2.0 * np.outer(diff, raw) / self._feature_dim
+        energy = float(np.dot(raw, raw)) + 1e-8
+        self._projection -= lr * grad * (self._feature_dim / energy)
 
-        # Gradient clipping
-        norm = np.linalg.norm(self._projection)
-        if norm > 10.0:
-            self._projection = self._projection / (norm / 10.0)
+        # Gradient clipping. The identity/random initialisation already has
+        # norm sqrt(min(feature_dim, len(raw))), so the cap has to scale with
+        # the encoder width — a fixed 10 silently destroys the identity map
+        # for feature_dim >= 101.
+        cap = max(10.0, float(np.sqrt(self._feature_dim)))
+        norm = float(np.linalg.norm(self._projection))
+        if norm > cap:
+            self._projection = self._projection * (cap / norm)
 
         return loss
+
+    def _adapt_target(self, target_latent: Optional[np.ndarray]) -> np.ndarray:
+        """Reshape a caller-supplied target to the encoder output dimension."""
+        if target_latent is None:
+            return np.zeros(self._feature_dim, dtype=np.float32)
+        tgt = np.asarray(target_latent, dtype=np.float32).ravel()
+        if tgt.shape[0] == self._feature_dim:
+            return tgt
+        out = np.zeros(self._feature_dim, dtype=np.float32)
+        n = min(int(tgt.shape[0]), self._feature_dim)
+        out[:n] = tgt[:n]
+        return out

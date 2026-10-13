@@ -19,7 +19,6 @@ from .game_structs import (
     SkillID,
     SkillParams,
     SkillResult,
-    SkillSpec,
     SkillTrigger,
     check_preconditions,
     get_available_skills,
@@ -435,27 +434,3 @@ class SkillSelector:
 
         triggers.sort(key=lambda t: t.urgency, reverse=True)
         return triggers[:5]  # Top 5
-
-
-class SkillLibrary:
-    """技能庫管理：註冊、更新、序列化"""
-
-    def __init__(self):
-        self.skills: Dict[SkillID, SkillSpec] = GAME_SKILLS.copy()
-        self.custom_skills: Dict[SkillID, SkillSpec] = {}
-
-    def register(self, skill_id: SkillID, spec: SkillSpec):
-        self.custom_skills[skill_id] = spec
-
-    def get(self, skill_id: SkillID) -> Optional[SkillSpec]:
-        return self.custom_skills.get(skill_id) or self.skills.get(skill_id)
-
-    def all(self) -> Dict[SkillID, SkillSpec]:
-        merged = self.skills.copy()
-        merged.update(self.custom_skills)
-        return merged
-
-    def update_priority(self, skill_id: SkillID, priority: float):
-        if skill_id in self.skills:
-            # 實際上會更新 selector 的 _skill_priorities
-            pass
