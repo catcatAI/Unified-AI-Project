@@ -32,7 +32,7 @@ which conclusions rest on which.
 from __future__ import annotations
 
 import math
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from typing import Any, Dict, List, Optional, Sequence
 
 from .cim_strip_reference import CimStripReferenceModel
@@ -211,9 +211,18 @@ def weight_streaming(claimed: ClaimedArchitecture, interconnect: Interconnect) -
     all of them unless they are resident in L1. If they are not resident, the
     card is bandwidth-bound in exactly the way a GPU is, and the token rate
     becomes an interconnect number rather than a compute number.
+
+    The required bandwidth is scaled by the streamed fraction: a design whose
+    weights are fully resident in L1 streams nothing, so its required weight
+    bandwidth is zero and the interconnect does not bound the token rate.
+    (The un-scaled formula flagged even fully-resident designs as
+    bandwidth-bound — a formula bug that kept the blocking correction
+    permanent regardless of any L1 resize.)
     """
     model = claimed.model_bytes
-    required_gbs = model / claimed.token_latency_s / 1e9
+    resident_fraction = min(1.0, (claimed.card_l1_mb * 1e6) / model) if model else 1.0
+    stream_fraction = 1.0 - resident_fraction
+    required_gbs = (model / claimed.token_latency_s / 1e9) * stream_fraction
     available = {
         "one_pcie_endpoint": interconnect.pcie_gbs_per_direction,
         "card_pcie_both_channels": interconnect.card_pcie_gbs,
@@ -222,7 +231,6 @@ def weight_streaming(claimed: ClaimedArchitecture, interconnect: Interconnect) -
     }
     best_name = max(available, key=lambda key: available[key])
     best = available[best_name]
-    resident_fraction = min(1.0, (claimed.card_l1_mb * 1e6) / model) if model else 1.0
     return {
         "model_bytes": model,
         "required_weight_bandwidth_gbs": required_gbs,
@@ -232,7 +240,7 @@ def weight_streaming(claimed: ClaimedArchitecture, interconnect: Interconnect) -
         "shortfall_x": required_gbs / best if best else float("inf"),
         "achievable_tokens_per_s": best * 1e9 / model if model else 0.0,
         "l1_resident_fraction": resident_fraction,
-        "weights_streamed_per_token_fraction": 1.0 - resident_fraction,
+        "weights_streamed_per_token_fraction": stream_fraction,
         "verdict": (
             "weights are not resident, so the token rate is set by the "
             "interconnect, not by the array"
@@ -240,6 +248,26 @@ def weight_streaming(claimed: ClaimedArchitecture, interconnect: Interconnect) -
             else "weights are resident, so the token rate is set by the array"
         ),
     }
+
+
+def revised_architecture(
+    claimed: Optional[ClaimedArchitecture] = None,
+    density: Density = SRAM_6T_BITCELL_DENSITY,
+) -> ClaimedArchitecture:
+    """The design after applying the audit's own recommended fix (raise L1).
+
+    The audit's bottom line is "Resizing L1 is the larger and cheaper fix":
+    raise L1 until the model + KV cache are resident. This factory computes
+    that size from the residency requirement (not a magic constant) and
+    returns the revised summary. The historical claims stay in
+    ``ClaimedArchitecture()`` defaults so the audit can keep demonstrating
+    that it catches them; the fact gate audits THIS revision for blocking
+    flaws, so the gate answers "is the current revised design consistent?"
+    rather than "did the 2026 strawman ever get fixed?".
+    """
+    base = claimed or ClaimedArchitecture()
+    needed_mb = l1_residency_requirement(base, density=density)["card_capacity_mb"]
+    return replace(base, card_l1_mb=round(needed_mb, 2))
 
 
 def l1_residency_requirement(
@@ -614,6 +642,7 @@ __all__ = [
     "l1_residency_requirement",
     "leakage_requirement",
     "measured_efficiency",
+    "revised_architecture",
     "sense_amplifier_budget",
     "throughput_check",
     "weight_streaming",

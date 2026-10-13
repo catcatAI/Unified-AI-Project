@@ -26,6 +26,7 @@ from ai.hardware.card_architecture_audit import (
     l1_residency_requirement,
     leakage_requirement,
     measured_efficiency,
+    revised_architecture,
     sense_amplifier_budget,
     throughput_check,
     weight_streaming,
@@ -89,15 +90,45 @@ def test_density_record_round_trips() -> None:
 # the bandwidth finding
 # -----------------------------------------------------------------------------
 def test_token_rate_is_bandwidth_bound() -> None:
-    """The headline rate costs more bandwidth than the card can ever supply."""
+    """The headline rate costs more bandwidth than the card can ever supply.
+
+    Required bandwidth is scaled by the streamed fraction (weights that are
+    resident in L1 stream nothing); with 180 MB L1 only 9% of the 2 GB model
+    is resident, so ~91% of the unscaled 9615 GB/s is required.
+    """
     result = weight_streaming(ClaimedArchitecture(), Interconnect())
 
-    assert result["required_weight_bandwidth_gbs"] > 9000.0
+    assert result["weights_streamed_per_token_fraction"] > 0.9
+    assert result["required_weight_bandwidth_gbs"] > 8000.0
     assert result["best_available_gbs"] < 200.0
     assert result["shortfall_x"] > 50.0
     assert result["achievable_tokens_per_s"] < 100.0
     assert result["l1_resident_fraction"] < 0.2
     assert "not resident" in result["verdict"]
+
+
+def test_fully_resident_design_needs_no_weight_bandwidth() -> None:
+    """Regression for the formula bug: a resident design must not be flagged
+    as bandwidth-bound — required bandwidth scales with the streamed
+    fraction, so full residency means zero required weight bandwidth."""
+    revised = revised_architecture()
+    result = weight_streaming(revised, Interconnect())
+
+    assert result["l1_resident_fraction"] >= 0.95
+    assert result["weights_streamed_per_token_fraction"] == pytest.approx(0.0)
+    assert result["required_weight_bandwidth_gbs"] == pytest.approx(0.0)
+    assert result["shortfall_x"] == pytest.approx(0.0)
+    assert "resident" in result["verdict"] and "not resident" not in result["verdict"]
+
+
+def test_revised_architecture_clears_both_blocking_corrections() -> None:
+    """The fact gate audits this revision: raising L1 (the audit's own
+    recommended fix) must clear both blocking corrections."""
+    report = audit(revised_architecture())
+    blocking = [item for item in report["corrections"] if item["severity"] == "blocking"]
+
+    assert blocking == []
+    assert report["recomputed"]["l1_residency"]["shortfall_factor"] == pytest.approx(1.0, rel=0.01)
 
 
 def test_bandwidth_shortfall_is_reported_as_blocking() -> None:
