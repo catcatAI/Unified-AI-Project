@@ -9,18 +9,24 @@ import asyncio
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum, auto
+from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
 
 class SyncEventType(Enum):
-    """Types of sync events."""
+    """Types of sync events.
 
-    STATUS_CHANGE = auto()
-    DATA_UPDATE = auto()
-    SYSTEM_EVENT = auto()
+    Values are the wire-level discriminators: ``SyncEventType("<name>")``
+    must resolve, so every event kind an emitter can name has to exist here.
+    """
+
+    STATUS_CHANGE = "status_change"
+    DATA_UPDATE = "data_update"
+    SYSTEM_EVENT = "system_event"
+    MODULE_CONTROL = "module_control"
+    WALLPAPER_OBJECT_INJECTION = "wallpaper_object_injection"
 
 
 @dataclass

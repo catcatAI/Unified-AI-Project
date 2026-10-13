@@ -28,6 +28,22 @@ class TestLifespanServiceGetters:
         lifespan_module._agent_manager_instance = None
         assert lifespan_module.get_agent_manager() is None
 
+    def test_get_emotion_system_returns_shared_singleton(self):
+        """`get_emotion_system` must hand back the instance chat_routes caches.
+
+        It backs the last-resort branch of
+        `semantic_qa._emotion_threshold_adjustment()`, which probes
+        `api.lifespan` for this name. The getter did not exist, so the probe
+        always returned None and two EmotionSystem instances could coexist.
+        """
+        from core.backbone import get_backbone
+
+        es = lifespan_module.get_emotion_system()
+        assert es is not None
+        assert hasattr(es, "get_emotion_summary")
+        # Same backbone key chat_routes._get_emotion_system() registers under.
+        assert get_backbone().get_module("chat.emotion_system") is es
+
 
 @pytest.mark.asyncio
 class TestChatServiceRetry:

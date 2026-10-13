@@ -4,7 +4,7 @@ Vision API endpoints
 """
 
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Body, HTTPException
 from services.vision_service import VisionService
@@ -76,12 +76,22 @@ async def vision_control(params: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
 
 
 @router.get("/control")
-async def vision_control_get(enabled: bool = True) -> Dict[str, Any]:
-    """Enable/disable the vision module (GET method)."""
-    actual = _vision_service.set_enabled(enabled)
+async def vision_control_get(enabled: Optional[bool] = None) -> Dict[str, Any]:
+    """Read the vision module state (GET method).
+
+    A bare GET must not mutate: the previous signature defaulted to
+    ``enabled=True`` and called ``set_enabled`` unconditionally, so any status
+    probe silently re-enabled the module and made
+    ``POST /mobile/module-control {"enabled": false}`` look like it had not
+    worked.  Passing ``?enabled=...`` still writes, preserving the documented
+    GET control form.
+    """
+    actual = (
+        bool(_vision_service.enabled) if enabled is None else _vision_service.set_enabled(enabled)
+    )
     return {
         "status": "success",
         "module": "vision",
         "enabled": actual,
-        "requested": enabled,
+        "requested": actual if enabled is None else bool(enabled),
     }

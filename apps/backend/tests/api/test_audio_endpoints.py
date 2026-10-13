@@ -73,3 +73,25 @@ def test_audio_control_post_and_get_agree_on_enabled_flag():
     assert resp_get.status_code == 200
     jg = resp_get.json()
     assert jg == {"status": "success", "module": "audio", "enabled": True, "requested": True}
+
+
+def test_audio_control_bare_get_is_a_read_not_a_write():
+    """A status probe must not re-enable the module (same defect as vision)."""
+    client = TestClient(app)
+    try:
+        assert (
+            client.post("/api/v1/audio/control", json={"enabled": False}).json()["enabled"] is False
+        )
+
+        probe = client.get("/api/v1/audio/control")
+        assert probe.status_code == 200
+        j = probe.json()
+        assert j["enabled"] is False, "bare GET must not mutate module state"
+        assert j["requested"] is False
+        assert j["module"] == "audio"
+
+        explicit = client.get("/api/v1/audio/control", params={"enabled": True})
+        assert explicit.status_code == 200
+        assert explicit.json()["enabled"] is True
+    finally:
+        client.post("/api/v1/audio/control", json={"enabled": True})

@@ -75,7 +75,7 @@ async def mobile_module_control(data: Dict[str, Any] = Body(...)) -> dict:
         await sync_manager.broadcast_event(
             SyncEvent(
                 id=str(uuid.uuid4()),
-                event_type=SyncEventType.STATUS_CHANGE,
+                event_type=SyncEventType.MODULE_CONTROL,
                 data={"module": module, "enabled": enabled},
                 source="mobile_app",
             )

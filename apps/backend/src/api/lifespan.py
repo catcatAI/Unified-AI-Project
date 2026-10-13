@@ -271,6 +271,33 @@ def get_causal_reasoning():
     return _causal_reasoning_instance
 
 
+def get_emotion_system():
+    """Get or create the shared EmotionSystem singleton.
+
+    Resolved through the backbone registry under the same module key that
+    ``chat_routes._get_emotion_system()`` uses, so the last-resort branch of
+    ``ai.unified_engine.semantic_qa._emotion_threshold_adjustment()`` observes
+    the instance chat_routes actually applies influence to. That branch probes
+    ``api.lifespan`` for this name; before it existed the probe always returned
+    None and the EmotionSystem fallback could never fire.
+    """
+    try:
+        from core.backbone import get_backbone
+
+        bb = get_backbone()
+        cached = bb.get_module("chat.emotion_system")
+        if cached is not None:
+            return cached
+        from ai.alignment.emotion_system import EmotionSystem
+
+        instance = EmotionSystem()
+        bb.register_module("chat.emotion_system", instance)
+        return instance
+    except Exception as e:
+        logger.warning(f"[EmotionSystem] Unavailable: {e}")
+        return None
+
+
 def get_proactive():
     """Get the ProactiveInteractionSystem singleton (initialized during lifespan startup)."""
     return _proactive_instance
@@ -823,6 +850,27 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     _try_init_crisis()
     _try_init_causal_reasoning()
     _try_init_session_manager()
+
+    # Register the perception sync listeners.
+    # VisionService/AudioService are constructed at *import* time, when no
+    # event loop is running, so their own
+    # `create_task(self._init_sync_listener())` is skipped with a debug log and
+    # `sync_manager._clients` stays empty. /mobile/module-control therefore
+    # broadcast to nobody and the module on/off switch silently did nothing.
+    # Register the two endpoint-owned singletons here, where a loop exists.
+    try:
+        from core.sync.realtime_sync import sync_manager
+
+        await sync_manager.initialize()
+        from api.v1.endpoints import audio as _audio_endpoint
+        from api.v1.endpoints import vision as _vision_endpoint
+
+        await _vision_endpoint._vision_service._init_sync_listener()
+        await _audio_endpoint.get_audio_service()._init_sync_listener()
+        logger.info("[Sync] Listeners registered: %s", sync_manager.get_status()["clients"])
+    except Exception:
+        logger.warning("[Sync] Perception listener registration skipped", exc_info=True)
+
     # TrainingCoordinator owns training execution: its worker dispatches queued
     # samples to the processors registered by each domain owner. Without a
     # processor every sample was deferred forever, so the processors are

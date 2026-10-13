@@ -69,7 +69,19 @@ async def audio_control(params: Dict[str, Any] = Body(...)) -> dict:
 
 
 @router.get("/control")
-async def audio_control_get(enabled: bool = True) -> dict:
-    """控制音頻模組開關（GET 方法支持）"""
-    actual = get_audio_service().set_enabled(enabled)
-    return {"status": "success", "module": "audio", "enabled": actual, "requested": enabled}
+async def audio_control_get(enabled: Optional[bool] = None) -> dict:
+    """讀取音頻模組開關狀態（GET 方法）
+
+    裸 GET 不可寫入：舊簽名預設 ``enabled=True`` 並無條件呼叫 ``set_enabled``，
+    導致任何狀態探測都會靜默把模組重新打開，
+    ``POST /mobile/module-control {"enabled": false}`` 因此看起來沒有生效。
+    明確帶上 ``?enabled=...`` 仍會寫入，保留原有的 GET 控制用法。
+    """
+    svc = get_audio_service()
+    actual = bool(svc.enabled) if enabled is None else svc.set_enabled(enabled)
+    return {
+        "status": "success",
+        "module": "audio",
+        "enabled": actual,
+        "requested": actual if enabled is None else bool(enabled),
+    }

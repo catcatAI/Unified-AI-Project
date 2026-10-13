@@ -21,7 +21,7 @@ from core.perception.auditory_memory import AuditoryMemory
 from core.perception.auditory_sampler import AudioFeatureType, AuditorySampler
 
 try:
-    from core.sync.realtime_sync import SyncEvent, sync_manager
+    from core.sync.realtime_sync import SyncEvent, SyncEventType, sync_manager
 
     _SYNC_AVAILABLE = True
 except ImportError:
@@ -90,11 +90,16 @@ class AudioService:
 
     async def _handle_sync_event(self, event: "SyncEvent") -> None:
         """處理同步事件（模組開關控制）"""
-        if getattr(event, "type", None) == "module_control":
-            data = getattr(event, "data", {}) or {}
-            if data.get("module") == "audio":
-                self.enabled = data.get("enabled", True)
-                logger.info(f"Audio Service enabled status changed to: {self.enabled}")
+        # SyncEventType lives in the same guarded import; the short-circuit
+        # keeps this name-safe if the sync subsystem is unavailable.
+        if not _SYNC_AVAILABLE or event.event_type != SyncEventType.MODULE_CONTROL:
+            return
+        data = event.data or {}
+        module = data.get("module")
+        enabled = data.get("enabled")
+        if module == "audio" and enabled is not None:
+            self.enabled = bool(enabled)
+            logger.info(f"Audio Service enabled status changed to: {self.enabled}")
 
     def set_enabled(self, enabled: bool) -> bool:
         """Enable/disable the audio service. Returns the new enabled state."""
