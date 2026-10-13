@@ -21,10 +21,12 @@ class TestBug7DynamicThresholdImport:
     """
 
     def test_feedback_aggregator_initializes(self):
-        """`_initialize_feedback_aggregator` 不再吞掉 TypeError，且舊錯誤路徑不回歸。
+        """舊錯誤路徑不回歸；死重複檔已刪除（R81 根治升級）。
 
-        驗證舊的 `services.llm.llm_decision_loop` 路徑不存在於源碼，
-        且方法顯式保持 unwired（None）而非假裝初始化成功。
+        驗證舊的 `services.llm.llm_decision_loop` 路徑不存在，
+        `ai.lifecycle.llm_decision_loop` 存在且含 LLMDecisionLoop，
+        且含壞 import 的死重複檔 `ai.core.dynamic_threshold_manager`
+        已被整檔刪除（生產使用的是 core.life.dynamic_parameters）。
         """
         import importlib
 
@@ -34,14 +36,9 @@ class TestBug7DynamicThresholdImport:
         assert importlib.util.find_spec("services.llm.llm_decision_loop") is None
         # 確認 `ai.lifecycle.llm_decision_loop` 存在且含 LLMDecisionLoop
         assert hasattr(real, "LLMDecisionLoop")
-        # 舊錯誤路徑不得回歸；方法必須顯式保持 None（R81）
-        import ai.core.dynamic_threshold_manager as dtm
-
-        source = importlib.import_module(dtm.__name__).__file__
-        with open(source, encoding="utf-8") as f:
-            content = f.read()
-        assert "from services.llm.llm_decision_loop import" not in content
-        assert "self.feedback_aggregator = None" in content
+        # 含壞 import 的死重複檔已整檔刪除（曾靠 source 讀檔斷言，如今檔案不存在
+        # 是更強的回歸保證：路徑消失 = 不可能回歸）
+        assert importlib.util.find_spec("ai.core.dynamic_threshold_manager") is None
 
 
 class TestBug8HAMMissingMethods:
