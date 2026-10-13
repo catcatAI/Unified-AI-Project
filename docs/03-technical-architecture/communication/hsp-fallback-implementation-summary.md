@@ -29,7 +29,7 @@ Protocol）添加了完整的備用協議支持，確保在主HSP協議不可用
 
 ```
 Unified-AI-Project/
-├── src/hsp/
+├── src/core/hsp/
 │   ├── connector.py                    # 增強的HSP連接器
 │   ├── fallback/
 │   │   └── mcp_fallback_protocols.py      # 備用協議實現

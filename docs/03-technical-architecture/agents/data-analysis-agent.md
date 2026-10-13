@@ -3,8 +3,9 @@
 ## Overview
 
 This document provides an overview of the `DataAnalysisAgent` module
-(`src/agents/data_analysis_agent.py`). This agent is a specialized sub-agent
-designed for analyzing data, with a particular focus on CSV files.
+(`src/ai/agents/specialized/data_analysis_agent.py`). This agent is a
+specialized sub-agent designed for analyzing data, with a particular focus on
+CSV files.
 
 ## Purpose
 
@@ -58,4 +59,4 @@ via the `HSPConnector`.
 
 ## Code Location
 
-`src/agents/data_analysis_agent.py`
+`src/ai/agents/specialized/data_analysis_agent.py`

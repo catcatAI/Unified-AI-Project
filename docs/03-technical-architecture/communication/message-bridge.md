@@ -3,7 +3,7 @@
 ## Overview
 
 This document provides an overview of the `MessageBridge` module
-(`src/hsp/bridge/message_bridge.py`). This module acts as a crucial
+(`src/core/hsp/bridge/message_bridge.py`). This module acts as a crucial
 intermediary, bridging messages between the external Heterogeneous Service
 Protocol (HSP) network (via MQTT) and the AI's internal message bus.
 
@@ -64,4 +64,4 @@ communication layers.
 
 ## Code Location
 
-`src/hsp/bridge/message_bridge.py`
+`src/core/hsp/bridge/message_bridge.py`

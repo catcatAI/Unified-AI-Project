@@ -1,8 +1,11 @@
 # Feature Completeness & Implementation Roadmap
 
 > ⚠️ **2026-10 狀態提示**：本文件是**規劃**文件，其「Current
-> State」評估已過時（例如把 Trust management 列為缺失，但
-> `tests/ai/core/test_trust_manager.py` 已存在）。功能成熟度的**唯一權威來源**是
+> State」評估已過時。2026-10-14 稽核更正：其文末「Files Modified/
+> Created」清單所列 14 個檔案（trust_manager / dynamic_threshold_manager /
+> text_understanding / 相關 tests / scripts / IMPLEMENTATION_PLAN 等）
+> **從未落地**——`tests/ai/core/` 下無 test_trust_manager.py， `ai/core/`
+> 下無 trust_manager.py，該區塊僅為歷史計畫殘影。功能成熟度的**唯一權威來源**是
 > [STATUS_MATRIX.md](../STATUS_MATRIX.md)（由 `scripts/gen_status_matrix.py`
 > 生成的視圖）。本文件僅保留作為歷史路線圖。
 
@@ -438,6 +441,9 @@ understanding capabilities.
 ---
 
 ## Files Modified/Created
+
+> ⚠️
+> **歷史計畫殘影（2026-10-14 稽核確認）**：以下 14 個檔案**從未建立**，實際磁碟上皆不存在。保留原文僅供追溯當初規劃範圍，**不要按此清單找檔**。現況以 STATUS_MATRIX.md 為準。
 
 ### Documentation
 

@@ -4,7 +4,7 @@
 
 This document provides an overview of the core data structures and message
 formats for the Heterogeneous Service Protocol (HSP), as defined in
-`src/hsp/types.py`.
+`apps/backend/src/core/hsp/types.py`.
 
 ## Purpose
 
@@ -89,4 +89,4 @@ code readability and maintainability.
 
 ## Code Location
 
-`apps/backend/src/hsp/types.py`
+`apps/backend/src/core/hsp/types.py`

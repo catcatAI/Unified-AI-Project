@@ -3,9 +3,9 @@
 ## Overview
 
 This document provides an overview of the `FallbackConfigLoader` module, defined
-in `src/hsp/utils/fallback_config_loader.py`. This module is responsible for
-loading, managing, and validating configuration settings for the Heterogeneous
-Service Protocol (HSP) fallback communication system.
+in `src/core/hsp/utils/fallback_config_loader.py`. This module is responsible
+for loading, managing, and validating configuration settings for the
+Heterogeneous Service Protocol (HSP) fallback communication system.
 
 ## Purpose
 
@@ -66,4 +66,4 @@ configuration before it is put into use.
 
 ## Code Location
 
-`apps/backend/src/hsp/utils/fallback_config_loader.py`
+`apps/backend/src/core/hsp/utils/fallback_config_loader.py`

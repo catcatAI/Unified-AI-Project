@@ -1,8 +1,10 @@
 # Angela AI Architecture
 
 > **Source of Truth**: This document is the authoritative reference for Angela
-> AI system architecture. **Last Updated**: 2026-06-25 **Derived from**:
-> `docs/FULL_ARCHITECTURE_ANALYSIS.md` **完整感知・認知・執行架構**:
+> AI system architecture. **Last Updated**: 2026-06-25 **Derived from**
+> (archived):
+> [`docs/09-archive/FULL_ARCHITECTURE_ANALYSIS.md`](09-archive/FULL_ARCHITECTURE_ANALYSIS.md)
+> **完整感知・認知・執行架構**:
 > [ANGELA_FULL_ARCHITECTURE.md](architecture/ANGELA_FULL_ARCHITECTURE.md)
 
 ---
@@ -277,13 +279,13 @@ ConceptMapper → GeometricVocabulary → InstanceOptimizer → Render
 
 ## 12. Relevant Documents
 
-| Document                                                        | Purpose                                                       |
-| --------------------------------------------------------------- | ------------------------------------------------------------- |
-| `AGENTS.md`                                                     | Development guide, build/test/lint commands                   |
-| `ANGELA_MATRIX_ANNOTATION_GUIDE.md`                             | Matrix annotation standards (L1-L6, αβγδ εθζη, A/B/C, L0-L11) |
-| `docs/COMPREHENSIVE_REPAIR_ROADMAP.md`                          | Phased repair roadmap (Phase A-F)                             |
-| `docs/OMISSIONS_CHECKLIST.md`                                   | Known omissions and gaps tracker                              |
-| `docs/COMPOSITIONAL_IMAGE_GENERATION_IMPLEMENTATION_SUMMARY.md` | GVV pipeline summary                                          |
-| `docs/06-project-management/plans/PHASE_REVIEW6.md`             | 62.5-round dev log                                            |
-| `docs/06-project-management/plans/PROJECT_HONEST_AUDIT.md`      | Honest project audit (~6.0/10)                                |
-| `CHANGELOG.md`                                                  | Release history                                               |
+| Document                                                                              | Purpose                                                       |
+| ------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| `AGENTS.md`                                                                           | Development guide, build/test/lint commands                   |
+| `ANGELA_MATRIX_ANNOTATION_GUIDE.md`                                                   | Matrix annotation standards (L1-L6, αβγδ εθζη, A/B/C, L0-L11) |
+| `docs/09-archive/auto-archived-2026-08-11/COMPREHENSIVE_REPAIR_ROADMAP.md`            | Phased repair roadmap (Phase A-F) 🗄️ 已歸檔                   |
+| `docs/09-archive/auto-archived-2026-08-11/OMISSIONS_CHECKLIST.md`                     | Known omissions and gaps tracker 🗄️ 已歸檔                    |
+| `docs/09-archive/auto-archived-2026-08-11/COMPOSITIONAL_IMAGE_GENERATION_COMPLETE.md` | GVV pipeline summary 🗄️ 已歸檔                                |
+| `docs/09-archive/auto-archived-2026-08-11/PHASE_REVIEW6.md`                           | 62.5-round dev log 🗄️ 已歸檔                                  |
+| （PROJECT_HONEST_AUDIT.md）                                                           | 已不存在——全庫查無此檔                                        |
+| `CHANGELOG.md`                                                                        | Release history                                               |

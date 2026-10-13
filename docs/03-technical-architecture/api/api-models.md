@@ -3,9 +3,9 @@
 ## Overview
 
 This document provides a comprehensive overview of the Pydantic models defined
-in the `src/services/api_models.py` module. These models serve as the
-standardized data structures for API requests and responses across various
-backend services and integrations within the Unified-AI-Project.
+in the `src/models/api_models.py` module. These models serve as the standardized
+data structures for API requests and responses across various backend services
+and integrations within the Unified-AI-Project.
 
 This module is crucial for ensuring clear, validated, and type-safe data
 exchange through the RESTful APIs. It facilitates robust API development,
@@ -72,4 +72,4 @@ standardized API error response.
 
 ## Code Location
 
-`src/services/api_models.py`
+`src/models/api_models.py`

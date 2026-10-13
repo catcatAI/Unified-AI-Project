@@ -3,7 +3,7 @@
 ## Overview
 
 This document provides an overview of the `ExternalConnector` module
-(`src/hsp/external/external_connector.py`). This module is responsible for
+(`src/core/hsp/external/external_connector.py`). This module is responsible for
 managing the low-level connection to an external MQTT broker, serving as the
 primary transport layer for the Heterogeneous Service Protocol (HSP).
 
@@ -60,4 +60,4 @@ AI system.
 
 ## Code Location
 
-`src/hsp/external/external_connector.py`
+`src/core/hsp/external/external_connector.py`

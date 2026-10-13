@@ -14,10 +14,8 @@ Project 的开发环境，解决"执行后能测试，测试后能执行，执�
 ### 2. 一键设置
 
 ```bash
-# 克隆项目后，运行一键设置
+# 克隆项目后，运行一键设置（安装 Node 依赖 + 后端 Python [standard]）
 pnpm setup
-# 或者
-node scripts/setup.js
 ```
 
 这个命令会：
@@ -141,8 +139,8 @@ pnpm dev:backend
 # 终端 2: 只启动前端
 pnpm dev:frontend
 
-# 终端 3: 测试监控
-node scripts/test-watcher.js
+# 终端 3: 测试监控（简易 watch 循环）
+while true; do clear; pnpm test -x -q; sleep 30; done
 ```
 
 ## 🧪 测试策略
@@ -157,27 +155,23 @@ node scripts/test-watcher.js
 
 #### 后端测试 (pytest)
 
-- 配置文件: `apps/backend/pytest.ini`
-- 测试目录: `apps/backend/tests/`
-- 覆盖率报告: `apps/backend/htmlcov/`
+- 配置文件: `pyproject.toml` `[tool.pytest.ini_options]`（repo 根目录）
+- 测试目录: `tests/`（主套件）＋ `apps/backend/tests/`（后端附加）
+- 覆盖率报告: `pytest --cov=apps/backend/src --cov-report=html`
 
-#### 前端测试 (Jest)
+#### 前端／桌面测试
 
-- 配置文件: `apps/frontend-dashboard/jest.config.js`
-- 测试目录: `apps/frontend-dashboard/__tests__/`
-
-#### 桌面应用测试 (Jest)
-
-- 配置文件: `apps/desktop-app/jest.config.js`
-- 测试目录: `apps/desktop-app/__tests__/`
+- 目前**无独立 JS 测试框架**（desktop-app `package.json` 的 `test` 为 stub）
+- 前端资产的自动化校验在
+  `tests/frontend/`（pytest：asset 完整性、菜单接线、shadowed-method 检查）
+- 共享 JS 以 `pnpm lint:js` + `npx prettier --check` 做静态把关
 
 ### 测试最佳实践
 
 ```bash
 # 运行特定测试
-cd apps/backend
-source venv/bin/activate  # Linux/Mac
-call venv\\Scripts\\activate.bat  # Windows
+source .venv/bin/activate  # Linux/Mac（venv 在 repo 根目录）
+.venv\Scripts\activate.bat  # Windows
 pytest tests/test_specific.py -v
 
 # 运行标记的测试

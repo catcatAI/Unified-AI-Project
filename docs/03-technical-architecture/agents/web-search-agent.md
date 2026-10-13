@@ -3,8 +3,8 @@
 ## Overview
 
 This document provides an overview of the `WebSearchAgent` module
-(`src/agents/web_search_agent.py`). This agent is a specialized sub-agent
-designed for searching the web for information.
+(`src/ai/agents/specialized/web_search_agent.py`). This agent is a specialized
+sub-agent designed for searching the web for information.
 
 ## Purpose
 
@@ -71,4 +71,4 @@ the requester.
 
 ## Code Location
 
-`src/agents/web_search_agent.py`
+`src/ai/agents/specialized/web_search_agent.py`

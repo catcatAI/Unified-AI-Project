@@ -56,13 +56,13 @@
 
 ## 3. 配置體系（分層，非重複）
 
-| 層         | 檔案                                               | 說明                                                         | 誰在用                             |
-| ---------- | -------------------------------------------------- | ------------------------------------------------------------ | ---------------------------------- |
-| 底層載入   | `core/system/config/tiered_loader.py`              | YAML 分層合併＋`write_user_config`                           | 上層                               |
-| 型別化存取 | `core/config_loader.py`（`AngelaConfig`）          | Authority+Learned 雙層語意、意圖關鍵字、路由政策             | router、chat_service、repl、routes |
-| LLM 配置   | `configs/system/llm.default.yaml`＋`llm.user.yaml` | provider/模型/模式（local/cloud）                            | llm_routes、first-run 偵測         |
-| 環境變數   | `.env`                                             | 金鑰類（`SECRET_KEY`、`HSP_ENCRYPTION_KEY` 需真 Fernet key） | AuthMiddleware、HSP security       |
-| 生命狀態   | `data/autonomous_lifecycle_state.json`             | **跨進程共享**（server↔遊戲 agent；R71c）                    | AutonomousLifeCycle 兩端           |
+| 層         | 檔案                                                            | 說明                                                         | 誰在用                             |
+| ---------- | --------------------------------------------------------------- | ------------------------------------------------------------ | ---------------------------------- |
+| 底層載入   | `core/system/config/tiered_loader.py`                           | YAML 分層合併＋`write_user_config`                           | 上層                               |
+| 型別化存取 | `core/config_loader.py`（`AngelaConfig`）                       | Authority+Learned 雙層語意、意圖關鍵字、路由政策             | router、chat_service、repl、routes |
+| LLM 配置   | `apps/backend/configs/system/llm.default.yaml`＋`llm.user.yaml` | provider/模型/模式（local/cloud）                            | llm_routes、first-run 偵測         |
+| 環境變數   | `.env`                                                          | 金鑰類（`SECRET_KEY`、`HSP_ENCRYPTION_KEY` 需真 Fernet key） | AuthMiddleware、HSP security       |
+| 生命狀態   | `data/autonomous_lifecycle_state.json`                          | **跨進程共享**（server↔遊戲 agent；R71c）                    | AutonomousLifeCycle 兩端           |
 
 > 原則：**改配置不踫碼**。使用者配置一律進 `*.user.yaml`／`.env`；
 > `*.default.yaml` 是出廠值不可編輯。

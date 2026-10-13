@@ -3,8 +3,8 @@
 ## Overview
 
 This document provides an overview of the `BaseAgent` class
-(`src/agents/base_agent.py`). This class serves as the foundation for all
-specialized sub-agents within the Unified-AI-Project.
+(`src/ai/agents/base/base_agent.py`). This class serves as the foundation for
+all specialized sub-agents within the Unified-AI-Project.
 
 ## Purpose
 
@@ -62,4 +62,4 @@ will be ready to receive task requests, which will be routed to its
 
 ## Code Location
 
-`src/agents/base_agent.py`
+`src/ai/agents/base/base_agent.py`

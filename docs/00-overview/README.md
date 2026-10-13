@@ -13,29 +13,29 @@
 
 ### 🎮 游戏设计文档
 
-| 文档名称    | 位置                                                         | 描述                | 完成度  |
-| ----------- | ------------------------------------------------------------ | ------------------- | ------- |
-| 游戏概述    | `docs/02-game-design/README.md`                              | Angela's World 总览 | ✅ 完整 |
-| 主设计文档  | `docs/02-game-design/main-design.md`                         | 核心游戏设计        | ✅ 完整 |
-| 角色设计    | `docs/02-game-design/character-design/general-characters.md` | 游戏角色设定        | ✅ 完整 |
-| Angela 设计 | `docs/02-game-design/character-design/angela-design.md`      | AI 角色详细设计     | ✅ 新建 |
-| 游戏系统    | `docs/02-game-design/game-systems.md`                        | 游戏机制设计        | ✅ 完整 |
-| 地图设计    | `docs/02-game-design/map-design.md`                          | 游戏世界设计        | ✅ 完整 |
-| 成功标准    | `docs/02-game-design/success-criteria.md`                    | 游戏成功指标        | ✅ 完整 |
+| 文档名称    | 位置                                                    | 描述                | 完成度  |
+| ----------- | ------------------------------------------------------- | ------------------- | ------- |
+| 游戏概述    | `docs/02-game-design/README.md`                         | Angela's World 总览 | ✅ 完整 |
+| 主设计文档  | `docs/02-game-design/GAME_OVERVIEW.md`                  | 核心游戏设计        | ✅ 完整 |
+| 角色设计    | `docs/02-game-design/CHARACTER_SYSTEM.md`               | 游戏角色设定        | ✅ 完整 |
+| Angela 设计 | `docs/02-game-design/CHARACTER_SYSTEM.md`               | AI 角色详细设计     | ✅ 最新 |
+| 游戏系统    | `docs/02-game-design/SIMULATION_SYSTEMS.md`             | 游戏机制设计        | ✅ 完整 |
+| 地图设计    | `docs/02-game-design/MAP_AND_SCENES.md`                 | 游戏世界设计        | ✅ 完整 |
+| 成功标准    | `docs/06-project-management/status/success-criteria.md` | 游戏成功指标        | ✅ 完整 |
 
 ### 🏗️ 技术架构文档
 
-| 文档名称       | 位置                                                                                         | 描述                           | 复杂度 |
-| -------------- | -------------------------------------------------------------------------------------------- | ------------------------------ | ------ |
-| HSP 规范       | `docs/03-technical-architecture/communication/hsp-specification/01-overview-and-concepts.md` | 异构服务协议                   | 🔴 高  |
-| HAM 设计       | `09-archive/03-technical-architecture-memory-systems/memory-systems/ham-design.md`           | 分层抽象记忆 🗑️ 已歸檔         | 🔴 高  |
-| Fragmenta 设计 | `docs/04-advanced-concepts/fragmenta-design.md`                                              | Fragmenta 架构                 | 🔴 高  |
-| MCP 集成       | `docs/03-technical-architecture/communication/mcp-context7-connector.md`                     | Context7 集成                  | 🟡 中  |
-| 数据标准       | `09-archive/03-technical-architecture-memory-systems/memory-systems/data-standards.md`       | 内部数据格式 🗑️ 已歸檔         | 🟡 中  |
-| 代理协作       | `docs/04-advanced-concepts/agent-collaboration.md`                                           | 代理协作框架                   | 🔴 高  |
-| AVIS 规范      | `docs/04-advanced-concepts/ai-virtual-input.md`                                              | AI 虚拟输入系统                | 🔴 高  |
-| LIS 規範       | `docs/04-advanced-concepts/linguistic-immune-system.md`                                      | 語言免疫系統                   | 🔴 高  |
-| 核心服務概述   | `09-archive/03-technical-architecture-core-services/core-services/overview.md`               | 核心服務初始化與管理 🗑️ 已歸檔 | 🟢 高  |
+| 文档名称       | 位置                                                                                         | 描述                                  | 复杂度 |
+| -------------- | -------------------------------------------------------------------------------------------- | ------------------------------------- | ------ |
+| HSP 规范       | `docs/03-technical-architecture/communication/hsp-specification/01-overview-and-concepts.md` | 异构服务协议                          | 🔴 高  |
+| HAM 设计       | `docs/03-technical-architecture/HAMMemory.md`                                                | 分层抽象记忆（原 ham-design.md 已刪） | 🔴 高  |
+| Fragmenta 设计 | `docs/04-advanced-concepts/fragmenta-design.md`                                              | Fragmenta 架构                        | 🔴 高  |
+| MCP 集成       | `docs/03-technical-architecture/communication/mcp-context7-connector.md`                     | Context7 集成                         | 🟡 中  |
+| 数据标准       | `09-archive/03-technical-architecture-memory-systems/memory-systems/data-standards.md`       | 内部数据格式 🗑️ 已歸檔                | 🟡 中  |
+| 代理协作       | `docs/04-advanced-concepts/agent-collaboration.md`                                           | 代理协作框架                          | 🔴 高  |
+| AVIS 规范      | `docs/04-advanced-concepts/ai-virtual-input.md`                                              | AI 虚拟输入系统                       | 🔴 高  |
+| LIS 規範       | `docs/04-advanced-concepts/linguistic-immune-system.md`                                      | 語言免疫系統                          | 🔴 高  |
+| 核心服務概述   | `09-archive/03-technical-architecture-core-services/core-services/overview.md`               | 核心服務初始化與管理 🗑️ 已歸檔        | 🟢 高  |
 
 ### 🔧 技术规范文档
 
@@ -56,19 +56,19 @@
 
 ### 📊 项目管理文档
 
-| 文档名称 | 位置                                                                                             | 描述         | 重要性    |
-| -------- | ------------------------------------------------------------------------------------------------ | ------------ | --------- |
-| 项目状态 | `docs/06-project-management/status/organization-status.md`                                       | 当前组织状态 | 🟢 高     |
-| 成功标准 | `docs/06-project-management/status/success-criteria.md`                                          | 项目成功指标 | 🟢 高     |
-| 内容组织 | `docs/09-archive/planning-2026-08-13/project-management/planning-docs/content-organization.md`   | 内容组织方式 | 🗄️ 已歸檔 |
-| 状态摘要 | `docs/09-archive/planning-2026-08-13/project-management/planning-docs/project-status-summary.md` | 项目状态总结 | 🗄️ 已歸檔 |
+| 文档名称 | 位置                                                                                             | 描述                   | 重要性    |
+| -------- | ------------------------------------------------------------------------------------------------ | ---------------------- | --------- |
+| 项目状态 | `docs/09-archive/status-files/organization-status.md`                                            | 当前组织状态 🗄️ 已歸檔 | 🟢 高     |
+| 成功标准 | `docs/06-project-management/status/success-criteria.md`                                          | 项目成功指标           | 🟢 高     |
+| 内容组织 | `docs/09-archive/planning-2026-08-13/project-management/planning-docs/content-organization.md`   | 内容组织方式           | 🗄️ 已歸檔 |
+| 状态摘要 | `docs/09-archive/planning-2026-08-13/project-management/planning-docs/project-status-summary.md` | 项目状态总结           | 🗄️ 已歸檔 |
 
 ### 🚧 开发文档
 
-| 文档名称 | 位置                                                                                        | 描述         | 时效性    |
-| -------- | ------------------------------------------------------------------------------------------- | ------------ | --------- |
-| 重构计划 | `docs/06-project-management/reports/merge-restructure-plan.md`                              | 项目重构计划 | 🟡 历史   |
-| 待办事项 | `docs/09-archive/planning-2026-08-13/project-management/planning-docs/todo-placeholders.md` | 开发待办列表 | 🗄️ 已歸檔 |
+| 文档名称 | 位置                                                                                                      | 描述                   | 时效性    |
+| -------- | --------------------------------------------------------------------------------------------------------- | ---------------------- | --------- |
+| 重构计划 | `docs/09-archive/planning-2026-08-13/project-management/implementation-reports/merge-restructure-plan.md` | 项目重构计划 🗄️ 已歸檔 | 🟡 历史   |
+| 待办事项 | `docs/09-archive/planning-2026-08-13/project-management/planning-docs/todo-placeholders.md`               | 开发待办列表           | 🗄️ 已歸檔 |
 
 ## 🎯 按使用场景分类
 
@@ -76,26 +76,26 @@
 
 1. `README.md` - 项目概述
 2. `docs/INDEX.md` - 文档导航
-3. `docs/GLOSSARY.md` - 术语表
+3. `docs/00-overview/GLOSSARY.md` - 术语表
 4. `docs/00-overview/PROJECT_CHARTER.md` - 详细架构
 
 ### 👨‍💻 开发者技术路径
 
 1. `docs/03-technical-architecture/communication/hsp-specification/01-overview-and-concepts.md` - 通信协议
-2. `docs/03-technical-architecture/memory-systems/ham-design.md` - 记忆系统
+2. `docs/03-technical-architecture/HAMMemory.md` - 记忆系统
 3. `docs/03-technical-architecture/` - 技术规范目录
 4. `docs/05-development/testing/` - 测试文档目录
 
 ### 🎮 游戏开发路径
 
 1. `docs/02-game-design/README.md` - 游戏概述
-2. `docs/02-game-design/main-design.md` - 主设计
-3. `docs/02-game-design/character-design/angela-design.md` - Angela 设计
-4. `docs/02-game-design/game-systems.md` - 游戏系统
+2. `docs/02-game-design/GAME_OVERVIEW.md` - 主设计
+3. `docs/02-game-design/CHARACTER_SYSTEM.md` - Angela 设计
+4. `docs/02-game-design/SIMULATION_SYSTEMS.md` - 游戏系统
 
 ### 📊 项目管理路径
 
-1. `docs/06-project-management/status/organization-status.md` - 项目状态
+1. `docs/09-archive/status-files/organization-status.md` - 项目状态（🗄️ 已歸檔）
 2. `docs/06-project-management/` - 管理文档目录
 3. `docs/09-archive/planning-2026-08-13/project-management/planning-docs/todo-placeholders.md` - 待办事项（🗄️ 已歸檔）
 
@@ -111,7 +111,7 @@
 
 - `docs/03-technical-architecture/communication/hsp-specification/01-overview-and-concepts.md` - 过于复杂，需要简化
 - `docs/03-technical-architecture/architecture/` - 部分文档过于技术化
-- `docs/06-project-management/reports/merge-restructure-plan.md` - 历史文档，需要更新
+- `docs/09-archive/planning-2026-08-13/project-management/implementation-reports/merge-restructure-plan.md` - 历史文档（🗄️ 已歸檔）
 
 ### 🔴 需要重点关注的文档
 

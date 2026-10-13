@@ -3,7 +3,7 @@
 ## Overview
 
 This document provides an overview of the `InternalBus` module
-(`src/hsp/internal/internal_bus.py`). This module implements an in-memory
+(`src/core/hsp/internal/internal_bus.py`). This module implements an in-memory
 publish-subscribe message system designed for efficient inter-component
 communication within the AI's single process.
 
@@ -55,4 +55,4 @@ needing to poll or directly query other parts of the system.
 
 ## Code Location
 
-`src/hsp/internal/internal_bus.py`
+`src/core/hsp/internal/internal_bus.py`

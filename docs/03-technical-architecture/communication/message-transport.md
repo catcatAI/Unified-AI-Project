@@ -22,12 +22,12 @@ Heterogeneous Synchronization Protocol (HSP), which allows different AI
 instances to communicate with each other. The `paho-mqtt` library is used to
 communicate with an MQTT broker.
 
-The HSP implementation is located in the `apps/backend/src/hsp/` directory.
+The HSP implementation is located in the `apps/backend/src/core/hsp/` directory.
 
 ## Standard Input/Output
 
-The command-line interface (CLI) in `packages/cli/main.py` uses standard input
-and output to communicate with the user.
+The command-line interface (CLI) in `packages/cli/cli/main.py` uses standard
+input and output to communicate with the user.
 
 ## Fallback Protocol System
 

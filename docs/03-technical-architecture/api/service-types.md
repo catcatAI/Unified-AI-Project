@@ -1,5 +1,9 @@
 # Service Types: Data Structures for Core Services and Simulated Environments
 
+> ⚠️ **模組狀態（2026-10-14 稽核）**：原 `src/services/types.py`
+> 已裁撤，本文所述 `VirtualMouseEventType`
+> 等型別全庫已不存在（AIVirtualInputService 等一併裁撤）。本文僅供歷史追溯。
+
 ## Overview
 
 This document provides a comprehensive overview of the TypedDicts and Literal

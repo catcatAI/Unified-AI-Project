@@ -3,7 +3,7 @@
 ## Overview
 
 This document provides an overview of the `HSPConnector` module
-(`src/hsp/connector.py`). This module is the main connector for the
+(`src/core/hsp/connector.py`). This module is the main connector for the
 Heterogeneous Service Protocol (HSP) and serves as the primary communication
 layer for the entire AI ecosystem.
 
@@ -88,4 +88,4 @@ other components:
 
 ## Code Location
 
-`src/hsp/connector.py`
+`src/core/hsp/connector.py`

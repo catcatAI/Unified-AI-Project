@@ -2,8 +2,8 @@
 
 ## Overview
 
-The `common_types.py` (`src/shared/types/common_types.py`) module serves as a
-central repository for **reusable TypedDicts and Enums** that define the
+The `common_types.py` (`src/core/shared/types/common_types.py`) module serves as
+a central repository for **reusable TypedDicts and Enums** that define the
 structure of data objects exchanged across various components and services
 within the Unified-AI-Project. By centralizing these definitions, the module
 ensures data consistency, enhances type safety, and improves code readability
@@ -128,4 +128,4 @@ role in:
 
 ## Code Location
 
-`src/shared/types/common_types.py`
+`src/core/shared/types/common_types.py`

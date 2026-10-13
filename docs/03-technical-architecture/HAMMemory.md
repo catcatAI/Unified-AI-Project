@@ -9,7 +9,7 @@ Project 的核心記憶架構，目前已完成實現並處於穩定狀態。它
 
 - **完成度**: 100%
 - **版本**: 1.0.0
-- **位置**: `apps/backend/src/ai/memory/ham_memory_manager.py`
+- **位置**: `apps/backend/src/ai/memory/ham_memory/ham_manager.py`
 - **行數**: 約1145行代碼
 
 ### 核心功能

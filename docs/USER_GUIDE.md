@@ -165,19 +165,19 @@ SECRET_KEY=your-secret-key
 
 ### Configuration Files
 
-| File                                | Purpose                                   |
-| ----------------------------------- | ----------------------------------------- |
-| `configs/config.yaml`               | Main server + AI model config             |
-| `configs/system/llm.default.yaml`   | LLM backends, deployment mode, web search |
-| `configs/system/llm.user.yaml`      | User overrides for LLM config             |
-| `configs/system/core.default.yaml`  | Core system defaults                      |
-| `configs/crisis_system_config.json` | Crisis/safety system                      |
-| `configs/personality_profiles/`     | Personality configurations                |
-| `configs/formula_configs/`          | Formula engine configs                    |
+| File                                             | Purpose                                   |
+| ------------------------------------------------ | ----------------------------------------- |
+| `apps/backend/configs/config.yaml`               | Main server + AI model config             |
+| `apps/backend/configs/system/llm.default.yaml`   | LLM backends, deployment mode, web search |
+| `apps/backend/configs/system/llm.user.yaml`      | User overrides for LLM config             |
+| `apps/backend/configs/system/core.default.yaml`  | Core system defaults                      |
+| `apps/backend/configs/crisis_system_config.json` | Crisis/safety system                      |
+| `apps/backend/configs/personality_profiles/`     | Personality configurations                |
+| `apps/backend/configs/formula_configs/`          | Formula engine configs                    |
 
 ### Deployment Modes
 
-Set `deployment.mode` in `configs/system/llm.default.yaml`:
+Set `deployment.mode` in `apps/backend/configs/system/llm.default.yaml`:
 
 - **`local`** — Only local models (no internet needed)
 - **`local+llm`** — Local + cloud LLM (requires API keys)

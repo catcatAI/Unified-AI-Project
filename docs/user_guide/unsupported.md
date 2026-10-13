@@ -45,5 +45,5 @@
 ## 能力誠實拆分
 
 「架構完成度」不等於「模型能力完成度」。智能評分與確定性／神經泛化的拆分見
-`docs/INTELLIGENCE_ASSESSMENT.md`；正式版驗收門檻見
+`docs/06-project-management/INTELLIGENCE_ASSESSMENT.md`；正式版驗收門檻見
 `docs/06-project-management/RELEASE_CRITERIA.md`。

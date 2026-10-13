@@ -3,7 +3,7 @@
 ## Overview
 
 This document provides an overview of the `DataAligner` module, defined in
-`src/hsp/bridge/data_aligner.py`. This module is a critical component
+`src/core/hsp/bridge/data_aligner.py`. This module is a critical component
 responsible for validating and aligning incoming messages against predefined
 schemas within the Heterogeneous Service Protocol (HSP).
 
@@ -47,7 +47,7 @@ returned, indicating the nature of the discrepancy.
 
 ## Integration with Other Modules
 
-- **HSP Type Definitions (`src/hsp/types.py`)**: The `DataAligner` relies
+- **HSP Type Definitions (`src/core/hsp/types.py`)**: The `DataAligner` relies
   heavily on the `TypedDict` definitions (like `HSPMessageEnvelope`,
   `HSPFactPayload`, etc.) from the `hsp.types` module. These definitions serve
   as the implicit schemas against which incoming messages are validated.
@@ -58,4 +58,4 @@ returned, indicating the nature of the discrepancy.
 
 ## Code Location
 
-`apps/backend/src/hsp/bridge/data_aligner.py`
+`apps/backend/src/core/hsp/bridge/data_aligner.py`

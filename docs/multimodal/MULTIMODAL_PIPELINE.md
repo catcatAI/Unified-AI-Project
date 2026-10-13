@@ -244,7 +244,7 @@ pytest tests/benchmarks/test_multimodal_stress.py -v --timeout=120
 pytest tests/ai/multimodal/test_multilingual_multimodal.py -v
 
 # All tests
-pytest tests/services/test_cross_modal.py tests/services/test_multimodal_service.py tests/api/test_multimodal_routes.py tests/ai/vision/test_vision_pipeline.py tests/ai/audio/test_audio_pipeline.py tests/services/test_multimodal_production.py tests/services/test_multimodal_integration.py -v
+pytest tests/services/test_cross_modal.py tests/services/test_multimodal_service.py tests/api/test_multimodal_routes.py tests/ai/vision/test_vision_pipeline.py tests/services/test_audio_service.py tests/services/test_multimodal_production.py tests/services/test_multimodal_integration.py -v
 ```
 
 ## File Map
@@ -293,14 +293,13 @@ tests/
 │   ├── test_multimodal_service.py    P30: 27 tests
 │   ├── test_cross_modal.py           P33: 25 tests
 │   ├── test_multimodal_production.py P37: 23 tests
-│   └── test_multimodal_integration.py P38: 10 tests (NEW)
+│   ├── test_multimodal_integration.py P38: 10 tests (NEW)
+│   └── test_audio_service.py         P32: 15 tests（音訊管線測試）
 ├── api/
 │   └── test_multimodal_routes.py     P30: 9 tests
 ├── ai/
 │   ├── vision/
 │   │   └── test_vision_pipeline.py   P31: 20 tests
-│   ├── audio/
-│   │   └── test_audio_pipeline.py    P32: 20 tests
 │   ├── multimodal/
 │   │   ├── test_continuous_multimodal_learning.py P36: 20 tests
 │   │   └── test_multilingual_multimodal.py P38: 8 tests (NEW)

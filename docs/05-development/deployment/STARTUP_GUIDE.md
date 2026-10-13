@@ -74,10 +74,10 @@ pnpm dev:dashboard
 
 ```bash
 # 杀死占用8000端口的进程（后端）
-node scripts/port_manager.js kill-service BACKEND_API
+python3 packages/cli/cli/port_manager.py kill-service BACKEND_API
 
 # 杀死占用3000端口的进程（前端）
-node scripts/port_manager.js kill-service FRONTEND_DASHBOARD
+python3 packages/cli/cli/port_manager.py kill-service FRONTEND_DASHBOARD
 ```
 
 ### 2. 依赖安装失败

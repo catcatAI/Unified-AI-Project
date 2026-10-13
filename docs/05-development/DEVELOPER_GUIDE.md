@@ -310,7 +310,8 @@ async def create_user(user: UserCreate):
 
 ### API Documentation
 
-Update `docs/API_ENDPOINTS.md` when adding new endpoints.
+Update `docs/03-technical-architecture/api/API_ENDPOINTS.md` when adding new
+endpoints.
 
 ## Component Development
 

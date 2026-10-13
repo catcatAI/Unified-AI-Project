@@ -1,5 +1,9 @@
 # ImageGenerationAgent: Specialized Agent for Image Creation
 
+> ⚠️ **模組狀態（2026-10-14 稽核）**：`src/agents/image_generation_agent.py`
+> 已裁撤，現行入口為 `services/handlers/image_generation_handler.py` ＋
+> `api/routes/image_generation_routes.py`。其餘段落為歷史設計描述。
+
 ## Overview
 
 This document provides an overview of the `ImageGenerationAgent` module

@@ -3,9 +3,9 @@
 ## Overview
 
 This document provides an overview of the `CreativeWritingAgent` module
-(`src/agents/creative_writing_agent.py`). This agent is a specialized sub-agent
-designed to handle creative writing tasks, such as generating marketing copy,
-short stories, or polishing existing text.
+(`src/ai/agents/specialized/creative_writing_agent.py`). This agent is a
+specialized sub-agent designed to handle creative writing tasks, such as
+generating marketing copy, short stories, or polishing existing text.
 
 ## Purpose
 
@@ -64,4 +64,4 @@ original requester via the `HSPConnector`.
 
 ## Code Location
 
-`src/agents/creative_writing_agent.py`
+`src/ai/agents/specialized/creative_writing_agent.py`

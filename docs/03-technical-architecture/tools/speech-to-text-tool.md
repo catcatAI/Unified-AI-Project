@@ -1,5 +1,11 @@
 # SpeechToTextTool: Recognizing Speech from Audio
 
+> ⚠️ **路徑狀態（2026-10-14 稽核）**：原 `apps/backend/src/tools/`
+> 目錄已於重構中裁撤，本文的 `src/tools/...` 路徑全部失效。現行工具面為
+> `core/tools/`（web_search_tool / parameter_extractor / js_tool_dispatcher）＋
+> `services/handlers/*_handler.py` ＋ `api/routes/*_routes.py` ＋
+> `ai/agents/specialized/`。其餘段落為歷史設計描述。
+
 ## Overview
 
 This document provides an overview of the `speech_to_text_tool.py` module

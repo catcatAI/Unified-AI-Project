@@ -5,19 +5,20 @@
 知識圖譜 (Knowledge Graph, KG) 是 Unified
 AI 系統中一個核心的 AI 元件，其目標是將非結構化的資訊（如純文字）轉化為一個由「實體 (Entities)」和「關係 (Relationships)」組成的結構化網路。這使得 AI 不僅能理解文字的表面含義，更能推理實體之間的深層連結，從而做出更智慧的決策。
 
-此系統主要由兩部分構成：
+此系統在文件上規劃為兩部分：
 
-1.  **資料結構 (Data Structures)**: 在
-    `apps/backend/src/ai/knowledge_graph/types.py`
-    中定義，為知識圖譜提供了標準化的綱要 (schema)。
+1.  **資料結構 (Data Structures)**: 規劃中的綱要 (schema) 為 `KGEntity` /
+    `KGRelationship` / `KnowledgeGraph` 三個 `TypedDict`。⚠️
+    **2026-10-14 稽核更正**：全庫**無**
+    `knowledge_graph/types.py`，也無上述型別定義——此節描述的是**規劃中的 schema**，非現有程式碼。
 2.  **互動代理 (Agent)**: 在
     `apps/backend/src/ai/agents/specialized/knowledge_graph_agent.py`
-    中實現，作為系統其他部分與知識圖譜功能互動的統一介面。
+    中實現，作為系統其他部分與知識圖譜功能互動的統一介面（唯一實際存在的部分）。
 
-## 1. 資料結構 (`types.py`)
+## 1. 資料結構（規劃中的 schema，尚未落地）
 
-為了確保資料的一致性和可預測性，知識圖譜的結構使用了 Python 的 `TypedDict`
-進行了嚴格定義。
+以下欄位定義為**設計目標**，確保未來資料的一致性和可預測性；目前程式碼中並無對應的
+`TypedDict`（見上方稽核更正）。
 
 - **`KGEntity`
   (實體)**: 代表圖譜中的一個節點，例如「巴黎」、「愛因斯坦」或一個抽象概念。其關鍵欄位包括：

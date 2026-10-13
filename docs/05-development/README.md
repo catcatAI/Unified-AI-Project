@@ -213,7 +213,7 @@ When adding new features or making significant changes, update the
 documentation:
 
 1. **API Documentation**: Update API endpoint documentation in
-   `docs/API_ENDPOINTS.md`.
+   `docs/03-technical-architecture/api/API_ENDPOINTS.md`.
 2. **User Guides**: Update user guides in the `docs/` directory.
 3. **Technical Documentation**: Update technical documentation in the
    appropriate sections.
