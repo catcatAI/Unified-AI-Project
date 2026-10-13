@@ -18,9 +18,14 @@ class FallbackConfigLoader:
         "hsp_fallback": {
             "enabled": True,
             "protocols": {
+                # HTTP disabled by default (2026-10-13): outbound sends require
+                # peer endpoints registered via add_endpoint() — none are, so it
+                # could never deliver; meanwhile every connector would bind
+                # 127.0.0.1:8765 (port conflicts under parallel tests). Enable
+                # explicitly once real peer endpoints exist.
                 "http": {
                     "priority": 3,
-                    "enabled": True,
+                    "enabled": False,
                     "host": "127.0.0.1",
                     "port": 8765,
                     "timeout": 30,

@@ -33,9 +33,12 @@ from .external.external_connector import ExternalConnector
 # Type alias for external connector (can be real or mock)
 ExternalConnectorType = Union[ExternalConnector, MagicMock]
 from .fallback.fallback_protocols import (
+    FallbackMessage,
     FileBasedProtocol,
     HTTPProtocol,
     InMemoryProtocol,
+    MessagePriority,
+    get_fallback_manager,
 )
 from .internal.internal_bus import InternalBus
 from .performance_optimizer import HSPPerformanceEnhancer, HSPPerformanceOptimizer
@@ -145,7 +148,7 @@ class HSPConnector:
         self.broker_address = broker_address
         self.broker_port = broker_port
         self.enable_fallback = enable_fallback
-        self.fallback_manager = None
+        self.fallback_manager: Optional[Any] = None  # FallbackProtocolManager | None
         self.fallback_initialized = False
         self.logger = logging.getLogger(__name__)
         self.hsp_available = False
@@ -411,8 +414,16 @@ class HSPConnector:
         if hasattr(self, "external_connector") and hasattr(self.external_connector, "connect"):
             success = await self.external_connector.connect()
             self.is_connected = success
+            if not success:
+                self.logger.warning(
+                    "HSPConnector: broker connect failed; fallback protocols will be used"
+                )
+            if self.enable_fallback:
+                await self._initialize_fallback_protocols()
             return success
         self.is_connected = True
+        if self.enable_fallback:
+            await self._initialize_fallback_protocols()
         return True
 
     @property
@@ -534,11 +545,10 @@ class HSPConnector:
 
         if self.fallback_manager:
             try:
-                # 修复：确保正确调用shutdown方法(不是异步方法)
-                if hasattr(self.fallback_manager, "shutdown") and callable(
-                    self.fallback_manager.shutdown
-                ):
-                    self.fallback_manager.shutdown()
+                # shutdown() is async on FallbackProtocolManager (the migration
+                # era code called it synchronously — that only created a
+                # coroutine and never stopped anything).
+                await self.fallback_manager.shutdown()
                 self.logger.info("HSPConnector: Fallback manager shut down.")
             except (
                 Exception
@@ -579,11 +589,7 @@ class HSPConnector:
 
         if self.fallback_manager and self.fallback_initialized:
             try:
-                # 修复：确保正确调用shutdown方法(不是异步方法)
-                if hasattr(self.fallback_manager, "shutdown") and callable(
-                    self.fallback_manager.shutdown
-                ):
-                    self.fallback_manager.shutdown()
+                await self.fallback_manager.shutdown()
             except (
                 Exception
             ) as e:  # broad exception acceptable: fallback shutdown may raise various errors
@@ -601,24 +607,62 @@ class HSPConnector:
             ) as e:  # broad exception acceptable: callback execution may raise various errors
                 self.logger.warning(f"HSPConnector: disconnect callback error: {e}", exc_info=True)
 
-    async def _initialize_protocols_with_config(self, config: Dict[str, Any]) -> bool:
+    async def _initialize_fallback_protocols(self) -> None:
+        """Initialize fallback protocols from config (called by connect()).
+
+        The monorepo migration dropped this method entirely, leaving
+        ``fallback_manager`` permanently None — every fallback branch in this
+        connector was dead code.
         """
-        Initializes the individual fallback protocols based on the provided configuration.
-        """
+        if not self.enable_fallback:
+            return
         try:
+            from .utils.fallback_config_loader import get_config_loader
+
+            config_loader = get_config_loader()
+            if not config_loader.is_fallback_enabled():
+                self.logger.info("Fallback protocols disabled in configuration")
+                return
+
+            fallback_config = config_loader.get_fallback_config()
+            self.fallback_manager = get_fallback_manager()
+
+            success = await self._initialize_protocols_with_config(fallback_config)
+            if success:
+                self.fallback_initialized = True
+                message_config = fallback_config.get("message", {})
+                self.fallback_manager.health_check_interval = int(
+                    message_config.get("health_check_interval", 30)
+                )
+                # Typed registration — the manager delivers "hsp_message"
+                # inbounds to this handler (same contract as the old tree).
+                self.fallback_manager.register_handler("hsp_message", self._handle_fallback_message)
+                self.logger.info("HSP fallback protocols initialized")
+            else:
+                self.logger.error("HSP fallback protocol initialization failed")
+        except Exception as e:
+            self.logger.error(f"Error initializing fallback protocols: {e}", exc_info=True)
+
+    async def _initialize_protocols_with_config(self, config: Dict[str, Any]) -> bool:
+        """Initialize individual fallback protocols from config."""
+        try:
+            if not self.fallback_manager:
+                return False
             protocols_config = config.get("protocols", {})
 
             # Initialize in-memory protocol
             memory_config = protocols_config.get("memory", {})
-            if memory_config.get("enabled", True) and self.fallback_manager:
-                memory_protocol = InMemoryProtocol()
+            if memory_config.get("enabled", True):
+                memory_protocol = InMemoryProtocol(
+                    max_queue_size=int(memory_config.get("queue_size", 1000))
+                )
                 priority = memory_config.get("priority", 1)
                 self.fallback_manager.add_protocol(memory_protocol, priority=priority)
                 self.logger.debug(f"Added memory protocol with priority {priority}")
 
             # Initialize file-based protocol
             file_config = protocols_config.get("file", {})
-            if file_config.get("enabled", True) and self.fallback_manager:
+            if file_config.get("enabled", True):
                 base_path = file_config.get("base_path", "data/fallback_comm")
                 # Anchor relative paths to the repo data root, not CWD
                 # (audit 2026-10-11: same split-brain class as vector store).
@@ -637,43 +681,95 @@ class HSPConnector:
                 self.fallback_manager.add_protocol(file_protocol, priority=priority)
                 self.logger.debug(f"Added file protocol with priority {priority}")
 
-            # Initialize HTTP protocol
+            # Initialize HTTP protocol (disabled by default in config: needs
+            # registered peer endpoints; binds a port).
             http_config = protocols_config.get("http", {})
-            if http_config.get("enabled", True) and self.fallback_manager:
+            if http_config.get("enabled", False):
                 host = http_config.get("host", "127.0.0.1")
-                # Check TESTING env var here as well
                 port = 0 if os.environ.get("TESTING") == "true" else http_config.get("port", 8765)
                 http_protocol = HTTPProtocol(host=host, port=port)
                 priority = http_config.get("priority", 3)
                 self.fallback_manager.add_protocol(http_protocol, priority=priority)
                 self.logger.debug(f"Added HTTP protocol with priority {priority}")
 
-            # Initialize and start the fallback manager
-            if self.fallback_manager:
-                # 修复：确保正确调用initialize和start方法(不是异步方法)
-                if (
-                    hasattr(self.fallback_manager, "initialize")
-                    and callable(self.fallback_manager.initialize)
-                    and hasattr(self.fallback_manager, "start")
-                    and callable(self.fallback_manager.start)
-                ):
-                    # Continue with the rest of the logic
-                    init_result = self.fallback_manager.initialize()
-                    if init_result:
-                        self.fallback_manager.start()
-                        return True
-                    else:
-                        return False
-                else:
-                    return False
-            else:
+            # Initialize and start the manager (both are async — the migration
+            # era code called them synchronously, which only created coroutines
+            # and left every protocol uninitialized).
+            if not self.fallback_manager.protocols:
+                self.logger.warning("No fallback protocols enabled in config")
                 return False
+            if await self.fallback_manager.initialize():
+                await self.fallback_manager.start()
+                return True
+            return False
 
         except (
             Exception
         ) as e:  # broad exception acceptable: protocol initialization involves multiple operations that may fail
             self.logger.error(f"Error initializing protocols with config: {e}", exc_info=True)
             return False
+
+    async def _send_via_fallback(self, topic: str, envelope: Dict[str, Any], qos: int = 1) -> bool:
+        """Send an HSP envelope through the fallback protocols.
+
+        ``envelope`` is typed as a plain dict because the ACK-timeout call
+        site passes ``dict(envelope)`` (a widened copy of the TypedDict).
+        """
+        if not self.fallback_manager:
+            return False
+
+        try:
+            priority = MessagePriority.NORMAL
+            qos_params = envelope.get("qos_parameters") or {}
+            if qos >= 2:
+                priority = MessagePriority.HIGH
+            elif qos_params.get("priority") == "high":
+                priority = MessagePriority.HIGH
+            elif qos_params.get("priority") == "low":
+                priority = MessagePriority.LOW
+
+            # Keyword args: the pre-monorepo call passed sender_id as the
+            # first positional against a recipient_id-first signature —
+            # a TypeError on every degraded send.
+            success = bool(
+                await self.fallback_manager.send_message(
+                    recipient_id=envelope.get("recipient_ai_id", "unknown"),
+                    message_type="hsp_message",
+                    payload={"topic": topic, "envelope": dict(envelope), "qos": qos},
+                    priority=priority,
+                    correlation_id=envelope.get("correlation_id"),
+                    sender_id=envelope.get("sender_ai_id", self.ai_id),
+                )
+            )
+
+            if success:
+                self.logger.debug(f"Message sent via fallback: {envelope.get('message_id')}")
+            else:
+                self.logger.error(
+                    f"Failed to send message via fallback: {envelope.get('message_id')}"
+                )
+            return success
+
+        except Exception as e:
+            self.logger.error(f"Error sending via fallback: {e}", exc_info=True)
+            return False
+
+    async def _handle_fallback_message(self, message: FallbackMessage) -> None:
+        """Route an inbound fallback message into the message bridge.
+
+        MessageBridge.handle_external_message is sync and takes a single
+        dict (the pre-monorepo tree had an async (topic, payload) signature).
+        """
+        try:
+            payload = message.payload
+            envelope = payload.get("envelope")
+            if envelope:
+                self.message_bridge.handle_external_message(
+                    {"topic": payload.get("topic", ""), "payload": envelope}
+                )
+                self.logger.debug(f"Processed fallback message: {message.id}")
+        except Exception as e:
+            self.logger.error(f"Error handling fallback message: {e}", exc_info=True)
 
     def get_communication_status(self) -> Dict[str, Any]:
         """
@@ -687,11 +783,7 @@ class HSPConnector:
         }
 
         if self.fallback_manager:
-            # 修复：确保正确调用get_status方法(不是异步方法)
-            if hasattr(self.fallback_manager, "get_status") and callable(
-                self.fallback_manager.get_status
-            ):
-                status["fallback_status"] = self.fallback_manager.get_status()
+            status["fallback_status"] = self.fallback_manager.get_status()
 
         return status
 
