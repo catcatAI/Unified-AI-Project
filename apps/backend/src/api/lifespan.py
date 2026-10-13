@@ -812,7 +812,7 @@ def _memory_backend_from_chat():
     return None
 
 
-def _try_start_proactive() -> None:
+async def _try_start_proactive() -> None:
     global _proactive_instance
     try:
         from ai.lifecycle.proactive_interaction_system import ProactiveInteractionSystem
@@ -831,7 +831,10 @@ def _try_start_proactive() -> None:
             user_monitor=user_monitor,
             broadcast_callback=_broadcast_proactive,
         )
-        asyncio.create_task(_proactive_instance.start())
+        # await instead of floating create_task: start() returns promptly after
+        # spawning self._proactive_task internally; a detached create_task here
+        # could be GC'd before running (event loop only holds weak refs).
+        await _proactive_instance.start()
         logger.info("[ProactiveInteractionSystem] Started with WebSocket broadcast")
     except Exception:
         logger.warning("[Proactive] Init skipped — will not run proactively", exc_info=True)
@@ -911,7 +914,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         )
 
     # Start ProactiveInteractionSystem (Angela can initiate conversations)
-    _try_start_proactive()
+    await _try_start_proactive()
 
     # Pre-initialize ChatService at startup so its (potentially slow) memory
     # backends (e.g. chromadb PersistentClient) are warmed up before the first

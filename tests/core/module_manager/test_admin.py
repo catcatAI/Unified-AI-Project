@@ -108,7 +108,10 @@ class TestAdminEndpointLogic:
             assert mod_name in response["graph"]
         await m.stop()
 
-    @pytest.mark.skip("ModuleManager admin endpoint logic: modules path not configured correctly")
+    @pytest.mark.skip(
+        "apps/backend/src/modules/ does not exist — no modules to scan; "
+        "ModuleManager detail endpoint has no live module to report on"
+    )
     async def test_admin_module_detail_shape(self):
         mod_path = Path(__file__).resolve().parent.parent.parent.parent / "apps/backend/src/modules"
         m = ModuleManager(scan_paths=[mod_path])

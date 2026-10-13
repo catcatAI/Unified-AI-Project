@@ -69,13 +69,11 @@ def test_theta_router_cascade_no_registry():
     assert result["status"] == "skip"
 
 
-@pytest.mark.skip("TODO: PortRegistry class not yet implemented in axis_port_registry.py")
 def test_theta_router_cascade_empty_outputs():
-    pytest.importorskip("core.engine.axis_port_registry")
-    from core.engine.axis_port_registry import PortDirection, PortRegistry
+    from core.engine.axis_port_registry import PortRegistry
 
-    registry = PortRegistry(state_adapter=None)
-    registry.register(name="test", direction=PortDirection.IO, semantic_vector=make_vector())
+    registry = PortRegistry()
+    registry.register_port("test", {"direction": "IO", "semantic_vector": make_vector()})
 
     router = ThetaRouter(state_adapter=None, port_registry=registry)
     result = router.cascade_output("nonexistent_axis", {"data": 1.0})

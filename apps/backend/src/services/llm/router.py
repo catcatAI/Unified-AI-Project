@@ -654,8 +654,8 @@ class AngelaLLMService:
         meta["cached"] = True
         try:
             response.metadata = meta
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Response metadata cache flag not set (frozen object?): {e}")
         self._response_cache[key] = (time.time() + ttl, response)
         self._response_cache.move_to_end(key)
         while len(self._response_cache) > max_size:
@@ -1297,8 +1297,8 @@ class AngelaLLMService:
             if getattr(used_type, "value", "") == "llamacpp-qwen":
                 self._qwen_healthy = False
                 self._qwen_last_check = time.time()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"qwen health flag update failed for {used_type}: {e}")
         remaining = list(self.backends.keys())
         if remaining:
             self._pick_best_backend(remaining)
@@ -1439,59 +1439,68 @@ class AngelaLLMService:
             from services.handlers.vision_handler import VisionHandler
             from services.handlers.web_search_handler import WebSearchHandler
             from services.handlers.workspace_mount_handler import WorkspaceMountHandler
-
-            bus = self.model_bus
-            if bus is None:
-                return
-            bus.register_handler("file_ops", FileOperationHandler(), ["file"])
-            bus.register_handler("web_search", WebSearchHandler(), ["search"])
-            bus.register_handler("code_exec", CodeExecutionHandler(), ["code", "execute"])
-            bus.register_handler("system_cmd", SystemCommandHandler(), ["system"])
-            bus.register_handler("task_mgr", TaskManagerHandler(), ["task"])
-            bus.register_handler("vision", VisionHandler(), ["vision"])
-            bus.register_handler("image_generate", ImageGenerationHandler(), ["image_generation"])
-            bus.register_handler("learning", LearningHandler(), ["learn", "remember"])
-            bus.register_handler("workspace", WorkspaceMountHandler(), ["mount", "workspace"])
-            bus.register_handler(
-                "civil",
-                CivilModelHandler(),
-                [
-                    "beam",
-                    "bridge",
-                    "column",
-                    "slab",
-                    "concrete",
-                    "CAD",
-                    "STEP",
-                    "STL",
-                    "DXF",
-                    "box",
-                    "tbeam",
-                    "steel",
-                    "truss",
-                    "prestress",
-                    "梁",
-                    "柱",
-                    "板",
-                    "橋",
-                    "箱",
-                    "鋼",
-                    "桁架",
-                    "預力",
-                    "预力",
-                    "護欄",
-                    "支座",
-                    "混凝土",
-                    "建模",
-                    "出圖",
-                    "計算",
-                ],
-            )
-            logger.info(
-                "Model Bus handlers registered: file_ops, web_search, code_exec, system_cmd, task_mgr, vision, image_generate, learning, civil"
-            )
         except Exception as e:
-            logger.warning(f"Model Bus handler registration skipped: {e}")
+            logger.warning(f"Model Bus handler imports failed: {e}")
+            return
+
+        bus = self.model_bus
+        if bus is None:
+            return
+
+        civil_intents = [
+            "beam",
+            "bridge",
+            "column",
+            "slab",
+            "concrete",
+            "CAD",
+            "STEP",
+            "STL",
+            "DXF",
+            "box",
+            "tbeam",
+            "steel",
+            "truss",
+            "prestress",
+            "梁",
+            "柱",
+            "板",
+            "橋",
+            "箱",
+            "鋼",
+            "桁架",
+            "預力",
+            "预力",
+            "護欄",
+            "支座",
+            "混凝土",
+            "建模",
+            "出圖",
+            "計算",
+        ]
+        registrations = [
+            ("file_ops", FileOperationHandler, ["file"]),
+            ("web_search", WebSearchHandler, ["search"]),
+            ("code_exec", CodeExecutionHandler, ["code", "execute"]),
+            ("system_cmd", SystemCommandHandler, ["system"]),
+            ("task_mgr", TaskManagerHandler, ["task"]),
+            ("vision", VisionHandler, ["vision"]),
+            ("image_generate", ImageGenerationHandler, ["image_generation"]),
+            ("learning", LearningHandler, ["learn", "remember"]),
+            ("workspace", WorkspaceMountHandler, ["mount", "workspace"]),
+            ("civil", CivilModelHandler, civil_intents),
+        ]
+        # Per-handler isolation: one failing constructor/registration must not
+        # prevent the remaining handlers from registering (previously a single
+        # try wrapped all 10 — a mid-list failure silently unregistered the rest).
+        registered = []
+        for name, handler_cls, intents in registrations:
+            try:
+                bus.register_handler(name, handler_cls(), intents)
+                registered.append(name)
+            except Exception as e:
+                logger.warning(f"Model Bus handler '{name}' registration failed: {e}")
+        logger.info("Model Bus handlers registered: %s", ", ".join(registered))
 
     def _init_meta_controller(self):
         try:
@@ -2665,8 +2674,8 @@ class AngelaLLMService:
                         _intensity = _ea_result.get("intensity", 0.0)
                         if _detected and _intensity > 0.3:
                             _emotion_cat = _emotion_to_category.get(_detected)
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug(f"EmotionAnalyzer skipped (routing falls through): {e}")
                     if _emotion_cat and _factual_query:
                         _emotion_cat = None
                     if _emotion_cat:
@@ -2695,8 +2704,8 @@ class AngelaLLMService:
                                     hit_source="emotion-analyzer",
                                     route="COMPOSED",
                                 )
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            logger.debug(f"Composed emotion template failed, falling through: {e}")
                     # Structural pattern fallback for greeting/farewell only
                     _PATTERN_CATEGORY = {
                         "farewell": [
@@ -2755,14 +2764,14 @@ class AngelaLLMService:
                                         hit_source="pattern-category",
                                         route="COMPOSED",
                                     )
-                                except Exception:
-                                    pass
+                                except Exception as e:
+                                    logger.debug(f"Composed pattern template failed: {e}")
                                 break
                         else:
                             continue
                         break
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"Pattern-category fallback block failed: {e}")
 
             match_result = self.template_matcher.match(user_message, context)
             match_score = match_result.score
