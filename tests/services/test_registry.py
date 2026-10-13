@@ -8,6 +8,9 @@ class TestLLMBackend:
     def test_has_llamacpp(self):
         assert LLMBackend.LLAMA_CPP.value == "llamacpp"
 
+    def test_has_llamacpp_qwen(self):
+        assert LLMBackend.LLAMA_CPP_QWEN.value == "llamacpp-qwen"
+
     def test_has_ollama(self):
         assert LLMBackend.OLLAMA.value == "ollama"
 
@@ -36,7 +39,7 @@ class TestLLMBackend:
         assert LLMBackend.UNIFIED.value == "unified"
 
     def test_members_count(self):
-        assert len(LLMBackend) == 10
+        assert len(LLMBackend) == 11
 
     def test_from_value_valid(self):
         assert LLMBackend("ollama") == LLMBackend.OLLAMA

@@ -48,10 +48,41 @@ def test_non_code_plan_never_bypassed():
         "寫一個Unity類建車身",
         "幫我生成排序函數",
         "繼續，直接給完整代碼",
+        "只輸出修好的for循環段",
+        "幫我寫個 for 迴圈",
+        "輸出陣列排序代碼",
     ],
 )
 def test_message_level_write_detected(text):
     assert GateExecutionOwner.is_code_write_request(text) is True
+
+
+def test_chinese_loop_write_detected_without_ascii_noun():
+    """回歸鎖定："只輸出修好的for循環段" 有寫入動詞卻沒有名詞，write-bypass
+    從未觸發，罐頭 small-talk 模板搶答了程式碼請求（live 2026-10-11 修復
+    重演）。舊測試靠尾綴 Cilinder 才變綠，掩蓋了這個缺口。"""
+    assert GateExecutionOwner.is_code_write_request("只輸出修好的for循環段") is True
+    assert GateExecutionOwner.is_code_write_request("幫我寫個 for 迴圈") is True
+    assert GateExecutionOwner.is_code_write_request("輸出陣列排序代碼") is True
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "please write the report for tomorrow",
+        "generate a summary for the meeting",
+        "please output while running",
+        "give me the sort order",
+        "幫我寫一封信",
+        "幫我總結一下重點",
+    ],
+)
+def test_bare_ascii_nouns_are_not_code_write_requests(text):
+    """回歸鎖定：裸 "for"/"while"/"sort" 是普通英文散文詞，加入名詞表後
+    "write the report for tomorrow" 被誤判成程式碼寫入請求（audit
+    2026-10-12）。名詞表只接受短語形式（for loop / while loop）；中文
+    循環詞彙本身已無歧義，不依賴裸英文字。"""
+    assert GateExecutionOwner.is_code_write_request(text) is False
 
 
 @pytest.mark.parametrize(

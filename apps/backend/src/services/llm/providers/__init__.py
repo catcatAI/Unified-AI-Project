@@ -14,8 +14,6 @@ logger = logging.getLogger(__name__)
 _LAZY_PROVIDERS = {
     "AnthropicAPIBackend": (".anthropic", "AnthropicAPIBackend"),
     "BaseLLMBackend": (".base", "BaseLLMBackend"),
-    "ED3NBackend": (".ed3n", "ED3NBackend"),
-    "GARDENBackend": (".garden", "GARDENBackend"),
     "GoogleAPIBackend": (".google", "GoogleAPIBackend"),
     "LlamaCppBackend": (".llamacpp", "LlamaCppBackend"),
     "OllamaBackend": (".ollama", "OllamaBackend"),
@@ -75,6 +73,4 @@ __all__ = [
     "OpenAIAPIBackend",
     "AnthropicAPIBackend",
     "GoogleAPIBackend",
-    "ED3NBackend",
-    "GARDENBackend",
 ]

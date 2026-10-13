@@ -34,6 +34,57 @@ def _recall_service():
     return object.__new__(AngelaLLMService)
 
 
+def _null_matcher():
+    """Truthy matcher so _try_template_match runs past its early guard.
+
+    With template_matcher=None the method returns before the social/keyword/
+    emotion layers, so a test that only asserts `is None` verifies nothing
+    about those layers (two older tests passed for exactly that reason).
+    """
+    from types import SimpleNamespace
+
+    return SimpleNamespace(match=lambda *a, **k: SimpleNamespace(score=0.0, template_content=""))
+
+
+def _template_service(monkeypatch, matcher=None):
+    """A router instance with the template layers actually reachable."""
+    from unittest.mock import AsyncMock
+
+    service = _recall_service()
+    service.stats = {
+        "total_requests": 1,
+        "total_response_time": 0.0,
+        "memory_hits": 0,
+        "composed_responses": 0,
+    }
+    service.model_bus = None
+    service.template_matcher = matcher if matcher is not None else _null_matcher()
+    monkeypatch.setattr(service, "_query_taught_facts", AsyncMock(return_value=[]))
+    monkeypatch.setattr(service, "_recall_user_fact", AsyncMock(return_value=None))
+    return service
+
+
+class _FakeTemplate:
+    def __init__(self, category, keywords, content):
+        self.category = category
+        self.keywords = keywords
+        self.content = content
+
+
+def _fake_library(monkeypatch, templates):
+    """Deterministic template library (keyword scan + category lookup)."""
+    import ai.memory.template_library as template_library
+
+    class FakeLibrary:
+        def get_all_templates(self):
+            return list(templates)
+
+        def get_by_category(self, category):
+            return [t for t in templates if t.category == category]
+
+    monkeypatch.setattr(template_library, "get_template_library", lambda: FakeLibrary())
+
+
 def _fact_context(content="User taught Angela: 我的貓叫咪咪", relevance=0.9):
     return {
         "retrieved_context": [
@@ -294,7 +345,9 @@ async def test_emotion_template_yields_to_factual_query(monkeypatch):
         "composed_responses": 0,
     }
     service.model_bus = None
-    service.template_matcher = None
+    # Truthy matcher: with None the method returns at its own guard, which is
+    # what this test used to measure instead of the factual guard.
+    service.template_matcher = _null_matcher()
     monkeypatch.setattr(service, "_query_taught_facts", AsyncMock(return_value=[]))
     monkeypatch.setattr(service, "_recall_user_fact", AsyncMock(return_value=None))
     result = await service._try_template_match("解釋為什麼天空是藍色的，兩句話", {}, 0.0)
@@ -308,7 +361,15 @@ async def test_template_layers_yield_to_code_write(monkeypatch):
     from unittest.mock import AsyncMock
 
     service = _recall_service()
-    service.stats = {"total_requests": 1, "total_response_time": 0.0, "memory_hits": 0}
+    # composed_responses must exist: a missing key made the template layer raise
+    # KeyError into a bare `except: pass`, so the assertion held for the wrong
+    # reason instead of because the code-write gate fired.
+    service.stats = {
+        "total_requests": 1,
+        "total_response_time": 0.0,
+        "memory_hits": 0,
+        "composed_responses": 0,
+    }
     service.model_bus = None
     service.template_matcher = SimpleNamespace(
         match=lambda *a, **k: SimpleNamespace(score=0.99, template_content="好的！没问题~")
@@ -486,3 +547,127 @@ async def test_backend_calls_use_waiting_scheduler_owner() -> None:
     assert result.text == "scheduled"
     assert calls[0]["timeout"] == 4.0
     assert calls[0]["label"] == "test"
+
+
+@pytest.mark.asyncio
+async def test_keyword_category_beats_vague_emotion_category(monkeypatch):
+    """回歸鎖定：關鍵詞命中（特定類別）必須勝過 EmotionAnalyzer 的粗略類別。
+    舊行為把「我好想你」交給 small_talk 隨機模板（實測吃到「好好吃！我也想尝尝呢~」）。"""
+    from ai.memory.memory_template import ResponseCategory
+
+    intimacy = _FakeTemplate(ResponseCategory.INTIMACY, ["想你"], "我也想你！")
+    decoy = _FakeTemplate(ResponseCategory.SMALL_TALK, [], "好好吃！我也想尝尝呢~")
+    _fake_library(monkeypatch, [intimacy, decoy])
+    service = _template_service(monkeypatch)
+
+    result = await service._try_template_match("我好想你", {}, 0.0)
+
+    assert result is not None
+    assert result.hit_source == "keyword-category"
+    assert result.text == "我也想你！"
+
+
+@pytest.mark.asyncio
+async def test_traditional_input_hits_simplified_keywords(monkeypatch):
+    """回歸鎖定：模板庫關鍵詞全為簡體，繁體輸入（我好難過）過去一個都命中不了，
+    落到 EmotionAnalyzer 粗略類別後從同類別裡隨機抽一張（實測吃到「工作辛苦了」）。"""
+    from ai.memory.memory_template import ResponseCategory
+
+    comfort = _FakeTemplate(ResponseCategory.EMOTIONAL, ["难过"], "摸摸头~别难过")
+    decoy = _FakeTemplate(ResponseCategory.HELP, ["工作"], "工作辛苦了！你真的很棒！")
+    _fake_library(monkeypatch, [comfort, decoy])
+    service = _template_service(monkeypatch)
+
+    result = await service._try_template_match("我好難過", {}, 0.0)
+
+    assert result is not None
+    assert result.hit_source == "keyword-category"
+    assert result.text == "摸摸头~别难过"
+
+
+@pytest.mark.asyncio
+async def test_serves_the_template_whose_keyword_matched(monkeypatch):
+    """回歸鎖定：命中關鍵詞後必須回比對到的那張模板，而不是同類別裡隨機一張。
+    「好累」是 study_break 的關鍵詞，過去會被 help 類別的隨機一張蓋掉
+    （實測吃到「当然！需要我帮你做什么？」）。"""
+    from ai.memory.memory_template import ResponseCategory
+
+    matched = _FakeTemplate(ResponseCategory.HELP, ["好累"], "学了这么久，休息一下吧！")
+    sibling = _FakeTemplate(ResponseCategory.HELP, ["帮忙"], "当然！需要我帮你做什么？")
+    _fake_library(monkeypatch, [matched, sibling])
+    service = _template_service(monkeypatch)
+
+    for _ in range(5):
+        result = await service._try_template_match("我好累", {}, 0.0)
+        assert result is not None
+        assert result.text == "学了这么久，休息一下吧！"
+
+
+@pytest.mark.asyncio
+async def test_negated_keyword_does_not_match(monkeypatch):
+    """回歸鎖定：子字串比對下，「不开心」的「开心」和「我不太想你」的「想你」
+    都曾經命中，回出與語意相反的答案。"""
+    from ai.memory.memory_template import ResponseCategory
+
+    joy = _FakeTemplate(ResponseCategory.EMOTIONAL, ["开心"], "看到你开心，我也跟着开心起来了呢！")
+    denial = _FakeTemplate(ResponseCategory.EMOTIONAL, ["不开心"], "摸摸头~别难过")
+    missing = _FakeTemplate(ResponseCategory.INTIMACY, ["想你"], "我也想你！")
+    _fake_library(monkeypatch, [joy, denial, missing])
+    service = _template_service(monkeypatch)
+
+    # 明确的否定短语：由自己的關鍵詞比中
+    result = await service._try_template_match("我不开心", {}, 0.0)
+    assert result is not None and result.text == "摸摸头~别难过"
+
+    # 否定詞 + 程度副詞：不算命中，不得回出相反的開心模板
+    for text in ("我不太开心", "我不太想你"):
+        result = await service._try_template_match(text, {}, 0.0)
+        assert result is None or result.text != "看到你开心，我也跟着开心起来了呢！"
+        assert result is None or result.text != "我也想你！"
+
+
+@pytest.mark.asyncio
+async def test_known_fallback_template_is_never_served(monkeypatch):
+    """回歸鎖定：罐頭層不得回「我不太確定」這類已知無知模板——它會擋掉
+    真的能回答的 LLM（live 2026-10-10 Unity 請求）。關鍵詞路徑有守門，
+    情緒路徑沒有（傷心→support 只有這張模板時就把它回出去了）。
+
+    這裡刻意讓訊息命中不了任何關鍵詞，確保走到的是情緒路徑。"""
+    from ai.memory.memory_template import ResponseCategory
+
+    bad = _FakeTemplate(ResponseCategory.SUPPORT, ["相信"], "不好意思，这个我不太确定...")
+    _fake_library(monkeypatch, [bad])
+    service = _template_service(monkeypatch)
+
+    result = await service._try_template_match("我好伤心啊", {}, 0.0)
+
+    assert result is None
+
+
+@pytest.mark.asyncio
+async def test_keyword_category_yields_to_factual_query(monkeypatch):
+    """知識型問題不得被關鍵詞模板搶答，即使模板關鍵詞剛好出現在問題裡。"""
+    from ai.memory.memory_template import ResponseCategory
+
+    template = _FakeTemplate(ResponseCategory.CURIOSITY, ["天空"], "天空是藍色的喔~")
+    _fake_library(monkeypatch, [template])
+    service = _template_service(monkeypatch)
+
+    result = await service._try_template_match("解釋為什麼天空是藍色的，兩句話", {}, 0.0)
+
+    assert result is None
+
+
+@pytest.mark.asyncio
+async def test_code_write_request_skips_keyword_templates(monkeypatch):
+    """回歸鎖定（live 2026-10-11 Unity 修復重演）：程式碼請求即使命中模板
+    關鍵詞，也必須略過所有罐頭模板層，交由 LLM 生成。"""
+    from ai.memory.memory_template import ResponseCategory
+
+    template = _FakeTemplate(ResponseCategory.AFFIRMATION, ["修好"], "好的！没问题~")
+    _fake_library(monkeypatch, [template])
+    service = _template_service(monkeypatch)
+
+    result = await service._try_template_match("只輸出修好的for循環段", {}, 0.0)
+
+    assert result is None

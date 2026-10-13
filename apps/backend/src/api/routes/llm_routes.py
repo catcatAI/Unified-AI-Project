@@ -29,35 +29,54 @@ async def llm_status() -> Dict[str, Any]:
     try:
         llm_svc = await _get_llm()
         backends = []
-        for btype, bobj in getattr(llm_svc, "backends", {}).items():
-            name = btype.name if hasattr(btype, "name") else str(btype)
-            is_active = (
-                getattr(llm_svc, "active_backend_type", None) is not None
-                and btype == llm_svc.active_backend_type
-            )
-            # Attempt health check (skip if event loop is running to avoid blocking)
-            # 健康探測需真網路呼叫（最長 10s）；/status 不阻塞，回 unknown。
-            # 歷史代碼在 async 端點內以 loop.is_running() 判定——永遠 skip（死分支），
-            # 行為保留：不做探測。
-            health = "unknown"
+        active_type = getattr(llm_svc, "active_backend_type", None)
 
+        def _category(btype: Any) -> str:
+            # Reuse the router's own local/cloud rule so status cannot drift
+            # from the gate that actually decides which backends may run.
+            resolver = getattr(llm_svc, "backend_category", None)
+            if resolver is not None:
+                try:
+                    return str(resolver(btype))
+                except Exception as exc:
+                    logger.debug("backend_category failed: %s", exc)
+            value = str(getattr(btype, "value", btype)).lower()
+            return "cloud" if value in {"openai", "anthropic", "google"} else "local"
+
+        def _health(btype: Any) -> str:
+            resolver = getattr(llm_svc, "backend_health", None)
+            if resolver is not None:
+                try:
+                    return str(resolver(btype))
+                except Exception as exc:
+                    logger.debug("backend_health failed: %s", exc)
+            return "unknown"
+
+        def _append(btype: Any, present: bool) -> None:
+            name = btype.name if hasattr(btype, "name") else str(btype)
             backends.append(
                 {
                     "name": name,
-                    "active": is_active,
-                    "health": health,
-                    "type": getattr(bobj, "_backend_type", "unknown"),
+                    "available": present,
+                    "active": active_type is not None and btype == active_type,
+                    "health": _health(btype),
+                    "type": _category(btype),
                 }
             )
+
+        for btype in getattr(llm_svc, "backends", {}):
+            _append(btype, True)
+        # Configured-but-pruned backends (failed the boot health check or were
+        # demoted at runtime) used to vanish from this list entirely, so an
+        # operator could not tell "never configured" from "configured, down".
+        for btype in getattr(llm_svc, "_pruned_backends", {}):
+            if btype not in getattr(llm_svc, "backends", {}):
+                _append(btype, False)
 
         return {
             "available": getattr(llm_svc, "is_available", False),
             "mode": getattr(llm_svc, "llm_mode", "unknown"),
-            "active": (
-                llm_svc.active_backend_type.name
-                if getattr(llm_svc, "active_backend_type", None)
-                else None
-            ),
+            "active": active_type.name if active_type else None,
             "backends": backends,
             "stats": getattr(llm_svc, "stats", {}),
         }

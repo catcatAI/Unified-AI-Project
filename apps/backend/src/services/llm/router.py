@@ -67,6 +67,7 @@ if TYPE_CHECKING:
 # Model Bus pipeline
 from ai.core.model_bus import ModelBus
 from ai.core.query_classifier import QueryClassifier, QueryType
+from ai.core.unicode_utils import to_simplified
 from ai.meta.priority_negotiator import (
     PriorityNegotiator,
     angela_emotion_voter,
@@ -193,6 +194,88 @@ _KNOWN_FALLBACK_RESPONSES = frozenset(
         "抱歉，這個我幫不了你...不過我可以陪你一起想！",
     }
 )
+
+
+def _usable_templates(templates) -> list:
+    """Templates that may actually be served to a user.
+
+    A template whose text is one of the known "I don't understand" fallbacks
+    must never win: serving it from the template layer blocks the LLM that
+    could really answer (live 2026-10-10 Unity code request).
+    """
+    return [
+        t
+        for t in (templates or [])
+        if (getattr(t, "content", "") or "").strip() not in _KNOWN_FALLBACK_RESPONSES
+    ]
+
+
+# "Is this asking for information?" — question marks, English interrogatives,
+# Chinese interrogatives, and explain/introduce request verbs. Used to decide
+# whether a query may be answered by a feeling template. Deliberately excludes
+# bare time words: the classifier's TRAINED dictionary tags 今天/明天 as
+# `knowledge`, so "我今天很開心" was treated as a query and lost its reply.
+_INFORMATION_REQUEST_RE = re.compile(
+    r"[?？]\s*$"
+    r"|^\s*(what|who|when|where|why|how|which|tell me|explain|please explain)\b"
+    r"|(?:什么|什麼|哪些|如何|為何|为何|为什么|為什麼|哪里|哪裏|哪裡|是不是|能否|是否|"
+    r"多少|誰|谁|怎麼|怎么|幾|几)"
+    r"|(?:解釋|解释|介紹|介绍|說說|说说|講講|讲讲|聊聊|談談|谈谈)",
+    re.IGNORECASE,
+)
+
+
+# A keyword the surrounding sentence negates must not count as a match: with
+# substring matching, `难过` inside `我不难过` and `开心` inside `我不太开心`
+# both used to win and answer the opposite of what was said.
+_NEGATORS = ("不", "沒", "没", "無", "无", "非", "別", "别", "未", "勿", "甭")
+# Intensifiers/adverbs that may sit between the negator and the keyword
+# (`不太开心`, `不怎么开心`, `不是很高兴`).
+_NEGATION_BRIDGES = frozenset("太很是否怎幺么咋多好够会會算也")
+_NEGATION_BRIDGE_LIMIT = 2
+
+
+def _is_negated(folded: str, keyword: str, index: int) -> bool:
+    """True when a negator immediately governs the keyword at *index*.
+
+    Keywords that themselves start with a negator (``不开心``) are negated
+    phrases in their own right, so they stay valid.
+    """
+    if keyword.startswith(_NEGATORS):
+        return False
+    pos = index - 1
+    bridges = 0
+    while pos >= 0 and folded[pos] in _NEGATION_BRIDGES and bridges < _NEGATION_BRIDGE_LIMIT:
+        pos -= 1
+        bridges += 1
+    return pos >= 0 and folded[pos] in _NEGATORS
+
+
+def _pick_relevant_template(templates, message: str):
+    """Return the template whose keyword best matches *message*, or ``None``.
+
+    Longest keyword wins, so a specific phrase beats a generic fragment
+    (``不开心`` → comfort_sad rather than ``开心`` → joy).
+
+    Keywords are Simplified and the user may write Traditional, so the message
+    is folded to the library's script before comparing (matching only — the
+    user's own text is never rewritten).
+    """
+    folded = to_simplified(message or "").lower()
+    best = None
+    best_len = 0
+    for template in templates or []:
+        for keyword in getattr(template, "keywords", []) or []:
+            keyword_lower = str(keyword).lower().strip()
+            if len(keyword_lower) < 2 or len(keyword_lower) <= best_len:
+                continue
+            index = folded.find(keyword_lower)
+            if index < 0 or _is_negated(folded, keyword_lower, index):
+                continue
+            best_len = len(keyword_lower)
+            best = template
+    return best
+
 
 _BACKEND_FACTORIES: Dict[str, str] = {
     "llama_cpp": "_init_llamacpp",
@@ -385,6 +468,12 @@ class AngelaLLMService:
         # Dual-model executor health cache (Phase 3 slice).
         self._qwen_last_check: float = 0.0
         self._qwen_healthy: bool = False
+
+        # Last known health per backend, recorded by every place that already
+        # probes check_health() (boot selection, demote, revive). /llm/status
+        # reads this instead of issuing its own network probes, so it reports
+        # truth without blocking the endpoint or burning cloud quota.
+        self._health_cache: Dict[Any, str] = {}
 
         # [auto] LLM mode (deployment.mode / settings.llm_mode)
         deployment = self.config.get("deployment") or {}
@@ -842,6 +931,25 @@ class AngelaLLMService:
         mode = (deployment.get("mode") or self.config.get("llm_mode") or "local").lower()
         return self._MODE_ALLOWED_TYPES.get(mode, frozenset({"local"}))
 
+    # Category (local/cloud) of a registered backend type — the same rule the
+    # cloud-fusion gate uses, shared so /llm/status cannot drift from it.
+    @classmethod
+    def backend_category(cls, btype: Any) -> str:
+        """Return 'local' or 'cloud' for a backend type."""
+        value = str(getattr(btype, "value", btype)).lower()
+        return "cloud" if value in cls._CLOUD_PROVIDERS else "local"
+
+    def record_backend_health(self, btype: Any, healthy: bool) -> None:
+        """Cache the outcome of a check_health() probe (see _health_cache)."""
+        try:
+            self._health_cache[btype] = "healthy" if healthy else "unhealthy"
+        except Exception as exc:  # pragma: no cover - defensive
+            logger.debug("Health cache update failed: %s", exc)
+
+    def backend_health(self, btype: Any) -> str:
+        """Last known health: healthy/unhealthy, or 'unknown' before any probe."""
+        return self._health_cache.get(btype, "unknown")
+
     def _init_backends(self) -> None:
         """初始化可用的後端（依 deployment.mode 閘控類別）"""
         deployment = self.config.get("deployment") or {}
@@ -1075,11 +1183,13 @@ class AngelaLLMService:
         deployment = self.config.get("deployment") or {}
         selection = (deployment.get("selection") or "available").lower()
         for backend_type, backend in self.backends.items():
-            if await self._submit_waiting(
+            healthy = await self._submit_waiting(
                 backend.check_health(),
                 timeout=timeout_value("llm.health_check", 5.0),
                 label=f"health:{backend_type.value}",
-            ):
+            )
+            self.record_backend_health(backend_type, healthy)
+            if healthy:
                 available.append(backend_type)
                 logger.info(f"✓ {backend_type.value} 後端可用")
             elif selection == "available":
@@ -1136,7 +1246,9 @@ class AngelaLLMService:
                 )
             except Exception as exc:
                 logger.debug("Backend revive probe failed: %s", exc)
+                self.record_backend_health(btype, False)
                 return None
+            self.record_backend_health(btype, healthy)
             return btype if healthy else None
 
         results = await asyncio.gather(
@@ -1177,6 +1289,7 @@ class AngelaLLMService:
             )
         except Exception:
             healthy = False
+        self.record_backend_health(used_type, healthy)
         if healthy:
             return False
         self._pruned_backends[used_type] = self.backends.pop(used_type, None) or backend
@@ -2231,8 +2344,10 @@ class AngelaLLMService:
 
                 if QueryClassifier().classify(user_message).primary_type == QueryType.MATH:
                     return None
-            except Exception:
-                pass
+            except Exception as exc:
+                # Silent failure here means a math query may recall a loosely
+                # overlapping fact instead of computing — worth a trace.
+                logger.debug(f"Math-over-memory guard unavailable: {exc}")
             # Handler-backed intents win over recall: an imperative with an
             # explicit verb ("組裝一個chip查看代理", "記住我的狗叫旺財") must
             # reach its handler, not recall a loosely overlapping fact
@@ -2246,8 +2361,10 @@ class AngelaLLMService:
                 owner = GateExecutionOwner.__new__(GateExecutionOwner)
                 if owner._registry_handler_for(user_message, _REGISTRY_DISPATCH_INTENTS):
                     return None
-            except Exception:
-                pass
+            except Exception as exc:
+                # Same class of failure: a dispatchable request would be answered
+                # from memory instead of reaching its handler.
+                logger.debug(f"Registry-dispatch guard unavailable: {exc}")
             lowered = user_message.strip().lower()
             # CJK bigrams carry word-level meaning in 2 chars; ASCII needs
             # longer windows (" a"/"us" match everything — live 2026-10-10:
@@ -2344,8 +2461,11 @@ class AngelaLLMService:
 
             if GateExecutionOwner.is_code_write_request(user_message):
                 return None
-        except Exception:
-            pass
+        except Exception as exc:
+            # If this guard cannot run, a code request is answered from canned
+            # templates (the live Unity regression this rule exists to stop) —
+            # never let that be invisible.
+            logger.debug(f"Code-write guard unavailable: {exc}")
 
         if not hasattr(self, "template_matcher") or not self.template_matcher:
             return None
@@ -2428,25 +2548,90 @@ class AngelaLLMService:
                 except Exception as exc:
                     logger.debug(f"Social template lookup failed: {exc}")
             # Keyword-based category routing: when SOCIAL_MAP doesn't match,
-            # check if any template keyword is a substring of the input.
-            # This handles inputs like "沒問題" → affirmation, "加油" → support
-            # without hardcoding every possible input.
+            # check if any template keyword is a substring of the input, so a
+            # template's own keyword routes to its category (e.g. "想你" →
+            # intimacy, "难过" → emotional) without hardcoding every input.
+            # Only keywords that exist in the loaded template library match.
             if not _social:
                 try:
                     from ai.memory.memory_template import ResponseCategory
                     from ai.memory.template_library import get_template_library
 
                     _lib = get_template_library()
-                    _input_lower = user_message.strip().lower()
-                    _best_cat = None
-                    _best_overlap = 0
-                    for _t in _lib.get_all_templates():
-                        for _kw in getattr(_t, "keywords", []) or []:
-                            _kw_lower = _kw.lower().strip()
-                            if _kw_lower and len(_kw_lower) >= 2 and _kw_lower in _input_lower:
-                                if len(_kw_lower) > _best_overlap:
-                                    _best_overlap = len(_kw_lower)
-                                    _best_cat = _t.category
+                    # Template keywords are Simplified; a Traditional message
+                    # ("我好難過") matched none of them and fell through to a
+                    # random category pick. Fold the input to the vocabulary's
+                    # script before matching. Matching only — never echoed back.
+                    _best_tpl = _pick_relevant_template(_lib.get_all_templates(), user_message)
+                    _best_cat = _best_tpl.category if _best_tpl is not None else None
+                    # Emotion/keyword templates serve feelings, not questions:
+                    # a factual/task query with incidental emotion or template
+                    # words ("為什麼天空是藍色的" → curious) must fall through to
+                    # knowledge/LLM layers instead of a random curiosity
+                    # template (live 2026-10-10: physics got "我在想你呀").
+                    # KNOWLEDGE needs the question form as well: the trained
+                    # classifier dictionary tags the time words (今天/明天) as
+                    # knowledge, so a plain feeling statement ("我今天很開心")
+                    # was treated as a query and lost its emotional reply.
+                    _factual_query = False
+                    try:
+                        _eq = QueryClassifier().classify(user_message)
+                        _eqt = str(
+                            getattr(_eq.primary_type, "value", _eq.primary_type) or ""
+                        ).lower()
+                        _question_shaped = bool(
+                            _INFORMATION_REQUEST_RE.search(user_message.strip())
+                        )
+                        _factual_query = _eqt in (
+                            "code",
+                            "math",
+                            "logic",
+                            "file",
+                            "task",
+                            "system",
+                            "execute",
+                            "search",
+                        ) or (_eqt == "knowledge" and _question_shaped)
+                    except Exception as exc:
+                        # Falling back to "not factual" restores the very bug this
+                        # guard fixes (a knowledge question answered by a feeling
+                        # template), so a broken classifier must be visible.
+                        logger.debug(f"Factual-query guard unavailable: {exc}")
+                    # Template-keyword routing FIRST: a keyword that really
+                    # appears in the message pins the exact category, so a
+                    # specific hit ("想你" → intimacy) must beat the vaguer
+                    # emotion category (happy → small_talk), which used to answer
+                    # "我好想你" with a random small-talk template ("好好吃！").
+                    # `_best_tpl` is the template whose own keyword matched.
+                    # Serving it (instead of a random sibling from its category)
+                    # is what makes the match meaningful: `好累` is a keyword of
+                    # study_break, but a category-wide random pick answered it
+                    # with "当然！需要我帮你做什么？" from help_general.
+                    if _best_cat is not None and not _factual_query:
+                        try:
+                            _usable_k = _usable_templates(_lib.get_by_category(_best_cat))
+                            if _best_tpl is not None and _best_tpl in _usable_k:
+                                _ch_k = _best_tpl
+                            else:
+                                import random as _rand_k
+
+                                _ch_k = _rand_k.choice(_usable_k) if _usable_k else None
+                            if _ch_k is not None:
+                                _rt_k = (time.time() - start_time) * 1000
+                                self.stats["composed_responses"] += 1
+                                return ChatResponse(
+                                    text=_ch_k.content,
+                                    backend="composed-template",
+                                    model="template-based",
+                                    tokens_used=50,
+                                    response_time_ms=_rt_k,
+                                    confidence=0.8,
+                                    hit_score=0.8,
+                                    hit_source="keyword-category",
+                                    route="COMPOSED",
+                                )
+                        except Exception as exc:
+                            logger.debug(f"Keyword-category template failed: {exc}")
                     # AI-driven social routing: use EmotionAnalyzer for emotional
                     # content, keep structural patterns for greeting/farewell only.
                     _emotion_to_category = {
@@ -2458,6 +2643,14 @@ class AngelaLLMService:
                         "curious": "curiosity",
                         "calm": "small_talk",
                     }
+                    # These map to TOPIC-shaped categories (weather/food/games),
+                    # unlike the empathetic support/emotional ones. A generic
+                    # topic reply to a feeling is only noise, so require the
+                    # category to actually share a keyword with the message
+                    # ("我好開心" used to draw "游戏好玩吗？" at random);
+                    # otherwise fall through to the layers that can hold a
+                    # conversation.
+                    _TOPIC_EMOTION_CATEGORIES = frozenset({"small_talk", "curiosity"})
                     _emotion_cat = None
                     try:
                         _ea = EmotionAnalyzer()
@@ -2468,39 +2661,21 @@ class AngelaLLMService:
                             _emotion_cat = _emotion_to_category.get(_detected)
                     except Exception:
                         pass
-                    if _emotion_cat:
-                        # Emotion templates serve feelings, not questions: a
-                        # factual/task query with incidental emotion words
-                        # ("為什麼天空是藍色的" → curious) must fall through to
-                        # knowledge/LLM layers instead of a random curiosity
-                        # template (live 2026-10-10: physics got "我在想你呀").
-                        try:
-                            _eq = QueryClassifier().classify(user_message)
-                            _eqt = str(
-                                getattr(_eq.primary_type, "value", _eq.primary_type) or ""
-                            ).lower()
-                            if _eqt in (
-                                "knowledge",
-                                "code",
-                                "math",
-                                "logic",
-                                "file",
-                                "task",
-                                "system",
-                                "execute",
-                                "search",
-                            ):
-                                _emotion_cat = None
-                        except Exception:
-                            pass
+                    if _emotion_cat and _factual_query:
+                        _emotion_cat = None
                     if _emotion_cat:
                         try:
                             _cat_e = ResponseCategory(_emotion_cat)
-                            _tpls_e = _lib.get_by_category(_cat_e)
-                            if _tpls_e:
+                            _tpls_e = _usable_templates(_lib.get_by_category(_cat_e))
+                            # Ranked by the message's own keywords, so the reply
+                            # fits what was said; a blind random pick from the
+                            # category is only kept for the empathetic categories.
+                            _ch_e = _pick_relevant_template(_tpls_e, user_message)
+                            if _ch_e is None and _emotion_cat not in _TOPIC_EMOTION_CATEGORIES:
                                 import random as _rand_e
 
-                                _ch_e = _rand_e.choice(_tpls_e)
+                                _ch_e = _rand_e.choice(_tpls_e) if _tpls_e else None
+                            if _ch_e is not None:
                                 _rt_e = (time.time() - start_time) * 1000
                                 self.stats["composed_responses"] += 1
                                 return ChatResponse(
@@ -2913,12 +3088,9 @@ class AngelaLLMService:
                     import re as _re2
 
                     # Traditional→Simplified for cross-script template matching
-                    # (templates are simplified; user may write traditional)
-                    _T2S = str.maketrans(
-                        "難過與時這麼們對開關門點說話學覺體聽寫愛錯讓質勵圓滿壓力歡樂憂傷",
-                        "难过与时这么们对开关门点说话学觉体听写爱错让质励圆满压力欢乐忧伤",
-                    )
-                    normalized_msg = user_message.translate(_T2S).lower()
+                    # (templates are simplified; user may write traditional).
+                    # Shared table, not a local hand-rolled subset.
+                    normalized_msg = to_simplified(user_message).lower()
                     # CJK: single-char granularity (难 vs 别难过 share 难+过)
                     user_words = set(
                         _re2.findall(
@@ -3536,6 +3708,77 @@ class AngelaLLMService:
                 )
             return await self._fallback_response(user_message, context)
 
+    @staticmethod
+    def _backend_token(value: Any) -> str:
+        """Separator-insensitive token for a backend config id or enum value.
+
+        Config ids carry separators (``llamacpp-local``, ``ollama-llama3``)
+        while enum values do not (``llamacpp``, ``ollama``), so a plain
+        substring test never matched the configured fallback chain and Angela
+        answered "I can't do that" while healthy local models sat idle.
+        """
+        return re.sub(r"[^a-z0-9]", "", str(value).lower())
+
+    def _plan_fallback_backends(self, chain: List[str], exclude: Any = None) -> List[Any]:
+        """Backend types to try, in order, for the given configured chain.
+
+        Three passes:
+
+        1. **Exact** — ``llamacpp-qwen`` resolves to ``LLAMA_CPP_QWEN``.  This
+           pass runs first for the whole chain so a configured slot never
+           cross-matches its sibling (``llamacpp-qwen`` must not fall onto
+           ``LLAMA_CPP`` when the qwen slot exists).
+        2. **Prefix** — ids that carry a vendor/model label
+           (``llamacpp-local`` → ``llamacpp``, ``google-gemini`` → ``google``)
+           resolve to the matching backend.  Only reached for names that had no
+           exact match, which is what keeps pass 1 authoritative.
+        3. **Every other registered backend** — chains are written against the
+           full catalogue, so they routinely name backends this deployment
+           disabled (ollama, anthropic, google under ``deployment.mode=local``).
+           Without this pass a single backend hiccup degraded all the way to a
+           refusal even though another healthy model was registered.
+
+        ``exclude`` is the backend that just failed and must not be retried.
+        """
+        available = [bt for bt in list(self.backends) if bt is not exclude]
+        by_token: Dict[str, Any] = {}
+        for bt in available:
+            token = self._backend_token(getattr(bt, "value", bt))
+            if token:
+                by_token.setdefault(token, bt)
+
+        ordered: List[Any] = []
+        planned: set = set()
+
+        def plan(bt: Any) -> None:
+            if bt in planned:
+                return
+            planned.add(bt)
+            ordered.append(bt)
+
+        unresolved: List[str] = []
+        for backend_name in chain:
+            token = self._backend_token(backend_name)
+            match = by_token.get(token)
+            if match is not None:
+                plan(match)
+            else:
+                unresolved.append(backend_name)
+
+        for backend_name in unresolved:
+            token = self._backend_token(backend_name)
+            if not token:
+                continue
+            for bt in available:
+                bt_token = self._backend_token(getattr(bt, "value", bt))
+                if bt_token and token.startswith(bt_token):
+                    plan(bt)
+                    break
+
+        for bt in available:
+            plan(bt)
+        return ordered
+
     async def _try_fallback_chain(
         self, user_message: str, context: Dict[str, Any], chain: List[str]
     ) -> LLMResponse:
@@ -3547,51 +3790,59 @@ class AngelaLLMService:
         # (which would retry the just-failed backend and never reach garden).
         if isinstance(chain, dict):
             flattened: List[str] = []
-            seen: set = set()
+            seen_names: set = set()
             for value in chain.values():
                 entries = [value] if isinstance(value, str) else list(value)
                 for entry in entries:
-                    if entry not in seen:
-                        seen.add(entry)
+                    if entry not in seen_names:
+                        seen_names.add(entry)
                         flattened.append(entry)
             chain = flattened
-        for backend_name in chain:
-            for btype, bobj in self.backends.items():
-                bname_str = btype.name.lower()
-                if backend_name.lower() in bname_str or bname_str in backend_name.lower():
-                    try:
-                        full_prompt = self._construct_angela_prompt(user_message, context)
-                        response = await self._submit_backend_call(
-                            bobj,
-                            prompt=full_prompt[-1]["content"],
-                            messages=full_prompt,
-                            temperature=llm_param("llm.generation.temperature", 0.7),
-                            max_tokens=512,
-                            timeout=timeout_value("llm.fallback_chain", 30.0),
-                            label=f"fallback:{btype.name}",
-                        )
-                        # Backends signal failure by RETURNING an error
-                        # response, not by raising — so a non-empty success is
-                        # the only case worth returning.  Anything else must
-                        # fall through to the next backend, or the chain would
-                        # hand the caller an error/empty answer instead of a
-                        # real fallback.
-                        if response is not None and not response.error and response.text:
-                            self.active_backend = bobj
-                            logger.info(f"[Fallback] Switched to {btype.name}")
-                            return response
-                        logger.warning(
-                            "[Fallback] Backend %s returned error/empty, trying next",
-                            btype.name,
-                        )
-                        continue
-                    except Exception:
-                        logger.warning(
-                            "[Fallback] Backend %s failed, trying next fallback",
-                            btype.name,
-                            exc_info=True,
-                        )
-                        continue
+
+        # The backend that just failed must not be retried in this pass.
+        failed_type = context.get("_used_backend_type") or getattr(
+            self, "active_backend_type", None
+        )
+        ordered = self._plan_fallback_backends(chain, exclude=failed_type)
+
+        for btype in ordered:
+            bobj = self.backends.get(btype)
+            if bobj is None:
+                continue
+            try:
+                full_prompt = self._construct_angela_prompt(user_message, context)
+                response = await self._submit_backend_call(
+                    bobj,
+                    prompt=full_prompt[-1]["content"],
+                    messages=full_prompt,
+                    temperature=llm_param("llm.generation.temperature", 0.7),
+                    max_tokens=512,
+                    timeout=timeout_value("llm.fallback_chain", 30.0),
+                    label=f"fallback:{btype.name}",
+                )
+                # Backends signal failure by RETURNING an error
+                # response, not by raising — so a non-empty success is
+                # the only case worth returning.  Anything else must
+                # fall through to the next backend, or the chain would
+                # hand the caller an error/empty answer instead of a
+                # real fallback.
+                if response is not None and not response.error and response.text:
+                    self.active_backend = bobj
+                    self.active_backend_type = btype
+                    logger.info(f"[Fallback] Switched to {btype.name}")
+                    return response
+                logger.warning(
+                    "[Fallback] Backend %s returned error/empty, trying next",
+                    btype.name,
+                )
+                continue
+            except Exception:
+                logger.warning(
+                    "[Fallback] Backend %s failed, trying next fallback",
+                    btype.name,
+                    exc_info=True,
+                )
+                continue
         return await self._fallback_response(user_message, context)
 
     def _record_route_learning(
