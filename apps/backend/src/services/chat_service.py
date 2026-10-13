@@ -62,10 +62,15 @@ def _should_garden_learn(user_message: Any, response: Any) -> bool:
             if is_unservable_template(text):
                 return False
         except Exception:
-            pass
+            # Fail-closed: if the poison guard cannot run, do NOT learn.
+            # A fail-open here bakes refusals/echoes into GARDEN with 0.7
+            # confidence (the exact 2026-10-10 audit finding this guard exists for).
+            logger.warning("Poison guard unavailable; refusing GARDEN learn", exc_info=True)
+            return False
         return True
     except Exception:
-        return True
+        logger.warning("Learn-gate evaluation failed; refusing GARDEN learn", exc_info=True)
+        return False
 
 
 class ChatService:

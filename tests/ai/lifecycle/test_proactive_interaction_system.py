@@ -460,9 +460,15 @@ class TestCalculateInterval:
         assert interval == proactive_system.check_interval
 
 
-@pytest.mark.skip("Message generation tests hang due to LLM service mock mismatch")
 class TestMessageGeneration:
-    """Tests for message generation methods."""
+    """Tests for message generation methods.
+
+    These used to be skipped as "hang due to LLM service mock mismatch", but
+    the generators never touched llm_service — they asked the ED3N reflex for
+    programmatic keys (welcome_back, idle_check, …) that no REFLEX_PRESETS
+    entry matches, so every message came back as "". The production fix adds a
+    deterministic fallback per opportunity type; these tests now pin it.
+    """
 
     async def test_generate_return_message(self, proactive_system):
         msg = await proactive_system._generate_return_message({})

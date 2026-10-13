@@ -1506,7 +1506,13 @@ class AngelaLLMService:
                     self.meta_controller = shared
                     return
             except Exception:
-                pass
+                # Split-brain risk: REST /meta/confidence/summary reads the
+                # shared singleton, so a silently-created local controller
+                # would diverge from it with no observable signal.
+                logger.warning(
+                    "Shared MetaController unavailable; router uses its own instance",
+                    exc_info=True,
+                )
             from ai.meta.meta_controller import MetaController
 
             self.meta_controller = MetaController()
@@ -3222,7 +3228,11 @@ class AngelaLLMService:
                         ):
                             target_category = ResponseCategory.SUPPORT
             except Exception:
-                pass
+                # R35 lived under this pass: a dead branch here silently drops
+                # the SUPPORT override and a negatively-engaged user keeps
+                # getting generic templates with no signal.
+                logger.warning("Emotion->SUPPORT routing override failed", exc_info=True)
+
             templates = library.get_by_category(target_category)
 
             if not templates:

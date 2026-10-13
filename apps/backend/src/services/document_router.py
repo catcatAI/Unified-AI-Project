@@ -353,7 +353,10 @@ async def _learn_from_llm_output(
             logger.debug("Skipped baking unservable LLM output as example")
             return
     except Exception:
-        pass
+        # Fail-closed: an unverifiable guard must never bake LLM output that
+        # later replays verbatim on file overlap.
+        logger.warning("Poison guard unavailable; refusing to bake LLM output", exc_info=True)
+        return
     if not (llm_output or "").strip():
         return
     op = _OPERATIONS.get(task_type, _OPERATIONS["summarize"])

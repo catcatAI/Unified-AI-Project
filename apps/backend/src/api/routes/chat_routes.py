@@ -2249,7 +2249,9 @@ async def chat_stream(request: Dict[str, Any] = Body(...)) -> StreamingResponse:
         try:
             token_queue.put_nowait({"token": piece})
         except Exception:
-            pass
+            # A dropped enqueue shows up as a truncated answer with no server
+            # trace; at minimum it must be visible in the log.
+            logger.warning("SSE token enqueue failed; token dropped", exc_info=True)
 
     extra_context["_stream_callback"] = _token_callback
 
@@ -2282,7 +2284,9 @@ async def chat_stream(request: Dict[str, Any] = Body(...)) -> StreamingResponse:
                         if verdict is not None:
                             yield f"data: {json.dumps(verdict, ensure_ascii=False)}\n\n"
                     except Exception:
-                        pass
+                        # Lock/verdict events are one-shot on a live stream —
+                        # losing one is unrecoverable downstream.
+                        logger.warning("StreamJudge feed failed; verdict dropped", exc_info=True)
                 except asyncio.TimeoutError:
                     if task.done():
                         break

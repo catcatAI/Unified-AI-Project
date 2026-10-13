@@ -146,7 +146,23 @@ class BlockHistoryPersistence:
                 with open(path, "r", encoding="utf-8") as f:
                     data = json.load(f)
             except Exception:
-                pass
+                # Corrupt file must be archived, not silently overwritten: the
+                # default empty `data` below would be written back at save(),
+                # wiping the whole selection_log without a trace.
+                corrupt_path = f"{path}.corrupt"
+                try:
+                    os.replace(path, corrupt_path)
+                    logger.warning(
+                        "block_history.json unreadable; archived to %s before reset",
+                        corrupt_path,
+                        exc_info=True,
+                    )
+                except OSError:
+                    logger.warning(
+                        "block_history.json unreadable and archive failed; "
+                        "previous log will be overwritten",
+                        exc_info=True,
+                    )
 
         # Append new record
         record = {

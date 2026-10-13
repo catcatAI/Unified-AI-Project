@@ -121,7 +121,13 @@ class MemoryIntegration:
                         logger.info("Skipped unservable memory template id=%s", template_id)
                         return None
                 except Exception:
-                    pass
+                    # Fail-closed: unverifiable guard must never serve a template.
+                    logger.warning(
+                        "Poison guard unavailable; refusing template id=%s",
+                        template_id,
+                        exc_info=True,
+                    )
+                    return None
 
                 return ChatResponse(
                     text=template_content,

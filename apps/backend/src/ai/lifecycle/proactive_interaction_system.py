@@ -429,10 +429,17 @@ class ProactiveInteractionSystem:
             elif opp_type == InteractionOpportunity.WEATHER_CHANGE.value:
                 message = await self._generate_weather_message(opportunity)
             else:
-                engine = self._get_ed3n_engine()
-                message = engine.process(
-                    "unknown_opportunity", context={"opp_type": opp_type}, depth="reflex"
+                message = self._reflex_or_fallback(
+                    "unknown_opportunity",
+                    {"opp_type": opp_type},
+                    f"有新的互動機會：{opp_type}",
                 )
+
+            # An empty proactive message is still broadcast verbatim by
+            # _execute_proactive_action; never plan one.
+            if not (message or "").strip():
+                logger.debug("Proactive %s produced no message; skipping plan", opp_type)
+                return None
 
             plan = InteractionPlan(
                 opportunity=opp_type,
@@ -458,34 +465,69 @@ class ProactiveInteractionSystem:
             _ed3n_engine_singleton = ED3NEngine.get_shared()
         return _ed3n_engine_singleton
 
+    def _reflex_or_fallback(self, trigger: str, context: Dict[str, Any], fallback: str) -> str:
+        """ED3N reflex with a deterministic proactive-text fallback.
+
+        ``depth="reflex"`` only consults REFLEX_PRESETS, whose keys are all
+        user-typed phrases (你好 / good morning / …). The programmatic keys
+        used here (welcome_back, idle_check, …) never match, so the reflex
+        always returns "" and every proactive plan was broadcast as an empty
+        message. A proactive greeting must have real content, so a miss falls
+        back to a hand-written message instead of "".
+        """
+        try:
+            msg = self._get_ed3n_engine().process(trigger, context=context, depth="reflex")
+        except Exception:
+            logger.warning("ED3N reflex failed for %s", trigger, exc_info=True)
+            return fallback
+        return msg if isinstance(msg, str) and msg.strip() else fallback
+
     async def _generate_return_message(self, opportunity: Dict[str, Any]) -> str:
         """生成返回消息"""
-        engine = self._get_ed3n_engine()
-        return engine.process("welcome_back", context={"type": "return"}, depth="reflex")
+        return self._reflex_or_fallback(
+            "welcome_back", {"type": "return"}, "歡迎回來！好久不見，最近過得怎麼樣？"
+        )
 
     async def _generate_idle_message(self, opportunity: Dict[str, Any]) -> str:
         """生成閒置消息"""
         idle_time = opportunity.get("data", {}).get("idle_time", 0)
-        engine = self._get_ed3n_engine()
-        return engine.process("idle_check", context={"idle_time": idle_time}, depth="reflex")
+        if idle_time >= 300:
+            fallback = "你好像忙了好一陣子…需要我幫忙嗎？"
+        else:
+            fallback = "在做什麼呀？要不要聊聊天？"
+        return self._reflex_or_fallback("idle_check", {"idle_time": idle_time}, fallback)
 
     async def _generate_emotional_message(self, opportunity: Dict[str, Any]) -> str:
         """生成情緒消息"""
         emotion = opportunity.get("data", {}).get("emotion", "neutral")
-        engine = self._get_ed3n_engine()
-        return engine.process("emotional_response", context={"emotion": emotion}, depth="reflex")
+        _fallbacks = {
+            "sad": "聽起來你有些難過，我在這裡陪你。",
+            "frustrated": "遇到煩惱的事了嗎？說給我聽聽吧。",
+            "anxious": "別緊張，一步一步來，我在。",
+        }
+        fallback = _fallbacks.get(emotion, "我感覺你的情緒有些變化，還好嗎？")
+        return self._reflex_or_fallback("emotional_response", {"emotion": emotion}, fallback)
 
     async def _generate_time_based_message(self, opportunity: Dict[str, Any]) -> str:
         """生成基於時間的消息"""
         time_type = opportunity.get("data", {}).get("time_type", "")
-        engine = self._get_ed3n_engine()
-        return engine.process("time_greeting", context={"time_type": time_type}, depth="reflex")
+        _fallbacks = {
+            "morning_greeting": "早上好！新的一天開始了，今天有什麼計畫嗎？",
+            "evening_greeting": "晚上好！今天辛苦了，早點休息。",
+            "sleep_reminder": "很晚了，記得早點休息。",
+        }
+        fallback = _fallbacks.get(time_type, "這個時間點，想和你打個招呼。")
+        return self._reflex_or_fallback("time_greeting", {"time_type": time_type}, fallback)
 
     async def _generate_memory_message(self, opportunity: Dict[str, Any]) -> str:
         """生成記憶消息"""
         events = opportunity.get("data", {}).get("events", [])
-        engine = self._get_ed3n_engine()
-        return engine.process("memory_trigger", context={"events": events}, depth="reflex")
+        if events:
+            _shown = "、".join(str(e) for e in events[:3])
+            fallback = f"我記得我們之前聊過：{_shown}。想繼續那個話題嗎？"
+        else:
+            fallback = "我剛剛想起…你最近過得怎麼樣？"
+        return self._reflex_or_fallback("memory_trigger", {"events": events}, fallback)
 
     async def _generate_weather_message(self, opportunity: Dict[str, Any]) -> str:
         """生成天氣消息"""
@@ -493,11 +535,12 @@ class ProactiveInteractionSystem:
         desc = data.get("current", "unknown")
         temp = data.get("temperature")
         location = data.get("location", "your area")
+        _temp_part = f"，{temp}°C" if temp is not None else ""
+        fallback = f"{location}的天氣變成 {desc}{_temp_part}，出門記得留意。"
         parts = [f"The weather in {location} has changed to {desc}"]
         if temp is not None:
             parts.append(f" ({temp}°C)")
-        engine = self._get_ed3n_engine()
-        return engine.process("weather_change", context={"message": "".join(parts)}, depth="reflex")
+        return self._reflex_or_fallback("weather_change", {"message": "".join(parts)}, fallback)
 
     async def _execute_planned_actions(self) -> None:
         """執行計劃的行動"""
