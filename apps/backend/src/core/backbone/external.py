@@ -168,7 +168,9 @@ class ExternalGateway:
                 try:
                     self.pairs.fail(pair_id, reason=str(exc))
                 except Exception:
-                    pass
+                    logger.debug(
+                        "pairs.fail bookkeeping crashed for pair %s", pair_id, exc_info=True
+                    )
             raise
         else:
             if pair_id is not None and self.pairs is not None:

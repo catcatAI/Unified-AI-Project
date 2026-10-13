@@ -85,6 +85,7 @@ class UnifiedEngine:
                 v2 = _g2("unified.use_delta", None)
                 use_delta = bool(v2) if v2 is not None else True
             except Exception:
+                logger.debug("unified.use_delta config read failed; defaulting True", exc_info=True)
                 use_delta = True
         # Clamp slots by RAM on extended (128k) to avoid OOM on 8GB boxes:
         # effective cap is the same cascade that guards GARDEN (usable-2GB).

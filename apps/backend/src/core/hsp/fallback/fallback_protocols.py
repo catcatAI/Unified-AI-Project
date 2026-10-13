@@ -508,7 +508,9 @@ class FallbackProtocolManager:
                     if await protocol.health_check():
                         candidates.append((priority, protocol))
                 except Exception:
-                    pass
+                    logger.debug(
+                        "retry health_check for %s crashed", protocol.protocol_name, exc_info=True
+                    )
 
         if not candidates:
             logger.error("No healthy fallback protocol available")

@@ -167,7 +167,9 @@ class ResponseModeSelector:
                 try:
                     self.pairs.fail(pair_id, reason=str(exc))
                 except Exception:
-                    pass
+                    logger.debug(
+                        "pairs.fail bookkeeping crashed for pair %s", pair_id, exc_info=True
+                    )
             return await self._fallback_result(mode, user_message, context)
 
         layers: List[str] = []

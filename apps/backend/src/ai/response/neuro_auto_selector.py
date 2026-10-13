@@ -303,7 +303,11 @@ class StateInterpreter:
                     self._state_matrix = dli.state_matrix
                     return
             except Exception:
-                pass
+                logger.debug(
+                    "[StateInterpreter] DLI state_matrix fetch failed; "
+                    "falling back to shared singleton",
+                    exc_info=True,
+                )
             try:
                 from core.engine.state_matrix import get_shared_state_matrix
 

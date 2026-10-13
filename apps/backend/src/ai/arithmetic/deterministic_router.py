@@ -63,7 +63,7 @@ def try_logic(text: str) -> Optional[str]:
                 return str(result)
             return f"{cleaned}={result}"
     except Exception:
-        pass
+        logger.debug("try_logic evaluate_logic failed; no logic seed", exc_info=True)
     return None
 
 

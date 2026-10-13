@@ -387,7 +387,11 @@ _register(
 
 
 def _surface_trigger(state: Any) -> bool:
-    """缺氧或灼傷：身體訊號，不是世界預測。"""
+    """缺氧或灼傷：身體訊號，不是世界預測。
+
+    fail-open 方向（讀不到 proprioception → 不觸發上浮）：反射失敗不可見
+    會讓 agent 忽略致命狀態，故失敗留 warning。
+    """
     try:
         prop = state.proprioception if state else None
         if prop is None:
@@ -396,6 +400,7 @@ def _surface_trigger(state: Any) -> bool:
             return True
         return bool(getattr(prop, "is_in_lava", False))
     except Exception:
+        logger.warning("drowning/lava signal read failed; treating as safe", exc_info=True)
         return False
 
 
