@@ -61,7 +61,7 @@ def _sig_distance(
 
 
 def _crop_palette(
-    img: Any, box: Tuple[int, int, int, int]
+    img: Any, box: Tuple[float, float, float, float]
 ) -> List[Tuple[Tuple[int, int, int], float]]:
     """Dominant quantized colors inside box (relative 0..1 coords)."""
     w, h = img.size
@@ -75,7 +75,7 @@ def _crop_palette(
     return [(c, v / n) for c, v in counts.most_common(5)]
 
 
-def _structure(img: Any, box: Tuple[int, int, int, int]) -> str:
+def _structure(img: Any, box: Tuple[float, float, float, float]) -> str:
     """Model-decided structure class for this pile of pixels: flat/edge/busy."""
     pal = _crop_palette(img, box)
     if not pal:
@@ -102,7 +102,7 @@ class ObjectTrack:
     def __init__(
         self,
         palette: List[Tuple[Tuple[int, int, int], float]],
-        box: Tuple[float, ...],
+        box: Tuple[float, float, float, float],
         structure: str,
         ground: Tuple[int, int, int] = (0, 0, 0),
     ):
@@ -134,7 +134,9 @@ class ObjectTrack:
         return not self.ground_texture and self.area >= MIN_OBJECT_FRACTION
 
     def matches(
-        self, palette: List[Tuple[Tuple[int, int, int], float]], box: Tuple[float, ...]
+        self,
+        palette: List[Tuple[Tuple[int, int, int], float]],
+        box: Tuple[float, float, float, float],
     ) -> bool:
         return (
             _boxes_overlap(self.box, box)
@@ -144,7 +146,7 @@ class ObjectTrack:
     def absorb(
         self,
         palette: List[Tuple[Tuple[int, int, int], float]],
-        box: Tuple[float, ...],
+        box: Tuple[float, float, float, float],
         structure: str,
     ) -> None:
         sig = _signature(palette)

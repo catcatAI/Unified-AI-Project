@@ -39,7 +39,7 @@ from __future__ import annotations
 import hashlib
 import math
 import struct
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -117,7 +117,6 @@ def read_gguf_structure(path: str | Path) -> dict[str, Any]:
             key = rstr()
             (vtype,) = rf("I")
             kv[key] = rval(vtype)
-        info_start = f.tell()
         tensors: list[TensorInfo] = []
         for _ in range(n_tensors):
             name = rstr()
@@ -866,7 +865,10 @@ class Engine:
             f"{self.cum['mem_r']:.3f}|{self.cum['mem_w']:.3f}|{self.cum['macs']:.3f}|"
             f"{len(self.item_done)}|{self.tokens_done}|{self.ctx}"
         )
-        return hashlib.sha1(payload.encode()).hexdigest()[:16]
+        # Report fingerprint, not a security primitive (B324): the digest only
+        # names a simulation result, and usedforsecurity=False keeps the value
+        # byte-identical to the previous sha1 output.
+        return hashlib.sha1(payload.encode(), usedforsecurity=False).hexdigest()[:16]
 
     def make_report(self, checkpoints: list[dict[str, Any]], totals: dict[str, int]) -> SimReport:
         consumed = {

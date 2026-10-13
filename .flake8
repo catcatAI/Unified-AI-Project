@@ -7,6 +7,7 @@ max-line-length = 100
 max-complexity = 10
 exclude =
     .git,
+    .mypy_cache,
     __pycache__,
     venv,
     .venv,
@@ -51,7 +52,6 @@ ignore =
     E741,
     C901,
     F405,
-    F821,
     E121,
     E126,
     E131,

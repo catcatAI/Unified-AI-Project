@@ -3,11 +3,13 @@ Unicode normalization and input-method utilities for ED3N and GARDEN.
 
 Provides:
   - normalize_text()   — NFKC + fullwidth → halfwidth + zero-width cleanup
+  - to_simplified()    — Traditional → Simplified fold for cross-script matching
   - to_romaji()        — Hiragana/Katakana → romaji (Japanese input method)
   - is_cjk() / is_japanese() — character range checks
   - cjk_radical()      — CJK radical lookup for a given character (optional)
 
-Zero external dependencies. Uses only Python's built-in ``unicodedata``.
+Zero external dependencies. Uses only Python's built-in ``unicodedata`` plus a
+character table generated from the repo's own CC-CEDICT data.
 """
 
 # =============================================================================
@@ -21,6 +23,7 @@ logger = logging.getLogger(__name__)
 
 __all__ = [
     "normalize_text",
+    "to_simplified",
     "to_romaji",
     "is_cjk",
     "is_japanese",
@@ -176,6 +179,50 @@ def normalize_text(text: str) -> str:
     for zc in ("\u200b", "\u200c", "\u200d", "\ufeff", "\u00ad"):
         text = text.replace(zc, "")
     return text.strip()
+
+
+# Traditional → Simplified character table (generated; see scripts/gen_t2s_table.py).
+# Built lazily so importing this module stays cheap for ASCII-only workloads.
+_T2S_TABLE = None
+
+
+def _t2s_table():
+    """Build (once) the ``str.translate`` table for Traditional → Simplified."""
+    global _T2S_TABLE
+    if _T2S_TABLE is None:
+        from ai.core.t2s_table import SIMPLIFIED, TRADITIONAL
+
+        if len(TRADITIONAL) != len(SIMPLIFIED):
+            raise ValueError(
+                "t2s_table.py is corrupt: TRADITIONAL/SIMPLIFIED length mismatch "
+                f"({len(TRADITIONAL)} vs {len(SIMPLIFIED)}) — regenerate it"
+            )
+        _T2S_TABLE = str.maketrans(TRADITIONAL, SIMPLIFIED)
+    return _T2S_TABLE
+
+
+def to_simplified(text: str) -> str:
+    """Fold Traditional Chinese to Simplified so it can match Simplified vocabulary.
+
+    The template library, emotion lexicon and response categories are all
+    Simplified, so a Traditional input misses every keyword it should hit
+    (``我好難過`` never matched the ``难过`` template and fell through to a
+    random category pick). Folding the *input* before matching fixes that
+    without duplicating the whole vocabulary in both scripts.
+
+    Use this for matching and classification only — not for text that is shown
+    back to the user, which should keep the script they wrote.
+
+    Non-Chinese characters pass through unchanged.
+
+    Examples:
+        "我好難過" → "我好难过"
+        "想你了" → "想你了"  (unchanged: already Simplified)
+        "hello" → "hello"
+    """
+    if not text or text.isascii():
+        return text
+    return text.translate(_t2s_table())
 
 
 def to_romaji(text: str) -> str:

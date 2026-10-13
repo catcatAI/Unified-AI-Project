@@ -7,9 +7,14 @@ agent workspace at runtime so it can operate them (open → act → close):
 "把shell掛上" / "掛載文件" / "卸載shell" / "有哪些應用".
 """
 
+from __future__ import annotations
+
 import logging
 import re
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
+
+if TYPE_CHECKING:
+    from services.agent_workspace.global_tree import UnifiedWorkspace
 
 logger = logging.getLogger(__name__)
 
@@ -64,16 +69,17 @@ class WorkspaceMountHandler:
             logger.warning(f"[WorkspaceMountHandler] failed: {e}", exc_info=True)
             return f"（掛載）執行失敗：{e}"
 
-    def _get_workspace(self) -> Optional[object]:
+    def _get_workspace(self) -> Optional[UnifiedWorkspace]:
         try:
             from api.lifespan import get_agent_workspace
 
-            return get_agent_workspace()
+            ws: Optional[UnifiedWorkspace] = get_agent_workspace()
+            return ws
         except Exception as exc:
             logger.debug(f"workspace unavailable: {exc}")
             return None
 
-    def _available(self, workspace: object) -> list:
+    def _available(self, workspace: UnifiedWorkspace) -> list:
         try:
             if hasattr(workspace, "workspace"):
                 sessions = getattr(getattr(workspace, "workspace"), "sessions", None)
@@ -85,7 +91,7 @@ class WorkspaceMountHandler:
             logger.debug(f"available_apps failed: {exc}")
         return []
 
-    def _inspect(self, workspace: object) -> str:
+    def _inspect(self, workspace: UnifiedWorkspace) -> str:
         """Agent self-inspection: mounted apps + open sessions + health."""
         try:
             inner = getattr(workspace, "workspace", workspace)
@@ -112,9 +118,9 @@ class WorkspaceMountHandler:
             logger.warning(f"[WorkspaceMountHandler] inspect failed: {e}", exc_info=True)
             return f"（自檢）查詢失敗：{e}"
 
-    def _configure(self, workspace: object, target: str) -> str:
+    def _configure(self, workspace: UnifiedWorkspace, target: str) -> str:
         """Compose an agent from modules for a target (puzzle assembly)."""
-        from services.agent_workspace.modules import compose_agent, suggest_modules
+        from services.agent_workspace.modules import suggest_modules
 
         modules = suggest_modules(target)
         if not modules:

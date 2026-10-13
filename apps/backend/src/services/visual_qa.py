@@ -15,7 +15,8 @@ from __future__ import annotations
 
 import io
 import logging
-from collections import Counter, deque
+import math
+from collections import deque
 from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
@@ -87,7 +88,7 @@ def color_blobs(image_data: bytes, max_side: int = 48) -> List[Dict[str, Any]]:
 
 
 def _color_distance(a: Tuple[int, int, int], b: Tuple[int, int, int]) -> float:
-    return ((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2) ** 0.5
+    return math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2)
 
 
 def _sample_at(

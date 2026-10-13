@@ -39,11 +39,13 @@ class SpriteConverter:
 
 if __name__ == "__main__":
     converter = SpriteConverter()
-    # Correct path to root directory
+    # Image lives in <repo>/resources/ (moved there by the root-cleanup commit);
+    # the old `../..` pointed at the repo root and cv2.imread returned None,
+    # which surfaced as `ValueError: 無法讀取圖片` (audit 2026-10-12).
     import os
 
     _dir = os.path.dirname(os.path.abspath(__file__))
-    _img = os.path.join(_dir, "..", "..", "angela_01.jpg")
+    _img = os.path.join(_dir, "..", "..", "resources", "angela_01.jpg")
     dna = converter.convert(_img)
     np.save("angela_dna_v1.npy", dna)
     print("Angela 已完成像素化轉換。")

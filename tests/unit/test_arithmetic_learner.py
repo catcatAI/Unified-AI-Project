@@ -135,7 +135,7 @@ def test_unconvergeable_stops() -> None:
     )
 
 
-def test_save_load_resume(tmp_path: "Any") -> None:
+def test_save_load_resume(tmp_path) -> None:
     import numpy as np
 
     l = ArithmeticLearner()
@@ -321,7 +321,7 @@ def test_logic_unknown_gate_rejected(learner: ArithmeticLearner) -> None:
         learner.predict_logic_gate("NAND2", 1, 0)
 
 
-def test_save_load_resume_op_cells(tmp_path: "Any") -> None:
+def test_save_load_resume_op_cells(tmp_path) -> None:
     import numpy as np
 
     l = ArithmeticLearner()

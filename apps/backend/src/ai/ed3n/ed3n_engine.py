@@ -834,7 +834,6 @@ class ED3NEngine:
         try:
             from core.bio.biological_integrator import BiologicalIntegrator
 
-            bio = BiologicalIntegrator.__new__(BiologicalIntegrator)
             instance = BiologicalIntegrator._instance
             if instance is not None and getattr(instance, "_initialized", False):
                 self.modulator.connect_endocrine_system(instance.endocrine_system)

@@ -412,9 +412,6 @@ class AngelaAutonomousAgent:
 
     async def _main_loop(self):
         """Main autonomous agent loop - runs at configured tick rate"""
-        tick_interval = self.config.tick_interval
-        last_tick = time.time()
-
         while self.running:
             loop_start = time.time()
             self.tick_count += 1
@@ -943,9 +940,6 @@ class AngelaAutonomousAgent:
         memories = []
         if self.memory:
             memories = await self.memory.recall_experience(self.current_goal.value, limit=10)
-
-        # Get strategy directive
-        strategy = self.strategy_engine.get_directive() if self.strategy_engine else {}
 
         # Build planning context (state 必須已由 _perceive 建立)
         if self.current_state is None:

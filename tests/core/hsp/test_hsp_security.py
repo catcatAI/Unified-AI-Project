@@ -5,6 +5,7 @@
 """
 
 import os
+from unittest.mock import AsyncMock
 
 import pytest
 from core.hsp.connector import HSPConnector
@@ -123,7 +124,6 @@ class TestHSPSecurity:
         assert is_valid is True
         assert "payload" in processed_message
 
-    @pytest.mark.skip("HSPConnector fixture has deeper init issues (needs full refactor)")
     async def test_hsp_connector_secure_message_creation(self, hsp_connector) -> None:
         """测试HSP连接器安全消息创建"""
         # 创建测试载荷
@@ -152,7 +152,6 @@ class TestHSPSecurity:
         assert isinstance(payload, str)
         assert payload.startswith("encrypted,")
 
-    @pytest.mark.skip("HSPConnector fixture has deeper init issues (needs full refactor)")
     async def test_hsp_connector_secure_message_dispatch(self, hsp_connector) -> None:
         """测试HSP连接器安全消息分发"""
         # 创建测试消息
@@ -185,8 +184,38 @@ class TestHSPSecurity:
         # 分发消息
         await hsp_connector._dispatch_fact_to_callbacks(secured_message)
 
-        # 验证回调被调用
-        assert callback.called()
+        # 验证回调被调用（`called` 是属性，不是方法）
+        assert callback.called
+        assert callback.call_count == 1
+
+    async def test_create_envelope_applies_security(self, hsp_connector) -> None:
+        """回歸鎖定：_create_envelope 必須真的套用 secure_message 的結果。
+
+        舊碼寫成 `self.security_context.secure_message(dict(envelope), ...)`
+        卻把回傳值丟掉——加密／簽名都寫進了淺拷貝。信封因此帶著
+        security_parameters=None 與未加密的 payload 離開，接收端
+        authenticate_and_process_message 因缺少 auth_token 直接拒收，
+        發送側整套安全層等於沒接。這條測試同時鎖定發出／接收可以互通。
+        """
+        envelope = hsp_connector._create_envelope(
+            message_type="HSP,Fact_v0.1",
+            payload={"secret": "值"},
+            recipient_ai_id="did,hsp,test_ai_002",
+        )
+
+        params = envelope["security_parameters"]
+        assert isinstance(params, dict)
+        assert params.get("auth_token"), "envelope left without an auth token"
+
+        payload = envelope["payload"]
+        assert isinstance(payload, str)
+        assert payload.startswith("encrypted,"), "payload was published unencrypted"
+
+        ok, processed = hsp_connector.security_context.authenticate_and_process_message(
+            dict(envelope)
+        )
+        assert ok is True, processed.get("error")
+        assert processed["payload"] == {"secret": "值"}
 
 
 if __name__ == "__main__":

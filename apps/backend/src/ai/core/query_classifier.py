@@ -502,8 +502,12 @@ class QueryClassifier:
             (
                 QueryType.SEARCH,
                 re.compile(
-                    _WORD_BOUNDARY_CJK + r"(搜寻|搜索|查找|找|查询|搜|"
-                    r"搜尋|搜索|查找|找|查詢|搜|"
+                    # 查 lookups: bare 「查」 is deliberately excluded because the
+                    # CJK boundary let it match inside 檢查/調查/審查/抽查 (a check
+                    # of the system is not a web search); the lookup phrasings
+                    # are enumerated instead.
+                    _WORD_BOUNDARY_CJK + r"(搜寻|搜索|查找|查一下|查看|查查|查一查|找|查询|搜|"
+                    r"搜尋|搜索|查找|查一下|查看|查查|查一查|找|查詢|搜|"
                     r"\b(search|find|look\s*for|google|query|lookup)\b)",
                     re.IGNORECASE,
                 ),

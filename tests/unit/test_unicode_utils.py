@@ -8,6 +8,7 @@ from ai.core.unicode_utils import (
     is_japanese,
     normalize_text,
     to_romaji,
+    to_simplified,
 )
 
 
@@ -88,6 +89,43 @@ class TestCharacterDetection:
 
     def test_is_english_dominant_no_alpha_returns_true(self):
         assert is_english_dominant("12345 !!!") is True
+
+
+class TestToSimplified:
+    """The template library, emotion lexicon and categories are all Simplified;
+    a Traditional input used to match none of their keywords (我好難過 matched
+    nothing and fell through to a random category pick)."""
+
+    def test_traditional_folds_to_simplified(self):
+        assert to_simplified("我好難過") == "我好难过"
+        assert to_simplified("我很開心") == "我很开心"
+        assert to_simplified("謝謝你") == "谢谢你"
+
+    def test_simplified_unchanged(self):
+        assert to_simplified("我好难过") == "我好难过"
+        assert to_simplified("想你了") == "想你了"
+
+    def test_ascii_and_empty_pass_through(self):
+        assert to_simplified("hello world") == "hello world"
+        assert to_simplified("") == ""
+
+    def test_mixed_script_only_folds_cjk(self):
+        assert to_simplified("I miss you 想你") == "I miss you 想你"
+        assert to_simplified("我很開心 OK") == "我很开心 OK"
+
+    def test_returns_new_string_without_mutating_input(self):
+        original = "我好難過"
+        assert to_simplified(original) == "我好难过"
+        assert original == "我好難過"
+
+    def test_table_is_parallel_and_complete(self):
+        """A truncated or misaligned regeneration must fail loudly, not fold
+        characters to whatever happens to line up."""
+        from ai.core.t2s_table import PAIR_COUNT, SIMPLIFIED, TRADITIONAL
+
+        assert len(TRADITIONAL) == len(SIMPLIFIED) == PAIR_COUNT
+        assert PAIR_COUNT > 3000
+        assert len(set(TRADITIONAL)) == PAIR_COUNT
 
 
 class TestCjkRadical:

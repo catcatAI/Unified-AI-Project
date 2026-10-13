@@ -17,8 +17,8 @@ from __future__ import annotations
 
 import logging
 import os
-import shlex
 import subprocess
+import tempfile
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
@@ -120,7 +120,9 @@ class BrowserAgent(AppAdapter):
 _MOUNT_ROOTS: List[Path] = [
     Path.home(),
     Path(os.environ.get("ANGELA_WORKSPACE", os.getcwd())),
-    Path("/tmp"),
+    # Platform temp dir (B108): a literal "/tmp" is POSIX-only and would jail
+    # every workspace path on Windows.
+    Path(tempfile.gettempdir()),
 ]
 
 # Shell denylist: obvious destructors blocked even after confirmation.
@@ -208,7 +210,12 @@ async def _run_shell(cmd: str, cwd: str, timeout: float) -> Dict[str, Any]:
 
     def _call() -> Dict[str, Any]:
         try:
-            done = subprocess.run(
+            # shell=True is the feature, not an accident: ShellAdapter executes
+            # user-approved command LINES (pipes / globs / redirection included)
+            # and argv-splitting would silently change their meaning. It is
+            # gated by the framework confirm requirement (run is dangerous), a
+            # cwd jail, _SHELL_DENY, a 1-300s timeout and output truncation.
+            done = subprocess.run(  # nosec B602
                 cmd,
                 shell=True,
                 cwd=cwd,

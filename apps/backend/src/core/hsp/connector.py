@@ -1038,11 +1038,21 @@ class HSPConnector:
             "payload": payload,
         }
 
-        # 应用安全处理
+        # 應用安全處理
+        # secure_message 就地改動並回傳同一個 dict；舊碼把結果丟掉，只用
+        # dict(envelope) 這個淺拷貝去改，於是信封帶著
+        # security_parameters=None 與未加密的 payload 離開。接收端
+        # HSPSecurityContext.authenticate_and_process_message 因為缺少
+        # auth_token 會直接拒收（HSPConnector._dispatch_task_result_to_callbacks
+        # 等路徑），整套安全層在發送側等於沒接上（audit 2026-10-12）。
         try:
-            self.security_context.secure_message(dict(envelope), self.ai_id)
-            # 确保返回类型正确
-            return envelope
+            secured = self.security_context.secure_message(dict(envelope), self.ai_id)
+            if not isinstance(secured, dict):
+                return envelope
+            # secure_message 的簽名是 Dict[str, Any]，但回傳的正是
+            # HSPMessageEnvelope 的內容加上 security_parameters，用 cast
+            # 表達這一點（cast 是執行期 no-op，不改變行為）。
+            return cast(HSPMessageEnvelope, secured)
         except (
             Exception
         ) as e:  # broad exception acceptable: security processing involves multiple operations that may fail

@@ -73,8 +73,14 @@ def clip_probe(crop_png: bytes, candidates: Tuple[str, ...] = PERSON_CANDIDATES)
         import torch
         from transformers import CLIPModel, CLIPProcessor
 
-        model = CLIPModel.from_pretrained(snap)
-        proc = CLIPProcessor.from_pretrained(snap)
+        # B615 false positive: `snap` is an absolute LOCAL snapshot directory
+        # from _clip_snapshot() (~/.cache/huggingface/hub/.../snapshots/<commit>),
+        # so from_pretrained() reads bytes already on disk and never contacts the
+        # Hub. Bandit's local-path escape hatch only recognises a literal "./"
+        # or "/" first argument, which a variable can never be — and the
+        # snapshot dir name IS the pinned commit SHA.
+        model = CLIPModel.from_pretrained(snap)  # nosec B615
+        proc = CLIPProcessor.from_pretrained(snap)  # nosec B615
         img = _PILImage.open(io.BytesIO(crop_png)).convert("RGB")
         inp = proc(text=list(candidates), images=img, return_tensors="pt", padding=True)
         with torch.no_grad():
@@ -105,8 +111,10 @@ def clip_embed(crop_png: bytes) -> Optional[List[float]]:
         import torch
         from transformers import CLIPModel, CLIPProcessor
 
-        model = CLIPModel.from_pretrained(snap)
-        proc = CLIPProcessor.from_pretrained(snap)
+        # B615 false positive — see clip_probe(): `snap` is a local snapshot
+        # directory (absolute path), not a Hugging Face repo id.
+        model = CLIPModel.from_pretrained(snap)  # nosec B615
+        proc = CLIPProcessor.from_pretrained(snap)  # nosec B615
         img = _PILImage.open(io.BytesIO(crop_png)).convert("RGB")
         inp = proc(images=img, return_tensors="pt")
         with torch.no_grad():

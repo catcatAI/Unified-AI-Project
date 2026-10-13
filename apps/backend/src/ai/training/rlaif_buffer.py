@@ -114,17 +114,14 @@ class RLAIFBuffer:
     def dpo_loss(self, beta: float = 0.1) -> Optional[Dict[str, float]]:
         """計算 DPO loss (僅統計，不更新權重). Call site 決定是否反向.
 
-        L = -log σ(β * (r_win - r_lose)), r = dot(win_vec, lose_vec) proxy.
+        L = -log σ(β * (s_win - s_lose))，偏好邊際 s 取自 heuristic scorer 的
+        分數差（pairs 由 scorer 產生，故分數差即偏好強度）。
         Returns None if no pairs.
         """
         if not self._pairs:
             return None
         losses: List[float] = []
         for p in list(self._pairs)[-32:]:
-            # Proxy reward: cosine-like dot (vectors already ~[0,1])
-            r_win = float(np.dot(p.win_vec, p.win_vec) / max(np.linalg.norm(p.win_vec), 1e-8))
-            r_lose = float(np.dot(p.lose_vec, p.lose_vec) / max(np.linalg.norm(p.lose_vec), 1e-8))
-            # Use score gap as reward proxy (heuristic scorer)
             gap = (p.score_win - p.score_lose) * beta
             loss = -np.log(1 / (1 + np.exp(-gap)) + 1e-8)
             losses.append(float(loss))

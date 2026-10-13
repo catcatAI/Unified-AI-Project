@@ -46,6 +46,14 @@ async def test_refinement_pipeline():
     service = AngelaLLMService()
     service.model_bus = mock_bus
 
+    # Hermetic: AngelaLLMService() probes the host and registers real backends
+    # (unified / llamacpp / llamacpp-qwen). For a greeting the dual-model
+    # selector would send the refinement to whatever is listening on the
+    # ambient llama.cpp port, so the assertion below would pass in CI but hang
+    # or fail on a dev machine with local model servers up. Pin the light-slot
+    # choice so the test exercises the refinement path, not the host's servers.
+    service._select_light_backend = AsyncMock(return_value=(None, None))
+
     # Mock LLM Backend to check if it receives the draft
     mock_backend = AsyncMock()
     mock_backend.generate.return_value = LLMResponse(text="潤色後的回應", confidence=0.9)

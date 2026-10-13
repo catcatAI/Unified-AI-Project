@@ -5,7 +5,11 @@ import numpy as np
 import pytest
 from soft_body_engine import SoftBodyEngine
 
-pytest.skip("Manual diagnostic script, not a test", allow_module_level=True)
+# 以腳本身分執行時 (__main__) 不能跳過，否則 __main__ 區塊永遠跑不到、
+# 直接以 Skipped 例外收場（audit 2026-10-12）。以模組身分被 pytest
+# import 時照原意跳過，避免被收進測試。
+if __name__ != "__main__":
+    pytest.skip("Manual diagnostic script, not a test", allow_module_level=True)
 
 _core_path = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "../../packages/biology-core/src")
