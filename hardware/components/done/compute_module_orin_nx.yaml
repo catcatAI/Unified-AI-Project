@@ -13,7 +13,7 @@ facts:
     c4: up-to-x4 dual-mode root-port-or-endpoint（Gen4）——小卡 edge 走這條
     c7: x2（on-card NVMe）
   power_modes_w: [10, 15, 25, 40]
-  module_input_range_v: [5, 20]  # slot 12V 直餵在範圍內；>=8V 解鎖 40W
+  module_input_range_v: [5, 20] # slot 12V 直餵在範圍內；>=8V 解鎖 40W
   junction_temp_c: { target: 90, slowdown: 99, max: 105 }
 consumer_of_truth: hardware/assemblies/done/edge_card/edge_card_spec.yaml (compute.module)
 sources:

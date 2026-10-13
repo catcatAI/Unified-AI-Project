@@ -4131,5 +4131,9 @@ test files with zero pytest assertions.
   hardware workspace locks `test_hardware_workspace.py`, +6 concurrent).
 - **Test count**: **7,148 collected (tests/) — 0 errors** (2026-10-09; +5
   edge_card spec gap-closure tests — B1-B10 + C3 audit gaps, +13 concurrent).
+- **Test count**: **7,458 collected (tests/) — 0 errors** (2026-10-13; +41
+  restored `test_game_agent_integration.py`, +18 memory-panel, +34
+  llm-status/fallback, +13 sync-event tests; −62 false-pass tests, −1
+  permanently-skipped `test_ham_config_exists`).
 
 [//]: # 'End of MASTER_TASK_MAP'

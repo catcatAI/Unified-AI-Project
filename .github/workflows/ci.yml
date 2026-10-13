@@ -128,10 +128,10 @@ jobs:
         run: |
           COLLECTED=$(python -m pytest tests/ --collect-only -q 2>&1 | grep -oP '\d+(?= tests collected)' | tail -1)
           echo "Collected: $COLLECTED"
-          # Window tracks the real suite size (6673 as of 2026-09-28); it is a
+          # Window tracks the real suite size (7458 as of 2026-10-13); it is a
           # mass-loss/duplication alarm, not a per-commit precision gate.
           if [ "$COLLECTED" -lt 6000 ] || [ "$COLLECTED" -gt 7500 ]; then
-            echo "⚠️ Test count $COLLECTED outside expected 5000-6000 window — check README/AGENTS sync"
+            echo "⚠️ Test count $COLLECTED outside expected 6000-7500 window — check README/AGENTS sync"
           else
             echo "✅ Test count $COLLECTED in expected window"
           fi

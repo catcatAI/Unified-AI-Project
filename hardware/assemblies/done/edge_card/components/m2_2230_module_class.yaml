@@ -1,6 +1,6 @@
 schema_version: edge-component-card/1
 id: m2-key-m-2230-module-class
-status: complete  # 介面等級完成；具體 SSD 零件選型未完成（components/wip/m2_ssd_part_selection.yaml）
+status: complete # 介面等級完成；具體 SSD 零件選型未完成（components/wip/m2_ssd_part_selection.yaml）
 role: edge_card 的儲存介面等級（卡上 NVMe 走 Orin C7 x2）
 what: M.2 Key-M 2230 socket 介面等級元件卡（22mm 寬 x 30mm 長模組區）
 facts:

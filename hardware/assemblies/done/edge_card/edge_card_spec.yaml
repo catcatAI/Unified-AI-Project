@@ -720,7 +720,8 @@ clocking_and_noise:
     intra_pair_skew_max_mm: 0.127 # 5 mils intra-pair, TI layout guides (src_ti_pcie_layout)
     via_pairs_max_on_lane: 6 # <=6 via pairs per TX/RX lane, 1 dB each at Gen4 (src_ti_precision_labs_pcie)
     edge_to_chip_trace_max_mm: 101.6 # 4 inches edge-finger to add-in-card chip (src_ti_precision_labs_pcie)
-    sources: [src_pcie_cem, src_ti_pcie_layout, src_ti_precision_labs_pcie, src_pcie_gen4_compliance]
+    sources:
+      [src_pcie_cem, src_ti_pcie_layout, src_ti_precision_labs_pcie, src_pcie_gen4_compliance]
   source: src_pcie_cem
 
 # =============================================================================
