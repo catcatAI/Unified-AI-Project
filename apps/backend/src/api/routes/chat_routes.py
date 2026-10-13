@@ -918,7 +918,10 @@ async def _try_agent_routing(
             if clock_query_kind(user_message) is not None:
                 return None
         except Exception:
-            pass
+            logger.warning(
+                "clock_query_kind probe failed; time questions may leak to " "knowledge agent",
+                exc_info=True,
+            )
 
         eda_request = AgentOrchestrator.is_eda_execution_request(user_message)
         ai_card_request = AgentOrchestrator.is_ai_card_request(user_message)
@@ -1006,7 +1009,11 @@ async def _try_agent_routing(
                 logger.debug("Agent routing skipped for code-write request")
                 return None
         except Exception:
-            pass
+            logger.warning(
+                "code-write gate probe failed; code-write requests may fall "
+                "through to general agent routing",
+                exc_info=True,
+            )
 
         # ExecutionGate blocked the specialized agent (irreversible action needs
         # explicit confirmation). Surface the confirmation instead of silently

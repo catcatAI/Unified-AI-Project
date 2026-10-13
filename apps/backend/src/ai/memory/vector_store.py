@@ -47,6 +47,11 @@ def _default_persist_dir() -> str:
 
         return os.fspath(DATA_DIR / "vector_store")
     except Exception:
+        # 兩層錨定皆敗 → CWD 相對路徑（split-brain 類風險）：留痕以便追查
+        logger.warning(
+            "vector store path anchoring failed; falling back to " "CWD-relative data/vector_store",
+            exc_info=True,
+        )
         return os.path.abspath("data/vector_store")
 
 

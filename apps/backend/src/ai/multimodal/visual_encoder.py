@@ -251,6 +251,11 @@ class VisualEncoder:
             img = Image.open(io.BytesIO(image_data)).convert("RGB")
             raw = self._extract_raw(img)
         except Exception:
+            logger.warning(
+                "visual training sample decode/extract failed; returning "
+                "0.0 loss (sample skipped)",
+                exc_info=True,
+            )
             return 0.0
         if raw.size == 0 or np.all(raw == 0):
             return 0.0

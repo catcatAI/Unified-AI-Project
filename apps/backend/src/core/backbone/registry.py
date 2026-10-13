@@ -125,6 +125,7 @@ class AxisRegistry(_BaseRegistry):
                 obj[key] = value
                 return True
         except Exception:
+            logger.debug("axis write %r.%r failed", axis, key, exc_info=True)
             return False
         return False
 
@@ -141,6 +142,7 @@ class AxisRegistry(_BaseRegistry):
                 obj.update(data)
                 return True
         except Exception:
+            logger.debug("axis bulk update %r failed", axis, exc_info=True)
             return False
         return False
 
@@ -178,6 +180,7 @@ class ModuleRegistry(_BaseRegistry):
             try:
                 hook()
             except Exception:
+                logger.debug("mount hook %r failed", key, exc_info=True)
                 return False
         return True
 
@@ -189,6 +192,7 @@ class ModuleRegistry(_BaseRegistry):
             try:
                 hook()
             except Exception:
+                logger.debug("unmount hook %r failed", key, exc_info=True)
                 return False
         return True
 

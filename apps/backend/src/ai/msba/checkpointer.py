@@ -290,7 +290,12 @@ class MSBACheckpointer:
                         with open(meta_path, "r") as f:
                             meta = json.load(f)
                     except Exception:
-                        pass
+                        logger.warning(
+                            "corrupt checkpoint meta.json at %s; "
+                            "version listed with empty metadata",
+                            meta_path,
+                            exc_info=True,
+                        )
                 versions.append(
                     {
                         "version": v,

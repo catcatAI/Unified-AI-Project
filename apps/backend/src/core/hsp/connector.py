@@ -675,7 +675,12 @@ class HSPConnector:
                             rel = Path(*rel.parts[1:])
                         base_path = str(get_data_root() / rel)
                     except Exception:
-                        pass
+                        self.logger.warning(
+                            "[HSP] data_root anchor failed; file protocol "
+                            "falls back to CWD-relative base_path=%r",
+                            str(base_path),
+                            exc_info=True,
+                        )
                 file_protocol = FileBasedProtocol(base_path=base_path)
                 priority = file_config.get("priority", 2)
                 self.fallback_manager.add_protocol(file_protocol, priority=priority)

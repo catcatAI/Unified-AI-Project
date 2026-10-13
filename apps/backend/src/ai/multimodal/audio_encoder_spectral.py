@@ -327,6 +327,11 @@ class AudioSpectralEncoder:
             samples = self._decode_audio(audio_data)
             raw = self._extract_raw(samples)
         except Exception:
+            logger.warning(
+                "audio training sample decode/extract failed; returning "
+                "0.0 loss (sample skipped)",
+                exc_info=True,
+            )
             return 0.0
         if raw.size == 0 or np.all(raw == 0):
             return 0.0

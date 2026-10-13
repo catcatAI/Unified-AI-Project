@@ -109,7 +109,12 @@ class UnifiedEngine:
                         logger.info("Unified slots %d clamped to %d by RAM cap", slots, max_pow2)
                         slots = max(32768, max_pow2)
             except Exception:
-                pass
+                logger.warning(
+                    "RAM probe failed; OOM slot clamp skipped (unclamped "
+                    "slots=%d may OOM on small-memory hosts)",
+                    slots,
+                    exc_info=True,
+                )
         self.core = FixedSizeCore(
             max_seq=max_seq, slots=slots, use_feat=use_feat, use_delta=use_delta
         )

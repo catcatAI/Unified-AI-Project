@@ -126,7 +126,12 @@ class UnifiedBackend(BaseLLMBackend):
                     with open(qa_path, encoding="utf-8") as _f:
                         engine.semantic_qa.load_dict(_json.load(_f))
                 except Exception:  # noqa: BLE001
-                    pass
+                    logger.warning(
+                        "SemanticQA knowledge load failed (%s); engine "
+                        "comes up without QA knowledge",
+                        qa_path,
+                        exc_info=True,
+                    )
             self._engine = engine
             return engine
         except Exception as exc:

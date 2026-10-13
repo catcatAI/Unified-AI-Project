@@ -86,6 +86,7 @@ def _emotion_threshold_adjustment() -> float:
                     es = get_es()
                 except Exception:
                     es = None
+                    logger.debug("emotion system unavailable for threshold adj", exc_info=True)
                 if es is not None and hasattr(es, "get_emotion_summary"):
                     summary = es.get_emotion_summary()
                     dom = summary.get("dominant_emotion", "neutral")
@@ -94,7 +95,7 @@ def _emotion_threshold_adjustment() -> float:
                     if dom in ("fear", "sadness", "anger", "disgust"):
                         adj += 0.05
         except Exception:
-            pass
+            logger.debug("emotion threshold adjustment failed; adj stays 0", exc_info=True)
     return max(-0.10, min(0.10, adj))
 
 
@@ -137,7 +138,13 @@ def _ensure_emotion_event_subscription() -> None:
         state_store.subscribe_event("emotion.behavioral_adjustment", _on_emotion_event)
         _SUBSCRIBED = True
     except Exception:
-        pass
+        # 失敗 = 情緒事件永久到不了 QA 閾值；一次性 warning（冪等旗標未置位，
+        # 下次呼叫會重試並再記一次——不重試才是 bug）。
+        logger.warning(
+            "failed to subscribe emotion.behavioral_adjustment; "
+            "emotion-driven threshold adjustment is inert",
+            exc_info=True,
+        )
 
 
 def _on_emotion_event(event_type: str, data: Dict[str, Any]) -> None:
@@ -209,7 +216,7 @@ def _features(s: str, dim: int = _DIM) -> np.ndarray:
             if arr is not None and arr.shape[0] > 0:
                 return np.asarray(arr[0], dtype=np.float32)
         except Exception:
-            pass
+            logger.debug("ONNX encode failed; falling back to hash embedding", exc_info=True)
     v = np.zeros(dim, dtype=np.float32)
     ws = _tokens(s)
     for w in ws:
@@ -230,7 +237,7 @@ def _embedding_dim() -> int:
             if probe is not None and probe.ndim == 2:
                 return int(probe.shape[1])
         except Exception:
-            pass
+            logger.debug("ONNX dim probe failed; using hash fallback dim", exc_info=True)
     return _DIM
 
 

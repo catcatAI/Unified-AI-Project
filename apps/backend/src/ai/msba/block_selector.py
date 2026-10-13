@@ -157,7 +157,7 @@ class BlockSelector:
             try:
                 return embedder.encode(text)
             except Exception:
-                pass
+                logger.debug("embedder encode failed; falling back to hash embedder", exc_info=True)
         # Fallback: simple hash-based embedding
         return _SimpleEmbedder().encode(text)
 

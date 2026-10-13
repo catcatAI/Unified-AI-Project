@@ -217,7 +217,7 @@ class MSBAPipeline:
                     reasoning_chain=[f"compute_arithmetic({input_text!r}) = {value}"],
                 )
         except Exception:
-            pass
+            logger.debug("math seed compute_arithmetic failed; no math seed", exc_info=True)
 
         # Knowledge via the shared ED3N dictionary layer singleton
         try:
@@ -237,7 +237,7 @@ class MSBAPipeline:
                         reasoning_chain=[f"dictionary hits: {[e.key for e in hits]}"],
                     )
         except Exception:
-            pass
+            logger.debug("knowledge seed dictionary lookup failed; no seed", exc_info=True)
 
         return SeedResult()
 

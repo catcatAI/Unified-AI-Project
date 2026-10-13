@@ -173,6 +173,10 @@ class MathVerifier:
         try:
             _result = compute_arithmetic(message)
         except Exception:
+            logger.warning(
+                "compute_arithmetic crashed in verify(); falling through to " "extractor/LLM path",
+                exc_info=True,
+            )
             _result = None
         if _result is not None:
             _expr = _normalize_expr(message)

@@ -769,14 +769,22 @@ class AngelaAutonomousAgent:
                 try:
                     mode = self.emotion.get_behavioral_adjustment().get("routing_mode", mode)
                 except Exception:
-                    pass
+                    logger.debug(
+                        "emotion behavioral adjustment unreadable; "
+                        "routing mode falls back to neutral",
+                        exc_info=True,
+                    )
             if self.lifecycle is not None and hasattr(self.lifecycle, "get_behavioral_adjustment"):
                 try:
                     lm = self.lifecycle.get_behavioral_adjustment().get("routing_mode")
                     if lm and lm != "neutral":
                         mode = lm
                 except Exception:
-                    pass
+                    logger.debug(
+                        "lifecycle behavioral adjustment unreadable; "
+                        "routing mode keeps prior value",
+                        exc_info=True,
+                    )
             temps = {"exploratory": 1.25, "conservative": 0.7}
             new_temp = temps.get(mode, 1.0)
             if (
