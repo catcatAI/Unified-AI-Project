@@ -247,7 +247,7 @@ pytest -s     # 显示print输出
 | DESKTOP_APP        | 3001   | 桌面应用 Electron 服务 |
 | BACKEND_API        | 8000   | 后端 API 服务          |
 
-项目实现了自动化的端口冲突检测和解决机制，在启动服务之前会自动检测并终止已存在的冲突进程。详细信息请参阅：[端口管理策略](PORT_MANAGEMENT_STRATEGY.md)
+项目实现了自动化的端口冲突检测和解决机制，在启动服务之前会自动检测并终止已存在的冲突进程。详细信息请参阅：[端口管理策略](../03-technical-architecture/PORT_MANAGEMENT_STRATEGY.md)
 
 ### 调试技巧
 
@@ -255,7 +255,8 @@ pytest -s     # 显示print输出
 
    ```bash
    pnpm health-check
-   python scripts/health_check.py
+   # 或直接在仓库根目录运行
+   python3 scripts/utils/health_check.py
    ```
 
 2. **查看日志**

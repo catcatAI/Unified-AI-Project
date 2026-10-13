@@ -147,7 +147,7 @@ class LuantiConnector:
             "protocol_version": self.config.protocol_version,
             "password": self.config.password,
             "client_name": "AngelaAI",
-            "client_version": "7.5.0",
+            "client_version": "7.5.0-dev",
         }
         await self._send(auth_msg)
 

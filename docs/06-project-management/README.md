@@ -58,7 +58,8 @@ H-level:
 
 ## Current State
 
-- **Version**: 7.5.0-dev — all 14 version locations synchronized
+- **Version**: 7.5.0-dev — all version locations synchronized (enforced by
+  `tests/test_version_consistency.py`)
 - **Tests**: 2837 tests, 0 collection errors
 - **HIGH vulnerabilities**: 0 remaining (all repaired in H1-H4)
 - **Modules**: 564 Python files (~69K lines), 204 stub modules (36%)

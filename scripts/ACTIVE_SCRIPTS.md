@@ -29,22 +29,16 @@ Unified-AI-Project.
 
 ### Training & AI
 
-- **`train_ed3n.py`**: ED3N training
 - **`train_pipeline.py`**: Training pipeline
 - **`train_visual_decoder.py`**: Train VisualDecoder texture weights via
   FullTrainingPipeline (Phase 1+2+3a). Saves
   `data/multimodal/weights/p29_trained.npz` with 7 weight arrays. Usage:
   `python scripts/train_visual_decoder.py --texture-steps 200`
-- **`train_multimodal_real.py`**: Full multimodal training with real CIFAR-10 +
-  ESC-50 data. Phase 1+2 (real contrastive + reconstruction) + Phase 3a
-  (texture) + Phase 3b (wavetable). Saves joint `p29_trained.npz` (15 arrays).
-  Usage: `python scripts/train_multimodal_real.py --texture-steps 500`
 - **`generate_training_data.py`**: Generate training data
 
 ### Development & Testing
 
 - **`verify_ice_loop.py`**: Verify ICE (Ingest-Cognition-Execution) loop
-- **`verify_phase_2_loop.py`**: Verify Phase 2 quality-based reward loop
 
 ### Project Management
 
@@ -87,7 +81,6 @@ Unified-AI-Project.
 - **`check_test_results.py`**: Check test results from runs
 - **`continuous_test_improvement.py`**: Continuous improvement of test suite
 - **`deadlock_detector.py`**: Detect deadlocks in async tests
-- **`enterprise_test_suite.py`**: Enterprise-scale test suite runner
 - **`extract_latest_failures.py`**: Extract latest test failures
 - **`find_skipped_tests.py`**: Find all skipped tests
 - **`generate_test_report.py`**: Generate test reports
@@ -102,12 +95,18 @@ Unified-AI-Project.
 - **`run_tests_with_compat.py`**: Run tests with compatibility mode
 - **`smart_test_runner.py`**: Smart test runner with analytics
 
-## tools/
+## Archived / removed scripts
 
-### Legacy Scripts
+These were previously listed here as active and are **not** present anymore:
 
-- **`install_angela.py`**: Full installer
-- **`AngelaLauncher.bat`**: Windows launcher with auto-repair
+| Script                     | Where it went                                             |
+| -------------------------- | --------------------------------------------------------- |
+| `train_ed3n.py`            | `scripts/_archive/train_ed3n.py`                          |
+| `train_multimodal_real.py` | `scripts/_archive/train_multimodal_real.py`               |
+| `install_angela.py`        | Removed; installer functionality lives in root `setup.py` |
+| `AngelaLauncher.bat`       | Removed (the `tools/` directory no longer exists)         |
+| `enterprise_test_suite.py` | Removed                                                   |
+| `verify_phase_2_loop.py`   | Removed                                                   |
 
 ## Usage Guidelines
 
@@ -146,10 +145,11 @@ python scripts/verify_drive_analyzer.py
 
 ## Maintenance Notes
 
-- **Active Scripts**: ~30 scripts in `scripts/` directory
-- **Utilities**: 28 scripts in `scripts/utils/` (was 5 — expanded with test
-  utility scripts from `tests/utils/`)
-- **Tools**: 2 scripts in `tools/`
-- **Tests/utils remaining**: `test_text_utils.py`, `text_utils.py` (legitimate
-  test files with pytest test functions)
-- **Last Cleanup**: 2026-07-07
+- **Active Scripts**: 214 `.py` scripts in `scripts/`
+- **Utilities**: 29 scripts in `scripts/utils/`
+- **Archive**: 22 scripts in `scripts/_archive/` (kept for reference, not
+  maintained)
+- **Tools**: the `tools/` directory was removed; nothing to list
+- **Tests/utils remaining**: `test_text_utils.py` (legitimate test file with
+  pytest test functions)
+- **Last Cleanup**: 2026-10-13

@@ -8,29 +8,35 @@
 
 ### 一键安装（新用户推荐）
 
-**最简单的方式** - 只需下载一个文件，运行即可：
+> ⚠️ **2026-10 更正**：本節原本指示下載獨立的
+> `install_angela.py`。該檔案已從專案移除，功能整併進專案根目錄的
+> `setup.py`，GitHub 上已不存在 `install_angela.py`，原本的 `curl`
+> 連結會 404。請改用下方流程。
+
+**最簡單的方式** — 取得專案檔案後，執行內建安裝程式：
 
 #### Windows:
 
-1. **下载安装程序**
+1. **取得專案檔案**
 
    ```powershell
    # 打开PowerShell或CMD，运行：
-   curl -o install_angela.py https://raw.githubusercontent.com/catcatAI/Unified-AI-Project/main/install_angela.py
+   git clone https://github.com/catcatAI/Unified-AI-Project.git
+   cd Unified-AI-Project
    ```
 
 2. **运行安装**
 
    ```powershell
-   python install_angela.py
+   python setup.py
    ```
 
-   或双击下载的 `install_angela.py` 文件
+   或双击专案资料夹中的 `setup.py` 文件
 
 3. **按提示操作**
-   - 选择安装目录（默认：`C:\Users\你的用户名\AngelaAI`）
-   - 等待自动从GitHub拉取代码
-   - 等待依赖安装（5-10分钟）
+   - 选择安装目录（默认：当前目录；可用 `--install-dir` 指定）
+   - 等待依赖安装（5-10分钟；可用 `--skip-deps` 跳过）
+   - 建立桌面／开始菜单捷径（可用 `--skip-shortcuts` 跳过）
    - 完成！
 
 4. **启动Angela**
@@ -42,14 +48,14 @@
 #### macOS/Linux:
 
 ```bash
-# 下载安装程序
-curl -o install_angela.py https://raw.githubusercontent.com/catcatAI/Unified-AI-Project/main/install_angela.py
+# 取得專案檔案
+git clone https://github.com/catcatAI/Unified-AI-Project.git
+cd Unified-AI-Project
 
 # 运行安装
-python3 install_angela.py
+python3 setup.py
 
 # 启动
-cd ~/AngelaAI
 python scripts/run_angela.py
 ```
 
@@ -123,45 +129,41 @@ docker-compose up -d
 
 ## 📋 安装选项对比
 
-| 方式         | 适用对象 | 难度        | 特点                             |
-| ------------ | -------- | ----------- | -------------------------------- |
-| **一键安装** | 新用户   | ⭐ 最简单   | 自动下载、自动安装、创建快捷方式 |
-| **手动安装** | 开发者   | ⭐⭐ 中等   | 可修改代码、灵活配置             |
-| **Docker**   | 高级用户 | ⭐⭐⭐ 复杂 | 容器化部署、隔离环境             |
+| 方式         | 适用对象 | 难度        | 特点                                    |
+| ------------ | -------- | ----------- | --------------------------------------- |
+| **一键安装** | 新用户   | ⭐ 最简单   | 自动安装依赖、建立桌面/开始菜单快捷方式 |
+| **手动安装** | 开发者   | ⭐⭐ 中等   | 可修改代码、灵活配置                    |
+| **Docker**   | 高级用户 | ⭐⭐⭐ 复杂 | 容器化部署、隔离环境                    |
 
 ---
 
 ## 🔧 安装程序详解
 
-### install_angela.py 功能
+### setup.py 功能（`install_angela.py` 的后继者）
 
 **这个安装程序会：**
 
 1. **系统检查**
    - ✅ Python 3.10+ 版本检查
-   - ✅ pip 包管理器检查
-   - ✅ Git 版本控制检查
    - ✅ 磁盘空间检查（需要2GB+）
 
-2. **代码获取**
-   - 📥 从GitHub克隆最新代码
-   - 🔄 如果Git不可用，自动下载ZIP
-   - 📂 安装到指定目录（默认用户目录）
-
-3. **依赖安装**
-   - 📦 安装 requirements.txt 中的所有依赖
+2. **依赖安装**
+   - 📦 安装 `apps/backend` 的依赖
    - 🎵 安装音频支持（pyaudio等）
    - ⏱️ 耗时：5-10分钟（取决于网络）
 
-4. **快捷方式**
-   - 🖥️ 创建桌面快捷方式
-   - 📋 创建开始菜单项
-   - 🗑️ 创建卸载程序
+3. **快捷方式**
+   - 🖥️ 创建桌面快捷方式（仅 Windows）
+   - 📋 创建开始菜单项（仅 Windows）
 
-5. **完成提示**
+4. **完成提示**
    - 📖 显示安装摘要
    - 🚀 说明启动方式
    - 💡 提供首次使用提示
+
+> ℹ️ 与旧版 `install_angela.py`
+> 的差异：不再自行从 GitHub 克隆代码（请先 clone 本专案），因此没有 `--repo` /
+> `--skip-clone` 选项；也不再产生卸载程序。
 
 ---
 
@@ -171,51 +173,44 @@ docker-compose up -d
 
 ```bash
 # 安装到D盘
-python install_angela.py --install-dir "D:\AngelaAI"
+python setup.py --install-dir "D:\AngelaAI"
 
 # 安装到任意位置
-python install_angela.py --install-dir "/path/to/install"
+python setup.py --install-dir "/path/to/install"
 ```
 
-### 使用其他仓库
+### 使用其他仓库（fork）
+
+先用 `git clone` 取得该 fork，再在资料夹内执行安装程式：
 
 ```bash
 # 安装fork的版本
-python install_angela.py --repo https://github.com/yourname/Unified-AI-Project.git
+git clone https://github.com/yourname/Unified-AI-Project.git
+cd Unified-AI-Project
+python setup.py
 ```
 
 ### 跳过某些步骤
 
 ```bash
-# 跳过克隆（如果已在项目目录）
-python install_angela.py --skip-clone
-
-# 跳过依赖安装
-python install_angela.py --skip-deps
+# 跳过依赖安装（只创建快捷方式）
+python setup.py --skip-deps
 
 # 跳过快捷方式创建
-python install_angela.py --skip-shortcuts
+python setup.py --skip-shortcuts
 ```
 
 ---
 
 ## 🗑️ 卸载
 
-### 方法一：使用卸载程序（推荐）
+> ⚠️ **2026-10 更正**：旧版 `install_angela.py` 会产生卸载程序，且文件名为
+> `uninstall.py`。两者都已从专案移除，目前**没有**内建卸载程式，请手动删除安装目录。
 
-**Windows:**
+### 手动删除
 
-- 开始菜单 → Angela AI → 卸载 Angela AI
-- 或在安装目录运行：`python uninstall.py`
-
-**macOS/Linux:**
-
-```bash
-cd ~/AngelaAI
-python uninstall.py
-```
-
-### 方法二：手动删除
+删除当初指定的安装目录（预设为 clone 下来的专案资料夹，例如 `~/AngelaAI` 或
+`%USERPROFILE%\AngelaAI`）：
 
 ```bash
 # Windows
@@ -225,14 +220,16 @@ rmdir /s /q "%USERPROFILE%\AngelaAI"
 rm -rf ~/AngelaAI
 ```
 
+若安装时建立了桌面／开始菜单捷径，也请一并手动删除。
+
 ---
 
 ## ❓ 常见问题
 
 ### Q: 安装失败，提示"Git未安装"
 
-**A:**
-安装程序会自动尝试下载ZIP文件作为备选。也可以手动安装Git：https://git-scm.com
+**A:** 安装程式本身不再代为下载 git。请先安装 Git（https://git-scm.com），或从
+GitHub 网页版下载 ZIP 解压缩后再执行 `python setup.py`。
 
 ### Q: 依赖安装超时
 
@@ -247,9 +244,10 @@ rm -rf ~/AngelaAI
 **A:**
 
 ```bash
-cd ~/AngelaAI
+cd ~/AngelaAI     # 你的安装/克隆目录
 git pull origin main
-pip install -r requirements.txt --upgrade
+pip install -e "apps/backend"          # 或 apps/backend[standard]，与首次安装时相同层级
+npx pnpm install --no-frozen-lockfile
 ```
 
 ### Q: 安装后找不到快捷方式
@@ -299,8 +297,7 @@ Redistributable，下载：https://aka.ms/vs/17/release/vc_redist.x64.exe
 
    ```bash
    # 方法1：双击桌面快捷方式
-   # 方法2：终端运行
-   cd ~/AngelaAI
+   # 方法2：终端运行（在你的项目/安装目录）
    python scripts/run_angela.py
    ```
 
@@ -313,11 +310,13 @@ Redistributable，下载：https://aka.ms/vs/17/release/vc_redist.x64.exe
 
 ## 📚 相关文档
 
-- **使用指南**: [README.md](../README.md)
-- **项目结构**: [PROJECT_STRUCTURE.md](../PROJECT_STRUCTURE.md)
+- **使用指南**: [README.md](../../README.md)
+- **项目概览**: [PROJECT_OVERVIEW.md](../PROJECT_OVERVIEW.md)
+- **模组地图**: [MODULE_MAP.md](../MODULE_MAP.md)
 - **艺术学习**:
-  [docs/ART_LEARNING_LIVE2D_GUIDE.md](ART_LEARNING_LIVE2D_GUIDE.md)
-- **API文档**: [docs/02-api-docs/](02-api-docs/)
+  [ART_LEARNING_LIVE2D_GUIDE.md](../04-advanced-concepts/ART_LEARNING_LIVE2D_GUIDE.md)
+- **API文档**:
+  [docs/03-technical-architecture/api/](../03-technical-architecture/api/)
 
 ---
 

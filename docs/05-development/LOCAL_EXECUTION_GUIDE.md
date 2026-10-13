@@ -208,23 +208,24 @@ if __name__ == "__main__":
 #### 3.1 運行單元測試
 
 ```bash
-# 運行完整測試套件
-cd D:\Projects\Unified-AI-Project
-python tests\unit\test_ai_ops_complete.py
+# 運行完整測試套件（在倉庫根目錄）
+# ⚠️ 舊版指示的 tests/unit/test_ai_ops_complete.py 已不存在：該檔案隨 ai.ops
+#    子系統一併刪除（見 AGENTS.md §X #104/#105）
+pytest tests/ apps/backend/tests/ -q
 ```
 
 #### 3.2 運行功能測試
 
 ```bash
-# 運行功能測試
-python test_functionality.py
+# 運行功能測試（以 services 為例）
+pytest tests/services/ -q
 ```
 
 #### 3.3 運行性能測試
 
 ```bash
 # 運行性能測試
-python test_performance.py
+pytest tests/performance/ -q
 ```
 
 ## 常見問題解決

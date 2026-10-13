@@ -1029,10 +1029,13 @@ try {
 2. **CHANGELOG must match real versions**: Every CHANGELOG entry must correspond
    to a real git tag or source code version change. Fictional/unreleased
    versions must be marked `Internal/Unreleased`.
-3. **All 14 version locations must stay in sync**: Before any commit that
-   changes `package.json` version, run a consistency check across all version
-   files. See `docs/06-project-management/MASTER_TASK_MAP.md` for the full file
-   list.
+3. **All version locations must stay in sync**: Before any commit that changes
+   `package.json` version, run the consistency check:
+   `pytest tests/test_version_consistency.py -q`. That test is the authoritative
+   list of version locations and fails if any of them disagree with
+   `package.json`. (The earlier "14 version locations" wording pointed at a file
+   list in `docs/06-project-management/MASTER_TASK_MAP.md` that was never
+   written down, so it could not be followed.)
 4. **No bare "Fix and update" commits**: Every commit that touches a version
    field must explain WHY in the commit message body.
 

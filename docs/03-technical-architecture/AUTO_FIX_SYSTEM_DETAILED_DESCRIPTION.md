@@ -1,5 +1,14 @@
 # Unified AI Project 自动修复系统详细说明
 
+> ⚠️
+> **2026-10 狀態更正**：本文描述的自動修復系統（`tools/scripts/unified_auto_fix.py`、
+> `tools/scripts/final_targeted_auto_fix_system.py`、
+> `auto_fix_workspace/scripts/interactive_auto_fix_system.py`、`scripts/enhanced_auto_fix.py`
+> 等）**已從倉庫移除**（v6.0.4，commit `311ad8d53`），`tools/` 與
+> `auto_fix_workspace/`
+> 目錄均不存在。本文保留為**歷史設計記錄**，其中的命令不可執行。（`workflow_controller.py`
+> 仍存在，位於 `apps/backend/scripts/`。）
+
 ## 概述
 
 Unified AI

@@ -21,7 +21,7 @@ pip install -r requirements.txt
 在现有的测试脚本或CI/CD流程中添加以下代码：
 
 ```python
-from apps.backend.scripts.process_test_results import process_test_results
+from scripts.utils.process_test_results import process_test_results
 
 # 在测试完成后调用
 if __name__ == "__main__":
@@ -45,8 +45,8 @@ if __name__ == "__main__":
 也可以通过命令行手动处理测试结果：
 
 ```bash
-cd D:\Projects\Unified-AI-Project
-python apps/backend/scripts/process_test_results.py test_results.json --baseline baseline_results.json --historical historical_results_1.json historical_results_2.json --send-email --recipients dev-team@example.com
+# 在仓库根目录运行（使 scripts 命名空间可被 import）
+python scripts/utils/process_test_results.py test_results.json --baseline baseline_results.json --historical historical_results_1.json historical_results_2.json --send-email --recipients dev-team@example.com
 ```
 
 ## 3. 自定义配置

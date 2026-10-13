@@ -93,12 +93,12 @@ asyncio.run(main())
 
 ### 2. 运行演示
 
-```bash
-# 运行完整演示
-python apps/backend/src/ai/examples/level5_asi_demo.py
+> ⚠️ **2026-10 更正**：下列演示脚本已不存在（`apps/backend/src/ai/examples/`
+> 目录已从仓库移除），保留为历史记录。请改用上方 Python API 的方式自行调用。
 
-# 运行交互式演示
-python apps/backend/src/ai/examples/level5_asi_demo.py interactive
+```text
+apps/backend/src/ai/examples/level5_asi_demo.py              # 已移除
+apps/backend/src/ai/examples/level5_asi_demo.py interactive  # 已移除
 ```
 
 ### 3. 使用对齐代理

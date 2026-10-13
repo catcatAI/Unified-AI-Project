@@ -308,7 +308,9 @@ apps/backend/src/
 
 **測試方法：**
 
+> ⚠️ 原指令是執行
+> `test_identity.py`，但該腳本不存在。現行最接近的自動化檢查是 reflex 身份模式（「你是誰」/「你是誰」）的測試：
+
 ```bash
-python test_identity.py
-# 應該看到 Angela 使用數位生命體描述而非物理描述
+pytest tests/ai/core/test_integration_phase37.py -q -k personality
 ```

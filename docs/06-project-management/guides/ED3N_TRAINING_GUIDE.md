@@ -50,12 +50,16 @@ Existing datasets at `apps/backend/data/raw_datasets/`:
 
 ### Quick Start
 
+> ⚠️ **2026-10 更正**：`scripts/train_ed3n.py` 已封存至
+> `scripts/_archive/train_ed3n.py`。本文件其余章节保留的路径为历史记录；现行维护的训练入口是
+> `scripts/train_pipeline.py`。
+
 ```bash
-# Train with default settings
-python scripts/train_ed3n.py
+# 封存版训练脚本（保留供参考）
+python scripts/_archive/train_ed3n.py
 
 # Train with custom parameters
-python scripts/train_ed3n.py --epochs 5 --lr 0.05 --data-dir apps/backend/data/raw_datasets
+python scripts/_archive/train_ed3n.py --epochs 5 --lr 0.05 --data-dir apps/backend/data/raw_datasets
 ```
 
 ### Parameters
@@ -186,7 +190,8 @@ for q in ['true AND false', '(false OR true) AND false', '999 + 1']:
 
 1. Prepare data as JSON: `[{"input": "...", "output": "..."}]`
 2. Ensure domain-specific tokens exist in the dictionary (or will be auto-grown)
-3. Run `python scripts/train_ed3n.py`
+3. Run `python scripts/_archive/train_ed3n.py`（封存版；现行入口为
+   `train_pipeline.py`）
 
 ### Adding Custom Presets
 
@@ -216,7 +221,7 @@ Edit `apps/backend/src/ai/ed3n/dictionary_layer.py:_build_presets()`:
 
 | File                                       | Purpose                                            |
 | ------------------------------------------ | -------------------------------------------------- |
-| `scripts/train_ed3n.py`                    | Main training pipeline                             |
+| `scripts/_archive/train_ed3n.py`           | Main training pipeline（已封存）                   |
 | `data/checkpoints/ed3n_full.json`          | Engine checkpoint (dictionary + reflex + settings) |
 | `data/checkpoints/trainer_state.json`      | Training metrics history                           |
 | `data/checkpoints/network.json`            | CoreNetwork connection weights                     |

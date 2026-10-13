@@ -177,7 +177,8 @@ DDR3内存的电脑）。通过自动动态调控和动态载入技术，实现�
 
 ```bash
 # 运行硬件兼容性测试
-python training/test_hardware_compatibility.py
+# ⚠️ 原指令 python training/test_hardware_compatibility.py 已失效（training/ 目录已移除）
+pytest tests/core/test_hardware_profile.py -q
 ```
 
 ### 8.2 集成显卡优化
@@ -226,7 +227,8 @@ print(f"内存使用: {resource_usage['memory_used_gb']}GB/{resource_usage['memo
 
 ```bash
 # 运行快速硬件测试
-python training/quick_hardware_test.py
+# ⚠️ 原指令 python training/quick_hardware_test.py 已失效（training/ 目录已移除）
+python scripts/verify_hardware_tiers.py
 ```
 
 ## 10. 未来改进方向

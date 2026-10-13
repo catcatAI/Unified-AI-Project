@@ -1,5 +1,10 @@
 # Unified AI Project - Content Analysis Module Test Fixes Summary
 
+> ⚠️ **2026-10 狀態更正**：本文是**當時**的修復紀錄。其 Verification 章節引用的
+> `tests/core_ai/...` 與 `tests/hsp/...`
+> 路徑屬於已移除的舊版目錄配置，現已不存在，因此那些指令**不可執行**。現行測試配置見
+> `tests/README.md`。
+
 This document summarizes the fixes applied to resolve test failures in the
 ContentAnalyzerModule of the Unified AI Project backend.
 

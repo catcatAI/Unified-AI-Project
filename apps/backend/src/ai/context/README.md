@@ -230,7 +230,9 @@ python demo_context_system.py
 ### 运行测试
 
 ```bash
-pytest tests/core_ai/context/test_context_system.py -v
+# ⚠️ 原指令引用的 tests/core_ai/（舊版目錄配置）已不存在；
+#    現行上下文測試位於 tests/ai/context/
+pytest tests/ai/context/ -v
 ```
 
 ## 配置

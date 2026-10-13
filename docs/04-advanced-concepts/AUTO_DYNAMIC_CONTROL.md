@@ -203,7 +203,8 @@ print(f"内存利用率: {utilization['memory_utilization']:.2%}")
 
 ```bash
 # 运行资源管理测试
-python training/test_resource_management.py
+# ⚠️ 原指令 python training/test_resource_management.py 已失效（training/ 目录已移除）
+pytest tests/unit/test_resource_awareness_service.py -q
 ```
 
 ## 9. 最佳实践

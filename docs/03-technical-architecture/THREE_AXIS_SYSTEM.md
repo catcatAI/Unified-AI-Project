@@ -2,8 +2,15 @@
 
 > 本文件分析三軸系統的理論架構、上下文組成與長度上限，並逐一檢視現有
 > **確定性引擎 / ED3N 引擎 /
-> GARDEN 引擎**如何被三軸系統及其衍生引擎取代。這是**分析與設計**層級的文件。三軸系統目前為概念驗證階段（
-> `scripts/` 與 `/tmp/opencode/verify_*.py` 有數學域實驗），尚未整合進產品。
+> GARDEN 引擎**如何被三軸系統及其衍生引擎取代。這是**分析與設計**層級的文件。三軸系統目前為概念驗證階段，尚未整合進產品。
+>
+> ⚠️ **2026-10 狀態更正**：本文件舊版聲稱「`scripts/` 與
+> `/tmp/opencode/verify_*.py` 有數學域實驗」，但本文件下方引用的
+> `scripts/train_three_axis.py`、 `scripts/prepare_three_axis_datasets.py` 與
+> `tests/ai/test_three_axis_engine.py` **均已不存在**——三軸程式碼在 commit
+> `b26456bac`（執行 PROJECT_CLEANUP_PLAN）時被移除。目前的文字推論路徑已由
+> `apps/backend/src/ai/unified_engine/`
+> 取代。因此**下方所有命令都是歷史設計記錄，不可直接執行**。
 
 ---
 
@@ -506,7 +513,11 @@ OK  178  +  101=?      -> 178  +  101=279      (conf=0.95, route=anchor-aligned)
 `279`。位置軸從「字串開頭絕對座標」獲得「**相對錨點的滑動**」自由度 — 這正是先前 §8.1 所述「逐字符一致」限制的結構性解法。誠實邊界：錨點與空白摺疊是**形式**自由度；`calculate 178 plus 101 = ?`
 的 `plus` 是**語義**變異，不在錨點學習範圍（需內容軸/辭典層）。
 
-### 8.6 訓練指令（Training Commands）
+### 8.6 訓練指令（Training Commands）— 歷史記錄，已不可執行
+
+> ⚠️ **2026-10 更正**：本節所有 `scripts/train_three_axis.py` 與
+> `scripts/prepare_three_axis_datasets.py` 指令**都已失效**（三軸程式碼在
+> `b26456bac` 被移除），僅保留作為設計記錄。請勿照抄執行。
 
 > 2026-08-19：三軸模型的標準訓練流程。數據集**自動準備**（自動決定下載啥、下載多少）+
 > **自動訓練** + 記憶體安全 + 對話驗證。

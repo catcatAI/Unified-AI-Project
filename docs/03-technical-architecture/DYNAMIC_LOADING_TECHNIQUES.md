@@ -478,10 +478,9 @@ class PerformanceMonitor:
 
 ```bash
 # 运行动态载入测试
-python training/test_dynamic_loading.py
-
-# 性能分析
-python -m cProfile -o dynamic_loading.prof training/test_dynamic_loading.py
+# ⚠️ 原指令引用的 training/test_dynamic_loading.py 已移除（training/ 目录不存在）
+#    现请以 pytest 运行对应单元的测试，或自行以 cProfile 包装目标脚本：
+python -m cProfile -o dynamic_loading.prof <你的脚本>.py
 ```
 
 ## 9. 最佳实践

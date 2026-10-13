@@ -324,27 +324,35 @@ game:
 
 ## 6. 測試與驗收腳本
 
+> ⚠️
+> **2026-10 更正**：本節原本列出 7 個「每模組一個測試檔」的路徑（`test_foveated_sampler.py`、`test_game_policy.py`、`test_skill_selector.py`、
+> `test_game_task_executor.py`、`test_game_planner.py`、`test_game_memory_bridge.py`、
+> `test_llm_game_interface.py`）以及
+> `tests/integration/test_game_agent_e2e.py`，
+> **這些檔案都不存在**——實際測試已合併為下列 4 個檔案（121
+> tests，實測全綠）。設定檔路徑也不同（原 `configs/standard/game.default.yaml`
+> 不存在）。
+
 ```bash
-# 1. 單元測試
-cd /home/cxuo/文件/GitHub/Unified-AI-Project
-source .venv/bin/activate
-python -m pytest tests/ai/multimodal/test_foveated_sampler.py -v
-python -m pytest tests/ai/multimodal/test_game_policy.py -v
-python -m pytest tests/ai/multimodal/test_skill_selector.py -v
-python -m pytest tests/ai/multimodal/test_game_task_executor.py -v
-python -m pytest tests/ai/multimodal/test_game_planner.py -v
-python -m pytest tests/ai/multimodal/test_game_memory_bridge.py -v
-python -m pytest tests/ai/multimodal/test_llm_game_interface.py -v
+# 1. 單元／行為測試（在倉庫根目錄）
+#    涵蓋 foveated_sampler / game_policy / skill_selector / game_task_executor /
+#    game_planner / game_memory_bridge / llm_game_interface
+python -m pytest tests/ai/multimodal/test_game_agent_integration.py \
+                 tests/ai/multimodal/test_game_behaviors.py \
+                 tests/ai/multimodal/test_game_memory_persistence.py \
+                 tests/ai/multimodal/test_policy_training.py -v
 
-# 2. 整合測試 (需啟動 Luanti 伺服器)
-# Terminal 1: 啟動 Luanti
-# minetest-server --gameid minetest_game --world /tmp/luanti_test --port 30000
-
-# Terminal 2: 執行測試
-python -m pytest tests/integration/test_game_agent_e2e.py -v -s
+# 2. 整合測試（另有需要真實 Luanti 伺服器的 e2e 案例）
+python -m pytest tests/ai/multimodal/test_chicken_pecking_rice_e2e.py -v -s
+# 連線情境：
+# Terminal 1: minetest-server --gameid minetest_game --world /tmp/luanti_test --port 30000
 
 # 3. 手動觀察測試
-python -m apps.backend.src.ai.multimodal.game_agent --config configs/standard/game.default.yaml --duration 600
+#    game_agent 以 apps/backend/src 為 import 根目錄（它用 `from integrations...` 與
+#    `from .foveated_sampler...`），且 integrations 套件在 import 時會載入
+#    googleapiclient，需要 `google` extra：pip install -e "apps/backend[google]"
+cd apps/backend/src
+python -m ai.multimodal.game_agent --config ../configs/system/game.default.yaml --duration 600
 ```
 
 ---

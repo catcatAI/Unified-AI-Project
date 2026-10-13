@@ -35,21 +35,18 @@ Testing）方法，以及前端終端對話測試流程。
 
 ## 自動化超時設置
 
-專案中提供了自動化腳本 `scripts/add_pytest_timeouts.py`
-來為測試文件添加超時設置：
+> ⚠️ **2026-10 更正**：舊版文件提到的自動化腳本 `scripts/add_pytest_timeouts.py`
+> （依目錄／檔名自動為測試檔寫入 timeout）已從專案移除（commit
+> `affb082db`），因此**沒有**「一行命令批次改寫所有測試超時」的機制。
 
-```bash
-# 為所有測試文件添加超時設置
-python scripts/add_pytest_timeouts.py
-```
+現行的超時控制方式：
 
-腳本會根據文件路徑和名稱自動設置適當的超時時間：
-
-- 位於 `integration` 目錄下的測試：10秒
-- 位於 `performance` 目錄下的測試：30秒
-- 其他測試：5秒
-
-特殊文件的超時設置可以在腳本的 `SPECIAL_TIMEOUTS` 字典中配置。
+- **全域**：由 `pytest-timeout` 外掛透過命令列參數控制（CI 使用
+  `--timeout=60`，見 `.github/workflows/ci.yml`）。
+- **單次執行**：在命令列指定 `--timeout=N`（見下方「基本命令」）。
+- **個別測試**：可用 `@pytest.mark.timeout(N)`；`timeout` 標記已在
+  `pyproject.toml` 註冊，但目前的測試套件尚未使用它。
+- **建議值**：單元測試 5s、整合測試 10s、效能測試 30s+（見上方「超時設置原則」）。
 
 ## 運行測試（含超時）
 

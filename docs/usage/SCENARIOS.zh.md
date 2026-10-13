@@ -74,7 +74,8 @@ python scripts/verify_training.py
 python scripts/train_visual_decoder.py --texture-steps 500
 
 # 階段 1-2：對比 + 重構學習
-python scripts/train_multimodal_real.py
+# ⚠️ train_multimodal_real.py 已封存至 scripts/_archive/，僅在需要重現舊訓練時使用
+python scripts/_archive/train_multimodal_real.py
 
 # 階段 3-5：完整管線（8 階段）
 python scripts/train_pipeline.py --all-phases

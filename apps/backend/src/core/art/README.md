@@ -8,23 +8,19 @@ Angela AI 的创作系统整合了真实的 AI API，提供高质量的绘画、
 
 ```
 core/art/
-├── desktop_demo.py              # 桌面演示 (PIL绘图，立即可用)
-├── real_creator.py             # 统一创作系统 (整合所有API)
-├── real_comfyui_api.py        # ComfyUI API (AI绘画)
 ├── real_edge_tts.py           # Edge TTS (语音合成)
 └── real_playwright_browser.py # Playwright (网页浏览)
+
+> ⚠️ **2026-10 更正**：本模块曾包含 `desktop_demo.py`、`real_creator.py` 与
+> `real_comfyui_api.py`，三者均已从仓库移除。以下描述它们的章节保留为**历史记录**，
+> 其中的命令已不可执行。
 ```
 
 ## 快速开始
 
-### 运行桌面演示 (立即可用，无需外部服务)
+### 桌面演示（`desktop_demo.py` 已移除）
 
-```bash
-cd D:\Projects\Unified-AI-Project
-python apps/backend/src/core/art/desktop_demo.py
-```
-
-输出示例:
+原桌面演示的输出示例（保留作为参考）：
 
 ```
 🎨 Angela 开始创作...
@@ -39,22 +35,24 @@ python apps/backend/src/core/art/desktop_demo.py
    ✅ 保存: Angela_Background_20260204_094543.png
 ```
 
-### 运行完整创作系统
+### 运行现存模块
 
 ```bash
-# 需要先安装依赖
-pip install edge-tts playwright aiohttp
+# 安装依赖（edge-tts 已在 BASE 依赖中，无需重复安装）
+pip install playwright aiohttp
 
 # 安装 Playwright 浏览器
 playwright install chromium
-
-# 运行
-python apps/backend/src/core/art/real_creator.py
 ```
+
+现存的 `real_edge_tts.py` 与 `real_playwright_browser.py`
+以 import 方式使用，用法见下方「模块说明」。
 
 ## 模块说明
 
-### desktop_demo.py
+### ~~desktop_demo.py~~（已移除）
+
+> 该模块已从仓库移除；以下为历史功能说明。
 
 使用 PIL 绘制简单图像，无需外部服务。
 
@@ -65,7 +63,9 @@ python apps/backend/src/core/art/real_creator.py
 - 绘制背景图
 - 生成说明文件
 
-### real_comfyui_api.py
+### ~~real_comfyui_api.py~~（已移除）
+
+> 该模块已从仓库移除；以下为历史功能说明。
 
 ComfyUI API 集成，用于 AI 绘画。
 
@@ -149,7 +149,9 @@ artworks = await browser.collect_artwork("https://www.pinterest.com/search/pins/
 await browser.close()
 ```
 
-### real_creator.py
+### ~~real_creator.py~~（已移除）
+
+> 该模块已从仓库移除；以下为历史功能说明。
 
 整合所有创作功能的统一系统。
 

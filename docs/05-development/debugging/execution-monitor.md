@@ -1,8 +1,14 @@
 # Execution Monitor - 執行監控系統
 
-> ⚠️ Note: the `from src.core_ai.execution_manager import ...` examples below
-> reference the removed legacy module layout and are kept only as historical
-> illustration.
+> ⚠️ **2026-10 更正**：本文件舊版的範例使用 `src.core_ai.execution_manager`
+> （`ExecutionManager` / `ExecutionManagerConfig`），以及
+> `scripts/execution_monitor_cli.py` 與
+> `scripts/test_execution_monitor.py`；這些在專案重構後**都已不存在**（範例會直接
+> `ImportError`）。現行實作位於
+> `apps/backend/src/core/managers/execution_monitor.py`，類名為
+> `ExecutionMonitor` / `ExecutionConfig` /
+> `ExecutionResult`，本文件範例已改寫為實際可執行的版本。舊版 CLI 的選項（`--health-check`、`--monitor`、`--stress-test`、
+> `--async`、`--no-terminal-check`）沒有對應實作，請改用下方 Python API。
 
 ## 概述 | Overview
 
@@ -38,36 +44,39 @@ automatically adjust timeout values based on historical execution data.
 
 ### 基本使用 | Basic Usage
 
+> 執行範例前，請確認 `apps/backend/src` 在 `sys.path`
+> 上（後端服務本身即是以此為根目錄運行）：
+> `cd apps/backend && PYTHONPATH=src python3 your_script.py`。
+
 ```python
-from src.core_ai.execution_manager import ExecutionManager
+from core.managers.execution_monitor import ExecutionMonitor
 
-# 創建執行管理器
-with ExecutionManager() as manager:
-    # 執行命令
-    result = manager.execute_command("echo 'Hello World'", timeout=30.0)
+# 建立執行監控器
+monitor = ExecutionMonitor()
+result = monitor.execute_command("echo 'Hello World'", timeout=30.0)
 
-    print(f"Status: {result.status.value}")
-    print(f"Output: {result.stdout}")
-    print(f"Execution time: {result.execution_time:.2f}s")
+print(f"Status: {result.status.value}")
+print(f"Output: {result.stdout}")
+print(f"Execution time: {result.execution_time:.2f}s")
 ```
 
 ### 便捷函數 | Convenience Functions
 
 ```python
-from src.core_ai.execution_manager import execute_with_smart_monitoring
+from core.managers.execution_monitor import execute_with_monitoring
 
 # 直接執行命令
-result = execute_with_smart_monitoring("python script.py", timeout=60.0)
+result = execute_with_monitoring("echo hello", timeout=60.0)
 ```
 
 ### 異步執行 | Async Execution
 
 ```python
 import asyncio
-from src.core_ai.execution_manager import execute_async_with_smart_monitoring
+from core.managers.execution_monitor import execute_async_with_monitoring
 
 async def run_async_command():
-    result = await execute_async_with_smart_monitoring("long_running_command")
+    result = await execute_async_with_monitoring("long_running_command")
     return result
 
 # 運行異步命令
@@ -76,39 +85,36 @@ result = asyncio.run(run_async_command())
 
 ## 命令行工具 | CLI Tools
 
-### 執行監控CLI | Execution Monitor CLI
+> ⚠️ 舊版獨立的 `scripts/execution_monitor_cli.py` 與
+> `scripts/test_execution_monitor.py` 已從專案移除。監控器本體仍在
+> `apps/backend/src/core/managers/execution_monitor.py`，且內建一個精簡的執行入口（僅支援
+> `<command>`、`--timeout`、`--verbose`）。
+
+### 執行監控模組 | Execution Monitor module
 
 ```bash
+cd apps/backend/src          # 讓 `core.*` 可被 import
+
 # 執行單個命令
-python scripts/execution_monitor_cli.py "echo 'Hello World'"
+python -m core.managers.execution_monitor "echo 'Hello World'"
 
 # 設定超時時間
-python scripts/execution_monitor_cli.py "python script.py" --timeout 60
+python -m core.managers.execution_monitor "your_command" --timeout 60
 
-# 檢查系統健康狀態
-python scripts/execution_monitor_cli.py --health-check
-
-# 啟動連續監控模式
-python scripts/execution_monitor_cli.py --monitor --interval 5
-
-# 運行壓力測試
-python scripts/execution_monitor_cli.py --stress-test
-
-# 異步執行命令
-python scripts/execution_monitor_cli.py "long_command" --async
+# 詳細輸出（DEBUG 日誌）
+python -m core.managers.execution_monitor "your_command" --verbose
 ```
 
-### 測試腳本 | Test Script
+> ℹ️ 舊版 CLI 的 `--health-check`、`--monitor`、`--stress-test`、`--async`、
+> `--no-terminal-check` 選項在現行模組中沒有實作；這些能力請改用 Python
+> API（`get_system_health()`、`check_terminal_responsiveness()`、
+> `ExecutionConfig(enable_terminal_check=False)` 等，見下方範例）。
+
+### 測試 | Tests
 
 ```bash
-# 運行所有測試
-python scripts/test_execution_monitor.py
-
-# 運行演示
-python scripts/test_execution_monitor.py --demo
-
-# 運行特定測試
-python scripts/test_execution_monitor.py --test test_basic_execution
+# 監控器的測試
+python -m pytest tests/core/managers/test_execution_monitor.py -q
 ```
 
 ## 配置 | Configuration
@@ -269,32 +275,37 @@ class DialogueManager:
 
 #### 1. 命令執行超時
 
-```bash
-# 檢查系統負載
-python scripts/execution_monitor_cli.py --health-check
+```python
+from core.managers.execution_monitor import ExecutionMonitor, get_execution_monitor
 
-# 調整超時設定
-python scripts/execution_monitor_cli.py "your_command" --timeout 120
+# 檢查系統負載
+print(get_execution_monitor().get_system_health())
+
+# 調整超時設定（明確指定較長的 timeout）
+result = ExecutionMonitor().execute_command("your_command", timeout=120.0)
 ```
 
 #### 2. 終端機無響應
 
-```bash
+```python
+from core.managers.execution_monitor import ExecutionConfig, ExecutionMonitor
+
 # 檢查終端機狀態
-python scripts/execution_monitor_cli.py --monitor
+print(ExecutionMonitor().check_terminal_responsiveness())
 
 # 禁用終端機監控（如果需要）
-python scripts/execution_monitor_cli.py "command" --no-terminal-check
+monitor = ExecutionMonitor(ExecutionConfig(enable_terminal_check=False))
 ```
 
 #### 3. 資源使用率過高
 
-```bash
-# 監控資源使用情況
-python scripts/execution_monitor_cli.py --monitor --interval 2
+```python
+from core.managers.execution_monitor import ExecutionConfig, ExecutionMonitor
 
-# 檢查最近的問題記錄
-python scripts/execution_monitor_cli.py --health-check --verbose
+# 使用更嚴格的資源閾值；超標時會觸發資源問題檢測與記錄
+monitor = ExecutionMonitor(ExecutionConfig(cpu_threshold=70.0, memory_threshold=70.0))
+
+# 檢查最近的問題記錄：將 root logger 設為 DEBUG 後重跑
 ```
 
 ### 日誌分析 | Log Analysis
@@ -305,9 +316,10 @@ python scripts/execution_monitor_cli.py --health-check --verbose
 import logging
 logging.basicConfig(level=logging.DEBUG)
 
-# 啟用詳細日誌
-config = ExecutionManagerConfig(log_level="DEBUG")
-manager = ExecutionManager(config)
+# ExecutionConfig 沒有 log_level 欄位；詳細日誌由 root logger 控制（如上）
+from core.managers.execution_monitor import ExecutionMonitor
+
+monitor = ExecutionMonitor()
 ```
 
 ## 性能優化 | Performance Optimization
@@ -323,24 +335,26 @@ manager = ExecutionManager(config)
 ### 配置調優 | Configuration Tuning
 
 ```python
-# 高性能配置
-high_performance_config = ExecutionManagerConfig(
+from core.managers.execution_monitor import ExecutionConfig
+
+# 高性能（寬鬆）配置
+high_performance_config = ExecutionConfig(
     adaptive_timeout=True,
-    history_size=100,           # 更大的歷史記錄
-    timeout_multiplier=2.0,     # 較小的超時倍數
-    max_retry_attempts=2,       # 較少的重試次數
-    cpu_critical=95.0,          # 較高的CPU閾值
-    memory_critical=90.0        # 較高的記憶體閾值
+    default_timeout=30.0,       # 較短的預設超時
+    max_timeout=300.0,
+    cpu_threshold=95.0,         # 較高的 CPU 閾值
+    memory_threshold=90.0,      # 較高的記憶體閾值
 )
 
 # 穩定性優先配置
-stability_config = ExecutionManagerConfig(
+stability_config = ExecutionConfig(
     adaptive_timeout=True,
-    timeout_multiplier=3.0,     # 較大的超時倍數
-    max_retry_attempts=5,       # 更多的重試次數
-    cpu_critical=80.0,          # 較低的CPU閾值
-    memory_critical=75.0,       # 較低的記憶體閾值
-    auto_recovery=True
+    default_timeout=120.0,      # 較長的預設超時
+    max_timeout=900.0,
+    cpu_threshold=80.0,         # 較低的 CPU 閾值
+    memory_threshold=75.0,      # 較低的記憶體閾值
+    enable_terminal_check=True,
+    enable_process_monitor=True,
 )
 ```
 

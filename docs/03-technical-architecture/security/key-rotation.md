@@ -70,7 +70,8 @@ Expected output:
 Verify keys work for encryption/decryption:
 
 ```bash
-python test_keys.py
+# ⚠️ 原指令 `python test_keys.py` 引用的腳本不存在；現行驗證入口為：
+pytest tests/core/security/test_key_validator.py -q
 ```
 
 All three keys should pass validation.

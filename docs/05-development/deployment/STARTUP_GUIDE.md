@@ -128,7 +128,8 @@ pip install -r requirements-dev.txt
 您可以运行健康检查脚本来验证环境配置是否正确：
 
 ```bash
-python health_check.py
+# 在仓库根目录运行；等价于 `pnpm health-check`
+python3 scripts/utils/health_check.py
 ```
 
 这将检查Python版本、依赖安装状态等关键组件。

@@ -233,7 +233,9 @@ services:
 
 ```bash
 # 整合後確認無重複
-python -m pytest tests/unit/test_module_imports.py -v --tb=short -q
+# ⚠️ 本計畫原本提議的 tests/unit/test_module_imports.py 實際落地為
+#    tests/unit/test_smoke_imports.py（§X #119-#122 的匯入測試合併）
+python -m pytest tests/unit/test_smoke_imports.py -v --tb=short -q
 
 # 確認整合後收集數與整合前相同
 python -m pytest tests/ --collect-only -q 2>&1 | tail -3

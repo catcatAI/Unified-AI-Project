@@ -75,7 +75,8 @@ This trains:
 python scripts/train_visual_decoder.py --texture-steps 500
 
 # Phase 1-2: Contrastive + reconstruction learning
-python scripts/train_multimodal_real.py
+# ⚠️ train_multimodal_real.py 已封存至 scripts/_archive/，僅在需要重現舊訓練時使用
+python scripts/_archive/train_multimodal_real.py
 
 # Phase 3-5: Full pipeline (8 phases)
 python scripts/train_pipeline.py --all-phases

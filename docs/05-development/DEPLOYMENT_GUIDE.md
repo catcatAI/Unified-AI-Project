@@ -104,21 +104,19 @@ npm start
 - `app_config.json`: 应用配置
 - `backend_config.json`: 后端连接配置
 
-## 5. 数据库设置
+## 5. 数据存储设置
 
-### 5.1 初始化数据库
+本项目**不使用 SQL 数据库**，因此没有初始化/迁移步骤。（旧版本文件曾指示执行
+`scripts/init_database.py` 与
+`scripts/migrate_database.py`；这两个脚本在项目历史中从未存在，已自本文件移除。）
 
-```bash
-cd apps/backend
-python scripts/init_database.py
-```
+持久化由以下机制提供，后端首次启动时会自动建立所需目录：
 
-### 5.2 数据库迁移
-
-```bash
-cd apps/backend
-python scripts/migrate_database.py
-```
+| 数据         | 位置                                             | 说明                                |
+| ------------ | ------------------------------------------------ | ----------------------------------- |
+| HAM 长期记忆 | `apps/backend/data/`                             | 对话与经验记忆（JSON）              |
+| 向量库       | `VECTOR_STORE_PATH`（默认 `data/vector_store/`） | ChromaDB；未安装则回退 numpy + JSON |
+| 检查点/缓存  | `apps/backend/data/checkpoints/`、`.../cache/`   | 训练检查点与快取                    |
 
 ## 6. 模型训练和部署
 
@@ -128,10 +126,13 @@ python scripts/migrate_database.py
 # 使用CLI工具启动训练
 unified-cli train start <model_name>
 
-# 或直接运行训练脚本
-cd training
-python train_model.py --model <model_name>
+# 或直接运行训练脚本（在仓库根目录）
+python scripts/train_pipeline.py
 ```
+
+> ℹ️ 旧版本文件曾指示进入 `training/` 目录后执行 `train_model.py`。本仓库没有
+> `training/` 目录，`train_model.py` 亦不存在；实际训练入口为
+> `scripts/train_pipeline.py`。
 
 ### 6.2 部署模型
 
@@ -171,20 +172,22 @@ python train_model.py --model <model_name>
 2. 检查GPU驱动版本
 3. 确认PyTorch或TensorFlow的GPU版本已安装
 
-#### 问题3: 数据库连接失败
+#### 问题3: 向量库不可用
 
 **解决方案**:
 
-1. 检查数据库服务是否运行
-2. 确认数据库配置正确
-3. 检查防火墙设置
+1. 本项目默认使用纯 numpy +
+   JSON 后端，不需要外部数据库服务；若已安装 ChromaDB 但载入失败，系统会自动回退。
+2. 确认 `VECTOR_STORE_PATH` 指向的目录可写入。
+3. 如要强制使用 ChromaDB，安装 `pip install -e "apps/backend[vector]"`。
 
 ### 8.2 健康检查
 
 运行健康检查脚本验证系统状态:
 
 ```bash
-python scripts/health_check.py
+# 在仓库根目录运行；等价于 `pnpm health-check`
+python3 scripts/utils/health_check.py
 ```
 
 ## 9. 安全配置

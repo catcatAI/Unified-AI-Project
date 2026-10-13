@@ -38,29 +38,29 @@
 - 创建反馈报告
 - 与开发流程集成，生成任务跟踪项
 
-### 4. 测试结果处理主脚本 (process_test_results.py)
+### 4. 测试结果处理主脚本 (scripts/utils/process_test_results.py)
 
-整合所有功能的主脚本，提供完整的测试结果处理流程。
+整合所有功能的主脚本，提供完整的测试结果处理流程：读取 JUnit
+XML 或同构的 JSON 结果，输出统计摘要，可选地与基线比较（回归检测）与追踪历史趋势，并可选择发出邮件通知。
 
-### 5. 演示脚本 (demo_test_result_processing.py)
-
-演示如何使用这些组件的示例脚本。
+> ⚠️ **2026-10 更正**：本文件旧版把此脚本记为
+> `apps/backend/scripts/process_test_results.py`，并提到一个演示脚本
+> `demo_test_result_processing.py`。两者都不存在：主脚本实际位于
+> `scripts/utils/`，演示脚本已移除。
 
 ## 使用方法
-
-### 运行演示
-
-```bash
-cd D:\Projects\Unified-AI-Project
-python apps/backend/scripts/demo_test_result_processing.py
-```
 
 ### 处理测试结果
 
 ```bash
-cd D:\Projects\Unified-AI-Project
-python apps/backend/scripts/process_test_results.py <results_file> [--baseline <baseline_file>] [--historical <historical_files>]
+# 在仓库根目录运行；输入可以是 pytest 的 JUnit XML 或同构 JSON
+python scripts/utils/process_test_results.py <results_file> [--baseline <baseline_file>] [--historical <historical_files>]
+
+# 需要邮件通知时，先设置 SMTP_HOST / SMTP_PORT / SMTP_USER / SMTP_PASSWORD
+python scripts/utils/process_test_results.py results.xml --send-email --recipients dev-team@example.com
 ```
+
+输入缺失、格式错误或解析不出任何测试用例时，脚本会以退出码 1 结束（旧版无论如何都回传 0）。
 
 ## 生成的文件
 

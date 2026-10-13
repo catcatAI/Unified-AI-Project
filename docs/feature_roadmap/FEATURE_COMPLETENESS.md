@@ -1,5 +1,11 @@
 # Feature Completeness & Implementation Roadmap
 
+> ⚠️ **2026-10 狀態提示**：本文件是**規劃**文件，其「Current
+> State」評估已過時（例如把 Trust management 列為缺失，但
+> `tests/ai/core/test_trust_manager.py` 已存在）。功能成熟度的**唯一權威來源**是
+> [STATUS_MATRIX.md](../STATUS_MATRIX.md)（由 `scripts/gen_status_matrix.py`
+> 生成的視圖）。本文件僅保留作為歷史路線圖。
+
 ## Executive Summary
 
 **Current State:** The Angela AI Project shows mixed maturity across major AI
@@ -311,8 +317,10 @@ mkdir -p tests/ai/core/
 touch tests/ai/core/test_trust_manager.py
 
 # Performance testing
-python scripts/benchmark_text_understanding.py
-python scripts/benchmark_threshold_optimization.py
+# ⚠️ 原規劃的 benchmark_text_understanding.py / benchmark_threshold_optimization.py
+#    從未實作；現有的量測入口：
+python scripts/run_benchmarks.py
+python scripts/benchmark_ed3n_garden.py
 ```
 
 **Test Categories:**
@@ -381,17 +389,19 @@ python scripts/benchmark_threshold_optimization.py
 python apps/backend/start_server.py --environment=development
 
 # Testing with realistic data
-python scripts/generate_test_data.py --domain=finance --volume=10000
+# ⚠️ 原規劃的 generate_test_data.py 從未實作；現可用：
+python scripts/generate_training_data.py
 ```
 
 ### Staging Environment
 
 ```bash
 # Integration testing
-python scripts/run_integration_tests.py --threshold=0.95
+python scripts/utils/run_integration_tests.py
 
 # Performance testing
-python scripts/run_performance_benchmark.py --load=production-like
+# ⚠️ 原規劃的 run_performance_benchmark.py 從未實作；現可用：
+python scripts/run_benchmarks.py
 ```
 
 ### Production Deployment

@@ -2,8 +2,8 @@
 
 ## 启动过程概述
 
-通过执行 `python scripts/smart_dev_runner.py` 命令，成功启动了 Unified AI
-Project 的后端服务。启动过程包括以下阶段：
+通过执行 `cd apps/backend && python scripts/smart_dev_runner.py`
+命令，成功启动了 Unified AI Project 的后端服务。启动过程包括以下阶段：
 
 1. 环境设置和检查
 2. 核心服务初始化
