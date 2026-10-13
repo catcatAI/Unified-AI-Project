@@ -114,12 +114,15 @@ _SMOKE_MODULES = [
 
 
 def _try_import_class(module_path, class_name):
-    """Try to import a class, catching ImportError gracefully."""
+    """Try to import a class; ImportError 不在這裡吞。
+
+    測試以「模組必須存在」的斷言呈現，smoke 才會紅燈。
+    """
     try:
         mod = importlib.import_module(module_path)
-        return getattr(mod, class_name, None)
-    except (ImportError, AttributeError):
+    except ImportError:
         return None
+    return getattr(mod, class_name, None)
 
 
 @pytest.mark.parametrize(
@@ -128,11 +131,13 @@ def _try_import_class(module_path, class_name):
     ids=lambda x: x.split(".")[-1] if isinstance(x, str) else "",
 )
 def test_smoke_import(module_path, class_name, kwargs):
-    """Verify module can be imported."""
+    """驗證模組可 import——smoke 是回歸防線，缺席必須紅燈（不可 skip）。"""
+    try:
+        importlib.import_module(module_path)
+    except ImportError as exc:
+        pytest.fail(f"smoke module missing (was importable): {module_path}: {exc}")
     cls = _try_import_class(module_path, class_name)
-    if cls is None:
-        pytest.skip(f"Not available: {module_path}.{class_name}")
-    assert cls is not None
+    assert cls is not None, f"class {module_path}.{class_name} missing or not exported"
 
 
 @pytest.mark.parametrize(
@@ -141,10 +146,13 @@ def test_smoke_import(module_path, class_name, kwargs):
     ids=lambda x: x.split(".")[-1] if isinstance(x, str) else "",
 )
 def test_smoke_instantiate(module_path, class_name, kwargs):
-    """Verify basic instantiation."""
+    """驗證可基本實例化——import 失敗=紅燈；屬性缺失=明確斷言失敗。"""
+    try:
+        importlib.import_module(module_path)
+    except ImportError as exc:
+        pytest.fail(f"smoke module missing (was importable): {module_path}: {exc}")
     cls = _try_import_class(module_path, class_name)
-    if cls is None:
-        pytest.skip(f"Not available: {module_path}.{class_name}")
+    assert cls is not None, f"class {module_path}.{class_name} missing or not exported"
     instance = cls(**kwargs)
     assert isinstance(instance, cls)
 

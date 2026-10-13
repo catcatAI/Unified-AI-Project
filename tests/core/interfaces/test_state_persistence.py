@@ -1,8 +1,12 @@
 """
-Test all 3 implementations of the StatePersistence protocol.
+StatePersistence protocol conformance tests.
 
 Verifies structural subtyping conformance via isinstance checks against
 the @runtime_checkable protocol, and basic round-trip persistence.
+
+（MetacognitiveCapabilitiesEngine 段已刪：該類別全庫不存在，幽靈模組
+core/metacognition/ 24L docstring-only 樓已隨本輪清除；原本的 skipif
+reason 還誤寫 sklearn。）
 """
 
 import pytest
@@ -31,73 +35,6 @@ def test_fake_conforms_to_protocol():
     from core.interfaces.persistence import StatePersistence
 
     assert isinstance(FakePersistence(), StatePersistence)
-
-
-# ── MetacognitiveCapabilitiesEngine ────────────────────────────────────────
-
-
-def _metacognitive_engine_available():
-    """Check if MetacognitiveCapabilitiesEngine can be imported."""
-    try:
-        from core.metacognition.metacognitive_capabilities_engine import (
-            MetacognitiveCapabilitiesEngine,
-        )
-
-        return True
-    except ImportError:
-        return False
-
-
-@pytest.mark.skipif(
-    not _metacognitive_engine_available(),
-    reason="sklearn not available for MetacognitiveCapabilitiesEngine",
-)
-class TestMetacognitivePersistence:
-    """MetacognitiveCapabilitiesEngine must conform to StatePersistence."""
-
-    @pytest.fixture(scope="class")
-    def engine(self):
-        from core.metacognition.metacognitive_capabilities_engine import (
-            MetacognitiveCapabilitiesEngine,
-        )
-
-        return MetacognitiveCapabilitiesEngine(workspace_path="data/test_meta_persistence")
-
-    def test_conforms_to_protocol(self, engine):
-        from core.interfaces.persistence import StatePersistence
-
-        assert isinstance(engine, StatePersistence)
-
-    def test_save_load_roundtrip(self, engine):
-        async def _run():
-            key = "test_rt"
-            data = {"value": 42}
-            ok = await engine.save_state(key, data)
-            assert ok is True
-            loaded = await engine.load_state(key)
-            assert loaded == data
-            await engine.delete_state(key)
-            assert await engine.load_state(key) is None
-
-        import asyncio
-
-        asyncio.run(_run())
-
-    def test_list_keys_filtering(self, engine):
-        async def _run():
-            for k in ("a_1", "a_2", "b_1"):
-                await engine.save_state(k, {"d": True})
-            all_keys = await engine.list_keys()
-            assert "a_1" in all_keys
-            a_keys = await engine.list_keys(prefix="a_")
-            assert len(a_keys) == 2
-            assert "b_1" not in a_keys
-            for k in ("a_1", "a_2", "b_1"):
-                await engine.delete_state(k)
-
-        import asyncio
-
-        asyncio.run(_run())
 
 
 # ── StateMatrixAdapter ─────────────────────────────────────────────────────

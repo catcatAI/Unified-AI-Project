@@ -722,12 +722,12 @@ apps/backend/src/core/backbone/
 
 | 類別              | 項目                                                                                | 動作                                                                        |
 | ----------------- | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| 空 shim           | `core/autonomous/state_matrix.py`（12L）                                            | 刪除                                                                        |
-| 空 shim           | `core/autonomous/` 其餘 re-export（見 AGENTS 說明）                                 | 收斂                                                                        |
-| 幽靈模組          | `core/metacognition/metacognitive_capabilities_engine.py`（24L）                    | 實作或刪除                                                                  |
-| 幽靈模組          | `core/ethics/ethics_manager.py`（17L）                                              | 實作或刪除                                                                  |
-| 幽靈模組          | `core/evolution/emergence_engine.py`（21L）                                         | 實作或刪除                                                                  |
-| 幽靈模組          | `core/feedback_loop_engine.py`（24L）                                               | 實作或刪除                                                                  |
+| 空 shim           | `core/autonomous/state_matrix.py`（12L）                                            | ✅ 已刪除（2026-10-14 事實稽核）                                            |
+| 空 shim           | `core/autonomous/` 其餘 re-export（見 AGENTS 說明）                                 | ✅ 僅存生產模組（2026-10-14 稽核）                                          |
+| 幽靈模組          | `core/metacognition/metacognitive_capabilities_engine.py`（24L）                    | ✅ 已刪除（2026-10-14；類別全庫不存在，死測試一併清除）                     |
+| 幽靈模組          | `core/ethics/ethics_manager.py`（17L）                                              | ✅ 已刪除                                                                   |
+| 幽靈模組          | `core/evolution/emergence_engine.py`（21L）                                         | ✅ 已刪除                                                                   |
+| 幽靈模組          | `core/feedback_loop_engine.py`（24L）                                               | ✅ 已刪除                                                                   |
 | god-module        | `services/llm/router.py`（2,072L）                                                  | 只收斂接線，不拆分                                                          |
 | god-module        | `api/routes/chat_routes.py`（1,985L）                                               | 只收斂接線，不拆分                                                          |
 | API drift         | `AutonomousLifeCycle.should_act/decide/evaluate_state`                              | 測試對齊或補實作                                                            |
