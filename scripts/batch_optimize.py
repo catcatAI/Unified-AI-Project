@@ -17,6 +17,7 @@ import numpy as np
 from ai.multimodal.primitives.differentiable_renderer import DifferentiableRenderer
 from ai.multimodal.primitives.primitive_renderer import PrimitiveRenderer
 from ai.multimodal.primitives.primitive_types import TOTAL_DIM, DrawingInstructions
+from PIL import Image
 
 CIFAR_DIR = "D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
 CLASSES = ["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
@@ -46,8 +47,6 @@ def load_random_images(n):
         elif arr.shape == (3, 32, 32):
             arr = arr.transpose(1, 2, 0)
             # Resize to 128x128
-        from PIL import Image
-
         pil_img = Image.fromarray(arr).resize((128, 128), Image.LANCZOS)
         arr = np.array(pil_img, dtype=np.float32) / 255.0
         images.append(arr)
@@ -115,7 +114,7 @@ def main():
         # Compute PIL similarity for reporting
         instructions = DrawingInstructions.from_vector(opt_vec, canvas_size=(128, 128))
         rendered_pil = pil_renderer.render(instructions)
-        orig_pil = __import__("PIL").Image.fromarray((images[i] * 255).astype(np.uint8))
+        orig_pil = Image.fromarray((images[i] * 255).astype(np.uint8))
 
         # Cosine similarity
         r_arr = np.array(rendered_pil, dtype=np.float32).flatten()

@@ -144,25 +144,9 @@ def start_core_components():
 def load_functional_modules():
     """加载功能模块"""
     print("🔌 第3层, 功能模块加载")
-    try:
-        # 加载宠物系统
-        from apps.backend.src.pet.pet_manager import PetManager
-
-        pet_manager = PetManager(
-            "pet1", {"initial_personality": {"curiosity": 0.7, "playfulness": 0.8}}
-        )
-        print("✅ 宠物系统初始化完成")
-        # 使用pet_manager执行一些基本操作以避免未使用变量警告
-        print(f"✅ 宠物系统初始化完成,宠物ID, {pet_manager.pet_id}")
-
-        return True
-    except Exception as e:
-        print(f"⚠️ 功能模块加载失败, {e}")
-        import traceback
-
-        traceback.print_exc()
-        # 功能模块失败不影响核心服务
-        return True
+    # 寵物系統（apps/backend/src/pet/）已刪除，本層目前無可選功能模組
+    print("✅ 功能模块层为空（pet system 已移除），无加载项")
+    return True
 
 
 def start_full_services():

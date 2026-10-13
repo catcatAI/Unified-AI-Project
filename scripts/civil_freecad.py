@@ -8,6 +8,7 @@
 import argparse
 import os
 import subprocess
+import time
 
 FC_MACRO = "/tmp/fc_beam.py"
 
@@ -44,14 +45,14 @@ print('FC-BEAM: %d objects -> %s' % (len(doc.Objects), '{args.out}'))
 """
     with open(FC_MACRO, "w", encoding="utf-8") as f:
         f.write(macro)
-    t0 = __import__("time").time()
+    t0 = time.time()
     p = subprocess.run(
         ["flatpak", "run", "--filesystem=/tmp", "org.freecad.FreeCAD", "--console", FC_MACRO],
         capture_output=True,
         text=True,
         timeout=300,
     )
-    print(f"  flatpak exit {p.returncode} ({__import__('time').time()-t0:.1f}s)")
+    print(f"  flatpak exit {p.returncode} ({time.time()-t0:.1f}s)")
     for line in (p.stdout + p.stderr).splitlines():
         if "FC-BEAM" in line or "Error" in line or "Traceback" in line:
             print("  " + line.strip()[:160])

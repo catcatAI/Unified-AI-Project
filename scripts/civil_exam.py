@@ -6,11 +6,12 @@
 """
 
 import json
+import os
 import subprocess
 import sys
 
 PY = sys.executable
-SCRIPTS = __import__("os").path.dirname(__file__)
+SCRIPTS = os.path.dirname(__file__)
 PASS, FAIL = "✅", "❌"
 
 

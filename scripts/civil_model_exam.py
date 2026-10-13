@@ -158,7 +158,7 @@ def main():
             return "上版語法錯誤：" + note[4:80] + "。只輸出修正後完整代碼。"
         if "不可運行" in note:
             return "上版建出 0 物件：確保創建函數都被調用。只輸出修正後完整代碼。"
-        m = __import__("re").search(r"(\d+) 物件", note)
+        m = re.search(r"(\d+) 物件", note)
         n = int(m.group(1)) if m else 0
         if "尺寸錯" in note:
             return f"上版 {n} 物件但路尺寸錯（要 A 路 30x8x0.5）。" "只輸出修正後完整代碼。"

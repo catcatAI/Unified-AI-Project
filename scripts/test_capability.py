@@ -148,7 +148,7 @@ except Exception as e:
 # 8. Test MetabolicHeartbeat
 print("\n--- 8. MetabolicHeartbeat ---")
 try:
-    from ai.lifecycle.metabolic_heartbeat import MetabolicHeartbeat
+    from core.life.heartbeat import MetabolicHeartbeat
 
     mh = MetabolicHeartbeat()
     health = mh.get_system_health()

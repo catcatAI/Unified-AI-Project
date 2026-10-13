@@ -71,7 +71,7 @@ def benchmark_classifier():
     """Benchmark classifier."""
     try:
         sys.path.insert(0, str(Path(__file__).parent.parent / "apps" / "backend" / "src"))
-        from ai.core.classifier import QueryClassifier
+        from ai.core.query_classifier import QueryClassifier
 
         classifier = QueryClassifier()
 
