@@ -91,12 +91,30 @@ class TestLifecycleConfigDriven:
         assert result is None
 
     def test_high_success_rate_boost(self, metrics):
-        alc = AutonomousLifeCycle()
-        alc.executions_succeeded = 10
-        alc.executions_failed = 0
-        alc.exploration_threshold = 0.5
-        result = alc._evaluate_and_decide(metrics)
-        assert result is not None or alc.executions_succeeded == 10
+        """A high success rate must lower the exploration threshold.
+
+        With hsm_value=0.5, the modulated threshold is 0.425 at 100% success
+        (exploration fires) but 0.6 at 0% success (it does not). The old
+        assertion was `result is not None or executions_succeeded == 10` —
+        the right side was set by this test, so it could never fail.
+        """
+        boosted_metrics = FormulaMetrics(**{**metrics.__dict__, "hsm_value": 0.5})
+
+        high = AutonomousLifeCycle()
+        high.executions_succeeded = 10
+        high.executions_failed = 0
+        high.exploration_threshold = 0.5
+
+        low = AutonomousLifeCycle()
+        low.executions_succeeded = 0
+        low.executions_failed = 10
+        low.exploration_threshold = 0.5
+
+        high_decision = high._evaluate_and_decide(boosted_metrics)
+        low_decision = low._evaluate_and_decide(boosted_metrics)
+
+        assert high_decision is not None
+        assert low_decision is None
 
 
 @pytest.mark.asyncio

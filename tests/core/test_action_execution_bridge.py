@@ -92,7 +92,6 @@ class TestActionExecutionBridgeInitialization:
 
         await bridge.shutdown()
 
-    @pytest.mark.skip("Pre-existing: mock shutdown behavior mismatch")
     @pytest.mark.asyncio
     async def test_shutdown(self, mock_components):
         """Test bridge shutdown"""
@@ -257,7 +256,6 @@ class TestActionTypeHandlers:
         assert result.success is True
         assert result.data["downloaded"] is True
 
-    @pytest.mark.skip("Pre-existing: download_manager is Mock, not ComponentManager")
     @pytest.mark.asyncio
     async def test_download_resource_without_manager(self, basic_bridge):
         """Test download_resource without download manager"""
@@ -353,7 +351,6 @@ class TestErrorHandling:
         assert result.success is False
         assert "error_message" in result.to_dict()
 
-    @pytest.mark.skip("Pre-existing: Mock object can't be awaited")
     @pytest.mark.asyncio
     async def test_handler_exception(self, bridge, mock_components):
         """Test handling of exceptions in action handlers"""
@@ -368,7 +365,6 @@ class TestErrorHandling:
         assert result.success is False
         assert "error" in result.data
 
-    @pytest.mark.skip("Pre-existing: Mock object can't be awaited")
     @pytest.mark.asyncio
     async def test_missing_required_component(self, basic_bridge):
         """Test actions with missing components"""
@@ -381,12 +377,11 @@ class TestErrorHandling:
         assert result.success is False
         assert result.data["error"] == "File manager not available"
 
-    @pytest.mark.skip("Pre-existing: cancel action behavior mismatch")
     @pytest.mark.asyncio
     async def test_cancel_action(self, bridge):
         """Test action cancellation"""
         # Submit action without waiting
-        result = bridge.execute_action(
+        result = await bridge.execute_action(
             action_type=ActionType.SYSTEM_QUERY,
             parameters={"query_type": "status"},
             wait_for_completion=False,
@@ -485,25 +480,32 @@ class TestFeedbackLoops:
         )
 
         await asyncio.sleep(0.1)
-        assert mock_components["cdm"].integrate_execution_feedback is not None
+        # Was `assert ... is not None` — the test itself assigned the mock, so
+        # that could never fail. The bridge's _send_feedback_to_cdm is what
+        # must actually call integrate_execution_feedback.
+        mock_components["cdm"].integrate_execution_feedback.assert_awaited_once()
 
-    @pytest.mark.skip("Pre-existing: execution history format mismatch")
     @pytest.mark.asyncio
-    async def test_execution_history(self, basic_bridge):
+    async def test_execution_history(self, tmp_path):
         """Test execution history tracking"""
-        # Execute actions
-        for i in range(3):
-            await basic_bridge.execute_action(
-                action_type=ActionType.SYSTEM_QUERY,
-                parameters={"query_type": "status", "index": i},
-                priority=1,
-            )
+        # Isolated history file: the default bridge reads/writes
+        # ~/.angela/action_history.json, so earlier tests in this session
+        # would already have populated the list and broken the count below.
+        bridge = ActionExecutionBridge(config={"history_path": str(tmp_path / "h.json")})
+        await bridge.initialize()
+        try:
+            for i in range(3):
+                await bridge.execute_action(
+                    action_type=ActionType.SYSTEM_QUERY,
+                    parameters={"query_type": "status", "index": i},
+                    priority=1,
+                )
 
-        # Get history
-        history = basic_bridge.get_action_history(limit=10)
-        assert len(history) == 3
+            history = bridge.get_action_history(limit=10)
+            assert len(history) == 3
+        finally:
+            await bridge.shutdown()
 
-    @pytest.mark.skip("Pre-existing: Mock object can't be awaited")
     @pytest.mark.asyncio
     async def test_success_failure_patterns(self, bridge, mock_components):
         """Test success and failure pattern tracking"""

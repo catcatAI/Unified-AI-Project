@@ -355,6 +355,10 @@ class ActionExecutionBridge:
                 await self._execution_task
             except asyncio.CancelledError:
                 logger.debug("Execution task cancelled during shutdown")
+            finally:
+                # Release the finished (cancelled) task so a later initialize()
+                # cannot confuse a stale handle with a live loop.
+                self._execution_task = None
 
         # Save history
         await self._save_history()
@@ -525,20 +529,47 @@ class ActionExecutionBridge:
             result_data = await handler(parameters, context)
             execution_time = int((asyncio.get_running_loop().time() - start_time) * 1000)
 
-            # === Success result construction ===
-            result = ExecutionResult(
-                action_id=action_id,
-                action_type=context.action_type,
-                status=ExecutionResultStatus.SUCCESS,
-                success=True,
-                data=result_data,
-                execution_time_ms=execution_time,
-                feedback_for_learning={
-                    "trigger_source": context.trigger_source,
-                    "priority": context.priority,
-                    "parameters": parameters,
-                },
+            # Handlers report in-band failures by returning {"error": ...}
+            # (or {"success": False}) rather than raising — missing component,
+            # downstream exception, unsupported operation. Wrapping those as
+            # SUCCESS made every execution count as a success: success_rate
+            # stayed 1.0, failure_patterns never accumulated, and
+            # action_executor handed result.success=True straight to callers.
+            _handler_failed = isinstance(result_data, dict) and (
+                bool(result_data.get("error")) or result_data.get("success") is False
             )
+            if _handler_failed:
+                _err = result_data.get("error") or "handler reported failure"
+                logger.warning("%s handler reported failure: %s", context.action_type, _err)
+                result = ExecutionResult(
+                    action_id=action_id,
+                    action_type=context.action_type,
+                    status=ExecutionResultStatus.FAILURE,
+                    success=False,
+                    error_message=safe_error(ValueError(_err)),
+                    data=result_data,
+                    execution_time_ms=execution_time,
+                    feedback_for_learning={
+                        "trigger_source": context.trigger_source,
+                        "priority": context.priority,
+                        "parameters": parameters,
+                    },
+                )
+            else:
+                # === Success result construction ===
+                result = ExecutionResult(
+                    action_id=action_id,
+                    action_type=context.action_type,
+                    status=ExecutionResultStatus.SUCCESS,
+                    success=True,
+                    data=result_data,
+                    execution_time_ms=execution_time,
+                    feedback_for_learning={
+                        "trigger_source": context.trigger_source,
+                        "priority": context.priority,
+                        "parameters": parameters,
+                    },
+                )
 
         except asyncio.TimeoutError:
             execution_time = int((asyncio.get_running_loop().time() - start_time) * 1000)
