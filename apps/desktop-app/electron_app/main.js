@@ -143,6 +143,10 @@ app.whenReady().then(async () => {
   const appDir = path.dirname(path.resolve(__filename))
 
   // Define allowed directories to prevent path traversal attacks
+  // appDir = <repo>/apps/desktop-app/electron_app，所以：
+  //   '..'      -> apps/desktop-app
+  //   '../..'   -> apps
+  //   '../../..' -> repo 根目錄（原本少一層，repo 根的 resources/ 被擋掉）
   const ALLOWED_DIRECTORIES = [
     path.join(appDir, 'resources'),
     path.join(appDir, '..'), // Parent directory for resources/
@@ -150,7 +154,7 @@ app.whenReady().then(async () => {
     path.join(appDir, 'resources/models'),
     path.join(appDir, 'data'),
     path.join(appDir, 'models'),
-    path.join(appDir, '..', '..', 'resources'),
+    path.join(appDir, '..', '..', '..', 'resources'),
   ]
 
   protocol.registerFileProtocol('local', (request, callback) => {
@@ -769,12 +773,18 @@ function getTrayIconPath() {
   }
 
   if (process.platform === 'darwin') {
-    const icnsPath = path.join(__dirname, '..', '..', 'resources', 'icon.icns')
+    // __dirname = apps/desktop-app/electron_app，兩層 '..' 只回到 apps/，
+    // 真正的 resources/ 在 repo 根目錄，需三層（audit 2026-10-12）。
+    const icnsPath = path.join(__dirname, '..', '..', '..', 'resources', 'icon.icns')
     if (fs.existsSync(icnsPath)) return icnsPath
   }
 
-  const pngFallback = path.join(__dirname, '..', '..', 'resources', 'icon.png')
+  const pngFallback = path.join(__dirname, '..', '..', '..', 'resources', 'icon.png')
   if (fs.existsSync(pngFallback)) return pngFallback
+
+  // 最後退回專案內自帶的 assets/icon.png（win32 分支已先試過）。
+  const assetsPng = path.join(__dirname, 'assets', 'icon.png')
+  if (fs.existsSync(assetsPng)) return assetsPng
 
   return null
 }

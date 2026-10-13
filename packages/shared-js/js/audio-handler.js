@@ -142,13 +142,18 @@ class AudioHandler {
 
   async _loadNativeModule() {
     try {
+      // 路徑基準：執行期副本位於 <surface>/libs/shared-js/。
+      // desktop 往上三層 = apps/desktop-app/，原生模組就在其 native_modules/；
+      // web 往上三層 = 站點根（無 native_modules，走 Web Audio fallback，正確）。
+      // 原本只往上兩層 → electron_app/native_modules/，該目錄從未存在
+      // （audit 2026-10-13 實機重現「Could not load native module」）。
       switch (this.platform) {
         case 'windows':
-          return await import('../../native_modules/node-wasapi-capture/index.js')
+          return await import('../../../native_modules/node-wasapi-capture/index.js')
         case 'macos':
-          return await import('../../native_modules/node-coreaudio-capture/index.js')
+          return await import('../../../native_modules/node-coreaudio-capture/index.js')
         case 'linux':
-          return await import('../../native_modules/node-pulseaudio-capture/index.js')
+          return await import('../../../native_modules/node-pulseaudio-capture/index.js')
         default:
           return null
       }

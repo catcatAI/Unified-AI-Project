@@ -271,6 +271,12 @@ class Live2DManager {
 
       console.log('[Live2DManager] Live2D model loaded successfully:', modelPath)
 
+      // 模型載入前呼叫的 setExpression() 只記了狀態（wrapper 還不存在），
+      // 補做一次，否則第一個情緒永遠不會反映到臉上。
+      if (this.currentExpression) {
+        this._applyExpression(this.currentExpression)
+      }
+
       // 更新PerformanceManager中的能力状态
       this._updateCapabilityStates()
     } catch (error) {
@@ -1035,6 +1041,7 @@ class Live2DManager {
     try {
       if (this.expressions[expression]) {
         this.currentExpression = expression
+        this._applyExpression(expression)
         console.log(`[Live2DManager] Expression: ${expression}`)
       } else {
         console.warn(
@@ -1044,6 +1051,7 @@ class Live2DManager {
         // 回退到neutral表情
         if (this.expressions['neutral']) {
           this.currentExpression = 'neutral'
+          this._applyExpression('neutral')
         }
       }
     } catch (error) {
@@ -1059,15 +1067,108 @@ class Live2DManager {
     }
   }
 
+  /**
+   * 把表情真的寫進 Live2D 模型。
+   *
+   * 舊碼只更新 `this.currentExpression` 就結束，從不碰 `this.wrapper`，所以
+   * 情緒→臉部的所有呼叫點（app.js、state-matrix.js、unified-display-matrix.js、
+   * backend-websocket.js）實際上只改了一個記憶體值，角色的臉從來不會動
+   * （audit 2026-10-12）。
+   *
+   * 兩條路徑，依序嘗試：
+   *   1. 模型自帶的 `.exp3.json`（Epsilon_free 有 Normal/Smile/…）；
+   *   2. 通用參數表（miara_pro 沒有表情檔，只有 ParamEyeLOpen 這類 id）。
+   *
+   * @param {string} expression
+   */
+  _applyExpression(expression) {
+    if (!this.wrapper) return
+    this._applyExpressionToModel(expression).catch((error) => {
+      console.warn('[Live2DManager] Failed to apply expression:', expression, error)
+    })
+  }
+
+  async _applyExpressionToModel(expression) {
+    try {
+      if (await this.wrapper.setExpression(expression)) return
+    } catch (error) {
+      console.warn('[Live2DManager] wrapper.setExpression threw:', error.message)
+    }
+
+    const params = this.expressions[expression]
+    if (!params) return
+    for (const [paramId, value] of Object.entries(params)) {
+      this.wrapper.updateParameter(paramId, value)
+    }
+  }
+
   // Motion control
   startMotion(motion) {
     this.currentMotion = motion
     console.log(`[Live2DManager] Motion: ${motion}`)
+    this._resolveAndPlayMotion(motion)
   }
 
   async playMotion(category, motion) {
     console.log(`[Live2DManager] Play motion: ${category}/${motion}`)
-    return true
+    return this._resolveAndPlayMotion(category, motion)
+  }
+
+  /**
+   * 依名稱在真實模型中找動作並播放。
+   *
+   * 模型檔只給出 `Epsilon_m_01` 這類不透明名稱，而呼叫端傳的是
+   * `Wave`/`Nod`/`idle` 這類語意名稱，兩者本來就對不上；舊碼直接
+   * `return true` 假裝播成功了。這裡改成真的查 `getAvailableMotions()`：
+   * 找得到就播，找不到就退回 Idle 分組並如實警告（audit 2026-10-12）。
+   *
+   * @param {string} name 語意名稱（如 `idle`、`Wave`）或 `group/motion`
+   * @param {string} [motionName] 可選，直接指定組內動作名
+   * @returns {Promise<boolean>} 是否真的啟動了動作
+   */
+  async _resolveAndPlayMotion(name, motionName) {
+    if (!this.wrapper) return false
+
+    let available
+    try {
+      available = this.wrapper.getAvailableMotions() || {}
+    } catch (error) {
+      console.warn('[Live2DManager] Could not enumerate model motions:', error.message)
+      return false
+    }
+
+    const groups = Object.keys(available)
+    if (groups.length === 0) {
+      // Core-only 載入路徑沒有 Cubism Framework 的 MotionGroup，動作本來就
+      // 不可用；如實回報，不要對呼叫端說「播好了」。
+      console.warn('[Live2DManager] Model has no loaded motion groups (Core-only runtime)')
+      return false
+    }
+
+    const first = (g) => (available[g] && available[g][0] && available[g][0].name) || null
+
+    // 1) 呼叫端直接給了 `group/motion`
+    if (name && name.includes('/')) {
+      const [g, m] = name.split('/')
+      if (available[g]) return this.wrapper.playMotion(g, m)
+    }
+
+    // 2) 組名或動作名完全相符
+    const wanted = String(name || '').toLowerCase()
+    const groupHit = groups.find((g) => g.toLowerCase() === wanted)
+    if (groupHit) return this.wrapper.playMotion(groupHit, first(groupHit))
+
+    for (const g of groups) {
+      const hit = (available[g] || []).find((m) => String(m.name).toLowerCase() === wanted)
+      if (hit) return this.wrapper.playMotion(g, hit.name)
+    }
+
+    if (motionName) return this._resolveAndPlayMotion(`${name}/${motionName}`)
+
+    // 3) 退回 Idle：角色至少有反應，且 log 如實說明沒有對應的動作
+    const idle = groups.find((g) => g.toLowerCase() === 'idle') || groups[0]
+    console.warn(`[Live2DManager] No model motion named "${name}"; playing group "${idle}" instead`)
+    return this.wrapper.playMotion(idle, first(idle))
   }
 
   // Parameter control

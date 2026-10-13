@@ -202,7 +202,7 @@ class HapticHandler {
           )
           finalIntensity = udmHaptic.intensity
         } catch (udmError) {
-          console.warn('[HapticHandler] UDM触觉强度计算失败，使用基础强度:', umError)
+          console.warn('[HapticHandler] UDM触觉强度计算失败，使用基础强度:', udmError)
         }
       }
 

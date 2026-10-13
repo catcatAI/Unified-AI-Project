@@ -1,0 +1,41 @@
+{
+  "Version": 3,
+  "FileReferences": {
+    "Moc": "miara_pro_t03.moc3",
+    "DisplayInfo": "miara_pro_t03.cdi3.json",
+    "Textures": ["miara_pro_t03.4096/texture_00.png"],
+    "Physics": "miara_pro_t03.physics3.json",
+    "Motions": {
+      "Motion": [
+        {
+          "File": "motion/Scene1.motion3.json"
+        },
+        {
+          "File": "motion/Scene2.motion3.json"
+        },
+        {
+          "File": "motion/Scene3.motion3.json"
+        }
+      ]
+    }
+  },
+  "Groups": [
+    {
+      "Name": "LipSync",
+      "Ids": []
+    },
+    {
+      "Name": "EyeBlink",
+      "Ids": []
+    }
+  ],
+  "Layout": {
+    "CenterX": 0.0,
+    "CenterY": 0.0,
+    "Scale": 1.0
+  },
+  "HitAreas": [],
+  "MetaData": {
+    "Source": "reconstructed from on-disk runtime assets (audit 2026-10-12)"
+  }
+}

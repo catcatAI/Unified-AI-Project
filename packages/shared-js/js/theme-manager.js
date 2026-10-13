@@ -276,6 +276,13 @@ class ThemeManager {
     const theme = this.themes[this.currentTheme]
     const root = document.documentElement
 
+    // 樣式表用 [data-theme='dark'|'light'|'custom'] 定義各主題的變數，但
+    // 全 repo 從來沒有任何地方寫入這個屬性——四組主題規則一直沒有生效，
+    // 主題切換只改了 JS 內部狀態（getTheme()/_notifyChange）與一組
+    // `--color-*` 變數（樣式表不讀它）。把屬性補上，樣式才會跟著切
+    // （audit 2026-10-12）。
+    root.setAttribute('data-theme', this.currentTheme)
+
     if (this.transitionEnabled) {
       root.style.setProperty('--transition-duration', this.config.transitionDuration)
     }

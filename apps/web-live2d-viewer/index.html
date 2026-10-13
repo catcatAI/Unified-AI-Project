@@ -37,6 +37,13 @@
         --control-bg: rgba(0, 0, 0, 0.5);
         --control-bg-hover: rgba(255, 255, 255, 0.8);
         --control-bg-disabled: rgba(0, 0, 0, 0.3);
+        --bg-panel: #16213e;
+        --surface-card: rgba(255, 255, 255, 0.04);
+        --surface-card-border: rgba(255, 255, 255, 0.08);
+        --field-bg: rgba(0, 0, 0, 0.3);
+        --field-border: rgba(255, 255, 255, 0.15);
+        --field-inset: rgba(0, 0, 0, 0.25);
+        --divider: rgba(255, 255, 255, 0.06);
       }
 
       /* 暗色主題 */
@@ -52,6 +59,13 @@
         --control-bg: rgba(0, 0, 0, 0.5);
         --control-bg-hover: rgba(255, 255, 255, 0.8);
         --control-bg-disabled: rgba(0, 0, 0, 0.3);
+        --bg-panel: #16213e;
+        --surface-card: rgba(255, 255, 255, 0.04);
+        --surface-card-border: rgba(255, 255, 255, 0.08);
+        --field-bg: rgba(0, 0, 0, 0.3);
+        --field-border: rgba(255, 255, 255, 0.15);
+        --field-inset: rgba(0, 0, 0, 0.25);
+        --divider: rgba(255, 255, 255, 0.06);
       }
 
       /* 亮色主題 */
@@ -67,6 +81,13 @@
         --control-bg: rgba(255, 255, 255, 0.7);
         --control-bg-hover: rgba(255, 255, 255, 0.9);
         --control-bg-disabled: rgba(0, 0, 0, 0.3);
+        --bg-panel: #f2f5fa;
+        --surface-card: #ffffff;
+        --surface-card-border: rgba(0, 0, 0, 0.1);
+        --field-bg: #ffffff;
+        --field-border: rgba(0, 0, 0, 0.15);
+        --field-inset: rgba(0, 0, 0, 0.06);
+        --divider: rgba(0, 0, 0, 0.1);
       }
 
       /* 自定義主題 */
@@ -82,6 +103,13 @@
         --control-bg: rgba(155, 89, 182, 0.5);
         --control-bg-hover: rgba(155, 89, 182, 0.7);
         --control-bg-disabled: rgba(155, 89, 182, 0.3);
+        --bg-panel: #2b1d42;
+        --surface-card: rgba(255, 255, 255, 0.06);
+        --surface-card-border: rgba(255, 255, 255, 0.1);
+        --field-bg: rgba(0, 0, 0, 0.3);
+        --field-border: rgba(155, 89, 182, 0.5);
+        --field-inset: rgba(0, 0, 0, 0.3);
+        --divider: rgba(255, 255, 255, 0.08);
       }
 
       #container {
@@ -119,6 +147,26 @@
 
       .canvas-wrapper.visible {
         display: block;
+      }
+
+      /* #character-container 是 .canvas-wrapper 唯一的實例，而且它是全站
+         唯一的 #live2d-canvas 容器。規則寫成 display:none 之後，並沒有任何
+         程式碼會替它補上 .visible（grep 全 repo 零命中），所以角色永遠不會
+         出現；同時 .shell-panel 不透明地蓋在 z-index 170，即使顯示了也看不
+         到（audit 2026-10-12）。 */
+      #character-container.canvas-wrapper {
+        display: block;
+      }
+
+      /* Pet 面板只是標籤框（標題 + 狀態），底下的角色要透過來顯示。 */
+      #panel-pet {
+        background: transparent;
+      }
+
+      /* #pet-canvas-container 內的 canvas 沒有任何 JS 引用（dead markup），
+         留著只會在透明面板中間佔出一個 300x150 的空洞。 */
+      #pet-canvas-container {
+        display: none;
       }
 
       /* Legacy wrapper for fallback canvas (without proper scaling) */
@@ -722,7 +770,7 @@
         right: 0;
         bottom: 0;
         z-index: 170;
-        background: #16213e;
+        background: var(--bg-panel);
         overflow-y: auto;
         color: var(--text-primary);
         padding: 16px;
@@ -735,12 +783,12 @@
       .shell-panel h2 {
         font-size: 16px;
         margin-bottom: 12px;
-        color: #fff;
+        color: var(--text-primary);
       }
 
       .panel-card {
-        background: rgba(255, 255, 255, 0.04);
-        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: var(--surface-card);
+        border: 1px solid var(--surface-card-border);
         border-radius: 10px;
         padding: 14px;
         margin-bottom: 12px;
@@ -758,8 +806,8 @@
       .shell-panel input[type='number'],
       .shell-panel button,
       .shell-panel textarea {
-        background: rgba(0, 0, 0, 0.3);
-        border: 1px solid rgba(255, 255, 255, 0.15);
+        background: var(--field-bg);
+        border: 1px solid var(--field-border);
         border-radius: 6px;
         color: var(--text-primary);
         padding: 7px 10px;
@@ -790,7 +838,7 @@
         display: flex;
         justify-content: space-between;
         padding: 6px 0;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        border-bottom: 1px solid var(--divider);
         font-size: 13px;
       }
 
@@ -802,7 +850,7 @@
       #chat-messages {
         height: calc(100vh - 220px);
         overflow-y: auto;
-        background: rgba(0, 0, 0, 0.25);
+        background: var(--field-inset);
         border-radius: 8px;
         padding: 12px;
         display: flex;
@@ -826,7 +874,7 @@
 
       /* Game panel */
       #game-console {
-        background: rgba(0, 0, 0, 0.35);
+        background: var(--field-inset);
         border-radius: 8px;
         padding: 12px;
         height: calc(100vh - 320px);
@@ -1211,8 +1259,12 @@
     <!-- Pet Panel (Live2D Character View) -->
     <section class="shell-panel active" id="panel-pet">
       <h2>🖼️ Angela</h2>
+      <!-- 與 #character-container 內的 #live2d-canvas 撞名。全站所有 JS 都用
+           getElementById('live2d-canvas')，一定取到文件中第一個，所以這個
+           canvas 永遠不會被繪製；重複 id 在 HTML 中也是非法的。角色實際由
+           #character-container 顯示（audit 2026-10-12）。 -->
       <div id="pet-canvas-container">
-        <canvas id="live2d-canvas"></canvas>
+        <canvas id="pet-live2d-canvas"></canvas>
       </div>
       <div id="pet-status">
         <span id="pet-mood">情緒: 平靜</span>

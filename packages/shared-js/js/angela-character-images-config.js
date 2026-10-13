@@ -682,14 +682,19 @@ function getDensityAdjustedOverlayPositions(overlayPositions) {
 
 // 導出到全局
 if (typeof window !== 'undefined') {
-  window.ANGELA_CHARACTER_IMAGES = ANGELA_CHARACTER_IMAGES
+  // 舊碼這裡有一行 `window.ANGELA_CHARACTER_IMAGES = ANGELA_CHARACTER_IMAGES`，
+  // 但整份檔案只有第 16 行的 `window.ANGELA_CHARACTER_IMAGES = {…}` 這個綁定，
+  // 從未宣告過裸名 `ANGELA_CHARACTER_IMAGES`，因此每次載入（桌面版與網頁版
+  // 都載入）都會拋 ReferenceError——下面四個導出函式也一併掛不上去
+  // （audit 2026-10-12）。配置本身在第 16 行就已就位，刪掉這行即可。
   window.adjustPositionForDensity = adjustPositionForDensity
   window.adjustOverlayPositionsForDensity = adjustOverlayPositionsForDensity
   window.getCurrentDensity = getCurrentDensity
   window.getDensityAdjustedOverlayPositions = getDensityAdjustedOverlayPositions
 }
 
-// ES6 模塊導出
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = ANGELA_CHARACTER_IMAGES
+// ES6 模塊導出。此檔只在瀏覽器可載入（第 16 行就用到 window），所以連同
+// window 一起檢查，避免在 Node 中以 ReferenceError 失敗。
+if (typeof window !== 'undefined' && typeof module !== 'undefined' && module.exports) {
+  module.exports = window.ANGELA_CHARACTER_IMAGES
 }

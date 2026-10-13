@@ -24,6 +24,8 @@ class Live2DCubismWrapper {
     this.lastUpdate = 0
     this.targetFPS = 60
     this.updateInterval = 1000 / 60
+    // 表情/通用設定寫入的參數基準值，供 applyLifeSigns() 做乘法合成。
+    this._baseParameterValues = {}
 
     this.callbacks = {
       onLoaded: null,
@@ -233,6 +235,8 @@ class Live2DCubismWrapper {
       const lastSlash = modelPath.lastIndexOf('/')
       const baseDir = modelPath.substring(0, lastSlash + 1)
       console.log('[loadModel] baseDir:', baseDir)
+      // 留著給 applyExpressionFile() 用：表情檔路徑相對於 model3.json。
+      this.modelBaseDir = baseDir
 
       // Step 2: Load MOC3 file
       console.log('[loadModel] Step 2: Loading MOC3...')
@@ -427,9 +431,16 @@ class Live2DCubismWrapper {
       basePath = basePath + '/'
     }
 
-    // Get texture paths from model3.json if available
+    // Get texture paths from model3.json if available.
+    // loadModel() already resolves `baseDir + FileReferences.Textures[i]` and
+    // hands us that image path. Re-appending the texture name here produced
+    // `runtime/Epsilon_free.2048/Epsilon_free.2048/texture_00.png` (a 404 on
+    // the first attempt). Use the path as-is when it already names an image.
     const texturePaths = []
-    if (this.model3Json?.FileReferences?.Textures) {
+    const isDirectTexture = /\.(png|jpe?g|webp|gif|bmp)(\?.*)?$/i.test(modelPath)
+    if (isDirectTexture) {
+      texturePaths.push(modelPath)
+    } else if (this.model3Json?.FileReferences?.Textures) {
       for (const t of this.model3Json.FileReferences.Textures) {
         if (!t.startsWith('/') && !t.includes(':')) {
           texturePaths.push(basePath + t)
@@ -823,32 +834,24 @@ class Live2DCubismWrapper {
   async setupModelParameters() {
     console.log('Setting up model parameters...')
 
-    // Check if model3Json has parameter data
-    if (
-      !this.model3Json ||
-      !this.model3Json.FileReferences ||
-      !this.model3Json.FileReferences.Parameters
-    ) {
-      console.warn('No parameter data found in model3.json')
+    // model3.json 規格上**沒有** `FileReferences.Parameters`（參數存在 moc3
+    // 裡，由 CubismCore 帶出），舊碼在這裡一路 return 並印
+    // "No parameter data found"。真正要做的是把 Core 參數表的預設值存成基準
+    // 值，applyLifeSigns() 才有乘法基底可用。
+    const params = this.live2dModel && this.live2dModel.parameters
+    if (!params || !params.ids || !params.values) {
+      console.warn('Model exposes no parameter table')
       return
     }
 
-    const parameters = this.model3Json.FileReferences.Parameters
-
-    for (const [paramName, paramData] of Object.entries(parameters)) {
-      // Check if live2dModel has findModelParameterById method
-      if (typeof this.live2dModel.findModelParameterById === 'function') {
-        const parameter = this.live2dModel.findModelParameterById(paramData.Id)
-        if (parameter) {
-          parameter.value = paramData.Value
-          if (typeof this.live2dModel.addParameter === 'function') {
-            this.live2dModel.addParameter(parameter)
-          }
-        }
+    for (let i = 0; i < params.ids.length; i++) {
+      const norm = this._normalizeParamId(params.ids[i])
+      if (this._baseParameterValues[norm] === undefined && params.defaultValues) {
+        this._baseParameterValues[norm] = params.defaultValues[i]
       }
     }
 
-    console.log(`Loaded ${Object.keys(parameters).length} parameters`)
+    console.log(`Loaded ${params.ids.length} parameters`)
   }
 
   createRenderer() {
@@ -1153,6 +1156,11 @@ class Live2DCubismWrapper {
         this.cubismModel.update(deltaTime)
       }
 
+      // 眨眼/呼吸：只有這個 wrapper 的 render loop 會在非 fallback 模式下
+      // 跑，所以生命跡象必須在這裡驅動（Live2DManager 的 animation loop
+      // 只在 2D fallback 模式啟動，模型畫布當時是隱藏的）。
+      this._updateLifeSigns(deltaTime)
+
       if (this.renderer) {
         if (typeof this.renderer.update === 'function') {
           this.renderer.update(this.live2dModel || this.cubismModel)
@@ -1170,6 +1178,48 @@ class Live2DCubismWrapper {
         this.renderer.drawPlaceholder(this.gl)
       }
     }
+  }
+
+  /**
+   * =============================================================================
+   * ANGELA-MATRIX: L4 [γ] [B] [L0]
+   * =============================================================================
+   * 每幀推進眨眼狀態機與呼吸波形，再交給 applyLifeSigns() 合成進參數表。
+   *
+   * 眨眼節奏：2-5 秒隨機間隔、約 100ms 閉眼；呼吸：週期 ~3.14s、振幅 0.1。
+   * *deltaTime 單位是秒（getCurrentDeltaTime() 的回傳值）。
+   *
+   * @param {number} deltaTime 距上一幀的秒數
+   */
+  _updateLifeSigns(deltaTime) {
+    if (!this.isLoaded || !this.live2dModel) return
+
+    if (!this._blink) {
+      this._blink = { timer: 0, interval: 2 + Math.random() * 3, closing: false, openness: 1 }
+    }
+
+    const blink = this._blink
+    const step = Number.isFinite(deltaTime) ? deltaTime : 0
+    blink.timer += step
+
+    if (blink.closing) {
+      blink.openness -= step / 0.1
+      if (blink.openness <= 0) {
+        blink.closing = false
+        blink.openness = 1
+        blink.timer = 0
+        blink.interval = 2 + Math.random() * 3
+      }
+    } else if (blink.timer >= blink.interval) {
+      blink.closing = true
+      blink.timer = 0
+    }
+
+    const breath = Math.sin((Date.now() / 1000) * 2) * 0.1
+    this.applyLifeSigns({
+      blink: blink.closing ? blink.openness : 1,
+      breath,
+    })
   }
 
   handleMotionTransitions(deltaTime) {
@@ -1200,6 +1250,16 @@ class Live2DCubismWrapper {
 
     try {
       this.currentMotionFade = 0.0
+
+      // motionManager 只有在 Cubism **Framework** bundle 存在時才會被建立
+      // （setupMotionGroups 一開始就 return）。本 repo 未打包該 bundle，所以
+      // 這裡要明確回報「無法播放」，而不是對 undefined 呼叫方法拋 TypeError。
+      if (!this.motionManager || typeof this.motionManager.getMotionGroupAll !== 'function') {
+        console.warn(
+          `[playMotion] No motion manager available; cannot play ${groupName}/${motionName}`
+        )
+        return false
+      }
 
       const groups = this.motionManager.getMotionGroupAll()
 
@@ -1232,7 +1292,11 @@ class Live2DCubismWrapper {
 
   stopMotion() {
     if (this.currentMotion) {
-      this.live2dModel.stopAllMotions()
+      // stopAllMotions() 是 Cubism Framework 的 API；Core 模型沒有，
+      // 直接呼叫會在這裡拋 TypeError。
+      if (this.live2dModel && typeof this.live2dModel.stopAllMotions === 'function') {
+        this.live2dModel.stopAllMotions()
+      }
       this.currentMotion = null
       this.currentMotionFade = 0.0
       console.log('All motions stopped')
@@ -1245,45 +1309,318 @@ class Live2DCubismWrapper {
     }
 
     try {
-      const parameter = this.live2dModel.findModelParameterById(parameterName)
-      if (parameter) {
-        parameter.value = value
+      const parameter = this._findParameter(parameterName)
+      if (!parameter) return false
+
+      parameter.value = value
+      // 記錄成基準值：applyLifeSigns() 要拿它當眨眼/呼吸的乘法基底，
+      // 否則每幀的眨眼會蓋掉表情檔設的開眼程度。key 正規化是因為同一個
+      // 參數可能以 `PARAM_EYE_L_OPEN` 或 `ParamEyeLOpen` 兩種寫法進來。
+      this._baseParameterValues[this._normalizeParamId(parameter.id || parameterName)] = value
+
+      if (typeof this.live2dModel.addParameter === 'function') {
         this.live2dModel.addParameter(parameter)
-        this.live2dModel.update()
-        return true
       }
-      return false
+      if (typeof this.live2dModel.update === 'function') {
+        this.live2dModel.update()
+      }
+      return true
     } catch (error) {
       console.error(`Failed to update parameter ${parameterName}:`, error)
       return false
     }
   }
 
-  setExpression(expressionName) {
+  /**
+   * =============================================================================
+   * ANGELA-MATRIX: L4 [γ] [B] [L0]
+   * =============================================================================
+   * 把「生命跡象」（眨眼 / 呼吸）合成進 Live2D 模型參數。
+   *
+   * 這層是必要的：`Live2DManager._updateBlink()` / `_updateBreathing()` 原本
+   * 只改 2D 立繪 fallback 用的內部狀態，Live2D 模型每幀都不會動。這裡用
+   * 表情/通用設定寫下的**基準值**做乘法合成（眨眼）與加法合成（呼吸），
+   * 所以表情設定的開眼程度不會被眨眼蓋掉。
+   *
+   * @param {{blink?: number, breath?: number}} signs
+   *   blink: 1 = 睜眼, 0 = 全閉；breath: 呼吸位移（模型通常以 0 為基準）
+   * @returns {boolean} 是否真的寫入參數
+   */
+  applyLifeSigns(signs) {
+    if (!this.isLoaded || !this.live2dModel) return false
+
+    const blink = signs && Number.isFinite(signs.blink) ? signs.blink : 1
+    const breath = signs && Number.isFinite(signs.breath) ? signs.breath : 0
+
+    const params = this.live2dModel.parameters
+    if (!params || !params.ids || !params.values) return false
+
+    let touched = false
+    for (let i = 0; i < params.ids.length; i++) {
+      const norm = this._normalizeParamId(params.ids[i])
+
+      const base =
+        this._baseParameterValues[norm] !== undefined
+          ? this._baseParameterValues[norm]
+          : params.defaultValues
+            ? params.defaultValues[i]
+            : 0
+
+      let next = null
+      if (norm.endsWith('eyelopen') || norm.endsWith('eyeropen')) {
+        next = base * blink
+      } else if (norm.endsWith('breath')) {
+        next = base + breath
+      }
+
+      if (next !== null && Number.isFinite(next)) {
+        params.values[i] = next
+        touched = true
+      }
+    }
+
+    if (touched && typeof this.live2dModel.update === 'function') {
+      this.live2dModel.update()
+      if (!this._lifeSignsLogged) {
+        this._lifeSignsLogged = true
+        console.log('[LifeSigns] blink/breath driven into model parameters every frame')
+      }
+    }
+    return touched
+  }
+
+  /**
+   * =============================================================================
+   * ANGELA-MATRIX: L4 [γ] [B] [L0]
+   * =============================================================================
+   * 應用模型自帶的表情檔（.exp3.json）。
+   *
+   * 表情檔是 Live2D 官方格式：`Parameters: [{Id, Value, Blend}]`，Id 與模型
+   * 的參數 id 完全一致（Epsilon_free 是 `PARAM_*`，大小寫都對得上），所以這
+   * 是唯一「有依據」的表情來源。
+   *
+   * @param {string} expressionName 表情檔名（不含副檔名），大小寫不拘
+   * @returns {Promise<boolean>} 是否成功套用
+   */
+  async applyExpressionFile(expressionName) {
+    if (!this.isLoaded || !this.model3Json?.FileReferences?.Expressions) return false
+
+    const wanted = String(expressionName || '').toLowerCase()
+    const entry = this.model3Json.FileReferences.Expressions.find(
+      (e) => String(e.Name).toLowerCase() === wanted
+    )
+    if (!entry) return false
+
+    const baseDir = this.modelBaseDir || ''
+    const path = `${baseDir}${entry.File}`
+    let json
+    try {
+      const buf = await this.loadFileAsArrayBuffer(path)
+      json = JSON.parse(new TextDecoder().decode(buf))
+    } catch (error) {
+      console.warn(`[setExpression] Failed to load expression file ${path}:`, error.message)
+      return false
+    }
+
+    const params = json.Parameters || []
+
+    // 表情是單選的：先整體回到預設值，再套用這個表情檔的參數。否則從 Smile
+    // 換到 Sad 會留下 Smile 多設的參數（舊碼沒有這一步）。
+    this._resetParametersToDefaults()
+
+    // 表情檔存在但不含參數（Normal.exp3.json 就是 54 bytes 的空參數檔）＝
+    // 「回到原狀」本身就是這個表情。舊碼在這裡回 false，於是
+    // setExpression('neutral') 一路跌到最後印 "No expression file or motion
+    // named"，而且上一個表情的臉不會被清掉（audit 2026-10-13 實機重現）。
+    if (params.length === 0) {
+      console.log(`[setExpression] Applied "${entry.Name}" (reset to defaults)`)
+      return true
+    }
+
+    let applied = 0
+    for (const p of params) {
+      const parameter = this._findParameter(p.Id)
+      if (!parameter) continue
+      const value = Number(p.Value)
+      if (!Number.isFinite(value)) continue
+
+      switch (p.Blend) {
+        case 'Multiply':
+          parameter.value *= value
+          break
+        case 'Overwrite':
+          parameter.value = value
+          break
+        case 'Add':
+        default:
+          parameter.value += value
+          break
+      }
+      this._baseParameterValues[this._normalizeParamId(p.Id)] = parameter.value
+      if (typeof this.live2dModel.addParameter === 'function') {
+        this.live2dModel.addParameter(parameter)
+      }
+      applied++
+    }
+
+    if (applied > 0) {
+      this.live2dModel.update()
+      console.log(
+        `[setExpression] Applied "${entry.Name}" (${applied}/${params.length} parameters)`
+      )
+      return true
+    }
+    return false
+  }
+
+  /**
+   * =============================================================================
+   * ANGELA-MATRIX: L4 [γ] [B] [L0]
+   * =============================================================================
+   * 把所有參數寫回 moc3 預設值，並清空表情基準值（生命跡象改用預設值做基底）。
+   *
+   * 這是「回到 neutral」的實際動作 —— Live2D 的表情檔不會自動還原，
+   * 少了這一步就沒有辦法真正回到預設臉。
+   *
+   * @returns {boolean} 模型是否可用
+   */
+  _resetParametersToDefaults() {
+    const params = this.live2dModel && this.live2dModel.parameters
+    if (!params || !params.ids || !params.values) return false
+
+    for (let i = 0; i < params.ids.length; i++) {
+      if (params.defaultValues) {
+        params.values[i] = params.defaultValues[i]
+      }
+    }
+
+    this._baseParameterValues = {}
+
+    if (typeof this.live2dModel.update === 'function') {
+      this.live2dModel.update()
+    }
+    return true
+  }
+
+  /**
+   * =============================================================================
+   * ANGELA-MATRIX: L4 [γ] [B] [L0]
+   * =============================================================================
+   * 依模型參數 id 取回可讀寫的參數物件。
+   *
+   * 模型是用 `Live2DCubismCore.Model.fromMoc()` 建的（Core API），Core 沒有
+   * `findModelParameterById` —— 那是 Cubism **Framework** 的方法，而本 repo
+   * 沒有打包 Framework bundle。Core 的參數表是扁平的
+   * `parameters.{ids, values, defaultValues}`（見 live2dcubismcore.d.ts）。
+   *
+   * 舊碼在找不到 `findModelParameterById` 時一律回 `null`，於是
+   * `applyExpressionFile()` 永遠 `applied === 0`、`updateParameter()` 每次都
+   * 拋 TypeError —— 角色的臉完全不會動（audit 2026-10-13 實機重現）。
+   *
+   * 回傳值把 `value` 做成存取器直接寫進 `parameters.values`，呼叫端原本的
+   * `parameter.value = x` / `*= x` 寫法不用改。
+   *
+   * @param {string} parameterId
+   * @returns {{id: string, value: number}|null}
+   */
+  _findParameter(parameterId) {
+    const model = this.live2dModel
+    if (!model) return null
+
+    if (typeof model.findModelParameterById === 'function') {
+      try {
+        return model.findModelParameterById(parameterId) || null
+      } catch (error) {
+        console.warn(`[findParameter] findModelParameterById("${parameterId}") failed:`, error)
+        return null
+      }
+    }
+
+    const params = model.parameters
+    if (!params || !params.ids || !params.values) return null
+
+    let index = Array.prototype.indexOf.call(params.ids, parameterId)
+    if (index < 0) {
+      // id 約定隨模型而異（Epsilon_free 是 `PARAM_EYE_L_OPEN`，miara_pro 是
+      // `ParamEyeLOpen`）。上層的通用表情表用後者，先做正規化比對再放棄。
+      const wanted = this._normalizeParamId(parameterId)
+      for (let i = 0; i < params.ids.length; i++) {
+        if (this._normalizeParamId(params.ids[i]) === wanted) {
+          index = i
+          break
+        }
+      }
+    }
+    if (index < 0) return null
+
+    const values = params.values
+    return {
+      id: parameterId,
+      get value() {
+        return values[index]
+      },
+      set value(next) {
+        values[index] = next
+      },
+    }
+  }
+
+  _normalizeParamId(id) {
+    return String(id)
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '')
+  }
+
+  async setExpression(expressionName) {
     if (!this.isLoaded) {
       return false
     }
 
     console.log(`Setting expression: ${expressionName}`)
 
-    const expressionMotions = {
-      neutral: ['neutral_idle'],
-      happy: ['happy_idle', 'happy'],
-      sad: ['sad_idle', 'sad'],
-      angry: ['angry_idle', 'angry'],
-      surprised: ['surprised_idle', 'surprised'],
-      shy: ['shy_idle', 'shy'],
-      love: ['love_idle', 'love'],
+    // 1) 模型自帶的表情檔（最可靠）
+    if (await this.applyExpressionFile(expressionName)) return true
+
+    // 2) 語意名 → 表情檔別名。模型檔只有 Normal/Smile/Sad/Angry/
+    //    Blushing/Surprised 這些名稱，而上層傳的是 neutral/happy/shy...
+    //    這層對照是必要的，不是猜測——Blushing 即 PARAM_TERE（照れ）。
+    const aliases = {
+      neutral: 'Normal',
+      calm: 'Normal',
+      normal: 'Normal',
+      happy: 'Smile',
+      smile: 'Smile',
+      sad: 'Sad',
+      angry: 'Angry',
+      surprised: 'Surprised',
+      shy: 'Blushing',
+      love: 'Blushing',
+      blush: 'Blushing',
+    }
+    const alias = aliases[String(expressionName || '').toLowerCase()]
+    if (alias && alias.toLowerCase() !== String(expressionName || '').toLowerCase()) {
+      if (await this.applyExpressionFile(alias)) return true
     }
 
-    const motions = expressionMotions[expressionName]
-    if (!motions) {
-      console.warn(`Unknown expression: ${expressionName}`)
-      return false
+    // 3) 退回動作：舊碼這裡用 `motions[0].split('/')` 拆 `neutral_idle` 這
+    //    樣不含斜線的字串，motionName 恆為 undefined，此路徑必定 return
+    //    false（audit 2026-10-12）。改成對照模型實際載入的動作。
+    const available = this.getAvailableMotions() || {}
+    const groups = Object.keys(available)
+    if (groups.length > 0) {
+      const wanted = String(expressionName || '').toLowerCase()
+      const groupHit = groups.find((g) => g.toLowerCase() === wanted)
+      if (groupHit && available[groupHit][0]) {
+        return this.playMotion(groupHit, available[groupHit][0].name)
+      }
+      for (const g of groups) {
+        const hit = (available[g] || []).find((m) => String(m.name).toLowerCase() === wanted)
+        if (hit) return this.playMotion(g, hit.name)
+      }
     }
 
-    const [groupName, motionName] = motions[0].split('/')
-    return this.playMotion(groupName, motionName)
+    console.warn(`[setExpression] No expression file or motion named "${expressionName}"`)
+    return false
   }
 
   resetPose() {

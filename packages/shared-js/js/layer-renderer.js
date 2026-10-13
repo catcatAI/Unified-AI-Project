@@ -62,13 +62,18 @@ class LayerRenderer {
     try {
       // 按圖層類型加載圖片
       for (const [imageId, imageData] of Object.entries(images)) {
-        const layerType = imageData.layer
+        // 生產端（live2d-manager.js loadCharacterImages）存的是
+        // { image, config }，這裡原本直接讀 imageData.layer / .path，
+        // 兩者都是 undefined → 條件永不成立 → layers 全是 null，
+        // 最後 render() 只留下一個深色矩形（audit 2026-10-12）。
+        const cfg = imageData && imageData.config ? imageData.config : imageData
+        const layerType = cfg.layer
 
         if (layerType && this.layers.hasOwnProperty(layerType)) {
-          const img = await this._loadImageWithTransparencyCheck(imageData.path, imageId)
+          const img = await this._loadImageWithTransparencyCheck(cfg.path, imageId)
           this.layers[layerType] = {
             image: img.image,
-            config: imageData,
+            config: cfg,
             imageId: imageId,
             hasTransparency: img.hasTransparency,
           }
@@ -79,7 +84,14 @@ class LayerRenderer {
       }
 
       this.imagesLoaded = true
-      console.log('[LayerRenderer] All layers loaded successfully')
+      const loadedCount = Object.values(this.layers).filter((l) => l && l.image).length
+      if (loadedCount > 0) {
+        console.log(`[LayerRenderer] ${loadedCount} layer(s) loaded successfully`)
+      } else {
+        // 不要再打「All layers loaded successfully」——0 層也走同一路徑，
+        // 那句 log 會讓排查的人以為問題已不存在（audit 2026-10-12）。
+        console.warn('[LayerRenderer] No layers were matched; canvas will show the background only')
+      }
       return true
     } catch (error) {
       console.error('[LayerRenderer] Error loading layers:', error)
