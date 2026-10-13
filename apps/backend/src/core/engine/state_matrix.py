@@ -1621,6 +1621,26 @@ class StateMatrix4D:
         }
 
 
+# ---------------------------------------------------------------------------
+# Shared singleton factory (§X #197-style unification)
+# ---------------------------------------------------------------------------
+# Production previously created up to 6 independent StateMatrix4D instances
+# (DLI, state_matrix_api, backbone, chat_routes fallback, neuro_auto_selector
+# fallback, angela_model_core) — Angela's "internal state" was fragmented
+# across disconnected matrices. This factory makes one instance the single
+# source of truth. Tests that need isolation still construct
+# StateMatrix4D() directly.
+_shared_state_matrix: Optional[StateMatrix4D] = None
+
+
+def get_shared_state_matrix() -> StateMatrix4D:
+    """Return the process-wide shared StateMatrix4D instance."""
+    global _shared_state_matrix
+    if _shared_state_matrix is None:
+        _shared_state_matrix = StateMatrix4D()
+    return _shared_state_matrix
+
+
 # Example usage
 if __name__ == "__main__":
     logger.info("=" * 60)

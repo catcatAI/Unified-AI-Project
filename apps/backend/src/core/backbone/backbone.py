@@ -224,9 +224,9 @@ class Backbone:
 
     @staticmethod
     def _create_state_matrix():
-        from core.engine.state_matrix import StateMatrix4D
+        from core.engine.state_matrix import get_shared_state_matrix
 
-        return StateMatrix4D()
+        return get_shared_state_matrix()
 
     @staticmethod
     def _create_emotion_singleton():

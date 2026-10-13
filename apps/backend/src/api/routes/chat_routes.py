@@ -291,12 +291,12 @@ def _get_emotion_system():
 
 
 def _get_state_matrix():
-    """Get live state matrix from DLI when available, fallback to standalone."""
+    """Get live state matrix from DLI when available, fallback to shared singleton."""
 
     def _factory():
-        from core.engine.state_matrix import StateMatrix4D
+        from core.engine.state_matrix import get_shared_state_matrix
 
-        return StateMatrix4D()
+        return get_shared_state_matrix()
 
     try:
         dli = get_digital_life()

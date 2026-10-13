@@ -35,23 +35,17 @@ import datetime
 import logging
 from typing import Any, Dict, List, Optional, cast
 
-from core.engine.state_matrix import StateMatrix4D
+from core.engine.state_matrix import StateMatrix4D, get_shared_state_matrix
 from core.utils import safe_error
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
 
-# Global state matrix instance (singleton pattern for API access)
-_state_matrix_instance: Optional[StateMatrix4D] = None
-
 
 def get_state_matrix() -> StateMatrix4D:
-    """Get or create the global state matrix instance."""
-    global _state_matrix_instance
-    if _state_matrix_instance is None:
-        _state_matrix_instance = StateMatrix4D()
-    return _state_matrix_instance
+    """Get the shared state matrix instance (DLI writes, HTTP API reads)."""
+    return get_shared_state_matrix()
 
 
 # Request/Response models

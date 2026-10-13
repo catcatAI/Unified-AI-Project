@@ -380,7 +380,13 @@ class DigitalLifeIntegrator:
         self._event_callbacks: list[Callable[[LifeEvent], None]] = []
 
         # Self-Introspection and State Matrix
-        self.state_matrix = StateMatrix4D()
+        # §X #197-style unification: shared singleton so the HTTP API
+        # (state_matrix_api), backbone, and chat routes all read the SAME
+        # matrix DLI updates — previously each created its own disconnected
+        # instance (split-brain internal state).
+        from core.engine.state_matrix import get_shared_state_matrix
+
+        self.state_matrix = get_shared_state_matrix()
         self.self_introspector = SelfIntrospector(self.config.get("introspection", {}))
         self.introspection_report: Optional[dict[str, Any]] = None
 

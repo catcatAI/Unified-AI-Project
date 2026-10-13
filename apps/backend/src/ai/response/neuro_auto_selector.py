@@ -305,9 +305,9 @@ class StateInterpreter:
             except Exception:
                 pass
             try:
-                from core.engine.state_matrix import StateMatrix4D
+                from core.engine.state_matrix import get_shared_state_matrix
 
-                self._state_matrix = StateMatrix4D()
+                self._state_matrix = get_shared_state_matrix()
             except ImportError:
                 logger.warning("[StateInterpreter] StateMatrix4D not available", exc_info=True)
 
