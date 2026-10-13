@@ -143,6 +143,27 @@ class ChatService:
             return self._llm_service.model_bus
         return None
 
+    @property
+    def memory_manager(self):
+        """HAM memory manager, owned by the underlying LLM router.
+
+        ChatService never assigns ``self.memory_manager`` — the memory
+        subsystem is created by ``AngelaLLMService._init_memory_enhancement()``.
+        The API probes therefore read a missing attribute off the chat service
+        and permanently reported ``{"initialized": false}`` for
+        ``/context/summary``, ``/context/memory/recent`` and the system status
+        card, even while HAM was live and answering queries.
+        """
+        llm = self._llm_service
+        if llm is None:
+            try:
+                from services.llm import router as _router
+
+                llm = _router._llm_service
+            except Exception:
+                return None
+        return getattr(llm, "memory_manager", None)
+
     async def _ham_sync_loop(self) -> None:
         """Background task: sync ED3N dictionary to HAM memory periodically."""
         import random
@@ -426,7 +447,7 @@ class ChatService:
         await self._process_multimodal_output(response, merged_context, mm_adapter)
         await self._process_learning(user_message, response, merged_context)
         self._schedule_grounded_learning(user_message, response)
-        await self._store_interaction_memories(user_message, response)
+        await self._store_interaction_memories(user_message, response, merged_context)
 
         return response
 
@@ -786,7 +807,41 @@ class ChatService:
         except Exception as e:
             logger.warning("Grounded learning schedule skipped: %s", e, exc_info=True)
 
-    async def _store_interaction_memories(self, user_message: str, response) -> None:
+    async def _build_memory_metadata(
+        self, content: str, context: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """Compose stored-memory metadata: current emotion + scored importance.
+
+        /context/memory/recent reads these keys straight off the record; before
+        this they were never written, so every row in the MemoryViewer panel
+        showed ``emotion: ""`` / ``importance: 0.0`` (reproduced live 2026-10-13).
+        Importance comes from the existing HAM scorer, awaited here because the
+        store path is already async — the synchronous facade calls
+        ``asyncio.run()`` and would raise inside the running event loop.
+        """
+        metadata: Dict[str, Any] = {}
+
+        raw_emotion = (context or {}).get("emotion") if isinstance(context, dict) else None
+        if isinstance(raw_emotion, dict):
+            emotion_name = raw_emotion.get("emotion")
+        elif isinstance(raw_emotion, str):
+            emotion_name = raw_emotion
+        else:
+            emotion_name = None
+        if emotion_name:
+            metadata["emotion"] = str(emotion_name)
+
+        try:
+            from ai.memory.ham_memory.ham_importance_scorer import ImportanceScorer
+
+            metadata["importance"] = float(await ImportanceScorer().calculate(content, metadata))
+        except Exception as e:
+            logger.debug("Memory importance scoring skipped: %s", e, exc_info=True)
+        return metadata
+
+    async def _store_interaction_memories(
+        self, user_message: str, response, context: Optional[Dict[str, Any]] = None
+    ) -> None:
         # Vector-store writes are best-effort and must NOT block the answer path.
         # chromadb PersistentClient.add can take several seconds in some
         # environments, so we offload it to a background task (fire-and-forget),
@@ -808,10 +863,14 @@ class ChatService:
             try:
                 mm = getattr(self._llm_service, "memory_manager", None)
                 if mm:
+                    metadata = await self._build_memory_metadata(
+                        f"{user_message}\n{response.text}", context
+                    )
                     self._spawn_background_task(
                         mm.store_experience(
                             raw_data={"user": user_message, "assistant": response.text},
                             data_type="conversation",
+                            metadata=metadata,
                         )
                     )
             except Exception as e:

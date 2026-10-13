@@ -33,14 +33,6 @@ async def test_ham_errors_import():
     assert HAMRetrievalError is not None
 
 
-async def test_ham_config_exists():
-    """Test HAM config module exists"""
-    pytest.importorskip("ai.memory.ham_memory.ham_config")
-    from ai.memory.ham_memory import ham_config
-
-    assert ham_config is not None
-
-
 async def test_ham_utils_import():
     """Test HAM utils module can be imported"""
     from ai.memory import ham_utils

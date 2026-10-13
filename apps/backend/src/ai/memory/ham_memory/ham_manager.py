@@ -7,6 +7,7 @@ import asyncio
 import json
 import logging
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -299,10 +300,15 @@ class HAMMemoryManager:
                       keywords are auto-extracted from raw_data.
         """
         resolved_keywords = keywords if keywords is not None else self._extract_keywords(raw_data)
+        entry_meta = dict(metadata or {})
+        # 面板（/context/memory/recent）與時間衰減都讀 metadata.timestamp；
+        # 沒人送時在這裡補一個，否則每列記憶的 timestamp 都是 null。
+        if entry_meta.get("timestamp") in (None, ""):
+            entry_meta["timestamp"] = datetime.now(timezone.utc).isoformat()
         entry = {
             "content": raw_data if isinstance(raw_data, dict) else str(raw_data),
             "data_type": data_type,
-            "metadata": metadata or {},
+            "metadata": entry_meta,
             "keywords": resolved_keywords,
         }
         # Route experiences into the correct bucket. Only proper answer
@@ -483,7 +489,8 @@ class HAMMemoryManager:
         for c in reversed(conversations):
             content = str(c.get("content", ""))
             if data_type_filter:
-                ctype = str(c.get("type", ""))
+                # store_experience 寫的是 data_type；type 是舊 conversation 物件的鍵
+                ctype = str(c.get("data_type") or c.get("type") or "")
                 if ctype != data_type_filter:
                     continue
             if kws and not any(kw in content.lower() for kw in kws):
@@ -501,13 +508,28 @@ class HAMMemoryManager:
         """包成含 `.content` 的輕量物件（相容 HAMRecallResult 的取用方）。"""
 
         class _Mem:
-            def __init__(self, content, memory_id="", metadata=None):
+            """Dict-like wrapper: attribute access for API callers, ``get()`` for
+            callers that treat the result as a mapping (e.g. cli/repl.py)."""
+
+            def __init__(self, content, memory_id="", metadata=None, data_type=""):
                 self.content = content
                 self.memory_id = memory_id
                 self.metadata = metadata or {}
+                self.data_type = data_type
 
+            def get(self, key, default=None):
+                if hasattr(self, key):
+                    value = getattr(self, key)
+                    if value not in (None, ""):
+                        return value
+                return self.metadata.get(key, default)
+
+        # content is returned RAW (dict stays dict). Stringifying here made the
+        # MemoryViewer render Python repr, and left game_memory_bridge's
+        # isinstance(content, dict) branch permanently dead.
         return _Mem(
-            str(conversation.get("content", "")),
+            conversation.get("content", ""),
             memory_id=str(conversation.get("id", "")),
             metadata=conversation.get("metadata") or {},
+            data_type=str(conversation.get("data_type") or conversation.get("type") or ""),
         )

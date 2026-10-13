@@ -37,7 +37,6 @@ from ai.memory.memory_template import MemoryTemplate, ResponseCategory, UserImpr
 from ai.memory.precompute_service import PrecomputeService, PrecomputeTask
 from ai.memory.task_generator import TaskGenerator
 from ai.memory.template_library import PredefinedTemplate, TemplateLibrary, get_template_library
-from ai.memory.types import MemoryType
 from ai.memory.vector_store import VectorMemoryStore
 
 __all__ = [
@@ -66,5 +65,4 @@ __all__ = [
     "PrecomputeTask",
     "TaskGenerator",
     "MathRippleEngine",
-    "MemoryType",
 ]

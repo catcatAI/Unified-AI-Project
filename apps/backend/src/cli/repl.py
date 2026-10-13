@@ -658,7 +658,6 @@ def _format_llm_routing(service: Any) -> str:
             return "\n".join(lines)
 
         is_available = getattr(llm_svc, "is_available", False)
-        active = getattr(llm_svc, "active_backend", None)
         active_type = getattr(llm_svc, "active_backend_type", None)
         llm_mode = getattr(llm_svc, "llm_mode", "unknown")
         chain = getattr(llm_svc, "_angela_fallback_chain", [])
@@ -751,7 +750,6 @@ def _handle_model_command(args: str, service: Any) -> str:
         return "❌ LLM service not available.\n" + _hint("Check backend server status")
 
     backends = getattr(llm_svc, "backends", {})
-    active = getattr(llm_svc, "active_backend", None)
     active_type = getattr(llm_svc, "active_backend_type", None)
 
     # ── /model list ──
@@ -945,7 +943,10 @@ def _format_memory_summary(service: Any, search: str) -> str:
             ]
 
             for i, r in enumerate(results):
-                content = r.get("content", "")[:100]
+                content = r.get("content", "")
+                if isinstance(content, dict):
+                    content = " | ".join(str(v) for v in content.values() if v)
+                content = str(content)[:100]
                 cat = r.get("category", "?")
                 importance = r.get("importance", 0)
                 score = r.get("score", r.get("similarity", 0))

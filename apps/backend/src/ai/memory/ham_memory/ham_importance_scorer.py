@@ -293,7 +293,13 @@ class ImportanceScorer:
                 # so treat it as maximally recent.
                 return 1.0
 
-            now = datetime.now()
+            # Aware (UTC) and naive timestamps must not be mixed: subtracting
+            # them raises TypeError, which the broad except below would turn
+            # into TIME_ERROR_FALLBACK (0.5) for every freshly stored memory.
+            if timestamp.tzinfo is None:
+                now = datetime.now()
+            else:
+                now = datetime.now(timestamp.tzinfo)
             age_days = (now - timestamp).days
 
             # No decay for very recent memories

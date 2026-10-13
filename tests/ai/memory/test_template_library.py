@@ -31,7 +31,8 @@ class TestTemplateLibraryInit:
         lib = TemplateLibrary()
         count = lib.get_template_count()
         assert count > 0
-        assert count == 48  # 51 curated - 3 exact-duplicate contents (audit 2026-10-10)
+        # 51 curated - 3 exact-duplicate contents (audit 2026-10-10) + comfort_joy
+        assert count == 49
 
     def test_init_contains_known_ids(self):
         lib = TemplateLibrary()
@@ -48,11 +49,12 @@ class TestTemplateLibraryGet:
 
     def test_get_all_templates(self, lib):
         templates = lib.get_all_templates()
-        assert len(templates) == 48
+        assert len(templates) == 49
         ids = [t.id for t in templates]
         assert "greeting_morning" in ids
         assert "farewell_general" in ids
         assert "comfort_sad" in ids
+        assert "comfort_joy" in ids
 
     def test_get_by_id_exists(self, lib):
         tpl = lib.get_by_id("greeting_general")
@@ -76,8 +78,19 @@ class TestTemplateLibraryGet:
         templates = lib.get_by_category(ResponseCategory.RESEARCH)
         assert templates == []
 
+    def test_positive_emotion_has_a_template(self, lib):
+        """Happy input used to have no entry to land on at all.
+
+        The library held sadness/tiredness/frustration/worry but nothing for
+        joy, so `我好開心` fell to the emotion layer and drew a random
+        topic template ("游戏好玩吗？")."""
+        joy = lib.get_by_id("comfort_joy")
+        assert joy is not None
+        assert joy.category == ResponseCategory.EMOTIONAL
+        assert "开心" in joy.keywords
+
     def test_get_template_count(self, lib):
-        assert lib.get_template_count() == 48
+        assert lib.get_template_count() == 49
 
 
 class TestTemplateLibraryCategoryCounts:
@@ -88,7 +101,7 @@ class TestTemplateLibraryCategoryCounts:
 
     def test_get_category_counts(self, lib):
         counts = lib.get_category_counts()
-        assert sum(counts.values()) == 48
+        assert sum(counts.values()) == 49
         assert ResponseCategory.GREETING in counts
         assert ResponseCategory.FAREWELL in counts
         assert ResponseCategory.EMOTIONAL in counts
@@ -162,4 +175,4 @@ class TestTemplateLibrarySingleton:
 
     def test_singleton_is_template_library(self):
         lib = get_template_library()
-        assert lib.get_template_count() == 48
+        assert lib.get_template_count() == 49

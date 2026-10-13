@@ -16,6 +16,24 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/context", tags=["Context"])
 
 
+def _render_memory_content(content: Any) -> str:
+    """Render a stored memory for the MemoryViewer panel.
+
+    Conversation entries are stored as ``{"user": ..., "assistant": ...}``;
+    stringifying that dict would render Python repr (escaped quotes, braces)
+    straight into the UI. Fall back to ``str(content)`` for any other shape.
+    """
+    if content is None:
+        return ""
+    if isinstance(content, dict):
+        user_part = str(content.get("user") or "").strip()
+        assistant_part = str(content.get("assistant") or "").strip()
+        rendered = " | ".join(part for part in (user_part, assistant_part) if part)
+        if rendered:
+            return rendered[:200]
+    return str(content)[:200]
+
+
 @router.get("/summary")
 async def context_summary() -> Dict[str, Any]:
     """Return context overview: state matrix, memory status, intent list."""
@@ -123,7 +141,7 @@ async def context_memory_recent(limit: int = 10) -> Dict[str, Any]:
             meta = getattr(r, "metadata", None) or {}
             memories.append(
                 {
-                    "content": str(content)[:200] if content is not None else "",
+                    "content": _render_memory_content(content),
                     "type": getattr(r, "data_type", None) or meta.get("type", ""),
                     "importance": float(meta.get("importance", 0.0) or 0.0),
                     "emotion": meta.get("emotion", ""),

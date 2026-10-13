@@ -2,18 +2,7 @@
 # ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
 # =============================================================================
 
-from enum import Enum
 from typing import Any, Dict, TypedDict
-
-
-class MemoryType(Enum):
-    """Enumeration of different memory types."""
-
-    core = "core"
-    episodic = "episodic"
-    semantic = "semantic"
-    procedural = "procedural"
-    working = "working"
 
 
 class HAMDataPackageInternal(TypedDict):

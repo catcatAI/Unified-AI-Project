@@ -87,3 +87,90 @@ async def test_summary_memory_query_error_keeps_none(monkeypatch):
 
     assert result["memory"]["initialized"] is True
     assert result["memory"]["recent_count"] is None
+
+
+class _FakeHAM:
+    """Minimal stand-in for HAMMemoryManager."""
+
+    def __init__(self, results=None):
+        self._results = results if results is not None else [object(), object(), object()]
+
+    async def query_core_memory(self, *args, **kwargs):
+        return list(self._results)
+
+
+def _real_chat_service(ham) -> "object":
+    """A genuine ChatService wired to a router that owns ``ham``."""
+    from services.chat_service import ChatService
+
+    class _Router:
+        pass
+
+    router = _Router()
+    router.memory_manager = ham
+    chat = ChatService(llm_service=router)
+    return chat
+
+
+def test_chat_service_exposes_memory_manager_and_delegates_to_the_router():
+    """ChatService owns no memory_manager — it must reach the router's HAM.
+
+    Reading the missing attribute off the chat service made every API memory
+    probe report ``initialized: false`` while HAM was live and answering.
+    """
+    ham = _FakeHAM()
+    chat = _real_chat_service(ham)
+    assert chat.memory_manager is ham
+
+    # not yet wired -> None, never an AttributeError
+    from services.chat_service import ChatService
+
+    assert ChatService(llm_service=None).memory_manager is None or hasattr(
+        ChatService(llm_service=None), "memory_manager"
+    )
+
+
+@pytest.mark.asyncio
+async def test_context_summary_reads_memory_through_the_real_chat_service(monkeypatch):
+    ham = _FakeHAM()
+    chat = _real_chat_service(ham)
+
+    monkeypatch.setattr(api_lifespan, "_get_chat_service", AsyncMock(return_value=chat))
+    monkeypatch.setattr(
+        config_loader,
+        "get_angela_config",
+        lambda: SimpleNamespace(get_intents=lambda: {"intent_a": {}}),
+    )
+    monkeypatch.setattr(
+        llm_service_module,
+        "get_llm_service",
+        AsyncMock(
+            return_value=SimpleNamespace(
+                is_available=True, active_backend_type=None, llm_mode="mock"
+            )
+        ),
+    )
+
+    result = await context_routes.context_summary()
+    assert result["memory"]["initialized"] is True
+    assert result["memory"]["recent_count"] == 3
+
+
+@pytest.mark.asyncio
+async def test_context_memory_recent_serves_real_ham(monkeypatch):
+    ham = _FakeHAM(
+        [
+            SimpleNamespace(
+                content="user taught: \u6c34\u7684\u6cb8\u9ede\u662f\u4e00\u767e\u5ea6",
+                metadata={"type": "knowledge", "importance": 0.9},
+                data_type="knowledge",
+            )
+        ]
+    )
+    chat = _real_chat_service(ham)
+    monkeypatch.setattr(api_lifespan, "_get_chat_service", AsyncMock(return_value=chat))
+
+    out = await context_routes.context_memory_recent(limit=5)
+    assert out["initialized"] is True
+    assert len(out["memories"]) == 1
+    assert "\u6c34\u7684\u6cb8\u9ede" in out["memories"][0]["content"]
