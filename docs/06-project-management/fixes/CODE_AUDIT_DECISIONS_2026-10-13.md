@@ -1094,3 +1094,57 @@ awaited」——實測全部可 await；寫「hang」——實測 0.3s 完成。
 **還原死碼時要跑通最小 round-trip 再接線。** HSP
 fallback 還原後第一次跑就暴露舊版的循環 health-check 門（bug
 5）——如果直接接進 connector 再 debug，線索會被 connector 的其他邏輯淹沒。
+
+## 18. 死引用稽核 + 幽靈模組清除（2026-10-14）
+
+### 18.1 範圍與方法
+
+兩輪 explore 稽核（bare-except
+107 處清單、95 筆 skip 稽核、全庫死引用掃描）＋自寫路徑檢查器掃 `docs/**/*.md`
+的反引號路徑。高/中嚴重度全修；低嚴重度與歷史文件（09-archive/、dated 報告）依政策不動。
+
+### 18.2 本輪修復（commit 24d7fa3a3 / 9263e20ba / 0f0752641）
+
+- **幽靈模組**：`core/metacognition/`（24L
+  docstring-only，類別全庫不存在）整包刪除；死測試
+  `TestMetacognitivePersistence`（永久假 skip、reason 誤寫 sklearn）一併清除；ARCHITECTURE_BACKBONE 幽靈表 6 項全部標記已刪。
+- **smoke 契約**：`test_smoke_imports.py` import 缺席 `skip` →
+  `fail`（假綠不可再發生）。
+- **scripts 死 import
+  3 項**：test_capability（metabolic_heartbeat→core.life.heartbeat）、benchmark_baseline（classifier→query_classifier）、smart_dev_runner（PetManager 段移除）；另清 4 處
+  `__import__("X")` hack → 頂層 import。
+- **文件死路徑大批次（42 檔）**：入口 README/ARCHITECTURE/FEATURE_COMPLETENESS 誠實化（14 個「New
+  module」從未落地、PROJECT_HONEST_AUDIT 全庫查無）；hsp 家族 8 檔
+  `src/hsp/`→`src/core/hsp/`；agents 4 檔 →
+  `ai/agents/{base,specialized}`；tools
+  10 檔＋image-generation-agent＋service-types 加「已裁撤」橫幅（`src/tools/`
+  整目錄已刪）；USER_GUIDE configs →
+  `apps/backend/configs/`；knowledge-graph.md 的 TypedDict
+  schema 改標「規劃中、未落地」；遊戲設計 6 死路徑 →
+  UPPERCASE 實檔；Jest/pytest.ini/test-watcher 等失效工作流說明全部改為現行事實。
+
+### 18.3 本輪驗證
+
+| 檢查                                  | 結果                                           |
+| ------------------------------------- | ---------------------------------------------- |
+| `pytest`（全 testpaths）              | **7966 passed, 115 skipped, 0 failed**（5:05） |
+| `scripts/check_fact_gates.py`         | **ALL PASS**（8 域 22 verdict）                |
+| `scripts/mypy_budget_gate.py`         | 0 errors / budget 0                            |
+| `bandit -r apps/backend/src -ll`      | exit 0                                         |
+| flake8/black/isort（全部觸及 py 檔）  | 0 errors                                       |
+| `npx prettier --check`（全部觸及 md） | 通過                                           |
+| `tests/test_documented_paths.py`      | 3 passed                                       |
+
+### 18.4 教訓
+
+**文件死路徑是系統性的，不是零星的。** 一次 `src/hsp/`→`core/hsp/`
+搬家就產生 15+ 檔文件的連環失效。模組搬家時應同步 grep
+docs（規則可加進搬家 checklist）。
+
+**「全庫查無」要敢下結論。**
+FEATURE_COMPLETENESS頭註原本寫「test_trust_manager.py 已存在」——實際
+`ai/core/`、`tests/ai/core/` 都沒有，整批 14 個「New
+module」從未落地。誠實標「歷史計畫殘影」比留一個假的存在宣稱有價值。
+
+**我的路徑檢查器要加白名單。** bare 檔名（`test_x.py`
+在歷史報告中的提及）被大量誤報；掃描器只應看含目錄的路徑，且要區分歸檔文件與現行文件。
