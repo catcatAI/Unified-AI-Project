@@ -846,7 +846,9 @@ class ConsistencyReviewer:
                     )
                 )
         except ImportError:
-            pass
+            logger.debug(
+                "review: ExecutionGate not importable; interface check skipped", exc_info=True
+            )
 
         try:
             from ai.meta.meta_controller import MetaController
@@ -863,7 +865,9 @@ class ConsistencyReviewer:
                         )
                     )
         except ImportError:
-            pass
+            logger.debug(
+                "review: MetaController not importable; interface check skipped", exc_info=True
+            )
 
         return findings
 

@@ -534,11 +534,11 @@ async def upload_file(
             try:
                 os.close(fd)
             except Exception:
-                pass
+                logger.debug("drive upload: os.close(fd) in finally failed", exc_info=True)
         try:
             os.unlink(tmp_path)
         except Exception:
-            pass
+            logger.debug("drive upload: tmp cleanup failed", exc_info=True)
 
 
 @router.post("/files/create")

@@ -38,7 +38,9 @@ def _default_persist_dir() -> str:
 
         return os.fspath(get_vector_store_dir())
     except Exception:
-        pass
+        logger.debug(
+            "data_config.get_vector_store_dir failed; using data/vector_store", exc_info=True
+        )
     explicit = os.environ.get("VECTOR_STORE_PATH")
     if explicit:
         return os.path.abspath(explicit)

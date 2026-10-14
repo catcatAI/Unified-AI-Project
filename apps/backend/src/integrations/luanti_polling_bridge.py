@@ -197,7 +197,7 @@ class PollingBridge:
             if hasattr(self, "_runner") and self._runner:
                 await self._runner.cleanup()
         except Exception:
-            pass
+            logger.warning("polling bridge runner cleanup failed", exc_info=True)
         logger.info("Polling bridge stopped")
 
 

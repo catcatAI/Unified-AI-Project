@@ -294,7 +294,7 @@ class TaskSplitter:
             plain_shape = str(preset.get("plain_shape", plain_shape))
             anchor_max = int(preset.get("anchor_max_chars", anchor_max))
         except Exception:
-            pass
+            logger.debug("micro_act preset load failed; using defaults", exc_info=True)
         if len(part) > max_chars:
             part = part[:max_chars]
         # Weak executors drown in context: the full brief degrades them

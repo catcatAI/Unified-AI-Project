@@ -68,10 +68,9 @@ MASTER_CONSOLIDATED_PLAN 等) 位於 `06-project-management/plans/` 目錄下。
 
 - `03-technical-architecture/communication/hsp-specification/` — HSP protocol
   spec
-- `09-archive/03-technical-architecture-memory-systems/memory-systems/` — HAM
-  memory design 🗑️ 已歸檔 (described obsolete `src/core_ai/` layout)
-- `03-technical-architecture/design/MODULE_MANAGER_SYSTEM.md` — ModuleManager
-  design
+- `03-technical-architecture/HAMMemory.md` — HAM 記憶體系（現行文件）
+- `09-archive/auto-archived-2026-08-11/MODULE_MANAGER_SYSTEM.md` — ModuleManager
+  design 🗄️ 已歸檔（現行實作在 `apps/backend/src/core/system/module_manager/`）
 - **[architecture/ANGELA_FULL_ARCHITECTURE.md](architecture/ANGELA_FULL_ARCHITECTURE.md)**
   — 架構概覽 (部分過時)
 

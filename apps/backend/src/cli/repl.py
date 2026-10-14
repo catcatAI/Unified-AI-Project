@@ -500,7 +500,7 @@ def _format_config_summary(service: Any) -> str:
         try:
             deployment = cfg.get_authority("llm", {}).get("deployment", {})
         except Exception:
-            pass
+            logger.debug("repl: deployment config unavailable", exc_info=True)
         mode = deployment.get("mode", "unknown")
         selection = deployment.get("selection", "available")
         mode_icon = {"local": "🏠", "local+llm": "🔗", "llm": "☁️", "auto": "🤖"}.get(mode, "❓")
@@ -511,7 +511,7 @@ def _format_config_summary(service: Any) -> str:
         try:
             web_search = cfg.get_authority("llm", {}).get("web_search", {})
         except Exception:
-            pass
+            logger.debug("repl: web_search config unavailable", exc_info=True)
         ws_enabled = web_search.get("enabled", True)
         ws_provider = web_search.get("provider", "duckduckgo")
         lines.append(f"  Web Search:  {'✅' if ws_enabled else '❌'} {ws_provider}")
@@ -522,19 +522,19 @@ def _format_config_summary(service: Any) -> str:
             temp = llm_cfg.get("defaults", {}).get("temperature", 0.7)
             max_tok = llm_cfg.get("defaults", {}).get("max_tokens", 512)
             llm_mode = llm_cfg.get("llm_mode", "standard")
-            mem_enh = llm_cfg.get("enable_memory_enhancement", True)
+            mem_enh = cfg.get_authority("llm", {}).get("enable_memory_enhancement", True)
             lines.append(
                 f"  LLM:         mode={llm_mode}  temp={temp}  max_tokens={max_tok}  memory_enhance={mem_enh}"
             )
         except Exception:
-            pass
+            logger.debug("repl: LLM settings config unavailable", exc_info=True)
 
         # Backends summary
         backends_cfg = {}
         try:
             backends_cfg = cfg.get_authority("llm", {}).get("backends", {})
         except Exception:
-            pass
+            logger.debug("repl: backends config unavailable", exc_info=True)
         if backends_cfg:
             enabled = [
                 k
@@ -567,7 +567,7 @@ def _format_config_summary(service: Any) -> str:
             if thresholds:
                 lines.append(f"  Thresholds:  {thresholds}")
         except Exception:
-            pass
+            logger.debug("repl: complexity thresholds unavailable", exc_info=True)
 
         # Learned configs
         try:
@@ -578,7 +578,7 @@ def _format_config_summary(service: Any) -> str:
                 learned_files = list(learned_dir.glob("*.yaml"))
                 lines.append(f"  Learned:     {len(learned_files)} file(s)")
         except Exception:
-            pass
+            logger.debug("repl: learned-config scan failed", exc_info=True)
 
         # Warnings
         warnings = []
@@ -699,7 +699,7 @@ def _format_llm_routing(service: Any) -> str:
                     else:
                         health = "ok"  # skip health check in running loop
                 except Exception:
-                    pass
+                    logger.debug("repl: backend health check failed", exc_info=True)
                 status = _badge("active" if is_active else health, health == "ok" or is_active)
                 lines.append(f"  {name:<24s} {backend_type:<8s} {status}{marker}")
 
@@ -781,7 +781,7 @@ def _handle_model_command(args: str, service: Any) -> str:
                 except RuntimeError:
                     health = "ok" if _aio.run(bobj.check_health()) else "fail"
             except Exception:
-                pass
+                logger.debug("repl: local backend health check failed", exc_info=True)
             status_str = "active" if is_active else health
             lines.append(f"  {idx:<4d} {name:<24s} {'local':<8s} {status_str:<12s}{marker}")
 
@@ -903,7 +903,7 @@ def _format_context_overview(service: Any, args: str) -> str:
         try:
             deployment = cfg.get_authority("llm", {}).get("deployment", {})
         except Exception:
-            pass
+            logger.debug("repl: /ctx config deployment unavailable", exc_info=True)
         mode = deployment.get("mode", "unknown")
         intents = list(cfg.get_intents().keys())
         lines.append(f"  Config:    mode={mode}  intents={len(intents)}")

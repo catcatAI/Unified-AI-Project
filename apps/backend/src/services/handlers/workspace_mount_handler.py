@@ -112,7 +112,7 @@ class WorkspaceMountHandler:
                 ov = workspace.overview(max_depth=1)
                 lines.append(f"工作區：{str(ov)[:120]}")
             except Exception:
-                pass
+                logger.debug("workspace overview unavailable", exc_info=True)
             return "（自檢）\n" + "\n".join(lines)
         except Exception as e:
             logger.warning(f"[WorkspaceMountHandler] inspect failed: {e}", exc_info=True)

@@ -64,7 +64,9 @@ class UnifiedBackend(BaseLLMBackend):
 
             search_roots.append(os.path.join(str(get_checkpoints_dir()), "unified"))
         except Exception:  # noqa: BLE001
-            pass
+            logger.debug(
+                "data_config.get_checkpoints_dir failed; unified search root skipped", exc_info=True
+            )
 
         for d in search_roots:
             # Prefer 128k npz (best quality, delta-fusion ready)

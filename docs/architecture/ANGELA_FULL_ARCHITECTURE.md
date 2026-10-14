@@ -3,6 +3,14 @@
 > **Last Updated**: 2026-06-15 **基於**: 12 個代理完整代碼審計 + 管線接線驗證
 > **目的**: 完整描述 Angela 如何視、聽、觸、說、畫、移、思考、感受、自主
 > **代碼統計**: ~641 Python 檔案, ~15.5MB 後端代碼
+>
+> ⚠️ **時點快照（2026-10-14 稽核確認）**：本文是
+> **2026-06-15 的架構快照**，其中約 40 個模組路徑（`ai/compression/`、`ai/language_models/`、
+> `core/ethics/ethics_manager.py`、`services/tactile_service.py`、`pet/pet_manager.py`
+> 等）在後續 Phase 9-12 裁撤中已刪除或搬遷。**現行架構權威**：
+> [`architecture/backbone/ARCHITECTURE_BACKBONE.md`](backbone/ARCHITECTURE_BACKBONE.md)
+> ＋倉庫根目錄 `AGENTS.md` 的 Key Project
+> Structure。本文僅供追溯 2026-06 時點的管線接線設計，勿按其路徑找檔。
 
 ---
 

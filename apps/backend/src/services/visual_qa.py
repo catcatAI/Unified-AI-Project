@@ -306,7 +306,7 @@ def judge_render(
             f"亮度{_aes['brightness']:.2f}。"
         )
     except Exception:
-        pass
+        logger.debug("aesthetics enrichment failed", exc_info=True)
     try:
         _field = visual_field(image_data)
         if _field["scales"]:
@@ -315,7 +315,7 @@ def judge_render(
                 f"細節度{_field['detail']:.2f}。"
             )
     except Exception:
-        pass
+        logger.debug("visual_field enrichment failed", exc_info=True)
     if spec:
         pm = palette_match(image_data, spec)
         lines.append(
