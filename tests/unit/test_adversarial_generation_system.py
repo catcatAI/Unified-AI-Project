@@ -1,11 +1,5 @@
 """Tests for apps.backend.src.ai.alignment.adversarial_generation_system"""
 
-import pytest
-
-pytest.importorskip(
-    "apps.backend.src.ai.alignment.adversarial_generation_system",
-    reason="AdversarialGenerationSystem not available",
-)
 from apps.backend.src.ai.alignment.adversarial_generation_system import AdversarialGenerationSystem
 
 

@@ -12,7 +12,6 @@ def test_importance_scorer_speed():
     calculate() 是同步 API（曾為 async；舊 benchmark 對其 await 會炸
     TypeError——改名 test_*.py 進入收集後即暴露）。
     """
-    pytest.importorskip("ai.memory.importance_scorer")
     from ai.memory.importance_scorer import ImportanceScorer
 
     def _run():
@@ -39,7 +38,6 @@ def test_importance_scorer_speed():
 @pytest.mark.benchmark
 def test_importance_scorer_accuracy():
     """Verify longer docs with keyword matches get higher scores."""
-    pytest.importorskip("ai.memory.importance_scorer")
     from ai.memory.importance_scorer import ImportanceScorer
 
     scorer = ImportanceScorer()
@@ -59,7 +57,6 @@ def test_importance_scorer_accuracy():
 @pytest.mark.benchmark
 def test_system_monitor_metrics():
     """Benchmark SystemMonitor.collect_metrics()."""
-    pytest.importorskip("monitoring.system_monitor")
     from monitoring.system_monitor import SystemMonitor
 
     def _run():
@@ -80,7 +77,6 @@ def test_services_initialize_speed():
     initialize_services() 是同步且回傳 None——side effect 是註冊
     logger/config 服務，以此為誠實斷言（計時由 PerformanceTimer 記錄）。
     """
-    pytest.importorskip("core_services")
     from core_services import get_services, initialize_services, shutdown_services
 
     shutdown_services()

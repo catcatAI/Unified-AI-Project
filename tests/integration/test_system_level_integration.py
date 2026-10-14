@@ -1,6 +1,4 @@
 import pytest
-
-pytest.importorskip("core.managers.system_manager")
 from core.managers.system_manager import SystemManager
 
 

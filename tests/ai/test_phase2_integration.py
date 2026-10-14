@@ -7,22 +7,15 @@ from unittest.mock import MagicMock
 
 import pytest
 
-# Lazy imports for optional modules
-try:
-    from ai.agents.agent_orchestrator import AgentOrchestrator
-    from ai.reasoning.planning_engine import PlanningEngine
-    from ai.reasoning.reasoning_engines import (
-        AbductiveReasoner,
-        AnalogicalReasoner,
-        ChainOfThoughtReasoner,
-    )
-
-    IMPORTS_AVAILABLE = True
-except ImportError:
-    IMPORTS_AVAILABLE = False
-
-
-pytestmark = pytest.mark.skipif(not IMPORTS_AVAILABLE, reason="Phase 2 modules not available")
+# repo 模組必須真 import——原 try/except ImportError → skipif 會把
+# import 斷裂吞成整檔 skip（非正當跳過）
+from ai.agents.agent_orchestrator import AgentOrchestrator
+from ai.reasoning.planning_engine import PlanningEngine
+from ai.reasoning.reasoning_engines import (
+    AbductiveReasoner,
+    AnalogicalReasoner,
+    ChainOfThoughtReasoner,
+)
 
 
 class TestAgentOrchestratorIntegration:

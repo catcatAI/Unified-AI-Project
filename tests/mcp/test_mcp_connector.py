@@ -1,7 +1,6 @@
 import pytest
 
 pytest.importorskip("paho.mqtt")
-pytest.importorskip("mcp.connector")
 from mcp.connector import MCPConnector
 
 

@@ -68,7 +68,6 @@ async def test_model_core_generate_prompt_prefix(model):
     assert "Angela Internal State" in prefix
 
 
-@pytest.mark.skip(reason="BiologicalIntegrator.initialize() requires runtime deps")
 @pytest.mark.asyncio
 async def test_model_core_full_lifecycle(model):
     """Full init→run→shutdown cycle."""
@@ -77,5 +76,7 @@ async def test_model_core_full_lifecycle(model):
     assert snapshot["system_integrity"] in ("Optimal", "Degraded")
     await asyncio.sleep(0.5)
     prefix = model.generate_prompt_prefix()
-    assert "Energy" in prefix
+    # 曾被無條件 skip 掩蓋的字串漂移：前綴現渲染為 "Simulated energy value"
+    # （小寫 energy），原斷言 "Energy" 恆失敗
+    assert "energy" in prefix.lower()
     await model.shutdown()

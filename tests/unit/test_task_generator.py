@@ -1,8 +1,6 @@
 """Tests for ai.memory.task_generator"""
 
 import pytest
-
-pytest.importorskip("ai.memory.task_generator", reason="TaskGenerator not available")
 from ai.memory.task_generator import TaskGenerator
 
 

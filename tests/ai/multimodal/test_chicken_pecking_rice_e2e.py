@@ -28,10 +28,10 @@ from ai.multimodal.semantic_visual import SemanticVisualEncoder
 from ai.multimodal.vision_response_generator import VisionResponseGenerator
 from PIL import Image, ImageDraw
 
+# REAL-CLIP E2E: ~90s + HF model download; needs a CLIP-capable env.
+# slow_stress → deselected unless --run-slow; previously a hard skip.
 pytestmark = [
-    pytest.mark.skip(
-        reason="REAL-CLIP E2E: ~90s + HF model download, stalls full suite; run explicitly in a CLIP-capable env"
-    ),
+    pytest.mark.slow_stress,
     pytest.mark.slow,
 ]
 

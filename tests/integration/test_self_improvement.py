@@ -1,6 +1,4 @@
 import pytest
-
-pytest.importorskip("core.life.evolution_engine")
 from core.life.evolution_engine import EvolutionEngine
 
 

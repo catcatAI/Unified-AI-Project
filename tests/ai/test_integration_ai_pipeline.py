@@ -722,10 +722,12 @@ class TestNeuroVocabularyEdgeCases:
 
     def test_sync_restore_state_store_roundtrip(self, vocab):
         """sync_to_state_store / restore_from_state_store roundtrip."""
-        mod = pytest.importorskip("core.system.state_store.global_store")
+        # repo 模組必須真 import（importorskip 會把真 import 斷裂吞成 skip）；
+        # hasattr 用 assert 而非 skip（方法消失 = 紅字）
+        from core.system.state_store import global_store as mod
+
         state_store = mod.state_store
-        if not hasattr(state_store, "get_state"):
-            pytest.skip("state_store missing get_state method")
+        assert hasattr(state_store, "get_state"), "state_store.get_state must exist"
         vocab.learn_mapping("rt.field", 0.3, "roundtrip value")
         vocab.sync_to_state_store()
         vocab2 = NeuroVocabulary()

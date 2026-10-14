@@ -42,15 +42,14 @@ def ed3n_adapter():
 
 @pytest.fixture
 def garden_adapter():
-    try:
-        from ai.garden.dictionary import VectorDictionary
+    # VectorDictionary 為 torch/numpy 雙後端，純 numpy 環境也可 import——
+    # 原 except ImportError → skip 會吞 repo 模組斷裂（非正當跳過）
+    from ai.garden.dictionary import VectorDictionary
 
-        d = VectorDictionary(compatibility_mode=True)
-        d.add_entry("g1", surface_forms={"zh": "你好"})
-        d.add_entry("g2", surface_forms={"zh": "學習"})
-        return GardenDictionaryAdapter(d)
-    except ImportError as exc:  # pragma: no cover - 環境缺依賴
-        pytest.skip(f"VectorDictionary not importable: {exc}")
+    d = VectorDictionary(compatibility_mode=True)
+    d.add_entry("g1", surface_forms={"zh": "你好"})
+    d.add_entry("g2", surface_forms={"zh": "學習"})
+    return GardenDictionaryAdapter(d)
 
 
 class TestProtocol:

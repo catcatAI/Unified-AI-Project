@@ -2,8 +2,6 @@
 
 import pytest
 
-pytest.importorskip("core.perception.perceptual_memory")
-
 
 class TestPerceptualMemory:
     """Basic smoke tests for PerceptualMemory"""

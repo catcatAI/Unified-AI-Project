@@ -1,8 +1,6 @@
 """Smoke tests for core.hardware.webgl_bridge"""
 
 import pytest
-
-pytest.importorskip("core.hardware.webgl_bridge")
 from core.hardware.webgl_bridge import WebGLGPUInfo
 
 

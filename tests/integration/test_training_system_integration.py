@@ -1,6 +1,4 @@
 import pytest
-
-pytest.importorskip("ai.ed3n.dictionary_layer")
 from ai.ed3n.dictionary_layer import DictionaryLayer
 
 

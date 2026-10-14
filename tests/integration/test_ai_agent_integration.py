@@ -1,6 +1,4 @@
 import pytest
-
-pytest.importorskip("ai.agents.agent_manager")
 from ai.agents.agent_manager import AgentManager
 
 

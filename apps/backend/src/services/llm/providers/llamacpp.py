@@ -174,6 +174,8 @@ class LlamaCppBackend(BaseLLMBackend):
                     try:
                         line = raw.decode("utf-8", errors="replace").strip()
                     except Exception:
+                        # errors="replace" 后 decode 基本不会抛，但仍禁止静默丢行
+                        logger.debug("llamacpp SSE chunk decode failed", exc_info=True)
                         continue
                     if not line.startswith("data:"):
                         continue
@@ -185,6 +187,10 @@ class LlamaCppBackend(BaseLLMBackend):
                         delta = (obj.get("choices") or [{}])[0].get("delta", {})
                         piece = delta.get("content") or ""
                     except Exception:
+                        # 后端发了畸形 SSE JSON = 响应内容会缺一块；必须留痕
+                        logger.warning(
+                            "llamacpp SSE malformed JSON dropped (data[:120]=%r)", data[:120]
+                        )
                         continue
                     if piece:
                         if len(chunks) < 4096:

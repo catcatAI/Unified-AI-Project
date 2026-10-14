@@ -18,10 +18,11 @@ import pytest
 SRC_ROOT = Path(__file__).resolve().parent.parent.parent.parent / "apps" / "backend" / "src"
 sys.path.insert(0, str(SRC_ROOT))
 
+# SLOW REVIEW ENGINE: scans entire project (~8 min standalone).
+# slow_stress → deselected unless --run-slow; previously a hard
+# pytest.mark.skip, i.e. never runnable without editing source.
 pytestmark = [
-    pytest.mark.skip(
-        reason="SLOW REVIEW ENGINE: scans entire project (~8 min standalone), stalls full suite; run explicitly when auditing"
-    ),
+    pytest.mark.slow_stress,
     pytest.mark.slow,
 ]
 

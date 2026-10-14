@@ -175,6 +175,9 @@ class PollingBridge:
 
         self._runner = web.AppRunner(app)
         await self._runner.setup()
+        # nosec B104 - bind-all is the intentional default for the LAN game
+        # bridge (same policy as core/config/system_config.py); narrow to a
+        # configured host before exposing beyond a trusted LAN
         self._site = web.TCPSite(self._runner, "0.0.0.0", self.http_port)  # nosec B104
         await self._site.start()
 

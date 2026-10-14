@@ -1656,7 +1656,9 @@ async def _handle_chat_request(
         ).get("response_text")
         if session_id in sessions and user_message and response_text:
             try:
-                session_data: Dict[str, Any] = sessions.get(session_id)  # type: ignore[assignment]
+                # .get() 可回 None — Optional 型別如实宣告（原 Dict+ignore 与
+                # 紧随的 is None 判斷自相矛盾）
+                session_data: Optional[Dict[str, Any]] = sessions.get(session_id)
                 if session_data is None:
                     raise HTTPException(status_code=404, detail="Session not found")
                 messages_raw = session_data.get("messages")

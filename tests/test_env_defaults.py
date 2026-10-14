@@ -390,7 +390,7 @@ def test_exempted_documented_vars_all_carry_a_reason():
 
 def test_python_is_not_required_in_the_template():
     """`python` does not exist in this environment; the template must not imply it."""
-    if os.environ.get("CI") == "true":
-        return
+    # 曾有 `if CI: return` — 在最該把關的環境（CI）上變成零斷言空洞通過，
+    # 屬非正當跳過；文件內容檢查與執行環境無關，無條件斷言
     text = ENV_EXAMPLE.read_text(encoding="utf-8")
     assert "PYTHON_BIN=python\n" not in text

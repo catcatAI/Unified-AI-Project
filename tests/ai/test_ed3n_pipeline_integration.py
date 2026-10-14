@@ -119,11 +119,14 @@ def test_prompt_builder_injection():
 
 def test_retrieval_from_txt_file():
     """Test retrieving content from a text file."""
-    import os
+    # fixture 路徑必須相對於本檔而非 CWD：原相對路徑在 repo root 跑 pytest
+    # 時恆找不到（檔在 tests/ 下），測試 100% 永久 skip（非正當跳過）
+    from pathlib import Path
 
-    if not os.path.exists("test_retrieval.txt"):
-        pytest.skip("test_retrieval.txt not found")
-    with open("test_retrieval.txt", "r", encoding="utf-8") as f:
+    fixture_path = Path(__file__).resolve().parent.parent / "test_retrieval.txt"
+    if not fixture_path.exists():
+        pytest.skip(f"tests/test_retrieval.txt missing at {fixture_path}")
+    with open(fixture_path, "r", encoding="utf-8") as f:
         content = f.read()
 
     key_terms = ["Angela", "數據之海", "二進位", "符號", "沙灘"]

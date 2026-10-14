@@ -9,10 +9,11 @@ import pytest
 PROJECT_ROOT = str(Path(__file__).parent.parent.parent)
 SRC_PATH = str(Path(PROJECT_ROOT) / "apps" / "backend" / "src")
 
+# SLOW: subprocess-boots the entire FastAPI server (~33s). slow_stress →
+# deselected unless --run-slow; previously a hard skip (server import
+# breakage was silently absorbed rather than being runnable on demand).
 pytestmark = [
-    pytest.mark.skip(
-        reason="SLOW: subprocess-boots the entire FastAPI server (~33s, heavier under combined runs) and stalls the full suite"
-    ),
+    pytest.mark.slow_stress,
     pytest.mark.slow,
 ]
 

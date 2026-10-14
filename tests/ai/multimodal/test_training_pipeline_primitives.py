@@ -130,18 +130,16 @@ class TestFullPipelinePhase3d:
         assert result["encoder_result"]["best_loss"] < 0.15
         assert "history" in result["encoder_result"]
 
-    @pytest.mark.skip(
-        reason="SLOW: full primitives+sequence training (20+15 epochs) ~45s, stalls the full suite"
-    )
+    # SLOW: full primitives+sequence training (20+15 epochs) ~45s
+    @pytest.mark.slow_stress
     @pytest.mark.slow
     def test_train_primitives_weights_change(self, pipeline):
         snap_before = pipeline._sequence_generator._W_ho.copy()
         pipeline.train_primitives(epochs=20, lr=0.01, seq_epochs=15, seq_lr=0.001)
         assert not np.allclose(pipeline._sequence_generator._W_ho, snap_before)
 
-    @pytest.mark.skip(
-        reason="SLOW: full primitives training (30+20 epochs) + image generation exceeds 60s and stalls the full suite"
-    )
+    # SLOW: full primitives training (30+20 epochs) + image generation >60s
+    @pytest.mark.slow_stress
     @pytest.mark.slow
     def test_image_generator_produces_structured_output_after_training(self, pipeline):
         from ai.multimodal.generator.image_generator import ImageGenerator
@@ -205,9 +203,8 @@ class TestPrimitiveEncoderPersistence:
         assert loaded
         assert fresh._primitive_encoder is None
 
-    @pytest.mark.skip(
-        reason="SLOW: full primitives+sequence training (20+15 epochs) + save/load ~45s, stalls the full suite"
-    )
+    # SLOW: full primitives+sequence training (20+15 epochs) + save/load ~45s
+    @pytest.mark.slow_stress
     @pytest.mark.slow
     def test_image_generator_works_after_weight_roundtrip(self, pipeline, tmp_path):
         from ai.multimodal.generator.image_generator import ImageGenerator

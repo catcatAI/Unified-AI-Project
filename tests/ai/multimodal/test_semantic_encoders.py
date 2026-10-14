@@ -409,10 +409,10 @@ class TestSemanticEncoderRealModels:
     model-capable environment is available.
     """
 
+    # REAL-MODEL LOAD: downloads/loads CLIP+Whisper (~20-35s, ~300MB+ HF
+    # cache). slow_stress → deselected unless --run-slow; was a hard skip.
     pytestmark = [
-        pytest.mark.skip(
-            reason="REAL-MODEL LOAD: downloads/loads CLIP+Whisper (~20-35s, stalls full suite); run explicitly"
-        ),
+        pytest.mark.slow_stress,
         pytest.mark.slow,
     ]
 

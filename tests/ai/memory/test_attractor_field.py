@@ -14,15 +14,14 @@ import math
 
 import pytest
 
-try:
-    from ai.memory.attractor_field import (
-        BehaviorTone,
-        GradientField,
-        GradientResult,
-        MemoryAttractor,
-    )
-except ImportError as exc:
-    pytest.skip(f"ai.memory.attractor_field not importable: {exc}", allow_module_level=True)
+# attractor_field 純 stdlib——必須真 import（原 except ImportError →
+# allow_module_level skip 會吞掉 repo 模組 import 斷裂）
+from ai.memory.attractor_field import (
+    BehaviorTone,
+    GradientField,
+    GradientResult,
+    MemoryAttractor,
+)
 
 
 class TestMemoryAttractor:

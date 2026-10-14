@@ -1,6 +1,4 @@
 import pytest
-
-pytest.importorskip("ai.agents.specialized.knowledge_graph_agent")
 from ai.agents.specialized.knowledge_graph_agent import KnowledgeGraphAgent
 
 

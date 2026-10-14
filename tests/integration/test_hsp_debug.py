@@ -1,6 +1,4 @@
 import pytest
-
-pytest.importorskip("core.hsp.connector")
 from core.hsp.connector import HSPConnector
 
 

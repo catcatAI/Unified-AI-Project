@@ -7,20 +7,13 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-# Lazy imports for optional modules
-try:
-    from ai.context.dialogue_context import DialogueContextManager
-    from ai.context.model_context import ModelContextManager
-    from ai.context.tool_context import ToolContextManager
-    from ai.ed3n.ed3n_engine import ED3NEngine
-    from ai.garden.garden_engine import GARDENEngine
-
-    IMPORTS_AVAILABLE = True
-except ImportError:
-    IMPORTS_AVAILABLE = False
-
-
-pytestmark = pytest.mark.skipif(not IMPORTS_AVAILABLE, reason="Phase 1 modules not available")
+# repo 模組必須真 import——原 try/except ImportError → skipif 會把
+# import 斷裂吞成整檔 skip（非正當跳過）
+from ai.context.dialogue_context import DialogueContextManager
+from ai.context.model_context import ModelContextManager
+from ai.context.tool_context import ToolContextManager
+from ai.ed3n.ed3n_engine import ED3NEngine
+from ai.garden.garden_engine import GARDENEngine
 
 
 class TestDialogueContext:

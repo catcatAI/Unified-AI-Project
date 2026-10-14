@@ -216,7 +216,6 @@ class TestTextureBenchmark:
     @classmethod
     def cifar_images(cls, request):
         pytest.importorskip("scipy.ndimage")
-        pytest.importorskip("ai.multimodal.data_loader")
         from ai.multimodal.data_loader import CIFAR10Loader
         from scipy.ndimage import zoom
 

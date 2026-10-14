@@ -149,7 +149,6 @@ def test_policy_falls_through_to_defer():
 
 
 def test_policy_decide_from_profile():
-    pytest.importorskip("core.allocation.resonance")
     from core.allocation.policy import AllocationPolicy
     from core.allocation.resonance import ResonanceProfile
 

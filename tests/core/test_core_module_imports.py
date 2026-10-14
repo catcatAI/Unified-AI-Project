@@ -95,7 +95,6 @@ def test_gmqtt_library_available() -> None:
 
 def test_external_connector_creation() -> None:
     """Verify ExternalConnector can be imported and created with required params."""
-    pytest.importorskip("core.hsp.external.external_connector")
     from core.hsp.external.external_connector import ExternalConnector
 
     connector = ExternalConnector(

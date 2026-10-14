@@ -8,7 +8,6 @@ from tests.conftest import benchmark
 @pytest.mark.benchmark
 def test_emotion_system_speed():
     """Benchmark EmotionSystem operations."""
-    pytest.importorskip("ai.alignment.emotion_system")
     from ai.alignment.emotion_system import EmotionSystem
 
     def _run():
@@ -30,7 +29,6 @@ def test_emotion_system_speed():
 @pytest.mark.benchmark
 def test_alignment_manager_speed():
     """Benchmark AlignmentManager checks."""
-    pytest.importorskip("ai.alignment.alignment_manager")
     from ai.alignment.alignment_manager import AlignmentManager
 
     manager = AlignmentManager()
@@ -45,7 +43,6 @@ def test_alignment_manager_speed():
 @pytest.mark.benchmark
 def test_knowledge_graph_speed():
     """Benchmark KnowledgeGraphAgent operations."""
-    pytest.importorskip("ai.agents.specialized.knowledge_graph_agent")
     from ai.agents.specialized.knowledge_graph_agent import KnowledgeGraphAgent
 
     def _run():

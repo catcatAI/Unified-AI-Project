@@ -161,7 +161,6 @@ class TestGravityCalibrator:
     """Extra tests for GravityCalibrator (was in dedicated file)."""
 
     def test_constants(self):
-        pytest.importorskip("core.card.quality.gravity_calibration")
         from core.card.quality.gravity_calibration import G_CANDIDATES, IDEAL_LOWER, IDEAL_UPPER
 
         assert IDEAL_LOWER == 0.6
@@ -173,7 +172,6 @@ class TestLevel5ASISystem:
     """Extra tests for Level5ASISystem (was dedicated file)."""
 
     def test_instantiation_system_id(self):
-        pytest.importorskip("ai.level5_asi_system")
         from ai.level5_asi_system import Level5ASISystem
 
         instance = Level5ASISystem()
@@ -187,7 +185,6 @@ class TestParameterExtractor:
         """Verify core.tools.parameter_extractor package is importable.
         Merged from tests/tools/test_tools_imports.py (§X #120).
         """
-        pytest.importorskip("core.tools.parameter_extractor")
         mod = importlib.import_module("core.tools.parameter_extractor")
         assert mod is not None
 
@@ -205,7 +202,8 @@ _MODULE_ATTR_IMPORTS = [
 
 
 class TestOptionalModuleImports:
-    """Parametrized import tests for optional module attributes."""
+    """Parametrized import tests for core module attributes (hsp/bridge/
+    angela_error 等 repo 模組——缺席=紅字,不可 skip)。"""
 
     @pytest.mark.parametrize(
         "module_path,attr_name",
@@ -214,7 +212,6 @@ class TestOptionalModuleImports:
     )
     def test_optional_module_import(self, module_path: str, attr_name: str) -> None:
         """Verify optional module attribute is importable."""
-        pytest.importorskip(module_path)
         mod = importlib.import_module(module_path)
         obj = getattr(mod, attr_name)
         assert obj is not None
@@ -273,7 +270,6 @@ class TestEventLoopSystem:
 
     @staticmethod
     def _import():
-        pytest.importorskip("core.event_loop_system")
         from core.event_loop_system import EventLoopSystem
 
         return EventLoopSystem
@@ -289,7 +285,6 @@ class TestEventLoopSystem:
         assert hasattr(instance, "register_handler")
 
     def test_event_dataclass(self):
-        pytest.importorskip("core.event_loop_system")
         from datetime import datetime
 
         from core.event_loop_system import Event, EventPriority, EventStatus
@@ -310,7 +305,6 @@ class TestHookRegistry:
 
     @staticmethod
     def _import():
-        pytest.importorskip("core.plugin.hook_registry")
         from core.plugin.hook_registry import HookRegistry
 
         return HookRegistry
@@ -335,7 +329,6 @@ class TestHSMFormulaSystem:
 
     @staticmethod
     def _import():
-        pytest.importorskip("core.hsm_formula_system")
         from core.hsm_formula_system import HSMFormulaSystem
 
         return HSMFormulaSystem
@@ -355,7 +348,6 @@ class TestMaturitySystem:
     """Extra tests for maturity_system (was dedicated file)."""
 
     def test_maturity_level(self):
-        pytest.importorskip("core.maturity.maturity_system")
         from core.maturity.maturity_system import MaturityLevel
 
         assert len(MaturityLevel) == 12
@@ -363,14 +355,12 @@ class TestMaturitySystem:
         assert MaturityLevel.L11.value == "L11"
 
     def test_maturity_manager(self):
-        pytest.importorskip("core.maturity.maturity_system")
         from core.maturity.maturity_system import MaturityLevel, MaturityManager
 
         instance = MaturityManager()
         assert instance.current_level == MaturityLevel.L0
 
     def test_experience_tracker(self):
-        pytest.importorskip("core.maturity.maturity_system")
         from core.maturity.maturity_system import ExperienceTracker
 
         instance = ExperienceTracker()
