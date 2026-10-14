@@ -1102,14 +1102,18 @@ tests/
 
 ## Quick Commands Reference
 
-| Task                 | Command                              |
-| -------------------- | ------------------------------------ |
-| Dev server (backend) | `pnpm dev:backend`                   |
-| Dev server (desktop) | `pnpm dev:desktop`                   |
-| All dev servers      | `pnpm dev:all`                       |
-| Single test          | `pytest tests/path.py::test_func -v` |
-| Format Python        | `black apps/backend/src tests/`      |
-| Format JS            | `prettier --write "**/*.js"`         |
-| Type check           | `mypy apps/backend/src`              |
-| Lint all             | `pnpm lint`                          |
-| Run all tests        | `pnpm test`                          |
+| Task                               | Command                               |
+| ---------------------------------- | ------------------------------------- |
+| Dev server (backend)               | `pnpm dev:backend`                    |
+| Dev server (desktop)               | `pnpm dev:desktop`                    |
+| All dev servers                    | `pnpm dev:all`                        |
+| Single test                        | `pytest tests/path.py::test_func -v`  |
+| Format Python                      | `black apps/backend/src tests/`       |
+| Format JS                          | `prettier --write "**/*.js"`          |
+| Type check                         | `mypy apps/backend/src`               |
+| Lint all                           | `pnpm lint`                           |
+| Run all tests                      | `pnpm test`                           |
+| Single check (facts + definitions) | `python3 scripts/check_fact_gates.py` |
+
+> 🔎 **單一檢查入口**：所有「非編譯器」檢查集中在
+> `scripts/check_fact_gates.py`（九域：edge/audit/chat/cluster/config/version/docs/modules/definitions）——一個工具跑一次＝全部檢查都被檢視，避免多工具「不打開就被掠過」。定義稽核 MD 報告：`python3 scripts/check_fact_gates.py --write-definitions-audit`。

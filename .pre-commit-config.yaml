@@ -100,6 +100,14 @@ repos:
         args: ["lint:js"]
         language: system
         pass_filenames: false
+      - id: fact-gates
+        # 單一檢查入口：九域事實門 + 定義稽核一次跑完（AGENTS.md
+        # 「單一檢查入口」）。掛成 hook 是為了「不打開就被掠過」——
+        # 每次 pnpm check 必跑；掃描約 6s，失敗即 BLOCKED（exit 1）。
+        name: fact gates (facts + definitions)
+        entry: python3 scripts/check_fact_gates.py
+        language: system
+        pass_filenames: false
 
 ci:
   autofix_commit_msg: |
