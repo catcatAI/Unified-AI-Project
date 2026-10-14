@@ -549,6 +549,19 @@ class DigitalLifeIntegrator:
     def process_interaction_feedback(self, engagement_ratio: float, success: bool) -> None:
         """Receive interaction outcome feedback to adjust DLI internal state.
 
+        Parameter definitions (not measurements):
+        - engagement_ratio: a PROXY signal — the chat pipeline defines it as
+          response-length / message-length (see chat_routes). The parameter
+          name is historical; it is NOT a measurement of user engagement.
+        - success: the chat pipeline defines it as "response was non-empty"
+          — a minimal proxy, not a correctness judgment.
+
+        Policy definition (deliberate, reversible): when the rolling average
+        of the proxy ratio drops below 0.4, visual_3d modality is disabled;
+        when it rises above 1.2, the modality is re-enabled. This is a
+        resource-conservatism heuristic keyed to the length ratio — it is
+        not a conclusion about the user's actual state or interest.
+
         C³ 6.0: Closes the DLI→routing→interaction→DLI feedback loop.
         """
         self._engagement_window.append(engagement_ratio)
@@ -1018,6 +1031,11 @@ class DigitalLifeIntegrator:
                 if ix * ix + iy * iy + iz * iz > 0.0001:  # squared magnitude > 0.01²
                     # C³ 4.0: Map each 3D intent component to a distinct parameter per dimension
                     # (previously collapsed to single scalar magnitude → lost directional info)
+                    # 定義（設計者選定的映射，非發現）：intent 向量分量 ix/iy/iz
+                    # 依維度映射到不同的 state-matrix slot（如 gamma: ix→happiness）。
+                    # 這些 slot 名稱是模擬狀態的座標軸命名；本映射是設計選擇，
+                    # 不宣稱 intent 分量「就是」快樂或好奇——只是把方向性資訊
+                    # 寫進對應的數值槽位，供下游 heuristic 讀取。
                     dim_state = state_snapshot.get(dim_name, {})
                     if dim_name == "alpha":
                         self.state_matrix.update_alpha(

@@ -1098,7 +1098,7 @@ class AngelaAutonomousAgent:
                     pol_out = self.policy.forward(latent, proprio32)
                     self._last_policy_confidence = float(pol_out.confidence)
                 except Exception:
-                    pass
+                    logger.debug("policy.forward failed; confidence unchanged", exc_info=True)
             # No per-skill abstention hacks here: _queue_skill translates
             # every skill through the behavior library, which abstains
             # untranslatable intents (undirected place/build/eat,
@@ -1170,7 +1170,7 @@ class AngelaAutonomousAgent:
             if len(getattr(self.bridge, "pending_actions", [])) >= 3:
                 return
         except Exception:
-            pass
+            logger.debug("backpressure probe failed; assuming queue empty", exc_info=True)
         from ai.multimodal.game_behaviors import expand_behavior, skill_to_behavior
 
         skill_id = skill_ctx.active_skill.value
@@ -1204,7 +1204,7 @@ class AngelaAutonomousAgent:
         try:
             self._recent_actions.append(str(action_type))
         except Exception:
-            pass
+            logger.debug("recent-actions bookkeeping failed", exc_info=True)
         if action_type in ("step_ahead", "goto"):
             try:
                 prop = self.current_state.proprioception if self.current_state else None
@@ -1675,7 +1675,7 @@ class AngelaAutonomousAgent:
                 int(v) for v in pickups.values()
             )
         except Exception:
-            pass
+            logger.debug("total-pickups counter update failed", exc_info=True)
         logger.info(
             f"Behavior settled: {ab['id']} completed={completed} "
             f"reason={reason} pickups={pickups}"
@@ -1854,11 +1854,16 @@ class AngelaAutonomousAgent:
             self._last_completed, self._last_failed = completed, failed
             if d_done or d_fail:
                 total = max(1, d_done + d_fail)
-                engagement = (1.0 + d_done) / (1.0 + total)
+                # 定義（非事實）：task_success_ratio := (1+完成數)/(1+總任務數)。
+                # 此值經歷史參數名 engagement_ratio 傳入情緒/生命週期迴圈，
+                # 與 chat 管線的「回應長度比」proxy 共用同一參數名但語意不同
+                # （任務完成率 vs 字元長度比），兩者皆非使用者投入度的量測。
+                task_success_ratio = (1.0 + d_done) / (1.0 + total)
+                # 定義（非事實）：success := 完成數 >= 失敗數（本批次）。
                 success = d_done >= d_fail
                 if self.emotion is not None:
                     self.emotion.process_interaction_feedback(
-                        engagement_ratio=engagement,
+                        engagement_ratio=task_success_ratio,
                         had_error=not success,
                         response_success=success,
                     )
@@ -1866,7 +1871,7 @@ class AngelaAutonomousAgent:
                     self.lifecycle, "feed_interaction_outcome"
                 ):
                     self.lifecycle.feed_interaction_outcome(
-                        engagement_ratio=engagement, success=success
+                        engagement_ratio=task_success_ratio, success=success
                     )
         except Exception as e:
             logger.debug(f"Affect feedback failed: {e}")

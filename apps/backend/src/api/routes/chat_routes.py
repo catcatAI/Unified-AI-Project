@@ -358,10 +358,12 @@ async def _inject_emotion_behavioral_context(
 ) -> None:
     """Inject emotional behavioral adjustments into context.
 
-    Maps detected user emotion to routing_mode and response_style
-    so that the LLM prompt receives behavioral guidance beyond
-    just the emotion text. Also updates Angela's internal EmotionSystem
-    and cross-component Emotion→Biological stress/relaxation (C³ 4.0).
+    Maps keyword-detected user-text emotion (EmotionAnalyzer output — an
+    inference from word choice, not a measurement of the user's feelings)
+    to routing_mode and response_style so that the LLM prompt receives
+    behavioral guidance beyond just the emotion text. Also updates Angela's
+    internal EmotionSystem (PAD simulation state) and cross-component
+    Emotion→Biological stress/relaxation (C³ 4.0).
     """
     if not emotion_result:
         return
@@ -1318,50 +1320,58 @@ def _fire_causal_learning(response_text: str, user_message: str, session_id: str
         buf = _get_causal_buffer(session_id)
         msg_len = float(len(user_message))
         resp_len = float(len(response_text))
-        engagement = resp_len / max(msg_len, 1.0)
+        # 定義（非事實）：resp_msg_ratio := 回應字元數 / 提問字元數。
+        # 這是下游 feedback 迴路使用的「投入度代理訊號」——它衡量回應
+        # 相對提問的長度比，不是使用者投入度的量測本身。下游 API 參數名
+        # 沿用歷史名稱 engagement_ratio；語意以此處定義為準。
+        resp_msg_ratio = resp_len / max(msg_len, 1.0)
+        # 定義（非事實）：empty_response := 回應為空。呼叫端以它作為
+        # had_error / success 的最低限度代理——「非空」不等於「正確」
+        # 或「有用」，只表示 LLM 產出了非零字元。
+        empty_response = not response_text
 
         buf["msg_lengths"].append(msg_len)
         buf["resp_lengths"].append(resp_len)
-        buf["engagement_ratios"].append(engagement)
+        buf["engagement_ratios"].append(resp_msg_ratio)
         _trim_causal_series(buf)
 
-        # Emotion feedback loop: interaction outcome → emotional state adjustment
+        # Emotion feedback loop: proxy ratio → internal emotion-label adjustment
         try:
             es = _get_emotion_system()
             if es:
-                had_error = len(response_text) == 0
                 es.process_interaction_feedback(
-                    engagement_ratio=engagement,
-                    had_error=had_error,
+                    engagement_ratio=resp_msg_ratio,
+                    had_error=empty_response,
                     response_success=None,
                 )
         except Exception as e:
             logger.warning(f"Emotion feedback loop failed: {e}", exc_info=True)
 
-        # DLI feedback loop: interaction outcome → modality gateway adjustment
+        # DLI feedback loop: proxy ratio → modality gateway adjustment
         try:
             dli = get_digital_life()
             if dli:
                 dli.process_interaction_feedback(
-                    engagement_ratio=engagement,
-                    success=len(response_text) > 0,
+                    engagement_ratio=resp_msg_ratio,
+                    success=not empty_response,
                 )
         except Exception as e:
             logger.warning(f"DLI feedback loop failed: {e}", exc_info=True)
 
-        # Lifecycle feedback loop: interaction outcome → phase-aware routing
+        # Lifecycle feedback loop: proxy ratio → phase-aware routing
         try:
             alc = _get_lifecycle()
             if alc:
                 alc.feed_interaction_outcome(
-                    engagement_ratio=engagement,
-                    success=len(response_text) > 0,
+                    engagement_ratio=resp_msg_ratio,
+                    success=not empty_response,
                 )
         except Exception as e:
             logger.warning(f"Lifecycle feedback loop failed: {e}", exc_info=True)
 
-        # Dynamic strength: higher when response is substantive relative to query
-        dynamic_strength = min(0.9, max(0.1, engagement / 5.0))
+        # Dynamic strength: scales with the length-ratio proxy (see definition
+        # above), not with any measured quality of the response.
+        dynamic_strength = min(0.9, max(0.1, resp_msg_ratio / 5.0))
 
         # Only pass the accumulated series (not a single value) once we have
         # enough temporal depth for Granger causality.
@@ -1400,7 +1410,8 @@ def _fire_causal_learning(response_text: str, user_message: str, session_id: str
                 "interaction": {
                     "msg_length": msg_len,
                     "resp_length": resp_len,
-                    "engagement_ratio": engagement,
+                    # 歷史鍵名；值為 resp_msg_ratio（見上方定義）
+                    "engagement_ratio": resp_msg_ratio,
                 },
             }
         )
@@ -2503,7 +2514,7 @@ async def chat_with_image(
                             f"畫面以{_top['color']}色為主（佔{_top['fraction']:.0%}）。"
                         )
                 except Exception:
-                    pass
+                    logger.debug("color_blobs enrichment failed", exc_info=True)
                 image_context = {
                     "visual_measurements": ("\n".join(_seen_bits) if _seen_bits else ""),
                     "filename": file.filename,

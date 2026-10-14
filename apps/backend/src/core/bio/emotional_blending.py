@@ -2,9 +2,11 @@
 Angela AI v6.0 - Emotional Blending System
 情绪混合系统
 
-Implements the PAD (Pleasure-Arousal-Dominance) emotional model with
-emotional blending algorithms, physiological/cognitive/hormonal influences,
-and multi-modal emotional expression.
+Definitional note: this module implements the PAD (Pleasure-Arousal-Dominance)
+model as a SIMULATION — BasicEmotion members carry design-chosen PAD centroids
+(e.g. JOY = (0.8, 0.6, 0.3)); "physiological/cognitive/hormonal influences"
+are numeric inputs to the PAD state, not readings from any organism. All
+outputs (dominant_emotion labels, expression values) are simulation state.
 
 Features:
 - PAD emotional model implementation

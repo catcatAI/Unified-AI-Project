@@ -217,39 +217,6 @@ class DynamicThresholdManager:
                 logger.error("DynamicParams update error", exc_info=True)
                 await asyncio.sleep(loop_sleep("sleep_very_long", 10.0))
 
-    def _build_context(self) -> Dict[str, float]:
-        """Build a global context from current parameter values."""
-
-        def get_val(name: str, default: float = 0.5) -> float:
-            param = self.parameters.get(name)
-            return param.current_value if param else default
-
-        return {
-            "energy": get_val("energy_decay_rate", 0.05),
-            "mood": get_val("emotion_happiness_threshold", 0.6),
-            "stress": 1.0 - get_val("emotion_anger_threshold", 0.7),
-            "confidence": get_val("decision_confidence_threshold", 0.7),
-            "fatigue": 1.0 - get_val("rest_recovery_rate", 0.1),
-            "recent_success": get_val("action_success_rate", 0.85),
-            "recent_failure": 1.0 - get_val("action_success_rate", 0.85),
-        }
-
-    def _build_context_for_parameter(
-        self, param_name: str, global_context: Dict[str, float]
-    ) -> Dict[str, float]:
-        """Build a per-parameter context capturing cross-parameter influence."""
-        context = global_context.copy()
-        if param_name == "emotion_happiness_threshold":
-            context["recent_success"] = context.get("recent_success", 0.5) * 1.5
-            context["fatigue"] = context.get("fatigue", 0.5) * 1.3
-        elif param_name == "action_success_rate":
-            context["energy"] = context.get("energy", 0.5) * 1.2
-            context["confidence"] = context.get("confidence", 0.5) * 1.4
-        elif param_name == "decision_confidence_threshold":
-            context["recent_failure"] = context.get("recent_failure", 0.5) * 1.3
-            context["energy"] = context.get("energy", 0.5) * 1.1
-        return context
-
     def get_parameter(self, param_name: str, context: Optional[Dict[str, float]] = None) -> float:
         """Get a dynamic parameter value, adjusted by context / spatial gravity."""
         param = self.parameters.get(param_name)
@@ -315,7 +282,13 @@ class DynamicThresholdManager:
         }
 
     def update_from_state_matrix(self, state_matrix: Any) -> None:
-        """Update parameters from state matrix values."""
+        """Update threshold parameters from state matrix values.
+
+        定義（設計者選定的耦合 heuristic，非發現）：alpha.energy 升高 →
+        快樂閾值調低（更容易標記 joy）；gamma.happiness 升高 → 悲傷閾值調低；
+        beta.curiosity 升高 → 社交主動閾值調高。係數為固定 heuristic，
+        未經實證校準；調整的是「觸發情緒標籤的門檻」，不是情緒本身。
+        """
         if state_matrix is None:
             return
         try:

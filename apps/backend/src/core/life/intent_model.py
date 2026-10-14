@@ -261,6 +261,9 @@ class IntentManager:
         If a value falls below the threshold, a HOMEOSTASIS intent is created
         to drive the system toward restoring balance.
         """
+        # 定義：維度 slot 鍵名沿用 StateMatrix4D 的軸命名（如 gamma 的
+        # "happiness" slot）——數值槽位名稱，非對感受的量測。低於閾值
+        # 觸發對應類別的 homeostatic intent（恢復平衡的內部意圖）。
         dim_config: Dict[str, tuple] = {
             "alpha": (IntentCategory.HOMEOSTASIS, "energy", 0.3),
             "gamma": (IntentCategory.EXPLORATION, "happiness", 0.3),

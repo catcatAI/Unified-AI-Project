@@ -3,6 +3,14 @@ Angela AI v7.5.0-dev - 6D State Matrix System (αβγδεθ)
 六維狀態矩陣系統
 
 獨立的狀態矩陣管理系統，整合所有維度的狀態。
+
+Definitional note: the axis slot names (energy, happiness, trust, ...) are
+DEFINITIONS chosen by the simulation design — names of numeric slots in a
+state vector, not measurements of felt physiology or emotion. Upstream
+writers (intent mapping, emotion feedback, dynamic parameters) set these
+values from heuristic rules; downstream readers must treat them as
+simulation state, never as observations of an organism.
+
 Features:
 - 6-dimensional state matrix (α, β, γ, δ, ε, θ)
 - Inter-dimensional influence modeling

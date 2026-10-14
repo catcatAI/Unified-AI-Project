@@ -421,8 +421,14 @@ class EndocrineSystem:
         """
         Calculate the combined effects of all hormones on different systems
 
+        定義（非生理事實）：HormoneType 鍵名（SEROTONIN、DOPAMINE 等）是
+        模擬激素槽位的命名；返回的 effects 各鍵（mood、energy 等）是
+        這些模擬槽位的加權和——設計者選定的 heuristic 係數，不是對任何
+        實際神經化學或感受過程的量測。
+
         Returns:
-            Dictionary with effects on emotion, energy, social behavior, etc.
+            Dictionary with weighted-sum effects on emotion, energy, social
+            behavior, etc. (simulated values, not measurements).
         """
         effects = {
             "energy": 0.0,

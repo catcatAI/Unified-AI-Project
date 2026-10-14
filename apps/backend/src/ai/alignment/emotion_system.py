@@ -1,6 +1,14 @@
 """
 感性系统 (Emotion System)
 Level 5 ASI 的三大支柱之一, 负责情感理解、价值评估和共情能力
+
+Definitional note: EmotionType / ValueDimension members are NAMED STATES
+and NAMED AXES of a PAD-based simulation state machine — design-chosen
+labels for numeric slots, not measurements of felt emotion or values.
+Influence mappings (e.g. "joy" → valence +0.4) are heuristic coefficients
+selected by the authors. Downstream consumers (prompt injection, routing,
+biological integrator) receive simulation state; they must not restate it
+to users as facts about feelings.
 """
 
 # =============================================================================
@@ -317,7 +325,14 @@ class EmotionSystem:
             self.emotion_history = self.emotion_history[-max_len:]
 
     def apply_influence(self, source: str, type: str, value: float, intensity: float) -> None:
-        """外部激素或事件對情緒的影響 — 真實影響情緒狀態 (PAD 模型)"""
+        """Apply an influence to the internal PAD emotion state.
+
+        定義（非生理事實）：influence_map 中的 (valence, arousal, dominance)
+        係數是設計者選定的 heuristic——如 "dopamine"→(0.3,0.2,0.1)、
+        "joy"→(0.4,0.1,0.1)。type 鍵名沿用神經化學/情緒詞彙作為內部標籤，
+        不宣稱任何實際神經化學或感受過程；本方法修改的是 PAD 模擬狀態機
+        的數值，不是「真實情緒」。
+        """
         logger.debug(
             f"[{self.system_id}] Influence from {source}: {type} = {value} (intensity={intensity})"
         )
@@ -434,14 +449,29 @@ class EmotionSystem:
         """
         Process interaction outcome feedback to close the emotional loop.
 
-        Maps interaction outcomes to emotional adjustments with
-        temporal awareness via feedback history:
-        - High engagement (>2.0) + success → joy/dopamine boost
-        - Low engagement (<0.5) → sadness/stress
-        - Error → fear/stress
-        - Neutral → slight trust/calm
-        - Rising engagement trend amplifies positive adjustments
-        - Declining engagement trend amplifies negative adjustments
+        Parameter definitions (not measurements):
+        - engagement_ratio: a PROXY signal supplied by the caller — the chat
+          pipeline defines it as response-length / message-length
+          (see chat_routes._fire_causal_learning). It is NOT a measurement
+          of the user's actual engagement; the parameter name is historical.
+        - had_error / response_success: the chat pipeline defines both from
+          "response was empty" — a minimal proxy, not a correctness or
+          usefulness judgment.
+
+        Policy definitions (deliberate mappings, not biological facts):
+        - if ratio > 2.0 and not failed → inject internal labels
+          joy / dopamine (intensity scales with ratio)
+        - if ratio < 0.5 → inject internal labels sadness / cortisol
+        - error / failure → inject internal labels fear / stress
+        - neutral → slight trust / calm labels
+        - a rising ratio trend amplifies positive injections; a declining
+          trend dampens them
+
+        joy / sadness / dopamine / cortisol here are NAMED STATES of the
+        internal emotion state machine. They are not claims that the system
+        or the user feels anything — downstream consumers (prompt injection,
+        routing) receive simulation labels whose only input, for this path,
+        is the length-ratio proxy above.
 
         C³: Closes the Emotion→Behavior→Response→Feedback→Emotion loop.
         """
@@ -460,16 +490,17 @@ class EmotionSystem:
             }
         )
 
-        # Compute temporal trend: is engagement improving?
+        # Compute temporal trend of the proxy ratio (not of engagement itself)
         trend_multiplier = 1.0
         if len(self._feedback_history) >= 3:
             recent = [e["engagement_ratio"] for e in list(self._feedback_history)[-3:]]
             if recent[-1] > recent[0]:
-                trend_multiplier = 1.2  # Rising engagement → amplify positive
+                trend_multiplier = 1.2  # Rising proxy ratio → amplify positive
             elif recent[-1] < recent[0]:
-                trend_multiplier = 0.8  # Declining engagement → dampen positive
+                trend_multiplier = 0.8  # Declining proxy ratio → dampen positive
 
-        # Determine influence type and intensity based on interaction outcome
+        # Inject named internal-state labels per the policy definitions in
+        # the docstring (proxy-driven, not observed affect).
         if had_error or response_success is False:
             self.apply_influence("interaction_feedback", "stress", 0.6 * trend_multiplier, 1.0)
             self.apply_influence("interaction_feedback", "fear", 0.3 * trend_multiplier, 0.8)

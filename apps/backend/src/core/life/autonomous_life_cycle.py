@@ -449,8 +449,10 @@ class AutonomousLifeCycle:
 
         # Build context for dynamic parameter evaluation
         context = {
-            "energy": 1.0 - metrics.s_stress,  # Lower stress = higher energy
-            "mood": metrics.life_intensity,  # Life intensity affects mood
+            "energy": 1.0 - metrics.s_stress,  # 定義：energy := 1 - s_stress
+            # 定義（非事實）：mood := life_intensity（公式輸出）。
+            # 此處 mood 是動態參數用的鍵名，不是對任何感受狀態的宣稱。
+            "mood": metrics.life_intensity,
             "stress": metrics.s_stress,
             "confidence": metrics.a_c / 1.5 if metrics.a_c <= 1.5 else 1.0,
             "execution_success_rate": execution_success_rate,
@@ -1071,7 +1073,11 @@ class AutonomousLifeCycle:
         else:
             confidence = 0.5
 
-        # Incorporate interaction quality feedback (C³ 6.0)
+        # Incorporate caller-supplied proxy signals (C³ 6.0). The value below
+        # is mean(proxy_ratio × success_weight) — a heuristic score derived
+        # from the length-ratio / completion-ratio proxies defined in
+        # feed_interaction_outcome(). Its name (interaction "quality") is
+        # historical; it is not a measurement of interaction quality.
         avg_interaction_quality = 1.0
         if self._interaction_quality:
             avg_interaction_quality = sum(
@@ -1101,11 +1107,21 @@ class AutonomousLifeCycle:
         return result
 
     def feed_interaction_outcome(self, engagement_ratio: float, success: bool) -> None:
-        """Feed interaction outcome feedback into lifecycle decision process.
+        """Feed caller-supplied interaction PROXY signals into lifecycle decisions.
 
-        Tracks a rolling window of interaction quality so that the lifecycle
-        can adjust its routing recommendations based on actual interaction
-        outcomes (not just internal formula metrics).
+        Parameter definitions (not measurements):
+        - engagement_ratio: a PROXY signal — the chat pipeline defines it as
+          response-length / message-length (see chat_routes); the game agent
+          defines it as a task-completion ratio (see angela_agent). The
+          parameter name is historical and shared across these incommensurable
+          proxies; neither is a measurement of user engagement.
+        - success: at the chat call site, defined as "response non-empty";
+          at the game call site, defined as "completed tasks >= failed
+          tasks". Both are minimal proxies, not correctness judgments.
+
+        The rolling window below accumulates these proxy signals so
+        get_behavioral_adjustment() can shift routing on recent trends —
+        it does NOT observe "actual interaction outcomes" directly.
 
         C³ 6.0: Closes the lifecycle→routing→interaction→feedback loop.
         """

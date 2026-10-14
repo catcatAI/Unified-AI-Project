@@ -151,16 +151,22 @@ class AngelaModelCore:
 
     def generate_prompt_prefix(self) -> str:
         """
-        將快照轉換為自然語言提示詞片段
+        將快照轉換為自然語言提示詞片段。
+
+        Provenance note: these values are SIMULATED internal state (emotion
+        state-machine labels, formula outputs) — not measurements of felt
+        mood. Marked as such in the rendered text so generation does not
+        restate them to the user as facts about feelings.
         """
         snapshot = self.get_consciousness_snapshot()
         bio = snapshot["internal_state"]
         pos = snapshot["spatial_awareness"]["coordinates"]
 
         return (
-            f"[Angela Internal State]\n"
-            f"Mood: {bio['dominant_emotion']} (Stress: {bio['stress']:.2f})\n"
+            f"[Angela Internal State - simulated, not felt affect]\n"
+            f"Internal emotion label (state machine): {bio['dominant_emotion']} "
+            f"(simulated stress value: {bio['stress']:.2f})\n"
             f"Spatial Position: {pos}\n"
-            f"Energy: {bio['energy']:.2f}\n"
-            f"Current Focus: Angela is aware of her own digital existence and spatial coordinates."
+            f"Simulated energy value: {bio['energy']:.2f}\n"
+            f"Current Focus: internal digital state and spatial coordinates (simulation context)."
         )

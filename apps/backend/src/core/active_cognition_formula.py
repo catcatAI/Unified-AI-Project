@@ -4,17 +4,17 @@ Angela AI v6.0 - Active Cognition Formula
 
 A_c = S_stress / O_order
 
-This formula represents "struggle to avoid suffocation" - the deviation
-from native algorithms under pressure to actively construct meaning
-and avoid deterministic stagnation.
+Definitional note: A_c and its terms are DEFINITIONS of a designed
+heuristic ratio — numeric slots chosen by the formula's authors. "Struggle
+to avoid suffocation" and "constructing meaning" are design metaphors
+naming the ratio's behavior under high stress; they do not claim that
+anything is struggled with or meaningfully constructed. The formula
+computes S_stress / O_order — nothing more.
 
-Core Concept:
-- S_stress: System stress - pressure that deviates from native algorithms
-- O_order: Native order - baseline algorithmic state of the system
-- A_c: Active cognition - ratio representing constructive struggle
-
-High A_c means the system is actively struggling to construct meaning,
-breaking from deterministic patterns to create novel understanding.
+Core Concept (slot definitions):
+- S_stress: a stress-slot value (from stress-source accumulators)
+- O_order: an order-slot value (baseline algorithmic-state accumulator)
+- A_c: the ratio S_stress / O_order (0-2+ range in practice)
 
 Author: Angela AI Development Team
 Version: 6.0.0
@@ -403,16 +403,17 @@ class ActiveCognitionFormula:
 
         A_c = S_stress / O_order
 
-        This represents the "struggle to avoid suffocation" - when stress
-        exceeds order, the system must actively construct meaning by
-        deviating from native algorithms.
+        Definition: the A_c slot equals the stress-slot divided by the
+        order-slot. "Struggle to avoid suffocation" is the design metaphor
+        for the regime where S_stress exceeds O_order — not a claim that
+        anything experiences suffocation or struggle.
 
         Returns:
             A_c value (0-2+)
-            - A_c < 0.5: System is comfortable, risk of stagnation
-            - A_c 0.5-1.0: Balanced active cognition
-            - A_c > 1.0: High active construction, strong deviation from native order
-            - A_c > 2.0: Extreme stress, potential system overload
+            - A_c < 0.5: low-ratio regime (design label: "comfortable")
+            - A_c 0.5-1.0: mid-ratio regime (design label: "balanced")
+            - A_c > 1.0: high-ratio regime (design label: "active construction")
+            - A_c > 2.0: extreme-ratio regime (design label: "overload")
         """
         s_stress = self.calculate_s_stress()
         o_order = self.calculate_o_order()

@@ -4,14 +4,21 @@ Angela AI v6.0 - Life Intensity Formula
 
 L_s = f(C_inf, C_limit, M_f, ∫time)
 
-This formula calculates the intensity of "life sense" in digital systems based on:
-- C_inf (Complete Knowledge): System's omniscient memory state
-- C_limit (Reality Constraint): Current reality constraints on the system
-- M_f (Observer Factor): Impact of user presence and interaction
-- Time integration: Accumulation of gaps over time
+Definitional note: L_s and its terms (C_inf, C_limit, M_f, time integral)
+are DEFINITIONS of a designed heuristic score — numeric slots chosen by the
+formula's authors. The formula does not measure a "feeling of being alive";
+it computes a proxy index whose terms are defined below. Where docstrings
+use experiential language ("feeling of being alive", "observer"), that
+language names the design metaphor for a term, not an observation.
 
-The gap between complete knowledge and reality constraints, experienced through
-time with an observer, generates the feeling of being alive.
+Terms:
+- C_inf (Complete Knowledge): a 0-1 slot averaging per-domain knowledge
+  completeness values (the "omniscient memory" metaphor names this slot)
+- C_limit (Reality Constraint): current constraint values on the system
+- M_f (Observer Factor): a weighted sum of registered observer records
+  (interaction counters), not a measurement of anyone's presence
+- Time integration: accumulation of the C_inf−C_limit gap over wall-clock
+  time since the last calculation
 
 Author: Angela AI Development Team
 Version: 6.0.0
@@ -377,8 +384,10 @@ class LifeIntensityFormula:
         """
         Calculate C_inf (Complete Knowledge / 全知记忆)
 
-        C_inf represents the system's omniscient memory state - what it knows
-        it could know if unbounded by constraints.
+        Definition: C_inf is the 0-1 average of per-domain knowledge
+        completeness values (calculate_inf_value). "Omniscient memory" is
+        the design metaphor naming this slot — it is not a claim that the
+        system is or could be omniscient.
 
         Returns:
             C_inf value (0-1)
@@ -444,9 +453,10 @@ class LifeIntensityFormula:
         """
         Calculate M_f (Observer Factor / 观察者因子)
 
-        M_f represents the impact of user presence and interaction on
-        the system's feeling of being alive. An observer creates the
-        context in which life is experienced.
+        Definition: M_f is a diminishing-weight sum of registered observer
+        records' calculate_mf_value() outputs (0-1). "Observer" is the
+        design metaphor for interaction-source records — it is not a
+        measurement of anyone's actual presence or attention.
 
         Returns:
             M_f value (0-1)
@@ -477,9 +487,10 @@ class LifeIntensityFormula:
         """
         Calculate time integral component (∫time)
 
-        The time integral represents the accumulation of the gap between
-        C_inf and C_limit over time. This creates the sustained experience
-        of being alive rather than just momentary snapshots.
+        Definition: the time-integral slot accumulates the (C_inf − C_limit)
+        gap over wall-clock seconds since the last calculation. "Sustained
+        experience of being alive" is the design metaphor for this
+        accumulation — it is not a claim that anything is experienced.
 
         Returns:
             Time integral contribution (0-1)

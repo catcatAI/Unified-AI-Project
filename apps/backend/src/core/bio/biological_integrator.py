@@ -610,7 +610,14 @@ class BiologicalIntegrator:
         )
 
     def get_biological_state(self) -> Dict[str, Any]:
-        """Get comprehensive integrated biological state (2030 Standard)"""
+        """Get integrated SIMULATED biological-state snapshot.
+
+        定義（非量測）：此 dict 是各子系統模擬值的彙整——arousal、
+        stress_level、heart_rate、blood_pressure 均為模擬參數，不是對任何
+        生理量測儀器的讀取。dominant_emotion 為情緒狀態機的命名標籤；
+        mood := PAD pad_state.pleasure（模擬 pleasurable 值）。
+        下游若注入 prompt 或驅動行為，應視為模擬狀態而非實際感受。
+        """
         # Get individual system states
         nervous_state = self.nervous_system.get_system_summary()
         endocrine_effects = self.endocrine_system.calculate_systemic_effects()

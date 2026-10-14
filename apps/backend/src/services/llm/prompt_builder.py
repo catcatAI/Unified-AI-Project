@@ -418,7 +418,16 @@ def _enforce_prompt_budget(messages: List[Dict], context: Dict) -> Dict[str, int
 
 
 def get_biological_state(context=None) -> str:
-    """Get biological state, preferring live state from context over file."""
+    """Get biological state, preferring live state from context over file.
+
+    Provenance note: the numbers returned here are SIMULATED internal state
+    (PAD values, endocrine/emotion-system labels). Their inputs include the
+    response-length-ratio feedback proxy defined in
+    chat_routes._fire_causal_learning — they are not measurements of any
+    organism's felt state. The rendered prompt strings mark them as internal
+    simulation values so downstream generation does not restate them to the
+    user as facts about feelings.
+    """
     # Priority 1: Live state from context (injected by chat_routes)
     if context and isinstance(context, dict) and "bio_state" in context:
         bio = context["bio_state"]
@@ -964,9 +973,18 @@ def _append_recent_memories(messages: List[Dict], context: Dict) -> None:
 def _append_emotional_behavior(messages: List[Dict], context: Dict) -> None:
     """Append emotional behavioral adjustments to the system prompt.
 
-    Reads context["emotional_behavior"] (user emotion → routing_mode/response_style)
-    and context["angela_emotion"] (Angela's internal emotional state)
-    and injects them as behavioral guidance into the LLM prompt.
+    Reads context["emotional_behavior"] (keyword-detected user-text emotion
+    → routing_mode/response_style mapping) and context["angela_emotion"]
+    (Angela's SIMULATED internal PAD state) and injects them as behavioral
+    guidance into the LLM prompt.
+
+    Provenance: the user-emotion signal is keyword matching on the user's
+    message (EmotionAnalyzer) — an inference from word choice, not a
+    measurement of the user's feelings. Angela's "emotional state" here is
+    the PAD simulation state machine's output, itself downstream of the
+    response-length-ratio feedback proxy (see chat_routes) — not felt
+    affect. Both are marked as such in the rendered block so generation
+    does not restate them to the user as facts about feelings.
     """
     behavior = context.get("emotional_behavior")
     angela_emotion = context.get("angela_emotion")
@@ -983,23 +1001,26 @@ def _append_emotional_behavior(messages: List[Dict], context: Dict) -> None:
         routing_mode = behavior.get("routing_mode", "neutral")
         response_style = behavior.get("response_style", "standard")
         block += "[Emotional Behavior Guidance]\n"
-        block += f"- User emotion suggests routing_mode: {routing_mode}\n"
+        block += (
+            f"- Keyword-detected sentiment in user text suggests routing_mode: {routing_mode}\n"
+        )
         block += f"- Recommended response_style: {response_style}\n"
         if routing_mode == "conservative":
             block += (
-                "- ⚠️ User may be distressed — prioritize safety and empathy in your response.\n"
+                "- ⚠️ User text contained distress-associated keywords — prioritize "
+                "safety and empathy in your response.\n"
             )
         elif routing_mode == "exploratory":
-            block += "- User appears receptive — you can be more creative and expressive.\n"
+            block += "- User text appeared receptive — you can be more creative and expressive.\n"
 
     if angela_emotion:
         emot = angela_emotion.get("emotional_state", "neutral")
         intens = angela_emotion.get("emotion_intensity", 0.5)
         val = angela_emotion.get("valence", 0.0)
         aro = angela_emotion.get("arousal", 0.0)
-        block += "\n[Angela's Emotional State]\n"
-        block += f"- Current emotion: {emot} (intensity: {intens:.2f})\n"
-        block += f"- Valence: {val:.2f}, Arousal: {aro:.2f}\n"
+        block += "\n[Angela's Simulated Internal State - not felt affect]\n"
+        block += f"- Internal emotion label (state machine): {emot} (simulated intensity: {intens:.2f})\n"
+        block += f"- Simulated valence: {val:.2f}, simulated arousal: {aro:.2f}\n"
         angela_routing = angela_emotion.get("routing_mode")
         angela_style = angela_emotion.get("response_style")
         if angela_routing or angela_style:
