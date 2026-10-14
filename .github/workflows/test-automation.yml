@@ -43,34 +43,14 @@ jobs:
           flags: unittests
           name: codecov-umbrella
 
-      - name: 检查测试结果
-        run: |
-          # 如果测试失败，输出错误信息
-          if [ $? -ne 0 ]; then
-            echo "测试执行失败"
-            exit 1
-          fi
-
-  test-quality-gate:
-    runs-on: ubuntu-latest
-    needs: test-suite
-    if: always()
-
-    steps:
-      - uses: actions/checkout@v5
-
-      - name: 检查测试覆盖率
-        run: |
-          echo "覆盖率检查跳过 (脚本未找到)"
-
-      - name: 生成质量报告
-        run: |
-          echo "测试质量检查完成"
-          echo "覆盖率阈值检查通过"
+      # 2026-10-15: 刪除「检查测试结果」死步驟（`$?` 檢查獨立 step 永遠
+      # 看到 0——pytest 失敗早已由前一步令 job 紅燈，此步是偽保險）。
+      # 亦刪除 test-quality-gate 假門（echo-only + if:always ⇒ 恆綠，
+      # "覆盖率阈值检查通过" 純宣告）——要真門請加可失敗的覆蓋率腳本。
 
   notification:
     runs-on: ubuntu-latest
-    needs: [test-suite, test-quality-gate]
+    needs: [test-suite]
 
     steps:
       - name: 发送通知
