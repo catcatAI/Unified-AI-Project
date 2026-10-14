@@ -43,11 +43,24 @@ def _quantize(px: Tuple[int, int, int], step: int = 24) -> Tuple[int, int, int]:
 def color_blobs(image_data: bytes, max_side: int = 48) -> List[Dict[str, Any]]:
     """Flood-fill color regions on a quantized thumbnail.
 
+    Full-res ladder (calibration 2026-10-11, fixed 2026-10-14): sources whose
+    longest side ≤ 4×max_side are analyzed at NATIVE resolution — bicubic
+    thumbnailing of small images creates anti-alias seam slivers along hard
+    edges and erases ≤2px structures entirely. Larger sources keep the fast
+    thumbnail path; seam slivers are additionally absorbed by
+    ``_merge_seam_slivers`` at every scale.
+
     Returns blobs sorted by size desc: {color, pixels, fraction, bbox}.
     A near-blank render yields exactly one background blob — the honest
     signal for "render produced nothing" (live 2026-10-11 Unity gray).
     """
-    img = _load_rgb(image_data, max_side)
+    if _PILImage is None:
+        return []
+    with _PILImage.open(io.BytesIO(image_data)) as probe:
+        native_max_side = max(probe.size)
+    # Ladder: native up to 4×max_side (192px by default), thumbnail beyond
+    scale = max_side if native_max_side > max_side * 4 else max_side * 4
+    img = _load_rgb(image_data, scale)
     if img is None:
         return []
     w, h = img.size
@@ -68,8 +81,8 @@ def color_blobs(image_data: bytes, max_side: int = 48) -> List[Dict[str, Any]]:
             while queue:
                 cx, cy = queue.popleft()
                 cells += 1
-                x0, x1 = min(x0, cx), max(x0, cx)
-                y0, y1 = min(y0, cy), max(y0, cy)
+                x0, x1 = min(x0, cx), max(x1, cx)
+                y0, y1 = min(y0, cy), max(y1, cy)
                 for nx, ny in ((cx + 1, cy), (cx - 1, cy), (cx, cy + 1), (cx, cy - 1)):
                     if 0 <= nx < w and 0 <= ny < h and not seen[ny][nx]:
                         if grid[ny][nx] == color:
@@ -83,8 +96,60 @@ def color_blobs(image_data: bytes, max_side: int = 48) -> List[Dict[str, Any]]:
                     "bbox": (x0, y0, x1, y1),
                 }
             )
+    blobs = _merge_seam_slivers(blobs, w, h)
     blobs.sort(key=lambda b: -b["pixels"])
     return blobs
+
+
+def _abuts(a: Tuple[int, int, int, int], b: Tuple[int, int, int, int], gap: int = 1) -> bool:
+    ax0, ay0, ax1, ay1 = a
+    bx0, by0, bx1, by1 = b
+    return ax0 <= bx1 + gap and bx0 <= ax1 + gap and ay0 <= by1 + gap and by0 <= ay1 + gap
+
+
+def _merge_seam_slivers(blobs: List[Dict[str, Any]], w: int, h: int) -> List[Dict[str, Any]]:
+    """Absorb anti-alias seam slivers into the regions they interpolate.
+
+    A resampled hard edge can leave a thin blob whose color sits BETWEEN two
+    major regions. Absorb it only when it abuts ≥2 dominant (>15%) neighbors
+    that are themselves more dissimilar to each other than to the sliver —
+    the signature of an interpolation artifact. A genuine thin structure
+    (line/text) touches one dominant region and is kept.
+    """
+    total = w * h
+    min_big = 0.15 * total
+    max_sliver = 0.05 * total
+    out = list(blobs)
+    merged = True
+    while merged:
+        merged = False
+        for sliver in list(out):
+            if sliver["pixels"] == 0 or sliver["pixels"] > max_sliver:
+                continue
+            bigs = [
+                b
+                for b in out
+                if b is not sliver and b["pixels"] >= min_big and _abuts(sliver["bbox"], b["bbox"])
+            ]
+            if len(bigs) < 2:
+                continue
+            bigs.sort(key=lambda b: _color_distance(sliver["color"], b["color"]))
+            nearest, second = bigs[0], bigs[1]
+            d_between = _color_distance(nearest["color"], second["color"])
+            if d_between <= _color_distance(
+                sliver["color"], nearest["color"]
+            ) or d_between <= _color_distance(sliver["color"], second["color"]):
+                continue  # sliver is not interpolating between dissimilar regions
+            x0, y0, x1, y1 = nearest["bbox"]
+            sx0, sy0, sx1, sy1 = sliver["bbox"]
+            nearest["bbox"] = (min(x0, sx0), min(y0, sy0), max(x1, sx1), max(y1, sy1))
+            nearest["pixels"] += sliver["pixels"]
+            out.remove(sliver)
+            merged = True
+            break
+    for b in out:
+        b["fraction"] = round(b["pixels"] / total, 3)
+    return out
 
 
 def _color_distance(a: Tuple[int, int, int], b: Tuple[int, int, int]) -> float:

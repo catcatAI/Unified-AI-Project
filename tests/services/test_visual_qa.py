@@ -63,12 +63,10 @@ def test_aesthetics_separates_gray_from_colorful():
     assert vivid["complexity"] >= 2
 
 
-@pytest.mark.xfail(
-    strict=True, reason="seam anti-alias rows split into sliver blobs; merger pending"
-)
 def test_clean_edges_do_not_split_blobs():
-    # Known FAIL (calibration 2026-10-11): a clean 50/50 split yields 4 blobs
-    # (two 0.02 seam slivers), not 2. strict=True forces marker removal on fix.
+    # Fixed 2026-10-14: full-res ladder (native for ≤192px) + seam sliver
+    # merger. Previously a clean 50/50 split yielded 4 blobs (two 0.02 seam
+    # slivers from bicubic thumbnailing); xfail(strict) marker removed on fix.
     try:
         from PIL import Image
     except ImportError:
@@ -82,11 +80,10 @@ def test_clean_edges_do_not_split_blobs():
     assert len(blobs) == 2
 
 
-@pytest.mark.xfail(
-    strict=True, reason="48px downscale erases sub-2% structures; full-res ladder pending"
-)
 def test_thin_structures_survive_downscale():
-    # Known FAIL (calibration 2026-10-11): a 2px line leaves no blob at all.
+    # Fixed 2026-10-14: full-res ladder analyzes ≤192px sources natively, so
+    # a 2px line keeps its pure quantized color (192, 24, 24). Previously the
+    # 48px thumbnail erased it entirely; xfail(strict) marker removed on fix.
     try:
         from PIL import Image, ImageDraw
     except ImportError:
