@@ -133,8 +133,8 @@ class HardwareDetector {
         }
 
         const debugInfo = gl.getExtension('WEBGL_debug_renderer_info')
-        let vendor = gl.getParameter(gl.VENDOR)
-        let renderer = gl.getParameter(gl.RENDERER)
+        const vendor = gl.getParameter(gl.VENDOR)
+        const renderer = gl.getParameter(gl.RENDERER)
         let unmaskedRenderer = ''
         let unmaskedVendor = ''
 
@@ -235,7 +235,6 @@ class HardwareDetector {
   _isLaptopDevice(platform) {
     // 基於觸控和屏幕尺寸
     const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0
-    const hasPointer = window.matchMedia('(pointer: coarse)').matches
 
     // 小屏幕通常意味筆記本
     const screenWidth = window.screen.width
@@ -618,7 +617,6 @@ class StateMatrixIntegration {
 
     // 呼吸參數：能量越高，呼吸越急促
     const breathFrequency = 0.5 + (energy * 1.5) / 100
-    const breathDepth = 0.1 + (arousal * 0.9) / 100
 
     this.live2dManager.setParameter('ParamBreath', breathFrequency)
 
@@ -628,7 +626,6 @@ class StateMatrixIntegration {
     this.live2dManager.setParameter('ParamEyeROpen', eyeOpenness)
 
     // 身體放鬆程度
-    const bodyRelaxation = 1.0 - (this.alpha.comfort / 100) * 0.3
     // 身體姿態受影響（需後端協作）
   }
 
@@ -636,14 +633,11 @@ class StateMatrixIntegration {
     if (!this.live2dManager || !this.delta) return
 
     // 根據關注度調整眼球追蹤
-    const attention = this.delta.attention / 100
 
     // 根據親密程度調整行為
-    const intimacy = this.delta.intimacy / 100
 
     // 信任程度影響表情開放度
     const trust = this.delta.trust / 100
-    const expressionOpenness = 0.5 + trust * 0.5
 
     // 存在感
     const presence = this.delta.presence / 100
@@ -729,7 +723,6 @@ class DynamicPerformanceManager {
 
   _optimizeForHardware() {
     const profile = this.hardwareDetector.profile
-    const capabilities = this.hardwareDetector.capabilities
 
     // 智能性能調整
     const isLowEnd =
@@ -811,7 +804,6 @@ class DynamicPerformanceManager {
 
   setMode(mode) {
     this.currentMode = mode
-    const performanceLevel = this.hardwareDetector.capabilities.performance_level
 
     const modeConfigs = {
       lite: {
@@ -859,8 +851,6 @@ class DynamicPerformanceManager {
 
   _setEffectsLevel(effects) {
     if (!this.live2dManager) return
-
-    const supportedEffects = this.hardwareDetector.capabilities.effects || ['basic']
 
     this.live2dManager.setEffects(effects)
   }

@@ -174,7 +174,10 @@ class SoundEngine {
       try {
         this._nightLoop.gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.5)
         this._nightLoop.osc.stop(this.ctx.currentTime + 0.6)
-      } catch (e) {}
+      } catch (e) {
+        // 節點已停止/參數競態屬預期衰減路徑，無害（非靜默吞錯）
+        void e
+      }
       this._nightLoop = null
     }
   }

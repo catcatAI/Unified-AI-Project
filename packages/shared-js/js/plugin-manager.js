@@ -141,7 +141,7 @@ class PluginManager {
     return new Promise((resolve, reject) => {
       const reader = new FileReader()
       reader.onload = (e) => resolve(e.target.result)
-      reader.onerror = (e) => reject(new Error(`Failed to read file: ${path}`))
+      reader.onerror = (_e) => reject(new Error(`Failed to read file: ${path}`))
       reader.readAsText(path)
     })
   }
@@ -571,7 +571,6 @@ class PluginManager {
     })
 
     // 禁止訪問的危險方法列表
-    const dangerousMethods = ['destroy', 'cleanup', 'reset', 'clear', 'delete']
 
     // 返回凍結的對象，防止添加新屬性
     return Object.freeze(safeObj)

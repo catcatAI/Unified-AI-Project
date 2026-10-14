@@ -263,7 +263,7 @@ class AngelaApp {
     }
   }
 
-  _handleHover(region, pos) {
+  _handleHover(region, _pos) {
     // Hover is deliberately light: report the region so the state matrix can
     // track attention, without triggering haptics or expressions.
     if (!region) return
@@ -581,7 +581,7 @@ class AngelaApp {
 
         // 基本縮放
         getUserScale: () => 1.0,
-        setUserScale: (scale) => {},
+        setUserScale: (_scale) => {},
 
         // 基本身體部位檢測
         identifyBodyPart: (x, y) => {
@@ -599,11 +599,11 @@ class AngelaApp {
         },
 
         // 基本触觉强度计算
-        calculateHapticIntensity: (base, pos, size) => base,
+        calculateHapticIntensity: (base, _pos, _size) => base,
 
         // 基本方法
-        handleTouch: (x, y, type) => ({ success: false }),
-        handleClick: (x, y) => ({ success: false }),
+        handleTouch: (_x, _y, _type) => ({ success: false }),
+        handleClick: (_x, _y) => ({ success: false }),
 
         // 显示尺寸
         getDisplaySize: () => ({ width: baseWidth, height: baseHeight }),
@@ -1098,7 +1098,6 @@ class AngelaApp {
     const btnSend = document.getElementById('btn-send')
     const btnToggle = document.getElementById('btn-toggle-dialogue')
     const bottomBar = document.getElementById('bottom-bar')
-    const messagesContainer = document.getElementById('dialogue-messages')
 
     // Toggle dialogue panel
     btnToggle?.addEventListener('click', () => {

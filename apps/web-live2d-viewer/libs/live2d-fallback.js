@@ -10,7 +10,7 @@ console.log('[Fallback] Live2D fallback script loaded')
 window.loadLocalLive2DSDK = function () {
   console.log('[Fallback] loadLocalLive2DSDK called')
 
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve, _reject) => {
     console.log('嘗試加載本地Live2D SDK...')
 
     // 檢查是否已經加載
@@ -50,12 +50,12 @@ window.loadLocalLive2DSDK = function () {
           this.motions = new Map()
         }
 
-        loadMotion(data) {
+        loadMotion(_data) {
           // 模擬載入動作
           return Promise.resolve(true)
         }
 
-        startMotion(priority) {
+        startMotion(_priority) {
           // 模擬開始動作
           return true
         }

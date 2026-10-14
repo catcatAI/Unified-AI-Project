@@ -363,22 +363,15 @@ class AudioHandler {
       ]
 
       this.speechRecognition.onresult = (event) => {
-        let finalTranscript = ''
-        let interimTranscript = ''
-
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const transcript = event.results[i][0].transcript
           const confidence = event.results[i][0].confidence || 0
 
           if (event.results[i].isFinal) {
-            finalTranscript += transcript
-
             if (this.onSpeechRecognized) {
               this.onSpeechRecognized(transcript, true, confidence)
             }
           } else {
-            interimTranscript += transcript
-
             if (this.onSpeechRecognized) {
               this.onSpeechRecognized(transcript, false, confidence)
             }

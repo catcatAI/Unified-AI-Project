@@ -135,7 +135,7 @@ class InputHandler {
     }
   }
 
-  _onMouseUp(event) {
+  _onMouseUp(_event) {
     this.isMouseDown = false
 
     if (this.currentDrag && this.onDragEnd) {

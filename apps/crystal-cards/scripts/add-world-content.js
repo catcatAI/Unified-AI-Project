@@ -13,7 +13,7 @@ const esc = (s) =>
 
 // === NATIONAL CARDS ===
 const nations = allCards.filter((c) => c.card_type === '國家卡')
-let nationEntries = nations
+const nationEntries = nations
   .map((card) => {
     const name = card.name.split('—')[0].split('（')[0].trim()
     const id = 'nation_' + name.replace(/\s+/g, '_').slice(0, 20)
@@ -27,7 +27,7 @@ let nationEntries = nations
 
 // === ORGANIZATION CARDS ===
 const orgs = allCards.filter((c) => c.card_type === '組織卡')
-let orgEntries = orgs
+const orgEntries = orgs
   .map((card) => {
     const name = card.name.split('—')[0].trim()
     const id = 'org_' + name.replace(/\s+/g, '_').slice(0, 20)
@@ -38,7 +38,7 @@ let orgEntries = orgs
 
 // === RULE CARDS ===
 const rules = allCards.filter((c) => c.card_type === '規則卡')
-let ruleEntries = rules
+const ruleEntries = rules
   .map((card) => {
     const name = card.name.split('（')[0].trim()
     const id = 'rule_' + name.replace(/\s+/g, '_').slice(0, 20)
@@ -49,7 +49,7 @@ let ruleEntries = rules
 
 // === SCENE CARDS ===
 const scenes = allCards.filter((c) => c.card_type === '場景卡')
-let sceneEntries = scenes
+const sceneEntries = scenes
   .map((card) => {
     const name = card.name.split('—')[0].trim()
     const id = 'scene_' + name.replace(/\s+/g, '_').slice(0, 20)
@@ -60,6 +60,10 @@ let sceneEntries = scenes
 
 // Find the end of the CARDS object (line with "};" before NPC_SCHEDULES)
 const lines = content.split('\n')
+// insertBefore 需先宣告（原為隱式全域：找到位置時運作、找不到時
+// `insertBefore === -1` 讀未宣告識別字 → ReferenceError 蓋掉原本的
+// 友善錯誤訊息；定義稽核 2026-10-14 修正）
+let insertBefore = -1
 // Find }; that ends CARDS (before '// World line descriptions')
 for (let i = 0; i < lines.length; i++) {
   if (lines[i].includes('World line descriptions')) {

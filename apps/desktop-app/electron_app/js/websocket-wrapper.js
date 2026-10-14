@@ -15,15 +15,8 @@ function generateKey() {
   return crypto.randomBytes(16).toString('base64')
 }
 
-function generateAccept(key) {
-  return crypto
-    .createHash('sha1')
-    .update(key + GUID)
-    .digest('base64')
-}
-
 class WebSocketConnection extends events.EventEmitter {
-  constructor(url, options) {
+  constructor(url, _options) {
     super()
     this.url = url
     this.CONNECTING = 0
@@ -40,7 +33,7 @@ class WebSocketConnection extends events.EventEmitter {
   }
 
   _parseUrl(url) {
-    const match = url.match(/^ws:\/\/([^\/:]+)(?::(\d+))?(\/.*)?$/)
+    const match = url.match(/^ws:\/\/[^/:]+(?::(\d+))?(\/.*)?$/)
     if (!match) throw new Error('Invalid WebSocket URL')
     this.host = match[1]
     this.port = parseInt(match[2] || '80', 10)
@@ -135,7 +128,7 @@ class WebSocketConnection extends events.EventEmitter {
         headerLen = 4
       } else if (payloadLen === 127) {
         if (this._buffer.length < 10) return
-        const high = this._buffer.readUInt32BE(2)
+        this._buffer.readUInt32BE(2)
         const low = this._buffer.readUInt32BE(6)
         payloadLen = low
         headerLen = 10

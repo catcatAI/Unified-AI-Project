@@ -128,7 +128,7 @@ class LayerRenderer {
 
         resolve({ image: img, hasTransparency: hasTransparency })
       }
-      img.onerror = (e) => reject(new Error(`Failed to load image: ${path}`))
+      img.onerror = (_e) => reject(new Error(`Failed to load image: ${path}`))
       img.src = path
     })
   }
@@ -363,7 +363,6 @@ class LayerRenderer {
       )
     } else {
       // 降級方案：使用網格位置渲染（居中）
-      const grid = config.grid
       const cellSize = config.cellSize
 
       const gridX = currentItem.gridX || 0
@@ -374,8 +373,8 @@ class LayerRenderer {
 
       // 獲取顯示縮放比例
       const displayScale = this.udm ? this.udm.getUserScale() : 1.0
-      let targetWidth = cellSize.width * displayScale
-      let targetHeight = cellSize.height * displayScale
+      const targetWidth = cellSize.width * displayScale
+      const targetHeight = cellSize.height * displayScale
 
       // 居中顯示
       const targetX = (this.canvas.width - targetWidth) / 2

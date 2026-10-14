@@ -172,12 +172,9 @@ class AvailabilityManager {
    * Quick availability check
    */
   async _performQuickCheck() {
-    const checks = []
-
     // Memory check
     if (performance.memory) {
       const usedMB = Math.round(performance.memory.usedJSHeapSize / 1048576)
-      const totalMB = Math.round(performance.memory.totalJSHeapSize / 1048576)
       const limitMB = Math.round(performance.memory.jsHeapSizeLimit / 1048576)
 
       if (usedMB / limitMB > 0.9) {

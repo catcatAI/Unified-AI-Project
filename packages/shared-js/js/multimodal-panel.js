@@ -480,7 +480,7 @@ class MultimodalPanel {
 
   async _refreshItems() {
     try {
-      const health = await this.client.multimodalHealth()
+      await this.client.multimodalHealth()
       const items = await this._getItems()
       const list = document.getElementById('items-list')
       const entries = Object.entries(items)

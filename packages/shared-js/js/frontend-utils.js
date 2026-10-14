@@ -88,8 +88,10 @@ const FrontendUtils = {
    */
   resolveModelPath(modelPath, options = {}) {
     const {
-      // modelsDir default - consider using env var or config
-      // modelsDir = path.join(require('os').homedir(), 'Desktop', 'Unified-AI-Project', 'resources', 'models'),
+      // modelsDir 由呼叫端注入（原本解構被註解掉，但下方仍在使用 →
+      // 呼叫即 ReferenceError；定義稽核 2026-10-14 還原，預設 '' 使
+      // 相對路徑解析優雅降級而非崩潰；electron 端可傳入主進程路徑）
+      modelsDir = '',
       requiredPattern = '_t03.model3.json',
     } = options
 
@@ -142,7 +144,7 @@ const FrontendUtils = {
    */
   pathJoin(...parts) {
     return parts
-      .map((part) => part.replace(/[\/\\]+/g, '/').replace(/\/$/, ''))
+      .map((part) => part.replace(/[/\\]+/g, '/').replace(/\/$/, ''))
       .filter(Boolean)
       .join('/')
   },

@@ -204,7 +204,6 @@ class Live2DCubismWrapper {
         throw new Error('WebGL not supported')
       }
 
-      const ext = this.gl.getExtension('OES_element_index_uint')
       this.gl.getExtension('OES_standard_derivatives')
       this.gl.getExtension('OES_texture_float_linear')
       this.gl.getExtension('OES_texture_float')
@@ -502,8 +501,8 @@ class Live2DCubismWrapper {
 
     // Auto-scale texture if too large
     let imageToUse = image
-    let originalWidth = image.width
-    let originalHeight = image.height
+    const originalWidth = image.width
+    const originalHeight = image.height
 
     // Limit texture size for performance (2048 preserves good quality for 4K atlases)
     const maxAllowedSize = 2048
@@ -653,7 +652,7 @@ class Live2DCubismWrapper {
     const normalizedPath = basePath.replace(/\\/g, '/')
 
     // Remove trailing slash if present
-    let cleanPath = normalizedPath.endsWith('/') ? normalizedPath.slice(0, -1) : normalizedPath
+    const cleanPath = normalizedPath.endsWith('/') ? normalizedPath.slice(0, -1) : normalizedPath
 
     // Check if basePath is already a complete file path (ends with the extension)
     const pathExt = cleanPath.substring(cleanPath.lastIndexOf('.'))
@@ -895,7 +894,7 @@ class Live2DCubismWrapper {
       }
 
       this.renderer = {
-        update: function (model) {
+        update: function (_model) {
           // Update is handled by model.update()
         },
         draw: function (gl) {

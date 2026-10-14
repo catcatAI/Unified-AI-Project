@@ -176,7 +176,7 @@ class AngelaAPIClient {
 
     console.log(`[APIClient] Fetching: ${this.baseURL}${this.unifiedChatPath}`, { message })
     try {
-      let response = await fetch(`${this.baseURL}${this.unifiedChatPath}`, {
+      const response = await fetch(`${this.baseURL}${this.unifiedChatPath}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -356,7 +356,7 @@ class BackendWebSocketClient {
     this._fireEvent('wallpaperObjectInjected', data)
   }
 
-  _handleRequestState(data) {
+  _handleRequestState(_data) {
     // 回應狀態請求
     console.log('[BackendWebSocket] Received state request, sending current state')
     if (window.angelaApp && window.angelaApp.stateMatrix) {
@@ -981,7 +981,7 @@ class BackendWebSocketClient {
    */
   _insertByPriority(message) {
     // 找到插入位置（第一個優先級低於當前消息的位置）
-    let insertIndex = this._offlineQueue.findIndex((msg) => msg._priority < message._priority)
+    const insertIndex = this._offlineQueue.findIndex((msg) => msg._priority < message._priority)
 
     if (insertIndex === -1) {
       // 沒有找到優先級更低的消息，插入到末尾
@@ -1200,7 +1200,7 @@ class BackendWebSocketClient {
     // Clear all pending responses
     if (this._pendingResponses && this._pendingResponses.size > 0) {
       console.log(`[BackendWebSocket] Clearing ${this._pendingResponses.size} pending responses`)
-      for (const [messageId, pending] of this._pendingResponses.entries()) {
+      for (const [_messageId, pending] of this._pendingResponses.entries()) {
         clearTimeout(pending.timeout)
         // Pending entries only carry resolve (see sendMessage/requestFullState);
         // guard so disconnect-with-inflight-requests cannot throw.

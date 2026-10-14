@@ -281,7 +281,7 @@ class CharacterTouchDetector {
     const precision = this.udm ? this.udm.getResourcePrecision() : '720p'
     const scale = this._getScaleForPrecision(precision)
 
-    for (const [partName, zone, area] of sortedZones) {
+    for (const [partName, zone, _area] of sortedZones) {
       const rect = zone.rect
       const scaledX = x / scale
       const scaledY = y / scale

@@ -94,12 +94,6 @@ function getCardType(templateId) {
   return t ? t.type : null
 }
 
-// Get the actual game board dimensions
-function getBoardDimensions() {
-  // Default dimensions, overridden by renderer
-  return { width: 900, height: 600 }
-}
-
 // ═══════════════════════════════════════════════════════
 // Board Card Management
 // ═══════════════════════════════════════════════════════
@@ -875,7 +869,10 @@ function loadGame() {
 function autoSave() {
   try {
     saveGame()
-  } catch (e) {}
+  } catch (e) {
+    // 存檔失敗（配額/暫存不可寫）不阻斷遊戲 — 保留錯誤供除錯，非靜默忽略
+    console.warn('auto-save failed:', e)
+  }
 }
 
 // ═══════════════════════════════════════════════════════

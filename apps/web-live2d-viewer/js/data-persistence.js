@@ -104,7 +104,6 @@ class DataPersistence {
 
   delete(key, autoSave = true) {
     if (key in this.data) {
-      const value = this.data[key]
       delete this.data[key]
 
       try {

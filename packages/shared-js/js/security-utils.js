@@ -86,7 +86,7 @@ class SecurityUtils {
     // SQL 注入模式
     this.sqlInjectionPatterns = [
       /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|TRUNCATE|EXEC|UNION)\b)/gi,
-      /(\-\-)|(#)|(;)/g,
+      /(--)|(#)|(;)/g,
       /(\bOR\b|\bAND\b)\s*\d+\s*=\s*\d+/gi,
       /(\bOR\b|\bAND\b)\s*['"][\w\s]+['"]\s*=\s*['"][\w\s]+['"]/gi,
       /(\bOR\b|\bAND\b)\s*true\s*=\s*true/gi,

@@ -48,31 +48,6 @@ const inGame = new Set([
   'char_xiaowu',
 ])
 
-// Locations already in game
-const gameLocations = new Set([
-  'loc_holy_cross',
-  'loc_mirror_lake',
-  'loc_yuyu_mountain',
-  'loc_market',
-  'loc_fog_islands',
-  'loc_convenience_store',
-  'loc_forest',
-  'loc_hot_spring',
-  'loc_clear_stream',
-  'loc_mirror_mountain',
-  'loc_abandoned_mine',
-  'loc_hall_of_heroes',
-  'loc_rust_city',
-  'loc_library',
-  'loc_corridor',
-  'loc_witch_academy',
-  'loc_orbital_station',
-  'loc_frozen_wastes',
-  'loc_secret_ironworks',
-  'loc_agriculture',
-  'loc_west_market',
-])
-
 // Extract characters NOT in game
 const missingChars = cards.filter(
   (c) => c.card_id && c.card_id.match(/^CC-\d+$/) && !inGame.has(c.card_id)
@@ -103,7 +78,6 @@ missingChars.forEach((card) => {
   const abilityNames = abilities.map((a) => a.name)
 
   // Generate HP/ATK/DEF/SPD from tokens
-  const combatTokens = tokens.filter((t) => t.category === 'combat' || t.category === 'vitality')
   const hp = 80 + Math.floor(Math.random() * 40)
   const atk = 5 + Math.floor(Math.random() * 10)
   const def = 3 + Math.floor(Math.random() * 8)
@@ -111,7 +85,6 @@ missingChars.forEach((card) => {
 
   // Determine world line from tokens
   const slToken = tokens.find((t) => t.type === 'storyline')
-  const worldLine = slToken ? 'W01' : 'W01'
 
   // Generate a simple dialogue
   const dialogueId = `greeting_${id}`

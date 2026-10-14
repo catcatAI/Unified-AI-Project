@@ -3,13 +3,15 @@
  * ANGELA-MATRIX: L1-L6[All Layers] αβγδ [A/B/C] L2+
  * =============================================================================
  *
- * Responsibility: Manage 4D state matrix (αβγδ), update all dimensions in real-time
- * 维度: 涉及所有四个维度 (αβγδ)
- *   - α (Alpha): 生理维度 - energy, comfort, arousal, rest_need, vitality, tension
- *   - β (Beta): 认知维度 - curiosity, focus, confusion, learning, clarity, creativity
- *   - γ (Gamma): 物理维度 - happiness, sadness, anger, fear, surprise, disgust
- *   - δ (Delta): 精神维度 - mood, emotion, personality, wisdom, empathy
- * 安全: 跨所有安全层级 (A/B/C)
+ * Responsibility: Manage state matrix dimensions, update all axes in real-time
+ * 维度: 与后端 StateMatrix4D (DEFAULT_DIMENSIONS) 对齐 — 同一定义、两端同步
+ *   - α (Alpha): 生理 - energy, comfort, arousal, rest_need, vitality, tension
+ *   - β (Beta): 認知 - curiosity, focus, confusion, learning, clarity, creativity
+ *   - γ (Gamma): 情感 - happiness, sadness, anger, fear, disgust, surprise,
+ *                   trust, anticipation, love, calm
+ *   - δ (Delta): 社交 - attention, bond, trust, presence, engagement, intimacy
+ *   - ε/θ/ζ/η: 見各軸 values 定義（定義稽核 2026-10-14 對齊後端）
+ * 安全: 跨所有安全層級 (A/B/C)
  * 成熟度: L2+ 等级开始接触状态矩阵概念
  *
  * @class StateMatrix4D
@@ -21,7 +23,7 @@ class StateMatrix4D {
 
     this.alpha = {
       name: 'alpha',
-      cn_name: '生理维度',
+      cn_name: '生理',
       values: {
         energy: 0.5,
         comfort: 0.5,
@@ -36,7 +38,7 @@ class StateMatrix4D {
 
     this.beta = {
       name: 'beta',
-      cn_name: '认知维度',
+      cn_name: '認知',
       values: {
         curiosity: 0.5,
         focus: 0.5,
@@ -51,7 +53,7 @@ class StateMatrix4D {
 
     this.gamma = {
       name: 'gamma',
-      cn_name: '情感维度',
+      cn_name: '情感',
       values: {
         happiness: 0.5,
         sadness: 0.0,
@@ -70,7 +72,7 @@ class StateMatrix4D {
 
     this.delta = {
       name: 'delta',
-      cn_name: '社交维度',
+      cn_name: '社交',
       values: {
         attention: 0.5,
         bond: 0.5,
@@ -85,13 +87,13 @@ class StateMatrix4D {
 
     this.epsilon = {
       name: 'epsilon',
-      cn_name: '数理维度',
+      cn_name: '數理',
       values: {
         logic: 0.5,
         precision: 0.5,
         abstraction: 0.5,
         certainty: 0.5,
-        complexity: 0.0,
+        complexity: 0.5,
         fatigue: 0.0,
       },
       weight: config.epsilon_weight || 0.3,
@@ -100,11 +102,17 @@ class StateMatrix4D {
 
     this.theta = {
       name: 'theta',
-      cn_name: '元认知维度',
+      cn_name: '元認知',
       values: {
-        doubt: 0.0,
+        novelty: 0.5,
+        complexity: 0.5,
+        ambiguity: 0.5,
+        dimension_fit: 0.5,
+        creation_urge: 0.0,
         theta_negativity: 0.0,
+        correction_urge: 0.0,
         audit_intensity: 0.0,
+        doubt: 0.0,
         caution: 0.0,
         self_reflection: 0.5,
         meta_accuracy: 0.5,
@@ -115,12 +123,12 @@ class StateMatrix4D {
 
     this.zeta = {
       name: 'zeta',
-      cn_name: '敘事維度',
+      cn_name: '意識流',
       values: {
         temporal_coherence: 0.5,
-        memory_depth: 0.3,
+        memory_depth: 0.6,
         narrative_flow: 0.5,
-        identity_continuity: 0.5,
+        identity_continuity: 0.75,
       },
       weight: config.zeta_weight || 0.3,
       timestamp: Date.now(),
@@ -467,7 +475,6 @@ class StateMatrix4D {
       return
     }
 
-    const dim = this.dimensions[dimensionName]
     const avg = this.getDimensionAverage(dimensionName)
 
     for (const [threshold, callback] of this.thresholdCallbacks[dimensionName]) {
@@ -528,7 +535,6 @@ class StateMatrix4D {
 
       // 呼吸頻率與深度：能量與覺醒度越高，呼吸越急促
       const breathFrequency = 0.5 + energy * 1.5
-      const breathDepth = 0.5 + arousal * 0.5
 
       // 假設 Live2DManager 支援這些抽象設置，或直接設置參數
       this.live2DManager.setParameter('ParamBreath', breathFrequency)
@@ -618,7 +624,7 @@ class StateMatrix4D {
   /**
    * 根據主導情緒應用 fallback 模式的立繪表情（舊版，保留兼容）
    */
-  _applyFallbackExpression(dominantEmotion) {
+  _applyFallbackExpression(_dominantEmotion) {
     // 使用新的三層渲染系統
     this._applyFallbackLayers()
   }
@@ -1415,7 +1421,7 @@ class StateMatrix4D {
     }
   }
 
-  handleInteractionDrag(data) {
+  handleInteractionDrag(_data) {
     try {
       this.updateDelta({ attention: 1.0, engagement: 0.9 })
       this.updateBeta({ focus: 0.7 })
@@ -1444,7 +1450,7 @@ class StateMatrix4D {
     }
   }
 
-  handleInteractionTouch(data) {
+  handleInteractionTouch(_data) {
     try {
       this.updateAlpha({ comfort: Math.min(1, this.alpha.values.comfort + 0.1) })
       this.updateDelta({ intimacy: Math.min(1, this.delta.values.intimacy + 0.15) })

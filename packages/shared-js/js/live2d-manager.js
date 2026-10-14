@@ -229,7 +229,7 @@ class Live2DManager {
     checkAndInit()
   }
 
-  _initializeWithSDK(CubismCore) {
+  _initializeWithSDK(_CubismCore) {
     this.isFramework = true
     this.isFallback = false
 
@@ -952,7 +952,7 @@ class Live2DManager {
     this.parameters.ParamEyeROpen = this.fallbackState.eyeOpenness
   }
 
-  _updateBreathing(deltaTime) {
+  _updateBreathing(_deltaTime) {
     const time = performance.now() / 1000
     this.parameters.ParamBreath = Math.sin(time * 2) * 0.1
   }

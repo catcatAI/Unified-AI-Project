@@ -38,7 +38,7 @@
 
     setTimeout(
       () => {
-        dialogue.choices.forEach((choice, idx) => {
+        dialogue.choices.forEach((choice, _idx) => {
           const btn = document.createElement('button')
           btn.className = 'dialog-choice'
 

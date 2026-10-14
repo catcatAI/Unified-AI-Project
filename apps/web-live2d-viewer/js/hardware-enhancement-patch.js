@@ -208,7 +208,7 @@
       return currentMode
     }
 
-    detector._optimizeRenderQualityForIntegrated = function (currentQuality, gpuType) {
+    detector._optimizeRenderQualityForIntegrated = function (currentQuality, _gpuType) {
       // 为核显适当降低质量设置
       if (currentQuality.resolution === '4K') {
         return { ...currentQuality, resolution: '1440p' }

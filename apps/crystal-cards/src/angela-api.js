@@ -18,7 +18,7 @@ class AngelaGameAPI {
   async connect() {
     try {
       this.ws = new WebSocket(this.wsUrl)
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve, _reject) => {
         this.ws.onopen = () => {
           // Send handshake
           this.ws.send(
@@ -85,7 +85,7 @@ class AngelaGameAPI {
   /**
    * Generate ambient description for a location
    */
-  async generateAmbience(locationName, timeOfDay, weather = 'clear') {
+  async generateAmbience(locationName, timeOfDay, _weather = 'clear') {
     if (!this.connected) {
       return this._fallbackAmbience(locationName, timeOfDay)
     }
@@ -149,7 +149,7 @@ class AngelaGameAPI {
 
   // ── Fallbacks (when Angela is offline) ──
 
-  _fallbackDialogue(characterName, playerInput) {
+  _fallbackDialogue(characterName, _playerInput) {
     const responses = {
       晞咕萊雅: '她看著你，沒有說話。',
       紅: '「嗯？」',

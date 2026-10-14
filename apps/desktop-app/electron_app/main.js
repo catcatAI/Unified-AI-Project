@@ -7,8 +7,6 @@ const {
   systemPreferences,
   nativeTheme,
   Menu,
-  Tray,
-  nativeImage,
   protocol,
   dialog,
 } = require('electron')
@@ -33,7 +31,6 @@ process.on('uncaughtException', (err) => {
 })
 
 // Import Live2D Cubism Web SDK (will be loaded via CDN or local)
-const LIVE2D_VERSION = '5.0.0'
 
 // Single instance lock - prevent multiple instances from starting
 const gotTheLock = app.requestSingleInstanceLock()
@@ -47,12 +44,11 @@ if (!gotTheLock) {
 let mainWindow
 let settingsWindow
 let isDevMode = false
-let modelPath = null
 let currentWallpaper = null
 let currentWallpaperMode = '2D'
 let currentPerformanceMode = 'standard'
 let backendIP = '127.0.0.1'
-let moduleStates = {
+const moduleStates = {
   vision: true,
   audio: true,
   tactile: true,
@@ -115,7 +111,7 @@ function saveSettings(settings) {
 let globalSettings = loadSettings()
 
 // When a second instance tries to start, focus the existing window
-app.on('second-instance', (event, commandLine, workingDirectory) => {
+app.on('second-instance', (_event, _commandLine, _workingDirectory) => {
   log.info('[Main] Second instance detected, focusing existing window')
 
   // FIX: Check if mainWindow exists and is valid before accessing
@@ -290,7 +286,7 @@ app.on('window-all-closed', () => {
   }
 })
 
-app.on('before-quit', (e) => {
+app.on('before-quit', (_e) => {
   // Clean up before quit
   if (tray) {
     tray.destroy()
@@ -512,7 +508,7 @@ function buildContextMenuTemplate() {
       label: 'Auto-startup',
       type: 'checkbox',
       checked: getAutoStartupStatus(),
-      click: (item) => {
+      click: (_item) => {
         const currentStatus = getAutoStartupStatus()
         setAutoStartup(!currentStatus)
         createTray() // Refresh tray menu
@@ -546,7 +542,7 @@ function buildContextMenuTemplate() {
  * 把右鍵選單掛到某個視窗（安全檢查 + 錯誤記錄）。
  */
 function attachContextMenu(win) {
-  win.webContents.on('context-menu', (event, params) => {
+  win.webContents.on('context-menu', (event, _params) => {
     event.preventDefault()
     try {
       const contextMenu = buildContextMenuTemplate()
@@ -632,7 +628,7 @@ function createMainWindow() {
   // Log console messages from renderer (rate-limited to prevent log floods)
   let _consoleCount = 0
   let _consoleLastLog = 0
-  mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
+  mainWindow.webContents.on('console-message', (event, level, message, _line, _sourceId) => {
     if (mainWindow.isDestroyed()) return
     if (message.includes('[Renderer]')) return
     if (level >= 3) {
@@ -1031,12 +1027,6 @@ function setRenderMode(mode) {
 function toggleModule(module, enabled) {
   moduleStates[module] = enabled
   sendToMainWindow('module-toggle', { module, enabled })
-  createTray() // Refresh menu
-}
-
-function setBackendIP(ip) {
-  backendIP = ip
-  sendToMainWindow('backend-ip-changed', ip)
   createTray() // Refresh menu
 }
 
@@ -1521,7 +1511,7 @@ async function getSystemWallpaper() {
   } else if (process.platform === 'darwin') {
     const { exec } = require('child_process')
     return new Promise((resolve) => {
-      exec('defaults read com.apple.desktop Background', (error) => {
+      exec('defaults read com.apple.desktop Background', (_error) => {
         // macOS wallpaper detection is complex, simplify for now
         resolve(null)
       })
@@ -1614,16 +1604,11 @@ let wsSessionInfo = null // Store session info for reconnect
 let wsReconnectTimer = null
 let wsReconnectAttempts = 0
 let wsHeartbeatInterval = null
-const WS_MAX_RECONNECT_ATTEMPTS = 5
-const WS_RECONNECT_DELAY = 3000
 
 // WebSocketConnection (websocket-wrapper.js) exposes state constants only as
 // *instance* properties (this.OPEN = 1, ...), so there is no static
 // WebSocket.OPEN. Use module-level numeric constants for state checks.
-const WS_STATE_CONNECTING = 0
 const WS_STATE_OPEN = 1
-const WS_STATE_CLOSING = 2
-const WS_STATE_CLOSED = 3
 
 function connectWebSocket(url, sessionInfo) {
   log.info('[Main] connectWebSocket() called with:', url, 'session:', sessionInfo)
@@ -1735,7 +1720,6 @@ function connectWebSocket(url, sessionInfo) {
 
     wsClient.on('close', (code, reason) => {
       log.info(`[WebSocket] Closed: ${code} - ${reason}`)
-      const oldClient = wsClient
       wsClient = null
 
       if (wsHeartbeatInterval) {
@@ -1836,7 +1820,7 @@ ipcMain.handle('plugins-list', () => {
     const files = fs.readdirSync(pluginDir).filter((f) => f.endsWith('.js'))
     return files.map((f) => {
       const p = path.join(pluginDir, f)
-      const code = fs.readFileSync(p, 'utf-8')
+      fs.readFileSync(p, 'utf-8')
       const name = f.replace(/\.js$/, '')
       return { name, path: p }
     })
@@ -1849,7 +1833,7 @@ ipcMain.handle('plugins-list', () => {
 function safePluginName(name) {
   // Path traversal guard: reject names with slashes, backslashes, dots, or non-ASCII
   if (!name || typeof name !== 'string') return null
-  if (/[\\/\.\x00-\x1f]/.test(name) || !/^\w[\w-]*$/.test(name)) return null
+  if (/[\\/.\x00-\x1f]/.test(name) || !/^\w[\w-]*$/.test(name)) return null
   return path.join(pluginDir, `${name}.js`)
 }
 

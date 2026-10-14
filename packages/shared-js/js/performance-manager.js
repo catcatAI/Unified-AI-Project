@@ -865,7 +865,6 @@ class PerformanceManager {
     this.lastAutoConfigureTime = now
 
     const ram = this.hardwareProfile.ram_gb || 4
-    const gpu = this.hardwareProfile.gpu_info ? this.hardwareProfile.gpu_info.name : ''
     const level = this.currentMode
 
     console.log(`Auto-configuring modules for ${level} mode on ${ram}GB RAM...`)
@@ -899,9 +898,6 @@ class PerformanceManager {
 
     const canvas = document.querySelector('#live2d-canvas')
     if (!canvas) return
-
-    const targetWidth = canvas.clientWidth * this.resolutionScale
-    const targetHeight = canvas.clientHeight * this.resolutionScale
 
     if (this.live2DManager) {
       this.live2DManager.setResolutionScale(this.resolutionScale)

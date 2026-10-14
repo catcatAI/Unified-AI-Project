@@ -31,11 +31,10 @@
  */
 
 // 获取Angela角色配置（如果已加载）
-const ANGELA_CONFIG =
-  typeof window.ANGELA_CHARACTER_CONFIG !== 'undefined' ? window.ANGELA_CHARACTER_CONFIG : null
+typeof window.ANGELA_CHARACTER_CONFIG !== 'undefined' ? window.ANGELA_CHARACTER_CONFIG : null
 
 class UnifiedDisplayMatrix {
-  constructor(options = {}) {
+  constructor(_options = {}) {
     // ============================================================
     // 基础配置 (720p = 100%)
     // ============================================================
@@ -651,7 +650,7 @@ class UnifiedDisplayMatrix {
       case 'screen':
         // 屏幕坐標通常沒有明確範圍限制
         break
-      case 'canvas':
+      case 'canvas': {
         // Canvas 坐標應在 0 到 baseWidth/baseHeight 之間
         const baseWidth = this.currentState.baseWidth
         const baseHeight = this.currentState.baseHeight
@@ -660,7 +659,8 @@ class UnifiedDisplayMatrix {
           result.error = `坐標超出 Canvas 範圍 [0,0]-[${baseWidth},${baseHeight}]`
         }
         break
-      case 'resource':
+      }
+      case 'resource': {
         // 資源坐標範圍取決於當前精度
         const precision = this.resourceMatrix[this.currentState.resourcePrecision]
         if (x < 0 || x > precision.width || y < 0 || y > precision.height) {
@@ -668,6 +668,7 @@ class UnifiedDisplayMatrix {
           result.error = `坐標超出資源範圍 [0,0]-[${precision.width},${precision.height}]`
         }
         break
+      }
     }
 
     return result
@@ -947,7 +948,7 @@ class UnifiedDisplayMatrix {
    * @param {object} touchSize - 触摸区域大小 (像素)
    * @returns {number} - 调整后的触觉强度 (0-1)
    */
-  calculateHapticIntensity(baseIntensity, touchPosition = null, touchSize = null) {
+  calculateHapticIntensity(baseIntensity, _touchPosition = null, touchSize = null) {
     // 基准触摸区域 (100% 缩放下的 40×40 像素)
     const baseTouchArea = 40 * 40
 

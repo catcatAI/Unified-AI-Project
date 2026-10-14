@@ -44,7 +44,6 @@ class Logger {
 
   _formatMessage(level, message, data) {
     const timestamp = new Date().toISOString()
-    const prefix = `${this.config.prefix} [${level.toUpperCase()}]`
     return { timestamp, level, message, data }
   }
 

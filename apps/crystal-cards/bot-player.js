@@ -43,7 +43,7 @@ const engineRaw = fs.readFileSync(path.join(__dirname, 'src', 'game-engine.js'),
 eval(engineRaw)
 
 const E = window.GameEngine
-const { CARDS, WORLD_LINES } = window.CARDS_DATA
+const { CARDS } = window.CARDS_DATA
 
 // ═══════════════════════════════════════════════════════
 // Angela AI Client
@@ -362,7 +362,7 @@ async function executeDecision(decision, state) {
         if (recipe.output.startsWith('item_') || recipe.output.startsWith('res_')) {
           E.addToInventory(recipe.output, recipe.count)
         } else {
-          const card = E.createBoardCard(recipe.output, 300, 200)
+          E.createBoardCard(recipe.output, 300, 200)
         }
         const t = E.getCardTemplate(recipe.output)
         logEvent(
@@ -391,7 +391,7 @@ function handleStackResult(result, state) {
       autoAdvanceDialogue(result.dialogueId, state)
       break
     }
-    case 'combat':
+    case 'combat': {
       logEvent(state.day, state.timeOfDay, 'combat', `Combat with ${result.defender?.name}`)
       const combatResult = E.executeCombat(
         result.attacker,
@@ -403,6 +403,7 @@ function handleStackResult(result, state) {
         report.combatLog.push({ day: state.day, text: r.text, type: r.type })
       })
       break
+    }
     case 'craft':
       logEvent(state.day, state.timeOfDay, 'craft', result.message)
       break

@@ -9,7 +9,6 @@
 
   // ── DOM refs ──
   const board = document.getElementById('board')
-  const sidebarContent = document.getElementById('sidebar-content')
   const availableCards = document.getElementById('available-cards')
   const inventoryCards = document.getElementById('inventory-cards')
   const dayDisplay = document.getElementById('day-display')
@@ -32,7 +31,7 @@
   const cardElements = new Map() // cardId -> DOM element
 
   // ── Drag state ──
-  let dragState = {
+  const dragState = {
     active: false,
     cardId: null,
     offsetX: 0,
@@ -181,8 +180,8 @@
     if (!card) return
 
     const boardPos = clientToBoard(e.clientX, e.clientY)
-    let newX = boardPos.x - dragState.offsetX
-    let newY = boardPos.y - dragState.offsetY
+    const newX = boardPos.x - dragState.offsetX
+    const newY = boardPos.y - dragState.offsetY
 
     // Clamp to board bounds — prevent dragging off-screen
     const clamped = clampToBoard(newX, newY)
@@ -227,7 +226,7 @@
     }
   }
 
-  function onDragEnd(e) {
+  function onDragEnd(_e) {
     document.removeEventListener('mousemove', onDragMove)
     document.removeEventListener('mouseup', onDragEnd)
 
