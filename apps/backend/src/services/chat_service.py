@@ -165,7 +165,11 @@ class ChatService:
                 from services.llm import router as _router
 
                 llm = _router._llm_service
-            except Exception:
+            except Exception as exc:
+                # 曾有同类 bug 让 HAM 活着却被报成未初始化（见 docstring）—必须留痕
+                logger.warning(
+                    "memory_manager probe failed (llm router unavailable): %s", exc, exc_info=True
+                )
                 return None
         return getattr(llm, "memory_manager", None)
 

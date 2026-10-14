@@ -283,7 +283,10 @@ class FileOperationHandler:
         limit_mb = max_file_write_mb()
         try:
             existing = target.stat().st_size if target.exists() else 0
-        except OSError:
+        except OSError as exc:
+            # stat 失敗時無法驗證既有大小（50MB 闘門對該次追加是盲的）；
+            # 不可存取路徑會在隨後 open() 拋錯並傳達給呼叫端，此處必須留痕
+            logger.warning("Cannot stat %s for append size check: %s", target, exc)
             existing = 0
         size = existing + len(content.encode("utf-8"))
         if size > limit_mb * 1024 * 1024:

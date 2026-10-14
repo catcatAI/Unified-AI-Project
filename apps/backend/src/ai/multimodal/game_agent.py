@@ -49,6 +49,30 @@ from .visual_encoder import VisualEncoder
 
 logger = logging.getLogger(__name__)
 
+# =============================================================================
+# ANGELA-MATRIX: [L4-L5] [αβγδ] [B] [L3]
+# =============================================================================
+# 背景任务追踪：持强引用防 GC + done 回调记录失败（对照 chat_routes.py
+# _spawn_background_task 范式）。裸 asyncio.create_task 的异常永不被
+# retrieve —重规划/经验入库失败等于零日志（本模块 :294/:386 即此类）。
+_background_tasks: set = set()
+
+
+def _track_background(coro, what: str) -> "asyncio.Task":
+    task = asyncio.create_task(coro)
+    _background_tasks.add(task)
+
+    def _done(t: "asyncio.Task") -> None:
+        _background_tasks.discard(t)
+        if t.cancelled():
+            return
+        exc = t.exception()
+        if exc is not None:
+            logger.warning("Background task %s failed: %s", what, exc, exc_info=exc)
+
+    task.add_done_callback(_done)
+    return task
+
 
 @dataclass
 class GameAgentConfig:
@@ -291,7 +315,7 @@ class GameAgent:
         """L2 請求重規劃回調"""
         logger.info(f"Replan requested for {task_id}: {blocker}")
         # 觸發 L3 重規劃 (非阻塞)
-        asyncio.create_task(self._replan(blocker))
+        _track_background(self._replan(blocker), "replan")
 
     async def _replan(self, blocker: str):
         """重規劃"""
@@ -383,7 +407,7 @@ class GameAgent:
 
                 # 10. 記憶存儲 (非阻塞)
                 if self._tick % 100 == 0:
-                    asyncio.create_task(self._store_experience())
+                    _track_background(self._store_experience(), "store_experience")
 
                 # 11. Tick 計數與限制
                 self._tick += 1
@@ -651,7 +675,7 @@ async def main():
     # 信號處理
     loop = asyncio.get_running_loop()
     for sig in (signal.SIGINT, signal.SIGTERM):
-        loop.add_signal_handler(sig, lambda: asyncio.create_task(agent.shutdown()))
+        loop.add_signal_handler(sig, lambda: _track_background(agent.shutdown(), "shutdown"))
 
     await agent.run()
 

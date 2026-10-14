@@ -1150,7 +1150,12 @@ class AngelaAutonomousAgent:
                 return False
             norm = normalize_inventory(inv)
             return all(norm.get(ing, 0) >= cnt for ing, cnt in rec.ingredients.items())
-        except Exception:
+        except Exception as exc:
+            # fail-open 是 docstring 契约（保持不变）；但异常原因必须留痕，
+            # 否则配方/库存桥的真 bug 会静默放行一切 craft
+            logger.warning(
+                "craftable check failed for %r, failing open: %s", rid, exc, exc_info=True
+            )
             return True
 
     def _queue_skill(self, skill_ctx: SkillContext):

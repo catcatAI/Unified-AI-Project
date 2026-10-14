@@ -52,7 +52,10 @@ def _cfg_get(key: str, default=None):
         from core.system.config.magic_numbers import _get
 
         return _get(key, default)
-    except Exception:
+    except Exception as exc:
+        # 读不到配置会静默换默认值 —若 magic_numbers 本身坏了，GARDEN 会
+        # 一直跑在错误参数上且零日志
+        logger.warning("tiered config read failed for %r, using default: %s", key, exc)
         return default
 
 

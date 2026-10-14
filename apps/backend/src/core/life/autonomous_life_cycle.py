@@ -101,6 +101,13 @@ def _repo_root_state_path() -> str:
     try:
         return str(Path(__file__).resolve().parents[5] / "data" / "autonomous_lifecycle_state.json")
     except Exception:
+        # 回落 cwd 相对路径 = 跨进程生命状态可能写到别处静默分叉
+        # （主 server 与 game agent 两个进程的 lifecycle 从此看不见彼此）
+        logger.warning(
+            "Cannot resolve repo-root lifecycle path; falling back to cwd-relative path "
+            "(cross-process lifecycle state may diverge)",
+            exc_info=True,
+        )
         return "data/autonomous_lifecycle_state.json"
 
 

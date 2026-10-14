@@ -727,7 +727,15 @@ class Backbone:
         if res is not None and hasattr(res, "access"):
             try:
                 return res.access(*args, **kwargs)
-            except Exception:
+            except Exception as exc:
+                # 嵌套层异常降级返回中间对象（语义不变，依原契约）；留痕，
+                # 否则下游把中间对象当叶子用时只剩不可解的 AttributeError
+                logger.warning(
+                    "nested access failed for %r, returning intermediate: %s",
+                    key,
+                    exc,
+                    exc_info=True,
+                )
                 return res
         return res
 

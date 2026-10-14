@@ -1751,7 +1751,12 @@ class AngelaLLMService:
                                 timeout=timeout_value("llm.health_check", 5.0),
                                 label=f"health:{bt.value}",
                             )
-                        except Exception:
+                        except Exception as exc:
+                            # 抛错（崩溃/超时）≠ 不健康：静默会把后端真故障伪装成
+                            # 正常判否，故障排查全靠猜
+                            logger.warning(
+                                "check_health crashed for %s: %s", bt.value, exc, exc_info=True
+                            )
                             healthy = False
                         if healthy:
                             _, fparams = await self._prepare_generation_context(
@@ -2172,7 +2177,10 @@ class AngelaLLMService:
                     timeout=timeout_value("llm.health_check", 5.0),
                     label=f"health:{bt.value}",
                 )
-            except Exception:
+            except Exception as exc:
+                logger.warning(
+                    "check_health crashed during ranking for %s: %s", bt.value, exc, exc_info=True
+                )
                 ok = False
             return ok
 

@@ -370,7 +370,10 @@ class GateExecutionOwner:
                 if getattr(btype, "value", str(btype)) != "unified":
                     return True
             return False
-        except Exception:
+        except Exception as exc:
+            # 探针异常 ≠ 后端不健康：静默会把代码写入请求错误拦回旧的
+            # “请确认”行为，且外层 chat_routes 的 warning 永不可达
+            logger.warning("_llm_generation_available probe failed: %s", exc, exc_info=True)
             return False
 
     def _intent_registry_confirms(self, user_message: str, handler: Optional[str]) -> bool:

@@ -41,8 +41,13 @@ def load_preset(name: str) -> Dict[str, Any]:
         with open(path, encoding="utf-8") as f:
             data = yaml.safe_load(f) or {}
         return _expand(data) if isinstance(data, dict) else {}
+    except FileNotFoundError:
+        logger.debug("preset %s not present (using hardcoded defaults)", name)
+        return {}
     except Exception as exc:
-        logger.debug("preset %s unavailable: %s", name, exc)
+        # preset 損坏时 prompt 框架静默回硬编码默认 —root logger INFO 会吞掉
+        # debug，必须 warning 才可见（缺席文件本身是正常情况，另行 debug）
+        logger.warning("preset %s unreadable, falling back to hardcoded defaults: %s", name, exc)
         return {}
 
 

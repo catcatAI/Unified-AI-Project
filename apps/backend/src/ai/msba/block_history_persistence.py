@@ -120,7 +120,12 @@ class BlockHistoryPersistence:
                 data: Any = json.load(f)
             selection_log: List[dict] = list(data.get("selection_log", []))
             return selection_log
-        except Exception:
+        except Exception as exc:
+            # JSON 损坏时静默清空 = 选择历史无声丢失，下次 append 也会
+            # 基于已消失的 log 继续写
+            logger.error(
+                "selection log unreadable at %s, starting empty: %s", path, exc, exc_info=True
+            )
             return []
 
     def append_selection(

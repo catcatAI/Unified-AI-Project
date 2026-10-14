@@ -65,7 +65,7 @@ class BackboneState:
         try:
             data = self._store.get_state(domain) or {}
         except Exception as e:
-            logger.debug(f"state get {domain} failed: {e}", exc_info=True)
+            logger.warning(f"state get {domain} failed: {e}", exc_info=True)
             return default
         if key is None:
             return data
@@ -79,7 +79,7 @@ class BackboneState:
             self._store.update_state(domain, data, notify=notify)
             return True
         except Exception:
-            logger.debug(f"state update {domain} failed", exc_info=True)
+            logger.warning(f"state update {domain} failed", exc_info=True)
             return False
 
     def set(self, domain: str, key: str, value: Any, notify: bool = True) -> bool:
@@ -93,7 +93,7 @@ class BackboneState:
             data = self._store.get_state(None) or {}
             return list(data.keys())
         except Exception:
-            logger.debug("state domain_keys failed", exc_info=True)
+            logger.warning("state domain_keys failed", exc_info=True)
             return []
 
     def subscribe(self, domain: str, callback: Callable) -> bool:
@@ -104,7 +104,7 @@ class BackboneState:
             self._store.subscribe(domain, callback)
             return True
         except Exception:
-            logger.debug(f"state subscribe {domain} failed", exc_info=True)
+            logger.warning(f"state subscribe {domain} failed", exc_info=True)
             return False
 
     def unsubscribe(self, domain: str, callback: Optional[Callable] = None) -> bool:
@@ -117,7 +117,7 @@ class BackboneState:
         try:
             return bool(self._store.unsubscribe(domain, callback))
         except Exception:
-            logger.debug(f"state unsubscribe {domain} failed", exc_info=True)
+            logger.warning(f"state unsubscribe {domain} failed", exc_info=True)
             return False
 
     def emit_event(self, event_type: str, data: Dict[str, Any]) -> bool:
@@ -128,7 +128,7 @@ class BackboneState:
             self._store.emit_event(event_type, data)
             return True
         except Exception:
-            logger.debug(f"state emit_event {event_type} failed", exc_info=True)
+            logger.warning(f"state emit_event {event_type} failed", exc_info=True)
             return False
 
     # ------------------------------------------------------------------
@@ -170,7 +170,7 @@ class BackboneState:
                 update_method(**{key: value})
                 return True
             except Exception:
-                logger.debug(f"axis update {axis}.{key} failed", exc_info=True)
+                logger.warning(f"axis update {axis}.{key} failed", exc_info=True)
                 return False
         return False
 
@@ -187,6 +187,6 @@ class BackboneState:
                 update_method(**data)
                 return True
             except Exception:
-                logger.debug(f"axis bulk update {axis} failed", exc_info=True)
+                logger.warning(f"axis bulk update {axis} failed", exc_info=True)
                 return False
         return False
