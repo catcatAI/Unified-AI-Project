@@ -303,11 +303,16 @@ class TestRendererEventChannels:
         """The allowlist may exceed reality, but not silently.
 
         `performance-auto-adjust` and `websocket-send-result` are allowlisted and
-        have neither a sender nor a subscriber today. They are recorded here so
-        the pair cannot grow unnoticed.
+        have neither a sender nor a subscriber today (websocket-send-result's
+        `event.reply` in main.js is invisible to the producer scan by design —
+        the record tracks scan-truth). `backend-ip-changed` joined on 2026-10-14
+        when its only sender, the zero-caller `setBackendIP()` in main.js, was
+        removed as dead code. They are recorded here so the set cannot grow
+        unnoticed.
         """
         unused = sorted(self._allowlist() - self._producers())
         assert unused == [
+            "backend-ip-changed",
             "performance-auto-adjust",
             "websocket-send-result",
         ], "allowlisted channels with no sender changed; update this record"
