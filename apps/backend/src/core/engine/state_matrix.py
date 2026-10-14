@@ -154,10 +154,21 @@ class StateMatrix4D:
         dim_defs = matrix_conf.get("dimensions", {})
 
         # 默認維度定義（當配置中無定義時使用）
+        # 2026-10-14 定義稽核：本字典為「live 定義源」，須涵蓋所有實際使用中的槽
+        # （座標讀取器、INFLUENCE_RULES、_AXIS_SCHEMA、update_* 呼叫、JS 鏡像同步），
+        # 與 configs/standard/matrix/matrix.default.yaml、packages/shared-js 的
+        # state-matrix.js 三處對齊 — 見 docs/06-project-management/fixes/DEFINITIONS_AUDIT_2026-10-14.md
         DEFAULT_DIMENSIONS = {
             "alpha": {
                 "cn_name": "生理",
-                "initial_values": {"energy": 0.5, "comfort": 0.5, "arousal": 0.5, "rest_need": 0.5},
+                "initial_values": {
+                    "energy": 0.5,
+                    "comfort": 0.5,
+                    "arousal": 0.5,
+                    "rest_need": 0.5,
+                    "vitality": 0.5,
+                    "tension": 0.0,
+                },
             },
             "beta": {
                 "cn_name": "認知",
@@ -166,6 +177,8 @@ class StateMatrix4D:
                     "focus": 0.5,
                     "confusion": 0.0,
                     "learning": 0.5,
+                    "clarity": 0.5,
+                    "creativity": 0.5,
                 },
             },
             "gamma": {
@@ -179,11 +192,20 @@ class StateMatrix4D:
                     "surprise": 0.0,
                     "trust": 0.5,
                     "anticipation": 0.5,
+                    "love": 0.0,
+                    "calm": 0.5,
                 },
             },
             "delta": {
                 "cn_name": "社交",
-                "initial_values": {"attention": 0.5, "bond": 0.5, "trust": 0.5, "presence": 0.5},
+                "initial_values": {
+                    "attention": 0.5,
+                    "bond": 0.5,
+                    "trust": 0.5,
+                    "presence": 0.5,
+                    "engagement": 0.5,
+                    "intimacy": 0.0,
+                },
             },
             "epsilon": {
                 "cn_name": "數理",
@@ -207,6 +229,11 @@ class StateMatrix4D:
                     "theta_negativity": 0.0,
                     "correction_urge": 0.0,
                     "audit_intensity": 0.0,
+                    # 自我監控槽（與 JS 鏡像、theta_router 測試對齊）
+                    "doubt": 0.0,
+                    "caution": 0.0,
+                    "self_reflection": 0.5,
+                    "meta_accuracy": 0.5,
                 },
             },
             "zeta": {
@@ -214,8 +241,10 @@ class StateMatrix4D:
                 "initial_values": {
                     "narrative_flow": 0.5,
                     "temporal_coherence": 0.5,
-                    "identity": 0.5,
-                    "memory_access": 0.5,
+                    # 舊名 identity/memory_access 零讀寫者 → 對齊座標讀取器、
+                    # INFLUENCE_RULES 與 JS 鏡像的正式槽名
+                    "identity_continuity": 0.75,
+                    "memory_depth": 0.6,
                 },
             },
         }

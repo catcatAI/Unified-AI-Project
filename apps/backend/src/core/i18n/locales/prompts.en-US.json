@@ -88,9 +88,5 @@
   "angela.note_no_disturb": "Do not disturb the user too much",
   "angela.note_prioritize": "Prioritize the user emotions and needs",
   "angela.note_emotional_memory": "Reference emotional memories to make decisions consistent with past experience",
-  "angela.note_offline": "When user is offline, unless necessary, choose none",
-  "angela.planning_error": "A logic error was discovered during the planning process: {error}.",
-  "angela.generation_error": "Sorry, a problem was encountered during generation...",
-  "angela.decompose_prompt": "You are a task planning expert. Break down the user\\'s complex request into subtasks.\nAvailable capabilities: {capabilities}\nUser request: {user_query}\nPlease output a JSON-formatted subtask list, each task containing:\n  - capability_needed: required capability name\n  - task_parameters: task parameters (can include \\'<output_of_task_N>\\' references to prior results)\n  - task_description: task description\nOutput only JSON in the format: [{{...}}, ...]",
-  "angela.integrate_prompt": "User\\'s original request: {original_query}\n\nSubtask results:\n{results}\n\nPlease integrate these results into a complete, coherent response that directly addresses the user\\'s original request. If the results are incomplete, explain the reason and provide reasonable supplementary information."
+  "angela.note_offline": "When user is offline, unless necessary, choose none"
 }

@@ -371,6 +371,10 @@ class EmotionSystem:
             "sensitivity": (-0.1, 0.1, -0.1),
             "boost": (0.2, 0.1, 0.1),
             "negative_thought": (-0.3, 0.1, -0.2),
+            # 定義稽核：trust 為 process_interaction_feedback 中性回饋分支的
+            # 呼叫類型，先前未定義 → PAD 漂移靜默 no-op。係數為設計者 heuristic
+            # （同 oxytocin 型：正效價、低喚醒、微增支配感）。
+            "trust": (0.3, -0.1, 0.1),
         }
 
         d_valence, d_arousal, d_dominance = influence_map.get(type, (0.0, 0.0, 0.0))

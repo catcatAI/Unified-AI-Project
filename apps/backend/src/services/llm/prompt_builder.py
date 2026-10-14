@@ -443,6 +443,9 @@ def get_biological_state(context=None) -> str:
                 parts.append(prompt("angela.bio.emotion", value=bio["dominant_emotion"]))
             if parts:
                 return "、".join(parts)
+            if not bio:
+                # 空 bio dict → 使用已註冊但先前未接線的定義（定義稽核 2026-10-14）
+                return prompt("angela.bio.uninitialized")
         return str(bio)
 
     # Priority 2: File-based state (fallback)

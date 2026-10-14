@@ -41,7 +41,7 @@ evolve, and interact with its environment.
 Angela's primary inference engine — a hybrid SNN (Spiking Neural Network) +
 dictionary-lookup system for low-latency local reasoning. Uses trie-based reflex
 tables, LRU-cached dictionary encoding, and continuous learning pipelines.
-~5,500 lines across 26 files.
+~7,500 lines across 26 files.
 
 ### Environment Simulator
 
@@ -56,9 +56,10 @@ in a dual-loop with θ (cognitive layer).
 ### 8D State Matrix (理想目標) / StateMatrix4D (實際)
 
 The expanded state matrix (αβγδεθζη) that drives Angela's autonomous behavior.
-**實際代碼**: `StateMatrix4D` class (`core/engine/state_matrix.py`, 1,244 行,
-6 軸 αβγδεθ) + `DimensionState` 結構體。8 軸規格（含 ζ Connectivity + η
-Execution）為理想架構目標，尚未完全實作。
+**實際代碼**: `StateMatrix4D` class (`core/engine/state_matrix.py`, 1,751 行,
+7 軸 αβγδεθζ) + `DimensionState` 結構體。8 軸規格（+ η
+Execution）為理想架構目標：ζ 已實作；η 在 Python 為獨立子系統
+`eta_axis.py`、在 JS 鏡像為矩陣第 8 軸。
 
 ## G
 
@@ -66,13 +67,13 @@ Execution）為理想架構目標，尚未完全實作。
 
 Lightweight local inference engine complementing ED3N. Provides vector semantic
 search via `VectorDictionary` (+ optional SentenceTransformer) and sparse SNN
-inference via `TensorSNNCore`. ~2,600 lines across 9 files. Dual-backend (torch
+inference via `TensorSNNCore`. ~6,000 lines across 9 files. Dual-backend (torch
 or numpy) for cross-platform compatibility.
 
 ### GVV (Geometric Vocabulary Vector)
 
 Compositional image generation pipeline: ConceptMapper → GeometricVocabulary →
-InstanceOptimizer → LearnableDecomposer → PixelRefiner. 14 source files, ~62
+InstanceOptimizer → LearnableDecomposer → PixelRefiner. 16 source files, 85
 tests. Part of the primitives system under `ai/multimodal/primitives/`.
 
 ## H

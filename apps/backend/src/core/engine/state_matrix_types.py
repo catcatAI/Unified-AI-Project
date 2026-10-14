@@ -157,7 +157,9 @@ class DimensionState:
         elif n == "epsilon":
             logic = v.get("logic", 0.5)
             precision = v.get("precision", 0.5)
-            abstraction = v.get("abstraction_level", v.get("abstraction", 0.5))
+            # 定義稽核：abstraction_level 為 YAML 草稿槽，epsilon 從未持有 —
+            # 統一讀正式槽 abstraction（舊的雙讀寫法永遠只會落到 fallback）。
+            abstraction = v.get("abstraction", 0.5)
             certainty = v.get("certainty", 0.5)
             fatigue = v.get("fatigue", 0.0)
             x = (logic + precision) / 2.0 * 5.0
@@ -197,8 +199,17 @@ class DimensionState:
         return max(self.values.items(), key=lambda x: x[1])
 
     def update(self, **kwargs) -> None:
-        """更新维度值 / Update dimension values"""
+        """更新維度值 / Update dimension values"""
+        dropped = [k for k in kwargs if k not in self.values]
         for key, value in kwargs.items():
             if key in self.values:
                 self.values[key] = max(0.0, min(1.0, float(value)))
+        if dropped:
+            # 定義稽核：未定義槽不再靜默丟棄 — 記錄以便發現定義落差。
+            logger.warning(
+                "DimensionState(%s) dropped undefined keys: %s (defined: %s)",
+                self.name,
+                sorted(dropped),
+                sorted(self.values),
+            )
         self.timestamp = datetime.now()

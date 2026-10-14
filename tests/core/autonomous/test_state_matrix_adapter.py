@@ -35,13 +35,15 @@ class TestUpdateMethods:
     @pytest.mark.parametrize(
         "axis_name,field,value",
         [
-            ("alpha", "focus", 0.8),
+            # 欄位須為該軸真實定義槽（定義稽核 2026-10-14：focus/excitement/
+            # awareness/surprise 原為錯軸或不存在的槽名）
+            ("alpha", "energy", 0.8),
             ("beta", "curiosity", 0.6),
-            ("gamma", "excitement", 0.7),
+            ("gamma", "happiness", 0.7),
             ("delta", "engagement", 0.5),
-            ("epsilon", "awareness", 0.9),
+            ("epsilon", "logic", 0.9),
             ("theta", "doubt", 0.3),
-            ("zeta", "surprise", 0.4),
+            ("zeta", "temporal_coherence", 0.4),
         ],
     )
     def test_update_axis_succeeds(self, adapter, axis_name, field, value):
@@ -53,8 +55,8 @@ class TestUpdateMethods:
             assert adapter.theta.values.get("doubt") == 0.3
 
     def test_update_zeta_succeeds(self, adapter):
-        adapter.update_zeta(surprise=0.4)
-        assert adapter.zeta.values.get("surprise") == 0.4
+        adapter.update_zeta(memory_depth=0.6)
+        assert adapter.zeta.values.get("memory_depth") == 0.6
 
 
 class TestInfluenceComputation:
@@ -98,8 +100,8 @@ class TestTemporalQueries:
     def test_temporal_trend_returns_value(self, adapter):
         # Add some records first to have data for trend computation
         for v in [0.1, 0.2, 0.3, 0.4, 0.5]:
-            adapter.temporal.record("alpha", "focus", v)
-        result = adapter.temporal_trend("alpha", "focus", window=5)
+            adapter.temporal.record("alpha", "energy", v)
+        result = adapter.temporal_trend("alpha", "energy", window=5)
         assert result is not None
 
     def test_temporal_trend_computes_real_trend(self):

@@ -88,9 +88,5 @@
   "angela.note_no_disturb": "不要過度打擾用戶",
   "angela.note_prioritize": "優先考慮用戶的情緒和需求",
   "angela.note_emotional_memory": "參考情感記憶做出更符合過往經驗的決策",
-  "angela.note_offline": "用戶不在线時，除非必要，否則選擇none",
-  "angela.planning_error": "規劃過程中發現邏輯錯誤：{error}。",
-  "angela.generation_error": "抱歉，生成過程中遇到問題...",
-  "angela.decompose_prompt": "你是一個任務規劃專家。將用戶的複雜請求分解成子任務。\n可用能力：{capabilities}\n用戶請求：{user_query}\n請輸出 JSON 格式的子任務列表，每個任務包含：\n  - capability_needed: 需要的 capability 名稱\n  - task_parameters: 任務參數（可以包含 '<output_of_task_N>' 引用前期結果）\n  - task_description: 任務描述\n只輸出 JSON，格式：[{{...}}, ...]",
-  "angela.integrate_prompt": "用戶原始請求：{original_query}\n\n子任務結果：\n{results}\n\n請將這些結果整合成一個完整、連貫的回應，直接回答用戶的原始請求。如果結果不完整，說明原因並給出合理的補充。"
+  "angela.note_offline": "用戶不在线時，除非必要，否則選擇none"
 }

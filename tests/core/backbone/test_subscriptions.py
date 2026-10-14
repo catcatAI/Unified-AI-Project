@@ -101,10 +101,11 @@ class TestCNSDomainSync:
         sync, _ = sync_ctx
         sync.subscribe("core")
         # 模擬下層 CNS 觸發 domain callback（domain, data）
-        state._callbacks["core"]("core", {"alpha": {"focus": 0.8, "energy": 0.6}})
+        # 欄位須屬正確軸（focus 屬 beta；定義稽核 2026-10-14 修正原錯軸資料）
+        state._callbacks["core"]("core", {"alpha": {"energy": 0.6}, "beta": {"focus": 0.8}})
         # write_axis 被呼叫（記錄在 state._writes）
-        writes = [w for w in state._writes if w[0] == "alpha"]
-        assert ("alpha", "focus", 0.8) in writes
+        writes = [w for w in state._writes]
+        assert ("beta", "focus", 0.8) in writes
         assert ("alpha", "energy", 0.6) in writes
 
     def test_domain_change_non_axis_data_ignored(self, sync_ctx):

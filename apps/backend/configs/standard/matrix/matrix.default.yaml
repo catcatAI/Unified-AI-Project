@@ -1,9 +1,17 @@
 # State Matrix Meta-Configuration
 # Defines axes, initial values, and weights
+#
+# 定義稽核 (2026-10-14): 本檔目前未被 get_formula_config("matrix") 載入
+# （app_config_loader._CONFIG["formula"] 無 "matrix" key），運行時走
+# state_matrix.py 的 DEFAULT_DIMENSIONS。為避免雙源分歧，本檔的
+# initial_values / cn_name 已與 DEFAULT_DIMENSIONS 完全對齊（live 為準）；
+# weight / initial_coordinate / anchor_keywords 為未啟用的設計草稿值，
+# 接線前需人工定奪（改變 weight 即改變 compute_influences 輸出）。
+# 對齊後接線本檔＝行為不變。見 docs/06-project-management/fixes/DEFINITIONS_AUDIT_2026-10-14.md
 
 dimensions:
   alpha:
-    cn_name: "生理维度"
+    cn_name: "生理"
     initial_values:
       { energy: 0.5, comfort: 0.5, arousal: 0.5, rest_need: 0.5, vitality: 0.5, tension: 0.0 }
     weight: 1.0
@@ -25,7 +33,7 @@ dimensions:
       ]
 
   beta:
-    cn_name: "认知维度"
+    cn_name: "認知"
     initial_values:
       { curiosity: 0.5, focus: 0.5, confusion: 0.0, learning: 0.5, clarity: 0.5, creativity: 0.5 }
     weight: 1.0
@@ -47,13 +55,15 @@ dimensions:
       ]
 
   gamma:
-    cn_name: "情感维度"
+    cn_name: "情感"
     initial_values:
       {
         happiness: 0.5,
         sadness: 0.0,
         anger: 0.0,
         fear: 0.0,
+        disgust: 0.0,
+        surprise: 0.0,
         trust: 0.5,
         anticipation: 0.5,
         love: 0.0,
@@ -79,7 +89,7 @@ dimensions:
       ]
 
   delta:
-    cn_name: "社交维度"
+    cn_name: "社交"
     initial_values:
       { attention: 0.5, bond: 0.5, trust: 0.5, presence: 0.5, intimacy: 0.0, engagement: 0.5 }
     weight: 1.0
@@ -100,14 +110,14 @@ dimensions:
       ]
 
   epsilon:
-    cn_name: "数理维度"
+    cn_name: "數理"
     initial_values:
       {
         logic: 0.5,
         precision: 0.5,
         abstraction: 0.5,
         certainty: 0.5,
-        complexity: 0.0,
+        complexity: 0.5,
         fatigue: 0.0,
       }
     weight: 0.3
@@ -116,18 +126,21 @@ dimensions:
       ["計算", "邏輯", "數字", "精確", "calculate", "logic", "number", "math", "precise", "compute"]
 
   theta:
-    cn_name: "元認知維度"
+    cn_name: "元認知"
     initial_values:
       {
         novelty: 0.5,
         complexity: 0.5,
         ambiguity: 0.5,
-        abstraction_level: 0.5,
         dimension_fit: 0.5,
         creation_urge: 0.0,
         theta_negativity: 0.0,
         correction_urge: 0.0,
         audit_intensity: 0.0,
+        doubt: 0.0,
+        caution: 0.0,
+        self_reflection: 0.5,
+        meta_accuracy: 0.5,
       }
     weight: 0.8
     initial_coordinate: [0.0, 5.0, 5.0]
@@ -147,9 +160,9 @@ dimensions:
       ]
 
   zeta:
-    cn_name: "意識流維度"
+    cn_name: "意識流"
     initial_values:
-      { temporal_coherence: 0.8, memory_depth: 0.6, narrative_flow: 0.7, identity_continuity: 0.75 }
+      { temporal_coherence: 0.5, memory_depth: 0.6, narrative_flow: 0.5, identity_continuity: 0.75 }
     weight: 0.2
     initial_coordinate: [0.0, 0.0, 0.0]
     anchor_keywords:
