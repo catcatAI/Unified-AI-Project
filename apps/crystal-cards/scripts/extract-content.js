@@ -83,9 +83,6 @@ missingChars.forEach((card) => {
   const def = 3 + Math.floor(Math.random() * 8)
   const spd = 5 + Math.floor(Math.random() * 10)
 
-  // Determine world line from tokens
-  const slToken = tokens.find((t) => t.type === 'storyline')
-
   // Generate a simple dialogue
   const dialogueId = `greeting_${id}`
   const desc = card.description

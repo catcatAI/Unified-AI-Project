@@ -534,7 +534,8 @@ class StateMatrix4D {
       const restNeed = this.alpha.values.rest_need || 0.5
 
       // 呼吸頻率與深度：能量與覺醒度越高，呼吸越急促
-      const breathFrequency = 0.5 + energy * 1.5
+      // （两者取均值驱动——原先 arousal 声明后从未进入公式）
+      const breathFrequency = 0.5 + ((energy + arousal) / 2) * 1.5
 
       // 假設 Live2DManager 支援這些抽象設置，或直接設置參數
       this.live2DManager.setParameter('ParamBreath', breathFrequency)

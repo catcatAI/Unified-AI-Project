@@ -75,9 +75,11 @@ export default [
           argsIgnorePattern: '^_',
           // script-tag 跨檔全域 class：定義於本檔、由其他檔案或 index.html
           // inline <script> 使用（2026-10-14 全倉 grep 驗證過），故本檔
-          // 內的「定義但未用」為誤報；未列入此清單的名字照樣會被報
+          // 內的「定義但未用」為誤報；未列入此清單的名字照樣會被報。
+          // ^_：解構棄位（如 for-of 第三元 _area、清理迴圈 _messageId）
+          // 屬明示不用約定，非殘留。
           varsIgnorePattern:
-            '^(Logger|MaturityTracker|PerformanceManager|PluginManager|PrecisionManager|StateMatrix4D|StatePersistence|TerminalUI)$',
+            '^_|^(Logger|MaturityTracker|PerformanceManager|PluginManager|PrecisionManager|StateMatrix4D|StatePersistence|TerminalUI)$',
         },
       ],
       'no-console': 'warn',

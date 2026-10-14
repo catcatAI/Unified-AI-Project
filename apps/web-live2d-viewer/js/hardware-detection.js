@@ -615,8 +615,10 @@ class StateMatrixIntegration {
     const energy = this.alpha.energy / 100
     const arousal = this.alpha.arousal / 100
 
-    // 呼吸參數：能量越高，呼吸越急促
-    const breathFrequency = 0.5 + (energy * 1.5) / 100
+    // 呼吸參數：能量與覺醒度越高，呼吸越急促
+    // （原式 (energy*1.5)/100 在 energy 已 /100 後近乎常數 0.515，且
+    //  arousal 声明从未进入公式）
+    const breathFrequency = 0.5 + ((energy + arousal) / 2) * 1.5
 
     this.live2dManager.setParameter('ParamBreath', breathFrequency)
 
@@ -635,9 +637,6 @@ class StateMatrixIntegration {
     // 根據關注度調整眼球追蹤
 
     // 根據親密程度調整行為
-
-    // 信任程度影響表情開放度
-    const trust = this.delta.trust / 100
 
     // 存在感
     const presence = this.delta.presence / 100
