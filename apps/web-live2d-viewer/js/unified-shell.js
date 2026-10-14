@@ -362,10 +362,18 @@ class UnifiedShell {
       this._mediaRecorder.onstop = async () => {
         stream.getTracks().forEach((t) => t.stop())
         const blob = new Blob(this._recChunks, { type: 'audio/webm' })
-        this._audioData = await this._convertToWav(await blob.arrayBuffer(), 'audio/webm')
-        this._showResult('mm-audio-result', {
-          status: `已錄音 (${this._audioData.byteLength} bytes)`,
-        })
+        const wav = await this._convertToWav(await blob.arrayBuffer(), 'audio/webm')
+        if (wav) {
+          this._audioData = wav
+          this._showResult('mm-audio-result', {
+            status: `已錄音 (${this._audioData.byteLength} bytes)`,
+          })
+        } else {
+          this._audioData = null
+          this._showResult('mm-audio-result', {
+            error: '錄音解碼失敗，無法轉為 WAV — 請重錄或改上傳檔案',
+          })
+        }
       }
       this._mediaRecorder.start()
       const rec = document.getElementById('mm-record-btn')
@@ -415,8 +423,11 @@ class UnifiedShell {
       }
       if (typeof ctx.close === 'function') ctx.close()
       return buffer
-    } catch {
-      return arrayBuffer
+    } catch (err) {
+      // 解码失败 ≠ 可以把原始容器当 WAV 用：返回 null 让调用方明确报错，
+      // 否则非 WAV 字节会静默流入后续编码（假 WAV）
+      console.warn('[UnifiedShell] decodeAudioData failed, cannot produce WAV:', err)
+      return null
     }
   }
 

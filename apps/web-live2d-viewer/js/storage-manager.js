@@ -465,6 +465,7 @@ class UnifiedStorageManager {
 
       return true
     } catch (error) {
+      console.warn('[StorageManager] has() probe failed (corrupt/unreadable entry):', error)
       return false
     }
   }

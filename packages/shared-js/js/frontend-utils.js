@@ -166,6 +166,7 @@ const FrontendUtils = {
       }
       return false
     } catch (e) {
+      console.warn('[FrontendUtils] isFile failed:', e)
       return false
     }
   },
@@ -187,6 +188,7 @@ const FrontendUtils = {
       }
       return false
     } catch (e) {
+      console.warn('[FrontendUtils] isDir failed:', e)
       return false
     }
   },
@@ -215,6 +217,7 @@ const FrontendUtils = {
       }
       return require('path').join(dirPath, match)
     } catch (e) {
+      console.warn('[FrontendUtils] findFileInDir failed:', e)
       return null
     }
   },

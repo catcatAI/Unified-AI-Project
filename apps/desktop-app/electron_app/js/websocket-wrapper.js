@@ -27,13 +27,18 @@ class WebSocketConnection extends events.EventEmitter {
     this._socket = null
     this._buffer = Buffer.alloc(0)
     this._headers = {}
+    this._fragments = null
+    this._fragmentOpcode = 0
 
     this._parseUrl(url)
     this._connect()
   }
 
   _parseUrl(url) {
-    const match = url.match(/^ws:\/\/[^/:]+(?::(\d+))?(\/.*)?$/)
+    // host 必须是捕获组 1：原正则 host 未分组，match[1]=port、match[2]=path
+    // → this.host 拿到端口字符串、this.port = parseInt('/path') 恒 NaN，
+    // net.connect 立刻抛 ERR_SOCKET_BAD_PORT（连接从未可能成功）
+    const match = url.match(/^ws:\/\/([^/:]+)(?::(\d+))?(\/.*)?$/)
     if (!match) throw new Error('Invalid WebSocket URL')
     this.host = match[1]
     this.port = parseInt(match[2] || '80', 10)
@@ -90,6 +95,22 @@ class WebSocketConnection extends events.EventEmitter {
       return
     }
 
+    // RFC 6455 §4.2.1: 客户端必须校验 Sec-WebSocket-Accept（GUID 此前是
+    // 死常量，accept 从未验证——任何回 101 的服务端都会被接受）
+    const acceptMatch = headerStr.match(/sec-websocket-accept:\s*(\S+)/i)
+    const expectedAccept = crypto
+      .createHash('sha1')
+      .update(this._handshakeKey + GUID)
+      .digest('base64')
+    if (!acceptMatch || acceptMatch[1].trim() !== expectedAccept) {
+      this._socket.end()
+      this.emit(
+        'error',
+        new Error('WebSocket handshake accept mismatch (invalid Sec-WebSocket-Accept)')
+      )
+      return
+    }
+
     this.readyState = this.OPEN
     this._buffer = body
     this.emit('open')
@@ -100,23 +121,18 @@ class WebSocketConnection extends events.EventEmitter {
     while (this._buffer.length >= 2) {
       const firstByte = this._buffer[0]
       const secondByte = this._buffer[1]
+      const fin = (firstByte & 0x80) !== 0
       const opcode = firstByte & 0x0f
       const rsv = firstByte & 0x70
       if (rsv !== 0) {
-        // Invalid frame with reserved bits - log but try to recover
-        const textPreview = this._buffer
-          .slice(0, Math.min(50, this._buffer.length))
-          .toString('utf8')
-        console.warn(
-          '[NativeWS] Received frame with RSV bits set (ignoring). firstByte=0x' +
-            firstByte.toString(16) +
-            ', text="...' +
-            textPreview.replace(/[\r\n]/g, ' ') +
-            '"'
+        // RFC 6455: 未协商扩展时 RSV 必须为 0 —原「逐字节跳过重新对齐」
+        // 会把失步的流当合法帧继续解析（伪恢复）。fail-closed + 明确报错。
+        this.emit(
+          'error',
+          new Error(`Invalid WebSocket frame: RSV bits set (firstByte=0x${firstByte.toString(16)})`)
         )
-        // Clear this byte and try to resync
-        this._buffer = this._buffer.slice(1)
-        continue // Skip this byte and try again
+        this._socket.destroy()
+        return
       }
       const masked = (secondByte & 0x80) !== 0
       let payloadLen = secondByte & 0x7f
@@ -149,22 +165,48 @@ class WebSocketConnection extends events.EventEmitter {
       }
 
       this._buffer = this._buffer.slice(dataStart + payloadLen)
-      this._handleOpcode(opcode, payload)
+      this._handleOpcode(opcode, payload, fin)
     }
   }
 
-  _handleOpcode(opcode, payload) {
+  _handleOpcode(opcode, payload, fin) {
     switch (opcode) {
       case 0x1:
-        this.emit('message', payload.toString('utf8'))
-        break
       case 0x2:
-        this.emit('message', payload)
+        if (fin) {
+          this.emit('message', opcode === 0x2 ? payload : payload.toString('utf8'))
+        } else {
+          // 分片消息：暂存 opcode，续帧（0x0）拼接完成后统一 emit
+          this._fragmentOpcode = opcode
+          this._fragments = [payload]
+        }
         break
-      case 0x8:
+      case 0x0:
+        if (this._fragments === null) {
+          // 无首帧的 continuation = 协议错误（原 switch 无 0x0 分支，静默丢弃）
+          this.emit('error', new Error('Unexpected WebSocket continuation frame'))
+          this._socket.destroy()
+          return
+        }
+        this._fragments.push(payload)
+        if (fin) {
+          const full = Buffer.concat(this._fragments)
+          const op = this._fragmentOpcode
+          this._fragments = null
+          this._fragmentOpcode = 0
+          this.emit('message', op === 0x2 ? full : full.toString('utf8'))
+        }
+        break
+      case 0x8: {
+        // 收到关闭帧：按 RFC 回帧、解析状态码、只发一次 close
+        // （原不回帧、状态码恒 1005、随后 socket close 还会再发 1006）
+        const code = payload.length >= 2 ? payload.readUInt16BE(0) : 1005
+        if (this.readyState === this.OPEN) this._sendFrame(0x88, payload)
+        this.readyState = this.CLOSED
         this._socket.end()
-        this.emit('close', 1005, Buffer.alloc(0))
+        this.emit('close', code, payload.length > 2 ? payload.slice(2) : Buffer.alloc(0))
         break
+      }
       case 0x9:
         this._sendFrame(0xa, payload)
         break
@@ -240,6 +282,8 @@ class WebSocketConnection extends events.EventEmitter {
   close() {
     if (this.readyState === this.OPEN) {
       this._sendFrame(0x88, Buffer.alloc(0))
+      // 主动关闭：_onClose 将报 1005（干净关闭）而非误报 1006（异常断开）
+      this.readyState = this.CLOSING
     }
     this._socket.end()
   }
@@ -249,8 +293,10 @@ class WebSocketConnection extends events.EventEmitter {
   }
 
   _onClose() {
+    if (this.readyState === this.CLOSED) return // 0x8 路径已发过 close（原会双发）
+    const localClose = this.readyState === this.CLOSING
     this.readyState = this.CLOSED
-    this.emit('close', 1006, Buffer.alloc(0))
+    this.emit('close', localClose ? 1005 : 1006, Buffer.alloc(0))
   }
 }
 

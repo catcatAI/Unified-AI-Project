@@ -1098,7 +1098,8 @@
       if (defeatedMatch) return (state.flags || {})['defeated_' + defeatedMatch[1]]
       return true // unknown trigger, allow
     } catch (e) {
-      return true // on error, allow
+      console.warn('[Renderer] Trigger evaluation failed, allowing card:', e)
+      return true // fail-open by design; logged so the bypass stays visible
     }
   }
 

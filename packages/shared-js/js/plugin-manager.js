@@ -59,8 +59,24 @@ class PluginManager {
 
     try {
       if (event === 'rename') {
-        const response = await fetch(fullPath).catch(() => null)
-        const fileExists = response && response.ok
+        let response = null
+        try {
+          response = await fetch(fullPath)
+        } catch (err) {
+          // 网络/加载错误 ≠ 文件消失：原 .catch(() => null) 会把 null 当
+          // 404 走到「文件已删除」分支，瞬态错误静默卸载已加载插件
+          this._log('warn', `Plugin existence check failed for ${name}: ${err} — skipping`)
+          return
+        }
+        let fileExists = response.ok
+        if (!response.ok && response.status !== 404) {
+          // 非 404 的失败（5xx 等）不能断言文件消失，跳过本次决策
+          this._log(
+            'warn',
+            `Unexpected HTTP ${response.status} probing ${fullPath}; skipping ${name}`
+          )
+          return
+        }
 
         if (fileExists && !isLoaded) {
           this._log('info', `New plugin detected: ${name}`)
