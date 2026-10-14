@@ -294,6 +294,11 @@ class BackendWebSocketClient {
       case 'angela_action':
         this._fireEvent('angela_action', data)
         break
+      case 'proactive_action':
+        // 主动互动（proactive_interaction_system）经 push_to_all 直发扁平信封
+        // （无 data 包装）—整条交 P0-4 onMessage 给 app.js 气泡/表情路径
+        this._fireEvent('proactive_action', message)
+        break
       case 'request_state':
         this._handleRequestState(data)
         break

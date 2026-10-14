@@ -6,7 +6,7 @@ Audio API endpoints
 import logging
 from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, Body, Depends, HTTPException
+from fastapi import APIRouter, Body, Depends, HTTPException, Response
 from services.audio_service import AudioService
 
 logger = logging.getLogger(__name__)
@@ -31,6 +31,32 @@ def get_audio_service() -> AudioService:
 @router.get("/status")
 async def get_audio_status() -> dict:
     return {"status": "ok", "service": "audio"}
+
+
+# ANGELA-MATRIX: [L6] [αβγδ] [B] [L4]
+@router.post("/tts")
+async def audio_tts(
+    params: Dict[str, Any] = Body(...),
+    svc: AudioService = Depends(get_audio_service),
+) -> Response:
+    """文字轉語音：回傳合成音訊串流（edge-tts mp3 bytes）
+
+    契約 2026-10-14：crystal-cards `textToSpeech()` 呼叫
+    ``POST /api/v1/audio/tts {text, voice}`` 並以 ``response.blob()`` 播放；
+    此路由此前不存在（僅有服務層 ``text_to_speech()``），前端恆 404。
+    合成失敗/edge-tts 未安裝回 503 — 前端 ``response.ok`` 判定後靜默退回無聲，
+    不回假音訊。
+    """
+    text = str(params.get("text", "")).strip()
+    if not text:
+        raise HTTPException(status_code=422, detail="text is required")
+    voice = params.get("voice")
+    audio = await svc.text_to_speech(text, voice=str(voice) if voice else None)
+    if not audio:
+        raise HTTPException(
+            status_code=503, detail="TTS unavailable (edge-tts missing or synthesis failed)"
+        )
+    return Response(content=audio, media_type="audio/mpeg")
 
 
 @router.post("/scan")

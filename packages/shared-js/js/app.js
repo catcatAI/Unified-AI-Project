@@ -408,6 +408,13 @@ class AngelaApp {
 
   async _initializeSecurity() {
     this.updateLoadingText('Initializing security...')
+    // 非 Electron 上下文（web viewer 浏览器加载 app.js）没有 electronAPI：
+    // 此前 catch 分支里的 window.electronAPI.security.init 会再抛 TypeError
+    // 打断整条初始化链 —无安全握手可做时明确跳过
+    if (typeof window.electronAPI === 'undefined' || !window.electronAPI.security) {
+      this.logger.info('Security init skipped: no electronAPI (browser context)')
+      return
+    }
     try {
       const backendHost = localStorage.getItem('backend_host') || 'localhost'
       const controller = new AbortController()
@@ -428,7 +435,14 @@ class AngelaApp {
           return
         }
       }
-      throw new Error('Remote Key C unavailable')
+      // sync-key-c 契约（chat_routes docstring）：后端永不在响应体回传金钥材料，
+      // key_available=true 只表示后端持有 Key C —错误信息必须区分
+      //「后端有但按契约不发」与「连不上」
+      throw new Error(
+        data.key_available
+          ? 'Backend holds Key C but never transmits it (by contract)'
+          : 'Remote Key C unavailable'
+      )
     } catch (error) {
       this.logger.warn('Security fallback mode:', error.message)
       await window.electronAPI.security.init('Angela-Desktop-Sync-Key-C-Fallback')
@@ -837,20 +851,26 @@ class AngelaApp {
       this._handleBiologicalEvent(message.data)
     }
 
-    // P0-3: 处理 Angela 主动动作 (LLM 决策)
-    if (message.type === 'angela_action') {
+    // P0-3: 处理 Angela 主动动作 (LLM 决策) 与主动互动（proactive_interaction_system）
+    if (message.type === 'angela_action' || message.type === 'proactive_action') {
       this._handleAngelaAction(message)
     }
   }
 
   /**
-   * P0-3: 处理 Angela 主动动作
+   * P0-3 处理 Angela 主动动作
+   *
+   * 信封形状（契约 2026-10-14）：angela_action 由 lifespan._dli_broadcast 包一层
+   * {type, data, timestamp}，proactive_action 由 push_to_all 直发扁平
+   * {type, action, message, ...}。此前直接读外层 action/message — 对嵌套信封
+   * 恒 undefined，气泡与 Live2D 动作从不触发。有内层 data 取内层，否则用整条。
    */
   _handleAngelaAction(data) {
     console.log('[App] Angela proactive action received:', data)
 
-    const action = data.action
-    const message = data.message
+    const payload = data && typeof data.data === 'object' && data.data !== null ? data.data : data
+    const action = payload.action
+    const message = payload.message
 
     // 1. 显示对话气泡
     //    `this.dialogueUI` was always null: no page loaded dialogue-ui.js, and
@@ -922,6 +942,25 @@ class AngelaApp {
       case 'tactile_stimulus':
         this._handleTactileStimulus(eventData)
         break
+      case 'state_changed': {
+        // 后端 websocket_manager 实际唯一发送的子型别（复合状态推送）；
+        // 上列 7 个已知型别后端从不发送 —此前整体链路断在事件名上。
+        // 字段/量纲以 websocket_manager state_changed payload 为准：
+        // stress_level 0..1、mood 0..1、arousal 0..100、dominant_emotion 字符串
+        if (eventData.dominant_emotion !== undefined) {
+          this._handleEmotionChanged({ new_emotion: eventData.dominant_emotion, intensity: 0.5 })
+        }
+        if (eventData.stress_level !== undefined) {
+          this._handleStressChanged({ stress: eventData.stress_level })
+        }
+        if (eventData.mood !== undefined) {
+          this._handleMoodChanged({ mood: eventData.mood })
+        }
+        if (eventData.arousal !== undefined) {
+          this._handleArousalChanged({ arousal: eventData.arousal })
+        }
+        break
+      }
       default:
         console.warn('[App] Unknown biological event:', eventType)
     }

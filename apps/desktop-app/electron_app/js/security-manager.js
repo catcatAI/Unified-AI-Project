@@ -65,6 +65,12 @@ class SecurityManager {
               console.log('✅ Key C synced successfully')
               resolve(true)
             } else {
+              if (json.key_available) {
+                // sync-key-c 契约：后端持有 Key C 但永不回传材料（见路由 docstring）
+                console.warn(
+                  'Backend holds Key C but never transmits key material by contract; keeping local key'
+                )
+              }
               resolve(false)
             }
           } catch (e) {

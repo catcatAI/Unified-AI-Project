@@ -13,6 +13,7 @@ class AngelaGameAPI {
     this.ws = null
     this.connected = false
     this.sessionId = null
+    this._heartbeatTimer = null
   }
 
   async connect() {
@@ -34,14 +35,39 @@ class AngelaGameAPI {
           if (msg.type === 'connected') {
             this.connected = true
             this.sessionId = msg.session_id
+            this._startHeartbeat()
             resolve(true)
           }
         }
         this.ws.onerror = () => resolve(false)
+        // 後端以 120s 無心跳即斷線（connection_session heartbeat_timeout）；
+        // onclose 必須同步 connected 狀態，否則後續呼叫全打到已死連線上
+        this.ws.onclose = () => {
+          this.connected = false
+          this._stopHeartbeat()
+        }
         setTimeout(() => resolve(false), 3000)
       })
     } catch (e) {
       return false
+    }
+  }
+
+  // 心跳：與 desktop main.js / backend-websocket.js 同為 30s，
+  // 後端 websocket_manager 僅認 heartbeat/ping 兩種 type
+  _startHeartbeat() {
+    if (this._heartbeatTimer) return
+    this._heartbeatTimer = setInterval(() => {
+      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        this.ws.send(JSON.stringify({ type: 'heartbeat', timestamp: Date.now() }))
+      }
+    }, 30000)
+  }
+
+  _stopHeartbeat() {
+    if (this._heartbeatTimer) {
+      clearInterval(this._heartbeatTimer)
+      this._heartbeatTimer = null
     }
   }
 
@@ -59,7 +85,7 @@ class AngelaGameAPI {
 玩家說：「${playerInput}」
 請用角色的語氣回應（1-2句話）。`
 
-      const response = await fetch(`${this.httpUrl}/chat/unified`, {
+      const response = await fetch(`${this.httpUrl}/api/v1/chat/unified`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -93,7 +119,7 @@ class AngelaGameAPI {
     try {
       const prompt = `描述「${locationName}」在${timeOfDay}時的環境氣氛（1句話，30字以內）。`
 
-      const response = await fetch(`${this.httpUrl}/chat/unified`, {
+      const response = await fetch(`${this.httpUrl}/api/v1/chat/unified`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -204,6 +230,7 @@ class AngelaGameAPI {
   }
 
   disconnect() {
+    this._stopHeartbeat()
     if (this.ws) {
       this.ws.close()
       this.connected = false
