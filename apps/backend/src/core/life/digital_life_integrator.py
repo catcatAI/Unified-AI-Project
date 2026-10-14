@@ -474,7 +474,7 @@ class DigitalLifeIntegrator:
                     from api.lifespan import get_lifecycle
 
                     self.autonomous_lifecycle = get_lifecycle()
-                except Exception:  # noqa: BLE001 - standalone mode fallback
+                except Exception:  # standalone mode fallback
                     self.autonomous_lifecycle = AutonomousLifeCycle(config=self.config)
                 await self.autonomous_lifecycle.initialize()
                 # _on_formula_decision(decision) 契約是「單參 LifeDecision」，

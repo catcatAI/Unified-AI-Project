@@ -148,7 +148,7 @@ class UnifiedEngine:
                 else:
                     logger.info("semantic QA loaded %d facts", len(self.semantic_qa._questions))
                     return
-        except Exception as exc:  # noqa: BLE001 - optional boot feature
+        except Exception as exc:  # optional boot feature
             logger.debug("semantic QA auto-load skipped: %s", exc)
         # Fallback: tiny facts from data file so offline factual queries work
         # even without a shipped checkpoint. Data-driven, not code hard-code.

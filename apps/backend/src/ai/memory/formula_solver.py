@@ -361,7 +361,7 @@ def _eval_safe(expr: str, values: Dict[str, float]) -> Optional[float]:
     try:
         result = eval(expr, allowed, env)  # nosec B307 - whitelisted names only
         return float(result) if isinstance(result, (int, float)) else None
-    except Exception:  # noqa: BLE001 - any eval failure = not solvable
+    except Exception:  # any eval failure = not solvable
         return None
 
 

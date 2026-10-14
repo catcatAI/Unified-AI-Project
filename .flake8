@@ -4,7 +4,11 @@
 # so this dedicated .flake8 is the source of truth. It must mirror the
 # [tool.flake8] block in the root pyproject.toml.
 max-line-length = 100
-max-complexity = 10
+# NOTE: complexity (C901) is intentionally NOT enforced — C901 is in the
+# ignore list below. A former `max-complexity = 10` line was inert (mccabe
+# only emits C901, which is ignored) and falsely implied a cap; removed for
+# honesty. Re-enabling = un-ignore C901 + fix the ~263 offenders (separate
+# effort).
 exclude =
     .git,
     .mypy_cache,

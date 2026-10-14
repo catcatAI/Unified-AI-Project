@@ -158,6 +158,12 @@ def test_run_functional_dot_product_test_reports_a_timeout(
         return process
 
     async def fake_wait_for(awaitable: object, timeout: float) -> None:
+        # 模擬逾時：先關閉未被 await 的 communicate協程，避免
+        # "coroutine was never awaited" 警告噪音
+        import asyncio as _a
+
+        if _a.iscoroutine(awaitable):
+            awaitable.close()
         raise asyncio_timeout_error()
 
     monkeypatch.setattr(strip_ref.shutil, "which", lambda name: "/usr/bin/ngspice")

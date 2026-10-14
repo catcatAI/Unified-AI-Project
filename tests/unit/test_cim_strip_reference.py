@@ -916,6 +916,10 @@ def test_simulate_weight_response_reports_an_ngspice_timeout(
         return process
 
     async def fake_wait_for(awaitable: object, timeout: float) -> None:
+        # 模擬逾時：先關閉未被 await 的 communicate協程，否則
+        # "coroutine was never awaited" 警告噪音（awaitable 由呼叫方建立）
+        if asyncio.iscoroutine(awaitable):
+            awaitable.close()
         raise asyncio.TimeoutError
 
     monkeypatch.setattr(strip_ref.shutil, "which", lambda name: "/usr/bin/ngspice")

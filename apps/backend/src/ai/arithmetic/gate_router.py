@@ -79,7 +79,7 @@ def try_logic_gate(text: str) -> Optional[str]:
 
     try:
         bit = learner.predict_logic_gate(op, a, b)
-    except Exception as e:  # noqa: BLE001 - defensive last resort
+    except Exception as e:  # defensive last resort
         logger.debug("logic-gate fallback failed for %r: %s", text, e)
         return None
     return str(int(bit))

@@ -286,9 +286,11 @@ class TestGardenLearnGate:
         assert _should_garden_learn("隨便問", self._resp(**kwargs)) is False
 
     async def test_process_skips_garden_call(self, chat_service):
-        from unittest.mock import AsyncMock
+        from unittest.mock import MagicMock
 
-        chat_service._garden_engine = SimpleNamespace(learn_from_interaction=AsyncMock())
+        # learn_from_interaction 是同步 def（回傳 Dict）——用 AsyncMock 會
+        # 產生「coroutine never awaited」噪音；同步方法須用 MagicMock
+        chat_service._garden_engine = SimpleNamespace(learn_from_interaction=MagicMock())
         bad = self._resp(model="honest-no-answer")
         await chat_service._process_garden_learning("隨便問", bad)
         chat_service._garden_engine.learn_from_interaction.assert_not_called()

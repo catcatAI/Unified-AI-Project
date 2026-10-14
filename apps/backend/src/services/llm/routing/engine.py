@@ -93,7 +93,7 @@ class RoutingEngine:
             t0 = time.perf_counter()
             try:
                 response = await fn(user_message, context)
-            except Exception as exc:  # noqa: BLE001 — 單步故障不拖垮整輪路由
+            except Exception as exc:  # 單步故障不拖垮整輪路由
                 outcomes.append(
                     StepOutcome(
                         step=step.name,

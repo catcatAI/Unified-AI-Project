@@ -148,7 +148,7 @@ class BackboneIO:
                     source=source.target or "io",
                 )
                 self.pairs.resolve(pair_id, output)
-        except Exception:  # noqa: BLE001 - 配對失敗不中斷主流程
+        except Exception:  # 配對失敗不中斷主流程
             logger.warning("auto-pair failed for %s", pair_id, exc_info=True)
 
     # ------------------------------------------------------------------

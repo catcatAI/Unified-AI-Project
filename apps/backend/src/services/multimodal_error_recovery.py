@@ -20,7 +20,7 @@ try:
     from core.data_config import get_multimodal_dir as _gmmd
 
     _MM_DIR = str(_gmmd())
-except Exception:  # noqa: BLE001
+except Exception:  # optional multimodal dir resolve; fallback to relative path
     _MM_DIR = os.path.join("data", "multimodal")
 import time
 from typing import Any, Dict, Optional, cast

@@ -63,7 +63,7 @@ class UnifiedBackend(BaseLLMBackend):
             from core.data_config import get_checkpoints_dir
 
             search_roots.append(os.path.join(str(get_checkpoints_dir()), "unified"))
-        except Exception:  # noqa: BLE001
+        except Exception:  # optional boot fallback (get_checkpoints_dir)
             logger.debug(
                 "data_config.get_checkpoints_dir failed; unified search root skipped", exc_info=True
             )
@@ -116,7 +116,7 @@ class UnifiedBackend(BaseLLMBackend):
                     qa_path = os.path.join(
                         str(get_checkpoints_dir()), "unified", "qa_knowledge.json"
                     )
-                except Exception:  # noqa: BLE001
+                except Exception:  # optional QA knowledge path; absent ⇒ engine without QA
                     qa_path = ""
             if qa_path and os.path.isfile(qa_path):
                 try:
@@ -127,7 +127,7 @@ class UnifiedBackend(BaseLLMBackend):
                     engine.semantic_qa = SemanticQA()
                     with open(qa_path, encoding="utf-8") as _f:
                         engine.semantic_qa.load_dict(_json.load(_f))
-                except Exception:  # noqa: BLE001
+                except Exception:  # optional QA load; failure ⇒ engine without QA knowledge
                     logger.warning(
                         "SemanticQA knowledge load failed (%s); engine "
                         "comes up without QA knowledge",

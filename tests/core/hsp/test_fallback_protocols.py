@@ -29,7 +29,9 @@ from core.hsp.fallback.fallback_protocols import (
     get_fallback_manager,
 )
 
-pytestmark = pytest.mark.asyncio
+# asyncio mark 應只套用到 async 測試——原模組級 pytestmark 誤標
+# TestFallbackMessage 的 2 個同步測試（pytest-asyncio 警告噪音）。
+# 改為逐 async class 套用。
 
 
 class TestFallbackMessage:
@@ -74,6 +76,8 @@ class TestFallbackMessage:
 
 
 class TestInMemoryProtocol:
+    pytestmark = pytest.mark.asyncio
+
     async def test_send_listener_handler_roundtrip(self):
         proto = InMemoryProtocol()
         assert await proto.initialize()
@@ -134,6 +138,8 @@ class TestInMemoryProtocol:
 
 
 class TestFileBasedProtocol:
+    pytestmark = pytest.mark.asyncio
+
     async def test_outbox_inbox_roundtrip(self):
         base = tempfile.mkdtemp()
         proto = FileBasedProtocol(base_path=base)
@@ -178,6 +184,8 @@ class TestFileBasedProtocol:
 
 
 class TestFallbackProtocolManager:
+    pytestmark = pytest.mark.asyncio
+
     async def test_send_rotates_past_failing_protocol(self):
         """A protocol that fails sends must not block delivery forever;
         the manager rotates to the next healthy one."""
@@ -264,6 +272,8 @@ class TestFallbackProtocolManager:
 
 
 class TestConnectorFallbackIntegration:
+    pytestmark = pytest.mark.asyncio
+
     async def test_connect_initializes_fallback_and_degraded_send(self):
         from core.hsp.connector import HSPConnector
 

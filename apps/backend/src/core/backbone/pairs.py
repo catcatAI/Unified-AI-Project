@@ -333,7 +333,7 @@ class PairScheduler:
                     )
                 )
                 self.resolve(pair_id, output)
-            except Exception as exc:  # noqa: BLE001 - 成對錯誤必須追蹤，不靜默
+            except Exception as exc:  # 成對錯誤必須追蹤，不靜默
                 try:
                     self.fail(pair_id, reason=str(exc))
                 except Exception as e2:

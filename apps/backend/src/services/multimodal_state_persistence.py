@@ -22,7 +22,7 @@ def _multimodal_checkpoints_root():
         from core.data_config import get_multimodal_dir
 
         return get_multimodal_dir()
-    except Exception:  # noqa: BLE001 - fallback to legacy relative path
+    except Exception:  # fallback to legacy relative path
         return os.path.join("data", "multimodal")
 
 
