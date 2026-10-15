@@ -84,62 +84,74 @@ class MathExtractor:
             logger.warning("Failed to evaluate expression '%s'", expr, exc_info=True)
             return None
 
+    def _eval_constant(self, node) -> Optional[float]:
+        if isinstance(node.value, bool):
+            return float(node.value)
+        if isinstance(node.value, int):
+            return node.value
+        if isinstance(node.value, float):
+            return node.value
+        return None
+
+    def _eval_unary(self, node) -> Optional[float]:
+        op = self.SAFE_OPS.get(type(node.op))
+        if op is None:
+            return None
+        operand = self._eval_node(node.operand)
+        if operand is None:
+            return None
+        result: Any = op(operand)
+        return float(result) if isinstance(result, (int, float)) else None
+
+    def _eval_binop(self, node) -> Optional[float]:
+        op = self.SAFE_OPS.get(type(node.op))
+        if op is None:
+            return None
+        left = self._eval_node(node.left)
+        right = self._eval_node(node.right)
+        if left is None or right is None:
+            return None
+        try:
+            if isinstance(node.op, ast.Pow):
+                # Bounding exponents avoids pathological huge-integer
+                # computation (e.g. 10**9999999 → multi-MB int / OOM).
+                if isinstance(right, int) and abs(right) > self.MAX_POW_EXPONENT:
+                    return None
+            return float(op(left, right))
+        except (ZeroDivisionError, OverflowError, MemoryError):
+            return None
+
+    def _eval_call(self, node) -> Optional[float]:
+        if not isinstance(node.func, ast.Name):
+            return None
+        fn_name = node.func.id
+        fn = _SAFE_FUNCTIONS.get(fn_name)
+        if fn is None:
+            return None
+        args = [self._eval_node(a) for a in node.args]
+        if any(a is None for a in args):
+            return None
+        try:
+            if fn_name == "factorial":
+                arg = args[0]
+                if isinstance(arg, int) and abs(arg) > self.MAX_FACTORIAL_ARG:
+                    return None
+            return float(fn(*args))
+        except (ValueError, OverflowError, ZeroDivisionError, MemoryError):
+            return None
+
     def _eval_node(self, node) -> Optional[float]:
         self._node_count += 1
         if self._node_count > self.MAX_EXPR_NODES:
             return None
         if isinstance(node, ast.Constant):
-            if isinstance(node.value, bool):
-                return float(node.value)
-            if isinstance(node.value, int):
-                return node.value
-            if isinstance(node.value, float):
-                return node.value
-            return None
+            return self._eval_constant(node)
         if isinstance(node, ast.UnaryOp):
-            op = self.SAFE_OPS.get(type(node.op))
-            if op is None:
-                return None
-            operand = self._eval_node(node.operand)
-            if operand is None:
-                return None
-            result: Any = op(operand)
-            return float(result) if isinstance(result, (int, float)) else None
+            return self._eval_unary(node)
         if isinstance(node, ast.BinOp):
-            op = self.SAFE_OPS.get(type(node.op))
-            if op is None:
-                return None
-            left = self._eval_node(node.left)
-            right = self._eval_node(node.right)
-            if left is None or right is None:
-                return None
-            try:
-                if isinstance(node.op, ast.Pow):
-                    # Bounding exponents avoids pathological huge-integer
-                    # computation (e.g. 10**9999999 → multi-MB int / OOM).
-                    if isinstance(right, int) and abs(right) > self.MAX_POW_EXPONENT:
-                        return None
-                return float(op(left, right))
-            except (ZeroDivisionError, OverflowError, MemoryError):
-                return None
+            return self._eval_binop(node)
         if isinstance(node, ast.Call):
-            if not isinstance(node.func, ast.Name):
-                return None
-            fn_name = node.func.id
-            fn = _SAFE_FUNCTIONS.get(fn_name)
-            if fn is None:
-                return None
-            args = [self._eval_node(a) for a in node.args]
-            if any(a is None for a in args):
-                return None
-            try:
-                if fn_name == "factorial":
-                    arg = args[0]
-                    if isinstance(arg, int) and abs(arg) > self.MAX_FACTORIAL_ARG:
-                        return None
-                return float(fn(*args))
-            except (ValueError, OverflowError, ZeroDivisionError, MemoryError):
-                return None
+            return self._eval_call(node)
         return None
 
 
@@ -448,6 +460,86 @@ def compute_arithmetic(text: str) -> Optional[float]:
     return result
 
 
+def _logic_eval_tokens(expr: str) -> Optional[str]:
+    """Token-guard and eval a pure True/False/and/or/not expression."""
+    tokens = re.findall(r"\b\w+\b", expr)
+    if all(t in ("True", "False", "and", "or", "not") for t in tokens):
+        try:
+            result = eval(expr, {"__builtins__": {}}, {})  # nosec B307
+            return "true" if result else "false"
+        except Exception:
+            return None
+    return None
+
+
+def _logic_chinese_path(t: str) -> Optional[str]:
+    """Chinese logic expression path."""
+    _HAS_OPERATOR = any(kw in t for kw in ("或", "且", "既不是", "並非", "不成立", "矛盾", "衝突"))
+    if not _HAS_OPERATOR:
+        return None  # Only bare 真/假 — not a logic expression, skip.
+    expr = t
+    expr = expr.replace("真的", "True").replace("假的", "False")
+    expr = expr.replace("真", "True").replace("假", "False")
+    expr = expr.replace("或", " or ")
+    expr = expr.replace("且", " and ")
+    expr = expr.replace("既不是", " not ")
+    expr = expr.replace("並非", " not ")
+    expr = expr.replace("不成立", " not True ")
+    expr = expr.replace("矛盾", " False ").replace("衝突", " False ")
+    return _logic_eval_tokens(expr)
+
+
+
+
+
+
+
+
+
+
+def _expand_nor(m):
+    parts = re.findall(r"(True|False)", m.group(0))
+    if len(parts) == 2:
+        return f"not ({parts[0]} or {parts[1]})"
+    return m.group(0)
+
+
+def _expand_nand(m):
+    parts = re.findall(r"(True|False)", m.group(0))
+    if len(parts) == 2:
+        return f"not ({parts[0]} and {parts[1]})"
+    return m.group(0)
+
+
+def _expand_xor(m):
+    parts = re.findall(r"(True|False)", m.group(0))
+    if len(parts) == 2:
+        return f"({parts[0]} and not {parts[1]}) or (not {parts[0]} and {parts[1]})"
+    return m.group(0)
+
+
+def _expand_xnor(m):
+    parts = re.findall(r"(True|False)", m.group(0))
+    if len(parts) == 2:
+        return f"({parts[0]} and {parts[1]}) or (not {parts[0]} and not {parts[1]})"
+    return m.group(0)
+
+
+def _logic_expand_compound(expr: str) -> str:
+    """Expand nor/nand/xor/xnor in both prefix and infix orders."""
+    expr = re.sub(r"\bnor\s+(True|False)\s+(True|False)\b", _expand_nor, expr)
+    expr = re.sub(r"\bnand\s+(True|False)\s+(True|False)\b", _expand_nand, expr)
+    expr = re.sub(r"\bxor\s+(True|False)\s+(True|False)\b", _expand_xor, expr)
+    # Infix order (operand BEFORE operator): "false nand true", "true xor false"
+    expr = re.sub(r"\b(True|False)\s+nor\s+(True|False)\b", _expand_nor, expr)
+    expr = re.sub(r"\b(True|False)\s+nand\s+(True|False)\b", _expand_nand, expr)
+    expr = re.sub(r"\b(True|False)\s+xor\s+(True|False)\b", _expand_xor, expr)
+    # xnor: both prefix and infix orders
+    expr = re.sub(r"\bxnor\s+(True|False)\s+(True|False)\b", _expand_xnor, expr)
+    expr = re.sub(r"\b(True|False)\s+xnor\s+(True|False)\b", _expand_xnor, expr)
+    return expr
+
+
 def evaluate_logic(text: str) -> Optional[str]:
     """Evaluate boolean logic expressions.
 
@@ -470,23 +562,7 @@ def evaluate_logic(text: str) -> Optional[str]:
             # Only bare 真/假 — not a logic expression, skip.
             pass
         else:
-            expr = t
-            expr = expr.replace("真的", "True").replace("假的", "False")
-            expr = expr.replace("真", "True").replace("假", "False")
-            expr = expr.replace("或", " or ")
-            expr = expr.replace("且", " and ")
-            expr = expr.replace("既不是", " not ")
-            expr = expr.replace("並非", " not ")
-            expr = expr.replace("不成立", " not True ")
-            expr = expr.replace("矛盾", " False ").replace("衝突", " False ")
-            tokens = re.findall(r"\b\w+\b", expr)
-            if all(t in ("True", "False", "and", "or", "not") for t in tokens):
-                try:
-                    result = eval(expr, {"__builtins__": {}}, {})  # nosec B307
-                    return "true" if result else "false"
-                except Exception:
-                    return None
-            return None
+            return _logic_chinese_path(t)
 
     # ---- English path ----
     if not re.search(r"\b(true|false|and|or|not|nor|nand|xor|xnor)\b", t):
@@ -503,54 +579,70 @@ def evaluate_logic(text: str) -> Optional[str]:
     expr = re.sub(r"\bfalse\b", "False", expr)
 
     # Expand compound operators: nor/nand/xor have fixed arity of 2
-    def _expand_nor(m):
-        parts = re.findall(r"(True|False)", m.group(0))
-        if len(parts) == 2:
-            return f"not ({parts[0]} or {parts[1]})"
-        return m.group(0)
-
-    def _expand_nand(m):
-        parts = re.findall(r"(True|False)", m.group(0))
-        if len(parts) == 2:
-            return f"not ({parts[0]} and {parts[1]})"
-        return m.group(0)
-
-    def _expand_xor(m):
-        parts = re.findall(r"(True|False)", m.group(0))
-        if len(parts) == 2:
-            return f"({parts[0]} and not {parts[1]}) or (not {parts[0]} and {parts[1]})"
-        return m.group(0)
-
-    expr = re.sub(r"\bnor\s+(True|False)\s+(True|False)\b", _expand_nor, expr)
-    expr = re.sub(r"\bnand\s+(True|False)\s+(True|False)\b", _expand_nand, expr)
-    expr = re.sub(r"\bxor\s+(True|False)\s+(True|False)\b", _expand_xor, expr)
-    # Infix order (operand BEFORE operator): "false nand true", "true xor false"
-    expr = re.sub(r"\b(True|False)\s+nor\s+(True|False)\b", _expand_nor, expr)
-    expr = re.sub(r"\b(True|False)\s+nand\s+(True|False)\b", _expand_nand, expr)
-    expr = re.sub(r"\b(True|False)\s+xor\s+(True|False)\b", _expand_xor, expr)
-
-    # xnor: both prefix and infix orders
-    def _expand_xnor(m):
-        parts = re.findall(r"(True|False)", m.group(0))
-        if len(parts) == 2:
-            return f"({parts[0]} and {parts[1]}) or (not {parts[0]} and not {parts[1]})"
-        return m.group(0)
-
-    expr = re.sub(r"\bxnor\s+(True|False)\s+(True|False)\b", _expand_xnor, expr)
-    expr = re.sub(r"\b(True|False)\s+xnor\s+(True|False)\b", _expand_xnor, expr)
+    expr = _logic_expand_compound(expr)
 
     expr = re.sub(r"\band\b", "and", expr)
     expr = re.sub(r"\bor\b", "or", expr)
     expr = re.sub(r"\bnot\b", "not", expr)
 
-    tokens = re.findall(r"\b\w+\b", expr)
-    if all(t in ("True", "False", "and", "or", "not") for t in tokens):
-        try:
-            result = eval(expr, {"__builtins__": {}}, {})  # nosec B307
-            return "true" if result else "false"
-        except Exception:
-            return None
+    return _logic_eval_tokens(expr)
+
+
+
+
+def _math_constant_query(text: str) -> Optional[str]:
+    """Step 1: constant queries ("what is pi", "value of e")."""
+    const_match = re.search(
+        r"\b(pi|π|euler(?:'s)?\s*(?:number|constant)?|e\b|inf(?:inity)?)\b",
+        text.strip().lower(),
+    )
+    if not const_match:
+        return None
+    key = const_match.group(1)
+    # Map variants to canonical constant keys
+    if key in ("pi", "π"):
+        display, val = _MATH_CONSTANTS["pi"]
+        return f"{display} = {val}"
+    if key == "e" or "euler" in key:
+        display, val = _MATH_CONSTANTS["e"]
+        return f"{display} = {val}"
+    if key in ("inf", "infinity"):
+        return "∞ = 無限大"
     return None
+
+
+def _math_number_theory(text: str) -> Optional[str]:
+    """Step 2: number theory queries ("is 17 prime", "gcd 12 18")."""
+    prime_m = re.search(r"(?:is|是)\s*(-?\d+)\s*(?:prime|質數|素数)", text.strip().lower())
+    if prime_m:
+        n = int(prime_m.group(1))
+        is_prime = _is_prime(n)
+        return f"{n} is prime = {'true' if is_prime else 'false'}"
+    gcd_m = re.search(
+        r"(?:gcd|最大公因數|最大公约数)\s*[：(]?\s*(-?\d+)\s*,?\s*(-?\d+)", text.strip().lower()
+    )
+    if gcd_m:
+        a, b = int(gcd_m.group(1)), int(gcd_m.group(2))
+        return f"gcd({a}, {b}) = {_gcd(a, b)}"
+    lcm_m = re.search(
+        r"(?:lcm|最小公倍數|最小公倍数)\s*[：(]?\s*(-?\d+)\s*,?\s*(-?\d+)", text.strip().lower()
+    )
+    if lcm_m:
+        a, b = int(lcm_m.group(1)), int(lcm_m.group(2))
+        return f"lcm({a}, {b}) = {_lcm(a, b)}"
+    return None
+
+
+def _math_format_result(math_expr: str, result) -> str:
+    """Format extracted expression result."""
+    if isinstance(result, float) and result.is_integer():
+        result = int(result)
+    if isinstance(result, int):
+        return f"{math_expr} = {result}"
+    if isinstance(result, float) and math.isinf(result):
+        return f"{math_expr} = 除数不能为零"
+    float_str = f"{result:.10f}".rstrip("0").rstrip(".")
+    return f"{math_expr} = {float_str}"
 
 
 def evaluate_math(text: str) -> Optional[str]:
@@ -567,43 +659,13 @@ def evaluate_math(text: str) -> Optional[str]:
     if not text:
         return None
 
-    # Step 1: constant queries ("what is pi", "value of e")
-    const_match = re.search(
-        r"\b(pi|π|euler(?:'s)?\s*(?:number|constant)?|e\b|inf(?:inity)?)\b",
-        text.strip().lower(),
-    )
-    if const_match:
-        key = const_match.group(1)
-        # Map variants to canonical constant keys
-        if key in ("pi", "π"):
-            display, val = _MATH_CONSTANTS["pi"]
-            return f"{display} = {val}"
-        if key == "e" or "euler" in key:
-            display, val = _MATH_CONSTANTS["e"]
-            return f"{display} = {val}"
-        if key in ("inf", "infinity"):
-            return "∞ = 無限大"
+    const_result = _math_constant_query(text)
+    if const_result is not None:
+        return const_result
 
-    # Step 2: number theory queries ("is 17 prime", "gcd 12 18")
-    prime_m = re.search(r"(?:is|是)\s*(-?\d+)\s*(?:prime|質數|素数)", text.strip().lower())
-    if prime_m:
-        n = int(prime_m.group(1))
-        is_prime = _is_prime(n)
-        return f"{n} is prime = {'true' if is_prime else 'false'}"
-
-    gcd_m = re.search(
-        r"(?:gcd|最大公因數|最大公约数)\s*[：(]?\s*(-?\d+)\s*,?\s*(-?\d+)", text.strip().lower()
-    )
-    if gcd_m:
-        a, b = int(gcd_m.group(1)), int(gcd_m.group(2))
-        return f"gcd({a}, {b}) = {_gcd(a, b)}"
-
-    lcm_m = re.search(
-        r"(?:lcm|最小公倍數|最小公倍数)\s*[：(]?\s*(-?\d+)\s*,?\s*(-?\d+)", text.strip().lower()
-    )
-    if lcm_m:
-        a, b = int(lcm_m.group(1)), int(lcm_m.group(2))
-        return f"lcm({a}, {b}) = {_lcm(a, b)}"
+    theory_result = _math_number_theory(text)
+    if theory_result is not None:
+        return theory_result
 
     # Step 3: normal expression evaluation
     expr = _normalize_expr(text)
@@ -619,11 +681,4 @@ def evaluate_math(text: str) -> Optional[str]:
     math_expr, result = extracted
     if result is None:
         return None
-    if isinstance(result, float) and result.is_integer():
-        result = int(result)
-    if isinstance(result, int):
-        return f"{math_expr} = {result}"
-    if isinstance(result, float) and math.isinf(result):
-        return f"{math_expr} = 除数不能为零"
-    float_str = f"{result:.10f}".rstrip("0").rstrip(".")
-    return f"{math_expr} = {float_str}"
+    return _math_format_result(math_expr, result)
