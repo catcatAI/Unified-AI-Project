@@ -434,43 +434,45 @@ class EmotionAnalyzer:
                 break
         return has_negation, has_intensifier
 
+    def _score_polarity_keywords(
+        self, text: str, keywords: list, negation_words: list, intensifier_words: list
+    ) -> Tuple[float, int]:
+        """Score one polarity keyword list (positive/negative share this logic)."""
+        score = 0.0
+        match_count = 0
+        for keyword in keywords:
+            if keyword in text:
+                has_negation, has_intensifier = self._score_keyword_match(
+                    text, keyword, negation_words, intensifier_words
+                )
+                if has_negation:
+                    score -= 0.5
+                else:
+                    if has_intensifier:
+                        score += 1.5
+                    else:
+                        score += 1.0
+                    match_count += 1
+        return score, match_count
+
     def _score_emotion_keywords(
         self, text: str, keywords_data: dict, negation_words: list, intensifier_words: list
     ) -> Tuple[float, int]:
         """Score emotion keywords in text."""
         score = 0.0
         match_count = 0
-        for keyword in keywords_data.get("positive", []):
-            if keyword in text:
-                has_negation, has_intensifier = self._score_keyword_match(
-                    text, keyword, negation_words, intensifier_words
-                )
-                if has_negation:
-                    score -= 0.5
-                else:
-                    if has_intensifier:
-                        score += 1.5
-                    else:
-                        score += 1.0
-                    match_count += 1
-        for keyword in keywords_data.get("negative", []):
-            if keyword in text:
-                has_negation, has_intensifier = self._score_keyword_match(
-                    text, keyword, negation_words, intensifier_words
-                )
-                if has_negation:
-                    score -= 0.5
-                else:
-                    if has_intensifier:
-                        score += 1.5
-                    else:
-                        score += 1.0
-                    match_count += 1
+        for polarity in ("positive", "negative"):
+            part_score, part_count = self._score_polarity_keywords(
+                text, keywords_data.get(polarity, []), negation_words, intensifier_words
+            )
+            score += part_score
+            match_count += part_count
         for keyword in keywords_data.get("neutral", []):
             if keyword in text:
                 score += 0.8
                 match_count += 1
         return score, match_count
+
 
     def _compute_emotion_result(self, emotion_scores: Dict[str, float]) -> Dict[str, Any]:
         """Compute emotion result from scores."""

@@ -67,6 +67,44 @@ class MemoryIntegration:
         self._svc = service
         _load_memory_modules()
 
+    def _validated_template_content(self, best_template: Any) -> Optional[str]:
+        """Return servable memory-template content; None when the hit must not serve."""
+        # Conversation/interaction logs are stored in the same `templates`
+        # bucket by store_experience(data_type="conversation"), but they are
+        # NOT answer templates — returning one as the response would leak a
+        # raw interaction record. Only genuine template types are usable.
+        tpl_type = best_template.get("data_type", "")
+        if tpl_type == "conversation":
+            return None
+
+        template_content = best_template.get("content", "")
+        template_id = best_template.get("id", "unknown")
+
+        # Defensive: content must be a string answer, never a dict/log.
+        if not isinstance(template_content, str):
+            template_content = str(template_content)
+        if not template_content or template_content.strip().startswith("{"):
+            return None
+
+        # Poisoned-template guard (defense in depth; HAM also filters):
+        # fossilized refusals/echoes/identity-leaks must never serve.
+        try:
+            from ai.memory.ham_memory.ham_manager import is_unservable_template
+
+            if is_unservable_template(template_content):
+                logger.info("Skipped unservable memory template id=%s", template_id)
+                return None
+        except Exception:
+            # Fail-closed: unverifiable guard must never serve a template.
+            logger.warning(
+                "Poison guard unavailable; refusing template id=%s",
+                template_id,
+                exc_info=True,
+            )
+            return None
+
+        return template_content
+
     async def try_memory_retrieval(
         self, user_message: str, context: Dict[str, Any]
     ) -> Optional["LLMResponse"]:
@@ -95,38 +133,8 @@ class MemoryIntegration:
             if results and len(results) > 0:
                 best_template, score = results[0]
 
-                # Conversation/interaction logs are stored in the same `templates`
-                # bucket by store_experience(data_type="conversation"), but they are
-                # NOT answer templates — returning one as the response would leak a
-                # raw interaction record. Only genuine template types are usable.
-                tpl_type = best_template.get("data_type", "")
-                if tpl_type == "conversation":
-                    return None
-
-                template_content = best_template.get("content", "")
-                template_id = best_template.get("id", "unknown")
-
-                # Defensive: content must be a string answer, never a dict/log.
-                if not isinstance(template_content, str):
-                    template_content = str(template_content)
-                if not template_content or template_content.strip().startswith("{"):
-                    return None
-
-                # Poisoned-template guard (defense in depth; HAM also filters):
-                # fossilized refusals/echoes/identity-leaks must never serve.
-                try:
-                    from ai.memory.ham_memory.ham_manager import is_unservable_template
-
-                    if is_unservable_template(template_content):
-                        logger.info("Skipped unservable memory template id=%s", template_id)
-                        return None
-                except Exception:
-                    # Fail-closed: unverifiable guard must never serve a template.
-                    logger.warning(
-                        "Poison guard unavailable; refusing template id=%s",
-                        template_id,
-                        exc_info=True,
-                    )
+                template_content = self._validated_template_content(best_template)
+                if template_content is None:
                     return None
 
                 return ChatResponse(
@@ -138,7 +146,7 @@ class MemoryIntegration:
                     hit_source="memory",
                     route="MEMORY",
                     metadata={
-                        "template_id": template_id,
+                        "template_id": best_template.get("id", "unknown"),
                         "template_score": score,
                         "memory_hit": True,
                     },
@@ -149,6 +157,7 @@ class MemoryIntegration:
         except Exception as e:
             logger.warning("Memory retrieval error: %s", e, exc_info=True)
             return None
+
 
     async def start_precompute(self) -> None:
         """Start the precompute service."""

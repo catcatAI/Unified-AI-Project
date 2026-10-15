@@ -678,30 +678,7 @@ class QueryClassifier:
         # Step 2: ED3N Dictionary classification (primary path)
         result = self._classify_by_dictionary(text, has_negation)
         if result is not None:
-            # 防誤判（本輪由土木特例升級為通用規則）：字典低置信（<0.7）時，
-            # 若 regex 更有把握則讓位。例：字典 creative 0.45 vs regex
-            # knowledge 0.75（什麼是光合作用）；字典 knowledge 0.6 vs
-            # regex CIVIL 0.9（梁跨度8米配筋多少）。CIVIL 誤傷門控在
-            # _classify_by_regex 內部處理，主板類不受影響。
-            # 否定句除外（不要搜尋）：否定翻轉意圖，不疊加匹配加成，
-            # 且閘門本就會 negation_reject。
-            cede = result.confidence < 0.7 and not has_negation
-            # 任務領域優先（R13）：字典 file + task 命中 + 無文件實體信號時
-            # 同樣讓位（「建立任務：買牛奶」字典 file 0.70 卡邊界）。
-            if not cede and not has_negation and result.primary_type == QueryType.FILE:
-                cede = not _FILE_SPECIFIC.search(text) and any(
-                    qt == QueryType.TASK and pattern.search(text)
-                    for qt, pattern, _ in self._patterns
-                )
-            if cede:
-                regex_result = self._classify_by_regex(text, has_negation)
-                if (
-                    regex_result is not None
-                    and regex_result.primary_type != result.primary_type
-                    and regex_result.confidence > result.confidence
-                ):
-                    return regex_result
-            return result
+            return self._dictionary_step(text, has_negation, result)
 
         # Steps 3-5: Regex pattern matching (fallback)
         result = self._classify_by_regex(text, has_negation)
@@ -720,6 +697,40 @@ class QueryClassifier:
 
         # Step 8: 回传 UNKNOWN
         return QueryResult(QueryType.UNKNOWN, 0.3, 0.0, "none", reason="no_match_fallback")
+
+    def _dictionary_step(self, text: str, has_negation: bool, result: QueryResult) -> QueryResult:
+        """Step 2: dictionary hit, yielding to regex only when the cede rules fire."""
+        if self._dictionary_cede(text, has_negation, result):
+            regex_result = self._classify_by_regex(text, has_negation)
+            if (
+                regex_result is not None
+                and regex_result.primary_type != result.primary_type
+                and regex_result.confidence > result.confidence
+            ):
+                return regex_result
+        return result
+
+    def _dictionary_cede(self, text: str, has_negation: bool, result: QueryResult) -> bool:
+        """Whether the dictionary hit should cede to a (better) regex result.
+
+        防誤判（本輪由土木特例升級為通用規則）：字典低置信（<0.7）時，
+        若 regex 更有把握則讓位。例：字典 creative 0.45 vs regex
+        knowledge 0.75（什麼是光合作用）；字典 knowledge 0.6 vs
+        regex CIVIL 0.9（梁跨度8米配筋多少）。CIVIL 誤傷門控在
+        _classify_by_regex 內部處理，主板類不受影響。
+        否定句除外（不要搜尋）：否定翻轉意圖，不疊加匹配加成，
+        且閘門本就會 negation_reject。
+        任務領域優先（R13）：字典 file + task 命中 + 無文件實體信號時
+        同樣讓位（「建立任務：買牛奶」字典 file 0.70 卡邊界）。
+        """
+        cede = result.confidence < 0.7 and not has_negation
+        if not cede and not has_negation and result.primary_type == QueryType.FILE:
+            cede = not _FILE_SPECIFIC.search(text) and any(
+                qt == QueryType.TASK and pattern.search(text)
+                for qt, pattern, _ in self._patterns
+            )
+        return cede
+
 
     def _classify_semantic_intent(self, text: str, has_negation: bool) -> Optional[QueryResult]:
         if _CAPABILITY_INTENT.search(text):
@@ -778,8 +789,9 @@ class QueryClassifier:
             logger.warning(f"Dictionary lookup failed: {e}", exc_info=True)
         return None
 
-    def _classify_by_regex(self, text: str, has_negation: bool) -> Optional[QueryResult]:
-        matches = []
+    def _collect_regex_matches(self, text: str, has_negation: bool) -> List[Tuple]:
+        """Scan every pattern for hits, with CIVIL false-positive gate + negation cap."""
+        matches: List[Tuple] = []
         for qt, pattern, base_conf in self._patterns:
             m = pattern.search(text)
             if m:
@@ -810,18 +822,15 @@ class QueryClassifier:
                         self._infer_action_type(qt, text),
                     )
                 )
-        matches.sort(key=lambda x: (x[1], x[2]), reverse=True)
-        # 任務領域優先（R13）：task 與 file 同中時，若無文件實體信號
-        # （文件/路徑/副檔名/備份），file 屬通用動詞（建立/刪除）誤中——
-        # 「建立任務：買牛奶」曾判 file/create 走檔案操作要路徑。
-        if any(m[0] == QueryType.TASK for m in matches) and not _FILE_SPECIFIC.search(text):
-            matches = [m for m in matches if m[0] != QueryType.FILE]
+        return matches
 
-        # 禮貌前綴讓位（R13 同構）：僅靠請/幫我/please 類前綴命中 COMMAND、
-        # 且存在其他領域信號（math/search/code/file…）時，前綴不構成意圖
-        # 主張——「請計算 123 × 456」應走 math 而非 command。
-        # 門控：「打開計算機／關閉計算器」類 app 名詞是命令受詞而非數學
-        # 意圖，此時 COMMAND 不讓位。
+    def _yield_politeness_command(self, matches: List[Tuple], text: str) -> List[Tuple]:
+        """禮貌前綴讓位（R13 同構）：僅靠請/幫我/please 類前綴命中 COMMAND、
+        且存在其他領域信號（math/search/code/file…）時，前綴不構成意圖
+        主張——「請計算 123 × 456」應走 math 而非 command。
+        門控：「打開計算機／關閉計算器」類 app 名詞是命令受詞而非數學
+        意圖，此時 COMMAND 不讓位。
+        """
         _APP_NOUN_GUARD = re.compile(
             r"(打開|關閉|啟動|停止|open|close|start|stop|launch|kill)",
             re.IGNORECASE,
@@ -836,20 +845,36 @@ class QueryClassifier:
             domain_hits = [m for m in matches if m[0] != QueryType.COMMAND]
             if cmd_text_hit and domain_hits and not _APP_NOUN_GUARD.search(text):
                 matches = [m for m in matches if m[0] != QueryType.COMMAND]
+        return matches
 
-        # code 領域讓位（R13 同構）：「Write a Python function」——write 是
-        # file 通用動詞，function 才是領域信號；無檔案實體時 file 讓位 code。
+    def _yield_code_rules(self, matches: List[Tuple], text: str) -> List[Tuple]:
+        """code 領域讓位（R13 同構）：「Write a Python function」——write 是
+        file 通用動詞，function 才是領域信號；無檔案實體時 file 讓位 code。
+        寫碼意圖優先（R13 同構）：MATH 僅靠裸「計算」類動詞命中、且無數字
+        無符號時，屬動詞誤中——「寫一個python函數計算費波那契」要的是寫碼，
+        不是算術（活體曾判 MATH→答不出）。有數字/符號時 MATH 不讓位。
+        """
         if any(m[0] == QueryType.CODE for m in matches) and not _FILE_SPECIFIC.search(text):
             matches = [m for m in matches if m[0] != QueryType.FILE]
-
-        # 寫碼意圖優先（R13 同構）：MATH 僅靠裸「計算」類動詞命中、且無數字
-        # 無符號時，屬動詞誤中——「寫一個python函數計算費波那契」要的是寫碼，
-        # 不是算術（活體曾判 MATH→答不出）。有數字/符號時 MATH 不讓位。
         if any(m[0] == QueryType.CODE for m in matches) and any(
             m[0] == QueryType.MATH for m in matches
         ):
             if not re.search(r"\d|[+\-*/^%()=]", text):
                 matches = [m for m in matches if m[0] != QueryType.MATH]
+        return matches
+
+    def _classify_by_regex(self, text: str, has_negation: bool) -> Optional[QueryResult]:
+        matches = self._collect_regex_matches(text, has_negation)
+        matches.sort(key=lambda x: (x[1], x[2]), reverse=True)
+        # 任務領域優先（R13）：task 與 file 同中時，若無文件實體信號
+        # （文件/路徑/副檔名/備份），file 屬通用動詞（建立/刪除）誤中——
+        # 「建立任務：買牛奶」曾判 file/create 走檔案操作要路徑。
+        if any(m[0] == QueryType.TASK for m in matches) and not _FILE_SPECIFIC.search(text):
+            matches = [m for m in matches if m[0] != QueryType.FILE]
+
+        matches = self._yield_politeness_command(matches, text)
+        matches = self._yield_code_rules(matches, text)
+
         if matches:
             primary = matches[0]
             secondary = (
@@ -865,6 +890,7 @@ class QueryClassifier:
                 reason="regex_pattern_match",
             )
         return None
+
 
     def _classify_reflex_override(self, text: str) -> Optional[QueryResult]:
         if len(text) < 2:
@@ -957,6 +983,34 @@ class QueryClassifier:
 
         return type_base
 
+    def _read_verb_action(self, text: str) -> str:
+        """SEARCH/VISION/AUDIO: write verbs → modify, else read."""
+        if any_keyword(text, tuple(_WRITE_VERBS)):
+            return "modify"
+        return "read"
+
+    def _file_verb_action(self, text: str) -> str:
+        """FILE: delete > create > move > modify > read."""
+        if any_keyword(text, tuple(_DELETE_VERBS)):
+            return "delete"
+        if any_keyword(text, tuple(_CREATE_VERBS)):
+            return "create"
+        if any_keyword(text, tuple(_MOVE_VERBS)):
+            return "modify"
+        if any_keyword(text, tuple(_MODIFY_VERBS)):
+            return "modify"
+        return "read"
+
+    def _command_verb_action(self, text: str) -> str:
+        """COMMAND: delete > create > modify > read."""
+        if any_keyword(text, tuple(_DELETE_VERBS)):
+            return "delete"
+        if any_keyword(text, tuple(_CREATE_VERBS)):
+            return "create"
+        if any_keyword(text, tuple(_MODIFY_VERBS)):
+            return "modify"
+        return "read"
+
     def _infer_action_type(self, query_type: QueryType, text: str) -> str:
         """根据意图和文字推断操作类型"""
         # 无操作类
@@ -973,21 +1027,11 @@ class QueryClassifier:
 
         # 读取类
         if query_type in (QueryType.SEARCH, QueryType.VISION, QueryType.AUDIO):
-            if any_keyword(text, tuple(_WRITE_VERBS)):
-                return "modify"
-            return "read"
+            return self._read_verb_action(text)
 
         # FILE 类：根据动词判断
         if query_type == QueryType.FILE:
-            if any_keyword(text, tuple(_DELETE_VERBS)):
-                return "delete"
-            if any_keyword(text, tuple(_CREATE_VERBS)):
-                return "create"
-            if any_keyword(text, tuple(_MOVE_VERBS)):
-                return "modify"
-            if any_keyword(text, tuple(_MODIFY_VERBS)):
-                return "modify"
-            return "read"
+            return self._file_verb_action(text)
 
         # CODE/EXECUTE → system
         if query_type in (QueryType.CODE, QueryType.EXECUTE):
@@ -1001,15 +1045,10 @@ class QueryClassifier:
 
         # COMMAND → 根据内容判断
         if query_type == QueryType.COMMAND:
-            if any_keyword(text, tuple(_DELETE_VERBS)):
-                return "delete"
-            if any_keyword(text, tuple(_CREATE_VERBS)):
-                return "create"
-            if any_keyword(text, tuple(_MODIFY_VERBS)):
-                return "modify"
-            return "read"
+            return self._command_verb_action(text)
 
         return "none"
+
 
     def _keys_to_intent(self, keys: List[str]) -> Tuple[QueryType, float]:
         """Map ED3N dictionary keys to a QueryType with confidence."""

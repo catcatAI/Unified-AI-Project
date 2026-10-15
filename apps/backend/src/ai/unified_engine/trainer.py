@@ -59,6 +59,36 @@ def _query_of(sample: str) -> str:
     return sample + "=?"
 
 
+def _numeric_match(got: str, want: str) -> bool:
+    """Numeric normalisation: exact float, decimal-rounded, or relative tolerance.
+
+    Tolerates formatting differences: the deterministic math layer returns
+    full precision (e.g. 4.6581632653) while the dataset stores the value
+    rounded to its own decimal places (4.6582).
+    """
+    try:
+        f_got, f_want = float(got), float(want)
+        if f_got == f_want:
+            return True
+        # Floating-point precision differences: the deterministic math layer
+        # returns full precision (e.g. 4.6581632653) while the dataset stores
+        # the value rounded to its own decimal places (4.6582). Match by
+        # rounding the engine output to the dataset's number of decimals.
+        want_str = str(want)
+        n_dec = 0
+        if "." in want_str:
+            n_dec = len(want_str.split(".")[1])
+        if n_dec and round(f_got, n_dec) == f_want:
+            return True
+        # Fallback: relative tolerance for near-matches (very small values
+        # whose rounding would lose a digit of the dataset).
+        if f_want != 0 and abs((f_got - f_want) / f_want) < 1e-6:
+            return True
+    except (ValueError, TypeError):
+        pass
+    return False
+
+
 def _answers_match(out: str, truth: str, sample: str) -> bool:
     """Match the engine output against the ground-truth answer.
 
@@ -81,27 +111,10 @@ def _answers_match(out: str, truth: str, sample: str) -> bool:
     if got in ("true", "false") and want in ("true", "false"):
         return got == want
     # Numeric normalisation (int/float).
-    try:
-        f_got, f_want = float(got), float(want)
-        if f_got == f_want:
-            return True
-        # Floating-point precision differences: the deterministic math layer
-        # returns full precision (e.g. 4.6581632653) while the dataset stores
-        # the value rounded to its own decimal places (4.6582). Match by
-        # rounding the engine output to the dataset's number of decimals.
-        want_str = str(want)
-        n_dec = 0
-        if "." in want_str:
-            n_dec = len(want_str.split(".")[1])
-        if n_dec and round(f_got, n_dec) == f_want:
-            return True
-        # Fallback: relative tolerance for near-matches (very small values
-        # whose rounding would lose a digit of the dataset).
-        if f_want != 0 and abs((f_got - f_want) / f_want) < 1e-6:
-            return True
-    except (ValueError, TypeError):
-        pass
+    if _numeric_match(got, want):
+        return True
     return False
+
 
 
 def train_exact_bytes(
