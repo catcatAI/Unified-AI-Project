@@ -439,6 +439,19 @@ class FixedSizeCore:
             return [1.0 / VOCAB] * VOCAB
         return [float(c) / total for c in row]
 
+    def _gram_order_cell(self, prefix: bytes, order: int, wmix: int, mask: int) -> Optional[np.ndarray]:
+        """Lookup normalized cell for given n-gram order (5=4-byte context, etc.)."""
+        ctx_len = order - 1
+        if len(prefix) < ctx_len:
+            return None
+        table = {4: self._gram5, 3: self._gram, 2: self._gram3}[ctx_len]
+        cell = table[(_scalar_hash(prefix[-ctx_len:], wmix)) & mask]
+        total = float(cell.sum())
+        if total > 0:
+            dist: np.ndarray = cell.astype(np.float64) / total
+            return dist
+        return None
+
     def gram_dist(self, prefix: bytes, w: int = 0) -> np.ndarray:
         """Multi-order backoff: 5-gram -> 4-gram -> 3-gram -> bigram ->
         unigram. Empty slots fall back to a lower order, so low-order
@@ -462,21 +475,12 @@ class FixedSizeCore:
                 return dist
             return None
 
-        # 5-gram (4-byte context)
-        if len(prefix) >= 4:
-            d = _norm(self._gram5[(_scalar_hash(prefix[-4:], wmix)) & mask])
+        # n-gram backoff (5-gram -> 4-gram -> 3-gram)
+        for order in (5, 4, 3):
+            d = self._gram_order_cell(prefix, order, wmix, mask)
             if d is not None:
                 return d
-        # 4-gram (3-byte context)
-        if len(prefix) >= 3:
-            d = _norm(self._gram[(_scalar_hash(prefix[-3:], wmix)) & mask])
-            if d is not None:
-                return d
-        # 3-gram (2-byte context)
-        if len(prefix) >= 2:
-            d = _norm(self._gram3[(_scalar_hash(prefix[-2:], wmix)) & mask])
-            if d is not None:
-                return d
+
         # bigram (transition), language-plane isolated
         wp = w % UNI_WIDTH
         if len(prefix) >= 1:
@@ -580,6 +584,103 @@ class FixedSizeCore:
                 return b
         return int(np.argmax(arr))
 
+    @staticmethod
+    def _pending_multibyte(buf: bytearray) -> int:
+        """Number of continuation bytes still required to finish an open
+        multibyte sequence at the end of buf (0 = none open)."""
+        i = len(buf) - 1
+        back = 0
+        while i >= 0 and back < 4:
+            b = buf[i]
+            if b & 0xC0 == 0x80:  # continuation byte
+                back += 1
+                i -= 1
+                continue
+            # lead byte found
+            if b & 0xE0 == 0xC0:
+                need = 2
+            elif b & 0xF0 == 0xE0:
+                need = 3
+            elif b & 0xF8 == 0xF0:
+                need = 4
+            else:
+                need = 1  # ascii (or stray) — complete
+            return max(0, need - 1 - back)
+        return 0
+
+    @staticmethod
+    def _mask_utf8_probs(probs, pending: int):
+        """Mask probs for UTF-8 safety: forbid orphan continuations or force completion."""
+        if pending == 0:
+            # no open multibyte sequence: forbid orphan continuation bytes
+            probs[0x80:0xC0] = 0.0
+            total = probs.sum()
+            if total <= 0:
+                probs[:] = 1.0 / VOCAB
+            else:
+                probs /= total
+        elif pending > 0:
+            # an open sequence MUST be completed: allow only continuations
+            mask = np.zeros(VOCAB, dtype=np.float64)
+            mask[0x80:0xC0] = probs[0x80:0xC0]
+            total = mask.sum()
+            if total > 0:
+                probs = mask / total
+            # else: keep original (shouldn't happen with valid training)
+        return probs
+
+    @staticmethod
+    def _apply_temperature(probs, temperature: float):
+        """Apply temperature sharpening to probs."""
+        if temperature == 1.0 or temperature <= 0:
+            return probs
+        with np.errstate(divide="ignore"):
+            logits = np.log(np.maximum(probs, 1e-12)) / temperature
+        logits -= logits.max()
+        probs = np.exp(logits)
+        probs /= probs.sum()
+        return probs
+
+    @staticmethod
+    def _apply_repetition_penalty(probs, out: bytearray, repetition_penalty: float):
+        """Apply repetition penalty over recent bytes."""
+        if repetition_penalty == 1.0 or len(out) == 0:
+            return probs
+        recent = set(out[-32:])
+        for b in recent:
+            probs[b] /= repetition_penalty
+        s = probs.sum()
+        if s > 0:
+            probs /= s
+        return probs
+
+    @staticmethod
+    def _sample_byte(probs, rng) -> int:
+        """Sample next byte from probs using rng."""
+        r = rng.random()
+        acc = 0.0
+        nxt = int(np.argmax(probs))
+        for b, p in enumerate(probs):
+            acc += p
+            if r <= acc:
+                nxt = b
+                break
+        return nxt
+
+    @staticmethod
+    def _trim_utf8_tail(out: bytearray) -> bytearray:
+        """Trim trailing incomplete multibyte sequence so output is valid UTF-8."""
+        for trim in range(1, 4):
+            try:
+                bytes(out).decode("utf-8")
+                break
+            except UnicodeDecodeError:
+                if trim == 3:
+                    out = out[:-3]
+                else:
+                    del out[-1:]
+        return out
+
     def generate(
         self,
         prefix: bytes,
@@ -600,87 +701,19 @@ class FixedSizeCore:
         rng = random.Random(seed)
         out = bytearray(prefix)
 
-        def _pending_multibyte(buf: bytearray) -> int:
-            """Number of continuation bytes still required to finish an open
-            multibyte sequence at the end of buf (0 = none open)."""
-            i = len(buf) - 1
-            back = 0
-            while i >= 0 and back < 4:
-                b = buf[i]
-                if b & 0xC0 == 0x80:  # continuation byte
-                    back += 1
-                    i -= 1
-                    continue
-                # lead byte found
-                if b & 0xE0 == 0xC0:
-                    need = 2
-                elif b & 0xF0 == 0xE0:
-                    need = 3
-                elif b & 0xF8 == 0xF0:
-                    need = 4
-                else:
-                    need = 1  # ascii (or stray) — complete
-                return max(0, need - 1 - back)
-            return 0
-
         for step in range(max_len):
             pos = len(out) - 1
-            pending = _pending_multibyte(out)
+            pending = self._pending_multibyte(out)
             probs = self.next_byte_probs_fused(bytes(out), pos)
-            if pending == 0:
-                # no open multibyte sequence: forbid orphan continuation bytes
-                probs[0x80:0xC0] = 0.0
-                total = probs.sum()
-                if total <= 0:
-                    probs[:] = 1.0 / VOCAB
-                else:
-                    probs /= total
-            elif pending > 0:
-                # an open sequence MUST be completed: allow only continuations
-                mask = np.zeros(VOCAB, dtype=np.float64)
-                mask[0x80:0xC0] = probs[0x80:0xC0]
-                total = mask.sum()
-                if total > 0:
-                    probs = mask / total
-                # else: keep original (shouldn't happen with valid training)
-            # apply temperature + penalty manually here (probs already local)
-            if temperature != 1.0 and temperature > 0:
-                with np.errstate(divide="ignore"):
-                    logits = np.log(np.maximum(probs, 1e-12)) / temperature
-                logits -= logits.max()
-                probs = np.exp(logits)
-                probs /= probs.sum()
-            if repetition_penalty != 1.0 and len(out) > 0:
-                recent = set(out[-32:])
-                for b in recent:
-                    probs[b] /= repetition_penalty
-                s = probs.sum()
-                if s > 0:
-                    probs /= s
-            r = rng.random()
-            acc = 0.0
-            nxt = int(np.argmax(probs))
-            for b, p in enumerate(probs):
-                acc += p
-                if r <= acc:
-                    nxt = b
-                    break
+            probs = self._mask_utf8_probs(probs, pending)
+            probs = self._apply_temperature(probs, temperature)
+            probs = self._apply_repetition_penalty(probs, out, repetition_penalty)
+            nxt = self._sample_byte(probs, rng)
             out.append(nxt)
             if stop_on and bytes([nxt]) in stop_on:
                 if len(out) > len(prefix):
                     break
-        # Trim any trailing incomplete multibyte sequence so the output is
-        # always valid UTF-8 when the prefix was valid.
-        for trim in range(1, 4):
-            try:
-                bytes(out).decode("utf-8")
-                break
-            except UnicodeDecodeError:
-                if trim == 3:
-                    out = out[:-3]
-                else:
-                    del out[-1:]
-        return bytes(out)
+        return bytes(self._trim_utf8_tail(out))
 
     # ------------------------------------------------------------------
     # Scoring / evaluation helpers
