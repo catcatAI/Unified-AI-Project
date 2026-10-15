@@ -22,10 +22,12 @@ jobs:
         run: pnpm install --frozen-lockfile=false
       - name: Lint (JS)
         run: pnpm lint:js
+      - name: Type check (TS — web-dashboard 20 檔納入門禁)
+        # Next 16 移除 next lint/next build 型別併入 build；此處獨立 tsc
+        # --noEmit 把 web-dashboard 的 .ts/.tsx 顯式納入 CI，不再裸奔
+        run: pnpm typecheck:dashboard
       - name: Prettier check (full repo, .prettierignore-gated)
         run: pnpm exec prettier --check .
-      - name: Test (JS placeholder)
-        run: echo "No JS unit tests configured yet"
 
   python:
     runs-on: ubuntu-latest
