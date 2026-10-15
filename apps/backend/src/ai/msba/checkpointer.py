@@ -56,6 +56,74 @@ class MSBACheckpointer:
 
         os.makedirs(base_dir, exist_ok=True)
 
+    @staticmethod
+    def _write_json(path: str, payload: Any, label: str) -> None:
+        """Write payload as JSON; failures are logged, never raised."""
+        try:
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(payload, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            logger.debug("Failed to save %s: %s", label, e)
+
+    @staticmethod
+    def _read_json(
+        path: str,
+        key: str,
+        result: Dict[str, Any],
+        fail_label: str,
+        ok_label: Optional[str] = None,
+    ) -> None:
+        """Load JSON at path into result[key]; failures logged, never raised."""
+        if not os.path.exists(path):
+            return
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                result[key] = json.load(f)
+            if ok_label is not None:
+                logger.info("Loaded %s", ok_label)
+        except Exception as e:
+            logger.debug("Failed to load %s: %s", fail_label, e)
+
+    def _save_block_weights(
+        self, blocks: Dict[str, "SemanticBlock"], ckpt_dir: str
+    ) -> None:
+        """Persist each block's SNN weights (W-array npz or engine checkpoint)."""
+        for bid, block in blocks.items():
+            coordinator = getattr(block, "coordinator", None)
+            if coordinator is None or coordinator.engine is None:
+                continue
+            engine = coordinator.engine
+            path = os.path.join(ckpt_dir, f"{bid}_snn.npz")
+            try:
+                if hasattr(engine, "W"):
+                    np.savez_compressed(path, W=engine.W)
+                elif hasattr(engine, "save_checkpoint"):
+                    engine.save_checkpoint(path)
+            except Exception as e:
+                logger.debug("Failed to save %s: %s", bid, e)
+
+    def _load_block_weights(
+        self, blocks: Dict[str, "SemanticBlock"], ckpt_dir: str
+    ) -> None:
+        """Restore each block's SNN weights when a checkpoint file exists."""
+        for bid, block in blocks.items():
+            coordinator = getattr(block, "coordinator", None)
+            if coordinator is None or coordinator.engine is None:
+                continue
+            engine = coordinator.engine
+            path = os.path.join(ckpt_dir, f"{bid}_snn.npz")
+            if not os.path.exists(path):
+                continue
+            try:
+                if hasattr(engine, "W"):
+                    data = np.load(path)
+                    engine.W = data["W"]
+                elif hasattr(engine, "load_checkpoint"):
+                    engine.load_checkpoint(path)
+                logger.info("Loaded SNN weights for %s", bid)
+            except Exception as e:
+                logger.debug("Failed to load %s: %s", bid, e)
+
     def save(
         self,
         blocks: Dict[str, "SemanticBlock"],
@@ -76,19 +144,7 @@ class MSBACheckpointer:
         os.makedirs(ckpt_dir, exist_ok=True)
 
         # BlockSNN weights
-        for bid, block in blocks.items():
-            coordinator = getattr(block, "coordinator", None)
-            if coordinator is None or coordinator.engine is None:
-                continue
-            engine = coordinator.engine
-            path = os.path.join(ckpt_dir, f"{bid}_snn.npz")
-            try:
-                if hasattr(engine, "W"):
-                    np.savez_compressed(path, W=engine.W)
-                elif hasattr(engine, "save_checkpoint"):
-                    engine.save_checkpoint(path)
-            except Exception as e:
-                logger.debug("Failed to save %s: %s", bid, e)
+        self._save_block_weights(blocks, ckpt_dir)
 
         # Cross-attention matrix
         ca_path = os.path.join(ckpt_dir, "cross_attention.npy")
@@ -98,56 +154,32 @@ class MSBACheckpointer:
             logger.debug("Failed to save cross_attention: %s", e)
 
         # Block history
-        hist_path = os.path.join(ckpt_dir, "history.json")
-        try:
-            with open(hist_path, "w", encoding="utf-8") as f:
-                json.dump(history, f, ensure_ascii=False, indent=2)
-        except Exception as e:
-            logger.debug("Failed to save history: %s", e)
+        self._write_json(os.path.join(ckpt_dir, "history.json"), history, "history")
 
         # Training state
         if training_state:
-            train_path = os.path.join(ckpt_dir, "training.json")
-            try:
-                with open(train_path, "w", encoding="utf-8") as f:
-                    json.dump(training_state, f, ensure_ascii=False, indent=2)
-            except Exception as e:
-                logger.debug("Failed to save training state: %s", e)
+            self._write_json(
+                os.path.join(ckpt_dir, "training.json"), training_state, "training state"
+            )
 
         # A/B testing state
         if ab_state:
-            ab_path = os.path.join(ckpt_dir, "ab_testing.json")
-            try:
-                with open(ab_path, "w", encoding="utf-8") as f:
-                    json.dump(ab_state, f, ensure_ascii=False, indent=2)
-            except Exception as e:
-                logger.debug("Failed to save A/B state: %s", e)
+            self._write_json(os.path.join(ckpt_dir, "ab_testing.json"), ab_state, "A/B state")
 
         # Metrics snapshot
         if metrics_snapshot:
-            metrics_path = os.path.join(ckpt_dir, "metrics.json")
-            try:
-                with open(metrics_path, "w", encoding="utf-8") as f:
-                    json.dump(metrics_snapshot, f, ensure_ascii=False, indent=2)
-            except Exception as e:
-                logger.debug("Failed to save metrics: %s", e)
+            self._write_json(os.path.join(ckpt_dir, "metrics.json"), metrics_snapshot, "metrics")
 
         # Write version metadata
-        meta_path = os.path.join(ckpt_dir, "meta.json")
-        try:
-            with open(meta_path, "w", encoding="utf-8") as f:
-                json.dump(
-                    {
-                        "version": self._version,
-                        "timestamp": time.time(),
-                        "blocks": list(blocks.keys()),
-                    },
-                    f,
-                    ensure_ascii=False,
-                    indent=2,
-                )
-        except Exception as e:
-            logger.debug("Failed to save meta: %s", e)
+        self._write_json(
+            os.path.join(ckpt_dir, "meta.json"),
+            {
+                "version": self._version,
+                "timestamp": time.time(),
+                "blocks": list(blocks.keys()),
+            },
+            "meta",
+        )
 
         # Cleanup old versions
         self._cleanup_old_versions()
@@ -186,25 +218,9 @@ class MSBACheckpointer:
         result: Dict[str, Any] = {}
 
         # BlockSNN weights
-        for bid, block in blocks.items():
-            coordinator = getattr(block, "coordinator", None)
-            if coordinator is None or coordinator.engine is None:
-                continue
-            engine = coordinator.engine
-            path = os.path.join(ckpt_dir, f"{bid}_snn.npz")
-            if not os.path.exists(path):
-                continue
-            try:
-                if hasattr(engine, "W"):
-                    data = np.load(path)
-                    engine.W = data["W"]
-                elif hasattr(engine, "load_checkpoint"):
-                    engine.load_checkpoint(path)
-                logger.info("Loaded SNN weights for %s", bid)
-            except Exception as e:
-                logger.debug("Failed to load %s: %s", bid, e)
+        self._load_block_weights(blocks, ckpt_dir)
 
-        # Cross-attention matrix
+        # Cross-attention matrix (.npy, not JSON)
         ca_path = os.path.join(ckpt_dir, "cross_attention.npy")
         if os.path.exists(ca_path):
             try:
@@ -214,55 +230,42 @@ class MSBACheckpointer:
                 logger.debug("Failed to load cross_attention: %s", e)
 
         # Block history
-        hist_path = os.path.join(ckpt_dir, "history.json")
-        if os.path.exists(hist_path):
-            try:
-                with open(hist_path, "r", encoding="utf-8") as f:
-                    result["history"] = json.load(f)
-                logger.info("Loaded block history")
-            except Exception as e:
-                logger.debug("Failed to load history: %s", e)
+        self._read_json(
+            os.path.join(ckpt_dir, "history.json"), "history", result, "history", "block history"
+        )
 
         # Training state
-        train_path = os.path.join(ckpt_dir, "training.json")
-        if os.path.exists(train_path):
-            try:
-                with open(train_path, "r", encoding="utf-8") as f:
-                    result["training_state"] = json.load(f)
-                logger.info("Loaded training state")
-            except Exception as e:
-                logger.debug("Failed to load training state: %s", e)
+        self._read_json(
+            os.path.join(ckpt_dir, "training.json"),
+            "training_state",
+            result,
+            "training state",
+            "training state",
+        )
 
         # A/B testing state
-        ab_path = os.path.join(ckpt_dir, "ab_testing.json")
-        if os.path.exists(ab_path):
-            try:
-                with open(ab_path, "r", encoding="utf-8") as f:
-                    result["ab_state"] = json.load(f)
-                logger.info("Loaded A/B testing state")
-            except Exception as e:
-                logger.debug("Failed to load A/B state: %s", e)
+        self._read_json(
+            os.path.join(ckpt_dir, "ab_testing.json"),
+            "ab_state",
+            result,
+            "A/B state",
+            "A/B testing state",
+        )
 
         # Metrics snapshot
-        metrics_path = os.path.join(ckpt_dir, "metrics.json")
-        if os.path.exists(metrics_path):
-            try:
-                with open(metrics_path, "r", encoding="utf-8") as f:
-                    result["metrics_snapshot"] = json.load(f)
-                logger.info("Loaded metrics snapshot")
-            except Exception as e:
-                logger.debug("Failed to load metrics: %s", e)
+        self._read_json(
+            os.path.join(ckpt_dir, "metrics.json"),
+            "metrics_snapshot",
+            result,
+            "metrics",
+            "metrics snapshot",
+        )
 
-        # Read version metadata
-        meta_path = os.path.join(ckpt_dir, "meta.json")
-        if os.path.exists(meta_path):
-            try:
-                with open(meta_path, "r", encoding="utf-8") as f:
-                    result["meta"] = json.load(f)
-            except Exception as e:
-                logger.debug("Failed to load meta: %s", e)
+        # Read version metadata (no success log — preserved from original)
+        self._read_json(os.path.join(ckpt_dir, "meta.json"), "meta", result, "meta")
 
         return result
+
 
     def check_auto_save(self) -> bool:
         """Check if auto-save should trigger. Returns True if save needed."""
