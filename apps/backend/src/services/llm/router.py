@@ -2462,43 +2462,314 @@ class AngelaLLMService:
             logger.debug(f"User fact recall skipped: {e}")
             return None
 
-    async def _try_template_match(
+    async def _tm_short_circuit_pre(
         self, user_message: str, context: Dict[str, Any], start_time: float
     ) -> Optional[LLMResponse]:
+        """Model Bus + user-fact recall short-circuit layers (None → continue)."""
         if hasattr(self, "model_bus") and self.model_bus:
             model_bus_result = await self._try_model_bus_match(user_message, context)
             if model_bus_result is not None:
                 return model_bus_result
+        return await self._recall_user_fact(user_message, context, start_time)
 
-        fact_result = await self._recall_user_fact(user_message, context, start_time)
-        if fact_result is not None:
-            return fact_result
+    def _template_layers_enabled(self, user_message: str) -> bool:
+        """Code-WRITE requests skip ALL template layers; template_matcher must exist.
 
-        # Code-WRITE requests skip ALL template layers (social/keyword/emotion/
-        # pattern/matcher): template keywords self-match inside code requests
-        # ("修好的" contains "好的" → affirmation ramble) and block generation
-        # (live 2026-10-11 Unity repair). Same write-yield rule as recall,
-        # gate and agent routing.
+        If the code-write guard cannot run, a code request is answered from
+        canned templates (the live Unity regression this rule exists to stop) —
+        never let that be invisible.
+        """
         try:
             from services.execution.gate_execution import GateExecutionOwner
 
             if GateExecutionOwner.is_code_write_request(user_message):
-                return None
+                return False
         except Exception as exc:
-            # If this guard cannot run, a code request is answered from canned
-            # templates (the live Unity regression this rule exists to stop) —
-            # never let that be invisible.
             logger.debug(f"Code-write guard unavailable: {exc}")
+        return bool(getattr(self, "template_matcher", None))
 
-        if not hasattr(self, "template_matcher") or not self.template_matcher:
+    @staticmethod
+    def _is_factual_query(user_message: str) -> bool:
+        """Detect factual/task queries that must not be answered by feeling templates.
+
+        KNOWLEDGE needs the question form as well: the trained classifier
+        dictionary tags time words (今天/明天) as knowledge, so a plain feeling
+        statement ("我今天很開心") must not be treated as a query.
+        """
+        try:
+            _eq = QueryClassifier().classify(user_message)
+            _eqt = str(getattr(_eq.primary_type, "value", _eq.primary_type) or "").lower()
+            _question_shaped = bool(_INFORMATION_REQUEST_RE.search(user_message.strip()))
+            return _eqt in (
+                "code",
+                "math",
+                "logic",
+                "file",
+                "task",
+                "system",
+                "execute",
+                "search",
+            ) or (_eqt == "knowledge" and _question_shaped)
+        except Exception as exc:
+            # Falling back to "not factual" restores the very bug this guard
+            # fixes (a knowledge question answered by a feeling template), so
+            # a broken classifier must be visible.
+            logger.debug(f"Factual-query guard unavailable: {exc}")
+            return False
+
+    def _tm_social_route(
+        self, user_message: str, start_time: float, social_entry: Any
+    ) -> Optional[LLMResponse]:
+        """Serve a social input (greeting/farewell/thanks) by preferred ID or category."""
+        _preferred_id, _cat_name = social_entry
+        try:
+            from ai.memory.memory_template import ResponseCategory
+            from ai.memory.template_library import get_template_library
+
+            lib = get_template_library()
+            chosen = None
+            # Try preferred template ID first
+            if _preferred_id:
+                for t in lib.get_all_templates():
+                    if t.id == _preferred_id:
+                        chosen = t
+                        break
+            # Fall back to category
+            if not chosen:
+                cat = ResponseCategory(_cat_name)
+                templates = lib.get_by_category(cat)
+                if templates:
+                    import random as _rand
+
+                    chosen = _rand.choice(templates)
+            if chosen:
+                response_time = (time.time() - start_time) * 1000
+                self.stats["composed_responses"] += 1
+                return ChatResponse(
+                    text=chosen.content,
+                    backend="composed-template",
+                    model="template-based",
+                    tokens_used=50,
+                    response_time_ms=response_time,
+                    confidence=0.85,
+                    hit_score=0.9,
+                    hit_source="social",
+                    route="COMPOSED",
+                )
+        except Exception as exc:
+            logger.debug(f"Social template lookup failed: {exc}")
+        return None
+
+    def _tm_keyword_route(
+        self, user_message: str, start_time: float, _lib: Any, _factual_query: bool
+    ) -> Optional[LLMResponse]:
+        """Keyword-based category routing: a template's own keyword pins its category.
+
+        Serving the matched template (instead of a random sibling from its
+        category) is what makes the match meaningful — a keyword that really
+        appears in the message pins the exact category.
+        """
+        from ai.memory.memory_template import ResponseCategory  # noqa: F401
+
+        try:
+            _best_tpl = _pick_relevant_template(_lib.get_all_templates(), user_message)
+            _best_cat = _best_tpl.category if _best_tpl is not None else None
+            if _best_cat is not None and not _factual_query:
+                _usable_k = _usable_templates(_lib.get_by_category(_best_cat))
+                if _best_tpl is not None and _best_tpl in _usable_k:
+                    _ch_k = _best_tpl
+                else:
+                    import random as _rand_k
+
+                    _ch_k = _rand_k.choice(_usable_k) if _usable_k else None
+                if _ch_k is not None:
+                    _rt_k = (time.time() - start_time) * 1000
+                    self.stats["composed_responses"] += 1
+                    return ChatResponse(
+                        text=_ch_k.content,
+                        backend="composed-template",
+                        model="template-based",
+                        tokens_used=50,
+                        response_time_ms=_rt_k,
+                        confidence=0.8,
+                        hit_score=0.8,
+                        hit_source="keyword-category",
+                        route="COMPOSED",
+                    )
+        except Exception as exc:
+            logger.debug(f"Keyword-category template failed: {exc}")
+        return None
+
+    def _tm_emotion_route(
+        self, user_message: str, start_time: float, _lib: Any, _factual_query: bool
+    ) -> Optional[LLMResponse]:
+        """AI-driven social routing: EmotionAnalyzer for emotional content."""
+        from ai.memory.memory_template import ResponseCategory
+
+        _emotion_to_category = {
+            "sad": "support",
+            "fear": "support",
+            "angry": "support",
+            "happy": "small_talk",
+            "surprise": "curiosity",
+            "curious": "curiosity",
+            "calm": "small_talk",
+        }
+        # Topic-shaped categories (weather/food/games) require a shared keyword
+        # with the message; empathetic support/emotional ones may pick at random.
+        _TOPIC_EMOTION_CATEGORIES = frozenset({"small_talk", "curiosity"})
+        _emotion_cat = None
+        try:
+            _ea = EmotionAnalyzer()
+            _ea_result = _ea.analyze_emotion(user_message)
+            _detected = _ea_result.get("emotion", "")
+            _intensity = _ea_result.get("intensity", 0.0)
+            if _detected and _intensity > 0.3:
+                _emotion_cat = _emotion_to_category.get(_detected)
+        except Exception as e:
+            logger.debug(f"EmotionAnalyzer skipped (routing falls through): {e}")
+        if _emotion_cat and _factual_query:
+            _emotion_cat = None
+        if _emotion_cat:
+            try:
+                _cat_e = ResponseCategory(_emotion_cat)
+                _tpls_e = _usable_templates(_lib.get_by_category(_cat_e))
+                _ch_e = _pick_relevant_template(_tpls_e, user_message)
+                if _ch_e is None and _emotion_cat not in _TOPIC_EMOTION_CATEGORIES:
+                    import random as _rand_e
+
+                    _ch_e = _rand_e.choice(_tpls_e) if _tpls_e else None
+                if _ch_e is not None:
+                    _rt_e = (time.time() - start_time) * 1000
+                    self.stats["composed_responses"] += 1
+                    return ChatResponse(
+                        text=_ch_e.content,
+                        backend="composed-template",
+                        model="template-based",
+                        tokens_used=50,
+                        response_time_ms=_rt_e,
+                        confidence=0.8,
+                        hit_score=0.8,
+                        hit_source="emotion-analyzer",
+                        route="COMPOSED",
+                    )
+            except Exception as e:
+                logger.debug(f"Composed emotion template failed, falling through: {e}")
+        return None
+
+    def _tm_pattern_route(
+        self, user_message: str, start_time: float, _lib: Any
+    ) -> Optional[LLMResponse]:
+        """Structural pattern fallback for greeting/farewell only."""
+        from ai.memory.memory_template import ResponseCategory
+
+        _PATTERN_CATEGORY = {
+            "farewell": [
+                "good night",
+                "goodnight",
+                "晚安",
+                "see you",
+                "see ya",
+                "see you later",
+            ],
+            "greeting": [
+                "morning",
+                "good morning",
+                "早上好",
+                "午安",
+                "afternoon",
+                "evening",
+            ],
+        }
+        _input_lower2 = user_message.strip().lower()
+        for _cat_name, _patterns in _PATTERN_CATEGORY.items():
+            for _pat in _patterns:
+                if _pat.lower() in _input_lower2 or _input_lower2 in _pat.lower():
+                    try:
+                        _cat = ResponseCategory(_cat_name)
+                        _tpls = _lib.get_by_category(_cat)
+                        if not _tpls:
+                            _FALLBACK = {
+                                "support": "affirmation",
+                                "apology": "affirmation",
+                                "gratitude": "affirmation",
+                            }
+                            _fb = _FALLBACK.get(_cat_name)
+                            if _fb:
+                                _tpls = _lib.get_by_category(ResponseCategory(_fb))
+                        if not _tpls:
+                            break  # no templates for this category, try next pattern
+                        import random as _rand3
+
+                        _ch = _rand3.choice(_tpls)
+                        if (_ch.content or "").strip() in _KNOWN_FALLBACK_RESPONSES:
+                            # Ignorance template must never block the
+                            # LLM/fallback chain: try next pattern.
+                            break
+                        _rt2 = (time.time() - start_time) * 1000
+                        self.stats["composed_responses"] += 1
+                        return ChatResponse(
+                            text=_ch.content,
+                            backend="composed-template",
+                            model="template-based",
+                            tokens_used=50,
+                            response_time_ms=_rt2,
+                            confidence=0.8,
+                            hit_score=0.8,
+                            hit_source="pattern-category",
+                            route="COMPOSED",
+                        )
+                    except Exception as e:
+                        logger.debug(f"Composed pattern template failed: {e}")
+                    break
+            else:
+                continue
+            break
+        return None
+
+    async def _tm_matcher_route(
+        self, user_message: str, context: Dict[str, Any], start_time: float
+    ) -> Optional[LLMResponse]:
+        """Template matcher composed/hybrid layers."""
+        matcher = self.template_matcher
+        if matcher is None:
+            return None
+        match_result = matcher.match(user_message, context)
+        match_score = match_result.score
+        tmpl_cfg = _get_llm_config("template_match", {})
+        composed_thresh = tmpl_cfg.get("composed", 0.8)
+        hybrid_thresh = tmpl_cfg.get("hybrid", 0.5)
+        # Ignorance templates ("I don't know") must never win over the
+        # LLM/fallback chain that could actually answer.
+        if (match_result.template_content or "").strip() in _KNOWN_FALLBACK_RESPONSES:
+            logger.debug("Skipped ignorance template match; falling through")
+            return None
+        if match_score > composed_thresh:
+            return await self._build_composed_response(
+                user_message, context, match_result, match_score, start_time
+            )
+        if match_score > hybrid_thresh:
+            return await self._build_hybrid_response(
+                user_message, context, match_result, match_score, start_time
+            )
+        return None
+
+    async def _try_template_match(
+        self, user_message: str, context: Dict[str, Any], start_time: float
+    ) -> Optional[LLMResponse]:
+        pre = await self._tm_short_circuit_pre(user_message, context, start_time)
+        if pre is not None:
+            return pre
+        if not self._template_layers_enabled(user_message):
             return None
         try:
+            from ai.memory.template_library import get_template_library
+
+            _lib = get_template_library()
+            _factual_query = self._is_factual_query(user_message)
             # Social input detection: common greetings/farewells/thanks that
-            # TemplateMatcher can't match (input text ≠ response text).
-            # Route directly to TemplateLibrary by category.
-            _lower = user_message.strip().lower()
-            # Map social inputs to preferred template IDs for precise responses.
-            # Falls back to category if preferred ID not found.
+            # TemplateMatcher can't match (input text ≠ response text). Map to
+            # preferred template IDs, falling back to category.
             _SOCIAL_MAP = {
                 "你好": ("greeting_general", "greeting"),
                 "hello": ("greeting_general", "greeting"),
@@ -2530,280 +2801,23 @@ class AngelaLLMService:
                 "好": ("affirmation_yes", "affirmation"),
                 "嗯": ("affirmation_yes", "affirmation"),
             }
-            _social = _SOCIAL_MAP.get(_lower)
+            _social = _SOCIAL_MAP.get(user_message.strip().lower())
             if _social:
-                _preferred_id, _cat_name = _social
-                try:
-                    from ai.memory.memory_template import ResponseCategory
-                    from ai.memory.template_library import get_template_library
-
-                    lib = get_template_library()
-                    chosen = None
-                    # Try preferred template ID first
-                    if _preferred_id:
-                        all_t = lib.get_all_templates()
-                        for t in all_t:
-                            if t.id == _preferred_id:
-                                chosen = t
-                                break
-                    # Fall back to category
-                    if not chosen:
-                        cat = ResponseCategory(_cat_name)
-                        templates = lib.get_by_category(cat)
-                        if templates:
-                            import random as _rand
-
-                            chosen = _rand.choice(templates)
-                    if chosen:
-                        response_time = (time.time() - start_time) * 1000
-                        self.stats["composed_responses"] += 1
-                        return ChatResponse(
-                            text=chosen.content,
-                            backend="composed-template",
-                            model="template-based",
-                            tokens_used=50,
-                            response_time_ms=response_time,
-                            confidence=0.85,
-                            hit_score=0.9,
-                            hit_source="social",
-                            route="COMPOSED",
-                        )
-                except Exception as exc:
-                    logger.debug(f"Social template lookup failed: {exc}")
-            # Keyword-based category routing: when SOCIAL_MAP doesn't match,
-            # check if any template keyword is a substring of the input, so a
-            # template's own keyword routes to its category (e.g. "想你" →
-            # intimacy, "难过" → emotional) without hardcoding every input.
-            # Only keywords that exist in the loaded template library match.
-            if not _social:
-                try:
-                    from ai.memory.memory_template import ResponseCategory
-                    from ai.memory.template_library import get_template_library
-
-                    _lib = get_template_library()
-                    # Template keywords are Simplified; a Traditional message
-                    # ("我好難過") matched none of them and fell through to a
-                    # random category pick. Fold the input to the vocabulary's
-                    # script before matching. Matching only — never echoed back.
-                    _best_tpl = _pick_relevant_template(_lib.get_all_templates(), user_message)
-                    _best_cat = _best_tpl.category if _best_tpl is not None else None
-                    # Emotion/keyword templates serve feelings, not questions:
-                    # a factual/task query with incidental emotion or template
-                    # words ("為什麼天空是藍色的" → curious) must fall through to
-                    # knowledge/LLM layers instead of a random curiosity
-                    # template (live 2026-10-10: physics got "我在想你呀").
-                    # KNOWLEDGE needs the question form as well: the trained
-                    # classifier dictionary tags the time words (今天/明天) as
-                    # knowledge, so a plain feeling statement ("我今天很開心")
-                    # was treated as a query and lost its emotional reply.
-                    _factual_query = False
-                    try:
-                        _eq = QueryClassifier().classify(user_message)
-                        _eqt = str(
-                            getattr(_eq.primary_type, "value", _eq.primary_type) or ""
-                        ).lower()
-                        _question_shaped = bool(
-                            _INFORMATION_REQUEST_RE.search(user_message.strip())
-                        )
-                        _factual_query = _eqt in (
-                            "code",
-                            "math",
-                            "logic",
-                            "file",
-                            "task",
-                            "system",
-                            "execute",
-                            "search",
-                        ) or (_eqt == "knowledge" and _question_shaped)
-                    except Exception as exc:
-                        # Falling back to "not factual" restores the very bug this
-                        # guard fixes (a knowledge question answered by a feeling
-                        # template), so a broken classifier must be visible.
-                        logger.debug(f"Factual-query guard unavailable: {exc}")
-                    # Template-keyword routing FIRST: a keyword that really
-                    # appears in the message pins the exact category, so a
-                    # specific hit ("想你" → intimacy) must beat the vaguer
-                    # emotion category (happy → small_talk), which used to answer
-                    # "我好想你" with a random small-talk template ("好好吃！").
-                    # `_best_tpl` is the template whose own keyword matched.
-                    # Serving it (instead of a random sibling from its category)
-                    # is what makes the match meaningful: `好累` is a keyword of
-                    # study_break, but a category-wide random pick answered it
-                    # with "当然！需要我帮你做什么？" from help_general.
-                    if _best_cat is not None and not _factual_query:
-                        try:
-                            _usable_k = _usable_templates(_lib.get_by_category(_best_cat))
-                            if _best_tpl is not None and _best_tpl in _usable_k:
-                                _ch_k = _best_tpl
-                            else:
-                                import random as _rand_k
-
-                                _ch_k = _rand_k.choice(_usable_k) if _usable_k else None
-                            if _ch_k is not None:
-                                _rt_k = (time.time() - start_time) * 1000
-                                self.stats["composed_responses"] += 1
-                                return ChatResponse(
-                                    text=_ch_k.content,
-                                    backend="composed-template",
-                                    model="template-based",
-                                    tokens_used=50,
-                                    response_time_ms=_rt_k,
-                                    confidence=0.8,
-                                    hit_score=0.8,
-                                    hit_source="keyword-category",
-                                    route="COMPOSED",
-                                )
-                        except Exception as exc:
-                            logger.debug(f"Keyword-category template failed: {exc}")
-                    # AI-driven social routing: use EmotionAnalyzer for emotional
-                    # content, keep structural patterns for greeting/farewell only.
-                    _emotion_to_category = {
-                        "sad": "support",
-                        "fear": "support",
-                        "angry": "support",
-                        "happy": "small_talk",
-                        "surprise": "curiosity",
-                        "curious": "curiosity",
-                        "calm": "small_talk",
-                    }
-                    # These map to TOPIC-shaped categories (weather/food/games),
-                    # unlike the empathetic support/emotional ones. A generic
-                    # topic reply to a feeling is only noise, so require the
-                    # category to actually share a keyword with the message
-                    # ("我好開心" used to draw "游戏好玩吗？" at random);
-                    # otherwise fall through to the layers that can hold a
-                    # conversation.
-                    _TOPIC_EMOTION_CATEGORIES = frozenset({"small_talk", "curiosity"})
-                    _emotion_cat = None
-                    try:
-                        _ea = EmotionAnalyzer()
-                        _ea_result = _ea.analyze_emotion(user_message)
-                        _detected = _ea_result.get("emotion", "")
-                        _intensity = _ea_result.get("intensity", 0.0)
-                        if _detected and _intensity > 0.3:
-                            _emotion_cat = _emotion_to_category.get(_detected)
-                    except Exception as e:
-                        logger.debug(f"EmotionAnalyzer skipped (routing falls through): {e}")
-                    if _emotion_cat and _factual_query:
-                        _emotion_cat = None
-                    if _emotion_cat:
-                        try:
-                            _cat_e = ResponseCategory(_emotion_cat)
-                            _tpls_e = _usable_templates(_lib.get_by_category(_cat_e))
-                            # Ranked by the message's own keywords, so the reply
-                            # fits what was said; a blind random pick from the
-                            # category is only kept for the empathetic categories.
-                            _ch_e = _pick_relevant_template(_tpls_e, user_message)
-                            if _ch_e is None and _emotion_cat not in _TOPIC_EMOTION_CATEGORIES:
-                                import random as _rand_e
-
-                                _ch_e = _rand_e.choice(_tpls_e) if _tpls_e else None
-                            if _ch_e is not None:
-                                _rt_e = (time.time() - start_time) * 1000
-                                self.stats["composed_responses"] += 1
-                                return ChatResponse(
-                                    text=_ch_e.content,
-                                    backend="composed-template",
-                                    model="template-based",
-                                    tokens_used=50,
-                                    response_time_ms=_rt_e,
-                                    confidence=0.8,
-                                    hit_score=0.8,
-                                    hit_source="emotion-analyzer",
-                                    route="COMPOSED",
-                                )
-                        except Exception as e:
-                            logger.debug(f"Composed emotion template failed, falling through: {e}")
-                    # Structural pattern fallback for greeting/farewell only
-                    _PATTERN_CATEGORY = {
-                        "farewell": [
-                            "good night",
-                            "goodnight",
-                            "晚安",
-                            "see you",
-                            "see ya",
-                            "see you later",
-                        ],
-                        "greeting": [
-                            "morning",
-                            "good morning",
-                            "早上好",
-                            "午安",
-                            "afternoon",
-                            "evening",
-                        ],
-                    }
-                    _input_lower2 = user_message.strip().lower()
-                    for _cat_name, _patterns in _PATTERN_CATEGORY.items():
-                        for _pat in _patterns:
-                            if _pat.lower() in _input_lower2 or _input_lower2 in _pat.lower():
-                                try:
-                                    _cat = ResponseCategory(_cat_name)
-                                    _tpls = _lib.get_by_category(_cat)
-                                    if not _tpls:
-                                        # Fallback: try a related category
-                                        _FALLBACK = {
-                                            "support": "affirmation",
-                                            "apology": "affirmation",
-                                            "gratitude": "affirmation",
-                                        }
-                                        _fb = _FALLBACK.get(_cat_name)
-                                        if _fb:
-                                            _tpls = _lib.get_by_category(ResponseCategory(_fb))
-                                    if not _tpls:
-                                        break  # no templates for this category, try next pattern
-                                    import random as _rand3
-
-                                    _ch = _rand3.choice(_tpls)
-                                    if (_ch.content or "").strip() in _KNOWN_FALLBACK_RESPONSES:
-                                        # Ignorance template must never block
-                                        # the LLM/fallback chain: try next pattern.
-                                        break
-                                    _rt2 = (time.time() - start_time) * 1000
-                                    self.stats["composed_responses"] += 1
-                                    return ChatResponse(
-                                        text=_ch.content,
-                                        backend="composed-template",
-                                        model="template-based",
-                                        tokens_used=50,
-                                        response_time_ms=_rt2,
-                                        confidence=0.8,
-                                        hit_score=0.8,
-                                        hit_source="pattern-category",
-                                        route="COMPOSED",
-                                    )
-                                except Exception as e:
-                                    logger.debug(f"Composed pattern template failed: {e}")
-                                break
-                        else:
-                            continue
-                        break
-                except Exception as e:
-                    logger.debug(f"Pattern-category fallback block failed: {e}")
-
-            match_result = self.template_matcher.match(user_message, context)
-            match_score = match_result.score
-
-            tmpl_cfg = _get_llm_config("template_match", {})
-            composed_thresh = tmpl_cfg.get("composed", 0.8)
-            hybrid_thresh = tmpl_cfg.get("hybrid", 0.5)
-
-            # Ignorance templates ("I don't know") must never win over the
-            # LLM/fallback chain that could actually answer.
-            if (match_result.template_content or "").strip() in _KNOWN_FALLBACK_RESPONSES:
-                logger.debug("Skipped ignorance template match; falling through")
-                return None
-
-            if match_score > composed_thresh:
-                return await self._build_composed_response(
-                    user_message, context, match_result, match_score, start_time
-                )
-
-            if match_score > hybrid_thresh:
-                return await self._build_hybrid_response(
-                    user_message, context, match_result, match_score, start_time
-                )
-
+                result = self._tm_social_route(user_message, start_time, _social)
+                if result is not None:
+                    return result
+                # Social matched but failed to serve → skip keyword/emotion/
+                # pattern and fall through to the matcher (original branching).
+            else:
+                for route in (
+                    lambda: self._tm_keyword_route(user_message, start_time, _lib, _factual_query),
+                    lambda: self._tm_emotion_route(user_message, start_time, _lib, _factual_query),
+                    lambda: self._tm_pattern_route(user_message, start_time, _lib),
+                ):
+                    result = route()
+                    if result is not None:
+                        return result
+            return await self._tm_matcher_route(user_message, context, start_time)
         except (ValueError, KeyError, AttributeError, TypeError) as e:
             logger.warning(f"P0-2 template matching failed: {e}", exc_info=True)
         return None
