@@ -50,6 +50,13 @@ class GlobalStateStore:
         self._persistence: Optional[Any] = None
         # CNS event bus — transient events, not persisted
         self._event_subscribers: Dict[str, List[Tuple[int, Callable]]] = {}
+        # 遙測計數：讓 emit 出去的事件至少有一個常駐消費者（計數），
+        # 不再是「發了無人聽」的孤兒事件。純計數，不改任何下游客戶端行為。
+        self._event_telemetry: Dict[str, int] = {}
+
+    def get_event_telemetry(self) -> Dict[str, int]:
+        """Return a copy of per-event-type emit counts (observability only)."""
+        return dict(self._event_telemetry)
 
     def set_persistence(self, backend: Any) -> None:
         """Attach a persistence backend (must implement StatePersistence protocol)."""
@@ -219,6 +226,9 @@ class GlobalStateStore:
         Supports both sync and async callbacks.
         """
         subscribers = self._event_subscribers.get(event_type, [])
+        # 無論有無訂閱者都計數——消除「孤兒事件」（emit 無 subscribe），
+        # 計數器是常駐消費者；有訂閱者時照常派發（行為不變）
+        self._event_telemetry[event_type] = self._event_telemetry.get(event_type, 0) + 1
         if not subscribers:
             return
         for _, callback in subscribers:
