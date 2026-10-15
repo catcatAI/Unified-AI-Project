@@ -10,7 +10,7 @@ import threading
 import time
 import uuid
 from datetime import datetime, timedelta
-from typing import Any, AsyncGenerator, Dict, List, Optional, Tuple
+from typing import Any, AsyncGenerator, Dict, List, NamedTuple, Optional, Tuple
 
 from api.lifespan import (
     _angela_cfg,
@@ -2496,113 +2496,24 @@ async def chat_with_image(
     if not session_id:
         session_id = f"img-{uuid.uuid4().hex[:8]}"
 
-    clip_response = None
-    image_data = None
-    image_is_blank = False
-    _visual_concepts_text = ""
-    if file and file.content_type and file.content_type.startswith("image/"):
-        try:
-            image_data = await file.read()
-            if len(image_data) > 10 * 1024 * 1024:
-                raise HTTPException(status_code=413, detail="Image too large (>10MB limit)")
+    clip = await _clip_phase(file, message, session_id)
+    if clip is None:
+        clip = _ClipPhaseResult(None, None, 0.0, False, "", None)
 
-            # Blank-image gate (audit 2026-10-11): CLIP scores noise ~0.22 on
-            # blank renders, above the 0.15 template threshold, yielding
-            # "我看到兔子在跳" for empty frames. A single ≥98% blob means no
-            # content — skip CLIP/vision ornamentation for it.
-            try:
-                from services.visual_qa import color_blobs
+    if clip.early_response is not None:
+        return clip.early_response
 
-                _blobs = color_blobs(image_data)
-                image_is_blank = len(_blobs) == 1 and (_blobs[0].get("fraction") or 0) >= 0.98
-            except Exception:
-                image_is_blank = False
-
-            # QA questions answered deterministically BEFORE CLIP templates:
-            # weak CLIP hits (0.22 noise) otherwise compose echoes.
-            if _is_visual_qa_question(message):
-                _qa = _visual_qa_response(image_data, session_id)
-                if _qa is not None:
-                    return _qa
-
-            # Describe/explain requests need vision+LLM, not a CLIP one-liner:
-            # "我看到人描述這張圖裡有什麼" is an echo, not a description.
-            import re as _re_desc
-
-            if _re_desc.search(
-                r"(描述|解釋|解释|說說|说说|介紹|介绍|講講|讲讲|告訴我|告诉我|"
-                r"這是什麼|这是什么|裡有什麼|里有什么)",
-                message or "",
-            ):
-                image_is_blank = False  # fall through to vision+chat below
-                # Skip the CLIP template block entirely for these.
-                _skip_clip_template = True
-            else:
-                _skip_clip_template = False
-
-            from ai.ed3n.ed3n_engine import ED3NEngine
-            from ai.multimodal.concept_library import ConceptLibrary
-            from ai.multimodal.semantic_visual import SemanticVisualEncoder
-            from ai.multimodal.vision_response_generator import VisionResponseGenerator
-
-            encoder = SemanticVisualEncoder()
-            if encoder.is_available:
-                ed3n = ED3NEngine.get_shared()
-                if len(ed3n.dictionary.entries) < 100:
-                    # 132MB sync load would block the event loop for seconds
-                    # (audit 2026-10-10): offload like the vector-store I/O.
-                    await asyncio.to_thread(ed3n.load_external_dictionaries)
-
-                from ai.multimodal.semantic_key_mapper import SemanticKeyMapper
-
-                mapper = SemanticKeyMapper(max_entries=1000)
-                library = ConceptLibrary(
-                    semantic_encoder=encoder,
-                    dictionary=ed3n.dictionary,
-                    key_mapper=mapper,
-                )
-                library.build()
-
-                results = library.classify(image_data, top_k=3)
-                # Stash concepts for the LLM prompt even when the template
-                # path is skipped: measurements must reach generation.
-                # (Injected into context below; context doesn't exist yet here.)
-                try:
-                    _visual_concepts_text = "、".join(
-                        f"{r.get('concept_name')}({float(r.get('confidence', 0)):.2f})"
-                        for r in (results or [])[:3]
-                    )
-                except Exception:
-                    _visual_concepts_text = ""
-                if (
-                    results
-                    and results[0]["confidence"] > 0.15
-                    and not image_is_blank
-                    and not _skip_clip_template
-                ):
-                    generator = VisionResponseGenerator(dictionary=ed3n.dictionary)
-                    for cname, info in library._concepts.items():
-                        generator.register_concept(cname, info["dict_key"], info["labels"])
-                    top_concept = results[0]["concept_name"]
-                    concept_info = library._concepts.get(top_concept, {})
-                    action = concept_info.get("action", "") or message or ""
-                    clip_response = generator.generate_response(
-                        results, language="zh", action=action
-                    )
-        except Exception as e:
-            logger.warning(f"CLIP classification failed, falling back to LLM: {e}", exc_info=True)
-
-    if clip_response:
+    if clip.clip_response:
         return {
-            "response": clip_response,
+            "response": clip.clip_response,
             "session_id": session_id,
             "source": "clip_classify",
-            "confidence": results[0]["confidence"],
+            "confidence": clip.confidence,
         }
 
     # Blank frames short-circuit everything: no CLIP/vision/LLM layer can
     # say anything true about an empty render except that it is empty.
-    if image_is_blank:
+    if clip.image_is_blank:
         return {
             "response": "（圖像質檢）畫面近乎空白，疑似渲染失敗或鏡頭沒對準物體。",
             "response_text": "（圖像質檢）畫面近乎空白，疑似渲染失敗或鏡頭沒對準物體。",
@@ -2613,51 +2524,7 @@ async def chat_with_image(
             "model": "visual-qa",
         }
 
-    image_context = None
-    if file and file.content_type and file.content_type.startswith("image/"):
-        try:
-            if image_data is None:
-                image_data = await file.read()
-            vision = _get_vision_service()
-            if vision is not None:
-                analysis = await vision.process(
-                    {
-                        "image_data": image_data,
-                        "filename": file.filename,
-                        "question": message or "描述這張圖片",
-                    }
-                )
-                # Measurements FIRST in the dict: the prompt builder dumps
-                # image_analysis whole but truncates at 2000 chars, so anything
-                # appended last never reaches the model (live 2026-10-11).
-                # Assertive sentences, not data dumps: small models skim JSON
-                # fields but follow plain assertions.
-                _seen_bits: List[str] = []
-                if _visual_concepts_text:
-                    _concepts = [
-                        c.strip() for c in str(_visual_concepts_text).split("、") if c.strip()
-                    ]
-                    if _concepts:
-                        _seen_bits.append("圖中看起來像" + _concepts[0].split("(")[0] + "。")
-                try:
-                    from services.visual_qa import color_blobs as _cb
-
-                    _blobs = _cb(image_data)[:3]
-                    if _blobs:
-                        _top = _blobs[0]
-                        _seen_bits.append(
-                            f"畫面以{_top['color']}色為主（佔{_top['fraction']:.0%}）。"
-                        )
-                except Exception:
-                    logger.debug("color_blobs enrichment failed", exc_info=True)
-                image_context = {
-                    "visual_measurements": ("\n".join(_seen_bits) if _seen_bits else ""),
-                    "filename": file.filename,
-                    "analysis": analysis,
-                    "image_data": image_data,
-                }
-        except Exception as e:
-            logger.warning(f"Image analysis failed, continuing with text only: {e}")
+    image_context = await _vision_phase(file, clip, message)
 
     history: List[Dict[str, Any]] = []
     context: Dict[str, Any] = {"user_name": user_name}
@@ -2666,9 +2533,7 @@ async def chat_with_image(
     # Measurements ride the user message too: system-context JSON gets
     # skimmed, but user text gets attention (live 2026-10-11: two rounds of
     # metadata-only descriptions despite measurements in prompt).
-    _vm = ""
-    if isinstance(image_context, dict):
-        _vm = str(image_context.get("visual_measurements") or "").strip()
+    _vm = str(image_context.get("visual_measurements") or "").strip() if image_context else ""
     _user_message = message or "我上傳了一張圖片"
     if _vm:
         _user_message = f"{_user_message}\n【實測所見】{_vm}"
@@ -2681,6 +2546,192 @@ async def chat_with_image(
         origin="Human",
         extra_context=context if image_context else None,
     )
+
+
+class _ClipPhaseResult(NamedTuple):
+    """Result of the CLIP classification phase for an image upload."""
+
+    early_response: Optional[Dict[str, Any]]
+    clip_response: Optional[str]
+    confidence: float
+    image_is_blank: bool
+    visual_concepts_text: str
+    image_data: Optional[bytes]
+
+
+def _clip_blank_gate(image_data: bytes) -> bool:
+    """Blank-image gate: a single ≥98% color blob means an empty render."""
+    try:
+        from services.visual_qa import color_blobs
+
+        _blobs = color_blobs(image_data)
+        return len(_blobs) == 1 and (_blobs[0].get("fraction") or 0) >= 0.98
+    except Exception:
+        return False
+
+
+def _is_describe_request(message: str) -> bool:
+    """Describe/explain requests need vision+LLM, not a CLIP one-liner."""
+    import re as _re_desc
+
+    return bool(
+        _re_desc.search(
+            r"(描述|解釋|解释|說說|说说|介紹|介绍|講講|讲讲|告訴我|告诉我|"
+            r"這是什麼|这是什么|裡有什麼|里有什么)",
+            message or "",
+        )
+    )
+
+
+async def _clip_run_classify(
+    image_data: bytes, message: str, image_is_blank: bool, skip_clip_template: bool
+) -> Tuple[Optional[str], float, str]:
+    """Run CLIP zero-shot classify + template generation (best-effort).
+
+    Returns (clip_response, confidence, visual_concepts_text).
+    """
+    clip_response = None
+    confidence = 0.0
+    visual_concepts_text = ""
+    from ai.ed3n.ed3n_engine import ED3NEngine
+    from ai.multimodal.concept_library import ConceptLibrary
+    from ai.multimodal.semantic_visual import SemanticVisualEncoder
+    from ai.multimodal.vision_response_generator import VisionResponseGenerator
+
+    encoder = SemanticVisualEncoder()
+    if not encoder.is_available:
+        return clip_response, confidence, visual_concepts_text
+    ed3n = ED3NEngine.get_shared()
+    if len(ed3n.dictionary.entries) < 100:
+        # 132MB sync load would block the event loop for seconds
+        # (audit 2026-10-10): offload like the vector-store I/O.
+        await asyncio.to_thread(ed3n.load_external_dictionaries)
+
+    from ai.multimodal.semantic_key_mapper import SemanticKeyMapper
+
+    mapper = SemanticKeyMapper(max_entries=1000)
+    library = ConceptLibrary(
+        semantic_encoder=encoder,
+        dictionary=ed3n.dictionary,
+        key_mapper=mapper,
+    )
+    library.build()
+    results = library.classify(image_data, top_k=3)
+    # Stash concepts for the LLM prompt even when the template path is
+    # skipped: measurements must reach generation.
+    try:
+        visual_concepts_text = "、".join(
+            f"{r.get('concept_name')}({float(r.get('confidence', 0)):.2f})"
+            for r in (results or [])[:3]
+        )
+    except Exception:
+        visual_concepts_text = ""
+    if (
+        results
+        and results[0]["confidence"] > 0.15
+        and not image_is_blank
+        and not skip_clip_template
+    ):
+        generator = VisionResponseGenerator(dictionary=ed3n.dictionary)
+        for cname, info in library._concepts.items():
+            generator.register_concept(cname, info["dict_key"], info["labels"])
+        top_concept = results[0]["concept_name"]
+        concept_info = library._concepts.get(top_concept, {})
+        action = concept_info.get("action", "") or message or ""
+        confidence = results[0]["confidence"]
+        clip_response = generator.generate_response(results, language="zh", action=action)
+    return clip_response, confidence, visual_concepts_text
+
+
+async def _clip_phase(
+    file: Any, message: str, session_id: str
+) -> Optional[_ClipPhaseResult]:
+    """Read + blank-gate + QA short-circuit + CLIP classify for an image upload.
+
+    Returns None when the file is not an image (no CLIP phase applies).
+    """
+    if not (file and file.content_type and file.content_type.startswith("image/")):
+        return None
+    image_data = None
+    image_is_blank = False
+    visual_concepts_text = ""
+    clip_response = None
+    confidence = 0.0
+    try:
+        image_data = await file.read()
+        if len(image_data) > 10 * 1024 * 1024:
+            raise HTTPException(status_code=413, detail="Image too large (>10MB limit)")
+        image_is_blank = _clip_blank_gate(image_data)
+        # QA questions answered deterministically BEFORE CLIP templates:
+        # weak CLIP hits (0.22 noise) otherwise compose echoes.
+        if _is_visual_qa_question(message):
+            _qa = _visual_qa_response(image_data, session_id)
+            if _qa is not None:
+                return _ClipPhaseResult(_qa, None, 0.0, image_is_blank, "", image_data)
+        # Describe/explain requests need vision+LLM, not a CLIP one-liner;
+        # skip the CLIP template block entirely for these.
+        skip_clip_template = _is_describe_request(message)
+        if skip_clip_template:
+            image_is_blank = False
+        clip_response, confidence, visual_concepts_text = await _clip_run_classify(
+            image_data, message, image_is_blank, skip_clip_template
+        )
+    except Exception as e:
+        logger.warning(f"CLIP classification failed, falling back to LLM: {e}", exc_info=True)
+    return _ClipPhaseResult(None, clip_response, confidence, image_is_blank, visual_concepts_text, image_data)
+
+
+def _build_visual_measurements(visual_concepts_text: str, image_data: bytes) -> str:
+    """Build assertive measurement sentences from CLIP concepts + color blobs."""
+    _seen_bits: List[str] = []
+    if visual_concepts_text:
+        _concepts = [c.strip() for c in str(visual_concepts_text).split("、") if c.strip()]
+        if _concepts:
+            _seen_bits.append("圖中看起來像" + _concepts[0].split("(")[0] + "。")
+    try:
+        from services.visual_qa import color_blobs as _cb
+
+        _blobs = _cb(image_data)[:3]
+        if _blobs:
+            _top = _blobs[0]
+            _seen_bits.append(f"畫面以{_top['color']}色為主（佔{_top['fraction']:.0%}）。")
+    except Exception:
+        logger.debug("color_blobs enrichment failed", exc_info=True)
+    return "\n".join(_seen_bits) if _seen_bits else ""
+
+
+async def _vision_phase(file: Any, clip: _ClipPhaseResult, message: str) -> Optional[Dict[str, Any]]:
+    """Vision analysis for an image upload (None when not an image / failed)."""
+    if not (file and file.content_type and file.content_type.startswith("image/")):
+        return None
+    try:
+        image_data = clip.image_data
+        if image_data is None:
+            image_data = await file.read()
+        vision = _get_vision_service()
+        if vision is None:
+            return None
+        analysis = await vision.process(
+            {
+                "image_data": image_data,
+                "filename": file.filename,
+                "question": message or "描述這張圖片",
+            }
+        )
+        # Measurements FIRST in the dict: the prompt builder dumps
+        # image_analysis whole but truncates at 2000 chars, so anything
+        # appended last never reaches the model (live 2026-10-11).
+        return {
+            "visual_measurements": _build_visual_measurements(clip.visual_concepts_text, image_data),
+            "filename": file.filename,
+            "analysis": analysis,
+            "image_data": image_data,
+        }
+    except Exception as e:
+        logger.warning(f"Image analysis failed, continuing with text only: {e}")
+        return None
+
+
 
 
 def _is_visual_qa_question(message: str) -> bool:
