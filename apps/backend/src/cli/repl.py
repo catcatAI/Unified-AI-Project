@@ -488,6 +488,135 @@ def _format_state_snapshot(service: Any) -> str:
 # ═══════════════════════════════════════════════════════════════════
 
 
+def _cfg_walk(service: Any, *keys: str, default=None) -> Any:
+    """Safely walk nested config path, returning default on any error."""
+    cfg = service._angela_config
+    cur = cfg
+    for key in keys:
+        try:
+            cur = cur.get(key) if isinstance(cur, dict) else getattr(cur, key, None)
+        except Exception:
+            logger.debug("repl: config key %r unavailable", key, exc_info=True)
+            return default
+    return cur
+
+
+def _format_deployment_line(cfg: Any) -> tuple:
+    """Format the deployment mode line and return (line, mode)."""
+    try:
+        deployment = cfg.get_authority("llm", {}).get("deployment", {})
+    except Exception:
+        deployment = {}
+        logger.debug("repl: deployment config unavailable", exc_info=True)
+    mode = deployment.get("mode", "unknown")
+    selection = deployment.get("selection", "available")
+    mode_icon = {"local": "🏠", "local+llm": "🔗", "llm": "☁️", "auto": "🤖"}.get(mode, "❓")
+    line = f"  Deployment:  {mode_icon} mode={mode}  selection={selection}"
+    return (line, mode)
+
+
+def _format_web_search_line(cfg: Any) -> str:
+    """Format web search status line."""
+    try:
+        web_search = cfg.get_authority("llm", {}).get("web_search", {})
+    except Exception:
+        web_search = {}
+        logger.debug("repl: web_search config unavailable", exc_info=True)
+    ws_enabled = web_search.get("enabled", True)
+    ws_provider = web_search.get("provider", "duckduckgo")
+    return f"  Web Search:  {'✅' if ws_enabled else '❌'} {ws_provider}"
+
+
+def _format_llm_line(cfg: Any) -> Optional[str]:
+    """Format LLM settings line, or None if unavailable."""
+    try:
+        llm_cfg = cfg.get_authority("llm", {}).get("settings", {})
+        defaults = llm_cfg.get("defaults", {})
+        temp = defaults.get("temperature", 0.7)
+        max_tok = defaults.get("max_tokens", 512)
+        llm_mode = llm_cfg.get("llm_mode", "standard")
+        mem_enh = cfg.get_authority("llm", {}).get("enable_memory_enhancement", True)
+        return (
+            f"  LLM:         mode={llm_mode}  temp={temp}  "
+            f"max_tokens={max_tok}  memory_enhance={mem_enh}"
+        )
+    except Exception:
+        logger.debug("repl: LLM settings config unavailable", exc_info=True)
+        return None
+
+
+def _format_backends_line(cfg: Any) -> list:
+    """Format backends summary lines."""
+    try:
+        backends_cfg = cfg.get_authority("llm", {}).get("backends", {})
+    except Exception:
+        backends_cfg = {}
+        logger.debug("repl: backends config unavailable", exc_info=True)
+    if not backends_cfg:
+        return []
+    lines = []
+    enabled = [
+        k for k, v in backends_cfg.items()
+        if isinstance(v, dict) and v.get("enabled", False)
+    ]
+    disabled = [
+        k for k, v in backends_cfg.items()
+        if isinstance(v, dict) and not v.get("enabled", True)
+    ]
+    lines.append(f"  Backends:    {len(enabled)} enabled, {len(disabled)} disabled")
+    for bid in enabled:
+        b = backends_cfg[bid]
+        lines.append(f"    ✅ {bid:<22s} type={b.get('type', '?')}  provider={b.get('provider', '?')}")
+    for bid in disabled:
+        b = backends_cfg[bid]
+        lines.append(f"    ⬜ {bid:<22s} (disabled, provider={b.get('provider', '?')})")
+    return lines
+
+
+def _format_thresholds_line(cfg: Any) -> Optional[str]:
+    """Format complexity thresholds line, or None if unavailable."""
+    try:
+        thresholds = cfg.get_complexity_thresholds()
+        if thresholds:
+            return f"  Thresholds:  {thresholds}"
+    except Exception:
+        logger.debug("repl: complexity thresholds unavailable", exc_info=True)
+    return None
+
+
+def _format_learned_line() -> Optional[str]:
+    """Format learned config scan line, or None if unavailable."""
+    try:
+        from pathlib import Path
+        learned_dir = Path(__file__).resolve().parents[2] / "data" / "angela_learned"
+        if learned_dir.exists():
+            n = len(list(learned_dir.glob("*.yaml")))
+            return f"  Learned:     {n} file(s)"
+    except Exception:
+        logger.debug("repl: learned-config scan failed", exc_info=True)
+    return None
+
+
+def _collect_warnings(mode: str, backends_cfg: dict) -> list:
+    """Collect config warnings for cloud backends without API keys."""
+    warnings: list = []
+    if mode not in ("local+llm", "llm", "auto"):
+        return warnings
+    has_openai = bool(os.getenv("OPENAI_API_KEY"))
+    has_anthropic = bool(os.getenv("ANTHROPIC_API_KEY"))
+    has_google = bool(os.getenv("GOOGLE_API_KEY"))
+    cloud_backends = [
+        k for k, v in backends_cfg.items()
+        if isinstance(v, dict) and v.get("type") == "cloud" and v.get("enabled")
+    ]
+    if cloud_backends and not any([has_openai, has_anthropic, has_google]):
+        warnings.append("⚠️  Cloud backends enabled but no API keys found in environment!")
+        warnings.append(
+            _hint("Set OPENAI_API_KEY, ANTHROPIC_API_KEY, or GOOGLE_API_KEY in .env")
+        )
+    return warnings
+
+
 def _format_config_summary(service: Any) -> str:
     """Format config summary with deployment mode and warnings."""
     try:
@@ -495,109 +624,32 @@ def _format_config_summary(service: Any) -> str:
 
         lines = [_section("Configuration")]
 
-        # Deployment mode — most important
-        deployment = {}
-        try:
-            deployment = cfg.get_authority("llm", {}).get("deployment", {})
-        except Exception:
-            logger.debug("repl: deployment config unavailable", exc_info=True)
-        mode = deployment.get("mode", "unknown")
-        selection = deployment.get("selection", "available")
-        mode_icon = {"local": "🏠", "local+llm": "🔗", "llm": "☁️", "auto": "🤖"}.get(mode, "❓")
-        lines.append(f"  Deployment:  {mode_icon} mode={mode}  selection={selection}")
-
-        # Web search
-        web_search = {}
-        try:
-            web_search = cfg.get_authority("llm", {}).get("web_search", {})
-        except Exception:
-            logger.debug("repl: web_search config unavailable", exc_info=True)
-        ws_enabled = web_search.get("enabled", True)
-        ws_provider = web_search.get("provider", "duckduckgo")
-        lines.append(f"  Web Search:  {'✅' if ws_enabled else '❌'} {ws_provider}")
-
-        # LLM settings
-        try:
-            llm_cfg = cfg.get_authority("llm", {}).get("settings", {})
-            temp = llm_cfg.get("defaults", {}).get("temperature", 0.7)
-            max_tok = llm_cfg.get("defaults", {}).get("max_tokens", 512)
-            llm_mode = llm_cfg.get("llm_mode", "standard")
-            mem_enh = cfg.get_authority("llm", {}).get("enable_memory_enhancement", True)
-            lines.append(
-                f"  LLM:         mode={llm_mode}  temp={temp}  max_tokens={max_tok}  memory_enhance={mem_enh}"
-            )
-        except Exception:
-            logger.debug("repl: LLM settings config unavailable", exc_info=True)
-
-        # Backends summary
-        backends_cfg = {}
-        try:
-            backends_cfg = cfg.get_authority("llm", {}).get("backends", {})
-        except Exception:
-            logger.debug("repl: backends config unavailable", exc_info=True)
-        if backends_cfg:
-            enabled = [
-                k
-                for k, v in backends_cfg.items()
-                if isinstance(v, dict) and v.get("enabled", False)
-            ]
-            disabled = [
-                k
-                for k, v in backends_cfg.items()
-                if isinstance(v, dict) and not v.get("enabled", True)
-            ]
-            lines.append(f"  Backends:    {len(enabled)} enabled, {len(disabled)} disabled")
-            for bid in enabled:
-                b = backends_cfg[bid]
-                btype = b.get("type", "?")
-                provider = b.get("provider", "?")
-                lines.append(f"    ✅ {bid:<22s} type={btype}  provider={provider}")
-            for bid in disabled:
-                b = backends_cfg[bid]
-                provider = b.get("provider", "?")
-                lines.append(f"    ⬜ {bid:<22s} (disabled, provider={provider})")
+        dep_line, mode = _format_deployment_line(cfg)
+        lines.append(dep_line)
+        lines.append(_format_web_search_line(cfg))
+        llm_line = _format_llm_line(cfg)
+        if llm_line:
+            lines.append(llm_line)
+        lines.extend(_format_backends_line(cfg))
 
         # Intents
         intents = list(cfg.get_intents().keys())
         lines.append(f"  Intents:     {len(intents)} registered")
 
-        # Thresholds
-        try:
-            thresholds = cfg.get_complexity_thresholds()
-            if thresholds:
-                lines.append(f"  Thresholds:  {thresholds}")
-        except Exception:
-            logger.debug("repl: complexity thresholds unavailable", exc_info=True)
+        thr = _format_thresholds_line(cfg)
+        if thr:
+            lines.append(thr)
 
-        # Learned configs
-        try:
-            from pathlib import Path
-
-            learned_dir = Path(__file__).resolve().parents[2] / "data" / "angela_learned"
-            if learned_dir.exists():
-                learned_files = list(learned_dir.glob("*.yaml"))
-                lines.append(f"  Learned:     {len(learned_files)} file(s)")
-        except Exception:
-            logger.debug("repl: learned-config scan failed", exc_info=True)
+        learned = _format_learned_line()
+        if learned:
+            lines.append(learned)
 
         # Warnings
-        warnings = []
-        if mode in ("local+llm", "llm", "auto"):
-            # Check if API keys exist
-            has_openai = bool(os.getenv("OPENAI_API_KEY"))
-            has_anthropic = bool(os.getenv("ANTHROPIC_API_KEY"))
-            has_google = bool(os.getenv("GOOGLE_API_KEY"))
-            cloud_backends = [
-                k
-                for k, v in backends_cfg.items()
-                if isinstance(v, dict) and v.get("type") == "cloud" and v.get("enabled")
-            ]
-            if cloud_backends and not any([has_openai, has_anthropic, has_google]):
-                warnings.append("⚠️  Cloud backends enabled but no API keys found in environment!")
-                warnings.append(
-                    _hint("Set OPENAI_API_KEY, ANTHROPIC_API_KEY, or GOOGLE_API_KEY in .env")
-                )
-
+        try:
+            backends_cfg = cfg.get_authority("llm", {}).get("backends", {})
+        except Exception:
+            backends_cfg = {}
+        warnings = _collect_warnings(mode, backends_cfg)
         if warnings:
             lines.append("")
             lines.append(_section("Warnings"))
