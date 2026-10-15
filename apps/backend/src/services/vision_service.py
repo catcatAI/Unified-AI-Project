@@ -267,8 +267,10 @@ class VisionService:
 
                     img1 = Image.open(BytesIO(image_data1)).convert("RGB").resize((32, 32))
                     img2 = Image.open(BytesIO(image_data2)).convert("RGB").resize((32, 32))
-                    p1 = list(img1.get_flattened_data())
-                    p2 = list(img2.get_flattened_data())
+                    # RGB 下 get_flattened_data 保證回傳 tuple[tuple[int,...],...]；
+                    # cast 收窄聯合型別（另一變體 tuple[float,...] 僅非 RGB 模式），避免 list() 拓寬成 list[object]
+                    p1 = list(cast("tuple[tuple[int, ...], ...]", img1.get_flattened_data()))
+                    p2 = list(cast("tuple[tuple[int, ...], ...]", img2.get_flattened_data()))
                     diffs = sum(abs(p1[i][j] - p2[i][j]) for i in range(len(p1)) for j in range(3))
                     max_diff = len(p1) * 3 * 255
                     similarity_score = 1.0 - (diffs / max_diff)
@@ -654,7 +656,7 @@ class VisionService:
             from PIL import Image
 
             img = Image.open(BytesIO(image_data)).convert("RGB").resize((64, 64))
-            pixels = list(img.get_flattened_data())
+            pixels = list(cast("tuple[tuple[int, ...], ...]", img.get_flattened_data()))
             total = len(pixels)
             r_avg = sum(p[0] for p in pixels) / total
             g_avg = sum(p[1] for p in pixels) / total
@@ -716,7 +718,7 @@ class VisionService:
             from PIL import Image
 
             img = Image.open(BytesIO(image_data)).convert("RGB").resize((64, 64))
-            pixels = list(img.get_flattened_data())
+            pixels = list(cast("tuple[tuple[int, ...], ...]", img.get_flattened_data()))
             total = len(pixels)
             r_total = sum(p[0] for p in pixels) / total
             g_total = sum(p[1] for p in pixels) / total
