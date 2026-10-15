@@ -3020,10 +3020,28 @@ class AngelaLLMService:
         Question-shaped inputs that reached here have already been
         through semantic-QA/stat-core; fragments would be non-answers, so
         questions get an honest "don't know" instead."""
+        looks_like_question = self._looks_like_question(user_message)
+
+        for tier in (
+            self._fb_model_bus,
+            self._fb_pipeline_math,
+            self._fb_greeting_template,
+            self._fb_emotional_support,
+            self._fb_honest_refusal,
+            self._fb_neuro_blender,
+        ):
+            result = await tier(user_message, context, looks_like_question)
+            if result is not None:
+                return result
+        # Tier 3 always returns (template-engine or error).
+        return await self._fb_pure_template(user_message, context, looks_like_question)
+
+    @staticmethod
+    def _looks_like_question(user_message: str) -> bool:
+        """Chinese question words can appear at END of sentence too."""
         import re as _re
 
-        # Chinese question words can appear at END of sentence too
-        looks_like_question = bool(
+        return bool(
             _re.search(
                 r"[?？]\s*$"
                 r"|^\s*(what|who|when|where|why|how|which|tell me|explain|please explain)\b"
@@ -3033,12 +3051,16 @@ class AngelaLLMService:
             )
         )
 
-        # Tier 0: Model Bus capability-based routing
-        bus_result = await self._try_model_bus(user_message, context)
-        if bus_result is not None:
-            return bus_result
+    async def _fb_model_bus(
+        self, user_message: str, context: Dict[str, Any], looks_like_question: bool
+    ) -> Optional[LLMResponse]:
+        """Tier 0: Model Bus capability-based routing."""
+        return await self._try_model_bus(user_message, context)
 
-        # Tier 0.1: If Pipeline already confirmed math, use its result
+    async def _fb_pipeline_math(
+        self, user_message: str, context: Dict[str, Any], looks_like_question: bool
+    ) -> Optional[LLMResponse]:
+        """Tier 0.1: If Pipeline already confirmed math, use its result."""
         math_result = context.get("_math_result")
         if math_result and isinstance(math_result, dict) and math_result.get("response_text"):
             return LLMResponse(
@@ -3049,43 +3071,49 @@ class AngelaLLMService:
                 confidence=0.95,
                 metadata={"fallback": True, "tier": "pipeline-math"},
             )
+        return None
 
-        # Tier 0.2: If Pipeline classified as reflex/greeting, use TemplateLibrary
-        dispatch_intent = context.get("_dispatch_intent", "")
-        if dispatch_intent in ("generate", "GENERATE"):
-            # Check if QueryClassifier in Pipeline already identified this as greeting/farewell
-            intent_result = context.get("_intent_result")
-            if intent_result and isinstance(intent_result, dict):
-                sub_type = intent_result.get("sub_type", "")
-                if sub_type in ("greeting", "farewell"):
-                    try:
-                        from ai.memory.memory_template import ResponseCategory
-                        from ai.memory.template_library import get_template_library
+    async def _fb_greeting_template(
+        self, user_message: str, context: Dict[str, Any], looks_like_question: bool
+    ) -> Optional[LLMResponse]:
+        """Tier 0.2: If Pipeline classified as reflex/greeting, use TemplateLibrary."""
+        # Check if QueryClassifier in Pipeline already identified this as greeting/farewell
+        if context.get("_dispatch_intent", "") not in ("generate", "GENERATE"):
+            return None
+        intent_result = context.get("_intent_result")
+        if not (intent_result and isinstance(intent_result, dict)):
+            return None
+        if intent_result.get("sub_type", "") not in ("greeting", "farewell"):
+            return None
+        sub_type = intent_result.get("sub_type", "")
+        try:
+            from ai.memory.memory_template import ResponseCategory
+            from ai.memory.template_library import get_template_library
 
-                        lib = get_template_library()
-                        cat = (
-                            ResponseCategory.GREETING
-                            if sub_type == "greeting"
-                            else ResponseCategory.FAREWELL
-                        )
-                        templates = lib.get_by_category(cat)
-                        if templates:
-                            import random as _rand
+            lib = get_template_library()
+            cat = ResponseCategory.GREETING if sub_type == "greeting" else ResponseCategory.FAREWELL
+            templates = lib.get_by_category(cat)
+            if templates:
+                import random as _rand
 
-                            text = _rand.choice(templates).content
-                            return LLMResponse(
-                                text=text,
-                                backend="composed-template",
-                                model="template-library",
-                                confidence=0.8,
-                                metadata={"fallback": True, "tier": "template-library"},
-                            )
-                    except Exception as exc:
-                        logger.debug(f"Template library greeting/farewell failed: {exc}")
+                text = _rand.choice(templates).content
+                return LLMResponse(
+                    text=text,
+                    backend="composed-template",
+                    model="template-library",
+                    confidence=0.8,
+                    metadata={"fallback": True, "tier": "template-library"},
+                )
+        except Exception as exc:
+            logger.debug(f"Template library greeting/farewell failed: {exc}")
+        return None
 
-        # Emotional input (e.g. "I feel sad") deserves an empathetic
-        # SUPPORT template, not mood-glue fragments. Detect via
-        # bio_state dominant emotion + feeling verbs.
+    async def _fb_emotional_support(
+        self, user_message: str, context: Dict[str, Any], looks_like_question: bool
+    ) -> Optional[LLMResponse]:
+        """Emotional input (e.g. "I feel sad") deserves an empathetic
+        SUPPORT template, not mood-glue fragments. Detect via
+        bio_state dominant emotion + feeling verbs."""
         import re as _re
 
         bio_state = context.get("bio_state") or {}
@@ -3096,56 +3124,61 @@ class AngelaLLMService:
             _re.IGNORECASE,
         )
         negative = dominant in ("sad", "fear", "angry", "disgust")
-        if feels or (negative and not looks_like_question):
-            try:
-                from ai.memory.memory_template import ResponseCategory
-                from ai.memory.template_library import get_template_library
+        if not (feels or (negative and not looks_like_question)):
+            return None
+        try:
+            from ai.memory.memory_template import ResponseCategory
+            from ai.memory.template_library import get_template_library
 
-                library = get_template_library()
-                templates = library.get_by_category(ResponseCategory.EMOTIONAL)
-                if not templates:
-                    templates = library.get_by_category(ResponseCategory.SUPPORT)
-                if templates:
-                    # keyword-relevant pick instead of blind random: match
-                    # template content against the user's own words first
-                    import re as _re2
+            library = get_template_library()
+            templates = library.get_by_category(ResponseCategory.EMOTIONAL)
+            if not templates:
+                templates = library.get_by_category(ResponseCategory.SUPPORT)
+            if templates:
+                text = self._pick_support_template(templates, user_message).replace(
+                    "{user_name}", context.get("user_name", "朋友")
+                )
+                return LLMResponse(
+                    text=text,
+                    backend="local-fallback",
+                    model="support-template",
+                    confidence=0.5,
+                    metadata={"fallback": True, "tier": "support", "emotion": dominant},
+                )
+        except Exception as exc:
+            logger.warning(f"Support template fallback failed: {exc}")
+        return None
 
-                    # Traditional→Simplified for cross-script template matching
-                    # (templates are simplified; user may write traditional).
-                    # Shared table, not a local hand-rolled subset.
-                    normalized_msg = to_simplified(user_message).lower()
-                    # CJK: single-char granularity (难 vs 别难过 share 难+过)
-                    user_words = set(
-                        _re2.findall(
-                            r"[\u4e00-\u9fff]|[A-Za-z]{3,}",
-                            normalized_msg,
-                        )
-                    )
-                    scored = []
-                    for t in templates:
-                        c = str(getattr(t, "content", ""))
-                        tw = set(_re2.findall(r"[\u4e00-\u9fff]|[A-Za-z]{3,}", c.lower()))
-                        overlap = len(user_words & tw)
-                        scored.append((overlap, c))
-                    scored.sort(key=lambda x: -x[0])
-                    best_text = (
-                        scored[0][1]
-                        if scored and scored[0][0] > 0
-                        else random.choice([c for _, c in scored])
-                    )
-                    text = best_text.replace("{user_name}", context.get("user_name", "朋友"))
-                    return LLMResponse(
-                        text=text,
-                        backend="local-fallback",
-                        model="support-template",
-                        confidence=0.5,
-                        metadata={"fallback": True, "tier": "support", "emotion": dominant},
-                    )
-            except Exception as exc:
-                logger.warning(f"Support template fallback failed: {exc}")
+    @staticmethod
+    def _pick_support_template(templates: Any, user_message: str) -> str:
+        """keyword-relevant pick instead of blind random: match template
+        content against the user's own words first."""
+        import re as _re2
 
-        # Tier 1.5: For questions that survived all layers, return honest
-        # "don't know" instead of NeuroBlender random fragments.
+        # Traditional→Simplified for cross-script template matching
+        # (templates are simplified; user may write traditional).
+        normalized_msg = to_simplified(user_message).lower()
+        # CJK: single-char granularity (难 vs 别难过 share 难+过)
+        user_words = set(_re2.findall(r"[\u4e00-\u9fff]|[A-Za-z]{3,}", normalized_msg))
+        scored = []
+        for t in templates:
+            c = str(getattr(t, "content", ""))
+            tw = set(_re2.findall(r"[\u4e00-\u9fff]|[A-Za-z]{3,}", c.lower()))
+            overlap = len(user_words & tw)
+            scored.append((overlap, c))
+        scored.sort(key=lambda x: -x[0])
+        if scored and scored[0][0] > 0:
+            return scored[0][1]
+        return random.choice([c for _, c in scored])
+
+    async def _fb_honest_refusal(
+        self, user_message: str, context: Dict[str, Any], looks_like_question: bool
+    ) -> Optional[LLMResponse]:
+        """Tier 1.5/1.6: Questions get an honest "don't know"; task-shaped
+        inputs that survived everything get an honest "can't do" — never
+        small-talk. looks_like_question only covers questions, so imperative
+        tasks ("寫Unity腳本", "講講量子力學") fell to Tier 2/3 rambles
+        instead (live 2026-10-10). Chit-chat types keep Tier 2/3."""
         if looks_like_question:
             return LLMResponse(
                 text=f"{context.get('user_name', '你')}，這個問題我目前還沒有足夠的知識能正確回答。你可以問我數學、邏輯，或我學過的事實。",
@@ -3154,12 +3187,6 @@ class AngelaLLMService:
                 confidence=0.4,
                 metadata={"fallback": True, "tier": "honest"},
             )
-
-        # Tier 1.6: task-shaped inputs that survived everything must get an
-        # honest "can't do" — never small-talk. looks_like_question only
-        # covers questions, so imperative tasks ("寫Unity腳本", "講講量子力學")
-        # fell to Tier 2/3 rambles ("嗨！好久不見") instead (live 2026-10-10).
-        # Chit-chat types (greeting/reflex/opinion/unknown) keep Tier 2/3.
         _task_types = frozenset(
             {
                 "code",
@@ -3198,24 +3225,30 @@ class AngelaLLMService:
                 confidence=0.4,
                 metadata={"fallback": True, "tier": "honest-task"},
             )
+        return None
 
-        # Tier 2: NeuroBlender (smalltalk only — never for negative emotion)
+    async def _fb_neuro_blender(
+        self, user_message: str, context: Dict[str, Any], looks_like_question: bool
+    ) -> Optional[LLMResponse]:
+        """Tier 2: NeuroBlender (smalltalk only — never for negative emotion)."""
         try:
             result = await self._try_neuro_blender(user_message, context)
             if result:
                 return result
         except Exception as e:
             logger.warning(f"NeuroBlender fallback failed: {e}", exc_info=True)
+        return None
 
-        # Tier 3: pure template
+    async def _fb_pure_template(
+        self, user_message: str, context: Dict[str, Any], looks_like_question: bool
+    ) -> LLMResponse:
+        """Tier 3: pure template (always returns — template-engine or error)."""
         try:
             from ai.memory.memory_template import ResponseCategory
             from ai.memory.template_library import get_template_library
 
             library = get_template_library()
-
             emotion = context.get("bio_state", {}).get("dominant_emotion", "neutral").lower()
-
             category_map = {
                 "happy": ResponseCategory.SMALL_TALK,
                 "sad": ResponseCategory.SUPPORT,
@@ -3225,42 +3258,17 @@ class AngelaLLMService:
                 "fear": ResponseCategory.SUPPORT,
                 "surprise": ResponseCategory.CURIOSITY,
             }
-
-            target_category = category_map.get(emotion, ResponseCategory.SMALL_TALK)
-
-            # EmotionSystem temporal awareness: sustained negative → force SUPPORT;
-            # declining trend → prefer empathy over casual.
-            try:
-                from core.backbone import get_backbone
-
-                # 方法非屬性：必須調用（R35 真 bug——缺括號致死分支恆走 except）。
-                _es = get_backbone().emotion()
-                if _es is not None:
-                    if _es._sustained_negative_counter >= 3:
-                        target_category = ResponseCategory.SUPPORT
-                    elif _es._feedback_history and len(_es._feedback_history) >= 2:
-                        _recent = list(_es._feedback_history)
-                        if _recent[-1].get("engagement_ratio", 1.0) < _recent[0].get(
-                            "engagement_ratio", 1.0
-                        ):
-                            target_category = ResponseCategory.SUPPORT
-            except Exception:
-                # R35 lived under this pass: a dead branch here silently drops
-                # the SUPPORT override and a negatively-engaged user keeps
-                # getting generic templates with no signal.
-                logger.warning("Emotion->SUPPORT routing override failed", exc_info=True)
-
+            target_category = self._emotion_support_override(
+                category_map.get(emotion, ResponseCategory.SMALL_TALK)
+            )
             templates = library.get_by_category(target_category)
-
             if not templates:
                 templates = library.get_by_category(ResponseCategory.SMALL_TALK)
-
             if templates:
                 template = random.choice(templates)
                 text = template.content.replace("{user_name}", context.get("user_name", "朋友"))
             else:
                 text = "（核心 LLM 目前離線中，但我依然能感受到妳。能稍微等我一下嗎？）"
-
             return LLMResponse(
                 text=text,
                 backend="local-fallback",
@@ -3277,6 +3285,32 @@ class AngelaLLMService:
                 confidence=0.0,
                 error=safe_error(e),
             )
+
+    @staticmethod
+    def _emotion_support_override(target_category: Any) -> Any:
+        """EmotionSystem temporal awareness: sustained negative → force SUPPORT;
+        declining trend → prefer empathy over casual."""
+        try:
+            from ai.memory.memory_template import ResponseCategory
+            from core.backbone import get_backbone
+
+            # 方法非屬性：必須調用（R35 真 bug——缺括號致死分支恆走 except）。
+            _es = get_backbone().emotion()
+            if _es is not None:
+                if _es._sustained_negative_counter >= 3:
+                    return ResponseCategory.SUPPORT
+                if _es._feedback_history and len(_es._feedback_history) >= 2:
+                    _recent = list(_es._feedback_history)
+                    if _recent[-1].get("engagement_ratio", 1.0) < _recent[0].get(
+                        "engagement_ratio", 1.0
+                    ):
+                        return ResponseCategory.SUPPORT
+        except Exception:
+            # R35 lived under this pass: a dead branch here silently drops
+            # the SUPPORT override and a negatively-engaged user keeps
+            # getting generic templates with no signal.
+            logger.warning("Emotion->SUPPORT routing override failed", exc_info=True)
+        return target_category
 
     # ── NeuroBlender fallback helper ──────────────────────────────────────
 
