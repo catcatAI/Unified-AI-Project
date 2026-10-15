@@ -392,53 +392,9 @@ class _STEncoder:
         if not subprocess_check("sentence_transformers"):
             raise ImportError("sentence_transformers not available (import check failed)")
         try:
-            # Backend selection: "onnx" (int8, ~2.1x faster CPU inference),
-            # "torch" (reference), "auto" = onnx when a quantized export
-            # exists, else torch. See scripts/export_minilm_onnx.py.
-            backend = str(_cfg_get("ai.garden.st_backend", "auto")).lower()
-            if backend in ("onnx", "auto"):
-                onnx_path = _onnx_model_path(model_name)
-                if onnx_path:
-                    try:
-                        self._model = _OnnxEncoder(onnx_path)
-                        self._backend = "onnx"
-                        self._model_cache[model_name] = self
-                        logger.info(
-                            "GARDEN: loaded ONNX int8 encoder '%s' (%s)",
-                            model_name,
-                            onnx_path,
-                        )
-                        return
-                    except Exception as onnx_err:
-                        if backend == "onnx":
-                            raise
-                        logger.warning(
-                            "ONNX encoder unavailable (%s); falling back to torch",
-                            onnx_err,
-                        )
-                elif backend == "onnx":
-                    raise ImportError(
-                        f"st_backend=onnx but no quantized model at {_default_onnx_path(model_name)}; "
-                        "run scripts/export_minilm_onnx.py first"
-                    )
-
-            from sentence_transformers import SentenceTransformer
-
-            # Offline-first: when the model is already in the local HF cache,
-            # skip the hub revision check entirely. This removes a network
-            # dependency (and multi-second stall on flaky connections) from
-            # first engine construction, and makes air-gapped deployments work
-            # without HF_HUB_OFFLINE env vars.
-            kwargs: Dict[str, Any] = {}
-            try:
-                if _model_in_hf_cache(model_name):
-                    kwargs["local_files_only"] = True
-            except Exception as cache_err:  # cache probing must never block load
-                logger.debug("HF cache probe failed (%s); loading normally", cache_err)
-            self._model = SentenceTransformer(model_name, **kwargs)
-            self._backend = "torch"
-            # Cache once loaded successfully
-            self._model_cache[model_name] = self
+            if self._try_onnx_backend(model_name):
+                return
+            self._load_torch_backend(model_name)
         except Exception as e:
             raise ImportError(f"sentence_transformers not available: {e}")
         logger.info(
@@ -446,6 +402,59 @@ class _STEncoder:
             model_name,
             getattr(self, "_backend", "torch"),
         )
+
+    def _try_onnx_backend(self, model_name: str) -> bool:
+        """Try loading ONNX int8 encoder; returns True on success."""
+        backend = str(_cfg_get("ai.garden.st_backend", "auto")).lower()
+        if backend not in ("onnx", "auto"):
+            return False
+        onnx_path = _onnx_model_path(model_name)
+        if not onnx_path:
+            if backend == "onnx":
+                raise ImportError(
+                    f"st_backend=onnx but no quantized model at {_default_onnx_path(model_name)}; "
+                    "run scripts/export_minilm_onnx.py first"
+                )
+            return False
+        try:
+            self._model = _OnnxEncoder(onnx_path)
+            self._backend = "onnx"
+            self._model_cache[model_name] = self
+            logger.info(
+                "GARDEN: loaded ONNX int8 encoder '%s' (%s)",
+                model_name,
+                onnx_path,
+            )
+            return True
+        except Exception as onnx_err:
+            if backend == "onnx":
+                raise
+            logger.warning(
+                "ONNX encoder unavailable (%s); falling back to torch",
+                onnx_err,
+            )
+            return False
+
+    def _load_torch_backend(self, model_name: str) -> None:
+        """Load torch SentenceTransformer with offline-first cache probing."""
+        from sentence_transformers import SentenceTransformer
+
+        # Offline-first: when the model is already in the local HF cache,
+        # skip the hub revision check entirely. This removes a network
+        # dependency (and multi-second stall on flaky connections) from
+        # first engine construction, and makes air-gapped deployments work
+        # without HF_HUB_OFFLINE env vars.
+        kwargs: Dict[str, Any] = {}
+        try:
+            if _model_in_hf_cache(model_name):
+                kwargs["local_files_only"] = True
+        except Exception as cache_err:  # cache probing must never block load
+            logger.debug("HF cache probe failed (%s); loading normally", cache_err)
+        self._model = SentenceTransformer(model_name, **kwargs)
+        self._backend = "torch"
+        # Cache once loaded successfully
+        self._model_cache[model_name] = self
+
 
     def encode(self, texts: List[str]):
         """Encode texts to L2-normalized embeddings.
@@ -531,36 +540,7 @@ class _ChromaEncoder:
             self._collection.add(documents=docs_to_add, ids=ids_to_add)
 
         # Query each text to get its embedding from ChromaDB
-        embeddings = []
-        for text in texts:
-            cached_id: Optional[str] = self._text_to_id.get(text)
-            if cached_id:
-                try:
-                    result = self._collection.get(
-                        ids=[cached_id],
-                        include=["embeddings"],
-                    )
-                    embs = result.get("embeddings") if result else None
-                    if embs is not None and len(embs) > 0:
-                        emb = embs[0]
-                        if emb is not None and len(emb) > 0:
-                            embeddings.append(emb)
-                        else:
-                            logger.warning(
-                                "GARDEN: ChromaDB returned empty embedding for text '%s'", text[:50]
-                            )
-                            embeddings.append([0.0] * self.EMBEDDING_DIM)
-                    else:
-                        logger.warning(
-                            "GARDEN: ChromaDB get() returned no embeddings for text '%s'", text[:50]
-                        )
-                        embeddings.append([0.0] * self.EMBEDDING_DIM)
-                except Exception as e:
-                    logger.warning("GARDEN: ChromaDB get() failed for text '%s': %s", text[:50], e)
-                    embeddings.append([0.0] * self.EMBEDDING_DIM)
-            else:
-                logger.warning("GARDEN: text '%s' not found in ChromaDB text_to_id map", text[:50])
-                embeddings.append([0.0] * self.EMBEDDING_DIM)
+        embeddings = [self._get_embedding(text) for text in texts]
 
         if not embeddings:
             return torch.zeros(0, self.EMBEDDING_DIM)
@@ -568,6 +548,35 @@ class _ChromaEncoder:
         # list-of-ndarray 直建 tensor 會觸發 torch 慢路徑（UserWarning），先收斂成單一 ndarray
         arr = np.array(embeddings, dtype=np.float32)
         return torch.tensor(arr, dtype=torch.float32).cpu()
+
+    def _get_embedding(self, text: str) -> List[float]:
+        """Retrieve embedding for one text from ChromaDB; fallback to zeros."""
+        cached_id: Optional[str] = self._text_to_id.get(text)
+        if not cached_id:
+            logger.warning("GARDEN: text '%s' not found in ChromaDB text_to_id map", text[:50])
+            return [0.0] * self.EMBEDDING_DIM
+        try:
+            result = self._collection.get(
+                ids=[cached_id],
+                include=["embeddings"],
+            )
+            embs = result.get("embeddings") if result else None
+            if embs is not None and len(embs) > 0:
+                emb = embs[0]
+                if emb is not None and len(emb) > 0:
+                    return list(emb)
+                logger.warning(
+                    "GARDEN: ChromaDB returned empty embedding for text '%s'", text[:50]
+                )
+                return [0.0] * self.EMBEDDING_DIM
+            logger.warning(
+                "GARDEN: ChromaDB get() returned no embeddings for text '%s'", text[:50]
+            )
+            return [0.0] * self.EMBEDDING_DIM
+        except Exception as e:
+            logger.warning("GARDEN: ChromaDB get() failed for text '%s': %s", text[:50], e)
+            return [0.0] * self.EMBEDDING_DIM
+
 
     def query_embedding(self, text: str) -> Optional[List[float]]:
         """Get the embedding for a single text without adding it to the collection."""
@@ -762,6 +771,16 @@ class VectorDictionary:
         self._pruned_keys = []
         return keys
 
+    def _add_unique_surface(self, entry, prefix: str, form: str) -> None:
+        """Add form with a unique key (en, en2, en3...) to preserve all surface forms."""
+        if form not in entry.surface_forms.values():
+            form_key = prefix
+            idx = 2
+            while form_key in entry.surface_forms:
+                form_key = f"{prefix}{idx}"
+                idx += 1
+            entry.surface_forms[form_key] = form
+
     def grow(self, text: str, surface_form: str, confidence: Optional[float] = None) -> str:
         """Add a new entry learned from conversation.
 
@@ -792,21 +811,8 @@ class VectorDictionary:
             if entry:
                 en_form = surface_form or text
                 zh_form = text
-                if en_form not in entry.surface_forms.values():
-                    # Add with a unique key to preserve all surface forms
-                    form_key = "en"
-                    idx = 2
-                    while form_key in entry.surface_forms:
-                        form_key = f"en{idx}"
-                        idx += 1
-                    entry.surface_forms[form_key] = en_form
-                if zh_form not in entry.surface_forms.values():
-                    form_key = "zh"
-                    idx = 2
-                    while form_key in entry.surface_forms:
-                        form_key = f"zh{idx}"
-                        idx += 1
-                    entry.surface_forms[form_key] = zh_form
+                self._add_unique_surface(entry, "en", en_form)
+                self._add_unique_surface(entry, "zh", zh_form)
                 # Update surface set so exact match works
                 added = set()
                 for sf in (en_form, zh_form):
@@ -823,6 +829,7 @@ class VectorDictionary:
         self.add_entry(key, {"en": text, "zh": surface_form or text}, confidence=confidence)
         logger.debug("GARDEN: grew new concept key=%s surface=%s", key, surface_form)
         return key
+
 
     def grow_batch(self, texts: List[str], confidence: Optional[float] = None) -> List[str]:
         """Add multiple new entries learned from conversation without rebuilding index.
@@ -1010,6 +1017,190 @@ class VectorDictionary:
     # Core encode / decode
     # ------------------------------------------------------------------
 
+    def _ensure_surface_cache(self) -> None:
+        """Build reverse lookup caches (surface form → key, prefix buckets)."""
+        if hasattr(self, "_surface_to_key") and self._surface_to_key is not None:
+            return
+        self._surface_to_key = {}
+        self._prefix_first = {}
+        for key, entry in self.entries.items():
+            for form in entry.surface_forms.values():
+                if form:
+                    f_lower = form.lower().strip()
+                    for word in f_lower.split():
+                        if word and word not in self._surface_to_key:
+                            self._surface_to_key[word] = key
+                    if f_lower:
+                        bucket = f_lower[:3]
+                        self._prefix_first.setdefault(bucket, []).append((f_lower, key))
+
+    def _exact_match(self, tok: str) -> Optional[str]:
+        t = tok.lower().strip()
+        return self._surface_to_key.get(t) if self._surface_to_key else None
+
+    def _cache_embed(self, query: str, qvec: Any) -> None:
+        if self._embed_cache is None:
+            self._embed_cache = OrderedDict()
+        self._embed_cache[query] = qvec
+        self._embed_cache.move_to_end(query)
+        while len(self._embed_cache) > self._embed_cache_max:
+            self._embed_cache.popitem(last=False)
+
+    def _match_single(self, query: str) -> List[Tuple[str, float]]:
+        """Return (key, similarity_score) for TF-IDF match."""
+        if not query or len(query.strip()) < 1:
+            return []
+        cache_key = query.lower().strip()
+        qvec = self._embed_cache.get(cache_key) if self._embed_cache else None
+        if qvec is None:
+            qvec = self._encoder.encode([query])
+            qvec = self._normalize(qvec, dim=-1)
+            self._cache_embed(cache_key, qvec)
+        scores = self._matrix @ qvec.T
+        if hasattr(scores, "ndim") and scores.ndim > 1:
+            scores = scores.squeeze(-1)
+        k = min(self.top_k, scores.shape[0])
+        if hasattr(scores, "topk"):
+            top_scores, top_indices = scores.topk(k)
+        else:
+            top_indices = np.argsort(-scores)[:k]
+            top_scores = scores[top_indices]
+        matched = []
+        for score, idx in zip(top_scores.tolist(), top_indices.tolist()):
+            if score >= self.similarity_threshold:
+                matched.append((self._key_order[idx], score))
+        return matched
+
+    @staticmethod
+    def _is_cjk_char(ch: str) -> bool:
+        return "一" <= ch <= "鿿" or "぀" <= ch <= "ヿ"
+
+    def _encode_cjk_step(self, tokens: List[str], result: Dict[str, float]) -> None:
+        """Step 1: CJK runs — all substrings exact match, conf = len(sub)/len(run)."""
+        i = 0
+        while i < len(tokens):
+            tok = tokens[i]
+            if tok and self._is_cjk_char(tok[0]):
+                # Build contiguous CJK run
+                run_chars: List[str] = []
+                while i < len(tokens) and tokens[i] and self._is_cjk_char(tokens[i][0]):
+                    run_chars.append(tokens[i])
+                    i += 1
+                run = "".join(run_chars)
+                run_len = len(run)
+                if run_len == 0:
+                    continue
+                # Check all substrings for exact match
+                for start in range(run_len):
+                    for end in range(start + 1, run_len + 1):
+                        sub = run[start:end]
+                        cjk_key: Optional[str] = self._exact_match(sub)
+                        if cjk_key:
+                            conf = len(sub) / run_len
+                            if cjk_key not in result or conf > result[cjk_key]:
+                                result[cjk_key] = conf
+            else:
+                i += 1
+
+    def _encode_exact_step(
+        self, tokens: List[str], result: Dict[str, float], matched_tokens: set
+    ) -> None:
+        """Step 2: Non-CJK tokens — exact match, conf = 1.0."""
+        for tok in tokens:
+            if tok and not self._is_cjk_char(tok[0]) and tok.strip():
+                token_key: Optional[str] = self._exact_match(tok)
+                if token_key:
+                    result[token_key] = max(result.get(token_key, 0.0), 1.0)
+                    matched_tokens.add(tok.lower().strip())
+
+    def _encode_prefix_step(
+        self, tokens: List[str], result: Dict[str, float], matched_tokens: set
+    ) -> None:
+        """Step 3: Unmatched non-CJK tokens — prefix dedup (word forms)."""
+        for tok in tokens:
+            if not (tok and not self._is_cjk_char(tok[0]) and tok.strip()):
+                continue
+            token_lower = tok.lower().strip()
+            if token_lower in matched_tokens:
+                continue
+            best_key = None
+            best_score = 0.0
+            # _prefix_overlap needs a shared prefix >= min_prefix(3), so any
+            # form scoring >0 must share the first 3 chars — bucket is exact.
+            for form, key in (
+                self._prefix_first.get(token_lower[:3], ()) if self._prefix_first else ()
+            ):
+                score = self._prefix_overlap(token_lower, form)
+                if score > best_score:
+                    best_score = score
+                    best_key = key
+            if best_score >= 0.5 and best_key:
+                conf = min(best_score, 0.85)  # cap prefix dedup confidence
+                result[best_key] = max(result.get(best_key, 0.0), conf)
+                matched_tokens.add(token_lower)
+
+    def _tfidf_collect_vectors(self, unique_tokens: List[str]) -> List[Any]:
+        """Gather embeddings for unique tokens (cached hits + batch misses)."""
+        qvecs_list: List[Any] = []
+        missing: List[str] = []
+        for tok in unique_tokens:
+            cached = self._embed_cache.get(tok.lower().strip()) if self._embed_cache else None
+            if cached is not None:
+                qvecs_list.append(cached)
+            else:
+                missing.append(tok)
+        if missing:
+            batch = self._encoder.encode(missing)
+            batch = self._normalize(batch, dim=-1)
+            for j, tok in enumerate(missing):
+                self._cache_embed(tok.lower().strip(), batch[j])
+                qvecs_list.append(batch[j])
+        return qvecs_list
+
+    @staticmethod
+    def _topk_scores(col: Any, k: int) -> Tuple[List[float], List[int]]:
+        if hasattr(col, "topk"):
+            top_scores, top_indices = col.topk(k)
+        else:
+            top_indices = np.argsort(-col)[:k]
+            top_scores = col[top_indices]
+        return top_scores.tolist(), top_indices.tolist()
+
+    def _encode_tfidf_step(
+        self, tokens: List[str], result: Dict[str, float], matched_tokens: set
+    ) -> None:
+        """Step 4: Still-unmatched tokens — TF-IDF (single batched matmul)."""
+        unique_tokens: List[str] = []
+        seen_tokens: set = set()
+        for tok in tokens:
+            if tok and tok.strip():
+                token_lower = tok.lower().strip()
+                if token_lower not in matched_tokens and token_lower not in seen_tokens:
+                    seen_tokens.add(token_lower)
+                    unique_tokens.append(tok)
+        if not unique_tokens:
+            return
+        qvecs_list = self._tfidf_collect_vectors(unique_tokens)
+        if hasattr(qvecs_list[0], "norm"):
+            import torch as _torch
+
+            qbatch: Any = _torch.stack(qvecs_list, dim=0)
+        else:
+            qbatch = np.stack(qvecs_list)
+        all_scores = self._matrix @ qbatch.T  # [V, T]
+        for j, tok in enumerate(unique_tokens):
+            col = all_scores[:, j]
+            if hasattr(col, "ndim") and col.ndim > 1:
+                col = col.squeeze(-1)
+            k = min(self.top_k, col.shape[0])
+            top_scores, top_indices = self._topk_scores(col, k)
+            for score, idx in zip(top_scores, top_indices):
+                if score >= self.similarity_threshold:
+                    conf = min(float(score), 0.5)
+                    result[self._key_order[idx]] = max(
+                        result.get(self._key_order[idx], 0.0), conf
+                    )
+
     def encode(self, text: str) -> Dict[str, float]:
         """Map text to concept keys with per-key confidence scores.
 
@@ -1031,60 +1222,7 @@ class VectorDictionary:
 
         import re as _re
 
-        # Build reverse lookup cache
-        if not hasattr(self, "_surface_to_key") or self._surface_to_key is None:
-            self._surface_to_key = {}
-            self._prefix_first = {}
-            for key, entry in self.entries.items():
-                for form in entry.surface_forms.values():
-                    if form:
-                        f_lower = form.lower().strip()
-                        for word in f_lower.split():
-                            if word and word not in self._surface_to_key:
-                                self._surface_to_key[word] = key
-                        if f_lower:
-                            bucket = f_lower[:3]
-                            self._prefix_first.setdefault(bucket, []).append((f_lower, key))
-
-        def _exact_match(tok: str) -> Optional[str]:
-            t = tok.lower().strip()
-            return self._surface_to_key.get(t) if self._surface_to_key else None
-
-        def _cache_embed(query: str, qvec: Any) -> None:
-            if self._embed_cache is None:
-                self._embed_cache = OrderedDict()
-            self._embed_cache[query] = qvec
-            self._embed_cache.move_to_end(query)
-            while len(self._embed_cache) > self._embed_cache_max:
-                self._embed_cache.popitem(last=False)
-
-        def _match_single(query: str) -> List[Tuple[str, float]]:
-            """Return (key, similarity_score) for TF-IDF match."""
-            if not query or len(query.strip()) < 1:
-                return []
-            cache_key = query.lower().strip()
-            qvec = self._embed_cache.get(cache_key) if self._embed_cache else None
-            if qvec is None:
-                qvec = self._encoder.encode([query])
-                qvec = self._normalize(qvec, dim=-1)
-                _cache_embed(cache_key, qvec)
-            scores = self._matrix @ qvec.T
-            if hasattr(scores, "ndim") and scores.ndim > 1:
-                scores = scores.squeeze(-1)
-            k = min(self.top_k, scores.shape[0])
-            if hasattr(scores, "topk"):
-                top_scores, top_indices = scores.topk(k)
-            else:
-                top_indices = np.argsort(-scores)[:k]
-                top_scores = scores[top_indices]
-            matched = []
-            for score, idx in zip(top_scores.tolist(), top_indices.tolist()):
-                if score >= self.similarity_threshold:
-                    matched.append((self._key_order[idx], score))
-            return matched
-
-        def _is_cjk(ch: str) -> bool:
-            return "\u4e00" <= ch <= "\u9fff" or "\u3040" <= ch <= "\u30ff"
+        self._ensure_surface_cache()
 
         result: Dict[str, float] = {}
         tokens = _re.findall(r"[a-zA-Z0-9]+|.", text)
@@ -1092,137 +1230,19 @@ class VectorDictionary:
         # Track which non-CJK tokens are already matched (skip later steps)
         matched_tokens: set = set()
 
-        # ======================================================================
-        # Step 1: CJK runs — all substrings exact match
-        # ======================================================================
-        i = 0
-        while i < len(tokens):
-            tok = tokens[i]
-            if tok and _is_cjk(tok[0]):
-                # Build contiguous CJK run
-                run_chars: List[str] = []
-                while i < len(tokens) and tokens[i] and _is_cjk(tokens[i][0]):
-                    run_chars.append(tokens[i])
-                    i += 1
-                run = "".join(run_chars)
-                run_len = len(run)
-                if run_len == 0:
-                    continue
-                # Check all substrings for exact match
-                for start in range(run_len):
-                    for end in range(start + 1, run_len + 1):
-                        sub = run[start:end]
-                        cjk_key: Optional[str] = _exact_match(sub)
-                        if cjk_key:
-                            conf = len(sub) / run_len
-                            if cjk_key not in result or conf > result[cjk_key]:
-                                result[cjk_key] = conf
-            else:
-                i += 1
+        self._encode_cjk_step(tokens, result)
+        self._encode_exact_step(tokens, result, matched_tokens)
+        self._encode_prefix_step(tokens, result, matched_tokens)
+        self._encode_tfidf_step(tokens, result, matched_tokens)
 
-        # ======================================================================
-        # Step 2: Non-CJK tokens — exact match
-        # ======================================================================
-        i = 0
-        while i < len(tokens):
-            tok = tokens[i]
-            if tok and not _is_cjk(tok[0]) and tok.strip():
-                token_key: Optional[str] = _exact_match(tok)
-                if token_key:
-                    result[token_key] = max(result.get(token_key, 0.0), 1.0)
-                    matched_tokens.add(tok.lower().strip())
-            i += 1
-
-        # ======================================================================
-        # Step 3: Unmatched non-CJK tokens — prefix dedup (word forms)
-        # ======================================================================
-        i = 0
-        while i < len(tokens):
-            tok = tokens[i]
-            if tok and not _is_cjk(tok[0]) and tok.strip():
-                token_lower = tok.lower().strip()
-                if token_lower in matched_tokens:
-                    i += 1
-                    continue
-                best_key = None
-                best_score = 0.0
-                # _prefix_overlap needs a shared prefix >= min_prefix(3), so any
-                # form scoring >0 must share the first 3 chars — bucket is exact.
-                for form, key in (
-                    self._prefix_first.get(token_lower[:3], ()) if self._prefix_first else ()
-                ):
-                    score = self._prefix_overlap(token_lower, form)
-                    if score > best_score:
-                        best_score = score
-                        best_key = key
-                if best_score >= 0.5 and best_key:
-                    conf = min(best_score, 0.85)  # cap prefix dedup confidence
-                    result[best_key] = max(result.get(best_key, 0.0), conf)
-                    matched_tokens.add(token_lower)
-            i += 1
-
-        # ======================================================================
-        # Step 4: Still-unmatched tokens — TF-IDF (single batched matmul)
-        # ======================================================================
-        unique_tokens: List[str] = []
-        seen_tokens: set = set()
-        i = 0
-        while i < len(tokens):
-            tok = tokens[i]
-            if tok and tok.strip():
-                token_lower = tok.lower().strip()
-                if token_lower not in matched_tokens and token_lower not in seen_tokens:
-                    seen_tokens.add(token_lower)
-                    unique_tokens.append(tok)
-            i += 1
-        if unique_tokens:
-            qvecs_list: List[Any] = []
-            missing: List[str] = []
-            for tok in unique_tokens:
-                cached = self._embed_cache.get(tok.lower().strip()) if self._embed_cache else None
-                if cached is not None:
-                    qvecs_list.append(cached)
-                else:
-                    missing.append(tok)
-            if missing:
-                batch = self._encoder.encode(missing)
-                batch = self._normalize(batch, dim=-1)
-                for j, tok in enumerate(missing):
-                    _cache_embed(tok.lower().strip(), batch[j])
-                    qvecs_list.append(batch[j])
-            if hasattr(qvecs_list[0], "norm"):
-                import torch as _torch
-
-                qbatch: Any = _torch.stack(qvecs_list, dim=0)
-            else:
-                qbatch = np.stack(qvecs_list)
-            all_scores = self._matrix @ qbatch.T  # [V, T]
-            for j, tok in enumerate(unique_tokens):
-                col = all_scores[:, j]
-                if hasattr(col, "ndim") and col.ndim > 1:
-                    col = col.squeeze(-1)
-                k = min(self.top_k, col.shape[0])
-                if hasattr(col, "topk"):
-                    top_scores, top_indices = col.topk(k)
-                else:
-                    top_indices = np.argsort(-col)[:k]
-                    top_scores = col[top_indices]
-                for score, idx in zip(top_scores.tolist(), top_indices.tolist()):
-                    if score >= self.similarity_threshold:
-                        conf = min(float(score), 0.5)
-                        result[self._key_order[idx]] = max(
-                            result.get(self._key_order[idx], 0.0), conf
-                        )
-
-        # ======================================================================
         # Step 5: Whole-text TF-IDF (phrase-level catch-all)
-        # ======================================================================
-        for key, score in _match_single(text):
+        for key, score in self._match_single(text):
             conf = min(score, 0.6)
             if key not in result or conf > result[key]:
                 result[key] = conf
 
         return result
+
 
     def decode(self, keys: List[str], original_text: Optional[str] = None) -> str:
         """Turn a list of concept keys back into a human-readable string.
@@ -1250,23 +1270,26 @@ class VectorDictionary:
             if entry is None:
                 continue
             # Try to match original text against surface forms
-            surface = None
-            if lower_orig is not None:
-                # 1) Full-text match (catches CJK multi-char entries like "北京")
-                for sf in entry.surface_forms.values():
-                    if sf and sf.lower().strip() == lower_orig:
-                        surface = sf
-                        break
-                if surface is None:
-                    # 2) Token-level match (for multi-word inputs like "happy happiness")
-                    for sf in entry.surface_forms.values():
-                        if sf and sf.lower().strip() in orig_tokens:
-                            surface = sf
-                            break
+            surface = self._match_surface(entry, lower_orig, orig_tokens)
             if surface is None:
                 surface = entry.surface_forms.get("zh") or entry.surface_forms.get("en") or key
             parts.append(surface)
         return " ".join(parts)
+
+    @staticmethod
+    def _match_surface(entry, lower_orig: Optional[str], orig_tokens: set) -> Optional[str]:
+        """Match surface form against original text (full-text then token-level)."""
+        if lower_orig is None:
+            return None
+        # 1) Full-text match (catches CJK multi-char entries like "北京")
+        for sf in entry.surface_forms.values():
+            if sf and sf.lower().strip() == lower_orig:
+                return str(sf)
+        # 2) Token-level match (for multi-word inputs like "happy happiness")
+        for sf in entry.surface_forms.values():
+            if sf and sf.lower().strip() in orig_tokens:
+                return str(sf)
+        return None
 
     @staticmethod
     def route_math(text: str) -> Optional[str]:
