@@ -8,7 +8,7 @@ import hashlib
 import json
 import math
 import uuid
-from typing import Any, Dict, Mapping, Sequence
+from typing import Any, Dict, List, Mapping, Sequence, Tuple
 
 EDA_EPISODE_SCHEMA_VERSION = "eda-episode/1"
 _SENSITIVE_KEY_PARTS = (
@@ -28,34 +28,51 @@ def _short_text(value: Any, limit: int = 256) -> str:
     return str(value if value is not None else "")[:limit]
 
 
+def _sanitize_scalar(value: Any) -> Tuple[bool, Any]:
+    """Sanitize a scalar value; returns (handled, sanitized)."""
+    if value is None or isinstance(value, bool):
+        return True, value
+    if isinstance(value, int):
+        return True, value
+    if isinstance(value, float):
+        return True, (value if math.isfinite(value) else None)
+    if isinstance(value, str):
+        return True, value[:256]
+    return False, value
+
+
+def _sanitize_mapping(value: Mapping[str, Any], key: str) -> Dict[str, Any]:
+    sanitized: Dict[str, Any] = {}
+    for raw_key, raw_value in list(value.items())[:64]:
+        key_text = _short_text(raw_key, 64)
+        child = _sanitize(raw_value, key_text)
+        if child is not None:
+            sanitized[key_text] = child
+    return sanitized
+
+
+def _sanitize_sequence(value: Any, key: str) -> List[Any]:
+    sanitized_list: List[Any] = []
+    for item in list(value)[:64]:
+        child = _sanitize(item, key)
+        if child is not None:
+            sanitized_list.append(child)
+    return sanitized_list
+
+
 def _sanitize(value: Any, key: str = "") -> Any:
     normalized_key = key.lower()
     if any(part in normalized_key for part in _SENSITIVE_KEY_PARTS):
         return None
-    if value is None or isinstance(value, bool):
-        return value
-    if isinstance(value, int):
-        return value
-    if isinstance(value, float):
-        return value if math.isfinite(value) else None
-    if isinstance(value, str):
-        return value[:256]
+    handled, scalar = _sanitize_scalar(value)
+    if handled:
+        return scalar
     if isinstance(value, Mapping):
-        sanitized: Dict[str, Any] = {}
-        for raw_key, raw_value in list(value.items())[:64]:
-            key_text = _short_text(raw_key, 64)
-            child = _sanitize(raw_value, key_text)
-            if child is not None:
-                sanitized[key_text] = child
-        return sanitized
+        return _sanitize_mapping(value, key)
     if isinstance(value, (list, tuple, set)):
-        sanitized_list = []
-        for item in list(value)[:64]:
-            child = _sanitize(item, key)
-            if child is not None:
-                sanitized_list.append(child)
-        return sanitized_list
+        return _sanitize_sequence(value, key)
     return _short_text(value)
+
 
 
 def _status(result: Mapping[str, Any]) -> str:
@@ -201,37 +218,22 @@ def _evaluate_ic(results: Mapping[str, Mapping[str, Any]]) -> Dict[str, Any]:
     }
 
 
+def _as_mapping(value: Any) -> Mapping[str, Any]:
+    """Coerce to a Mapping ({} when the value is missing or the wrong type)."""
+    return value if isinstance(value, Mapping) else {}
+
+
 def _evaluate_ai_card_reference(results: Mapping[str, Mapping[str, Any]]) -> Dict[str, Any]:
-    result = results.get("ai_card_reference", {})
-    if not isinstance(result, Mapping):
-        result = {}
-    validation = result.get("validation", {})
-    if not isinstance(validation, Mapping):
-        validation = {}
-    checks = result.get("checks", {})
-    if not isinstance(checks, Mapping):
-        checks = {}
-    hierarchy = result.get("hierarchy", {})
-    if not isinstance(hierarchy, Mapping):
-        hierarchy = {}
-    die = hierarchy.get("die", {})
-    if not isinstance(die, Mapping):
-        die = {}
-    card = hierarchy.get("card", {})
-    if not isinstance(card, Mapping):
-        card = {}
-    host = hierarchy.get("host", {})
-    if not isinstance(host, Mapping):
-        host = {}
-    l1 = die.get("l1_cache", {})
-    if not isinstance(l1, Mapping):
-        l1 = {}
-    l2 = card.get("l2_memory", {})
-    if not isinstance(l2, Mapping):
-        l2 = {}
-    l3 = host.get("l3", {})
-    if not isinstance(l3, Mapping):
-        l3 = {}
+    result = _as_mapping(results.get("ai_card_reference", {}))
+    validation = _as_mapping(result.get("validation", {}))
+    checks = _as_mapping(result.get("checks", {}))
+    hierarchy = _as_mapping(result.get("hierarchy", {}))
+    die = _as_mapping(hierarchy.get("die", {}))
+    card = _as_mapping(hierarchy.get("card", {}))
+    host = _as_mapping(hierarchy.get("host", {}))
+    l1 = _as_mapping(die.get("l1_cache", {}))
+    l2 = _as_mapping(card.get("l2_memory", {}))
+    l3 = _as_mapping(host.get("l3", {}))
     check_values: list[bool] = []
     reasons: list[str] = []
     _check(
@@ -300,6 +302,7 @@ def _evaluate_ai_card_reference(results: Mapping[str, Mapping[str, Any]]) -> Dic
             "cost_decision": result.get("cost", {}).get("decision"),
         },
     }
+
 
 
 def _evaluate_rtl(results: Mapping[str, Mapping[str, Any]]) -> Dict[str, Any]:
