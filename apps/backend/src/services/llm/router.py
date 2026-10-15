@@ -802,6 +802,39 @@ class AngelaLLMService:
         except Exception as e:
             logger.warning(f"Failed to load templates to matcher: {e}", exc_info=True)
 
+    def _init_memory_coordinator(self) -> None:
+        """Init UnifiedMemoryCoordinator (optional LogicUnit + CDM deps)."""
+        try:
+            from ai.lifecycle.unified_memory_coordinator import UnifiedMemoryCoordinator
+
+            logic_unit = None
+            cdm_model = None
+            try:
+                from ai.memory.lu_logic.logic_unit import LogicUnit
+
+                logic_unit = LogicUnit(max_rules=500)
+            except Exception as e:
+                logger.warning("Failed to import LogicUnit: %s", e, exc_info=True)
+            try:
+                from core.cdm_dividend_model import CDMCognitiveDividendModel
+
+                cdm_model = CDMCognitiveDividendModel()
+            except Exception as e:
+                logger.warning(
+                    "Failed to import CDMCognitiveDividendModel: %s", e, exc_info=True
+                )
+            self.memory_coordinator: Optional[UnifiedMemoryCoordinator] = (
+                UnifiedMemoryCoordinator(
+                    memory_manager=self.memory_manager,
+                    logic_unit=logic_unit,
+                    cdm_model=cdm_model,
+                )
+            )
+            logger.info("[C1] UnifiedMemoryCoordinator initialized")
+        except Exception as e:
+            logger.warning(f"[C1] UnifiedMemoryCoordinator unavailable: {e}", exc_info=True)
+            self.memory_coordinator = None
+
     def _init_memory_enhancement(self) -> None:
         """初始化记忆增强系统（HAM + LU + CDM + 预计算 + 模板库）"""
         if not is_memory_enhanced():
@@ -818,36 +851,7 @@ class AngelaLLMService:
                 self.memory_manager = HAMMemoryManager()
             self.enable_memory_enhancement = True
 
-            try:
-                from ai.lifecycle.unified_memory_coordinator import UnifiedMemoryCoordinator
-
-                logic_unit = None
-                cdm_model = None
-                try:
-                    from ai.memory.lu_logic.logic_unit import LogicUnit
-
-                    logic_unit = LogicUnit(max_rules=500)
-                except Exception as e:
-                    logger.warning("Failed to import LogicUnit: %s", e, exc_info=True)
-                try:
-                    from core.cdm_dividend_model import CDMCognitiveDividendModel
-
-                    cdm_model = CDMCognitiveDividendModel()
-                except Exception as e:
-                    logger.warning(
-                        "Failed to import CDMCognitiveDividendModel: %s", e, exc_info=True
-                    )
-                self.memory_coordinator: Optional[UnifiedMemoryCoordinator] = (
-                    UnifiedMemoryCoordinator(
-                        memory_manager=self.memory_manager,
-                        logic_unit=logic_unit,
-                        cdm_model=cdm_model,
-                    )
-                )
-                logger.info("[C1] UnifiedMemoryCoordinator initialized")
-            except Exception as e:
-                logger.warning(f"[C1] UnifiedMemoryCoordinator unavailable: {e}", exc_info=True)
-                self.memory_coordinator = None
+            self._init_memory_coordinator()
 
             _mem_cfg = _get_llm_config("memory", {})
             self.precompute_service = PrecomputeService(config=_mem_cfg)
@@ -861,6 +865,7 @@ class AngelaLLMService:
         except Exception as e:
             logger.warning(f"Failed to initialize memory enhancement: {e}", exc_info=True)
             self.enable_memory_enhancement = False
+
 
     def _get_default_config(self) -> Dict[str, Any]:
         """從分層配置系統讀取 LLM 配置 [Phase 7]"""
@@ -3593,6 +3598,21 @@ class AngelaLLMService:
     # anything else stays on the thinker). Slice of Phase 3 dual-model.
     _LIGHT_QUERY_TYPES = frozenset({"greeting", "reflex"})
 
+    async def _refresh_qwen_health(self, qwen_type: Any) -> bool:
+        """Refresh the cached qwen health bit at most once per 60s; never blocks."""
+        now = time.time()
+        if now - getattr(self, "_qwen_last_check", 0.0) > 60.0:
+            self._qwen_last_check = now
+            try:
+                self._qwen_healthy = await self._submit_waiting(
+                    self.backends[qwen_type].check_health(),
+                    timeout=timeout_value("llm.health_check", 5.0),
+                    label="health:llamacpp-qwen",
+                )
+            except Exception:
+                self._qwen_healthy = False
+        return bool(getattr(self, "_qwen_healthy", False))
+
     async def _select_light_backend(self, user_message: str) -> tuple:
         """Return (backend, backend_type) for simple chitchat when the executor
         slot is registered and recently healthy; else (None, None) to keep the
@@ -3623,20 +3643,10 @@ class AngelaLLMService:
             _re_light.IGNORECASE,
         ):
             return None, None
-        now = time.time()
-        if now - getattr(self, "_qwen_last_check", 0.0) > 60.0:
-            self._qwen_last_check = now
-            try:
-                self._qwen_healthy = await self._submit_waiting(
-                    self.backends[qwen_type].check_health(),
-                    timeout=timeout_value("llm.health_check", 5.0),
-                    label="health:llamacpp-qwen",
-                )
-            except Exception:
-                self._qwen_healthy = False
-        if not getattr(self, "_qwen_healthy", False):
+        if not await self._refresh_qwen_health(qwen_type):
             return None, None
         return self.backends[qwen_type], qwen_type
+
 
     async def _call_llm_backend(
         self, user_message: str, context: Dict[str, Any], params: GenerationParams
@@ -3794,6 +3804,48 @@ class AngelaLLMService:
         """
         return re.sub(r"[^a-z0-9]", "", str(value).lower())
 
+    @staticmethod
+    def _plan_dedup(bt: Any, planned: set, ordered: List[Any]) -> None:
+        """Append bt once (dedup across all three planning passes)."""
+        if bt in planned:
+            return
+        planned.add(bt)
+        ordered.append(bt)
+
+    def _plan_exact_pass(
+        self, available: List[Any], chain: List[str], planned: set, ordered: List[Any]
+    ) -> List[str]:
+        """Pass 1 (exact): whole-chain token map, authoritative before prefix pass."""
+        by_token: Dict[str, Any] = {}
+        for bt in available:
+            token = self._backend_token(getattr(bt, "value", bt))
+            if token:
+                by_token.setdefault(token, bt)
+
+        unresolved: List[str] = []
+        for backend_name in chain:
+            token = self._backend_token(backend_name)
+            match = by_token.get(token)
+            if match is not None:
+                self._plan_dedup(match, planned, ordered)
+            else:
+                unresolved.append(backend_name)
+        return unresolved
+
+    def _plan_prefix_pass(
+        self, unresolved: List[str], available: List[Any], planned: set, ordered: List[Any]
+    ) -> None:
+        """Pass 2 (prefix): vendor/model labels resolve to matching backends."""
+        for backend_name in unresolved:
+            token = self._backend_token(backend_name)
+            if not token:
+                continue
+            for bt in available:
+                bt_token = self._backend_token(getattr(bt, "value", bt))
+                if bt_token and token.startswith(bt_token):
+                    self._plan_dedup(bt, planned, ordered)
+                    break
+
     def _plan_fallback_backends(self, chain: List[str], exclude: Any = None) -> List[Any]:
         """Backend types to try, in order, for the given configured chain.
 
@@ -3816,43 +3868,18 @@ class AngelaLLMService:
         ``exclude`` is the backend that just failed and must not be retried.
         """
         available = [bt for bt in list(self.backends) if bt is not exclude]
-        by_token: Dict[str, Any] = {}
-        for bt in available:
-            token = self._backend_token(getattr(bt, "value", bt))
-            if token:
-                by_token.setdefault(token, bt)
 
         ordered: List[Any] = []
         planned: set = set()
 
-        def plan(bt: Any) -> None:
-            if bt in planned:
-                return
-            planned.add(bt)
-            ordered.append(bt)
+        unresolved = self._plan_exact_pass(available, chain, planned, ordered)
+        self._plan_prefix_pass(unresolved, available, planned, ordered)
 
-        unresolved: List[str] = []
-        for backend_name in chain:
-            token = self._backend_token(backend_name)
-            match = by_token.get(token)
-            if match is not None:
-                plan(match)
-            else:
-                unresolved.append(backend_name)
-
-        for backend_name in unresolved:
-            token = self._backend_token(backend_name)
-            if not token:
-                continue
-            for bt in available:
-                bt_token = self._backend_token(getattr(bt, "value", bt))
-                if bt_token and token.startswith(bt_token):
-                    plan(bt)
-                    break
-
+        # Pass 3: every other registered backend (chains name disabled ones).
         for bt in available:
-            plan(bt)
+            self._plan_dedup(bt, planned, ordered)
         return ordered
+
 
     async def _try_fallback_chain(
         self, user_message: str, context: Dict[str, Any], chain: List[str]
