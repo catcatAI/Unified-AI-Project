@@ -122,41 +122,58 @@ class SystemHardwareProbe:
         )
         return profile
 
+    def _cpu_flags_linux(self) -> List[str]:
+        """Linux: parse /proc/cpuinfo flags line."""
+        try:
+            with open("/proc/cpuinfo") as f:
+                for line in f:
+                    if "flags" in line:
+                        return line.split(":")[-1].strip().split()
+        except Exception as e:
+            logger.warning("Failed to parse /proc/cpuinfo: %s", e, exc_info=True)
+        return []
+
+    def _cpu_flags_windows(self) -> List[str]:
+        """Windows: WMIC CPU Caption (crude flag proxy)."""
+        flags = []
+        try:
+            result = subprocess.run(
+                ["wmic", "cpu", "get", "Caption", "/format:list"],
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+            for line in result.stdout.splitlines():
+                if "Caption=" in line:
+                    flags.append(line.strip())
+        except Exception as e:
+            logger.warning("WMIC CPU query failed: %s", e, exc_info=True)
+        return flags
+
+    def _cpu_flags_darwin(self) -> List[str]:
+        """macOS: sysctl hw.optional.* flags."""
+        flags = []
+        try:
+            result = subprocess.run(["sysctl", "-a"], capture_output=True, text=True, timeout=5)
+            for line in result.stdout.splitlines():
+                if "hw.optional." in line and ": 1" in line:
+                    parts = line.split(".")
+                    if len(parts) >= 3:
+                        flags.append(parts[2].split(":")[0])
+        except Exception as e:
+            logger.warning("Failed to parse sysctl output on macOS: %s", e, exc_info=True)
+        return flags
+
     def _detect_cpu_flags(self) -> List[str]:
         """Detect cpu flags."""
-        flags = []
         if self.platform_name == "linux":
-            try:
-                with open("/proc/cpuinfo") as f:
-                    for line in f:
-                        if "flags" in line:
-                            return line.split(":")[-1].strip().split()
-            except Exception as e:
-                logger.warning("Failed to parse /proc/cpuinfo: %s", e, exc_info=True)
-        elif self.platform_name == "windows":
-            try:
-                result = subprocess.run(
-                    ["wmic", "cpu", "get", "Caption", "/format:list"],
-                    capture_output=True,
-                    text=True,
-                    timeout=5,
-                )
-                for line in result.stdout.splitlines():
-                    if "Caption=" in line:
-                        flags.append(line.strip())
-            except Exception as e:
-                logger.warning("WMIC CPU query failed: %s", e, exc_info=True)
-        elif self.platform_name == "darwin":
-            try:
-                result = subprocess.run(["sysctl", "-a"], capture_output=True, text=True, timeout=5)
-                for line in result.stdout.splitlines():
-                    if "hw.optional." in line and ": 1" in line:
-                        parts = line.split(".")
-                        if len(parts) >= 3:
-                            flags.append(parts[2].split(":")[0])
-            except Exception as e:
-                logger.warning("Failed to parse sysctl output on macOS: %s", e, exc_info=True)
-        return flags
+            return self._cpu_flags_linux()
+        if self.platform_name == "windows":
+            return self._cpu_flags_windows()
+        if self.platform_name == "darwin":
+            return self._cpu_flags_darwin()
+        return []
+
 
     def _detect_ram(self) -> Tuple[float, float]:
         """Detect ram."""
@@ -165,9 +182,8 @@ class SystemHardwareProbe:
             return mem.total / (1024**3), mem.available / (1024**3)
         return 8.0, 4.0
 
-    def _detect_gpu(self) -> Tuple[AcceleratorType, str, int]:
-        # 1. NVIDIA
-        """Detect gpu."""
+    def _gpu_nvidia(self) -> Optional[Tuple[AcceleratorType, str, int]]:
+        """1. NVIDIA via nvidia-smi."""
         try:
             result = subprocess.run(
                 ["nvidia-smi", "--query-gpu=name,memory.total", "--format=csv,noheader,nounits"],
@@ -184,12 +200,10 @@ class SystemHardwareProbe:
             logger.debug("nvidia-smi is not installed; trying other accelerators")
         except Exception as e:
             logger.warning("nvidia-smi failed: %s", e, exc_info=True)
+        return None
 
-        # 2. Apple Metal
-        if self.platform_name == "darwin":
-            return AcceleratorType.APPLE_METAL, "Apple Silicon", 0  # macOS unified memory is tricky
-
-        # 3. AMD (ROCm)
+    def _gpu_amd_rocm(self) -> Optional[Tuple[AcceleratorType, str, int]]:
+        """3. AMD (ROCm)."""
         try:
             result = subprocess.run(
                 ["rocm-smi", "--showid"], capture_output=True, text=True, timeout=5
@@ -200,80 +214,112 @@ class SystemHardwareProbe:
             logger.debug("rocm-smi is not installed; trying other accelerators")
         except Exception as e:
             logger.warning("rocm-smi failed: %s", e, exc_info=True)
+        return None
 
-        # 3b. Intel Arc (Linux, spec-driven via PCI device ID + glxinfo VRAM)
-        if self.platform_name == "linux":
-            try:
-                import re
+    @staticmethod
+    def _refine_arc_vram(vram: int) -> int:
+        """Refine Arc VRAM via glxinfo Video memory (best-effort)."""
+        import re
 
-                arc_ids = {
-                    "e20b": ("Arc B580", 12288),
-                    "e20c": ("Arc B570", 10240),
-                    "e20d": ("Arc B570", 10240),
-                }
-                result = subprocess.run(["lspci", "-nn"], capture_output=True, text=True, timeout=5)
-                if result.returncode == 0:
-                    for line in result.stdout.splitlines():
-                        m = re.search(r"\[8086:([0-9a-f]{4})\]", line.lower())
-                        if m and m.group(1) in arc_ids:
-                            model, vram = arc_ids[m.group(1)]
-                            name = f"Intel Arc {model} ({m.group(1)})"
-                            try:
-                                glx = subprocess.run(
-                                    ["glxinfo"], capture_output=True, text=True, timeout=5
-                                )
-                                for gl in glx.stdout.splitlines():
-                                    if "Video memory:" in gl or "Dedicated video memory:" in gl:
-                                        m2 = re.search(r"(\d+)\s*MB", gl)
-                                        if m2:
-                                            vram = int(m2.group(1))
-                                            break
-                            except Exception:
-                                logger.warning("glxinfo VRAM query failed", exc_info=True)
-                            return AcceleratorType.INTEL, name, vram
-            except Exception:
-                logger.warning("Intel Arc detection failed", exc_info=True)
+        try:
+            glx = subprocess.run(["glxinfo"], capture_output=True, text=True, timeout=5)
+            for gl in glx.stdout.splitlines():
+                if "Video memory:" in gl or "Dedicated video memory:" in gl:
+                    m2 = re.search(r"(\d+)\s*MB", gl)
+                    if m2:
+                        return int(m2.group(1))
+        except Exception:
+            logger.warning("glxinfo VRAM query failed", exc_info=True)
+        return vram
 
-        # 4. Windows WMIC Fallback
-        if self.platform_name == "windows":
-            try:
-                # 修复：移除 shell=True，直接调用 wmic 命令防止注入
-                result = subprocess.run(
-                    [
-                        "wmic",
-                        "path",
-                        "win32_VideoController",
-                        "get",
-                        "name,AdapterRAM",
-                        "/format:list",
-                    ],
-                    capture_output=True,
-                    text=True,
-                    timeout=5,
-                )
-                output = result.stdout
-                name, ram = "", 0
-                for line in output.splitlines():
-                    if "Name=" in line:
-                        name = line.split("=")[1].strip()
-                    if "AdapterRAM=" in line:
-                        raw_ram = line.split("=")[1].strip()
-                        if raw_ram.isdigit():
-                            ram = int(raw_ram) // (1024 * 1024)
-                if name:
-                    # Very crude brand detection
-                    atype = AcceleratorType.NONE
-                    if "NVIDIA" in name.upper():
-                        atype = AcceleratorType.NVIDIA
-                    elif "AMD" in name.upper() or "RADEON" in name.upper():
-                        atype = AcceleratorType.AMD
-                    elif "INTEL" in name.upper():
-                        atype = AcceleratorType.INTEL
-                    return atype, name, ram
-            except Exception:
-                logger.warning("WMIC command failed on Windows", exc_info=True)
+    def _gpu_intel_arc_linux(self) -> Optional[Tuple[AcceleratorType, str, int]]:
+        """3b. Intel Arc (Linux, spec-driven via PCI device ID + glxinfo VRAM)."""
+        if self.platform_name != "linux":
+            return None
+        try:
+            import re
+
+            arc_ids = {
+                "e20b": ("Arc B580", 12288),
+                "e20c": ("Arc B570", 10240),
+                "e20d": ("Arc B570", 10240),
+            }
+            result = subprocess.run(["lspci", "-nn"], capture_output=True, text=True, timeout=5)
+            if result.returncode == 0:
+                for line in result.stdout.splitlines():
+                    m = re.search(r"\[8086:([0-9a-f]{4})\]", line.lower())
+                    if m and m.group(1) in arc_ids:
+                        model, vram = arc_ids[m.group(1)]
+                        name = f"Intel Arc {model} ({m.group(1)})"
+                        vram = self._refine_arc_vram(vram)
+                        return AcceleratorType.INTEL, name, vram
+        except Exception:
+            logger.warning("Intel Arc detection failed", exc_info=True)
+        return None
+
+    @staticmethod
+    def _wmic_brand_type(name: str) -> AcceleratorType:
+        """Very crude brand detection from a WMIC device name."""
+        up = name.upper()
+        if "NVIDIA" in up:
+            return AcceleratorType.NVIDIA
+        if "AMD" in up or "RADEON" in up:
+            return AcceleratorType.AMD
+        if "INTEL" in up:
+            return AcceleratorType.INTEL
+        return AcceleratorType.NONE
+
+    def _gpu_windows_wmic(self) -> Optional[Tuple[AcceleratorType, str, int]]:
+        """4. Windows WMIC Fallback."""
+        if self.platform_name != "windows":
+            return None
+        try:
+            # 修复：移除 shell=True，直接调用 wmic 命令防止注入
+            result = subprocess.run(
+                [
+                    "wmic",
+                    "path",
+                    "win32_VideoController",
+                    "get",
+                    "name,AdapterRAM",
+                    "/format:list",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+            output = result.stdout
+            name, ram = "", 0
+            for line in output.splitlines():
+                if "Name=" in line:
+                    name = line.split("=")[1].strip()
+                if "AdapterRAM=" in line:
+                    raw_ram = line.split("=")[1].strip()
+                    if raw_ram.isdigit():
+                        ram = int(raw_ram) // (1024 * 1024)
+            if name:
+                return self._wmic_brand_type(name), name, ram
+        except Exception:
+            logger.warning("WMIC command failed on Windows", exc_info=True)
+        return None
+
+    def _detect_gpu(self) -> Tuple[AcceleratorType, str, int]:
+        """Detect gpu. Priority: NVIDIA -> Apple Metal -> AMD -> Intel Arc -> WMIC."""
+        hit = self._gpu_nvidia()
+        if hit is not None:
+            return hit
+
+        # 2. Apple Metal
+        if self.platform_name == "darwin":
+            return AcceleratorType.APPLE_METAL, "Apple Silicon", 0  # macOS unified memory is tricky
+
+        for probe in (self._gpu_amd_rocm, self._gpu_intel_arc_linux, self._gpu_windows_wmic):
+            hit = probe()
+            if hit is not None:
+                return hit
 
         return AcceleratorType.NONE, "None", 0
+
 
     def _refine_cpu_acceleration(self, flags: List[str]) -> Tuple[AcceleratorType, str]:
         """Refine cpu acceleration."""

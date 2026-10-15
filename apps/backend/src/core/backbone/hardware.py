@@ -11,7 +11,7 @@ import importlib.util
 import logging
 import os
 import platform
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -79,6 +79,187 @@ class HardwareProfile:
     }
 
     @staticmethod
+    def _arc_vram_gb(low: str) -> int:
+        """Arc VRAM by marketing name when lspci/glxinfo lack a precise figure."""
+        if "b580" in low:
+            return 12
+        if "b570" in low:
+            return 10
+        return 8
+
+    @staticmethod
+    def _assign_gpu_vendor(result: Dict[str, Any], low: str) -> None:
+        """Set gpu_vendor from a lowercase renderer/device string."""
+        if "intel" in low:
+            result["gpu_vendor"] = "intel"
+        elif "amd" in low:
+            result["gpu_vendor"] = "amd"
+        elif "nvidia" in low:
+            result["gpu_vendor"] = "nvidia"
+
+    @staticmethod
+    def _refine_vram_glxinfo(result: Dict[str, Any]) -> None:
+        """Refine VRAM via glxinfo (more accurate if available)."""
+        import re
+        import subprocess
+
+        try:
+            glx = subprocess.check_output(["glxinfo"], stderr=subprocess.DEVNULL, timeout=3).decode()
+            for gl in glx.splitlines():
+                if "Video memory:" in gl or "Dedicated video memory:" in gl:
+                    m2 = re.search(r"(\d+)\s*MB", gl)
+                    if m2:
+                        vram_mb = int(m2.group(1))
+                        result["gpu_memory_gb"] = round(vram_mb / 1024, 1)
+                        break
+        except Exception as e:
+            logger.debug(f"glxinfo VRAM refinement failed: {e}", exc_info=True)
+
+    @staticmethod
+    def _gpu_from_nvidia_smi(result: Dict[str, Any]) -> bool:
+        """1) NVIDIA via nvidia-smi (most precise for NVIDIA)."""
+        import subprocess
+
+        try:
+            out = subprocess.check_output(
+                ["nvidia-smi", "--query-gpu=name,memory.total", "--format=csv,noheader,nounits"],
+                stderr=subprocess.DEVNULL,
+                timeout=5,
+            ).decode()
+            lines = out.strip().split("\n")
+            if lines and lines[0].strip():
+                parts = lines[0].split(",")
+                if len(parts) >= 2:
+                    result["gpu"] = parts[0].strip()
+                    result["gpu_memory_gb"] = float(parts[1].strip()) / 1024
+                    result["gpu_vendor"] = "nvidia"
+                    return True
+                elif parts[0].strip():
+                    result["gpu"] = parts[0].strip()
+                    result["gpu_vendor"] = "nvidia"
+                    return True
+        except Exception as e:
+            logger.debug("nvidia-smi unavailable: %s", e)
+        return False
+
+    @staticmethod
+    def _gpu_intel_arc_from_lspci(line: str, low: str, result: Dict[str, Any]) -> bool:
+        """Intel Arc via lspci device ID (e.g. 8086:e20c = B570); string-match fallback."""
+        import re
+
+        m = re.search(r"\[8086:([0-9a-f]{4})\]", low)
+        if m:
+            dev_id = m.group(1)
+            if dev_id in HardwareProfile._INTEL_ARC_IDS:
+                model, vram = HardwareProfile._INTEL_ARC_IDS[dev_id]
+                result["gpu"] = f"Intel Arc {model} ({dev_id})"
+                result["gpu_memory_gb"] = vram
+                result["gpu_vendor"] = "intel"
+                result["gpu_device_id"] = dev_id
+                HardwareProfile._refine_vram_glxinfo(result)
+                logger.debug(f"Detected Intel Arc via device ID {dev_id}: {result}")
+                return True
+        # Fallback: string match for Arc without device ID
+        if "arc" in low:
+            result["gpu"] = line.split(":")[-1].strip()
+            result["gpu_memory_gb"] = HardwareProfile._arc_vram_gb(low)
+            result["gpu_vendor"] = "intel"
+            return True
+        return False
+
+    @staticmethod
+    def _gpu_from_lspci_nn(result: Dict[str, Any]) -> bool:
+        """2) Intel Arc / AMD via lspci -nn (device ID is hardware truth)."""
+        import subprocess
+
+        try:
+            out = subprocess.check_output(["lspci", "-nn"], stderr=subprocess.DEVNULL, timeout=5).decode()
+            for line in out.splitlines():
+                low = line.lower()
+                if "8086:" in low and HardwareProfile._gpu_intel_arc_from_lspci(line, low, result):
+                    return True
+                if "amd" in low and ("radeon" in low or "vga" in low or "display" in low):
+                    result["gpu"] = line.split(":")[-1].strip()
+                    result["gpu_vendor"] = "amd"
+                    result["gpu_memory_gb"] = 8
+                    return True
+        except Exception as e:
+            logger.debug(f"lspci -nn GPU detection failed: {e}", exc_info=True)
+        return False
+
+    @staticmethod
+    def _gpu_from_legacy_lspci(result: Dict[str, Any]) -> bool:
+        """Legacy lspci without -nn (fallback)."""
+        import subprocess
+
+        try:
+            out = subprocess.check_output(["lspci"], stderr=subprocess.DEVNULL, timeout=5).decode()
+            for line in out.splitlines():
+                low = line.lower()
+                if "arc" in low and "intel" in low:
+                    result["gpu"] = line.split(":")[-1].strip()
+                    result["gpu_memory_gb"] = HardwareProfile._arc_vram_gb(low)
+                    result["gpu_vendor"] = "intel"
+                    return True
+        except Exception as e:
+            logger.debug(f"legacy lspci GPU detection failed: {e}", exc_info=True)
+        return False
+
+    @staticmethod
+    def _parse_glxinfo(out: str) -> Tuple[Optional[int], Optional[str]]:
+        """Parse glxinfo output for Video memory (MB) and renderer string."""
+        import re
+
+        # 與第 2) 段同名變量隔離（同函數三段各用各的；曾致 Optional 交叉污染）。
+        vram3_mb: Optional[int] = None
+        renderer3: Optional[str] = None
+        for line in out.splitlines():
+            if "Video memory:" in line or "Dedicated video memory:" in line:
+                m = re.search(r"(\d+)\s*MB", line)
+                if m:
+                    vram3_mb = int(m.group(1))
+            if "OpenGL renderer string" in line:
+                renderer3 = line.split(":", 1)[-1].strip()
+        return vram3_mb, renderer3
+
+    @staticmethod
+    def _gpu_from_glxinfo(result: Dict[str, Any]) -> bool:
+        """3) glxinfo renderer + Video memory (Mesa - accurate VRAM)."""
+        import subprocess
+
+        try:
+            out = subprocess.check_output(["glxinfo"], stderr=subprocess.DEVNULL, timeout=5).decode()
+            vram3_mb, renderer3 = HardwareProfile._parse_glxinfo(out)
+            if renderer3:
+                low = renderer3.lower()
+                result["gpu"] = renderer3
+                if vram3_mb:
+                    result["gpu_memory_gb"] = round(vram3_mb / 1024, 1)
+                elif "arc" in low:
+                    result["gpu_memory_gb"] = HardwareProfile._arc_vram_gb(low)
+                elif "intel" in low or "amd" in low:
+                    result["gpu_memory_gb"] = result["gpu_memory_gb"] or 4
+                HardwareProfile._assign_gpu_vendor(result, low)
+                if result["gpu"]:
+                    return True
+        except Exception as e:
+            logger.debug(f"glxinfo GPU detection failed: {e}", exc_info=True)
+        return False
+
+    @staticmethod
+    def _gpu_from_dri(result: Dict[str, Any]) -> None:
+        """4) /dev/dri existence (last resort)."""
+        try:
+            import os
+
+            if os.path.exists("/dev/dri/renderD128"):
+                result["gpu"] = result["gpu"] or "Intel/AMD GPU (renderD128)"
+                result["gpu_memory_gb"] = result["gpu_memory_gb"] or 4
+                result["gpu_vendor"] = result["gpu_vendor"] or "unknown"
+        except Exception as e:
+            logger.debug(f"GPU dri fallback failed: {e}", exc_info=True)
+
+    @staticmethod
     def _detect_gpu() -> Dict[str, Any]:
         """Truly hardware-driven GPU detection — vendor/model/VRAM from actual hardware.
 
@@ -94,158 +275,17 @@ class HardwareProfile:
             "gpu_vendor": None,
             "gpu_device_id": None,
         }
-        import subprocess
-
-        # 1) NVIDIA via nvidia-smi (most precise for NVIDIA)
-        try:
-            out = subprocess.check_output(
-                ["nvidia-smi", "--query-gpu=name,memory.total", "--format=csv,noheader,nounits"],
-                stderr=subprocess.DEVNULL,
-                timeout=5,
-            ).decode()
-            lines = out.strip().split("\n")
-            if lines and lines[0].strip():
-                parts = lines[0].split(",")
-                if len(parts) >= 2:
-                    result["gpu"] = parts[0].strip()
-                    result["gpu_memory_gb"] = float(parts[1].strip()) / 1024
-                    result["gpu_vendor"] = "nvidia"
-                    return result
-                elif parts[0].strip():
-                    result["gpu"] = parts[0].strip()
-                    result["gpu_vendor"] = "nvidia"
-                    return result
-        except Exception as e:
-            logger.debug("nvidia-smi unavailable: %s", e)
-
-        # 2) Intel Arc / AMD via lspci -nn (device ID is hardware truth, not marketing string)
-        try:
-            out = subprocess.check_output(
-                ["lspci", "-nn"], stderr=subprocess.DEVNULL, timeout=5
-            ).decode()
-            for line in out.splitlines():
-                low = line.lower()
-                # Intel Arc detection via device ID (e.g. 8086:e20c = B570)
-                if "8086:" in low:
-                    # Extract device ID: [8086:e20c]
-                    import re
-
-                    m = re.search(r"\[8086:([0-9a-f]{4})\]", low)
-                    if m:
-                        dev_id = m.group(1)
-                        if dev_id in HardwareProfile._INTEL_ARC_IDS:
-                            model, vram = HardwareProfile._INTEL_ARC_IDS[dev_id]
-                            result["gpu"] = f"Intel Arc {model} ({dev_id})"
-                            result["gpu_memory_gb"] = vram
-                            result["gpu_vendor"] = "intel"
-                            result["gpu_device_id"] = dev_id
-                            # Try to refine VRAM via glxinfo (more accurate if available)
-                            try:
-                                glx = subprocess.check_output(
-                                    ["glxinfo"], stderr=subprocess.DEVNULL, timeout=3
-                                ).decode()
-                                for gl in glx.splitlines():
-                                    if "Video memory:" in gl or "Dedicated video memory:" in gl:
-                                        # e.g. "Video memory: 10172MB"
-                                        m2 = re.search(r"(\d+)\s*MB", gl)
-                                        if m2:
-                                            vram_mb = int(m2.group(1))
-                                            result["gpu_memory_gb"] = round(vram_mb / 1024, 1)
-                                            break
-                            except Exception as e:
-                                logger.debug(f"glxinfo VRAM refinement failed: {e}", exc_info=True)
-                            logger.debug(f"Detected Intel Arc via device ID {dev_id}: {result}")
-                            return result
-                    # Fallback: string match for Arc without device ID
-                    if "arc" in low:
-                        result["gpu"] = line.split(":")[-1].strip()
-                        if "b580" in low:
-                            result["gpu_memory_gb"] = 12
-                        elif "b570" in low:
-                            result["gpu_memory_gb"] = 10
-                        else:
-                            result["gpu_memory_gb"] = 8
-                        result["gpu_vendor"] = "intel"
-                        return result
-                if "amd" in low and ("radeon" in low or "vga" in low or "display" in low):
-                    result["gpu"] = line.split(":")[-1].strip()
-                    result["gpu_vendor"] = "amd"
-                    result["gpu_memory_gb"] = 8
-                    return result
-        except Exception as e:
-            logger.debug(f"lspci -nn GPU detection failed: {e}", exc_info=True)
-
-        # Legacy lspci without -nn (fallback)
-        try:
-            out = subprocess.check_output(["lspci"], stderr=subprocess.DEVNULL, timeout=5).decode()
-            for line in out.splitlines():
-                low = line.lower()
-                if "arc" in low and "intel" in low:
-                    result["gpu"] = line.split(":")[-1].strip()
-                    if "b580" in low:
-                        result["gpu_memory_gb"] = 12
-                    elif "b570" in low:
-                        result["gpu_memory_gb"] = 10
-                    else:
-                        result["gpu_memory_gb"] = 8
-                    result["gpu_vendor"] = "intel"
-                    return result
-        except Exception as e:
-            logger.debug(f"legacy lspci GPU detection failed: {e}", exc_info=True)
-
-        # 3) glxinfo renderer + Video memory (Mesa - accurate VRAM)
-        try:
-            out = subprocess.check_output(
-                ["glxinfo"], stderr=subprocess.DEVNULL, timeout=5
-            ).decode()
-            # 與第 2) 段同名變量隔離（同函數三段各用各的；曾致 Optional 交叉污染）。
-            vram3_mb: Optional[int] = None
-            renderer3: Optional[str] = None
-            for line in out.splitlines():
-                if "Video memory:" in line or "Dedicated video memory:" in line:
-                    import re
-
-                    m = re.search(r"(\d+)\s*MB", line)
-                    if m:
-                        vram3_mb = int(m.group(1))
-                if "OpenGL renderer string" in line:
-                    renderer3 = line.split(":", 1)[-1].strip()
-            if renderer3:
-                low = renderer3.lower()
-                result["gpu"] = renderer3
-                if vram3_mb:
-                    result["gpu_memory_gb"] = round(vram3_mb / 1024, 1)
-                elif "arc" in low:
-                    if "b580" in low:
-                        result["gpu_memory_gb"] = 12
-                    elif "b570" in low:
-                        result["gpu_memory_gb"] = 10
-                    else:
-                        result["gpu_memory_gb"] = 8
-                elif "intel" in low or "amd" in low:
-                    result["gpu_memory_gb"] = result["gpu_memory_gb"] or 4
-                if "intel" in low:
-                    result["gpu_vendor"] = "intel"
-                elif "amd" in low:
-                    result["gpu_vendor"] = "amd"
-                elif "nvidia" in low:
-                    result["gpu_vendor"] = "nvidia"
-                if result["gpu"]:
-                    return result
-        except Exception as e:
-            logger.debug(f"glxinfo GPU detection failed: {e}", exc_info=True)
-
-        # 4) /dev/dri existence (last resort)
-        try:
-            import os
-
-            if os.path.exists("/dev/dri/renderD128"):
-                result["gpu"] = result["gpu"] or "Intel/AMD GPU (renderD128)"
-                result["gpu_memory_gb"] = result["gpu_memory_gb"] or 4
-                result["gpu_vendor"] = result["gpu_vendor"] or "unknown"
-        except Exception as e:
-            logger.debug(f"GPU dri fallback failed: {e}", exc_info=True)
+        if HardwareProfile._gpu_from_nvidia_smi(result):
+            return result
+        if HardwareProfile._gpu_from_lspci_nn(result):
+            return result
+        if HardwareProfile._gpu_from_legacy_lspci(result):
+            return result
+        if HardwareProfile._gpu_from_glxinfo(result):
+            return result
+        HardwareProfile._gpu_from_dri(result)
         return result
+
 
     @staticmethod
     def _check_torch() -> bool:
@@ -254,6 +294,36 @@ class HardwareProfile:
     @staticmethod
     def _check_chromadb() -> bool:
         return importlib.util.find_spec("chromadb") is not None
+
+    @staticmethod
+    def _tier_env_override() -> Optional[str]:
+        """Explicit override (hardware-adaptive respects user choice)."""
+        env = os.environ.get("ANGELA_HARDWARE_PROFILE")
+        if env:
+            # Validate against known tiers
+            known = {
+                "high_performance_desktop",
+                "desktop_igpu",
+                "laptop_normal",
+                "laptop_power_saver",
+                "low_power_device",
+                "server_cloud",
+                "high_performance_gpu",
+                "auto",
+            }
+            if env in known and env != "auto":
+                return env
+        return None
+
+    @staticmethod
+    def _tier_is_server(
+        ram_gb: float, has_gpu: bool, gpu_gb: float, is_headless: bool, is_ssh: bool
+    ) -> bool:
+        """Headless Linux without SSH display + enough RAM -> likely server/cloud."""
+        if is_headless and not is_ssh and ram_gb >= 8:
+            if ram_gb >= 32 or (has_gpu and gpu_gb >= 16):
+                return True
+        return False
 
     @staticmethod
     def get_tier(hw: Dict[str, Any]) -> str:
@@ -272,24 +342,9 @@ class HardwareProfile:
           laptop_power_saver: RAM 4-8GB
           low_power_device: RAM<4GB
         """
-        # Allow explicit override (hardware-adaptive respects user choice)
-        import os
-
-        env = os.environ.get("ANGELA_HARDWARE_PROFILE")
-        if env:
-            # Validate against known tiers
-            known = {
-                "high_performance_desktop",
-                "desktop_igpu",
-                "laptop_normal",
-                "laptop_power_saver",
-                "low_power_device",
-                "server_cloud",
-                "high_performance_gpu",
-                "auto",
-            }
-            if env in known and env != "auto":
-                return env
+        override = HardwareProfile._tier_env_override()
+        if override:
+            return override
 
         has_gpu = bool(hw.get("gpu"))
         gpu_gb = hw.get("gpu_memory_gb", 0) or 0
@@ -300,10 +355,8 @@ class HardwareProfile:
         is_ssh = "SSH_CLIENT" in os.environ or "SSH_TTY" in os.environ
 
         # Pure spec-driven tiers (hardware first, chassis irrelevant)
-        if is_headless and not is_ssh and ram_gb >= 8:
-            # Headless Linux without SSH display -> likely server/cloud
-            if ram_gb >= 32 or (has_gpu and gpu_gb >= 16):
-                return "server_cloud"
+        if HardwareProfile._tier_is_server(ram_gb, has_gpu, gpu_gb, is_headless, is_ssh):
+            return "server_cloud"
         if has_gpu and gpu_gb >= 8 and ram_gb >= 16:
             return "high_performance_gpu"
         if has_gpu and gpu_gb >= 6 and ram_gb >= 12:
@@ -320,6 +373,7 @@ class HardwareProfile:
         if ram_gb >= 4:
             return "laptop_power_saver"
         return "low_power_device"
+
 
     @staticmethod
     def get_adaptive_compute(hw: Dict[str, Any]) -> Dict[str, Any]:
