@@ -87,7 +87,14 @@ class CrisisSystem:
         if context is None:
             context = {}
 
-        # Auto-reset if crisis timeout elapsed
+        self._auto_reset_expired_crisis()
+
+        text_input = input_data.get("text", "").lower()
+        detected_level = self._detect_input_crisis(text_input)
+        return self._record_detected_level(detected_level, text_input, context)
+
+    def _auto_reset_expired_crisis(self) -> None:
+        """Auto-reset if crisis timeout elapsed."""
         if self.crisis_level > 0 and self._crisis_last_detected > 0:
             elapsed = time.time() - self._crisis_last_detected
             if elapsed > self.crisis_timeout:
@@ -96,8 +103,8 @@ class CrisisSystem:
                 )
                 self.crisis_level = 0
 
-        text_input = input_data.get("text", "").lower()
-
+    def _detect_input_crisis(self, text_input: str) -> int:
+        """Sentiment + keyword scan → detected crisis level (0 when none)."""
         # Simple sentiment analysis - count negative words
         sentiment_score = sum([1 for word in self.negative_words if word in text_input.split()])
 
@@ -113,7 +120,12 @@ class CrisisSystem:
             if keyword in text_input:
                 detected_level = self.default_crisis_level
                 break
+        return detected_level
 
+    def _record_detected_level(
+        self, detected_level: int, text_input: str, context: Dict[str, Any]
+    ) -> int:
+        """Record/escalate the detected level; return the maintained level."""
         if detected_level > 0:
             if detected_level > self.crisis_level:
                 logger.info(
@@ -144,6 +156,7 @@ class CrisisSystem:
             # If self.crisis_level was 0, it remains 0.
 
         return self.crisis_level
+
 
     def _trigger_protocol(self, level: int, details: Dict[str, Any]) -> None:
         """

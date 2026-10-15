@@ -120,23 +120,9 @@ class PriorityNegotiator:
                 "voter_contributions": {},
             }
 
-        # Categorical voting: routing_mode (weighted plurality)
-        mode_votes: Dict[str, float] = {}
-        for name, vote in votes.items():
-            if vote.routing_mode:
-                w = self._weight_fns[name](context) * vote.confidence
-                mode_votes[vote.routing_mode] = mode_votes.get(vote.routing_mode, 0.0) + w
-
-        winning_mode = max(mode_votes, key=lambda k: mode_votes[k]) if mode_votes else None
-
-        # Categorical voting: response_style (weighted plurality)
-        style_votes: Dict[str, float] = {}
-        for name, vote in votes.items():
-            if vote.response_style:
-                w = self._weight_fns[name](context) * vote.confidence
-                style_votes[vote.response_style] = style_votes.get(vote.response_style, 0.0) + w
-
-        winning_style = max(style_votes, key=lambda k: style_votes[k]) if style_votes else None
+        # Categorical voting (weighted plurality) for both categorical fields
+        winning_mode = self._weighted_plurality(votes, context, "routing_mode")
+        winning_style = self._weighted_plurality(votes, context, "response_style")
 
         # Numeric fusion: weighted average of temperature/tokens biases
         total_conf = sum(vote.confidence for vote in votes.values())
@@ -163,6 +149,23 @@ class PriorityNegotiator:
             "resolved_by": top_voter,
             "voter_contributions": {n: round(c, 4) for n, c in contributions.items()},
         }
+
+    def _weighted_plurality(
+        self, votes: Dict[str, VoterVote], context: Dict[str, Any], field: str
+    ) -> Optional[str]:
+        """Weighted plurality over one categorical vote field.
+
+        Each voter's chosen value accrues weight = base_weight * confidence;
+        the value with the highest total wins (None when nobody voted for it).
+        """
+        tally: Dict[str, float] = {}
+        for name, vote in votes.items():
+            value = getattr(vote, field)
+            if value:
+                w = self._weight_fns[name](context) * vote.confidence
+                tally[value] = tally.get(value, 0.0) + w
+        return max(tally, key=lambda k: tally[k]) if tally else None
+
 
 
 # ── Default Voter Functions ──────────────────────────────────────────

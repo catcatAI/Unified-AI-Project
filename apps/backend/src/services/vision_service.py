@@ -260,55 +260,14 @@ class VisionService:
             }
 
             if comparison_type == "similarity":
-                try:
-                    from io import BytesIO
-
-                    from PIL import Image
-
-                    img1 = Image.open(BytesIO(image_data1)).convert("RGB").resize((32, 32))
-                    img2 = Image.open(BytesIO(image_data2)).convert("RGB").resize((32, 32))
-                    # RGB 下 get_flattened_data 保證回傳 tuple[tuple[int,...],...]；
-                    # cast 收窄聯合型別（另一變體 tuple[float,...] 僅非 RGB 模式），避免 list() 拓寬成 list[object]
-                    p1 = list(cast("tuple[tuple[int, ...], ...]", img1.get_flattened_data()))
-                    p2 = list(cast("tuple[tuple[int, ...], ...]", img2.get_flattened_data()))
-                    diffs = sum(abs(p1[i][j] - p2[i][j]) for i in range(len(p1)) for j in range(3))
-                    max_diff = len(p1) * 3 * 255
-                    similarity_score = 1.0 - (diffs / max_diff)
-                except Exception as err:
-                    logger.warning(
-                        "Image similarity comparison fallback (PIL failed): %s", err, exc_info=True
-                    )
-                    size_factor = 1 - abs(len(image_data1) - len(image_data2)) / max(
-                        len(image_data1), len(image_data2), 1
-                    )
-                    similarity_score = size_factor
-
+                similarity_score = self._similarity_score(image_data1, image_data2)
                 comparison_result["similarity_score"] = round(similarity_score, 3)
                 comparison_result["confidence"] = round(0.5 + 0.5 * similarity_score, 3)
 
             elif comparison_type == "difference":
-                try:
-                    from io import BytesIO
-
-                    import numpy as np
-                    from PIL import Image
-
-                    img1_np: np.ndarray = np.array(
-                        Image.open(BytesIO(image_data1)).convert("RGB").resize((64, 64))
-                    )
-                    img2_np: np.ndarray = np.array(
-                        Image.open(BytesIO(image_data2)).convert("RGB").resize((64, 64))
-                    )
-                    diff = np.abs(img1_np.astype(int) - img2_np.astype(int))
-                    diff_score = float(np.mean(diff) / 255.0)
-                    comparison_result["difference_score"] = round(diff_score, 3)
-                except Exception as err:
-                    logger.warning(
-                        "Image difference fallback (numpy failed): %s", err, exc_info=True
-                    )
-                    comparison_result["difference_score"] = round(
-                        1 - len(image_data1) / max(len(image_data2), 1), 3
-                    )
+                comparison_result["difference_score"] = round(
+                    self._difference_score(image_data1, image_data2), 3
+                )
 
             elif comparison_type == "feature_match":
                 # Feature matching requires real CV libraries; use size-based heuristic
@@ -328,6 +287,53 @@ class VisionService:
         except Exception as e:
             logger.error(f"Error comparing images: {e}", exc_info=True)
             return {"error": safe_error(e), "similarity_score": None}
+
+    def _similarity_score(self, image_data1: bytes, image_data2: bytes) -> float:
+        """PIL pixel-level similarity (0-1); size-based heuristic when PIL fails."""
+        try:
+            from io import BytesIO
+
+            from PIL import Image
+
+            img1 = Image.open(BytesIO(image_data1)).convert("RGB").resize((32, 32))
+            img2 = Image.open(BytesIO(image_data2)).convert("RGB").resize((32, 32))
+            # RGB 下 get_flattened_data 保證回傳 tuple[tuple[int,...],...]；
+            # cast 收窄聯合型別（另一變體 tuple[float,...] 僅非 RGB 模式），避免 list() 拓寬成 list[object]
+            p1 = list(cast("tuple[tuple[int, ...], ...]", img1.get_flattened_data()))
+            p2 = list(cast("tuple[tuple[int, ...], ...]", img2.get_flattened_data()))
+            diffs = sum(abs(p1[i][j] - p2[i][j]) for i in range(len(p1)) for j in range(3))
+            max_diff = len(p1) * 3 * 255
+            return 1.0 - (diffs / max_diff)
+        except Exception as err:
+            logger.warning(
+                "Image similarity comparison fallback (PIL failed): %s", err, exc_info=True
+            )
+            return 1 - abs(len(image_data1) - len(image_data2)) / max(
+                len(image_data1), len(image_data2), 1
+            )
+
+    def _difference_score(self, image_data1: bytes, image_data2: bytes) -> float:
+        """numpy mean abs diff / 255; size-ratio heuristic when numpy fails."""
+        try:
+            from io import BytesIO
+
+            import numpy as np
+            from PIL import Image
+
+            img1_np: np.ndarray = np.array(
+                Image.open(BytesIO(image_data1)).convert("RGB").resize((64, 64))
+            )
+            img2_np: np.ndarray = np.array(
+                Image.open(BytesIO(image_data2)).convert("RGB").resize((64, 64))
+            )
+            diff = np.abs(img1_np.astype(int) - img2_np.astype(int))
+            return float(np.mean(diff) / 255.0)
+        except Exception as err:
+            logger.warning(
+                "Image difference fallback (numpy failed): %s", err, exc_info=True
+            )
+            return 1 - len(image_data1) / max(len(image_data2), 1)
+
 
     async def process_video_frame(
         self,
@@ -551,41 +557,56 @@ class VisionService:
             # Real region proposals from color segmentation (audit 2026-10-11):
             # file metadata is NOT object detection; bounded boxes of large
             # non-background blobs are. Capped at 5, confidence by size.
-            try:
-                from services.visual_qa import color_blobs
-
-                for i, blob in enumerate(color_blobs(image_data)[:6]):
-                    if i == 0 and (blob.get("fraction") or 0) >= 0.98:
-                        continue  # background itself is not an object
-                    if (blob.get("fraction") or 0) < 0.01:
-                        continue
-                    x0, y0, x1, y1 = blob.get("bbox", (0, 0, 0, 0))
-                    properties.append(
-                        {
-                            "label": f"region_{i}",
-                            "confidence": round(min(0.5 + blob.get("fraction", 0), 0.9), 2),
-                            "property": "region",
-                            "color": list(blob.get("color", (0, 0, 0))),
-                            "bbox": [x0, y0, x1, y1],
-                        }
-                    )
-                    if len(properties) >= 8:
-                        break
-            except Exception as exc:
-                logger.debug(f"Region proposals skipped: {exc}")
+            self._append_region_proposals(properties, image_data)
             # Attempt cluster distribution with real image hash as feature vector
-            try:
-                feature_hash = [
-                    ord(c) / 255.0
-                    for c in hashlib.md5(image_data, usedforsecurity=False).hexdigest()[:64]
-                ]
-                await cluster_manager.distribute_task("Vision", feature_hash)
-            except Exception:
-                logger.warning("Cluster distribution failed", exc_info=True)
+            await self._distribute_feature_hash(image_data)
             return properties
         except Exception as err:
             logger.warning("Object detection fallback: %s", err, exc_info=True)
             return [{"label": "unrecognized_image", "confidence": 0.5, "property": "format"}]
+
+    def _append_region_proposals(
+        self, properties: List[Dict[str, Any]], image_data: bytes
+    ) -> None:
+        """Append color-segmentation region boxes to `properties` (mutates in place).
+
+        The `len(properties) >= 8` cap counts the base format/resolution/color
+        entries too — same total cap as before the extraction.
+        """
+        try:
+            from services.visual_qa import color_blobs
+
+            for i, blob in enumerate(color_blobs(image_data)[:6]):
+                if i == 0 and (blob.get("fraction") or 0) >= 0.98:
+                    continue  # background itself is not an object
+                if (blob.get("fraction") or 0) < 0.01:
+                    continue
+                x0, y0, x1, y1 = blob.get("bbox", (0, 0, 0, 0))
+                properties.append(
+                    {
+                        "label": f"region_{i}",
+                        "confidence": round(min(0.5 + blob.get("fraction", 0), 0.9), 2),
+                        "property": "region",
+                        "color": list(blob.get("color", (0, 0, 0))),
+                        "bbox": [x0, y0, x1, y1],
+                    }
+                )
+                if len(properties) >= 8:
+                    break
+        except Exception as exc:
+            logger.debug(f"Region proposals skipped: {exc}")
+
+    async def _distribute_feature_hash(self, image_data: bytes) -> None:
+        """Attempt cluster distribution with real image hash as feature vector."""
+        try:
+            feature_hash = [
+                ord(c) / 255.0
+                for c in hashlib.md5(image_data, usedforsecurity=False).hexdigest()[:64]
+            ]
+            await cluster_manager.distribute_task("Vision", feature_hash)
+        except Exception:
+            logger.warning("Cluster distribution failed", exc_info=True)
+
 
     async def initialize(self) -> bool:
         """Boot cognitive perception layers."""
