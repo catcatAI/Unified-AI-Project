@@ -68,7 +68,7 @@ class PluginManager {
           this._log('warn', `Plugin existence check failed for ${name}: ${err} — skipping`)
           return
         }
-        let fileExists = response.ok
+        const fileExists = response.ok
         if (!response.ok && response.status !== 404) {
           // 非 404 的失败（5xx 等）不能断言文件消失，跳过本次决策
           this._log(
