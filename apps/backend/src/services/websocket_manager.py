@@ -184,159 +184,164 @@ async def push_to_client(client_id: str, message: dict) -> bool:
     return await manager._sm.send_to_client(client_id, message)
 
 
+async def _get_bio_integrator():
+    """Get BiologicalIntegrator instance or None."""
+    try:
+        from core.bio.biological_integrator import BiologicalIntegrator
+        return BiologicalIntegrator()
+    except Exception as e:
+        live_err(f"BioIntegrator init: {e}", "bio_init")
+        return None
+
+
+def _read_neuroplasticity(bio_integrator) -> tuple:
+    """Read neuroplasticity state (learning rate, cognitive load)."""
+    _lr = 0.01
+    _cl = 0.0
+    try:
+        np_sys = bio_integrator.neuroplasticity_system
+        if np_sys and hasattr(np_sys, "hebbian_rule"):
+            _lr = np_sys.hebbian_rule.learning_rate
+        if np_sys and hasattr(np_sys, "memory_traces"):
+            _cl = min(1.0, len(np_sys.memory_traces) / 50.0)
+    except Exception as e:
+        logger.debug(f"Neuroplasticity state read failed: {e}")
+    return (_lr, _cl)
+
+
+def _read_posture(bio_integrator) -> Dict[str, Any]:
+    """Read cerebellum posture."""
+    _posture = {
+        "theta_matrix": [0.0] * 9,
+        "finger_matrix": {"left": [0.0] * 5, "right": [0.0] * 5},
+    }
+    try:
+        _cb = bio_integrator.cerebellum
+        if _cb and hasattr(_cb, "get_posture"):
+            _p = _cb.get_posture()
+            _posture["theta_matrix"] = _p.get("theta_matrix", [0.0] * 9)
+    except Exception as e:
+        logger.debug(f"Cerebellum posture read failed: {e}")
+    return _posture
+
+
+def _read_state_matrix() -> Dict[str, Any]:
+    """Read StateMatrix4D data from DLI."""
+    _sm_data: Dict[str, Any] = {}
+    try:
+        from api.lifespan import get_digital_life
+        dli = get_digital_life()
+        if dli and hasattr(dli, "state_matrix"):
+            sm = dli.state_matrix
+            _sm_data = sm.get_state() if hasattr(sm, "get_state") else {}
+    except Exception as e:
+        logger.debug(f"StateMatrix4D read failed for broadcast: {e}")
+    return _sm_data
+
+
+def _build_state_data(bio_state: dict, _lr: float, _cl: float, _posture: Dict[str, Any], _sm_data: Dict[str, Any]) -> Dict[str, Any]:
+    """Build state_data dict for broadcast."""
+    _current_stress = bio_state.get("stress_level", 0.0)
+    _current_mood = bio_state.get("mood", 0.5)
+    _overlay = lambda key: (
+        {k: v for k, v in _sm_data.get(key, {}).items() if k != "coordinate"}
+        if _sm_data else {}
+    )
+    return {
+        "alpha": {
+            "energy": (100.0 - _current_stress) / 100.0,
+            "stress": _current_stress,
+            "hormones": bio_state.get("hormonal_effects", {}),
+            **_overlay("alpha"),
+        },
+        "beta": {
+            "learning_rate": _lr,
+            "cognitive_load": _cl,
+            **_overlay("beta"),
+        },
+        "gamma": {
+            "happiness": _current_mood,
+            "emotion": bio_state.get("dominant_emotion", "calm"),
+            **_overlay("gamma"),
+        },
+        "delta": {
+            "intensity": bio_state.get("arousal", 50.0) / 100.0,
+            **_overlay("delta"),
+        },
+        "epsilon": {
+            **(_sm_data.get("epsilon", {}) if _sm_data else {}),
+        },
+        "theta": {
+            **_overlay("theta"),
+        },
+        "zeta": {
+            **_overlay("zeta"),
+        },
+        "spatial": {
+            "x": 200.0,
+            "y": 0.0,
+            "posture": _posture,
+        },
+        "timestamp": datetime.now().isoformat(),
+    }
+
+
+_prev_bio_signature = ""
+
+
+async def _broadcast_bio_event(bio_state: dict, _current_stress: float, _current_mood: float) -> None:
+    """Emit biological_event on significant state changes."""
+    global _prev_bio_signature
+    bio_signature = (
+        f"{_current_stress:.2f}|{_current_mood:.2f}|{bio_state.get('arousal', 50.0):.1f}"
+    )
+    if bio_signature != _prev_bio_signature:
+        _prev_bio_signature = bio_signature
+        await manager.broadcast(
+            {
+                "type": "biological_event",
+                "data": {
+                    "event": "state_changed",
+                    "data": {
+                        "stress_level": _current_stress,
+                        "mood": _current_mood,
+                        "arousal": bio_state.get("arousal", 50.0),
+                        "dominant_emotion": bio_state.get("dominant_emotion", "calm"),
+                    },
+                },
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
+
+
 async def broadcast_state_updates() -> None:
     """Periodically broadcast state updates (bio + state matrix + Live2D) to all connected clients."""
     _bio_integrator = None
     _interval = loop_sleep("ws_broadcast_interval", 1.0)
-    _prev_bio_signature = ""
     while True:
         try:
             if not manager.active_connections:
                 await asyncio.sleep(_interval)
                 continue
             if _bio_integrator is None:
-                try:
-                    from core.bio.biological_integrator import BiologicalIntegrator
-
-                    _bio_integrator = BiologicalIntegrator()
-                except Exception as e:
-                    live_err(f"BioIntegrator init: {e}", "bio_init")
+                _bio_integrator = await _get_bio_integrator()
+                if _bio_integrator is None:
                     await asyncio.sleep(loop_sleep("ws_broadcast_retry", 5.0))
                     continue
 
             bio_state = _bio_integrator.get_biological_state()
-
-            # HIGH-4: dynamic beta from neuroplasticity system
-            _lr = 0.01
-            _cl = 0.0
-            try:
-                np_sys = _bio_integrator.neuroplasticity_system
-                if np_sys and hasattr(np_sys, "hebbian_rule"):
-                    _lr = np_sys.hebbian_rule.learning_rate
-                if np_sys and hasattr(np_sys, "memory_traces"):
-                    _cl = min(1.0, len(np_sys.memory_traces) / 50.0)
-            except Exception as e:
-                logger.debug(f"Neuroplasticity state read failed: {e}")
-
-            # HIGH-5: dynamic spatial posture from cerebellum
-            _posture = {
-                "theta_matrix": [0.0] * 9,
-                "finger_matrix": {"left": [0.0] * 5, "right": [0.0] * 5},
-            }
-            try:
-                _cb = _bio_integrator.cerebellum
-                if _cb and hasattr(_cb, "get_posture"):
-                    _p = _cb.get_posture()
-                    _posture["theta_matrix"] = _p.get("theta_matrix", [0.0] * 9)
-            except Exception as e:
-                logger.debug(f"Cerebellum posture read failed: {e}")
-
-            # Read StateMatrix4D data from DLI (live instance)
-            _sm_data: Dict[str, Any] = {}
-            try:
-                from api.lifespan import get_digital_life
-
-                dli = get_digital_life()
-                if dli and hasattr(dli, "state_matrix"):
-                    sm = dli.state_matrix
-                    _sm_data = sm.get_state() if hasattr(sm, "get_state") else {}
-            except Exception as e:
-                logger.debug(f"StateMatrix4D read failed for broadcast: {e}")
-
+            _lr, _cl = _read_neuroplasticity(_bio_integrator)
+            _posture = _read_posture(_bio_integrator)
+            _sm_data = _read_state_matrix()
+            state_data = _build_state_data(bio_state, _lr, _cl, _posture, _sm_data)
             _current_stress = bio_state.get("stress_level", 0.0)
             _current_mood = bio_state.get("mood", 0.5)
-            state_data = {
-                "alpha": {
-                    "energy": (100.0 - _current_stress) / 100.0,
-                    "stress": _current_stress,
-                    "hormones": bio_state.get("hormonal_effects", {}),
-                    # StateMatrix4D alpha values overlay
-                    **(
-                        {k: v for k, v in _sm_data.get("alpha", {}).items() if k != "coordinate"}
-                        if _sm_data
-                        else {}
-                    ),
-                },
-                "beta": {
-                    "learning_rate": _lr,
-                    "cognitive_load": _cl,
-                    # StateMatrix4D beta values overlay
-                    **(
-                        {k: v for k, v in _sm_data.get("beta", {}).items() if k != "coordinate"}
-                        if _sm_data
-                        else {}
-                    ),
-                },
-                "gamma": {
-                    "happiness": _current_mood,
-                    "emotion": bio_state.get("dominant_emotion", "calm"),
-                    # StateMatrix4D gamma values overlay (includes sadness/anger/fear etc.)
-                    **(
-                        {k: v for k, v in _sm_data.get("gamma", {}).items() if k != "coordinate"}
-                        if _sm_data
-                        else {}
-                    ),
-                },
-                "delta": {
-                    "intensity": bio_state.get("arousal", 50.0) / 100.0,
-                    # StateMatrix4D delta values overlay
-                    **(
-                        {k: v for k, v in _sm_data.get("delta", {}).items() if k != "coordinate"}
-                        if _sm_data
-                        else {}
-                    ),
-                },
-                "epsilon": {
-                    **(_sm_data.get("epsilon", {}) if _sm_data else {}),
-                },
-                "theta": {
-                    **(
-                        {k: v for k, v in _sm_data.get("theta", {}).items() if k != "coordinate"}
-                        if _sm_data
-                        else {}
-                    ),
-                },
-                "zeta": {
-                    **(
-                        {k: v for k, v in _sm_data.get("zeta", {}).items() if k != "coordinate"}
-                        if _sm_data
-                        else {}
-                    ),
-                },
-                "spatial": {
-                    "x": 200.0,
-                    "y": 0.0,
-                    "posture": _posture,
-                },
-                "timestamp": datetime.now().isoformat(),
-            }
 
-            # Emit biological_event on significant state changes
-            bio_signature = (
-                f"{_current_stress:.2f}|{_current_mood:.2f}|{bio_state.get('arousal', 50.0):.1f}"
-            )
-            if bio_signature != _prev_bio_signature:
-                _prev_bio_signature = bio_signature
-                await manager.broadcast(
-                    {
-                        "type": "biological_event",
-                        "data": {
-                            "event": "state_changed",
-                            "data": {
-                                "stress_level": _current_stress,
-                                "mood": _current_mood,
-                                "arousal": bio_state.get("arousal", 50.0),
-                                "dominant_emotion": bio_state.get("dominant_emotion", "calm"),
-                            },
-                        },
-                        "timestamp": datetime.now().isoformat(),
-                    }
-                )
+            await _broadcast_bio_event(bio_state, _current_stress, _current_mood)
 
             # C2: include Live2D state (from service registry singleton) in broadcast
             try:
                 from core.interfaces.service_registry import get_registry
-
                 reg_live2d = get_registry().get("live2d_integration")
                 if reg_live2d is not None and hasattr(reg_live2d, "get_live2d_state"):
                     state_data["live2d"] = reg_live2d.get_live2d_state()
