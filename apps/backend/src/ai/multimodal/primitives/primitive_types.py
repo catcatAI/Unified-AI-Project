@@ -6,7 +6,7 @@ Vector layout expanded to ~200 dims for richer representation.
 
 import math
 from dataclasses import dataclass, field
-from typing import List, Tuple
+from typing import Any, Callable, List, Tuple
 
 import numpy as np
 
@@ -161,24 +161,65 @@ class DrawingInstructions:
     background_color: Tuple[int, ...] = (255, 255, 255)
     canvas_size: Tuple[int, int] = (128, 128)
 
+    @staticmethod
+    def _vector_block(items: List[Any], n_slots: int, width: int, encode: Callable) -> List[float]:
+        """Encode up to n_slots items, then zero-pad the block to n_slots*width."""
+        vec: List[float] = []
+        for item in items[:n_slots]:
+            vec.extend(encode(item))
+        for _ in range(max(0, n_slots - len(items))):
+            vec.extend([0.0] * width)
+        return vec
+
+    @staticmethod
+    def _plane_vec(pl: Plane) -> List[float]:
+        """Plane → 9-dim bbox encoding (cx, cy, rx, ry, fill RGB, outline_w, _)."""
+        if pl.points:
+            xs = [p.x for p in pl.points]
+            ys = [p.y for p in pl.points]
+            cx = (min(xs) + max(xs)) / 2
+            cy = (min(ys) + max(ys)) / 2
+            rx = (max(xs) - min(xs)) / 2
+            ry = (max(ys) - min(ys)) / 2
+        else:
+            cx, cy, rx, ry = 0.5, 0.5, 0.0, 0.0
+        return [
+            cx,
+            cy,
+            rx,
+            ry,
+            pl.fill_color[0] / 255.0,
+            pl.fill_color[1] / 255.0,
+            pl.fill_color[2] / 255.0,
+            pl.outline_width,
+            0.0,
+        ]
+
     def to_vector(self) -> np.ndarray:
         """Convert instructions to fixed-size vector for ML."""
-        vec = []
+        vec: List[float] = []
 
         # Header
         vec.extend([c / 255.0 for c in self.background_color])
         vec.extend([self.canvas_size[0] / 256.0, self.canvas_size[1] / 256.0])
 
         # Points (15 × 5 = 75)
-        for p in self.points[:N_POINTS]:
-            vec.extend([p.x, p.y, p.color[0] / 255.0, p.color[1] / 255.0, p.color[2] / 255.0])
-        for _ in range(max(0, N_POINTS - len(self.points))):
-            vec.extend([0.0] * 5)
+        vec.extend(
+            self._vector_block(
+                self.points,
+                N_POINTS,
+                5,
+                lambda p: [p.x, p.y, p.color[0] / 255.0, p.color[1] / 255.0, p.color[2] / 255.0],
+            )
+        )
 
         # Lines (10 × 8 = 80)
-        for l in self.lines[:N_LINES]:
-            vec.extend(
-                [
+        vec.extend(
+            self._vector_block(
+                self.lines,
+                N_LINES,
+                8,
+                lambda l: [
                     l.start.x,
                     l.start.y,
                     l.end.x,
@@ -187,42 +228,20 @@ class DrawingInstructions:
                     l.color[0] / 255.0,
                     l.color[1] / 255.0,
                     l.color[2] / 255.0,
-                ]
+                ],
             )
-        for _ in range(max(0, N_LINES - len(self.lines))):
-            vec.extend([0.0] * 8)
+        )
 
-        # Planes (5 × 9 = 45) — simplified as bounding rect: cx, cy, rx, ry, fill_r, fill_g, fill_b, outline_w, _
-        for pl in self.planes[:N_PLANES]:
-            if pl.points:
-                xs = [p.x for p in pl.points]
-                ys = [p.y for p in pl.points]
-                cx = (min(xs) + max(xs)) / 2
-                cy = (min(ys) + max(ys)) / 2
-                rx = (max(xs) - min(xs)) / 2
-                ry = (max(ys) - min(ys)) / 2
-            else:
-                cx, cy, rx, ry = 0.5, 0.5, 0.0, 0.0
-            vec.extend(
-                [
-                    cx,
-                    cy,
-                    rx,
-                    ry,
-                    pl.fill_color[0] / 255.0,
-                    pl.fill_color[1] / 255.0,
-                    pl.fill_color[2] / 255.0,
-                    pl.outline_width,
-                    0.0,
-                ]
-            )
-        for _ in range(max(0, N_PLANES - len(self.planes))):
-            vec.extend([0.0] * 9)
+        # Planes (5 × 9 = 45) — simplified as bounding rect
+        vec.extend(self._vector_block(self.planes, N_PLANES, 9, self._plane_vec))
 
         # Circles (4 × 7 = 28)
-        for c in self.circles[:N_CIRCLES]:
-            vec.extend(
-                [
+        vec.extend(
+            self._vector_block(
+                self.circles,
+                N_CIRCLES,
+                7,
+                lambda c: [
                     c.cx,
                     c.cy,
                     c.radius,
@@ -230,15 +249,17 @@ class DrawingInstructions:
                     c.fill_color[1] / 255.0,
                     c.fill_color[2] / 255.0,
                     c.outline_width,
-                ]
+                ],
             )
-        for _ in range(max(0, N_CIRCLES - len(self.circles))):
-            vec.extend([0.0] * 7)
+        )
 
         # Arcs (3 × 10 = 30)
-        for a in self.arcs[:N_ARCS]:
-            vec.extend(
-                [
+        vec.extend(
+            self._vector_block(
+                self.arcs,
+                N_ARCS,
+                10,
+                lambda a: [
                     a.cx,
                     a.cy,
                     a.radius,
@@ -249,36 +270,28 @@ class DrawingInstructions:
                     a.color[1] / 255.0,
                     a.color[2] / 255.0,
                     0.0,
-                ]
+                ],
             )
-        for _ in range(max(0, N_ARCS - len(self.arcs))):
-            vec.extend([0.0] * 10)
+        )
 
         return np.array(vec, dtype=np.float32)
 
     @classmethod
-    def from_vector(
-        cls, vec: np.ndarray, canvas_size: Tuple[int, int] = (128, 128)
-    ) -> "DrawingInstructions":
-        """Create DrawingInstructions from vector representation."""
-        if len(vec) != TOTAL_DIM:
-            raise ValueError(f"Expected vector of length {TOTAL_DIM}, got {len(vec)}")
-
-        bg_color = tuple(int(c * 255) for c in vec[0:3])
-
-        # Points
-        points = []
+    def _points_from_vec(cls, vec: np.ndarray) -> List[Point]:
+        points: List[Point] = []
         for i in range(N_POINTS):
             s = 5 + i * 5
             x, y, r, g, b = vec[s : s + 5]
             if x > 0 or y > 0:
                 points.append(Point(x, y, (int(r * 255), int(g * 255), int(b * 255)), 0.05))
+        return points
 
-        # Lines
-        off = 5 + N_POINTS * 5
-        lines = []
+    @classmethod
+    def _lines_from_vec(cls, vec: np.ndarray) -> List[Line]:
+        base = 5 + N_POINTS * 5
+        lines: List[Line] = []
         for i in range(N_LINES):
-            s = off + i * 8
+            s = base + i * 8
             sx, sy, ex, ey, w, r, g, b = vec[s : s + 8]
             if sx > 0 or sy > 0 or ex > 0 or ey > 0:
                 lines.append(
@@ -289,12 +302,14 @@ class DrawingInstructions:
                         (int(r * 255), int(g * 255), int(b * 255)),
                     )
                 )
+        return lines
 
-        # Planes
-        off += N_LINES * 8
-        planes = []
+    @classmethod
+    def _planes_from_vec(cls, vec: np.ndarray) -> List[Plane]:
+        base = 5 + N_POINTS * 5 + N_LINES * 8
+        planes: List[Plane] = []
         for i in range(N_PLANES):
-            s = off + i * 9
+            s = base + i * 9
             cx, cy, rx, ry, fr, fg, fb, ow, _ = vec[s : s + 9]
             if rx > 0 or ry > 0:
                 planes.append(
@@ -310,23 +325,27 @@ class DrawingInstructions:
                         ow,
                     )
                 )
+        return planes
 
-        # Circles
-        off += N_PLANES * 9
-        circles = []
+    @classmethod
+    def _circles_from_vec(cls, vec: np.ndarray) -> List[Circle]:
+        base = 5 + N_POINTS * 5 + N_LINES * 8 + N_PLANES * 9
+        circles: List[Circle] = []
         for i in range(N_CIRCLES):
-            s = off + i * 7
+            s = base + i * 7
             cx, cy, r, fr, fg, fb, ow = vec[s : s + 7]
             if r > 0:
                 circles.append(
                     Circle(cx, cy, r, (int(fr * 255), int(fg * 255), int(fb * 255)), (0, 0, 0), ow)
                 )
+        return circles
 
-        # Arcs
-        off += N_CIRCLES * 7
-        arcs = []
+    @classmethod
+    def _arcs_from_vec(cls, vec: np.ndarray) -> List[Arc]:
+        base = 5 + N_POINTS * 5 + N_LINES * 8 + N_PLANES * 9 + N_CIRCLES * 7
+        arcs: List[Arc] = []
         for i in range(N_ARCS):
-            s = off + i * 10
+            s = base + i * 10
             cx, cy, r, sa, ea, w, cr, cg, cb, _ = vec[s : s + 10]
             if r > 0:
                 arcs.append(
@@ -340,13 +359,24 @@ class DrawingInstructions:
                         (int(cr * 255), int(cg * 255), int(cb * 255)),
                     )
                 )
+        return arcs
+
+    @classmethod
+    def from_vector(
+        cls, vec: np.ndarray, canvas_size: Tuple[int, int] = (128, 128)
+    ) -> "DrawingInstructions":
+        """Create DrawingInstructions from vector representation."""
+        if len(vec) != TOTAL_DIM:
+            raise ValueError(f"Expected vector of length {TOTAL_DIM}, got {len(vec)}")
+
+        bg_color = tuple(int(c * 255) for c in vec[0:3])
 
         return cls(
-            points=points,
-            lines=lines,
-            planes=planes,
-            circles=circles,
-            arcs=arcs,
+            points=cls._points_from_vec(vec),
+            lines=cls._lines_from_vec(vec),
+            planes=cls._planes_from_vec(vec),
+            circles=cls._circles_from_vec(vec),
+            arcs=cls._arcs_from_vec(vec),
             background_color=bg_color,
             canvas_size=canvas_size,
         )
