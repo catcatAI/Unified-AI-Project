@@ -25,6 +25,16 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 BUDGET_FILE = Path(__file__).resolve().parent / "mypy_budget.txt"
 
+# 本機環境一致性：mypy 結果強依賴安裝的 mypy 版本/插件。若用系統 python3
+# 跑（其 mypy 與專案 venv 不同），會得 ~109 假錯誤。偵測到專案 venv 且當前
+# 不在其中時，自動用 venv python 重跑——無論如何呼叫都得到一致結果。
+# CI 用 setup-python（repo root 無 .venv/bin/python）→ 不觸發，維持原行為。
+_VENV_PY = REPO_ROOT / ".venv" / "bin" / "python"
+if _VENV_PY.exists() and Path(sys.executable).resolve() != _VENV_PY.resolve():
+    import os
+
+    os.execv(str(_VENV_PY), [str(_VENV_PY), *sys.argv])
+
 
 def count_mypy_errors() -> tuple[int, str]:
     proc = subprocess.run(
