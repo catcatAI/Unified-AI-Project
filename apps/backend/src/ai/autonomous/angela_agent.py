@@ -220,15 +220,10 @@ class AngelaAutonomousAgent:
         self.last_strategy_update = 0.0
         self.last_replan_tick = -1000
 
-    async def initialize(self) -> bool:
-        """Initialize all components"""
-        logger.info("Initializing Angela Autonomous Agent...")
-
-        # Create memory directory
+    async def _init_memory_bridge(self) -> None:
+        """Memory directory + HAM bridge (fallback: local-only) + spatial persistence."""
         Path(self.config.memory_path).mkdir(parents=True, exist_ok=True)
 
-        # Initialize memory bridge with the REAL HAM backend
-        # (previously MockHAMManager — experiences never persisted)
         self.memory = GameMemoryBridge()
         try:
             from ai.memory.ham_memory.ham_manager import HAMMemoryManager
@@ -252,31 +247,85 @@ class AngelaAutonomousAgent:
         except Exception as e:
             logger.warning(f"Spatial memory load skipped: {e}")
 
-        # L0 Policy：載入已訓練權重（行為克隆產物）。Xavier 隨機只是出廠
-        # 狀態；有訓練檔就用訓練檔——訓練/推論接線閉環（R74）。
-        if self._bc_enabled:
-            try:
-                weights_path = str(Path(self.config.memory_path) / "policy_weights.json")
-                self._policy_weights_path = weights_path
-                if self.policy.load_weights(weights_path):
-                    self._policy_trained = True
-            except Exception as e:
-                logger.warning(f"Policy weights load skipped: {e}")
+    def _load_policy_weights_if_enabled(self) -> None:
+        """L0 Policy：載入已訓練權重（行為克隆產物）。Xavier 隨機只是出廠
+        狀態；有訓練檔就用訓練檔——訓練/推論接線閉環（R74）。
+        """
+        if not self._bc_enabled:
+            return
+        try:
+            weights_path = str(Path(self.config.memory_path) / "policy_weights.json")
+            self._policy_weights_path = weights_path
+            if self.policy.load_weights(weights_path):
+                self._policy_trained = True
+        except Exception as e:
+            logger.warning(f"Policy weights load skipped: {e}")
 
-        # 截窗視覺（識別）：OS 級 pyautogui 截 Luanti 窗口。找不到窗口/
-        # 無顯示環境時保持 None，主迴圈自動降級——不影響 poller 資料路徑。
+    def _init_screen_vision(self) -> None:
+        """截窗視覺（識別）：OS 級 pyautogui 截 Luanti 窗口。找不到窗口/
+        無顯示環境時保持 None，主迴圈自動降級——不影響 poller 資料路徑。
+        """
         self._screen_vision: Optional[GameVision] = None
-        if self.config.vision_enabled:
-            try:
-                self._screen_vision = GameVision()
-                rect = self._screen_vision.locate_game_window()
-                if rect:
-                    logger.info(f"Screen vision ready (game window {rect})")
-                else:
-                    logger.info("Screen vision armed (no game window yet; will retry)")
-            except Exception as e:
-                logger.warning(f"Screen vision unavailable: {e}")
-                self._screen_vision = None
+        if not self.config.vision_enabled:
+            return
+        try:
+            self._screen_vision = GameVision()
+            rect = self._screen_vision.locate_game_window()
+            if rect:
+                logger.info(f"Screen vision ready (game window {rect})")
+            else:
+                logger.info("Screen vision armed (no game window yet; will retry)")
+        except Exception as e:
+            logger.warning(f"Screen vision unavailable: {e}")
+            self._screen_vision = None
+
+    def _init_visual_encoder(self) -> None:
+        """Real VisualEncoder for when frames arrive (currently the poller
+        reports state only, so visual stays None until /api/frame lands).
+        """
+        try:
+            from ai.multimodal.visual_encoder import VisualEncoder
+
+            self.visual_encoder = VisualEncoder()
+            logger.info("VisualEncoder wired (awaiting frame source)")
+        except Exception as e:
+            logger.warning(f"VisualEncoder unavailable: {e}")
+            self.visual_encoder = None
+
+    def _init_emotion_lifecycle(self) -> None:
+        """Emotion + Lifecycle: wire the REAL project systems so game
+        outcomes feed the same loops the chat pipeline uses.
+        """
+        try:
+            from ai.alignment.emotion_system import EmotionSystem
+
+            self.emotion = EmotionSystem(system_id="angela_game_agent")
+            logger.info("EmotionSystem wired into game agent")
+        except Exception as e:
+            logger.warning(f"EmotionSystem unavailable, game affect disabled: {e}")
+            self.emotion = None
+        try:
+            from core.life.autonomous_life_cycle import AutonomousLifeCycle
+
+            self.lifecycle = AutonomousLifeCycle()
+            logger.info("AutonomousLifeCycle wired into game agent")
+        except Exception as e:
+            logger.warning(f"AutonomousLifeCycle unavailable: {e}")
+            self.lifecycle = None
+
+    async def initialize(self) -> bool:
+        """Initialize all components"""
+        logger.info("Initializing Angela Autonomous Agent...")
+
+        # Memory directory + HAM bridge + spatial persistence
+        await self._init_memory_bridge()
+
+        # L0 policy weights (pre-injected policy honored; load happens
+        # before the GamePolicy rebuild below — original order preserved)
+        self._load_policy_weights_if_enabled()
+
+        # 截窗視覺（識別）
+        self._init_screen_vision()
 
         # Initialize LLM interface: local llama.cpp server (fully offline).
         # Falls back to rules per-call when the model is unreachable.
@@ -311,16 +360,7 @@ class AngelaAutonomousAgent:
             )
         )
 
-        # Real VisualEncoder for when frames arrive (currently the poller
-        # reports state only, so visual stays None until /api/frame lands)
-        try:
-            from ai.multimodal.visual_encoder import VisualEncoder
-
-            self.visual_encoder = VisualEncoder()
-            logger.info("VisualEncoder wired (awaiting frame source)")
-        except Exception as e:
-            logger.warning(f"VisualEncoder unavailable: {e}")
-            self.visual_encoder = None
+        self._init_visual_encoder()
 
         self.policy = GamePolicy(
             PolicyConfig(latent_dim=128, continuous_dim=16, discrete_dim=8, use_diffusion=True)
@@ -365,27 +405,12 @@ class AngelaAutonomousAgent:
             StrategyConfig(update_interval_sec=self.config.strategy_update_interval)
         )
 
-        # Emotion + Lifecycle: wire the REAL project systems so game
-        # outcomes feed the same loops the chat pipeline uses
-        try:
-            from ai.alignment.emotion_system import EmotionSystem
-
-            self.emotion = EmotionSystem(system_id="angela_game_agent")
-            logger.info("EmotionSystem wired into game agent")
-        except Exception as e:
-            logger.warning(f"EmotionSystem unavailable, game affect disabled: {e}")
-            self.emotion = None
-        try:
-            from core.life.autonomous_life_cycle import AutonomousLifeCycle
-
-            self.lifecycle = AutonomousLifeCycle()
-            logger.info("AutonomousLifeCycle wired into game agent")
-        except Exception as e:
-            logger.warning(f"AutonomousLifeCycle unavailable: {e}")
-            self.lifecycle = None
+        # Emotion + Lifecycle wiring
+        self._init_emotion_lifecycle()
 
         logger.info("All components initialized successfully")
         return True
+
 
     async def start(self):
         """Start the autonomous agent main loop"""
@@ -410,6 +435,84 @@ class AngelaAutonomousAgent:
         finally:
             await self.cleanup()
 
+    async def _tick_goal_and_replan(self) -> None:
+        """Select the initial goal when unset, then replan (L3) if needed."""
+        if self.current_goal is None:
+            goal = self.goal_manager.get_highest_priority()
+            if goal:
+                self.current_goal, _ = goal
+                logger.info(f"Selected initial goal: {self.current_goal.value}")
+        if self._should_replan() and self.current_state is not None:
+            await self._replan()
+
+    def _dispatch_pending_chats(self) -> None:
+        """In-game dialogue: one reply task per overheard chat."""
+        if self._pending_chats:
+            chats, self._pending_chats = self._pending_chats, []
+            for ev in chats:
+                asyncio.create_task(self._handle_chat_event(ev))
+
+    def _tick_periodic_behavior(self) -> None:
+        """Periodic eyes + curiosity exploration (15s cadence, idle only)."""
+        # 4d. Periodic eyes: look around every ~15s when idle, so
+        # aiming and water-flinch run without chat prompts.
+        if not self._active_behavior and self.current_state and self.tick_count % 150 == 0:
+            self._start_behavior("look_vision", {"range": 24}, "periodic-eyes")
+
+        # 4e. Curiosity: visit stale-known spots on foot so their
+        # surroundings re-enter spatial memory. Never preempts an
+        # active behavior. Checks on the 15s cadence, fires at most
+        # once per cooldown.
+        if (
+            not self._active_behavior
+            and self.current_state
+            and self.tick_count % 150 == 0
+            and self.tick_count - self._last_explore_tick >= self._explore_cooldown_ticks
+        ):
+            self._maybe_start_curiosity_exploration()
+
+    async def _tick_observation_memory(self) -> None:
+        """6b. Periodic episodic snapshot of what was just seen (scan/vision),
+        so HAM recall works on places even without a task event.
+        """
+        if self.tick_count - self._last_obs_store_tick < 300:
+            return
+        if self._last_scan or self._last_vision:
+            self._last_obs_store_tick = self.tick_count
+            await self._store_observation_memory()
+
+    def _tick_spatial_saving(self) -> None:
+        """6c/6d. Periodic crash-safe spatial snapshot + lifecycle state sync."""
+        # 6c. Periodic spatial snapshot: crash-safe (cleanup-only
+        # save loses everything on hard exit). Cheap JSON write.
+        if self._spatial_path and self.tick_count % 600 == 0:
+            try:
+                self.memory.save_spatial(self._spatial_path)
+            except Exception as e:
+                logger.debug(f"Periodic spatial save failed: {e}")
+
+        # 6d. Lifecycle state sync: agent is a separate process from
+        # the main server; both share the lifecycle JSON so game and
+        # chat Angelas share one life phase (save_state was previously
+        # dead code — loaded by nobody's writes).
+        if self.lifecycle is not None and self.tick_count % 600 == 0:
+            try:
+                if getattr(self.lifecycle, "_persist_path", None):
+                    self.lifecycle.save_state(self.lifecycle._persist_path)
+            except Exception as e:
+                logger.debug(f"Lifecycle state save failed: {e}")
+
+    async def _tick_policy_training(self) -> None:
+        """6e. L0 policy 行為克隆：週期訓練（hold-out 門；R74）."""
+        if not self._bc_enabled:
+            return
+        if self.config.policy_train_interval_sec <= 0:
+            return
+        if time.time() - self._last_train_time < self.config.policy_train_interval_sec:
+            return
+        self._last_train_time = time.time()
+        await self._train_policy_periodic()
+
     async def _main_loop(self):
         """Main autonomous agent loop - runs at configured tick rate"""
         while self.running:
@@ -432,16 +535,8 @@ class AngelaAutonomousAgent:
                 ):
                     await self._update_strategy()
 
-                # 3. Select initial goal if none set
-                if self.current_goal is None:
-                    goal = self.goal_manager.get_highest_priority()
-                    if goal:
-                        self.current_goal, _ = goal
-                        logger.info(f"Selected initial goal: {self.current_goal.value}")
-
-                # 3. Plan/Replan (L3) - if needed
-                if self._should_replan() and self.current_state is not None:
-                    await self._replan()
+                # 3. Goal selection + replan (L3)
+                await self._tick_goal_and_replan()
 
                 # 3b. Reflexes (library triggers + bump detector). Surface
                 # preempts anything; bump turns only when idle.
@@ -450,31 +545,14 @@ class AngelaAutonomousAgent:
                 # 4. Execute tasks (L2)
                 await self._execute_tasks()
 
-                # 4b. In-game dialogue: one reply task per overheard chat
-                if self._pending_chats:
-                    chats, self._pending_chats = self._pending_chats, []
-                    for ev in chats:
-                        asyncio.create_task(self._handle_chat_event(ev))
+                # 4b. In-game dialogue
+                self._dispatch_pending_chats()
 
                 # 4c. Behavior runner: feed LLM-composed behavior actions
                 await self._tick_behavior()
 
-                # 4d. Periodic eyes: look around every ~15s when idle, so
-                # aiming and water-flinch run without chat prompts.
-                if not self._active_behavior and self.current_state and self.tick_count % 150 == 0:
-                    self._start_behavior("look_vision", {"range": 24}, "periodic-eyes")
-
-                # 4e. Curiosity: visit stale-known spots on foot so their
-                # surroundings re-enter spatial memory. Never preempts an
-                # active behavior. Checks on the 15s cadence, fires at most
-                # once per cooldown.
-                if (
-                    not self._active_behavior
-                    and self.current_state
-                    and self.tick_count % 150 == 0
-                    and self.tick_count - self._last_explore_tick >= self._explore_cooldown_ticks
-                ):
-                    self._maybe_start_curiosity_exploration()
+                # 4d/4e. Periodic eyes + curiosity exploration
+                self._tick_periodic_behavior()
 
                 # 5. Skill selection (L1) - if no active subgoal
                 if not self.executor._current:
@@ -487,41 +565,14 @@ class AngelaAutonomousAgent:
                 if self.tick_count % 100 == 0:
                     await self._consolidate_memory()
 
-                # 6b. Observation memory: periodic episodic snapshot of what
-                # was just seen (scan/vision), so HAM recall works on places
-                # even without a task event.
-                if self.tick_count - self._last_obs_store_tick >= 300:
-                    if self._last_scan or self._last_vision:
-                        self._last_obs_store_tick = self.tick_count
-                        await self._store_observation_memory()
+                # 6b. Observation memory snapshot
+                await self._tick_observation_memory()
 
-                # 6c. Periodic spatial snapshot: crash-safe (cleanup-only
-                # save loses everything on hard exit). Cheap JSON write.
-                if self._spatial_path and self.tick_count % 600 == 0:
-                    try:
-                        self.memory.save_spatial(self._spatial_path)
-                    except Exception as e:
-                        logger.debug(f"Periodic spatial save failed: {e}")
+                # 6c/6d. Spatial + lifecycle persistence
+                self._tick_spatial_saving()
 
-                # 6d. Lifecycle state sync: agent is a separate process from
-                # the main server; both share the lifecycle JSON so game and
-                # chat Angelas share one life phase (save_state was previously
-                # dead code — loaded by nobody's writes).
-                if self.lifecycle is not None and self.tick_count % 600 == 0:
-                    try:
-                        if getattr(self.lifecycle, "_persist_path", None):
-                            self.lifecycle.save_state(self.lifecycle._persist_path)
-                    except Exception as e:
-                        logger.debug(f"Lifecycle state save failed: {e}")
-
-                # 6e. L0 policy 行為克隆：週期訓練（hold-out 門；R74）
-                if (
-                    self._bc_enabled
-                    and self.config.policy_train_interval_sec > 0
-                    and time.time() - self._last_train_time >= self.config.policy_train_interval_sec
-                ):
-                    self._last_train_time = time.time()
-                    await self._train_policy_periodic()
+                # 6e. Periodic policy training
+                await self._tick_policy_training()
 
             except Exception as e:
                 logger.error(f"Tick error: {e}", exc_info=True)
@@ -536,6 +587,7 @@ class AngelaAutonomousAgent:
             if self.tick_count % 100 == 0:
                 self._log_status()
 
+
     @staticmethod
     def _normalize_position(pos) -> Tuple[float, float, float]:
         """Bridge sends dict {x,y,z}; policy stack needs a tuple."""
@@ -549,6 +601,114 @@ class AngelaAutonomousAgent:
             return (float(pos[0]), float(pos[1]), float(pos[2]))
         except Exception:
             return (0.0, 0.0, 0.0)
+
+    def _encode_bridge_frame(self, state: Dict[str, Any]) -> None:
+        """Encode a frame when the bridge provides one; otherwise visual
+        stays None and the policy runs on proprioception.
+        (Honest stub: /api/frame is still a placeholder.)
+        """
+        frame = state.get("frame")
+        if frame is None or self.visual_encoder is None or self.current_state is None:
+            return
+        try:
+            import io as _io
+
+            import numpy as _np
+            from PIL import Image as _Image
+
+            if isinstance(frame, (bytes, bytearray)):
+                img = _Image.open(_io.BytesIO(bytes(frame))).convert("RGB")
+            else:
+                img = _Image.fromarray(_np.asarray(frame, dtype=_np.uint8))
+            feats = self.visual_encoder.encode_from_pil(img)
+            self.current_state.visual = VisualObservation(
+                frame_id=self.tick_count,
+                timestamp=time.time(),
+                features=_np.asarray(feats, dtype=_np.float32),
+                fovea_xy=(320, 240),
+                inverse_map=None,
+                raw_frame_shape=img.size[::-1],
+            )
+        except Exception as e:
+            logger.debug(f"Frame encode failed: {e}")
+
+    def _drain_chat_events(self) -> None:
+        """Drain overheard player chat (in-process bridge, no HTTP).
+
+        The inner bridge-None check mirrors the original code; it is
+        unreachable dead-defensive code (no awaits between the top-of-
+        _perceive check and here) — preserved for exact parity.
+        """
+        try:
+            if self.bridge is None:
+                return
+            fresh = self.bridge.take_chat_events()
+            if fresh:
+                self._pending_chats.extend(fresh)
+        except Exception as e:
+            logger.debug(f"Chat drain failed: {e}")
+
+    def _observe_world_vision(self, state: Optional[Dict[str, Any]], vision: Dict[str, Any]) -> None:
+        """識別→記憶閉環：射線命中帶世界座標，直接入空間記憶"""
+        if not vision or not self.memory:
+            return
+        try:
+            self.memory.observe_world(
+                (
+                    self._normalize_position(state.get("position", (0, 0, 0)))
+                    if state
+                    else (0, 0, 0)
+                ),
+                vision.get("rays") or [],
+                source="vision",
+            )
+        except Exception as e:
+            logger.debug(f"Vision->spatial memory failed: {e}")
+
+    def _observe_world_scan(self, state: Optional[Dict[str, Any]], scan: Dict[str, Any]) -> None:
+        """同上：掃描結果也進空間記憶（比視線範圍廣）"""
+        if not scan or not self.memory:
+            return
+        try:
+            self.memory.observe_world(
+                (
+                    self._normalize_position(state.get("position", (0, 0, 0)))
+                    if state
+                    else (0, 0, 0)
+                ),
+                scan.get("nodes") or [],
+                source="scan",
+            )
+        except Exception as e:
+            logger.debug(f"Scan->spatial memory failed: {e}")
+
+    def _observe_world_from_sensors(self, state: Optional[Dict[str, Any]]) -> None:
+        """Coordinate-walk + survey + vision status + memory closure."""
+        try:
+            self._last_goto = state.get("goto_") if state else None
+            scan = state.get("scan") if state else None
+            if scan:
+                self._last_scan = scan
+            vision = state.get("vision") if state else None
+            if vision:
+                self._last_vision = vision
+                self._observe_world_vision(state, vision)
+            if scan:
+                self._observe_world_scan(state, scan)
+        except Exception as e:
+            logger.debug(f"Goto/scan/vision perception failed: {e}")
+
+    def _track_death_edge(self, state: Optional[Dict[str, Any]]) -> None:
+        """Death rising edge (strategy context + honesty about dying)."""
+        try:
+            hp = state.get("hp", 20) if state else 20
+            if hp is not None and self._prev_hp is not None:
+                if self._prev_hp > 0 and int(hp) <= 0:
+                    self._death_count += 1
+                    logger.warning(f"Angela died in game (death #{self._death_count})")
+            self._prev_hp = int(hp) if hp is not None else self._prev_hp
+        except Exception as e:
+            logger.debug(f"Death tracking failed: {e}")
 
     async def _perceive(self):
         """L0: Perception - get game state from polling bridge"""
@@ -581,95 +741,20 @@ class AngelaAutonomousAgent:
 
                 # Encode a frame when the bridge provides one; otherwise
                 # visual stays None and the policy runs on proprioception.
-                # (Honest stub: /api/frame is still a placeholder.)
-                frame = state.get("frame")
-                if frame is not None and self.visual_encoder is not None:
-                    try:
-                        import io as _io
-
-                        import numpy as _np
-                        from PIL import Image as _Image
-
-                        if isinstance(frame, (bytes, bytearray)):
-                            img = _Image.open(_io.BytesIO(bytes(frame))).convert("RGB")
-                        else:
-                            img = _Image.fromarray(_np.asarray(frame, dtype=_np.uint8))
-                        feats = self.visual_encoder.encode_from_pil(img)
-                        self.current_state.visual = VisualObservation(
-                            frame_id=self.tick_count,
-                            timestamp=time.time(),
-                            features=_np.asarray(feats, dtype=_np.float32),
-                            fovea_xy=(320, 240),
-                            inverse_map=None,
-                            raw_frame_shape=img.size[::-1],
-                        )
-                    except Exception as e:
-                        logger.debug(f"Frame encode failed: {e}")
+                self._encode_bridge_frame(state)
 
             # Drain overheard player chat (in-process bridge, no HTTP)
-            try:
-                if self.bridge is None:
-                    return
-                fresh = self.bridge.take_chat_events()
-                if fresh:
-                    self._pending_chats.extend(fresh)
-            except Exception as e:
-                logger.debug(f"Chat drain failed: {e}")
+            self._drain_chat_events()
 
             # Coordinate-walk + survey + vision status
-            try:
-                self._last_goto = state.get("goto_") if state else None
-                scan = state.get("scan") if state else None
-                if scan:
-                    self._last_scan = scan
-                vision = state.get("vision") if state else None
-                if vision:
-                    self._last_vision = vision
-                    # 識別→記憶閉環：射線命中帶世界座標，直接入空間記憶
-                    if self.memory:
-                        try:
-                            self.memory.observe_world(
-                                (
-                                    self._normalize_position(state.get("position", (0, 0, 0)))
-                                    if state
-                                    else (0, 0, 0)
-                                ),
-                                vision.get("rays") or [],
-                                source="vision",
-                            )
-                        except Exception as e:
-                            logger.debug(f"Vision->spatial memory failed: {e}")
-                if scan:
-                    # 同上：掃描結果也進空間記憶（比視線範圍廣）
-                    if self.memory:
-                        try:
-                            self.memory.observe_world(
-                                (
-                                    self._normalize_position(state.get("position", (0, 0, 0)))
-                                    if state
-                                    else (0, 0, 0)
-                                ),
-                                scan.get("nodes") or [],
-                                source="scan",
-                            )
-                        except Exception as e:
-                            logger.debug(f"Scan->spatial memory failed: {e}")
-            except Exception as e:
-                logger.debug(f"Goto/scan/vision perception failed: {e}")
+            self._observe_world_from_sensors(state)
 
             # Death rising edge (strategy context + honesty about dying)
-            try:
-                hp = state.get("hp", 20) if state else 20
-                if hp is not None and self._prev_hp is not None:
-                    if self._prev_hp > 0 and int(hp) <= 0:
-                        self._death_count += 1
-                        logger.warning(f"Angela died in game (death #{self._death_count})")
-                self._prev_hp = int(hp) if hp is not None else self._prev_hp
-            except Exception as e:
-                logger.debug(f"Death tracking failed: {e}")
+            self._track_death_edge(state)
 
         except Exception as e:
             logger.error(f"Perception error: {e}")
+
 
     def _capture_screen_vision(self):
         """截窗視覺（識別）：節流截幀→encoder→current_state.visual。
@@ -756,6 +841,36 @@ class AngelaAutonomousAgent:
         if self._strategy_llm_counter % 4 == 0:
             asyncio.create_task(self._llm_evaluate())
 
+    def _read_affect_mode(self) -> str:
+        """Read the dominant routing mode from emotion then lifecycle.
+
+        Both systems were write-only (fed outcomes, never consulted); this
+        reads their behavioral adjustment back. Unreadable adjustments
+        fall back to the prior/neutral value (logged at debug).
+        """
+        mode = "neutral"
+        if self.emotion is not None:
+            try:
+                mode = self.emotion.get_behavioral_adjustment().get("routing_mode", mode)
+            except Exception:
+                logger.debug(
+                    "emotion behavioral adjustment unreadable; "
+                    "routing mode falls back to neutral",
+                    exc_info=True,
+                )
+        if self.lifecycle is not None and hasattr(self.lifecycle, "get_behavioral_adjustment"):
+            try:
+                lm = self.lifecycle.get_behavioral_adjustment().get("routing_mode")
+                if lm and lm != "neutral":
+                    mode = lm
+            except Exception:
+                logger.debug(
+                    "lifecycle behavioral adjustment unreadable; "
+                    "routing mode keeps prior value",
+                    exc_info=True,
+                )
+        return mode
+
     def _apply_affect(self):
         """Close the affect loop: emotion/lifecycle read back into decisions.
 
@@ -764,27 +879,7 @@ class AngelaAutonomousAgent:
         samples wider, conservative sticks to the best skill.
         """
         try:
-            mode = "neutral"
-            if self.emotion is not None:
-                try:
-                    mode = self.emotion.get_behavioral_adjustment().get("routing_mode", mode)
-                except Exception:
-                    logger.debug(
-                        "emotion behavioral adjustment unreadable; "
-                        "routing mode falls back to neutral",
-                        exc_info=True,
-                    )
-            if self.lifecycle is not None and hasattr(self.lifecycle, "get_behavioral_adjustment"):
-                try:
-                    lm = self.lifecycle.get_behavioral_adjustment().get("routing_mode")
-                    if lm and lm != "neutral":
-                        mode = lm
-                except Exception:
-                    logger.debug(
-                        "lifecycle behavioral adjustment unreadable; "
-                        "routing mode keeps prior value",
-                        exc_info=True,
-                    )
+            mode = self._read_affect_mode()
             temps = {"exploratory": 1.25, "conservative": 0.7}
             new_temp = temps.get(mode, 1.0)
             if (
@@ -922,19 +1017,27 @@ class AngelaAutonomousAgent:
             return True
         return False
 
-    async def _replan(self):
-        """L3: Replan based on current state and goals"""
-        self._apply_affect()
-        # A terminal failure carries a blocker: let the LLM diagnose first.
-        # A fallback subgoal can resolve it without a full replan.
+    async def _maybe_llm_diagnose_blocker(self) -> bool:
+        """A terminal failure carries a blocker: let the LLM diagnose first.
+
+        A fallback subgoal can resolve it without a full replan. Returns
+        True when the diagnose path fired (caller should skip replan).
+        """
         try:
             blocker = getattr(getattr(self.executor, "_task_progress", None), "blocker", "")
             if blocker and self.tick_count - self._last_diag_tick > 300:
                 self._last_diag_tick = self.tick_count
                 await self._llm_diagnose()
-                return
+                return True
         except Exception as e:
             logger.debug(f"Diagnose-first failed: {e}")
+        return False
+
+    async def _replan(self):
+        """L3: Replan based on current state and goals"""
+        self._apply_affect()
+        if await self._maybe_llm_diagnose_blocker():
+            return
         if not self.current_goal:
             # Select highest priority goal
             goal = self.goal_manager.get_highest_priority()
@@ -1158,6 +1261,32 @@ class AngelaAutonomousAgent:
             )
             return True
 
+    def _action_queue_full(self) -> bool:
+        """背壓：poller 2s 取一次，agent 10Hz 生產會淹沒 queue；超過上限就丟棄"""
+        try:
+            if len(getattr(self.bridge, "pending_actions", [])) >= 3:
+                return True
+        except Exception:
+            logger.debug("backpressure probe failed; assuming queue empty", exc_info=True)
+        return False
+
+    def _maybe_redirect_to_look(
+        self, skill_id: str, params: Dict[str, Any]
+    ) -> Tuple[str, Dict[str, Any]]:
+        """Recovery spiral: a nonzero yaw becomes a real turn one tick in
+        three (via the look path); the other two ticks walk. The yaw
+        used to be silently dropped, so recovery never turned.
+        """
+        if skill_id not in ("move", "navigate"):
+            return skill_id, params
+        try:
+            yaw_param = float(params.get("yaw", 0.0) or 0.0)
+        except (TypeError, ValueError):
+            yaw_param = 0.0
+        if yaw_param != 0.0 and self.tick_count % 3 == 0:
+            return "look", {"yaw": yaw_param}
+        return skill_id, params
+
     def _queue_skill(self, skill_ctx: SkillContext):
         """Queue skill for execution via the behavior library.
 
@@ -1170,26 +1299,14 @@ class AngelaAutonomousAgent:
         # would otherwise overwrite it before the 0.5Hz poll drains it.
         if self.tick_count - self._behavior_hold_tick < 30:
             return
-        # 背壓：poller 2s 取一次，agent 10Hz 生產會淹沒 queue；超過上限就丟棄
-        try:
-            if len(getattr(self.bridge, "pending_actions", [])) >= 3:
-                return
-        except Exception:
-            logger.debug("backpressure probe failed; assuming queue empty", exc_info=True)
+        # 背壓：超過上限就丟棄
+        if self._action_queue_full():
+            return
         from ai.multimodal.game_behaviors import expand_behavior, skill_to_behavior
 
         skill_id = skill_ctx.active_skill.value
         params = dict(skill_ctx.params or {})
-        # Recovery spiral: a nonzero yaw becomes a real turn one tick in
-        # three (via the look path); the other two ticks walk. The yaw
-        # used to be silently dropped, so recovery never turned.
-        if skill_id in ("move", "navigate"):
-            try:
-                yaw_param = float(params.get("yaw", 0.0) or 0.0)
-            except (TypeError, ValueError):
-                yaw_param = 0.0
-            if yaw_param != 0.0 and self.tick_count % 3 == 0:
-                skill_id, params = "look", {"yaw": yaw_param}
+        skill_id, params = self._maybe_redirect_to_look(skill_id, params)
         bid, bparams = skill_to_behavior(skill_id, params, craftable=self._craftable_check)
         if not bid:
             logger.debug(f"No behavior verb for skill {skill_id}, abstaining")
@@ -1218,16 +1335,8 @@ class AngelaAutonomousAgent:
                 pos = (0, 0, 0)
             self._last_loco = {"tick": self.tick_count, "pos": pos}
 
-    def _check_reflexes(self):
-        """Evaluate library-owned reflex triggers + bump detector.
-
-        Surface (breath/lava) preempts anything; bump (locomotion fed but
-        zero displacement) turns only when no behavior runs. Cooldowns stop
-        flapping. Everything decided here lives in the behavior library —
-        the poller only executes primitives.
-        """
-        if not self.current_state:
-            return
+    def _check_library_reflexes(self) -> None:
+        """Scan the behavior library for fired triggers (30-tick cooldown)."""
         try:
             for bid, b in BEHAVIORS.items():
                 trigger = getattr(b, "trigger", None)
@@ -1247,7 +1356,12 @@ class AngelaAutonomousAgent:
                     return
         except Exception as e:
             logger.debug(f"Reflex check failed: {e}")
+
+    def _check_bump_reflex(self) -> None:
+        """Bump detector: locomotion fed but zero displacement -> turn."""
         try:
+            if self.current_state is None:
+                return
             if self._active_behavior or not self._last_loco:
                 return
             age = self.tick_count - self._last_loco["tick"]
@@ -1263,6 +1377,19 @@ class AngelaAutonomousAgent:
                 self._start_behavior("turn", {"degrees": 45}, "reflex:bump")
         except Exception as e:
             logger.debug(f"Bump check failed: {e}")
+
+    def _check_reflexes(self):
+        """Evaluate library-owned reflex triggers + bump detector.
+
+        Surface (breath/lava) preempts anything; bump (locomotion fed but
+        zero displacement) turns only when no behavior runs. Cooldowns stop
+        flapping. Everything decided here lives in the behavior library —
+        the poller only executes primitives.
+        """
+        if not self.current_state:
+            return
+        self._check_library_reflexes()
+        self._check_bump_reflex()
 
     async def _execute_reflex(self):
         """L0: Execute reflex actions via bridge"""
@@ -1431,6 +1558,53 @@ class AngelaAutonomousAgent:
         except Exception:
             return "狀態未知"
 
+    @staticmethod
+    def _is_chat_echo(say: str, message: str) -> bool:
+        """Echo guard: small models sometimes parrot the input as the reply."""
+        return bool(
+            say
+            and message
+            and (
+                say.strip() == message.strip()
+                or message.strip() in say
+                and len(say) < len(message) + 8
+            )
+        )
+
+    def _queue_chat_say(self, say: str) -> None:
+        """Queue one in-game chat line to the polling bridge."""
+        try:
+            if self.bridge is not None:
+                self.bridge.queue_action({"type": "chat", "message": say})
+        except Exception as e:
+            logger.error(f"Queue chat failed: {e}")
+
+    async def _store_chat_memory(
+        self, player: str, message: str, say: str, bid: str
+    ) -> None:
+        """Store the overheard chat + reply as one HAM episodic memory."""
+        try:
+            if self.memory:
+                from ai.multimodal.game_memory_bridge import GameExperience, MemoryType
+
+                prop = self.current_state.proprioception if self.current_state else None
+                pos = tuple(getattr(prop, "position", (0, 0, 0)) or (0, 0, 0))
+                await self.memory.store_experience(
+                    GameExperience(
+                        exp_id=f"chat_{int(time.time() * 1000)}",
+                        memory_type=MemoryType.EPISODIC,
+                        timestamp=time.time(),
+                        position=(float(pos[0]), float(pos[1]), float(pos[2])),
+                        action="chat",
+                        context={"player": player, "message": message},
+                        outcome={"say": say, "behavior": bid},
+                        reward=0.5,
+                        tags=["chat", player],
+                    )
+                )
+        except Exception as e:
+            logger.debug(f"Chat memory store failed: {e}")
+
     async def _handle_chat_event(self, ev: Dict[str, Any]):
         """Overheard a player: LLM decides what to say + do (with fallback)."""
         player = str(ev.get("player", "?"))
@@ -1453,16 +1627,7 @@ class AngelaAutonomousAgent:
             say, bid, bparams = self._fallback_chat(player, message)
 
         say = say[:300]
-        # Echo guard: small models sometimes parrot the input as the reply.
-        if (
-            say
-            and message
-            and (
-                say.strip() == message.strip()
-                or message.strip() in say
-                and len(say) < len(message) + 8
-            )
-        ):
+        if self._is_chat_echo(say, message):
             logger.warning("LLM echoed chat, using fallback line instead")
             say, bid, bparams = self._fallback_chat(player, message)
             say = say[:300]
@@ -1470,35 +1635,11 @@ class AngelaAutonomousAgent:
         if say:
             self._chat_history.append(f"{player}: {message}")
             self._chat_history.append(f"Angela: {say}")
-            try:
-                if self.bridge is not None:
-                    self.bridge.queue_action({"type": "chat", "message": say})
-            except Exception as e:
-                logger.error(f"Queue chat failed: {e}")
+            self._queue_chat_say(say)
         if bid and bid in BEHAVIORS:
             self._start_behavior(bid, bparams, f"chat:{player}")
 
-        try:
-            if self.memory:
-                from ai.multimodal.game_memory_bridge import GameExperience, MemoryType
-
-                prop = self.current_state.proprioception if self.current_state else None
-                pos = tuple(getattr(prop, "position", (0, 0, 0)) or (0, 0, 0))
-                await self.memory.store_experience(
-                    GameExperience(
-                        exp_id=f"chat_{int(time.time() * 1000)}",
-                        memory_type=MemoryType.EPISODIC,
-                        timestamp=time.time(),
-                        position=(float(pos[0]), float(pos[1]), float(pos[2])),
-                        action="chat",
-                        context={"player": player, "message": message},
-                        outcome={"say": say, "behavior": bid},
-                        reward=0.5,
-                        tags=["chat", player],
-                    )
-                )
-        except Exception as e:
-            logger.debug(f"Chat memory store failed: {e}")
+        await self._store_chat_memory(player, message, say, bid)
 
     @staticmethod
     def _fallback_chat(player: str, message: str):
@@ -1540,6 +1681,108 @@ class AngelaAutonomousAgent:
         }
         logger.info(f"Behavior started: {bid} ({reason}) blocked={not ok} {missing}")
 
+    async def _ground_wait_survey(self, ab: Dict[str, Any]) -> None:
+        """Two-phase grounding for scout/vision: wait for the fresh survey
+        record, then finish (or time out if the survey never landed).
+        """
+        wait_for = ab.get("wait_for", "")
+        store = self._last_scan if wait_for == "scan" else self._last_vision
+        store = store if isinstance(store, dict) else None
+        if store and store.get("seq", 0) != ab.get("scan_seq", 0):
+            if wait_for == "scan":
+                await self._finish_scout(ab, store)
+            else:
+                await self._finish_vision(ab, store)
+            return
+        if self.tick_count - ab["started"] > 120:
+            await self._settle_behavior(False, f"{wait_for}_timeout")
+
+    async def _ground_arrival(self, ab: Dict[str, Any]) -> None:
+        """Goto grounding: judge arrival from the freshest goto report."""
+        # Freshness: ignore reports predating this behavior, or a
+        # previous walk's failure settles the new one instantly.
+        cur = self._last_goto if isinstance(self._last_goto, dict) else None
+        if cur is not None and cur is not ab.get("goto_basis"):
+            status = cur.get("status")
+            if status == "arrived":
+                await self._settle_behavior(True, "")
+                return
+            if status in ("failed", "aborted"):
+                await self._settle_behavior(False, f"goto_{cur.get('reason', 'unknown')}")
+                return
+
+    async def _ground_any_pickup(
+        self, ab: Dict[str, Any], b, pickups: Dict[str, int]
+    ) -> None:
+        """No-pickup grounding: grace window, one adjust retry, then fail."""
+        # Give the last fed action a full poll cycle to land before
+        # calling it a miss (observed: dig_at judged 0.1s after feed).
+        if (self.tick_count - self._last_behavior_feed_tick) < 25:
+            return
+        if b.adjust and ab["retries"] < 1:
+            ab["params"] = b.adjust(
+                ab["params"],
+                BehaviorFeedback(
+                    behavior_id=ab["id"],
+                    params=ab["params"],
+                    ticks_used=self.tick_count - ab["started"],
+                    pickups=pickups,
+                    completed=False,
+                    fail_reason="no_pickup",
+                ),
+            )
+            ab["actions"] = b.expand(ab["params"], self.current_state)
+            ab["idx"] = 0
+            ab["started"] = self.tick_count
+            ab["retries"] += 1
+            logger.info(f"Behavior adjusted: {ab['id']} -> {ab['params']}")
+            return
+        await self._settle_behavior(False, "no_pickup")
+
+    async def _ground_steps_done(self, ab: Dict[str, Any]) -> None:
+        """steps_done: settle only after the queue demonstrably drained
+        (slot-hold mutes the executor, so empty really means consumed).
+        """
+        try:
+            drained = len(getattr(self.bridge, "pending_actions", [])) == 0
+        except Exception:
+            drained = False
+        if drained and (self.tick_count - self._last_behavior_feed_tick) >= 15:
+            await self._settle_behavior(True, "")
+
+    async def _tick_behavior_grounding(self, ab: Dict[str, Any], b) -> None:
+        """Exhausted-actions grounding phase (always terminal for the tick)."""
+        wait_for = ab.get("wait_for", "")
+        if wait_for in ("scan", "vision"):
+            await self._ground_wait_survey(ab)
+            return
+        if b.success_criteria == "arrived":
+            await self._ground_arrival(ab)
+            return
+        pickups = self._behavior_pickups(ab)
+        if b.success_criteria == "any_pickup" and not pickups:
+            await self._ground_any_pickup(ab, b, pickups)
+            return
+        await self._ground_steps_done(ab)
+
+    def _tick_behavior_feed(self, ab: Dict[str, Any]) -> None:
+        """Feed the next action when the queue is drained (or 2s stale)."""
+        try:
+            pending = len(getattr(self.bridge, "pending_actions", []))
+        except Exception:
+            pending = 0
+        if pending == 0 or (self.tick_count - self._last_behavior_feed_tick) >= 20:
+            nxt = ab["actions"][ab["idx"]]
+            ab["idx"] += 1
+            self._last_behavior_feed_tick = self.tick_count
+            self._behavior_hold_tick = self.tick_count
+            try:
+                if self.bridge is not None:
+                    self.bridge.queue_action(nxt)
+                    self._note_feed(nxt.get("type", ""))
+            except Exception as e:
+                logger.error(f"Queue behavior action failed: {e}")
+
     async def _tick_behavior(self):
         """Feed one behavior action per drain; settle on done/timeout."""
         ab = self._active_behavior
@@ -1570,83 +1813,10 @@ class AngelaAutonomousAgent:
             # Two-phase grounding: scout/vision wait for their survey, then
             # either flinch (rule) or the LLM picks a coordinate and chains
             # the next behavior. Timeouts guard lost surveys.
-            wait_for = ab.get("wait_for", "")
-            if wait_for in ("scan", "vision"):
-                store = self._last_scan if wait_for == "scan" else self._last_vision
-                store = store if isinstance(store, dict) else None
-                if store and store.get("seq", 0) != ab.get("scan_seq", 0):
-                    if wait_for == "scan":
-                        await self._finish_scout(ab, store)
-                    else:
-                        await self._finish_vision(ab, store)
-                    return
-                if self.tick_count - ab["started"] > 120:
-                    await self._settle_behavior(False, f"{wait_for}_timeout")
-                return
-            if b.success_criteria == "arrived":
-                # Freshness: ignore reports predating this behavior, or a
-                # previous walk's failure settles the new one instantly.
-                cur = self._last_goto if isinstance(self._last_goto, dict) else None
-                if cur is not None and cur is not ab.get("goto_basis"):
-                    status = cur.get("status")
-                    if status == "arrived":
-                        await self._settle_behavior(True, "")
-                        return
-                    if status in ("failed", "aborted"):
-                        await self._settle_behavior(False, f"goto_{cur.get('reason', 'unknown')}")
-                        return
-                return
-            pickups = self._behavior_pickups(ab)
-            if b.success_criteria == "any_pickup" and not pickups:
-                # Give the last fed action a full poll cycle to land before
-                # calling it a miss (observed: dig_at judged 0.1s after feed).
-                if (self.tick_count - self._last_behavior_feed_tick) < 25:
-                    return
-                if b.adjust and ab["retries"] < 1:
-                    ab["params"] = b.adjust(
-                        ab["params"],
-                        BehaviorFeedback(
-                            behavior_id=ab["id"],
-                            params=ab["params"],
-                            ticks_used=self.tick_count - ab["started"],
-                            pickups=pickups,
-                            completed=False,
-                            fail_reason="no_pickup",
-                        ),
-                    )
-                    ab["actions"] = b.expand(ab["params"], self.current_state)
-                    ab["idx"] = 0
-                    ab["started"] = self.tick_count
-                    ab["retries"] += 1
-                    logger.info(f"Behavior adjusted: {ab['id']} -> {ab['params']}")
-                    return
-                await self._settle_behavior(False, "no_pickup")
-                return
-            # steps_done: settle only after the queue demonstrably drained
-            # (slot-hold mutes the executor, so empty really means consumed).
-            try:
-                drained = len(getattr(self.bridge, "pending_actions", [])) == 0
-            except Exception:
-                drained = False
-            if drained and (self.tick_count - self._last_behavior_feed_tick) >= 15:
-                await self._settle_behavior(True, "")
+            await self._tick_behavior_grounding(ab, b)
             return
 
-        try:
-            pending = len(getattr(self.bridge, "pending_actions", []))
-        except Exception:
-            pending = 0
-        if pending == 0 or (self.tick_count - self._last_behavior_feed_tick) >= 20:
-            nxt = actions[ab["idx"]]
-            ab["idx"] += 1
-            self._last_behavior_feed_tick = self.tick_count
-            self._behavior_hold_tick = self.tick_count
-            try:
-                if self.bridge is not None:
-                    self.bridge.queue_action(nxt)
-                    self._note_feed(nxt.get("type", ""))
-            except Exception as e:
-                logger.error(f"Queue behavior action failed: {e}")
+        self._tick_behavior_feed(ab)
 
         limit = 600 if b.success_criteria == "arrived" else 60 + 25 * len(actions)
         if self.tick_count - ab["started"] > limit:
@@ -1669,39 +1839,31 @@ class AngelaAutonomousAgent:
                 out[str(k)] = grown
         return out
 
-    async def _settle_behavior(self, completed: bool, reason: str):
-        ab = self._active_behavior
-        self._active_behavior = None
-        if not ab:
-            return
-        pickups = self._behavior_pickups(ab)
+    def _mark_goto_visited(self, ab: Dict[str, Any]) -> None:
+        """到場標記：goto 成功＝親訪，刷新附近地點 last_visited/visit_count
+        （好奇心語意基準：看過≠去過）。
+        """
         try:
-            self._total_pickups = int(getattr(self, "_total_pickups", 0)) + sum(
-                int(v) for v in pickups.values()
-            )
-        except Exception:
-            logger.debug("total-pickups counter update failed", exc_info=True)
-        logger.info(
-            f"Behavior settled: {ab['id']} completed={completed} "
-            f"reason={reason} pickups={pickups}"
-        )
-        # 到場標記：goto 成功＝親訪，刷新附近地點 last_visited/visit_count
-        # （好奇心語意基準：看過≠去過）。
-        if completed and ab.get("id") == "goto" and self.memory and self.current_state:
-            try:
-                prop = self.current_state.proprioception
-                if prop is not None:
-                    self.memory.mark_visited(self._normalize_position(prop.position))
-            except Exception as e:
-                logger.debug(f"mark_visited failed: {e}")
-        # Follow-up chain (e.g. scout -> goto -> dig_at the tree): the
-        # finished behavior leaves the next link, run only on success.
-        if completed:
-            follow = getattr(self, "_behavior_followup", None)
-            self._behavior_followup = None
-            if follow and follow.get("behavior_id") in BEHAVIORS:
-                logger.info(f"Behavior follow-up: {follow['behavior_id']}")
-                self._start_behavior(follow["behavior_id"], follow.get("params", {}), "follow-up")
+            prop = self.current_state.proprioception if self.current_state else None
+            if prop is not None:
+                self.memory.mark_visited(self._normalize_position(prop.position))
+        except Exception as e:
+            logger.debug(f"mark_visited failed: {e}")
+
+    def _run_behavior_followup(self) -> None:
+        """Follow-up chain (e.g. scout -> goto -> dig_at the tree): the
+        finished behavior leaves the next link, run only on success.
+        """
+        follow = getattr(self, "_behavior_followup", None)
+        self._behavior_followup = None
+        if follow and follow.get("behavior_id") in BEHAVIORS:
+            logger.info(f"Behavior follow-up: {follow['behavior_id']}")
+            self._start_behavior(follow["behavior_id"], follow.get("params", {}), "follow-up")
+
+    async def _store_behavior_memory(
+        self, ab: Dict[str, Any], completed: bool, reason: str, pickups: Dict[str, int]
+    ) -> None:
+        """Store the settled behavior as one HAM procedural memory."""
         try:
             if self.memory:
                 from ai.multimodal.game_memory_bridge import GameExperience, MemoryType
@@ -1723,6 +1885,29 @@ class AngelaAutonomousAgent:
                 )
         except Exception as e:
             logger.debug(f"Behavior memory store failed: {e}")
+
+    async def _settle_behavior(self, completed: bool, reason: str):
+        ab = self._active_behavior
+        self._active_behavior = None
+        if not ab:
+            return
+        pickups = self._behavior_pickups(ab)
+        try:
+            self._total_pickups = int(getattr(self, "_total_pickups", 0)) + sum(
+                int(v) for v in pickups.values()
+            )
+        except Exception:
+            logger.debug("total-pickups counter update failed", exc_info=True)
+        logger.info(
+            f"Behavior settled: {ab['id']} completed={completed} "
+            f"reason={reason} pickups={pickups}"
+        )
+        if completed and ab.get("id") == "goto" and self.memory and self.current_state:
+            self._mark_goto_visited(ab)
+        if completed:
+            self._run_behavior_followup()
+        await self._store_behavior_memory(ab, completed, reason, pickups)
+
 
     async def _finish_scout(self, ab: Dict[str, Any], scan: Dict[str, Any]):
         """Scout phase two: LLM turns surveyed nodes into a goto coordinate."""
@@ -1894,6 +2079,45 @@ class AngelaAutonomousAgent:
             f"Risk: {directive.get('risk_tolerance', 0):.2f}"
         )
 
+    async def _cleanup_memory_saving(self) -> None:
+        """Final experience save + spatial persistence (memory-backed)."""
+        # Final save - create a proper experience object
+        try:
+            from ai.multimodal.game_memory_bridge import GameExperience, MemoryType
+
+            exp = GameExperience(
+                exp_id=f"shutdown_{int(time.time())}",
+                memory_type=MemoryType.EPISODIC,
+                timestamp=time.time(),
+                position=(0, 0, 0),
+                action="shutdown",
+                context={},
+                outcome={},
+                reward=0.0,
+                tags=["shutdown"],
+            )
+            await self.memory.store_experience(exp)
+        except Exception as e:
+            logger.warning(f"Final memory save failed: {e}")
+
+        # 空間記憶持久化：重啟後記得世界長什麼樣
+        try:
+            if self._spatial_path:
+                if self.memory.save_spatial(self._spatial_path):
+                    logger.info(f"Spatial memory saved to {self._spatial_path}")
+        except Exception as e:
+            logger.warning(f"Spatial memory save failed: {e}")
+
+    async def _cleanup_lifecycle_save(self) -> None:
+        """生命狀態最終同步：遊戲進程的成長（探索次數、成敗）寫回共享檔"""
+        if self.lifecycle is None:
+            return
+        try:
+            self.lifecycle.save_state(self.lifecycle._persist_path)
+            logger.info("Lifecycle state saved (shared with main server)")
+        except Exception as e:
+            logger.warning(f"Lifecycle state save failed: {e}")
+
     async def cleanup(self):
         """Cleanup resources"""
         logger.info("Shutting down Angela...")
@@ -1904,40 +2128,11 @@ class AngelaAutonomousAgent:
         if self.llm:
             await self.llm.close()
         if self.memory:
-            # Final save - create a proper experience object
-            try:
-                from ai.multimodal.game_memory_bridge import GameExperience, MemoryType
+            await self._cleanup_memory_saving()
 
-                exp = GameExperience(
-                    exp_id=f"shutdown_{int(time.time())}",
-                    memory_type=MemoryType.EPISODIC,
-                    timestamp=time.time(),
-                    position=(0, 0, 0),
-                    action="shutdown",
-                    context={},
-                    outcome={},
-                    reward=0.0,
-                    tags=["shutdown"],
-                )
-                await self.memory.store_experience(exp)
-            except Exception as e:
-                logger.warning(f"Final memory save failed: {e}")
-
-            # 空間記憶持久化：重啟後記得世界長什麼樣
-            try:
-                if self._spatial_path:
-                    if self.memory.save_spatial(self._spatial_path):
-                        logger.info(f"Spatial memory saved to {self._spatial_path}")
-            except Exception as e:
-                logger.warning(f"Spatial memory save failed: {e}")
-
-        # 生命狀態最終同步：遊戲進程的成長（探索次數、成敗）寫回共享檔
+        # 生命狀態最終同步
         if self.lifecycle is not None and getattr(self.lifecycle, "_persist_path", None):
-            try:
-                self.lifecycle.save_state(self.lifecycle._persist_path)
-                logger.info("Lifecycle state saved (shared with main server)")
-            except Exception as e:
-                logger.warning(f"Lifecycle state save failed: {e}")
+            await self._cleanup_lifecycle_save()
 
         logger.info("Angela shutdown complete")
 
