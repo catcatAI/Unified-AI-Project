@@ -516,20 +516,10 @@ def _result_numbers(text: str) -> List[str]:
     return [m.group(0) for m in re.finditer(r"-?\d+(?:\.\d+)?", text)]
 
 
-def _learn_template(
-    sample_input: str,
-    sample_output: str,
-    engine_type: str,
-    engine_result: str,
-) -> None:
-    """Extract and store a template from a deterministic match.
-
-    Reverse-searches the engine result inside the sample to determine
-    which parts are natural-language wrapping.
-    """
-    input_prefix, input_suffix = "", sample_input
-
-    # Extract expression and result from engine_result
+def _template_extract_values(
+    sample_input: str, sample_output: str, engine_type: str, engine_result: str
+) -> Tuple[str, str, str, str]:
+    """Extract (input_prefix, input_suffix, expr, result_val) for template learning."""
     if engine_type == "math":
         parts = engine_result.split(" = ", 1)
         expr = parts[0].strip() if len(parts) == 2 else ""
@@ -543,6 +533,7 @@ def _learn_template(
         expr = ""
         result_val = engine_result.strip()
 
+    input_prefix, input_suffix = "", sample_input
     # --- Input side: find where the engine's consumed input appears ---
     if expr and expr in sample_input:
         idx = sample_input.find(expr)
@@ -551,43 +542,78 @@ def _learn_template(
     elif not expr:
         # Non-math engines consume the whole input
         input_prefix, input_suffix = "", ""
+    return input_prefix, input_suffix, expr, result_val
+
+
+def _template_fill_reasoning(
+    output_template: str, expr: str, result_val: str
+) -> Tuple[str, bool]:
+    """Reasoning fill: {R0},{R1}... for result numbers, {L0_input} for expr."""
+    inserted = False
+    # Replace result numbers in order with {R0}, {R1}, ...
+    for i, n in enumerate(_result_numbers(result_val)):
+        m = re.search(re.escape(n), output_template)
+        if m:
+            output_template = (
+                output_template[: m.start()] + f"{{R{i}}}" + output_template[m.end() :]
+            )
+            inserted = True
+    if expr and expr in output_template:
+        output_template = output_template.replace(expr, "{L0_input}", 1)
+        inserted = True
+    return output_template, inserted
+
+
+def _template_fill_generic(
+    output_template: str, result_val: str, expr: str, engine_type: str
+) -> Tuple[str, bool]:
+    """Generic fill: {L0_result} for result value, {L0_input} for expr."""
+    inserted = False
+    # Replace result value with {L0_result} in output
+    rv = result_val
+    if rv in output_template:
+        output_template = output_template.replace(rv, "{L0_result}", 1)
+        inserted = True
+    else:
+        # Try finding by numeric value
+        nums = re.findall(r"-?\d+(?:\.\d+)?", output_template)
+        for n in nums:
+            if engine_type == "math":
+                if _math_value_matches(rv, n):
+                    output_template = output_template.replace(n, "{L0_result}", 1)
+                    inserted = True
+                    break
+
+    # Replace input expression with {L0_input} in output (if present)
+    if expr and expr in output_template:
+        output_template = output_template.replace(expr, "{L0_input}", 1)
+        inserted = True
+    return output_template, inserted
+
+
+def _learn_template(
+    sample_input: str,
+    sample_output: str,
+    engine_type: str,
+    engine_result: str,
+) -> None:
+    """Extract and store a template from a deterministic match.
+
+    Reverse-searches the engine result inside the sample to determine
+    which parts are natural-language wrapping.
+    """
+    input_prefix, input_suffix, expr, result_val = _template_extract_values(
+        sample_input, sample_output, engine_type, engine_result
+    )
 
     # --- Output side: build output_template with placeholders ---
     output_template = sample_output
-    inserted = False
-
     if engine_type == "reasoning":
-        # Replace result numbers in order with {R0}, {R1}, ...
-        for i, n in enumerate(_result_numbers(result_val)):
-            m = re.search(re.escape(n), output_template)
-            if m:
-                output_template = (
-                    output_template[: m.start()] + f"{{R{i}}}" + output_template[m.end() :]
-                )
-                inserted = True
-        if expr and expr in output_template:
-            output_template = output_template.replace(expr, "{L0_input}", 1)
-            inserted = True
+        output_template, inserted = _template_fill_reasoning(output_template, expr, result_val)
     else:
-        # Replace result value with {L0_result} in output
-        rv = result_val
-        if rv in output_template:
-            output_template = output_template.replace(rv, "{L0_result}", 1)
-            inserted = True
-        else:
-            # Try finding by numeric value
-            nums = re.findall(r"-?\d+(?:\.\d+)?", output_template)
-            for n in nums:
-                if engine_type == "math":
-                    if _math_value_matches(rv, n):
-                        output_template = output_template.replace(n, "{L0_result}", 1)
-                        inserted = True
-                        break
-
-        # Replace input expression with {L0_input} in output (if present)
-        if expr and expr in output_template:
-            output_template = output_template.replace(expr, "{L0_input}", 1)
-            inserted = True
+        output_template, inserted = _template_fill_generic(
+            output_template, result_val, expr, engine_type
+        )
 
     # Only store if output has NL wrapping beyond bare placeholders AND at
     # least one placeholder was actually substituted (skips garbage templates
@@ -604,6 +630,44 @@ def _learn_template(
         if len(existing) >= 20:
             existing.pop(0)
         existing.append(entry)
+
+
+def _reconstruct_reasoning(
+    templates: List[Tuple[str, str, str]], user_input: str, engine_result: str
+) -> str:
+    """Reasoning-mode template replay ({R{i}} → result numbers)."""
+    result_nums = _result_numbers(engine_result)
+    for input_prefix, input_suffix, output_template in templates:
+        if not input_prefix and not input_suffix:
+            continue
+        if user_input.startswith(input_prefix) and user_input.endswith(input_suffix):
+            filled = output_template
+            for i, n in enumerate(result_nums):
+                filled = filled.replace(f"{{R{i}}}", n, 1)
+            if "{L0_input}" in filled:
+                filled = filled.replace("{L0_input}", _data_region(user_input), 1)
+            if filled != engine_result:
+                return filled
+    return engine_result
+
+
+def _reconstruct_generic(
+    templates: List[Tuple[str, str, str]], user_input: str, result_val: str, engine_result: str
+) -> str:
+    """Generic template replay ({L0_input}/{L0_result})."""
+    for input_prefix, input_suffix, output_template in templates:
+        if not input_prefix and not input_suffix:
+            continue
+        if user_input.startswith(input_prefix) and user_input.endswith(input_suffix):
+            middle = user_input[len(input_prefix) :]
+            if input_suffix:
+                middle = middle[: -len(input_suffix)] if len(input_suffix) else middle
+            filled = output_template.replace("{L0_input}", middle).replace(
+                "{L0_result}", result_val
+            )
+            if filled != engine_result:
+                return filled
+    return engine_result
 
 
 def _reconstruct_with_template(
@@ -631,34 +695,9 @@ def _reconstruct_with_template(
         result_val = engine_result.strip()
 
     if engine_type == "reasoning":
-        result_nums = _result_numbers(engine_result)
-        for input_prefix, input_suffix, output_template in templates:
-            if not input_prefix and not input_suffix:
-                continue
-            if user_input.startswith(input_prefix) and user_input.endswith(input_suffix):
-                filled = output_template
-                for i, n in enumerate(result_nums):
-                    filled = filled.replace(f"{{R{i}}}", n, 1)
-                if "{L0_input}" in filled:
-                    filled = filled.replace("{L0_input}", _data_region(user_input), 1)
-                if filled != engine_result:
-                    return filled
-        return engine_result
+        return _reconstruct_reasoning(templates, user_input, engine_result)
+    return _reconstruct_generic(templates, user_input, result_val, engine_result)
 
-    for input_prefix, input_suffix, output_template in templates:
-        if not input_prefix and not input_suffix:
-            continue
-        if user_input.startswith(input_prefix) and user_input.endswith(input_suffix):
-            middle = user_input[len(input_prefix) :]
-            if input_suffix:
-                middle = middle[: -len(input_suffix)] if len(input_suffix) else middle
-            filled = output_template.replace("{L0_input}", middle).replace(
-                "{L0_result}", result_val
-            )
-            if filled != engine_result:
-                return filled
-
-    return engine_result
 
 
 def record_template_match(
@@ -818,6 +857,63 @@ class GARDENEngine:
             except Exception as e:
                 logger.warning("GARDEN: failed to read config %s: %s", fname, e)
 
+    def _load_config_file(self, fpath: str, fname: str) -> int:
+        """Load one config JSON (reflex + dictionary entries); returns new-entry count."""
+        added = 0
+        try:
+            with open(fpath, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            # Load reflex patterns
+            for pattern, response in data.get("reflex_patterns", {}).items():
+                self.reflex.add(pattern, response)
+            # Load dictionary entries
+            for entry_data in data.get("dictionary_entries", []):
+                key = entry_data.get("key")
+                if key and key not in self.dictionary.entries:
+                    self.dictionary.add_entry(
+                        key=key,
+                        surface_forms=entry_data.get("surface_forms", {}),
+                        relations=entry_data.get("relations"),
+                        confidence=entry_data.get(
+                            "confidence",
+                            confidence_value("ai.garden.engine.preset_confidence", 0.9),
+                        ),
+                    )
+                    added += 1
+        except Exception as e:
+            logger.warning("GARDEN: failed to load config %s: %s", fname, e)
+        return added
+
+    def _load_presets_from_config(self) -> int:
+        """Also load from config JSON files; returns count of new entries."""
+        config_dir = os.path.join(os.path.dirname(__file__), "config")
+        if not os.path.isdir(config_dir):
+            return 0
+        loaded_from_config = 0
+        for fname in sorted(os.listdir(config_dir)):
+            if not fname.endswith(".json"):
+                continue
+            fpath = os.path.join(config_dir, fname)
+            loaded_from_config += self._load_config_file(fpath, fname)
+        if loaded_from_config > 0:
+            logger.info(
+                "GARDEN: loaded %d additional concepts from config/", loaded_from_config
+            )
+        return loaded_from_config
+
+    def _wire_dictionary_into_snn(self) -> None:
+        """Collect all unique keys (entries + relation targets) for
+        pre-allocation, then wire dictionary relations into the SNN.
+        """
+        all_keys: set = set(self.dictionary.entries.keys())
+        for entry in self.dictionary.entries.values():
+            for targets in entry.relations.values():
+                all_keys.update(targets)
+        self.snn._pre_allocate(list(all_keys))
+        for entry in self.dictionary.entries.values():
+            self.snn.add_relations_from_entry(entry.key, entry.relations)
+            self.snn._register_key(entry.key)
+
     def load_presets(self) -> None:
         """Load built-in dictionary presets and wire their relations into the SNN.
 
@@ -835,52 +931,9 @@ class GARDENEngine:
             self._presets_loaded = True
             return
 
-        # Also load from config JSON files
-        config_dir = os.path.join(os.path.dirname(__file__), "config")
-        if os.path.isdir(config_dir):
-            loaded_from_config = 0
-            for fname in sorted(os.listdir(config_dir)):
-                if not fname.endswith(".json"):
-                    continue
-                fpath = os.path.join(config_dir, fname)
-                try:
-                    with open(fpath, "r", encoding="utf-8") as f:
-                        data = json.load(f)
-                    # Load reflex patterns
-                    for pattern, response in data.get("reflex_patterns", {}).items():
-                        self.reflex.add(pattern, response)
-                    # Load dictionary entries
-                    for entry_data in data.get("dictionary_entries", []):
-                        key = entry_data.get("key")
-                        if key and key not in self.dictionary.entries:
-                            self.dictionary.add_entry(
-                                key=key,
-                                surface_forms=entry_data.get("surface_forms", {}),
-                                relations=entry_data.get("relations"),
-                                confidence=entry_data.get(
-                                    "confidence",
-                                    confidence_value("ai.garden.engine.preset_confidence", 0.9),
-                                ),
-                            )
-                            loaded_from_config += 1
-                except Exception as e:
-                    logger.warning("GARDEN: failed to load config %s: %s", fname, e)
-            if loaded_from_config > 0:
-                logger.info(
-                    "GARDEN: loaded %d additional concepts from config/", loaded_from_config
-                )
+        self._load_presets_from_config()
+        self._wire_dictionary_into_snn()
 
-        # Collect all unique keys (entries + relation targets) for pre-allocation
-        all_keys: set = set(self.dictionary.entries.keys())
-        for entry in self.dictionary.entries.values():
-            for targets in entry.relations.values():
-                all_keys.update(targets)
-        self.snn._pre_allocate(list(all_keys))
-
-        # Wire dictionary relations into the SNN weight matrix
-        for entry in self.dictionary.entries.values():
-            self.snn.add_relations_from_entry(entry.key, entry.relations)
-            self.snn._register_key(entry.key)
         self._presets_loaded = True
         logger.info(
             "GARDEN: presets loaded — %d concepts, %d SNN vocab",
@@ -888,9 +941,53 @@ class GARDENEngine:
             self.snn.vocab_size,
         )
 
+
     # ------------------------------------------------------------------
     # Core processing pipeline
     # ------------------------------------------------------------------
+
+    def _update_template_entry(
+        self, in_tpl: str, out_tpl: str, slot_map: Dict[int, int], confidence: float
+    ) -> None:
+        """Running-mean confidence update + more-frequent out_tpl preference."""
+        entry = self._templates.setdefault(
+            in_tpl,
+            {"out_tpl": out_tpl, "slot_map": slot_map, "samples": 0, "confidence": 0.0},
+        )
+        entry["samples"] += 1
+        n = entry["samples"]
+        entry["confidence"] = entry["confidence"] * ((n - 1) / n) + confidence / n
+        # If the same in-template produced a different out-template, keep the
+        # more-frequent one (structure -> structure is the strongest signal).
+        if entry["out_tpl"] != out_tpl and entry["samples"] > 1:
+            entry["out_tpl"] = out_tpl if confidence > entry["confidence"] else entry["out_tpl"]
+
+    def _evict_oldest_template(self) -> None:
+        """Enforce the template-store cap (FIFO by first-seen).  When a template
+        is evicted, its SNN keys must follow — otherwise the SNN keeps a dead
+        tpl: neuron for every evicted template (unbounded drift, exactly the
+        dict/SNN V divergence the separation forbids).  Only the out-tpl is
+        compacted when it is no longer referenced by any surviving template
+        (multiple in-tpls may share one out-tpl, e.g. taller/older -> X).
+        """
+        oldest = next(iter(self._templates))
+        evicted_out = self._templates[oldest].get("out_tpl")
+        self._templates.pop(oldest, None)
+        try:
+            orphan_keys = [f"tpl:{oldest}"]
+            if (
+                evicted_out
+                and evicted_out != oldest
+                and not any(v.get("out_tpl") == evicted_out for v in self._templates.values())
+            ):
+                orphan_keys.append(f"tpl:{evicted_out}")
+            removed = self.snn.compact_removed_keys(orphan_keys)
+            if removed:
+                logger.debug(
+                    "GARDEN: compacted %d orphan template keys after FIFO evict", removed
+                )
+        except Exception as e:
+            logger.debug("GARDEN: template orphan compaction failed: %s", e)
 
     def _learn_template(
         self,
@@ -921,17 +1018,7 @@ class GARDENEngine:
             if ov in in_vars:
                 slot_map[out_idx] = in_vars.index(ov)
 
-        entry = self._templates.setdefault(
-            in_tpl,
-            {"out_tpl": out_tpl, "slot_map": slot_map, "samples": 0, "confidence": 0.0},
-        )
-        entry["samples"] += 1
-        n = entry["samples"]
-        entry["confidence"] = entry["confidence"] * ((n - 1) / n) + confidence / n
-        # If the same in-template produced a different out-template, keep the
-        # more-frequent one (structure -> structure is the strongest signal).
-        if entry["out_tpl"] != out_tpl and entry["samples"] > 1:
-            entry["out_tpl"] = out_tpl if confidence > entry["confidence"] else entry["out_tpl"]
+        self._update_template_entry(in_tpl, out_tpl, slot_map, confidence)
 
         # Register the template keys into the SNN key space (not the
         # dictionary's token keys — those stay in the dictionary).
@@ -941,33 +1028,11 @@ class GARDENEngine:
         except Exception as e:
             logger.debug("GARDEN: template key registration failed: %s", e)
 
-        # Enforce the template-store cap (FIFO by first-seen).  When a template
-        # is evicted, its SNN keys must follow — otherwise the SNN keeps a dead
-        # tpl: neuron for every evicted template (unbounded drift, exactly the
-        # dict/SNN V divergence the separation forbids).  Only the out-tpl is
-        # compacted when it is no longer referenced by any surviving template
-        # (multiple in-tpls may share one out-tpl, e.g. taller/older -> X).
         if len(self._templates) > self._templates_cap:
-            oldest = next(iter(self._templates))
-            evicted_out = self._templates[oldest].get("out_tpl")
-            self._templates.pop(oldest, None)
-            try:
-                orphan_keys = [f"tpl:{oldest}"]
-                if (
-                    evicted_out
-                    and evicted_out != oldest
-                    and not any(v.get("out_tpl") == evicted_out for v in self._templates.values())
-                ):
-                    orphan_keys.append(f"tpl:{evicted_out}")
-                removed = self.snn.compact_removed_keys(orphan_keys)
-                if removed:
-                    logger.debug(
-                        "GARDEN: compacted %d orphan template keys after FIFO evict", removed
-                    )
-            except Exception as e:
-                logger.debug("GARDEN: template orphan compaction failed: %s", e)
+            self._evict_oldest_template()
 
         return in_tpl, out_tpl
+
 
     def _learned_slots(
         self, in_tpl: str, in_vars: List[str]
@@ -1111,6 +1176,151 @@ class GARDENEngine:
         ranked = sorted(acc.items(), key=lambda kv: -kv[1])[:slots]
         return dict(ranked)
 
+    def _process_deterministic_stages(self, text: str) -> Optional[str]:
+        """Stage 1–1.6b: high-precision structural answers, template recall,
+        relational-chain reasoning. All set confidence 0.85 on hit.
+
+        These run BEFORE the reflex stage so that structurally-answerable
+        questions (e.g. "Which is heavier: 1kg of feathers or 1kg of steel?")
+        are not hijacked by an over-broad reflexive greeting pattern.
+        Template recall runs before relational-chain so a learned comparison
+        reversal (taller -> shorter) is not swallowed by the offline graph
+        resolver (which would mis-answer a single comparison as "the greatest").
+        """
+        math_result = self._try_math_eval(text)
+        if math_result is not None:
+            return _reconstruct_with_template(text, math_result, "math")
+
+        logic_result = self._try_logic_eval(text)
+        if logic_result is not None:
+            return _reconstruct_with_template(text, logic_result, "logic")
+
+        reasoning_result = self._try_reasoning(text)
+        if reasoning_result is not None:
+            return _reconstruct_with_template(text, reasoning_result, "reasoning")
+
+        # Stage 1.6a: Structural template recall (SNN layer, separate key space
+        # from the dictionary).  The dictionary owns concrete tokens; the SNN
+        # owns the structures those tokens fill.  If the query's skeleton was
+        # learned (e.g. "[] is taller than []"), the SNN fires the paired
+        # output skeleton and the slot fillers from the query are substituted
+        # back in — pure structure, no token-key mirroring into the SNN.
+        template_answer = self._try_template_recall(text)
+        if template_answer is not None:
+            return template_answer
+
+        # Stage 1.6b: Relational-chain reasoning (offline graph derivation).
+        # Catches relational comparison questions the symbolic reasoner's regex
+        # patterns miss (novel comparators / longer chains / paraphrases) by
+        # building a transient directed graph from the stated comparisons and
+        # resolving it via transitive closure. No LLM or torch dependency.
+        chain_result = self._try_chain_reasoning(text)
+        if chain_result is not None:
+            return _reconstruct_with_template(text, chain_result, "text")
+        return None
+
+    def _merge_rescue_targets(
+        self, network_output: Dict[str, float], input_keys: Dict[str, float]
+    ) -> Dict[str, float]:
+        """Stage 6.5: Anchor calibration — single-pass Hebbian weights never
+        reach the SNN spike/decode threshold, so forward() alone never
+        surfaces one-shot learned associations (presets, at 0.5-0.9, dominate
+        top-k). Recover learned output targets from the engine-side
+        provenance store (input-concept overlap, no preset mixing) and merge
+        them at a decodable magnitude so the neural layer's learned
+        associations actually surface. Inert when nothing was learned for the
+        active input.
+        """
+        rescue = self._retrieval_targets(input_keys, slots=_slot_budget(len(input_keys))[1])
+        if not rescue:
+            return network_output
+        w_max = max(rescue.values())
+        for k, w in rescue.items():
+            # Rescale into the decodable band [gate, 1]: the floor is the
+            # decode gate itself (a candidate is visible iff >= gate), so
+            # the strongest learned target maps to 1.0 and the weakest to
+            # exactly gate — monotone, non-arbitrary.
+            scaled = _DECODE_GATE + (1.0 - _DECODE_GATE) * (w / w_max)
+            if scaled > network_output.get(k, 0.0):
+                network_output[k] = scaled
+        return network_output
+
+    def _anchored_decode_with_fallback(
+        self, network_output: Dict[str, float], input_keys: Dict[str, float], text: str
+    ) -> str:
+        """Stage 7: Anchored decode, then direct input-key fallback decode."""
+        response = _anchored_decode(network_output, input_keys, self.dictionary, original_text=text)
+        if not response:
+            # Fallback: decode input keys directly
+            fallback_keys = list(input_keys.keys())[
+                : limit_value("ai.garden.engine.fallback_decode_keys", 4)
+            ]
+            response = self.dictionary.decode(
+                fallback_keys,
+                original_text=text,
+            )
+        return response
+
+    def _cycle_refine(
+        self, response: str, input_keys: Dict[str, float], text: str, context: Optional[Dict[str, Any]]
+    ) -> Tuple[str, int]:
+        """Stage 6 (cycling): iterative refinement if response is weak.
+
+        NOTE (measured): snn.forward() only reads context["neural_state"];
+        "previous_output"/"cycle" are IGNORED and the forward is
+        deterministic, so every cycle replays an identical computation and
+        can never improve the response. The loop therefore defaults OFF
+        (ai.garden.engine.max_cycles=0) — re-enable only once forward()
+        actually consumes the refinement context.
+        """
+        max_cycles = getattr(self, "max_cycles", limit_value("ai.garden.engine.max_cycles", 0))
+        min_response_len = limit_value("ai.garden.engine.min_response_len", 5)
+        current_output = response
+        cycles_used = 0
+
+        for cycle in range(max_cycles):
+            if len(current_output) >= min_response_len:
+                break
+            cycles_used += 1
+
+            # Re-run with previous output as context
+            cycle_context = dict(context) if context else {}
+            cycle_context["previous_output"] = current_output
+            cycle_context["cycle"] = cycle + 1
+
+            cycle_network = self.snn.forward(input_keys, context=cycle_context)
+            cycle_response = _anchored_decode(
+                cycle_network, input_keys, self.dictionary, original_text=text
+            )
+
+            if cycle_response and len(cycle_response) > len(current_output):
+                current_output = cycle_response
+        return current_output, cycles_used
+
+    def _compute_last_confidence(
+        self, input_keys: Dict[str, float], current_output: str, cycles_used: int
+    ) -> None:
+        """Compute confidence: key coverage × response quality × cycle penalty"""
+        key_ratio = min(1.0, len(input_keys) / limit_value("ai.garden.engine.top_k", 8))
+        resp_quality = min(
+            1.0, len(current_output) / limit_value("ai.garden.engine.quality_ref_len", 50)
+        )
+        key_ratio_weight = confidence_value("ai.garden.engine.key_ratio_weight", 0.5)
+        quality_weight = confidence_value("ai.garden.engine.quality_weight", 0.3)
+        base_confidence = limit_value("ai.garden.engine.confidence_base", 20) / 100.0
+        cycle_penalty = 1.0 - (
+            cycles_used * timing_value("ai.garden.engine.cycle_penalty_step", 0.1)
+        )
+        self._last_confidence = round(
+            max(
+                0.0,
+                key_ratio * key_ratio_weight
+                + resp_quality * quality_weight
+                + base_confidence * cycle_penalty,
+            ),
+            3,
+        )
+
     def process(self, text: str, context: Optional[Dict[str, Any]] = None) -> str:
         """
         Full GARDEN inference pipeline:
@@ -1126,48 +1336,11 @@ class GARDENEngine:
         emotion = self._detect_emotion(text)
         self._adjust_hormones(emotion)
 
-        # Stage 1: High-precision structural answers (math + symbolic reasoning).
-        # These run BEFORE the reflex stage so that structurally-answerable
-        # questions (e.g. "Which is heavier: 1kg of feathers or 1kg of steel?")
-        # are not hijacked by an over-broad reflexive greeting pattern.
-        math_result = self._try_math_eval(text)
-        if math_result is not None:
+        # Stages 1–1.6b: deterministic / structural (confidence 0.85 on hit)
+        det = self._process_deterministic_stages(text)
+        if det is not None:
             self._last_confidence = 0.85
-            return _reconstruct_with_template(text, math_result, "math")
-
-        logic_result = self._try_logic_eval(text)
-        if logic_result is not None:
-            self._last_confidence = 0.85
-            return _reconstruct_with_template(text, logic_result, "logic")
-
-        reasoning_result = self._try_reasoning(text)
-        if reasoning_result is not None:
-            self._last_confidence = 0.85
-            return _reconstruct_with_template(text, reasoning_result, "reasoning")
-
-        # Stage 1.6a: Structural template recall (SNN layer, separate key space
-        # from the dictionary).  The dictionary owns concrete tokens; the SNN
-        # owns the structures those tokens fill.  If the query's skeleton was
-        # learned (e.g. "[] is taller than []"), the SNN fires the paired
-        # output skeleton and the slot fillers from the query are substituted
-        # back in — pure structure, no token-key mirroring into the SNN.
-        # Runs before relational-chain so a learned comparison reversal (taller
-        # -> shorter) is not swallowed by the offline graph resolver (which
-        # would mis-answer a single comparison as "the greatest").
-        template_answer = self._try_template_recall(text)
-        if template_answer is not None:
-            self._last_confidence = 0.85
-            return template_answer
-
-        # Stage 1.6b: Relational-chain reasoning (offline graph derivation).
-        # Catches relational comparison questions the symbolic reasoner's regex
-        # patterns miss (novel comparators / longer chains / paraphrases) by
-        # building a transient directed graph from the stated comparisons and
-        # resolving it via transitive closure. No LLM or torch dependency.
-        chain_result = self._try_chain_reasoning(text)
-        if chain_result is not None:
-            self._last_confidence = 0.85
-            return _reconstruct_with_template(text, chain_result, "text")
+            return det
 
         # Stage 2: Reflex (fast pattern match) — greetings / canned replies.
         reflex_hit = self.reflex.match(text)
@@ -1200,97 +1373,22 @@ class GARDENEngine:
         network_output = self.snn.forward(input_keys, context=context)
         self._last_network_output = network_output
 
-        # Stage 6.5: Anchor calibration — single-pass Hebbian weights never
-        # reach the SNN spike/decode threshold, so forward() alone never
-        # surfaces one-shot learned associations (presets, at 0.5-0.9, dominate
-        # top-k). Recover learned output targets from the engine-side
-        # provenance store (input-concept overlap, no preset mixing) and merge
-        # them at a decodable magnitude so the neural layer's learned
-        # associations actually surface. Inert when nothing was learned for the
-        # active input.
-        rescue = self._retrieval_targets(input_keys, slots=_slot_budget(len(input_keys))[1])
-        if rescue:
-            w_max = max(rescue.values())
-            for k, w in rescue.items():
-                # Rescale into the decodable band [gate, 1]: the floor is the
-                # decode gate itself (a candidate is visible iff >= gate), so
-                # the strongest learned target maps to 1.0 and the weakest to
-                # exactly gate — monotone, non-arbitrary.
-                scaled = _DECODE_GATE + (1.0 - _DECODE_GATE) * (w / w_max)
-                if scaled > network_output.get(k, 0.0):
-                    network_output[k] = scaled
-            self._last_network_output = network_output
+        # Stage 6.5: Anchor calibration (learned-target rescue merge)
+        network_output = self._merge_rescue_targets(network_output, input_keys)
+        self._last_network_output = network_output
 
         # Stage 7: Anchored decode
-        response = _anchored_decode(network_output, input_keys, self.dictionary, original_text=text)
-
-        if not response:
-            # Fallback: decode input keys directly
-            fallback_keys = list(input_keys.keys())[
-                : limit_value("ai.garden.engine.fallback_decode_keys", 4)
-            ]
-            response = self.dictionary.decode(
-                fallback_keys,
-                original_text=text,
-            )
+        response = self._anchored_decode_with_fallback(network_output, input_keys, text)
 
         if not response:
             self._last_confidence = 0.0
             return self._fallback_str(text)
 
-        # Stage 6: Cycling — iterative refinement if response is weak.
-        #
-        # NOTE (measured): snn.forward() only reads context["neural_state"];
-        # "previous_output"/"cycle" are IGNORED and the forward is
-        # deterministic, so every cycle replays an identical computation and
-        # can never improve the response. The loop therefore defaults OFF
-        # (ai.garden.engine.max_cycles=0) — re-enable only once forward()
-        # actually consumes the refinement context.
-        MAX_CYCLES = getattr(self, "max_cycles", limit_value("ai.garden.engine.max_cycles", 0))
-        MIN_RESPONSE_LEN = limit_value("ai.garden.engine.min_response_len", 5)
-        current_output = response
-        cycles_used = 0
-
-        for cycle in range(MAX_CYCLES):
-            if len(current_output) >= MIN_RESPONSE_LEN:
-                break
-            cycles_used += 1
-
-            # Re-run with previous output as context
-            cycle_context = dict(context) if context else {}
-            cycle_context["previous_output"] = current_output
-            cycle_context["cycle"] = cycle + 1
-
-            cycle_network = self.snn.forward(input_keys, context=cycle_context)
-            cycle_response = _anchored_decode(
-                cycle_network, input_keys, self.dictionary, original_text=text
-            )
-
-            if cycle_response and len(cycle_response) > len(current_output):
-                current_output = cycle_response
-
-        # Compute confidence: key coverage × response quality × cycle penalty
-        key_ratio = min(1.0, len(input_keys) / limit_value("ai.garden.engine.top_k", 8))
-        resp_quality = min(
-            1.0, len(current_output) / limit_value("ai.garden.engine.quality_ref_len", 50)
-        )
-        key_ratio_weight = confidence_value("ai.garden.engine.key_ratio_weight", 0.5)
-        quality_weight = confidence_value("ai.garden.engine.quality_weight", 0.3)
-        base_confidence = limit_value("ai.garden.engine.confidence_base", 20) / 100.0
-        cycle_penalty = 1.0 - (
-            cycles_used * timing_value("ai.garden.engine.cycle_penalty_step", 0.1)
-        )
-        self._last_confidence = round(
-            max(
-                0.0,
-                key_ratio * key_ratio_weight
-                + resp_quality * quality_weight
-                + base_confidence * cycle_penalty,
-            ),
-            3,
-        )
-
+        # Cycling: iterative refinement if response is weak (defaults OFF)
+        current_output, cycles_used = self._cycle_refine(response, input_keys, text, context)
+        self._compute_last_confidence(input_keys, current_output, cycles_used)
         return current_output
+
 
     # ------------------------------------------------------------------
     # Multi-step reasoning (Phase 4.3)
@@ -1481,51 +1579,24 @@ class GARDENEngine:
     # Continuous learning
     # ------------------------------------------------------------------
 
-    def learn_from_interaction(
-        self,
-        user_text: str,
-        response_text: str,
-        confidence: Optional[float] = None,
-    ) -> Dict[str, Any]:
+    def _learn_skip_summary(self, engine_handled: bool = False) -> Dict[str, Any]:
+        summary: Dict[str, Any] = {
+            "interaction": self._learn_count,
+            "new_concepts": [],
+            "input_keys": [],
+            "output_keys": [],
+            "hebbian_delta": 0.0,
+        }
+        if engine_handled:
+            summary["engine_handled"] = True
+        return summary
+
+    def _grow_novel_tokens(
+        self, user_text: str, response_text: str, confidence: float
+    ) -> List[str]:
+        """Grow dictionary with novel concepts from user+response text.
+        Batch grow - don't rebuild index until all tokens processed.
         """
-        Online learning from a single interaction.
-        1. Detect and grow new concepts in the dictionary (from both user and response text)
-        2. Run Hebbian weight update in SNN between input and response keys
-        Returns a summary dict.
-        """
-        if not self._learning_enabled:
-            return {
-                "interaction": self._learn_count,
-                "new_concepts": [],
-                "input_keys": [],
-                "output_keys": [],
-                "hebbian_delta": 0.0,
-            }
-
-        # If a deterministic engine already handles this input, skip learning
-        if self._is_deterministic_match(user_text, response_text):
-            return {
-                "interaction": self._learn_count,
-                "new_concepts": [],
-                "input_keys": [],
-                "output_keys": [],
-                "hebbian_delta": 0.0,
-                "engine_handled": True,
-            }
-
-        confidence = (
-            confidence
-            if confidence is not None
-            else confidence_value("ai.garden.engine.learn_confidence", 0.7)
-        )
-        if not self._presets_loaded:
-            self.load_presets()
-
-        self._learn_count += 1
-
-        new_keys: List[str] = []
-
-        # Grow dictionary with novel concepts from user text
         all_tokens = []
         for text in [user_text, response_text]:
             tokens = [
@@ -1542,7 +1613,7 @@ class GARDENEngine:
             if cleaned and len(cleaned) >= limit_value("ai.garden.engine.min_token_length", 3):
                 cleaned_tokens.append(cleaned)
 
-        # Batch grow - don't rebuild index until all tokens processed
+        new_keys: List[str] = []
         for token in cleaned_tokens:
             existing = self.dictionary._find_similar_key(
                 token, threshold=threshold_value("ai.garden.engine.dedup_similarity", 0.90)
@@ -1551,6 +1622,38 @@ class GARDENEngine:
                 new_key = self.dictionary.grow(token, token, confidence=confidence)
                 if new_key:
                     new_keys.append(new_key)
+        return new_keys
+
+    def learn_from_interaction(
+        self,
+        user_text: str,
+        response_text: str,
+        confidence: Optional[float] = None,
+    ) -> Dict[str, Any]:
+        """
+        Online learning from a single interaction.
+        1. Detect and grow new concepts in the dictionary (from both user and response text)
+        2. Run Hebbian weight update in SNN between input and response keys
+        Returns a summary dict.
+        """
+        if not self._learning_enabled:
+            return self._learn_skip_summary()
+
+        # If a deterministic engine already handles this input, skip learning
+        if self._is_deterministic_match(user_text, response_text):
+            return self._learn_skip_summary(engine_handled=True)
+
+        confidence = (
+            confidence
+            if confidence is not None
+            else confidence_value("ai.garden.engine.learn_confidence", 0.7)
+        )
+        if not self._presets_loaded:
+            self.load_presets()
+
+        self._learn_count += 1
+
+        new_keys = self._grow_novel_tokens(user_text, response_text, confidence)
 
         # Structural learning: the dictionary grows tokens, the SNN learns the
         # STRUCTURE those tokens fill.  Template keys live in the SNN's own key
@@ -1584,6 +1687,224 @@ class GARDENEngine:
             "hebbian_delta": round(delta, 6),
         }
 
+
+    def _batch_non_engine_indices(self, samples: List[Dict[str, str]]) -> List[int]:
+        """Pre-compute which samples are handled by deterministic engines.
+        Those samples are pure computational facts — skip dictionary growth
+        and Hebbian learning to keep numeric/formula noise out of GARDEN's
+        vocabulary.
+        """
+        filtered_indices: List[int] = []
+        for idx, s in enumerate(samples):
+            user_text = s.get("input", "") or ""
+            response_text = s.get("output", "") or ""
+            if not self._is_deterministic_match(str(user_text), str(response_text)):
+                filtered_indices.append(idx)
+        return filtered_indices
+
+    def _batch_collect_tokens(
+        self, samples: List[Dict[str, str]], filtered_indices: List[int]
+    ) -> List[str]:
+        """Stage 1: Collect all tokens from non-engine-handled samples,
+        then strip punctuation and re-check the length floor.
+        """
+        all_tokens: List[str] = []
+        for idx in filtered_indices:
+            s = samples[idx]
+            user_text = s.get("input", "") or ""
+            response_text = s.get("output", "") or ""
+            if not isinstance(user_text, str) or not isinstance(response_text, str):
+                user_text = str(user_text)
+                response_text = str(response_text)
+            for text in [user_text, response_text]:
+                tokens = [
+                    t
+                    for t in text.lower().split()
+                    if len(t) >= limit_value("ai.garden.engine.min_token_length", 3)
+                ]
+                all_tokens.extend(tokens)
+
+        cleaned_tokens = []
+        for token in all_tokens:
+            cleaned = token.strip(string.punctuation)
+            if cleaned and len(cleaned) >= limit_value("ai.garden.engine.min_token_length", 3):
+                cleaned_tokens.append(cleaned)
+        return cleaned_tokens
+
+    def _batch_grow_concepts(
+        self, cleaned_tokens: List[str], confidence: float
+    ) -> Tuple[bool, List[str]]:
+        """Stage 2: Grow new concepts from training data.
+        With prefix dedup (threshold=0.5), word forms share neurons:
+        "happy"/"happiness"/"happier" → same neuron, "glad" → new neuron.
+        V grows proportionally to unique concepts, not word forms.
+        """
+        all_new_keys: List[str] = []
+        seen_tokens: set = set()
+        grew_any = False
+        for token in cleaned_tokens:
+            if token in seen_tokens:
+                continue
+            seen_tokens.add(token)
+            result_key = self.dictionary.grow(token, token, confidence=confidence)
+            if result_key and result_key.startswith("l"):
+                grew_any = True
+                all_new_keys.append(result_key)
+        return grew_any, all_new_keys
+
+    def _batch_learn_templates(
+        self, samples: List[Dict[str, str]], filtered_indices: List[int], confidence: float
+    ) -> Dict[int, Optional[Tuple[str, str]]]:
+        """Stage 2b: Learn STRUCTURES into the SNN.  The dictionary above grows
+        concrete tokens; the SNN learns the structural skeleton each sample
+        fills ([] + [] = [], [] is taller than []).  Dictionary token keys
+        are NOT mirrored into the SNN — the two stay separate key spaces
+        (dictionary is dictionary, SNN is SNN).
+        """
+        template_pairs: Dict[int, Optional[Tuple[str, str]]] = {}
+        for idx in filtered_indices:
+            s = samples[idx]
+            user_text = s.get("input", "") or ""
+            response_text = s.get("output", "") or ""
+            template_pairs[idx] = self._learn_template(
+                str(user_text), str(response_text), confidence=confidence
+            )
+        return template_pairs
+
+    def _batch_prune_snn_sync(self) -> None:
+        """Stage 2c: Sync SNN with dictionary pruning.  If the dictionary hit
+        its cap and evicted low-value entries, those are dead neurons in the
+        SNN registry — compact them out so V doesn't drift (dict 9,573 vs
+        SNN 20,573 wastes up to 2x matrix memory).
+        """
+        if getattr(self.dictionary, "drain_pruned_keys", None) is not None:
+            pruned = self.dictionary.drain_pruned_keys()
+            if pruned:
+                try:
+                    self.snn.compact_removed_keys(pruned)
+                except Exception as e:
+                    logger.warning(f"SNN prune compaction failed: {e}", exc_info=True)
+
+    def _batch_encode_unique(
+        self, samples: List[Dict[str, str]], filtered_indices: List[int]
+    ) -> Dict[str, Dict[str, float]]:
+        """Batch-level text dedup: identical input/output strings recur a
+        lot inside a batch (common phrases, templates). Encode each
+        unique string ONCE and reuse the key dict across samples —
+        avoids re-running the O(V) TF-IDF query for every occurrence.
+        """
+        batch_texts: Dict[str, str] = {}
+        batch_text_keys: Dict[str, Dict[str, float]] = {}
+        for idx in filtered_indices:
+            s = samples[idx]
+            for field in ("input", "output"):
+                txt = str(s.get(field, "") or "")
+                if txt and txt not in batch_texts:
+                    batch_texts[txt] = txt
+        for txt in batch_texts:
+            batch_text_keys[txt] = self.dictionary.encode(txt)
+        return batch_text_keys
+
+    def _batch_hebbian_update(
+        self,
+        idx: int,
+        s: Dict[str, str],
+        template_pairs: Dict[int, Optional[Tuple[str, str]]],
+        batch_text_keys: Dict[str, Dict[str, float]],
+        lr: float,
+        target_str: float,
+    ) -> Tuple[float, float, bool]:
+        """One sample's structural Hebbian + auto-regressive pass.
+
+        Returns (hebbian_delta, auto_regressive_delta, updated).
+        """
+        user_text = str(s.get("input", "") or "")
+        response_text = str(s.get("output", "") or "")
+        input_keys = batch_text_keys.get(user_text) or {}
+        output_keys = batch_text_keys.get(response_text) or {}
+        # Token-level provenance (composition layer, NOT the SNN): lets
+        # process() recover learned output tokens that never reached
+        # the SNN spike threshold.  Dictionary keys never enter the
+        # SNN key space from here.
+        self._record_learned(input_keys, output_keys)
+
+        hebbian_delta = 0.0
+        auto_regressive_delta = 0.0
+        # Structural Hebbian: the SNN learns template -> template
+        # ([] is taller than [] -> [] is shorter than []).  This is
+        # the ONLY weight write for learned data — dictionary token
+        # keys are not Hebbian targets (dictionary is dictionary,
+        # SNN is SNN).
+        tpl_pair = template_pairs.get(idx)
+        if tpl_pair is None:
+            return hebbian_delta, auto_regressive_delta, False
+        in_tpl, out_tpl = tpl_pair
+        # Skip templates that were evicted by the FIFO cap during
+        # _learn_template — their tpl: keys are compacted out of
+        # the SNN and must not be re-registered by a late Hebbian
+        # write (that would recreate the orphan-neuron drift the
+        # cap enforcement is meant to prevent).
+        if in_tpl and in_tpl not in self._templates:
+            return hebbian_delta, auto_regressive_delta, False
+        if not (in_tpl and out_tpl):
+            return hebbian_delta, auto_regressive_delta, False
+        delta = self.snn.hebbian_update(
+            {f"tpl:{in_tpl}": 1.0},
+            {f"tpl:{out_tpl}": 1.0},
+            lr=lr,
+            target_strength=target_str,
+        )
+        hebbian_delta += delta
+
+        # Pass 2: Auto-regressive — SNN forward on the input
+        # template, then teach (input + intermediate) ->
+        # output.  Chains template associations so the SNN
+        # learns multi-hop structural reasoning.
+        snn_intermediate = self.snn.forward({f"tpl:{in_tpl}": 1.0})
+        intermediate: Dict[str, float] = {k: v for k, v in snn_intermediate.items() if v > 0.3}
+        if intermediate:
+            combined: Dict[str, float] = dict(intermediate)
+            combined[f"tpl:{in_tpl}"] = 1.0
+            delta_ar = self.snn.hebbian_update(
+                combined,
+                {f"tpl:{out_tpl}": 1.0},
+                lr=lr * 0.5,
+                target_strength=target_str,
+            )
+            auto_regressive_delta += delta_ar
+        return hebbian_delta, auto_regressive_delta, True
+
+    def _batch_train_associations(
+        self,
+        samples: List[Dict[str, str]],
+        filtered_indices: List[int],
+        template_pairs: Dict[int, Optional[Tuple[str, str]]],
+    ) -> Tuple[float, float, int]:
+        """Stage 4: Hebbian updates for each non-engine-handled sample.
+        Skipped when train_associations=False (knowledge-only ingestion: the
+        fact lives in the dictionary, the SNN only ever learns associations).
+        """
+        hebbian_delta = 0.0
+        auto_regressive_delta = 0.0
+        updates_performed = 0
+        lr = learning_rate("ai.garden.engine.hebbian_lr", 0.05)
+        target_str = confidence_value("ai.garden.engine.hebbian_target_strength", 0.35)
+        batch_text_keys = self._batch_encode_unique(samples, filtered_indices)
+
+        for idx in filtered_indices:
+            s = samples[idx]
+            hd, ard, updated = self._batch_hebbian_update(
+                idx, s, template_pairs, batch_text_keys, lr, target_str
+            )
+            hebbian_delta += hd
+            auto_regressive_delta += ard
+            if updated:
+                updates_performed += 1
+                # Periodic global decay every 1000 Hebbian updates
+                if updates_performed % 1000 == 0:
+                    self.snn.apply_decay(weight_decay=0.002)
+        return hebbian_delta, auto_regressive_delta, updates_performed
+
     def learn_batch(
         self,
         samples: List[Dict[str, str]],
@@ -1612,17 +1933,7 @@ class GARDENEngine:
         if not self._presets_loaded:
             self.load_presets()
 
-        # Pre-compute which samples are handled by deterministic engines.
-        # Those samples are pure computational facts — skip dictionary growth
-        # and Hebbian learning to keep numeric/formula noise out of GARDEN's
-        # vocabulary.
-        filtered_indices: List[int] = []
-        for idx, s in enumerate(samples):
-            user_text = s.get("input", "") or ""
-            response_text = s.get("output", "") or ""
-            if not self._is_deterministic_match(str(user_text), str(response_text)):
-                filtered_indices.append(idx)
-
+        filtered_indices = self._batch_non_engine_indices(samples)
         if not filtered_indices:
             return {
                 "interaction": self._learn_count,
@@ -1631,162 +1942,22 @@ class GARDENEngine:
                 "engine_handled_count": len(samples),
             }
 
-        all_new_keys: List[str] = []
-        all_tokens: List[str] = []
-
-        # Stage 1: Collect all tokens from non-engine-handled samples
-        for idx in filtered_indices:
-            s = samples[idx]
-            user_text = s.get("input", "") or ""
-            response_text = s.get("output", "") or ""
-            if not isinstance(user_text, str) or not isinstance(response_text, str):
-                user_text = str(user_text)
-                response_text = str(response_text)
-            for text in [user_text, response_text]:
-                tokens = [
-                    t
-                    for t in text.lower().split()
-                    if len(t) >= limit_value("ai.garden.engine.min_token_length", 3)
-                ]
-                all_tokens.extend(tokens)
-
-        # Clean punctuation from tokens
-        cleaned_tokens = []
-        for token in all_tokens:
-            cleaned = token.strip(string.punctuation)
-            if cleaned and len(cleaned) >= limit_value("ai.garden.engine.min_token_length", 3):
-                cleaned_tokens.append(cleaned)
-
-        # Stage 2: Grow new concepts from training data.
-        # With prefix dedup (threshold=0.5), word forms share neurons:
-        # "happy"/"happiness"/"happier" → same neuron, "glad" → new neuron.
-        # V grows proportionally to unique concepts, not word forms.
-        seen_tokens: set = set()
-        grew_any = False
-        for token in cleaned_tokens:
-            if token in seen_tokens:
-                continue
-            seen_tokens.add(token)
-            result_key = self.dictionary.grow(token, token, confidence=confidence)
-            if result_key and result_key.startswith("l"):
-                grew_any = True
-                all_new_keys.append(result_key)
-
-        # Stage 2b: Learn STRUCTURES into the SNN.  The dictionary above grows
-        # concrete tokens; the SNN learns the structural skeleton each sample
-        # fills ([] + [] = [], [] is taller than []).  Dictionary token keys
-        # are NOT mirrored into the SNN — the two stay separate key spaces
-        # (dictionary is dictionary, SNN is SNN).
-        template_pairs: Dict[int, Optional[Tuple[str, str]]] = {}
-        for idx in filtered_indices:
-            s = samples[idx]
-            user_text = s.get("input", "") or ""
-            response_text = s.get("output", "") or ""
-            template_pairs[idx] = self._learn_template(
-                str(user_text), str(response_text), confidence=confidence
-            )
-
-        # Stage 2c: Sync SNN with dictionary pruning.  If the dictionary hit
-        # its cap and evicted low-value entries, those are dead neurons in the
-        # SNN registry — compact them out so V doesn't drift (dict 9,573 vs
-        # SNN 20,573 wastes up to 2x matrix memory).
-        if getattr(self.dictionary, "drain_pruned_keys", None) is not None:
-            pruned = self.dictionary.drain_pruned_keys()
-            if pruned:
-                try:
-                    self.snn.compact_removed_keys(pruned)
-                except Exception as e:
-                    logger.warning(f"SNN prune compaction failed: {e}", exc_info=True)
+        cleaned_tokens = self._batch_collect_tokens(samples, filtered_indices)
+        grew_any, all_new_keys = self._batch_grow_concepts(cleaned_tokens, confidence)
+        template_pairs = self._batch_learn_templates(samples, filtered_indices, confidence)
+        self._batch_prune_snn_sync()
 
         # Stage 3: Rebuild index ONCE after all grows
         if grew_any and self.dictionary._dirty:
             self.dictionary._rebuild_index()
 
-        # Stage 4: Hebbian updates for each non-engine-handled sample.
-        # Skipped when train_associations=False (knowledge-only ingestion: the
-        # fact lives in the dictionary, the SNN only ever learns associations).
         hebbian_delta = 0.0
         auto_regressive_delta = 0.0
         updates_performed = 0
         if train_associations:
-            lr = learning_rate("ai.garden.engine.hebbian_lr", 0.05)
-            target_str = confidence_value("ai.garden.engine.hebbian_target_strength", 0.35)
-
-            # Batch-level text dedup: identical input/output strings recur a
-            # lot inside a batch (common phrases, templates). Encode each
-            # unique string ONCE and reuse the key dict across samples —
-            # avoids re-running the O(V) TF-IDF query for every occurrence.
-            batch_texts: Dict[str, str] = {}
-            batch_text_keys: Dict[str, Dict[str, float]] = {}
-            for idx in filtered_indices:
-                s = samples[idx]
-                for field in ("input", "output"):
-                    txt = str(s.get(field, "") or "")
-                    if txt and txt not in batch_texts:
-                        batch_texts[txt] = txt
-            for txt in batch_texts:
-                batch_text_keys[txt] = self.dictionary.encode(txt)
-
-            for idx in filtered_indices:
-                s = samples[idx]
-                user_text = str(s.get("input", "") or "")
-                response_text = str(s.get("output", "") or "")
-                input_keys = batch_text_keys.get(user_text) or {}
-                output_keys = batch_text_keys.get(response_text) or {}
-                # Token-level provenance (composition layer, NOT the SNN): lets
-                # process() recover learned output tokens that never reached
-                # the SNN spike threshold.  Dictionary keys never enter the
-                # SNN key space from here.
-                self._record_learned(input_keys, output_keys)
-
-                # Structural Hebbian: the SNN learns template -> template
-                # ([] is taller than [] -> [] is shorter than []).  This is
-                # the ONLY weight write for learned data — dictionary token
-                # keys are not Hebbian targets (dictionary is dictionary,
-                # SNN is SNN).
-                tpl_pair = template_pairs.get(idx)
-                if tpl_pair is not None:
-                    in_tpl, out_tpl = tpl_pair
-                    # Skip templates that were evicted by the FIFO cap during
-                    # _learn_template — their tpl: keys are compacted out of
-                    # the SNN and must not be re-registered by a late Hebbian
-                    # write (that would recreate the orphan-neuron drift the
-                    # cap enforcement is meant to prevent).
-                    if in_tpl and in_tpl not in self._templates:
-                        continue
-                    if in_tpl and out_tpl:
-                        delta = self.snn.hebbian_update(
-                            {f"tpl:{in_tpl}": 1.0},
-                            {f"tpl:{out_tpl}": 1.0},
-                            lr=lr,
-                            target_strength=target_str,
-                        )
-                        hebbian_delta += delta
-
-                        # Pass 2: Auto-regressive — SNN forward on the input
-                        # template, then teach (input + intermediate) ->
-                        # output.  Chains template associations so the SNN
-                        # learns multi-hop structural reasoning.
-                        snn_intermediate = self.snn.forward({f"tpl:{in_tpl}": 1.0})
-                        intermediate: Dict[str, float] = {
-                            k: v for k, v in snn_intermediate.items() if v > 0.3
-                        }
-                        if intermediate:
-                            combined: Dict[str, float] = dict(intermediate)
-                            combined[f"tpl:{in_tpl}"] = 1.0
-                            delta_ar = self.snn.hebbian_update(
-                                combined,
-                                {f"tpl:{out_tpl}": 1.0},
-                                lr=lr * 0.5,
-                                target_strength=target_str,
-                            )
-                            auto_regressive_delta += delta_ar
-
-                        updates_performed += 1
-
-                # Periodic global decay every 1000 Hebbian updates
-                if updates_performed > 0 and updates_performed % 1000 == 0:
-                    self.snn.apply_decay(weight_decay=0.002)
+            hebbian_delta, auto_regressive_delta, updates_performed = (
+                self._batch_train_associations(samples, filtered_indices, template_pairs)
+            )
 
         self._learn_count += len(samples)
 
@@ -1800,6 +1971,7 @@ class GARDENEngine:
             "associations_trained": train_associations,
             "engine_handled_count": engine_handled,
         }
+
 
     # ------------------------------------------------------------------
     # Hormonal modulation passthrough
@@ -1868,6 +2040,56 @@ class GARDENEngine:
             json.dump(meta, f, ensure_ascii=False, indent=2)
         logger.info("GARDEN: engine saved to %s", directory)
 
+    def _load_meta_templates(self, saved_templates: Any) -> None:
+        """Restore the structural-template store (SNN structural layer)."""
+        if not isinstance(saved_templates, dict):
+            return
+        self._templates = {}
+        for in_tpl, entry in saved_templates.items():
+            if not isinstance(entry, dict):
+                continue
+            slot_map = entry.get("slot_map") or {}
+            # JSON serialization stringifies int dict keys — restore.
+            self._templates[in_tpl] = {
+                "out_tpl": entry.get("out_tpl", ""),
+                "slot_map": {
+                    int(k) if str(k).lstrip("-").isdigit() else k: v for k, v in slot_map.items()
+                },
+                "samples": int(entry.get("samples", 0)),
+                "confidence": float(entry.get("confidence", 0.0)),
+            }
+
+    def _load_meta_learned(self, saved_learned: Any) -> None:
+        """Restore the provenance store (composition layer).  If the
+        checkpoint predates provenance persistence (or stores none),
+        learned recall starts empty and rebuilds on the next learn pass.
+        """
+        if not isinstance(saved_learned, list) or not saved_learned:
+            return
+        self._learned_recall = {}
+        self._learned_index = {}
+        self._learned_order = deque()
+        for rec_id, (concepts, out_keys) in enumerate(saved_learned):
+            if not concepts or not out_keys:
+                continue
+            self._learned_recall[rec_id] = (frozenset(concepts), out_keys)
+            self._learned_order.append(rec_id)
+            for c in concepts:
+                self._learned_index.setdefault(c, set()).add(rec_id)
+        self._learned_next_id = max(self._learned_recall.keys(), default=-1) + 1
+
+    def _load_meta_reflex(self, saved_reflex: Any) -> None:
+        """Restore the reflex table saved with the checkpoint. If the
+        checkpoint predates reflex persistence (or stores none), fall
+        back to the config-reflex presets so greeting/canned replies do
+        not silently vanish from the loaded model.
+        """
+        if not saved_reflex:
+            return
+        self.reflex.clear()
+        for pattern, response in saved_reflex.items():
+            self.reflex.add(pattern, response)
+
     def load(self, directory: str) -> None:
         """Load full engine state from a previously saved directory."""
         dict_path = os.path.join(directory, "dictionary.json")
@@ -1887,50 +2109,10 @@ class GARDENEngine:
                 meta = json.load(f)
             self._query_count = meta.get("query_count", 0)
             self._learn_count = meta.get("learn_count", 0)
-            # Restore the structural-template store (SNN structural layer).
-            saved_templates = meta.get("templates")
-            if isinstance(saved_templates, dict):
-                self._templates = {}
-                for in_tpl, entry in saved_templates.items():
-                    if not isinstance(entry, dict):
-                        continue
-                    slot_map = entry.get("slot_map") or {}
-                    # JSON serialization stringifies int dict keys — restore.
-                    self._templates[in_tpl] = {
-                        "out_tpl": entry.get("out_tpl", ""),
-                        "slot_map": {
-                            int(k) if str(k).lstrip("-").isdigit() else k: v
-                            for k, v in slot_map.items()
-                        },
-                        "samples": int(entry.get("samples", 0)),
-                        "confidence": float(entry.get("confidence", 0.0)),
-                    }
-            # Restore the provenance store (composition layer).  If the
-            # checkpoint predates provenance persistence (or stores none),
-            # learned recall starts empty and rebuilds on the next learn pass.
-            saved_learned = meta.get("learned_recall")
-            if isinstance(saved_learned, list) and saved_learned:
-                self._learned_recall = {}
-                self._learned_index = {}
-                self._learned_order = deque()
-                for rec_id, (concepts, out_keys) in enumerate(saved_learned):
-                    if not concepts or not out_keys:
-                        continue
-                    self._learned_recall[rec_id] = (frozenset(concepts), out_keys)
-                    self._learned_order.append(rec_id)
-                    for c in concepts:
-                        self._learned_index.setdefault(c, set()).add(rec_id)
-                self._learned_next_id = max(self._learned_recall.keys(), default=-1) + 1
+            self._load_meta_templates(meta.get("templates"))
+            self._load_meta_learned(meta.get("learned_recall"))
             self._learned_next_id = meta.get("learned_next_id", self._learned_next_id)
-            # Restore the reflex table saved with the checkpoint. If the
-            # checkpoint predates reflex persistence (or stores none), fall
-            # back to the config-reflex presets so greeting/canned replies do
-            # not silently vanish from the loaded model.
-            saved_reflex = meta.get("reflex_patterns")
-            if saved_reflex:
-                self.reflex.clear()
-                for pattern, response in saved_reflex.items():
-                    self.reflex.add(pattern, response)
+            self._load_meta_reflex(meta.get("reflex_patterns"))
         self._presets_loaded = True
         # Apply updated preset surface forms (adds Arabic numerals, operator symbols)
         self._apply_preset_updates()
@@ -1938,6 +2120,7 @@ class GARDENEngine:
         # (covers checkpoints saved before reflex persistence was added).
         self._load_config_reflex_into(self.reflex)
         logger.info("GARDEN: engine loaded from %s", directory)
+
 
     def _apply_preset_updates(self) -> None:
         """Update existing preset entries with enriched surface forms.
