@@ -29,8 +29,14 @@ BUDGET_FILE = Path(__file__).resolve().parent / "mypy_budget.txt"
 # 跑（其 mypy 與專案 venv 不同），會得 ~109 假錯誤。偵測到專案 venv 且當前
 # 不在其中時，自動用 venv python 重跑——無論如何呼叫都得到一致結果。
 # CI 用 setup-python（repo root 無 .venv/bin/python）→ 不觸發，維持原行為。
+#
+# 路徑比較必須用 .absolute() 而非 .resolve()：.venv/bin/python 是指向基礎
+# 解釋器的符號鏈結，.resolve() 會把兩者解析成同一路徑（/usr/bin/python3），
+# 導致「已在 venv」誤判、re-exec 永不觸發、退回系統 mypy（假 109 錯）。
+# .absolute() 正規化路徑但保留符號鏈結，可正確區分「經 .venv/bin/python
+# 執行」與「經系統 python3 執行」。
 _VENV_PY = REPO_ROOT / ".venv" / "bin" / "python"
-if _VENV_PY.exists() and Path(sys.executable).resolve() != _VENV_PY.resolve():
+if _VENV_PY.exists() and Path(sys.executable).absolute() != _VENV_PY.absolute():
     import os
 
     os.execv(str(_VENV_PY), [str(_VENV_PY), *sys.argv])
