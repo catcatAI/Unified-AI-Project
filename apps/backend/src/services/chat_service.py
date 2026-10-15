@@ -30,6 +30,37 @@ _NON_LEARNING_MODELS = frozenset(
 )
 
 
+def _garden_field(response: Any, name: str) -> Any:
+    if isinstance(response, dict):
+        return response.get(name)
+    return getattr(response, name, None)
+
+
+def _garden_guard_unservable(text: str) -> bool:
+    try:
+        from ai.memory.ham_memory.ham_manager import is_unservable_template
+
+        if is_unservable_template(text):
+            return False
+    except Exception:
+        # Fail-closed: if the poison guard cannot run, do NOT learn.
+        # A fail-open here bakes refusals/echoes into GARDEN with 0.7
+        # confidence (the exact 2026-10-10 audit finding this guard exists for).
+        logger.warning("Poison guard unavailable; refusing GARDEN learn", exc_info=True)
+        return False
+    return True
+
+
+def _garden_guard_model_backend(response: Any, text: str) -> bool:
+    model = str(_garden_field(response, "model") or "")
+    if model in _NON_LEARNING_MODELS:
+        return False
+    backend = str(_garden_field(response, "backend") or "")
+    if backend == "local-fallback" and len(text.strip()) < 20:
+        return False
+    return True
+
+
 def _should_garden_learn(user_message: Any, response: Any) -> bool:
     """Gate live chat turns out of GARDEN Hebbian learning.
 
@@ -38,36 +69,15 @@ def _should_garden_learn(user_message: Any, response: Any) -> bool:
     (audit 2026-10-10: the live twin of the template-poison loop).
     Returns False for anything not worth learning; failures never block.
     """
-
-    def _field(name: str) -> Any:
-        if isinstance(response, dict):
-            return response.get(name)
-        return getattr(response, name, None)
-
     try:
-        text = _field("text") or ""
+        text = _garden_field(response, "text") or ""
         if not isinstance(text, str) or not text.strip():
             return False
-        if _field("error"):
+        if _garden_field(response, "error"):
             return False
-        model = str(_field("model") or "")
-        if model in _NON_LEARNING_MODELS:
+        if not _garden_guard_model_backend(response, text):
             return False
-        backend = str(_field("backend") or "")
-        if backend == "local-fallback" and len(text.strip()) < 20:
-            return False
-        try:
-            from ai.memory.ham_memory.ham_manager import is_unservable_template
-
-            if is_unservable_template(text):
-                return False
-        except Exception:
-            # Fail-closed: if the poison guard cannot run, do NOT learn.
-            # A fail-open here bakes refusals/echoes into GARDEN with 0.7
-            # confidence (the exact 2026-10-10 audit finding this guard exists for).
-            logger.warning("Poison guard unavailable; refusing GARDEN learn", exc_info=True)
-            return False
-        return True
+        return _garden_guard_unservable(text)
     except Exception:
         logger.warning("Learn-gate evaluation failed; refusing GARDEN learn", exc_info=True)
         return False
@@ -195,45 +205,39 @@ class ChatService:
             except Exception as e:
                 logger.warning("HAM sync loop error: %s", e, exc_info=True)
 
-    async def initialize(self) -> None:
-        if self._initialized:
+    async def _init_legacy_ed3n(self) -> None:
+        """Init legacy ED3N continuous-learning pipeline (ANGELA_LEGACY_ED3N=1)."""
+        if os.environ.get("ANGELA_LEGACY_ED3N") != "1":
             return
-        if self._llm_service is None:
-            from services.llm.router import get_llm_service
+        try:
+            from ai.ed3n.continuous_learning import ContinuousLearningPipeline
+            from ai.ed3n.ed3n_engine import ED3NEngine
 
-            self._llm_service = await get_llm_service()
-        # Legacy ED3N continuous-learning: OFF by default — the unified engine
-        # is the text core now. Set ANGELA_LEGACY_ED3N=1 to re-enable.
-        import os as _os
+            engine = ED3NEngine.get_shared()
+            from ai.ed3n.ed3n_trainer import ED3NTrainer
 
-        if _os.environ.get("ANGELA_LEGACY_ED3N") == "1":
-            try:
-                from ai.ed3n.continuous_learning import ContinuousLearningPipeline
-                from ai.ed3n.ed3n_engine import ED3NEngine
+            trainer = ED3NTrainer(engine)
+            state_path = os.path.join(self._cl_state_dir, "cl_state.json")
+            if await asyncio.to_thread(os.path.exists, state_path):
+                self._continuous_learning = ContinuousLearningPipeline.load(
+                    self._cl_state_dir, engine=engine, trainer=trainer
+                )
+                logger.info("Loaded CL state from %s", state_path)
+            else:
+                self._continuous_learning = ContinuousLearningPipeline(
+                    engine=engine,
+                    trainer=trainer,
+                    growth_interval=15,
+                    train_interval=50,
+                    min_examples_for_train=30,
+                )
+                engine._continuous_learning = self._continuous_learning
+            logger.info("CLP wired into ED3NEngine for _maybe_learn()")
+        except Exception as e:
+            logger.warning("Continuous learning init skipped: %s", e)
 
-                engine = ED3NEngine.get_shared()
-                from ai.ed3n.ed3n_trainer import ED3NTrainer
-
-                trainer = ED3NTrainer(engine)
-                state_path = os.path.join(self._cl_state_dir, "cl_state.json")
-                if await asyncio.to_thread(os.path.exists, state_path):
-                    self._continuous_learning = ContinuousLearningPipeline.load(
-                        self._cl_state_dir, engine=engine, trainer=trainer
-                    )
-                    logger.info("Loaded CL state from %s", state_path)
-                else:
-                    self._continuous_learning = ContinuousLearningPipeline(
-                        engine=engine,
-                        trainer=trainer,
-                        growth_interval=15,
-                        train_interval=50,
-                        min_examples_for_train=30,
-                    )
-                    engine._continuous_learning = self._continuous_learning
-                logger.info("CLP wired into ED3NEngine for _maybe_learn()")
-            except Exception as e:
-                logger.warning("Continuous learning init skipped: %s", e)
-        # Initialize TrainingCoordinator for domain training orchestration
+    async def _init_training_coordinator(self) -> None:
+        """Init TrainingCoordinator for domain training orchestration."""
         try:
             from api.lifespan import get_training_coordinator
 
@@ -241,17 +245,22 @@ class ChatService:
             logger.info("TrainingCoordinator wired into ChatService")
         except Exception as e:
             logger.warning("TrainingCoordinator not available: %s", e, exc_info=True)
-        # Legacy GARDEN engine: OFF by default (see ANGELA_LEGACY_ED3N note).
-        if _os.environ.get("ANGELA_LEGACY_ED3N") == "1":
-            try:
-                from ai.garden.garden_engine import GARDENEngine
 
-                self._garden_engine = GARDENEngine(compatibility_mode=True)
-                self._garden_engine.load_presets()
-                logger.info("GARDEN engine initialized for continuous learning")
-            except Exception as e:
-                logger.warning("GARDEN engine init skipped: %s", e)
-        # Initialize ED3N learning integration for HAM sync (Phase 5.2)
+    async def _init_legacy_garden(self) -> None:
+        """Init legacy GARDEN engine (ANGELA_LEGACY_ED3N=1)."""
+        if os.environ.get("ANGELA_LEGACY_ED3N") != "1":
+            return
+        try:
+            from ai.garden.garden_engine import GARDENEngine
+
+            self._garden_engine = GARDENEngine(compatibility_mode=True)
+            self._garden_engine.load_presets()
+            logger.info("GARDEN engine initialized for continuous learning")
+        except Exception as e:
+            logger.warning("GARDEN engine init skipped: %s", e)
+
+    async def _init_ed3n_learning_integration(self) -> None:
+        """Init ED3N learning integration for HAM sync (Phase 5.2)."""
         try:
             from ai.ed3n.learning_integration import ED3NLearningIntegration
 
@@ -260,7 +269,9 @@ class ChatService:
             logger.info("ED3N learning integration initialized")
         except Exception as e:
             logger.warning("ED3N learning integration init skipped: %s", e)
-        # Initialize VectorMemoryStore for semantic memory retrieval (Phase 5.3)
+
+    async def _init_vector_store(self) -> None:
+        """Init VectorMemoryStore for semantic memory retrieval (Phase 5.3)."""
         try:
             from ai.memory.vector_store import get_vector_store
 
@@ -274,7 +285,9 @@ class ChatService:
             )
         except Exception as e:
             logger.warning("VectorStore init skipped: %s", e)
-        # Initialize HAM memory for template-based retrieval (Phase 5.3)
+
+    async def _init_ham_memory(self) -> None:
+        """Init HAM memory for template-based retrieval (Phase 5.3)."""
         try:
             from core.backbone import get_backbone
 
@@ -287,7 +300,9 @@ class ChatService:
             )
         except Exception as e:
             logger.warning("HAM memory init skipped: %s", e)
-        # Initialize CulturalContextModule
+
+    async def _init_cultural_context(self) -> None:
+        """Init CulturalContextModule."""
         try:
             from ai.context.cultural_context import CulturalContextModule
 
@@ -295,7 +310,9 @@ class ChatService:
             logger.info("CulturalContextModule initialized")
         except Exception as e:
             logger.warning("CulturalContextModule init skipped: %s", e, exc_info=True)
-        # Initialize KnowledgePipeline for pre-LLM local data lookup (§X #268)
+
+    async def _init_knowledge_pipeline(self) -> None:
+        """Init KnowledgePipeline for pre-LLM local data lookup (§X #268)."""
         try:
             from ai.memory.grounded_knowledge import GroundedKnowledgeStore
             from ai.meta.knowledge_pipeline import KnowledgePipeline
@@ -314,11 +331,13 @@ class ChatService:
         except Exception as e:
             self._knowledge_pipeline = None
             logger.warning("KnowledgePipeline init skipped: %s", e)
-        # Warm up ED3N dictionary (loads 460k entries) in background
+
+    async def _schedule_ed3n_warmup(self) -> None:
+        """Warm up ED3N dictionary (loads 460k entries) in background."""
         try:
             from ai.ed3n.ed3n_engine import ED3NEngine
 
-            if _os.environ.get("ANGELA_LEGACY_ED3N") == "1":
+            if os.environ.get("ANGELA_LEGACY_ED3N") == "1":
                 self._spawn_background_task(
                     asyncio.to_thread(lambda: ED3NEngine.get_shared(load_trained=True).warm_up())
                 )
@@ -326,9 +345,8 @@ class ChatService:
         except Exception as e:
             logger.debug("ED3N warm-up skipped: %s", e)
 
-        self._initialized = True
-        logger.info("ChatService initialized")
-        # 註冊中層學習協調器（§5.5.2）：CNS 事件驅動，取代內嵌觸發
+    async def _register_learning_pipelines(self) -> None:
+        """Register mid-layer learning coordinators (§5.5.2) into backbone."""
         try:
             from core.backbone import get_backbone
 
@@ -338,9 +356,36 @@ class ChatService:
             logger.info("Learning pipelines registered into backbone coordinator")
         except Exception as exc:
             logger.warning("Backbone learning registration skipped: %s", exc, exc_info=True)
+
+    async def initialize(self) -> None:
+        if self._initialized:
+            return
+        if self._llm_service is None:
+            from services.llm.router import get_llm_service
+
+            self._llm_service = await get_llm_service()
+        # Legacy ED3N continuous-learning: OFF by default — the unified engine
+        # is the text core now. Set ANGELA_LEGACY_ED3N=1 to re-enable.
+        import os as _os
+        os = _os  # rebind for helpers
+
+        await self._init_legacy_ed3n()
+        await self._init_training_coordinator()
+        await self._init_legacy_garden()
+        await self._init_ed3n_learning_integration()
+        await self._init_vector_store()
+        await self._init_ham_memory()
+        await self._init_cultural_context()
+        await self._init_knowledge_pipeline()
+        await self._schedule_ed3n_warmup()
+
+        self._initialized = True
+        logger.info("ChatService initialized")
+        await self._register_learning_pipelines()
         # Start periodic HAM sync background task (Phase 5.2)
         if self._ed3n_learning_integration:
             self._ham_sync_task = asyncio.create_task(self._ham_sync_loop())
+
 
     async def _try_repl_hardware_agent(
         self, user_message: str, context: Dict[str, Any]
@@ -473,73 +518,90 @@ class ChatService:
             logger.warning("Cultural context enrichment skipped: %s", e, exc_info=True)
         return merged_context
 
+    def _build_rag_entries(self, docs, distances) -> list:
+        """Convert vector-store hits into structured retrieved_context entries."""
+        rag_entries = []
+        for i, d in enumerate(docs):
+            if not d or not isinstance(d, str):
+                continue
+            distance = distances[i] if i < len(distances) else 1.0
+            relevance = max(0.0, 1.0 - float(distance))
+            rag_entries.append(
+                {
+                    "role": "long_term_memory",
+                    "content": str(d)[:200],
+                    "relevance": round(relevance, 3),
+                }
+            )
+        return rag_entries
+
+    def _vector_backoff(self, reason: str) -> None:
+        self._vector_store_backoff_until = time.time() + 300.0
+        self._vector_store_recent_fail = True
+        logger.warning(reason)
+
+    async def _inject_vector_context(self, merged_context: dict, user_message: str) -> None:
+        """Vector search enrichment with tight timeout + backoff."""
+        if self._vector_store is None or self._vector_store_backoff_active():
+            return
+        try:
+            # Vector search is an enrichment only — never block the answer
+            # path. Some backends (e.g. chromadb PersistentClient) are
+            # pathologically slow to query in certain environments, so bind
+            # it tightly and degrade gracefully when it overruns. On timeout
+            # the backend backs off (not permanent: a transient stall must
+            # not kill semantic memory for the process lifetime). The
+            # underlying thread keeps the worker lock even after cancel,
+            # so the backoff window (5min) lets it drain before retrying.
+            vs_results = await asyncio.wait_for(
+                self._vector_store.semantic_search(user_message, 3),
+                timeout=1.0,
+            )
+            self._vector_store_recent_fail = False
+            docs = vs_results.get("documents", [[]])[0]
+            distances = vs_results.get("distances", [[]])[0]
+            knowledge = [str(d)[:200] for d in docs if d and isinstance(d, str)]
+            if knowledge:
+                merged_context["dictionary_context"] = knowledge
+                # RAG wiring: surface the SAME long-term semantic hits as
+                # structured retrieved_context entries so prompt_builder
+                # injects them for the LLM (previously they only reached
+                # dictionary_context and open-domain answers could not
+                # cite accumulated knowledge).
+                rag_entries = self._build_rag_entries(docs, distances)
+                if rag_entries:
+                    existing = merged_context.get("retrieved_context") or []
+                    merged_context["retrieved_context"] = existing + rag_entries
+        except asyncio.TimeoutError:
+            self._vector_backoff(
+                "VectorStore query exceeded 1.0s budget; backing off vector "
+                "enrichment for 5min to keep the answer path responsive"
+            )
+        except Exception as e:
+            self._vector_backoff(f"VectorStore query failed; backing off: {e}")
+            logger.debug("VectorStore failure detail", exc_info=True)
+
+    async def _inject_ham_context(self, merged_context: dict, user_message: str) -> None:
+        """HAM template retrieval enrichment."""
+        if self._ham_memory is None:
+            return
+        try:
+            ham_results = await self._ham_memory.retrieve_response_templates(
+                user_message, top_k=3, min_score=0.3
+            )
+            memories = []
+            for tpl, score in ham_results:
+                content = tpl.get("content", "")
+                if content:
+                    memories.append(f"[past:{score:.2f}] {str(content)[:200]}")
+            if memories:
+                merged_context["conversation_memory"] = memories
+        except Exception as e:
+            logger.warning("HAM memory query failed: %s", e, exc_info=True)
+
     async def _inject_memory_context(self, merged_context: dict, user_message: str) -> dict:
-        if self._vector_store is not None and not self._vector_store_backoff_active():
-            try:
-                # Vector search is an enrichment only — never block the answer
-                # path. Some backends (e.g. chromadb PersistentClient) are
-                # pathologically slow to query in certain environments, so bind
-                # it tightly and degrade gracefully when it overruns. On timeout
-                # the backend backs off (not permanent: a transient stall must
-                # not kill semantic memory for the process lifetime). The
-                # underlying thread keeps the worker lock even after cancel,
-                # so the backoff window (5min) lets it drain before retrying.
-                vs_results = await asyncio.wait_for(
-                    self._vector_store.semantic_search(user_message, 3),
-                    timeout=1.0,
-                )
-                self._vector_store_recent_fail = False
-                docs = vs_results.get("documents", [[]])[0]
-                distances = vs_results.get("distances", [[]])[0]
-                knowledge = [str(d)[:200] for d in docs if d and isinstance(d, str)]
-                if knowledge:
-                    merged_context["dictionary_context"] = knowledge
-                    # RAG wiring: surface the SAME long-term semantic hits as
-                    # structured retrieved_context entries so prompt_builder
-                    # injects them for the LLM (previously they only reached
-                    # dictionary_context and open-domain answers could not
-                    # cite accumulated knowledge).
-                    rag_entries = []
-                    for i, d in enumerate(docs):
-                        if not d or not isinstance(d, str):
-                            continue
-                        distance = distances[i] if i < len(distances) else 1.0
-                        relevance = max(0.0, 1.0 - float(distance))
-                        rag_entries.append(
-                            {
-                                "role": "long_term_memory",
-                                "content": str(d)[:200],
-                                "relevance": round(relevance, 3),
-                            }
-                        )
-                    if rag_entries:
-                        existing = merged_context.get("retrieved_context") or []
-                        merged_context["retrieved_context"] = existing + rag_entries
-            except asyncio.TimeoutError:
-                self._vector_store_backoff_until = time.time() + 300.0
-                self._vector_store_recent_fail = True
-                logger.warning(
-                    "VectorStore query exceeded 1.0s budget; backing off vector "
-                    "enrichment for 5min to keep the answer path responsive"
-                )
-            except Exception as e:
-                self._vector_store_backoff_until = time.time() + 300.0
-                self._vector_store_recent_fail = True
-                logger.warning("VectorStore query failed; backing off: %s", e, exc_info=True)
-        if self._ham_memory is not None:
-            try:
-                ham_results = await self._ham_memory.retrieve_response_templates(
-                    user_message, top_k=3, min_score=0.3
-                )
-                memories = []
-                for tpl, score in ham_results:
-                    content = tpl.get("content", "")
-                    if content:
-                        memories.append(f"[past:{score:.2f}] {str(content)[:200]}")
-                if memories:
-                    merged_context["conversation_memory"] = memories
-            except Exception as e:
-                logger.warning("HAM memory query failed: %s", e, exc_info=True)
+        await self._inject_vector_context(merged_context, user_message)
+        await self._inject_ham_context(merged_context, user_message)
         if "dictionary_context" in merged_context or "conversation_memory" in merged_context:
             logger.debug(
                 "Memory context injected: dict=%d, conv=%d",
@@ -586,6 +648,21 @@ class ChatService:
             logger.warning("Grounded context injection skipped: %s", e, exc_info=True)
         return merged_context
 
+    def _format_search_lines(self, usable: list, ws_top: int) -> str:
+        """Format usable web-search hits into prompt-ready lines."""
+        lines = []
+        for r in usable[:ws_top]:
+            title = r.get("title", "")
+            snippet = (r.get("snippet") or "").strip()
+            url = r.get("url", "")
+            line = f"- {title}"
+            if snippet:
+                line += f": {snippet}"
+            if url:
+                line += f" ({url})"
+            lines.append(line)
+        return "\n".join(lines)
+
     async def _maybe_search_and_ground(self, user_message: str, merged_context: dict) -> dict:
         """Proactively web-search to ground an uncertain factual query.
 
@@ -628,18 +705,7 @@ class ChatService:
             if not usable:
                 return merged_context
 
-            lines = []
-            for r in usable[:ws_top]:
-                title = r.get("title", "")
-                snippet = (r.get("snippet") or "").strip()
-                url = r.get("url", "")
-                line = f"- {title}"
-                if snippet:
-                    line += f": {snippet}"
-                if url:
-                    line += f" ({url})"
-                lines.append(line)
-            merged_context["web_search_context"] = "\n".join(lines)
+            merged_context["web_search_context"] = self._format_search_lines(usable, ws_top)
 
             # remember as verified knowledge (sources = the search hits)
             get_grounded_learning_manager().learn_verified_from_search(user_message, usable)
@@ -946,29 +1012,34 @@ class ChatService:
             logger.warning("ChatService.generate_text failed: %s", e)
             return None
 
-    async def shutdown(self) -> None:
-        self._initialized = False
-        # Cancel tracked fire-and-forget background tasks (ED3N warm-up,
-        # memory writes) so nothing keeps running after shutdown.
+    async def _cancel_background_tasks(self) -> None:
+        """Cancel tracked fire-and-forget background tasks (ED3N warm-up, memory writes)."""
         for task in list(self._background_tasks):
             task.cancel()
         if self._background_tasks:
             await asyncio.gather(*self._background_tasks, return_exceptions=True)
             self._background_tasks.clear()
-        # Stop HAM sync background task (Phase 5.2)
+
+    async def _stop_ham_sync(self) -> None:
+        """Stop HAM sync background task (Phase 5.2)."""
         if self._ham_sync_task:
             self._ham_sync_task.cancel()
             try:
                 await self._ham_sync_task
             except asyncio.CancelledError:
                 pass
-        # Final HAM sync on shutdown
+
+    async def _final_ham_sync(self) -> None:
+        """Final HAM sync on shutdown."""
         if self._ed3n_learning_integration:
             try:
                 result = self._ed3n_learning_integration.synchronize_knowledge()
                 logger.info("Final HAM sync on shutdown: %d entries", result.get("synced", 0))
             except Exception as e:
                 logger.warning("Final HAM sync failed: %s", e, exc_info=True)
+
+    async def _save_cl_state(self) -> None:
+        """Save continuous-learning state on shutdown."""
         if self._continuous_learning:
             report = self._continuous_learning.get_learning_report()
             logger.info("Continuous learning final report:\n%s", report)
@@ -976,7 +1047,9 @@ class ChatService:
                 await asyncio.to_thread(self._continuous_learning.save, self._cl_state_dir)
             except Exception as e:
                 logger.warning("Failed to save CL state: %s", e)
-        # Save GARDEN engine state
+
+    async def _save_garden_state(self) -> None:
+        """Save GARDEN engine state on shutdown."""
         if self._garden_engine:
             try:
                 garden_state_dir = os.path.join(self._cl_state_dir, "garden_state")
@@ -985,6 +1058,14 @@ class ChatService:
                 logger.info("GARDEN engine saved on shutdown")
             except Exception as e:
                 logger.warning("Failed to save GARDEN state: %s", e)
+
+    async def shutdown(self) -> None:
+        self._initialized = False
+        await self._cancel_background_tasks()
+        await self._stop_ham_sync()
+        await self._final_ham_sync()
+        await self._save_cl_state()
+        await self._save_garden_state()
         logger.info("ChatService shutdown")
 
 
