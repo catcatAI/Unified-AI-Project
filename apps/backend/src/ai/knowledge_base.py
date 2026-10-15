@@ -286,38 +286,69 @@ _ZH_SUBJECT_ALIASES: Dict[str, List[str]] = {
 }
 
 
-def route_knowledge(text: str) -> Optional[str]:
-    """Answer a simple factual question from the curated knowledge store.
+# Subject-attribute routing rules: (question keywords, knowledge attr key).
+# Order matters — the first matching rule wins, mirroring the original
+# hand-written if-chain (color handled separately for its dual color/colour keys).
+_ATTRIBUTE_RULES: Tuple[Tuple[Tuple[str, ...], str], ...] = (
+    (("sound", "says", "say", "noise"), "sound"),
+    (("day",), "days"),
+    (("side",), "sides"),
+    (("leg",), "legs"),
+    (("state",), "state"),
+    (("wheel", "輪子", "輪"), "wheels"),
+    (("chamber",), "chambers"),
+    (("currency", "貨幣", "通貨"), "currency"),
+    (("language", "語言", "语言"), "language"),
+    (("composer", "作曲家"), "composer"),
+    (("painter", "畫家", "画家"), "painter"),
+    (("discoverer", "發現者", "发现者"), "discoverer"),
+    (("shape",), "shape"),
+    (("inventor", "發明", "发明"), "inventor"),
+    (("year",), "year"),
+    (("longest", "最長", "最长"), "longest"),
+    (("highest", "tallest", "最高"), "highest"),
+    (("largest", "最大"), "largest"),
+    (("smallest", "最小"), "smallest"),
+    (("lightest", "最輕", "最轻"), "lightest"),
+    (("value", "worth", "值", "價值"), "value"),
+    (("author", "wrote", "written"), "author"),
+    (("wrote",), "wrote"),
+    (("capital", "首都"), "capital"),
+    (("ended", "end", "結束"), "ended"),
+)
 
-    Returns a short answer string (e.g. ``"blue"``, ``"7"``, ``"cat"``), or
-    ``None`` when the question is not covered, so the caller can fall through
-    to its normal (vector/SNN) pipeline.
-    """
-    if not text or not isinstance(text, str):
-        return None
-    t = text.lower().strip()
 
-    # 1) antonym: "opposite of hot"
+def _rk_antonym(t: str) -> Optional[str]:
+    """1) antonym: "opposite of hot"."""
     m = re.search(r"opposite of (\w+)", t)
     if m and m.group(1) in _ANTONYMS:
         return _ANTONYMS[m.group(1)]
+    return None
 
-    # 2) "X says <sound>" / "animal says meow" -> reverse sound lookup
+
+def _rk_sound(t: str) -> Optional[str]:
+    """2) "X says <sound>" / "animal says meow" -> reverse sound lookup."""
     m = re.search(r"says (\w+)", t)
     if m:
         sound = m.group(1)
         for subject, attrs in _KNOWLEDGE.items():
             if attrs.get("sound") == sound:
                 return subject
+    return None
 
-    # 3) known aliases
+
+def _rk_alias(t: str) -> Optional[str]:
+    """3) known aliases (red/blue planet)."""
     if "red planet" in t:
         return "Mars"
     if "blue planet" in t:
         return "Earth"
+    return None
 
-    # 3b) multi-word phrase subjects：tokens 匹配切不開空格實體（"world war 2"
-    # → world/war/2；"light bulb" → light/bulb），用短語先行解析到正典 key。
+
+def _rk_phrase_normalize(t: str) -> str:
+    """3b) multi-word phrase subjects: tokens can't split space entities
+    ("world war 2" → world/war/2), so normalize phrases to canonical keys."""
     _phrase_subjects = (
         ("world war 2", "ww2"),
         ("world war ii", "ww2"),
@@ -330,27 +361,25 @@ def route_knowledge(text: str) -> Optional[str]:
     for phrase, canonical in _phrase_subjects:
         if phrase in t:
             t = t.replace(phrase, canonical)
+    return t
 
-    # 4) days in a week / year
+
+def _rk_calendar(t: str) -> Optional[str]:
+    """4/4b) days-in-week/year + succession ("day after monday")."""
     if re.search(r"\bweek\b", t) and re.search(r"\bday\b", t):
         return "7"
     if re.search(r"\byear\b", t) and re.search(r"\bday\b", t):
         return "365"
-
-    # 4b) succession: "day after monday", "month after march", "next tuesday",
-    #     "what day comes after monday", "the day following tuesday"
-    succ = None
     m = re.search(r"(?:after|following|next)\s+(\w+)", t)
     if m:
-        succ = m.group(1)
-    if succ:
-        entry = _KNOWLEDGE.get(succ)
+        entry = _KNOWLEDGE.get(m.group(1))
         if entry and entry.get("next"):
             return entry["next"]
+    return None
 
-    # 4c) superlative phrases（策展知識庫範圍內的知名「最」問題）：
-    # 「largest ocean」「highest mountain」等固定短語直接對應專屬屬性。
-    # R79：原本靠 ocean_largest 等死 key 支撐，實際永遠答不出。
+
+def _rk_superlative(t: str) -> Optional[str]:
+    """4c) superlative phrases ("largest ocean" → pacific's size)."""
     _superlatives = (
         ("largest ocean", "pacific"),
         ("largest desert", "sahara"),
@@ -367,81 +396,43 @@ def route_knowledge(text: str) -> Optional[str]:
             entry = _KNOWLEDGE.get(subject)
             if entry and "answer" in entry:
                 return entry["answer"]
+    return None
 
-    # 5) subject attribute lookup
-    # Word-boundary match for ASCII subjects: a bare ``subject in t`` makes
-    # "pigeon" match subject "pig", "coward" match "cow", "search" match "sea",
-    # "birdie" match "bird", "education" match "cat" — returning oink/moo/blue/
-    # tweet/meow nonsense for unrelated words.  Require the subject to be a
-    # standalone word.  CJK aliases have no word boundaries, so they stay as
-    # substring matches.
-    # Tokenization replaces 79 per-subject regex scans with ONE pass over the
-    # text (``set(re.findall(...))``), then O(1) membership checks — equivalent
-    # to the word-boundary regex for ASCII subjects (verified) and ~20x faster
-    # (217 µs → 10 µs per call).
+
+def _match_specific_attr(t: str, attrs: Dict[str, str]) -> Tuple[bool, Optional[str]]:
+    """Match a specific attribute branch for a hit subject (order-preserving).
+
+    Returns (matched, value): matched is True when a specific attribute rule
+    applies; value is the attribute value (or None).
+    """
+    # color: dual color/colour keys
+    if any(k in t for k in ("color", "colour")) and ("color" in attrs or "colour" in attrs):
+        return True, attrs.get("color") or attrs.get("colour")
+    for keywords, attr_key in _ATTRIBUTE_RULES:
+        if any(k in t for k in keywords) and attr_key in attrs:
+            return True, attrs[attr_key]
+    return False, None
+
+
+def _rk_subject_attrs(t: str) -> Optional[str]:
+    """5) subject attribute lookup with deferred answer fallback.
+
+    Word-boundary match for ASCII subjects (a bare substring match makes
+    "pigeon" match "pig"). CJK aliases stay substring matches. An early
+    incidental subject match must not shadow a later subject with a specific
+    attribute hit, so a generic "answer" is deferred until all subjects are
+    tried.
+    """
     tokens = set(re.findall(r"[a-z0-9]+", t))
-    # Generic answer fallback is deferred: an early incidental subject match
-    # (e.g. "human" in "Who wrote Hamlet?") must not shadow a later subject
-    # with a specific attribute hit ("hamlet" + wrote → author).
     _answer_fallback = None
     for subject, attrs in _KNOWLEDGE.items():
         aliases = _ZH_SUBJECT_ALIASES.get(subject)
         subject_hit = subject in tokens
         alias_hit = bool(aliases and any(a in t for a in aliases))
         if subject_hit or alias_hit:
-            if any(k in t for k in ("color", "colour")) and ("color" in attrs or "colour" in attrs):
-                return attrs.get("color") or attrs.get("colour")
-            if any(k in t for k in ("sound", "says", "say", "noise")) and "sound" in attrs:
-                return attrs["sound"]
-            if "day" in t and "days" in attrs:
-                return attrs["days"]
-            if "side" in t and "sides" in attrs:
-                return attrs["sides"]
-            if "leg" in t and "legs" in attrs:
-                return attrs["legs"]
-            if "state" in t and "state" in attrs:
-                return attrs["state"]
-            if any(k in t for k in ("wheel", "輪子", "輪")) and "wheels" in attrs:
-                return attrs["wheels"]
-            if "chamber" in t and "chambers" in attrs:
-                return attrs["chambers"]
-            if any(k in t for k in ("currency", "貨幣", "通貨")) and "currency" in attrs:
-                return attrs["currency"]
-            if any(k in t for k in ("language", "語言", "语言")) and "language" in attrs:
-                return attrs["language"]
-            if any(k in t for k in ("composer", "作曲家")) and "composer" in attrs:
-                return attrs["composer"]
-            if any(k in t for k in ("painter", "畫家", "画家")) and "painter" in attrs:
-                return attrs["painter"]
-            if any(k in t for k in ("discoverer", "發現者", "发现者")) and "discoverer" in attrs:
-                return attrs["discoverer"]
-            if "shape" in t and "shape" in attrs:
-                return attrs["shape"]
-            if any(k in t for k in ("inventor", "發明", "发明")) and "inventor" in attrs:
-                return attrs["inventor"]
-            if "year" in t and "year" in attrs:
-                return attrs["year"]
-            if any(k in t for k in ("longest", "最長", "最长")) and "longest" in attrs:
-                return attrs["longest"]
-            if any(k in t for k in ("highest", "tallest", "最高")) and "highest" in attrs:
-                return attrs["highest"]
-            if any(k in t for k in ("largest", "最大")) and "largest" in attrs:
-                return attrs["largest"]
-            if any(k in t for k in ("smallest", "最小")) and "smallest" in attrs:
-                return attrs["smallest"]
-            if any(k in t for k in ("lightest", "最輕", "最轻")) and "lightest" in attrs:
-                return attrs["lightest"]
-            if any(k in t for k in ("value", "worth", "值", "價值")) and "value" in attrs:
-                return attrs["value"]
-            # L3-1 擴充：author/wrote/capital/ended 等通用屬性
-            if any(k in t for k in ("author", "wrote", "written")) and "author" in attrs:
-                return attrs["author"]
-            if "wrote" in t and "wrote" in attrs:
-                return attrs["wrote"]
-            if any(k in t for k in ("capital", "首都")) and "capital" in attrs:
-                return attrs["capital"]
-            if any(k in t for k in ("ended", "end", "結束")) and "ended" in attrs:
-                return attrs["ended"]
+            attr_matched, val = _match_specific_attr(t, attrs)
+            if attr_matched:
+                return val
             if (
                 _answer_fallback is None
                 and "answer" in attrs
@@ -450,12 +441,8 @@ def route_knowledge(text: str) -> Optional[str]:
                 )
             ):
                 _answer_fallback = attrs["answer"]
-            # prim covers only legacy attrs; author/capital/ended/answer have
-            # explicit branches above (or the deferred fallback), so an early
-            # incidental subject must not shadow via prim either. `days` is
-            # excluded: day-questions are handled by the specific branch and
-            # section 4; via prim it shadowed later subjects ("What year WW2
-            # ended?" → year/days 365 instead of ww2/ended 1945).
+            # prim covers only legacy attrs; `days` is excluded (day-questions
+            # have a specific branch + section 4).
             prim = (
                 attrs.get("color")
                 or attrs.get("known_as")
@@ -465,11 +452,13 @@ def route_knowledge(text: str) -> Optional[str]:
             )
             if prim:
                 return prim
-
     if _answer_fallback is not None:
         return _answer_fallback
+    return None
 
-    # 6) unit conversion: "how many m in a km", "convert 5 km to m"
+
+def _rk_unit_conversion(t: str) -> Optional[str]:
+    """6) unit conversion: "how many m in a km", "convert 5 km to m"."""
     m = re.search(
         r"(?:convert|how many|how much)\s+(-?\d+(?:\.\d+)?)?\s*(\w+)\s+(?:to|in a|in|per)\s+(\w+)",
         t,
@@ -478,16 +467,17 @@ def route_knowledge(text: str) -> Optional[str]:
         value_str, src_unit, dst_unit = m.group(1), m.group(2), m.group(3)
         conv = _UNIT_CONVERSIONS.get((src_unit, dst_unit))
         if conv is not None:
-            multiplier, src_name = conv
+            multiplier, _src_name = conv
             if value_str:
                 value = float(value_str)
                 converted = value * multiplier
                 return f"{value} {src_unit} = {converted:.4f} {dst_unit}"
-            else:
-                return f"1 {src_unit} = {multiplier} {dst_unit}"
+            return f"1 {src_unit} = {multiplier} {dst_unit}"
+    return None
 
-    # 7) chemical formula: "formula of water", "what is the formula of salt",
-    #    "chemical formula of salt"（chemical 與實體間可隔 formula 一詞）
+
+def _rk_chemical(t: str) -> Optional[str]:
+    """7) chemical formula: "formula of water", "chemical formula of salt"."""
     m = re.search(r"(?:chemical\s+)?(?:formula|composition)\s+(?:of|for|is)?\s*(\w+(?:\s+\w+)?)", t)
     if not m:
         m = re.search(r"chemical\s+(?:of|for|is)?\s*(\w+(?:\s+\w+)?)", t)
@@ -496,6 +486,41 @@ def route_knowledge(text: str) -> Optional[str]:
         formula = _CHEMICAL_FORMULAS.get(name)
         if formula:
             return f"{name} = {formula}"
+    return None
+
+
+def route_knowledge(text: str) -> Optional[str]:
+    """Answer a simple factual question from the curated knowledge store.
+
+    Returns a short answer string (e.g. ``"blue"``, ``"7"``, ``"cat"``), or
+    ``None`` when the question is not covered, so the caller can fall through
+    to its normal (vector/SNN) pipeline.
+    """
+    if not text or not isinstance(text, str):
+        return None
+    t = text.lower().strip()
+
+    for matcher in (_rk_antonym, _rk_sound, _rk_alias):
+        result = matcher(t)
+        if result is not None:
+            return result
+
+    # 3b) phrase normalization mutates t before the remaining lookups
+    t = _rk_phrase_normalize(t)
+
+    for matcher in (_rk_calendar, _rk_superlative):
+        result = matcher(t)
+        if result is not None:
+            return result
+
+    result = _rk_subject_attrs(t)
+    if result is not None:
+        return result
+
+    for matcher in (_rk_unit_conversion, _rk_chemical):
+        result = matcher(t)
+        if result is not None:
+            return result
 
     return None
 
