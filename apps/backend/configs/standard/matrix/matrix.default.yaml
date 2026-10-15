@@ -1,13 +1,11 @@
 # State Matrix Meta-Configuration
 # Defines axes, initial values, and weights
 #
-# 定義稽核 (2026-10-14): 本檔目前未被 get_formula_config("matrix") 載入
-# （app_config_loader._CONFIG["formula"] 無 "matrix" key），運行時走
-# state_matrix.py 的 DEFAULT_DIMENSIONS。為避免雙源分歧，本檔的
-# initial_values / cn_name 已與 DEFAULT_DIMENSIONS 完全對齊（live 為準）；
-# weight / initial_coordinate / anchor_keywords 為未啟用的設計草稿值，
-# 接線前需人工定奪（改變 weight 即改變 compute_influences 輸出）。
-# 對齊後接線本檔＝行為不變。見 docs/06-project-management/fixes/DEFINITIONS_AUDIT_2026-10-14.md
+# 定義稽核 (2026-10-14): 本檔經 app_config_loader 載入為 _CONFIG["formula"]["matrix"]，
+# state_matrix.py __init__ 讀取 dimensions 初始化（get_formula_config("matrix")）。
+# initial_values / cn_name 與 live 行為對齊（單一源）。weight / initial_coordinate
+# 一律取 live 預設（1.0 / [0,0,0]），anchor_keywords 不設（live 無錨點載入）——
+# 接線本檔＝行為不變。見 docs/06-project-management/fixes/DEFINITIONS_AUDIT_2026-10-14.md
 
 dimensions:
   alpha:
@@ -15,44 +13,14 @@ dimensions:
     initial_values:
       { energy: 0.5, comfort: 0.5, arousal: 0.5, rest_need: 0.5, vitality: 0.5, tension: 0.0 }
     weight: 1.0
-    initial_coordinate: [0.0, -5.0, 0.0]
-    anchor_keywords:
-      [
-        "能量",
-        "疲憊",
-        "身體",
-        "累",
-        "餓",
-        "渴",
-        "健康",
-        "energy",
-        "tired",
-        "body",
-        "physical",
-        "health",
-      ]
+    initial_coordinate: [0.0, 0.0, 0.0]
 
   beta:
     cn_name: "認知"
     initial_values:
       { curiosity: 0.5, focus: 0.5, confusion: 0.0, learning: 0.5, clarity: 0.5, creativity: 0.5 }
     weight: 1.0
-    initial_coordinate: [0.0, 10.0, 0.0]
-    anchor_keywords:
-      [
-        "思考",
-        "學習",
-        "專注",
-        "好奇",
-        "困惑",
-        "理解",
-        "think",
-        "learn",
-        "focus",
-        "curious",
-        "understand",
-        "decide",
-      ]
+    initial_coordinate: [0.0, 0.0, 0.0]
 
   gamma:
     cn_name: "情感"
@@ -70,44 +38,14 @@ dimensions:
         calm: 0.5,
       }
     weight: 1.0
-    initial_coordinate: [0.0, 2.0, 2.0]
-    anchor_keywords:
-      [
-        "開心",
-        "難過",
-        "生氣",
-        "害怕",
-        "愛",
-        "情緒",
-        "happy",
-        "sad",
-        "angry",
-        "fear",
-        "love",
-        "emotion",
-        "feel",
-      ]
+    initial_coordinate: [0.0, 0.0, 0.0]
 
   delta:
     cn_name: "社交"
     initial_values:
       { attention: 0.5, bond: 0.5, trust: 0.5, presence: 0.5, intimacy: 0.0, engagement: 0.5 }
     weight: 1.0
-    initial_coordinate: [0.0, 0.0, 10.0]
-    anchor_keywords:
-      [
-        "社交",
-        "信任",
-        "連接",
-        "朋友",
-        "alone",
-        "social",
-        "trust",
-        "bond",
-        "friend",
-        "connection",
-        "together",
-      ]
+    initial_coordinate: [0.0, 0.0, 0.0]
 
   epsilon:
     cn_name: "數理"
@@ -120,10 +58,8 @@ dimensions:
         complexity: 0.5,
         fatigue: 0.0,
       }
-    weight: 0.3
+    weight: 1.0
     initial_coordinate: [0.0, 0.0, 0.0]
-    anchor_keywords:
-      ["計算", "邏輯", "數字", "精確", "calculate", "logic", "number", "math", "precise", "compute"]
 
   theta:
     cn_name: "元認知"
@@ -142,43 +78,15 @@ dimensions:
         self_reflection: 0.5,
         meta_accuracy: 0.5,
       }
-    weight: 0.8
-    initial_coordinate: [0.0, 5.0, 5.0]
-    anchor_keywords:
-      [
-        "複雜",
-        "新穎",
-        "創造",
-        "策略",
-        "分析",
-        "元認知",
-        "complex",
-        "novel",
-        "create",
-        "strategy",
-        "analyze",
-      ]
+    weight: 1.0
+    initial_coordinate: [0.0, 0.0, 0.0]
 
   zeta:
     cn_name: "意識流"
     initial_values:
       { temporal_coherence: 0.5, memory_depth: 0.6, narrative_flow: 0.5, identity_continuity: 0.75 }
-    weight: 0.2
+    weight: 1.0
     initial_coordinate: [0.0, 0.0, 0.0]
-    anchor_keywords:
-      [
-        "記憶",
-        "時間",
-        "故事",
-        "身份",
-        "連續",
-        "memory",
-        "time",
-        "story",
-        "identity",
-        "history",
-        "narrative",
-      ]
 
 system_limits:
   max_misallocation_log: 100

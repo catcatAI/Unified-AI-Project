@@ -74,6 +74,7 @@ _CONFIG: Dict[str, Any] = {
 
 
 _bootstrap_merged = False
+_matrix_merged = False
 
 
 def _merge_bootstrap_overrides() -> None:
@@ -98,6 +99,34 @@ def _merge_bootstrap_overrides() -> None:
         )
     finally:
         _bootstrap_merged = True
+
+
+def _merge_matrix_overrides() -> None:
+    """Merge the canonical matrix config over the hardcoded formula defaults.
+
+    The authoritative matrix dimension definitions live in
+    ``configs/standard/matrix/matrix.{default,user,evolved}.yaml``.  Loading
+    them here populates ``_CONFIG["formula"]["matrix"]`` so that
+    ``state_matrix.StateMatrix4D`` reads real config (via
+    ``get_formula_config("matrix")``) instead of silently falling back to its
+    hardcoded ``DEFAULT_DIMENSIONS`` — eliminating the dead-config / dual-source
+    problem.  The YAML is aligned to live behavior, so wiring is behavior-neutral.
+    """
+    global _matrix_merged
+    if _matrix_merged:
+        return
+    try:
+        from core.system.config.tiered_loader import get_config as _tiered_get
+
+        matrix = _tiered_get("standard/matrix/matrix")
+        if isinstance(matrix, dict) and matrix:
+            _CONFIG.setdefault("formula", {}).setdefault("matrix", {}).update(matrix)
+    except Exception as e:
+        logger.warning(
+            "Matrix config loader unavailable, using hardcoded defaults: %s", e, exc_info=True
+        )
+    finally:
+        _matrix_merged = True
 
 
 def load_config(path: Optional[str] = None) -> Dict[str, Any]:
@@ -130,5 +159,7 @@ def get_bootstrap_config() -> Dict[str, Any]:
 
 def get_formula_config(domain: str) -> Dict[str, Any]:
     """Return the formula sub-configuration for the given domain."""
+    if domain == "matrix":
+        _merge_matrix_overrides()
     formula_cfg: Dict[str, Any] = _CONFIG.get("formula", {}).get(domain, {})
     return formula_cfg
