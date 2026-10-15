@@ -82,12 +82,55 @@ _GGUF_VAL_FMT = {
 }
 
 
+def _gguf_read_kv(f, rf, rstr, rval, n_kv: int) -> dict[str, Any]:
+    """Read n_kv key-value pairs from GGUF stream."""
+    kv: dict[str, Any] = {}
+    for _ in range(n_kv):
+        key = rstr()
+        (vtype,) = rf("I")
+        kv[key] = rval(vtype)
+    return kv
+
+
+def _gguf_read_tensors(f, rf, rstr, n_tensors: int) -> list[TensorInfo]:
+    """Read n_tensors tensor descriptors from GGUF stream."""
+    tensors: list[TensorInfo] = []
+    for _ in range(n_tensors):
+        name = rstr()
+        (nd,) = rf("I")
+        dims = [rf("Q")[0] for _ in range(nd)]
+        (type_id,) = rf("I")
+        (offset,) = rf("Q")
+        tensors.append(
+            TensorInfo(name=name, dims=dims, type_id=type_id, offset=offset, nbytes=0)
+        )
+    return tensors
+
+
+def _gguf_tile_nbytes(tensors: list[TensorInfo], data_start: int, file_size: int) -> None:
+    """Fill nbytes from offset tiling; raise if offsets do not tile exactly."""
+    tensors.sort(key=lambda t: t.offset)
+    for i, t in enumerate(tensors):
+        end = tensors[i + 1].offset if i + 1 < len(tensors) else file_size - data_start
+        t.nbytes = end - t.offset
+    accounted = (file_size - data_start) if tensors else 0
+    if tensors and sum(t.nbytes for t in tensors) != accounted:
+        raise ValueError("tensor offsets do not tile the data section exactly")
+
+
+def _gguf_read_header(f, rf) -> tuple[int, int]:
+    """Read GGUF magic/version/counts; returns (n_tensors, n_kv)."""
+    magic, _version, n_tensors, n_kv = rf("IIQQ")
+    if magic != 0x46554747:
+        raise ValueError(f"not a GGUF file: magic={magic:#x}")
+    return n_tensors, n_kv
+
+
 def read_gguf_structure(path: str | Path) -> dict[str, Any]:
     """Return {'kv': dict, 'tensors': [TensorInfo sorted by offset], 'info_end': int}."""
     path = Path(path)
     file_size = path.stat().st_size
     with path.open("rb") as f:
-
         def rf(fmt: str) -> tuple:
             raw = f.read(struct.calcsize("<" + fmt))
             if len(raw) < struct.calcsize("<" + fmt):
@@ -109,35 +152,17 @@ def read_gguf_structure(path: str | Path) -> dict[str, Any]:
                 raise ValueError(f"unsupported gguf value type {t}")
             return rf(_GGUF_VAL_FMT[t])[0]
 
-        magic, version, n_tensors, n_kv = rf("IIQQ")
+        magic, _version, n_tensors, n_kv = rf("IIQQ")
         if magic != 0x46554747:
             raise ValueError(f"not a GGUF file: {path}")
-        kv: dict[str, Any] = {}
-        for _ in range(n_kv):
-            key = rstr()
-            (vtype,) = rf("I")
-            kv[key] = rval(vtype)
-        tensors: list[TensorInfo] = []
-        for _ in range(n_tensors):
-            name = rstr()
-            (nd,) = rf("I")
-            dims = [rf("Q")[0] for _ in range(nd)]
-            (type_id,) = rf("I")
-            (offset,) = rf("Q")
-            tensors.append(
-                TensorInfo(name=name, dims=dims, type_id=type_id, offset=offset, nbytes=0)
-            )
+        kv = _gguf_read_kv(f, rf, rstr, rval, n_kv)
+        tensors = _gguf_read_tensors(f, rf, rstr, n_tensors)
         info_end = f.tell()
         alignment = kv.get("general.alignment", 32)
         data_start = (info_end + alignment - 1) // alignment * alignment
-        tensors.sort(key=lambda t: t.offset)
-        for i, t in enumerate(tensors):
-            end = tensors[i + 1].offset if i + 1 < len(tensors) else file_size - data_start
-            t.nbytes = end - t.offset
-        accounted = (file_size - data_start) if tensors else 0
-        if tensors and sum(t.nbytes for t in tensors) != accounted:
-            raise ValueError("tensor offsets do not tile the data section exactly")
+        _gguf_tile_nbytes(tensors, data_start, file_size)
         return {"kv": kv, "tensors": tensors, "info_end": info_end, "file_size": file_size}
+
 
 
 # -----------------------------------------------------------------------------
@@ -467,9 +492,8 @@ class Engine:
                 )
             )
 
-    def check_invariants(self) -> list[str]:
-        cfg = self.cfg
-        slack_mem = 1.0 + 1e-9 * max(self.t, 1.0)
+    def _inv_ceiling_checks(self, cfg, slack: float) -> list[str]:
+        """Physical/service ceiling violations."""
         out: list[str] = []
         if not math.isfinite(self.t) or self.t < 0:
             out.append(f"time not finite/monotonic: {self.t}")
@@ -477,15 +501,20 @@ class Engine:
             out.append(f"SRAM out of bounds: {self.sram}")
         if (
             self.cum["mem_r"] + self.cum["mem_w"]
-            > cfg.mem_service_bytes_per_ns * self.t + slack_mem
+            > cfg.mem_service_bytes_per_ns * self.t + slack
         ):
             out.append("mem exceeded serviced ceiling")
-        if self.cum["mem_r"] + self.cum["mem_w"] > cfg.mem_raw_bytes_per_ns * self.t + slack_mem:
+        if self.cum["mem_r"] + self.cum["mem_w"] > cfg.mem_raw_bytes_per_ns * self.t + slack:
             out.append("mem exceeded PHYSICAL LPDDR5 ceiling")
-        if self.cum["macs"] > cfg.mac_per_ns * self.t + slack_mem:
+        if self.cum["macs"] > cfg.mac_per_ns * self.t + slack:
             out.append("MAC array exceeded dense ceiling")
-        if self.cum["pcie"] > cfg.pcie_bytes_per_ns * self.t + slack_mem:
+        if self.cum["pcie"] > cfg.pcie_bytes_per_ns * self.t + slack:
             out.append("PCIe exceeded Gen4 x1 ceiling")
+        return out
+
+    def _inv_item_checks(self) -> tuple[list[str], float]:
+        """Per-item progress violations; returns (violations, staged bytes)."""
+        out: list[str] = []
         staged = 0.0
         for i in self.items:
             fetched = self.fetched.get(i.idx, 0.0)
@@ -502,13 +531,28 @@ class Engine:
                 if i.nbytes and i.ops:
                     if abs(ops_done * i.bytes_per_op - consumed) > 1e-6 * max(1.0, consumed):
                         out.append(f"{i.name}: ops/bytes decoupled")
-        if abs(staged - self.sram) > 1e-3:
-            out.append(f"SRAM bookkeeping mismatch: {self.sram} vs staged {staged}")
+        return out, staged
+
+    def _inv_frontier_checks(self) -> list[str]:
+        """Items past the compute frontier must be done."""
+        out: list[str] = []
         for j in range(self.comp_idx):
             it = self.items[j]
             if it.kind in ("stream", "pcie") and it.idx not in self.item_done:
                 out.append(f"{it.name}: past compute frontier but not done")
         return out
+
+    def check_invariants(self) -> list[str]:
+        cfg = self.cfg
+        slack = 1.0 + 1e-9 * max(self.t, 1.0)
+        out = self._inv_ceiling_checks(cfg, slack)
+        item_out, staged = self._inv_item_checks()
+        out.extend(item_out)
+        if abs(staged - self.sram) > 1e-3:
+            out.append(f"SRAM bookkeeping mismatch: {self.sram} vs staged {staged}")
+        out.extend(self._inv_frontier_checks())
+        return out
+
 
     # -- event step -----------------------------------------------------------
     def _ready_writes(self) -> list[int]:
@@ -603,15 +647,279 @@ class Engine:
             changed = True
         return event, changed
 
+    def _select_mem_target(self) -> Item | None:
+        """Select memory server target (write priority, non-preemptive)."""
+        n = len(self.items)
+        if self.write_in_service is not None:
+            return self._item(self.write_in_service)
+        if self.mem_idx < n and self.items[self.mem_idx].kind in ("read", "stream"):
+            return self.items[self.mem_idx]
+        return None
+
+    def _step_candidate_mem(self, c_rate: float) -> tuple:
+        """Build memory server candidate (dt, kind, item) if ready."""
+        cfg = self.cfg
+        m_rate = cfg.mem_service_bytes_per_ns
+        mem_rate = 0.0
+        mem_target = self._select_mem_target()
+        if mem_target is None:
+            return None, mem_rate, mem_target
+        remaining = mem_target.nbytes - self.fetched.get(mem_target.idx, 0.0)
+        if remaining <= EPS:
+            return (0.0, "mem_done", mem_target), mem_rate, mem_target
+        if mem_target.kind == "stream":
+            drain = self._comp_drain_rate()
+            room = float(cfg.sram_bytes) - self.sram
+            mem_rate = m_rate
+            if room <= EPS:
+                if drain <= EPS:
+                    mem_rate = 0.0  # scratchpad full, compute not pulling
+                else:
+                    mem_rate = min(m_rate, drain)  # paced by the drain
+            if mem_rate > 0:
+                t_mem = remaining / mem_rate
+                net = mem_rate - drain
+                if room > EPS and net > EPS:
+                    t_mem = min(t_mem, room / net)  # SRAM room exhausts first
+                return (t_mem, "mem_done", mem_target), mem_rate, mem_target
+            return None, mem_rate, mem_target
+        else:  # read / write bypass the scratchpad
+            if m_rate > 0:
+                mem_rate = m_rate
+                return (remaining / m_rate, "mem_done", mem_target), mem_rate, mem_target
+            return None, mem_rate, mem_target
+
+    def _step_candidate_comp(self, c_rate: float) -> tuple | None:
+        """Build compute server candidate (dt, kind, item) if ready."""
+        cfg = self.cfg
+        n = len(self.items)
+        if self.comp_idx >= n:
+            return None
+        it = self.items[self.comp_idx]
+        if it.kind != "stream":
+            return None
+        ops_left = it.ops - self.ops_done[it.idx]
+        if it.nbytes == 0:  # ops-only (softmax over the vocab)
+            return (max(ops_left, 0.0) / c_rate, "comp_done", it)
+        elif self._comp_retire_ready(it):
+            return (0.0, "comp_done", it)
+        else:
+            avail = self.fetched[it.idx] - self.consumed[it.idx]
+            if avail > EPS:
+                t_ops = ops_left / c_rate
+                t_bytes = avail / (c_rate * it.bytes_per_op)
+                if t_ops <= t_bytes + EPS:
+                    return (t_ops, "comp_done", it)
+                else:
+                    # conservative pause: re-evaluate as memory feeds;
+                    # never dt==0 (avail > EPS)
+                    return (t_bytes, "comp_starve", it)
+            # else starved and unfed: NO dt==0 candidate - memory
+            # must feed first (the old comp_starve dt=0 livelock)
+            return None
+
+    def _step_candidate_pcie(self) -> tuple | None:
+        """Build pcie server candidate (dt, kind, item) if ready."""
+        cfg = self.cfg
+        if self.pcie_busy is None:
+            return None
+        it = self._item(self.pcie_busy)
+        remaining = it.nbytes - self.fetched.get(it.idx, 0.0)
+        return (remaining / cfg.pcie_bytes_per_ns, "pcie_done", it)
+
+    def _step_advance_mem(self, dt: float, mem_target, mem_rate: float) -> float:
+        """Continuous advance memory server over dt; returns served bytes."""
+        if mem_target is None or mem_rate <= 0:
+            return 0.0
+        remaining = mem_target.nbytes - self.fetched.get(mem_target.idx, 0.0)
+        served: float = min(remaining, mem_rate * dt)
+        if served > 0:
+            self.fetched[mem_target.idx] = self.fetched.get(mem_target.idx, 0.0) + served
+            if mem_target.kind == "write":
+                self.cum["mem_w"] += served
+            else:
+                self.cum["mem_r"] += served
+                if mem_target.kind == "stream":
+                    self.sram += served
+        return served
+
+    def _step_advance_comp(self, dt: float) -> float:
+        """Continuous advance compute server over dt; returns served ops."""
+        c_rate = self.cfg.mac_per_ns
+        n = len(self.items)
+        if self.comp_idx >= n:
+            return 0.0
+        it = self.items[self.comp_idx]
+        if it.kind != "stream":
+            return 0.0
+        add_ops = min(it.ops - self.ops_done[it.idx], c_rate * dt)
+        if it.nbytes > 0:
+            avail = self.fetched[it.idx] - self.consumed[it.idx]
+            add_ops = min(add_ops, avail / it.bytes_per_op)
+        if add_ops > 0:
+            self.ops_done[it.idx] += add_ops
+            add_bytes = add_ops * it.bytes_per_op
+            self.consumed[it.idx] += add_bytes
+            self.cum["macs"] += add_ops
+            if add_bytes > 0:
+                self.sram = max(0.0, self.sram - add_bytes)
+        return add_ops
+
+    def _step_advance_pcie(self, dt: float) -> float:
+        """Continuous advance pcie server over dt; returns served bytes."""
+        cfg = self.cfg
+        if self.pcie_busy is None:
+            return 0.0
+        it = self._item(self.pcie_busy)
+        remaining = it.nbytes - self.fetched.get(it.idx, 0.0)
+        served = min(remaining, cfg.pcie_bytes_per_ns * dt)
+        if served > 0:
+            self.fetched[it.idx] = self.fetched.get(it.idx, 0.0) + served
+            self.cum["pcie"] += served
+        return served
+
+    def _step_retire_mem(self, mem_target, events: list) -> None:
+        """Retire memory server item at exactly self.t."""
+        it = mem_target
+        if it.nbytes - self.fetched.get(it.idx, 0.0) > EPS:
+            return
+        # fold the sub-EPS residual into the counters so per-token
+        # totals consume the workload bytes EXACTLY
+        resid = it.nbytes - self.fetched.get(it.idx, 0.0)
+        if resid > 0:
+            if it.kind == "write":
+                self.cum["mem_w"] += resid
+            else:
+                self.cum["mem_r"] += resid
+                if it.kind == "stream":
+                    self.sram += resid
+        self.fetched[it.idx] = float(it.nbytes)
+        if it.kind == "write":
+            self.exact["mem_w"] += it.nbytes
+            self.item_done.add(it.idx)
+            self.done_times[it.idx] = self.t
+            self.write_pending.remove(it.idx)
+            self.write_in_service = None
+            events.append(f"mem_write_done:{it.name}")
+        elif it.kind == "read":
+            self.exact["mem_r"] += it.nbytes
+            self.item_done.add(it.idx)
+            self.done_times[it.idx] = self.t
+            self.mem_idx += 1
+            events.append(f"mem_read_done:{it.name}")
+        else:  # stream: fetch complete; compute retires it later
+            self.exact["mem_r"] += it.nbytes
+            self.mem_idx += 1
+            events.append(f"fetch_done:{it.name}")
+
+    def _step_retire_comp(self, events: list) -> None:
+        """Retire compute server item at exactly self.t."""
+        n = len(self.items)
+        if self.comp_idx >= n:
+            return
+        it = self.items[self.comp_idx]
+        if it.kind != "stream" or not self._comp_retire_ready(it):
+            return
+        # snap residuals so cumulative counters stay exact
+        # (ops_done and cum["macs"] grow by identical amounts,
+        # so adding the residual back makes the token totals exact)
+        resid_ops = it.ops - self.ops_done[it.idx]
+        resid_bytes = it.nbytes - self.consumed[it.idx]
+        if resid_ops:
+            self.cum["macs"] += resid_ops
+        if resid_bytes > 0:
+            self.sram = max(0.0, self.sram - resid_bytes)
+        self.ops_done[it.idx] = float(it.ops)
+        self.consumed[it.idx] = float(it.nbytes)
+        self.exact["macs"] += it.ops
+        self.item_done.add(it.idx)
+        self.done_times[it.idx] = self.t
+        self.comp_idx += 1
+        events.append(f"comp_done:{it.name}")
+
+    def _step_retire_pcie(self, events: list) -> None:
+        """Retire pcie server item at exactly self.t."""
+        if self.pcie_busy is None:
+            return
+        it = self._item(self.pcie_busy)
+        if it.nbytes - self.fetched.get(it.idx, 0.0) > EPS:
+            return
+        resid = it.nbytes - self.fetched.get(it.idx, 0.0)
+        if resid > 0:
+            self.cum["pcie"] += resid
+        self.fetched[it.idx] = float(it.nbytes)
+        self.exact["pcie"] += it.nbytes
+        self.item_done.add(it.idx)
+        self.done_times[it.idx] = self.t
+        self.pcie_busy = None
+        self.comp_idx += 1
+        events.append(f"pcie_done:{it.name}")
+
+    def _step_collect_cands(self, c_rate: float) -> tuple:
+        """Collect candidates and compute dt; returns (cands, dt, mem_target, mem_rate)."""
+        if self._is_complete():
+            return [], 0.0, None, 0.0
+        cands: list[tuple[float, str, Item]] = []
+        # memory server target (write priority, non-preemptive)
+        cand_mem, mem_rate, mem_target = self._step_candidate_mem(c_rate)
+        if cand_mem is not None:
+            cands.append(cand_mem)
+        # compute server (in-order; read/write already skipped structurally)
+        cand_comp = self._step_candidate_comp(c_rate)
+        if cand_comp is not None:
+            cands.append(cand_comp)
+        # pcie server
+        cand_pcie = self._step_candidate_pcie()
+        if cand_pcie is not None:
+            cands.append(cand_pcie)
+        dt = 0.0
+        if cands:
+            dt = min(c[0] for c in cands)
+            if not math.isfinite(dt) or dt < -EPS:
+                raise RuntimeError(f"non-finite step dt={dt}")
+            dt = max(dt, 0.0)
+        return cands, dt, mem_target, mem_rate
+
+    def _step_structural(self, events: list) -> bool:
+        """Run structural pass; returns True if structurally changed."""
+        struct_event, struct_changed = self._structural_pass()
+        if struct_event:
+            events.append(struct_event)
+            return True
+        if struct_changed:
+            events.append("structural")
+            return True
+        return False
+
+    def _step_starve_check(self, cands: list, dt: float, events: list) -> None:
+        """Append comp_starve events for candidates at dt."""
+        for d, kind, payload in cands:
+            if kind == "comp_starve" and d <= dt + EPS:
+                events.append(f"comp_starve:{payload.name}")
+
+    def _step_advance_servers(self, dt: float, mem_target, mem_rate: float, events: list) -> tuple:
+        """Advance all servers over dt; returns (served_mem, served_ops, served_pcie)."""
+        if dt <= 0:
+            return 0.0, 0.0, 0.0
+        self.t += dt
+        served_mem = self._step_advance_mem(dt, mem_target, mem_rate)
+        served_ops = self._step_advance_comp(dt)
+        served_pcie = self._step_advance_pcie(dt)
+        if not events:
+            events.append(
+                f"flow:mem={served_mem:.0f}B,mac={served_ops:.0f},pcie={served_pcie:.0f}B"
+            )
+        if served_mem > 0 or served_ops > 0 or served_pcie > 0:
+            self._progress_marker += 1
+        return served_mem, served_ops, served_pcie
+
     def step(self) -> str:
         """Advance to the next event. Returns a '+'-joined event name.
 
         Raises RuntimeError on deadlock (no candidate, no structural change)
         or on a no-progress (dt==0, state unchanged) hop.
         """
-        cfg = self.cfg
-        m_rate = cfg.mem_service_bytes_per_ns
-        c_rate = cfg.mac_per_ns
+        c_rate = self.cfg.mac_per_ns
         n = len(self.items)
         if self._is_complete():
             raise RuntimeError("engine stepped past end of workload")
@@ -619,203 +927,26 @@ class Engine:
 
         # ---- (A) zero-time structural transitions ----
         events: list[str] = []
-        struct_event, struct_changed = self._structural_pass()
-        if struct_event:
-            events.append(struct_event)
-        elif struct_changed:
-            events.append("structural")
+        struct_changed = self._step_structural(events)
 
         # ---- (B) candidate thresholds -> dt ----
-        dt = 0.0
-        mem_target: Item | None = None
-        mem_rate = 0.0
-        if not self._is_complete():
-            cands: list[tuple[float, str, Item]] = []
-
-            # memory server target (write priority, non-preemptive)
-            if self.write_in_service is not None:
-                mem_target = self._item(self.write_in_service)
-            elif self.mem_idx < n and self.items[self.mem_idx].kind in ("read", "stream"):
-                mem_target = self.items[self.mem_idx]
-            if mem_target is not None:
-                remaining = mem_target.nbytes - self.fetched.get(mem_target.idx, 0.0)
-                if remaining <= EPS:
-                    cands.append((0.0, "mem_done", mem_target))
-                elif mem_target.kind == "stream":
-                    drain = self._comp_drain_rate()
-                    room = float(cfg.sram_bytes) - self.sram
-                    mem_rate = m_rate
-                    if room <= EPS:
-                        if drain <= EPS:
-                            mem_rate = 0.0  # scratchpad full, compute not pulling
-                        else:
-                            mem_rate = min(m_rate, drain)  # paced by the drain
-                    if mem_rate > 0:
-                        t_mem = remaining / mem_rate
-                        net = mem_rate - drain
-                        if room > EPS and net > EPS:
-                            t_mem = min(t_mem, room / net)  # SRAM room exhausts first
-                        cands.append((t_mem, "mem_done", mem_target))
-                else:  # read / write bypass the scratchpad
-                    if m_rate > 0:
-                        mem_rate = m_rate
-                        cands.append((remaining / m_rate, "mem_done", mem_target))
-
-            # compute server (in-order; read/write already skipped structurally)
-            if self.comp_idx < n:
-                it = self.items[self.comp_idx]
-                if it.kind == "stream":
-                    ops_left = it.ops - self.ops_done[it.idx]
-                    if it.nbytes == 0:  # ops-only (softmax over the vocab)
-                        cands.append((max(ops_left, 0.0) / c_rate, "comp_done", it))
-                    elif self._comp_retire_ready(it):
-                        cands.append((0.0, "comp_done", it))
-                    else:
-                        avail = self.fetched[it.idx] - self.consumed[it.idx]
-                        if avail > EPS:
-                            t_ops = ops_left / c_rate
-                            t_bytes = avail / (c_rate * it.bytes_per_op)
-                            if t_ops <= t_bytes + EPS:
-                                cands.append((t_ops, "comp_done", it))
-                            else:
-                                # conservative pause: re-evaluate as memory feeds;
-                                # never dt==0 (avail > EPS)
-                                cands.append((t_bytes, "comp_starve", it))
-                        # else starved and unfed: NO dt==0 candidate - memory
-                        # must feed first (the old comp_starve dt=0 livelock)
-
-            # pcie server
-            if self.pcie_busy is not None:
-                it = self._item(self.pcie_busy)
-                remaining = it.nbytes - self.fetched.get(it.idx, 0.0)
-                cands.append((remaining / cfg.pcie_bytes_per_ns, "pcie_done", it))
-
-            if cands:
-                dt = min(c[0] for c in cands)
-                if not math.isfinite(dt) or dt < -EPS:
-                    raise RuntimeError(f"non-finite step dt={dt}")
-                dt = max(dt, 0.0)
-                for d, kind, payload in cands:
-                    if kind == "comp_starve" and d <= dt + EPS:
-                        events.append(f"comp_starve:{payload.name}")
-            elif not struct_changed:
-                raise RuntimeError(
-                    f"DEADLOCK at t={self.t} hops={self.hops} mem={self.mem_idx} "
-                    f"comp={self.comp_idx} writes={len(self.write_pending)}"
-                )
+        cands, dt, mem_target, mem_rate = self._step_collect_cands(c_rate)
+        if cands:
+            self._step_starve_check(cands, dt, events)
+        elif not struct_changed:
+            raise RuntimeError(
+                f"DEADLOCK at t={self.t} hops={self.hops} mem={self.mem_idx} "
+                f"comp={self.comp_idx} writes={len(self.write_pending)}"
+            )
 
         # ---- (C) continuous advance over dt for all servers ----
-        served_mem = 0.0
-        served_ops = 0.0
-        served_pcie = 0.0
-        if dt > 0:
-            self.t += dt
-            if mem_target is not None and mem_rate > 0:
-                remaining = mem_target.nbytes - self.fetched.get(mem_target.idx, 0.0)
-                served = min(remaining, mem_rate * dt)
-                if served > 0:
-                    served_mem = served
-                    self.fetched[mem_target.idx] = self.fetched.get(mem_target.idx, 0.0) + served
-                    if mem_target.kind == "write":
-                        self.cum["mem_w"] += served
-                    else:
-                        self.cum["mem_r"] += served
-                        if mem_target.kind == "stream":
-                            self.sram += served
-            if self.comp_idx < n:
-                it = self.items[self.comp_idx]
-                if it.kind == "stream":
-                    add_ops = min(it.ops - self.ops_done[it.idx], c_rate * dt)
-                    if it.nbytes > 0:
-                        avail = self.fetched[it.idx] - self.consumed[it.idx]
-                        add_ops = min(add_ops, avail / it.bytes_per_op)
-                    if add_ops > 0:
-                        served_ops = add_ops
-                        self.ops_done[it.idx] += add_ops
-                        add_bytes = add_ops * it.bytes_per_op
-                        self.consumed[it.idx] += add_bytes
-                        self.cum["macs"] += add_ops
-                        if add_bytes > 0:
-                            self.sram = max(0.0, self.sram - add_bytes)
-            if self.pcie_busy is not None:
-                it = self._item(self.pcie_busy)
-                remaining = it.nbytes - self.fetched.get(it.idx, 0.0)
-                served = min(remaining, cfg.pcie_bytes_per_ns * dt)
-                if served > 0:
-                    served_pcie = served
-                    self.fetched[it.idx] = self.fetched.get(it.idx, 0.0) + served
-                    self.cum["pcie"] += served
-        if dt > 0 and not events:
-            events.append(
-                f"flow:mem={served_mem:.0f}B,mac={served_ops:.0f},pcie={served_pcie:.0f}B"
-            )
-        if served_mem > 0 or served_ops > 0 or served_pcie > 0:
-            self._progress_marker += 1
+        self._step_advance_servers(dt, mem_target, mem_rate, events)
 
         # ---- (D) retire thresholds hit at exactly self.t ----
         if mem_target is not None:
-            it = mem_target
-            if it.nbytes - self.fetched.get(it.idx, 0.0) <= EPS:
-                # fold the sub-EPS residual into the counters so per-token
-                # totals consume the workload bytes EXACTLY
-                resid = it.nbytes - self.fetched.get(it.idx, 0.0)
-                if resid > 0:
-                    if it.kind == "write":
-                        self.cum["mem_w"] += resid
-                    else:
-                        self.cum["mem_r"] += resid
-                        if it.kind == "stream":
-                            self.sram += resid
-                self.fetched[it.idx] = float(it.nbytes)
-                if it.kind == "write":
-                    self.exact["mem_w"] += it.nbytes
-                    self.item_done.add(it.idx)
-                    self.done_times[it.idx] = self.t
-                    self.write_pending.remove(it.idx)
-                    self.write_in_service = None
-                    events.append(f"mem_write_done:{it.name}")
-                elif it.kind == "read":
-                    self.exact["mem_r"] += it.nbytes
-                    self.item_done.add(it.idx)
-                    self.done_times[it.idx] = self.t
-                    self.mem_idx += 1
-                    events.append(f"mem_read_done:{it.name}")
-                else:  # stream: fetch complete; compute retires it later
-                    self.exact["mem_r"] += it.nbytes
-                    self.mem_idx += 1
-                    events.append(f"fetch_done:{it.name}")
-        if self.comp_idx < n:
-            it = self.items[self.comp_idx]
-            if it.kind == "stream" and self._comp_retire_ready(it):
-                # snap residuals so cumulative counters stay exact
-                # (ops_done and cum["macs"] grow by identical amounts,
-                # so adding the residual back makes the token totals exact)
-                resid_ops = it.ops - self.ops_done[it.idx]
-                resid_bytes = it.nbytes - self.consumed[it.idx]
-                if resid_ops:
-                    self.cum["macs"] += resid_ops
-                if resid_bytes > 0:
-                    self.sram = max(0.0, self.sram - resid_bytes)
-                self.ops_done[it.idx] = float(it.ops)
-                self.consumed[it.idx] = float(it.nbytes)
-                self.exact["macs"] += it.ops
-                self.item_done.add(it.idx)
-                self.done_times[it.idx] = self.t
-                self.comp_idx += 1
-                events.append(f"comp_done:{it.name}")
-        if self.pcie_busy is not None:
-            it = self._item(self.pcie_busy)
-            if it.nbytes - self.fetched.get(it.idx, 0.0) <= EPS:
-                resid = it.nbytes - self.fetched.get(it.idx, 0.0)
-                if resid > 0:
-                    self.cum["pcie"] += resid
-                self.fetched[it.idx] = float(it.nbytes)
-                self.exact["pcie"] += it.nbytes
-                self.item_done.add(it.idx)
-                self.done_times[it.idx] = self.t
-                self.pcie_busy = None
-                self.comp_idx += 1
-                events.append(f"pcie_done:{it.name}")
+            self._step_retire_mem(mem_target, events)
+        self._step_retire_comp(events)
+        self._step_retire_pcie(events)
 
         # ---- record, verify, watchdog, finish ----
         self._record_hop("+".join(events) or "advance", "+".join(events))
@@ -830,6 +961,11 @@ class Engine:
         if self._is_complete():
             self._finish_token()
         return "+".join(events) or "advance"
+
+
+
+
+
 
     def _finish_token(self) -> None:
         self.per_token_ms.append((self.t - self.token_start_t) / 1e6)
