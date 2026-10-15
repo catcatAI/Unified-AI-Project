@@ -67,7 +67,9 @@ def _crop_palette(
     w, h = img.size
     x0, y0, x1, y1 = (int(box[0] * w), int(box[1] * h), int(box[2] * w), int(box[3] * h))
     crop = img.crop((max(x0, 0), max(y0, 0), min(x1, w), min(y1, h)))
-    px = list(crop.getdata())
+    # get_flattened_data 對 RGB/RGBA 回傳逐像素元組（同 getdata），
+    # 為 Pillow 14 (2027) 弃用後的替代 API
+    px = list(crop.get_flattened_data())
     n = max(len(px), 1)
     import collections as _collections
 

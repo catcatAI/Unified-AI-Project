@@ -215,7 +215,9 @@ def aesthetics(image_data: bytes) -> Dict[str, Any]:
         return {"colorfulness": 0.0, "balance": 0.0, "brightness": 0.0, "complexity": 1}
     import math as _math
 
-    px = list(img.getdata())
+    # get_flattened_data 對 RGB 回傳逐像素 (r,g,b) 元組（同 getdata），
+    # 為 Pillow 14 (2027) 弃用後的替代 API
+    px = list(img.get_flattened_data())
     n = max(len(px), 1)
     # Brightness (luminance mean).
     lum = [0.299 * r + 0.587 * g + 0.114 * b for r, g, b in px]

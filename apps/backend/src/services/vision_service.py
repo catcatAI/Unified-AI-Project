@@ -267,8 +267,8 @@ class VisionService:
 
                     img1 = Image.open(BytesIO(image_data1)).convert("RGB").resize((32, 32))
                     img2 = Image.open(BytesIO(image_data2)).convert("RGB").resize((32, 32))
-                    p1 = list(img1.getdata())
-                    p2 = list(img2.getdata())
+                    p1 = list(img1.get_flattened_data())
+                    p2 = list(img2.get_flattened_data())
                     diffs = sum(abs(p1[i][j] - p2[i][j]) for i in range(len(p1)) for j in range(3))
                     max_diff = len(p1) * 3 * 255
                     similarity_score = 1.0 - (diffs / max_diff)
@@ -654,7 +654,7 @@ class VisionService:
             from PIL import Image
 
             img = Image.open(BytesIO(image_data)).convert("RGB").resize((64, 64))
-            pixels = list(img.getdata())
+            pixels = list(img.get_flattened_data())
             total = len(pixels)
             r_avg = sum(p[0] for p in pixels) / total
             g_avg = sum(p[1] for p in pixels) / total
@@ -716,7 +716,7 @@ class VisionService:
             from PIL import Image
 
             img = Image.open(BytesIO(image_data)).convert("RGB").resize((64, 64))
-            pixels = list(img.getdata())
+            pixels = list(img.get_flattened_data())
             total = len(pixels)
             r_total = sum(p[0] for p in pixels) / total
             g_total = sum(p[1] for p in pixels) / total
