@@ -1,3 +1,16 @@
+// 在安裝 console→Logger 橋之前，先捕獲「原始 console」——Logger 自身的輸出
+// sink 必須走原始 console，否則橋把 console 路由回 Logger 會無限遞迴。
+const _origConsole =
+  typeof console !== 'undefined'
+    ? {
+        debug: console.debug.bind(console),
+        info: console.info.bind(console),
+        log: console.log.bind(console),
+        warn: console.warn.bind(console),
+        error: console.error.bind(console),
+      }
+    : { debug() {}, info() {}, log() {}, warn() {}, error() {} }
+
 class Logger {
   constructor(config = {}) {
     this.config = {
@@ -62,7 +75,7 @@ class Logger {
       try {
         listener(logEntry)
       } catch (e) {
-        console.error('Logger listener error:', e)
+        _origConsole.error('Logger listener error:', e)
       }
     })
   }
@@ -73,7 +86,7 @@ class Logger {
     const logEntry = this._formatMessage('debug', message, data)
     this._addLog(logEntry)
 
-    console.debug(`${logEntry.timestamp} ${logEntry.prefix}`, message, data || '')
+    _origConsole.debug(`${logEntry.timestamp} ${logEntry.prefix}`, message, data || '')
   }
 
   info(message, data = null) {
@@ -82,7 +95,7 @@ class Logger {
     const logEntry = this._formatMessage('info', message, data)
     this._addLog(logEntry)
 
-    console.info(`${logEntry.timestamp} ${logEntry.prefix}`, message, data || '')
+    _origConsole.info(`${logEntry.timestamp} ${logEntry.prefix}`, message, data || '')
   }
 
   warn(message, data = null) {
@@ -91,7 +104,7 @@ class Logger {
     const logEntry = this._formatMessage('warn', message, data)
     this._addLog(logEntry)
 
-    console.warn(`${logEntry.timestamp} ${logEntry.prefix}`, message, data || '')
+    _origConsole.warn(`${logEntry.timestamp} ${logEntry.prefix}`, message, data || '')
   }
 
   error(message, error = null) {
@@ -108,7 +121,7 @@ class Logger {
     const logEntry = this._formatMessage('error', message, errorData)
     this._addLog(logEntry)
 
-    console.error(`${logEntry.timestamp} ${logEntry.prefix}`, message, error || '')
+    _origConsole.error(`${logEntry.timestamp} ${logEntry.prefix}`, message, error || '')
   }
 
   critical(message, error = null) {
@@ -125,7 +138,7 @@ class Logger {
     const logEntry = this._formatMessage('critical', message, errorData)
     this._addLog(logEntry)
 
-    console.error(`🚨 ${logEntry.timestamp} ${logEntry.prefix}`, message, error || '')
+    _origConsole.error(`🚨 ${logEntry.timestamp} ${logEntry.prefix}`, message, error || '')
   }
 
   setLevel(level) {
@@ -185,7 +198,7 @@ class Logger {
       const data = JSON.stringify(this.logs)
       localStorage.setItem('angela_logs', data)
     } catch (e) {
-      console.error('Failed to persist logs:', e)
+      _origConsole.error('Failed to persist logs:', e)
     }
   }
 
@@ -199,7 +212,7 @@ class Logger {
         this.info(`Loaded ${this.logs.length} logs from storage`)
       }
     } catch (e) {
-      console.error('Failed to load logs from storage:', e)
+      _origConsole.error('Failed to load logs from storage:', e)
     }
   }
 
@@ -237,3 +250,50 @@ class Logger {
     this._persistToStorage()
   }
 }
+
+// ── console → Logger 橋（全域，載入 logger.js 即生效）──────────────────────
+// 各共享腳本以全域 <script> 載入、非 ES module，內部大量裸 console.* 呼叫
+// 繞過了 Logger（分級 + 持久化 + 監聽）。本橋在 logger.js 載入時**替換
+// console.debug/info/log/warn/error**，把它們路由到 Logger —— 既有呼叫點
+// 零改動即全部走正規日誌通道（console 恆存在，無 ReferenceError 風險）。
+// Logger 未就緒（app.js 尚未建 window.angelaAppLogger）時降級直印 console，
+// 維持可觀測。這把「繞過 Logger 的裸 console」根治為「分級持久化日誌」。
+;(function installConsoleBridge() {
+  if (typeof console === 'undefined' || console.__angelaBridged) return
+  const orig = {
+    debug: console.debug.bind(console),
+    info: console.info.bind(console),
+    log: console.log.bind(console),
+    warn: console.warn.bind(console),
+    error: console.error.bind(console),
+  }
+  const join = (args) =>
+    args
+      .map((a) => {
+        if (typeof a === 'string') return a
+        if (a instanceof Error) return a.stack || a.message
+        try {
+          return JSON.stringify(a)
+        } catch {
+          return String(a)
+        }
+      })
+      .join(' ')
+  const sink =
+    (level) =>
+    (...args) => {
+      const lg = typeof window !== 'undefined' ? window.angelaAppLogger : null
+      if (lg && typeof lg[level] === 'function') {
+        lg[level](join(args))
+      } else {
+        // Logger 未就緒 —— 用原始 console 輸出（保留可觀測）
+        orig[level === 'log' ? 'info' : level](...args)
+      }
+    }
+  console.debug = sink('debug')
+  console.info = sink('info')
+  console.log = sink('info') // console.log 視為 info 級
+  console.warn = sink('warn')
+  console.error = sink('error')
+  console.__angelaBridged = true
+})()

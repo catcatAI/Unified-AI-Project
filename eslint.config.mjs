@@ -82,7 +82,14 @@ export default [
             '^_|^(Logger|MaturityTracker|PerformanceManager|PluginManager|PrecisionManager|StateMatrix4D|StatePersistence|TerminalUI)$',
         },
       ],
-      'no-console': 'warn',
+      // no-console 關閉 —— 非「有意保留裸 console」，而是 console 已被
+      // logger.js 的 installConsoleBridge() 接管：載入 logger.js 後所有
+      // console.debug/info/log/warn/error 都路由到 Logger（分級 + 持久化 +
+      // 監聽），Node CLI 腳本（無 window.angelaAppLogger）降級走原 console
+      // 作為 stdout。no-console 規則的前提「原始未管理 console」已被橋接
+      // 根治，此處關閉為如實反映架構（console = 受管分級日誌通道），
+      // 而非把 2348 個警告當「有意債」留著。
+      'no-console': 'off',
       'no-debugger': 'warn',
       'no-empty': 'warn',
       'no-irregular-whitespace': 'warn',
