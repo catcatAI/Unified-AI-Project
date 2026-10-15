@@ -599,24 +599,16 @@ async def _try_alignment_check(
         logger.warning(f"Level5ASI alignment check unavailable: {e}", exc_info=True)
 
 
-async def _build_chat_context(
-    context: Dict[str, Any],
-    user_message: str,
-    user_name: str,
-    history: List[Dict[str, Any]],
-    session_id: str,
-    chat_svc: Any,
-    bio: Any,
-) -> None:
-    """Build the full LLM context: bio state, state matrix, retrieved context, dialogue, memory.
-    Mutates the `context` dict in-place."""
-    # Bio state
+def _ctx_bio_state(context: Dict[str, Any], bio: Any) -> None:
+    """Bio state injection."""
     try:
         context["bio_state"] = bio.get_biological_state()
     except Exception as e:
         logger.warning(f"Biological state retrieval failed: {e}", exc_info=True)
 
-    # State matrix 4D axes
+
+def _ctx_state_matrix(context: Dict[str, Any]) -> None:
+    """State matrix 4D axes + theta + eta injection."""
     try:
         sm = _get_state_matrix()
         eta_state = _get_eta_axis()
@@ -644,7 +636,11 @@ async def _build_chat_context(
     except Exception as e:
         logger.warning(f"StateMatrix4D unavailable: {e}", exc_info=True)
 
-    # ED3N context retrieval from history
+
+def _ctx_retrieved(
+    context: Dict[str, Any], history: List[Dict[str, Any]], user_message: str
+) -> None:
+    """ED3N context retrieval from history."""
     retrieved_ctx: List[Dict[str, Any]] = []
     if history and len(history) > 0:
         try:
@@ -675,7 +671,11 @@ async def _build_chat_context(
             logger.warning(f"ED3N context retrieval failed: {e}", exc_info=True)
     context["retrieved_context"] = retrieved_ctx
 
-    # Dialogue context injection
+
+def _ctx_dialogue(
+    context: Dict[str, Any], session_id: str, user_message: str
+) -> None:
+    """Dialogue context injection."""
     try:
         dialogue_ctx = _get_dialogue_ctx()
         if session_id:
@@ -686,7 +686,9 @@ async def _build_chat_context(
     except Exception as e:
         logger.warning(f"Dialogue context unavailable: {e}", exc_info=True)
 
-    # Memory context injection
+
+def _ctx_memories(context: Dict[str, Any]) -> None:
+    """Memory context injection."""
     try:
         dialogue_ctx = _get_dialogue_ctx()
         recent_memories = dialogue_ctx.get_recent_conversations(limit=5)
@@ -695,11 +697,9 @@ async def _build_chat_context(
     except Exception as e:
         logger.warning(f"Memory context unavailable: {e}", exc_info=True)
 
-    # History in context
-    if history:
-        context["history"] = history
 
-    # LifeEssence tendency injection: accumulated personality from historical traces
+def _ctx_life_essence(context: Dict[str, Any]) -> None:
+    """LifeEssence tendency injection: accumulated personality from historical traces."""
     try:
         from core.life.life_essence import get_life_essence
 
@@ -715,6 +715,32 @@ async def _build_chat_context(
             logger.debug("LifeEssence tendencies injected into chat context")
     except Exception as e:
         logger.warning(f"LifeEssence injection unavailable: {e}", exc_info=True)
+
+
+async def _build_chat_context(
+    context: Dict[str, Any],
+    user_message: str,
+    user_name: str,
+    history: List[Dict[str, Any]],
+    session_id: str,
+    chat_svc: Any,
+    bio: Any,
+) -> None:
+    """Build the full LLM context: bio state, state matrix, retrieved context, dialogue, memory.
+    Mutates the `context` dict in-place."""
+    _ctx_bio_state(context, bio)
+    _ctx_state_matrix(context)
+    _ctx_retrieved(context, history, user_message)
+    _ctx_dialogue(context, session_id, user_message)
+    _ctx_memories(context)
+
+    # History in context
+    if history:
+        context["history"] = history
+
+    _ctx_life_essence(context)
+
+
 
 
 def _gate_execution_response(
@@ -872,6 +898,241 @@ _agent_manager_instance = None
 _agent_orchestrator_instance = None
 
 
+def _agent_route_clock_skip(user_message: str) -> bool:
+    """Deterministic clock owns time/date questions — skip agent handling.
+
+    The knowledge agent would otherwise answer with dictionary translation
+    fragments ("the present"). Skip so the router's clock step answers
+    (live probe 2026-10-09).
+    """
+    try:
+        from services.llm.router import clock_query_kind
+
+        if clock_query_kind(user_message) is not None:
+            return True
+    except Exception:
+        logger.warning(
+            "clock_query_kind probe failed; time questions may leak to " "knowledge agent",
+            exc_info=True,
+        )
+    return False
+
+
+def _agent_route_classify(user_message: str, context: Dict[str, Any]) -> Tuple[str, float]:
+    """Reuse the classification already computed by _handle_execution_gate.
+
+    Stored on context to avoid classifying the same message twice per request
+    — QueryClassifier construction + ED3N encode is not cheap.
+    """
+    cached_type = context.get("_classify_result_type")
+    cached_conf = context.get("_classify_result_confidence")
+    if cached_type is not None:
+        return str(cached_type), float(cached_conf) if cached_conf is not None else 0.0
+    from services.llm.context_scheduler import get_context_scheduler
+
+    plan = get_context_scheduler().plan_query(user_message, context)
+    return plan.query_type, plan.confidence
+
+
+def _agent_route_eda_override(
+    user_message: str,
+    context: Dict[str, Any],
+    agent_orchestrator_cls: Any,
+    primary_type_name: str,
+    confidence: float,
+) -> Tuple[str, float]:
+    """EDA/AI-card requests override the classification to eda (high confidence)."""
+    eda_request = agent_orchestrator_cls.is_eda_execution_request(user_message)
+    ai_card_request = agent_orchestrator_cls.is_ai_card_request(user_message)
+    eda_followup = context.get("_eda_followup") is True and agent_orchestrator_cls.is_eda_followup_request(
+        user_message
+    )
+    if eda_request or ai_card_request or eda_followup:
+        return "eda", max(confidence, 0.8)
+    return primary_type_name, confidence
+
+
+def _agent_route_filter_skip(primary_type_name: str, confidence: float, query_type_cls: Any) -> bool:
+    """Only route non-actionable intents with agent suitability (else fall to LLM)."""
+    actionable = {
+        t.value
+        for t in (
+            query_type_cls.FILE,
+            query_type_cls.SEARCH,
+            query_type_cls.CODE,
+            query_type_cls.EXECUTE,
+            query_type_cls.TASK,
+            query_type_cls.SYSTEM,
+        )
+    }
+    if primary_type_name in actionable:
+        return True
+    agent_types = {
+        t.value
+        for t in (
+            query_type_cls.CREATIVE,
+            query_type_cls.KNOWLEDGE,
+            query_type_cls.OPINION,
+            query_type_cls.VISION,
+            query_type_cls.AUDIO,
+            query_type_cls.LOGIC,
+            query_type_cls.COMMAND,
+        )
+    }
+    agent_types.add("eda")
+    if primary_type_name not in agent_types and confidence < 0.3:
+        return True
+    return False
+
+
+def _agent_route_init_singletons(
+    lifespan_get_agent_manager: Any,
+    get_training_coordinator: Any,
+    agent_manager_cls: Any,
+    agent_orchestrator_cls: Any,
+    register_specialized_agents: Any,
+) -> Any:
+    """Lazy-init agent manager + orchestrator singletons, reuse across requests.
+
+    Prefer the lifespan-initialized AgentManager singleton when available so
+    specialized agents are only registered once per process.
+    """
+    global _agent_manager_instance, _agent_orchestrator_instance
+    if _agent_manager_instance is None and lifespan_get_agent_manager is not None:
+        _agent_manager_instance = lifespan_get_agent_manager()
+    if _agent_manager_instance is None:
+        _agent_manager_instance = agent_manager_cls(enable_process_agents=False, enable_router=False)
+        training_coordinator = (
+            get_training_coordinator() if get_training_coordinator is not None else None
+        )
+        register_specialized_agents(
+            _agent_manager_instance,
+            training_coordinator=training_coordinator,
+        )
+        _agent_orchestrator_instance = agent_orchestrator_cls(agent_manager=_agent_manager_instance)
+        logger.info("AgentManager/AgentOrchestrator singletons initialized")
+    elif _agent_orchestrator_instance is None:
+        _agent_orchestrator_instance = agent_orchestrator_cls(agent_manager=_agent_manager_instance)
+    return _agent_orchestrator_instance
+
+
+async def _agent_wire_model_bus(orchestrator: Any) -> None:
+    # Handler-backed intents (file/code/web_search) execute through the
+    # per-request ChatService's ModelBus; the orchestrator singleton must
+    # see it to route them (previously never wired → those intents were
+    # dead and silently fell back to the LLM).
+    agent_chat_svc = await _get_chat_service()
+    if agent_chat_svc and agent_chat_svc.model_bus:
+        orchestrator.model_bus = agent_chat_svc.model_bus
+
+
+def _agent_route_code_write_bypass(user_message: str) -> bool:
+    """Code-WRITE requests must reach the LLM, not a code agent's confirm gate.
+
+    There is no code to run yet (mirrors the execution-gate bypass; live
+    2026-10-10 Unity script blocked here instead). Message-level detection
+    (not agent-name): the blocking agent varies while the request shape is
+    constant.
+    """
+    try:
+        from services.execution.gate_execution import GateExecutionOwner
+
+        if GateExecutionOwner.is_code_write_request(
+            user_message
+        ) and GateExecutionOwner._llm_generation_available():
+            logger.debug("Agent routing skipped for code-write request")
+            return True
+    except Exception:
+        logger.warning(
+            "code-write gate probe failed; code-write requests may fall "
+            "through to general agent routing",
+            exc_info=True,
+        )
+    return False
+
+
+def _agent_route_gate(
+    primary: Dict[str, Any],
+    user_message: str,
+    context: Dict[str, Any],
+    schema_ver: str,
+    session_id: str,
+) -> Tuple[bool, Optional[Dict[str, Any]]]:
+    """Handle ExecutionGate confirm/reject. Returns (handled, response)."""
+    gate_action = primary.get("gate_action")
+    if gate_action not in ("confirm_then_execute", "reject"):
+        return False, None
+    # ExecutionGate blocked the specialized agent (irreversible action needs
+    # explicit confirmation). Surface the confirmation instead of silently
+    # falling through to the LLM, mirroring the handler gate flow above.
+    confirm_text = primary.get("confirm_message") or (
+        "這個操作需要你確認後我才會執行：" f"{user_message}"
+    )
+    if gate_action == "confirm_then_execute":
+        pending = {
+            "kind": "agent",
+            "agent": primary.get("agent"),
+            "intent": primary.get("intent"),
+            "original_query": user_message,
+        }
+        context["pending_action"] = pending
+        session_data = sessions.get(session_id) or {}
+        session_data["pending_action"] = pending
+        sessions.set(session_id, session_data)
+        return True, {
+            "response_text": confirm_text,
+            "response": confirm_text,
+            "source": "gate_confirm",
+            "schema_version": schema_ver,
+            "truncation_message": "",
+            "emotion": "neutral",
+            "emotion_confidence": 0.5,
+            "emotion_intensity": 0.5,
+            "hit_score": 0.0,
+            "hit_source": "gate_confirm",
+            "route": "agent_gate_confirm",
+            "session_id": session_id,
+        }
+    logger.info(
+        "ExecutionGate rejected agent %s: %s",
+        primary.get("agent"),
+        primary.get("gate_reason"),
+    )
+    return True, None
+
+
+def _agent_route_result(primary: Dict[str, Any], context: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """Extract the specialized agent's result into a response dict."""
+    agent_result = primary.get("result")
+    if not (agent_result and isinstance(agent_result, dict) and agent_result.get("result")):
+        return None
+    inner = agent_result["result"]
+    # Specialized agents return dicts like {"status": "success"} — an
+    # error/unavailable status must not be presented as a successful
+    # response (fall through to the LLM instead).
+    if isinstance(inner, dict) and inner.get("status") in (
+        "error",
+        "unavailable",
+        "failed",
+    ):
+        logger.debug(
+            "Agent %s returned non-success status; falling back to LLM: %s",
+            primary.get("agent", "unknown"),
+            inner.get("status"),
+        )
+        return None
+    response_text = (
+        inner.get("message") if isinstance(inner, dict) and inner.get("message") else str(inner)
+    )
+    context["_agent_result"] = response_text
+    context["_agent_result_source"] = primary.get("agent", "unknown")
+    return {
+        "response": response_text,
+        "source": primary.get("agent", "unknown"),
+        "confidence": primary.get("confidence", 0.8),
+    }
+
+
 async def _try_agent_routing(
     user_message: str,
     context: Dict[str, Any],
@@ -881,8 +1142,6 @@ async def _try_agent_routing(
     """Try agent auto-routing for non-execution intents (creative/knowledge/opinion/search).
     Returns a response dict if an agent handled the query, else None (falls through to LLM)."""
     try:
-        global _agent_manager_instance, _agent_orchestrator_instance
-
         from ai.agents.agent_adapter import register_specialized_agents
         from ai.agents.agent_manager import AgentManager
         from ai.agents.agent_orchestrator import AgentOrchestrator
@@ -895,200 +1154,39 @@ async def _try_agent_routing(
             _lifespan_get_agent_manager = None  # type: ignore[assignment]
             _get_training_coordinator = None  # type: ignore[assignment]
 
-        # Reuse the classification already computed by _handle_execution_gate
-        # (stored on context) to avoid classifying the same message twice per
-        # request — QueryClassifier construction + ED3N encode is not cheap.
-        cached_type = context.get("_classify_result_type")
-        cached_conf = context.get("_classify_result_confidence")
-        if cached_type is not None:
-            primary_type_name = str(cached_type)
-            confidence = float(cached_conf) if cached_conf is not None else 0.0
-        else:
-            from services.llm.context_scheduler import get_context_scheduler
-
-            plan = get_context_scheduler().plan_query(user_message, context)
-            primary_type_name = plan.query_type
-            confidence = plan.confidence
-
-        # Deterministic clock owns time/date questions: the knowledge agent
-        # would otherwise answer with dictionary translation fragments
-        # ("the present"). Skip agent handling so the router's clock step
-        # answers (live probe 2026-10-09).
-        try:
-            from services.llm.router import clock_query_kind
-
-            if clock_query_kind(user_message) is not None:
-                return None
-        except Exception:
-            logger.warning(
-                "clock_query_kind probe failed; time questions may leak to " "knowledge agent",
-                exc_info=True,
-            )
-
-        eda_request = AgentOrchestrator.is_eda_execution_request(user_message)
-        ai_card_request = AgentOrchestrator.is_ai_card_request(user_message)
-        eda_followup = context.get(
-            "_eda_followup"
-        ) is True and AgentOrchestrator.is_eda_followup_request(user_message)
-        if eda_request or ai_card_request or eda_followup:
-            primary_type_name = "eda"
-            confidence = max(confidence, 0.8)
-
-        # Only route non-actionable intents (execution gate handles actionable ones)
-        actionable = {
-            t.value
-            for t in (
-                QueryType.FILE,
-                QueryType.SEARCH,
-                QueryType.CODE,
-                QueryType.EXECUTE,
-                QueryType.TASK,
-                QueryType.SYSTEM,
-            )
-        }
-        if primary_type_name in actionable:
+        if _agent_route_clock_skip(user_message):
             return None
 
-        # Map QueryType to agent suitability threshold — route all non-actionable intents
-        agent_types = {
-            t.value
-            for t in (
-                QueryType.CREATIVE,
-                QueryType.KNOWLEDGE,
-                QueryType.OPINION,
-                QueryType.VISION,
-                QueryType.AUDIO,
-                QueryType.LOGIC,
-                QueryType.COMMAND,
-            )
-        }
-        agent_types.add("eda")
-        if primary_type_name not in agent_types and confidence < 0.3:
+        primary_type_name, confidence = _agent_route_classify(user_message, context)
+        primary_type_name, confidence = _agent_route_eda_override(
+            user_message, context, AgentOrchestrator, primary_type_name, confidence
+        )
+        if _agent_route_filter_skip(primary_type_name, confidence, QueryType):
             return None
 
-        # Singleton: lazy-init agent manager + orchestrator once, reuse across requests.
-        # Prefer the lifespan-initialized AgentManager singleton when available so
-        # specialized agents are only registered once per process.
-        if _agent_manager_instance is None and _lifespan_get_agent_manager is not None:
-            _agent_manager_instance = _lifespan_get_agent_manager()
-        if _agent_manager_instance is None:
-            _agent_manager_instance = AgentManager(enable_process_agents=False, enable_router=False)
-            training_coordinator = (
-                _get_training_coordinator() if _get_training_coordinator is not None else None
-            )
-            register_specialized_agents(
-                _agent_manager_instance,
-                training_coordinator=training_coordinator,
-            )
-            _agent_orchestrator_instance = AgentOrchestrator(agent_manager=_agent_manager_instance)
-            logger.info("AgentManager/AgentOrchestrator singletons initialized")
-        elif _agent_orchestrator_instance is None:
-            _agent_orchestrator_instance = AgentOrchestrator(agent_manager=_agent_manager_instance)
-        orchestrator = _agent_orchestrator_instance
-        # Handler-backed intents (file/code/web_search) execute through the
-        # per-request ChatService's ModelBus; the orchestrator singleton must
-        # see it to route them (previously never wired → those intents were
-        # dead and silently fell back to the LLM).
-        agent_chat_svc = await _get_chat_service()
-        if agent_chat_svc and agent_chat_svc.model_bus:
-            orchestrator.model_bus = agent_chat_svc.model_bus
+        orchestrator = _agent_route_init_singletons(
+            _lifespan_get_agent_manager,
+            _get_training_coordinator,
+            AgentManager,
+            AgentOrchestrator,
+            register_specialized_agents,
+        )
+        await _agent_wire_model_bus(orchestrator)
         route_result = await orchestrator.route_task(user_message, context)
 
         primary = route_result.get("results", [{}])[0] if route_result.get("results") else {}
 
-        # Code-WRITE requests must reach the LLM, not a code agent's confirm
-        # gate: there is no code to run yet (mirrors the execution-gate
-        # bypass; live 2026-10-10 Unity script blocked here instead).
-        # Message-level detection (not agent-name): the blocking agent varies
-        # (code/understand/task...) while the request shape is constant.
-        try:
-            from services.execution.gate_execution import GateExecutionOwner
-
-            if (
-                GateExecutionOwner.is_code_write_request(user_message)
-                and GateExecutionOwner._llm_generation_available()
-            ):
-                logger.debug("Agent routing skipped for code-write request")
-                return None
-        except Exception:
-            logger.warning(
-                "code-write gate probe failed; code-write requests may fall "
-                "through to general agent routing",
-                exc_info=True,
-            )
-
-        # ExecutionGate blocked the specialized agent (irreversible action needs
-        # explicit confirmation). Surface the confirmation instead of silently
-        # falling through to the LLM, mirroring the handler gate flow above.
-        gate_action = primary.get("gate_action")
-        if gate_action in ("confirm_then_execute", "reject"):
-            confirm_text = primary.get("confirm_message") or (
-                "這個操作需要你確認後我才會執行：" f"{user_message}"
-            )
-            if gate_action == "confirm_then_execute":
-                pending = {
-                    "kind": "agent",
-                    "agent": primary.get("agent"),
-                    "intent": primary.get("intent"),
-                    "original_query": user_message,
-                }
-                context["pending_action"] = pending
-                session_data = sessions.get(session_id) or {}
-                session_data["pending_action"] = pending
-                sessions.set(session_id, session_data)
-                return {
-                    "response_text": confirm_text,
-                    "response": confirm_text,
-                    "source": "gate_confirm",
-                    "schema_version": schema_ver,
-                    "truncation_message": "",
-                    "emotion": "neutral",
-                    "emotion_confidence": 0.5,
-                    "emotion_intensity": 0.5,
-                    "hit_score": 0.0,
-                    "hit_source": "gate_confirm",
-                    "route": "agent_gate_confirm",
-                    "session_id": session_id,
-                }
-            logger.info(
-                "ExecutionGate rejected agent %s: %s",
-                primary.get("agent"),
-                primary.get("gate_reason"),
-            )
+        if _agent_route_code_write_bypass(user_message):
             return None
-
-        agent_result = primary.get("result")
-        if agent_result and isinstance(agent_result, dict) and agent_result.get("result"):
-            inner = agent_result["result"]
-            # Specialized agents return dicts like {"status": "success"} — an
-            # error/unavailable status must not be presented as a successful
-            # response (fall through to the LLM instead).
-            if isinstance(inner, dict) and inner.get("status") in (
-                "error",
-                "unavailable",
-                "failed",
-            ):
-                logger.debug(
-                    "Agent %s returned non-success status; falling back to LLM: %s",
-                    primary.get("agent", "unknown"),
-                    inner.get("status"),
-                )
-                return None
-            response_text = (
-                inner.get("message")
-                if isinstance(inner, dict) and inner.get("message")
-                else str(inner)
-            )
-            context["_agent_result"] = response_text
-            context["_agent_result_source"] = primary.get("agent", "unknown")
-            return {
-                "response": response_text,
-                "source": primary.get("agent", "unknown"),
-                "confidence": primary.get("confidence", 0.8),
-            }
+        handled, gate_resp = _agent_route_gate(primary, user_message, context, schema_ver, session_id)
+        if handled:
+            return gate_resp
+        return _agent_route_result(primary, context)
     except Exception as e:
         logger.warning(f"Agent routing unavailable: {e}", exc_info=True)
     return None
+
+
 
 
 def _get_causal_routing_adjustment() -> Dict[str, Any]:
@@ -2366,6 +2464,65 @@ async def unified_chat(request: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     return response
 
 
+async def _sse_pump(
+    token_queue: "asyncio.Queue", task: "asyncio.Future", judge: Any
+) -> AsyncGenerator[str, None]:
+    """Pump tokens from the queue until the task completes. Yields SSE lines."""
+    while True:
+        try:
+            item = await asyncio.wait_for(token_queue.get(), timeout=45.0)
+            yield f"data: {json.dumps(item, ensure_ascii=False)}\n\n"
+            # Phase 2: judge on the rolling window (never blocks
+            # generation — this runs in the endpoint loop, not the
+            # provider callback). Lock events ride the same stream.
+            try:
+                verdict = judge.feed(str(item.get("token", "")))
+                if verdict is not None:
+                    yield f"data: {json.dumps(verdict, ensure_ascii=False)}\n\n"
+            except Exception:
+                # Lock/verdict events are one-shot on a live stream —
+                # losing one is unrecoverable downstream.
+                logger.warning("StreamJudge feed failed; verdict dropped", exc_info=True)
+        except asyncio.TimeoutError:
+            if task.done():
+                break
+            yield ": ping\n\n"
+            continue
+        if task.done() and token_queue.empty():
+            break
+
+
+async def _sse_finalize(task: "asyncio.Future", judge: Any) -> AsyncGenerator[str, None]:
+    """Await the final result and yield the terminal SSE event."""
+    try:
+        result = await asyncio.wait_for(task, timeout=300.0)
+    except asyncio.TimeoutError:
+        task.cancel()
+        yield f"data: {json.dumps({'error': 'overall timeout'})}\n\n"
+        return
+    except Exception as exc:
+        yield f"data: {json.dumps({'error': str(exc)[:200]})}\n\n"
+        return
+    final_text = (result or {}).get("response_text", "")
+    final_backend = (result or {}).get("backend", "unknown")
+    # Never report success on an empty answer (audit 2026-10-10: a
+    # failed pipeline yielded done:true with blank text and no signal).
+    if not (final_text or "").strip() and final_backend == "unknown":
+        yield f"data: {json.dumps({'error': 'empty response'})}\n\n"
+        return
+    try:
+        consistency = judge.finalize(final_text)
+    except Exception:
+        consistency = {}
+    final = {
+        "done": True,
+        "response_text": final_text,
+        "backend": final_backend,
+        "judge_consistency": consistency,
+    }
+    yield f"data: {json.dumps(final, ensure_ascii=False)}\n\n"
+
+
 @router.post("/chat/stream")
 async def chat_stream(request: Dict[str, Any] = Body(...)) -> StreamingResponse:
     """SSE streaming chat: tokens are emitted as the LLM generates them.
@@ -2425,60 +2582,17 @@ async def chat_stream(request: Dict[str, Any] = Body(...)) -> StreamingResponse:
             )
         )
         try:
-            while True:
-                try:
-                    item = await asyncio.wait_for(token_queue.get(), timeout=45.0)
-                    yield f"data: {json.dumps(item, ensure_ascii=False)}\n\n"
-                    # Phase 2: judge on the rolling window (never blocks
-                    # generation — this runs in the endpoint loop, not the
-                    # provider callback). Lock events ride the same stream.
-                    try:
-                        verdict = judge.feed(str(item.get("token", "")))
-                        if verdict is not None:
-                            yield f"data: {json.dumps(verdict, ensure_ascii=False)}\n\n"
-                    except Exception:
-                        # Lock/verdict events are one-shot on a live stream —
-                        # losing one is unrecoverable downstream.
-                        logger.warning("StreamJudge feed failed; verdict dropped", exc_info=True)
-                except asyncio.TimeoutError:
-                    if task.done():
-                        break
-                    yield ": ping\n\n"
-                    continue
-                if task.done() and token_queue.empty():
-                    break
-            try:
-                result = await asyncio.wait_for(task, timeout=300.0)
-            except asyncio.TimeoutError:
-                task.cancel()
-                yield f"data: {json.dumps({'error': 'overall timeout'})}\n\n"
-                return
-            except Exception as exc:
-                yield f"data: {json.dumps({'error': str(exc)[:200]})}\n\n"
-                return
-            final_text = (result or {}).get("response_text", "")
-            final_backend = (result or {}).get("backend", "unknown")
-            # Never report success on an empty answer (audit 2026-10-10: a
-            # failed pipeline yielded done:true with blank text and no signal).
-            if not (final_text or "").strip() and final_backend == "unknown":
-                yield f"data: {json.dumps({'error': 'empty response'})}\n\n"
-                return
-            try:
-                consistency = judge.finalize(final_text)
-            except Exception:
-                consistency = {}
-            final = {
-                "done": True,
-                "response_text": final_text,
-                "backend": final_backend,
-                "judge_consistency": consistency,
-            }
-            yield f"data: {json.dumps(final, ensure_ascii=False)}\n\n"
+            async for line in _sse_pump(token_queue, task, judge):
+                yield line
+            async for line in _sse_finalize(task, judge):
+                yield line
         finally:
             if not task.done():
                 task.cancel()
 
     return StreamingResponse(_event_gen(), media_type="text/event-stream")
+
+
 
 
 @router.post("/chat/with-image")
