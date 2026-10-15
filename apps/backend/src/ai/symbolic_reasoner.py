@@ -147,46 +147,58 @@ _BASE_TO_COMP = {
 }
 
 
-def _solve_transitive(text: str) -> Optional[str]:
-    """A > B, B > C  =>  A is the greatest / tallest / etc."""
-    # Find comparator statements:  "X is <comp> than Y"  or  "X <comp> Y"
-    # Chinese: "X 比 Y <comp>"
-    pairs: List[Tuple[str, str, str]] = []  # (subject, object, comparator)
-    # Trailing yes/no question "…, is A older than B?" — cut before fact
-    # parsing (else the question pollutes the graph and every answer is "yes")
+def _detect_trailing_question(text: str) -> Tuple[Optional[Tuple[str, str, str]], str]:
+    """Split a trailing yes/no question from the fact text it appends to.
+
+    Returns (q_triple, facts_text). facts_text excludes the question so the
+    graph is not polluted by the question itself (else every answer is "yes").
+    """
     q_match = re.search(
         r",\s*is\s+([A-Za-z一-鿿]+)\s+(\w+?)\s+than\s+([A-Za-z一-鿿]+)\s*\??\s*(?:yes/no)?\s*$",
         text,
     )
-    q_cn_match = None
-    if q_match is None:
-        q_cn_match = re.search(
-            r"，\s*([A-Za-z一-鿿]+?)\s*比\s*([A-Za-z一-鿿]+?)\s*(強|高|大|重|快|多|長)\s*(?:嗎|吗)\s*？?\s*$",
-            text,
+    if q_match is not None:
+        return (
+            (q_match.group(1).upper(), q_match.group(2).lower(), q_match.group(3).upper()),
+            text[: q_match.start()],
         )
-    q_triple = None
-    facts_text = text
-    if q_match:
-        q_triple = (q_match.group(1).upper(), q_match.group(2).lower(), q_match.group(3).upper())
-        facts_text = text[: q_match.start()]
-    elif q_cn_match:
-        q_triple = (q_cn_match.group(1).upper(), "taller", q_cn_match.group(2).upper())
-        facts_text = text[: q_cn_match.start()]
-    # English "X is taller than Y" / "X taller than Y" (multi-letter entities:
-    # "Tom is older than Jerry", "first is higher than second")
+    q_cn_match = re.search(
+        r"，\s*([A-Za-z一-鿿]+?)\s*比\s*([A-Za-z一-鿿]+?)\s*(強|高|大|重|快|多|長)\s*(?:嗎|吗)\s*？?\s*$",
+        text,
+    )
+    if q_cn_match is not None:
+        return (
+            (q_cn_match.group(1).upper(), "taller", q_cn_match.group(2).upper()),
+            text[: q_cn_match.start()],
+        )
+    return None, text
+
+
+def _extract_pairs_en(facts_text: str) -> List[Tuple[str, str, str]]:
+    """"X is taller than Y" / "X taller than Y" (multi-letter entities)."""
+    pairs: List[Tuple[str, str, str]] = []
     for m in re.finditer(
         r"\b([A-Za-z]+)\b\s+(?:is\s+)?(\w+?)\s+than\s+\b([A-Za-z]+)\b", facts_text
     ):
-        subj, comp, obj = m.group(1).upper(), m.group(2).lower(), m.group(3).upper()
-        pairs.append((subj, obj, comp))
-    # Symbol chains "X > Y > Z" (consecutive pairs; finditer would skip overlaps)
+        pairs.append((m.group(1).upper(), m.group(3).upper(), m.group(2).lower()))
+    return pairs
+
+
+def _extract_pairs_symbolic(facts_text: str) -> List[Tuple[str, str, str]]:
+    """Symbol chains "X > Y > Z" (consecutive pairs; finditer would skip overlaps)."""
+    pairs: List[Tuple[str, str, str]] = []
     for seg in re.split(r"[,;，；]", facts_text):
         if ">" in seg:
             ents = [e.strip() for e in seg.split(">")]
             ents = [e for e in ents if re.fullmatch(r"[A-Za-z一-鿿]+", e or "")]
             for i in range(len(ents) - 1):
                 pairs.append((ents[i].upper(), ents[i + 1].upper(), "taller"))
-    # Negation "A is not as short as B" / "B not as short as C" (lesser-comp => A > B)
+    return pairs
+
+
+def _extract_pairs_negation(facts_text: str) -> List[Tuple[str, str, str]]:
+    """Negation "A is not as short as B" (lesser-comp => A > B, greater => B > A)."""
+    pairs: List[Tuple[str, str, str]] = []
     for m in re.finditer(
         r"\b([A-Za-z一-鿿]+)\b\s+(?:is\s+)?not\s+as\s+(\w+)\s+as\s+\b([A-Za-z一-鿿]+)\b",
         facts_text,
@@ -197,19 +209,63 @@ def _solve_transitive(text: str) -> Optional[str]:
             pairs.append((subj, obj, "taller"))
         elif comp in _GREATER:
             pairs.append((obj, subj, "taller"))
-    # Chinese "X 比 Y 高" (strip 若/如果 prefixes: "若A比B強" => A)
+    return pairs
+
+
+def _extract_pairs_cn(facts_text: str) -> List[Tuple[str, str, str]]:
+    """Chinese "X 比 Y 高" (strip 若/如果 prefixes: "若A比B強" => A)."""
+    pairs: List[Tuple[str, str, str]] = []
     for m in re.finditer(
         r"([\w一-鿿]{1,8})\s*比\s*([\w一-鿿]{1,8})\s*(高|大|重|快|多|長|強)", facts_text
     ):
         subj = re.sub(r"^(若|如果)+", "", m.group(1))
         obj = re.sub(r"^(若|如果)+", "", m.group(2))
         pairs.append((subj, obj, "taller"))
+    return pairs
 
-    if not pairs:
-        return None
 
-    # Build a "greater-than" graph. For each (a, b, comp):
-    #   greater comparators => a > b ;  lesser => b > a
+def _extract_pairs(facts_text: str) -> List[Tuple[str, str, str]]:
+    """Run all comparator-pattern matchers, preserving source order."""
+    return (
+        _extract_pairs_en(facts_text)
+        + _extract_pairs_symbolic(facts_text)
+        + _extract_pairs_negation(facts_text)
+        + _extract_pairs_cn(facts_text)
+    )
+
+
+# Extra greater/lesser comparators (CN glyphs + English forms not in _GREATER)
+_EXTRA_GREATER = frozenset(
+    {
+        "taller",
+        "bigger",
+        "larger",
+        "heavier",
+        "older",
+        "faster",
+        "higher",
+        "more",
+        "longer",
+        "wider",
+        "hotter",
+        "stronger",
+        "richer",
+        "高",
+        "大",
+        "重",
+        "快",
+        "多",
+        "長",
+        "強",
+    }
+)
+_EXTRA_LESSER = frozenset({"低", "小", "輕", "慢", "少", "弱"})
+
+
+def _build_graphs(pairs: List[Tuple[str, str, str]]) -> Tuple[dict, dict]:
+    """Build a "greater-than" graph. For each (a, b, comp):
+    greater comparators => a > b ; lesser => b > a.
+    """
     greater: dict = {}
     lesser: dict = {}
 
@@ -218,79 +274,58 @@ def _solve_transitive(text: str) -> Optional[str]:
         lesser.setdefault(b, set()).add(a)
 
     for a, b, comp in pairs:
-        if comp in _GREATER or comp in (
-            "taller",
-            "bigger",
-            "larger",
-            "heavier",
-            "older",
-            "faster",
-            "higher",
-            "more",
-            "longer",
-            "wider",
-            "hotter",
-            "stronger",
-            "richer",
-            "高",
-            "大",
-            "重",
-            "快",
-            "多",
-            "長",
-            "強",
-        ):
+        if comp in _GREATER or comp in _EXTRA_GREATER:
             _record(a, b)
-        elif comp in _LESSER or comp in ("低", "小", "輕", "慢", "少", "弱"):
+        elif comp in _LESSER or comp in _EXTRA_LESSER:
             _record(b, a)
+    return greater, lesser
 
-    if not greater:
-        return None
 
-    # Precedence guard: bare statements ("Sam is older than Kim.") belong to the
-    # template/SNN path — symbolic answers only questions (else it hijacks
-    # GARDEN template generalization, see test_template_recall_*).
-    if q_triple is None and not re.search(
-        r"\?|？|who|which|whom|whose|誰|嗎|是否|^\s*is\s+[A-Za-z一-鿿]+",
-        text,
-        re.IGNORECASE,
-    ):
-        return None
+def _is_wh_question(text: str) -> bool:
+    """Symbolic answers only for questions (else it hijacks GARDEN templates)."""
+    return bool(
+        re.search(
+            r"\?|？|who|which|whom|whose|誰|嗎|是否|^\s*is\s+[A-Za-z一-鿿]+",
+            text,
+            re.IGNORECASE,
+        )
+    )
 
-    # Yes/no entailment "…, is A older than B?" — answer from transitive closure
-    # (facts_text already excludes the question, so no self-fulfilling "yes").
-    if q_triple is not None:
-        qa, qcomp, qb = q_triple
 
-        def _dominates(src: str, dst: str) -> bool:
-            seen = {src}
-            stack = [src]
-            while stack:
-                n = stack.pop()
-                for m in greater.get(n, ()):
-                    if m == dst:
-                        return True
-                    if m not in seen:
-                        seen.add(m)
-                        stack.append(m)
-            return False
+def _dominates(src: str, dst: str, greater: dict) -> bool:
+    """True when dst is reachable from src in the greater-than graph."""
+    seen = {src}
+    stack = [src]
+    while stack:
+        n = stack.pop()
+        for m in greater.get(n, ()):
+            if m == dst:
+                return True
+            if m not in seen:
+                seen.add(m)
+                stack.append(m)
+    return False
 
-        if qcomp in _GREATER:
-            if _dominates(qa, qb):
-                return "yes"
-            if _dominates(qb, qa):
-                return "no"
-        elif qcomp in _LESSER:
-            if _dominates(qb, qa):
-                return "yes"
-            if _dominates(qa, qb):
-                return "no"
-        return None
 
-    # The "tallest / biggest / ...est" entity is one that is greater than all
-    # others and nothing is greater than it.
-    all_nodes = set(greater) | set(lesser)
-    ask_least = bool(
+def _answer_yes_no(q_triple: Tuple[str, str, str], greater: dict) -> Optional[str]:
+    """Yes/no entailment "…, is A older than B?" — answer from transitive closure."""
+    qa, qcomp, qb = q_triple
+    if qcomp in _GREATER:
+        if _dominates(qa, qb, greater):
+            return "yes"
+        if _dominates(qb, qa, greater):
+            return "no"
+    elif qcomp in _LESSER:
+        if _dominates(qb, qa, greater):
+            return "yes"
+        if _dominates(qa, qb, greater):
+            return "no"
+    return None
+
+
+def _ask_least(text: str) -> bool:
+    """Detect a least/smallest/... superlative question."""
+    return bool(
         re.search(
             r"shortest|smallest|least|youngest|lightest|"
             r"slowest|lowest|weakest|poorest|coldest|minimum|"
@@ -298,43 +333,69 @@ def _solve_transitive(text: str) -> Optional[str]:
             text.lower(),
         )
     )
-    if ask_least:
-        # The least entity is dominated by all others (in `lesser`).
-        candidates = [n for n in lesser if n not in greater]
-        if len(candidates) == 1:
-            bottom = candidates[0]
-            seen = set()
-            stack = list(lesser.get(bottom, set()))
-            while stack:
-                n = stack.pop()
-                if n in seen:
-                    continue
-                seen.add(n)
-                stack.extend(lesser.get(n, set()))
-            if seen >= (all_nodes - {bottom}):
-                comp_word = pairs[0][2]
-                superlative = _superlative(comp_word, least=True)
-                return f"{bottom} is {superlative}"
-        return None
 
+
+def _dominates_all(node: str, graph: dict, all_nodes: set) -> bool:
+    """True when node transitively reaches every other node in the graph."""
+    seen = set()
+    stack = list(graph.get(node, set()))
+    while stack:
+        n = stack.pop()
+        if n in seen:
+            continue
+        seen.add(n)
+        stack.extend(graph.get(n, set()))
+    return seen >= (all_nodes - {node})
+
+
+def _answer_superlative_least(
+    greater: dict, lesser: dict, all_nodes: set, pairs: List[Tuple[str, str, str]]
+) -> Optional[str]:
+    """The least entity is dominated by all others (in `lesser`)."""
+    candidates = [n for n in lesser if n not in greater]
+    if len(candidates) == 1:
+        bottom = candidates[0]
+        if _dominates_all(bottom, lesser, all_nodes):
+            comp_word = pairs[0][2]
+            return f"{bottom} is {_superlative(comp_word, least=True)}"
+    return None
+
+
+def _answer_superlative_greatest(
+    greater: dict, lesser: dict, all_nodes: set, pairs: List[Tuple[str, str, str]]
+) -> Optional[str]:
+    """The greatest entity is greater than all others and nothing is greater."""
     candidates = [n for n in greater if n not in lesser]
     if len(candidates) == 1:
         top = candidates[0]
-        # verify it dominates everything else transitively
-        seen = set()
-        stack = list(greater.get(top, set()))
-        while stack:
-            n = stack.pop()
-            if n in seen:
-                continue
-            seen.add(n)
-            stack.extend(greater.get(n, set()))
-        if seen >= (all_nodes - {top}):
-            # pick a human-friendly superlative
+        if _dominates_all(top, greater, all_nodes):
             comp_word = pairs[0][2]
-            superlative = _superlative(comp_word)
-            return f"{top} is {superlative}"
+            return f"{top} is {_superlative(comp_word)}"
     return None
+
+
+def _solve_transitive(text: str) -> Optional[str]:
+    """A > B, B > C  =>  A is the greatest / tallest / etc."""
+    # Precedence guard: bare statements ("Sam is older than Kim.") belong to the
+    # template/SNN path — symbolic answers only questions (else it hijacks
+    # GARDEN template generalization, see test_template_recall_*).
+    q_triple, facts_text = _detect_trailing_question(text)
+    pairs = _extract_pairs(facts_text)
+    if not pairs:
+        return None
+    greater, lesser = _build_graphs(pairs)
+    if not greater:
+        return None
+    if q_triple is None and not _is_wh_question(text):
+        return None
+    if q_triple is not None:
+        return _answer_yes_no(q_triple, greater)
+    all_nodes = set(greater) | set(lesser)
+    if _ask_least(text):
+        return _answer_superlative_least(greater, lesser, all_nodes, pairs)
+    return _answer_superlative_greatest(greater, lesser, all_nodes, pairs)
+
+
 
 
 def _superlative(comp: str, least: bool = False) -> str:
@@ -445,22 +506,15 @@ def _solve_ranking_facts(text: str) -> Optional[str]:
     return f"{top} is the greatest"
 
 
-def _solve_syllogism(text: str) -> Optional[str]:
-    """All X are Y. Z is an X. Does Z have property Y?
+def _find_universal(sentences: List[str]) -> Optional[Tuple[str, str]]:
+    """Find the UNIVERSAL premise ("all X can Y" / "X can Y" / "X are Y").
 
-    Premise 1: "<A> <verb> <B>"  (e.g. "birds can fly", "birds fly")
-    Premise 2: "<C> is a/an <A>"  (e.g. "a penguin is a bird")
-    Question:  "can <C> <B>?"  => answer yes/no based on premise 1.
+    Prefer an explicit universal statement; skip membership statements
+    ("Z is a X") so we don't mistake them for the rule.
     """
-    # Split into sentences
-    sentences = re.split(r"[.。!！?？;；]", text)
-    sentences = [s.strip() for s in sentences if s.strip()]
-
-    # Find the UNIVERSAL premise first ("all X can Y" / "X can Y" / "X are Y").
-    # Prefer an explicit universal statement; skip membership statements
-    # ("Z is a X") so we don't mistake them for the rule.
-    universal = None  # (category, property)
-    membership_re = re.compile(r"\b([a-z一-鿿]+)\s+is\s+(?:a|an)\s+([a-z一-鿿]+)\b", re.IGNORECASE)
+    membership_re = re.compile(
+        r"\b([a-z一-鿿]+)\s+is\s+(?:a|an)\s+([a-z一-鿿]+)\b", re.IGNORECASE
+    )
     for s in sentences:
         low = s.lower()
         m = re.search(r"(?:all\s+)?([a-z一-鿿]+)\s+(?:can|are|is)\s+([a-z一-鿿]+)", low)
@@ -474,25 +528,19 @@ def _solve_syllogism(text: str) -> Optional[str]:
         # Skip membership-style statements ("Z is a X")
         if membership_re.search(low) and re.search(r"\bis\s+(?:a|an)\s", low):
             continue
-        universal = (cat, prop)
-        break
+        return (cat, prop)
     # Fallback: any universal-style premise even if it also contains membership
-    if universal is None:
-        for s in sentences:
-            low = s.lower()
-            m = re.search(r"(?:all\s+)?([a-z一-鿿]+)\s+(?:can|are|is)\s+([a-z一-鿿]+)", low)
-            if m and m.group(1) not in ("all", "the", "a", "an", "every"):
-                universal = (m.group(1), m.group(2))
-                break
+    for s in sentences:
+        low = s.lower()
+        m = re.search(r"(?:all\s+)?([a-z一-鿿]+)\s+(?:can|are|is)\s+([a-z一-鿿]+)", low)
+        if m and m.group(1) not in ("all", "the", "a", "an", "every"):
+            return (m.group(1), m.group(2))
+    return None
 
-    if universal is None:
-        return None
 
-    cat, prop = universal
-    # Find membership: "<C> is a/an <cat>" or "<C> 是 <cat>".
-    # Allow singular/plural mismatch (rule says "birds", member says "bird").
+def _find_member(sentences: List[str], cat: str) -> Optional[str]:
+    """Find the member "<C> is a/an <cat>" or "<C> 是 <cat>" (plural-insensitive)."""
     cat_norm = cat.rstrip("s") or cat
-    member = None
     member_re = re.compile(
         r"\b([a-z一-鿿]+)\s+is\s+(?:a|an)\s+" + re.escape(cat_norm) + r"s?\b",
         re.IGNORECASE,
@@ -508,8 +556,27 @@ def _solve_syllogism(text: str) -> Optional[str]:
             cand = m.group(1)
             if cand in ("a", "an", "the", "一", "一隻", "一個", "一頭", "一名"):
                 continue
-            member = cand
-            break
+            return cand
+    return None
+
+
+def _solve_syllogism(text: str) -> Optional[str]:
+    """All X are Y. Z is an X. Does Z have property Y?
+
+    Premise 1: "<A> <verb> <B>"  (e.g. "birds can fly", "birds fly")
+    Premise 2: "<C> is a/an <A>"  (e.g. "a penguin is a bird")
+    Question:  "can <C> <B>?"  => answer yes/no based on premise 1.
+    """
+    # Split into sentences
+    sentences = re.split(r"[.。!！?？;；]", text)
+    sentences = [s.strip() for s in sentences if s.strip()]
+
+    universal = _find_universal(sentences)
+    if universal is None:
+        return None
+
+    cat, prop = universal
+    member = _find_member(sentences, cat)
     if member is None:
         return None
 
@@ -525,6 +592,8 @@ def _solve_syllogism(text: str) -> Optional[str]:
         )
         return "no" if neg else "yes"
     return None
+
+
 
 
 def _solve_calendar(text: str) -> Optional[str]:
@@ -671,6 +740,75 @@ def _alias_present(alias: str, low: str) -> bool:
     return alias in low
 
 
+def _detect_attr_kind(low: str) -> Optional[str]:
+    """Detect the attribute kind from the prompt (legs first, then wheels/value)."""
+    for k, cfg in _ATTR_KINDS.items():
+        if any(w in low for w in cfg["words"]):
+            return k
+    return None
+
+
+def _attr_val(
+    key: str, low: str, cfg: "_AttrKind", attr_word: "Tuple[str, ...]"
+) -> Optional[int]:
+    """Per-object attribute value: explicit in prompt first, else knowledge base."""
+    # Prefer an explicit per-object attribute stated in the prompt.
+    alias_alt = "|".join(
+        re.escape(a) if not a.isascii() or not a.isalnum() else rf"\b{re.escape(a)}\b"
+        for a in _ENTITY_ALIASES[key]
+    )
+    m = re.search(
+        rf"(?:each|per|每隻|每只|每)\s*(?:{alias_alt})\s*(?:has|have|有)\s*(\d+)\s*(?:{'|'.join(re.escape(w) for w in attr_word)})",
+        low,
+    )
+    if m:
+        return int(m.group(1))
+    try:
+        from ai.knowledge_base import _KNOWLEDGE
+
+        raw = _KNOWLEDGE.get(key, {}).get(cfg["kb"])
+        return int(raw) if raw is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _parse_total_attr(m_r: "re.Match[str]", kind: str) -> float:
+    """Total attribute R (value kind may be a dollar amount -> cents)."""
+    total_raw = m_r.group(1) or m_r.group(2)
+    total_attr = float(total_raw)
+    if kind == "value" and "." in total_raw:
+        total_attr = round(total_attr * 100)  # "$1.40" -> 140 cents
+    else:
+        total_attr = int(total_attr)
+    return total_attr
+
+
+def _parse_total_obj(low: str) -> Optional[int]:
+    """Total object count C (count-noun first, then a "共 N" form)."""
+    m_c = _OBJ_COUNT_RE.search(low)
+    if m_c:
+        return int(m_c.group(1))
+    m = re.search(r"(?:共有|共|總共|總計)\D*?(\d+)\s*(?:隻|只|個|枚)", low)
+    if not m:
+        return None
+    return int(m.group(1))
+
+
+def _pick_labels(a: str, b: str, low: str) -> Tuple[str, str]:
+    """Human-friendly labels: prefer CJK aliases when the prompt is CJK."""
+    cjk = any("一" <= ch <= "鿿" for ch in low)
+    aliases = _ENTITY_ALIASES
+    if cjk:
+        label_a = next(
+            (x for x in aliases[a] if any("一" <= ch <= "鿿" for ch in x)), aliases[a][0]
+        )
+        label_b = next(
+            (x for x in aliases[b] if any("一" <= ch <= "鿿" for ch in x)), aliases[b][0]
+        )
+        return label_a, label_b
+    return aliases[a][0], aliases[b][0]
+
+
 def _solve_word_problem(text: str) -> Optional[str]:
     """Solve a two-object linear pair.
 
@@ -701,39 +839,14 @@ def _solve_word_problem(text: str) -> Optional[str]:
         return None
     a, b = present[0], present[1]
 
-    # Detect the attribute kind from the prompt (legs first, then wheels/value).
-    kind = None
-    for k, cfg in _ATTR_KINDS.items():
-        if any(w in low for w in cfg["words"]):
-            kind = k
-            break
+    kind = _detect_attr_kind(low)
     if kind is None:
         return None
     cfg = _ATTR_KINDS[kind]
     attr_word = cfg["words"]
 
-    def _attr_val(key: str) -> Optional[int]:
-        # Prefer an explicit per-object attribute stated in the prompt.
-        alias_alt = "|".join(
-            re.escape(a) if not a.isascii() or not a.isalnum() else rf"\b{re.escape(a)}\b"
-            for a in _ENTITY_ALIASES[key]
-        )
-        m = re.search(
-            rf"(?:each|per|每隻|每只|每)\s*(?:{alias_alt})\s*(?:has|have|有)\s*(\d+)\s*(?:{'|'.join(re.escape(w) for w in attr_word)})",
-            low,
-        )
-        if m:
-            return int(m.group(1))
-        try:
-            from ai.knowledge_base import _KNOWLEDGE
-
-            raw = _KNOWLEDGE.get(key, {}).get(cfg["kb"])
-            return int(raw) if raw is not None else None
-        except (TypeError, ValueError):
-            return None
-
-    a_val = _attr_val(a)
-    b_val = _attr_val(b)
+    a_val = _attr_val(a, low, cfg, attr_word)
+    b_val = _attr_val(b, low, cfg, attr_word)
     if a_val is None or b_val is None or a_val == b_val:
         return None
 
@@ -741,22 +854,12 @@ def _solve_word_problem(text: str) -> Optional[str]:
     m_r = re.search(cfg["r_re"], low)
     if not m_r:
         return None
-    total_raw = m_r.group(1) or m_r.group(2)
-    total_attr = float(total_raw)
-    if kind == "value" and "." in total_raw:
-        total_attr = round(total_attr * 100)  # "$1.40" -> 140 cents
-    else:
-        total_attr = int(total_attr)
+    total_attr = _parse_total_attr(m_r, kind)
 
-    # Total object count C (count-noun first, then a "共 N" form).
-    m_c = _OBJ_COUNT_RE.search(low)
-    if m_c:
-        total_obj = int(m_c.group(1))
-    else:
-        m = re.search(r"(?:共有|共|總共|總計)\D*?(\d+)\s*(?:隻|只|個|枚)", low)
-        if not m:
-            return None
-        total_obj = int(m.group(1))
+    # Total object count C.
+    total_obj = _parse_total_obj(low)
+    if total_obj is None:
+        return None
 
     # Solve A+B=C ; a_val*A + b_val*B = R.
     numerator = total_attr - b_val * total_obj
@@ -768,18 +871,10 @@ def _solve_word_problem(text: str) -> Optional[str]:
     if count_a < 0 or count_b < 0:
         return None
 
-    cjk = any("\u4e00" <= ch <= "\u9fff" for ch in low)
-    aliases = _ENTITY_ALIASES
-    if cjk:
-        label_a = next(
-            (x for x in aliases[a] if any("\u4e00" <= ch <= "\u9fff" for ch in x)), aliases[a][0]
-        )
-        label_b = next(
-            (x for x in aliases[b] if any("\u4e00" <= ch <= "\u9fff" for ch in x)), aliases[b][0]
-        )
-    else:
-        label_a, label_b = aliases[a][0], aliases[b][0]
+    label_a, label_b = _pick_labels(a, b, low)
     return f"{count_a} {label_a}, {count_b} {label_b}"
+
+
 
 
 def route_reasoning(text: str) -> Optional[str]:
