@@ -1218,33 +1218,8 @@ class ED3NEngine:
                 logger.warning("ED3N: failed to save LatentReasoningNetwork: %s", e, exc_info=True)
         logger.info("ED3NEngine saved to %s", path)
 
-    def load(self, path: str) -> None:
-        """Load full ED3N engine state.
-
-        Defensive loading: a missing/corrupt section is logged clearly and
-        skipped rather than silently accepted — an engine must never look
-        "loaded" while carrying an untrained/preset network or an empty
-        dictionary from a partial checkpoint.
-        """
-        import json
-        import os
-
-        self.load_presets()
-        try:
-            with open(path, "r", encoding="utf-8") as f:
-                state = json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError) as e:
-            logger.error("ED3NEngine: failed to load checkpoint %s: %s", path, e)
-            return
-        if not isinstance(state, dict):
-            logger.error(
-                "ED3NEngine: checkpoint %s has invalid format (expected JSON object, got %s); "
-                "refusing to apply partial state",
-                path,
-                type(state).__name__,
-            )
-            return
-        self.snn_mode = bool(state.get("snn_mode", False))
+    def _load_reflex_state(self, state: dict) -> None:
+        """Load reflex threshold and patterns from checkpoint state."""
         if "reflex_threshold" in state:
             self.reflex.threshold = state["reflex_threshold"]
         if "reflex_patterns" in state:
@@ -1262,6 +1237,9 @@ class ED3NEngine:
                 logger.info(
                     "Loaded %d reflex patterns from checkpoint.", len(state["reflex_patterns"])
                 )
+
+    def _load_network_state(self, state: dict, path: str) -> None:
+        """Load CoreNetwork from checkpoint state."""
         if "network" in state:
             from ai.ed3n.core_network import CoreNetwork
 
@@ -1281,6 +1259,11 @@ class ED3NEngine:
                 "ED3NEngine: checkpoint %s has no 'network' section; keeping preset network",
                 path,
             )
+
+    def _load_dictionary_state(self, path: str) -> None:
+        """Load dictionary from JSON file."""
+        import os
+
         dict_path = path.replace(".json", "_dictionary.json")
         if os.path.exists(dict_path):
             self.dictionary.import_from_json(dict_path)
@@ -1288,29 +1271,71 @@ class ED3NEngine:
             logger.warning(
                 "ED3NEngine: dictionary file %s missing; dictionary NOT restored", dict_path
             )
-        if self._continuous_learning is not None:
-            cl_path = path.replace(".json", "_continuous_learning.json")
-            if os.path.exists(cl_path):
-                try:
-                    self._continuous_learning = type(self._continuous_learning).load(
-                        cl_path, self, None
-                    )
-                except Exception as e:
-                    logger.warning(
-                        "ED3NEngine: failed to load CL checkpoint %s: %s; "
-                        "keeping fresh pipeline",
-                        cl_path,
-                        e,
-                    )
-            else:
-                logger.debug("ED3NEngine: no continuous-learning checkpoint at %s", cl_path)
-        # Restore LatentReasoningNetwork only if latent space was enabled.
+
+    def _load_continuous_learning(self, path: str) -> None:
+        """Load continuous learning pipeline if enabled."""
+        import os
+
+        if self._continuous_learning is None:
+            return
+        cl_path = path.replace(".json", "_continuous_learning.json")
+        if os.path.exists(cl_path):
+            try:
+                self._continuous_learning = type(self._continuous_learning).load(
+                    cl_path, self, None
+                )
+            except Exception as e:
+                logger.warning(
+                    "ED3NEngine: failed to load CL checkpoint %s: %s; "
+                    "keeping fresh pipeline",
+                    cl_path,
+                    e,
+                )
+        else:
+            logger.debug("ED3NEngine: no continuous-learning checkpoint at %s", cl_path)
+
+    def _load_latent_reasoning(self, path: str) -> None:
+        """Load LatentReasoningNetwork if enabled."""
+        import os
+
         lrn_path = path.replace(".json", "_lrn.npz")
         if os.path.exists(lrn_path) and self._latent_reasoning is not None:
             try:
                 self._latent_reasoning = type(self._latent_reasoning).load(lrn_path)
             except Exception as e:
                 logger.warning("ED3N: failed to load LatentReasoningNetwork: %s", e, exc_info=True)
+
+    def load(self, path: str) -> None:
+        """Load full ED3N engine state.
+
+        Defensive loading: a missing/corrupt section is logged clearly and
+        skipped rather than silently accepted — an engine must never look
+        "loaded" while carrying an untrained/preset network or an empty
+        dictionary from a partial checkpoint.
+        """
+        import json
+
+        self.load_presets()
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                state = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            logger.error("ED3NEngine: failed to load checkpoint %s: %s", path, e)
+            return
+        if not isinstance(state, dict):
+            logger.error(
+                "ED3NEngine: checkpoint %s has invalid format (expected JSON object, got %s); "
+                "refusing to apply partial state",
+                path,
+                type(state).__name__,
+            )
+            return
+        self.snn_mode = bool(state.get("snn_mode", False))
+        self._load_reflex_state(state)
+        self._load_network_state(state, path)
+        self._load_dictionary_state(path)
+        self._load_continuous_learning(path)
+        self._load_latent_reasoning(path)
         logger.info("ED3NEngine loaded from %s", path)
 
     def train(
