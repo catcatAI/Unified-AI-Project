@@ -1318,20 +1318,93 @@ class AngelaLLMService:
         )
         return True
 
+    @staticmethod
+    def _backend_provider_map():
+        """provider string for each LLMBackend enum member."""
+        return {
+            getattr(LLMBackend, k.upper()): v.split("_", 1)[1]
+            for k, v in _BACKEND_FACTORIES.items()
+            if v.startswith("_init_")
+        }
+
+    def _learned_priority_penalty(self, provider: str, angela_cfg) -> int:
+        """Learned route stats: <60% success -> +20 penalty; >80% -> -5 boost."""
+        if angela_cfg is None or not provider:
+            return 0
+        perf = angela_cfg.get_route_performance(provider)
+        total = perf.get("success_count", 0) + perf.get("fail_count", 0)
+        if total < 5:
+            return 0
+        rate = perf.get("success_rate", 0.5)
+        if rate < 0.6:
+            logger.info(
+                f"[learned] {provider} success_rate={rate:.0%} ({total} samples) -> penalty +20"
+            )
+            return 20
+        if rate > 0.8:
+            logger.info(
+                f"[learned] {provider} success_rate={rate:.0%} ({total} samples) -> boost -5"
+            )
+            return -5
+        return 0
+
+    def _rank_backend(self, btype: "LLMBackend", provider_for, angela_cfg) -> float:
+        from core.system.config.network_defaults import BACKEND_PRIORITY
+
+        provider = provider_for.get(btype)
+        if provider is None:
+            return 99.0
+        # Base priority from config
+        base = 99
+        for bid, bcfg in (self.config.get("backends") or {}).items():
+            if isinstance(bcfg, dict) and (bcfg.get("provider") or "") == provider:
+                base = int(bcfg.get("priority", BACKEND_PRIORITY.get(provider, 99)))
+                break
+        if base == 99:
+            base = BACKEND_PRIORITY.get(provider, 99)
+        # Learn penalty: providers with <60% success rate over >=5 attempts
+        # get +20 priority (pushed back). Providers with >80% get -5 (boost).
+        penalty = self._learned_priority_penalty(provider, angela_cfg)
+        if penalty > 0:
+            base += penalty
+        elif penalty < 0:
+            base = max(0, base + penalty)
+        return base
+
+    def _apply_preferred_backend(self, ranked):
+        """User-persisted preference (Desktop Settings → llm.user.yaml
+        settings.preferred_backend) wins when it names an available backend.
+        """
+        preferred = (
+            str((self.config.get("settings") or {}).get("preferred_backend", "")).strip().lower()
+        )
+        if not preferred:
+            return ranked
+        matched = next(
+            (
+                bt
+                for bt in ranked
+                if preferred in str(getattr(bt, "value", bt)).lower()
+                or preferred in str(getattr(bt, "name", "")).lower()
+            ),
+            None,
+        )
+        if matched is not None:
+            logger.info(f"[preferred] honoring settings.preferred_backend={preferred!r}")
+            return [matched] + [bt for bt in ranked if bt is not matched]
+        logger.warning(
+            f"[preferred] settings.preferred_backend={preferred!r} not in available "
+            f"{[getattr(bt, 'value', bt) for bt in ranked]}; falling back to ranking"
+        )
+        return ranked
+
     def _pick_best_backend(self, available):
         # Priority is driven by each backend's `priority` in config
         # (backends.*.priority), falling back to network_defaults.BACKEND_PRIORITY
         # keyed by provider name. Lower number = higher priority.
         # Additionally, learned route stats penalise providers with low success
         # rates — the broken feedback loop is now closed.
-        from core.system.config.network_defaults import BACKEND_PRIORITY
-
-        # provider string for each LLMBackend enum member.
-        provider_for = {
-            getattr(LLMBackend, k.upper()): v.split("_", 1)[1]
-            for k, v in _BACKEND_FACTORIES.items()
-            if v.startswith("_init_")
-        }
+        provider_for = self._backend_provider_map()
 
         # Read learned route performance to penalise unreliable providers.
         try:
@@ -1341,65 +1414,13 @@ class AngelaLLMService:
         except Exception:
             _angela_cfg = None
 
-        def _rank(btype: "LLMBackend") -> float:
-            provider = provider_for.get(btype)
-            if provider is None:
-                return 99.0
-            # Base priority from config
-            base = 99
-            for bid, bcfg in (self.config.get("backends") or {}).items():
-                if isinstance(bcfg, dict) and (bcfg.get("provider") or "") == provider:
-                    base = int(bcfg.get("priority", BACKEND_PRIORITY.get(provider, 99)))
-                    break
-            if base == 99:
-                base = BACKEND_PRIORITY.get(provider, 99)
-            # Learn penalty: providers with <60% success rate over >=5 attempts
-            # get +20 priority (pushed back). Providers with >80% get -5 (boost).
-            if _angela_cfg is not None and provider:
-                perf = _angela_cfg.get_route_performance(provider)
-                total = perf.get("success_count", 0) + perf.get("fail_count", 0)
-                if total >= 5:
-                    rate = perf.get("success_rate", 0.5)
-                    if rate < 0.6:
-                        base += 20
-                        logger.info(
-                            f"[learned] {provider} success_rate={rate:.0%} ({total} samples) -> penalty +20"
-                        )
-                    elif rate > 0.8:
-                        base = max(0, base - 5)
-                        logger.info(
-                            f"[learned] {provider} success_rate={rate:.0%} ({total} samples) -> boost -5"
-                        )
-            return base
-
-        ranked = sorted(available, key=_rank)
-        # User-persisted preference (Desktop Settings → llm.user.yaml
-        # settings.preferred_backend) wins when it names an available backend.
-        preferred = (
-            str((self.config.get("settings") or {}).get("preferred_backend", "")).strip().lower()
+        ranked = sorted(
+            available, key=lambda bt: self._rank_backend(bt, provider_for, _angela_cfg)
         )
-        if preferred:
-            matched = next(
-                (
-                    bt
-                    for bt in ranked
-                    if preferred in str(getattr(bt, "value", bt)).lower()
-                    or preferred in str(getattr(bt, "name", "")).lower()
-                ),
-                None,
-            )
-            if matched is not None:
-                logger.info(f"[preferred] honoring settings.preferred_backend={preferred!r}")
-                ranked = [matched] + [bt for bt in ranked if bt is not matched]
-            else:
-                logger.warning(
-                    f"[preferred] settings.preferred_backend={preferred!r} not in available "
-                    f"{[getattr(bt, 'value', bt) for bt in ranked]}; falling back to ranking"
-                )
-        for backend_type in ranked:
-            self.active_backend = self.backends[backend_type]
-            self.active_backend_type = backend_type
-            break
+        ranked = self._apply_preferred_backend(ranked)
+        if ranked:
+            self.active_backend = self.backends[ranked[0]]
+            self.active_backend_type = ranked[0]
 
     def _resolve_query_type_for_bus(self, query: str) -> str:
         """Resolve a query type through the shared ContextScheduler owner.
@@ -1582,6 +1603,55 @@ class AngelaLLMService:
             context["_model_context_window"] = int(backend_window)
         return construct_angela_prompt(user_message, context, neuro_vocabulary=nv)
 
+    async def _legacy_decision_waterfall(
+        self, user_message: str, context: Dict[str, Any], start_time: float
+    ) -> Optional[LLMResponse]:
+        """===== Legacy 決策瀑布（ANGELA_ROUTING_ENGINE=0 時使用）=====.
+
+        Returns the first non-None route result, else None (caller falls
+        through to the main LLM step).
+        """
+        template_result = await self._try_template_match(user_message, context, start_time)
+        if template_result is not None:
+            return template_result
+
+        # Deterministic math: prefer Pipeline's pre-verified result;
+        # fall back to MathVerifier when Pipeline context is unavailable
+        # (e.g. direct Router calls without Pipeline).
+        pipeline_math_result = await self._pipeline_math_response(user_message, context, start_time)
+        if pipeline_math_result is not None:
+            return pipeline_math_result
+
+        math_backup_result = await self._math_backup_response(user_message, context, start_time)
+        if math_backup_result is not None:
+            return math_backup_result
+
+        clock_result = await self._clock_response(user_message, context, start_time)
+        if clock_result is not None:
+            return clock_result
+
+        ensemble_result = await self._try_ensemble(user_message, context)
+        if ensemble_result is not None:
+            return ensemble_result
+
+        memory_result = await self._try_memory_retrieval(user_message, context, start_time)
+        if memory_result is not None:
+            return memory_result
+
+        knowledge_result = await self._try_knowledge(user_message, context, start_time)
+        if knowledge_result is not None:
+            return knowledge_result
+
+        # NeuralBridge: when the switch is ON, bypass the LLM text-based
+        # transfer and route through the direct neural connection (StateMatrix
+        # → GARDEN SNN → StateMatrix). Falls back to the normal LLM path if the
+        # neural route produces no usable response.
+        neural_result = await self._try_neural_bridge(user_message, context)
+        if neural_result is not None:
+            return neural_result
+
+        return None
+
     async def generate_response_full(
         self, user_message: str, context: Optional[Dict[str, Any]] = None
     ) -> LLMResponse:
@@ -1635,74 +1705,32 @@ class AngelaLLMService:
                 self._routing_manifest.plan, user_message, context
             )
 
-        # ===== Legacy 決策瀑布（ANGELA_ROUTING_ENGINE=0 時使用）=====
-        template_result = await self._try_template_match(user_message, context, start_time)
-        if template_result is not None:
-            return template_result
-
-        # Deterministic math: prefer Pipeline's pre-verified result;
-        # fall back to MathVerifier when Pipeline context is unavailable
-        # (e.g. direct Router calls without Pipeline).
-        pipeline_math_result = await self._pipeline_math_response(user_message, context, start_time)
-        if pipeline_math_result is not None:
-            return pipeline_math_result
-
-        math_backup_result = await self._math_backup_response(user_message, context, start_time)
-        if math_backup_result is not None:
-            return math_backup_result
-
-        clock_result = await self._clock_response(user_message, context, start_time)
-        if clock_result is not None:
-            return clock_result
-
-        ensemble_result = await self._try_ensemble(user_message, context)
-        if ensemble_result is not None:
-            return ensemble_result
-
-        memory_result = await self._try_memory_retrieval(user_message, context, start_time)
-        if memory_result is not None:
-            return memory_result
-
-        knowledge_result = await self._try_knowledge(user_message, context, start_time)
-        if knowledge_result is not None:
-            return knowledge_result
-
-        # NeuralBridge: when the switch is ON, bypass the LLM text-based
-        # transfer and route through the direct neural connection (StateMatrix
-        # → GARDEN SNN → StateMatrix). Falls back to the normal LLM path if the
-        # neural route produces no usable response.
-        neural_result = await self._try_neural_bridge(user_message, context)
-        if neural_result is not None:
-            return neural_result
+        waterfall = await self._legacy_decision_waterfall(user_message, context, start_time)
+        if waterfall is not None:
+            return waterfall
 
         return await self._route_step_main_llm(user_message, context, start_time)
 
-    async def _route_step_main_llm(
-        self, user_message: str, context: Dict[str, Any], start_time: float
-    ) -> LLMResponse:
-        """主 LLM 生成路徑（Honest gate → fusion → LLM → fallback）。
-
-        從 generate_response_full 抽出；legacy 瀑布與路由引擎連接器共用。
-        永不回傳 None：內部失敗時自行落 fallback／ModelBus。
+    def _classify_question_like(self, user_message: str) -> bool:
+        """Honest gate: use QueryClassifier generically (covers CJK/多語言),
+        not a hard-coded English regex. Falls back to regex only if classifier
+        unavailable. This avoids the "hard-code short board" where new
+        languages or phrasings route incorrectly.
         """
-        # Honest gate: use QueryClassifier generically (covers CJK/多語言),
-        # not a hard-coded English regex. Falls back to regex only if classifier
-        # unavailable. This avoids the "hard-code short board" where new
-        # languages or phrasings route incorrectly.
-        _is_question_like = False
+        is_question_like = False
         try:
             from ai.core.query_classifier import QueryClassifier, QueryType
 
             _qc = QueryClassifier()
             _qr = _qc.classify(user_message)
             # Knowledge/creative/opinion/search are question-like; greeting/reflex are not
-            _is_question_like = (
+            is_question_like = (
                 _qr.primary_type not in (QueryType.UNKNOWN, QueryType.GREETING, QueryType.REFLEX)
                 and _qr.confidence > 0.35
             )
         except Exception as exc:
             logger.debug("QueryClassifier failed, falling back to regex: %s", exc)
-        if not _is_question_like:
+        if not is_question_like:
             try:
                 import re as _re_q
 
@@ -1710,7 +1738,7 @@ class AngelaLLMService:
                 # sentence (e.g. "天氣如何" / "如何是好" / "你是誰"), so they
                 # must match ANYWHERE — anchoring them to ^ breaks detection.
                 # Include BOTH Simplified and Traditional forms.
-                _is_question_like = bool(
+                is_question_like = bool(
                     _re_q.search(
                         r"[?？]\s*$"
                         r"|^\s*(what|who|when|where|why|how|which|tell me|explain|please explain)\b"
@@ -1720,70 +1748,150 @@ class AngelaLLMService:
                     )
                 )
             except Exception:
-                _is_question_like = False
+                is_question_like = False
+        return is_question_like
+
+    async def _honest_fusion_attempt(
+        self, bt, user_message: str, context: Dict[str, Any]
+    ) -> Optional[LLMResponse]:
+        """One healthy-backend fusion attempt (Angela prompt carried)."""
+        _, fparams = await self._prepare_generation_context(user_message, context)
+        msgs = self._construct_angela_prompt(user_message, context)
+        resp = await self._submit_backend_call(
+            self.backends[bt],
+            prompt=msgs[-1]["content"],
+            messages=msgs,
+            temperature=fparams.temperature,
+            max_tokens=fparams.max_tokens,
+            timeout=fparams.timeout,
+            label=f"fusion:{bt.value}",
+            context=context,
+        )
+        if resp and resp.text and resp.text.strip():
+            resp.metadata = resp.metadata or {}
+            resp.metadata["fusion"] = "unified+llm"
+            logger.info(f"[fusion] open-domain → {bt.value}")
+            return resp
+        return None
+
+    async def _honest_gate_fusion(
+        self, user_message: str, context: Dict[str, Any]
+    ) -> Optional[LLMResponse]:
+        """unified+LLM fusion: cloud available → let it answer open-domain.
+        Deterministic shapes (math/logic) NEVER fuse — unified owns them.
+        """
+        import re as _re2
+
+        if self.active_backend_type != LLMBackend.UNIFIED:
+            return None
+        if _re2.search(r"\d\s*[+\-*/^%]", user_message):
+            return None
+        mode = (self.config.get("deployment") or {}).get("mode", "local")
+        others = [bt for bt in self.backends if bt != LLMBackend.UNIFIED]
+        if mode not in ("local+llm", "llm", "auto") or not others:
+            return None
+
+        def _key(x):
+            return int(
+                (self.config.get("backends") or {})
+                .get(
+                    next(
+                        (
+                            bid
+                            for bid, c in (self.config.get("backends") or {}).items()
+                            if str(c.get("provider")) == x.value
+                        ),
+                        {},
+                    ),
+                    {},
+                )
+                .get("priority", 99)
+            )
+
+        for bt in sorted(others, key=_key):
+            try:
+                healthy = await self._submit_waiting(
+                    self.backends[bt].check_health(),
+                    timeout=timeout_value("llm.health_check", 5.0),
+                    label=f"health:{bt.value}",
+                )
+            except Exception as exc:
+                # 抛错（崩溃/超时）≠ 不健康：静默会把后端真故障伪装成
+                # 正常判否，故障排查全靠猜
+                logger.warning("check_health crashed for %s: %s", bt.value, exc, exc_info=True)
+                healthy = False
+            if healthy:
+                resp = await self._honest_fusion_attempt(bt, user_message, context)
+                if resp is not None:
+                    return resp
+            break  # only try the best-ranked one
+        return None
+
+    async def _finalize_llm_response(
+        self, response: LLMResponse, user_message: str, context: Dict[str, Any], start_time: float
+    ) -> LLMResponse:
+        """Stats + deviation tracking + template store + learning + events."""
+        response_time = (time.time() - start_time) * 1000
+        self._update_stats(response_time)
+
+        if hasattr(self, "deviation_tracker"):
+            tracker = getattr(self, "deviation_tracker", None)
+            if tracker is not None:
+                tracker.record(
+                    user_input=user_message,
+                    match_score=0.0,
+                    route=self.ResponseRoute.LLM_FULL,
+                    response_text=response.text,
+                    tokens_used=response.tokens_used or 600,
+                    response_time_ms=response_time,
+                    composition_time_ms=0.0,
+                    match_time_ms=0.0,
+                )
+
+        if self.enable_memory_enhancement and not response.error:
+            await self._store_response_as_template(user_message, response, context)
+            self._schedule_precompute_tasks(user_message, context)
+
+        logger.info(f"Angela 回應生成完成 (LLM_FULL) ({response_time:.0f}ms)")
+        self._record_route_learning(context, "success", response_time)
+        if self.meta_controller is not None:
+            self.meta_controller.record_confidence(
+                "llm:full", response.confidence if hasattr(response, "confidence") else 0.0
+            )
+        state_store.emit_event(
+            "routing.response_generated",
+            {
+                "method": "llm_full",
+                "response_time_ms": response_time,
+                "confidence": response.confidence if hasattr(response, "confidence") else 0.0,
+                "response_text_length": len(response.text) if hasattr(response, "text") else 0,
+            },
+        )
+        return response
+
+    async def _bus_or_fallback(self, user_message: str, context: Dict[str, Any]) -> LLMResponse:
+        """ModelBus pre-match when available, else the canned fallback."""
+        bus_result = await self._try_model_bus(user_message, context)
+        if bus_result is not None:
+            return bus_result
+        return await self._fallback_response(user_message, context)
+
+    async def _route_step_main_llm(
+        self, user_message: str, context: Dict[str, Any], start_time: float
+    ) -> LLMResponse:
+        """主 LLM 生成路徑（Honest gate → fusion → LLM → fallback）。
+
+        從 generate_response_full 抽出；legacy 瀑布與路由引擎連接器共用。
+        永不回傳 None：內部失敗時自行落 fallback／ModelBus。
+        """
+        # Honest gate: QueryClassifier generically, regex fallback
+        _is_question_like = self._classify_question_like(user_message)
         if _is_question_like:
             # unified+LLM fusion: cloud available → let it answer open-domain.
             # Deterministic shapes (math/logic) NEVER fuse — unified owns them.
-            import re as _re2
-
-            if self.active_backend_type == LLMBackend.UNIFIED and not _re2.search(
-                r"\d\s*[+\-*/^%]", user_message
-            ):
-                mode = (self.config.get("deployment") or {}).get("mode", "local")
-                others = [bt for bt in self.backends if bt != LLMBackend.UNIFIED]
-                if mode in ("local+llm", "llm", "auto") and others:
-                    for bt in sorted(
-                        others,
-                        key=lambda x: int(
-                            (self.config.get("backends") or {})
-                            .get(
-                                next(
-                                    (
-                                        bid
-                                        for bid, c in (self.config.get("backends") or {}).items()
-                                        if str(c.get("provider")) == x.value
-                                    ),
-                                    {},
-                                ),
-                                {},
-                            )
-                            .get("priority", 99)
-                        ),
-                    ):
-                        try:
-                            healthy = await self._submit_waiting(
-                                self.backends[bt].check_health(),
-                                timeout=timeout_value("llm.health_check", 5.0),
-                                label=f"health:{bt.value}",
-                            )
-                        except Exception as exc:
-                            # 抛错（崩溃/超时）≠ 不健康：静默会把后端真故障伪装成
-                            # 正常判否，故障排查全靠猜
-                            logger.warning(
-                                "check_health crashed for %s: %s", bt.value, exc, exc_info=True
-                            )
-                            healthy = False
-                        if healthy:
-                            _, fparams = await self._prepare_generation_context(
-                                user_message, context
-                            )
-                            msgs = self._construct_angela_prompt(user_message, context)
-                            resp = await self._submit_backend_call(
-                                self.backends[bt],
-                                prompt=msgs[-1]["content"],
-                                messages=msgs,
-                                temperature=fparams.temperature,
-                                max_tokens=fparams.max_tokens,
-                                timeout=fparams.timeout,
-                                label=f"fusion:{bt.value}",
-                                context=context,
-                            )
-                            if resp and resp.text and resp.text.strip():
-                                resp.metadata = resp.metadata or {}
-                                resp.metadata["fusion"] = "unified+llm"
-                                logger.info(f"[fusion] open-domain → {bt.value}")
-                                return resp
-                        break  # only try the best-ranked one
+            fusion = await self._honest_gate_fusion(user_message, context)
+            if fusion is not None:
+                return fusion
             # Semantic QA can answer factual open-domain even without LLM;
             # don't honest-fallback if it has a hit (e.g. capital of Japan -> Tokyo).
             # When semantic QA has no answer, fall through to the LLM/
@@ -1791,58 +1899,17 @@ class AngelaLLMService:
             # ModelBus draft (if any) to be refined by the LLM backend.
 
         if not self.is_available or self.active_backend is None:
-            bus_result = await self._try_model_bus(user_message, context)
-            if bus_result is not None:
-                return bus_result
-            return await self._fallback_response(user_message, context)
+            return await self._bus_or_fallback(user_message, context)
 
         try:
             response = await self._generate_with_llm(user_message, context)
-
-            response_time = (time.time() - start_time) * 1000
-            self._update_stats(response_time)
-
-            if hasattr(self, "deviation_tracker"):
-                tracker = getattr(self, "deviation_tracker", None)
-                if tracker is not None:
-                    tracker.record(
-                        user_input=user_message,
-                        match_score=0.0,
-                        route=self.ResponseRoute.LLM_FULL,
-                        response_text=response.text,
-                        tokens_used=response.tokens_used or 600,
-                        response_time_ms=response_time,
-                        composition_time_ms=0.0,
-                        match_time_ms=0.0,
-                    )
-
-            if self.enable_memory_enhancement and not response.error:
-                await self._store_response_as_template(user_message, response, context)
-                self._schedule_precompute_tasks(user_message, context)
-
-            logger.info(f"Angela 回應生成完成 (LLM_FULL) ({response_time:.0f}ms)")
-            self._record_route_learning(context, "success", response_time)
-            if self.meta_controller is not None:
-                self.meta_controller.record_confidence(
-                    "llm:full", response.confidence if hasattr(response, "confidence") else 0.0
-                )
-            state_store.emit_event(
-                "routing.response_generated",
-                {
-                    "method": "llm_full",
-                    "response_time_ms": response_time,
-                    "confidence": response.confidence if hasattr(response, "confidence") else 0.0,
-                    "response_text_length": len(response.text) if hasattr(response, "text") else 0,
-                },
+            return await self._finalize_llm_response(
+                response, user_message, context, start_time
             )
-            return response
-
         except Exception as e:
             logger.error(f"生成回應時出錯: {e}", exc_info=True)
-            bus_result = await self._try_model_bus(user_message, context)
-            if bus_result is not None:
-                return bus_result
-            return await self._fallback_response(user_message, context)
+            return await self._bus_or_fallback(user_message, context)
+
 
     # ------------------------------------------------------------------
     # 路由清單：連接器（manifest 每一列對應一個連接器）
@@ -2076,6 +2143,38 @@ class AngelaLLMService:
             logger.warning(f"Ensemble generation failed, falling back to single model: {e}")
             return None
 
+    def _resolve_semantic_qa(self):
+        """Locate an existing semantic_qa (never construct UnifiedEngine —
+        torch initialization hangs or OOMs.  If the existing engine's
+        semantic_qa is unavailable, skip the gate).
+        """
+        _qa = getattr(self, "semantic_qa", None)
+        if _qa is not None:
+            return _qa
+        try:
+            ub = self.backends.get(LLMBackend.UNIFIED)
+            if ub is not None and hasattr(ub, "_engine") and ub._engine is not None:
+                return getattr(ub._engine, "semantic_qa", None)
+            return None
+        except Exception:
+            return None
+
+    def _semantic_qa_gate(self, user_message: str) -> bool:
+        """True when high-confidence semantic QA should win over memory TF-IDF."""
+        try:
+            _qa = self._resolve_semantic_qa()
+            if _qa is not None:
+                try:
+                    hit = _qa.answer(user_message.strip().rstrip("?？ "))
+                    if hit is not None and hit[1] >= 0.80:
+                        # High-confidence semantic QA -> skip memory, let unified handle
+                        return True
+                except Exception as exc:
+                    logger.warning("Semantic QA gate failed: %s", exc, exc_info=True)
+        except Exception as exc:
+            logger.debug("Semantic QA gate unavailable: %s", exc)
+        return False
+
     async def _try_memory_retrieval(
         self, user_message: str, context: Dict[str, Any], start_time: float
     ) -> Optional[LLMResponse]:
@@ -2084,28 +2183,8 @@ class AngelaLLMService:
         # General gate: if Unified's semantic QA can answer with high
         # confidence, let it win over memory's TF-IDF (which is coarse and
         # mis-matches "capital of Japan" -> France). No keyword hard-code.
-        try:
-            _qa = getattr(self, "semantic_qa", None)
-            if _qa is None:
-                try:
-                    ub = self.backends.get(LLMBackend.UNIFIED)
-                    if ub is not None and hasattr(ub, "_engine") and ub._engine is not None:
-                        _qa = getattr(ub._engine, "semantic_qa", None)
-                    # NOTE: do NOT create a new UnifiedEngine() here —
-                    # torch initialization hangs or OOMs.  If the existing
-                    # engine's semantic_qa is unavailable, skip the gate.
-                except Exception:
-                    _qa = None
-            if _qa is not None:
-                try:
-                    hit = _qa.answer(user_message.strip().rstrip("?？ "))
-                    if hit is not None and hit[1] >= 0.80:
-                        # High-confidence semantic QA -> skip memory, let unified handle
-                        return None
-                except Exception as exc:
-                    logger.warning("Semantic QA gate failed: %s", exc, exc_info=True)
-        except Exception as exc:
-            logger.debug("Semantic QA gate unavailable: %s", exc)
+        if self._semantic_qa_gate(user_message):
+            return None
         try:
             memory_response = await self.memory_integration.try_memory_retrieval(
                 user_message, context
@@ -2128,6 +2207,78 @@ class AngelaLLMService:
             )
             self.stats["memory_hit_rate"] = self.stats["memory_hits"] / self.stats["total_requests"]
 
+    def _backend_category(self, bt) -> str:
+        """Compare the backend's CATEGORY (local/cloud) against the mode gate."""
+        if bt in (LLMBackend.ED3N, LLMBackend.GARDEN, LLMBackend.UNIFIED, LLMBackend.LOCAL):
+            return "local"
+        return "cloud" if bt.value in self._CLOUD_PROVIDERS else "local"
+
+    def _fusion_open_domain_gate(self, text: str) -> bool:
+        """True when the query stays on unified (deterministic/QA shapes)."""
+        import re as _re
+
+        if _re.search(r"\d\s*[+\-*/^]|(true|false)\b|=", text):
+            return True
+        semantic_qa = getattr(self, "semantic_qa", None)
+        if semantic_qa is not None:
+            try:
+                if semantic_qa.answer(text.rstrip("?？= ")) is not None:
+                    return True
+            except Exception as _e:
+                logger.debug("semantic_qa check failed: %s", _e)
+        return False
+
+    def _fusion_candidates(self, allowed) -> List[Any]:
+        return [
+            bt
+            for bt in self.backends
+            if bt != LLMBackend.UNIFIED and self._backend_category(bt) in allowed
+        ]
+
+    def _fusion_priority_key(self, bt) -> int:
+        backends_cfg = self.config.get("backends") or {}
+        bid = next((b for b, c in backends_cfg.items() if c.get("provider") == bt.value), None)
+        cfg = backends_cfg.get(bid, {}) if bid is not None else {}
+        return int(cfg.get("priority", 99))
+
+    async def _fusion_backend_healthy(self, bt) -> bool:
+        try:
+            return bool(
+                await self._submit_waiting(
+                    self.backends[bt].check_health(),
+                    timeout=timeout_value("llm.health_check", 5.0),
+                    label=f"health:{bt.value}",
+                )
+            )
+        except Exception as exc:
+            logger.warning(
+                "check_health crashed during ranking for %s: %s", bt.value, exc, exc_info=True
+            )
+            return False
+
+    async def _fusion_attempt(
+        self, bt, user_message: str, context: Dict[str, Any], gen_params
+    ):
+        try:
+            msgs = self._construct_angela_prompt(user_message, context)
+            resp = await self._submit_backend_call(
+                self.backends[bt],
+                prompt=msgs[-1]["content"],
+                messages=msgs,
+                temperature=gen_params.temperature,
+                max_tokens=gen_params.max_tokens,
+                timeout=gen_params.timeout,
+                label=f"cloud-fusion:{bt.value}",
+                context=context,
+            )
+            if resp and resp.text and resp.text.strip():
+                resp.metadata = resp.metadata or {}
+                resp.metadata["fusion"] = "unified-context+llm"
+                return resp
+        except Exception as exc:
+            logger.warning(f"[fusion] {bt.value} failed: {exc}")
+        return None
+
     async def _maybe_cloud_fusion(self, user_message: str, context: Dict[str, Any], gen_params):
         """unified+LLM fusion gate.
 
@@ -2138,8 +2289,6 @@ class AngelaLLMService:
           - a non-unified backend is registered and healthy
         Returns None to stay on the unified path otherwise.
         """
-        import re as _re
-
         if self.active_backend_type != LLMBackend.UNIFIED:
             return None
         mode = (self.config.get("deployment") or {}).get("mode", "local")
@@ -2147,88 +2296,25 @@ class AngelaLLMService:
             return None
         text = user_message.strip()
         # deterministic layers / QA shapes stay on unified
-        if _re.search(r"\d\s*[+\-*/^]|(true|false)\b|=", text):
+        if self._fusion_open_domain_gate(text):
             return None
-        semantic_qa = getattr(self, "semantic_qa", None)
-        if semantic_qa is not None:
-            try:
-                if semantic_qa.answer(text.rstrip("?？= ")) is not None:
-                    return None
-            except Exception as _e:
-                logger.debug("semantic_qa check failed: %s", _e)
         # pick best non-unified backend (compare the backend's CATEGORY —
         # local/cloud — against the mode gate, not the provider name:
         # "llamacpp" in {"local"} is always False, which silently disabled
         # the whole fusion path for every deployment mode).
-        allowed = self._allowed_types()
-
-        def _backend_category(bt) -> str:
-            if bt in (LLMBackend.ED3N, LLMBackend.GARDEN, LLMBackend.UNIFIED, LLMBackend.LOCAL):
-                return "local"
-            return "cloud" if bt.value in self._CLOUD_PROVIDERS else "local"
-
-        candidates = [
-            bt
-            for bt in self.backends
-            if bt != LLMBackend.UNIFIED and _backend_category(bt) in allowed
-        ]
+        candidates = self._fusion_candidates(self._allowed_types())
         if not candidates:
             return None
 
-        async def _rank(bt):
-            try:
-                ok = await self._submit_waiting(
-                    self.backends[bt].check_health(),
-                    timeout=timeout_value("llm.health_check", 5.0),
-                    label=f"health:{bt.value}",
-                )
-            except Exception as exc:
-                logger.warning(
-                    "check_health crashed during ranking for %s: %s", bt.value, exc, exc_info=True
-                )
-                ok = False
-            return ok
-
-        for bt in sorted(
-            candidates,
-            key=lambda x: int(
-                (self.config.get("backends") or {})
-                .get(
-                    next(
-                        (
-                            bid
-                            for bid, c in (self.config.get("backends") or {}).items()
-                            if c.get("provider") == x.value
-                        ),
-                        {},
-                    ),
-                    {},
-                )
-                .get("priority", 99)
-            ),
-        ):
-            if await _rank(bt):
+        for bt in sorted(candidates, key=self._fusion_priority_key):
+            if await self._fusion_backend_healthy(bt):
                 logger.info(f"[fusion] open-domain → {bt.value} (unified context carried)")
-                try:
-                    msgs = self._construct_angela_prompt(user_message, context)
-                    resp = await self._submit_backend_call(
-                        self.backends[bt],
-                        prompt=msgs[-1]["content"],
-                        messages=msgs,
-                        temperature=gen_params.temperature,
-                        max_tokens=gen_params.max_tokens,
-                        timeout=gen_params.timeout,
-                        label=f"cloud-fusion:{bt.value}",
-                        context=context,
-                    )
-                    if resp and resp.text and resp.text.strip():
-                        resp.metadata = resp.metadata or {}
-                        resp.metadata["fusion"] = "unified-context+llm"
-                        return resp
-                except Exception as exc:
-                    logger.warning(f"[fusion] {bt.value} failed: {exc}")
+                resp = await self._fusion_attempt(bt, user_message, context, gen_params)
+                if resp is not None:
+                    return resp
                 return None
         return None
+
 
     async def _try_neural_bridge(
         self, user_message: str, context: Dict[str, Any]
@@ -2336,6 +2422,119 @@ class AngelaLLMService:
             logger.debug(f"Taught-fact lookup skipped: {e}")
             return []
 
+    def _filter_taught_facts(self, entries) -> List[Dict[str, Any]]:
+        """Only LearningHandler-taught facts (stable "User taught Angela:"
+        storage prefix). Conversation history shares the long_term_memory
+        role and would otherwise self-match the query text itself.
+        """
+        return [
+            e
+            for e in entries
+            if isinstance(e, dict)
+            and e.get("role") == "long_term_memory"
+            and isinstance(e.get("content"), str)
+            and e["content"].startswith("User taught Angela:")
+        ]
+
+    def _recall_math_guard(self, user_message: str) -> bool:
+        """Deterministic math wins over fuzzy memory: a math-shaped query
+        sharing one coincidental bigram with a fact ("一百加二十是多少"
+        vs "…一百度") must compute, not recall. (Live hijack 2026-10-09.)
+        """
+        try:
+            from ai.core.query_classifier import QueryClassifier, QueryType
+
+            return QueryClassifier().classify(user_message).primary_type == QueryType.MATH
+        except Exception as exc:
+            # Silent failure here means a math query may recall a loosely
+            # overlapping fact instead of computing — worth a trace.
+            logger.debug(f"Math-over-memory guard unavailable: {exc}")
+            return False
+
+    def _recall_registry_guard(self, user_message: str) -> bool:
+        """Handler-backed intents win over recall: an imperative with an
+        explicit verb ("組裝一個chip查看代理", "記住我的狗叫旺財") must
+        reach its handler, not recall a loosely overlapping fact
+        (live 2026-10-10: chip recall ate a compose request on "chip").
+        """
+        try:
+            from services.execution.gate_execution import (
+                _REGISTRY_DISPATCH_INTENTS,
+                GateExecutionOwner,
+            )
+
+            owner = GateExecutionOwner.__new__(GateExecutionOwner)
+            return bool(owner._registry_handler_for(user_message, _REGISTRY_DISPATCH_INTENTS))
+        except Exception as exc:
+            # Same class of failure: a dispatchable request would be answered
+            # from memory instead of reaching its handler.
+            logger.debug(f"Registry-dispatch guard unavailable: {exc}")
+            return False
+
+    def _build_fact_chunks(self, user_message: str) -> List[str]:
+        """CJK bigrams carry word-level meaning in 2 chars; ASCII needs
+        longer windows (" a"/"us" match everything — live 2026-10-10:
+        an English relay recalled the AsyncIO fact). ASCII runs below
+        4 chars contribute nothing.
+        """
+        lowered = user_message.strip().lower()
+        import re as _re_chunks
+
+        chunks = [lowered[i : i + 2] for i in range(len(lowered) - 1)]
+        chunks = [c for c in chunks if len(c) >= 2 and c not in self._FACT_MATCH_STOPWORDS]
+        for run in _re_chunks.findall(r"[a-z0-9]{4,}", lowered):
+            for i in range(len(run) - 3):
+                gram = run[i : i + 4]
+                if gram not in self._FACT_MATCH_ASCII_STOPWORDS:
+                    chunks.append(gram)
+        # Keep 2-char chunks only when they carry a CJK char: pure
+        # ASCII/punct bigrams (" a", "us") match everything across
+        # languages — ASCII is covered by the 4-grams above instead.
+        chunks = [
+            c
+            for c in chunks
+            if _re_chunks.search(r"[一-鿿]", c or "") or len(c or "") >= 4
+        ]
+        return chunks
+
+    @staticmethod
+    def _fact_relevance(entry: Dict[str, Any]) -> float:
+        try:
+            return float(entry.get("relevance", 0.5))
+        except (TypeError, ValueError):
+            return 0.5
+
+    def _best_taught_fact(
+        self, facts: List[Dict[str, Any]], chunks: List[str]
+    ) -> Optional[str]:
+        """Overlap COUNT decides (primary): among near-duplicate fact
+        phrasings ("我的X叫Y" x N) every candidate shares 我的, so a
+        boolean any-match degrades to pure vector relevance and a
+        stale fact can outrank the right one (live: cat beat fox).
+        """
+        best = None
+        for entry in facts:
+            content = entry.get("content")
+            if not content or not isinstance(content, str):
+                continue
+            lowered_content = content.lower()
+            # Match against the FACT PART only: the storage prefix
+            # ("user taught angela:") contributes matchable ASCII chunks
+            # ("us", "ta", "al"…) so any English query self-matches every
+            # fact (live: English relay recalled AsyncIO fact).
+            fact_part = lowered_content.split("user taught angela:", 1)
+            haystack = fact_part[-1] if len(fact_part) > 1 else lowered_content
+            overlap = sum(1 for c in chunks if c in haystack)
+            if overlap == 0:
+                continue
+            relevance = self._fact_relevance(entry)
+            key = (overlap, relevance)
+            if best is None or key > best[0]:
+                best = (key, content)
+        if best is None:
+            return None
+        return best[1]
+
     async def _recall_user_fact(
         self, user_message: str, context: Dict[str, Any], start_time: float
     ) -> Optional[LLMResponse]:
@@ -2351,103 +2550,19 @@ class AngelaLLMService:
         try:
             entries = list(context.get("retrieved_context") or [])
             entries.extend(await self._query_taught_facts(user_message))
-            # Only LearningHandler-taught facts (stable "User taught Angela:"
-            # storage prefix). Conversation history shares the long_term_memory
-            # role and would otherwise self-match the query text itself.
-            facts = [
-                e
-                for e in entries
-                if isinstance(e, dict)
-                and e.get("role") == "long_term_memory"
-                and isinstance(e.get("content"), str)
-                and e["content"].startswith("User taught Angela:")
-            ]
+            facts = self._filter_taught_facts(entries)
             if not facts or not user_message:
                 return None
-            # Deterministic math wins over fuzzy memory: a math-shaped query
-            # sharing one coincidental bigram with a fact ("一百加二十是多少"
-            # vs "…一百度") must compute, not recall. (Live hijack 2026-10-09.)
-            try:
-                from ai.core.query_classifier import QueryClassifier, QueryType
-
-                if QueryClassifier().classify(user_message).primary_type == QueryType.MATH:
-                    return None
-            except Exception as exc:
-                # Silent failure here means a math query may recall a loosely
-                # overlapping fact instead of computing — worth a trace.
-                logger.debug(f"Math-over-memory guard unavailable: {exc}")
-            # Handler-backed intents win over recall: an imperative with an
-            # explicit verb ("組裝一個chip查看代理", "記住我的狗叫旺財") must
-            # reach its handler, not recall a loosely overlapping fact
-            # (live 2026-10-10: chip recall ate a compose request on "chip").
-            try:
-                from services.execution.gate_execution import (
-                    _REGISTRY_DISPATCH_INTENTS,
-                    GateExecutionOwner,
-                )
-
-                owner = GateExecutionOwner.__new__(GateExecutionOwner)
-                if owner._registry_handler_for(user_message, _REGISTRY_DISPATCH_INTENTS):
-                    return None
-            except Exception as exc:
-                # Same class of failure: a dispatchable request would be answered
-                # from memory instead of reaching its handler.
-                logger.debug(f"Registry-dispatch guard unavailable: {exc}")
-            lowered = user_message.strip().lower()
-            # CJK bigrams carry word-level meaning in 2 chars; ASCII needs
-            # longer windows (" a"/"us" match everything — live 2026-10-10:
-            # an English relay recalled the AsyncIO fact). ASCII runs below
-            # 4 chars contribute nothing.
-            import re as _re_chunks
-
-            chunks = [lowered[i : i + 2] for i in range(len(lowered) - 1)]
-            chunks = [c for c in chunks if len(c) >= 2 and c not in self._FACT_MATCH_STOPWORDS]
-            for run in _re_chunks.findall(r"[a-z0-9]{4,}", lowered):
-                for i in range(len(run) - 3):
-                    gram = run[i : i + 4]
-                    if gram not in self._FACT_MATCH_ASCII_STOPWORDS:
-                        chunks.append(gram)
-            # Keep 2-char chunks only when they carry a CJK char: pure
-            # ASCII/punct bigrams (" a", "us") match everything across
-            # languages — ASCII is covered by the 4-grams above instead.
-            chunks = [
-                c
-                for c in chunks
-                if _re_chunks.search(r"[\u4e00-\u9fff]", c or "") or len(c or "") >= 4
-            ]
+            if self._recall_math_guard(user_message):
+                return None
+            if self._recall_registry_guard(user_message):
+                return None
+            chunks = self._build_fact_chunks(user_message)
             if not chunks:
                 return None
-            best = None
-            for entry in facts:
-                content = entry.get("content")
-                if not content or not isinstance(content, str):
-                    continue
-                lowered_content = content.lower()
-                # Match against the FACT PART only: the storage prefix
-                # ("user taught angela:") contributes matchable ASCII chunks
-                # ("us", "ta", "al"…) so any English query self-matches every
-                # fact (live: English relay recalled AsyncIO fact).
-                fact_part = lowered_content.split("user taught angela:", 1)
-                haystack = fact_part[-1] if len(fact_part) > 1 else lowered_content
-                # Overlap COUNT decides (primary): among near-duplicate fact
-                # phrasings ("我的X叫Y" x N) every candidate shares 我的, so a
-                # boolean any-match degrades to pure vector relevance and a
-                # stale fact can outrank the right one (live: cat beat fox).
-                overlap = sum(1 for c in chunks if c in haystack)
-                if overlap == 0:
-                    continue
-                relevance = entry.get("relevance", 0.5)
-                try:
-                    relevance = float(relevance)
-                except (TypeError, ValueError):
-                    relevance = 0.5
-                key = (overlap, relevance)
-                if best is None or key > best[0]:
-                    best = (key, content)
-            if best is None:
+            fact = self._best_taught_fact(facts, chunks)
+            if fact is None:
                 return None
-            _, content = best
-            fact = content
             prefix = "User taught Angela:"
             if fact.startswith(prefix):
                 fact = fact[len(prefix) :].strip()
@@ -2466,6 +2581,7 @@ class AngelaLLMService:
         except Exception as e:
             logger.debug(f"User fact recall skipped: {e}")
             return None
+
 
     async def _tm_short_circuit_pre(
         self, user_message: str, context: Dict[str, Any], start_time: float
@@ -2827,6 +2943,58 @@ class AngelaLLMService:
             logger.warning(f"P0-2 template matching failed: {e}", exc_info=True)
         return None
 
+    def _bus_effective_thresholds(self, selected_model: str):
+        """direct_threshold and draft_low, MetaController-adjusted."""
+        direct_threshold = 0.8
+        draft_low = 0.4
+        if self.meta_controller is not None:
+            adj = self.meta_controller.get_threshold_adjustment(
+                f"model_bus:{selected_model}"
+            )
+            direct_threshold = max(0.5, min(0.95, direct_threshold + adj))
+            draft_low = max(0.2, min(0.6, draft_low + adj * 0.5))
+        return direct_threshold, draft_low
+
+    def _bus_gate_routing_mode(self, user_message: str, context: Dict[str, Any]) -> str:
+        """Gate through PriorityNegotiator routing mode before returning."""
+        routing_mode = "neutral"
+        try:
+            pn_vote = _negotiator.resolve({**context, "user_message": user_message})
+            routing_mode = pn_vote.get("routing_mode", "neutral")
+        except Exception as e:
+            logger.warning("PriorityNegotiator resolve failed: %s", e, exc_info=True)
+        return routing_mode
+
+    def _bus_direct_hit(
+        self, decision, result, context, user_message: str, direct_threshold: float
+    ) -> Optional[LLMResponse]:
+        """Conservative-mode gate, then return the bus hit (or stash a draft)."""
+        routing_mode = self._bus_gate_routing_mode(user_message, context)
+        effective_threshold = direct_threshold
+        if routing_mode == "conservative":
+            effective_threshold = max(0.9, direct_threshold)
+        if decision.confidence < effective_threshold:
+            logger.info(
+                f"ModelBus draft (conservative mode threshold): {decision.selected_model} (conf={decision.confidence:.2f})"
+            )
+            context["draft_response"] = result.text
+            context["draft_model"] = decision.selected_model
+            return None
+        logger.info(
+            f"ModelBus direct hit: {decision.selected_model} (conf={decision.confidence:.2f}, mode={routing_mode})"
+        )
+        if self.meta_controller is not None:
+            self.meta_controller.record_confidence(
+                f"model_bus:{decision.selected_model}", decision.confidence
+            )
+        return LLMResponse(
+            text=result.text,
+            confidence=decision.confidence,
+            model=decision.selected_model,
+            backend="model_bus",
+            response_time_ms=decision.total_latency_ms,
+        )
+
     async def _try_model_bus_match(
         self, user_message: str, context: Dict[str, Any]
     ) -> Optional[LLMResponse]:
@@ -2844,46 +3012,13 @@ class AngelaLLMService:
             if not result or not result.text or result.text in _KNOWN_FALLBACK_RESPONSES:
                 return None
 
-            direct_threshold = 0.8
-            draft_low = 0.4
-            if self.meta_controller is not None:
-                adj = self.meta_controller.get_threshold_adjustment(
-                    f"model_bus:{decision.selected_model}"
-                )
-                direct_threshold = max(0.5, min(0.95, direct_threshold + adj))
-                draft_low = max(0.2, min(0.6, draft_low + adj * 0.5))
+            direct_threshold, draft_low = self._bus_effective_thresholds(
+                decision.selected_model
+            )
 
             if decision.confidence >= direct_threshold:
-                # Gate through PriorityNegotiator routing mode before returning
-                routing_mode = "neutral"
-                try:
-                    pn_vote = _negotiator.resolve({**context, "user_message": user_message})
-                    routing_mode = pn_vote.get("routing_mode", "neutral")
-                except Exception as e:
-                    logger.warning("PriorityNegotiator resolve failed: %s", e, exc_info=True)
-                effective_threshold = direct_threshold
-                if routing_mode == "conservative":
-                    effective_threshold = max(0.9, direct_threshold)
-                if decision.confidence < effective_threshold:
-                    logger.info(
-                        f"ModelBus draft (conservative mode threshold): {decision.selected_model} (conf={decision.confidence:.2f})"
-                    )
-                    context["draft_response"] = result.text
-                    context["draft_model"] = decision.selected_model
-                    return None
-                logger.info(
-                    f"ModelBus direct hit: {decision.selected_model} (conf={decision.confidence:.2f}, mode={routing_mode})"
-                )
-                if self.meta_controller is not None:
-                    self.meta_controller.record_confidence(
-                        f"model_bus:{decision.selected_model}", decision.confidence
-                    )
-                return LLMResponse(
-                    text=result.text,
-                    confidence=decision.confidence,
-                    model=decision.selected_model,
-                    backend="model_bus",
-                    response_time_ms=decision.total_latency_ms,
+                return self._bus_direct_hit(
+                    decision, result, context, user_message, direct_threshold
                 )
 
             if draft_low <= decision.confidence < direct_threshold:
@@ -3446,23 +3581,10 @@ class AngelaLLMService:
 
     # ========== 记忆增强系统 - 辅助方法 ==========
 
-    async def _prepare_generation_context(
-        self, user_message: str, context: Dict[str, Any]
-    ) -> Tuple[Optional[LLMResponse], GenerationParams]:
-        defaults = _get_llm_config("defaults", {})
-        # backend.timeout 必須是正數才採用；非數值/非正值（設定檔型別錯誤、mock 物件等）
-        # 回退到預設值，否則 AsyncMock 之類會流進 wait_for 造成 TypeError 與孤兒協程
-        _backend_timeout = getattr(self.active_backend, "timeout", None)
-        gen_timeout = (
-            _backend_timeout
-            if isinstance(_backend_timeout, (int, float))
-            and not isinstance(_backend_timeout, bool)
-            and _backend_timeout > 0
-            else defaults.get("timeout_default", 30.0)
-        )
-        gen_temperature = defaults.get("temperature", 0.7)
-        gen_max_tokens = defaults.get("max_tokens", 512)
-
+    def _inject_negotiator_signals(self, context: Dict[str, Any]) -> None:
+        """Inject MetaController calibration / Heartbeat health / DLI state
+        into context for PriorityNegotiator.
+        """
         # Inject MetaController calibration into context for PriorityNegotiator
         if self.meta_controller is not None:
             try:
@@ -3493,52 +3615,58 @@ class AngelaLLMService:
         except Exception:
             logger.warning("DLI state unavailable", exc_info=True)
 
-        if self.llm_mode == "auto" and self.auto_selector is not None:
-            try:
-                ctx = {
-                    "intent": context.get("intent", "general"),
-                    "complexity": context.get("complexity", 0.5),
-                    "user_message": user_message,
-                    "energy": context.get("energy"),
+    async def _auto_select_generation(
+        self, user_message: str, context: Dict[str, Any], gen_timeout, gen_temperature, gen_max_tokens
+    ):
+        """AutoSelector dynamic decision.
+
+        Returns (timeout, temperature, max_tokens, need_fallback); the
+        neuroblender budget signal sets need_fallback=True with unchanged
+        params (caller then returns the canned fallback response).
+        """
+        if self.auto_selector is None:  # call-site already guards; defensive
+            return gen_timeout, gen_temperature, gen_max_tokens, False
+        try:
+            ctx = {
+                "intent": context.get("intent", "general"),
+                "complexity": context.get("complexity", 0.5),
+                "user_message": user_message,
+                "energy": context.get("energy"),
+            }
+            auto_result = await self.auto_selector.decide(context=ctx)
+
+            if auto_result.backend.value == "neuroblender":
+                logger.info("[auto] 預算不足，使用 NeuroBlender 降級")
+                return gen_timeout, gen_temperature, gen_max_tokens, True
+
+            if auto_result.backend.value != (
+                self.active_backend_type.value if self.active_backend_type else ""
+            ):
+                backend_map = {
+                    "ollama": LLMBackend.OLLAMA,
+                    "llamacpp": LLMBackend.LLAMA_CPP,
+                    "openai": LLMBackend.OPENAI,
+                    "anthropic": LLMBackend.ANTHROPIC,
+                    "google": LLMBackend.GOOGLE,
                 }
-                auto_result = await self.auto_selector.decide(context=ctx)
+                mapped = backend_map.get(auto_result.backend.value)
+                if mapped and mapped in self.backends:
+                    prev = self.active_backend_type.value if self.active_backend_type else "none"
+                    self.active_backend = self.backends[mapped]
+                    self.active_backend_type = mapped
+                    logger.info(f"[auto] 切換後端: {prev} → {mapped.value}")
 
-                if auto_result.backend.value == "neuroblender":
-                    logger.info("[auto] 預算不足，使用 NeuroBlender 降級")
-                    params = GenerationParams(gen_timeout, gen_temperature, gen_max_tokens)
-                    return await self._fallback_response(user_message, context), params
+            return auto_result.time_budget_ms / 1000.0, auto_result.temperature, auto_result.max_tokens, False
+        except Exception as e:
+            logger.warning(f"[auto] 動態決策失敗: {e}，使用默認參數", exc_info=True)
+            return gen_timeout, gen_temperature, gen_max_tokens, False
 
-                if auto_result.backend.value != (
-                    self.active_backend_type.value if self.active_backend_type else ""
-                ):
-                    backend_map = {
-                        "ollama": LLMBackend.OLLAMA,
-                        "llamacpp": LLMBackend.LLAMA_CPP,
-                        "openai": LLMBackend.OPENAI,
-                        "anthropic": LLMBackend.ANTHROPIC,
-                        "google": LLMBackend.GOOGLE,
-                    }
-                    mapped = backend_map.get(auto_result.backend.value)
-                    if mapped and mapped in self.backends:
-                        prev = (
-                            self.active_backend_type.value if self.active_backend_type else "none"
-                        )
-                        self.active_backend = self.backends[mapped]
-                        self.active_backend_type = mapped
-                        logger.info(f"[auto] 切換後端: {prev} → {mapped.value}")
-
-                gen_timeout = auto_result.time_budget_ms / 1000.0
-                gen_temperature = auto_result.temperature
-                gen_max_tokens = auto_result.max_tokens
-            except Exception as e:
-                logger.warning(f"[auto] 動態決策失敗: {e}，使用默認參數", exc_info=True)
-
-        # PriorityNegotiator: weighted fusion replaces hardcoded priority chain
-        # Each voter (lifecycle, emotional, intent, angela_emotion, causal)
-        # votes for routing_mode/response_style with confidence weight.
-        # Categorical fields use weighted plurality; numeric fields use weighted averaging.
-        decision = _negotiator.resolve(context)
-
+    def _apply_negotiator_bias(self, decision, gen_temperature, gen_max_tokens):
+        """PriorityNegotiator: weighted fusion replaces hardcoded priority chain.
+        Each voter (lifecycle, emotional, intent, angela_emotion, causal)
+        votes for routing_mode/response_style with confidence weight.
+        Categorical fields use weighted plurality; numeric fields use weighted averaging.
+        """
         routing_mode = decision.get("routing_mode")
         if routing_mode == "conservative":
             gen_temperature = max(0.1, gen_temperature - 0.3)
@@ -3557,6 +3685,42 @@ class AngelaLLMService:
                 f"tokens_bias={tokens_bias:+d} → "
                 f"temperature={gen_temperature:.2f}, max_tokens={gen_max_tokens}"
             )
+        return routing_mode, gen_temperature, gen_max_tokens
+
+    async def _prepare_generation_context(
+        self, user_message: str, context: Dict[str, Any]
+    ) -> Tuple[Optional[LLMResponse], GenerationParams]:
+        defaults = _get_llm_config("defaults", {})
+        # backend.timeout 必須是正數才採用；非數值/非正值（設定檔型別錯誤、mock 物件等）
+        # 回退到預設值，否則 AsyncMock 之類會流進 wait_for 造成 TypeError 與孤兒協程
+        _backend_timeout = getattr(self.active_backend, "timeout", None)
+        gen_timeout = (
+            _backend_timeout
+            if isinstance(_backend_timeout, (int, float))
+            and not isinstance(_backend_timeout, bool)
+            and _backend_timeout > 0
+            else defaults.get("timeout_default", 30.0)
+        )
+        gen_temperature = defaults.get("temperature", 0.7)
+        gen_max_tokens = defaults.get("max_tokens", 512)
+
+        # Inject MetaController calibration + Heartbeat health + DLI state
+        self._inject_negotiator_signals(context)
+
+        if self.llm_mode == "auto" and self.auto_selector is not None:
+            gen_timeout, gen_temperature, gen_max_tokens, need_fallback = (
+                await self._auto_select_generation(
+                    user_message, context, gen_timeout, gen_temperature, gen_max_tokens
+                )
+            )
+            if need_fallback:
+                params = GenerationParams(gen_timeout, gen_temperature, gen_max_tokens)
+                return await self._fallback_response(user_message, context), params
+
+        decision = _negotiator.resolve(context)
+        routing_mode, gen_temperature, gen_max_tokens = self._apply_negotiator_bias(
+            decision, gen_temperature, gen_max_tokens
+        )
 
         state_store.emit_event(
             "routing.context_prepared",
@@ -3571,6 +3735,7 @@ class AngelaLLMService:
         # Store actual routing_mode for post-generation feedback loop
         context["_actual_routing_mode"] = routing_mode
         return None, GenerationParams(gen_timeout, gen_temperature, gen_max_tokens)
+
 
     async def _upgrade_digested_context(
         self, messages: List[Dict[str, str]], context: Dict[str, Any]
@@ -3734,6 +3899,34 @@ class AngelaLLMService:
 
         return response
 
+    async def _handle_generation_timeout(self, context, gen_params, start_time) -> None:
+        """Record timeout learning + demote unhealthy backend + auto-selector fail."""
+        self._record_route_learning(context, "timeout", gen_params.timeout * 1000)
+        try:
+            await self._demote_unhealthy_active(context)
+        except Exception as exc:
+            logger.debug("Backend demote on timeout skipped: %s", exc)
+        if (
+            self.llm_mode == "auto"
+            and self.auto_selector is not None
+            and AutoDecision is not None
+            and self.active_backend_type is not None
+        ):
+            elapsed = (time.time() - start_time) * 1000
+            self.auto_selector.record_result(
+                AutoDecision(backend=AutoBackendChoice(self.active_backend_type.value)),
+                actual_ms=elapsed,
+                success=False,
+            )
+
+    async def _fallback_after_failure(self, user_message: str, context: Dict[str, Any]) -> LLMResponse:
+        """Angela fallback chain when configured, else the canned fallback."""
+        if self._angela_fallback_chain:
+            return await self._try_fallback_chain(
+                user_message, context, self._angela_fallback_chain
+            )
+        return await self._fallback_response(user_message, context)
+
     async def _generate_with_llm(self, user_message: str, context: Dict[str, Any]) -> LLMResponse:
         start_time = time.time()
 
@@ -3762,36 +3955,12 @@ class AngelaLLMService:
 
         except asyncio.TimeoutError:
             logger.warning("LLM generation timeout", exc_info=True)
-            self._record_route_learning(context, "timeout", gen_params.timeout * 1000)
-            try:
-                await self._demote_unhealthy_active(context)
-            except Exception as exc:
-                logger.debug("Backend demote on timeout skipped: %s", exc)
-            if (
-                self.llm_mode == "auto"
-                and self.auto_selector is not None
-                and AutoDecision is not None
-                and self.active_backend_type is not None
-            ):
-                elapsed = (time.time() - start_time) * 1000
-                self.auto_selector.record_result(
-                    AutoDecision(backend=AutoBackendChoice(self.active_backend_type.value)),
-                    actual_ms=elapsed,
-                    success=False,
-                )
-            if self._angela_fallback_chain:
-                return await self._try_fallback_chain(
-                    user_message, context, self._angela_fallback_chain
-                )
-            return await self._fallback_response(user_message, context)
+            await self._handle_generation_timeout(context, gen_params, start_time)
+            return await self._fallback_after_failure(user_message, context)
         except Exception as e:
             logger.error(f"LLM generation error: {e}", exc_info=True)
             self._record_route_learning(context, "error", 0.0)
-            if self._angela_fallback_chain:
-                return await self._try_fallback_chain(
-                    user_message, context, self._angela_fallback_chain
-                )
-            return await self._fallback_response(user_message, context)
+            return await self._fallback_after_failure(user_message, context)
 
     @staticmethod
     def _backend_token(value: Any) -> str:
@@ -3969,6 +4138,187 @@ class AngelaLLMService:
         except Exception as e:
             logger.warning("Failed to learn route_fail: %s", e, exc_info=True)
 
+    def _template_fallback_reject(self, response: LLMResponse) -> bool:
+        if str(getattr(response, "backend", "")) == "local-fallback" or str(
+            getattr(response, "model", "")
+        ) in ("honest-no-answer", "empty-input"):
+            logger.debug("Skipped template storage for fallback response")
+            return True
+        return False
+
+    @staticmethod
+    def _template_stat_core_reject(response: LLMResponse) -> bool:
+        # Never memorize statistical-core guesses: their confidence is
+        # heuristic, and fabricated answers (e.g. "…please=true") poison
+        # the template pool and get replayed verbatim later. Only
+        # deterministic/semantic-qa/reflex routes are trustworthy enough.
+        route = ""
+        md = getattr(response, "metadata", None)
+        if isinstance(md, dict):
+            route = str(md.get("route", ""))
+        if route in ("statistical-core", "none") or (
+            not route
+            and "=" in (response.text or "")[:80]
+            and (response.text or "").strip().lower().endswith(("=true", "=false"))
+        ):
+            logger.debug("Skipped template storage for stat-core guess")
+            return True
+        return False
+
+    @staticmethod
+    def _template_neuroblender_reject(response: LLMResponse) -> bool:
+        # Never memorize NeuroBlender fragments: they are emotion-glued
+        # sentence concatenations that would replay as fake answers to
+        # unrelated questions (measured live).
+        model_name = str(getattr(response, "model", "") or "")
+        if "neuro-blender" in model_name or response.backend == "local-fallback":
+            logger.debug("Skipped template storage for NeuroBlender fragment")
+            return True
+        return False
+
+    @staticmethod
+    def _template_trivial_reject(response: LLMResponse) -> bool:
+        """Never memorize trivial/garbage responses that would poison the
+        template pool: single-token answers, echo-answers ("X=X"),
+        pure numbers, or very short responses.
+        """
+        import re as _re_trash
+
+        _text_raw = (response.text or "").strip()
+        if (
+            len(_text_raw) < 5
+            or _re_trash.match(r"^[\w\s.=/+\-*]+$", _text_raw)
+            or _re_trash.match(r"^[\d.\s]+$", _text_raw)
+            or "=" in _text_raw
+            and len(_text_raw.split("=")) == 2
+            and _text_raw.split("=")[0].strip() == _text_raw.split("=")[1].strip()
+        ):
+            logger.debug("Skipped template storage for trivial/garbage response")
+            return True
+        return False
+
+    @staticmethod
+    def _template_nonanswer_reject(response: LLMResponse) -> bool:
+        # Never memorize non-answers (refusals / "I don't know" / empty).
+        # The neural SNN backends (ED3N etc.) report a high confidence even
+        # for "Sorry, I didn't understand what you meant.", so the confidence
+        # gate above is insufficient — storing such text as a template would
+        # later serve it back verbatim as a "real" answer.
+        _text = (response.text or "").strip().lower()
+        if not _text or any(
+            p in _text
+            for p in (
+                # English refusals
+                "sorry",
+                "i don't understand",
+                "i did not understand",
+                "i don't know",
+                "i do not know",
+                "cannot help",
+                "can't help",
+                "no answer",
+                "unknown",
+                # Chinese refusals
+                "對不起",
+                "抱歉",
+                "不明白",
+                "不清楚",
+                "不知道",
+                "無法",
+                "幫不上忙",
+                "做不到",
+                "暫時無法",
+                "沒有答案",
+                "我不能",
+            )
+        ):
+            logger.debug("Skipped template storage for non-answer response")
+            return True
+        return False
+
+    def _template_store_reject(self, response: LLMResponse) -> bool:
+        """Run every fossilization gate; True = do not store.
+
+        Each sub-gener fires its own original debug log on rejection.
+        """
+        # Verified-only fossilization (measured live 2026-10-09): every
+        # response reaching this LLM_FULL path is an unverified
+        # generation, and auto-fossilizing them poisoned the template
+        # pool with greetings-for-recall-questions, "I'm Gemma" identity
+        # leaks, destructive-action claims, prompt echoes and refusals —
+        # all replayed verbatim later with high TF-IDF scores. Fallback
+        # responses are never storable. A curated caller may still store
+        # by marking metadata {"verified": True}.
+        if response.confidence < 0.5:
+            return True
+        md_verified = getattr(response, "metadata", None)
+        verified = isinstance(md_verified, dict) and md_verified.get("verified") is True
+        if self._template_fallback_reject(response):
+            return True
+        if not verified:
+            logger.debug("Skipped template storage for unverified generation")
+            return True
+        if self._template_stat_core_reject(response):
+            return True
+        if self._template_neuroblender_reject(response):
+            return True
+        if self._template_trivial_reject(response):
+            return True
+        return self._template_nonanswer_reject(response)
+
+    @staticmethod
+    def _learn_sentence_mappings(nv, axes, desc_text: str) -> None:
+        for axis_name, ax in axes.items():
+            vals = ax.get("values", {})
+            for k, v in vals.items():
+                nv.learn_mapping(f"{axis_name}.{k}", v, desc_text)
+
+    def _learn_neuro_vocab_mappings(self, response: LLMResponse, context: Dict[str, Any]) -> None:
+        """C6: 從回應文本萃取自我描述句，學習數值→語意映射"""
+        if self.__class__._neuro_vocab_instance is None:
+            return
+        import re as _re
+
+        nv = self.__class__._neuro_vocab_instance[0]
+        state_for_llm = context.get("state_for_llm")
+        if not (state_for_llm and response.text):
+            return
+        sentences = _re.split(r"(?<=[。！？.!?\n])\s*", response.text)
+        desc_pattern = _re.compile(r"(我感覺|像是|有點|好像|覺得|似乎|彷彿)")
+        for sentence in sentences:
+            sentence = sentence.strip()
+            if not sentence or len(sentence) < 4:
+                continue
+            match = desc_pattern.search(sentence)
+            if not match:
+                continue
+            desc_text = sentence[:80]
+            # 映射到最近一次軸點位數值
+            self._learn_sentence_mappings(nv, state_for_llm.get("axes", {}), desc_text)
+        # C6 Phase 4: sync learned mappings to StateStore for persistence
+        nv.sync_to_state_store()
+
+    async def _record_cognitive_activity(
+        self, response: LLMResponse, user_message: str
+    ) -> None:
+        """C1: 通过协调器记录认知投入（如果 CDM 可用）"""
+        if not hasattr(self, "memory_coordinator") or self.memory_coordinator is None:
+            return
+        try:
+            from core.cdm_dividend_model import CognitiveActivity
+
+            await self.memory_coordinator.store_experience(
+                raw_data=response.text,
+                data_type="response_template",
+                metadata={"llm_generated": True},
+                activity_type=CognitiveActivity.LEARNING,
+                duration=2.0,
+                intensity=response.confidence,
+                context={"user_message": user_message},
+            )
+        except Exception as e:
+            logger.warning("Failed to record cognitive activity: %s", e, exc_info=True)
+
     async def _store_response_as_template(
         self, user_message: str, response: LLMResponse, context: Dict[str, Any]
     ) -> None:
@@ -3981,131 +4331,10 @@ class AngelaLLMService:
             context: 上下文
         """
         try:
-            # 只有当回應质量较高时才存储
-            if response.confidence < 0.5:
+            if self._template_store_reject(response):
                 return
 
-            # Verified-only fossilization (measured live 2026-10-09): every
-            # response reaching this LLM_FULL path is an unverified
-            # generation, and auto-fossilizing them poisoned the template
-            # pool with greetings-for-recall-questions, "I'm Gemma" identity
-            # leaks, destructive-action claims, prompt echoes and refusals —
-            # all replayed verbatim later with high TF-IDF scores. Fallback
-            # responses are never storable. A curated caller may still store
-            # by marking metadata {"verified": True}.
-            md_verified = getattr(response, "metadata", None)
-            verified = isinstance(md_verified, dict) and md_verified.get("verified") is True
-            if str(getattr(response, "backend", "")) == "local-fallback" or str(
-                getattr(response, "model", "")
-            ) in ("honest-no-answer", "empty-input"):
-                logger.debug("Skipped template storage for fallback response")
-                return
-            if not verified:
-                logger.debug("Skipped template storage for unverified generation")
-                return
-
-            # Never memorize statistical-core guesses: their confidence is
-            # heuristic, and fabricated answers (e.g. "…please=true") poison
-            # the template pool and get replayed verbatim later. Only
-            # deterministic/semantic-qa/reflex routes are trustworthy enough.
-            route = ""
-            md = getattr(response, "metadata", None)
-            if isinstance(md, dict):
-                route = str(md.get("route", ""))
-            if route in ("statistical-core", "none") or (
-                not route
-                and "=" in (response.text or "")[:80]
-                and (response.text or "").strip().lower().endswith(("=true", "=false"))
-            ):
-                logger.debug("Skipped template storage for stat-core guess")
-                return
-
-            # Never memorize NeuroBlender fragments: they are emotion-glued
-            # sentence concatenations that would replay as fake answers to
-            # unrelated questions (measured live).
-            model_name = str(getattr(response, "model", "") or "")
-            if "neuro-blender" in model_name or response.backend == "local-fallback":
-                logger.debug("Skipped template storage for NeuroBlender fragment")
-                return
-
-            # Never memorize trivial/garbage responses that would poison the
-            # template pool: single-token answers, echo-answers ("X=X"),
-            # pure numbers, or very short responses.
-            import re as _re_trash
-
-            _text_raw = (response.text or "").strip()
-            if (
-                len(_text_raw) < 5
-                or _re_trash.match(r"^[\w\s.=/+\-*]+$", _text_raw)
-                or _re_trash.match(r"^[\d.\s]+$", _text_raw)
-                or "=" in _text_raw
-                and len(_text_raw.split("=")) == 2
-                and _text_raw.split("=")[0].strip() == _text_raw.split("=")[1].strip()
-            ):
-                logger.debug("Skipped template storage for trivial/garbage response")
-                return
-
-            # Never memorize non-answers (refusals / "I don't know" / empty).
-            # The neural SNN backends (ED3N etc.) report a high confidence even
-            # for "Sorry, I didn't understand what you meant.", so the confidence
-            # gate above is insufficient — storing such text as a template would
-            # later serve it back verbatim as a "real" answer.
-            _text = (response.text or "").strip().lower()
-            if not _text or any(
-                p in _text
-                for p in (
-                    # English refusals
-                    "sorry",
-                    "i don't understand",
-                    "i did not understand",
-                    "i don't know",
-                    "i do not know",
-                    "cannot help",
-                    "can't help",
-                    "no answer",
-                    "unknown",
-                    # Chinese refusals
-                    "對不起",
-                    "抱歉",
-                    "不明白",
-                    "不清楚",
-                    "不知道",
-                    "無法",
-                    "幫不上忙",
-                    "做不到",
-                    "暫時無法",
-                    "沒有答案",
-                    "我不能",
-                )
-            ):
-                logger.debug("Skipped template storage for non-answer response")
-                return
-
-            # C6: 從回應文本萃取自我描述句，學習數值→語意映射
-            if self.__class__._neuro_vocab_instance is not None:
-                import re as _re
-
-                nv = self.__class__._neuro_vocab_instance[0]
-                state_for_llm = context.get("state_for_llm")
-                if state_for_llm and response.text:
-                    sentences = _re.split(r"(?<=[。！？.!?\n])\s*", response.text)
-                    desc_pattern = _re.compile(r"(我感覺|像是|有點|好像|覺得|似乎|彷彿)")
-                    for sentence in sentences:
-                        sentence = sentence.strip()
-                        if not sentence or len(sentence) < 4:
-                            continue
-                        match = desc_pattern.search(sentence)
-                        if not match:
-                            continue
-                        desc_text = sentence[:80]
-                        # 映射到最近一次軸點位數值
-                        axes = state_for_llm.get("axes", {})
-                        for axis_name, ax in axes.items():
-                            vals = ax.get("values", {})
-                            for k, v in vals.items():
-                                nv.learn_mapping(f"{axis_name}.{k}", v, desc_text)
-                    # C6 Phase 4: sync learned mappings to StateStore for persistence
-                    nv.sync_to_state_store()
+            self._learn_neuro_vocab_mappings(response, context)
 
             # 创建模板
             from ai.memory.memory_template import ResponseCategory, create_template
@@ -4127,28 +4356,14 @@ class AngelaLLMService:
             if hasattr(self, "memory_manager") and self.memory_manager is not None:
                 await self.memory_manager.store_template(template)
 
-            # C1: 通过协调器记录认知投入（如果 CDM 可用）
-            if hasattr(self, "memory_coordinator") and self.memory_coordinator is not None:
-                try:
-                    from core.cdm_dividend_model import CognitiveActivity
-
-                    await self.memory_coordinator.store_experience(
-                        raw_data=response.text,
-                        data_type="response_template",
-                        metadata={"llm_generated": True},
-                        activity_type=CognitiveActivity.LEARNING,
-                        duration=2.0,
-                        intensity=response.confidence,
-                        context={"user_message": user_message},
-                    )
-                except Exception as e:
-                    logger.warning("Failed to record cognitive activity: %s", e, exc_info=True)
+            await self._record_cognitive_activity(response, user_message)
 
             logger.debug(f"Stored new template for query: '{user_message}'")
 
         except (IOError, KeyError, AttributeError, ValueError) as e:
             # template storage is best-effort, non-critical
             logger.warning(f"Failed to store response as template: {e}", exc_info=True)
+
 
     def _schedule_precompute_tasks(
         self, user_message: str, context: Dict[str, Any], user_id: str = ""
@@ -4250,23 +4465,22 @@ class AngelaLLMService:
             logger.warning("generate_text failed after retries", exc_info=True)
             return self._ed3n_fallback_text(prompt)
 
-    async def chat_completion(
-        self, messages: List[ChatMessage], model_id: Optional[str] = None, **kwargs
-    ) -> LLMResponse:
-        """
-        聊天補全介面（遷移自 multi_llm_adapter.py，thin wrapper）
-        用於向後相容需要 chat_completion() 的消費者。
-        """
-        if not self.is_available or self.active_backend is None:
-            last_content = (
-                messages[-1].content
-                if isinstance(messages[-1], ChatMessage)
-                else (str(messages[-1]) if messages else "")
-            )
-            text = self._ed3n_fallback_text(last_content)
-            return LLMResponse(text=text, backend="ed3n", model="ed3n-v1", confidence=0.6)
+    def _ed3n_fallback_response(self, messages: List[Any]) -> LLMResponse:
+        """ED3N fallback reply built from the last message's content."""
+        last_content = (
+            messages[-1].content
+            if isinstance(messages[-1], ChatMessage)
+            else (str(messages[-1]) if messages else "")
+        )
+        text = self._ed3n_fallback_text(last_content)
+        return LLMResponse(text=text, backend="ed3n", model="ed3n-v1", confidence=0.6)
 
-        # P6-1: fire on_message pipeline for plugin system (handlers can annotate/modify data)
+    async def _fire_on_message_pipeline(
+        self, messages: List[Any], model_id: Optional[str]
+    ) -> None:
+        """P6-1: fire on_message pipeline for plugin system (handlers can
+        annotate/modify data).
+        """
         try:
             from core.plugin import plugin_manager as _pm
 
@@ -4286,15 +4500,52 @@ class AngelaLLMService:
         except Exception as e:
             logger.warning("Failed to execute on_message plugin pipeline: %s", e, exc_info=True)
 
+    async def _fire_on_response_pipeline(self, chat_resp, model_id: Optional[str]) -> None:
+        """P7: fire on_response pipeline for plugin system."""
         try:
-            converted_messages = []
-            for msg in messages:
-                if isinstance(msg, ChatMessage):
-                    converted_messages.append({"role": msg.role, "content": msg.content})
-                elif isinstance(msg, dict):
-                    converted_messages.append(msg)
-                else:
-                    converted_messages.append({"role": "user", "content": str(msg)})
+            from core.plugin import plugin_manager as _pm
+
+            await _pm.execute_pipeline(
+                "on_response",
+                {
+                    "response_text": chat_resp.text if not chat_resp.error else "",
+                    "model_id": model_id,
+                    "tokens_used": chat_resp.tokens_used,
+                },
+            )
+        except Exception as e:
+            logger.warning(
+                "Failed to execute on_response plugin pipeline: %s", e, exc_info=True
+            )
+
+    @staticmethod
+    def _convert_chat_messages(messages: List[Any]) -> List[Dict[str, Any]]:
+        """Normalize ChatMessage/dict/other into OpenAI-style dicts."""
+        converted_messages: List[Dict[str, Any]] = []
+        for msg in messages:
+            if isinstance(msg, ChatMessage):
+                converted_messages.append({"role": msg.role, "content": msg.content})
+            elif isinstance(msg, dict):
+                converted_messages.append(msg)
+            else:
+                converted_messages.append({"role": "user", "content": str(msg)})
+        return converted_messages
+
+    async def chat_completion(
+        self, messages: List[ChatMessage], model_id: Optional[str] = None, **kwargs
+    ) -> LLMResponse:
+        """
+        聊天補全介面（遷移自 multi_llm_adapter.py，thin wrapper）
+        用於向後相容需要 chat_completion() 的消費者。
+        """
+        if not self.is_available or self.active_backend is None:
+            return self._ed3n_fallback_response(messages)
+
+        # P6-1: fire on_message pipeline for plugin system
+        await self._fire_on_message_pipeline(messages, model_id)
+
+        try:
+            converted_messages = self._convert_chat_messages(messages)
 
             max_tokens = kwargs.get("max_tokens", 256)
             temperature = kwargs.get("temperature", 0.7)
@@ -4316,21 +4567,7 @@ class AngelaLLMService:
             chat_resp = await _call_with_retry(_do_chat, label="chat_completion")
 
             # P7: fire on_response pipeline for plugin system
-            try:
-                from core.plugin import plugin_manager as _pm
-
-                await _pm.execute_pipeline(
-                    "on_response",
-                    {
-                        "response_text": chat_resp.text if not chat_resp.error else "",
-                        "model_id": model_id,
-                        "tokens_used": chat_resp.tokens_used,
-                    },
-                )
-            except Exception as e:
-                logger.warning(
-                    "Failed to execute on_response plugin pipeline: %s", e, exc_info=True
-                )
+            await self._fire_on_response_pipeline(chat_resp, model_id)
 
             return LLMResponse(
                 text=chat_resp.text if not chat_resp.error else "",
@@ -4344,22 +4581,10 @@ class AngelaLLMService:
 
         except asyncio.TimeoutError:
             logger.warning("chat_completion timeout", exc_info=True)
-            last_content = (
-                messages[-1].content
-                if isinstance(messages[-1], ChatMessage)
-                else (str(messages[-1]) if messages else "")
-            )
-            text = self._ed3n_fallback_text(last_content)
-            return LLMResponse(text=text, backend="ed3n", model="ed3n-v1", confidence=0.6)
+            return self._ed3n_fallback_response(messages)
         except Exception as e:
             logger.error(f"chat_completion error: {e}", exc_info=True)
-            last_content = (
-                messages[-1].content
-                if isinstance(messages[-1], ChatMessage)
-                else (str(messages[-1]) if messages else "")
-            )
-            fallback_text = self._ed3n_fallback_text(last_content)
-            return LLMResponse(text=fallback_text, backend="ed3n", model="ed3n-v1", confidence=0.6)
+            return self._ed3n_fallback_response(messages)
 
 
 def _get_llm_config(key: str, default=None):
