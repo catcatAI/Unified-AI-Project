@@ -194,6 +194,49 @@ class MultimodalStatePersistence:
 
     # --- Load ---
 
+    async def _load_weights_component(self, cp_dir: str, components_loaded: List[str]) -> None:
+        """Load weights.npz if present."""
+        weights_path = os.path.join(cp_dir, "weights.npz")
+        if not os.path.exists(weights_path):
+            return
+        try:
+            if hasattr(self._service, "load_weights"):
+                l_result = await self._service.load_weights(str(weights_path))
+                if l_result.get("status") == "loaded":
+                    components_loaded.append("weights")
+        except Exception as e:
+            logger.warning("Failed to load weights: %s", e)
+
+    async def _load_cml_component(self, cp_dir: str, components_loaded: List[str]) -> None:
+        """Load CML state if present."""
+        cml_path = os.path.join(cp_dir, "cml_state.json")
+        if not os.path.exists(cml_path):
+            return
+        try:
+            if hasattr(self._service, "_get_cml"):
+                cml = self._service._get_cml()
+                if hasattr(cml, "load_state_dict"):
+                    cml_state = await async_json_load(cml_path)
+                    cml.load_state_dict(cml_state)
+                    components_loaded.append("cml")
+        except Exception as e:
+            logger.warning("Failed to load CML state: %s", e)
+
+    async def _load_memory_component(self, cp_dir: str, components_loaded: List[str]) -> None:
+        """Load memory index if present."""
+        mem_path = os.path.join(cp_dir, "memory_index.json")
+        if not os.path.exists(mem_path):
+            return
+        try:
+            if hasattr(self._service, "_get_memory_store"):
+                mem = self._service._get_memory_store()
+                if hasattr(mem, "load_index"):
+                    loaded = await mem.load_index(mem_path)
+                    if loaded:
+                        components_loaded.append("memory_index")
+        except Exception as e:
+            logger.warning("Failed to load memory index: %s", e)
+
     async def load_checkpoint(self, label: str) -> Dict[str, Any]:
         """Load a checkpoint by label.
 
@@ -223,42 +266,10 @@ class MultimodalStatePersistence:
             except Exception:
                 logger.warning("Failed to load checkpoint metadata, continuing", exc_info=True)
 
-        # 2. Load weights
-        weights_path = os.path.join(cp_dir, "weights.npz")
-        if os.path.exists(weights_path):
-            try:
-                if hasattr(self._service, "load_weights"):
-                    l_result = await self._service.load_weights(str(weights_path))
-                    if l_result.get("status") == "loaded":
-                        components_loaded.append("weights")
-            except Exception as e:
-                logger.warning("Failed to load weights: %s", e)
-
-        # 3. Load CML state
-        cml_path = os.path.join(cp_dir, "cml_state.json")
-        if os.path.exists(cml_path):
-            try:
-                if hasattr(self._service, "_get_cml"):
-                    cml = self._service._get_cml()
-                    if hasattr(cml, "load_state_dict"):
-                        cml_state = await async_json_load(cml_path)
-                        cml.load_state_dict(cml_state)
-                        components_loaded.append("cml")
-            except Exception as e:
-                logger.warning("Failed to load CML state: %s", e)
-
-        # 4. Load memory index
-        mem_path = os.path.join(cp_dir, "memory_index.json")
-        if os.path.exists(mem_path):
-            try:
-                if hasattr(self._service, "_get_memory_store"):
-                    mem = self._service._get_memory_store()
-                    if hasattr(mem, "load_index"):
-                        loaded = await mem.load_index(mem_path)
-                        if loaded:
-                            components_loaded.append("memory_index")
-            except Exception as e:
-                logger.warning("Failed to load memory index: %s", e)
+        # 2-4. Load components
+        await self._load_weights_component(cp_dir, components_loaded)
+        await self._load_cml_component(cp_dir, components_loaded)
+        await self._load_memory_component(cp_dir, components_loaded)
 
         status = "loaded" if components_loaded else "empty"
         logger.info(
