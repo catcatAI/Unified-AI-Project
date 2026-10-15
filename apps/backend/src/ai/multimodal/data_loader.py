@@ -100,21 +100,8 @@ class CIFAR10Loader:
     def size(self) -> int:
         return len(self._samples)
 
-    def encode_all(self, max_images: int = 0, checkpoint_interval: int = 5000) -> int:
-        """Encode all images via VisualEncoder with checkpoint persistence.
-
-        Args:
-            max_images: Maximum images to encode (0 = all available).
-            checkpoint_interval: Save checkpoint every N images.
-
-        Saves incremental checkpoints every `checkpoint_interval` images,
-        and resumes from checkpoint if available.
-
-        Returns count of successfully encoded images.
-        """
-        checkpoint_path = self._data_dir / "_encoded_checkpoint.npz"
-
-        # Resume from checkpoint if it exists
+    def _resume_from_checkpoint(self, checkpoint_path) -> None:
+        """Resume encoded features from checkpoint if it exists."""
         if checkpoint_path.exists():
             try:
                 ckpt = np.load(checkpoint_path, allow_pickle=False)
@@ -122,7 +109,6 @@ class CIFAR10Loader:
                 saved_features = ckpt.get("features", [])
                 if len(saved_indices) > 0:
                     self._encoded = dict(zip(saved_indices, saved_features))
-                    # Ensure features are float32 (checkpoint may store object arrays)
                     for idx in self._encoded:
                         if self._encoded[idx] is not None:
                             self._encoded[idx] = np.asarray(self._encoded[idx], dtype=np.float32)
@@ -136,6 +122,53 @@ class CIFAR10Loader:
         else:
             self._encoded = {}
 
+    def _save_checkpoint(self, checkpoint_path, i: int, checkpoint_interval: int) -> None:
+        """Save checkpoint every checkpoint_interval images."""
+        try:
+            indices = np.array(list(self._encoded.keys()), dtype=object)
+            feats = np.array(list(self._encoded.values()), dtype=object)
+            np.savez(checkpoint_path, indices=indices, features=feats)
+        except Exception as e:
+            logger.warning("CIFAR-10: checkpoint save failed at %d: %s", i + 1, e)
+        if (i + 1) % checkpoint_interval == 0:
+            logger.info(
+                "  Encoded %d/%d CIFAR-10 images (checkpoint saved)",
+                i + 1,
+                len(self._samples),
+            )
+
+    def _encode_single(self, i: int) -> bool:
+        """Encode a single image at index i. Returns True if successful."""
+        try:
+            label, path = self._samples[i]
+            img_data = np.load(path).astype(np.uint8)
+            from PIL import Image
+
+            features = self._encoder.encode_from_pil(Image.fromarray(img_data))
+            if features is not None and (
+                isinstance(features, np.ndarray) and features.sum() != 0
+            ):
+                self._encoded[i] = np.asarray(features, dtype=np.float32)
+                return True
+        except Exception as e:
+            logger.warning("CIFAR-10 encode failed at index %d: %s", i, e, exc_info=True)
+        return False
+
+    def encode_all(self, max_images: int = 0, checkpoint_interval: int = 5000) -> int:
+        """Encode all images via VisualEncoder with checkpoint persistence.
+
+        Args:
+            max_images: Maximum images to encode (0 = all available).
+            checkpoint_interval: Save checkpoint every N images.
+
+        Saves incremental checkpoints every `checkpoint_interval` images,
+        and resumes from checkpoint if available.
+
+        Returns count of successfully encoded images.
+        """
+        checkpoint_path = self._data_dir / "_encoded_checkpoint.npz"
+        self._resume_from_checkpoint(checkpoint_path)
+
         count = len(self._encoded)
         total = min(len(self._samples), max_images) if max_images > 0 else len(self._samples)
         if count >= total:
@@ -147,36 +180,14 @@ class CIFAR10Loader:
                 break
             if i in self._encoded:
                 continue
-            try:
-                label, path = self._samples[i]
-                img_data = np.load(path).astype(np.uint8)
-                from PIL import Image
-
-                features = self._encoder.encode_from_pil(Image.fromarray(img_data))
-                if features is not None and (
-                    isinstance(features, np.ndarray) and features.sum() != 0
-                ):
-                    self._encoded[i] = np.asarray(features, dtype=np.float32)
-                    count += 1
-            except Exception as e:
-                logger.warning("CIFAR-10 encode failed at index %d: %s", i, e, exc_info=True)
+            if self._encode_single(i):
+                count += 1
             if (
                 (i + 1) % checkpoint_interval == 0
                 or (i + 1) == len(self._samples)
                 or count >= total
             ):
-                try:
-                    indices = np.array(list(self._encoded.keys()), dtype=object)
-                    feats = np.array(list(self._encoded.values()), dtype=object)
-                    np.savez(checkpoint_path, indices=indices, features=feats)
-                except Exception as e:
-                    logger.warning("CIFAR-10: checkpoint save failed at %d: %s", i + 1, e)
-                if (i + 1) % checkpoint_interval == 0:
-                    logger.info(
-                        "  Encoded %d/%d CIFAR-10 images (checkpoint saved)",
-                        i + 1,
-                        len(self._samples),
-                    )
+                self._save_checkpoint(checkpoint_path, i, checkpoint_interval)
 
         if count == len(self._samples):
             try:
