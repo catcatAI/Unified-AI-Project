@@ -283,6 +283,70 @@ class GameTaskExecutor:
         return True
 
     @staticmethod
+    @staticmethod
+    def _precondition_skip(cond: str) -> bool:
+        """Preconditions handled at execution time — skip."""
+        return cond.startswith("completed:") or cond in (
+            "recipe_unlocked",
+            "ingredients_in_inv",
+            "hostile_in_range",
+            "has_materials",
+            "space_available",
+        )
+
+    @staticmethod
+    def _precondition_food(inv: dict, failed: List[str]) -> None:
+        """Check has_food precondition."""
+        food_items = ["apple", "bread", "meat", "cooked", "carrot", "potato"]
+        if not any(f in str(k) for k in inv for f in food_items):
+            failed.append("無食物")
+
+    @staticmethod
+    def _precondition_hunger(prop, failed: List[str]) -> None:
+        """Check hunger_low precondition."""
+        max_hunger = getattr(prop, "max_hunger", 20) if prop else 20
+        hunger = getattr(prop, "hunger", 20) if prop else 20
+        try:
+            if float(hunger) > float(max_hunger) * 0.3:
+                failed.append("飢餓度未低")
+        except (TypeError, ValueError):
+            pass
+
+    @staticmethod
+    def _precondition_tool(cond: str, inv: dict, failed: List[str]) -> None:
+        """Check has_tool:X precondition."""
+        tool = cond.split(":", 1)[1]
+        total = 0
+        for key, val in inv.items():
+            if tool in str(key):
+                try:
+                    total += int(val)
+                except (TypeError, ValueError):
+                    pass
+        if total <= 0:
+            failed.append(f"缺少工具: {tool}")
+
+    @staticmethod
+    def _precondition_material(cond: str, inv: dict, failed: List[str]) -> None:
+        """Check has_wood / has_wood>=N precondition."""
+        m = re.match(r"has_([a-z_]+)(>=(\d+))?", cond)
+        if not m:
+            logger.debug(f"Unknown subgoal precondition (ignored): {cond}")
+            return
+        item, _, need = m.groups()
+        have = 0
+        for key, val in inv.items():
+            if item in str(key):
+                try:
+                    have += int(val)
+                except (TypeError, ValueError):
+                    pass
+        if need is not None and have < int(need):
+            failed.append(f"缺少材料: {item} ({have}/{need})")
+        elif need is None and have <= 0:
+            failed.append(f"缺少材料: {item}")
+
+    @staticmethod
     def _check_subgoal_preconditions(
         preconditions: List[str], state: GameState
     ) -> Tuple[bool, List[str]]:
@@ -295,55 +359,17 @@ class GameTaskExecutor:
         inv = dict((prop.inventory if prop else {}) or {})
         failed: List[str] = []
 
-        def _count(needle: str) -> int:
-            total = 0
-            for key, val in inv.items():
-                if needle in str(key):
-                    try:
-                        total += int(val)
-                    except (TypeError, ValueError):
-                        pass
-            return total
-
         for cond in preconditions or []:
-            if cond.startswith("completed:"):
-                continue  # 依賴在出隊時已驗過
-            elif cond in (
-                "recipe_unlocked",
-                "ingredients_in_inv",
-                "hostile_in_range",
-                "has_materials",
-                "space_available",
-            ):
-                continue  # 具體檢查在執行時做（與規格層一致）
+            if GameTaskExecutor._precondition_skip(cond):
+                continue
             elif cond == "has_food":
-                food_items = ["apple", "bread", "meat", "cooked", "carrot", "potato"]
-                if not any(f in str(k) for k in inv for f in food_items):
-                    failed.append("無食物")
+                GameTaskExecutor._precondition_food(inv, failed)
             elif cond == "hunger_low":
-                max_hunger = getattr(prop, "max_hunger", 20) if prop else 20
-                hunger = getattr(prop, "hunger", 20) if prop else 20
-                try:
-                    if float(hunger) > float(max_hunger) * 0.3:
-                        failed.append("飢餓度未低")
-                except (TypeError, ValueError):
-                    pass
+                GameTaskExecutor._precondition_hunger(prop, failed)
             elif cond.startswith("has_tool:"):
-                tool = cond.split(":", 1)[1]
-                if _count(tool) <= 0:
-                    failed.append(f"缺少工具: {tool}")
+                GameTaskExecutor._precondition_tool(cond, inv, failed)
             elif cond.startswith("has_"):
-                # has_wood / has_wood>=3 / has_cobblestone>=3
-                m = re.match(r"has_([a-z_]+)(>=(\d+))?", cond)
-                if m:
-                    item, _, need = m.groups()
-                    have = _count(item)
-                    if need is not None and have < int(need):
-                        failed.append(f"缺少材料: {item} ({have}/{need})")
-                    elif need is None and have <= 0:
-                        failed.append(f"缺少材料: {item}")
-                else:
-                    logger.debug(f"Unknown subgoal precondition (ignored): {cond}")
+                GameTaskExecutor._precondition_material(cond, inv, failed)
             else:
                 logger.debug(f"Unknown subgoal precondition (ignored): {cond}")
 
