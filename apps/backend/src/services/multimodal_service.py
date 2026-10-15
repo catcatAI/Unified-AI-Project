@@ -1012,9 +1012,8 @@ class MultimodalService:
 
     # --- Health ---
 
-    async def health(self) -> Dict[str, Any]:
-        """Check health of all multimodal components."""
-        status: Dict[str, Any] = {"status": "healthy"}
+    async def _health_check_encoders(self, status: Dict[str, Any]) -> None:
+        """Check vision and audio encoders."""
         try:
             _ = self._get_visual_encoder()
             status["encoders"] = {"vision": True}
@@ -1027,6 +1026,9 @@ class MultimodalService:
         except Exception as err:
             logger.warning("Audio encoder health check failed: %s", err, exc_info=True)
             status["encoders"]["audio"] = False
+
+    async def _health_check_pipeline(self, status: Dict[str, Any]) -> None:
+        """Check latent space and vision pipeline."""
         try:
             _ = self._get_latent_space()
             status["latent_space"] = True
@@ -1034,19 +1036,23 @@ class MultimodalService:
             logger.warning("Latent space health check failed: %s", err, exc_info=True)
             status["latent_space"] = False
         try:
-            # P33: Check vision pipeline health
             vp = self._get_vision_pipeline()
             if hasattr(vp, "get_stats"):
                 status["vision_pipeline"] = vp.get_stats()
         except Exception:
             logger.warning("vision pipeline health check failed", exc_info=True)
+
+    async def _health_check_registry(self, status: Dict[str, Any]) -> None:
+        """Check registered items count."""
         try:
             async with self._items_lock:
                 status["registered_items"] = len(self._registered_items)
         except Exception as err:
             logger.warning("Registered items count failed: %s", err, exc_info=True)
             status["registered_items"] = 0
-        # P37: Add production hardening health info
+
+    async def _health_check_hardening(self, status: Dict[str, Any]) -> None:
+        """Check production hardening components."""
         try:
             if self._error_recovery is not None:
                 status["recovery_state"] = self._error_recovery.get_recovery_state()
@@ -1063,4 +1069,12 @@ class MultimodalService:
                 status["quality_monitor"] = self._mm_quality_monitor.report()
         except Exception:
             logger.warning("quality monitor health check failed", exc_info=True)
+
+    async def health(self) -> Dict[str, Any]:
+        """Check health of all multimodal components."""
+        status: Dict[str, Any] = {"status": "healthy"}
+        await self._health_check_encoders(status)
+        await self._health_check_pipeline(status)
+        await self._health_check_registry(status)
+        await self._health_check_hardening(status)
         return status
