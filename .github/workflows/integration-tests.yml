@@ -41,8 +41,12 @@ jobs:
 
       - name: Run performance tests
         run: |
+          # 2026-10-15: 原 --benchmark-only 有雙重缺陷：(1) pytest-benchmark
+          # 未安裝 ⇒ unrecognized argument；(2) 即便安裝，本套件無任何測試使用
+          # benchmark fixture（自帶 time/statistics 計時）⇒ 選中 0 個 = exit 5。
+          # 正確做法：直接跑 -m performance（step 1 已用 not performance 排除）
           cd apps/backend
-          python -m pytest tests/integration/ -v --tb=short -m "performance" --benchmark-only --benchmark-json=benchmark-results.json
+          python -m pytest tests/integration/ -v --tb=short -m "performance" --junitxml=perf-results.xml
         if: matrix.python-version == '3.10'
 
       - name: Upload test results
@@ -54,7 +58,7 @@ jobs:
             apps/backend/test-results.xml
             apps/backend/coverage.xml
             apps/backend/htmlcov/
-            apps/backend/benchmark-results.json
+            apps/backend/perf-results.xml
 
       - name: Publish test results
         uses: EnricoMi/publish-unit-test-result-action@v2

@@ -27,4 +27,7 @@ jobs:
           pip install pytest
       - name: Run tests
         run: |
+          # 2026-10-15: packages/cli 此前零測試檔 ⇒ pytest exit 5（no tests
+          # collected）= 觸發即紅/形同虛設。補 packages/cli/tests/test_smoke.py
+          # 後此門才有意義。
           pytest packages/cli -q
