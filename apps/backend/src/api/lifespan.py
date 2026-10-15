@@ -641,50 +641,67 @@ def _try_warm_ed3n():
         logger.warning(f"[ED3N] Warm-up skipped (non-critical): {e}", exc_info=True)
 
 
-async def _shutdown_services(broadcast_task, module_manager):
-    """Gracefully shut down all services on application exit."""
+async def _sd_agent_manager() -> None:
     if _agent_manager_instance is not None:
         try:
             _agent_manager_instance.shutdown_all_agents()
             logger.info("[AgentManager] Shut down")
         except Exception as e:
             logger.warning(f"[AgentManager] Shutdown error: {e}")
+
+
+async def _sd_bio_integrator() -> None:
     if _bio_integrator_instance is not None:
         try:
             await _bio_integrator_instance.shutdown()
             logger.info("[Bio] BiologicalIntegrator shut down")
         except Exception as e:
             logger.warning(f"[Bio] BiologicalIntegrator shutdown error: {e}")
+
+
+async def _sd_brain_bridge() -> None:
     if _brain_bridge_instance is not None:
         try:
             await _brain_bridge_instance.stop()
             logger.info("[BrainBridge] BrainBridgeService stopped")
         except Exception as e:
             logger.warning(f"[BrainBridge] Shutdown error: {e}")
+
+
+async def _sd_chat_service() -> None:
     if _chat_service_instance is not None:
         try:
             await _chat_service_instance.shutdown()
         except Exception as e:
             logger.warning(f"[ChatService] Shutdown error: {e}")
+
+
+async def _sd_digital_life() -> None:
     if _digital_life_instance is not None:
         try:
             await _digital_life_instance.shutdown()
             logger.info("[DLI] DigitalLifeIntegrator shut down")
         except Exception as e:
             logger.warning(f"[DLI] Shutdown error: {e}")
-    if _training_coordinator_instance is not None:
-        try:
-            await _training_coordinator_instance.stop_training_worker()
-            logger.info("[TrainingCoordinator] Worker stopped")
-        except Exception as e:
-            logger.warning(f"[TrainingCoordinator] Worker stop failed: {e}")
-        try:
-            _training_coordinator_instance.save("data/training_coordinator.json")
-            logger.info("[TrainingCoordinator] State saved")
-        except Exception as e:
-            logger.warning(f"[TrainingCoordinator] State save skipped: {e}")
-    # Lifecycle state save: server-side life growth (decisions, phase) is
 
+
+async def _sd_training_coordinator() -> None:
+    if _training_coordinator_instance is None:
+        return
+    try:
+        await _training_coordinator_instance.stop_training_worker()
+        logger.info("[TrainingCoordinator] Worker stopped")
+    except Exception as e:
+        logger.warning(f"[TrainingCoordinator] Worker stop failed: {e}")
+    try:
+        _training_coordinator_instance.save("data/training_coordinator.json")
+        logger.info("[TrainingCoordinator] State saved")
+    except Exception as e:
+        logger.warning(f"[TrainingCoordinator] State save skipped: {e}")
+
+
+def _sd_lifecycle_state() -> None:
+    # Lifecycle state save: server-side life growth (decisions, phase) is
     # written back to the shared JSON so the game agent process picks it up
     # on next start (save_state previously had zero callers repo-wide).
     try:
@@ -694,6 +711,9 @@ async def _shutdown_services(broadcast_task, module_manager):
             logger.info("[LifeCycle] State saved to shared file")
     except Exception as e:
         logger.warning(f"[LifeCycle] State save skipped: {e}")
+
+
+async def _sd_broadcast(broadcast_task) -> None:
     if broadcast_task is not None:
         broadcast_task.cancel()
         try:
@@ -701,18 +721,27 @@ async def _shutdown_services(broadcast_task, module_manager):
         except asyncio.CancelledError:
             pass
         logger.info("[Broadcast] State broadcast task stopped")
+
+
+async def _sd_session_manager() -> None:
     try:
         from services.connection_session import shutdown_session_manager
 
         await shutdown_session_manager()
     except Exception as e:
         logger.warning(f"[SessionManager] Shutdown error: {e}")
+
+
+async def _sd_module_manager(module_manager) -> None:
     if module_manager is not None:
         try:
             await module_manager.stop()
             logger.info("[ModuleManager] Module system shut down cleanly")
         except Exception as e:
             logger.error(f"[ModuleManager] Shutdown error: {e}", exc_info=True)
+
+
+async def _sd_llm() -> None:
     try:
         from services.llm.router import _llm_service as _llm
 
@@ -721,6 +750,9 @@ async def _shutdown_services(broadcast_task, module_manager):
             logger.info("[LLM] Backend HTTP sessions closed")
     except Exception as e:
         logger.warning(f"[LLM] Shutdown skipped: {e}", exc_info=True)
+
+
+def _sd_plugin_metrics() -> None:
     if _metrics_handler is not None:
         try:
             metric_data = _metrics_handler.get_metrics()
@@ -728,6 +760,56 @@ async def _shutdown_services(broadcast_task, module_manager):
             logger.warning(f"[Plugin] Shutdown metrics skipped: {e}", exc_info=True)
         else:
             logger.info("[Plugin] Shutdown — hook invocation counts: %s", metric_data["counts"])
+
+
+async def _shutdown_services(broadcast_task, module_manager):
+    """Gracefully shut down all services on application exit."""
+    await _sd_agent_manager()
+    await _sd_bio_integrator()
+    await _sd_brain_bridge()
+    await _sd_chat_service()
+    await _sd_digital_life()
+    await _sd_training_coordinator()
+    _sd_lifecycle_state()
+    await _sd_broadcast(broadcast_task)
+    await _sd_session_manager()
+    await _sd_module_manager(module_manager)
+    await _sd_llm()
+    _sd_plugin_metrics()
+
+
+
+
+def _backbone_try(bb, name: str, fn, *, kind: str = "module", key: Optional[str] = None) -> None:
+    """Register one backbone component, skipping on None/failure."""
+    key = key or name
+    try:
+        obj = fn()
+        if obj is None:
+            logger.debug("[Backbone] %s None, skip", key)
+            return
+        if kind == "module":
+            bb.register_module(key, obj)
+        elif kind == "matrix":
+            bb.register_matrix(key, obj)
+        elif kind == "memory":
+            bb.register_memory(key, obj)
+        elif kind == "dictionary":
+            bb.register_dictionary(key, obj)
+        logger.debug("[Backbone] registered %s=%s", kind, key)
+    except Exception as exc:
+        logger.debug("[Backbone] skip %s=%s: %s", kind, key, exc)
+
+
+def _register_state_matrix(bb) -> None:
+    """核心矩陣（DLI 持有的 StateMatrix4D）。"""
+    try:
+        dli = get_digital_life()
+        sm = getattr(dli, "state_matrix", None) or getattr(dli, "state", None)
+        if sm is not None:
+            _backbone_try(bb, "state_matrix", lambda: sm, kind="matrix")
+    except Exception as exc:
+        logger.debug("[Backbone] state_matrix unavailable: %s", exc)
 
 
 def _register_backbone() -> None:
@@ -744,53 +826,25 @@ def _register_backbone() -> None:
 
     bb = get_backbone()
 
-    def _try(name: str, fn, *, kind: str = "module", key: Optional[str] = None) -> None:
-        key = key or name
-        try:
-            obj = fn()
-            if obj is None:
-                logger.debug("[Backbone] %s None, skip", key)
-                return
-            if kind == "module":
-                bb.register_module(key, obj)
-            elif kind == "matrix":
-                bb.register_matrix(key, obj)
-            elif kind == "memory":
-                bb.register_memory(key, obj)
-            elif kind == "dictionary":
-                bb.register_dictionary(key, obj)
-            logger.debug("[Backbone] registered %s=%s", kind, key)
-        except Exception as exc:
-            logger.debug("[Backbone] skip %s=%s: %s", kind, key, exc)
-
-    # 核心矩陣（DLI 持有的 StateMatrix4D）
-    try:
-        dli = get_digital_life()
-        sm = getattr(dli, "state_matrix", None) or getattr(dli, "state", None)
-        if sm is not None:
-            _try("state_matrix", lambda: sm, kind="matrix")
-    except Exception as exc:
-        logger.debug("[Backbone] state_matrix unavailable: %s", exc)
+    _register_state_matrix(bb)
 
     # 模組（lifespan 單例）
-    _try("digital_life", get_digital_life, kind="module", key="digital_life")
-    _try("lifecycle", get_lifecycle, kind="module", key="lifecycle")
-    _try("heartbeat", get_metabolic_heartbeat, kind="module", key="metabolic_heartbeat")
-    _try("causal_reasoning", get_causal_reasoning, kind="module", key="causal_reasoning")
-    _try("crisis", get_crisis_system, kind="module", key="crisis_system")
-    _try("agent_manager", get_agent_manager, kind="module", key="agent_manager")
-    _try("desktop_interaction", get_desktop_interaction, kind="module", key="desktop_interaction")
-    _try(
-        "training_coordinator", get_training_coordinator, kind="module", key="training_coordinator"
-    )
+    _backbone_try(bb, "digital_life", get_digital_life, kind="module", key="digital_life")
+    _backbone_try(bb, "lifecycle", get_lifecycle, kind="module", key="lifecycle")
+    _backbone_try(bb, "heartbeat", get_metabolic_heartbeat, kind="module", key="metabolic_heartbeat")
+    _backbone_try(bb, "causal_reasoning", get_causal_reasoning, kind="module", key="causal_reasoning")
+    _backbone_try(bb, "crisis", get_crisis_system, kind="module", key="crisis_system")
+    _backbone_try(bb, "agent_manager", get_agent_manager, kind="module", key="agent_manager")
+    _backbone_try(bb, "desktop_interaction", get_desktop_interaction, kind="module", key="desktop_interaction")
+    _backbone_try(bb, "training_coordinator", get_training_coordinator, kind="module", key="training_coordinator")
 
     # ChatService（重元件：含 model_bus / memory managers）
     chat = globals().get("_chat_service_instance")
     if chat is not None:
-        _try("chat_service", lambda: chat, kind="module", key="chat_service")
+        _backbone_try(bb, "chat_service", lambda: chat, kind="module", key="chat_service")
 
     # 記憶（HAM / vector / memory_manager）
-    _try("ham", lambda: _memory_backend_from_chat(), kind="memory", key="ham")
+    _backbone_try(bb, "ham", lambda: _memory_backend_from_chat(), kind="memory", key="ham")
 
     logger.info(
         "[Backbone] registration done; modules=%d matrices=%d memories=%d",
@@ -798,6 +852,8 @@ def _register_backbone() -> None:
         bb.registries.matrices.count(),
         bb.memories.names().__len__() if hasattr(bb.memories, "names") else 0,
     )
+
+
 
 
 def _memory_backend_from_chat():
@@ -840,20 +896,7 @@ async def _try_start_proactive() -> None:
         logger.warning("[Proactive] Init skipped — will not run proactively", exc_info=True)
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    """Application lifespan: initialize services on startup, shutdown on exit."""
-    _module_manager = None
-
-    _init_plugins()
-    await _try_start_bio()
-    await _try_start_digital_life()
-    await _try_start_brain_bridge()
-    await _try_start_agents()
-    _try_init_crisis()
-    _try_init_causal_reasoning()
-    _try_init_session_manager()
-
+async def _sync_register_listeners() -> None:
     # Register the perception sync listeners.
     # VisionService/AudioService are constructed at *import* time, when no
     # event loop is running, so their own
@@ -874,6 +917,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     except Exception:
         logger.warning("[Sync] Perception listener registration skipped", exc_info=True)
 
+
+async def _training_start_worker() -> None:
     # TrainingCoordinator owns training execution: its worker dispatches queued
     # samples to the processors registered by each domain owner. Without a
     # processor every sample was deferred forever, so the processors are
@@ -890,8 +935,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             "[TrainingCoordinator] Worker start skipped — samples stay queued",
             exc_info=True,
         )
-    _broadcast_task = _try_start_broadcast()
-    _try_warm_ed3n()
+
+
+def _preinit_lifecycle() -> None:
     # Pre-initialize lifecycle singleton during startup (lazy creates it on first use)
     try:
         _ = get_lifecycle()
@@ -900,9 +946,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             "[LifeCycle] Pre-init skipped — will lazily initialize on first use", exc_info=True
         )
 
-    # Wire DLI broadcast_callback so LLMDecisionLoop proactive actions reach frontend
-    _try_wire_dli_broadcast()
 
+async def _preinit_heartbeat() -> None:
     # Initialize heartbeat singleton (C³ 6.0: start during lifespan)
     try:
         hb = get_metabolic_heartbeat()
@@ -913,9 +958,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             "[Heartbeat] Pre-init skipped — will lazily initialize on first use", exc_info=True
         )
 
-    # Start ProactiveInteractionSystem (Angela can initiate conversations)
-    await _try_start_proactive()
 
+async def _preinit_chat_service() -> None:
     # Pre-initialize ChatService at startup so its (potentially slow) memory
     # backends (e.g. chromadb PersistentClient) are warmed up before the first
     # user request, instead of blocking the first chat call for many seconds.
@@ -927,14 +971,50 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             "[ChatService] Pre-init skipped — will lazily initialize on first use", exc_info=True
         )
 
+
+def _preinit_backbone() -> None:
     # 把實際單例註冊進主幹線（backbone 直接連接核心元件）
     try:
         _register_backbone()
     except Exception:
         logger.warning("[Backbone] registration failed during startup", exc_info=True)
 
-    yield
 
+async def _startup_services():
+    """Full startup sequence. Returns the broadcast task for shutdown."""
+    _init_plugins()
+    await _try_start_bio()
+    await _try_start_digital_life()
+    await _try_start_brain_bridge()
+    await _try_start_agents()
+    _try_init_crisis()
+    _try_init_causal_reasoning()
+    _try_init_session_manager()
+
+    await _sync_register_listeners()
+    await _training_start_worker()
+    _broadcast_task = _try_start_broadcast()
+    _try_warm_ed3n()
+    _preinit_lifecycle()
+
+    # Wire DLI broadcast_callback so LLMDecisionLoop proactive actions reach frontend
+    _try_wire_dli_broadcast()
+
+    await _preinit_heartbeat()
+
+    # Start ProactiveInteractionSystem (Angela can initiate conversations)
+    await _try_start_proactive()
+
+    await _preinit_chat_service()
+    _preinit_backbone()
+
+    return _broadcast_task
+
+
+
+
+async def _shutdown_pre_lifespan() -> None:
+    """Stop heartbeat + proactive before the full service shutdown."""
     try:
         hb_inst = get_metabolic_heartbeat()
         await hb_inst.stop()
@@ -947,4 +1027,14 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         except Exception as err:
             logger.warning(f"Proactive stop on shutdown skipped: {err}", exc_info=True)
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """Application lifespan: initialize services on startup, shutdown on exit."""
+    _module_manager = None
+    _broadcast_task = await _startup_services()
+
+    yield
+
+    await _shutdown_pre_lifespan()
     await _shutdown_services(_broadcast_task, _module_manager)
