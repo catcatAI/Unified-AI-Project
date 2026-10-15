@@ -1713,19 +1713,115 @@ async def _run_chat_pipeline(
     timeout = chat_cfg.get("http_timeout", 60.0)
     flow_source = chat_cfg.get("default_flow", "angela_chat_service")
 
-    # Step 1: Validate and truncate input
+    # Step 1: Validate and truncate input (raises HTTP 400 when invalid)
     _raw_input_len = len(user_message)
-    try:
-        user_message = _validate_and_truncate_input(user_message, chat_cfg)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    user_message = _validate_input_or_400(user_message, chat_cfg)
     _was_truncated = _raw_input_len > max_len
 
-    # Step 1.5: Adaptive main-line dispatch (REFACTOR_PLAN §13) — best effort.
-    # Step 2: Initialize base context (must exist before any hook writes to it)
-    context: Dict[str, Any] = {"user_name": user_name}
-    if extra_context:
-        context.update(extra_context)
+    # Step 2: Initialize context + best-effort priming (EDA / dispatch / MSBA)
+    context = _prime_chat_context(user_message, user_name, origin, extra_context, history)
+
+    # Step 3: Math dual-rail verification (IntentRegistry-confirmed result short-circuits)
+    math_shortcircuit = await _gate_math(
+        user_message, user_name, session_id, schema_ver, trunc_msg, _was_truncated, context
+    )
+    if math_shortcircuit is not None:
+        return math_shortcircuit
+
+    # Step 4-5f: Emotion analysis + behavioral context injections + crisis
+    bio = _get_bio_integrator()
+    emotion_result, crisis_level = await _analyze_emotion_and_crisis(user_message, context, bio)
+    if emotion_result:
+        context["emotion"] = emotion_result
+        await _inject_behavioral_context(context, emotion_result, bio)
+    if crisis_level > 0:
+        context["crisis_level"] = crisis_level
+        context["crisis_instruction"] = (
+            f"User input has crisis level {crisis_level}. "
+            "Respond with empathy, provide support resources if appropriate, "
+            "and prioritize user safety in your response."
+        )
+    await _try_alignment_check(user_message, crisis_level, context)
+
+    # Step 5g-5h: Intent routing + DesktopInteraction wiring (context enrichment)
+    chat_svc = await _get_chat_service()
+    intent_result = await _try_intent_routing(user_message, chat_svc, user_name, context)
+    if intent_result:
+        context["_intent_result"] = intent_result
+    _wire_desktop_interaction(context)
+
+    # Step 6: Build full LLM context (bio state, state matrix, ED3N retrieval, dialogue, memory)
+    chat_svc = await _get_chat_service()
+    await _build_chat_context(context, user_message, user_name, history, session_id, chat_svc, bio)
+
+    # Step 7: Execution gate (intent classification → auto/confirm/reject — may short-circuit)
+    gate_result = await _handle_execution_gate(
+        user_message, chat_svc, context, schema_ver, session_id
+    )
+    if gate_result:
+        _set_latest_response(session_id, gate_result)
+        return gate_result
+
+    # Step 8: Agent auto-routing (creative/knowledge/opinion/vision/audio — may short-circuit)
+    agent_result = await _try_agent_routing(user_message, context, schema_ver, session_id)
+    if agent_result:
+        agent_response = _wrap_agent_response(
+            agent_result, schema_ver, trunc_msg, _was_truncated, session_id
+        )
+        _set_latest_response(session_id, agent_response)
+        return agent_response
+
+    # Step 9: Inject causal predictions into context (learned from past interactions)
+    _inject_causal_predictions(context)
+
+    # Step 9.5: Collect the scheduled MSBA result into context (best-effort)
+    await _collect_msba_result(context)
+
+    # Step 10: Generate LLM response (mode-aware; timeout → serve latest cached)
+    try:
+        llm_response = await _generate_llm_response(
+            user_message, user_name, context, chat_svc, mode, timeout
+        )
+    except _LLMTimeoutError:
+        _set_latest_response(session_id, _handle_timeout(session_id, schema_ver))
+        return _latest_responses[session_id]
+
+    response_text = _extract_response_text(llm_response)
+    context["continuation_count"] = context.get("continuation_count", 0) + 1
+    _fire_causal_learning(response_text, user_message, session_id)
+    _log_loop_signal(response_text, session_id)
+
+    # Step 10b/10c: Post-response feedback loops (online learning + intent outcome)
+    _record_post_response_feedback(context, response_text, user_message)
+
+    _set_latest_response(
+        session_id,
+        _format_chat_response(
+            response_text,
+            llm_response,
+            emotion_result,
+            schema_ver,
+            trunc_msg,
+            user_message,
+            max_len,
+            session_id,
+            source=flow_source,
+            was_truncated=_was_truncated,
+        ),
+    )
+    return _latest_responses[session_id]
+
+
+def _validate_input_or_400(user_message: str, chat_cfg: Dict[str, Any]) -> str:
+    """Step 1: validate + truncate input. Raises HTTP 400 on invalid input."""
+    try:
+        return _validate_and_truncate_input(user_message, chat_cfg)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+def _detect_eda_followup(context: Dict[str, Any], history: List[Dict[str, Any]]) -> None:
+    """EDA follow-up context detection (best-effort)."""
     try:
         from ai.agents.agent_orchestrator import AgentOrchestrator
 
@@ -1736,11 +1832,15 @@ async def _run_chat_pipeline(
     except Exception as exc:
         logger.debug("EDA follow-up context detection unavailable: %s", exc)
 
-    # Step 2.5: Main-line dispatch hook — judges whether this input is a
-    # generation request vs a learning signal vs training data, and (when a
-    # TrainingCoordinator is available) enqueues training with priority. Never
-    # raises into the response path; the decision is recorded on context for
-    # observability.
+
+def _run_mainline_dispatch(
+    context: Dict[str, Any],
+    user_message: str,
+    origin: str,
+    extra_context: Optional[Dict[str, Any]],
+) -> None:
+    """Step 2.5: main-line dispatch hook — judges generation vs learning signal
+    vs training data; enqueues training when a TrainingCoordinator exists."""
     try:
         from services.mainline_dispatcher import dispatch as _ml_dispatch
 
@@ -1763,112 +1863,148 @@ async def _run_chat_pipeline(
     except Exception as _e:  # pragma: no cover - defensive
         logger.debug("Main-line dispatch hook skipped: %s", _e)
 
-    # Step 2.75: MSBA multi-dimensional semantic block processing
-    # All inputs enter MSBA — lightweight inputs use fewer blocks.
-    # Adds fused representation + NeuroBlender 9D vector to context.
+
+def _schedule_msba(context: Dict[str, Any], user_message: str) -> None:
+    """Step 2.75: MSBA multi-dimensional semantic block processing — schedule
+    non-blocking; result collected in Step 9.5."""
     try:
-        from ai.msba.block_factory import create_all_blocks
         from ai.msba.neuroblender_bridge import NeuroBlenderBridge
-        from ai.msba.pipeline import MSBAPipeline
 
         _msba = _get_msba_pipeline()
         if _msba is not None:
             import asyncio as _asyncio
 
             _fused = _asyncio.ensure_future(_msba.process(user_message))
-            # Non-blocking: schedule and continue; result used in Step 10
             context["_msba_task"] = _fused
             context["_msba_bridge"] = NeuroBlenderBridge()
             logger.debug("MSBA pipeline scheduled for input")
     except Exception as _e:
         logger.debug("MSBA scheduling skipped: %s", _e)
 
-        # Step 3: Math dual-rail verification — gate through IntentRegistry first
+
+def _prime_chat_context(
+    user_message: str,
+    user_name: str,
+    origin: str,
+    extra_context: Optional[Dict[str, Any]],
+    history: List[Dict[str, Any]],
+) -> Dict[str, Any]:
+    """Step 2: initialize base context and run best-effort priming hooks.
+
+    Base context must exist before any hook writes to it. EDA follow-up
+    detection, main-line dispatch, and MSBA scheduling are all best-effort —
+    they never raise into the response path.
+    """
+    context: Dict[str, Any] = {"user_name": user_name}
+    if extra_context:
+        context.update(extra_context)
+    _detect_eda_followup(context, history)
+    _run_mainline_dispatch(context, user_message, origin, extra_context)
+    _schedule_msba(context, user_message)
+    return context
+
+
+async def _gate_math(
+    user_message: str,
+    user_name: str,
+    session_id: str,
+    schema_ver: str,
+    trunc_msg: str,
+    was_truncated: bool,
+    context: Dict[str, Any],
+) -> Optional[Dict[str, Any]]:
+    """Step 3: math dual-rail verification — gate through IntentRegistry.
+
+    Returns the math response to short-circuit with (IntentRegistry confirms
+    math) or None to continue (enriching context with the unconfirmed result).
+    """
     math_result = await _try_math_verification(
-        user_message, user_name, session_id, schema_ver, trunc_msg, _was_truncated
+        user_message, user_name, session_id, schema_ver, trunc_msg, was_truncated
     )
-    if math_result:
-        try:
-            from core.intent_registry import IntentRegistry
+    if not math_result:
+        return None
+    try:
+        from core.intent_registry import IntentRegistry
 
-            ir = IntentRegistry()
-            ir_name, ir_conf = ir.detect(user_message)
-            if ir_name == "math" and ir_conf >= 0.1:
-                _set_latest_response(session_id, math_result)
-                return math_result  # IntentRegistry confirms → fast path
-        except Exception as e:
-            logger.warning("IntentRegistry math gate failed: %s", e, exc_info=True)
-        # IntentRegistry didn't confirm → enrich context instead
-        context["_math_result"] = math_result
+        ir = IntentRegistry()
+        ir_name, ir_conf = ir.detect(user_message)
+        if ir_name == "math" and ir_conf >= 0.1:
+            _set_latest_response(session_id, math_result)
+            return math_result  # IntentRegistry confirms -> fast path
+    except Exception as e:
+        logger.warning("IntentRegistry math gate failed: %s", e, exc_info=True)
+    # IntentRegistry didn't confirm -> enrich context instead
+    context["_math_result"] = math_result
+    return None
 
-    # Step 4: bio integrator
-    bio = _get_bio_integrator()
-    emotion_result, crisis_level = await _analyze_emotion_and_crisis(user_message, context, bio)
-    if emotion_result:
-        context["emotion"] = emotion_result
-        # Step 5b: Inject emotional behavioral context (routing_mode + response_style)
-        await _inject_emotion_behavioral_context(emotion_result, context, bio)
-        # Step 5c: Inject autonomous lifecycle behavioral adjustment
-        try:
-            lc = _get_lifecycle()
-            if lc:
-                lc_adj = lc.get_behavioral_adjustment()
-                context["lifecycle_behavior"] = lc_adj
-                logger.debug(
-                    f"Lifecycle behavioral adjustment: {lc_adj.get('routing_mode')} / {lc_adj.get('response_style')} "
-                    f"(phase={lc_adj.get('phase')}, decision={lc_adj.get('decision_type')})"
-                )
-        except Exception as e:
-            logger.warning(f"Lifecycle behavioral adjustment unavailable: {e}", exc_info=True)
-        # Step 5d: Inject intent routing adjustment (C³ 4.0→5.0)
-        try:
-            im = _get_intent_manager()
-            if im:
-                intent_adj = im.get_intent_routing_adjustment()
-                if intent_adj.get("routing_mode"):
-                    context["intent_routing"] = intent_adj
-                    logger.debug(
-                        f"Intent routing adjustment: mode={intent_adj['routing_mode']}, "
-                        f"style={intent_adj['response_style']}, "
-                        f"strength={intent_adj['intent_strength']}"
-                    )
-        except Exception as e:
-            logger.warning(f"Intent routing adjustment unavailable: {e}", exc_info=True)
-        # Step 5e: Inject modality gateway state (C³ 3.0 — was never consumed)
-        try:
-            mg = _get_modality_gateway()
-            if mg:
-                context["modality_state"] = mg.get_modality_summary()
-                logger.debug(
-                    f"Modality state: {len(context['modality_state'].get('active', []))} active / "
-                    f"{len(context['modality_state'].get('inactive', []))} inactive"
-                )
-        except Exception as e:
-            logger.warning(f"Modality state unavailable: {e}", exc_info=True)
-        # Step 5f: Inject DLI awareness injection into context (C³ 6.0)
-        try:
-            dli = get_digital_life()
-            if dli:
-                context["awareness_injection"] = dli.get_awareness_injection()
-        except Exception as e:
-            logger.warning(f"Awareness injection unavailable: {e}", exc_info=True)
-    if crisis_level > 0:
-        context["crisis_level"] = crisis_level
-        context["crisis_instruction"] = (
-            f"User input has crisis level {crisis_level}. "
-            "Respond with empathy, provide support resources if appropriate, "
-            "and prioritize user safety in your response."
+
+def _apply_lifecycle_behavior(context: Dict[str, Any]) -> None:
+    """Step 5c: inject autonomous lifecycle behavioral adjustment."""
+    lc = _get_lifecycle()
+    if lc:
+        lc_adj = lc.get_behavioral_adjustment()
+        context["lifecycle_behavior"] = lc_adj
+        logger.debug(
+            f"Lifecycle behavioral adjustment: {lc_adj.get('routing_mode')} / {lc_adj.get('response_style')} "
+            f"(phase={lc_adj.get('phase')}, decision={lc_adj.get('decision_type')})"
         )
-    await _try_alignment_check(user_message, crisis_level, context)
 
-    # Step 5g: IntentRegistry routing — process document intents through tiered pipeline
-    # (local first, LLM fallback). Does NOT short-circuit — result is injected as context.
-    chat_svc = await _get_chat_service()
-    intent_result = await _try_intent_routing(user_message, chat_svc, user_name, context)
-    if intent_result:
-        context["_intent_result"] = intent_result
 
-    # Step 5h: Wire DesktopInteraction into context for generic file operations
+def _apply_intent_routing(context: Dict[str, Any]) -> None:
+    """Step 5d: inject intent routing adjustment (C³ 4.0→5.0)."""
+    im = _get_intent_manager()
+    if im:
+        intent_adj = im.get_intent_routing_adjustment()
+        if intent_adj.get("routing_mode"):
+            context["intent_routing"] = intent_adj
+            logger.debug(
+                f"Intent routing adjustment: mode={intent_adj['routing_mode']}, "
+                f"style={intent_adj['response_style']}, "
+                f"strength={intent_adj['intent_strength']}"
+            )
+
+
+def _apply_modality_state(context: Dict[str, Any]) -> None:
+    """Step 5e: inject modality gateway state (C³ 3.0 — was never consumed)."""
+    mg = _get_modality_gateway()
+    if mg:
+        context["modality_state"] = mg.get_modality_summary()
+        logger.debug(
+            f"Modality state: {len(context['modality_state'].get('active', []))} active / "
+            f"{len(context['modality_state'].get('inactive', []))} inactive"
+        )
+
+
+def _apply_awareness_injection(context: Dict[str, Any]) -> None:
+    """Step 5f: inject DLI awareness injection into context (C³ 6.0)."""
+    dli = get_digital_life()
+    if dli:
+        context["awareness_injection"] = dli.get_awareness_injection()
+
+
+async def _inject_behavioral_context(
+    context: Dict[str, Any], emotion_result: Any, bio: Any
+) -> None:
+    """Steps 5b-5f: inject behavioral/routing context (all best-effort).
+
+    5b emotional behavioral context, then 5c-5f lifecycle/intent/modality/awareness
+    injections — each isolated so one failure never blocks the others.
+    """
+    await _inject_emotion_behavioral_context(emotion_result, context, bio)
+    for fn in (
+        _apply_lifecycle_behavior,
+        _apply_intent_routing,
+        _apply_modality_state,
+        _apply_awareness_injection,
+    ):
+        try:
+            fn(context)
+        except Exception as e:
+            logger.warning(f"{fn.__name__} unavailable: {e}", exc_info=True)
+
+
+def _wire_desktop_interaction(context: Dict[str, Any]) -> None:
+    """Step 5h: wire DesktopInteraction into context for generic file operations."""
     try:
         from api.lifespan import get_desktop_interaction
 
@@ -1879,109 +2015,54 @@ async def _run_chat_pipeline(
     except Exception as e:
         logger.warning(f"DesktopInteraction wiring failed: {e}", exc_info=True)
 
-    # Step 6: Build full LLM context (bio state, state matrix, ED3N retrieval, dialogue, memory)
-    chat_svc = await _get_chat_service()
-    await _build_chat_context(context, user_message, user_name, history, session_id, chat_svc, bio)
 
-    # Step 7: Execution gate (intent classification → auto/confirm/reject — may short-circuit)
-    gate_result = await _handle_execution_gate(
-        user_message, chat_svc, context, schema_ver, session_id
-    )
-    if gate_result:
-        _set_latest_response(session_id, gate_result)
-        return gate_result
+def _wrap_agent_response(
+    agent_result: Dict[str, Any],
+    schema_ver: str,
+    trunc_msg: str,
+    was_truncated: bool,
+    session_id: str,
+) -> Dict[str, Any]:
+    """Step 8: normalize an agent-routing result into a chat response dict."""
+    return {
+        "response_text": agent_result["response"],
+        "response": agent_result["response"],
+        "source": agent_result.get("source", "agent"),
+        "schema_version": schema_ver,
+        "truncation_message": trunc_msg if was_truncated else "",
+        "emotion": "calm",
+        "emotion_confidence": 0.6,
+        "emotion_intensity": 0.4,
+        "session_id": session_id,
+    }
 
-    # Step 8: Agent auto-routing (creative/knowledge/opinion/vision/audio — may short-circuit)
-    agent_result = await _try_agent_routing(user_message, context, schema_ver, session_id)
-    if agent_result:
-        agent_response = {
-            "response_text": agent_result["response"],
-            "response": agent_result["response"],
-            "source": agent_result.get("source", "agent"),
-            "schema_version": schema_ver,
-            "truncation_message": trunc_msg if _was_truncated else "",
-            "emotion": "calm",
-            "emotion_confidence": 0.6,
-            "emotion_intensity": 0.4,
-            "session_id": session_id,
-        }
-        _set_latest_response(session_id, agent_response)
-        return agent_response
 
-    # Step 9: Inject causal predictions into context (learned from past interactions)
-    _inject_causal_predictions(context)
-
-    # Step 9.5: Collect MSBA result and inject into context
+async def _collect_msba_result(context: Dict[str, Any]) -> None:
+    """Step 9.5: collect the scheduled MSBA result (best-effort) into context."""
     _msba_task = context.pop("_msba_task", None)
     _msba_bridge = context.pop("_msba_bridge", None)
-    if _msba_task is not None:
-        try:
-            _msba_output = await asyncio.wait_for(_msba_task, timeout=0.05)
-            if _msba_output and _msba_bridge is not None:
-                context["msba_output"] = _msba_output
-                # Convert to NeuroBlender 9D for LLM context
-                try:
-                    from ai.msba.types import FusedRepresentation
-
-                    if hasattr(_msba_output, "primary"):
-                        _blender_vec = _msba_bridge.fused_to_blender_vector(_msba_output)
-                        context["msba_blender_9d"] = _msba_bridge.blender_to_context(_blender_vec)
-                        context["msba_dominant"] = _msba_bridge.get_dominant_dimension(_blender_vec)
-                except Exception as _e:
-                    logger.debug("MSBA->NeuroBlender conversion skipped: %s", _e)
-        except asyncio.TimeoutError:
-            logger.debug("MSBA result not ready within budget, continuing")
-        except Exception as _e:
-            logger.debug("MSBA result collection failed: %s", _e)
-
-    # Step 10: Generate LLM response
-    if mode != "1:1":
-        # 響應模式選取器（§5.6 backbone.respond）：1:1 / layered / stream / layered_stream
-        try:
-            from core.backbone import get_backbone
-
-            response_result = await asyncio.wait_for(
-                get_backbone().respond(user_message, context=context, mode=mode),
-                timeout=timeout,
-            )
-            llm_response = response_result
-        except asyncio.TimeoutError:
-            _set_latest_response(session_id, _handle_timeout(session_id, schema_ver))
-            return _latest_responses[session_id]
-        except asyncio.CancelledError:
-            logger.info("Client disconnected mid-response, cancelling")
-            raise
-        except Exception as e:
-            logger.warning(f"Response mode {mode} failed, falling back to 1:1: {e}")
+    if _msba_task is None:
+        return
+    try:
+        _msba_output = await asyncio.wait_for(_msba_task, timeout=0.05)
+        if _msba_output and _msba_bridge is not None:
+            context["msba_output"] = _msba_output
+            # Convert to NeuroBlender 9D for LLM context
             try:
-                llm_response = await asyncio.wait_for(
-                    chat_svc.generate_response(user_message, user_name, context=context),
-                    timeout=timeout,
-                )
-            except asyncio.TimeoutError:
-                _set_latest_response(session_id, _handle_timeout(session_id, schema_ver))
-                return _latest_responses[session_id]
-            except asyncio.CancelledError:
-                raise
-            except Exception as e2:
-                logger.error(f"Error in _handle_chat_request: {e2}", exc_info=True)
-                raise RuntimeError(f"chat request failed: {e2}")
-    else:
-        try:
-            llm_response = await asyncio.wait_for(
-                chat_svc.generate_response(user_message, user_name, context=context),
-                timeout=timeout,
-            )
-        except asyncio.TimeoutError:
-            _set_latest_response(session_id, _handle_timeout(session_id, schema_ver))
-            return _latest_responses[session_id]
-        except asyncio.CancelledError:
-            logger.info("Client disconnected mid-response, cancelling")
-            raise
-        except Exception as e:
-            logger.error(f"Error in _handle_chat_request: {e}", exc_info=True)
-            raise RuntimeError(f"chat request failed: {e}")
+                if hasattr(_msba_output, "primary"):
+                    _blender_vec = _msba_bridge.fused_to_blender_vector(_msba_output)
+                    context["msba_blender_9d"] = _msba_bridge.blender_to_context(_blender_vec)
+                    context["msba_dominant"] = _msba_bridge.get_dominant_dimension(_blender_vec)
+            except Exception as _e:
+                logger.debug("MSBA->NeuroBlender conversion skipped: %s", _e)
+    except asyncio.TimeoutError:
+        logger.debug("MSBA result not ready within budget, continuing")
+    except Exception as _e:
+        logger.debug("MSBA result collection failed: %s", _e)
 
+
+def _extract_response_text(llm_response: Any) -> str:
+    """Normalize an LLM response (dict or object) into plain response text."""
     if isinstance(llm_response, dict):
         response_text = (
             llm_response.get("text")
@@ -1997,23 +2078,27 @@ async def _run_chat_pipeline(
                 str(llm_response.get("error"))[:200],
             )
             response_text = "抱歉，剛才的處理遇到問題，請再說一次。"
-    else:
-        response_text = (
-            llm_response.text
-            if hasattr(llm_response, "text")
-            else getattr(llm_response, "response", None) or str(llm_response)
-        )
-    context["continuation_count"] = context.get("continuation_count", 0) + 1
-    _fire_causal_learning(response_text, user_message, session_id)
-    _log_loop_signal(response_text, session_id)
+        return response_text
+    return (
+        llm_response.text
+        if hasattr(llm_response, "text")
+        else getattr(llm_response, "response", None) or str(llm_response)
+    )
 
-    # Step 10c: Online self-learning — teach dictionary classifier from LLM response
+
+def _record_post_response_feedback(
+    context: Dict[str, Any], response_text: str, user_message: str
+) -> None:
+    """Steps 10b/10c: post-response feedback loops (best-effort).
+
+    10c online self-learning (dictionary classifier) + 10b intent outcome
+    recording (C³ 5.0→6.0). Neither may raise into the response path.
+    """
     try:
         _learn_from_classification_feedback(user_message, response_text, context)
     except Exception as e:
         logger.warning(f"Online learning step skipped: {e}", exc_info=True)
 
-    # Step 10b: Record intent outcome feedback loop (C³ 5.0→6.0)
     try:
         im = _get_intent_manager()
         if im:
@@ -2029,22 +2114,70 @@ async def _run_chat_pipeline(
     except Exception as e:
         logger.warning(f"Intent outcome recording unavailable: {e}", exc_info=True)
 
-    _set_latest_response(
-        session_id,
-        _format_chat_response(
-            response_text,
-            llm_response,
-            emotion_result,
-            schema_ver,
-            trunc_msg,
-            user_message,
-            max_len,
-            session_id,
-            source=flow_source,
-            was_truncated=_was_truncated,
-        ),
-    )
-    return _latest_responses[session_id]
+
+class _LLMTimeoutError(Exception):
+    """Internal: LLM generation exceeded its timeout budget (not user-visible)."""
+
+
+async def _generate_via_chat_service(
+    user_message: str,
+    user_name: str,
+    context: Dict[str, Any],
+    chat_svc: Any,
+    timeout: float,
+) -> Any:
+    """Generate a response via ChatService.generate_response.
+
+    Raises _LLMTimeoutError on timeout (caller serves the latest cached
+    response). CancelledError and RuntimeError propagate to the caller.
+    """
+    try:
+        return await asyncio.wait_for(
+            chat_svc.generate_response(user_message, user_name, context=context),
+            timeout=timeout,
+        )
+    except asyncio.CancelledError:
+        logger.info("Client disconnected mid-response, cancelling")
+        raise
+    except asyncio.TimeoutError as e:
+        raise _LLMTimeoutError from e
+    except Exception as e:
+        logger.error(f"Error in _handle_chat_request: {e}", exc_info=True)
+        raise RuntimeError(f"chat request failed: {e}") from e
+
+
+async def _generate_llm_response(
+    user_message: str,
+    user_name: str,
+    context: Dict[str, Any],
+    chat_svc: Any,
+    mode: str,
+    timeout: float,
+) -> Any:
+    """Step 10: mode-aware LLM generation.
+
+    響應模式選取器（§5.6 backbone.respond）：1:1 / layered / stream / layered_stream.
+    mode == "1:1" uses ChatService directly; other modes try backbone.respond
+    and fall back to ChatService on failure. Raises _LLMTimeoutError on
+    timeout; CancelledError and RuntimeError propagate to the caller.
+    """
+    if mode == "1:1":
+        return await _generate_via_chat_service(user_message, user_name, context, chat_svc, timeout)
+    try:
+        from core.backbone import get_backbone
+
+        return await asyncio.wait_for(
+            get_backbone().respond(user_message, context=context, mode=mode),
+            timeout=timeout,
+        )
+    except asyncio.CancelledError:
+        logger.info("Client disconnected mid-response, cancelling")
+        raise
+    except asyncio.TimeoutError as e:
+        raise _LLMTimeoutError from e
+    except Exception as e:
+        logger.warning(f"Response mode {mode} failed, falling back to 1:1: {e}")
+        return await _generate_via_chat_service(user_message, user_name, context, chat_svc, timeout)
 
 
 def _build_math_response(
