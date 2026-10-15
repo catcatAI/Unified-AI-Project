@@ -351,6 +351,35 @@ _ANGELA_EMOTION_BEHAVIOR_MAP = {
 }
 
 
+def _adjust_emotion_threshold(adj: Dict[str, Any]) -> None:
+    """狀態(6D)→情緒(PAD)→閾值 自調閉環: 情緒直接調節語義 QA 閾值。
+
+    exploratory/高 valence+arousal → 更開放 (閾值 -0.05),
+    conservative/低 valence/疲勞 → 更保守 (+0.08)
+    """
+    try:
+        from ai.unified_engine.semantic_qa import set_emotion_threshold_adjustment
+
+        delta = 0.0
+        routing = adj.get("routing_mode", "")
+        valence = float(adj.get("valence", 0.0) or 0.0)
+        arousal = float(adj.get("arousal", 0.5) or 0.5)
+        sustained = int(adj.get("sustained_negative_counter", 0) or 0)
+        if routing == "exploratory":
+            delta -= 0.05
+        if routing == "conservative":
+            delta += 0.05
+        if valence > 0.3 and arousal > 0.5:
+            delta -= 0.03
+        if valence < -0.3:
+            delta += 0.03
+        if sustained >= 3:
+            delta += 0.08
+        set_emotion_threshold_adjustment(delta)
+    except Exception as e:
+        logger.debug(f"Emotion threshold adjustment failed: {e}", exc_info=True)
+
+
 async def _inject_emotion_behavioral_context(
     emotion_result: Optional[Dict[str, Any]],
     context: Dict[str, Any],
@@ -392,35 +421,15 @@ async def _inject_emotion_behavioral_context(
             es.apply_influence("user_message", mapped, intensity * 0.3, 0.5)
             adj = es.get_behavioral_adjustment()
             context["angela_emotion"] = adj
-            # 狀態(6D)→情緒(PAD)→閾值 自調閉環: 情緒直接調節語義 QA 閾值
-            # exploratory/高 valence+arousal → 更開放 (閾值 -0.05), conservative/低 valence/疲勞 → 更保守 (+0.08)
-            try:
-                from ai.unified_engine.semantic_qa import set_emotion_threshold_adjustment
-
-                delta = 0.0
-                routing = adj.get("routing_mode", "")
-                valence = float(adj.get("valence", 0.0) or 0.0)
-                arousal = float(adj.get("arousal", 0.5) or 0.5)
-                sustained = int(adj.get("sustained_negative_counter", 0) or 0)
-                if routing == "exploratory":
-                    delta -= 0.05
-                if routing == "conservative":
-                    delta += 0.05
-                if valence > 0.3 and arousal > 0.5:
-                    delta -= 0.03
-                if valence < -0.3:
-                    delta += 0.03
-                if sustained >= 3:
-                    delta += 0.08
-                set_emotion_threshold_adjustment(delta)
-            except Exception as e:
-                logger.debug(f"Emotion threshold adjustment failed: {e}", exc_info=True)
+            _adjust_emotion_threshold(adj)
 
         # Cross-component: Emotion → Biological stress/relaxation (C³ 4.0)
         if bio is not None:
             await _apply_emotion_to_biology(emotion, intensity, bio)
     except Exception as e:
         logger.warning(f"EmotionSystem behavioral injection failed: {e}", exc_info=True)
+
+
 
 
 # Emotion → Biological stress/relaxation mapping for C³ 4.0 cross-component chain
@@ -530,19 +539,21 @@ async def _try_math_verification(
     return None
 
 
-async def _analyze_emotion_and_crisis(
-    user_message: str,
-    context: Dict[str, Any],
-    bio: Any,
-) -> Tuple[Optional[Dict[str, Any]], int]:
-    """Analyze user emotion + assess crisis level. Fires biological stimulus as side-effect."""
-    emotion_result: Optional[Dict[str, Any]] = None
+def _analyze_user_emotion(user_message: str) -> Optional[Dict[str, Any]]:
+    """Keyword-detected user-text emotion (inference, not measurement)."""
     try:
-        emotion_result = _get_emotion_analyzer().analyze_emotion(user_message)
+        emotion_result: Optional[Dict[str, Any]] = (
+            _get_emotion_analyzer().analyze_emotion(user_message)
+        )
         logger.debug(f"Emotion analysis: {emotion_result}")
+        return emotion_result
     except Exception as e:
         logger.info(f"Emotion analysis unavailable: {e}")
+    return None
 
+
+def _assess_crisis_level(user_message: str) -> int:
+    """Assess crisis level from the user input (0 when unavailable)."""
     crisis_level = 0
     try:
         crisis_sys = get_crisis_system()
@@ -552,8 +563,13 @@ async def _analyze_emotion_and_crisis(
                 logger.info(f"[CrisisSystem] Level {crisis_level} detected")
     except Exception as e:
         logger.warning(f"Crisis assessment unavailable: {e}", exc_info=True)
+    return crisis_level
 
-    # Fire-and-forget: biological stimulus processing
+
+async def _fire_bio_stimulus(
+    bio: Any, user_message: str, emotion_result: Optional[Dict[str, Any]]
+) -> None:
+    """Fire-and-forget: biological stimulus processing."""
     try:
         _spawn_background_task(
             bio.process_auditory_stimulus(volume=0.6, content=user_message), "auditory_stimulus"
@@ -572,7 +588,19 @@ async def _analyze_emotion_and_crisis(
     except Exception as e:
         logger.warning(f"Biological state update from chat failed: {e}", exc_info=True)
 
+
+async def _analyze_emotion_and_crisis(
+    user_message: str,
+    context: Dict[str, Any],
+    bio: Any,
+) -> Tuple[Optional[Dict[str, Any]], int]:
+    """Analyze user emotion + assess crisis level. Fires biological stimulus as side-effect."""
+    emotion_result = _analyze_user_emotion(user_message)
+    crisis_level = _assess_crisis_level(user_message)
+    await _fire_bio_stimulus(bio, user_message, emotion_result)
     return emotion_result, crisis_level
+
+
 
 
 async def _try_alignment_check(
@@ -1189,6 +1217,50 @@ async def _try_agent_routing(
 
 
 
+# Table-driven causal→routing bias rules (see _get_causal_routing_adjustment).
+_CAD_RULES = (
+    # (cause, threshold, temp_coeff, token_coeff, conf_gain, label)
+    ("user_input", 0.5, -0.15, 0.0, 0.3, "user_input→response"),
+    ("query_complexity", 0.3, -0.1, 128.0, 0.3, "complexity→response"),
+    ("conversation_momentum", 0.4, 0.1, 64.0, 0.2, "momentum→input"),
+    ("interaction_value", 0.3, 0.0, 128.0, 0.2, "interaction_value→input"),
+)
+
+
+def _cad_zero() -> Dict[str, Any]:
+    """Neutral causal-routing adjustment (fresh dict per call — no aliasing)."""
+    return {
+        "temperature_bias": 0.0,
+        "max_tokens_bias": 0,
+        "causal_confidence": 0.0,
+        "effective_guidance": "",
+    }
+
+
+def _cad_apply_rule(
+    causal: Any,
+    cause: str,
+    threshold: float,
+    temp_coeff: float,
+    token_coeff: float,
+    conf_gain: float,
+    label: str,
+) -> Optional[Tuple[float, int, float, str]]:
+    """Apply one causal-adjustment rule. Returns None when strength is below threshold."""
+    preds: List[Dict[str, float]] = causal.predict(cause)
+    strength = (sum(p["strength"] for p in preds) / len(preds)) if preds else 0.0
+    if strength <= threshold:
+        return None
+    temp_adj = temp_coeff * min(1.0, strength)
+    token_adj = int(token_coeff * min(1.0, strength))
+    parts = [f"strength={strength:.2f}"]
+    if temp_coeff != 0:
+        parts.append(f"temp{temp_adj:+.3f}")
+    if token_coeff != 0:
+        parts.append(f"+{token_adj}tok")
+    return temp_adj, token_adj, conf_gain, f"{label} ({', '.join(parts)})"
+
+
 def _get_causal_routing_adjustment() -> Dict[str, Any]:
     """Compute concrete routing adjustments from learned causal relationships.
 
@@ -1206,80 +1278,26 @@ def _get_causal_routing_adjustment() -> Dict[str, Any]:
     try:
         causal = get_causal_reasoning()
         if not causal:
-            return {
-                "temperature_bias": 0.0,
-                "max_tokens_bias": 0,
-                "causal_confidence": 0.0,
-                "effective_guidance": "",
-            }
+            return _cad_zero()
 
         rels = causal.get_relationships()
         if not rels:
-            return {
-                "temperature_bias": 0.0,
-                "max_tokens_bias": 0,
-                "causal_confidence": 0.0,
-                "effective_guidance": "",
-            }
+            return _cad_zero()
 
         temp_bias = 0.0
         tokens_bias = 0
         confidence = 0.0
-        guidance_parts = []
+        guidance_parts: List[str] = []
 
-        # Shortcut: get average prediction strength for a cause
-        def _avg_strength(cause: str) -> float:
-            preds: List[Dict[str, float]] = causal.predict(cause)
-            if not preds:
-                return 0.0
-            return sum(p["strength"] for p in preds) / len(preds)
-
-        # user_input → angela_response: high strength = predictable pattern
-        # → reduce temperature for more consistent, reliable output
-        ui_strength = _avg_strength("user_input")
-        if ui_strength > 0.5:
-            adj = -(0.15 * min(1.0, ui_strength))
-            temp_bias += adj
-            confidence += 0.3
-            guidance_parts.append(
-                f"user_input→response (strength={ui_strength:.2f}, temp{adj:+.3f})"
-            )
-
-        # query_complexity → angela_response: complex queries need precise responses
-        # → reduce temperature + increase max_tokens
-        qc_strength = _avg_strength("query_complexity")
-        if qc_strength > 0.3:
-            temp_adj = -(0.1 * min(1.0, qc_strength))
+        for rule in _CAD_RULES:
+            hit = _cad_apply_rule(causal, *rule)
+            if hit is None:
+                continue
+            temp_adj, token_adj, conf, guidance = hit
             temp_bias += temp_adj
-            token_adj = int(128 * min(1.0, qc_strength))
             tokens_bias += token_adj
-            confidence += 0.3
-            guidance_parts.append(
-                f"complexity→response (strength={qc_strength:.2f}, temp{temp_adj:+.3f}, +{token_adj}tok)"
-            )
-
-        # conversation_momentum → user_input: high momentum = engaging conversation
-        # → increase temperature for more creative, exploratory responses
-        cm_strength = _avg_strength("conversation_momentum")
-        if cm_strength > 0.4:
-            temp_adj = 0.1 * min(1.0, cm_strength)
-            temp_bias += temp_adj
-            token_adj = int(64 * min(1.0, cm_strength))
-            tokens_bias += token_adj
-            confidence += 0.2
-            guidance_parts.append(
-                f"momentum→input (strength={cm_strength:.2f}, temp{temp_adj:+.3f}, +{token_adj}tok)"
-            )
-
-        # interaction_value → user_input: high value interaction → boost response depth
-        iv_strength = _avg_strength("interaction_value")
-        if iv_strength > 0.3:
-            token_adj = int(128 * min(1.0, iv_strength))
-            tokens_bias += token_adj
-            confidence += 0.2
-            guidance_parts.append(
-                f"interaction_value→input (strength={iv_strength:.2f}, +{token_adj}tok)"
-            )
+            confidence += conf
+            guidance_parts.append(guidance)
 
         effective_guidance = "; ".join(guidance_parts) if guidance_parts else ""
         return {
@@ -1290,12 +1308,9 @@ def _get_causal_routing_adjustment() -> Dict[str, Any]:
         }
     except Exception as e:
         logger.warning(f"Causal routing adjustment failed: {e}", exc_info=True)
-        return {
-            "temperature_bias": 0.0,
-            "max_tokens_bias": 0,
-            "causal_confidence": 0.0,
-            "effective_guidance": "",
-        }
+        return _cad_zero()
+
+
 
 
 def _inject_causal_predictions(context: Dict[str, Any]) -> None:
@@ -1404,6 +1419,76 @@ def _log_loop_signal(response_text: str, session_id: str) -> None:
         logger.debug(f"Loop monitor skipped: {e}", exc_info=True)
 
 
+def _causal_feedback_loops(resp_msg_ratio: float, empty_response: bool) -> None:
+    """Emotion/DLI/Lifecycle feedback loops: proxy ratio → adjustments (C³ 4.0)."""
+    # Emotion feedback loop: proxy ratio → internal emotion-label adjustment
+    try:
+        es = _get_emotion_system()
+        if es:
+            es.process_interaction_feedback(
+                engagement_ratio=resp_msg_ratio,
+                had_error=empty_response,
+                response_success=None,
+            )
+    except Exception as e:
+        logger.warning(f"Emotion feedback loop failed: {e}", exc_info=True)
+
+    # DLI feedback loop: proxy ratio → modality gateway adjustment
+    try:
+        dli = get_digital_life()
+        if dli:
+            dli.process_interaction_feedback(
+                engagement_ratio=resp_msg_ratio,
+                success=not empty_response,
+            )
+    except Exception as e:
+        logger.warning(f"DLI feedback loop failed: {e}", exc_info=True)
+
+    # Lifecycle feedback loop: proxy ratio → phase-aware routing
+    try:
+        alc = _get_lifecycle()
+        if alc:
+            alc.feed_interaction_outcome(
+                engagement_ratio=resp_msg_ratio,
+                success=not empty_response,
+            )
+    except Exception as e:
+        logger.warning(f"Lifecycle feedback loop failed: {e}", exc_info=True)
+
+
+def _causal_build_data(
+    buf: Dict[str, List[float]], msg_len: float, resp_len: float
+) -> Dict[str, List[float]]:
+    """Only pass the accumulated series (not a single value) once we have
+    enough temporal depth for Granger causality."""
+    if len(buf["msg_lengths"]) >= 5:
+        return {
+            "user_input": list(buf["msg_lengths"]),
+            "angela_response": list(buf["resp_lengths"]),
+        }
+    return {"user_input": [msg_len], "angela_response": [resp_len]}
+
+
+def _causal_record_temporal(
+    causal: Any, msg_len: float, resp_len: float, resp_msg_ratio: float
+) -> None:
+    """C³ 4.0: Record snapshot into TemporalState bridge and periodically
+    call ingest_temporal_state() for Granger causality over chat data."""
+    ts = _get_causal_temporal_state()
+    ts.record(
+        {
+            "interaction": {
+                "msg_length": msg_len,
+                "resp_length": resp_len,
+                # 歷史鍵名；值為 resp_msg_ratio（見上方定義）
+                "engagement_ratio": resp_msg_ratio,
+            },
+        }
+    )
+    if ts.size() >= 5 and ts.size() % 5 == 0:
+        causal.ingest_temporal_state(ts, window=20)
+
+
 def _fire_causal_learning(response_text: str, user_message: str, session_id: str) -> None:
     """Accumulate temporal data and learn causal relationships per session.
 
@@ -1433,62 +1518,16 @@ def _fire_causal_learning(response_text: str, user_message: str, session_id: str
         buf["engagement_ratios"].append(resp_msg_ratio)
         _trim_causal_series(buf)
 
-        # Emotion feedback loop: proxy ratio → internal emotion-label adjustment
-        try:
-            es = _get_emotion_system()
-            if es:
-                es.process_interaction_feedback(
-                    engagement_ratio=resp_msg_ratio,
-                    had_error=empty_response,
-                    response_success=None,
-                )
-        except Exception as e:
-            logger.warning(f"Emotion feedback loop failed: {e}", exc_info=True)
-
-        # DLI feedback loop: proxy ratio → modality gateway adjustment
-        try:
-            dli = get_digital_life()
-            if dli:
-                dli.process_interaction_feedback(
-                    engagement_ratio=resp_msg_ratio,
-                    success=not empty_response,
-                )
-        except Exception as e:
-            logger.warning(f"DLI feedback loop failed: {e}", exc_info=True)
-
-        # Lifecycle feedback loop: proxy ratio → phase-aware routing
-        try:
-            alc = _get_lifecycle()
-            if alc:
-                alc.feed_interaction_outcome(
-                    engagement_ratio=resp_msg_ratio,
-                    success=not empty_response,
-                )
-        except Exception as e:
-            logger.warning(f"Lifecycle feedback loop failed: {e}", exc_info=True)
+        _causal_feedback_loops(resp_msg_ratio, empty_response)
 
         # Dynamic strength: scales with the length-ratio proxy (see definition
         # above), not with any measured quality of the response.
         dynamic_strength = min(0.9, max(0.1, resp_msg_ratio / 5.0))
 
-        # Only pass the accumulated series (not a single value) once we have
-        # enough temporal depth for Granger causality.
-        data: Dict[str, List[float]]
-        if len(buf["msg_lengths"]) >= 5:
-            data = {
-                "user_input": list(buf["msg_lengths"]),
-                "angela_response": list(buf["resp_lengths"]),
-            }
-        else:
-            data = {
-                "user_input": [msg_len],
-                "angela_response": [resp_len],
-            }
-
         causal.learn(
             {
                 "variables": ["user_input", "angela_response"],
-                "data": data,
+                "data": _causal_build_data(buf, msg_len, resp_len),
                 "relationships": [
                     {
                         "cause": "user_input",
@@ -1500,21 +1539,7 @@ def _fire_causal_learning(response_text: str, user_message: str, session_id: str
             }
         )
 
-        # C³ 4.0: Record snapshot into TemporalState bridge and periodically
-        # call ingest_temporal_state() for Granger causality over chat data.
-        ts = _get_causal_temporal_state()
-        ts.record(
-            {
-                "interaction": {
-                    "msg_length": msg_len,
-                    "resp_length": resp_len,
-                    # 歷史鍵名；值為 resp_msg_ratio（見上方定義）
-                    "engagement_ratio": resp_msg_ratio,
-                },
-            }
-        )
-        if ts.size() >= 5 and ts.size() % 5 == 0:
-            causal.ingest_temporal_state(ts, window=20)
+        _causal_record_temporal(causal, msg_len, resp_len, resp_msg_ratio)
 
         # Cap buffer at 100 entries per session to prevent unbounded growth
         if len(buf["msg_lengths"]) > 100:
@@ -1524,6 +1549,75 @@ def _fire_causal_learning(response_text: str, user_message: str, session_id: str
 
     except Exception as e:
         logger.warning(f"Causal learning failed: {e}", exc_info=True)
+
+
+
+
+def _classify_feedback_target(
+    response_text: str, context: Dict[str, Any], qc: Any
+) -> Optional[Tuple[str, Any]]:
+    """Determine best target type (priority: routing intent > response class > lifecycle).
+
+    Returns (target_type, response_type), or None when still unknown.
+    """
+    # Step 1: Classify the LLM response to infer the user's true intent
+    # (response usually contains content matching the intended type)
+    response_type = qc.classify(response_text)
+
+    # Also check routing context for ground truth
+    lifecycle_adj = context.get("lifecycle_behavior", {})
+    lc_mode = lifecycle_adj.get("routing_mode", "")
+    intent_routing = context.get("intent_routing", {})
+    intent_mode = intent_routing.get("routing_mode", "")
+
+    # Determine best target type (priority: routing intent > response class > lifecycle)
+    target_type = response_type.primary_type.value
+    if intent_mode:
+        target_type = intent_mode
+    elif lc_mode and lc_mode != "neutral":
+        target_type = lc_mode
+
+    # Skip learning if still unknown
+    if target_type == "unknown":
+        return None
+    return target_type, response_type
+
+
+def _extract_learning_keywords(user_message: str) -> List[str]:
+    """Step 2: Extract good keywords from the user's input (2-12 char tokens)."""
+    import re
+
+    tokens = re.findall(r"[\w\u4e00-\u9fff]+", user_message)
+    keywords = [t for t in tokens if 2 <= len(t) <= 12 and t not in _LEARNING_STOPWORDS]
+    return keywords[:3]  # Max 3 keywords per learning cycle
+
+
+def _learn_keywords(
+    dc: Any,
+    keywords: List[str],
+    target_type: str,
+    target_action: str,
+    user_message: str,
+    response_type: Any,
+) -> None:
+    """Steps 4-5: Learn each keyword, then batch-persist the training data once."""
+    learned_count = 0
+    for kw in keywords:
+        kw_lower = kw.lower().strip()
+        if len(kw_lower) < 2:
+            continue
+        key = dc.learn(kw_lower, target_type, target_action, confidence=0.5, persist=False)
+        if key:
+            learned_count += 1
+
+    # Step 5: Batch persist once
+    if learned_count > 0:
+        dc._persist_training_data()
+        logger.info(
+            f"Online learned {learned_count} keyword(s) from UNKNOWN input: "
+            f"'{user_message[:40]}' → {target_type}/{target_action} "
+            f"(response_type={response_type.primary_type.value})"
+        )
 
 
 def _learn_from_classification_feedback(
@@ -1553,59 +1647,23 @@ def _learn_from_classification_feedback(
 
     dc = get_dictionary_classifier()
 
-    # Step 1: Classify the LLM response to infer the user's true intent
-    # (response usually contains content matching the intended type)
     qc = _get_query_classifier()
-    response_type = qc.classify(response_text)
-
-    # Also check routing context for ground truth
-    lifecycle_adj = context.get("lifecycle_behavior", {})
-    lc_mode = lifecycle_adj.get("routing_mode", "")
-    intent_routing = context.get("intent_routing", {})
-    intent_mode = intent_routing.get("routing_mode", "")
-
-    # Determine best target type (priority: routing intent > response class > lifecycle)
-    target_type = response_type.primary_type.value
-    if intent_mode:
-        target_type = intent_mode
-    elif lc_mode and lc_mode != "neutral":
-        target_type = lc_mode
-
-    # Skip learning if still unknown
-    if target_type == "unknown":
+    classified = _classify_feedback_target(response_text, context, qc)
+    if classified is None:
         return
+    target_type, response_type = classified
 
-    # Step 2: Extract good keywords from the user's input (2-5 char tokens)
-    import re
-
-    tokens = re.findall(r"[\w\u4e00-\u9fff]+", user_message)
-    keywords = [t for t in tokens if 2 <= len(t) <= 12 and t not in _LEARNING_STOPWORDS]
-    keywords = keywords[:3]  # Max 3 keywords per learning cycle
-
+    keywords = _extract_learning_keywords(user_message)
     if not keywords:
         return
 
     # Step 3: Infer best action_type from the original classify
     target_action = orig_action if orig_action != "none" else "read"
 
-    # Step 4: Learn each keyword
-    learned_count = 0
-    for kw in keywords:
-        kw_lower = kw.lower().strip()
-        if len(kw_lower) < 2:
-            continue
-        key = dc.learn(kw_lower, target_type, target_action, confidence=0.5, persist=False)
-        if key:
-            learned_count += 1
+    # Step 4-5: Learn each keyword, then batch persist once
+    _learn_keywords(dc, keywords, target_type, target_action, user_message, response_type)
 
-    # Step 5: Batch persist once
-    if learned_count > 0:
-        dc._persist_training_data()
-        logger.info(
-            f"Online learned {learned_count} keyword(s) from UNKNOWN input: "
-            f"'{user_message[:40]}' → {target_type}/{target_action} "
-            f"(response_type={response_type.primary_type.value})"
-        )
+
 
 
 def _handle_timeout(session_id: str, schema_ver: str) -> Dict[str, Any]:
