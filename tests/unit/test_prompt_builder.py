@@ -244,7 +244,13 @@ class TestPromptBudgetGate:
 
         before = get_prompt_budget_stats()["events"]
         messages = self._build(n_blocks=5)
-        _enforce_prompt_budget(messages, {"_prompt_token_budget": 1500})
+        # 與同類測試一致：禁用消化排程器，強制走裁剪路徑，
+        # 讓 dropped_messages 斷言確定（否則排程器消化後可能 0 裁剪）
+        with patch(
+            "services.llm.context_scheduler.get_context_scheduler",
+            side_effect=ImportError("disabled"),
+        ):
+            _enforce_prompt_budget(messages, {"_prompt_token_budget": 1500})
         after = get_prompt_budget_stats()
         assert after["events"] == before + 1
         assert after["dropped_messages"] >= 1
