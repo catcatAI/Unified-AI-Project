@@ -69,6 +69,7 @@ jobs:
           flake8 apps/backend/src tests/
           python scripts/mypy_budget_gate.py
           python scripts/complexity_budget_gate.py
+          python scripts/type_ignore_budget_gate.py
         env:
           ANGELA_HARDWARE_PROFILE: high_performance_desktop
       - name: Fact gates (facts + definitions — 單一檢查入口)
