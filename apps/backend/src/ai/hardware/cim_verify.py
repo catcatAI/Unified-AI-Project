@@ -183,6 +183,165 @@ def _run_drc_and_extract(
     return (int(match.group(1)) if match else None), spice, text
 
 
+def _detect_array_nets(
+    by_drain: Dict[str, List[Dict[str, Any]]],
+    expected_columns: int,
+) -> Dict[str, List[Dict[str, Any]]]:
+    """Identify array columns structurally: a weight column is a spine whose
+    gate drives several devices, whereas a single-cell peripheral drives one."""
+    array_nets = {
+        net: cells
+        for net, cells in by_drain.items()
+        if len({c["gate"] for c in cells}) == 1 and len(cells) >= 2
+    }
+    if expected_columns and len(array_nets) < expected_columns:
+        # the 1x column is a single cell and is filtered out above; count the
+        # single-cell spines the caller says are columns
+        singles = [
+            net
+            for net, cells in by_drain.items()
+            if len(cells) == 1 and len({c["gate"] for c in cells}) == 1
+        ]
+        array_nets = {**array_nets, **{net: by_drain[net] for net in singles[:1]}}
+    return array_nets
+
+
+def _verify_spine_partition(
+    report: GateReport,
+    sizes: List[int],
+    expected_spine_sizes: Optional[Sequence[int]],
+    devices: List[Dict[str, Any]],
+    expected_columns: int,
+) -> None:
+    """Add spine_partition / spine_sizes_distinct / no_giant_net gates."""
+    if expected_spine_sizes is not None:
+        report.add(
+            Gate(
+                "spine_partition",
+                "every array cell collapsing onto one net, so a whole array "
+                "became a single spine and the per-cell weights vanished",
+                sizes == sorted(expected_spine_sizes, reverse=True),
+                f"spine sizes {sizes}, expected " f"{sorted(expected_spine_sizes, reverse=True)}",
+            )
+        )
+        # The gate the first gate set missed entirely. A group whose weight
+        # columns all hold the same number of cells passes every structural
+        # check above and still cannot express a 1:2:4:8 weight, because the
+        # ratio comes from the columns holding *different* cell counts.
+        # Comparing each size against a constant cannot catch that; only
+        # comparing the spines against each other can.
+        distinct = len(set(sizes))
+        report.add(
+            Gate(
+                "spine_sizes_distinct",
+                "every weight column holding the same cell count, which makes "
+                "the array a bank of identical columns and leaves the weight "
+                "ratio inexpressible",
+                bool(sizes) and distinct == len(sizes) and len(sizes) > 1,
+                f"{len(sizes)} spines, {distinct} distinct sizes: {sizes}",
+            )
+        )
+    else:
+        # Only meaningful once the array is present. A two-device inverter is
+        # supposed to be one net holding two devices, and calling that a giant
+        # net would make the gate reject the one block it is meant to bless.
+        if expected_columns or expected_spine_sizes:
+            biggest = max(sizes) if sizes else 0
+            report.add(
+                Gate(
+                    "no_giant_net",
+                    "a routing line bridging separate spines",
+                    biggest < len(devices),
+                    f"largest net holds {biggest} of {len(devices)} devices",
+                )
+            )
+
+
+def _verify_inverters(
+    report: GateReport, devices: List[Dict[str, Any]], min_inverter_gates: int
+) -> None:
+    """Add cmos_inverters_present gate (shared gate + joined drain = real inverter)."""
+    # A CMOS inverter is one gate driving exactly one nfet and one pfet. A
+    # peripheral that is not wired that way can still pass every gate above:
+    # the first version of the sense amplifier drew twelve separate
+    # inverters, each with its own gate and no cascade between them, and
+    # the netlist showed one device per gate while DRC stayed clean, the
+    # device count stayed exact and the weight ratio was unaffected.
+    fanouts: Dict[str, int] = defaultdict(int)
+    for device in devices:
+        fanouts[device["gate"]] += 1
+    inverters = [
+        gate
+        for gate, count in fanouts.items()
+        if count == 2
+        and {("pfet" if "pfet" in d["model"] else "nfet") for d in devices if d["gate"] == gate}
+        == {"nfet", "pfet"}
+    ]
+    # A real inverter is one gate driving one nfet and one pfet *and* both
+    # drains on one node. Sharing the gate alone is not enough: a pair with
+    # unjoined drains appears in the netlist as an inverter and is not one
+    # electrically, so the gate check has to look at the drains too.
+    real_inverters = []
+    for gate, count in fanouts.items():
+        if count != 2:
+            continue
+        pair = [d for d in devices if d["gate"] == gate]
+        kinds = {"pfet" if "pfet" in d["model"] else "nfet" for d in pair}
+        if kinds == {"nfet", "pfet"} and len({d["drain"] for d in pair}) == 1:
+            real_inverters.append(gate)
+    report.add(
+        Gate(
+            "cmos_inverters_present",
+            "peripheral transistors left with unshared gates, so the "
+            "amplifier is a set of isolated devices rather than a cascade",
+            len(real_inverters) >= min_inverter_gates,
+            f"{len(inverters)} shared-gate pairs, "
+            f"{len(real_inverters)} with a joined output, "
+            f"expected >= {min_inverter_gates}",
+        )
+    )
+
+
+def _verify_spine_sources(
+    report: GateReport,
+    array_nets: Dict[str, List[Dict[str, Any]]],
+    expect_single_source_per_spine: bool,
+    has_array: bool,
+) -> None:
+    """Add spine_single_source / spine_single_word_line gates (array only)."""
+    # The single-source and single-word-line checks describe a weight column: a
+    # set of parallel cells sharing one source under one word line. They say
+    # nothing about a peripheral, and a CMOS inverter is the deliberate
+    # opposite, with one source per device type. So they only run when the caller
+    # has told us the block contains an array.
+    if not (expect_single_source_per_spine and array_nets and has_array):
+        return
+    multi_source = [
+        net for net, cells in array_nets.items() if len({c["source"] for c in cells}) != 1
+    ]
+    report.add(
+        Gate(
+            "spine_single_source",
+            "a column whose cells do not share one source, which means the "
+            "patches are not a parallel weight bin",
+            not multi_source,
+            f"{len(multi_source)} array spines with multiple sources",
+        )
+    )
+    multi_gate = [
+        net for net, cells in array_nets.items() if len({c["gate"] for c in cells}) != 1
+    ]
+    report.add(
+        Gate(
+            "spine_single_word_line",
+            "cells on one spine driven by separate gates, which is not how "
+            "a current-weighted bin is built",
+            not multi_gate,
+            f"{len(multi_gate)} array spines with multiple word lines",
+        )
+    )
+
+
 def verify_block(
     mag_text: str,
     expected_transistors: int,
@@ -271,136 +430,13 @@ def verify_block(
     # name. It does mean the 1x bin, which is a single cell, is only recognised
     # when the caller asks for it explicitly, so the caller passes the number of
     # columns it expects and the count is checked below.
-    array_nets = {
-        net: cells
-        for net, cells in by_drain.items()
-        if len({c["gate"] for c in cells}) == 1 and len(cells) >= 2
-    }
-    if expected_columns and len(array_nets) < expected_columns:
-        # the 1x column is a single cell and is filtered out above; count the
-        # single-cell spines the caller says are columns
-        singles = [
-            net
-            for net, cells in by_drain.items()
-            if len(cells) == 1 and len({c["gate"] for c in cells}) == 1
-        ]
-        array_nets = {**array_nets, **{net: by_drain[net] for net in singles[:1]}}
+    array_nets = _detect_array_nets(by_drain, expected_columns)
     sizes = sorted((len(cells) for cells in array_nets.values()), reverse=True)
 
-    if expected_spine_sizes is not None:
-        report.add(
-            Gate(
-                "spine_partition",
-                "every array cell collapsing onto one net, so a whole array "
-                "became a single spine and the per-cell weights vanished",
-                sizes == sorted(expected_spine_sizes, reverse=True),
-                f"spine sizes {sizes}, expected " f"{sorted(expected_spine_sizes, reverse=True)}",
-            )
-        )
-        # The gate the first gate set missed entirely. A group whose weight
-        # columns all hold the same number of cells passes every structural
-        # check above and still cannot express a 1:2:4:8 weight, because the
-        # ratio comes from the columns holding *different* cell counts.
-        # Comparing each size against a constant cannot catch that; only
-        # comparing the spines against each other can.
-        distinct = len(set(sizes))
-        report.add(
-            Gate(
-                "spine_sizes_distinct",
-                "every weight column holding the same cell count, which makes "
-                "the array a bank of identical columns and leaves the weight "
-                "ratio inexpressible",
-                bool(sizes) and distinct == len(sizes) and len(sizes) > 1,
-                f"{len(sizes)} spines, {distinct} distinct sizes: {sizes}",
-            )
-        )
-    else:
-        # Only meaningful once the array is present. A two-device inverter is
-        # supposed to be one net holding two devices, and calling that a giant
-        # net would make the gate reject the one block it is meant to bless.
-        if expected_columns or expected_spine_sizes:
-            biggest = max(sizes) if sizes else 0
-            report.add(
-                Gate(
-                    "no_giant_net",
-                    "a routing line bridging separate spines",
-                    biggest < len(devices),
-                    f"largest net holds {biggest} of {len(devices)} devices",
-                )
-            )
-
-    if min_inverter_gates:
-        # A CMOS inverter is one gate driving exactly one nfet and one pfet. A
-        # peripheral that is not wired that way can still pass every gate above:
-        # the first version of the sense amplifier drew twelve separate
-        # inverters, each with its own gate and no cascade between them, and
-        # the netlist showed one device per gate while DRC stayed clean, the
-        # device count stayed exact and the weight ratio was unaffected.
-        fanouts: Dict[str, int] = defaultdict(int)
-        for device in devices:
-            fanouts[device["gate"]] += 1
-        inverters = [
-            gate
-            for gate, count in fanouts.items()
-            if count == 2
-            and {("pfet" if "pfet" in d["model"] else "nfet") for d in devices if d["gate"] == gate}
-            == {"nfet", "pfet"}
-        ]
-        # A real inverter is one gate driving one nfet and one pfet *and* both
-        # drains on one node. Sharing the gate alone is not enough: a pair with
-        # unjoined drains appears in the netlist as an inverter and is not one
-        # electrically, so the gate check has to look at the drains too.
-        real_inverters = []
-        for gate, count in fanouts.items():
-            if count != 2:
-                continue
-            pair = [d for d in devices if d["gate"] == gate]
-            kinds = {"pfet" if "pfet" in d["model"] else "nfet" for d in pair}
-            if kinds == {"nfet", "pfet"} and len({d["drain"] for d in pair}) == 1:
-                real_inverters.append(gate)
-        report.add(
-            Gate(
-                "cmos_inverters_present",
-                "peripheral transistors left with unshared gates, so the "
-                "amplifier is a set of isolated devices rather than a cascade",
-                len(real_inverters) >= min_inverter_gates,
-                f"{len(inverters)} shared-gate pairs, "
-                f"{len(real_inverters)} with a joined output, "
-                f"expected >= {min_inverter_gates}",
-            )
-        )
-
-    # The single-source and single-word-line checks describe a weight column: a
-    # set of parallel cells sharing one source under one word line. They say
-    # nothing about a peripheral, and a CMOS inverter is the deliberate
-    # opposite, with one source per device type. So they only run when the caller
-    # has told us the block contains an array.
+    _verify_spine_partition(report, sizes, expected_spine_sizes, devices, expected_columns)
+    _verify_inverters(report, devices, min_inverter_gates)
     has_array = bool(expected_spine_sizes) or bool(expected_columns)
-    if expect_single_source_per_spine and array_nets and has_array:
-        multi_source = [
-            net for net, cells in array_nets.items() if len({c["source"] for c in cells}) != 1
-        ]
-        report.add(
-            Gate(
-                "spine_single_source",
-                "a column whose cells do not share one source, which means the "
-                "patches are not a parallel weight bin",
-                not multi_source,
-                f"{len(multi_source)} array spines with multiple sources",
-            )
-        )
-        multi_gate = [
-            net for net, cells in array_nets.items() if len({c["gate"] for c in cells}) != 1
-        ]
-        report.add(
-            Gate(
-                "spine_single_word_line",
-                "cells on one spine driven by separate gates, which is not how "
-                "a current-weighted bin is built",
-                not multi_gate,
-                f"{len(multi_gate)} array spines with multiple word lines",
-            )
-        )
+    _verify_spine_sources(report, array_nets, expect_single_source_per_spine, has_array)
 
     return report
 
