@@ -328,14 +328,8 @@ def _print_boot_status(service: Any) -> None:
 # ═══════════════════════════════════════════════════════════════════
 
 
-def _handle_repl_command(text: str, service: Any, history: list[str]) -> Tuple[str, Optional[str]]:
-    """Handle repl command request."""
-    parts = text.lstrip("/:")
-    tokens = parts.split(maxsplit=1)
-    cmd = tokens[0].lower()
-    args = tokens[1] if len(tokens) > 1 else ""
-
-    # ── Navigation ──
+def _repl_nav_command(cmd: str, history: list[str]) -> Optional[Tuple[str, Optional[str]]]:
+    """Navigation: /help, /clear, /history. None = not this group."""
     if cmd in ("h", "help"):
         return ("system", _build_help_text())
 
@@ -346,7 +340,11 @@ def _handle_repl_command(text: str, service: Any, history: list[str]) -> Tuple[s
         lines = [f"  {i+1}. {h[:60]}" for i, h in enumerate(history[-10:])]
         return ("system", "Recent history:\n" + "\n".join(lines) if lines else "(empty)")
 
-    # ── System info ──
+    return None
+
+
+def _repl_info_command(cmd: str, service: Any) -> Optional[Tuple[str, Optional[str]]]:
+    """System info: /state, /config, /intent, /route. None = not this group."""
     if cmd in ("s", "state"):
         return ("system", _format_state_snapshot(service))
 
@@ -359,7 +357,14 @@ def _handle_repl_command(text: str, service: Any, history: list[str]) -> Tuple[s
     if cmd in ("r", "route"):
         return ("system", _format_llm_routing(service))
 
-    # ── Memory ──
+    return None
+
+
+def _repl_tool_command(
+    cmd: str, args: str, service: Any
+) -> Optional[Tuple[str, Optional[str]]]:
+    """Tool commands: /memory, /context, /model, /drive, /tickle, /eval.
+    None = not this group."""
     if cmd in ("m", "mem", "memory"):
         return ("system", _format_memory_summary(service, args))
 
@@ -382,6 +387,31 @@ def _handle_repl_command(text: str, service: Any, history: list[str]) -> Tuple[s
     # ── Eval ──
     if cmd == "eval":
         return ("system", _handle_eval_command(args))
+
+    return None
+
+
+def _handle_repl_command(text: str, service: Any, history: list[str]) -> Tuple[str, Optional[str]]:
+    """Handle repl command request."""
+    parts = text.lstrip("/:")
+    tokens = parts.split(maxsplit=1)
+    cmd = tokens[0].lower()
+    args = tokens[1] if len(tokens) > 1 else ""
+
+    # ── Navigation ──
+    nav = _repl_nav_command(cmd, history)
+    if nav is not None:
+        return nav
+
+    # ── System info ──
+    info = _repl_info_command(cmd, service)
+    if info is not None:
+        return info
+
+    # ── Tools ──
+    tool = _repl_tool_command(cmd, args, service)
+    if tool is not None:
+        return tool
 
     return ("unknown", None)
 
