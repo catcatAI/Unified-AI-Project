@@ -515,6 +515,45 @@ class LifeIntensityFormula:
         self.last_calculation = now
         return min(1.0, normalized_integral)
 
+    def _dominant_domain(self) -> Optional[KnowledgeDomain]:
+        """Domain with highest knowledge state (None when no states)."""
+        if not self.knowledge_states:
+            return None
+        return max(
+            self.knowledge_states.items(), key=lambda x: x[1].calculate_inf_value()
+        )[0]
+
+    def _trim_history(self) -> None:
+        """Halve history when it overflows max size (keeps newest half)."""
+        if len(self.intensity_history) > self.max_history_size:
+            self.intensity_history = self.intensity_history[-self.max_history_size // 2 :]
+
+    def _notify_threshold_crossings(self, l_s: float) -> None:
+        """Fire threshold callbacks on up/down crossing (resilient per-callback)."""
+        if len(self.intensity_history) < 2:
+            return
+        prev_l_s = self.intensity_history[-2].l_s
+        if (prev_l_s < self._intensity_threshold <= l_s) or (
+            prev_l_s >= self._intensity_threshold > l_s
+        ):
+            for callback in self._threshold_callbacks:
+                try:
+                    callback(prev_l_s, l_s)
+                except (
+                    Exception
+                ) as e:  # broad exception acceptable: threshold callbacks should be resilient
+                    logger.error(f"Error in {__name__}: {e}", exc_info=True)
+
+    def _notify_intensity(self, snapshot: "LifeIntensitySnapshot") -> None:
+        """Fire intensity callbacks (resilient per-callback)."""
+        for intensity_cb in self._intensity_callbacks:
+            try:
+                intensity_cb(snapshot)
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: intensity callbacks should be resilient
+                logger.error(f"Error in {__name__}: {e}", exc_info=True)
+
     def calculate_life_intensity(self) -> float:
         """
         Calculate L_s (Life Intensity / 生命感强度)
@@ -549,14 +588,7 @@ class LifeIntensityFormula:
         # Normalize
         l_s = max(0.0, min(1.0, l_s))
 
-        # Find dominant domain (domain with highest knowledge state)
-        dominant_domain = None
-        if self.knowledge_states:
-            dominant_domain = max(
-                self.knowledge_states.items(), key=lambda x: x[1].calculate_inf_value()
-            )[0]
-
-        # Create snapshot
+        # Create snapshot (dominant domain = highest knowledge state)
         snapshot = LifeIntensitySnapshot(
             timestamp=datetime.now(),
             l_s=l_s,
@@ -564,37 +596,19 @@ class LifeIntensityFormula:
             c_limit=c_limit,
             m_f=m_f,
             time_integral=time_integral,
-            dominant_domain=dominant_domain,
+            dominant_domain=self._dominant_domain(),
         )
 
         self.intensity_history.append(snapshot)
 
         # Manage history size
-        if len(self.intensity_history) > self.max_history_size:
-            self.intensity_history = self.intensity_history[-self.max_history_size // 2 :]
+        self._trim_history()
 
         # Check threshold crossing
-        if len(self.intensity_history) >= 2:
-            prev_l_s = self.intensity_history[-2].l_s
-            if (prev_l_s < self._intensity_threshold <= l_s) or (
-                prev_l_s >= self._intensity_threshold > l_s
-            ):
-                for callback in self._threshold_callbacks:
-                    try:
-                        callback(prev_l_s, l_s)
-                    except (
-                        Exception
-                    ) as e:  # broad exception acceptable: threshold callbacks should be resilient
-                        logger.error(f"Error in {__name__}: {e}", exc_info=True)
+        self._notify_threshold_crossings(l_s)
 
         # Notify callbacks
-        for intensity_cb in self._intensity_callbacks:
-            try:
-                intensity_cb(snapshot)
-            except (
-                Exception
-            ) as e:  # broad exception acceptable: intensity callbacks should be resilient
-                logger.error(f"Error in {__name__}: {e}", exc_info=True)
+        self._notify_intensity(snapshot)
 
         return l_s
 
