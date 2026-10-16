@@ -11,7 +11,7 @@ import logging
 import os
 import re
 import time
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 from core.interfaces.protocols import LLMResponse
 from core.utils import safe_error
@@ -36,20 +36,13 @@ class UnifiedBackend(BaseLLMBackend):
         self._engine: Optional[Any] = None
 
     @staticmethod
-    def _resolve_default_checkpoint() -> str:
-        """Locate the best trained checkpoint.
-
-        Preference order: 128k-slot npz (best quality) > legacy unified.json.
-        Searches data_config root then repo-local fallback.
-        """
-        candidates = []
-
-        # 1. env override
+    def _collect_search_roots() -> List[str]:
+        """Assemble checkpoint search roots: env override > walk-up > data_config."""
+        search_roots: List[str] = []
         env_root = os.environ.get("ANGELA_PROJECT_ROOT", "").strip()
-        search_roots = []
         if env_root:
             search_roots.append(os.path.join(env_root, "data", "checkpoints", "unified"))
-        # 2. walk up from module dir
+        # walk up from module dir
         here = os.path.abspath(os.path.dirname(__file__))
         root = here
         for _ in range(8):
@@ -58,7 +51,7 @@ class UnifiedBackend(BaseLLMBackend):
                 search_roots.append(cp)
                 break
             root = os.path.dirname(root)
-        # 3. data_config
+        # data_config
         try:
             from core.data_config import get_checkpoints_dir
 
@@ -67,7 +60,12 @@ class UnifiedBackend(BaseLLMBackend):
             logger.debug(
                 "data_config.get_checkpoints_dir failed; unified search root skipped", exc_info=True
             )
+        return search_roots
 
+    @staticmethod
+    def _scan_candidates(search_roots: List[str]) -> List[str]:
+        """Pick the best checkpoint file per root: 128k npz > full_train npz > legacy json."""
+        candidates: List[str] = []
         for d in search_roots:
             # Prefer 128k npz (best quality, delta-fusion ready)
             for f in sorted(os.listdir(d)) if os.path.isdir(d) else []:
@@ -82,10 +80,70 @@ class UnifiedBackend(BaseLLMBackend):
                 candidates.append(legacy)
             if candidates:
                 break
+        return candidates
 
+    @staticmethod
+    def _resolve_default_checkpoint() -> str:
+        """Locate the best trained checkpoint.
+
+        Preference order: 128k-slot npz (best quality) > legacy unified.json.
+        Searches data_config root then repo-local fallback.
+        """
+        candidates = UnifiedBackend._scan_candidates(UnifiedBackend._collect_search_roots())
         resolved = candidates[0] if candidates else ""
         logger.info("[UnifiedBackend] checkpoint resolved to %s", resolved or "(none)")
         return resolved
+
+    @staticmethod
+    def _load_checkpoint_weights(engine: Any, checkpoint: str) -> None:
+        """Load npz slot arrays onto engine.core, or fall back to engine.load()."""
+        if not checkpoint or not os.path.isfile(checkpoint):
+            return
+        if checkpoint.endswith(".npz"):
+            import numpy as np
+
+            z = np.load(checkpoint, allow_pickle=False)
+            core = engine.core
+            for attr in ("pos", "trans", "gram", "gram3", "gram5", "uni"):
+                if attr in z:
+                    setattr(core, f"_{attr}", z[attr])
+        else:
+            engine.load(checkpoint)
+
+    @staticmethod
+    def _resolve_qa_path(checkpoint: str) -> str:
+        """Locate qa_knowledge.json next to the checkpoint, else under data_config."""
+        qa_dir = os.path.dirname(checkpoint) if checkpoint else ""
+        qa_path = os.path.join(qa_dir, "qa_knowledge.json") if qa_dir else ""
+        if qa_path and os.path.isfile(qa_path):
+            return qa_path
+        try:
+            from core.data_config import get_checkpoints_dir
+
+            return os.path.join(str(get_checkpoints_dir()), "unified", "qa_knowledge.json")
+        except Exception:  # optional QA knowledge path; absent ⇒ engine without QA
+            return ""
+
+    @staticmethod
+    def _load_qa(engine: Any, qa_path: str) -> None:
+        """Attach SemanticQA knowledge if the file exists; absence is non-fatal."""
+        if not qa_path or not os.path.isfile(qa_path):
+            return
+        try:
+            import json as _json
+
+            from ai.unified_engine.semantic_qa import SemanticQA
+
+            engine.semantic_qa = SemanticQA()
+            with open(qa_path, encoding="utf-8") as _f:
+                engine.semantic_qa.load_dict(_json.load(_f))
+        except Exception:  # optional QA load; failure ⇒ engine without QA knowledge
+            logger.warning(
+                "SemanticQA knowledge load failed (%s); engine "
+                "comes up without QA knowledge",
+                qa_path,
+                exc_info=True,
+            )
 
     def _get_engine(self) -> Any:
         """Lazy-init UnifiedEngine from resolved checkpoint."""
@@ -95,45 +153,8 @@ class UnifiedBackend(BaseLLMBackend):
             from ai.unified_engine.unified_engine import UnifiedEngine
 
             engine = UnifiedEngine()
-            if self.checkpoint and os.path.isfile(self.checkpoint):
-                if self.checkpoint.endswith(".npz"):
-                    import numpy as np
-
-                    z = np.load(self.checkpoint, allow_pickle=False)
-                    core = engine.core
-                    for attr in ("pos", "trans", "gram", "gram3", "gram5", "uni"):
-                        if attr in z:
-                            setattr(core, f"_{attr}", z[attr])
-                else:
-                    engine.load(self.checkpoint)
-            # Load QA knowledge
-            qa_dir = os.path.dirname(self.checkpoint) if self.checkpoint else ""
-            qa_path = os.path.join(qa_dir, "qa_knowledge.json") if qa_dir else ""
-            if not qa_path or not os.path.isfile(qa_path):
-                try:
-                    from core.data_config import get_checkpoints_dir
-
-                    qa_path = os.path.join(
-                        str(get_checkpoints_dir()), "unified", "qa_knowledge.json"
-                    )
-                except Exception:  # optional QA knowledge path; absent ⇒ engine without QA
-                    qa_path = ""
-            if qa_path and os.path.isfile(qa_path):
-                try:
-                    import json as _json
-
-                    from ai.unified_engine.semantic_qa import SemanticQA
-
-                    engine.semantic_qa = SemanticQA()
-                    with open(qa_path, encoding="utf-8") as _f:
-                        engine.semantic_qa.load_dict(_json.load(_f))
-                except Exception:  # optional QA load; failure ⇒ engine without QA knowledge
-                    logger.warning(
-                        "SemanticQA knowledge load failed (%s); engine "
-                        "comes up without QA knowledge",
-                        qa_path,
-                        exc_info=True,
-                    )
+            self._load_checkpoint_weights(engine, self.checkpoint)
+            self._load_qa(engine, self._resolve_qa_path(self.checkpoint))
             self._engine = engine
             return engine
         except Exception as exc:
