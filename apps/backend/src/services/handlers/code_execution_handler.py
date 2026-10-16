@@ -472,6 +472,46 @@ class CodeExecutionHandler:
         # Single-line, code-shaped text (e.g. ``import os`` / ``x = 1``).
         return stripped_text
 
+    @staticmethod
+    def _restricted_builtins_globals() -> Dict[str, Any]:
+        """Build exec globals with whitelist-only builtins."""
+        restricted_globals: Dict[str, Any] = {"__builtins__": {}}
+        for name in _BUILTINS_WHITELIST:
+            restricted_globals["__builtins__"][name] = (
+                __builtins__[name]
+                if isinstance(__builtins__, dict)
+                else getattr(__builtins__, name)
+            )
+        return restricted_globals
+
+    @staticmethod
+    def _build_exec_output(stdout_val: str, stderr_val: str) -> str:
+        """Assemble captured stdout/stderr into the i18n response text."""
+        parts = []
+        if stdout_val:
+            parts.append(t("code_exec.output", output=stdout_val))
+        if stderr_val:
+            parts.append(t("code_exec.error", error=stderr_val))
+        if not parts:
+            return t("code_exec.complete_no_output")
+        return t("code_exec.header") + "\n" + "\n".join(parts)
+
+    @staticmethod
+    def _exec_error_response(e: BaseException) -> str:
+        """Exception path: traceback 摘要＋記錄＋i18n 錯誤回執。"""
+        tb = traceback.format_exc()
+        lines = tb.splitlines()
+        if len(lines) > _MAX_TRACEBACK_LINES:
+            tb = (
+                "\n".join(lines[:_MAX_TRACEBACK_LINES])
+                + f"\n... (後續 {len(lines) - _MAX_TRACEBACK_LINES} 行已省略)"
+            )
+        if len(tb) > _MAX_OUTPUT:
+            tb = tb[:_MAX_OUTPUT] + "\n... (已截斷)"
+        logger.warning(f"Code execution error: {e}")
+        safe_msg = safe_error(e) if isinstance(e, Exception) else str(e)
+        return t("code_exec.execution_error", traceback=safe_msg)
+
     async def _execute(self, code: str) -> str:
         try:
             _validate_code_safety(code)
@@ -484,13 +524,7 @@ class CodeExecutionHandler:
         old_stderr = sys.stderr
         captured_out = io.StringIO()
         captured_err = io.StringIO()
-        restricted_globals: Dict[str, Any] = {"__builtins__": {}}
-        for name in _BUILTINS_WHITELIST:
-            restricted_globals["__builtins__"][name] = (
-                __builtins__[name]
-                if isinstance(__builtins__, dict)
-                else getattr(__builtins__, name)
-            )
+        restricted_globals = self._restricted_builtins_globals()
 
         def _run_exec():
             # Code-execution tool: _validate_code_safety() already vetted the
@@ -504,31 +538,14 @@ class CodeExecutionHandler:
                 asyncio.to_thread(_run_exec),
                 timeout=_TIMEOUT,
             )
-            stdout_val = captured_out.getvalue()[:_MAX_OUTPUT]
-            stderr_val = captured_err.getvalue()[:_MAX_OUTPUT]
-            parts = []
-            if stdout_val:
-                parts.append(t("code_exec.output", output=stdout_val))
-            if stderr_val:
-                parts.append(t("code_exec.error", error=stderr_val))
-            if not parts:
-                return t("code_exec.complete_no_output")
-            return t("code_exec.header") + "\n" + "\n".join(parts)
+            return self._build_exec_output(
+                captured_out.getvalue()[:_MAX_OUTPUT],
+                captured_err.getvalue()[:_MAX_OUTPUT],
+            )
         except asyncio.TimeoutError:
             return t("code_exec.timeout", seconds=_TIMEOUT)
         except Exception as e:
-            tb = traceback.format_exc()
-            lines = tb.splitlines()
-            if len(lines) > _MAX_TRACEBACK_LINES:
-                tb = (
-                    "\n".join(lines[:_MAX_TRACEBACK_LINES])
-                    + f"\n... (後續 {len(lines) - _MAX_TRACEBACK_LINES} 行已省略)"
-                )
-            if len(tb) > _MAX_OUTPUT:
-                tb = tb[:_MAX_OUTPUT] + "\n... (已截斷)"
-            logger.warning(f"Code execution error: {e}")
-            safe_msg = safe_error(e) if isinstance(e, Exception) else str(e)
-            return t("code_exec.execution_error", traceback=safe_msg)
+            return self._exec_error_response(e)
         finally:
             sys.stdout = old_stdout
             sys.stderr = old_stderr
