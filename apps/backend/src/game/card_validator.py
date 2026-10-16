@@ -147,56 +147,74 @@ class GameCardValidator:
                     )
                 )
 
-    def _check_stats(self, cid: str, card: Dict[str, Any], report: ValidationReport) -> None:
-        stats = card.get("stats") or {}
-        for key, value in stats.items():
-            if value is None:
-                report.add(CardIssue(cid, "stat_none", f"stat '{key}' is null", "warning"))
-                continue
-            if isinstance(value, float) and math.isnan(value):
-                report.add(CardIssue(cid, "stat_numeric", f"stat '{key}' is NaN", "error"))
-                continue
-            if isinstance(value, (dict, list)):
-                continue  # 巢狀結構不下數值斷言
-            if isinstance(value, bool):
-                continue
-            if _is_numeric(value):
-                if key.lower() in ("age", "level", "lv") and value <= 0:
+    @staticmethod
+    def _stat_guard(cid: str, key: str, value: Any, report: ValidationReport) -> bool:
+        """null/NaN/巢狀/布林先行檢查；True = 跳過後續數值斷言。"""
+        if value is None:
+            report.add(CardIssue(cid, "stat_none", f"stat '{key}' is null", "warning"))
+            return True
+        if isinstance(value, float) and math.isnan(value):
+            report.add(CardIssue(cid, "stat_numeric", f"stat '{key}' is NaN", "error"))
+            return True
+        if isinstance(value, (dict, list)) or isinstance(value, bool):
+            return True  # 巢狀結構/布林不下數值斷言
+        return False
+
+    @staticmethod
+    def _check_numeric_stat(
+        cid: str, key: str, value: float, report: ValidationReport
+    ) -> None:
+        """數值 stat：age/level 正值斷言 + 百分比界域 [0,100]。"""
+        if key.lower() in ("age", "level", "lv") and value <= 0:
+            report.add(
+                CardIssue(
+                    cid,
+                    "stat_positive",
+                    f"stat '{key}' = {value} must be positive",
+                    "error",
+                )
+            )
+        if key.endswith("%") or "percent" in key.lower():
+            if not (0.0 <= value <= 100.0):
+                report.add(
+                    CardIssue(
+                        cid,
+                        "stat_percent",
+                        f"percent stat '{key}' = {value} outside [0,100]",
+                        "error",
+                    )
+                )
+
+    @staticmethod
+    def _check_string_stat(
+        cid: str, key: str, value: str, report: ValidationReport
+    ) -> None:
+        """字串 stat：字串化數值的百分比界域 + 空字串警告。"""
+        if _is_numeric_str(value):
+            # 字串化的數值：百分比界域也要查
+            if "%" in value:
+                num = float(value.replace("%", "").replace(",", "").strip())
+                if not (0.0 <= num <= 100.0):
                     report.add(
                         CardIssue(
                             cid,
-                            "stat_positive",
-                            f"stat '{key}' = {value} must be positive",
+                            "stat_percent_str",
+                            f"percent str stat '{key}' = {value} outside [0,100]",
                             "error",
                         )
                     )
-                if key.endswith("%") or "percent" in key.lower():
-                    if not (0.0 <= value <= 100.0):
-                        report.add(
-                            CardIssue(
-                                cid,
-                                "stat_percent",
-                                f"percent stat '{key}' = {value} outside [0,100]",
-                                "error",
-                            )
-                        )
-            elif isinstance(value, str) and _is_numeric_str(value):
-                # 字串化的數值：百分比界域也要查
-                raw = value.replace("%", "").replace(",", "").strip()
-                if "%" in value:
-                    num = float(raw)
-                    if not (0.0 <= num <= 100.0):
-                        report.add(
-                            CardIssue(
-                                cid,
-                                "stat_percent_str",
-                                f"percent str stat '{key}' = {value} outside [0,100]",
-                                "error",
-                            )
-                        )
-            # 非數值字串：確認非空
-            elif isinstance(value, str) and not value.strip():
-                report.add(CardIssue(cid, "stat_empty", f"stat '{key}' is empty string", "warning"))
+        elif not value.strip():
+            report.add(CardIssue(cid, "stat_empty", f"stat '{key}' is empty string", "warning"))
+
+    def _check_stats(self, cid: str, card: Dict[str, Any], report: ValidationReport) -> None:
+        stats = card.get("stats") or {}
+        for key, value in stats.items():
+            if self._stat_guard(cid, key, value, report):
+                continue
+            if _is_numeric(value):
+                self._check_numeric_stat(cid, key, value, report)
+            elif isinstance(value, str):
+                self._check_string_stat(cid, key, value, report)
 
     def _check_field_count(self, cid: str, card: Dict[str, Any], report: ValidationReport) -> None:
         """raw_field_count 為來源 raw 欄位數（導入前），與處理後 token 數是
