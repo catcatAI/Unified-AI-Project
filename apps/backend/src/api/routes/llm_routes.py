@@ -7,7 +7,7 @@ POST /llm/switch   — Switch active backend
 """
 
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, Optional, Tuple
 
 from fastapi import APIRouter, Body
 
@@ -24,33 +24,35 @@ async def _get_llm():
 
 
 @router.get("/status")
+def _llm_backend_category(llm_svc: Any, btype: Any) -> str:
+    """Classify a backend as local/cloud using the router's own rule when available."""
+    resolver = getattr(llm_svc, "backend_category", None)
+    if resolver is not None:
+        try:
+            return str(resolver(btype))
+        except Exception as exc:
+            logger.debug("backend_category failed: %s", exc)
+    value = str(getattr(btype, "value", btype)).lower()
+    return "cloud" if value in {"openai", "anthropic", "google"} else "local"
+
+
+def _llm_backend_health(llm_svc: Any, btype: Any) -> str:
+    """Get backend health via the router's resolver when available."""
+    resolver = getattr(llm_svc, "backend_health", None)
+    if resolver is not None:
+        try:
+            return str(resolver(btype))
+        except Exception as exc:
+            logger.debug("backend_health failed: %s", exc)
+    return "unknown"
+
+
 async def llm_status() -> Dict[str, Any]:
     """Return LLM backend status with health indicators."""
     try:
         llm_svc = await _get_llm()
         backends = []
         active_type = getattr(llm_svc, "active_backend_type", None)
-
-        def _category(btype: Any) -> str:
-            # Reuse the router's own local/cloud rule so status cannot drift
-            # from the gate that actually decides which backends may run.
-            resolver = getattr(llm_svc, "backend_category", None)
-            if resolver is not None:
-                try:
-                    return str(resolver(btype))
-                except Exception as exc:
-                    logger.debug("backend_category failed: %s", exc)
-            value = str(getattr(btype, "value", btype)).lower()
-            return "cloud" if value in {"openai", "anthropic", "google"} else "local"
-
-        def _health(btype: Any) -> str:
-            resolver = getattr(llm_svc, "backend_health", None)
-            if resolver is not None:
-                try:
-                    return str(resolver(btype))
-                except Exception as exc:
-                    logger.debug("backend_health failed: %s", exc)
-            return "unknown"
 
         def _append(btype: Any, present: bool) -> None:
             name = btype.name if hasattr(btype, "name") else str(btype)
@@ -59,8 +61,8 @@ async def llm_status() -> Dict[str, Any]:
                     "name": name,
                     "available": present,
                     "active": active_type is not None and btype == active_type,
-                    "health": _health(btype),
-                    "type": _category(btype),
+                    "health": _llm_backend_health(llm_svc, btype),
+                    "type": _llm_backend_category(llm_svc, btype),
                 }
             )
 
@@ -136,6 +138,70 @@ async def llm_config_get() -> Dict[str, Any]:
 
 
 @router.post("/config")
+def _validate_enum(dotted: str, value: Any) -> Optional[str]:
+    """Validate enum membership; returns error message or None."""
+    if dotted not in _LLM_CONFIG_ENUMS:
+        return None
+    if value not in _LLM_CONFIG_ENUMS[dotted]:
+        return f"Invalid {dotted}={value!r}. Allowed: {list(_LLM_CONFIG_ENUMS[dotted])}"
+    return None
+
+
+def _validate_range(dotted: str, value: Any) -> Tuple[bool, Any, Optional[str]]:
+    """Validate numeric range; returns (ok, normalized_value, error)."""
+    if dotted not in _LLM_CONFIG_RANGES:
+        return True, value, None
+    lo, hi = _LLM_CONFIG_RANGES[dotted]
+    try:
+        num = float(value)
+    except (TypeError, ValueError):
+        return False, value, f"Invalid {dotted}={value!r}: must be a number"
+    if not (lo <= num <= hi):
+        return False, value, f"Invalid {dotted}={value!r}: must be within [{lo}, {hi}]"
+    return True, (int(num) if dotted != "settings.defaults.temperature" else num), None
+
+
+def _validate_bool(dotted: str, value: Any) -> Optional[str]:
+    """Validate boolean type; returns error message or None."""
+    if dotted not in _LLM_CONFIG_BOOLS:
+        return None
+    if not isinstance(value, bool):
+        return f"Invalid {dotted}={value!r}: must be true/false"
+    return None
+
+
+def _validate_str(dotted: str, value: Any) -> Tuple[bool, Any, Optional[str]]:
+    """Validate string type; returns (ok, normalized_value, error)."""
+    if dotted not in _LLM_CONFIG_STRS:
+        return True, value, None
+    if not isinstance(value, str) or not value.strip() or len(value) > 64:
+        return False, value, f"Invalid {dotted}={value!r}: must be a non-empty string ≤64 chars"
+    return True, value.strip(), None
+
+
+def _validate_config_value(dotted: str, value: Any) -> Tuple[bool, Any, Optional[str]]:
+    """Validate a single config value; returns (ok, normalized_value, error_msg)."""
+    err = _validate_enum(dotted, value)
+    if err:
+        return False, value, err
+    ok, value, err = _validate_range(dotted, value)
+    if not ok:
+        return False, value, err
+    err = _validate_bool(dotted, value)
+    if err:
+        return False, value, err
+    return _validate_str(dotted, value)
+
+
+def _set_nested(patch: Dict[str, Any], dotted: str, value: Any) -> None:
+    """Insert a dotted key path into a nested dict patch."""
+    node = patch
+    parts = dotted.split(".")
+    for part in parts[:-1]:
+        node = node.setdefault(part, {})
+    node[parts[-1]] = value
+
+
 async def llm_config_set(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """Persist LLM settings to the user config layer (``llm.user.yaml``).
 
@@ -162,40 +228,10 @@ async def llm_config_set(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
 
     patch: Dict[str, Any] = {}
     for dotted, value in payload.items():
-        if dotted in _LLM_CONFIG_ENUMS:
-            if value not in _LLM_CONFIG_ENUMS[dotted]:
-                return {
-                    "ok": False,
-                    "error": f"Invalid {dotted}={value!r}. Allowed: {list(_LLM_CONFIG_ENUMS[dotted])}",
-                }
-        elif dotted in _LLM_CONFIG_RANGES:
-            lo, hi = _LLM_CONFIG_RANGES[dotted]
-            try:
-                num = float(value)
-            except (TypeError, ValueError):
-                return {"ok": False, "error": f"Invalid {dotted}={value!r}: must be a number"}
-            if not (lo <= num <= hi):
-                return {
-                    "ok": False,
-                    "error": f"Invalid {dotted}={value!r}: must be within [{lo}, {hi}]",
-                }
-            value = int(num) if dotted != "settings.defaults.temperature" else num
-        elif dotted in _LLM_CONFIG_BOOLS:
-            if not isinstance(value, bool):
-                return {"ok": False, "error": f"Invalid {dotted}={value!r}: must be true/false"}
-        elif dotted in _LLM_CONFIG_STRS:
-            if not isinstance(value, str) or not value.strip() or len(value) > 64:
-                return {
-                    "ok": False,
-                    "error": f"Invalid {dotted}={value!r}: must be a non-empty string ≤64 chars",
-                }
-            value = value.strip()
-        # dotted → nested patch
-        node = patch
-        parts = dotted.split(".")
-        for part in parts[:-1]:
-            node = node.setdefault(part, {})
-        node[parts[-1]] = value
+        ok, normalized, err = _validate_config_value(dotted, value)
+        if not ok:
+            return {"ok": False, "error": err}
+        _set_nested(patch, dotted, normalized)
 
     from core.system.config.tiered_loader import write_user_config
 
