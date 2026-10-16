@@ -60,6 +60,84 @@ class EvolutionEngine:
     def set_trait(self, name: str, value: float) -> None:
         self._traits[name] = max(0.0, min(1.0, value))
 
+    def _apply_decay(self, now: datetime) -> None:
+        """隨時間自然回歸默認值（decay）。"""
+        if not self._last_update:
+            self._last_update = now
+            return
+        elapsed_hours = (now - self._last_update).total_seconds() / 3600.0
+        decay = self._decay_rate * elapsed_hours
+        for trait in self._traits:
+            default = _DEFAULT_TRAITS.get(trait, 0.5)
+            if self._traits[trait] > default:
+                self._traits[trait] = max(default, self._traits[trait] - decay)
+            elif self._traits[trait] < default:
+                self._traits[trait] = min(default, self._traits[trait] + decay)
+        self._last_update = now
+
+    def _apply_emotion(self, emotion_state: Dict[str, float]) -> None:
+        """正向情感 → openness/extraversion；負向 → neuroticism/agreeableness。"""
+        lr = self._learning_rate
+        happiness = emotion_state.get("happiness", 0.5)
+        anger = emotion_state.get("anger", 0.0)
+        fear = emotion_state.get("fear", 0.0)
+        valence = emotion_state.get("valence", 0.5)
+        arousal = emotion_state.get("arousal", 0.5)
+
+        delta_open = (happiness - 0.5) * lr + (valence - 0.5) * lr * 0.5
+        self._traits["openness"] = max(0.0, min(1.0, self._traits["openness"] + delta_open))
+
+        delta_extra = (happiness - 0.3) * lr * 0.8 + (arousal - 0.5) * lr * 0.3
+        self._traits["extraversion"] = max(
+            0.0, min(1.0, self._traits["extraversion"] + delta_extra)
+        )
+
+        delta_neuro = (fear * 0.4 + anger * 0.3) * lr
+        self._traits["neuroticism"] = max(
+            0.0, min(1.0, self._traits["neuroticism"] + delta_neuro)
+        )
+
+        if anger > 0.5:
+            self._traits["agreeableness"] = max(
+                0.0, self._traits["agreeableness"] - anger * lr * 0.5
+            )
+
+    def _apply_safety(self, safety_score: float) -> None:
+        """安全性高 → conscientiousness/agreeableness；低 → neuroticism↑ extraversion↓。"""
+        lr = self._learning_rate
+        safe = max(0.0, min(1.0, safety_score))
+        unsafe = 1.0 - safe
+
+        self._traits["conscientiousness"] = max(
+            0.0, min(1.0, self._traits["conscientiousness"] + (safe - 0.5) * lr * 0.6)
+        )
+
+        self._traits["agreeableness"] = max(
+            0.0, min(1.0, self._traits["agreeableness"] + (safe - 0.5) * lr * 0.4)
+        )
+
+        self._traits["neuroticism"] = max(
+            0.0, min(1.0, self._traits["neuroticism"] + unsafe * lr * 0.3)
+        )
+
+        self._traits["extraversion"] = max(
+            0.0, min(1.0, self._traits["extraversion"] - unsafe * lr * 0.2)
+        )
+
+    def _propagate_to_dtm(self) -> None:
+        """把當前特質傳到 DTM social_initiative_threshold。"""
+        if self.dtm is None:
+            return
+        try:
+            extra = self._traits.get("extraversion", 0.5)
+            neuro = self._traits.get("neuroticism", 0.5)
+            self.dtm.set_parameter(
+                "social_initiative_threshold",
+                max(0.1, min(0.9, 0.5 - extra * 0.15 + neuro * 0.1)),
+            )
+        except Exception:
+            logger.warning("Failed to propagate traits to DTM", exc_info=True)
+
     def evolve_from_feedback(
         self,
         emotion_state: Optional[Dict[str, float]] = None,
@@ -75,74 +153,15 @@ class EvolutionEngine:
         - 隨時間自然回歸默認值（decay）
         """
         now = datetime.now()
-        if self._last_update:
-            elapsed_hours = (now - self._last_update).total_seconds() / 3600.0
-            decay = self._decay_rate * elapsed_hours
-            for trait in self._traits:
-                default = _DEFAULT_TRAITS.get(trait, 0.5)
-                if self._traits[trait] > default:
-                    self._traits[trait] = max(default, self._traits[trait] - decay)
-                elif self._traits[trait] < default:
-                    self._traits[trait] = min(default, self._traits[trait] + decay)
-        self._last_update = now
-
-        lr = self._learning_rate
+        self._apply_decay(now)
 
         if emotion_state:
-            happiness = emotion_state.get("happiness", 0.5)
-            anger = emotion_state.get("anger", 0.0)
-            fear = emotion_state.get("fear", 0.0)
-            valence = emotion_state.get("valence", 0.5)
-            arousal = emotion_state.get("arousal", 0.5)
-
-            delta_open = (happiness - 0.5) * lr + (valence - 0.5) * lr * 0.5
-            self._traits["openness"] = max(0.0, min(1.0, self._traits["openness"] + delta_open))
-
-            delta_extra = (happiness - 0.3) * lr * 0.8 + (arousal - 0.5) * lr * 0.3
-            self._traits["extraversion"] = max(
-                0.0, min(1.0, self._traits["extraversion"] + delta_extra)
-            )
-
-            delta_neuro = (fear * 0.4 + anger * 0.3) * lr
-            self._traits["neuroticism"] = max(
-                0.0, min(1.0, self._traits["neuroticism"] + delta_neuro)
-            )
-
-            if anger > 0.5:
-                self._traits["agreeableness"] = max(
-                    0.0, self._traits["agreeableness"] - anger * lr * 0.5
-                )
+            self._apply_emotion(emotion_state)
 
         if safety_score is not None:
-            safe = max(0.0, min(1.0, safety_score))
-            unsafe = 1.0 - safe
+            self._apply_safety(safety_score)
 
-            self._traits["conscientiousness"] = max(
-                0.0, min(1.0, self._traits["conscientiousness"] + (safe - 0.5) * lr * 0.6)
-            )
-
-            self._traits["agreeableness"] = max(
-                0.0, min(1.0, self._traits["agreeableness"] + (safe - 0.5) * lr * 0.4)
-            )
-
-            self._traits["neuroticism"] = max(
-                0.0, min(1.0, self._traits["neuroticism"] + unsafe * lr * 0.3)
-            )
-
-            self._traits["extraversion"] = max(
-                0.0, min(1.0, self._traits["extraversion"] - unsafe * lr * 0.2)
-            )
-
-        if self.dtm is not None:
-            try:
-                extra = self._traits.get("extraversion", 0.5)
-                neuro = self._traits.get("neuroticism", 0.5)
-                self.dtm.set_parameter(
-                    "social_initiative_threshold",
-                    max(0.1, min(0.9, 0.5 - extra * 0.15 + neuro * 0.1)),
-                )
-            except Exception:
-                logger.warning("Failed to propagate traits to DTM", exc_info=True)
+        self._propagate_to_dtm()
 
         return self.traits
 
