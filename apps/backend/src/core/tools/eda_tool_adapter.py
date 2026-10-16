@@ -398,6 +398,47 @@ class EdaToolAdapter:
         """Persist the final job manifest and return its serializable result."""
         return self._write_manifest(workspace, payload)
 
+    async def _probe_gui_version(
+        self, name: str, settings: Dict[str, Any], command: Optional[str], entry: Dict[str, Any]
+    ) -> None:
+        """gui mode: headless/status keys + version file read (best effort)."""
+        entry["headless"] = False
+        entry["integration_status"] = "gui_client" if command else "unavailable"
+        version_file = settings.get("version_file")
+        if command and version_file:
+            try:
+                version_path = Path(str(version_file)).expanduser()
+                if version_path.is_file():
+                    entry["version"] = version_path.read_text(encoding="utf-8").strip()
+            except OSError as exc:
+                logger.warning("Unable to read %s version file: %s", name, exc, exc_info=True)
+
+    async def _probe_cli_version(
+        self,
+        name: str,
+        settings: Dict[str, Any],
+        mode: str,
+        command: Optional[str],
+        entry: Dict[str, Any],
+    ) -> None:
+        """cli mode: run version_args probe to fill version/version_error."""
+        if not (command and mode == "cli"):
+            return
+        version_args = settings.get("version_args", [])
+        if isinstance(version_args, list) and version_args:
+            version_command = self._command_args(name, *[str(arg) for arg in version_args])
+            if version_command:
+                version_run = await self._run(
+                    version_command,
+                    Path.cwd(),
+                    self.probe_timeout,
+                )
+                version_text = (version_run["stdout"] + version_run["stderr"]).strip()
+                if version_run.get("return_code") == 0 and not version_run.get("timed_out"):
+                    entry["version"] = self._version_line(version_text, name)
+                else:
+                    entry["version_error"] = self._version_line(version_text, name)
+
     async def probe(self) -> Dict[str, Any]:
         """Probe installed tools and explicit file/GUI bridge integrations."""
         tools: Dict[str, Any] = {}
@@ -420,37 +461,11 @@ class EdaToolAdapter:
                 "mode": mode,
             }
             if mode == "gui":
-                entry["headless"] = False
-                entry["integration_status"] = "gui_client" if command else "unavailable"
-                version_file = settings.get("version_file")
-                if command and version_file:
-                    try:
-                        version_path = Path(str(version_file)).expanduser()
-                        if version_path.is_file():
-                            entry["version"] = version_path.read_text(encoding="utf-8").strip()
-                    except OSError as exc:
-                        logger.warning(
-                            "Unable to read %s version file: %s", name, exc, exc_info=True
-                        )
-            if command and mode == "cli":
-                version_args = settings.get("version_args", [])
-                if isinstance(version_args, list) and version_args:
-                    version_command = self._command_args(name, *[str(arg) for arg in version_args])
-                    if version_command:
-                        version_run = await self._run(
-                            version_command,
-                            Path.cwd(),
-                            self.probe_timeout,
-                        )
-                        version_text = (version_run["stdout"] + version_run["stderr"]).strip()
-                        if version_run.get("return_code") == 0 and not version_run.get("timed_out"):
-                            entry["version"] = self._version_line(version_text, name)
-                        else:
-                            entry["version_error"] = self._version_line(version_text, name)
+                await self._probe_gui_version(name, settings, command, entry)
+            await self._probe_cli_version(name, settings, mode, command, entry)
             tools[name] = entry
         available = any(entry["available"] for entry in tools.values())
         return {"status": "success" if available else "unavailable", "tools": tools}
-
     @staticmethod
     def _parse_ngspice_log(path: Path) -> Dict[str, Any]:
         if not path.is_file():
@@ -567,33 +582,27 @@ class EdaToolAdapter:
         }
         return self._write_manifest(job, payload) if finalize else payload
 
-    async def generate_layout(
-        self,
-        workspace: Optional[EdaWorkspace] = None,
-        label: str = "layout",
-        width_um: float = 20.0,
-        height_um: float = 10.0,
-    ) -> Dict[str, Any]:
-        """Generate and read back a small two-layer KLayout layout."""
-        if not self.enabled:
-            return {"status": "unavailable", "tool": "klayout", "diagnostics": ["EDA disabled"]}
-        job = workspace or self.create_workspace("klayout")
-        safe_label = self._safe_label(label)
+    @staticmethod
+    def _layout_dims(width_um: float, height_um: float) -> Tuple[int, int]:
+        """µm → dbu (0.001µm) with hard 1..10_000_000 clamp."""
         try:
             width = max(1, min(int(round(float(width_um) * 1_000)), 10_000_000))
             height = max(1, min(int(round(float(height_um) * 1_000)), 10_000_000))
         except (TypeError, ValueError) as exc:
             raise ValueError("layout dimensions must be numeric") from exc
-        script_path = job.input_dir / f"{safe_label}.py"
-        gds_relative = f"output/{safe_label}.gds"
-        oas_relative = f"output/{safe_label}.oas"
-        klayout_settings = self._tool_settings("klayout")
-        layer_settings = klayout_settings.get("layers", {})
-        if not isinstance(layer_settings, dict):
-            layer_settings = {}
-        metal1_layer = self._layer_number(layer_settings.get("metal1"), 49)
-        via1_layer = self._layer_number(layer_settings.get("via1"), 50)
-        script = f"""import json
+        return width, height
+
+    @staticmethod
+    def _layout_script(
+        width: int,
+        height: int,
+        gds_relative: str,
+        oas_relative: str,
+        metal1_layer: int,
+        via1_layer: int,
+    ) -> str:
+        """Two-layer KLayout generator script (metal1 boxes + via1)."""
+        return f"""import json
 import os
 import pya
 
@@ -621,6 +630,62 @@ print("EDA_KLAYOUT_JSON:" + json.dumps({{
     "bbox": [bbox.left, bbox.bottom, bbox.right, bbox.top],
 }}))
 """
+
+    @staticmethod
+    def _parse_layout_metrics(combined: str) -> Dict[str, Any]:
+        """Marker JSON metrics + fixed template-only annotations."""
+        marker = _KLAYOUT_MARKER.search(combined)
+        try:
+            metrics = json.loads(marker.group(1)) if marker else {}
+        except json.JSONDecodeError:
+            metrics = {}
+        metrics.update(
+            {
+                "geometry_count": 3,
+                "template_only": True,
+                "design_depth": "template",
+            }
+        )
+        return metrics
+
+    @staticmethod
+    def _layout_status(
+        run: Dict[str, Any], metrics: Dict[str, Any], diagnostics: List[str]
+    ) -> str:
+        """timeout → error(no artifact) → success ladder; mutates diagnostics."""
+        if run["timed_out"]:
+            return "timeout"
+        if run["return_code"] != 0 or not metrics.get("readback_ok"):
+            if not diagnostics:
+                diagnostics.append("KLayout did not produce a readable GDS artifact")
+            return "error"
+        return "success"
+
+    async def generate_layout(
+        self,
+        workspace: Optional[EdaWorkspace] = None,
+        label: str = "layout",
+        width_um: float = 20.0,
+        height_um: float = 10.0,
+    ) -> Dict[str, Any]:
+        """Generate and read back a small two-layer KLayout layout."""
+        if not self.enabled:
+            return {"status": "unavailable", "tool": "klayout", "diagnostics": ["EDA disabled"]}
+        job = workspace or self.create_workspace("klayout")
+        safe_label = self._safe_label(label)
+        width, height = self._layout_dims(width_um, height_um)
+        script_path = job.input_dir / f"{safe_label}.py"
+        gds_relative = f"output/{safe_label}.gds"
+        oas_relative = f"output/{safe_label}.oas"
+        klayout_settings = self._tool_settings("klayout")
+        layer_settings = klayout_settings.get("layers", {})
+        if not isinstance(layer_settings, dict):
+            layer_settings = {}
+        metal1_layer = self._layer_number(layer_settings.get("metal1"), 49)
+        via1_layer = self._layer_number(layer_settings.get("via1"), 50)
+        script = self._layout_script(
+            width, height, gds_relative, oas_relative, metal1_layer, via1_layer
+        )
         script_path.write_text(script, encoding="utf-8")
         command = self._resolve_tool("klayout")
         if command is None:
@@ -636,29 +701,11 @@ print("EDA_KLAYOUT_JSON:" + json.dumps({{
         combined = run["stdout"] + "\n" + run["stderr"]
         run_log_path = job.logs_dir / f"{safe_label}.log"
         run_log_path.write_text(combined, encoding="utf-8")
-        marker = _KLAYOUT_MARKER.search(combined)
-        try:
-            metrics = json.loads(marker.group(1)) if marker else {}
-        except json.JSONDecodeError:
-            metrics = {}
-        metrics.update(
-            {
-                "geometry_count": 3,
-                "template_only": True,
-                "design_depth": "template",
-            }
-        )
+        metrics = self._parse_layout_metrics(combined)
         gds_path = job.root / gds_relative
         oas_path = job.root / oas_relative
         diagnostics = [run["stderr"]] if run["stderr"] else []
-        if run["timed_out"]:
-            status = "timeout"
-        elif run["return_code"] != 0 or not metrics.get("readback_ok"):
-            status = "error"
-            if not diagnostics:
-                diagnostics.append("KLayout did not produce a readable GDS artifact")
-        else:
-            status = "success"
+        status = self._layout_status(run, metrics, diagnostics)
         payload = {
             "status": status,
             "tool": "klayout",
@@ -678,7 +725,6 @@ print("EDA_KLAYOUT_JSON:" + json.dumps({{
             "duration_ms": run["duration_ms"],
         }
         return self._write_manifest(job, payload)
-
     @staticmethod
     def _magic_marker_value(match: Optional[re.Match[str]]) -> Optional[str]:
         """Extract the first whitespace-separated token from a marker match."""
