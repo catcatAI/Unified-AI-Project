@@ -13,7 +13,7 @@ import re
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from core.i18n.i18n_manager import t
 from core.system.config.magic_numbers import max_file_write_mb
@@ -172,35 +172,23 @@ class FileOperationHandler:
     # Natural-language request parsing (best-effort)
     # ------------------------------------------------------------------
 
-    def _parse_text_request(self, text: str) -> Dict[str, str]:
-        """Parse a natural-language file request into structured params.
-
-        Understands common Chinese/English phrasings such as:
-          "刪除 /tmp/a.txt" / "讀取 test.txt" / "寫入 hello.txt 內容是 ..."
-          "建立 notes/hello.txt" / "重新命名 a.txt 為 b.txt" / "移動 a.txt 到 dir"
-        """
-        import re
-
-        params: Dict[str, str] = {}
-        if not text:
-            return params
-        lower = text.lower()
-
-        # 0. Content (write/append): everything after a content marker
-        content = None
+    def _parse_content(self, text: str, lower: str, params: Dict[str, str]) -> Optional[str]:
+        """Parse content after a content marker. Returns content or None."""
         for sep in ("內容是", "内容是", "內容:", "内容:", "content:", "with content"):
             if sep in lower:
                 _, after = text.split(sep, 1)
                 if after.strip():
                     content = after.strip().strip("\"'")
-                break
-        if content is not None:
-            params["content"] = content
+                    params["content"] = content
+                    return content
+        return None
 
-        # 1. Path: first path-like token, excluding action keywords and the
-        #    content portion. Computed BEFORE the action scan so a path such as
-        #    /tmp/opencode_probe/x.txt cannot supply the action keyword "open"
-        #    and silently turn a delete into a read.
+    def _parse_path(
+        self, text: str, content: Optional[str], params: Dict[str, str]
+    ) -> List[str]:
+        """Parse path from text, excluding content portion. Returns path_tokens."""
+        import re
+
         work = text
         if content is not None:
             for sep in ("內容是", "内容是", "內容:", "内容:", "content:", "with content"):
@@ -212,9 +200,12 @@ class FileOperationHandler:
         for candidate in path_tokens:
             params["path"] = candidate
             break
+        return [tok.strip("`'\"") for tok in tokens]
 
-        # 2. Action keywords — scanned on the text with path tokens removed, and
-        #    ASCII keywords are matched on word boundaries.
+    def _parse_action(
+        self, text: str, lower: str, tokens: List[str], path_tokens: List[str], params: Dict[str, str]
+    ) -> None:
+        """Parse action keyword from text."""
         action_scan = " ".join(
             tok.strip("`'\"") for tok in tokens if tok.strip("`'\"") not in path_tokens
         ).lower()
@@ -223,21 +214,45 @@ class FileOperationHandler:
                 params["action"] = action
                 break
         if "action" not in params:
-            # Fall back to the full text so a path-only request still resolves.
             for action, kws in _ACTION_KEYWORDS:
                 if any(k in lower for k in kws):
                     params["action"] = action
                     break
 
-        # 3. Target name (rename/move): token after 為/为/成/到/to
-        if params.get("action") in ("rename", "move"):
-            for sep in ("為", "为", "成", "到", " to "):
-                if sep in text:
-                    rest = text.split(sep, 1)[1].strip()
-                    m = re.search(r"[^\s`'\"，。！？!?,;；]+", rest)
-                    if m:
-                        params["new_name"] = m.group(0).strip("`'\"")
-                        break
+    def _parse_new_name(self, text: str, params: Dict[str, str]) -> None:
+        """Parse target name for rename/move."""
+        import re
+
+        if params.get("action") not in ("rename", "move"):
+            return
+        for sep in ("為", "为", "成", "到", " to "):
+            if sep in text:
+                rest = text.split(sep, 1)[1].strip()
+                m = re.search(r"[^\s`'\"，。！？!?,;；]+", rest)
+                if m:
+                    params["new_name"] = m.group(0).strip("`'\"")
+                    break
+
+    def _parse_text_request(self, text: str) -> Dict[str, str]:
+        """Parse a natural-language file request into structured params.
+
+        Understands common Chinese/English phrasings such as:
+          "刪除 /tmp/a.txt" / "讀取 test.txt" / "寫入 hello.txt 內容是 ..."
+          "建立 notes/hello.txt" / "重新命名 a.txt 為 b.txt" / "移動 a.txt 到 dir"
+        """
+        params: Dict[str, str] = {}
+        if not text:
+            return params
+        lower = text.lower()
+
+        content = self._parse_content(text, lower, params)
+        path_tokens = self._parse_path(text, content, params)
+        # Re-tokenize for action scan (tokens from _parse_path stripped)
+        import re
+
+        tokens = re.findall(r"[^\s`'\"，。！？!?,;；]+(?:\.[^\s`'\"，。！？!?,;；]+)?", text)
+        self._parse_action(text, lower, tokens, path_tokens, params)
+        self._parse_new_name(text, params)
 
         return params
 
