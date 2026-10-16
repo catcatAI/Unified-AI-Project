@@ -424,6 +424,47 @@ class ActiveCognitionFormula:
 
         return s_stress / o_order
 
+    def _notify_threshold_crossings(self, prev_a_c: float, a_c: float) -> None:
+        """跨越 min_a_c_threshold 時通知回呼（上穿 True / 下穿 False）。"""
+        if prev_a_c < self.min_a_c_threshold <= a_c:
+            for callback in self._threshold_callbacks:
+                try:
+                    callback(a_c, True)
+                except Exception as e:
+                    logger.error(f"Error in {__name__}: {e}", exc_info=True)
+
+        elif prev_a_c >= self.min_a_c_threshold > a_c:
+            for callback in self._threshold_callbacks:
+                try:
+                    callback(a_c, False)
+                except Exception as e:
+                    logger.error(f"Error in {__name__}: {e}", exc_info=True)
+
+    @staticmethod
+    def _classify_construction(a_c: float) -> str:
+        """依 A_c 三分支判定建構類型。"""
+        radical_threshold = threshold_value("ac.construction_radical_threshold", 1.5)
+        significant_threshold = threshold_value("ac.construction_significant_threshold", 1.0)
+        moderate_threshold = threshold_value("ac.construction_moderate_threshold", 0.8)
+        if a_c > radical_threshold:
+            return "radical_deviation"
+        elif a_c > significant_threshold:
+            return "significant_deviation"
+        elif a_c > moderate_threshold:
+            return "moderate_adaptation"
+        return "subtle_adjustment"
+
+    @staticmethod
+    def _construction_outcome(deviation: float, s_stress: float, o_order: float) -> str:
+        """依偏離度三分支產生結果描述。"""
+        deviation_high = threshold_value("ac.deviation_high", 0.5)
+        deviation_mid = threshold_value("ac.deviation_mid", 0.2)
+        if deviation > deviation_high:
+            return f"强烈偏离原生秩序 (S_stress={s_stress:.3f} > O_order={o_order:.3f})"
+        elif deviation > deviation_mid:
+            return "中度偏离原生秩序，主动建构新意义"
+        return "轻微偏离，在秩序边缘探索"
+
     def process_active_cognition(self) -> float:
         """
         Calculate A_c and apply side effects (callbacks, recording).
@@ -441,19 +482,7 @@ class ActiveCognitionFormula:
 
         if self.construction_history:
             prev_a_c = self.construction_history[-1].a_c_value
-            if prev_a_c < self.min_a_c_threshold <= a_c:
-                for callback in self._threshold_callbacks:
-                    try:
-                        callback(a_c, True)
-                    except Exception as e:
-                        logger.error(f"Error in {__name__}: {e}", exc_info=True)
-
-            elif prev_a_c >= self.min_a_c_threshold > a_c:
-                for callback in self._threshold_callbacks:
-                    try:
-                        callback(a_c, False)
-                    except Exception as e:
-                        logger.error(f"Error in {__name__}: {e}", exc_info=True)
+            self._notify_threshold_crossings(prev_a_c, a_c)
 
         if a_c > self.min_a_c_threshold:
             self._record_construction(a_c, s_stress, o_order)
@@ -472,27 +501,10 @@ class ActiveCognitionFormula:
         deviation = min(1.0, a_c - deviation_threshold) if a_c > deviation_threshold else 0.0
 
         # Determine construction type
-        radical_threshold = threshold_value("ac.construction_radical_threshold", 1.5)
-        significant_threshold = threshold_value("ac.construction_significant_threshold", 1.0)
-        moderate_threshold = threshold_value("ac.construction_moderate_threshold", 0.8)
-        if a_c > radical_threshold:
-            construction_type = "radical_deviation"
-        elif a_c > significant_threshold:
-            construction_type = "significant_deviation"
-        elif a_c > moderate_threshold:
-            construction_type = "moderate_adaptation"
-        else:
-            construction_type = "subtle_adjustment"
+        construction_type = self._classify_construction(a_c)
 
         # Generate outcome description
-        deviation_high = threshold_value("ac.deviation_high", 0.5)
-        deviation_mid = threshold_value("ac.deviation_mid", 0.2)
-        if deviation > deviation_high:
-            outcome = f"强烈偏离原生秩序 (S_stress={s_stress:.3f} > O_order={o_order:.3f})"
-        elif deviation > deviation_mid:
-            outcome = "中度偏离原生秩序，主动建构新意义"
-        else:
-            outcome = "轻微偏离，在秩序边缘探索"
+        outcome = self._construction_outcome(deviation, s_stress, o_order)
 
         construction = ActiveConstruction(
             construction_id=construction_id,
