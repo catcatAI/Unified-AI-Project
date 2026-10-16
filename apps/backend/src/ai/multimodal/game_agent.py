@@ -340,101 +340,100 @@ class GameAgent:
         self._executor.load_plan(new_plan)
         logger.info(f"Replan completed: {new_plan.plan_id}")
 
+    def _select_skill(self, skill_ctx: Optional[SkillContext]) -> Tuple[Optional[SkillContext], Optional[Any]]:
+        """Select skill: use L2 result if available, else L1 selector."""
+        if skill_ctx is not None:
+            return skill_ctx, None
+        skill_params = self._selector.select(
+            self._state.visual.features if self._state.visual else np.zeros(128),
+            self._state,
+        )
+        ctx = SkillContext(
+            active_skill=skill_params.skill_id,
+            params=skill_params.params,
+            priority=skill_params.priority,
+            interrupt_on=[],
+        )
+        return ctx, skill_params
+
+    def _execute_tick_step(self) -> Tuple[Optional[SkillContext], Optional[Any], PolicyOutput, Dict[str, Any]]:
+        """Execute one tick step: task execution, skill selection, policy inference, action composition."""
+        # Task execution (L2) -> SkillContext
+        skill_ctx = self._executor.tick(
+            self._current_skill_result,
+            self._state,
+            self._state.visual.features if self._state.visual else np.zeros(128),
+        )
+        # Skill selection (L1) - if L2 didn't specify skill
+        skill_ctx, skill_params = self._select_skill(skill_ctx)
+        # Policy inference (L0)
+        policy_out = self._policy.forward(
+            self._state.visual.features if self._state.visual else np.zeros(128),
+            self._proprioception_to_vector(self._state.proprioception),
+            self._state.visual.features if self._state.visual else None,
+        )
+        # Compose actions
+        actions = self._compose_actions(policy_out, skill_ctx, skill_params)
+        return skill_ctx, skill_params, policy_out, actions
+
+    def _run_tick_callbacks(self):
+        """Invoke registered tick callbacks, logging individual errors."""
+        for cb in self._tick_callbacks:
+            try:
+                cb(self._tick, self._state)
+            except Exception as e:
+                logger.error(f"Tick callback error: {e}")
+
+    async def _control_frame_rate(self, loop_start: float):
+        """Frame rate control: sleep if ahead, warn if overtime."""
+        elapsed = time.perf_counter() - loop_start
+        sleep_time = self.config.tick_interval - elapsed
+        if sleep_time > 0:
+            await asyncio.sleep(sleep_time)
+        elif elapsed > self.config.tick_interval * 2:
+            logger.warning(f"Tick overtime: {elapsed*1000:.1f}ms")
+
+    async def _run_single_tick(self, loop_start: float) -> bool:
+        """Run one tick. Returns False if loop should break."""
+        snapshot = self._luanti.get_latest_snapshot()
+        if snapshot:
+            self._update_state_from_snapshot(snapshot)
+        if self._state.visual:
+            await self._encode_visual()
+        self._strategy.update(self._state)
+        await self._maybe_replan()
+
+        skill_ctx, skill_params, policy_out, actions = self._execute_tick_step()
+        await self._send_actions(actions)
+        self._current_skill_result = self._create_skill_result(actions, policy_out)
+
+        if self._tick % 100 == 0:
+            _track_background(self._store_experience(), "store_experience")
+        self._tick += 1
+        if self.config.max_ticks > 0 and self._tick >= self.config.max_ticks:
+            return False
+        self._run_tick_callbacks()
+        await self._control_frame_rate(loop_start)
+        return True
+
     async def run(self):
         """主循環"""
         if not self._running:
             if not await self.initialize():
                 return
-
         logger.info("Starting GameAgent main loop...")
-
         try:
             while self._running:
                 loop_start = time.perf_counter()
-
-                # 1. 取得最新遊戲快照
-                snapshot = self._luanti.get_latest_snapshot()
-                if snapshot:
-                    self._update_state_from_snapshot(snapshot)
-
-                # 2. 視覺編碼 (如果有新幀)
-                if self._state.visual:
-                    await self._encode_visual()
-
-                # 3. 策略更新 (L4)
-                self._strategy.update(self._state)
-
-                # 4. 規劃 (L3) - 非阻塞
-                await self._maybe_replan()
-
-                # 5. 任務執行 (L2) -> 產出 SkillContext
-                skill_ctx = self._executor.tick(
-                    self._current_skill_result,
-                    self._state,
-                    self._state.visual.features if self._state.visual else np.zeros(128),
-                )
-
-                # 5. 技能選擇 (L1) - 如果 L2 沒指定技能
-                if skill_ctx is None:
-                    skill_params = self._selector.select(
-                        self._state.visual.features if self._state.visual else np.zeros(128),
-                        self._state,
-                    )
-                    skill_ctx = SkillContext(
-                        active_skill=skill_params.skill_id,
-                        params=skill_params.params,
-                        priority=skill_params.priority,
-                        interrupt_on=[],
-                    )
-
-                # 6. Policy 推理 (L0)
-                policy_out = self._policy.forward(
-                    self._state.visual.features if self._state.visual else np.zeros(128),
-                    self._proprioception_to_vector(self._state.proprioception),
-                    self._state.visual.features if self._state.visual else None,  # 簡化
-                )
-
-                # 7. 合成動作
-                actions = self._compose_actions(
-                    policy_out, skill_ctx, skill_params if "skill_params" in locals() else None
-                )
-
-                # 8. 下發動作到 Luanti
-                await self._send_actions(actions)
-
-                # 9. 記錄技能結果 (下一幀使用)
-                self._current_skill_result = self._create_skill_result(actions, policy_out)
-
-                # 10. 記憶存儲 (非阻塞)
-                if self._tick % 100 == 0:
-                    _track_background(self._store_experience(), "store_experience")
-
-                # 11. Tick 計數與限制
-                self._tick += 1
-                if self.config.max_ticks > 0 and self._tick >= self.config.max_ticks:
+                if not await self._run_single_tick(loop_start):
                     break
-
-                # 12. 回調
-                for cb in self._tick_callbacks:
-                    try:
-                        cb(self._tick, self._state)
-                    except Exception as e:
-                        logger.error(f"Tick callback error: {e}")
-
-                # 幀率控制
-                elapsed = time.perf_counter() - loop_start
-                sleep_time = self.config.tick_interval - elapsed
-                if sleep_time > 0:
-                    await asyncio.sleep(sleep_time)
-                elif elapsed > self.config.tick_interval * 2:
-                    logger.warning(f"Tick overtime: {elapsed*1000:.1f}ms")
-
         except asyncio.CancelledError:
             logger.info("GameAgent cancelled")
         except Exception as e:
             logger.error(f"GameAgent error: {e}", exc_info=True)
         finally:
             await self.shutdown()
+
 
     def _update_state_from_snapshot(self, snapshot: GameSnapshot):
         """從 Luanti 快照更新狀態"""
@@ -521,7 +520,7 @@ class GameAgent:
                 self._executor.load_plan(plan)
 
     def _compose_actions(
-        self, policy_out: PolicyOutput, skill_ctx: SkillContext, skill_params: Optional[Any] = None
+        self, policy_out: PolicyOutput, skill_ctx: Optional[SkillContext], skill_params: Optional[Any] = None
     ) -> Dict[str, Any]:
         """合成最終動作"""
         actions = {}
