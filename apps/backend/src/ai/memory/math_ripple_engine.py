@@ -308,6 +308,55 @@ class RippleCascade:
     """
 
     @staticmethod
+    def _make_cascade_effect(
+        ripple: RippleEffect, target_depth: RippleDepth, step: int, cascade_factor: float
+    ) -> RippleEffect:
+        """依源漣漪建立第 step 級級聯效果（純建構無分支）。"""
+        return RippleEffect(
+            operator=ripple.operator,
+            operand_a=ripple.operand_a,
+            operand_b=ripple.operand_b,
+            result=ripple.result,
+            operand_a_magnitude=ripple.operand_a_magnitude,
+            result_magnitude=ripple.result_magnitude,
+            cascade_step=step,
+            cascade_decay_factor=cascade_factor,
+            ripple_depth=target_depth,
+            algorithm_depth=ripple.algorithm_depth,
+            depth_level=target_depth.value,
+            depth_multiplier=ripple.depth_multiplier,
+        )
+
+    @staticmethod
+    def _apply_axis_effects(
+        effect: RippleEffect, ripple: RippleEffect, axis: str, step: int, cascade_factor: float
+    ) -> None:
+        """依目標軸寫入對應效果值與描述。"""
+        if axis == "alpha":
+            effect.alpha_arousal = ripple.alpha_arousal * cascade_factor
+            effect.description = f"[CASCADE-{step}] α軸漣漪（衰減×{cascade_factor:.2f}）"
+        elif axis == "beta":
+            effect.beta_focus = ripple.beta_focus * cascade_factor
+            effect.description = f"[CASCADE-{step}] β軸漣漪（衰減×{cascade_factor:.2f}）"
+        elif axis == "gamma":
+            effect.gamma_excitement = ripple.gamma_excitement * cascade_factor
+            effect.description = f"[CASCADE-{step}] γ軸漣漪（衰減×{cascade_factor:.2f}）"
+        elif axis == "delta":
+            effect.delta_engagement = ripple.delta_engagement * cascade_factor
+            effect.description = f"[CASCADE-{step}] δ軸漣漪（衰減×{cascade_factor:.2f}）"
+        elif axis == "theta":
+            effect.epsilon_delta = ripple.epsilon_delta * cascade_factor * 0.5
+            effect.description = f"[CASCADE-{step}] θ軸漣漪（衰減×{cascade_factor:.2f}）"
+
+    @staticmethod
+    def _apply_to_matrix(matrix: Optional[Any], effect: RippleEffect, axis: str) -> None:
+        """矩陣具備該軸且非空時，將漣漪套用到軸狀態。"""
+        if matrix and hasattr(matrix, axis):
+            mat = getattr(matrix, axis, None)
+            if mat:
+                RippleCascade._apply_ripple_to_axis(mat, effect, axis)
+
+    @staticmethod
     def cascade(
         ripple: RippleEffect,
         matrix: Optional[Any] = None,
@@ -336,43 +385,12 @@ class RippleCascade:
                 continue
 
             cascade_factor = decay**step
-            effect = RippleEffect(
-                operator=ripple.operator,
-                operand_a=ripple.operand_a,
-                operand_b=ripple.operand_b,
-                result=ripple.result,
-                operand_a_magnitude=ripple.operand_a_magnitude,
-                result_magnitude=ripple.result_magnitude,
-                cascade_step=step,
-                cascade_decay_factor=cascade_factor,
-                ripple_depth=target_depth,
-                algorithm_depth=ripple.algorithm_depth,
-                depth_level=target_depth.value,
-                depth_multiplier=ripple.depth_multiplier,
+            effect = RippleCascade._make_cascade_effect(
+                ripple, target_depth, step, cascade_factor
             )
-
-            if axis == "alpha":
-                effect.alpha_arousal = ripple.alpha_arousal * cascade_factor
-                effect.description = f"[CASCADE-{step}] α軸漣漪（衰減×{cascade_factor:.2f}）"
-            elif axis == "beta":
-                effect.beta_focus = ripple.beta_focus * cascade_factor
-                effect.description = f"[CASCADE-{step}] β軸漣漪（衰減×{cascade_factor:.2f}）"
-            elif axis == "gamma":
-                effect.gamma_excitement = ripple.gamma_excitement * cascade_factor
-                effect.description = f"[CASCADE-{step}] γ軸漣漪（衰減×{cascade_factor:.2f}）"
-            elif axis == "delta":
-                effect.delta_engagement = ripple.delta_engagement * cascade_factor
-                effect.description = f"[CASCADE-{step}] δ軸漣漪（衰減×{cascade_factor:.2f}）"
-            elif axis == "theta":
-                effect.epsilon_delta = ripple.epsilon_delta * cascade_factor * 0.5
-                effect.description = f"[CASCADE-{step}] θ軸漣漪（衰減×{cascade_factor:.2f}）"
-
+            RippleCascade._apply_axis_effects(effect, ripple, axis, step, cascade_factor)
             all_ripples.append(effect)
-
-            if matrix and hasattr(matrix, axis):
-                mat = getattr(matrix, axis, None)
-                if mat:
-                    RippleCascade._apply_ripple_to_axis(mat, effect, axis)
+            RippleCascade._apply_to_matrix(matrix, effect, axis)
 
         if target_depth.feedback_enabled and (
             ripple.overload_triggered or ripple.fear_triggered or ripple.confusion_triggered
@@ -656,6 +674,36 @@ class MathRippleEngine:
                 config.algorithm_depth = force_algo
             self.set_depth(config.algorithm_depth, config.depth)
 
+    @staticmethod
+    def _find_highest_precedence(chunk: List[str]) -> Optional[int]:
+        """回傳最高優先級運算子在 chunk 的索引；無則 None。
+
+        優先順序：乘除指數 → 加減；僅掃奇數位（運算子位）。
+        """
+        precedence = [("*", "/", "^", "**"), ("+", "-")]
+        for prec_ops in precedence:
+            for idx in range(1, len(chunk), 2):
+                if chunk[idx] in prec_ops:
+                    return idx
+        return None
+
+    def _record_chain_step(
+        self, ripple: RippleEffect, op: str, ripples: List[RippleEffect]
+    ) -> None:
+        """補深度欄位、收錄漣漪，累加器存在時派送三類觸發。"""
+        ripple.ripple_depth = self.ripple_depth
+        ripple.algorithm_depth = self.algorithm_depth
+        ripple.depth_level = self.ripple_depth.value
+        ripples.append(ripple)
+        if self.accumulator:
+            self.accumulator.add(ripple)
+            if ripple.overload_triggered:
+                self._apply_cognitive_overload()
+            elif ripple.fear_triggered:
+                self._apply_division_fear()
+            elif ripple.confusion_triggered:
+                self._apply_order_confusion(op)
+
     def _process_operator_chain(
         self, tokens: List[str], i: int, current: float, ripples: List[RippleEffect]
     ) -> Tuple[int, float]:
@@ -667,36 +715,17 @@ class MathRippleEngine:
         Returns (len(tokens) - 1, result) to signal the main compute loop
         that all tokens have been consumed.
         """
-        PRECEDENCE = [("*", "/", "^", "**"), ("+", "-")]
         # Mutable chunk: [a, op, b, op, c, ...]
         chunk = tokens[i:]
         while len(chunk) >= 3:
-            found = None
-            for prec_ops in PRECEDENCE:
-                for idx in range(1, len(chunk), 2):
-                    if chunk[idx] in prec_ops:
-                        found = idx
-                        break
-                if found is not None:
-                    break
+            found = self._find_highest_precedence(chunk)
             if found is None:
                 break
             left = float(chunk[found - 1])
             op = chunk[found]
             right = float(chunk[found + 1])
             result, ripple = self._compute_single(left, op, right)
-            ripple.ripple_depth = self.ripple_depth
-            ripple.algorithm_depth = self.algorithm_depth
-            ripple.depth_level = self.ripple_depth.value
-            ripples.append(ripple)
-            if self.accumulator:
-                self.accumulator.add(ripple)
-                if ripple.overload_triggered:
-                    self._apply_cognitive_overload()
-                elif ripple.fear_triggered:
-                    self._apply_division_fear()
-                elif ripple.confusion_triggered:
-                    self._apply_order_confusion(op)
+            self._record_chain_step(ripple, op, ripples)
             chunk[found - 1 : found + 2] = [str(result)]
         result = float(chunk[0]) if chunk else current
         return len(tokens) - 1, result
@@ -854,6 +883,112 @@ class MathRippleEngine:
 
         return tokens
 
+    def _ripple_add(self, a: float, b: float, ripple: RippleEffect) -> float:
+        """加法漣漪：ε 與 |b| 成正比、β 封頂、δ 固定增益。"""
+        result = a + b
+        ripple.epsilon_delta = (
+            abs(b) / (abs(a) + self.GAIN_ADD_EPSILON_DENOM) * self.GAIN_ADD_EPSILON_RATIO
+        )
+        ripple.beta_focus = min(self.GAIN_ADD_BETA_CAP, abs(b) * self.GAIN_ADD_BETA_SCALE)
+        ripple.delta_engagement = self.GAIN_ADD_DELTA
+        ripple.description = f"{a} + {b} = {result}（簡單位移）"
+        return result
+
+    def _ripple_sub(self, a: float, b: float, ripple: RippleEffect) -> float:
+        """減法漣漪：非交換、b>a 較小 γ、a<b 觸發困惑。"""
+        result = a - b
+        ripple.epsilon_delta = self.GAIN_SUB_EPSILON
+        ripple.gamma_excitement = (
+            self.GAIN_SUB_GAMMA_SMALLER if b > a else self.GAIN_SUB_GAMMA_LARGER
+        )
+        ripple.beta_focus = self.GAIN_SUB_BETA
+        ripple.delta_engagement = self.GAIN_SUB_DELTA
+        if a < b:
+            ripple.confusion_triggered = True
+        ripple.description = f"{a} - {b} = {result}（減法非交換）"
+        return result
+
+    def _ripple_mul(self, a: float, b: float, ripple: RippleEffect) -> float:
+        """乘法漣漪：四維隨 log1p(|ab|) 放大；巨大值觸發過載。"""
+        result = a * b
+        mag = abs(a * b)
+        ripple.epsilon_delta = math.log1p(mag) * self.GAIN_MUL_EPSILON_SLOPE
+
+        ripple.alpha_arousal = min(
+            self.GAIN_MUL_ALPHA_CAP,
+            self.GAIN_MUL_ALPHA_BASE + math.log1p(mag) * self.GAIN_MUL_ALPHA_SLOPE,
+        )
+        ripple.beta_focus = min(
+            self.GAIN_MUL_BETA_CAP,
+            self.GAIN_MUL_BETA_BASE + math.log1p(mag) * self.GAIN_MUL_BETA_SLOPE,
+        )
+        ripple.gamma_excitement = min(
+            self.GAIN_MUL_GAMMA_CAP,
+            self.GAIN_MUL_GAMMA_BASE + math.log1p(mag) * self.GAIN_MUL_GAMMA_SLOPE,
+        )
+        ripple.delta_engagement = min(
+            self.GAIN_MUL_DELTA_CAP,
+            self.GAIN_MUL_DELTA_BASE + math.log1p(mag) * self.GAIN_MUL_DELTA_SLOPE,
+        )
+
+        if mag > self.OVERLOAD_THRESHOLD_MAGNITUDE:
+            ripple.overload_triggered = True
+            ripple.description = f"{a} × {b} = {result}（數字巨大！認知過載）"
+        else:
+            ripple.description = f"{a} × {b} = {result}（乘法放大）"
+        return result
+
+    def _ripple_div(self, a: float, b: float, ripple: RippleEffect) -> float:
+        """除法漣漪：近零除數恐：近零除數恐懼；結果巨大/趨零分級描述。"""
+        if abs(b) < self.FEAR_DIVISOR_NEAR_ZERO:
+            result = float("inf") * (-1 if a * b < 0 else 1)
+            ripple.epsilon_delta = self.GAIN_DIV_FEAR_EPSILON
+            ripple.gamma_excitement = self.GAIN_DIV_FEAR_GAMMA
+            ripple.fear_triggered = True
+            ripple.description = f"{a} ÷ {b}（近零除數！恐懼）"
+            return result
+        result = a / b
+        ripple.epsilon_delta = (
+            self.GAIN_DIV_EPSILON_BASE + abs(a / b) * self.GAIN_DIV_EPSILON_SCALE
+        )
+        ripple.alpha_arousal = self.GAIN_DIV_ALPHA
+        ripple.beta_focus = self.GAIN_DIV_BETA
+        ripple.gamma_excitement = self.GAIN_DIV_GAMMA
+        if abs(result) > self.GAIN_DIV_OVERLOAD_RESULT:
+            ripple.overload_triggered = True
+            ripple.description = f"{a} ÷ {b} = {result:.1f}（結果巨大）"
+        elif abs(result) < self.GAIN_DIV_NEARZERO_RESULT:
+            ripple.description = f"{a} ÷ {b} = {result:.4f}（趨近零）"
+        else:
+            ripple.description = f"{a} ÷ {b} = {result}（除法分割）"
+        return result
+
+    def _ripple_pow(self, a: float, b: float, ripple: RippleEffect) -> float:
+        """冪運算漣漪：三維隨 log1p(|result|) 放大；巨大值過載。"""
+        result = float(a**b)  # mypy: float**float → Any（可能 complex），收斂回 float
+        mag = abs(result)
+        ripple.epsilon_delta = math.log1p(mag) * self.GAIN_POW_EPSILON_SLOPE
+
+        ripple.alpha_arousal = min(
+            self.GAIN_POW_ALPHA_CAP,
+            self.GAIN_POW_ALPHA_BASE + math.log1p(mag) * self.GAIN_POW_ALPHA_SLOPE,
+        )
+        ripple.beta_focus = min(
+            self.GAIN_POW_BETA_CAP,
+            self.GAIN_POW_BETA_BASE + math.log1p(mag) * self.GAIN_POW_BETA_SLOPE,
+        )
+        ripple.gamma_excitement = min(
+            self.GAIN_POW_GAMMA_CAP,
+            self.GAIN_POW_GAMMA_BASE + math.log1p(mag) * self.GAIN_POW_GAMMA_SLOPE,
+        )
+
+        if mag > self.OVERLOAD_THRESHOLD_MAGNITUDE:
+            ripple.overload_triggered = True
+            ripple.description = f"{a}^{b} = {result:.1f}（指數爆炸！）"
+        else:
+            ripple.description = f"{a}^{b} = {result}（指數放大）"
+        return result
+
     def _compute_single(self, a: float, op: str, b: float) -> Tuple[float, RippleEffect]:
         """計算單次運算並產生漣漪"""
         op_enum = MathOp.ADD
@@ -868,105 +1003,19 @@ class MathRippleEngine:
 
         if op == "+":
             op_enum = MathOp.ADD
-            result = a + b
-            ripple.epsilon_delta = (
-                abs(b) / (abs(a) + self.GAIN_ADD_EPSILON_DENOM) * self.GAIN_ADD_EPSILON_RATIO
-            )
-            ripple.beta_focus = min(self.GAIN_ADD_BETA_CAP, abs(b) * self.GAIN_ADD_BETA_SCALE)
-            ripple.delta_engagement = self.GAIN_ADD_DELTA
-            ripple.description = f"{a} + {b} = {result}（簡單位移）"
-
+            result = self._ripple_add(a, b, ripple)
         elif op == "-":
             op_enum = MathOp.SUB
-            result = a - b
-            ripple.epsilon_delta = self.GAIN_SUB_EPSILON
-            ripple.gamma_excitement = (
-                self.GAIN_SUB_GAMMA_SMALLER if b > a else self.GAIN_SUB_GAMMA_LARGER
-            )
-            ripple.beta_focus = self.GAIN_SUB_BETA
-            ripple.delta_engagement = self.GAIN_SUB_DELTA
-            if a < b:
-                ripple.confusion_triggered = True
-            ripple.description = f"{a} - {b} = {result}（減法非交換）"
-
+            result = self._ripple_sub(a, b, ripple)
         elif op == "*":
             op_enum = MathOp.MUL
-            result = a * b
-            mag = abs(a * b)
-            ripple.epsilon_delta = math.log1p(mag) * self.GAIN_MUL_EPSILON_SLOPE
-
-            ripple.alpha_arousal = min(
-                self.GAIN_MUL_ALPHA_CAP,
-                self.GAIN_MUL_ALPHA_BASE + math.log1p(mag) * self.GAIN_MUL_ALPHA_SLOPE,
-            )
-            ripple.beta_focus = min(
-                self.GAIN_MUL_BETA_CAP,
-                self.GAIN_MUL_BETA_BASE + math.log1p(mag) * self.GAIN_MUL_BETA_SLOPE,
-            )
-            ripple.gamma_excitement = min(
-                self.GAIN_MUL_GAMMA_CAP,
-                self.GAIN_MUL_GAMMA_BASE + math.log1p(mag) * self.GAIN_MUL_GAMMA_SLOPE,
-            )
-            ripple.delta_engagement = min(
-                self.GAIN_MUL_DELTA_CAP,
-                self.GAIN_MUL_DELTA_BASE + math.log1p(mag) * self.GAIN_MUL_DELTA_SLOPE,
-            )
-
-            if mag > self.OVERLOAD_THRESHOLD_MAGNITUDE:
-                ripple.overload_triggered = True
-                ripple.description = f"{a} × {b} = {result}（數字巨大！認知過載）"
-            else:
-                ripple.description = f"{a} × {b} = {result}（乘法放大）"
-
-        elif op == "/" or op == "//" or op == "÷":
+            result = self._ripple_mul(a, b, ripple)
+        elif op in ("/", "//", "÷"):
             op_enum = MathOp.DIV
-            if abs(b) < self.FEAR_DIVISOR_NEAR_ZERO:
-                result = float("inf") * (-1 if a * b < 0 else 1)
-                ripple.epsilon_delta = self.GAIN_DIV_FEAR_EPSILON
-                ripple.gamma_excitement = self.GAIN_DIV_FEAR_GAMMA
-                ripple.fear_triggered = True
-                ripple.description = f"{a} ÷ {b}（近零除數！恐懼）"
-            else:
-                result = a / b
-                ripple.epsilon_delta = (
-                    self.GAIN_DIV_EPSILON_BASE + abs(a / b) * self.GAIN_DIV_EPSILON_SCALE
-                )
-                ripple.alpha_arousal = self.GAIN_DIV_ALPHA
-                ripple.beta_focus = self.GAIN_DIV_BETA
-                ripple.gamma_excitement = self.GAIN_DIV_GAMMA
-                if abs(result) > self.GAIN_DIV_OVERLOAD_RESULT:
-                    ripple.overload_triggered = True
-                    ripple.description = f"{a} ÷ {b} = {result:.1f}（結果巨大）"
-                elif abs(result) < self.GAIN_DIV_NEARZERO_RESULT:
-                    ripple.description = f"{a} ÷ {b} = {result:.4f}（趨近零）"
-                else:
-                    ripple.description = f"{a} ÷ {b} = {result}（除法分割）"
-
+            result = self._ripple_div(a, b, ripple)
         elif op in ("^", "**"):
             op_enum = MathOp.POW
-            result = a**b
-            mag = abs(result)
-            ripple.epsilon_delta = math.log1p(mag) * self.GAIN_POW_EPSILON_SLOPE
-
-            ripple.alpha_arousal = min(
-                self.GAIN_POW_ALPHA_CAP,
-                self.GAIN_POW_ALPHA_BASE + math.log1p(mag) * self.GAIN_POW_ALPHA_SLOPE,
-            )
-            ripple.beta_focus = min(
-                self.GAIN_POW_BETA_CAP,
-                self.GAIN_POW_BETA_BASE + math.log1p(mag) * self.GAIN_POW_BETA_SLOPE,
-            )
-            ripple.gamma_excitement = min(
-                self.GAIN_POW_GAMMA_CAP,
-                self.GAIN_POW_GAMMA_BASE + math.log1p(mag) * self.GAIN_POW_GAMMA_SLOPE,
-            )
-
-            if mag > self.OVERLOAD_THRESHOLD_MAGNITUDE:
-                ripple.overload_triggered = True
-                ripple.description = f"{a}^{b} = {result:.1f}（指數爆炸！）"
-            else:
-                ripple.description = f"{a}^{b} = {result}（指數放大）"
-
+            result = self._ripple_pow(a, b, ripple)
         else:
             result = 0.0
             ripple.description = "未知運算"
