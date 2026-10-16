@@ -7,7 +7,7 @@ DrawingInstructions for PrimitiveRenderer to render.
 
 import json
 import logging
-from typing import List
+from typing import Dict, List, Tuple
 
 import numpy as np
 
@@ -151,6 +151,116 @@ class SequenceGenerator:
 
         return primitives
 
+    def _forward_teacher_forcing(
+        self, clip_embedding: np.ndarray, target_primitives: List[np.ndarray], steps: int
+    ) -> Tuple[List[np.ndarray], List[np.ndarray]]:
+        """Teacher-forced forward pass. Returns (predicted, hidden_states[0..T])."""
+        h = np.tanh(self._W_ih @ clip_embedding + self._b_ih)
+        predicted: List[np.ndarray] = []
+        hidden_states = [h.copy()]  # [h_0, h_1, ..., h_T]
+
+        for step in range(steps):
+            prim_emb = self._W_ho @ h + self._b_ho
+            norm = np.linalg.norm(prim_emb)
+            if norm > 0:
+                prim_emb = prim_emb / norm
+            predicted.append(prim_emb)
+
+            target = target_primitives[step]
+            h = np.tanh(self._W_hh @ h + self._W_ph @ target + self._b_hh)
+            hidden_states.append(h.copy())
+        return predicted, hidden_states
+
+    def _init_grads(self) -> Dict[str, np.ndarray]:
+        """Gradient buffers for all layers (accumulate, then update)."""
+        return {
+            "W_ih": np.zeros_like(self._W_ih),
+            "b_ih": np.zeros_like(self._b_ih),
+            "W_ph": np.zeros_like(self._W_ph),
+            "b_ph": np.zeros_like(self._b_ph),
+            "W_hh": np.zeros_like(self._W_hh),
+            "b_hh": np.zeros_like(self._b_hh),
+            "W_ho": np.zeros_like(self._W_ho),
+            "b_ho": np.zeros_like(self._b_ho),
+            "W_stop": np.zeros_like(self._W_stop),
+            "b_stop": np.zeros_like(self._b_stop),
+        }
+
+    @staticmethod
+    def _accumulate_output_grads(
+        d_output: np.ndarray, hidden_states: List[np.ndarray], grads: Dict[str, np.ndarray]
+    ) -> None:
+        """1. Output layer: W_ho @ h_t + b_ho (unscaled MSE: dL/dy = y_pred - y_target)."""
+        for t in range(d_output.shape[0]):
+            grads["W_ho"] += np.outer(d_output[t], hidden_states[t])
+            grads["b_ho"] += d_output[t]
+
+    def _accumulate_bptt_grads(
+        self,
+        d_output: np.ndarray,
+        hidden_states: List[np.ndarray],
+        target_primitives: List[np.ndarray],
+        clip_embedding: np.ndarray,
+        grads: Dict[str, np.ndarray],
+    ) -> None:
+        """2. BPTT through hidden states (backwards through time)."""
+        steps = d_output.shape[0]
+        d_h_future = np.zeros(self._hidden_dim, dtype=np.float32)
+
+        for t in range(steps - 1, -1, -1):
+            d_h = self._W_ho.T @ d_output[t]
+            if t < steps - 1:
+                d_h += d_h_future
+
+            h_t = hidden_states[t]
+            d_pre = d_h * (1.0 - h_t**2)
+
+            if t == 0:
+                grads["W_ih"] += np.outer(d_pre, clip_embedding)
+                grads["b_ih"] += d_pre
+            else:
+                grads["W_hh"] += np.outer(d_pre, hidden_states[t - 1])
+                grads["W_ph"] += np.outer(d_pre, target_primitives[t - 1])
+                grads["b_hh"] += d_pre
+
+            d_h_future = (
+                self._W_hh.T @ d_pre if t > 0 else np.zeros(self._hidden_dim, dtype=np.float32)
+            )
+
+    def _accumulate_stop_grads(
+        self, hidden_states: List[np.ndarray], steps: int, grads: Dict[str, np.ndarray]
+    ) -> None:
+        """3. Stop token gradient (sigmoid BCE), target 1 only at the final step."""
+        for t in range(steps):
+            stop_target = 1.0 if t == steps - 1 else 0.0
+            h_t = hidden_states[t]
+            stop_logit = float(np.dot(self._W_stop, h_t) + self._b_stop[0])
+            stop_pred = 1.0 / (1.0 + np.exp(-np.clip(stop_logit, -10, 10)))
+            stop_error = stop_pred - stop_target
+            grads["W_stop"] += stop_error * h_t
+            grads["b_stop"][0] += stop_error
+
+    @staticmethod
+    def _clip_gradients(grads: Dict[str, np.ndarray], max_norm: float = 10.0) -> None:
+        """4. Gradient clipping (per-array norm-based)."""
+        for g in grads.values():
+            norm = np.sqrt(np.sum(g**2))
+            if norm > max_norm:
+                g *= max_norm / norm
+
+    def _apply_updates(self, lr: float, grads: Dict[str, np.ndarray]) -> None:
+        """5. Apply all updates at once."""
+        self._W_ih -= lr * grads["W_ih"]
+        self._b_ih -= lr * grads["b_ih"]
+        self._W_ph -= lr * grads["W_ph"]
+        self._b_ph -= lr * grads["b_ph"]
+        self._W_hh -= lr * grads["W_hh"]
+        self._b_hh -= lr * grads["b_hh"]
+        self._W_ho -= lr * grads["W_ho"]
+        self._b_ho -= lr * grads["b_ho"]
+        self._W_stop -= lr * grads["W_stop"]
+        self._b_stop -= lr * grads["b_stop"]
+
     def train_step(
         self, clip_embedding: np.ndarray, target_primitives: List[np.ndarray], lr: float = 0.001
     ) -> float:
@@ -178,20 +288,9 @@ class SequenceGenerator:
         T = min(len(target_primitives), self._max_steps)
 
         # Forward pass with teacher forcing
-        h = np.tanh(self._W_ih @ clip_embedding + self._b_ih)
-        predicted = []
-        hidden_states = [h.copy()]  # [h_0, h_1, ..., h_T]
-
-        for step in range(T):
-            prim_emb = self._W_ho @ h + self._b_ho
-            norm = np.linalg.norm(prim_emb)
-            if norm > 0:
-                prim_emb = prim_emb / norm
-            predicted.append(prim_emb)
-
-            target = target_primitives[step]
-            h = np.tanh(self._W_hh @ h + self._W_ph @ target + self._b_hh)
-            hidden_states.append(h.copy())
+        predicted, hidden_states = self._forward_teacher_forcing(
+            clip_embedding, target_primitives, T
+        )
 
         # Loss
         pred_matrix = np.stack(predicted)
@@ -201,78 +300,14 @@ class SequenceGenerator:
         # Unscaled MSE gradient: dL/dy = (y_pred - y_target)
         d_output = pred_matrix - targ_matrix  # (T, primitive_dim)
 
-        # Gradient buffers (accumulate, then update)
-        d_W_ih = np.zeros_like(self._W_ih)
-        d_b_ih = np.zeros_like(self._b_ih)
-        d_W_ph = np.zeros_like(self._W_ph)
-        d_b_ph = np.zeros_like(self._b_ph)
-        d_W_hh = np.zeros_like(self._W_hh)
-        d_b_hh = np.zeros_like(self._b_hh)
-        d_W_ho = np.zeros_like(self._W_ho)
-        d_b_ho = np.zeros_like(self._b_ho)
-        d_W_stop = np.zeros_like(self._W_stop)
-        d_b_stop = np.zeros_like(self._b_stop)
-
-        # 1. Output layer: W_ho @ h_t + b_ho
-        for t in range(T):
-            d_W_ho += np.outer(d_output[t], hidden_states[t])
-            d_b_ho += d_output[t]
-
-        # 2. BPTT through hidden states (backwards through time)
-        d_h_future = np.zeros(self._hidden_dim, dtype=np.float32)
-
-        for t in range(T - 1, -1, -1):
-            d_h = self._W_ho.T @ d_output[t]
-            if t < T - 1:
-                d_h += d_h_future
-
-            h_t = hidden_states[t]
-            d_pre = d_h * (1.0 - h_t**2)
-
-            if t == 0:
-                d_W_ih += np.outer(d_pre, clip_embedding)
-                d_b_ih += d_pre
-            else:
-                d_W_hh += np.outer(d_pre, hidden_states[t - 1])
-                d_W_ph += np.outer(d_pre, target_primitives[t - 1])
-                d_b_hh += d_pre
-
-            d_h_future = (
-                self._W_hh.T @ d_pre if t > 0 else np.zeros(self._hidden_dim, dtype=np.float32)
-            )
-
-        # 3. Stop token gradient (sigmoid BCE)
-        for t in range(T):
-            stop_target = 1.0 if t == T - 1 else 0.0
-            h_t = hidden_states[t]
-            stop_logit = float(np.dot(self._W_stop, h_t) + self._b_stop[0])
-            stop_pred = 1.0 / (1.0 + np.exp(-np.clip(stop_logit, -10, 10)))
-            stop_error = stop_pred - stop_target
-            d_W_stop += stop_error * h_t
-            d_b_stop[0] += stop_error
-
-        # 4. Gradient clipping (norm-based)
-        max_norm = 10.0
-        for g in [d_W_ih, d_W_ph, d_W_hh, d_W_ho]:
-            norm = np.sqrt(np.sum(g**2))
-            if norm > max_norm:
-                g *= max_norm / norm
-        for g in [d_b_ih, d_b_ph, d_b_hh, d_b_ho, d_W_stop, d_b_stop]:
-            norm = np.sqrt(np.sum(g**2))
-            if norm > max_norm:
-                g *= max_norm / norm
-
-        # 5. Apply all updates at once
-        self._W_ih -= lr * d_W_ih
-        self._b_ih -= lr * d_b_ih
-        self._W_ph -= lr * d_W_ph
-        self._b_ph -= lr * d_b_ph
-        self._W_hh -= lr * d_W_hh
-        self._b_hh -= lr * d_b_hh
-        self._W_ho -= lr * d_W_ho
-        self._b_ho -= lr * d_b_ho
-        self._W_stop -= lr * d_W_stop
-        self._b_stop -= lr * d_b_stop
+        grads = self._init_grads()
+        self._accumulate_output_grads(d_output, hidden_states, grads)
+        self._accumulate_bptt_grads(
+            d_output, hidden_states, target_primitives, clip_embedding, grads
+        )
+        self._accumulate_stop_grads(hidden_states, T, grads)
+        self._clip_gradients(grads)
+        self._apply_updates(lr, grads)
 
         self._trained = True
         return loss
