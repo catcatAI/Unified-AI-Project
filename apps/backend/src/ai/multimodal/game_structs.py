@@ -248,6 +248,63 @@ GAME_SKILLS: Dict[SkillID, SkillSpec] = {
 }
 
 
+def _check_has_tool(cond: str, inv: Dict) -> Optional[str]:
+    """has_tool: requirement — returns failure message or None."""
+    tool = cond.split(":")[1]
+    if not any(tool in k for k in inv.keys()):
+        return f"缺少工具: {tool}"
+    return None
+
+
+def _check_has_block(cond: str, inv: Dict) -> Optional[str]:
+    """has_block: requirement — returns failure message or None."""
+    block = cond.split(":")[1]
+    if block != "*" and block not in inv:
+        return f"缺少方塊: {block}"
+    return None
+
+
+def _check_has_food(inv: Dict) -> Optional[str]:
+    """has_food requirement — returns failure message or None."""
+    food_items = ["apple", "bread", "meat", "cooked", "carrot", "potato"]
+    if not any(f in inv for f in food_items):
+        return "無食物"
+    return None
+
+
+def _check_hunger_low(state: GameState) -> Optional[str]:
+    """hunger_low requirement — returns failure message or None."""
+    max_hunger = getattr(state.proprioception, "max_hunger", 20)
+    if state.proprioception and state.proprioception.hunger > max_hunger * 0.3:
+        return "飢餓度未低"
+    return None
+
+
+# Conditions evaluated at execution time or by perception — pass silently here.
+_DEFERRED_CONDS = {
+    "recipe_unlocked",  # 簡化：假設基本配方都解鎖
+    "ingredients_in_inv",  # 具體檢查在執行時做
+    "hostile_in_range",  # 由視覺/實體感知判斷
+    "has_materials",
+    "space_available",
+}
+
+
+def _check_one_precondition(cond: str, state: GameState, inv: Dict) -> Optional[str]:
+    """Check one precondition; returns failure message or None (pass/deferred)."""
+    if cond.startswith("has_tool:"):
+        return _check_has_tool(cond, inv)
+    if cond.startswith("has_block:"):
+        return _check_has_block(cond, inv)
+    if cond == "has_food":
+        return _check_has_food(inv)
+    if cond == "hunger_low":
+        return _check_hunger_low(state)
+    if cond in _DEFERRED_CONDS:
+        return None
+    return None
+
+
 def check_preconditions(skill_id: SkillID, state: GameState) -> Tuple[bool, List[str]]:
     """檢查技能前置條件"""
     spec = GAME_SKILLS[skill_id]
@@ -255,35 +312,9 @@ def check_preconditions(skill_id: SkillID, state: GameState) -> Tuple[bool, List
     inv = (state.proprioception.inventory if state.proprioception else {}) or {}
 
     for cond in spec.preconditions:
-        if cond.startswith("has_tool:"):
-            tool = cond.split(":")[1]
-            if not any(tool in k for k in inv.keys()):
-                failed.append(f"缺少工具: {tool}")
-        elif cond.startswith("has_block:"):
-            block = cond.split(":")[1]
-            if block != "*" and block not in inv:
-                failed.append(f"缺少方塊: {block}")
-        elif cond == "has_food":
-            food_items = ["apple", "bread", "meat", "cooked", "carrot", "potato"]
-            if not any(f in inv for f in food_items):
-                failed.append("無食物")
-        elif cond == "hunger_low":
-            max_hunger = getattr(state.proprioception, "max_hunger", 20)
-            if state.proprioception and state.proprioception.hunger > max_hunger * 0.3:
-                failed.append("飢餓度未低")
-        elif cond == "recipe_unlocked":
-            # 簡化：假設基本配方都解鎖
-            pass
-        elif cond == "ingredients_in_inv":
-            # 具體檢查在執行時做
-            pass
-        elif cond == "hostile_in_range":
-            # 由視覺/實體感知判斷
-            pass
-        elif cond == "has_materials":
-            pass
-        elif cond == "space_available":
-            pass
+        failure = _check_one_precondition(cond, state, inv)
+        if failure:
+            failed.append(failure)
 
     return len(failed) == 0, failed
 
