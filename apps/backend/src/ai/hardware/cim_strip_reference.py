@@ -1629,6 +1629,97 @@ class DotProductVector:
         )
 
 
+def _deck_prelude(
+    library: Path,
+    device: str,
+    vectors: Sequence[DotProductVector],
+    array_vds_v: float,
+    input_vgs_v: float,
+) -> List[str]:
+    """Deck header: library include, device token, case count."""
+    return [
+        "* angela single-die CIM strip field functional verification",
+        f"* device library: {library}",
+        f"* device token: {device}",
+        f"* {len(vectors)} isolated matrix-vector cases",
+        f"* array rail {array_vds_v}V, input swing {input_vgs_v}V",
+        ".param mc_mm_switch=0 mc_pr_switch=0",
+        f".include {library.as_posix()}",
+    ]
+
+
+def _append_isolation_lines(
+    lines: List[str],
+    vectors: Sequence[DotProductVector],
+    array_vds_v: float,
+    input_vgs_v: float,
+    cell_w_um: float,
+    cell_l_um: float,
+    device: str,
+) -> None:
+    """Per case: spine supplies, input sources and calibration transistor."""
+    # Each case owns its input lines, spines and calibration cell. Sharing them
+    # would be fatal rather than merely faster: every case's cells would sit on
+    # the same node, their currents would sum, and each "measurement" would
+    # reflect all the other vectors at once. Isolation is what makes the
+    # decoded ratio mean anything.
+    for case_index, vector in enumerate(vectors):
+        for strip in range(vector.strip_count):
+            lines.append(f"vvdd_{case_index}_{strip} spine{case_index}_{strip} 0 {array_vds_v}")
+        lines.append(f"vvdd_{case_index}_cal spine{case_index}_cal 0 {array_vds_v}")
+        for slot in range(vector.slot_count):
+            lines.append(f"vg_{case_index}_{slot} in{case_index}_{slot} 0 0")
+        lines.append(f"vg_{case_index}_cal gcal{case_index} 0 0")
+        lines.append(
+            f"mcal{case_index} spine{case_index}_cal gcal{case_index} 0 0 {device} "
+            f"w={cell_w_um}u l={cell_l_um}u"
+        )
+
+
+def _append_weight_cells(
+    lines: List[str],
+    vectors: Sequence[DotProductVector],
+    device: str,
+    cell_w_um: float,
+    cell_l_um: float,
+) -> None:
+    """Per case, per strip, only the cells whose weight bit is set are placed.
+
+    The instance prefix must be a device letter: SPICE reads a leading "x" as
+    a subcircuit call, not as a transistor.
+    """
+    for case_index, vector in enumerate(vectors):
+        for strip, weights in enumerate(vector.strip_weights):
+            for slot, weight in enumerate(weights):
+                for bit, present in enumerate(weight_to_cell_counts(int(weight))):
+                    for unit in range(present):
+                        lines.append(
+                            f"m{case_index}_{strip}_{slot}_{bit}_{unit} "
+                            f"spine{case_index}_{strip} in{case_index}_{slot} 0 0 {device} "
+                            f"w={cell_w_um}u l={cell_l_um}u"
+                        )
+
+
+def _append_control_block(
+    lines: List[str],
+    outputs: List[str],
+    vectors: Sequence[DotProductVector],
+    input_vgs_v: float,
+) -> None:
+    """Per case: set input bits, run op, print cal/strip currents to files."""
+    for case_index, vector in enumerate(vectors):
+        for slot in range(vector.slot_count):
+            bit = vector.input_bits[slot]
+            lines.append(f"alter vg_{case_index}_{slot} = {input_vgs_v if bit else 0}")
+        lines.append(f"alter vg_{case_index}_cal = {input_vgs_v}")
+        lines.append("op")
+        lines.append(f"print -i(vvdd_{case_index}_cal) > case{case_index}_cal.txt")
+        outputs.append(f"case{case_index}_cal.txt")
+        for strip in range(vector.strip_count):
+            lines.append(f"print -i(vvdd_{case_index}_{strip}) > case{case_index}_s{strip}.txt")
+            outputs.append(f"case{case_index}_s{strip}.txt")
+
+
 def build_dot_product_deck(
     model_library: Path,
     vectors: Sequence[DotProductVector],
@@ -1654,59 +1745,15 @@ def build_dot_product_deck(
         raise CimStripError(f"sky130 model library not found: {library}")
     device = device_token or sky130_device_token(library) or "sky130_fd_pr__nfet_01v8"
 
-    lines: List[str] = [
-        "* angela single-die CIM strip field functional verification",
-        f"* device library: {library}",
-        f"* device token: {device}",
-        f"* {len(vectors)} isolated matrix-vector cases",
-        f"* array rail {array_vds_v}V, input swing {input_vgs_v}V",
-        ".param mc_mm_switch=0 mc_pr_switch=0",
-        f".include {library.as_posix()}",
-    ]
-    # Each case owns its input lines, spines and calibration cell. Sharing them
-    # would be fatal rather than merely faster: every case's cells would sit on
-    # the same node, their currents would sum, and each "measurement" would
-    # reflect all the other vectors at once. Isolation is what makes the
-    # decoded ratio mean anything.
-    for case_index, vector in enumerate(vectors):
-        for strip in range(vector.strip_count):
-            lines.append(f"vvdd_{case_index}_{strip} spine{case_index}_{strip} 0 {array_vds_v}")
-        lines.append(f"vvdd_{case_index}_cal spine{case_index}_cal 0 {array_vds_v}")
-        for slot in range(vector.slot_count):
-            lines.append(f"vg_{case_index}_{slot} in{case_index}_{slot} 0 0")
-        lines.append(f"vg_{case_index}_cal gcal{case_index} 0 0")
-        lines.append(
-            f"mcal{case_index} spine{case_index}_cal gcal{case_index} 0 0 {device} "
-            f"w={cell_w_um}u l={cell_l_um}u"
-        )
-
-    # Per case, per strip, only the cells whose weight bit is set are placed.
-    # The instance prefix must be a device letter: SPICE reads a leading "x" as
-    # a subcircuit call, not as a transistor.
-    for case_index, vector in enumerate(vectors):
-        for strip, weights in enumerate(vector.strip_weights):
-            for slot, weight in enumerate(weights):
-                for bit, present in enumerate(weight_to_cell_counts(int(weight))):
-                    for unit in range(present):
-                        lines.append(
-                            f"m{case_index}_{strip}_{slot}_{bit}_{unit} "
-                            f"spine{case_index}_{strip} in{case_index}_{slot} 0 0 {device} "
-                            f"w={cell_w_um}u l={cell_l_um}u"
-                        )
+    lines = _deck_prelude(library, device, vectors, array_vds_v, input_vgs_v)
+    _append_isolation_lines(
+        lines, vectors, array_vds_v, input_vgs_v, cell_w_um, cell_l_um, device
+    )
+    _append_weight_cells(lines, vectors, device, cell_w_um, cell_l_um)
 
     outputs: List[str] = []
     lines.append(".control")
-    for case_index, vector in enumerate(vectors):
-        for slot in range(vector.slot_count):
-            bit = vector.input_bits[slot]
-            lines.append(f"alter vg_{case_index}_{slot} = {input_vgs_v if bit else 0}")
-        lines.append(f"alter vg_{case_index}_cal = {input_vgs_v}")
-        lines.append("op")
-        lines.append(f"print -i(vvdd_{case_index}_cal) > case{case_index}_cal.txt")
-        outputs.append(f"case{case_index}_cal.txt")
-        for strip in range(vector.strip_count):
-            lines.append(f"print -i(vvdd_{case_index}_{strip}) > case{case_index}_s{strip}.txt")
-            outputs.append(f"case{case_index}_s{strip}.txt")
+    _append_control_block(lines, outputs, vectors, input_vgs_v)
     lines.append("quit")
     lines.append(".endc")
     lines.append(".end")
@@ -1752,6 +1799,31 @@ def evaluate_dot_product_case(
     }
 
 
+def _parse_dot_product_outputs(
+    directory: Path, outputs: Sequence[str], vectors: Sequence[DotProductVector]
+) -> List[Dict[str, Any]]:
+    """Read ngspice current files and evaluate each parseable case."""
+    measured: Dict[str, float] = {}
+    for name in outputs:
+        path = directory / name
+        if not path.is_file():
+            continue
+        match = re.search(r"=\s*(-?\d+\.?\d*(?:[eE][-+]?\d+)?)", path.read_text(encoding="utf-8"))
+        if match:
+            measured[name] = float(match.group(1))
+    cases: List[Dict[str, Any]] = []
+    for index, vector in enumerate(vectors):
+        calibration = measured.get(f"case{index}_cal.txt")
+        if calibration is None:
+            continue
+        currents = [
+            measured.get(f"case{index}_s{strip}.txt", float("nan"))
+            for strip in range(vector.strip_count)
+        ]
+        cases.append(evaluate_dot_product_case(vector, calibration, currents))
+    return cases
+
+
 async def run_functional_dot_product_test(
     run_directory: Path,
     vectors: Sequence[DotProductVector],
@@ -1794,25 +1866,8 @@ async def run_functional_dot_product_test(
         process.kill()
         await process.wait()
         return {"status": "error", "reason": f"ngspice timed out after {timeout_s}s"}
-    measured: Dict[str, float] = {}
-    for name in outputs:
-        path = directory / name
-        if not path.is_file():
-            continue
-        match = re.search(r"=\s*(-?\d+\.?\d*(?:[eE][-+]?\d+)?)", path.read_text(encoding="utf-8"))
-        if match:
-            measured[name] = float(match.group(1))
+    cases = _parse_dot_product_outputs(directory, outputs, vectors)
     strip_count = max(vector.strip_count for vector in vectors)
-    cases: List[Dict[str, Any]] = []
-    for index, vector in enumerate(vectors):
-        calibration = measured.get(f"case{index}_cal.txt")
-        if calibration is None:
-            continue
-        currents = [
-            measured.get(f"case{index}_s{strip}.txt", float("nan"))
-            for strip in range(vector.strip_count)
-        ]
-        cases.append(evaluate_dot_product_case(vector, calibration, currents))
     if not cases:
         return {
             "status": "error",
