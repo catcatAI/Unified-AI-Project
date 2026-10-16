@@ -5,7 +5,7 @@
 import asyncio
 import logging
 from datetime import datetime
-from typing import Any, List
+from typing import Any, List, Optional
 
 logger = logging.getLogger(__name__)
 from core.system.config.magic_numbers import loop_sleep
@@ -55,50 +55,51 @@ class HAMBackgroundTasks:
 
             logger.info("Background task: Old experiences cleanup complete.")
 
+    @staticmethod
+    def _memory_age_days(data_package: dict, now: datetime) -> Optional[int]:
+        """Age in whole days from the memory timestamp; None = missing/unparseable."""
+        timestamp_str = data_package.get("timestamp", "")
+        if not timestamp_str:
+            return None
+        try:
+            timestamp = datetime.fromisoformat(timestamp_str)
+            return (now - timestamp).days
+        except ValueError:
+            logger.warning(
+                "Failed to parse timestamp '%s', skipping memory",
+                timestamp_str,
+                exc_info=True,
+            )
+            return None
+
+    @staticmethod
+    def _should_delete_by_age(relevance: float, age_days: int) -> bool:
+        """Age-based retention tiers: low(<0.3) 30d, medium(<0.7) 90d."""
+        if relevance < 0.3:
+            return age_days > 30
+        if relevance < 0.7:
+            return age_days > 90
+        return False
+
     def _identify_memories_to_delete(self) -> List[str]:
         """Identify memories to delete."""
         HIGH_IMPORTANCE_THRESHOLD = 0.7
-        MEDIUM_IMPORTANCE_THRESHOLD = 0.3
-        LOW_IMPORTANCE_AGE_DAYS = 30
-        MEDIUM_IMPORTANCE_AGE_DAYS = 90
         memories_to_delete = []
         now = datetime.now()
 
         for mem_id, data_package in list(self.core_memory_store.items()):
             try:
                 relevance = data_package.get("relevance", 0.5)
-                metadata = data_package.get("metadata", {})
-                protected = metadata.get("protected", False)
+                protected = data_package.get("metadata", {}).get("protected", False)
 
-                if protected:
-                    continue
-                if relevance >= HIGH_IMPORTANCE_THRESHOLD:
+                if protected or relevance >= HIGH_IMPORTANCE_THRESHOLD:
                     continue
 
-                timestamp_str = data_package.get("timestamp", "")
-                if not timestamp_str:
+                age_days = self._memory_age_days(data_package, now)
+                if age_days is None:
                     continue
 
-                try:
-                    timestamp = datetime.fromisoformat(timestamp_str)
-                    age_days = (now - timestamp).days
-                except ValueError:
-                    logger.warning(
-                        "Failed to parse timestamp '%s', skipping memory",
-                        timestamp_str,
-                        exc_info=True,
-                    )
-                    continue
-
-                should_delete = False
-                if relevance < MEDIUM_IMPORTANCE_THRESHOLD:
-                    if age_days > LOW_IMPORTANCE_AGE_DAYS:
-                        should_delete = True
-                elif relevance < HIGH_IMPORTANCE_THRESHOLD:
-                    if age_days > MEDIUM_IMPORTANCE_AGE_DAYS:
-                        should_delete = True
-
-                if should_delete:
+                if self._should_delete_by_age(relevance, age_days):
                     memories_to_delete.append(mem_id)
 
             except Exception as e:
