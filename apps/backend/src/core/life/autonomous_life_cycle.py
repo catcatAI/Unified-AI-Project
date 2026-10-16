@@ -27,7 +27,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from core.active_cognition_formula import ActiveCognitionFormula, OrderType, StressSource
 from core.autonomous.behavior_executor import BehaviorExecutor
@@ -446,16 +446,11 @@ class AutonomousLifeCycle:
 
         return metrics
 
-    def _evaluate_and_decide(self, metrics: FormulaMetrics) -> Optional[LifeDecision]:
-        """Evaluate metrics and make life decisions using dynamic thresholds"""
-        self._decision_counter += 1
-        decision_id = f"decision_{self._decision_counter}"
-
+    def _build_decision_context(self, metrics: FormulaMetrics) -> Dict[str, Any]:
+        """Build context dict for dynamic parameter evaluation."""
         total = self.executions_succeeded + self.executions_failed
         execution_success_rate = self.executions_succeeded / total if total > 0 else 1.0
-
-        # Build context for dynamic parameter evaluation
-        context = {
+        return {
             "energy": 1.0 - metrics.s_stress,  # 定義：energy := 1 - s_stress
             # 定義（非事實）：mood := life_intensity（公式輸出）。
             # 此處 mood 是動態參數用的鍵名，不是對任何感受狀態的宣稱。
@@ -465,64 +460,106 @@ class AutonomousLifeCycle:
             "execution_success_rate": execution_success_rate,
         }
 
-        # Get dynamic thresholds
-        dynamic_confidence_threshold = self._get_decision_confidence_threshold(context)
-        dynamic_risk_tolerance = self._get_risk_tolerance(context)
-
-        # Modulate thresholds based on execution success rate (feedback loop)
-        # High success → more confident/risky; Low success → more conservative
+    def _modulate_by_success_rate(
+        self,
+        success_rate: float,
+        conf_threshold: float,
+        risk_tolerance: float,
+    ) -> Tuple[float, float]:
+        """Modulate confidence/risk thresholds based on overall execution success rate."""
         success_low = lifecycle_value("lifecycle.success_rate_low", 0.5)
         success_high = lifecycle_value("lifecycle.success_rate_high", 0.9)
         conf_penalty = lifecycle_value("lifecycle.confidence_penalty", 0.15)
         conf_boost = lifecycle_value("lifecycle.confidence_boost", 0.1)
         risk_penalty = lifecycle_value("lifecycle.risk_penalty", 0.2)
         risk_boost = lifecycle_value("lifecycle.risk_boost", 0.15)
+        if success_rate < success_low:
+            conf_threshold = min(1.0, conf_threshold + conf_penalty)
+            risk_tolerance = max(0.1, risk_tolerance - risk_penalty)
+        elif success_rate > success_high:
+            conf_threshold = max(0.3, conf_threshold - conf_boost)
+            risk_tolerance = min(1.0, risk_tolerance + risk_boost)
+        return conf_threshold, risk_tolerance
 
-        if execution_success_rate < success_low:
-            dynamic_confidence_threshold = min(1.0, dynamic_confidence_threshold + conf_penalty)
-            dynamic_risk_tolerance = max(0.1, dynamic_risk_tolerance - risk_penalty)
-        elif execution_success_rate > success_high:
-            dynamic_confidence_threshold = max(0.3, dynamic_confidence_threshold - conf_boost)
-            dynamic_risk_tolerance = min(1.0, dynamic_risk_tolerance + risk_boost)
+    def _hint_decision_type(
+        self,
+        metrics: FormulaMetrics,
+        exploration_threshold: float,
+        conf_threshold: float,
+    ) -> Optional[str]:
+        """Guess which decision type we're about to make based on metric analysis."""
+        if metrics.hsm_value > exploration_threshold:
+            return "exploration"
+        if metrics.cognitive_gap > self.coexistence_threshold and not metrics.coexistence_active:
+            return "coexistence_activation"
+        if metrics.a_c > conf_threshold:
+            return "meaning_construction"
+        if metrics.cdm_conversion_rate < 0.5:
+            return "resource_reallocation"
+        return None
+
+    def _modulate_by_type_stats(
+        self,
+        decision_type_hint: Optional[str],
+        conf_threshold: float,
+        risk_tolerance: float,
+        exploration_threshold: float,
+    ) -> Tuple[float, float, float]:
+        """Per-type execution feedback: modulate thresholds from historical success rates."""
+        if not decision_type_hint:
+            return exploration_threshold, conf_threshold, risk_tolerance
+        type_stats = self._behavior_executor.get_type_stats()
+        if decision_type_hint not in type_stats:
+            return exploration_threshold, conf_threshold, risk_tolerance
+        ts = type_stats[decision_type_hint]
+        total_samples = ts["success"] + ts["fail"]
+        if total_samples < 3:  # Require minimum samples for type-specific feedback
+            return exploration_threshold, conf_threshold, risk_tolerance
+        conf_penalty = lifecycle_value("lifecycle.confidence_penalty", 0.15)
+        conf_boost = lifecycle_value("lifecycle.confidence_boost", 0.1)
+        risk_penalty = lifecycle_value("lifecycle.risk_penalty", 0.2)
+        risk_boost = lifecycle_value("lifecycle.risk_boost", 0.15)
+        if ts["rate"] < 0.4:
+            # Type consistently fails → raise thresholds (more conservative)
+            if decision_type_hint == "exploration":
+                exploration_threshold = min(1.0, exploration_threshold + 0.1)
+            conf_threshold = min(1.0, conf_threshold + conf_penalty * 0.5)
+            risk_tolerance = max(0.1, risk_tolerance - risk_penalty * 0.5)
+        elif ts["rate"] > 0.9:
+            # Type consistently succeeds → lower thresholds (more confident)
+            conf_threshold = max(0.3, conf_threshold - conf_boost * 0.5)
+            risk_tolerance = min(1.0, risk_tolerance + risk_boost * 0.5)
+        return exploration_threshold, conf_threshold, risk_tolerance
+
+    def _evaluate_and_decide(self, metrics: FormulaMetrics) -> Optional[LifeDecision]:
+        """Evaluate metrics and make life decisions using dynamic thresholds"""
+        self._decision_counter += 1
+        decision_id = f"decision_{self._decision_counter}"
+
+        context = self._build_decision_context(metrics)
+        dynamic_confidence_threshold = self._get_decision_confidence_threshold(context)
+        dynamic_risk_tolerance = self._get_risk_tolerance(context)
+
+        # Modulate thresholds based on execution success rate (feedback loop)
+        dynamic_confidence_threshold, dynamic_risk_tolerance = self._modulate_by_success_rate(
+            context["execution_success_rate"], dynamic_confidence_threshold, dynamic_risk_tolerance
+        )
 
         # Adjust exploration threshold based on risk tolerance (before per-type feedback)
         adjusted_exploration_threshold = self.exploration_threshold * (1.5 - dynamic_risk_tolerance)
 
-        # C³ 4.0: Per-type execution feedback — modulate decision-type-specific thresholds
-        # based on historical success rate for each decision type.
-        type_stats = self._behavior_executor.get_type_stats()
-        decision_type_hint = None
-
-        # Determine which decision type we're about to make based on metric analysis
-        if metrics.hsm_value > adjusted_exploration_threshold:
-            decision_type_hint = "exploration"
-        elif metrics.cognitive_gap > self.coexistence_threshold and not metrics.coexistence_active:
-            decision_type_hint = "coexistence_activation"
-        elif metrics.a_c > dynamic_confidence_threshold:
-            decision_type_hint = "meaning_construction"
-        elif metrics.cdm_conversion_rate < 0.5:
-            decision_type_hint = "resource_reallocation"
-
-        if decision_type_hint and decision_type_hint in type_stats:
-            ts = type_stats[decision_type_hint]
-            total_samples = ts["success"] + ts["fail"]
-            if total_samples >= 3:  # Require minimum samples for type-specific feedback
-                if ts["rate"] < 0.4:
-                    # Type consistently fails → raise exploration threshold (more conservative)
-                    if decision_type_hint == "exploration":
-                        adjusted_exploration_threshold = min(
-                            1.0, adjusted_exploration_threshold + 0.1
-                        )
-                    dynamic_confidence_threshold = min(
-                        1.0, dynamic_confidence_threshold + conf_penalty * 0.5
-                    )
-                    dynamic_risk_tolerance = max(0.1, dynamic_risk_tolerance - risk_penalty * 0.5)
-                elif ts["rate"] > 0.9:
-                    # Type consistently succeeds → lower threshold (more confident)
-                    dynamic_confidence_threshold = max(
-                        0.3, dynamic_confidence_threshold - conf_boost * 0.5
-                    )
-                    dynamic_risk_tolerance = min(1.0, dynamic_risk_tolerance + risk_boost * 0.5)
+        # C³ 4.0: Per-type execution feedback
+        decision_type_hint = self._hint_decision_type(
+            metrics, adjusted_exploration_threshold, dynamic_confidence_threshold
+        )
+        adjusted_exploration_threshold, dynamic_confidence_threshold, (
+            dynamic_risk_tolerance
+        ) = self._modulate_by_type_stats(
+            decision_type_hint,
+            dynamic_confidence_threshold,
+            dynamic_risk_tolerance,
+            adjusted_exploration_threshold,
+        )
 
         # Decision 1: Exploration (HSM-based) - affected by risk tolerance
         if metrics.hsm_value > adjusted_exploration_threshold:
@@ -871,22 +908,24 @@ class AutonomousLifeCycle:
         )
         return True
 
+    def _target_phase(self, metrics: FormulaMetrics, old_phase: LifePhase) -> LifePhase:
+        """Determine target phase from metrics (transition logic)."""
+        if metrics.life_intensity < 0.3 and old_phase != LifePhase.EMERGENCE:
+            return LifePhase.EMERGENCE
+        if metrics.hsm_value > 0.7 and metrics.a_c > 1.0:
+            return LifePhase.EXPLORATION
+        if metrics.cdm_conversion_rate > 0.8 and metrics.coexistence_active:
+            return LifePhase.CONSOLIDATION
+        if metrics.life_intensity > 0.8 and metrics.c_inf > 0.8:
+            return LifePhase.TRANSCENDENCE
+        if metrics.coexistence_active and metrics.resonance_total > 2.0:
+            return LifePhase.COEXISTENCE
+        return old_phase
+
     async def _check_phase_transition(self, metrics: FormulaMetrics) -> None:
         """Check if life phase should transition"""
         old_phase = self.current_phase
-        new_phase = old_phase
-
-        # Phase transition logic based on metrics
-        if metrics.life_intensity < 0.3 and old_phase != LifePhase.EMERGENCE:
-            new_phase = LifePhase.EMERGENCE
-        elif metrics.hsm_value > 0.7 and metrics.a_c > 1.0:
-            new_phase = LifePhase.EXPLORATION
-        elif metrics.cdm_conversion_rate > 0.8 and metrics.coexistence_active:
-            new_phase = LifePhase.CONSOLIDATION
-        elif metrics.life_intensity > 0.8 and metrics.c_inf > 0.8:
-            new_phase = LifePhase.TRANSCENDENCE
-        elif metrics.coexistence_active and metrics.resonance_total > 2.0:
-            new_phase = LifePhase.COEXISTENCE
+        new_phase = self._target_phase(metrics, old_phase)
 
         if new_phase != old_phase:
             self.current_phase = new_phase
