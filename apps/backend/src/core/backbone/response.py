@@ -138,6 +138,44 @@ class ResponseModeSelector:
     # ------------------------------------------------------------------
     # layered / layered_stream — StreamingPipeline 逐層 emit（§5.6.1）
     # ------------------------------------------------------------------
+    async def _collect_stream_tokens(
+        self, stream, stream_mode: bool
+    ) -> tuple:
+        """Collect tokens and layers from stream."""
+        from ai.streaming.token_stream import TokenType
+
+        layers: List[str] = []
+        tokens: List[str] = []
+        while True:
+            token = await stream.get(timeout=1.0)
+            if token is None:
+                break
+            if token.type == TokenType.CONTROL:
+                continue
+            tokens.append(token.content)
+            if stream_mode:
+                layers.append(token.content)
+            elif token.content:
+                layers.append(token.content)
+        return tokens, layers
+
+    def _resolve_pair(
+        self, pair_id: Optional[str], envelope, text: str, layers: List[str]
+    ) -> None:
+        """Resolve pair with output envelope."""
+        if pair_id is not None and self.pairs is not None:
+            output = Envelope(
+                payload={"text": text, "layers": layers},
+                kind=EnvelopeKind.RESPONSE,
+                direction="up",
+                correlation_id=envelope.correlation_id,
+                source="response_selector",
+            )
+            try:
+                self.pairs.resolve(pair_id, output)
+            except Exception as e:
+                logger.debug(f"pairs resolve {pair_id} failed: {e}", exc_info=True)
+
     async def _respond_layered(
         self,
         user_message: str,
@@ -172,19 +210,7 @@ class ResponseModeSelector:
                     )
             return await self._fallback_result(mode, user_message, context)
 
-        layers: List[str] = []
-        tokens: List[str] = []
-        while True:
-            token = await stream.get(timeout=1.0)
-            if token is None:
-                break
-            if token.type == TokenType.CONTROL:
-                continue
-            tokens.append(token.content)
-            if stream_mode:
-                layers.append(token.content)
-            elif token.content:
-                layers.append(token.content)
+        tokens, layers = await self._collect_stream_tokens(stream, stream_mode)
 
         text = "".join(tokens).strip()
         if not text and self.router is not None:
@@ -194,31 +220,9 @@ class ResponseModeSelector:
                 mode,
             )
             result = await self._fallback_result(mode, user_message, context)
-            if pair_id is not None and self.pairs is not None:
-                output = Envelope(
-                    payload={"text": result.text, "layers": [result.text]},
-                    kind=EnvelopeKind.RESPONSE,
-                    direction="up",
-                    correlation_id=envelope.correlation_id,
-                    source="response_selector",
-                )
-                try:
-                    self.pairs.resolve(pair_id, output)
-                except Exception as e:
-                    logger.debug(f"pairs resolve {pair_id} failed: {e}", exc_info=True)
+            self._resolve_pair(pair_id, envelope, result.text, [result.text])
             return result
-        if pair_id is not None and self.pairs is not None:
-            output = Envelope(
-                payload={"text": text, "layers": layers},
-                kind=EnvelopeKind.RESPONSE,
-                direction="up",
-                correlation_id=envelope.correlation_id,
-                source="response_selector",
-            )
-            try:
-                self.pairs.resolve(pair_id, output)
-            except Exception as e:
-                logger.debug(f"pairs resolve {pair_id} failed: {e}", exc_info=True)
+        self._resolve_pair(pair_id, envelope, text, layers)
         return ResponseResult(
             mode=mode,
             text=text,
