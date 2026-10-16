@@ -213,6 +213,75 @@ class AgentOrchestrator:
             )
         )
 
+    def _classify_special_intents(self, lower: str) -> Optional[str]:
+        """Classify special intents (code/knowledge/roleplay/web_research/image)."""
+        if re.search(r"(執行|運行|跑一下|跑這個|execute|run this|run the|執行這個)", lower):
+            return "code_execute"
+        if re.search(
+            r"(理解|解釋|分析|understand|explain|analyze|review.*code)", lower
+        ) and re.search(r"(code|代碼|程式|python|javascript|函數|function|syntax|語法|bug|debug)", lower):
+            return "code_understand"
+        if re.search(r"(知識圖譜|知識庫|knowledge graph|knowledge base|圖譜|knowledge)", lower):
+            return "knowledge_query"
+        if re.search(
+            r"(跑團|桌上遊戲|角色扮演|\btrpg\b|\brpg\b|地下城|副本|奇幻|"
+            r"冒險|冒險者|法師|戰士|盜賊|矮人|精靈|龍騎|牧師|"
+            r"\broleplay\b|\bdungeon master\b|\bdm\b|\bcampaign\b|"
+            r"\broll initiative\b|\bcharacter sheet\b|\bcreate (a )?character\b)",
+            lower,
+        ):
+            return "roleplay"
+        if re.search(
+            r"(抓取|擷取|爬取|抓这个|抓這個|"
+            r"\b(fetch|scrape|crawl|spider)\b|"
+            r"網址|網頁內容|網站內容|這個網頁|這個網站|該網頁|"
+            r"\bthis (url|page|site|link|article)\b|\bthe url\b)",
+            lower,
+        ):
+            return "web_research"
+        if re.search(
+            r"(圖(片|中|裡|里)?.{0,2}的?文字|照片(中|裡|里)?.{0,2}的?文字|"
+            r"圖(片|中|裡|里)?.{0,2}中的人物|"
+            r"圖(片|中|裡|里)?.{0,2}有什麼|照片(中|裡|里)?.{0,2}有什麼|"
+            r"\b(ocr|extract text|text in the (image|photo)|"
+            r"objects? in the (image|photo))\b)",
+            lower,
+        ):
+            return "image_detail"
+        return None
+
+    def _classify_media_intents(self, lower: str) -> str:
+        """Classify media intents (vision/audio/nlp/image_gen)."""
+        if re.search(r"(圖片|影像|image|photo|picture|vision|視覺)", lower):
+            return "vision"
+        if re.search(r"(音訊|語音|audio|voice|speech|transcribe|音樂)", lower):
+            return "audio"
+        if re.search(r"(情緒|情感|sentiment|情緒分析|nlp|自然語言)", lower):
+            return "nlp"
+        if re.search(r"(畫|繪圖|生成圖|generate.*image|draw|paint|art|藝術)", lower):
+            return "image_generate"
+        return "general"
+
+    def _classify_basic_intents(self, lower: str) -> str:
+        """Classify basic intents (search/file/creative/data/plan/media)."""
+        if re.search(r"(搜索|搜尋|查詢|search|find|lookup|google|web)", lower):
+            return "web_search"
+        if re.search(
+            r"(讀取|打開|查看|read|open|show|寫入|保存|write|save|刪除|delete|remove)", lower
+        ):
+            if re.search(r"(刪除|delete|remove|移除)", lower):
+                return "file_delete"
+            if re.search(r"(寫入|保存|write|save|建立|create|新增|add)", lower):
+                return "file_write"
+            return "file_read"
+        if re.search(r"(寫|創作|生成文本|write|create|story|poem|creative|文章)", lower):
+            return "creative_write"
+        if re.search(r"(分析數據|analyze.*data|統計|statistics|data|數據)", lower):
+            return "data_analysis"
+        if re.search(r"(規劃|計劃|plan|schedule|安排|organize)", lower):
+            return "plan_create"
+        return self._classify_media_intents(lower)
+
     def classify_intent(self, user_message: str) -> str:
         """Classify user message into an intent category via regex sub-classification."""
         lower = user_message.lower()
@@ -227,106 +296,10 @@ class AgentOrchestrator:
         # "general" silently killed every specialized agent path. Sub-
         # classification below is the single source of truth for routing.
 
-        # Code execution requires an explicit execution verb — bare code/程式
-        # mentions ("分析這段程式碼", "這段代碼什麼意思") are analysis, not
-        # execution requests.
-        if re.search(r"(執行|運行|跑一下|跑這個|execute|run this|run the|執行這個)", lower):
-            return "code_execute"
-        # "分析" alone is too broad — 分析圖片/分析數據 belong to vision/data
-        # agents. Only treat it as code analysis when tied to code keywords.
-        if re.search(
-            r"(理解|解釋|分析|understand|explain|analyze|review.*code)", lower
-        ) and re.search(r"(code|代碼|程式|python|javascript|函數|function|syntax|語法|bug|debug)", lower):
-            return "code_understand"
-
-        # Knowledge graph queries are more specific than web search — check
-        # first so "查詢知識圖譜" routes to knowledge_query, not web_search.
-        if re.search(r"(知識圖譜|知識庫|knowledge graph|knowledge base|圖譜|knowledge)", lower):
-            return "knowledge_query"
-
-        # Roleplay / tabletop RPG. Checked before creative_write because
-        # 「幫我寫一個關於龍的冒險故事」 is a campaign request, not a writing
-        # request — and FantasyDMAgent is the component that owns the rules
-        # (difficulty by level, class/race stat blocks, DC resolution).
-        # NOTE: `lower` is already lowercased, so the latin alternatives must be
-        # written in lower case — "TRPG" here would never have matched.
-        if re.search(
-            r"(跑團|桌上遊戲|角色扮演|\btrpg\b|\brpg\b|地下城|副本|奇幻|"
-            r"冒險|冒險者|法師|戰士|盜賊|矮人|精靈|龍騎|牧師|"
-            r"\broleplay\b|\bdungeon master\b|\bdm\b|\bcampaign\b|"
-            r"\broll initiative\b|\bcharacter sheet\b|\bcreate (a )?character\b)",
-            lower,
-        ):
-            return "roleplay"
-
-        # Web research: fetching and summarising a specific page, which
-        # WebSearchAgent does with fetch_content(). Checked before web_search so
-        # 「抓取這個網址的內容」 reaches the agent instead of the plain handler.
-        if re.search(
-            r"(抓取|擷取|爬取|抓这个|抓這個|"
-            r"\b(fetch|scrape|crawl|spider)\b|"
-            r"網址|網頁內容|網站內容|這個網頁|這個網站|該網頁|"
-            r"\bthis (url|page|site|link|article)\b|\bthe url\b)",
-            lower,
-        ):
-            return "web_research"
-
-        # Image detail: reading text out of an image or listing what is in it.
-        # VisionProcessingAgent owns extract_text()/detect_objects(); plain
-        # 「看這張圖」 stays with the vision handler.
-        if re.search(
-            r"(圖(片|中|裡|里)?.{0,2}的?文字|照片(中|裡|里)?.{0,2}的?文字|"
-            r"圖(片|中|裡|里)?.{0,2}中的人物|"
-            r"圖(片|中|裡|里)?.{0,2}有什麼|照片(中|裡|里)?.{0,2}有什麼|"
-            r"\b(ocr|extract text|text in the (image|photo)|"
-            r"objects? in the (image|photo))\b)",
-            lower,
-        ):
-            return "image_detail"
-
-        # Web search
-        if re.search(r"(搜索|搜尋|查詢|search|find|lookup|google|web)", lower):
-            return "web_search"
-
-        # File operations (checked before creative to catch "寫入" vs creative "寫")
-        if re.search(
-            r"(讀取|打開|查看|read|open|show|寫入|保存|write|save|刪除|delete|remove)", lower
-        ):
-            if re.search(r"(刪除|delete|remove|移除)", lower):
-                return "file_delete"
-            if re.search(r"(寫入|保存|write|save|建立|create|新增|add)", lower):
-                return "file_write"
-            return "file_read"
-
-        # Creative
-        if re.search(r"(寫|創作|生成文本|write|create|story|poem|creative|文章)", lower):
-            return "creative_write"
-
-        # Data analysis
-        if re.search(r"(分析數據|analyze.*data|統計|statistics|data|數據)", lower):
-            return "data_analysis"
-
-        # Planning
-        if re.search(r"(規劃|計劃|plan|schedule|安排|organize)", lower):
-            return "plan_create"
-
-        # Vision
-        if re.search(r"(圖片|影像|image|photo|picture|vision|視覺)", lower):
-            return "vision"
-
-        # Audio
-        if re.search(r"(音訊|語音|audio|voice|speech|transcribe|音樂)", lower):
-            return "audio"
-
-        # NLP
-        if re.search(r"(情緒|情感|sentiment|情緒分析|nlp|自然語言)", lower):
-            return "nlp"
-
-        # Image generation
-        if re.search(r"(畫|繪圖|生成圖|generate.*image|draw|paint|art|藝術)", lower):
-            return "image_generate"
-
-        return "general"
+        special = self._classify_special_intents(lower)
+        if special:
+            return special
+        return self._classify_basic_intents(lower)
 
     def select_agent(self, intent: str) -> Optional[str]:
         """Select the best agent for a given intent."""
