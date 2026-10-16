@@ -347,6 +347,31 @@ def palette_match(
     return {"score": score, "matches": per_name, "blobs": len(blobs)}
 
 
+def _aesthetics_line(image_data: bytes, lines: List[str]) -> None:
+    """Append aesthetics measurement line; enrichment failure must not fail verdict."""
+    try:
+        _aes = aesthetics(image_data)
+        lines.append(
+            f"美學量測：鮮艷{_aes['colorfulness']:.2f}、均衡{_aes['balance']:.2f}、"
+            f"亮度{_aes['brightness']:.2f}。"
+        )
+    except Exception:
+        logger.debug("aesthetics enrichment failed", exc_info=True)
+
+
+def _visual_field_line(image_data: bytes, lines: List[str]) -> None:
+    """Append visual-field line when scales are present."""
+    try:
+        _field = visual_field(image_data)
+        if _field["scales"]:
+            lines.append(
+                f"視域：三尺度注視（fovea/mid/periphery）覆蓋{_field['coverage']:.0%}，"
+                f"細節度{_field['detail']:.2f}。"
+            )
+    except Exception:
+        logger.debug("visual_field enrichment failed", exc_info=True)
+
+
 def judge_render(
     image_data: bytes,
     spec: Optional[List[Tuple[str, Tuple[int, int, int]]]] = None,
@@ -366,23 +391,8 @@ def judge_render(
             "blank": True,
         }
     lines = [f"檢出 {len(blobs)} 個色塊，最大 {top['color']} 佔{top['fraction']:.0%}."]
-    try:
-        _aes = aesthetics(image_data)
-        lines.append(
-            f"美學量測：鮮艷{_aes['colorfulness']:.2f}、均衡{_aes['balance']:.2f}、"
-            f"亮度{_aes['brightness']:.2f}。"
-        )
-    except Exception:
-        logger.debug("aesthetics enrichment failed", exc_info=True)
-    try:
-        _field = visual_field(image_data)
-        if _field["scales"]:
-            lines.append(
-                f"視域：三尺度注視（fovea/mid/periphery）覆蓋{_field['coverage']:.0%}，"
-                f"細節度{_field['detail']:.2f}。"
-            )
-    except Exception:
-        logger.debug("visual_field enrichment failed", exc_info=True)
+    _aesthetics_line(image_data, lines)
+    _visual_field_line(image_data, lines)
     if spec:
         pm = palette_match(image_data, spec)
         lines.append(
