@@ -33,7 +33,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
 from core.system.config.magic_numbers import loop_sleep
 
@@ -381,66 +381,74 @@ class FileSystemMonitor:
 
             await asyncio.sleep(self.poll_interval)
 
+    async def _check_file_state(self, item: Path, item_str: str) -> None:
+        """Stat one file; emit created/modified; refresh state entry."""
+        try:
+            stat = item.stat()
+            current_state = {"mtime": stat.st_mtime, "size": stat.st_size}
+
+            if item_str not in self._file_states:
+                # New file
+                await self._emit_event(
+                    FileSystemEvent(
+                        event_id=f"fs_{time.time()}",
+                        path=item,
+                        event_type="created",
+                        is_directory=False,
+                        timestamp=datetime.now(),
+                        file_size=stat.st_size,
+                    )
+                )
+            elif self._file_states[item_str]["mtime"] != current_state["mtime"]:
+                # Modified
+                await self._emit_event(
+                    FileSystemEvent(
+                        event_id=f"fs_{time.time()}",
+                        path=item,
+                        event_type="modified",
+                        is_directory=False,
+                        timestamp=datetime.now(),
+                        file_size=stat.st_size,
+                    )
+                )
+
+            self._file_states[item_str] = current_state
+
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: path check errors should be logged
+            logger.error(f"Error in {__name__}: {e}", exc_info=True)
+
+    async def _scan_current_files(self, path: Path) -> Set[str]:
+        """Snapshot non-ignored files under path, emitting per-file events."""
+        current_files: Set[str] = set()
+        for item in path.iterdir():
+            if item.is_file() and not self._should_ignore(item):
+                item_str = str(item)
+                current_files.add(item_str)
+                await self._check_file_state(item, item_str)
+        return current_files
+
+    async def _emit_deleted(self, current_files: Set[str]) -> None:
+        """Emit deleted events for state entries no longer on disk."""
+        for old_file in list(self._file_states.keys()):
+            if old_file not in current_files:
+                await self._emit_event(
+                    FileSystemEvent(
+                        event_id=f"fs_{time.time()}",
+                        path=Path(old_file),
+                        event_type="deleted",
+                        is_directory=False,
+                        timestamp=datetime.now(),
+                    )
+                )
+                del self._file_states[old_file]
+
     async def _check_path_changes(self, path: Path) -> None:
         """Check for changes in a path"""
         try:
-            current_files = set()
-
-            for item in path.iterdir():
-                if item.is_file() and not self._should_ignore(item):
-                    item_str = str(item)
-                    current_files.add(item_str)
-
-                    try:
-                        stat = item.stat()
-                        current_state = {"mtime": stat.st_mtime, "size": stat.st_size}
-
-                        # Check if new or modified
-                        if item_str not in self._file_states:
-                            # New file
-                            await self._emit_event(
-                                FileSystemEvent(
-                                    event_id=f"fs_{time.time()}",
-                                    path=item,
-                                    event_type="created",
-                                    is_directory=False,
-                                    timestamp=datetime.now(),
-                                    file_size=stat.st_size,
-                                )
-                            )
-                        elif self._file_states[item_str]["mtime"] != current_state["mtime"]:
-                            # Modified
-                            await self._emit_event(
-                                FileSystemEvent(
-                                    event_id=f"fs_{time.time()}",
-                                    path=item,
-                                    event_type="modified",
-                                    is_directory=False,
-                                    timestamp=datetime.now(),
-                                    file_size=stat.st_size,
-                                )
-                            )
-
-                        self._file_states[item_str] = current_state
-
-                    except (
-                        Exception
-                    ) as e:  # broad exception acceptable: path check errors should be logged
-                        logger.error(f"Error in {__name__}: {e}", exc_info=True)
-
-            # Check for deleted files
-            for old_file in list(self._file_states.keys()):
-                if old_file not in current_files:
-                    await self._emit_event(
-                        FileSystemEvent(
-                            event_id=f"fs_{time.time()}",
-                            path=Path(old_file),
-                            event_type="deleted",
-                            is_directory=False,
-                            timestamp=datetime.now(),
-                        )
-                    )
-                    del self._file_states[old_file]
+            current_files = await self._scan_current_files(path)
+            await self._emit_deleted(current_files)
 
         except (
             Exception
