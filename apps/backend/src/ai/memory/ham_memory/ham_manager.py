@@ -14,6 +14,19 @@ from typing import Any, Dict, List, Optional, Tuple
 from utils.text_utils import bigram_jaccard as _bigram_jaccard_util
 from utils.text_utils import char_bigrams as _char_bigrams_util
 
+_TEMPLATE_STOPWORDS = frozenset(
+    {
+        "what", "is", "the", "a", "an", "of", "to", "do", "does", "did",
+        "you", "your", "i", "my", "me", "are", "how", "why", "who", "when",
+        "where", "which", "that", "this", "it", "in", "on", "at", "for",
+        # Generic meta words from a fossilized filler template
+        # ("User, the question you're asking is about the current
+        # state…"): without these, any English query containing
+        # "question" matches that template and gets served garbage.
+        "question", "asking", "asked", "current", "state", "about", "re",
+    }
+)
+
 logger = logging.getLogger(__name__)
 
 # Content markers that make a stored template UNSERVABLE as an answer.
@@ -150,6 +163,44 @@ class HAMMemoryManager:
         self._enforce_cap("templates")
         await asyncio.to_thread(self._save)
 
+    def _score_keyword_match(self, kw_lower: str, query_lower: str) -> float:
+        """Score a single keyword against the query."""
+        import re as _kw_re
+
+        if kw_lower not in query_lower:
+            return _bigram_jaccard_util(kw_lower, query_lower)
+        if len(kw_lower) <= 1:
+            return 0.0
+        if len(kw_lower) <= 2:
+            pattern = r"(?<![\w])" + _kw_re.escape(kw_lower) + r"(?![\w])"
+            if _kw_re.search(pattern, query_lower):
+                return 0.9
+            return 0.0
+        return 0.9
+
+    def _relevance_gate(
+        self, keywords: List[str], query_lower: str, best_score: float, min_score: float
+    ) -> float:
+        """Apply relevance gate: penalize single-keyword match on long query."""
+        query_tokens = query_lower.split()
+        matched_kws = set()
+        total_non_stop = 0
+        for kw in keywords:
+            k = kw.lower().strip()
+            if not k or k in _TEMPLATE_STOPWORDS:
+                continue
+            total_non_stop += 1
+            if k in query_lower:
+                matched_kws.add(k)
+        if len(query_tokens) <= 3:
+            if len(matched_kws) <= 1:
+                return 0.0
+        elif len(matched_kws) <= 1 and total_non_stop > 1:
+            best_score *= 1.0 / max(total_non_stop, 2)
+            if best_score < min_score:
+                return 0.0
+        return best_score
+
     async def retrieve_response_templates(
         self,
         query: str,
@@ -163,56 +214,8 @@ class HAMMemoryManager:
         if not candidates:
             return []
 
-        # Generic stopwords must not trigger a template match on their own —
-        # otherwise every query containing "what"/"is"/"the" matches the first
-        # template that lists those words (e.g. "opposite of hot"), which then
-        # gets served verbatim as the answer to unrelated queries.
-        _STOPWORDS = frozenset(
-            {
-                "what",
-                "is",
-                "the",
-                "a",
-                "an",
-                "of",
-                "to",
-                "do",
-                "does",
-                "did",
-                "you",
-                "your",
-                "i",
-                "my",
-                "me",
-                "are",
-                "how",
-                "why",
-                "who",
-                "when",
-                "where",
-                "which",
-                "that",
-                "this",
-                "it",
-                "in",
-                "on",
-                "at",
-                "for",
-                # Generic meta words from a fossilized filler template
-                # ("User, the question you're asking is about the current
-                # state…"): without these, any English query containing
-                # "question" matches that template and gets served garbage.
-                "question",
-                "asking",
-                "asked",
-                "current",
-                "state",
-                "about",
-                "re",
-            }
-        )
-
         scored = []
+        query_lower = query.lower()
         for tpl in candidates:
             if is_unservable_template(tpl.get("content", "")):
                 continue
@@ -222,58 +225,14 @@ class HAMMemoryManager:
             best_score = 0.0
             for kw in keywords:
                 kw_lower = kw.lower().strip()
-                if not kw_lower or kw_lower in _STOPWORDS:
+                if not kw_lower or kw_lower in _TEMPLATE_STOPWORDS:
                     continue
-                query_lower = query.lower()
-                # Substring match — but reject single-char or symbol keywords
-                # that would match any query containing that character
-                # (e.g. "*" in "SELECT * FROM users").  For short keywords
-                # (≤2 chars) we require word-boundary adjacency to avoid
-                # false positives like "5" matching "123456".
-                if kw_lower in query_lower:
-                    if len(kw_lower) <= 1:
-                        # Single-char keywords (operators, digits) are too
-                        # noisy — never treat them as a match.
-                        pass
-                    elif len(kw_lower) <= 2:
-                        # Require word-boundary context for short keywords
-                        import re as _kw_re
-
-                        pattern = r"(?<![\w])" + _kw_re.escape(kw_lower) + r"(?![\w])"
-                        if _kw_re.search(pattern, query_lower):
-                            best_score = max(best_score, 0.9)
-                    else:
-                        best_score = max(best_score, 0.9)
-                else:
-                    # Bigram Jaccard
-                    best_score = max(best_score, _bigram_jaccard_util(kw_lower, query_lower))
-            if best_score >= min_score:
-                # Relevance gate: count how many non-stopword keywords
-                # matched.  A single keyword match on a long query is often
-                # a false positive (e.g. "capital" in "capital of Italy"
-                # matching the "capital of France" template).
-                query_tokens = query_lower.split()
-                matched_kws = set()
-                total_non_stop = 0
-                for kw in keywords:
-                    k = kw.lower().strip()
-                    if not k or k in _STOPWORDS:
-                        continue
-                    total_non_stop += 1
-                    if k in query_lower:
-                        matched_kws.add(k)
-                # Short query: reject if only 1 keyword matched
-                if len(query_tokens) <= 3:
-                    if len(matched_kws) <= 1:
-                        continue
-                # Long query: penalize single-keyword match proportionally
-                # so unrelated templates don't win over honest fallback.
-                # 1/N match → score × (1/N), e.g. 0.9 × 1/3 = 0.3 < 0.5
-                elif len(matched_kws) <= 1 and total_non_stop > 1:
-                    best_score *= 1.0 / max(total_non_stop, 2)
-                    if best_score < min_score:
-                        continue
-                scored.append((tpl, best_score))
+                best_score = max(best_score, self._score_keyword_match(kw_lower, query_lower))
+            if best_score < min_score:
+                continue
+            gated_score = self._relevance_gate(keywords, query_lower, best_score, min_score)
+            if gated_score >= min_score:
+                scored.append((tpl, gated_score))
 
         scored.sort(key=lambda x: x[1], reverse=True)
         return scored[: limit or top_k]
