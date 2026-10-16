@@ -447,6 +447,72 @@ class UnifiedEngine:
         with self._process_lock:
             return self._process_inner(text, context)
 
+    @staticmethod
+    def _semantic_overlap_pass(resolved: str, ans: str, sim: float) -> bool:
+        """高相似度（sim≥guard）放行；否則要求查詢內容詞與答案重疊。
+
+        查詢內容詞（非停用詞英文 ≥3 字母或 ≥2 字中文）至少一個出現在
+        答案中才放行；無內容詞視為放行（原 `qws and not any(...)` 等價）。
+        """
+        import re as _re
+
+        guard_thr = threshold_value("semantic_qa.overlap_guard", 0.85)
+        if sim >= guard_thr:
+            return True
+        stop = {
+            "what",
+            "is",
+            "the",
+            "of",
+            "are",
+            "there",
+            "a",
+            "an",
+            "to",
+            "in",
+            "on",
+            "how",
+            "does",
+            "do",
+            "many",
+            "much",
+        }
+        qws = [
+            w.lower()
+            for w in _re.findall(r"[A-Za-z]{3,}", resolved)
+            if w.lower() not in stop
+        ]
+        qws += [c for c in _re.findall(r"[\u4e00-\u9fff]{2,}", resolved)]
+        if not qws:
+            return True
+        return any(
+            w in ans.lower() or any(c in ans for c in w if "\u4e00" <= c <= "\u9fff")
+            for w in qws
+        )
+
+    def _try_semantic_qa(self, text: str) -> Optional[str]:
+        """語義 QA 路線：適用且命中 → wrapped 答案；否則 None。
+
+        跳過命題式查詢（含 "=" 或以 "?=" 結尾）與 <3 字元短查詢；
+        低相似度命中須通過內容詞重疊防護。
+        """
+        if self.semantic_qa is None or "=" in text or text.rstrip().endswith("?="):
+            return None
+        if len(text.strip()) < 3:
+            return None
+        resolved = self._resolve_coreference(text)
+        hit = self.semantic_qa.answer(resolved)
+        if hit is None:
+            return None
+        ans, sim = hit
+        if not self._semantic_overlap_pass(resolved, ans, sim):
+            return None
+        self._last_route = "semantic-qa"
+        self._last_confidence = min(0.95, max(0.5, sim))
+        wrapped = self._wrap_answer(resolved, ans)
+        self._remember_turn(text, wrapped)
+        return wrapped
+
     def _process_inner(self, text: str, context: Optional[Dict[str, Any]] = None) -> str:
         # 0. Reflex / presets (greetings, canned replies) — single source.
         r = self._try_reflex(text)
@@ -466,60 +532,9 @@ class UnifiedEngine:
             self._last_confidence = 1.0
             return r
         # 2. Learned semantic QA (SLS gradient layer) — factual open questions.
-        # Skip proposition-style queries ("X nor Y=?"): those belong to the
-        if self.semantic_qa is not None and "=" not in text and not text.rstrip().endswith("?="):
-            # Reject very short queries (< 3 chars) — they produce false
-            # positives like "a" -> "cold" from embedding similarity noise.
-            if len(text.strip()) >= 3:
-                resolved = self._resolve_coreference(text)
-                hit = self.semantic_qa.answer(resolved)
-                if hit is not None:
-                    import re as _re
-
-                    ans, sim = hit
-                    # Content-word overlap guard: at least one non-stopword
-                    # from the query must appear in the answer, otherwise the
-                    # match is topical noise (e.g. "light speed" -> continents).
-                    # High-similarity hits (sim >= 0.85) bypass the guard.
-                    guard_thr = threshold_value("semantic_qa.overlap_guard", 0.85)
-                    if sim < guard_thr:
-                        stop = {
-                            "what",
-                            "is",
-                            "the",
-                            "of",
-                            "are",
-                            "there",
-                            "a",
-                            "an",
-                            "to",
-                            "in",
-                            "on",
-                            "how",
-                            "does",
-                            "do",
-                            "many",
-                            "much",
-                        }
-                        qws = [
-                            w.lower()
-                            for w in _re.findall(r"[A-Za-z]{3,}", resolved)
-                            if w.lower() not in stop
-                        ]
-                        qws += [c for c in _re.findall(r"[\u4e00-\u9fff]{2,}", resolved)]
-                        if qws and not any(
-                            w in hit[0].lower()
-                            or any(c in hit[0] for c in w if "\u4e00" <= c <= "\u4e9f")
-                            for w in qws
-                        ):
-                            hit = None
-                if hit is not None:
-                    ans, sim = hit
-                    self._last_route = "semantic-qa"
-                    self._last_confidence = min(0.95, max(0.5, sim))
-                    wrapped = self._wrap_answer(resolved, ans)
-                    self._remember_turn(text, wrapped)
-                    return wrapped
+        r = self._try_semantic_qa(text)
+        if r is not None:
+            return r
         # 3. Learned statistical core.
         core_hit = self._infer_from_core(text)  # r 已被 reflex/math/logic 佔用（str | None）
         if core_hit is not None:
