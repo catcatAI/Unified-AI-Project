@@ -44,30 +44,42 @@ class WorkspaceMountHandler:
             if action[0] == "configure":
                 return self._configure(workspace, action[1])
             if action[0] == "list":
-                apps = self._available(workspace)
-                if not apps:
-                    return "（掛載）目前沒有可用應用。"
-                lines = [
-                    f"{a.get('app_id')}（{a.get('label')}）：{','.join(a.get('commands', []))}"
-                    for a in apps
-                ]
-                return "（掛載）可用應用：\n" + "\n".join(lines)
+                return self._handle_list(workspace)
             if action[0] == "mount":
-                result = workspace.mount_app(action[1])
-                if isinstance(result, dict) and result.get("ok"):
-                    cmds = ",".join(result.get("commands", []))
-                    return (
-                        f"（掛載）已掛載 {result.get('app_id')}（{result.get('label')}），"
-                        f"可用指令：{cmds}。可 open 開啟會話操作。"
-                    )
-                return f"（掛載）掛載失敗：{(result or {}).get('error', '未知錯誤')}"
-            result = workspace.unmount_app(action[1])
-            if isinstance(result, dict) and result.get("ok"):
-                return f"（掛載）已卸載 {action[1]}。"
-            return f"（掛載）卸載失敗：{(result or {}).get('error', '未知錯誤')}"
+                return self._handle_mount(workspace, action[1])
+            return self._handle_unmount(workspace, action[1])
         except Exception as e:
             logger.warning(f"[WorkspaceMountHandler] failed: {e}", exc_info=True)
             return f"（掛載）執行失敗：{e}"
+
+    def _handle_list(self, workspace: UnifiedWorkspace) -> str:
+        """list: render available apps summary."""
+        apps = self._available(workspace)
+        if not apps:
+            return "（掛載）目前沒有可用應用。"
+        lines = [
+            f"{a.get('app_id')}（{a.get('label')}）：{','.join(a.get('commands', []))}"
+            for a in apps
+        ]
+        return "（掛載）可用應用：\n" + "\n".join(lines)
+
+    def _handle_mount(self, workspace: UnifiedWorkspace, app_id: str) -> str:
+        """mount: attach an app and report its commands."""
+        result = workspace.mount_app(app_id)
+        if isinstance(result, dict) and result.get("ok"):
+            cmds = ",".join(result.get("commands", []))
+            return (
+                f"（掛載）已掛載 {result.get('app_id')}（{result.get('label')}），"
+                f"可用指令：{cmds}。可 open 開啟會話操作。"
+            )
+        return f"（掛載）掛載失敗：{(result or {}).get('error', '未知錯誤')}"
+
+    def _handle_unmount(self, workspace: UnifiedWorkspace, app_id: str) -> str:
+        """unmount: detach an app and report the outcome."""
+        result = workspace.unmount_app(app_id)
+        if isinstance(result, dict) and result.get("ok"):
+            return f"（掛載）已卸載 {app_id}。"
+        return f"（掛載）卸載失敗：{(result or {}).get('error', '未知錯誤')}"
 
     def _get_workspace(self) -> Optional[UnifiedWorkspace]:
         try:
@@ -154,17 +166,14 @@ class WorkspaceMountHandler:
     # an explanation (配置文件在哪，怎麼掛載shell), never an action.
     _INFO_VETO = ("在哪", "是什麼", "是什么意思", "怎麼", "怎么", "如何")
 
-    def _parse_action(self, text: str) -> Optional[tuple]:
-        t = (text or "").strip()
-        # Negated actions never act (不要卸載shell).
-        if re.search(r"(不要|不用|別|不想|禁止).{0,4}(卸載|卸载|掛載|挂载|掛上|配置|組裝|拼裝)", t):
-            return None
+    def _has_veto(self, s: str) -> bool:
+        """Info-seeking markers veto action interpretation."""
+        return any(w in s for w in self._INFO_VETO)
 
-        def _has_veto(s: str) -> bool:
-            return any(w in s for w in self._INFO_VETO)
-
+    def _parse_configure_action(self, t: str) -> Optional[tuple]:
+        """configure/compose intent → ("configure", target); None if not this action."""
         if re.search(r"(配置|組裝|拼裝|configure|compose)", t, re.IGNORECASE):
-            if not _has_veto(t):
+            if not self._has_veto(t):
                 target = re.sub(
                     r"(配置|組裝|拼裝|配一個|configure|compose|一個|一個新的|新的|代理|agent|應用|应用|幫我|帮我|請|请|給我|给我)",
                     "",
@@ -172,17 +181,10 @@ class WorkspaceMountHandler:
                     flags=re.IGNORECASE,
                 ).strip(" 的了，,：:、")
                 return ("configure", target or t)
-        if re.search(
-            r"(代理狀態|代理健康|代理正常|會話狀態|会话状态|會話開著|会话开着"
-            r"|agent status|agent health)",
-            t,
-            re.IGNORECASE,
-        ):
-            return ("inspect", "")
-        if re.search(r"(有哪些|列出|可用|查看).{0,4}(應用|应用|app)", t, re.IGNORECASE):
-            return ("list", "")
-        if _has_veto(t):
-            return None
+        return None
+
+    def _parse_mount_unmount(self, t: str) -> Optional[tuple]:
+        """mount/unmount intent with kind extraction; None when no kind."""
         want_unmount = any(k in t for k in _UNMOUNT_RES)
         m = re.search(r"(shell|files|終端|命令行|命令列|終端機|文件|檔案|文件操作)", t)
         kind = m.group(1) if m else ""
@@ -196,3 +198,25 @@ class WorkspaceMountHandler:
         if not kind:
             return None
         return ("mount", kind)
+
+    def _parse_action(self, text: str) -> Optional[tuple]:
+        t = (text or "").strip()
+        # Negated actions never act (不要卸載shell).
+        if re.search(r"(不要|不用|別|不想|禁止).{0,4}(卸載|卸载|掛載|挂载|掛上|配置|組裝|拼裝)", t):
+            return None
+
+        configured = self._parse_configure_action(t)
+        if configured is not None:
+            return configured
+        if re.search(
+            r"(代理狀態|代理健康|代理正常|會話狀態|会话状态|會話開著|会话开着"
+            r"|agent status|agent health)",
+            t,
+            re.IGNORECASE,
+        ):
+            return ("inspect", "")
+        if re.search(r"(有哪些|列出|可用|查看).{0,4}(應用|应用|app)", t, re.IGNORECASE):
+            return ("list", "")
+        if self._has_veto(t):
+            return None
+        return self._parse_mount_unmount(t)
