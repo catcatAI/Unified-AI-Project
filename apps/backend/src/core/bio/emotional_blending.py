@@ -291,8 +291,8 @@ class EmotionalBlendingSystem:
                 logger.error("Emotion blending update loop error: %s", e, exc_info=True)
                 await asyncio.sleep(loop_sleep("emotion_update", 1.0))
 
-    async def _update_emotion(self) -> None:
-        """Update current emotion toward target or baseline"""
+    def _move_toward_target(self) -> None:
+        """Move toward target emotion (clear on reach) or drift to baseline."""
         if self.target_emotion:
             # Move toward target emotion
             self.current_emotion = self._interpolate_emotions(
@@ -308,7 +308,8 @@ class EmotionalBlendingSystem:
                 self.current_emotion, self.baseline_emotion, self.transition_speed * 0.3
             )
 
-        # Apply influences
+    def _dispatch_influences(self) -> None:
+        """Apply influences by source type (physiological/cognitive/hormonal)."""
         for influence in self.influences:
             if influence.source == "physiological":
                 self._apply_physiological_influence(influence)
@@ -317,12 +318,8 @@ class EmotionalBlendingSystem:
             elif influence.source == "hormonal":
                 self._apply_hormonal_influence(influence)
 
-        # Record history
-        self.emotion_history.append(copy.deepcopy(self.current_emotion))
-        if len(self.emotion_history) > self.history_limit:
-            self.emotion_history.pop(0)
-
-        # Notify callbacks
+    def _notify_emotion_change(self) -> None:
+        """Notify callbacks when emotion moved > 0.05 since prior history entry."""
         if len(self.emotion_history) > 1:
             prev = self.emotion_history[-2]
             curr = self.current_emotion
@@ -334,6 +331,21 @@ class EmotionalBlendingSystem:
                         Exception
                     ) as e:  # broad exception acceptable: emotion change callbacks should not break updates
                         logger.error(f"Error in {__name__}: {e}", exc_info=True)
+
+    async def _update_emotion(self) -> None:
+        """Update current emotion toward target or baseline"""
+        self._move_toward_target()
+
+        # Apply influences
+        self._dispatch_influences()
+
+        # Record history
+        self.emotion_history.append(copy.deepcopy(self.current_emotion))
+        if len(self.emotion_history) > self.history_limit:
+            self.emotion_history.pop(0)
+
+        # Notify callbacks
+        self._notify_emotion_change()
 
     async def _decay_influences(self) -> None:
         """Decay influence strengths over time"""
@@ -895,63 +907,84 @@ class MultidimensionalStateMatrix:
 
         return influences
 
+    def _influence_alpha(
+        self, source_name: str, target_dim: StateDimension, amount: float
+    ) -> None:
+        """gamma → alpha: positive emotions raise energy, cut rest need."""
+        if source_name == "gamma":  # Emotional affects physiological
+            # Positive emotions increase energy, reduce rest need
+            happiness = self.gamma.values.get("happiness", 0.5)
+            target_dim.values["energy"] = min(
+                1.0, target_dim.values["energy"] + amount * happiness * 0.1
+            )
+            target_dim.values["rest_need"] = max(
+                0.0, target_dim.values["rest_need"] - amount * happiness * 0.1
+            )
+
+    def _influence_beta(
+        self, source_name: str, target_dim: StateDimension, amount: float
+    ) -> None:
+        """alpha → beta: energy raises focus; gamma: arousal lowers focus."""
+        if source_name == "alpha":  # Physiological affects cognitive
+            # High energy increases focus
+            energy = self.alpha.values.get("energy", 0.5)
+            target_dim.values["focus"] = min(
+                1.0, target_dim.values["focus"] + amount * energy * 0.1
+            )
+        if source_name == "gamma":  # Emotional affects cognitive
+            # High arousal emotions reduce focus
+            arousal_emotions = (
+                self.gamma.values.get("anger", 0)
+                + self.gamma.values.get("fear", 0)
+                + self.gamma.values.get("surprise", 0)
+            ) / 3
+            target_dim.values["focus"] = max(
+                0.0, target_dim.values["focus"] - amount * arousal_emotions * 0.15
+            )
+
+    def _influence_gamma(
+        self, source_name: str, target_dim: StateDimension, amount: float
+    ) -> None:
+        """alpha → gamma: arousal raises all emotions; delta: bond raises happiness."""
+        if source_name == "alpha":  # Physiological affects emotional
+            # High arousal increases emotional intensity
+            arousal = self.alpha.values.get("arousal", 0.5)
+            for emotion in ["happiness", "sadness", "anger", "fear"]:
+                target_dim.values[emotion] = min(
+                    1.0, target_dim.values[emotion] + amount * arousal * 0.05
+                )
+        if source_name == "delta":  # Social affects emotional
+            # Bond increases happiness
+            bond = self.delta.values.get("bond", 0.5)
+            target_dim.values["happiness"] = min(
+                1.0, target_dim.values["happiness"] + amount * bond * 0.1
+            )
+
+    def _influence_delta(
+        self, source_name: str, target_dim: StateDimension, amount: float
+    ) -> None:
+        """gamma → delta: happiness raises bond + presence."""
+        if source_name == "gamma":  # Emotional affects social
+            # Happiness increases bond
+            happiness = self.gamma.values.get("happiness", 0.5)
+            target_dim.values["bond"] = min(
+                1.0, target_dim.values["bond"] + amount * happiness * 0.1
+            )
+            target_dim.values["presence"] = min(
+                1.0, target_dim.values["presence"] + amount * happiness * 0.08
+            )
+
     def _apply_influence(self, target_dim: StateDimension, source_name: str, amount: float) -> None:
         """应用维度间影响 / Apply influence to target dimension"""
         # Dimension-specific influence rules
         if target_dim.name == "alpha":  # Physiological
-            if source_name == "gamma":  # Emotional affects physiological
-                # Positive emotions increase energy, reduce rest need
-                happiness = self.gamma.values.get("happiness", 0.5)
-                target_dim.values["energy"] = min(
-                    1.0, target_dim.values["energy"] + amount * happiness * 0.1
-                )
-                target_dim.values["rest_need"] = max(
-                    0.0, target_dim.values["rest_need"] - amount * happiness * 0.1
-                )
-
+            self._influence_alpha(source_name, target_dim, amount)
         elif target_dim.name == "beta":  # Cognitive
-            if source_name == "alpha":  # Physiological affects cognitive
-                # High energy increases focus
-                energy = self.alpha.values.get("energy", 0.5)
-                target_dim.values["focus"] = min(
-                    1.0, target_dim.values["focus"] + amount * energy * 0.1
-                )
-            if source_name == "gamma":  # Emotional affects cognitive
-                # High arousal emotions reduce focus
-                arousal_emotions = (
-                    self.gamma.values.get("anger", 0)
-                    + self.gamma.values.get("fear", 0)
-                    + self.gamma.values.get("surprise", 0)
-                ) / 3
-                target_dim.values["focus"] = max(
-                    0.0, target_dim.values["focus"] - amount * arousal_emotions * 0.15
-                )
-
+            self._influence_beta(source_name, target_dim, amount)
         elif target_dim.name == "gamma":  # Emotional
-            if source_name == "alpha":  # Physiological affects emotional
-                # High arousal increases emotional intensity
-                arousal = self.alpha.values.get("arousal", 0.5)
-                for emotion in ["happiness", "sadness", "anger", "fear"]:
-                    target_dim.values[emotion] = min(
-                        1.0, target_dim.values[emotion] + amount * arousal * 0.05
-                    )
-            if source_name == "delta":  # Social affects emotional
-                # Bond increases happiness
-                bond = self.delta.values.get("bond", 0.5)
-                target_dim.values["happiness"] = min(
-                    1.0, target_dim.values["happiness"] + amount * bond * 0.1
-                )
-
+            self._influence_gamma(source_name, target_dim, amount)
         elif target_dim.name == "delta":  # Social
-            if source_name == "gamma":  # Emotional affects social
-                # Happiness increases bond
-                happiness = self.gamma.values.get("happiness", 0.5)
-                target_dim.values["bond"] = min(
-                    1.0, target_dim.values["bond"] + amount * happiness * 0.1
-                )
-                target_dim.values["presence"] = min(
-                    1.0, target_dim.values["presence"] + amount * happiness * 0.08
-                )
+            self._influence_delta(source_name, target_dim, amount)
 
     def get_dimension_state(self, dimension: str) -> Dict[str, float]:
         """
