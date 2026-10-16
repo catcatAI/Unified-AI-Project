@@ -121,6 +121,38 @@ class LlamaCppBackend(BaseLLMBackend):
                 text="", backend="llama.cpp", model=self.model or "unknown", error=safe_error(e)
             )
 
+    async def _process_sse_chunk(self, raw: bytes, chunks: list) -> tuple:
+        """Process one SSE chunk. Returns (piece, truncated_flag)."""
+        import json as _json
+
+        try:
+            line = raw.decode("utf-8", errors="replace").strip()
+        except Exception:
+            logger.debug("llamacpp SSE chunk decode failed", exc_info=True)
+            return None, False
+        if not line.startswith("data:"):
+            return None, False
+        data = line[5:].strip()
+        if data == "[DONE]":
+            return None, False
+        try:
+            obj = _json.loads(data)
+            delta = (obj.get("choices") or [{}])[0].get("delta", {})
+            piece = delta.get("content") or ""
+        except Exception:
+            logger.warning(
+                "llamacpp SSE malformed JSON dropped (data[:120]=%r)", data[:120]
+            )
+            return None, False
+        if not piece:
+            return None, False
+        truncated = False
+        if len(chunks) < 4096:
+            chunks.append(piece)
+        else:
+            truncated = True
+        return piece, truncated
+
     async def generate_stream(self, prompt: str, stream_callback, **kwargs) -> LLMResponse:
         """Streaming generate: POST stream:true, invoke callback per delta.
 
@@ -129,7 +161,6 @@ class LlamaCppBackend(BaseLLMBackend):
         stall timeout 30s; the caller's total timeout still bounds us.
         """
         import inspect as _inspect
-        import json as _json
 
         start_time = time.time()
         messages = kwargs.get("messages", [{"role": "user", "content": prompt}])
@@ -150,13 +181,10 @@ class LlamaCppBackend(BaseLLMBackend):
             except Exception as exc:
                 logger.debug("stream_callback failed: %s", exc)
 
-        # Defensive caps (audit 2026-10-10): total wall so a wedged server
-        # can't hold our worker forever; chunk cap so a runaway stream can't
-        # grow memory without bound (max_tokens normally bounds this anyway).
         chunks: list = []
-        truncated = False
         try:
             session = self._get_session()
+            truncated = False
             async with session.post(
                 f"{self.base_url}/v1/chat/completions",
                 json=payload,
@@ -171,32 +199,10 @@ class LlamaCppBackend(BaseLLMBackend):
                         error=f"HTTP {response.status}: {text[:200]}",
                     )
                 async for raw in response.content:
-                    try:
-                        line = raw.decode("utf-8", errors="replace").strip()
-                    except Exception:
-                        # errors="replace" 后 decode 基本不会抛，但仍禁止静默丢行
-                        logger.debug("llamacpp SSE chunk decode failed", exc_info=True)
-                        continue
-                    if not line.startswith("data:"):
-                        continue
-                    data = line[5:].strip()
-                    if data == "[DONE]":
-                        break
-                    try:
-                        obj = _json.loads(data)
-                        delta = (obj.get("choices") or [{}])[0].get("delta", {})
-                        piece = delta.get("content") or ""
-                    except Exception:
-                        # 后端发了畸形 SSE JSON = 响应内容会缺一块；必须留痕
-                        logger.warning(
-                            "llamacpp SSE malformed JSON dropped (data[:120]=%r)", data[:120]
-                        )
-                        continue
+                    piece, chunk_truncated = await self._process_sse_chunk(raw, chunks)
+                    if chunk_truncated:
+                        truncated = True
                     if piece:
-                        if len(chunks) < 4096:
-                            chunks.append(piece)
-                        else:
-                            truncated = True
                         await _emit(piece)
             text = "".join(chunks)
             if truncated:
