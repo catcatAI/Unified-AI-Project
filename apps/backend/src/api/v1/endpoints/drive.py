@@ -133,73 +133,69 @@ class DriveDeduplication:
 class DocumentParser:
     """解析常見文件格式為純文字"""
 
+    _TEXT_SUFFIXES = frozenset({".txt", ".md", ".py", ".js", ".ts", ".json", ".yaml", ".yml", ".html", ".css", ".xml"})
+
+    def _parse_text(self, path: Path, suffix: str) -> str:
+        """Parse plain-text-like files."""
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                return f.read()
+        except Exception:
+            logger.warning(f"Failed to read text file: {path}", exc_info=True)
+            return ""
+
+    def _parse_docx(self, path: Path) -> str:
+        """Parse .docx files."""
+        try:
+            from docx import Document as DocxDocument
+
+            doc = DocxDocument(str(path))
+            return "\n".join(p.text for p in doc.paragraphs)
+        except ImportError:
+            return f"[Binary file: {path.name}]"
+        except Exception:
+            logger.warning(f"Failed to parse docx: {path}", exc_info=True)
+            return ""
+
+    def _parse_xlsx(self, path: Path) -> str:
+        """Parse .xlsx/.xls files."""
+        try:
+            import openpyxl  # type: ignore[import-untyped]
+
+            wb = openpyxl.load_workbook(path, read_only=True)
+            try:
+                lines = []
+                for sheet in wb.sheetnames:
+                    ws = wb[sheet]
+                    for row in ws.iter_rows(values_only=True):
+                        line = " | ".join(str(c) if c is not None else "" for c in row)
+                        if line.strip():
+                            lines.append(line)
+                return "\n".join(lines)
+            finally:
+                wb.close()
+        except ImportError:
+            return f"[Spreadsheet: {path.name}]"
+        except Exception:
+            logger.warning(f"Failed to parse spreadsheet: {path}", exc_info=True)
+            return ""
+
     def parse_document(self, file_path: str) -> str:
         """Parse the input data."""
         path = Path(file_path)
         suffix = path.suffix.lower()
 
         if suffix == ".txt":
-            try:
-                with open(path, "r", encoding="utf-8") as f:
-                    return f.read()
-            except Exception:
-                logger.warning(f"Failed to read text file: {path}", exc_info=True)
-                return ""
-
-        if suffix in (
-            ".md",
-            ".py",
-            ".js",
-            ".ts",
-            ".json",
-            ".yaml",
-            ".yml",
-            ".html",
-            ".css",
-            ".xml",
-        ):
-            try:
-                with open(path, "r", encoding="utf-8") as f:
-                    return f.read()
-            except Exception:
-                logger.warning(f"Failed to read source file: {path}", exc_info=True)
-                return ""
-
-        if suffix in (".docx",):
-            try:
-                from docx import Document as DocxDocument
-
-                doc = DocxDocument(str(path))
-                return "\n".join(p.text for p in doc.paragraphs)
-            except ImportError:
-                return f"[Binary file: {path.name}]"
-            except Exception:
-                logger.warning(f"Failed to parse docx: {path}", exc_info=True)
-                return ""
-
+            return self._parse_text(path, suffix)
+        if suffix in self._TEXT_SUFFIXES:
+            return self._parse_text(path, suffix)
+        if suffix == ".docx":
+            return self._parse_docx(path)
         if suffix in (".xlsx", ".xls"):
-            try:
-                import openpyxl  # type: ignore[import-untyped]
-
-                wb = openpyxl.load_workbook(path, read_only=True)
-                try:
-                    lines = []
-                    for sheet in wb.sheetnames:
-                        ws = wb[sheet]
-                        for row in ws.iter_rows(values_only=True):
-                            line = " | ".join(str(c) if c is not None else "" for c in row)
-                            if line.strip():
-                                lines.append(line)
-                    return "\n".join(lines)
-                finally:
-                    wb.close()
-            except ImportError:
-                return f"[Spreadsheet: {path.name}]"
-            except Exception:
-                logger.warning(f"Failed to parse spreadsheet: {path}", exc_info=True)
-                return ""
+            return self._parse_xlsx(path)
 
         return f"[File: {path.name} ({suffix})]"
+
 
 
 @router.get("/status")
