@@ -182,6 +182,25 @@ class KnowledgePipeline:
             logger.debug("_try_grounded_knowledge: %s", e)
         return None
 
+    @staticmethod
+    def _format_dict_entry(key: str, entry) -> Optional[str]:
+        """Format a single dictionary entry for display."""
+        if not entry:
+            return None
+        surfaces = getattr(entry, "surface_forms", {})
+        if isinstance(surfaces, dict) and surfaces:
+            zh = surfaces.get("zh", "")
+            en = surfaces.get("en", "")
+            if zh and en:
+                return f"{zh} = {en}"
+            if zh:
+                return str(zh)
+            if en:
+                return str(en)
+        elif entry.contexts:
+            return f"{key}: {entry.contexts[0]}"
+        return None
+
     async def _try_dictionary_lookup(self, text: str, ctx: Dict) -> Optional[Dict]:
         """Query the ED3N DictionaryLayer (242k+ entries) for translations/definitions."""
         try:
@@ -204,20 +223,9 @@ class KnowledgePipeline:
                 entries = engine.dictionary.lookup(top_keys)
                 parts = []
                 for key, entry in entries.items():
-                    if not entry:
-                        continue
-                    surfaces = getattr(entry, "surface_forms", {})
-                    if isinstance(surfaces, dict) and surfaces:
-                        zh = surfaces.get("zh", "")
-                        en = surfaces.get("en", "")
-                        if zh and en:
-                            parts.append(f"{zh} = {en}")
-                        elif zh:
-                            parts.append(zh)
-                        elif en:
-                            parts.append(en)
-                    elif entry.contexts:
-                        parts.append(f"{key}: {entry.contexts[0]}")
+                    part = self._format_dict_entry(key, entry)
+                    if part:
+                        parts.append(part)
                 if parts:
                     return {
                         "answer": "\n".join(parts[:3]),
