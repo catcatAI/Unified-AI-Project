@@ -1007,6 +1007,56 @@ class DigitalLifeIntegrator:
             # broad except acceptable: dynamic params update is non-critical, graceful degradation
             logger.error(f"[DigitalLife] Error updating dynamic parameters: {e}", exc_info=True)
 
+    def _apply_intent_influence(
+        self, dim_name: str, ix: float, iy: float, iz: float, state_snapshot: Dict[str, Any]
+    ) -> None:
+        """3D intent 分量依維度寫入對應 state-matrix slot。
+
+        C³ 4.0: Map each 3D intent component to a distinct parameter per dimension
+        (previously collapsed to single scalar magnitude → lost directional info).
+        定義（設計者選定的映射，非發現）：intent 向量分量 ix/iy/iz
+        依維度映射到不同的 state-matrix slot（如 gamma: ix→happiness）。
+        這些 slot 名稱是模擬狀態的座標軸命名；本映射是設計選擇，
+        不宣稱 intent 分量「就是」快樂或好奇——只是把方向性資訊
+        寫進對應的數值槽位，供下游 heuristic 讀取。
+        """
+        dim_state = state_snapshot.get(dim_name, {})
+        if dim_name == "alpha":
+            self.state_matrix.update_alpha(
+                energy=max(0.0, min(1.0, dim_state.get("energy", 0.5) + ix * 0.1)),
+                comfort=max(0.0, min(1.0, dim_state.get("comfort", 0.5) + iy * 0.1)),
+                arousal=max(0.0, min(1.0, dim_state.get("arousal", 0.5) + iz * 0.1)),
+            )
+        elif dim_name == "beta":
+            self.state_matrix.update_beta(
+                focus=max(0.0, min(1.0, dim_state.get("focus", 0.5) + ix * 0.1)),
+                curiosity=max(0.0, min(1.0, dim_state.get("curiosity", 0.5) + iy * 0.1)),
+                learning=max(0.0, min(1.0, dim_state.get("learning", 0.5) + iz * 0.1)),
+            )
+        elif dim_name == "gamma":
+            self.state_matrix.update_gamma(
+                happiness=max(0.0, min(1.0, dim_state.get("happiness", 0.5) + ix * 0.1)),
+                trust=max(0.0, min(1.0, dim_state.get("trust", 0.5) + iy * 0.1)),
+                anticipation=max(0.0, min(1.0, dim_state.get("anticipation", 0.5) + iz * 0.1)),
+            )
+        elif dim_name == "delta":
+            self.state_matrix.update_delta(
+                bond=max(0.0, min(1.0, dim_state.get("bond", 0.5) + ix * 0.1)),
+                trust=max(0.0, min(1.0, dim_state.get("trust", 0.5) + iy * 0.1)),
+                attention=max(0.0, min(1.0, dim_state.get("attention", 0.5) + iz * 0.1)),
+            )
+
+    def _apply_intent_influences(self, state_snapshot: Dict[str, Any]) -> bool:
+        """Apply intent influences for all four dims; True if any applied."""
+        intent_applied = False
+        for dim_name in ("alpha", "beta", "gamma", "delta"):
+            influence = self.intent_manager.get_intent_influence(dim_name)
+            ix, iy, iz = influence  # unpack 3D intent vector components
+            if ix * ix + iy * iy + iz * iz > 0.0001:  # squared magnitude > 0.01²
+                self._apply_intent_influence(dim_name, ix, iy, iz, state_snapshot)
+                intent_applied = True
+        return intent_applied
+
     async def _update_intent_state(self) -> None:
         """
         Update intent state periodically.
@@ -1032,52 +1082,7 @@ class DigitalLifeIntegrator:
             self.intent_manager.update_intents(delta_time=3.0)
 
             # 5. Apply intent influences to state matrix
-            intent_applied = False
-            for dim_name in ("alpha", "beta", "gamma", "delta"):
-                influence = self.intent_manager.get_intent_influence(dim_name)
-                ix, iy, iz = influence  # unpack 3D intent vector components
-                if ix * ix + iy * iy + iz * iz > 0.0001:  # squared magnitude > 0.01²
-                    # C³ 4.0: Map each 3D intent component to a distinct parameter per dimension
-                    # (previously collapsed to single scalar magnitude → lost directional info)
-                    # 定義（設計者選定的映射，非發現）：intent 向量分量 ix/iy/iz
-                    # 依維度映射到不同的 state-matrix slot（如 gamma: ix→happiness）。
-                    # 這些 slot 名稱是模擬狀態的座標軸命名；本映射是設計選擇，
-                    # 不宣稱 intent 分量「就是」快樂或好奇——只是把方向性資訊
-                    # 寫進對應的數值槽位，供下游 heuristic 讀取。
-                    dim_state = state_snapshot.get(dim_name, {})
-                    if dim_name == "alpha":
-                        self.state_matrix.update_alpha(
-                            energy=max(0.0, min(1.0, dim_state.get("energy", 0.5) + ix * 0.1)),
-                            comfort=max(0.0, min(1.0, dim_state.get("comfort", 0.5) + iy * 0.1)),
-                            arousal=max(0.0, min(1.0, dim_state.get("arousal", 0.5) + iz * 0.1)),
-                        )
-                    elif dim_name == "beta":
-                        self.state_matrix.update_beta(
-                            focus=max(0.0, min(1.0, dim_state.get("focus", 0.5) + ix * 0.1)),
-                            curiosity=max(
-                                0.0, min(1.0, dim_state.get("curiosity", 0.5) + iy * 0.1)
-                            ),
-                            learning=max(0.0, min(1.0, dim_state.get("learning", 0.5) + iz * 0.1)),
-                        )
-                    elif dim_name == "gamma":
-                        self.state_matrix.update_gamma(
-                            happiness=max(
-                                0.0, min(1.0, dim_state.get("happiness", 0.5) + ix * 0.1)
-                            ),
-                            trust=max(0.0, min(1.0, dim_state.get("trust", 0.5) + iy * 0.1)),
-                            anticipation=max(
-                                0.0, min(1.0, dim_state.get("anticipation", 0.5) + iz * 0.1)
-                            ),
-                        )
-                    elif dim_name == "delta":
-                        self.state_matrix.update_delta(
-                            bond=max(0.0, min(1.0, dim_state.get("bond", 0.5) + ix * 0.1)),
-                            trust=max(0.0, min(1.0, dim_state.get("trust", 0.5) + iy * 0.1)),
-                            attention=max(
-                                0.0, min(1.0, dim_state.get("attention", 0.5) + iz * 0.1)
-                            ),
-                        )
-                    intent_applied = True
+            intent_applied = self._apply_intent_influences(state_snapshot)
 
             if intent_applied and logger.isEnabledFor(logging.DEBUG):
                 logger.debug("🔗 [IntentModel] Applied intent influences to state matrix.")
