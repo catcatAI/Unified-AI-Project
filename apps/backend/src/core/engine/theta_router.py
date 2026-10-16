@@ -173,6 +173,92 @@ class ThetaRouter:
 
         return {}
 
+    def _validate_route_inputs(self, port_name: str, port: Any) -> Optional[RouteDecision]:
+        """Validate port and state adapter availability. Returns skip decision or None."""
+        if not port:
+            return RouteDecision(
+                action=RouteAction.SKIP,
+                port_name=port_name,
+                reasoning="Port not found",
+            )
+        if not self._state_adapter:
+            return RouteDecision(
+                action=RouteAction.SKIP,
+                port_name=port_name,
+                reasoning="StateMatrixAdapter not available",
+            )
+        return None
+
+    def _get_semantic_anchors(self) -> Dict[str, Any]:
+        """Extract semantic_anchors from state adapter (new API or legacy _sm)."""
+        semantic_anchors = getattr(self._state_adapter, "semantic_anchors", {})
+        if not semantic_anchors:
+            sm = getattr(self._state_adapter, "_sm", None)
+            if sm:
+                semantic_anchors = getattr(sm, "semantic_anchors", {})
+        return semantic_anchors
+
+    def _get_dimensions(self) -> Dict[str, Any]:
+        """Extract dimensions from state adapter (new API or legacy _sm)."""
+        dimensions = getattr(self._state_adapter, "dimensions", {})
+        if not dimensions:
+            sm = getattr(self._state_adapter, "_sm", None)
+            if sm:
+                dimensions = getattr(sm, "dimensions", {})
+        return dimensions
+
+    def _update_theta(
+        self, novelty: float, active_dims: int, dimensions: Dict[str, Any]
+    ) -> None:
+        """Update theta values via state adapter's theta proxy."""
+        theta_proxy = getattr(self._state_adapter, "theta", None)
+        if not theta_proxy:
+            sm = getattr(self._state_adapter, "_sm", None)
+            if sm:
+                theta_proxy = getattr(sm, "theta", None)
+        if theta_proxy and hasattr(theta_proxy, "update"):
+            theta_proxy.update(
+                novelty=novelty,
+                complexity=active_dims / max(1, len(dimensions)),
+            )
+
+    def _compute_decision(
+        self,
+        port_name: str,
+        max_sim: float,
+        best_axis: Optional[str],
+        novelty: float,
+        active_dims: int,
+        dimensions: Dict[str, Any],
+    ) -> RouteDecision:
+        """Compute the final route decision based on similarity scores."""
+        if max_sim >= self.DEFAULT_THRESHOLD and best_axis:
+            return RouteDecision(
+                action=RouteAction.BIND,
+                port_name=port_name,
+                target_axis=best_axis,
+                confidence=max_sim,
+                reasoning=f"相似度 {max_sim:.3f} >= 閾值 {self.DEFAULT_THRESHOLD}，綁定到 {best_axis}",
+            )
+
+        if max_sim < self.CREATE_THRESHOLD and self.theta_values.get("creation_urge", 0) > 0.6:
+            proposed = f"axis_{port_name}_{len(dimensions) + 1}"
+            return RouteDecision(
+                action=RouteAction.CREATE_AXIS,
+                port_name=port_name,
+                proposed_name=proposed,
+                confidence=1.0 - max_sim,
+                reasoning=f"相似度過低({max_sim:.3f})，creation_urge={self.theta_values.get('creation_urge', 0):.2f}，建議創建新軸",
+            )
+
+        return RouteDecision(
+            action=RouteAction.BIND,
+            port_name=port_name,
+            target_axis=best_axis,
+            confidence=max_sim,
+            reasoning=f"中等相似度 {max_sim:.3f}，綁定到現有軸 {best_axis}",
+        )
+
     def resolve_route(self, port_name: str) -> RouteDecision:
         """
         為單個端口解析路由決策
@@ -190,28 +276,11 @@ class ThetaRouter:
             RouteDecision
         """
         port = self._port_registry.get_port(port_name) if self._port_registry else None
-        if not port:
-            return RouteDecision(
-                action=RouteAction.SKIP,
-                port_name=port_name,
-                reasoning="Port not found",
-            )
+        skip = self._validate_route_inputs(port_name, port)
+        if skip:
+            return skip
 
-        # Guard: StateMatrixAdapter may not implement the full protocol
-        if not self._state_adapter:
-            return RouteDecision(
-                action=RouteAction.SKIP,
-                port_name=port_name,
-                reasoning="StateMatrixAdapter not available",
-            )
-
-        # Extract semantic_anchors from state adapter (new API or legacy _sm)
-        semantic_anchors = getattr(self._state_adapter, "semantic_anchors", {})
-        if not semantic_anchors:
-            # Fallback to legacy _MatrixAdapter._sm
-            sm = getattr(self._state_adapter, "_sm", None)
-            if sm:
-                semantic_anchors = getattr(sm, "semantic_anchors", {})
+        semantic_anchors = self._get_semantic_anchors()
         if not semantic_anchors:
             return RouteDecision(
                 action=RouteAction.SKIP,
@@ -244,56 +313,10 @@ class ThetaRouter:
         novelty = 1.0 - max_sim
         active_dims = sum(1 for v in axis_similarities.values() if v > self.DEFAULT_THRESHOLD)
 
-        # Update theta values via state adapter's theta proxy (new API or legacy)
-        theta_proxy = getattr(self._state_adapter, "theta", None)
-        if not theta_proxy:
-            # Fallback to legacy _MatrixAdapter._sm.theta
-            sm = getattr(self._state_adapter, "_sm", None)
-            if sm:
-                theta_proxy = getattr(sm, "theta", None)
+        dimensions = self._get_dimensions()
+        self._update_theta(novelty, active_dims, dimensions)
 
-        if theta_proxy and hasattr(theta_proxy, "update"):
-            dimensions = getattr(self._state_adapter, "dimensions", {})
-            if not dimensions:
-                sm = getattr(self._state_adapter, "_sm", None)
-                if sm:
-                    dimensions = getattr(sm, "dimensions", {})
-            theta_proxy.update(
-                novelty=novelty,
-                complexity=active_dims / max(1, len(dimensions)),
-            )
-
-        if max_sim >= self.DEFAULT_THRESHOLD and best_axis:
-            return RouteDecision(
-                action=RouteAction.BIND,
-                port_name=port_name,
-                target_axis=best_axis,
-                confidence=max_sim,
-                reasoning=f"相似度 {max_sim:.3f} >= 閾值 {self.DEFAULT_THRESHOLD}，綁定到 {best_axis}",
-            )
-
-        if max_sim < self.CREATE_THRESHOLD and self.theta_values.get("creation_urge", 0) > 0.6:
-            dimensions = getattr(self._state_adapter, "dimensions", {})
-            if not dimensions:
-                sm = getattr(self._state_adapter, "_sm", None)
-                if sm:
-                    dimensions = getattr(sm, "dimensions", {})
-            proposed = f"axis_{port_name}_{len(dimensions) + 1}"
-            return RouteDecision(
-                action=RouteAction.CREATE_AXIS,
-                port_name=port_name,
-                proposed_name=proposed,
-                confidence=1.0 - max_sim,
-                reasoning=f"相似度過低({max_sim:.3f})，creation_urge={self.theta_values.get('creation_urge', 0):.2f}，建議創建新軸",
-            )
-
-        return RouteDecision(
-            action=RouteAction.BIND,
-            port_name=port_name,
-            target_axis=best_axis,
-            confidence=max_sim,
-            reasoning=f"中等相似度 {max_sim:.3f}，綁定到現有軸 {best_axis}",
-        )
+        return self._compute_decision(port_name, max_sim, best_axis, novelty, active_dims, dimensions)
 
     def _binding_api_ready(self) -> bool:
         """綁定系 registry API 是否就緒（R20 生存守衛）。
