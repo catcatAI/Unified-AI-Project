@@ -602,6 +602,63 @@ async def _handle_multimodal_decode(websocket: WebSocket, data: dict) -> None:
         )
 
 
+async def _route_ws_message(websocket: WebSocket, data: Dict[str, Any], session_id: str) -> None:
+    """Route one inbound WebSocket message by type."""
+    msg_type = data.get("type")
+
+    if msg_type in ("heartbeat", "ping"):
+        await _handle_heartbeat(websocket, data)
+
+    elif msg_type == "state_update":
+        await manager.broadcast(
+            {
+                "type": "state_update",
+                "data": data.get("data", {}),
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
+
+    elif msg_type == "tactile_event":
+        await _handle_tactile_event(websocket, data)
+
+    elif msg_type == "chat_message":
+        await _handle_chat_message(websocket, data, session_id)
+
+    elif msg_type == "multimodal_encode":
+        await _handle_multimodal_encode(websocket, data)
+
+    elif msg_type == "multimodal_decode":
+        await _handle_multimodal_decode(websocket, data)
+
+    else:
+        await websocket.send_json(
+            {
+                "type": "echo",
+                "original": data,
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
+
+
+async def _cleanup_ws_session(websocket: WebSocket, client_id: str, session_id: str) -> None:
+    """Unregister the client and drop ws->client / session-history mappings."""
+    task = asyncio.create_task(manager.unregister(client_id))
+    task.add_done_callback(
+        lambda t: (
+            logger.debug(f"Final unregister failed: {t.exception()}")
+            if not t.cancelled() and t.exception()
+            else None
+        )
+    )
+    # Symmetric cleanup with disconnect(): drop our ws->client mapping here too,
+    # otherwise _sessions_by_ws grows per connection. Safe unconditionally: this
+    # frame still references our websocket object, so its id() cannot have been
+    # reused by another live connection.
+    manager._sessions_by_ws.pop(id(websocket), None)
+    async with _session_history_lock:
+        _session_history.pop(session_id, None)
+
+
 async def websocket_handler(websocket: WebSocket) -> None:
     """
     WebSocket endpoint handler for real-time communication with desktop app.
@@ -627,41 +684,7 @@ async def websocket_handler(websocket: WebSocket) -> None:
             )
 
             await manager._sm.update_heartbeat(client_id)
-
-            msg_type = data.get("type")
-
-            if msg_type in ("heartbeat", "ping"):
-                await _handle_heartbeat(websocket, data)
-
-            elif msg_type == "state_update":
-                await manager.broadcast(
-                    {
-                        "type": "state_update",
-                        "data": data.get("data", {}),
-                        "timestamp": datetime.now().isoformat(),
-                    }
-                )
-
-            elif msg_type == "tactile_event":
-                await _handle_tactile_event(websocket, data)
-
-            elif msg_type == "chat_message":
-                await _handle_chat_message(websocket, data, session_id)
-
-            elif msg_type == "multimodal_encode":
-                await _handle_multimodal_encode(websocket, data)
-
-            elif msg_type == "multimodal_decode":
-                await _handle_multimodal_decode(websocket, data)
-
-            else:
-                await websocket.send_json(
-                    {
-                        "type": "echo",
-                        "original": data,
-                        "timestamp": datetime.now().isoformat(),
-                    }
-                )
+            await _route_ws_message(websocket, data, session_id)
 
         except asyncio.TimeoutError:
             logger.warning(f"[WebSocket] Heartbeat timeout: {client_id}", exc_info=True)
@@ -679,18 +702,4 @@ async def websocket_handler(websocket: WebSocket) -> None:
             logger.error(f"[WebSocket] Error for {client_id}: {e}", exc_info=True)
             continue
 
-    task = asyncio.create_task(manager.unregister(client_id))
-    task.add_done_callback(
-        lambda t: (
-            logger.debug(f"Final unregister failed: {t.exception()}")
-            if not t.cancelled() and t.exception()
-            else None
-        )
-    )
-    # Symmetric cleanup with disconnect(): drop our ws->client mapping here too,
-    # otherwise _sessions_by_ws grows per connection. Safe unconditionally: this
-    # frame still references our websocket object, so its id() cannot have been
-    # reused by another live connection.
-    manager._sessions_by_ws.pop(id(websocket), None)
-    async with _session_history_lock:
-        _session_history.pop(session_id, None)
+    await _cleanup_ws_session(websocket, client_id, session_id)
