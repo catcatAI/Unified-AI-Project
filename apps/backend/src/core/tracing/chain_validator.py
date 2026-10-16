@@ -35,10 +35,66 @@ class ChainValidator:
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
 
+    @staticmethod
+    def _check_layer_transition(node: Any, parent: Any, warnings: List[str]) -> None:
+        """Layer monotonicity: backward transitions warn, TypeError tolerated."""
+        child_layer = getattr(node, "layer", None)
+        parent_layer = getattr(parent, "layer", None)
+        if (
+            child_layer is not None
+            and parent_layer is not None
+            and hasattr(child_layer, "value")
+            and hasattr(parent_layer, "value")
+        ):
+            try:
+                if child_layer.value < parent_layer.value:
+                    warnings.append(f"backward layer transition: {parent_layer} -> {child_layer}")
+            except TypeError:
+                logger.debug(
+                    "Layer comparison: incompatible types %s vs %s",
+                    type(child_layer).__name__,
+                    type(parent_layer).__name__,
+                    exc_info=True,
+                )
+
+    @staticmethod
+    def _check_links(
+        node: Any, chain: Any, node_map: Dict[Any, Any], errors: List[str], warnings: List[str]
+    ) -> None:
+        """Link integrity: broken parent refs, root parenting, orphans."""
+        if node.parent_id and node.parent_id not in node_map:
+            errors.append(f"Broken link: {node.id} -> {node.parent_id}")
+        if node.id == chain.root_id and node.parent_id:
+            errors.append(f"root node {node.id} has parent")
+        if node.id != chain.root_id and not node.parent_id:
+            warnings.append(f"orphaned: {node.id}")
+            errors.append(f"orphaned: {node.id}")
+
+    def _check_parent_temporal(
+        self, node: Any, node_map: Dict[Any, Any], errors: List[str], warnings: List[str]
+    ) -> None:
+        """Parent exists → timestamp monotonicity + layer transition check."""
+        if node.parent_id and node.parent_id in node_map:
+            parent = node_map[node.parent_id]
+            if node.timestamp < parent.timestamp:
+                errors.append(f"timestamp violation: {node.id} before {node.parent_id}")
+            self._check_layer_transition(node, parent, warnings)
+
+    def _validate_node(
+        self,
+        node: Any,
+        chain: Any,
+        node_map: Dict[Any, Any],
+        errors: List[str],
+        warnings: List[str],
+    ) -> None:
+        self._check_links(node, chain, node_map, errors, warnings)
+        self._check_parent_temporal(node, node_map, errors, warnings)
+
     def validate_chain(self, chain: Any) -> ValidationResult:
         """Validate a causal chain's integrity."""
-        errors = []
-        warnings = []
+        errors: List[str] = []
+        warnings: List[str] = []
 
         if not chain.root_id:
             errors.append("Chain has no root_id")
@@ -51,37 +107,7 @@ class ChainValidator:
         node_map = {n.id: n for n in node_list}
 
         for node in node_list:
-            if node.parent_id and node.parent_id not in node_map:
-                errors.append(f"Broken link: {node.id} -> {node.parent_id}")
-            if node.id == chain.root_id and node.parent_id:
-                errors.append(f"root node {node.id} has parent")
-            if node.id != chain.root_id and not node.parent_id:
-                warnings.append(f"orphaned: {node.id}")
-                errors.append(f"orphaned: {node.id}")
-            if node.parent_id and node.parent_id in node_map:
-                parent = node_map[node.parent_id]
-                if node.timestamp < parent.timestamp:
-                    errors.append(f"timestamp violation: {node.id} before {node.parent_id}")
-                child_layer = getattr(node, "layer", None)
-                parent_layer = getattr(parent, "layer", None)
-                if (
-                    child_layer is not None
-                    and parent_layer is not None
-                    and hasattr(child_layer, "value")
-                    and hasattr(parent_layer, "value")
-                ):
-                    try:
-                        if child_layer.value < parent_layer.value:
-                            warnings.append(
-                                f"backward layer transition: {parent_layer} -> {child_layer}"
-                            )
-                    except TypeError:
-                        logger.debug(
-                            "Layer comparison: incompatible types %s vs %s",
-                            type(child_layer).__name__,
-                            type(parent_layer).__name__,
-                            exc_info=True,
-                        )
+            self._validate_node(node, chain, node_map, errors, warnings)
 
         return ValidationResult(
             valid=len(errors) == 0,
