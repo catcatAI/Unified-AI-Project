@@ -563,6 +563,48 @@ class IntentRegistry:
         self._rebuild_keyword_index()
         return len(self.patterns) < before
 
+    def _match_keywords(self, p: "IntentPattern", query: str) -> set:
+        """Match positive keywords against query, return matched character positions."""
+        matched_positions: set = set()
+        for kw in p.keywords:
+            if not kw:
+                continue
+            if kw.isascii() and kw.isalpha():
+                # English: word-boundary aware
+                for m in re.finditer(
+                    rf"(?<![a-zA-Z]){re.escape(kw)}(?![a-zA-Z])", query, re.IGNORECASE
+                ):
+                    for i in range(m.start(), m.end()):
+                        matched_positions.add(i)
+            else:
+                # CJK: substring match (density check later prevents false positives)
+                idx = 0
+                while True:
+                    idx = query.find(kw, idx)
+                    if idx == -1:
+                        break
+                    for i in range(idx, idx + len(kw)):
+                        matched_positions.add(i)
+                    idx += 1
+        return matched_positions
+
+    def _score_pattern(self, p: "IntentPattern", query: str, matched_positions: set) -> float:
+        """Score a pattern based on density, anti-keywords, and format keys."""
+        query_len = max(len(query), 1)
+        density = len(matched_positions) / query_len
+
+        # Anti-keyword penalty: each anti match cuts remaining score by 50%
+        anti_hits = sum(1 for akw in p.anti_keywords if akw in query)
+        penalty = 1.0 - min(anti_hits * 0.5, 0.9)
+        score = density * penalty
+
+        # Format gate: if format_keys specified, at least one must match
+        if p.format_keys:
+            has_format = any(fk in query for fk in p.format_keys)
+            if not has_format:
+                score *= 0.3  # heavy discount, not zero
+        return score
+
     def detect(self, query: str, category: Optional[str] = None) -> Tuple[Optional[str], float]:
         if not query:
             return None, 0.0
@@ -573,46 +615,11 @@ class IntentRegistry:
             if category and p.category != category:
                 continue
 
-            # Positive keyword coverage
-            matched_positions: set = set()
-            for kw in p.keywords:
-                if not kw:
-                    continue
-                if kw.isascii() and kw.isalpha():
-                    # English: word-boundary aware
-                    for m in re.finditer(
-                        rf"(?<![a-zA-Z]){re.escape(kw)}(?![a-zA-Z])", query, re.IGNORECASE
-                    ):
-                        for i in range(m.start(), m.end()):
-                            matched_positions.add(i)
-                else:
-                    # CJK: substring match (density check later prevents false positives)
-                    idx = 0
-                    while True:
-                        idx = query.find(kw, idx)
-                        if idx == -1:
-                            break
-                        for i in range(idx, idx + len(kw)):
-                            matched_positions.add(i)
-                        idx += 1
-
+            matched_positions = self._match_keywords(p, query)
             if not matched_positions:
                 continue
 
-            # Density: unique keyword-char positions / query length
-            query_len = max(len(query), 1)
-            density = len(matched_positions) / query_len
-
-            # Anti-keyword penalty: each anti match cuts remaining score by 50%
-            anti_hits = sum(1 for akw in p.anti_keywords if akw in query)
-            penalty = 1.0 - min(anti_hits * 0.5, 0.9)
-            score = density * penalty
-
-            # Format gate: if format_keys specified, at least one must match
-            if p.format_keys:
-                has_format = any(fk in query for fk in p.format_keys)
-                if not has_format:
-                    score *= 0.3  # heavy discount, not zero
+            score = self._score_pattern(p, query, matched_positions)
 
             if score > best_score or (
                 score == best_score and score > 0 and p.priority < best_priority
