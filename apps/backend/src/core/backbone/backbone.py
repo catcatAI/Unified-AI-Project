@@ -807,15 +807,8 @@ class Backbone:
     # ------------------------------------------------------------------
     # 重置
     # ------------------------------------------------------------------
-    def clear(self) -> None:
-        """重置所有註冊與快取（測試 / 重新初始化用）。"""
-        if self._registries is not None:
-            self._registries.clear_all()
-            self._registries.dictionaries._mountables.clear()
-        self._engines.clear()
-        self._singletons.clear()
-        self._axes_registries.clear()
-        self._free_matrices.clear()
+    def _clear_closables(self) -> None:
+        """清除可能拋異常的外部資源（mounts/pairs）；各自寬 except。"""
         if self._mounts is not None:
             try:
                 self._mounts.clear()
@@ -826,6 +819,17 @@ class Backbone:
                 self._pairs.clear()
             except Exception as e:
                 logger.debug(f"backbone clear pairs failed: {e}", exc_info=True)
+
+    def clear(self) -> None:
+        """重置所有註冊與快取（測試 / 重新初始化用）。"""
+        if self._registries is not None:
+            self._registries.clear_all()
+            self._registries.dictionaries._mountables.clear()
+        self._engines.clear()
+        self._singletons.clear()
+        self._axes_registries.clear()
+        self._free_matrices.clear()
+        self._clear_closables()
         self._config_obj = None
         self._memory_registry = None
         self._translator = None
