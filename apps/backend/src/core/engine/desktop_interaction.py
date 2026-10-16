@@ -784,23 +784,118 @@ class DesktopInteraction:
             SPI_SETDESKWALLPAPER, 0, str(image_path.absolute()), 3
         )
 
+    @staticmethod
+    def _wallpaper_path_ok(image_path: Path) -> bool:
+        """檔案存在且為圖檔副檔名（macOS/Linux 會插值進 shell，先擋）。"""
+        if not image_path.exists():
+            return False
+        # Refuse non-files and non-image suffixes before any platform
+        # command sees the path (macOS/Linux interpolate it into shell).
+        if not image_path.is_file() or image_path.suffix.lower() not in {
+            ".png",
+            ".jpg",
+            ".jpeg",
+            ".bmp",
+            ".webp",
+            ".gif",
+            ".svg",
+        }:
+            logger.error("Refusing wallpaper outside image files: %s", image_path)
+            return False
+        return True
+
+    async def _set_wallpaper_darwin(self, image_path: Path) -> bool:
+        """macOS: Finder AppleScript 設桌面壁紙。"""
+        script = (
+            'tell application "Finder" to set desktop picture to POSIX file '
+            f'"{image_path.absolute()}"'
+        )
+        loop = asyncio.get_running_loop()
+        try:
+            await loop.run_in_executor(
+                None,
+                lambda: subprocess.run(
+                    ["osascript", "-e", script],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                    timeout=timeout_value("desktop.wallpaper_macos", 15),
+                ),
+            )
+            return True
+        except (
+            subprocess.CalledProcessError,
+            FileNotFoundError,
+            subprocess.TimeoutExpired,
+        ) as e:
+            logger.info(f"macOS 壁紙設置失敗: {e}")
+            return False
+
+    async def _set_wallpaper_linux(self, image_path: Path) -> bool:
+        """Linux: gnome/unity 用 gsettings、kde 用 qdbus，其餘直通。"""
+        de = os.environ.get("DESKTOP_SESSION", "").lower()
+        loop = asyncio.get_running_loop()
+        try:
+            if "gnome" in de or "unity" in de:
+                image_uri = f"file://{image_path.absolute()}"
+                await loop.run_in_executor(
+                    None,
+                    lambda: subprocess.run(
+                        [
+                            "gsettings",
+                            "set",
+                            "org.gnome.desktop.background",
+                            "picture-uri",
+                            image_uri,
+                        ],
+                        check=True,
+                        capture_output=True,
+                        text=True,
+                        timeout=timeout_value("desktop.wallpaper_gsettings", 10),
+                    ),
+                )
+                return True
+            elif "kde" in de:
+                image_path_str = str(image_path.absolute())
+                kde_script = (
+                    "var allDesktops = desktops(); "
+                    "for (i=0;i<allDesktops.length;i++) { "
+                    "d = allDesktops[i]; "
+                    'd.wallpaperPlugin = "org.kde.image"; '
+                    'd.currentConfigGroup = Array("Wallpaper", "org.kde.image", "General"); '
+                    'd.writeConfig("Image", "file://' + image_path_str + '") '
+                    "}"
+                )
+                await loop.run_in_executor(
+                    None,
+                    lambda: subprocess.run(
+                        [
+                            "qdbus",
+                            "org.kde.plasmashell",
+                            "/PlasmaShell",
+                            "org.kde.PlasmaShell.evaluateScript",
+                            kde_script,
+                        ],
+                        check=True,
+                        capture_output=True,
+                        text=True,
+                        timeout=timeout_value("desktop.wallpaper_kde", 10),
+                    ),
+                )
+                return True
+        except (
+            subprocess.CalledProcessError,
+            FileNotFoundError,
+            subprocess.TimeoutExpired,
+        ) as e:
+            logger.info(f"Linux 壁紙設置失敗: {e}")
+            return False
+        return True
+
     async def set_wallpaper(self, image_path: Path) -> bool:
         # Set wallpaper image
         try:
-            if not image_path.exists():
-                return False
-            # Refuse non-files and non-image suffixes before any platform
-            # command sees the path (macOS/Linux interpolate it into shell).
-            if not image_path.is_file() or image_path.suffix.lower() not in {
-                ".png",
-                ".jpg",
-                ".jpeg",
-                ".bmp",
-                ".webp",
-                ".gif",
-                ".svg",
-            }:
-                logger.error("Refusing wallpaper outside image files: %s", image_path)
+            if not self._wallpaper_path_ok(image_path):
                 return False
 
             # Platform-specific wallpaper setting
@@ -813,88 +908,11 @@ class DesktopInteraction:
                 await loop.run_in_executor(None, lambda: self._set_wallpaper_windows(image_path))
                 return True
 
-            elif system == "Darwin":  # macOS
-                script = f'tell application "Finder" to set desktop picture to POSIX file "{image_path.absolute()}"'
-                loop = asyncio.get_running_loop()
-                try:
-                    await loop.run_in_executor(
-                        None,
-                        lambda: subprocess.run(
-                            ["osascript", "-e", script],
-                            check=True,
-                            capture_output=True,
-                            text=True,
-                            timeout=timeout_value("desktop.wallpaper_macos", 15),
-                        ),
-                    )
-                    return True
-                except (
-                    subprocess.CalledProcessError,
-                    FileNotFoundError,
-                    subprocess.TimeoutExpired,
-                ) as e:
-                    logger.info(f"macOS 壁紙設置失敗: {e}")
-                    return False
+            if system == "Darwin":  # macOS
+                return await self._set_wallpaper_darwin(image_path)
 
-            elif system == "Linux":
-                de = os.environ.get("DESKTOP_SESSION", "").lower()
-                loop = asyncio.get_running_loop()
-                try:
-                    if "gnome" in de or "unity" in de:
-                        image_uri = f"file://{image_path.absolute()}"
-                        await loop.run_in_executor(
-                            None,
-                            lambda: subprocess.run(
-                                [
-                                    "gsettings",
-                                    "set",
-                                    "org.gnome.desktop.background",
-                                    "picture-uri",
-                                    image_uri,
-                                ],
-                                check=True,
-                                capture_output=True,
-                                text=True,
-                                timeout=timeout_value("desktop.wallpaper_gsettings", 10),
-                            ),
-                        )
-                        return True
-                    elif "kde" in de:
-                        image_path_str = str(image_path.absolute())
-                        kde_script = (
-                            "var allDesktops = desktops(); "
-                            "for (i=0;i<allDesktops.length;i++) { "
-                            "d = allDesktops[i]; "
-                            'd.wallpaperPlugin = "org.kde.image"; '
-                            'd.currentConfigGroup = Array("Wallpaper", "org.kde.image", "General"); '
-                            'd.writeConfig("Image", "file://' + image_path_str + '") '
-                            "}"
-                        )
-                        await loop.run_in_executor(
-                            None,
-                            lambda: subprocess.run(
-                                [
-                                    "qdbus",
-                                    "org.kde.plasmashell",
-                                    "/PlasmaShell",
-                                    "org.kde.PlasmaShell.evaluateScript",
-                                    kde_script,
-                                ],
-                                check=True,
-                                capture_output=True,
-                                text=True,
-                                timeout=timeout_value("desktop.wallpaper_kde", 10),
-                            ),
-                        )
-                        return True
-                except (
-                    subprocess.CalledProcessError,
-                    FileNotFoundError,
-                    subprocess.TimeoutExpired,
-                ) as e:
-                    logger.info(f"Linux 壁紙設置失敗: {e}")
-                    return False
-                return True
+            if system == "Linux":
+                return await self._set_wallpaper_linux(image_path)
 
         except (
             Exception
