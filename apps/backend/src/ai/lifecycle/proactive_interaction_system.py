@@ -398,42 +398,52 @@ class ProactiveInteractionSystem:
         except Exception as e:
             logger.warning("Weather check skipped: %s", e, exc_info=True)
 
+    def _cooldown_blocks(self, opportunity: Dict[str, Any]) -> bool:
+        """冷卻未過且非高優先 → 阻擋計劃（無前次互動時間則放行）。"""
+        if not self.last_interaction_time:
+            return False
+        cooldown_passed = (
+            datetime.now() - self.last_interaction_time
+        ).total_seconds() > self.interaction_cooldown
+        return not cooldown_passed and opportunity.get("priority") != "high"
+
+    async def _generate_opportunity_message(self, opportunity: Dict[str, Any]) -> str:
+        """依機會類型生成對應訊息（未知型別走 reflex/fallback）。"""
+        opp_type = opportunity["type"]
+        if opp_type == InteractionOpportunity.USER_RETURN.value:
+            return await self._generate_return_message(opportunity)
+        elif opp_type == InteractionOpportunity.LONG_IDLE.value:
+            return await self._generate_idle_message(opportunity)
+        elif opp_type == InteractionOpportunity.EMOTIONAL_CHANGE.value:
+            return await self._generate_emotional_message(opportunity)
+        elif opp_type == InteractionOpportunity.TIME_BASED.value:
+            return await self._generate_time_based_message(opportunity)
+        elif opp_type == InteractionOpportunity.MEMORY_TRIGGER.value:
+            return await self._generate_memory_message(opportunity)
+        elif opp_type == InteractionOpportunity.WEATHER_CHANGE.value:
+            return await self._generate_weather_message(opportunity)
+        else:
+            return self._reflex_or_fallback(
+                "unknown_opportunity",
+                {"opp_type": opp_type},
+                f"有新的互動機會：{opp_type}",
+            )
+
     async def _plan_proactive_action(
         self, opportunity: Dict[str, Any], user_state: Dict[str, Any]
     ) -> Optional[InteractionPlan]:
         """計劃主動行動"""
         try:
             # 檢查冷卻時間
-            if self.last_interaction_time:
-                cooldown_passed = (
-                    datetime.now() - self.last_interaction_time
-                ).total_seconds() > self.interaction_cooldown
-                if not cooldown_passed and opportunity.get("priority") != "high":
-                    return None
+            if self._cooldown_blocks(opportunity):
+                return None
 
             # 構建計劃
             opp_type = opportunity["type"]
             priority = opportunity.get("priority", "medium")
 
             # 根據機會類型生成消息
-            if opp_type == InteractionOpportunity.USER_RETURN.value:
-                message = await self._generate_return_message(opportunity)
-            elif opp_type == InteractionOpportunity.LONG_IDLE.value:
-                message = await self._generate_idle_message(opportunity)
-            elif opp_type == InteractionOpportunity.EMOTIONAL_CHANGE.value:
-                message = await self._generate_emotional_message(opportunity)
-            elif opp_type == InteractionOpportunity.TIME_BASED.value:
-                message = await self._generate_time_based_message(opportunity)
-            elif opp_type == InteractionOpportunity.MEMORY_TRIGGER.value:
-                message = await self._generate_memory_message(opportunity)
-            elif opp_type == InteractionOpportunity.WEATHER_CHANGE.value:
-                message = await self._generate_weather_message(opportunity)
-            else:
-                message = self._reflex_or_fallback(
-                    "unknown_opportunity",
-                    {"opp_type": opp_type},
-                    f"有新的互動機會：{opp_type}",
-                )
+            message = await self._generate_opportunity_message(opportunity)
 
             # An empty proactive message is still broadcast verbatim by
             # _execute_proactive_action; never plan one.
