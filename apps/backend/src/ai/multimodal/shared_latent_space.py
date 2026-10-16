@@ -135,6 +135,45 @@ class SharedLatentSpace:
             )
             return False
 
+    def _apply_modality_weights(self, data: Any) -> int:
+        """Copy npz weights onto registered projections; skip shape mismatches.
+        Returns the number of modalities actually updated."""
+        loaded = 0
+        for name, proj in self._projections.items():
+            w_key = f"{name}__W"
+            b_key = f"{name}__b"
+            if w_key not in data or b_key not in data:
+                continue
+            try:
+                proj["W"][:] = data[w_key]
+                proj["b"][:] = data[b_key]
+            except ValueError:
+                # Shape mismatch (e.g. stale/foreign modality key in a shared
+                # checkpoint): skip this modality, keep loading the rest.
+                logger.warning(
+                    "SharedLatentSpace: skipping %s (shape %s vs %s)",
+                    name,
+                    getattr(data[w_key], "shape", "?"),
+                    getattr(proj["W"], "shape", "?"),
+                )
+                continue
+            loaded += 1
+        return loaded
+
+    def _load_version_meta(self, data: Any) -> None:
+        """Restore version/created_at metadata from the npz (best effort)."""
+        if "__version" in data and data["__version"].size:
+            self.version = int(data["__version"].flat[0])
+        if "__created_at" in data and data["__created_at"].size:
+            try:
+                ts = int(data["__created_at"].flat[0])
+                if ts > 0:
+                    self.created_at = datetime.datetime.fromtimestamp(
+                        ts, tz=datetime.timezone.utc
+                    ).isoformat(timespec="seconds")
+            except (OSError, ValueError, OverflowError):
+                pass
+
     def load_weights(self, path: str) -> bool:
         """Load modality projection weights from a .npz file.
 
@@ -152,37 +191,8 @@ class SharedLatentSpace:
             return False
 
         try:
-            loaded = 0
-            for name, proj in self._projections.items():
-                w_key = f"{name}__W"
-                b_key = f"{name}__b"
-                if w_key not in data or b_key not in data:
-                    continue
-                try:
-                    proj["W"][:] = data[w_key]
-                    proj["b"][:] = data[b_key]
-                except ValueError:
-                    # Shape mismatch (e.g. stale/foreign modality key in a shared
-                    # checkpoint): skip this modality, keep loading the rest.
-                    logger.warning(
-                        "SharedLatentSpace: skipping %s (shape %s vs %s)",
-                        name,
-                        getattr(data[w_key], "shape", "?"),
-                        getattr(proj["W"], "shape", "?"),
-                    )
-                    continue
-                loaded += 1
-            if "__version" in data and data["__version"].size:
-                self.version = int(data["__version"].flat[0])
-            if "__created_at" in data and data["__created_at"].size:
-                try:
-                    ts = int(data["__created_at"].flat[0])
-                    if ts > 0:
-                        self.created_at = datetime.datetime.fromtimestamp(
-                            ts, tz=datetime.timezone.utc
-                        ).isoformat(timespec="seconds")
-                except (OSError, ValueError, OverflowError):
-                    pass
+            loaded = self._apply_modality_weights(data)
+            self._load_version_meta(data)
             logger.info("SharedLatentSpace weights loaded from %s (%d modalities)", path, loaded)
             return loaded > 0
         except Exception as e:
