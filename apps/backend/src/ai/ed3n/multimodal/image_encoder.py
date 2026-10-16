@@ -62,49 +62,79 @@ class ImageEncoder:
                 return self._fallback_encode(image_data)
         return self._fallback_encode(image_data)
 
+    def _analyze_objects(self, analysis: Dict, keys: List[str]) -> None:
+        """Extract object keys from analysis."""
+        if "objects" not in analysis:
+            return
+        for obj in analysis["objects"]:
+            name = obj.get("label") or obj.get("name") or str(obj)
+            keys.append(self._key_for_concept(name, "object"))
+
+    def _analyze_scene(self, analysis: Dict, keys: List[str]) -> None:
+        """Extract scene key from analysis."""
+        if "scene" not in analysis:
+            return
+        scene = analysis["scene"]
+        if isinstance(scene, dict):
+            scene_label = scene.get("label") or scene.get("scene_type") or str(scene)
+        else:
+            scene_label = str(scene)
+        keys.append(self._key_for_concept(scene_label, "scene"))
+
+    def _analyze_colors(self, analysis: Dict, keys: List[str]) -> None:
+        """Extract color keys from analysis."""
+        if "colors" not in analysis:
+            return
+        colors = analysis["colors"]
+        if isinstance(colors, list):
+            for c in colors:
+                color_name = c.get("name") or c.get("color") or str(c)
+                keys.append(self._key_for_concept(color_name, "color"))
+        elif isinstance(colors, dict):
+            for k, v in colors.items():
+                keys.append(self._key_for_concept(str(v), "color"))
+
+    def _analyze_emotions(self, analysis: Dict, keys: List[str]) -> None:
+        """Extract emotion keys from analysis."""
+        if "emotions" not in analysis:
+            return
+        emotions = analysis["emotions"]
+        if isinstance(emotions, list):
+            for em in emotions:
+                em_name = em.get("emotion") or em.get("label") or str(em)
+                keys.append(self._key_for_concept(em_name, "emotion"))
+
+    def _analyze_caption(self, analysis: Dict, keys: List[str]) -> None:
+        """Extract caption key from analysis."""
+        if "caption" not in analysis:
+            return
+        caption = analysis["caption"]
+        if isinstance(caption, dict):
+            caption_text = caption.get("text") or caption.get("caption") or str(caption)
+        else:
+            caption_text = str(caption)
+        keys.append(self._key_for_concept(caption_text, "caption"))
+
+    def _analyze_ocr(self, analysis: Dict, keys: List[str]) -> None:
+        """Extract OCR keys from analysis."""
+        if "ocr_text" not in analysis:
+            return
+        ocr = analysis["ocr_text"]
+        if isinstance(ocr, list):
+            for item in ocr:
+                text = item.get("text") or str(item)
+                keys.append(self._key_for_concept(text, "ocr"))
+        elif isinstance(ocr, str):
+            keys.append(self._key_for_concept(ocr, "ocr"))
+
     def _analyze_to_entries(self, analysis: Dict) -> List[str]:
         keys: List[str] = []
-        if "objects" in analysis:
-            for obj in analysis["objects"]:
-                name = obj.get("label") or obj.get("name") or str(obj)
-                keys.append(self._key_for_concept(name, "object"))
-        if "scene" in analysis:
-            scene = analysis["scene"]
-            if isinstance(scene, dict):
-                scene_label = scene.get("label") or scene.get("scene_type") or str(scene)
-            else:
-                scene_label = str(scene)
-            keys.append(self._key_for_concept(scene_label, "scene"))
-        if "colors" in analysis:
-            colors = analysis["colors"]
-            if isinstance(colors, list):
-                for c in colors:
-                    color_name = c.get("name") or c.get("color") or str(c)
-                    keys.append(self._key_for_concept(color_name, "color"))
-            elif isinstance(colors, dict):
-                for k, v in colors.items():
-                    keys.append(self._key_for_concept(str(v), "color"))
-        if "emotions" in analysis:
-            emotions = analysis["emotions"]
-            if isinstance(emotions, list):
-                for em in emotions:
-                    em_name = em.get("emotion") or em.get("label") or str(em)
-                    keys.append(self._key_for_concept(em_name, "emotion"))
-        if "caption" in analysis:
-            caption = analysis["caption"]
-            if isinstance(caption, dict):
-                caption_text = caption.get("text") or caption.get("caption") or str(caption)
-            else:
-                caption_text = str(caption)
-            keys.append(self._key_for_concept(caption_text, "caption"))
-        if "ocr_text" in analysis:
-            ocr = analysis["ocr_text"]
-            if isinstance(ocr, list):
-                for item in ocr:
-                    text = item.get("text") or str(item)
-                    keys.append(self._key_for_concept(text, "ocr"))
-            elif isinstance(ocr, str):
-                keys.append(self._key_for_concept(ocr, "ocr"))
+        self._analyze_objects(analysis, keys)
+        self._analyze_scene(analysis, keys)
+        self._analyze_colors(analysis, keys)
+        self._analyze_emotions(analysis, keys)
+        self._analyze_caption(analysis, keys)
+        self._analyze_ocr(analysis, keys)
         return keys
 
     def _key_for_concept(self, concept: str, category: str) -> str:
