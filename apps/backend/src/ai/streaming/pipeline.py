@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 from .producers import (
     BaseLevelProducer,
@@ -42,51 +42,74 @@ class StreamingPipeline:
         """Set fallback function called when all levels produce empty output."""
         self.fallback_fn = fn
 
+    async def _run_level_pass(
+        self,
+        level_name: str,
+        producer,
+        query: str,
+        buffer: str,
+        stream: TokenStream,
+        pass_type: str,
+    ) -> Tuple[str, object]:
+        """Run one pass (fast/slow) on a level. Returns (new_buffer, output)."""
+        t0 = time.time()
+        try:
+            if pass_type == "fast":
+                out = producer.fast_pass(query, buffer)
+            else:
+                out = producer.slow_pass(query, buffer, None)
+        except Exception as e:
+            logger.warning("%s %s_pass failed: %s", level_name, pass_type, e)
+            out = None
+
+        if out:
+            buffer = self._merge(buffer, out)
+            confidence = 0.55 if pass_type == "fast" else 0.85
+            await self._emit(stream, out, level_name, pass_type, confidence, time.time() - t0)
+        return buffer, out
+
+    async def _run_level(
+        self, level_name: str, producer, query: str, buffer: str, stream: TokenStream
+    ) -> Optional[str]:
+        """Run fast+slow passes for one level. Returns updated buffer, None to break."""
+        if not producer.garden and not producer.ed3n:
+            return buffer
+
+        buffer, fast_out = await self._run_level_pass(
+            level_name, producer, query, buffer, stream, "fast"
+        )
+        buffer, _slow_out = await self._run_level_pass(
+            level_name, producer, query, buffer, stream, "slow"
+        )
+
+        # If section level produced nothing, skip remaining (no learned knowledge)
+        if level_name == "section" and not buffer and not fast_out:
+            return None  # signal break
+        return buffer
+
+    async def _run_fallback(self, query: str, stream: TokenStream) -> None:
+        """Trigger LLM fallback when buffer is empty."""
+        if self.fallback_fn:
+            try:
+                fallback_text = await self.fallback_fn(query)
+                if fallback_text:
+                    await self._emit(stream, fallback_text, "fallback", "llm", 0.5, 0.0)
+            except Exception as e:
+                logger.warning("Fallback failed: %s", e)
+
     async def stream(self, query: str, stream: TokenStream, timeout: float = 5.0) -> None:
         """Run streaming pipeline, emitting tokens to stream."""
         buffer = ""
 
         for level_name, producer in self.producers:
-            if not producer.garden and not producer.ed3n:
-                continue
-
-            # Fast pass
-            t0 = time.time()
-            try:
-                fast_out = producer.fast_pass(query, buffer)
-            except Exception as e:
-                logger.warning("%s fast_pass failed: %s", level_name, e)
-                fast_out = None
-
-            if fast_out:
-                buffer = self._merge(buffer, fast_out)
-                await self._emit(stream, fast_out, level_name, "fast", 0.55, time.time() - t0)
-
-            # Slow pass
-            t1 = time.time()
-            try:
-                slow_out = producer.slow_pass(query, buffer, fast_out)
-            except Exception as e:
-                logger.warning("%s slow_pass failed: %s", level_name, e)
-                slow_out = None
-
-            if slow_out:
-                buffer = self._merge(buffer, slow_out)
-                await self._emit(stream, slow_out, level_name, "slow", 0.85, time.time() - t1)
-
-            # If section level produced nothing, skip remaining (no learned knowledge)
-            if level_name == "section" and not buffer and not fast_out:
+            result = await self._run_level(level_name, producer, query, buffer, stream)
+            if result is None:
                 break
+            buffer = result
 
         # Final: if buffer is still empty, trigger fallback
         if not buffer:
-            if self.fallback_fn:
-                try:
-                    fallback_text = await self.fallback_fn(query)
-                    if fallback_text:
-                        await self._emit(stream, fallback_text, "fallback", "llm", 0.5, 0.0)
-                except Exception as e:
-                    logger.warning("Fallback failed: %s", e)
+            await self._run_fallback(query, stream)
 
         # Signal done
         await stream.put(StreamToken.create_control("DONE"))
