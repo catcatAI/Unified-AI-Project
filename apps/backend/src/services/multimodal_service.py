@@ -20,7 +20,7 @@ import logging
 import os
 import threading
 import time
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, cast
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, cast
 
 import numpy as np
 from core.utils import safe_error
@@ -412,6 +412,87 @@ class MultimodalService:
             timeout=self.ENCODE_TIMEOUT,
         )
 
+    async def _encode_vision(self, data: bytes) -> Dict[str, Any]:
+        """Encode vision data via VisionPipeline."""
+        vision_pipeline = self._get_vision_pipeline()
+        pipe_result = await asyncio.to_thread(vision_pipeline.process, data)
+        if pipe_result.get("error"):
+            return {"error": pipe_result["error"]}
+        self._get_quality_monitor().record(pipe_result)
+        return pipe_result
+
+    async def _encode_audio(self, data: bytes) -> Dict[str, Any]:
+        """Encode audio data via AudioPipeline."""
+        audio_pipeline = self._get_audio_pipeline()
+        pipe_result = await asyncio.to_thread(audio_pipeline.process, data)
+        if pipe_result.get("error"):
+            return {"error": pipe_result["error"]}
+        self._get_audio_quality_monitor().record(pipe_result)
+        return pipe_result
+
+    async def _register_item(
+        self, item_id: str, modality: str, vec: Any, latent: Any, t0: float
+    ) -> None:
+        """Register encoded item with LRU eviction."""
+        async with self._items_lock:
+            if len(self._registered_items) >= 5000:
+                oldest = next(iter(self._registered_items))
+                self._registered_items.pop(oldest, None)
+            self._registered_items[item_id] = {
+                "modality": modality,
+                "feature_vector": (
+                    vec.tolist()
+                    if hasattr(vec, "tolist")
+                    else (latent.tolist() if isinstance(vec, np.ndarray) else vec)
+                ),
+                "latent": latent.tolist() if hasattr(latent, "tolist") else latent,
+                "timestamp": t0,
+            }
+
+    def _get_encode_quality(self, modality: str) -> float:
+        """Get quality score for CML feed."""
+        if modality == "vision":
+            raw_q = self._get_quality_monitor().report().get("avg_ssim", 0.0)
+            return float(raw_q) if isinstance(raw_q, (int, float)) else 0.0
+        if modality == "audio":
+            raw_q = self._get_audio_quality_monitor().report().get("avg_snr", 0.0)
+            return float(raw_q) / 30.0 if isinstance(raw_q, (int, float)) else 0.0
+        return 0.0
+
+    def _feed_cml(self, modality: str, vec: Any, latent: Any) -> None:
+        """Feed encode result into continuous multimodal learning."""
+        try:
+            cml = self._get_cml()
+            quality = self._get_encode_quality(modality)
+            cml.record_encode(
+                modality,
+                _as_float_list(vec),
+                _as_float_list(latent),
+                quality,
+            )
+            if cml.should_train():
+                cml.micro_train()
+        except Exception as cml_e:
+            logger.warning("CML feed failed (non-fatal): %s", cml_e, exc_info=True)
+
+    async def _dispatch_encode(
+        self, data: bytes, modality: str, result: Dict[str, Any]
+    ) -> Optional[Tuple[Any, Any]]:
+        """Dispatch encode to modality pipeline. Returns (vec, latent) or None on error."""
+        if modality == "vision":
+            pipe_result = await self._encode_vision(data)
+            if pipe_result.get("error"):
+                return None
+            result["ssim"] = pipe_result.get("ssim", 0.0)
+            return pipe_result.get("feature_vector"), pipe_result.get("latent")
+        if modality == "audio":
+            pipe_result = await self._encode_audio(data)
+            if pipe_result.get("error"):
+                return None
+            result["snr"] = pipe_result.get("snr", 0.0)
+            return pipe_result.get("feature_vector"), pipe_result.get("latent")
+        return None
+
     async def _encode_impl(
         self, data: bytes, modality: str, item_id: Optional[str] = None
     ) -> Dict[str, Any]:
@@ -421,35 +502,14 @@ class MultimodalService:
             logger.warning("encode: empty data provided for modality=%s", modality)
             return {"modality": modality, "error": "Empty data provided"}
         try:
-            if modality == "vision":
-                # P33: Use VisionPipeline for full pipeline (encode→latent→decode→ssim)
-                vision_pipeline = self._get_vision_pipeline()
-                pipe_result = await asyncio.to_thread(vision_pipeline.process, data)
-                if pipe_result.get("error"):
-                    return {"modality": modality, "error": pipe_result["error"]}
-                vec = pipe_result.get("feature_vector")
-                latent = pipe_result.get("latent")
-                result["ssim"] = pipe_result.get("ssim", 0.0)
-                # Record quality
-                self._get_quality_monitor().record(pipe_result)
-            elif modality == "audio":
-                # P33: Use AudioPipeline for full pipeline
-                audio_pipeline = self._get_audio_pipeline()
-                pipe_result = await asyncio.to_thread(audio_pipeline.process, data)
-                if pipe_result.get("error"):
-                    return {"modality": modality, "error": pipe_result["error"]}
-                vec = pipe_result.get("feature_vector")
-                latent = pipe_result.get("latent")
-                result["snr"] = pipe_result.get("snr", 0.0)
-                # Record quality
-                self._get_audio_quality_monitor().record(pipe_result)
-            else:
+            dispatched = await self._dispatch_encode(data, modality, result)
+            if dispatched is None:
                 return {"modality": modality, "error": f"Unknown modality: {modality}"}
+            vec, latent = dispatched
 
             if vec is None or (hasattr(vec, "size") and vec.size == 0):
                 return {"modality": modality, "error": "Encoding returned empty feature vector"}
 
-            # Ensure latent is projected through shared latent space
             if latent is None:
                 ls = self._get_latent_space()
                 latent = ls.project(modality, np.array(vec))
@@ -457,21 +517,7 @@ class MultimodalService:
             if item_id is None:
                 item_id = f"{modality}_{int(t0 * 1000)}_{hash(data) & 0xFFFFFF:06x}"
 
-            async with self._items_lock:
-                # LRU eviction to prevent unbounded growth (long-running server)
-                if len(self._registered_items) >= 5000:
-                    oldest = next(iter(self._registered_items))
-                    self._registered_items.pop(oldest, None)
-                self._registered_items[item_id] = {
-                    "modality": modality,
-                    "feature_vector": (
-                        vec.tolist()
-                        if hasattr(vec, "tolist")
-                        else (latent.tolist() if isinstance(vec, np.ndarray) else vec)
-                    ),
-                    "latent": latent.tolist() if hasattr(latent, "tolist") else latent,
-                    "timestamp": t0,
-                }
+            await self._register_item(item_id, modality, vec, latent, t0)
 
             result.update(
                 {
@@ -482,28 +528,7 @@ class MultimodalService:
                     "time_ms": round((time.time() - t0) * 1000, 1),
                 }
             )
-            # Feed into continuous multimodal learning
-            try:
-                cml = self._get_cml()
-                # last_score() 兩邊監控器皆不存在（死防禦恆走 else）；
-                # 改用 report()（同 cml_encode 上方 avg_ssim/avg_snr 口徑）。
-                quality = 0.0
-                if modality == "vision":
-                    raw_q = self._get_quality_monitor().report().get("avg_ssim", 0.0)
-                    quality = float(raw_q) if isinstance(raw_q, (int, float)) else 0.0
-                elif modality == "audio":
-                    raw_q = self._get_audio_quality_monitor().report().get("avg_snr", 0.0)
-                    quality = float(raw_q) / 30.0 if isinstance(raw_q, (int, float)) else 0.0
-                cml.record_encode(
-                    modality,
-                    _as_float_list(vec),
-                    _as_float_list(latent),
-                    quality,
-                )
-                if cml.should_train():
-                    cml.micro_train()
-            except Exception as cml_e:
-                logger.warning("CML feed failed (non-fatal): %s", cml_e, exc_info=True)
+            self._feed_cml(modality, vec, latent)
         except Exception as e:
             logger.error("Encode failed: %s", e, exc_info=True)
             result["error"] = safe_error(e)
