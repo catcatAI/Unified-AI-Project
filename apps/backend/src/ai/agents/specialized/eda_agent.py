@@ -1364,6 +1364,206 @@ class EdaAgent:
                 "diagnostics": [str(exc)],
             }
 
+    def _validate_cim_params(self, weight_bits: int, slots: int) -> None:
+        """Validate CIM experiment parameters."""
+        if not 2 <= weight_bits <= 8:
+            raise ValueError("weight_bits must be in [2, 8]")
+        if slots < 1:
+            raise ValueError("slots must be positive")
+
+    def _build_layout_verification(
+        self, tile: Any, workspace: Any, run: Dict[str, Any], slots: int, expected: int
+    ) -> Dict[str, Any]:
+        """Build layout verification report from extraction results."""
+        from ai.hardware.cim_weight_strip import spine_topology
+
+        drc_errors = run.get("drc_errors")
+        extracted = run.get("extracted")
+        if run.get("status") == "skipped":
+            layout_status = "skipped"
+        elif run.get("status") == "ok" and drc_errors == 0 and extracted == expected:
+            layout_status = "ok"
+        else:
+            layout_status = "failed"
+        spice_path = workspace.root / "strip.spice"
+        return {
+            "status": layout_status,
+            "reason": run.get("reason"),
+            "drc_errors": drc_errors,
+            "extracted_transistors": extracted,
+            "expected_transistors": expected,
+            "spine_topology": spine_topology(spice_path) if spice_path.is_file() else {},
+            "tile_copies": slots,
+            "tile_cells": expected,
+            "tile_width_um": round(float(tile["width_um"]), 3),
+            "tile_height_um": round(float(tile["height_um"]), 3),
+            "tile_um2_per_cell": round(float(tile["um2_per_transistor"]), 4),
+        }
+
+    def _build_density_findings(
+        self,
+        config: Any,
+        tile: Any,
+        slots: int,
+        weight_bits: int,
+        expected: int,
+    ) -> Dict[str, Any]:
+        """Build density findings report comparing measured vs claimed cell area."""
+        from ai.hardware.card_architecture_audit import ANALOG_CIM_DENSITY
+        from ai.hardware.cim_strip_reference import (
+            MEASUREMENT_PROVENANCE,
+            MIN_CHARACTERISED_NFET_W_UM,
+        )
+
+        claimed_cell_um2 = float(config.cell_footprint_um2)
+        measured_cell_um2 = float(tile["um2_per_transistor"])
+        drafted_cell_w_um = float(MEASUREMENT_PROVENANCE["cell_w_um"])
+        bare_device_um2 = drafted_cell_w_um * float(MEASUREMENT_PROVENANCE["cell_l_um"])
+        dense_um2 = float(ANALOG_CIM_DENSITY.um2_per_element)
+        return {
+            "measured_um2_per_cell": round(measured_cell_um2, 4),
+            "measured_on": (
+                f"{slots} DRC-checked strip(s), {expected} extracted cells, "
+                f"{weight_bits}-bit weight columns"
+            ),
+            "claimed_um2_per_cell": claimed_cell_um2,
+            "claim_source": "freeze packet area model (CimStripConfig.cell_footprint_um2)",
+            "measured_over_claimed_x": round(measured_cell_um2 / claimed_cell_um2, 3),
+            "bare_device_wl_um2": round(bare_device_um2, 4),
+            "measured_over_bare_device_x": round(measured_cell_um2 / bare_device_um2, 2),
+            "dense_array_um2_per_cell": dense_um2,
+            "dense_array_provenance": ANALOG_CIM_DENSITY.provenance,
+            "dense_array_measured_here": ANALOG_CIM_DENSITY.measured_in_this_repository,
+            "pdk_min_characterised_w_um": MIN_CHARACTERISED_NFET_W_UM,
+            "drafted_cell_w_um": drafted_cell_w_um,
+            "pdk_covers_drafted_cell": drafted_cell_w_um >= MIN_CHARACTERISED_NFET_W_UM,
+            "note": (
+                f"the packet's {claimed_cell_um2:.2f} um2 per cell is its bare "
+                f"device W*L figure, while the device rectangle itself is "
+                f"{bare_device_um2:.3f} um2 and the cell actually laid out, "
+                f"DRC-checked and extracted here measures {measured_cell_um2:.2f} um2 "
+                f"({measured_cell_um2 / claimed_cell_um2:.1f}x the claim) once "
+                "contacts, spacing and routing exist; the PDK additionally only "
+                f"characterises the nfet down to W={MIN_CHARACTERISED_NFET_W_UM}um, "
+                f"above the {drafted_cell_w_um}um cell drafted here, so the drawn "
+                "cell has no characterised model"
+            ),
+        }
+
+    def _build_single_die_sizing(
+        self,
+        config: Any,
+        area_budget_mm2: float,
+        array_fraction: float,
+        measured_cell_um2: float,
+        dense_um2: float,
+    ) -> Dict[str, Any]:
+        """Build single-die sizing report with capacity estimates."""
+        cells_per_weight = int(config.cells_per_weight_max)
+
+        def capacity_kb(area_mm2_value: float, density_um2: float) -> float:
+            cells = area_mm2_value * 1.0e6 * array_fraction / density_um2
+            return cells / cells_per_weight / 1024.0
+
+        def array_area_mm2(weight_mb: float, density_um2: float) -> float:
+            weights = weight_mb * 1024.0 * 1024.0
+            return weights * cells_per_weight * density_um2 / 1.0e6
+
+        die_areas = (1.5, 4.0, 9.0, 25.0, 100.0)
+        return {
+            "density_um2_per_cell_used": round(measured_cell_um2, 4),
+            "density_source": "measured here on the DRC-checked array tile",
+            "cells_per_weight": cells_per_weight,
+            "cells_per_weight_model": (
+                "the packet's own bit-serial model, so the only thing that "
+                "changed against the packet is the measured density"
+            ),
+            "array_fraction": array_fraction,
+            "array_fraction_is_an_assumption": True,
+            "capacity": {
+                "die_area_mm2": area_budget_mm2,
+                "weight_capacity_kb": round(capacity_kb(area_budget_mm2, measured_cell_um2), 2),
+                "weight_capacity_mb": round(
+                    capacity_kb(area_budget_mm2, measured_cell_um2) / 1024.0, 4
+                ),
+            },
+            "capacity_kb_by_die_area_mm2": {
+                f"{area:g}": round(capacity_kb(area, measured_cell_um2), 2)
+                for area in die_areas
+            },
+            "array_area_mm2_required_for": {
+                "weights_1mb": round(array_area_mm2(1.0, measured_cell_um2), 2),
+                "weights_16mb": round(array_area_mm2(16.0, measured_cell_um2), 2),
+            },
+            "best_case_with_dense_array_mm2_required_for": {
+                "weights_1mb": round(array_area_mm2(1.0, dense_um2), 2),
+                "weights_16mb": round(array_area_mm2(16.0, dense_um2), 2),
+                "density_um2_per_cell": dense_um2,
+            },
+            "single_die_verdict": (
+                f"1 MB of int8 weights needs about "
+                f"{array_area_mm2(1.0, measured_cell_um2):.1f} mm2 of array at the "
+                f"density measured here and "
+                f"{array_area_mm2(16.0, measured_cell_um2):.0f} mm2 for the 16 MB "
+                f"working set, so neither fits a {area_budget_mm2:g} mm2 die; even at "
+                f"the densest array this repository has measured ({dense_um2} um2 per "
+                f"cell) the 1 MB figure is "
+                f"{array_area_mm2(1.0, dense_um2):.1f} mm2 of array alone, before "
+                "the sense chain, sequencer, pad ring and power grid are placed, so "
+                "the co-package is not optional scope"
+            ),
+        }
+
+    def _run_simulation(
+        self,
+        simulate_extracted: bool,
+        workspace: Any,
+        spice_path: Any,
+        strip: Any,
+        slots: int,
+        bins: tuple,
+    ) -> Dict[str, Any]:
+        """Run extracted netlist simulation if requested."""
+        if not simulate_extracted:
+            return {"status": "not_requested"}
+        from ai.hardware.cim_toolchain import MODEL_LIBRARY
+        from ai.hardware.cim_verify import verify_weights
+        from ai.hardware.cim_strip_reference import find_sky130_model_library
+        from ai.hardware.cim_weight_strip import extract
+
+        library = MODEL_LIBRARY if MODEL_LIBRARY.is_file() else None
+        if library is None:
+            library = find_sky130_model_library()
+        if library is None:
+            return {"status": "skipped", "reason": "sky130_model_library_not_found"}
+
+        sim_directory = workspace.root / "single_strip"
+        sim_spice_path = spice_path
+        if slots > 1:
+            # Every copy of the tile is identical, so one strip is the
+            # whole weight-ratio gate and the tiled netlist would
+            # otherwise mix several copies into one ratio test.
+            sim_directory.mkdir(parents=True, exist_ok=True)
+            extract(strip, sim_directory)
+            sim_spice_path = sim_directory / "strip.spice"
+        if not sim_spice_path.is_file():
+            return {"status": "skipped", "reason": "extracted_netlist_missing"}
+
+        report = verify_weights(
+            sim_spice_path.read_text(encoding="utf-8", errors="replace"),
+            bins,
+            library,
+        )
+        return {
+            "status": "pass" if report.ok else "fail",
+            "weights": report.as_dict(),
+            "model_library": str(library),
+            "note": (
+                "the weight-ratio gate runs on one strip: the tile's "
+                "copies are identical by construction"
+            ),
+        }
+
     async def run_cim_single_die_experiment(
         self,
         weight_bits: int = 4,
@@ -1389,27 +1589,17 @@ class EdaAgent:
                 "diagnostics": ["eda.enabled=false"],
             }
         try:
-            from ai.hardware.card_architecture_audit import ANALOG_CIM_DENSITY
-            from ai.hardware.cim_strip_reference import (
-                MEASUREMENT_PROVENANCE,
-                MIN_CHARACTERISED_NFET_W_UM,
-                CimStripConfig,
-                find_sky130_model_library,
-            )
-            from ai.hardware.cim_toolchain import MODEL_LIBRARY
-            from ai.hardware.cim_verify import verify_weights
+            from ai.hardware.cim_strip_reference import CimStripConfig
             from ai.hardware.cim_weight_strip import (
                 WeightStripGeometry,
                 build_strip,
                 extract,
-                spine_topology,
                 tile_strips,
             )
+            from ai.hardware.card_architecture_audit import ANALOG_CIM_DENSITY
+            from ai.hardware.cim_strip_reference import MIN_CHARACTERISED_NFET_W_UM
 
-            if not 2 <= weight_bits <= 8:
-                raise ValueError("weight_bits must be in [2, 8]")
-            if slots < 1:
-                raise ValueError("slots must be positive")
+            self._validate_cim_params(weight_bits, slots)
             config = CimStripConfig()
             area_budget_mm2 = float(die_area_mm2 or config.die_area_budget_mm2)
 
@@ -1419,159 +1609,39 @@ class EdaAgent:
             workspace = self.adapter.create_workspace("cim_single_die")
             run = extract(tile, workspace.root)
             expected = int(tile["transistors_total"])
+            layout_verification = self._build_layout_verification(
+                tile, workspace, run, slots, expected
+            )
+            layout_status = layout_verification["status"]
+            spice_path = workspace.root / "strip.spice"
+
+            density_findings = self._build_density_findings(
+                config, tile, slots, weight_bits, expected
+            )
+            measured_cell_um2 = float(tile["um2_per_transistor"])
+            claimed_cell_um2 = float(config.cell_footprint_um2)
+            dense_um2 = float(ANALOG_CIM_DENSITY.um2_per_element)
+            drafted_cell_w_um = float(
+                __import__("ai.hardware.cim_strip_reference", fromlist=["MEASUREMENT_PROVENANCE"]).MEASUREMENT_PROVENANCE["cell_w_um"]
+            )
             drc_errors = run.get("drc_errors")
             extracted = run.get("extracted")
-            if run.get("status") == "skipped":
-                layout_status = "skipped"
-            elif run.get("status") == "ok" and drc_errors == 0 and extracted == expected:
-                layout_status = "ok"
-            else:
-                layout_status = "failed"
-            spice_path = workspace.root / "strip.spice"
-            layout_verification = {
-                "status": layout_status,
-                "reason": run.get("reason"),
-                "drc_errors": drc_errors,
-                "extracted_transistors": extracted,
-                "expected_transistors": expected,
-                "spine_topology": spine_topology(spice_path) if spice_path.is_file() else {},
-                "tile_copies": slots,
-                "tile_cells": expected,
-                "tile_width_um": round(float(tile["width_um"]), 3),
-                "tile_height_um": round(float(tile["height_um"]), 3),
-                "tile_um2_per_cell": round(float(tile["um2_per_transistor"]), 4),
-            }
 
-            claimed_cell_um2 = float(config.cell_footprint_um2)
-            measured_cell_um2 = float(tile["um2_per_transistor"])
-            drafted_cell_w_um = float(MEASUREMENT_PROVENANCE["cell_w_um"])
-            bare_device_um2 = drafted_cell_w_um * float(MEASUREMENT_PROVENANCE["cell_l_um"])
-            dense_um2 = float(ANALOG_CIM_DENSITY.um2_per_element)
-            density_findings = {
-                "measured_um2_per_cell": round(measured_cell_um2, 4),
-                "measured_on": (
-                    f"{slots} DRC-checked strip(s), {expected} extracted cells, "
-                    f"{weight_bits}-bit weight columns"
-                ),
-                "claimed_um2_per_cell": claimed_cell_um2,
-                "claim_source": "freeze packet area model (CimStripConfig.cell_footprint_um2)",
-                "measured_over_claimed_x": round(measured_cell_um2 / claimed_cell_um2, 3),
-                "bare_device_wl_um2": round(bare_device_um2, 4),
-                "measured_over_bare_device_x": round(measured_cell_um2 / bare_device_um2, 2),
-                "dense_array_um2_per_cell": dense_um2,
-                "dense_array_provenance": ANALOG_CIM_DENSITY.provenance,
-                "dense_array_measured_here": ANALOG_CIM_DENSITY.measured_in_this_repository,
-                "pdk_min_characterised_w_um": MIN_CHARACTERISED_NFET_W_UM,
-                "drafted_cell_w_um": drafted_cell_w_um,
-                "pdk_covers_drafted_cell": drafted_cell_w_um >= MIN_CHARACTERISED_NFET_W_UM,
-                "note": (
-                    f"the packet's {claimed_cell_um2:.2f} um2 per cell is its bare "
-                    f"device W*L figure, while the device rectangle itself is "
-                    f"{bare_device_um2:.3f} um2 and the cell actually laid out, "
-                    f"DRC-checked and extracted here measures {measured_cell_um2:.2f} um2 "
-                    f"({measured_cell_um2 / claimed_cell_um2:.1f}x the claim) once "
-                    "contacts, spacing and routing exist; the PDK additionally only "
-                    f"characterises the nfet down to W={MIN_CHARACTERISED_NFET_W_UM}um, "
-                    f"above the {drafted_cell_w_um}um cell drafted here, so the drawn "
-                    "cell has no characterised model"
-                ),
-            }
-
-            cells_per_weight = int(config.cells_per_weight_max)
+            single_die_sizing = self._build_single_die_sizing(
+                config, area_budget_mm2, array_fraction, measured_cell_um2, dense_um2
+            )
 
             def capacity_kb(area_mm2_value: float, density_um2: float) -> float:
                 cells = area_mm2_value * 1.0e6 * array_fraction / density_um2
-                return cells / cells_per_weight / 1024.0
+                return cells / int(config.cells_per_weight_max) / 1024.0
 
             def array_area_mm2(weight_mb: float, density_um2: float) -> float:
                 weights = weight_mb * 1024.0 * 1024.0
-                return weights * cells_per_weight * density_um2 / 1.0e6
+                return weights * int(config.cells_per_weight_max) * density_um2 / 1.0e6
 
-            die_areas = (1.5, 4.0, 9.0, 25.0, 100.0)
-            single_die_sizing = {
-                "density_um2_per_cell_used": round(measured_cell_um2, 4),
-                "density_source": "measured here on the DRC-checked array tile",
-                "cells_per_weight": cells_per_weight,
-                "cells_per_weight_model": (
-                    "the packet's own bit-serial model, so the only thing that "
-                    "changed against the packet is the measured density"
-                ),
-                "array_fraction": array_fraction,
-                "array_fraction_is_an_assumption": True,
-                "capacity": {
-                    "die_area_mm2": area_budget_mm2,
-                    "weight_capacity_kb": round(capacity_kb(area_budget_mm2, measured_cell_um2), 2),
-                    "weight_capacity_mb": round(
-                        capacity_kb(area_budget_mm2, measured_cell_um2) / 1024.0, 4
-                    ),
-                },
-                "capacity_kb_by_die_area_mm2": {
-                    f"{area:g}": round(capacity_kb(area, measured_cell_um2), 2)
-                    for area in die_areas
-                },
-                "array_area_mm2_required_for": {
-                    "weights_1mb": round(array_area_mm2(1.0, measured_cell_um2), 2),
-                    "weights_16mb": round(array_area_mm2(16.0, measured_cell_um2), 2),
-                },
-                "best_case_with_dense_array_mm2_required_for": {
-                    "weights_1mb": round(array_area_mm2(1.0, dense_um2), 2),
-                    "weights_16mb": round(array_area_mm2(16.0, dense_um2), 2),
-                    "density_um2_per_cell": dense_um2,
-                },
-                "single_die_verdict": (
-                    f"1 MB of int8 weights needs about "
-                    f"{array_area_mm2(1.0, measured_cell_um2):.1f} mm2 of array at the "
-                    f"density measured here and "
-                    f"{array_area_mm2(16.0, measured_cell_um2):.0f} mm2 for the 16 MB "
-                    f"working set, so neither fits a {area_budget_mm2:g} mm2 die; even at "
-                    f"the densest array this repository has measured ({dense_um2} um2 per "
-                    f"cell) the 1 MB figure is "
-                    f"{array_area_mm2(1.0, dense_um2):.1f} mm2 of array alone, before "
-                    "the sense chain, sequencer, pad ring and power grid are placed, so "
-                    "the co-package is not optional scope"
-                ),
-            }
-
-            simulation: Dict[str, Any] = {"status": "not_requested"}
-            if simulate_extracted:
-                library = MODEL_LIBRARY if MODEL_LIBRARY.is_file() else None
-                if library is None:
-                    library = find_sky130_model_library()
-                if library is None:
-                    simulation = {
-                        "status": "skipped",
-                        "reason": "sky130_model_library_not_found",
-                    }
-                else:
-                    sim_directory = workspace.root / "single_strip"
-                    sim_spice_path = spice_path
-                    if slots > 1:
-                        # Every copy of the tile is identical, so one strip is the
-                        # whole weight-ratio gate and the tiled netlist would
-                        # otherwise mix several copies into one ratio test.
-                        sim_directory.mkdir(parents=True, exist_ok=True)
-                        extract(strip, sim_directory)
-                        sim_spice_path = sim_directory / "strip.spice"
-                    if not sim_spice_path.is_file():
-                        simulation = {
-                            "status": "skipped",
-                            "reason": "extracted_netlist_missing",
-                        }
-                    else:
-                        report = verify_weights(
-                            sim_spice_path.read_text(encoding="utf-8", errors="replace"),
-                            bins,
-                            library,
-                        )
-                        simulation = {
-                            "status": "pass" if report.ok else "fail",
-                            "weights": report.as_dict(),
-                            "model_library": str(library),
-                            "note": (
-                                "the weight-ratio gate runs on one strip: the tile's "
-                                "copies are identical by construction"
-                            ),
-                        }
+            simulation = self._run_simulation(
+                simulate_extracted, workspace, spice_path, strip, slots, bins
+            )
 
             if layout_status == "ok":
                 status = "verified"
