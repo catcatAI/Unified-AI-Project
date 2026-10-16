@@ -362,7 +362,8 @@ class SemanticKeyMapperAdapter(_BaseDictionaryAdapter):
             logger.debug("SemanticKeyMapperAdapter register failed: %s", exc, exc_info=True)
             return False
 
-    def _query_scored(self, input_data: Any, **kwargs: Any) -> List[Any]:
+    def _query_vector(self, input_data: Any) -> Any:
+        """正規化查詢向量；清單轉 ndarray，失敗或非向量回 None。"""
         import numpy as np
 
         q = input_data
@@ -371,8 +372,25 @@ class SemanticKeyMapperAdapter(_BaseDictionaryAdapter):
                 q = np.asarray(q, dtype=np.float32)
             except Exception as e:
                 logger.debug(f"dict q convert failed: {e}", exc_info=True)
-                return []
+                return None
         if not isinstance(q, np.ndarray):
+            return None
+        return q
+
+    @staticmethod
+    def _hits_to_scored(hits: Any) -> List[Any]:
+        """把 dict/tuple/list 形式的命中轉為 (key, score) 清單。"""
+        out: List[Any] = []
+        for h in hits or []:
+            if isinstance(h, dict):
+                out.append((h.get("key"), float(h.get("score", 0.0) or 0.0)))
+            elif isinstance(h, (tuple, list)) and len(h) >= 2:
+                out.append((h[0], float(h[1] or 0.0)))
+        return out
+
+    def _query_scored(self, input_data: Any, **kwargs: Any) -> List[Any]:
+        q = self._query_vector(input_data)
+        if q is None:
             return []
         fn = getattr(self.inner, "map_latent_to_keys", None)
         if not callable(fn):
@@ -382,13 +400,7 @@ class SemanticKeyMapperAdapter(_BaseDictionaryAdapter):
         except Exception as e:
             logger.debug(f"dict map_latent_to_keys failed: {e}", exc_info=True)
             return []
-        out: List[Any] = []
-        for h in hits or []:
-            if isinstance(h, dict):
-                out.append((h.get("key"), float(h.get("score", 0.0) or 0.0)))
-            elif isinstance(h, (tuple, list)) and len(h) >= 2:
-                out.append((h[0], float(h[1] or 0.0)))
-        return out
+        return self._hits_to_scored(hits)
 
 
 __all__ = [
