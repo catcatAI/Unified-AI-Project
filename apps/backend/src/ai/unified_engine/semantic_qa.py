@@ -41,6 +41,57 @@ _DEFAULT_THRESHOLD = 0.75  # lowered 0.80->0.75 for open-domain recall (ONNX 384
 _CACHED_THRESHOLD: Optional[float] = None
 
 
+def _adjust_from_emotion_event() -> float:
+    """Derive threshold adjustment from latest emotion event (if available)."""
+    emo = _LATEST_EMOTION_EVENT
+    if not isinstance(emo, dict):
+        return 0.0
+    adj = 0.0
+    routing = emo.get("routing_mode", "")
+    valence = float(emo.get("valence", 0.0) or 0.0)
+    arousal = float(emo.get("arousal", 0.5) or 0.5)
+    sustained = int(emo.get("sustained_negative_counter", 0) or 0)
+    if routing in ("exploratory",):
+        adj -= 0.05
+    if routing in ("conservative",):
+        adj += 0.05
+    if valence > 0.3 and arousal > 0.5:
+        adj -= 0.03
+    if valence < -0.3:
+        adj += 0.03
+    if sustained >= 3:
+        adj += 0.08
+    return adj
+
+
+def _adjust_from_emotion_system() -> float:
+    """Derive threshold adjustment from EmotionSystem dominant emotion (fallback)."""
+    adj = 0.0
+    try:
+        import importlib
+
+        mod = importlib.import_module("api.lifespan")
+        get_es = getattr(mod, "get_emotion_system", None) or getattr(
+            mod, "_get_emotion_system", None
+        )
+        if get_es is not None:
+            try:
+                es = get_es()
+            except Exception:
+                es = None
+                logger.debug("emotion system unavailable for threshold adj", exc_info=True)
+            if es is not None and hasattr(es, "get_emotion_summary"):
+                summary = es.get_emotion_summary()
+                dom = summary.get("dominant_emotion", "neutral")
+                if dom in ("joy", "trust", "surprise", "anticipation"):
+                    adj -= 0.04
+                if dom in ("fear", "sadness", "anger", "disgust"):
+                    adj += 0.05
+    except Exception:
+        logger.debug("emotion threshold adjustment failed; adj stays 0", exc_info=True)
+    return adj
+
+
 def _emotion_threshold_adjustment() -> float:
     """情緒→閾值的自調整增量 (AI 自調, 閉環).
 
@@ -57,45 +108,9 @@ def _emotion_threshold_adjustment() -> float:
     adj = 0.0
     # Path 1: state_store 事件訂閱快取 (EmotionSystem 每輪 emit 推送, 此處被動接收)
     _ensure_emotion_event_subscription()
-    emo = _LATEST_EMOTION_EVENT
-    if isinstance(emo, dict):
-        routing = emo.get("routing_mode", "")
-        valence = float(emo.get("valence", 0.0) or 0.0)
-        arousal = float(emo.get("arousal", 0.5) or 0.5)
-        sustained = int(emo.get("sustained_negative_counter", 0) or 0)
-        if routing in ("exploratory",):
-            adj -= 0.05
-        if routing in ("conservative",):
-            adj += 0.05
-        if valence > 0.3 and arousal > 0.5:
-            adj -= 0.03
-        if valence < -0.3:
-            adj += 0.03
-        if sustained >= 3:
-            adj += 0.08
+    adj += _adjust_from_emotion_event()
     if adj == 0.0:
-        try:
-            import importlib
-
-            mod = importlib.import_module("api.lifespan")
-            get_es = getattr(mod, "get_emotion_system", None) or getattr(
-                mod, "_get_emotion_system", None
-            )
-            if get_es is not None:
-                try:
-                    es = get_es()
-                except Exception:
-                    es = None
-                    logger.debug("emotion system unavailable for threshold adj", exc_info=True)
-                if es is not None and hasattr(es, "get_emotion_summary"):
-                    summary = es.get_emotion_summary()
-                    dom = summary.get("dominant_emotion", "neutral")
-                    if dom in ("joy", "trust", "surprise", "anticipation"):
-                        adj -= 0.04
-                    if dom in ("fear", "sadness", "anger", "disgust"):
-                        adj += 0.05
-        except Exception:
-            logger.debug("emotion threshold adjustment failed; adj stays 0", exc_info=True)
+        adj += _adjust_from_emotion_system()
     return max(-0.10, min(0.10, adj))
 
 
