@@ -149,44 +149,59 @@ class GameStrategy:
         except Exception as e:
             logger.error(f"Failed to save strategy weights: {e}")
 
+    def _record_death(self, data: Dict[str, Any]) -> None:
+        """Handle death event: bump counters and record anomaly."""
+        self.stats.death_count += 1
+        self._total_deaths = getattr(self, "_total_deaths", 0) + 1
+        self._record_anomaly("death", data)
+
+    def _record_anomaly_event(self, data: Dict[str, Any]) -> None:
+        """Handle anomaly event: bump counter and record pattern."""
+        self.stats.anomaly_count += 1
+        self._record_anomaly(data.get("reason", "unknown"), data)
+
+    def _record_stuck(self, data: Dict[str, Any]) -> None:
+        """Handle stuck event: bump counter and record anomaly."""
+        self.stats.stuck_count += 1
+        self._record_anomaly("stuck", data)
+
+    def _record_resource_collected(self, data: Dict[str, Any]) -> None:
+        """Handle resource_collected event: accumulate per-resource counts."""
+        for res, count in data.items():
+            self.stats.resource_collected[res] += count
+
+    def _update_event_stats(self, event_type: str, data: Dict[str, Any]) -> None:
+        """Update statistics counters based on event type."""
+        simple = {
+            "goal_completed": "goals_completed",
+            "goal_failed": "goals_failed",
+            "subgoal_completed": "subgoals_completed",
+            "subgoal_failed": "subgoals_failed",
+            "block_placed": "blocks_placed",
+            "block_dug": "blocks_dug",
+            "item_crafted": "items_crafted",
+            "combat_win": "combat_wins",
+            "combat_loss": "combat_losses",
+        }
+        if event_type in simple:
+            setattr(self.stats, simple[event_type], getattr(self.stats, simple[event_type]) + 1)
+            return
+        special = {
+            "death": self._record_death,
+            "anomaly": self._record_anomaly_event,
+            "stuck": self._record_stuck,
+            "resource_collected": self._record_resource_collected,
+        }
+        if event_type in special:
+            special[event_type](data)
+            return
+        if event_type == "distance":
+            self.stats.distance_traveled += data.get("delta", 0)
+
     def record_event(self, event_type: str, data: Dict[str, Any]):
         """記錄事件"""
         self._history.append((time.time(), event_type, data))
-
-        # 更新統計
-        if event_type == "goal_completed":
-            self.stats.goals_completed += 1
-        elif event_type == "goal_failed":
-            self.stats.goals_failed += 1
-        elif event_type == "subgoal_completed":
-            self.stats.subgoals_completed += 1
-        elif event_type == "subgoal_failed":
-            self.stats.subgoals_failed += 1
-        elif event_type == "death":
-            self.stats.death_count += 1
-            self._total_deaths = getattr(self, "_total_deaths", 0) + 1
-            self._record_anomaly("death", data)
-        elif event_type == "anomaly":
-            self.stats.anomaly_count += 1
-            self._record_anomaly(data.get("reason", "unknown"), data)
-        elif event_type == "stuck":
-            self.stats.stuck_count += 1
-            self._record_anomaly("stuck", data)
-        elif event_type == "resource_collected":
-            for res, count in data.items():
-                self.stats.resource_collected[res] += count
-        elif event_type == "distance":
-            self.stats.distance_traveled += data.get("delta", 0)
-        elif event_type == "block_placed":
-            self.stats.blocks_placed += 1
-        elif event_type == "block_dug":
-            self.stats.blocks_dug += 1
-        elif event_type == "item_crafted":
-            self.stats.items_crafted += 1
-        elif event_type == "combat_win":
-            self.stats.combat_wins += 1
-        elif event_type == "combat_loss":
-            self.stats.combat_losses += 1
+        self._update_event_stats(event_type, data)
 
     @staticmethod
     def _snapshot_proprioception(prop: Any) -> Dict[str, Any]:
