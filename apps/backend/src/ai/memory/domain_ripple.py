@@ -145,17 +145,10 @@ TRIGGER_OVERLOAD_FOCUS_LOSS = 0.20
 TRIGGER_OVERLOAD_CONFUSION = 0.30
 
 
-def apply_ripple_to_state(state_matrix: Any, ripple: Dict[str, Any], scale: float = 1.0) -> None:
-    """Apply a single ripple dict onto the real StateMatrix4D, fully.
-
-    Unlike the old ``cognitive_pipeline._apply_ripple_to_state`` (which only
-    touched arousal / focus / happiness), this applies the ENTIRE ripple schema
-    including ε.logic/complexity and the negative-valence triggers (fear /
-    confusion / overload). Every write is clamped and validated against the
-    axis schema, so no spurious dimension keys are created.
-    """
-    if not state_matrix or not ripple:
-        return
+def _apply_dimension_ripples(
+    state_matrix: Any, ripple: Dict[str, Any], scale: float
+) -> None:
+    """Apply dimension-specific ripples (epsilon/alpha/beta/gamma/delta)."""
 
     def _add(axis_name: str, key: str, delta: float) -> None:
         axis = getattr(state_matrix, axis_name, None)
@@ -163,7 +156,6 @@ def apply_ripple_to_state(state_matrix: Any, ripple: Dict[str, Any], scale: floa
             return
         if key not in _AXIS_SCHEMA.get(axis_name, set()):
             return
-        # Clamp the delta so no engine can apply an unbounded jump (§11.8 B3).
         capped = max(-RIPPLE_DELTA_CAP, min(RIPPLE_DELTA_CAP, delta)) * scale
         axis.values[key] = _clamp(axis.values.get(key, 0.5) + capped)
 
@@ -172,34 +164,25 @@ def apply_ripple_to_state(state_matrix: Any, ripple: Dict[str, Any], scale: floa
         _add("epsilon", "logic", min(ed, 1.0) * GAIN_EPSILON_LOGIC)
         _add("epsilon", "complexity", min(ed, 1.0) * GAIN_EPSILON_COMPLEXITY)
 
-    if ripple.get("alpha_arousal"):
-        _add("alpha", "arousal", ripple["alpha_arousal"])
-    if ripple.get("alpha_tension"):
-        _add("alpha", "tension", ripple["alpha_tension"])
+    for delta_key, (axis_name, key) in _RIPPLE_KEY_MAP.items():
+        if ripple.get(delta_key):
+            _add(axis_name, key, ripple[delta_key])
 
-    if ripple.get("beta_focus"):
-        _add("beta", "focus", ripple["beta_focus"])
-    if ripple.get("beta_confusion"):
-        _add("beta", "confusion", ripple["beta_confusion"])
-    if ripple.get("beta_clarity"):
-        _add("beta", "clarity", ripple["beta_clarity"])
-    # beta_learning was previously dropped (chemistry make_ripples emits it but
-    # the legacy apply path ignored it). Now applied (§11.8 B1).
-    if ripple.get("beta_learning"):
-        _add("beta", "learning", ripple["beta_learning"])
 
-    if ripple.get("gamma_excitement"):
-        _add("gamma", "happiness", ripple["gamma_excitement"])
-    if ripple.get("gamma_surprise"):
-        _add("gamma", "surprise", ripple["gamma_surprise"])
-    if ripple.get("gamma_sadness"):
-        _add("gamma", "sadness", ripple["gamma_sadness"])
+def _apply_negative_valence_triggers(
+    state_matrix: Any, ripple: Dict[str, Any], scale: float
+) -> None:
+    """Apply negative-valence triggers (confusion/fear/overload)."""
 
-    if ripple.get("delta_engagement"):
-        _add("delta", "engagement", ripple["delta_engagement"])
-        _add("delta", "bond", ripple["delta_engagement"] * GAIN_DELTA_BOND_RATIO)
+    def _add(axis_name: str, key: str, delta: float) -> None:
+        axis = getattr(state_matrix, axis_name, None)
+        if axis is None or not hasattr(axis, "values"):
+            return
+        if key not in _AXIS_SCHEMA.get(axis_name, set()):
+            return
+        capped = max(-RIPPLE_DELTA_CAP, min(RIPPLE_DELTA_CAP, delta)) * scale
+        axis.values[key] = _clamp(axis.values.get(key, 0.5) + capped)
 
-    # --- Negative-valence triggers (real cognitive-affective responses) ---
     if ripple.get("confusion"):
         _add("beta", "confusion", TRIGGER_CONFUSION_GAIN)
         _add("beta", "clarity", -TRIGGER_CLARITY_LOSS)
@@ -215,9 +198,44 @@ def apply_ripple_to_state(state_matrix: Any, ripple: Dict[str, Any], scale: floa
         _add("beta", "confusion", TRIGGER_OVERLOAD_CONFUSION)
 
 
-# Mapping from cognition-delta key -> (axis, valid StateMatrix key). Only keys
-# present in the real axis schema are ever written, so no spurious dimensions
-# are created (e.g. "excitement" is folded into the real gamma "happiness").
+_RIPPLE_KEY_MAP = {
+    "alpha_arousal": ("alpha", "arousal"),
+    "alpha_tension": ("alpha", "tension"),
+    "beta_focus": ("beta", "focus"),
+    "beta_confusion": ("beta", "confusion"),
+    "beta_clarity": ("beta", "clarity"),
+    # beta_learning was previously dropped (chemistry make_ripples emits it but
+    # the legacy apply path ignored it). Now applied (§11.8 B1).
+    "beta_learning": ("beta", "learning"),
+    "gamma_excitement": ("gamma", "happiness"),
+    "gamma_surprise": ("gamma", "surprise"),
+    "gamma_sadness": ("gamma", "sadness"),
+    "delta_engagement": ("delta", "engagement"),
+}
+
+
+def apply_ripple_to_state(state_matrix: Any, ripple: Dict[str, Any], scale: float = 1.0) -> None:
+    """Apply a single ripple dict onto the real StateMatrix4D, fully.
+
+    Unlike the old ``cognitive_pipeline._apply_ripple_to_state`` (which only
+    touched arousal / focus / happiness), this applies the ENTIRE ripple schema
+    including ε.logic/complexity and the negative-valence triggers (fear /
+    confusion / overload). Every write is clamped and validated against the
+    axis schema, so no spurious dimension keys are created.
+    """
+    if not state_matrix or not ripple:
+        return
+
+    _apply_dimension_ripples(state_matrix, ripple, scale)
+    if ripple.get("delta_engagement"):
+        axis = getattr(state_matrix, "delta", None)
+        if axis is not None and hasattr(axis, "values"):
+            if "bond" in _AXIS_SCHEMA.get("delta", set()):
+                capped = max(-RIPPLE_DELTA_CAP, min(RIPPLE_DELTA_CAP, ripple["delta_engagement"] * GAIN_DELTA_BOND_RATIO)) * scale
+                axis.values["bond"] = _clamp(axis.values.get("bond", 0.5) + capped)
+
+    _apply_negative_valence_triggers(state_matrix, ripple, scale)
+
 _COGNITION_DELTA_MAP = {
     "gamma_happiness": ("gamma", "happiness"),
     "gamma_excitement": ("gamma", "happiness"),
