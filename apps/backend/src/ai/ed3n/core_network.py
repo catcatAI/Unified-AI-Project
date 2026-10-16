@@ -130,6 +130,46 @@ class CoreNetwork:
         # large training runs.
         self._conn_count = 0
 
+    def _activate_input_keys(self, input_keys: List[str]) -> None:
+        """Activate all neurons matching input keys across groups."""
+        for key in input_keys:
+            for group_name, group in self.groups.items():
+                if key in group.neurons:
+                    group.activate(key, 1.0)
+
+    def _classify_pairs(self, input_keys: List[str], context: Optional[Dict[str, object]]) -> None:
+        """Classify all unordered input-key pairs and apply relation activation."""
+        for i, key in enumerate(input_keys):
+            for other_key in input_keys[i + 1 :]:
+                rel_type, confidence = self.classifier.classify_pair(
+                    key, other_key, context=context
+                )
+                self._apply_relation_activation(key, other_key, rel_type, confidence)
+
+    def _collect_candidate_keys(self, input_keys: List[str], propagated: Dict[str, float]) -> Set[str]:
+        """Collect neurons that could carry activation above threshold."""
+        candidate_keys: Set[str] = set(input_keys)
+        candidate_keys.update(propagated.keys())
+        for key in input_keys:
+            for group in self.groups.values():
+                neuron = group.neurons.get(key)
+                if neuron is None:
+                    continue
+                candidate_keys.update(neuron.connections.keys())
+        return candidate_keys
+
+    def _gather_activations(self, candidate_keys: Set[str]) -> Dict[str, float]:
+        """Gather activations for candidate keys above their threshold."""
+        activations: Dict[str, float] = {}
+        for key in candidate_keys:
+            for group in self.groups.values():
+                neuron = group.neurons.get(key)
+                if neuron is None:
+                    continue
+                if neuron.activation > neuron.threshold:
+                    activations[key] = neuron.activation
+        return activations
+
     def forward(
         self,
         input_keys: List[str],
@@ -140,19 +180,8 @@ class CoreNetwork:
         self.reset()
         activations: Dict[str, float] = {}
 
-        for key in input_keys:
-            for group_name, group in self.groups.items():
-                if key in group.neurons:
-                    group.activate(key, 1.0)
-
-        for key in input_keys:
-            for other_key in input_keys:
-                if key >= other_key:
-                    continue
-                rel_type, confidence = self.classifier.classify_pair(
-                    key, other_key, context=context
-                )
-                self._apply_relation_activation(key, other_key, rel_type, confidence)
+        self._activate_input_keys(input_keys)
+        self._classify_pairs(input_keys, context)
 
         propagated = self.compute_spike_propagation(
             active_keys=input_keys,
@@ -167,22 +196,9 @@ class CoreNetwork:
         #   - targets reached by spike propagation (already in ``propagated``).
         # Scanning only those keeps forward() cost proportional to the active
         # neighbourhood instead of O(total neurons) on every call.
-        candidate_keys: Set[str] = set(input_keys)
-        candidate_keys.update(propagated.keys())
-        for key in input_keys:
-            for group in self.groups.values():
-                neuron = group.neurons.get(key)
-                if neuron is None:
-                    continue
-                candidate_keys.update(neuron.connections.keys())
-
-        for key in candidate_keys:
-            for group in self.groups.values():
-                neuron = group.neurons.get(key)
-                if neuron is None:
-                    continue
-                if neuron.activation > neuron.threshold:
-                    activations[key] = max(activations.get(key, 0.0), neuron.activation)
+        candidate_keys = self._collect_candidate_keys(input_keys, propagated)
+        for key, act in self._gather_activations(candidate_keys).items():
+            activations[key] = max(activations.get(key, 0.0), act)
 
         return activations
 
