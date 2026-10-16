@@ -249,6 +249,38 @@ class AxisOutputManager:
             "results": results,
         }
 
+    def _merge_port_channel(self, port: Dict[str, Any], merged: Dict[str, float]) -> float:
+        """Read one port's channel; weight-merge numerics into `merged`.
+
+        Returns the contributed weight (0.0 when channel empty/invalid).
+        """
+        port_name = port.get("axis", "")
+        channel = self._channels.get(port_name)
+        if not channel or channel.is_empty():
+            return 0.0
+
+        data = channel.peek()
+        if not isinstance(data, dict) or "data" not in data:
+            return 0.0
+
+        port_data = data["data"]
+        weight: float = port.get("priority", 0.5)
+
+        for key, value in port_data.items():
+            if isinstance(value, (int, float)):
+                if key not in merged:
+                    merged[key] = 0.0
+                merged[key] += value * weight
+        return weight
+
+    @staticmethod
+    def _normalize_merged(merged: Dict[str, float], total_weight: float) -> None:
+        """Weighted-average normalization (in place)."""
+        if total_weight <= 0:
+            return
+        for key in merged:
+            merged[key] /= total_weight
+
     def input(self, axis_name: str) -> Dict[str, Any]:
         """
         從所有綁定的輸入端口讀取並合併數據到軸
@@ -270,28 +302,9 @@ class AxisOutputManager:
         total_weight = 0.0
 
         for port in inputs:
-            port_name = port.get("axis", "")
-            channel = self._channels.get(port_name)
-            if not channel or channel.is_empty():
-                continue
+            total_weight += self._merge_port_channel(port, merged)
 
-            data = channel.peek()
-            if not isinstance(data, dict) or "data" not in data:
-                continue
-
-            port_data = data["data"]
-            weight = port.get("priority", 0.5)
-            total_weight += weight
-
-            for key, value in port_data.items():
-                if isinstance(value, (int, float)):
-                    if key not in merged:
-                        merged[key] = 0.0
-                    merged[key] += value * weight
-
-        if total_weight > 0:
-            for key in merged:
-                merged[key] /= total_weight
+        self._normalize_merged(merged, total_weight)
 
         logger.info(
             f"[AxisOutputManager] input('{axis_name}') ← {len(inputs)} ports, {len(merged)} fields merged"
