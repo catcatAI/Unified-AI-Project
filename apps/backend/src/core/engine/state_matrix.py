@@ -543,77 +543,29 @@ class StateMatrix4D:
     # [Task N.23-THETA] Meta-Cognitive Axis (θ) - 軸管理與分配決策
     # =============================================================================
 
-    def _meta_allocate_policy(
-        self, semantic_vector: List[float], label: str = ""
-    ) -> AllocateDecision:
-        """
-        使用 AllocationPolicy 的分配決策（Phase 2 重構結果）
-
-        這是 meta_allocate() 的重構版本，使用可配置的 stages 替代 if-elif 鏈。
-        保留給 StateMatrixAdapter 的 allocation_decide() 使用。
-
-        Returns:
-            AllocateDecision（與 meta_allocate 相同格式）
-        """
-        from core.allocation.policy import AllocationAction as PolicyAction
-        from core.allocation.policy import (
-            AllocationContext,
-            AllocationPolicy,
-        )
-
-        axis_similarities: Dict[str, float] = {}
-        for axis_name, anchor in self.semantic_anchors.items():
-            sim = anchor.compute_resonance(semantic_vector)
-            axis_similarities[axis_name] = sim
-
-        max_sim = max(axis_similarities.values()) if axis_similarities else 0.0
-        best_axis = (
-            max(axis_similarities, key=lambda k: axis_similarities[k])
-            if axis_similarities
-            else None
-        )
-        num_high_sim = sum(1 for s in axis_similarities.values() if s > 0.5)
-        active_dims = sum(1 for v in axis_similarities.values() if v > 0.1)
-
+    @staticmethod
+    def _shannon_entropy(values: List[float]) -> float:
+        """Normalized Shannon entropy of non-negative similarity mass."""
+        if not values:
+            return 0.0
+        total = sum(values)
+        if total <= 0:
+            return 0.0
         entropy_val = 0.0
-        if axis_similarities:
-            total = sum(axis_similarities.values())
-            if total > 0:
-                probs = [s / total for s in axis_similarities.values()]
-                for p in probs:
-                    if p > 0:
-                        entropy_val -= p * math.log(p + 1e-10)
-                max_entropy = math.log(len(probs) + 1e-10)
-                if max_entropy > 0:
-                    entropy_val /= max_entropy
+        for s in values:
+            p = s / total
+            if p > 0:
+                entropy_val -= p * math.log(p + 1e-10)
+        max_entropy = math.log(len(values) + 1e-10)
+        if max_entropy > 0:
+            entropy_val /= max_entropy
+        return entropy_val
 
-        self.theta.update(
-            novelty=1.0 - max_sim,
-            complexity=active_dims / max(1, len(self.dimensions)),
-            ambiguity=entropy_val,
-            dimension_fit=max_sim,
-        )
-
-        if label:
-            self._track_buffer(label)
-
-        ctx = AllocationContext(
-            vector=semantic_vector,
-            label=label,
-            similarities=axis_similarities,
-            max_resonance=max_sim,
-            best_axis=best_axis,
-            num_high_sim=num_high_sim,
-            entropy=entropy_val,
-            active_dims=active_dims,
-            novelty=1.0 - max_sim,
-            complexity=float(active_dims) / max(1, len(self.dimensions)),
-            dimension_fit=max_sim,
-            buffer_tracking=self.buffer_tracking,
-        )
-
-        policy = AllocationPolicy()
-        decision = policy.decide(ctx)
+    def _decision_to_allocate(
+        self, decision: Any, label: str, semantic_vector: List[float]
+    ) -> AllocateDecision:
+        """Policy decision → AllocateDecision 四分支映射。"""
+        from core.allocation.policy import AllocationAction as PolicyAction
 
         if decision.action == PolicyAction.ASSIGN:
             return AllocateDecision(
@@ -646,6 +598,67 @@ class StateMatrix4D:
                 confidence=decision.confidence,
                 reasoning=decision.reasoning,
             )
+
+    def _meta_allocate_policy(
+        self, semantic_vector: List[float], label: str = ""
+    ) -> AllocateDecision:
+        """
+        使用 AllocationPolicy 的分配決策（Phase 2 重構結果）
+
+        這是 meta_allocate() 的重構版本，使用可配置的 stages 替代 if-elif 鏈。
+        保留給 StateMatrixAdapter 的 allocation_decide() 使用。
+
+        Returns:
+            AllocateDecision（與 meta_allocate 相同格式）
+        """
+        from core.allocation.policy import (
+            AllocationContext,
+            AllocationPolicy,
+        )
+
+        axis_similarities: Dict[str, float] = {}
+        for axis_name, anchor in self.semantic_anchors.items():
+            sim = anchor.compute_resonance(semantic_vector)
+            axis_similarities[axis_name] = sim
+
+        max_sim = max(axis_similarities.values()) if axis_similarities else 0.0
+        best_axis = (
+            max(axis_similarities, key=lambda k: axis_similarities[k])
+            if axis_similarities
+            else None
+        )
+        num_high_sim = sum(1 for s in axis_similarities.values() if s > 0.5)
+        active_dims = sum(1 for v in axis_similarities.values() if v > 0.1)
+        entropy_val = self._shannon_entropy(list(axis_similarities.values()))
+
+        self.theta.update(
+            novelty=1.0 - max_sim,
+            complexity=active_dims / max(1, len(self.dimensions)),
+            ambiguity=entropy_val,
+            dimension_fit=max_sim,
+        )
+
+        if label:
+            self._track_buffer(label)
+
+        ctx = AllocationContext(
+            vector=semantic_vector,
+            label=label,
+            similarities=axis_similarities,
+            max_resonance=max_sim,
+            best_axis=best_axis,
+            num_high_sim=num_high_sim,
+            entropy=entropy_val,
+            active_dims=active_dims,
+            novelty=1.0 - max_sim,
+            complexity=float(active_dims) / max(1, len(self.dimensions)),
+            dimension_fit=max_sim,
+            buffer_tracking=self.buffer_tracking,
+        )
+
+        policy = AllocationPolicy()
+        decision = policy.decide(ctx)
+        return self._decision_to_allocate(decision, label, semantic_vector)
 
     def meta_allocate(self, semantic_vector: List[float], label: str = "") -> AllocateDecision:
         """
@@ -1542,27 +1555,24 @@ class StateMatrix4D:
             },
         }
 
+    def _import_axis_values(self, data: Dict[str, Any]) -> None:
+        """按名稱回填七軸 values（僅存在於 data 的軸）。"""
+        for axis_name in ("alpha", "beta", "gamma", "delta", "epsilon", "theta", "zeta"):
+            if axis_name in data:
+                getattr(self, axis_name).values.update(data[axis_name])
+
+    def _import_weights(self, data: Dict[str, Any]) -> None:
+        """回填軸權重（僅已存在的軸）。"""
+        if "weights" not in data:
+            return
+        for name, weight in data["weights"].items():
+            if name in self.dimensions:
+                self.dimensions[name].weight = weight
+
     def import_from_dict(self, data: Dict[str, Any]) -> None:
         """从字典导入 / Import state from dictionary"""
-        if "alpha" in data:
-            self.alpha.values.update(data["alpha"])
-        if "beta" in data:
-            self.beta.values.update(data["beta"])
-        if "gamma" in data:
-            self.gamma.values.update(data["gamma"])
-        if "delta" in data:
-            self.delta.values.update(data["delta"])
-        if "epsilon" in data:
-            self.epsilon.values.update(data["epsilon"])
-        if "theta" in data:
-            self.theta.values.update(data["theta"])
-        if "zeta" in data:
-            self.zeta.values.update(data["zeta"])
-
-        if "weights" in data:
-            for name, weight in data["weights"].items():
-                if name in self.dimensions:
-                    self.dimensions[name].weight = weight
+        self._import_axis_values(data)
+        self._import_weights(data)
 
         if "influence_matrix" in data:
             self.influence_matrix = data["influence_matrix"]
