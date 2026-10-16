@@ -234,8 +234,10 @@ class TestR85DeadPathFixes:
         dli = DigitalLifeIntegrator(config={"enable_formula_integration": False})
         params = list(inspect.signature(dli._on_formula_decision).parameters)
         assert len(params) == 1, "單參 LifeDecision 契約"
-        # 單參回呼不能出現在 phase callback 註冊路徑（雙參呼叫會 TypeError）
-        source = inspect.getsource(DigitalLifeIntegrator.initialize)
+        # 單參回呼不能出現在 phase callback 註冊路徑（雙參呼叫會 TypeError）。
+        # 以整個類別源碼檢查：initialize 內容可再抽取為 helper（複雜度重構），
+        # 但契約必須在類別任何位置成立。
+        source = inspect.getsource(DigitalLifeIntegrator)
         assert "register_decision_callback(self._on_formula_decision)" in source
         assert "register_phase_callback(self._on_formula_decision)" not in source
 

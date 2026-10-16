@@ -281,6 +281,43 @@ class DynamicThresholdManager:
             for name, param in self.parameters.items()
         }
 
+    def _apply_alpha_thresholds(self, state_matrix: Any) -> None:
+        """alpha.energy → 快樂閾值調低 / 憤怒閾值調高。"""
+        alpha = getattr(state_matrix, "alpha", None)
+        if alpha is None:
+            return
+        energy = alpha.values.get("energy", 0.5)
+        happiness = self.parameters.get("emotion_happiness_threshold")
+        if happiness:
+            happiness.base_value = max(0.1, min(0.9, 0.6 - energy * 0.2))
+            happiness.current_value = happiness.base_value
+        anger = self.parameters.get("emotion_anger_threshold")
+        if anger:
+            anger.base_value = max(0.1, min(0.9, 0.5 + energy * 0.1))
+            anger.current_value = anger.base_value
+
+    def _apply_gamma_thresholds(self, state_matrix: Any) -> None:
+        """gamma.happiness → 悲傷閾值調低。"""
+        gamma = getattr(state_matrix, "gamma", None)
+        if gamma is None:
+            return
+        happiness_val = gamma.values.get("happiness", 0.5)
+        sadness = self.parameters.get("emotion_sadness_threshold")
+        if sadness:
+            sadness.base_value = max(0.1, min(0.9, 0.5 - happiness_val * 0.2))
+            sadness.current_value = sadness.base_value
+
+    def _apply_beta_thresholds(self, state_matrix: Any) -> None:
+        """beta.curiosity → 社交主動閾值調高。"""
+        beta = getattr(state_matrix, "beta", None)
+        if beta is None:
+            return
+        curiosity = beta.values.get("curiosity", 0.5)
+        social = self.parameters.get("social_initiative_threshold")
+        if social:
+            social.base_value = max(0.1, min(0.9, 0.5 + curiosity * 0.2))
+            social.current_value = social.base_value
+
     def update_from_state_matrix(self, state_matrix: Any) -> None:
         """Update threshold parameters from state matrix values.
 
@@ -292,32 +329,8 @@ class DynamicThresholdManager:
         if state_matrix is None:
             return
         try:
-            alpha = getattr(state_matrix, "alpha", None)
-            if alpha is not None:
-                energy = alpha.values.get("energy", 0.5)
-                happiness = self.parameters.get("emotion_happiness_threshold")
-                if happiness:
-                    happiness.base_value = max(0.1, min(0.9, 0.6 - energy * 0.2))
-                    happiness.current_value = happiness.base_value
-                anger = self.parameters.get("emotion_anger_threshold")
-                if anger:
-                    anger.base_value = max(0.1, min(0.9, 0.5 + energy * 0.1))
-                    anger.current_value = anger.base_value
-
-            gamma = getattr(state_matrix, "gamma", None)
-            if gamma is not None:
-                happiness_val = gamma.values.get("happiness", 0.5)
-                sadness = self.parameters.get("emotion_sadness_threshold")
-                if sadness:
-                    sadness.base_value = max(0.1, min(0.9, 0.5 - happiness_val * 0.2))
-                    sadness.current_value = sadness.base_value
-
-            beta = getattr(state_matrix, "beta", None)
-            if beta is not None:
-                curiosity = beta.values.get("curiosity", 0.5)
-                social = self.parameters.get("social_initiative_threshold")
-                if social:
-                    social.base_value = max(0.1, min(0.9, 0.5 + curiosity * 0.2))
-                    social.current_value = social.base_value
+            self._apply_alpha_thresholds(state_matrix)
+            self._apply_gamma_thresholds(state_matrix)
+            self._apply_beta_thresholds(state_matrix)
         except Exception:
             logger.warning("Failed to update from state matrix", exc_info=True)
