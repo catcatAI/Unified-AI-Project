@@ -431,20 +431,9 @@ class GameMemoryBridge:
 
     # ==================== 經驗檢索 ====================
 
-    async def recall_experience(
-        self,
-        query: str,
-        limit: int = 10,
-        memory_type: Optional[MemoryType] = None,
-        min_reward: float = -1.0,
-    ) -> List[str]:
-        """
-        檢索相關經驗 (返回摘要字串列表)
-
-        先查本地會話快取，再查 HAM 持久層，兩者合併去重。
-        """
-        results = []
-        # 1. HAM 持久層 (真實調用)
+    async def _recall_ham(self, query: str, limit: int) -> List[Tuple[int, str]]:
+        """HAM 持久層檢索（真實調用）；失敗回本地 only。分數固定 1。"""
+        results: List[Tuple[int, str]] = []
         try:
             if self._ham is not None and hasattr(self._ham, "query_core_memory"):
                 ham_hits = await self._ham.query_core_memory(
@@ -464,27 +453,54 @@ class GameMemoryBridge:
                     results.append((1, summary))
         except Exception as e:
             logger.debug(f"HAM recall failed, using local only: {e}")
+        return results
+
+    @staticmethod
+    def _match_experience(exp: Any, query_lower: str) -> Optional[Tuple[int, str]]:
+        """簡單關鍵字匹配：tag +2、action +3、context +1；0 分 → None。"""
+        match_score = 0
+        for tag in exp.tags:
+            if tag.lower() in query_lower:
+                match_score += 2
+        if query_lower in exp.action.lower():
+            match_score += 3
+        if query_lower in str(exp.context).lower():
+            match_score += 1
+
+        if match_score > 0:
+            summary = (
+                f"[{exp.memory_type.value}] {exp.action} @ {exp.position} -> "
+                f"{exp.outcome} (reward: {exp.reward:.2f})"
+            )
+            return (match_score, summary)
+        return None
+
+    async def recall_experience(
+        self,
+        query: str,
+        limit: int = 10,
+        memory_type: Optional[MemoryType] = None,
+        min_reward: float = -1.0,
+    ) -> List[str]:
+        """
+        檢索相關經驗 (返回摘要字串列表)
+
+        先查本地會話快取，再查 HAM 持久層，兩者合併去重。
+        """
+        results: List[Tuple[int, str]] = []
+        # 1. HAM 持久層 (真實調用)
+        results.extend(await self._recall_ham(query, limit))
         query_lower = query.lower()
 
-        for exp in reversed(self._experiences):  # 最新優先
+        # 2. 本地會話（最新優先）
+        for exp in reversed(self._experiences):
             if memory_type and exp.memory_type != memory_type:
                 continue
             if exp.reward < min_reward:
                 continue
-
-            # 簡單關鍵字匹配
-            match_score = 0
-            for tag in exp.tags:
-                if tag.lower() in query_lower:
-                    match_score += 2
-            if query_lower in exp.action.lower():
-                match_score += 3
-            if query_lower in str(exp.context).lower():
-                match_score += 1
-
-            if match_score > 0:
-                summary = f"[{exp.memory_type.value}] {exp.action} @ {exp.position} -> {exp.outcome} (reward: {exp.reward:.2f})"
-                results.append((match_score, summary))
+            hit = self._match_experience(exp, query_lower)
+            if hit is not None:
+                results.append(hit)
 
         results.sort(key=lambda x: -x[0])
         return [r[1] for r in results[:limit]]
