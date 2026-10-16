@@ -505,6 +505,141 @@ class GamePolicy:
         gp = 0.5 * (1 + t) + 0.5 * A * (1 - t * t) * k * (1 + 3 * 0.044715 * A**2)
         return np.asarray(dY * (g + A * gp), dtype=np.float32)
 
+    def _make_bc_batch(self, dataset: List[Dict[str, Any]], indices: np.ndarray):
+        """Stack samples into X/Y arrays (proprioception + intent padded to 32)."""
+        Xs, Yc, Yd, Ym = [], [], [], []
+        for i in indices:
+            s = dataset[i]
+            prop = np.asarray(s.get("proprioception", np.zeros(32)), dtype=np.float32)
+            prop = self._pad_or_truncate(prop, 32)
+            intent = np.asarray(s.get("intent", self._intent_embedding), dtype=np.float32)
+            if intent.shape[0] != 32:
+                intent = self._pad_or_truncate(intent, 32)
+            Xs.append(
+                np.concatenate([np.asarray(s["visual_latent"], dtype=np.float32), prop, intent])
+            )
+            Yc.append(np.asarray(s["continuous"], dtype=np.float32))
+            Yd.append(int(s["discrete"]))
+            mode = s.get("mode")
+            Ym.append(
+                PolicyMode(mode).value
+                if isinstance(mode, str)
+                else getattr(mode, "value", None)
+            )
+        return (
+            np.stack(Xs),
+            np.stack(Yc),
+            np.asarray(Yd, dtype=np.int64),
+            np.asarray(
+                [list(PolicyMode).index(PolicyMode(m)) if m else -1 for m in Ym], dtype=np.int64
+            ),
+        )
+
+    def _bc_loss_grads(
+        self,
+        out: Dict[str, np.ndarray],
+        Ycc: np.ndarray,
+        Ydd: np.ndarray,
+        Ymm: np.ndarray,
+        N: int,
+        n_c: int,
+        action_scale: float,
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Loss gradients: continuous MSE（經 tanh 反傳）、離散 softmax CE、模式（有標註才參與）。"""
+        dcont = 2.0 * (out["cont"] - Ycc) / (N * n_c) * action_scale
+        dcont_pre = dcont * (1.0 - np.tanh(out["cont_pre"]) ** 2)
+        dlogits_d = self._softmax_batch(out["disc_logits"])
+        dlogits_d[np.arange(N), Ydd] -= 1.0
+        dlogits_d /= N
+        mode_logits = out["mode_logits"]
+        if (Ymm >= 0).any():
+            dlogits_m = self._softmax_batch(mode_logits)
+            mask = Ymm >= 0
+            dlogits_m[mask, Ymm[mask]] -= 1.0
+            dlogits_m /= N
+        else:
+            dlogits_m = np.zeros_like(mode_logits)
+        return dcont_pre, dlogits_d, dlogits_m
+
+    def _bc_backward(
+        self,
+        out: Dict[str, np.ndarray],
+        dcont_pre: np.ndarray,
+        dlogits_d: np.ndarray,
+        dlogits_m: np.ndarray,
+    ) -> Dict[str, np.ndarray]:
+        """手寫反傳：三輸出頭 + 殘差主幹（x2→x1→n1/z1）。"""
+        grads: Dict[str, np.ndarray] = {}
+        dx2 = dcont_pre @ self._params["W_cont"].T
+        grads["W_cont"] = out["x2"].T @ dcont_pre
+        grads["b_cont"] = dcont_pre.sum(axis=0)
+        dx2 += dlogits_d @ self._params["W_disc"].T
+        grads["W_disc"] = out["x2"].T @ dlogits_d
+        grads["b_disc"] = dlogits_d.sum(axis=0)
+        dx2 += dlogits_m @ self._params["W_mode"].T
+        grads["W_mode"] = out["x2"].T @ dlogits_m
+        grads["b_mode"] = dlogits_m.sum(axis=0)
+
+        # x2 = x1 + n3*0.1
+        dn3 = self._layer_norm_backward(dx2 * 0.1, out["z3"])
+        dx1 = dx2.copy()
+        dz3 = self._gelu_backward(dn3, out["a3"])
+        dx1 += dz3 @ self._params["W_h2"].T
+        grads["W_h2"] = out["x1"].T @ dz3
+        grads["b_h2"] = dz3.sum(axis=0)
+        # x1 = n1 + n2*0.1
+        dn2 = self._layer_norm_backward(dx1 * 0.1, out["z2"])
+        dn1 = dx1.copy()
+        dz2 = self._gelu_backward(dn2, out["a2"])
+        dn1 += dz2 @ self._params["W_h1"].T
+        grads["W_h1"] = out["n1"].T @ dz2
+        grads["b_h1"] = dz2.sum(axis=0)
+        dz1 = self._gelu_backward(self._layer_norm_backward(dn1, out["z1"]), out["a1"])
+        grads["W_in"] = out["X"].T @ dz1
+        grads["b_in"] = dz1.sum(axis=0)
+        return grads
+
+    def _bc_apply_gate(
+        self,
+        base_mae: float,
+        base_acc: float,
+        best: Dict[str, np.ndarray],
+        best_val: Tuple[float, float],
+        original: Dict[str, np.ndarray],
+        min_mae_improvement: float,
+        min_acc_improvement: float,
+        train_samples: int,
+        val_samples: int,
+        epochs: int,
+    ) -> Dict[str, Any]:
+        """學習門：通過 → 採用最佳權重（learned=True）；未過 → 還原原權重。
+
+        門未過＝一切如舊，不保留部分擬合結果（RELEASE_CRITERIA 第 4 維）。
+        """
+        mae_imp = base_mae - best_val[0]
+        acc_imp = best_val[1] - base_acc
+        if mae_imp >= min_mae_improvement or acc_imp >= min_acc_improvement:
+            for k in self._TRAINABLE:
+                self._params[k] = best[k]
+            return {
+                "learned": True,
+                "baseline": {"val_mae": round(base_mae, 4), "val_acc": round(base_acc, 4)},
+                "after": {"val_mae": round(best_val[0], 4), "val_acc": round(best_val[1], 4)},
+                "improvement": {"mae": round(mae_imp, 4), "acc": round(acc_imp, 4)},
+                "train_samples": train_samples,
+                "val_samples": val_samples,
+                "epochs": epochs,
+            }
+        for k in self._TRAINABLE:
+            self._params[k] = original[k]
+        return {
+            "learned": False,
+            "reason": "holdout gate not passed",
+            "baseline": {"val_mae": round(base_mae, 4), "val_acc": round(base_acc, 4)},
+            "after": {"val_mae": round(best_val[0], 4), "val_acc": round(best_val[1], 4)},
+            "improvement": {"mae": round(mae_imp, 4), "acc": round(acc_imp, 4)},
+        }
+
     def train_behavior_cloning(
         self,
         dataset: List[Dict[str, Any]],
@@ -541,37 +676,8 @@ class GamePolicy:
         if len(tr_idx) < 4:
             return {"learned": False, "reason": "train split too small"}
 
-        def make_batch(indices):
-            Xs, Yc, Yd, Ym = [], [], [], []
-            for i in indices:
-                s = dataset[i]
-                prop = np.asarray(s.get("proprioception", np.zeros(32)), dtype=np.float32)
-                prop = self._pad_or_truncate(prop, 32)
-                intent = np.asarray(s.get("intent", self._intent_embedding), dtype=np.float32)
-                if intent.shape[0] != 32:
-                    intent = self._pad_or_truncate(intent, 32)
-                Xs.append(
-                    np.concatenate([np.asarray(s["visual_latent"], dtype=np.float32), prop, intent])
-                )
-                Yc.append(np.asarray(s["continuous"], dtype=np.float32))
-                Yd.append(int(s["discrete"]))
-                mode = s.get("mode")
-                Ym.append(
-                    PolicyMode(mode).value
-                    if isinstance(mode, str)
-                    else getattr(mode, "value", None)
-                )
-            return (
-                np.stack(Xs),
-                np.stack(Yc),
-                np.asarray(Yd, dtype=np.int64),
-                np.asarray(
-                    [list(PolicyMode).index(PolicyMode(m)) if m else -1 for m in Ym], dtype=np.int64
-                ),
-            )
-
-        Xtr, Yctr, Ydtr, Ymtr = make_batch(tr_idx)
-        Xva, Ycva, Ydva, Ymva = make_batch(val_idx)
+        Xtr, Yctr, Ydtr, Ymtr = self._make_bc_batch(dataset, tr_idx)
+        Xva, Ycva, Ydva, Ymva = self._make_bc_batch(dataset, val_idx)
         c = self.config
         n_c = c.continuous_dim
 
@@ -590,53 +696,10 @@ class GamePolicy:
                 X, Ycc, Ydd, Ymm = Xtr[b], Yctr[b], Ydtr[b], Ymtr[b]
                 N = X.shape[0]
                 out = self._batch_forward(X)
-
-                # --- 損失梯度 ---
-                # 連續：MSE（經 tanh 反傳：dL/dcont_pre = dL/dcont * (1-tanh²)）
-                dcont = 2.0 * (out["cont"] - Ycc) / (N * n_c) * c.action_scale
-                dcont_pre = dcont * (1.0 - np.tanh(out["cont_pre"]) ** 2)
-                # 離散：softmax CE（逐行）
-                dlogits_d = self._softmax_batch(out["disc_logits"])
-                dlogits_d[np.arange(N), Ydd] -= 1.0
-                dlogits_d /= N
-                # 模式（有標註才參與）
-                mode_logits = out["mode_logits"]
-                if (Ymm >= 0).any():
-                    dlogits_m = self._softmax_batch(mode_logits)
-                    mask = Ymm >= 0
-                    dlogits_m[mask, Ymm[mask]] -= 1.0
-                    dlogits_m /= N
-                else:
-                    dlogits_m = np.zeros_like(mode_logits)
-
-                grads: Dict[str, np.ndarray] = {}
-                dx2 = dcont_pre @ self._params["W_cont"].T
-                grads["W_cont"] = out["x2"].T @ dcont_pre
-                grads["b_cont"] = dcont_pre.sum(axis=0)
-                dx2 += dlogits_d @ self._params["W_disc"].T
-                grads["W_disc"] = out["x2"].T @ dlogits_d
-                grads["b_disc"] = dlogits_d.sum(axis=0)
-                dx2 += dlogits_m @ self._params["W_mode"].T
-                grads["W_mode"] = out["x2"].T @ dlogits_m
-                grads["b_mode"] = dlogits_m.sum(axis=0)
-
-                # x2 = x1 + n3*0.1
-                dn3 = self._layer_norm_backward(dx2 * 0.1, out["z3"])
-                dx1 = dx2.copy()
-                dz3 = self._gelu_backward(dn3, out["a3"])
-                dx1 += dz3 @ self._params["W_h2"].T
-                grads["W_h2"] = out["x1"].T @ dz3
-                grads["b_h2"] = dz3.sum(axis=0)
-                # x1 = n1 + n2*0.1
-                dn2 = self._layer_norm_backward(dx1 * 0.1, out["z2"])
-                dn1 = dx1.copy()
-                dz2 = self._gelu_backward(dn2, out["a2"])
-                dn1 += dz2 @ self._params["W_h1"].T
-                grads["W_h1"] = out["n1"].T @ dz2
-                grads["b_h1"] = dz2.sum(axis=0)
-                dz1 = self._gelu_backward(self._layer_norm_backward(dn1, out["z1"]), out["a1"])
-                grads["W_in"] = out["X"].T @ dz1
-                grads["b_in"] = dz1.sum(axis=0)
+                dcont_pre, dlogits_d, dlogits_m = self._bc_loss_grads(
+                    out, Ycc, Ydd, Ymm, N, n_c, c.action_scale
+                )
+                grads = self._bc_backward(out, dcont_pre, dlogits_d, dlogits_m)
 
                 for k in self._TRAINABLE:
                     self._params[k] = (self._params[k] - lr * grads[k]).astype(np.float32)
@@ -647,30 +710,18 @@ class GamePolicy:
                 best_val = (val_mae, val_acc)
                 best = {k: self._params[k].copy() for k in self._TRAINABLE}
 
-        mae_imp = base_mae - best_val[0]
-        acc_imp = best_val[1] - base_acc
-        if mae_imp >= min_mae_improvement or acc_imp >= min_acc_improvement:
-            for k in self._TRAINABLE:
-                self._params[k] = best[k]
-            return {
-                "learned": True,
-                "baseline": {"val_mae": round(base_mae, 4), "val_acc": round(base_acc, 4)},
-                "after": {"val_mae": round(best_val[0], 4), "val_acc": round(best_val[1], 4)},
-                "improvement": {"mae": round(mae_imp, 4), "acc": round(acc_imp, 4)},
-                "train_samples": int(len(tr_idx)),
-                "val_samples": int(len(val_idx)),
-                "epochs": epochs,
-            }
-        # 學習門未過：還原到訓練前權重（門未過＝一切如舊，不保留部分擬合結果）
-        for k in self._TRAINABLE:
-            self._params[k] = original[k]
-        return {
-            "learned": False,
-            "reason": "holdout gate not passed",
-            "baseline": {"val_mae": round(base_mae, 4), "val_acc": round(base_acc, 4)},
-            "after": {"val_mae": round(best_val[0], 4), "val_acc": round(best_val[1], 4)},
-            "improvement": {"mae": round(mae_imp, 4), "acc": round(acc_imp, 4)},
-        }
+        return self._bc_apply_gate(
+            base_mae,
+            base_acc,
+            best,
+            best_val,
+            original,
+            min_mae_improvement,
+            min_acc_improvement,
+            int(len(tr_idx)),
+            int(len(val_idx)),
+            epochs,
+        )
 
     def _softmax_batch(self, x: np.ndarray) -> np.ndarray:
         """逐行 softmax（批次用；_softmax 僅支援 1D）。"""
