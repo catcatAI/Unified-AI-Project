@@ -49,6 +49,20 @@ class ColdStartManager:
         warmed: bool = bool(coordinator.is_warmed)
         return warmed
 
+    def _try_engine(
+        self, engine: Any, input_projection: Dict[str, float], label: str
+    ) -> Optional[Dict[str, float]]:
+        """嘗試單一 fallback engine；dict 輸出回 float 鍵值，否則 None。"""
+        if engine is None:
+            return None
+        try:
+            output = engine.forward(input_projection)
+            if isinstance(output, dict):
+                return {k: float(v) for k, v in output.items()}
+        except Exception as e:
+            logger.debug("%s fallback failed: %s", label, e)
+        return None
+
     def fallback_compute(
         self, block_id: str, input_projection: Dict[str, float]
     ) -> Dict[str, float]:
@@ -67,22 +81,14 @@ class ColdStartManager:
             return result
 
         # Fallback: try CoreNetwork
-        if self.core_network is not None:
-            try:
-                output = self.core_network.forward(input_projection)
-                if isinstance(output, dict):
-                    return {k: float(v) for k, v in output.items()}
-            except Exception as e:
-                logger.debug("CoreNetwork fallback failed: %s", e)
+        core_result = self._try_engine(self.core_network, input_projection, "CoreNetwork")
+        if core_result is not None:
+            return core_result
 
         # Fallback: try TensorSNNCore
-        if self.tensor_snn is not None:
-            try:
-                output = self.tensor_snn.forward(input_projection)
-                if isinstance(output, dict):
-                    return {k: float(v) for k, v in output.items()}
-            except Exception as e:
-                logger.debug("TensorSNNCore fallback failed: %s", e)
+        snn_result = self._try_engine(self.tensor_snn, input_projection, "TensorSNNCore")
+        if snn_result is not None:
+            return snn_result
 
         # Final degradation: pass-through
         return input_projection
