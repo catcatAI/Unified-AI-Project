@@ -127,6 +127,36 @@ class ExternalGateway:
     # ------------------------------------------------------------------
     # 呼叫（成對排程，步驟 B4）
     # ------------------------------------------------------------------
+    def _resolve_pair_failure(self, pair_id: Optional[str], exc: Exception) -> None:
+        """失敗 → 標記 ERROR；bookkeeping 自身失敗只 debug，不掩蓋原異常。"""
+        if pair_id is None or self.pairs is None:
+            return
+        try:
+            self.pairs.fail(pair_id, reason=str(exc))
+        except Exception:
+            logger.debug(
+                "pairs.fail bookkeeping crashed for pair %s", pair_id, exc_info=True
+            )
+
+    def _resolve_pair_success(
+        self, pair_id: Optional[str], envelope: Envelope, result: Any, name: str
+    ) -> None:
+        """成功 → 以 up-direction 輸出信封 resolve 成對追蹤。"""
+        if pair_id is None or self.pairs is None:
+            return
+        output = Envelope(
+            payload=result,
+            kind=EnvelopeKind.EXTERNAL,
+            direction="up",
+            correlation_id=envelope.correlation_id,
+            source=name,
+            target="external_gateway",
+        )
+        try:
+            self.pairs.resolve(pair_id, output)
+        except Exception as e:
+            logger.debug(f"pairs resolve {pair_id} failed: {e}", exc_info=True)
+
     async def call_external(
         self,
         name: str,
@@ -164,29 +194,11 @@ class ExternalGateway:
             result = await self._run_with_resilience(backend, method, timeout, retries, **kwargs)
         except Exception as exc:
             logger.warning("call_external %s.%s failed: %s", name, method, exc, exc_info=True)
-            if pair_id is not None and self.pairs is not None:
-                try:
-                    self.pairs.fail(pair_id, reason=str(exc))
-                except Exception:
-                    logger.debug(
-                        "pairs.fail bookkeeping crashed for pair %s", pair_id, exc_info=True
-                    )
+            self._resolve_pair_failure(pair_id, exc)
             raise
-        else:
-            if pair_id is not None and self.pairs is not None:
-                output = Envelope(
-                    payload=result,
-                    kind=EnvelopeKind.EXTERNAL,
-                    direction="up",
-                    correlation_id=envelope.correlation_id,
-                    source=name,
-                    target="external_gateway",
-                )
-                try:
-                    self.pairs.resolve(pair_id, output)
-                except Exception as e:
-                    logger.debug(f"pairs resolve {pair_id} failed: {e}", exc_info=True)
-            return result
+
+        self._resolve_pair_success(pair_id, envelope, result, name)
+        return result
 
     async def _run_with_resilience(
         self,
