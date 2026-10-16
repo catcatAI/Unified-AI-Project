@@ -75,6 +75,30 @@ class AgentAdapter:
                 return name, None
         return None, None
 
+    # Default values for required params by name pattern.
+    _PARAM_DEFAULTS: Dict[str, Any] = {
+        "sender_ai_id": "adapter",
+        "envelope": None,
+        "language": "python",
+        "text": "",
+        "query": "",
+        "data": [],
+        "prompt": "",
+        "theme": "general",
+        "goal": "unknown",
+        "entity": "",
+        "audio_path": "",
+        "image_path": "",
+        "content": "",
+    }
+
+    def _param_default(self, param_name: str) -> Any:
+        """Resolve default value for a required parameter by name pattern."""
+        for pattern, default in self._PARAM_DEFAULTS.items():
+            if pattern in param_name:
+                return default
+        return None
+
     def _fill_defaults(self, method, args: Dict[str, Any]) -> Dict[str, Any]:
         """Inspect method signature and fill defaults for missing required params."""
         try:
@@ -94,33 +118,7 @@ class AgentAdapter:
             if param_name not in filled:
                 if param.default is not inspect.Parameter.empty:
                     continue  # Has default, skip
-                # Fill required params with sensible defaults
-                if "sender_ai_id" in param_name:
-                    filled[param_name] = "adapter"
-                elif "envelope" in param_name:
-                    filled[param_name] = None
-                elif "language" in param_name:
-                    filled[param_name] = "python"
-                elif "text" in param_name:
-                    filled[param_name] = ""
-                elif "query" in param_name:
-                    filled[param_name] = ""
-                elif "data" in param_name:
-                    filled[param_name] = []
-                elif "prompt" in param_name:
-                    filled[param_name] = ""
-                elif "theme" in param_name:
-                    filled[param_name] = "general"
-                elif "goal" in param_name:
-                    filled[param_name] = "unknown"
-                elif "entity" in param_name:
-                    filled[param_name] = ""
-                elif "audio_path" in param_name or "image_path" in param_name:
-                    filled[param_name] = ""
-                elif "content" in param_name:
-                    filled[param_name] = ""
-                else:
-                    filled[param_name] = None
+                filled[param_name] = self._param_default(param_name)
         return filled
 
     async def execute(self, task: Dict[str, Any]) -> Any:
