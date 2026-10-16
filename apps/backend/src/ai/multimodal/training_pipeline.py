@@ -526,35 +526,27 @@ class PrimitiveTrainer:
         self._gen = sequence_generator
         self._library: Optional[Any] = None
 
-    def _create_library_shapes(self):
-        """Create a library of basic geometric shapes with various colors and positions."""
-        from .primitives.primitive_types import Arc, Circle, DrawingInstructions, Line, Plane, Point
+    def _make_circles(self, colors, bg) -> list:
+        """Circles: 3 radii × 3 positions × 8 colors (limited to avoid explosion)."""
+        from .primitives.primitive_types import Circle, DrawingInstructions
 
         shapes = []
-        colors = [
-            (255, 0, 0),
-            (0, 255, 0),
-            (0, 0, 255),
-            (255, 255, 0),
-            (0, 255, 255),
-            (255, 165, 0),
-            (128, 0, 128),
-            (255, 0, 255),
-        ]
-
-        bg = (255, 255, 255)
-
-        # Circles: 3 radii × 3 positions × 8 colors (limited to avoid explosion)
         for cx, cy in [(0.5, 0.5), (0.3, 0.3), (0.7, 0.7)]:
             for r in [0.1, 0.2, 0.3]:
                 for color in colors[:4]:
                     shapes.append(
                         DrawingInstructions(
-                            circles=[Circle(cx, cy, r, color, (0, 0, 0), 0.02)], background_color=bg
+                            circles=[Circle(cx, cy, r, color, (0, 0, 0), 0.02)],
+                            background_color=bg,
                         )
                     )
+        return shapes
 
-        # Squares (rectangular planes): 2 sizes × 3 positions × 4 colors
+    def _make_squares(self, colors, bg) -> list:
+        """Squares (rectangular planes): 2 sizes × 3 positions × 4 colors."""
+        from .primitives.primitive_types import DrawingInstructions, Plane, Point
+
+        shapes = []
         for cx, cy in [(0.5, 0.5), (0.3, 0.5), (0.5, 0.3)]:
             for rx, ry in [(0.15, 0.15), (0.25, 0.15), (0.15, 0.25)]:
                 for color in colors[4:6]:
@@ -576,8 +568,13 @@ class PrimitiveTrainer:
                             background_color=bg,
                         )
                     )
+        return shapes
 
-        # Triangles: 3-point planes × 4 colors
+    def _make_triangles(self, colors, bg) -> list:
+        """Triangles: 3-point planes × 4 colors."""
+        from .primitives.primitive_types import DrawingInstructions, Plane, Point
+
+        shapes = []
         tri_verts = [
             [(0.5, 0.2), (0.3, 0.8), (0.7, 0.8)],
             [(0.2, 0.5), (0.5, 0.2), (0.8, 0.5)],
@@ -598,8 +595,13 @@ class PrimitiveTrainer:
                         background_color=bg,
                     )
                 )
+        return shapes
 
-        # Lines: horizontal, vertical, diagonal × 4 colors
+    def _make_lines(self, colors, bg) -> list:
+        """Lines: horizontal, vertical, diagonal × 4 colors."""
+        from .primitives.primitive_types import DrawingInstructions, Line, Point
+
+        shapes = []
         line_defs = [
             [(0.1, 0.5), (0.9, 0.5)],
             [(0.5, 0.1), (0.5, 0.9)],
@@ -621,15 +623,18 @@ class PrimitiveTrainer:
                         background_color=bg,
                     )
                 )
+        return shapes
 
-        # Dots: single points × 4 colors × 3 positions
+    def _make_dots_and_arcs(self, colors, bg) -> list:
+        """Dots (single points × 4 colors × 3 positions) + Arcs (partial circles × 4 colors)."""
+        from .primitives.primitive_types import Arc, DrawingInstructions, Point
+
+        shapes = []
         for px, py in [(0.3, 0.3), (0.5, 0.5), (0.7, 0.7)]:
             for color in colors[:4]:
                 shapes.append(
                     DrawingInstructions(points=[Point(px, py, color, 0.15)], background_color=bg)
                 )
-
-        # Arcs: partial circles × 4 colors
         for start_angle, end_angle in [(0, 3.14), (3.14, 6.28), (1.57, 4.71)]:
             for color in colors[:4]:
                 shapes.append(
@@ -638,6 +643,29 @@ class PrimitiveTrainer:
                         background_color=bg,
                     )
                 )
+        return shapes
+
+    def _create_library_shapes(self):
+        """Create a library of basic geometric shapes with various colors and positions."""
+        colors = [
+            (255, 0, 0),
+            (0, 255, 0),
+            (0, 0, 255),
+            (255, 255, 0),
+            (0, 255, 255),
+            (255, 165, 0),
+            (128, 0, 128),
+            (255, 0, 255),
+        ]
+
+        bg = (255, 255, 255)
+
+        shapes = []
+        shapes += self._make_circles(colors, bg)
+        shapes += self._make_squares(colors, bg)
+        shapes += self._make_triangles(colors, bg)
+        shapes += self._make_lines(colors, bg)
+        shapes += self._make_dots_and_arcs(colors, bg)
 
         return shapes
 
