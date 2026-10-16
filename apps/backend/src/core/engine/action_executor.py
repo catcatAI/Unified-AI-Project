@@ -475,6 +475,38 @@ class ActionExecutor:
 
             action.completed_at = datetime.now()
 
+    def _run_pre_callbacks(self, action: Action) -> None:
+        """Run pre-execution callbacks (each resilient)."""
+        for callback in self._pre_execution_callbacks:
+            try:
+                callback(action)
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: callback errors should not break action execution
+                logger.warning(f"Pre-execution callback failed: {e}", exc_info=True)
+
+    def _run_post_callbacks(self, action: Action) -> None:
+        """Run post-execution callbacks with result (each resilient)."""
+        for callback in self._post_execution_callbacks:
+            try:
+                result = action.result
+                if result is not None:
+                    callback(action, result)
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: callback errors should not break execution loop
+                logger.warning(f"Post-execution callback failed: {e}", exc_info=True)
+
+    def _finalize_action(self, action: Action) -> None:
+        """Completion bookkeeping: timestamp, notify, cleanup, wake waiters."""
+        action.completed_at = datetime.now()
+        self._notify_status_change(action)
+        if action.action_id in self.active_actions:
+            del self.active_actions[action.action_id]
+        # Signal completion to any waiter via event-driven pattern
+        if action.action_id in self._completion_events:
+            self._completion_events[action.action_id].set()
+
     async def _execute_action(self, action: Action) -> None:
         """Execute a single action with full lifecycle"""
         action.status = ActionStatus.VALIDATING
@@ -482,13 +514,7 @@ class ActionExecutor:
         self.active_actions[action.action_id] = action
 
         try:
-            for callback in self._pre_execution_callbacks:
-                try:
-                    callback(action)
-                except (
-                    Exception
-                ) as e:  # broad exception acceptable: callback errors should not break action execution
-                    logger.warning(f"Pre-execution callback failed: {e}", exc_info=True)
+            self._run_pre_callbacks(action)
 
             await self._apply_biological_strain(action)
 
@@ -497,15 +523,7 @@ class ActionExecutor:
 
             await self._run_and_record_result(action)
 
-            for callback in self._post_execution_callbacks:  # type: ignore[assignment]
-                try:
-                    result = action.result
-                    if result is not None:
-                        callback(action, result)  # type: ignore[call-arg]
-                except (
-                    Exception
-                ) as e:  # broad exception acceptable: callback errors should not break execution loop
-                    logger.warning(f"Post-execution callback failed: {e}", exc_info=True)
+            self._run_post_callbacks(action)
 
         except (
             Exception
@@ -521,13 +539,7 @@ class ActionExecutor:
             self._record_action_outcome(action, success=False)
 
         finally:
-            action.completed_at = datetime.now()
-            self._notify_status_change(action)
-            if action.action_id in self.active_actions:
-                del self.active_actions[action.action_id]
-            # Signal completion to any waiter via event-driven pattern
-            if action.action_id in self._completion_events:
-                self._completion_events[action.action_id].set()
+            self._finalize_action(action)
 
     async def _validate_action(self, action: Action) -> tuple[bool, Optional[str]]:
         """Validate action through safety checks"""
