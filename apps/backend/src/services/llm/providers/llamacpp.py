@@ -153,6 +153,24 @@ class LlamaCppBackend(BaseLLMBackend):
             truncated = True
         return piece, truncated
 
+    async def _stream_response_loop(
+        self, response, chunks: list, stream_callback, _inspect
+    ) -> bool:
+        """Process SSE stream from response. Returns truncated flag."""
+        truncated = False
+        async for raw in response.content:
+            piece, chunk_truncated = await self._process_sse_chunk(raw, chunks)
+            if chunk_truncated:
+                truncated = True
+            if piece:
+                try:
+                    out = stream_callback(piece)
+                    if _inspect.isawaitable(out):
+                        await out
+                except Exception as exc:
+                    logger.debug("stream_callback failed: %s", exc)
+        return truncated
+
     async def generate_stream(self, prompt: str, stream_callback, **kwargs) -> LLMResponse:
         """Streaming generate: POST stream:true, invoke callback per delta.
 
@@ -171,20 +189,9 @@ class LlamaCppBackend(BaseLLMBackend):
             "stream": True,
         }
 
-        async def _emit(piece: str) -> None:
-            if not piece:
-                return
-            try:
-                out = stream_callback(piece)
-                if _inspect.isawaitable(out):
-                    await out
-            except Exception as exc:
-                logger.debug("stream_callback failed: %s", exc)
-
         chunks: list = []
         try:
             session = self._get_session()
-            truncated = False
             async with session.post(
                 f"{self.base_url}/v1/chat/completions",
                 json=payload,
@@ -198,12 +205,9 @@ class LlamaCppBackend(BaseLLMBackend):
                         model=self.model or "unknown",
                         error=f"HTTP {response.status}: {text[:200]}",
                     )
-                async for raw in response.content:
-                    piece, chunk_truncated = await self._process_sse_chunk(raw, chunks)
-                    if chunk_truncated:
-                        truncated = True
-                    if piece:
-                        await _emit(piece)
+                truncated = await self._stream_response_loop(
+                    response, chunks, stream_callback, _inspect
+                )
             text = "".join(chunks)
             if truncated:
                 text += "…[truncated]"
