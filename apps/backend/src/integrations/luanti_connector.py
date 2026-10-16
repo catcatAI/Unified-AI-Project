@@ -164,41 +164,57 @@ class LuantiConnector:
             if self.config.auto_reconnect:
                 asyncio.create_task(self._reconnect())
 
+    def _resolve_response_future(self, msg: Dict) -> bool:
+        """Complete a pending request future if this message carries its id.
+
+        Returns True when the message was consumed as a response.
+        """
+        if "request_id" not in msg:
+            return False
+        req_id = msg["request_id"]
+        if req_id not in self._response_futures:
+            return False
+        fut = self._response_futures.pop(req_id)
+        if not fut.done():
+            fut.set_result(msg)
+        return True
+
+    async def _dispatch_registered(self, msg_type: str, msg: Dict) -> None:
+        """分派給註冊處理器（單一 handler 失敗不影響其餘）。"""
+        if msg_type not in self._handlers:
+            return
+        for handler in self._handlers[msg_type]:
+            try:
+                await handler(msg)
+            except Exception as e:
+                logger.error(f"Handler error for {msg_type}: {e}")
+
+    async def _apply_type_specific(self, msg_type: str, msg: Dict) -> None:
+        """特定類型處理（auth_success / player_state / frame）。"""
+        if msg_type == "auth_success":
+            self._connected_event.set()
+            self.state = ConnectionState.READY
+        elif msg_type == "player_state":
+            self._update_player_state(msg)
+        elif msg_type == "frame":
+            await self._handle_frame(msg)
+        # R87 死路徑 #14：chat 分支此前呼叫不存在的 self._dispatch ——
+        # AttributeError 落入外層 except（state=ERROR）且中斷後續處理。
+        # chat 的分派已由上方 generic handler 機制（self._handlers）涵蓋，
+        # 此處不需再重複處理。
+
     async def _handle_message(self, raw_message: str):
         """處理接收到的訊息"""
         try:
             msg = json.loads(raw_message)
             msg_type = msg.get("type", "")
 
-            # 處理回應 future
-            if "request_id" in msg:
-                req_id = msg["request_id"]
-                if req_id in self._response_futures:
-                    fut = self._response_futures.pop(req_id)
-                    if not fut.done():
-                        fut.set_result(msg)
-                    return
+            # 處理回應 future（消費訊息則不再往下）
+            if self._resolve_response_future(msg):
+                return
 
-            # 分派給註冊處理器
-            if msg_type in self._handlers:
-                for handler in self._handlers[msg_type]:
-                    try:
-                        await handler(msg)
-                    except Exception as e:
-                        logger.error(f"Handler error for {msg_type}: {e}")
-
-            # 特定類型處理
-            if msg_type == "auth_success":
-                self._connected_event.set()
-                self.state = ConnectionState.READY
-            elif msg_type == "player_state":
-                self._update_player_state(msg)
-            elif msg_type == "frame":
-                await self._handle_frame(msg)
-            # R87 死路徑 #14：chat 分支此前呼叫不存在的 self._dispatch ——
-            # AttributeError 落入外層 except（state=ERROR）且中斷後續處理。
-            # chat 的分派已由上方 generic handler 機制（self._handlers）涵蓋，
-            # 此處不需再重複處理。
+            await self._dispatch_registered(msg_type, msg)
+            await self._apply_type_specific(msg_type, msg)
 
         except json.JSONDecodeError:
             logger.warning(f"Invalid JSON: {raw_message[:100]}")
