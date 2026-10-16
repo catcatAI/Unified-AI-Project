@@ -644,6 +644,71 @@ class TensorSNNCore:
     # Forward pass (LIF multi-step)
     # ------------------------------------------------------------------
 
+    def _init_activations(
+        self,
+        input_keys: Dict[str, float],
+        context: Optional[Dict[str, Any]],
+    ):
+        """Build initial activation vector from input_keys + neural_state injection."""
+        a = _zeros(self.vocab_size)
+        for key, conf in input_keys.items():
+            idx = self._key_to_idx.get(key)
+            if idx is not None:
+                a[idx] = max(0.0, min(1.0, conf))
+                self._touch(idx)
+
+        # NeuralBridge injection: the context slot was declared but never read.
+        # StateMatrix axis values (mapped to concept keys, all in [0,1]) are
+        # merged into the initial activations — a minimal-translation direct
+        # numeric link (no vector projection). Skip keys outside the vocab.
+        neural_state = (context or {}).get("neural_state")
+        if neural_state:
+            for key, conf in neural_state.items():
+                idx = self._key_to_idx.get(key)
+                if idx is not None and a[idx] == 0:
+                    a[idx] = max(0.0, min(1.0, conf))
+                    self._touch(idx)
+        return a
+
+    def _compute_timestep(
+        self, a: "np.ndarray", W: "np.ndarray", potential: "np.ndarray", t: int, threshold: float, max_active: int
+    ):
+        """One LIF + top-k competition timestep. Returns (potential, spikes, n_active)."""
+        V = self.vocab_size
+        active_idx = _nonzero_indices(a)
+        n_active = len(active_idx)
+        if n_active > 0:
+            _use_torch = hasattr(W[active_idx], "sum") and hasattr(W[active_idx].sum, "dim")
+            if _use_torch:
+                incoming = W[active_idx].sum(dim=0)
+            else:
+                incoming = W[active_idx].sum(axis=0)
+            potential = potential * (1.0 - self.leak) + incoming
+        else:
+            potential = potential * (1.0 - self.leak)
+
+        # Top-k competition
+        if _numel(potential) > max_active:
+            sorted_idx = np.argpartition(potential, -max_active)[-max_active:]
+        else:
+            sorted_idx = _nonzero_indices(potential)
+        spike_mask = _float(potential >= threshold)
+        topk_mask = _zeros(V)
+        if hasattr(sorted_idx, "tolist"):
+            topk_mask[sorted_idx.tolist()] = 1.0
+        else:
+            topk_mask[sorted_idx] = 1.0
+        spikes = spike_mask * topk_mask
+
+        # Reset potential for spiking neurons (refractory period).
+        # Without this, strongly-coupled pairs enter runaway oscillation
+        # and prevent 2+ hop propagation.
+        spike_idx = _nonzero_indices(spikes)
+        if len(spike_idx) > 0:
+            potential[spike_idx] = 0.0
+
+        return potential, spikes, n_active
+
     def forward(
         self,
         input_keys: Dict[str, float],
@@ -665,25 +730,7 @@ class TensorSNNCore:
         V = self.vocab_size
         W = self._W[:V, :V]
 
-        a = _zeros(V)
-        for key, conf in input_keys.items():
-            idx = self._key_to_idx.get(key)
-            if idx is not None:
-                a[idx] = max(0.0, min(1.0, conf))
-                self._touch(idx)
-
-        # NeuralBridge injection: the context slot was declared but never read.
-        # StateMatrix axis values (mapped to concept keys, all in [0,1]) are
-        # merged into the initial activations — a minimal-translation direct
-        # numeric link (no vector projection). Skip keys outside the vocab.
-        neural_state = (context or {}).get("neural_state")
-        if neural_state:
-            for key, conf in neural_state.items():
-                idx = self._key_to_idx.get(key)
-                if idx is not None and a[idx] == 0:
-                    a[idx] = max(0.0, min(1.0, conf))
-                    self._touch(idx)
-
+        a = self._init_activations(input_keys, context)
         if a.sum() == 0.0:
             return {}
 
@@ -696,38 +743,9 @@ class TensorSNNCore:
         max_active = max(1, int(V * top_k_ratio))
 
         for t in range(self.timesteps):
-            active_idx = _nonzero_indices(a)
-            n_active = len(active_idx)
-            if n_active > 0:
-                _use_torch = hasattr(W[active_idx], "sum") and hasattr(W[active_idx].sum, "dim")
-                if _use_torch:
-                    incoming = W[active_idx].sum(dim=0)
-                else:
-                    incoming = W[active_idx].sum(axis=0)
-                potential = potential * (1.0 - self.leak) + incoming
-            else:
-                potential = potential * (1.0 - self.leak)
-
-            # Top-k competition
-            if _numel(potential) > max_active:
-                sorted_idx = np.argpartition(potential, -max_active)[-max_active:]
-            else:
-                sorted_idx = _nonzero_indices(potential)
-            spike_mask = _float(potential >= threshold)
-            topk_mask = _zeros(V)
-            if hasattr(sorted_idx, "tolist"):
-                topk_mask[sorted_idx.tolist()] = 1.0
-            else:
-                topk_mask[sorted_idx] = 1.0
-            spikes = spike_mask * topk_mask
-
-            # Reset potential for spiking neurons (refractory period).
-            # Without this, strongly-coupled pairs enter runaway oscillation
-            # and prevent 2+ hop propagation.
-            spike_idx = _nonzero_indices(spikes)
-            if len(spike_idx) > 0:
-                potential[spike_idx] = 0.0
-
+            potential, spikes, n_active = self._compute_timestep(
+                a, W, potential, t, threshold, max_active
+            )
             a = spikes * (self.decay**t)
             cumulative += spikes
             total_active += n_active
