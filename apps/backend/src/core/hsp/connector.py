@@ -560,43 +560,44 @@ class HSPConnector:
         self.is_connected = False
         self.hsp_available = False
 
-    async def disconnect(self) -> None:
-        """Disconnect from the service."""
-        if self.mock_mode:
-            self.logger.info("HSPConnector: Mock disconnect successful.")
-            self.is_connected = False
-        else:
+    async def _disconnect_external(self) -> None:
+        """Real-path disconnect: close connector, reflect underlying state."""
+        try:
+            await self.external_connector.disconnect()
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: disconnect may raise various errors (already closed)
+            self.logger.warning(
+                f"HSPConnector: external disconnect raised (likely already closed) {e}",
+                exc_info=True,
+            )
+        finally:
+            # Reflect underlying state or force false
             try:
-                await self.external_connector.disconnect()
-            except (
-                Exception
-            ) as e:  # broad exception acceptable: disconnect may raise various errors (already closed)
-                self.logger.warning(
-                    f"HSPConnector: external disconnect raised (likely already closed) {e}",
-                    exc_info=True,
+                self.is_connected = bool(
+                    getattr(self.external_connector, "is_connected", False)
                 )
-            finally:
-                # Reflect underlying state or force false
-                try:
-                    self.is_connected = bool(
-                        getattr(self.external_connector, "is_connected", False)
-                    )
-                except (
-                    Exception
-                ) as e:  # broad exception acceptable: state reflection may raise various errors
-                    logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                    self.is_connected = False
-
-        if self.fallback_manager and self.fallback_initialized:
-            try:
-                await self.fallback_manager.shutdown()
             except (
                 Exception
-            ) as e:  # broad exception acceptable: fallback shutdown may raise various errors
-                self.logger.warning(f"HSPConnector: fallback shutdown error: {e}", exc_info=True)
-            finally:
-                self.fallback_initialized = False
+            ) as e:  # broad exception acceptable: state reflection may raise various errors
+                logger.error(f"Error in {__name__}: {e}", exc_info=True)
+                self.is_connected = False
 
+    async def _shutdown_fallback(self) -> None:
+        """Shutdown fallback manager if it was initialized."""
+        if not (self.fallback_manager and self.fallback_initialized):
+            return
+        try:
+            await self.fallback_manager.shutdown()
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: fallback shutdown may raise various errors
+            self.logger.warning(f"HSPConnector: fallback shutdown error: {e}", exc_info=True)
+        finally:
+            self.fallback_initialized = False
+
+    async def _fire_disconnect_callbacks(self) -> None:
+        """Run registered disconnect callbacks (sync or async), resilient each."""
         for callback in self._disconnect_callbacks:
             try:
                 result = callback()
@@ -606,6 +607,17 @@ class HSPConnector:
                 Exception
             ) as e:  # broad exception acceptable: callback execution may raise various errors
                 self.logger.warning(f"HSPConnector: disconnect callback error: {e}", exc_info=True)
+
+    async def disconnect(self) -> None:
+        """Disconnect from the service."""
+        if self.mock_mode:
+            self.logger.info("HSPConnector: Mock disconnect successful.")
+            self.is_connected = False
+        else:
+            await self._disconnect_external()
+
+        await self._shutdown_fallback()
+        await self._fire_disconnect_callbacks()
 
     async def _initialize_fallback_protocols(self) -> None:
         """Initialize fallback protocols from config (called by connect()).
@@ -643,6 +655,62 @@ class HSPConnector:
         except Exception as e:
             self.logger.error(f"Error initializing fallback protocols: {e}", exc_info=True)
 
+    def _init_memory_protocol(self, manager: Any, memory_config: Dict[str, Any]) -> None:
+        """In-memory protocol (enabled by default)."""
+        if not memory_config.get("enabled", True):
+            return
+        memory_protocol = InMemoryProtocol(
+            max_queue_size=int(memory_config.get("queue_size", 1000))
+        )
+        priority = memory_config.get("priority", 1)
+        manager.add_protocol(memory_protocol, priority=priority)
+        self.logger.debug(f"Added memory protocol with priority {priority}")
+
+    def _anchor_data_path(self, base_path: Any) -> str:
+        """Anchor relative paths to the repo data root, not CWD.
+
+        (audit 2026-10-11: same split-brain class as vector store).
+        """
+        path_str = str(base_path)
+        if os.path.isabs(path_str):
+            return path_str
+        try:
+            from core.data_config import get_data_root
+
+            rel = Path(path_str)
+            if rel.parts and rel.parts[0] == "data":
+                rel = Path(*rel.parts[1:])
+            return str(get_data_root() / rel)
+        except Exception:
+            self.logger.warning(
+                "[HSP] data_root anchor failed; file protocol "
+                "falls back to CWD-relative base_path=%r",
+                path_str,
+                exc_info=True,
+            )
+            return path_str
+
+    def _init_file_protocol(self, manager: Any, file_config: Dict[str, Any]) -> None:
+        """File-based protocol (enabled by default), data-root anchored."""
+        if not file_config.get("enabled", True):
+            return
+        base_path = self._anchor_data_path(file_config.get("base_path", "data/fallback_comm"))
+        file_protocol = FileBasedProtocol(base_path=base_path)
+        priority = file_config.get("priority", 2)
+        manager.add_protocol(file_protocol, priority=priority)
+        self.logger.debug(f"Added file protocol with priority {priority}")
+
+    def _init_http_protocol(self, manager: Any, http_config: Dict[str, Any]) -> None:
+        """HTTP protocol (disabled by default: needs registered peers; binds a port)."""
+        if not http_config.get("enabled", False):
+            return
+        host = http_config.get("host", "127.0.0.1")
+        port = 0 if os.environ.get("TESTING") == "true" else http_config.get("port", 8765)
+        http_protocol = HTTPProtocol(host=host, port=port)
+        priority = http_config.get("priority", 3)
+        manager.add_protocol(http_protocol, priority=priority)
+        self.logger.debug(f"Added HTTP protocol with priority {priority}")
+
     async def _initialize_protocols_with_config(self, config: Dict[str, Any]) -> bool:
         """Initialize individual fallback protocols from config."""
         try:
@@ -650,52 +718,9 @@ class HSPConnector:
                 return False
             protocols_config = config.get("protocols", {})
 
-            # Initialize in-memory protocol
-            memory_config = protocols_config.get("memory", {})
-            if memory_config.get("enabled", True):
-                memory_protocol = InMemoryProtocol(
-                    max_queue_size=int(memory_config.get("queue_size", 1000))
-                )
-                priority = memory_config.get("priority", 1)
-                self.fallback_manager.add_protocol(memory_protocol, priority=priority)
-                self.logger.debug(f"Added memory protocol with priority {priority}")
-
-            # Initialize file-based protocol
-            file_config = protocols_config.get("file", {})
-            if file_config.get("enabled", True):
-                base_path = file_config.get("base_path", "data/fallback_comm")
-                # Anchor relative paths to the repo data root, not CWD
-                # (audit 2026-10-11: same split-brain class as vector store).
-                if not os.path.isabs(str(base_path)):
-                    try:
-                        from core.data_config import get_data_root
-
-                        rel = Path(str(base_path))
-                        if rel.parts and rel.parts[0] == "data":
-                            rel = Path(*rel.parts[1:])
-                        base_path = str(get_data_root() / rel)
-                    except Exception:
-                        self.logger.warning(
-                            "[HSP] data_root anchor failed; file protocol "
-                            "falls back to CWD-relative base_path=%r",
-                            str(base_path),
-                            exc_info=True,
-                        )
-                file_protocol = FileBasedProtocol(base_path=base_path)
-                priority = file_config.get("priority", 2)
-                self.fallback_manager.add_protocol(file_protocol, priority=priority)
-                self.logger.debug(f"Added file protocol with priority {priority}")
-
-            # Initialize HTTP protocol (disabled by default in config: needs
-            # registered peer endpoints; binds a port).
-            http_config = protocols_config.get("http", {})
-            if http_config.get("enabled", False):
-                host = http_config.get("host", "127.0.0.1")
-                port = 0 if os.environ.get("TESTING") == "true" else http_config.get("port", 8765)
-                http_protocol = HTTPProtocol(host=host, port=port)
-                priority = http_config.get("priority", 3)
-                self.fallback_manager.add_protocol(http_protocol, priority=priority)
-                self.logger.debug(f"Added HTTP protocol with priority {priority}")
+            self._init_memory_protocol(self.fallback_manager, protocols_config.get("memory", {}))
+            self._init_file_protocol(self.fallback_manager, protocols_config.get("file", {}))
+            self._init_http_protocol(self.fallback_manager, protocols_config.get("http", {}))
 
             # Initialize and start the manager (both are async — the migration
             # era code called them synchronously, which only created coroutines
