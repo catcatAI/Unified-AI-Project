@@ -791,6 +791,78 @@ def _format_llm_routing(service: Any) -> str:
 # ═══════════════════════════════════════════════════════════════════
 
 
+def _handle_model_list(backends: Any, active_type: Any) -> str:
+    """Format /model list output with backend health checks."""
+    lines = [_section("Available Models")]
+
+    if not backends:
+        lines.append("  (no backends registered)")
+        lines.append(_hint("Check deployment.mode in llm.default.yaml"))
+        lines.append(_hint("For local: ensure Ollama is running"))
+        lines.append(_hint("For cloud: set API key in .env"))
+        return "\n".join(lines)
+
+    lines.append(f"  {'#':<4s} {'Backend':<24s} {'Type':<8s} {'Status':<12s}")
+    lines.append(f"  {'─'*4} {'─'*24} {'─'*8} {'─'*12}")
+
+    idx = 0
+    for btype, bobj in backends.items():
+        idx += 1
+        name = btype.name if hasattr(btype, "name") else str(btype)
+        is_active = active_type is not None and btype == active_type
+        marker = " ★" if is_active else "  "
+        health = "ok"
+        try:
+            import asyncio as _aio
+
+            try:
+                _aio.get_running_loop()
+            except RuntimeError:
+                health = "ok" if _aio.run(bobj.check_health()) else "fail"
+        except Exception:
+            logger.debug("repl: local backend health check failed", exc_info=True)
+        status_str = "active" if is_active else health
+        lines.append(f"  {idx:<4d} {name:<24s} {'local':<8s} {status_str:<12s}{marker}")
+
+    lines.append("\n  ★ = active backend")
+    lines.append(f"  Total: {len(backends)} registered, 1 active")
+    return "\n".join(lines)
+
+
+def _handle_model_stats(llm_svc: Any) -> str:
+    """Format /model stats output."""
+    stats = getattr(llm_svc, "stats", {})
+    if not stats:
+        return "No statistics available yet. Statistics are recorded after LLM calls."
+    lines = [_section("LLM Statistics")]
+    for k, v in stats.items():
+        lines.append(f"  {k}: {v}")
+    return "\n".join(lines)
+
+
+def _handle_model_switch(llm_svc: Any, backends: Any, subarg: str) -> str:
+    """Handle /model switch command."""
+    if not subarg:
+        available = (
+            [btype.name for btype in backends.keys()] if hasattr(backends, "keys") else []
+        )
+        lines = ["Usage: /model switch <name>"]
+        lines.append(f"Available: {available}")
+        return "\n".join(lines)
+
+    backend_key = subarg.strip()
+    for btype, bobj in backends.items():
+        name = btype.name if hasattr(btype, "name") else str(btype)
+        if backend_key.lower() in name.lower():
+            llm_svc.active_backend = bobj
+            llm_svc.active_backend_type = btype
+            return f"✅ Switched to {name}"
+    available = [
+        btype.name if hasattr(btype, "name") else str(btype) for btype in backends.keys()
+    ]
+    return f"❌ Model '{backend_key}' not found.\nAvailable: {available}"
+
+
 def _handle_model_command(args: str, service: Any) -> str:
     """Handle model command request with rich output."""
     parts = args.strip().split(maxsplit=1)
@@ -806,72 +878,15 @@ def _handle_model_command(args: str, service: Any) -> str:
 
     # ── /model list ──
     if subcmd in ("list", "ls", "l", ""):
-        lines = [_section("Available Models")]
-
-        if not backends:
-            lines.append("  (no backends registered)")
-            lines.append(_hint("Check deployment.mode in llm.default.yaml"))
-            lines.append(_hint("For local: ensure Ollama is running"))
-            lines.append(_hint("For cloud: set API key in .env"))
-            return "\n".join(lines)
-
-        lines.append(f"  {'#':<4s} {'Backend':<24s} {'Type':<8s} {'Status':<12s}")
-        lines.append(f"  {'─'*4} {'─'*24} {'─'*8} {'─'*12}")
-
-        idx = 0
-        for btype, bobj in backends.items():
-            idx += 1
-            name = btype.name if hasattr(btype, "name") else str(btype)
-            is_active = active_type is not None and btype == active_type
-            marker = " ★" if is_active else "  "
-            health = "ok"
-            try:
-                import asyncio as _aio
-
-                try:
-                    _aio.get_running_loop()
-                except RuntimeError:
-                    health = "ok" if _aio.run(bobj.check_health()) else "fail"
-            except Exception:
-                logger.debug("repl: local backend health check failed", exc_info=True)
-            status_str = "active" if is_active else health
-            lines.append(f"  {idx:<4d} {name:<24s} {'local':<8s} {status_str:<12s}{marker}")
-
-        lines.append("\n  ★ = active backend")
-        lines.append(f"  Total: {len(backends)} registered, 1 active")
-        return "\n".join(lines)
+        return _handle_model_list(backends, active_type)
 
     # ── /model stats ──
     if subcmd in ("stats", "s"):
-        stats = getattr(llm_svc, "stats", {})
-        if not stats:
-            return "No statistics available yet. Statistics are recorded after LLM calls."
-        lines = [_section("LLM Statistics")]
-        for k, v in stats.items():
-            lines.append(f"  {k}: {v}")
-        return "\n".join(lines)
+        return _handle_model_stats(llm_svc)
 
     # ── /model switch ──
     if subcmd in ("switch", "sw", "set"):
-        if not subarg:
-            available = (
-                [btype.name for btype in backends.keys()] if hasattr(backends, "keys") else []
-            )
-            lines = ["Usage: /model switch <name>"]
-            lines.append(f"Available: {available}")
-            return "\n".join(lines)
-
-        backend_key = subarg.strip()
-        for btype, bobj in backends.items():
-            name = btype.name if hasattr(btype, "name") else str(btype)
-            if backend_key.lower() in name.lower():
-                llm_svc.active_backend = bobj
-                llm_svc.active_backend_type = btype
-                return f"✅ Switched to {name}"
-        available = [
-            btype.name if hasattr(btype, "name") else str(btype) for btype in backends.keys()
-        ]
-        return f"❌ Model '{backend_key}' not found.\nAvailable: {available}"
+        return _handle_model_switch(llm_svc, backends, subarg)
 
     # ── /model auto ──
     if subcmd in ("auto", "a"):
@@ -884,6 +899,69 @@ def _handle_model_command(args: str, service: Any) -> str:
 # ═══════════════════════════════════════════════════════════════════
 # /ctx — subcommands
 # ═══════════════════════════════════════════════════════════════════
+
+
+def _format_ctx_state_line(service: Any) -> str:
+    """Format state matrix line for /ctx overview."""
+    try:
+        sm = service.state_matrix
+        alpha = getattr(sm, "alpha", None)
+        beta = getattr(sm, "beta", None)
+        gamma = getattr(sm, "gamma", None)
+        energy = alpha.values.get("energy", 0.5) if alpha and hasattr(alpha, "values") else 0.5
+        focus = beta.values.get("focus", 0.5) if beta and hasattr(beta, "values") else 0.5
+        happy = gamma.values.get("happiness", 0.5) if gamma and hasattr(gamma, "values") else 0.5
+        return f"  State:     energy {_bar(energy)}  focus {_bar(focus)}  happy {_bar(happy)}"
+    except Exception:
+        return "  State:     (unavailable)"
+
+
+def _format_ctx_memory_line(service: Any) -> str:
+    """Format memory line for /ctx overview."""
+    try:
+        if hasattr(service, "memory_manager") and service.memory_manager:
+            loop = asyncio.new_event_loop()
+            results = loop.run_until_complete(
+                service.memory_manager.query_core_memory(keywords=["experience"], limit=5)
+            )
+            loop.close()
+            return f"  Memory:    ✅ initialized — {len(results)} recent memories queryable"
+        return "  Memory:    ❌ not initialized\n" + _hint(
+            "Install extras: pip install -e 'apps/backend[vector]'"
+        )
+    except Exception:
+        return "  Memory:    (error)"
+
+
+def _format_ctx_llm_line() -> str:
+    """Format LLM line for /ctx overview."""
+    try:
+        llm_svc = _get_llm_svc()
+        if llm_svc and getattr(llm_svc, "is_available", False):
+            active_type = getattr(llm_svc, "active_backend_type", None)
+            name = active_type.name if active_type else "unknown"
+            n_backends = len(getattr(llm_svc, "backends", {}))
+            llm_mode = getattr(llm_svc, "llm_mode", "unknown")
+            return f"  LLM:       ✅ active={name}  backends={n_backends}  mode={llm_mode}"
+        return "  LLM:       ❌ no backend available\n" + _hint("See /model list for details")
+    except Exception:
+        return "  LLM:       (error)"
+
+
+def _format_ctx_config_line(service: Any) -> str:
+    """Format config line for /ctx overview."""
+    try:
+        cfg = service._angela_config
+        deployment = {}
+        try:
+            deployment = cfg.get_authority("llm", {}).get("deployment", {})
+        except Exception:
+            logger.debug("repl: /ctx config deployment unavailable", exc_info=True)
+        mode = deployment.get("mode", "unknown")
+        intents = list(cfg.get_intents().keys())
+        return f"  Config:    mode={mode}  intents={len(intents)}"
+    except Exception:
+        return "  Config:    (unavailable)"
 
 
 def _format_context_overview(service: Any, args: str) -> str:
@@ -901,67 +979,10 @@ def _format_context_overview(service: Any, args: str) -> str:
 
     # Full overview
     lines = [_section("Context Overview")]
-
-    # 1) State
-    try:
-        sm = service.state_matrix
-        alpha = getattr(sm, "alpha", None)
-        beta = getattr(sm, "beta", None)
-        gamma = getattr(sm, "gamma", None)
-        energy = alpha.values.get("energy", 0.5) if alpha and hasattr(alpha, "values") else 0.5
-        focus = beta.values.get("focus", 0.5) if beta and hasattr(beta, "values") else 0.5
-        happy = gamma.values.get("happiness", 0.5) if gamma and hasattr(gamma, "values") else 0.5
-
-        lines.append(
-            f"  State:     energy {_bar(energy)}  focus {_bar(focus)}  happy {_bar(happy)}"
-        )
-    except Exception:
-        lines.append("  State:     (unavailable)")
-
-    # 2) Memory
-    try:
-        if hasattr(service, "memory_manager") and service.memory_manager:
-            loop = asyncio.new_event_loop()
-            results = loop.run_until_complete(
-                service.memory_manager.query_core_memory(keywords=["experience"], limit=5)
-            )
-            loop.close()
-            lines.append(f"  Memory:    ✅ initialized — {len(results)} recent memories queryable")
-        else:
-            lines.append("  Memory:    ❌ not initialized")
-            lines.append(_hint("Install extras: pip install -e 'apps/backend[vector]'"))
-    except Exception:
-        lines.append("  Memory:    (error)")
-
-    # 3) LLM
-    try:
-        llm_svc = _get_llm_svc()
-        if llm_svc and getattr(llm_svc, "is_available", False):
-            active_type = getattr(llm_svc, "active_backend_type", None)
-            name = active_type.name if active_type else "unknown"
-            n_backends = len(getattr(llm_svc, "backends", {}))
-            llm_mode = getattr(llm_svc, "llm_mode", "unknown")
-            lines.append(f"  LLM:       ✅ active={name}  backends={n_backends}  mode={llm_mode}")
-        else:
-            lines.append("  LLM:       ❌ no backend available")
-            lines.append(_hint("See /model list for details"))
-    except Exception:
-        lines.append("  LLM:       (error)")
-
-    # 4) Config
-    try:
-        cfg = service._angela_config
-        deployment = {}
-        try:
-            deployment = cfg.get_authority("llm", {}).get("deployment", {})
-        except Exception:
-            logger.debug("repl: /ctx config deployment unavailable", exc_info=True)
-        mode = deployment.get("mode", "unknown")
-        intents = list(cfg.get_intents().keys())
-        lines.append(f"  Config:    mode={mode}  intents={len(intents)}")
-    except Exception:
-        lines.append("  Config:    (unavailable)")
-
+    lines.append(_format_ctx_state_line(service))
+    lines.append(_format_ctx_memory_line(service))
+    lines.append(_format_ctx_llm_line())
+    lines.append(_format_ctx_config_line(service))
     lines.append("")
     lines.append("Subcommands: /ctx state | /ctx models | /ctx memory | /ctx config")
     return "\n".join(lines)
