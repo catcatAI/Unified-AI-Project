@@ -24,7 +24,7 @@ import platform
 import re
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -266,6 +266,103 @@ class HardwareProfile:
     # ------------------------------------------------------------------
 
     @staticmethod
+    def _detect_scenario_env() -> Optional[HardwareScenario]:
+        """1. Env override (explicit user choice wins)."""
+        env_override = os.environ.get("ANGELA_HARDWARE_PROFILE", "").strip()
+        if env_override and env_override.lower() != "auto":
+            try:
+                detected = HardwareScenario(env_override.lower())
+                logger.info("HardwareProfile: using env override: %s", detected.value)
+                return detected
+            except ValueError:
+                logger.warning("HardwareProfile: unknown env value: %s", env_override)
+        return None
+
+    @staticmethod
+    def _detect_scenario_forced_low(system: str, machine: str) -> Optional[HardwareScenario]:
+        """2. CI / ARM — still spec-driven but forced low for safety."""
+        if os.environ.get("CI") == "true":
+            logger.info("HardwareProfile: CI detected → LOW_POWER_DEVICE")
+            return HardwareScenario.LOW_POWER_DEVICE
+        if system == "Linux" and machine in ("armv7l", "aarch64"):
+            logger.info("HardwareProfile: ARM Linux → LOW_POWER_DEVICE")
+            return HardwareScenario.LOW_POWER_DEVICE
+        return None
+
+    @staticmethod
+    def _spec_scenario(
+        system: str, tier: str, spec: Dict[str, Any]
+    ) -> Optional[HardwareScenario]:
+        """Map backbone tier → scenario; battery downgrade as secondary modifier."""
+        mapping = {
+            "server_cloud": HardwareScenario.SERVER_CLOUD,
+            "high_performance_gpu": HardwareScenario.HIGH_PERFORMANCE_DESKTOP,
+            "high_performance_desktop": HardwareScenario.HIGH_PERFORMANCE_DESKTOP,
+            "desktop_igpu": HardwareScenario.DESKTOP_IGPU,
+            "laptop_normal": HardwareScenario.LAPTOP_NORMAL,
+            "laptop_power_saver": HardwareScenario.LAPTOP_POWER_SAVER,
+            "low_power_device": HardwareScenario.LOW_POWER_DEVICE,
+        }
+        if tier not in mapping:
+            logger.debug("HardwareProfile: spec tier %s not in mapping, fallback", tier)
+            return None
+        # Battery as secondary modifier: if on battery and low, downgrade one step
+        # (Windows/Darwin only, best-effort)
+        if system in ("Windows", "Darwin"):
+            bat = _check_battery(system)
+            if bat == "power_saver" and tier in (
+                "high_performance_desktop",
+                "laptop_normal",
+            ):
+                logger.info(
+                    "HardwareProfile: battery discharging <30%% downgrade %s -> LAPTOP_POWER_SAVER (spec: RAM %.1fGB VRAM %.1fGB)",
+                    tier,
+                    spec.get("ram_gb", 0),
+                    spec.get("gpu_memory_gb", 0),
+                )
+                return HardwareScenario.LAPTOP_POWER_SAVER
+        logger.info(
+            "HardwareProfile: spec-driven %s (RAM %.1fGB VRAM %.1fGB CPU %s, chassis-agnostic)",
+            mapping[tier].value,
+            spec.get("ram_gb", 0),
+            spec.get("gpu_memory_gb", 0),
+            spec.get("cpu_cores", 0),
+        )
+        return mapping[tier]
+
+    @staticmethod
+    def _detect_scenario_spec(system: str) -> Optional[HardwareScenario]:
+        """3. Primary: actual hardware spec via backbone/hardware.py (RAM/VRAM/CPU).
+
+        Same spec -> same tier, regardless of chassis.
+        """
+        try:
+            from core.backbone.hardware import HardwareProfile as BHw
+
+            spec = BHw.detect()
+            tier = BHw.get_tier(spec)
+            return HardwareProfile._spec_scenario(system, tier, spec)
+        except Exception as e:
+            logger.debug(
+                "HardwareProfile: spec-driven detect failed, fallback to chassis check: %s", e
+            )
+            return None
+
+    @staticmethod
+    def _detect_scenario_fallback(system: str) -> HardwareScenario:
+        """4/5. Headless / chassis checks (secondary), then hardware-agnostic default."""
+        has_display = bool(os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"))
+        is_ssh = "SSH_CLIENT" in os.environ or "SSH_TTY" in os.environ
+        if system == "Linux" and not has_display and not is_ssh:
+            logger.info("HardwareProfile: headless Linux → SERVER_CLOUD (fallback)")
+            return HardwareScenario.SERVER_CLOUD
+        if system == "Windows" and _has_intel_igpu_only():
+            logger.info("HardwareProfile: Intel iGPU detected (no dGPU) → DESKTOP_IGPU (fallback)")
+            return HardwareScenario.DESKTOP_IGPU
+        logger.info("HardwareProfile: default → HIGH_PERFORMANCE_DESKTOP (fallback)")
+        return HardwareScenario.HIGH_PERFORMANCE_DESKTOP
+
+    @staticmethod
     def _detect_scenario() -> HardwareScenario:
         """Truly hardware-driven scenario — spec first, chassis label second.
 
@@ -280,94 +377,18 @@ class HardwareProfile:
         This makes ASUS BR1100FKA vs desktop-with-same-RAM get identical adaptive
         compute; only the physical hardware matters.
         """
-        # 1. Env override (explicit user choice wins)
-        env_override = os.environ.get("ANGELA_HARDWARE_PROFILE", "").strip()
-        if env_override and env_override.lower() != "auto":
-            try:
-                detected = HardwareScenario(env_override.lower())
-                logger.info("HardwareProfile: using env override: %s", detected.value)
-                return detected
-            except ValueError:
-                logger.warning("HardwareProfile: unknown env value: %s", env_override)
-
+        env_scenario = HardwareProfile._detect_scenario_env()
+        if env_scenario is not None:
+            return env_scenario
         system = platform.system()
         machine = platform.machine()
-
-        # 2. CI / ARM — still spec-driven but forced low for safety
-        if os.environ.get("CI") == "true":
-            logger.info("HardwareProfile: CI detected → LOW_POWER_DEVICE")
-            return HardwareScenario.LOW_POWER_DEVICE
-        if system == "Linux" and machine in ("armv7l", "aarch64"):
-            logger.info("HardwareProfile: ARM Linux → LOW_POWER_DEVICE")
-            return HardwareScenario.LOW_POWER_DEVICE
-
-        # 3. Primary: actual hardware spec via backbone/hardware.py (RAM/VRAM/CPU)
-        # This is the hardware-adaptive core: same spec -> same tier, regardless of chassis
-        try:
-            from core.backbone.hardware import HardwareProfile as BHw
-
-            spec = BHw.detect()
-            tier = BHw.get_tier(spec)
-            # Map backbone tier -> this module's scenario (names align, but handle high_performance_gpu)
-            mapping = {
-                "server_cloud": HardwareScenario.SERVER_CLOUD,
-                "high_performance_gpu": HardwareScenario.HIGH_PERFORMANCE_DESKTOP,
-                "high_performance_desktop": HardwareScenario.HIGH_PERFORMANCE_DESKTOP,
-                "desktop_igpu": HardwareScenario.DESKTOP_IGPU,
-                "laptop_normal": HardwareScenario.LAPTOP_NORMAL,
-                "laptop_power_saver": HardwareScenario.LAPTOP_POWER_SAVER,
-                "low_power_device": HardwareScenario.LOW_POWER_DEVICE,
-            }
-            if tier in mapping:
-                # Battery as secondary modifier: if on battery and low, downgrade one step
-                # (Windows/Darwin only, best-effort)
-                if system in ("Windows", "Darwin"):
-                    bat = _check_battery(system)
-                    if bat == "power_saver" and tier in (
-                        "high_performance_desktop",
-                        "laptop_normal",
-                    ):
-                        logger.info(
-                            "HardwareProfile: battery discharging <30%% downgrade %s -> LAPTOP_POWER_SAVER (spec: RAM %.1fGB VRAM %.1fGB)",
-                            tier,
-                            spec.get("ram_gb", 0),
-                            spec.get("gpu_memory_gb", 0),
-                        )
-                        return HardwareScenario.LAPTOP_POWER_SAVER
-                logger.info(
-                    "HardwareProfile: spec-driven %s (RAM %.1fGB VRAM %.1fGB CPU %s, chassis-agnostic)",
-                    mapping[tier].value,
-                    spec.get("ram_gb", 0),
-                    spec.get("gpu_memory_gb", 0),
-                    spec.get("cpu_cores", 0),
-                )
-                return mapping[tier]
-            logger.debug("HardwareProfile: spec tier %s not in mapping, fallback", tier)
-        except Exception as e:
-            logger.debug(
-                "HardwareProfile: spec-driven detect failed, fallback to chassis check: %s", e
-            )
-
-        # 4. Fallback: headless / chassis checks (secondary, for when spec detect fails)
-        has_display = bool(os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"))
-        is_ssh = "SSH_CLIENT" in os.environ or "SSH_TTY" in os.environ
-        if system == "Linux" and not has_display and not is_ssh:
-            logger.info("HardwareProfile: headless Linux → SERVER_CLOUD (fallback)")
-            return HardwareScenario.SERVER_CLOUD
-        if system == "Windows" and _has_intel_igpu_only():
-            logger.info("HardwareProfile: Intel iGPU detected (no dGPU) → DESKTOP_IGPU (fallback)")
-            return HardwareScenario.DESKTOP_IGPU
-
-        # 5. Default (still hardware-agnostic fallback, but spec path should have handled 15GB+Arc case)
-        logger.info("HardwareProfile: default → HIGH_PERFORMANCE_DESKTOP (fallback)")
-        return HardwareScenario.HIGH_PERFORMANCE_DESKTOP
-        logger.info("HardwareProfile: default → HIGH_PERFORMANCE_DESKTOP")
-        return HardwareScenario.HIGH_PERFORMANCE_DESKTOP
-
-    # ------------------------------------------------------------------
-    # Public API
-    # ------------------------------------------------------------------
-
+        forced_low = HardwareProfile._detect_scenario_forced_low(system, machine)
+        if forced_low is not None:
+            return forced_low
+        spec_scenario = HardwareProfile._detect_scenario_spec(system)
+        if spec_scenario is not None:
+            return spec_scenario
+        return HardwareProfile._detect_scenario_fallback(system)
     @property
     def scenario(self) -> HardwareScenario:
         """Currently active hardware scenario."""
@@ -446,6 +467,39 @@ class HardwareProfile:
 # ---------------------------------------------------------------------------
 
 
+def _battery_darwin() -> Optional[str]:
+    """Darwin pmset probe: discharging hint with % parse."""
+    import subprocess  # noqa: S404 — intentional os-level check
+
+    result = subprocess.run(
+        ["pmset", "-g", "batt"],
+        capture_output=True,
+        text=True,
+        timeout=3,
+    )
+    if "discharging" not in result.stdout:
+        return None
+    for line in result.stdout.splitlines():
+        if "%" in line:
+            match = re.search(r"(\d+)%", line)
+            if match and int(match.group(1)) < 30:
+                return "power_saver"
+            return "laptop"
+    return None
+
+
+def _battery_windows() -> Optional[str]:
+    """Windows psutil probe: unplugged discharging hint."""
+    import psutil  # noqa: S404 — intentional os-level check
+
+    battery = psutil.sensors_battery()
+    if battery is not None and not battery.power_plugged:
+        if battery.percent < 30:
+            return "power_saver"
+        return "laptop"
+    return None
+
+
 def _check_battery(system: str) -> Optional[str]:
     """Check battery status and return a hint string.
 
@@ -456,29 +510,9 @@ def _check_battery(system: str) -> Optional[str]:
     """
     try:
         if system == "Darwin":
-            import subprocess  # noqa: S404 — intentional os-level check
-
-            result = subprocess.run(
-                ["pmset", "-g", "batt"],
-                capture_output=True,
-                text=True,
-                timeout=3,
-            )
-            if "discharging" in result.stdout:
-                for line in result.stdout.splitlines():
-                    if "%" in line:
-                        match = re.search(r"(\d+)%", line)
-                        if match and int(match.group(1)) < 30:
-                            return "power_saver"
-                        return "laptop"
-        elif system == "Windows":
-            import psutil  # noqa: S404 — intentional os-level check
-
-            battery = psutil.sensors_battery()
-            if battery is not None and not battery.power_plugged:
-                if battery.percent < 30:
-                    return "power_saver"
-                return "laptop"
+            return _battery_darwin()
+        if system == "Windows":
+            return _battery_windows()
     except Exception:  # noqa: S110 — broad except intentional; battery check is best-effort
         logger.warning("Battery detection failed (non-critical)", exc_info=True)
     return None
