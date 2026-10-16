@@ -884,32 +884,23 @@ class ArithmeticLearner:
         return float(res.fun)
 
     # ----------------------------------------------------------- autonomous
+    def _merge_truth_table(self, pool: list, table: list) -> None:
+        """Merge deterministic truth table samples into pool, avoiding duplicates."""
+        existing: set = set(pool)
+        for s in table:
+            if s not in existing:
+                pool.append(s)
+
     def _ensure_truth_tables(self) -> None:
         """Guarantee the full deterministic truth tables for all op cells."""
         if len(self._samples) < len(self.generate_cell_truth_table()):
-            cell_table = self.generate_cell_truth_table()
-            existing_cells: set[CellSample] = set(self._samples)
-            for cell_s in cell_table:
-                if cell_s not in existing_cells:
-                    self._samples.append(cell_s)
+            self._merge_truth_table(self._samples, self.generate_cell_truth_table())
         if len(self._sub_samples) < len(self.generate_sub_truth_table()):
-            sub_table = self.generate_sub_truth_table()
-            existing_subs: set[SubCellSample] = set(self._sub_samples)
-            for sub_s in sub_table:
-                if sub_s not in existing_subs:
-                    self._sub_samples.append(sub_s)
+            self._merge_truth_table(self._sub_samples, self.generate_sub_truth_table())
         if len(self._mul_samples) < len(self.generate_mul_truth_table()):
-            mul_table = self.generate_mul_truth_table()
-            existing_muls: set[MulCellSample] = set(self._mul_samples)
-            for mul_s in mul_table:
-                if mul_s not in existing_muls:
-                    self._mul_samples.append(mul_s)
+            self._merge_truth_table(self._mul_samples, self.generate_mul_truth_table())
         if len(self._logic_samples) < len(self.generate_logic_truth_table()):
-            logic_table = self.generate_logic_truth_table()
-            existing_logics: set[LogicSample] = set(self._logic_samples)
-            for logic_s in logic_table:
-                if logic_s not in existing_logics:
-                    self._logic_samples.append(logic_s)
+            self._merge_truth_table(self._logic_samples, self.generate_logic_truth_table())
 
     def evaluate_overall_accuracy(self) -> float:
         """Mean of the four per-op cell accuracies (the loop's global metric)."""
@@ -1009,6 +1000,67 @@ class ArithmeticLearner:
             return snap
 
     # -------------------------------------------------------------- dialogue
+    def _learn_add_pairs(self, pairs: List[Tuple[int, int]]) -> None:
+        """Ingest addition pairs into the cell sample pool with carry propagation."""
+        for a, b in pairs:
+            result = _label_add(a, b)
+            digits_a = [int(ch) for ch in reversed(str(a))]
+            digits_b = [int(ch) for ch in reversed(str(b))]
+            result_digits = [int(ch) for ch in reversed(str(result))]
+            carry = 0
+            nd = max(len(digits_a), len(digits_b))
+            for p in range(nd):
+                da = digits_a[p] if p < len(digits_a) else 0
+                db = digits_b[p] if p < len(digits_b) else 0
+                col = da + db + carry
+                dig = col % 10
+                co = col // 10
+                cell_sample: CellSample = CellSample(da, db, carry, dig, co)
+                if cell_sample not in self._samples:
+                    self._samples.append(cell_sample)
+                carry = co
+            # final overflow column (if any)
+            if carry > 0 and len(result_digits) > nd:
+                overflow_sample: CellSample = CellSample(0, 0, carry, result_digits[-1], 0)
+                if overflow_sample not in self._samples:
+                    self._samples.append(overflow_sample)
+
+    def _learn_sub_pairs(self, sub_pairs: List[Tuple[int, int]]) -> None:
+        """Ingest subtraction pairs into the sub-cell sample pool with borrow propagation."""
+        for a, b in sub_pairs:
+            result = _label_sub(a, b)
+            if result < 0:
+                a, b, result = b, a, -result
+            digits_a = [int(ch) for ch in reversed(str(a))]
+            digits_b = [int(ch) for ch in reversed(str(b))]
+            borrow = 0
+            nd = max(len(digits_a), len(digits_b))
+            for p in range(nd):
+                da = digits_a[p] if p < len(digits_a) else 0
+                db = digits_b[p] if p < len(digits_b) else 0
+                diff = da - db - borrow
+                if diff < 0:
+                    diff += 10
+                    borrow_out = 1
+                else:
+                    borrow_out = 0
+                sub_sample: SubCellSample = SubCellSample(da, db, borrow, diff, borrow_out)
+                if sub_sample not in self._sub_samples:
+                    self._sub_samples.append(sub_sample)
+                borrow = borrow_out
+
+    def _learn_mul_pairs(self, mul_pairs: List[Tuple[int, int]]) -> None:
+        """Ingest multiplication pairs into the mul-cell sample pool (digit x digit)."""
+        for a, b in mul_pairs:
+            digits_a = [int(ch) for ch in str(a)]
+            digits_b = [int(ch) for ch in str(b)]
+            for da in digits_a:
+                for db in digits_b:
+                    prod = da * db
+                    mul_sample: MulCellSample = MulCellSample(da, db, prod % 10, prod // 10)
+                    if mul_sample not in self._mul_samples:
+                        self._mul_samples.append(mul_sample)
+
     def learn_from_dialogue(
         self,
         user_text: str,
@@ -1041,58 +1093,9 @@ class ArithmeticLearner:
         # dialogue-observed column cells on top (source of truth is still the
         # deterministic engine for the overall result).
         self._ensure_truth_tables()
-        for a, b in pairs:
-            result = _label_add(a, b)
-            digits_a = [int(ch) for ch in reversed(str(a))]
-            digits_b = [int(ch) for ch in reversed(str(b))]
-            result_digits = [int(ch) for ch in reversed(str(result))]
-            carry = 0
-            nd = max(len(digits_a), len(digits_b))
-            for p in range(nd):
-                da = digits_a[p] if p < len(digits_a) else 0
-                db = digits_b[p] if p < len(digits_b) else 0
-                col = da + db + carry
-                dig = col % 10
-                co = col // 10
-                cell_sample: CellSample = CellSample(da, db, carry, dig, co)
-                if cell_sample not in self._samples:
-                    self._samples.append(cell_sample)
-                carry = co
-            # final overflow column (if any)
-            if carry > 0 and len(result_digits) > nd:
-                overflow_sample: CellSample = CellSample(0, 0, carry, result_digits[-1], 0)
-                if overflow_sample not in self._samples:
-                    self._samples.append(overflow_sample)
-        for a, b in sub_pairs:
-            result = _label_sub(a, b)
-            if result < 0:
-                a, b, result = b, a, -result
-            digits_a = [int(ch) for ch in reversed(str(a))]
-            digits_b = [int(ch) for ch in reversed(str(b))]
-            borrow = 0
-            nd = max(len(digits_a), len(digits_b))
-            for p in range(nd):
-                da = digits_a[p] if p < len(digits_a) else 0
-                db = digits_b[p] if p < len(digits_b) else 0
-                diff = da - db - borrow
-                if diff < 0:
-                    diff += 10
-                    borrow_out = 1
-                else:
-                    borrow_out = 0
-                sub_sample: SubCellSample = SubCellSample(da, db, borrow, diff, borrow_out)
-                if sub_sample not in self._sub_samples:
-                    self._sub_samples.append(sub_sample)
-                borrow = borrow_out
-        for a, b in mul_pairs:
-            digits_a = [int(ch) for ch in str(a)]
-            digits_b = [int(ch) for ch in str(b)]
-            for da in digits_a:
-                for db in digits_b:
-                    prod = da * db
-                    mul_sample: MulCellSample = MulCellSample(da, db, prod % 10, prod // 10)
-                    if mul_sample not in self._mul_samples:
-                        self._mul_samples.append(mul_sample)
+        self._learn_add_pairs(pairs)
+        self._learn_sub_pairs(sub_pairs)
+        self._learn_mul_pairs(mul_pairs)
         if not auto_run:
             return None
         return self.run(max_epochs=20, stall_epochs=5)
@@ -1193,6 +1196,30 @@ class ArithmeticLearner:
             )
         logger.info("ArithmeticLearner.save -> %s", path)
 
+    def _load_op_cell(self, data: Any, prefix: str, cell: Any, n_heads: int) -> None:
+        """Load op-cell weights from a checkpoint (backward compatible)."""
+        if f"{prefix}_hidden_w" not in data.files:
+            return
+        cell.hidden_w = data[f"{prefix}_hidden_w"].astype(np.float32)
+        cell.hidden_b = data[f"{prefix}_hidden_b"].astype(np.float32)
+        cell.head_ws = [
+            data[f"{prefix}_head{i}_w"].astype(np.float32) for i in range(n_heads)
+        ]
+        cell.head_bs = [
+            data[f"{prefix}_head{i}_b"].astype(np.float32) for i in range(n_heads)
+        ]
+
+    def _load_truth_tables_if_empty(self) -> None:
+        """Populate empty sample pools from deterministic truth tables."""
+        if not self._samples:
+            self._samples = self.generate_cell_truth_table()
+        if not self._sub_samples:
+            self._sub_samples = self.generate_sub_truth_table()
+        if not self._mul_samples:
+            self._mul_samples = self.generate_mul_truth_table()
+        if not self._logic_samples:
+            self._logic_samples = self.generate_logic_truth_table()
+
     def load(self, path: str) -> None:
         with self._lock:
             data = np.load(path, allow_pickle=False)
@@ -1207,47 +1234,16 @@ class ArithmeticLearner:
             self.snapshot.epoch = int(data["epoch"])
             self.snapshot.generated_samples = int(data["generated_samples"])
             # op cells (backward compatible with pre-extension checkpoints)
-            if "sub_hidden_w" in data.files:
-                self._sub_cell.hidden_w = data["sub_hidden_w"].astype(np.float32)
-                self._sub_cell.hidden_b = data["sub_hidden_b"].astype(np.float32)
-                self._sub_cell.head_ws = [
-                    data["sub_head0_w"].astype(np.float32),
-                    data["sub_head1_w"].astype(np.float32),
-                ]
-                self._sub_cell.head_bs = [
-                    data["sub_head0_b"].astype(np.float32),
-                    data["sub_head1_b"].astype(np.float32),
-                ]
-            if "mul_hidden_w" in data.files:
-                self._mul_cell.hidden_w = data["mul_hidden_w"].astype(np.float32)
-                self._mul_cell.hidden_b = data["mul_hidden_b"].astype(np.float32)
-                self._mul_cell.head_ws = [
-                    data["mul_head0_w"].astype(np.float32),
-                    data["mul_head1_w"].astype(np.float32),
-                ]
-                self._mul_cell.head_bs = [
-                    data["mul_head0_b"].astype(np.float32),
-                    data["mul_head1_b"].astype(np.float32),
-                ]
-            if "logic_hidden_w" in data.files:
-                self._logic_cell.hidden_w = data["logic_hidden_w"].astype(np.float32)
-                self._logic_cell.hidden_b = data["logic_hidden_b"].astype(np.float32)
-                self._logic_cell.head_ws = [data["logic_head0_w"].astype(np.float32)]
-                self._logic_cell.head_bs = [data["logic_head0_b"].astype(np.float32)]
+            self._load_op_cell(data, "sub", self._sub_cell, 2)
+            self._load_op_cell(data, "mul", self._mul_cell, 2)
+            self._load_op_cell(data, "logic", self._logic_cell, 1)
             if "task_accuracy" in data.files:
                 try:
                     raw = data["task_accuracy"].tobytes()
                     self.snapshot.task_accuracy = _parse_task_accuracy(raw)
                 except Exception:
                     self.snapshot.task_accuracy = {}
-            if not self._samples:
-                self._samples = self.generate_cell_truth_table()
-            if not self._sub_samples:
-                self._sub_samples = self.generate_sub_truth_table()
-            if not self._mul_samples:
-                self._mul_samples = self.generate_mul_truth_table()
-            if not self._logic_samples:
-                self._logic_samples = self.generate_logic_truth_table()
+            self._load_truth_tables_if_empty()
         logger.info(
             "ArithmeticLearner.load <- %s (resume from epoch %d)", path, self.snapshot.epoch
         )
