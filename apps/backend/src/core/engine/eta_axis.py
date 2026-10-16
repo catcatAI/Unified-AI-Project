@@ -152,6 +152,32 @@ class AtomicModule:
             return val >= threshold
         return False
 
+    @staticmethod
+    def _arithmetic_div(kwargs: Dict) -> float:
+        """DIV with zero-guard (returns 0.0 on b == 0)."""
+        a = float(kwargs.get("a", 0.0))
+        b = float(kwargs.get("b", 1.0))
+        if b == 0.0:
+            return 0.0
+        return a / b
+
+    @staticmethod
+    def _arithmetic_custom_expr(kwargs: Dict, params: Dict) -> float:
+        """CUSTOM_EXPR via safe_eval; failure/non-convertible → 0.0."""
+        expr = params.get("expr", "0")
+        local_vars = {k: float(v) for k, v in kwargs.items()}
+        eval_result = safe_eval(expr, context=local_vars)
+        if eval_result.success and eval_result.result is not None:
+            try:
+                return float(eval_result.result)
+            except (TypeError, ValueError):
+                logger.debug(
+                    "Custom expression result not convertible to float: %s", eval_result.result
+                )
+                return 0.0
+        logger.debug("Custom expression eval failed (%s): %s", expr, eval_result.error)
+        return 0.0
+
     def _exec_arithmetic(self, st: ArithmeticOpType, kwargs: Dict, params: Dict) -> float:
         if st == ArithmeticOpType.ADD:
             vals = kwargs.get("values", [])
@@ -167,25 +193,9 @@ class AtomicModule:
                 result *= float(v)
             return result
         if st == ArithmeticOpType.DIV:
-            a = float(kwargs.get("a", 0.0))
-            b = float(kwargs.get("b", 1.0))
-            if b == 0.0:
-                return 0.0
-            return a / b
+            return self._arithmetic_div(kwargs)
         if st == ArithmeticOpType.CUSTOM_EXPR:
-            expr = params.get("expr", "0")
-            local_vars = {k: float(v) for k, v in kwargs.items()}
-            eval_result = safe_eval(expr, context=local_vars)
-            if eval_result.success and eval_result.result is not None:
-                try:
-                    return float(eval_result.result)
-                except (TypeError, ValueError):
-                    logger.debug(
-                        "Custom expression result not convertible to float: %s", eval_result.result
-                    )
-                    return 0.0
-            logger.debug("Custom expression eval failed (%s): %s", expr, eval_result.error)
-            return 0.0
+            return self._arithmetic_custom_expr(kwargs, params)
         return 0.0
 
     def _exec_aggregator(self, st: AggregatorType, kwargs: Dict, params: Dict) -> float:
