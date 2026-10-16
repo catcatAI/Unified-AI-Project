@@ -809,114 +809,96 @@ class DigitalLifeIntegrator:
     async def _apply_state_behaviors(self, state: LifeCycleState) -> None:
         """Apply behaviors specific to life cycle state"""
         if state == LifeCycleState.INITIALIZING:
-            # =============================================================
-            # ANGELA-MATRIX: [L3] [αβγδ] [A] [L5+]
-            # INITIALIZING: 系統啟動初期 — 保守運作、逐步建構活動基準
-            # =============================================================
-            # 設定基礎狀態矩陣：低但活躍的初始值
-            self.state_matrix.update_beta(learning=0.3, curiosity=0.2)
-            # 初始化動態參數（若啟用）
-            if self._dynamic_params_enabled and self.dynamic_params is None:
-                try:
-                    self.dynamic_params = DynamicThresholdManager(config=self.config)
-                    logger.info("🔧 [DigitalLife] INITIALIZING: Dynamic parameters initialized.")
-                except Exception as e:
-                    logger.warning(f"[DigitalLife] INITIALIZING: Dynamic params skipped: {e}")
-            # 記錄初始生命事件
-            self.record_life_event(
-                event_type="system_initialize",
-                description="Angela digital life initializing — core systems online",
-                significance=0.5,
-            )
-            logger.info(
-                "🔧 [DigitalLife] INITIALIZING: Core systems initialized at conservative baseline."
-            )
-
+            await self._behavior_initializing()
         elif state == LifeCycleState.AWAKENING:
-            # =============================================================
-            # ANGELA-MATRIX: [L3] [αβγδ] [A] [L6+]
-            # AWAKENING: 覺醒階段 — 緩慢探索、建立基礎域感知
-            # =============================================================
-            # 逐步提升認知維度
-            self.state_matrix.update_beta(learning=0.5, curiosity=0.4)
-            # 啟動使用者監控循環
-            try:
-                await self.user_monitor.start()
-            except Exception as e:
-                logger.warning(
-                    f"[DigitalLife] AWAKENING: User monitor start skipped: {e}", exc_info=True
-                )
-            # 生物系統覺醒
-            await self.biological_integrator.process_relaxation_event(intensity=0.3)
-            logger.info("🔆 [DigitalLife] AWAKENING: Systems awakening — exploration beginning.")
-
+            await self._behavior_awakening()
         elif state == LifeCycleState.GROWING:
-            # =============================================================
-            # ANGELA-MATRIX: [L3] [αβγδ] [A] [L6+]
-            # [Task N.22.3] GROWING 狀態學習強化
-            # =============================================================
-            # 強化認知維度：提升好奇心與學習典型
-            self.state_matrix.update_beta(learning=0.8, curiosity=0.7)
-            # 觸發記憶鞏固：學習期間穩固記憶
-            if self.memory_bridge:
-                self.memory_bridge.trigger_consolidation()
-            logger.info(
-                "🌱 [DigitalLife] GROWING: Learning boost + memory consolidation triggered."
-            )
-
+            await self._behavior_growing()
         elif state == LifeCycleState.MATURE:
-            # =============================================================
-            # ANGELA-MATRIX: [L3] [αβγδ] [A] [L8+]
-            # [Task N.22.4] MATURE 狀態公式評估
-            # =============================================================
-            if self.autonomous_lifecycle:
-                metrics = self.autonomous_lifecycle.get_current_metrics()
-                # 將生命強度映射到 β 維度清晰度
-                self.state_matrix.update_beta(clarity=min(1.0, metrics.life_intensity * 0.8))
-            logger.info("✨ [DigitalLife] MATURE: Formula evaluation applied to beta clarity.")
-
+            await self._behavior_mature()
         elif state == LifeCycleState.RESTING:
-            # Slow down biological processes
-            await self.biological_integrator.process_relaxation_event(intensity=0.8)
-            # Consolidate memories
-            if self.memory_bridge:
-                self.memory_bridge.trigger_consolidation()
-            logger.info(
-                "💤 [DigitalLife] RESTING: Biological processes slowed, memory consolidated."
-            )
-
+            await self._behavior_resting()
         elif state == LifeCycleState.DORMANT:
-            # =============================================================
-            # ANGELA-MATRIX: [L3] [αβγδ] [A] [L5+]
-            # DORMANT: 深度休眠 — 資源回收、深層記憶鞏固、低功耗模式
-            # =============================================================
-            # 抑制狀態矩陣活動（將關鍵維度降至休眠基線）
-            self.state_matrix.update_beta(learning=0.05, curiosity=0.05)
-            # 深層記憶鞏固
-            if self.memory_bridge:
-                self.memory_bridge.trigger_consolidation()
-            # 生物系統深度放鬆
-            await self.biological_integrator.process_relaxation_event(intensity=0.9)
-            # 動態參數漂移檢查（若啟用）
-            if self.dynamic_params:
-                try:
-                    params_summary = self.dynamic_params.get_all_parameters_summary()
-                    drifted_params = [
-                        k
-                        for k, v in params_summary.items()
-                        if abs(v.get("current", 0.5) - v.get("base", 0.5)) > 0.2
-                    ]
-                    if drifted_params:
-                        logger.info(
-                            f"💤 [DigitalLife] DORMANT: {len(drifted_params)} drifted params identified."
-                        )
-                except Exception as e:
-                    logger.warning(
-                        f"[DigitalLife] DORMANT: Param check skipped: {e}", exc_info=True
-                    )
-            logger.info("💤 [DigitalLife] DORMANT: Deep sleep — resource reclamation active.")
+            await self._behavior_dormant()
         else:
-            logger.warning(f"[DigitalLife] Unknown state: {state}")
+            logger.debug(f"[DigitalLife] No specific behavior for state {state}")
+
+    async def _behavior_initializing(self) -> None:
+        """INITIALIZING: 保守運作、逐步建構活動基準"""
+        self.state_matrix.update_beta(learning=0.3, curiosity=0.2)
+        if self._dynamic_params_enabled and self.dynamic_params is None:
+            try:
+                self.dynamic_params = DynamicThresholdManager(config=self.config)
+                logger.info("🔧 [DigitalLife] INITIALIZING: Dynamic parameters initialized.")
+            except Exception as e:
+                logger.warning(f"[DigitalLife] INITIALIZING: Dynamic params skipped: {e}")
+        self.record_life_event(
+            event_type="system_initialize",
+            description="Angela digital life initializing — core systems online",
+            significance=0.5,
+        )
+        logger.info(
+            "🔧 [DigitalLife] INITIALIZING: Core systems initialized at conservative baseline."
+        )
+
+    async def _behavior_awakening(self) -> None:
+        """AWAKENING: 覺醒階段 — 緩慢探索、建立基礎域感知"""
+        self.state_matrix.update_beta(learning=0.5, curiosity=0.4)
+        try:
+            await self.user_monitor.start()
+        except Exception as e:
+            logger.warning(
+                f"[DigitalLife] AWAKENING: User monitor start skipped: {e}", exc_info=True
+            )
+        await self.biological_integrator.process_relaxation_event(intensity=0.3)
+        logger.info("🔆 [DigitalLife] AWAKENING: Systems awakening — exploration beginning.")
+
+    async def _behavior_growing(self) -> None:
+        """GROWING: 狀態學習強化"""
+        self.state_matrix.update_beta(learning=0.8, curiosity=0.7)
+        if self.memory_bridge:
+            self.memory_bridge.trigger_consolidation()
+        logger.info(
+            "🌱 [DigitalLife] GROWING: Learning boost + memory consolidation triggered."
+        )
+
+    async def _behavior_mature(self) -> None:
+        """MATURE: 狀態公式評估"""
+        if self.autonomous_lifecycle:
+            metrics = self.autonomous_lifecycle.get_current_metrics()
+            self.state_matrix.update_beta(clarity=min(1.0, metrics.life_intensity * 0.8))
+        logger.info("✨ [DigitalLife] MATURE: Formula evaluation applied to beta clarity.")
+
+    async def _behavior_resting(self) -> None:
+        """RESTING: 慢速生物過程、記憶鞏固"""
+        await self.biological_integrator.process_relaxation_event(intensity=0.8)
+        if self.memory_bridge:
+            self.memory_bridge.trigger_consolidation()
+        logger.info(
+            "💤 [DigitalLife] RESTING: Biological processes slowed, memory consolidated."
+        )
+
+    async def _behavior_dormant(self) -> None:
+        """DORMANT: 深度休眠 — 資源回收、深層記憶鞏固、低功耗模式"""
+        self.state_matrix.update_beta(learning=0.05, curiosity=0.05)
+        if self.memory_bridge:
+            self.memory_bridge.trigger_consolidation()
+        await self.biological_integrator.process_relaxation_event(intensity=0.9)
+        if self.dynamic_params:
+            try:
+                params_summary = self.dynamic_params.get_all_parameters_summary()
+                drifted_params = [
+                    k
+                    for k, v in params_summary.items()
+                    if abs(v.get("current", 0.5) - v.get("base", 0.5)) > 0.2
+                ]
+                if drifted_params:
+                    logger.info(
+                        f"💤 [DigitalLife] DORMANT: {len(drifted_params)} params drifted >0.2: {drifted_params}"
+                    )
+            except Exception as e:
+                logger.debug(f"[DigitalLife] DORMANT: param drift check skipped: {e}")
+        logger.info("💤 [DigitalLife] DORMANT: Deep sleep — resource recycling active.")
 
     async def _check_system_health(self) -> None:
         """Check health of all subsystems"""
