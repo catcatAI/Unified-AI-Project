@@ -581,21 +581,13 @@ class DigitalLifeIntegrator:
             },
         )
 
-    async def shutdown(self) -> None:
-        """Shutdown digital life and all subsystems"""
-        self._running = False
-
+    async def _stop_background_tasks(self) -> None:
+        """Cancel lifecycle/health tasks and stop decision loop + user monitor."""
         # Cancel tasks
         if self._life_cycle_task:
             self._life_cycle_task.cancel()
         if self._health_check_task:
             self._health_check_task.cancel()
-
-        # Shutdown subsystems
-        await self.biological_integrator.shutdown()
-        await self.action_executor.shutdown()
-        if self.memory_bridge:
-            await self.memory_bridge.shutdown()
 
         # Stop background decision loop + user monitor (started in start();
         # without this, their tasks leak across server restarts).
@@ -609,20 +601,29 @@ class DigitalLifeIntegrator:
         except Exception as e:
             logger.error(f"Error stopping UserMonitor: {e}", exc_info=True)
 
-        # Persist lifecycle state BEFORE shutdown (save_state had no caller,
-        # so lifecycle decisions never survived restarts).
-        if self.autonomous_lifecycle:
-            try:
-                from core.data_config import get_checkpoints_dir
+    async def _persist_lifecycle_state(self) -> None:
+        """Persist lifecycle state BEFORE shutdown (save_state had no caller,
+        so lifecycle decisions never survived restarts)."""
+        if not self.autonomous_lifecycle:
+            return
+        try:
+            from core.data_config import get_checkpoints_dir
 
-                state_dir = os.path.join(str(get_checkpoints_dir()), "lifecycle")
-                os.makedirs(state_dir, exist_ok=True)
-                self.autonomous_lifecycle.save_state(
-                    os.path.join(state_dir, "lifecycle_state.json")
-                )
-            except Exception as e:
-                logger.warning(f"Lifecycle state save skipped: {e}")
-            await self.autonomous_lifecycle.shutdown()
+            state_dir = os.path.join(str(get_checkpoints_dir()), "lifecycle")
+            os.makedirs(state_dir, exist_ok=True)
+            self.autonomous_lifecycle.save_state(
+                os.path.join(state_dir, "lifecycle_state.json")
+            )
+        except Exception as e:
+            logger.warning(f"Lifecycle state save skipped: {e}")
+        await self.autonomous_lifecycle.shutdown()
+
+    async def _stop_subsystems(self) -> None:
+        """Shutdown biological/action/memory subsystems and dynamic params."""
+        await self.biological_integrator.shutdown()
+        await self.action_executor.shutdown()
+        if self.memory_bridge:
+            await self.memory_bridge.shutdown()
 
         # Shutdown dynamic parameters
         if self.dynamic_params:
@@ -631,6 +632,14 @@ class DigitalLifeIntegrator:
             except Exception as e:
                 # broad except acceptable: shutdown cleanup, must not raise
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
+
+    async def shutdown(self) -> None:
+        """Shutdown digital life and all subsystems"""
+        self._running = False
+
+        await self._stop_background_tasks()
+        await self._stop_subsystems()
+        await self._persist_lifecycle_state()
 
         # Record final stats
         self._update_active_time()
