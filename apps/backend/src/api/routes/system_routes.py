@@ -18,19 +18,8 @@ router = APIRouter(prefix="/system", tags=["System Discovery"])
 _start_time = time.time()
 
 
-@router.get("/discovery")
-async def system_discovery() -> Dict[str, Any]:
-    """All-in-one system info for UI panels.
-
-    Returns deployment mode, LLM backend list with health,
-    intent count, memory status, and 8D state summary.
-    """
-    result: Dict[str, Any] = {
-        "timestamp": time.time(),
-        "uptime_seconds": int(time.time() - _start_time),
-    }
-
-    # ── Deployment config ──
+async def _discovery_deployment(result: Dict[str, Any]) -> None:
+    """Fill result["deployment"] + result["web_search"] from the LLM authority config."""
     try:
         from core.config_loader import get_angela_config
 
@@ -51,7 +40,9 @@ async def system_discovery() -> Dict[str, Any]:
         logger.warning("Config load failed: %s", e, exc_info=True)
         result["deployment"] = {"mode": "unknown", "selection": "unknown"}
 
-    # ── LLM backends ──
+
+async def _discovery_llm(result: Dict[str, Any]) -> None:
+    """Fill result["llm"] with backend list + health from the live LLM service."""
     try:
         from services.angela_llm_service import get_llm_service
 
@@ -70,22 +61,20 @@ async def system_discovery() -> Dict[str, Any]:
                     "type": getattr(bobj, "_backend_type", "unknown"),
                 }
             )
+        active = getattr(llm_svc, "active_backend_type", None)
         result["llm"] = {
             "available": getattr(llm_svc, "is_available", False),
             "mode": getattr(llm_svc, "llm_mode", "unknown"),
-            "active": (
-                llm_svc.active_backend_type.name
-                if getattr(llm_svc, "active_backend_type", None) is not None
-                and llm_svc.active_backend_type is not None
-                else None
-            ),
+            "active": active.name if active is not None else None,
             "backends": backends_list,
         }
     except Exception as e:
         logger.warning("LLM service unavailable: %s", e, exc_info=True)
         result["llm"] = {"available": False, "mode": "unknown", "backends": []}
 
-    # ── Intents ──
+
+async def _discovery_intents(result: Dict[str, Any]) -> None:
+    """Fill result["intents"] with configured intent names + count."""
     try:
         from core.config_loader import get_angela_config
 
@@ -95,9 +84,10 @@ async def system_discovery() -> Dict[str, Any]:
     except Exception:
         result["intents"] = {"count": 0, "names": []}
 
-    # ── Memory ──
+
+async def _discovery_memory(result: Dict[str, Any]) -> None:
+    """Fill result["memory"] with whether the chat service has a memory manager."""
     try:
-        # Try to get memory manager from the chat service
         from api.lifespan import _get_chat_service
 
         service = await _get_chat_service()
@@ -106,7 +96,9 @@ async def system_discovery() -> Dict[str, Any]:
     except Exception:
         result["memory"] = {"initialized": False}
 
-    # ── 8D State summary ──
+
+async def _discovery_state(result: Dict[str, Any]) -> None:
+    """Fill result["state"] with per-axis 8D state means rounded to 3 decimals."""
     try:
         from api.lifespan import _get_chat_service
 
@@ -122,5 +114,29 @@ async def system_discovery() -> Dict[str, Any]:
         result["state"] = state
     except Exception:
         result["state"] = {}
+
+
+@router.get("/discovery")
+async def system_discovery() -> Dict[str, Any]:
+    """All-in-one system info for UI panels.
+
+    Returns deployment mode, LLM backend list with health,
+    intent count, memory status, and 8D state summary.
+    """
+    result: Dict[str, Any] = {
+        "timestamp": time.time(),
+        "uptime_seconds": int(time.time() - _start_time),
+    }
+
+    # ── Deployment config ──
+    await _discovery_deployment(result)
+    # ── LLM backends ──
+    await _discovery_llm(result)
+    # ── Intents ──
+    await _discovery_intents(result)
+    # ── Memory ──
+    await _discovery_memory(result)
+    # ── 8D State summary ──
+    await _discovery_state(result)
 
     return result
