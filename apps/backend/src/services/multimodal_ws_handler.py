@@ -56,60 +56,95 @@ async def multimodal_stream_handler(websocket: WebSocket) -> None:
         logger.error(f"Multimodal WS error: {e}")
 
 
+async def _action_encode(svc: MultimodalService, payload: Dict[str, Any]) -> Any:
+    return await svc.encode(
+        (
+            payload["content"].encode()
+            if isinstance(payload.get("content"), str)
+            else payload.get("content", b"")
+        ),
+        payload.get("modality", "vision"),
+        payload.get("item_id"),
+    )
+
+
+async def _action_decode(svc: MultimodalService, payload: Dict[str, Any]) -> Any:
+    return await svc.decode(
+        payload["item_id"],
+        payload.get("modality", "vision"),
+        payload.get("output_format", "base64"),
+    )
+
+
+async def _action_compare(svc: MultimodalService, payload: Dict[str, Any]) -> Any:
+    return await svc.compare(payload["item_a"], payload["item_b"])
+
+
+async def _action_generate(svc: MultimodalService, payload: Dict[str, Any]) -> Any:
+    return await svc.generate(payload["source_item_id"], payload.get("target_modality", "text"))
+
+
+async def _action_retrieve(svc: MultimodalService, payload: Dict[str, Any]) -> Any:
+    return await svc.retrieve(
+        payload.get("query_id", ""),
+        payload.get("top_k", 5),
+        payload.get("modality_filter"),
+    )
+
+
+async def _action_train(svc: MultimodalService, payload: Dict[str, Any]) -> Any:
+    return await svc.train(
+        payload.get("mode", "full"),
+        payload.get("epochs", 5),
+        payload.get("lr", 0.01),
+        payload.get("use_real", False),
+    )
+
+
+async def _action_evaluate(svc: MultimodalService, payload: Dict[str, Any]) -> Any:
+    return await svc.evaluate(
+        payload.get("item_id"),
+        payload.get("modality", "vision"),
+        payload.get("n_samples", 5),
+    )
+
+
+async def _action_health(svc: MultimodalService, payload: Dict[str, Any]) -> Any:
+    return await svc.health()
+
+
+async def _action_memory_search(svc: MultimodalService, payload: Dict[str, Any]) -> Any:
+    return await svc.memory_search(payload.get("query", ""), payload.get("top_k", 5))
+
+
+_SERVICE_HANDLERS: Dict[str, Any] = {
+    "encode": _action_encode,
+    "multimodal_encode": _action_encode,
+    "decode": _action_decode,
+    "multimodal_decode": _action_decode,
+    "compare": _action_compare,
+    "generate": _action_generate,
+    "retrieve": _action_retrieve,
+    "train": _action_train,
+    "evaluate": _action_evaluate,
+    "health": _action_health,
+    "memory_search": _action_memory_search,
+}
+
+
 async def _dispatch(
     svc: MultimodalService,
     action: str,
     payload: Dict[str, Any],
     websocket: Optional[WebSocket] = None,
 ) -> Any:
-    if action in ("encode", "multimodal_encode"):
-        return await svc.encode(
-            (
-                payload["content"].encode()
-                if isinstance(payload.get("content"), str)
-                else payload.get("content", b"")
-            ),
-            payload.get("modality", "vision"),
-            payload.get("item_id"),
-        )
-    elif action in ("decode", "multimodal_decode"):
-        return await svc.decode(
-            payload["item_id"],
-            payload.get("modality", "vision"),
-            payload.get("output_format", "base64"),
-        )
-    elif action == "compare":
-        return await svc.compare(payload["item_a"], payload["item_b"])
-    elif action == "generate":
-        return await svc.generate(payload["source_item_id"], payload.get("target_modality", "text"))
-    elif action == "retrieve":
-        return await svc.retrieve(
-            payload.get("query_id", ""),
-            payload.get("top_k", 5),
-            payload.get("modality_filter"),
-        )
-    elif action == "train":
-        return await svc.train(
-            payload.get("mode", "full"),
-            payload.get("epochs", 5),
-            payload.get("lr", 0.01),
-            payload.get("use_real", False),
-        )
-    elif action == "evaluate":
-        return await svc.evaluate(
-            payload.get("item_id"),
-            payload.get("modality", "vision"),
-            payload.get("n_samples", 5),
-        )
-    elif action == "health":
-        return await svc.health()
-    elif action == "memory_search":
-        return await svc.memory_search(payload.get("query", ""), payload.get("top_k", 5))
-    elif action in ("chat_stream", "chat"):
+    if action in ("chat_stream", "chat"):
         assert websocket is not None  # chat 串流必須有連線；呼叫端契約
         return await _handle_chat_stream(websocket, payload)
-    else:
+    handler = _SERVICE_HANDLERS.get(action)
+    if handler is None:
         raise ValueError(f"Unknown multimodal action: {action}")
+    return await handler(svc, payload)
 
 
 async def _handle_chat_stream(websocket: WebSocket, payload: Dict[str, Any]) -> str:
