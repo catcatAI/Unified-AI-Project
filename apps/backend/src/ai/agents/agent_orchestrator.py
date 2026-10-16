@@ -360,6 +360,155 @@ class AgentOrchestrator:
 
         return subtasks
 
+    def _get_gate_decision(
+        self,
+        task: Dict[str, Any],
+        confirmed_agent: Any,
+        confirmed_intent: Any,
+        message: str,
+    ) -> Any:
+        """Ask ExecutionGate whether this agent may run (confirm path if pre-approved)."""
+        intent = str(task["intent"])
+        agent_value = task.get("agent")
+        agent_name = agent_value if isinstance(agent_value, str) else None
+        if confirmed_agent == agent_name and confirmed_intent == intent:
+            return self._execution_gate.confirm_agent_execution(
+                intent=intent,
+                agent_name=agent_name,
+                user_message=message,
+            )
+        return self._execution_gate.decide_agent_execution(
+            intent=intent,
+            agent_name=agent_name,
+            user_message=message,
+        )
+
+    async def _execute_via_model_bus(
+        self, agent_name: str, message: str, context: Dict[str, Any]
+    ) -> Any:
+        """Try ModelBus handler-backed execution; returns None on failure."""
+        if not self._model_bus:
+            return None
+        try:
+            return await self._model_bus.execute_handler(agent_name, message, context)
+        except Exception as e:
+            logger.warning(f"ModelBus execution failed for {agent_name}: {e}", exc_info=True)
+            return None
+
+    def _resolve_eda_method(self, message: str, force_eda_followup: bool) -> Optional[str]:
+        """Pick the EDA agent method for RTL / hardware-standards / AI-card requests."""
+        if self.is_rtl_generation_request(message):
+            return "run_rtl_experiment"
+        if self.is_hardware_standards_request(message):
+            return "get_hardware_standards"
+        if self.is_ai_card_request(message) or force_eda_followup:
+            return "run_ai_card_reference_experiment"
+        return None
+
+    async def _execute_via_agent_manager(
+        self,
+        agent_name: str,
+        message: str,
+        force_eda_followup: bool,
+    ) -> Optional[Dict[str, Any]]:
+        """Execute via AgentManager (specialized `_agent`-suffixed ids only)."""
+        if self._agent_manager is None:
+            return None
+        try:
+            agent_task = {
+                "message": message,
+                "query": message,
+                "prompt": message,
+                "code": message,
+                "text": message,
+                "content": message,
+            }
+            if agent_name == "eda_agent":
+                method = self._resolve_eda_method(message, force_eda_followup)
+                if method:
+                    agent_task["method"] = method
+            agent_result = await self._agent_manager.execute_agent(agent_name, agent_task)
+            return {
+                "type": agent_name,
+                "success": bool(getattr(agent_result, "success", False)),
+                "result": getattr(agent_result, "result_data", None),
+                "error": getattr(agent_result, "error", None),
+            }
+        except Exception as e:
+            logger.warning(
+                f"AgentManager execution failed for {agent_name}: {e}", exc_info=True
+            )
+            return None
+
+    async def _process_subtask(
+        self,
+        task: Dict[str, Any],
+        confirmed_agent: Any,
+        confirmed_intent: Any,
+        context: Optional[Dict[str, Any]],
+        force_eda_followup: bool,
+    ) -> Dict[str, Any]:
+        """Process one subtask: gate → ModelBus → AgentManager fallback."""
+        intent = str(task["intent"])
+        agent_value = task.get("agent")
+        agent_name = agent_value if isinstance(agent_value, str) else None
+        message = str(task.get("message", ""))
+
+        if intent == "general":
+            return {
+                "intent": intent,
+                "agent": None,
+                "result": None,
+                "note": "No specialized agent; use LLM",
+            }
+        if not agent_name:
+            return {
+                "intent": intent,
+                "agent": None,
+                "result": None,
+                "note": "No agent mapped for intent",
+            }
+
+        gate_decision = self._get_gate_decision(task, confirmed_agent, confirmed_intent, message)
+        if gate_decision.action != "auto_execute":
+            return {
+                "intent": intent,
+                "agent": agent_name,
+                "result": {
+                    "type": "execution_gate",
+                    "success": False,
+                    "result": None,
+                    "error": gate_decision.reason,
+                },
+                "message": message,
+                "gate_action": gate_decision.action,
+                "gate_reason": gate_decision.reason,
+                "confirm_message": gate_decision.confirm_message,
+            }
+
+        # Try ModelBus first, then AgentManager for specialized `_agent` ids.
+        result = await self._execute_via_model_bus(agent_name, message, context or {})
+        is_specialized_agent = agent_name.endswith("_agent")
+        if (
+            (result is None or (isinstance(result, dict) and not result.get("success")))
+            and is_specialized_agent
+        ):
+            am_result = await self._execute_via_agent_manager(
+                agent_name, message, force_eda_followup
+            )
+            if am_result is not None:
+                result = am_result
+
+        if isinstance(result, dict):
+            self._execution_gate.record_result(agent_name, bool(result.get("success")))
+
+        return {
+            "intent": intent,
+            "agent": agent_name,
+            "result": result,
+            "message": message,
+        }
+
     async def route_task(
         self, user_message: str, context: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
@@ -388,138 +537,10 @@ class AgentOrchestrator:
         confirmed_intent = (context or {}).get("_gate_confirmed_intent")
         results: List[Dict[str, Any]] = []
         for task in subtasks:
-            intent = str(task["intent"])
-            agent_value = task.get("agent")
-            agent_name = agent_value if isinstance(agent_value, str) else None
-            message = str(task.get("message", ""))
-
-            if intent == "general":
-                results.append(
-                    {
-                        "intent": intent,
-                        "agent": None,
-                        "result": None,
-                        "note": "No specialized agent; use LLM",
-                    }
-                )
-                continue
-
-            if not agent_name:
-                results.append(
-                    {
-                        "intent": intent,
-                        "agent": None,
-                        "result": None,
-                        "note": "No agent mapped for intent",
-                    }
-                )
-                continue
-
-            # Execution policy is owned by ExecutionGate: it decides whether this
-            # specialized agent may run, require confirmation, or be rejected.
-            # Only "auto_execute" reaches the ModelBus handler / AgentManager.
-            if confirmed_agent == agent_name and confirmed_intent == intent:
-                gate_decision = self._execution_gate.confirm_agent_execution(
-                    intent=intent,
-                    agent_name=agent_name,
-                    user_message=message,
-                )
-            else:
-                gate_decision = self._execution_gate.decide_agent_execution(
-                    intent=intent,
-                    agent_name=agent_name,
-                    user_message=message,
-                )
-            if gate_decision.action != "auto_execute":
-                results.append(
-                    {
-                        "intent": intent,
-                        "agent": agent_name,
-                        "result": {
-                            "type": "execution_gate",
-                            "success": False,
-                            "result": None,
-                            "error": gate_decision.reason,
-                        },
-                        "message": message,
-                        "gate_action": gate_decision.action,
-                        "gate_reason": gate_decision.reason,
-                        "confirm_message": gate_decision.confirm_message,
-                    }
-                )
-                continue
-
-            # Try to execute via ModelBus (handler-backed intents) first, then
-            # fall back to AgentManager (specialized agents registered by
-            # agent_adapter with `_agent`-suffixed ids). Previously this only
-            # consulted ModelBus, so specialized-agent intents (code_understand,
-            # knowledge_query, creative_write, ...) always returned None and
-            # silently fell back to the LLM — the whole agent path was dead.
-            result = None
-            if self._model_bus:
-                try:
-                    result = await self._model_bus.execute_handler(
-                        agent_name, message, context or {}
-                    )
-                except Exception as e:
-                    logger.warning(
-                        f"ModelBus execution failed for {agent_name}: {e}", exc_info=True
-                    )
-            # AgentManager fallback only applies to specialized-agent ids (the
-            # `_agent`-suffixed ids from register_specialized_agents). ModelBus
-            # handler ids (file_ops/code_exec/web_search/vision) must NOT fall
-            # back — AgentManager doesn't register them and the attempt only
-            # produces a misleading "Agent not found" warning.
-            is_specialized_agent = agent_name.endswith("_agent")
-            if (
-                (result is None or (isinstance(result, dict) and not result.get("success")))
-                and is_specialized_agent
-                and self._agent_manager is not None
-            ):
-                try:
-                    # Pass the raw message under every common parameter name so
-                    # the adapter's _fill_defaults can satisfy the agent method
-                    # signature (prompt/code/text/query/...). Without this the
-                    # adapter filled required params with empty defaults and
-                    # agents returned "No prompt provided" / "No code provided".
-                    agent_task = {
-                        "message": message,
-                        "query": message,
-                        "prompt": message,
-                        "code": message,
-                        "text": message,
-                        "content": message,
-                    }
-                    if agent_name == "eda_agent" and self.is_rtl_generation_request(message):
-                        agent_task["method"] = "run_rtl_experiment"
-                    elif agent_name == "eda_agent" and self.is_hardware_standards_request(message):
-                        agent_task["method"] = "get_hardware_standards"
-                    elif agent_name == "eda_agent" and (
-                        self.is_ai_card_request(message) or force_eda_followup
-                    ):
-                        agent_task["method"] = "run_ai_card_reference_experiment"
-                    agent_result = await self._agent_manager.execute_agent(agent_name, agent_task)
-                    result = {
-                        "type": agent_name,
-                        "success": bool(getattr(agent_result, "success", False)),
-                        "result": getattr(agent_result, "result_data", None),
-                        "error": getattr(agent_result, "error", None),
-                    }
-                except Exception as e:
-                    logger.warning(
-                        f"AgentManager execution failed for {agent_name}: {e}", exc_info=True
-                    )
-
-            if isinstance(result, dict):
-                self._execution_gate.record_result(agent_name, bool(result.get("success")))
-
             results.append(
-                {
-                    "intent": intent,
-                    "agent": agent_name,
-                    "result": result,
-                    "message": message,
-                }
+                await self._process_subtask(
+                    task, confirmed_agent, confirmed_intent, context, force_eda_followup
+                )
             )
 
         return {
