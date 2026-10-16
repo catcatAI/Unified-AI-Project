@@ -139,18 +139,28 @@ def _dig_expand(params: Dict[str, Any], _state: Any = None) -> List[Action]:
     return actions
 
 
-def _xyz(params: Dict[str, Any], key: str = "pos") -> Optional[Dict[str, float]]:
-    p = params.get(key)
+def _xyz_from_dict(p: Any) -> Optional[Dict[str, float]]:
+    """dict 形態（含 x/y float 化失敗 → None）。"""
     if isinstance(p, dict) and all(k in p for k in ("x", "y", "z")):
         try:
             return {"x": float(p["x"]), "y": float(p["y"]), "z": float(p["z"])}
         except (TypeError, ValueError):
             return None
+    return None
+
+
+def _xyz_from_seq(p: Any) -> Optional[Dict[str, float]]:
+    """list/tuple 三元素形態。"""
     if isinstance(p, (list, tuple)) and len(p) == 3:
         try:
             return {"x": float(p[0]), "y": float(p[1]), "z": float(p[2])}
         except (TypeError, ValueError):
             return None
+    return None
+
+
+def _xyz_from_str(p: Any) -> Optional[Dict[str, float]]:
+    """字串形態：依逗號/空格分隔嘗試解析三數。"""
     for sep in (",", " "):
         if isinstance(p, str) and sep in p:
             try:
@@ -159,6 +169,17 @@ def _xyz(params: Dict[str, Any], key: str = "pos") -> Optional[Dict[str, float]]
             except (TypeError, ValueError):
                 continue
     return None
+
+
+def _xyz(params: Dict[str, Any], key: str = "pos") -> Optional[Dict[str, float]]:
+    p = params.get(key)
+    for parser in (_xyz_from_dict, _xyz_from_seq, _xyz_from_str):
+        result = parser(p)
+        if result is not None:
+            return result
+    return None
+
+
 
 
 def _goto_expand(params: Dict[str, Any], _state: Any = None) -> List[Action]:
@@ -486,6 +507,38 @@ class ChatDecision(BaseModel):
     reasoning: str = Field(default="", description="一句話說明")
 
 
+def _skill_to_walk(params: Dict[str, Any]) -> Tuple[str, Dict[str, Any]]:
+    """move/navigate → walk（forward 符號決定 backward）。"""
+    try:
+        fwd = float(params.get("forward", 1.0))
+    except (TypeError, ValueError):
+        fwd = 1.0
+    return "walk", {"steps": 3, "backward": bool(fwd < 0)}
+
+
+def _skill_to_turn(params: Dict[str, Any]) -> Tuple[str, Dict[str, Any]]:
+    """look → turn；零轉動禁排（pitch 無對應動詞，瞄準走 look_at）。"""
+    try:
+        yaw = float(params.get("yaw", 0.0) or 0.0)
+    except (TypeError, ValueError):
+        yaw = 0.0
+    if yaw == 0.0:
+        return "", {}
+    import math
+
+    return "turn", {"degrees": math.degrees(yaw)}
+
+
+def _skill_to_craft(
+    params: Dict[str, Any], craftable: Optional[Callable[[str], bool]]
+) -> Tuple[str, Dict[str, Any]]:
+    """craft → craft_one；配方不可製造禁排。"""
+    rid = str(params.get("recipe_id", "auto") or "auto")
+    if craftable is not None and not craftable(rid):
+        return "", {}
+    return "craft_one", {"recipe_id": rid}
+
+
 # 舊迴圈（executor/L1 SkillContext）進遊戲的唯一翻譯器。
 # 意圖（skill＋params）只能翻成行為庫的語言；翻不出來（place/build/
 # eat／做不出的 craft）就禁排——此前三處 abstain 補丁都是在這裡
@@ -495,33 +548,16 @@ def skill_to_behavior(
     params: Optional[Dict[str, Any]] = None,
     craftable: Optional[Callable[[str], bool]] = None,
 ) -> Tuple[str, Dict[str, Any]]:
-    """(skill, params) -> (behavior_id, params)，翻不出回 ("", {})."""
+    """(skill, params) -> (behavior_id, params)，翻不出回 ("", {})。"""
     params = params or {}
     if skill in ("move", "navigate"):
-        try:
-            fwd = float(params.get("forward", 1.0))
-        except (TypeError, ValueError):
-            fwd = 1.0
-        return "walk", {"steps": 3, "backward": bool(fwd < 0)}
+        return _skill_to_walk(params)
     if skill in ("dig", "combat"):
         return "dig_burst", {"n": 1}
     if skill == "look":
-        # 只有 yaw 轉得出來（turn）；pitch 抬頭低頭沒有對應動詞，
-        # 真瞄準走 look_at。零轉動直接禁排（此前全是空轉）。
-        try:
-            yaw = float(params.get("yaw", 0.0) or 0.0)
-        except (TypeError, ValueError):
-            yaw = 0.0
-        if yaw == 0.0:
-            return "", {}
-        import math
-
-        return "turn", {"degrees": math.degrees(yaw)}
+        return _skill_to_turn(params)
     if skill == "craft":
-        rid = str(params.get("recipe_id", "auto") or "auto")
-        if craftable is not None and not craftable(rid):
-            return "", {}
-        return "craft_one", {"recipe_id": rid}
+        return _skill_to_craft(params, craftable)
     # place/build/eat: 沒有無目的的動詞。定向放置走 place_one/place_at
     # （runner/chat/plan），吃東西缺 use 動作（poller 待補），藍圖缺執行器。
     return "", {}
