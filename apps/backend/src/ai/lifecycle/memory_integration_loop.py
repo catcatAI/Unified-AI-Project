@@ -302,51 +302,57 @@ class MemoryIntegrationLoop:
         ) as e:  # broad exception acceptable: pattern analysis should not crash the loop
             logger.warning(f"Error analyzing patterns: {e}", exc_info=True)
 
+    def _neuroplasticity_encode(self, content: str) -> None:
+        """Encode content via neuroplasticity (Phase 5.3), counting successes."""
+        if self._neuroplasticity is None:
+            return
+        try:
+            if hasattr(self._neuroplasticity, "encode"):
+                self._neuroplasticity.encode(content)
+                self.stats["neuroplasticity_encodings"] += 1
+            if hasattr(self._neuroplasticity, "consolidate"):
+                self._neuroplasticity.consolidate()
+        except Exception as e:
+            logger.warning("Neuroplasticity encoding failed: %s", e, exc_info=True)
+
+    async def _boost_importance(self, info: Any) -> None:
+        """Boost importance based on access count (Phase 5.3)."""
+        if info.importance >= 1.0 or not info.integrated:
+            return
+        boost = 0.0
+        if hasattr(info, "_access_count") and info._access_count > 5:
+            boost = 0.2
+        elif hasattr(self.memory_manager, "get_access_count"):
+            count = await self.memory_manager.get_access_count(info.content)
+            if count > 5:
+                boost = 0.2
+        if boost > 0:
+            info.importance = min(1.0, info.importance + boost)
+            self.stats["importance_boosts"] += 1
+
+    async def _structure_one(self, info: Any) -> None:
+        """Structure a single memory item with neuroplasticity and importance boost."""
+        structured_data = self._simple_structure(info.content)
+        self._neuroplasticity_encode(info.content)
+        await self._boost_importance(info)
+        if hasattr(self.memory_manager, "store_structured_memory"):
+            await self.memory_manager.store_structured_memory(
+                content=info.content, structured_data=structured_data
+            )
+        info.structured = True
+        self.stats["structured_memories"] += 1
+
     async def _structure_memory(self) -> None:
         """結構化記憶 with neuroplasticity integration (Phase 5.3)."""
         for info in self.integration_queue[
             : batch_value("ai.memory_integration_loop.structure_batch", 10)
         ]:
-            if not info.structured:
-                try:
-                    # 簡單的結構化：提取關鍵信息
-                    structured_data = self._simple_structure(info.content)
-
-                    # Phase 5.3: Neuroplasticity encoding
-                    if self._neuroplasticity is not None:
-                        try:
-                            if hasattr(self._neuroplasticity, "encode"):
-                                self._neuroplasticity.encode(info.content)
-                                self.stats["neuroplasticity_encodings"] += 1
-                            if hasattr(self._neuroplasticity, "consolidate"):
-                                self._neuroplasticity.consolidate()
-                        except Exception as e:
-                            logger.warning("Neuroplasticity encoding failed: %s", e, exc_info=True)
-
-                    # Phase 5.3: Importance boosting based on access count
-                    if info.importance < 1.0 and info.integrated:
-                        boost = 0.0
-                        if hasattr(info, "_access_count") and info._access_count > 5:
-                            boost = 0.2
-                        elif hasattr(self.memory_manager, "get_access_count"):
-                            count = await self.memory_manager.get_access_count(info.content)
-                            if count > 5:
-                                boost = 0.2
-                        if boost > 0:
-                            info.importance = min(1.0, info.importance + boost)
-                            self.stats["importance_boosts"] += 1
-
-                    # 存儲結構化數據
-                    if hasattr(self.memory_manager, "store_structured_memory"):
-                        await self.memory_manager.store_structured_memory(
-                            content=info.content, structured_data=structured_data
-                        )
-
-                    info.structured = True
-                    self.stats["structured_memories"] += 1
-
-                except Exception as e:
-                    logger.warning(f"Error structuring memory: {e}", exc_info=True)
+            if info.structured:
+                continue
+            try:
+                await self._structure_one(info)
+            except Exception as e:
+                logger.warning(f"Error structuring memory: {e}", exc_info=True)
 
     def _simple_structure(self, content: str) -> Dict[str, Any]:
         """簡單的記憶結構化"""
