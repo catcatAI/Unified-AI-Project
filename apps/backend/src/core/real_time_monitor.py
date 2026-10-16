@@ -785,6 +785,97 @@ class UserActivityMonitor:
             focus_score=focus_score,
         )
 
+    async def _get_active_window_windows(self) -> Optional[str]:
+        """Windows: PowerShell via Shell.Application COM."""
+        result = await asyncio.to_thread(
+            subprocess.run,
+            [
+                "powershell",
+                "-NoProfile",
+                "-Command",
+                "(New-Object -ComObject 'Shell.Application').Windows() | "
+                "Select-Object -First 1 | ForEach-Object { $_.LocationName }",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=2,
+        )
+        title = result.stdout.strip()
+        return title if title else None
+
+    async def _get_active_window_darwin(self) -> Optional[str]:
+        """macOS: osascript frontmost app name."""
+        result = await asyncio.to_thread(
+            subprocess.run,
+            [
+                "osascript",
+                "-e",
+                'tell application "System Events" to get name of '
+                "first application process whose frontmost is true",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=2,
+        )
+        title = result.stdout.strip()
+        return title if title else None
+
+    async def _get_active_window_linux_xprop(self) -> Optional[str]:
+        """Linux fallback: xprop two-call approach (no shell=True)."""
+        try:
+            # Step 1: get active window ID
+            id_result = await asyncio.to_thread(
+                subprocess.run,
+                ["xprop", "-root", "_NET_ACTIVE_WINDOW"],
+                capture_output=True,
+                text=True,
+                timeout=2,
+            )
+            if id_result.returncode != 0:
+                return None
+            # Parse window ID from output like "_NET_ACTIVE_WINDOW(WINDOW): window id # 0x..."
+            parts = id_result.stdout.strip().split()
+            window_id = parts[-1] if parts else None
+            if not window_id or window_id == "not" or window_id.startswith("_NET"):
+                return None
+            # Step 2: get window name
+            name_result = await asyncio.to_thread(
+                subprocess.run,
+                ["xprop", "-id", window_id, "_NET_WM_NAME"],
+                capture_output=True,
+                text=True,
+                timeout=2,
+            )
+            if name_result.returncode != 0:
+                return None
+            raw = name_result.stdout.strip()
+            # Parse UTF8_STRING or STRING value: "_NET_WM_NAME(UTF8_STRING) = \"title\""
+            if "=" in raw:
+                title = raw.split("=", 1)[-1].strip().strip('"')
+                return title if title else None
+        except FileNotFoundError:
+            pass
+        return None
+
+    async def _get_active_window_linux(self) -> Optional[str]:
+        """Linux: xdotool (preferred) or xprop (fallback)."""
+        # Preferred: xdotool (fast, single call)
+        try:
+            result = await asyncio.to_thread(
+                subprocess.run,
+                ["xdotool", "getactivewindow", "getwindowname"],
+                capture_output=True,
+                text=True,
+                timeout=2,
+            )
+            title = result.stdout.strip()
+            if title:
+                return title
+        except FileNotFoundError:
+            pass
+        # Fallback: xprop (two-call approach, no shell=True)
+        return await self._get_active_window_linux_xprop()
+
     async def _get_active_window(self) -> Optional[str]:
         """Get currently active window title (cross-platform).
 
@@ -797,87 +888,11 @@ class UserActivityMonitor:
         system = platform.system().lower()
         try:
             if system == "windows":
-                result = await asyncio.to_thread(
-                    subprocess.run,
-                    [
-                        "powershell",
-                        "-NoProfile",
-                        "-Command",
-                        "(New-Object -ComObject 'Shell.Application').Windows() | "
-                        "Select-Object -First 1 | ForEach-Object { $_.LocationName }",
-                    ],
-                    capture_output=True,
-                    text=True,
-                    timeout=2,
-                )
-                title = result.stdout.strip()
-                return title if title else None
-
-            elif system == "darwin":
-                result = await asyncio.to_thread(
-                    subprocess.run,
-                    [
-                        "osascript",
-                        "-e",
-                        'tell application "System Events" to get name of '
-                        "first application process whose frontmost is true",
-                    ],
-                    capture_output=True,
-                    text=True,
-                    timeout=2,
-                )
-                title = result.stdout.strip()
-                return title if title else None
-
-            elif system == "linux":
-                # Preferred: xdotool (fast, single call)
-                try:
-                    result = await asyncio.to_thread(
-                        subprocess.run,
-                        ["xdotool", "getactivewindow", "getwindowname"],
-                        capture_output=True,
-                        text=True,
-                        timeout=2,
-                    )
-                    title = result.stdout.strip()
-                    if title:
-                        return title
-                except FileNotFoundError:
-                    pass
-                # Fallback: xprop (two-call approach, no shell=True)
-                try:
-                    # Step 1: get active window ID
-                    id_result = await asyncio.to_thread(
-                        subprocess.run,
-                        ["xprop", "-root", "_NET_ACTIVE_WINDOW"],
-                        capture_output=True,
-                        text=True,
-                        timeout=2,
-                    )
-                    if id_result.returncode != 0:
-                        return None
-                    # Parse window ID from output like "_NET_ACTIVE_WINDOW(WINDOW): window id # 0x..."
-                    parts = id_result.stdout.strip().split()
-                    window_id = parts[-1] if parts else None
-                    if not window_id or window_id == "not" or window_id.startswith("_NET"):
-                        return None
-                    # Step 2: get window name
-                    name_result = await asyncio.to_thread(
-                        subprocess.run,
-                        ["xprop", "-id", window_id, "_NET_WM_NAME"],
-                        capture_output=True,
-                        text=True,
-                        timeout=2,
-                    )
-                    if name_result.returncode != 0:
-                        return None
-                    raw = name_result.stdout.strip()
-                    # Parse UTF8_STRING or STRING value: "_NET_WM_NAME(UTF8_STRING) = \"title\""
-                    if "=" in raw:
-                        title = raw.split("=", 1)[-1].strip().strip('"')
-                        return title if title else None
-                except FileNotFoundError:
-                    pass
+                return await self._get_active_window_windows()
+            if system == "darwin":
+                return await self._get_active_window_darwin()
+            if system == "linux":
+                return await self._get_active_window_linux()
 
         except (subprocess.TimeoutExpired, OSError) as e:
             logger.debug("Active window detection failed on %s: %s", system, e)
