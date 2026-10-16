@@ -7,9 +7,10 @@ import ast
 import asyncio
 import io
 import logging
+import re
 import sys
 import traceback
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional
 
 from core.i18n.i18n_manager import t
 from core.utils import safe_error
@@ -258,21 +259,18 @@ class _SafetyChecker(ast.NodeVisitor):
         self.generic_visit(node)
 
 
-def _extract_inline_code(text: str) -> str:
-    """Extract a short Python snippet embedded in natural language.
+def _parseable(cand: str) -> Optional[str]:
+    """Return cand if it parses as an eval expression, else None."""
+    try:
+        ast.parse(cand, mode="eval")
+    except SyntaxError:
+        return None
+    return cand
 
-    Handles cases like ``執行 print(42)``, ``運行 1+1``, or nested calls such
-    as ``執行 print(getattr((), '__class__'))`` where the user did not use a
-    code fence. Scans for balanced-parenthesis call expressions and simple
-    arithmetic, keeping only candidates that are themselves valid Python so
-    prose is never fed to exec().
-    """
-    import re
 
-    if not text or not text.strip():
-        return ""
-    candidates = []
-    # 1. Call expressions with balanced parentheses (supports nesting).
+def _extract_paren_calls(text: str) -> List[str]:
+    """Call expressions with balanced parentheses (supports nesting)."""
+    candidates: List[str] = []
     for m in re.finditer(r"[A-Za-z_][A-Za-z0-9_]*\s*\(", text):
         start = m.start()
         depth = 0
@@ -288,20 +286,34 @@ def _extract_inline_code(text: str) -> str:
             i += 1
         if depth != 0:
             continue
-        cand = text[start : i + 1].strip()
-        try:
-            ast.parse(cand, mode="eval")
-        except SyntaxError:
-            continue
-        candidates.append(cand)
-    # 2. Simple arithmetic like ``1+1`` / ``3*7``.
+        cand = _parseable(text[start : i + 1].strip())
+        if cand is not None:
+            candidates.append(cand)
+    return candidates
+
+
+def _extract_arith(text: str) -> List[str]:
+    """Simple arithmetic like ``1+1`` / ``3*7``."""
+    candidates: List[str] = []
     for m in re.finditer(r"\d+(?:\.\d+)?\s*[+\-*/%^]\s*\d+(?:\.\d+)?", text):
-        cand = m.group(0).strip()
-        try:
-            ast.parse(cand, mode="eval")
-        except SyntaxError:
-            continue
-        candidates.append(cand)
+        cand = _parseable(m.group(0).strip())
+        if cand is not None:
+            candidates.append(cand)
+    return candidates
+
+
+def _extract_inline_code(text: str) -> str:
+    """Extract a short Python snippet embedded in natural language.
+
+    Handles cases like ``執行 print(42)``, ``運行 1+1``, or nested calls such
+    as ``執行 print(getattr((), '__class__'))`` where the user did not use a
+    code fence. Scans for balanced-parenthesis call expressions and simple
+    arithmetic, keeping only candidates that are themselves valid Python so
+    prose is never fed to exec().
+    """
+    if not text or not text.strip():
+        return ""
+    candidates = _extract_paren_calls(text) + _extract_arith(text)
     if candidates:
         # Prefer the longest parseable candidate (most likely the real snippet).
         return max(candidates, key=len)
