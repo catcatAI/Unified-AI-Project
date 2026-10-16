@@ -38,14 +38,10 @@ class GoogleDriveHandler:
     def __init__(self, drive_service: Any = None):
         self.drive_service = drive_service
 
-    async def handle(self, intent: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        operation = params or {}
-        action = operation.get("action", intent.replace("google_drive_", ""))
-        logger.info(f"GoogleDriveHandler handling: {action}")
-
-        if action not in self.SUPPORTED_ACTIONS:
-            return {"status": "error", "action": action, "error": f"Unsupported action: {action}"}
-
+    async def _try_drive_execute(
+        self, action: str, operation: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
+        """Drive API path: return dict result, or None to fall back to local fs."""
         if self.drive_service and hasattr(self.drive_service, "execute"):
             try:
                 result = await self.drive_service.execute(action, operation)
@@ -56,35 +52,56 @@ class GoogleDriveHandler:
             except Exception as e:
                 logger.warning(f"GoogleDriveService execute failed, falling back to local fs: {e}")
                 # Fall through to local fs fallback
+        return None
+
+    def _local_list(self, action: str, path: str) -> Dict[str, Any]:
+        """Local fs fallback for list: entries with size/type."""
+        try:
+            files = []
+            for f in os.listdir(path):
+                fp = os.path.join(path, f)
+                files.append(
+                    {
+                        "name": f,
+                        "is_dir": os.path.isdir(fp),
+                        "size": os.path.getsize(fp) if os.path.isfile(fp) else 0,
+                    }
+                )
+            return {"status": "ok", "action": action, "files": files, "mode": "local_fs"}
+        except Exception as e:
+            logger.warning("Drive operation failed: %s", safe_error(e), exc_info=True)
+            return {"status": "error", "action": action, "error": safe_error(e)}
+
+    def _local_info(self, action: str, path: str) -> Dict[str, Any]:
+        """Local fs fallback for info: existence/type/size probe."""
+        if os.path.exists(path):
+            return {
+                "status": "ok",
+                "action": action,
+                "exists": True,
+                "is_file": os.path.isfile(path),
+                "size": os.path.getsize(path) if os.path.isfile(path) else 0,
+            }
+        return {"status": "ok", "action": action, "exists": False}
+
+    async def handle(self, intent: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        operation = params or {}
+        action = operation.get("action", intent.replace("google_drive_", ""))
+        logger.info(f"GoogleDriveHandler handling: {action}")
+
+        if action not in self.SUPPORTED_ACTIONS:
+            return {"status": "error", "action": action, "error": f"Unsupported action: {action}"}
+
+        remote = await self._try_drive_execute(action, operation)
+        if remote is not None:
+            return remote
 
         # Local filesystem fallback (no drive_service configured or execute failed)
         path = operation.get("path", operation.get("filepath", "."))
         if action == "list":
-            try:
-                files = []
-                for f in os.listdir(path):
-                    fp = os.path.join(path, f)
-                    files.append(
-                        {
-                            "name": f,
-                            "is_dir": os.path.isdir(fp),
-                            "size": os.path.getsize(fp) if os.path.isfile(fp) else 0,
-                        }
-                    )
-                return {"status": "ok", "action": action, "files": files, "mode": "local_fs"}
-            except Exception as e:
-                logger.warning("Drive operation failed: %s", safe_error(e), exc_info=True)
-                return {"status": "error", "action": action, "error": safe_error(e)}
+            return self._local_list(action, path)
         elif action == "info":
-            if os.path.exists(path):
-                return {
-                    "status": "ok",
-                    "action": action,
-                    "exists": True,
-                    "is_file": os.path.isfile(path),
-                    "size": os.path.getsize(path) if os.path.isfile(path) else 0,
-                }
-            return {"status": "ok", "action": action, "exists": False}
+            return self._local_info(action, path)
 
         return {
             "status": "ok",
