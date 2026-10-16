@@ -679,6 +679,98 @@ print("EDA_KLAYOUT_JSON:" + json.dumps({{
         }
         return self._write_manifest(job, payload)
 
+    @staticmethod
+    def _magic_marker_value(match: Optional[re.Match[str]]) -> Optional[str]:
+        """Extract the first whitespace-separated token from a marker match."""
+        if not match:
+            return None
+        value = match.group(1).strip()
+        return value.split()[0] if value else ""
+
+    def _parse_magic_output(self, combined: str) -> Dict[str, Any]:
+        """Parse Magic stdout/stderr into structured statuses and PDK readiness."""
+        tech_file_match = _MAGIC_TECH_FILE.search(combined)
+        tech_name_match = _MAGIC_TECH_NAME.search(combined)
+        read_match = _MAGIC_READ_STATUS.search(combined)
+        load_match = _MAGIC_LOAD_STATUS.search(combined)
+        box_match = _MAGIC_BOX_STATUS.search(combined)
+        drc_match = _MAGIC_DRC_STATUS.search(combined)
+        drc_count_match = _MAGIC_DRC_COUNT.search(combined)
+        write_match = _MAGIC_WRITE_STATUS.search(combined)
+
+        tech_file = tech_file_match.group(1).strip() if tech_file_match else ""
+        tech_name = tech_name_match.group(1).strip() if tech_name_match else ""
+        rules_match = re.search(r"Total number of rules specifed in tech file:\s*(\d+)", combined)
+        rules = int(rules_match.group(1)) if rules_match else 0
+        pdk_ready = bool(tech_file and tech_name.lower() != "minimum" and rules > 0)
+        read_status = self._magic_marker_value(read_match)
+        load_status = self._magic_marker_value(load_match)
+        box_status = self._magic_marker_value(box_match)
+        drc_status = self._magic_marker_value(drc_match)
+        drc_error_count = int(drc_count_match.group(1)) if drc_count_match else None
+        write_status = self._magic_marker_value(write_match)
+        critical_pattern = re.compile(
+            r"\b(?:error while reading|unknown layer|i/o error|no cif/gds output style|drc error)\b",
+            re.IGNORECASE,
+        )
+        has_critical_error = bool(critical_pattern.search(combined))
+        layout_loaded = read_status == "0" and load_status == "0" and box_status == "0"
+        drc_clean = drc_status == "0" and drc_error_count == 0 and not has_critical_error
+        return {
+            "tech_file": tech_file,
+            "tech_name": tech_name,
+            "rules": rules,
+            "pdk_ready": pdk_ready,
+            "read_status": read_status,
+            "load_status": load_status,
+            "box_status": box_status,
+            "drc_status": drc_status,
+            "drc_error_count": drc_error_count,
+            "write_status": write_status,
+            "has_critical_error": has_critical_error,
+            "layout_loaded": layout_loaded,
+            "drc_clean": drc_clean,
+        }
+
+    @staticmethod
+    def _magic_diagnostics(
+        run: Dict[str, Any],
+        parsed: Dict[str, Any],
+        layout_loaded: bool,
+        drc_clean: bool,
+        output_valid: bool,
+    ) -> List[str]:
+        """Assemble human-readable diagnostics from the Magic run."""
+        diagnostics = [run["stderr"]] if run["stderr"] else []
+        if not parsed["pdk_ready"]:
+            diagnostics.append("Magic has no usable PDK/rule set; DRC was not certified")
+        if parsed["has_critical_error"]:
+            diagnostics.append("Magic reported a layout/DRC diagnostic")
+        if parsed["drc_error_count"] is not None and parsed["drc_error_count"] > 0:
+            diagnostics.append(f"Magic DRC reported {parsed['drc_error_count']} errors")
+        if not layout_loaded:
+            diagnostics.append("Magic headless run did not load a selectable layout box")
+        return diagnostics
+
+    @staticmethod
+    def _magic_status(
+        run: Dict[str, Any],
+        parsed: Dict[str, Any],
+        layout_loaded: bool,
+        drc_clean: bool,
+        output_valid: bool,
+    ) -> str:
+        """Map Magic run results to a single status string."""
+        if run["timed_out"]:
+            return "timeout"
+        if not parsed["pdk_ready"]:
+            return "missing_pdk"
+        if parsed["has_critical_error"] or not output_valid:
+            return "error"
+        if layout_loaded and drc_clean:
+            return "success"
+        return "degraded"
+
     async def run_magic(
         self,
         input_layout: os.PathLike[str] | str,
@@ -754,71 +846,24 @@ quit 0 -noprompt
         combined = run["stdout"] + "\n" + run["stderr"]
         run_log_path = workspace.logs_dir / f"{safe_label}.log"
         run_log_path.write_text(combined, encoding="utf-8")
-        tech_file_match = _MAGIC_TECH_FILE.search(combined)
-        tech_name_match = _MAGIC_TECH_NAME.search(combined)
-        read_match = _MAGIC_READ_STATUS.search(combined)
-        load_match = _MAGIC_LOAD_STATUS.search(combined)
-        box_match = _MAGIC_BOX_STATUS.search(combined)
-        drc_match = _MAGIC_DRC_STATUS.search(combined)
-        drc_count_match = _MAGIC_DRC_COUNT.search(combined)
-        write_match = _MAGIC_WRITE_STATUS.search(combined)
-
-        def marker_value(match: Optional[re.Match[str]]) -> Optional[str]:
-            if not match:
-                return None
-            value = match.group(1).strip()
-            return value.split()[0] if value else ""
-
-        tech_file = tech_file_match.group(1).strip() if tech_file_match else ""
-        tech_name = tech_name_match.group(1).strip() if tech_name_match else ""
-        rules_match = re.search(r"Total number of rules specifed in tech file:\s*(\d+)", combined)
-        rules = int(rules_match.group(1)) if rules_match else 0
-        pdk_ready = bool(tech_file and tech_name.lower() != "minimum" and rules > 0)
-        read_status = marker_value(read_match)
-        load_status = marker_value(load_match)
-        box_status = marker_value(box_match)
-        drc_status = marker_value(drc_match)
-        drc_error_count = int(drc_count_match.group(1)) if drc_count_match else None
-        write_status = marker_value(write_match)
-        critical_pattern = re.compile(
-            r"\b(?:error while reading|unknown layer|i/o error|no cif/gds output style|drc error)\b",
-            re.IGNORECASE,
-        )
-        has_critical_error = bool(critical_pattern.search(combined))
-        layout_loaded = read_status == "0" and load_status == "0" and box_status == "0"
-        drc_clean = drc_status == "0" and drc_error_count == 0 and not has_critical_error
-        diagnostics = [run["stderr"]] if run["stderr"] else []
-        if not pdk_ready:
-            diagnostics.append("Magic has no usable PDK/rule set; DRC was not certified")
-        if has_critical_error:
-            diagnostics.append("Magic reported a layout/DRC diagnostic")
-        if drc_error_count is not None and drc_error_count > 0:
-            diagnostics.append(f"Magic DRC reported {drc_error_count} errors")
-        if not layout_loaded:
-            diagnostics.append("Magic headless run did not load a selectable layout box")
+        parsed = self._parse_magic_output(combined)
+        layout_loaded = parsed["layout_loaded"]
+        drc_clean = parsed["drc_clean"]
         output_valid = output_path.is_file() and output_path.stat().st_size > 0
-        if run["timed_out"]:
-            status = "timeout"
-        elif not pdk_ready:
-            status = "missing_pdk"
-        elif has_critical_error or not output_valid:
-            status = "error"
-        elif layout_loaded and drc_clean:
-            status = "success"
-        else:
-            status = "degraded"
+        status = self._magic_status(run, parsed, layout_loaded, drc_clean, output_valid)
+        diagnostics = self._magic_diagnostics(run, parsed, layout_loaded, drc_clean, output_valid)
         metrics = {
-            "pdk_ready": pdk_ready,
+            "pdk_ready": parsed["pdk_ready"],
             "configured_tech": configured_tech,
-            "tech_name": tech_name,
-            "tech_file": tech_file,
-            "rule_count": rules,
-            "read_status": read_status,
-            "load_status": load_status,
-            "box_status": box_status,
-            "drc_status": drc_status,
-            "drc_error_count": drc_error_count,
-            "write_status": write_status,
+            "tech_name": parsed["tech_name"],
+            "tech_file": parsed["tech_file"],
+            "rule_count": parsed["rules"],
+            "read_status": parsed["read_status"],
+            "load_status": parsed["load_status"],
+            "box_status": parsed["box_status"],
+            "drc_status": parsed["drc_status"],
+            "drc_error_count": parsed["drc_error_count"],
+            "write_status": parsed["write_status"],
             "layout_loaded": layout_loaded,
             "drc_clean": drc_clean,
             "output_bytes": output_path.stat().st_size if output_path.is_file() else 0,
