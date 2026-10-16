@@ -441,27 +441,10 @@ def verify_block(
     return report
 
 
-def simulate_spine(
-    spice_text: str,
-    weight_bins: Sequence[int],
-    model_library: Path,
-    drain_rail_v: float = 0.3,
-    input_swing_v: float = 1.0,
-) -> Dict[str, Any]:
-    """Measure the extracted spines and check the weight ratio.
-
-    This is the gate that the group layout failed. Everything upstream of it
-    passed: DRC clean, correct device count, correct spine count, one gate and
-    one source per spine. The block was still unable to express a 1:2:4:8
-    weight, because every column held the same number of cells.
-    """
-    ngspice = find_ngspice()
-    if ngspice is None:
-        return {"status": "skipped", "reason": "ngspice_not_found"}
-    devices = parse_devices(spice_text)
-    if not devices:
-        return {"status": "error", "reason": "no devices to simulate"}
-
+def _extract_spines(
+    devices: List[Dict[str, Any]],
+) -> Tuple[Optional[List[Tuple[str, List[Dict[str, Any]]]]], Optional[Dict[str, Any]]]:
+    """Group devices by drain into 2+ cell spines. Returns (spines, error)."""
     by_drain: Dict[str, List[Dict[str, Any]]] = {}
     for device in devices:
         by_drain.setdefault(device["drain"], []).append(device)
@@ -470,11 +453,21 @@ def simulate_spine(
         key=lambda item: len(item[1]),
     )
     if len(spines) < 2:
-        return {
+        return None, {
             "status": "error",
             "reason": f"only {len(spines)} spine(s) with 2+ cells; cannot weigh",
         }
+    return spines, None
 
+
+def _build_spine_deck(
+    spines: List[Tuple[str, List[Dict[str, Any]]]],
+    model_library: Path,
+    drain_rail_v: float,
+    input_swing_v: float,
+) -> Tuple[Optional[List[str]], Optional[Dict[str, Any]]]:
+    """Emit the ngspice deck driving each spine's word line and source.
+    Returns (lines, error): a spine must be one gate over one source."""
     lines = [
         "* weight-ratio gate, driven from the extracted netlist",
         ".param mc_mm_switch=0 mc_pr_switch=0",
@@ -488,7 +481,7 @@ def simulate_spine(
         gates = {c["gate"] for c in cells}
         sources = {c["source"] for c in cells}
         if len(gates) != 1 or len(sources) != 1:
-            return {
+            return None, {
                 "status": "error",
                 "reason": (
                     f"spine {net} has {len(gates)} gates and {len(sources)} "
@@ -510,7 +503,13 @@ def simulate_spine(
     for index in range(len(spines)):
         lines.append(f"print @vdd{index}[i]")
     lines += ["quit", ".endc", ".end"]
+    return lines, None
 
+
+def _run_ngspice(
+    ngspice: str, lines: List[str]
+) -> Tuple[Optional[str], Optional[Dict[str, Any]]]:
+    """Write and run the deck. Returns (stdout+stderr, error)."""
     import tempfile
 
     workdir = Path(tempfile.mkdtemp(prefix="cimsim-"))
@@ -521,19 +520,62 @@ def simulate_spine(
             [ngspice, "-b", str(deck)], capture_output=True, text=True, timeout=600
         )
     except subprocess.TimeoutExpired:
-        return {"status": "error", "reason": "ngspice timed out"}
+        return None, {"status": "error", "reason": "ngspice timed out"}
     text = result.stdout + result.stderr
     if "singular" in text.lower():
-        return {"status": "error", "reason": "singular matrix: a net is floating"}
+        return None, {"status": "error", "reason": "singular matrix: a net is floating"}
+    return text, None
+
+
+def _parse_spine_currents(
+    text: str, spine_count: int
+) -> Tuple[Optional[Dict[int, float]], Optional[Dict[str, Any]]]:
+    """Parse @vddN[i] currents; all spines must report. Returns (currents, error)."""
     currents = {
         int(index): float(value)
         for index, value in re.findall(r"@vdd(\d+)\[i\] = ([-\d.e+]+)", text)
     }
-    if len(currents) != len(spines):
-        return {
+    if len(currents) != spine_count:
+        return None, {
             "status": "error",
-            "reason": f"read {len(currents)} of {len(spines)} spine currents",
+            "reason": f"read {len(currents)} of {spine_count} spine currents",
         }
+    return currents, None
+
+
+def simulate_spine(
+    spice_text: str,
+    weight_bins: Sequence[int],
+    model_library: Path,
+    drain_rail_v: float = 0.3,
+    input_swing_v: float = 1.0,
+) -> Dict[str, Any]:
+    """Measure the extracted spines and check the weight ratio.
+
+    This is the gate that the group layout failed. Everything upstream of it
+    passed: DRC clean, correct device count, correct spine count, one gate and
+    one source per spine. The block was still unable to express a 1:2:4:8
+    weight, because every column held the same number of cells.
+    """
+    ngspice = find_ngspice()
+    if ngspice is None:
+        return {"status": "skipped", "reason": "ngspice_not_found"}
+    devices = parse_devices(spice_text)
+    if not devices:
+        return {"status": "error", "reason": "no devices to simulate"}
+
+    spines, err = _extract_spines(devices)
+    if spines is None:
+        return err or {"status": "error", "reason": "spine extraction failed"}
+    lines, err = _build_spine_deck(spines, model_library, drain_rail_v, input_swing_v)
+    if lines is None:
+        return err or {"status": "error", "reason": "deck build failed"}
+    text, err = _run_ngspice(ngspice, lines)
+    if text is None:
+        return err or {"status": "error", "reason": "ngspice run failed"}
+    currents, err = _parse_spine_currents(text, len(spines))
+    if currents is None:
+        return err or {"status": "error", "reason": "current parse failed"}
 
     measured = [abs(currents[i]) for i in range(len(spines))]
     smallest = measured[0]
