@@ -229,25 +229,10 @@ def _find_local_match(task_type: str, source_dir: str, files: List[Path]) -> Opt
 # ═══════════════════════════════════════════════
 
 
-async def _try_local_processing(
-    user_message: str, task_type: str, source_dir: str, files: List[Path]
+async def _local_ed3n_stage(
+    op: Dict, source_dir: str, retention_note: str, files: List[Path]
 ) -> Optional[Dict]:
-    op = _OPERATIONS.get(task_type, _OPERATIONS["summarize"])
-    retention_min, retention_max = op["retention"]
-    retention_pct = f"{int(retention_min*100)}%～{int(retention_max*100)}%"
-    retention_note = f"（保留率：{retention_pct}，{op['desc']}）"
-
-    matched = await asyncio.to_thread(_find_local_match, task_type, source_dir, files)
-    if matched:
-        return {
-            "response_text": matched.get(
-                "response", f"已從先前經驗完成{op['label']}任務{retention_note}。"
-            ),
-            "output_files": matched.get("output_files", []),
-            "source": "document_router_local",
-            "route": "document_router",
-        }
-
+    """Tier-1 stage A: ED3N shallow process of up to 5 files."""
     try:
         from ai.ed3n.ed3n_engine import ED3NEngine
 
@@ -267,7 +252,13 @@ async def _try_local_processing(
             }
     except Exception as e:
         logger.warning(f"ED3N local processing unavailable: {e}", exc_info=True)
+    return None
 
+
+async def _local_garden_stage(
+    op: Dict, source_dir: str, retention_note: str, files: List[Path]
+) -> Optional[Dict]:
+    """Tier-1 stage B: GARDEN process of up to 5 files."""
     try:
         from ai.garden.garden_engine import GARDENEngine
 
@@ -287,11 +278,33 @@ async def _try_local_processing(
             }
     except Exception as e:
         logger.warning(f"GARDEN local processing unavailable: {e}", exc_info=True)
-
     return None
 
 
-# ═══════════════════════════════════════════════
+async def _try_local_processing(
+    user_message: str, task_type: str, source_dir: str, files: List[Path]
+) -> Optional[Dict]:
+    op = _OPERATIONS.get(task_type, _OPERATIONS["summarize"])
+    retention_min, retention_max = op["retention"]
+    retention_pct = f"{int(retention_min*100)}%～{int(retention_max*100)}%"
+    retention_note = f"（保留率：{retention_pct}，{op['desc']}）"
+
+    matched = await asyncio.to_thread(_find_local_match, task_type, source_dir, files)
+    if matched:
+        return {
+            "response_text": matched.get(
+                "response", f"已從先前經驗完成{op['label']}任務{retention_note}。"
+            ),
+            "output_files": matched.get("output_files", []),
+            "source": "document_router_local",
+            "route": "document_router",
+        }
+
+    ed3n_result = await _local_ed3n_stage(op, source_dir, retention_note, files)
+    if ed3n_result is not None:
+        return ed3n_result
+
+    return await _local_garden_stage(op, source_dir, retention_note, files)
 # Tier 2: LLM fallback
 # ═══════════════════════════════════════════════
 
@@ -341,26 +354,33 @@ async def _try_llm_processing(
 # ═══════════════════════════════════════════════
 
 
-async def _learn_from_llm_output(
-    task_type: str, source_dir: str, files: List[Path], llm_output: str
-) -> None:
-    # Never bake garbage: first-task LLM output replays verbatim on ≥50%
-    # file overlap (audit 2026-10-10). Same bar as the GARDEN learn gate.
+def _poison_guard_ok(llm_output: str) -> bool:
+    """Never bake garbage: first-task LLM output replays verbatim on ≥50%
+    file overlap (audit 2026-10-10). Same bar as the GARDEN learn gate.
+    Fail-closed: an unverifiable guard must never bake LLM output that
+    later replays verbatim on file overlap.
+    """
     try:
         from ai.memory.ham_memory.ham_manager import is_unservable_template
 
         if is_unservable_template(llm_output):
             logger.debug("Skipped baking unservable LLM output as example")
-            return
+            return False
     except Exception:
-        # Fail-closed: an unverifiable guard must never bake LLM output that
-        # later replays verbatim on file overlap.
         logger.warning("Poison guard unavailable; refusing to bake LLM output", exc_info=True)
-        return
-    if not (llm_output or "").strip():
-        return
-    op = _OPERATIONS.get(task_type, _OPERATIONS["summarize"])
-    examples = _load_examples()
+        return False
+    return True
+
+
+def _append_example(
+    examples: Dict[str, Any],
+    task_type: str,
+    source_dir: str,
+    files: List[Path],
+    llm_output: str,
+    op: Dict,
+) -> None:
+    """Append one baked example and trim the per-type ledger to 20."""
     if task_type not in examples:
         examples[task_type] = []
     examples[task_type].append(
@@ -379,8 +399,10 @@ async def _learn_from_llm_output(
     )
     if len(examples[task_type]) > 20:
         examples[task_type] = examples[task_type][-20:]
-    await _save_examples(examples)
 
+
+def _learn_ed3n(task_type: str, llm_output: str) -> None:
+    """Tier-3a: teach ED3N a reflex for this doc task."""
     try:
         from ai.ed3n.ed3n_engine import ED3NEngine
 
@@ -389,6 +411,9 @@ async def _learn_from_llm_output(
     except Exception as e:
         logger.warning("ED3N learn_reflex failed in document_router: %s", e, exc_info=True)
 
+
+async def _learn_garden(files: List[Path], llm_output: str) -> None:
+    """Tier-3b: GARDEN associations accumulate on the shared instance."""
     try:
         from ai.garden.garden_engine import GARDENEngine
         from services.chat_service import _should_garden_learn
@@ -407,7 +432,21 @@ async def _learn_from_llm_output(
         )
 
 
-# ═══════════════════════════════════════════════
+async def _learn_from_llm_output(
+    task_type: str, source_dir: str, files: List[Path], llm_output: str
+) -> None:
+    if not _poison_guard_ok(llm_output):
+        return
+    if not (llm_output or "").strip():
+        return
+    op = _OPERATIONS.get(task_type, _OPERATIONS["summarize"])
+    examples = _load_examples()
+    _append_example(examples, task_type, source_dir, files, llm_output, op)
+    await _save_examples(examples)
+
+    _learn_ed3n(task_type, llm_output)
+
+    await _learn_garden(files, llm_output)
 # Main entry point
 # ═══════════════════════════════════════════════
 
