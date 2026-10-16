@@ -348,6 +348,49 @@ class CyberIdentity:
         cutoff = datetime.now() - timedelta(days=days)
         return [g for g in self.growth_history if g["timestamp"] > cutoff]
 
+    def _record_milestone(self, growth_record: IdentityGrowth, milestone: str) -> None:
+        """Record milestone text and notify milestone callbacks."""
+        growth_record.milestones.append(milestone)
+
+        # Notify milestone callbacks
+        for callback in self._milestone_callbacks:
+            try:
+                callback(milestone)
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: milestone callbacks should not block growth recording
+                logger.error(f"Error in {__name__}: {e}", exc_info=True)
+
+    def _append_growth_history(
+        self, aspect: IdentityAspect, growth_record: IdentityGrowth, milestone: Optional[str]
+    ) -> None:
+        """Append growth history entry and trim to _MAX_GROWTH_HISTORY."""
+        self.growth_history.append(
+            {
+                "timestamp": datetime.now(),
+                "aspect": aspect,
+                "level": growth_record.level,
+                "growth_rate": growth_record.growth_rate,
+                "milestone": milestone,
+            }
+        )
+        if len(self.growth_history) > _MAX_GROWTH_HISTORY:
+            self.growth_history = self.growth_history[-_MAX_GROWTH_HISTORY:]
+
+    def _notify_growth_callbacks(
+        self, aspect: IdentityAspect, growth_record: IdentityGrowth
+    ) -> None:
+        """Notify per-aspect growth callbacks (errors must not block updates)."""
+        if aspect not in self._growth_callbacks:
+            return
+        for growth_cb in self._growth_callbacks[aspect]:
+            try:
+                growth_cb(growth_record.previous_level, growth_record.level)
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: growth callbacks should not block updates
+                logger.error(f"Error in {__name__}: {e}", exc_info=True)
+
     def record_growth(
         self, aspect: IdentityAspect, new_level: float, milestone: Optional[str] = None
     ) -> None:
@@ -392,39 +435,13 @@ class CyberIdentity:
 
             # Record milestone
             if milestone:
-                growth_record.milestones.append(milestone)
-
-                # Notify milestone callbacks
-                for callback in self._milestone_callbacks:
-                    try:
-                        callback(milestone)
-                    except (
-                        Exception
-                    ) as e:  # broad exception acceptable: milestone callbacks should not block growth recording
-                        logger.error(f"Error in {__name__}: {e}", exc_info=True)
+                self._record_milestone(growth_record, milestone)
 
             # Record in history
-            self.growth_history.append(
-                {
-                    "timestamp": datetime.now(),
-                    "aspect": aspect,
-                    "level": growth_record.level,
-                    "growth_rate": growth_record.growth_rate,
-                    "milestone": milestone,
-                }
-            )
-            if len(self.growth_history) > _MAX_GROWTH_HISTORY:
-                self.growth_history = self.growth_history[-_MAX_GROWTH_HISTORY:]
+            self._append_growth_history(aspect, growth_record, milestone)
 
             # Notify callbacks
-            if aspect in self._growth_callbacks:
-                for growth_cb in self._growth_callbacks[aspect]:
-                    try:
-                        growth_cb(growth_record.previous_level, growth_record.level)
-                    except (
-                        Exception
-                    ) as e:  # broad exception acceptable: growth callbacks should not block updates
-                        logger.error(f"Error in {__name__}: {e}", exc_info=True)
+            self._notify_growth_callbacks(aspect, growth_record)
 
             # Update self-description if significant growth
             if growth_record.level - growth_record.previous_level > 0.1:
