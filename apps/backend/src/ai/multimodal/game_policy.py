@@ -309,13 +309,9 @@ class GamePolicy:
         padded[: len(arr)] = arr
         return padded
 
-    def get_action_dict(self, output: PolicyOutput) -> Dict[str, Any]:
-        """將 PolicyOutput 轉換為 Luanti 動作字典"""
-        actions: Dict[str, Any] = {}
-
-        # 連續動作解碼
-        cont = output.continuous
-
+    @staticmethod
+    def _decode_move_actions(cont: Any, actions: Dict[str, Any]) -> None:
+        """連續動作解碼：move（閾值 0.1）與 look（閾值 0.05）。"""
         # 移動
         move_forward = float(np.clip(cont[0], -1, 1))
         move_strafe = float(np.clip(cont[1], -1, 1))
@@ -330,9 +326,9 @@ class GamePolicy:
         if abs(look_yaw) > 0.05 or abs(look_pitch) > 0.05:
             actions["look"] = {"yaw_delta": look_yaw, "pitch_delta": look_pitch}
 
-        # 離散動作 (sigmoid + threshold)
-        disc_probs = 1 / (1 + np.exp(-output.discrete_logits))
-
+    @staticmethod
+    def _decode_discrete_actions(disc_probs: Any, actions: Dict[str, Any]) -> None:
+        """離散動作解碼（sigmoid + 0.5 門檻）：dig/place 與 move 三開關。"""
         if disc_probs[0] > 0.5:  # attack
             actions["dig"] = True
         if disc_probs[1] > 0.5:  # use
@@ -349,6 +345,17 @@ class GamePolicy:
             if "move" not in actions:
                 actions["move"] = {}
             actions["move"]["sneak"] = True
+
+    def get_action_dict(self, output: PolicyOutput) -> Dict[str, Any]:
+        """將 PolicyOutput 轉換為 Luanti 動作字典"""
+        actions: Dict[str, Any] = {}
+
+        # 連續動作解碼
+        self._decode_move_actions(output.continuous, actions)
+
+        # 離散動作 (sigmoid + threshold)
+        disc_probs = 1 / (1 + np.exp(-output.discrete_logits))
+        self._decode_discrete_actions(disc_probs, actions)
 
         return actions
 
