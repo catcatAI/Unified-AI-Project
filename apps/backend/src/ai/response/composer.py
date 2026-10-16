@@ -1082,6 +1082,48 @@ class NeuroBlender:
             by_role.setdefault(frag.structural_type, []).append((frag, sim))
         return by_role
 
+    @staticmethod
+    def _add_if_unique(
+        frag: NeuroFragment, seen_contents: set, selected: List[NeuroFragment]
+    ) -> bool:
+        """Add a if unique（content 前 15 字元去重）。"""
+        key = frag.content.strip()[:15]
+        if key not in seen_contents:
+            seen_contents.add(key)
+            selected.append(frag)
+            return True
+        return False
+
+    def _select_low_energy(
+        self, by_role: Dict[str, List[Tuple[NeuroFragment, float]]], top_k_total: int
+    ) -> List[NeuroFragment]:
+        """低能量路線：statement/closing_question/transition 各取最高一分。"""
+        selected: List[NeuroFragment] = []
+        seen_contents: set = set()
+        for role in ("statement", "closing_question", "transition"):
+            items = by_role.get(role, [])
+            items.sort(key=lambda x: x[1], reverse=True)
+            for frag, _ in items:
+                if self._add_if_unique(frag, seen_contents, selected):
+                    break
+        if len(selected) > top_k_total:
+            selected = selected[:top_k_total]
+        return selected
+
+    def _select_normal(
+        self, by_role: Dict[str, List[Tuple[NeuroFragment, float]]], top_k_per_role: int
+    ) -> List[NeuroFragment]:
+        """正常路線：每 role 取前 top_k_per_role 個 unique fragment。"""
+        selected: List[NeuroFragment] = []
+        seen_contents: set = set()
+        for role, items in by_role.items():
+            items.sort(key=lambda x: x[1], reverse=True)
+            for frag, _ in items[: top_k_per_role * 2]:
+                self._add_if_unique(frag, seen_contents, selected)
+                if len([f for f in selected if f.structural_type == role]) >= top_k_per_role:
+                    break
+        return selected
+
     def _select_top_fragments(
         self,
         by_role: Dict[str, List[Tuple[NeuroFragment, float]]],
@@ -1091,35 +1133,9 @@ class NeuroBlender:
         top_k_per_role: int,
     ) -> List[NeuroFragment]:
         """Select top fragments."""
-        selected: List[NeuroFragment] = []
-        seen_contents: set = set()
-
-        def add_if_unique(frag: NeuroFragment) -> bool:
-            """Add a if unique."""
-            key = frag.content.strip()[:15]
-            if key not in seen_contents:
-                seen_contents.add(key)
-                selected.append(frag)
-                return True
-            return False
-
         if alpha_energy < _bio_thresh.get("composer_energy_greeting", 0.3):
-            for role in ("statement", "closing_question", "transition"):
-                items = by_role.get(role, [])
-                items.sort(key=lambda x: x[1], reverse=True)
-                for frag, _ in items:
-                    if add_if_unique(frag):
-                        break
-            if len(selected) > top_k_total:
-                selected = selected[:top_k_total]
-        else:
-            for role, items in by_role.items():
-                items.sort(key=lambda x: x[1], reverse=True)
-                for frag, _ in items[: top_k_per_role * 2]:
-                    add_if_unique(frag)
-                    if len([f for f in selected if f.structural_type == role]) >= top_k_per_role:
-                        break
-        return selected
+            return self._select_low_energy(by_role, top_k_total)
+        return self._select_normal(by_role, top_k_per_role)
 
     def _extract_beta_curiosity(self, state_dict: Dict[str, Any]) -> float:
         """Extract beta curiosity."""
