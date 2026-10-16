@@ -276,6 +276,52 @@ _DISPLAY = {
 }
 
 
+def _fmt_item(it: Dict[str, Any], label_key: str) -> str:
+    """Format one inventory item: label + remaining non-empty fields."""
+    rest = {k: v for k, v in it.items() if k != label_key and v is not None and v != ""}
+    if not rest:
+        return str(it.get(label_key, ""))
+    parts = [str(it.get(label_key, ""))]
+    for k, v in rest.items():
+        parts.append(f"{k}={v}")
+    return " ".join(parts)
+
+
+def _render_connections(label: str, info: Any, lines: List[str]) -> None:
+    """connections 段：無邊 / 前 40 條邊列印。"""
+    if not info:
+        lines.append(f"▶ {label}: (無 mod，無邊)")
+        return
+    lines.append(f"▶ {label}: {len(info)} 條")
+    for edge in info[:40]:
+        lines.append(f"    - {edge['from']} ─[{edge['via']}]→ {edge['to_type']}")
+
+
+def _render_dict_section(label: str, info: Dict[str, Any], lines: List[str]) -> None:
+    """dict 段：meta 鍵值 + 可選 by_kind 分類列。"""
+    meta = ", ".join(f"{k}={v}" for k, v in info.items() if k != "by_kind")
+    lines.append(f"▶ {label}: {meta or '(none)'}")
+    if isinstance(info.get("by_kind"), dict):
+        kinds = ", ".join(f"{k}:{v}" for k, v in info["by_kind"].items())
+        lines.append(f"    kinds: {kinds}")
+
+
+def _render_list_section(
+    section_key: str, label: str, info: List[Any], lines: List[str], detailed: bool
+) -> None:
+    """list 段：數量 + detailed 時前 40 項明細。"""
+    count = len(info)
+    lines.append(f"▶ {label}: {count} 項")
+    if detailed and count:
+        label_key = (
+            "name" if section_key in ("external", "learning", "memory", "datasets") else "key"
+        )
+        for item in info[:40]:
+            lines.append(f"    - {_fmt_item(item, label_key)}")
+        if count > 40:
+            lines.append(f"    … (共 {count} 項，只顯示前 40)")
+
+
 def dump(backbone: Any, *, title: str = "BACKBONE", detailed: bool = True) -> str:
     """把 backbone 打印成可讀結構樹文字。
 
@@ -291,47 +337,16 @@ def dump(backbone: Any, *, title: str = "BACKBONE", detailed: bool = True) -> st
     lines.append(f"  {title} — 主幹線全覽")
     lines.append("═" * width)
 
-    def _fmt_item(it: Dict[str, Any], label_key: str) -> str:
-        rest = {k: v for k, v in it.items() if k != label_key and v is not None and v != ""}
-        if not rest:
-            return str(it.get(label_key, ""))
-        parts = [str(it.get(label_key, ""))]
-        for k, v in rest.items():
-            parts.append(f"{k}={v}")
-        return " ".join(parts)
-
     for section_key, label in _DISPLAY.items():
         info = data.get(section_key)
         if section_key == "connections":
-            if not info:
-                lines.append(f"▶ {label}: (無 mod，無邊)")
-                continue
-            lines.append(f"▶ {label}: {len(info)} 條")
-            for edge in info[:40]:
-                lines.append(f"    - {edge['from']} ─[{edge['via']}]→ {edge['to_type']}")
-            continue
-        if isinstance(info, dict):
-            meta = ", ".join(f"{k}={v}" for k, v in info.items() if k != "by_kind")
-            lines.append(f"▶ {label}: {meta or '(none)'}")
-            if isinstance(info.get("by_kind"), dict):
-                kinds = ", ".join(f"{k}:{v}" for k, v in info["by_kind"].items())
-                lines.append(f"    kinds: {kinds}")
-            continue
-        if isinstance(info, list):
-            count = len(info)
-            lines.append(f"▶ {label}: {count} 項")
-            if detailed and count:
-                label_key = (
-                    "name"
-                    if section_key in ("external", "learning", "memory", "datasets")
-                    else "key"
-                )
-                for item in info[:40]:
-                    lines.append(f"    - {_fmt_item(item, label_key)}")
-                if count > 40:
-                    lines.append(f"    … (共 {count} 項，只顯示前 40)")
-            continue
-        lines.append(f"▶ {label}: {info}")
+            _render_connections(label, info, lines)
+        elif isinstance(info, dict):
+            _render_dict_section(label, info, lines)
+        elif isinstance(info, list):
+            _render_list_section(section_key, label, info, lines, detailed)
+        else:
+            lines.append(f"▶ {label}: {info}")
 
     lines.append("─" * width)
     lines.append("安全層註記: 由 lifespan setup_middleware 掛載（HTTP 下層入口）")
