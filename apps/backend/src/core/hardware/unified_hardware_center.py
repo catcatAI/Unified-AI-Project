@@ -16,7 +16,7 @@ Angela AI Matrix 的硬件與資源總控中心
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -100,6 +100,60 @@ class HardwareDetector:
     regardless of laptop/desktop label.
     """
 
+    @staticmethod
+    def _read_cpu_name() -> str:
+        """CPU name via platform, refined from /proc/cpuinfo on Linux."""
+        cpu_name = ""
+        try:
+            import platform as _plat
+
+            cpu_name = _plat.processor() or _plat.machine()
+            # Try to get detailed CPU name on Linux
+            if _plat.system() == "Linux":
+                with open("/proc/cpuinfo", "r") as f:
+                    for line in f:
+                        if line.startswith("model name"):
+                            cpu_name = line.split(":", 1)[-1].strip()
+                            break
+        except Exception as e:
+            logger.debug(f"/proc/cpuinfo read failed, using platform name: {e}", exc_info=True)
+        return cpu_name
+
+    @staticmethod
+    def _resolve_gpu(spec: Dict[str, Any]) -> Tuple[str, str]:
+        """GPU name + vendor: spec vendor first, else infer from the name string."""
+        gpu_name = spec.get("gpu") or ""
+        gpu_vendor = (spec.get("gpu_vendor") or "").lower()
+        vendor_map = {"nvidia": "nvidia", "intel": "intel", "amd": "amd", "unknown": "unknown"}
+        vendor = vendor_map.get(gpu_vendor, "unknown")
+        # Try to map vendor string if not provided
+        if not vendor or vendor == "unknown":
+            low = gpu_name.lower()
+            if "nvidia" in low:
+                vendor = "nvidia"
+            elif "intel" in low:
+                vendor = "intel"
+            elif "amd" in low or "radeon" in low:
+                vendor = "amd"
+        return gpu_name, vendor
+
+    @staticmethod
+    def _read_memory(spec: Dict[str, Any]) -> Tuple[int, int, float]:
+        """Memory MB via psutil, falling back to spec-derived totals."""
+        total_mb = int((spec.get("ram_gb", 0) or 0) * 1024)
+        avail_mb = 0
+        percent = 0.0
+        try:
+            import psutil
+
+            vm = psutil.virtual_memory()
+            total_mb = int(vm.total / 1024 / 1024)
+            avail_mb = int(vm.available / 1024 / 1024)
+            percent = vm.percent
+        except Exception as e:
+            logger.debug(f"psutil memory read failed, using spec values: {e}", exc_info=True)
+        return total_mb, avail_mb, percent
+
     def detect(self) -> HardwareProfile:
         try:
             # Use backbone as source of truth for actual hardware spec
@@ -107,49 +161,9 @@ class HardwareDetector:
 
             spec = BHw.detect()
             # Map to this center's dataclass (spec-driven)
-            cpu_name = ""
-            try:
-                import platform as _plat
-
-                cpu_name = _plat.processor() or _plat.machine()
-                # Try to get detailed CPU name on Linux
-                if _plat.system() == "Linux":
-                    with open("/proc/cpuinfo", "r") as f:
-                        for line in f:
-                            if line.startswith("model name"):
-                                cpu_name = line.split(":", 1)[-1].strip()
-                                break
-            except Exception as e:
-                logger.debug(f"/proc/cpuinfo read failed, using platform name: {e}", exc_info=True)
-
-            # GPU mapping
-            gpu_name = spec.get("gpu") or ""
-            gpu_vendor = (spec.get("gpu_vendor") or "").lower()
-            vendor_map = {"nvidia": "nvidia", "intel": "intel", "amd": "amd", "unknown": "unknown"}
-            vendor = vendor_map.get(gpu_vendor, "unknown")
-            # Try to map vendor string if not provided
-            if not vendor or vendor == "unknown":
-                low = gpu_name.lower()
-                if "nvidia" in low:
-                    vendor = "nvidia"
-                elif "intel" in low:
-                    vendor = "intel"
-                elif "amd" in low or "radeon" in low:
-                    vendor = "amd"
-
-            # Memory via psutil or spec
-            total_mb = int((spec.get("ram_gb", 0) or 0) * 1024)
-            avail_mb = 0
-            percent = 0.0
-            try:
-                import psutil
-
-                vm = psutil.virtual_memory()
-                total_mb = int(vm.total / 1024 / 1024)
-                avail_mb = int(vm.available / 1024 / 1024)
-                percent = vm.percent
-            except Exception as e:
-                logger.debug(f"psutil memory read failed, using spec values: {e}", exc_info=True)
+            cpu_name = self._read_cpu_name()
+            gpu_name, vendor = self._resolve_gpu(spec)
+            total_mb, avail_mb, percent = self._read_memory(spec)
 
             return HardwareProfile(
                 cpu=CPUInfo(
