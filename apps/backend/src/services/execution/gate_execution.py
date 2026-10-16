@@ -531,6 +531,79 @@ class GateExecutionOwner:
     # ------------------------------------------------------------------
     # Full request pass
     # ------------------------------------------------------------------
+    def _bypass_code_write(
+        self,
+        user_message: str,
+        context: Dict[str, Any],
+        plan: Any,
+        decision: Any,
+    ) -> Optional[GateOutcome]:
+        """Code-WRITE requests carry no code (no fences/backticks, single
+        line): there is nothing to execute, and gating them only yields
+        a confirm prompt followed by "specify code". When an LLM backend
+        is available, fall through so the model WRITES the code instead
+        (live 2026-10-10: gemma writes correct fibonacci, gate blocked).
+        Fenced/inline/multiline code keeps the execute path. Keyed on
+        the resolved HANDLER (code_exec), not the plan type: a Unity
+        build script ("建車身…存檔") plans as EXECUTE but still needs
+        code written first (live 2026-10-10). System handlers
+        (system_cmd: 關機 etc.) never bypass.
+        """
+        if decision.action in ("auto_execute", "confirm_then_execute"):
+            if self.is_code_write_request(user_message) and self._llm_generation_available():
+                context["last_action_result"] = None
+                return GateOutcome(action=OUTCOME_NONE, plan=plan, decision=decision)
+        return None
+
+    async def _route_auto_execute(
+        self,
+        user_message: str,
+        context: Dict[str, Any],
+        plan: Any,
+        decision: Any,
+        model_bus: Any,
+    ) -> Optional[GateOutcome]:
+        """auto_execute: registry-confirmed handler exec, else IR-mismatch fallthrough."""
+        if decision.action != "auto_execute":
+            return None
+        if self._intent_registry_confirms(user_message, decision.handler):
+            if decision.handler and model_bus:
+                return await self.execute_handler(
+                    decision.handler, user_message, context, model_bus
+                )
+        context["last_action_result"] = None
+        context["_gate_ir_mismatch"] = True
+        return GateOutcome(action=OUTCOME_NONE, plan=plan, decision=decision)
+
+    def _route_confirm(
+        self,
+        session_id: str,
+        context: Dict[str, Any],
+        plan: Any,
+        decision: Any,
+    ) -> Optional[GateOutcome]:
+        """confirm_then_execute: store pending + ask the user to confirm."""
+        if decision.action != "confirm_then_execute":
+            return None
+        self.store_pending(
+            session_id,
+            context,
+            {
+                "handler": decision.handler,
+                "action_type": decision.action_type,
+                "original_query": decision.original_query,
+            },
+        )
+        return GateOutcome(
+            action=OUTCOME_CONFIRM,
+            message=decision.confirm_message,
+            handler=decision.handler,
+            query_type=plan.query_type,
+            confidence=plan.confidence,
+            plan=plan,
+            decision=decision,
+        )
+
     async def process(
         self,
         user_message: str,
@@ -559,50 +632,19 @@ class GateExecutionOwner:
 
             plan, decision = self.plan_and_decide(user_message, context, model_bus)
 
-            # Code-WRITE requests carry no code (no fences/backticks, single
-            # line): there is nothing to execute, and gating them only yields
-            # a confirm prompt followed by "specify code". When an LLM backend
-            # is available, fall through so the model WRITES the code instead
-            # (live 2026-10-10: gemma writes correct fibonacci, gate blocked).
-            # Fenced/inline/multiline code keeps the execute path. Keyed on
-            # the resolved HANDLER (code_exec), not the plan type: a Unity
-            # build script ("建車身…存檔") plans as EXECUTE but still needs
-            # code written first (live 2026-10-10). System handlers
-            # (system_cmd: 關機 etc.) never bypass.
-            if decision.action in ("auto_execute", "confirm_then_execute"):
-                if self.is_code_write_request(user_message) and self._llm_generation_available():
-                    context["last_action_result"] = None
-                    return GateOutcome(action=OUTCOME_NONE, plan=plan, decision=decision)
+            bypass = self._bypass_code_write(user_message, context, plan, decision)
+            if bypass is not None:
+                return bypass
 
-            if decision.action == "auto_execute":
-                if self._intent_registry_confirms(user_message, decision.handler):
-                    if decision.handler and model_bus:
-                        return await self.execute_handler(
-                            decision.handler, user_message, context, model_bus
-                        )
-                context["last_action_result"] = None
-                context["_gate_ir_mismatch"] = True
-                return GateOutcome(action=OUTCOME_NONE, plan=plan, decision=decision)
+            auto = await self._route_auto_execute(
+                user_message, context, plan, decision, model_bus
+            )
+            if auto is not None:
+                return auto
 
-            if decision.action == "confirm_then_execute":
-                self.store_pending(
-                    session_id,
-                    context,
-                    {
-                        "handler": decision.handler,
-                        "action_type": decision.action_type,
-                        "original_query": decision.original_query,
-                    },
-                )
-                return GateOutcome(
-                    action=OUTCOME_CONFIRM,
-                    message=decision.confirm_message,
-                    handler=decision.handler,
-                    query_type=plan.query_type,
-                    confidence=plan.confidence,
-                    plan=plan,
-                    decision=decision,
-                )
+            confirm = self._route_confirm(session_id, context, plan, decision)
+            if confirm is not None:
+                return confirm
 
             # reject: clear action result, continue to generation
             context["last_action_result"] = None
