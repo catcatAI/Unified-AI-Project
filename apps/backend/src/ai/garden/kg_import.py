@@ -286,6 +286,50 @@ class KGImporter:
     # ConceptNet CSV parser
     # ------------------------------------------------------------------
 
+    def _ensure_conceptnet_entity(
+        self, key: str, lang: str, name: str, max_entities: int
+    ) -> None:
+        """Ensure a ConceptNet entity exists, adding it or updating its surface form."""
+        if key not in self.entities:
+            if len(self.entities) >= max_entities:
+                return
+            self.entities[key] = {
+                "surface": {lang: name},
+                "relations": {},
+                "source": "conceptnet",
+            }
+        elif lang not in self.entities[key]["surface"]:
+            self.entities[key]["surface"][lang] = name
+
+    def _parse_conceptnet_row(
+        self, row: List[str], max_entities: int
+    ) -> bool:
+        """Parse one ConceptNet CSV row; returns True if a triple was added."""
+        if len(row) < 3:
+            return False
+        src_full, rel_type, tgt_full = row[0].strip(), row[1].strip(), row[2].strip()
+
+        # Only English/Chinese
+        if not (src_full.startswith("/c/en/") or src_full.startswith("/c/zh/")):
+            return False
+        if not (tgt_full.startswith("/c/en/") or tgt_full.startswith("/c/zh/")):
+            return False
+
+        src_lang = "en" if src_full.startswith("/c/en/") else "zh"
+        tgt_lang = "en" if tgt_full.startswith("/c/en/") else "zh"
+        src_name = self._conceptnet_name(src_full)
+        tgt_name = self._conceptnet_name(tgt_full)
+        src_key = self._conceptnet_key(src_name, src_lang)
+        tgt_key = self._conceptnet_key(tgt_name, tgt_lang)
+
+        self._ensure_conceptnet_entity(src_key, src_lang, src_name, max_entities)
+        self._ensure_conceptnet_entity(tgt_key, tgt_lang, tgt_name, max_entities)
+
+        norm_rel = self._normalize_conceptnet_rel(rel_type)
+        weight = RELATION_WEIGHTS.get(norm_rel, 0.5)
+        self._add_triple(src_key, norm_rel, tgt_key, weight=weight)
+        return True
+
     def parse_conceptnet(self, csv_path: str, max_entities: int = 500000) -> "KGImporter":
         """
         Parse a ConceptNet CSV file.
@@ -307,54 +351,8 @@ class KGImporter:
         with open_func(csv_path, "rt", encoding="utf-8", errors="replace") as f:
             reader = csv.reader(f)
             for row in reader:
-                if len(row) < 3:
-                    continue
-                src_full, rel_type, tgt_full = row[0].strip(), row[1].strip(), row[2].strip()
-
-                # Only English/Chinese
-                if not (src_full.startswith("/c/en/") or src_full.startswith("/c/zh/")):
-                    continue
-                if not (tgt_full.startswith("/c/en/") or tgt_full.startswith("/c/zh/")):
-                    continue
-
-                src_lang = "en" if src_full.startswith("/c/en/") else "zh"
-                tgt_lang = "en" if tgt_full.startswith("/c/en/") else "zh"
-                src_name = self._conceptnet_name(src_full)
-                tgt_name = self._conceptnet_name(tgt_full)
-                src_key = self._conceptnet_key(src_name, src_lang)
-                tgt_key = self._conceptnet_key(tgt_name, tgt_lang)
-
-                # Add entities
-                if src_key not in self.entities:
-                    if len(self.entities) >= max_entities:
-                        continue
-                    self.entities[src_key] = {
-                        "surface": {src_lang: src_name},
-                        "relations": {},
-                        "source": "conceptnet",
-                    }
-                else:
-                    if src_lang not in self.entities[src_key]["surface"]:
-                        self.entities[src_key]["surface"][src_lang] = src_name
-
-                if tgt_key not in self.entities:
-                    if len(self.entities) >= max_entities:
-                        continue
-                    self.entities[tgt_key] = {
-                        "surface": {tgt_lang: tgt_name},
-                        "relations": {},
-                        "source": "conceptnet",
-                    }
-                else:
-                    if tgt_lang not in self.entities[tgt_key]["surface"]:
-                        self.entities[tgt_key]["surface"][tgt_lang] = tgt_name
-
-                # Normalize relation type
-                norm_rel = self._normalize_conceptnet_rel(rel_type)
-                weight = RELATION_WEIGHTS.get(norm_rel, 0.5)
-                self._add_triple(src_key, norm_rel, tgt_key, weight=weight)
-                count += 1
-
+                if self._parse_conceptnet_row(row, max_entities):
+                    count += 1
                 if count % 100000 == 0:
                     logger.info("KGImporter: parsed %d ConceptNet triples...", count)
 
@@ -407,6 +405,56 @@ class KGImporter:
     # Wikidata simplified parser
     # ------------------------------------------------------------------
 
+    def _ingest_claims(
+        self, key: str, claims: Dict[str, Any], max_entities: int
+    ) -> int:
+        """Ingest Wikidata claims as relations; returns number of triples added."""
+        count = 0
+        for prop, values in claims.items():
+            if not isinstance(values, list):
+                continue
+            norm_rel = self._wikidata_prop_to_rel(prop)
+            weight = RELATION_WEIGHTS.get(norm_rel, 0.5)
+            for val in values:
+                if isinstance(val, str):
+                    tgt_key = f"wd_{val}"
+                    if tgt_key not in self.entities and len(self.entities) < max_entities:
+                        self.entities[tgt_key] = {
+                            "surface": {"en": val},
+                            "relations": {},
+                            "source": "wikidata",
+                        }
+                    self._add_triple(key, norm_rel, tgt_key, weight=weight)
+                    count += 1
+        return count
+
+    def _ingest_wikidata_line(self, obj: Dict[str, Any], max_entities: int) -> int:
+        """Ingest one JSONL line as an entity + its claim relations; returns triples added."""
+        qid = obj.get("id", "")
+        labels = obj.get("labels", {})
+        en_label = labels.get("en", "")
+        zh_label = labels.get("zh", "")
+        if not en_label and not zh_label:
+            return 0
+
+        key = f"wd_{qid}"
+        if key in self.entities:
+            return 0
+        if len(self.entities) >= max_entities:
+            return 0
+
+        surface = {}
+        if en_label:
+            surface["en"] = en_label
+        if zh_label:
+            surface["zh"] = zh_label
+        self.entities[key] = {
+            "surface": surface,
+            "relations": {},
+            "source": "wikidata",
+        }
+        return self._ingest_claims(key, obj.get("claims", {}), max_entities)
+
     def parse_wikidata(self, jsonl_path: str, max_entities: int = 500000) -> "KGImporter":
         """
         Parse a simplified Wikidata JSONL dump (one JSON object per line).
@@ -433,50 +481,9 @@ class KGImporter:
                     obj = json.loads(line)
                 except json.JSONDecodeError:
                     continue
-
-                qid = obj.get("id", "")
-                labels = obj.get("labels", {})
-                en_label = labels.get("en", "")
-                zh_label = labels.get("zh", "")
-                if not en_label and not zh_label:
-                    continue
-
-                key = f"wd_{qid}"
-                if key in self.entities:
-                    continue
                 if len(self.entities) >= max_entities:
                     break
-
-                surface = {}
-                if en_label:
-                    surface["en"] = en_label
-                if zh_label:
-                    surface["zh"] = zh_label
-                self.entities[key] = {
-                    "surface": surface,
-                    "relations": {},
-                    "source": "wikidata",
-                }
-
-                # Process claims as relations
-                claims = obj.get("claims", {})
-                for prop, values in claims.items():
-                    if not isinstance(values, list):
-                        continue
-                    norm_rel = self._wikidata_prop_to_rel(prop)
-                    weight = RELATION_WEIGHTS.get(norm_rel, 0.5)
-                    for val in values:
-                        if isinstance(val, str):
-                            tgt_key = f"wd_{val}"
-                            if tgt_key not in self.entities and len(self.entities) < max_entities:
-                                self.entities[tgt_key] = {
-                                    "surface": {"en": val},
-                                    "relations": {},
-                                    "source": "wikidata",
-                                }
-                            self._add_triple(key, norm_rel, tgt_key, weight=weight)
-                            count += 1
-
+                count += self._ingest_wikidata_line(obj, max_entities)
                 if count > 0 and count % 50000 == 0:
                     logger.info("KGImporter: parsed %d Wikidata triples...", count)
 
