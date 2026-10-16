@@ -127,6 +127,39 @@ def parse_and_resolve_relational_chain(
     return f"{sol} is {comp_word}"
 
 
+def _record_edge(a: str, b: str, greater: Dict[str, Set[str]], lesser: Dict[str, Set[str]], all_nodes: Set[str]) -> None:
+    greater.setdefault(a, set()).add(b)
+    lesser.setdefault(b, set()).add(a)
+    all_nodes.add(a)
+    all_nodes.add(b)
+
+
+def _build_graph(edges: List[Tuple[str, str, float]]) -> Tuple[Dict[str, Set[str]], Dict[str, Set[str]], Set[str]]:
+    """Build greater/lesser adjacency sets from weighted edge list."""
+    greater: Dict[str, Set[str]] = {}
+    lesser: Dict[str, Set[str]] = {}
+    all_nodes: Set[str] = set()
+    for a, b, w in edges:
+        if w > 0:
+            _record_edge(a, b, greater, lesser, all_nodes)
+        elif w < 0:
+            _record_edge(b, a, greater, lesser, all_nodes)
+    return greater, lesser, all_nodes
+
+
+def _transitive_closure(node: str, graph: Dict[str, Set[str]]) -> Set[str]:
+    """DFS transitive closure reachable from node."""
+    seen: Set[str] = set()
+    stack = list(graph.get(node, set()))
+    while stack:
+        n = stack.pop()
+        if n in seen:
+            continue
+        seen.add(n)
+        stack.extend(graph.get(n, set()))
+    return seen
+
+
 def resolve_relational_chain(
     edges: List[Tuple[str, str, float]],
     query_entities: List[str],
@@ -154,21 +187,7 @@ def resolve_relational_chain(
     if not edges or not query_entities:
         return None
 
-    greater: Dict[str, Set[str]] = {}
-    lesser: Dict[str, Set[str]] = {}
-    all_nodes: Set[str] = set()
-
-    def _record(a: str, b: str) -> None:
-        greater.setdefault(a, set()).add(b)
-        lesser.setdefault(b, set()).add(a)
-        all_nodes.add(a)
-        all_nodes.add(b)
-
-    for a, b, w in edges:
-        if w > 0:
-            _record(a, b)
-        elif w < 0:
-            _record(b, a)
+    greater, lesser, all_nodes = _build_graph(edges)
 
     if not greater:
         return None
@@ -178,25 +197,11 @@ def resolve_relational_chain(
         candidates = list(all_nodes)
 
     def _dominates(node: str, others: Set[str]) -> bool:
-        seen: Set[str] = set()
-        stack = list(greater.get(node, set()))
-        while stack:
-            n = stack.pop()
-            if n in seen:
-                continue
-            seen.add(n)
-            stack.extend(greater.get(n, set()))
+        seen = _transitive_closure(node, greater)
         return others.issubset(seen | {node})
 
     def _dominated_by_all(node: str, others: Set[str]) -> bool:
-        seen: Set[str] = set()
-        stack = list(lesser.get(node, set()))
-        while stack:
-            n = stack.pop()
-            if n in seen:
-                continue
-            seen.add(n)
-            stack.extend(lesser.get(n, set()))
+        seen = _transitive_closure(node, lesser)
         return others.issubset(seen | {node})
 
     if ask_max:
