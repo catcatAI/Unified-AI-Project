@@ -735,6 +735,45 @@ class ActionExecutionBridge:
 
     # ========== Action Handlers ==========
 
+    async def _dispatch_orchestrator_message(
+        self, message: str, emotion: str, topic: Any, result: dict[str, Any]
+    ) -> None:
+        """Send autonomous message to orchestrator (either API shape)."""
+        if not self.orchestrator:
+            return
+        try:
+            if hasattr(self.orchestrator, "generate_proactive_message"):
+                response = await self.orchestrator.generate_proactive_message(
+                    message=message, emotion=emotion, topic=topic
+                )
+                result["orchestrator_response"] = response
+            elif hasattr(self.orchestrator, "process_user_input"):
+                response = await self.orchestrator.process_user_input(f"[AUTONOMOUS] {message}")
+                result["orchestrator_response"] = response
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: optional orchestrator call, handle gracefully
+            logger.error(f"Error in {__name__}: {e}", exc_info=True)
+            result["orchestrator_error"] = safe_error(e)
+
+    async def _display_desktop_pet_message(
+        self, message: str, emotion: str, result: dict[str, Any]
+    ) -> None:
+        """Show message on desktop pet (show_message or display_bubble shape)."""
+        if not self.desktop_pet:
+            return
+        try:
+            if hasattr(self.desktop_pet, "show_message"):
+                self.desktop_pet.show_message(message, emotion=emotion)
+            elif hasattr(self.desktop_pet, "display_bubble"):
+                self.desktop_pet.display_bubble(message)
+            result["displayed"] = True
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: optional desktop pet display, handle gracefully
+            logger.error(f"Error in {__name__}: {e}", exc_info=True)
+            result["display_error"] = safe_error(e)
+
     async def _handle_initiate_conversation(
         self, parameters: dict[str, Any], context: ExecutionContext
     ) -> dict[str, Any]:
@@ -746,37 +785,66 @@ class ActionExecutionBridge:
         result = {"message": message, "emotion": emotion}
 
         # Send to orchestrator if available
-        if self.orchestrator:
-            try:
-                if hasattr(self.orchestrator, "generate_proactive_message"):
-                    response = await self.orchestrator.generate_proactive_message(
-                        message=message, emotion=emotion, topic=topic
-                    )
-                    result["orchestrator_response"] = response
-                elif hasattr(self.orchestrator, "process_user_input"):
-                    response = await self.orchestrator.process_user_input(f"[AUTONOMOUS] {message}")
-                    result["orchestrator_response"] = response
-            except (
-                Exception
-            ) as e:  # broad exception acceptable: optional orchestrator call, handle gracefully
-                logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                result["orchestrator_error"] = safe_error(e)
+        await self._dispatch_orchestrator_message(message, emotion, topic, result)
 
         # Show in desktop pet if available
-        if self.desktop_pet:
-            try:
-                if hasattr(self.desktop_pet, "show_message"):
-                    self.desktop_pet.show_message(message, emotion=emotion)
-                elif hasattr(self.desktop_pet, "display_bubble"):
-                    self.desktop_pet.display_bubble(message)
-                result["displayed"] = True
-            except (
-                Exception
-            ) as e:  # broad exception acceptable: optional desktop pet display, handle gracefully
-                logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                result["display_error"] = safe_error(e)
+        await self._display_desktop_pet_message(message, emotion, result)
 
         return result
+
+    async def _explore_web_search(
+        self, tool: Any, topic: str, depth: str, result: dict[str, Any]
+    ) -> None:
+        """Web search stage: depth → result-limit mapping, sync or async fn."""
+        try:
+            _search_fn = tool.search
+            _n = (
+                _DEFAULT_SEARCH_RESULTS
+                if depth == "shallow"
+                else _DEFAULT_MEDIUM_LIMIT if depth == "medium" else _DEFAULT_DEEP_LIMIT
+            )
+            if asyncio.iscoroutinefunction(_search_fn):
+                search_results = await _search_fn(topic, _n)
+            else:
+                search_results = await asyncio.to_thread(_search_fn, topic, _n)
+            result["exploration_data"]["search_results"] = search_results
+        except Exception as e:  # broad exception acceptable: optional search, handle gracefully
+            logger.error(f"Error in {__name__}: {e}", exc_info=True)
+            result["search_error"] = safe_error(e)
+
+    async def _explore_local_search(
+        self, manager: Any, topic: str, result: dict[str, Any]
+    ) -> None:
+        """Local file search stage of explore_topic."""
+        try:
+            # Search for files related to topic
+            if hasattr(manager, "search_files"):
+                local_results = await manager.search_files(topic)
+                result["exploration_data"]["local_files"] = local_results
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: optional local search, handle gracefully
+            logger.error(f"Error in {__name__}: {e}", exc_info=True)
+            result["local_search_error"] = safe_error(e)
+
+    async def _explore_integrate_cdm(
+        self, cdm: Any, topic: str, result: dict[str, Any]
+    ) -> None:
+        """CDM integration stage: ingest each search snippet."""
+        try:
+            if hasattr(cdm, "ingest_document"):
+                for item in result["exploration_data"].get("search_results", []):
+                    await cdm.ingest_document(
+                        content=item.get("snippet", ""),
+                        source=item.get("url", "web_search"),
+                        metadata={"topic": topic, "type": "exploration"},
+                    )
+            result["integrated_to_cdm"] = True
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: optional CDM integration, handle gracefully
+            logger.error(f"Error in {__name__}: {e}", exc_info=True)
+            result["cdm_integration_error"] = safe_error(e)
 
     async def _handle_explore_topic(
         self, parameters: dict[str, Any], context: ExecutionContext
@@ -790,51 +858,15 @@ class ActionExecutionBridge:
 
         # Search for information
         if source in ["web", "mixed"] and self.web_search_tool:
-            try:
-                _search_fn = self.web_search_tool.search
-                _n = (
-                    _DEFAULT_SEARCH_RESULTS
-                    if depth == "shallow"
-                    else _DEFAULT_MEDIUM_LIMIT if depth == "medium" else _DEFAULT_DEEP_LIMIT
-                )
-                if asyncio.iscoroutinefunction(_search_fn):
-                    search_results = await _search_fn(topic, _n)
-                else:
-                    search_results = await asyncio.to_thread(_search_fn, topic, _n)
-                result["exploration_data"]["search_results"] = search_results
-            except Exception as e:  # broad exception acceptable: optional search, handle gracefully
-                logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                result["search_error"] = safe_error(e)
+            await self._explore_web_search(self.web_search_tool, topic, depth, result)
 
         # Search local files
         if source in ["local", "mixed"] and self.file_manager:
-            try:
-                # Search for files related to topic
-                if hasattr(self.file_manager, "search_files"):
-                    local_results = await self.file_manager.search_files(topic)
-                    result["exploration_data"]["local_files"] = local_results
-            except (
-                Exception
-            ) as e:  # broad exception acceptable: optional local search, handle gracefully
-                logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                result["local_search_error"] = safe_error(e)
+            await self._explore_local_search(self.file_manager, topic, result)
 
         # Integrate into CDM
         if self.cdm and result["exploration_data"]:
-            try:
-                if hasattr(self.cdm, "ingest_document"):
-                    for item in result["exploration_data"].get("search_results", []):
-                        await self.cdm.ingest_document(
-                            content=item.get("snippet", ""),
-                            source=item.get("url", "web_search"),
-                            metadata={"topic": topic, "type": "exploration"},
-                        )
-                result["integrated_to_cdm"] = True
-            except (
-                Exception
-            ) as e:  # broad exception acceptable: optional CDM integration, handle gracefully
-                logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                result["cdm_integration_error"] = safe_error(e)
+            await self._explore_integrate_cdm(self.cdm, topic, result)
 
         return result
 
@@ -1024,6 +1056,44 @@ class ActionExecutionBridge:
 
         return result
 
+    async def _file_op_read(
+        self, manager: Any, path: str, encoding: str, result: dict[str, Any]
+    ) -> None:
+        """read: fetch file contents into result."""
+        if hasattr(manager, "read_file"):
+            data = await manager.read_file(path, encoding=encoding)
+            result["success"] = True
+            result["content"] = data
+
+    async def _file_op_write(
+        self, manager: Any, path: str, content: Any, encoding: str, result: dict[str, Any]
+    ) -> None:
+        """write: persist content to path."""
+        if hasattr(manager, "write_file"):
+            success = await manager.write_file(path, content, encoding=encoding)
+            result["success"] = success
+
+    async def _file_op_delete(self, manager: Any, path: str, result: dict[str, Any]) -> None:
+        """delete: remove file at path."""
+        if hasattr(manager, "delete_file"):
+            success = await manager.delete_file(path)
+            result["success"] = success
+
+    async def _file_op_list(self, manager: Any, path: str, result: dict[str, Any]) -> None:
+        """list: directory entries into result."""
+        if hasattr(manager, "list_directory"):
+            files = await manager.list_directory(path)
+            result["success"] = True
+            result["files"] = files
+
+    async def _file_op_move(
+        self, manager: Any, path: str, destination: str, result: dict[str, Any]
+    ) -> None:
+        """move: relocate path to destination."""
+        if hasattr(manager, "move_file"):
+            success = await manager.move_file(path, destination)
+            result["success"] = success
+
     async def _handle_file_operation(
         self, parameters: dict[str, Any], context: ExecutionContext
     ) -> dict[str, Any]:
@@ -1039,34 +1109,19 @@ class ActionExecutionBridge:
             result["error"] = "File manager not available"
             return result
 
+        manager = self.file_manager
         try:
             if operation == "read":
-                if hasattr(self.file_manager, "read_file"):
-                    data = await self.file_manager.read_file(path, encoding=encoding)
-                    result["success"] = True
-                    result["content"] = data
-
+                await self._file_op_read(manager, path, encoding, result)
             elif operation == "write":
-                if hasattr(self.file_manager, "write_file"):
-                    success = await self.file_manager.write_file(path, content, encoding=encoding)
-                    result["success"] = success
-
+                await self._file_op_write(manager, path, content, encoding, result)
             elif operation == "delete":
-                if hasattr(self.file_manager, "delete_file"):
-                    success = await self.file_manager.delete_file(path)
-                    result["success"] = success
-
+                await self._file_op_delete(manager, path, result)
             elif operation == "list":
-                if hasattr(self.file_manager, "list_directory"):
-                    files = await self.file_manager.list_directory(path)
-                    result["success"] = True
-                    result["files"] = files
-
+                await self._file_op_list(manager, path, result)
             elif operation == "move":
                 destination = parameters.get("destination", "")
-                if hasattr(self.file_manager, "move_file"):
-                    success = await self.file_manager.move_file(path, destination)
-                    result["success"] = success
+                await self._file_op_move(manager, path, destination, result)
 
         except Exception as e:  # broad exception acceptable: file operation error handling
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
