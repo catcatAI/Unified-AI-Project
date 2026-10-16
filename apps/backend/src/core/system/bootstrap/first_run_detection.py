@@ -54,6 +54,59 @@ def _probe_local_http(host: str, timeout: float = 1.0) -> bool:
         return False
 
 
+def _classify_backend(
+    name: str, cfg: Dict[str, Any], allow_cloud: bool, deployment_mode: str
+) -> str:
+    """Classify one backend entry. Returns 'usable' | 'unreachable' | 'blocked:<msg>'."""
+    enabled = cfg.get("enabled", True)
+    if not enabled:
+        return "skip"
+    kind = str(cfg.get("type", "")).lower()
+    provider = str(cfg.get("provider", "")).lower()
+
+    if kind == "local":
+        if provider in _ALWAYS_AVAILABLE_PROVIDERS:
+            return "usable"
+        host = cfg.get("base_url") or _LOCAL_BACKEND_HOSTS.get(provider, "")
+        if host and _probe_local_http(host):
+            return "usable"
+        return "unreachable"
+
+    if kind != "cloud":
+        # Unknown kind: treat conservatively as usable (don't false-alarm).
+        return "usable"
+
+    # Cloud backend: requires deployment gate + API key.
+    env_keys = _CLOUD_BACKEND_ENV_KEYS.get(provider, [])
+    if not allow_cloud:
+        return f"blocked:{name} (deployment.mode={deployment_mode} gates it)"
+    if env_keys and not _first_env_value(env_keys):
+        return f"blocked:{name} (missing {'/'.join(env_keys)})"
+    return "usable"
+
+
+def _build_warnings(unreachable_local: List[str], blocked_cloud: List[str]) -> List[str]:
+    """Build actionable warning messages when no usable backend exists."""
+    warnings: List[str] = []
+    for b in unreachable_local:
+        warnings.append(
+            f"⚠️  Local backend '{b}' is not responding "
+            f"(is the server running? e.g. `ollama serve`)"
+        )
+    if blocked_cloud:
+        for b in blocked_cloud:
+            warnings.append(f"⚠️  Cloud backend {b}")
+        warnings.append(
+            "💡 Fix: set OPENAI_API_KEY in .env and set "
+            "deployment.mode: local+llm in configs/system/llm.default.yaml"
+        )
+    warnings.append(
+        "💡 Fix: install Ollama (https://ollama.ai) then "
+        "`ollama pull qwen3.5:0.8b` for a local backend"
+    )
+    return warnings
+
+
 def detect_first_run() -> Dict[str, Any]:
     """Inspect deployment config + environment for usable backends.
 
@@ -68,7 +121,6 @@ def detect_first_run() -> Dict[str, Any]:
     usable: List[str] = []
     blocked_cloud: List[str] = []
     unreachable_local: List[str] = []
-    warnings: List[str] = []
 
     llm_cfg = get_config("system/llm") or {}
     deployment_mode = (llm_cfg.get("deployment") or {}).get("mode", "auto")
@@ -79,56 +131,19 @@ def detect_first_run() -> Dict[str, Any]:
     for name, cfg in backends.items():
         if not isinstance(cfg, dict):
             continue
-        enabled = cfg.get("enabled", True)
-        if not enabled:
+        verdict = _classify_backend(name, cfg, allow_cloud, deployment_mode)
+        if verdict == "skip":
             continue
-        kind = str(cfg.get("type", "")).lower()
-        provider = str(cfg.get("provider", "")).lower()
-
-        if kind == "local":
-            if provider in _ALWAYS_AVAILABLE_PROVIDERS:
-                usable.append(name)
-                continue
-            host = cfg.get("base_url") or _LOCAL_BACKEND_HOSTS.get(provider, "")
-            if host and _probe_local_http(host):
-                usable.append(name)
-            else:
-                unreachable_local.append(name)
-            continue
-
-        if kind != "cloud":
-            # Unknown kind: treat conservatively as usable (don't false-alarm).
+        if verdict == "usable":
             usable.append(name)
-            continue
+        elif verdict == "unreachable":
+            unreachable_local.append(name)
+        elif verdict.startswith("blocked:"):
+            blocked_cloud.append(verdict[len("blocked:") :])
 
-        # Cloud backend: requires deployment gate + API key.
-        env_keys = _CLOUD_BACKEND_ENV_KEYS.get(provider, [])
-        if not allow_cloud:
-            blocked_cloud.append(f"{name} (deployment.mode={deployment_mode} gates it)")
-            continue
-        if env_keys and not _first_env_value(env_keys):
-            blocked_cloud.append(f"{name} (missing {'/'.join(env_keys)})")
-        else:
-            usable.append(name)
-
+    warnings: List[str] = []
     if not usable:
-        if unreachable_local:
-            for b in unreachable_local:
-                warnings.append(
-                    f"⚠️  Local backend '{b}' is not responding "
-                    f"(is the server running? e.g. `ollama serve`)"
-                )
-        if blocked_cloud:
-            for b in blocked_cloud:
-                warnings.append(f"⚠️  Cloud backend {b}")
-            warnings.append(
-                "💡 Fix: set OPENAI_API_KEY in .env and set "
-                "deployment.mode: local+llm in configs/system/llm.default.yaml"
-            )
-        warnings.append(
-            "💡 Fix: install Ollama (https://ollama.ai) then "
-            "`ollama pull qwen3.5:0.8b` for a local backend"
-        )
+        warnings = _build_warnings(unreachable_local, blocked_cloud)
 
     return {
         "usable_backends": usable,
