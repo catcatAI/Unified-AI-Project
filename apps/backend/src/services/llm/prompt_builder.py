@@ -320,6 +320,130 @@ def _append_workspace_overview(messages: List[Dict], context: Dict) -> None:
     )
 
 
+def _digest_overflow(
+    messages: List[Dict],
+    budget_tokens: int,
+    context: Dict,
+    stats: Dict[str, int],
+    total: int,
+) -> int:
+    """階段 0：非破壞性消化（模型陣列排程器）——失敗保留原 total。
+
+    把中段訊息交給消化工作者（自創萃取／小模型）壓成有界摘要，
+    保留資訊而非刪除；帳本保證跨輪一致。
+    """
+    try:
+        from services.llm.context_scheduler import get_context_scheduler
+
+        conv_id = str(context.get("conversation_id") or context.get("session_id") or "default")
+        digest_result = get_context_scheduler().digest_overflow_sync(
+            messages, budget_tokens, conv_id
+        )
+        if digest_result.get("digested"):
+            stats["digested_messages"] = int(digest_result["digested"])
+            stats["freed_chars"] += int(digest_result.get("freed_chars", 0))
+            total = sum(estimate_tokens(str(m.get("content", ""))) for m in messages)
+    except Exception as exc:  # 排程器缺席時直接進入裁剪階段
+        logger.debug("context scheduler unavailable, falling back to trim: %s", exc)
+    return total
+
+
+def _evict_oldest(
+    messages: List[Dict], target: int, stats: Dict[str, int], total: int
+) -> int:
+    """階段 1：最舊優先驅逐（保護 system 與最終 user）。"""
+    idx = 1
+    while total > target and idx < len(messages) - 1:
+        msg = messages[idx]
+        if msg.get("role") == "system":
+            idx += 1
+            continue
+        content = str(msg.get("content", ""))
+        messages.pop(idx)
+        total -= estimate_tokens(content)
+        stats["dropped_messages"] += 1
+        stats["freed_chars"] += len(content)
+    return total
+
+
+def _halve_final_user(
+    messages: List[Dict], target: int, stats: Dict[str, int], total: int
+) -> int:
+    """階段 2：砍半最終 user 訊息（使用者貼超長文件的真实情境）。"""
+    while total > target and messages:
+        final_msg = messages[-1]
+        content = str(final_msg.get("content", ""))
+        if len(content) <= 80:  # 太短再砍已無意義——交由 system 區段裁剪
+            break
+        halved = content[: len(content) // 2] + "…（已截斷）"
+        total -= estimate_tokens(content) - estimate_tokens(halved)
+        final_msg["content"] = halved
+        stats["truncated_messages"] += 1
+        stats["freed_chars"] += len(content) - len(halved)
+    return total
+
+
+def _trim_system_phase(
+    messages: List[Dict], target: int, stats: Dict[str, int], total: int
+) -> int:
+    """階段 3：system 內部區段裁剪（system 本身超額時的唯一手段）。"""
+    while total > target:
+        deficit = total - target
+        before = estimate_tokens(str(messages[0].get("content", "")))
+        new_content, freed, dropped = _trim_system_sections(
+            str(messages[0].get("content", "")), deficit
+        )
+        if dropped == 0:
+            break  # 無可裁區段（核心＋安全指令本身超額）——誠實上報
+        messages[0]["content"] = new_content
+        total -= before - estimate_tokens(new_content)
+        stats["trimmed_system_sections"] += dropped
+        stats["freed_chars"] += freed
+    return total
+
+
+def _record_budget_audit(
+    messages: List[Dict], stats: Dict[str, int], budget_tokens: int
+) -> None:
+    """遙測累計＋系統提示稽核註記（僅在真的裁過時）。"""
+    trimmed = (
+        stats["digested_messages"]
+        + stats["dropped_messages"]
+        + stats["truncated_messages"]
+        + stats["trimmed_system_sections"]
+    )
+    if not trimmed:
+        return
+    _budget_telemetry["events"] += 1
+    for key in (
+        "digested_messages",
+        "dropped_messages",
+        "truncated_messages",
+        "trimmed_system_sections",
+        "freed_chars",
+    ):
+        _budget_telemetry[key] += stats[key]
+    logger.info(
+        "提示超出 token 預算（%d/%d）：消化 %d 則、驅逐 %d 則、截斷 %d 則、system 區段 -%d",
+        stats["total_tokens"],
+        budget_tokens,
+        stats["digested_messages"],
+        stats["dropped_messages"],
+        stats["truncated_messages"],
+        stats["trimmed_system_sections"],
+    )
+    messages[0]["content"] += (
+        f"\n\n[Context Budget Note]\n"
+        f"- budget_tokens: {budget_tokens}\n"
+        f"- total_tokens: {stats['total_tokens']}\n"
+        f"- digested_messages: {stats['digested_messages']}\n"
+        f"- dropped_messages: {stats['dropped_messages']}\n"
+        f"- truncated_messages: {stats['truncated_messages']}\n"
+        f"- trimmed_system_sections: {stats['trimmed_system_sections']}\n"
+        "（部分上下文因超出預算被消化或裁剪；如需細節請向使用者確認或分次處理）"
+    )
+
+
 def _enforce_prompt_budget(messages: List[Dict], context: Dict) -> Dict[str, int]:
     """總量守門（最後一道關卡）：提示 token 估算不得超過預算。
 
@@ -350,100 +474,54 @@ def _enforce_prompt_budget(messages: List[Dict], context: Dict) -> Dict[str, int
         return stats
 
     # ── 階段 0：非破壞性消化（模型陣列排程器——優先於任何裁剪） ──
-    # 把中段訊息交給消化工作者（自創萃取／小模型）壓成有界摘要，
-    # 保留資訊而非刪除；帳本保證跨輪一致。
-    try:
-        from services.llm.context_scheduler import get_context_scheduler
-
-        conv_id = str(context.get("conversation_id") or context.get("session_id") or "default")
-        digest_result = get_context_scheduler().digest_overflow_sync(
-            messages, budget_tokens, conv_id
-        )
-        if digest_result.get("digested"):
-            stats["digested_messages"] = int(digest_result["digested"])
-            stats["freed_chars"] += int(digest_result.get("freed_chars", 0))
-            total = sum(estimate_tokens(str(m.get("content", ""))) for m in messages)
-    except Exception as exc:  # 排程器缺席時直接進入裁剪階段
-        logger.debug("context scheduler unavailable, falling back to trim: %s", exc)
+    total = _digest_overflow(messages, budget_tokens, context, stats, total)
 
     # ── 階段 1：最舊優先驅逐（保護 system 與最終 user） ──
-    idx = 1
-    while total > target and idx < len(messages) - 1:
-        msg = messages[idx]
-        if msg.get("role") == "system":
-            idx += 1
-            continue
-        content = str(msg.get("content", ""))
-        messages.pop(idx)
-        total -= estimate_tokens(content)
-        stats["dropped_messages"] += 1
-        stats["freed_chars"] += len(content)
+    total = _evict_oldest(messages, target, stats, total)
 
     # ── 階段 2：砍半最終 user 訊息（貼超長文件情境） ──
-    while total > target and messages:
-        final_msg = messages[-1]
-        content = str(final_msg.get("content", ""))
-        if len(content) <= 80:  # 太短再砍已無意義——交由 system 區段裁剪
-            break
-        halved = content[: len(content) // 2] + "…（已截斷）"
-        total -= estimate_tokens(content) - estimate_tokens(halved)
-        final_msg["content"] = halved
-        stats["truncated_messages"] += 1
-        stats["freed_chars"] += len(content) - len(halved)
+    total = _halve_final_user(messages, target, stats, total)
 
     # ── 階段 3：system 內部區段裁剪（system 本身超額時的唯一手段） ──
-    while total > target:
-        deficit = total - target
-        before = estimate_tokens(str(messages[0].get("content", "")))
-        new_content, freed, dropped = _trim_system_sections(
-            str(messages[0].get("content", "")), deficit
-        )
-        if dropped == 0:
-            break  # 無可裁區段（核心＋安全指令本身超額）——誠實上報
-        messages[0]["content"] = new_content
-        total -= before - estimate_tokens(new_content)
-        stats["trimmed_system_sections"] += dropped
-        stats["freed_chars"] += freed
+    total = _trim_system_phase(messages, target, stats, total)
 
     stats["total_tokens"] = sum(estimate_tokens(str(m.get("content", ""))) for m in messages)
 
     # ── 遙測＋稽核註記 ──
-    trimmed = (
-        stats["digested_messages"]
-        + stats["dropped_messages"]
-        + stats["truncated_messages"]
-        + stats["trimmed_system_sections"]
-    )
-    if trimmed:
-        _budget_telemetry["events"] += 1
-        for key in (
-            "digested_messages",
-            "dropped_messages",
-            "truncated_messages",
-            "trimmed_system_sections",
-            "freed_chars",
-        ):
-            _budget_telemetry[key] += stats[key]
-        logger.info(
-            "提示超出 token 預算（%d/%d）：消化 %d 則、驅逐 %d 則、截斷 %d 則、system 區段 -%d",
-            stats["total_tokens"],
-            budget_tokens,
-            stats["digested_messages"],
-            stats["dropped_messages"],
-            stats["truncated_messages"],
-            stats["trimmed_system_sections"],
-        )
-        messages[0]["content"] += (
-            f"\n\n[Context Budget Note]\n"
-            f"- budget_tokens: {budget_tokens}\n"
-            f"- total_tokens: {stats['total_tokens']}\n"
-            f"- digested_messages: {stats['digested_messages']}\n"
-            f"- dropped_messages: {stats['dropped_messages']}\n"
-            f"- truncated_messages: {stats['truncated_messages']}\n"
-            f"- trimmed_system_sections: {stats['trimmed_system_sections']}\n"
-            "（部分上下文因超出預算被消化或裁剪；如需細節請向使用者確認或分次處理）"
-        )
+    _record_budget_audit(messages, stats, budget_tokens)
     return stats
+
+
+def _render_bio_dict(bio: dict) -> Optional[str]:
+    """Render a bio_state dict to prompt parts; None → caller falls back to str(bio)."""
+    parts = []
+    if "arousal" in bio:
+        parts.append(prompt("angela.bio.arousal", value=f"{bio['arousal']:.1f}"))
+    if "stress_level" in bio:
+        parts.append(prompt("angela.bio.stress", value=f"{bio['stress_level']:.2f}"))
+    if "mood" in bio:
+        parts.append(prompt("angela.bio.mood", value=f"{bio['mood']:.2f}"))
+    if "dominant_emotion" in bio:
+        parts.append(prompt("angela.bio.emotion", value=bio["dominant_emotion"]))
+    if parts:
+        return "、".join(parts)
+    if not bio:
+        # 空 bio dict → 使用已註冊但先前未接線的定義（定義稽核 2026-10-14）
+        return prompt("angela.bio.uninitialized")
+    return None
+
+
+def _bio_state_from_file() -> str:
+    """Fallback: read brain_status.json (file-based simulated state)."""
+    try:
+        brain_path = str(Path(__file__).resolve().parents[3] / "data" / "brain_status.json")
+        if os.path.exists(brain_path):
+            with open(brain_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            return json.dumps(data, ensure_ascii=False, indent=2)
+    except Exception as e:
+        logger.warning(f"Brain status file read failed: {e}", exc_info=True)
+    return ""
 
 
 def get_biological_state(context=None) -> str:
@@ -461,32 +539,13 @@ def get_biological_state(context=None) -> str:
     if context and isinstance(context, dict) and "bio_state" in context:
         bio = context["bio_state"]
         if isinstance(bio, dict):
-            parts = []
-            if "arousal" in bio:
-                parts.append(prompt("angela.bio.arousal", value=f"{bio['arousal']:.1f}"))
-            if "stress_level" in bio:
-                parts.append(prompt("angela.bio.stress", value=f"{bio['stress_level']:.2f}"))
-            if "mood" in bio:
-                parts.append(prompt("angela.bio.mood", value=f"{bio['mood']:.2f}"))
-            if "dominant_emotion" in bio:
-                parts.append(prompt("angela.bio.emotion", value=bio["dominant_emotion"]))
-            if parts:
-                return "、".join(parts)
-            if not bio:
-                # 空 bio dict → 使用已註冊但先前未接線的定義（定義稽核 2026-10-14）
-                return prompt("angela.bio.uninitialized")
+            rendered = _render_bio_dict(bio)
+            if rendered is not None:
+                return rendered
         return str(bio)
 
     # Priority 2: File-based state (fallback)
-    try:
-        brain_path = str(Path(__file__).resolve().parents[3] / "data" / "brain_status.json")
-        if os.path.exists(brain_path):
-            with open(brain_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-            return json.dumps(data, ensure_ascii=False, indent=2)
-    except Exception as e:
-        logger.warning(f"Brain status file read failed: {e}", exc_info=True)
-    return ""
+    return _bio_state_from_file()
 
 
 _formula_cache = None
@@ -555,35 +614,41 @@ def _get_non_paradox():
     return _non_paradox_instance
 
 
-def get_formula_summaries() -> str:
-    """Compute 5 theoretical formulas and return a formatted string."""
-    global _formula_cache, _formula_cache_time
-    if _formula_cache is not None and (time.time() - _formula_cache_time) < _FORMULA_CACHE_TTL:
-        return _formula_cache
-
-    lines = []
+def _formula_hsm_line() -> Optional[str]:
+    """HSM formula prompt line; None when the module is unavailable."""
     try:
-        lines.append(prompt("angela.formula.hsm", value=f"{_get_hsm().calculate_hsm():.4f}"))
+        return prompt("angela.formula.hsm", value=f"{_get_hsm().calculate_hsm():.4f}")
     except (ImportError, AttributeError) as e:
         logger.debug(f"HSM formula unavailable: {e}")
+    return None
+
+
+def _formula_life_intensity_line() -> Optional[str]:
+    """Life-intensity formula prompt line; None when unavailable."""
     try:
-        lines.append(
-            prompt(
-                "angela.formula.life_intensity",
-                value=f"{_get_life_intensity().calculate_life_intensity():.4f}",
-            )
+        return prompt(
+            "angela.formula.life_intensity",
+            value=f"{_get_life_intensity().calculate_life_intensity():.4f}",
         )
     except (ImportError, AttributeError) as e:
         logger.debug(f"LifeIntensity formula unavailable: {e}")
+    return None
+
+
+def _formula_active_cognition_line() -> Optional[str]:
+    """Active-cognition formula prompt line; None when unavailable."""
     try:
-        lines.append(
-            prompt(
-                "angela.formula.active_cognition",
-                value=f"{_get_active_cognition().calculate_active_cognition():.4f}",
-            )
+        return prompt(
+            "angela.formula.active_cognition",
+            value=f"{_get_active_cognition().calculate_active_cognition():.4f}",
         )
     except (ImportError, AttributeError) as e:
         logger.debug(f"ActiveCognition formula unavailable: {e}")
+    return None
+
+
+def _formula_cdm_line() -> Optional[str]:
+    """CDM life-sense-output prompt line; None when unavailable."""
     try:
         from core.cdm_dividend_model import CognitiveActivity, CognitiveInvestment
 
@@ -592,27 +657,46 @@ def get_formula_summaries() -> str:
             activity_type=CognitiveActivity.INTERACTING, duration_seconds=1.0, intensity=0.5
         )
         output = cdm.calculate_life_sense_output(inv)
-        lines.append(
-            prompt(
-                "angela.formula.cdm",
-                amount=f"{output.output_amount:.2f}",
-                quality=f"{output.quality_score:.2f}",
-            )
+        return prompt(
+            "angela.formula.cdm",
+            amount=f"{output.output_amount:.2f}",
+            quality=f"{output.quality_score:.2f}",
         )
     except (ImportError, AttributeError) as e:
         logger.debug(f"CDM formula unavailable: {e}")
+    return None
+
+
+def _formula_non_paradox_line() -> Optional[str]:
+    """NonParadox coexistence prompt line; None when unavailable."""
     try:
         state = _get_non_paradox().calculate_coexistence_state("angela_dialogue")
         if state:
-            lines.append(
-                prompt(
-                    "angela.formula.non_paradox_coherence", value=f"{state.get('coherence', 0):.2f}"
-                )
+            return prompt(
+                "angela.formula.non_paradox_coherence", value=f"{state.get('coherence', 0):.2f}"
             )
-        else:
-            lines.append(prompt("angela.formula.non_paradox_inactive"))
+        return prompt("angela.formula.non_paradox_inactive")
     except (ImportError, AttributeError) as e:
         logger.debug(f"NonParadox formula unavailable: {e}")
+    return None
+
+
+def get_formula_summaries() -> str:
+    """Compute 5 theoretical formulas and return a formatted string."""
+    global _formula_cache, _formula_cache_time
+    if _formula_cache is not None and (time.time() - _formula_cache_time) < _FORMULA_CACHE_TTL:
+        return _formula_cache
+
+    lines = []
+    for line in (
+        _formula_hsm_line(),
+        _formula_life_intensity_line(),
+        _formula_active_cognition_line(),
+        _formula_cdm_line(),
+        _formula_non_paradox_line(),
+    ):
+        if line is not None:
+            lines.append(line)
     result = "\n".join(lines) if lines else ""
     _formula_cache = result
     _formula_cache_time = time.time()
