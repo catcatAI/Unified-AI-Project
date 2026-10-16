@@ -554,6 +554,55 @@ class MultimodalService:
             timeout=self.DECODE_TIMEOUT,
         )
 
+    def _decode_vision(
+        self, item: Dict[str, Any], latent: Any, output_format: str, result: Dict[str, Any]
+    ) -> Optional[str]:
+        """Vision decode → PIL or data-URL into result; return error or None."""
+        vision_decoder = self._get_visual_decoder()
+        decoded = vision_decoder.decode(latent)  # numpy uint8 array (128,128,3)
+        if decoded is None or decoded.size == 0:
+            return "Decoding returned empty image"
+        pil_img = Image.fromarray(decoded)
+        if output_format == "pil":
+            result["decoded"] = pil_img
+        else:
+            import base64
+
+            buf = io.BytesIO()
+            pil_img.save(buf, format="PNG")
+            b64 = base64.b64encode(buf.getvalue()).decode("ascii")
+            result["decoded"] = f"data:image/png;base64,{b64}"
+        if item.get("feature_vector") is not None:
+            result["quality"] = {"ssim": 0.0}  # feature-level no ssim
+        return None
+
+    def _decode_audio(
+        self, latent: Any, output_format: str, result: Dict[str, Any]
+    ) -> Optional[str]:
+        """Audio decode → list or WAV data-URL into result; return error or None."""
+        audio_decoder = self._get_audio_decoder()
+        wav = audio_decoder.decode(latent)  # numpy float32 array
+        if wav is None or len(wav) == 0:
+            return "Decoding returned empty audio"
+        if output_format == "raw":
+            result["decoded"] = wav.tolist()
+        else:
+            import base64
+
+            sample_rate = 16000
+            int16 = (np.clip(wav, -1.0, 1.0) * 32767).astype(np.int16)
+            buf = io.BytesIO()
+            import wave
+
+            with wave.open(buf, "wb") as wf:
+                wf.setnchannels(1)
+                wf.setsampwidth(2)
+                wf.setframerate(sample_rate)
+                wf.writeframes(int16.tobytes())
+            b64 = base64.b64encode(buf.getvalue()).decode("ascii")
+            result["decoded"] = f"data:audio/wav;base64,{b64}"
+        return None
+
     async def _decode_impl(
         self, item_id: str, modality: str, output_format: str = "base64"
     ) -> Dict[str, Any]:
@@ -574,45 +623,13 @@ class MultimodalService:
             latent = np.array(item["latent"], dtype=np.float32)
 
             if modality == "vision":
-                vision_decoder = self._get_visual_decoder()
-                decoded = vision_decoder.decode(latent)  # numpy uint8 array (128,128,3)
-                if decoded is None or decoded.size == 0:
-                    return {"error": "Decoding returned empty image"}
-                pil_img = Image.fromarray(decoded)
-                if output_format == "pil":
-                    result["decoded"] = pil_img
-                else:
-                    import base64
-
-                    buf = io.BytesIO()
-                    pil_img.save(buf, format="PNG")
-                    b64 = base64.b64encode(buf.getvalue()).decode("ascii")
-                    result["decoded"] = f"data:image/png;base64,{b64}"
-                original = item.get("feature_vector")
-                if original is not None:
-                    result["quality"] = {"ssim": 0.0}  # feature-level no ssim
+                error = self._decode_vision(item, latent, output_format, result)
+                if error is not None:
+                    return {"error": error}
             elif modality == "audio":
-                audio_decoder = self._get_audio_decoder()
-                wav = audio_decoder.decode(latent)  # numpy float32 array
-                if wav is None or len(wav) == 0:
-                    return {"error": "Decoding returned empty audio"}
-                if output_format == "raw":
-                    result["decoded"] = wav.tolist()
-                else:
-                    import base64
-
-                    sample_rate = 16000
-                    int16 = (np.clip(wav, -1.0, 1.0) * 32767).astype(np.int16)
-                    buf = io.BytesIO()
-                    import wave
-
-                    with wave.open(buf, "wb") as wf:
-                        wf.setnchannels(1)
-                        wf.setsampwidth(2)
-                        wf.setframerate(sample_rate)
-                        wf.writeframes(int16.tobytes())
-                    b64 = base64.b64encode(buf.getvalue()).decode("ascii")
-                    result["decoded"] = f"data:audio/wav;base64,{b64}"
+                error = self._decode_audio(latent, output_format, result)
+                if error is not None:
+                    return {"error": error}
 
             result["format"] = output_format
             result["time_ms"] = round((time.time() - t0) * 1000, 1)
