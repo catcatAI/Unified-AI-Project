@@ -14,21 +14,13 @@ logger = logging.getLogger(__name__)
 KEY_WEIGHT_VARIANT = 0.6  # weight for keys discovered via text variant
 
 
-def anchored_decode(
-    network_output: Dict[str, float],
+def _collect_anchors(
     original_input_keys: List[str],
     dictionary: DictionaryLayer,
-    top_k_anchors: int = 3,
-    top_k_network: int = 5,
-    enriched: Optional[EnrichedInput] = None,
-) -> str:
-    if not network_output:
-        network_output = {}
-    if not original_input_keys:
-        original_input_keys = []
-    anchor_pool: List[Dict[str, Any]] = []
-    seen_keys: set = set()
-
+    seen_keys: set,
+    anchor_pool: List[Dict[str, Any]],
+) -> None:
+    """Collect original input keys as anchors."""
     for key in original_input_keys:
         if key in seen_keys:
             continue
@@ -38,29 +30,43 @@ def anchored_decode(
             continue
         anchor_pool.append({"key": key, "entry": entry, "weight": 1.0, "source": "anchor"})
 
-    # Stage 1b: Variant-based key discovery — encode each text variant to find
-    # additional dictionary keys that primary encoding may have missed
-    # (e.g. fullwidth input → NFKC'd variant → matches pinyin surface form)
-    if enriched is not None:
-        for variant in enriched.text_variants[1:]:
-            if variant.lower().strip() == enriched.raw_text.lower().strip():
-                continue
-            for vkey in dictionary.encode(variant):
-                if vkey in seen_keys:
-                    continue
-                seen_keys.add(vkey)
-                ventry = dictionary.entries.get(vkey)
-                if ventry is None:
-                    continue
-                anchor_pool.append(
-                    {
-                        "key": vkey,
-                        "entry": ventry,
-                        "weight": KEY_WEIGHT_VARIANT,
-                        "source": "variant",
-                    }
-                )
 
+def _collect_variants(
+    enriched: Optional[EnrichedInput],
+    dictionary: DictionaryLayer,
+    seen_keys: set,
+    anchor_pool: List[Dict[str, Any]],
+) -> None:
+    """Stage 1b: Variant-based key discovery."""
+    if enriched is None:
+        return
+    for variant in enriched.text_variants[1:]:
+        if variant.lower().strip() == enriched.raw_text.lower().strip():
+            continue
+        for vkey in dictionary.encode(variant):
+            if vkey in seen_keys:
+                continue
+            seen_keys.add(vkey)
+            ventry = dictionary.entries.get(vkey)
+            if ventry is None:
+                continue
+            anchor_pool.append(
+                {
+                    "key": vkey,
+                    "entry": ventry,
+                    "weight": KEY_WEIGHT_VARIANT,
+                    "source": "variant",
+                }
+            )
+
+
+def _collect_network(
+    network_output: Dict[str, float],
+    dictionary: DictionaryLayer,
+    seen_keys: set,
+    anchor_pool: List[Dict[str, Any]],
+) -> None:
+    """Collect network output keys as candidates."""
     sorted_network = sorted(network_output.items(), key=lambda x: x[1], reverse=True)
     for key, score in sorted_network:
         if key in seen_keys:
@@ -71,6 +77,11 @@ def anchored_decode(
             continue
         anchor_pool.append({"key": key, "entry": entry, "weight": score, "source": "network"})
 
+
+def _merge_candidates(
+    anchor_pool: List[Dict[str, Any]], top_k_anchors: int, top_k_network: int
+) -> List[Dict[str, Any]]:
+    """Merge and sort anchor/network candidates."""
     top_anchors = sorted(
         [a for a in anchor_pool if a["source"] == "anchor"],
         key=lambda x: x["weight"],
@@ -91,14 +102,15 @@ def anchored_decode(
         else:
             combined[key]["weight"] = max(combined[key]["weight"], item["weight"])
 
-    scored = sorted(combined.values(), key=lambda x: x["weight"], reverse=True)
+    return sorted(combined.values(), key=lambda x: x["weight"], reverse=True)
 
+
+def _format_surfaces(scored: List[Dict[str, Any]]) -> str:
+    """Format scored items into surface string."""
     parts: List[str] = []
     seen_surfaces: set = set()
     for item in scored:
         anchored_entry: DictionaryEntry = item["entry"]
-        # P2 (REFACTOR_PLAN §11.4): placeholder entries carry no real surface;
-        # never emit the raw key into the response — skip them.
         if anchored_entry.is_placeholder:
             continue
         zh = anchored_entry.surface_forms.get("zh")
@@ -110,6 +122,29 @@ def anchored_decode(
         parts.append(surface)
 
     return " ".join(parts) if parts else ""
+
+
+def anchored_decode(
+    network_output: Dict[str, float],
+    original_input_keys: List[str],
+    dictionary: DictionaryLayer,
+    top_k_anchors: int = 3,
+    top_k_network: int = 5,
+    enriched: Optional[EnrichedInput] = None,
+) -> str:
+    if not network_output:
+        network_output = {}
+    if not original_input_keys:
+        original_input_keys = []
+    anchor_pool: List[Dict[str, Any]] = []
+    seen_keys: set = set()
+
+    _collect_anchors(original_input_keys, dictionary, seen_keys, anchor_pool)
+    _collect_variants(enriched, dictionary, seen_keys, anchor_pool)
+    _collect_network(network_output, dictionary, seen_keys, anchor_pool)
+
+    scored = _merge_candidates(anchor_pool, top_k_anchors, top_k_network)
+    return _format_surfaces(scored)
 
 
 def compute_anchor_drift(
