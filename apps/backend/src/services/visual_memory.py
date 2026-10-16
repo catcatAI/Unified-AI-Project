@@ -166,6 +166,71 @@ class ObjectTrack:
         self.fixations += 1
 
 
+def _dump_track(t: ObjectTrack) -> Dict[str, Any]:
+    """Serialize one track for the scan result."""
+    return {
+        "id": t.id,
+        "fixations": t.fixations,
+        "box": [round(v, 3) for v in t.box],
+        "top_color": list(max(t.signature.items(), key=lambda kv: kv[1])[0]),
+        "structures": t.structures,
+        "ground_texture": t.ground_texture,
+    }
+
+
+class _ScanState:
+    """Fixation accumulator: merges fixations into tracks across passes."""
+
+    def __init__(self, img: Any, ground: Tuple[int, int, int]) -> None:
+        self.img = img
+        self.ground = ground
+        self.tracks: List[ObjectTrack] = []
+        self.fixations = 0
+
+    def fixate(self, box: Tuple[float, float, float, float], source: Any = None) -> None:
+        self.fixations += 1
+        canvas = source or self.img
+        pal = _crop_palette(canvas, box)
+        if not pal:
+            return
+        structure = _structure(canvas, box)
+        if structure == "flat" and pal[0][0] == self.ground:
+            return  # ground residue, not a thing
+        for track in self.tracks:
+            if track.matches(pal, box):
+                track.absorb(pal, box, structure)
+                return
+        self.tracks.append(ObjectTrack(pal, box, structure, ground=self.ground))
+
+    def grid_pass(self, grid: int) -> List[Tuple[float, float, float, float]]:
+        """Coarse grid fixation; returns hot (edge/busy) cells for zoomed revisit."""
+        cell = 1.0 / grid
+        hot: List[Tuple[float, float, float, float]] = []
+        for gy in range(grid):
+            for gx in range(grid):
+                box = (gx * cell, gy * cell, (gx + 1) * cell, (gy + 1) * cell)
+                self.fixate(box)
+                # Focus: anything not-ground deserves a second, zoomed look.
+                # Busy-only revisits starve edge cells of their second fixation
+                # (no persistence proof). Ground-flat cells stay skipped.
+                structure = _structure(self.img, box)
+                if structure in ("edge", "busy"):
+                    hot.append(box)
+        return hot
+
+    def zoom_revisits(self, hot: List[Tuple[float, float, float, float]], hires: Any) -> None:
+        """Zoomed revisits: quarter-window fixations inside hot cells, read
+        from the full-resolution canvas (real zoom, not smaller window)."""
+        for x0, y0, x1, y1 in hot:
+            qw, qh = (x1 - x0) / 2.0, (y1 - y0) / 2.0
+            for dy in (0, 1):
+                for dx in (0, 1):
+                    self.fixate(
+                        (x0 + dx * qw, y0 + dy * qh, x0 + (dx + 1) * qw, y0 + (dy + 1) * qh),
+                        source=hires,
+                    )
+
+
 def scan(image_data: bytes, grid: int = 3) -> Dict[str, Any]:
     """Saccadic scan: coarse grid, then zoomed revisits, merged to tracks.
 
@@ -183,63 +248,16 @@ def scan(image_data: bytes, grid: int = 3) -> Dict[str, Any]:
     ground = full[0][0] if full else (0, 0, 0)
 
     ObjectTrack._next_id = 0
-    tracks: List[ObjectTrack] = []
-    fixations = 0
-
-    def _fixate(box: Tuple[float, float, float, float], source: Any = None) -> None:
-        nonlocal fixations
-        fixations += 1
-        canvas = source or img
-        pal = _crop_palette(canvas, box)
-        if not pal:
-            return
-        structure = _structure(canvas, box)
-        if structure == "flat" and pal[0][0] == ground:
-            return  # ground residue, not a thing
-        for track in tracks:
-            if track.matches(pal, box):
-                track.absorb(pal, box, structure)
-                return
-        tracks.append(ObjectTrack(pal, box, structure, ground=ground))
-
-    cell = 1.0 / grid
-    hot: List[Tuple[float, float, float, float]] = []
-    for gy in range(grid):
-        for gx in range(grid):
-            box = (gx * cell, gy * cell, (gx + 1) * cell, (gy + 1) * cell)
-            _fixate(box)
-            # Focus: anything not-ground deserves a second, zoomed look.
-            # Busy-only revisits starve edge cells of their second fixation
-            # (no persistence proof). Ground-flat cells stay skipped.
-            structure = _structure(img, box)
-            if structure in ("edge", "busy"):
-                hot.append(box)
-    # Zoomed revisits: quarter-window fixations inside hot cells, read
-    # from the full-resolution canvas (real zoom, not smaller window).
-    for x0, y0, x1, y1 in hot:
-        qw, qh = (x1 - x0) / 2.0, (y1 - y0) / 2.0
-        for dy in (0, 1):
-            for dx in (0, 1):
-                _fixate(
-                    (x0 + dx * qw, y0 + dy * qh, x0 + (dx + 1) * qw, y0 + (dy + 1) * qh),
-                    source=hires,
-                )
-
-    def _dump(t: ObjectTrack) -> Dict[str, Any]:
-        return {
-            "id": t.id,
-            "fixations": t.fixations,
-            "box": [round(v, 3) for v in t.box],
-            "top_color": list(max(t.signature.items(), key=lambda kv: kv[1])[0]),
-            "structures": t.structures,
-            "ground_texture": t.ground_texture,
-        }
+    state = _ScanState(img, ground)
+    hot = state.grid_pass(grid)
+    state.zoom_revisits(hot, hires)
+    tracks = state.tracks
 
     # Residue keeps everything (visual context); objects exclude textured
     # ground and sub-fragment slivers. Count = len(objects), not blobs.
     return {
-        "tracks": [_dump(t) for t in tracks],
-        "objects": [_dump(t) for t in tracks if t.is_object],
+        "tracks": [_dump_track(t) for t in tracks],
+        "objects": [_dump_track(t) for t in tracks if t.is_object],
         "ground": list(ground),
-        "fixations": fixations,
+        "fixations": state.fixations,
     }
