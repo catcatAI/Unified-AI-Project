@@ -20,7 +20,7 @@ import os
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from services.agent_workspace.app_session import (
     DEFAULT_LOG_PATH,
@@ -173,30 +173,47 @@ class ShellAdapter(AppAdapter):
             self._run,
         )
 
-    async def _run(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        cmd = str(params.get("cmd", "") or "").strip()
-        if not cmd:
-            return {"ok": False, "error": "缺少 cmd"}
-        lowered = f" {cmd.lower()} "
-        if any(d.strip().lower() in lowered for d in _SHELL_DENY if d.strip()):
-            return {"ok": False, "error": "拒絕危險指令"}
-        explicit_cwd = str(params.get("cwd", "") or "").strip()
+    @staticmethod
+    def _denied(lowered: str) -> bool:
+        """Deny-list substring gate (dangerous commands are never run)."""
+        return any(d.strip().lower() in lowered for d in _SHELL_DENY if d.strip())
+
+    def _resolve_cwd(self, explicit_cwd: str) -> Tuple[Optional[Path], Optional[str]]:
+        """Resolve + jail the working directory; (cwd, None) or (None, error)."""
         cwd = Path(explicit_cwd) if explicit_cwd else Path(self._workdir)
         if not cwd.is_absolute():
             cwd = Path(os.getcwd()) / cwd
         if not (cwd.exists() and cwd.is_dir()):
             if explicit_cwd:
-                return {"ok": False, "error": f"工作目錄不存在：{cwd}"}
+                return None, f"工作目錄不存在：{cwd}"
             # Default workdir (e.g. ANGELA_WORKSPACE=./workspace) missing:
             # fall back to the process cwd instead of failing every run.
             cwd = Path(os.getcwd())
         if not _is_mount_safe_path(cwd):
-            return {"ok": False, "error": f"工作目錄越界：{cwd}"}
+            return None, f"工作目錄越界：{cwd}"
+        return cwd, None
+
+    @staticmethod
+    def _parse_timeout(params: Dict[str, Any]) -> float:
+        """Parse timeout param, clamp to 1–300s (default 60)."""
         try:
             timeout = float(params.get("timeout", 60))
         except (TypeError, ValueError):
             timeout = 60.0
-        timeout = min(max(timeout, 1.0), 300.0)
+        return min(max(timeout, 1.0), 300.0)
+
+    async def _run(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        cmd = str(params.get("cmd", "") or "").strip()
+        if not cmd:
+            return {"ok": False, "error": "缺少 cmd"}
+        lowered = f" {cmd.lower()} "
+        if self._denied(lowered):
+            return {"ok": False, "error": "拒絕危險指令"}
+        explicit_cwd = str(params.get("cwd", "") or "").strip()
+        cwd, cwd_error = self._resolve_cwd(explicit_cwd)
+        if cwd_error is not None:
+            return {"ok": False, "error": cwd_error}
+        timeout = self._parse_timeout(params)
         try:
             proc = await _run_shell(cmd, str(cwd), timeout)
         except Exception as exc:
