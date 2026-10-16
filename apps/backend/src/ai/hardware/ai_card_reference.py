@@ -34,7 +34,8 @@ class AiCardReferenceConfig:
     preferred_power_limit_w: float = 350.0
     prototype_bom_cap_usd: int = 3000
 
-    def __post_init__(self) -> None:
+    def _validate_pcie_and_fabric(self) -> None:
+        """Validate PCIe parameters and internal fabric widths/partitions."""
         if self.pcie_generation < 1 or self.pcie_lanes < 1:
             raise ValueError("PCIe generation and lane count must be positive")
         if self.pcie_signaling_rate_gbps_per_lane <= 0:
@@ -52,6 +53,9 @@ class AiCardReferenceConfig:
             != self.weight_update_width_bits
         ):
             raise ValueError("secondary update partitions must exactly cover the update bus")
+
+    def _validate_power_and_memory(self) -> None:
+        """Validate clock/DMA/cache/external-memory/power/BOM parameters."""
         if self.target_clock_mhz <= 0 or self.dma_tile_bytes <= 0:
             raise ValueError("target clock and DMA tile size must be positive")
         if self.dma_credit_limit < 1 or self.cache_target_mb < 0:
@@ -60,6 +64,14 @@ class AiCardReferenceConfig:
             raise ValueError("external memory and prototype power limit must be positive")
         if self.preferred_power_limit_w <= 0 or self.prototype_bom_cap_usd < 0:
             raise ValueError("preferred power limit must be positive and BOM cap non-negative")
+
+    def _validate_ranges(self) -> None:
+        """Validate positive ranges and ratio bounds."""
+        self._validate_pcie_and_fabric()
+        self._validate_power_and_memory()
+
+    def _finalize_derived(self) -> None:
+        """Compute/validate derived fields (frozen dataclass → object.__setattr__)."""
         computed = (
             self.pcie_signaling_rate_gbps_per_lane
             * self.pcie_lanes
@@ -75,6 +87,10 @@ class AiCardReferenceConfig:
                 "cache_partitions_mb",
                 {"activation": 8, "weights": 16, "staging": 8},
             )
+
+    def __post_init__(self) -> None:
+        self._validate_ranges()
+        self._finalize_derived()
 
     @property
     def pcie_raw_gbps_each_direction(self) -> float:
