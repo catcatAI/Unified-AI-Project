@@ -399,15 +399,8 @@ class DigitalLifeIntegrator:
         self._interaction_feedback_count: int = 0
         self._subscribe_cns_events()
 
-    async def initialize(self) -> bool:
-        """
-        Initialize digital life with 2030-standard robust error handling.
-        Ensures partial survival even if high-level modules fail.
-        """
-        self._running = True
-        logger.info("🌌 Starting Angela's Digital Life Incubation...")
-
-        # 1. Core Biological Foundation (Must work)
+    async def _init_biological_foundation(self) -> None:
+        """1. Core Biological Foundation (Must work)."""
         try:
             await self.biological_integrator.initialize()
             logger.info("  [Foundation] Biological systems online.")
@@ -415,7 +408,8 @@ class DigitalLifeIntegrator:
             # broad except acceptable: init must survive optional component failure
             logger.error(f"  [CRITICAL] Biological boot failure: {e}", exc_info=True)
 
-        # 2. Action & Interaction Layer
+    async def _init_action_layer(self) -> None:
+        """2. Action & Interaction Layer."""
         try:
             self.action_executor.set_digital_life_integrator(self)
             await self.action_executor.initialize()
@@ -424,8 +418,10 @@ class DigitalLifeIntegrator:
             # broad except acceptable: executor degradation is non-critical, graceful degradation
             logger.warning(f"  [Sensory] Executor degraded: {e}", exc_info=True)
 
-        # 2.5 Memory-Neuroplasticity Bridge (§11.3 #6: 修 DLI.memory_bridge = None)
-        # 建立並啟動 memory_bridge，讓 consolidation trigger 真正生效（GR/RESTING/DORMANT）。
+    async def _init_memory_bridge(self) -> None:
+        """2.5 Memory-Neuroplasticity Bridge (§11.3 #6: 修 DLI.memory_bridge = None).
+        建立並啟動 memory_bridge，讓 consolidation trigger 真正生效（GR/RESTING/DORMANT）。
+        """
         try:
             self.memory_bridge = _memory_bridge_mod.MemoryNeuroplasticityBridge()
             await self.memory_bridge.initialize()
@@ -436,7 +432,8 @@ class DigitalLifeIntegrator:
                 f"  [Foundation] Memory-neuroplasticity bridge degraded: {e}", exc_info=True
             )
 
-        # 3. High-Level Cognition (Optional/Graceful)
+    async def _init_cognition(self) -> None:
+        """3. High-Level Cognition (Optional/Graceful)."""
         try:
             if os.environ.get("ANGELA_REPL_MODE") == "1":
                 logger.info("  [Cognition] LLM Decision Loop disabled in REPL mode.")
@@ -464,32 +461,31 @@ class DigitalLifeIntegrator:
                 exc_info=True,
             )
 
-        # 3.5 Autonomous Life Cycle (Formula-driven decision system)
-        if self._formula_integration_enabled:
+    async def _init_autonomous_lifecycle(self) -> None:
+        """3.5 Autonomous Life Cycle (Formula-driven decision system)."""
+        if not self._formula_integration_enabled:
+            return
+        try:
+            # Reuse the shared singleton (api.lifespan.get_lifecycle) so
+            # chat-facing consumers read the RUNNING instance, not a
+            # second dormant copy (split-brain bug).
             try:
-                # Reuse the shared singleton (api.lifespan.get_lifecycle) so
-                # chat-facing consumers read the RUNNING instance, not a
-                # second dormant copy (split-brain bug).
-                try:
-                    from api.lifespan import get_lifecycle
+                from api.lifespan import get_lifecycle
 
-                    self.autonomous_lifecycle = get_lifecycle()
-                except Exception:  # standalone mode fallback
-                    self.autonomous_lifecycle = AutonomousLifeCycle(config=self.config)
-                await self.autonomous_lifecycle.initialize()
-                # _on_formula_decision(decision) 契約是「單參 LifeDecision」，
-                # 必須註冊到 decision callbacks；誤註冊到 phase callbacks（雙參
-                # old_phase/new_phase）會每次相位轉換都 TypeError 被吞，回呼永不觸發。
-                self.autonomous_lifecycle.register_decision_callback(self._on_formula_decision)
-                logger.info("  [Autonomy] Autonomous Life Cycle active (shared).")
-            except Exception as e:
-                logger.warning(f"  [Autonomy] Life cycle degraded: {e}")
+                self.autonomous_lifecycle = get_lifecycle()
+            except Exception:  # standalone mode fallback
+                self.autonomous_lifecycle = AutonomousLifeCycle(config=self.config)
+            await self.autonomous_lifecycle.initialize()
+            # _on_formula_decision(decision) 契約是「單參 LifeDecision」，
+            # 必須註冊到 decision callbacks；誤註冊到 phase callbacks（雙參
+            # old_phase/new_phase）會每次相位轉換都 TypeError 被吞，回呼永不觸發。
+            self.autonomous_lifecycle.register_decision_callback(self._on_formula_decision)
+            logger.info("  [Autonomy] Autonomous Life Cycle active (shared).")
+        except Exception as e:
+            logger.warning(f"  [Autonomy] Life cycle degraded: {e}")
 
-        # 4. Final Activation
-        self.is_initialized = True
-        await self._transition_state(LifeCycleState.AWAKENING)
-
-        # Start background loops
+    def _spawn_background_loops(self) -> None:
+        """Start lifecycle + health-check background loops with failure callbacks."""
         self._life_cycle_task = asyncio.create_task(self._life_cycle_loop())
         self._life_cycle_task.add_done_callback(
             lambda t: (
@@ -506,6 +502,27 @@ class DigitalLifeIntegrator:
                 else None
             )
         )
+
+    async def initialize(self) -> bool:
+        """
+        Initialize digital life with 2030-standard robust error handling.
+        Ensures partial survival even if high-level modules fail.
+        """
+        self._running = True
+        logger.info("🌌 Starting Angela's Digital Life Incubation...")
+
+        await self._init_biological_foundation()
+        await self._init_action_layer()
+        await self._init_memory_bridge()
+        await self._init_cognition()
+        await self._init_autonomous_lifecycle()
+
+        # 4. Final Activation
+        self.is_initialized = True
+        await self._transition_state(LifeCycleState.AWAKENING)
+
+        # Start background loops
+        self._spawn_background_loops()
 
         logger.info(f"✨ Angela has awakened in {self.life_cycle_state.en_name} state.")
         return True
