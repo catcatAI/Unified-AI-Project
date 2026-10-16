@@ -264,6 +264,15 @@ class CimStripConfig:
     sense_chain_duty: float = 1.0
 
     def __post_init__(self) -> None:
+        self._validate_counts()
+        self._validate_area()
+        self._validate_voltage()
+        self._validate_fraction()
+        self._validate_sense()
+        self._validate_weight_bits()
+
+    def _validate_counts(self) -> None:
+        """Validate strip/slot/die counts."""
         if self.strips_per_die < 1 or self.weight_slots_per_strip < 1:
             raise CimStripError("strip and slot counts must be positive")
         if self.cells_per_weight_max < 2:
@@ -272,34 +281,49 @@ class CimStripConfig:
             raise CimStripError("cells_per_weight_max must be a power of two")
         if self.dies_per_package < 1 or self.packages_per_card < 1:
             raise CimStripError("dies_per_package and packages_per_card must be positive")
+
+    def _validate_area(self) -> None:
+        """Validate area budgets."""
         if self.cell_footprint_um2 <= 0:
             raise CimStripError("cell_footprint_um2 must be positive")
         if self.die_area_budget_mm2 <= 0 or self.die_strip_area_budget_mm2 <= 0:
             raise CimStripError("die area budgets must be positive")
         if self.die_strip_area_budget_mm2 > self.die_area_budget_mm2:
             raise CimStripError("strip area budget cannot exceed the die area budget")
+
+    def _validate_voltage(self) -> None:
+        """Validate voltage and working set."""
         if self.array_vds_v <= 0 or self.input_vgs_max_v <= 0:
             raise CimStripError("array and input voltages must be positive")
+        if self.target_weight_working_set_mb <= 0:
+            raise CimStripError("target weight working set must be positive")
+
+    def _validate_fraction(self) -> None:
+        """Validate fractional parameters."""
         if not 0.0 <= self.input_ones_fraction <= 1.0:
             raise CimStripError("input_ones_fraction must be a probability")
         if not 0.0 < self.mean_weight_popcount <= self.cells_per_weight_max:
             raise CimStripError("mean_weight_popcount must be within the weight chain length")
-        if self.sense_time_s <= 0 or self.board_power_budget_w <= 0:
-            raise CimStripError("sense time and power budget must be positive")
-        if self.target_weight_working_set_mb <= 0:
-            raise CimStripError("target weight working set must be positive")
         if not 0.0 < self.linearity_tolerance_frac < 1.0:
             raise CimStripError("linearity tolerance must be a fraction in (0, 1)")
+
+    def _validate_sense(self) -> None:
+        """Validate sense-chain feasibility."""
+        if self.sense_time_s <= 0 or self.board_power_budget_w <= 0:
+            raise CimStripError("sense time and power budget must be positive")
         if self.effective_bits_v1 < 1:
             raise CimStripError("effective_bits_v1 must be positive")
         if self.min_read_swing_v <= 0 or self.min_cell_current_a <= 0:
             raise CimStripError("sense-chain feasibility limits must be positive")
-        if not 1 <= self.weight_bits <= 16:
-            raise CimStripError("weight_bits must be in [1, 16]")
         if self.input_gate_capacitance_f <= 0:
             raise CimStripError("input_gate_capacitance_f must be positive")
         if self.sense_chain_power_w < 0 or not 0.0 < self.sense_chain_duty <= 1.0:
             raise CimStripError("sense chain power must be non-negative and duty in (0, 1]")
+
+    def _validate_weight_bits(self) -> None:
+        """Validate weight bits vs chain length."""
+        if not 1 <= self.weight_bits <= 16:
+            raise CimStripError("weight_bits must be in [1, 16]")
         if self.cells_per_weight_max < self.weight_bits:
             raise CimStripError(
                 "cells_per_weight_max must provide at least one cell per weight bit"
