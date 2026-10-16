@@ -824,6 +824,49 @@ class NeuroVocabulary:
             )
             self.add_fragment(frag)
 
+    def _infer_structural_type(self, sentence: str, i: int, total: int) -> str:
+        """Infer structural type of a sentence fragment."""
+        if i == 0 and any_keyword(sentence, ("早安", "晚安", "你好", "嗨", "hi")):
+            return "greeting"
+        if i == total - 1 and any_keyword(sentence, ("吗", "呢", "?", "？")):
+            return "closing_question"
+        if any_keyword(sentence, ("!", "！")):
+            return "exclamation"
+        if any_keyword(sentence, ("让我", "想想", "关于")):
+            return "transition"
+        return "statement"
+
+    def _category_weights(self, category: str) -> Dict[str, float]:
+        """Infer 8D weights from category."""
+        weights = {
+            "alpha": 0.5,
+            "beta_val": 0.4,
+            "gamma": 0.1,
+            "delta": 0.3,
+            "epsilon": 0.3,
+            "zeta": 0.4,
+            "theta": 0.2,
+            "eta": 0.4,
+        }
+        cat = category.lower()
+        if "greeting" in cat:
+            weights.update({"alpha": 0.7, "gamma": 0.5, "delta": 0.4})
+        elif "emotional" in cat or "support" in cat:
+            weights.update({"alpha": 0.3, "gamma": -0.3, "delta": 0.6, "beta_val": 0.2})
+        elif "affirmation" in cat:
+            weights.update({"gamma": 0.7, "alpha": 0.6, "delta": 0.5})
+        elif "negation" in cat:
+            weights.update({"gamma": -0.4, "alpha": 0.3, "delta": 0.2})
+        elif "curiosity" in cat:
+            weights.update({"beta_val": 0.8, "gamma": 0.4, "alpha": 0.6})
+        elif "intimacy" in cat:
+            weights.update({"delta": 0.9, "gamma": 0.8, "alpha": 0.4})
+        elif "help" in cat:
+            weights.update({"epsilon": 0.6, "beta_val": 0.5, "alpha": 0.5})
+        elif "farewell" in cat:
+            weights.update({"zeta": 0.7, "alpha": 0.4, "gamma": 0.3})
+        return weights
+
     def decompose_from_templates(self, library) -> int:
         """
         从 TemplateLibrary 自动分解模板为片段。
@@ -838,6 +881,8 @@ class NeuroVocabulary:
             logger.warning("decompose_from_templates: failed to get templates", exc_info=True)
             return 0
 
+        import re as _re
+
         for tmpl in templates:
             content = getattr(tmpl, "content", "") or ""
             category = getattr(tmpl, "category", None)
@@ -847,8 +892,6 @@ class NeuroVocabulary:
                 category = category.value if hasattr(category, "value") else str(category)
             tmpl_id = getattr(tmpl, "id", "unknown")
 
-            import re as _re
-
             normalized = content.replace("...", "…").replace("。。", "。")
             sentences = [
                 s.strip() for s in _re.split(r"(?<=[。！？.!?])\s*", normalized) if s.strip()
@@ -856,76 +899,22 @@ class NeuroVocabulary:
 
             for i, sentence in enumerate(sentences):
                 fid = f"{tmpl_id}_s{i}"
-                # 推断 structural_type
-                if i == 0 and any_keyword(sentence, ("早安", "晚安", "你好", "嗨", "hi")):
-                    stype = "greeting"
-                elif i == len(sentences) - 1 and any_keyword(sentence, ("吗", "呢", "?", "？")):
-                    stype = "closing_question"
-                elif any_keyword(sentence, ("!", "！")):
-                    stype = "exclamation"
-                elif any_keyword(sentence, ("让我", "想想", "关于")):
-                    stype = "transition"
-                else:
-                    stype = "statement"
-
-                # 从类别推断 8D 权重
-                alpha = 0.5
-                beta_val = 0.4
-                gamma = 0.1
-                delta = 0.3
-                epsilon = 0.3
-                zeta = 0.4
-                theta = 0.2
-                eta = 0.4
-
-                if "greeting" in category.lower():
-                    alpha = 0.7
-                    gamma = 0.5
-                    delta = 0.4
-                elif "emotional" in category.lower() or "support" in category.lower():
-                    alpha = 0.3
-                    gamma = -0.3
-                    delta = 0.6
-                    beta_val = 0.2
-                elif "affirmation" in category.lower():
-                    gamma = 0.7
-                    alpha = 0.6
-                    delta = 0.5
-                elif "negation" in category.lower():
-                    gamma = -0.4
-                    alpha = 0.3
-                    delta = 0.2
-                elif "curiosity" in category.lower():
-                    beta_val = 0.8
-                    gamma = 0.4
-                    alpha = 0.6
-                elif "intimacy" in category.lower():
-                    delta = 0.9
-                    gamma = 0.8
-                    alpha = 0.4
-                elif "help" in category.lower():
-                    epsilon = 0.6
-                    beta_val = 0.5
-                    alpha = 0.5
-                elif "farewell" in category.lower():
-                    zeta = 0.7
-                    alpha = 0.4
-                    gamma = 0.3
+                stype = self._infer_structural_type(sentence, i, len(sentences))
+                w = self._category_weights(category)
 
                 frag = NeuroFragment(
                     fragment_id=fid,
                     content=sentence,
                     category=category,
                     structural_type=stype,
-                    alpha_energy=alpha,
-                    beta_curiosity=beta_val,
-                    gamma_valence=gamma,
-                    delta_intimacy=delta,
-                    epsilon_precision=epsilon,
-                    zeta_temporal=zeta,
-                    theta_meta=theta,
-                    eta_execution=eta,
-                    context_tags=[category, stype],
+                    alpha_energy=w["alpha"],
+                    beta_curiosity=w["beta_val"],
+                    gamma_valence=w["gamma"],
+                    delta_intimacy=w["delta"],
+                    epsilon_precision=w["epsilon"],
+                    zeta_temporal=w["zeta"],
+                    theta_meta=w["theta"],
+                    eta_execution=w["eta"],
                 )
                 self.add_fragment(frag)
                 count += 1
