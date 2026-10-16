@@ -199,44 +199,96 @@ class SkillSelector:
 
         return SkillScore(skill_id=skill_id, score=raw_score, confidence=confidence, params=params)
 
+    def _relevance_eat(self, prop) -> float:
+        """EAT relevance: hunger"""
+        hunger_ratio = prop.hunger / max(prop.max_hunger, 1)
+        if hunger_ratio < 0.3:
+            return float(0.5 * (1 - hunger_ratio / 0.3))
+        return 0.0
+
+    def _relevance_dig(self, prop) -> float:
+        """DIG relevance: 手持工具"""
+        if (
+            "pickaxe" in prop.wielded_item
+            or "axe" in prop.wielded_item
+            or "shovel" in prop.wielded_item
+        ):
+            return 0.2
+        return 0.0
+
     def _state_relevance(self, skill_id: SkillID, state: GameState) -> float:
         """根據當前狀態計算技能相關性"""
         if not state.proprioception:
             return 0.0
 
         prop = state.proprioception
-        bonus = 0.0
 
         if skill_id == SkillID.EAT:
-            hunger_ratio = prop.hunger / max(prop.max_hunger, 1)
-            if hunger_ratio < 0.3:
-                bonus += 0.5 * (1 - hunger_ratio / 0.3)
+            return self._relevance_eat(prop)
 
-        elif skill_id == SkillID.COMBAT:
+        if skill_id == SkillID.COMBAT:
             if prop.hp < prop.max_hp * 0.5:
-                bonus += 0.3
-            # 檢查附近敵對實體 (簡化)
+                return 0.3
+            return 0.0
 
-        elif skill_id == SkillID.DIG:
-            # 手持工具且面前有可挖方塊
-            if (
-                "pickaxe" in prop.wielded_item
-                or "axe" in prop.wielded_item
-                or "shovel" in prop.wielded_item
-            ):
-                bonus += 0.2
+        if skill_id == SkillID.DIG:
+            return self._relevance_dig(prop)
 
-        elif skill_id == SkillID.CRAFT:
+        if skill_id == SkillID.CRAFT:
             # 背包有材料且配方解鎖
             if len(prop.inventory) > 5:
-                bonus += 0.1
+                return 0.1
+            return 0.0
 
-        elif skill_id == SkillID.MOVE or skill_id == SkillID.NAVIGATE:
+        if skill_id == SkillID.MOVE or skill_id == SkillID.NAVIGATE:
             # 需要移動時 (有目標、卡住、探索)
             if state.task_progress and state.task_progress.blocker:
-                bonus += 0.4
+                return 0.4
+            return 0.0
 
-        return bonus
+        return 0.0
+
+    def _estimate_place_params(self, prop) -> Dict[str, Any]:
+        """PLACE: 手持方塊"""
+        for item, count in prop.inventory.items():
+            if count > 0 and item not in ["pickaxe", "axe", "shovel", "sword"]:
+                return {"block_type": item, "face": "top", "direction": "forward"}
+        return {}
+
+    def _estimate_craft_params(self, prop) -> Dict[str, Any]:
+        """CRAFT: 簡化：優先合成工具（背包先折短名，否則 itemstring 永遠對不上）"""
+        from ai.multimodal.game_memory_bridge import normalize_inventory
+
+        inv = normalize_inventory(prop.inventory)
+        if inv.get("cobblestone", 0) >= 3:
+            return {"recipe_id": "stone_pickaxe", "count": 1}
+        if inv.get("wood", 0) >= 2:
+            return {"recipe_id": "stick", "count": 4}
+        return {"recipe_id": "auto", "count": 1}
+
+    def _estimate_eat_params(self, prop) -> Dict[str, Any]:
+        """EAT: 從背包找食物"""
+        food = next(
+            (
+                k
+                for k in prop.inventory
+                if any(f in k for f in ["apple", "bread", "meat", "carrot"])
+            ),
+            "apple",
+        )
+        return {"food_item": food}
+
+    def _estimate_move_params(self) -> Dict[str, Any]:
+        """MOVE"""
+        return {"forward": 1.0, "strafe": 0.0, "yaw": 0.0}
+
+    def _estimate_combat_params(self, prop) -> Dict[str, Any]:
+        """COMBAT"""
+        return {
+            "target_entity": "nearest_hostile",
+            "weapon": prop.wielded_item,
+            "tactic": "melee",
+        }
 
     def _estimate_params(self, skill_id: SkillID, state: GameState) -> Dict[str, Any]:
         """估算技能參數"""
@@ -247,60 +299,43 @@ class SkillSelector:
             # 背包/手持資訊的技能——回空參數，由下游用預設值執行。
             return params
 
-        if skill_id == SkillID.MOVE:
-            params = {"forward": 1.0, "strafe": 0.0, "yaw": 0.0}
-
-        elif skill_id == SkillID.DIG:
-            # 朝著面前的方塊
-            params = {"target_node": "auto", "direction": "forward", "tool": prop.wielded_item}
-
-        elif skill_id == SkillID.PLACE:
-            # 手持方塊
-            for item, count in prop.inventory.items():
-                if count > 0 and item not in ["pickaxe", "axe", "shovel", "sword"]:
-                    params = {"block_type": item, "face": "top", "direction": "forward"}
-                    break
-
-        elif skill_id == SkillID.CRAFT:
-            # 簡化：優先合成工具（背包先折短名，否則 itemstring 永遠對不上）
-            from ai.multimodal.game_memory_bridge import normalize_inventory
-
-            inv = normalize_inventory(prop.inventory)
-            if inv.get("cobblestone", 0) >= 3:
-                params = {"recipe_id": "stone_pickaxe", "count": 1}
-            elif inv.get("wood", 0) >= 2:
-                params = {"recipe_id": "stick", "count": 4}
-            else:
-                params = {"recipe_id": "auto", "count": 1}
-
-        elif skill_id == SkillID.COMBAT:
-            params = {
-                "target_entity": "nearest_hostile",
-                "weapon": prop.wielded_item,
-                "tactic": "melee",
-            }
-
-        elif skill_id == SkillID.NAVIGATE:
-            params = {"target_pos": None, "path": None}
-
-        elif skill_id == SkillID.EAT:
-            food = next(
-                (
-                    k
-                    for k in prop.inventory
-                    if any(f in k for f in ["apple", "bread", "meat", "carrot"])
-                ),
-                "apple",
-            )
-            params = {"food_item": food}
-
-        elif skill_id == SkillID.BUILD:
-            params = {"blueprint": "shelter_5x5x3", "origin": prop.position, "rotation": 0}
-
-        elif skill_id == SkillID.LOOK:
-            params = {"yaw": 0.0, "pitch": -0.3, "target": "scan"}
+        dispatch = {
+            SkillID.MOVE: lambda: self._estimate_move_params(),
+            SkillID.DIG: lambda: {"target_node": "auto", "direction": "forward", "tool": prop.wielded_item},
+            SkillID.PLACE: lambda: self._estimate_place_params(prop),
+            SkillID.CRAFT: lambda: self._estimate_craft_params(prop),
+            SkillID.COMBAT: lambda: self._estimate_combat_params(prop),
+            SkillID.NAVIGATE: lambda: {"target_pos": None, "path": None},
+            SkillID.EAT: lambda: self._estimate_eat_params(prop),
+            SkillID.BUILD: lambda: {"blueprint": "shelter_5x5x3", "origin": prop.position, "rotation": 0},
+            SkillID.LOOK: lambda: {"yaw": 0.0, "pitch": -0.3, "target": "scan"},
+        }
+        fn = dispatch.get(skill_id)
+        if fn:
+            params = fn()
 
         return params
+
+
+    def _param_move(self, params: Dict, continuous_bias: np.ndarray, discrete_triggers: Dict) -> None:
+        """MOVE bias: 3 dims"""
+        continuous_bias[0] = params.get("forward", 1.0)
+        continuous_bias[1] = params.get("strafe", 0.0)
+        continuous_bias[2] = params.get("yaw", 0.0)
+        if params.get("jump"):
+            discrete_triggers["jump"] = 1.0
+        if params.get("sprint"):
+            discrete_triggers["sprint"] = 1.0
+        if params.get("sneak"):
+            discrete_triggers["sneak"] = 1.0
+
+    def _param_combat(self, continuous_bias: np.ndarray, discrete_triggers: Dict) -> None:
+        """COMBAT bias: 3 dims"""
+        continuous_bias[0] = 0.0  # combat_yaw
+        continuous_bias[1] = 0.0  # combat_pitch
+        continuous_bias[2] = 0.5  # combat_strafe (左右移動)
+        discrete_triggers["attack"] = 1.0
+        discrete_triggers["block"] = 0.3
 
     def _parameterize_skill(
         self, skill_id: SkillID, base_params: Dict, state: GameState, latent: np.ndarray
@@ -313,21 +348,12 @@ class SkillSelector:
 
         # 連續動作 bias (從 latent 解碼或用預設)
         continuous_bias = np.zeros(spec.continuous_dim, dtype=np.float32)
-        discrete_triggers = {}
+        discrete_triggers: Dict[str, float] = {}
 
         # 使用相對索引 (每個技能自己的 continuous_dim 範圍)
 
         if skill_id == SkillID.MOVE:
-            # 3 dims: forward, strafe, yaw
-            continuous_bias[0] = params.get("forward", 1.0)
-            continuous_bias[1] = params.get("strafe", 0.0)
-            continuous_bias[2] = params.get("yaw", 0.0)
-            if params.get("jump"):
-                discrete_triggers["jump"] = 1.0
-            if params.get("sprint"):
-                discrete_triggers["sprint"] = 1.0
-            if params.get("sneak"):
-                discrete_triggers["sneak"] = 1.0
+            self._param_move(params, continuous_bias, discrete_triggers)
 
         elif skill_id == SkillID.DIG:
             # 2 dims: dig_yaw, dig_pitch
@@ -342,12 +368,7 @@ class SkillSelector:
             discrete_triggers["use"] = 1.0
 
         elif skill_id == SkillID.COMBAT:
-            # 3 dims: combat_yaw, combat_pitch, combat_strafe
-            continuous_bias[0] = 0.0  # combat_yaw
-            continuous_bias[1] = 0.0  # combat_pitch
-            continuous_bias[2] = 0.5  # combat_strafe (左右移動)
-            discrete_triggers["attack"] = 1.0
-            discrete_triggers["block"] = 0.3
+            self._param_combat(continuous_bias, discrete_triggers)
 
         elif skill_id == SkillID.NAVIGATE:
             # 3 dims: nav_yaw, nav_pitch, nav_forward
@@ -378,6 +399,7 @@ class SkillSelector:
             priority=1.0,
             params=params,
         )
+
 
     def _get_termination_condition(self, skill_id: SkillID, params: Dict, state: GameState) -> str:
         """生成終止條件字串"""
