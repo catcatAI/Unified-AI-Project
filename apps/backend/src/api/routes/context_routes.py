@@ -34,12 +34,8 @@ def _render_memory_content(content: Any) -> str:
     return str(content)[:200]
 
 
-@router.get("/summary")
-async def context_summary() -> Dict[str, Any]:
-    """Return context overview: state matrix, memory status, intent list."""
-    result: Dict[str, Any] = {"timestamp": time.time()}
-
-    # ── 8D State Matrix ──
+async def _summary_state_section(result: Dict[str, Any]) -> None:
+    """Fill result['state'] and result['eta'] from chat service state matrix."""
     try:
         from api.lifespan import _get_chat_service
 
@@ -65,7 +61,9 @@ async def context_summary() -> Dict[str, Any]:
         result["state"] = {}
         result["eta"] = None
 
-    # ── Memory ──
+
+async def _summary_memory_section(result: Dict[str, Any]) -> None:
+    """Fill result['memory'] with initialization status + recent count."""
     try:
         from api.lifespan import _get_chat_service
 
@@ -86,7 +84,9 @@ async def context_summary() -> Dict[str, Any]:
     except Exception:
         result["memory"] = {"initialized": False}
 
-    # ── Intents ──
+
+def _summary_intents_section(result: Dict[str, Any]) -> None:
+    """Fill result['intents'] with configured intent names."""
     try:
         from core.config_loader import get_angela_config
 
@@ -99,23 +99,32 @@ async def context_summary() -> Dict[str, Any]:
     except Exception:
         result["intents"] = {"count": 0, "names": []}
 
-    # ── LLM quick status ──
+
+async def _summary_llm_section(result: Dict[str, Any]) -> None:
+    """Fill result['llm'] with quick backend status."""
     try:
         from services.angela_llm_service import get_llm_service
 
         llm_svc = await get_llm_service()
+        active = getattr(llm_svc, "active_backend_type", None)
         result["llm"] = {
             "available": getattr(llm_svc, "is_available", False),
-            "active": (
-                llm_svc.active_backend_type.name
-                if getattr(llm_svc, "active_backend_type", None) is not None
-                and llm_svc.active_backend_type is not None
-                else None
-            ),
+            "active": active.name if active is not None else None,
             "mode": getattr(llm_svc, "llm_mode", "unknown"),
         }
     except Exception:
         result["llm"] = {"available": False}
+
+
+@router.get("/summary")
+async def context_summary() -> Dict[str, Any]:
+    """Return context overview: state matrix, memory status, intent list."""
+    result: Dict[str, Any] = {"timestamp": time.time()}
+
+    await _summary_state_section(result)
+    await _summary_memory_section(result)
+    _summary_intents_section(result)
+    await _summary_llm_section(result)
 
     return result
 
