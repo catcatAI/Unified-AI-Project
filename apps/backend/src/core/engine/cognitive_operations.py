@@ -126,6 +126,79 @@ def execute_thought_chain(
     return result
 
 
+def _shunting_yard(tokens: List[str]) -> List[Any]:
+    """Convert tokens to RPN using shunting-yard algorithm."""
+    precedence = _get_spatial_config(
+        "operator_precedence", {"+": 1, "-": 1, "*": 2, "/": 2, "**": 3}
+    )
+    output_queue: List[Any] = []
+    operator_stack: List[str] = []
+
+    for token in tokens:
+        if re.match(r"\d+\.?\d*", token):
+            output_queue.append(float(token))
+        elif token == "(":
+            operator_stack.append(token)
+        elif token == ")":
+            while operator_stack and operator_stack[-1] != "(":
+                output_queue.append(operator_stack.pop())
+            operator_stack.pop()
+        else:
+            while (
+                operator_stack
+                and operator_stack[-1] != "("
+                and precedence[operator_stack[-1]] >= precedence[token]
+            ):
+                output_queue.append(operator_stack.pop())
+            operator_stack.append(token)
+
+    while operator_stack:
+        output_queue.append(operator_stack.pop())
+    return output_queue
+
+
+def _apply_spatial_op(dimensions: Dict[str, Any], token: str, a: float, b: float) -> float:
+    """Apply a spatial operation and return the result."""
+    if "epsilon" in dimensions:
+        ey, ez = (
+            dimensions["epsilon"].coordinate[1],
+            dimensions["epsilon"].coordinate[2],
+        )
+        dimensions["epsilon"].coordinate = (a, ey, ez)
+
+    if token == "**":
+        return float(a**b)
+
+    op_map = {
+        "+": CognitiveOp.ACCUMULATE,
+        "-": CognitiveOp.DECREMENT,
+        "*": CognitiveOp.AMPLIFY,
+        "/": CognitiveOp.DIMINISH,
+    }
+    op = op_map.get(token, CognitiveOp.ACCUMULATE)
+    new_coord = perform_spatial_reasoning(dimensions, "epsilon", op, b)
+    return float(new_coord[0])
+
+
+def _update_epsilon_metrics(
+    dimensions: Dict[str, Any], expression: str, final_result: float
+) -> None:
+    """Update epsilon dimension metrics after evaluation."""
+    if "epsilon" not in dimensions:
+        return
+    comp_div = _get_spatial_config("complexity_divisor", 20.0)
+    dimensions["epsilon"].values["complexity"] = min(1.0, len(expression) / comp_div)
+    cert_base = _get_spatial_config("certainty_base", 0.5)
+    cert_char = _get_spatial_config("certainty_per_char", 0.05)
+    fat_inc = _get_spatial_config("fatigue_increment", 0.02)
+    dimensions["epsilon"].values["certainty"] = min(
+        1.0, cert_base + cert_char * len(expression)
+    )
+    dimensions["epsilon"].values["fatigue"] = min(
+        1.0, dimensions["epsilon"].values.get("fatigue", 0.0) + fat_inc
+    )
+
+
 def evaluate_math_spatially(dimensions: Dict[str, Any]) -> Callable[[str], float]:
     """
     [L4-Reasoning] 將數學算式原生解析為空間變換。
@@ -137,84 +210,19 @@ def evaluate_math_spatially(dimensions: Dict[str, Any]) -> Callable[[str], float
         logger.info(f"[SpatialMath] Resolving expression: {expression}")
 
         tokens = re.findall(r"\d+\.?\d*|\*\*|[\+\-\*\/\(\)]", expression)
+        output_queue = _shunting_yard(tokens)
 
-        precedence = _get_spatial_config(
-            "operator_precedence", {"+": 1, "-": 1, "*": 2, "/": 2, "**": 3}
-        )
-        output_queue = []
-        operator_stack = []
-
-        for token in tokens:
-            if re.match(r"\d+\.?\d*", token):
-                output_queue.append(float(token))
-            elif token == "(":
-                operator_stack.append(token)
-            elif token == ")":
-                while operator_stack and operator_stack[-1] != "(":
-                    output_queue.append(operator_stack.pop())
-                operator_stack.pop()
-            else:
-                while (
-                    operator_stack
-                    and operator_stack[-1] != "("
-                    and precedence[operator_stack[-1]] >= precedence[token]
-                ):
-                    output_queue.append(operator_stack.pop())
-                operator_stack.append(token)
-
-        while operator_stack:
-            output_queue.append(operator_stack.pop())
-
-        execution_stack = []
-
-        if "epsilon" in dimensions:
-            comp_div = _get_spatial_config("complexity_divisor", 20.0)
-            dimensions["epsilon"].values["complexity"] = min(1.0, len(expression) / comp_div)
-
+        execution_stack: List[float] = []
         for token in output_queue:
             if isinstance(token, float):
                 execution_stack.append(token)
             else:
                 b = execution_stack.pop()
                 a = execution_stack.pop()
-
-                if "epsilon" in dimensions:
-                    ey, ez = (
-                        dimensions["epsilon"].coordinate[1],
-                        dimensions["epsilon"].coordinate[2],
-                    )
-                    dimensions["epsilon"].coordinate = (a, ey, ez)
-
-                if token == "+":
-                    op = CognitiveOp.ACCUMULATE
-                elif token == "-":
-                    op = CognitiveOp.DECREMENT
-                elif token == "*":
-                    op = CognitiveOp.AMPLIFY
-                elif token == "/":
-                    op = CognitiveOp.DIMINISH
-                elif token == "**":
-                    execution_stack.append(a**b)
-                    continue
-                else:
-                    op = CognitiveOp.ACCUMULATE
-
-                new_coord = perform_spatial_reasoning(dimensions, "epsilon", op, b)
-                execution_stack.append(new_coord[0])
+                execution_stack.append(_apply_spatial_op(dimensions, token, a, b))
 
         final_result = execution_stack[0] if execution_stack else 0.0
-
-        if "epsilon" in dimensions:
-            cert_base = _get_spatial_config("certainty_base", 0.5)
-            cert_char = _get_spatial_config("certainty_per_char", 0.05)
-            fat_inc = _get_spatial_config("fatigue_increment", 0.02)
-            dimensions["epsilon"].values["certainty"] = min(
-                1.0, cert_base + cert_char * len(expression)
-            )
-            dimensions["epsilon"].values["fatigue"] = min(
-                1.0, dimensions["epsilon"].values.get("fatigue", 0.0) + fat_inc
-            )
-
+        _update_epsilon_metrics(dimensions, expression, final_result)
         logger.info(f"[SpatialMath] Epsilon calculation: {expression} = {final_result}")
         return final_result
 
