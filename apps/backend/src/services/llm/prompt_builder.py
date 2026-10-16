@@ -6,7 +6,7 @@ import logging
 import os
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from core.prompt_manager import prompt
 
@@ -116,27 +116,23 @@ def resolve_model_window(model_name: str) -> int:
     return DEFAULT_MODEL_CONTEXT_WINDOW
 
 
-def _trim_system_sections(content: str, deficit_tokens: int) -> tuple:
-    """system 訊息內部裁剪：保護開頭核心段落與安全指令區段，
-    其餘 [Tag] 區段由大至小整段捨棄；仍不足則砍半最大區段。
-    回傳（新內容, 釋放字元數, 捨棄區段數）。"""
-    parts = content.split("\n\n[")
-    if len(parts) <= 1:
-        return content, 0, 0  # 無區段結構，不可裁
+def _droppable(parts: List[str]) -> List[int]:
+    """Indices of non-protected sections (parts[0] is the core, never droppable)."""
+    return [
+        i
+        for i, part in enumerate(parts[1:], start=1)
+        if not part.startswith(_PROTECTED_SYSTEM_SECTIONS)
+    ]
 
-    def droppable() -> List[int]:
-        out = []
-        for i, part in enumerate(parts[1:], start=1):
-            if part.startswith(_PROTECTED_SYSTEM_SECTIONS):
-                continue
-            out.append(i)
-        return out
 
+def _drop_whole_sections(
+    parts: List[str], deficit_tokens: int
+) -> Tuple[int, int, int]:
+    """整段捨棄（由大至小）。回傳（剩餘 deficit, 釋放字元, 捨棄數）。"""
     freed_chars = 0
     dropped = 0
-    # 先整段捨棄（由大至小）
     while deficit_tokens > 0:
-        candidates = droppable()
+        candidates = _droppable(parts)
         if not candidates:
             break
         biggest = max(candidates, key=lambda i: len(parts[i]))
@@ -144,9 +140,15 @@ def _trim_system_sections(content: str, deficit_tokens: int) -> tuple:
         freed_chars += len(parts[biggest])
         parts.pop(biggest)
         dropped += 1
-    # 仍不足：砍半最大區段
+    return deficit_tokens, freed_chars, dropped
+
+
+def _halve_sections(parts: List[str], deficit_tokens: int) -> Tuple[int, int, int]:
+    """仍不足：砍半最大區段。回傳（剩餘 deficit, 釋放字元, 捨棄數）。"""
+    freed_chars = 0
+    dropped = 0
     while deficit_tokens > 0:
-        candidates = droppable()
+        candidates = _droppable(parts)
         if not candidates:
             break
         biggest = max(candidates, key=lambda i: len(parts[i]))
@@ -157,25 +159,52 @@ def _trim_system_sections(content: str, deficit_tokens: int) -> tuple:
         freed_chars += len(parts[biggest]) - len(halved)
         parts[biggest] = halved
         dropped += 1
-    # 最後手段：核心本身超額（小模型連身分都裝不下）——按行精簡，
-    # 保留前幾行「她是誰」的身分精華，捨棄狀態樣板等細節
-    if deficit_tokens > 0 and len(parts[0]) > 400:
-        lines = [ln for ln in parts[0].splitlines() if ln.strip()]
-        keep: List[str] = []
-        used = 0
-        for ln in lines:
-            cost = estimate_tokens(ln) + 1
-            if used + cost > 400 and keep:
-                break
-            keep.append(ln)
-            used += cost
-        trimmed_core = "\n".join(keep) + "\n…（核心提示已精簡）"
-        freed_now = estimate_tokens(parts[0]) - estimate_tokens(trimmed_core)
-        if freed_now > 0:  # 只有真的變小才計入，避免死循環
-            deficit_tokens -= freed_now
-            freed_chars += len(parts[0]) - len(trimmed_core)
-            parts[0] = trimmed_core
-            dropped += 1
+    return deficit_tokens, freed_chars, dropped
+
+
+def _trim_core_section(parts: List[str], deficit_tokens: int) -> Tuple[int, int]:
+    """最後手段：核心本身超額——按行精簡，保留前幾行「她是誰」的身分精華。
+    回傳（釋放字元, 捨棄數）。"""
+    if deficit_tokens <= 0 or len(parts[0]) <= 400:
+        return 0, 0
+    lines = [ln for ln in parts[0].splitlines() if ln.strip()]
+    keep: List[str] = []
+    used = 0
+    for ln in lines:
+        cost = estimate_tokens(ln) + 1
+        if used + cost > 400 and keep:
+            break
+        keep.append(ln)
+        used += cost
+    trimmed_core = "\n".join(keep) + "\n…（核心提示已精簡）"
+    freed_now = estimate_tokens(parts[0]) - estimate_tokens(trimmed_core)
+    if freed_now <= 0:  # 只有真的變小才計入，避免死循環
+        return 0, 0
+    freed_chars = len(parts[0]) - len(trimmed_core)
+    parts[0] = trimmed_core
+    return freed_chars, 1
+
+
+def _trim_system_sections(content: str, deficit_tokens: int) -> tuple:
+    """system 訊息內部裁剪：保護開頭核心段落與安全指令區段，
+    其餘 [Tag] 區段由大至小整段捨棄；仍不足則砍半最大區段。
+    回傳（新內容, 釋放字元數, 捨棄區段數）。"""
+    parts = content.split("\n\n[")
+    if len(parts) <= 1:
+        return content, 0, 0  # 無區段結構，不可裁
+
+    freed_chars = 0
+    dropped = 0
+    deficit_tokens, freed, count = _drop_whole_sections(parts, deficit_tokens)
+    freed_chars += freed
+    dropped += count
+    deficit_tokens, freed, count = _halve_sections(parts, deficit_tokens)
+    freed_chars += freed
+    dropped += count
+    # 最後手段：核心本身超額（小模型連身分都裝不下）
+    freed, count = _trim_core_section(parts, deficit_tokens)
+    freed_chars += freed
+    dropped += count
     return "\n\n[".join(parts), freed_chars, dropped
 
 
