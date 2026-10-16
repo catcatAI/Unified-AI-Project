@@ -20,18 +20,22 @@ class VisionHandler:
         self._model_bus = model_bus
         self._vision_service: Optional[Any] = None
 
-    async def handle(self, text: str, intent: str = "vision") -> str:
-        image_path = self._extract_image_path(text)
+    async def _validate_image_path(self, image_path: Optional[str]) -> tuple:
+        """Validate image path existence, file type, and MIME type. Returns (target, mime_type, error_msg)."""
         if not image_path:
-            return "（視覺分析）請提供圖片路徑或附帶圖片。"
+            return None, None, "（視覺分析）請提供圖片路徑或附帶圖片。"
         target = Path(image_path)
         if not await asyncio.to_thread(target.exists):
-            return f"（視覺分析）圖片不存在：{image_path}"
+            return None, None, f"（視覺分析）圖片不存在：{image_path}"
         if not await asyncio.to_thread(target.is_file):
-            return f"（視覺分析）不是檔案：{image_path}"
+            return None, None, f"（視覺分析）不是檔案：{image_path}"
         mime_type = mimetypes.guess_type(str(target))[0]
         if not mime_type or not mime_type.startswith("image/"):
-            return f"（視覺分析）不支援的圖片格式：{mime_type}"
+            return None, None, f"（視覺分析）不支援的圖片格式：{mime_type}"
+        return target, mime_type, None
+
+    def _check_path_fence(self, target: Path, image_path: str) -> Optional[str]:
+        """Check path is within allowed roots; returns error message or None."""
         try:
             from services.handlers.file_operation_handler import _is_safe_path as _roots_ok
 
@@ -39,27 +43,46 @@ class VisionHandler:
                 return f"（視覺分析）路徑不在允許範圍：{image_path}"
         except Exception as e:
             logger.warning(f"Vision path fence unavailable: {e}", exc_info=True)
+        return None
+
+    async def _analyze_with_service(
+        self, image_data: bytes, target: Path, mime_type: str
+    ) -> Optional[str]:
+        """Run VisionService analysis; returns caption or None if unavailable."""
+        if self._vision_service is None:
+            try:
+                from services.vision_service import VisionService
+
+                self._vision_service = VisionService()
+            except Exception as e:
+                logger.warning(f"VisionService unavailable: {e}", exc_info=True)
+                self._vision_service = False  # don't retry every request
+        if self._vision_service and self._vision_service is not True:
+            result = await self._vision_service.analyze_image(
+                image_data=image_data, context={"path": str(target), "mime_type": mime_type}
+            )
+            caption = result.get("caption") or result.get("description")
+            if caption:
+                return f"（視覺分析）{caption}"
+        return None
+
+    async def handle(self, text: str, intent: str = "vision") -> str:
+        image_path = self._extract_image_path(text)
+        target, mime_type, error_msg = await self._validate_image_path(image_path)
+        if error_msg:
+            return error_msg
+        fence_error = self._check_path_fence(target, image_path)
+        if fence_error:
+            return fence_error
         try:
             image_data = await asyncio.to_thread(target.read_bytes)
             # Delegate to the shared VisionService for real analysis. The old
             # model_bus.execute_handler("vision", ...) branch was dead code — it
             # would recurse into this same handler, so production always fell
             # back to _local_describe (file metadata only).
-            if self._vision_service is None:
-                try:
-                    from services.vision_service import VisionService
-
-                    self._vision_service = VisionService()
-                except Exception as e:
-                    logger.warning(f"VisionService unavailable: {e}", exc_info=True)
-                    self._vision_service = False  # don't retry every request
-            if self._vision_service and self._vision_service is not True:
-                result = await self._vision_service.analyze_image(
-                    image_data=image_data, context={"path": str(target), "mime_type": mime_type}
-                )
-                caption = result.get("caption") or result.get("description")
-                if caption:
-                    return f"（視覺分析）{caption}"
+            caption = await self._analyze_with_service(image_data, target, mime_type)
+            if caption:
+                return caption
             return self._local_describe(target, mime_type)
         except Exception as e:
             logger.error(f"VisionHandler error: {e}", exc_info=True)
