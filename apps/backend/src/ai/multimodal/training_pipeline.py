@@ -1305,6 +1305,71 @@ class FullTrainingPipeline:
             logger.warning("Failed to save weights: %s", e)
             return ""
 
+    def _load_projections(self, data: Any) -> None:
+        """載入 vision/audio 可訓練投影矩陣。"""
+        if "vision_W" in data:
+            self._ls._projections["vision"]["W"][:] = data["vision_W"]
+            self._ls._projections["vision"]["b"][:] = data["vision_b"]
+        if "audio_W" in data:
+            self._ls._projections["audio"]["W"][:] = data["audio_W"]
+            self._ls._projections["audio"]["b"][:] = data["audio_b"]
+
+    def _load_visual_decoder(self, data: Any) -> None:
+        """載入視覺解碼器主權重與 texture 權重組。"""
+        if "visual_decoder_W" in data:
+            self._visual_decoder._W[:] = data["visual_decoder_W"]
+            self._visual_decoder._b[:] = data["visual_decoder_b"]
+        if "texture_W_hidden" in data:
+            self._visual_decoder._W_hidden[:] = data["texture_W_hidden"]
+            self._visual_decoder._b_hidden[:] = data["texture_b_hidden"]
+            self._visual_decoder._W_featmap[:] = data["texture_W_featmap"]
+            self._visual_decoder._b_featmap[:] = data["texture_b_featmap"]
+            self._visual_decoder._tex_kernels[:] = data["texture_tex_kernels"]
+
+    def _load_audio_decoder(self, data: Any) -> None:
+        """載入音訊解碼器主權重與 hidden/wavetable/noise 權重組。"""
+        if "audio_decoder_W" in data:
+            self._audio_decoder._W[:] = data["audio_decoder_W"]
+            self._audio_decoder._b[:] = data["audio_decoder_b"]
+        if "audio_W_hidden" in data:
+            self._audio_decoder._W_hidden[:] = data["audio_W_hidden"]
+            self._audio_decoder._b_hidden[:] = data["audio_b_hidden"]
+            self._audio_decoder._W_wavetable[:] = data["audio_W_wavetable"]
+            self._audio_decoder._b_wavetable[:] = data["audio_b_wavetable"]
+            self._audio_decoder._W_noise[:] = data["audio_W_noise"]
+            self._audio_decoder._b_noise[:] = data["audio_b_noise"]
+
+    def _load_sequence_generator(self, data: Any) -> None:
+        """載入序列產生器全部循環權重並標記 trained。"""
+        if "seq_W_ih" in data:
+            self._sequence_generator._W_ih[:] = data["seq_W_ih"]
+            self._sequence_generator._b_ih[:] = data["seq_b_ih"]
+            self._sequence_generator._W_ph[:] = data["seq_W_ph"]
+            self._sequence_generator._b_ph[:] = data["seq_b_ph"]
+            self._sequence_generator._W_hh[:] = data["seq_W_hh"]
+            self._sequence_generator._b_hh[:] = data["seq_b_hh"]
+            self._sequence_generator._W_ho[:] = data["seq_W_ho"]
+            self._sequence_generator._b_ho[:] = data["seq_b_ho"]
+            self._sequence_generator._W_stop[:] = data["seq_W_stop"]
+            self._sequence_generator._b_stop[:] = data["seq_b_stop"]
+            self._sequence_generator._trained = True
+
+    def _load_primitive_encoder(self, data: Any) -> None:
+        """依儲存形狀重建 PrimitiveEncoder 並載入 encode/decode 權重。"""
+        if "prim_enc_W_encode" in data:
+            from .primitives.primitive_encoder import PrimitiveEncoder
+
+            self._primitive_encoder = PrimitiveEncoder(
+                embedding_dim=data["prim_enc_W_encode"].shape[0]
+            )
+            assert self._primitive_encoder is not None
+            self._primitive_encoder._W_encode[:] = data["prim_enc_W_encode"]
+            self._primitive_encoder._b_encode[:] = data["prim_enc_b_encode"]
+            self._primitive_encoder._W_decode[:] = data["prim_enc_W_decode"]
+            self._primitive_encoder._b_decode[:] = data["prim_enc_b_decode"]
+            self._primitive_encoder._trained = True
+            self._primitive_encoder._best_loss = 0.0
+
     def load_weights(self, path: str) -> bool:
         """Load trained weights from a .npz file.
 
@@ -1321,56 +1386,11 @@ class FullTrainingPipeline:
             return False
 
         try:
-            if "vision_W" in data:
-                self._ls._projections["vision"]["W"][:] = data["vision_W"]
-                self._ls._projections["vision"]["b"][:] = data["vision_b"]
-            if "audio_W" in data:
-                self._ls._projections["audio"]["W"][:] = data["audio_W"]
-                self._ls._projections["audio"]["b"][:] = data["audio_b"]
-            if "visual_decoder_W" in data:
-                self._visual_decoder._W[:] = data["visual_decoder_W"]
-                self._visual_decoder._b[:] = data["visual_decoder_b"]
-            if "texture_W_hidden" in data:
-                self._visual_decoder._W_hidden[:] = data["texture_W_hidden"]
-                self._visual_decoder._b_hidden[:] = data["texture_b_hidden"]
-                self._visual_decoder._W_featmap[:] = data["texture_W_featmap"]
-                self._visual_decoder._b_featmap[:] = data["texture_b_featmap"]
-                self._visual_decoder._tex_kernels[:] = data["texture_tex_kernels"]
-            if "audio_decoder_W" in data:
-                self._audio_decoder._W[:] = data["audio_decoder_W"]
-                self._audio_decoder._b[:] = data["audio_decoder_b"]
-            if "audio_W_hidden" in data:
-                self._audio_decoder._W_hidden[:] = data["audio_W_hidden"]
-                self._audio_decoder._b_hidden[:] = data["audio_b_hidden"]
-                self._audio_decoder._W_wavetable[:] = data["audio_W_wavetable"]
-                self._audio_decoder._b_wavetable[:] = data["audio_b_wavetable"]
-                self._audio_decoder._W_noise[:] = data["audio_W_noise"]
-                self._audio_decoder._b_noise[:] = data["audio_b_noise"]
-            if "seq_W_ih" in data:
-                self._sequence_generator._W_ih[:] = data["seq_W_ih"]
-                self._sequence_generator._b_ih[:] = data["seq_b_ih"]
-                self._sequence_generator._W_ph[:] = data["seq_W_ph"]
-                self._sequence_generator._b_ph[:] = data["seq_b_ph"]
-                self._sequence_generator._W_hh[:] = data["seq_W_hh"]
-                self._sequence_generator._b_hh[:] = data["seq_b_hh"]
-                self._sequence_generator._W_ho[:] = data["seq_W_ho"]
-                self._sequence_generator._b_ho[:] = data["seq_b_ho"]
-                self._sequence_generator._W_stop[:] = data["seq_W_stop"]
-                self._sequence_generator._b_stop[:] = data["seq_b_stop"]
-                self._sequence_generator._trained = True
-            if "prim_enc_W_encode" in data:
-                from .primitives.primitive_encoder import PrimitiveEncoder
-
-                self._primitive_encoder = PrimitiveEncoder(
-                    embedding_dim=data["prim_enc_W_encode"].shape[0]
-                )
-                assert self._primitive_encoder is not None
-                self._primitive_encoder._W_encode[:] = data["prim_enc_W_encode"]
-                self._primitive_encoder._b_encode[:] = data["prim_enc_b_encode"]
-                self._primitive_encoder._W_decode[:] = data["prim_enc_W_decode"]
-                self._primitive_encoder._b_decode[:] = data["prim_enc_b_decode"]
-                self._primitive_encoder._trained = True
-                self._primitive_encoder._best_loss = 0.0
+            self._load_projections(data)
+            self._load_visual_decoder(data)
+            self._load_audio_decoder(data)
+            self._load_sequence_generator(data)
+            self._load_primitive_encoder(data)
             logger.info("Weights loaded from %s", path)
             return True
         except Exception as e:
