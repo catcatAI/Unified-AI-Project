@@ -89,6 +89,27 @@ class SecurityLayer:
                 return str(value.decode("utf-8", errors="ignore"))
         return None
 
+    @staticmethod
+    def _bearer_token(authorization: str) -> str:
+        """Strip 'bearer ' prefix when present (case-insensitive)."""
+        if authorization.lower().startswith("bearer "):
+            return authorization[len("bearer ") :].strip()
+        return authorization
+
+    def _verify_token_any(self, auth: Any, token: str) -> bool:
+        """JWT 驗證失敗再試 API key；任一通過即 True。"""
+        try:
+            if auth.verify_token(token) is not None:
+                return True
+        except Exception as exc:
+            logger.debug("SecurityLayer auth verify failed: %s", exc)
+        try:
+            if auth.verify_api_key(token) is not None:
+                return True
+        except Exception as exc:
+            logger.debug("SecurityLayer api-key verify failed: %s", exc)
+        return False
+
     def check_authorization(self, scope: Dict[str, Any], path: str) -> Optional[int]:
         """校驗授權；回傳 None=允許，int=HTTP 拒絕狀態碼。
 
@@ -104,21 +125,10 @@ class SecurityLayer:
         if not authorization:
             self.stats["auth_rejected"] += 1
             return 401
-        token = authorization
-        if authorization.lower().startswith("bearer "):
-            token = authorization[len("bearer ") :].strip()
+        token = self._bearer_token(authorization)
         # 嘗試 JWT 驗證；失敗再試 API key
-        try:
-            payload = self.auth.verify_token(token)
-            if payload is not None:
-                return None
-        except Exception as exc:
-            logger.debug("SecurityLayer auth verify failed: %s", exc)
-        try:
-            if self.auth.verify_api_key(token) is not None:
-                return None
-        except Exception as exc:
-            logger.debug("SecurityLayer api-key verify failed: %s", exc)
+        if self._verify_token_any(self.auth, token):
+            return None
         self.stats["auth_rejected"] += 1
         return 401
 
