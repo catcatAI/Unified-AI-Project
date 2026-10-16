@@ -17,7 +17,7 @@ import os
 import sys
 import threading
 import time
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 # Config-driven sleep intervals
 try:
@@ -700,6 +700,99 @@ def _format_intent_registry() -> str:
 # ═══════════════════════════════════════════════════════════════════
 
 
+def _llm_routing_overview(llm_svc: Any) -> List[str]:
+    """Format the overview section (overall/mode/active/fallback)."""
+    is_available = getattr(llm_svc, "is_available", False)
+    active_type = getattr(llm_svc, "active_backend_type", None)
+    llm_mode = getattr(llm_svc, "llm_mode", "unknown")
+    chain = getattr(llm_svc, "_angela_fallback_chain", [])
+
+    lines = [_section("LLM Routing")]
+    lines.append(f"  Overall:    {_badge('available', is_available)}")
+    lines.append(f"  Mode:       {llm_mode}")
+    lines.append(f"  Active:     {active_type.name if active_type else '(none)'}")
+    if chain:
+        lines.append(f"  Fallback:   {' → '.join(str(c) for c in chain)}")
+    return lines
+
+
+def _llm_backend_health(bobj: Any) -> str:
+    """Best-effort health string for one backend."""
+    health = "?"
+    try:
+        import asyncio as _aio
+
+        try:
+            _aio.get_running_loop()
+        except RuntimeError:
+            health = "ok" if _aio.run(bobj.check_health()) else "fail"
+        else:
+            health = "ok"  # skip health check in running loop
+    except Exception:
+        logger.debug("repl: backend health check failed", exc_info=True)
+    return health
+
+
+def _llm_backend_table(llm_svc: Any) -> List[str]:
+    """Format the registered-backends table section."""
+    backends = getattr(llm_svc, "backends", {})
+    active_type = getattr(llm_svc, "active_backend_type", None)
+    if not backends:
+        return []
+
+    lines = ["", _section("Registered Backends")]
+    lines.append(f"  {'Backend':<24s} {'Type':<8s} {'Status':<10s} {'Active'}")
+    lines.append(f"  {'─'*24} {'─'*8} {'─'*10} {'─'*6}")
+
+    for btype, bobj in backends.items():
+        name = btype.name if hasattr(btype, "name") else str(btype)
+        backend_type = (
+            getattr(bobj, "_config", {}).get("type", "?")
+            if hasattr(bobj, "_config")
+            else "?"
+        )
+        is_active = active_type is not None and btype == active_type
+        marker = " ★" if is_active else ""
+        health = _llm_backend_health(bobj)
+        status = _badge("active" if is_active else health, health == "ok" or is_active)
+        lines.append(f"  {name:<24s} {backend_type:<8s} {status}{marker}")
+    return lines
+
+
+def _llm_stats_section(llm_svc: Any) -> List[str]:
+    """Format the statistics section."""
+    stats = getattr(llm_svc, "stats", {})
+    if not stats:
+        return []
+    lines = ["", _section("Statistics")]
+    for k, v in stats.items():
+        lines.append(f"  {k}: {v}")
+    return lines
+
+
+def _llm_hints(llm_svc: Any) -> List[str]:
+    """Format trailing hints based on availability/mode."""
+    is_available = getattr(llm_svc, "is_available", False)
+    llm_mode = getattr(llm_svc, "llm_mode", "unknown")
+    lines = [""]
+    if not is_available:
+        lines.append(_hint("No backend passed health check"))
+        lines.append(_hint("For local: ensure Ollama is running (ollama serve)"))
+        lines.append(
+            _hint(
+                "For cloud: set API key in .env and deployment.mode: local+llm in llm.default.yaml"
+            )
+        )
+    elif llm_mode == "local":
+        lines.append(_hint("Running in local-only mode. Cloud backends are gated."))
+        lines.append(
+            _hint(
+                "To enable cloud: change deployment.mode to 'local+llm' or 'auto' in llm.default.yaml"
+            )
+        )
+    return lines
+
+
 def _format_llm_routing(service: Any) -> str:
     """Format LLM routing with backend health details."""
     try:
@@ -709,76 +802,10 @@ def _format_llm_routing(service: Any) -> str:
             lines.append(_hint("Check if the backend server is running"))
             return "\n".join(lines)
 
-        is_available = getattr(llm_svc, "is_available", False)
-        active_type = getattr(llm_svc, "active_backend_type", None)
-        llm_mode = getattr(llm_svc, "llm_mode", "unknown")
-        chain = getattr(llm_svc, "_angela_fallback_chain", [])
-        backends = getattr(llm_svc, "backends", {})
-        stats = getattr(llm_svc, "stats", {})
-
-        lines = [_section("LLM Routing")]
-        lines.append(f"  Overall:    {_badge('available', is_available)}")
-        lines.append(f"  Mode:       {llm_mode}")
-        lines.append(f"  Active:     {active_type.name if active_type else '(none)'}")
-        if chain:
-            lines.append(f"  Fallback:   {' → '.join(str(c) for c in chain)}")
-
-        # Backend table
-        if backends:
-            lines.append("")
-            lines.append(_section("Registered Backends"))
-            lines.append(f"  {'Backend':<24s} {'Type':<8s} {'Status':<10s} {'Active'}")
-            lines.append(f"  {'─'*24} {'─'*8} {'─'*10} {'─'*6}")
-
-            for btype, bobj in backends.items():
-                name = btype.name if hasattr(btype, "name") else str(btype)
-                backend_type = (
-                    getattr(bobj, "_config", {}).get("type", "?")
-                    if hasattr(bobj, "_config")
-                    else "?"
-                )
-                is_active = active_type is not None and btype == active_type
-                marker = " ★" if is_active else ""
-                # Try health check
-                health = "?"
-                try:
-                    import asyncio as _aio
-
-                    try:
-                        _aio.get_running_loop()
-                    except RuntimeError:
-                        health = "ok" if _aio.run(bobj.check_health()) else "fail"
-                    else:
-                        health = "ok"  # skip health check in running loop
-                except Exception:
-                    logger.debug("repl: backend health check failed", exc_info=True)
-                status = _badge("active" if is_active else health, health == "ok" or is_active)
-                lines.append(f"  {name:<24s} {backend_type:<8s} {status}{marker}")
-
-        # Stats
-        if stats:
-            lines.append("")
-            lines.append(_section("Statistics"))
-            for k, v in stats.items():
-                lines.append(f"  {k}: {v}")
-
-        # Hints
-        lines.append("")
-        if not is_available:
-            lines.append(_hint("No backend passed health check"))
-            lines.append(_hint("For local: ensure Ollama is running (ollama serve)"))
-            lines.append(
-                _hint(
-                    "For cloud: set API key in .env and deployment.mode: local+llm in llm.default.yaml"
-                )
-            )
-        elif llm_mode == "local":
-            lines.append(_hint("Running in local-only mode. Cloud backends are gated."))
-            lines.append(
-                _hint(
-                    "To enable cloud: change deployment.mode to 'local+llm' or 'auto' in llm.default.yaml"
-                )
-            )
+        lines = _llm_routing_overview(llm_svc)
+        lines += _llm_backend_table(llm_svc)
+        lines += _llm_stats_section(llm_svc)
+        lines += _llm_hints(llm_svc)
 
         return "\n".join(lines)
     except Exception as e:
