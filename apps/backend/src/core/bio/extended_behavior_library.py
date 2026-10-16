@@ -210,6 +210,38 @@ class ExtendedBehaviorLibrary:
         """Get all behaviors in a category"""
         return [b for b in self.behaviors.values() if b.category == category]
 
+    @staticmethod
+    def _build_param_context(context: Dict[str, Any]) -> Dict[str, Any]:
+        """Build context for dynamic parameter evaluation."""
+        param_context: Dict[str, Any] = {}
+        if "emotion" in context and isinstance(context["emotion"], (int, float)):
+            param_context["mood"] = context["emotion"]
+        if "energy" in context:
+            param_context["energy"] = context["energy"]
+        return param_context
+
+    def _dynamic_threshold(
+        self, behavior: BehaviorDefinition, trigger: Any, param_context: Dict[str, Any]
+    ) -> Any:
+        """Dynamic threshold per trigger type (emotion/social/static)."""
+        if trigger.trigger_type == "emotion":
+            return self._get_emotion_threshold(
+                emotion_type=trigger.condition, context=param_context
+            )
+        if trigger.trigger_type in ("proximity", "stimulus"):
+            # For social behaviors, use social initiative threshold
+            if behavior.category == BehaviorCategory.SOCIAL:
+                return self._get_social_threshold(param_context)
+            return trigger.threshold
+        return trigger.threshold
+
+    @staticmethod
+    def _trigger_matches(value: Any, trigger: Any, dynamic_threshold: Any) -> bool:
+        """Numeric >= threshold, or exact condition/threshold equality."""
+        if isinstance(value, (int, float)) and value >= dynamic_threshold:
+            return True
+        return bool(value == trigger.condition or value == dynamic_threshold)
+
     def check_triggers(self, context: Dict[str, Any]) -> List[BehaviorDefinition]:
         """
         Check which behaviors can be triggered based on context
@@ -226,13 +258,7 @@ class ExtendedBehaviorLibrary:
             List of triggerable behaviors
         """
         triggerable = []
-
-        # Build context for dynamic parameter evaluation
-        param_context = {}
-        if "emotion" in context and isinstance(context["emotion"], (int, float)):
-            param_context["mood"] = context["emotion"]
-        if "energy" in context:
-            param_context["energy"] = context["energy"]
+        param_context = self._build_param_context(context)
 
         for behavior in self.behaviors.values():
             for trigger in behavior.triggers:
@@ -240,31 +266,14 @@ class ExtendedBehaviorLibrary:
                     continue
 
                 # Check if context matches trigger
-                if trigger.trigger_type in context:
-                    value = context[trigger.trigger_type]
-
-                    # Get dynamic threshold based on trigger type
-                    if trigger.trigger_type == "emotion":
-                        dynamic_threshold = self._get_emotion_threshold(
-                            emotion_type=trigger.condition, context=param_context
-                        )
-                    elif trigger.trigger_type == "proximity" or trigger.trigger_type == "stimulus":
-                        # For social behaviors, use social initiative threshold
-                        if behavior.category == BehaviorCategory.SOCIAL:
-                            dynamic_threshold = self._get_social_threshold(param_context)
-                        else:
-                            dynamic_threshold = trigger.threshold
-                    else:
-                        dynamic_threshold = trigger.threshold
-
-                    if isinstance(value, (int, float)) and value >= dynamic_threshold:
-                        triggerable.append(behavior)
-                        trigger.mark_triggered()
-                        break
-                    elif value == trigger.condition or value == dynamic_threshold:
-                        triggerable.append(behavior)
-                        trigger.mark_triggered()
-                        break
+                if trigger.trigger_type not in context:
+                    continue
+                value = context[trigger.trigger_type]
+                dynamic_threshold = self._dynamic_threshold(behavior, trigger, param_context)
+                if self._trigger_matches(value, trigger, dynamic_threshold):
+                    triggerable.append(behavior)
+                    trigger.mark_triggered()
+                    break
 
         # Sort by priority
         triggerable.sort(key=lambda b: b.priority.value)
