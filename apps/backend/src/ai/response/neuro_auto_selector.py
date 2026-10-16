@@ -328,27 +328,11 @@ class StateInterpreter:
             logger.warning(f"Failed to get alpha energy from state matrix: {e}", exc_info=True)
         return 0.5
 
-    def get_state_dict(self) -> Dict[str, float]:
-        """
-        Return a flat dict of key state values for decision correction.
-        Keys: alpha_energy, epsilon_precision, delta_happiness, theta_novelty,
-              theta_negativity, eta_success_rate
-        """
-        self._ensure_loaded()
-        result: Dict[str, float] = {}
-
-        if self._state_matrix is None:
-            return {
-                "alpha_energy": 0.5,
-                "epsilon_precision": 0.5,
-                "delta_happiness": 0.5,
-                "theta_novelty": 0.3,
-                "theta_negativity": 0.3,
-                "eta_success_rate": 0.85,
-            }
-
+    @staticmethod
+    def _read_state_values(matrix: Any, result: Dict[str, float]) -> None:
+        """從 StateMatrix 讀取 8D 關鍵值填入 result（η 走 export_for_llm）。"""
         try:
-            state = self._state_matrix.get_state()
+            state = matrix.get_state()
             if "alpha" in state:
                 result["alpha_energy"] = float(state["alpha"].get("energy", 0.5))
             if "epsilon" in state:
@@ -360,7 +344,7 @@ class StateInterpreter:
                 result["theta_negativity"] = float(state["theta"].get("negativity", 0.3))
             # η 不在 StateMatrix4D 中，需從 export_for_llm() 取得
             try:
-                full = self._state_matrix.export_for_llm()
+                full = matrix.export_for_llm()
                 eta_data = full.get("eta", {})
                 result["eta_success_rate"] = float(eta_data.get("success_rate", 0.85))
             except (KeyError, TypeError, ValueError, AttributeError) as e:
@@ -370,12 +354,38 @@ class StateInterpreter:
         except (KeyError, TypeError, ValueError, AttributeError) as e:
             logger.warning(f"Failed to get state dict from state matrix: {e}", exc_info=True)
 
-        # Fill defaults for missing keys
+    @staticmethod
+    def _fill_state_defaults(result: Dict[str, float]) -> None:
+        """為缺漏鍵補預設值。"""
         for key in ["alpha_energy", "epsilon_precision", "delta_happiness"]:
             result.setdefault(key, 0.5)
         for key in ["theta_novelty", "theta_negativity"]:
             result.setdefault(key, 0.3)
         result.setdefault("eta_success_rate", 0.85)
+
+    def get_state_dict(self) -> Dict[str, float]:
+        """
+        Return a flat dict of key state values for decision correction.
+        Keys: alpha_energy, epsilon_precision, delta_happiness, theta_novelty,
+              theta_negativity, eta_success_rate
+        """
+        self._ensure_loaded()
+
+        if self._state_matrix is None:
+            return {
+                "alpha_energy": 0.5,
+                "epsilon_precision": 0.5,
+                "delta_happiness": 0.5,
+                "theta_novelty": 0.3,
+                "theta_negativity": 0.3,
+                "eta_success_rate": 0.85,
+            }
+
+        result: Dict[str, float] = {}
+        self._read_state_values(self._state_matrix, result)
+
+        # Fill defaults for missing keys
+        self._fill_state_defaults(result)
 
         return result
 
