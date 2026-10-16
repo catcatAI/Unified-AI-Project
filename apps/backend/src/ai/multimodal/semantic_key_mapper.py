@@ -159,6 +159,80 @@ class SemanticKeyMapper:
     # Query
     # ------------------------------------------------------------------
 
+    def _match_raw(
+        self, query: np.ndarray, top_k: int
+    ) -> Tuple[Optional[List[Dict[str, Any]]], np.ndarray]:
+        """"raw" mode: use high-dim CLIP/Whisper vectors. Returns (results_or_None, query)."""
+        has_raw = any(v.size > 0 for v in self._raw_semantic_vectors)
+        if not has_raw:
+            return None, query  # fallback to auto
+
+        pool = self._raw_semantic_vectors
+        # Pad query if needed (match pool dim)
+        pool_dim = max(v.size for v in pool if v.size > 0)
+        if query.size < pool_dim:
+            padded = np.zeros(pool_dim, dtype=np.float32)
+            padded[: query.size] = query
+            query = padded
+        elif query.size > pool_dim:
+            query = query[:pool_dim]
+        q_norm = np.linalg.norm(query)
+        if q_norm > 0:
+            query = query / q_norm
+
+        # Filter to entries with raw vectors
+        valid = [(i, v) for i, v in enumerate(self._raw_semantic_vectors) if v.size > 0]
+        if not valid:
+            return None, query  # fallback
+        indices, vecs = zip(*valid)
+        pool_np = np.array(vecs, dtype=np.float32)
+        norms = np.linalg.norm(pool_np, axis=1, keepdims=True)
+        norms[norms == 0] = 1.0
+        pool_np = pool_np / norms
+        scores = pool_np @ query
+        top_idx = np.argsort(scores)[-top_k:][::-1]
+        results = [
+            {"key": self._keys[indices[i]], "score": round(float(scores[i]), 4)}
+            for i in top_idx
+        ]
+        return results, query
+
+    def _select_pool(self, mode: str) -> List[np.ndarray]:
+        """Determine which latent pool to query based on mode."""
+        if mode == "auto":
+            if any(c is not None for c in self._combined_latents):
+                return self._combined_latents
+            if any(c is not None for c in self._semantic_latents):
+                return self._semantic_latents
+            return self._structural_latents
+        if mode == "combined":
+            return self._combined_latents
+        if mode == "semantic":
+            return self._semantic_latents
+        if mode == "structural":
+            return self._structural_latents
+        return self._combined_latents
+
+    def _cosine_topk(self, pool: List[np.ndarray], query: np.ndarray, top_k: int) -> List[Dict[str, Any]]:
+        """Cosine similarity top-k over a latent pool."""
+        pool_np = np.array(pool, dtype=np.float32)  # [V, 64]
+        norms = np.linalg.norm(pool_np, axis=1, keepdims=True)
+        norms[norms == 0] = 1.0
+        pool_np = pool_np / norms
+
+        scores = pool_np @ query  # [V] cosine similarities
+
+        top_indices = np.argsort(scores)[-top_k:][::-1]
+        results = []
+        for idx in top_indices:
+            results.append(
+                {
+                    "key": self._keys[idx],
+                    "score": round(float(scores[idx]), 4),
+                }
+            )
+        return results
+
     def map_latent_to_keys(
         self, query_latent: np.ndarray, top_k: int = 5, mode: str = "auto"
     ) -> List[Dict[str, Any]]:
@@ -189,74 +263,14 @@ class SemanticKeyMapper:
 
         # "raw" mode: use high-dim CLIP/Whisper vectors for better accuracy
         if mode == "raw":
-            has_raw = any(v.size > 0 for v in self._raw_semantic_vectors)
-            if has_raw:
-                pool = self._raw_semantic_vectors
-                # Pad query if needed (match pool dim)
-                pool_dim = max(v.size for v in pool if v.size > 0)
-                if query.size < pool_dim:
-                    padded = np.zeros(pool_dim, dtype=np.float32)
-                    padded[: query.size] = query
-                    query = padded
-                elif query.size > pool_dim:
-                    query = query[:pool_dim]
-                q_norm = np.linalg.norm(query)
-                if q_norm > 0:
-                    query = query / q_norm
-
-                # Filter to entries with raw vectors
-                valid = [(i, v) for i, v in enumerate(self._raw_semantic_vectors) if v.size > 0]
-                if not valid:
-                    mode = "auto"  # fallback
-                else:
-                    indices, vecs = zip(*valid)
-                    pool_np = np.array(vecs, dtype=np.float32)
-                    norms = np.linalg.norm(pool_np, axis=1, keepdims=True)
-                    norms[norms == 0] = 1.0
-                    pool_np = pool_np / norms
-                    scores = pool_np @ query
-                    top_idx = np.argsort(scores)[-top_k:][::-1]
-                    return [
-                        {"key": self._keys[indices[i]], "score": round(float(scores[i]), 4)}
-                        for i in top_idx
-                    ]
-            else:
-                mode = "auto"  # fallback
+            results, query = self._match_raw(query, top_k)
+            if results is not None:
+                return results
+            mode = "auto"  # fallback
 
         # Determine which pool to query
-        if mode == "auto":
-            if any(c is not None for c in self._combined_latents):
-                pool = self._combined_latents
-            elif any(c is not None for c in self._semantic_latents):
-                pool = self._semantic_latents
-            else:
-                pool = self._structural_latents
-        elif mode == "combined":
-            pool = self._combined_latents
-        elif mode == "semantic":
-            pool = self._semantic_latents
-        elif mode == "structural":
-            pool = self._structural_latents
-        else:
-            pool = self._combined_latents
-
-        pool_np = np.array(pool, dtype=np.float32)  # [V, 64]
-        norms = np.linalg.norm(pool_np, axis=1, keepdims=True)
-        norms[norms == 0] = 1.0
-        pool_np = pool_np / norms
-
-        scores = pool_np @ query  # [V] cosine similarities
-
-        top_indices = np.argsort(scores)[-top_k:][::-1]
-        results = []
-        for idx in top_indices:
-            results.append(
-                {
-                    "key": self._keys[idx],
-                    "score": round(float(scores[idx]), 4),
-                }
-            )
-        return results
+        pool = self._select_pool(mode)
+        return self._cosine_topk(pool, query, top_k)
 
     # ------------------------------------------------------------------
     # Introspection
