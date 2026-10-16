@@ -307,6 +307,38 @@ def find_target(text: str) -> Optional[str]:
     return None
 
 
+def _try_formula(
+    qty: str, spec: "FormulaSpec", known: Dict[str, Any], target: Optional[str]
+) -> Optional[Dict[str, object]]:
+    """嘗試單一公式：恰好一個未知，且未知須與顯式 target 相符。"""
+    vars_ = spec["vars"]
+    missing = [var for var in vars_ + [qty] if var not in known]
+    if len(missing) != 1:
+        return None
+    unknown = missing[0]
+    if target is not None and unknown != target and qty != target:
+        return None
+    values = {_VAR_NAMES[k]: v for k, v in known.items()}
+    const_val = spec.get("const")
+    if const_val is not None:
+        values["g"] = float(const_val)
+    solve_map = spec["solve"]
+    expr = solve_map.get(unknown)
+    if expr is None:
+        return None
+    try:
+        result = _eval_safe(expr, values)
+    except (ZeroDivisionError, ValueError, TypeError):
+        return None
+    if result is None:
+        return None
+    return {
+        "value": round(float(result), 6),
+        "quantity": unknown,
+        "formula": qty,
+    }
+
+
 def solve(text: str) -> Optional[Dict[str, object]]:
     """Solve a single-unknown physics word problem.
 
@@ -324,32 +356,9 @@ def solve(text: str) -> Optional[Dict[str, object]]:
     # Try each formula: exactly one unknown, and the unknown (or the formula's
     # own quantity) must be what was asked when a target is explicit.
     for qty, spec in _FORMULAS.items():
-        vars_ = spec["vars"]
-        missing = [var for var in vars_ + [qty] if var not in known]
-        if len(missing) != 1:
-            continue
-        unknown = missing[0]
-        if target is not None and unknown != target and qty != target:
-            continue
-        values = {_VAR_NAMES[k]: v for k, v in known.items()}
-        const_val = spec.get("const")
-        if const_val is not None:
-            values["g"] = float(const_val)
-        solve_map = spec["solve"]
-        expr = solve_map.get(unknown)
-        if expr is None:
-            continue
-        try:
-            result = _eval_safe(expr, values)
-        except (ZeroDivisionError, ValueError, TypeError):
-            continue
-        if result is None:
-            continue
-        return {
-            "value": round(float(result), 6),
-            "quantity": unknown,
-            "formula": qty,
-        }
+        solved = _try_formula(qty, spec, known, target)
+        if solved is not None:
+            return solved
     return None
 
 
