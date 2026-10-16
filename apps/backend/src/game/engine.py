@@ -397,6 +397,97 @@ class GameEngine:
         self._interaction_choices = choices
         self._showing_interaction = True
 
+    def _interaction_accept_quest(self, npc: NPC) -> None:
+        """accept_quest: activate the NPC's quest or refuse."""
+        s = self.state
+        npc_quest_map = {
+            "晞咕萊雅": "SQ-01",
+            "紅": "SQ-02",
+            "小狐丸": "MQ-02",
+            "晴空": "SQ-03",
+            "深痕·裂脊": "SQ-04",
+            "翎翾": "SQ-05",
+            "煦掠": "SQ-06",
+        }
+        quest_id = npc_quest_map.get(npc.name)
+        if quest_id and self.quest_log.activate_quest(quest_id):
+            quest = next(q for q in self.quest_log.quests if q.quest_id == quest_id)
+            s.messages.append(
+                Message(
+                    speaker="system",
+                    text=self.i18n.t("quest_started", title=quest.title),
+                    kind="system",
+                )
+            )
+        else:
+            s.messages.append(
+                Message(speaker=npc.name, text=self.i18n.t("npc_no_quest"), kind="dialogue")
+            )
+
+    def _interaction_ask_info(self, npc: NPC) -> None:
+        """ask_info: NPC dialogue + active-quest hint + progress check."""
+        s = self.state
+        info_lines = npc.get_dialogue()
+        s.messages.append(Message(speaker=npc.name, text=info_lines, kind="dialogue"))
+        # NPC gives a hint about current quest
+        active_quests = self.quest_log.get_active()
+        if active_quests:
+            q = random.choice(active_quests)
+            hint = self.i18n.t("npc_quest_hint", quest=q.title)
+            s.messages.append(Message(speaker=npc.name, text=hint, kind="dialogue"))
+        self._check_quest_progress("ask_info", npc_name=npc.name)
+
+    def _interaction_ask_help(self, npc: NPC) -> None:
+        """ask_help: disposition-gated heal (0-100 scale) + progress check."""
+        s = self.state
+        # disposition 為 NPC 模型的 0-100 整數尺度（曾誤寫 0.6/1.0/0.1，
+        # 使高低判幾乎恆真且一次求助就把值壓成 1.0）。
+        if npc.disposition > 60:
+            heal = random.randint(10, 25)
+            s.pc.hp = min(s.pc.max_hp, s.pc.hp + heal)
+            spirit = random.randint(5, 15)
+            s.pc.spirit = min(s.pc.max_spirit, s.pc.spirit + spirit)
+            s.messages.append(
+                Message(
+                    speaker=npc.name,
+                    text=self.i18n.t("npc_help_yes", name=npc.name, heal=heal, spirit=spirit),
+                    kind="dialogue",
+                )
+            )
+        else:
+            s.messages.append(
+                Message(
+                    speaker=npc.name,
+                    text=self.i18n.t("npc_help_no", name=npc.name),
+                    kind="dialogue",
+                )
+            )
+        self._check_quest_progress("ask_help", npc_name=npc.name)
+
+    def _interaction_give_item(self, npc: NPC) -> None:
+        """give_item: hand over first inventory item (+10 disposition) or refuse."""
+        s = self.state
+        if s.pc.inventory:
+            item = s.pc.inventory[0]
+            s.pc.inventory.pop(0)
+            npc.disposition = min(100, npc.disposition + 10)
+            s.messages.append(
+                Message(
+                    speaker=npc.name,
+                    text=self.i18n.t("npc_item_received", name=npc.name, item=item),
+                    kind="dialogue",
+                )
+            )
+            self._check_quest_progress("give_item", npc_name=npc.name)
+        else:
+            s.messages.append(
+                Message(
+                    speaker=npc.name,
+                    text=self.i18n.t("npc_no_item"),
+                    kind="dialogue",
+                )
+            )
+
     def _handle_interaction_choice(self, idx: int) -> None:
         s = self.state
         action_key, label = self._interaction_choices[idx]
@@ -407,88 +498,13 @@ class GameEngine:
         s.messages.append(Message(speaker="你", text=label, kind="action"))
 
         if action_key == "accept_quest":
-            npc_quest_map = {
-                "晞咕萊雅": "SQ-01",
-                "紅": "SQ-02",
-                "小狐丸": "MQ-02",
-                "晴空": "SQ-03",
-                "深痕·裂脊": "SQ-04",
-                "翎翾": "SQ-05",
-                "煦掠": "SQ-06",
-            }
-            quest_id = npc_quest_map.get(npc.name)
-            if quest_id and self.quest_log.activate_quest(quest_id):
-                quest = next(q for q in self.quest_log.quests if q.quest_id == quest_id)
-                s.messages.append(
-                    Message(
-                        speaker="system",
-                        text=self.i18n.t("quest_started", title=quest.title),
-                        kind="system",
-                    )
-                )
-            else:
-                s.messages.append(
-                    Message(speaker=npc.name, text=self.i18n.t("npc_no_quest"), kind="dialogue")
-                )
-
+            self._interaction_accept_quest(npc)
         elif action_key == "ask_info":
-            info_lines = npc.get_dialogue()
-            s.messages.append(Message(speaker=npc.name, text=info_lines, kind="dialogue"))
-            # NPC gives a hint about current quest
-            active_quests = self.quest_log.get_active()
-            if active_quests:
-                q = random.choice(active_quests)
-                hint = self.i18n.t("npc_quest_hint", quest=q.title)
-                s.messages.append(Message(speaker=npc.name, text=hint, kind="dialogue"))
-            self._check_quest_progress("ask_info", npc_name=npc.name)
-
+            self._interaction_ask_info(npc)
         elif action_key == "ask_help":
-            # disposition 為 NPC 模型的 0-100 整數尺度（曾誤寫 0.6/1.0/0.1，
-            # 使高低判幾乎恆真且一次求助就把值壓成 1.0）。
-            if npc.disposition > 60:
-                heal = random.randint(10, 25)
-                s.pc.hp = min(s.pc.max_hp, s.pc.hp + heal)
-                spirit = random.randint(5, 15)
-                s.pc.spirit = min(s.pc.max_spirit, s.pc.spirit + spirit)
-                s.messages.append(
-                    Message(
-                        speaker=npc.name,
-                        text=self.i18n.t("npc_help_yes", name=npc.name, heal=heal, spirit=spirit),
-                        kind="dialogue",
-                    )
-                )
-            else:
-                s.messages.append(
-                    Message(
-                        speaker=npc.name,
-                        text=self.i18n.t("npc_help_no", name=npc.name),
-                        kind="dialogue",
-                    )
-                )
-            self._check_quest_progress("ask_help", npc_name=npc.name)
-
+            self._interaction_ask_help(npc)
         elif action_key == "give_item":
-            if s.pc.inventory:
-                item = s.pc.inventory[0]
-                s.pc.inventory.pop(0)
-                npc.disposition = min(100, npc.disposition + 10)
-                s.messages.append(
-                    Message(
-                        speaker=npc.name,
-                        text=self.i18n.t("npc_item_received", name=npc.name, item=item),
-                        kind="dialogue",
-                    )
-                )
-                self._check_quest_progress("give_item", npc_name=npc.name)
-            else:
-                s.messages.append(
-                    Message(
-                        speaker=npc.name,
-                        text=self.i18n.t("npc_no_item"),
-                        kind="dialogue",
-                    )
-                )
-
+            self._interaction_give_item(npc)
         elif action_key == "leave":
             s.messages.append(
                 Message(
