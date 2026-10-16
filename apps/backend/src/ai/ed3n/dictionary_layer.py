@@ -147,6 +147,39 @@ class DictionaryLayer:
             return raw[:cap]
         return filtered[:cap]
 
+    def _collect_candidates(self, text_lower: str) -> set:
+        """Collect candidate dictionary keys via keyword/bigram index."""
+        candidates: set = set()
+        for kw in self._matching_keywords(text_lower):
+            candidates.update(self._keyword_index[kw])
+        for bigram, keys in self._bigram_index.items():
+            if bigram in text_lower:
+                candidates.update(keys)
+        return candidates
+
+    def _score_surface(self, sf_lower: str, text_lower: str, max_len: int) -> float:
+        """Score a single surface form against the query text."""
+        if sf_lower == text_lower:
+            return 1.0
+        best = 0.0
+        if sf_lower in text_lower:
+            # Penalize single CJK character false positives from CC-CEDICT
+            if len(sf_lower) == 1 and not sf_lower.isascii() and len(text_lower) > 1:
+                best = max(best, 0.05)
+            else:
+                ratio = len(sf_lower) / max_len
+                best = max(
+                    best,
+                    ratio * behavior_threshold("ai.dictionary_layer.encode_exact_weight", 0.85),
+                )
+        if text_lower in sf_lower:
+            ratio = len(text_lower) / max(len(sf_lower), 1)
+            best = max(
+                best,
+                ratio * behavior_threshold("ai.dictionary_layer.encode_substr_weight", 0.6),
+            )
+        return best
+
     def encode_soft(self, text: str) -> Dict[str, float]:
         if not text or not isinstance(text, str):
             return {}
@@ -159,13 +192,7 @@ class DictionaryLayer:
         scores: Dict[str, float] = {}
         max_len = max(len(text_lower), 1)
 
-        # Collect candidate keys from keyword/bigram index
-        candidates: set = set()
-        for kw in self._matching_keywords(text_lower):
-            candidates.update(self._keyword_index[kw])
-        for bigram, keys in self._bigram_index.items():
-            if bigram in text_lower:
-                candidates.update(keys)
+        candidates = self._collect_candidates(text_lower)
         if not candidates:
             return {}
 
@@ -180,26 +207,7 @@ class DictionaryLayer:
             for sf_lower in surface_lower_list:
                 if not sf_lower:
                     continue
-                if sf_lower == text_lower:
-                    best = 1.0
-                    break
-                if sf_lower in text_lower:
-                    # Penalize single CJK character false positives from CC-CEDICT
-                    if len(sf_lower) == 1 and not sf_lower.isascii() and len(text_lower) > 1:
-                        best = max(best, 0.05)
-                    else:
-                        ratio = len(sf_lower) / max_len
-                        best = max(
-                            best,
-                            ratio
-                            * behavior_threshold("ai.dictionary_layer.encode_exact_weight", 0.85),
-                        )
-                if text_lower in sf_lower:
-                    ratio = len(text_lower) / max(len(sf_lower), 1)
-                    best = max(
-                        best,
-                        ratio * behavior_threshold("ai.dictionary_layer.encode_substr_weight", 0.6),
-                    )
+                best = max(best, self._score_surface(sf_lower, text_lower, max_len))
             if best > 0:
                 scores[key] = round(best * entry.confidence, 4)
         return scores
@@ -258,6 +266,34 @@ class DictionaryLayer:
             return []
         return sorted(matched, key=self._keyword_rank.__getitem__)
 
+    def _collect_matched_keys(self, text_lower: str) -> List[str]:
+        """Collect unique matched keys via keyword/bigram index (deduplicated)."""
+        matched_keys: List[str] = []
+        for kw in self._matching_keywords(text_lower):
+            matched_keys.extend(self._keyword_index[kw])
+        for bigram, keys in self._bigram_index.items():
+            if bigram in text_lower:
+                matched_keys.extend(keys)
+        seen: set = set()
+        unique_keys: List[str] = []
+        for k in matched_keys:
+            if k not in seen:
+                seen.add(k)
+                unique_keys.append(k)
+        return unique_keys
+
+    def _expand_synonyms(self, unique_keys: List[str]) -> List[str]:
+        """Expand keys with synonyms not already present."""
+        seen: set = set(unique_keys)
+        expanded_keys: List[str] = []
+        for k in list(unique_keys):
+            syns = self.get_synonyms(k)
+            for s in syns:
+                if s not in seen and s in self.entries:
+                    seen.add(s)
+                    expanded_keys.append(s)
+        return expanded_keys
+
     def _encode_locked(self, text: str, modality: str = "text") -> List[str]:
         if not text or not isinstance(text, str):
             return []
@@ -274,30 +310,9 @@ class DictionaryLayer:
             self._encode_cache.move_to_end(cache_key)
             return [str(k) for k in cached]
         text_lower = text.lower().strip()
-        matched_keys: List[str] = []
 
-        for kw in self._matching_keywords(text_lower):
-            matched_keys.extend(self._keyword_index[kw])
-
-        for bigram, keys in self._bigram_index.items():
-            if bigram in text_lower:
-                matched_keys.extend(keys)
-
-        seen: set = set()
-        unique_keys: List[str] = []
-        for k in matched_keys:
-            if k not in seen:
-                seen.add(k)
-                unique_keys.append(k)
-
-        expanded_keys: List[str] = []
-        for k in list(unique_keys):
-            syns = self.get_synonyms(k)
-            for s in syns:
-                if s not in seen and s in self.entries:
-                    seen.add(s)
-                    expanded_keys.append(s)
-        unique_keys.extend(expanded_keys)
+        unique_keys = self._collect_matched_keys(text_lower)
+        unique_keys.extend(self._expand_synonyms(unique_keys))
 
         if len(self._encode_cache) > self._encode_cache_max:
             self._encode_cache.popitem(last=False)
@@ -507,9 +522,33 @@ class DictionaryLayer:
             len(presets) - loaded,
         )
 
+    def _load_preset_file(self, fpath: str) -> Tuple[int, int]:
+        """Load a single preset JSON file, returning (entries_loaded, patterns_loaded)."""
+        import json
+
+        try:
+            with open(fpath, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except (OSError, json.JSONDecodeError) as e:
+            logger.warning("DictionaryLayer: skipping unreadable preset file %s: %s", fpath, e)
+            return 0, 0
+        if not isinstance(data, dict):
+            logger.warning(
+                "DictionaryLayer: skipping preset file %s (expected JSON object, got %s)",
+                fpath,
+                type(data).__name__,
+            )
+            return 0, 0
+        patterns = len(data["reflex_patterns"]) if "reflex_patterns" in data else 0
+        entries = 0
+        for entry_data in data.get("dictionary_entries", []):
+            if entry_data["key"] not in self.entries:
+                self.add_entry(**entry_data)
+                entries += 1
+        return entries, patterns
+
     def load_preset_responses_from_dir(self, config_dir: Optional[str] = None) -> int:
         """Load dictionary entries + reflex from config JSON files."""
-        import json
         import os
 
         if config_dir is None:
@@ -522,33 +561,14 @@ class DictionaryLayer:
         loaded = 0
         patterns_loaded = 0
 
-        # Load dictionary presets from JSON files
         for fname in os.listdir(config_dir):
             if not fname.endswith(".json"):
                 continue
             fpath = os.path.join(config_dir, fname)
-            try:
-                with open(fpath, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-            except (OSError, json.JSONDecodeError) as e:
-                logger.warning("DictionaryLayer: skipping unreadable preset file %s: %s", fpath, e)
-                continue
-            if not isinstance(data, dict):
-                logger.warning(
-                    "DictionaryLayer: skipping preset file %s (expected JSON object, got %s)",
-                    fpath,
-                    type(data).__name__,
-                )
-                continue
-            # Load reflex patterns if present
-            if "reflex_patterns" in data:
-                # These are loaded into the engine's reflex layer separately
-                patterns_loaded += len(data["reflex_patterns"])
-            # Load dictionary entries if present
-            for entry_data in data.get("dictionary_entries", []):
-                if entry_data["key"] not in self.entries:
-                    self.add_entry(**entry_data)
-                    loaded += 1
+            entries, patterns = self._load_preset_file(fpath)
+            loaded += entries
+            patterns_loaded += patterns
+
         self._rebuild_index()
         logger.info(
             "Loaded %d entries and %d reflex patterns from %s", loaded, patterns_loaded, config_dir
@@ -679,6 +699,13 @@ class DictionaryLayer:
             self._dirty = True
         return new_keys
 
+    def _rewrite_relations(self, source_key: str, target_key: str) -> None:
+        """Replace source_key with target_key in all relation lists."""
+        for e in self.entries.values():
+            for rels in e.relations.values():
+                if source_key in rels:
+                    rels[rels.index(source_key)] = target_key
+
     def merge_entries(self, source_key: str, target_key: str) -> bool:
         if source_key not in self.entries or target_key not in self.entries:
             logger.warning(
@@ -699,29 +726,20 @@ class DictionaryLayer:
                 if t not in existing and t != target_key:
                     existing.append(t)
         target.confidence = max(target.confidence, source.confidence)
-        for e in self.entries.values():
-            for rels in e.relations.values():
-                if source_key in rels:
-                    rels[rels.index(source_key)] = target_key
+        self._rewrite_relations(source_key, target_key)
         del self.entries[source_key]
         self._dirty = True
         logger.info("Merged %s -> %s", source_key, target_key)
         return True
 
-    def resolve_concepts(self, keys: List[str]) -> List[str]:
-        """Concept convergence (P1 / REFACTOR_PLAN §11.2, C2).
+    def _concept_groups_and_roots(
+        self, present: List[str]
+    ) -> Tuple[Dict[str, List[str]], Dict[str, str]]:
+        """Union-find grouping of synonym/mapping-linked keys.
 
-        Given a set of dictionary keys (input anchors + network output), merge
-        keys that are synonyms/mappings of each other into a single canonical
-        representative so the decoder never emits the same concept twice or
-        splits one concept across duplicate placeholder keys.
-
-        Returns canonical keys in first-seen order; entries not present in the
-        dictionary are dropped.
+        Returns (groups, root_of) where groups maps root -> member keys
+        and root_of maps each key to its group root.
         """
-        present = [k for k in keys if k in self.entries]
-        if not present:
-            return []
         parent: Dict[str, str] = {k: k for k in present}
 
         def _find(x: str) -> str:
@@ -744,24 +762,44 @@ class DictionaryLayer:
                     _union(k, rel)
 
         groups: Dict[str, List[str]] = {}
+        root_of: Dict[str, str] = {}
         for k in present:
-            groups.setdefault(_find(k), []).append(k)
+            r = _find(k)
+            root_of[k] = r
+            groups.setdefault(r, []).append(k)
+        return groups, root_of
+
+    def _pick_canonical(self, grp: List[str]) -> str:
+        """Prefer a non-placeholder entry with a real surface; else lexicographically smallest."""
+        return min(
+            grp,
+            key=lambda kk: (0 if self.entries[kk].surface_forms else 1, kk),
+        )
+
+    def resolve_concepts(self, keys: List[str]) -> List[str]:
+        """Concept convergence (P1 / REFACTOR_PLAN §11.2, C2).
+
+        Given a set of dictionary keys (input anchors + network output), merge
+        keys that are synonyms/mappings of each other into a single canonical
+        representative so the decoder never emits the same concept twice or
+        splits one concept across duplicate placeholder keys.
+
+        Returns canonical keys in first-seen order; entries not present in the
+        dictionary are dropped.
+        """
+        present = [k for k in keys if k in self.entries]
+        if not present:
+            return []
+        groups, root_of = self._concept_groups_and_roots(present)
 
         resolved: List[str] = []
         seen_roots: set = set()
         for k in present:
-            root = _find(k)
+            root = root_of[k]
             if root in seen_roots:
                 continue
             seen_roots.add(root)
-            grp = groups[root]
-            # Canonical = prefer a non-placeholder entry with a real surface;
-            # otherwise the lexicographically smallest key.
-            canon = min(
-                grp,
-                key=lambda kk: (0 if self.entries[kk].surface_forms else 1, kk),
-            )
-            resolved.append(canon)
+            resolved.append(self._pick_canonical(groups[root]))
         return resolved
 
     def backfill_placeholder(self, key: str) -> bool:
