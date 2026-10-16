@@ -462,6 +462,41 @@ class ThetaRouter:
             "results": results,
         }
 
+    @staticmethod
+    def _build_port_map(inputs: List[Any]) -> Dict[str, Dict[str, Any]]:
+        """Index dict-shaped input ports by name (non-dict ports are skipped)."""
+        port_map: Dict[str, Dict[str, Any]] = {}
+        for p in inputs:
+            if isinstance(p, dict):
+                name = p.get("name")
+                if name:
+                    port_map[name] = p
+        return port_map
+
+    @staticmethod
+    def _merge_weighted(
+        port_data_list: List[Tuple[str, Any]], port_map: Dict[str, Dict[str, Any]]
+    ) -> Tuple[Dict[str, Any], float]:
+        """Priority-weighted merge of known ports. Returns (merged, total_weight)."""
+        merged: Dict[str, Any] = {}
+        total_weight = 0.0
+        for port_name, data in port_data_list:
+            port = port_map.get(port_name)
+            if not port:
+                continue
+            weight = port.get("priority", 0.0)
+            total_weight += weight
+            if isinstance(data, dict):
+                for key, value in data.items():
+                    if key not in merged:
+                        merged[key] = 0.0
+                    merged[key] += value * weight
+            else:
+                if "raw" not in merged:
+                    merged["raw"] = 0.0
+                merged["raw"] += data * weight
+        return merged, total_weight
+
     def merge_input(self, axis_name: str, port_data_list: List[Tuple[str, Any]]) -> Any:
         """
         將多個輸入端口的數據合併到軸
@@ -485,32 +520,8 @@ class ThetaRouter:
         if not inputs:
             return None
 
-        port_map: Dict[str, Dict[str, Any]] = {}
-        for p in inputs:
-            if isinstance(p, dict):
-                name = p.get("name")
-                if name:
-                    port_map[name] = p
-        merged: Dict[str, Any] = {}
-        total_weight = 0.0
-
-        for port_name, data in port_data_list:
-            port = port_map.get(port_name)
-            if not port:
-                continue
-
-            weight = port.get("priority", 0.0)
-            total_weight += weight
-
-            if isinstance(data, dict):
-                for key, value in data.items():
-                    if key not in merged:
-                        merged[key] = 0.0
-                    merged[key] += value * weight
-            else:
-                if "raw" not in merged:
-                    merged["raw"] = 0.0
-                merged["raw"] += data * weight
+        port_map = self._build_port_map(inputs)
+        merged, total_weight = self._merge_weighted(port_data_list, port_map)
 
         if total_weight > 0:
             for key in merged:
