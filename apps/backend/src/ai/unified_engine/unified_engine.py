@@ -50,6 +50,78 @@ class UnifiedEngine:
     """Single engine: deterministic routing first, then the fixed-size
     statistical core. model_bytes is constant across training."""
 
+    @staticmethod
+    def _resolve_slots(explicit: Optional[int]) -> int:
+        """Resolve slot count from explicit arg or compute.unified config."""
+        if explicit is not None:
+            return explicit
+        try:
+            from core.system.config.magic_numbers import compute_int
+
+            return compute_int("unified", "slots", 65536)
+        except Exception:
+            return 65536
+
+    @staticmethod
+    def _resolve_use_feat(explicit: Optional[bool]) -> bool:
+        """Resolve use_feat from explicit arg or compute.unified config."""
+        if explicit is not None:
+            return explicit
+        try:
+            from core.system.config.magic_numbers import _get
+
+            v = _get("unified.use_feat", None)
+            return bool(v) if v is not None else True
+        except Exception:
+            return True
+
+    @staticmethod
+    def _resolve_use_delta(explicit: Optional[bool]) -> bool:
+        """Resolve use_delta from explicit arg or compute.unified config."""
+        if explicit is not None:
+            return explicit
+        try:
+            from core.system.config.magic_numbers import _get as _g2
+
+            v2 = _g2("unified.use_delta", None)
+            return bool(v2) if v2 is not None else True
+        except Exception:
+            logger.debug("unified.use_delta config read failed; defaulting True", exc_info=True)
+            return True
+
+    @staticmethod
+    def _clamp_slots_by_ram(slots: int) -> int:
+        """Clamp slots by RAM on extended (128k) to avoid OOM on 8GB boxes."""
+        if slots <= 65536:
+            return slots
+        try:
+            from core.system.config.magic_numbers import (
+                _probe_ram_total_gb,
+                effective_capacity_bytes,
+            )
+
+            ram = _probe_ram_total_gb()
+            if ram and ram > 0:
+                # unified tables: 4 gram tables + delta + feat ≈ 5*slots*256*4
+                # ~= slots*5120 bytes. Clamp so unified alone fits in cap.
+                cap = effective_capacity_bytes(
+                    "memory", total_gb=max(0, ram - 2.0), numeric_mb=8192
+                )
+                max_slots = int(cap / 5120)
+                # round down to power of two
+                max_pow2 = 1 << (max_slots.bit_length() - 1) if max_slots > 0 else 65536
+                if slots > max_pow2:
+                    logger.info("Unified slots %d clamped to %d by RAM cap", slots, max_pow2)
+                    return max(32768, max_pow2)
+        except Exception:
+            logger.warning(
+                "RAM probe failed; OOM slot clamp skipped (unclamped "
+                "slots=%d may OOM on small-memory hosts)",
+                slots,
+                exc_info=True,
+            )
+        return slots
+
     def __init__(
         self,
         memory_cap_mb: Optional[float] = None,
@@ -61,61 +133,9 @@ class UnifiedEngine:
         # slots/use_feat/use_delta: config-driven via compute.unified, explicit
         # args win over config. Keeps 65k default (259MB) unless hardware
         # profile or ANGELA_EXTENDED_MODEL opts into 128k.
-        if slots is None:
-            try:
-                from core.system.config.magic_numbers import compute_int
-
-                slots = compute_int("unified", "slots", 65536)
-            except Exception:
-                slots = 65536
-        if use_feat is None:
-            try:
-                # unified.use_feat is not a mode flag; read via _get directly
-                from core.system.config.magic_numbers import _get
-                from core.system.config.magic_numbers import compute_bool as _cb
-
-                v = _get("unified.use_feat", None)
-                use_feat = bool(v) if v is not None else True
-            except Exception:
-                use_feat = True
-        if use_delta is None:
-            try:
-                from core.system.config.magic_numbers import _get as _g2
-
-                v2 = _g2("unified.use_delta", None)
-                use_delta = bool(v2) if v2 is not None else True
-            except Exception:
-                logger.debug("unified.use_delta config read failed; defaulting True", exc_info=True)
-                use_delta = True
-        # Clamp slots by RAM on extended (128k) to avoid OOM on 8GB boxes:
-        # effective cap is the same cascade that guards GARDEN (usable-2GB).
-        if slots is not None and slots > 65536:
-            try:
-                from core.system.config.magic_numbers import (
-                    _probe_ram_total_gb,
-                    effective_capacity_bytes,
-                )
-
-                ram = _probe_ram_total_gb()
-                if ram and ram > 0:
-                    # unified tables: 4 gram tables + delta + feat ≈ 5*slots*256*4
-                    # ~= slots*5120 bytes. Clamp so unified alone fits in cap.
-                    cap = effective_capacity_bytes(
-                        "memory", total_gb=max(0, ram - 2.0), numeric_mb=8192
-                    )
-                    max_slots = int(cap / 5120)
-                    # round down to power of two
-                    max_pow2 = 1 << (max_slots.bit_length() - 1) if max_slots > 0 else 65536
-                    if slots > max_pow2:
-                        logger.info("Unified slots %d clamped to %d by RAM cap", slots, max_pow2)
-                        slots = max(32768, max_pow2)
-            except Exception:
-                logger.warning(
-                    "RAM probe failed; OOM slot clamp skipped (unclamped "
-                    "slots=%d may OOM on small-memory hosts)",
-                    slots,
-                    exc_info=True,
-                )
+        slots = self._clamp_slots_by_ram(self._resolve_slots(slots))
+        use_feat = self._resolve_use_feat(use_feat)
+        use_delta = self._resolve_use_delta(use_delta)
         self.core = FixedSizeCore(
             max_seq=max_seq, slots=slots, use_feat=use_feat, use_delta=use_delta
         )
