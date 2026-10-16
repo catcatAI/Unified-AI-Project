@@ -33,7 +33,7 @@ import uuid
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, cast
+from typing import Any, Callable, Dict, List, Optional, Tuple, cast
 
 from core.system.config.magic_numbers import loop_sleep
 
@@ -486,10 +486,9 @@ class FallbackProtocolManager:
         logger.error("All fallback protocols failed to initialize")
         return False
 
-    async def _select_active_protocol(self, exclude: Optional[set] = None) -> None:
-        """Pick the highest-priority healthy protocol not in ``exclude``."""
-        exclude = exclude or set()
-        candidates = []
+    async def _collect_healthy_protocols(self, exclude: set) -> List[Tuple[int, Any]]:
+        """Collect healthy protocols not in exclude, returning (priority, protocol) tuples."""
+        candidates: List[Tuple[int, Any]] = []
         for priority, protocol in self.protocols:
             if id(protocol) in exclude:
                 continue
@@ -498,19 +497,31 @@ class FallbackProtocolManager:
                     candidates.append((priority, protocol))
             except Exception as e:
                 logger.debug("Health check error for %s: %s", protocol.protocol_name, e)
+        return candidates
+
+    async def _retry_with_reset(self) -> List[Tuple[int, Any]]:
+        """Reset failure counters and retry health checks once."""
+        for _, protocol in self.protocols:
+            protocol.consecutive_failures = 0
+        candidates: List[Tuple[int, Any]] = []
+        for priority, protocol in self.protocols:
+            try:
+                if await protocol.health_check():
+                    candidates.append((priority, protocol))
+            except Exception:
+                logger.debug(
+                    "retry health_check for %s crashed", protocol.protocol_name, exc_info=True
+                )
+        return candidates
+
+    async def _select_active_protocol(self, exclude: Optional[set] = None) -> None:
+        """Pick the highest-priority healthy protocol not in ``exclude``."""
+        exclude = exclude or set()
+        candidates = await self._collect_healthy_protocols(exclude)
 
         if not candidates and exclude:
             # Everything excluded (failure streaks) — reset counters and retry once.
-            for _, protocol in self.protocols:
-                protocol.consecutive_failures = 0
-            for priority, protocol in self.protocols:
-                try:
-                    if await protocol.health_check():
-                        candidates.append((priority, protocol))
-                except Exception:
-                    logger.debug(
-                        "retry health_check for %s crashed", protocol.protocol_name, exc_info=True
-                    )
+            candidates = await self._retry_with_reset()
 
         if not candidates:
             logger.error("No healthy fallback protocol available")
