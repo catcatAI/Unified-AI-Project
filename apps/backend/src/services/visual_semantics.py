@@ -144,6 +144,35 @@ def _cosine(a: List[float], b: List[float]) -> float:
     return dot / (na * nb)
 
 
+def _dsu_find(parent: List[int], i: int) -> int:
+    """Union-find with path halving."""
+    while parent[i] != i:
+        parent[i] = parent[parent[i]]
+        i = parent[i]
+    return i
+
+
+def _dsu_union(parent: List[int], i: int, j: int) -> None:
+    parent[_dsu_find(parent, i)] = _dsu_find(parent, j)
+
+
+def _merge_eligible_pair(
+    parent: List[int], items: List[Dict[str, Any]], i: int, j: int, sim_bar: float
+) -> None:
+    """Union items i/j only when decision/looks/size-band all agree."""
+    a, b = items[i], items[j]
+    if a.get("decision") != b.get("decision"):
+        return
+    if a.get("decision") is None:
+        return
+    if a.get("emb") is None or b.get("emb") is None:
+        return
+    if size_band(a["box"]) != size_band(b["box"]):
+        return
+    if _cosine(a["emb"], b["emb"]) >= sim_bar:
+        _dsu_union(parent, i, j)
+
+
 def link_subjects(items: List[Dict[str, Any]], sim_bar: float = 0.9) -> List[List[Dict[str, Any]]]:
     """Re-id grouping: same decision + same looks + same size = one subject.
 
@@ -154,31 +183,13 @@ def link_subjects(items: List[Dict[str, Any]], sim_bar: float = 0.9) -> List[Lis
     """
     parent = list(range(len(items)))
 
-    def _find(i: int) -> int:
-        while parent[i] != i:
-            parent[i] = parent[parent[i]]
-            i = parent[i]
-        return i
-
-    def _union(i: int, j: int) -> None:
-        parent[_find(i)] = _find(j)
-
     for i in range(len(items)):
         for j in range(i + 1, len(items)):
-            a, b = items[i], items[j]
-            if a.get("decision") != b.get("decision"):
-                continue
-            if a.get("decision") is None:
-                continue
-            if a.get("emb") is None or b.get("emb") is None:
-                continue
-            if size_band(a["box"]) != size_band(b["box"]):
-                continue
-            if _cosine(a["emb"], b["emb"]) >= sim_bar:
-                _union(i, j)
+            _merge_eligible_pair(parent, items, i, j, sim_bar)
+
     groups: Dict[int, List[Dict[str, Any]]] = {}
     for i, item in enumerate(items):
-        groups.setdefault(_find(i), []).append(item)
+        groups.setdefault(_dsu_find(parent, i), []).append(item)
     return list(groups.values())
 
 
