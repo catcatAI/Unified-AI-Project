@@ -105,6 +105,28 @@ class BooleanGateLearner:
         return self.hypothesis.name
 
 
+def _eval_boolop(node: ast.BoolOp, values: Mapping[str, int]) -> int:
+    """And→all、Or→any；其餘運算子拋 unsupported。"""
+    if isinstance(node.op, ast.And):
+        return int(all(_eval_oracle_node(value, values) for value in node.values))
+    if isinstance(node.op, ast.Or):
+        return int(any(_eval_oracle_node(value, values) for value in node.values))
+    raise ValueError("oracle expression contains an unsupported operation")
+
+
+def _eval_compare(node: ast.Compare, values: Mapping[str, int]) -> int:
+    """單運算元 Eq/NotEq 比較；多運算元或其餘運算子拋 unsupported。"""
+    if not (len(node.ops) == 1 and len(node.comparators) == 1):
+        raise ValueError("oracle expression contains an unsupported operation")
+    left = _eval_oracle_node(node.left, values)
+    right = _eval_oracle_node(node.comparators[0], values)
+    if isinstance(node.ops[0], ast.Eq):
+        return int(left == right)
+    if isinstance(node.ops[0], ast.NotEq):
+        return int(left != right)
+    raise ValueError("oracle expression contains an unsupported operation")
+
+
 def _eval_oracle_node(node: ast.AST, values: Mapping[str, int]) -> int:
     if isinstance(node, ast.Expression):
         return _eval_oracle_node(node.body, values)
@@ -115,19 +137,11 @@ def _eval_oracle_node(node: ast.AST, values: Mapping[str, int]) -> int:
     if isinstance(node, ast.Constant):
         return _bit(node.value)
     if isinstance(node, ast.BoolOp):
-        if isinstance(node.op, ast.And):
-            return int(all(_eval_oracle_node(value, values) for value in node.values))
-        if isinstance(node.op, ast.Or):
-            return int(any(_eval_oracle_node(value, values) for value in node.values))
+        return _eval_boolop(node, values)
     if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.Not):
         return 1 - _eval_oracle_node(node.operand, values)
-    if isinstance(node, ast.Compare) and len(node.ops) == 1 and len(node.comparators) == 1:
-        left = _eval_oracle_node(node.left, values)
-        right = _eval_oracle_node(node.comparators[0], values)
-        if isinstance(node.ops[0], ast.Eq):
-            return int(left == right)
-        if isinstance(node.ops[0], ast.NotEq):
-            return int(left != right)
+    if isinstance(node, ast.Compare):
+        return _eval_compare(node, values)
     raise ValueError("oracle expression contains an unsupported operation")
 
 
