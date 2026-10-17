@@ -52,6 +52,11 @@ dist/
 data/
 !data/README.md
 !tests/data/
+# Root data/ keeps everything local except its inventory README.
+# Anchored: global data/ (any depth) must keep ignoring deep data dirs.
+!/data/
+/data/*
+!/data/README.md
 # Pixel-angela PixelObject spec samples (world_manifest.md §3 contract —
 # tracked source-of-truth, NOT runtime data; see apps/pixel-angela/data/world_objects/)
 !apps/pixel-angela/data/

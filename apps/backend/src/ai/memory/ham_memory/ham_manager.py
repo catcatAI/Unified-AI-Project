@@ -120,6 +120,22 @@ class HAMMemoryManager:
 
     def _write_to_disk(self) -> None:
         """Synchronous disk write — called from _save or save_async."""
+        # P1-9: top-level metadata had NO writer anywhere (永遠 {}).
+        # Stamp self-describing provenance on every save; merge so any
+        # caller-set keys survive.
+        meta = self._data.get("metadata")
+        if not isinstance(meta, dict):
+            meta = {}
+        meta.update(
+            {
+                "schema_version": 1,
+                "saved_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                "conversation_count": len(self._data.get("conversations", [])),
+                "template_count": len(self._data.get("templates", [])),
+                "bucket_cap": self._max_entries_per_bucket,
+            }
+        )
+        self._data["metadata"] = meta
         self.memory_file.parent.mkdir(parents=True, exist_ok=True)
         with open(self.memory_file, "w", encoding="utf-8") as f:
             json.dump(self._data, f, ensure_ascii=False, indent=2)

@@ -117,5 +117,78 @@ class TestUnservableTemplateGuard:
         assert "good" in ids
 
 
+class TestMetadataStamping:
+    """P1-9: top-level metadata had NO writer (永遠 {} for ham_game_memory
+    4982 conversations). Every save must stamp self-describing provenance."""
+
+    def _read(self, tmp_path):
+        import json
+        from pathlib import Path
+
+        return json.loads(Path(tmp_path / "ham.json").read_text(encoding="utf-8"))
+
+    @pytest.mark.asyncio
+    async def test_metadata_stamped_on_save(self, tmp_path):
+        from datetime import datetime
+
+        from ai.memory.ham_memory.ham_manager import HAMMemoryManager
+
+        m = HAMMemoryManager(memory_file=str(tmp_path / "ham.json"), auto_save=False)
+        m._data["conversations"] = [{"content": "a"}, {"content": "b"}]
+        m._data["templates"] = [{"content": "t"}]
+        m._write_to_disk()
+
+        meta = self._read(tmp_path)["metadata"]
+        assert meta["schema_version"] == 1
+        assert meta["conversation_count"] == 2
+        assert meta["template_count"] == 1
+        assert meta["bucket_cap"] == m._max_entries_per_bucket
+        # saved_at must be a real UTC ISO timestamp
+        parsed = datetime.fromisoformat(meta["saved_at"])
+        assert parsed.tzinfo is not None
+
+    @pytest.mark.asyncio
+    async def test_caller_metadata_keys_preserved(self, tmp_path):
+        from ai.memory.ham_memory.ham_manager import HAMMemoryManager
+
+        m = HAMMemoryManager(memory_file=str(tmp_path / "ham.json"), auto_save=False)
+        m._data["metadata"] = {"custom_key": "keep-me"}
+        m._write_to_disk()
+
+        meta = self._read(tmp_path)["metadata"]
+        assert meta["custom_key"] == "keep-me"
+        assert meta["schema_version"] == 1
+
+    @pytest.mark.asyncio
+    async def test_legacy_empty_metadata_upgraded_on_reload(self, tmp_path):
+        import json
+        from pathlib import Path
+
+        from ai.memory.ham_memory.ham_manager import HAMMemoryManager
+
+        # reproduce the real on-disk state: metadata恒空
+        legacy = {"templates": [], "conversations": [{"content": "old"}], "metadata": {}}
+        Path(tmp_path / "ham.json").write_text(json.dumps(legacy), encoding="utf-8")
+
+        m = HAMMemoryManager(memory_file=str(tmp_path / "ham.json"), auto_save=False)
+        assert m._data["metadata"] == {}, "load must not mutate (read path stays pure)"
+        m._write_to_disk()  # _save() early-returns when auto_save=False
+        meta = self._read(tmp_path)["metadata"]
+        assert meta["schema_version"] == 1
+        assert meta["conversation_count"] == 1
+
+    @pytest.mark.asyncio
+    async def test_non_dict_metadata_replaced(self, tmp_path):
+        from ai.memory.ham_memory.ham_manager import HAMMemoryManager
+
+        m = HAMMemoryManager(memory_file=str(tmp_path / "ham.json"), auto_save=False)
+        m._data["metadata"] = "corrupted"
+        m._write_to_disk()
+
+        meta = self._read(tmp_path)["metadata"]
+        assert isinstance(meta, dict)
+        assert meta["schema_version"] == 1
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

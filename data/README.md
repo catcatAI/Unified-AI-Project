@@ -1,0 +1,28 @@
+# data/ — 本機執行期資產（clone 無）
+
+本目錄 **除本 README 與 `materials/` 下 2 個歷史強制納管檔外全部 gitignore**
+（規則見根 `.gitignore` `data/` 區塊）。clone 專案後此處由執行期自動重建；
+**任何依賴這些檔案的驗證與復現結論都帶有「本機資產」前提**。
+
+| 路徑 | 大小 | 內容 | 本機性質 |
+| --- | --- | --- | --- |
+| `multimodal/` | ~2.0G | 視覺/音訊處理快取與模型產出 | 執行期重建 |
+| `models/` | ~1.1G | 本地模型權重 | 不入庫 |
+| `dictionaries/` | ~189M | CC-CEDICT/JMdict/WordNet 匯入索引 | `scripts/import_dictionaries.py` 重建 |
+| `corpus/` | ~95M | 訓練語料 | 不入庫 |
+| `context_storage/` | ~6.5M | 對話上下文儲存 | 執行期重建 |
+| `angela_memory/ham_game_memory.json` | ~3.5M | **遊戲 HAM 持久記憶**（4,982 conversations；寫入方 `ai/autonomous/angela_agent.py` → `HAMMemoryManager`；`game_memory_bridge` 經 store 存 experience） | 本機資產，clone 無。**templates 桶恆空**是真實使用面：遊戲流只寫 conversations，`store_template` 的唯一呼叫者是 `services/llm/router.py:4357`（主 HAM 實例），非遊戲實例——不虛構模板。**metadata 自 P1-9 起於每次 save 蓋章**（schema_version/saved_at/counts），舊檔的 `{}` 於下次 save 自動升級 |
+| `memory/` | ~372K | 主 `ham_memory.json` | 同上（同一 manager，同一蓋章） |
+| `state/` `checkpoints/` `vector_store/` | ~2M | 狀態/檢查點/向量索引 | 執行期重建 |
+| `agent_workspace/` `eda_runs/` `fallback_comm/` | ~3M | agent 工作區/EDA/降級通訊 | 執行期重建 |
+| `*.json`（根，如 `life_essence_state.json`） | ~0.6M | 生命週期/策略等狀態檔 | 執行期重建 |
+| `materials/` | — | `civil_materials.json` + `civil_templates.json` | **已納管**（歷史強制加入，ignore 規則不影響已追蹤檔） |
+
+## 復現性註記（P1-9）
+
+- **「clone 無」清單**：上表全部本機資產。任何宣稱「以 ham_game_memory N 筆
+  實測」的結論，僅在具備該檔案的機器上可復現；量化審計數字應標註檔案雜湊
+  與日期。
+- `ham_game_memory.json` 之 `metadata` 空 `{}` 為 2026-10-17 修復前的歷史狀態；
+  修復後新寫入必含 `schema_version`/`saved_at`/`conversation_count`/
+  `template_count`/`bucket_cap`（測試：`tests/ai/memory/test_ham_memory.py::TestMetadataStamping`）。
