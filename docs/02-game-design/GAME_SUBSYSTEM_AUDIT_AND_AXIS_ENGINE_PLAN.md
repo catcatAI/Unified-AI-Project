@@ -358,6 +358,16 @@ class Entity:
 4. **M1→M4 引擎核心**（每階段提交+測試）→ M5 內容灌入 → M6 顯示接線 → M7 效能。
 5. 收尾：`docs/02-game-design/FILE_INVENTORY.md` 與本檔對齊；`start_game_stack.sh` 重寫成
    「後端/代理/Luanti」三段各自可選啟動。
+   ——**已完成（2026-10-17）**：FILE_INVENTORY 補 10 個缺口（backbone_bridge/
+   analyze_cards/check_content/conftest 四孤兒＋engine/ 十檔＋tests/ 306
+   ＋測試節 4 行：game-rpg tests、tests/game 30、資產契約 10、繪製 53）；
+   start_game_stack.sh 重寫為 `--backend|--agent|--luanti` 三段可選
+   （可組合、固定執行序、各自 health/tcp 幂等探測；後端段打
+   `/api/v1/health`、Luanti 段 flatpak 起服＋/dev/tcp :30000 探測＋四前置
+   README 指引、無參數 usage exit 2、未知旗標 exit 2）。驗證：`bash -n`
+   SYNTAX_OK、--help exit 0、無參數 exit 2、`--backend` 命中「already up」
+   活探測分支 exit 0；agent/Luanti 段不在此批實跑（llama 模型起服重、
+   flatpak 服務端 §九 已聲明 CI 無法跑、驗證靠文檔+本地冒煙）。
 
 ## 九、風險與回退
 

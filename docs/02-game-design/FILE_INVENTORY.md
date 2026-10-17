@@ -16,6 +16,12 @@
 | `apps/game-rpg/axis_system.py`      | Python   | 軸譜系統                                       |
 | `apps/game-rpg/world_clock.py`      | Python   | 多世界線時間引擎                               |
 | `apps/game-rpg/game_familiarity.py` | Python   | 熟悉度系統                                     |
+| `apps/game-rpg/backbone_bridge.py`  | Python   | 主幹線接入（可選 lazy，缺時遊戲照跑）          |
+| `apps/game-rpg/analyze_cards.py`    | Python   | 卡片分析工具                                   |
+| `apps/game-rpg/check_content.py`    | Python   | 內容一致性檢查工具                             |
+| `apps/game-rpg/conftest.py`         | Python   | pytest bootstrap（game-rpg 根插入 sys.path）   |
+| `apps/game-rpg/engine/`             | Python   | 「萬物皆軸」M1–M7 引擎（10 檔：契約管線/量化/主時鐘/渲染橋/內容快照/精靈視圖/SoA 熱群組） |
+| `apps/game-rpg/tests/`              | pytest   | 單測 306 passed（axis/backbone/craft＋engine M1–M7 七檔） |
 | `apps/game-rpg/data/`               | JSON     | 遊戲資料（唯一權威來源）                       |
 
 ### 設計文檔
@@ -114,6 +120,10 @@
 | ------------------ | ------------- |
 | `tests/core/card/` | 卡片系統測試  |
 | `tests/ai/meta/`   | AI 元系統測試 |
+| `apps/game-rpg/tests/` | game-rpg 單測 306 passed（axis/backbone/craft＋engine M1–M7 七檔） |
+| `tests/game/`      | 後端遊戲子系統 29＋CLI echo 冒煙 1（共 30 tests；`test_game_cli_smoke.py` 斷言 8 關鍵幀） |
+| `tests/frontend/test_game_asset_contracts.py` | 遊戲資產契約 10（glb v2/立繪/base_sprite/圖集/卡片自述總和） |
+| `tests/ai/multimodal/primitives/test_game_sprites.py` | 軸→視覺繪製 53（atlas/幀表/三圖層/四地形＋axis_system 同步鎖定） |
 
 ### 專案整合計劃
 
