@@ -52,6 +52,9 @@ dist/
 data/
 !data/README.md
 !tests/data/
+# Pixel-angela PixelObject spec samples (world_manifest.md §3 contract —
+# tracked source-of-truth, NOT runtime data; see apps/pixel-angela/data/world_objects/)
+!apps/pixel-angela/data/
 model_cache/
 logs/
 *.log

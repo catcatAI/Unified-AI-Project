@@ -1,0 +1,10 @@
+{
+  "name": "snack_energy",
+  "category": "consumable",
+  "collision": { "x": 56, "y": 328, "w": 16, "h": 16 },
+  "pattern": ["WrW", "rOr", "WrW"],
+  "palette": { "W": "#FFF8DC", "r": "#FF4500", "O": "#FF8C00" },
+  "metabolic_impact": { "energy": 12.0, "arousal": 1.5 },
+  "interact": { "on_contact": "consume" },
+  "notes": "能量點心：接觸即消耗，+Energy / 輕微 +Arousal（manifest §2 消耗品）。"
+}

@@ -156,16 +156,28 @@ class AngelaRenderer(QWidget):
 
     def _init_system_tray(self):
         self.tray = QSystemTrayIcon(self)
-        pixmap = QPixmap(32, 32)
-        pixmap.fill(Qt.GlobalColor.transparent)
-        p = QPainter(pixmap)
-        p.setBrush(QColor(42, 75, 140))
-        p.setPen(Qt.PenStyle.NoPen)
-        p.drawRect(4, 4, 24, 24)
-        p.setPen(QColor(255, 255, 255))
-        p.setFont(QFont("Arial", 14, QFont.Weight.Bold))
-        p.drawText(pixmap.rect(), Qt.AlignmentFlag.AlignCenter, "A")
-        p.end()
+        # Prefer the bundled Angela pixel sprite (base_sprite.png, 128x128);
+        # fall back to a generated "A" tile if the asset is missing/unreadable.
+        sprite_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "base_sprite.png")
+        pixmap = QPixmap(sprite_path)
+        if pixmap.isNull():
+            pixmap = QPixmap(32, 32)
+            pixmap.fill(Qt.GlobalColor.transparent)
+            p = QPainter(pixmap)
+            p.setBrush(QColor(42, 75, 140))
+            p.setPen(Qt.PenStyle.NoPen)
+            p.drawRect(4, 4, 24, 24)
+            p.setPen(QColor(255, 255, 255))
+            p.setFont(QFont("Arial", 14, QFont.Weight.Bold))
+            p.drawText(pixmap.rect(), Qt.AlignmentFlag.AlignCenter, "A")
+            p.end()
+        else:
+            pixmap = pixmap.scaled(
+                32,
+                32,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation,
+            )
         self.tray.setIcon(QIcon(pixmap))
         self.tray.activated.connect(self._on_tray_activated)
         self.tray.show()

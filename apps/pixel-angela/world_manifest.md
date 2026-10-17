@@ -18,9 +18,15 @@
 
 ## 3. MOD 實作流程
 
-1.  在 `data/world_objects/` 建立對應的 `json` 描述檔。
-2.  定義物件的像素矩陣圖案 (128x384 矩陣的子集)。
-3.  在 `PixelWorld` 中註冊該物件的 `(x, y, w, h)` 碰撞區域。
+> **現狀（2026-10-17）**：`PixelWorld` / `BasePixelObject` / `interaction_handler`
+> 尚未實作（全倉零代碼引用）。`data/world_objects/` 已建目錄並附 3 個規範樣例
+> （`wall_static` / `snack_energy` / `pet_cat_small`，欄位對齊本文件 §1-2），
+> 欄位契約由 `tests/frontend/test_pixel_world_objects.py` 守護——運行時落地時
+> 以該目錄為註冊表起點，勿改欄位語意。
+
+1.  在 `apps/pixel-angela/data/world_objects/` 建立對應的 `json` 描述檔。
+2.  定義物件的像素矩陣圖案 (128x384 矩陣的子集，樣例以 `pattern`+`palette` 表示)。
+3.  在 `PixelWorld`（**待實作**）中註冊該物件的 `(x, y, w, h)` 碰撞區域。
 
 ## 4. 擴展接口
 

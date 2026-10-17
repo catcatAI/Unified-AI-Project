@@ -1,0 +1,10 @@
+{
+  "name": "pet_cat_small",
+  "category": "living",
+  "collision": { "x": 88, "y": 316, "w": 24, "h": 24 },
+  "pattern": ["p..p", "pppp", "pppp", "p..p"],
+  "palette": { "p": "#FFB6C1" },
+  "metabolic_impact": { "energy": -2.0, "arousal": 3.0 },
+  "interact": { "on_contact": "observe" },
+  "notes": "小貓（生物類）：具自發行為，僅需介面欄位；行為細節由未來 PixelWorld 運行時提供（manifest §2 Living）。"
+}
