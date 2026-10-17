@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 # Angela in-game autonomy stack (local only, no cloud):
-#   1. llama.cpp server :8080  (local LLM decider, Gemma 4 E2B Q4_0 GGUF)
-#   2. run_angela.py          (agent loop + bridge :30003)
+#   1. llama.cpp server :8080    (local LLM decider, Gemma 4 E2B Q4_0 GGUF)
+#   2. run_luanti_agent.py       (angela_agent loop + PollingBridge :30003)
+#      NOTE: the unified launcher scripts/run_angela.py (backend API :8000
+#      + desktop) does NOT bind :30003 — the game agent is a separate
+#      process (docs/INVOCATION_MATRIX.md).
 # Luanti server :30000 stays manual (flatpak/GUI varies per machine):
 #   flatpak run org.luanti.luanti --server --gameid minetest_game \
 #     --world /tmp/luanti_test --port 30000 \
@@ -36,8 +39,8 @@ else
 fi
 
 if ! health http://127.0.0.1:30003/health; then
-  echo "[2/2] starting Angela agent (bridge :30003) ..."
-  (cd "$ROOT" && "$PY" run_angela.py >/tmp/angela.log 2>&1 &)
+  echo "[2/2] starting Angela game agent (PollingBridge :30003) ..."
+  (cd "$ROOT" && "$PY" "$ROOT/scripts/run_luanti_agent.py" >/tmp/angela.log 2>&1 &)
   sleep 12
   health http://127.0.0.1:30003/health || { echo "agent failed (see /tmp/angela.log)"; exit 1; }
 else
