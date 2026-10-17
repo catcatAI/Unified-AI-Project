@@ -5,9 +5,17 @@ import re
 _GAME_DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
 # ============================================================
-# 1. Parse the catalog from 完整卡片目錄V1.0.txt
+# 1. Parse the catalog from 完整卡片目錄V1.txt (legacy alias: V1.0)
 # ============================================================
-cat_path = os.path.join(_GAME_DATA_DIR, "gdrive_export", "完整卡片目錄V1.0.txt")
+_cat_candidates = [
+    os.path.join(_GAME_DATA_DIR, "gdrive_export", "完整卡片目錄V1.txt"),
+    os.path.join(_GAME_DATA_DIR, "gdrive_export", "完整卡片目錄V1.0.txt"),
+]
+cat_path = next((p for p in _cat_candidates if os.path.isfile(p)), None)
+if cat_path is None:
+    raise FileNotFoundError(
+        "card catalog not found; tried: " + ", ".join(_cat_candidates)
+    )
 with open(cat_path, "r", encoding="utf-8") as f:
     catalog_text = f.read()
 
