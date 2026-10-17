@@ -9,6 +9,9 @@
 #   flatpak run org.luanti.luanti --server --gameid minetest_game \
 #     --world /tmp/luanti_test --port 30000 \
 #     --config ~/.var/app/org.luanti.luanti/config/luanti/minetest.conf
+#   The mod needs FOUR prerequisites incl. `secure.http_mods = agent_poller`
+#   in that minetest.conf — see apps/luanti-mods/README.md (without it the
+#   mod returns early and the stack looks fine but the bridge is never polled).
 # Then join with any client; the agent pilots "AngelaBot".
 set -u
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
