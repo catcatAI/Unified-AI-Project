@@ -353,17 +353,10 @@ class ED3NEngine:
             enriched=enriched,
         )
 
-    def _process_unlocked(
-        self, input_text: str, context: Optional[Dict[str, Any]] = None, depth: str = "auto"
-    ) -> str:
-        if not input_text or not isinstance(input_text, str):
-            self._last_confidence = 0.0
-            return ""
-
-        query_id = f"{id(input_text)}_{time.time_ns()}"
-        stages: Dict[str, float] = {}
-        FALLBACK_STR = self._fallback_str(input_text)
-
+    def _try_early_stages(
+        self, input_text: str, query_id: str, stages: Dict[str, float], depth: str
+    ) -> Optional[str]:
+        """Reflex→math→logic→symbolic→KB→chain 六段確定性門控；命中回應答，否則 None。"""
         # Stage 1: Reflex
         reflex_result = self._stage_reflex(input_text, query_id, stages)
         if reflex_result is not None:
@@ -413,6 +406,23 @@ class ED3NEngine:
         chain_result = self._stage_chain_reasoning(input_text, query_id, stages)
         if chain_result is not None:
             return chain_result
+
+        return None
+
+    def _process_unlocked(
+        self, input_text: str, context: Optional[Dict[str, Any]] = None, depth: str = "auto"
+    ) -> str:
+        if not input_text or not isinstance(input_text, str):
+            self._last_confidence = 0.0
+            return ""
+
+        query_id = f"{id(input_text)}_{time.time_ns()}"
+        stages: Dict[str, float] = {}
+        FALLBACK_STR = self._fallback_str(input_text)
+
+        early = self._try_early_stages(input_text, query_id, stages, depth)
+        if early is not None:
+            return early
 
         # Stage 2: Encode
         keys, cache_hit = self._stage_encode(input_text, query_id, stages)
