@@ -1131,6 +1131,70 @@ class EdaAgent:
                 "diagnostics": [str(exc)],
             }
 
+    async def _exploration_stage(self, workspace: Any, spec: Dict[str, Any]) -> Dict[str, Any]:
+        """sweep 開啟時跑參數探索，否則回 skipped 結構。"""
+        if spec["sweep"]:
+            return await self._run_sweep(workspace, spec["resistances"], spec["capacitances"])
+        return {
+            "status": "skipped",
+            "point_count": 0,
+            "successful_count": 0,
+            "rows": [],
+            "best": None,
+            "artifacts": [],
+        }
+
+    async def _magic_stage(
+        self, layout: Dict[str, Any], probe: Dict[str, Any], workspace: Any
+    ) -> Dict[str, Any]:
+        """有 GDS 產物且 magic 可用才跑 Magic DRC，否則回 skipped 結構。"""
+        magic: Dict[str, Any] = {
+            "status": "skipped",
+            "tool": "magic",
+            "artifacts": [],
+            "metrics": {},
+            "diagnostics": ["KLayout did not produce a GDS input"],
+        }
+        gds_artifact = next(
+            (item for item in layout.get("artifacts", []) if item.get("type") == "gds"),
+            None,
+        )
+        magic_available = probe["tools"].get("magic", {}).get("available", False)
+        if gds_artifact and magic_available:
+            magic = await self.adapter.run_magic(
+                gds_artifact["path"], workspace=workspace, label="magic_layout"
+            )
+        return magic
+
+    @staticmethod
+    def _ic_status(layout: Dict[str, Any], simulation: Dict[str, Any]) -> Tuple[str, List[str]]:
+        """klayout+ngspice 成功數判定三級狀態；回 (status, successful_tools)。"""
+        successful_tools = [
+            name
+            for name, result in (
+                ("klayout", layout),
+                ("ngspice", simulation),
+            )
+            if result.get("status") == "success"
+        ]
+        if not successful_tools:
+            return "unavailable", successful_tools
+        if len(successful_tools) < 2:
+            return "partial", successful_tools
+        return "success", successful_tools
+
+    @staticmethod
+    def _magic_note(magic: Dict[str, Any]) -> str:
+        """依 Magic 狀態與 DRC 指標產生人話註記（四級）。"""
+        magic_metrics = magic.get("metrics", {})
+        if magic.get("status") == "success":
+            return "Magic DRC 已驗證"
+        if magic_metrics.get("drc_error_count"):
+            return f"Magic DRC 發現 {magic_metrics['drc_error_count']} 個錯誤"
+        if magic_metrics.get("pdk_ready"):
+            return "Magic PDK 已載入，但 headless DRC 未完成認證"
+        return "Magic 缺少可用 PDK，未宣稱 DRC 通過"
+
     async def run_experiment(
         self,
         query: str = "",
@@ -1177,34 +1241,8 @@ class EdaAgent:
             simulation = await self.adapter.run_ngspice(
                 deck, workspace=workspace, label="rc_filter", finalize=False
             )
-            exploration = (
-                await self._run_sweep(workspace, spec["resistances"], spec["capacitances"])
-                if spec["sweep"]
-                else {
-                    "status": "skipped",
-                    "point_count": 0,
-                    "successful_count": 0,
-                    "rows": [],
-                    "best": None,
-                    "artifacts": [],
-                }
-            )
-            magic: Dict[str, Any] = {
-                "status": "skipped",
-                "tool": "magic",
-                "artifacts": [],
-                "metrics": {},
-                "diagnostics": ["KLayout did not produce a GDS input"],
-            }
-            gds_artifact = next(
-                (item for item in layout.get("artifacts", []) if item.get("type") == "gds"),
-                None,
-            )
-            magic_available = probe["tools"].get("magic", {}).get("available", False)
-            if gds_artifact and magic_available:
-                magic = await self.adapter.run_magic(
-                    gds_artifact["path"], workspace=workspace, label="magic_layout"
-                )
+            exploration = await self._exploration_stage(workspace, spec)
+            magic = await self._magic_stage(layout, probe, workspace)
             all_artifacts = self._merge_artifacts(
                 layout.get("artifacts", []),
                 simulation.get("artifacts", []),
@@ -1227,29 +1265,8 @@ class EdaAgent:
             learning_artifact = learning.pop("artifact", None)
             if learning_artifact:
                 all_artifacts.append(learning_artifact)
-            successful_tools = [
-                name
-                for name, result in (
-                    ("klayout", layout),
-                    ("ngspice", simulation),
-                )
-                if result.get("status") == "success"
-            ]
-            if not successful_tools:
-                status = "unavailable"
-            elif len(successful_tools) < 2:
-                status = "partial"
-            else:
-                status = "success"
-            magic_metrics = magic.get("metrics", {})
-            if magic.get("status") == "success":
-                magic_note = "Magic DRC 已驗證"
-            elif magic_metrics.get("drc_error_count"):
-                magic_note = f"Magic DRC 發現 {magic_metrics['drc_error_count']} 個錯誤"
-            elif magic_metrics.get("pdk_ready"):
-                magic_note = "Magic PDK 已載入，但 headless DRC 未完成認證"
-            else:
-                magic_note = "Magic 缺少可用 PDK，未宣稱 DRC 通過"
+            status, successful_tools = self._ic_status(layout, simulation)
+            magic_note = self._magic_note(magic)
             best = exploration.get("best")
             best_note = (
                 f"；最佳候選 R={best['resistance_ohm']:g}Ω/C={best['capacitance_f']:g}F"
