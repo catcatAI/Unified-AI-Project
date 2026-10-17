@@ -952,22 +952,9 @@ class EdaAgent:
             )
         )
 
-    async def run_design_experiment(
-        self,
-        query: str = "",
-        width_mm: float = 40.0,
-        height_mm: float = 30.0,
-        easyeda_source: Optional[str] = None,
-        easyeda_footprint: bool = False,
-        workflow: str = "auto",
-    ) -> Dict[str, Any]:
-        """Run KiCad generation and explicit EasyEDA/JLCONE handoff workflows."""
-        if not self.adapter.enabled:
-            return {
-                "status": "unavailable",
-                "message": "EDA integration is disabled by configuration",
-                "diagnostics": ["eda.enabled=false"],
-            }
+    @staticmethod
+    def _requested_workflows(query: str, workflow: str) -> Dict[str, bool]:
+        """依 workflow 白名單與 query 關鍵字判定三工具啟用（無一命中預設 kicad）。"""
         requested = {
             "kicad": workflow in {"all", "kicad", "pcb"}
             or bool(re.search(r"kicad|gerber|pcb|電路板|电路板", query or "", re.I)),
@@ -978,8 +965,18 @@ class EdaAgent:
         }
         if not any(requested.values()):
             requested["kicad"] = True
-        probe = await self.adapter.probe()
-        workspace = self.adapter.create_workspace("angela_pcb")
+        return requested
+
+    async def _run_pcb_tools(
+        self,
+        requested: Dict[str, bool],
+        workspace: Any,
+        width_mm: float,
+        height_mm: float,
+        easyeda_source: Optional[str],
+        easyeda_footprint: bool,
+    ) -> Tuple[Dict[str, Any], Dict[str, Any], Dict[str, Any]]:
+        """依 requested 執行 KiCad/EasyEDA/JLCONE 三工具，回各自結果。"""
         kicad: Dict[str, Any] = {
             "status": "skipped",
             "tool": "kicad",
@@ -1001,26 +998,76 @@ class EdaAgent:
             "metrics": {},
             "diagnostics": [],
         }
-        try:
-            if requested["kicad"]:
-                kicad = await self.adapter.generate_kicad_board(
-                    workspace, width_mm=width_mm, height_mm=height_mm
+        if requested["kicad"]:
+            kicad = await self.adapter.generate_kicad_board(
+                workspace, width_mm=width_mm, height_mm=height_mm
+            )
+        if requested["easyeda"]:
+            if easyeda_source and easyeda_footprint:
+                easyeda = await self.adapter.convert_easyeda_footprint(
+                    easyeda_source, workspace=workspace
                 )
-            if requested["easyeda"]:
-                if easyeda_source and easyeda_footprint:
-                    easyeda = await self.adapter.convert_easyeda_footprint(
-                        easyeda_source, workspace=workspace
-                    )
-                elif easyeda_source:
-                    easyeda = await self.adapter.stage_easyeda_file(
-                        easyeda_source, workspace=workspace
-                    )
-                else:
-                    easyeda = self.adapter.prepare_easyeda_handoff(
-                        workspace, kicad.get("artifacts", [])
-                    )
-            if requested["jlcone"]:
-                jlcone = self.adapter.prepare_jlcone_handoff(workspace, kicad.get("artifacts", []))
+            elif easyeda_source:
+                easyeda = await self.adapter.stage_easyeda_file(
+                    easyeda_source, workspace=workspace
+                )
+            else:
+                easyeda = self.adapter.prepare_easyeda_handoff(
+                    workspace, kicad.get("artifacts", [])
+                )
+        if requested["jlcone"]:
+            jlcone = self.adapter.prepare_jlcone_handoff(workspace, kicad.get("artifacts", []))
+        return kicad, easyeda, jlcone
+
+    @staticmethod
+    def _pcb_status(
+        requested: Dict[str, bool],
+        kicad: Dict[str, Any],
+        easyeda: Dict[str, Any],
+        jlcone: Dict[str, Any],
+    ) -> str:
+        """啟用工具中成功數與 bridge_required 判定整體狀態三級。"""
+        result_by_tool = {"kicad": kicad, "easyeda": easyeda, "jlcone": jlcone}
+        active = [name for name in requested if requested[name]]
+        good = {
+            name
+            for name in active
+            if result_by_tool[name].get("status")
+            in {"success", "ready_for_client", "bridge_required"}
+        }
+        bridge_required = any(
+            result_by_tool[name].get("status") == "bridge_required" for name in active
+        )
+        if not good:
+            return "unavailable"
+        if len(good) < len(active) or bridge_required:
+            return "partial"
+        return "success"
+
+    async def run_design_experiment(
+        self,
+        query: str = "",
+        width_mm: float = 40.0,
+        height_mm: float = 30.0,
+        easyeda_source: Optional[str] = None,
+        easyeda_footprint: bool = False,
+        workflow: str = "auto",
+    ) -> Dict[str, Any]:
+        """Run KiCad generation and explicit EasyEDA/JLCONE handoff workflows."""
+        if not self.adapter.enabled:
+            return {
+                "status": "unavailable",
+                "message": "EDA integration is disabled by configuration",
+                "diagnostics": ["eda.enabled=false"],
+            }
+        requested = self._requested_workflows(query, workflow)
+        probe = await self.adapter.probe()
+        workspace = self.adapter.create_workspace("angela_pcb")
+        try:
+            kicad, easyeda, jlcone = await self._run_pcb_tools(
+                requested, workspace, width_mm, height_mm,
+                easyeda_source, easyeda_footprint,
+            )
             all_artifacts = self._merge_artifacts(
                 kicad.get("artifacts", []),
                 easyeda.get("artifacts", []),
@@ -1041,23 +1088,7 @@ class EdaAgent:
             learning_artifact = learning.pop("artifact", None)
             if learning_artifact:
                 all_artifacts.append(learning_artifact)
-            result_by_tool = {"kicad": kicad, "easyeda": easyeda, "jlcone": jlcone}
-            active = [name for name in requested if requested[name]]
-            good = {
-                name
-                for name in active
-                if result_by_tool[name].get("status")
-                in {"success", "ready_for_client", "bridge_required"}
-            }
-            bridge_required = any(
-                result_by_tool[name].get("status") == "bridge_required" for name in active
-            )
-            if not good:
-                status = "unavailable"
-            elif len(good) < len(active) or bridge_required:
-                status = "partial"
-            else:
-                status = "success"
+            status = self._pcb_status(requested, kicad, easyeda, jlcone)
             summary = {
                 "query": query,
                 "workflow": workflow,
