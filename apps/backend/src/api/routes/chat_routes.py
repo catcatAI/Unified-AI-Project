@@ -2242,13 +2242,40 @@ def _extract_response_text(llm_response: Any) -> str:
     )
 
 
+def _record_meta_calibration_sample(context: Dict[str, Any], response_text: str) -> None:
+    """10d: feed chat routing confidence into MetaController (問題單 6).
+
+    Chat traffic never called record_confidence, so calibration stayed at
+    zero samples and save_calibration_state had no reason to fire. Best-effort:
+    never raises into the response path.
+    """
+    try:
+        from api.routes.meta_routes import _get_controller as _get_meta_controller
+
+        mc = _get_meta_controller()
+        intent_routing = context.get("intent_routing", {}) or {}
+        mode = intent_routing.get("routing_mode")
+        if mc is None or not mode:
+            return
+        try:
+            conf = float(intent_routing.get("intent_strength", 0.5))
+        except (TypeError, ValueError):
+            conf = 0.5
+        conf = max(0.0, min(1.0, conf))
+        success = bool(response_text and len(response_text) > 10)
+        mc.record_confidence("chat:intent_routing", conf, correct=success)
+    except Exception as e:
+        logger.warning(f"Meta confidence recording unavailable: {e}", exc_info=True)
+
+
 def _record_post_response_feedback(
     context: Dict[str, Any], response_text: str, user_message: str
 ) -> None:
-    """Steps 10b/10c: post-response feedback loops (best-effort).
+    """Steps 10b/10c/10d: post-response feedback loops (best-effort).
 
     10c online self-learning (dictionary classifier) + 10b intent outcome
-    recording (C³ 5.0→6.0). Neither may raise into the response path.
+    recording (C³ 5.0→6.0) + 10d meta calibration sampling (問題單 6).
+    None may raise into the response path.
     """
     try:
         _learn_from_classification_feedback(user_message, response_text, context)
@@ -2269,6 +2296,8 @@ def _record_post_response_feedback(
             )
     except Exception as e:
         logger.warning(f"Intent outcome recording unavailable: {e}", exc_info=True)
+
+    _record_meta_calibration_sample(context, response_text)
 
 
 class _LLMTimeoutError(Exception):

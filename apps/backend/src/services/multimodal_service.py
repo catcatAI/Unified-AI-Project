@@ -20,6 +20,7 @@ import logging
 import os
 import threading
 import time
+import zlib
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, cast
 
 import numpy as np
@@ -62,6 +63,29 @@ def _as_float_list(v: Any) -> list:
         except Exception:
             return []
     return list(v) if isinstance(v, (list, tuple)) else []
+
+
+def _text_structural_vec(text: str, dim: int = 512) -> Any:
+    """Deterministic structural text features (signed char-bigram hashing).
+
+    CLIP-backed semantic text encoding lives in ai.multimodal.text_encoder /
+    MultimodalBridge (torch/CLIP optional); this path stays dependency-free so
+    modality="text" encode→store→search always works. Feature semantics are
+    text↔text only — cross-modal text↔vision similarity is not meaningful with
+    structural features (result carries text_encoder="structural" to say so).
+    """
+    vec = np.zeros(dim, dtype=np.float32)
+    normalized = "".join(text.split()).lower()
+    if not normalized:
+        return vec
+    grams = [normalized[i : i + 2] for i in range(len(normalized) - 1)] or [normalized]
+    for gram in grams:
+        h = zlib.crc32(gram.encode("utf-8"))
+        vec[h % dim] += 1.0 if (h >> 16) & 1 else -1.0
+    norm = float(np.linalg.norm(vec))
+    if norm > 0.0:
+        vec /= norm
+    return vec
 
 
 # Lazy imports for heavy modules
@@ -247,7 +271,12 @@ class MultimodalService:
             elif modality == "audio":
                 return await asyncio.to_thread(router.encode_audio, data)
             else:
-                return {"error": f"Unknown modality: {modality}"}
+                return {
+                    "error": (
+                        f"Unsupported modality for semantic encoder: {modality!r} "
+                        "(semantic path supports vision, audio)"
+                    )
+                }
         except Exception as e:
             logger.error("encode_semantic failed: %s", e)
             return {"error": safe_error(e)}
@@ -478,19 +507,37 @@ class MultimodalService:
     async def _dispatch_encode(
         self, data: bytes, modality: str, result: Dict[str, Any]
     ) -> Optional[Tuple[Any, Any]]:
-        """Dispatch encode to modality pipeline. Returns (vec, latent) or None on error."""
+        """Dispatch encode to modality pipeline.
+
+        Returns (vec, latent-like) or None. On pipeline failure the real error
+        is preserved in result["error"] so callers can report the actual cause;
+        None WITHOUT result["error"] means the modality is unsupported.
+        """
         if modality == "vision":
             pipe_result = await self._encode_vision(data)
             if pipe_result.get("error"):
+                result["error"] = pipe_result["error"]
                 return None
             result["ssim"] = pipe_result.get("ssim", 0.0)
             return pipe_result.get("feature_vector"), pipe_result.get("latent")
         if modality == "audio":
             pipe_result = await self._encode_audio(data)
             if pipe_result.get("error"):
+                result["error"] = pipe_result["error"]
                 return None
             result["snr"] = pipe_result.get("snr", 0.0)
             return pipe_result.get("feature_vector"), pipe_result.get("latent")
+        if modality == "text":
+            try:
+                text = data.decode("utf-8")
+            except UnicodeDecodeError as e:
+                result["error"] = f"text payload is not valid UTF-8: {safe_error(e)}"
+                return None
+            if not text.strip():
+                result["error"] = "text payload is empty"
+                return None
+            result["text_encoder"] = "structural"
+            return _text_structural_vec(text), None
         return None
 
     async def _encode_impl(
@@ -504,7 +551,13 @@ class MultimodalService:
         try:
             dispatched = await self._dispatch_encode(data, modality, result)
             if dispatched is None:
-                return {"modality": modality, "error": f"Unknown modality: {modality}"}
+                pipeline_error = result.pop("error", None)
+                if pipeline_error is not None:
+                    return {"modality": modality, "error": str(pipeline_error)}
+                return {
+                    "modality": modality,
+                    "error": f"Unsupported modality: {modality!r} (supported: vision, audio, text)",
+                }
             vec, latent = dispatched
 
             if vec is None or (hasattr(vec, "size") and vec.size == 0):

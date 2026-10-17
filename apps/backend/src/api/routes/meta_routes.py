@@ -24,9 +24,11 @@ def _get_controller():
     global _META_CONTROLLER
     if _META_CONTROLLER is None:
         try:
-            from ai.meta.meta_controller import MetaController
+            from ai.meta.meta_controller import DEFAULT_PERSIST_PATH, MetaController
 
-            _META_CONTROLLER = MetaController()
+            # Shared app singleton opts into disk persistence (問題單 6);
+            # ad-hoc MetaController() constructions stay in-memory.
+            _META_CONTROLLER = MetaController(persist_path=DEFAULT_PERSIST_PATH)
         except Exception as e:
             logger.warning("MetaController not available: %s", e)
     return _META_CONTROLLER

@@ -165,9 +165,13 @@ class MathVerifier:
 
     def is_math_message(self, text: str) -> bool:
         math_patterns = [
-            r"\d+\s*[\+\-\*\/\%]\s*\d+",
-            r"(?:計算|求解|解方程|sum|calculate|compute)",
-            r"[\=\?]\s*\d+",
+            # ASCII + Unicode/full-width operators (問題單 8): typed
+            # "123 × 456" used to miss every pattern (math<0.9, is_math=False)
+            # and skipped the deterministic native path even though
+            # _normalize_expr maps ×÷ and friends for compute_arithmetic.
+            r"\d+\s*[\+\-\*\/\%×÷＋－−／]\s*\d+",
+            r"(?:計算|计算|求解|解方程|sum|calculate|compute)",
+            r"[\=\＝\?]\s*\d+",
             # Chinese verbal operators (audit 2026-10-10): without these the
             # deterministic layer skips verbal math and it falls to LLM/honest.
             # Safe to widen: verify() rejects non-computable text anyway.
@@ -429,7 +433,16 @@ def convert_chinese_math(text: str) -> Optional[str]:
 
 def _normalize_expr(text: str) -> str:
     """Strip leading/trailing non-arithmetic decoration (e.g. 等于/？/=)."""
-    expr = text.strip().replace("×", "*").replace("÷", "/").replace("^", "**")
+    expr = (
+        text.strip()
+        .replace("×", "*")
+        .replace("÷", "/")
+        .replace("＋", "+")
+        .replace("－", "-")
+        .replace("−", "-")
+        .replace("／", "/")
+        .replace("^", "**")
+    )
     converted = convert_chinese_math(expr)
     expr = converted if converted is not None else expr
     expr = re.sub(r"^[=等于是\s]+", "", expr).strip()

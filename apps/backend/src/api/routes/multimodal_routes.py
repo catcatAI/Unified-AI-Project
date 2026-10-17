@@ -20,9 +20,9 @@ ANGELA-MATRIX: L6[执行层] αβγδ [B] L4
 
 import json
 import logging
-from typing import Optional
+from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +51,35 @@ def set_service(service) -> None:
     _SERVICE = service
 
 
+async def _fields_from_request(request: Request) -> Dict[str, Any]:
+    """Parse a JSON body or form fields (dual-format parameter endpoints).
+
+    memory/* historically accepted only application/x-www-form-urlencoded —
+    JSON callers got FastAPI's unhelpful 422 with input: null. Both formats
+    now work; malformed payloads return a field-level message instead.
+    """
+    ctype = (request.headers.get("content-type") or "").split(";")[0].strip().lower()
+    if ctype == "application/json":
+        body = await request.json()
+        if not isinstance(body, dict):
+            raise HTTPException(
+                status_code=422, detail="JSON body must be an object of field names to values"
+            )
+        return body
+    form = await request.form()
+    return dict(form)
+
+
+def _require_str_field(fields: Dict[str, Any], name: str) -> str:
+    value = fields.get(name)
+    if not isinstance(value, str) or not value:
+        raise HTTPException(
+            status_code=422,
+            detail=f'{name} required: send JSON {{"{name}": ...}} or a form field named {name}',
+        )
+    return value
+
+
 # --- Encode ---
 
 
@@ -60,9 +89,10 @@ async def encode_endpoint(
     modality: str = Form("vision"),
     item_id: Optional[str] = Form(None),
 ):
-    """Encode an uploaded image or audio file into feature vectors.
+    """Encode an uploaded image, audio, or UTF-8 text file into feature vectors.
 
-    Accepts multipart upload. Returns feature_vector, latent, item_id, dim, time_ms.
+    Accepts multipart upload. modality: vision (default), audio, or text.
+    Returns feature_vector, latent, item_id, dim, time_ms.
     """
     svc = _get_service()
     if svc is None:
@@ -404,8 +434,10 @@ async def cml_train_endpoint(epochs: int = Form(3)):
 
 
 @router.post("/multimodal/memory/store")
-async def memory_store_endpoint(item_id: str = Form(...)):
-    """Store a registered item into multimodal memory."""
+async def memory_store_endpoint(request: Request):
+    """Store a registered item into multimodal memory (JSON or form body)."""
+    fields = await _fields_from_request(request)
+    item_id = _require_str_field(fields, "item_id")
     svc = _get_service()
     if svc is None:
         raise HTTPException(status_code=503, detail="MultimodalService not available")
@@ -416,14 +448,18 @@ async def memory_store_endpoint(item_id: str = Form(...)):
 
 
 @router.post("/multimodal/memory/search")
-async def memory_search_endpoint(
-    query_item_id: str = Form(...),
-    top_k: int = Form(5),
-    modality_filter: Optional[str] = Form(None),
-):
-    """Search memory by latent similarity to a registered item."""
+async def memory_search_endpoint(request: Request):
+    """Search memory by latent similarity to a registered item (JSON or form body)."""
+    fields = await _fields_from_request(request)
+    query_item_id = _require_str_field(fields, "query_item_id")
+    try:
+        top_k = int(fields.get("top_k", 5))
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=422, detail="top_k must be an integer between 1 and 100")
     if top_k < 1 or top_k > 100:
         raise HTTPException(status_code=400, detail="top_k must be between 1 and 100")
+    modality_filter_raw = fields.get("modality_filter")
+    modality_filter = modality_filter_raw if modality_filter_raw else None
     svc = _get_service()
     if svc is None:
         return {"success": False, "results": [], "count": 0}
@@ -432,8 +468,13 @@ async def memory_search_endpoint(
 
 
 @router.post("/multimodal/memory/recall")
-async def memory_recall_endpoint(hours: float = Form(24)):
-    """Recall entries from memory within a time window."""
+async def memory_recall_endpoint(request: Request):
+    """Recall entries from memory within a time window (JSON or form body)."""
+    fields = await _fields_from_request(request)
+    try:
+        hours = float(fields.get("hours", 24))
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=422, detail="hours must be a number of hours")
     svc = _get_service()
     if svc is None:
         return {"success": False, "entries": [], "count": 0}

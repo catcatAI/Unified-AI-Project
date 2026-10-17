@@ -35,6 +35,14 @@ from .user_monitor import UserMonitor, UserState
 
 logger = logging.getLogger(__name__)
 
+# JSON-failure degradation (問題單 3): a model that keeps replying in plain
+# prose used to log a WARNING every cycle forever AND re-call the LLM each
+# time. After this many consecutive non-JSON replies the decision path
+# degrades to the rule fallback and only probes the LLM again periodically.
+_JSON_FAIL_STREAK_LIMIT = 3
+_LLM_RETRY_AFTER_S = 600.0
+_JSON_WARN_EVERY = 10
+
 
 def _parse_llm_json(response_text: str) -> Dict[str, Any]:
     candidates = [response_text.strip()]
@@ -51,6 +59,14 @@ def _parse_llm_json(response_text: str) -> Dict[str, Any]:
             parsed = json.loads(candidate)
         except json.JSONDecodeError:
             continue
+        if isinstance(parsed, dict):
+            return parsed
+    embedded = re.search(r"\{.*\}", response_text, flags=re.DOTALL)
+    if embedded:
+        try:
+            parsed = json.loads(embedded.group(0))
+        except json.JSONDecodeError:
+            parsed = None
         if isinstance(parsed, dict):
             return parsed
     raise ValueError("LLM response is not a JSON object")
@@ -143,6 +159,8 @@ class LLMDecisionLoop:
         self._decision_task: Optional[asyncio.Task] = None
         self._last_decision_at: Optional[float] = None
         self.decision_cooldown = timing_value("ai.llm_decision_loop.decision_cooldown", 60.0)
+        self._json_fail_streak = 0
+        self._last_llm_attempt = 0.0
 
         # 決策歷史
         self.decision_history: List[Decision] = []
@@ -423,8 +441,41 @@ class LLMDecisionLoop:
 
         return decision_prompt
 
+    def _should_attempt_llm(self) -> bool:
+        """Skip the LLM while a JSON-failure streak cools down.
+
+        Recovery is probed once per retry window so a model that never
+        returns JSON cannot burn a call (and log a warning) every cycle.
+        """
+        if self._json_fail_streak < _JSON_FAIL_STREAK_LIMIT:
+            return True
+        return (time.monotonic() - self._last_llm_attempt) >= _LLM_RETRY_AFTER_S
+
+    def _note_json_failure(self, response_text: str, error: Exception) -> None:
+        """Count consecutive non-JSON replies; warn sparsely, not every cycle."""
+        self._json_fail_streak += 1
+        streak = self._json_fail_streak
+        if streak == 1 or streak % _JSON_WARN_EVERY == 0:
+            logger.warning(
+                "Failed to parse LLM response as JSON (streak %d): %s. Raw: %s",
+                streak,
+                error,
+                response_text[:500],
+            )
+        else:
+            logger.debug("LLM JSON parse failure (streak %d): %s", streak, error)
+        if streak == _JSON_FAIL_STREAK_LIMIT:
+            logger.warning(
+                "LLM JSON decision degraded to rule fallback for %ds after %d consecutive failures",
+                int(_LLM_RETRY_AFTER_S),
+                streak,
+            )
+
     async def _generate_decision(self, decision_prompt: str) -> Dict[str, Any]:
         """使用 LLM 生成決策"""
+        if not self._should_attempt_llm():
+            return self._fallback_decision()
+        self._last_llm_attempt = time.monotonic()
         try:
             # 構建消息
             messages = [
@@ -442,14 +493,12 @@ class LLMDecisionLoop:
             else:
                 return self._fallback_decision()
             try:
-                return _parse_llm_json(response_text)
+                parsed = _parse_llm_json(response_text)
             except ValueError as e:
-                logger.warning(
-                    "Failed to parse LLM response as JSON: %s. Raw: %s",
-                    e,
-                    response_text[:500],
-                )
+                self._note_json_failure(response_text, e)
                 return self._fallback_decision()
+            self._json_fail_streak = 0
+            return parsed
 
         except (
             Exception

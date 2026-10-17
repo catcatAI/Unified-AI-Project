@@ -22,7 +22,16 @@ logger = logging.getLogger(__name__)
 
 _DEFAULT_ALPHA = 0.15
 _WINDOW_SIZE = 100
-_DEFAULT_PERSIST_PATH = "data/meta_controller_state.json"
+DEFAULT_PERSIST_PATH = "data/meta_controller_state.json"
+# C³ closure (問題單 6): record_confidence is the highest-traffic state
+# mutator, but save_calibration_state was never called — calibration died
+# with the process. Persist at most once per _SAVE_THROTTLE_S after a
+# mutation so a live chat session cannot thrash disk. The constructor
+# default is None (pure in-memory): only app-wired shared instances
+# (api.routes.meta_routes._get_controller) pass DEFAULT_PERSIST_PATH, so
+# ad-hoc constructions (tests, router fallback) never read or clobber the
+# shared state file.
+_SAVE_THROTTLE_S = 300.0
 
 
 @dataclass
@@ -64,7 +73,7 @@ class MetaController:
         self,
         window_size: int = _WINDOW_SIZE,
         alpha: float = _DEFAULT_ALPHA,
-        persist_path: Optional[str] = _DEFAULT_PERSIST_PATH,
+        persist_path: Optional[str] = None,
     ):
         self._samples: Dict[str, deque] = {}
         self._window_size = window_size
@@ -81,6 +90,7 @@ class MetaController:
         # Raw (pre-multiplier) adjustments for cache-hit recomputation
         self._raw_adjustments: Dict[str, float] = {}
         # Auto-load from disk if available
+        self._last_save_ts = 0.0
         if self._persist_path and os.path.exists(self._persist_path):
             self.load_calibration_state(self._persist_path)
 
@@ -112,6 +122,20 @@ class MetaController:
                 "total_samples": self._total_samples,
             },
         )
+        self._maybe_save_calibration_state()
+
+    def _maybe_save_calibration_state(self) -> None:
+        """Throttled persist after mutation (C³ closure; never raises)."""
+        if not self._persist_path:
+            return
+        now = time.monotonic()
+        if now - self._last_save_ts < _SAVE_THROTTLE_S:
+            return
+        self._last_save_ts = now
+        try:
+            self.save_calibration_state(self._persist_path)
+        except Exception as e:
+            logger.warning(f"[MetaController] Calibration save skipped: {e}")
 
     def get_ewma_confidence(self, source: str, default: float = 0.5) -> float:
         return self._ewma.get(source, default)
