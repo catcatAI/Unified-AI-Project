@@ -4,28 +4,20 @@
 # ANGELA-MATRIX: [L2] [β] [C] [L1]
 # =============================================================================
 #
-# Controls whether the CLI role-playing game (apps/game-rpg/) mounts its
-# resources into the core backbone:
-#   - card dictionary   : apps/game-rpg/data/game_cards.json (351 cards)
-#   - free matrix       : game-specific SharedLatentSpace instance
-#   - axis registry     : game axis_system.AXIS_SYSTEMS (species/AI/cyborg/myth)
+# Two honoured keys only:
+#   - enabled     : backbone_bridge gate (apps/game-rpg/backbone_bridge.py
+#                   _game_config_enabled; missing config => False, conservative)
+#   - data_path   : authoritative deck path, asserted equal to the dataset
+#                   location by tests/core/backbone/test_c6_datasets.py
 #
-# The game CLI keeps running standalone even if the backbone is unavailable
-# (backbone_bridge is lazy); these flags only govern the bridge.
-
-# ── not consumed by code ──────────────────────────────────────────────
-# The keys below are declared here but nothing reads them. Each one is
-# recorded with its reason in tests/test_config_coverage.py
-# (UNHONOURED_SECTIONS), which fails if the list drifts in either
-# direction — so a key fixed here must be removed from that list.
+# History: seven aspirational keys (mount_card_dictionary / mount_free_matrix /
+# mount_axes / max_cards / dictionary_modality / axis_registry_name /
+# supplement_path) described a backbone-mount design that was never built.
+# They were declared dead by tests/test_config_coverage.py (UNHONOURED_SECTIONS)
+# and removed on 2026-10-17 — see
+# docs/02-game-design/GAME_SUBSYSTEM_AUDIT_AND_AXIS_ENGINE_PLAN.md (P1-5).
+# Reintroduce a key only together with a real consumer + its coverage-test drop.
 
 game:
   enabled: true
   data_path: "apps/game-rpg/data/game_cards.json"
-  supplement_path: "apps/game-rpg/data/game_supplement.json"
-  mount_card_dictionary: true
-  mount_free_matrix: true
-  mount_axes: true
-  dictionary_modality: "card"
-  axis_registry_name: "game"
-  max_cards: 351

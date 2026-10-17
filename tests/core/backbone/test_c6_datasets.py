@@ -153,8 +153,10 @@ class TestRealGameCards:
 
     def test_get_config_game_matches_dataset_path(self):
         # §4 配置一致性：get_config(system/game).data_path 對應資料集路徑
+        # （max_cards 原斷言已隨死鍵刪除——game.default.yaml 2026-10-17 只餘
+        #  enabled/data_path 兩個有消費者的鍵，見 P1-5）
         from core.system.config.tiered_loader import get_config
 
         cfg = (get_config("system/game") or {}).get("game") or {}
         assert cfg.get("data_path") == "apps/game-rpg/data/game_cards.json"
-        assert cfg.get("max_cards") == 351
+        assert cfg.get("enabled") is True

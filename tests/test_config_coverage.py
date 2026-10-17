@@ -189,17 +189,8 @@ UNHONOURED_SECTIONS = {
     },
     "system/keys": {"firebase.credentials_path": "no Firebase integration is wired"},
     "system/timing": {"timing.loop": "loop sleeps read their own keys"},
-    "system/game": {
-        "game.mount_card_dictionary": (
-            "the game module resolves its own paths/constants; noted in game.default.yaml"
-        ),
-        "game.mount_free_matrix": "as mount_card_dictionary; noted in game.default.yaml",
-        "game.mount_axes": "as mount_card_dictionary; noted in game.default.yaml",
-        "game.max_cards": "as mount_card_dictionary; noted in game.default.yaml",
-        "game.dictionary_modality": "the game module has no consumer",
-        "game.axis_registry_name": "the game module has no consumer",
-        "game.supplement_path": "the game module has no consumer",
-    },
+    # system/game: 2026-10-17 all seven dead keys removed from game.default.yaml
+    # (design never built) — no unhonoured sections remain for this path.
     "system/capacity": {"capacity.dataset": "no dataset budgeting code exists"},
     "system/bootstrap": {"paths.venv": "tooling resolves the venv itself"},
 }
