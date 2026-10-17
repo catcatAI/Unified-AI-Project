@@ -234,3 +234,9 @@ class Entity:
 - [ ] `flake8`/`mypy`/`complexity_budget_gate`/`mypy_budget_gate` 全綠
 - [x] 全量 pytest 無回歸（P0-7 後新基線：**7,824 passed / 107 skipped / 0 failed**，
       paths=`tests/`+`apps/backend/tests/`；舊 7,413/91 為 `tests/` 單獨，收集數 7,504 未變）
+- [x] 全量 pytest 無回歸（P1 收官覆測 2026-10-17：**7,838 passed / 107 skipped /
+      0 failed**，同 paths，291s。新增測試逐一實證 +15（pixel_world 5、
+      live2d manifest 5、HAM metadata 4、crystal node 橋 1），對 7,824 基線
+      顯示 +14——差 1 未定位（P1 觸及測試檔 def/parametrize 前後對帳均無
+      縮減；skipped 穩定 107、0 failed/0 error，非回歸訊號）。收集 7,941 與
+      運行 7,945 之 +4 為既存結構性差，非 P1 引入）
