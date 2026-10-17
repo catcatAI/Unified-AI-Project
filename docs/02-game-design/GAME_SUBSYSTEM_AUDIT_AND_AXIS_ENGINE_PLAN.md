@@ -238,6 +238,18 @@ class Entity:
 > 比覆寫 time_scale、None/未掛回群組建構值、負比 raise。
 > `tests/engine/test_m3_clock.py` **16 tests**；game-rpg 全套
 > **234 passed**（+16）；mypy 0（6 files）、flake8=0、black clean。
+>
+> ✅ **M4 完成（2026-10-17）**：`engine/render_bridge.py`（§6.2 檔名）——
+> 狀態分離：模擬層只 `push()` frozen `EntityState` 快照（複製、sim_time
+> 非遞減）、渲染層只讀 `sample(alpha)`/`sample_at(display_time)`
+> 前後快照線性 lerp + 像素吸附（複用 M2 `quantize`，`pixel_size=0`=連續）；
+> `push_entities(Entity…)` 接 M1 Entity x/y 軸值（非數值→0）。驗收
+> `test_30hz_sim_144hz_display_linear`：30Hz 模擬 6 幀（v=720px/s）逐幀
+> 推進、144Hz 顯示 25 中間幀全數 = 精確線性 `[5m]`（等步進無跳變、
+> 吸附後整數落格）。`tests/engine/test_m4_render_bridge.py` **19 tests**
+> （lerp 7、吸附 4、快照語義 8；spawn=curr 位、移除即不渲染、同刻最新幀
+> 取勝）。game-rpg 全套 **253 passed**（+19）；mypy 0（7 files）、
+> flake8=0、black clean。
 
 ### 6.4 與現有系統的介面
 

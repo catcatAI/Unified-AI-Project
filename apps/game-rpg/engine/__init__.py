@@ -23,6 +23,7 @@ from engine.quantize import (
     quantize_axis,
     quantize_fixed,
 )
+from engine.render_bridge import EntityState, RenderBridge, RenderState
 
 __all__ = [
     "AxisGroup",
@@ -31,10 +32,13 @@ __all__ = [
     "ContractError",
     "EnginePipeline",
     "Entity",
+    "EntityState",
     "GroupClock",
     "GroupContract",
     "MasterClock",
     "MissingSignalError",
+    "RenderBridge",
+    "RenderState",
     "SIGNAL_DTYPES",
     "SignalSpec",
     "TickContext",
