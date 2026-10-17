@@ -55,6 +55,9 @@ data/
 # Pixel-angela PixelObject spec samples (world_manifest.md §3 contract —
 # tracked source-of-truth, NOT runtime data; see apps/pixel-angela/data/world_objects/)
 !apps/pixel-angela/data/
+# Live2D avatar generator default output (live2d_avatar_generator.py:533
+# "./live2d_models", mkdir on construction) — runtime-generated, never track
+live2d_models/
 model_cache/
 logs/
 *.log

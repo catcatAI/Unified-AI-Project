@@ -85,18 +85,18 @@
 
 ### P1（正確性/一致性）
 
-| ID | 項目 | 修法 |
-|---|---|---|
-| P1-1 | `game_routes.py` docstring 漏 `/validate`、卡片數寫死 351 | docstring 補齊；卡片數改從引擎讀取 |
-| P1-2 | `test_router_has_expected_paths` 寬鬆斷言（`issubset or all`） | 改嚴格 `issubset`，補 `/game/validate` 斷言 |
-| P1-3 | `models/models.json` 孤兒且矛盾（只列 miara，代碼默認 Epsilon_free） | 刪除或改為真實鏡像（含 Epsilon_free），加「代碼不讀此檔」註記或讓代碼讀它 |
-| P1-4 | `FILE_INVENTORY.md` 漂移（widgets.py、根 data json、整合計劃不存在） | 逐項核對刪改 |
-| P1-5 | `game.default.yaml` 7 個 dead key | 二選一：接消費者（backbone_bridge 讀 max_cards 等）或刪鍵+更新 config_coverage |
-| P1-6 | pixel-angela `base_sprite.png` 孤兒、`data/world_objects/` 缺 | 接進 renderer 或移到 `assets/` 加載路徑；建 `data/world_objects/` 規範樣例 |
-| P1-7 | Live2D miara model3.json 事後重建（HitAreas/Expressions 空） | 用 Cubism Editor 重生或從 `resources/models/miara_pro` 原始件還原 expressions；至少補 HitAreas |
-| P1-8 | 根 `live2d_models/` 空殼目錄 | 刪或改指 `resources/models` |
-| P1-9 | `ham_game_memory.json` templates/metadata 恆空+不可復現 | bridge 寫入時補 metadata；文檔標注「本機資產，clone 無」 |
-| P1-10 | crystal-cards 零行為測試 | 新增 `tests/frontend/test_crystal_engine.mjs`（node:test）：tryStack/executeCombat/save-load 純函數層 |
+| ID | 項目 | 修法 | 狀態/證據 |
+|---|---|---|---|
+| P1-1 | `game_routes.py` docstring 漏 `/validate`、卡片數寫死 351 | docstring 補齊；卡片數改從引擎讀取 | ✅ `521f64198`：docstring 補 `/validate`、去寫死 351，21 tests |
+| P1-2 | `test_router_has_expected_paths` 寬鬆斷言（`issubset or all`） | 改嚴格 `issubset`，補 `/game/validate` 斷言 | ✅ `521f64198`：改嚴格集合差斷言含 `/validate` |
+| P1-3 | `models/models.json` 孤兒且矛盾（只列 miara，代碼默認 Epsilon_free） | 刪除或改為真實鏡像（含 Epsilon_free），加「代碼不讀此檔」註記或讓代碼讀它 | ✅ `2d6bdd39f`：雙面真鏡像（Epsilon_free isDefault+`_note`），4 路徑實存，tests/frontend 163 passed |
+| P1-4 | `FILE_INVENTORY.md` 漂移（widgets.py、根 data json、整合計劃不存在） | 逐項核對刪改 | ✅ `5ab3c9bd1`：11 項修正（歸檔指址/根 data 5 實項 git 狀態/設計文檔表 13 檔） |
+| P1-5 | `game.default.yaml` 7 個 dead key | 二選一：接消費者（backbone_bridge 讀 max_cards 等）或刪鍵+更新 config_coverage | ✅ `b3dc18145`：刪 7 死鍵（只餘 `enabled`/`data_path` 真鍵）+coverage/c6 同步，69+303 passed |
+| P1-6 | pixel-angela `base_sprite.png` 孤兒、`data/world_objects/` 缺 | 接進 renderer 或移到 `assets/` 加載路徑；建 `data/world_objects/` 規範樣例 | ✅ `9c32c9bb3`：tray 優先載 base_sprite（fallback 保留）+3 分類樣例+`.gitignore` negation；18 tests |
+| P1-7 | Live2D miara model3.json 事後重建（HitAreas/Expressions 空） | 用 Cubism Editor 重生或從 `resources/models/miara_pro` 原始件還原 expressions；至少補 HitAreas | ✅ `ae02ec435`：Groups Ids 以 cdi3 實值填（ParamMouthOpenY/ParamEyeL,ROpen，雙面 byte 一致）；**Expressions/HitAreas 盤上無對應資產（無 expression3.json、hit-test 定義在 moc3 需 Editor），如實記錄不虛構**，manifest 契約測試 5 tests |
+| P1-8 | 栮 `live2d_models/` 空殼目錄 | 刪或改指 `resources/models` | ✅（本 commit）：定性=generator 預設輸出（`live2d_avatar_generator.py:533` `mkdir exist_ok`），非孤兒→`.gitignore` 接管防生成物入 git+刪空殼（運行時重建） |
+| P1-9 | `ham_game_memory.json` templates/metadata 恆空+不可復現 | bridge 寫入時補 metadata；文檔標注「本機資產，clone 無」 | ⏳ 待辦 |
+| P1-10 | crystal-cards 零行為測試 | 新增 `tests/frontend/test_crystal_engine.mjs`（node:test）：tryStack/executeCombat/save-load 純函數層 | ⏳ 待辦 |
 
 ## 五、2D/3D 資源檢查、升級與繪製計畫
 
