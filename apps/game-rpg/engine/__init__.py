@@ -24,6 +24,7 @@ from engine.quantize import (
     quantize_fixed,
 )
 from engine.render_bridge import EntityState, RenderBridge, RenderState
+from engine.runner import EngineRunner
 
 __all__ = [
     "AxisGroup",
@@ -31,6 +32,7 @@ __all__ = [
     "AxisType",
     "ContractError",
     "EnginePipeline",
+    "EngineRunner",
     "Entity",
     "EntityState",
     "GroupClock",

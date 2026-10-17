@@ -313,6 +313,30 @@ class Entity:
 > 同序累加一致（1e-12）、SoA↔Entity 往返、六類響亮 raise、成長 100 槽
 > 保值。game-rpg 全套 **306 passed**（+15）；mypy 0（10 files）、
 > flake8=0、black clean。
+>
+> ✅ **M8 完成（2026-10-18，§6.4「生產 tick 迴圈」遠期項落地）**：
+> `engine/runner.py` —— `EngineRunner`：M1 管線＋M3 中控時鐘＋M4 渲染橋
+> 串成可 start/stop 執行器。`step()` 確定性推進一個 master tick（時鐘
+> 到期 n 次 → `EnginePipeline.tick_group()` 單組 fire n 次，各組
+> tick_rate 不同步 fire——新增單組原語 `tick_group`＋訪問器
+> `signal_snapshot()`/`time_scale_of()`）；`start()/stop()` 牆鐘 daemon
+> 執行緒（stop 事件喚醒等待、落後 resync 不補發、start/stop 皆冪等、
+> 啟動後禁註冊）；`push_states/push_entities/sample/sample_at` 外包
+> M4 渲染橋；`snapshot()` 執行緒安全唯讀快照（running/master_ticks/
+> 組 fire/dt/time_scale/訊號表）。後端接線：`game_routes`
+> `_get_axis_runner()` 共享例項（story 群組真檔 351 卡＋首卡播種心跳
+> handler——契約 provides card_type/story_role 的運行期重播自持＋
+> `world_clock.get_time_flow_ratio` 外包 flow_id 流速覆寫），
+> `POST /game/engine/{start,stop}`（冪等控制面）、`GET
+> /game/engine/snapshot`（輪詢消費介面＝pixel-angela ws 遠期前的可用
+> 通路）、`/engine/status` 增 runner 塊（建構失敗降級不拖垮）。
+> **驗收** `tests/engine/test_m8_runner.py` **16 tests**（step
+> fire/pipeline/handler 1:1:1、子彈時間 0.2×=360/300、time_scale 0 暫
+> 停、牆鐘推進與 stop 凍結、start/stop 冪等、啟動後禁註冊、M5 真檔首
+> 卡播種/重播自持、渲染橋三外包、訊號表副本語意、世界線流速覆寫）＋
+> `tests/api/test_game_routes.py` 24→**30 passed**（runner 塊/
+> snapshot 冪等無副作用/啟動播種/stop 凍結/冪等/降級 503）。game-rpg
+> 全套 **322 passed**（+16）；flake8=0、black clean。
 
 ### 6.4 與現有系統的介面
 
@@ -322,8 +346,11 @@ class Entity:
   時間線本體；M3 驗收＝戰鬥 0.2× 時心理組 fire 數 300==300 精確同步）；
   `group_dt()` 分發 API 在 `engine/clock.py`（docstring 即標「group_dt
   分發 API」＝該組單次 fire 本地 dt），`test_m3_clock.py` 16 tests 綠。
-  生產側常駐 tick 迴圈不存在（端點唯讀設計），運行期接線與 pixel-angela
-  ws 同列遠期。
+  生產側常駐 tick 迴圈**已落地（M8，2026-10-18）**：`EngineRunner`
+  `time_flow_source=world_clock.get_time_flow_ratio` 外包（flow_id 經
+  `register(..., flow_id=...)` 覆寫該組 time_scale）；執行緒由
+  `POST /game/engine/start` 明確觸發（冪等），`GET
+  /game/engine/snapshot` 供輪詢消費。
 - `axis_system.py`：M5 作為內容適配器（`axis_code → AxisGroup("story").axes`），不改其 920 行。
   ——**已落地（M5，2026-10-17）**：`resolve_card_axis`/`parse_axis_code`
   原生 `(code, label)` 元組在 `content.py` 正規化取純碼；`story_group()`
@@ -342,10 +369,12 @@ class Entity:
   `tests/api/test_game_routes.py` 21→**24 passed**（shape/只讀冪等/
   降級 + 全 router 路徑 `/api/v1/game/engine/status` 在列 + 期望路徑集）。
 - `pixel-angela`：M6 表現端之一（ws 收 render_bridge 快照）。
-  ——**遠期（M6 註記同批聲明）**：M6 交付 `SpriteView` PIL 離屏合成
-  （精靈塗層/粒子在 view 層可複用，手動冒煙 CLI 產 1440×384 實圖）；
-  ws 收 render_bridge 快照＝表現端實窗接線，待生產 tick 迴圈落地後接
-  （現無常駐迴圈可推，端點亦為唯讀）。
+  ——**輪詢已可消費（M8，2026-10-18）**：`GET /game/engine/snapshot`
+  回 runner 唯讀快照（running/master_ticks/組 fire/訊號表），表現端
+  即可輪詢接數；ws 推送（推式）仍為遠期項——推式需像素端常駐窗訂閱
+  與斷線重連語意，待表現端實際接入需求出現再做。M6 交付的 `SpriteView`
+  PIL 離屏合成（精靈塗層/粒子在 view 層可複用，手動冒煙 CLI 產
+  1440×384 實圖）不變。
 - `angela_agent.py` 五層 AI：後續把 `game_structs.SkillContext` 對接 AxisGroup（L0 動作寫入戰鬥/空間軸）——遠期。
 
 ## 七、顯示/交互正常性驗證矩陣

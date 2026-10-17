@@ -1,13 +1,15 @@
 """Tests for game_routes API endpoints.
 
 Covers:
-- Route import and registration (11 endpoints)
+- Route import and registration (read-only + session + M8 runner endpoints)
 - Read-only endpoints (status/worlds/characters/cards/axes)
 - Session lifecycle (create / state / action / end)
+- M8 resident tick loop (start/stop/snapshot + status runner block)
 - Error handling (missing session, engine unavailable)
 """
 
 import sys
+import time
 from pathlib import Path
 from unittest.mock import patch
 
@@ -38,6 +40,9 @@ class TestGameRoutesImport:
         expected = {
             "/game/status",
             "/game/engine/status",
+            "/game/engine/start",
+            "/game/engine/stop",
+            "/game/engine/snapshot",
             "/game/worlds",
             "/game/characters",
             "/game/cards",
@@ -268,3 +273,92 @@ class TestAxisEngineStatus:
         assert result["available"] is False
         assert result["groups"] == []
         assert result["master_ticks"] == 0
+
+
+@pytest.mark.asyncio
+class TestAxisEngineRunnerM8:
+    """M8 常駐 tick 迴圈端點（§6.4「生產 tick 迴圈」遠期項；輪詢消費介面）。"""
+
+    async def test_status_includes_runner_block(self):
+        from api.routes import game_routes
+
+        result = game_routes.game_engine_status()
+        runner = result["runner"]
+        assert runner["running"] is False
+        assert set(runner["groups"]) == {"story"}
+
+    async def test_snapshot_idempotent_and_read_only(self):
+        from api.routes import game_routes
+
+        first = game_routes.game_engine_snapshot()
+        second = game_routes.game_engine_snapshot()
+        assert first["available"] is True
+        assert first["engine"] == "axis-v1"
+        assert first["running"] is False
+        assert first == second  # 兩次全等=未啟動執行緒、無副作用
+        assert set(first["groups"]) == {"story"}
+        group = first["groups"]["story"]
+        assert set(group) == {"fired", "dt", "time_scale"}
+        assert group["dt"] == pytest.approx(1.0 / 30.0)
+        assert set(first["signals"]) == set()  # 未 fire 前訊號表為空
+
+    async def test_start_ticks_seeds_story_then_stop_freezes(self):
+        from api.routes import game_routes
+
+        start = game_routes.game_engine_start()
+        assert start["available"] is True
+        assert start["running"] is True
+        try:
+            deadline = time.monotonic() + 2.0
+            snap = start
+            while snap["master_ticks"] < 3 and time.monotonic() < deadline:
+                time.sleep(0.02)
+                snap = game_routes.game_engine_snapshot()
+            assert snap["master_ticks"] >= 3
+            assert snap["running"] is True
+            story = snap["signals"].get("story", {})
+            assert story.get("card_type")
+            assert story.get("story_role")
+            from engine import content as _content
+
+            seed = _content.card_to_values(_content.load_cards()[0])
+            assert story["card_type"] == seed["card_type"]
+            assert story["story_role"] == seed["story_role"]
+        finally:
+            stop = game_routes.game_engine_stop()
+        assert stop["running"] is False
+        frozen = stop["master_ticks"]
+        time.sleep(0.05)
+        assert game_routes.game_engine_snapshot()["master_ticks"] == frozen
+
+    async def test_start_stop_idempotent(self):
+        from api.routes import game_routes
+
+        first = game_routes.game_engine_start()
+        second = game_routes.game_engine_start()
+        try:
+            assert first["running"] is True
+            assert second["running"] is True
+        finally:
+            game_routes.game_engine_stop()
+            again = game_routes.game_engine_stop()
+        assert again["running"] is False
+
+    async def test_snapshot_unavailable_degrades(self):
+        from api.routes import game_routes
+
+        with patch.object(game_routes, "_get_axis_runner", side_effect=RuntimeError("no runner")):
+            result = game_routes.game_engine_snapshot()
+        assert result["available"] is False
+        assert result["running"] is False
+        assert result["signals"] == {}
+
+    async def test_start_unavailable_raises_503(self):
+        from fastapi import HTTPException
+
+        from api.routes import game_routes
+
+        with patch.object(game_routes, "_get_axis_runner", side_effect=RuntimeError("no runner")):
+            with pytest.raises(HTTPException) as exc:
+                game_routes.game_engine_start()
+        assert exc.value.status_code == 503

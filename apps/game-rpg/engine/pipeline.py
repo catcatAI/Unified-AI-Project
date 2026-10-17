@@ -98,9 +98,25 @@ class EnginePipeline:
         self._pending.clear()
         self.ticks += 1
 
+    def tick_group(self, name: str) -> None:
+        """跑單組一次 fire 並併入該組 pending（M8 執行器：各組 tick_rate 不同步 fire）。"""
+        if not self._started:
+            raise ContractError("pipeline not started; call startup() first")
+        if name not in self._groups:
+            raise ContractError(f"unknown group: {name!r}")
+        self._handlers[name](TickContext(self, name))
+        values = self._pending.pop(name, None)
+        if values:
+            self._current.setdefault(name, {}).update(values)
+        self.ticks += 1
+
     def signal(self, ref: str, default: Any = None) -> Any:
         """tick 外讀訊號快照（與 TickContext.read 同語意）。"""
         return self._read(ref, default)
+
+    def signal_snapshot(self) -> Dict[str, Dict[str, Any]]:
+        """全組訊號表唯讀副本（M8 執行器 snapshot 用；執行緒安全由呼叫端鎖定）。"""
+        return {gname: dict(values) for gname, values in self._current.items()}
 
     # ------------------------------------------------------------------
     # 內部

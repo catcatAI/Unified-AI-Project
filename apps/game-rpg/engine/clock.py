@@ -79,6 +79,10 @@ class MasterClock:
         """該組累積 fire 次數（M3 驗收以 tick 計數）。"""
         return self._clock_of(group_name).fired
 
+    def time_scale_of(self, group_name: str) -> float:
+        """該組當前 time_scale（M8 執行器快照用；含世界線流速覆寫後值）。"""
+        return self._clock_of(group_name).time_scale
+
     def group_dt(self, group_name: str) -> float:
         """group_dt 分發 API：該組單次 fire 的本地 dt（= 1/tick_rate）。"""
         return self._clock_of(group_name).period
