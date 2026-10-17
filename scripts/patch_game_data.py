@@ -2,14 +2,23 @@
 patch_game_data.py — Surgically patches game_data.py NPC generation.
 Replaces fabricated merchant inventory and round-robin location assignment
 with lore-accurate logic derived from card tokens.
+
+Safe to re-run (idempotent):
+  * legacy anchor present  -> patch applied, target rewritten
+  * applied markers present -> reported as already-applied, no-op (mtime kept)
+  * anchor drift (neither) -> exit 1, target NOT modified
+Always finishes with a REAL verification (`import game_data` in a subprocess).
 """
 
 import pathlib
 import re
+import subprocess
 import sys
 
 TARGET = pathlib.Path(__file__).resolve().parent.parent / "apps" / "game-rpg" / "game_data.py"
 src = TARGET.read_text(encoding="utf-8")
+changed = False
+failed: list[str] = []
 
 # ─────────────────────────────────────────────────────────────────────────────
 # PATCH 1: Add _CHAR_SUPP_CARDS + IGNORED_CARD_TYPES after _MECHANISM_CARDS line
@@ -23,11 +32,15 @@ IGNORED_CARD_TYPES = frozenset([
     "元公式卡", "元設定卡", "創作工具卡", "安全詞庫卡", "專案管理卡"
 ])"""
 
-if OLD_CARD_TYPES in src:
+if "_CHAR_SUPP_CARDS" in src and "IGNORED_CARD_TYPES" in src:
+    print("[PATCH 1] already applied — NEW markers present, no-op")
+elif OLD_CARD_TYPES in src:
     src = src.replace(OLD_CARD_TYPES, NEW_CARD_TYPES, 1)
+    changed = True
     print("[PATCH 1] Added _CHAR_SUPP_CARDS + IGNORED_CARD_TYPES  ✓")
 else:
-    print("[PATCH 1] SKIP — pattern already applied or not found")
+    print("[PATCH 1] ERROR — anchor drift: legacy anchor gone and NEW markers absent")
+    failed.append("PATCH 1")
 
 # ─────────────────────────────────────────────────────────────────────────────
 # PATCH 2: Replace the NPC section header + _NPC_LOCATIONS_POOL + helpers
@@ -215,17 +228,15 @@ def _build_lore_offers(card: dict, role_text: str, craft_toks: list) -> List[str
 
     return offers[:12]'''
 
-if OLD_NPC_SECTION_START in src:
+if "_get_npc_home_from_card" in src and "_generate_npc_schedule" in src:
+    print("[PATCH 2] already applied (evolved past this tool) — NEW markers present, no-op")
+elif OLD_NPC_SECTION_START in src:
     src = src.replace(OLD_NPC_SECTION_START, NEW_NPC_SECTION_START, 1)
+    changed = True
     print("[PATCH 2] Replaced NPC section header + helpers  ✓")
 else:
-    print("[PATCH 2] SKIP — pattern not found, checking variants...")
-    # Try matching just the section comment
-    alt_marker = "# 6. NPC GENERATION — 59 character cards → interactive NPCs"
-    if alt_marker in src:
-        print("  Found alt marker, patching inline...")
-    else:
-        print("  WARNING: Could not find NPC section marker!")
+    print("[PATCH 2] ERROR — anchor drift: legacy section gone and NEW markers absent")
+    failed.append("PATCH 2")
 
 # ─────────────────────────────────────────────────────────────────────────────
 # PATCH 3: Replace generate_all_npcs() body
@@ -467,14 +478,46 @@ NEW_GENERATE_NPCS = """def generate_all_npcs() -> Dict[str, dict]:
             "quest_type": "side",
             "raw_tokens": len(tokens),"""
 
-if OLD_GENERATE_NPCS in src:
+if "_NPC_ALIAS_TO_CANON" in src:
+    print("[PATCH 3] already applied (superseded by evolution — _NPC_ALIAS_TO_CANON present), no-op")
+elif OLD_GENERATE_NPCS in src:
     src = src.replace(OLD_GENERATE_NPCS, NEW_GENERATE_NPCS, 1)
+    changed = True
     print("[PATCH 3] Replaced generate_all_npcs() body  ✓")
 else:
-    print("[PATCH 3] SKIP — generate_all_npcs body pattern not found (may already be patched)")
+    print("[PATCH 3] ERROR — anchor drift: legacy body gone and evolution markers absent")
+    failed.append("PATCH 3")
 
 # ─────────────────────────────────────────────────────────────────────────────
-# WRITE BACK
+# ABORT on drift BEFORE touching the target
 # ─────────────────────────────────────────────────────────────────────────────
-TARGET.write_text(src, encoding="utf-8")
-print("\nAll patches applied. Verifying import...")
+if failed:
+    sys.stderr.write(
+        "ABORT: " + ", ".join(failed) + " anchor drift — target NOT modified.\n"
+    )
+    sys.exit(1)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# WRITE BACK (only when something actually changed)
+# ─────────────────────────────────────────────────────────────────────────────
+if changed:
+    TARGET.write_text(src, encoding="utf-8")
+    print(f"\nWrote {TARGET}")
+else:
+    print("\nNo legacy anchors matched — target NOT rewritten (mtime preserved)")
+
+# ─────────────────────────────────────────────────────────────────────────────
+# REAL VERIFICATION (the old print claimed this but never ran it)
+# ─────────────────────────────────────────────────────────────────────────────
+print("Verifying import...")
+proc = subprocess.run(
+    [sys.executable, "-c", "import game_data"],
+    cwd=str(TARGET.parent),
+    capture_output=True,
+    text=True,
+    timeout=120,
+)
+if proc.returncode != 0:
+    sys.stderr.write(proc.stderr[-2000:])
+    sys.exit(f"VERIFY FAIL — 'import game_data' exited {proc.returncode}")
+print("Verify OK — 'import game_data' exit 0")
