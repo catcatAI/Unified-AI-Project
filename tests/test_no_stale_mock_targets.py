@@ -89,6 +89,28 @@ def _line_of(text: str, index: int) -> int:
     return text.count("\n", 0, index) + 1
 
 
+def _scan_file(path: Path) -> List[Tuple[int, str]]:
+    """掃單檔全部 patch/importorskip 目標；回 (行號, 詳情) 列表。"""
+    try:
+        text = path.read_text(encoding="utf-8")
+    except UnicodeDecodeError:  # pragma: no cover - defensive
+        return []
+    hits: List[Tuple[int, str]] = []
+    for regex, kind, checker in (
+        (_PATCH_RE, "patch", _stale_patch_target),
+        (_IMPORTORSKIP_RE, "importorskip", lambda d: not _is_module(d)),
+    ):
+        for match in regex.finditer(text):
+            lineno = _line_of(text, match.start())
+            line = text.splitlines()[lineno - 1]
+            stripped = line.lstrip()
+            if stripped.startswith("#") or '"""' in stripped:
+                continue
+            if checker(match.group(1)):
+                hits.append((lineno, f"[{kind}] {match.group(1)}"))
+    return hits
+
+
 def _collect() -> List[Tuple[Path, int, str]]:
     hits: List[Tuple[Path, int, str]] = []
     self_path = Path(__file__).resolve()
@@ -98,22 +120,8 @@ def _collect() -> List[Tuple[Path, int, str]]:
         for path in sorted(root.rglob("*.py")):
             if path.resolve() == self_path:
                 continue
-            try:
-                text = path.read_text(encoding="utf-8")
-            except UnicodeDecodeError:  # pragma: no cover - defensive
-                continue
-            for regex, kind, checker in (
-                (_PATCH_RE, "patch", _stale_patch_target),
-                (_IMPORTORSKIP_RE, "importorskip", lambda d: not _is_module(d)),
-            ):
-                for match in regex.finditer(text):
-                    lineno = _line_of(text, match.start())
-                    line = text.splitlines()[lineno - 1]
-                    stripped = line.lstrip()
-                    if stripped.startswith("#") or '"""' in stripped:
-                        continue
-                    if checker(match.group(1)):
-                        hits.append((path, lineno, f"[{kind}] {match.group(1)}"))
+            for lineno, detail in _scan_file(path):
+                hits.append((path, lineno, detail))
     hits.sort(key=lambda h: (str(h[0]), h[1]))
     return hits
 
