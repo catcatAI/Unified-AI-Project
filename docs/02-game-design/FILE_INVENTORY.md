@@ -17,7 +17,6 @@
 | `apps/game-rpg/world_clock.py`      | Python   | 多世界線時間引擎                               |
 | `apps/game-rpg/game_familiarity.py` | Python   | 熟悉度系統                                     |
 | `apps/game-rpg/data/`               | JSON     | 遊戲資料（唯一權威來源）                       |
-| `ANGELA_CARD_INTEGRATION_PLAN.md`   | Markdown | 卡片系統整合計劃                               |
 
 ### 設計文檔
 
@@ -35,6 +34,8 @@
 | `NUMERICAL_SYSTEMS.md`     | 數值計算公式與規則             |
 | `MAP_AND_SCENES.md`        | 地圖、場景、不動產、物件、載具 |
 | `SIMULATION_SYSTEMS.md`    | NPC 作息、行程、生活模擬       |
+| `GAME_FAMILIARITY_SYSTEM.md` | 熟悉度系統設計               |
+| `GAME_SUBSYSTEM_AUDIT_AND_AXIS_ENGINE_PLAN.md` | 12 子系統盤點與「萬物皆軸」落地計畫 |
 | `FILE_INVENTORY.md`        | 這份文件                       |
 
 ### 後端遊戲原始碼
@@ -51,10 +52,9 @@
 | `quests.py`          | 任務系統（主線/支線、任務目標狀態機）           |
 | `i18n.py`            | 多語系統                                        |
 | `token_effects.py`   | Token 效果應用                                  |
-| `screens.py`         | 遊戲畫面管理                                    |
+| `screens.py`         | 遊戲畫面管理（含小元件，無獨立 widgets 模組）  |
 | `title_screen.py`    | 標題畫面                                        |
 | `gameover_screen.py` | 遊戲結束畫面                                    |
-| `widgets.py`         | TUI 小元件                                      |
 
 ### 核心卡片系統原始碼
 
@@ -74,16 +74,17 @@
 
 ### 遊戲資料（卡片堆）
 
-路徑: `data/`
+路徑: `apps/game-rpg/data/`（唯一權威來源；根目錄 `data/` 的舊卡片 JSON
+`game_cards.json`/`card_registry.json`/`all_cards.json`/`all_cards_final.json`/
+`parsed_cards.json`/`card_deck_inventory.json` 已於技術債清理批次刪除）
 
-| 檔案                       | 大小   | 說明                                               |
-| -------------------------- | ------ | -------------------------------------------------- |
-| `game_cards.json`          | 347 KB | 主卡片資料（含角色卡、世界觀卡、物品卡、場景卡等） |
-| `card_registry.json`       | 93 KB  | 卡片註冊表                                         |
-| `all_cards.json`           | 169 KB | 整合卡片資料                                       |
-| `all_cards_final.json`     | 381 KB | 最終整合卡片                                       |
-| `parsed_cards.json`        | 86 KB  | 解析後卡片                                         |
-| `card_deck_inventory.json` | 44 KB  | 卡片堆庫存                                         |
+| 檔案                       | 大小    | 說明                                                        | git    |
+| -------------------------- | ------- | ----------------------------------------------------------- | ------ |
+| `game_cards.json`          | 1.6 MB  | 主卡片資料（351 卡：角色/世界觀/物品/場景/劇情節點等）      | 已入庫 |
+| `game_supplement.json`     | 57 KB   | 補充資料（裝備/敵人/配方等模擬層）                          | 已入庫 |
+| `world_clock.json`         | 21 KB   | 主時鐘/世界線/季節（`master_clock` 資料）                   | 已入庫 |
+| `gdrive_cards.json`        | 250 KB  | Google Drive 卡片匯入中間產物                               | 未入庫 |
+| `gdrive_export/`           | 140 txt | 原始卡片目錄文字檔（axis 譜系權威來源）                    | 未入庫 |
 
 #### 卡片堆說明
 
@@ -116,9 +117,13 @@
 
 ### 專案整合計劃
 
-| 檔案                                                               | 說明                     |
-| ------------------------------------------------------------------ | ------------------------ |
-| `ANGELA_CARD_INTEGRATION_PLAN.md`                                  | 專案根目錄的卡片整合計劃 |
-| `docs/06-project-management/plans/ANGELA_CARD_INTEGRATION_PLAN.md` | 程式管理中的整合計劃     |
-| `docs/06-project-management/plans/CARD_IMPORT_PIPELINE_PLAN.md`    | 卡片匯入管線計劃         |
-| `docs/06-project-management/plans/CARD_INTEGRATION_PLAN_REVIEW.md` | 整合計劃審查             |
+> 三份計劃文檔已於 2026-08-11 自動歸檔至
+> `docs/09-archive/auto-archived-2026-08-11/`（根目錄同名檔一併歸檔）。
+> 僅作歷史紀錄，非現行計畫——現行遊戲工作以
+> `docs/02-game-design/GAME_SUBSYSTEM_AUDIT_AND_AXIS_ENGINE_PLAN.md` 為準。
+
+| 檔案                                                                                             | 說明                     |
+| ------------------------------------------------------------------------------------------------ | ------------------------ |
+| `docs/09-archive/auto-archived-2026-08-11/ANGELA_CARD_INTEGRATION_PLAN.md`                      | 卡片整合計劃（已歸檔）   |
+| `docs/09-archive/auto-archived-2026-08-11/CARD_IMPORT_PIPELINE_PLAN.md`                         | 卡片匯入管線計劃（已歸檔） |
+| `docs/09-archive/auto-archived-2026-08-11/CARD_INTEGRATION_PLAN_REVIEW.md`                      | 整合計劃審查（已歸檔）   |
