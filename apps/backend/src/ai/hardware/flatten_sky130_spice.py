@@ -145,6 +145,52 @@ def substitute(text: str, params: Dict[str, str], depth: int = 0) -> str:
     return substitute(replaced, params, depth + 1) if replaced != text else replaced
 
 
+def _flatten_model(
+    model: Path, params: Dict[str, str], lines: List[str], unresolved: List[str]
+) -> int:
+    """處理單一模型檔（.model card 與其 +/* 延續行）；回傳 card 數。"""
+    if not model.is_file():
+        return 0
+    raw_text = model.read_text(encoding="utf-8", errors="replace")
+    cards = 0
+    in_card = False
+    for raw in collapse_monte_carlo(raw_text).splitlines():
+        text = substitute(raw, params)
+        if text.strip().lower().startswith(".model"):
+            in_card = True
+            cards += 1
+        elif in_card:
+            # A model card runs on "+" continuations and may carry "*"
+            # comments between them -- the PDK puts a banner comment right
+            # after the .model line. Dropping those comments ends the card
+            # early, and then every "+" parameter line after it is discarded
+            # too, which yields a card with a name and no physics: the
+            # simulator then reports "could not find a valid modelname"
+            # because the surviving header carries no binning at all.
+            stripped = text.lstrip()
+            if stripped.startswith("+") or stripped.startswith("*"):
+                pass
+            else:
+                in_card = False
+                continue
+        else:
+            # The PDK also ships .subckt wrappers whose device lines
+            # reference {l}, {w}, {ad} and friends. Those are neither
+            # needed for a primitive-level deck nor resolvable offline,
+            # and leaving them in makes the simulator discard the .model
+            # cards beside them. The known-good flattened reference
+            # contains nothing but model cards.
+            continue
+        # Unresolved braces only matter on lines that survive into the deck:
+        # a dropped subckt line's {l}/{w} geometry is expected to be
+        # unresolved and must not fail the whole run.
+        for missing in _SUBST.findall(text):
+            if missing not in unresolved:
+                unresolved.append(missing)
+        lines.append(text)
+    return cards
+
+
 def flatten(
     model_files: List[Path],
     param_files: List[Path],
@@ -164,44 +210,7 @@ def flatten(
     cards = 0
     unresolved: List[str] = []
     for model in model_files:
-        if not model.is_file():
-            continue
-        raw_text = model.read_text(encoding="utf-8", errors="replace")
-        in_card = False
-        for raw in collapse_monte_carlo(raw_text).splitlines():
-            text = substitute(raw, params)
-            if text.strip().lower().startswith(".model"):
-                in_card = True
-                cards += 1
-            elif in_card:
-                # A model card runs on "+" continuations and may carry "*"
-                # comments between them -- the PDK puts a banner comment right
-                # after the .model line. Dropping those comments ends the card
-                # early, and then every "+" parameter line after it is discarded
-                # too, which yields a card with a name and no physics: the
-                # simulator then reports "could not find a valid modelname"
-                # because the surviving header carries no binning at all.
-                stripped = text.lstrip()
-                if stripped.startswith("+") or stripped.startswith("*"):
-                    pass
-                else:
-                    in_card = False
-                    continue
-            else:
-                # The PDK also ships .subckt wrappers whose device lines
-                # reference {l}, {w}, {ad} and friends. Those are neither
-                # needed for a primitive-level deck nor resolvable offline, and
-                # leaving them in makes the simulator discard the .model cards
-                # beside them. The known-good flattened reference contains
-                # nothing but model cards.
-                continue
-            # Unresolved braces only matter on lines that survive into the deck:
-            # a dropped subckt line's {l}/{w} geometry is expected to be
-            # unresolved and must not fail the whole run.
-            for missing in _SUBST.findall(text):
-                if missing not in unresolved:
-                    unresolved.append(missing)
-            lines.append(text)
+        cards += _flatten_model(model, params, lines, unresolved)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return cards, unresolved
