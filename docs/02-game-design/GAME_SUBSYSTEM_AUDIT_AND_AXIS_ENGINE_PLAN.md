@@ -124,6 +124,26 @@
 2. **tile 集**：為空間群組畫 16×16 地形集（毒氣區/走廊/湖/市場——對 crystal-cards 地點）。
 3. **驗收**：每張輸出過 `Image.open` + 尺寸/色深斷言；atlas 與 JSON 幀表一致性測試。
 
+> ✅ **執行結果（2026-10-17）**：全部落地於新檔 `primitives/game_sprites.py`（不動
+> `game_materials.py`）：`render_entity_layers`/`render_entity_sprite`（body/overlay/
+> emissive 三圖層，32/64，五輪廓×紋樣×高光/發光/透明度全由軸位表驅動）、
+> `render_terrain_tile`（TILE_KINDS=toxic_zone/corridor/lake/market 四種 16×16）、
+> `build_atlas`/`save_atlas`（同尺寸網格打包+JSON 幀表：meta/frame_size/columns/
+> count + 逐幀 x/y/w/h，名稱排序決定性排版）、CLI `python -m
+> ai.multimodal.primitives.game_sprites <out_dir>`（entity+terrain 雙 atlas 內容再
+> 生成；**生成 PNG/JSON 不入庫**，依 .gitignore「忽略生成資料」政策，M6 於執行期呼叫
+> 函式/CLI 即可）。軸位表 `AXIS_POSITIONS` 為 axis_system.AXIS_SYSTEMS 的視覺契約
+> 鏡像（後端不 import game-rpg CLI），由 `test_game_sprites.py` importlib 載入
+> axis_system **逐鍵同步鎖定**。驗收 53 tests（`test_game_sprites.py`）：計畫兩例
+> 鎖定（物種 H/S/C→humanoid/anthro/beast、義體 C1<C2<C3<C4 高光 0.25→0.95）、
+> 三圖層尺寸/RGBA/非空、合成 32/64、透明度軟化 alpha、四 tile 非空且互異、
+> atlas 邊界/不重疊/裁切==原幀/save roundtrip、錯誤路徑（未知 profile/段數/軸位/
+> 地形/尺寸/混合尺寸/空幀/重名）全 raise、CLI 寫出 4 檔。flake8=0、mypy=0、
+> C901 棘輪 0=0（兩函式已拆 pattern/painter 化）、黑格式過。
+> 內容註記（誠實對帳）：「毒氣區/走廊/湖/市場」四 tile 按計畫實作；crystal-cards
+> 實際語料走廊(7)/湖(47) 豐富、市場僅1 處「街頭市場情報」、毒氣 0 處（毒氣區對
+> W04 熒光沼澤/鏽蝕城邦之類場景，M5 內容灌入時對接場景卡）。
+
 ### 5.3 繪製升級（3D）
 
 1. `angela_clay.glb` 已是合法 glTF v2——**驗證器測試**（二進制 magic `glTF`+JSON chunk 可解析+mesh>0）。
@@ -228,11 +248,13 @@ class Entity:
 - [x] P1 十項全修或明確記錄「不修理由+替代」（P1-1~P1-10 全修，證據見 §四
       「P1」表狀態欄；P1-7 的 Expressions/HitAreas 為盤上無資產之「如實記錄
       不虛構」替代）
-- [ ] 2D/3D 資產契約測試入庫（glb/atlas/卡片 JSON）——**部分：glb（v2/chunk/AABB/
+- [x] 2D/3D 資產契約測試入庫（glb/atlas/卡片 JSON）——glb（v2/chunk/AABB/
       95 mesh/18 materials）+4 立繪+base_sprite+resources 位圖 5 檔+game_cards
-      自述總和一致性（10 tests）已入庫 `tests/frontend/test_game_asset_contracts.py`
-      （2026-10-17，同批訂正 game_cards 5 處陳舊自述值 3720→3376 token 等，
-      計畫 §5.1 表 resources/data 路徑漂移）；**atlas 待 §5.2 補**
+      自述總和一致性 10 tests（`tests/frontend/test_game_asset_contracts.py`，
+      同批訂正 game_cards 5 處陳舊自述值 3720→3376 token 等、計畫 §5.1 表路徑
+      漂移）+ atlas/幀表/三圖層/四地形 53 tests（§5.2
+      `tests/ai/multimodal/primitives/test_game_sprites.py`，含 axis_system
+      跨檔同步鎖定）——2026-10-17 齊
 - [ ] 萬物皆軸 M1~M4 單測全綠；M5 卡片灌入快照測試綠
 - [ ] 顯示/交互驗證矩陣逐行有「手動冒煙記錄」或自動化測試
 - [ ] `flake8`/`mypy`/`complexity_budget_gate`/`mypy_budget_gate` 全綠

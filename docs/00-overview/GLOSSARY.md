@@ -73,7 +73,7 @@ or numpy) for cross-platform compatibility.
 ### GVV (Geometric Vocabulary Vector)
 
 Compositional image generation pipeline: ConceptMapper → GeometricVocabulary →
-InstanceOptimizer → LearnableDecomposer → PixelRefiner. 16 source files, 85
+InstanceOptimizer → LearnableDecomposer → PixelRefiner. 17 source files, 124
 tests. Part of the primitives system under `ai/multimodal/primitives/`.
 
 ## H
