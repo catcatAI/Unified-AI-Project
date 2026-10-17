@@ -150,6 +150,16 @@
 2. 用 `trimesh`（若可用）或 glb JSON chunk 派生**碰撞包圍盒**（extent 軸初值），供空間群組。
 3. 精靈→3D 混合管線（可選後續）：glb 作展示層，2D atlas 作遊戲內實體層。
 
+> **執行結果（2026-10-17）**：
+> 1. ✅ 已落地——`tests/frontend/test_game_asset_contracts.py::
+>    test_glb_is_valid_gltf_v2`（magic `glTF`＋JSON chunk 首塊可解析＋BIN
+>    chunk＋95 meshes/18 materials/96 nodes 鎖定，§5.1 批入庫）。
+> 2. ✅ 派生已落地——同檔 `test_glb_position_accessors_yield_finite_aabb`
+>    （由 glb JSON chunk 派生碰撞 AABB、extent 三軸>0，不依賴 trimesh；
+>    函式 docstring 即標「§5.3-2」）；「供空間群組」消費＝遠期（M1–M7
+>    引擎尚無空間群組，軸域先落 story/心理組）。
+> 3. 可選後續維持開放（計畫原文明示可選，不列 DoD）。
+
 ## 六、「萬物皆軸」引擎原型落地計畫
 
 **落點**：新建 `apps/game-rpg/engine/`（純 stdlib，與現有 CLI 共存，不動 19,982 行既有代碼）。
@@ -307,7 +317,20 @@ class Entity:
 ### 6.4 與現有系統的介面
 
 - `world_clock.py`：M3 的中控時鐘**外包**它的 world_lines 索引（不重寫時間線），新增 group_dt 分發 API。
+  ——**已落地（M3，2026-10-17）**：`MasterClock(..., time_flow_source=
+  world_clock.get_time_flow_ratio)` 外包世界線流速比（不動 world_clock
+  時間線本體；M3 驗收＝戰鬥 0.2× 時心理組 fire 數 300==300 精確同步）；
+  `group_dt()` 分發 API 在 `engine/clock.py`（docstring 即標「group_dt
+  分發 API」＝該組單次 fire 本地 dt），`test_m3_clock.py` 16 tests 綠。
+  生產側常駐 tick 迴圈不存在（端點唯讀設計），運行期接線與 pixel-angela
+  ws 同列遠期。
 - `axis_system.py`：M5 作為內容適配器（`axis_code → AxisGroup("story").axes`），不改其 920 行。
+  ——**已落地（M5，2026-10-17）**：`resolve_card_axis`/`parse_axis_code`
+  原生 `(code, label)` 元組在 `content.py` 正規化取純碼；`story_group()`
+  由 351 張真檔卡片灌 `AxisGroup("story")`（20 卡型＋9 超類 FSM 狀態域，
+  `STORY_ROLE_BY_CARD_TYPE` 20 鍵全覆蓋）。零改動證據：`git show --stat
+  5bc4d2021` 僅 `engine/content.py`＋`test_m5_content.py` 兩檔；
+  `axis_system.py` 現 920 行（M5 前最後改動＝既存 style/refactor 批）。
 - `game_routes.py`：新增 `GET /api/v1/game/engine/status`（只讀）暴露引擎 tick/組清單。
   ——**已落地（2026-10-17）**：`/game/engine/status` 端點（router prefix
   `/game` 掛 `/api/v1`）回 `axis-v1`：master_hz=60、master_ticks=0（**只讀
@@ -319,6 +342,10 @@ class Entity:
   `tests/api/test_game_routes.py` 21→**24 passed**（shape/只讀冪等/
   降級 + 全 router 路徑 `/api/v1/game/engine/status` 在列 + 期望路徑集）。
 - `pixel-angela`：M6 表現端之一（ws 收 render_bridge 快照）。
+  ——**遠期（M6 註記同批聲明）**：M6 交付 `SpriteView` PIL 離屏合成
+  （精靈塗層/粒子在 view 層可複用，手動冒煙 CLI 產 1440×384 實圖）；
+  ws 收 render_bridge 快照＝表現端實窗接線，待生產 tick 迴圈落地後接
+  （現無常駐迴圈可推，端點亦為唯讀）。
 - `angela_agent.py` 五層 AI：後續把 `game_structs.SkillContext` 對接 AxisGroup（L0 動作寫入戰鬥/空間軸）——遠期。
 
 ## 七、顯示/交互正常性驗證矩陣
