@@ -268,6 +268,26 @@ class Entity:
 > 35 卡全入譜系快照、每值落譜系狀態域、可解析數==快照數且 <351（確認
 > 魔女等未分類卡真被排除）。game-rpg 全套 **274 passed**（+21）；
 > mypy 0（8 files，動態 import 切斷舊碼傳遞追蹤）、flake8=0、black clean。
+>
+> ✅ **M6 完成（2026-10-17）**：`engine/sprite_view.py` —— §5.2 精靈管線接
+> render_bridge：`SpriteView`（離屏 PIL 幀合成；RenderBridge 已吸附座標
+> 再做半遠離零雙保險 `quantize(x,1)`、sorted 疊放=確定性、負座標裁切）；
+> `load_entity_sprite()` 經 `_game_sprites()` importlib+Any 動態載入
+> §5.2 `render_entity_sprite(axis_code, group_profile, size)`（editable
+> .pth 已供 `ai` 路徑時走直連，缺路徑才 bootstrap `apps/backend/src`）。
+> **驗收（像素層自動化）** `tests/engine/test_m6_sprite_view.py`
+> **17 tests**：`test_movement_smooth_and_no_jitter_at_pixels` —— 30Hz
+> 模擬/144Hz 顯示 25 幀逐幀渲染實幀，實體 bbox 左緣嚴格等速 +5px
+> （無跳變/回跳=抖動徵兆）、每幀 bbox 寬高完全一致（無子像素膨脹閃爍）、
+> 絕對位置=5m+精靈 alpha 透明邊距偏移；另含真實 §5.2 管線載入（RGBA 32
+> 非全透明、壞軸碼 AxisCodeError、size<16 raise）、雙保險吸附 7.6→8、
+> 背景/尺寸、反序插入幀 bytes 全等、全出界僅背景。
+> **手動視覺冒煙清單**（§七矩陣 M6 行）：`cd apps/game-rpg &&
+> python -m engine.sprite_view --out /tmp/engine_m6_smoke.png`（實測產
+> 1440×384 移動序列拼圖）→ 眼看間距漸變均勻、無跳格/抖動；PyQt6 ws 接線
+> 為 §6.4「pixel-angela 收快照」遠期項，不在本里程碑。
+> game-rpg 全套 **291 passed**（+17）；mypy 0（9 files）、flake8=0、
+> black clean。
 
 ### 6.4 與現有系統的介面
 
