@@ -1,7 +1,7 @@
 """Tests for game_routes API endpoints.
 
 Covers:
-- Route import and registration (10 endpoints)
+- Route import and registration (11 endpoints)
 - Read-only endpoints (status/worlds/characters/cards/axes)
 - Session lifecycle (create / state / action / end)
 - Error handling (missing session, engine unavailable)
@@ -37,6 +37,7 @@ class TestGameRoutesImport:
         paths = {r.path for r in router.routes}
         expected = {
             "/game/status",
+            "/game/engine/status",
             "/game/worlds",
             "/game/characters",
             "/game/cards",
@@ -225,3 +226,45 @@ class TestGameDegraded:
             elif hasattr(r, "path"):
                 paths.add(r.path)
         assert "/api/v1/game/status" in paths
+        assert "/api/v1/game/engine/status" in paths
+
+
+@pytest.mark.asyncio
+class TestAxisEngineStatus:
+    """§6.4 萬物皆軸引擎只讀端點（master tick/組清單）。"""
+
+    async def test_engine_status_shape(self):
+        from api.routes import game_routes
+
+        result = game_routes.game_engine_status()
+        assert result["available"] is True
+        assert result["engine"] == "axis-v1"
+        assert result["master_hz"] == 60.0
+        assert result["master_ticks"] == 0  # 只讀：不啟動任何迴圈
+        assert len(result["groups"]) == 1
+        group = result["groups"][0]
+        assert group["name"] == "story"
+        assert group["tick_rate"] == 30.0
+        assert group["time_scale"] == 1.0
+        assert set(group["axes"]) == {"card_type", "story_role"}
+        assert group["axes"]["card_type"] == {"kind": "fsm", "states": 20}
+        assert group["axes"]["story_role"] == {"kind": "fsm", "states": 9}
+        assert set(group["signals"]) == {"card_type", "story_role"}
+
+    async def test_engine_status_idempotent_read_only(self):
+        from api.routes import game_routes
+
+        first = game_routes.game_engine_status()
+        second = game_routes.game_engine_status()
+        assert first == second  # 兩次全等=tick 未前進、無副作用
+
+    async def test_engine_status_unavailable_degrades(self):
+        from api.routes import game_routes
+
+        with patch.object(
+            game_routes, "_get_axis_engine", side_effect=RuntimeError("no axis engine")
+        ):
+            result = game_routes.game_engine_status()
+        assert result["available"] is False
+        assert result["groups"] == []
+        assert result["master_ticks"] == 0

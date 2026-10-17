@@ -22,7 +22,9 @@ Endpoints:
 ANGELA-MATRIX: [L4-L5] [αβγδ] [A] [L3]
 """
 
+import importlib
 import logging
+import sys
 import threading
 import uuid
 from pathlib import Path
@@ -48,6 +50,9 @@ _ENGINE_LOCK = threading.Lock()
 _SESSIONS: Dict[str, Any] = {}
 _SESSION_LOCK = threading.Lock()
 _SESSION_MAX = 64
+
+_AXIS_ENGINE: Optional[Dict[str, Any]] = None
+_AXIS_LOCK = threading.Lock()
 
 
 def _get_engine():
@@ -76,6 +81,49 @@ def _load_axis_system():
         "axes": getattr(module, "AXIS_SYSTEMS", {}),
         "dimensions": list(getattr(module, "DIMENSIONS", ())),
         "default_lineage": getattr(module, "DEFAULT_LINEAGE", "其他"),
+    }
+
+
+def _get_axis_engine() -> Dict[str, Any]:
+    """§6.4 萬物皆軸引擎共享例項（只讀狀態來源）。
+
+    game-rpg 根路徑 bootstrap 同 tests/conftest.py 先例（已存在則跳過）；
+    僅建 MasterClock+story 群組（真檔 351 卡→FSM 狀態域），**不啟動**
+    任何 tick 迴圈——端點只讀、無副作用。
+    """
+    global _AXIS_ENGINE
+    if _AXIS_ENGINE is None:
+        with _AXIS_LOCK:
+            if _AXIS_ENGINE is None:
+                root = str(_GAME_ROOT)
+                if root not in sys.path:
+                    sys.path.insert(0, root)
+                # 動態載入（Any 綁定）：engine 套件在 game-rpg 根、
+                # 不在後端 import 路徑——同 M5/M6 動態解析先例，不靜態綁
+                engine_mod: Any = importlib.import_module("engine")
+                content_mod: Any = importlib.import_module("engine.content")
+
+                group = content_mod.story_group()
+                clock = engine_mod.MasterClock(master_hz=60.0)
+                clock.register_group(group)
+                _AXIS_ENGINE = {"clock": clock, "groups": [group]}
+    return _AXIS_ENGINE
+
+
+def _axis_group_to_dict(group) -> dict:
+    """AxisGroup → JSON-safe 狀態表（fsm 給狀態數、數值軸給 step）。"""
+    axes_out: Dict[str, Any] = {}
+    for name, spec in group.axes.items():
+        if spec.kind == "fsm":
+            axes_out[name] = {"kind": spec.kind, "states": len(spec.states)}
+        else:
+            axes_out[name] = {"kind": spec.kind, "step": spec.step}
+    return {
+        "name": group.name,
+        "tick_rate": group.tick_rate,
+        "time_scale": group.time_scale,
+        "axes": axes_out,
+        "signals": list(group.contract.provide_names()),
     }
 
 
@@ -133,6 +181,29 @@ def game_status() -> dict:
     except Exception as err:
         logger.warning("Game engine unavailable: %s", err, exc_info=True)
         return {"available": False, "total_cards": 0}
+
+
+@router.get("/engine/status")
+def game_engine_status() -> dict:
+    """§6.4：萬物皆軸引擎只讀狀態（master tick/組清單/軸域），不啟動迴圈。"""
+    try:
+        core = _get_axis_engine()
+        clock = core["clock"]
+        return {
+            "engine": "axis-v1",
+            "available": True,
+            "master_hz": clock.master_hz,
+            "master_ticks": clock.master_ticks,
+            "groups": [_axis_group_to_dict(g) for g in core["groups"]],
+        }
+    except Exception as err:
+        logger.warning("Axis engine unavailable: %s", err, exc_info=True)
+        return {
+            "engine": "axis-v1",
+            "available": False,
+            "master_ticks": 0,
+            "groups": [],
+        }
 
 
 @router.get("/worlds")

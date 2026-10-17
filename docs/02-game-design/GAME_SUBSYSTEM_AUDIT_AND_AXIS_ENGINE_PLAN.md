@@ -309,6 +309,15 @@ class Entity:
 - `world_clock.py`：M3 的中控時鐘**外包**它的 world_lines 索引（不重寫時間線），新增 group_dt 分發 API。
 - `axis_system.py`：M5 作為內容適配器（`axis_code → AxisGroup("story").axes`），不改其 920 行。
 - `game_routes.py`：新增 `GET /api/v1/game/engine/status`（只讀）暴露引擎 tick/組清單。
+  ——**已落地（2026-10-17）**：`/game/engine/status` 端點（router prefix
+  `/game` 掛 `/api/v1`）回 `axis-v1`：master_hz=60、master_ticks=0（**只讀
+  不啟迴圈**，兩次呼叫全等=無副作用）、story 群組組清單（tick_rate/time_scale/
+  軸域含 20 卡型+9 超類狀態數/provides 訊號）；`_get_axis_engine()`
+  單例+threading.Lock、game-rpg 根路徑 bootstrap 同 conftest 先例、
+  importlib+Any 動態載入（engine 不在後端 import 路徑，同 M5/M6 風格）；
+  異常降級 `available:false`（logger.warning+exc_info）。驗收：
+  `tests/api/test_game_routes.py` 21→**24 passed**（shape/只讀冪等/
+  降級 + 全 router 路徑 `/api/v1/game/engine/status` 在列 + 期望路徑集）。
 - `pixel-angela`：M6 表現端之一（ws 收 render_bridge 快照）。
 - `angela_agent.py` 五層 AI：後續把 `game_structs.SkillContext` 對接 AxisGroup（L0 動作寫入戰鬥/空間軸）——遠期。
 
