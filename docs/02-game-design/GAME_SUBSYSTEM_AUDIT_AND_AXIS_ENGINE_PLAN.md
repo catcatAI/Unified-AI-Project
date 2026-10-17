@@ -96,7 +96,7 @@
 | P1-7 | Live2D miara model3.json 事後重建（HitAreas/Expressions 空） | 用 Cubism Editor 重生或從 `resources/models/miara_pro` 原始件還原 expressions；至少補 HitAreas | ✅ `ae02ec435`：Groups Ids 以 cdi3 實值填（ParamMouthOpenY/ParamEyeL,ROpen，雙面 byte 一致）；**Expressions/HitAreas 盤上無對應資產（無 expression3.json、hit-test 定義在 moc3 需 Editor），如實記錄不虛構**，manifest 契約測試 5 tests |
 | P1-8 | 栮 `live2d_models/` 空殼目錄 | 刪或改指 `resources/models` | ✅（本 commit）：定性=generator 預設輸出（`live2d_avatar_generator.py:533` `mkdir exist_ok`），非孤兒→`.gitignore` 接管防生成物入 git+刪空殼（運行時重建） |
 | P1-9 | `ham_game_memory.json` templates/metadata 恆空+不可復現 | bridge 寫入時補 metadata；文檔標注「本機資產，clone 無」 | ✅（本 commit）：`HAMMemoryManager._write_to_disk` 每次 save 蓋章 top-level metadata（schema_version/saved_at/counts/bucket_cap、merge 保留既有鍵）——涵蓋遊戲與主實例；templates 恆空定性為真實使用面（遊戲流只寫 conversations，store_template 唯一呼叫者在 llm/router 主實例）不虛構；`data/README.md` 落地本機資產清單+復現註記（gitignore 加錨定 `!/data/`+`/data/*`+`!/data/README.md` 使 README 可追蹤、其餘仍本地）；4 tests（TestMetadataStamping） |
-| P1-10 | crystal-cards 零行為測試 | 新增 `tests/frontend/test_crystal_engine.mjs`（node:test）：tryStack/executeCombat/save-load 純函數層 | ⏳ 待辦 |
+| P1-10 | crystal-cards 零行為測試 | 新增 `tests/frontend/test_crystal_engine.mjs`（node:test）：tryStack/executeCombat/save-load 純函數層 | ✅（本 commit）：`test_crystal_engine.mjs` 11 tests 全綠（stack 上限/recipe 兩路徑/dialogue 觸發/擊殺+loot/反擊 game over/save-load 重建/非法存檔拒絕），node:vm 模擬瀏覽器 script 語意；pytest 橋 `test_crystal_engine_node.py` 使 `pytest tests/` 即跑；**順帶修死點**：bot-player.js 雙 eval 看不到 cards 的 const（載入即 ReferenceError）→ `global.CARDS` 橋接+刪模組層 TDZ const，實跑 30 日模擬恢復正常 |
 
 ## 五、2D/3D 資源檢查、升級與繪製計畫
 
@@ -225,7 +225,9 @@ class Entity:
 ## 十、完成定義（DoD）
 
 - [x] P0 七項全修，各自有驗證命令輸出證據（見 §四「P0 執行結果」表）
-- [ ] P1 十項全修或明確記錄「不修理由+替代」
+- [x] P1 十項全修或明確記錄「不修理由+替代」（P1-1~P1-10 全修，證據見 §四
+      「P1」表狀態欄；P1-7 的 Expressions/HitAreas 為盤上無資產之「如實記錄
+      不虛構」替代）
 - [ ] 2D/3D 資產契約測試入庫（glb/atlas/卡片 JSON）
 - [ ] 萬物皆軸 M1~M4 單測全綠；M5 卡片灌入快照測試綠
 - [ ] 顯示/交互驗證矩陣逐行有「手動冒煙記錄」或自動化測試

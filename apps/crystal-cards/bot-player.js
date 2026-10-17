@@ -37,13 +37,19 @@ const cardsClean =
   cardsRaw.replace(/if \(typeof module.*[\s\S]*$/, '') + // Remove module.exports block at end
   'window.CARDS_DATA = { CARDS, WORLD_LINES, NPC_SCHEDULES };'
 eval(cardsClean)
+// cards.js 的 const 只活在本次 eval 的詞法範圍；engine 是「另一次」eval，
+// 看不到它（瀏覽器兩個 <script> 共享頂層詞法環境，Node 的 eval 不共享——
+// 修前載入即 ReferenceError: CARDS is not defined）。橋接到全域。
+global.CARDS = window.CARDS_DATA.CARDS
 
 // Load game engine
 const engineRaw = fs.readFileSync(path.join(__dirname, 'src', 'game-engine.js'), 'utf-8')
 eval(engineRaw)
 
 const E = window.GameEngine
-const { CARDS } = window.CARDS_DATA
+// 注意：不可在此寫 const { CARDS } = window.CARDS_DATA —— 模組層的 const
+// 會讓後續 eval 的裸 CARDS 走 TDZ（Cannot access 'CARDS' before
+// initialization）。全域 global.CARDS（上方橋接）已供下方 3 處使用。
 
 // ═══════════════════════════════════════════════════════
 // Angela AI Client
