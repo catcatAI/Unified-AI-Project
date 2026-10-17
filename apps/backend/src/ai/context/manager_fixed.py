@@ -210,6 +210,30 @@ class ContextManager:
             logger.error(f"Failed to search contexts: {e}", exc_info=True)
             return []
 
+    @staticmethod
+    def _filter_transfer_data(
+        data: Dict[str, Any], filter_criteria: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """簡單鍵值過濾：criteria 內須等值才留、criteria 外全留。"""
+        filtered_data: Dict[str, Any] = {}
+        for key, value in data.items():
+            if key in filter_criteria and data[key] == filter_criteria[key]:
+                filtered_data[key] = value
+            elif key not in filter_criteria:
+                filtered_data[key] = value
+        return filtered_data
+
+    def _persist_transfer(self, target_context: Any, target_id: str) -> bool:
+        """memory→disk 雙儲存落盤；任一失敗記 error 回 False。"""
+        if not self.memory_storage.save_context(target_context):
+            logger.error(f"Failed to save target context {target_id} to memory storage")
+            return False
+
+        if not self.disk_storage.save_context(target_context):
+            logger.error(f"Failed to save target context {target_id} to disk storage")
+            return False
+        return True
+
     def transfer_context(
         self,
         source_id: str,
@@ -234,24 +258,13 @@ class ContextManager:
             data_to_transfer = source_context.content.copy()
             if filter_criteria:
                 # 简单的键值过滤
-                filtered_data = {}
-                for key, value in data_to_transfer.items():
-                    if key in filter_criteria and data_to_transfer[key] == filter_criteria[key]:
-                        filtered_data[key] = value
-                    elif key not in filter_criteria:
-                        filtered_data[key] = value
-                data_to_transfer = filtered_data
+                data_to_transfer = self._filter_transfer_data(data_to_transfer, filter_criteria)
 
             # 更新目标上下文
             target_context.update_content(data_to_transfer)
 
             # 保存目标上下文
-            if not self.memory_storage.save_context(target_context):
-                logger.error(f"Failed to save target context {target_id} to memory storage")
-                return False
-
-            if not self.disk_storage.save_context(target_context):
-                logger.error(f"Failed to save target context {target_id} to disk storage")
+            if not self._persist_transfer(target_context, target_id):
                 return False
 
             # 更新缓存
