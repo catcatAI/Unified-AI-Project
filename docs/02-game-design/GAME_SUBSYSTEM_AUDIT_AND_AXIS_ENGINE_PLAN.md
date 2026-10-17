@@ -59,7 +59,7 @@
 
 ## 四、破損與風險修復計畫
 
-### P0（阻斷「可運行」，先修）
+### P0（阻斷「可運行」，先修）— ✅ 2026-10-17 全部完成
 
 | ID | 破損 | 證據 | 修法 | 驗收 |
 |---|---|---|---|---|
@@ -70,6 +70,18 @@
 | P0-5 | crystal-cards 缺 `assets/icons/icon.png`（main.js:26 引用、build.files 含 `assets/**/*`） | 目錄不存在 | 用 `resources/icon.png` 複製/縮放為多尺寸 ico/png | 啟動無 404；打包配置不再指向幽靈目錄 |
 | P0-6 | Luanti mod 缺 `secure.http_mods = agent_poller` 文檔與安裝步驟 | 全倉 grep `http_mods`=0 | 在 `apps/luanti-mods/README.md` 寫 4 前置（mods 安裝、world.mt、minetest.conf、bridge :30003）；`start_game_stack.sh` 註釋同步 | 文檔齊備；新人按文檔可掛載 |
 | P0-7 | `textual`/`PyQt6`/`opencv-python`/`pygame` 未裝 → B 的 TUI、D 的像素渲染不可跑 | .venv 實測 | `pip install -e "apps/backend[tui,game]"`；`pip install -r apps/pixel-angela/requirements.txt`（評估 cv2 必要性——sprite_converter 可改純 PIL） | `python -m src.game.app --help` 級別可起；`python apps/pixel-angela/renderer.py --selftest` 起窗 |
+
+**P0 執行結果（2026-10-17，逐項證據）**：
+
+| # | 結果 | 驗收證據 |
+|---|---|---|
+| P0-1 | ✅ commit `e50026512` | bash -n 過；實測起 PollingBridge 後 `curl :30003/health` → `{"status":"ok",...}` exit 0 |
+| P0-2 | ✅ commit `ab6d8e7f3` | `python apps/game-rpg/analyze_cards.py` exit 0（原必炸 FileNotFoundError），輸出 163 目錄卡/162 覆蓋/99.4% |
+| P0-3 | ✅ commit `2ab969d72` | 連跑兩次 exit 0、md5+mtime 不變；破壞目標實測 VERIFY FAIL 捕獲 NameError exit 1 且不覆寫 |
+| P0-4 | ✅ commit `2564ec80b` | **審計前提部分推翻**：`restart` 是 dialog.js:111 哨兵（非斷鏈）、storyNodes 全倉零消費者（死資料）；真破損是 **64/64 storyEvents.dialogue 全缺**（故事觸發靜默失效）。補 64 條派生 dialogue＋新增 `scripts/check_crystal_links.js`：64 fail/5 warn → **0 fail/5 warn** exit 0；node --check + eslint 過 |
+| P0-5 | ✅ commit `ae4b1407d` | 256×256 icon 落地（resources/icon.png 32×32 NEAREST 8x）＋`build.icon` 接線；node 實測 main.js 相對路徑 exists=true、package.json 合法 |
+| P0-6 | ✅ commit `1ef04e2f6` | `apps/luanti-mods/README.md` 四前置齊（含 `secure.http_mods`——原全倉 0 命中）＋6 端點表＋驗證清單；start_game_stack.sh 註釋同步；bash -n 過 |
+| P0-7 | ✅ 本批 | 裝 `textual 8.2.8`/`pygame 2.6.1`/`PyQt6 6.11.0`/`opencv-python 5.0.0`；冒烟：Textual `run_test()` headless 掛載 TitleScreen OK、Qt offscreen QApplication＋renderer 模組匯入 OK；`tests/game/`+`test_pixel_angela_menu` 42 passed；**全量 pytest 7,824 passed / 107 skipped / 0 failed**（基線 7,413/91 是 `tests/` 單獨——其收集數 7,504 未變；本次首將 `apps/backend/tests/` 423 納入）；mypy gate 0=0、flake8 斷檔修正後 0 |
 
 ### P1（正確性/一致性）
 
@@ -212,10 +224,11 @@ class Entity:
 
 ## 十、完成定義（DoD）
 
-- [ ] P0 七項全修，各自有驗證命令輸出證據
+- [x] P0 七項全修，各自有驗證命令輸出證據（見 §四「P0 執行結果」表）
 - [ ] P1 十項全修或明確記錄「不修理由+替代」
 - [ ] 2D/3D 資產契約測試入庫（glb/atlas/卡片 JSON）
 - [ ] 萬物皆軸 M1~M4 單測全綠；M5 卡片灌入快照測試綠
 - [ ] 顯示/交互驗證矩陣逐行有「手動冒煙記錄」或自動化測試
 - [ ] `flake8`/`mypy`/`complexity_budget_gate`/`mypy_budget_gate` 全綠
-- [ ] 全量 pytest 無回歸（基線 7413 passed / 91 skipped）
+- [x] 全量 pytest 無回歸（P0-7 後新基線：**7,824 passed / 107 skipped / 0 failed**，
+      paths=`tests/`+`apps/backend/tests/`；舊 7,413/91 為 `tests/` 單獨，收集數 7,504 未變）

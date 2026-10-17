@@ -13,9 +13,7 @@ _cat_candidates = [
 ]
 cat_path = next((p for p in _cat_candidates if os.path.isfile(p)), None)
 if cat_path is None:
-    raise FileNotFoundError(
-        "card catalog not found; tried: " + ", ".join(_cat_candidates)
-    )
+    raise FileNotFoundError("card catalog not found; tried: " + ", ".join(_cat_candidates))
 with open(cat_path, "r", encoding="utf-8") as f:
     catalog_text = f.read()
 
@@ -278,7 +276,7 @@ for cid, info in sorted(mismatches.items()):
 # ============================================================
 # 4. game_data.py analysis
 # ============================================================
-print(f"\n\n=== game_data.py PROCESSING ===")
+print("\n\n=== game_data.py PROCESSING ===")
 game_types = set(g["type"] for g in game_cards.values())
 print(f"Card types in game_cards.json: {sorted(game_types)}")
 processed_types = {
@@ -303,7 +301,7 @@ for t in sorted(unprocessed):
 # ============================================================
 # 5. Summary
 # ============================================================
-print(f"\n\n=== SUMMARY ===")
+print("\n\n=== SUMMARY ===")
 print(f"Catalog cards: {total_catalog}")
 covered = sum(1 for c in catalog_list if c in game_cards)
 print(f"Covered in JSON: {covered}")

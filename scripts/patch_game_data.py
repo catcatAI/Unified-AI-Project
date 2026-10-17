@@ -479,7 +479,9 @@ NEW_GENERATE_NPCS = """def generate_all_npcs() -> Dict[str, dict]:
             "raw_tokens": len(tokens),"""
 
 if "_NPC_ALIAS_TO_CANON" in src:
-    print("[PATCH 3] already applied (superseded by evolution — _NPC_ALIAS_TO_CANON present), no-op")
+    print(
+        "[PATCH 3] already applied (superseded by evolution — _NPC_ALIAS_TO_CANON present), no-op"
+    )
 elif OLD_GENERATE_NPCS in src:
     src = src.replace(OLD_GENERATE_NPCS, NEW_GENERATE_NPCS, 1)
     changed = True
@@ -492,9 +494,7 @@ else:
 # ABORT on drift BEFORE touching the target
 # ─────────────────────────────────────────────────────────────────────────────
 if failed:
-    sys.stderr.write(
-        "ABORT: " + ", ".join(failed) + " anchor drift — target NOT modified.\n"
-    )
+    sys.stderr.write("ABORT: " + ", ".join(failed) + " anchor drift — target NOT modified.\n")
     sys.exit(1)
 
 # ─────────────────────────────────────────────────────────────────────────────
