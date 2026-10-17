@@ -96,6 +96,59 @@ class ED3NTrainer:
             self.best_accuracy = combined_acc
         return combined
 
+    @staticmethod
+    def _link_relation(entry1: Any, entry2: Any, rel_type: str, k1: str, k2: str) -> None:
+        """雙向掛關係（各向僅缺才 append，原地更新 relations）。"""
+        existing = entry1.relations.get(rel_type, [])
+        if k2 not in existing:
+            existing.append(k2)
+            entry1.relations[rel_type] = existing
+        existing2 = entry2.relations.get(rel_type, [])
+        if k1 not in existing2:
+            existing2.append(k1)
+            entry2.relations[rel_type] = existing2
+
+    def _grow_missing_keys(self, misses: Any, surface: str, confidence: float) -> None:
+        """缺失 key 若不在詞典則 grow 新條目（debug log 原樣）。"""
+        for key in misses:
+            if key not in self.dictionary.entries:
+                new_key = self.dictionary.grow(
+                    text=surface,
+                    surface_form=surface,
+                    confidence=confidence
+                    * confidence_value("ai.ed3n.trainer.confidence_scaling", 0.6),
+                )
+                if new_key:
+                    logger.debug("Grew entry %s for missing key", new_key)
+
+    def _learn_dictionary_example(self, ex: TrainingExample) -> Tuple[int, float]:
+        """單例學習：grow 缺 key、調 confidence、掛關係；回 (hits, loss)。"""
+        matched_keys = self.dictionary.encode(ex.input_text)
+
+        expected_set = set(ex.input_keys)
+        matched_set = set(matched_keys)
+        hits = expected_set & matched_set
+        misses = expected_set - matched_set
+
+        self._grow_missing_keys(misses, ex.input_text, ex.confidence)
+
+        for key in ex.input_keys:
+            entry = self.dictionary.entries.get(key)
+            if entry is None:
+                continue
+            match = 1.0 if key in matched_set else 0.0
+            entry.confidence += self.dictionary_lr * (match - entry.confidence)
+
+        for k1, rel_type, k2 in ex.relation_pairs:
+            entry1 = self.dictionary.entries.get(k1)
+            entry2 = self.dictionary.entries.get(k2)
+            if entry1 is None or entry2 is None:
+                continue
+            self._link_relation(entry1, entry2, rel_type, k1, k2)
+
+        loss = 1.0 - (len(hits) / max(len(expected_set), 1))
+        return len(hits), loss
+
     def train_dictionary_phase(self, examples: List[TrainingExample]) -> TrainMetrics:
         if not examples:
             return TrainMetrics(
@@ -113,49 +166,9 @@ class ED3NTrainer:
         total_loss = 0.0
 
         for ex in examples:
-            matched_keys = self.dictionary.encode(ex.input_text)
-
-            expected_set = set(ex.input_keys)
-            matched_set = set(matched_keys)
-            hits = expected_set & matched_set
-            misses = expected_set - matched_set
-
-            correct += len(hits)
-
-            for key in misses:
-                surface = ex.input_text
-                if key not in self.dictionary.entries:
-                    new_key = self.dictionary.grow(
-                        text=surface,
-                        surface_form=surface,
-                        confidence=ex.confidence
-                        * confidence_value("ai.ed3n.trainer.confidence_scaling", 0.6),
-                    )
-                    if new_key:
-                        logger.debug("Grew entry %s for missing key", new_key)
-
-            for key in ex.input_keys:
-                entry = self.dictionary.entries.get(key)
-                if entry is None:
-                    continue
-                match = 1.0 if key in matched_set else 0.0
-                entry.confidence += self.dictionary_lr * (match - entry.confidence)
-
-            for k1, rel_type, k2 in ex.relation_pairs:
-                entry1 = self.dictionary.entries.get(k1)
-                entry2 = self.dictionary.entries.get(k2)
-                if entry1 is None or entry2 is None:
-                    continue
-                existing = entry1.relations.get(rel_type, [])
-                if k2 not in existing:
-                    existing.append(k2)
-                    entry1.relations[rel_type] = existing
-                existing2 = entry2.relations.get(rel_type, [])
-                if k1 not in existing2:
-                    existing2.append(k1)
-                    entry2.relations[rel_type] = existing2
-
-            total_loss += 1.0 - (len(hits) / max(len(expected_set), 1))
+            hits, loss = self._learn_dictionary_example(ex)
+            correct += hits
+            total_loss += loss
 
         n = len(examples)
         accuracy = correct / max(sum(len(e.input_keys) for e in examples), 1)
