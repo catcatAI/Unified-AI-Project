@@ -216,6 +216,15 @@ class Entity:
 > 型別/精度 coerce（float 捨入 precision、int/bool/str 拒絕雜型）、啟動後
 > 禁註冊、重名/契約-群組名不符 raise。雜項：flake8=0、black clean、
 > mypy 0（4 files）、game-rpg 全套 **189 passed**。
+>
+> ✅ **M2 完成（2026-10-17）**：`engine/quantize.py` —— `quantize(v, step)`
+> 半遠離零吸附 + step 十進位寬度清洗表示（**0.01 step 往返無漂移**：
+> idempotent+落格斷言）、**step=0 連續不量化**、step<0 raise；
+> `quantize_fixed`/`from_fixed` 定點格索引往返、`quantize_auto(fixed=)`
+> 模式開關（§6.2）；`quantize_axis(value, spec, override_step)` **軸級覆寫**
+> （覆寫優先、0=對軸關閉、fsm/非數值原樣通過）。`tests/engine/
+> test_m2_quantize.py` **29 tests**（M1+M2=72，game-rpg 全套 **218 passed**；
+> mypy 0（5 files）、flake8=0、black clean）。
 
 ### 6.4 與現有系統的介面
 

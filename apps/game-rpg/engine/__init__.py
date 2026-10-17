@@ -15,6 +15,13 @@ from engine.contracts import (
     SignalSpec,
 )
 from engine.pipeline import EnginePipeline, TickContext
+from engine.quantize import (
+    from_fixed,
+    quantize,
+    quantize_auto,
+    quantize_axis,
+    quantize_fixed,
+)
 
 __all__ = [
     "AxisGroup",
@@ -29,4 +36,9 @@ __all__ = [
     "SignalSpec",
     "TickContext",
     "Value",
+    "from_fixed",
+    "quantize",
+    "quantize_auto",
+    "quantize_axis",
+    "quantize_fixed",
 ]
