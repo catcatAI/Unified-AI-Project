@@ -204,6 +204,19 @@ class Entity:
 | M6 | 2D 表現：§5.2 精靈管線接 render_bridge（PyQt6 或新 SDL/pygame） | 視覺冒煙：實體移動平滑、量化不抖動 |
 | M7 | 效能：剖析→熱群組（空間/表現）換連續記憶體（array/numpy 結構） | 基準：1k 實體 60 tick/s 帧預算內 |
 
+> ✅ **M1 完成（2026-10-17）**：新建 `apps/game-rpg/engine/`（`axes.py`
+> AxisType/AxisSpec/AxisGroup/Entity、`contracts.py` SignalSpec/GroupContract/
+> ContractError/MissingSignalError、`pipeline.py` EnginePipeline/TickContext、
+> `__init__.py` 匯出）+ 獨立測試目錄 `apps/game-rpg/tests/engine/test_m1_core.py`
+> （**43 tests**；不合可整目錄刪除，既有 146 tests 不動）。驗收落實：
+> 「契約缺訊號啟動即 raise」= startup() 解析全部 requires →
+> MissingSignalError（未註冊群組/未提供訊號兩路徑）；「組間訊號下一 tick
+> 可見」= emit 寫 pending、tick 末併入快照 → 同 tick（含本組自讀）不可見、
+> 下一 tick 可見（`test_cross_group_signal_visible_next_tick`）。附強制：
+> 型別/精度 coerce（float 捨入 precision、int/bool/str 拒絕雜型）、啟動後
+> 禁註冊、重名/契約-群組名不符 raise。雜項：flake8=0、black clean、
+> mypy 0（4 files）、game-rpg 全套 **189 passed**。
+
 ### 6.4 與現有系統的介面
 
 - `world_clock.py`：M3 的中控時鐘**外包**它的 world_lines 索引（不重寫時間線），新增 group_dt 分發 API。
@@ -266,3 +279,6 @@ class Entity:
       顯示 +14——差 1 未定位（P1 觸及測試檔 def/parametrize 前後對帳均無
       縮減；skipped 穩定 107、0 failed/0 error，非回歸訊號）。收集 7,941 與
       運行 7,945 之 +4 為既存結構性差，非 P1 引入）
+- [x] 全量 pytest 無回歸（§5.1+§5.2 後覆測 2026-10-17：**7,901 passed / 107
+      skipped / 0 failed**，同 paths，286s。+63 對 7,838 基線精確對帳 =
+      game_asset_contracts 10 + game_sprites 53；skipped 恆 107、0 failed）
