@@ -3773,30 +3773,35 @@ def start_game():
         for qdef, qdata in get_active_quests(character):
             if check_quest_completion(character, qdef["id"]):
                 reward = complete_quest(character, qdef["id"])
-            if reward:
-                print("\n" + C.YELLOW + C.BOLD + "  ⭐ 任務完成: %s!" % qdef["title"] + C.RESET)
-                print(
-                    "    " + C.GREEN + "獲得 %dEXP, %dG" % (reward["exp"], reward["gold"]) + C.RESET
-                )
-                if reward.get("item"):
-                    print("    " + C.CYAN + "獲得物品: %s" % reward["item"] + C.RESET)
-                for m in reward.get("level_up_msgs", []):
-                    print("    " + C.MAGENTA + C.BOLD + m + C.RESET)
-                # Apply reputation reward
-                rep_r = qdef.get("reward_reputation", 0)
-                if rep_r:
-                    modify_reputation(character, rep_r)
-                    print("    " + C.MAGENTA + "聲望 +%d" % rep_r + C.RESET)
-                # Apply relationship rewards
-                rel_r = qdef.get("reward_relationships", {})
-                if rel_r:
-                    for npc_name, val in rel_r.items():
-                        add_relationship(character, npc_name, val)
-                        print("    " + C.YELLOW + "🤝 %s 好感度 +%d" % (npc_name, val) + C.RESET)
-                # Unlock next quest chain
-                nq = qdef.get("next_quest", "")
-                if nq:
-                    print("    " + C.CYAN + "解鎖下一階段任務!" + C.RESET)
+                if reward:
+                    print("\n" + C.YELLOW + C.BOLD + "  ⭐ 任務完成: %s!" % qdef["title"] + C.RESET)
+                    print(
+                        "    "
+                        + C.GREEN
+                        + "獲得 %dEXP, %dG" % (reward["exp"], reward["gold"])
+                        + C.RESET
+                    )
+                    if reward.get("item"):
+                        print("    " + C.CYAN + "獲得物品: %s" % reward["item"] + C.RESET)
+                    for m in reward.get("level_up_msgs", []):
+                        print("    " + C.MAGENTA + C.BOLD + m + C.RESET)
+                    # Apply reputation reward
+                    rep_r = qdef.get("reward_reputation", 0)
+                    if rep_r:
+                        modify_reputation(character, rep_r)
+                        print("    " + C.MAGENTA + "聲望 +%d" % rep_r + C.RESET)
+                    # Apply relationship rewards
+                    rel_r = qdef.get("reward_relationships", {})
+                    if rel_r:
+                        for npc_name, val in rel_r.items():
+                            add_relationship(character, npc_name, val)
+                            print(
+                                "    " + C.YELLOW + "🤝 %s 好感度 +%d" % (npc_name, val) + C.RESET
+                            )
+                    # Unlock next quest chain
+                    nq = qdef.get("next_quest", "")
+                    if nq:
+                        print("    " + C.CYAN + "解鎖下一階段任務!" + C.RESET)
 
 
 if __name__ == "__main__":

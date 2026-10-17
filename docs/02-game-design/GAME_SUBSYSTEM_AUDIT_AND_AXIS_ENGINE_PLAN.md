@@ -333,6 +333,23 @@ class Entity:
 | Live2D web | http.server 8080 | 滑鼠 | `scripts/start.py` 起服+asset_integrity 16 測試 |
 | 萬物皆軸引擎 M6 | PyQt6/精靈 | 鍵盤 | 單測 lerp+手動視覺冒煙清單 |
 
+**驗證記錄（2026-10-17 逐行執行）**：
+
+| 行 | 自動化測試（實測全綠） | 手動冒煙記錄 |
+|---|---|---|
+| game-rpg CLI | `tests/game/test_game_cli_smoke.py` 1 test：echo 序列 Enter/Enter/1/6/q/n 喂 `run_game.py` 子進程，rc=0＋8 關鍵幀（橫幅/時代選擇/角色選擇/CC-01 確認/主線自動接取/正常退出） | —（自動化即驗收手段） |
+| backend/game TUI | `tests/game/` 29 tests（subsystem 15＋card_validator 14） | P0-7 記錄：Textual `run_test()` headless 掛 TitleScreen OK |
+| crystal-cards | `test_crystal_engine.mjs` 11 node:test＋pytest 橋 `tests/frontend/test_crystal_engine_node.py`（P1-10 批） | `pnpm start`（手段行；行為層已由 node:test 覆蓋） |
+| pixel-angela | `tests/frontend/test_pixel_angela_menu.py` 11 AST 測試 | P0-7 記錄：Qt offscreen QApplication＋renderer 模組匯入 OK |
+| Luanti mod | —（CI 無法跑 flatpak 服務端，如實記錄不虛構） | P0-6 `commit 1ef04e2f6`：README 四前置＋6 端點表＋驗證清單（文檔化步驟） |
+| Live2D web | `tests/frontend/test_asset_integrity.py` 16＋`test_live2d_model_manifests.py` 3 | `scripts/start.py` 起服（手段行） |
+| 萬物皆軸引擎 M6 | `test_m6_sprite_view.py` 17（lerp/bbox/像素吸附） | §6.3 M6 註記：手動視覺冒煙清單 |
+
+> 掃描本行時發現並修復真缺陷：`run_game.py` 主迴圈任務結算 `if reward:` 縮進在
+> `if check_quest_completion:` 之外（`UnboundLocalError: reward`）——任何動作後
+> 的任務結算必炸（echo 子進程首跑即命中）。`complete_quest` 成功路徑恒回非空
+> dict，整塊嵌套安全。§二「主迴圈零覆蓋」由此行補上首個端到端覆蓋。
+
 ## 八、執行順序（建議）
 
 1. **P0-1~P0-7**（阻斷項）→ 每項獨立提交+驗收。
@@ -369,8 +386,16 @@ class Entity:
       ——M1 43/M2 29/M3 16/M4 19/M5 21/M6 17/M7 15，game-rpg 全套
       306 passed；M6 像素層+手動冒煙清單、M7 1k 實體 60Hz 幀預算
       均含驗收測試）
-- [ ] 顯示/交互驗證矩陣逐行有「手動冒煙記錄」或自動化測試
-- [ ] `flake8`/`mypy`/`complexity_budget_gate`/`mypy_budget_gate` 全綠
+- [x] 顯示/交互驗證矩陣逐行有「手動冒煙記錄」或自動化測試
+      （2026-10-17：§七 驗證記錄表 7 行逐行齊——game-rpg CLI 行新補
+      `tests/game/test_game_cli_smoke.py` echo 子進程端到端（1 test，
+      0.2s），掃描時抓出並修復 run_game.py 主迴圈任務結算
+      UnboundLocalError reward 必炸真缺陷；其餘 6 行 = 既有自動化
+      測試＋P0-6/P0-7/P1-10 手動冒煙記錄）
+- [x] `flake8`/`mypy`/`complexity_budget_gate`/`mypy_budget_gate` 全綠
+      （2026-10-17 實測：flake8 apps/backend/src＋tests/ = 0；mypy
+      Success: no issues found in 739 source files；mypy_budget_gate
+      0=0；complexity_budget_gate 0=0；check_fact_gates ALL PASS）
 - [x] 全量 pytest 無回歸（P0-7 後新基線：**7,824 passed / 107 skipped / 0 failed**，
       paths=`tests/`+`apps/backend/tests/`；舊 7,413/91 為 `tests/` 單獨，收集數 7,504 未變）
 - [x] 全量 pytest 無回歸（P1 收官覆測 2026-10-17：**7,838 passed / 107 skipped /
@@ -381,4 +406,8 @@ class Entity:
       運行 7,945 之 +4 為既存結構性差，非 P1 引入）
 - [x] 全量 pytest 無回歸（§5.1+§5.2 後覆測 2026-10-17：**7,901 passed / 107
       skipped / 0 failed**，同 paths，286s。+63 對 7,838 基線精確對帳 =
-      game_asset_contracts 10 + game_sprites 53；skipped 恆 107、0 failed）
+      game_asset_contracts 10 +       game_sprites 53；skipped 恆 107、0 failed）
+- [x] 全量 pytest 無回歸（§6.4 端點＋§7 CLI 冒煙 收官覆測 2026-10-17：
+      **7,905 passed / 107 skipped / 0 failed**，同 paths，285s。+4 對
+      7,901 基線精確對帳＝api 端點 3＋CLI echo 冒煙 1；skipped 恆 107、
+      0 failed/0 error。中間態 7,904 為端點批次後單獨覆測值）
