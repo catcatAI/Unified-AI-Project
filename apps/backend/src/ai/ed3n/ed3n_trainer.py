@@ -414,6 +414,60 @@ class SequenceTrainer:
         self.scheduled_sampling_decay = scheduled_sampling_decay
         self.scheduled_sampling_start = scheduled_sampling_start
 
+    def _sequence_train_target(
+        self, context: List[str], target_key: str
+    ) -> Tuple[float, int, List[str]]:
+        """單 target 步進：forward→loss→關係→confidence→sampling→截窗。
+
+        回 (abs_error, correct 0/1, 更新後 context)。
+        """
+        self.network.reset()
+        activations = self.network.forward_sequential(
+            context, current_position=len(context) - 1
+        )
+
+        actual = activations.get(target_key, 0.0)
+        error = 1.0 - actual
+        correct = 1 if actual > threshold_value("ai.ed3n.sequence.activation_threshold", 0.3) else 0
+
+        # 反向找最近非目標 context key 作前驅（等價原 reversed 迴圈＋break）
+        rel_key = next((ck for ck in reversed(context) if ck != target_key), None)
+        if rel_key is not None:
+            self.network.add_directed(
+                rel_key,
+                target_key,
+                weight=self.seq_lr
+                * (1.0 - actual)
+                * confidence_value("ai.ed3n.sequence.connection_weight", 0.5),
+            )
+            self.network.adjust_connection(
+                rel_key,
+                target_key,
+                self.seq_lr
+                * error
+                * learning_rate("ai.ed3n.sequence.connection_adjust", 0.3),
+            )
+
+        entry = self.dictionary.entries.get(target_key)
+        if entry is not None:
+            entry.confidence = min(
+                entry.confidence + self.seq_lr * (1.0 - entry.confidence),
+                confidence_value("ai.ed3n.sequence.max_confidence", 1.0),
+            )
+
+        if random.random() < self.scheduled_sampling_prob:
+            context.append(target_key)
+        else:
+            predicted = (
+                max(activations, key=lambda k: activations[k]) if activations else target_key
+            )
+            context.append(predicted)
+
+        if len(context) > limit_value("ai.ed3n.sequence.context_window", 8):
+            context = context[-limit_value("ai.ed3n.sequence.context_truncation", 8) :]
+
+        return abs(error), correct, context
+
     def train_step(self, batch: SeqBatch) -> TrainMetrics:
         if not batch or not batch.examples:
             return TrainMetrics(
@@ -435,60 +489,10 @@ class SequenceTrainer:
             context = list(ex.input_key_seq)
 
             for target_key in ex.target_key_seq:
+                loss, hit, context = self._sequence_train_target(context, target_key)
+                total_loss += loss
+                correct += hit
                 total_steps += 1
-
-                self.network.reset()
-                activations = self.network.forward_sequential(
-                    context, current_position=len(context) - 1
-                )
-
-                actual = activations.get(target_key, 0.0)
-                error = 1.0 - actual
-                total_loss += abs(error)
-
-                if actual > threshold_value("ai.ed3n.sequence.activation_threshold", 0.3):
-                    correct += 1
-
-                rel_key = None
-                for ck in reversed(context):
-                    if ck != target_key:
-                        rel_key = ck
-                        break
-                if rel_key is not None:
-                    self.network.add_directed(
-                        rel_key,
-                        target_key,
-                        weight=self.seq_lr
-                        * (1.0 - actual)
-                        * confidence_value("ai.ed3n.sequence.connection_weight", 0.5),
-                    )
-                    self.network.adjust_connection(
-                        rel_key,
-                        target_key,
-                        self.seq_lr
-                        * error
-                        * learning_rate("ai.ed3n.sequence.connection_adjust", 0.3),
-                    )
-
-                entry = self.dictionary.entries.get(target_key)
-                if entry is not None:
-                    entry.confidence = min(
-                        entry.confidence + self.seq_lr * (1.0 - entry.confidence),
-                        confidence_value("ai.ed3n.sequence.max_confidence", 1.0),
-                    )
-
-                if random.random() < self.scheduled_sampling_prob:
-                    context.append(target_key)
-                else:
-                    predicted = (
-                        max(activations, key=lambda k: activations[k])
-                        if activations
-                        else target_key
-                    )
-                    context.append(predicted)
-
-                if len(context) > limit_value("ai.ed3n.sequence.context_window", 8):
-                    context = context[-limit_value("ai.ed3n.sequence.context_truncation", 8) :]
 
         self.scheduled_sampling_prob = max(
             self.scheduled_sampling_end,
