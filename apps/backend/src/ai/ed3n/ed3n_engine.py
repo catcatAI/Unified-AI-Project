@@ -1478,6 +1478,38 @@ class ED3NEngine:
             current = parent
         return os.getcwd()
 
+    @staticmethod
+    def _dict_loader():
+        """優先 orjson（~3-5x），缺貨退 json。回載入器 callable。"""
+        try:
+            import orjson as _fast_json
+
+            def _load_json(fpath):
+                with open(fpath, "rb") as f:
+                    return _fast_json.loads(f.read())
+        except ImportError:
+
+            def _load_json(fpath):
+                with open(fpath, "r", encoding="utf-8") as f:
+                    return json.load(f)
+
+        return _load_json
+
+    def _load_one_dict(self, fname: str, dict_dir: str, load_json) -> int:
+        """載入單一字典檔；缺檔/解析失敗回 0（warning 原樣）。"""
+        fpath = os.path.join(dict_dir, fname)
+        if not os.path.exists(fpath):
+            return 0
+        try:
+            data = load_json(fpath)
+            entries_data = data.get("entries", [])
+            count = self.dictionary.bulk_add_entries(entries_data)
+            logger.info("Loaded %d entries from %s", count, fpath)
+            return count
+        except Exception as e:
+            logger.warning("Failed to load %s: %s", fpath, e)
+            return 0
+
     def load_external_dictionaries(self, dict_dir: Optional[str] = None) -> int:
         """Load external dictionary entries (CEDICT/JMdict/WordNet) into DictionaryLayer.
 
@@ -1494,33 +1526,10 @@ class ED3NEngine:
         if dict_dir is None:
             base = os.environ.get("PROJECT_ROOT", self._find_project_root())
             dict_dir = os.path.join(base, "data", "dictionaries")
+        load_json = self._dict_loader()
         total = 0
-        # Use orjson for ~3-5x faster JSON parsing when available
-        try:
-            import orjson as _fast_json
-
-            def _load_json(fpath):
-                with open(fpath, "rb") as f:
-                    return _fast_json.loads(f.read())
-
-        except ImportError:
-
-            def _load_json(fpath):
-                with open(fpath, "r", encoding="utf-8") as f:
-                    return json.load(f)
-
         for fname in ("cedict.json", "jmdict.json", "wordnet.json"):
-            fpath = os.path.join(dict_dir, fname)
-            if not os.path.exists(fpath):
-                continue
-            try:
-                data = _load_json(fpath)
-                entries_data = data.get("entries", [])
-                count = self.dictionary.bulk_add_entries(entries_data)
-                total += count
-                logger.info("Loaded %d entries from %s", count, fpath)
-            except Exception as e:
-                logger.warning("Failed to load %s: %s", fpath, e)
+            total += self._load_one_dict(fname, dict_dir, load_json)
         if total > 0:
             self.dictionary._rebuild_index()
             self.network.sync_from_dictionary(self.dictionary)
