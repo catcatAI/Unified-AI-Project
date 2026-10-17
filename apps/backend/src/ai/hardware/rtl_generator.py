@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Mapping
+from typing import Any, Dict, List, Mapping, Tuple
 
 
 def _integer(value: Any, name: str) -> int:
@@ -17,22 +17,45 @@ def _integer(value: Any, name: str) -> int:
     return parsed
 
 
-def generate_mvu_header_projection(header: Mapping[str, Any]) -> str:
-    declared = header.get("declared")
-    address_map = header.get("address_map")
-    if not isinstance(declared, dict) or not isinstance(address_map, dict):
+def _require_sections(header: Mapping[str, Any]) -> None:
+    """declared 與 address_map 兩段皆須為 dict（先於任何欄位提取）。"""
+    if not isinstance(header.get("declared"), dict) or not isinstance(
+        header.get("address_map"), dict
+    ):
         raise ValueError("header declared and address_map sections are required")
-    total_bytes = _integer(declared.get("total_sram_bytes"), "total_sram_bytes")
-    bank_count = _integer(declared.get("sub_bank_count"), "sub_bank_count")
-    bank_bytes = _integer(declared.get("sub_bank_bytes"), "sub_bank_bytes")
-    wavefront_cycles = _integer(declared.get("wavefront_cycles"), "wavefront_cycles")
-    forward_width = _integer(declared.get("forward_bus_bits"), "forward_bus_bits")
-    plasticity_width = _integer(declared.get("plasticity_bus_bits"), "plasticity_bus_bits")
-    delta_width = _integer(declared.get("delta_w_bits"), "delta_w_bits")
-    mask_width = _integer(declared.get("hit_mask_bits"), "hit_mask_bits")
-    axi_address_width = _integer(declared.get("axi_address_width_bits"), "axi_address_width_bits")
-    axi_data_width = _integer(declared.get("axi_data_width_bits"), "axi_data_width_bits")
-    sram_base = int(declared.get("sram_base_address", 0))
+
+
+def _extract_declared(header: Mapping[str, Any]) -> Dict[str, int]:
+    """取出 declared 段的整數欄位（缺欄/非正整數由 _integer 拋錯）。"""
+    declared = header.get("declared")
+    if not isinstance(declared, dict):
+        raise ValueError("header declared and address_map sections are required")
+    return {
+        "total_bytes": _integer(declared.get("total_sram_bytes"), "total_sram_bytes"),
+        "bank_count": _integer(declared.get("sub_bank_count"), "sub_bank_count"),
+        "bank_bytes": _integer(declared.get("sub_bank_bytes"), "sub_bank_bytes"),
+        "wavefront_cycles": _integer(declared.get("wavefront_cycles"), "wavefront_cycles"),
+        "forward_width": _integer(declared.get("forward_bus_bits"), "forward_bus_bits"),
+        "plasticity_width": _integer(
+            declared.get("plasticity_bus_bits"), "plasticity_bus_bits"
+        ),
+        "delta_width": _integer(declared.get("delta_w_bits"), "delta_w_bits"),
+        "mask_width": _integer(declared.get("hit_mask_bits"), "hit_mask_bits"),
+        "axi_address_width": _integer(
+            declared.get("axi_address_width_bits"), "axi_address_width_bits"
+        ),
+        "axi_data_width": _integer(
+            declared.get("axi_data_width_bits"), "axi_data_width_bits"
+        ),
+        "sram_base": int(declared.get("sram_base_address", 0)),
+    }
+
+
+def _extract_address_ranges(header: Mapping[str, Any]) -> Tuple[List[Any], List[Any], List[Any]]:
+    """取出 address_map 三段位域範圍（各須為二元 list）。"""
+    address_map = header.get("address_map")
+    if not isinstance(address_map, dict):
+        raise ValueError("header declared and address_map sections are required")
     bank_bits = address_map.get("bank_select_bits")
     word_bits = address_map.get("word_select_bits")
     byte_bits = address_map.get("byte_select_bits")
@@ -45,22 +68,48 @@ def generate_mvu_header_projection(header: Mapping[str, Any]) -> str:
         and len(byte_bits) == 2
     ):
         raise ValueError("address_decode bit ranges must be two-element lists")
+    return bank_bits, word_bits, byte_bits
+
+
+def _validate_geometry(
+    d: Dict[str, int], bank_bits: List[Any], word_bits: List[Any]
+) -> None:
+    """校驗 bank/word 幾何、wavefront、封包寬度與 AXI 範圍。"""
+    bank_count = d["bank_count"]
     if bank_count != (1 << (bank_bits[0] - bank_bits[1] + 1)):
         raise ValueError("bank count does not match bank address slice")
-    if bank_bytes != (1 << (word_bits[0] - word_bits[1] + 1)) * 8:
+    if d["bank_bytes"] != (1 << (word_bits[0] - word_bits[1] + 1)) * 8:
         raise ValueError("bank byte size does not match word and byte address slices")
-    if total_bytes != bank_count * bank_bytes:
+    if d["total_bytes"] != bank_count * d["bank_bytes"]:
         raise ValueError("total SRAM size does not match bank geometry")
-    if wavefront_cycles != bank_count:
+    if d["wavefront_cycles"] != bank_count:
         raise ValueError("wavefront cycle count does not match bank count")
-    if delta_width + mask_width != plasticity_width:
+    if d["delta_width"] + d["mask_width"] != d["plasticity_width"]:
         raise ValueError("plasticity fields do not fill the declared packet width")
-    if axi_data_width != 32:
+    if d["axi_data_width"] != 32:
         raise ValueError("the current projection requires 32-bit AXI data")
-    if axi_address_width != 32:
+    if d["axi_address_width"] != 32:
         raise ValueError("the current projection requires 32-bit AXI addressing")
-    if sram_base < 0 or sram_base >= 1 << axi_address_width:
+    if d["sram_base"] < 0 or d["sram_base"] >= 1 << d["axi_address_width"]:
         raise ValueError("SRAM base address is outside the AXI address width")
+
+
+def generate_mvu_header_projection(header: Mapping[str, Any]) -> str:
+    _require_sections(header)
+    d = _extract_declared(header)
+    bank_bits, word_bits, byte_bits = _extract_address_ranges(header)
+    _validate_geometry(d, bank_bits, word_bits)
+
+    total_bytes = d["total_bytes"]
+    bank_count = d["bank_count"]
+    bank_bytes = d["bank_bytes"]
+    wavefront_cycles = d["wavefront_cycles"]
+    forward_width = d["forward_width"]
+    plasticity_width = d["plasticity_width"]
+    delta_width = d["delta_width"]
+    mask_width = d["mask_width"]
+    axi_address_width = d["axi_address_width"]
+    sram_base = d["sram_base"]
     bank_msb, bank_lsb = (int(value) for value in bank_bits)
     word_msb, word_lsb = (int(value) for value in word_bits)
     byte_msb, byte_lsb = (int(value) for value in byte_bits)
