@@ -1,11 +1,18 @@
 {
   "models": [
     {
+      "name": "Epsilon_free",
+      "displayName": "Epsilon Free",
+      "path": "models/Epsilon_free/runtime/Epsilon_free.model3.json",
+      "description": "Epsilon Free Live2D Model (expressions + full motions)",
+      "isDefault": true
+    },
+    {
       "name": "miara_pro",
       "displayName": "Miara Pro",
       "path": "models/miara_pro_en/runtime/miara_pro_t03.model3.json",
-      "description": "Miara Pro Live2D Model (English)",
-      "isDefault": true
+      "description": "Miara Pro Live2D Model (English; fallback)",
+      "isDefault": false
     }
   ],
   "settings": {
@@ -18,5 +25,6 @@
     "enableExpressions": true,
     "enableMotions": true,
     "fps": 60
-  }
+  },
+  "_note": "Informational mirror of the live fallback chain in packages/shared-js/js/angela-character-config.js (model_path + fallback_models); code does not read this file. Keep both entries and isDefault in sync with that config."
 }
