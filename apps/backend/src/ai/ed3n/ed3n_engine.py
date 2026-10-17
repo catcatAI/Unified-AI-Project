@@ -985,6 +985,32 @@ class ED3NEngine:
     def is_multimodal_available(self) -> bool:
         return self.image_encoder is not None or self.audio_encoder is not None
 
+    @staticmethod
+    def _encode_latent(encode_fn: Any, data: Any, label: str) -> Optional[Any]:
+        """單模態語義編碼；失敗或無 latent 回 None（warning 原樣）。"""
+        try:
+            result = encode_fn(data, include_semantic=True)
+        except Exception as e:
+            logger.warning("Semantic %s encoding failed: %s", label, e, exc_info=True)
+            return None
+        combined = result.get("latent")
+        if combined is None:
+            return None
+        return combined
+
+    @staticmethod
+    def _map_latents_to_keys(mapper: Any, query_latents: List[Any]) -> List[str]:
+        """逐 latent 查 top-3，score>0.3 去重收集 concept keys。"""
+        semantic_keys: List[str] = []
+        for latent in query_latents:
+            matches = mapper.map_latent_to_keys(latent, top_k=3, mode="combined")
+            for m in matches:
+                key = m.get("key", "")
+                score = m.get("score", 0.0)
+                if key and score > 0.3 and key not in semantic_keys:
+                    semantic_keys.append(key)
+        return semantic_keys
+
     def _process_semantic_keys(
         self, image_data: Optional[Any] = None, audio_data: Optional[Any] = None
     ) -> List[str]:
@@ -1002,36 +1028,19 @@ class ED3NEngine:
             return []
 
         mapper = self._get_semantic_key_mapper()
-        semantic_keys: List[str] = []
         query_latents: List[Any] = []
 
         if image_data:
-            try:
-                result = router.encode_vision(image_data, include_semantic=True)
-                combined = result.get("latent")
-                if combined is not None:
-                    query_latents.append(combined)
-            except Exception as e:
-                logger.warning("Semantic vision encoding failed: %s", e, exc_info=True)
+            latent = self._encode_latent(router.encode_vision, image_data, "vision")
+            if latent is not None:
+                query_latents.append(latent)
 
         if audio_data:
-            try:
-                result = router.encode_audio(audio_data, include_semantic=True)
-                combined = result.get("latent")
-                if combined is not None:
-                    query_latents.append(combined)
-            except Exception as e:
-                logger.warning("Semantic audio encoding failed: %s", e, exc_info=True)
+            latent = self._encode_latent(router.encode_audio, audio_data, "audio")
+            if latent is not None:
+                query_latents.append(latent)
 
-        for latent in query_latents:
-            matches = mapper.map_latent_to_keys(latent, top_k=3, mode="combined")
-            for m in matches:
-                key = m.get("key", "")
-                score = m.get("score", 0.0)
-                if key and score > 0.3 and key not in semantic_keys:
-                    semantic_keys.append(key)
-
-        return semantic_keys
+        return self._map_latents_to_keys(mapper, query_latents)
 
     def process_multimodal(
         self,
