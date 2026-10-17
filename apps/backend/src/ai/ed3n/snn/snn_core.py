@@ -7,7 +7,7 @@ SNN-based core network replacing sequential CoreNetwork.
 """
 
 import logging
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, TYPE_CHECKING, Tuple
 
 from core.system.config.magic_numbers import compute_bool
 
@@ -91,6 +91,73 @@ class SNNCore:
         for group in self.groups.values():
             group.modulator = modulator
 
+    def _prepare_group(
+        self, input_keys: List[str], context: Optional[Dict[str, Any]]
+    ) -> Tuple[Any, Dict[str, float]]:
+        """依分類結果選活躍群組，補缺神經元；回 (group, input_currents)。"""
+        relation_type = "synonym"
+        if input_keys and len(input_keys) >= 2 and self.classifier:
+            rt, _ = self.classifier.classify_pair(
+                input_keys[0], input_keys[1], context=context
+            )
+            relation_type = self._group_name_for(rt)
+
+        active_group = self.groups.get(relation_type)
+        if active_group is None:
+            active_group = self.groups["synonym"]
+
+        input_currents = {k: 15.0 for k in input_keys}
+        for key in input_keys:
+            if key not in active_group.neurons:
+                active_group.add_neuron(LIFNeuron(key=key, group_type=relation_type))
+        return active_group, input_currents
+
+    @staticmethod
+    def _run_batches(
+        engine: Any,
+        owner: Any,
+        batch: Any,
+        active_group: Any,
+        threshold_mod: float,
+        max_iterations: int,
+        timestep: Any,
+        sparse_engine: Any,
+    ) -> Dict[int, List[str]]:
+        """迭代計算批次直到無下游或達迭代上限；回 batch_id → spikes。"""
+        all_spikes: Dict[int, List[str]] = {}
+        iteration = 0
+        while batch is not None and iteration < max_iterations:
+            active_neurons = {
+                k: active_group.neurons[k]
+                for k in batch.neuron_keys
+                if k in active_group.neurons
+            }
+
+            spiked = engine.compute_batch(
+                batch, active_neurons, timestep, threshold_mod
+            )
+            all_spikes[batch.batch_id] = spiked
+
+            silent = [k for k in batch.neuron_keys if k not in spiked]
+            if sparse_engine is not None:
+                sparse_engine.deactivate(silent)
+
+            if spiked:
+                batch = engine.get_downstream(spiked, owner)
+            else:
+                batch = None
+            iteration += 1
+        return all_spikes
+
+    @staticmethod
+    def _normalize_output(output: Dict[str, float]) -> Dict[str, float]:
+        """輸出以最大值歸一化（max<=0 則原樣）。"""
+        if output:
+            max_val = max(output.values())
+            if max_val > 0:
+                output = {k: v / max_val for k, v in output.items()}
+        return output
+
     def forward(
         self,
         input_keys: List[str],
@@ -111,19 +178,7 @@ class SNNCore:
         mod_factor = self.modulator.get_modulation_factor()
         threshold_mod = 1.0 / mod_factor if mod_factor > 0 else 2.0
 
-        relation_type = "synonym"
-        if input_keys and len(input_keys) >= 2 and self.classifier:
-            rt, _ = self.classifier.classify_pair(input_keys[0], input_keys[1], context=context)
-            relation_type = self._group_name_for(rt)
-
-        active_group = self.groups.get(relation_type)
-        if active_group is None:
-            active_group = self.groups["synonym"]
-
-        input_currents = {k: 15.0 for k in input_keys}
-        for key in input_keys:
-            if key not in active_group.neurons:
-                active_group.add_neuron(LIFNeuron(key=key, group_type=relation_type))
+        active_group, input_currents = self._prepare_group(input_keys, context)
 
         batch = (
             self.batch_engine.create_initial_batch(input_keys, input_currents)
@@ -133,40 +188,16 @@ class SNNCore:
         if self.sparse_engine is not None:
             self.sparse_engine.activate(input_keys)
 
-        all_spikes: Dict[int, List[str]] = {}
-        iteration = 0
-
         if self.batch_engine is None:
             return {}
 
-        while batch is not None and iteration < max_iterations:
-            active_neurons = {
-                k: active_group.neurons[k] for k in batch.neuron_keys if k in active_group.neurons
-            }
-
-            spiked = self.batch_engine.compute_batch(
-                batch, active_neurons, self._timestep, threshold_mod
-            )
-            all_spikes[batch.batch_id] = spiked
-
-            silent = [k for k in batch.neuron_keys if k not in spiked]
-            if self.sparse_engine is not None:
-                self.sparse_engine.deactivate(silent)
-
-            if spiked:
-                batch = self.batch_engine.get_downstream(spiked, self)
-            else:
-                batch = None
-            iteration += 1
-
+        all_spikes = self._run_batches(
+            self.batch_engine, self, batch, active_group, threshold_mod,
+            max_iterations, self._timestep, self.sparse_engine,
+        )
         output = self.batch_engine.collect_output_spikes(all_spikes)
 
-        if output:
-            max_val = max(output.values())
-            if max_val > 0:
-                output = {k: v / max_val for k, v in output.items()}
-
-        return output
+        return self._normalize_output(output)
 
     def add_relation(
         self,
