@@ -337,6 +337,30 @@ class Entity:
 > `tests/api/test_game_routes.py` 24→**30 passed**（runner 塊/
 > snapshot 冪等無副作用/啟動播種/stop 凍結/冪等/降級 503）。game-rpg
 > 全套 **322 passed**（+16）；flake8=0、black clean。
+>
+> ✅ **M9 完成（2026-10-18，§6.4「SkillContext 對接 AxisGroup」遠期項
+> 落地）**：`engine/agent_bridge.py` —— `agent_group()`（10Hz＝
+> angela_agent `tick_interval=0.1` 證據；戰鬥側 `action` fsm（9
+> SkillID+idle）/`combat` fsm（off/engaged）/`priority`；空間側
+> `move_forward` [-1,1]／`move_yaw` [-π,π]——逐軸映射證據：
+> `_skill_to_walk` 內建前進 1.0、`_skill_to_turn` 預設 0.0、
+> `_decode_move_actions` np.clip 夾域、`_compose_actions` 觸發鍵
+> membership）＋ `skill_context_to_values()`（未知技能
+> ValueError 響亮 raise＝資料漂移、壞值回 default）＋
+> `AgentAxisWriter`（write 驗域/snapshot 副本/handler 每 fire 全覆蓋
+> 發布閉包＝story 心跳同型）。接線：`angela_agent._queue_skill`
+> （文件自述「the ONLY gateway」）**受理即寫入意圖**（寫入=閘道口
+> 受理時點、非已送達 Luanti；失敗只 `logger.debug` 不擋閘道）；
+> engine 路徑 bootstrap 同 game_routes M5/M8 先例、importlib 動態解析
+> （R85）；`get_agent_axis_snapshot()` 觀測入口。後端 runner **不**
+> 註冊 producer-less agent 群組（不造假接線；HTTP 暴露＝遠期）。
+> **驗收** `tests/engine/test_m9_agent_bridge.py` **18 tests**（群組
+> 形狀/契約全覆蓋/逐軸語義含 enum/戰鬥 engaged 路徑/未知技能
+> raise/clip+壞值/寫入失敗不改態/管線首 fire=idle→寫入後發布）＋
+> `tests/ai/autonomous/test_m9_agent_axis.py` **5 tests**（ACTION_STATES
+> ↔SkillID 守漂移/真實 AngelaAutonomousAgent 閘道口 move+combat 寫入/
+> 未知技能不擋閘道/snapshot 降級）。game-rpg 全套 **340 passed**
+> （+18）；flake8=0、black clean。
 
 ### 6.4 與現有系統的介面
 
@@ -375,7 +399,12 @@ class Entity:
   與斷線重連語意，待表現端實際接入需求出現再做。M6 交付的 `SpriteView`
   PIL 離屏合成（精靈塗層/粒子在 view 層可複用，手動冒煙 CLI 產
   1440×384 實圖）不變。
-- `angela_agent.py` 五層 AI：後續把 `game_structs.SkillContext` 對接 AxisGroup（L0 動作寫入戰鬥/空間軸）——遠期。
+- `angela_agent.py` 五層 AI：`game_structs.SkillContext` 對接 AxisGroup
+  （L0 動作寫入戰鬥/空間軸）——**已落地（M9，2026-10-18）**：
+  `_queue_skill` 閘道口受理即寫 `agent` 群組（`engine/agent_bridge.py`
+  轉換+驗域），`get_agent_axis_snapshot()` 可觀測；§6.4 M9 記錄含逐軸
+  映射證據。仍遠期＝把 agent 軸快照經後端 HTTP 暴露（需 angela_agent
+  與 game_routes 同進程持有權——現各自獨立例項，不造假接線）。
 
 ## 七、顯示/交互正常性驗證矩陣
 

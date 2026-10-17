@@ -20,7 +20,7 @@
 | `apps/game-rpg/analyze_cards.py`    | Python   | 卡片分析工具                                   |
 | `apps/game-rpg/check_content.py`    | Python   | 內容一致性檢查工具                             |
 | `apps/game-rpg/conftest.py`         | Python   | pytest bootstrap（game-rpg 根插入 sys.path）   |
-| `apps/game-rpg/engine/`             | Python   | 「萬物皆軸」M1–M8 引擎（11 檔：契約管線/量化/主時鐘/渲染橋/內容快照/精靈視圖/SoA 熱群組/常駐執行器） |
+| `apps/game-rpg/engine/`             | Python   | 「萬物皆軸」M1–M9 引擎（12 檔：契約管線/量化/主時鐘/渲染橋/內容快照/精靈視圖/SoA 熱群組/常駐執行器/SkillContext 橋接） |
 | `apps/game-rpg/tests/`              | pytest   | 單測 306 passed（axis/backbone/craft＋engine M1–M7 七檔） |
 | `apps/game-rpg/data/`               | JSON     | 遊戲資料（唯一權威來源）                       |
 

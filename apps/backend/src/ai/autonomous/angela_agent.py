@@ -1287,6 +1287,43 @@ class AngelaAutonomousAgent:
             return "look", {"yaw": yaw_param}
         return skill_id, params
 
+    # ------------------------------------------------------------------
+    # M9: SkillContext → agent 軸群組（§6.4「L0 動作寫入戰鬥/空間軸」）
+    # ------------------------------------------------------------------
+    def _agent_writer(self) -> Any:
+        """agent 軸群組寫入器（懶建例項）。
+
+        engine 套件在 game-rpg 根、不在後端 import 路徑——同 game_routes
+        M5/M8 bootstrap 先例（已存在則跳過）；動態 importlib 解析、不靜態
+        綁定（R85 跨檔 mock 汙染：測試可 patch `engine.agent_bridge.X`）。
+        """
+        writer = getattr(self, "_agent_writer_cache", None)
+        if writer is None:
+            import importlib
+
+            root = (
+                Path(__file__).resolve().parent.parent.parent.parent.parent.parent
+                / "apps"
+                / "game-rpg"
+            )
+            root_str = str(root)
+            if root_str not in sys.path:
+                sys.path.insert(0, root_str)
+            bridge_mod: Any = importlib.import_module("engine.agent_bridge")
+            writer = bridge_mod.AgentAxisWriter()
+            self._agent_writer_cache = writer
+        return writer
+
+    def get_agent_axis_snapshot(self) -> Dict[str, Any]:
+        """agent 軸值快照（action/move_forward/move_yaw/combat/priority）。"""
+        try:
+            writer: Any = self._agent_writer()
+            snapshot: Dict[str, Any] = writer.snapshot()
+            return snapshot
+        except Exception as e:
+            logger.debug("agent axis snapshot unavailable: %s", e, exc_info=True)
+            return {}
+
     def _queue_skill(self, skill_ctx: SkillContext):
         """Queue skill for execution via the behavior library.
 
@@ -1294,7 +1331,14 @@ class AngelaAutonomousAgent:
         translated to behavior-library verbs first. Untranslatable intents
         (undirected place/build/eat, uncraftable craft, no-op looks)
         abstain here by architecture, not by patch.
+
+        M9: 受理即把意圖寫入 agent 軸群組（戰鬥/空間軸）——寫入=閘道口
+        受理時點，非「已送達 Luanti」；轉換失敗只記日誌不擋閘道。
         """
+        try:
+            self._agent_writer().write(skill_ctx)
+        except Exception as e:
+            logger.debug("agent axis write skipped: %s", e, exc_info=True)
         # Yield to a runner-fed behavior action: the executor's 10Hz writes
         # would otherwise overwrite it before the 0.5Hz poll drains it.
         if self.tick_count - self._behavior_hold_tick < 30:
