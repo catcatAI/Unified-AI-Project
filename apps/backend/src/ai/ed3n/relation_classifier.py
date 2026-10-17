@@ -41,6 +41,22 @@ class RelationClassifier:
         result, _ = self.classify_pair(key1, key2, dictionary=dictionary)
         return result
 
+    def _explicit_relation_type(
+        self, entry1: "DictionaryEntry", entry2: "DictionaryEntry"
+    ) -> Optional[Tuple[RelationType, float]]:
+        """依原優先序查六種顯式關係；命中回 (type, score)，否則 None。"""
+        for rel_key, rel_type, score in (
+            ("synonym", RelationType.SYNONYM, 0.95),
+            ("mapping", RelationType.MAPPING, 0.90),
+            ("analogy", RelationType.ANALOGY, 0.90),
+            ("anti_synonym", RelationType.ANTI_SYNONYM, 0.95),
+            ("anti_mapping", RelationType.ANTI_MAPPING, 0.95),
+            ("anti_analogy", RelationType.ANTI_ANALOGY, 0.95),
+        ):
+            if self._check_explicit_relation(entry1, entry2, rel_key):
+                return rel_type, score
+        return None
+
     def classify_pair(
         self,
         key1: str,
@@ -64,18 +80,9 @@ class RelationClassifier:
         if entry1 is None or entry2 is None:
             return self._heuristic_classify(key1, key2, d)
 
-        if self._check_explicit_relation(entry1, entry2, "synonym"):
-            return RelationType.SYNONYM, 0.95
-        if self._check_explicit_relation(entry1, entry2, "mapping"):
-            return RelationType.MAPPING, 0.90
-        if self._check_explicit_relation(entry1, entry2, "analogy"):
-            return RelationType.ANALOGY, 0.90
-        if self._check_explicit_relation(entry1, entry2, "anti_synonym"):
-            return RelationType.ANTI_SYNONYM, 0.95
-        if self._check_explicit_relation(entry1, entry2, "anti_mapping"):
-            return RelationType.ANTI_MAPPING, 0.95
-        if self._check_explicit_relation(entry1, entry2, "anti_analogy"):
-            return RelationType.ANTI_ANALOGY, 0.95
+        explicit = self._explicit_relation_type(entry1, entry2)
+        if explicit is not None:
+            return explicit
 
         return self._heuristic_classify(key1, key2, d, entry1, entry2)
 
