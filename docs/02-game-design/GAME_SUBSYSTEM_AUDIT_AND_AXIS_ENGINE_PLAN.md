@@ -15,7 +15,7 @@
 
 | # | 子系統 | 路徑 | 語言/框架 | 規模 | 可運行性 | 測試 | 主要破損/風險 |
 |---|---|---|---|---|---|---|---|
-| A | CLI RPG | `apps/game-rpg/` | Python stdlib 純 CLI | 12 py=**19,982 行**；data 5.1MB（351 卡/3,720 token） | ✅ import 全過；`python apps/game-rpg/run_game.py` 可跑 | **139**（axis 116/bridge 14/craft 9）；主迴圈 7,317 行零覆蓋 | `analyze_cards.py` 檔名錯誤必炸；`gdrive_export/` 未入庫；axis_system 非 ECS |
+| A | CLI RPG | `apps/game-rpg/` | Python stdlib 純 CLI | 12 py=**19,982 行**；data 5.1MB（351 卡/3,376 token，2026-10-17 訂正自述總和前為 3,720 陳舊值） | ✅ import 全過；`python apps/game-rpg/run_game.py` 可跑 | **139**（axis 116/bridge 14/craft 9）；主迴圈 7,317 行零覆蓋 | `analyze_cards.py` 檔名錯誤必炸；`gdrive_export/` 未入庫；axis_system 非 ECS |
 | B | 卡牌/TUI 引擎 | `apps/backend/src/game/` | Python + Textual（headless 引擎） | 12 py=**3,924 行** | ⚠️ 引擎可用；❌ **textual 未裝 TUI 起不來** | **29**（subsystem 15+validator 14）；npc/quests/screens 零覆蓋 | `widgets.py` 文檔漂移；跨應用硬依賴 game_cards.json |
 | C | Electron 卡牌 | `apps/crystal-cards/` | Electron 28.3.3 + ws | src+data=**12,869 行**（cards.js 8,266；22 類/70 角色/197 對話） | ✅ 可跑（node_modules 齊）；dist 750MB gitignored | ❌ **零行為測試** | **5/5 地點 storyNodes 斷鏈**；1 條對話斷链；**缺 assets/ 圖標** |
 | D | 像素渲染 | `apps/pixel-angela/` | PyQt6+numpy/PIL/ws | 8 py=**711 行**（renderer 424） | ❌ **PyQt6/cv2 未裝**；需後端 ws :8000 | **11**（AST 菜單接線，非像素） | `base_sprite.png` 孤兒；`data/world_objects/` 不存在 |
@@ -104,15 +104,15 @@
 
 | 資產 | 格式 | 狀態 | 動作 |
 |---|---|---|---|
-| `models/angela_clay/angela_clay.glb` | glTF v2, 95 meshes/18 materials | ✅ 完整入庫 | 納入 3D 表現層（§六）；加 glTF 有效性測試（magic+JSON schema） |
-| `models/angela_clay/render/*.png` ×4 | 700×900 | ✅ | 作為 2D 立繪參考底圖 |
-| Live2D Epsilon_free | moc3+physics+motions | ✅ 可玩 | 保持；進 fallback 鏈 |
-| Live2D miara_pro_en | 事後重建 manifest | ⚠️ 薄 | P1-7 補 expressions |
-| `apps/pixel-angela/base_sprite.png` | 30KB | ⚠️ 孤兒 | 接入 renderer 作默認皮膚 |
-| `resources/angela_01/02.jpg, 03.png, icon.png` | 位圖 | ✅ | icon 供 crystal-cards（P0-5）；立繪供 2D 管線 |
-| `data/game_cards.json` | 351 卡 | ✅ | 作為 ECS 內容灌入源 |
-| crystal-cards cards.js | 8,266 行 | ✅ 斷鏈待修 | P0-4 後作為劇情群組內容源 |
-| `test_models/` 196 目錄 | 20MB gitignored | ⚠️ | 清理或納入 .gitattributes LFS 評估 |
+| `models/angela_clay/angela_clay.glb` | glTF v2, 95 meshes/18 materials | ✅ 完整入庫 | ✅ glTF 有效性+AABB 契約測試已入庫（`test_game_asset_contracts.py`，2026-10-17；96 節點=95 mesh+根） |
+| `models/angela_clay/render/*.png` ×4 | 700×900 RGBA | ✅ | ✅ 尺寸/集合契約已入庫；作為 2D 立繪參考底圖 |
+| Live2D Epsilon_free | moc3+physics+motions | ✅ 可玩 | 保持；進 fallback 鏈（P1-7 manifest 契約測試覆蓋） |
+| Live2D miara_pro_en | Groups 已補 cdi3 實值 | ✅（P1-7） | Expressions/HitAreas 盤上無資產如實記錄（editor 需求見 manifest MetaData） |
+| `apps/pixel-angela/base_sprite.png` | 128×128 | ✅（P1-6 接入托盤） | ✅ 尺寸契約已入庫 |
+| `resources/angela_01.jpg` `angela_02.jpg` `angela_03.png` `icon.png`（平鋪於 `resources/`，非子目錄——本表原路徑有誤 2026-10-17 訂正） | 位圖 339×1024/338×1024/592×1792/32×32 | ✅ | ✅ 尺寸契約已入庫；icon 供 crystal-cards（P0-5）；立繪供 2D 管線 |
+| `apps/game-rpg/data/game_cards.json`（原表寫 `data/game_cards.json` 有誤，2026-10-17 訂正） | 351 卡/3,376 token | ✅（自述總和 5 處陳舊值已訂正+契約鎖定） | 作為 ECS 內容灌入源（M5） |
+| crystal-cards cards.js | 8,266 行 | ✅ 斷鏈已修（P0-4） | 劇情群組內容源；連結稽核 `check_crystal_links.js` |
+| `test_models/` 200 目錄 | 20MB gitignored | ⚠️ | 清理或納入 .gitattributes LFS 評估 |
 
 ### 5.2 繪製升級（2D）
 
@@ -228,7 +228,11 @@ class Entity:
 - [x] P1 十項全修或明確記錄「不修理由+替代」（P1-1~P1-10 全修，證據見 §四
       「P1」表狀態欄；P1-7 的 Expressions/HitAreas 為盤上無資產之「如實記錄
       不虛構」替代）
-- [ ] 2D/3D 資產契約測試入庫（glb/atlas/卡片 JSON）
+- [ ] 2D/3D 資產契約測試入庫（glb/atlas/卡片 JSON）——**部分：glb（v2/chunk/AABB/
+      95 mesh/18 materials）+4 立繪+base_sprite+resources 位圖 5 檔+game_cards
+      自述總和一致性（10 tests）已入庫 `tests/frontend/test_game_asset_contracts.py`
+      （2026-10-17，同批訂正 game_cards 5 處陳舊自述值 3720→3376 token 等，
+      計畫 §5.1 表 resources/data 路徑漂移）；**atlas 待 §5.2 補**
 - [ ] 萬物皆軸 M1~M4 單測全綠；M5 卡片灌入快照測試綠
 - [ ] 顯示/交互驗證矩陣逐行有「手動冒煙記錄」或自動化測試
 - [ ] `flake8`/`mypy`/`complexity_budget_gate`/`mypy_budget_gate` 全綠
