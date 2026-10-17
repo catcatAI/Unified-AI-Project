@@ -20,6 +20,7 @@ import json
 import logging
 import os
 import sys
+from typing import Any, List, cast
 import time
 
 logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(message)s")
@@ -47,15 +48,13 @@ def cmd_query(args) -> None:
     print(result)
 
 
-def cmd_train(args) -> None:
+def _load_train_examples(path: str) -> List[dict]:
+    """依副檔名載入 CSV/JSON 訓練樣本；不支援格式印訊息 exit(1)。"""
     import csv
 
-    e = get_engine(args.checkpoint)
-
-    # Load data
-    if args.data.endswith(".csv"):
-        examples = []
-        with open(args.data, encoding="utf-8") as f:
+    if path.endswith(".csv"):
+        examples: List[dict] = []
+        with open(path, encoding="utf-8") as f:
             for row in csv.DictReader(f):
                 examples.append(
                     {
@@ -63,35 +62,29 @@ def cmd_train(args) -> None:
                         "output": row.get("output", row.get("answer", "")),
                     }
                 )
-    elif args.data.endswith(".json"):
-        with open(args.data, encoding="utf-8") as f:
+        return examples
+    if path.endswith(".json"):
+        with open(path, encoding="utf-8") as f:
             raw = json.load(f)
         if isinstance(raw, list):
-            examples = [
+            return [
                 {
                     "input": item.get("input", item.get("problem", "")),
                     "output": item.get("output", item.get("answer", "")),
                 }
                 for item in raw
             ]
-        else:
-            examples = raw.get("examples", [])
-    else:
-        print(f"Unsupported format: {args.data}")
-        sys.exit(1)
+        return cast("List[dict]", raw.get("examples", []))
+    print(f"Unsupported format: {path}")
+    sys.exit(1)
 
-    # Filter empty
-    examples = [ex for ex in examples if ex["input"] and ex["output"]]
-    if not examples:
-        print("No valid examples found")
-        return
-    print(f"  Training on {len(examples)} examples ({args.epochs} epochs)...")
 
-    # Build TrainingExamples
-    texamples = []
+def _build_texamples(engine: Any, examples: List[dict]) -> List[TrainingExample]:
+    """encode 兩端得 keys；任一為空跳過該例。"""
+    texamples: List[TrainingExample] = []
     for ex in examples:
-        ik = e.dictionary.encode(ex["input"])
-        ok = e.dictionary.encode(ex["output"])
+        ik = engine.dictionary.encode(ex["input"])
+        ok = engine.dictionary.encode(ex["output"])
         if not ik or not ok:
             continue
         texamples.append(
@@ -105,6 +98,21 @@ def cmd_train(args) -> None:
                 metadata={},
             )
         )
+    return texamples
+
+
+def cmd_train(args) -> None:
+    e = get_engine(args.checkpoint)
+
+    # Load data
+    examples = [ex for ex in _load_train_examples(args.data) if ex["input"] and ex["output"]]
+    if not examples:
+        print("No valid examples found")
+        return
+    print(f"  Training on {len(examples)} examples ({args.epochs} epochs)...")
+
+    # Build TrainingExamples
+    texamples = _build_texamples(e, examples)
 
     if not texamples:
         print("No examples with valid dictionary keys")
