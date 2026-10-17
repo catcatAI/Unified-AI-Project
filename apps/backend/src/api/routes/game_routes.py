@@ -11,8 +11,9 @@ Endpoints:
   GET    /game/status                     → Engine availability + card count
   GET    /game/worlds                     → Selectable worlds
   GET    /game/characters                 → Playable characters
-  GET    /game/cards                      → Compact card catalog (all 351)
+  GET    /game/cards                      → Compact card catalog (type/limit filter)
   GET    /game/axes                       → Axis systems (4 lineages × 3 axes)
+  GET    /game/validate                   → Deterministic rule report over full deck
   POST   /game/sessions                   → Start new game session
   GET    /game/sessions/{sid}             → Current state
   POST   /game/sessions/{sid}/action      → Advance with text input
@@ -193,8 +194,8 @@ def game_axes() -> dict:
 
 @router.get("/validate")
 def game_validate() -> dict:
-    """數理化/結構一致性驗證：跑完整卡片集（351）確定性規則，
-    回報硬錯誤（errors）與軟警告（warnings）。"""
+    """數理化/結構一致性驗證：跑完整卡片集確定性規則（卡片數以
+    report.total_cards 動態回傳），回報硬錯誤（errors）與軟警告（warnings）。"""
     try:
         from game.card_validator import load_report
 

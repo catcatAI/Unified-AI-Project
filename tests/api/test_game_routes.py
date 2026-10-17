@@ -41,24 +41,13 @@ class TestGameRoutesImport:
             "/game/characters",
             "/game/cards",
             "/game/axes",
+            "/game/validate",
             "/game/sessions",
             "/game/sessions/{sid}",
             "/game/sessions/{sid}/action",
-            "/game/sessions/{sid}/action".replace("/action", ""),
         }
-        assert "/game/sessions" in paths
-        assert "/game/sessions/{sid}" in paths
-        assert "/game/sessions/{sid}/action" in paths
-        assert expected.issubset(paths) or all(
-            ep in paths
-            for ep in [
-                "/game/status",
-                "/game/worlds",
-                "/game/characters",
-                "/game/cards",
-                "/game/axes",
-            ]
-        )
+        missing = expected - paths
+        assert not missing, f"missing routes: {sorted(missing)}"
 
     async def test_router_prefix(self):
         from api.routes.game_routes import router
