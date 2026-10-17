@@ -260,6 +260,39 @@ class BehaviorFeedbackLoop:
 
                 self.stats["evaluated_behaviors"] += 1
 
+    @staticmethod
+    def _score_user_response(record: BehaviorRecord) -> float:
+        """用戶響應分：有響應表示參與，>10 字 +0.3，>0 字 +0.1。"""
+        if record.user_response:
+            response_length = len(record.user_response)
+            if response_length > 10:
+                return 0.3
+            elif response_length > 0:
+                return 0.1
+        return 0.0
+
+    @staticmethod
+    def _score_user_emotion(record: BehaviorRecord) -> float:
+        """用戶情緒分：正向 +0.3／負向 -0.2／neutral +0.1。"""
+        if record.user_emotion:
+            if record.user_emotion in ["happy", "excited"]:
+                return 0.3
+            elif record.user_emotion in ["sad", "frustrated"]:
+                return -0.2
+            elif record.user_emotion == "neutral":
+                return 0.1
+        return 0.0
+
+    @staticmethod
+    def _score_time_recency(record: BehaviorRecord) -> float:
+        """時間因子：60 秒內 +0.1（越近權重越高），超過 1 小時 -0.1。"""
+        time_since = (datetime.now() - record.timestamp).total_seconds()
+        if time_since < 60:
+            return 0.1
+        elif time_since > 3600:
+            return -0.1
+        return 0.0
+
     async def evaluate_behavior(self, record: BehaviorRecord) -> float:
         """評估單個行為的效果"""
         try:
@@ -267,33 +300,17 @@ class BehaviorFeedbackLoop:
             score = 0.5  # 基礎分
 
             # 1. 用戶響應
-            if record.user_response:
-                # 有響應表示用戶參與
-                response_length = len(record.user_response)
-                if response_length > 10:
-                    score += 0.3
-                elif response_length > 0:
-                    score += 0.1
+            score += self._score_user_response(record)
 
             # 2. 用戶情緒
-            if record.user_emotion:
-                if record.user_emotion in ["happy", "excited"]:
-                    score += 0.3
-                elif record.user_emotion in ["sad", "frustrated"]:
-                    score -= 0.2
-                elif record.user_emotion == "neutral":
-                    score += 0.1
+            score += self._score_user_emotion(record)
 
             # 3. 優先級匹配
             if record.action == "greet" and record.priority == "high":
                 score += 0.1
 
             # 4. 時間因素（越近的記錄權重越高）
-            time_since = (datetime.now() - record.timestamp).total_seconds()
-            if time_since < 60:
-                score += 0.1
-            elif time_since > 3600:
-                score -= 0.1
+            score += self._score_time_recency(record)
 
             # 限制在 0-1 之間
             return max(0.0, min(1.0, score))
