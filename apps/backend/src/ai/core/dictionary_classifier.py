@@ -11,7 +11,7 @@ import json
 import logging
 import os
 import re
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from core.utils import any_keyword
 
@@ -213,6 +213,45 @@ class DictionaryClassifier:
             return result
         return None
 
+    def _best_alpha_token_pair(self, text_lower: str) -> Optional[Tuple[Any, ...]]:
+        """ASCII 關鍵字以整 token 命中者中擇最優 pair（score,-rank,keyword,keys）。"""
+        assert self._match_tables is not None  # 調用點已 ensure；窄化供拆包
+        alpha_token_keys, _substring_pairs, rank = self._match_tables
+        best_pair: Optional[Tuple[Any, ...]] = None
+        # Invert the scan: only keywords actually present in the text are
+        # candidates (exactly the set any_keyword() would accept), so we avoid
+        # re-compiling regexes / sweeping the whole index on every query.
+        # Tie-break preserves the original keyword_index insertion order.
+        for token in set(re.findall(r"[a-zA-Z]+", text_lower)):
+            token_keys = alpha_token_keys.get(token)
+            if token_keys:
+                pair = (
+                    self._keyword_score(text_lower, token),
+                    -rank[token],
+                    token,
+                    token_keys,
+                )
+                if best_pair is None or pair > best_pair:
+                    best_pair = pair
+        return best_pair
+
+    def _best_substring_pair(self, text_lower: str) -> Optional[Tuple[Any, ...]]:
+        """子字串關鍵字（CJK 等）命中者中擇最優 pair。"""
+        assert self._match_tables is not None  # 調用點已 ensure；窄化供拆包
+        _alpha_token_keys, substring_pairs, rank = self._match_tables
+        best_pair: Optional[Tuple[Any, ...]] = None
+        for keyword, keys in substring_pairs:
+            if keyword in text_lower:
+                pair = (
+                    self._keyword_score(text_lower, keyword),
+                    -rank[keyword],
+                    keyword,
+                    keys,
+                )
+                if best_pair is None or pair > best_pair:
+                    best_pair = pair
+        return best_pair
+
     def _match_keywords(self, text_lower: str) -> Tuple[Optional[str], float]:
         best_key = None
         best_score = 0.0
@@ -228,28 +267,12 @@ class DictionaryClassifier:
             if self._match_tables is None:  # 防禦：建表失敗時不比對
                 return best_key, best_score
             assert self._match_tables is not None  # 208 行已檢查；窄化供 mypy 使用
-            alpha_token_keys, substring_pairs, rank = self._match_tables
-            # Invert the scan: only keywords actually present in the text are
-            # candidates (exactly the set any_keyword() would accept), so we avoid
-            # re-compiling regexes / sweeping the whole index on every query.
-            # Tie-break preserves the original keyword_index insertion order.
-            best_pair = None  # (score, -rank, keyword, keys)
-            for token in set(re.findall(r"[a-zA-Z]+", text_lower)):
-                token_keys = alpha_token_keys.get(token)
-                if token_keys:
-                    pair = (
-                        self._keyword_score(text_lower, token),
-                        -rank[token],
-                        token,
-                        token_keys,
-                    )
-                    if best_pair is None or pair > best_pair:
-                        best_pair = pair
-            for keyword, keys in substring_pairs:
-                if keyword in text_lower:
-                    pair = (self._keyword_score(text_lower, keyword), -rank[keyword], keyword, keys)
-                    if best_pair is None or pair > best_pair:
-                        best_pair = pair
+            # 兩路候選各自擇優後再併——substring 後到者勝當更佳（原同一
+            # best_pair 依序更新的等價重排）。
+            best_pair = self._best_alpha_token_pair(text_lower)
+            sub_pair = self._best_substring_pair(text_lower)
+            if sub_pair is not None and (best_pair is None or sub_pair > best_pair):
+                best_pair = sub_pair
             if best_pair is not None and best_pair[0] > best_score:
                 best_score = best_pair[0]
                 best_key = best_pair[3][0] if best_pair[3] else None
