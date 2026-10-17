@@ -14,6 +14,7 @@ from engine.contracts import (
     MissingSignalError,
     SignalSpec,
 )
+from engine.clock import GroupClock, MasterClock
 from engine.pipeline import EnginePipeline, TickContext
 from engine.quantize import (
     from_fixed,
@@ -30,7 +31,9 @@ __all__ = [
     "ContractError",
     "EnginePipeline",
     "Entity",
+    "GroupClock",
     "GroupContract",
+    "MasterClock",
     "MissingSignalError",
     "SIGNAL_DTYPES",
     "SignalSpec",

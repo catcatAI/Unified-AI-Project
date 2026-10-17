@@ -225,6 +225,19 @@ class Entity:
 > （覆寫優先、0=對軸關閉、fsm/非數值原樣通過）。`tests/engine/
 > test_m2_quantize.py` **29 tests**（M1+M2=72，game-rpg 全套 **218 passed**；
 > mypy 0（5 files）、flake8=0、black clean）。
+>
+> ✅ **M3 完成（2026-10-17）**：`engine/clock.py` —— `MasterClock`（master
+> 固定推進 dt、各組以本組週期 `1/tick_rate` 累積 `dt×time_scale`、到期
+> while-fire；秒制累積 600 ticks@0.2× 精確 120 fires）。驗收測試
+> `test_combat_02x_leaves_mind_unaffected`：戰鬥 0.2× vs 1.0 兩時鐘各 600
+> master ticks → **心理組 fire 數完全相等（300==300，不受影響）**、戰鬥
+> 120≈0.2×600（±2）；附 0=暫停（執行期 `set_time_scale`，AxisGroup 建構期
+> 仍強制 >0=M1 契約）、`group_dt()` 分發 API（回 1/tick_rate）、
+> §6.4 **外包 world_lines 索引**：`time_flow_source`（實接
+> `world_clock.get_time_flow_ratio`，測試 fake source）按 `flow_id` 查流速
+> 比覆寫 time_scale、None/未掛回群組建構值、負比 raise。
+> `tests/engine/test_m3_clock.py` **16 tests**；game-rpg 全套
+> **234 passed**（+16）；mypy 0（6 files）、flake8=0、black clean。
 
 ### 6.4 與現有系統的介面
 
