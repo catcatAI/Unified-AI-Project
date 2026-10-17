@@ -250,6 +250,24 @@ class Entity:
 > （lerp 7、吸附 4、快照語義 8；spawn=curr 位、移除即不渲染、同刻最新幀
 > 取勝）。game-rpg 全套 **253 passed**（+19）；mypy 0（7 files）、
 > flake8=0、black clean。
+>
+> ✅ **M5 完成（2026-10-17）**：`engine/content.py` —— **351 卡→劇情群組
+> FSM 軸**：`story_group()` = `card_type` FSM（狀態域=資料實際 20 卡型，
+> sorted 確定性）+ `story_role` FSM（`STORY_ROLE_BY_CARD_TYPE` 卡型→9 超類
+> 全覆盖；新卡型未映射 → `card_to_values` ValueError 響亮 raise）、
+> `cards_to_axis_snapshot()` = `{card_id: 軸值}`（缺/重複 card_id raise）。
+> **axis_system 譜系→離散軸字典**：`lineage_states()`（真源
+> `AXIS_SYSTEMS` 四譜系同步鎖）→ `lineage_axis_group()` 每譜系 3 fsm 軸
+> 群組；`card_to_lineage()` 經 `resolve_card_axis` 權威解析並把原生
+> `(code, label)` 元組正規化為純碼（如 `"D1"`）、不可解析者排除不硬塞；
+> `axis_system` 以 importlib+Any 動態載入（engine 不靜態綁 game 根模組，
+> 也不把 axis_system/sim_systems 舊碼拖進 engine 型別檢查範圍）。
+> 驗收 `tests/engine/test_m5_content.py` **21 tests**：真檔 351 全量轉換
+> 落 fsm 狀態域、快照兩跑全等、CC-01 spot（角色卡/character）、映射鍵==
+> 資料卡型集合同步鎖、`lineage_states`==`AXIS_SYSTEMS` 逐鍵逐碼、權威表
+> 35 卡全入譜系快照、每值落譜系狀態域、可解析數==快照數且 <351（確認
+> 魔女等未分類卡真被排除）。game-rpg 全套 **274 passed**（+21）；
+> mypy 0（8 files，動態 import 切斷舊碼傳遞追蹤）、flake8=0、black clean。
 
 ### 6.4 與現有系統的介面
 
