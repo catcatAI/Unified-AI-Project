@@ -18,7 +18,7 @@ migration must not change split results.
 from __future__ import annotations
 
 import re
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 __all__ = [
     "split_paragraphs",
@@ -45,13 +45,8 @@ _SECTION_PATTERNS = [
 _TEMPLATE_ENDERS = frozenset(["。", "！", "？", ".", "!", "?"])
 
 
-def split_sections(text: str) -> List[Tuple[str, str, int]]:
-    """Split *text* into ``(header, section_text, level)`` tuples.
-
-    Mirrors ``DocumentChunker._split_sections`` exactly: line scan with header
-    priority, preamble capture, section body until the next header.
-    """
-    lines = text.split("\n")
+def _find_header_lines(lines: List[str]) -> List[Tuple[int, str, int]]:
+    """掃描行首標頭（依 pattern 優先序短路）；回 (行號, 標題, level)。"""
     sections: List[Tuple[int, str, int]] = []
     for i, line in enumerate(lines):
         stripped = line.strip()
@@ -62,6 +57,27 @@ def split_sections(text: str) -> List[Tuple[str, str, int]]:
             if m:
                 sections.append((i, m.group(1).strip(), priority))
                 break
+    return sections
+
+
+def _preamble_block(lines: List[str], start: int) -> Optional[Tuple[str, str, int]]:
+    """取 start 之前的前言塊；無前言回 None。"""
+    if start <= 0:
+        return None
+    preamble = "\n".join(lines[:start]).strip()
+    if not preamble:
+        return None
+    return ("", preamble, 0)
+
+
+def split_sections(text: str) -> List[Tuple[str, str, int]]:
+    """Split *text* into ``(header, section_text, level)`` tuples.
+
+    Mirrors ``DocumentChunker._split_sections`` exactly: line scan with header
+    priority, preamble capture, section body until the next header.
+    """
+    lines = text.split("\n")
+    sections = _find_header_lines(lines)
 
     if not sections:
         return [("", text.strip(), 0)]
@@ -71,15 +87,14 @@ def split_sections(text: str) -> List[Tuple[str, str, int]]:
         end = sections[j + 1][0] if j + 1 < len(sections) else len(lines)
         sec_text = "\n".join(lines[start:end]).strip()
         if j == 0 and start > 0:
-            preamble = "\n".join(lines[:start]).strip()
-            if preamble:
-                result.append(("", preamble, 0))
+            block = _preamble_block(lines, start)
+            if block:
+                result.append(block)
         result.append((header, sec_text, level))
 
-    if sections[0][0] > 0:
-        preamble = "\n".join(lines[: sections[0][0]]).strip()
-        if preamble:
-            result.insert(0, ("", preamble, 0))
+    first_block = _preamble_block(lines, sections[0][0])
+    if first_block:
+        result.insert(0, first_block)
 
     return result
 
