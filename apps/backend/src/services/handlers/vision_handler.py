@@ -20,7 +20,9 @@ class VisionHandler:
         self._model_bus = model_bus
         self._vision_service: Optional[Any] = None
 
-    async def _validate_image_path(self, image_path: Optional[str]) -> tuple:
+    async def _validate_image_path(
+        self, image_path: Optional[str]
+    ) -> "tuple[Optional[Path], Optional[str], Optional[str]]":
         """Validate image path existence, file type, and MIME type. Returns (target, mime_type, error_msg)."""
         if not image_path:
             return None, None, "（視覺分析）請提供圖片路徑或附帶圖片。"
@@ -71,7 +73,10 @@ class VisionHandler:
         target, mime_type, error_msg = await self._validate_image_path(image_path)
         if error_msg:
             return error_msg
-        fence_error = self._check_path_fence(target, image_path)
+        # error_msg 為 None 蘊含驗證成功：target/mime 必非 None（供 mypy 窄化）
+        assert target is not None and mime_type is not None
+        # error_msg 為 None 蘊含驗證成功，image_path 必非空；or "" 僅供型別收窄
+        fence_error = self._check_path_fence(target, image_path or "")
         if fence_error:
             return fence_error
         try:
