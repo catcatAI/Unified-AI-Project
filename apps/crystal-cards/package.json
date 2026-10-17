@@ -18,6 +18,7 @@
   "build": {
     "appId": "com.angela.crystal-cards",
     "productName": "Crystal Cards",
+    "icon": "assets/icons/icon.png",
     "directories": {
       "output": "dist"
     },
