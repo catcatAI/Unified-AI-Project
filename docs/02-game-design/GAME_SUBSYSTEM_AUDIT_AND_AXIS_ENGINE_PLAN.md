@@ -288,6 +288,21 @@ class Entity:
 > 為 §6.4「pixel-angela 收快照」遠期項，不在本里程碑。
 > game-rpg 全套 **291 passed**（+17）；mypy 0（9 files）、flake8=0、
 > black clean。
+>
+> ✅ **M7 完成（2026-10-17，§六 M1–M7 全數落地）**：`engine/packed.py`
+> —— 熱群組 **SoA 連續記憶體** `PackedGroup`：每軸一個 `array('d')`
+> （fsm 軸 `array('i')` 狀態索引+表解碼回字串），冷路徑仍用 M1 Entity
+> dict（零改動）；stdlib 零新依賴（numpy 為「array/numpy」選項，本批
+> array 已達預算故不引）。域/未知軸/型別/fsm 出域全響亮 raise、缺軸=型別
+> 零值、容量翻倍成長保值、`from_entities`/`entity_at` 與 M1 雙向互轉
+> （含 fsm 解碼）。熱路徑 `advance_xy(dt)` 緊迴圈積分 x+=vx*dt、
+> y+=vy*dt。**驗收** `tests/engine/test_m7_perf.py` **15 tests**：
+> `test_1k_entities_60hz_within_frame_budget` —— 1,000 實體 ×120 tick
+> 實測 avg/tick **< 16.67ms（60Hz 幀預算）**且末幀位置正確在動；附 dict
+> 對照組（寬鬆防呆，不設相對斷言以免 CI 抖動）、advance_xy 對 dict
+> 同序累加一致（1e-12）、SoA↔Entity 往返、六類響亮 raise、成長 100 槽
+> 保值。game-rpg 全套 **306 passed**（+15）；mypy 0（10 files）、
+> flake8=0、black clean。
 
 ### 6.4 與現有系統的介面
 
@@ -340,7 +355,11 @@ class Entity:
       漂移）+ atlas/幀表/三圖層/四地形 53 tests（§5.2
       `tests/ai/multimodal/primitives/test_game_sprites.py`，含 axis_system
       跨檔同步鎖定）——2026-10-17 齊
-- [ ] 萬物皆軸 M1~M4 單測全綠；M5 卡片灌入快照測試綠
+- [x] 萬物皆軸 M1~M4 單測全綠；M5 卡片灌入快照測試綠
+      （2026-10-17 實測：**M1–M7 全落地，engine 306 tests 全綠**
+      ——M1 43/M2 29/M3 16/M4 19/M5 21/M6 17/M7 15，game-rpg 全套
+      306 passed；M6 像素層+手動冒煙清單、M7 1k 實體 60Hz 幀預算
+      均含驗收測試）
 - [ ] 顯示/交互驗證矩陣逐行有「手動冒煙記錄」或自動化測試
 - [ ] `flake8`/`mypy`/`complexity_budget_gate`/`mypy_budget_gate` 全綠
 - [x] 全量 pytest 無回歸（P0-7 後新基線：**7,824 passed / 107 skipped / 0 failed**，
