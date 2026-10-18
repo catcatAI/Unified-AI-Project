@@ -374,30 +374,31 @@ def test_name_is_not_read_from_a_reentrant_live_check():
 
 
 def test_routing_policy_map_is_either_used_or_documented():
-    """Catches a dead mapping, which a per-key sweep cannot.
+    """routing.policy must be consumed by code, or honestly labelled dead.
 
-    The per-key check looks for each key's *name* in the source, and `math`,
-    `code`, `task` and `general` all appear for unrelated reasons — so the whole
-    `routing.policy` block looked alive while `self._angela_routing`, the only
-    handle on it, was assigned at router.py:355 and never read.
+    The per-key sweep cannot catch this: it looks for each key's *name* in the
+    source, and `math`, `code`, `task` and `general` all appear for unrelated
+    reasons — so the whole `routing.policy` block looked alive while
+    `self._angela_routing`, the only handle on it, was assigned and never read.
+    D2 (2026-10-19) removed that dead handle, so the map now has no reader at
+    all and the YAML must say so. If policy-driven selection is ever
+    implemented, this test fails on purpose: drop the "not consumed by code"
+    comment from system/llm.default.yaml (it would be stale) and update the
+    assertions here to match the live contract.
     """
     router = (SRC / "services/llm/router.py").read_text(encoding="utf-8")
-    assert "_angela_routing" in router, (
-        "the router no longer touches routing.policy at all — update this test and "
-        "system/llm.default.yaml, because the config's status just changed"
+    assert "_angela_routing" not in router, (
+        "a routing.policy handle reappeared in router.py — if policy-driven "
+        "selection now reads it, drop the 'not consumed by code' comment from "
+        "system/llm.default.yaml and update this test; if it is another "
+        "assigned-but-never-read handle, delete it (D2)"
     )
-    # Read anywhere other than its own assignment?
-    reads = len(re.findall(r"_angela_routing(?!\s*=\s*routing)", router)) > 1
-    if reads:
-        return  # policy-driven selection exists; the config is live
 
-    # Still dead: the config file must say so, so nobody reads it as behaviour.
     llm_yaml = (CONFIGS / "system/llm.default.yaml").read_text(encoding="utf-8")
     assert "not consumed by code" in llm_yaml, (
-        "self._angela_routing is assigned but never read, so every routing.policy "
-        "entry is dead, and system/llm.default.yaml does not say so — implementing "
-        "policy-driven selection is a design decision, so until then the file must "
-        "state the truth"
+        "no code reads routing.policy (the dead router handle was removed in "
+        "D2), but system/llm.default.yaml no longer states that the map is "
+        "dead — the file must state the truth so nobody reads it as behaviour"
     )
 
 

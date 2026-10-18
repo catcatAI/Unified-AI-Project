@@ -511,6 +511,7 @@ class AngelaLLMService:
             "composed_responses": 0,
             "hybrid_responses": 0,
             "token_savings_rate": 0.0,
+            "cache_hits": 0,
         }
 
         # ========== P0-2: Response Composition & Matching System ==========
@@ -526,7 +527,6 @@ class AngelaLLMService:
         self.memory_integration = MemoryIntegration(self)
 
         routing = self.config.get("routing") or {}
-        self._angela_routing = routing.get("policy", {})
         self._angela_fallback_chain = routing.get("fallback_chain", [])
         self._angela_intent_routing = routing.get("intent_routing", {})
 
@@ -735,7 +735,7 @@ class AngelaLLMService:
             return response
         cached = self._response_cache_get(cache_key)
         if cached is not None:
-            self.stats["cache_hits"] = self.stats.get("cache_hits", 0) + 1
+            self.stats["cache_hits"] += 1
             logger.debug("[Router] Response cache hit for: %.60s", user_message)
             return cached
         response = await self.generate_response_full(user_message, context)

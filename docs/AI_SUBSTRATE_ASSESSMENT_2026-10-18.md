@@ -156,7 +156,7 @@
 - [ ] A2 決定 checkpoint 來源：從 `/media/covo/ZX` 機器取回，或本機重訓（`scripts/train_unified.py` 入庫路線）
 - [ ] A3 `train_exact_bytes`/`heldout_bpc` 接上呼叫者（訓練報表必須由留出集產生）
 - [ ] A4 補齊 3 個缺數據檔或明確從 pipeline 移除（禁止靜默 skip）
-- [ ] A5 GARDEN accuracy 改實測回傳；ED3N 評估改 hold-out（`_grow_missing_keys` 不得計入評估）
+- [x] A5 GARDEN accuracy 改實測回傳；ED3N 評估改 hold-out（`_grow_missing_keys` 不得計入評估）— ✅ 2026-10-19：GARDEN `_eval_garden_holdout`（`process` 實測 contains-match，替掉 `train.garden.record_accuracy` 0.7 假常數）；ED3N `ED3NTrainer.evaluate_holdout`（純推論，不 grow/不調權重）＋`_holdout_split` 每 10th 切分（cap 500/200）；16 新測試 `tests/ai/ed3n/test_holdout_eval.py`，全套 8504 passed 0 failed
 - [ ] A6 統一評測入口：`benchmark_ed3n_garden --gate`＋留出集數字入 JSON 工件（停止以 MD 散佈分數）
 
 **B. AI 路徑真實性（先確認「走 AI」再談「AI 好不好」）**
@@ -172,12 +172,80 @@
 
 **D. 配置一致性**
 - [ ] D1 收斂 `llm_mode`/`deployment.mode` 雙變數分叉；修 `_allowed_types` 讀取層級
-- [ ] D2 清死檔（`src/configs/system/llm.evolved.yaml`）、`routing.policy` 死碼、stats 初始化
+- [x] D2 清死檔（`src/configs/system/llm.evolved.yaml`）、`routing.policy` 死碼、stats 初始化— ✅ 2026-10-19：刪 `src/configs` 死檔（canonical `configs/system/llm.evolved.yaml` 保留）；移除 `router._angela_routing` 死屬性＋更新 `test_routing_policy_map_is_either_used_or_documented` 契約；`stats["cache_hits"]=0` 初始化＋2 新測試，75 passed
 
 **E. 評估基準（重訓前先立）**
 - [ ] E1 未見泛化探針：`probe_reasoning_unseen.py`（symbolic vs neural 分列）
 - [ ] E2 angela_bench gate（math≥75/knowledge_mc≥90/routing≥95）作回歸地板
-- [ ] E3 分數類型標注嚴格遵循 INTELLIGENCE_ASSESSMENT 六型表（架構/框架/預期/訓練/驗證/實際——禁止再混用）
+- [x] E3 分數類型標注嚴格遵循 INTELLIGENCE_ASSESSMENT 六型表（架構/框架/預期/訓練/驗證/實際——禁止再混用）— ✅ 2026-10-19：§1.1 分數總表加「分數類型」欄（11 維度全標注）；§1.2「訓練+驗證 3.0」行標「已廢混合記法」；§2.2 隨機權重行標 ED3N 汙染/GARDEN 硬編碼假常數；§3.2 訓練基線加 E3 警示框；「知識+推理 8.6」行標「訓練（污染）⚠️」
+
+---
+
+## 五-b、升級前基準計分（六型口徑，2026-10-19）
+
+依 `docs/RESEARCH_UPGRADE_REPORT_2026-10-18.md` §五既有量測計分；**不新測**。
+六型定義見 `docs/06-project-management/INTELLIGENCE_ASSESSMENT.md`：架構/框架/預期/訓練/驗證/實際。
+「訓練分」＝訓練集 in-loop，**不得當驗證分**；缺數據＝0，不用推估值填。
+
+| 維度 | 分 | 型 | 證據（報告既有量測） |
+|---|---|---|---|
+| 確定性引擎 | 9.5/10 | 驗證 | math 5/5、knowledge 5/5、reasoning 5/5（符號/KB 擋下）；native math 32/40=80% |
+| 知識/推理混合 | 8.6/10 | 驗證(部分)+訓練 | native knowledge 4/15=26.67%、knowledge_mc 39/40=97.5%；其引用的 ED3N 0.914 屬訓練分 |
+| 架構接通 | 9.5/10 | 架構 | 19/20 子系統、606 py、88 routes、0 STUB |
+| 查詢+學習閉環 | 9.0/10 | 框架 | 6 個閉環運作、CN→EN probe 8/8 |
+| 自主閉環 | 9.0/10 | 框架 | 生命週期+心跳+DLI+因果 warm-start |
+| 路由正確性 | 100%（10/10） | 驗證 | native routing（餘量僅 5pt） |
+| **神經訓練分** | ED3N 0.914 / GARDEN 0.700 | 訓練（**不採信**） | ED3N 訓練集 in-loop 且 grow 計入；GARDEN 為硬編碼常數（train_pipeline.py:1535）→ 誠實計 **N/A** |
+| **神經驗證分** | **0/10** | 驗證 | 無任何 hold-out 評估（A5 未做） |
+| 離線開放域 | 0/10 | 實際 | 8080/8081/11434 全未監聽（C1 未接） |
+| 雲端開放域 | 6.0/10 | 實際 | google fusion 活、本地無推理 |
+| 多模態 | 5.1/10 | 架構+框架 | 接通 1.0＋生成 0.02（MSE 0.271） |
+| 統計內核開放域 | ≈0/10 | 實際 | 專案自評「hash n-gram 無法匹配 LLM」；生成保真 10-13 bytes |
+
+**綜合口徑分（升級前）＝ 4.3/10**（明示權重，步驟④後同式重算）
+
+| 成分 | 權重 | 升級前值 |
+|---|---|---|
+| 神經**驗證**分（hold-out，A5） | 0.25 | **0**（無 hold-out） |
+| 確定性 native 四件套均值 | 0.25 | (80+26.67+97.5+100)/4 = 7.6 |
+| 雲端開放域（實際） | 0.20 | 6.0 |
+| 離線開放域（實際） | 0.15 | 0（C1 未接） |
+| 架構/框架均值 | 0.10 | (9.5+9.0)/2 = 9.25 |
+| 多模態 | 0.05 | 5.1 |
+
+算式＝0.25×0＋0.25×7.6＋0.20×6.0＋0.15×0＋0.10×9.25＋0.05×5.1 = **4.28 → 4.3**。
+**不計入**：ED3N 0.914／GARDEN 0.700（訓練分且評估污染——GARDEN 為硬編碼假常數）。
+誠實扣分項（不入式，另表記錄）：假分、缺 hold-out、checkpoint 缺、pre-flight 5/18、28 條升級候選。
+
+> 本分為「報告量測口徑」總分，步驟④後以同權重式重算比對。變動主要來自**假分清除/補實測**，非能力增長——如實陳述。
+
+---
+
+## 五-c、升級後重算（同式，2026-10-19）
+
+D2/E3/A5 三項已執行；以**同一權重式**重算比對。原則：本批改的是**量測誠實度與死碼**，
+未新增任何能力量測——故各輸入分**不動**，總分不動。
+
+| 成分 | 權重 | 升級前 | 升級後 | 變動原因 |
+|---|---|---|---|---|
+| 神經**驗證**分（hold-out） | 0.25 | 0 | **0（可測未測）** | A5 已接 `evaluate_holdout`/`_eval_garden_holdout` 並移除 GARDEN 假常數，但**未重跑訓練**——尚無 hold-out 數字，缺數據仍計 0 |
+| 確定性 native 四件套均值 | 0.25 | 7.6 | 7.6 | 未重跑 benchmark |
+| 雲端開放域（實際） | 0.20 | 6.0 | 6.0 | 未動 |
+| 離線開放域（實際） | 0.15 | 0 | 0 | C1 未做 |
+| 架構/框架均值 | 0.10 | 9.25 | 9.25 | D2 清死碼不改子系統量測 |
+| 多模態 | 0.05 | 5.1 | 5.1 | 未動 |
+
+算式＝0.25×0＋0.25×7.6＋0.20×6.0＋0.15×0＋0.10×9.25＋0.05×5.1 = **4.28 → 4.3（不變）**。
+
+**結論（如實）**：綜合口徑分 **4.3 → 4.3，零變化**。本批價值不在分數，而在——
+
+1. **假分清除**：GARDEN 0.700 硬編碼常數已移除，訓練管線不再產出假 accuracy（A5）。
+2. **hold-out 可測**：下次重跑 `train_pipeline` 即產出真實神經驗證分，該 0.25 權重項首次可被真數填入。
+3. **量測口徑強制**：E3 六型標注入 assessment，訓練分冒充驗證分的記法被標「已廢」。
+4. **死碼清零**：D2 死配置檔/死屬性/stats 缺鍵移除（75 passed）。
+5. **checklist 5/18 → 8/18；候選 28 → 25**（新報告 `RESEARCH_UPGRADE_REPORT_2026-10-19.md`，top-3 換為 B4/BENCH-margin-*）。
+
+> 分數能動的唯一路徑：重跑訓練（填入 hold-out 真分）或重跑 benchmark——皆屬 A6/C1/E 範圍，本批不執行。
 
 ---
 

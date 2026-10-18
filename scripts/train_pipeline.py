@@ -1183,6 +1183,51 @@ def _step3_generate_knowledge():
     return generate_knowledge_data()
 
 
+def _holdout_split(samples, stride=10, cap=500):
+    """A5: deterministic holdout split by index (every `stride`-th, up to `cap`).
+
+    Index-based so a resumed run splits identically. Returns
+    (train_samples, holdout_samples).
+    """
+    if not samples:
+        return [], []
+    holdout_indices = []
+    for i in range(0, len(samples), stride):
+        if len(holdout_indices) >= cap:
+            break
+        holdout_indices.append(i)
+    holdout_set = set(holdout_indices)
+    train = [s for i, s in enumerate(samples) if i not in holdout_set]
+    holdout = [samples[i] for i in holdout_indices]
+    return train, holdout
+
+
+def _eval_garden_holdout(garden_engine, holdout_samples):
+    """A5: measured GARDEN holdout accuracy via engine.process (no training).
+
+    Contains-match against expected output — same semantics as
+    scripts/benchmark_ed3n_garden.py::score_response. Returns 0.0 when the
+    slice is empty so a fake constant can never creep back in.
+    """
+    if not holdout_samples:
+        return 0.0
+    correct = 0
+    evaluated = 0
+    for s in holdout_samples:
+        expected = (s.get("output") or "").strip().lower()
+        if not expected:
+            continue
+        evaluated += 1
+        try:
+            response = (garden_engine.process(s.get("input", "")) or "").strip().lower()
+        except Exception:
+            logger.debug("GARDEN holdout eval failed for %r", s.get("input"), exc_info=True)
+            continue
+        if expected in response:
+            correct += 1
+    return correct / max(evaluated, 1)
+
+
 def _step4_train_ed3n(coordinator, batches, resume_state=None, save_state=None):
     # Step 4: Train ED3N — coarse learning on ALL data
     # -----------------------------------------------------------------------
@@ -1306,48 +1351,65 @@ def _step4_train_ed3n(coordinator, batches, resume_state=None, save_state=None):
         f"{skipped_domain} non-association domains excluded from SNN)"
     )
 
+    # A5: deterministic holdout split (every 10th example, capped). Training
+    # sees only train_examples; holdout accuracy is the only number recorded
+    # as the domain's final accuracy (in-loop train accuracy is progress-only).
+    train_examples, holdout_examples = _holdout_split(
+        examples,
+        stride=limit_value("train.ed3n.holdout_stride", 10),
+        cap=limit_value("train.ed3n.holdout_size", 500),
+    )
+    print(f"  Holdout split: {len(train_examples)} train / {len(holdout_examples)} holdout")
+
+    # Record-domain computed from ALL examples so the final holdout record
+    # overwrites the per-epoch in-loop record for the same domain key.
+    seen_domains = {e.metadata.get("domain", "unknown") for e in examples}
+    record_domain = next(iter(seen_domains)) if len(seen_domains) == 1 else "mixed"
+
     # 4d: Train epochs — resumable per epoch.
     # Each epoch is checkpointed to ed3n_epoch{N}.json AND recorded in
     # resume_state as ed3n_epochs_done=N, so a killed run resumes at the next
     # epoch instead of retraining from scratch.
+    trainer = None
     if examples:
-        print(
-            f"  Training network ({epochs_total} epochs, {len(examples)} examples"
-            f"{', resuming from epoch ' + str(epochs_done + 1) if epochs_done else ''})..."
-        )
         trainer = ED3NTrainer(
             ed3n_engine,
             dictionary_lr=learning_rate("train.ed3n.dictionary_lr", 0.05),
             network_lr=learning_rate("train.ed3n.network_lr", 0.05),
         )
-        for epoch in range(epochs_done, epochs_total):
-            t0 = time.time()
-            batch = TrainingBatch(examples=examples, batch_id=f"ed3n_ep{epoch}")
-            m = trainer.train_step(batch)
+        if train_examples:
             print(
-                f"    Epoch {epoch+1}/{epochs_total}: loss={m.loss:.4f} acc={m.accuracy:.4f} ({time.time()-t0:.1f}s)"
+                f"  Training network ({epochs_total} epochs, {len(train_examples)} examples"
+                f"{', resuming from epoch ' + str(epochs_done + 1) if epochs_done else ''})..."
             )
-            # Record with coordinator — preserve the true per-domain label so the
-            # coverage report is accurate (previously collapsed to math/logic).
-            seen_domains = {e.metadata.get("domain", "unknown") for e in batch.examples}
-            record_domain = next(iter(seen_domains)) if len(seen_domains) == 1 else "mixed"
-            asyncio.run(
-                coordinator.record_training(
-                    domain=record_domain,
-                    model_id="ed3n",
-                    count=len(examples),
-                    accuracy=m.accuracy,
-                    examples=[
-                        {"input": e.input_text, "output": e.expected_output}
-                        for e in examples[: limit_value("train.ed3n.max_examples_per_epoch", 50)]
-                    ],
+            for epoch in range(epochs_done, epochs_total):
+                t0 = time.time()
+                batch = TrainingBatch(examples=train_examples, batch_id=f"ed3n_ep{epoch}")
+                m = trainer.train_step(batch)
+                print(
+                    f"    Epoch {epoch+1}/{epochs_total}: loss={m.loss:.4f} acc={m.accuracy:.4f} ({time.time()-t0:.1f}s)"
                 )
-            )
-            # Save mid-training checkpoint + record epoch as done (resume point).
-            ed3n_engine.save(os.path.join(CKPT_DIR, f"ed3n_epoch{epoch+1}.json"))
-            epochs_done = epoch + 1
-            prog_save(4, {"ed3n_epochs_done": epochs_done})
-            print(f"    [checkpoint] epoch {epochs_done}/{epochs_total} saved")
+                # Record with coordinator — in-loop TRAIN accuracy (progress
+                # only; overwritten by the holdout record at the end of step 4).
+                asyncio.run(
+                    coordinator.record_training(
+                        domain=record_domain,
+                        model_id="ed3n",
+                        count=len(train_examples),
+                        accuracy=m.accuracy,
+                        examples=[
+                            {"input": e.input_text, "output": e.expected_output}
+                            for e in train_examples[
+                                : limit_value("train.ed3n.max_examples_per_epoch", 50)
+                            ]
+                        ],
+                    )
+                )
+                # Save mid-training checkpoint + record epoch as done (resume point).
+                ed3n_engine.save(os.path.join(CKPT_DIR, f"ed3n_epoch{epoch+1}.json"))
+                epochs_done = epoch + 1
+                prog_save(4, {"ed3n_epochs_done": epochs_done})
+                print(f"    [checkpoint] epoch {epochs_done}/{epochs_total} saved")
 
     # 4e: Add reflex patterns from training data.
     # Only short, canned-style inputs (greeting/reflex/command) become reflex
@@ -1381,8 +1443,9 @@ def _step4_train_ed3n(coordinator, batches, resume_state=None, save_state=None):
     print(f"    Added {reflex_count} reflex patterns")
 
     # 4f: Sequence training (optional — improves next-token prediction)
+    # A5: train only on train_examples — holdout must not leak into seq training.
     print("  Training SequenceTrainer (next-token prediction)...")
-    if examples:
+    if train_examples:
         seq_trainer = SequenceTrainer(
             ed3n_engine, seq_lr=learning_rate("train.ed3n.sequence_lr", 0.1)
         )
@@ -1392,7 +1455,7 @@ def _step4_train_ed3n(coordinator, batches, resume_state=None, save_state=None):
                     e.input_keys[: limit_value("train.ed3n.seq_input_keys", 3)],
                     e.output_keys[: limit_value("train.ed3n.seq_output_keys", 2)],
                 )
-                for e in examples[: limit_value("train.ed3n.seq_max_examples", 1000)]
+                for e in train_examples[: limit_value("train.ed3n.seq_max_examples", 1000)]
                 if e.input_keys and e.output_keys
             ],
             "pipeline_seq",
@@ -1403,8 +1466,9 @@ def _step4_train_ed3n(coordinator, batches, resume_state=None, save_state=None):
             seq_trainer.save(os.path.join(CKPT_DIR, "sequence_trainer.json"))
 
     # 4g: Joint training (combines ED3N + sequence)
+    # A5: train only on train_examples — holdout must not leak into joint training.
     print("  Training JointTrainer (combined)...")
-    if examples:
+    if train_examples:
         joint_trainer = JointTrainer(
             ed3n_engine,
             dict_lr=learning_rate("train.joint.dict_lr", 0.05),
@@ -1412,7 +1476,7 @@ def _step4_train_ed3n(coordinator, batches, resume_state=None, save_state=None):
             seq_lr=learning_rate("train.joint.seq_lr", 0.1),
         )
         joint_batch = TrainingBatch(
-            examples=examples[: limit_value("train.joint.max_examples", 500)],
+            examples=train_examples[: limit_value("train.joint.max_examples", 500)],
             batch_id="joint_pipeline",
         )
         joint_seq_batch = make_synthetic_seq_batch(
@@ -1421,7 +1485,7 @@ def _step4_train_ed3n(coordinator, batches, resume_state=None, save_state=None):
                     e.input_keys[: limit_value("train.joint.seq_input_keys", 3)],
                     e.output_keys[: limit_value("train.joint.seq_output_keys", 2)],
                 )
-                for e in examples[: limit_value("train.joint.seq_max_examples", 500)]
+                for e in train_examples[: limit_value("train.joint.seq_max_examples", 500)]
                 if e.input_keys and e.output_keys
             ],
             "joint_seq",
@@ -1429,6 +1493,30 @@ def _step4_train_ed3n(coordinator, batches, resume_state=None, save_state=None):
         joint_metrics = joint_trainer.train_step(joint_batch, joint_seq_batch)
         print(f"    Joint loss={joint_metrics.loss:.4f} acc={joint_metrics.accuracy:.4f}")
         joint_trainer.save(os.path.join(CKPT_DIR, "joint_trainer.json"))
+
+    # A5: holdout eval — the ONLY accuracy recorded as the domain's final
+    # accuracy (overwrites the per-epoch in-loop records for record_domain).
+    # count=0: evaluation-only record, does not inflate trained_count.
+    if trainer is not None and holdout_examples:
+        eval_metrics = trainer.evaluate_holdout(holdout_examples)
+        print(
+            f"  Holdout eval: acc={eval_metrics.accuracy:.4f} loss={eval_metrics.loss:.4f}"
+            f" ({len(holdout_examples)} examples)"
+        )
+        asyncio.run(
+            coordinator.record_training(
+                domain=record_domain,
+                model_id="ed3n",
+                count=0,
+                accuracy=eval_metrics.accuracy,
+                examples=[
+                    {"input": e.input_text, "output": e.expected_output}
+                    for e in holdout_examples[
+                        : limit_value("train.ed3n.max_examples_per_epoch", 50)
+                    ]
+                ],
+            )
+        )
 
     # Consolidate trained state into the canonical checkpoint so that a run
     # killed after step 4 but before step 6 (which also saves it) can resume
@@ -1498,9 +1586,20 @@ def _step5_train_garden(coordinator, batches, resume_state=None, save_state=None
         # dictionary remains the primary fact store; the SNN adds association
         # recall on top.
         garden_samples = batches.get("garden", [])
+        # A5: deterministic holdout split (every 10th index, capped). Holdout
+        # samples are NEVER passed to learn_batch; accuracy is measured on them
+        # via engine.process after training (replaces the old hardcoded 0.7).
+        holdout_stride = limit_value("train.garden.holdout_stride", 10)
+        holdout_cap = limit_value("train.garden.holdout_size", 200)
+        holdout_indices: set = set()
+        for hi in range(0, len(garden_samples), holdout_stride):
+            if len(holdout_indices) >= holdout_cap:
+                break
+            holdout_indices.add(hi)
+        holdout_samples = [garden_samples[i] for i in sorted(holdout_indices)]
         print(
-            f"  Processing {len(garden_samples)} knowledge samples "
-            f"(dict + SNN Hebbian associations)..."
+            f"  Processing {len(garden_samples) - len(holdout_samples)} knowledge samples "
+            f"(dict + SNN Hebbian associations, {len(holdout_samples)} held out)..."
         )
 
         # Use batch learning for speed (rebuilds index ONCE, not per sample)
@@ -1510,13 +1609,23 @@ def _step5_train_garden(coordinator, batches, resume_state=None, save_state=None
         batch_done = int(resume_state.get("garden_batch_done", 0))
         total_learned = batch_done
         for i in range(batch_done, len(garden_samples), BATCH_SIZE):
-            batch = garden_samples[i : i + BATCH_SIZE]
-            result = garden_engine.learn_batch(
-                samples=[{"input": s["input"], "output": s["output"]} for s in batch],
-                confidence=confidence_value("train.garden.learn_confidence", 0.7),
-                train_associations=True,
-            )
-            total_learned += result["samples_processed"]
+            # batch_done still indexes the FULL list (resume semantics), but
+            # holdout indices are filtered out of every batch before learning.
+            batch = [
+                s
+                for j, s in zip(
+                    range(i, min(i + BATCH_SIZE, len(garden_samples))),
+                    garden_samples[i : i + BATCH_SIZE],
+                )
+                if j not in holdout_indices
+            ]
+            if batch:
+                result = garden_engine.learn_batch(
+                    samples=[{"input": s["input"], "output": s["output"]} for s in batch],
+                    confidence=confidence_value("train.garden.learn_confidence", 0.7),
+                    train_associations=True,
+                )
+                total_learned += result["samples_processed"]
             # Persist after each batch so a kill resumes from the next batch.
             garden_engine.save(garden_ckpt)
             batch_done = min(i + BATCH_SIZE, len(garden_samples))
@@ -1526,18 +1635,24 @@ def _step5_train_garden(coordinator, batches, resume_state=None, save_state=None
 
         print(f"  learn_batch calls: {total_learned} (associations_trained=True)")
 
-        # Record with coordinator
-        asyncio.run(
-            coordinator.record_training(
-                domain="knowledge",
-                model_id="garden",
-                count=total_learned,
-                accuracy=confidence_value("train.garden.record_accuracy", 0.7),
-                examples=[
-                    {"input": s["input"], "output": s["output"]} for s in garden_samples[:50]
-                ],
+        # Record with coordinator — measured holdout accuracy only (no
+        # hardcoded constant). Skipped entirely when there is no holdout.
+        if holdout_samples:
+            holdout_acc = _eval_garden_holdout(garden_engine, holdout_samples)
+            print(f"  Holdout eval: acc={holdout_acc:.4f} ({len(holdout_samples)} examples)")
+            asyncio.run(
+                coordinator.record_training(
+                    domain="knowledge",
+                    model_id="garden",
+                    count=total_learned,
+                    accuracy=holdout_acc,
+                    examples=[
+                        {"input": s["input"], "output": s["output"]} for s in garden_samples[:50]
+                    ],
+                )
             )
-        )
+        else:
+            print("  [WARNING] No holdout samples — skipping accuracy record (no fake constant)")
 
     except Exception as e:
         logger.warning("GARDEN training failed (non-fatal): %s", e)

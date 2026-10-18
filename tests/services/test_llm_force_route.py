@@ -671,3 +671,36 @@ async def test_code_write_request_skips_keyword_templates(monkeypatch):
     result = await service._try_template_match("只輸出修好的for循環段", {}, 0.0)
 
     assert result is None
+
+
+# ---------------------------------------------------------------------------
+# D2 (2026-10-19): stats 初始化 + cache_hits 計數
+# ---------------------------------------------------------------------------
+
+
+def _stats_service():
+    """Hermetic service: explicit empty-backend config, no host probing."""
+    return AngelaLLMService({"backends": {}, "deployment": {"mode": "local"}, "settings": {}})
+
+
+def test_stats_initializes_cache_hits():
+    """cache_hits 必須在 __init__ 無條件初始化（曾缺鍵，靠 .get 混用掩飾）。"""
+    service = _stats_service()
+    assert service.stats["cache_hits"] == 0
+    assert "cache_hits" in service.stats
+
+
+@pytest.mark.asyncio
+async def test_cache_hit_increments_stats():
+    """快取命中走 stats['cache_hits'] += 1（D2 後為純 +=，不再 .get 混用）。"""
+    from core.interfaces.protocols import LLMResponse
+
+    service = _stats_service()
+    key = service._response_cache_key("what is 2+2", {})
+    assert key is not None, "cachable message must produce a cache key"
+    service._response_cache_put(key, LLMResponse(text="4", backend="unified", model="m"))
+
+    response = await service.generate_response("what is 2+2", {})
+
+    assert response.metadata.get("cached") is True
+    assert service.stats["cache_hits"] == 1

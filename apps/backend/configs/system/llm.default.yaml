@@ -159,13 +159,15 @@ backends:
 # Routing policy + fallback chain (migrated from llm_providers.default.yaml).
 routing:
   # ── this whole policy map is not consumed by code ──
-  # services/llm/router.py assigns `self._angela_routing = routing.get("policy")`
-  # at line 355 and never reads it; backend selection uses the router's own
-  # logic, and context['complexity'] is only logged. So math/code/task/general
-  # and the complexity_* entries describe intended behaviour, not current
-  # behaviour. Implementing policy-driven selection is a design decision, not a
-  # wiring fix, so it is recorded in
-  # tests/test_config_coverage.py::UNHONOURED_SECTIONS and asserted there.
+  # Nothing reads routing.policy: the router's former dead handle
+  # `self._angela_routing = routing.get("policy")` was removed (D2, 2026-10-19),
+  # and core/config_loader.py's get_routing_policy()/get_llm_config() have no
+  # callers. Backend selection uses the router's own logic, and
+  # context['complexity'] is only logged. So math/code/task/general and the
+  # complexity_* entries describe intended behaviour, not current behaviour.
+  # Implementing policy-driven selection is a design decision, not a wiring
+  # fix; absence of any reader is asserted in
+  # tests/test_config_coverage.py::test_routing_policy_map_is_either_used_or_documented.
   policy:
     math: "unified-1g"
     code: "ollama-llama3"

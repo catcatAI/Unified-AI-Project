@@ -244,6 +244,57 @@ class ED3NTrainer:
             duration_ms=(time.perf_counter() - start) * 1000.0,
         )
 
+    def evaluate_holdout(self, examples: List[TrainingExample]) -> TrainMetrics:
+        """純推論留出集評估——不 grow 字典、不做 Hebbian 權重調整。
+
+        計分口徑與 train_network_phase 的 forward 部分相同（activation >
+        activation_threshold 且 expected confidence > expected_conf 計命中），
+        但刻意**不含 dictionary encode 命中率**：訓練集的 dictionary 分數受
+        `_grow_missing_keys` 汙染（缺 key 一律 grow 成功 → 假 1.0），此方法
+        只衡量網絡前向激活。注意 forward() 內的 relation activation 會寫
+        分類器驅動的關係連接（推論固有行為，與訓練無關），不觸及 mapping
+        組的 Hebbian 權重。
+        """
+        if not examples:
+            return TrainMetrics(
+                phase="holdout",
+                loss=0.0,
+                accuracy=0.0,
+                learning_rate=self.network_lr,
+                epoch=self.current_epoch,
+                samples=0,
+                duration_ms=0.0,
+            )
+
+        start = time.perf_counter()
+        total_loss = 0.0
+        total_correct = 0
+        total_expected = 0
+
+        for ex in examples:
+            activations = self.network.forward(ex.input_keys)
+
+            for expected_key in ex.output_keys:
+                total_expected += 1
+                actual = activations.get(expected_key, 0.0)
+                total_loss += abs(ex.confidence - actual)
+
+                if actual > threshold_value(
+                    "ai.ed3n.trainer.activation_threshold", 0.3
+                ) and ex.confidence > confidence_value("ai.ed3n.trainer.expected_confidence", 0.5):
+                    total_correct += 1
+
+        n = len(examples)
+        return TrainMetrics(
+            phase="holdout",
+            loss=total_loss / max(total_expected, 1),
+            accuracy=total_correct / max(total_expected, 1),
+            learning_rate=self.network_lr,
+            epoch=self.current_epoch,
+            samples=n,
+            duration_ms=(time.perf_counter() - start) * 1000.0,
+        )
+
     def save(self, path: str) -> None:
         """Save trainer state (dictionary export + network params)."""
         import json
