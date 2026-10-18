@@ -42,6 +42,12 @@ web_search:
   user_agent: "AngelaAI/7.5.0"
   max_results: 3
   timeout: 2.5
+  # 研究管線（core/tools/research_pipeline.py）：抓前 K 頁內文做事實抽取，
+  # 來源按可信度排序（wikipedia/.gov/.edu/docs/定價路徑加分、SEO/社群殼沉底）。
+  research_fetch_k: 3
+  research_fetch_timeout: 8.0
+  trusted_domains: [] # 額外可信域（疊加於內建預設）
+  penalized_domains: [] # 額外降權域（疊加於內建預設）
 
 # Service-level settings (was angela_core.llm + llm_mode).
 settings:

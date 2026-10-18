@@ -119,6 +119,75 @@ class TestPersistGateInteractionHelper:
         asyncio.run(_persist_gate_interaction("q", "r", chat_svc, {}))
 
 
+class TestResearchLLMSynthesis:
+    """gate web_search 的 AI 歸納環：LLM 成文＋來源不丟；失敗降級抽取式。"""
+
+    MATERIAL = (
+        "「q」的搜尋結果（研究摘要：1/1 頁內文）：\n"
+        "【關鍵事實】\n• Free tier is 2,000 queries per month.\n"
+        "【來源（按可信度）】\n1. [高] Official — https://x.example/p"
+    )
+
+    def test_synthesis_applied_and_sources_kept(self):
+        from api.routes.chat_routes import _synthesize_research_response
+
+        async def fake_gen(*, prompt, max_tokens, temperature, system_prompt):
+            assert "研究問題" in prompt and "Free tier" in prompt
+            assert temperature == 0.2
+            return (
+                "綜合多個來源後：Brave Search API 的免費額度為每月 2,000 次查詢，"
+                "超過後按每千次 3 USD 計價；DuckDuckGo 未提供公開搜尋 API。"
+                "以上結論僅基於已抓取的來源材料。"
+            )
+
+        chat_svc = SimpleNamespace(generate_text=fake_gen)
+        out = asyncio.run(_synthesize_research_response("q", self.MATERIAL, chat_svc))
+        # LLM 沒帶來源 → 從材料補回
+        assert "免費額度為每月 2,000 次查詢" in out
+        assert "【來源（按可信度）】" in out
+        assert "https://x.example/p" in out
+
+    def test_synthesis_keeps_llm_sources_when_present(self):
+        from api.routes.chat_routes import _synthesize_research_response
+
+        llm_out = "綜合結論……\n【來源】\n1. [高] Official — https://y.example/p"
+
+        async def fake_gen(*, prompt, max_tokens, temperature, system_prompt):
+            return llm_out
+
+        chat_svc = SimpleNamespace(generate_text=fake_gen)
+        out = asyncio.run(_synthesize_research_response("q", self.MATERIAL, chat_svc))
+        assert out == llm_out  # 不重複附加
+
+    def test_no_llm_falls_back_to_material(self):
+        from api.routes.chat_routes import _synthesize_research_response
+
+        assert (
+            asyncio.run(_synthesize_research_response("q", self.MATERIAL, SimpleNamespace()))
+            == self.MATERIAL
+        )
+
+    def test_llm_exception_falls_back(self):
+        from api.routes.chat_routes import _synthesize_research_response
+
+        async def boom(*, prompt, max_tokens, temperature, system_prompt):
+            raise RuntimeError("model down")
+
+        chat_svc = SimpleNamespace(generate_text=boom)
+        out = asyncio.run(_synthesize_research_response("q", self.MATERIAL, chat_svc))
+        assert out == self.MATERIAL
+
+    def test_short_llm_output_falls_back(self):
+        from api.routes.chat_routes import _synthesize_research_response
+
+        async def tiny(*, prompt, max_tokens, temperature, system_prompt):
+            return "ok"
+
+        chat_svc = SimpleNamespace(generate_text=tiny)
+        out = asyncio.run(_synthesize_research_response("q", self.MATERIAL, chat_svc))
+        assert out == self.MATERIAL
+
+
 class TestWebSearchHistoryEndpoint:
     def test_history_endpoint_reads_tail(self, monkeypatch):
         from fastapi import FastAPI

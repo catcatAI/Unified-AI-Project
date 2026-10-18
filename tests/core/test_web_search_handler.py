@@ -84,31 +84,61 @@ class TestHandleResponseClean:
             self.queries.append(query)
             return self._results
 
-    def _handle_with(self, results, text="搜尋 python tutorial"):
+    @staticmethod
+    def _no_fetch(monkeypatch):
+        import core.tools.research_pipeline as rp
+
+        monkeypatch.setattr(rp, "fetch_page_text", lambda *a, **k: None)
+
+    def _handle_with(self, monkeypatch, results, text="搜尋 python tutorial"):
         from services.handlers.web_search_handler import WebSearchHandler
 
+        self._no_fetch(monkeypatch)
         h = WebSearchHandler()
         fake = self.FakeTool(results)
         h._tool = fake
         return asyncio.run(h.handle(text, "web_search"))
 
-    def test_success_no_double_paren(self):
+    def test_success_no_double_paren(self, monkeypatch):
         out = self._handle_with(
+            monkeypatch,
             [
                 {"title": "T1", "url": "https://a.example/1"},
                 {"title": "T2", "url": "https://b.example/2"},
-            ]
+            ],
         )
         assert "（網路搜尋）" not in out
         assert "搜尋結果" in out
         assert "https://a.example/1" in out
 
-    def test_error_message_clean(self):
-        out = self._handle_with([{"error": "boom"}])
+    def test_error_message_clean(self, monkeypatch):
+        out = self._handle_with(monkeypatch, [{"error": "boom"}])
         assert "（" not in out
         assert "搜尋時發生錯誤" in out
 
-    def test_empty_message_clean(self):
-        out = self._handle_with([])
+    def test_empty_message_clean(self, monkeypatch):
+        out = self._handle_with(monkeypatch, [])
         assert "沒有找到" in out
         assert "（" not in out
+
+    def test_research_answer_has_facts_when_fetch_succeeds(self, monkeypatch):
+        """抓到內文 → 答案含【關鍵事實】與抓取數（非連結清單）。"""
+        import core.tools.research_pipeline as rp
+
+        from services.handlers.web_search_handler import WebSearchHandler
+
+        page = (
+            "The Brave Search API free tier allows 2,000 queries per month for "
+            "developers. After that the paid plan starts at 3 USD per thousand queries. "
+            "DuckDuckGo does not offer a public search API."
+        )
+        monkeypatch.setattr(rp, "fetch_page_text", lambda *a, **k: page)
+        h = WebSearchHandler()
+        h._tool = self.FakeTool(
+            [{"title": "Brave pricing", "url": "https://brave.com/pricing", "snippet": ""}]
+        )
+        out = asyncio.run(h.handle("搜尋 Brave Search API 免費額度", "web_search"))
+        assert "【關鍵事實】" in out
+        assert "2,000 queries" in out
+        assert "【來源（按可信度）】" in out
+        assert "（研究摘要：1/1 頁內文）" in out

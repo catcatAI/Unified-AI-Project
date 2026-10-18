@@ -3,15 +3,15 @@ ANGELA-MATRIX: [L3-L4] [β] [B] [L2]
 网络搜索工具 — 使用 DuckDuckGo Lite 或 Wikipedia API。
 """
 
-import html
 import json
 import logging
 import re
 import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
+from html import unescape
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from core.utils import safe_error
 
@@ -140,6 +140,61 @@ class WebSearchTool:
         except Exception as e:
             logger.warning("web_search history append failed: %s", e, exc_info=True)
 
+    _ANCHOR_RE = re.compile(r"<a\s([^>]*?)>(.*?)</a>", re.DOTALL | re.IGNORECASE)
+    _HREF_ATTR_RE = re.compile(r"""href=["']([^"']+)["']""", re.IGNORECASE)
+    _CLASS_ATTR_RE = re.compile(r"""class=['"]([^'"]+)['"]""", re.IGNORECASE)
+    _SNIPPET_CELL_RE = re.compile(
+        r"<td class=['\"]result-snippet['\"]>(.*?)</td>", re.DOTALL | re.IGNORECASE
+    )
+
+    @staticmethod
+    def _clean_markup(fragment: str) -> str:
+        return unescape(re.sub(r"<[^>]+>", "", fragment)).strip()
+
+    def _parse_ddg_lite(self, html_text: str, num_results: int) -> List[Dict[str, Any]]:
+        """Parse DDG Lite HTML → [{title, url, snippet}]（snippet 配對真抓）。
+
+        實測（2026-10-18）：Lite 逐結果交錯
+        ``<a class='result-link'>`` 與 ``<td class='result-snippet'>``
+        ——舊解析硬寫 snippet=""（10 個摘要儲存格全被丟掉）。錨定
+        result-link 主解析 + 摘要 cursor 配對；無 result-link 時回退
+        裸錨點（R29 錄製夾具路徑，摘要缺失僅降級為空）。
+        """
+        snippets = [
+            (m.start(), self._clean_markup(m.group(1)))
+            for m in self._SNIPPET_CELL_RE.finditer(html_text)
+        ]
+        anchors: List[Tuple[int, int, str, str, bool]] = []
+        for m in self._ANCHOR_RE.finditer(html_text):
+            attrs, inner = m.group(1), m.group(2)
+            href_m = self._HREF_ATTR_RE.search(attrs)
+            if not href_m:
+                continue
+            url = href_m.group(1)
+            if url.startswith("/") or "duckduckgo.com" in url or not url.startswith("http"):
+                continue
+            cls_m = self._CLASS_ATTR_RE.search(attrs)
+            is_result = bool(cls_m and "result-link" in cls_m.group(1))
+            anchors.append((m.start(), m.end(), url, self._clean_markup(inner), is_result))
+        primary = [a for a in anchors if a[4]]
+        used = primary if primary else anchors
+        # 摘要 cursor：每個錚定錨點消費其後第一個未用儲存格（交錯序配對）
+        results: List[Dict[str, Any]] = []
+        snip_i = 0
+        for start, end, url, title, _cls in used:
+            while snip_i < len(snippets) and snippets[snip_i][0] < end:
+                snip_i += 1
+            snippet = ""
+            if snip_i < len(snippets):
+                snippet = snippets[snip_i][1]
+                snip_i += 1
+            if len(title) < 2:
+                continue
+            results.append({"title": title, "url": url, "snippet": snippet[:400]})
+            if len(results) >= num_results:
+                break
+        return results
+
     def _ddg_search(self, query: str, num_results: int = 5) -> List[Dict[str, Any]]:
         try:
             data = urllib.parse.urlencode({"q": query, "kl": ""}).encode()
@@ -155,27 +210,7 @@ class WebSearchTool:
                 req, timeout=self.timeout
             ) as resp:  # nosec B310 - scheme-validated in __init__
                 html_text = resp.read().decode("utf-8", errors="replace")
-            results: List[Dict[str, Any]] = []
-            # R29：舊正則要求 rel="nofollow"+<span> 標題，實測 DDG Lite
-            # 回傳是裸 <a href>文字</a>（0 命中 → 誤掉進英文 wiki 出歌手）。
-            # 寬容解析：取所有外部 http 連結，剝標籤取標題，站內/短標題丟棄。
-            for m in re.finditer(
-                r'<a\s[^>]*?href="([^"]+)"[^>]*>(.*?)</a>',
-                html_text,
-                re.DOTALL | re.IGNORECASE,
-            ):
-                url, inner = m.group(1), m.group(2)
-                if url.startswith("/") or "duckduckgo.com" in url:
-                    continue
-                if not url.startswith("http"):
-                    continue
-                title = html.unescape(re.sub(r"<[^>]+>", "", inner)).strip()
-                if len(title) < 2:
-                    continue
-                results.append({"title": title, "url": url, "snippet": ""})
-                if len(results) >= num_results:
-                    break
-            return results
+            return self._parse_ddg_lite(html_text, num_results)
         except Exception as e:
             logger.warning(f"DDG search failed: {e}", exc_info=True)
             return [{"error": safe_error(e)}]

@@ -771,6 +771,19 @@ async def _build_chat_context(
 
 
 
+def _gate_detail_text(action_result: Any) -> str:
+    """Handler 回傳裡的人讀細節（dict.message/status/path 或純字串）。"""
+    if isinstance(action_result, dict):
+        payload = action_result.get("result")
+        if isinstance(payload, dict):
+            return str(payload.get("message") or payload.get("status") or payload.get("path") or "")
+        if payload:
+            return str(payload)
+    if isinstance(action_result, str):
+        return action_result.strip()
+    return ""
+
+
 def _gate_execution_response(
     *,
     executed: bool,
@@ -787,17 +800,7 @@ def _gate_execution_response(
     request whose side effect had already been applied (or lost).
     """
     if executed:
-        detail = ""
-        if isinstance(action_result, dict):
-            payload = action_result.get("result")
-            if isinstance(payload, dict):
-                detail = str(
-                    payload.get("message") or payload.get("status") or payload.get("path") or ""
-                )
-            elif payload:
-                detail = str(payload)
-        elif isinstance(action_result, str):
-            detail = action_result.strip()
+        detail = _gate_detail_text(action_result)
         text = f"已執行：{handler_id}。" + (f"（{detail}）" if detail else "")
         source = "gate_executed"
         hit_source = "gate_executed"
@@ -838,6 +841,63 @@ async def _persist_gate_interaction(
         await store(user_message, response_text, context)
     except Exception as e:
         logger.warning("Gate interaction memory store failed: %s", e, exc_info=True)
+
+
+async def _synthesize_research_response(
+    user_message: str, extractive_answer: str, chat_svc: Any
+) -> str:
+    """web_search gate：LLM 把抽取式材料歸納成自然語言終答（走 AI）。
+
+    audit 2026-10-18 第二輪：研究回答「不走 AI」——handler 只吐結構化
+    材料。此處在 gate 回應前過一遍 LLM（短提示、低溫、只准用材料），
+    失敗/超時/LLM 不可用 → 原樣回傳抽取式答案（結構完整仍可答）。
+    來源清單不可丟：LLM 輸出缺「【來源」時從材料尾端補回。
+    """
+    if not chat_svc or not extractive_answer:
+        logger.info(
+            "[Research-Synth] no chat_svc=%s material=%d → extractive",
+            bool(chat_svc),
+            len(extractive_answer),
+        )
+        return extractive_answer
+    gen = getattr(chat_svc, "generate_text", None)
+    if gen is None:
+        logger.info("[Research-Synth] chat_svc lacks generate_text → extractive")
+        return extractive_answer
+    from core.system.config.magic_numbers import timeout_value
+
+    system_prompt = (
+        "你是研究助理。只根據給定的來源材料回答，嚴禁編造材料沒有的數字或結論。"
+        "材料不足以回答問題時，明說缺口並列出已知事實。150-350 字，"
+        "可條列；若多來源互相矛盾，指出矛盾並建議以官方頁為準。"
+        "結尾保留原樣的「【來源】」清單（含可信度標記）。"
+    )
+    prompt = f"研究問題：{user_message}\n\n來源材料：\n{extractive_answer}"
+    try:
+        out = await asyncio.wait_for(
+            gen(prompt=prompt, max_tokens=600, temperature=0.2, system_prompt=system_prompt),
+            timeout=timeout_value("research.llm_synthesis", 60.0),
+        )
+    except Exception as e:
+        logger.debug("research LLM synthesis skipped: %s", e)
+        return extractive_answer
+    if not out or len(str(out).strip()) < 40:
+        logger.info(
+            "[Research-Synth] empty/short LLM output (%s chars) → extractive",
+            0 if not out else len(str(out).strip()),
+        )
+        return extractive_answer
+    text = str(out).strip()
+    if "【來源" not in text:
+        tail_at = extractive_answer.rfind("【來源")
+        if tail_at != -1:
+            text = text + "\n" + extractive_answer[tail_at:]
+    logger.info(
+        "[Research-Synth] LLM answer applied (%d chars, material %d chars)",
+        len(text),
+        len(extractive_answer),
+    )
+    return text
 
 
 async def _handle_execution_gate(
@@ -896,7 +956,16 @@ async def _handle_execution_gate(
             schema_ver=schema_ver,
             session_id=session_id,
         )
-        await _persist_gate_interaction(user_message, resp.get("response_text", ""), chat_svc, context)
+        # web_search：回應本體是研究答案（AI 歸納；不套「已執行：」殼）。
+        if "web_search" in (outcome.handler or ""):
+            material = _gate_detail_text(outcome.result)
+            if material:
+                resp["response_text"] = resp["response"] = await _synthesize_research_response(
+                    user_message, material, chat_svc
+                )
+        await _persist_gate_interaction(
+            user_message, resp.get("response_text", ""), chat_svc, context
+        )
         return resp
     if outcome.action == OUTCOME_CANCEL:
         return {

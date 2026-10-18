@@ -9,9 +9,16 @@ from types import SimpleNamespace
 
 
 class TestDelegateToWebSearchTool:
+    @staticmethod
+    def _no_fetch(monkeypatch):
+        import core.tools.research_pipeline as rp
+
+        monkeypatch.setattr(rp, "fetch_page_text", lambda *a, **k: None)
+
     def test_search_delegates_with_normalized_shape(self, monkeypatch):
         from ai.agents.specialized.web_search_agent import WebSearchAgent
 
+        self._no_fetch(monkeypatch)
         agent = WebSearchAgent()
         seen = {}
 
@@ -33,9 +40,39 @@ class TestDelegateToWebSearchTool:
         assert out["result_count"] == 2
         assert [r["url"] for r in out["results"]] == ["https://a.example/1", "https://b.example/2"]
 
+    def test_search_message_is_research_answer_not_link_list(self, monkeypatch):
+        """message 即終答（_agent_route_result 直接拿它當回覆）。"""
+        import core.tools.research_pipeline as rp
+
+        from ai.agents.specialized.web_search_agent import WebSearchAgent
+
+        page = (
+            "The Brave Search API removed its free tier in February 2026 and now "
+            "bills 3 USD per thousand queries. DuckDuckGo keeps 1 free endpoint."
+        )
+        monkeypatch.setattr(rp, "fetch_page_text", lambda *a, **k: page)
+        agent = WebSearchAgent()
+
+        class FakeTool:
+            def search(self, query, num_results=5):
+                return [
+                    {"title": "Brave pricing", "url": "https://brave.com/pricing", "snippet": ""}
+                ]
+
+        monkeypatch.setattr(agent, "_tool", lambda: FakeTool())
+        out = agent.search("Brave Search API 免費額度")
+        assert out["status"] == "success"
+        assert out["answer"] == out["message"]
+        assert "【關鍵事實】" in out["message"]
+        assert "removed its free tier" in out["message"]
+        assert "【來源（按可信度）】" in out["message"]
+        assert "brave.com/pricing" in out["message"]
+        assert "Found" not in out["message"]
+
     def test_search_all_errors_is_error(self, monkeypatch):
         from ai.agents.specialized.web_search_agent import WebSearchAgent
 
+        self._no_fetch(monkeypatch)
         agent = WebSearchAgent()
 
         class FakeTool:
@@ -60,16 +97,21 @@ class TestDelegateToWebSearchTool:
 
 
 class TestFetchContentTextSummary:
+    """fetch_content 已委託 research_pipeline.fetch_page_text（單一實裝）——
+    此處打樁 urllib 共模，仍走真剝除鏈驗證輸出。"""
+
     def _fetch_with(self, monkeypatch, html):
-        from ai.agents.specialized import web_search_agent as wsa
+        import core.tools.research_pipeline as rp
+
+        from ai.agents.specialized.web_search_agent import WebSearchAgent
 
         class FakeResp:
             def __init__(self, data, content_type="text/html; charset=utf-8"):
                 self._data = data.encode("utf-8")
                 self.headers = {"Content-Type": content_type}
 
-            def read(self):
-                return self._data
+            def read(self, n=-1):
+                return self._data if n is None or n < 0 else self._data[:n]
 
             def __enter__(self):
                 return self
@@ -77,8 +119,8 @@ class TestFetchContentTextSummary:
             def __exit__(self, *a):
                 return False
 
-        monkeypatch.setattr(wsa.urllib.request, "urlopen", lambda req, timeout=15: FakeResp(html))
-        return wsa.WebSearchAgent().fetch_content("https://example.com/page")
+        monkeypatch.setattr(rp.urllib.request, "urlopen", lambda req, timeout=8: FakeResp(html))
+        return WebSearchAgent().fetch_content("https://example.com/page")
 
     def test_script_style_and_tags_stripped(self, monkeypatch):
         html = (
@@ -100,13 +142,15 @@ class TestFetchContentTextSummary:
         assert out["content_summary"] == "a b c"
 
     def test_fetch_error_status(self, monkeypatch):
-        from ai.agents.specialized import web_search_agent as wsa
+        import core.tools.research_pipeline as rp
 
-        def _boom(req, timeout=15):
+        from ai.agents.specialized.web_search_agent import WebSearchAgent
+
+        def _boom(req, timeout=8):
             raise OSError("refused")
 
-        monkeypatch.setattr(wsa.urllib.request, "urlopen", _boom)
-        out = wsa.WebSearchAgent().fetch_content("https://example.com/x")
+        monkeypatch.setattr(rp.urllib.request, "urlopen", _boom)
+        out = WebSearchAgent().fetch_content("https://example.com/x")
         assert out["status"] == "error"
 
 

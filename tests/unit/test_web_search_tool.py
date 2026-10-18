@@ -97,6 +97,56 @@ class TestDdgParserRegression:
         assert all(len(r["title"]) >= 2 for r in results)
 
 
+class TestDdgSnippetRegression:
+    """實測（2026-10-18）：Lite 逐結果交錯 result-link 與 result-snippet
+    ——舊解析硬寫 snippet=""，10 個摘要儲存格全丟。錨定解析＋cursor 配對。"""
+
+    HTML = (
+        "<html><body><table>"
+        "<tr><td><a rel='nofollow' href='https://a.example/p1' class='result-link'>"
+        "Result One <b>bold</b></a></td></tr>"
+        "<tr><td class='result-snippet'>The free tier allows <b>2,000</b> queries.</td></tr>"
+        "<tr><td><a rel='nofollow' href='https://b.example/p2' class='result-link'>"
+        "Result Two</a></td></tr>"
+        "<tr><td class='result-snippet'>Paid plan costs 3 USD per thousand.</td></tr>"
+        "</table></body></html>"
+    )
+
+    def _tool(self, monkeypatch, html_text):
+        from core.tools import web_search_tool as wst
+
+        class FakeResp:
+            def __init__(self, data):
+                self._data = data.encode("utf-8")
+
+            def read(self, n=-1):
+                return self._data
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *a):
+                return False
+
+        monkeypatch.setattr(
+            wst.urllib.request, "urlopen", lambda req, timeout=10: FakeResp(html_text)
+        )
+        return wst.WebSearchTool()
+
+    def test_snippets_paired_with_own_result(self, monkeypatch):
+        results = self._tool(monkeypatch, self.HTML)._ddg_search("q", 5)
+        assert len(results) == 2
+        assert results[0]["snippet"] == "The free tier allows 2,000 queries."
+        assert results[1]["snippet"] == "Paid plan costs 3 USD per thousand."
+        assert results[0]["title"] == "Result One bold"
+        assert results[1]["url"] == "https://b.example/p2"
+
+    def test_empty_snippet_when_no_cells(self, monkeypatch):
+        html = "<a href='https://a.example/x'>Bare anchor title</a>"
+        results = self._tool(monkeypatch, html)._ddg_search("q", 5)
+        assert results and results[0]["snippet"] == ""
+
+
 class TestWikiLanguage:
     """#6：中文查詢走 zh.wikipedia（原一律英語 API，中文備援語種不對）。"""
 

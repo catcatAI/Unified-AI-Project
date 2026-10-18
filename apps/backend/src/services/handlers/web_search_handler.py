@@ -50,23 +50,20 @@ class WebSearchHandler:
         return await self._search(query)
 
     async def _search(self, query: str) -> str:
-        """Search."""
+        """研究管線執行（排序→抓內文→抽事實→比對→結構化答案）。"""
         tool = self._search_tool
         if not tool:
             return "搜尋工具尚未就緒。"
         try:
-            results = await asyncio.to_thread(tool.search, query)
-            if not results:
-                return f"沒有找到「{query}」的相關結果。"
-            if isinstance(results[0], dict) and "error" in results[0]:
-                logger.warning(f"[WebSearchHandler] search returned error: {results[0]['error']}")
+            from core.tools.research_pipeline import run_research
+
+            research = await asyncio.to_thread(run_research, query, tool)
+            if not research.get("ok"):
+                logger.warning(f"[WebSearchHandler] search returned error: {research.get('error')}")
                 return "搜尋時發生錯誤，請稍後再試。"
-            lines = [
-                f"• {r.get('title', '?')} — {r.get('url', '?')}"
-                for r in results
-                if isinstance(r, dict)
-            ]
-            return f"「{query}」的搜尋結果：\n" + "\n".join(lines[:5])
+            if not research.get("sources"):
+                return f"沒有找到「{query}」的相關結果。"
+            return str(research.get("answer") or "")
         except Exception as e:
             logger.error(f"[WebSearchHandler] search failed: {e}", exc_info=True)
             return "搜尋時發生錯誤。"

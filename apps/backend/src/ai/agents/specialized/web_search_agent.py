@@ -16,11 +16,8 @@
 
 import logging
 import re
-import urllib.request
 from datetime import datetime
 from typing import Any, Dict, List, Optional
-
-from core.system.config.magic_numbers import timeout_value
 
 logger = logging.getLogger(__name__)
 
@@ -78,22 +75,38 @@ class WebSearchAgent:
         return WebSearchTool()
 
     def search(self, query: str, num_results: int = 5) -> Dict[str, Any]:
-        """Search via the shared WebSearchTool (DDG Lite + Wikipedia fallback)."""
+        """研究管線（排序/抓內文/事實抽取/交叉比對）；message 即終答。
+
+        舊版 message=\"Found N results\" 只給連結快取級回應——
+        ``_agent_route_result`` 直接拿 message 當回覆，主 AI 路徑同源。
+        """
         if not query:
             return {"status": "error", "message": "No search query provided"}
         try:
-            raw = self._tool().search(query, num_results=num_results)
+            from core.tools.research_pipeline import run_research
+
+            research = run_research(query, tool=self._tool(), num_results=num_results)
+            if not research.get("ok"):
+                return {"status": "error", "message": f"Search failed: {research.get('error')}"}
+            sources = research.get("sources") or []
+            if not sources:
+                return {
+                    "status": "success",
+                    "message": f"沒有找到「{query}」的相關結果。",
+                    "query": query,
+                    "result_count": 0,
+                    "results": [],
+                }
             results = [
                 {
                     "url": r.get("url", ""),
                     "title": r.get("title", ""),
                     "snippet": r.get("snippet", ""),
+                    "trust": r.get("trust", "中"),
                 }
-                for r in raw
-                if isinstance(r, dict) and not r.get("error")
+                for r in sources
+                if isinstance(r, dict)
             ]
-            if raw and all(isinstance(r, dict) and r.get("error") for r in raw):
-                return {"status": "error", "message": f"Search failed: {raw[0].get('error')}"}
             self._search_history.append(
                 {
                     "query": query,
@@ -103,10 +116,16 @@ class WebSearchAgent:
             )
             if len(self._search_history) > self._MAX_SEARCH_HISTORY:
                 self._search_history = self._search_history[-self._MAX_SEARCH_HISTORY :]
-            logger.info(f"search: '{query}' -> {len(results)} results (via WebSearchTool)")
+            logger.info(
+                "search: '%s' -> %d sources, %d facts (via research pipeline)",
+                query,
+                len(results),
+                len(research.get("facts") or []),
+            )
             return {
                 "status": "success",
-                "message": f"Found {len(results)} results for '{query}'",
+                "message": research.get("answer") or f"找到 {len(results)} 個來源。",
+                "answer": research.get("answer") or "",
                 "query": query,
                 "result_count": len(results),
                 "results": results,
@@ -115,35 +134,28 @@ class WebSearchAgent:
             logger.error(f"search failed for '{query}': {e}")
             return {"status": "error", "message": f"Search failed: {e}"}
 
-    # 真文字摘要：script/style 剝除 → 去標籤 → 空白收斂 → 前 500 字元。
-    _TAG_RE = re.compile(r"<(script|style)[^>]*>.*?</\1>", re.DOTALL | re.IGNORECASE)
-    _ANY_TAG_RE = re.compile(r"<[^>]+>")
-    _WS_RE = re.compile(r"\s+")
-
     def fetch_content(self, url: str) -> Dict[str, Any]:
-        """Fetch a URL and return a plain-text summary (not raw HTML)."""
+        """Fetch a URL → plain-text summary（共用 research_pipeline.fetch_page_text）。"""
         if not url:
             return {"status": "error", "message": "No URL provided"}
         try:
-            req = urllib.request.Request(
-                url, headers={"User-Agent": "Mozilla/5.0 (compatible; AngelaAI/7.5.0)"}
-            )
-            with urllib.request.urlopen(
-                req, timeout=timeout_value("web_fetch.http", 15)
-            ) as resp:  # nosec B310 - caller passes http(s) URLs from user text; scheme guard below
-                content_type = resp.headers.get("Content-Type", "")
-                raw = resp.read()
-            text = raw.decode("utf-8", errors="replace")
-            cleaned = self._TAG_RE.sub(" ", text)
-            cleaned = self._ANY_TAG_RE.sub(" ", cleaned)
-            cleaned = self._WS_RE.sub(" ", cleaned).strip()
-            summary = cleaned[:500]
-            logger.info(f"fetch_content: {url} -> {len(text)} bytes, summary={len(summary)} chars")
+            from core.tools.research_pipeline import fetch_page_text
+
+            text = fetch_page_text(url, min_chars=0)
+            if not text:
+                logger.info(f"fetch_content: {url} -> no extractable text")
+                return {
+                    "status": "error",
+                    "message": f"No extractable text from {url}",
+                    "url": url,
+                }
+            summary = text[:500]
+            logger.info(f"fetch_content: {url} -> {len(text)} chars, summary={len(summary)}")
             return {
                 "status": "success",
-                "message": f"Fetched {url} ({len(text)} bytes)",
+                "message": f"Fetched {url} ({len(text)} chars)",
                 "url": url,
-                "content_type": content_type,
+                "content_type": "text/plain",
                 "content_summary": summary,
                 "content_length": len(text),
             }
