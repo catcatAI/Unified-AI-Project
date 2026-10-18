@@ -2270,7 +2270,16 @@ class AngelaLLMService:
         self, bt, user_message: str, context: Dict[str, Any], gen_params
     ):
         try:
-            msgs = self._construct_angela_prompt(user_message, context)
+            system_prompt = str(context.get("system_prompt") or "")
+            if system_prompt:
+                # generate_text(editorial) 契約：直給 system+原文，不做
+                # Angela 風格包裝（generate_text 明示「不走 Angela 風格包裝」）。
+                msgs = [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_message},
+                ]
+            else:
+                msgs = self._construct_angela_prompt(user_message, context)
             resp = await self._submit_backend_call(
                 self.backends[bt],
                 prompt=msgs[-1]["content"],
@@ -2306,7 +2315,9 @@ class AngelaLLMService:
             return None
         text = user_message.strip()
         # deterministic layers / QA shapes stay on unified
-        if self._fusion_open_domain_gate(text):
+        # 封閉域判定服務的是「使用者問題」的路由；editorial 呼叫（潤色/改寫）
+        # 經 context 標明非查詢任務，數字/= 不代表它在解題 → 不適用該判定。
+        if not context.get("bypass_fusion_gate") and self._fusion_open_domain_gate(text):
             return None
         # pick best non-unified backend (compare the backend's CATEGORY —
         # local/cloud — against the mode gate, not the provider name:
@@ -4503,16 +4514,28 @@ class AngelaLLMService:
             logger.warning(f"ED3N fallback text failed: {e}", exc_info=True)
             return ""
 
+    @staticmethod
+    def _editorial_fusion_ctx(system_prompt: str, editorial: bool) -> Dict[str, Any]:
+        """editorial（潤色/改寫）呼叫的 fusion context；一般呼叫維持空 dict。"""
+        if not editorial:
+            return {}
+        return {"bypass_fusion_gate": True, "system_prompt": system_prompt}
+
     async def generate_text(
         self,
         prompt: str,
         max_tokens: int = 512,
         temperature: float = 0.7,
         system_prompt: str = "",
+        editorial: bool = False,
     ) -> str:
         """
         純文字生成介面（供 ProjectCoordinator 等內部元件使用）
         不走 Angela 風格包裝，直接返回 LLM 原始文字。
+
+        editorial=True：逐段改寫/潤色類任務（非使用者查詢）。封閉域閘門
+        （數字運算/=、QA 命中）不適用於改寫 → 允許 fusion 雲端執行，並
+        把 system_prompt 原樣帶給後端（不做 Angela 包裝）。
         """
         messages = []
         if system_prompt:
@@ -4530,7 +4553,9 @@ class AngelaLLMService:
             gen_params = GenerationParams(
                 timeout_value("llm.generate_text", 60.0), temperature, max_tokens
             )
-            fused = await self._maybe_cloud_fusion(prompt, {}, gen_params)
+            fused = await self._maybe_cloud_fusion(
+                prompt, self._editorial_fusion_ctx(system_prompt, editorial), gen_params
+            )
             if fused is not None and fused.text and not fused.error:
                 logger.info("[generate_text] fusion → %s", fused.backend)
                 return str(fused.text)

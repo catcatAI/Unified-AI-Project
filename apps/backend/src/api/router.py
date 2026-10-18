@@ -265,6 +265,14 @@ except ImportError as e:
     logger.warning(f"llm_routes not available: {e}")
 
 try:
+    from api.routes.research_routes import router as research_router
+
+    router.include_router(research_router, prefix="/api/v1")
+    logger.debug("Included research_routes")
+except ImportError as e:
+    logger.warning(f"research_routes not available: {e}")
+
+try:
     from api.routes.context_routes import router as context_router
 
     router.include_router(context_router, prefix="/api/v1")

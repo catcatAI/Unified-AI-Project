@@ -152,7 +152,7 @@
 ## 五、訓練/運行前檢查清單（Pre-flight Checklist）
 
 **A. 權重與可重現性（先修再練）**
-- [ ] A1 修 npz key 前綴斷鏈（provider 讀 `core_*` 或 save 寫無前綴＋互相回退），並加 round-trip 測試 ← **不修則訓練白跑**
+- [x] A1 修 npz key 前綴斷鏈（provider 讀 `core_*` 或 save 寫無前綴＋互相回退），並加 round-trip 測試 ← **不修則訓練白跑** — ✅ 2026-10-18：`_load_checkpoint_weights` 改 `engine.load()` 全狀態優先＋容錯移植雙鍵（`core_*`/裸鍵+feat/feat_bool），round-trip 測試 `test_unified_engine.py::TestProviderNpzChain` 通過（commit 7a11c9c22）
 - [ ] A2 決定 checkpoint 來源：從 `/media/covo/ZX` 機器取回，或本機重訓（`scripts/train_unified.py` 入庫路線）
 - [ ] A3 `train_exact_bytes`/`heldout_bpc` 接上呼叫者（訓練報表必須由留出集產生）
 - [ ] A4 補齊 3 個缺數據檔或明確從 pipeline 移除（禁止靜默 skip）
@@ -160,14 +160,14 @@
 - [ ] A6 統一評測入口：`benchmark_ed3n_garden --gate`＋留出集數字入 JSON 工件（停止以 MD 散佈分數）
 
 **B. AI 路徑真實性（先確認「走 AI」再談「AI 好不好」）**
-- [ ] B1 `generate_text` 接 fusion 或明式指定後端（研究合成/內部元件不該旁路 google）
-- [ ] B2 修 llm_routes decorator 錯位（/llm/status、/llm/config 422）
-- [ ] B3 更正 `llm.default.yaml:17` 註解（ed3n/garden 不可註冊）；決定 ModelBus 0 models 是終態還是待接
+- [x] B1 `generate_text` 接 fusion 或明式指定後端（研究合成/內部元件不該旁路 google）— ✅ 2026-10-18：`generate_text` 內建 `_maybe_cloud_fusion` 嘗試（開域→unified→google 同主路徑），`test_generate_text_fusion.py` 4 測試通過
+- [x] B2 修 llm_routes decorator 錯位（/llm/status、/llm/config 422）— ✅ 2026-10-18：decorator 歸位 `llm_status`/`llm_config_set`，另新增 `GET /llm/solution-rules` 統計端點，`TestRouteBinding` 5 測試通過
+- [x] B3 更正 `llm.default.yaml:17` 註解（ed3n/garden 不可註冊）；決定 ModelBus 0 models 是終態還是待接 — ✅ 2026-10-18：註解已更正；**決定：ModelBus 0 models 為終態**（註冊制已由 LLM bus + PriorityNegotiator 取代，不再接）
 - [ ] B4 分通道定義「主 ai」：測評分開計 COMPOSED / fusion-google / unified / fallback
 
 **C. 環境選擇（運行前定案）**
 - [ ] C1 離線策略三選一：起 llama-server(8080, 用 data/models gguf) / 起 ollama(qwen2.5) / 純雲端——現況三者皆未接，離線開放域＝0
-- [ ] C2 `preferred_backend` 對齊可用後端（否則每啟動 15s health 白付）
+- [x] C2 `preferred_backend` 對齊可用後端（否則每啟動 15s health 白付）— ✅ 2026-10-18：`preferred_backend: llamacpp→unified`（主路徑），llamacpp-local/qwen `enabled:false`（8080/8081 curl 實測未聽，停啟動白付 3×5s health 探測）
 - [ ] C3 key 治理：`keys.*.yaml` 接載或刪除；避免單 `.env` 隱性依賴
 
 **D. 配置一致性**

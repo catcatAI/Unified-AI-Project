@@ -20,6 +20,8 @@ backends:
     context_window: 2048
     timeout: 120
 settings:
-  preferred_backend: llamacpp
+  # C2: 對齊現有可用後端 — llamacpp 已停用，保留舊值只會每啟動
+  # 打一發 "not in available" warning 並走 fallback。主路徑＝unified（→fusion google）。
+  preferred_backend: unified
 deployment:
   mode: local+llm
