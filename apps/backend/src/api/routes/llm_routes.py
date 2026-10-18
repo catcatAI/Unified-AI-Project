@@ -2,8 +2,11 @@
 ANGELA-MATRIX: [L5] [β] [B] [L3]
 LLM management API — backend status and switching.
 
-GET  /llm/status   — Backend list with health, active, stats
-POST /llm/switch   — Switch active backend
+GET  /llm/status         — Backend list with health, active, stats
+POST /llm/switch         — Switch active backend
+GET  /llm/config         — Effective settings subset (Desktop Settings prefill)
+POST /llm/config         — Persist whitelisted settings to llm.user.yaml
+GET  /llm/solution-rules — 規則沉澱層統計（rule store stats）
 """
 
 import logging
@@ -23,7 +26,6 @@ async def _get_llm():
     return await get_llm_service()
 
 
-@router.get("/status")
 def _llm_backend_category(llm_svc: Any, btype: Any) -> str:
     """Classify a backend as local/cloud using the router's own rule when available."""
     resolver = getattr(llm_svc, "backend_category", None)
@@ -47,6 +49,7 @@ def _llm_backend_health(llm_svc: Any, btype: Any) -> str:
     return "unknown"
 
 
+@router.get("/status")
 async def llm_status() -> Dict[str, Any]:
     """Return LLM backend status with health indicators."""
     try:
@@ -106,6 +109,18 @@ _LLM_CONFIG_BOOLS = (
 _LLM_CONFIG_STRS = ("settings.preferred_backend",)
 
 
+@router.get("/solution-rules")
+async def llm_solution_rules_stats() -> Dict[str, Any]:
+    """規則沉澱層統計（獨立於 LLM service — 供 ops/桌面即時監控）。"""
+    try:
+        from ai.rules import get_rule_store
+
+        return {"ok": True, **get_rule_store().stats()}
+    except Exception as exc:
+        logger.warning("solution rule stats unavailable: %s", exc)
+        return {"ok": False, "error": str(exc)}
+
+
 def _get_path(d: Dict[str, Any], dotted: str):
     cur: Any = d
     for part in dotted.split("."):
@@ -137,7 +152,6 @@ async def llm_config_get() -> Dict[str, Any]:
     return {"ok": True, "config": out, "restart_required": True}
 
 
-@router.post("/config")
 def _validate_enum(dotted: str, value: Any) -> Optional[str]:
     """Validate enum membership; returns error message or None."""
     if dotted not in _LLM_CONFIG_ENUMS:
@@ -202,6 +216,7 @@ def _set_nested(patch: Dict[str, Any], dotted: str, value: Any) -> None:
     node[parts[-1]] = value
 
 
+@router.post("/config")
 async def llm_config_set(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """Persist LLM settings to the user config layer (``llm.user.yaml``).
 

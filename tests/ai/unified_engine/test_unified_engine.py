@@ -257,3 +257,55 @@ class TestDeterministicLayers:
         out = eng.process("not (true and false)=?")
         assert eng._last_route == "deterministic-logic"
         assert "true" in out.lower()
+
+
+@pytest.fixture(scope="module")
+def saved_npz(tmp_path_factory):
+    """One save() shared by the chain tests (~250 MB npz — don't pay it twice)."""
+    eng = UnifiedEngine(memory_cap_mb=2048)
+    eng.learn_batch(["3+5=8", "752 * 851=639952", "a nor b=False"])
+    eng.freeze()
+    path = str(tmp_path_factory.mktemp("npz") / "model.npz")
+    eng.save(path)
+    return eng, path
+
+
+class TestProviderNpzChain:
+    """A1: provider load must read what save() writes — the train→save→load
+    chain used to break because save() emits ``core_*`` keys while the old
+    provider loader transplanted only bare keys (and dropped feat/scalars/meta).
+    """
+
+    def test_provider_loads_save_written_npz(self, saved_npz):
+        import numpy as np
+
+        from services.llm.providers.unified import UnifiedBackend
+
+        source, path = saved_npz
+        fresh = UnifiedEngine(memory_cap_mb=2048)
+        UnifiedBackend._load_checkpoint_weights(fresh, path)
+        assert np.array_equal(fresh.core._pos, source.core._pos)
+        assert np.array_equal(fresh.core._gram3, source.core._gram3)
+        assert np.array_equal(fresh.core._feat, source.core._feat)
+        assert np.array_equal(fresh.core._feat_bool, source.core._feat_bool)
+        assert fresh.core._bytes_seen == source.core._bytes_seen  # scalars restored
+        assert fresh._frozen is True  # meta restored
+
+    def test_provider_accepts_legacy_bare_key_npz(self, tmp_path):
+        import numpy as np
+
+        from services.llm.providers.unified import UnifiedBackend
+
+        bare = {
+            name: np.full((6, 3), i + 1.0, dtype=np.float32)
+            for i, name in enumerate(("pos", "trans", "gram", "gram3", "gram5", "uni"))
+        }
+        bare["feat"] = np.full((6, 2), 7.0, dtype=np.float32)
+        bare["feat_bool"] = np.zeros((6, 2), dtype=np.float32)
+        path = str(tmp_path / "legacy.npz")
+        np.savez(path, **bare)
+        engine = UnifiedEngine(memory_cap_mb=2048)
+        UnifiedBackend._load_checkpoint_weights(engine, path)
+        assert np.array_equal(engine.core._pos, bare["pos"])
+        assert np.array_equal(engine.core._feat, bare["feat"])
+        assert np.array_equal(engine.core._feat_bool, bare["feat_bool"])

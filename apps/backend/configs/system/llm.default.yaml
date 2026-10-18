@@ -14,9 +14,10 @@
 # runtime fallback for provider __init__ defaults.
 #
 # deployment.mode controls WHICH backend categories are allowed:
-#   local      -> only local neural models (ed3n/garden/ollama/llamacpp)
+#   local      -> only local LLM servers (ollama/llamacpp; ed3n/garden 是內部
+#                 fallback 路徑，不是 LLM bus 可註冊的後端 — 勿再列於此)
 #   local+llm  -> local + external cloud LLM (opt-in, explicit)
-#   llm        -> only external cloud LLM (no local neural)
+#   llm        -> only external cloud LLM (no local LLM servers)
 #   auto       -> local + cloud all open; engine auto-selects best backend
 #
 # selection controls HOW backends are chosen within the allowed set:

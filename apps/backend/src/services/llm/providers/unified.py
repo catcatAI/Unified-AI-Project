@@ -96,19 +96,33 @@ class UnifiedBackend(BaseLLMBackend):
 
     @staticmethod
     def _load_checkpoint_weights(engine: Any, checkpoint: str) -> None:
-        """Load npz slot arrays onto engine.core, or fall back to engine.load()."""
+        """Restore checkpoint state onto the engine (A1 save→load chain fix).
+
+        unified/2 npz and unified/1 JSON are fully restored by ``engine.load``
+        (8 slot arrays + scalars + meta + SemanticQA) — the previous code
+        bypassed it for npz and transplanted only 6 bare-key arrays, so files
+        written by ``save()`` (``core_*`` keys) never loaded and even bare-key
+        files silently lost feat/scalars/meta. The raw transplant below is a
+        tolerant last-resort path for npz files ``engine.load`` rejects; it
+        accepts **both** the ``core_*`` keys save() writes and legacy bare
+        keys, closing the chain in both directions.
+        """
         if not checkpoint or not os.path.isfile(checkpoint):
             return
-        if checkpoint.endswith(".npz"):
-            import numpy as np
-
-            z = np.load(checkpoint, allow_pickle=False)
-            core = engine.core
-            for attr in ("pos", "trans", "gram", "gram3", "gram5", "uni"):
-                if attr in z:
-                    setattr(core, f"_{attr}", z[attr])
-        else:
+        if not checkpoint.endswith(".npz"):
             engine.load(checkpoint)
+            return
+        if engine.load(checkpoint):
+            return
+        import numpy as np
+
+        z = np.load(checkpoint, allow_pickle=False)
+        core = engine.core
+        for attr in ("pos", "trans", "gram", "gram3", "gram5", "uni", "feat", "feat_bool"):
+            if f"core_{attr}" in z:
+                setattr(core, f"_{attr}", z[f"core_{attr}"])
+            elif attr in z:
+                setattr(core, f"_{attr}", z[attr])
 
     @staticmethod
     def _resolve_qa_path(checkpoint: str) -> str:

@@ -2036,8 +2036,9 @@ async def _run_chat_pipeline(
     _fire_causal_learning(response_text, user_message, session_id)
     _log_loop_signal(response_text, session_id)
 
-    # Step 10b/10c: Post-response feedback loops (online learning + intent outcome)
-    _record_post_response_feedback(context, response_text, user_message)
+    # Step 10b/10c/10e: Post-response feedback loops (online learning + intent
+    # outcome + solution-rule outcome)
+    _record_post_response_feedback(context, response_text, user_message, _was_truncated)
 
     _set_latest_response(
         session_id,
@@ -2358,14 +2359,44 @@ def _record_meta_calibration_sample(context: Dict[str, Any], response_text: str)
 
 
 def _record_post_response_feedback(
-    context: Dict[str, Any], response_text: str, user_message: str
+    context: Dict[str, Any],
+    response_text: str,
+    user_message: str,
+    was_truncated: bool = False,
 ) -> None:
-    """Steps 10b/10c/10d: post-response feedback loops (best-effort).
+    """Steps 10b/10c/10d/10e: post-response feedback loops (best-effort).
 
     10c online self-learning (dictionary classifier) + 10b intent outcome
-    recording (C³ 5.0→6.0) + 10d meta calibration sampling (問題單 6).
+    recording (C³ 5.0→6.0) + 10d meta calibration sampling (問題單 6)
+    + 10e solution-rule outcome (規則沉澱層閉環回饋 → RuleStore.record_outcome).
     None may raise into the response path.
     """
+    # 10e: 規則命中回饋。Success = 存的答案真的送到（逐字相等或原文含於回覆，
+    # 容忍輕度後製）且未被截斷；空回覆/截斷 = 失敗 → 降信心（兩敗出局閉環）。
+    try:
+        hit = context.pop("_solution_rule_hit", None)
+        if hit:
+            from ai.rules import get_rule_store
+
+            answer = str(hit.get("answer") or "").strip()
+            resp = (response_text or "").strip()
+            compact_answer = "".join(answer.split())
+            compact_resp = "".join(resp.split())
+            if len(answer) >= 8:
+                served = bool(compact_answer) and compact_answer in compact_resp
+            else:
+                served = bool(compact_answer) and compact_answer == compact_resp
+            success = served and not was_truncated and bool(resp)
+            recorded = get_rule_store().record_outcome(str(hit.get("rule_id") or ""), success)
+            logger.debug(
+                "Solution rule outcome: rule=%s success=%s recorded=%s",
+                hit.get("rule_id"),
+                success,
+                recorded,
+            )
+    except Exception as e:
+        logger.warning(f"Solution rule feedback skipped: {e}", exc_info=True)
+
     try:
         _learn_from_classification_feedback(user_message, response_text, context)
     except Exception as e:

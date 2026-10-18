@@ -324,3 +324,71 @@ class TestLLMStatusEndpoint:
         out = await llm_routes.llm_status()
         assert out["backends"][0]["type"] == "local"
         assert out["backends"][0]["health"] == "unknown"
+
+
+class TestRouteBinding:
+    """B2 decorator-drift regression: /status and /config used to answer 422.
+
+    ``@router.get("/status")`` had drifted onto the private helper
+    ``_llm_backend_category`` and ``@router.post("/config")`` onto
+    ``_validate_enum`` — FastAPI then bound those helper signatures as request
+    handlers (missing required params → 422) while the real ``llm_status`` /
+    ``llm_config_set`` handlers were never registered as routes. Direct unit
+    calls to llm_status() could not see this; route resolution can.
+    """
+
+    @staticmethod
+    def _endpoints():
+        """Bound handlers on the router itself (path already carries the
+        ``/llm`` prefix). App-level include_router introspection is avoided on
+        purpose: FastAPI ≥0.140 nests included routers as ``_IncludedRouter``,
+        so ``app.routes`` no longer lists the APIRoutes directly.
+        """
+        from api.routes import llm_routes
+
+        return {
+            (route.path, tuple(sorted(route.methods or []))): route.endpoint
+            for route in llm_routes.router.routes
+            if getattr(route, "methods", None)
+        }
+
+    def test_status_bound_to_real_handler(self) -> None:
+        endpoint = self._endpoints().get(("/llm/status", ("GET",)))
+        assert endpoint is not None
+        assert endpoint.__name__ == "llm_status"
+
+    def test_config_post_bound_to_real_handler(self) -> None:
+        endpoint = self._endpoints().get(("/llm/config", ("POST",)))
+        assert endpoint is not None
+        assert endpoint.__name__ == "llm_config_set"
+
+    def test_helpers_are_not_bound_as_routes(self) -> None:
+        names = {ep.__name__ for ep in self._endpoints().values()}
+        assert "_llm_backend_category" not in names
+        assert "_validate_enum" not in names
+
+    def test_config_get_and_switch_still_bound(self) -> None:
+        endpoints = self._endpoints()
+        assert endpoints.get(("/llm/config", ("GET",))) is not None
+        assert endpoints.get(("/llm/config", ("GET",))).__name__ == "llm_config_get"
+        assert endpoints.get(("/llm/switch", ("POST",))).__name__ == "llm_switch"
+
+    def test_solution_rules_stats_endpoint_responds(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path
+    ) -> None:
+        from ai.rules.solution_rules import RuleStore
+        from api.routes.llm_routes import router as llm_router
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+
+        store = RuleStore(path=str(tmp_path / "rules.json"))
+        monkeypatch.setattr("ai.rules.get_rule_store", lambda: store)
+        app = FastAPI()
+        app.include_router(llm_router, prefix="/api/v1")
+        client = TestClient(app)
+        resp = client.get("/api/v1/llm/solution-rules")
+        assert resp.status_code == 200
+        payload = resp.json()
+        assert payload["ok"] is True
+        assert payload["total"] == 0
+        assert payload["by_kind"] == {}

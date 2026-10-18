@@ -4423,6 +4423,10 @@ class AngelaLLMService:
             rule.confidence,
             response_time,
         )
+        # P1 closed loop: chat_routes pops this marker after the response ships
+        # and feeds record_outcome(success/failure) back into the rule's
+        # confidence (consume-once; context is per-turn, so no cross-turn leak).
+        context["_solution_rule_hit"] = {"rule_id": rule.id, "answer": rule.answer}
         return LLMResponse(
             text=rule.answer,
             backend="solution-rule",
@@ -4518,6 +4522,20 @@ class AngelaLLMService:
         if not self.is_available or self.active_backend is None:
             ed3n_text = self._ed3n_fallback_text(prompt)
             return ed3n_text
+
+        # B1: internal callers (research synthesis, coordinator, …) must not
+        # bypass fusion — open-domain prompts get the same unified→LLM
+        # delegation as the main path; gated prompts fall through to unified.
+        try:
+            gen_params = GenerationParams(
+                timeout_value("llm.generate_text", 60.0), temperature, max_tokens
+            )
+            fused = await self._maybe_cloud_fusion(prompt, {}, gen_params)
+            if fused is not None and fused.text and not fused.error:
+                logger.info("[generate_text] fusion → %s", fused.backend)
+                return str(fused.text)
+        except Exception as exc:
+            logger.debug("generate_text fusion skipped: %s", exc)
 
         async def _do_call() -> Optional[LLMResponse]:
             backend = self.active_backend
