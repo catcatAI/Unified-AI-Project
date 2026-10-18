@@ -209,6 +209,14 @@ except ImportError as e:
     logger.warning(f"review_routes not available: {e}")
 
 try:
+    from api.routes.web_search_routes import router as web_search_router
+
+    router.include_router(web_search_router, prefix="/api/v1")
+    logger.debug("Included web_search_routes")
+except ImportError as e:
+    logger.warning(f"web_search_routes not available: {e}")
+
+try:
     from api.routes.multimodal_routes import router as multimodal_router
 
     router.include_router(multimodal_router, prefix="/api/v1")

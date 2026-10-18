@@ -6,9 +6,23 @@ Delegates to WebSearchTool for actual web search.
 
 import asyncio
 import logging
+import re
 from typing import Optional
 
 logger = logging.getLogger(__name__)
+
+# 錨定前綴剔除（audit 2026-10-18）：舊實作對每個前綴 `re.sub(..., count=1)`
+# **未錨定字串開頭**——「查/找/search」等單字元詞會從字串中間任何位置摳掉
+# （實測「幫我調查 X Search API」→「幫我調 X  API」，搜尋拿殘缺查詢跑）。
+# 改為單一錨定 alternation，一字串最多循環剝 3 層（「請幫我搜尋 X」）。
+_INTENT_PREFIX_RE = re.compile(
+    r"^\s*(?:請?幫我|可以幫我|請你?)?\s*"
+    r"(?:搜尋|搜索|搜尋一下|搜索一下|查詢|查找|調查|调研|搜一下|查一下|"
+    r"lookup|search|google|find|查|找)?\s*",
+    re.IGNORECASE,
+)
+_ABOUT_RE = re.compile(r"^\s*(?:關於|有關|看看)\s*")
+_TRAILING_PUNCT_RE = re.compile(r"[\s,.!?;:，。！？；：]+$")
 
 
 class WebSearchHandler:
@@ -32,43 +46,42 @@ class WebSearchHandler:
         """Extract query from text, execute search, return formatted results."""
         query = self._extract_query(text)
         if not query:
-            return "（網路搜尋）請告訴我要搜尋什麼。"
+            return "請告訴我要搜尋什麼。"
         return await self._search(query)
 
     async def _search(self, query: str) -> str:
         """Search."""
         tool = self._search_tool
         if not tool:
-            return "（網路搜尋）搜尋工具尚未就緒。"
+            return "搜尋工具尚未就緒。"
         try:
             results = await asyncio.to_thread(tool.search, query)
             if not results:
-                return f"（網路搜尋）沒有找到「{query}」的相關結果。"
+                return f"沒有找到「{query}」的相關結果。"
             if isinstance(results[0], dict) and "error" in results[0]:
                 logger.warning(f"[WebSearchHandler] search returned error: {results[0]['error']}")
-                return "（網路搜尋）搜尋時發生錯誤，請稍後再試。"
+                return "搜尋時發生錯誤，請稍後再試。"
             lines = [
                 f"• {r.get('title', '?')} — {r.get('url', '?')}"
                 for r in results
                 if isinstance(r, dict)
             ]
-            return f"（網路搜尋）「{query}」的搜尋結果：\n" + "\n".join(lines[:5])
+            return f"「{query}」的搜尋結果：\n" + "\n".join(lines[:5])
         except Exception as e:
             logger.error(f"[WebSearchHandler] search failed: {e}", exc_info=True)
-            return "（網路搜尋）搜尋時發生錯誤。"
+            return "搜尋時發生錯誤。"
 
     def _extract_query(self, text: str) -> Optional[str]:
-        """Extract the search query from user text by removing intent keywords."""
-        import re
+        """Strip intent prefixes **anchored at string start only**.
 
-        prefixes = sorted(
-            ["搜尋", "搜索", "幫我搜", "幫我查", "google", "search", "lookup", "查", "找"],
-            key=len,
-            reverse=True,
-        )
-        for prefix in prefixes:
-            pattern = re.compile(re.escape(prefix), re.IGNORECASE)
-            text = pattern.sub("", text, count=1).strip()
-        text = re.sub(r"^(關於|有關|看看|幫我|請幫我|可以幫我)\s*", "", text).strip()
-        text = re.sub(r"[\s,.!?;:，。！？；：]+$", "", text).strip()
+        中段的「查/找/Search」等是查詢內容的一部分，絕不可摳除。
+        """
+        text = (text or "").strip()
+        for _ in range(3):
+            stripped = _INTENT_PREFIX_RE.sub("", text, count=1)
+            if stripped == text:
+                break
+            text = stripped
+        text = _ABOUT_RE.sub("", text).strip()
+        text = _TRAILING_PUNCT_RE.sub("", text).strip()
         return text if text and len(text) >= 2 else None

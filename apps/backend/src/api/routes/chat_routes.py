@@ -822,6 +822,24 @@ def _gate_execution_response(
     }
 
 
+async def _persist_gate_interaction(
+    user_message: str, response_text: str, chat_svc: Any, context: Dict[str, Any]
+) -> None:
+    """Gate 捷徑也要寫對話記憶（audit 2026-10-18：研究結果原本不進
+    /context/memory/recent——gate 提前 return 跳過了 generate 路徑的
+    ``_store_interaction_memories``）。Best-effort：失敗只記日誌不擋回應。
+    """
+    if not chat_svc or not response_text:
+        return
+    store = getattr(chat_svc, "store_gate_interaction", None)
+    if store is None:
+        return
+    try:
+        await store(user_message, response_text, context)
+    except Exception as e:
+        logger.warning("Gate interaction memory store failed: %s", e, exc_info=True)
+
+
 async def _handle_execution_gate(
     user_message: str,
     chat_svc: Any,
@@ -870,7 +888,7 @@ async def _handle_execution_gate(
         return None
 
     if outcome.action in (OUTCOME_EXECUTED, OUTCOME_AGENT_EXECUTED):
-        return _gate_execution_response(
+        resp = _gate_execution_response(
             executed=True,
             handler_id=outcome.handler or "",
             action_result=outcome.result,
@@ -878,6 +896,8 @@ async def _handle_execution_gate(
             schema_ver=schema_ver,
             session_id=session_id,
         )
+        await _persist_gate_interaction(user_message, resp.get("response_text", ""), chat_svc, context)
+        return resp
     if outcome.action == OUTCOME_CANCEL:
         return {
             "response_text": outcome.message,

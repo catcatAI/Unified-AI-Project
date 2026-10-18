@@ -923,12 +923,32 @@ class ChatService:
         # mirroring how grounded-learning verification is already decoupled.
         if not response:
             return
+        await self._persist_conversation_text(user_message, response.text, context)
+
+    async def store_gate_interaction(
+        self, user_message: str, response_text: str, context: Optional[Dict[str, Any]] = None
+    ) -> None:
+        """Persist a gate-executed interaction into the same memory stores.
+
+        Gate shortcuts (web_search 等) 在 generate_response 之前就 return，
+        跳過了 ``_store_interaction_memories``——研究結果原本不進
+        HAM/vector 記憶（audit 2026-10-18：/context/memory/recent 對研究
+        查詢 grep=0，普通對話有存）。此方法讓 gate 捷徑寫入同一批 store。
+        """
+        if not response_text:
+            return
+        await self._persist_conversation_text(user_message, response_text, context)
+
+    async def _persist_conversation_text(
+        self, user_text: str, assistant_text: str, context: Optional[Dict[str, Any]] = None
+    ) -> None:
+        """Shared write path for conversation memory (generate + gate 捷徑)."""
         if self._vector_store is not None:
             try:
                 import uuid as _uuid
 
                 memory_id = f"chat_{_uuid.uuid4().hex[:12]}"
-                content = f"User: {user_message}\nAngela: {response.text}"
+                content = f"User: {user_text}\nAngela: {assistant_text}"
                 self._spawn_background_task(
                     self._vector_store.add_memory(memory_id, content, {"type": "conversation"})
                 )
@@ -939,11 +959,11 @@ class ChatService:
                 mm = getattr(self._llm_service, "memory_manager", None)
                 if mm:
                     metadata = await self._build_memory_metadata(
-                        f"{user_message}\n{response.text}", context
+                        f"{user_text}\n{assistant_text}", context
                     )
                     self._spawn_background_task(
                         mm.store_experience(
-                            raw_data={"user": user_message, "assistant": response.text},
+                            raw_data={"user": user_text, "assistant": assistant_text},
                             data_type="conversation",
                             metadata=metadata,
                         )

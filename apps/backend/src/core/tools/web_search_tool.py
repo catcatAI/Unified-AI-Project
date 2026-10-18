@@ -9,6 +9,8 @@ import logging
 import re
 import urllib.parse
 import urllib.request
+from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from core.utils import safe_error
@@ -18,6 +20,15 @@ logger = logging.getLogger(__name__)
 DEFAULT_USER_AGENT = "AngelaAI/7.5.0"
 _DDG_URL = "https://lite.duckduckgo.com/lite/"
 _WIKI_API = "https://en.wikipedia.org/w/api.php"
+_WIKI_API_ZH = "https://zh.wikipedia.org/w/api.php"
+# CJK（含 Extension A）→ 中文查詢走 zh.wikipedia（原一律英語 API，中文
+# 備援語種不對；實測審計 2026-10-18 未觸發但屬確定缺陷）。
+_CJK_RE = re.compile(r"[㐀-䶿一-鿿]")
+# 稽核軌跡：TTL RAM session 是研究結果唯一落地處 → append-only jsonl。
+_HISTORY_PATH = (
+    Path(__file__).resolve().parents[3] / "data" / "research_history" / "web_search.jsonl"
+)
+_HISTORY_ROTATE_BYTES = 5_000_000
 
 
 def _load_web_search_config() -> dict:
@@ -31,6 +42,33 @@ def _load_web_search_config() -> dict:
     except Exception:
         logger.warning("web_search config read failed, using defaults", exc_info=True)
     return {}
+
+
+def read_recent_history(limit: int = 20) -> List[Dict[str, Any]]:
+    """Read the newest ``limit`` research audit records (jsonl tail, oldest first).
+
+    稽核入口：`GET /api/v1/web-search/history` 與人工 grep 同源。
+    """
+    path = _HISTORY_PATH
+    try:
+        if not path.exists():
+            return []
+        lines = path.read_text(encoding="utf-8").splitlines()
+        out: List[Dict[str, Any]] = []
+        for line in lines[-max(1, limit) :]:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                record = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(record, dict):
+                out.append(record)
+        return out
+    except Exception as e:
+        logger.warning("web_search history read failed: %s", e, exc_info=True)
+        return []
 
 
 class WebSearchTool:
@@ -56,14 +94,51 @@ class WebSearchTool:
         if not self.enabled:
             return []
         num = min(num_results, self.max_results) if self.max_results else num_results
+        provider = ""  # falsy sentinel — "none" is truthy and would block fallback
+        results: List[Dict[str, Any]] = []
         if self.provider in ("duckduckgo", "both"):
             results = self._ddg_search(query, num)
             if results and not any("error" in r for r in results):
-                return results
-        if self.provider in ("wikipedia", "both"):
-            return self._wiki_search(query, num)
-        # Fallback: if DDG was primary and failed, try Wikipedia.
-        return self._wiki_search(query, num)
+                provider = "duckduckgo"
+        if not provider and self.provider in ("wikipedia", "both"):
+            results = self._wiki_search(query, num)
+            provider = "wikipedia"
+        if not provider:
+            # Fallback: if DDG was primary and failed, try Wikipedia.
+            results = self._wiki_search(query, num)
+            provider = "wikipedia"
+        n_ok = sum(1 for r in results if isinstance(r, dict) and "error" not in r)
+        logger.info("[WebSearch] query=%r provider=%s n=%d", query, provider, n_ok)
+        self._record_history(query, provider, results)
+        return results
+
+    def _record_history(self, query: str, provider: str, results: List[Dict[str, Any]]) -> None:
+        """Append one audit record (RAM TTL session 不落盤，此為稽核落地處)。"""
+        try:
+            _HISTORY_PATH.parent.mkdir(parents=True, exist_ok=True)
+            if _HISTORY_PATH.exists() and _HISTORY_PATH.stat().st_size > _HISTORY_ROTATE_BYTES:
+                _HISTORY_PATH.replace(_HISTORY_PATH.with_suffix(".jsonl.old"))
+            urls = [
+                r.get("url")
+                for r in results[:5]
+                if isinstance(r, dict) and r.get("url") and not r.get("error")
+            ]
+            error = next(
+                (r.get("error") for r in results if isinstance(r, dict) and r.get("error")),
+                None,
+            )
+            record = {
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "query": query,
+                "provider": provider,
+                "n_results": len([u for u in urls if u]),
+                "urls": urls,
+                "error": error,
+            }
+            with open(_HISTORY_PATH, "a", encoding="utf-8") as f:
+                f.write(json.dumps(record, ensure_ascii=False) + "\n")
+        except Exception as e:
+            logger.warning("web_search history append failed: %s", e, exc_info=True)
 
     def _ddg_search(self, query: str, num_results: int = 5) -> List[Dict[str, Any]]:
         try:
@@ -105,8 +180,18 @@ class WebSearchTool:
             logger.warning(f"DDG search failed: {e}", exc_info=True)
             return [{"error": safe_error(e)}]
 
+    def _wiki_endpoint(self, query: str) -> tuple:
+        """(api_url, host) — 中文查詢走 zh.wikipedia；自訂 config 優先。"""
+        if self.wiki_api != _WIKI_API:
+            host = urllib.parse.urlparse(self.wiki_api).netloc or "en.wikipedia.org"
+            return self.wiki_api, host
+        if _CJK_RE.search(query or ""):
+            return _WIKI_API_ZH, "zh.wikipedia.org"
+        return self.wiki_api, "en.wikipedia.org"
+
     def _wiki_search(self, query: str, num_results: int = 5) -> List[Dict[str, Any]]:
         try:
+            api, host = self._wiki_endpoint(query)
             params = urllib.parse.urlencode(
                 {
                     "action": "query",
@@ -116,7 +201,7 @@ class WebSearchTool:
                     "format": "json",
                 }
             )
-            url = f"{self.wiki_api}?{params}"
+            url = f"{api}?{params}"
             req = urllib.request.Request(url, headers={"User-Agent": self.user_agent})
             with urllib.request.urlopen(
                 req, timeout=self.timeout
@@ -129,7 +214,7 @@ class WebSearchTool:
                 results.append(
                     {
                         "title": title,
-                        "url": f"https://en.wikipedia.org/wiki/{urllib.parse.quote(title)}",
+                        "url": f"https://{host}/wiki/{urllib.parse.quote(title)}",
                         "snippet": snippet,
                     }
                 )
@@ -139,4 +224,4 @@ class WebSearchTool:
             return [{"error": safe_error(e)}]
 
 
-__all__ = ["WebSearchTool"]
+__all__ = ["WebSearchTool", "read_recent_history"]

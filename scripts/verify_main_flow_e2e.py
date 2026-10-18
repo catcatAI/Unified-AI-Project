@@ -39,7 +39,9 @@ EXEC_CASES = [
     ("建立任務：買牛奶", "task", "auto_execute", "task_mgr", "買牛奶"),
     ("任務列表", "task", "auto_execute", "task_mgr", "買牛奶"),
     ("完成任務 #1", "task", "auto_execute", "task_mgr", "完成"),
-    ("搜尋台北天氣", "search", "auto_execute", "web_search", "（網路搜尋）"),
+    # audit 2026-10-18：去裝飾性「（網路搜尋）」前綴（gate detail 已包「（）」
+    # 會變雙括號）；改驗「『查詢』的搜尋結果」——同時釘住查詢抽取未被改壞。
+    ("搜尋台北天氣", "search", "auto_execute", "web_search", "「台北天氣」的搜尋結果"),
 ]
 
 # confirm：只驗 verdict + handler 可解（不模擬用戶按確認）

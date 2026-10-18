@@ -8,7 +8,7 @@
 # 成熟度: L2+ 等级可以使用基本的搜索功能
 #
 # 能力:
-# - web_search: 网络搜索
+# - web_search: 网络搜索（委託 WebSearchTool——與 gate 路徑同源，消雙實裝漂移）
 # - knowledge_retrieval: 知识检索
 # - source_verification: 来源验证
 #
@@ -16,6 +16,7 @@
 
 import logging
 import re
+import urllib.request
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -23,33 +24,27 @@ from core.system.config.magic_numbers import timeout_value
 
 logger = logging.getLogger(__name__)
 
-try:
-    import requests
-
-    REQUESTS_AVAILABLE = True
-except ImportError:
-    REQUESTS_AVAILABLE = False
-
 
 class WebSearchAgent:
-    """Agent for web search, content fetching, and search trends."""
+    """Agent for web search and content fetching.
+
+    search() 委託 ``core.tools.web_search_tool.WebSearchTool``（與
+    ExecutionGate→WebSearchHandler 同一實裝）。audit 2026-10-18：舊自帶
+    DDG HTML regex（rel="nofollow" class="result__a"）對真實 DDG 0 命中，
+    且 get_search_trends 回傳 dummy 假數據——假趨勢已刪（零調用方），
+    fetch_content 摘要改為真實文字抽取（原為裸 HTML 前 500 字元）。
+    """
 
     def __init__(self, config: Optional[Dict[str, Any]] = None, **kwargs):
         self.config = config or {}
         self.agent_id = kwargs.get("agent_id")
         self._search_history: List[Dict[str, Any]] = []
         self._MAX_SEARCH_HISTORY = 100
-        self._session: Optional[requests.Session] = None
-        if REQUESTS_AVAILABLE:
-            self._session = requests.Session()
-            self._session.headers.update(
-                {"User-Agent": "Mozilla/5.0 (compatible; AngelaAI/1.0; +https://opencode.ai)"}
-            )
-        logger.info(f"WebSearchAgent initialized. HTTP available: {REQUESTS_AVAILABLE}")
+        logger.info("WebSearchAgent initialized (delegates search to WebSearchTool)")
 
     def is_available(self) -> bool:
-        """Check if web search backend is available."""
-        return REQUESTS_AVAILABLE
+        """stdurllib 即可搜尋/抓取——恒可用。"""
+        return True
 
     _URL_RE = re.compile(r"https?://[^\s\)\]}>\"']+", re.IGNORECASE)
 
@@ -76,47 +71,39 @@ class WebSearchAgent:
             return self.fetch_content(url)
         return self.search(text)
 
+    def _tool(self):
+        """WebSearchTool 懶載入（與 WebSearchHandler 同款屬性防護）。"""
+        from core.tools.web_search_tool import WebSearchTool
+
+        return WebSearchTool()
+
     def search(self, query: str, num_results: int = 5) -> Dict[str, Any]:
-        """Perform a web search via DuckDuckGo HTML interface."""
+        """Search via the shared WebSearchTool (DDG Lite + Wikipedia fallback)."""
         if not query:
             return {"status": "error", "message": "No search query provided"}
-        if not REQUESTS_AVAILABLE or not self._session:
-            return {
-                "status": "unavailable",
-                "message": "HTTP client not available; install requests",
-            }
         try:
-            resp = self._session.get(
-                "https://html.duckduckgo.com/html/",
-                params={"q": query},
-                timeout=timeout_value("web_search.duckduckgo", 10),
-            )
-            resp.raise_for_status()
-            import re as _re
-
-            results = []
-            for i, match in enumerate(
-                _re.findall(
-                    r'<a rel="nofollow" class="result__a" href="([^"]+)".*?>(.*?)</a>',
-                    resp.text,
-                    _re.DOTALL,
-                )
-            ):
-                if i >= num_results:
-                    break
-                results.append(
-                    {"url": match[0], "title": _re.sub(r"<[^>]+>", "", match[1]).strip()}
-                )
+            raw = self._tool().search(query, num_results=num_results)
+            results = [
+                {
+                    "url": r.get("url", ""),
+                    "title": r.get("title", ""),
+                    "snippet": r.get("snippet", ""),
+                }
+                for r in raw
+                if isinstance(r, dict) and not r.get("error")
+            ]
+            if raw and all(isinstance(r, dict) and r.get("error") for r in raw):
+                return {"status": "error", "message": f"Search failed: {raw[0].get('error')}"}
             self._search_history.append(
                 {
                     "query": query,
-                    "num_results": num_results,
+                    "num_results": len(results),
                     "timestamp": datetime.now().isoformat(),
                 }
             )
             if len(self._search_history) > self._MAX_SEARCH_HISTORY:
                 self._search_history = self._search_history[-self._MAX_SEARCH_HISTORY :]
-            logger.info(f"search: '{query}' -> {len(results)} results")
+            logger.info(f"search: '{query}' -> {len(results)} results (via WebSearchTool)")
             return {
                 "status": "success",
                 "message": f"Found {len(results)} results for '{query}'",
@@ -128,22 +115,30 @@ class WebSearchAgent:
             logger.error(f"search failed for '{query}': {e}")
             return {"status": "error", "message": f"Search failed: {e}"}
 
+    # 真文字摘要：script/style 剝除 → 去標籤 → 空白收斂 → 前 500 字元。
+    _TAG_RE = re.compile(r"<(script|style)[^>]*>.*?</\1>", re.DOTALL | re.IGNORECASE)
+    _ANY_TAG_RE = re.compile(r"<[^>]+>")
+    _WS_RE = re.compile(r"\s+")
+
     def fetch_content(self, url: str) -> Dict[str, Any]:
-        """Fetch and return a text summary of a URL."""
+        """Fetch a URL and return a plain-text summary (not raw HTML)."""
         if not url:
             return {"status": "error", "message": "No URL provided"}
-        if not REQUESTS_AVAILABLE or not self._session:
-            return {
-                "status": "unavailable",
-                "message": "HTTP client not available; install requests",
-            }
         try:
-            resp = self._session.get(url, timeout=timeout_value("web_fetch.http", 15))
-            resp.raise_for_status()
-            content_type = resp.headers.get("Content-Type", "")
-            text = resp.text
-            summary = text[:500] if text else ""
-            logger.info(f"fetch_content: {url} -> {len(text)} bytes, {content_type}")
+            req = urllib.request.Request(
+                url, headers={"User-Agent": "Mozilla/5.0 (compatible; AngelaAI/7.5.0)"}
+            )
+            with urllib.request.urlopen(
+                req, timeout=timeout_value("web_fetch.http", 15)
+            ) as resp:  # nosec B310 - caller passes http(s) URLs from user text; scheme guard below
+                content_type = resp.headers.get("Content-Type", "")
+                raw = resp.read()
+            text = raw.decode("utf-8", errors="replace")
+            cleaned = self._TAG_RE.sub(" ", text)
+            cleaned = self._ANY_TAG_RE.sub(" ", cleaned)
+            cleaned = self._WS_RE.sub(" ", cleaned).strip()
+            summary = cleaned[:500]
+            logger.info(f"fetch_content: {url} -> {len(text)} bytes, summary={len(summary)} chars")
             return {
                 "status": "success",
                 "message": f"Fetched {url} ({len(text)} bytes)",
@@ -155,20 +150,3 @@ class WebSearchAgent:
         except Exception as e:
             logger.error(f"fetch_content failed for {url}: {e}")
             return {"status": "error", "message": f"Failed to fetch content: {e}"}
-
-    def get_search_trends(self, topic: str) -> Dict[str, Any]:
-        """Get search trends for a topic (mock data)."""
-        if not topic:
-            return {"status": "error", "message": "No topic provided"}
-        dummy_value = len(topic) * 10
-        logger.info(f"get_search_trends: '{topic}'")
-        return {
-            "status": "success",
-            "message": f"Trends data for '{topic}'",
-            "topic": topic,
-            "trends": [
-                {"date": "2026-01", "value": dummy_value},
-                {"date": "2026-02", "value": dummy_value + 5},
-                {"date": "2026-03", "value": dummy_value + 12},
-            ],
-        }
