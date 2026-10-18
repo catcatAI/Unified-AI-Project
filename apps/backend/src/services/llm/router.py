@@ -1630,6 +1630,10 @@ class AngelaLLMService:
         if clock_result is not None:
             return clock_result
 
+        rule_result = await self._solution_rules_response(user_message, context, start_time)
+        if rule_result is not None:
+            return rule_result
+
         ensemble_result = await self._try_ensemble(user_message, context)
         if ensemble_result is not None:
             return ensemble_result
@@ -1848,6 +1852,8 @@ class AngelaLLMService:
                     match_time_ms=0.0,
                 )
 
+        self._maybe_distill_solution_rule(user_message, response)
+
         if self.enable_memory_enhancement and not response.error:
             await self._store_response_as_template(user_message, response, context)
             self._schedule_precompute_tasks(user_message, context)
@@ -1891,6 +1897,9 @@ class AngelaLLMService:
             # Deterministic shapes (math/logic) NEVER fuse — unified owns them.
             fusion = await self._honest_gate_fusion(user_message, context)
             if fusion is not None:
+                # Fusion is the live open-domain path (bypasses finalize);
+                # same verifier-backed admission as the LLM_FULL path.
+                self._maybe_distill_solution_rule(user_message, fusion)
                 return fusion
             # Semantic QA can answer factual open-domain even without LLM;
             # don't honest-fallback if it has a hit (e.g. capital of Japan -> Tokyo).
@@ -1921,6 +1930,7 @@ class AngelaLLMService:
         register("pipeline_math", self._connector_pipeline_math)
         register("math_backup", self._connector_math_backup)
         register("clock", self._connector_clock)
+        register("solution_rules", self._connector_solution_rules)
         register("template_match", self._connector_template_match)
         register("ensemble", self._connector_ensemble)
         register("memory_retrieval", self._connector_memory_retrieval)
@@ -4236,10 +4246,13 @@ class AngelaLLMService:
             return True
         return False
 
-    def _template_store_reject(self, response: LLMResponse) -> bool:
+    def _template_store_reject(self, response: LLMResponse, require_verified: bool = True) -> bool:
         """Run every fossilization gate; True = do not store.
 
         Each sub-gener fires its own original debug log on rejection.
+        require_verified=False is the solution-rule distillation path: it
+        swaps the curator "verified" mark for deterministic verification in
+        ai.rules (verify_solution), keeping every other gate.
         """
         # Verified-only fossilization (measured live 2026-10-09): every
         # response reaching this LLM_FULL path is an unverified
@@ -4255,7 +4268,7 @@ class AngelaLLMService:
         verified = isinstance(md_verified, dict) and md_verified.get("verified") is True
         if self._template_fallback_reject(response):
             return True
-        if not verified:
+        if require_verified and not verified:
             logger.debug("Skipped template storage for unverified generation")
             return True
         if self._template_stat_core_reject(response):
@@ -4364,6 +4377,68 @@ class AngelaLLMService:
             # template storage is best-effort, non-critical
             logger.warning(f"Failed to store response as template: {e}", exc_info=True)
 
+    def _maybe_distill_solution_rule(self, user_message: str, response: LLMResponse) -> None:
+        """成功回答 → 確定性驗證後入規則庫（ai.rules），失敗靜默跳過。
+
+        與模板池共用全部 fossilization 門（fallback/stat-core/neuroblender/
+        trivial/nonanswer/confidence），唯一差異：不需策展 verified 標記，
+        改由 verify_solution() 的算術自洽驗證把關；動態查詢（時鐘/天氣/
+        相對日期）永不入庫，避免過期答案重放。
+        """
+        try:
+            if response.error:
+                return
+            if self._template_store_reject(response, require_verified=False):
+                return
+            if clock_query_kind(user_message) is not None:
+                return
+            from ai.rules import get_rule_store, is_dynamic_query
+
+            if is_dynamic_query(user_message):
+                return
+            get_rule_store().remember(user_message, response.text)
+        except (ImportError, ValueError, KeyError, AttributeError, OSError) as exc:
+            logger.debug("solution-rule distillation skipped: %s", exc)
+
+    async def _solution_rules_response(
+        self, user_message: str, context: Dict[str, Any], start_time: float
+    ) -> Optional[LLMResponse]:
+        """已驗證規則庫命中：同一問題（保守正規化身分）逐字重放，0 tokens。"""
+        try:
+            from ai.rules import get_rule_store
+
+            rule = get_rule_store().recall(user_message)
+        except (ImportError, ValueError, KeyError, AttributeError, OSError) as exc:
+            logger.debug("solution rule recall skipped: %s", exc)
+            return None
+        if rule is None:
+            return None
+        response_time = (time.time() - start_time) * 1000
+        self._update_stats(response_time)
+        self.stats["memory_hits"] += 1
+        logger.info(
+            "[SolutionRule] hit kind=%s serves=%d conf=%.2f (%.0fms)",
+            rule.kind,
+            rule.serves,
+            rule.confidence,
+            response_time,
+        )
+        return LLMResponse(
+            text=rule.answer,
+            backend="solution-rule",
+            model=f"rule:{rule.kind}",
+            tokens_used=0,
+            response_time_ms=response_time,
+            confidence=rule.confidence,
+            metadata={"solution_rule": True, "rule_id": rule.id, "source": "solution-rule"},
+        )
+
+    async def _connector_solution_rules(
+        self, user_message: str, context: Dict[str, Any]
+    ) -> Optional[LLMResponse]:
+        return await self._solution_rules_response(
+            user_message, context, self._route_start(context)
+        )
 
     def _schedule_precompute_tasks(
         self, user_message: str, context: Dict[str, Any], user_id: str = ""

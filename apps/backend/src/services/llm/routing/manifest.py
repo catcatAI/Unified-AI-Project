@@ -17,6 +17,7 @@ DEFAULT_PLAN: List[StepSpec] = [
     StepSpec(name="pipeline_math", connector="pipeline_math", tier=0, priority=0),
     StepSpec(name="math_backup", connector="math_backup", tier=0, priority=1),
     StepSpec(name="clock", connector="clock", tier=0, priority=2),
+    StepSpec(name="solution_rules", connector="solution_rules", tier=0, priority=3),
     # tier 1：高確定性確定路徑
     StepSpec(name="template_match", connector="template_match", tier=1, priority=0),
     StepSpec(name="ensemble", connector="ensemble", tier=1, priority=1),

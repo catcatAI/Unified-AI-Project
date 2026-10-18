@@ -45,6 +45,23 @@ def _reset_emotion_threshold_adjustment():
     reset()
 
 
+@pytest.fixture(autouse=True)
+def _isolate_solution_rule_store(monkeypatch, tmp_path_factory):
+    """Rule store (ai.rules) must never write repo data/ during tests.
+
+    The store singleton caches its path on first use; pointing the env at a
+    session tmp dir before any get_rule_store() call keeps unpatched chat
+    flows (fusion admission) out of the developer's real rule file, and
+    clearing _STORE afterwards stops a loaded singleton leaking across tests.
+    Same never-break-unrelated-tests doctrine as the fixture above.
+    """
+    monkeypatch.setenv("ANGELA_SOLUTION_RULES_PATH", str(tmp_path_factory.mktemp("solution_rules")))
+    yield
+    module = sys.modules.get("ai.rules.solution_rules")
+    if module is not None:
+        module._STORE = None
+
+
 def pytest_addoption(parser):
     parser.addoption(
         "--run-slow",
