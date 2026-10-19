@@ -57,6 +57,9 @@ _UNSERVABLE_CONTENT_MARKERS = (
     "幫不上忙",
     "暫時無法",
     "沒有答案",
+    # English honest-abstain copy（router._HONEST_NO_ANSWER/_HONEST_CANNOT_DO 鏡像）
+    "don't have enough knowledge",
+    "can't complete this task",
     # Destructive-action claims replay "done" for deletes that may never
     # have executed ("Got it! Deleting the files …").
     "got it! deleting",

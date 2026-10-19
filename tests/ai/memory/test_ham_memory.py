@@ -253,5 +253,21 @@ class TestSubjectCoverageGuard:
         assert "the" not in [k.lower() for k in kws]
 
 
+class TestUnservableEnglishAbstain:
+    """router 英文 honest-abstain 文案必須被毒化守衛攔截（鏡像同步契約）。"""
+
+    def test_honest_abstain_en_markers(self):
+        from ai.memory.ham_memory.ham_manager import is_unservable_template
+
+        assert is_unservable_template(
+            "You, I don't have enough knowledge to answer this correctly yet. "
+            "You can ask me math, logic, or facts I've learned."
+        )
+        assert is_unservable_template(
+            "You, I can't complete this task right now (no language model is available)."
+        )
+        assert not is_unservable_template("The capital of France is Paris.")
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

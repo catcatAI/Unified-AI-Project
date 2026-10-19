@@ -35,6 +35,7 @@ from typing import (
 
 from core.interfaces.protocols import ChatMessage, ChatResponse, LLMResponse
 from core.interfaces.service_registry import get_registry
+from core.prompt_manager import detect_response_language
 from core.system.config.magic_numbers import lifecycle_value, llm_param, timeout_value
 from core.system.config.network_defaults import (
     ANTHROPIC_API_BASE,
@@ -195,6 +196,56 @@ _KNOWN_FALLBACK_RESPONSES = frozenset(
     }
 )
 
+# 正規化字元：尾隨標點/空白剥除後再比對 known-fallback 集（模板 replace、
+# 引擎重排常帶 尾點/省略號 變體，exact strip 比對會漏）。
+_FALLBACK_STRIP_CHARS = "。．.!！?？…~～;；:：\"'，,、 \t"
+
+
+def _normalize_fallback_text(text: Optional[str]) -> str:
+    t = (text or "").strip().lower()
+    while t and t[-1] in _FALLBACK_STRIP_CHARS:
+        t = t[:-1].rstrip()
+    return t
+
+
+_KNOWN_FALLBACK_NORM = frozenset(_normalize_fallback_text(s) for s in _KNOWN_FALLBACK_RESPONSES)
+
+
+def _is_known_fallback(text: Optional[str]) -> bool:
+    """已知棄權/錯誤字串（含尾隨標點變體）→ True，不得作為答案。"""
+    return _normalize_fallback_text(text) in _KNOWN_FALLBACK_NORM
+
+
+# Honest-abstain 文案（Tier 1.5/1.6 與離線兜底）。語言鍵控：英文查詢離線時
+# 不得收到中文回答（語言層寫死＝2026-10-19 同族缺陷）。其中文/英文字串的
+# 特徵子串同步鏡入 _template_nonanswer_reject 與
+# ham_manager._UNSERVABLE_CONTENT_MARKERS——棄權永遠不可被化石化/GARDEN 學習。
+_HONEST_NO_ANSWER = {
+    "zh": "{name}，這個問題我目前還沒有足夠的知識能正確回答。你可以問我數學、邏輯，或我學過的事實。",
+    "en": (
+        "{name}, I don't have enough knowledge to answer this correctly yet. "
+        "You can ask me math, logic, or facts I've learned."
+    ),
+}
+_HONEST_CANNOT_DO = {
+    "zh": "{name}，這個任務我目前做不到{why}。",
+    "en": "{name}, I can't complete this task right now{why}.",
+}
+_HONEST_CANNOT_DO_WHY = {
+    "zh_no_llm": "（沒有可用的語言模型）",
+    "zh_llm": "（目前的能力無法完成）",
+    "en_no_llm": " (no language model is available)",
+    "en_llm": " (beyond my current ability)",
+}
+_OFFLINE_TEMPLATE_TEXT = {
+    "zh": "（核心 LLM 目前離線中，但我依然能感受到你。能稍微等我一下嗎？）",
+    "en": "(Core LLM is offline right now, but I can still feel your presence. Can you wait a moment?)",
+}
+_OFFLINE_ERROR_TEXT = {
+    "zh": "（系統核心對話模組載入失敗，請檢查後端日誌。）",
+    "en": "(Core dialogue module failed to load; check the backend logs.)",
+}
+
 
 def _usable_templates(templates) -> list:
     """Templates that may actually be served to a user.
@@ -203,11 +254,7 @@ def _usable_templates(templates) -> list:
     must never win: serving it from the template layer blocks the LLM that
     could really answer (live 2026-10-10 Unity code request).
     """
-    return [
-        t
-        for t in (templates or [])
-        if (getattr(t, "content", "") or "").strip() not in _KNOWN_FALLBACK_RESPONSES
-    ]
+    return [t for t in (templates or []) if not _is_known_fallback(getattr(t, "content", ""))]
 
 
 # "Is this asking for information?" — question marks, English interrogatives,
@@ -458,6 +505,9 @@ class AngelaLLMService:
             "enable_memory_enhancement", True
         )
         self.is_available = False
+
+        # Honest-abstain 遙測（Tier 1.5/1.6 拒答/拒做次數）；get_abstain_stats() 讀取。
+        self._abstain_counts: Dict[str, int] = {"honest-no-answer": 0, "honest-cannot-do": 0}
 
         # Backends pruned by the startup health check (enabled in config but
         # unhealthy at boot, e.g. llama.cpp server started after Angela).
@@ -2378,7 +2428,7 @@ class AngelaLLMService:
             logger.warning(f"NeuralBridge route failed: {e}", exc_info=True)
             return None
 
-        if not result or not result.text or result.text in _KNOWN_FALLBACK_RESPONSES:
+        if not result or not result.text or _is_known_fallback(result.text):
             return None
 
         response_time_ms = (time.time() - start_time) * 1000
@@ -2862,7 +2912,7 @@ class AngelaLLMService:
                         import random as _rand3
 
                         _ch = _rand3.choice(_tpls)
-                        if (_ch.content or "").strip() in _KNOWN_FALLBACK_RESPONSES:
+                        if _is_known_fallback(_ch.content):
                             # Ignorance template must never block the
                             # LLM/fallback chain: try next pattern.
                             break
@@ -2901,7 +2951,7 @@ class AngelaLLMService:
         hybrid_thresh = tmpl_cfg.get("hybrid", 0.5)
         # Ignorance templates ("I don't know") must never win over the
         # LLM/fallback chain that could actually answer.
-        if (match_result.template_content or "").strip() in _KNOWN_FALLBACK_RESPONSES:
+        if _is_known_fallback(match_result.template_content):
             logger.debug("Skipped ignorance template match; falling through")
             return None
         if match_score > composed_thresh:
@@ -3048,7 +3098,7 @@ class AngelaLLMService:
                 return None
 
             result = decision.results.get(decision.selected_model)
-            if not result or not result.text or result.text in _KNOWN_FALLBACK_RESPONSES:
+            if not result or not result.text or _is_known_fallback(result.text):
                 return None
 
             direct_threshold, draft_low = self._bus_effective_thresholds(
@@ -3187,7 +3237,7 @@ class AngelaLLMService:
                     result = decision.results.get(decision.selected_model)
                     if result is None:
                         return None
-                    if not result.text or result.text in _KNOWN_FALLBACK_RESPONSES:
+                    if not result.text or _is_known_fallback(result.text):
                         return None
                     return LLMResponse(
                         text=result.text,
@@ -3371,14 +3421,19 @@ class AngelaLLMService:
         inputs that survived everything get an honest "can't do" — never
         small-talk. looks_like_question only covers questions, so imperative
         tasks ("寫Unity腳本", "講講量子力學") fell to Tier 2/3 rambles
-        instead (live 2026-10-10). Chit-chat types keep Tier 2/3."""
+        instead (live 2026-10-10). Chit-chat types keep Tier 2/3.
+        文案按查詢語言切換（2026-10-19：英文問句離線不再收到中文拒答）。"""
+        lang = detect_response_language(user_message)
         if looks_like_question:
+            self._record_abstain("honest-no-answer")
             return LLMResponse(
-                text=f"{context.get('user_name', '你')}，這個問題我目前還沒有足夠的知識能正確回答。你可以問我數學、邏輯，或我學過的事實。",
+                text=_HONEST_NO_ANSWER.get(lang, _HONEST_NO_ANSWER["en"]).format(
+                    name=context.get("user_name") or ("你" if lang == "zh" else "You")
+                ),
                 backend="local-fallback",
                 model="honest-no-answer",
                 confidence=0.4,
-                metadata={"fallback": True, "tier": "honest"},
+                metadata={"fallback": True, "tier": "honest", "language": lang},
             )
         _task_types = frozenset(
             {
@@ -3410,15 +3465,33 @@ class AngelaLLMService:
         if _qtype in _task_types:
             _backends = getattr(self, "backends", None) or {}
             _has_llm = any(getattr(_bt, "value", str(_bt)) != "unified" for _bt in _backends)
-            _why = "（沒有可用的語言模型）" if not _has_llm else "（目前的能力無法完成）"
+            _why_key = f"{lang}_{'llm' if _has_llm else 'no_llm'}"
+            self._record_abstain("honest-cannot-do")
             return LLMResponse(
-                text=f"{context.get('user_name', '你')}，這個任務我目前做不到{_why}。",
+                text=_HONEST_CANNOT_DO.get(lang, _HONEST_CANNOT_DO["en"]).format(
+                    name=context.get("user_name") or ("你" if lang == "zh" else "You"),
+                    why=_HONEST_CANNOT_DO_WHY.get(_why_key, _HONEST_CANNOT_DO_WHY["en_llm"]),
+                ),
                 backend="local-fallback",
                 model="honest-cannot-do",
                 confidence=0.4,
-                metadata={"fallback": True, "tier": "honest-task"},
+                metadata={"fallback": True, "tier": "honest-task", "language": lang},
             )
         return None
+
+    def _record_abstain(self, kind: str) -> None:
+        counts = getattr(self, "_abstain_counts", None)
+        if counts is None:
+            counts = {"honest-no-answer": 0, "honest-cannot-do": 0}
+            self._abstain_counts = counts
+        counts[kind] = counts.get(kind, 0) + 1
+
+    def get_abstain_stats(self) -> Dict[str, int]:
+        """棄權遙測：honest 拒答/拒做次數（離線診斷與閉環回饋用）。"""
+        counts = getattr(self, "_abstain_counts", None)
+        if counts is None:
+            return {"honest-no-answer": 0, "honest-cannot-do": 0}
+        return dict(counts)
 
     async def _fb_neuro_blender(
         self, user_message: str, context: Dict[str, Any], looks_like_question: bool
@@ -3457,11 +3530,12 @@ class AngelaLLMService:
             templates = library.get_by_category(target_category)
             if not templates:
                 templates = library.get_by_category(ResponseCategory.SMALL_TALK)
+            _lang = detect_response_language(user_message)
             if templates:
                 template = random.choice(templates)
                 text = template.content.replace("{user_name}", context.get("user_name", "朋友"))
             else:
-                text = "（核心 LLM 目前離線中，但我依然能感受到妳。能稍微等我一下嗎？）"
+                text = _OFFLINE_TEMPLATE_TEXT.get(_lang, _OFFLINE_TEMPLATE_TEXT["en"])
             return LLMResponse(
                 text=text,
                 backend="local-fallback",
@@ -3472,7 +3546,9 @@ class AngelaLLMService:
         except Exception as e:
             logger.error(f"Ultimate fallback failure: {e}", exc_info=True)
             return LLMResponse(
-                text="（系統核心對話模組載入失敗，請檢查後端日誌。）",
+                text=_OFFLINE_ERROR_TEXT.get(
+                    detect_response_language(user_message), _OFFLINE_ERROR_TEXT["en"]
+                ),
                 backend="error",
                 model="error",
                 confidence=0.0,
@@ -4269,6 +4345,9 @@ class AngelaLLMService:
                 "暫時無法",
                 "沒有答案",
                 "我不能",
+                # English honest-abstain copy (_HONEST_NO_ANSWER/_HONEST_CANNOT_DO)
+                "don't have enough knowledge",
+                "can't complete this task",
             )
         ):
             logger.debug("Skipped template storage for non-answer response")

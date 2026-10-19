@@ -439,6 +439,69 @@ async def test_fallback_chitchat_keeps_smalltalk():
 
 
 @pytest.mark.asyncio
+async def test_fallback_honest_no_answer_language():
+    """離線問句拒答按查詢語言切換：英文問句不再收到中文拒答（2026-10-19）。"""
+    service = _recall_service()
+    service.model_bus = None
+    zh = await service._fallback_response("量子糾纏是什麼？", {})
+    assert zh.model == "honest-no-answer"
+    assert "足夠的知識" in zh.text
+    en = await service._fallback_response("What is quantum entanglement?", {})
+    assert en.model == "honest-no-answer"
+    assert "enough knowledge" in en.text
+    assert "這個問題" not in en.text
+    assert en.metadata.get("language") == "en"
+
+
+@pytest.mark.asyncio
+async def test_fallback_honest_cannot_do_language():
+    """任務型拒做同様語言鍵控。"""
+    service = _recall_service()
+    service.model_bus = None
+    en = await service._fallback_response(
+        "Write a Unity editor script", {"_classify_result_type": "code"}
+    )
+    assert en.model == "honest-cannot-do"
+    assert "can't complete this task" in en.text
+    assert "做不到" not in en.text
+
+
+def test_is_known_fallback_normalizes_trailing_punctuation():
+    """已知棄權字串比對須容尾隨標點變體（模板/引擎重排常見），真內容不誤殺。"""
+    from services.llm.router import _is_known_fallback
+
+    assert _is_known_fallback("不好意思，這個我不太確定......")
+    assert _is_known_fallback("抱歉，我没理解你的意思？")
+    # 空/None 不算已知棄權字串——呼叫點各自有 `not result.text` 前置守衛。
+    assert not _is_known_fallback(None)
+    assert not _is_known_fallback("抱歉，這是我學過的事實：日本首都是東京。")
+
+
+@pytest.mark.asyncio
+async def test_abstain_stats_increment():
+    """棄權遙測：honest 拒答/拒做各自計數（get_abstain_stats）。"""
+    service = _recall_service()
+    service.model_bus = None
+    assert service.get_abstain_stats() == {"honest-no-answer": 0, "honest-cannot-do": 0}
+    await service._fallback_response("天狼星有幾顆行星？", {})
+    await service._fallback_response("寫Unity腳本", {"_classify_result_type": "code"})
+    stats = service.get_abstain_stats()
+    assert stats["honest-no-answer"] == 1
+    assert stats["honest-cannot-do"] == 1
+
+
+def test_honest_copy_language_keys_and_no_gendered_you():
+    """文案常數：zh/en 雙鍵齊備；離線兜底文案不再硬編碼性別稱謂「妳」。"""
+    from services.llm.router import _HONEST_CANNOT_DO, _HONEST_NO_ANSWER, _OFFLINE_TEMPLATE_TEXT
+
+    assert set(_HONEST_NO_ANSWER) == {"zh", "en"}
+    assert set(_HONEST_CANNOT_DO) == {"zh", "en"}
+    assert set(_OFFLINE_TEMPLATE_TEXT) == {"zh", "en"}
+    assert "妳" not in _OFFLINE_TEMPLATE_TEXT["zh"]
+    assert "你" in _OFFLINE_TEMPLATE_TEXT["zh"]
+
+
+@pytest.mark.asyncio
 async def test_query_taught_facts_searches_facts_only_and_filters_prefix(monkeypatch):
     """Direct lookup restricts ranking to taught facts store-side (echo-proof)."""
     from unittest.mock import AsyncMock
