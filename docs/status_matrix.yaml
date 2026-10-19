@@ -180,7 +180,7 @@ features:
     claim: 全倉綠
     status: verified
     verify_command: pytest
-    evidence: 8534 passed, 112 skipped, 0 failed（2026-10-19 稽核批次全 testpaths 實測：tests/＋apps/backend/tests/＋apps/game-rpg/tests＋scripts）
+    evidence: 8540 passed, 112 skipped, 0 failed（2026-10-19 稽核批次全 testpaths 實測：tests/＋apps/backend/tests/＋apps/game-rpg/tests＋scripts）
     last_verified: "2026-10-19"
 
   - id: mypy-debt

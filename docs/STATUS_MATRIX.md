@@ -28,7 +28,7 @@
 | Dashboard 新面板 | Config/Model/Context/Health 可用 | `apps/web-dashboard/src/components/ConfigPanel.tsx`<br>`apps/web-dashboard/src/components/ModelSelector.tsx`<br>`apps/web-dashboard/src/components/ContextViewer.tsx`<br>`apps/web-dashboard/src/components/HealthIndicator.tsx` | **wired** | 面板接 real backend；E2E 手動驗證待補 | 2026-09-17 |
 | 明確不支援項文檔 | 正式版聲明範圍 | `docs/user_guide/unsupported.md`<br>`docs/architecture/limitations.md`<br>`docs/user_guide/hardware.md` | **verified** | `ls docs/user_guide/unsupported.md docs/architecture/limitations.md docs/user_guide/hardware.md`；三文檔存在且與 RELEASE_CRITERIA 同步 | 2026-09-17 |
 | HSP 加密金鑰 | 加密可用且啟動不炸 | `apps/backend/src/core/hsp/security.py` | **verified** | `pytest tests/core/hsp/`；佔位符自動回退生成＋警告；.env 佔位符致 5 errors 已修 | 2026-09-17 |
-| 測試品質門 | 全倉綠 | —（見證據欄） | **verified** | `pytest`；8534 passed, 112 skipped, 0 failed（2026-10-19 稽核批次全 testpaths 實測：tests/＋apps/backend/tests/＋apps/game-rpg/tests＋scripts） | 2026-10-19 |
+| 測試品質門 | 全倉綠 | —（見證據欄） | **verified** | `pytest`；8540 passed, 112 skipped, 0 failed（2026-10-19 稽核批次全 testpaths 實測：tests/＋apps/backend/tests/＋apps/game-rpg/tests＋scripts） | 2026-10-19 |
 | mypy 型別債 | apps/backend/src 零錯誤（棘輪鎖定 0，禁止新增） | `pyproject.toml`<br>`scripts/mypy_budget_gate.py`<br>`scripts/mypy_budget.txt` | **verified** | `python scripts/mypy_budget_gate.py`；門機制可驗證；棘輪基線已清零 0（歷史 559→540→518→497→476→432→405→402→391→344→0）；mypy 實測 746 個 source files 全綠（no issues found）；新增債 CI 直接紅燈 | 2026-10-19 |
 | flake8 | 0 errors | `.flake8` | **verified** | `python -m flake8`；全倉 0（37 類忽略為已知門檻寬鬆，非隱瞞） | 2026-09-03 |
 | 離線能力 | 無 key 可運作（部分） | `apps/backend/src/services/llm/providers/unified.py` | **wired** | unified-1g 永遠可用；反射/數學/字典離線；開放域生成需 LLM；unsupported.md 已聲明邊界 | 2026-09-17 |
