@@ -96,7 +96,7 @@ python scripts/gen_project_map.py --module execution_gate --limit 3
 
 ## Status — 對內外宣稱的唯一出口
 
-- **[STATUS_MATRIX.md](docs/STATUS_MATRIX.md)**：23 條功能 × 五級狀態（`claimed`
+- **[STATUS_MATRIX.md](docs/STATUS_MATRIX.md)**：25 條功能 × 五級狀態（`claimed`
   → `implemented` → `wired` → `verified` →
   `production`），每列附驗證指令與日期。**改狀態只改 YAML，重跑生成器**：
 

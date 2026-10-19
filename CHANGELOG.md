@@ -6,6 +6,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Internal/Unreleased] - 2026-10-19 — 2026-08-11 以來重點批次
+
+> 本版本尚未發佈（版本治理規則 2：未發佈條目標 `Internal/Unreleased`）。
+> 2026-08-11 以來約 1,100 個 commit 未逐條入誌（逐條編寫等同虛構），完整
+> 變更以 `git log` 與 `docs/06-project-management/MASTER_TASK_MAP.md` 為準；
+> 本節僅收錄**已完成驗證**的重點批次。
+
+### Added
+
+- **五步曲批次**（`8afdbc3e0`，2026-10-19）：D2/E3/A5 升級＋門禁＋新報告＋計分
+  重算；全倉 8504 passed, 112 skipped。
+- **研究管線**（`e4759c262`、`1f63a2caa`）：搜尋→抓內文→抽事實→交叉比對→AI
+  歸納，含潤色 editorial 旁路；WebSearch 六項稽核修復（`b8d1ab240`）。
+- **LLM 底層閉環**（`7a11c9c22`）：A1/B1/B2/B3/C2 五處修復＋規則回饋統計端點；
+  規則沉澱層（`4cd57e9d9`）：複雜答案驗證一次、正規化身分重放免重算。
+
+### Fixed
+
+- **稽核批次**（`2b87f1190`，2026-10-19）：三輪外審修復——zh-TW 語言層（動態
+  語言偵測＋全 locale 繁體化）、HAM 主體覆蓋守衛（錯主體模板回放拒答）、code
+  召回劫持守衛、同步端點改 `asyncio.to_thread` 解事件迴圈凍結、沙箱 import
+  死契約＋OOM 常數上限、cwd 錨定（雙 cwd 各 136 過）、HAM 資料污染清理
+  （chroma 115→4）。
+- **型別棘輪**（`3fc2ae331`）：type-ignore 預算 112→111 對齊實測。
+- **數字對齊**（`2b87f1190` 內）：README mypy 432/344→實測 0/0（746 files）、
+  「123 條路由」→動態措辭、STATUS_MATRIX 23→25 條；全套實測
+  **8527 passed, 112 skipped, 0 failed**（2026-10-19 全 testpaths）。
+
 ## [7.5.0-dev] - 2026-08-11 — Angela 真實多模態學習與審核
 
 ### Added
