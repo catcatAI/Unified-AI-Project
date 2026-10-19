@@ -131,3 +131,23 @@ class TestMetabolicHeartbeat:
         with pytest.raises(RuntimeError, match="no bio"):
             await hb.start()
         assert hb._running is False
+
+    def test_cns_feedback_llm_abstained_lowers_response_quality(self):
+        """llm.abstained → response_quality 0.0（與 routing 1.0 對偶）壓低健康分。"""
+        from core.life.heartbeat import MetabolicHeartbeat
+
+        hb = MetabolicHeartbeat()
+        hb._handle_cns_event("routing.response_generated", {})
+        hb._handle_cns_event("llm.abstained", {"kind": "honest-no-answer", "total": 1})
+        assert list(hb._response_quality) == [1.0, 0.0]
+        health = hb.get_system_health()
+        assert health["system_health"] == 0.5  # (1.0 + 0.0) / 2
+        assert health["response_quality_samples"] == 2
+
+    def test_llm_abstained_is_subscribed(self):
+        """接線：llm.abstained 已被 heartbeat 訂閱（孤兒事件棘輪守門）。"""
+        from core.life.heartbeat import MetabolicHeartbeat
+        from core.system.state_store.global_store import state_store
+
+        MetabolicHeartbeat()
+        assert "llm.abstained" in state_store._event_subscribers

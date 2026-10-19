@@ -781,3 +781,141 @@ async def test_cache_hit_increments_stats():
 
     assert response.metadata.get("cached") is True
     assert service.stats["cache_hits"] == 1
+
+
+@pytest.mark.asyncio
+async def test_abstain_envelope_v1_on_both_tiers():
+    """Abstain 通道（v1）：honest 拒答/拒做各帶結構化信封（v/reason/language/
+    tier），fallback 標記保留；信封在 metadata["abstain"]。"""
+    service = _recall_service()
+    service.model_bus = None
+    q = await service._fallback_response("量子糾纏是什麼？", {})
+    env_q = q.metadata.get("abstain")
+    assert env_q == {
+        "v": 1,
+        "reason": "no_answer",
+        "language": "zh",
+        "tier": "honest",
+    }
+    assert q.metadata.get("fallback") is True
+    t = await service._fallback_response("寫Unity腳本", {"_classify_result_type": "code"})
+    env_t = t.metadata.get("abstain")
+    assert env_t["v"] == 1
+    assert env_t["reason"] == "cannot_do"
+    assert env_t["tier"] == "honest-task"
+    en = await service._fallback_response("What is quantum entanglement?", {})
+    assert en.metadata["abstain"]["language"] == "en"
+    assert en.metadata["abstain"]["reason"] == "no_answer"
+
+
+def test_abstain_routing_snapshot_and_bounded_window():
+    """abstain 閉環：無樣本→None；樣本≥1 有 rate 快照；窗口有界（maxlen=20）。"""
+    service = _recall_service()
+    assert service.get_abstain_routing() is None
+    service.record_served_turn()
+    service.record_served_turn()
+    service._record_abstain("honest-no-answer")
+    snap = service.get_abstain_routing()
+    assert snap == {"recent_abstain_rate": 0.333, "sample_count": 3, "abstains": 1}
+    for _ in range(25):
+        service.record_served_turn()
+    snap2 = service.get_abstain_routing()
+    assert snap2["sample_count"] == 20
+    assert snap2["abstains"] == 0
+
+
+def test_extract_abstain_envelope():
+    """_extract_abstain_envelope：有 dict 信封取之；無/畸形 metadata→None。"""
+    from types import SimpleNamespace
+
+    from api.routes.chat_routes import _extract_abstain_envelope
+
+    env = {"v": 1, "reason": "no_answer", "language": "zh", "tier": "honest"}
+    assert _extract_abstain_envelope(SimpleNamespace(metadata={"abstain": env})) == env
+    assert _extract_abstain_envelope(SimpleNamespace(metadata={})) is None
+    assert _extract_abstain_envelope(SimpleNamespace(metadata={"abstain": "oops"})) is None
+    assert _extract_abstain_envelope(SimpleNamespace()) is None
+    # dict 形式的 llm_response（knowledge 管線早退）：getattr miss → None
+    assert _extract_abstain_envelope({"text": "hi", "response": "hi"}) is None
+
+
+def test_format_chat_response_surfaces_abstain():
+    """API payload：_format_chat_response 帶 additive "abstain" 鍵；無棄權=None。"""
+    from types import SimpleNamespace
+
+    from api.routes.chat_routes import _format_chat_response
+
+    env = {"v": 1, "reason": "cannot_do", "language": "zh", "tier": "honest-task"}
+    resp = SimpleNamespace(
+        text="做不到",
+        model="honest-cannot-do",
+        backend="local-fallback",
+        metadata={"fallback": True, "abstain": env},
+    )
+    out = _format_chat_response("做不到", resp, None, "v1", "", "寫腳本", 500, "s1")
+    assert out["abstain"] == env
+    served = SimpleNamespace(text="日本首都是東京。", model="kb", backend="knowledge", metadata={})
+    out2 = _format_chat_response("日本首都是東京。", served, None, "v1", "", "q", 500, "s1")
+    assert out2["abstain"] is None
+
+
+def test_post_response_feedback_abstain_aware(monkeypatch):
+    """10b 閉環：棄權回合 record_intent_outcome(success=False) 且不補 served
+    分母；正常回合 success=True 且 chat_svc.record_served_turn 呼叫一次。"""
+    from api.routes import chat_routes
+
+    captured = []
+
+    class _FakeIM:
+        def record_intent_outcome(self, mode, success):
+            captured.append((mode, success))
+
+    monkeypatch.setattr(chat_routes, "_get_intent_manager", lambda: _FakeIM())
+    monkeypatch.setattr(chat_routes, "_learn_from_classification_feedback", lambda *a, **k: None)
+
+    class _FakeSvc:
+        served = 0
+
+        def record_served_turn(self):
+            self.served += 1
+
+    svc = _FakeSvc()
+    chat_routes._record_post_response_feedback(
+        {
+            "_abstain": {"v": 1, "reason": "no_answer"},
+            "intent_routing": {"routing_mode": "conservative"},
+        },
+        "這個問題我目前還沒有足夠的知識能正確回答。",
+        "q?",
+        False,
+        svc,
+    )
+    assert captured[-1] == ("conservative", False)
+    assert svc.served == 0
+    chat_routes._record_post_response_feedback(
+        {"intent_routing": {"routing_mode": "neutral"}},
+        "日本的首都是東京，這是已確認的事實。",
+        "q",
+        False,
+        svc,
+    )
+    assert captured[-1] == ("neutral", True)
+    assert svc.served == 1
+
+
+def test_chat_service_record_served_turn_delegation():
+    """ChatService.record_served_turn 委派到底層 llm 服務；缺席時靜默 no-op。"""
+    from services.chat_service import ChatService
+
+    class _R:
+        n = 0
+
+        def record_served_turn(self):
+            self.n += 1
+
+    r = _R()
+    cs = ChatService(llm_service=r)
+    cs.record_served_turn()
+    assert r.n == 1
+    ChatService(llm_service=None).record_served_turn()  # no-op, no raise
+    ChatService(llm_service=object()).record_served_turn()  # 無方法 → no-op

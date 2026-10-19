@@ -26,6 +26,15 @@ and this project adheres to
 - **棄權路徑語言化＋正規化守衛**（`f4cb444b8`）：英文離線拒答不再回中文；
   已知棄權集尾隨標點正規化比對（6 呼叫點統一）；棄權遙測 get_abstain_stats；
   英文棄權子串鏡入毒化守衛（永不化石化）。6 新測試。
+- **Abstain 通道（v1）＋閉環**（2026-10-19）：honest 拒答/拒做各帶結構化信封
+  `metadata.abstain`（`v`/`reason`/`language`/`tier`——additive 契約、`v` 欄位
+  預留升級換代）；chat API payload 同步暴露 additive `abstain` 欄；IntentModel
+  與 MetaController 校準不再把棄權文案當成功樣本；非棄權回合經
+  `record_served_turn` 記進路由器有界窗口（maxlen=20）→ `get_abstain_routing`
+  快照注入 context → `abstain_voter`（第 9 位投票者：近期棄權率≥0.5 且樣本≥3
+  → 投保守路由）；`llm.abstained` CNS 事件由 MetabolicHeartbeat 訂閱
+  （response_quality 0.0 對偶 → 壓低健康分 → heartbeat_voter 同向加壓）。
+  14 新測試，全 testpaths **8554 passed, 112 skipped, 0 failed**（2026-10-19）。
 
 ### Fixed
 

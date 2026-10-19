@@ -143,6 +143,7 @@ class MetabolicHeartbeat:
         state_store.subscribe_event(
             "lifecycle.decision_executed", self._handle_cns_event, priority=5
         )
+        state_store.subscribe_event("llm.abstained", self._handle_cns_event, priority=5)
 
     def _handle_cns_event(self, event_type: str, payload: Dict[str, Any]) -> None:
         if event_type == "emotion.updated":
@@ -152,6 +153,11 @@ class MetabolicHeartbeat:
             self._emotion_stability.append(stability)
         elif event_type == "routing.response_generated":
             self._response_quality.append(1.0)
+        elif event_type == "llm.abstained":
+            # 棄權＝沒真正服務到 → response_quality 低分（與
+            # routing.response_generated 的 1.0 對偶），壓低系統健康分
+            # → heartbeat_voter 更趨保守（abstain 閉環的第二條腿）。
+            self._response_quality.append(0.0)
         elif event_type == "lifecycle.decision_executed":
             success = payload.get("success", False)
             self._lifecycle_success.append(1.0 if success else 0.0)

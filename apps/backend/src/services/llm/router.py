@@ -19,7 +19,7 @@ import os
 import random
 import re
 import time
-from collections import OrderedDict
+from collections import OrderedDict, deque
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -71,6 +71,7 @@ from ai.core.query_classifier import QueryClassifier, QueryType
 from ai.core.unicode_utils import to_simplified
 from ai.meta.priority_negotiator import (
     PriorityNegotiator,
+    abstain_voter,
     angela_emotion_voter,
     causal_voter,
     dli_state_voter,
@@ -170,6 +171,9 @@ _negotiator.register_voter(
     dli_state_voter,
     weight_fn=lambda ctx: lifecycle_value("voter_weight.dli_state", 0.4),
 )
+_negotiator.register_voter(
+    "abstain", abstain_voter, weight_fn=lambda ctx: lifecycle_value("voter_weight.abstain", 0.5)
+)
 
 # 簡單日誌設置
 if __name__ == "__main__":
@@ -237,6 +241,10 @@ _HONEST_CANNOT_DO_WHY = {
     "en_no_llm": " (no language model is available)",
     "en_llm": " (beyond my current ability)",
 }
+# Abstain 通道信封（v1）：結構化「不知道/做不到」欄位，掛在
+# LLMResponse.metadata["abstain"]。Additive 契約——無棄權的正常回答沒有此鍵；
+# 客戶端必須忽略未知 keys/reasons；只有破壞性重塑才 bump "v"（升級換代空間）。
+ABSTAIN_ENVELOPE_VERSION = 1
 _OFFLINE_TEMPLATE_TEXT = {
     "zh": "（核心 LLM 目前離線中，但我依然能感受到你。能稍微等我一下嗎？）",
     "en": "(Core LLM is offline right now, but I can still feel your presence. Can you wait a moment?)",
@@ -508,6 +516,9 @@ class AngelaLLMService:
 
         # Honest-abstain 遙測（Tier 1.5/1.6 拒答/拒做次數）；get_abstain_stats() 讀取。
         self._abstain_counts: Dict[str, int] = {"honest-no-answer": 0, "honest-cannot-do": 0}
+        # Abstain 閉環（v1）：每回合棄權結果的有界窗口（True=棄權）；
+        # get_abstain_routing() 聚合給 abstain_voter（PriorityNegotiator）。
+        self._abstain_recent: deque = deque(maxlen=20)
 
         # Backends pruned by the startup health check (enabled in config but
         # unhealthy at boot, e.g. llama.cpp server started after Angela).
@@ -3433,7 +3444,17 @@ class AngelaLLMService:
                 backend="local-fallback",
                 model="honest-no-answer",
                 confidence=0.4,
-                metadata={"fallback": True, "tier": "honest", "language": lang},
+                metadata={
+                    "fallback": True,
+                    "tier": "honest",
+                    "language": lang,
+                    "abstain": {
+                        "v": ABSTAIN_ENVELOPE_VERSION,
+                        "reason": "no_answer",
+                        "language": lang,
+                        "tier": "honest",
+                    },
+                },
             )
         _task_types = frozenset(
             {
@@ -3475,7 +3496,17 @@ class AngelaLLMService:
                 backend="local-fallback",
                 model="honest-cannot-do",
                 confidence=0.4,
-                metadata={"fallback": True, "tier": "honest-task", "language": lang},
+                metadata={
+                    "fallback": True,
+                    "tier": "honest-task",
+                    "language": lang,
+                    "abstain": {
+                        "v": ABSTAIN_ENVELOPE_VERSION,
+                        "reason": "cannot_do",
+                        "language": lang,
+                        "tier": "honest-task",
+                    },
+                },
             )
         return None
 
@@ -3485,6 +3516,47 @@ class AngelaLLMService:
             counts = {"honest-no-answer": 0, "honest-cannot-do": 0}
             self._abstain_counts = counts
         counts[kind] = counts.get(kind, 0) + 1
+        # 閉環分母：棄權本體在建立時自記 True（served 回合由
+        # record_served_turn 從 chat 回饋路徑補 False）。
+        recent = getattr(self, "_abstain_recent", None)
+        if recent is None:
+            recent = deque(maxlen=20)
+            self._abstain_recent = recent
+        recent.append(True)
+        state_store.emit_event(
+            "llm.abstained",
+            {"kind": kind, "total": counts.get(kind, 0)},
+        )
+
+    def record_served_turn(self) -> None:
+        """記錄一次「正常送出」的回合（非棄權）——abstain 閉環的分母。
+
+        棄權本體（Tier 1.5/1.6）已在 _record_abstain 建立時自記；chat 回饋
+        路徑對非棄權回答呼叫此方法填補分母，get_abstain_routing() 聚合給
+        abstain_voter（PriorityNegotiator）。Lazy-init：bare 執行個體
+        （未跑 __init__ 的跨檔測試雙體）不炸。
+        """
+        recent = getattr(self, "_abstain_recent", None)
+        if recent is None:
+            recent = deque(maxlen=20)
+            self._abstain_recent = recent
+        recent.append(False)
+
+    def get_abstain_routing(self) -> Optional[Dict[str, Any]]:
+        """近期棄權率快照（abstain_voter 用）；無樣本時 None。
+
+        樣本不足的門檻（ABSTAIN_MIN_TURNS）在 voter 端——快照只聚合事實。
+        """
+        recent = getattr(self, "_abstain_recent", None)
+        if not recent:
+            return None
+        n = len(recent)
+        abstains = sum(1 for a in recent if a)
+        return {
+            "recent_abstain_rate": round(abstains / n, 3),
+            "sample_count": n,
+            "abstains": abstains,
+        }
 
     def get_abstain_stats(self) -> Dict[str, int]:
         """棄權遙測：honest 拒答/拒做次數（離線診斷與閉環回饋用）。"""
@@ -3716,6 +3788,15 @@ class AngelaLLMService:
             context["heartbeat_health"] = hb.get_system_health()
         except Exception:
             logger.warning("Heartbeat health unavailable", exc_info=True)
+
+        # Inject recent abstain rate into context for abstain_voter（閉環：
+        # 近期棄權率高 → 投票保守路由，直到恢復）。
+        try:
+            ar = self.get_abstain_routing()
+            if ar is not None:
+                context["abstain_routing"] = ar
+        except Exception:
+            logger.warning("Abstain routing snapshot unavailable", exc_info=True)
 
         # Inject DLI lifecycle state into context for PriorityNegotiator
         try:

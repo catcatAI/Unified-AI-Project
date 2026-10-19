@@ -158,6 +158,20 @@ class ChatService:
             return self._llm_service.model_bus
         return None
 
+    def record_served_turn(self) -> None:
+        """Abstain 閉環鉤子：把「正常送出」回合記進 LLM 路由器的近期窗口。
+
+        棄權本體（Tier 1.5/1.6 honest refusal）已在路由器內自記 True；
+        這裡只補分母（chat 回饋路徑對非棄權回答呼叫）。Lazy delegate——
+        llm 服務缺席或無此方法時靜默跳過（best-effort 回饋路徑）。
+        """
+        llm = self._llm_service
+        if llm is None:
+            return
+        recorder = getattr(llm, "record_served_turn", None)
+        if recorder:
+            recorder()
+
     @property
     def memory_manager(self):
         """HAM memory manager, owned by the underlying LLM router.

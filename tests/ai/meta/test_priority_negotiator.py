@@ -4,6 +4,7 @@ import pytest
 from ai.meta.priority_negotiator import (
     PriorityNegotiator,
     VoterVote,
+    abstain_voter,
     angela_emotion_voter,
     causal_voter,
     emotional_voter,
@@ -343,3 +344,56 @@ class TestMetaCalibrationVoter:
         assert result["temperature_bias"] > 0
         assert result["tokens_bias"] > 0
         assert result["resolved_by"] == "meta_calibration"
+
+
+class TestAbstainVoter:
+    """abstain_voter：近期棄權率高→保守路由；證據不足/低率→不投票。
+
+    context["abstain_routing"] 由路由器 get_abstain_routing() 注入
+    （record_served_turn/_record_abstain 建的有界窗口聚合）。
+    """
+
+    def test_high_rate_votes_conservative(self):
+        vote = abstain_voter(
+            {"abstain_routing": {"recent_abstain_rate": 0.75, "sample_count": 8, "abstains": 6}}
+        )
+        assert vote is not None
+        assert vote.routing_mode == "conservative"
+        assert vote.response_style == "cautious"
+        assert vote.temperature_bias < 0
+        assert vote.tokens_bias < 0
+        assert 0.4 <= vote.confidence <= 0.6
+
+    def test_low_rate_no_vote(self):
+        assert (
+            abstain_voter({"abstain_routing": {"recent_abstain_rate": 0.2, "sample_count": 10}})
+            is None
+        )
+
+    def test_insufficient_samples_no_vote(self):
+        # rate=1.0 但樣本 <3：證據不足不投票（避免冷啟動就把路由打成保守）。
+        assert (
+            abstain_voter({"abstain_routing": {"recent_abstain_rate": 1.0, "sample_count": 2}})
+            is None
+        )
+
+    def test_missing_or_malformed_context(self):
+        assert abstain_voter({}) is None
+        assert abstain_voter({"abstain_routing": None}) is None
+        assert (
+            abstain_voter({"abstain_routing": {"recent_abstain_rate": "x", "sample_count": 3}})
+            is None
+        )
+
+    def test_confidence_scales_with_rate_capped(self):
+        v50 = abstain_voter({"abstain_routing": {"recent_abstain_rate": 0.5, "sample_count": 5}})
+        v100 = abstain_voter({"abstain_routing": {"recent_abstain_rate": 1.0, "sample_count": 5}})
+        assert v50 is not None and v100 is not None
+        assert v100.confidence > v50.confidence
+        assert v100.confidence <= 0.6
+
+    def test_registered_on_router_negotiator(self):
+        # 接線：abstain_voter 已掛上 router 模組級 PriorityNegotiator singleton。
+        from services.llm.router import _negotiator
+
+        assert "abstain" in _negotiator._voters

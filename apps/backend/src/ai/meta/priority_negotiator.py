@@ -326,3 +326,47 @@ def dli_state_voter(context: Dict[str, Any]) -> Optional[VoterVote]:
             confidence=0.6,
         )
     return None
+
+
+# Abstain-vote signature constants (named — were bare literals):
+# a recent abstain rate at/above threshold with enough samples votes
+# conservative; confidence scales up to ABSTAIN_CONFIDENCE_MAX with the
+# overshoot past the threshold.
+ABSTAIN_RATE_THRESHOLD = 0.5
+ABSTAIN_MIN_TURNS = 3
+ABSTAIN_CONFIDENCE = 0.45
+ABSTAIN_CONFIDENCE_MAX = 0.6
+
+
+def abstain_voter(context: Dict[str, Any]) -> Optional[VoterVote]:
+    """Recent honest-abstain rate → conservative routing pressure.
+
+    When ≥50% of recent substantive turns ended in an honest abstain
+    (Tier 1.5/1.6 no_answer/cannot_do), routing is over-reaching; vote
+    conservative until the rate recovers. Reads ``context["abstain_routing"]``
+    injected by the router from its own per-turn tracker
+    (``record_served_turn``/``_record_abstain`` → ``get_abstain_routing``).
+    Returns None when there is not yet enough evidence (sample_count <
+    ABSTAIN_MIN_TURNS) or the rate is below threshold.
+    """
+    ar = context.get("abstain_routing")
+    if not ar:
+        return None
+    try:
+        rate = float(ar.get("recent_abstain_rate", 0.0))
+        samples = int(ar.get("sample_count", 0))
+    except (TypeError, ValueError):
+        return None
+    if samples < ABSTAIN_MIN_TURNS or rate < ABSTAIN_RATE_THRESHOLD:
+        return None
+    confidence = min(
+        ABSTAIN_CONFIDENCE_MAX,
+        ABSTAIN_CONFIDENCE + (rate - ABSTAIN_RATE_THRESHOLD),
+    )
+    return VoterVote(
+        routing_mode="conservative",
+        response_style="cautious",
+        temperature_bias=-0.1,
+        tokens_bias=-50,
+        confidence=round(confidence, 3),
+    )

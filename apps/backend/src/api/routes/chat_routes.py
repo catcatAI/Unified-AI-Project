@@ -1843,6 +1843,8 @@ def _format_chat_response(
         "hit_score": getattr(llm_response, "hit_score", 0.0),
         "hit_source": getattr(llm_response, "hit_source", "none"),
         "route": _derived_route,
+        # Abstain 通道（v1）：結構化棄權信封（無棄權=None，形狀穩定）。
+        "abstain": _extract_abstain_envelope(llm_response),
         "session_id": session_id,
     }
 
@@ -2032,13 +2034,19 @@ async def _run_chat_pipeline(
         return _latest_responses[session_id]
 
     response_text = _extract_response_text(llm_response)
+    # Abstain 通道（v1）：把結構化棄權信封放進 context，供回饋閉環（10b/10d）
+    # 與 API payload 使用（additive；無棄權=None）。每回合重算——同回合內
+    # 生成完成後才 stamp，不會殘留上一回合的值。
+    context["_abstain"] = _extract_abstain_envelope(llm_response)
     context["continuation_count"] = context.get("continuation_count", 0) + 1
     _fire_causal_learning(response_text, user_message, session_id)
     _log_loop_signal(response_text, session_id)
 
     # Step 10b/10c/10e: Post-response feedback loops (online learning + intent
     # outcome + solution-rule outcome)
-    _record_post_response_feedback(context, response_text, user_message, _was_truncated)
+    _record_post_response_feedback(
+        context, response_text, user_message, _was_truncated, chat_svc
+    )
 
     _set_latest_response(
         session_id,
@@ -2332,6 +2340,21 @@ def _extract_response_text(llm_response: Any) -> str:
     )
 
 
+def _extract_abstain_envelope(llm_response: Any) -> Optional[Dict[str, Any]]:
+    """Structured abstain channel (v1): read metadata["abstain"] if present.
+
+    Additive contract — absent (None) for served answers; the envelope carries
+    {"v", "reason", "language", "tier"}. Clients must ignore unknown
+    keys/reasons inside the envelope (upgrade path: bump "v" only on
+    breaking reshapes).
+    """
+    meta = getattr(llm_response, "metadata", None)
+    if not isinstance(meta, dict):
+        return None
+    env = meta.get("abstain")
+    return env if isinstance(env, dict) else None
+
+
 def _record_meta_calibration_sample(context: Dict[str, Any], response_text: str) -> None:
     """10d: feed chat routing confidence into MetaController (問題單 6).
 
@@ -2352,7 +2375,8 @@ def _record_meta_calibration_sample(context: Dict[str, Any], response_text: str)
         except (TypeError, ValueError):
             conf = 0.5
         conf = max(0.0, min(1.0, conf))
-        success = bool(response_text and len(response_text) > 10)
+        # Abstain-aware：棄權不是「答對了」——不可餵給校準當正樣本。
+        success = bool(response_text and len(response_text) > 10) and not context.get("_abstain")
         mc.record_confidence("chat:intent_routing", conf, correct=success)
     except Exception as e:
         logger.warning(f"Meta confidence recording unavailable: {e}", exc_info=True)
@@ -2363,13 +2387,16 @@ def _record_post_response_feedback(
     response_text: str,
     user_message: str,
     was_truncated: bool = False,
+    chat_svc: Any = None,
 ) -> None:
     """Steps 10b/10c/10d/10e: post-response feedback loops (best-effort).
 
     10c online self-learning (dictionary classifier) + 10b intent outcome
     recording (C³ 5.0→6.0) + 10d meta calibration sampling (問題單 6)
     + 10e solution-rule outcome (規則沉澱層閉環回饋 → RuleStore.record_outcome).
-    None may raise into the response path.
+    Abstain-aware (v1): context["_abstain"] 信封存在時，10b/10d 不把棄權
+    當成功樣本；10b 之後把非棄權回合經 chat_svc.record_served_turn() 記進
+    路由器的 abstain 閉環分母。None may raise into the response path.
     """
     # 10e: 規則命中回饋。Success = 存的答案真的送到（逐字相等或原文含於回覆，
     # 容忍輕度後製）且未被截斷；空回覆/截斷 = 失敗 → 降信心（兩敗出局閉環）。
@@ -2408,14 +2435,27 @@ def _record_post_response_feedback(
             actual_mode = context.get("_actual_routing_mode")
             intent_routing = context.get("intent_routing", {})
             recommended_mode = intent_routing.get("routing_mode") if intent_routing else None
-            success = bool(response_text and len(response_text) > 10)
+            # Abstain-aware：honest 拒答/拒做不是 routing 成功（2026-10-19
+            # 前 ~50 字的拒答文案被當成功樣本餵進 IntentModel 閉環）。
+            _is_abstain = bool(context.get("_abstain"))
+            success = bool(response_text and len(response_text) > 10) and not _is_abstain
             im.record_intent_outcome(recommended_mode, success)
             logger.debug(
                 f"Intent outcome: recommended={recommended_mode}, "
-                f"actual={actual_mode}, success={success}"
+                f"actual={actual_mode}, success={success}, abstain={_is_abstain}"
             )
     except Exception as e:
         logger.warning(f"Intent outcome recording unavailable: {e}", exc_info=True)
+
+    # Abstain 閉環分母：非棄權的正常送出回合記進路由器近期窗口（棄權本體
+    # 在 Tier 1.5/1.6 建立時已自記 True），recent rate 餵給 abstain_voter。
+    if chat_svc is not None and not context.get("_abstain"):
+        try:
+            recorder = getattr(chat_svc, "record_served_turn", None)
+            if recorder:
+                recorder()
+        except Exception as e:
+            logger.debug(f"Served-turn abstain tracking skipped: {e}", exc_info=True)
 
     _record_meta_calibration_sample(context, response_text)
 
