@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Angela AI Unified Launcher v6.3.0
+Angela AI Unified Launcher v7.5.0-dev
 一键启动：自动启动后端 API + 桌面应用
 
 Usage:
@@ -707,7 +707,7 @@ def main():
         parser.error("--repl 不能与 --api-only/--desktop-only 同时使用")
 
     print("=" * 60)
-    print("🌟 Angela AI 一键启动器 v6.3.0")
+    print("🌟 Angela AI 一键启动器 v7.5.0-dev")
     print("=" * 60)
 
     launcher = Launcher()

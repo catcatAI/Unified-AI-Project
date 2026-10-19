@@ -2492,6 +2492,22 @@ class AngelaLLMService:
             logger.debug(f"Registry-dispatch guard unavailable: {exc}")
             return False
 
+    def _recall_code_guard(self, user_message: str) -> bool:
+        """Code requests win over recall: writing/reviewing code must reach the
+        code path, not answer from a fact sharing one ASCII 4-gram
+        (live 2026-10-18: "寫一個 Python 函式算費波那契" recalled
+        "我喜歡用 Python" via "pyth", confidence 0.9 — same hijack family
+        as the 2026-10-09/10 math/registry cases, one entry point over).
+        """
+        try:
+            from ai.core.query_classifier import QueryClassifier, QueryType
+
+            return QueryClassifier().classify(user_message).primary_type == QueryType.CODE
+        except Exception as exc:
+            # Same class of failure: a code request answered from memory.
+            logger.debug(f"Code-over-memory guard unavailable: {exc}")
+            return False
+
     def _build_fact_chunks(self, user_message: str) -> List[str]:
         """CJK bigrams carry word-level meaning in 2 chars; ASCII needs
         longer windows (" a"/"us" match everything — live 2026-10-10:
@@ -2577,6 +2593,8 @@ class AngelaLLMService:
             if self._recall_math_guard(user_message):
                 return None
             if self._recall_registry_guard(user_message):
+                return None
+            if self._recall_code_guard(user_message):
                 return None
             chunks = self._build_fact_chunks(user_message)
             if not chunks:
@@ -4478,8 +4496,16 @@ class AngelaLLMService:
             logger.debug(f"Precompute scheduling skipped: {e}")
 
     def _extract_keywords(self, text: str) -> List[str]:
-        """提取关键词"""
-        stopwords = {
+        """提取关键词（中英）——過濾停用詞，保留主體詞。
+
+        2026-10-19 稽核修復：原版只過濾中文停用詞且 [:5] 截斷，導致
+        "What is the capital of Japan?" 存成 ["what","is","the","capital","of"]
+        （主體 Japan 被截掉、關鍵詞全是停用詞），檢索時以 0.9 信心答錯國名。
+        現與 ham_manager 共用同一組停用詞（TEMPLATE_STOPWORDS）。
+        """
+        from ai.memory.ham_memory.ham_manager import TEMPLATE_STOPWORDS
+
+        zh_stopwords = {
             "你",
             "我",
             "他",
@@ -4494,8 +4520,12 @@ class AngelaLLMService:
             "在",
             "有",
         }
-        words = re.findall(r"[\u4e00-\u9fff]{2,}|[a-zA-Z]{2,}", text)
-        keywords = [w for w in words if w not in stopwords and len(w) > 1]
+        words = re.findall(r"[一-鿿]{2,}|[a-zA-Z']{2,}", text)
+        keywords = [
+            w
+            for w in words
+            if w not in zh_stopwords and w.lower() not in TEMPLATE_STOPWORDS and len(w) > 1
+        ]
         return keywords[:5]
 
     def _ed3n_fallback_text(self, text: str) -> str:

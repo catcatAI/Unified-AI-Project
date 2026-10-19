@@ -7,6 +7,9 @@
 
 import inspect
 
+import pytest
+from fastapi import HTTPException
+
 from services.atlassian_api import (
     AtlassianCLIBridge,
     AtlassianConfig,
@@ -140,3 +143,28 @@ def test_atlassian_router_exposes_confluence_search():
         and "GET" in r.methods
         for r in atlassian_router.routes
     )
+
+
+@pytest.mark.parametrize(
+    "handler",
+    [
+        "get_spaces",
+        "get_projects",
+        "get_issues",
+        "search_confluence",
+    ],
+)
+def test_atlassian_unconfigured_returns_503(monkeypatch, handler):
+    """2026-10-18 稽核：未設定憑證是可恢復的客戶端狀態（503），
+    不是伺服器錯誤（500）。四端點一致。"""
+    import asyncio
+
+    import services.atlassian_api as aa
+
+    monkeypatch.setattr(aa.atlassian_bridge, "config", None)
+    with pytest.raises(HTTPException) as exc:
+        aa._ensure_configured()
+    assert exc.value.status_code == 503
+    with pytest.raises(HTTPException) as exc2:
+        asyncio.run(getattr(aa, handler)())
+    assert exc2.value.status_code == 503

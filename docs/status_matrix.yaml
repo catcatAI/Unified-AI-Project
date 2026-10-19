@@ -179,9 +179,9 @@ features:
     domain: 測試品質門
     claim: 全倉綠
     status: verified
-    verify_command: pytest tests/
-    evidence: 5586 passed, 122 skipped, 0 failed（R74 全倉前景）
-    last_verified: "2026-09-21"
+    verify_command: pytest
+    evidence: 8527 passed, 112 skipped, 0 failed（2026-10-19 稽核批次全 testpaths 實測：tests/＋apps/backend/tests/＋apps/game-rpg/tests＋scripts）
+    last_verified: "2026-10-19"
 
   - id: mypy-debt
     domain: mypy 型別債
@@ -192,8 +192,8 @@ features:
       - scripts/mypy_budget_gate.py
       - scripts/mypy_budget.txt
     verify_command: python scripts/mypy_budget_gate.py
-    evidence: 門機制可驗證；棘輪基線已清零 0（歷史 559→540→518→497→476→432→405→402→391→344→0）；mypy 實測 722 個 source files 全綠（no issues found）；新增債 CI 直接紅燈
-    last_verified: "2026-09-28"
+    evidence: 門機制可驗證；棘輪基線已清零 0（歷史 559→540→518→497→476→432→405→402→391→344→0）；mypy 實測 746 個 source files 全綠（no issues found）；新增債 CI 直接紅燈
+    last_verified: "2026-10-19"
 
   - id: flake8
     domain: flake8

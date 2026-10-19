@@ -190,5 +190,68 @@ class TestMetadataStamping:
         assert meta["schema_version"] == 1
 
 
+class TestSubjectCoverageGuard:
+    """2026-10-19 稽核：'What is the capital of Australia?' 以 0.9 信心命中
+    'what is the capital of Japan: Tokyo.' 模板（答錯國名 + 自我污染）。
+    主體守衛：查詢 ≥2 非停用詞、模板只覆蓋 ≤1 且內容未提未覆蓋詞 → 拒絕。"""
+
+    def _manager(self, tmp_path):
+        from ai.memory.ham_memory.ham_manager import HAMMemoryManager
+
+        return HAMMemoryManager(memory_file=str(tmp_path / "ham.json"), auto_save=False)
+
+    @pytest.mark.asyncio
+    async def test_wrong_subject_rejected(self, tmp_path):
+        m = self._manager(tmp_path)
+        m._data["templates"] = [
+            {
+                "content": "what is the capital of Japan: Tokyo.",
+                "id": "japan_capital",
+                "keywords": ["what", "is", "the", "capital", "of"],
+            },
+        ]
+        results = await m.retrieve_response_templates("What is the capital of Australia?")
+        assert results == []
+
+    @pytest.mark.asyncio
+    async def test_right_subject_still_serves(self, tmp_path):
+        m = self._manager(tmp_path)
+        m._data["templates"] = [
+            {
+                "content": "what is the capital of Japan: Tokyo.",
+                "id": "japan_capital",
+                "keywords": ["what", "is", "the", "capital", "of"],
+            },
+        ]
+        results = await m.retrieve_response_templates("What is the capital of Japan?")
+        ids = [tpl.get("id") for tpl, _ in results]
+        assert "japan_capital" in ids
+
+    @pytest.mark.asyncio
+    async def test_filler_words_do_not_false_reject(self, tmp_path):
+        """疑問填充詞（what's/like）不算 distinctive——天氣模板仍須命中。"""
+        m = self._manager(tmp_path)
+        m._data["templates"] = [
+            {
+                "content": "The weather is nice today! Wanna go out?",
+                "id": "weather_en",
+                "keywords": ["weather", "nice", "today"],
+            },
+        ]
+        results = await m.retrieve_response_templates("what's the weather like?")
+        ids = [tpl.get("id") for tpl, _ in results]
+        assert "weather_en" in ids
+
+    def test_extract_keywords_keeps_subject(self):
+        """存庫端根因：_extract_keywords 曾存出全停用詞關鍵詞（主體被 [:5] 截掉）。"""
+        from services.llm.router import AngelaLLMService
+
+        kws = AngelaLLMService._extract_keywords(None, "What is the capital of Japan?")
+        assert "Japan" in kws
+        assert "capital" in kws
+        assert "what" not in [k.lower() for k in kws]
+        assert "the" not in [k.lower() for k in kws]
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

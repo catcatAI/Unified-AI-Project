@@ -92,7 +92,7 @@ python scripts/gen_project_map.py --module game_agent
 python scripts/gen_project_map.py --module execution_gate --limit 3
 ```
 
-生成圖四區塊：依賴排錯（第三方/倉內分開）→ 碰撞索引（同名檔深→淺）→實時結構（入口點、123 條 FastAPI 路由、模組樹、被引用 Top、測試映射、STATUS_MATRIX 宣稱 vs 實體核對）→ 行為核心（驗收門/配置鍵/大檔/未用 import）。
+生成圖四區塊：依賴排錯（第三方/倉內分開）→ 碰撞索引（同名檔深→淺）→實時結構（入口點、全部 FastAPI 路由（動態生成）、模組樹、被引用 Top、測試映射、STATUS_MATRIX 宣稱 vs 實體核對）→ 行為核心（驗收門/配置鍵/大檔/未用 import）。
 
 ## Status — 對內外宣稱的唯一出口
 
@@ -107,8 +107,9 @@ python scripts/gen_project_map.py --module execution_gate --limit 3
 
 - 交叉核對自動化：`gen_project_map.py`
   會驗證 YAML 宣稱的每個 implementation/tests 路徑真實存在；違規即 CI 紅。
-- 誠實缺口（mypy
-  432 棘輪門、angela_bench 已建仍有跨 AI 對比待接入、live 訓練樣本等）見 STATUS_MATRIX。
+- 誠實缺口（angela_bench
+  已建仍有跨 AI 對比待接入、live 訓練樣本等）見 STATUS_MATRIX；mypy 棘輪門
+  2026-10-19 實測 0 errors（746 files）、預算 0/0，不再是缺口。
 
 ## What Does NOT Work — 防重實作清單（手寫保護區）
 
@@ -132,7 +133,7 @@ python scripts/gen_project_map.py --module execution_gate --limit 3
 ```bash
 python scripts/gen_project_map.py --budget 10000   # 地圖預算門（超標=專案有病）
 python scripts/gen_status_matrix.py check          # 狀態宣稱核對
-python scripts/mypy_budget_gate.py                 # mypy 棘輪門（基線 344，只降不升；--top N 附按檔案分布報告）
+python scripts/mypy_budget_gate.py                 # mypy 棘輪門（基線 0，只降不升；--top N 附按檔案分布報告）
 python -m pytest tests/                            # 全倉測試
 python -m flake8 && python -m black --check . && python -m isort --check-only .
 npx prettier --check .                             # 全倉格式（豁免見 .prettierignore）

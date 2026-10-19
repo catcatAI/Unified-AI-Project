@@ -8,7 +8,7 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from core.prompt_manager import prompt
+from core.prompt_manager import detect_response_language, get_prompt_manager, prompt
 
 logger = logging.getLogger(__name__)
 
@@ -798,6 +798,9 @@ def construct_angela_prompt(
     neuro_vocabulary: Optional[Any] = None,
 ) -> List[Dict[str, str]]:
     """建構 Angela 的提示詞"""
+    # 語言跟隨使用者輸入（繁中使用者不再拿到英文身份提示/簡體回覆）。
+    # 此函式為同步區段（內部無 await），set_language 後隨即建構，事件迴圈不會交錯。
+    get_prompt_manager().set_language(detect_response_language(user_message))
     bio_status = get_biological_state(context=context)
     state_for_llm = context.get("state_for_llm")
     system_prompt = _build_core_prompt(state_for_llm, neuro_vocabulary, bio_status)

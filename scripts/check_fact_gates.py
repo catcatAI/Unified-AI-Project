@@ -590,7 +590,7 @@ def audit_prompt_keys() -> Dict[str, Any]:
             key = m.group(2)
             if "{" not in key:
                 used.add(key)
-    zh = json.loads(read(SRC / "core/i18n/locales/prompts.zh-CN.json"))
+    zh = json.loads(read(SRC / "core/i18n/locales/prompts.zh-TW.json"))
     en = json.loads(read(SRC / "core/i18n/locales/prompts.en-US.json"))
 
     def flatten(d: Dict[str, Any], prefix: str = "") -> Set[str]:

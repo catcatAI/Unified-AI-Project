@@ -14,6 +14,18 @@ from typing import Any, Dict, List, Optional
 logger = logging.getLogger(__name__)
 
 
+def detect_response_language(text: str) -> str:
+    """Infer reply language ("zh" / "en") from the user's message.
+
+    CJK 比例 > 10% 視為中文（繁簡皆可）；其餘（含空字串）回 "en"。
+    純函式、無副作用——供 construct_angela_prompt 每請求呼叫。
+    """
+    if not text:
+        return "en"
+    cjk = sum(1 for ch in text if 0x4E00 <= ord(ch) <= 0x9FFF)
+    return "zh" if cjk / len(text) > 0.1 else "en"
+
+
 @dataclass
 class PromptTemplate:
     """A single prompt template with multi-language support."""
@@ -25,8 +37,15 @@ class PromptTemplate:
     tags: List[str] = field(default_factory=list)
 
     def render(self, language: str = "en", **kwargs) -> str:
-        """Render the template with given variables."""
-        template = self.templates.get(language) or self.templates.get("en", self.key)
+        """Render the template with given variables.
+
+        Fallback chain: exact language → base language (zh-TW → zh) → en → key.
+        """
+        template = (
+            self.templates.get(language)
+            or self.templates.get(language.split("-")[0])
+            or self.templates.get("en", self.key)
+        )
         try:
             return template.format(**kwargs)
         except KeyError as e:
@@ -121,7 +140,7 @@ class PromptManager:
         locale_dir = Path(
             directory or self._config_dir or (Path(__file__).parent / "i18n" / "locales")
         )
-        locale_files = {"en": "prompts.en-US.json", "zh": "prompts.zh-CN.json"}
+        locale_files = {"en": "prompts.en-US.json", "zh": "prompts.zh-TW.json"}
         merged: Dict[str, Dict[str, str]] = {}
 
         for language, filename in locale_files.items():
@@ -273,7 +292,7 @@ class PromptManager:
                 key="angela.execution_result",
                 templates={
                     "en": "[Execution Result]",
-                    "zh": "【执行结果】",
+                    "zh": "【執行結果】",
                 },
                 tags=["system"],
             )
@@ -333,7 +352,7 @@ class PromptManager:
                 key="angela.fallback",
                 templates={
                     "en": "Sorry, I didn't understand your meaning.",
-                    "zh": "抱歉，我暂时无法理解你的意思。",
+                    "zh": "抱歉，我暫時無法理解你的意思。",
                 },
                 tags=["response"],
             )

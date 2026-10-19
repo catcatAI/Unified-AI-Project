@@ -51,7 +51,7 @@ Unified-AI-Project.
 
 ### Utilities
 
-- **`run_angela.py`**: Unified launcher (v6.3.0). Starts backend API + optional
+- **`run_angela.py`**: Unified launcher (v7.5.0-dev). Starts backend API + optional
   desktop app.
   - `python scripts/run_angela.py` — default (Ctrl+C to quit)
   - `python scripts/run_angela.py --api-only` — backend only

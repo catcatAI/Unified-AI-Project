@@ -8,6 +8,7 @@
 ``apps/backend/data/research_history/web_search.jsonl``；此路由暴露尾端。
 """
 
+import asyncio
 import logging
 from typing import Any, Dict
 
@@ -25,7 +26,8 @@ async def web_search_history(limit: int = 20) -> Dict[str, Any]:
         from core.tools.web_search_tool import read_recent_history
 
         bounded = max(1, min(int(limit), 200))
-        items = read_recent_history(bounded)
+        # jsonl tail 讀檔是同步 I/O——async handler 直跑會佔住事件迴圈。
+        items = await asyncio.to_thread(read_recent_history, bounded)
         return {"ok": True, "count": len(items), "history": items}
     except Exception as e:
         logger.warning("web-search history read failed: %s", e, exc_info=True)

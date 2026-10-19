@@ -105,6 +105,20 @@ async def test_recall_user_fact_answers_from_memory():
 
 
 @pytest.mark.asyncio
+async def test_recall_user_fact_never_hijacks_code_requests():
+    """2026-10-18 稽核：code 寫作請求曾被記憶召回以 "pyth" 4-gram 劫持
+    （"我記得：我喜歡用 Python"，confidence 0.9）。code 守衛必須擋下。"""
+    service = _recall_service()
+    ctx = _fact_context(content="User taught Angela: 我喜歡用 Python")
+    for code_query in (
+        "寫一個 Python 函式算費波那契數列",
+        "寫一個 Python 函式做二分搜尋",
+        "請解釋 Python 的裝飾器",
+    ):
+        assert await service._recall_user_fact(code_query, ctx, 0.0) is None
+
+
+@pytest.mark.asyncio
 async def test_recall_user_fact_ignores_unrelated_query():
     """Greetings must still reach templates: no shared chunk, no interception."""
     service = _recall_service()

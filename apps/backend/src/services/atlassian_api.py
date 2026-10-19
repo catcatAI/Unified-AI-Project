@@ -141,6 +141,19 @@ atlassian_bridge = AtlassianCLIBridge()
 atlassian_router = APIRouter(prefix="/api/v1/atlassian", tags=["Atlassian"])
 
 
+def _ensure_configured() -> None:
+    """未設定憑證＝服務未就緒（503），不是伺服器錯誤（500）。
+
+    2026-10-18 稽核：四端點未設定時一律回 500——誤導監控與除錯
+    （未設定是可恢復的客戶端狀態，先 /configure 即可）。
+    """
+    if atlassian_bridge.config is None:
+        raise HTTPException(
+            status_code=503,
+            detail="Atlassian CLI not configured — POST /api/v1/atlassian/configure first",
+        )
+
+
 @atlassian_router.post("/configure")
 async def configure_atlassian(config: AtlassianConfig) -> dict:
     """Configure atlassian."""
@@ -159,6 +172,7 @@ async def get_atlassian_status() -> dict:
 @atlassian_router.get("/confluence/spaces")
 async def get_spaces() -> dict:
     """Get spaces."""
+    _ensure_configured()
     result = await atlassian_bridge.get_confluence_spaces()
     if not result["success"]:
         raise HTTPException(status_code=500, detail=result.get("error"))
@@ -168,6 +182,7 @@ async def get_spaces() -> dict:
 @atlassian_router.get("/jira/projects")
 async def get_projects() -> dict:
     """Get projects."""
+    _ensure_configured()
     result = await atlassian_bridge.get_jira_projects()
     if not result["success"]:
         raise HTTPException(status_code=500, detail=result.get("error"))
@@ -177,6 +192,7 @@ async def get_projects() -> dict:
 @atlassian_router.get("/jira/issues")
 async def get_issues(jql: Optional[str] = None, limit: int = 50) -> dict:
     """Get Jira issues (query param: jql, limit)."""
+    _ensure_configured()
     result = await atlassian_bridge.get_jira_issues(jql, limit)
     if not result["success"]:
         raise HTTPException(status_code=500, detail=result.get("error"))
@@ -186,6 +202,7 @@ async def get_issues(jql: Optional[str] = None, limit: int = 50) -> dict:
 @atlassian_router.get("/confluence/search")
 async def search_confluence(query: str = "", limit: int = 25) -> dict:
     """Search Confluence content."""
+    _ensure_configured()
     result = await atlassian_bridge.search_confluence_content(query)
     if not result["success"]:
         raise HTTPException(status_code=500, detail=result.get("error"))
@@ -195,6 +212,7 @@ async def search_confluence(query: str = "", limit: int = 25) -> dict:
 @atlassian_router.post("/jira/issues")
 async def create_issue(issue: JiraIssueCreate) -> dict:
     """Create issue."""
+    _ensure_configured()
     result = await atlassian_bridge.create_jira_issue(
         issue.project_key, issue.summary, issue.description or "", issue.issue_type
     )

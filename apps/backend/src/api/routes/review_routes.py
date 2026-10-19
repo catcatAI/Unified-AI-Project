@@ -14,6 +14,7 @@
 #
 # =============================================================================
 
+import asyncio
 import logging
 
 from fastapi import APIRouter, HTTPException, Query
@@ -48,7 +49,8 @@ async def get_full_review():
     engine = _get_engine()
     if engine is None:
         raise HTTPException(status_code=503, detail="Review engine not available")
-    reports = engine.run_full_review()
+    # run_full_review 掃全庫（~747 檔、~6s）——同步跑會冰住整個事件迴圈。
+    reports = await asyncio.to_thread(engine.run_full_review)
     return {
         "success": True,
         "reports": {k: v.to_dict() for k, v in reports.items()},
@@ -62,7 +64,7 @@ async def get_composite_score():
     engine = _get_engine()
     if engine is None:
         raise HTTPException(status_code=503, detail="Review engine not available")
-    reports = engine.run_full_review()
+    reports = await asyncio.to_thread(engine.run_full_review)
     return {
         "success": True,
         "composite_score": engine.get_composite_score(reports),
@@ -76,7 +78,7 @@ async def get_review_summary():
     engine = _get_engine()
     if engine is None:
         raise HTTPException(status_code=503, detail="Review engine not available")
-    reports = engine.run_full_review()
+    reports = await asyncio.to_thread(engine.run_full_review)
     return {
         "success": True,
         "summary": engine.generate_summary(reports),
@@ -99,7 +101,7 @@ async def get_dimension_review(dimension: str):
     if engine is None:
         raise HTTPException(status_code=503, detail="Review engine not available")
     try:
-        report = engine.run_review(dimension)
+        report = await asyncio.to_thread(engine.run_review, dimension)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     return {
@@ -119,7 +121,7 @@ async def review_specific_files(files: list[str]):
     from ai.meta.angela_review_engine import CodeReviewer
 
     src_root = Path(__file__).resolve().parent.parent.parent
-    report = CodeReviewer(src_root).review(target_files=files)
+    report = await asyncio.to_thread(CodeReviewer(src_root).review, files)
     return {
         "success": True,
         "report": report.to_dict(),

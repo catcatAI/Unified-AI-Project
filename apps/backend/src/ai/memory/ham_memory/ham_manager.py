@@ -24,8 +24,19 @@ _TEMPLATE_STOPWORDS = frozenset(
         # state…"): without these, any English query containing
         # "question" matches that template and gets served garbage.
         "question", "asking", "asked", "current", "state", "about", "re",
+        # English question fillers (2026-10-19 audit): without these, the
+        # subject-coverage guard false-rejects real matches like
+        # "what's the weather like?" (filler tokens look "distinctive").
+        "like", "please", "tell", "show", "explain", "would", "could",
+        "can", "let", "us", "get", "give", "need", "know", "think",
+        "something", "anything", "there", "here", "really", "just",
+        "maybe", "what's", "whats", "that's", "thats", "there's", "theres",
     }
 )
+
+# Public alias — shared with router._extract_keywords so store-time keyword
+# filtering and retrieve-time gating use the SAME stopword set.
+TEMPLATE_STOPWORDS = _TEMPLATE_STOPWORDS
 
 logger = logging.getLogger(__name__)
 
@@ -195,9 +206,19 @@ class HAMMemoryManager:
         return 0.9
 
     def _relevance_gate(
-        self, keywords: List[str], query_lower: str, best_score: float, min_score: float
+        self,
+        keywords: List[str],
+        query_lower: str,
+        best_score: float,
+        min_score: float,
+        content: str = "",
     ) -> float:
-        """Apply relevance gate: penalize single-keyword match on long query."""
+        """Apply relevance gate: penalize single-keyword match on long query.
+
+        主體守衛（2026-10-19 稽核）：查詢自帶 ≥2 個非停用詞、模板只覆蓋 ≤1 個，
+        且模板內容也未提到任何未覆蓋詞 → 模板回答的是另一個主體
+        （"capital of Australia" 命中 "capital of Japan: Tokyo"）→ 拒絕。
+        """
         query_tokens = query_lower.split()
         matched_kws = set()
         total_non_stop = 0
@@ -215,7 +236,31 @@ class HAMMemoryManager:
             best_score *= 1.0 / max(total_non_stop, 2)
             if best_score < min_score:
                 return 0.0
+        # Subject-coverage guard: reject wrong-subject replay.
+        if self._subject_coverage_rejects(query_tokens, matched_kws, content):
+            return 0.0
         return best_score
+
+    @staticmethod
+    def _subject_coverage_rejects(query_tokens: List[str], matched_kws: set, content: str) -> bool:
+        """主體覆蓋守衛（語意見 _relevance_gate docstring）。
+
+        查詢 ≥2 個非停用詞、模板只覆蓋 ≤1 個、且模板內容未提任何未覆蓋詞
+        → 模板回答的是另一個主體 → 拒絕。
+        """
+        if len(matched_kws) > 1 or len(query_tokens) <= 3:
+            return False
+        content_lower = (content or "").lower()
+        query_distinctive = [
+            t
+            for t in query_tokens
+            if t.strip("?!.,'\";:") not in _TEMPLATE_STOPWORDS and t not in _TEMPLATE_STOPWORDS
+        ]
+        unmatched = [t for t in query_distinctive if t not in matched_kws]
+        if len(query_distinctive) >= 2 and unmatched:
+            if not any(t.strip("?!.,'\";:") in content_lower for t in unmatched):
+                return True
+        return False
 
     async def retrieve_response_templates(
         self,
@@ -246,7 +291,9 @@ class HAMMemoryManager:
                 best_score = max(best_score, self._score_keyword_match(kw_lower, query_lower))
             if best_score < min_score:
                 continue
-            gated_score = self._relevance_gate(keywords, query_lower, best_score, min_score)
+            gated_score = self._relevance_gate(
+                keywords, query_lower, best_score, min_score, tpl.get("content", "")
+            )
             if gated_score >= min_score:
                 scored.append((tpl, gated_score))
 

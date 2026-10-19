@@ -19,12 +19,12 @@ class TestAngelaCore:
     def test_project_structure(self):
         required_dirs = ["apps/backend", "apps/desktop-app", "tests", "configs"]
         for dir_path in required_dirs:
-            assert os.path.isdir(dir_path), f"Missing directory: {dir_path}"
+            assert (project_root / dir_path).is_dir(), f"Missing directory: {dir_path}"
 
     def test_configuration_files(self):
         config_files = ["requirements.txt", ".env.example", "configs/angela_config.yaml"]
         for config_file in config_files:
-            assert os.path.isfile(config_file), f"Missing config: {config_file}"
+            assert (project_root / config_file).is_file(), f"Missing config: {config_file}"
 
     def test_live2d_manager_has_key_functions(self):
         live2d_path = (

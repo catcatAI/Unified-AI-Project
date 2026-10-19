@@ -240,10 +240,14 @@ class TestBasics:
 
 
 class TestLightCollectorsRealRepo:
-    def test_checklist_parses_18_items_with_5_done(self) -> None:
+    def test_checklist_parses_with_consistent_counts(self) -> None:
+        # 2026-10-19：原斷言 done==5 是五步曲批次（A5/B4/D2/E3…完成後漂移）的
+        # 過時釘數——living checklist 改驗不變量：total>0、done 與 done_ids
+        # 一致、首批已完成項仍在 done 內。
         res = ur._collect_checklist(ur._repo_root())
-        assert res["total"] == 18
-        assert res["done"] == 5
+        assert res["total"] >= 18
+        assert res["done"] == len(res["done_ids"])
+        assert res["done"] >= 5
         assert {"A1", "B1", "B2", "B3", "C2"} <= set(res["done_ids"])
         assert all(i["id"] for i in res["pending"])
 

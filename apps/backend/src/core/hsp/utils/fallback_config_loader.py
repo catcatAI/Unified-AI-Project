@@ -65,18 +65,25 @@ class FallbackConfigLoader:
         self._config: Optional[Dict[str, Any]] = None
 
     def _find_config_file(self) -> Optional[str]:
-        """查找配置文件"""
+        """查找配置文件（錨定相對模組位置，不隨 CWD 漂移）。
+
+        2026-10-19 稽核：原只搜 CWD 相對路徑——從 apps/backend 跑會誤撿
+        backend 私有 configs（http enabled=true，與 loader 預設 2026-10-13
+        決策矛盾）、從 repo 根跑則撈不到任何檔。改為以模組檔案位置錨定
+        兩個候選（backend configs → repo 根 configs），任一存在即用。
+        """
+        module_dir = os.path.dirname(os.path.abspath(__file__))
+        backend_root = os.path.dirname(os.path.dirname(os.path.dirname(module_dir)))
+        repo_root = os.path.dirname(os.path.dirname(backend_root))
         possible_paths = [
-            "configs/hsp_fallback_config.yaml",
-            "Unified-AI-Project/configs/hsp_fallback_config.yaml",
-            "../configs/hsp_fallback_config.yaml",
-            "hsp_fallback_config.yaml",
+            os.path.join(backend_root, "configs", "hsp_fallback_config.yaml"),
+            os.path.join(repo_root, "configs", "hsp_fallback_config.yaml"),
         ]
         for path in possible_paths:
             if os.path.exists(path):
                 return path
 
-        logger.warning("未找到配置文件, 将使用默认配置")
+        logger.warning("未找到配置文件, 將使用默認配置")
         return None
 
     def load_config(self) -> Dict[str, Any]:

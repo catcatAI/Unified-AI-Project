@@ -109,9 +109,8 @@ def test_prompt_builder_injection():
     messages = construct_angela_prompt("台北天氣如何？", context)
 
     system_content = messages[0]["content"]
-    assert (
-        "Execution Result" in system_content
-    ), "System prompt should contain execution result block"
+    # 2026-10-19 語言層變更：中文使用者訊息 → 中文執行結果區塊（原斷言英文 "Execution Result" 過時）
+    assert "執行結果" in system_content, "System prompt should contain execution result block"
     assert "web_search" in system_content, "Should contain handler type"
     assert "是" in system_content, "Should contain success status"
     assert "Search result" in system_content, "Should contain result text"

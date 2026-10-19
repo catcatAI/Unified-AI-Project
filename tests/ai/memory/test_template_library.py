@@ -59,7 +59,17 @@ class TestTemplateLibraryGet:
     def test_get_by_id_exists(self, lib):
         tpl = lib.get_by_id("greeting_general")
         assert tpl is not None
-        assert tpl.content == "你好呀！见到你真开心~"
+        assert tpl.content == "你好呀！見到你真開心~"
+
+    def test_all_content_is_traditional_chinese(self, lib):
+        # zh-tw 產品：模板輸出不得含簡體專用字（繁體中不存在的字形）。
+        simplified_only = set("见说样吗过来还这进间谢帮点电岁两严专业脏")
+        offenders = []
+        for tpl in lib.get_all_templates():
+            bad = simplified_only & set(tpl.content)
+            if bad:
+                offenders.append((tpl.id, "".join(sorted(bad))))
+        assert offenders == []
 
     def test_get_by_id_missing(self, lib):
         tpl = lib.get_by_id("nonexistent")

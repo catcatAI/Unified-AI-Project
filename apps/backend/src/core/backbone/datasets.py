@@ -17,6 +17,9 @@ from typing import Any, Callable, Dict, Iterable, List, Optional
 
 logger = logging.getLogger(__name__)
 
+# 錨定 repo 根（2026-10-19 稽核：相對路徑預設值從 apps/backend cwd 跑必炸）
+_REPO_ROOT = Path(__file__).resolve().parents[5]
+
 
 class Dataset:
     """單一資料集的結構化描述。
@@ -141,6 +144,11 @@ def load_json_records(
     可檢索文字。
     """
     path_obj = Path(path)
+    if not path_obj.is_file() and not Path(path).is_absolute():
+        # 相對路徑找不到 → repo 根錨定重試（不同 cwd 一致）
+        anchored = _REPO_ROOT / path
+        if anchored.is_file():
+            path_obj = anchored
     if not path_obj.is_file():
         logger.warning("Dataset file not found: %s", path)
         return []
@@ -169,7 +177,7 @@ def load_json_records(
 def register_game_cards(
     registry: DatasetRegistry,
     *,
-    path: str = "apps/game-rpg/data/game_cards.json",
+    path: str = str(_REPO_ROOT / "apps/game-rpg/data/game_cards.json"),
     name: str = "game_cards",
 ) -> Dataset:
     """註冊遊戲卡片資料集（§5 指定）。回傳註冊的 Dataset。"""

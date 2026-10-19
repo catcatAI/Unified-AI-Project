@@ -13,6 +13,7 @@ import traceback
 from typing import Any, Dict, List, Optional
 
 from core.i18n.i18n_manager import t
+from core.security.secure_eval import MAX_POW_EXPONENT, MAX_RANGE_END, MAX_STRING_REPEAT
 from core.utils import safe_error
 
 logger = logging.getLogger(__name__)
@@ -130,29 +131,10 @@ _BLOCKED_CALL_NAMES = frozenset(
     }
 )
 
-_BLOCKED_IMPORT_MODULES = frozenset(
-    {
-        "os",
-        "sys",
-        "subprocess",
-        "shutil",
-        "pathlib",
-        "socket",
-        "http",
-        "urllib",
-        "requests",
-        "ctypes",
-        "importlib",
-        "code",
-        "codeop",
-        "signal",
-        "threading",
-        "multiprocessing",
-        "pickle",
-        "shelve",
-        "marshal",
-    }
-)
+# AST 階段直接拒 import（2026-10-18 稽核）：先前只擋危險模組白名單外全放行，
+# 但 exec 的 __builtins__ 無 __import__ —— 任何 import 都會以 NameError
+# 必失敗（AST 說允許、執行必炸的死契約）。明示不支援是誠實契約。
+# 想跑 math/re/json 等請用內建函式或既有執行通道。
 
 
 class _SandboxViolation(Exception):
@@ -224,6 +206,18 @@ class _SafetyChecker(ast.NodeVisitor):
     def visit_Call(self, node: ast.Call) -> None:
         if isinstance(node.func, ast.Name):
             self._check_name(node.func, "()")
+            # 常數 range 上限（與 safe_eval 同源）：list(range(10**9)) 可在
+            # 10s timeout 內吃掉數十 GB 記憶體——迭代 DoS 與 OOM 同類。
+            if node.func.id == "range":
+                for arg in node.args:
+                    if (
+                        isinstance(arg, ast.Constant)
+                        and isinstance(arg.value, int)
+                        and abs(arg.value) > MAX_RANGE_END
+                    ):
+                        raise _SandboxViolation(
+                            f"range 大小 {arg.value} 超過上限 {MAX_RANGE_END}（防 OOM）"
+                        )
         elif isinstance(node.func, ast.Attribute):
             if node.func.attr in _BLOCKED_CALL_NAMES:
                 raise _SandboxViolation(f"Blocked method call: {node.func.attr}()")
@@ -231,21 +225,35 @@ class _SafetyChecker(ast.NodeVisitor):
                 raise _SandboxViolation(f"Blocked dunder method call: {node.func.attr}()")
         self.generic_visit(node)
 
+    def visit_BinOp(self, node: ast.BinOp) -> None:
+        # 記憶體擴張守衛（2026-10-18 稽核）：'x'*200_000_000 過 AST、
+        # exec 直接配置 200MB = OOM DoS。常數側超限即拒。
+        if isinstance(node.op, ast.Mult):
+            for side in (node.left, node.right):
+                if isinstance(side, ast.Constant):
+                    if isinstance(side.value, str) and len(side.value) > MAX_STRING_REPEAT:
+                        raise _SandboxViolation("字串重複超過上限（防 OOM）")
+                    if isinstance(side.value, int) and abs(side.value) > MAX_STRING_REPEAT:
+                        raise _SandboxViolation(
+                            f"乘法常數 {side.value} 超過上限 {MAX_STRING_REPEAT}（防 OOM）"
+                        )
+        elif isinstance(node.op, ast.Pow):
+            if (
+                isinstance(node.right, ast.Constant)
+                and isinstance(node.right.value, int)
+                and abs(node.right.value) > MAX_POW_EXPONENT
+            ):
+                raise _SandboxViolation(
+                    f"冪次指數 {node.right.value} 超過上限 {MAX_POW_EXPONENT}（防巨整數 DoS）"
+                )
+        self.generic_visit(node)
+
     def visit_Import(self, node: ast.Import) -> None:
         for alias in node.names:
-            root = alias.name.split(".")[0]
-            if root in _BLOCKED_IMPORT_MODULES:
-                raise _SandboxViolation(f"Blocked import: {alias.name}")
-            if alias.name.startswith("_"):
-                raise _SandboxViolation(f"Blocked private import: {alias.name}")
+            raise _SandboxViolation(f"沙箱不支援 import（執行環境無 __import__）：{alias.name}")
 
     def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
-        if node.module:
-            root = node.module.split(".")[0]
-            if root in _BLOCKED_IMPORT_MODULES:
-                raise _SandboxViolation(f"Blocked import: {node.module}")
-            if node.level > 0:
-                raise _SandboxViolation("Blocked relative import")
+        raise _SandboxViolation(f"沙箱不支援 import（執行環境無 __import__）：{node.module or '.'}")
 
     def visit_Name(self, node: ast.Name) -> None:
         if node.id in _BLOCKED_CALL_NAMES:

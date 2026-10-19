@@ -378,6 +378,53 @@ class TestCodeExecutionHandler:
         result = await handler.handle(code, "code")
         assert "DONE_AFTER_BREAK" in result
 
+    async def test_import_rejected_with_clear_message(self):
+        """2026-10-18 稽核：先前 AST 白名單放行 import 但 exec 無 __import__
+        （任何 import 必以 NameError 失敗=死契約）。現於驗證階段明示不支援。"""
+        from services.handlers.code_execution_handler import CodeExecutionHandler
+
+        handler = CodeExecutionHandler()
+        result = await handler._execute("import math")
+        assert "math" in result
+        assert "import" in result.lower()
+        # 契約一致：驗證期拒絕（明示不支援），不再是執行期 NameError
+        assert "NameError" not in result
+
+    async def test_from_import_rejected(self):
+        """from-import 同契約：驗證期拒絕。"""
+        from services.handlers.code_execution_handler import CodeExecutionHandler
+
+        handler = CodeExecutionHandler()
+        result = await handler._execute("from math import sqrt")
+        assert "math" in result
+
+    async def test_memory_expansion_guard(self):
+        """2026-10-18 稽核：'x'*200_000_000 過 AST 直接配置 200MB（OOM DoS）。"""
+        from services.handlers.code_execution_handler import CodeExecutionHandler
+
+        handler = CodeExecutionHandler()
+        result = await handler._execute("x = 'a' * 200000000\nprint(len(x))")
+        assert "OOM" in result or "上限" in result or "error" in result.lower()
+        # 小倍數仍可用
+        ok = await handler._execute("print(len('ab' * 10))")
+        assert "20" in ok
+
+    async def test_pow_exponent_guard(self):
+        """2**10_000_000 巨整數 DoS 應於驗證期拒絕。"""
+        from services.handlers.code_execution_handler import CodeExecutionHandler
+
+        handler = CodeExecutionHandler()
+        result = await handler._execute("print(2 ** 10000000)")
+        assert "冪" in result or "上限" in result or "error" in result.lower()
+
+    async def test_range_constant_guard(self):
+        """list(range(10_000_001)) 超 MAX_RANGE_END 應拒絕（防 OOM）。"""
+        from services.handlers.code_execution_handler import CodeExecutionHandler
+
+        handler = CodeExecutionHandler()
+        result = await handler._execute("print(len(list(range(10000001))))")
+        assert "range" in result or "上限" in result or "error" in result.lower()
+
 
 # =============================================================================
 # SystemCommandHandler tests

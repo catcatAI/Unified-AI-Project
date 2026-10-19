@@ -146,3 +146,66 @@ class TestPromptManager:
         """The prompt() convenience function works with Chinese."""
         result = prompt("angela.fallback", "zh")
         assert "抱歉" in result
+
+
+class TestLanguageDetection:
+    """detect_response_language + zh-TW fallback（語言層稽核發現：繁中使用者拿到簡體/英文）。"""
+
+    def test_detect_chinese_traditional(self):
+        from apps.backend.src.core.prompt_manager import detect_response_language
+
+        assert detect_response_language("你好呀，今天過得怎樣？") == "zh"
+
+    def test_detect_chinese_simplified(self):
+        from apps.backend.src.core.prompt_manager import detect_response_language
+
+        assert detect_response_language("你好呀，今天过得怎么样？") == "zh"
+
+    def test_detect_english(self):
+        from apps.backend.src.core.prompt_manager import detect_response_language
+
+        assert detect_response_language("What is the capital of Australia?") == "en"
+
+    def test_detect_mixed_mostly_english(self):
+        from apps.backend.src.core.prompt_manager import detect_response_language
+
+        assert detect_response_language("OK done, thanks") == "en"
+
+    def test_detect_empty(self):
+        from apps.backend.src.core.prompt_manager import detect_response_language
+
+        assert detect_response_language("") == "en"
+
+    def test_zh_tw_falls_back_to_zh_template(self):
+        from apps.backend.src.core.prompt_manager import PromptManager, PromptTemplate
+
+        mgr = PromptManager()
+        mgr.register(
+            PromptTemplate(
+                key="test.fallback_chain",
+                templates={"en": "EN", "zh": "ZH"},
+            )
+        )
+        assert mgr.get("test.fallback_chain", "zh-TW") == "ZH"
+
+    def test_zh_locale_is_traditional(self):
+        """zh 身份模板不得含簡體專用字。"""
+        from apps.backend.src.core.prompt_manager import get_prompt_manager
+
+        simplified_only = set("见说样吗过来还这进间谢帮点电岁两严专业脏")
+        result = get_prompt_manager().get("angela.identity", "zh")
+        assert not (simplified_only & set(result))
+
+    def test_construct_angela_prompt_sets_language(self):
+        """繁中輸入 → identity 為中文；英文輸入 → identity 為英文。"""
+        from apps.backend.src.core.prompt_manager import get_prompt_manager
+        from apps.backend.src.services.llm.prompt_builder import construct_angela_prompt
+
+        msgs = construct_angela_prompt("你好嗎？", {})
+        system = msgs[0]["content"]
+        assert "數字生命" in system
+        assert "Respond briefly and naturally in English" not in system
+
+        msgs = construct_angela_prompt("What is 2+2?", {})
+        system = msgs[0]["content"]
+        assert "Respond briefly and naturally in English" in system

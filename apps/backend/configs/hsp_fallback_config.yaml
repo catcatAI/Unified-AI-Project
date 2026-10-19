@@ -6,9 +6,12 @@ hsp_fallback:
   # Fallback協議優先級配置
   protocols:
     # HTTP協議 - 最高優先級
+    # 2026-10-19 對齊 loader 預設（2026-10-13 決策）：預設停用——
+    # 無註冊 peer 端點（永遠送不出）、綁 8765 埠（平行測試撞埠）。
+    # 等真實 peer 端點存在時再顯式啟用。
     http:
       priority: 3
-      enabled: true
+      enabled: false
       host: "127.0.0.1"
       port: 8765
       timeout: 30

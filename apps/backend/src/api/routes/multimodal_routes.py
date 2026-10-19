@@ -18,6 +18,7 @@ Endpoints:
 ANGELA-MATRIX: L6[执行层] αβγδ [B] L4
 """
 
+import asyncio
 import json
 import logging
 from typing import Any, Dict, Optional
@@ -317,7 +318,8 @@ async def quality_dashboard_endpoint():
     from services.cross_modal_quality import CrossModalQualityDashboard
 
     dashboard = CrossModalQualityDashboard()
-    dash_report = dashboard.dashboard_simple()
+    # dashboard_simple() 走全量統計——同步跑會冰住事件迴圈。
+    dash_report = await asyncio.to_thread(dashboard.dashboard_simple)
     return {"success": True, **dash_report}
 
 
