@@ -6,32 +6,25 @@ HAM Memory subpackage — human associative memory implementation.
 
 P16: Full HAM lifecycle: encoding → storage → consolidation → recall.
 P17: Importance-based decay, background consolidation, vector store integration.
+
+WHAT IS HERE (2026-10-20)
+-------------------------
+``HAMMemoryManager`` (the live store: bucketed, capped, age/importance
+pruned) and ``ImportanceScorer`` (wired into the chat service).
+
+The parallel implementation — ``ham_query_engine`` / ``ham_data_processor`` /
+``ham_core_storage`` / ``ham_background_tasks`` / ``ham_vector_store_manager``
+/ ``ham_types`` / ``ham_errors`` — was removed: it had no consumer outside its
+own package and its ``__init__`` exports, so the "encrypted core memory",
+"background retention" and "vector-indexed recall" it advertised never ran.
+The retention rules it contained now live in ``HAMMemoryManager.prune()``,
+over the data the system actually stores.
 """
 
-from ai.memory.ham_memory.ham_background_tasks import HAMBackgroundTasks
-from ai.memory.ham_memory.ham_core_storage import HAMCoreStorage
-from ai.memory.ham_memory.ham_data_processor import HAMDataProcessor
-from ai.memory.ham_memory.ham_errors import (
-    HAMInitializationError,
-    HAMMemoryError,
-    HAMRetrievalError,
-    HAMStorageError,
-)
 from ai.memory.ham_memory.ham_importance_scorer import ImportanceScorer
 from ai.memory.ham_memory.ham_manager import HAMMemoryManager
-from ai.memory.ham_memory.ham_query_engine import HAMQueryEngine
-from ai.memory.ham_memory.ham_vector_store_manager import HAMVectorStoreManager
 
 __all__ = [
     "HAMMemoryManager",
-    "HAMCoreStorage",
-    "HAMDataProcessor",
     "ImportanceScorer",
-    "HAMBackgroundTasks",
-    "HAMVectorStoreManager",
-    "HAMQueryEngine",
-    "HAMMemoryError",
-    "HAMInitializationError",
-    "HAMStorageError",
-    "HAMRetrievalError",
 ]

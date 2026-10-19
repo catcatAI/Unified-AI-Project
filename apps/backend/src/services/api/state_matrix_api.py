@@ -270,55 +270,123 @@ async def get_temporal_anomalies(axis: str, key: str, threshold: float = 2.0) ->
 
 @state_matrix_router.post("/port/register")
 async def register_port(request: Dict[str, Any]) -> dict:
-    """Register a port."""
+    """Register a port on an axis.
+
+    The port registry lives on the matrix (``matrix.ports``), so the
+    endpoint acts on the real registry instead of answering
+    ``not_implemented`` (audit 2026-10-20).
+    """
     matrix = get_state_matrix()
-    if hasattr(matrix, "register_port"):
-        return cast(dict, matrix.register_port(request.get("name"), request.get("config", {})))
-    logger.warning("register_port not implemented on StateMatrix4D")
-    return {"status": "not_implemented", "note": "Port registration not available"}
+    registry = getattr(matrix, "ports", None)
+    if registry is None:
+        raise HTTPException(status_code=501, detail="Port registry not available")
+    axis = str(request.get("axis") or request.get("name") or "").strip()
+    if not axis:
+        raise HTTPException(status_code=400, detail="axis is required")
+    config = request.get("config") or {}
+    if not isinstance(config, dict):
+        raise HTTPException(status_code=400, detail="config must be an object")
+    registry.register_port(axis, config)
+    port = registry.get_port(axis) or {}
+    return {"status": "registered", "axis": axis, "port": port}
 
 
 @state_matrix_router.post("/port/unregister")
 async def unregister_port(name: str) -> dict:
-    """Unregister a port."""
+    """Remove the port of an axis (and any binding to it)."""
     matrix = get_state_matrix()
-    if hasattr(matrix, "unregister_port"):
-        return cast(dict, matrix.unregister_port(name))
-    logger.warning("unregister_port not implemented on StateMatrix4D")
-    return {"status": "not_implemented"}
+    registry = getattr(matrix, "ports", None)
+    if registry is None:
+        raise HTTPException(status_code=501, detail="Port registry not available")
+    removed = registry.unregister_port(name)
+    return {"status": "unregistered" if removed else "not_found", "axis": name}
 
 
 @state_matrix_router.get("/port/list")
 async def list_ports() -> dict:
-    """List registered ports."""
+    """List the registered ports (optionally only the bound ones)."""
     matrix = get_state_matrix()
-    if hasattr(matrix, "ports"):
-        return {"ports": list(matrix.ports.keys())}
-    return {"ports": []}
+    registry = getattr(matrix, "ports", None)
+    if registry is None:
+        raise HTTPException(status_code=501, detail="Port registry not available")
+    return {"ports": registry.list_ports()}
+
+
+def _ripple_payload(request: RippleRequest) -> Dict[str, Any]:
+    """Map the API request onto the ripple engine's flat delta schema.
+
+    The engine (``ai.memory.domain_ripple``) speaks in per-axis delta keys
+    (``beta_focus``, ``alpha_arousal``, …), while the endpoint speaks in
+    axes. The mapping keeps the two views consistent instead of silently
+    dropping the request.
+    """
+    from ai.memory.domain_ripple import _RIPPLE_KEY_MAP
+
+    payload: Dict[str, Any] = {}
+    for target in request.target_axes:
+        if target == "epsilon":
+            payload["epsilon_delta"] = request.source_value
+            continue
+        for delta_key, (axis_name, _key) in _RIPPLE_KEY_MAP.items():
+            if axis_name == target:
+                payload[delta_key] = request.source_value
+    return payload
 
 
 @state_matrix_router.post("/ripple")
 async def apply_ripple(request: RippleRequest) -> dict:
-    """Apply ripple effect across axes."""
+    """Apply ripple effect across axes.
+
+    The ripple engine (``ai.memory.domain_ripple``) is the real
+    implementation; the endpoint drives it against the live matrix.
+    """
     matrix = get_state_matrix()
-    if hasattr(matrix, "apply_ripple"):
-        matrix.apply_ripple(
-            request.source_axis, request.source_value, request.target_axes, request.strength
+    payload = _ripple_payload(request)
+    if not payload:
+        raise HTTPException(
+            status_code=400,
+            detail=f"no rippleable key for target axes {request.target_axes}",
         )
-        return {"status": "applied"}
-    logger.warning("apply_ripple not implemented on StateMatrix4D")
-    return {"status": "not_implemented"}
+    try:
+        from ai.memory.domain_ripple import apply_ripple_to_state
+
+        apply_ripple_to_state(matrix, payload, scale=request.strength)
+    except Exception as exc:
+        logger.error("Ripple application failed: %s", safe_error(exc))
+        raise HTTPException(status_code=500, detail="Ripple application failed") from exc
+    return {"status": "applied", "ripple": payload, "strength": request.strength}
 
 
 @state_matrix_router.post("/allocation")
 async def allocation_decide(request: AllocationRequest) -> dict:
-    """Make allocation decision."""
+    """Make an allocation decision.
+
+    The matrix allocates through θ (``meta_allocate``); the candidates are
+    scored against the allocation policy and the decision is reported with
+    the axis it targets.
+    """
     matrix = get_state_matrix()
-    if hasattr(matrix, "allocation_decide"):
-        decision = matrix.allocation_decide(request.candidates, request.dimension)
-        return {"decision": decision}
-    logger.warning("allocation_decide not implemented on StateMatrix4D")
-    return {"status": "not_implemented"}
+    if not request.candidates:
+        raise HTTPException(status_code=400, detail="candidates must not be empty")
+    vector: List[float] = []
+    for candidate in request.candidates:
+        for value in candidate.values():
+            vector.append(float(value))
+    if not vector:
+        raise HTTPException(status_code=400, detail="candidates carry no values")
+    try:
+        decision = matrix.meta_allocate(vector, request.dimension)
+    except Exception as exc:
+        logger.error("Allocation decision failed: %s", safe_error(exc))
+        raise HTTPException(status_code=500, detail="Allocation decision failed") from exc
+    return {
+        "decision": {
+            "action": getattr(decision, "action", None),
+            "target": getattr(decision, "target", None),
+            "confidence": getattr(decision, "confidence", None),
+            "reasoning": getattr(decision, "reasoning", ""),
+        }
+    }
 
 
 @state_matrix_router.get("/negativity")

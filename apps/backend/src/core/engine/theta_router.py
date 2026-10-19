@@ -322,9 +322,9 @@ class ThetaRouter:
         """綁定系 registry API 是否就緒（R20 生存守衛）。
 
         auto_allocate / apply_routing_decisions 依賴的
-        bind_port_to_axis / unbind_port / list_ports(bound=) 尚未實作；
-        未就緒時呼叫方顯式短路（log + 空回傳），不拋 AttributeError。
-        綁定模型一旦定案，實作 registry 側後刪此守衛。
+        bind_port_to_axis / unbind_port / list_ports(bound=) 已於
+        AxisPortRegistry 實作（2026-10-20）；守衛保留作為第三方 registry
+        未實作該 API 時的短路（log + 空回傳），不拋 AttributeError。
         """
         import inspect
 
@@ -370,9 +370,8 @@ class ThetaRouter:
             logger.warning("[ThetaRouter] auto_allocate no-op: port-binding API 未實作")
             return []
 
-        # The code below is unreachable at runtime since _binding_api_ready() returns False
-        # but we keep it for future implementation. Using proper dict access for mypy.
-        unbound_ports = self._port_registry.list_ports()
+        # Only the ports that are not bound yet are candidates.
+        unbound_ports = self._port_registry.list_ports(bound=False)
         bindings: List[AxisBinding] = []
 
         for port in unbound_ports:
@@ -382,7 +381,7 @@ class ThetaRouter:
             decision = self.resolve_route(port_name)
 
             if decision.action == RouteAction.BIND and decision.target_axis:
-                # self._port_registry.bind_port_to_axis(port_name, decision.target_axis)
+                self._port_registry.bind_port_to_axis(port_name, decision.target_axis)
                 binding = AxisBinding(
                     axis_name=decision.target_axis,
                     port_names=[port_name],
@@ -393,8 +392,6 @@ class ThetaRouter:
                 self._record_routing(port_name, decision)
 
             elif decision.action == RouteAction.CREATE_AXIS and decision.proposed_name:
-                # sm.create_axis(...) - not implemented in StateMatrixAdapter
-                # self._port_registry.bind_port_to_axis(port_name, decision.proposed_name)
                 binding = AxisBinding(
                     axis_name=decision.proposed_name,
                     port_names=[port_name],

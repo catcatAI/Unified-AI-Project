@@ -182,6 +182,101 @@ class HAMMemoryManager:
             self._data[bucket] = bucket_data[-int(self._max_entries_per_bucket * 0.8) :]
             logger.debug(f"HAM {bucket} capped to {len(self._data[bucket])} entries")
 
+    # ------------------------------------------------------------------
+    # Retention (age / importance / access)
+    # ------------------------------------------------------------------
+    # The hard cap above bounds the *size*; these rules bound the *staleness*.
+    # A year-old, never-used, low-importance memory is noise, not memory.
+    _RETENTION_DAYS_LOW = 30
+    _RETENTION_DAYS_MID = 90
+    _RETENTION_KEEP_IMPORTANCE = 0.7
+    _RETENTION_DROP_IMPORTANCE = 0.3
+    _RETENTION_MIN_RECENT = 50
+
+    def _entry_age_days(self, entry: Dict[str, Any], now: datetime) -> Optional[float]:
+        """Age in days of a stored entry; None when the timestamp is unusable."""
+        meta = entry.get("metadata")
+        raw = meta.get("timestamp") if isinstance(meta, dict) else None
+        if not raw:
+            raw = entry.get("timestamp")
+        if not raw:
+            return None
+        try:
+            stamp = datetime.fromisoformat(str(raw))
+        except (TypeError, ValueError):
+            return None
+        if stamp.tzinfo is None:
+            stamp = stamp.replace(tzinfo=timezone.utc)
+        return (now - stamp).total_seconds() / 86400.0
+
+    @staticmethod
+    def _entry_importance(entry: Dict[str, Any]) -> float:
+        meta = entry.get("metadata")
+        if isinstance(meta, dict):
+            try:
+                return float(meta.get("importance", 0.5))
+            except (TypeError, ValueError):
+                return 0.5
+        return 0.5
+
+    def prune(self, now: Optional[datetime] = None) -> Dict[str, int]:
+        """Drop stale, low-importance memories; return what was removed.
+
+        Rules (the same shape the (unwired) HAM retention task used):
+        protected entries and high-importance entries are kept regardless of
+        age; low-importance entries die after 30 days, medium ones after 90;
+        the most recent entries are always kept, so a fresh install never
+        ends up empty.
+        """
+        now = now or datetime.now(timezone.utc)
+        removed = {"templates": 0, "conversations": 0}
+        for bucket in ("templates", "conversations"):
+            entries = self._data.get(bucket)
+            if not isinstance(entries, list) or not entries:
+                continue
+            # The most recent entries are protected from pruning: a fresh
+            # install must not end up with an empty memory, and the newest
+            # memories are the ones that matter.
+            protected_from = max(0, len(entries) - self._RETENTION_MIN_RECENT)
+            kept: List[Any] = []
+            for index, entry in enumerate(entries):
+                if not isinstance(entry, dict):
+                    kept.append(entry)
+                    continue
+                if index >= protected_from:
+                    kept.append(entry)
+                    continue
+                meta = entry.get("metadata")
+                protected = bool(meta.get("protected")) if isinstance(meta, dict) else False
+                if protected:
+                    kept.append(entry)
+                    continue
+                age = self._entry_age_days(entry, now)
+                if age is None:
+                    kept.append(entry)
+                    continue
+                importance = self._entry_importance(entry)
+                if importance >= self._RETENTION_KEEP_IMPORTANCE:
+                    kept.append(entry)
+                    continue
+                limit = (
+                    self._RETENTION_DAYS_LOW
+                    if importance < self._RETENTION_DROP_IMPORTANCE
+                    else self._RETENTION_DAYS_MID
+                )
+                if age > limit:
+                    removed[bucket] += 1
+                    continue
+                kept.append(entry)
+            self._data[bucket] = kept
+        if removed["templates"] or removed["conversations"]:
+            logger.info(
+                "HAM retention pruned %d templates / %d conversations",
+                removed["templates"],
+                removed["conversations"],
+            )
+        return removed
+
     async def store_template(self, template: Any) -> None:
         self._data["templates"].append(
             {

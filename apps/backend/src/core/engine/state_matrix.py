@@ -140,6 +140,12 @@ class StateMatrix4D:
         self.epsilon: DimensionState
         self.theta: DimensionState
         self.zeta: DimensionState
+        # The axis port registry: the matrix owns the ports of its axes, so
+        # the port API (register/unregister/list/bind) has a real home
+        # instead of answering "not_implemented" (audit 2026-10-20).
+        from core.engine.axis_port_registry import AxisPortRegistry
+
+        self.ports = AxisPortRegistry()
         self._setup_systems()
         self._setup_history()
 

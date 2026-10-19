@@ -48,7 +48,7 @@
   1519/R21 1525/R20 1626/R19 1628/R17 1692/R16 1693/R15 1748/R14
   1761/曾 2627，內 1028 為包基誤判假簇)——結構性，需多輪分域收斂；`python_version`
   保持 3.10（倉庫支援下限），不為降數字而改。
-- TS/TSX 無 parser（typescript-eslint 未安裝）：`lint:js` 僅覆蓋 JS；JS 側 0
+- TS/TSX 型別門禁已啟用（`pnpm typecheck:dashboard`，CI 執行）；`lint:js` 0
   errors（1348 warnings 既有，不追）。
 - JS warnings
   1348（多為 no-console）：既有噪聲，不列入門檻；新增代碼不增 warning 為紀律。

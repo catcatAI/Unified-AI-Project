@@ -41,6 +41,31 @@ features:
     evidence: 35 passed
     last_verified: "2026-09-17"
 
+  - id: identity-persona
+    domain: 身分與命名（per-user）＋天使工房角色
+    claim: 使用者為自己的 Angela 命名；名字貫穿 prompt／reflex／字幕／TTS／前端
+    status: verified
+    implementation:
+      - apps/backend/src/core/system/config/identity.py
+      - apps/backend/src/core/persona/lucifaella.py
+      - apps/backend/src/api/routes/identity_routes.py
+    tests:
+      - tests/core/test_identity_and_persona.py
+      - tests/api/test_identity_routes.py
+    verify_command: pytest tests/core/test_identity_and_persona.py tests/api/test_identity_routes.py
+    evidence: 30 passed（per-user 儲存＋全域改名拒絕＋prompt／reflex／字幕名稱傳遞＋露茜法埃拉交付流程）
+    last_verified: "2026-10-20"
+
+  - id: state-matrix-endpoints
+    domain: State Matrix HTTP 端點
+    claim: 埠註冊／漣漪／分配端點作用於真實物件（非 not_implemented）
+    status: verified
+    implementation: [apps/backend/src/services/api/state_matrix_api.py]
+    tests: [tests/api/test_state_matrix_endpoints.py]
+    verify_command: pytest tests/api/test_state_matrix_endpoints.py
+    evidence: 6 passed（埠註冊／註銷／列舉、漣漪落到矩陣、分配決策；2026-10-20 取代 5 個 not_implemented 端點）
+    last_verified: "2026-10-20"
+
   - id: tool-handlers
     domain: Tool handlers
     claim: 檔案／任務／搜尋 handler 可用
@@ -180,8 +205,8 @@ features:
     claim: 全倉綠
     status: verified
     verify_command: pytest
-    evidence: 8554 passed, 112 skipped, 0 failed（2026-10-19 abstain 通道+閉環批次全 testpaths 實測：tests/＋apps/backend/tests/＋apps/game-rpg/tests＋scripts）
-    last_verified: "2026-10-19"
+    evidence: 8,623 passed, 112 skipped, 0 failed（2026-10-20 測試數量同步批次全 testpaths 實測：tests/＋apps/backend/tests/＋apps/game-rpg/tests＋scripts）
+    last_verified: "2026-10-20"
 
   - id: mypy-debt
     domain: mypy 型別債
@@ -280,7 +305,7 @@ features:
       - apps/backend/src/ai/msba/relevance_convergence.py
       - apps/backend/src/ai/msba/block_selector.py
     tests: [tests/ai/msba]
-    evidence: chat_routes Step 2.75 排程、Step 10 消費（50ms 預算）注入 LLM context；Layer 0 接真實 MathVerifier/ED3N 字典（R77 修復死 import）；193 tests；A/B 對照未啟用
+    evidence: chat_routes Step 2.75 排程、Step 10 消費（50ms 預算）注入 LLM context；Layer 0 接真實 MathVerifier/ED3N 字典（R77 修復死 import）；193 tests；A/B 對照已啟用（2026-10-20：`MSBAPipeline.compare()` 對照無語意區塊的前區塊路徑，結果記入 routing 狀態；旗標 `msba_ab_testing`）
     last_verified: "2026-09-22"
 
 # -----------------------------------------------------------------------------
@@ -407,7 +432,7 @@ lifecycle:
   - id: msba-e2e-verified
     name: MSBA 端到端品質驗證（融合品質 benchmark）
     status: partial
-    note: 管線與橋接 wired＋193 tests；融合輸出品質未 benchmark，A/B 對照未啟用
+    note: 管線與橋接 wired＋193 tests；A/B 對照已啟用（2026-10-20，量測不切流量）；融合輸出品質未 benchmark
   - id: fps-20-loop
     name: 遊戲 20FPS 閉環
     status: planned

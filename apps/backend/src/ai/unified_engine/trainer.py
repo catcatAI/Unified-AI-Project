@@ -155,6 +155,71 @@ def heldout_bpc(core: FixedSizeCore, path: str, offset: int, n: int = 20_000) ->
     return -lp / ((len(held) - 4) * math.log(2))
 
 
+def train_with_holdout_bpc(
+    train_texts: List[str],
+    holdout_texts: List[str],
+    corpus_path: Optional[str] = None,
+    target_bytes: Optional[int] = None,
+    probe_bytes: int = 20_000,
+) -> Dict[str, Any]:
+    """Train a byte core on the train split and score it on the hold-out split.
+
+    WHY a separate core
+    -------------------
+    The engine's own core is trained by the sample path (``learn_batch``),
+    which also folds the problem/answer feature tables. Measuring bpc on
+    that core would mix two training regimes, and training it twice (once
+    in bytes, once in samples) would double every count and change the
+    reported corpus size. So the byte-level model is measured on its own
+    core: trained on exactly the train bytes, scored on bytes it has
+    never seen.
+
+    The number that comes out is a *hold-out* number by construction:
+    ``train_exact_bytes`` clips the last chunk to the byte budget, so the
+    training boundary is exact, and the probe starts strictly after it.
+    """
+    import tempfile
+
+    train_bytes = b"".join(t.encode("utf-8") for t in train_texts)
+    holdout_bytes = b"".join(t.encode("utf-8") for t in holdout_texts)
+    if not train_bytes or not holdout_bytes:
+        return {
+            "heldout_bpc": None,
+            "reason": "empty train or hold-out split",
+            "trained_bytes": len(train_bytes),
+            "holdout_bytes": len(holdout_bytes),
+        }
+
+    tmp_path = corpus_path
+    cleanup = False
+    if tmp_path is None:
+        handle, tmp_path = tempfile.mkstemp(prefix="unified_corpus_", suffix=".bin")
+        os.close(handle)
+        cleanup = True
+    try:
+        with open(tmp_path, "wb") as fh:
+            fh.write(train_bytes)
+            fh.write(holdout_bytes)
+
+        core = FixedSizeCore()
+        budget = target_bytes if target_bytes is not None else len(train_bytes)
+        trained = train_exact_bytes(core, tmp_path, budget)
+        bpc = heldout_bpc(core, tmp_path, len(train_bytes), n=probe_bytes)
+        return {
+            "heldout_bpc": round(bpc, 4),
+            "bpc_source": "holdout_split",
+            "trained_bytes": trained,
+            "holdout_bytes": len(holdout_bytes),
+            "probe_bytes": probe_bytes,
+        }
+    finally:
+        if cleanup:
+            try:
+                os.remove(tmp_path)
+            except OSError:
+                pass
+
+
 def evaluate_generalisation(
     engine: UnifiedEngine,
     test_samples: List[str],

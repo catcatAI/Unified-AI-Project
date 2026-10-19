@@ -481,8 +481,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function openDevTools() {
+  async function openDevTools() {
+    // The button used to only log: the devtools never opened. It now goes
+    // through the Electron IPC bridge (main process owns the window).
     console.log('[Settings] Open DevTools clicked')
+    const api = window.electronAPI && window.electronAPI.window
+    if (api && typeof api.openDevTools === 'function') {
+      try {
+        const result = await api.openDevTools()
+        if (result && result.success === false) {
+          showNotification(result.error || 'Could not open DevTools', 'error')
+        }
+        return
+      } catch (error) {
+        console.error('[Settings] DevTools request failed:', error)
+        showNotification('Could not open DevTools', 'error')
+        return
+      }
+    }
+    showNotification('DevTools are only available in the desktop app', 'error')
   }
 
   async function saveSettings() {

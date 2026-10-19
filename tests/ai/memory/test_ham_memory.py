@@ -3,36 +3,6 @@
 import pytest
 
 
-async def test_ham_types_import():
-    """Test HAM types module can be imported"""
-    from ai.memory.ham_memory.ham_types import (
-        HAMDataPackageInternal,
-        HAMMemory,
-        HAMMemoryError,
-        HAMRecallResult,
-    )
-
-    assert HAMDataPackageInternal is not None
-    assert HAMMemory is not None
-    assert HAMRecallResult is not None
-    assert HAMMemoryError is not None
-
-
-async def test_ham_errors_import():
-    """Test HAM errors module can be imported"""
-    from ai.memory.ham_memory.ham_errors import (
-        HAMInitializationError,
-        HAMMemoryError,
-        HAMRetrievalError,
-        HAMStorageError,
-    )
-
-    assert HAMMemoryError is not None
-    assert HAMInitializationError is not None
-    assert HAMStorageError is not None
-    assert HAMRetrievalError is not None
-
-
 async def test_ham_utils_import():
     """Test HAM utils module can be imported"""
     from ai.memory import ham_utils
@@ -46,34 +16,6 @@ async def test_ham_manager_import():
     from ai.memory.ham_memory.ham_manager import HAMMemoryManager
 
     assert HAMMemoryManager is not None
-
-
-async def test_ham_vector_store_import():
-    """Test HAM vector store manager can be imported"""
-    from ai.memory.ham_memory.ham_vector_store_manager import HAMVectorStoreManager
-
-    assert HAMVectorStoreManager is not None
-
-
-async def test_ham_query_engine_import():
-    """Test HAM query engine can be imported"""
-    from ai.memory.ham_memory.ham_query_engine import HAMQueryEngine
-
-    assert HAMQueryEngine is not None
-
-
-async def test_ham_memory_types():
-    """Test HAMMemory TypedDict structure"""
-    from ai.memory.ham_memory.ham_types import HAMMemory
-
-    sample = HAMMemory(
-        memory_id="test_001",
-        content="Test content",
-        metadata={"key": "value"},
-        relevance=0.8,
-    )
-    assert sample["memory_id"] == "test_001"
-    assert sample["content"] == "Test content"
 
 
 class TestUnservableTemplateGuard:
@@ -271,3 +213,63 @@ class TestUnservableEnglishAbstain:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+
+class TestRetention:
+    """The live store must prune stale memories, not only cap their number.
+
+    The hard cap bounds the size; the retention rules bound the staleness.
+    (The retention task that used to implement this was never scheduled — it
+    lived in a parallel, unwired HAM subsystem.)
+    """
+
+    def _manager(self, tmp_path):
+        from ai.memory.ham_memory.ham_manager import HAMMemoryManager
+
+        return HAMMemoryManager(memory_file=str(tmp_path / "ham.json"), auto_save=False)
+
+    def _entry(self, days_old: float, importance: float, protected: bool = False):
+        from datetime import datetime, timedelta, timezone
+
+        stamp = (datetime.now(timezone.utc) - timedelta(days=days_old)).isoformat()
+        meta = {"timestamp": stamp, "importance": importance}
+        if protected:
+            meta["protected"] = True
+        return {"content": "x", "data_type": "conversation", "metadata": meta}
+
+    def test_low_importance_old_memories_are_pruned(self, tmp_path):
+        m = self._manager(tmp_path)
+        # 60 entries: the newest 50 are protected from pruning, the 10 old
+        # ones are not.
+        m._data["conversations"] = [self._entry(200, 0.1) for _ in range(10)]
+        m._data["conversations"] += [self._entry(1, 0.1) for _ in range(50)]
+        removed = m.prune()
+        assert removed["conversations"] == 10
+        assert len(m._data["conversations"]) == 50
+
+    def test_high_importance_memories_survive(self, tmp_path):
+        m = self._manager(tmp_path)
+        m._data["conversations"] = [self._entry(400, 0.9)]
+        removed = m.prune()
+        assert removed["conversations"] == 0
+        assert len(m._data["conversations"]) == 1
+
+    def test_protected_memories_survive(self, tmp_path):
+        m = self._manager(tmp_path)
+        m._data["conversations"] = [self._entry(400, 0.1, protected=True)]
+        removed = m.prune()
+        assert removed["conversations"] == 0
+        assert len(m._data["conversations"]) == 1
+
+    def test_medium_importance_survives_until_90_days(self, tmp_path):
+        m = self._manager(tmp_path)
+        m._data["conversations"] = [self._entry(60, 0.5) for _ in range(60)]
+        assert m.prune()["conversations"] == 0
+        m._data["conversations"] = [self._entry(120, 0.5) for _ in range(60)]
+        assert m.prune()["conversations"] == 10
+
+    def test_recent_memories_are_always_kept(self, tmp_path):
+        m = self._manager(tmp_path)
+        m._data["conversations"] = [self._entry(500, 0.1) for _ in range(3)]
+        assert m.prune()["conversations"] == 0
+        assert len(m._data["conversations"]) == 3

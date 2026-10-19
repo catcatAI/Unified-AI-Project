@@ -265,20 +265,40 @@ class LaptopOptimizer {
   }
 
   _enableThermalThrottling() {
-    // 降低CPU/GPU使用率
-    // 注意：performanceManager 中没有 enableThermalThrottling 方法
-    // 可以通过降低 FPS 和效果级别来模拟
-    if (window.angelaApp && window.angelaApp.performanceManager) {
-      // 暂时注释掉不存在的方法
-      // window.angelaApp.performanceManager.enableThermalThrottling();
+    // Thermal throttling: drop the frame budget and the effect level.
+    // There is no `enableThermalThrottling()` on the performance manager —
+    // the previous implementation only had the call commented out, so the
+    // profile switch did nothing at all. The real levers are the ones the
+    // performance manager actually has.
+    const app = window.angelaApp
+    if (!app) return
+    if (app.performanceManager) {
+      if (typeof app.performanceManager.setTargetFPS === 'function') {
+        app.performanceManager.setTargetFPS(20)
+      }
+      if (typeof app.performanceManager.setEffectsLevel === 'function') {
+        app.performanceManager.setEffectsLevel(1)
+      }
+    }
+    if (app.live2dManager && typeof app.live2dManager.setTargetFPS === 'function') {
+      app.live2dManager.setTargetFPS(20)
     }
   }
 
   _disableThermalThrottling() {
-    // 注意：performanceManager 中没有 disableThermalThrottling 方法
-    if (window.angelaApp && window.angelaApp.performanceManager) {
-      // 暂时注释掉不存在的方法
-      // window.angelaApp.performanceManager.disableThermalThrottling();
+    // Restore the normal frame budget and effect level.
+    const app = window.angelaApp
+    if (!app) return
+    if (app.performanceManager) {
+      if (typeof app.performanceManager.setTargetFPS === 'function') {
+        app.performanceManager.setTargetFPS(60)
+      }
+      if (typeof app.performanceManager.setEffectsLevel === 'function') {
+        app.performanceManager.setEffectsLevel(4)
+      }
+    }
+    if (app.live2dManager && typeof app.live2dManager.setTargetFPS === 'function') {
+      app.live2dManager.setTargetFPS(60)
     }
   }
 

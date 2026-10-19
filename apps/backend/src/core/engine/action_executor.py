@@ -1076,12 +1076,12 @@ if __name__ == "__main__":
         # Create sample actions
         async def sample_action_1(name: str) -> str:
             """Execute the sample action 1 operation."""
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(loop_sleep("sleep_medium", 0.5))
             return f"Hello, {name}!"
 
         async def sample_action_2(value: int) -> int:
             """Execute the sample action 2 operation."""
-            await asyncio.sleep(0.3)
+            await asyncio.sleep(loop_sleep("demo_action_delay", 0.3))
             return value * 2
 
         logger.info("\n提交动作 / Submitting actions:")
@@ -1116,7 +1116,7 @@ if __name__ == "__main__":
         logger.info(f"  Time: {result.execution_time:.3f}s")
 
         # Wait for queue to process
-        await asyncio.sleep(1)
+        await asyncio.sleep(loop_sleep("sleep_long", 1.0))
 
         # Show stats
         logger.info("\n执行统计 / Execution stats:")

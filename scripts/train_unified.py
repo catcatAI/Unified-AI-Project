@@ -46,6 +46,7 @@ from ai.unified_engine.trainer import (  # noqa: E402
     evaluate_generalisation,
     measure_generation_fidelity,
     train_test_split,
+    train_with_holdout_bpc,
 )
 from ai.unified_engine.unified_engine import UnifiedEngine  # noqa: E402
 
@@ -131,6 +132,14 @@ def main() -> None:
     gen = measure_generation_fidelity(engine.core, train, n=30)
     results["generation"] = gen
 
+    # Hold-out byte-perplexity: trained on the train split only, measured on
+    # bytes the model has never seen. A training report whose numbers come
+    # from the training region are memorisation measurements (audit A3).
+    bpc = train_with_holdout_bpc(train, test)
+    results["holdout_bpc"] = bpc.get("heldout_bpc")
+    results["holdout_bpc_detail"] = bpc
+    logger.info("hold-out bpc (train split → hold-out split): %s", bpc.get("heldout_bpc"))
+
     os.makedirs(os.path.dirname(os.path.abspath(args.checkpoint)), exist_ok=True)
     engine.save(args.checkpoint)
     logger.info("checkpoint written: %s", args.checkpoint)
@@ -141,6 +150,7 @@ def main() -> None:
     print(f"  corpus bytes      : {results['train_corpus_bytes']}")
     print(f"  compression ratio : {results['compression_ratio']}")
     print(f"  test accuracy     : {results['test_accuracy']}")
+    print(f"  hold-out bpc      : {results['holdout_bpc']}  (measured on the hold-out split)")
     print(f"  route breakdown   : {results['route_breakdown_pct']}")
     print(f"  generation overlap: {results['generation']['bigram_overlap']}")
 

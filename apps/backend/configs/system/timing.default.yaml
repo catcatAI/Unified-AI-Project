@@ -32,6 +32,7 @@ timing:
     ws_broadcast_interval: 1.0 # websocket_manager.py broadcast cadence
     hsp_process_message: 0.1 # hsp/versioning.py synthetic processing pause
     fallback_retry_backoff: 0.2 # hsp/fallback manager pause between protocol rotations
+    demo_action_delay: 0.3 # action_executor.py sample-action pause (demo path)
 
   retry:
     # 2026-10-13: same §X #143 gap — retry_value() keys with no YAML entry.

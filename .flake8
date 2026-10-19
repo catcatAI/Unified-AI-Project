@@ -25,6 +25,12 @@ ignore =
     E203,
     W503,
     E501,
+    # F401 (unused import) stays ignored: the back-compat shim packages
+    # (core/autonomous/*, core/autonomous/cyber_identity.py, …) re-export
+    # their symbols BY importing them, so pyflakes sees them as unused.
+    # Removing the ignore would require either deleting the shims or
+    # re-exporting with __all__ (a separate refactor) — measured 2026-10-20:
+    # ~450 findings, the large majority inside the shims.
     F401,
     E402,
     F811,

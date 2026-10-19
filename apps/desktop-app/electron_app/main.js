@@ -1127,6 +1127,18 @@ ipcMain.handle('window-set-opacity', (event, opacity) => {
   return { success: true, opacity: value }
 })
 
+ipcMain.handle('window-open-devtools', () => {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    return { success: false, error: 'Main window not available' }
+  }
+  if (mainWindow.webContents.isDevToolsOpened()) {
+    mainWindow.webContents.closeDevTools()
+    return { success: true, opened: false }
+  }
+  mainWindow.webContents.openDevTools()
+  return { success: true, opened: true }
+})
+
 ipcMain.handle('window-get-opacity', () => {
   if (!mainWindow || mainWindow.isDestroyed()) return null
   // getOpacity() exists on Windows and Linux; elsewhere report 1 rather than
@@ -1511,10 +1523,22 @@ async function getSystemWallpaper() {
   } else if (process.platform === 'darwin') {
     const { exec } = require('child_process')
     return new Promise((resolve) => {
-      exec('defaults read com.apple.desktop Background', (_error) => {
-        // macOS wallpaper detection is complex, simplify for now
-        resolve(null)
-      })
+      // The AppleScript route returns the *current* desktop picture, which is
+      // what the wallpaper feature needs. The previous implementation ran
+      // `defaults read com.apple.desktop Background` and threw the result
+      // away (resolve(null)), so macOS always reported "no wallpaper".
+      exec(
+        'osascript -e \'tell application "Finder" to get POSIX path of (get desktop picture as alias)\'',
+        (error, stdout) => {
+          if (error) {
+            log.warn('[Wallpaper] macOS desktop picture lookup failed:', error.message)
+            resolve(null)
+            return
+          }
+          const picture = String(stdout || '').trim()
+          resolve(picture || null)
+        }
+      )
     })
   } else {
     // Linux
@@ -1571,21 +1595,12 @@ ipcMain.handle('autostart-set', (event, enable) => {
   return { success: true, enabled: enable }
 })
 
-// Audio system (placeholder - will be expanded)
-ipcMain.handle('audio-get-devices', async () => {
-  // Will use node-core-audio or similar
-  return {
-    inputDevices: [],
-    outputDevices: [],
-  }
-})
-
-// Haptic system (placeholder - will be expanded)
-ipcMain.handle('haptic-get-devices', async () => {
-  return {
-    devices: [],
-  }
-})
+// Device enumeration lives in the renderer, where it is real:
+//   audio  → native system-audio capture (audio-handler.js)
+//   haptic → WebHID (haptic-handler.js)
+// The main-process stubs that always answered with empty arrays are gone:
+// they were reachable through the preload bridge and reported "no devices"
+// for every machine.
 
 // File operations
 ipcMain.handle('file-save-dialog', async (event, options) => {

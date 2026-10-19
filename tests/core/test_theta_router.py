@@ -122,20 +122,113 @@ def test_re_evaluate_with_dict_ports_no_crash():
     assert router.re_evaluate_routing() == []
 
 
-def test_auto_allocate_no_binding_api_no_crash():
-    """R20: 綁定系 API 缺失時顯式 no-op（曾 TypeError/AttributeError）。"""
+class _Anchor:
+    """A semantic anchor that matches the test vector."""
+
+    def compute_resonance(self, vector):
+        return 0.9
+
+
+class _Adapter:
+    """A minimal state adapter with one semantic anchor."""
+
+    def __init__(self):
+        self.semantic_anchors = {"alpha": _Anchor()}
+        self.dimensions = {"alpha": object()}
+
+    class _Theta:
+        def __init__(self):
+            self.values = {"creation_urge": 0.0, "novelty": 0.5}
+
+        def update(self, **kwargs):
+            self.values.update(kwargs)
+
+    @property
+    def theta(self):
+        return self._Theta()
+
+
+def test_auto_allocate_binds_the_unbound_ports():
+    """The binding API exists (2026-10-20) — auto_allocate must act, not no-op.
+
+    It used to be a permanent no-op behind "綁定系 API 未實作", and the test
+    asserted the no-op, so the missing feature could never fail CI.
+    """
+    registry = _registry_with_port()
+    router = ThetaRouter(state_adapter=_Adapter(), port_registry=registry)
+    assert router._binding_api_ready() is True
+
+    bindings = router.auto_allocate()
+    assert bindings, "auto_allocate produced no binding"
+    # The port ends up bound to an axis, and the registry knows it.
+    assert registry.get_binding("alpha") == "alpha"
+    assert registry.list_ports(bound=True)
+
+
+def test_apply_routing_decisions_binds_and_unbinds():
+    """REBIND / UNBIND must reach the registry."""
     from unittest.mock import MagicMock
 
-    router = ThetaRouter(state_adapter=MagicMock(), port_registry=_registry_with_port())
+    registry = _registry_with_port()
+    router = ThetaRouter(state_adapter=MagicMock(), port_registry=registry)
+    rebind = RouteDecision(
+        action=RouteAction.REBIND,
+        port_name="alpha",
+        target_axis="beta",
+        confidence=0.9,
+        reasoning="t",
+    )
+    assert router.apply_routing_decisions([rebind]) == 1
+    assert registry.get_binding("alpha") == "beta"
+
+    unbind = RouteDecision(
+        action=RouteAction.UNBIND,
+        port_name="alpha",
+        confidence=0.9,
+        reasoning="t",
+    )
+    assert router.apply_routing_decisions([unbind]) == 1
+    assert registry.get_binding("alpha") is None
+
+
+def test_auto_allocate_no_binding_api_no_crash():
+    """R20: 第三方 registry 缺綁定 API 時仍顯式 no-op（曾 TypeError）。"""
+
+    class _LegacyRegistry:
+        """A registry without the binding API (pre-2026-10-20 shape)."""
+
+        def __init__(self):
+            self._ports = {}
+
+        def register_port(self, axis_name, port_config):
+            self._ports[axis_name] = dict(port_config, axis=axis_name)
+
+        def list_ports(self):
+            return list(self._ports.values())
+
+    from unittest.mock import MagicMock
+
+    router = ThetaRouter(state_adapter=MagicMock(), port_registry=_LegacyRegistry())
     assert router._binding_api_ready() is False
     assert router.auto_allocate() == []
 
 
 def test_apply_routing_decisions_no_binding_api_no_crash():
     """R20: REBIND/UNBIND 無綁定 API 時回 0 且不拋錯。"""
+
+    class _LegacyRegistry:
+        def __init__(self):
+            self._ports = {}
+
+        def register_port(self, axis_name, port_config):
+            self._ports[axis_name] = dict(port_config, axis=axis_name)
+
+        def list_ports(self):
+            return list(self._ports.values())
+
     from unittest.mock import MagicMock
 
-    router = ThetaRouter(state_adapter=MagicMock(), port_registry=_registry_with_port())
+    router = ThetaRouter(state_adapter=MagicMock(), port_registry=_LegacyRegistry())
     d = RouteDecision(
         action=RouteAction.REBIND,
         port_name="alpha",

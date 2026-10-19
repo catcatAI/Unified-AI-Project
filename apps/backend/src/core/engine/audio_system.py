@@ -622,7 +622,7 @@ if __name__ == "__main__":
             track_id="song_001", title="Test Song", artist="Test Artist", duration=30.0
         )
         await audio.play_music(track)
-        await asyncio.sleep(1)
+        await asyncio.sleep(loop_sleep("sleep_long", 1.0))
         logger.info(f"  播放进度: {audio.get_playback_progress():.1%}")
         await audio.stop()
 
@@ -638,7 +638,7 @@ if __name__ == "__main__":
             ],
         )
         await audio.sing(track, lyrics)
-        await asyncio.sleep(1)
+        await asyncio.sleep(loop_sleep("sleep_long", 1.0))
 
         current_lyric = lyrics.get_current_line(audio.current_playback_time)
         if current_lyric:

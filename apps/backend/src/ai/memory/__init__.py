@@ -11,19 +11,8 @@ P24: PrecomputeService + TaskGenerator (background task scheduling).
 """
 
 try:
-    from ai.memory.ham_memory.ham_background_tasks import HAMBackgroundTasks
-    from ai.memory.ham_memory.ham_core_storage import HAMCoreStorage
-    from ai.memory.ham_memory.ham_data_processor import HAMDataProcessor
-    from ai.memory.ham_memory.ham_errors import (
-        HAMInitializationError,
-        HAMMemoryError,
-        HAMRetrievalError,
-        HAMStorageError,
-    )
     from ai.memory.ham_memory.ham_importance_scorer import ImportanceScorer
     from ai.memory.ham_memory.ham_manager import HAMMemoryManager
-    from ai.memory.ham_memory.ham_query_engine import HAMQueryEngine
-    from ai.memory.ham_memory.ham_vector_store_manager import HAMVectorStoreManager
 except ImportError:
     import logging
 
@@ -41,16 +30,7 @@ from ai.memory.vector_store import VectorMemoryStore
 
 __all__ = [
     "HAMMemoryManager",
-    "HAMQueryEngine",
-    "HAMCoreStorage",
-    "HAMDataProcessor",
     "ImportanceScorer",
-    "HAMBackgroundTasks",
-    "HAMVectorStoreManager",
-    "HAMMemoryError",
-    "HAMInitializationError",
-    "HAMStorageError",
-    "HAMRetrievalError",
     "calculate_cosine_similarity",
     "generate_embedding",
     "MemoryTemplate",

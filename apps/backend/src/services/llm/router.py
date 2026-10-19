@@ -556,15 +556,21 @@ class AngelaLLMService:
         # truth without blocking the endpoint or burning cloud quota.
         self._health_cache: Dict[Any, str] = {}
 
-        # [auto] LLM mode (deployment.mode / settings.llm_mode)
-        deployment = self.config.get("deployment") or {}
-        settings = self.config.get("settings") or {}
-        self.llm_mode = (
-            deployment.get("mode")
-            or settings.get("llm_mode")
-            or self.config.get("llm_mode")
-            or "standard"
-        )
+        # LLM modes: TWO distinct concepts, one resolver (D1 convergence).
+        #
+        #   deployment.mode  — the CATEGORY GATE: which backend categories may
+        #                      be registered (local | local+llm | llm | auto).
+        #   settings.llm_mode — the SELECTION STRATEGY: standard (fixed
+        #                      priority order) or auto (the engine picks the
+        #                      best backend per request).
+        #
+        # They used to share one variable, and `deployment.mode` won: with the
+        # shipped config (deployment.mode=local) the strategy was pinned to
+        # "local", so `settings.llm_mode: auto` — the documented way to turn
+        # auto-selection on — never took effect and the auto-selector never
+        # ran. Two variables, one resolver, no shadowing.
+        self._deployment_mode, self._llm_mode = self._resolve_modes()
+
         self.auto_selector: Optional["NeuroAutoSelector"] = None
 
         self._initialized = True
@@ -1011,10 +1017,52 @@ class AngelaLLMService:
         "auto": frozenset({"local", "cloud"}),
     }
 
+    def _resolve_modes(self) -> tuple:
+        """Resolve (deployment_mode, llm_mode) from the config — one place.
+
+        ``deployment.mode`` gates the backend *categories*; ``settings.llm_mode``
+        selects the *strategy* (standard vs auto). ``deployment.mode: auto``
+        implies the auto strategy as well ("all categories open, engine
+        decides"), which is what its documentation says.
+        """
+        deployment = self._config_section("deployment")
+        settings = self._config_section("settings")
+        deployment_mode = str(deployment.get("mode") or "local").lower()
+        strategy = str(settings.get("llm_mode") or "standard").lower()
+        if deployment_mode == "auto":
+            strategy = "auto"
+        return deployment_mode, strategy
+
+    def _config_section(self, name: str) -> Dict[str, Any]:
+        """A config section, tolerating a service built without __init__."""
+        config = getattr(self, "config", None) or {}
+        section = config.get(name) or {}
+        return section if isinstance(section, dict) else {}
+
+    @property
+    def deployment_mode(self) -> str:
+        """The category gate (``deployment.mode``)."""
+        mode = getattr(self, "_deployment_mode", None)
+        if mode:
+            return str(mode)
+        return self._resolve_modes()[0]
+
+    @property
+    def llm_mode(self) -> str:
+        """The selection strategy (``settings.llm_mode``)."""
+        mode = getattr(self, "_llm_mode", None)
+        if mode:
+            return str(mode)
+        return self._resolve_modes()[1]
+
+    @llm_mode.setter
+    def llm_mode(self, value: str) -> None:
+        """Allow the REPL / operators to switch the strategy at runtime."""
+        self._llm_mode = str(value)
+
     def _allowed_types(self) -> frozenset:
         """Backends categories permitted by the configured deployment mode."""
-        deployment = self.config.get("deployment") or {}
-        mode = (deployment.get("mode") or self.config.get("llm_mode") or "local").lower()
+        mode = self.deployment_mode
         return self._MODE_ALLOWED_TYPES.get(mode, frozenset({"local"}))
 
     # Category (local/cloud) of a registered backend type — the same rule the
@@ -1038,8 +1086,7 @@ class AngelaLLMService:
 
     def _init_backends(self) -> None:
         """初始化可用的後端（依 deployment.mode 閘控類別）"""
-        deployment = self.config.get("deployment") or {}
-        mode = (deployment.get("mode") or self.config.get("llm_mode") or "local").lower()
+        mode = self.deployment_mode
         allowed = self._allowed_types()
         if mode == "local":
             logger.info(
@@ -1871,7 +1918,7 @@ class AngelaLLMService:
             return None
         if _re2.search(r"\d\s*[+\-*/^%]", user_message):
             return None
-        mode = (self.config.get("deployment") or {}).get("mode", "local")
+        mode = self.deployment_mode
         others = [bt for bt in self.backends if bt != LLMBackend.UNIFIED]
         if mode not in ("local+llm", "llm", "auto") or not others:
             return None
@@ -2391,7 +2438,7 @@ class AngelaLLMService:
         """
         if self.active_backend_type != LLMBackend.UNIFIED:
             return None
-        mode = (self.config.get("deployment") or {}).get("mode", "local")
+        mode = self.deployment_mode
         if mode not in ("local+llm", "llm", "auto"):
             return None
         text = user_message.strip()

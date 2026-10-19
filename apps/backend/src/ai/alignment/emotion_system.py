@@ -15,16 +15,42 @@ to users as facts about feelings.
 # ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
 # =============================================================================
 
+import json
 import logging
+import os
 import time
 from collections import deque
 from dataclasses import dataclass, field
 from enum import Enum
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from core.system.state_store.global_store import state_store
 
 logger = logging.getLogger(__name__)
+
+
+def _repo_root_state_path() -> str:
+    """Path of the shared emotion state file, anchored to the repo root.
+
+    The emotion state was process-local: the game agent and the main server
+    each kept their own in-memory copy, so the two never agreed on how the
+    user felt. The lifecycle state solved the same problem with a shared
+    JSON file; the emotion state now does the same, so a second process sees
+    what the first one felt.
+    """
+    try:
+        return str(Path(__file__).resolve().parents[4] / "data" / "emotion_state.json")
+    except Exception:
+        logger.warning(
+            "Cannot resolve repo-root emotion state path; falling back to a "
+            "cwd-relative path (cross-process emotion state may diverge)",
+            exc_info=True,
+        )
+        return os.path.join("data", "emotion_state.json")
+
+
+_DEFAULT_STATE_PATH = _repo_root_state_path()
 
 
 class EmotionType(Enum):
@@ -127,6 +153,89 @@ class EmotionSystem:
             EmotionType.SADNESS: {ValueDimension.MEANING: 0.3, ValueDimension.CONNECTION: 0.4},
         }
 
+    # ------------------------------------------------------------------
+    # Cross-process state (the game agent and the server share it)
+    # ------------------------------------------------------------------
+    def state_path(self) -> str:
+        return _DEFAULT_STATE_PATH
+
+    def save_state(self, path: Optional[str] = None) -> bool:
+        """Persist the current emotion state (best effort, never raises)."""
+        target = path or self.state_path()
+        try:
+            directory = os.path.dirname(target)
+            if directory:
+                os.makedirs(directory, exist_ok=True)
+            summary = self.get_emotion_summary()
+            payload = {
+                "version": 1,
+                "updated_at": time.time(),
+                "summary": summary,
+                "history": [
+                    {
+                        "primary_emotion": state.primary_emotion.value,
+                        "emotion_intensity": state.emotion_intensity,
+                        "valence": state.valence,
+                        "arousal": state.arousal,
+                        "timestamp": state.timestamp,
+                    }
+                    for state in self.emotion_history[-20:]
+                ],
+            }
+            tmp = f"{target}.tmp"
+            with open(tmp, "w", encoding="utf-8") as handle:
+                json.dump(payload, handle, ensure_ascii=False, indent=2)
+            os.replace(tmp, target)
+            return True
+        except (OSError, TypeError, ValueError) as exc:
+            logger.warning("Emotion state save failed: %s", exc)
+            return False
+
+    def adopt_shared_state(self, path: Optional[str] = None) -> bool:
+        """Adopt the state another process wrote (explicit, never automatic).
+
+        The constructor deliberately does not touch the filesystem: a shared
+        file read at construction time leaks state between processes *and*
+        between tests. The server calls this once at startup (see
+        ``api.lifespan.get_emotion_system``), the game agent calls it when it
+        attaches to the workshop.
+        """
+        return self.load_state(path)
+
+    def load_state(self, path: Optional[str] = None) -> bool:
+        """Adopt the shared emotion state written by another process."""
+        target = path or self.state_path()
+        try:
+            if not os.path.exists(target):
+                return False
+            with open(target, "r", encoding="utf-8") as handle:
+                payload = json.load(handle)
+        except (OSError, json.JSONDecodeError) as exc:
+            logger.warning("Emotion state load failed: %s", exc)
+            return False
+        history = payload.get("history") if isinstance(payload, dict) else None
+        if not isinstance(history, list):
+            return False
+        restored: List[EmotionalState] = []
+        for entry in history:
+            try:
+                restored.append(
+                    EmotionalState(
+                        primary_emotion=EmotionType(entry["primary_emotion"]),
+                        emotion_intensity=float(entry.get("emotion_intensity", 0.5)),
+                        secondary_emotions={},
+                        valence=float(entry.get("valence", 0.0)),
+                        arousal=float(entry.get("arousal", 0.5)),
+                        timestamp=float(entry.get("timestamp", time.time())),
+                    )
+                )
+            except (KeyError, ValueError, TypeError):
+                continue
+        if restored:
+            self.emotion_history = restored
+            return True
+        return False
+
     def get_emotion_summary(self) -> Dict[str, Any]:
         """獲取當前情緒狀態摘要 (2030 Standard)"""
         if not self.emotion_history:
@@ -153,6 +262,7 @@ class EmotionSystem:
             arousal=self._calculate_arousal(features),
         )
         self.emotion_history.append(state)
+        self.save_state()
         return state
 
     def assess_values(
@@ -410,6 +520,7 @@ class EmotionSystem:
             arousal=new_arousal,
         )
         self.emotion_history.append(influenced_state)
+        self.save_state()
 
         # Record emotion trace in LifeEssence for deep accumulation
         try:

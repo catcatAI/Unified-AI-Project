@@ -141,17 +141,11 @@ jobs:
           PYTHONPATH: apps/backend/src
       - name: Test count drift check
         run: |
-          COLLECTED=$(python -m pytest tests/ apps/backend/tests/ apps/game-rpg/tests/ --collect-only -q 2>&1 | grep -oP '\d+(?= tests collected)' | tail -1)
-          echo "Collected: $COLLECTED"
-          # Hard gate (2026-10-15: was echo-only ⇒ 可丟一半測試仍全綠).
-          # Window tracks the real combined suite (8073 as of 2026-10-15);
-          # it is a mass-loss/duplication alarm. Measurement: tests/ 7504 +
-          # apps/backend/tests/ 423 + apps/game-rpg/tests/ 146.
-          if [ "$COLLECTED" -lt 7500 ] || [ "$COLLECTED" -gt 8400 ]; then
-            echo "❌ Test count $COLLECTED outside hard window 7500-8400 — mass loss or duplication?"
-            exit 1
-          fi
-          echo "✅ Test count $COLLECTED in expected window"
+          # 單一權威機制（scripts/check_test_count.py）：基線在腳本裡，容差為
+          # 比例式（±15%），隨專案成長自動跟著走——舊版把窗口寫死在 workflow
+          # 裡（7500-8400），專案成長到 8,700 後門自己變紅，與測試無關。
+          python scripts/check_test_count.py --scope ci
+          python scripts/check_test_count.py --measure
 
   map-budget:
     runs-on: ubuntu-latest

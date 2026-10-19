@@ -179,6 +179,50 @@ class MSBAPipeline:
 
         return result
 
+    def legacy_pipeline(self) -> "MSBAPipeline":
+        """A pipeline instance with NO semantic blocks — the pre-block path.
+
+        This is the A/B counterpart of :meth:`process`: the same pipeline
+        (deterministic seed → convergence → decode) without the semantic
+        block fusion, i.e. what the system did before the block
+        architecture existed. It makes the A/B comparison real instead of
+        theoretical: both variants run in the same process, on the same
+        input, with the same decoder.
+        """
+        return MSBAPipeline(
+            blocks={},
+            query_classifier=self.query_classifier,
+            llm_service=self.llm_service,
+            dictionary=self.dictionary,
+        )
+
+    async def compare(self, input_text: str, state_ctx: Any = None) -> Dict[str, Any]:
+        """Run both variants on the same input and compare them.
+
+        Returns the two outputs, their latencies and whether they agree.
+        Used by the chat pipeline when the A/B comparison is enabled
+        (STATUS_MATRIX: "A/B 對照未啟用" — it was never wired).
+        """
+        import time as _time
+
+        start = _time.monotonic()
+        msba_output = await self.process(input_text, state_ctx)
+        msba_ms = (_time.monotonic() - start) * 1000
+
+        legacy = self.legacy_pipeline()
+        start = _time.monotonic()
+        legacy_output = await legacy.process(input_text, state_ctx)
+        legacy_ms = (_time.monotonic() - start) * 1000
+
+        return {
+            "input": input_text,
+            "msba_output": msba_output,
+            "legacy_output": legacy_output,
+            "msba_latency_ms": round(msba_ms, 3),
+            "legacy_latency_ms": round(legacy_ms, 3),
+            "agree": str(msba_output).strip() == str(legacy_output).strip(),
+        }
+
     def process_sync(self, input_text: str, state_ctx: Any = None) -> str:
         """Synchronous wrapper for process()."""
         try:

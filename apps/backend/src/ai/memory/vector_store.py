@@ -426,6 +426,17 @@ class VectorMemoryStore:
         # correctness never depends on chromadb, only on recall quality.
         force_numpy = os.environ.get("ANGELA_VECTOR_BACKEND", "").strip().lower() == "numpy"
 
+        # HAM_DISABLE_VECTOR_STORE=1: run without the vector extras at all.
+        # The flag used to be read by the (removed, never-wired) HAM vector
+        # store manager; it is honoured here now, in the store that is
+        # actually used, so the documented switch keeps working.
+        if os.environ.get("HAM_DISABLE_VECTOR_STORE", "0").strip() == "1":
+            force_numpy = True
+            logger.info(
+                "VectorMemoryStore: chromadb disabled via HAM_DISABLE_VECTOR_STORE=1 "
+                "(numpy backend only)"
+            )
+
         chromadb = None if force_numpy else _lazy_chromadb()
         if chromadb is not None:
             try:

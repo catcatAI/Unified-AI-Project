@@ -21,6 +21,7 @@ from api.lifespan import (
     get_digital_life,
     get_level5_asi,
 )
+from core.system.state_store import state_store
 from core.utils import safe_error
 from fastapi import APIRouter, Body, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import StreamingResponse
@@ -2160,6 +2161,10 @@ def _schedule_msba(context: Dict[str, Any], user_message: str) -> None:
             context["_msba_task"] = _fused
             context["_msba_bridge"] = NeuroBlenderBridge()
             logger.debug("MSBA pipeline scheduled for input")
+            if _msba_ab_enabled():
+                context["_msba_ab_task"] = _asyncio.ensure_future(
+                    _run_msba_ab_comparison(user_message)
+                )
     except Exception as _e:
         logger.debug("MSBA scheduling skipped: %s", _e)
 
@@ -2323,10 +2328,54 @@ def _wrap_agent_response(
     }
 
 
+def _msba_ab_enabled() -> bool:
+    """Whether the MSBA A/B comparison runs (off by default).
+
+    The comparison runs the block pipeline and the pre-block path on the same
+    input and records both — it measures, it does not change the answer.
+    Configured under ``system/core → msba.ab_testing``.
+    """
+    try:
+        from core.system.config.tiered_loader import get_config
+
+        cfg = get_config("system/core") or {}
+        section = cfg.get("msba") or {}
+        return bool(section.get("ab_testing", False))
+    except Exception as exc:
+        logger.debug(f"MSBA A/B flag unavailable: {exc}")
+        return False
+
+
+async def _run_msba_ab_comparison(user_message: str) -> None:
+    """Measure the MSBA path against the pre-block path (best effort)."""
+    try:
+        _msba = _get_msba_pipeline()
+        if _msba is None:
+            return
+        comparison = await _msba.compare(user_message)
+        context_payload = {"msba": {"ab_comparison": comparison}}
+        state_store.update_state("routing", context_payload, notify=False)
+        logger.debug(
+            "MSBA A/B: agree=%s msba=%.1fms legacy=%.1fms",
+            comparison.get("agree"),
+            comparison.get("msba_latency_ms", 0.0),
+            comparison.get("legacy_latency_ms", 0.0),
+        )
+    except Exception as exc:
+        logger.debug(f"MSBA A/B comparison skipped: {exc}")
+
+
 async def _collect_msba_result(context: Dict[str, Any]) -> None:
     """Step 9.5: collect the scheduled MSBA result (best-effort) into context."""
     _msba_task = context.pop("_msba_task", None)
     _msba_bridge = context.pop("_msba_bridge", None)
+    _msba_ab_task = context.pop("_msba_ab_task", None)
+    if _msba_ab_task is not None:
+        # The A/B comparison is a measurement: it must not delay the answer.
+        try:
+            await asyncio.wait_for(_msba_ab_task, timeout=0.5)
+        except (asyncio.TimeoutError, Exception) as exc:  # noqa: B014
+            logger.debug(f"MSBA A/B comparison not collected: {exc}")
     if _msba_task is None:
         return
     try:

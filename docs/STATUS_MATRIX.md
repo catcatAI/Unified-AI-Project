@@ -15,6 +15,8 @@
 | --- | --- | --- | --- | --- | --- |
 | 主流程 e2e | 對話→分類→閘門→執行→回應全通 | `scripts/verify_main_flow_e2e.py` | **verified** | `python scripts/verify_main_flow_e2e.py`；15/15 exit 0 | 2026-09-17 |
 | ExecutionGate | 危險操作前需確認／拒絕 | `apps/backend/src/ai/core/execution_gate.py` | **verified** | `pytest tests/ai/core/test_execution_gate.py`；35 passed | 2026-09-17 |
+| 身分與命名（per-user）＋天使工房角色 | 使用者為自己的 Angela 命名；名字貫穿 prompt／reflex／字幕／TTS／前端 | `apps/backend/src/core/system/config/identity.py`<br>`apps/backend/src/core/persona/lucifaella.py`<br>`apps/backend/src/api/routes/identity_routes.py` | **verified** | `pytest tests/core/test_identity_and_persona.py tests/api/test_identity_routes.py`；30 passed（per-user 儲存＋全域改名拒絕＋prompt／reflex／字幕名稱傳遞＋露茜法埃拉交付流程） | 2026-10-20 |
+| State Matrix HTTP 端點 | 埠註冊／漣漪／分配端點作用於真實物件（非 not_implemented） | `apps/backend/src/services/api/state_matrix_api.py` | **verified** | `pytest tests/api/test_state_matrix_endpoints.py`；6 passed（埠註冊／註銷／列舉、漣漪落到矩陣、分配決策；2026-10-20 取代 5 個 not_implemented 端點） | 2026-10-20 |
 | Tool handlers | 檔案／任務／搜尋 handler 可用 | `apps/backend/src/services/handlers` | **verified** | `pytest tests/services/test_handlers.py`；55 passed | 2026-09-17 |
 | 安全回歸（audit/content/permission） | 0 open alerts 維持 | `tests/security` | **verified** | `pytest tests/security/`；52 passed | 2026-09-17 |
 | First-run 偵測 | 無 LLM 後端時啟動即警告（非沉默） | `apps/backend/src/core/system/bootstrap/first_run_detection.py`<br>`apps/backend/main.py` | **verified** | `pytest tests/core/system/bootstrap/test_first_run_detection.py`；13 passed；實測分類 unified=可用、ollama=不可達、雲端=被 local mode 擋 | 2026-09-17 |
@@ -28,7 +30,7 @@
 | Dashboard 新面板 | Config/Model/Context/Health 可用 | `apps/web-dashboard/src/components/ConfigPanel.tsx`<br>`apps/web-dashboard/src/components/ModelSelector.tsx`<br>`apps/web-dashboard/src/components/ContextViewer.tsx`<br>`apps/web-dashboard/src/components/HealthIndicator.tsx` | **wired** | 面板接 real backend；E2E 手動驗證待補 | 2026-09-17 |
 | 明確不支援項文檔 | 正式版聲明範圍 | `docs/user_guide/unsupported.md`<br>`docs/architecture/limitations.md`<br>`docs/user_guide/hardware.md` | **verified** | `ls docs/user_guide/unsupported.md docs/architecture/limitations.md docs/user_guide/hardware.md`；三文檔存在且與 RELEASE_CRITERIA 同步 | 2026-09-17 |
 | HSP 加密金鑰 | 加密可用且啟動不炸 | `apps/backend/src/core/hsp/security.py` | **verified** | `pytest tests/core/hsp/`；佔位符自動回退生成＋警告；.env 佔位符致 5 errors 已修 | 2026-09-17 |
-| 測試品質門 | 全倉綠 | —（見證據欄） | **verified** | `pytest`；8597 passed, 112 skipped, 0 failed（2026-10-20 身分／命名＋角色交付＋模板定位批次全 testpaths 實測：tests/＋apps/backend/tests/＋apps/game-rpg/tests＋scripts） | 2026-10-20 |
+| 測試品質門 | 全倉綠 | —（見證據欄） | **verified** | `pytest`；8,623 passed, 112 skipped, 0 failed（2026-10-20 測試數量同步批次全 testpaths 實測：tests/＋apps/backend/tests/＋apps/game-rpg/tests＋scripts） | 2026-10-20 |
 | mypy 型別債 | apps/backend/src 零錯誤（棘輪鎖定 0，禁止新增） | `pyproject.toml`<br>`scripts/mypy_budget_gate.py`<br>`scripts/mypy_budget.txt` | **verified** | `python scripts/mypy_budget_gate.py`；門機制可驗證；棘輪基線已清零 0（歷史 559→540→518→497→476→432→405→402→391→344→0）；mypy 實測 746 個 source files 全綠（no issues found）；新增債 CI 直接紅燈 | 2026-10-19 |
 | flake8 | 0 errors | `.flake8` | **verified** | `python -m flake8`；全倉 0（37 類忽略為已知門檻寬鬆，非隱瞞） | 2026-09-03 |
 | 離線能力 | 無 key 可運作（部分） | `apps/backend/src/services/llm/providers/unified.py` | **wired** | unified-1g 永遠可用；反射/數學/字典離線；開放域生成需 LLM；unsupported.md 已聲明邊界 | 2026-09-17 |
@@ -37,7 +39,7 @@
 | Desktop LLM 設定持久化 | Settings 面板改 backend 設定重啟保留 | `apps/backend/src/api/routes/llm_routes.py` | **verified** | `pytest tests/api/test_llm_config.py`；12 passed；preferred mock 驗證（honor＋fallback 警告） | 2026-09-17 |
 | Luanti 遊戲代理（識別/記憶/自主性/學習） | 能識別環境、記住去過哪、自主探索、行為可訓練 | `apps/backend/src/ai/autonomous/angela_agent.py`<br>`apps/backend/src/ai/multimodal/game_agent.py`<br>`apps/backend/src/ai/multimodal/game_policy.py`<br>`apps/backend/src/ai/multimodal/skill_selector.py`<br>`apps/backend/src/integrations/luanti_connector.py`<br>`scripts/run_luanti_agent.py` | **wired** | R71 識別/記憶/好奇心＋R74 行為克隆訓練閉環（hold-out 學習門、權重持久化、啟動載入、推論信心可觀測）；驗證指令見 INVOCATION_MATRIX（wired 故不列）；live 樣本待玩家在線累積；20 FPS 仍 ❌（10Hz＋2s poller）；R90 死路徑 | 2026-09-24 |
 | 基準與驗收 | 可驗證的多後端基準，任何 OpenAI 相容端點可與原生堆疊同資料同比分器互相比較 | `scripts/run_benchmarks.py`<br>`benchmarks/data/native_bench_v1.json` | **verified** | `pytest tests/test_run_benchmarks.py`；22 tests；115 題官方結果 results/bench_20260922-091107.json（native math 80%/knowledge 26.7%/knowledge_mc 97.5%/code 0%/routing 100%；native-max mc 100%）＋--gate-native 回歸門納入 CI，逐題明細可複審 | 2026-09-22 |
-| MSBA 語意區塊架構 | 全輸入經 7 層語意區塊處理，融合表示以 NeuroBlender 9D 注入 LLM context | `apps/backend/src/ai/msba/pipeline.py`<br>`apps/backend/src/ai/msba/intra_block_hit.py`<br>`apps/backend/src/ai/msba/multimodal_blocks.py`<br>`apps/backend/src/ai/msba/relevance_convergence.py`<br>`apps/backend/src/ai/msba/block_selector.py` | **wired** | chat_routes Step 2.75 排程、Step 10 消費（50ms 預算）注入 LLM context；Layer 0 接真實 MathVerifier/ED3N 字典（R77 修復死 import）；193 tests；A/B 對照未啟用 | 2026-09-22 |
+| MSBA 語意區塊架構 | 全輸入經 7 層語意區塊處理，融合表示以 NeuroBlender 9D 注入 LLM context | `apps/backend/src/ai/msba/pipeline.py`<br>`apps/backend/src/ai/msba/intra_block_hit.py`<br>`apps/backend/src/ai/msba/multimodal_blocks.py`<br>`apps/backend/src/ai/msba/relevance_convergence.py`<br>`apps/backend/src/ai/msba/block_selector.py` | **wired** | chat_routes Step 2.75 排程、Step 10 消費（50ms 預算）注入 LLM context；Layer 0 接真實 MathVerifier/ED3N 字典（R77 修復死 import）；193 tests；A/B 對照已啟用（2026-10-20：`MSBAPipeline.compare()` 對照無語意區塊的前區塊路徑，結果記入 routing 狀態；旗標 `msba_ab_testing`） | 2026-09-22 |
 
 ## Chat Pipeline（主對話管線）
 
@@ -83,7 +85,7 @@
 | 🟡 partial | 遊戲代理 L4（技能學習/策略） | L0-L3 wired；L4 訓練管線通但 live 樣本未累積 |
 | 🟡 partial | 圖片生成品質 | 管線通、品質未達標 |
 | 🟡 partial | 對外公開 benchmark | 115 題管線、官方數據與 CI 回歸門已建（benchmarks/README.md）；跨 AI 對比待外部 LLM 端點實際接入跑分 |
-| 🟡 partial | MSBA 端到端品質驗證（融合品質 benchmark） | 管線與橋接 wired＋193 tests；融合輸出品質未 benchmark，A/B 對照未啟用 |
+| 🟡 partial | MSBA 端到端品質驗證（融合品質 benchmark） | 管線與橋接 wired＋193 tests；A/B 對照已啟用（2026-10-20，量測不切流量）；融合輸出品質未 benchmark |
 | 🗓️ planned | 遊戲 20FPS 閉環 | 現 10Hz＋2s poller |
 | 🟡 partial | Dashboard E2E 自動化 | R84 Preview 實測七面板全通；WS chat 死路徑修復（ChatPanel 缺 handshake＋ type=chat 不在後端分發清單→echo）；契約鎖定 tests/services/test_dashboard_ws_chat_e2e.py |
 | 🗑️ deleted | Mobile app | Phase 11 刪（骨架；路徑歷史 apps/mobile，非目錄型 token 免掃） |
@@ -122,7 +124,7 @@
 4. **mypy 棘輪鎖定於 0** — `scripts/mypy_budget_gate.py`；新增型別債 CI 直接紅燈。
 5. **公開 benchmark** — angela_bench 115 題管線與 CI 回歸門已建（`scripts/run_benchmarks.py --gate-native`）；跨 AI 對比待外部 LLM 端點實際接入跑分。
 6. **Luanti policy** — 訓練管線已通（hold-out 學習門鎖測試）；live 樣本待玩家在線累積；20 FPS 仍 ❌（10Hz＋2s poller）。
-7. **EmotionSystem 跨進程不共享** — 遊戲 agent 與主 server 生命階段已透過共享 lifecycle JSON 互通（R71c），情緒狀態仍各自 in-memory。
+7. **EmotionSystem 跨進程共享** — 生命階段與情緒狀態都已透過共享 JSON 互通（`data/autonomous_lifecycle_state.json`／`data/emotion_state.json`，2026-10-20）。
 
 > 調用方式查詢：見 **[`INVOCATION_MATRIX.md`](INVOCATION_MATRIX.md)**。本表答「能不能用、多成熟」；該表答「怎麼用、配什麼、怎麼驗證」。
 

@@ -291,6 +291,13 @@ def get_emotion_system():
         from ai.alignment.emotion_system import EmotionSystem
 
         instance = EmotionSystem()
+        # Adopt the emotion state another process wrote (the game agent runs
+        # in its own process; without this the two never agree on how the
+        # user feels).
+        try:
+            instance.adopt_shared_state()
+        except Exception as exc:
+            logger.debug("Shared emotion state not adopted: %s", exc)
         bb.register_module("chat.emotion_system", instance)
         return instance
     except Exception as e:

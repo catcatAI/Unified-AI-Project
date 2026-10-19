@@ -22,26 +22,56 @@ except ImportError:
             import client
 
             UnifiedAIClient = client.UnifiedAIClient
-        except ImportError:
+        except ImportError as _import_error:
+            # `except ... as e` unbinds the name when the block ends, so the
+            # reason is captured in a module-level name the class can use.
+            _MISSING_CLIENT_REASON = str(_import_error)
 
-            class UnifiedAIClient:
+            class UnifiedAIClient:  # type: ignore[no-redef]
+                """The backend client is not importable — say so, do not fake it.
+
+                The previous mock answered ``{"status": "healthy"}`` and
+                ``"Mock response to: …"``, so a broken installation looked
+                like a working backend talking to a healthy server. Every
+                call now fails with the reason.
+                """
+
                 def __init__(self, *args, **kwargs):
-                    pass
+                    raise RuntimeError(
+                        "The backend client could not be imported "
+                        f"({_MISSING_CLIENT_REASON}). Install the backend package or run the "
+                        "CLI from a checkout where it is importable."
+                    )
 
                 def health_check(self):
-                    return {"status": "healthy", "message": "Mock client"}
+                    raise RuntimeError(
+                        "The backend client could not be imported "
+                        f"({_MISSING_CLIENT_REASON})."
+                    )
 
                 def chat(self, message, *args, **kwargs):
-                    return {"response_text": f"Mock response to: {message}"}
+                    raise RuntimeError(
+                        "The backend client could not be imported "
+                        f"({_MISSING_CLIENT_REASON})."
+                    )
 
                 def analyze_code(self, code, language="auto"):
-                    return {"language": language, "analysis": "Mock analysis"}
+                    raise RuntimeError(
+                        "The backend client could not be imported "
+                        f"({_MISSING_CLIENT_REASON})."
+                    )
 
                 def search(self, query):
-                    return {"total": 0, "results": []}
+                    raise RuntimeError(
+                        "The backend client could not be imported "
+                        f"({_MISSING_CLIENT_REASON})."
+                    )
 
                 def generate_image(self, prompt, style="realistic"):
-                    return {"prompt": prompt, "style": style, "result": "Mock image generated"}
+                    raise RuntimeError(
+                        "The backend client could not be imported "
+                        f"({_MISSING_CLIENT_REASON})."
+                    )
 
 
 def main():

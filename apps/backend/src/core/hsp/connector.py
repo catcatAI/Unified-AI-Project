@@ -193,7 +193,10 @@ class HSPConnector:
         message_bridge: Optional[MessageBridge],
     ) -> None:
         if self.mock_mode:
-            self.logger.info("HSPConnector: Initializing in mock mode.")
+            self.logger.warning(
+                "HSPConnector: MOCK MODE — the external bus is emulated; no message "
+                "leaves this process and none is received from a broker."
+            )
             self.logger.debug(
                 f"HSPConnector.__init__ - ai_id: {ai_id}, mock_mode: {self.mock_mode}"
             )
@@ -230,7 +233,11 @@ class HSPConnector:
             self.external_connector: ExternalConnectorType = mock_connector
             self.is_connected = True
             self.hsp_available = True
+            # Diagnostics: the bus is emulated, so a "connected" report must
+            # not be read as a live broker connection.
+            self.external_is_mocked = True
         else:
+            self.external_is_mocked = False
             self.external_connector = ExternalConnector(
                 ai_id=ai_id, broker_address=broker_address, broker_port=broker_port
             )

@@ -38,13 +38,17 @@ H-level:
 | Level     | Focus                                                 | Status      | Score Target |
 | --------- | ----------------------------------------------------- | ----------- | :----------: |
 | **H1-H4** | HIGH vulnerability repair + test fixes                | ✅ Complete |  51% → 55%   |
-| **H5**    | Stub implementation (36/37 strict stubs, 2837 tests)  | ✅ Complete |  55% → 62%   |
+| **H5**    | Stub implementation (0 strict stubs left, 8,597 tests) | ✅ Complete |  55% → 62%   |
 | **H6**    | (Combined into H5/H7)                                 | —           |      —       |
-| **H7**    | Long file refactoring (132→50 files), doc consistency | 🔴 Active   |  62% → 68%   |
+| **H7**    | Long file refactoring (327 files >200 lines remain)  | 🔴 Active   |  62% → 68%   |
 | **H7.1**  | Core documentation alignment (5 docs)                 | 🔴 Active   |  68% → 72%   |
 | **H7.2**  | Deprecated archive cleanup                            | 🟡 Planned  |  72% → 73%   |
 | **H8**    | Test quality (boundary/perf/coverage)                 | 🟡 Planned  |  73% → 78%   |
-| **H9**    | ANGELA-MATRIX annotation + plugin docs                | 🟢 Planned  |  78% → 82%   |
+| **H9**    | ANGELA-MATRIX annotation (435/743 files) + plugin docs | 🟡 Active   |  78% → 82%   |
+
+> The numbers above were re-measured on 2026-10-20 (they used to be a
+> 2026-08 snapshot: 2,837 tests, 564 files, 204 stubs, 138 long files —
+> every one of them stale by a wide margin).
 
 ## Active AI Systems
 
@@ -60,10 +64,10 @@ H-level:
 
 - **Version**: 7.5.0-dev — all version locations synchronized (enforced by
   `tests/test_version_consistency.py`)
-- **Tests**: 2837 tests, 0 collection errors
+- **Tests**: 8,597 passed / 112 skipped, 0 failed (full testpaths, 2026-10-20)
 - **HIGH vulnerabilities**: 0 remaining (all repaired in H1-H4)
-- **Modules**: 564 Python files (~69K lines), 204 stub modules (36%)
-- **CI**: 9 workflows, `tests/unit/` integrated
+- **Modules**: 743 Python files (~211K lines), 0 stub modules
+- **CI**: 7 workflows, `tests/unit/` integrated
 - **Architecture**: ModuleManager hotplug system, HSP protocol, HAM memory,
   5-tier model scaling (ED3N→ECOSYSTEM)
 
@@ -71,23 +75,25 @@ H-level:
 
 | Metric                   | Value                            |
 | ------------------------ | -------------------------------- |
-| Test count               | 2837 (+93 from H5 sprint)        |
-| Stub modules             | 36/37 strict stubs implemented   |
-| Empty except blocks      | 0 (20 remainder are intentional) |
-| Files >200 lines         | 138 (target: 50 in H7)           |
-| Type annotation coverage | ~87%                             |
-| Version consistency      | 14/14                            |
+| Test count               | 8,597 passed / 112 skipped        |
+| Stub modules             | 0 remaining (0 STUB markers)      |
+| Empty except blocks      | 0 (remainder are intentional)      |
+| Files >200 lines         | 327 (target: 50 in H7)            |
+| Type annotation coverage | mypy budget 0 (locked, CI gate)   |
+| Version consistency      | enforced by `tests/test_version_consistency.py` |
 | `import core` time       | ~0.5s (lazy imports)             |
 
 ## Risk Management
 
 Key technical risks currently tracked:
 
-- **132 files >200 lines** — H7 refactoring in progress (neuroplasticity,
+- **327 files >200 lines** — H7 refactoring in progress (neuroplasticity,
   endocrine, state_matrix, router)
-- **Coverage ~6.8%** — H8 will add boundary/perf/coverage gates
-- **ANGELA-MATRIX annotation 0/6** — H9 will enforce standard
-- **70+ uncommitted changes** — ordered cleanup planned
+- **Coverage ~64%** (measured 2026-10-08 by the gap-closure plan) — H8 adds
+  boundary/perf/coverage gates
+- **ANGELA-MATRIX annotation 435/743 files** — H9 continues the sweep
+- **Test coverage gaps** — 309/504 source files still lack a dedicated test
+  file (H8)
 
 For detailed risk register see `MASTER_CONSOLIDATED_PLAN.md` (S/A/B/C/D/E task
 hierarchy).

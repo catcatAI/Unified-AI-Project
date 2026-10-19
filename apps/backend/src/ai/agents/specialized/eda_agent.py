@@ -1669,9 +1669,9 @@ class EdaAgent:
             measured_cell_um2 = float(tile["um2_per_transistor"])
             claimed_cell_um2 = float(config.cell_footprint_um2)
             dense_um2 = float(ANALOG_CIM_DENSITY.um2_per_element)
-            drafted_cell_w_um = float(
-                __import__("ai.hardware.cim_strip_reference", fromlist=["MEASUREMENT_PROVENANCE"]).MEASUREMENT_PROVENANCE["cell_w_um"]
-            )
+            from ai.hardware.cim_strip_reference import MEASUREMENT_PROVENANCE
+
+            drafted_cell_w_um = float(MEASUREMENT_PROVENANCE["cell_w_um"])
             drc_errors = run.get("drc_errors")
             extracted = run.get("extracted")
 

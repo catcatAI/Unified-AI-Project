@@ -30,6 +30,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // Window opacity. Requires a transparent window, which main.js creates.
     setOpacity: (opacity) => ipcRenderer.invoke('window-set-opacity', opacity),
     getOpacity: () => ipcRenderer.invoke('window-get-opacity'),
+    openDevTools: () => ipcRenderer.invoke('window-open-devtools'),
   },
 
   // Live2D model management
@@ -107,16 +108,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   debug: {
     setLogLevel: (level) => ipcRenderer.invoke('debug-set-log-level', level),
     getLogLevel: () => ipcRenderer.invoke('debug-get-log-level'),
-  },
-
-  // Audio system
-  audio: {
-    getDevices: () => ipcRenderer.invoke('audio-get-devices'),
-  },
-
-  // Haptic system
-  haptic: {
-    getDevices: () => ipcRenderer.invoke('haptic-get-devices'),
   },
 
   // File operations

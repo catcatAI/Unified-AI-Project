@@ -56,7 +56,7 @@ in a dual-loop with θ (cognitive layer).
 ### 8D State Matrix (理想目標) / StateMatrix4D (實際)
 
 The expanded state matrix (αβγδεθζη) that drives Angela's autonomous behavior.
-**實際代碼**: `StateMatrix4D` class (`core/engine/state_matrix.py`, 1,761 行,
+**實際代碼**: `StateMatrix4D` class (`core/engine/state_matrix.py`, 1,767 行,
 7 軸 αβγδεθζ) + `DimensionState` 結構體。8 軸規格（+ η
 Execution）為理想架構目標：ζ 已實作；η 在 Python 為獨立子系統
 `eta_axis.py`、在 JS 鏡像為矩陣第 8 軸。

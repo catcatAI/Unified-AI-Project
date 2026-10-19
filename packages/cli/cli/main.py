@@ -31,22 +31,32 @@ try:
     shutdown_services = core_services.shutdown_services
     DEFAULT_OPERATIONAL_CONFIGS = core_services.DEFAULT_OPERATIONAL_CONFIGS
 except ImportError as e:
-    print(f"Backend modules not available ({e}), using mock services")
+    # The backend is not importable. The previous fallback defined the
+    # service hooks as silent no-ops, so the CLI started, reported success
+    # and exited without doing anything. It now fails with the reason.
     HSPFactPayload = dict
     HSPMessageEnvelope = dict
     HSPCapabilityAdvertisementPayload = dict
     HSPTaskResultPayload = dict
 
+    _BACKEND_IMPORT_ERROR = e
+
+    def _missing_backend(*args, **kwargs):
+        raise RuntimeError(
+            f"Backend modules are not available ({_BACKEND_IMPORT_ERROR}); "
+            "the CLI cannot run without them."
+        )
+
     async def initialize_services(
         config=None, ai_id=None, use_mock_ham=False, operational_configs=None
     ):
-        pass
+        _missing_backend()
 
     def get_services():
         return {}
 
     async def shutdown_services():
-        pass
+        return None
 
     DEFAULT_OPERATIONAL_CONFIGS = {}
 

@@ -15,6 +15,25 @@ and this project adheres to
 
 ### Added
 
+- **補完批次（收尾）**（2026-10-20）：把專案自己記錄的未完項逐一收掉——
+  ① 測試數量單一權威機制 `scripts/check_test_count.py`（量測／門禁／同步文件；
+  CI 的硬編碼窗口 7500-8400 已被專案成長（8,726）頂爆，改為比例式容差），
+  STATUS_MATRIX MD↔YAML 漂移（CI 紅）一併修好；② 位元模型 backoff 改為
+  插值（n-gram 表是 hash bucket，未見 context 會落到碰撞 cell 而給出
+  自信的錯誤分布——留出集 bpc 9.42（比均勻猜測的 8.0 還差）→ 2.74）；
+  ③ 5 個 `not_implemented` 的 State Matrix 端點改為真實實作（埠註冊／註銷／
+  列舉、漣漪落到矩陣、分配決策），θ 路由的埠綁定 API 補上（auto_allocate
+  與 apply_routing_decisions 從永久 no-op 變成真的會綁）；④ HAM 未接線的平行
+  實作（query_engine／data_processor／core_storage／background_tasks／
+  vector_store_manager／types／errors，約 1,300 行）刪除，保留期的年齡／重要度
+  規則改寫在真正存資料的 `HAMMemoryManager.prune()`；⑤ EmotionSystem 跨進程
+  共享（`data/emotion_state.json`，主 server 與遊戲 agent 不再各說各話）；
+  ⑥ MSBA A/B 對照啟用（`MSBAPipeline.compare()` 對照「無語意區塊」的前區塊
+  路徑，量測不切流量）；⑦ 清理：HSP mock 模式改為明確警告、CLI 假 client 不再
+  假裝健康、狀態矩陣埠、macOS 桌布真實取得、Open DevTools 真的開、
+  熱節流真的降 FPS、`__import__` 與數字 sleep 遷移、刪除未使用的
+  `storage-manager.js`（含壞掉的版本遷移路徑）；⑧ 新增
+  `docs/architecture/BACKBONE_TOPOLOGY.md` 與 `scripts/backup_checkpoints.py`。
 - **身分與命名（per-user）＋天使工房接待角色**（2026-10-20）：使用者可為自己
   的 Angela 命名（`POST /api/v1/identity/name`），名稱存 `data/identities.json`
   的 per-user 記錄（全域改名被拒：一人改名不得改名他人）。名字現由

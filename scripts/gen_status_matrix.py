@@ -373,7 +373,8 @@ def render_md(root, data):
         mypy_gap,
         "5. **公開 benchmark** — angela_bench 115 題管線與 CI 回歸門已建（`scripts/run_benchmarks.py --gate-native`）；跨 AI 對比待外部 LLM 端點實際接入跑分。",
         "6. **Luanti policy** — 訓練管線已通（hold-out 學習門鎖測試）；live 樣本待玩家在線累積；20 FPS 仍 ❌（10Hz＋2s poller）。",
-        "7. **EmotionSystem 跨進程不共享** — 遊戲 agent 與主 server 生命階段已透過共享 lifecycle JSON 互通（R71c），情緒狀態仍各自 in-memory。",
+        "7. **EmotionSystem 跨進程共享** — 生命階段與情緒狀態都已透過共享 JSON 互通"
+        "（`data/autonomous_lifecycle_state.json`／`data/emotion_state.json`，2026-10-20）。",
         "",
         "> 調用方式查詢：見 **[`INVOCATION_MATRIX.md`](INVOCATION_MATRIX.md)**。"
         "本表答「能不能用、多成熟」；該表答「怎麼用、配什麼、怎麼驗證」。",

@@ -134,22 +134,75 @@ def _parse_malformed_logic_json(raw: str) -> List[Dict]:
     return samples
 
 
-def load_all_data() -> List[Dict]:
-    """Load all datasets from DATA_DIR and return unified sample list."""
-    samples: List[Dict] = []
-    datasets_info: List[Tuple[str, str, str, str]] = [
-        ("arithmetic_train_dataset.json", "problem", "answer", "math"),
-        ("logic_test.json", "proposition", "answer", "logic"),
-        ("logic_train.json", "proposition", "answer", "logic"),
-        ("knowledge_extra.json", "input", "output", "knowledge"),
-        ("reasoning_train.json", "input", "output", "reasoning"),
-        ("tooluse_train.json", "input", "output", "tooluse"),
-        ("association_train.json", "input", "output", "association"),
-    ]
+# Datasets the pipeline expects. ``required`` means "the run is invalid
+# without it" (the loader fails loudly); ``optional`` means "declared but
+# not shipped" — it is still reported, never silently skipped.
+#
+# The 2026-10-20 audit found three entries that were silently `continue`d
+# when absent, so a run could look complete while training on a third of the
+# intended corpora. The knowledge domain is covered by other sources
+# (the knowledge base, the dictionaries and the generated knowledge set),
+# so these three are declared optional with a stated reason.
+DATASETS_INFO: List[Tuple[str, str, str, str, bool, str]] = [
+    ("arithmetic_train_dataset.json", "problem", "answer", "math", True, ""),
+    ("logic_test.json", "proposition", "answer", "logic", True, ""),
+    ("logic_train.json", "proposition", "answer", "logic", True, ""),
+    (
+        "knowledge_extra.json",
+        "input",
+        "output",
+        "knowledge",
+        False,
+        "未隨附：knowledge 域由知識庫／字典／生成知識集覆蓋",
+    ),
+    (
+        "reasoning_train.json",
+        "input",
+        "output",
+        "reasoning",
+        False,
+        "未隨附：reasoning 域由邏輯／算術語料覆蓋",
+    ),
+    (
+        "tooluse_train.json",
+        "input",
+        "output",
+        "tooluse",
+        False,
+        "未隨附：tooluse 由工具樣本（templates/TRPG）覆蓋",
+    ),
+    ("association_train.json", "input", "output", "association", True, ""),
+]
 
-    for fname, inp_key, out_key, domain in datasets_info:
+# Filled by load_all_data(): the datasets that were not found, with the
+# reason. The training report carries it, so an incomplete run is visible
+# in the artifact and not only in the console.
+MISSING_DATASETS: List[Dict[str, Any]] = []
+
+
+def load_all_data() -> List[Dict]:
+    """Load all datasets from DATA_DIR and return unified sample list.
+
+    A dataset that is not on disk is reported (WARNING + the run report),
+    never skipped in silence. Required datasets abort the run.
+    """
+    samples: List[Dict] = []
+    MISSING_DATASETS.clear()
+    for fname, inp_key, out_key, domain, required, note in DATASETS_INFO:
         path = os.path.join(DATA_DIR, fname)
         if not os.path.exists(path):
+            if required:
+                raise FileNotFoundError(
+                    f"required dataset missing: {path} — the run would train on a "
+                    "fraction of the intended corpora; restore it or mark it optional"
+                )
+            MISSING_DATASETS.append({"file": fname, "domain": domain, "reason": note})
+            logger.warning(
+                "dataset not shipped, skipped EXPLICITLY: %s (%s) — %s",
+                fname,
+                domain,
+                note or "no reason recorded",
+            )
             continue
         data = _load_json(path)
         count_before = sum(1 for s in samples if s["domain"] == domain)
@@ -1877,6 +1930,10 @@ def _step6_sync_knowledge(
         "garden_trained": len(batches.get("garden", [])),
         "dictionary_size": len(ed3n_engine.dictionary.entries),
         "garden_dictionary_size": len(garden_engine.dictionary.entries) if garden_engine else 0,
+        # Datasets that were declared but not on disk. Recorded so an
+        # incomplete run is visible in the artifact (a silent skip made a
+        # partial run look complete).
+        "datasets_not_shipped": list(MISSING_DATASETS),
     }
     with open(os.path.join(CKPT_DIR, "training_report.json"), "w", encoding="utf-8") as f:
         json.dump(training_report, f, ensure_ascii=False, indent=2)
@@ -2023,6 +2080,11 @@ def main() -> None:
         + knowledge_samples
     )
     print(f"  Dataset samples:       {len(dataset_samples)}")
+    if MISSING_DATASETS:
+        print(
+            "  Datasets not shipped:  "
+            + ", ".join(f"{d['file']}({d['domain']})" for d in MISSING_DATASETS)
+        )
     print(f"  Alpaca samples:        {len(alpaca_samples)}")
     print(f"  Template samples:      {len(template_samples)}")
     print(f"  Knowledge base samples:{len(kb_samples)}")

@@ -201,15 +201,83 @@ class UnifiedKeyManager:
 
         return bool(stored_hash) and stored_hash == provided_hash
 
+    def _declared_api_keys(self) -> Dict[str, Dict[str, str]]:
+        """The API-key declaration from ``system/keys`` (tiered config).
+
+        The file declares *which* environment variables the project expects
+        (``gemini.api_key: GEMINI_API_KEY_PLACEHOLDER``). It used to have no
+        consumer at all: the keys were read straight from ``.env`` and the
+        declaration was documentation that could drift silently. Reading it
+        here makes the declaration authoritative for *resolution* and gives
+        the diagnostics a real source.
+        """
+        try:
+            from core.system.config.tiered_loader import get_config
+
+            section = get_config("system/keys") or {}
+        except Exception as exc:  # pragma: no cover - config unavailable
+            logger.debug("system/keys declaration unavailable: %s", exc)
+            return {}
+        if not isinstance(section, dict):
+            return {}
+        declared: Dict[str, Dict[str, str]] = {}
+        for service, entry in section.items():
+            if not isinstance(entry, dict):
+                continue
+            declared[str(service)] = {k: str(v) for k, v in entry.items() if isinstance(v, str)}
+        return declared
+
+    @staticmethod
+    def _env_var_name(declared_value: str) -> str:
+        """The env var a declaration points at (``X_PLACEHOLDER`` → ``X``)."""
+        value = str(declared_value or "").strip()
+        if value.endswith("_PLACEHOLDER"):
+            value = value[: -len("_PLACEHOLDER")]
+        return value
+
     def get_api_key(self, service_name: str) -> Optional[str]:
-        """獲取外部模型服務金鑰 (如 OpenAI, Anthropic API Keys)"""
-        # 優先從環境變量獲取，然後從配置文件獲取
+        """獲取外部模型服務金鑰 (如 OpenAI, Anthropic API Keys)
+
+        Resolution order: the environment variable, then the value declared
+        in ``system/keys`` (when it is a real value, not a placeholder), then
+        the legacy config file.
+        """
         env_key = os.environ.get(f"{service_name.upper()}_API_KEY")
         if env_key:
             return env_key
+        declared = self._declared_api_keys().get(service_name.lower(), {})
+        raw = declared.get("api_key")
+        if raw:
+            env_var = self._env_var_name(raw)
+            value = os.environ.get(env_var)
+            if value:
+                return value
+            if not raw.endswith("_PLACEHOLDER"):
+                return raw
         api_keys = self.config.get("api_keys", {})
         value = api_keys.get(service_name) if isinstance(api_keys, dict) else None
         return value if isinstance(value, str) else None
+
+    def api_key_status(self) -> Dict[str, Dict[str, Any]]:
+        """Which declared API keys are present, and which are missing.
+
+        The declaration in ``system/keys`` names every key the project can
+        use; this turns it into an honest report instead of a silent
+        dependency on one ``.env`` file.
+        """
+        status: Dict[str, Dict[str, Any]] = {}
+        for service, entry in self._declared_api_keys().items():
+            raw = entry.get("api_key")
+            if not raw:
+                continue
+            env_var = self._env_var_name(raw)
+            present = bool(os.environ.get(env_var)) or not raw.endswith("_PLACEHOLDER")
+            status[service] = {
+                "env_var": env_var,
+                "present": present,
+                "placeholder": raw.endswith("_PLACEHOLDER"),
+            }
+        return status
 
     def get_key(self, key_name: str) -> Optional[str]:
         """通用檢索 (向下相容)"""

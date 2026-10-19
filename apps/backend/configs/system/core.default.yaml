@@ -29,6 +29,12 @@ system:
 # hardcoded in several modules, so this key was dead.
 ai_name: Angela
 
+# MSBA A/B comparison (2026-10-20): runs the semantic-block pipeline and the
+# pre-block path on the same input and records both. It MEASURES — it does not
+# switch traffic. Read by api/routes/chat_routes._msba_ab_enabled().
+msba:
+  ab_testing: false
+
 # ED3N core_network propagation knobs actually read by core_network.py
 # (2026-09-03: ed3n.default.yaml's max_spike_hops/spike_decay do NOT match
 # code key names; these mirror code defaults so behavior is unchanged)
