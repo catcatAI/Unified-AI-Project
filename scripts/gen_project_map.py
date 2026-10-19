@@ -40,6 +40,13 @@ EXCLUDE_DIRS = {
     "build",
     ".mypy_cache",
     ".ruff_cache",
+    # gitignored 運行產物：掃入會隨每次跑測試/建置無限膨脹（test_models 實測
+    # 238 目錄 4,760 檔 → 區塊二 +5,369 行，預算門 10000 被灌爆 15432>10000）。
+    "test_models",
+    "live2d_models",
+    "logs",
+    "model_cache",
+    "CMakeFiles",
 }
 SKIP_EXT = {".pyc", ".pyo", ".pyd", ".so", ".o"}
 # 工具自身產物不量（自量衛生）：生成地圖 + 歷史快照若被掃入，
