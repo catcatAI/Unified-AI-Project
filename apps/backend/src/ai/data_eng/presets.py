@@ -15,6 +15,14 @@ After: this file is the single source. All builders delegate here.
 
 from typing import Dict
 
+# Placeholder for the instance's own name inside a reflex answer. A reflex
+# table is a *process-global* structure, so the name cannot be baked into it:
+# the name is per user and may change at any time (a rename). Entries that
+# mention the name carry the placeholder and are resolved at serve time by
+# `resolve_reflex`, so a renamed instance never introduces itself with a stale
+# name.
+NAME_PLACEHOLDER = "{name}"
+
 # Canonical reflex presets — union of ED3N (30) and GARDEN (19).
 # If a key appears in both with different values, ED3N's value is kept
 # (ED3N has the larger, more formal set).
@@ -55,17 +63,45 @@ REFLEX_PRESETS: Dict[str, str] = {
     "在忙吗": "不忙，随时为你服务！",
     "心情": "我心情不错！希望你也开心！",
     "今天": "今天是个好日子！",
-    "名字": "我是Angela AI，很高兴认识你！",
+    "名字": f"我是{NAME_PLACEHOLDER}，很高兴认识你！",
+    "你是谁": f"我是{NAME_PLACEHOLDER}，你的智能助手！",
+    "你是誰": f"我是{NAME_PLACEHOLDER}，你的智能助手！",
     "做什么": "我在这里帮助你完成各种任务！",
     "开心": "开心真好！希望你一直保持好心情！",
     "难过": "别难过，我在这里陪着你。",
     "烦恼": "别烦恼了，我们一起想办法。",
     "无聊": "无聊的话，我们可以聊聊天！",
     "兴奋": "太棒了！你的热情感染了我！",
+    "笑话": "為什麼程式設計師總把萬聖節和聖誕節搞混？因為 Oct 31 = Dec 25！",
+    "笑話": "為什麼程式設計師總把萬聖節和聖誕節搞混？因為 Oct 31 = Dec 25！",
+    "推薦一本書": "可以從《小王子》讀起：短小好讀，講愛與成長。",
+    "推薦一本书": "可以從《小王子》讀起：短小好讀，講愛與成長。",
+    "書推薦": "可以從《小王子》讀起：短小好讀，講愛與成長。",
+    "书推荐": "可以從《小王子》讀起：短小好讀，講愛與成長。",
     "help": "I'm here to help! How can I assist you?",
     "hello": "Hello! Nice to meet you!",
     "hi": "Hi there! How can I help you today?",
+    "who are you": f"I'm {NAME_PLACEHOLDER}, your smart assistant!",
+    "joke": "Why did the programmer quit? Because they didn't get arrays (a raise)!",
+    "recommend a book": "Start with 'The Little Prince' — short, warm, and about love and growing up.",
     "good morning": "Good morning! Hope you have a great day!",
     "goodbye": "Goodbye! Take care!",
     "thank you": "You're welcome! Happy to help!",
 }
+
+
+def resolve_reflex(text: str) -> str:
+    """Substitute the current instance name into a reflex answer.
+
+    Reflex tables are process-global, so the name is resolved when the answer
+    is served — a rename is then reflected immediately instead of being baked
+    into a cached string.
+    """
+    if not text or NAME_PLACEHOLDER not in text:
+        return text
+    try:
+        from core.system.config.identity import get_ai_name
+
+        return text.replace(NAME_PLACEHOLDER, get_ai_name())
+    except Exception:  # pragma: no cover - identity layer unavailable
+        return text.replace(NAME_PLACEHOLDER, "Angela")

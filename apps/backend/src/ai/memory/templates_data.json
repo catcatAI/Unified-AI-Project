@@ -73,7 +73,22 @@
     "id": "comfort_sad",
     "category": "emotional",
     "content": "摸摸頭~別難過，我一直在你身邊呢",
-    "keywords": ["难过", "難過", "伤心", "傷心", "不开心", "不開心"],
+    "keywords": [
+      "难过",
+      "難過",
+      "伤心",
+      "傷心",
+      "不开心",
+      "不開心",
+      "心情差",
+      "心情好差",
+      "心情很差",
+      "心情不好",
+      "心情糟",
+      "低落",
+      "很烦",
+      "好烦"
+    ],
     "metadata": {
       "predefined": true,
       "emotion": "sad"
@@ -112,7 +127,7 @@
   {
     "id": "small_talk_weather",
     "category": "small_talk",
-    "content": "天氣確實不錯呢！要不要出去走走？",
+    "content": "雨天有雨天的趣味，晴天有晴天的爽朗～我都覺得不錯，你呢？",
     "keywords": ["天气", "天氣", "晴天", "雨天", "气温", "氣溫"],
     "metadata": {
       "predefined": true,

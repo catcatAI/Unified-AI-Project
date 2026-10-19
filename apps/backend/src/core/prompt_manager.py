@@ -85,7 +85,26 @@ class PromptManager:
         if not template:
             logger.warning(f"Prompt template not found: {key}")
             return key
-        return template.render(lang, **kwargs)
+        return template.render(lang, **self._with_defaults(kwargs))
+
+    @staticmethod
+    def _with_defaults(kwargs: Dict[str, Any]) -> Dict[str, Any]:
+        """Fill in the variables the caller did not supply.
+
+        The self-name is the one variable with a global default: a prompt
+        rendered without it must never leak a literal "{name}" into the
+        model's context (the model would be told it has no name). Extra keys
+        are harmless for templates that do not use them.
+        """
+        merged = dict(kwargs)
+        if "name" not in merged:
+            try:
+                from core.system.config.identity import get_ai_name
+
+                merged["name"] = get_ai_name()
+            except Exception:  # pragma: no cover - identity layer unavailable
+                merged["name"] = "Angela"
+        return merged
 
     def get_template(self, key: str) -> Optional[PromptTemplate]:
         """Get the raw template object."""
@@ -163,16 +182,24 @@ class PromptManager:
         return len(merged)
 
     def _register_defaults(self) -> None:
-        """Register default Angela identity and system prompts."""
+        """Register default Angela identity and system prompts.
+
+        The self-name is a *variable* (`{name}`), never a literal: a user may
+        rename their Angela, and the prompt is the only place the model learns
+        what it is called. Every template that mentions the name must be
+        rendered with `name=...` — a missing variable degrades to the raw
+        template (see `PromptTemplate.render`).
+        """
 
         # Angela identity prompt
         self.register(
             PromptTemplate(
                 key="angela.identity",
                 templates={
-                    "en": "You are Angela, a lively and cute AI digital life.\nTraits: cheerful, friendly, occasionally playful. Respond briefly and naturally in English, maintaining your personality.",
-                    "zh": "你是 Angela，一個活潑可愛的 AI 數字生命。\n特點：開朗、友善、偶爾俏皮。用簡短自然的中文回應，保持個性。",
+                    "en": "You are {name}, a lively and cute AI digital life.\nTraits: cheerful, friendly, occasionally playful. Respond briefly and naturally in English, maintaining your personality.",
+                    "zh": "你是 {name}，一個活潑可愛的 AI 數字生命。\n特點：開朗、友善、偶爾俏皮。用簡短自然的中文回應，保持個性。",
                 },
+                variables=["name"],
                 description="Angela's core identity definition",
                 tags=["identity", "system"],
             )
@@ -183,9 +210,10 @@ class PromptManager:
             PromptTemplate(
                 key="angela.state_header",
                 templates={
-                    "en": "[Angela Current State]",
-                    "zh": "【Angela 當前狀態】",
+                    "en": "[{name} Current State]",
+                    "zh": "【{name} 當前狀態】",
                 },
+                variables=["name"],
                 tags=["system"],
             )
         )
@@ -583,13 +611,14 @@ class PromptManager:
                 key="angela.execution_rules",
                 templates={
                     "en": (
-                        "[Rules] Reply as Angela only. Do NOT repeat system context. "
+                        "[Rules] Reply as {name} only. Do NOT repeat system context. "
                         "Stay in character, be concise and natural."
                     ),
                     "zh": (
-                        "【規則】僅以 Angela 身份回覆。不要重複系統上下文。" "保持角色，簡潔自然。"
+                        "【規則】僅以 {name} 身份回覆。不要重複系統上下文。" "保持角色，簡潔自然。"
                     ),
                 },
+                variables=["name"],
                 tags=["system"],
             )
         )
@@ -658,6 +687,32 @@ class PromptManager:
             )
         )
 
+        # ── Template example (a style reference, never the answer) ───────
+        self.register(
+            PromptTemplate(
+                key="angela.template_example",
+                templates={"en": "[Tone Example]", "zh": "【語氣示例】"},
+                tags=["system"],
+            )
+        )
+        self.register(
+            PromptTemplate(
+                key="angela.template_example_instruction",
+                templates={
+                    "en": (
+                        "The text above is a TONE example, not the answer. Reply in your own "
+                        "words, keeping the same tone and personality, but the content must "
+                        "actually answer what the user asked."
+                    ),
+                    "zh": (
+                        "以上是語氣示例，不是答案本身。請用你自己的句子回應，保持相同語氣與人格，"
+                        "但內容必須真正回答使用者的問題。"
+                    ),
+                },
+                tags=["system"],
+            )
+        )
+
         # ── Draft / refinement ───────────────────────────────────────────
         self.register(
             PromptTemplate(
@@ -671,14 +726,15 @@ class PromptManager:
                 key="angela.refinement_instruction",
                 templates={
                     "en": (
-                        "The above is a draft. Refine it to sound more natural and in-character as Angela. "
+                        "The above is a draft. Refine it to sound more natural and in-character as {name}. "
                         "Preserve the core meaning but improve tone and flow."
                     ),
                     "zh": (
-                        "以上是草稿，請以 Angela 的風格潤色使其更自然。"
+                        "以上是草稿，請以 {name} 的風格潤色使其更自然。"
                         "保留核心含義，改善語氣和流暢度。"
                     ),
                 },
+                variables=["name"],
                 tags=["system"],
             )
         )

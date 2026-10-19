@@ -136,7 +136,7 @@
 ## 四、定義合理（驗證通過）
 
 - GLOSSARY 數值宣稱 5/5 項與實測一致。
-- i18n prompt：使用 90 鍵、zh 90 / en 90、雙語 parity diff=0、未定義=0。
+- i18n prompt：使用 92 鍵、zh 92 / en 92、雙語 parity diff=0、未定義=0。
 - magic_numbers：410 個使用中鍵、YAML 可解析 66、僅 inline
   default（設計如此，呼叫點有預設值）344、未定義且崩潰=0（所有取用器簽名帶 default 參數）。
 - `get_parameter`：3 個呼叫鍵全部在 `_DEFAULT_THRESHOLDS`。
@@ -149,5 +149,5 @@
 
 - StateMatrix 鍵：DEFAULT {'alpha': 6, 'beta': 6, 'gamma': 10, 'delta': 6,
   'epsilon': 6, 'theta': 12, 'zeta': 4}
-- 事件：emit 25 / subscribe 4 → 孤兒 21
+- 事件：emit 26 / subscribe 5 → 孤兒 21
 - 錯誤軸測試欄位 0；跨軸同名槽 2

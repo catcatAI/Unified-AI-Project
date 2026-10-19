@@ -22,6 +22,9 @@ class AngelaAPIClient {
     this.baseURL = baseURL
     this.connected = false
     this.unifiedChatPath = '/api/v1/chat/unified' // 新接口（迁移目标）
+    // The stable user key: the instance name is stored per user, so every
+    // call that depends on "who am I talking to" must use the same id.
+    this.userId = 'desktop_user'
 
     // 超時配置（毫秒）
     this.timeouts = {
@@ -158,6 +161,53 @@ class AngelaAPIClient {
   }
 
   /**
+   * Fetch the identity of this user's Angela (its name and persona state).
+   *
+   * The name is per user: a user may have named their own Angela, so the UI
+   * must not hardcode it. A failure is not fatal — the caller falls back to
+   * the default name.
+   * @returns {Promise<Object|null>} {ai_name, persona_state, host, ...} or null
+   */
+  async getIdentity() {
+    try {
+      const response = await fetch(
+        `${this.baseURL}/api/v1/identity?user_id=${encodeURIComponent(this.userId)}`,
+        {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+          signal: AbortSignal.timeout(this.timeouts.status),
+        }
+      )
+      if (!response.ok) return null
+      return await response.json()
+    } catch (error) {
+      console.warn('Identity lookup failed:', error)
+      return null
+    }
+  }
+
+  /**
+   * Name this user's Angela (the workshop handover).
+   * @param {string} name - the chosen name
+   * @returns {Promise<Object|null>} {ok, ai_name, persona_state, message} or null
+   */
+  async setIdentityName(name) {
+    try {
+      const response = await fetch(`${this.baseURL}/api/v1/identity/name`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name, user_id: this.userId }),
+        signal: AbortSignal.timeout(this.timeouts.status),
+      })
+      if (!response.ok) return null
+      return await response.json()
+    } catch (error) {
+      console.warn('Naming the AI failed:', error)
+      return null
+    }
+  }
+
+  /**
    * Send message to Angela
    * @param {string} message - User message
    * @returns {Promise<Object>} Angela's response
@@ -181,7 +231,7 @@ class AngelaAPIClient {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: message,
-          user_id: 'desktop_user',
+          user_id: this.userId,
           session_id: this.getSessionId(),
           tenant_id: 'default',
           persona_id: 'angela',
@@ -241,7 +291,7 @@ class AngelaAPIClient {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: message,
-          user_id: 'desktop_user',
+          user_id: this.userId,
           session_id: this.getSessionId(),
           tenant_id: 'default',
           persona_id: 'angela',

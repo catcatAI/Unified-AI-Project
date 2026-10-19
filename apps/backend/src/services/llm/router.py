@@ -288,16 +288,36 @@ _NEGATORS = ("不", "沒", "没", "無", "无", "非", "別", "别", "未", "勿
 # (`不太开心`, `不怎么开心`, `不是很高兴`).
 _NEGATION_BRIDGES = frozenset("太很是否怎幺么咋多好够会會算也")
 _NEGATION_BRIDGE_LIMIT = 2
+# Trailing antonym modifiers that reverse a positive keyword: the message
+# says 心情好 but 差 immediately follows, so 心情好 must NOT match the joy
+# template (measured 2026-10-19: "我今天心情好差…" served comfort_joy
+# "看到你開心…" — the opposite mood).
+_ANTONYM_SUFFIXES = frozenset("差糟烂爛坏壞烦煩闷悶乱亂苦不")
+
+# Translation-shaped requests (imperative or question form). These are model
+# work — canned templates must never answer them (measured 2026-10-19:
+# "翻譯：我愛你成英文" matched intimacy kw 爱你 → served "我也愛你！").
+_TRANSLATION_REQUEST_RE = re.compile(
+    r"翻譯|翻译|翻成|翻為|翻为"
+    r"|\btranslate\b|\btranslation\b"
+    r"|(?:英文|日文|中文|法文|韓文|韩文|德文).{0,6}(?:怎麼說|怎么说|怎麼寫|怎么写)"
+    r"|(?:怎麼說|怎么说|怎麼講|怎么讲).{0,6}(?:英文|日文|中文|法文)",
+    re.IGNORECASE,
+)
 
 
 def _is_negated(folded: str, keyword: str, index: int) -> bool:
-    """True when a negator immediately governs the keyword at *index*.
+    """True when a negator immediately governs the keyword at *index*, or a
+    trailing antonym modifier reverses it (``心情好`` inside ``心情好差``).
 
     Keywords that themselves start with a negator (``不开心``) are negated
     phrases in their own right, so they stay valid.
     """
     if keyword.startswith(_NEGATORS):
         return False
+    end = index + len(keyword)
+    if end < len(folded) and folded[end] in _ANTONYM_SUFFIXES:
+        return True
     pos = index - 1
     bridges = 0
     while pos >= 0 and folded[pos] in _NEGATION_BRIDGES and bridges < _NEGATION_BRIDGE_LIMIT:
@@ -2163,7 +2183,7 @@ class AngelaLLMService:
         route_knowledge() is the lightweight fallback for that path.
         """
         try:
-            from ai.knowledge_base import route_knowledge
+            from ai.knowledge_base import format_knowledge_answer, route_knowledge
 
             answer = route_knowledge(user_message)
             if answer:
@@ -2173,7 +2193,7 @@ class AngelaLLMService:
                 logger.info(f"Knowledge hit: {response_time:.0f}ms")
 
                 return LLMResponse(
-                    text=str(answer),
+                    text=format_knowledge_answer(str(answer), user_message),
                     backend="knowledge",
                     model="knowledge_base",
                     tokens_used=0,
@@ -2694,12 +2714,17 @@ class AngelaLLMService:
         return await self._recall_user_fact(user_message, context, start_time)
 
     def _template_layers_enabled(self, user_message: str) -> bool:
-        """Code-WRITE requests skip ALL template layers; template_matcher must exist.
+        """Code-WRITE and translation requests skip ALL template layers;
+        template_matcher must exist.
 
         If the code-write guard cannot run, a code request is answered from
         canned templates (the live Unity regression this rule exists to stop) —
-        never let that be invisible.
+        never let that be invisible. Translation requests likewise fall
+        through to the honest refusal instead of an intimacy/weather
+        template matched on some incidental keyword.
         """
+        if _TRANSLATION_REQUEST_RE.search(user_message or ""):
+            return False
         try:
             from services.execution.gate_execution import GateExecutionOwner
 
@@ -2740,8 +2765,8 @@ class AngelaLLMService:
 
     def _tm_social_route(
         self, user_message: str, start_time: float, social_entry: Any
-    ) -> Optional[LLMResponse]:
-        """Serve a social input (greeting/farewell/thanks) by preferred ID or category."""
+    ) -> Optional[Dict[str, Any]]:
+        """Select the template for a social input (greeting/farewell/thanks)."""
         _preferred_id, _cat_name = social_entry
         try:
             from ai.memory.memory_template import ResponseCategory
@@ -2764,29 +2789,22 @@ class AngelaLLMService:
 
                     chosen = _rand.choice(templates)
             if chosen:
-                response_time = (time.time() - start_time) * 1000
-                self.stats["composed_responses"] += 1
-                return ChatResponse(
-                    text=chosen.content,
-                    backend="composed-template",
-                    model="template-based",
-                    tokens_used=50,
-                    response_time_ms=response_time,
-                    confidence=0.85,
-                    hit_score=0.9,
-                    hit_source="social",
-                    route="COMPOSED",
-                )
+                return {
+                    "content": chosen.content,
+                    "hit_source": "social",
+                    "score": 0.9,
+                    "template_id": getattr(chosen, "id", None),
+                }
         except Exception as exc:
             logger.debug(f"Social template lookup failed: {exc}")
         return None
 
     def _tm_keyword_route(
         self, user_message: str, start_time: float, _lib: Any, _factual_query: bool
-    ) -> Optional[LLMResponse]:
+    ) -> Optional[Dict[str, Any]]:
         """Keyword-based category routing: a template's own keyword pins its category.
 
-        Serving the matched template (instead of a random sibling from its
+        Selecting the matched template (instead of a random sibling from its
         category) is what makes the match meaningful — a keyword that really
         appears in the message pins the exact category.
         """
@@ -2804,26 +2822,19 @@ class AngelaLLMService:
 
                     _ch_k = _rand_k.choice(_usable_k) if _usable_k else None
                 if _ch_k is not None:
-                    _rt_k = (time.time() - start_time) * 1000
-                    self.stats["composed_responses"] += 1
-                    return ChatResponse(
-                        text=_ch_k.content,
-                        backend="composed-template",
-                        model="template-based",
-                        tokens_used=50,
-                        response_time_ms=_rt_k,
-                        confidence=0.8,
-                        hit_score=0.8,
-                        hit_source="keyword-category",
-                        route="COMPOSED",
-                    )
+                    return {
+                        "content": _ch_k.content,
+                        "hit_source": "keyword-category",
+                        "score": 0.8,
+                        "template_id": getattr(_ch_k, "id", None),
+                    }
         except Exception as exc:
             logger.debug(f"Keyword-category template failed: {exc}")
         return None
 
     def _tm_emotion_route(
         self, user_message: str, start_time: float, _lib: Any, _factual_query: bool
-    ) -> Optional[LLMResponse]:
+    ) -> Optional[Dict[str, Any]]:
         """AI-driven social routing: EmotionAnalyzer for emotional content."""
         from ai.memory.memory_template import ResponseCategory
 
@@ -2861,26 +2872,19 @@ class AngelaLLMService:
 
                     _ch_e = _rand_e.choice(_tpls_e) if _tpls_e else None
                 if _ch_e is not None:
-                    _rt_e = (time.time() - start_time) * 1000
-                    self.stats["composed_responses"] += 1
-                    return ChatResponse(
-                        text=_ch_e.content,
-                        backend="composed-template",
-                        model="template-based",
-                        tokens_used=50,
-                        response_time_ms=_rt_e,
-                        confidence=0.8,
-                        hit_score=0.8,
-                        hit_source="emotion-analyzer",
-                        route="COMPOSED",
-                    )
+                    return {
+                        "content": _ch_e.content,
+                        "hit_source": "emotion-analyzer",
+                        "score": 0.8,
+                        "template_id": getattr(_ch_e, "id", None),
+                    }
             except Exception as e:
                 logger.debug(f"Composed emotion template failed, falling through: {e}")
         return None
 
     def _tm_pattern_route(
         self, user_message: str, start_time: float, _lib: Any
-    ) -> Optional[LLMResponse]:
+    ) -> Optional[Dict[str, Any]]:
         """Structural pattern fallback for greeting/farewell only."""
         from ai.memory.memory_template import ResponseCategory
 
@@ -2927,19 +2931,12 @@ class AngelaLLMService:
                             # Ignorance template must never block the
                             # LLM/fallback chain: try next pattern.
                             break
-                        _rt2 = (time.time() - start_time) * 1000
-                        self.stats["composed_responses"] += 1
-                        return ChatResponse(
-                            text=_ch.content,
-                            backend="composed-template",
-                            model="template-based",
-                            tokens_used=50,
-                            response_time_ms=_rt2,
-                            confidence=0.8,
-                            hit_score=0.8,
-                            hit_source="pattern-category",
-                            route="COMPOSED",
-                        )
+                        return {
+                            "content": _ch.content,
+                            "hit_source": "pattern-category",
+                            "score": 0.8,
+                            "template_id": getattr(_ch, "id", None),
+                        }
                     except Exception as e:
                         logger.debug(f"Composed pattern template failed: {e}")
                     break
@@ -2950,8 +2947,8 @@ class AngelaLLMService:
 
     async def _tm_matcher_route(
         self, user_message: str, context: Dict[str, Any], start_time: float
-    ) -> Optional[LLMResponse]:
-        """Template matcher composed/hybrid layers."""
+    ) -> Optional[Dict[str, Any]]:
+        """Select a template by matcher score (semantic / learned match)."""
         matcher = self.template_matcher
         if matcher is None:
             return None
@@ -2966,13 +2963,23 @@ class AngelaLLMService:
             logger.debug("Skipped ignorance template match; falling through")
             return None
         if match_score > composed_thresh:
-            return await self._build_composed_response(
-                user_message, context, match_result, match_score, start_time
-            )
+            return {
+                "content": match_result.template_content,
+                "hit_source": "template",
+                "score": match_score,
+                "template_id": getattr(match_result, "template_id", None),
+                "match_result": match_result,
+                "compose": "composed",
+            }
         if match_score > hybrid_thresh:
-            return await self._build_hybrid_response(
-                user_message, context, match_result, match_score, start_time
-            )
+            return {
+                "content": match_result.template_content,
+                "hit_source": "template",
+                "score": match_score,
+                "template_id": getattr(match_result, "template_id", None),
+                "match_result": match_result,
+                "compose": "hybrid",
+            }
         return None
 
     async def _try_template_match(
@@ -3023,25 +3030,109 @@ class AngelaLLMService:
                 "嗯": ("affirmation_yes", "affirmation"),
             }
             _social = _SOCIAL_MAP.get(user_message.strip().lower())
+            _selection: Optional[Dict[str, Any]] = None
             if _social:
-                result = self._tm_social_route(user_message, start_time, _social)
-                if result is not None:
-                    return result
-                # Social matched but failed to serve → skip keyword/emotion/
-                # pattern and fall through to the matcher (original branching).
+                # A social input pins its category: the keyword/emotion layers
+                # must not substitute a different template for it. If the
+                # social selection fails, the matcher below is the last resort.
+                _selection = self._tm_social_route(user_message, start_time, _social)
             else:
                 for route in (
                     lambda: self._tm_keyword_route(user_message, start_time, _lib, _factual_query),
                     lambda: self._tm_emotion_route(user_message, start_time, _lib, _factual_query),
                     lambda: self._tm_pattern_route(user_message, start_time, _lib),
                 ):
-                    result = route()
-                    if result is not None:
-                        return result
-            return await self._tm_matcher_route(user_message, context, start_time)
+                    _selection = route()
+                    if _selection is not None:
+                        break
+            if _selection is None:
+                _selection = await self._tm_matcher_route(user_message, context, start_time)
+            if _selection is None:
+                return None
+            return await self._serve_template_selection(
+                _selection, user_message, context, start_time
+            )
         except (ValueError, KeyError, AttributeError, TypeError) as e:
             logger.warning(f"P0-2 template matching failed: {e}", exc_info=True)
         return None
+
+    def _llm_backend_available(self) -> bool:
+        """True when a live (non-unified) backend can generate the reply.
+
+        The unified engine is the project's own offline stack, not a language
+        model: with it alone the canned fallback is the only thing that can
+        answer, so templates may still be served verbatim.
+        """
+        backends = getattr(self, "backends", None) or {}
+        try:
+            for btype in backends:
+                if getattr(btype, "value", str(btype)) != "unified":
+                    return True
+        except Exception as exc:  # pragma: no cover - defensive
+            logger.debug("Backend availability probe failed: %s", exc)
+        return False
+
+    async def _serve_template_selection(
+        self,
+        selection: Dict[str, Any],
+        user_message: str,
+        context: Dict[str, Any],
+        start_time: float,
+    ) -> Optional[LLMResponse]:
+        """Turn a template selection into an answer — or into model context.
+
+        A canned template is a *style example*, not an answer. For an AI
+        project the template belongs in the model's context (a tone/wording
+        example the model rephrases in its own words), not in the user's
+        face: serving it verbatim is the "rigid template" failure mode.
+        Therefore, when a language model is available the selection is handed
+        to it as an example and the model writes the reply. Only when no
+        model can answer (offline / degraded) is the template served as-is —
+        the one job a fixed string legitimately does.
+        """
+        content = str(selection.get("content") or "")
+        if not content:
+            return None
+
+        if self._llm_backend_available():
+            context["template_example"] = {
+                "content": content,
+                "hit_source": selection.get("hit_source", "template"),
+                "score": selection.get("score", 0.0),
+                "template_id": selection.get("template_id"),
+            }
+            self.stats["composed_responses"] += 1
+            logger.debug(
+                "Template %s selected → handed to the model as a style example",
+                selection.get("template_id") or selection.get("hit_source"),
+            )
+            return None
+
+        # No model available: the template is the degraded-mode answer.
+        _match_result = selection.get("match_result")
+        _compose = selection.get("compose")
+        if _match_result is not None and _compose in ("composed", "hybrid"):
+            if _compose == "composed":
+                return await self._build_composed_response(
+                    user_message, context, _match_result, selection.get("score", 0.0), start_time
+                )
+            return await self._build_hybrid_response(
+                user_message, context, _match_result, selection.get("score", 0.0), start_time
+            )
+        response_time = (time.time() - start_time) * 1000
+        self.stats["composed_responses"] += 1
+        return ChatResponse(
+            text=content,
+            backend="composed-template",
+            model="template-based",
+            tokens_used=50,
+            response_time_ms=response_time,
+            confidence=0.8,
+            hit_score=selection.get("score", 0.8),
+            hit_source=selection.get("hit_source", "template"),
+            route="COMPOSED",
+            metadata={"route": "COMPOSED", "degraded": True},
+        )
 
     def _bus_effective_thresholds(self, selected_model: str):
         """direct_threshold and draft_low, MetaController-adjusted."""
@@ -3325,6 +3416,25 @@ class AngelaLLMService:
                 confidence=0.95,
                 metadata={"fallback": True, "tier": "pipeline-math"},
             )
+        # Tier 0.1b: word problems the pure-arithmetic extractor cannot parse
+        # (2026-10-19 offline-speak): last deterministic chance before the
+        # template/refusal tiers. Ambiguous shapes return None (honest fall).
+        try:
+            from services.math_verifier import solve_word_problem
+
+            value = solve_word_problem(user_message)
+            if value is not None:
+                rendered = int(value) if float(value).is_integer() else value
+                return LLMResponse(
+                    text=str(rendered),
+                    backend="deterministic-math",
+                    model="word-problem",
+                    tokens_used=0,
+                    confidence=0.9,
+                    metadata={"fallback": True, "tier": "word-problem"},
+                )
+        except Exception as exc:
+            logger.debug(f"Word-problem fallback unavailable: {exc}")
         return None
 
     async def _fb_greeting_template(
@@ -3435,7 +3545,11 @@ class AngelaLLMService:
         instead (live 2026-10-10). Chit-chat types keep Tier 2/3.
         文案按查詢語言切換（2026-10-19：英文問句離線不再收到中文拒答）。"""
         lang = detect_response_language(user_message)
-        if looks_like_question:
+        # Translation is task-shaped even when phrased as a question
+        # ("我愛你英文怎麼說？"): an honest can't-do beats a random template
+        # or a bare "I don't know".
+        _is_translation = bool(_TRANSLATION_REQUEST_RE.search(user_message or ""))
+        if looks_like_question and not _is_translation:
             self._record_abstain("honest-no-answer")
             return LLMResponse(
                 text=_HONEST_NO_ANSWER.get(lang, _HONEST_NO_ANSWER["en"]).format(
@@ -3483,7 +3597,7 @@ class AngelaLLMService:
                 _qtype = str(getattr(_qr.primary_type, "value", _qr.primary_type) or "").lower()
             except Exception:
                 _qtype = ""
-        if _qtype in _task_types:
+        if _qtype in _task_types or _is_translation:
             _backends = getattr(self, "backends", None) or {}
             _has_llm = any(getattr(_bt, "value", str(_bt)) != "unified" for _bt in _backends)
             _why_key = f"{lang}_{'llm' if _has_llm else 'no_llm'}"

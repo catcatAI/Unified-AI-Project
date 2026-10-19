@@ -30,7 +30,7 @@ import numpy as np
 from ai.arithmetic.deterministic_router import try_logic as _det_try_logic
 from ai.arithmetic.deterministic_router import try_math as _det_try_math
 from ai.core.unicode_utils import normalize_text
-from ai.data_eng.presets import REFLEX_PRESETS
+from ai.data_eng.presets import REFLEX_PRESETS, resolve_reflex
 from ai.unified_engine.core_model import FixedSizeCore
 from ai.unified_engine.semantic_qa import SemanticQA
 from core.system.config.magic_numbers import (
@@ -261,7 +261,7 @@ class UnifiedEngine:
             return None
         # Direct hit
         if normalized in REFLEX_PRESETS:
-            return REFLEX_PRESETS[normalized]
+            return resolve_reflex(REFLEX_PRESETS[normalized])
         # Word-boundary scan for multi-word presets like "good morning"
         for pattern, response in REFLEX_PRESETS.items():
             if len(pattern) < 2:
@@ -287,7 +287,7 @@ class UnifiedEngine:
                 # For CJK patterns: skip word-boundary check (CJK has no spaces)
                 is_cjk = bool(_cjk_re.search(pattern))
                 if is_cjk or (before and after):
-                    return response
+                    return resolve_reflex(response)
                 start = idx + 1
         return None
 
@@ -375,6 +375,19 @@ class UnifiedEngine:
         answer, share = best
         if not answer or len(answer) > 32:
             return None
+        # OOD guard: answer_votes is byte-atomic (chr(peak)), so every vote is
+        # a single byte. On out-of-domain questions the peak is distribution
+        # noise (measured on the 32k-checkpoint: peak 'e', share=1.0, giving
+        # "<question>=e" for every knowledge/persona prompt). A non-digit byte
+        # can never be a real open answer (true/false go through the boolean
+        # layer above); a digit byte is only credible when the question itself
+        # carries arithmetic signal — otherwise return None so the fallback
+        # chain can answer honestly instead of emitting garbage.
+        if len(answer) == 1:
+            if not answer.isdigit():
+                return None
+            if not _re.search(r"[0-9+\-*/×÷]|加|減|减|乘|除", q):
+                return None
         conf = min(0.90, max(0.3, 0.3 + share))
         result = f"{q}={answer}"
         return result, conf, "statistical-core"
@@ -430,6 +443,9 @@ class UnifiedEngine:
             return f"{q} — {a}."
         if lowq.startswith(("how many", "how much", "how fast", "how long")):
             return f"{q} — {a}."
+        # zh questions read as "問句: 片段." (F9); give them a full Q→A line.
+        if any("一" <= ch <= "鿿" for ch in q[:8]):
+            return f"{q}？{a}。"
         return f"{q}: {a}." if len(q) < 60 else f"{a}."
 
     def _remember_turn(self, question: str, answer: str) -> None:

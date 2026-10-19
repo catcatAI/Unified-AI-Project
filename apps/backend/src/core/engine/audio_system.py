@@ -31,6 +31,16 @@ from core.system.config.magic_numbers import loop_sleep
 logger = logging.getLogger(__name__)
 
 
+def _current_speaker_name() -> str:
+    """The name shown as the subtitle speaker (follows a rename)."""
+    try:
+        from core.system.config.identity import get_ai_name
+
+        return get_ai_name()
+    except Exception:  # pragma: no cover - identity layer unavailable
+        return "Angela"
+
+
 class AudioState(Enum):
     """音频状态 / Audio states"""
 
@@ -124,7 +134,9 @@ class Subtitle:
     text: str
     start_time: float
     end_time: float
-    speaker: str = "Angela"  # see core.system.config.identity.get_ai_name()
+    # The speaker label is the instance's own name, so it follows a rename
+    # (see core.system.config.identity.get_ai_name).
+    speaker: str = field(default_factory=_current_speaker_name)
     style: str = "default"
     emotion_indicator: Optional[str] = None
 
@@ -276,7 +288,7 @@ class AudioSystem:
                     text=text,
                     start_time=0.0,
                     end_time=len(text) * 0.1,  # Estimate duration
-                    speaker="Angela",
+                    speaker=_current_speaker_name(),
                     emotion_indicator=tts_config.emotion,
                 )
                 self._show_subtitle(subtitle)
@@ -417,7 +429,7 @@ class AudioSystem:
                         text=current_line.text,
                         start_time=current_line.start_time,
                         end_time=current_line.end_time,
-                        speaker="Angela (Singing)",
+                        speaker=f"{_current_speaker_name()} (Singing)",
                         style="karaoke",
                     )
                     self._show_subtitle(subtitle)
@@ -595,7 +607,7 @@ if __name__ == "__main__":
 
         # TTS demo
         logger.info("\nTTS演示 / TTS demo:")
-        await audio.speak("你好，我是安吉拉，很高兴见到你！", show_subtitles=True)
+        await audio.speak(f"你好，我是{_current_speaker_name()}，很高兴见到你！", show_subtitles=True)
         logger.info("  说话完成 / Speaking complete")
 
         # TTS with emotion

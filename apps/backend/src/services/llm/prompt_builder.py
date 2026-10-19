@@ -792,6 +792,23 @@ def get_theta_state() -> str:
         return ""
 
 
+def _resolve_ai_name(context: Dict[str, Any]) -> str:
+    """The name the model should call itself in this request.
+
+    Resolved per user: a user may have named their own Angela, and the
+    prompt is the only place the model learns what it is called. Falls back to
+    the configured default when the identity layer is unavailable.
+    """
+    user_id = context.get("user_id") if isinstance(context, dict) else None
+    try:
+        from core.system.config.identity import get_ai_name
+
+        return get_ai_name(user_id)
+    except Exception as exc:  # pragma: no cover - identity layer unavailable
+        logger.warning("AI name resolution failed: %s", exc, exc_info=True)
+        return "Angela"
+
+
 def construct_angela_prompt(
     user_message: str,
     context: Dict[str, Any],
@@ -803,13 +820,15 @@ def construct_angela_prompt(
     get_prompt_manager().set_language(detect_response_language(user_message))
     bio_status = get_biological_state(context=context)
     state_for_llm = context.get("state_for_llm")
-    system_prompt = _build_core_prompt(state_for_llm, neuro_vocabulary, bio_status)
+    ai_name = _resolve_ai_name(context)
+    system_prompt = _build_core_prompt(state_for_llm, neuro_vocabulary, bio_status, ai_name)
     system_prompt = _attach_cognition_blocks(system_prompt)
     system_prompt = _attach_action_result(system_prompt, context)
     system_prompt = _attach_continuation_guard(system_prompt, context)
 
     messages = [{"role": "system", "content": system_prompt.strip()}]
 
+    _append_persona(messages, context)
     _append_user_profile(messages, context)
     _append_drive_files(messages, context)
     _append_image_analysis(messages, context)
@@ -824,6 +843,7 @@ def construct_angela_prompt(
     _append_workspace_overview(messages, context)
     _append_awareness_injection(messages, context)
     _append_crisis_safety(messages, context)
+    _append_template_example(messages, context)
     _append_draft_response(messages, context)
     _append_document_context(messages, context)
     _append_knowledge_context(messages, context)
@@ -836,7 +856,10 @@ def construct_angela_prompt(
 
 
 def _build_core_prompt(
-    state_for_llm: Optional[Dict], neuro_vocabulary: Optional[Any], bio_status: str
+    state_for_llm: Optional[Dict],
+    neuro_vocabulary: Optional[Any],
+    bio_status: str,
+    ai_name: str = "Angela",
 ) -> str:
     """Build the core system prompt from state, bio, and axis data."""
     axis_lines, theta_lines, eta_lines, guidance_lines = [], [], [], []
@@ -896,13 +919,13 @@ def _build_core_prompt(
     eta_block = "\n  ".join(eta_lines) if eta_lines else prompt("angela.eta.default")
     guidance_block = "\n".join(guidance_lines) if guidance_lines else ""
 
-    result = f"""{prompt('angela.identity')}
+    result = f"""{prompt('angela.identity', name=ai_name)}
 {bio_line}"""
 
     if axes_block or theta_lines:
         result += f"""
 
-{prompt('angela.state_header')}
+{prompt('angela.state_header', name=ai_name)}
 {axes_block}
 
 {prompt('angela.meta_cognition')}
@@ -952,7 +975,7 @@ Source: {context.get('_agent_result_source', 'unknown')}
 Result: {agent_result[:500]}
 
 The above was produced by a specialized agent. You may use it directly or enhance it."""
-    prompt_text += f"\n\n{prompt('angela.execution_rules')}"
+    prompt_text += f"\n\n{prompt('angela.execution_rules', name=_resolve_ai_name(context))}"
     return prompt_text
 
 
@@ -1293,9 +1316,58 @@ def _append_draft_response(messages: List[Dict], context: Dict) -> None:
     messages.append(
         {
             "role": "system",
-            "content": f"\n{prompt('angela.draft_response')}\n{draft_response}\n\n{prompt('angela.refinement_instruction')}\n",
+            "content": (
+                f"\n{prompt('angela.draft_response')}\n{draft_response}\n\n"
+                f"{prompt('angela.refinement_instruction', name=_resolve_ai_name(context))}\n"
+            ),
         }
     )
+
+
+def _append_template_example(messages: List[Dict], context: Dict) -> None:
+    """Attach the selected template as a *tone example* for the model.
+
+    A template is an example, not the answer: the model receives the wording
+    as a style reference and writes its own reply. The instruction says so
+    explicitly, otherwise models tend to echo the example verbatim — which is
+    exactly the rigid behaviour the example-in-context rule exists to avoid.
+    """
+    example = context.get("template_example")
+    if not example:
+        return
+    content = str(example.get("content") or "").strip()
+    if not content:
+        return
+    messages.append(
+        {
+            "role": "system",
+            "content": (
+                f"\n{prompt('angela.template_example')}\n{content}\n\n"
+                f"{prompt('angela.template_example_instruction')}\n"
+            ),
+        }
+    )
+
+
+def _append_persona(messages: List[Dict], context: Dict) -> None:
+    """Attach the workshop persona block (who the user is talking to).
+
+    The persona is *context*, not a script: it tells the model which role it
+    plays (workshop host before the handover, the user's own Angela after it)
+    and what it may not claim. An unavailable persona layer must not break the
+    prompt, so failures are logged and skipped.
+    """
+    try:
+        from core.persona.lucifaella import build_persona_block
+
+        ai_name = _resolve_ai_name(context)
+        block = build_persona_block(ai_name, context.get("user_id"))
+    except Exception as exc:  # pragma: no cover - persona layer unavailable
+        logger.warning("Persona block unavailable: %s", exc, exc_info=True)
+        return
+    if not block:
+        return
+    messages[0]["content"] += f"\n\n{block}"
 
 
 __all__ = [

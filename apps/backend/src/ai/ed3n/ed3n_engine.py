@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from ai.ed3n.input_enricher import EnrichedInput
 
 from ai.core.unicode_utils import is_english_dominant, normalize_text
-from ai.data_eng.presets import REFLEX_PRESETS
+from ai.data_eng.presets import REFLEX_PRESETS, resolve_reflex
 from core.system.config.magic_numbers import (
     batch_value,
     learning_rate,
@@ -54,7 +54,9 @@ class ReflexLayer:
             if normalized in self.lru_cache:
                 result = self.lru_cache.pop(normalized)
                 self.lru_cache[normalized] = result
-                return result
+                # The cached value is the raw template: the instance name is
+                # resolved at serve time so a rename is reflected at once.
+                return resolve_reflex(result)
 
             for pattern, response in self.patterns.items():
                 if len(pattern) < self.min_pattern_len:
@@ -69,7 +71,7 @@ class ReflexLayer:
                 # through to the dictionary/SNN stages.
                 if self._is_word_boundary_match(normalized, pattern):
                     self._add_to_cache(normalized, response)
-                    return response
+                    return resolve_reflex(response)
 
         return None
 

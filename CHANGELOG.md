@@ -15,6 +15,24 @@ and this project adheres to
 
 ### Added
 
+- **身分與命名（per-user）＋天使工房接待角色**（2026-10-20）：使用者可為自己
+  的 Angela 命名（`POST /api/v1/identity/name`），名稱存 `data/identities.json`
+  的 per-user 記錄（全域改名被拒：一人改名不得改名他人）。名字現由
+  `identity.get_ai_name(user_id)` 單一解析，並貫穿到 system prompt
+  （`angela.identity` 等改為 `{name}` 變數）、reflex 答案、字幕 speaker、TTS
+  自我介紹與前端對話標籤。角色層 `core/persona/lucifaella.py`：
+  露茜法埃拉（天使工房商務部負責人）負責迎賓與**交付**——使用者命名後，
+  對話主體改為其命名的 Angela，露茜法埃拉退居代理層；角色區塊明列界線
+  （無實質股份／法律權利、不得聲稱完成未完成操作、不得宣稱未接線能力）。
+  文件：`docs/03-technical-architecture/identity-and-workshop-persona.md`。
+  43 新測試，全 testpaths **8,597 passed, 112 skipped, 0 failed**（2026-10-20）。
+- **模板定位改正：示例進上下文，不是直接輸出**（2026-10-20）：回應模板層
+  （social/keyword/emotion/pattern/matcher）改為「選模板」＋
+  `_serve_template_selection()`：有語言模型時模板成為
+  `context["template_example"]`，隨 `angela.template_example` 區塊進 prompt
+  （明示為語氣示例、非答案），由模型用自己的話回答；無模型（離線／僅 unified）
+  時才逐字供應（降級／報錯用途）。模板選擇邏輯（否定守衛、`心情好差` 反義
+  守衛）保留——選對示例仍然重要。
 - **五步曲批次**（`8afdbc3e0`，2026-10-19）：D2/E3/A5 升級＋門禁＋新報告＋計分
   重算；全倉 8504 passed, 112 skipped。
 - **研究管線**（`e4759c262`、`1f63a2caa`）：搜尋→抓內文→抽事實→交叉比對→AI
@@ -38,6 +56,19 @@ and this project adheres to
 
 ### Fixed
 
+- **離線 speak 批次**（2026-10-20）：知識庫策展條目（光合作用／哺乳動物／地球
+  繞星／沸點／zh 單位換算）＋裸片段包句（`format_knowledge_answer`）；
+  單步應用題求解（`solve_word_problem`，多步／折扣／找零一律誠實拒答）；
+  執行閘不再對「寫程式」與「Python 是什麼語言？」問「要執行嗎」（真正的
+  執行意圖如「執行 script.py」保留確認）；UNIFIED 引擎 OOD 問句不再吐單
+  位元組垃圾（`<q>=e`）；翻譯請求不再吃到愛情模板（改走誠實 cannot-do）；
+  情緒模板反向修正（`心情好差` 不再配喜悅模板）＋雨天不再配晴天文案。
+  新增 `tests/services/test_offline_speak.py`（9 測試）。
+- **桌面 App 初始化中斷**（2026-10-20）：`app.js` 初始化流程漏了 `this.`
+  （`incrementLoadingProgress(...)` 裸呼叫）→ ReferenceError 被 init 的
+  try/catch 吞成「Init failed」：閒置偵測、後端同步、ready 狀態全部沒有執行。
+  同時修正 unified 聊天路徑未把 `user_id` 帶進 pipeline context 的缺口
+  （per-user 命名因此才會生效）。
 - **稽核批次**（`2b87f1190`，2026-10-19）：三輪外審修復——zh-TW 語言層（動態
   語言偵測＋全 locale 繁體化）、HAM 主體覆蓋守衛（錯主體模板回放拒答）、code
   召回劫持守衛、同步端點改 `asyncio.to_thread` 解事件迴圈凍結、沙箱 import

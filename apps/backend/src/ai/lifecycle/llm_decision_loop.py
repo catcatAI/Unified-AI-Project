@@ -35,6 +35,17 @@ from .user_monitor import UserMonitor, UserState
 
 logger = logging.getLogger(__name__)
 
+
+def _self_name() -> str:
+    """The name the model should call itself (per-user override aware)."""
+    try:
+        from core.system.config.identity import get_ai_name
+
+        return get_ai_name()
+    except Exception as exc:  # pragma: no cover - identity layer unavailable
+        logger.warning("AI name resolution failed: %s", exc, exc_info=True)
+        return "Angela"
+
 # JSON-failure degradation (問題單 3): a model that keeps replying in plain
 # prose used to log a WARNING every cycle forever AND re-call the LLM each
 # time. After this many consecutive non-JSON replies the decision path
@@ -391,7 +402,7 @@ class LLMDecisionLoop:
             ) as e:  # broad exception acceptable: emotional memory retrieval should not block decision
                 logger.warning(f"Error retrieving emotional memories: {e}", exc_info=True)
 
-        decision_prompt = f"""{prompt('angela.identity')}
+        decision_prompt = f"""{prompt('angela.identity', name=_self_name())}
 
 {prompt('angela.current_state')}:
 - {prompt('angela.alpha')}: {state_matrix.get('alpha', 0.5):.2f}
@@ -481,7 +492,7 @@ class LLMDecisionLoop:
             messages = [
                 {
                     "role": "system",
-                    "content": f"{prompt('angela.identity')} {prompt('angela.json_format')}。",
+                    "content": f"{prompt('angela.identity', name=_self_name())} {prompt('angela.json_format')}。",
                 },
                 {"role": "user", "content": decision_prompt},
             ]

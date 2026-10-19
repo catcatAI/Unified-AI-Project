@@ -311,6 +311,23 @@ class GateExecutionOwner:
         "场景",
     )
 
+    # Run-intent signals: messages that genuinely ask to RUN something
+    # without carrying a code block. Only these keep the confirm flow
+    # among no-code code_exec requests (write requests bypass first,
+    # questions bypass last).
+    _EXEC_VERBS = (
+        "執行",
+        "运行",
+        "運行",
+        "跑一下",
+        "跑起來",
+        "啟動",
+        "启动",
+        "execute",
+        "run it",
+        "run this",
+    )
+
     @staticmethod
     def is_code_write_request(user_message: str) -> bool:
         """True when the message asks for code to be WRITTEN (none carried)."""
@@ -538,22 +555,38 @@ class GateExecutionOwner:
         plan: Any,
         decision: Any,
     ) -> Optional[GateOutcome]:
-        """Code-WRITE requests carry no code (no fences/backticks, single
-        line): there is nothing to execute, and gating them only yields
-        a confirm prompt followed by "specify code". When an LLM backend
-        is available, fall through so the model WRITES the code instead
-        (live 2026-10-10: gemma writes correct fibonacci, gate blocked).
+        """Requests resolved to the code_exec handler that carry NO
+        executable code (no fences/backticks, single line) have nothing to
+        execute: gating them only yields a confirm prompt followed by
+        "specify code", or — offline (unified-only backend,
+        `_llm_generation_available()` False) — a bogus "confirm system
+        operation?" for plain code questions (measured 2026-10-19:
+        "幫我寫一支排序的程式碼" and "Python 是什麼語言？" both asked to
+        confirm code_exec). Fall through so the model WRITES the code /
+        answers the question when an LLM is available, and so the honest
+        no-LLM refusal answers when it is not — answering a question is
+        not an operation to confirm.
         Fenced/inline/multiline code keeps the execute path. Keyed on
         the resolved HANDLER (code_exec), not the plan type: a Unity
         build script ("建車身…存檔") plans as EXECUTE but still needs
         code written first (live 2026-10-10). System handlers
-        (system_cmd: 關機 etc.) never bypass.
+        (system_cmd: 關機 etc.) and file/agent handlers never bypass.
+        A genuine run intent without carried code ("執行 script.py")
+        keeps the confirm flow: only write requests and non-operation
+        code messages bypass.
         """
-        if decision.action in ("auto_execute", "confirm_then_execute"):
-            if self.is_code_write_request(user_message) and self._llm_generation_available():
-                context["last_action_result"] = None
-                return GateOutcome(action=OUTCOME_NONE, plan=plan, decision=decision)
-        return None
+        if decision.action not in ("auto_execute", "confirm_then_execute"):
+            return None
+        if str(getattr(decision, "handler", "") or "") != "code_exec":
+            return None
+        if not self._has_no_executable_code(user_message):
+            return None
+        if not self.is_code_write_request(user_message):
+            lowered = (user_message or "").lower()
+            if any(v in lowered for v in GateExecutionOwner._EXEC_VERBS):
+                return None
+        context["last_action_result"] = None
+        return GateOutcome(action=OUTCOME_NONE, plan=plan, decision=decision)
 
     async def _route_auto_execute(
         self,

@@ -113,10 +113,12 @@ class KnowledgePipeline:
         return None
 
     async def _try_math(self, text: str, ctx: Dict) -> Optional[Dict]:
-        if not self._math:
-            return None
         try:
-            if hasattr(self._math, "is_math_message") and self._math.is_math_message(text):
+            if (
+                self._math
+                and hasattr(self._math, "is_math_message")
+                and self._math.is_math_message(text)
+            ):
                 verification = self._math.verify(text)
                 if verification and getattr(verification, "is_correct", False):
                     answer = getattr(verification, "final_answer", None) or getattr(
@@ -126,6 +128,18 @@ class KnowledgePipeline:
                         return {"answer": str(answer), "confidence": 0.99}
         except Exception as e:
             logger.debug("_try_math: %s", e)
+        # Word problems (2026-10-19 offline-speak): single-operation shapes
+        # ("一個西瓜35元，買4個要多少錢？") the pure-arithmetic extractor
+        # cannot parse; anything ambiguous returns None and falls through.
+        try:
+            from services.math_verifier import solve_word_problem
+
+            value = solve_word_problem(text)
+            if value is not None:
+                answer = int(value) if float(value).is_integer() else value
+                return {"answer": str(answer), "confidence": 0.9}
+        except Exception as e:
+            logger.debug("_try_math word-problem: %s", e)
         return None
 
     async def _try_weather(self, text: str, ctx: Dict) -> Optional[Dict]:
@@ -152,11 +166,11 @@ class KnowledgePipeline:
 
     async def _try_knowledge(self, text: str, ctx: Dict) -> Optional[Dict]:
         try:
-            from ai.knowledge_base import route_knowledge
+            from ai.knowledge_base import format_knowledge_answer, route_knowledge
 
             answer = route_knowledge(text)
             if answer:
-                return {"answer": answer, "confidence": 0.95}
+                return {"answer": format_knowledge_answer(answer, text), "confidence": 0.95}
         except Exception as e:
             logger.debug("_try_knowledge: %s", e)
         return None

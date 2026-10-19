@@ -473,6 +473,49 @@ def compute_arithmetic(text: str) -> Optional[float]:
     return result
 
 
+# Word-problem reject guards (2026-10-19 offline-speak): shapes whose correct
+# operation is ambiguous to a single pattern. A wrong operation is worse than
+# an honest miss, so these fall through to the refusal chain untouched.
+_WORD_PROBLEM_REJECT = ("折", "找", "剩", "平均", "每週", "每周", "更多", "然後", "然后", "%")
+
+
+def solve_word_problem(text: str) -> Optional[float]:
+    """Solve a narrow set of grade-school word problems the pure-arithmetic
+    extractor cannot parse (single-operation shapes only).
+
+    Covered (zh):
+      - price x qty:   "一個西瓜35元，買4個要多少錢？" -> 140.0
+      - per-container: "一箱蘋果有24顆，7箱共有幾顆？" -> 168.0
+    Multi-step / discount / change-making inputs are rejected by
+    ``_WORD_PROBLEM_REJECT`` (or fail both patterns) and return None so the
+    caller can fall through to an honest refusal.
+    """
+    if not text:
+        return None
+    t = text.strip()
+    if any(g in t for g in _WORD_PROBLEM_REJECT):
+        return None
+    # price x qty: number + currency … 買/購買 … number
+    m = re.search(r"(\d+(?:\.\d+)?)\s*[元塊块圓圆]\D{0,8}?買(?:了)?(\d+)", t)
+    if m:
+        return float(m.group(1)) * float(m.group(2))
+    # per-container total: "N <unit> …, M <container>" -> N * M
+    m2 = re.search(
+        r"(\d+)\s*[顆个個只支本張张件]\s*[，,]?\s*(?:共)?(\d+)\s*[箱盒桶袋打]",
+        t,
+    )
+    if m2:
+        return float(m2.group(1)) * float(m2.group(2))
+    # "每箱 N … , M 箱" (per-unit first, container count second)
+    m3 = re.search(
+        r"每[箱盒桶袋個个件只支]\s*(\d+).*?[，,]?\s*(?:共)?(\d+)\s*[箱盒桶袋]",
+        t,
+    )
+    if m3:
+        return float(m3.group(1)) * float(m3.group(2))
+    return None
+
+
 def _logic_eval_tokens(expr: str) -> Optional[str]:
     """Token-guard and eval a pure True/False/and/or/not expression."""
     tokens = re.findall(r"\b\w+\b", expr)

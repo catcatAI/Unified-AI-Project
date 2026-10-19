@@ -29,7 +29,7 @@ from typing import Any, Deque, Dict, List, Optional, Tuple
 
 from ai.core.unicode_utils import is_english_dominant
 from ai.data_eng.assemble import decode_slot_budget, select_anchored_keys
-from ai.data_eng.presets import REFLEX_PRESETS
+from ai.data_eng.presets import REFLEX_PRESETS, resolve_reflex
 from core.system.config.magic_numbers import (
     cache_value,
     compute_bool,
@@ -76,7 +76,9 @@ class _ReflexTable:
     def match(self, text: str) -> Optional[str]:
         lower = text.strip().lower()
         if lower in self._cache:
-            return self._cache[lower]
+            # The cache holds the raw template; the name is resolved at serve
+            # time so a rename is reflected at once.
+            return resolve_reflex(self._cache[lower])
         for pattern, response in self.patterns.items():
             if pattern in lower:
                 # R79 修復：ASCII pattern 用詞邊界匹配——reflex 表中的短詞
@@ -88,7 +90,7 @@ class _ReflexTable:
                     oldest = next(iter(self._cache))
                     del self._cache[oldest]
                 self._cache[lower] = response
-                return response
+                return resolve_reflex(response)
         return None
 
     def add(self, pattern: str, response: str) -> None:

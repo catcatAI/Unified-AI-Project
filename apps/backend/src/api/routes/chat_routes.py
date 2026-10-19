@@ -72,6 +72,29 @@ def _spawn_background_task(coro, description: str = "") -> asyncio.Task:
     return task
 
 
+def _bind_current_user(user_id: Optional[str]) -> Any:
+    """Bind the requesting user so the instance name resolves per user."""
+    try:
+        from core.system.config.identity import set_current_user
+
+        return set_current_user(user_id)
+    except Exception as exc:  # pragma: no cover - identity layer unavailable
+        logger.warning("Could not bind current user: %s", exc, exc_info=True)
+        return None
+
+
+def _unbind_current_user(token: Any) -> None:
+    """Undo the user binding made by `_bind_current_user`."""
+    if token is None:
+        return
+    try:
+        from core.system.config.identity import reset_current_user
+
+        reset_current_user(token)
+    except Exception as exc:  # pragma: no cover - identity layer unavailable
+        logger.debug("Could not unbind current user: %s", exc)
+
+
 # Session store: owned by services.execution.gate_execution so the HTTP route and
 # the REPL / ChatService path share ONE gate + session owner.
 TTLSessionManager = _GateTTLSessionManager
@@ -1884,6 +1907,10 @@ async def _handle_chat_request(
     if not history:
         history = list(session.get("messages", []))
     result = None
+    # Bind the requesting user for the whole turn: the instance name is
+    # resolved per user, and every downstream consumer (prompt builder, reflex
+    # engines, subtitle/TTS layer) reads the same binding.
+    _user_token = _bind_current_user((extra_context or {}).get("user_id") or user_name)
     try:
         result = await _run_chat_pipeline(
             user_message,
@@ -1896,6 +1923,7 @@ async def _handle_chat_request(
         )
         return result
     finally:
+        _unbind_current_user(_user_token)
         # Prefer the pipeline return value; fall back to the last captured
         # response so exceptions/partial failures still persist the turn.
         response_text = (result or {}).get("response_text") or _latest_responses.get(
@@ -2152,6 +2180,10 @@ def _prime_chat_context(
     context: Dict[str, Any] = {"user_name": user_name}
     if extra_context:
         context.update(extra_context)
+    # The stable user key must reach the prompt layer: the instance name is
+    # resolved per user, so without user_id a renamed instance would fall
+    # back to the configured default name.
+    context.setdefault("user_id", (extra_context or {}).get("user_id") or user_name)
     _detect_eda_followup(context, history)
     _run_mainline_dispatch(context, user_message, origin, extra_context)
     _schedule_msba(context, user_message)
@@ -2698,6 +2730,10 @@ async def unified_chat(request: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
         session_id=session_id,
         origin=origin,
         mode=mode,
+        # The namespaced identity must reach the pipeline: the instance name
+        # is resolved per user, and the legacy session path already carried
+        # it (audit 2026-10-10) — the unified path used to drop it.
+        extra_context=context,
     )
     response["context"] = context
     response["mode"] = mode

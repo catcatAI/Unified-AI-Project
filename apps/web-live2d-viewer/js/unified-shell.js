@@ -90,6 +90,28 @@ class UnifiedShell {
         console.warn('[UnifiedShell] AngelaAPIClient unavailable:', err.message || err)
       }
     }
+    this._applyInstanceIdentity()
+  }
+
+  /**
+   * Resolve this user's Angela name and label the chat UI with it.
+   *
+   * The name is per user (a user may have named their own Angela), so the
+   * shell must not hardcode it. A failed lookup keeps the default markup.
+   */
+  async _applyInstanceIdentity() {
+    if (!this.apiClient) return
+    try {
+      const identity = await this.apiClient.getIdentity()
+      if (!identity || !identity.ai_name) return
+      const heading = document.querySelector('#panel-chat h2')
+      if (heading) heading.textContent = `💬 與 ${identity.ai_name} 對話`
+      document.querySelectorAll('[data-ai-name]').forEach((el) => {
+        el.textContent = identity.ai_name
+      })
+    } catch (err) {
+      console.warn('[UnifiedShell] Could not resolve the instance name:', err)
+    }
   }
 
   async _sendChat() {

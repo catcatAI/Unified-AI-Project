@@ -33,7 +33,7 @@ _KNOWLEDGE: Dict[str, Dict[str, str]] = {
     "fire": {"color": "orange"},
     "flame": {"color": "orange"},
     "mars": {"color": "red", "known_as": "Red Planet"},
-    "earth": {"color": "blue", "known_as": "Blue Planet"},
+    "earth": {"color": "blue", "known_as": "Blue Planet", "orbits": "太陽 / the Sun"},
     "moon": {"color": "grey"},
     "cloud": {"color": "white"},
     "gold": {"color": "yellow"},
@@ -144,6 +144,15 @@ _KNOWLEDGE: Dict[str, Dict[str, str]] = {
     "lightbulb": {"inventor": "Edison", "answer": "Edison"},
     "edison": {"inventor": "Edison", "answer": "Edison"},
     "america": {"discoverer": "Columbus", "answer": "Columbus"},
+    # 2026-10-19 offline-speak: curated science entries for the zh knowledge
+    # gaps (光合作用/哺乳動物 returned None and fell to garbage/refusal).
+    "mammal": {
+        "flies": "不會，只有蝙蝠等少數能飛 / only bats can fly",
+    },
+    "photosynthesis": {
+        "answer": "綠色植物在陽光下把二氧化碳和水轉成養分並放出氧氣 / "
+        "plants use sunlight, water and CO2 to make food and release O2",
+    },
 }
 
 # unit conversion table: (unit_a, unit_b) -> multiplier from a to b
@@ -283,6 +292,15 @@ _ZH_SUBJECT_ALIASES: Dict[str, List[str]] = {
     "nickel": ["五分錢", "鎳幣", "镍币"],
     "dime": ["一角硬幣", "一角硬币", "一毛"],
     "quarter": ["兩角五分", "兩毛五", "二十五分", "25分硬幣"],
+    # Nature/concept aliases (2026-10-19 offline-speak): zh questions like
+    # 「為什麼天空是藍的」「地球繞著什麼星轉」had NO alias and missed entirely.
+    "sky": ["天空", "藍天", "蓝天"],
+    "sun": ["太陽", "太阳"],
+    "moon": ["月亮", "月球"],
+    "earth": ["地球"],
+    "water": ["水的"],
+    "mammal": ["哺乳動物", "哺乳动物"],
+    "photosynthesis": ["光合作用"],
 }
 
 
@@ -315,6 +333,10 @@ _ATTRIBUTE_RULES: Tuple[Tuple[Tuple[str, ...], str], ...] = (
     (("wrote",), "wrote"),
     (("capital", "首都"), "capital"),
     (("ended", "end", "結束"), "ended"),
+    # 2026-10-19 offline-speak: zh/EN attribute words for curated entries
+    (("boil", "boils", "boiling", "沸點", "沸点", "沸腾", "沸騰"), "boils"),
+    (("orbit", "orbits", "revolve", "繞", "绕"), "orbits"),
+    (("flies", "fly", "flying", "will fly", "會飛", "会飞", "能飛", "能飞", "飛", "飞"), "flies"),
 )
 
 
@@ -405,8 +427,10 @@ def _match_specific_attr(t: str, attrs: Dict[str, str]) -> Tuple[bool, Optional[
     Returns (matched, value): matched is True when a specific attribute rule
     applies; value is the attribute value (or None).
     """
-    # color: dual color/colour keys
-    if any(k in t for k in ("color", "colour")) and ("color" in attrs or "colour" in attrs):
+    # color: dual color/colour keys (+ zh 顏色/颜色)
+    if any(k in t for k in ("color", "colour", "顏色", "颜色")) and (
+        "color" in attrs or "colour" in attrs
+    ):
         return True, attrs.get("color") or attrs.get("colour")
     for keywords, attr_key in _ATTRIBUTE_RULES:
         if any(k in t for k in keywords) and attr_key in attrs:
@@ -427,7 +451,8 @@ def _rk_subject_attrs(t: str) -> Optional[str]:
     _answer_fallback = None
     for subject, attrs in _KNOWLEDGE.items():
         aliases = _ZH_SUBJECT_ALIASES.get(subject)
-        subject_hit = subject in tokens
+        # EN plural tolerance: "Do all mammals fly?" must hit key "mammal".
+        subject_hit = subject in tokens or f"{subject}s" in tokens
         alias_hit = bool(aliases and any(a in t for a in aliases))
         if subject_hit or alias_hit:
             attr_matched, val = _match_specific_attr(t, attrs)
@@ -457,8 +482,27 @@ def _rk_subject_attrs(t: str) -> Optional[str]:
     return None
 
 
+# zh unit token → _UNIT_CONVERSIONS key (2026-10-19 offline-speak).
+_ZH_UNIT_TO_KEY: Dict[str, str] = {
+    "公斤": "kg",
+    "千克": "kg",
+    "克": "g",
+    "米": "m",
+    "公尺": "m",
+    "公里": "km",
+    "公分": "cm",
+    "厘米": "cm",
+    "英里": "mile",
+    "公升": "l",
+    "升": "l",
+    "毫升": "ml",
+    "磅": "lb",
+}
+
+
 def _rk_unit_conversion(t: str) -> Optional[str]:
-    """6) unit conversion: "how many m in a km", "convert 5 km to m"."""
+    """6) unit conversion: "how many m in a km", "convert 5 km to m",
+    and the zh form "100公斤等於幾磅？" (2026-10-19 offline-speak)."""
     m = re.search(
         r"(?:convert|how many|how much)\s+(-?\d+(?:\.\d+)?)?\s*(\w+)\s+(?:to|in a|in|per)\s+(\w+)",
         t,
@@ -473,6 +517,21 @@ def _rk_unit_conversion(t: str) -> Optional[str]:
                 converted = value * multiplier
                 return f"{value} {src_unit} = {converted:.4f} {dst_unit}"
             return f"1 {src_unit} = {multiplier} {dst_unit}"
+    # zh form: number + zh unit … 等於/是 … 幾/多少 + zh unit
+    mzh = re.search(
+        r"(-?\d+(?:\.\d+)?)\s*(公斤|千克|克|米|公尺|公里|公分|厘米|英里|公升|升|毫升|磅)"
+        r"\s*(?:等於|等于|是|=|轉換成|转换成|換算成|换算成)?\s*(?:幾|几|多少)?\s*"
+        r"(公斤|千克|克|米|公尺|公里|公分|厘米|英里|公升|升|毫升|磅)",
+        t,
+    )
+    if mzh:
+        value = float(mzh.group(1))
+        src_zh, dst_zh = mzh.group(2), mzh.group(3)
+        conv = _UNIT_CONVERSIONS.get((_ZH_UNIT_TO_KEY[src_zh], _ZH_UNIT_TO_KEY[dst_zh]))
+        if conv is not None:
+            multiplier, _src_name = conv
+            converted = value * multiplier
+            return f"{value} {src_zh} = {converted:.4f} {dst_zh}"
     return None
 
 
@@ -528,3 +587,44 @@ def route_knowledge(text: str) -> Optional[str]:
 def known_subjects() -> List[str]:
     """Expose the covered subjects (used by tests / introspection)."""
     return list(_KNOWLEDGE.keys())
+
+
+# ---------------------------------------------------------------------------
+# Serve-layer formatting (F9, 2026-10-19): bare fragments ("blue", "100")
+# read as broken chat; wrap into one sentence per response language.
+# Shared by router._try_knowledge and KnowledgePipeline's knowledge step.
+# ---------------------------------------------------------------------------
+_KNOWLEDGE_COLOR_ZH = {
+    "blue": "藍色",
+    "yellow": "黃色",
+    "red": "紅色",
+    "green": "綠色",
+    "black": "黑色",
+    "white": "白色",
+    "grey": "灰色",
+    "gray": "灰色",
+    "orange": "橘色",
+    "purple": "紫色",
+    "pink": "粉色",
+    "brown": "棕色",
+}
+
+
+def format_knowledge_answer(answer: str, query: str = "") -> str:
+    """Wrap a short bare knowledge fragment into a single sentence.
+
+    Long / sentence-like answers (curated concept entries, bilingual
+    values, unit-conversion strings) pass through untouched. Language is
+    chosen by a simple CJK-presence heuristic on the query.
+    """
+    a = str(answer).strip()
+    if len(a) > 16 or any(p in a for p in ("。", "！", "；", "/")):
+        return a
+    if re.search(r"[一-鿿]", query or ""):
+        zh = _KNOWLEDGE_COLOR_ZH.get(a.lower())
+        if zh:
+            return f"顏色是{zh}。"
+        return f"答案是 {a}。"
+    if a.lower() in _KNOWLEDGE_COLOR_ZH:
+        return f"The color is {a}."
+    return f"The answer is {a}."

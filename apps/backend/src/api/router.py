@@ -287,3 +287,11 @@ try:
     logger.debug("Included agent_workspace_routes")
 except ImportError as e:
     logger.warning(f"agent_workspace_routes not available: {e}")
+
+try:
+    from api.routes.identity_routes import router as identity_router
+
+    router.include_router(identity_router, prefix="/api/v1")
+    logger.debug("Included identity_routes")
+except ImportError as e:
+    logger.warning(f"identity_routes not available: {e}")

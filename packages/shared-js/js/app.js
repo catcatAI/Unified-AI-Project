@@ -168,10 +168,15 @@ class AngelaApp {
       this._setupUIControls()
       this._setupElectronEvents()
       await this._loadDefaultModel()
+      // `this.` was missing: the bare call raised a ReferenceError that the
+      // init try/catch turned into "Init failed" — the app never finished
+      // initializing (no idle detection, no backend sync, no ready state).
       this.incrementLoadingProgress(3, 'Loading model...')
       this._setupIdleDetection()
       await this._syncWithBackend()
       this.incrementLoadingProgress(2, 'Finalizing...')
+      // The instance name is per user: resolve it and label the chat UI.
+      this._applyInstanceIdentity()
 
       this._hideLoading()
       window.angelaApp = this
@@ -183,6 +188,31 @@ class AngelaApp {
       console.error('[AngelaApp] Critical error:', error)
       this.showStatus('Init failed. Check console.', 5000)
       setTimeout(() => this._hideLoading(), 2000)
+    }
+  }
+
+  /**
+   * Resolve this user's Angela name and label the chat UI with it.
+   *
+   * The instance name is per user (a user may have named their own Angela),
+   * so the UI must not hardcode it — a renamed instance would still be
+   * announced as "Angela" in the chat panel. A failed lookup is not fatal:
+   * the default markup stays.
+   */
+  async _applyInstanceIdentity() {
+    if (!this.apiClient) return
+    try {
+      const identity = await this.apiClient.getIdentity()
+      if (!identity || !identity.ai_name) return
+      this.aiName = identity.ai_name
+      const input = document.getElementById('dialogue-input')
+      if (input) input.placeholder = `與 ${identity.ai_name} 對話...`
+      document.querySelectorAll('[data-ai-name]').forEach((el) => {
+        el.textContent = identity.ai_name
+      })
+      console.log('[App] Instance identity resolved:', identity.ai_name)
+    } catch (error) {
+      console.warn('[App] Could not resolve the instance name:', error)
     }
   }
 

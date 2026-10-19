@@ -26,8 +26,31 @@ export default function ChatPanel() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [connected, setConnected] = useState(false)
+  // The instance name is per user (a user may have named their own Angela),
+  // so the role label is resolved from the backend instead of being hardcoded.
+  const [aiName, setAiName] = useState('Angela')
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    const resolveName = async () => {
+      try {
+        const res = await fetch('http://localhost:8000/api/v1/identity?user_id=dashboard_user', {
+          signal: AbortSignal.timeout(5000),
+        })
+        if (!res.ok) return
+        const data = await res.json()
+        if (!cancelled && data?.ai_name) setAiName(data.ai_name)
+      } catch {
+        // A failed lookup keeps the default name — the panel stays usable.
+      }
+    }
+    resolveName()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const connect = () => {
     const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
@@ -121,7 +144,7 @@ export default function ChatPanel() {
       <div className="messages">
         {messages.map((msg) => (
           <div key={msg.id} className={`message ${msg.role}`}>
-            <span className="role">{msg.role === 'user' ? 'You' : 'Angela'}</span>
+            <span className="role">{msg.role === 'user' ? 'You' : aiName}</span>
             <p dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }} />
           </div>
         ))}

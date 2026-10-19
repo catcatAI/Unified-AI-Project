@@ -18,6 +18,22 @@ import edge_tts
 logger = logging.getLogger(__name__)
 
 
+def _self_name() -> str:
+    """The instance's own name (follows a user rename)."""
+    try:
+        from core.system.config.identity import get_ai_name
+
+        return get_ai_name()
+    except Exception:  # pragma: no cover - identity layer unavailable
+        return "Angela"
+
+
+def _safe_filename(name: str) -> str:
+    """A filesystem-safe fragment for the instance name."""
+    cleaned = "".join(ch for ch in (name or "") if ch.isalnum() or ch in ("-", "_"))
+    return cleaned or "Angela"
+
+
 class AngelaRealVoice:
     """
     Angela 真实语音系统
@@ -86,7 +102,7 @@ class AngelaRealVoice:
             )
 
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"Angela_Voice_{timestamp}.wav"
+            filename = f"{_safe_filename(_self_name())}_Voice_{timestamp}.wav"
             save_path = self.output_dir / filename
 
             await communicate.save(str(save_path))
@@ -112,7 +128,7 @@ class AngelaRealVoice:
         Returns:
             语音文件路径
         """
-        text = f"Hello {name}! I'm Angela. I'm happy to see you! How can I help you today?"
+        text = f"Hello {name}! I'm {_self_name()}. I'm happy to see you! How can I help you today?"
 
         return await self._generate_audio(
             text=text,
@@ -128,8 +144,9 @@ class AngelaRealVoice:
         Returns:
             语音文件路径
         """
-        text = """
-        Hi there! I'm Angela, an AI assistant created to help you with creative tasks.
+        self_name = _self_name()
+        text = f"""
+        Hi there! I'm {self_name}, an AI assistant created to help you with creative tasks.
         I can generate images using AI, browse the web to learn new things,
         and have conversations with you.
         What would you like to create together today?
