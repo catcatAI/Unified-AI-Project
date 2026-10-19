@@ -21,6 +21,8 @@ and this project adheres to
   歸納，含潤色 editorial 旁路；WebSearch 六項稽核修復（`b8d1ab240`）。
 - **LLM 底層閉環**（`7a11c9c22`）：A1/B1/B2/B3/C2 五處修復＋規則回饋統計端點；
   規則沉澱層（`4cd57e9d9`）：複雜答案驗證一次、正規化身分重放免重算。
+- **bench LOST_CORRECT 回歸錨**（`a0b3db113`）：--gate-native 新增錨題零回歸
+  檢查（曾答對本次答錯 → exit 2），錨單調只增，本機實跑 85 題與官方數重現。
 
 ### Fixed
 
@@ -32,7 +34,9 @@ and this project adheres to
 - **型別棘輪**（`3fc2ae331`）：type-ignore 預算 112→111 對齊實測。
 - **數字對齊**（`2b87f1190` 內）：README mypy 432/344→實測 0/0（746 files）、
   「123 條路由」→動態措辭、STATUS_MATRIX 23→25 條；全套實測
-  **8527 passed, 112 skipped, 0 failed**（2026-10-19 全 testpaths）。
+  **8534 passed, 112 skipped, 0 failed**（2026-10-19 全 testpaths）。
+- **地圖預算門修復**（`917f614b6`）：CI 門爆 15432>10000——5 個 gitignored
+  產物目錄（test_models 4,760 檔等）被掃入，補 EXCLUDE_DIRS → 5070/10000 綠。
 
 ## [7.5.0-dev] - 2026-08-11 — Angela 真實多模態學習與審核
 
