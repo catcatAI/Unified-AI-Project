@@ -271,3 +271,80 @@ class TestGate:
         assert tool.GATE_NATIVE["knowledge_mc"] >= 90.0
         assert tool.GATE_NATIVE["routing"] >= 95.0
         assert tool.GATE_NATIVE["knowledge"] >= 25.0
+
+
+# ---------------------------------------------------------------- anchor
+
+
+class TestGateAnchor:
+    """LOST_CORRECT 回歸錨契約：錨題本次答錯 → 退出碼 2；錨只增不減。"""
+
+    @staticmethod
+    def _native_math(details, passed: int, total: int):
+        r = tool.SuiteResult(backend="native", suite="math", total=total, passed=passed)
+        r.details.extend(details)
+        return r
+
+    def test_missing_anchor_returns_empty(self, tmp_path):
+        assert tool.load_anchor(tmp_path / "nope.json") == {}
+
+    def test_corrupt_anchor_returns_empty(self, tmp_path):
+        p = tmp_path / "a.json"
+        p.write_text("{broken", encoding="utf-8")
+        assert tool.load_anchor(p) == {}
+
+    def test_update_anchor_is_monotone(self, tmp_path):
+        p = tmp_path / "anchor.json"
+        anchor: dict = {}
+        r1 = self._native_math(
+            [
+                tool.ItemResult(item_id="m1", passed=True),
+                tool.ItemResult(item_id="m2", passed=True),
+            ],
+            passed=2,
+            total=2,
+        )
+        assert tool.update_anchor([r1], anchor, p) == 2
+        r2 = self._native_math(
+            [
+                tool.ItemResult(item_id="m1", passed=True),
+                tool.ItemResult(item_id="m2", passed=False),
+            ],
+            passed=1,
+            total=2,
+        )
+        assert tool.update_anchor([r2], anchor, p) == 0
+        assert set(tool.load_anchor(p)["native/math"]) == {"m1", "m2"}
+
+    def test_update_anchor_ignores_non_native(self, tmp_path):
+        p = tmp_path / "anchor.json"
+        anchor: dict = {}
+        r = tool.SuiteResult(backend="echo", suite="math", total=1, passed=1)
+        r.details.append(tool.ItemResult(item_id="m1", passed=True))
+        assert tool.update_anchor([r], anchor, p) == 0
+        assert not p.exists()
+
+    def test_lost_correct_fails_gate(self, capsys):
+        anchor = {"native/math": ["m1", "m2"]}
+        r = self._native_math(
+            [
+                tool.ItemResult(item_id="m1", passed=True),
+                tool.ItemResult(item_id="m2", passed=False),
+            ],
+            passed=6,
+            total=8,
+        )
+        assert tool.check_gate([r], anchor) == 2
+        assert "LOST_CORRECT" in capsys.readouterr().err
+
+    def test_anchor_item_not_run_is_not_charged(self):
+        anchor = {"native/math": ["m9"]}
+        r = self._native_math([tool.ItemResult(item_id="m1", passed=True)], passed=9, total=9)
+        assert tool.check_gate([r], anchor) == 0
+
+    def test_skipped_anchor_item_not_charged(self):
+        anchor = {"native/math": ["m2"]}
+        r = self._native_math(
+            [tool.ItemResult(item_id="m2", passed=False, skipped=True)], passed=9, total=9
+        )
+        assert tool.check_gate([r], anchor) == 0

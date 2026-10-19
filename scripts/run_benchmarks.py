@@ -18,7 +18,9 @@ angela_bench — 可驗證的多後端基準 harness。
   python scripts/run_benchmarks.py --list-suites
 
 退出碼：0 = 全部評分完成；1 = 參數/執行錯誤。
-  --gate-native：CI 回歸門模式——native 套件分數低於 GATE_NATIVE 基準即退出碼 2。
+  --gate-native：CI 回歸門模式——native 套件分數低於 GATE_NATIVE 基準，
+  或曾收錄於 benchmarks/gate_anchor.json 的題目本次答錯（LOST_CORRECT），
+  即退出碼 2。錨只增不減：每次運行把本次答對併入錨，曾對的永不遺忘。
 """
 
 from __future__ import annotations
@@ -534,9 +536,58 @@ GATE_NATIVE: Dict[str, float] = {
 }
 
 
-def check_gate(results: List[SuiteResult]) -> int:
-    """回傳 0（全過）或 2（有套件低於基準）。"""
+# 回歸錨（LOST_CORRECT）：native backend/suite → 曾答對的題目 id 集合。
+# 只增不減（單調遞增）：新增題目/能力只會擴錨；縮錨須人工審核直接改檔。
+ANCHOR_PATH = REPO_ROOT / "benchmarks" / "gate_anchor.json"
+
+
+def load_anchor(path: Path = ANCHOR_PATH) -> Dict[str, List[str]]:
+    """讀取回歸錨；檔案缺失或損毀回空錨（門退化為純地板模式，不失效）。"""
+    if not path.exists():
+        return {}
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    if not isinstance(raw, dict):
+        return {}
+    anchor: Dict[str, List[str]] = {}
+    for key, ids in raw.items():
+        if isinstance(key, str) and isinstance(ids, list):
+            anchor[key] = sorted({str(i) for i in ids})
+    return anchor
+
+
+def update_anchor(
+    all_results: List[SuiteResult], anchor: Dict[str, List[str]], path: Path = ANCHOR_PATH
+) -> int:
+    """把本次 native 答對的題目併入錨並落盤（錨只增不減）。回傳新增數。"""
+    added = 0
+    for r in all_results:
+        if r.backend != "native":
+            continue
+        key = f"{r.backend}/{r.suite}"
+        seen = set(anchor.get(key, []))
+        for d in r.details:
+            if d.passed and not d.skipped and d.item_id not in seen:
+                seen.add(d.item_id)
+                added += 1
+        if seen:
+            anchor[key] = sorted(seen)
+    if added:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            json.dumps(anchor, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+    return added
+
+
+def check_gate(results: List[SuiteResult], anchor: Optional[Dict[str, List[str]]] = None) -> int:
+    """回傳 0（全過）或 2（套件低於地板 LOST_CORRECT 錨題本次答錯）。"""
+    anchor = anchor or {}
     failed = []
+    lost = []
     for r in results:
         if r.backend != "native":
             continue
@@ -545,14 +596,24 @@ def check_gate(results: List[SuiteResult]) -> int:
             continue
         if r.accuracy < floor:
             failed.append((r.suite, r.accuracy, floor))
-    if failed:
-        for suite, acc, floor in failed:
-            print(
-                f"GATE FAIL: native/{suite} {acc:.1f}% < {floor:.1f}%",
-                file=sys.stderr,
-            )
-        return 2
-    return 0
+        anchor_ids = set(anchor.get(f"{r.backend}/{r.suite}", []))
+        if not anchor_ids:
+            continue
+        for d in r.details:
+            # 錨題本次未跑（不在 details）不追責；skip=無法評測也不算丟分。
+            if d.item_id in anchor_ids and not d.passed and not d.skipped:
+                lost.append((r.suite, d.item_id))
+    for suite, acc, floor in failed:
+        print(
+            f"GATE FAIL: native/{suite} {acc:.1f}% < {floor:.1f}%",
+            file=sys.stderr,
+        )
+    for suite, item_id in lost:
+        print(
+            f"LOST_CORRECT: native/{suite} item {item_id} 曾收錄於錨、本次未答對",
+            file=sys.stderr,
+        )
+    return 2 if (failed or lost) else 0
 
 
 # ---------------------------------------------------------------- main
@@ -576,6 +637,7 @@ def main() -> int:
     args = parser.parse_args()
 
     items = load_dataset(Path(args.dataset))
+    anchor = load_anchor()
     if args.list_suites:
         for s in sorted({i.suite for i in items}):
             n = sum(1 for i in items if i.suite == s)
@@ -621,8 +683,13 @@ def main() -> int:
     print("\n=== comparison ===")
     print(render_table(all_results))
 
+    # 錨先收本次答對（門失敗也照收：錨記錄的是能力事實，不是考試成績）。
+    added = update_anchor(all_results, anchor)
+    if added:
+        print(f"anchor: +{added} 曾對題目併入 {ANCHOR_PATH.relative_to(REPO_ROOT)}")
+
     if args.gate_native:
-        rc = check_gate(all_results)
+        rc = check_gate(all_results, anchor)
         if rc == 0:
             print("gate: OK (native floors met)")
         return rc
