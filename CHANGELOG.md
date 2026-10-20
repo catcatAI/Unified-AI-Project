@@ -66,6 +66,13 @@ and this project adheres to
 
 ### Fixed
 
+- **219 支腳本完成定級，孤兒腳本不再無聲存在**（2026-10-20）：gap-closure
+  計畫列的「69 孤兒腳本逐個定級（留/刪/歸檔）」一直是開的——scripts/ 長到 219
+  支，63 支沒有任何文件、工作流程或程式引用，卻沒有任何紀錄說明它們是什麼。
+  新增 `scripts/INVENTORY.json`（每支腳本的類別、用途、是否被引用）＋產生器
+  `scripts/gen_script_inventory.py` ＋驗證測試：新增腳本必須先定級，過期條目
+  會讓門紅。複雜度棘輪只涵蓋 apps/backend/src 與 tests/ 這件事也如實記錄
+  （scripts/ 是一次性工具，仍有約 100 個 C901 函式——範圍決策，不是遺漏）。
 - **視訊的 motion_detected 不再是擲硬幣**（2026-10-20）：`process_video_frame`
   以前回報 `random.choice([True, False])`——一個假的量測卻以分析結果的樣子
   出現。現在真的比對前一幀（沿用既有的 `_difference_score`），回傳

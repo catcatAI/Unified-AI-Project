@@ -3,6 +3,22 @@
 This document lists the **currently active and recommended** scripts for the
 Unified-AI-Project.
 
+## 完整清單
+
+`scripts/` 目前有 219 支腳本。**每一支**都記在
+[`scripts/INVENTORY.json`](INVENTORY.json)（類別＋用途＋是否被引用），由
+`python3 scripts/gen_script_inventory.py` 產生，並由
+`tests/tools/test_script_inventory.py` 驗證（新增腳本必須先定級）。
+
+- 被引用（文件／工作流程／程式指向它）：156 支
+- 未被引用（研究一次性腳本，保留作為紀錄）：63 支
+
+> 這取代了先前「69 孤兒腳本逐個定級」的待辦：分類現在是可驗證的，不再是口頭承諾。
+>
+> 複雜度棘輪（`scripts/complexity_budget_gate.py`）的範圍刻意只含
+> `apps/backend/src` 與
+> `tests/`：scripts/ 是一次性工具與研究腳本，不是生產路徑，其中仍有約 100 個 C901 函式。這是範圍決策（記錄於此），不是遺漏。
+
 ## Core Operations
 
 ### Backend Management

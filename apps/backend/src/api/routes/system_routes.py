@@ -7,7 +7,7 @@ GET /system/discovery — deployment mode, backends, intents, memory, state summ
 
 import logging
 import time
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from core.utils import safe_error
 from fastapi import APIRouter, HTTPException
@@ -277,8 +277,7 @@ async def system_pet_state() -> Dict[str, Any]:
         if emotion is not None:
             result["emotion"] = emotion.get_emotion_summary().get("dominant_emotion")
         lifecycle = get_lifecycle()
-        phase = getattr(lifecycle, "current_phase", None)
-        result["life_phase"] = getattr(phase, "value", phase)
+        result["life_phase"] = _phase_label(getattr(lifecycle, "current_phase", None))
     except Exception as exc:
         result["error"] = safe_error(exc)
 
@@ -348,6 +347,19 @@ def _apply_pet_effects(matrix: Any, effects: Dict[str, float]) -> None:
 
 def _clamp01(value: float) -> float:
     return max(0.0, min(1.0, float(value)))
+
+
+def _phase_label(phase: Any) -> Optional[str]:
+    """A readable label for a life phase (its value is a (cn, en) tuple)."""
+    if phase is None:
+        return None
+    name = getattr(phase, "name", None)
+    if name:
+        return str(name)
+    value = getattr(phase, "value", phase)
+    if isinstance(value, (tuple, list)) and value:
+        return str(value[0])
+    return str(value)
 
 
 @router.get("/discovery")

@@ -1,0 +1,1101 @@
+{
+  "version": 1,
+  "note": "每支 scripts/*.py 的類別與用途；referenced=false 表示除了本清單以外沒有任何文件、工作流程或程式引用它（研究一次性腳本，保留作為紀錄）。",
+  "scripts": {
+    "_enrich_event_outcomes.py": {
+      "category": "tool",
+      "referenced": false,
+      "purpose": "Add favorable/unfavorable outcome descriptions to all world events."
+    },
+    "_fix_ability_types.py": {
+      "category": "tool",
+      "referenced": false,
+      "purpose": "_fix_ability_types.py — Fix missing ability type fields and short descriptions."
+    },
+    "_fix_card_tokens.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Fix game_cards.json token issues:"
+    },
+    "_fix_cc10_16_storyline.py": {
+      "category": "tool",
+      "referenced": false,
+      "purpose": "修正 CC-10/CC-16 卡片故事線污染。"
+    },
+    "_fix_race_naming.py": {
+      "category": "tool",
+      "referenced": false,
+      "purpose": "Fix 15 NPC_METADATA vs card race naming inconsistencies."
+    },
+    "_fix_remaining_strings.py": {
+      "category": "tool",
+      "referenced": false,
+      "purpose": "Fix 4 cards with string abilities — convert to dict format."
+    },
+    "_fix_token_types.py": {
+      "category": "tool",
+      "referenced": false,
+      "purpose": "Fix all 3871 token type fields."
+    },
+    "_fix_w02_emptiness.py": {
+      "category": "tool",
+      "referenced": false,
+      "purpose": "批次 58：W02 琥珀紀元村莊空盪修復——場景物件與敵人群補齊。"
+    },
+    "_improve_token_types.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Improve token type assignment by adding more keyword rules."
+    },
+    "_server_helper.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "ANGELA-MATRIX: [L1] [β] [B] [L0]"
+    },
+    "analyze_roadmap_from_logs.py": {
+      "category": "analysis",
+      "referenced": true,
+      "purpose": "Add project root to sys.path"
+    },
+    "analyze_tokens.py": {
+      "category": "analysis",
+      "referenced": true,
+      "purpose": "Generate token analysis from parsed card data."
+    },
+    "angela_review.py": {
+      "category": "tool",
+      "referenced": false,
+      "purpose": "!/usr/bin/env python3"
+    },
+    "audit_dictionary_quality.py": {
+      "category": "diagnostics",
+      "referenced": true,
+      "purpose": "L1-5 字典品質審計 — 輕量（<50MB, <1s）"
+    },
+    "audit_repo_facts.py": {
+      "category": "diagnostics",
+      "referenced": false,
+      "purpose": "倉庫事實審計門：語義不變量一次裁決，不再一點一滴手查。"
+    },
+    "backup_checkpoints.py": {
+      "category": "maintenance",
+      "referenced": true,
+      "purpose": "backup_checkpoints.py — 備份訓練檢查點（可排程）"
+    },
+    "batch_optimize.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Batch direct optimization of CIFAR-10 images using differentiable renderer."
+    },
+    "benchmark_500_framework.py": {
+      "category": "benchmark",
+      "referenced": false,
+      "purpose": "L2-6 500 題評測框架 — 硬件規格自適應（<50MB, <1s, 生成框架不重跑）"
+    },
+    "benchmark_500_real.py": {
+      "category": "benchmark",
+      "referenced": true,
+      "purpose": "L2-6 500 題評測（含模擬分支） — 硬件規格自適應（分批+sleep，<300MB）"
+    },
+    "benchmark_dialogue_coherence.py": {
+      "category": "benchmark",
+      "referenced": true,
+      "purpose": "L2-1 多輪對話一致性 — 硬件規格自適應（<50MB, <5s, 批量+sleep）"
+    },
+    "benchmark_ed3n_garden.py": {
+      "category": "benchmark",
+      "referenced": true,
+      "purpose": "Cross-domain benchmark for ED3N and GARDEN engines."
+    },
+    "benchmark_l3_integration.py": {
+      "category": "benchmark",
+      "referenced": true,
+      "purpose": "L3 整合探針 — 硬件規格自適應（<50MB, <5s, 批量+sleep）"
+    },
+    "benchmark_latent.py": {
+      "category": "benchmark",
+      "referenced": false,
+      "purpose": "Quick benchmark for ED3N with latent space reasoning."
+    },
+    "benchmark_long_memory.py": {
+      "category": "benchmark",
+      "referenced": true,
+      "purpose": "L3-4 長記憶跨會話 — 硬件規格自適應（<50MB, <5s, 批量+sleep）"
+    },
+    "benchmark_memory_hit.py": {
+      "category": "benchmark",
+      "referenced": true,
+      "purpose": "L2-2 記憶命中 — 硬件規格自適應（<50MB, <5s, 批量+sleep）"
+    },
+    "benchmark_tool_real.py": {
+      "category": "benchmark",
+      "referenced": true,
+      "purpose": "L3-2 真實工具調用 — 硬件規格自適應（<100MB，分批+sleep，沙箱守護）"
+    },
+    "benchmark_tool_use.py": {
+      "category": "benchmark",
+      "referenced": true,
+      "purpose": "L3-2 工具調用基準 — 硬件規格自適應（<50MB, <5s, 批量+sleep）"
+    },
+    "build_angela_clay_model.py": {
+      "category": "operations",
+      "referenced": false,
+      "purpose": "Angela Clay Figurine — procedural modeling build script."
+    },
+    "build_vocab_from_saved.py": {
+      "category": "operations",
+      "referenced": false,
+      "purpose": "Build vocabulary from saved optimized vectors and test recognition."
+    },
+    "capture_server_logs.py": {
+      "category": "tool",
+      "referenced": false,
+      "purpose": "Start backend server and capture ALL startup output."
+    },
+    "check_auth_status.py": {
+      "category": "diagnostics",
+      "referenced": true,
+      "purpose": "check auth status（無說明：原始碼未附 docstring）"
+    },
+    "check_backend_startup.py": {
+      "category": "diagnostics",
+      "referenced": false,
+      "purpose": "Comprehensive backend startup check — imports, config, services, port, server test."
+    },
+    "check_cards.py": {
+      "category": "diagnostics",
+      "referenced": false,
+      "purpose": "Show scene cards"
+    },
+    "check_checkpoint.py": {
+      "category": "diagnostics",
+      "referenced": true,
+      "purpose": "Reconstruct original checkpoint from saved weights + JSON metadata."
+    },
+    "check_dict.py": {
+      "category": "diagnostics",
+      "referenced": false,
+      "purpose": "Check what's actually in the dictionary."
+    },
+    "check_ed3n.py": {
+      "category": "diagnostics",
+      "referenced": false,
+      "purpose": "Check reflex patterns structure"
+    },
+    "check_fact_gates.py": {
+      "category": "diagnostics",
+      "referenced": true,
+      "purpose": "全倉單一檢查門：事實（facts）+ 定義（definitions），一次跑完、一次裁決。"
+    },
+    "check_final.py": {
+      "category": "diagnostics",
+      "referenced": false,
+      "purpose": "check final（無說明：原始碼未附 docstring）"
+    },
+    "check_last_memories.py": {
+      "category": "diagnostics",
+      "referenced": true,
+      "purpose": "check last memories（無說明：原始碼未附 docstring）"
+    },
+    "check_quality.py": {
+      "category": "diagnostics",
+      "referenced": true,
+      "purpose": "Quick quality check on trained models."
+    },
+    "check_test_count.py": {
+      "category": "diagnostics",
+      "referenced": true,
+      "purpose": "check_test_count.py — 測試數量的單一權威機制（量測＋門禁＋同步文件）"
+    },
+    "check_vec_store.py": {
+      "category": "diagnostics",
+      "referenced": true,
+      "purpose": "check vec store（無說明：原始碼未附 docstring）"
+    },
+    "check_vocab.py": {
+      "category": "diagnostics",
+      "referenced": false,
+      "purpose": "Check what surface forms map to"
+    },
+    "civil_autosize.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Autosize 引擎：定量迴路自轉（模型只報意圖，不進數字迴路）。"
+    },
+    "civil_blender.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "在 Blender 內執行：blender --background --python civil_blender.py -- --b 300 --d 450 --L 6000"
+    },
+    "civil_bridge.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "整橋組裝 v1：四點支撐 + 8×100 橋面（Blender STL + FreeCAD STEP + 構件驗算）。"
+    },
+    "civil_components.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "土木預製件模板 × 基本面 × 輸入 — EC2 簡化式加速計算。"
+    },
+    "civil_derive.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "數據驅動模板引擎：新模板用 JSON 定義（公式+材料引用），免寫碼即算。"
+    },
+    "civil_dxf.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "梁配筋截面 DXF（計算結果→2D 圖紙，FreeCAD/LibreCAD 可開）。"
+    },
+    "civil_exam.py": {
+      "category": "tool",
+      "referenced": false,
+      "purpose": "土木建模例題集（完成功能驗收）：每題有期望值，容差判定，全綠才算完工。"
+    },
+    "civil_footbridge.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "人行天橋專項（雙向8車道交叉口，四角通行）：設計+檢查+評分。"
+    },
+    "civil_freecad.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "FreeCAD 真橋（參數梁→STEP→回流驗證）— flatpak headless。"
+    },
+    "civil_interchange.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "立交專項考試：互通式立交規劃判斷（埋三個缺陷，看專案抓幾個）。"
+    },
+    "civil_llm_battery.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "小模型工程題庫（5 題）：無示例值 + 打回兩輪，對照手算答案。"
+    },
+    "civil_model_exam.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "模型建模考試（專案/專案ai/小模型親自寫碼）：提示→去圍欄→Blender 執行→評分。"
+    },
+    "civil_truss.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "鋼桁架橋 v2（100m 單跨）：整體彎矩→弦桿軸力→EC3 選截面→Blender 建模。"
+    },
+    "civil_views.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "視圖與平面圖（從 .blend 落盤檔開——視圖必與模型同一數據源）。"
+    },
+    "clean_ham.py": {
+      "category": "tool",
+      "referenced": false,
+      "purpose": "clean ham（無說明：原始碼未附 docstring）"
+    },
+    "clear_drive_sync.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "clear drive sync（無說明：原始碼未附 docstring）"
+    },
+    "compare_decoders.py": {
+      "category": "tool",
+      "referenced": false,
+      "purpose": "Compare decoder sizes on PCA 128 dims."
+    },
+    "compare_pca_dims.py": {
+      "category": "tool",
+      "referenced": false,
+      "purpose": "Three-Layer Architecture: Compare PCA dimensions (128/256/512/3072)."
+    },
+    "complexity_budget_gate.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "C901 複雜度棘輪門（R86）：鎖定超複雜函式上限，只能降不能升。"
+    },
+    "debug_memory.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Setup path"
+    },
+    "debug_snn_load.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Debug SNN load to find why density=0."
+    },
+    "demo_clip_primitives.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "End-to-end demo: CLIP encoding → primitive generation → rendering."
+    },
+    "demo_phase2_generator.py": {
+      "category": "tool",
+      "referenced": false,
+      "purpose": "Quick demo: train SequenceGenerator on random data and generate images."
+    },
+    "demo_primitives.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Demo script for compositional image generation primitives."
+    },
+    "demo_primitives_simple.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Simple demo of primitives without CLIP dependency."
+    },
+    "demo_primitives_with_cifar10.py": {
+      "category": "tool",
+      "referenced": false,
+      "purpose": "Demo: Use primitives with CIFAR-10 images."
+    },
+    "diag_latency.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "diag latency（無說明：原始碼未附 docstring）"
+    },
+    "diag_route.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "diag route（無說明：原始碼未附 docstring）"
+    },
+    "download_corpus.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Streaming corpus downloader that fills the disk corpus toward the ~10GB target."
+    },
+    "download_daily_data.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Download the real everyday-dialogue / commonsense dataset used by training."
+    },
+    "download_datasets.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Download external lexical datasets and multimodal training datasets."
+    },
+    "exchange_drive_code.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "exchange drive code（無說明：原始碼未附 docstring）"
+    },
+    "exp_accuracy_anchor.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "E6 正確率錨定：steering 提高的是正確一致，還是閃躲一致（Qwen2.5-0.5B）。"
+    },
+    "exp_accuracy_dose.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "E9 正確率-劑量軸：低劑量是否在不破壞正確率下起效（Qwen2.5-0.5B）。"
+    },
+    "exp_emotion_dose.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "E8 情緒劑量軸：人格方向是否因果改變輸出情緒（Qwen2.5-0.5B，倉內分類器作 DV）。"
+    },
+    "exp_factual_opinion.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "E7 事實vs意見分集：steering 獲益是否只存在於事實探針（Qwen2.5-0.5B）。"
+    },
+    "exp_gemma_baseline.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Gemma 基線離散度：同 18 事實探針在 Angela 引擎（E2B Q4_0）上的無干預一致性。"
+    },
+    "exp_gemma_crosscheck.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "跨模型基線相關：Qwen 與 Gemma 在同探針上的無干預離散度是否同形。"
+    },
+    "exp_head_ablation.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "E5 誘導頭消融：哪些頭驅動重複環（Qwen2.5-0.5B，因果檢驗）。"
+    },
+    "exp_head_inwardness.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "E2真頭實驗：loop 文本是否伴隨更高的近期注意力質量（Qwen2.5-0.5B，eager）。"
+    },
+    "exp_head_sink.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "E2真頭實驗 round 2：loop 文本是否伴隨更高的句首匯質量（新 prompt 集）。"
+    },
+    "exp_state_temperature_loops.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "E2-token 參數通道實驗：狀態指派的採樣溫度是否因果改變重複環率。"
+    },
+    "exp_steer_confirm.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "E4-CONFIRM：低劑量獲益在第三探針集上是否重現（L12，α∈{1.0,2.0}）。"
+    },
+    "exp_steer_consistency.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "E4 steering pilot：一致性人格方向是否因果提升跨改寫一致性。"
+    },
+    "exp_steer_dose.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "E4劑量軸：steering 強度與一致性變化的單調關係（全新探針集）。"
+    },
+    "exp_steer_scale.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "E4-SCALE：低劑量獲益放大確認（18 全新事實探針，α=2.0，全文存檔）。"
+    },
+    "expand_knowledge_pilot.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "L3-1 知識庫擴充 25%→50% 試點 — 硬件規格自適應（<50MB, <3s, 批量+sleep）"
+    },
+    "export_minilm_onnx.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Export the GARDEN sentence-transformer to quantized ONNX."
+    },
+    "export_remaining2.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Export ALL remaining .gdoc files from Google Drive using DriveFS metadata."
+    },
+    "final_verification.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "全量綜合驗收 — 硬件規格自適應（<100MB, <30s, 分批+sleep）"
+    },
+    "fix_all_imports.py": {
+      "category": "maintenance",
+      "referenced": true,
+      "purpose": "Fix all misplaced safe_error imports across all modified files."
+    },
+    "fix_checkpoint.py": {
+      "category": "maintenance",
+      "referenced": true,
+      "purpose": "Fix existing saturated checkpoint by row-normalizing the weight matrix."
+    },
+    "fix_docstring_imports.py": {
+      "category": "maintenance",
+      "referenced": false,
+      "purpose": "Fix imports that were placed inside docstrings."
+    },
+    "fix_future_imports.py": {
+      "category": "maintenance",
+      "referenced": false,
+      "purpose": "Fix import ordering: from core.utils import safe_error must be AFTER from __future__ imports."
+    },
+    "fix_json_types.py": {
+      "category": "maintenance",
+      "referenced": false,
+      "purpose": "Fix mismatches"
+    },
+    "gen_project_map.py": {
+      "category": "generation",
+      "referenced": true,
+      "purpose": "專案地圖生成器 — 依賴排錯 + 碰撞定位 + 行為理解，萬行預算封頂。"
+    },
+    "gen_status_matrix.py": {
+      "category": "generation",
+      "referenced": true,
+      "purpose": "STATUS_MATRIX 生成器與核對器 — YAML 真相源 ↔ MD 生成視圖。"
+    },
+    "gen_t2s_table.py": {
+      "category": "generation",
+      "referenced": true,
+      "purpose": "繁→簡字元對照表生成器 — 從倉庫自帶的 CC-CEDICT 推導，零外部依賴。"
+    },
+    "generate_association_100k.py": {
+      "category": "generation",
+      "referenced": true,
+      "purpose": "L1-1 關聯數據 12K→100K 擴充 — 分批流式生成（資源保護）"
+    },
+    "generate_benchmark_500.py": {
+      "category": "generation",
+      "referenced": true,
+      "purpose": "L2-6 500 題評測集實現 — 硬件規格自適應（流式，分批，<10MB）"
+    },
+    "generate_samples.py": {
+      "category": "generation",
+      "referenced": false,
+      "purpose": "Generate and save sample images for visual inspection."
+    },
+    "generate_training_data.py": {
+      "category": "generation",
+      "referenced": true,
+      "purpose": "============================================================================="
+    },
+    "generate_upgrade_report.py": {
+      "category": "generation",
+      "referenced": true,
+      "purpose": "專案AI自主研究報告 CLI — 生成《後續研究與升級路徑完整報告》。"
+    },
+    "get_drive_auth_url.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "get drive auth url（無說明：原始碼未附 docstring）"
+    },
+    "hardware_intelligence_report.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Hardware-Adaptive Intelligence Report — 智能驗收報告 (最小單位=模型驗證, 無偽裝)"
+    },
+    "import_card_deck.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Card Deck Import Script — 從 Google Drive 本地路徑讀取 .gdoc 並匯入 CardRegistry."
+    },
+    "import_dictionaries.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Import external dictionary JSON files into ED3N's DictionaryLayer."
+    },
+    "ingest_my_activities.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Ingest Chinese activity logs from 我的活動 into VectorMemoryStore."
+    },
+    "init_knowledge_graph.py": {
+      "category": "tool",
+      "referenced": false,
+      "purpose": "Knowledge Graph Initialization Script."
+    },
+    "inspect_char_lore.py": {
+      "category": "analysis",
+      "referenced": true,
+      "purpose": "Build: card_id -> all lore tokens (full detail), useful for understanding merchant wares"
+    },
+    "inspect_chars.py": {
+      "category": "analysis",
+      "referenced": false,
+      "purpose": "Also get craft/social specific items"
+    },
+    "inspect_orgs.py": {
+      "category": "analysis",
+      "referenced": false,
+      "purpose": "ORG cards"
+    },
+    "mypy_budget_gate.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "mypy 棘輪門（R74）：鎖定型別債上限，只能下降不能上升。"
+    },
+    "next_phase_10000.py": {
+      "category": "experimental",
+      "referenced": false,
+      "purpose": "下一輪 Phase 1 — 10000 真實 MSE 0.08→0.05（硬件規格自適應，分批+sleep，<1GB）"
+    },
+    "parse_correct.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "CORRECT APPROACH:"
+    },
+    "parse_gdrive_cards.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "parse_gdrive_cards.py — 解析 Google Drive 下載的卡片堆檔案"
+    },
+    "patch_game_data.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "patch_game_data.py — Surgically patches game_data.py NPC generation."
+    },
+    "perceptual_loss.py": {
+      "category": "experimental",
+      "referenced": false,
+      "purpose": "Perceptual Loss - fast version (no re-id in loss)."
+    },
+    "phase1_cifar_5000.py": {
+      "category": "experimental",
+      "referenced": false,
+      "purpose": "Phase 1 — L2-4 MSE 0.121→0.08 真實 5000 CIFAR（硬件規格自適應，分批+sleep，<1GB）"
+    },
+    "phase1_real_1000.py": {
+      "category": "experimental",
+      "referenced": true,
+      "purpose": "Phase 1 真實 1000 CIFAR — 硬件規格自適應（分批+sleep，<500MB）"
+    },
+    "phase2_real_1000.py": {
+      "category": "experimental",
+      "referenced": false,
+      "purpose": "Phase 2 真實 1000 CIFAR 對比 — 硬件規格自適應（分批+sleep，<500MB）"
+    },
+    "phase2_real_3000.py": {
+      "category": "experimental",
+      "referenced": true,
+      "purpose": "Phase 2 真實 3000 CIFAR 對比 — 硬件規格自適應（分批+sleep，<500MB）"
+    },
+    "phase3_reasoning_10k.py": {
+      "category": "experimental",
+      "referenced": true,
+      "purpose": "Phase 3 — 10K 未見推理 60%→75%（硬件規格自適應，分批+sleep，<500MB）"
+    },
+    "phase4_knowledge_50.py": {
+      "category": "experimental",
+      "referenced": false,
+      "purpose": "Phase 4 — MMLU 65%→75% 50 條（硬件規格自適應，分批+sleep，<100MB）"
+    },
+    "probe_clip_mse_500.py": {
+      "category": "probe",
+      "referenced": true,
+      "purpose": "首個真實 held-out MSE 測量 — 硬件規格自適應（分批+sleep，<2GB）"
+    },
+    "probe_contrastive_adaptive.py": {
+      "category": "probe",
+      "referenced": true,
+      "purpose": "L1-6 對比訓練硬件自適應 — 規格驅動批處理（<50MB, <1s）"
+    },
+    "probe_deep_chain.py": {
+      "category": "probe",
+      "referenced": true,
+      "purpose": "L1-2 深鏈研究 — propagation_hops 3 vs 6 對比（輕量，CPU-only, <2s）"
+    },
+    "probe_local_small_model.py": {
+      "category": "probe",
+      "referenced": true,
+      "purpose": "L2-5 本地小模型備選 — 硬件規格自適應（<50MB, <2s）"
+    },
+    "probe_multimodal_grounding.py": {
+      "category": "probe",
+      "referenced": true,
+      "purpose": "L2-4 多模態接地 — 硬件規格自適應（<50MB, <3s, 分批+sleep）"
+    },
+    "probe_reasoning_unseen.py": {
+      "category": "probe",
+      "referenced": true,
+      "purpose": "L2-3 未見推理泛化 — 硬件規格自適應（<50MB, <3s, 分批+sleep）"
+    },
+    "probe_snn_recall.py": {
+      "category": "probe",
+      "referenced": true,
+      "purpose": "Deprecated: Use probe_snn_unseen.py (strict unseen generalization). This file kept for history."
+    },
+    "probe_snn_unseen.py": {
+      "category": "probe",
+      "referenced": true,
+      "purpose": "L1-3 未見改述探針 — 硬件規格自適應（<100MB, <3s, 批量+sleep）"
+    },
+    "quick_snn_test.py": {
+      "category": "experimental",
+      "referenced": true,
+      "purpose": "Quick SNN-ONLY test after retraining with fixed encode."
+    },
+    "rebuild_vocab.py": {
+      "category": "experimental",
+      "referenced": false,
+      "purpose": "Rebuild vocabulary with 50 visual words and test recognition."
+    },
+    "rescale_checkpoint.py": {
+      "category": "experimental",
+      "referenced": false,
+      "purpose": "Rescale row-normalized checkpoint so max incoming signal is ~0.5."
+    },
+    "revert_checkpoint.py": {
+      "category": "experimental",
+      "referenced": false,
+      "purpose": "Revert checkpoint to original, then apply targeted fix."
+    },
+    "run_angela.py": {
+      "category": "operations",
+      "referenced": true,
+      "purpose": "Angela AI Unified Launcher v7.5.0-dev"
+    },
+    "run_benchmarks.py": {
+      "category": "operations",
+      "referenced": true,
+      "purpose": "angela_bench — 可驗證的多後端基準 harness。"
+    },
+    "run_luanti_agent.py": {
+      "category": "operations",
+      "referenced": true,
+      "purpose": "Angela Luanti Game Agent Launcher"
+    },
+    "run_mvu_reference.py": {
+      "category": "operations",
+      "referenced": false,
+      "purpose": "!/usr/bin/env python3"
+    },
+    "sample_train_analysis.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Sample-based training analysis."
+    },
+    "scale_vocabulary.py": {
+      "category": "experimental",
+      "referenced": false,
+      "purpose": "Scale vocabulary: optimize 500 CIFAR-10 images, build vocabulary, test recognition."
+    },
+    "scan_card_deck.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Scan card deck files and extract card information from filenames."
+    },
+    "seed_vector_store.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "ANGELA-MATRIX: [L2] [β] [B] [L1]"
+    },
+    "setup.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Angela AI — One-Command Setup."
+    },
+    "sharpness_test.py": {
+      "category": "experimental",
+      "referenced": false,
+      "purpose": "Edge sharpness post-processing comparison."
+    },
+    "sim_edge_card_cycle.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Structural cycle simulation runner for the edge card."
+    },
+    "sim_edge_card_software.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Host-proxy software simulation for the edge card budget."
+    },
+    "sim_edge_card_sweep.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Balance sweep for the edge card: compute x context x memory x PCIe."
+    },
+    "snn_smoke_test.py": {
+      "category": "experimental",
+      "referenced": false,
+      "purpose": "snn smoke test（無說明：原始碼未附 docstring）"
+    },
+    "start.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Angela AI — Start Script."
+    },
+    "start_backend_test.py": {
+      "category": "operations",
+      "referenced": false,
+      "purpose": "Start backend server and test health/chat endpoints."
+    },
+    "sync_card_deck.py": {
+      "category": "maintenance",
+      "referenced": false,
+      "purpose": "sync_card_deck.py — 一鍵從 Google Drive 拉取「卡片堆」所有 .gdoc 檔案"
+    },
+    "sync_shared_js.py": {
+      "category": "maintenance",
+      "referenced": true,
+      "purpose": "sync_shared_js.py — vendor the shared renderer modules into each front-end and"
+    },
+    "terminal_dialogue_test.py": {
+      "category": "experimental",
+      "referenced": true,
+      "purpose": "Terminal dialogue smoke test for the ED3N/GARDEN reasoning pipeline."
+    },
+    "terminal_dialogue_trained.py": {
+      "category": "experimental",
+      "referenced": false,
+      "purpose": "Interactive terminal dialogue against the TRAINED ED3N + GARDEN checkpoints."
+    },
+    "test_ab_pipeline.py": {
+      "category": "testing",
+      "referenced": true,
+      "purpose": "Test A→B pipeline: enhanced decomposer + PixelRefiner."
+    },
+    "test_ab_quick.py": {
+      "category": "testing",
+      "referenced": false,
+      "purpose": "Quick A→B test: enhanced decomposer + PixelRefiner (no generator)."
+    },
+    "test_ab_v2.py": {
+      "category": "testing",
+      "referenced": false,
+      "purpose": "Quick A-B test: 3 images, no generator, direct encode-decode."
+    },
+    "test_capability.py": {
+      "category": "testing",
+      "referenced": true,
+      "purpose": "Quick capability test for Angela AI - no LLM contamination."
+    },
+    "test_clip_vs_primitives.py": {
+      "category": "testing",
+      "referenced": true,
+      "purpose": "Compare recognition methods: primitives vs CLIP zero-shot."
+    },
+    "test_clip_zeroshot.py": {
+      "category": "testing",
+      "referenced": true,
+      "purpose": "Test CLIP zero-shot classification on held-out CIFAR-10."
+    },
+    "test_diff_render.py": {
+      "category": "testing",
+      "referenced": false,
+      "purpose": "Red point"
+    },
+    "test_drive_integration_script.py": {
+      "category": "testing",
+      "referenced": true,
+      "purpose": "1. Status check"
+    },
+    "test_encoder_fix.py": {
+      "category": "testing",
+      "referenced": false,
+      "purpose": "Quick test: verify encoder fix (b_decode initialization)."
+    },
+    "test_full_clip.py": {
+      "category": "testing",
+      "referenced": true,
+      "purpose": "Test full pipeline with real CLIP on small subset."
+    },
+    "test_gpu_compat.py": {
+      "category": "testing",
+      "referenced": true,
+      "purpose": "GPU Compatibility Test — Multiple approaches to bypass torch"
+    },
+    "test_gpu_direct.py": {
+      "category": "testing",
+      "referenced": true,
+      "purpose": "Direct GPU Usage Test — Bypasses torch entirely"
+    },
+    "test_gvv_quick.py": {
+      "category": "testing",
+      "referenced": false,
+      "purpose": "Quick GVV test: build vocabulary + test generation + test recognition."
+    },
+    "test_heldout.py": {
+      "category": "testing",
+      "referenced": false,
+      "purpose": "Test recognition on held-out CIFAR-10 images (not used for vocabulary)."
+    },
+    "test_individual_encode.py": {
+      "category": "testing",
+      "referenced": true,
+      "purpose": "Test: what if we match tokens individually instead of whole text?"
+    },
+    "test_lrn_pipeline.py": {
+      "category": "testing",
+      "referenced": false,
+      "purpose": "Test latent → LRN → text pipeline."
+    },
+    "test_recognition_iters.py": {
+      "category": "testing",
+      "referenced": false,
+      "purpose": "Test recognition with more optimization iterations (better feature extraction)."
+    },
+    "test_recognition_methods.py": {
+      "category": "testing",
+      "referenced": true,
+      "purpose": "Test recognition WITHOUT per-image optimization — use raw image features."
+    },
+    "test_training_state.py": {
+      "category": "testing",
+      "referenced": true,
+      "purpose": "Quick training test - ED3N + GARDEN with real data."
+    },
+    "test_wgpu_bench.py": {
+      "category": "testing",
+      "referenced": false,
+      "purpose": "wgpu GPU Persistent Buffer Test — Optimize for SNN use case"
+    },
+    "test_wgpu_compute.py": {
+      "category": "testing",
+      "referenced": false,
+      "purpose": "wgpu GPU Compute Test — Matrix Multiply via WebGPU (Vulkan backend)"
+    },
+    "three_col_test.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Direct SNN-ONLY test - no GARDENEngine process/generate."
+    },
+    "three_layer_arch.py": {
+      "category": "experimental",
+      "referenced": false,
+      "purpose": "Three-Layer Architecture: CLIP → PCA → Decoder."
+    },
+    "threshold_sweep.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Test SNN forward with correct keys"
+    },
+    "trace_pipeline.py": {
+      "category": "analysis",
+      "referenced": false,
+      "purpose": "Trace the full encode -> SNN -> decode pipeline."
+    },
+    "trace_stages.py": {
+      "category": "analysis",
+      "referenced": false,
+      "purpose": "Trace which stages handle test inputs in HYBRID mode."
+    },
+    "train_cifar_pilot.py": {
+      "category": "training",
+      "referenced": true,
+      "purpose": "L2-4 真實 CIFAR 500 試點 — 硬件規格自適應（<300MB, 分批+sleep）"
+    },
+    "train_cifar_real_3000.py": {
+      "category": "training",
+      "referenced": true,
+      "purpose": "L2-4 真實 3000 CIFAR 對比訓練 — 實質推進（硬件規格自適應，分批+sleep，<1GB）"
+    },
+    "train_cifar_real_500.py": {
+      "category": "training",
+      "referenced": true,
+      "purpose": "L2-4 真實 CIFAR 500 訓練 — 硬件規格自適應（分批+sleep，<500MB）"
+    },
+    "train_compositional.py": {
+      "category": "training",
+      "referenced": false,
+      "purpose": "Train SequenceGenerator on CIFAR-10 real data."
+    },
+    "train_contrastive_pilot.py": {
+      "category": "training",
+      "referenced": true,
+      "purpose": "L1-6 對比訓練試點 — 硬件規格自適應（<300MB, <30s）"
+    },
+    "train_contrastive_real.py": {
+      "category": "training",
+      "referenced": true,
+      "purpose": "真實對比訓練（`train_contrastive_pilot` 的真實數據版）— 硬件規格自適應"
+    },
+    "train_decomposer_on_optimized.py": {
+      "category": "training",
+      "referenced": true,
+      "purpose": "Train decomposer on directly-optimized primitive vectors."
+    },
+    "train_fixedcore_reasoning.py": {
+      "category": "training",
+      "referenced": true,
+      "purpose": "L2-3 FixedSizeCore 5K — 硬件規格自適應（分批+sleep，<300MB）"
+    },
+    "train_gvv.py": {
+      "category": "training",
+      "referenced": true,
+      "purpose": "End-to-end training and evaluation of Geometric Visual Vocabulary (GVV)."
+    },
+    "train_learnable_decomposer.py": {
+      "category": "training",
+      "referenced": false,
+      "purpose": "Train learnable decomposer: CLIP → primitive vectors."
+    },
+    "train_multimodal_pilot.py": {
+      "category": "training",
+      "referenced": true,
+      "purpose": "Deprecated: Use train_contrastive_pilot.py (same engine, consolidated). This file kept for history."
+    },
+    "train_pilot_association.py": {
+      "category": "training",
+      "referenced": true,
+      "purpose": "L1-1 試點訓練 — ED3N Hebbian 關聯 5K 子集（資源保護）"
+    },
+    "train_pipeline.py": {
+      "category": "training",
+      "referenced": true,
+      "purpose": "============================================================================="
+    },
+    "train_reasoning_improve.py": {
+      "category": "training",
+      "referenced": true,
+      "purpose": "L2-3 實際提升 — 5K 未見推理 → semantic_qa 訓練（硬件規格自適應，分批+sleep，<200MB）"
+    },
+    "train_reasoning_pilot.py": {
+      "category": "training",
+      "referenced": true,
+      "purpose": "L2-3 試點訓練 — 5K 未見推理 → FixedSizeCore（硬件規格自適應，分批+sleep，<200MB）"
+    },
+    "train_reinforce.py": {
+      "category": "training",
+      "referenced": true,
+      "purpose": "Train learnable decomposer with REINFORCE on rendering loss."
+    },
+    "train_sls_real.py": {
+      "category": "training",
+      "referenced": true,
+      "purpose": "SLS 真實對比訓練（項目原生 SharedLatentSpace，吃稠密向量）— 硬件規格自適應"
+    },
+    "train_three_layer.py": {
+      "category": "training",
+      "referenced": true,
+      "purpose": "Train Three-Layer Visual Architecture on CIFAR-10."
+    },
+    "train_unified.py": {
+      "category": "training",
+      "referenced": true,
+      "purpose": "============================================================================="
+    },
+    "train_visual_decoder.py": {
+      "category": "training",
+      "referenced": true,
+      "purpose": "Train VisualDecoder texture weights via FullTrainingPipeline."
+    },
+    "trigger_sync.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "trigger sync（無說明：原始碼未附 docstring）"
+    },
+    "type_ignore_budget_gate.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "type:ignore 壓制棘輪門（R87）：鎖定 # type: ignore 數量上限，只能降不能升。"
+    },
+    "validate_association.py": {
+      "category": "validation",
+      "referenced": true,
+      "purpose": "Neural ASSOCIATION validation harness (knowledge stays out of the SNN)."
+    },
+    "validate_holdout_gap.py": {
+      "category": "validation",
+      "referenced": true,
+      "purpose": "L1-4 Hold-out gap validation — 輕量評估（CPU-only, <50MB, <2s）"
+    },
+    "validate_three_column.py": {
+      "category": "validation",
+      "referenced": true,
+      "purpose": "Three-column honest validation harness for ED3N / GARDEN."
+    },
+    "verify_drive_analyzer.py": {
+      "category": "verification",
+      "referenced": true,
+      "purpose": "verify drive analyzer（無說明：原始碼未附 docstring）"
+    },
+    "verify_hardware_tiers.py": {
+      "category": "verification",
+      "referenced": true,
+      "purpose": "硬件全檔位驗證 — 規格驅動 chassis-agnostic（<50MB, <3s）"
+    },
+    "verify_ice_loop.py": {
+      "category": "verification",
+      "referenced": true,
+      "purpose": "0. Wait for Backend"
+    },
+    "verify_impls.py": {
+      "category": "verification",
+      "referenced": true,
+      "purpose": "1. ModelProvider -> LLMBackend"
+    },
+    "verify_main_flow_e2e.py": {
+      "category": "verification",
+      "referenced": true,
+      "purpose": "主流程端到端實測（R11 正式版實際使用證據）：用戶文本進 → 最終回應出。"
+    },
+    "verify_readiness.py": {
+      "category": "verification",
+      "referenced": true,
+      "purpose": "Project Readiness Verification — automated readiness checks for Angela AI."
+    },
+    "verify_snn_fix.py": {
+      "category": "verification",
+      "referenced": true,
+      "purpose": "Verify SNN fix: different inputs should produce different outputs."
+    },
+    "verify_training.py": {
+      "category": "verification",
+      "referenced": true,
+      "purpose": "Verify training results against architecture expectations."
+    },
+    "visual_verify.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "Visual verification: render images from concept space → primitives → image."
+    }
+  }
+}
