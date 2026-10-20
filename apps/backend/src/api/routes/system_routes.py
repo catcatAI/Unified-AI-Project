@@ -10,7 +10,7 @@ import time
 from typing import Any, Dict
 
 from core.utils import safe_error
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
 logger = logging.getLogger(__name__)
 
@@ -217,6 +217,137 @@ async def system_status_detailed() -> Dict[str, Any]:
         result["memory_error"] = safe_error(exc)
 
     return result
+
+
+@router.get("/pet")
+async def system_pet_state() -> Dict[str, Any]:
+    """The digital life's real state, for the dashboard's pet panel.
+
+    The dashboard used to show a *local* simulation (an in-memory object in
+    the Next.js API route that decayed on its own and answered "pet"/"feed"
+    with hard-coded deltas). The numbers on screen were therefore unrelated
+    to the system they claimed to describe.
+
+    This endpoint reports the real state matrix and the real life phase, and
+    names the source of every field so the panel can say where a number comes
+    from. The mapping (documented, not hidden):
+
+      happiness ← gamma.happiness   (情緒軸)
+      energy    ← alpha.energy      (生理軸)
+      health    ← alpha.comfort     (生理軸)
+      hunger    ← alpha.rest_need   (生理軸的休息需求)
+    """
+    result: Dict[str, Any] = {
+        "timestamp": time.time(),
+        "source": "state_matrix",
+        "happiness": 0.5,
+        "hunger": 0.5,
+        "energy": 0.5,
+        "health": 1.0,
+        "life_phase": None,
+        "emotion": None,
+    }
+    try:
+        from api.routes.chat_routes import _get_state_matrix
+
+        matrix = _get_state_matrix()
+
+        def _value(axis_name: str, key: str, default: float) -> float:
+            axis = getattr(matrix, axis_name, None)
+            values = getattr(axis, "values", None)
+            if isinstance(values, dict) and key in values:
+                try:
+                    return float(values[key])
+                except (TypeError, ValueError):
+                    return default
+            return default
+
+        result["happiness"] = _value("gamma", "happiness", 0.5)
+        result["energy"] = _value("alpha", "energy", 0.5)
+        result["health"] = _value("alpha", "comfort", 1.0)
+        result["hunger"] = _value("alpha", "rest_need", 0.5)
+    except Exception as exc:
+        result["source"] = "unavailable"
+        result["error"] = safe_error(exc)
+
+    try:
+        from api.lifespan import get_emotion_system, get_lifecycle
+
+        emotion = get_emotion_system()
+        if emotion is not None:
+            result["emotion"] = emotion.get_emotion_summary().get("dominant_emotion")
+        lifecycle = get_lifecycle()
+        phase = getattr(lifecycle, "current_phase", None)
+        result["life_phase"] = getattr(phase, "value", phase)
+    except Exception as exc:
+        result["error"] = safe_error(exc)
+
+    return result
+
+
+# The pet panel's interactions, applied to the REAL state matrix.
+_PET_ACTIONS: Dict[str, Dict[str, float]] = {
+    "pet": {"happiness": 0.1, "energy": -0.05},
+    "feed": {"hunger": -0.2, "happiness": 0.05},
+    "play": {"happiness": 0.15, "energy": -0.15, "hunger": 0.05},
+    "rest": {"energy": 0.3, "happiness": -0.05},
+}
+
+
+@router.post("/pet/interact")
+async def system_pet_interact(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """Apply a pet interaction to the real state matrix and report the result.
+
+    The panel used to mutate a local object; now the interaction reaches the
+    system it claims to describe. Unknown actions are rejected (400) instead
+    of being silently ignored.
+    """
+    action = str((payload or {}).get("action") or "").strip()
+    effects = _PET_ACTIONS.get(action)
+    if effects is None:
+        raise HTTPException(
+            status_code=400,
+            detail=f"unknown action '{action}'; expected one of {sorted(_PET_ACTIONS)}",
+        )
+
+    from api.routes.chat_routes import _get_state_matrix
+
+    matrix = _get_state_matrix()
+    try:
+        _apply_pet_effects(matrix, effects)
+    except Exception as exc:
+        logger.error("Pet interaction failed: %s", safe_error(exc))
+        raise HTTPException(status_code=500, detail="Pet interaction failed") from exc
+
+    return await system_pet_state()
+
+
+def _apply_pet_effects(matrix: Any, effects: Dict[str, float]) -> None:
+    """Apply the interaction deltas to the alpha/gamma axes of the matrix."""
+    alpha = getattr(matrix, "alpha", None)
+    gamma = getattr(matrix, "gamma", None)
+
+    if alpha is not None and ("hunger" in effects or "energy" in effects or "health" in effects):
+        rest_need = float(alpha.values.get("rest_need", 0.5))
+        energy = float(alpha.values.get("energy", 0.5))
+        comfort = float(alpha.values.get("comfort", 1.0))
+        if "hunger" in effects:
+            rest_need = _clamp01(rest_need + effects["hunger"])
+        if "energy" in effects:
+            energy = _clamp01(energy + effects["energy"])
+        if "health" in effects:
+            comfort = _clamp01(comfort + effects["health"])
+        if hasattr(alpha, "update"):
+            alpha.update(rest_need=rest_need, energy=energy, comfort=comfort)
+
+    if gamma is not None and "happiness" in effects:
+        happiness = _clamp01(float(gamma.values.get("happiness", 0.5)) + effects["happiness"])
+        if hasattr(gamma, "update"):
+            gamma.update(happiness=happiness)
+
+
+def _clamp01(value: float) -> float:
+    return max(0.0, min(1.0, float(value)))
 
 
 @router.get("/discovery")

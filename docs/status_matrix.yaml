@@ -175,7 +175,7 @@ features:
       - apps/web-dashboard/src/components/ModelSelector.tsx
       - apps/web-dashboard/src/components/ContextViewer.tsx
       - apps/web-dashboard/src/components/HealthIndicator.tsx
-    evidence: 面板接 real backend；E2E 手動驗證待補
+    evidence: 面板接 real backend（2026-10-20：新增契約測試 tests/api/test_dashboard_real_data.py——dashboard proxy 的每個後端路徑都必須存在，寵物面板改為讀真實狀態矩陣而非本地模擬）；瀏覽器 E2E 仍待補
     last_verified: "2026-09-17"
 
   - id: unsupported-docs
@@ -205,7 +205,7 @@ features:
     claim: 全倉綠
     status: verified
     verify_command: pytest
-    evidence: 8,681 passed, 112 skipped, 0 failed（2026-10-20 測試數量同步批次全 testpaths 實測：tests/＋apps/backend/tests/＋apps/game-rpg/tests＋scripts）
+    evidence: 8,688 passed, 112 skipped, 0 failed（2026-10-20 測試數量同步批次全 testpaths 實測：tests/＋apps/backend/tests/＋apps/game-rpg/tests＋scripts）
     last_verified: "2026-10-20"
 
   - id: mypy-debt

@@ -961,18 +961,18 @@ Level 4 — E2E Tests (tests/e2e/)
 
 ### 14.2 當前 Stub 處理計畫
 
-| Stub                                     | 類別                                          | 處理                         |
-| ---------------------------------------- | --------------------------------------------- | ---------------------------- |
-| `google_drive_handler.py`                | Accidental                                    | 實作真正的 Google Drive 操作 |
-| `core/security/key_generator.py`         | ✅ 已完成 (已有真實實作，移除 stub 標記)      |
-| `core/security/secure_eval.py`           | ✅ 已確認 (AST 安全求值器，完整實作，非 stub) |
-| `services/math_verifier.py`              | Intentional                                   | 保留但加明確時間表           |
-| `core/waiting_scheduler.py`              | ✅ 已完成 (slot-based 排程器實作)             |
-| `modules/tactile_service/`               | ✅ 已移除（包含在 modules/ 刪除中）           |
-| `modules/math_verifier/`                 | ✅ 已移除（包含在 modules/ 刪除中）           |
-| `modules/` (全部 11 個)                  | ✅ 已移除 (Phase 1)                           |
-| `services/node_services/server.js`       | ✅ 已移除（檔案不存在）                        | —                            |
-| `core/tools/js_tool_dispatcher/index.js` | ✅ 已移除（2026-10-20；佔位模組，無任何消費點）| —                            |
+| Stub                                     | 類別                                            | 處理                         |
+| ---------------------------------------- | ----------------------------------------------- | ---------------------------- |
+| `google_drive_handler.py`                | Accidental                                      | 實作真正的 Google Drive 操作 |
+| `core/security/key_generator.py`         | ✅ 已完成 (已有真實實作，移除 stub 標記)        |
+| `core/security/secure_eval.py`           | ✅ 已確認 (AST 安全求值器，完整實作，非 stub)   |
+| `services/math_verifier.py`              | Intentional                                     | 保留但加明確時間表           |
+| `core/waiting_scheduler.py`              | ✅ 已完成 (slot-based 排程器實作)               |
+| `modules/tactile_service/`               | ✅ 已移除（包含在 modules/ 刪除中）             |
+| `modules/math_verifier/`                 | ✅ 已移除（包含在 modules/ 刪除中）             |
+| `modules/` (全部 11 個)                  | ✅ 已移除 (Phase 1)                             |
+| `services/node_services/server.js`       | ✅ 已移除（檔案不存在）                         | —                            |
+| `core/tools/js_tool_dispatcher/index.js` | ✅ 已移除（2026-10-20；佔位模組，無任何消費點） | —                            |
 
 ---
 

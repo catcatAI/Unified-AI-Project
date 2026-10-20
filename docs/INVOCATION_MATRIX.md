@@ -41,18 +41,18 @@
 
 ## 2. 核心 API（backend 起動後；prefix `/api/v1`）
 
-| 調用                                                           | 作用                                          | 驗證                                             | 最近驗證   |
-| -------------------------------------------------------------- | --------------------------------------------- | ------------------------------------------------ | ---------- |
-| `GET /health`                                                  | 健康檢查（無需 prefix）                       | `curl :8000/health`                              | 2026-09-20 |
-| `GET /api/v1/llm/status`                                       | LLM 後端狀態                                  | `curl :8000/api/v1/llm/status`                   | 2026-09-17 |
-| `GET/POST /api/v1/llm/config`                                  | 讀寫偏好模型（`llm.user.yaml` 持久化）        | `pytest tests/api/test_llm_config.py` 12 passed  | 2026-09-17 |
-| `POST /api/v1/chat/unified`                                    | 主對話入口（情緒→危機→閘門→Agent→LLM 全管線） | `python scripts/verify_main_flow_e2e.py` → 15/15 | 2026-09-20 |
-| `POST /api/v1/session/start`、`POST /api/v1/session/{id}/send` | 對話 session                                  | 同上 e2e 覆蓋                                    | 2026-09-20 |
-| `GET /api/v1/context/memory/recent`                            | HAM 真實記憶查詢                              | Dashboard MemoryViewer 走此 API                  | 2026-09-17 |
-| `GET /api/v1/ops/status`、`/ops/metrics`                       | 系統指標（psutil 真值）                       | Dashboard SystemMonitor                          | 2026-09-17 |
+| 調用                                                           | 作用                                                 | 驗證                                             | 最近驗證   |
+| -------------------------------------------------------------- | ---------------------------------------------------- | ------------------------------------------------ | ---------- |
+| `GET /health`                                                  | 健康檢查（無需 prefix）                              | `curl :8000/health`                              | 2026-09-20 |
+| `GET /api/v1/llm/status`                                       | LLM 後端狀態                                         | `curl :8000/api/v1/llm/status`                   | 2026-09-17 |
+| `GET/POST /api/v1/llm/config`                                  | 讀寫偏好模型（`llm.user.yaml` 持久化）               | `pytest tests/api/test_llm_config.py` 12 passed  | 2026-09-17 |
+| `POST /api/v1/chat/unified`                                    | 主對話入口（情緒→危機→閘門→Agent→LLM 全管線）        | `python scripts/verify_main_flow_e2e.py` → 15/15 | 2026-09-20 |
+| `POST /api/v1/session/start`、`POST /api/v1/session/{id}/send` | 對話 session                                         | 同上 e2e 覆蓋                                    | 2026-09-20 |
+| `GET /api/v1/context/memory/recent`                            | HAM 真實記憶查詢                                     | Dashboard MemoryViewer 走此 API                  | 2026-09-17 |
+| `GET /api/v1/ops/status`、`/ops/metrics`                       | 系統指標（psutil 真值）                              | Dashboard SystemMonitor                          | 2026-09-17 |
 | `GET /api/v1/system/status/detailed`                           | 系統狀態詳情（狀態矩陣／情緒／生命階段／後端／記憶） | `curl :8000/api/v1/system/status/detailed`       | 2026-10-20 |
-| `WS /ws`                                                       | WebSocket 對話串流                            | e2e：EXEC/CONFIRM/CONFIRM-EXEC/REJECT 四態       | 2026-09-17 |
-| 全表                                                           | `/docs`（FastAPI Swagger）                    | 啟動後瀏覽 `:8000/docs`                          | 2026-09-20 |
+| `WS /ws`                                                       | WebSocket 對話串流                                   | e2e：EXEC/CONFIRM/CONFIRM-EXEC/REJECT 四態       | 2026-09-17 |
+| 全表                                                           | `/docs`（FastAPI Swagger）                           | 啟動後瀏覽 `:8000/docs`                          | 2026-09-20 |
 
 ## 3. 配置體系（分層，非重複）
 
@@ -99,7 +99,7 @@ python -m pytest tests/services/test_handlers.py \
                  tests/security/ -q               # → 全 passed
 
 # 4. 全倉回歸
-python -m pytest tests/ -q --timeout=120          # → 8,021 collected, 0 failed
+python -m pytest tests/ -q --timeout=120          # → 8,028 collected, 0 failed
 
 # 5. Lint
 python -m flake8 apps/backend/src scripts/run_luanti_agent.py  # 既有基準為準

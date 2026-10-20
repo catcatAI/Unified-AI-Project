@@ -66,85 +66,79 @@ and this project adheres to
 
 ### Fixed
 
-- **CI lint 盲點關閉**（2026-10-20）：`apps/backend/tests/` 一直在 lint 範圍之外
-  （稽核記為「56 條 E541 級既有告警，不動」）——那 21 條 F541 已修，CI 的
-  black/isort/flake8 現在也覆蓋 `apps/backend/tests/`，稽核文件同步更新。
-- **Live2D 產生的圖層不再���隨機方塊**（2026-10-20）：頭像生成器的每個圖層
-  以前是「隨機彩色矩形＋文字」（同一個圖層每次生成還會換顏色）。現在顏色由圖層
-  名稱推導（可重現），形狀依圖層種類繪製（眼／嘴／眉／臉／頭髮／身體）。
-- **21 個「孤兒事件」變成有名字的遙測清單**（2026-10-20）：事件稽核原本只
-  報「emit 26 / subscribe 5 → 孤兒 21」，讀者無從知道這 21 個是遺漏還是有意
-  為之。現在逐筆記錄於 `core/system/state_store/telemetry_events.py`（每筆附
-  「為何沒有 in-process 消費者」的理由），稽核掃描時扣除 → **未解釋的孤兒事件
-  為 0**；清單與程式不一致（事件已不再發射）會被新的
-  `defs.stale_telemetry_allowlist` 擋下，清單不能悄悄腐爛。定義稽核報告的
-  「定義有誤」桶由 21 降為 0。
-- **驗證登記簿從 2/10 變 8/10 verified**（2026-10-20）：六個條目原本標
-  「unverified（需要 GUI／顯示器）」，但前端其實已有 node harness——不需顯示器就能
-  驗證：桌面版與 web viewer 確實載入 app.js 且 AngelaApp 可 new；主動發話的氣泡
-  真的進對話面板（greet 另觸發 Live2D 動作，未知 action 不假動作）；硬體增強
-  patch 在偵測器缺 API 時如實跳過並警告（順帶修掉 patch 的回傳值與 docstring
-  不一致：以前回 detector，現在回 true＝已套用）；autostart 的 preload→IPC→main.js
-  呼叫鏈；設定頁 20 項「已接上」的行為鏈（真的走 DOM → collectSettings →
-  applySettingsToApplication，逐項確認抵達擁有它的子系統）。新增 12 個 node 行為
-  測試。
-- **hold-out 量測本來是空轉的**（2026-10-20）：`validate_holdout_gap.py` 只讀
-  input/question/text，而邏輯語料用 proposition 欄位 → 兩側命中率都是 0.000，
-  「gap 0.0 < 0.15 ✅」什麼都沒量到。已修欄位對應（train 0.250 / holdout 0.330 /
-  gap 0.080），並加 `--gate`（量測空轉時 exit 2，不再假通過），納入 CI——
-  誠實缺口 #2「學習品質未證明」的常態門因此才真的存在。
-- **重複分類債收斂（架構缺口 #1）**（2026-10-20）：一則訊息此前在 pipeline、
-  router（6 處）與 MSBA pipeline 各自分類一次——同一句話可能得到兩個路由
-  決定。現在決策由 request context 發布（`_classify_result_type`／
+- **Dashboard 的寵物面板不再顯示假資料**（2026-10-20）：`api/pet.ts` 以前是
+  Next.js 端自己維護的 in-memory 模擬（自己衰減、pet/feed/play/rest 回固定
+  增減），面板上的數字與它宣稱描述的系統無關。現在後端新增
+  `GET /api/v1/system/pet`（真實狀態矩陣：happiness←gamma.happiness、
+  energy←alpha.energy、health←alpha.comfort、hunger←alpha.rest_need，另附生命
+  階段與情緒，並標明每個欄位的來源）與 `POST /api/v1/system/pet/interact`
+  （互動真的作用在狀態矩陣上；未知動作回 400，不再靜默忽略）；前端改為
+  proxy 真後端，後端不可達時才用「明確標記為 simulated」的後備值。另加
+  契約測試：dashboard proxy 的每個後端路徑都必須真的存在。
+- **CI lint 盲點關閉**（2026-10-20）：`apps/backend/tests/`
+  一直在 lint 範圍之外（稽核記為「56 條 E541 級既有告警，不動」）——那 21 條 F541 已修，CI 的 black/isort/flake8 現在也覆蓋
+  `apps/backend/tests/`，稽核文件同步更新。
+- **Live2D 產生的圖層不再���隨機方塊**（2026-10-20）：頭像生成器的每個圖層以前是「隨機彩色矩形＋文字」（同一個圖層每次生成還會換顏色）。現在顏色由圖層名稱推導（可重現），形狀依圖層種類繪製（眼／嘴／眉／臉／頭髮／身體）。
+- **21 個「孤兒事件」變成有名字的遙測清單**（2026-10-20）：事件稽核原本只報「emit
+  26 / subscribe 5
+  → 孤兒 21」，讀者無從知道這 21 個是遺漏還是有意為之。現在逐筆記錄於
+  `core/system/state_store/telemetry_events.py`（每筆附「為何沒有 in-process 消費者」的理由），稽核掃描時扣除 →
+  **未解釋的孤兒事件為 0**；清單與程式不一致（事件已不再發射）會被新的
+  `defs.stale_telemetry_allowlist`
+  擋下，清單不能悄悄腐爛。定義稽核報告的「定義有誤」桶由 21 降為 0。
+- **驗證登記簿從 2/10 變 8/10
+  verified**（2026-10-20）：六個條目原本標「unverified（需要 GUI／顯示器）」，但前端其實已有 node
+  harness——不需顯示器就能驗證：桌面版與 web
+  viewer 確實載入 app.js 且 AngelaApp 可 new；主動發話的氣泡真的進對話面板（greet 另觸發 Live2D 動作，未知 action 不假動作）；硬體增強 patch 在偵測器缺 API 時如實跳過並警告（順帶修掉 patch 的回傳值與 docstring 不一致：以前回 detector，現在回 true＝已套用）；autostart 的 preload→IPC→main.js 呼叫鏈；設定頁 20 項「已接上」的行為鏈（真的走 DOM
+  → collectSettings →
+  applySettingsToApplication，逐項確認抵達擁有它的子系統）。新增 12 個 node 行為測試。
+- **hold-out 量測本來是空轉的**（2026-10-20）：`validate_holdout_gap.py`
+  只讀 input/question/text，而邏輯語料用 proposition 欄位 → 兩側命中率都是 0.000，「gap
+  0.0 < 0.15 ✅」什麼都沒量到。已修欄位對應（train 0.250 / holdout 0.330 / gap
+  0.080），並加 `--gate`（量測空轉時 exit
+  2，不再假通過），納入 CI——誠實缺口 #2「學習品質未證明」的常態門因此才真的存在。
+- **重複分類債收斂（架構缺口 #1）**（2026-10-20）：一則訊息此前在 pipeline、router（6 處）與 MSBA
+  pipeline 各自分類一次——同一句話可能得到兩個路由決定。現在決策由 request
+  context 發布（`_classify_result_type`／
   `_preprocessing_plan.query_type`），所有消費端讀同一份：router 新增
-  `_query_type()` 單一入口（數學／程式守衛、事實查詢守衛、誠實拒答、意圖
-  向量、輕量後端選擇全部改讀），MSBA pipeline 改吃呼叫端交來的 context。
-  5 個新測試（決策被快取時分類器完全不被呼叫）。
-- **音訊／NLP／遊戲三條路徑的假實作**（2026-10-20）：(1) 音訊特徵只有
-  energy＋peak（自稱「Placeholder for spectral features like MFCC」）→ 實作真
-  頻譜特徵（FFT 頻譜質心／roll-off／主頻、ZCR、spectral flux、13 維 MFCC，
-  numpy only），音訊編碼器因此能分出高低音與明暗音色（新增 high_pitch／
-  low_pitch、bright／dark 概念），7 個新測試；(2) NER 只找得到 URL 與 email
-  → 規則式命名實體（URL/EMAIL/NUMBER/PERCENT/MONEY/DATE/TIME/LOCATION 詞庫／
-  ORG 後綴／PERSON 敬稱），13 個新測試；(3) 遊戲「吃東西」技能沒有 use 動作
-  → poller 新增 `use` 動作（指向目標節點後右鍵使用）＋行為庫新增 `eat`
-  行為（無目標就拒絕，與 craft 同一條規則）；(4) 激素事件以前只 log 不生效 →
-  內分泌效果（energy/alertness/relaxation/focus/creativity/mood）真的進狀態
-  矩陣並驅動 Live2D 參數；(5) 前端效能指標只印一行 → 真的收 FPS／堆記憶；
-  (6) 驅動更新檢查回傳永遠跑不了的 `apt list --upgradable` → 誠實回報「瀏覽器
-  無法查套件管理器」＋已偵測到的驅動版本＋該去哪裡查。
-- **死碼清理**（2026-10-20）：`core/tools/js_tool_dispatcher/`（佔位模組、無任何
-  消費點、10 份文件引用）刪除並修正引用；`cognitive_pipeline._init_subsystems`
-  空的測試鉤子刪除；IDEAL_ARCHITECTURE 的「Accidental／實作或移除」清單條目
-  更新為已處理。
+  `_query_type()`
+  單一入口（數學／程式守衛、事實查詢守衛、誠實拒答、意圖向量、輕量後端選擇全部改讀），MSBA
+  pipeline 改吃呼叫端交來的 context。5 個新測試（決策被快取時分類器完全不被呼叫）。
+- **音訊／NLP／遊戲三條路徑的假實作**（2026-10-20）：(1) 音訊特徵只有 energy＋peak（自稱「Placeholder
+  for spectral features like
+  MFCC」）→ 實作真頻譜特徵（FFT 頻譜質心／roll-off／主頻、ZCR、spectral
+  flux、13 維 MFCC，numpy
+  only），音訊編碼器因此能分出高低音與明暗音色（新增 high_pitch／low_pitch、bright／dark 概念），7 個新測試；(2)
+  NER 只找得到 URL 與 email
+  → 規則式命名實體（URL/EMAIL/NUMBER/PERCENT/MONEY/DATE/TIME/LOCATION 詞庫／ORG 後綴／PERSON 敬稱），13 個新測試；(3) 遊戲「吃東西」技能沒有 use 動作 →
+  poller 新增 `use` 動作（指向目標節點後右鍵使用）＋行為庫新增 `eat`
+  行為（無目標就拒絕，與 craft 同一條規則）；(4) 激素事件以前只 log 不生效 → 內分泌效果（energy/alertness/relaxation/focus/creativity/mood）真的進狀態矩陣並驅動 Live2D 參數；(5) 前端效能指標只印一行 → 真的收 FPS／堆記憶；(6) 驅動更新檢查回傳永遠跑不了的
+  `apt list --upgradable`
+  → 誠實回報「瀏覽器無法查套件管理器」＋已偵測到的驅動版本＋該去哪裡查。
+- **死碼清理**（2026-10-20）：`core/tools/js_tool_dispatcher/`（佔位模組、無任何消費點、10 份文件引用）刪除並修正引用；`cognitive_pipeline._init_subsystems`
+  空的測試鉤子刪除；IDEAL_ARCHITECTURE 的「Accidental／實作或移除」清單條目更新為已處理。
 - **Luanti 輪詢間隔可配置**（2026-10-20）：poller 的 POLL_INTERVAL 寫死 2.0s
-  → 可用 minetest.conf `agent_poller_poll_interval` 設定（下限 0.05s），
-  mod.conf／README／設計文件同步。
+  → 可用 minetest.conf `agent_poller_poll_interval`
+  設定（下限 0.05s），mod.conf／README／設計文件同步。
 - **CI 全面復綠（2026-10-20）**：專案自己的 CI 有五處紅，這批逐一修掉——(1)
-  `black --check` 74 檔漂移（CI lint 步驟長期紅，與程式無關）→ 整庫格式化；
-  (2) isort 數檔 → 修；(3) mypy 6 個新錯誤 → 修（回到 0）；(4) 複雜度棘輪
-  6 個 C901（2 個既有＋4 個本批新增）→ 拆函式回到 0（預算是 0）；(5)
-  type:ignore 預算 111→110（棘輪要求下調）。另：prettier 27 檔 → 格式化；
-  integration workflow 指向從未存在的
-  `tests/integration/test_system_level_integration.py`（pytest exit 5＝紅）→
-  改指真正帶 `system_integration` marker 的 `test_full_system_integration.py`。
-- **`/api/v1/system/status/detailed` 404**（2026-10-20）：INVOCATION_MATRIX 宣稱
-  這個端點可 curl，實際不存在（文件說有、實際 404）。已實作：狀態矩陣各軸、
-  情緒摘要、生命階段、後端健康、記憶統計；每段獨立 try，缺子系统回 null 而不是
-  整個 500。
-- **SSE 串流只有 llama.cpp 能用**（2026-10-20）：`POST /api/v1/chat/stream` 宣稱
-  「token 隨模型產生逐字送出」，但只有 llama.cpp provider 實作 streaming，雲端
-  provider（OpenAI／Ollama／Anthropic／Google）整段回完 → 桌面端看不到漸進
-  回覆。已為四家補上串流（SSE／NDJSON 各自格式，共用 base.py 的 delta 解析），
-  9 個新測試（含壞 chunk 跳過、回呼爆炸不中斷）。
-- **助手用 user_id 當稱呼**（2026-10-20）：只送 user_id 的客戶端會被叫
-  「smoke_user，這個任務我目前做不到……」——id 不是顯示名稱。現在 id 與顯示名
-  分開，沒有顯示名時改用中性稱呼（你／You）。
-- **Live2D 狀態鏈因果驗證**（2026-10-20）：STATUS_MATRIX 的誠實缺口「狀態鏈完整
-  因果驗證未做」→ node 行為測試證明 axis 變更 → Live2D 參數、主導情緒 → 表情。
-- **過期證據數字**（2026-10-20）：STATUS_MATRIX 的 evidence 欄多處與實測不符
-  （35→70、55→60、52→56、13→12、22→33、193→198、746→742 source files）→
-  依實測更新並附日期。
+  `black --check` 74 檔漂移（CI lint 步驟長期紅，與程式無關）→ 整庫格式化；(2)
+  isort 數檔 → 修；(3) mypy
+  6 個新錯誤 → 修（回到 0）；(4) 複雜度棘輪 6 個 C901（2 個既有＋4 個本批新增）→ 拆函式回到 0（預算是 0）；(5)
+  type:ignore 預算 111→110（棘輪要求下調）。另：prettier
+  27 檔 → 格式化；integration workflow 指向從未存在的
+  `tests/integration/test_system_level_integration.py`（pytest exit
+  5＝紅）→改指真正帶 `system_integration` marker 的
+  `test_full_system_integration.py`。
+- **`/api/v1/system/status/detailed`
+  404**（2026-10-20）：INVOCATION_MATRIX 宣稱這個端點可 curl，實際不存在（文件說有、實際 404）。已實作：狀態矩陣各軸、情緒摘要、生命階段、後端健康、記憶統計；每段獨立 try，缺子系统回 null 而不是整個 500。
+- **SSE 串流只有 llama.cpp 能用**（2026-10-20）：`POST /api/v1/chat/stream`
+  宣稱「token 隨模型產生逐字送出」，但只有 llama.cpp
+  provider 實作 streaming，雲端 provider（OpenAI／Ollama／Anthropic／Google）整段回完 → 桌面端看不到漸進回覆。已為四家補上串流（SSE／NDJSON 各自格式，共用 base.py 的 delta 解析），9 個新測試（含壞 chunk 跳過、回呼爆炸不中斷）。
+- **助手用 user_id 當稱呼**（2026-10-20）：只送 user_id 的客戶端會被叫「smoke_user，這個任務我目前做不到……」——id 不是顯示名稱。現在 id 與顯示名分開，沒有顯示名時改用中性稱呼（你／You）。
+- **Live2D 狀態鏈因果驗證**（2026-10-20）：STATUS_MATRIX 的誠實缺口「狀態鏈完整因果驗證未做」→
+  node 行為測試證明 axis 變更 → Live2D 參數、主導情緒 → 表情。
+- **過期證據數字**（2026-10-20）：STATUS_MATRIX 的 evidence 欄多處與實測不符（35→70、55→60、52→56、13→12、22→33、193→198、746→742
+  source files）→ 依實測更新並附日期。
 - **離線 speak 批次**（2026-10-20）：知識庫策展條目（光合作用／哺乳動物／地球繞星／沸點／zh 單位換算）＋裸片段包句（`format_knowledge_answer`）；單步應用題求解（`solve_word_problem`，多步／折扣／找零一律誠實拒答）；執行閘不再對「寫程式」與「Python 是什麼語言？」問「要執行嗎」（真正的執行意圖如「執行 script.py」保留確認）；UNIFIED 引擎 OOD 問句不再吐單位元組垃圾（`<q>=e`）；翻譯請求不再吃到愛情模板（改走誠實 cannot-do）；情緒模板反向修正（`心情好差`
   不再配喜悅模板）＋雨天不再配晴天文案。新增
   `tests/services/test_offline_speak.py`（9 測試）。

@@ -852,7 +852,9 @@ class Live2DAvatarGenerator:
             elif "hair" in name:
                 draw.ellipse([126, 76, 396, 306], fill=color, outline=outline, width=3)
             else:
-                draw.rounded_rectangle([120, 120, 392, 392], radius=48, fill=color, outline=outline, width=3)
+                draw.rounded_rectangle(
+                    [120, 120, 392, 392], radius=48, fill=color, outline=outline, width=3
+                )
             draw.text((150, 460), layer.layer_name, fill=outline)
 
             # Derive output path from the layer's original path (set by _create_layers)
