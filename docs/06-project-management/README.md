@@ -43,8 +43,11 @@ H-level:
 | **H7**    | Long file refactoring (327 files >200 lines remain)    | 🔴 Active   |  62% → 68%   |
 | **H7.1**  | Core documentation alignment (5 docs)                  | 🔴 Active   |  68% → 72%   |
 | **H7.2**  | Deprecated archive cleanup                             | 🟡 Planned  |  72% → 73%   |
-| **H8**    | Test quality (boundary/perf/coverage)                  | 🟡 Planned  |  73% → 78%   |
+| **H8**    | Test quality (boundary/perf/coverage)                  | 🟡 Active   |  73% → 78%   |
 | **H9**    | ANGELA-MATRIX annotation (435/743 files) + plugin docs | 🟡 Active   |  78% → 82%   |
+
+> 2026-10-20 進度：H8 的「品質門」已補——CI 的五個門（black／isort／mypy／複雜度／type-ignore）本來全紅，已復綠；`apps/backend/tests/`
+> 納入 lint 範圍；hold-out 一般化量測修正後成為 CI 常態門（`validate_holdout_gap.py --gate`）；測試數量有單一權威機制（`scripts/check_test_count.py`）。H9 的註解覆蓋 435/743。
 
 > The numbers above were re-measured on 2026-10-20 (they used to be a 2026-08
 > snapshot: 2,837 tests, 564 files, 204 stubs, 138 long files — every one of
