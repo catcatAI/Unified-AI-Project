@@ -387,33 +387,42 @@ class OpenAICompatBackend:
         data: Any = {}
         for attempt in range(self.MAX_RETRIES):
             data = self._post(payload, headers)
-            error = data.get("error") if isinstance(data, dict) else None
-            if not error:
+            message = _api_error_message(data)
+            if not message:
                 break
-            message = error.get("message", "") if isinstance(error, dict) else str(error)
-            is_rate_limit = "quota" in str(message).lower() or "rate" in str(message).lower()
-            if not is_rate_limit or attempt == self.MAX_RETRIES - 1:
+            lowered = str(message).lower()
+            is_transient = (
+                "quota" in lowered
+                or "rate" in lowered
+                or "unavailable" in lowered
+                or "high demand" in lowered
+                or "overloaded" in lowered
+            )
+            if not is_transient or attempt == self.MAX_RETRIES - 1:
                 break
             delay = self.RETRY_BASE_DELAY_S * (2**attempt)
             print(
-                f"  [retry] {self.model}: rate limited, waiting {delay:.0f}s "
+                f"  [retry] {self.model}: transient error, waiting {delay:.0f}s "
                 f"(attempt {attempt + 1}/{self.MAX_RETRIES})",
                 file=sys.stderr,
                 flush=True,
             )
             time.sleep(delay)
-        # An API error (quota / auth / model not found) comes back as a JSON
-        # object with an "error" key and no choices. Returning it as the
-        # "answer" would score a transport failure as a wrong answer.
-        if isinstance(data, dict) and data.get("error"):
-            message = (
-                data["error"].get("message") if isinstance(data["error"], dict) else data["error"]
-            )
-            raise BackendError(f"{self.model}: {str(message)[:200]}")
+        # An API error (quota / auth / model not found / overload) comes back
+        # with no choices. Returning it as the "answer" would score a
+        # transport failure as a wrong answer. The Gemini OpenAI-compatible
+        # endpoint answers errors as a JSON *array*; OpenAI-compatible servers
+        # use an object — both shapes must be recognised.
+        api_error = _api_error_message(data)
+        if api_error:
+            raise BackendError(f"{self.model}: {api_error[:200]}")
         try:
             content = data["choices"][0]["message"]["content"]
         except (KeyError, IndexError, TypeError):
-            raise BackendError(f"{self.model}: unexpected response shape") from None
+            # Include what actually came back: "unexpected response shape"
+            # without the payload is a dead end for whoever reads the report.
+            raw = json.dumps(data, ensure_ascii=False)[:300]
+            raise BackendError(f"{self.model}: unexpected response shape: {raw}") from None
         if not str(content).strip():
             # An empty completion (some reasoning models answer with an
             # empty message when the budget is consumed by hidden thinking).
