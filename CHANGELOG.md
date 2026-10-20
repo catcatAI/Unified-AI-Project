@@ -66,6 +66,23 @@ and this project adheres to
 
 ### Fixed
 
+- **專案設定的 Gemini 模型全部已失效**（2026-10-20）：`llm.default.yaml` 的
+  `google-gemini.model_name`
+  是活的（gemini-3.1-flash-lite），但**預設值與硬體分級還停在已下架的模型**——`network_defaults.DEFAULT_GOOGLE_MODEL = "gemini-pro"`、bootstrap 分級的
+  `gemini-1.5-pro-latest` / `gemini-pro` /
+  `gemini-1.5-flash`，這些名稱在 v1beta 全部 404（實測）。已改成現存且配額合理的模型（依配額表：flash-lite 家族 500 次/日、一般 flash
+  20 次/日，常駐助理要用前者）；另外 Google provider 的健康檢查以前只驗 API
+  key，**不驗模型存在**，所以死模型能通過健康檢查然後每次生成都 404——現在會比對 models 清單並在警告裡指出可用模型。
+- **跨 AI 基準的評分誠實性**（2026-10-20）：配額錯誤被算成「答錯」，讓被 rate
+  limit 的模型顯示 0%（一句關於別個模型的謊話）。現在：429/配額/權限/ 空回應一律記為
+  _error_、不算答錯，報告顯示 `n/a (N err)` 而不是分數；API 錯誤訊息在 dict 與
+  **list** 兩種形狀下都認得（Gemini 的 OpenAI 相容端點回的是
+  `[{"error": {...}}]`，認不得就會把配額錯誤說成「回應格式怪」）；另加
+  `--request-interval` 節流（雲端端點有每分鐘請求上限：15 RPM → 4.2s）。
+- **Dashboard 真瀏覽器 E2E**（2026-10-20）：「需要 GUI 所以驗不了」是錯的——
+  Playwright＋Chromium 就能做。新增
+  `tests/frontend/test_dashboard_e2e.py`：真的起後端＋Next.js，用 Chromium 驗證健康徽章、系統面板的真實 CPU/記憶/磁碟、寵物面板的真實數值；CI 新增
+  `dashboard-e2e` 工作（裝 chromium 後跑）。
 - **core/bio 補上冒煙級測試＋相容 stub 開始說話**（2026-10-20）：gap-closure 計畫列的「薄弱檔按域補測（先 core/bio 的冒烟級）」：core/bio 有 20 個模組，此前只有 import 級別的覆蓋——建構子拋錯或方法回傳錯型別都不會讓任何測試紅。新增 16 個冒煙測試（ANS／小腦／情緒混合／HPA／習慣／激素動力学／輸入感測／動力學驗證／多維觸發／神經可塑性／顯性學習）。另外，
   `StateMatrixAdapter`（JSON 檔案版）的相容 proxy（anchor
   learning／resonance／allocation

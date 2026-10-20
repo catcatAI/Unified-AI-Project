@@ -1,25 +1,31 @@
 # Infrastructure & Bootstrap Configuration
 
 hardware_tiers:
+  # 2026-10-20: the old names (gemini-1.5-pro-latest / gemini-pro /
+  # gemini-1.5-flash) all return 404 on the Gemini API version this
+  # project speaks — every tier pointed at a model that no longer exists.
+  # The live text-out models are the 2.5/3.x flash family; the *lite*
+  # variants carry a 500 requests/day quota (the plain flash ones: 20/day),
+  # which is what an always-on desktop assistant needs.
   Extreme:
     score_threshold: 80
     max_fps: 60
-    llm_model: "gemini-1.5-pro-latest"
+    llm_model: "gemini-3.6-flash"
     precision: 1.0
   High:
     score_threshold: 60
     max_fps: 60
-    llm_model: "gemini-pro"
+    llm_model: "gemini-3.5-flash-lite"
     precision: 0.8
   Medium:
     score_threshold: 40
     max_fps: 30
-    llm_model: "gemini-pro"
+    llm_model: "gemini-3.1-flash-lite"
     precision: 0.5
   Low:
     score_threshold: 0
     max_fps: 24
-    llm_model: "gemini-1.5-flash"
+    llm_model: "gemini-2.5-flash-lite"
     precision: 0.3
 
 scoring_weights:

@@ -187,3 +187,34 @@ jobs:
         uses: gitleaks/gitleaks-action@v3
         with:
           args: --no-git
+
+  dashboard-e2e:
+    # The dashboard panels are verified in a real browser (Chromium): the
+    # API contract test proves the endpoints exist, this one proves the page
+    # renders the backend's real data.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 8
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 18
+          cache: "pnpm"
+      - name: Install JS workspaces
+        run: pnpm install --frozen-lockfile=false
+      - name: Install the dashboard's dependencies
+        run: pnpm install --frozen-lockfile=false
+        working-directory: apps/web-dashboard
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install the backend + Playwright
+        run: |
+          pip install -e "./apps/backend[dev,browser]"
+          python -m playwright install --with-deps chromium
+      - name: Dashboard browser E2E
+        run: pytest tests/frontend/test_dashboard_e2e.py -q
+        env:
+          ANGELA_HARDWARE_PROFILE: laptop_power_saver

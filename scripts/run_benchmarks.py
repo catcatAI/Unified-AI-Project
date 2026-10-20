@@ -72,13 +72,22 @@ class SuiteResult:
     total: int = 0
     passed: int = 0
     skipped: int = 0
+    # Items the backend could not answer at all (quota, network, malformed
+    # response). They are NOT wrong answers and must not be scored as such:
+    # a rate-limited run scored 0% would be a lie about the other model.
+    errors: int = 0
     latency_ms_sum: float = 0.0
     details: List[ItemResult] = field(default_factory=list)
 
     @property
     def accuracy(self) -> float:
-        denom = self.total - self.skipped
+        denom = self.total - self.skipped - self.errors
         return (self.passed / denom * 100) if denom else 0.0
+
+    @property
+    def comparable(self) -> bool:
+        """Whether the score may be compared with another backend."""
+        return self.errors == 0
 
     @property
     def avg_latency_ms(self) -> float:
@@ -271,6 +280,40 @@ class NativeMaxBackend(NativeBackend):
         return await super().answer(item)
 
 
+def _api_error_message(data: Any) -> str:
+    """The API error message in *data*, whichever shape it arrived in.
+
+    The Gemini OpenAI-compatible endpoint answers errors as a JSON array
+    (``[{"error": {...}}]``); OpenAI-compatible servers use an object
+    (``{"error": {...}}``). Both are checked, so a quota/auth/model error is
+    reported as what it is instead of "unexpected response shape".
+    """
+    candidates: List[Any] = []
+    if isinstance(data, dict):
+        candidates.append(data)
+    elif isinstance(data, list):
+        candidates.extend(data)
+    for entry in candidates:
+        if not isinstance(entry, dict):
+            continue
+        error = entry.get("error")
+        if not error:
+            continue
+        if isinstance(error, dict):
+            return str(error.get("message") or error.get("status") or error)
+        return str(error)
+    return ""
+
+
+class BackendError(RuntimeError):
+    """The backend could not answer (quota, auth, network, empty completion).
+
+    Distinct from "the model answered wrongly": an error must not be scored
+    as a failure, otherwise a rate-limited run reports 0% for a model that
+    never got the chance to answer.
+    """
+
+
 class OpenAICompatBackend:
     """OpenAI 相容 chat completions 端點（Ollama / vLLM / llama.cpp server /
     OpenAI / DeepSeek…）。同一份資料、同一個評分器 → 分數可直接對比。"""
@@ -304,6 +347,30 @@ class OpenAICompatBackend:
         content = await asyncio.to_thread(self._chat, prompt)
         return content if isinstance(content, str) else ""
 
+    # Retries for a rate-limited endpoint. A 429 is a temporary condition,
+    # not a wrong answer — the retry gives the model a fair chance before the
+    # item is reported as an error.
+    MAX_RETRIES = 4
+    RETRY_BASE_DELAY_S = 3.0
+
+    def _post(self, payload: bytes, headers: Dict[str, str]) -> Any:
+        client = self._ensure()
+        if client is not None:
+            resp = client.post(
+                f"{self.base_url}/chat/completions", content=payload, headers=headers
+            )
+            return resp.json()
+        import urllib.request
+
+        req = urllib.request.Request(
+            f"{self.base_url}/chat/completions",
+            data=payload,
+            headers=headers,
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=60) as r:  # noqa: S310
+            return json.loads(r.read())
+
     def _chat(self, prompt: str) -> str:
         payload = json.dumps(
             {
@@ -316,27 +383,42 @@ class OpenAICompatBackend:
         headers = {"Content-Type": "application/json"}
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
-        client = self._ensure()
-        if client is not None:
-            resp = client.post(
-                f"{self.base_url}/chat/completions", content=payload, headers=headers
-            )
-            data = resp.json()
-        else:
-            import urllib.request
 
-            req = urllib.request.Request(
-                f"{self.base_url}/chat/completions",
-                data=payload,
-                headers=headers,
-                method="POST",
+        data: Any = {}
+        for attempt in range(self.MAX_RETRIES):
+            data = self._post(payload, headers)
+            error = data.get("error") if isinstance(data, dict) else None
+            if not error:
+                break
+            message = error.get("message", "") if isinstance(error, dict) else str(error)
+            is_rate_limit = "quota" in str(message).lower() or "rate" in str(message).lower()
+            if not is_rate_limit or attempt == self.MAX_RETRIES - 1:
+                break
+            delay = self.RETRY_BASE_DELAY_S * (2**attempt)
+            print(
+                f"  [retry] {self.model}: rate limited, waiting {delay:.0f}s "
+                f"(attempt {attempt + 1}/{self.MAX_RETRIES})",
+                file=sys.stderr,
+                flush=True,
             )
-            with urllib.request.urlopen(req, timeout=60) as r:  # noqa: S310
-                data = json.loads(r.read())
+            time.sleep(delay)
+        # An API error (quota / auth / model not found) comes back as a JSON
+        # object with an "error" key and no choices. Returning it as the
+        # "answer" would score a transport failure as a wrong answer.
+        if isinstance(data, dict) and data.get("error"):
+            message = (
+                data["error"].get("message") if isinstance(data["error"], dict) else data["error"]
+            )
+            raise BackendError(f"{self.model}: {str(message)[:200]}")
         try:
-            return data["choices"][0]["message"]["content"]
+            content = data["choices"][0]["message"]["content"]
         except (KeyError, IndexError, TypeError):
-            return json.dumps(data, ensure_ascii=False)[:200]
+            raise BackendError(f"{self.model}: unexpected response shape") from None
+        if not str(content).strip():
+            # An empty completion (some reasoning models answer with an
+            # empty message when the budget is consumed by hidden thinking).
+            raise BackendError(f"{self.model}: empty completion")
+        return content
 
 
 # ---------------------------------------------------------------- scoring
@@ -431,20 +513,39 @@ _CODE_HANDLER: Any = None
 
 
 async def run_suite(
-    backend: Any, items: List[BenchItem], suite: str, backend_name: str
+    backend: Any,
+    items: List[BenchItem],
+    suite: str,
+    backend_name: str,
+    min_interval: float = 0.0,
 ) -> SuiteResult:
     result = SuiteResult(backend=backend_name, suite=suite)
+    last_call = 0.0
     for item in items:
+        if min_interval > 0:
+            wait = min_interval - (time.monotonic() - last_call)
+            if wait > 0:
+                time.sleep(wait)
         t0 = time.perf_counter()
         try:
             answer = await backend.answer(item)
-        except Exception as exc:
-            answer = ""
+        except BackendError as exc:
+            # The backend could not answer at all — count it as an error, not
+            # as a wrong answer, and keep the message for the report.
+            result.total += 1
+            result.errors += 1
             result.details.append(
                 ItemResult(item_id=item.id, passed=False, error=f"backend error: {exc}")
             )
-            result.total += 1
             continue
+        except Exception as exc:
+            result.total += 1
+            result.errors += 1
+            result.details.append(
+                ItemResult(item_id=item.id, passed=False, error=f"backend error: {exc}")
+            )
+            continue
+        last_call = time.monotonic()
         elapsed = (time.perf_counter() - t0) * 1000
         passed, skipped = score_item(item, answer)
         result.total += 1
@@ -463,12 +564,17 @@ async def run_suite(
     return result
 
 
-async def run_backend(backend: Any, items: List[BenchItem], suites: List[str]) -> List[SuiteResult]:
+async def run_backend(
+    backend: Any,
+    items: List[BenchItem],
+    suites: List[str],
+    min_interval: float = 0.0,
+) -> List[SuiteResult]:
     name = getattr(backend, "name", backend.__class__.__name__)
     out = []
     for suite in suites:
         suite_items = [i for i in items if i.suite == suite]
-        out.append(await run_suite(backend, suite_items, suite, name))
+        out.append(await run_suite(backend, suite_items, suite, name, min_interval))
     return out
 
 
@@ -481,13 +587,16 @@ def render_table(all_results: List[SuiteResult]) -> str:
         by_backend.setdefault(r.backend, []).append(r)
 
     lines = []
-    lines.append("| Backend | Suite | N | Pass | Skip | Accuracy | Avg latency |")
-    lines.append("|---|---|---|---|---|---|---|")
+    lines.append("| Backend | Suite | N | Pass | Skip | Err | Accuracy | Avg latency |")
+    lines.append("|---|---|---|---|---|---|---|---|")
     for backend_name, results in by_backend.items():
         for r in results:
+            # A run with errors is NOT comparable: the accuracy is computed
+            # over the answered items only, and saying so is the whole point.
+            accuracy = f"{r.accuracy:.1f}%" if r.comparable else f"n/a ({r.errors} err)"
             lines.append(
                 f"| {backend_name} | {r.suite} | {r.total} | {r.passed} | {r.skipped} "
-                f"| {r.accuracy:.1f}% | {r.avg_latency_ms:.0f}ms |"
+                f"| {r.errors} | {accuracy} | {r.avg_latency_ms:.0f}ms |"
             )
     return "\n".join(lines)
 
@@ -503,7 +612,9 @@ def save_results(all_results: List[SuiteResult], out_path: Path) -> None:
                 "total": r.total,
                 "passed": r.passed,
                 "skipped": r.skipped,
-                "accuracy": round(r.accuracy, 2),
+                "errors": r.errors,
+                "comparable": r.comparable,
+                "accuracy": round(r.accuracy, 2) if r.comparable else None,
                 "avg_latency_ms": round(r.avg_latency_ms, 1),
                 "details": [
                     {
@@ -627,6 +738,15 @@ def main() -> int:
     parser.add_argument("--model", default="", help="模型名（openai/ollama 後端）")
     parser.add_argument("--base-url", default="http://localhost:11434/v1")
     parser.add_argument("--api-key", default=os.environ.get("OPENAI_API_KEY", ""))
+    parser.add_argument(
+        "--request-interval",
+        type=float,
+        default=0.0,
+        help=(
+            "minimum seconds between two requests (0 = no pacing). Cloud endpoints "
+            "have a per-minute request limit (Gemini 2.5 Flash: 15 RPM → use 4.2)"
+        ),
+    )
     parser.add_argument("--out", default=str(REPO_ROOT / "benchmarks" / "results"))
     parser.add_argument(
         "--gate-native",
@@ -668,7 +788,9 @@ def main() -> int:
         name = getattr(backend, "name", backend.__class__.__name__)
         print(f"\n=== backend: {name} ===", flush=True)
         try:
-            results = asyncio.run(run_backend(backend, items, suites))
+            results = asyncio.run(
+                run_backend(backend, items, suites, min_interval=args.request_interval)
+            )
         except Exception as exc:
             print(f"backend {name} failed: {exc}", file=sys.stderr)
             continue

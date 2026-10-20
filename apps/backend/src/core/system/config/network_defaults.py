@@ -99,7 +99,12 @@ DEFAULT_OPENAI_MODEL: str = "gpt-4"
 DEFAULT_ANTHROPIC_MODEL: str = "claude-3-opus-20240229"
 DEFAULT_OLLAMA_MODEL: str = "llama3"
 DEFAULT_LLAMACPP_MODEL: str = "mistral-7b-instruct"
-DEFAULT_GOOGLE_MODEL: str = "gemini-pro"
+# 2026-10-20: "gemini-pro" (and every 1.5-era name) returns 404 on
+# v1beta — the Gemini API version this provider speaks. The live
+# text-out models are the 2.5/3.x flash family; the default is a
+# *lite* variant because the per-day quota is 500 requests there
+# (a desktop assistant talks more than 20 times a day).
+DEFAULT_GOOGLE_MODEL: str = "gemini-3.1-flash-lite"
 
 # Timeouts (seconds)
 DEFAULT_TIMEOUT: float = 120.0

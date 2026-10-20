@@ -175,8 +175,8 @@ features:
       - apps/web-dashboard/src/components/ModelSelector.tsx
       - apps/web-dashboard/src/components/ContextViewer.tsx
       - apps/web-dashboard/src/components/HealthIndicator.tsx
-    evidence: 面板接 real backend（2026-10-20：新增契約測試 tests/api/test_dashboard_real_data.py——dashboard proxy 的每個後端路徑都必須存在，寵物面板改為讀真實狀態矩陣而非本地模擬）；瀏覽器 E2E 仍待補
-    last_verified: "2026-09-17"
+    evidence: 面板接 real backend 且已在真瀏覽器驗證（2026-10-20：契約測試 tests/api/test_dashboard_real_data.py 驗證每個 proxy 路徑存在＋寵物面板讀真實狀態矩陣；瀏覽器 E2E tests/frontend/test_dashboard_e2e.py 用 Chromium 開後端＋Next.js，驗證健康徽章、系統面板的真實 CPU/記憶/磁碟、寵物面板的真實數值；CI 新增 dashboard-e2e 工作）
+    last_verified: "2026-10-20"
 
   - id: unsupported-docs
     domain: 明確不支援項文檔

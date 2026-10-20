@@ -3,6 +3,7 @@
 
 import logging
 import time
+from typing import Any
 
 import aiohttp
 from core.interfaces.protocols import LLMResponse
@@ -32,7 +33,15 @@ class GoogleAPIBackend(BaseLLMBackend):
         self.timeout = timeout
 
     async def check_health(self) -> bool:
-        """Check health (verifies API key against the models endpoint)."""
+        """Check health: the API key works AND the configured model exists.
+
+        The key check alone was not enough: a *stale* model name (every
+        "gemini-pro" / "gemini-1.5-*" name returns 404 on the API version
+        this project speaks) passed the health check and then failed on
+        every single generation, with the reason buried in a log line. The
+        model is now verified against the models endpoint, and the warning
+        names the model plus the available alternatives.
+        """
         if not self.api_key:
             return False
         try:
@@ -42,10 +51,40 @@ class GoogleAPIBackend(BaseLLMBackend):
                 params={"key": self.api_key},
                 timeout=aiohttp.ClientTimeout(total=5),
             ) as resp:
-                return resp.status == 200
+                if resp.status != 200:
+                    return False
+                try:
+                    payload = await resp.json()
+                except Exception:
+                    payload = {}
         except Exception as e:
             logger.warning(f"Google health check failed: {e}", exc_info=True)
-        return False
+            return False
+
+        available = self._model_names(payload)
+        if available and self.model not in available:
+            alternatives = ", ".join(sorted(available)[:8])
+            logger.warning(
+                "Google Gemini model %r is not available for this API key "
+                "(404 on every request). Available models include: %s",
+                self.model,
+                alternatives,
+            )
+            return False
+        return True
+
+    @staticmethod
+    def _model_names(payload: Any) -> set:
+        """The model ids the endpoint offers (empty when unknown)."""
+        names = set()
+        entries = payload.get("models") if isinstance(payload, dict) else None
+        for entry in entries or []:
+            if not isinstance(entry, dict):
+                continue
+            name = entry.get("name")
+            if isinstance(name, str):
+                names.add(name.split("/")[-1])
+        return names
 
     async def generate(self, prompt: str, **kwargs) -> LLMResponse:
         """Generate (streaming when a stream_callback is given)."""

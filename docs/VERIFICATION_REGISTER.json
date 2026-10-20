@@ -149,7 +149,7 @@
       ],
       "status": "unverified",
       "added": "2026-09-26",
-      "note": "2026-10-20 複核：(A) 已修 — CI 五個門（black/isort/mypy/複雜度/type-ignore）本來全紅，已復綠；hold-out 量測本來是空轉的（邏輯語料用 proposition 欄位，腳本只讀 input/question/text），已修並納入 CI；SSE 串流只有 llama.cpp 能用、狀態矩陣 5 個端點恆回 not_implemented、θ 埠綁定 API 缺席導致路由永久 no-op、重複分類債、HAM 保留期與死碼、桌面 App 初始化 ReferenceError——皆已修。(B) 剩：cluster 子系統、command triggers、複雜度路由、後端 TTS 端點、7 個只存不套用的設定（需產品決策）。(C) 本機無 GPU、未安裝 Electron、無 cluster 對等節點、llama.cpp 伺服器不由本專案啟動。"
+      "note": "2026-10-20 複核：(A) 已修 — CI 五個門（black／isort／mypy／複雜度／type-ignore）本來全紅，已復綠；hold-out 量測本來是空轉的（邏輯語料用 proposition 欄位，腳本只讀 input/question/text），已修並納入 CI；SSE 串流只有 llama.cpp 能用、狀態矩陣 5 個端點恆回 not_implemented、θ 埠綁定 API 缺席導致路由永久 no-op、重複分類債、HAM 保留期與死碼、桌面 App 初始化 ReferenceError——皆已修。(B) 剩：cluster 子系統、command triggers、複雜度路由、後端 TTS 端點、7 個只存不套用的設定（需產品決策）。(C) 本機無 GPU、未安裝 Electron、無 cluster 對等節點、llama.cpp 伺服器不由本專案啟動——但瀏覽器 E2E 已用 Playwright+Chromium 完成（tests/frontend/test_dashboard_e2e.py，CI 新增 dashboard-e2e 工作），所以「需要顯示器」不再是那個項目的理由。"
     }
   ]
 }
