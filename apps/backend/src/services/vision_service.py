@@ -3,7 +3,6 @@ import asyncio
 import hashlib
 import io
 import logging
-import random
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple, cast
 
@@ -31,6 +30,9 @@ except ImportError:
 class VisionService:
     """查看服務：提供圖像理解、物體檢測、OCR等多模態處理能力"""
 
+    # Mean frame difference above this counts as motion (0..1).
+    MOTION_THRESHOLD = 0.02
+
     def __init__(self, config: Optional[Dict] = None) -> None:
         self.config = config or {}
         self.enabled = True
@@ -47,6 +49,9 @@ class VisionService:
 
         # VisionPipeline will be lazily initialized
         self._vision_pipeline: Optional[Any] = None
+        # The previous video frame, for the measured motion score.
+        self._previous_video_frame: Optional[bytes] = None
+        self._motion_score: float = 0.0
 
         # 初始化視覺模型 / API
         self.model_config = self.config.get(
@@ -354,9 +359,28 @@ class VisionService:
 
         # 添加視頻特定資訊
         frame_analysis["frame_number"] = frame_number
-        frame_analysis["motion_detected"] = random.choice([True, False])
+        frame_analysis["motion_detected"] = self._detect_motion(frame_data)
+        frame_analysis["motion_score"] = self._motion_score
 
         return frame_analysis
+
+    def _detect_motion(self, frame_data: bytes) -> bool:
+        """Whether this frame differs from the previous one (measured).
+
+        The video path used to report a coin flip ("random.choice([True,
+        False])") — a fabricated measurement presented as analysis. The
+        motion score is now the real difference against the previous frame;
+        the first frame of a video has nothing to compare against, so it
+        reports no motion.
+        """
+        previous = self._previous_video_frame
+        self._previous_video_frame = frame_data
+        if previous is None:
+            self._motion_score = 0.0
+            return False
+        score = self._difference_score(frame_data, previous)
+        self._motion_score = round(float(score), 4)
+        return self._motion_score > self.MOTION_THRESHOLD
 
     async def get_sampling_analysis(
         self,

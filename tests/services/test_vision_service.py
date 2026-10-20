@@ -231,3 +231,46 @@ class TestVisionServiceHelpers:
     def test_set_peer_services(self, vision_service):
         vision_service.set_peer_services({"audio": MagicMock()})
         assert "audio" in vision_service.peer_services
+
+
+class TestVideoMotionIsMeasured:
+    """The video path reported a coin flip as "motion_detected"."""
+
+    def _frame(self, color):
+        from io import BytesIO
+
+        from PIL import Image
+
+        buf = BytesIO()
+        Image.new("RGB", (64, 64), color).save(buf, format="PNG")
+        return buf.getvalue()
+
+    @pytest.mark.asyncio
+    async def test_motion_is_measured_against_the_previous_frame(self):
+        from services.vision_service import VisionService
+
+        svc = VisionService()
+        first = await svc.process_video_frame(self._frame((0, 0, 0)), 0)
+        # The first frame has nothing to compare against.
+        assert first["motion_detected"] is False
+        assert first["motion_score"] == 0.0
+
+        same = await svc.process_video_frame(self._frame((0, 0, 0)), 1)
+        assert same["motion_detected"] is False
+
+        different = await svc.process_video_frame(self._frame((255, 255, 255)), 2)
+        assert different["motion_detected"] is True
+        assert different["motion_score"] > 0
+
+    @pytest.mark.asyncio
+    async def test_the_motion_score_is_not_random(self):
+        """The same frames must always give the same answer."""
+        from services.vision_service import VisionService
+
+        results = []
+        for _ in range(3):
+            svc = VisionService()
+            await svc.process_video_frame(self._frame((0, 0, 0)), 0)
+            result = await svc.process_video_frame(self._frame((10, 10, 10)), 1)
+            results.append(result["motion_detected"])
+        assert len(set(results)) == 1

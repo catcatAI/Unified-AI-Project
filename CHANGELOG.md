@@ -66,6 +66,11 @@ and this project adheres to
 
 ### Fixed
 
+- **視訊的 motion_detected 不再是擲硬幣**（2026-10-20）：`process_video_frame`
+  以前回報 `random.choice([True, False])`——一個假的量測卻以分析結果的樣子
+  出現。現在真的比對前一幀（沿用既有的 `_difference_score`），回傳
+  `motion_detected` 與 `motion_score`；第一幀沒有可比對的對象，如實回報「無
+  動作」。2 個新測試（含「同樣的幀永遠給同樣答案」的反隨機檢查）。
 - **Dashboard 的寵物面板不再顯示假資料**（2026-10-20）：`api/pet.ts` 以前是
   Next.js 端自己維護的 in-memory 模擬（自己衰減、pet/feed/play/rest 回固定
   增減），面板上的數字與它宣稱描述的系統無關。現在後端新增
