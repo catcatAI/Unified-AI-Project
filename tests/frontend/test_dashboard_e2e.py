@@ -35,9 +35,7 @@ DASHBOARD = ROOT / "apps" / "web-dashboard"
 
 playwright_api = pytest.importorskip("playwright.sync_api", reason="playwright not installed")
 
-playwright_browser = pytest.importorskip(
-    "playwright.sync_api", reason="playwright not installed"
-)
+playwright_browser = pytest.importorskip("playwright.sync_api", reason="playwright not installed")
 
 
 def _browser_available() -> bool:
@@ -50,9 +48,7 @@ def _browser_available() -> bool:
         return False
 
 
-pytestmark = pytest.mark.skipif(
-    not _browser_available(), reason="no Playwright browser available"
-)
+pytestmark = pytest.mark.skipif(not _browser_available(), reason="no Playwright browser available")
 
 
 def _free_port() -> int:
@@ -185,9 +181,9 @@ class TestDashboardShowsRealData:
                     if "Backend unreachable" not in body and "0.0" not in body:
                         break
                     page.wait_for_timeout(500)
-                assert "Backend unreachable" not in body, (
-                    "the system panel could not reach the backend"
-                )
+                assert (
+                    "Backend unreachable" not in body
+                ), "the system panel could not reach the backend"
                 assert "CPU" in body
             finally:
                 browser.close()

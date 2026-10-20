@@ -23,9 +23,31 @@ class EnvResolver:
     """
 
     def __init__(self, project_root: Optional[Path] = None):
-        self.project_root = project_root or Path(__file__).parent.parent.parent.parent.parent
+        self.project_root = project_root or self._find_project_root()
         self.os_type = platform.system().lower()
         self.distro = self._detect_distro()
+
+    @staticmethod
+    def _find_project_root() -> Path:
+        """The repository root — the same rule the rest of the project uses.
+
+        It used to be a fixed number of parent hops, which landed on
+        ``apps/backend`` instead of the repository root. The consequences
+        were real: the pnpm workspace file was not found (so the boot status
+        said "degraded" on a perfectly good checkout), the ``.env`` was not
+        found (so the bootstrap *created a second one* under apps/backend/,
+        which the server never reads), and the scaffolded directories landed
+        next to the source instead of beside the other runtime data.
+
+        The rule used everywhere else in the project: walk up until a
+        ``.gitignore`` marks the root.
+        """
+        here = Path(__file__).resolve()
+        for candidate in here.parents:
+            if (candidate / ".gitignore").exists():
+                return candidate
+        # Fallback: the backend package root (apps/backend).
+        return here.parent.parent.parent.parent.parent
 
     def scaffold_directories(self) -> List[Path]:
         """Creates necessary system directories (Minimal Units)."""

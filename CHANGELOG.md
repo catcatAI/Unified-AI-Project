@@ -66,6 +66,13 @@ and this project adheres to
 
 ### Fixed
 
+- **啟動器的專案根目錄差一層**（2026-10-20）：`EnvResolver`
+  用固定層數推算專案根，落在 `apps/backend/` 而不是倉庫根。實際後果：pnpm
+  workspace 檔找不到 → 開機狀態寫成 `degraded`（其實環境正常）；根目錄的 `.env`
+  找不到 → 啟動器**另建了一份
+  `apps/backend/.env`**（伺服器從來不讀它，裡面的 A/B/C 密鑰與真正那份還不一樣）；scaffold 的資料夾也落錯地方。已改為「往上找 .gitignore」──與專案其他模組同一條規則。修正後：狀態
+  `ready`、不再產生第二份 .env、scaffold 落在倉庫根。連帶把 `app_config_loader`
+  的後備設定與 `configs/angela_config.json` 的舊模型名一併修掉。
 - **專案設定的 Gemini 模型全部已失效**（2026-10-20）：`llm.default.yaml` 的
   `google-gemini.model_name`
   是活的（gemini-3.1-flash-lite），但**預設值與硬體分級還停在已下架的模型**——`network_defaults.DEFAULT_GOOGLE_MODEL = "gemini-pro"`、bootstrap 分級的

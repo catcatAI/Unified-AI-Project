@@ -16,28 +16,32 @@ _CONFIG: Dict[str, Any] = {
             "gpu_enabled": False,
         },
         "hardware_tiers": {
+            # 2026-10-20: this fallback mirrored the dead model names
+            # (gemini-1.5-pro-latest / gemini-pro / gemini-1.5-flash — all 404
+            # on the Gemini API version this project speaks). It now names the
+            # live models, like configs/system/bootstrap.default.yaml.
             "Extreme": {
                 "score_threshold": 80,
                 "max_fps": 60,
-                "llm_model": "gemini-1.5-pro-latest",
+                "llm_model": "gemini-3.6-flash",
                 "precision": 1.0,
             },
             "High": {
                 "score_threshold": 60,
                 "max_fps": 60,
-                "llm_model": "gemini-pro",
+                "llm_model": "gemini-3.5-flash-lite",
                 "precision": 0.8,
             },
             "Medium": {
                 "score_threshold": 40,
                 "max_fps": 30,
-                "llm_model": "gemini-pro",
+                "llm_model": "gemini-3.1-flash-lite",
                 "precision": 0.5,
             },
             "Low": {
                 "score_threshold": 0,
                 "max_fps": 24,
-                "llm_model": "gemini-1.5-flash",
+                "llm_model": "gemini-2.5-flash-lite",
                 "precision": 0.3,
             },
         },
