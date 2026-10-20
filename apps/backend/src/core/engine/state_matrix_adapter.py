@@ -62,10 +62,46 @@ class _TemporalProxy:
         ]
 
 
-class _InfluenceSpaceProxy:
+class _StubProxy:
+    """A compatibility stub that says it is a stub.
+
+    The JSON-file adapter (this class) bridges the old StateMatrix4D API to
+    the refactored modules, but several of those modules are *not* part of
+    the adapter: the live implementations are the shared StateMatrix4D
+    (``core.engine.state_matrix``), the allocation policy
+    (``core.allocation``), the resonance engine
+    (``core.allocation.resonance``) and the anchor learner
+    (``core.engine.anchor_learning``).
+
+    The old proxies returned an empty result *silently*, so a caller asking
+    for a resonance profile or the best axis got "no answer" and could not
+    tell it apart from a real one. They now warn once, naming the real
+    implementation.
+    """
+
+    _live_implementation = ""
+
+    def _warn_once(self, method: str) -> None:
+        if getattr(self, "_warned", False):
+            return
+        object.__setattr__(self, "_warned", True)
+        logger.warning(
+            "StateMatrixAdapter (JSON store): %s.%s is a compatibility stub and returns an "
+            "empty result — the live implementation is %s. Use the shared StateMatrix4D "
+            "(core.engine.state_matrix.get_shared_state_matrix) for real behaviour.",
+            type(self).__name__,
+            method,
+            self._live_implementation or "the shared StateMatrix4D",
+        )
+
+
+class _InfluenceSpaceProxy(_StubProxy):
     """Proxy for influence space computation."""
 
+    _live_implementation = "core.engine.state_matrix.StateMatrix4D.compute_influences"
+
     def compute(self, **kwargs) -> Dict[str, float]:
+        self._warn_once("compute")
         return {}
 
 
@@ -76,27 +112,36 @@ class _EtaProxy:
         self.module_registry = {}
 
 
-class _AnchorLearningProxy:
+class _AnchorLearningProxy(_StubProxy):
     """Proxy for anchor learning access."""
 
+    _live_implementation = "core.engine.anchor_learning.AnchorLearningEngine"
+
     def get_best_axis(self, **kwargs) -> Optional[str]:
+        self._warn_once("get_best_axis")
         return None
 
 
-class _ResonanceEngineProxy:
+class _ResonanceEngineProxy(_StubProxy):
     """Proxy for resonance engine access."""
 
+    _live_implementation = "core.allocation.resonance.ResonanceEngine"
+
     def compute_profile(self, **kwargs) -> Dict[str, Any]:
+        self._warn_once("compute_profile")
         return {}
 
 
-class _AllocationPolicyProxy:
+class _AllocationPolicyProxy(_StubProxy):
     """Proxy for allocation policy access."""
+
+    _live_implementation = "core.allocation.AllocationPolicy"
 
     def __init__(self):
         self.stages = []
 
     def decide(self, **kwargs) -> Dict[str, Any]:
+        self._warn_once("decide")
         return {"action": "none", "reason": "no policy configured"}
 
     @property

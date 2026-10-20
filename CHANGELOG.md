@@ -66,6 +66,14 @@ and this project adheres to
 
 ### Fixed
 
+- **core/bio 補上冒煙級測試＋相容 stub 開始說話**（2026-10-20）：gap-closure
+  計畫列的「薄弱檔按域補測（先 core/bio 的冒烟級）」：core/bio 有 20 個模組，
+  此前只有 import 級別的覆蓋——建構子拋錯或方法回傳錯型別都不會讓任何測試紅。
+  新增 16 個冒煙測試（ANS／小腦／情緒混合／HPA／習慣／激素動力学／輸入感測／
+  動力學驗證／多維觸發／神經可塑性／顯性學習）。另外，
+  `StateMatrixAdapter`（JSON 檔案版）的相容 proxy（anchor learning／resonance／
+  allocation policy）以前**靜默**回空結果，呼叫端分不出「沒答案」與「真答案」；
+  現在第一次使用會警告並指出真正的實作在哪（共享 StateMatrix4D／core.allocation）。
 - **刪除檔案改成可復原**（2026-10-20）：`file_ops.default.yaml` 宣告了
   `limits.move_to_trash: true`（可復原的刪除），但兩條刪除路徑（檔案操作
   handler 與桌面接管的 delete_file）都是直接 unlink/rmtree——被 AI 誤解的
