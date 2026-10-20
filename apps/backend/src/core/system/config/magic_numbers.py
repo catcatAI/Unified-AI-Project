@@ -236,6 +236,34 @@ def batch_value(key: str, default: int = 10) -> int:
     return _safe_int(_get(key, default), default)
 
 
+def file_ops_confirm_over_mb(default: int = 10) -> int:
+    """Write size (MB) above which a file write needs an explicit confirmation.
+
+    Reads ``standard.behavior.file_ops.limits.require_confirmation_over_mb``.
+    """
+    try:
+        return _safe_int(
+            _get("standard.behavior.file_ops.limits.require_confirmation_over_mb", default),
+            default,
+        )
+    except Exception:
+        return default
+
+
+def file_ops_move_to_trash(default: bool = True) -> bool:
+    """Whether deletes should move the file to the trash instead of removing it.
+
+    Reads ``standard.behavior.file_ops.limits.move_to_trash``.
+    """
+    try:
+        value = _get("standard.behavior.file_ops.limits.move_to_trash", default)
+        if isinstance(value, bool):
+            return value
+        return str(value).strip().lower() in ("1", "true", "yes", "on")
+    except Exception:
+        return default
+
+
 def max_file_write_mb(default: int = 50) -> int:
     """Single-write size cap for file operations, in megabytes.
 

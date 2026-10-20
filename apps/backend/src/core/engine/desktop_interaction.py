@@ -738,7 +738,13 @@ class DesktopInteraction:
                 logger.error("Refusing to delete file outside allowed roots: %s", file_path)
                 return False
             if file_path.exists() and file_path.is_file():
-                file_path.unlink()
+                # A recoverable delete (the declared file_ops behaviour): the
+                # file goes to the trash instead of being destroyed, so a
+                # mis-interpreted "delete this" is reversible.
+                from core.system.trash import move_to_trash
+
+                if move_to_trash(file_path) is None:
+                    file_path.unlink()
 
                 operation = FileOperation(
                     operation_id=f"delete_{datetime.now().timestamp()}",

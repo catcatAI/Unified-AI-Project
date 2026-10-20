@@ -236,14 +236,22 @@ class TestHandlerFileOperation:
             )
             assert "hello" in result
 
-    def test_delete(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            path = os.path.join(tmpdir, "test.txt")
-            _run_async(self.handler.handle("file_op_create", {"action": "create", "path": path}))
-            result = _run_async(
-                self.handler.handle("file_op_delete", {"action": "delete", "path": path})
-            )
-            assert "刪除" in result
+    def test_delete(self, tmp_path, monkeypatch):
+        """The configured delete is recoverable: the file goes to the trash.
+
+        The trash location is redirected to a temp dir so the test never
+        touches the user's real trash.
+        """
+        from core.system import trash
+
+        monkeypatch.setattr(trash, "trash_dir", lambda: tmp_path / "trash")
+        path = os.path.join(str(tmp_path), "test.txt")
+        _run_async(self.handler.handle("file_op_create", {"action": "create", "path": path}))
+        result = _run_async(
+            self.handler.handle("file_op_delete", {"action": "delete", "path": path})
+        )
+        assert "回收筒" in result or "trash" in result.lower()
+        assert not os.path.exists(path), "the file was destroyed instead of moved"
 
     def test_list_directory(self):
         with tempfile.TemporaryDirectory() as tmpdir:

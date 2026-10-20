@@ -66,6 +66,15 @@ and this project adheres to
 
 ### Fixed
 
+- **刪除檔案改成可復原**（2026-10-20）：`file_ops.default.yaml` 宣告了
+  `limits.move_to_trash: true`（可復原的刪除），但兩條刪除路徑（檔案操作
+  handler 與桌面接管的 delete_file）都是直接 unlink/rmtree——被 AI 誤解的
+  「刪掉這個」從此救不回來。現在新增 `core/system/trash.py`（Linux/macOS 用
+  系統回收筒慣例、Windows 用可復原的本地 Trash 並如實說明它不是回收筒），
+  兩條路徑都改走回收筒，回收筒不可用時才退回硬刪除。
+- **超過門檻的寫入先問再寫**（2026-10-20）：`limits.require_confirmation_over_mb`
+  同樣是死設定——超過門檻的寫入直接落盤。現在超過門檻且未確認時回覆確認訊息
+  （不寫入），確認後才寫。
 - **219 支腳本完成定級，孤兒腳本不再無聲存在**（2026-10-20）：gap-closure
   計畫列的「69 孤兒腳本逐個定級（留/刪/歸檔）」一直是開的——scripts/ 長到 219
   支，63 支沒有任何文件、工作流程或程式引用，卻沒有任何紀錄說明它們是什麼。

@@ -16,7 +16,11 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from core.i18n.i18n_manager import t
-from core.system.config.magic_numbers import max_file_write_mb
+from core.system.config.magic_numbers import (
+    file_ops_confirm_over_mb,
+    file_ops_move_to_trash,
+    max_file_write_mb,
+)
 from core.utils import safe_error as _safe_error
 
 logger = logging.getLogger(__name__)
@@ -291,6 +295,16 @@ class FileOperationHandler:
         if size > limit_mb * 1024 * 1024:
             logger.warning("Refusing oversized write to %s (%d bytes)", target, size)
             return t("file_ops.file_too_large", path=str(target), limit_mb=limit_mb)
+        # A write above the confirmation threshold needs an explicit yes.
+        confirm_mb = file_ops_confirm_over_mb()
+        if size > confirm_mb * 1024 * 1024 and not kw.get("confirmed"):
+            logger.info("Write to %s (%d bytes) needs confirmation", target, size)
+            return t(
+                "file_ops.confirm_required",
+                path=str(target),
+                size_mb=round(size / (1024 * 1024), 1),
+                limit_mb=confirm_mb,
+            )
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(content, encoding="utf-8")
         return t("file_ops.written", chars=len(content), path=str(target))
@@ -318,6 +332,14 @@ class FileOperationHandler:
     def _delete(self, target: Path, **kw) -> str:
         if not target.exists():
             return t("file_ops.file_not_found", path=str(target))
+        # The configured behaviour is a *recoverable* delete (move to trash);
+        # a hard delete is the fallback when the trash is unavailable.
+        if file_ops_move_to_trash():
+            from core.system.trash import move_to_trash
+
+            moved = move_to_trash(target)
+            if moved is not None:
+                return t("file_ops.moved_to_trash", path=str(target), trash=str(moved))
         if target.is_dir():
             shutil.rmtree(target)
             return t("file_ops.dir_deleted", path=str(target))
