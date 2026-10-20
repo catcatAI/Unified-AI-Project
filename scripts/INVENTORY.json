@@ -662,6 +662,11 @@
       "referenced": true,
       "purpose": "L2-4 多模態接地 — 硬件規格自適應（<50MB, <3s, 分批+sleep）"
     },
+    "probe_neural_bridge.py": {
+      "category": "probe",
+      "referenced": true,
+      "purpose": "中間層（神經橋接）量測 — 接觸 / 對齊 / 合成"
+    },
     "probe_reasoning_unseen.py": {
       "category": "probe",
       "referenced": true,

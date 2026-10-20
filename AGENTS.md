@@ -910,6 +910,24 @@ collected — 0 errors**).
 > angela_bench re-run confirmed no regression 80/26.7/97.5/0/100); full suite
 > 5,804 in 4.5min.
 
+> ✅ **NOTE (Updated 2026-10-21, 中間層)**: **中間層（神經 ↔ 確定性老師）**
+> 完成。新增 `apps/backend/src/ai/reasoning/neural_bridge.py`：使用者要求的
+> 「先接觸、再依反饋與神經網路對齊」三段式——**接觸**（ONNX
+> 多語編碼器把未見改述落到老師概念原型）／**對齊**（老師回饋只移動概念原型、
+> 不記題目）／**合成**（關係圖＋極值，語意同
+> `ai.symbolic_reasoner`）。概念原型的種子**只取老師詞彙**
+> （`_GREATER`/`_LESSER`/`_EXTRA_*`＋其「比較詞→最高級」對照表），
+> `tests/ai/test_neural_bridge.py` 有血緣測試守住。實測（`python
+> scripts/probe_neural_bridge.py`）：控制組（老師詞彙 12 題）中間層 12/12 vs
+> 老師 5/12（老師冠詞實體抽取缺陷）；**留出集**（老師解不了的改述 20
+> 題，開發期未看過、未對齊）中間層 16/20（對齊後 17/20）vs 老師 2/20；
+> 對齊回饋讓開發組 3/5 → 5/5。留出集 3
+> 題未答＝編碼器接觸失敗（sweltering/compact/thicker），如實記錄。
+> `scripts/probe_reasoning_unseen.py` 三欄：確定性 100/100、純神經 0/100、純神經＋中間層
+> 87/100——**純神經門檻仍未達**（中間層不等於純神經）。
+> **8,411 passed / 107 skipped / 0 failed**（`pytest tests/
+> apps/backend/tests/`）。
+
 ### JavaScript/TypeScript
 
 ```bash

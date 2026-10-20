@@ -19,7 +19,7 @@ meta:
   version: "2.0.0"
   language: zh-TW
   generated_view: docs/STATUS_MATRIX.md
-  last_sync: "2026-09-28"
+  last_sync: "2026-10-21"
 
 features:
   - id: main-flow-e2e
@@ -212,8 +212,8 @@ features:
     claim: 全倉綠
     status: verified
     verify_command: pytest
-    evidence: 8,720 passed, 112 skipped, 0 failed（2026-10-20 測試數量同步批次全 testpaths 實測：tests/＋apps/backend/tests/＋apps/game-rpg/tests＋scripts）
-    last_verified: "2026-10-20"
+    evidence: 8,751 passed, 112 skipped, 0 failed（2026-10-21 測試數量同步批次全 testpaths 實測：tests/＋apps/backend/tests/＋apps/game-rpg/tests＋scripts）
+    last_verified: "2026-10-21"
 
   - id: mypy-debt
     domain: mypy 型別債
@@ -302,6 +302,28 @@ features:
     verify_command: pytest tests/test_run_benchmarks.py
     evidence: 33 tests；115 題官方結果 results/bench_20260922-091107.json（native math 80%/knowledge 26.7%/knowledge_mc 97.5%/code 0%/routing 100%；native-max mc 100%）＋--gate-native 回歸門納入 CI，逐題明細可複審；**跨 AI 對照已實跑**（2026-10-20，同一份資料同一個評分器打 Gemini-3.1-flash-lite：knowledge 15/15 = 100%（可比）、math 35/40（4 筆為端點 503 暫時性錯誤，非答錯）——配額／過載錯誤現在記為 error 並顯示 n/a (N err)，不再被算成 0%；該 key 目前高需求＋日配額吃緊，全量可比跑分需服務端恢復時重跑）
     last_verified: "2026-10-20"
+
+  - id: neural-bridge
+    domain: 中間層（神經 ↔ 確定性老師）
+    claim: 以老師詞彙為概念原型，用多語編碼器接觸未見改述，再用老師回饋對齊原型
+    status: verified
+    implementation:
+      - apps/backend/src/ai/reasoning/neural_bridge.py
+    tests: [tests/ai/test_neural_bridge.py]
+    verify_command: pytest tests/ai/test_neural_bridge.py
+    evidence: >-
+      28 tests passed（2026-10-21 實測）。三段式：接觸（semantic_qa 的 ONNX
+      多語編碼器把「exceeds/outranks/cooler/junior」落到老師概念原型）→ 對齊
+      （`align_from_feedback`／`align_phrase` 只移動概念原型，不記題目）→ 合成
+      （關係圖＋極值，語意與 `ai.symbolic_reasoner` 同義）。實測（`python
+      scripts/probe_neural_bridge.py`）：控制組（老師詞彙 12 題）中間層 12/12
+      vs 老師 5/12（老師的文章實體抽取缺陷）；留出集（老師詞彙解不了的改述
+      20 題，開發期未看過、未對齊）中間層 16/20（對齊後 17/20）vs 老師 2/20；
+      對齊回饋讓開發組 3/5 → 5/5。留出集 3 題未答為編碼器接觸失敗
+      （sweltering/compact/thicker），非迴歸。`scripts/probe_reasoning_unseen.py`
+      三欄：確定性 100/100、純神經 0/100、純神經＋中間層 87/100（純神經門檻
+      仍未達，中間層不等於純神經）。
+    last_verified: "2026-10-21"
 
   - id: msba-pipeline
     domain: MSBA 語意區塊架構

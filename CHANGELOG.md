@@ -15,6 +15,24 @@ and this project adheres to
 
 ### Added
 
+- **中間層：神經 ↔ 確定性老師的橋接**（2026-10-21）：新增
+  `apps/backend/src/ai/reasoning/neural_bridge.py`——使用者要求的「先接觸、再依反饋與神經網路對齊」的中間層。三段式：①
+  **接觸**：以 `ai.unified_engine.semantic_qa` 的 ONNX
+  多語編碼器把比較詞「接觸」到概念原型（維度 ×
+  方向），所以老師詞彙外的改述（exceeds／outranks／cooler／junior）也能歸位；②
+  **對齊**：老師（或人類註解）回饋某詞該歸哪個概念時，概念原型往該詞挪一步——
+  只移動原型、不記題目，因此是泛化不是記憶；③
+  **合成**：關係圖＋極值（最大＝沒有入邊、最小＝沒有出邊），語意與
+  `ai.symbolic_reasoner` 同義。概念原型的種子**只取老師自己的詞彙**
+  （`_GREATER`/`_LESSER`/`_EXTRA_*` 與其「比較詞→最高級」對照表），測試會守住這條血緣。
+  量測（`python scripts/probe_neural_bridge.py`）：控制組（老師詞彙 12
+  題）中間層 12/12 vs 老師 5/12（老師在冠詞實體上有抽取缺陷）；**留出集**
+  （老師詞彙解不了的改述 20 題，開發期未看過、未參與對齊）中間層 16/20（對齊後
+  17/20）vs 老師 2/20；對齊回饋讓開發組 3/5 → 5/5。留出集 3
+  題未答是編碼器的接觸失敗（sweltering／compact／thicker），已如實記錄。
+  `scripts/probe_reasoning_unseen.py` 加第三欄「純神經＋中間層」＝
+  87/100（純神經 semantic_qa 仍 0/100——中間層不等於純神經，門檻未變）。
+
 - **補完批次（收尾）**（2026-10-20）：把專案自己記錄的未完項逐一收掉——
   ① 測試數量單一權威機制
   `scripts/check_test_count.py`（量測／門禁／同步文件；CI 的硬編碼窗口 7500-8400 已被專案成長（8,726）頂爆，改為比例式容差），STATUS_MATRIX

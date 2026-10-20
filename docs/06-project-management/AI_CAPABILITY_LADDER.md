@@ -50,12 +50,14 @@
 | L1-5 字典品質     | `python scripts/audit_dictionary_quality.py`                                           | dup < 5%              | avg dup **0.86%**                                          | ✅                                             |
 | L2-1 對話一致性   | `python scripts/benchmark_dialogue_coherence.py`                                       | 人設 ≥80% / 指代 ≥70% | 5/5 = **100%**                                             | ✅                                             |
 | L2-2 記憶命中     | `python scripts/benchmark_memory_hit.py`                                               | top-5 ≥60%            | 60/100 = **60%**（框架模擬；真實向量召回待 HAM 460K 接入） | ⚠️ 剛好達標                                    |
-| L2-3 純神經推理   | `python scripts/probe_reasoning_unseen.py`                                             | ≥50%                  | 確定性 100/100、純神經 **0%**                              | ❌ 未達（需在 FixedSizeCore 訓 5K 未見推理域） |
+| L2-3 純神經推理   | `python scripts/probe_reasoning_unseen.py`                                             | ≥50%                  | 確定性 100/100、純神經 **0%**、純神經＋中間層 87/100       | ❌ 未達（純神經仍 0%；中間層不等於純神經）      |
 | L3-1 無 RAG 知識  | `python scripts/run_benchmarks.py --backend native --suite knowledge_mc --gate-native` | ≥90%                  | **97.5%**                                                  | ✅                                             |
 | L3-2 工具呼叫     | `pytest tests/services/test_handlers.py`                                               | 100%                  | **60 passed**                                              | ✅                                             |
 | 整體回歸          | `pytest tests/ apps/backend/tests/ apps/game-rpg/tests/`                               | 0 failed              | **8,688 passed / 112 skipped / 0 failed**                  | ✅                                             |
 
-> **誠實說明**：L2-3（純神經推理）仍是 0%——確定性引擎答對題目不等於神經會做題（`INTELLIGENCE_ASSESSMENT §4.1`）。這一格沒有投影，量測就是 0。
+> **誠實說明**：L2-3（純神經推理）仍是 0%——確定性引擎答對題目不等於神經會做題（`INTELLIGENCE_ASSESSMENT §4.1`）。這一格沒有投影，量測就是 0。中間層（`ai/reasoning/neural_bridge.py`）是**第三條路**，不是純神經路徑的替代品：它用多語編碼器把未見改述「接觸」到老師的概念原型，再用老師回饋對齊原型，最後合成關係圖。
+>
+> 中間層的獨立量測（`python scripts/probe_neural_bridge.py`，2026-10-21）：老師詞彙解不了的改述**留出集** 20 題（開發期未看過、未參與對齊）——老師 2/20、中間層 16/20（對齊後 17/20）；老師詞彙控制組 12 題——老師 5/12、中間層 12/12（老師在冠詞實體上有抽取缺陷）。留出集 3 題未答是編碼器的接觸失敗（sweltering／compact／thicker），不是迴歸。
 
 ---
 

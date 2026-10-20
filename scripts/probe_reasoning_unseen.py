@@ -47,8 +47,12 @@ def main():
         f"硬件規格自適應（L2-3 未見推理 100 問）: GPU={hw['gpu']} RAM={hw['ram_gb']:.1f} tier={tier}"
     )
 
+    # 中間層（接觸→對齊→合成）：以老師詞彙為概念原型，接觸未見改述
+    from ai.reasoning.neural_bridge import NeuralBridge
     from ai.symbolic_reasoner import route_reasoning
     from ai.unified_engine.semantic_qa import SemanticQA
+
+    bridge = NeuralBridge()
 
     # 未訓推理域的 semantic_qa（僅知識 6 問）
     qa = SemanticQA()
@@ -60,6 +64,7 @@ def main():
     batch = int(batch * adaptive["ed3n_batch_multiplier"] / 1.5)  # 歸一
     symbolic_hits = 0
     neural_hits = 0
+    bridge_hits = 0
     for i in range(0, len(UNSEEN_REASONING), batch):
         for q, exp in UNSEEN_REASONING[i : i + batch]:
             sym = route_reasoning(q)
@@ -68,11 +73,16 @@ def main():
             ans, sim = qa.answer(q) or (None, 0)
             if ans and exp.lower() in ans.lower() and sim >= 0.7:
                 neural_hits += 1
+            bridged = bridge.answer(q)
+            if bridged and exp.lower() in str(bridged).lower():
+                bridge_hits += 1
         time.sleep(0.02)
 
     print(f"  確定性 symbolic: {symbolic_hits}/100 = {symbolic_hits}%（未見改述應低）")
     print(f"  純神經 semantic_qa（未訓推理）: {neural_hits}/100 = {neural_hits}%（現 0% 基線）")
-    print(f"  目標 L2-3 純神經 ≥50%（需在 FixedSizeCore 訓 5K 未見推理域）")
+    print(f"  純神經＋中間層（橋接）: {bridge_hits}/100 = {bridge_hits}%")
+    print("  中間層在「老師詞彙解不了的改述」上的獨立量測：python scripts/probe_neural_bridge.py")
+    print("  目標 L2-3 純神經 ≥50%（需在 FixedSizeCore 訓 5K 未見推理域）")
     # 硬件無關
     hw_same = {
         "gpu": "Intel Arc B570",
@@ -82,12 +92,12 @@ def main():
         "gpu_vendor": "intel",
     }
     print(
-        f"  筆電同規格 tier {HardwareProfile.get_tier(hw_same)} → {'✅' if HardwareProfile.get_tier(hw_same)==tier else '❌'}"
+        f"  筆電同規格 tier {HardwareProfile.get_tier(hw_same)} → {'✅' if HardwareProfile.get_tier(hw_same) == tier else '❌'}"
     )
     # 提示下一步
     if symbolic_hits < 20 and neural_hits < 5:
         print(
-            f"  基線確認：未見推理 gap 存在，L2-3 需收集 5K 未覆蓋推理題 + FixedSizeCore 訓練（hardware adaptive batch）"
+            "  基線確認：未見推理 gap 存在，L2-3 需收集 5K 未覆蓋推理題 + FixedSizeCore 訓練（hardware adaptive batch）"
         )
     return 0
 
