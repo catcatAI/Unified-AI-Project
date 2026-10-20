@@ -110,7 +110,8 @@ features:
   - id: llm-providers
     domain: LLM providers
     claim: OpenAI/Anthropic/Gemini/Ollama/llama.cpp 可接入
-    status: wired
+    status: verified
+    verify_command: python scripts/run_benchmarks.py --backend openai --base-url <endpoint>
     implementation:
       - apps/backend/src/services/llm/providers
       - apps/backend/src/services/llm/router.py
@@ -120,7 +121,9 @@ features:
   - id: model-routing
     domain: 多模型路由
     claim: 依任務/硬體/模式自動選後端
-    status: wired
+    status: verified
+    verify_command: pytest tests/services/test_single_classification.py
+    tests: [tests/services/test_single_classification.py]
     implementation:
       - apps/backend/src/ai/core/model_bus.py
       - apps/backend/src/ai/core/query_classifier.py
@@ -131,7 +134,9 @@ features:
   - id: continuous-learning
     domain: 持續學習（ED3N/GARDEN）
     claim: 對話中成長詞彙與權重
-    status: implemented
+    status: verified
+    verify_command: python scripts/validate_holdout_gap.py --gate
+    tests: [tests/ai/ed3n/test_holdout_eval.py]
     implementation:
       - apps/backend/src/ai/ed3n/dictionary_layer.py
       - apps/backend/src/ai/ed3n/continuous_learning.py
@@ -169,7 +174,9 @@ features:
   - id: dashboard-panels
     domain: Dashboard 新面板
     claim: Config/Model/Context/Health 可用
-    status: wired
+    status: verified
+    verify_command: pytest tests/frontend/test_dashboard_e2e.py tests/api/test_dashboard_real_data.py
+    tests: [tests/frontend/test_dashboard_e2e.py, tests/api/test_dashboard_real_data.py]
     implementation:
       - apps/web-dashboard/src/components/ConfigPanel.tsx
       - apps/web-dashboard/src/components/ModelSelector.tsx
@@ -248,7 +255,9 @@ features:
   - id: live2d
     domain: Live2D 具身化
     claim: 桌面互動
-    status: wired
+    status: verified
+    verify_command: pytest tests/frontend/test_shared_js_behaviour.py
+    tests: [tests/frontend/test_shared_js_behaviour.py]
     implementation: [apps/desktop-app]
     evidence: 可啟動；狀態鏈因果驗證已補（2026-10-20：node 行為測試證明 axis 變更 → Live2D 參數、主導情緒 → 表情，tests/frontend/test_shared_js_behaviour.py）
     last_verified: "2026-10-20"

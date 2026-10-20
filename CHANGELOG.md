@@ -66,6 +66,10 @@ and this project adheres to
 
 ### Fixed
 
+- **成熟度帳跟著事實更新**（2026-10-20）：5 個欄位的驗證真的發生了，狀態欄位卻還停在舊值——Dashboard 新面板（真瀏覽器 E2E）、Live2D 具身化（狀態鏈因果驗證）、多模型路由（一則訊息只分類一次）、持續學習（hold-out 成為常態門）、LLM
+  providers（跨 AI 品質基準已實跑）——一律由 `wired`/`implemented` 升為
+  `verified`，並附上各自的驗證指令與測試檔。成熟度分布：verified 22／wired
+  3／implemented 2。
 - **跨 AI 對照真的跑起來了**（2026-10-20）：同一份 115 題資料、同一個評分器打 Gemini-3.1-flash-lite：knowledge
   **15/15 = 100%（可比）**、math 35/40（4 筆為端點 503「high
   demand」暫時性錯誤，**不是答錯**）。先前這項被記成「待外部端點接入」——端點其實可用，難的是 harness 誠實：配額／過載錯誤以前被算成答錯，被 rate
