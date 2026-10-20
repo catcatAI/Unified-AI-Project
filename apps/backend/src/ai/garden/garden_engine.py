@@ -547,9 +547,7 @@ def _template_extract_values(
     return input_prefix, input_suffix, expr, result_val
 
 
-def _template_fill_reasoning(
-    output_template: str, expr: str, result_val: str
-) -> Tuple[str, bool]:
+def _template_fill_reasoning(output_template: str, expr: str, result_val: str) -> Tuple[str, bool]:
     """Reasoning fill: {R0},{R1}... for result numbers, {L0_input} for expr."""
     inserted = False
     # Replace result numbers in order with {R0}, {R1}, ...
@@ -699,7 +697,6 @@ def _reconstruct_with_template(
     if engine_type == "reasoning":
         return _reconstruct_reasoning(templates, user_input, engine_result)
     return _reconstruct_generic(templates, user_input, result_val, engine_result)
-
 
 
 def record_template_match(
@@ -898,9 +895,7 @@ class GARDENEngine:
             fpath = os.path.join(config_dir, fname)
             loaded_from_config += self._load_config_file(fpath, fname)
         if loaded_from_config > 0:
-            logger.info(
-                "GARDEN: loaded %d additional concepts from config/", loaded_from_config
-            )
+            logger.info("GARDEN: loaded %d additional concepts from config/", loaded_from_config)
         return loaded_from_config
 
     def _wire_dictionary_into_snn(self) -> None:
@@ -943,7 +938,6 @@ class GARDENEngine:
             self.snn.vocab_size,
         )
 
-
     # ------------------------------------------------------------------
     # Core processing pipeline
     # ------------------------------------------------------------------
@@ -985,9 +979,7 @@ class GARDENEngine:
                 orphan_keys.append(f"tpl:{evicted_out}")
             removed = self.snn.compact_removed_keys(orphan_keys)
             if removed:
-                logger.debug(
-                    "GARDEN: compacted %d orphan template keys after FIFO evict", removed
-                )
+                logger.debug("GARDEN: compacted %d orphan template keys after FIFO evict", removed)
         except Exception as e:
             logger.debug("GARDEN: template orphan compaction failed: %s", e)
 
@@ -1034,7 +1026,6 @@ class GARDENEngine:
             self._evict_oldest_template()
 
         return in_tpl, out_tpl
-
 
     def _learned_slots(
         self, in_tpl: str, in_vars: List[str]
@@ -1264,7 +1255,11 @@ class GARDENEngine:
         return response
 
     def _cycle_refine(
-        self, response: str, input_keys: Dict[str, float], text: str, context: Optional[Dict[str, Any]]
+        self,
+        response: str,
+        input_keys: Dict[str, float],
+        text: str,
+        context: Optional[Dict[str, Any]],
     ) -> Tuple[str, int]:
         """Stage 6 (cycling): iterative refinement if response is weak.
 
@@ -1390,7 +1385,6 @@ class GARDENEngine:
         current_output, cycles_used = self._cycle_refine(response, input_keys, text, context)
         self._compute_last_confidence(input_keys, current_output, cycles_used)
         return current_output
-
 
     # ------------------------------------------------------------------
     # Multi-step reasoning (Phase 4.3)
@@ -1689,7 +1683,6 @@ class GARDENEngine:
             "hebbian_delta": round(delta, 6),
         }
 
-
     def _batch_non_engine_indices(self, samples: List[Dict[str, str]]) -> List[int]:
         """Pre-compute which samples are handled by deterministic engines.
         Those samples are pure computational facts — skip dictionary growth
@@ -1974,7 +1967,6 @@ class GARDENEngine:
             "engine_handled_count": engine_handled,
         }
 
-
     # ------------------------------------------------------------------
     # Hormonal modulation passthrough
     # ------------------------------------------------------------------
@@ -2122,7 +2114,6 @@ class GARDENEngine:
         # (covers checkpoints saved before reflex persistence was added).
         self._load_config_reflex_into(self.reflex)
         logger.info("GARDEN: engine loaded from %s", directory)
-
 
     def _apply_preset_updates(self) -> None:
         """Update existing preset entries with enriched surface forms.

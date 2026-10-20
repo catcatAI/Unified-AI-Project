@@ -301,13 +301,21 @@ class SkillSelector:
 
         dispatch = {
             SkillID.MOVE: lambda: self._estimate_move_params(),
-            SkillID.DIG: lambda: {"target_node": "auto", "direction": "forward", "tool": prop.wielded_item},
+            SkillID.DIG: lambda: {
+                "target_node": "auto",
+                "direction": "forward",
+                "tool": prop.wielded_item,
+            },
             SkillID.PLACE: lambda: self._estimate_place_params(prop),
             SkillID.CRAFT: lambda: self._estimate_craft_params(prop),
             SkillID.COMBAT: lambda: self._estimate_combat_params(prop),
             SkillID.NAVIGATE: lambda: {"target_pos": None, "path": None},
             SkillID.EAT: lambda: self._estimate_eat_params(prop),
-            SkillID.BUILD: lambda: {"blueprint": "shelter_5x5x3", "origin": prop.position, "rotation": 0},
+            SkillID.BUILD: lambda: {
+                "blueprint": "shelter_5x5x3",
+                "origin": prop.position,
+                "rotation": 0,
+            },
             SkillID.LOOK: lambda: {"yaw": 0.0, "pitch": -0.3, "target": "scan"},
         }
         fn = dispatch.get(skill_id)
@@ -316,8 +324,9 @@ class SkillSelector:
 
         return params
 
-
-    def _param_move(self, params: Dict, continuous_bias: np.ndarray, discrete_triggers: Dict) -> None:
+    def _param_move(
+        self, params: Dict, continuous_bias: np.ndarray, discrete_triggers: Dict
+    ) -> None:
         """MOVE bias: 3 dims"""
         continuous_bias[0] = params.get("forward", 1.0)
         continuous_bias[1] = params.get("strafe", 0.0)
@@ -399,7 +408,6 @@ class SkillSelector:
             priority=1.0,
             params=params,
         )
-
 
     def _get_termination_condition(self, skill_id: SkillID, params: Dict, state: GameState) -> str:
         """生成終止條件字串"""

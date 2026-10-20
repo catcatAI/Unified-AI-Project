@@ -73,6 +73,21 @@ def _spawn_background_task(coro, description: str = "") -> asyncio.Task:
     return task
 
 
+def _display_name(user_name: Optional[str], user_id: Optional[str]) -> str:
+    """A display name that is not a raw user id.
+
+    The clients send ``user_id`` (a stable key) and sometimes a display
+    name. When only the id is known, the id must NOT become the name the
+    assistant greets the user with ("smoke_user，這個任務我目前做不到…"
+    reads like a bug). An empty name makes the fallback use a neutral
+    salutation instead.
+    """
+    name = (user_name or "").strip()
+    if not name or (user_id and name == str(user_id).strip()):
+        return ""
+    return name
+
+
 def _bind_current_user(user_id: Optional[str]) -> Any:
     """Bind the requesting user so the instance name resolves per user."""
     try:
@@ -454,8 +469,6 @@ async def _inject_emotion_behavioral_context(
         logger.warning(f"EmotionSystem behavioral injection failed: {e}", exc_info=True)
 
 
-
-
 # Emotion → Biological stress/relaxation mapping for C³ 4.0 cross-component chain
 _EMOTION_TO_STRESS_MAP: Dict[str, float] = {
     "anger": 0.3,
@@ -566,8 +579,8 @@ async def _try_math_verification(
 def _analyze_user_emotion(user_message: str) -> Optional[Dict[str, Any]]:
     """Keyword-detected user-text emotion (inference, not measurement)."""
     try:
-        emotion_result: Optional[Dict[str, Any]] = (
-            _get_emotion_analyzer().analyze_emotion(user_message)
+        emotion_result: Optional[Dict[str, Any]] = _get_emotion_analyzer().analyze_emotion(
+            user_message
         )
         logger.debug(f"Emotion analysis: {emotion_result}")
         return emotion_result
@@ -623,8 +636,6 @@ async def _analyze_emotion_and_crisis(
     crisis_level = _assess_crisis_level(user_message)
     await _fire_bio_stimulus(bio, user_message, emotion_result)
     return emotion_result, crisis_level
-
-
 
 
 async def _try_alignment_check(
@@ -724,9 +735,7 @@ def _ctx_retrieved(
     context["retrieved_context"] = retrieved_ctx
 
 
-def _ctx_dialogue(
-    context: Dict[str, Any], session_id: str, user_message: str
-) -> None:
+def _ctx_dialogue(context: Dict[str, Any], session_id: str, user_message: str) -> None:
     """Dialogue context injection."""
     try:
         dialogue_ctx = _get_dialogue_ctx()
@@ -791,8 +800,6 @@ async def _build_chat_context(
         context["history"] = history
 
     _ctx_life_essence(context)
-
-
 
 
 def _gate_detail_text(action_result: Any) -> str:
@@ -1085,15 +1092,17 @@ def _agent_route_eda_override(
     """EDA/AI-card requests override the classification to eda (high confidence)."""
     eda_request = agent_orchestrator_cls.is_eda_execution_request(user_message)
     ai_card_request = agent_orchestrator_cls.is_ai_card_request(user_message)
-    eda_followup = context.get("_eda_followup") is True and agent_orchestrator_cls.is_eda_followup_request(
-        user_message
-    )
+    eda_followup = context.get(
+        "_eda_followup"
+    ) is True and agent_orchestrator_cls.is_eda_followup_request(user_message)
     if eda_request or ai_card_request or eda_followup:
         return "eda", max(confidence, 0.8)
     return primary_type_name, confidence
 
 
-def _agent_route_filter_skip(primary_type_name: str, confidence: float, query_type_cls: Any) -> bool:
+def _agent_route_filter_skip(
+    primary_type_name: str, confidence: float, query_type_cls: Any
+) -> bool:
     """Only route non-actionable intents with agent suitability (else fall to LLM)."""
     actionable = {
         t.value
@@ -1142,7 +1151,9 @@ def _agent_route_init_singletons(
     if _agent_manager_instance is None and lifespan_get_agent_manager is not None:
         _agent_manager_instance = lifespan_get_agent_manager()
     if _agent_manager_instance is None:
-        _agent_manager_instance = agent_manager_cls(enable_process_agents=False, enable_router=False)
+        _agent_manager_instance = agent_manager_cls(
+            enable_process_agents=False, enable_router=False
+        )
         training_coordinator = (
             get_training_coordinator() if get_training_coordinator is not None else None
         )
@@ -1178,9 +1189,10 @@ def _agent_route_code_write_bypass(user_message: str) -> bool:
     try:
         from services.execution.gate_execution import GateExecutionOwner
 
-        if GateExecutionOwner.is_code_write_request(
-            user_message
-        ) and GateExecutionOwner._llm_generation_available():
+        if (
+            GateExecutionOwner.is_code_write_request(user_message)
+            and GateExecutionOwner._llm_generation_available()
+        ):
             logger.debug("Agent routing skipped for code-write request")
             return True
     except Exception:
@@ -1242,7 +1254,9 @@ def _agent_route_gate(
     return True, None
 
 
-def _agent_route_result(primary: Dict[str, Any], context: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+def _agent_route_result(
+    primary: Dict[str, Any], context: Dict[str, Any]
+) -> Optional[Dict[str, Any]]:
     """Extract the specialized agent's result into a response dict."""
     agent_result = primary.get("result")
     if not (agent_result and isinstance(agent_result, dict) and agent_result.get("result")):
@@ -1319,15 +1333,15 @@ async def _try_agent_routing(
 
         if _agent_route_code_write_bypass(user_message):
             return None
-        handled, gate_resp = _agent_route_gate(primary, user_message, context, schema_ver, session_id)
+        handled, gate_resp = _agent_route_gate(
+            primary, user_message, context, schema_ver, session_id
+        )
         if handled:
             return gate_resp
         return _agent_route_result(primary, context)
     except Exception as e:
         logger.warning(f"Agent routing unavailable: {e}", exc_info=True)
     return None
-
-
 
 
 # Table-driven causal→routing bias rules (see _get_causal_routing_adjustment).
@@ -1422,8 +1436,6 @@ def _get_causal_routing_adjustment() -> Dict[str, Any]:
     except Exception as e:
         logger.warning(f"Causal routing adjustment failed: {e}", exc_info=True)
         return _cad_zero()
-
-
 
 
 def _inject_causal_predictions(context: Dict[str, Any]) -> None:
@@ -1664,8 +1676,6 @@ def _fire_causal_learning(response_text: str, user_message: str, session_id: str
         logger.warning(f"Causal learning failed: {e}", exc_info=True)
 
 
-
-
 def _classify_feedback_target(
     response_text: str, context: Dict[str, Any], qc: Any
 ) -> Optional[Tuple[str, Any]]:
@@ -1775,8 +1785,6 @@ def _learn_from_classification_feedback(
 
     # Step 4-5: Learn each keyword, then batch persist once
     _learn_keywords(dc, keywords, target_type, target_action, user_message, response_type)
-
-
 
 
 def _handle_timeout(session_id: str, schema_ver: str) -> Dict[str, Any]:
@@ -2073,9 +2081,7 @@ async def _run_chat_pipeline(
 
     # Step 10b/10c/10e: Post-response feedback loops (online learning + intent
     # outcome + solution-rule outcome)
-    _record_post_response_feedback(
-        context, response_text, user_message, _was_truncated, chat_svc
-    )
+    _record_post_response_feedback(context, response_text, user_message, _was_truncated, chat_svc)
 
     _set_latest_response(
         session_id,
@@ -2188,7 +2194,17 @@ def _prime_chat_context(
     # The stable user key must reach the prompt layer: the instance name is
     # resolved per user, so without user_id a renamed instance would fall
     # back to the configured default name.
-    context.setdefault("user_id", (extra_context or {}).get("user_id") or user_name)
+    _fallback_user = (extra_context or {}).get("user_id") or user_name
+    if not _fallback_user:
+        # The display name may be empty (only a user id was sent); the bound
+        # current user still identifies this turn.
+        try:
+            from core.system.config.identity import current_user_id
+
+            _fallback_user = current_user_id() or ""
+        except Exception as _exc:
+            logger.debug(f"Current user lookup unavailable: {_exc}")
+    context.setdefault("user_id", _fallback_user)
     _detect_eda_followup(context, history)
     _run_mainline_dispatch(context, user_message, origin, extra_context)
     _schedule_msba(context, user_message)
@@ -2365,31 +2381,43 @@ async def _run_msba_ab_comparison(user_message: str) -> None:
         logger.debug(f"MSBA A/B comparison skipped: {exc}")
 
 
+async def _collect_msba_ab_task(context: Dict[str, Any]) -> None:
+    """Collect the scheduled MSBA A/B comparison (measurement only)."""
+    task = context.pop("_msba_ab_task", None)
+    if task is None:
+        return
+    try:
+        # The A/B comparison is a measurement: it must not delay the answer.
+        await asyncio.wait_for(task, timeout=0.5)
+    except asyncio.TimeoutError:
+        logger.debug("MSBA A/B comparison timed out")
+    except Exception as exc:
+        logger.debug(f"MSBA A/B comparison not collected: {exc}")
+
+
+def _apply_msba_blender(context: Dict[str, Any], output: Any, bridge: Any) -> None:
+    """Convert the MSBA fusion into the NeuroBlender 9D LLM context."""
+    try:
+        if hasattr(output, "primary"):
+            blander_vec = bridge.fused_to_blender_vector(output)
+            context["msba_blender_9d"] = bridge.blender_to_context(blander_vec)
+            context["msba_dominant"] = bridge.get_dominant_dimension(blander_vec)
+    except Exception as exc:
+        logger.debug("MSBA->NeuroBlender conversion skipped: %s", exc)
+
+
 async def _collect_msba_result(context: Dict[str, Any]) -> None:
     """Step 9.5: collect the scheduled MSBA result (best-effort) into context."""
     _msba_task = context.pop("_msba_task", None)
     _msba_bridge = context.pop("_msba_bridge", None)
-    _msba_ab_task = context.pop("_msba_ab_task", None)
-    if _msba_ab_task is not None:
-        # The A/B comparison is a measurement: it must not delay the answer.
-        try:
-            await asyncio.wait_for(_msba_ab_task, timeout=0.5)
-        except (asyncio.TimeoutError, Exception) as exc:  # noqa: B014
-            logger.debug(f"MSBA A/B comparison not collected: {exc}")
+    await _collect_msba_ab_task(context)
     if _msba_task is None:
         return
     try:
         _msba_output = await asyncio.wait_for(_msba_task, timeout=0.05)
         if _msba_output and _msba_bridge is not None:
             context["msba_output"] = _msba_output
-            # Convert to NeuroBlender 9D for LLM context
-            try:
-                if hasattr(_msba_output, "primary"):
-                    _blender_vec = _msba_bridge.fused_to_blender_vector(_msba_output)
-                    context["msba_blender_9d"] = _msba_bridge.blender_to_context(_blender_vec)
-                    context["msba_dominant"] = _msba_bridge.get_dominant_dimension(_blender_vec)
-            except Exception as _e:
-                logger.debug("MSBA->NeuroBlender conversion skipped: %s", _e)
+            _apply_msba_blender(context, _msba_output, _msba_bridge)
     except asyncio.TimeoutError:
         logger.debug("MSBA result not ready within budget, continuing")
     except Exception as _e:
@@ -2463,6 +2491,44 @@ def _record_meta_calibration_sample(context: Dict[str, Any], response_text: str)
         logger.warning(f"Meta confidence recording unavailable: {e}", exc_info=True)
 
 
+def _record_solution_rule_outcome(
+    context: Dict[str, Any],
+    response_text: str,
+    was_truncated: bool,
+) -> None:
+    """Step 10e: the solution-rule outcome (規則沉澱層閉環回饋).
+
+    Success = the stored answer really reached the user (verbatim or
+    contained in the reply, tolerating light post-processing) and the reply
+    was not truncated; an empty/truncated reply counts as a failure and
+    lowers the rule's confidence (two-strikes-out loop).
+    """
+    hit = context.pop("_solution_rule_hit", None)
+    if not hit:
+        return
+    try:
+        from ai.rules import get_rule_store
+
+        answer = str(hit.get("answer") or "").strip()
+        resp = (response_text or "").strip()
+        compact_answer = "".join(answer.split())
+        compact_resp = "".join(resp.split())
+        if len(answer) >= 8:
+            served = bool(compact_answer) and compact_answer in compact_resp
+        else:
+            served = bool(compact_answer) and compact_answer == compact_resp
+        success = served and not was_truncated and bool(resp)
+        recorded = get_rule_store().record_outcome(str(hit.get("rule_id") or ""), success)
+        logger.debug(
+            "Solution rule outcome: rule=%s success=%s recorded=%s",
+            hit.get("rule_id"),
+            success,
+            recorded,
+        )
+    except Exception as e:
+        logger.warning(f"Solution rule feedback skipped: {e}", exc_info=True)
+
+
 def _record_post_response_feedback(
     context: Dict[str, Any],
     response_text: str,
@@ -2479,31 +2545,7 @@ def _record_post_response_feedback(
     當成功樣本；10b 之後把非棄權回合經 chat_svc.record_served_turn() 記進
     路由器的 abstain 閉環分母。None may raise into the response path.
     """
-    # 10e: 規則命中回饋。Success = 存的答案真的送到（逐字相等或原文含於回覆，
-    # 容忍輕度後製）且未被截斷；空回覆/截斷 = 失敗 → 降信心（兩敗出局閉環）。
-    try:
-        hit = context.pop("_solution_rule_hit", None)
-        if hit:
-            from ai.rules import get_rule_store
-
-            answer = str(hit.get("answer") or "").strip()
-            resp = (response_text or "").strip()
-            compact_answer = "".join(answer.split())
-            compact_resp = "".join(resp.split())
-            if len(answer) >= 8:
-                served = bool(compact_answer) and compact_answer in compact_resp
-            else:
-                served = bool(compact_answer) and compact_answer == compact_resp
-            success = served and not was_truncated and bool(resp)
-            recorded = get_rule_store().record_outcome(str(hit.get("rule_id") or ""), success)
-            logger.debug(
-                "Solution rule outcome: rule=%s success=%s recorded=%s",
-                hit.get("rule_id"),
-                success,
-                recorded,
-            )
-    except Exception as e:
-        logger.warning(f"Solution rule feedback skipped: {e}", exc_info=True)
+    _record_solution_rule_outcome(context, response_text, was_truncated)
 
     try:
         _learn_from_classification_feedback(user_message, response_text, context)
@@ -2727,7 +2769,7 @@ async def send_message(session_id: str, request: Dict[str, Any] = Body(...)) -> 
     session = sessions.get(session_id)
     if session is None:
         raise HTTPException(status_code=404, detail="Session not found")
-    user_name = session.get("user_name", "User")
+    user_name = _display_name(session.get("user_name"), session.get("user_id"))
     # Carry the session's namespaced identity downstream so legacy sessions
     # get the same tenant/persona isolation as unified ones.
     legacy_context = {
@@ -2761,7 +2803,7 @@ async def unified_chat(request: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
         "persona_id": request.get("persona_id", "angela"),
         "client_id": request.get("origin", request.get("client_id", "desktop")),
     }
-    user_name = request.get("user_name", user_id)
+    user_name = _display_name(request.get("user_name"), user_id)
     history = request.get("history", [])
     # Bound history to prevent OOM from attacker-controlled large arrays
     if isinstance(history, list) and len(history) > 100:
@@ -2870,7 +2912,7 @@ async def chat_stream(request: Dict[str, Any] = Body(...)) -> StreamingResponse:
     mode = request.get("mode", "1:1")
     # Same identity rule as unified_chat (audit 2026-10-10): id wins.
     user_id = request.get("user_id") or request.get("user_name", "User")
-    user_name = request.get("user_name", user_id)
+    user_name = _display_name(request.get("user_name"), user_id)
     history = request.get("history", [])
     if isinstance(history, list) and len(history) > 100:
         history = history[-100:]
@@ -2923,8 +2965,6 @@ async def chat_stream(request: Dict[str, Any] = Body(...)) -> StreamingResponse:
                 task.cancel()
 
     return StreamingResponse(_event_gen(), media_type="text/event-stream")
-
-
 
 
 @router.post("/chat/with-image")
@@ -3089,9 +3129,7 @@ async def _clip_run_classify(
     return clip_response, confidence, visual_concepts_text
 
 
-async def _clip_phase(
-    file: Any, message: str, session_id: str
-) -> Optional[_ClipPhaseResult]:
+async def _clip_phase(file: Any, message: str, session_id: str) -> Optional[_ClipPhaseResult]:
     """Read + blank-gate + QA short-circuit + CLIP classify for an image upload.
 
     Returns None when the file is not an image (no CLIP phase applies).
@@ -3124,7 +3162,9 @@ async def _clip_phase(
         )
     except Exception as e:
         logger.warning(f"CLIP classification failed, falling back to LLM: {e}", exc_info=True)
-    return _ClipPhaseResult(None, clip_response, confidence, image_is_blank, visual_concepts_text, image_data)
+    return _ClipPhaseResult(
+        None, clip_response, confidence, image_is_blank, visual_concepts_text, image_data
+    )
 
 
 def _build_visual_measurements(visual_concepts_text: str, image_data: bytes) -> str:
@@ -3146,7 +3186,9 @@ def _build_visual_measurements(visual_concepts_text: str, image_data: bytes) -> 
     return "\n".join(_seen_bits) if _seen_bits else ""
 
 
-async def _vision_phase(file: Any, clip: _ClipPhaseResult, message: str) -> Optional[Dict[str, Any]]:
+async def _vision_phase(
+    file: Any, clip: _ClipPhaseResult, message: str
+) -> Optional[Dict[str, Any]]:
     """Vision analysis for an image upload (None when not an image / failed)."""
     if not (file and file.content_type and file.content_type.startswith("image/")):
         return None
@@ -3168,7 +3210,9 @@ async def _vision_phase(file: Any, clip: _ClipPhaseResult, message: str) -> Opti
         # image_analysis whole but truncates at 2000 chars, so anything
         # appended last never reaches the model (live 2026-10-11).
         return {
-            "visual_measurements": _build_visual_measurements(clip.visual_concepts_text, image_data),
+            "visual_measurements": _build_visual_measurements(
+                clip.visual_concepts_text, image_data
+            ),
             "filename": file.filename,
             "analysis": analysis,
             "image_data": image_data,
@@ -3176,8 +3220,6 @@ async def _vision_phase(file: Any, clip: _ClipPhaseResult, message: str) -> Opti
     except Exception as e:
         logger.warning(f"Image analysis failed, continuing with text only: {e}")
         return None
-
-
 
 
 def _is_visual_qa_question(message: str) -> bool:

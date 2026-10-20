@@ -28,8 +28,8 @@ features:
     status: verified
     implementation: [scripts/verify_main_flow_e2e.py]
     verify_command: python scripts/verify_main_flow_e2e.py
-    evidence: 15/15 exit 0
-    last_verified: "2026-09-17"
+    evidence: 15/15 exit 0（2026-10-20 實測）
+    last_verified: "2026-10-20"
 
   - id: execution-gate
     domain: ExecutionGate
@@ -38,8 +38,8 @@ features:
     implementation: [apps/backend/src/ai/core/execution_gate.py]
     tests: [tests/ai/core/test_execution_gate.py]
     verify_command: pytest tests/ai/core/test_execution_gate.py
-    evidence: 35 passed
-    last_verified: "2026-09-17"
+    evidence: 70 passed（2026-10-20 實測；原記 35，測試檔後續擴充）
+    last_verified: "2026-10-20"
 
   - id: identity-persona
     domain: 身分與命名（per-user）＋天使工房角色
@@ -73,8 +73,8 @@ features:
     implementation: [apps/backend/src/services/handlers]
     tests: [tests/services/test_handlers.py]
     verify_command: pytest tests/services/test_handlers.py
-    evidence: 55 passed
-    last_verified: "2026-09-17"
+    evidence: 60 passed（2026-10-20 實測；原記 55）
+    last_verified: "2026-10-20"
 
   - id: security-regression
     domain: 安全回歸（audit/content/permission）
@@ -83,8 +83,8 @@ features:
     implementation: [tests/security]
     tests: [tests/security]
     verify_command: pytest tests/security/
-    evidence: 52 passed
-    last_verified: "2026-09-17"
+    evidence: 56 passed（2026-10-20 實測；原記 52）
+    last_verified: "2026-10-20"
 
   - id: first-run-detection
     domain: First-run 偵測
@@ -95,8 +95,8 @@ features:
       - apps/backend/main.py
     tests: [tests/core/system/bootstrap/test_first_run_detection.py]
     verify_command: pytest tests/core/system/bootstrap/test_first_run_detection.py
-    evidence: 13 passed；實測分類 unified=可用、ollama=不可達、雲端=被 local mode 擋
-    last_verified: "2026-09-17"
+    evidence: 12 passed；實測分類 unified=可用、ollama=不可達、雲端=被 local mode 擋（2026-10-20 實測；原記 13）
+    last_verified: "2026-10-20"
 
   - id: deterministic-engines
     domain: 確定性引擎（Math/KB/symbolic）
@@ -197,15 +197,15 @@ features:
     implementation: [apps/backend/src/core/hsp/security.py]
     tests: [tests/core/hsp]
     verify_command: pytest tests/core/hsp/
-    evidence: 佔位符自動回退生成＋警告；.env 佔位符致 5 errors 已修
-    last_verified: "2026-09-17"
+    evidence: 佔位符自動回退生成＋警告；.env 佔位符致 5 errors 已修；tests/core/hsp/ 74 passed（2026-10-20 實測）
+    last_verified: "2026-10-20"
 
   - id: test-suite
     domain: 測試品質門
     claim: 全倉綠
     status: verified
     verify_command: pytest
-    evidence: 8,623 passed, 112 skipped, 0 failed（2026-10-20 測試數量同步批次全 testpaths 實測：tests/＋apps/backend/tests/＋apps/game-rpg/tests＋scripts）
+    evidence: 8,636 passed, 112 skipped, 0 failed（2026-10-20 測試數量同步批次全 testpaths 實測：tests/＋apps/backend/tests/＋apps/game-rpg/tests＋scripts）
     last_verified: "2026-10-20"
 
   - id: mypy-debt
@@ -217,7 +217,7 @@ features:
       - scripts/mypy_budget_gate.py
       - scripts/mypy_budget.txt
     verify_command: python scripts/mypy_budget_gate.py
-    evidence: 門機制可驗證；棘輪基線已清零 0（歷史 559→540→518→497→476→432→405→402→391→344→0）；mypy 實測 746 個 source files 全綠（no issues found）；新增債 CI 直接紅燈
+    evidence: 門機制可驗證；棘輪基線已清零 0（歷史 559→540→518→497→476→432→405→402→391→344→0）；mypy 實測 742 個 source files 全綠（no issues found，2026-10-20）；新增債 CI 直接紅燈
     last_verified: "2026-10-19"
 
   - id: flake8
@@ -226,7 +226,7 @@ features:
     status: verified
     implementation: [.flake8]
     verify_command: python -m flake8
-    evidence: 全倉 0（37 類忽略為已知門檻寬鬆，非隱瞞）
+    evidence: 全倉 0（39 類忽略為已知門檻寬鬆，非隱瞞；2026-10-20 複核：black/isort 原先漂移 74 檔，已整庫格式化，CI lint 步驟恢復綠）
     last_verified: "2026-09-03"
 
   - id: offline-capability
@@ -250,8 +250,8 @@ features:
     claim: 桌面互動
     status: wired
     implementation: [apps/desktop-app]
-    evidence: 可啟動；狀態鏈完整因果驗證未做
-    last_verified: "2026-09-17"
+    evidence: 可啟動；狀態鏈因果驗證已補（2026-10-20：node 行為測試證明 axis 變更 → Live2D 參數、主導情緒 → 表情，tests/frontend/test_shared_js_behaviour.py）
+    last_verified: "2026-10-20"
 
   - id: llm-config-persistence
     domain: Desktop LLM 設定持久化
@@ -261,7 +261,7 @@ features:
     tests: [tests/api/test_llm_config.py]
     verify_command: pytest tests/api/test_llm_config.py
     evidence: 12 passed；preferred mock 驗證（honor＋fallback 警告）
-    last_verified: "2026-09-17"
+    last_verified: "2026-10-20"
 
   - id: luanti-agent
     domain: Luanti 遊戲代理（識別/記憶/自主性/學習）
@@ -291,8 +291,8 @@ features:
       - benchmarks/data/native_bench_v1.json
     tests: [tests/test_run_benchmarks.py]
     verify_command: pytest tests/test_run_benchmarks.py
-    evidence: 22 tests；115 題官方結果 results/bench_20260922-091107.json（native math 80%/knowledge 26.7%/knowledge_mc 97.5%/code 0%/routing 100%；native-max mc 100%）＋--gate-native 回歸門納入 CI，逐題明細可複審
-    last_verified: "2026-09-22"
+    evidence: 33 tests；115 題官方結果 results/bench_20260922-091107.json（native math 80%/knowledge 26.7%/knowledge_mc 97.5%/code 0%/routing 100%；native-max mc 100%）＋--gate-native 回歸門納入 CI，逐題明細可複審
+    last_verified: "2026-10-20"
 
   - id: msba-pipeline
     domain: MSBA 語意區塊架構
@@ -305,7 +305,7 @@ features:
       - apps/backend/src/ai/msba/relevance_convergence.py
       - apps/backend/src/ai/msba/block_selector.py
     tests: [tests/ai/msba]
-    evidence: chat_routes Step 2.75 排程、Step 10 消費（50ms 預算）注入 LLM context；Layer 0 接真實 MathVerifier/ED3N 字典（R77 修復死 import）；193 tests；A/B 對照已啟用（2026-10-20：`MSBAPipeline.compare()` 對照無語意區塊的前區塊路徑，結果記入 routing 狀態；旗標 `msba_ab_testing`）
+    evidence: chat_routes Step 2.75 排程、Step 10 消費（50ms 預算）注入 LLM context；Layer 0 接真實 MathVerifier/ED3N 字典（R77 修復死 import）；198 tests（2026-10-20 實測）；A/B 對照已啟用（2026-10-20：`MSBAPipeline.compare()` 對照無語意區塊的前區塊路徑，結果記入 routing 狀態；旗標 `msba_ab_testing`）
     last_verified: "2026-09-22"
 
 # -----------------------------------------------------------------------------

@@ -581,9 +581,7 @@ class HSPConnector:
         finally:
             # Reflect underlying state or force false
             try:
-                self.is_connected = bool(
-                    getattr(self.external_connector, "is_connected", False)
-                )
+                self.is_connected = bool(getattr(self.external_connector, "is_connected", False))
             except (
                 Exception
             ) as e:  # broad exception acceptable: state reflection may raise various errors

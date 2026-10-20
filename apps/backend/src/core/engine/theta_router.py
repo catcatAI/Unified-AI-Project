@@ -207,9 +207,7 @@ class ThetaRouter:
                 dimensions = getattr(sm, "dimensions", {})
         return dimensions
 
-    def _update_theta(
-        self, novelty: float, active_dims: int, dimensions: Dict[str, Any]
-    ) -> None:
+    def _update_theta(self, novelty: float, active_dims: int, dimensions: Dict[str, Any]) -> None:
         """Update theta values via state adapter's theta proxy."""
         theta_proxy = getattr(self._state_adapter, "theta", None)
         if not theta_proxy:
@@ -316,7 +314,9 @@ class ThetaRouter:
         dimensions = self._get_dimensions()
         self._update_theta(novelty, active_dims, dimensions)
 
-        return self._compute_decision(port_name, max_sim, best_axis, novelty, active_dims, dimensions)
+        return self._compute_decision(
+            port_name, max_sim, best_axis, novelty, active_dims, dimensions
+        )
 
     def _binding_api_ready(self) -> bool:
         """綁定系 registry API 是否就緒（R20 生存守衛）。
@@ -576,11 +576,12 @@ class ThetaRouter:
         count = 0
         for decision in decisions:
             if decision.action == RouteAction.REBIND and decision.port_name:
-                self._port_registry.bind_port_to_axis(decision.port_name, decision.target_axis)  # type: ignore[attr-defined]
-                self._record_routing(decision.port_name, decision)
-                count += 1
+                if decision.target_axis:
+                    self._port_registry.bind_port_to_axis(decision.port_name, decision.target_axis)
+                    self._record_routing(decision.port_name, decision)
+                    count += 1
             elif decision.action == RouteAction.UNBIND and decision.port_name:
-                self._port_registry.unbind_port(decision.port_name)  # type: ignore[attr-defined]
+                self._port_registry.unbind_port(decision.port_name)
                 self._record_routing(decision.port_name, decision)
                 count += 1
 

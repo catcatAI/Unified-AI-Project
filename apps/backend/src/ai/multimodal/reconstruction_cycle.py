@@ -144,9 +144,7 @@ class ReconstructionCycle:
             return self._audio_decoder
         return None
 
-    def _texture_forward(
-        self, decoder: Any, latent: np.ndarray
-    ) -> tuple:
+    def _texture_forward(self, decoder: Any, latent: np.ndarray) -> tuple:
         """Forward texture branch with gradient cache. Returns (base_img, detail, cached_up, cached_windows)."""
         h = np.tanh(decoder._W_hidden @ latent + decoder._b_hidden)
         fm_flat = decoder._W_featmap @ h + decoder._b_featmap
@@ -238,9 +236,7 @@ class ReconstructionCycle:
         for c_in in range(tc):
             for i in range(ms):
                 for j in range(ms):
-                    block = d_up_acc[
-                        i * scale : (i + 1) * scale, j * scale : (j + 1) * scale, c_in
-                    ]
+                    block = d_up_acc[i * scale : (i + 1) * scale, j * scale : (j + 1) * scale, c_in]
                     d_fm[i, j, c_in] = np.sum(block)
         d_fm_flat = d_fm.reshape(-1)
 
@@ -325,8 +321,18 @@ class ReconstructionCycle:
             h = np.tanh(decoder._W_hidden @ latent + decoder._b_hidden)
 
             loss = self._texture_backward(
-                decoder, latent, h, base_img, detail, target, cached_windows,
-                d_W_hidden, d_b_hidden, d_W_featmap, d_b_featmap, d_tex_kernels,
+                decoder,
+                latent,
+                h,
+                base_img,
+                detail,
+                target,
+                cached_windows,
+                d_W_hidden,
+                d_b_hidden,
+                d_W_featmap,
+                d_b_featmap,
+                d_tex_kernels,
             )
             total_loss += loss
 
@@ -388,9 +394,7 @@ class ReconstructionCycle:
             d_end = (band_idx + 1) * (len(detail) // decoder.N_BANDS)
             band_detail = detail[d_start:d_end] if d_end <= len(detail) else detail[d_start:]
             sin_terms: list = []
-            for h_idx in range(
-                min(decoder.N_HARMONICS // decoder.N_BANDS, len(band_detail) // 2)
-            ):
+            for h_idx in range(min(decoder.N_HARMONICS // decoder.N_BANDS, len(band_detail) // 2)):
                 amp = np.abs(band_detail[h_idx * 2]) / max(np.abs(band_detail).max(), 1e-8)
                 amp = np.clip(amp, 0.0, 0.5)
                 h_freq = freq_hz * (h_idx + 2)
@@ -421,7 +425,9 @@ class ReconstructionCycle:
             envelope[start:end] = val
         return envelope
 
-    def _wavetable_forward(self, decoder: Any, latent: np.ndarray, n_samples: int) -> Dict[str, Any]:
+    def _wavetable_forward(
+        self, decoder: Any, latent: np.ndarray, n_samples: int
+    ) -> Dict[str, Any]:
         """Full decoder forward for one sample (projection branch frozen).
 
         Returns cached intermediates for backward.

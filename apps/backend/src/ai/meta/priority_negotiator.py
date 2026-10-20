@@ -167,7 +167,6 @@ class PriorityNegotiator:
         return max(tally, key=lambda k: tally[k]) if tally else None
 
 
-
 # ── Default Voter Functions ──────────────────────────────────────────
 
 # heartbeat_voter signature constants (named — were bare literals):

@@ -671,7 +671,13 @@ class TensorSNNCore:
         return a
 
     def _compute_timestep(
-        self, a: "np.ndarray", W: "np.ndarray", potential: "np.ndarray", t: int, threshold: float, max_active: int
+        self,
+        a: "np.ndarray",
+        W: "np.ndarray",
+        potential: "np.ndarray",
+        t: int,
+        threshold: float,
+        max_active: int,
     ):
         """One LIF + top-k competition timestep. Returns (potential, spikes, n_active)."""
         V = self.vocab_size

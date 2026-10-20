@@ -545,14 +545,6 @@ def _logic_chinese_path(t: str) -> Optional[str]:
     return _logic_eval_tokens(expr)
 
 
-
-
-
-
-
-
-
-
 def _expand_nor(m):
     parts = re.findall(r"(True|False)", m.group(0))
     if len(parts) == 2:
@@ -642,8 +634,6 @@ def evaluate_logic(text: str) -> Optional[str]:
     expr = re.sub(r"\bnot\b", "not", expr)
 
     return _logic_eval_tokens(expr)
-
-
 
 
 def _math_constant_query(text: str) -> Optional[str]:

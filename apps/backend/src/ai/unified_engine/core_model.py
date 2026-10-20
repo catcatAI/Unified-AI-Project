@@ -64,7 +64,7 @@ GRAM_ORDER = 4
 # memory footprint. The leftover weight goes to uniform so no byte is ever
 # impossible. See FixedSizeCore.gram_dist for the measurement that
 # motivated the interpolation.
-_NGRAM_BACKOFF_WEIGHTS = ((5, 0.50), (4,  0.25), (3, 0.15))
+_NGRAM_BACKOFF_WEIGHTS = ((5, 0.50), (4, 0.25), (3, 0.15))
 _BIGRAM_WEIGHT = 0.07
 _UNIGRAM_WEIGHT = 0.03
 # Smoothing floor: every byte keeps a small probability.
@@ -450,7 +450,9 @@ class FixedSizeCore:
             return [1.0 / VOCAB] * VOCAB
         return [float(c) / total for c in row]
 
-    def _gram_order_cell(self, prefix: bytes, order: int, wmix: int, mask: int) -> Optional[np.ndarray]:
+    def _gram_order_cell(
+        self, prefix: bytes, order: int, wmix: int, mask: int
+    ) -> Optional[np.ndarray]:
         """Lookup normalized cell for given n-gram order (5=4-byte context, etc.)."""
         ctx_len = order - 1
         if len(prefix) < ctx_len:
@@ -462,6 +464,29 @@ class FixedSizeCore:
             dist: np.ndarray = cell.astype(np.float64) / total
             return dist
         return None
+
+    def _blend_ngram_orders(self, prefix: bytes, wmix: int, mask: int) -> Tuple[np.ndarray, float]:
+        """Blend the n-gram tables (5-gram → 4-gram → 3-gram).
+
+        Returns the weighted sum and the weight that was actually used (the
+        caller renormalises over the available orders).
+        """
+        blended = np.zeros(VOCAB, dtype=np.float64)
+        used_weight = 0.0
+        for order, weight in _NGRAM_BACKOFF_WEIGHTS:
+            ctx_len = order - 1
+            if len(prefix) < ctx_len:
+                continue
+            table = {4: self._gram5, 3: self._gram, 2: self._gram3}.get(ctx_len)
+            if table is None:
+                continue
+            cell = table[(_scalar_hash(prefix[-ctx_len:], wmix)) & mask]
+            total = float(cell.sum())
+            if total <= 0:
+                continue
+            blended += weight * (cell.astype(np.float64) / total)
+            used_weight += weight
+        return blended, used_weight
 
     def gram_dist(self, prefix: bytes, w: int = 0) -> np.ndarray:
         """Interpolated n-gram backoff: 5-gram -> 4-gram -> 3-gram -> bigram
@@ -502,21 +527,7 @@ class FixedSizeCore:
                 return dist
             return None
 
-        blended = np.zeros(VOCAB, dtype=np.float64)
-        used_weight = 0.0
-        for order, weight in _NGRAM_BACKOFF_WEIGHTS:
-            ctx_len = order - 1
-            if len(prefix) < ctx_len:
-                continue
-            table = {4: self._gram5, 3: self._gram, 2: self._gram3}.get(ctx_len)
-            if table is None:
-                continue
-            cell = table[(_scalar_hash(prefix[-ctx_len:], wmix)) & mask]
-            dist = _norm(cell)
-            if dist is None:
-                continue
-            blended += weight * dist
-            used_weight += weight
+        blended, used_weight = self._blend_ngram_orders(prefix, wmix, mask)
 
         # bigram (transition), language-plane isolated
         wp = w % UNI_WIDTH
@@ -543,7 +554,8 @@ class FixedSizeCore:
         total = blended.sum()
         if total <= 0:
             return uniform
-        return blended / total
+        result: np.ndarray = blended / total
+        return result
 
     def _delta_dist(self, prefix: bytes) -> Optional[np.ndarray]:
         """Delta-table distribution for the current 4-byte window, or None."""

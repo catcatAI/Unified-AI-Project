@@ -529,9 +529,7 @@ class GamePolicy:
             Yd.append(int(s["discrete"]))
             mode = s.get("mode")
             Ym.append(
-                PolicyMode(mode).value
-                if isinstance(mode, str)
-                else getattr(mode, "value", None)
+                PolicyMode(mode).value if isinstance(mode, str) else getattr(mode, "value", None)
             )
         return (
             np.stack(Xs),

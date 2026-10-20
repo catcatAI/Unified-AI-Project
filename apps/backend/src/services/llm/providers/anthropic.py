@@ -54,7 +54,10 @@ class AnthropicAPIBackend(BaseLLMBackend):
         return False
 
     async def generate(self, prompt: str, **kwargs) -> LLMResponse:
-        """Generate."""
+        """Generate (streaming when a stream_callback is given)."""
+        stream_callback = kwargs.pop("stream_callback", None)
+        if stream_callback is not None:
+            return await self.generate_stream(prompt, stream_callback, **kwargs)
         start_time = time.time()
         messages = kwargs.get("messages", [{"role": "user", "content": prompt}])
         payload = {
@@ -99,4 +102,49 @@ class AnthropicAPIBackend(BaseLLMBackend):
                     )
         except Exception as e:
             logger.error(f"Anthropic API error: {e}", exc_info=True)
+            return LLMResponse(text="", backend="anthropic", model=self.model, error=safe_error(e))
+
+    async def generate_stream(self, prompt: str, stream_callback, **kwargs) -> LLMResponse:
+        """Streaming generate: Anthropic's SSE (content_block_delta events)."""
+        start_time = time.time()
+        messages = kwargs.get("messages", [{"role": "user", "content": prompt}])
+        payload = {
+            "model": self.model,
+            "messages": messages,
+            "max_tokens": kwargs.get("max_tokens", 512),
+            "temperature": kwargs.get("temperature", 0.7),
+            "stream": True,
+        }
+        try:
+            session = self._get_session()
+            async with session.post(
+                f"{self.base_url}/messages",
+                json=payload,
+                headers={
+                    "x-api-key": self.api_key,
+                    "Content-Type": "application/json",
+                    "anthropic-version": "2023-06-01",
+                },
+                timeout=aiohttp.ClientTimeout(total=600, sock_read=30),
+            ) as response:
+                if response.status != 200:
+                    text = await response.text()
+                    return LLMResponse(
+                        text="",
+                        backend="anthropic",
+                        model=self.model,
+                        error=f"HTTP {response.status}: {text[:200]}",
+                    )
+                chunks = await self._stream_and_collect(
+                    response, stream_callback, ["delta", "text"]
+                )
+            return LLMResponse(
+                text="".join(chunks),
+                backend="anthropic",
+                model=self.model,
+                response_time_ms=(time.time() - start_time) * 1000,
+                confidence=0.95,
+            )
+        except Exception as e:
+            logger.error(f"Anthropic streaming error: {e}", exc_info=True)
             return LLMResponse(text="", backend="anthropic", model=self.model, error=safe_error(e))

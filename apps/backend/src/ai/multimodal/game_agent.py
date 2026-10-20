@@ -340,7 +340,9 @@ class GameAgent:
         self._executor.load_plan(new_plan)
         logger.info(f"Replan completed: {new_plan.plan_id}")
 
-    def _select_skill(self, skill_ctx: Optional[SkillContext]) -> Tuple[Optional[SkillContext], Optional[Any]]:
+    def _select_skill(
+        self, skill_ctx: Optional[SkillContext]
+    ) -> Tuple[Optional[SkillContext], Optional[Any]]:
         """Select skill: use L2 result if available, else L1 selector."""
         if skill_ctx is not None:
             return skill_ctx, None
@@ -356,7 +358,9 @@ class GameAgent:
         )
         return ctx, skill_params
 
-    def _execute_tick_step(self) -> Tuple[Optional[SkillContext], Optional[Any], PolicyOutput, Dict[str, Any]]:
+    def _execute_tick_step(
+        self,
+    ) -> Tuple[Optional[SkillContext], Optional[Any], PolicyOutput, Dict[str, Any]]:
         """Execute one tick step: task execution, skill selection, policy inference, action composition."""
         # Task execution (L2) -> SkillContext
         skill_ctx = self._executor.tick(
@@ -433,7 +437,6 @@ class GameAgent:
             logger.error(f"GameAgent error: {e}", exc_info=True)
         finally:
             await self.shutdown()
-
 
     def _update_state_from_snapshot(self, snapshot: GameSnapshot):
         """從 Luanti 快照更新狀態"""
@@ -520,7 +523,10 @@ class GameAgent:
                 self._executor.load_plan(plan)
 
     def _compose_actions(
-        self, policy_out: PolicyOutput, skill_ctx: Optional[SkillContext], skill_params: Optional[Any] = None
+        self,
+        policy_out: PolicyOutput,
+        skill_ctx: Optional[SkillContext],
+        skill_params: Optional[Any] = None,
     ) -> Dict[str, Any]:
         """合成最終動作"""
         actions = {}

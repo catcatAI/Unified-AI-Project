@@ -907,9 +907,7 @@ class MultidimensionalStateMatrix:
 
         return influences
 
-    def _influence_alpha(
-        self, source_name: str, target_dim: StateDimension, amount: float
-    ) -> None:
+    def _influence_alpha(self, source_name: str, target_dim: StateDimension, amount: float) -> None:
         """gamma → alpha: positive emotions raise energy, cut rest need."""
         if source_name == "gamma":  # Emotional affects physiological
             # Positive emotions increase energy, reduce rest need
@@ -921,9 +919,7 @@ class MultidimensionalStateMatrix:
                 0.0, target_dim.values["rest_need"] - amount * happiness * 0.1
             )
 
-    def _influence_beta(
-        self, source_name: str, target_dim: StateDimension, amount: float
-    ) -> None:
+    def _influence_beta(self, source_name: str, target_dim: StateDimension, amount: float) -> None:
         """alpha → beta: energy raises focus; gamma: arousal lowers focus."""
         if source_name == "alpha":  # Physiological affects cognitive
             # High energy increases focus
@@ -942,9 +938,7 @@ class MultidimensionalStateMatrix:
                 0.0, target_dim.values["focus"] - amount * arousal_emotions * 0.15
             )
 
-    def _influence_gamma(
-        self, source_name: str, target_dim: StateDimension, amount: float
-    ) -> None:
+    def _influence_gamma(self, source_name: str, target_dim: StateDimension, amount: float) -> None:
         """alpha → gamma: arousal raises all emotions; delta: bond raises happiness."""
         if source_name == "alpha":  # Physiological affects emotional
             # High arousal increases emotional intensity
@@ -960,9 +954,7 @@ class MultidimensionalStateMatrix:
                 1.0, target_dim.values["happiness"] + amount * bond * 0.1
             )
 
-    def _influence_delta(
-        self, source_name: str, target_dim: StateDimension, amount: float
-    ) -> None:
+    def _influence_delta(self, source_name: str, target_dim: StateDimension, amount: float) -> None:
         """gamma → delta: happiness raises bond + presence."""
         if source_name == "gamma":  # Emotional affects social
             # Happiness increases bond

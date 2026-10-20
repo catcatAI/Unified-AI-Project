@@ -161,9 +161,7 @@ class GameCardValidator:
         return False
 
     @staticmethod
-    def _check_numeric_stat(
-        cid: str, key: str, value: float, report: ValidationReport
-    ) -> None:
+    def _check_numeric_stat(cid: str, key: str, value: float, report: ValidationReport) -> None:
         """數值 stat：age/level 正值斷言 + 百分比界域 [0,100]。"""
         if key.lower() in ("age", "level", "lv") and value <= 0:
             report.add(
@@ -186,9 +184,7 @@ class GameCardValidator:
                 )
 
     @staticmethod
-    def _check_string_stat(
-        cid: str, key: str, value: str, report: ValidationReport
-    ) -> None:
+    def _check_string_stat(cid: str, key: str, value: str, report: ValidationReport) -> None:
         """字串 stat：字串化數值的百分比界域 + 空字串警告。"""
         if _is_numeric_str(value):
             # 字串化的數值：百分比界域也要查

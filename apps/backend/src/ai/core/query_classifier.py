@@ -726,11 +726,9 @@ class QueryClassifier:
         cede = result.confidence < 0.7 and not has_negation
         if not cede and not has_negation and result.primary_type == QueryType.FILE:
             cede = not _FILE_SPECIFIC.search(text) and any(
-                qt == QueryType.TASK and pattern.search(text)
-                for qt, pattern, _ in self._patterns
+                qt == QueryType.TASK and pattern.search(text) for qt, pattern, _ in self._patterns
             )
         return cede
-
 
     def _classify_semantic_intent(self, text: str, has_negation: bool) -> Optional[QueryResult]:
         if _CAPABILITY_INTENT.search(text):
@@ -891,7 +889,6 @@ class QueryClassifier:
             )
         return None
 
-
     def _classify_reflex_override(self, text: str) -> Optional[QueryResult]:
         if len(text) < 2:
             if text not in VERBS_NOT_REFLEX:
@@ -1048,7 +1045,6 @@ class QueryClassifier:
             return self._command_verb_action(text)
 
         return "none"
-
 
     def _keys_to_intent(self, keys: List[str]) -> Tuple[QueryType, float]:
         """Map ED3N dictionary keys to a QueryType with confidence."""

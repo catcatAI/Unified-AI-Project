@@ -473,9 +473,7 @@ class SequenceTrainer:
         回 (abs_error, correct 0/1, 更新後 context)。
         """
         self.network.reset()
-        activations = self.network.forward_sequential(
-            context, current_position=len(context) - 1
-        )
+        activations = self.network.forward_sequential(context, current_position=len(context) - 1)
 
         actual = activations.get(target_key, 0.0)
         error = 1.0 - actual
@@ -494,9 +492,7 @@ class SequenceTrainer:
             self.network.adjust_connection(
                 rel_key,
                 target_key,
-                self.seq_lr
-                * error
-                * learning_rate("ai.ed3n.sequence.connection_adjust", 0.3),
+                self.seq_lr * error * learning_rate("ai.ed3n.sequence.connection_adjust", 0.3),
             )
 
         entry = self.dictionary.entries.get(target_key)

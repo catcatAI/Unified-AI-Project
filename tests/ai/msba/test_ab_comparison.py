@@ -12,7 +12,6 @@ same input, through the same decoder.
 """
 
 import pytest
-
 from ai.msba.block_factory import create_all_blocks
 from ai.msba.pipeline import MSBAPipeline
 

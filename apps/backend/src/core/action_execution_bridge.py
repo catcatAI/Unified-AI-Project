@@ -812,9 +812,7 @@ class ActionExecutionBridge:
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             result["search_error"] = safe_error(e)
 
-    async def _explore_local_search(
-        self, manager: Any, topic: str, result: dict[str, Any]
-    ) -> None:
+    async def _explore_local_search(self, manager: Any, topic: str, result: dict[str, Any]) -> None:
         """Local file search stage of explore_topic."""
         try:
             # Search for files related to topic
@@ -827,9 +825,7 @@ class ActionExecutionBridge:
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             result["local_search_error"] = safe_error(e)
 
-    async def _explore_integrate_cdm(
-        self, cdm: Any, topic: str, result: dict[str, Any]
-    ) -> None:
+    async def _explore_integrate_cdm(self, cdm: Any, topic: str, result: dict[str, Any]) -> None:
         """CDM integration stage: ingest each search snippet."""
         try:
             if hasattr(cdm, "ingest_document"):

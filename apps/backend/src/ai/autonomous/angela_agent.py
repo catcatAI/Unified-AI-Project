@@ -411,7 +411,6 @@ class AngelaAutonomousAgent:
         logger.info("All components initialized successfully")
         return True
 
-
     async def start(self):
         """Start the autonomous agent main loop"""
         if not await self.initialize():
@@ -587,7 +586,6 @@ class AngelaAutonomousAgent:
             if self.tick_count % 100 == 0:
                 self._log_status()
 
-
     @staticmethod
     def _normalize_position(pos) -> Tuple[float, float, float]:
         """Bridge sends dict {x,y,z}; policy stack needs a tuple."""
@@ -648,7 +646,9 @@ class AngelaAutonomousAgent:
         except Exception as e:
             logger.debug(f"Chat drain failed: {e}")
 
-    def _observe_world_vision(self, state: Optional[Dict[str, Any]], vision: Dict[str, Any]) -> None:
+    def _observe_world_vision(
+        self, state: Optional[Dict[str, Any]], vision: Dict[str, Any]
+    ) -> None:
         """識別→記憶閉環：射線命中帶世界座標，直接入空間記憶"""
         if not vision or not self.memory:
             return
@@ -754,7 +754,6 @@ class AngelaAutonomousAgent:
 
         except Exception as e:
             logger.error(f"Perception error: {e}")
-
 
     def _capture_screen_vision(self):
         """截窗視覺（識別）：節流截幀→encoder→current_state.visual。
@@ -865,8 +864,7 @@ class AngelaAutonomousAgent:
                     mode = lm
             except Exception:
                 logger.debug(
-                    "lifecycle behavioral adjustment unreadable; "
-                    "routing mode keeps prior value",
+                    "lifecycle behavioral adjustment unreadable; " "routing mode keeps prior value",
                     exc_info=True,
                 )
         return mode
@@ -1623,9 +1621,7 @@ class AngelaAutonomousAgent:
         except Exception as e:
             logger.error(f"Queue chat failed: {e}")
 
-    async def _store_chat_memory(
-        self, player: str, message: str, say: str, bid: str
-    ) -> None:
+    async def _store_chat_memory(self, player: str, message: str, say: str, bid: str) -> None:
         """Store the overheard chat + reply as one HAM episodic memory."""
         try:
             if self.memory:
@@ -1755,9 +1751,7 @@ class AngelaAutonomousAgent:
                 await self._settle_behavior(False, f"goto_{cur.get('reason', 'unknown')}")
                 return
 
-    async def _ground_any_pickup(
-        self, ab: Dict[str, Any], b, pickups: Dict[str, int]
-    ) -> None:
+    async def _ground_any_pickup(self, ab: Dict[str, Any], b, pickups: Dict[str, int]) -> None:
         """No-pickup grounding: grace window, one adjust retry, then fail."""
         # Give the last fed action a full poll cycle to land before
         # calling it a miss (observed: dig_at judged 0.1s after feed).
@@ -1951,7 +1945,6 @@ class AngelaAutonomousAgent:
         if completed:
             self._run_behavior_followup()
         await self._store_behavior_memory(ab, completed, reason, pickups)
-
 
     async def _finish_scout(self, ab: Dict[str, Any], scan: Dict[str, Any]):
         """Scout phase two: LLM turns surveyed nodes into a goto coordinate."""

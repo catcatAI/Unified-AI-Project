@@ -133,7 +133,9 @@ class DriveDeduplication:
 class DocumentParser:
     """解析常見文件格式為純文字"""
 
-    _TEXT_SUFFIXES = frozenset({".txt", ".md", ".py", ".js", ".ts", ".json", ".yaml", ".yml", ".html", ".css", ".xml"})
+    _TEXT_SUFFIXES = frozenset(
+        {".txt", ".md", ".py", ".js", ".ts", ".json", ".yaml", ".yml", ".html", ".css", ".xml"}
+    )
 
     def _parse_text(self, path: Path, suffix: str) -> str:
         """Parse plain-text-like files."""
@@ -195,7 +197,6 @@ class DocumentParser:
             return self._parse_xlsx(path)
 
         return f"[File: {path.name} ({suffix})]"
-
 
 
 @router.get("/status")

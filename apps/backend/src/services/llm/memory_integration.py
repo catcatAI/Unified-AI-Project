@@ -158,7 +158,6 @@ class MemoryIntegration:
             logger.warning("Memory retrieval error: %s", e, exc_info=True)
             return None
 
-
     async def start_precompute(self) -> None:
         """Start the precompute service."""
         if self._svc.enable_memory_enhancement and hasattr(self._svc, "precompute_service"):

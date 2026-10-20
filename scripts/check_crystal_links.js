@@ -19,14 +19,9 @@
 'use strict'
 
 const path = require('path')
-const { CARDS } = require(path.join(
-  __dirname,
-  '..',
-  'apps',
-  'crystal-cards',
-  'game-data',
-  'cards.js'
-))
+const { CARDS } = require(
+  path.join(__dirname, '..', 'apps', 'crystal-cards', 'game-data', 'cards.js')
+)
 
 const SENTINELS = new Set(['restart'])
 

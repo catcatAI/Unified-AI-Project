@@ -11,7 +11,6 @@ took effect and the auto-selector never ran.
 """
 
 import pytest
-
 from services.llm.router import AngelaLLMService
 
 
@@ -23,24 +22,18 @@ def _service(config: dict) -> AngelaLLMService:
 
 class TestLLMModeResolution:
     def test_shipped_config_keeps_the_standard_strategy(self):
-        service = _service(
-            {"deployment": {"mode": "local"}, "settings": {"llm_mode": "standard"}}
-        )
+        service = _service({"deployment": {"mode": "local"}, "settings": {"llm_mode": "standard"}})
         assert service.deployment_mode == "local"
         assert service.llm_mode == "standard"
 
     def test_settings_llm_mode_auto_is_honoured(self):
         """The defect: deployment.mode used to shadow the strategy."""
-        service = _service(
-            {"deployment": {"mode": "local"}, "settings": {"llm_mode": "auto"}}
-        )
+        service = _service({"deployment": {"mode": "local"}, "settings": {"llm_mode": "auto"}})
         assert service.deployment_mode == "local"
         assert service.llm_mode == "auto"
 
     def test_deployment_auto_opens_the_categories_and_the_strategy(self):
-        service = _service(
-            {"deployment": {"mode": "auto"}, "settings": {"llm_mode": "standard"}}
-        )
+        service = _service({"deployment": {"mode": "auto"}, "settings": {"llm_mode": "standard"}})
         assert service.deployment_mode == "auto"
         assert service.llm_mode == "auto"
         assert service._allowed_types() == frozenset({"local", "cloud"})

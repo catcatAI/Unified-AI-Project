@@ -36,17 +36,13 @@ def _extract_declared(header: Mapping[str, Any]) -> Dict[str, int]:
         "bank_bytes": _integer(declared.get("sub_bank_bytes"), "sub_bank_bytes"),
         "wavefront_cycles": _integer(declared.get("wavefront_cycles"), "wavefront_cycles"),
         "forward_width": _integer(declared.get("forward_bus_bits"), "forward_bus_bits"),
-        "plasticity_width": _integer(
-            declared.get("plasticity_bus_bits"), "plasticity_bus_bits"
-        ),
+        "plasticity_width": _integer(declared.get("plasticity_bus_bits"), "plasticity_bus_bits"),
         "delta_width": _integer(declared.get("delta_w_bits"), "delta_w_bits"),
         "mask_width": _integer(declared.get("hit_mask_bits"), "hit_mask_bits"),
         "axi_address_width": _integer(
             declared.get("axi_address_width_bits"), "axi_address_width_bits"
         ),
-        "axi_data_width": _integer(
-            declared.get("axi_data_width_bits"), "axi_data_width_bits"
-        ),
+        "axi_data_width": _integer(declared.get("axi_data_width_bits"), "axi_data_width_bits"),
         "sram_base": int(declared.get("sram_base_address", 0)),
     }
 
@@ -71,9 +67,7 @@ def _extract_address_ranges(header: Mapping[str, Any]) -> Tuple[List[Any], List[
     return bank_bits, word_bits, byte_bits
 
 
-def _validate_geometry(
-    d: Dict[str, int], bank_bits: List[Any], word_bits: List[Any]
-) -> None:
+def _validate_geometry(d: Dict[str, int], bank_bits: List[Any], word_bits: List[Any]) -> None:
     """校驗 bank/word 幾何、wavefront、封包寬度與 AXI 範圍。"""
     bank_count = d["bank_count"]
     if bank_count != (1 << (bank_bits[0] - bank_bits[1] + 1)):

@@ -127,14 +127,18 @@ def parse_and_resolve_relational_chain(
     return f"{sol} is {comp_word}"
 
 
-def _record_edge(a: str, b: str, greater: Dict[str, Set[str]], lesser: Dict[str, Set[str]], all_nodes: Set[str]) -> None:
+def _record_edge(
+    a: str, b: str, greater: Dict[str, Set[str]], lesser: Dict[str, Set[str]], all_nodes: Set[str]
+) -> None:
     greater.setdefault(a, set()).add(b)
     lesser.setdefault(b, set()).add(a)
     all_nodes.add(a)
     all_nodes.add(b)
 
 
-def _build_graph(edges: List[Tuple[str, str, float]]) -> Tuple[Dict[str, Set[str]], Dict[str, Set[str]], Set[str]]:
+def _build_graph(
+    edges: List[Tuple[str, str, float]],
+) -> Tuple[Dict[str, Set[str]], Dict[str, Set[str]], Set[str]]:
     """Build greater/lesser adjacency sets from weighted edge list."""
     greater: Dict[str, Set[str]] = {}
     lesser: Dict[str, Set[str]] = {}

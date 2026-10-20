@@ -74,7 +74,6 @@ def _sanitize(value: Any, key: str = "") -> Any:
     return _short_text(value)
 
 
-
 def _status(result: Mapping[str, Any]) -> str:
     return str(result.get("status", "unavailable"))
 
@@ -302,7 +301,6 @@ def _evaluate_ai_card_reference(results: Mapping[str, Mapping[str, Any]]) -> Dic
             "cost_decision": result.get("cost", {}).get("decision"),
         },
     }
-
 
 
 def _evaluate_rtl(results: Mapping[str, Mapping[str, Any]]) -> Dict[str, Any]:

@@ -305,6 +305,27 @@ class UnifiedEngine:
     # ------------------------------------------------------------------
     # Statistical inference (the learned model)
     # ------------------------------------------------------------------
+    @staticmethod
+    def _is_plausible_vote_answer(answer: str, question: str) -> bool:
+        """Is a byte-atomic answer vote credible?
+
+        answer_votes is byte-atomic (``chr(peak)``), so every vote is a
+        single byte. On out-of-domain questions the peak is distribution
+        noise (measured on the 32k-checkpoint: peak 'e', share=1.0, giving
+        "<question>=e" for every knowledge/persona prompt). A non-digit byte
+        can never be a real open answer (true/false go through the boolean
+        layer above); a digit byte is only credible when the question itself
+        carries arithmetic signal — otherwise the answer is dropped so the
+        fallback chain can answer honestly instead of emitting garbage.
+        """
+        if len(answer) != 1:
+            return True
+        if not answer.isdigit():
+            return False
+        import re as _re
+
+        return bool(_re.search(r"[0-9+\-*/×÷]|加|減|减|乘|除", question))
+
     def _infer_from_core(self, text: str) -> Optional[Tuple[str, float, str]]:
         """Answer a query using the statistical core's generalisation.
 
@@ -378,16 +399,9 @@ class UnifiedEngine:
         # OOD guard: answer_votes is byte-atomic (chr(peak)), so every vote is
         # a single byte. On out-of-domain questions the peak is distribution
         # noise (measured on the 32k-checkpoint: peak 'e', share=1.0, giving
-        # "<question>=e" for every knowledge/persona prompt). A non-digit byte
-        # can never be a real open answer (true/false go through the boolean
-        # layer above); a digit byte is only credible when the question itself
-        # carries arithmetic signal — otherwise return None so the fallback
-        # chain can answer honestly instead of emitting garbage.
-        if len(answer) == 1:
-            if not answer.isdigit():
-                return None
-            if not _re.search(r"[0-9+\-*/×÷]|加|減|减|乘|除", q):
-                return None
+        # "<question>=e" for every knowledge/persona prompt).
+        if not self._is_plausible_vote_answer(answer, q):
+            return None
         conf = min(0.90, max(0.3, 0.3 + share))
         result = f"{q}={answer}"
         return result, conf, "statistical-core"
@@ -493,17 +507,12 @@ class UnifiedEngine:
             "many",
             "much",
         }
-        qws = [
-            w.lower()
-            for w in _re.findall(r"[A-Za-z]{3,}", resolved)
-            if w.lower() not in stop
-        ]
+        qws = [w.lower() for w in _re.findall(r"[A-Za-z]{3,}", resolved) if w.lower() not in stop]
         qws += [c for c in _re.findall(r"[\u4e00-\u9fff]{2,}", resolved)]
         if not qws:
             return True
         return any(
-            w in ans.lower() or any(c in ans for c in w if "\u4e00" <= c <= "\u9fff")
-            for w in qws
+            w in ans.lower() or any(c in ans for c in w if "\u4e00" <= c <= "\u9fff") for w in qws
         )
 
     def _try_semantic_qa(self, text: str) -> Optional[str]:

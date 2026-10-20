@@ -146,7 +146,9 @@ class CoreNetwork:
                 )
                 self._apply_relation_activation(key, other_key, rel_type, confidence)
 
-    def _collect_candidate_keys(self, input_keys: List[str], propagated: Dict[str, float]) -> Set[str]:
+    def _collect_candidate_keys(
+        self, input_keys: List[str], propagated: Dict[str, float]
+    ) -> Set[str]:
         """Collect neurons that could carry activation above threshold."""
         candidate_keys: Set[str] = set(input_keys)
         candidate_keys.update(propagated.keys())

@@ -16,21 +16,77 @@ from utils.text_utils import char_bigrams as _char_bigrams_util
 
 _TEMPLATE_STOPWORDS = frozenset(
     {
-        "what", "is", "the", "a", "an", "of", "to", "do", "does", "did",
-        "you", "your", "i", "my", "me", "are", "how", "why", "who", "when",
-        "where", "which", "that", "this", "it", "in", "on", "at", "for",
+        "what",
+        "is",
+        "the",
+        "a",
+        "an",
+        "of",
+        "to",
+        "do",
+        "does",
+        "did",
+        "you",
+        "your",
+        "i",
+        "my",
+        "me",
+        "are",
+        "how",
+        "why",
+        "who",
+        "when",
+        "where",
+        "which",
+        "that",
+        "this",
+        "it",
+        "in",
+        "on",
+        "at",
+        "for",
         # Generic meta words from a fossilized filler template
         # ("User, the question you're asking is about the current
         # state…"): without these, any English query containing
         # "question" matches that template and gets served garbage.
-        "question", "asking", "asked", "current", "state", "about", "re",
+        "question",
+        "asking",
+        "asked",
+        "current",
+        "state",
+        "about",
+        "re",
         # English question fillers (2026-10-19 audit): without these, the
         # subject-coverage guard false-rejects real matches like
         # "what's the weather like?" (filler tokens look "distinctive").
-        "like", "please", "tell", "show", "explain", "would", "could",
-        "can", "let", "us", "get", "give", "need", "know", "think",
-        "something", "anything", "there", "here", "really", "just",
-        "maybe", "what's", "whats", "that's", "thats", "there's", "theres",
+        "like",
+        "please",
+        "tell",
+        "show",
+        "explain",
+        "would",
+        "could",
+        "can",
+        "let",
+        "us",
+        "get",
+        "give",
+        "need",
+        "know",
+        "think",
+        "something",
+        "anything",
+        "there",
+        "here",
+        "really",
+        "just",
+        "maybe",
+        "what's",
+        "whats",
+        "that's",
+        "thats",
+        "there's",
+        "theres",
     }
 )
 
@@ -219,14 +275,33 @@ class HAMMemoryManager:
                 return 0.5
         return 0.5
 
+    def _should_prune_entry(self, entry: Dict[str, Any], now: datetime) -> bool:
+        """True when an entry is stale enough to drop.
+
+        Protected entries and high-importance entries are kept regardless of
+        age; low-importance entries die after 30 days, medium ones after 90.
+        """
+        meta = entry.get("metadata")
+        if isinstance(meta, dict) and meta.get("protected"):
+            return False
+        age = self._entry_age_days(entry, now)
+        if age is None:
+            return False
+        importance = self._entry_importance(entry)
+        if importance >= self._RETENTION_KEEP_IMPORTANCE:
+            return False
+        limit = (
+            self._RETENTION_DAYS_LOW
+            if importance < self._RETENTION_DROP_IMPORTANCE
+            else self._RETENTION_DAYS_MID
+        )
+        return age > limit
+
     def prune(self, now: Optional[datetime] = None) -> Dict[str, int]:
         """Drop stale, low-importance memories; return what was removed.
 
-        Rules (the same shape the (unwired) HAM retention task used):
-        protected entries and high-importance entries are kept regardless of
-        age; low-importance entries die after 30 days, medium ones after 90;
-        the most recent entries are always kept, so a fresh install never
-        ends up empty.
+        The most recent entries are always kept, so a fresh install never
+        ends up with an empty memory.
         """
         now = now or datetime.now(timezone.utc)
         removed = {"templates": 0, "conversations": 0}
@@ -240,31 +315,10 @@ class HAMMemoryManager:
             protected_from = max(0, len(entries) - self._RETENTION_MIN_RECENT)
             kept: List[Any] = []
             for index, entry in enumerate(entries):
-                if not isinstance(entry, dict):
+                if not isinstance(entry, dict) or index >= protected_from:
                     kept.append(entry)
                     continue
-                if index >= protected_from:
-                    kept.append(entry)
-                    continue
-                meta = entry.get("metadata")
-                protected = bool(meta.get("protected")) if isinstance(meta, dict) else False
-                if protected:
-                    kept.append(entry)
-                    continue
-                age = self._entry_age_days(entry, now)
-                if age is None:
-                    kept.append(entry)
-                    continue
-                importance = self._entry_importance(entry)
-                if importance >= self._RETENTION_KEEP_IMPORTANCE:
-                    kept.append(entry)
-                    continue
-                limit = (
-                    self._RETENTION_DAYS_LOW
-                    if importance < self._RETENTION_DROP_IMPORTANCE
-                    else self._RETENTION_DAYS_MID
-                )
-                if age > limit:
+                if self._should_prune_entry(entry, now):
                     removed[bucket] += 1
                     continue
                 kept.append(entry)

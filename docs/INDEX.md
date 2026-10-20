@@ -70,8 +70,7 @@ MASTER_CONSOLIDATED_PLAN 等) 位於 `06-project-management/plans/` 目錄下。
   spec
 - `03-technical-architecture/HAMMemory.md` — HAM 記憶體系（現行文件）
 - **[03-technical-architecture/identity-and-workshop-persona.md](03-technical-architecture/identity-and-workshop-persona.md)**
-  — 身分與命名（per-user）、天使工房接待角色露茜法埃拉、交付流程、模板定位
-  （示例進上下文，非直接輸出）
+  — 身分與命名（per-user）、天使工房接待角色露茜法埃拉、交付流程、模板定位（示例進上下文，非直接輸出）
 - `09-archive/auto-archived-2026-08-11/MODULE_MANAGER_SYSTEM.md` — ModuleManager
   design 🗄️ 已歸檔（現行實作在 `apps/backend/src/core/system/module_manager/`）
 - **[architecture/ANGELA_FULL_ARCHITECTURE.md](architecture/ANGELA_FULL_ARCHITECTURE.md)**

@@ -785,8 +785,6 @@ async def _shutdown_services(broadcast_task, module_manager):
     _sd_plugin_metrics()
 
 
-
-
 def _backbone_try(bb, name: str, fn, *, kind: str = "module", key: Optional[str] = None) -> None:
     """Register one backbone component, skipping on None/failure."""
     key = key or name
@@ -838,12 +836,24 @@ def _register_backbone() -> None:
     # 模組（lifespan 單例）
     _backbone_try(bb, "digital_life", get_digital_life, kind="module", key="digital_life")
     _backbone_try(bb, "lifecycle", get_lifecycle, kind="module", key="lifecycle")
-    _backbone_try(bb, "heartbeat", get_metabolic_heartbeat, kind="module", key="metabolic_heartbeat")
-    _backbone_try(bb, "causal_reasoning", get_causal_reasoning, kind="module", key="causal_reasoning")
+    _backbone_try(
+        bb, "heartbeat", get_metabolic_heartbeat, kind="module", key="metabolic_heartbeat"
+    )
+    _backbone_try(
+        bb, "causal_reasoning", get_causal_reasoning, kind="module", key="causal_reasoning"
+    )
     _backbone_try(bb, "crisis", get_crisis_system, kind="module", key="crisis_system")
     _backbone_try(bb, "agent_manager", get_agent_manager, kind="module", key="agent_manager")
-    _backbone_try(bb, "desktop_interaction", get_desktop_interaction, kind="module", key="desktop_interaction")
-    _backbone_try(bb, "training_coordinator", get_training_coordinator, kind="module", key="training_coordinator")
+    _backbone_try(
+        bb, "desktop_interaction", get_desktop_interaction, kind="module", key="desktop_interaction"
+    )
+    _backbone_try(
+        bb,
+        "training_coordinator",
+        get_training_coordinator,
+        kind="module",
+        key="training_coordinator",
+    )
 
     # ChatService（重元件：含 model_bus / memory managers）
     chat = globals().get("_chat_service_instance")
@@ -859,8 +869,6 @@ def _register_backbone() -> None:
         bb.registries.matrices.count(),
         bb.memories.names().__len__() if hasattr(bb.memories, "names") else 0,
     )
-
-
 
 
 def _memory_backend_from_chat():
@@ -1016,8 +1024,6 @@ async def _startup_services():
     _preinit_backbone()
 
     return _broadcast_task
-
-
 
 
 async def _shutdown_pre_lifespan() -> None:

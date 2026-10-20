@@ -145,9 +145,7 @@ TRIGGER_OVERLOAD_FOCUS_LOSS = 0.20
 TRIGGER_OVERLOAD_CONFUSION = 0.30
 
 
-def _apply_dimension_ripples(
-    state_matrix: Any, ripple: Dict[str, Any], scale: float
-) -> None:
+def _apply_dimension_ripples(state_matrix: Any, ripple: Dict[str, Any], scale: float) -> None:
     """Apply dimension-specific ripples (epsilon/alpha/beta/gamma/delta)."""
 
     def _add(axis_name: str, key: str, delta: float) -> None:
@@ -231,10 +229,17 @@ def apply_ripple_to_state(state_matrix: Any, ripple: Dict[str, Any], scale: floa
         axis = getattr(state_matrix, "delta", None)
         if axis is not None and hasattr(axis, "values"):
             if "bond" in _AXIS_SCHEMA.get("delta", set()):
-                capped = max(-RIPPLE_DELTA_CAP, min(RIPPLE_DELTA_CAP, ripple["delta_engagement"] * GAIN_DELTA_BOND_RATIO)) * scale
+                capped = (
+                    max(
+                        -RIPPLE_DELTA_CAP,
+                        min(RIPPLE_DELTA_CAP, ripple["delta_engagement"] * GAIN_DELTA_BOND_RATIO),
+                    )
+                    * scale
+                )
                 axis.values["bond"] = _clamp(axis.values.get("bond", 0.5) + capped)
 
     _apply_negative_valence_triggers(state_matrix, ripple, scale)
+
 
 _COGNITION_DELTA_MAP = {
     "gamma_happiness": ("gamma", "happiness"),

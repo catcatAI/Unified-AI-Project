@@ -414,9 +414,7 @@ class FileSystemMonitor:
 
             self._file_states[item_str] = current_state
 
-        except (
-            Exception
-        ) as e:  # broad exception acceptable: path check errors should be logged
+        except Exception as e:  # broad exception acceptable: path check errors should be logged
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
     async def _scan_current_files(self, path: Path) -> Set[str]:

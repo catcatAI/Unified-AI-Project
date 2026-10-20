@@ -360,9 +360,7 @@ def _repl_info_command(cmd: str, service: Any) -> Optional[Tuple[str, Optional[s
     return None
 
 
-def _repl_tool_command(
-    cmd: str, args: str, service: Any
-) -> Optional[Tuple[str, Optional[str]]]:
+def _repl_tool_command(cmd: str, args: str, service: Any) -> Optional[Tuple[str, Optional[str]]]:
     """Tool commands: /memory, /context, /model, /drive, /tickle, /eval.
     None = not this group."""
     if cmd in ("m", "mem", "memory"):
@@ -586,17 +584,17 @@ def _format_backends_line(cfg: Any) -> list:
         return []
     lines = []
     enabled = [
-        k for k, v in backends_cfg.items()
-        if isinstance(v, dict) and v.get("enabled", False)
+        k for k, v in backends_cfg.items() if isinstance(v, dict) and v.get("enabled", False)
     ]
     disabled = [
-        k for k, v in backends_cfg.items()
-        if isinstance(v, dict) and not v.get("enabled", True)
+        k for k, v in backends_cfg.items() if isinstance(v, dict) and not v.get("enabled", True)
     ]
     lines.append(f"  Backends:    {len(enabled)} enabled, {len(disabled)} disabled")
     for bid in enabled:
         b = backends_cfg[bid]
-        lines.append(f"    ✅ {bid:<22s} type={b.get('type', '?')}  provider={b.get('provider', '?')}")
+        lines.append(
+            f"    ✅ {bid:<22s} type={b.get('type', '?')}  provider={b.get('provider', '?')}"
+        )
     for bid in disabled:
         b = backends_cfg[bid]
         lines.append(f"    ⬜ {bid:<22s} (disabled, provider={b.get('provider', '?')})")
@@ -618,6 +616,7 @@ def _format_learned_line() -> Optional[str]:
     """Format learned config scan line, or None if unavailable."""
     try:
         from pathlib import Path
+
         learned_dir = Path(__file__).resolve().parents[2] / "data" / "angela_learned"
         if learned_dir.exists():
             n = len(list(learned_dir.glob("*.yaml")))
@@ -636,14 +635,13 @@ def _collect_warnings(mode: str, backends_cfg: dict) -> list:
     has_anthropic = bool(os.getenv("ANTHROPIC_API_KEY"))
     has_google = bool(os.getenv("GOOGLE_API_KEY"))
     cloud_backends = [
-        k for k, v in backends_cfg.items()
+        k
+        for k, v in backends_cfg.items()
         if isinstance(v, dict) and v.get("type") == "cloud" and v.get("enabled")
     ]
     if cloud_backends and not any([has_openai, has_anthropic, has_google]):
         warnings.append("⚠️  Cloud backends enabled but no API keys found in environment!")
-        warnings.append(
-            _hint("Set OPENAI_API_KEY, ANTHROPIC_API_KEY, or GOOGLE_API_KEY in .env")
-        )
+        warnings.append(_hint("Set OPENAI_API_KEY, ANTHROPIC_API_KEY, or GOOGLE_API_KEY in .env"))
     return warnings
 
 
@@ -777,9 +775,7 @@ def _llm_backend_table(llm_svc: Any) -> List[str]:
     for btype, bobj in backends.items():
         name = btype.name if hasattr(btype, "name") else str(btype)
         backend_type = (
-            getattr(bobj, "_config", {}).get("type", "?")
-            if hasattr(bobj, "_config")
-            else "?"
+            getattr(bobj, "_config", {}).get("type", "?") if hasattr(bobj, "_config") else "?"
         )
         is_active = active_type is not None and btype == active_type
         marker = " ★" if is_active else ""
@@ -900,9 +896,7 @@ def _handle_model_stats(llm_svc: Any) -> str:
 def _handle_model_switch(llm_svc: Any, backends: Any, subarg: str) -> str:
     """Handle /model switch command."""
     if not subarg:
-        available = (
-            [btype.name for btype in backends.keys()] if hasattr(backends, "keys") else []
-        )
+        available = [btype.name for btype in backends.keys()] if hasattr(backends, "keys") else []
         lines = ["Usage: /model switch <name>"]
         lines.append(f"Available: {available}")
         return "\n".join(lines)
@@ -914,9 +908,7 @@ def _handle_model_switch(llm_svc: Any, backends: Any, subarg: str) -> str:
             llm_svc.active_backend = bobj
             llm_svc.active_backend_type = btype
             return f"✅ Switched to {name}"
-    available = [
-        btype.name if hasattr(btype, "name") else str(btype) for btype in backends.keys()
-    ]
+    available = [btype.name if hasattr(btype, "name") else str(btype) for btype in backends.keys()]
     return f"❌ Model '{backend_key}' not found.\nAvailable: {available}"
 
 

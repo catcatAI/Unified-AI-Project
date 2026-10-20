@@ -381,6 +381,7 @@ class ChatService:
         # Legacy ED3N continuous-learning: OFF by default — the unified engine
         # is the text core now. Set ANGELA_LEGACY_ED3N=1 to re-enable.
         import os as _os
+
         os = _os  # rebind for helpers
 
         await self._init_legacy_ed3n()
@@ -399,7 +400,6 @@ class ChatService:
         # Start periodic HAM sync background task (Phase 5.2)
         if self._ed3n_learning_integration:
             self._ham_sync_task = asyncio.create_task(self._ham_sync_loop())
-
 
     async def _try_repl_hardware_agent(
         self, user_message: str, context: Dict[str, Any]

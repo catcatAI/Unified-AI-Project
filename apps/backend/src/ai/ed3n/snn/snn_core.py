@@ -7,7 +7,7 @@ SNN-based core network replacing sequential CoreNetwork.
 """
 
 import logging
-from typing import Any, Dict, List, Optional, TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 from core.system.config.magic_numbers import compute_bool
 
@@ -97,9 +97,7 @@ class SNNCore:
         """依分類結果選活躍群組，補缺神經元；回 (group, input_currents)。"""
         relation_type = "synonym"
         if input_keys and len(input_keys) >= 2 and self.classifier:
-            rt, _ = self.classifier.classify_pair(
-                input_keys[0], input_keys[1], context=context
-            )
+            rt, _ = self.classifier.classify_pair(input_keys[0], input_keys[1], context=context)
             relation_type = self._group_name_for(rt)
 
         active_group = self.groups.get(relation_type)
@@ -128,14 +126,10 @@ class SNNCore:
         iteration = 0
         while batch is not None and iteration < max_iterations:
             active_neurons = {
-                k: active_group.neurons[k]
-                for k in batch.neuron_keys
-                if k in active_group.neurons
+                k: active_group.neurons[k] for k in batch.neuron_keys if k in active_group.neurons
             }
 
-            spiked = engine.compute_batch(
-                batch, active_neurons, timestep, threshold_mod
-            )
+            spiked = engine.compute_batch(batch, active_neurons, timestep, threshold_mod)
             all_spikes[batch.batch_id] = spiked
 
             silent = [k for k in batch.neuron_keys if k not in spiked]
@@ -192,8 +186,14 @@ class SNNCore:
             return {}
 
         all_spikes = self._run_batches(
-            self.batch_engine, self, batch, active_group, threshold_mod,
-            max_iterations, self._timestep, self.sparse_engine,
+            self.batch_engine,
+            self,
+            batch,
+            active_group,
+            threshold_mod,
+            max_iterations,
+            self._timestep,
+            self.sparse_engine,
         )
         output = self.batch_engine.collect_output_spikes(all_spikes)
 

@@ -473,7 +473,6 @@ class EmotionAnalyzer:
                 match_count += 1
         return score, match_count
 
-
     def _compute_emotion_result(self, emotion_scores: Dict[str, float]) -> Dict[str, Any]:
         """Compute emotion result from scores."""
         if not emotion_scores or all(score <= 0 for score in emotion_scores.values()):

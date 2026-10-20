@@ -607,7 +607,9 @@ if __name__ == "__main__":
 
         # TTS demo
         logger.info("\nTTS演示 / TTS demo:")
-        await audio.speak(f"你好，我是{_current_speaker_name()}，很高兴见到你！", show_subtitles=True)
+        await audio.speak(
+            f"你好，我是{_current_speaker_name()}，很高兴见到你！", show_subtitles=True
+        )
         logger.info("  说话完成 / Speaking complete")
 
         # TTS with emotion

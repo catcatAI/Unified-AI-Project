@@ -140,9 +140,7 @@ class LlamaCppBackend(BaseLLMBackend):
             delta = (obj.get("choices") or [{}])[0].get("delta", {})
             piece = delta.get("content") or ""
         except Exception:
-            logger.warning(
-                "llamacpp SSE malformed JSON dropped (data[:120]=%r)", data[:120]
-            )
+            logger.warning("llamacpp SSE malformed JSON dropped (data[:120]=%r)", data[:120])
             return None, False
         if not piece:
             return None, False

@@ -1008,9 +1008,7 @@ class EdaAgent:
                     easyeda_source, workspace=workspace
                 )
             elif easyeda_source:
-                easyeda = await self.adapter.stage_easyeda_file(
-                    easyeda_source, workspace=workspace
-                )
+                easyeda = await self.adapter.stage_easyeda_file(easyeda_source, workspace=workspace)
             else:
                 easyeda = self.adapter.prepare_easyeda_handoff(
                     workspace, kicad.get("artifacts", [])
@@ -1065,8 +1063,12 @@ class EdaAgent:
         workspace = self.adapter.create_workspace("angela_pcb")
         try:
             kicad, easyeda, jlcone = await self._run_pcb_tools(
-                requested, workspace, width_mm, height_mm,
-                easyeda_source, easyeda_footprint,
+                requested,
+                workspace,
+                width_mm,
+                height_mm,
+                easyeda_source,
+                easyeda_footprint,
             )
             all_artifacts = self._merge_artifacts(
                 kicad.get("artifacts", []),
@@ -1536,8 +1538,7 @@ class EdaAgent:
                 ),
             },
             "capacity_kb_by_die_area_mm2": {
-                f"{area:g}": round(capacity_kb(area, measured_cell_um2), 2)
-                for area in die_areas
+                f"{area:g}": round(capacity_kb(area, measured_cell_um2), 2) for area in die_areas
             },
             "array_area_mm2_required_for": {
                 "weights_1mb": round(array_area_mm2(1.0, measured_cell_um2), 2),
@@ -1574,9 +1575,9 @@ class EdaAgent:
         """Run extracted netlist simulation if requested."""
         if not simulate_extracted:
             return {"status": "not_requested"}
+        from ai.hardware.cim_strip_reference import find_sky130_model_library
         from ai.hardware.cim_toolchain import MODEL_LIBRARY
         from ai.hardware.cim_verify import verify_weights
-        from ai.hardware.cim_strip_reference import find_sky130_model_library
         from ai.hardware.cim_weight_strip import extract
 
         library = MODEL_LIBRARY if MODEL_LIBRARY.is_file() else None
@@ -1637,15 +1638,14 @@ class EdaAgent:
                 "diagnostics": ["eda.enabled=false"],
             }
         try:
-            from ai.hardware.cim_strip_reference import CimStripConfig
+            from ai.hardware.card_architecture_audit import ANALOG_CIM_DENSITY
+            from ai.hardware.cim_strip_reference import MIN_CHARACTERISED_NFET_W_UM, CimStripConfig
             from ai.hardware.cim_weight_strip import (
                 WeightStripGeometry,
                 build_strip,
                 extract,
                 tile_strips,
             )
-            from ai.hardware.card_architecture_audit import ANALOG_CIM_DENSITY
-            from ai.hardware.cim_strip_reference import MIN_CHARACTERISED_NFET_W_UM
 
             self._validate_cim_params(weight_bits, slots)
             config = CimStripConfig()

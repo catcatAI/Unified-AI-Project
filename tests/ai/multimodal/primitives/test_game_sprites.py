@@ -36,7 +36,6 @@ from ai.multimodal.primitives.game_sprites import (
     render_terrain_tile,
     save_atlas,
 )
-
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[4]

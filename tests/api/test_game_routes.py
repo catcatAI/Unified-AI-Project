@@ -354,9 +354,8 @@ class TestAxisEngineRunnerM8:
         assert result["signals"] == {}
 
     async def test_start_unavailable_raises_503(self):
-        from fastapi import HTTPException
-
         from api.routes import game_routes
+        from fastapi import HTTPException
 
         with patch.object(game_routes, "_get_axis_runner", side_effect=RuntimeError("no runner")):
             with pytest.raises(HTTPException) as exc:

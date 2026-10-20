@@ -153,8 +153,7 @@ class UnifiedBackend(BaseLLMBackend):
                 engine.semantic_qa.load_dict(_json.load(_f))
         except Exception:  # optional QA load; failure ⇒ engine without QA knowledge
             logger.warning(
-                "SemanticQA knowledge load failed (%s); engine "
-                "comes up without QA knowledge",
+                "SemanticQA knowledge load failed (%s); engine " "comes up without QA knowledge",
                 qa_path,
                 exc_info=True,
             )

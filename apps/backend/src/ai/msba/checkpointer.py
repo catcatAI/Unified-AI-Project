@@ -84,9 +84,7 @@ class MSBACheckpointer:
         except Exception as e:
             logger.debug("Failed to load %s: %s", fail_label, e)
 
-    def _save_block_weights(
-        self, blocks: Dict[str, "SemanticBlock"], ckpt_dir: str
-    ) -> None:
+    def _save_block_weights(self, blocks: Dict[str, "SemanticBlock"], ckpt_dir: str) -> None:
         """Persist each block's SNN weights (W-array npz or engine checkpoint)."""
         for bid, block in blocks.items():
             coordinator = getattr(block, "coordinator", None)
@@ -102,9 +100,7 @@ class MSBACheckpointer:
             except Exception as e:
                 logger.debug("Failed to save %s: %s", bid, e)
 
-    def _load_block_weights(
-        self, blocks: Dict[str, "SemanticBlock"], ckpt_dir: str
-    ) -> None:
+    def _load_block_weights(self, blocks: Dict[str, "SemanticBlock"], ckpt_dir: str) -> None:
         """Restore each block's SNN weights when a checkpoint file exists."""
         for bid, block in blocks.items():
             coordinator = getattr(block, "coordinator", None)
@@ -265,7 +261,6 @@ class MSBACheckpointer:
         self._read_json(os.path.join(ckpt_dir, "meta.json"), "meta", result, "meta")
 
         return result
-
 
     def check_auto_save(self) -> bool:
         """Check if auto-save should trigger. Returns True if save needed."""

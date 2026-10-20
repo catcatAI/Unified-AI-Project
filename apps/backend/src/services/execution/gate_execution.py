@@ -669,9 +669,7 @@ class GateExecutionOwner:
             if bypass is not None:
                 return bypass
 
-            auto = await self._route_auto_execute(
-                user_message, context, plan, decision, model_bus
-            )
+            auto = await self._route_auto_execute(user_message, context, plan, decision, model_bus)
             if auto is not None:
                 return auto
 

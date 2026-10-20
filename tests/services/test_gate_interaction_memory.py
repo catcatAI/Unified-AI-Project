@@ -190,10 +190,9 @@ class TestResearchLLMSynthesis:
 
 class TestWebSearchHistoryEndpoint:
     def test_history_endpoint_reads_tail(self, monkeypatch):
+        import core.tools.web_search_tool as wst
         from fastapi import FastAPI
         from fastapi.testclient import TestClient
-
-        import core.tools.web_search_tool as wst
 
         fake = [{"query": "q1", "provider": "duckduckgo", "n_results": 2, "urls": []}]
         monkeypatch.setattr(wst, "read_recent_history", lambda limit=20: fake)
@@ -211,10 +210,9 @@ class TestWebSearchHistoryEndpoint:
         assert body["history"][0]["query"] == "q1"
 
     def test_history_endpoint_swallows_errors(self, monkeypatch):
+        import core.tools.web_search_tool as wst
         from fastapi import FastAPI
         from fastapi.testclient import TestClient
-
-        import core.tools.web_search_tool as wst
 
         def _boom(limit=20):
             raise OSError("disk gone")

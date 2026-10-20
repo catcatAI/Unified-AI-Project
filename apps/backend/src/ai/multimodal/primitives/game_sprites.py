@@ -37,9 +37,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Sequence, Tuple
 
-from PIL import Image, ImageChops, ImageDraw
-
 from ai.multimodal.primitives.game_materials import WATER_BLUE, to_bytes
+from PIL import Image, ImageChops, ImageDraw
 
 RGB = Tuple[int, int, int]
 

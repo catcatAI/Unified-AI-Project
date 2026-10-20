@@ -43,7 +43,6 @@ class TestDelegateToWebSearchTool:
     def test_search_message_is_research_answer_not_link_list(self, monkeypatch):
         """message 即終答（_agent_route_result 直接拿它當回覆）。"""
         import core.tools.research_pipeline as rp
-
         from ai.agents.specialized.web_search_agent import WebSearchAgent
 
         page = (
@@ -102,7 +101,6 @@ class TestFetchContentTextSummary:
 
     def _fetch_with(self, monkeypatch, html):
         import core.tools.research_pipeline as rp
-
         from ai.agents.specialized.web_search_agent import WebSearchAgent
 
         class FakeResp:
@@ -143,7 +141,6 @@ class TestFetchContentTextSummary:
 
     def test_fetch_error_status(self, monkeypatch):
         import core.tools.research_pipeline as rp
-
         from ai.agents.specialized.web_search_agent import WebSearchAgent
 
         def _boom(req, timeout=8):

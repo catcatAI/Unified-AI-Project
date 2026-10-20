@@ -1202,12 +1202,8 @@ class ArithmeticLearner:
             return
         cell.hidden_w = data[f"{prefix}_hidden_w"].astype(np.float32)
         cell.hidden_b = data[f"{prefix}_hidden_b"].astype(np.float32)
-        cell.head_ws = [
-            data[f"{prefix}_head{i}_w"].astype(np.float32) for i in range(n_heads)
-        ]
-        cell.head_bs = [
-            data[f"{prefix}_head{i}_b"].astype(np.float32) for i in range(n_heads)
-        ]
+        cell.head_ws = [data[f"{prefix}_head{i}_w"].astype(np.float32) for i in range(n_heads)]
+        cell.head_bs = [data[f"{prefix}_head{i}_b"].astype(np.float32) for i in range(n_heads)]
 
     def _load_truth_tables_if_empty(self) -> None:
         """Populate empty sample pools from deterministic truth tables."""

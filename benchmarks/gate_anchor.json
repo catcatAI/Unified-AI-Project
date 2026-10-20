@@ -1,10 +1,5 @@
 {
-  "native/knowledge": [
-    "know-002",
-    "know-005",
-    "know-009",
-    "know-013"
-  ],
+  "native/knowledge": ["know-002", "know-005", "know-009", "know-013"],
   "native/knowledge_mc": [
     "mc-001",
     "mc-002",

@@ -157,7 +157,6 @@ class CrisisSystem:
 
         return self.crisis_level
 
-
     def _trigger_protocol(self, level: int, details: Dict[str, Any]) -> None:
         """
         Triggers a protocol based on the crisis level.

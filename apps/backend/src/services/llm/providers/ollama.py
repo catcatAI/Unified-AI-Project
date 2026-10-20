@@ -60,7 +60,10 @@ class OllamaBackend(BaseLLMBackend):
         return False
 
     async def generate(self, prompt: str, **kwargs) -> LLMResponse:
-        """Generate."""
+        """Generate (streaming when a stream_callback is given)."""
+        stream_callback = kwargs.pop("stream_callback", None)
+        if stream_callback is not None:
+            return await self.generate_stream(prompt, stream_callback, **kwargs)
         start_time = time.time()
         messages = kwargs.get("messages", [{"role": "user", "content": prompt}])
         payload = {
@@ -83,16 +86,12 @@ class OllamaBackend(BaseLLMBackend):
                 timeout=aiohttp.ClientTimeout(total=self.timeout),
             ) as response:
                 if response.status == 200:
-                    text = ""
-                    async for chunk in response.content:
-                        line = chunk.decode("utf-8").strip()
-                        if line:
-                            try:
-                                data = json.loads(line)
-                                if data.get("message", {}).get("content"):
-                                    text += data["message"]["content"]
-                            except json.JSONDecodeError:
-                                continue
+                    chunks = []
+                    async for line in self._iter_ndjson_payloads(response):
+                        piece = self._extract_delta(line, ["message", "content"])
+                        if piece:
+                            chunks.append(piece)
+                    text = "".join(chunks)
                     return LLMResponse(
                         text=text,
                         backend="ollama",
@@ -109,4 +108,50 @@ class OllamaBackend(BaseLLMBackend):
                     )
         except Exception as e:
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
+            return LLMResponse(text="", backend="ollama", model=self.model, error=safe_error(e))
+
+    async def generate_stream(self, prompt: str, stream_callback, **kwargs) -> LLMResponse:
+        """Streaming generate: Ollama streams NDJSON chunks."""
+        start_time = time.time()
+        messages = kwargs.get("messages", [{"role": "user", "content": prompt}])
+        payload = {
+            "model": self.model,
+            "messages": messages,
+            "stream": True,
+            "options": {
+                "temperature": kwargs.get("temperature", 0.7),
+                "num_predict": kwargs.get("max_tokens", 256),
+            },
+        }
+        headers = {}
+        if self.api_key:
+            headers["Authorization"] = f"Bearer {self.api_key}"
+        try:
+            session = self._get_session()
+            async with session.post(
+                f"{self.base_url}/api/chat",
+                json=payload,
+                headers=headers or None,
+                timeout=aiohttp.ClientTimeout(total=600, sock_read=30),
+            ) as response:
+                if response.status != 200:
+                    text = await response.text()
+                    return LLMResponse(
+                        text="",
+                        backend="ollama",
+                        model=self.model,
+                        error=f"HTTP {response.status}: {text[:200]}",
+                    )
+                chunks = await self._stream_and_collect(
+                    response, stream_callback, ["message", "content"], ndjson=True
+                )
+            return LLMResponse(
+                text="".join(chunks),
+                backend="ollama",
+                model=self.model,
+                response_time_ms=(time.time() - start_time) * 1000,
+                confidence=0.9,
+            )
+        except Exception as e:
+            logger.error(f"Ollama streaming error: {e}", exc_info=True)
             return LLMResponse(text="", backend="ollama", model=self.model, error=safe_error(e))

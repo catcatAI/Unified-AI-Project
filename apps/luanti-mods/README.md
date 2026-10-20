@@ -1,9 +1,10 @@
 # Luanti (Minetest) 遊戲模組 — agent_poller
 
-伺服端 mod：每 **2.0 s** 向 Python 橋接（預設 `http://localhost:30003`）`POST /api/poll`
-取指令並執行（goto / dig / place / craft / look_at / scan / give），把玩家聊天轉送
-`POST /api/chat` 給 Angela 代理。目標玩家 `AngelaBot`（不存在時取第一個在線玩家）。
-Python 側由 `scripts/run_luanti_agent.py` 啟動（獨立進程，**不是**統一啟動器
+伺服端 mod：每 **2.0 s** 向 Python 橋接（預設
+`http://localhost:30003`）`POST /api/poll` 取指令並執行（goto / dig / place /
+craft / look_at / scan / give），把玩家聊天轉送 `POST /api/chat`
+給 Angela 代理。目標玩家 `AngelaBot`（不存在時取第一個在線玩家）。Python 側由
+`scripts/run_luanti_agent.py` 啟動（獨立進程，**不是**統一啟動器
 `scripts/run_angela.py`——後者不起 :30003，見 `docs/INVOCATION_MATRIX.md`）。
 
 ## 完整安裝四前置（缺一不可）
@@ -69,27 +70,29 @@ flatpak run org.luanti.luanti --server --gameid minetest_game \
 
 ## 橋接端點（Python 側 `integrations/luanti_polling_bridge.py`）
 
-| 端點 | 方向 | 用途 |
-|---|---|---|
-| `GET /health` | 探活 | 探活/啟動驗收（`{status:"ok",...}`） |
-| `POST /api/poll` | mod → 橋接 | 每 2s 取一行待執行指令 |
-| `GET /api/state` | 代理查詢 | 遊戲世界狀態快照 |
-| `POST /api/action` | 代理寫入 | 排隊動作（下一 tick 由 mod 執行） |
-| `POST /api/chat` | mod → 橋接 | 玩家聊天轉發（Angela 回覆入隊） |
-| `GET /api/chat` | 代理讀取 | 讀取待發聊天訊息 |
+| 端點               | 方向       | 用途                                 |
+| ------------------ | ---------- | ------------------------------------ |
+| `GET /health`      | 探活       | 探活/啟動驗收（`{status:"ok",...}`） |
+| `POST /api/poll`   | mod → 橋接 | 每 2s 取一行待執行指令               |
+| `GET /api/state`   | 代理查詢   | 遊戲世界狀態快照                     |
+| `POST /api/action` | 代理寫入   | 排隊動作（下一 tick 由 mod 執行）    |
+| `POST /api/chat`   | mod → 橋接 | 玩家聊天轉發（Angela 回覆入隊）      |
+| `GET /api/chat`    | 代理讀取   | 讀取待發聊天訊息                     |
 
 ## 驗證 mod 生效
 
 1. 伺服器 log 出現 poller 相關輸出（HTTP API 不可用時為
    `[agent_poller] HTTP API not available!`——即前置 3 未做）。
-2. `curl -s http://127.0.0.1:30003/health` 顯示 `pending_actions` 隨代理活動變化。
+2. `curl -s http://127.0.0.1:30003/health` 顯示 `pending_actions`
+   隨代理活動變化。
 3. 遊戲內與 `AngelaBot` 聊天，橋接 log 出現 chat 轉發。
 
 ## 侷限與注意
 
 - **無 Lua 測試**：Python 側僅 `tests/integrations/test_luanti_chat_dispatch.py`
   （chat 分發）；mod 行為靠上述手動驗證清單。
-- `POLL_INTERVAL = 2.0 s`；代理側視覺輪詢另計——「20 FPS」目標未達
-  （`docs/03-technical-architecture/GAME_AI_IMPLEMENTATION_PLAN.md` §10）。
-- 橋接與 mod 都是**本機/內網**設計：橋接綁 `0.0.0.0:30003`（nosec B104），
-  勿暴露公網。
+- `POLL_INTERVAL = 2.0 s`；代理側視覺輪詢另計——「20
+  FPS」目標未達（`docs/03-technical-architecture/GAME_AI_IMPLEMENTATION_PLAN.md`
+  §10）。
+- 橋接與 mod 都是**本機/內網**設計：橋接綁 `0.0.0.0:30003`（nosec
+  B104），勿暴露公網。

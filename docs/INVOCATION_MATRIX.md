@@ -50,7 +50,7 @@
 | `POST /api/v1/session/start`、`POST /api/v1/session/{id}/send` | 對話 session                                  | 同上 e2e 覆蓋                                    | 2026-09-20 |
 | `GET /api/v1/context/memory/recent`                            | HAM 真實記憶查詢                              | Dashboard MemoryViewer 走此 API                  | 2026-09-17 |
 | `GET /api/v1/ops/status`、`/ops/metrics`                       | 系統指標（psutil 真值）                       | Dashboard SystemMonitor                          | 2026-09-17 |
-| `GET /api/v1/system/status/detailed`                           | 系統狀態詳情                                  | `curl :8000/api/v1/system/status/detailed`       | 2026-09-20 |
+| `GET /api/v1/system/status/detailed`                           | 系統狀態詳情（狀態矩陣／情緒／生命階段／後端／記憶） | `curl :8000/api/v1/system/status/detailed`       | 2026-10-20 |
 | `WS /ws`                                                       | WebSocket 對話串流                            | e2e：EXEC/CONFIRM/CONFIRM-EXEC/REJECT 四態       | 2026-09-17 |
 | 全表                                                           | `/docs`（FastAPI Swagger）                    | 啟動後瀏覽 `:8000/docs`                          | 2026-09-20 |
 
@@ -99,7 +99,7 @@ python -m pytest tests/services/test_handlers.py \
                  tests/security/ -q               # → 全 passed
 
 # 4. 全倉回歸
-python -m pytest tests/ -q --timeout=120          # → 7,963 collected, 0 failed
+python -m pytest tests/ -q --timeout=120          # → 7,976 collected, 0 failed
 
 # 5. Lint
 python -m flake8 apps/backend/src scripts/run_luanti_agent.py  # 既有基準為準

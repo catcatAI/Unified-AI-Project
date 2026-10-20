@@ -138,9 +138,7 @@ class ResponseModeSelector:
     # ------------------------------------------------------------------
     # layered / layered_stream — StreamingPipeline 逐層 emit（§5.6.1）
     # ------------------------------------------------------------------
-    async def _collect_stream_tokens(
-        self, stream, stream_mode: bool
-    ) -> tuple:
+    async def _collect_stream_tokens(self, stream, stream_mode: bool) -> tuple:
         """Collect tokens and layers from stream."""
         from ai.streaming.token_stream import TokenType
 
@@ -159,9 +157,7 @@ class ResponseModeSelector:
                 layers.append(token.content)
         return tokens, layers
 
-    def _resolve_pair(
-        self, pair_id: Optional[str], envelope, text: str, layers: List[str]
-    ) -> None:
+    def _resolve_pair(self, pair_id: Optional[str], envelope, text: str, layers: List[str]) -> None:
         """Resolve pair with output envelope."""
         if pair_id is not None and self.pairs is not None:
             output = Envelope(

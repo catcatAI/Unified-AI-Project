@@ -96,8 +96,13 @@ jobs:
 
       - name: Run system-level integration tests
         run: |
+          # The referenced file (test_system_level_integration.py) never
+          # existed — it was committed empty and later removed, so this step
+          # collected 0 tests and pytest exited 5 (CI red). The real
+          # system-level suite is test_full_system_integration.py (it carries
+          # the system_integration marker).
           cd apps/backend
-          python -m pytest tests/integration/test_system_level_integration.py -v --tb=short --cov=src --cov-report=xml --junitxml=system-test-results.xml -m "system_integration"
+          python -m pytest tests/integration/test_full_system_integration.py -v --tb=short --cov=src --cov-report=xml --junitxml=system-test-results.xml -m "system_integration"
 
       - name: Upload system test results
         uses: actions/upload-artifact@v4

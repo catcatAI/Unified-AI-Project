@@ -20,8 +20,8 @@ import json
 import logging
 import os
 import sys
-from typing import Any, List, cast
 import time
+from typing import Any, List, cast
 
 logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(message)s")
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", ".."))

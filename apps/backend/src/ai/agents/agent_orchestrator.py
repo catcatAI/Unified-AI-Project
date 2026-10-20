@@ -435,9 +435,7 @@ class AgentOrchestrator:
                 "error": getattr(agent_result, "error", None),
             }
         except Exception as e:
-            logger.warning(
-                f"AgentManager execution failed for {agent_name}: {e}", exc_info=True
-            )
+            logger.warning(f"AgentManager execution failed for {agent_name}: {e}", exc_info=True)
             return None
 
     async def _process_subtask(
@@ -490,9 +488,8 @@ class AgentOrchestrator:
         result = await self._execute_via_model_bus(agent_name, message, context or {})
         is_specialized_agent = agent_name.endswith("_agent")
         if (
-            (result is None or (isinstance(result, dict) and not result.get("success")))
-            and is_specialized_agent
-        ):
+            result is None or (isinstance(result, dict) and not result.get("success"))
+        ) and is_specialized_agent:
             am_result = await self._execute_via_agent_manager(
                 agent_name, message, force_eda_followup
             )

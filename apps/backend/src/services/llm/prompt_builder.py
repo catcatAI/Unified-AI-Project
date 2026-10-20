@@ -125,9 +125,7 @@ def _droppable(parts: List[str]) -> List[int]:
     ]
 
 
-def _drop_whole_sections(
-    parts: List[str], deficit_tokens: int
-) -> Tuple[int, int, int]:
+def _drop_whole_sections(parts: List[str], deficit_tokens: int) -> Tuple[int, int, int]:
     """整段捨棄（由大至小）。回傳（剩餘 deficit, 釋放字元, 捨棄數）。"""
     freed_chars = 0
     dropped = 0
@@ -348,9 +346,7 @@ def _digest_overflow(
     return total
 
 
-def _evict_oldest(
-    messages: List[Dict], target: int, stats: Dict[str, int], total: int
-) -> int:
+def _evict_oldest(messages: List[Dict], target: int, stats: Dict[str, int], total: int) -> int:
     """階段 1：最舊優先驅逐（保護 system 與最終 user）。"""
     idx = 1
     while total > target and idx < len(messages) - 1:
@@ -366,9 +362,7 @@ def _evict_oldest(
     return total
 
 
-def _halve_final_user(
-    messages: List[Dict], target: int, stats: Dict[str, int], total: int
-) -> int:
+def _halve_final_user(messages: List[Dict], target: int, stats: Dict[str, int], total: int) -> int:
     """階段 2：砍半最終 user 訊息（使用者貼超長文件的真实情境）。"""
     while total > target and messages:
         final_msg = messages[-1]
@@ -383,9 +377,7 @@ def _halve_final_user(
     return total
 
 
-def _trim_system_phase(
-    messages: List[Dict], target: int, stats: Dict[str, int], total: int
-) -> int:
+def _trim_system_phase(messages: List[Dict], target: int, stats: Dict[str, int], total: int) -> int:
     """階段 3：system 內部區段裁剪（system 本身超額時的唯一手段）。"""
     while total > target:
         deficit = total - target
@@ -402,9 +394,7 @@ def _trim_system_phase(
     return total
 
 
-def _record_budget_audit(
-    messages: List[Dict], stats: Dict[str, int], budget_tokens: int
-) -> None:
+def _record_budget_audit(messages: List[Dict], stats: Dict[str, int], budget_tokens: int) -> None:
     """遙測累計＋系統提示稽核註記（僅在真的裁過時）。"""
     trimmed = (
         stats["digested_messages"]

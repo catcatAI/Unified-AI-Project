@@ -35,20 +35,20 @@ All plans live in `docs/06-project-management/plans/`:
 The project uses **H-level milestones** (not phases). Current status per
 H-level:
 
-| Level     | Focus                                                 | Status      | Score Target |
-| --------- | ----------------------------------------------------- | ----------- | :----------: |
-| **H1-H4** | HIGH vulnerability repair + test fixes                | ✅ Complete |  51% → 55%   |
+| Level     | Focus                                                  | Status      | Score Target |
+| --------- | ------------------------------------------------------ | ----------- | :----------: |
+| **H1-H4** | HIGH vulnerability repair + test fixes                 | ✅ Complete |  51% → 55%   |
 | **H5**    | Stub implementation (0 strict stubs left, 8,597 tests) | ✅ Complete |  55% → 62%   |
-| **H6**    | (Combined into H5/H7)                                 | —           |      —       |
-| **H7**    | Long file refactoring (327 files >200 lines remain)  | 🔴 Active   |  62% → 68%   |
-| **H7.1**  | Core documentation alignment (5 docs)                 | 🔴 Active   |  68% → 72%   |
-| **H7.2**  | Deprecated archive cleanup                            | 🟡 Planned  |  72% → 73%   |
-| **H8**    | Test quality (boundary/perf/coverage)                 | 🟡 Planned  |  73% → 78%   |
+| **H6**    | (Combined into H5/H7)                                  | —           |      —       |
+| **H7**    | Long file refactoring (327 files >200 lines remain)    | 🔴 Active   |  62% → 68%   |
+| **H7.1**  | Core documentation alignment (5 docs)                  | 🔴 Active   |  68% → 72%   |
+| **H7.2**  | Deprecated archive cleanup                             | 🟡 Planned  |  72% → 73%   |
+| **H8**    | Test quality (boundary/perf/coverage)                  | 🟡 Planned  |  73% → 78%   |
 | **H9**    | ANGELA-MATRIX annotation (435/743 files) + plugin docs | 🟡 Active   |  78% → 82%   |
 
-> The numbers above were re-measured on 2026-10-20 (they used to be a
-> 2026-08 snapshot: 2,837 tests, 564 files, 204 stubs, 138 long files —
-> every one of them stale by a wide margin).
+> The numbers above were re-measured on 2026-10-20 (they used to be a 2026-08
+> snapshot: 2,837 tests, 564 files, 204 stubs, 138 long files — every one of
+> them stale by a wide margin).
 
 ## Active AI Systems
 
@@ -73,15 +73,15 @@ H-level:
 
 ## Key Metrics Dashboard
 
-| Metric                   | Value                            |
-| ------------------------ | -------------------------------- |
-| Test count               | 8,597 passed / 112 skipped        |
-| Stub modules             | 0 remaining (0 STUB markers)      |
-| Empty except blocks      | 0 (remainder are intentional)      |
-| Files >200 lines         | 327 (target: 50 in H7)            |
-| Type annotation coverage | mypy budget 0 (locked, CI gate)   |
+| Metric                   | Value                                           |
+| ------------------------ | ----------------------------------------------- |
+| Test count               | 8,597 passed / 112 skipped                      |
+| Stub modules             | 0 remaining (0 STUB markers)                    |
+| Empty except blocks      | 0 (remainder are intentional)                   |
+| Files >200 lines         | 327 (target: 50 in H7)                          |
+| Type annotation coverage | mypy budget 0 (locked, CI gate)                 |
 | Version consistency      | enforced by `tests/test_version_consistency.py` |
-| `import core` time       | ~0.5s (lazy imports)             |
+| `import core` time       | ~0.5s (lazy imports)                            |
 
 ## Risk Management
 
@@ -92,8 +92,8 @@ Key technical risks currently tracked:
 - **Coverage ~64%** (measured 2026-10-08 by the gap-closure plan) — H8 adds
   boundary/perf/coverage gates
 - **ANGELA-MATRIX annotation 435/743 files** — H9 continues the sweep
-- **Test coverage gaps** — 309/504 source files still lack a dedicated test
-  file (H8)
+- **Test coverage gaps** — 309/504 source files still lack a dedicated test file
+  (H8)
 
 For detailed risk register see `MASTER_CONSOLIDATED_PLAN.md` (S/A/B/C/D/E task
 hierarchy).

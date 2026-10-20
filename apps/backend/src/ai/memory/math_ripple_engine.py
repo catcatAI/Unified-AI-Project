@@ -385,9 +385,7 @@ class RippleCascade:
                 continue
 
             cascade_factor = decay**step
-            effect = RippleCascade._make_cascade_effect(
-                ripple, target_depth, step, cascade_factor
-            )
+            effect = RippleCascade._make_cascade_effect(ripple, target_depth, step, cascade_factor)
             RippleCascade._apply_axis_effects(effect, ripple, axis, step, cascade_factor)
             all_ripples.append(effect)
             RippleCascade._apply_to_matrix(matrix, effect, axis)
@@ -948,9 +946,7 @@ class MathRippleEngine:
             ripple.description = f"{a} ÷ {b}（近零除數！恐懼）"
             return result
         result = a / b
-        ripple.epsilon_delta = (
-            self.GAIN_DIV_EPSILON_BASE + abs(a / b) * self.GAIN_DIV_EPSILON_SCALE
-        )
+        ripple.epsilon_delta = self.GAIN_DIV_EPSILON_BASE + abs(a / b) * self.GAIN_DIV_EPSILON_SCALE
         ripple.alpha_arousal = self.GAIN_DIV_ALPHA
         ripple.beta_focus = self.GAIN_DIV_BETA
         ripple.gamma_excitement = self.GAIN_DIV_GAMMA

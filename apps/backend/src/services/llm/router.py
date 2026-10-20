@@ -907,15 +907,11 @@ class AngelaLLMService:
 
                 cdm_model = CDMCognitiveDividendModel()
             except Exception as e:
-                logger.warning(
-                    "Failed to import CDMCognitiveDividendModel: %s", e, exc_info=True
-                )
-            self.memory_coordinator: Optional[UnifiedMemoryCoordinator] = (
-                UnifiedMemoryCoordinator(
-                    memory_manager=self.memory_manager,
-                    logic_unit=logic_unit,
-                    cdm_model=cdm_model,
-                )
+                logger.warning("Failed to import CDMCognitiveDividendModel: %s", e, exc_info=True)
+            self.memory_coordinator: Optional[UnifiedMemoryCoordinator] = UnifiedMemoryCoordinator(
+                memory_manager=self.memory_manager,
+                logic_unit=logic_unit,
+                cdm_model=cdm_model,
             )
             logger.info("[C1] UnifiedMemoryCoordinator initialized")
         except Exception as e:
@@ -952,7 +948,6 @@ class AngelaLLMService:
         except Exception as e:
             logger.warning(f"Failed to initialize memory enhancement: {e}", exc_info=True)
             self.enable_memory_enhancement = False
-
 
     def _get_default_config(self) -> Dict[str, Any]:
         """從分層配置系統讀取 LLM 配置 [Phase 7]"""
@@ -1017,7 +1012,7 @@ class AngelaLLMService:
         "auto": frozenset({"local", "cloud"}),
     }
 
-    def _resolve_modes(self) -> tuple:
+    def _resolve_modes(self) -> Tuple[str, str]:
         """Resolve (deployment_mode, llm_mode) from the config — one place.
 
         ``deployment.mode`` gates the backend *categories*; ``settings.llm_mode``
@@ -1045,7 +1040,8 @@ class AngelaLLMService:
         mode = getattr(self, "_deployment_mode", None)
         if mode:
             return str(mode)
-        return self._resolve_modes()[0]
+        deployment_mode, _strategy = self._resolve_modes()
+        return deployment_mode
 
     @property
     def llm_mode(self) -> str:
@@ -1053,7 +1049,8 @@ class AngelaLLMService:
         mode = getattr(self, "_llm_mode", None)
         if mode:
             return str(mode)
-        return self._resolve_modes()[1]
+        _deployment_mode, strategy = self._resolve_modes()
+        return strategy
 
     @llm_mode.setter
     def llm_mode(self, value: str) -> None:
@@ -1542,9 +1539,7 @@ class AngelaLLMService:
         except Exception:
             _angela_cfg = None
 
-        ranked = sorted(
-            available, key=lambda bt: self._rank_backend(bt, provider_for, _angela_cfg)
-        )
+        ranked = sorted(available, key=lambda bt: self._rank_backend(bt, provider_for, _angela_cfg))
         ranked = self._apply_preferred_backend(ranked)
         if ranked:
             self.active_backend = self.backends[ranked[0]]
@@ -2040,13 +2035,10 @@ class AngelaLLMService:
 
         try:
             response = await self._generate_with_llm(user_message, context)
-            return await self._finalize_llm_response(
-                response, user_message, context, start_time
-            )
+            return await self._finalize_llm_response(response, user_message, context, start_time)
         except Exception as e:
             logger.error(f"生成回應時出錯: {e}", exc_info=True)
             return await self._bus_or_fallback(user_message, context)
-
 
     # ------------------------------------------------------------------
     # 路由清單：連接器（manifest 每一列對應一個連接器）
@@ -2394,9 +2386,7 @@ class AngelaLLMService:
             )
             return False
 
-    async def _fusion_attempt(
-        self, bt, user_message: str, context: Dict[str, Any], gen_params
-    ):
+    async def _fusion_attempt(self, bt, user_message: str, context: Dict[str, Any], gen_params):
         try:
             system_prompt = str(context.get("system_prompt") or "")
             if system_prompt:
@@ -2463,7 +2453,6 @@ class AngelaLLMService:
                     return resp
                 return None
         return None
-
 
     async def _try_neural_bridge(
         self, user_message: str, context: Dict[str, Any]
@@ -2655,11 +2644,7 @@ class AngelaLLMService:
         # Keep 2-char chunks only when they carry a CJK char: pure
         # ASCII/punct bigrams (" a", "us") match everything across
         # languages — ASCII is covered by the 4-grams above instead.
-        chunks = [
-            c
-            for c in chunks
-            if _re_chunks.search(r"[一-鿿]", c or "") or len(c or "") >= 4
-        ]
+        chunks = [c for c in chunks if _re_chunks.search(r"[一-鿿]", c or "") or len(c or "") >= 4]
         return chunks
 
     @staticmethod
@@ -2669,9 +2654,7 @@ class AngelaLLMService:
         except (TypeError, ValueError):
             return 0.5
 
-    def _best_taught_fact(
-        self, facts: List[Dict[str, Any]], chunks: List[str]
-    ) -> Optional[str]:
+    def _best_taught_fact(self, facts: List[Dict[str, Any]], chunks: List[str]) -> Optional[str]:
         """Overlap COUNT decides (primary): among near-duplicate fact
         phrasings ("我的X叫Y" x N) every candidate shares 我的, so a
         boolean any-match degrades to pure vector relevance and a
@@ -2748,7 +2731,6 @@ class AngelaLLMService:
         except Exception as e:
             logger.debug(f"User fact recall skipped: {e}")
             return None
-
 
     async def _tm_short_circuit_pre(
         self, user_message: str, context: Dict[str, Any], start_time: float
@@ -3186,9 +3168,7 @@ class AngelaLLMService:
         direct_threshold = 0.8
         draft_low = 0.4
         if self.meta_controller is not None:
-            adj = self.meta_controller.get_threshold_adjustment(
-                f"model_bus:{selected_model}"
-            )
+            adj = self.meta_controller.get_threshold_adjustment(f"model_bus:{selected_model}")
             direct_threshold = max(0.5, min(0.95, direct_threshold + adj))
             draft_low = max(0.2, min(0.6, draft_low + adj * 0.5))
         return direct_threshold, draft_low
@@ -3250,9 +3230,7 @@ class AngelaLLMService:
             if not result or not result.text or _is_known_fallback(result.text):
                 return None
 
-            direct_threshold, draft_low = self._bus_effective_thresholds(
-                decision.selected_model
-            )
+            direct_threshold, draft_low = self._bus_effective_thresholds(decision.selected_model)
 
             if decision.confidence >= direct_threshold:
                 return self._bus_direct_hit(
@@ -3933,15 +3911,25 @@ class AngelaLLMService:
         """Inject MetaController calibration / Heartbeat health / DLI state
         into context for PriorityNegotiator.
         """
-        # Inject MetaController calibration into context for PriorityNegotiator
-        if self.meta_controller is not None:
-            try:
-                adj = self.meta_controller.get_weighted_adjustment()
-                context["meta_calibration"] = {"weighted_adjustment": adj}
-            except Exception:
-                logger.warning("MetaController calibration unavailable", exc_info=True)
+        # Each signal is injected by its own helper: one broken source must
+        # not take the other three down with it.
+        self._inject_meta_calibration(context)
+        self._inject_heartbeat_health(context)
+        self._inject_abstain_routing(context)
+        self._inject_dli_state(context)
 
-        # Inject Heartbeat system health into context for PriorityNegotiator
+    def _inject_meta_calibration(self, context: Dict[str, Any]) -> None:
+        """Inject MetaController calibration into context for PriorityNegotiator."""
+        if self.meta_controller is None:
+            return
+        try:
+            adj = self.meta_controller.get_weighted_adjustment()
+            context["meta_calibration"] = {"weighted_adjustment": adj}
+        except Exception:
+            logger.warning("MetaController calibration unavailable", exc_info=True)
+
+    def _inject_heartbeat_health(self, context: Dict[str, Any]) -> None:
+        """Inject Heartbeat system health into context for PriorityNegotiator."""
         try:
             from api.lifespan import get_metabolic_heartbeat
 
@@ -3950,8 +3938,12 @@ class AngelaLLMService:
         except Exception:
             logger.warning("Heartbeat health unavailable", exc_info=True)
 
-        # Inject recent abstain rate into context for abstain_voter（閉環：
-        # 近期棄權率高 → 投票保守路由，直到恢復）。
+    def _inject_abstain_routing(self, context: Dict[str, Any]) -> None:
+        """Inject the recent abstain rate for abstain_voter.
+
+        The loop: a high recent abstain rate votes for conservative routing
+        until it recovers.
+        """
         try:
             ar = self.get_abstain_routing()
             if ar is not None:
@@ -3959,7 +3951,8 @@ class AngelaLLMService:
         except Exception:
             logger.warning("Abstain routing snapshot unavailable", exc_info=True)
 
-        # Inject DLI lifecycle state into context for PriorityNegotiator
+    def _inject_dli_state(self, context: Dict[str, Any]) -> None:
+        """Inject DLI lifecycle state into context for PriorityNegotiator."""
         try:
             from api.lifespan import get_digital_life
 
@@ -3973,7 +3966,12 @@ class AngelaLLMService:
             logger.warning("DLI state unavailable", exc_info=True)
 
     async def _auto_select_generation(
-        self, user_message: str, context: Dict[str, Any], gen_timeout, gen_temperature, gen_max_tokens
+        self,
+        user_message: str,
+        context: Dict[str, Any],
+        gen_timeout,
+        gen_temperature,
+        gen_max_tokens,
     ):
         """AutoSelector dynamic decision.
 
@@ -4013,7 +4011,12 @@ class AngelaLLMService:
                     self.active_backend_type = mapped
                     logger.info(f"[auto] 切換後端: {prev} → {mapped.value}")
 
-            return auto_result.time_budget_ms / 1000.0, auto_result.temperature, auto_result.max_tokens, False
+            return (
+                auto_result.time_budget_ms / 1000.0,
+                auto_result.temperature,
+                auto_result.max_tokens,
+                False,
+            )
         except Exception as e:
             logger.warning(f"[auto] 動態決策失敗: {e}，使用默認參數", exc_info=True)
             return gen_timeout, gen_temperature, gen_max_tokens, False
@@ -4093,7 +4096,6 @@ class AngelaLLMService:
         context["_actual_routing_mode"] = routing_mode
         return None, GenerationParams(gen_timeout, gen_temperature, gen_max_tokens)
 
-
     async def _upgrade_digested_context(
         self, messages: List[Dict[str, str]], context: Dict[str, Any]
     ) -> None:
@@ -4168,7 +4170,6 @@ class AngelaLLMService:
         if not await self._refresh_qwen_health(qwen_type):
             return None, None
         return self.backends[qwen_type], qwen_type
-
 
     async def _call_llm_backend(
         self, user_message: str, context: Dict[str, Any], params: GenerationParams
@@ -4276,7 +4277,9 @@ class AngelaLLMService:
                 success=False,
             )
 
-    async def _fallback_after_failure(self, user_message: str, context: Dict[str, Any]) -> LLMResponse:
+    async def _fallback_after_failure(
+        self, user_message: str, context: Dict[str, Any]
+    ) -> LLMResponse:
         """Angela fallback chain when configured, else the canned fallback."""
         if self._angela_fallback_chain:
             return await self._try_fallback_chain(
@@ -4405,7 +4408,6 @@ class AngelaLLMService:
         for bt in available:
             self._plan_dedup(bt, planned, ordered)
         return ordered
-
 
     async def _try_fallback_chain(
         self, user_message: str, context: Dict[str, Any], chain: List[str]
@@ -4661,9 +4663,7 @@ class AngelaLLMService:
         # C6 Phase 4: sync learned mappings to StateStore for persistence
         nv.sync_to_state_store()
 
-    async def _record_cognitive_activity(
-        self, response: LLMResponse, user_message: str
-    ) -> None:
+    async def _record_cognitive_activity(self, response: LLMResponse, user_message: str) -> None:
         """C1: 通过协调器记录认知投入（如果 CDM 可用）"""
         if not hasattr(self, "memory_coordinator") or self.memory_coordinator is None:
             return
@@ -4944,9 +4944,7 @@ class AngelaLLMService:
         text = self._ed3n_fallback_text(last_content)
         return LLMResponse(text=text, backend="ed3n", model="ed3n-v1", confidence=0.6)
 
-    async def _fire_on_message_pipeline(
-        self, messages: List[Any], model_id: Optional[str]
-    ) -> None:
+    async def _fire_on_message_pipeline(self, messages: List[Any], model_id: Optional[str]) -> None:
         """P6-1: fire on_message pipeline for plugin system (handlers can
         annotate/modify data).
         """
@@ -4983,9 +4981,7 @@ class AngelaLLMService:
                 },
             )
         except Exception as e:
-            logger.warning(
-                "Failed to execute on_response plugin pipeline: %s", e, exc_info=True
-            )
+            logger.warning("Failed to execute on_response plugin pipeline: %s", e, exc_info=True)
 
     @staticmethod
     def _convert_chat_messages(messages: List[Any]) -> List[Dict[str, Any]]:

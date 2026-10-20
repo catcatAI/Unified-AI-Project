@@ -162,7 +162,7 @@ class SemanticKeyMapper:
     def _match_raw(
         self, query: np.ndarray, top_k: int
     ) -> Tuple[Optional[List[Dict[str, Any]]], np.ndarray]:
-        """"raw" mode: use high-dim CLIP/Whisper vectors. Returns (results_or_None, query)."""
+        """ "raw" mode: use high-dim CLIP/Whisper vectors. Returns (results_or_None, query)."""
         has_raw = any(v.size > 0 for v in self._raw_semantic_vectors)
         if not has_raw:
             return None, query  # fallback to auto
@@ -192,8 +192,7 @@ class SemanticKeyMapper:
         scores = pool_np @ query
         top_idx = np.argsort(scores)[-top_k:][::-1]
         results = [
-            {"key": self._keys[indices[i]], "score": round(float(scores[i]), 4)}
-            for i in top_idx
+            {"key": self._keys[indices[i]], "score": round(float(scores[i]), 4)} for i in top_idx
         ]
         return results, query
 
@@ -213,7 +212,9 @@ class SemanticKeyMapper:
             return self._structural_latents
         return self._combined_latents
 
-    def _cosine_topk(self, pool: List[np.ndarray], query: np.ndarray, top_k: int) -> List[Dict[str, Any]]:
+    def _cosine_topk(
+        self, pool: List[np.ndarray], query: np.ndarray, top_k: int
+    ) -> List[Dict[str, Any]]:
         """Cosine similarity top-k over a latent pool."""
         pool_np = np.array(pool, dtype=np.float32)  # [V, 64]
         norms = np.linalg.norm(pool_np, axis=1, keepdims=True)

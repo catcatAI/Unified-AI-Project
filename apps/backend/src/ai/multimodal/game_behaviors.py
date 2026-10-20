@@ -180,8 +180,6 @@ def _xyz(params: Dict[str, Any], key: str = "pos") -> Optional[Dict[str, float]]
     return None
 
 
-
-
 def _goto_expand(params: Dict[str, Any], _state: Any = None) -> List[Action]:
     pos = _xyz(params)
     return [{"type": "goto", "pos": pos}] if pos else []

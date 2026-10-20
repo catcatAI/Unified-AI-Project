@@ -93,9 +93,7 @@ class EvolutionEngine:
         )
 
         delta_neuro = (fear * 0.4 + anger * 0.3) * lr
-        self._traits["neuroticism"] = max(
-            0.0, min(1.0, self._traits["neuroticism"] + delta_neuro)
-        )
+        self._traits["neuroticism"] = max(0.0, min(1.0, self._traits["neuroticism"] + delta_neuro))
 
         if anger > 0.5:
             self._traits["agreeableness"] = max(

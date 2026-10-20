@@ -104,7 +104,9 @@ class HardwareProfile:
         import subprocess
 
         try:
-            glx = subprocess.check_output(["glxinfo"], stderr=subprocess.DEVNULL, timeout=3).decode()
+            glx = subprocess.check_output(
+                ["glxinfo"], stderr=subprocess.DEVNULL, timeout=3
+            ).decode()
             for gl in glx.splitlines():
                 if "Video memory:" in gl or "Dedicated video memory:" in gl:
                     m2 = re.search(r"(\d+)\s*MB", gl)
@@ -173,7 +175,9 @@ class HardwareProfile:
         import subprocess
 
         try:
-            out = subprocess.check_output(["lspci", "-nn"], stderr=subprocess.DEVNULL, timeout=5).decode()
+            out = subprocess.check_output(
+                ["lspci", "-nn"], stderr=subprocess.DEVNULL, timeout=5
+            ).decode()
             for line in out.splitlines():
                 low = line.lower()
                 if "8086:" in low and HardwareProfile._gpu_intel_arc_from_lspci(line, low, result):
@@ -228,7 +232,9 @@ class HardwareProfile:
         import subprocess
 
         try:
-            out = subprocess.check_output(["glxinfo"], stderr=subprocess.DEVNULL, timeout=5).decode()
+            out = subprocess.check_output(
+                ["glxinfo"], stderr=subprocess.DEVNULL, timeout=5
+            ).decode()
             vram3_mb, renderer3 = HardwareProfile._parse_glxinfo(out)
             if renderer3:
                 low = renderer3.lower()
@@ -285,7 +291,6 @@ class HardwareProfile:
             return result
         HardwareProfile._gpu_from_dri(result)
         return result
-
 
     @staticmethod
     def _check_torch() -> bool:
@@ -373,7 +378,6 @@ class HardwareProfile:
         if ram_gb >= 4:
             return "laptop_power_saver"
         return "low_power_device"
-
 
     @staticmethod
     def get_adaptive_compute(hw: Dict[str, Any]) -> Dict[str, Any]:

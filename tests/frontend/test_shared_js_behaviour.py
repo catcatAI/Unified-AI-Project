@@ -595,3 +595,71 @@ def test_set_auto_adjust_toggles_the_watchdog_flag():
         """)
     result = run_node(script, "performance-manager.js", "PerformanceManager")
     assert result == {"off": False, "on": True}
+
+
+# --------------------------------------------------------------------------- #
+# StateMatrix4D → Live2D — the causal state chain
+# --------------------------------------------------------------------------- #
+# The status matrix recorded "Live2D 具身化 … 狀態鏈完整因果驗證未做": the
+# matrix holds a Live2D manager and the emotion→parameter path was covered,
+# but nothing proved that an AXIS change actually reaches the model. These
+# tests close that gap: state → parameter, and state → expression.
+def _state_matrix_call(script: str) -> dict:
+    """Run *script* against a StateMatrix4D wired to a recording manager."""
+    harness = textwrap.dedent(f"""
+        const applied = {{ parameters: {{}}, expressions: [] }}
+        const manager = {{
+          isFallback: false,
+          setParameter: (k, v) => {{ applied.parameters[k] = v }},
+          setExpression: (e) => {{ applied.expressions.push(e) }},
+          getParameter: () => 0,
+          setTrackingSensitivity: () => {{}},
+        }}
+        const sm = new cls()
+        // The matrix starts a history-cleanup timer; stop it or node never exits.
+        if (typeof sm._stopHistoryCleanupTimer === 'function') sm._stopHistoryCleanupTimer()
+        sm.setLive2DManager(manager)
+        const result = (function () {{
+        {script}
+        }})()
+        return {{ applied, result }}
+        """)
+    return run_node(harness, "state-matrix.js", "StateMatrix4D")
+
+
+def test_axis_change_reaches_the_live2d_parameter():
+    """alpha.energy → ParamEnergy: the state actually drives the model."""
+    out = _state_matrix_call(
+        "sm.updateAlpha({ energy: 0.9 })\n" "return { energy: sm.alpha.values.energy }"
+    )
+    assert out["applied"]["parameters"].get("ParamEnergy") == 0.9
+
+
+def test_gamma_change_reaches_the_live2d_parameter():
+    out = _state_matrix_call(
+        "sm.updateGamma({ happiness: 0.8 })\n" "return { happiness: sm.gamma.values.happiness }"
+    )
+    assert out["applied"]["parameters"].get("ParamHappiness") == 0.8
+
+
+def test_the_expression_follows_the_dominant_emotion():
+    """A mood change must reach the model's expression, not stay in memory."""
+    out = _state_matrix_call(
+        "sm.updateGamma({ happiness: 0.95 })\n"
+        "sm.updateGamma({ sadness: 0.0 })\n"
+        "return { dominant: sm.getDominantEmotion() }"
+    )
+    assert out["applied"]["expressions"], "no expression reached the Live2D manager"
+    assert out["applied"]["expressions"][-1] == out["result"]["dominant"]
+
+
+def test_no_live2d_manager_is_not_an_error():
+    """Without a manager the chain is a no-op, not a crash."""
+    script = textwrap.dedent("""
+        const sm = new cls()
+        if (typeof sm._stopHistoryCleanupTimer === 'function') sm._stopHistoryCleanupTimer()
+        sm.updateAlpha({ energy: 0.7 })
+        return { ok: true, energy: sm.alpha.values.energy }
+        """)
+    result = run_node(script, "state-matrix.js", "StateMatrix4D")
+    assert result["ok"] is True

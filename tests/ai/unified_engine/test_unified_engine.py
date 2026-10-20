@@ -278,7 +278,6 @@ class TestProviderNpzChain:
 
     def test_provider_loads_save_written_npz(self, saved_npz):
         import numpy as np
-
         from services.llm.providers.unified import UnifiedBackend
 
         source, path = saved_npz
@@ -293,7 +292,6 @@ class TestProviderNpzChain:
 
     def test_provider_accepts_legacy_bare_key_npz(self, tmp_path):
         import numpy as np
-
         from services.llm.providers.unified import UnifiedBackend
 
         bare = {

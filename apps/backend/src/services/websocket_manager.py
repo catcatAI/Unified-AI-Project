@@ -188,6 +188,7 @@ async def _get_bio_integrator():
     """Get BiologicalIntegrator instance or None."""
     try:
         from core.bio.biological_integrator import BiologicalIntegrator
+
         return BiologicalIntegrator()
     except Exception as e:
         live_err(f"BioIntegrator init: {e}", "bio_init")
@@ -230,6 +231,7 @@ def _read_state_matrix() -> Dict[str, Any]:
     _sm_data: Dict[str, Any] = {}
     try:
         from api.lifespan import get_digital_life
+
         dli = get_digital_life()
         if dli and hasattr(dli, "state_matrix"):
             sm = dli.state_matrix
@@ -239,13 +241,14 @@ def _read_state_matrix() -> Dict[str, Any]:
     return _sm_data
 
 
-def _build_state_data(bio_state: dict, _lr: float, _cl: float, _posture: Dict[str, Any], _sm_data: Dict[str, Any]) -> Dict[str, Any]:
+def _build_state_data(
+    bio_state: dict, _lr: float, _cl: float, _posture: Dict[str, Any], _sm_data: Dict[str, Any]
+) -> Dict[str, Any]:
     """Build state_data dict for broadcast."""
     _current_stress = bio_state.get("stress_level", 0.0)
     _current_mood = bio_state.get("mood", 0.5)
     _overlay = lambda key: (
-        {k: v for k, v in _sm_data.get(key, {}).items() if k != "coordinate"}
-        if _sm_data else {}
+        {k: v for k, v in _sm_data.get(key, {}).items() if k != "coordinate"} if _sm_data else {}
     )
     return {
         "alpha": {
@@ -289,7 +292,9 @@ def _build_state_data(bio_state: dict, _lr: float, _cl: float, _posture: Dict[st
 _prev_bio_signature = ""
 
 
-async def _broadcast_bio_event(bio_state: dict, _current_stress: float, _current_mood: float) -> None:
+async def _broadcast_bio_event(
+    bio_state: dict, _current_stress: float, _current_mood: float
+) -> None:
     """Emit biological_event on significant state changes."""
     global _prev_bio_signature
     bio_signature = (
@@ -342,6 +347,7 @@ async def broadcast_state_updates() -> None:
             # C2: include Live2D state (from service registry singleton) in broadcast
             try:
                 from core.interfaces.service_registry import get_registry
+
                 reg_live2d = get_registry().get("live2d_integration")
                 if reg_live2d is not None and hasattr(reg_live2d, "get_live2d_state"):
                     state_data["live2d"] = reg_live2d.get_live2d_state()

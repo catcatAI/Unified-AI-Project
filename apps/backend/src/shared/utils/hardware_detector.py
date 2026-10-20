@@ -174,7 +174,6 @@ class SystemHardwareProbe:
             return self._cpu_flags_darwin()
         return []
 
-
     def _detect_ram(self) -> Tuple[float, float]:
         """Detect ram."""
         if psutil:
@@ -319,7 +318,6 @@ class SystemHardwareProbe:
                 return hit
 
         return AcceleratorType.NONE, "None", 0
-
 
     def _refine_cpu_acceleration(self, flags: List[str]) -> Tuple[AcceleratorType, str]:
         """Refine cpu acceleration."""

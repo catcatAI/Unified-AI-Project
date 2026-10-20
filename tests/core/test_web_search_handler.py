@@ -124,7 +124,6 @@ class TestHandleResponseClean:
     def test_research_answer_has_facts_when_fetch_succeeds(self, monkeypatch):
         """抓到內文 → 答案含【關鍵事實】與抓取數（非連結清單）。"""
         import core.tools.research_pipeline as rp
-
         from services.handlers.web_search_handler import WebSearchHandler
 
         page = (

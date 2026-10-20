@@ -628,9 +628,7 @@ class DigitalLifeIntegrator:
 
             state_dir = os.path.join(str(get_checkpoints_dir()), "lifecycle")
             os.makedirs(state_dir, exist_ok=True)
-            self.autonomous_lifecycle.save_state(
-                os.path.join(state_dir, "lifecycle_state.json")
-            )
+            self.autonomous_lifecycle.save_state(os.path.join(state_dir, "lifecycle_state.json"))
         except Exception as e:
             logger.warning(f"Lifecycle state save skipped: {e}")
         await self.autonomous_lifecycle.shutdown()
@@ -884,9 +882,7 @@ class DigitalLifeIntegrator:
         self.state_matrix.update_beta(learning=0.8, curiosity=0.7)
         if self.memory_bridge:
             self.memory_bridge.trigger_consolidation()
-        logger.info(
-            "🌱 [DigitalLife] GROWING: Learning boost + memory consolidation triggered."
-        )
+        logger.info("🌱 [DigitalLife] GROWING: Learning boost + memory consolidation triggered.")
 
     async def _behavior_mature(self) -> None:
         """MATURE: 狀態公式評估"""
@@ -900,9 +896,7 @@ class DigitalLifeIntegrator:
         await self.biological_integrator.process_relaxation_event(intensity=0.8)
         if self.memory_bridge:
             self.memory_bridge.trigger_consolidation()
-        logger.info(
-            "💤 [DigitalLife] RESTING: Biological processes slowed, memory consolidated."
-        )
+        logger.info("💤 [DigitalLife] RESTING: Biological processes slowed, memory consolidated.")
 
     async def _behavior_dormant(self) -> None:
         """DORMANT: 深度休眠 — 資源回收、深層記憶鞏固、低功耗模式"""

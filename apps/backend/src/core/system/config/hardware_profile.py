@@ -290,9 +290,7 @@ class HardwareProfile:
         return None
 
     @staticmethod
-    def _spec_scenario(
-        system: str, tier: str, spec: Dict[str, Any]
-    ) -> Optional[HardwareScenario]:
+    def _spec_scenario(system: str, tier: str, spec: Dict[str, Any]) -> Optional[HardwareScenario]:
         """Map backbone tier → scenario; battery downgrade as secondary modifier."""
         mapping = {
             "server_cloud": HardwareScenario.SERVER_CLOUD,
@@ -389,6 +387,7 @@ class HardwareProfile:
         if spec_scenario is not None:
             return spec_scenario
         return HardwareProfile._detect_scenario_fallback(system)
+
     @property
     def scenario(self) -> HardwareScenario:
         """Currently active hardware scenario."""

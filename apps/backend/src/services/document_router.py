@@ -305,6 +305,8 @@ async def _try_local_processing(
         return ed3n_result
 
     return await _local_garden_stage(op, source_dir, retention_note, files)
+
+
 # Tier 2: LLM fallback
 # ═══════════════════════════════════════════════
 
@@ -447,6 +449,8 @@ async def _learn_from_llm_output(
     _learn_ed3n(task_type, llm_output)
 
     await _learn_garden(files, llm_output)
+
+
 # Main entry point
 # ═══════════════════════════════════════════════
 

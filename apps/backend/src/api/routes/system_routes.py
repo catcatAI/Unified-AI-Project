@@ -9,6 +9,7 @@ import logging
 import time
 from typing import Any, Dict
 
+from core.utils import safe_error
 from fastapi import APIRouter
 
 logger = logging.getLogger(__name__)
@@ -114,6 +115,108 @@ async def _discovery_state(result: Dict[str, Any]) -> None:
         result["state"] = state
     except Exception:
         result["state"] = {}
+
+
+async def _detailed_state_matrix() -> Dict[str, Any]:
+    """The state matrix axes (means + values), or None."""
+    from api.routes.chat_routes import _get_state_matrix
+
+    matrix = _get_state_matrix()
+    axes: Dict[str, Any] = {}
+    for axis_name in ("alpha", "beta", "gamma", "delta", "epsilon", "theta", "zeta"):
+        axis = getattr(matrix, axis_name, None)
+        values = getattr(axis, "values", None)
+        if isinstance(values, dict):
+            axes[axis_name] = {
+                "mean": round(sum(values.values()) / len(values), 3) if values else 0.5,
+                "values": {k: round(float(v), 3) for k, v in values.items()},
+            }
+    return axes
+
+
+async def _detailed_emotion_and_phase() -> Dict[str, Any]:
+    """The emotion summary and the current life phase."""
+    from api.lifespan import get_emotion_system, get_lifecycle
+
+    emotion = get_emotion_system()
+    lifecycle = get_lifecycle()
+    phase = getattr(lifecycle, "current_phase", None)
+    return {
+        "emotion": emotion.get_emotion_summary() if emotion is not None else None,
+        "life_phase": getattr(phase, "value", phase),
+    }
+
+
+async def _detailed_backends() -> Dict[str, Any]:
+    """The registered LLM backends with their last known health."""
+    from services.angela_llm_service import get_llm_service
+
+    service = await get_llm_service()
+    backends = getattr(service, "backends", {}) or {}
+    return {
+        "backends": {
+            str(getattr(btype, "value", btype)): service.backend_health(btype) for btype in backends
+        },
+        "active_backend": str(
+            getattr(getattr(service, "active_backend_type", None), "value", "none")
+        ),
+    }
+
+
+def _detailed_memory() -> Dict[str, Any]:
+    """The HAM memory statistics."""
+    from ai.memory.ham_memory.ham_manager import HAMMemoryManager
+
+    return HAMMemoryManager(auto_save=False).get_stats()
+
+
+@router.get("/status/detailed")
+async def system_status_detailed() -> Dict[str, Any]:
+    """Detailed system status (the contract the INVOCATION_MATRIX documents).
+
+    The matrix listed ``GET /api/v1/system/status/detailed`` with the
+    verification ``curl :8000/api/v1/system/status/detailed`` — the endpoint
+    did not exist, so the documented call answered 404. It is here now, and it
+    reports the parts an operator actually needs: the state matrix axes, the
+    emotion and life phase, the registered backends, and the memory status.
+
+    Everything is best-effort: a missing subsystem is reported as null, never
+    as an error (a status endpoint that 500s is useless).
+    """
+    result: Dict[str, Any] = {
+        "timestamp": time.time(),
+        "uptime_seconds": int(time.time() - _start_time),
+    }
+
+    # Each part is best-effort: a missing subsystem is reported as null,
+    # never as an error (a status endpoint that 500s is useless).
+    try:
+        result["state_matrix"] = await _detailed_state_matrix()
+    except Exception as exc:
+        result["state_matrix"] = None
+        result["state_matrix_error"] = safe_error(exc)
+
+    try:
+        result.update(await _detailed_emotion_and_phase())
+    except Exception as exc:
+        result["emotion"] = None
+        result["life_phase"] = None
+        result["emotion_error"] = safe_error(exc)
+
+    try:
+        result.update(await _detailed_backends())
+    except Exception as exc:
+        result["backends"] = {}
+        result["active_backend"] = None
+        result["backends_error"] = safe_error(exc)
+
+    try:
+        result["memory"] = _detailed_memory()
+    except Exception as exc:
+        result["memory"] = None
+        result["memory_error"] = safe_error(exc)
+
+    return result
 
 
 @router.get("/discovery")

@@ -27,17 +27,13 @@ if TYPE_CHECKING:
     from core.card.parser.merge_engine import MergeEngine
     from core.card.parser.timeline_resolver import TimelineResolver
 else:
-    ConflictDetector = _optional_import(
-        "core.card.parser.conflict_detector.ConflictDetector"
-    )
+    ConflictDetector = _optional_import("core.card.parser.conflict_detector.ConflictDetector")
     DeterministicParser = _optional_import(
         "core.card.parser.deterministic_parser.DeterministicParser"
     )
     read_gdoc_file = _optional_import("core.card.parser.gdoc_reader.read_gdoc_file")
     MergeEngine = _optional_import("core.card.parser.merge_engine.MergeEngine")
-    TimelineResolver = _optional_import(
-        "core.card.parser.timeline_resolver.TimelineResolver"
-    )
+    TimelineResolver = _optional_import("core.card.parser.timeline_resolver.TimelineResolver")
 
 __all__ = [
     "ConflictDetector",

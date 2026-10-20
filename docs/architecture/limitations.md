@@ -40,8 +40,8 @@
 
 ## 已知品質邊界（誠實清單）
 
-- mypy 類型覆蓋債：**0**（`scripts/mypy_budget.txt` 棘輪鎖 0，CI 對新增債直接
-  紅燈；見 `RELEASE_CRITERIA.md`）。
+- mypy 類型覆蓋債：**0**（`scripts/mypy_budget.txt`
+  棘輪鎖 0，CI 對新增債直接紅燈；見 `RELEASE_CRITERIA.md`）。
 - TS/TSX 有 parser 與型別門禁（`pnpm typecheck:dashboard`，CI 執行）。
-- 開放域泛化（純神經路徑）目前為低分能力；確定性能力為強項。位元模型經
-  插值 backoff 修正後，留出集 bpc 2.74（修正前 9.42，比均勻猜測還差）。
+- 開放域泛化（純神經路徑）目前為低分能力；確定性能力為強項。位元模型經插值 backoff 修正後，留出集 bpc
+  2.74（修正前 9.42，比均勻猜測還差）。

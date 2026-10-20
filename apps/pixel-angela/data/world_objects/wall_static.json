@@ -2,7 +2,16 @@
   "name": "wall_static",
   "category": "static",
   "collision": { "x": 0, "y": 300, "w": 128, "h": 84 },
-  "pattern": ["BBBBBBBB", "BBbBBbBB", "BBBBBBBB", "BbBBBbBB", "BBBBBBBB", "bBBBBBbB", "BBBBBBBB", "BbBBBBbB"],
+  "pattern": [
+    "BBBBBBBB",
+    "BBbBBbBB",
+    "BBBBBBBB",
+    "BbBBBbBB",
+    "BBBBBBBB",
+    "bBBBBBbB",
+    "BBBBBBBB",
+    "BbBBBBbB"
+  ],
   "palette": { "B": "#8B7355", "b": "#7A6548" },
   "metabolic_impact": { "energy": 0.0, "arousal": 0.0 },
   "interact": { "on_contact": "block" },

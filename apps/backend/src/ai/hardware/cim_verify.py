@@ -328,9 +328,7 @@ def _verify_spine_sources(
             f"{len(multi_source)} array spines with multiple sources",
         )
     )
-    multi_gate = [
-        net for net, cells in array_nets.items() if len({c["gate"] for c in cells}) != 1
-    ]
+    multi_gate = [net for net, cells in array_nets.items() if len({c["gate"] for c in cells}) != 1]
     report.add(
         Gate(
             "spine_single_word_line",
@@ -506,9 +504,7 @@ def _build_spine_deck(
     return lines, None
 
 
-def _run_ngspice(
-    ngspice: str, lines: List[str]
-) -> Tuple[Optional[str], Optional[Dict[str, Any]]]:
+def _run_ngspice(ngspice: str, lines: List[str]) -> Tuple[Optional[str], Optional[Dict[str, Any]]]:
     """Write and run the deck. Returns (stdout+stderr, error)."""
     import tempfile
 

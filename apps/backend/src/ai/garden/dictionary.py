@@ -455,7 +455,6 @@ class _STEncoder:
         # Cache once loaded successfully
         self._model_cache[model_name] = self
 
-
     def encode(self, texts: List[str]):
         """Encode texts to L2-normalized embeddings.
 
@@ -565,18 +564,13 @@ class _ChromaEncoder:
                 emb = embs[0]
                 if emb is not None and len(emb) > 0:
                     return list(emb)
-                logger.warning(
-                    "GARDEN: ChromaDB returned empty embedding for text '%s'", text[:50]
-                )
+                logger.warning("GARDEN: ChromaDB returned empty embedding for text '%s'", text[:50])
                 return [0.0] * self.EMBEDDING_DIM
-            logger.warning(
-                "GARDEN: ChromaDB get() returned no embeddings for text '%s'", text[:50]
-            )
+            logger.warning("GARDEN: ChromaDB get() returned no embeddings for text '%s'", text[:50])
             return [0.0] * self.EMBEDDING_DIM
         except Exception as e:
             logger.warning("GARDEN: ChromaDB get() failed for text '%s': %s", text[:50], e)
             return [0.0] * self.EMBEDDING_DIM
-
 
     def query_embedding(self, text: str) -> Optional[List[float]]:
         """Get the embedding for a single text without adding it to the collection."""
@@ -829,7 +823,6 @@ class VectorDictionary:
         self.add_entry(key, {"en": text, "zh": surface_form or text}, confidence=confidence)
         logger.debug("GARDEN: grew new concept key=%s surface=%s", key, surface_form)
         return key
-
 
     def grow_batch(self, texts: List[str], confidence: Optional[float] = None) -> List[str]:
         """Add multiple new entries learned from conversation without rebuilding index.
@@ -1197,9 +1190,7 @@ class VectorDictionary:
             for score, idx in zip(top_scores, top_indices):
                 if score >= self.similarity_threshold:
                     conf = min(float(score), 0.5)
-                    result[self._key_order[idx]] = max(
-                        result.get(self._key_order[idx], 0.0), conf
-                    )
+                    result[self._key_order[idx]] = max(result.get(self._key_order[idx], 0.0), conf)
 
     def encode(self, text: str) -> Dict[str, float]:
         """Map text to concept keys with per-key confidence scores.
@@ -1242,7 +1233,6 @@ class VectorDictionary:
                 result[key] = conf
 
         return result
-
 
     def decode(self, keys: List[str], original_text: Optional[str] = None) -> str:
         """Turn a list of concept keys back into a human-readable string.

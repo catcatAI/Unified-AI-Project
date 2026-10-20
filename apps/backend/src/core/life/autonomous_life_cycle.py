@@ -552,13 +552,13 @@ class AutonomousLifeCycle:
         decision_type_hint = self._hint_decision_type(
             metrics, adjusted_exploration_threshold, dynamic_confidence_threshold
         )
-        adjusted_exploration_threshold, dynamic_confidence_threshold, (
-            dynamic_risk_tolerance
-        ) = self._modulate_by_type_stats(
-            decision_type_hint,
-            dynamic_confidence_threshold,
-            dynamic_risk_tolerance,
-            adjusted_exploration_threshold,
+        adjusted_exploration_threshold, dynamic_confidence_threshold, (dynamic_risk_tolerance) = (
+            self._modulate_by_type_stats(
+                decision_type_hint,
+                dynamic_confidence_threshold,
+                dynamic_risk_tolerance,
+                adjusted_exploration_threshold,
+            )
         )
 
         # Decision 1: Exploration (HSM-based) - affected by risk tolerance

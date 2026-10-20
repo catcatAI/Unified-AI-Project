@@ -145,9 +145,7 @@ class CIFAR10Loader:
             from PIL import Image
 
             features = self._encoder.encode_from_pil(Image.fromarray(img_data))
-            if features is not None and (
-                isinstance(features, np.ndarray) and features.sum() != 0
-            ):
+            if features is not None and (isinstance(features, np.ndarray) and features.sum() != 0):
                 self._encoded[i] = np.asarray(features, dtype=np.float32)
                 return True
         except Exception as e:

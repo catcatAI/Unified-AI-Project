@@ -175,7 +175,7 @@ def _detect_trailing_question(text: str) -> Tuple[Optional[Tuple[str, str, str]]
 
 
 def _extract_pairs_en(facts_text: str) -> List[Tuple[str, str, str]]:
-    """"X is taller than Y" / "X taller than Y" (multi-letter entities)."""
+    """ "X is taller than Y" / "X taller than Y" (multi-letter entities)."""
     pairs: List[Tuple[str, str, str]] = []
     for m in re.finditer(
         r"\b([A-Za-z]+)\b\s+(?:is\s+)?(\w+?)\s+than\s+\b([A-Za-z]+)\b", facts_text
@@ -396,8 +396,6 @@ def _solve_transitive(text: str) -> Optional[str]:
     return _answer_superlative_greatest(greater, lesser, all_nodes, pairs)
 
 
-
-
 def _superlative(comp: str, least: bool = False) -> str:
     if least:
         table = {
@@ -512,9 +510,7 @@ def _find_universal(sentences: List[str]) -> Optional[Tuple[str, str]]:
     Prefer an explicit universal statement; skip membership statements
     ("Z is a X") so we don't mistake them for the rule.
     """
-    membership_re = re.compile(
-        r"\b([a-z一-鿿]+)\s+is\s+(?:a|an)\s+([a-z一-鿿]+)\b", re.IGNORECASE
-    )
+    membership_re = re.compile(r"\b([a-z一-鿿]+)\s+is\s+(?:a|an)\s+([a-z一-鿿]+)\b", re.IGNORECASE)
     for s in sentences:
         low = s.lower()
         m = re.search(r"(?:all\s+)?([a-z一-鿿]+)\s+(?:can|are|is)\s+([a-z一-鿿]+)", low)
@@ -592,8 +588,6 @@ def _solve_syllogism(text: str) -> Optional[str]:
         )
         return "no" if neg else "yes"
     return None
-
-
 
 
 def _solve_calendar(text: str) -> Optional[str]:
@@ -748,9 +742,7 @@ def _detect_attr_kind(low: str) -> Optional[str]:
     return None
 
 
-def _attr_val(
-    key: str, low: str, cfg: "_AttrKind", attr_word: "Tuple[str, ...]"
-) -> Optional[int]:
+def _attr_val(key: str, low: str, cfg: "_AttrKind", attr_word: "Tuple[str, ...]") -> Optional[int]:
     """Per-object attribute value: explicit in prompt first, else knowledge base."""
     # Prefer an explicit per-object attribute stated in the prompt.
     alias_alt = "|".join(
@@ -873,8 +865,6 @@ def _solve_word_problem(text: str) -> Optional[str]:
 
     label_a, label_b = _pick_labels(a, b, low)
     return f"{count_a} {label_a}, {count_b} {label_b}"
-
-
 
 
 def route_reasoning(text: str) -> Optional[str]:

@@ -519,9 +519,7 @@ class LifeIntensityFormula:
         """Domain with highest knowledge state (None when no states)."""
         if not self.knowledge_states:
             return None
-        return max(
-            self.knowledge_states.items(), key=lambda x: x[1].calculate_inf_value()
-        )[0]
+        return max(self.knowledge_states.items(), key=lambda x: x[1].calculate_inf_value())[0]
 
     def _trim_history(self) -> None:
         """Halve history when it overflows max size (keeps newest half)."""

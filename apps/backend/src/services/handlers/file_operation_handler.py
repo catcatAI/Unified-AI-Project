@@ -183,9 +183,7 @@ class FileOperationHandler:
                     return content
         return None
 
-    def _parse_path(
-        self, text: str, content: Optional[str], params: Dict[str, str]
-    ) -> List[str]:
+    def _parse_path(self, text: str, content: Optional[str], params: Dict[str, str]) -> List[str]:
         """Parse path from text, excluding content portion. Returns path_tokens."""
         import re
 
@@ -203,7 +201,12 @@ class FileOperationHandler:
         return [tok.strip("`'\"") for tok in tokens]
 
     def _parse_action(
-        self, text: str, lower: str, tokens: List[str], path_tokens: List[str], params: Dict[str, str]
+        self,
+        text: str,
+        lower: str,
+        tokens: List[str],
+        path_tokens: List[str],
+        params: Dict[str, str],
     ) -> None:
         """Parse action keyword from text."""
         action_scan = " ".join(

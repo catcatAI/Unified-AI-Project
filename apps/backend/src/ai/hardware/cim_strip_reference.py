@@ -1746,9 +1746,7 @@ def build_dot_product_deck(
     device = device_token or sky130_device_token(library) or "sky130_fd_pr__nfet_01v8"
 
     lines = _deck_prelude(library, device, vectors, array_vds_v, input_vgs_v)
-    _append_isolation_lines(
-        lines, vectors, array_vds_v, input_vgs_v, cell_w_um, cell_l_um, device
-    )
+    _append_isolation_lines(lines, vectors, array_vds_v, input_vgs_v, cell_w_um, cell_l_um, device)
     _append_weight_cells(lines, vectors, device, cell_w_um, cell_l_um)
 
     outputs: List[str] = []

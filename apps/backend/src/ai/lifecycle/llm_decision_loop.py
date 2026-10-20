@@ -46,6 +46,7 @@ def _self_name() -> str:
         logger.warning("AI name resolution failed: %s", exc, exc_info=True)
         return "Angela"
 
+
 # JSON-failure degradation (問題單 3): a model that keeps replying in plain
 # prose used to log a WARNING every cycle forever AND re-call the LLM each
 # time. After this many consecutive non-JSON replies the decision path

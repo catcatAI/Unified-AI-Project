@@ -8,97 +8,107 @@ and this project adheres to
 
 ## [Internal/Unreleased] - 2026-10-19 — 2026-08-11 以來重點批次
 
-> 本版本尚未發佈（版本治理規則 2：未發佈條目標 `Internal/Unreleased`）。
-> 2026-08-11 以來約 1,100 個 commit 未逐條入誌（逐條編寫等同虛構），完整
-> 變更以 `git log` 與 `docs/06-project-management/MASTER_TASK_MAP.md` 為準；
-> 本節僅收錄**已完成驗證**的重點批次。
+> 本版本尚未發佈（版本治理規則 2：未發佈條目標
+> `Internal/Unreleased`）。2026-08-11 以來約 1,100 個 commit 未逐條入誌（逐條編寫等同虛構），完整變更以
+> `git log` 與 `docs/06-project-management/MASTER_TASK_MAP.md`
+> 為準；本節僅收錄**已完成驗證**的重點批次。
 
 ### Added
 
 - **補完批次（收尾）**（2026-10-20）：把專案自己記錄的未完項逐一收掉——
-  ① 測試數量單一權威機制 `scripts/check_test_count.py`（量測／門禁／同步文件；
-  CI 的硬編碼窗口 7500-8400 已被專案成長（8,726）頂爆，改為比例式容差），
-  STATUS_MATRIX MD↔YAML 漂移（CI 紅）一併修好；② 位元模型 backoff 改為
-  插值（n-gram 表是 hash bucket，未見 context 會落到碰撞 cell 而給出
-  自信的錯誤分布——留出集 bpc 9.42（比均勻猜測的 8.0 還差）→ 2.74）；
-  ③ 5 個 `not_implemented` 的 State Matrix 端點改為真實實作（埠註冊／註銷／
-  列舉、漣漪落到矩陣、分配決策），θ 路由的埠綁定 API 補上（auto_allocate
-  與 apply_routing_decisions 從永久 no-op 變成真的會綁）；④ HAM 未接線的平行
-  實作（query_engine／data_processor／core_storage／background_tasks／
-  vector_store_manager／types／errors，約 1,300 行）刪除，保留期的年齡／重要度
-  規則改寫在真正存資料的 `HAMMemoryManager.prune()`；⑤ EmotionSystem 跨進程
-  共享（`data/emotion_state.json`，主 server 與遊戲 agent 不再各說各話）；
-  ⑥ MSBA A/B 對照啟用（`MSBAPipeline.compare()` 對照「無語意區塊」的前區塊
-  路徑，量測不切流量）；⑦ 清理：HSP mock 模式改為明確警告、CLI 假 client 不再
-  假裝健康、狀態矩陣埠、macOS 桌布真實取得、Open DevTools 真的開、
-  熱節流真的降 FPS、`__import__` 與數字 sleep 遷移、刪除未使用的
+  ① 測試數量單一權威機制
+  `scripts/check_test_count.py`（量測／門禁／同步文件；CI 的硬編碼窗口 7500-8400 已被專案成長（8,726）頂爆，改為比例式容差），STATUS_MATRIX
+  MD↔YAML 漂移（CI 紅）一併修好；② 位元模型 backoff 改為插值（n-gram 表是 hash
+  bucket，未見 context 會落到碰撞 cell 而給出自信的錯誤分布——留出集 bpc
+  9.42（比均勻猜測的 8.0 還差）→ 2.74）；③ 5 個 `not_implemented` 的 State
+  Matrix 端點改為真實實作（埠註冊／註銷／列舉、漣漪落到矩陣、分配決策），θ 路由的埠綁定 API 補上（auto_allocate 與 apply_routing_decisions 從永久 no-op 變成真的會綁）；④
+  HAM 未接線的平行實作（query_engine／data_processor／core_storage／background_tasks／vector_store_manager／types／errors，約 1,300 行）刪除，保留期的年齡／重要度規則改寫在真正存資料的
+  `HAMMemoryManager.prune()`；⑤
+  EmotionSystem 跨進程共享（`data/emotion_state.json`，主 server 與遊戲 agent 不再各說各話）；⑥
+  MSBA A/B 對照啟用（`MSBAPipeline.compare()`
+  對照「無語意區塊」的前區塊路徑，量測不切流量）；⑦ 清理：HSP
+  mock 模式改為明確警告、CLI 假 client 不再假裝健康、狀態矩陣埠、macOS 桌布真實取得、Open
+  DevTools 真的開、熱節流真的降 FPS、`__import__`
+  與數字 sleep 遷移、刪除未使用的
   `storage-manager.js`（含壞掉的版本遷移路徑）；⑧ 新增
   `docs/architecture/BACKBONE_TOPOLOGY.md` 與 `scripts/backup_checkpoints.py`。
-- **身分與命名（per-user）＋天使工房接待角色**（2026-10-20）：使用者可為自己
-  的 Angela 命名（`POST /api/v1/identity/name`），名稱存 `data/identities.json`
+- **身分與命名（per-user）＋天使工房接待角色**（2026-10-20）：使用者可為自己的 Angela 命名（`POST /api/v1/identity/name`），名稱存
+  `data/identities.json`
   的 per-user 記錄（全域改名被拒：一人改名不得改名他人）。名字現由
-  `identity.get_ai_name(user_id)` 單一解析，並貫穿到 system prompt
-  （`angela.identity` 等改為 `{name}` 變數）、reflex 答案、字幕 speaker、TTS
-  自我介紹與前端對話標籤。角色層 `core/persona/lucifaella.py`：
-  露茜法埃拉（天使工房商務部負責人）負責迎賓與**交付**——使用者命名後，
-  對話主體改為其命名的 Angela，露茜法埃拉退居代理層；角色區塊明列界線
-  （無實質股份／法律權利、不得聲稱完成未完成操作、不得宣稱未接線能力）。
-  文件：`docs/03-technical-architecture/identity-and-workshop-persona.md`。
-  43 新測試，全 testpaths **8,597 passed, 112 skipped, 0 failed**（2026-10-20）。
-- **模板定位改正：示例進上下文，不是直接輸出**（2026-10-20）：回應模板層
-  （social/keyword/emotion/pattern/matcher）改為「選模板」＋
+  `identity.get_ai_name(user_id)` 單一解析，並貫穿到 system
+  prompt（`angela.identity` 等改為 `{name}`
+  變數）、reflex 答案、字幕 speaker、TTS 自我介紹與前端對話標籤。角色層
+  `core/persona/lucifaella.py`：露茜法埃拉（天使工房商務部負責人）負責迎賓與**交付**——使用者命名後，對話主體改為其命名的 Angela，露茜法埃拉退居代理層；角色區塊明列界線（無實質股份／法律權利、不得聲稱完成未完成操作、不得宣稱未接線能力）。文件：`docs/03-technical-architecture/identity-and-workshop-persona.md`。43 新測試，全 testpaths
+  **8,597 passed, 112 skipped, 0 failed**（2026-10-20）。
+- **模板定位改正：示例進上下文，不是直接輸出**（2026-10-20）：回應模板層（social/keyword/emotion/pattern/matcher）改為「選模板」＋
   `_serve_template_selection()`：有語言模型時模板成為
-  `context["template_example"]`，隨 `angela.template_example` 區塊進 prompt
-  （明示為語氣示例、非答案），由模型用自己的話回答；無模型（離線／僅 unified）
-  時才逐字供應（降級／報錯用途）。模板選擇邏輯（否定守衛、`心情好差` 反義
-  守衛）保留——選對示例仍然重要。
-- **五步曲批次**（`8afdbc3e0`，2026-10-19）：D2/E3/A5 升級＋門禁＋新報告＋計分
-  重算；全倉 8504 passed, 112 skipped。
-- **研究管線**（`e4759c262`、`1f63a2caa`）：搜尋→抓內文→抽事實→交叉比對→AI
-  歸納，含潤色 editorial 旁路；WebSearch 六項稽核修復（`b8d1ab240`）。
-- **LLM 底層閉環**（`7a11c9c22`）：A1/B1/B2/B3/C2 五處修復＋規則回饋統計端點；
-  規則沉澱層（`4cd57e9d9`）：複雜答案驗證一次、正規化身分重放免重算。
-- **bench LOST_CORRECT 回歸錨**（`a0b3db113`）：--gate-native 新增錨題零回歸
-  檢查（曾答對本次答錯 → exit 2），錨單調只增，本機實跑 85 題與官方數重現。
-- **棄權路徑語言化＋正規化守衛**（`f4cb444b8`）：英文離線拒答不再回中文；
-  已知棄權集尾隨標點正規化比對（6 呼叫點統一）；棄權遙測 get_abstain_stats；
-  英文棄權子串鏡入毒化守衛（永不化石化）。6 新測試。
+  `context["template_example"]`，隨 `angela.template_example`
+  區塊進 prompt（明示為語氣示例、非答案），由模型用自己的話回答；無模型（離線／僅 unified）時才逐字供應（降級／報錯用途）。模板選擇邏輯（否定守衛、`心情好差`
+  反義守衛）保留——選對示例仍然重要。
+- **五步曲批次**（`8afdbc3e0`，2026-10-19）：D2/E3/A5 升級＋門禁＋新報告＋計分重算；全倉 8504
+  passed, 112 skipped。
+- **研究管線**（`e4759c262`、`1f63a2caa`）：搜尋→抓內文→抽事實→交叉比對→AI歸納，含潤色 editorial 旁路；WebSearch 六項稽核修復（`b8d1ab240`）。
+- **LLM 底層閉環**（`7a11c9c22`）：A1/B1/B2/B3/C2 五處修復＋規則回饋統計端點；規則沉澱層（`4cd57e9d9`）：複雜答案驗證一次、正規化身分重放免重算。
+- **bench
+  LOST_CORRECT 回歸錨**（`a0b3db113`）：--gate-native 新增錨題零回歸檢查（曾答對本次答錯 →
+  exit 2），錨單調只增，本機實跑 85 題與官方數重現。
+- **棄權路徑語言化＋正規化守衛**（`f4cb444b8`）：英文離線拒答不再回中文；已知棄權集尾隨標點正規化比對（6 呼叫點統一）；棄權遙測 get_abstain_stats；英文棄權子串鏡入毒化守衛（永不化石化）。6 新測試。
 - **Abstain 通道（v1）＋閉環**（2026-10-19）：honest 拒答/拒做各帶結構化信封
-  `metadata.abstain`（`v`/`reason`/`language`/`tier`——additive 契約、`v` 欄位
-  預留升級換代）；chat API payload 同步暴露 additive `abstain` 欄；IntentModel
-  與 MetaController 校準不再把棄權文案當成功樣本；非棄權回合經
+  `metadata.abstain`（`v`/`reason`/`language`/`tier`——additive 契約、`v`
+  欄位預留升級換代）；chat API payload 同步暴露 additive `abstain`
+  欄；IntentModel 與 MetaController 校準不再把棄權文案當成功樣本；非棄權回合經
   `record_served_turn` 記進路由器有界窗口（maxlen=20）→ `get_abstain_routing`
   快照注入 context → `abstain_voter`（第 9 位投票者：近期棄權率≥0.5 且樣本≥3
-  → 投保守路由）；`llm.abstained` CNS 事件由 MetabolicHeartbeat 訂閱
-  （response_quality 0.0 對偶 → 壓低健康分 → heartbeat_voter 同向加壓）。
-  14 新測試，全 testpaths **8554 passed, 112 skipped, 0 failed**（2026-10-19）。
+  → 投保守路由）；`llm.abstained`
+  CNS 事件由 MetabolicHeartbeat 訂閱（response_quality 0.0 對偶 → 壓低健康分 →
+  heartbeat_voter 同向加壓）。14 新測試，全 testpaths **8554 passed, 112
+  skipped, 0 failed**（2026-10-19）。
 
 ### Fixed
 
-- **離線 speak 批次**（2026-10-20）：知識庫策展條目（光合作用／哺乳動物／地球
-  繞星／沸點／zh 單位換算）＋裸片段包句（`format_knowledge_answer`）；
-  單步應用題求解（`solve_word_problem`，多步／折扣／找零一律誠實拒答）；
-  執行閘不再對「寫程式」與「Python 是什麼語言？」問「要執行嗎」（真正的
-  執行意圖如「執行 script.py」保留確認）；UNIFIED 引擎 OOD 問句不再吐單
-  位元組垃圾（`<q>=e`）；翻譯請求不再吃到愛情模板（改走誠實 cannot-do）；
-  情緒模板反向修正（`心情好差` 不再配喜悅模板）＋雨天不再配晴天文案。
-  新增 `tests/services/test_offline_speak.py`（9 測試）。
+- **CI 全面復綠（2026-10-20）**：專案自己的 CI 有五處紅，這批逐一修掉——(1)
+  `black --check` 74 檔漂移（CI lint 步驟長期紅，與程式無關）→ 整庫格式化；
+  (2) isort 數檔 → 修；(3) mypy 6 個新錯誤 → 修（回到 0）；(4) 複雜度棘輪
+  6 個 C901（2 個既有＋4 個本批新增）→ 拆函式回到 0（預算是 0）；(5)
+  type:ignore 預算 111→110（棘輪要求下調）。另：prettier 27 檔 → 格式化；
+  integration workflow 指向從未存在的
+  `tests/integration/test_system_level_integration.py`（pytest exit 5＝紅）→
+  改指真正帶 `system_integration` marker 的 `test_full_system_integration.py`。
+- **`/api/v1/system/status/detailed` 404**（2026-10-20）：INVOCATION_MATRIX 宣稱
+  這個端點可 curl，實際不存在（文件說有、實際 404）。已實作：狀態矩陣各軸、
+  情緒摘要、生命階段、後端健康、記憶統計；每段獨立 try，缺子系统回 null 而不是
+  整個 500。
+- **SSE 串流只有 llama.cpp 能用**（2026-10-20）：`POST /api/v1/chat/stream` 宣稱
+  「token 隨模型產生逐字送出」，但只有 llama.cpp provider 實作 streaming，雲端
+  provider（OpenAI／Ollama／Anthropic／Google）整段回完 → 桌面端看不到漸進
+  回覆。已為四家補上串流（SSE／NDJSON 各自格式，共用 base.py 的 delta 解析），
+  9 個新測試（含壞 chunk 跳過、回呼爆炸不中斷）。
+- **助手用 user_id 當稱呼**（2026-10-20）：只送 user_id 的客戶端會被叫
+  「smoke_user，這個任務我目前做不到……」——id 不是顯示名稱。現在 id 與顯示名
+  分開，沒有顯示名時改用中性稱呼（你／You）。
+- **Live2D 狀態鏈因果驗證**（2026-10-20）：STATUS_MATRIX 的誠實缺口「狀態鏈完整
+  因果驗證未做」→ node 行為測試證明 axis 變更 → Live2D 參數、主導情緒 → 表情。
+- **過期證據數字**（2026-10-20）：STATUS_MATRIX 的 evidence 欄多處與實測不符
+  （35→70、55→60、52→56、13→12、22→33、193→198、746→742 source files）→
+  依實測更新並附日期。
+- **離線 speak 批次**（2026-10-20）：知識庫策展條目（光合作用／哺乳動物／地球繞星／沸點／zh 單位換算）＋裸片段包句（`format_knowledge_answer`）；單步應用題求解（`solve_word_problem`，多步／折扣／找零一律誠實拒答）；執行閘不再對「寫程式」與「Python 是什麼語言？」問「要執行嗎」（真正的執行意圖如「執行 script.py」保留確認）；UNIFIED 引擎 OOD 問句不再吐單位元組垃圾（`<q>=e`）；翻譯請求不再吃到愛情模板（改走誠實 cannot-do）；情緒模板反向修正（`心情好差`
+  不再配喜悅模板）＋雨天不再配晴天文案。新增
+  `tests/services/test_offline_speak.py`（9 測試）。
 - **桌面 App 初始化中斷**（2026-10-20）：`app.js` 初始化流程漏了 `this.`
-  （`incrementLoadingProgress(...)` 裸呼叫）→ ReferenceError 被 init 的
-  try/catch 吞成「Init failed」：閒置偵測、後端同步、ready 狀態全部沒有執行。
-  同時修正 unified 聊天路徑未把 `user_id` 帶進 pipeline context 的缺口
-  （per-user 命名因此才會生效）。
-- **稽核批次**（`2b87f1190`，2026-10-19）：三輪外審修復——zh-TW 語言層（動態
-  語言偵測＋全 locale 繁體化）、HAM 主體覆蓋守衛（錯主體模板回放拒答）、code
-  召回劫持守衛、同步端點改 `asyncio.to_thread` 解事件迴圈凍結、沙箱 import
-  死契約＋OOM 常數上限、cwd 錨定（雙 cwd 各 136 過）、HAM 資料污染清理
-  （chroma 115→4）。
+  （`incrementLoadingProgress(...)` 裸呼叫）→
+  ReferenceError 被 init 的 try/catch 吞成「Init
+  failed」：閒置偵測、後端同步、ready 狀態全部沒有執行。同時修正 unified 聊天路徑未把
+  `user_id` 帶進 pipeline context 的缺口（per-user 命名因此才會生效）。
+- **稽核批次**（`2b87f1190`，2026-10-19）：三輪外審修復——zh-TW 語言層（動態語言偵測＋全 locale 繁體化）、HAM 主體覆蓋守衛（錯主體模板回放拒答）、code 召回劫持守衛、同步端點改
+  `asyncio.to_thread`
+  解事件迴圈凍結、沙箱 import 死契約＋OOM 常數上限、cwd 錨定（雙 cwd 各 136 過）、HAM 資料污染清理（chroma
+  115→4）。
 - **型別棘輪**（`3fc2ae331`）：type-ignore 預算 112→111 對齊實測。
-- **數字對齊**（`2b87f1190` 內）：README mypy 432/344→實測 0/0（746 files）、
-  「123 條路由」→動態措辭、STATUS_MATRIX 23→25 條；全套實測
-  **8540 passed, 112 skipped, 0 failed**（2026-10-19 全 testpaths）。
-- **地圖預算門修復**（`917f614b6`）：CI 門爆 15432>10000——5 個 gitignored
-  產物目錄（test_models 4,760 檔等）被掃入，補 EXCLUDE_DIRS → 5070/10000 綠。
+- **數字對齊**（`2b87f1190` 內）：README mypy 432/344→實測 0/0（746
+  files）、「123 條路由」→動態措辭、STATUS_MATRIX 23→25 條；全套實測 **8540
+  passed, 112 skipped, 0 failed**（2026-10-19 全 testpaths）。
+- **地圖預算門修復**（`917f614b6`）：CI 門爆 15432>10000——5 個 gitignored 產物目錄（test_models
+  4,760 檔等）被掃入，補 EXCLUDE_DIRS → 5070/10000 綠。
 
 ## [7.5.0-dev] - 2026-08-11 — Angela 真實多模態學習與審核
 

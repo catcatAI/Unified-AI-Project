@@ -33,7 +33,6 @@ def _skill_ctx(skill, params=None, priority=1.0, triggers=None):
 class TestActionStatesSync:
     def test_action_states_match_skillid(self):
         from ai.multimodal.game_structs import SkillID
-
         from engine.agent_bridge import ACTION_STATES
 
         assert ACTION_STATES == ("idle",) + tuple(s.value for s in SkillID)

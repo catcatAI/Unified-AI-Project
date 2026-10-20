@@ -466,6 +466,7 @@ class EdaToolAdapter:
             tools[name] = entry
         available = any(entry["available"] for entry in tools.values())
         return {"status": "success" if available else "unavailable", "tools": tools}
+
     @staticmethod
     def _parse_ngspice_log(path: Path) -> Dict[str, Any]:
         if not path.is_file():
@@ -649,9 +650,7 @@ print("EDA_KLAYOUT_JSON:" + json.dumps({{
         return metrics
 
     @staticmethod
-    def _layout_status(
-        run: Dict[str, Any], metrics: Dict[str, Any], diagnostics: List[str]
-    ) -> str:
+    def _layout_status(run: Dict[str, Any], metrics: Dict[str, Any], diagnostics: List[str]) -> str:
         """timeout → error(no artifact) → success ladder; mutates diagnostics."""
         if run["timed_out"]:
             return "timeout"
@@ -725,6 +724,7 @@ print("EDA_KLAYOUT_JSON:" + json.dumps({{
             "duration_ms": run["duration_ms"],
         }
         return self._write_manifest(job, payload)
+
     @staticmethod
     def _magic_marker_value(match: Optional[re.Match[str]]) -> Optional[str]:
         """Extract the first whitespace-separated token from a marker match."""

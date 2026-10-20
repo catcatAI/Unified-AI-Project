@@ -329,11 +329,8 @@ class VisionService:
             diff = np.abs(img1_np.astype(int) - img2_np.astype(int))
             return float(np.mean(diff) / 255.0)
         except Exception as err:
-            logger.warning(
-                "Image difference fallback (numpy failed): %s", err, exc_info=True
-            )
+            logger.warning("Image difference fallback (numpy failed): %s", err, exc_info=True)
             return 1 - len(image_data1) / max(len(image_data2), 1)
-
 
     async def process_video_frame(
         self,
@@ -565,9 +562,7 @@ class VisionService:
             logger.warning("Object detection fallback: %s", err, exc_info=True)
             return [{"label": "unrecognized_image", "confidence": 0.5, "property": "format"}]
 
-    def _append_region_proposals(
-        self, properties: List[Dict[str, Any]], image_data: bytes
-    ) -> None:
+    def _append_region_proposals(self, properties: List[Dict[str, Any]], image_data: bytes) -> None:
         """Append color-segmentation region boxes to `properties` (mutates in place).
 
         The `len(properties) >= 8` cap counts the base format/resolution/color
@@ -606,7 +601,6 @@ class VisionService:
             await cluster_manager.distribute_task("Vision", feature_hash)
         except Exception:
             logger.warning("Cluster distribution failed", exc_info=True)
-
 
     async def initialize(self) -> bool:
         """Boot cognitive perception layers."""

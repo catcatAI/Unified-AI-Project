@@ -286,9 +286,7 @@ class KGImporter:
     # ConceptNet CSV parser
     # ------------------------------------------------------------------
 
-    def _ensure_conceptnet_entity(
-        self, key: str, lang: str, name: str, max_entities: int
-    ) -> None:
+    def _ensure_conceptnet_entity(self, key: str, lang: str, name: str, max_entities: int) -> None:
         """Ensure a ConceptNet entity exists, adding it or updating its surface form."""
         if key not in self.entities:
             if len(self.entities) >= max_entities:
@@ -301,9 +299,7 @@ class KGImporter:
         elif lang not in self.entities[key]["surface"]:
             self.entities[key]["surface"][lang] = name
 
-    def _parse_conceptnet_row(
-        self, row: List[str], max_entities: int
-    ) -> bool:
+    def _parse_conceptnet_row(self, row: List[str], max_entities: int) -> bool:
         """Parse one ConceptNet CSV row; returns True if a triple was added."""
         if len(row) < 3:
             return False
@@ -405,9 +401,7 @@ class KGImporter:
     # Wikidata simplified parser
     # ------------------------------------------------------------------
 
-    def _ingest_claims(
-        self, key: str, claims: Dict[str, Any], max_entities: int
-    ) -> int:
+    def _ingest_claims(self, key: str, claims: Dict[str, Any], max_entities: int) -> int:
         """Ingest Wikidata claims as relations; returns number of triples added."""
         count = 0
         for prop, values in claims.items():

@@ -48,7 +48,10 @@ class GoogleAPIBackend(BaseLLMBackend):
         return False
 
     async def generate(self, prompt: str, **kwargs) -> LLMResponse:
-        """Generate."""
+        """Generate (streaming when a stream_callback is given)."""
+        stream_callback = kwargs.pop("stream_callback", None)
+        if stream_callback is not None:
+            return await self.generate_stream(prompt, stream_callback, **kwargs)
         start_time = time.time()
         messages = kwargs.get("messages", [{"role": "user", "content": prompt}])
         contents = []
@@ -94,4 +97,49 @@ class GoogleAPIBackend(BaseLLMBackend):
                     )
         except Exception as e:
             logger.error(f"Google Gemini API error: {e}", exc_info=True)
+            return LLMResponse(text="", backend="google", model=self.model, error=safe_error(e))
+
+    async def generate_stream(self, prompt: str, stream_callback, **kwargs) -> LLMResponse:
+        """Streaming generate: Gemini's streamGenerateContent (alt=sse)."""
+        start_time = time.time()
+        messages = kwargs.get("messages", [{"role": "user", "content": prompt}])
+        contents = []
+        for msg in messages:
+            role = "model" if msg["role"] == "assistant" else msg["role"]
+            contents.append({"role": role, "parts": [{"text": msg["content"]}]})
+        payload = {
+            "contents": contents,
+            "generationConfig": {
+                "maxOutputTokens": kwargs.get("max_tokens", 512),
+                "temperature": kwargs.get("temperature", 0.7),
+            },
+        }
+        try:
+            session = self._get_session()
+            async with session.post(
+                f"{self.GEMINI_BASE}/models/{self.model}:streamGenerateContent",
+                params={"key": self.api_key, "alt": "sse"},
+                json=payload,
+                timeout=aiohttp.ClientTimeout(total=600, sock_read=30),
+            ) as resp:
+                if resp.status != 200:
+                    text = await resp.text()
+                    return LLMResponse(
+                        text="",
+                        backend="google",
+                        model=self.model,
+                        error=f"HTTP {resp.status}: {text[:200]}",
+                    )
+                chunks = await self._stream_and_collect(
+                    resp, stream_callback, ["candidates", 0, "content", "parts"]
+                )
+            return LLMResponse(
+                text="".join(chunks),
+                backend="google",
+                model=self.model,
+                response_time_ms=(time.time() - start_time) * 1000,
+                confidence=0.95,
+            )
+        except Exception as e:
+            logger.error(f"Google Gemini streaming error: {e}", exc_info=True)
             return LLMResponse(text="", backend="google", model=self.model, error=safe_error(e))

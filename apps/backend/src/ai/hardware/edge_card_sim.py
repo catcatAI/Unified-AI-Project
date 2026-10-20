@@ -101,9 +101,7 @@ def _gguf_read_tensors(f, rf, rstr, n_tensors: int) -> list[TensorInfo]:
         dims = [rf("Q")[0] for _ in range(nd)]
         (type_id,) = rf("I")
         (offset,) = rf("Q")
-        tensors.append(
-            TensorInfo(name=name, dims=dims, type_id=type_id, offset=offset, nbytes=0)
-        )
+        tensors.append(TensorInfo(name=name, dims=dims, type_id=type_id, offset=offset, nbytes=0))
     return tensors
 
 
@@ -131,6 +129,7 @@ def read_gguf_structure(path: str | Path) -> dict[str, Any]:
     path = Path(path)
     file_size = path.stat().st_size
     with path.open("rb") as f:
+
         def rf(fmt: str) -> tuple:
             raw = f.read(struct.calcsize("<" + fmt))
             if len(raw) < struct.calcsize("<" + fmt):
@@ -162,7 +161,6 @@ def read_gguf_structure(path: str | Path) -> dict[str, Any]:
         data_start = (info_end + alignment - 1) // alignment * alignment
         _gguf_tile_nbytes(tensors, data_start, file_size)
         return {"kv": kv, "tensors": tensors, "info_end": info_end, "file_size": file_size}
-
 
 
 # -----------------------------------------------------------------------------
@@ -499,10 +497,7 @@ class Engine:
             out.append(f"time not finite/monotonic: {self.t}")
         if not 0 - EPS <= self.sram <= cfg.sram_bytes + EPS:
             out.append(f"SRAM out of bounds: {self.sram}")
-        if (
-            self.cum["mem_r"] + self.cum["mem_w"]
-            > cfg.mem_service_bytes_per_ns * self.t + slack
-        ):
+        if self.cum["mem_r"] + self.cum["mem_w"] > cfg.mem_service_bytes_per_ns * self.t + slack:
             out.append("mem exceeded serviced ceiling")
         if self.cum["mem_r"] + self.cum["mem_w"] > cfg.mem_raw_bytes_per_ns * self.t + slack:
             out.append("mem exceeded PHYSICAL LPDDR5 ceiling")
@@ -552,7 +547,6 @@ class Engine:
             out.append(f"SRAM bookkeeping mismatch: {self.sram} vs staged {staged}")
         out.extend(self._inv_frontier_checks())
         return out
-
 
     # -- event step -----------------------------------------------------------
     def _ready_writes(self) -> list[int]:
@@ -961,11 +955,6 @@ class Engine:
         if self._is_complete():
             self._finish_token()
         return "+".join(events) or "advance"
-
-
-
-
-
 
     def _finish_token(self) -> None:
         self.per_token_ms.append((self.t - self.token_start_t) / 1e6)

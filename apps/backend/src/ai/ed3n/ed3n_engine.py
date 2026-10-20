@@ -622,7 +622,9 @@ class ED3NEngine:
         stages["encode"] = (time.perf_counter() - t0) * 1000
         return keys, cache_hit
 
-    def _latent_generated_keys(self, generated: Optional[str], existing_keys: List[str]) -> List[str]:
+    def _latent_generated_keys(
+        self, generated: Optional[str], existing_keys: List[str]
+    ) -> List[str]:
         """LRN 生成文字編回 keys，排除既有 keys（空生成回 []）。"""
         if not generated:
             return []
@@ -633,9 +635,7 @@ class ED3NEngine:
         """SemanticKeyMapper 查相近概念（排除既有 keys，score>0.3）。"""
         if self._semantic_key_mapper is None:
             return []
-        results = self._semantic_key_mapper.map_latent_to_keys(
-            latent, top_k=3, mode="auto"
-        )
+        results = self._semantic_key_mapper.map_latent_to_keys(latent, top_k=3, mode="auto")
         mapped: List[str] = []
         for result in results:
             key = result.get("key", "")
@@ -680,13 +680,9 @@ class ED3NEngine:
             if self._latent_reasoning is not None:
                 # Generate text from latent via neural network
                 generated = self._latent_reasoning.generate(latent, max_tokens=3)
-                additional_keys.extend(
-                    self._latent_generated_keys(generated, existing_keys)
-                )
+                additional_keys.extend(self._latent_generated_keys(generated, existing_keys))
                 # Also find similar concepts via SemanticKeyMapper (if available)
-                additional_keys.extend(
-                    self._latent_mapper_keys(latent, existing_keys)
-                )
+                additional_keys.extend(self._latent_mapper_keys(latent, existing_keys))
 
             stages["latent"] = (time.perf_counter() - t0) * 1000
         except Exception as e:
@@ -1319,8 +1315,7 @@ class ED3NEngine:
                 )
             except Exception as e:
                 logger.warning(
-                    "ED3NEngine: failed to load CL checkpoint %s: %s; "
-                    "keeping fresh pipeline",
+                    "ED3NEngine: failed to load CL checkpoint %s: %s; " "keeping fresh pipeline",
                     cl_path,
                     e,
                 )
@@ -1489,6 +1484,7 @@ class ED3NEngine:
             def _load_json(fpath):
                 with open(fpath, "rb") as f:
                     return _fast_json.loads(f.read())
+
         except ImportError:
 
             def _load_json(fpath):

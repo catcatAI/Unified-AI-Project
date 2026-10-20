@@ -266,10 +266,9 @@ class _FakeMemoryService:
 
 @pytest.fixture
 def memory_client(monkeypatch):
+    from api.routes import multimodal_routes
     from fastapi import FastAPI
     from starlette.testclient import TestClient
-
-    from api.routes import multimodal_routes
 
     monkeypatch.setattr(multimodal_routes, "_SERVICE", _FakeMemoryService())
     app = FastAPI()

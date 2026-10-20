@@ -134,9 +134,7 @@ class ExternalGateway:
         try:
             self.pairs.fail(pair_id, reason=str(exc))
         except Exception:
-            logger.debug(
-                "pairs.fail bookkeeping crashed for pair %s", pair_id, exc_info=True
-            )
+            logger.debug("pairs.fail bookkeeping crashed for pair %s", pair_id, exc_info=True)
 
     def _resolve_pair_success(
         self, pair_id: Optional[str], envelope: Envelope, result: Any, name: str

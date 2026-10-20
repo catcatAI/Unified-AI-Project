@@ -13,7 +13,6 @@ These tests pin the corrected behaviour.
 """
 
 import pytest
-
 from services.api.state_matrix_api import (
     AllocationRequest,
     RippleRequest,

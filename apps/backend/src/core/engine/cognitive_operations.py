@@ -191,9 +191,7 @@ def _update_epsilon_metrics(
     cert_base = _get_spatial_config("certainty_base", 0.5)
     cert_char = _get_spatial_config("certainty_per_char", 0.05)
     fat_inc = _get_spatial_config("fatigue_increment", 0.02)
-    dimensions["epsilon"].values["certainty"] = min(
-        1.0, cert_base + cert_char * len(expression)
-    )
+    dimensions["epsilon"].values["certainty"] = min(1.0, cert_base + cert_char * len(expression))
     dimensions["epsilon"].values["fatigue"] = min(
         1.0, dimensions["epsilon"].values.get("fatigue", 0.0) + fat_inc
     )

@@ -9,7 +9,6 @@ import inspect
 
 import pytest
 from fastapi import HTTPException
-
 from services.atlassian_api import (
     AtlassianCLIBridge,
     AtlassianConfig,
