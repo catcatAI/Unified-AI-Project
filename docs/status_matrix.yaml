@@ -212,7 +212,7 @@ features:
     claim: 全倉綠
     status: verified
     verify_command: pytest
-    evidence: 8,751 passed, 112 skipped, 0 failed（2026-10-21 測試數量同步批次全 testpaths 實測：tests/＋apps/backend/tests/＋apps/game-rpg/tests＋scripts）
+    evidence: 8,755 passed, 112 skipped, 0 failed（2026-10-21 測試數量同步批次全 testpaths 實測：tests/＋apps/backend/tests/＋apps/game-rpg/tests＋scripts）
     last_verified: "2026-10-21"
 
   - id: mypy-debt
@@ -309,10 +309,11 @@ features:
     status: verified
     implementation:
       - apps/backend/src/ai/reasoning/neural_bridge.py
+      - apps/backend/src/ai/arithmetic/deterministic_router.py
     tests: [tests/ai/test_neural_bridge.py]
     verify_command: pytest tests/ai/test_neural_bridge.py
     evidence: >-
-      28 tests passed（2026-10-21 實測）。三段式：接觸（semantic_qa 的 ONNX
+      32 tests passed（2026-10-21 實測）。三段式：接觸（semantic_qa 的 ONNX
       多語編碼器把「exceeds/outranks/cooler/junior」落到老師概念原型）→ 對齊
       （`align_from_feedback`／`align_phrase` 只移動概念原型，不記題目）→ 合成
       （關係圖＋極值，語意與 `ai.symbolic_reasoner` 同義）。實測（`python
@@ -322,7 +323,11 @@ features:
       對齊回饋讓開發組 3/5 → 5/5。留出集 3 題未答為編碼器接觸失敗
       （sweltering/compact/thicker），非迴歸。`scripts/probe_reasoning_unseen.py`
       三欄：確定性 100/100、純神經 0/100、純神經＋中間層 87/100（純神經門檻
-      仍未達，中間層不等於純神經）。
+      仍未達，中間層不等於純神經）。**已接上生產路徑**：
+      `ai.arithmetic.deterministic_router.try_neural_bridge()` 接在
+      `try_reasoning`（老師）之後，老師先答、橋接補老師看不到的改述；GARDEN／
+      ED3N 引擎經同一個 router 因此一併受益。橋接對非比較問句會 abstain
+      （「Who is the tallest person in the room?」→ None，不亂答）。
     last_verified: "2026-10-21"
 
   - id: msba-pipeline

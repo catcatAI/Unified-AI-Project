@@ -924,8 +924,11 @@ collected — 0 errors**).
 > 對齊回饋讓開發組 3/5 → 5/5。留出集 3
 > 題未答＝編碼器接觸失敗（sweltering/compact/thicker），如實記錄。
 > `scripts/probe_reasoning_unseen.py` 三欄：確定性 100/100、純神經 0/100、純神經＋中間層
-> 87/100——**純神經門檻仍未達**（中間層不等於純神經）。
-> **8,411 passed / 107 skipped / 0 failed**（`pytest tests/
+> 87/100——**純神經門檻仍未達**（中間層不等於純神經）。**已接上生產路徑**：
+> `ai.arithmetic/deterministic_router.py` 的 `try_neural_bridge()` 接在
+> `try_reasoning`（老師）之後，老師先答、橋接補老師看不到的改述；GARDEN／ED3N
+> 引擎經同一 router 一併受益；橋接對非比較問句 abstain（不亂答）。
+> **8,415 passed / 107 skipped / 0 failed**（`pytest tests/
 > apps/backend/tests/`）。
 
 ### JavaScript/TypeScript

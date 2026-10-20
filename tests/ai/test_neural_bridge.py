@@ -173,6 +173,40 @@ def test_the_bridge_answers_a_yes_no_question(bridge: NeuralBridge) -> None:
     assert answer == "yes"
 
 
+def test_a_superlative_is_not_a_comparison(bridge: NeuralBridge) -> None:
+    """ "the tallest person" contains no comparison."""
+    assert bridge.answer("Who is the tallest person in the room?") is None
+    assert bridge.answer("Who is the smartest student in the class?") is None
+
+
+def test_the_answer_can_be_a_sentence(bridge: NeuralBridge) -> None:
+    assert bridge.answer_sentence("X is colder than Y, Y colder than Z, who coldest?") == (
+        "X is the coldest"
+    )
+    assert bridge.answer_sentence("A is not as short as B, B not as short as C, who shortest?") == (
+        "C is the shortest"
+    )
+
+
+def test_the_bridge_is_wired_into_the_deterministic_router() -> None:
+    from ai.arithmetic.deterministic_router import (
+        try_deterministic,
+        try_neural_bridge,
+        try_reasoning,
+    )
+
+    question = "The first exceeds second, second exceeds third, which is on top?"
+    assert try_reasoning(question) is None, "the teacher cannot see this paraphrase"
+    assert try_neural_bridge(question) is not None
+    assert try_deterministic(question) is not None
+
+
+def test_the_bridge_singleton_is_shared() -> None:
+    from ai.reasoning.neural_bridge import get_neural_bridge
+
+    assert get_neural_bridge() is get_neural_bridge()
+
+
 # --------------------------------------------------------------------------- #
 # The alignment step
 # --------------------------------------------------------------------------- #

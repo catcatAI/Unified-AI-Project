@@ -89,9 +89,27 @@ def try_reasoning(text: str) -> Optional[str]:
         return None
 
 
+def try_neural_bridge(text: str) -> Optional[str]:
+    """The intermediate layer: the neural contact with the teacher's concepts.
+
+    The deterministic teacher knows a fixed comparison vocabulary ("taller",
+    "colder", ...). The bridge contacts that vocabulary semantically, so the
+    paraphrases the teacher cannot see ("X exceeds Y", "A outranks B") become
+    answerable. It runs *after* the teacher, so the teacher's own answers
+    keep their wording and priority.
+    """
+    try:
+        from ai.reasoning.neural_bridge import get_neural_bridge
+
+        return get_neural_bridge().answer_sentence(text)
+    except Exception as exc:
+        logger.debug("neural bridge routing failed for %r: %s", text, exc)
+        return None
+
+
 def try_deterministic(text: str) -> Optional[str]:
     """Try all deterministic routes in priority order. First hit wins."""
-    for fn in (try_math, try_logic, try_knowledge, try_reasoning):
+    for fn in (try_math, try_logic, try_knowledge, try_reasoning, try_neural_bridge):
         result = fn(text)
         if result is not None:
             return result

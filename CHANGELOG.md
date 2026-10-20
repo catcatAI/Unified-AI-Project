@@ -32,6 +32,10 @@ and this project adheres to
   題未答是編碼器的接觸失敗（sweltering／compact／thicker），已如實記錄。
   `scripts/probe_reasoning_unseen.py` 加第三欄「純神經＋中間層」＝
   87/100（純神經 semantic_qa 仍 0/100——中間層不等於純神經，門檻未變）。
+  **並接上生產路徑**：`ai.arithmetic.deterministic_router.try_neural_bridge()`
+  接在 `try_reasoning`（老師）之後——老師先答、橋接補老師看不到的改述，
+  GARDEN／ED3N 引擎經同一個 router 因此一併受益；橋接對非比較問句會
+  abstain（「Who is the tallest person in the room?」→ None，不亂答）。
 
 - **補完批次（收尾）**（2026-10-20）：把專案自己記錄的未完項逐一收掉——
   ① 測試數量單一權威機制

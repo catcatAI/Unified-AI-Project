@@ -341,6 +341,19 @@ class RelationMatcher:
         dimension, direction = best[0].split("|", 1)
         return ((dimension, direction), best[1])
 
+    def is_superlative_word(self, word: str, threshold: float = 0.97) -> bool:
+        """True when the word is one of the teacher's superlatives.
+
+        "the tallest person" contains no comparison: "tallest" is the
+        question's superlative, so it is neither a relation word nor an
+        entity. The threshold is high on purpose: "hotter" is close to
+        "the hottest" but is a comparative, not a superlative.
+        """
+        if not word or len(word) < 3:
+            return False
+        direction = self.classify_direction(word, threshold=0.0)
+        return direction is not None and direction[1] >= threshold
+
     def classify_dimension(
         self, phrase: str, threshold: float = 0.40
     ) -> Optional[Tuple[str, float]]:
@@ -599,6 +612,11 @@ def _is_relation_window(tokens: Sequence[str], lo: int, hi: int) -> bool:
 
 
 _ARTICLES = ("the", "a", "an")
+# The prepositions: the object of a comparison stands right next to the
+# relation word ("A outranks B"), a preposition means the phrase is part of
+# a noun phrase ("the smartest student in the class").
+# ("to" is not here: "superior to X" is a comparison, not a noun phrase.)
+_PREPOSITIONS = ("in", "at", "on", "by", "with", "from", "of", "for", "into")
 
 
 def _trim_entity(words: List[str]) -> str:
@@ -770,6 +788,12 @@ class NeuralBridge:
             spans.append((subject, phrase, obj, negated))
         return spans
 
+    def _has_superlative_entity(self, *entities: str) -> bool:
+        """True when an entity is the question's superlative ("the tallest")."""
+        return any(
+            self.matcher.is_superlative_word(word) for entity in entities for word in entity.split()
+        )
+
     def _than_anchored(self, tokens: List[str]) -> Optional[Tuple[float, int, int, str]]:
         """The relation of the "X <comparative> than Y" shape.
 
@@ -795,6 +819,9 @@ class NeuralBridge:
             match = self.matcher.classify(phrase, kind="relation")
             if match is None:
                 continue
+            if self.matcher.is_superlative_word(phrase):
+                # The question's own superlative is not a comparison.
+                continue
             if best is None or match[1] > best[0]:
                 best = (match[1], lo, hi, phrase)
         if best is None:
@@ -805,6 +832,8 @@ class NeuralBridge:
         subject = _entity_before(tokens, lo)
         obj = _entity_after(tokens, obj_index)
         if not subject or not obj:
+            return None
+        if self._has_superlative_entity(subject, obj):
             return None
         return best
 
@@ -828,10 +857,22 @@ class NeuralBridge:
                 match = self.matcher.classify(phrase, kind="relation")
                 if match is None:
                     continue
+                if self.matcher.is_superlative_word(phrase):
+                    # The question's own superlative is not a comparison.
+                    continue
                 if best is None or match[1] > best[0]:
                     # A relation word always has an entity on both sides:
                     # the subject before it and the object after it.
-                    if not _entity_before(tokens, lo) or not _entity_after(tokens, hi):
+                    subject = _entity_before(tokens, lo)
+                    obj = _entity_after(tokens, hi)
+                    if not subject or not obj:
+                        continue
+                    if self._has_superlative_entity(subject, obj):
+                        # "the tallest person" is not a comparison.
+                        continue
+                    if hi < len(tokens) and tokens[hi].lower() in _PREPOSITIONS:
+                        # "the smartest student in the class": the phrase
+                        # belongs to a noun phrase, not to a comparison.
                         continue
                     best = (match[1], lo, hi, phrase)
         return best
@@ -939,7 +980,38 @@ class NeuralBridge:
 
     # -- the public entry point ------------------------------------------- #
     def answer(self, question: str) -> Optional[str]:
-        """The answer, or None when the layer cannot make sense of it."""
+        """The answer (the entity), or None when the layer cannot make sense of it."""
+        solved = self._solve(question)
+        return solved[0] if solved else None
+
+    def answer_sentence(self, question: str) -> Optional[str]:
+        """The answer as a sentence ("C is the shortest"), like the teacher."""
+        solved = self._solve(question)
+        if solved is None:
+            return None
+        entity, direction, dimension = solved
+        wording = self._wording(dimension, direction)
+        return f"{entity} is {wording}"
+
+    @staticmethod
+    def _wording(dimension: Optional[str], direction: str) -> str:
+        """The superlative wording of a direction ("the tallest")."""
+        if dimension:
+            words = SUPERLATIVE_SEEDS.get((dimension, direction))
+            if words:
+                return words[0]
+        return (
+            SUPERLATIVE_SEEDS.get((ANY_DIMENSION, direction), ["the greatest"])[0]
+            if (
+                ANY_DIMENSION,
+                direction,
+            )
+            in SUPERLATIVE_SEEDS
+            else ("the greatest" if direction == GREATEST else "the least")
+        )
+
+    def _solve(self, question: str) -> Optional[Tuple[str, str, Optional[str]]]:
+        """The (entity, direction, dimension) of the question, or None."""
         if not question or not question.strip():
             return None
         relations = self.find_relations(question)
@@ -957,7 +1029,8 @@ class NeuralBridge:
 
         # A yes/no question is answered by reachability in the chain.
         if re.search(r"\b(yes or no|yes/no)\b|是嗎|對嗎", question, re.IGNORECASE):
-            return self._answer_yes_no(relations, question)
+            answer = self._answer_yes_no(relations, question)
+            return (answer, direction, dimension) if answer else None
 
         # 2. 對齊 — the chain's dimension must agree with the question's.
         chain_dimensions = {dim for _s, (dim, _d), _o in relations if dim != ANY_DIMENSION}
@@ -974,7 +1047,10 @@ class NeuralBridge:
         chain_dimension = next(iter(chain_dimensions)) if len(chain_dimensions) == 1 else dimension
 
         # 3. 合成.
-        return self._compose(relations, chain_dimension, direction)
+        entity = self._compose(relations, chain_dimension, direction)
+        if entity is None:
+            return None
+        return (entity, direction, chain_dimension)
 
     # -- the feedback step ------------------------------------------------- #
     def align_phrase(self, phrase: str, concept) -> Dict[str, float]:
@@ -1025,6 +1101,17 @@ class NeuralBridge:
         return stats
 
 
+_BRIDGE: Optional[NeuralBridge] = None
+
+
+def get_neural_bridge() -> NeuralBridge:
+    """The process-wide bridge (the aligned prototypes must persist)."""
+    global _BRIDGE
+    if _BRIDGE is None:
+        _BRIDGE = NeuralBridge()
+    return _BRIDGE
+
+
 __all__ = [
     "AGGREGATION_ANY_SEEDS",
     "ANY_DIMENSION",
@@ -1039,4 +1126,5 @@ __all__ = [
     "RelationMatcher",
     "extract_aggregation_span",
     "extract_relation_spans",
+    "get_neural_bridge",
 ]
