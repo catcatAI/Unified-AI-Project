@@ -66,44 +66,30 @@ and this project adheres to
 
 ### Fixed
 
-- **core/bio 補上冒煙級測試＋相容 stub 開始說話**（2026-10-20）：gap-closure
-  計畫列的「薄弱檔按域補測（先 core/bio 的冒烟級）」：core/bio 有 20 個模組，
-  此前只有 import 級別的覆蓋——建構子拋錯或方法回傳錯型別都不會讓任何測試紅。
-  新增 16 個冒煙測試（ANS／小腦／情緒混合／HPA／習慣／激素動力学／輸入感測／
-  動力學驗證／多維觸發／神經可塑性／顯性學習）。另外，
-  `StateMatrixAdapter`（JSON 檔案版）的相容 proxy（anchor learning／resonance／
-  allocation policy）以前**靜默**回空結果，呼叫端分不出「沒答案」與「真答案」；
-  現在第一次使用會警告並指出真正的實作在哪（共享 StateMatrix4D／core.allocation）。
+- **core/bio 補上冒煙級測試＋相容 stub 開始說話**（2026-10-20）：gap-closure 計畫列的「薄弱檔按域補測（先 core/bio 的冒烟級）」：core/bio 有 20 個模組，此前只有 import 級別的覆蓋——建構子拋錯或方法回傳錯型別都不會讓任何測試紅。新增 16 個冒煙測試（ANS／小腦／情緒混合／HPA／習慣／激素動力学／輸入感測／動力學驗證／多維觸發／神經可塑性／顯性學習）。另外，
+  `StateMatrixAdapter`（JSON 檔案版）的相容 proxy（anchor
+  learning／resonance／allocation
+  policy）以前**靜默**回空結果，呼叫端分不出「沒答案」與「真答案」；現在第一次使用會警告並指出真正的實作在哪（共享 StateMatrix4D／core.allocation）。
 - **刪除檔案改成可復原**（2026-10-20）：`file_ops.default.yaml` 宣告了
-  `limits.move_to_trash: true`（可復原的刪除），但兩條刪除路徑（檔案操作
-  handler 與桌面接管的 delete_file）都是直接 unlink/rmtree——被 AI 誤解的
-  「刪掉這個」從此救不回來。現在新增 `core/system/trash.py`（Linux/macOS 用
-  系統回收筒慣例、Windows 用可復原的本地 Trash 並如實說明它不是回收筒），
-  兩條路徑都改走回收筒，回收筒不可用時才退回硬刪除。
+  `limits.move_to_trash: true`（可復原的刪除），但兩條刪除路徑（檔案操作 handler 與桌面接管的 delete_file）都是直接 unlink/rmtree——被 AI 誤解的「刪掉這個」從此救不回來。現在新增
+  `core/system/trash.py`（Linux/macOS 用系統回收筒慣例、Windows 用可復原的本地 Trash 並如實說明它不是回收筒），兩條路徑都改走回收筒，回收筒不可用時才退回硬刪除。
 - **超過門檻的寫入先問再寫**（2026-10-20）：`limits.require_confirmation_over_mb`
-  同樣是死設定——超過門檻的寫入直接落盤。現在超過門檻且未確認時回覆確認訊息
-  （不寫入），確認後才寫。
-- **219 支腳本完成定級，孤兒腳本不再無聲存在**（2026-10-20）：gap-closure
-  計畫列的「69 孤兒腳本逐個定級（留/刪/歸檔）」一直是開的——scripts/ 長到 219
-  支，63 支沒有任何文件、工作流程或程式引用，卻沒有任何紀錄說明它們是什麼。
-  新增 `scripts/INVENTORY.json`（每支腳本的類別、用途、是否被引用）＋產生器
-  `scripts/gen_script_inventory.py` ＋驗證測試：新增腳本必須先定級，過期條目
-  會讓門紅。複雜度棘輪只涵蓋 apps/backend/src 與 tests/ 這件事也如實記錄
-  （scripts/ 是一次性工具，仍有約 100 個 C901 函式——範圍決策，不是遺漏）。
+  同樣是死設定——超過門檻的寫入直接落盤。現在超過門檻且未確認時回覆確認訊息（不寫入），確認後才寫。
+- **219 支腳本完成定級，孤兒腳本不再無聲存在**（2026-10-20）：gap-closure計畫列的「69 孤兒腳本逐個定級（留/刪/歸檔）」一直是開的——scripts/ 長到 219支，63 支沒有任何文件、工作流程或程式引用，卻沒有任何紀錄說明它們是什麼。新增
+  `scripts/INVENTORY.json`（每支腳本的類別、用途、是否被引用）＋產生器
+  `scripts/gen_script_inventory.py`
+  ＋驗證測試：新增腳本必須先定級，過期條目會讓門紅。複雜度棘輪只涵蓋 apps/backend/src 與 tests/ 這件事也如實記錄（scripts/ 是一次性工具，仍有約 100 個 C901 函式——範圍決策，不是遺漏）。
 - **視訊的 motion_detected 不再是擲硬幣**（2026-10-20）：`process_video_frame`
-  以前回報 `random.choice([True, False])`——一個假的量測卻以分析結果的樣子
-  出現。現在真的比對前一幀（沿用既有的 `_difference_score`），回傳
-  `motion_detected` 與 `motion_score`；第一幀沒有可比對的對象，如實回報「無
-  動作」。2 個新測試（含「同樣的幀永遠給同樣答案」的反隨機檢查）。
-- **Dashboard 的寵物面板不再顯示假資料**（2026-10-20）：`api/pet.ts` 以前是
-  Next.js 端自己維護的 in-memory 模擬（自己衰減、pet/feed/play/rest 回固定
-  增減），面板上的數字與它宣稱描述的系統無關。現在後端新增
-  `GET /api/v1/system/pet`（真實狀態矩陣：happiness←gamma.happiness、
-  energy←alpha.energy、health←alpha.comfort、hunger←alpha.rest_need，另附生命
-  階段與情緒，並標明每個欄位的來源）與 `POST /api/v1/system/pet/interact`
-  （互動真的作用在狀態矩陣上；未知動作回 400，不再靜默忽略）；前端改為
-  proxy 真後端，後端不可達時才用「明確標記為 simulated」的後備值。另加
-  契約測試：dashboard proxy 的每個後端路徑都必須真的存在。
+  以前回報
+  `random.choice([True, False])`——一個假的量測卻以分析結果的樣子出現。現在真的比對前一幀（沿用既有的
+  `_difference_score`），回傳 `motion_detected` 與
+  `motion_score`；第一幀沒有可比對的對象，如實回報「無動作」。2 個新測試（含「同樣的幀永遠給同樣答案」的反隨機檢查）。
+- **Dashboard 的寵物面板不再顯示假資料**（2026-10-20）：`api/pet.ts`
+  以前是 Next.js 端自己維護的 in-memory 模擬（自己衰減、pet/feed/play/rest 回固定增減），面板上的數字與它宣稱描述的系統無關。現在後端新增
+  `GET /api/v1/system/pet`（真實狀態矩陣：happiness←gamma.happiness、energy←alpha.energy、health←alpha.comfort、hunger←alpha.rest_need，另附生命階段與情緒，並標明每個欄位的來源）與
+  `POST /api/v1/system/pet/interact`
+  （互動真的作用在狀態矩陣上；未知動作回 400，不再靜默忽略）；前端改為 proxy 真後端，後端不可達時才用「明確標記為 simulated」的後備值。另加契約測試：dashboard
+  proxy 的每個後端路徑都必須真的存在。
 - **CI lint 盲點關閉**（2026-10-20）：`apps/backend/tests/`
   一直在 lint 範圍之外（稽核記為「56 條 E541 級既有告警，不動」）——那 21 條 F541 已修，CI 的 black/isort/flake8 現在也覆蓋
   `apps/backend/tests/`，稽核文件同步更新。
