@@ -2163,7 +2163,10 @@ def _schedule_msba(context: Dict[str, Any], user_message: str) -> None:
         if _msba is not None:
             import asyncio as _asyncio
 
-            _fused = _asyncio.ensure_future(_msba.process(user_message))
+            # The context carries the classification the pipeline already
+            # computed — the MSBA pipeline must not classify the message a
+            # second time.
+            _fused = _asyncio.ensure_future(_msba.process(user_message, context))
             context["_msba_task"] = _fused
             context["_msba_bridge"] = NeuroBlenderBridge()
             logger.debug("MSBA pipeline scheduled for input")

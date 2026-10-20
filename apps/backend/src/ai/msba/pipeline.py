@@ -135,7 +135,7 @@ class MSBAPipeline:
         seed = self._deterministic_seed(input_text, state_ctx)
 
         # Classify for lightweight flag
-        lightweight = self._is_lightweight(input_text)
+        lightweight = self._is_lightweight(input_text, state_ctx)
 
         # Layer 2: Block Selector
         selection = self.block_selector.select(input_text, seed, lightweight=lightweight)
@@ -285,8 +285,20 @@ class MSBAPipeline:
 
         return SeedResult()
 
-    def _is_lightweight(self, input_text: str) -> bool:
-        """Determine if input should use lightweight selection."""
+    def _is_lightweight(self, input_text: str, state_ctx: Any = None) -> bool:
+        """Determine if input should use lightweight selection.
+
+        The caller may hand over the classification it already computed
+        (``state_ctx["_classify_result_type"]``): the pipeline, the router
+        and the bus used to classify the same message three times, which is
+        the duplicate-classification debt the status matrix records as the
+        top architectural gap. One message, one decision.
+        """
+        cached = None
+        if isinstance(state_ctx, dict):
+            cached = state_ctx.get("_classify_result_type")
+        if cached:
+            return str(cached).lower() in LIGHTWEIGHT_TYPES
         if self.query_classifier is None:
             return len(input_text) <= 3
         try:

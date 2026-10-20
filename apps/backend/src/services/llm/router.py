@@ -2574,15 +2574,15 @@ class AngelaLLMService:
             and e["content"].startswith("User taught Angela:")
         ]
 
-    def _recall_math_guard(self, user_message: str) -> bool:
+    def _recall_math_guard(
+        self, user_message: str, context: Optional[Dict[str, Any]] = None
+    ) -> bool:
         """Deterministic math wins over fuzzy memory: a math-shaped query
         sharing one coincidental bigram with a fact ("一百加二十是多少"
         vs "…一百度") must compute, not recall. (Live hijack 2026-10-09.)
         """
         try:
-            from ai.core.query_classifier import QueryClassifier, QueryType
-
-            return QueryClassifier().classify(user_message).primary_type == QueryType.MATH
+            return self._query_type(user_message, context) == "math"
         except Exception as exc:
             # Silent failure here means a math query may recall a loosely
             # overlapping fact instead of computing — worth a trace.
@@ -2609,7 +2609,9 @@ class AngelaLLMService:
             logger.debug(f"Registry-dispatch guard unavailable: {exc}")
             return False
 
-    def _recall_code_guard(self, user_message: str) -> bool:
+    def _recall_code_guard(
+        self, user_message: str, context: Optional[Dict[str, Any]] = None
+    ) -> bool:
         """Code requests win over recall: writing/reviewing code must reach the
         code path, not answer from a fact sharing one ASCII 4-gram
         (live 2026-10-18: "寫一個 Python 函式算費波那契" recalled
@@ -2617,9 +2619,7 @@ class AngelaLLMService:
         as the 2026-10-09/10 math/registry cases, one entry point over).
         """
         try:
-            from ai.core.query_classifier import QueryClassifier, QueryType
-
-            return QueryClassifier().classify(user_message).primary_type == QueryType.CODE
+            return self._query_type(user_message, context) == "code"
         except Exception as exc:
             # Same class of failure: a code request answered from memory.
             logger.debug(f"Code-over-memory guard unavailable: {exc}")
@@ -2701,11 +2701,11 @@ class AngelaLLMService:
             facts = self._filter_taught_facts(entries)
             if not facts or not user_message:
                 return None
-            if self._recall_math_guard(user_message):
+            if self._recall_math_guard(user_message, context):
                 return None
             if self._recall_registry_guard(user_message):
                 return None
-            if self._recall_code_guard(user_message):
+            if self._recall_code_guard(user_message, context):
                 return None
             chunks = self._build_fact_chunks(user_message)
             if not chunks:
@@ -2764,16 +2764,49 @@ class AngelaLLMService:
         return bool(getattr(self, "template_matcher", None))
 
     @staticmethod
-    def _is_factual_query(user_message: str) -> bool:
+    def _query_type(user_message: str, context: Optional[Dict[str, Any]] = None) -> str:
+        """The primary query type of this request — classified ONCE.
+
+        The router used to call ``QueryClassifier().classify()`` in six
+        places while the pipeline classified the same message separately:
+        the duplicate-classification debt the status matrix records as the top
+        architectural gap. The decision is now read from the request
+        (the gate execution and the context scheduler both publish it), and
+        only computed here when nobody has yet.
+        """
+        ctx = context or {}
+        cached = ctx.get("_classify_result_type")
+        if cached:
+            return str(cached).lower()
+        plan = ctx.get("_preprocessing_plan")
+        if isinstance(plan, dict) and plan.get("query_type"):
+            return str(plan["query_type"]).lower()
+        try:
+            from ai.core.query_classifier import QueryClassifier
+
+            result = QueryClassifier().classify(user_message)
+            return str(getattr(result.primary_type, "value", result.primary_type) or "").lower()
+        except Exception as exc:
+            logger.debug("Query type unavailable: %s", exc)
+            return ""
+
+    @staticmethod
+    def _is_factual_query(user_message: str, context: Optional[Dict[str, Any]] = None) -> bool:
         """Detect factual/task queries that must not be answered by feeling templates.
 
         KNOWLEDGE needs the question form as well: the trained classifier
         dictionary tags time words (今天/明天) as knowledge, so a plain feeling
         statement ("我今天很開心") must not be treated as a query.
+
+        The classification is read from the request's preprocessing plan when
+        there is one: the pipeline and the router used to classify the same
+        message separately, so the two could disagree about what the message
+        is (the duplicate-classification debt the status matrix records as
+        the top architectural gap). One classification per request, one
+        decision.
         """
         try:
-            _eq = QueryClassifier().classify(user_message)
-            _eqt = str(getattr(_eq.primary_type, "value", _eq.primary_type) or "").lower()
+            _eqt = AngelaLLMService._query_type(user_message, context)
             _question_shaped = bool(_INFORMATION_REQUEST_RE.search(user_message.strip()))
             return _eqt in (
                 "code",
@@ -3023,7 +3056,7 @@ class AngelaLLMService:
             from ai.memory.template_library import get_template_library
 
             _lib = get_template_library()
-            _factual_query = self._is_factual_query(user_message)
+            _factual_query = self._is_factual_query(user_message, context)
             # Social input detection: common greetings/farewells/thanks that
             # TemplateMatcher can't match (input text ≠ response text). Map to
             # preferred template IDs, falling back to category.
@@ -3613,15 +3646,7 @@ class AngelaLLMService:
                 "math",
             }
         )
-        _qtype = str(context.get("_classify_result_type") or "").lower()
-        if not _qtype:
-            try:
-                from ai.core.query_classifier import QueryClassifier
-
-                _qr = QueryClassifier().classify(user_message)
-                _qtype = str(getattr(_qr.primary_type, "value", _qr.primary_type) or "").lower()
-            except Exception:
-                _qtype = ""
+        _qtype = self._query_type(user_message, context)
         if _qtype in _task_types or _is_translation:
             _backends = getattr(self, "backends", None) or {}
             _has_llm = any(getattr(_bt, "value", str(_bt)) != "unified" for _bt in _backends)
@@ -3861,29 +3886,23 @@ class AngelaLLMService:
         if emotion in ("happy", "surprise"):
             intent_vec["excited"] = 0.6
         try:
-            _qc = QueryClassifier()
-            _qr = _qc.classify(user_message)
             _type_to_intent = {
-                QueryType.MATH: ("math", 0.8),
-                QueryType.LOGIC: ("math", 0.6),
-                QueryType.CODE: ("code", 0.8),
-                QueryType.CREATIVE: ("creative", 0.7),
-                QueryType.KNOWLEDGE: ("knowledge", 0.7),
-                QueryType.OPINION: ("casual", 0.6),
-                QueryType.COMMAND: ("command", 0.7),
-                QueryType.FILE: ("command", 0.7),
-                QueryType.SEARCH: ("search", 0.7),
-                QueryType.GREETING: ("casual", 0.9),
-                QueryType.REFLEX: ("casual", 0.8),
+                "math": ("math", 0.8),
+                "logic": ("math", 0.6),
+                "code": ("code", 0.8),
+                "creative": ("creative", 0.7),
+                "knowledge": ("knowledge", 0.7),
+                "opinion": ("casual", 0.6),
+                "command": ("command", 0.7),
+                "file": ("command", 0.7),
+                "search": ("search", 0.7),
+                "greeting": ("casual", 0.9),
+                "reflex": ("casual", 0.8),
             }
-            if _qr.primary_type in _type_to_intent:
-                _key, _base = _type_to_intent[_qr.primary_type]
-                intent_vec[_key] = max(_base * _qr.confidence, intent_vec.get(_key, 0.0))
-            if _qr.secondary_type and _qr.secondary_type in _type_to_intent:
-                _key2, _base2 = _type_to_intent[_qr.secondary_type]
-                intent_vec[_key2] = max(
-                    _base2 * _qr.secondary_confidence * 0.5, intent_vec.get(_key2, 0.0)
-                )
+            _qtype = self._query_type(user_message, context)
+            if _qtype in _type_to_intent:
+                _key, _base = _type_to_intent[_qtype]
+                intent_vec[_key] = max(_base * 0.8, intent_vec.get(_key, 0.0))
         except Exception as exc:
             logger.debug("QueryClassifier intent_vec fallback: %s", exc)
 
@@ -4137,7 +4156,9 @@ class AngelaLLMService:
                 self._qwen_healthy = False
         return bool(getattr(self, "_qwen_healthy", False))
 
-    async def _select_light_backend(self, user_message: str) -> tuple:
+    async def _select_light_backend(
+        self, user_message: str, context: Optional[Dict[str, Any]] = None
+    ) -> tuple:
         """Return (backend, backend_type) for simple chitchat when the executor
         slot is registered and recently healthy; else (None, None) to keep the
         active (thinker) backend. Health is cached 60s; never blocks requests.
@@ -4148,12 +4169,8 @@ class AngelaLLMService:
             return None, None
         if qwen_type not in getattr(self, "backends", {}):
             return None, None
-        try:
-            from ai.core.query_classifier import QueryClassifier
-
-            primary = QueryClassifier().classify(user_message).primary_type
-            qtype = str(getattr(primary, "value", primary) or "").lower()
-        except Exception:
+        qtype = self._query_type(user_message, context)
+        if not qtype:
             return None, None
         if qtype not in self._LIGHT_QUERY_TYPES:
             return None, None
@@ -4179,7 +4196,7 @@ class AngelaLLMService:
         await self._upgrade_digested_context(messages, context)
         _enforce_prompt_budget(messages, context)
 
-        light_backend, light_type = await self._select_light_backend(user_message)
+        light_backend, light_type = await self._select_light_backend(user_message, context)
         if light_backend is not None:
             logger.info("Dual-model: simple query → executor (qwen)")
 

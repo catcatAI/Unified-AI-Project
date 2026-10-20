@@ -66,6 +66,13 @@ and this project adheres to
 
 ### Fixed
 
+- **重複分類債收斂（架構缺口 #1）**（2026-10-20）：一則訊息此前在 pipeline、
+  router（6 處）與 MSBA pipeline 各自分類一次——同一句話可能得到兩個路由
+  決定。現在決策由 request context 發布（`_classify_result_type`／
+  `_preprocessing_plan.query_type`），所有消費端讀同一份：router 新增
+  `_query_type()` 單一入口（數學／程式守衛、事實查詢守衛、誠實拒答、意圖
+  向量、輕量後端選擇全部改讀），MSBA pipeline 改吃呼叫端交來的 context。
+  5 個新測試（決策被快取時分類器完全不被呼叫）。
 - **音訊／NLP／遊戲三條路徑的假實作**（2026-10-20）：(1) 音訊特徵只有
   energy＋peak（自稱「Placeholder for spectral features like MFCC」）→ 實作真
   頻譜特徵（FFT 頻譜質心／roll-off／主頻、ZCR、spectral flux、13 維 MFCC，

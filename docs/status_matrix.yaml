@@ -125,7 +125,7 @@ features:
       - apps/backend/src/ai/core/model_bus.py
       - apps/backend/src/ai/core/query_classifier.py
       - apps/backend/src/services/llm/router.py
-    evidence: 架構審計指出重複分類債（Pipeline vs Router vs ModelBus）；收斂列入待辦
+    evidence: 重複分類債已收斂（2026-10-20）：一則訊息只分類一次——決策由 request context 發布（_classify_result_type／_preprocessing_plan.query_type），router 的六個分類點、chat_routes 與 MSBA pipeline 全部改讀同一份；剩餘待辦是ModelBus 的 capability 路由與 QueryClassifier 的規則本體合併（非同一件事）
     last_verified: "2026-09-17"
 
   - id: continuous-learning
@@ -205,7 +205,7 @@ features:
     claim: 全倉綠
     status: verified
     verify_command: pytest
-    evidence: 8,662 passed, 112 skipped, 0 failed（2026-10-20 測試數量同步批次全 testpaths 實測：tests/＋apps/backend/tests/＋apps/game-rpg/tests＋scripts）
+    evidence: 8,667 passed, 112 skipped, 0 failed（2026-10-20 測試數量同步批次全 testpaths 實測：tests/＋apps/backend/tests/＋apps/game-rpg/tests＋scripts）
     last_verified: "2026-10-20"
 
   - id: mypy-debt

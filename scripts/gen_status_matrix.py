@@ -367,7 +367,7 @@ def render_md(root, data):
         "",
         "## 誠實缺口（正式版判斷依據）",
         "",
-        "1. **路由重複決策**（Pipeline/Router/ModelBus 各自分類）— 架構債，最高優先收斂。",
+        "1. **路由重複決策**（Pipeline/Router/ModelBus 各自分類）— 已收斂（2026-10-20：一則訊息只分類一次，決策由 request context 發布並由 router／chat_routes／MSBA 共用）。",
         "2. **學習品質未證明** — 「字典增長」≠「能力增長」；需 hold-out 前後測成為常態門。",
         "3. **Dashboard E2E** — 新面板僅 wired，缺自動化瀏覽器測試。",
         mypy_gap,
