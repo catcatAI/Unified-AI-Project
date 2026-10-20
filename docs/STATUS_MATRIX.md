@@ -38,7 +38,7 @@
 | Live2D 具身化 | 桌面互動 | `apps/desktop-app` | **wired** | 可啟動；狀態鏈因果驗證已補（2026-10-20：node 行為測試證明 axis 變更 → Live2D 參數、主導情緒 → 表情，tests/frontend/test_shared_js_behaviour.py） | 2026-10-20 |
 | Desktop LLM 設定持久化 | Settings 面板改 backend 設定重啟保留 | `apps/backend/src/api/routes/llm_routes.py` | **verified** | `pytest tests/api/test_llm_config.py`；12 passed；preferred mock 驗證（honor＋fallback 警告） | 2026-10-20 |
 | Luanti 遊戲代理（識別/記憶/自主性/學習） | 能識別環境、記住去過哪、自主探索、行為可訓練 | `apps/backend/src/ai/autonomous/angela_agent.py`<br>`apps/backend/src/ai/multimodal/game_agent.py`<br>`apps/backend/src/ai/multimodal/game_policy.py`<br>`apps/backend/src/ai/multimodal/skill_selector.py`<br>`apps/backend/src/integrations/luanti_connector.py`<br>`scripts/run_luanti_agent.py` | **wired** | R71 識別/記憶/好奇心＋R74 行為克隆訓練閉環（hold-out 學習門、權重持久化、啟動載入、推論信心可觀測）；驗證指令見 INVOCATION_MATRIX（wired 故不列）；live 樣本待玩家在線累積；20 FPS 仍 ❌（10Hz 內部迴圈＋預設 2s poller；輪詢間隔已可配置 `agent_poller_poll_interval`，預設 2.0s、下限 0.05s，2026-10-20）；R90 死路徑 | 2026-09-24 |
-| 基準與驗收 | 可驗證的多後端基準，任何 OpenAI 相容端點可與原生堆疊同資料同比分器互相比較 | `scripts/run_benchmarks.py`<br>`benchmarks/data/native_bench_v1.json` | **verified** | `pytest tests/test_run_benchmarks.py`；33 tests；115 題官方結果 results/bench_20260922-091107.json（native math 80%/knowledge 26.7%/knowledge_mc 97.5%/code 0%/routing 100%；native-max mc 100%）＋--gate-native 回歸門納入 CI，逐題明細可複審 | 2026-10-20 |
+| 基準與驗收 | 可驗證的多後端基準，任何 OpenAI 相容端點可與原生堆疊同資料同比分器互相比較 | `scripts/run_benchmarks.py`<br>`benchmarks/data/native_bench_v1.json` | **verified** | `pytest tests/test_run_benchmarks.py`；33 tests；115 題官方結果 results/bench_20260922-091107.json（native math 80%/knowledge 26.7%/knowledge_mc 97.5%/code 0%/routing 100%；native-max mc 100%）＋--gate-native 回歸門納入 CI，逐題明細可複審；**跨 AI 對照已實跑**（2026-10-20，同一份資料同一個評分器打 Gemini-3.1-flash-lite：knowledge 15/15 = 100%（可比）、math 35/40（4 筆為端點 503 暫時性錯誤，非答錯）——配額／過載錯誤現在記為 error 並顯示 n/a (N err)，不再被算成 0%；該 key 目前高需求＋日配額吃緊，全量可比跑分需服務端恢復時重跑） | 2026-10-20 |
 | MSBA 語意區塊架構 | 全輸入經 7 層語意區塊處理，融合表示以 NeuroBlender 9D 注入 LLM context | `apps/backend/src/ai/msba/pipeline.py`<br>`apps/backend/src/ai/msba/intra_block_hit.py`<br>`apps/backend/src/ai/msba/multimodal_blocks.py`<br>`apps/backend/src/ai/msba/relevance_convergence.py`<br>`apps/backend/src/ai/msba/block_selector.py` | **wired** | chat_routes Step 2.75 排程、Step 10 消費（50ms 預算）注入 LLM context；Layer 0 接真實 MathVerifier/ED3N 字典（R77 修復死 import）；198 tests（2026-10-20 實測）；A/B 對照已啟用（2026-10-20：`MSBAPipeline.compare()` 對照無語意區塊的前區塊路徑，結果記入 routing 狀態；旗標 `msba_ab_testing`） | 2026-09-22 |
 
 ## Chat Pipeline（主對話管線）
@@ -122,7 +122,7 @@
 2. **學習品質未證明** — 「字典增長」≠「能力增長」；hold-out 前後測已成為常態門（2026-10-20：量測先前是空轉的，已修並納入 CI），但「能力增長」的長期證據仍待累積。
 3. **Dashboard E2E** — 新面板僅 wired，缺自動化瀏覽器測試。
 4. **mypy 棘輪鎖定於 0** — `scripts/mypy_budget_gate.py`；新增型別債 CI 直接紅燈。
-5. **公開 benchmark** — angela_bench 115 題管線與 CI 回歸門已建（`scripts/run_benchmarks.py --gate-native`）；跨 AI 對比待外部 LLM 端點實際接入跑分。
+5. **公開 benchmark** — angela_bench 115 題管線與 CI 回歸門已建（`scripts/run_benchmarks.py --gate-native`）；跨 AI 對照已實跑（2026-10-20，同資料同評分器打 Gemini：knowledge 15/15 = 100% 可比、math 35/40 餘 4 筆為端點 503 暫時性錯誤），配額/過載錯誤現在記為 error 而非答錯，全量可比跑分待端點高需求緩解後重跑。
 6. **Luanti policy** — 訓練管線已通（hold-out 學習門鎖測試）；live 樣本待玩家在線累積；20 FPS 仍 ❌（10Hz＋2s poller）。
 7. **EmotionSystem 跨進程共享** — 生命階段與情緒狀態都已透過共享 JSON 互通（`data/autonomous_lifecycle_state.json`／`data/emotion_state.json`，2026-10-20）。
 

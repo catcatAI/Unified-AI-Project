@@ -66,6 +66,11 @@ and this project adheres to
 
 ### Fixed
 
+- **跨 AI 對照真的跑起來了**（2026-10-20）：同一份 115 題資料、同一個評分器打 Gemini-3.1-flash-lite：knowledge
+  **15/15 = 100%（可比）**、math 35/40（4 筆為端點 503「high
+  demand」暫時性錯誤，**不是答錯**）。先前這項被記成「待外部端點接入」——端點其實可用，難的是 harness 誠實：配額／過載錯誤以前被算成答錯，被 rate
+  limit 的模型會顯示 0%（一句關於別個模型的謊話）。現在錯誤一律記為 error、報告顯示 n/a
+  (N err)、暫時性錯誤會退避重試、並可 `--request-interval` 節流（15 RPM 上限）。
 - **啟動器的專案根目錄差一層**（2026-10-20）：`EnvResolver`
   用固定層數推算專案根，落在 `apps/backend/` 而不是倉庫根。實際後果：pnpm
   workspace 檔找不到 → 開機狀態寫成 `degraded`（其實環境正常）；根目錄的 `.env`

@@ -371,7 +371,7 @@ def render_md(root, data):
         "2. **學習品質未證明** — 「字典增長」≠「能力增長」；hold-out 前後測已成為常態門（2026-10-20：量測先前是空轉的，已修並納入 CI），但「能力增長」的長期證據仍待累積。",
         "3. **Dashboard E2E** — 新面板僅 wired，缺自動化瀏覽器測試。",
         mypy_gap,
-        "5. **公開 benchmark** — angela_bench 115 題管線與 CI 回歸門已建（`scripts/run_benchmarks.py --gate-native`）；跨 AI 對比待外部 LLM 端點實際接入跑分。",
+        "5. **公開 benchmark** — angela_bench 115 題管線與 CI 回歸門已建（`scripts/run_benchmarks.py --gate-native`）；跨 AI 對照已實跑（2026-10-20，同資料同評分器打 Gemini：knowledge 15/15 = 100% 可比、math 35/40 餘 4 筆為端點 503 暫時性錯誤），配額/過載錯誤現在記為 error 而非答錯，全量可比跑分待端點高需求緩解後重跑。",
         "6. **Luanti policy** — 訓練管線已通（hold-out 學習門鎖測試）；live 樣本待玩家在線累積；20 FPS 仍 ❌（10Hz＋2s poller）。",
         "7. **EmotionSystem 跨進程共享** — 生命階段與情緒狀態都已透過共享 JSON 互通"
         "（`data/autonomous_lifecycle_state.json`／`data/emotion_state.json`，2026-10-20）。",
