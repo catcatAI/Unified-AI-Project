@@ -193,7 +193,7 @@ class TestArtLearningSystem:
         assert isinstance(face_mapping, BodyPartMapping)
         assert "ParamCheek" in face_mapping.live2d_params
 
-        print(f"✓ All 18 body parts mapped")
+        print("✓ All 18 body parts mapped")
 
     async def test_touch_response(self, art_system):
         """Test touch to Live2D parameter conversion"""
@@ -208,7 +208,7 @@ class TestArtLearningSystem:
         assert -15 <= params["ParamAngleX"] <= 15
         assert 0 <= params["ParamHairSwing"] <= 1
 
-        print(f"✓ Touch response generates correct parameters")
+        print("✓ Touch response generates correct parameters")
 
     async def test_power_law_mastery(self, art_system):
         """Test power law skill acquisition"""
@@ -415,7 +415,7 @@ class TestPhysiologicalLive2DBridge:
         assert "FACE" in body_part_names
         assert "HANDS" in body_part_names
 
-        print(f"✓ All 18 body parts have Live2D touch zones")
+        print("✓ All 18 body parts have Live2D touch zones")
 
     def test_touch_type_variations(self, tactile_system):
         """Test different touch types produce different responses"""
@@ -428,7 +428,7 @@ class TestPhysiologicalLive2DBridge:
         # Should have different parameter effects
         assert pat_params != stroke_params
 
-        print(f"✓ Different touch types produce different responses")
+        print("✓ Different touch types produce different responses")
 
 
 # Integration Tests
@@ -484,7 +484,7 @@ class TestIntegration:
             # 4. Test body mapping
             body_mapping = generator.get_body_parameter_mapping("top_of_head")
             assert "parameters" in body_mapping
-            print(f"✓ Step 4: Body mapping verified")
+            print("✓ Step 4: Body mapping verified")
 
             # 5. Test touch to Live2D
             try:

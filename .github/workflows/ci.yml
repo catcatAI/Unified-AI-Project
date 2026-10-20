@@ -66,9 +66,13 @@ jobs:
           ANGELA_HARDWARE_PROFILE: high_performance_desktop
       - name: Lint/Type (Python)
         run: |
-          black --check apps/backend/src tests/
-          isort --check-only apps/backend/src tests/
-          flake8 apps/backend/src tests/
+          # 2026-10-20: apps/backend/tests/ was outside the lint scope — the
+          # audit recorded it as a known blind spot ("56 E541 級既有 flake8
+          # 告警…CI 的 lint 範圍不含 apps/backend/tests/"). The warnings are
+          # fixed and the scope now covers the tree CI actually runs.
+          black --check apps/backend/src apps/backend/tests tests/
+          isort --check-only apps/backend/src apps/backend/tests tests/
+          flake8 apps/backend/src apps/backend/tests tests/
           python scripts/mypy_budget_gate.py
           python scripts/complexity_budget_gate.py
           python scripts/type_ignore_budget_gate.py

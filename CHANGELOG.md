@@ -66,6 +66,12 @@ and this project adheres to
 
 ### Fixed
 
+- **CI lint 盲點關閉**（2026-10-20）：`apps/backend/tests/` 一直在 lint 範圍之外
+  （稽核記為「56 條 E541 級既有告警，不動」）——那 21 條 F541 已修，CI 的
+  black/isort/flake8 現在也覆蓋 `apps/backend/tests/`，稽核文件同步更新。
+- **Live2D 產生的圖層不再���隨機方塊**（2026-10-20）：頭像生成器的每個圖層
+  以前是「隨機彩色矩形＋文字」（同一個圖層每次生成還會換顏色）。現在顏色由圖層
+  名稱推導（可重現），形狀依圖層種類繪製（眼／嘴／眉／臉／頭髮／身體）。
 - **21 個「孤兒事件」變成有名字的遙測清單**（2026-10-20）：事件稽核原本只
   報「emit 26 / subscribe 5 → 孤兒 21」，讀者無從知道這 21 個是遺漏還是有意
   為之。現在逐筆記錄於 `core/system/state_store/telemetry_events.py`（每筆附

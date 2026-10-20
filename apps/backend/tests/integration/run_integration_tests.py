@@ -72,7 +72,7 @@ class TestRunner:
     def run_all_tests(self, full: bool = False, quick: bool = False):
         """运行所有测试"""
         print(f"\n{'='*70}")
-        print(f"ANGELA AI v6.0 - COMPREHENSIVE INTEGRATION TEST SUITE")
+        print("ANGELA AI v6.0 - COMPREHENSIVE INTEGRATION TEST SUITE")
         print(f"{'='*70}")
         print(f"Start Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print(f"Test Directory: {self.test_dir}")
@@ -107,10 +107,10 @@ class TestRunner:
     def generate_report(self):
         """生成测试报告"""
         print(f"\n{'='*70}")
-        print(f"TEST EXECUTION SUMMARY")
+        print("TEST EXECUTION SUMMARY")
         print(f"{'='*70}")
         print(f"End Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        print(f"\nResults:")
+        print("\nResults:")
 
         for test_name, result in self.results.items():
             status_icon = "✓" if result == "PASSED" else "✗" if result == "FAILED" else "?"
@@ -121,7 +121,7 @@ class TestRunner:
         total = len(self.results)
 
         print(f"\n{'='*70}")
-        print(f"SUMMARY:")
+        print("SUMMARY:")
         print(f"  Total Tests: {total}")
         print(f"  Passed: {passed}")
         print(f"  Failed: {failed}")
@@ -132,7 +132,7 @@ class TestRunner:
 
     def generate_html_report(self, output_file: str = "integration_test_report.html"):
         """生成HTML报告"""
-        html_content = f"""
+        html_content = """
 <!DOCTYPE html>
 <html>
 <head>
@@ -216,7 +216,7 @@ class TestRunner:
             )
             status_class = f"status-{result.lower().replace('_', '-')}"
 
-            html_content += f"""
+            html_content += """
     <div class="test-result {css_class}">
         <h3>{test_name}</h3>
         <p>Status: <span class="{status_class}">{result}</span></p>

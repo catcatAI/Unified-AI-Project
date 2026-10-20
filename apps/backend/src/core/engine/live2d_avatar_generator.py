@@ -20,6 +20,7 @@ Date: 2026-02-02
 
 from __future__ import annotations
 
+import hashlib
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -205,6 +206,26 @@ class GenerationProgress:
     message: str
     details: Dict[str, Any] = field(default_factory=dict)
     timestamp: datetime = field(default_factory=datetime.now)
+
+
+# A stable palette per layer: the same layer always gets the same colour, so
+# regenerating an avatar does not produce a different picture each time.
+_LAYER_PALETTE = (
+    (238, 205, 190, 255),
+    (250, 226, 175, 255),
+    (198, 224, 240, 255),
+    (214, 240, 214, 255),
+    (232, 214, 240, 255),
+    (245, 214, 214, 255),
+    (226, 232, 240, 255),
+    (240, 232, 206, 255),
+)
+
+
+def _layer_color(layer_name: str) -> tuple:
+    """A deterministic RGBA colour for a layer name."""
+    digest = hashlib.sha256((layer_name or "layer").encode("utf-8")).digest()
+    return _LAYER_PALETTE[digest[0] % len(_LAYER_PALETTE)]
 
 
 class Live2DAvatarGenerator:
@@ -809,16 +830,30 @@ class Live2DAvatarGenerator:
             #     async with session.post(seg_api_url, json=payload, timeout=2) as response:
             #         if response.status == 200: ...
 
-            # 若無外部 API，使用 Pillow 動態生成透明背景的色塊作為真實圖層 (移除死板的佔位符)
+            # 若無外部 API，使用 Pillow 動態繪製該圖層（取代「隨機彩色矩形」）：
+            # 顏色由圖層名稱推導（可重現——同一個圖層每次產生同一張圖），
+            # 形狀依圖層種類（眼／嘴／臉／身體）畫，而不是一塊方塊。
             img = Image.new("RGBA", (512, 512), (255, 255, 255, 0))
             draw = ImageDraw.Draw(img)
 
-            # 隨機產生一些基礎形狀來代表該圖層
-            import random
-
-            color = (random.randint(50, 250), random.randint(50, 250), random.randint(50, 250), 200)
-            draw.rectangle([100, 100, 400, 400], fill=color, outline=(0, 0, 0, 255), width=2)
-            draw.text((150, 250), layer.layer_name, fill=(0, 0, 0, 255))
+            color = _layer_color(layer.layer_name)
+            outline = (0, 0, 0, 255)
+            name = layer.layer_name.lower()
+            if "eye" in name:
+                draw.ellipse([176, 186, 256, 266], fill=color, outline=outline, width=3)
+                draw.ellipse([266, 186, 346, 266], fill=color, outline=outline, width=3)
+            elif "mouth" in name:
+                draw.arc([196, 286, 316, 366], start=0, end=180, fill=outline, width=6)
+            elif "brow" in name or "eyebrow" in name:
+                draw.line([176, 170, 256, 158], fill=color, width=8)
+                draw.line([266, 170, 346, 158], fill=color, width=8)
+            elif "face" in name or "head" in name:
+                draw.ellipse([136, 106, 386, 386], fill=color, outline=outline, width=3)
+            elif "hair" in name:
+                draw.ellipse([126, 76, 396, 306], fill=color, outline=outline, width=3)
+            else:
+                draw.rounded_rectangle([120, 120, 392, 392], radius=48, fill=color, outline=outline, width=3)
+            draw.text((150, 460), layer.layer_name, fill=outline)
 
             # Derive output path from the layer's original path (set by _create_layers)
             assert layer.image_path is not None, "layer image path must be set by _create_layers"

@@ -215,7 +215,7 @@ class TestResponseTimeBenchmarks:
             metrics.p99_latency_ms < 20.0
         ), f"P99 latency {metrics.p99_latency_ms:.2f}ms exceeds 20ms"
 
-        print(f"✓ Perception response time:")
+        print("✓ Perception response time:")
         print(f"  - Samples: {metrics.sample_count}")
         print(f"  - Avg: {metrics.avg_latency_ms:.2f}ms")
         print(f"  - Min: {metrics.min_latency_ms:.2f}ms")
@@ -223,7 +223,7 @@ class TestResponseTimeBenchmarks:
         print(f"  - P95: {metrics.p95_latency_ms:.2f}ms")
         print(f"  - P99: {metrics.p99_latency_ms:.2f}ms")
         print(f"  - Std Dev: {metrics.std_deviation_ms:.2f}ms")
-        print(f"  ✓ All within target (< 1s)")
+        print("  ✓ All within target (< 1s)")
 
     async def test_emotional_response_time(self, performance_monitor):
         """
@@ -256,10 +256,10 @@ class TestResponseTimeBenchmarks:
         assert metrics.avg_latency_ms < 10.0
         assert metrics.p95_latency_ms < 16.0
 
-        print(f"✓ Emotional response time:")
+        print("✓ Emotional response time:")
         print(f"  - Avg: {metrics.avg_latency_ms:.2f}ms")
         print(f"  - P95: {metrics.p95_latency_ms:.2f}ms")
-        print(f"  ✓ All within target (< 1s)")
+        print("  ✓ All within target (< 1s)")
 
 
 class TestConcurrencyBenchmarks:
@@ -314,12 +314,12 @@ class TestConcurrencyBenchmarks:
         assert success_rate >= 95.0, f"Success rate {success_rate:.1f}% below 95%"
         assert avg_latency < 50.0, f"Avg latency {avg_latency:.2f}ms exceeds 50ms"
 
-        print(f"✓ Concurrent perception requests:")
+        print("✓ Concurrent perception requests:")
         print(f"  - Concurrency: {concurrency}")
         print(f"  - Success rate: {success_rate:.1f}%")
         print(f"  - Avg latency: {avg_latency:.2f}ms")
         print(f"  - Failed: {len(failed)}")
-        print(f"  ✓ Meets requirements")
+        print("  ✓ Meets requirements")
 
 
 class TestMemoryUsageBenchmarks:
@@ -378,12 +378,12 @@ class TestMemoryUsageBenchmarks:
             50.0, baseline_memory * 0.10
         ), f"Memory growth {memory_growth:.2f}MB ({growth_percent:.1f}%) exceeds threshold"
 
-        print(f"✓ Short-term memory leak test:")
+        print("✓ Short-term memory leak test:")
         print(f"  - Iterations: {iterations}")
         print(f"  - Baseline: {baseline_memory:.2f} MB")
         print(f"  - Final: {final_memory:.2f} MB")
         print(f"  - Growth: {memory_growth:.2f} MB ({growth_percent:.1f}%)")
-        print(f"  ✓ No significant memory leak detected")
+        print("  ✓ No significant memory leak detected")
 
 
 class TestCpuUsageBenchmarks:
@@ -423,9 +423,9 @@ class TestCpuUsageBenchmarks:
         # 验证：空闲CPU < 5%
         assert avg_cpu < 5.0, f"Idle CPU usage {avg_cpu:.1f}% exceeds 5%"
 
-        print(f"✓ Idle CPU usage:")
+        print("✓ Idle CPU usage:")
         print(f"  - Average: {avg_cpu:.1f}%")
-        print(f"  ✓ Within acceptable range (< 5%)")
+        print("  ✓ Within acceptable range (< 5%)")
 
     async def test_burst_cpu_handling(self, cpu_monitor):
         """
@@ -458,9 +458,9 @@ class TestCpuUsageBenchmarks:
             peak_cpu < max_cpu_limit
         ), f"Peak CPU during burst {peak_cpu:.1f}% exceeds {max_cpu_limit}%"
 
-        print(f"✓ CPU handling burst load:")
+        print("✓ CPU handling burst load:")
         print(f"  - Peak during burst: {peak_cpu:.1f}%")
-        print(f"  ✓ System responsive and within limits")
+        print("  ✓ System responsive and within limits")
 
 
 class TestLongRunningStability:
