@@ -39,6 +39,26 @@
 
 ---
 
+## 目前實測（2026-10-20 複核）
+
+> 這張表是**現況**，不是計畫。每列的數字都來自可重跑的指令；門檻未達者明寫「未達」，不以投影或模擬值代替。
+
+| 閘                | 指令                                                                                   | 門檻                  | 實測                                                       | 狀態                                           |
+| ----------------- | -------------------------------------------------------------------------------------- | --------------------- | ---------------------------------------------------------- | ---------------------------------------------- |
+| L0 確定性引擎     | `python scripts/benchmark_ed3n_garden.py --engine both`                                | 20/20                 | 20/20                                                      | ✅                                             |
+| L1-4 hold-out gap | `python scripts/validate_holdout_gap.py --gate`（已入 CI）                             | gap < 15%             | train 0.250 / holdout 0.330 → gap **0.080**                | ✅                                             |
+| L1-5 字典品質     | `python scripts/audit_dictionary_quality.py`                                           | dup < 5%              | avg dup **0.86%**                                          | ✅                                             |
+| L2-1 對話一致性   | `python scripts/benchmark_dialogue_coherence.py`                                       | 人設 ≥80% / 指代 ≥70% | 5/5 = **100%**                                             | ✅                                             |
+| L2-2 記憶命中     | `python scripts/benchmark_memory_hit.py`                                               | top-5 ≥60%            | 60/100 = **60%**（框架模擬；真實向量召回待 HAM 460K 接入） | ⚠️ 剛好達標                                    |
+| L2-3 純神經推理   | `python scripts/probe_reasoning_unseen.py`                                             | ≥50%                  | 確定性 100/100、純神經 **0%**                              | ❌ 未達（需在 FixedSizeCore 訓 5K 未見推理域） |
+| L3-1 無 RAG 知識  | `python scripts/run_benchmarks.py --backend native --suite knowledge_mc --gate-native` | ≥90%                  | **97.5%**                                                  | ✅                                             |
+| L3-2 工具呼叫     | `pytest tests/services/test_handlers.py`                                               | 100%                  | **60 passed**                                              | ✅                                             |
+| 整體回歸          | `pytest tests/ apps/backend/tests/ apps/game-rpg/tests/`                               | 0 failed              | **8,688 passed / 112 skipped / 0 failed**                  | ✅                                             |
+
+> **誠實說明**：L2-3（純神經推理）仍是 0%——確定性引擎答對題目不等於神經會做題（`INTELLIGENCE_ASSESSMENT §4.1`）。這一格沒有投影，量測就是 0。
+
+---
+
 ## 總覽
 
 ```
