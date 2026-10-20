@@ -23,14 +23,14 @@
 | 確定性引擎（Math/KB/symbolic） | 數學、知識、符號推理可靠 | `apps/backend/src/services/math_verifier.py` | **verified** | `python scripts/benchmark_ed3n_garden.py`；ED3N/GARDEN benchmark 20/20；symbolic 探針 100（確定性路徑）；僅確定性層 | 2026-09-03 |
 | LLM providers | OpenAI/Anthropic/Gemini/Ollama/llama.cpp 可接入 | `apps/backend/src/services/llm/providers`<br>`apps/backend/src/services/llm/router.py` | **wired** | 配置與路由存在；品質 benchmark 未建立 | 2026-09-17 |
 | 多模型路由 | 依任務/硬體/模式自動選後端 | `apps/backend/src/ai/core/model_bus.py`<br>`apps/backend/src/ai/core/query_classifier.py`<br>`apps/backend/src/services/llm/router.py` | **wired** | 重複分類債已收斂（2026-10-20）：一則訊息只分類一次——決策由 request context 發布（_classify_result_type／_preprocessing_plan.query_type），router 的六個分類點、chat_routes 與 MSBA pipeline 全部改讀同一份；剩餘待辦是ModelBus 的 capability 路由與 QueryClassifier 的規則本體合併（非同一件事） | 2026-09-17 |
-| 持續學習（ED3N/GARDEN） | 對話中成長詞彙與權重 | `apps/backend/src/ai/ed3n/dictionary_layer.py`<br>`apps/backend/src/ai/ed3n/continuous_learning.py` | **implemented** | 訓練→存檔→門消費已閉環（100K 邊），可分性負結果已記錄（rank≈隨機） | 2026-09-03 |
+| 持續學習（ED3N/GARDEN） | 對話中成長詞彙與權重 | `apps/backend/src/ai/ed3n/dictionary_layer.py`<br>`apps/backend/src/ai/ed3n/continuous_learning.py` | **implemented** | 訓練→存檔→門消費已閉環（100K 邊），可分性負結果已記錄（rank≈隨機）；hold-out 前後測已成為常態門（2026-10-20：`scripts/validate_holdout_gap.py --gate` 納入 CI；量測本身先前是空轉的——腳本只讀 input/question/text，而邏輯語料用 proposition，兩側命中率都是 0.000 卻「通過」，已修：train 0.250 / holdout 0.330 / gap 0.080） | 2026-09-03 |
 | 神經開放域泛化 | 誠實標示：低 | `apps/backend/src/ai/unified_engine/core_model.py` | **implemented** | 硬指標探針 symbolic 100 / neural 0；0–60% 視指標 | 2026-09-03 |
 | HAM 記憶查詢 | 跨 session 記憶可查 | `apps/backend/src/ai/memory/ham_memory/ham_manager.py`<br>`apps/backend/src/api/routes/context_routes.py` | **verified** | `curl -s localhost:8000/api/v1/context/memory/recent`；GET /api/v1/context/memory/recent 真實查詢；Dashboard MemoryViewer 改接真實資料 | 2026-09-17 |
 | Web Dashboard 即時指標 | 系統監控顯示真實狀態 | `apps/web-dashboard/src/pages/api/system/metrics.ts` | **verified** | `curl -s http://localhost:8000/api/v1/ops/status`；mock（Math.random）已移除，proxy → /api/v1/ops/status（psutil） | 2026-09-17 |
 | Dashboard 新面板 | Config/Model/Context/Health 可用 | `apps/web-dashboard/src/components/ConfigPanel.tsx`<br>`apps/web-dashboard/src/components/ModelSelector.tsx`<br>`apps/web-dashboard/src/components/ContextViewer.tsx`<br>`apps/web-dashboard/src/components/HealthIndicator.tsx` | **wired** | 面板接 real backend；E2E 手動驗證待補 | 2026-09-17 |
 | 明確不支援項文檔 | 正式版聲明範圍 | `docs/user_guide/unsupported.md`<br>`docs/architecture/limitations.md`<br>`docs/user_guide/hardware.md` | **verified** | `ls docs/user_guide/unsupported.md docs/architecture/limitations.md docs/user_guide/hardware.md`；三文檔存在且與 RELEASE_CRITERIA 同步 | 2026-09-17 |
 | HSP 加密金鑰 | 加密可用且啟動不炸 | `apps/backend/src/core/hsp/security.py` | **verified** | `pytest tests/core/hsp/`；佔位符自動回退生成＋警告；.env 佔位符致 5 errors 已修；tests/core/hsp/ 74 passed（2026-10-20 實測） | 2026-10-20 |
-| 測試品質門 | 全倉綠 | —（見證據欄） | **verified** | `pytest`；8,667 passed, 112 skipped, 0 failed（2026-10-20 測試數量同步批次全 testpaths 實測：tests/＋apps/backend/tests/＋apps/game-rpg/tests＋scripts） | 2026-10-20 |
+| 測試品質門 | 全倉綠 | —（見證據欄） | **verified** | `pytest`；8,678 passed, 112 skipped, 0 failed（2026-10-20 測試數量同步批次全 testpaths 實測：tests/＋apps/backend/tests/＋apps/game-rpg/tests＋scripts） | 2026-10-20 |
 | mypy 型別債 | apps/backend/src 零錯誤（棘輪鎖定 0，禁止新增） | `pyproject.toml`<br>`scripts/mypy_budget_gate.py`<br>`scripts/mypy_budget.txt` | **verified** | `python scripts/mypy_budget_gate.py`；門機制可驗證；棘輪基線已清零 0（歷史 559→540→518→497→476→432→405→402→391→344→0）；mypy 實測 742 個 source files 全綠（no issues found，2026-10-20）；新增債 CI 直接紅燈 | 2026-10-19 |
 | flake8 | 0 errors | `.flake8` | **verified** | `python -m flake8`；全倉 0（39 類忽略為已知門檻寬鬆，非隱瞞；2026-10-20 複核：black/isort 原先漂移 74 檔，已整庫格式化，CI lint 步驟恢復綠） | 2026-09-03 |
 | 離線能力 | 無 key 可運作（部分） | `apps/backend/src/services/llm/providers/unified.py` | **wired** | unified-1g 永遠可用；反射/數學/字典離線；開放域生成需 LLM；unsupported.md 已聲明邊界 | 2026-09-17 |
@@ -119,7 +119,7 @@
 ## 誠實缺口（正式版判斷依據）
 
 1. **路由重複決策**（Pipeline/Router/ModelBus 各自分類）— 已收斂（2026-10-20：一則訊息只分類一次，決策由 request context 發布並由 router／chat_routes／MSBA 共用）。
-2. **學習品質未證明** — 「字典增長」≠「能力增長」；需 hold-out 前後測成為常態門。
+2. **學習品質未證明** — 「字典增長」≠「能力增長」；hold-out 前後測已成為常態門（2026-10-20：量測先前是空轉的，已修並納入 CI），但「能力增長」的長期證據仍待累積。
 3. **Dashboard E2E** — 新面板僅 wired，缺自動化瀏覽器測試。
 4. **mypy 棘輪鎖定於 0** — `scripts/mypy_budget_gate.py`；新增型別債 CI 直接紅燈。
 5. **公開 benchmark** — angela_bench 115 題管線與 CI 回歸門已建（`scripts/run_benchmarks.py --gate-native`）；跨 AI 對比待外部 LLM 端點實際接入跑分。

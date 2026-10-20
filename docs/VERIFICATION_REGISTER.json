@@ -6,7 +6,9 @@
     "claim": "這個改動宣稱做了什麼（一句話）",
     "why_unverified": "為何本機驗不了（環境限制，不是『沒空』）",
     "how_to_verify": "人工驗證步驟，夠具體到別人能照做",
-    "files": ["涉及的檔案路徑"],
+    "files": [
+      "涉及的檔案路徑"
+    ],
     "status": "unverified | verified | wont_verify",
     "verified_how": "status=verified 時必填：什麼環境、什麼結果",
     "added": "YYYY-MM-DD"
@@ -16,48 +18,53 @@
       "id": "settings-autostart",
       "area": "settings",
       "claim": "設定頁的「開機自動啟動」會經 preload 的 autostart 橋接真正呼叫 main.js 的 setAutoStartup()（win32/darwin/linux）",
-      "why_unverified": "需要啟動 Electron 桌面程式並檢查 OS 登入項；本機無顯示器，無法點擊設定頁",
-      "how_to_verify": "啟動桌面版 → 設定 → 勾選「開機自動啟動」→ 確認作業系統登入項出現/消失（Linux: ~/.config/autostart/angela-ai.desktop；macOS: 系統設定「登入項」；Windows: 登錄檔 Run）",
+      "how_to_verify": "pytest tests/frontend/test_frontend_claims.py（preload→IPC→main.js 呼叫鏈已驗證）；OS 登入項本身仍需桌面工作階段才能觀察",
       "files": [
         "apps/desktop-app/electron_app/preload.js",
         "apps/desktop-app/electron_app/main.js",
         "packages/shared-js/js/settings.js"
       ],
-      "status": "unverified",
-      "added": "2026-09-26"
+      "status": "verified",
+      "added": "2026-09-26",
+      "note": "2026-10-20：接線鏈以靜態契約測試驗證（原本整項標 unverified，連可驗證的部分也被環境限制擋住）。"
     },
     {
       "id": "frontend-angela-app-loads",
       "area": "other",
       "claim": "桌面版與 web viewer 現在都會載入 app.js，AngelaApp 可被 new 出來（先前完全沒有任何 script 引用它）",
-      "why_unverified": "需要 Electron / 瀏覽器載入頁面；本機無 GUI，僅能靜態驗證 script src 與順序",
-      "how_to_verify": "開啟桌面版，開發者工具主控台不應出現 ReferenceError: AngelaApp is not defined，且視窗狀態列應由載入流程更新",
-      "files": ["apps/desktop-app/electron_app/index.html", "apps/web-live2d-viewer/index.html"],
-      "status": "unverified",
-      "added": "2026-09-26"
+      "how_to_verify": "pytest tests/frontend/test_frontend_claims.py（node 行為測試：兩個頁面都載入 app.js，AngelaApp 類存在且可 new，initialize/_handleAngelaAction 齊備）",
+      "files": [
+        "apps/desktop-app/electron_app/index.html",
+        "apps/web-live2d-viewer/index.html"
+      ],
+      "status": "verified",
+      "added": "2026-09-26",
+      "note": "2026-10-20：以 node 行為測試驗證（不需 GUI）——原本列為「無顯示器所以驗不了」的項目，其實前端已有 node harness。"
     },
     {
       "id": "frontend-proactive-bubbles",
       "area": "other",
       "claim": "Angela 主動發話（greet/comfort/remind/share/question）會把氣泡渲染進設定頁既有的 #dialogue-messages 面板",
-      "why_unverified": "需要後端推播 proactive action 且前端可見；本機無 GUI 可觀察畫面",
-      "how_to_verify": "讓後端觸發任一 proactive action（例：情緒路由到 comfort），確認對話面板出現該則訊息而非只有 Live2D 動作",
-      "files": ["packages/shared-js/js/app.js"],
-      "status": "unverified",
-      "added": "2026-09-26"
+      "how_to_verify": "pytest tests/frontend/test_frontend_claims.py（node 行為測試：_handleAngelaAction 會把訊息送進 addDialogueMessage；greet 另觸發 Live2D 動作；未知 action 不觸發動作）",
+      "files": [
+        "packages/shared-js/js/app.js"
+      ],
+      "status": "verified",
+      "added": "2026-09-26",
+      "note": "2026-10-20：以 node 行為測試驗證（不需 GUI）。"
     },
     {
       "id": "webviewer-hardware-enhancement",
       "area": "other",
       "claim": "hardware-enhancement-patch.js 在偵測器缺少 detect()/_assessCapabilities() 時會如實跳過並記錄警告，而不是丟出未處理異常",
-      "why_unverified": "需要 web viewer 實際載入並觀察 console；本機無 GUI",
-      "how_to_verify": "開啟 web viewer → console 應出現 [HW-Patch] ... skipped 警告，且後續初始化不中斷",
+      "how_to_verify": "pytest tests/frontend/test_frontend_claims.py（node 行為測試：偵測器缺 detect()/_assessCapabilities() 時如實跳過並警告；相容時回 true）",
       "files": [
         "apps/web-live2d-viewer/js/hardware-enhancement-patch.js",
         "apps/web-live2d-viewer/js/hardware-integration.js"
       ],
-      "status": "unverified",
-      "added": "2026-09-26"
+      "status": "verified",
+      "added": "2026-09-26",
+      "note": "2026-10-20：以 node 行為測試驗證（不需 GUI）；同時修正 patch 的回傳值與 docstring 不一致（以前回 detector，現在回 true＝已套用）。"
     },
     {
       "id": "cli-hsp-sync-init",
@@ -65,7 +72,9 @@
       "claim": "HSP CLI 可在真實（同步）core_services 路徑下啟動，--help 不再因 await None 而死",
       "why_unverified": "已於本機以 python3 cli/main.py --help 實測通過；此條保留作為迴歸錨點",
       "how_to_verify": "cd packages/cli && python3 cli/main.py --help",
-      "files": ["packages/cli/cli/main.py"],
+      "files": [
+        "packages/cli/cli/main.py"
+      ],
       "status": "verified",
       "verified_how": "本機實測：python3 cli/main.py --help 正常輸出 usage 並優雅關閉服務，無 await 錯誤；另見 tests/tools/test_cli_tooling.py::test_hsp_cli_help_runs",
       "added": "2026-09-26"
@@ -74,8 +83,7 @@
       "id": "settings-batch-a-b-c-d-wired",
       "area": "settings",
       "claim": "設定頁已接上 20 項：haptics、modelScale、frameRate+renderQuality、wallpaperMode、backendIp/backendPort、speechRate/speechPitch/ttsVoice/speechLanguage、clickIntensity/touchIntensity、wallpaperEffect、emotionIntensity、windowOpacity、captureSystemAudio、debugMode、autoSwitchFallback、idleMode",
-      "why_unverified": "applySettingsToApplication 的呼叫鏈可用靜態與 node 行為測試驗證，但「設定視窗勾選後桌面版實際反應」需要啟動 Electron，本機無顯示器",
-      "how_to_verify": "啟動桌面版 → 設定 → 逐項修改並儲存 → 確認：haptics、模型縮放、FPS/品質、桌布模式與效果、後端 IP/埠重新連線、語速/音高/語音、情緒強度、主視窗透明度、系統音訊（Linux 應顯示不支援）、除錯模式日誌層級、關閉自動切換後低幀率不再降級（開啟時會降級）、閒置 60 秒後 Angela 播放 idle 動作、任何操作後恢復",
+      "how_to_verify": "pytest tests/frontend/test_frontend_claims.py（node 行為測試：真的走設定頁（DOM → collectSettings → applySettingsToApplication），逐項確認 20 個設定各自抵達擁有它的子系統）；另有靜態守門 tests/frontend/test_shared_js_behaviour.py",
       "files": [
         "packages/shared-js/js/settings.js",
         "packages/shared-js/js/performance-manager.js",
@@ -86,8 +94,9 @@
         "apps/desktop-app/electron_app/main.js",
         "packages/shared-js/js/app.js"
       ],
-      "status": "unverified",
-      "added": "2026-09-26"
+      "status": "verified",
+      "added": "2026-09-26",
+      "note": "2026-10-20：接線鏈以 node 行為測試驗證（原本整項標 unverified，連可驗證的部分也被環境限制擋住）；桌面版的「實際畫面反應」仍需 Electron。"
     },
     {
       "id": "settings-remaining-need-product-decision",
@@ -95,7 +104,9 @@
       "claim": "7 個設定仍只存檔不套用，且都不是「接線」問題：enableCluster/clusterRole/clusterMemoization/clusterIntegerOnly/nodeName（後端只有 /api/v1/system/cluster/status，接上等於要建 cluster 子系統）、ttsEngine（renderer 只有 Web Speech，Edge/Google 需要後端 TTS 端點；core/art/real_edge_tts.py 未經 HTTP 暴露）、sensitivity（無可接的實作：state-matrix 呼叫 setTrackingSensitivity 前會先探測，而 Live2DManager 從未定義該方法；且它由 attention 軸驅動，使用者偏好會與情緒系統衝突）",
       "why_unverified": "這些需要產品決策（要建什麼、語意是什麼），不是機械式接線；在決策前維持現狀並記錄在此，避免再被當成已完成",
       "how_to_verify": "決策後逐項處理。註：autoSwitchFallback 與 idleMode 原先也被列為需決策，後來確認 setAutoAdjust() 與 idle motion 早已存在、缺的只是呼叫路徑，已完成接線",
-      "files": ["packages/shared-js/js/settings.js"],
+      "files": [
+        "packages/shared-js/js/settings.js"
+      ],
       "status": "unverified",
       "added": "2026-09-26"
     },
@@ -103,15 +114,15 @@
       "id": "config-unhonoured-sections",
       "area": "other",
       "claim": "設定檔中宣告但無任何程式消費的項目，已逐條記錄於 tests/test_config_coverage.py::UNHONOURED_SECTIONS（含原因），並在對應 YAML 宣告處加上註解。其中 system/llm 的整個 routing.policy map 是死的：router.py:355 把 self._angela_routing 指派後從未讀取，因此 math/code/task/general 與 complexity_* 全都未被使用",
-      "why_unverified": "本項為靜態分析結論，非執行期行為：無法在此環境示範缺少的路由策略或指令觸發功能",
-      "how_to_verify": "實作 complexity 路由後，移除對應註解與清單條目，test_routing_policy_map_is_either_used_or_documented 會要求同步",
+      "how_to_verify": "pytest tests/test_config_coverage.py（清單逐條存在且帶原因；新增死設定會讓這個測試失敗；routing.policy 是「已記錄的設計決策」，其 YAML 註解說明為何尚未實作）",
       "files": [
         "apps/backend/configs/system/llm.default.yaml",
         "apps/backend/configs/system/core.default.yaml",
         "tests/test_config_coverage.py"
       ],
-      "status": "unverified",
-      "added": "2026-09-26"
+      "status": "verified",
+      "added": "2026-09-26",
+      "note": "2026-10-20：主張本身就是「清單已記錄且被測試強制」，因此可驗證；complexity 路由的實作仍是待產品決策項（見 settings-remaining-need-product-decision）。"
     },
     {
       "id": "ai-name-config-mismatch",
@@ -119,7 +130,9 @@
       "claim": "ai_name 設為 Angela，並成為單一來源：core/system/config/identity.get_ai_name() 供 SelfModel 與 create_soul_core 使用（後者原本接受 name 參數卻忽略它）",
       "why_unverified": "這是產品命名決策：套用設定會把對外名稱從 Angela 改成 Miko，需使用者決定",
       "how_to_verify": "決定後：若採單一來源，讓程式讀 ai_name（預設維持 Angela），並更新 YAML；若維持 Angela，將 YAML 改為 Angela 使設定與實作一致",
-      "files": ["apps/backend/configs/system/core.default.yaml"],
+      "files": [
+        "apps/backend/configs/system/core.default.yaml"
+      ],
       "status": "verified",
       "added": "2026-09-26",
       "verified_how": "本機實測：get_ai_name() 與 SelfModel().name 皆為 'Angela'；create_soul_core() 使用設定名，create_soul_core(name='TestSoul') 正確傳入。另確認不動 angela_agent.py 的 'Angela'（那是遊戲玩家名）與字典的 Angela 詞條",
@@ -128,15 +141,16 @@
     {
       "id": "environment-limits-what-cannot-be-verified",
       "area": "other",
-      "claim": "本環境的硬體/軟體限制決定了哪些項目無法驗證或無法實作，分三類：(A) 已處理；(B) 需先有功能/子系統，無法只靠接線完成；(C) 環境硬體限制，無論程式碼為何都無法在此驗證",
-      "why_unverified": "分類本身是本機偵測結果，非執行期行為。A=已修復並測試；B=需產品決策（cluster 子系統、command triggers、複雜度路由、後端 TTS 端點）；C=本機無 GPU（無 /dev/nvidia*）、未安裝 Electron（node_modules/electron 不存在，僅有失效的符號連結）、無 cluster 對等節點、llama.cpp 伺服器不由本專案啟動",
-      "how_to_verify": "C 類需在有 GPU 的機器或安裝 Electron 後驗證：python3 scripts/gen_project_map.py 會顯示本條；安裝 Electron 後可依各條 how_to_verify 逐項改為 verified",
+      "claim": "本環境的硬體/軟體限制決定了哪些項目無法驗證或無法實作，分三類：(A) 已處理並測試；(B) 需先有功能/子系統，無法只靠接線完成（產品決策）；(C) 環境硬體限制，無論程式碼為何都無法在此驗證",
+      "why_unverified": "分類本身是本機偵測結果，非執行期行為；內容已於 2026-10-20 依實際狀態複核。",
+      "how_to_verify": "C 類需在有 GPU 的機器或安裝 Electron 後驗證：安裝 Electron 後可依各條 how_to_verify 逐項改為 verified。",
       "files": [
         "apps/desktop-app/electron_app/package.json",
         "apps/backend/configs/system/core.default.yaml"
       ],
       "status": "unverified",
-      "added": "2026-09-26"
+      "added": "2026-09-26",
+      "note": "2026-10-20 複核：(A) 已修 — CI 五個門（black/isort/mypy/複雜度/type-ignore）本來全紅，已復綠；hold-out 量測本來是空轉的（邏輯語料用 proposition 欄位，腳本只讀 input/question/text），已修並納入 CI；SSE 串流只有 llama.cpp 能用、狀態矩陣 5 個端點恆回 not_implemented、θ 埠綁定 API 缺席導致路由永久 no-op、重複分類債、HAM 保留期與死碼、桌面 App 初始化 ReferenceError——皆已修。(B) 剩：cluster 子系統、command triggers、複雜度路由、後端 TTS 端點、7 個只存不套用的設定（需產品決策）。(C) 本機無 GPU、未安裝 Electron、無 cluster 對等節點、llama.cpp 伺服器不由本專案啟動。"
     }
   ]
 }

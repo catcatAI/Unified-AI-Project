@@ -368,7 +368,7 @@ def render_md(root, data):
         "## 誠實缺口（正式版判斷依據）",
         "",
         "1. **路由重複決策**（Pipeline/Router/ModelBus 各自分類）— 已收斂（2026-10-20：一則訊息只分類一次，決策由 request context 發布並由 router／chat_routes／MSBA 共用）。",
-        "2. **學習品質未證明** — 「字典增長」≠「能力增長」；需 hold-out 前後測成為常態門。",
+        "2. **學習品質未證明** — 「字典增長」≠「能力增長」；hold-out 前後測已成為常態門（2026-10-20：量測先前是空轉的，已修並納入 CI），但「能力增長」的長期證據仍待累積。",
         "3. **Dashboard E2E** — 新面板僅 wired，缺自動化瀏覽器測試。",
         mypy_gap,
         "5. **公開 benchmark** — angela_bench 115 題管線與 CI 回歸門已建（`scripts/run_benchmarks.py --gate-native`）；跨 AI 對比待外部 LLM 端點實際接入跑分。",

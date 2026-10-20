@@ -226,7 +226,10 @@
     }
 
     console.log('✅ Hardware detector enhanced successfully')
-    return detector
+    // The docstring (and the caller) treat the return value as "was the
+    // patch applied?" — it used to return the detector itself, so the two
+    // disagreed about the contract.
+    return true
   }
 
   // 主初始化函数

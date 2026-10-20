@@ -47,7 +47,18 @@ def hit_rate(samples):
 
     hits = 0
     for s in samples:
-        q = s.get("input") or s.get("question") or s.get("text") or ""
+        # The field names differ per corpus: logic rows use "proposition",
+        # math rows "problem", alpaca rows "input". Reading only some of them
+        # made the measurement vacuous (every question was empty → hit rate
+        # 0.000 → the gap gate passed without measuring anything).
+        q = (
+            s.get("proposition")
+            or s.get("problem")
+            or s.get("input")
+            or s.get("question")
+            or s.get("text")
+            or ""
+        )
         # 嘗試兩個確定性引擎任一命中即算 hit（模擬「可理解」）
         if route_knowledge(q) is not None or route_reasoning(q) is not None:
             hits += 1
@@ -58,6 +69,23 @@ def hit_rate(samples):
 
 
 def main():
+    """Measure the train/hold-out gap.
+
+    Exit code: 0 = the gap is under the threshold (or --gate is off), 1 = the
+    gap is too wide, 2 = the measurement itself was vacuous (nothing was
+    answered on either side, so a 0.0 gap proves nothing).
+    """
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Hold-out gap validation")
+    parser.add_argument(
+        "--gate",
+        action="store_true",
+        help="exit non-zero when the gap is too wide (or the measurement is vacuous)",
+    )
+    parser.add_argument("--max-gap", type=float, default=0.15, help="the gap threshold")
+    args = parser.parse_args()
+
     if not os.path.exists(DATA_PATH):
         print(f"⚠️ {DATA_PATH} not found — using synthetic 200 samples")
         items = [{"input": f"Test question {i}", "output": "dummy"} for i in range(200)]
@@ -77,10 +105,20 @@ def main():
     gap = abs(train_hit - hold_hit)
 
     print(f"Hit rate: train={train_hit:.3f} holdout={hold_hit:.3f} gap={gap:.3f}")
-    print(f"Gap <0.15 ? {'✅ PASS' if gap < 0.15 else '❌ FAIL (待訓練後複測)'}")
-    # 當前為框架驗證，不以 gap 作為 exit code（避免 CI 誤紅）
-    # 真正訓練後 gap 應 <0.15，屆時再改為嚴格
-    return 0
+
+    # A gap of 0.0 because nothing was answered on either side is not
+    # evidence of generalisation — it is an empty measurement.
+    vacuous = train_hit == 0.0 and hold_hit == 0.0
+    if vacuous:
+        print("❌ VACUOUS: neither side answered anything — the gap measures nothing")
+    else:
+        print(f"Gap <{args.max_gap} ? {'✅ PASS' if gap < args.max_gap else '❌ FAIL'}")
+
+    if not args.gate:
+        return 0
+    if vacuous:
+        return 2
+    return 0 if gap < args.max_gap else 1
 
 
 if __name__ == "__main__":

@@ -66,6 +66,20 @@ and this project adheres to
 
 ### Fixed
 
+- **驗證登記簿從 2/10 變 8/10 verified**（2026-10-20）：六個條目原本標
+  「unverified（需要 GUI／顯示器）」，但前端其實已有 node harness——不需顯示器就能
+  驗證：桌面版與 web viewer 確實載入 app.js 且 AngelaApp 可 new；主動發話的氣泡
+  真的進對話面板（greet 另觸發 Live2D 動作，未知 action 不假動作）；硬體增強
+  patch 在偵測器缺 API 時如實跳過並警告（順帶修掉 patch 的回傳值與 docstring
+  不一致：以前回 detector，現在回 true＝已套用）；autostart 的 preload→IPC→main.js
+  呼叫鏈；設定頁 20 項「已接上」的行為鏈（真的走 DOM → collectSettings →
+  applySettingsToApplication，逐項確認抵達擁有它的子系統）。新增 12 個 node 行為
+  測試。
+- **hold-out 量測本來是空轉的**（2026-10-20）：`validate_holdout_gap.py` 只讀
+  input/question/text，而邏輯語料用 proposition 欄位 → 兩側命中率都是 0.000，
+  「gap 0.0 < 0.15 ✅」什麼都沒量到。已修欄位對應（train 0.250 / holdout 0.330 /
+  gap 0.080），並加 `--gate`（量測空轉時 exit 2，不再假通過），納入 CI——
+  誠實缺口 #2「學習品質未證明」的常態門因此才真的存在。
 - **重複分類債收斂（架構缺口 #1）**（2026-10-20）：一則訊息此前在 pipeline、
   router（6 處）與 MSBA pipeline 各自分類一次——同一句話可能得到兩個路由
   決定。現在決策由 request context 發布（`_classify_result_type`／

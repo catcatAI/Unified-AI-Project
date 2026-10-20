@@ -139,6 +139,15 @@ jobs:
         env:
           ANGELA_HARDWARE_PROFILE: laptop_power_saver
           PYTHONPATH: apps/backend/src
+      - name: Hold-out generalisation gate (train vs hold-out gap)
+        run: |
+          # 2026-10-20: the hold-out measurement existed but was never a gate
+          # ("學習品質未證明" — STATUS_MATRIX 誠實缺口 #2). It also measured
+          # nothing: the script read only "input"/"question"/"text" while the
+          # logic corpus uses "proposition", so both sides scored 0.000 and the
+          # 0.0 gap "passed" vacuously. Both are fixed; the gate now fails on a
+          # wide gap AND on a vacuous measurement.
+          python scripts/validate_holdout_gap.py --gate
       - name: Test count drift check
         run: |
           # 單一權威機制（scripts/check_test_count.py）：基線在腳本裡，容差為
