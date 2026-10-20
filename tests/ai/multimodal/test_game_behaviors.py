@@ -41,6 +41,7 @@ class TestBehaviorRegistry:
             "look_vision",
             "craft_one",
             "surface",
+            "eat",
         }
 
     def test_walk_is_coordinate_step_ahead(self):
@@ -223,8 +224,31 @@ class TestSkillTranslator:
     def test_no_undirected_verbs(self):
         from ai.multimodal.game_behaviors import skill_to_behavior
 
-        for skill in ("place", "build", "eat", "dance"):
+        for skill in ("place", "build", "dance"):
             assert skill_to_behavior(skill, {}) == ("", {})
+
+    def test_eat_without_a_target_is_refused(self):
+        """Eating needs a target: the rule is the same as craft's."""
+        from ai.multimodal.game_behaviors import skill_to_behavior
+
+        assert skill_to_behavior("eat", {}) == ("", {})
+
+    def test_eat_with_a_target_translates(self):
+        from ai.multimodal.game_behaviors import skill_to_behavior
+
+        assert skill_to_behavior("eat", {"node": "default:apple"}) == (
+            "eat",
+            {"node": "default:apple"},
+        )
+
+    def test_eat_expands_to_a_use_action(self):
+        from ai.multimodal.game_behaviors import expand_behavior
+
+        assert expand_behavior("eat", {"node": "default:apple"}) == [
+            {"type": "use", "node": "default:apple"}
+        ]
+        # Without a target there is nothing to use — no random action.
+        assert expand_behavior("eat", {}) == []
 
     def test_craft_one_expands(self):
         assert expand_behavior("craft_one", {"recipe_id": "stick"}) == [

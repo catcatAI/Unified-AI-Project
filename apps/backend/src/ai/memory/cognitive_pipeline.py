@@ -91,11 +91,6 @@ class CognitivePipeline:
         self.math_engine = math_ripple_engine
         self.code_inspector = code_inspector
         self._recent_math: deque = deque(maxlen=_RECENT_MATH_WINDOW)
-        self._init_subsystems()
-
-    def _init_subsystems(self) -> None:
-        """初始化子系統（鈎子，供測試 mock）。"""
-        pass
 
     def get_current_state(self) -> List[float]:
         """從 state_matrix 提取當前 5 維狀態向量。"""

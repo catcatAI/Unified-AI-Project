@@ -205,7 +205,7 @@ features:
     claim: 全倉綠
     status: verified
     verify_command: pytest
-    evidence: 8,636 passed, 112 skipped, 0 failed（2026-10-20 測試數量同步批次全 testpaths 實測：tests/＋apps/backend/tests/＋apps/game-rpg/tests＋scripts）
+    evidence: 8,662 passed, 112 skipped, 0 failed（2026-10-20 測試數量同步批次全 testpaths 實測：tests/＋apps/backend/tests/＋apps/game-rpg/tests＋scripts）
     last_verified: "2026-10-20"
 
   - id: mypy-debt
@@ -279,7 +279,7 @@ features:
       - tests/ai/multimodal/test_game_agent_integration.py
       - tests/ai/multimodal/test_game_memory_persistence.py
       - tests/core/test_autonomous_life_cycle.py
-    evidence: R71 識別/記憶/好奇心＋R74 行為克隆訓練閉環（hold-out 學習門、權重持久化、啟動載入、推論信心可觀測）；驗證指令見 INVOCATION_MATRIX（wired 故不列）；live 樣本待玩家在線累積；20 FPS 仍 ❌（10Hz＋2s poller）；R90 死路徑 #18 修復：_encode_visual 接真實 VisualEncoder（原 np.random 佔位＋128/256 維度錯位），41 tests 契約鎖定
+    evidence: R71 識別/記憶/好奇心＋R74 行為克隆訓練閉環（hold-out 學習門、權重持久化、啟動載入、推論信心可觀測）；驗證指令見 INVOCATION_MATRIX（wired 故不列）；live 樣本待玩家在線累積；20 FPS 仍 ❌（10Hz 內部迴圈＋預設 2s poller；輪詢間隔已可配置 `agent_poller_poll_interval`，預設 2.0s、下限 0.05s，2026-10-20）；R90 死路徑 #18 修復：_encode_visual 接真實 VisualEncoder（原 np.random 佔位＋128/256 維度錯位），41 tests 契約鎖定
     last_verified: "2026-09-24"
 
   - id: benchmark-harness

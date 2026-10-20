@@ -109,6 +109,22 @@ class AudioEncoder:
                     keys.append(self._key_for_concept("voice_detected", "voice"))
                 else:
                     keys.append(self._key_for_concept("no_voice", "voice"))
+                # Spectral features (added with the MFCC extractor): the
+                # pitch and the brightness are what actually separate a
+                # bright, high voice from a dark, low one — energy alone
+                # collapsed every non-silent clip into "loud".
+                pitch_hz = float(features.get("pitch_hz", 0.0) or 0.0)
+                if pitch_hz > 0.0:
+                    keys.append(
+                        self._key_for_concept(
+                            "high_pitch" if pitch_hz >= 400.0 else "low_pitch", "pitch"
+                        )
+                    )
+                brightness = float(features.get("brightness", 0.0) or 0.0)
+                if energy > 0.01:
+                    keys.append(
+                        self._key_for_concept("bright" if brightness >= 0.08 else "dark", "timbre")
+                    )
                 return keys
             except Exception as e:
                 logger.warning("AudioProcessing failed: %s", e)

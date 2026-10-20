@@ -66,6 +66,26 @@ and this project adheres to
 
 ### Fixed
 
+- **音訊／NLP／遊戲三條路徑的假實作**（2026-10-20）：(1) 音訊特徵只有
+  energy＋peak（自稱「Placeholder for spectral features like MFCC」）→ 實作真
+  頻譜特徵（FFT 頻譜質心／roll-off／主頻、ZCR、spectral flux、13 維 MFCC，
+  numpy only），音訊編碼器因此能分出高低音與明暗音色（新增 high_pitch／
+  low_pitch、bright／dark 概念），7 個新測試；(2) NER 只找得到 URL 與 email
+  → 規則式命名實體（URL/EMAIL/NUMBER/PERCENT/MONEY/DATE/TIME/LOCATION 詞庫／
+  ORG 後綴／PERSON 敬稱），13 個新測試；(3) 遊戲「吃東西」技能沒有 use 動作
+  → poller 新增 `use` 動作（指向目標節點後右鍵使用）＋行為庫新增 `eat`
+  行為（無目標就拒絕，與 craft 同一條規則）；(4) 激素事件以前只 log 不生效 →
+  內分泌效果（energy/alertness/relaxation/focus/creativity/mood）真的進狀態
+  矩陣並驅動 Live2D 參數；(5) 前端效能指標只印一行 → 真的收 FPS／堆記憶；
+  (6) 驅動更新檢查回傳永遠跑不了的 `apt list --upgradable` → 誠實回報「瀏覽器
+  無法查套件管理器」＋已偵測到的驅動版本＋該去哪裡查。
+- **死碼清理**（2026-10-20）：`core/tools/js_tool_dispatcher/`（佔位模組、無任何
+  消費點、10 份文件引用）刪除並修正引用；`cognitive_pipeline._init_subsystems`
+  空的測試鉤子刪除；IDEAL_ARCHITECTURE 的「Accidental／實作或移除」清單條目
+  更新為已處理。
+- **Luanti 輪詢間隔可配置**（2026-10-20）：poller 的 POLL_INTERVAL 寫死 2.0s
+  → 可用 minetest.conf `agent_poller_poll_interval` 設定（下限 0.05s），
+  mod.conf／README／設計文件同步。
 - **CI 全面復綠（2026-10-20）**：專案自己的 CI 有五處紅，這批逐一修掉——(1)
   `black --check` 74 檔漂移（CI lint 步驟長期紅，與程式無關）→ 整庫格式化；
   (2) isort 數檔 → 修；(3) mypy 6 個新錯誤 → 修（回到 0）；(4) 複雜度棘輪

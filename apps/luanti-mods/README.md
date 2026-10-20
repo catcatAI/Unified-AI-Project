@@ -43,6 +43,7 @@ flatpak 預設設定檔路徑：
 ```ini
 agent_poller_bridge_url = http://localhost:30003   # 橋接位址（LAN 改 IP）
 agent_poller_allow_give = false                    # 測試後門 /give，預設關
+agent_poller_poll_interval = 2.0                   # 輪詢間隔（秒，下限 0.05）；想更快反應就調小
 ```
 
 ### 4) 啟動 Python 橋接（:30003）

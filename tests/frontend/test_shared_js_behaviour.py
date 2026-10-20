@@ -663,3 +663,43 @@ def test_no_live2d_manager_is_not_an_error():
         """)
     result = run_node(script, "state-matrix.js", "StateMatrix4D")
     assert result["ok"] is True
+
+
+# --------------------------------------------------------------------------- #
+# AngelaApp._handleHormoneChanged — the endocrine path must not vanish
+# --------------------------------------------------------------------------- #
+def _hormone_call(effects: dict) -> dict:
+    script = textwrap.dedent(f"""
+        const app = Object.create(cls.prototype)
+        const updated = {{ alpha: {{}}, beta: {{}}, gamma: {{}} }}
+        app.stateMatrix = {{
+          updateAlpha: (v) => {{ updated.alpha = v }},
+          updateBeta: (v) => {{ updated.beta = v }},
+          updateGamma: (v) => {{ updated.gamma = v }},
+        }}
+        app._handleHormoneChanged({json.dumps({"hormones": effects})})
+        return updated
+        """)
+    return run_node(script, "app.js", "AngelaApp")
+
+
+def test_hormone_effects_reach_the_state_matrix():
+    """The endocrine system's computed effects must reach the matrix."""
+    out = _hormone_call({"energy": 0.8, "focus": 0.6, "mood": 0.7, "alertness": 0.4})
+    assert out["alpha"]["energy"] == 0.8
+    assert out["alpha"]["arousal"] == 0.4
+    assert out["beta"]["focus"] == 0.6
+    assert out["gamma"]["happiness"] == 0.7
+
+
+def test_hormone_effects_are_clamped():
+    out = _hormone_call({"energy": 5.0, "mood": -2})
+    assert out["alpha"]["energy"] == 1.0
+    assert out["gamma"]["happiness"] == 0.0
+
+
+def test_an_empty_hormone_payload_changes_nothing():
+    out = _hormone_call({})
+    assert out["alpha"] == {}
+    assert out["beta"] == {}
+    assert out["gamma"] == {}

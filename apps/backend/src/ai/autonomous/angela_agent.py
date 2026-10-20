@@ -280,8 +280,13 @@ class AngelaAutonomousAgent:
             self._screen_vision = None
 
     def _init_visual_encoder(self) -> None:
-        """Real VisualEncoder for when frames arrive (currently the poller
-        reports state only, so visual stays None until /api/frame lands).
+        """Real VisualEncoder for the frames.
+
+        Two frame sources exist: the screen-capture path
+        (``_capture_screen_vision``, which fills ``current_state.visual``
+        today) and the poller's ``/api/frame`` (not implemented — the game
+        side does not expose it yet). The encoder is therefore wired for the
+        screen path; the poller path would reuse the same encoder.
         """
         try:
             from ai.multimodal.visual_encoder import VisualEncoder
@@ -601,9 +606,12 @@ class AngelaAutonomousAgent:
             return (0.0, 0.0, 0.0)
 
     def _encode_bridge_frame(self, state: Dict[str, Any]) -> None:
-        """Encode a frame when the bridge provides one; otherwise visual
-        stays None and the policy runs on proprioception.
-        (Honest stub: /api/frame is still a placeholder.)
+        """Encode a frame when the bridge provides one.
+
+        The poller does not expose ``/api/frame`` yet, so this stays a no-op
+        and the *screen* path (``_capture_screen_vision``) is what fills
+        ``current_state.visual``. When the bridge gains a frame endpoint this
+        becomes the second source.
         """
         frame = state.get("frame")
         if frame is None or self.visual_encoder is None or self.current_state is None:

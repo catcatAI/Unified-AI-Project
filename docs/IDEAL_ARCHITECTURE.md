@@ -971,8 +971,8 @@ Level 4 — E2E Tests (tests/e2e/)
 | `modules/tactile_service/`               | ✅ 已移除（包含在 modules/ 刪除中）           |
 | `modules/math_verifier/`                 | ✅ 已移除（包含在 modules/ 刪除中）           |
 | `modules/` (全部 11 個)                  | ✅ 已移除 (Phase 1)                           |
-| `services/node_services/server.js`       | Accidental                                    | 實作或移除                   |
-| `core/tools/js_tool_dispatcher/index.js` | Accidental                                    | 實作或移除                   |
+| `services/node_services/server.js`       | ✅ 已移除（檔案不存在）                        | —                            |
+| `core/tools/js_tool_dispatcher/index.js` | ✅ 已移除（2026-10-20；佔位模組，無任何消費點）| —                            |
 
 ---
 

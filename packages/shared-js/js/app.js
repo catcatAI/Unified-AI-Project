@@ -1085,10 +1085,50 @@ class AngelaApp {
 
   /**
    * P0-2: 处理激素变化
+   *
+   * The hormone effects used to be logged and dropped: the endocrine system
+   * computes energy / mood / focus / creativity / alertness … and none of it
+   * reached the state matrix or the model. The mapping below is the same one
+   * the emotion path uses (state matrix → Live2D parameters), so a hormonal
+   * shift now shows up in the avatar instead of vanishing.
    */
   _handleHormoneChanged(data) {
-    // 可以根据激素类型调整行为
     console.log('[App] Hormone changed:', data)
+    const effects = (data && (data.hormones || data.effects || data.hormonal_effects)) || {}
+    if (!effects || typeof effects !== 'object') return
+
+    const num = (value, fallback = 0.5) => {
+      const n = Number(value)
+      return Number.isFinite(n) ? Math.max(0, Math.min(1, n)) : fallback
+    }
+
+    if (this.stateMatrix) {
+      const alpha = {}
+      const beta = {}
+      const gamma = {}
+      if (effects.energy !== undefined) {
+        alpha.energy = num(effects.energy)
+        alpha.vitality = num(effects.energy)
+      }
+      if (effects.alertness !== undefined) {
+        alpha.arousal = num(effects.alertness)
+      }
+      if (effects.relaxation !== undefined) {
+        alpha.comfort = num(effects.relaxation)
+      }
+      if (effects.focus !== undefined) {
+        beta.focus = num(effects.focus)
+      }
+      if (effects.creativity !== undefined) {
+        beta.creativity = num(effects.creativity)
+      }
+      if (effects.mood !== undefined) {
+        gamma.happiness = num(effects.mood)
+      }
+      if (Object.keys(alpha).length) this.stateMatrix.updateAlpha(alpha)
+      if (Object.keys(beta).length) this.stateMatrix.updateBeta(beta)
+      if (Object.keys(gamma).length) this.stateMatrix.updateGamma(gamma)
+    }
   }
 
   /**

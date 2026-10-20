@@ -856,17 +856,33 @@ class DynamicPerformanceManager {
 
   _startMonitoring() {
     // 監控性能指標
+    this.performanceMetrics = { fps: 0, memoryMB: 0, timestamp: Date.now() }
     this._monitoringInterval = setInterval(() => {
       this._checkPerformanceMetrics()
     }, 5000) // 每 5 秒檢查一次
   }
 
   _checkPerformanceMetrics() {
-    // 這裡可以添加：
-    // - FPS 監控
-    // - 內存監控
-    // - GPU 使用率
-    console.log('Checking performance metrics...')
+    // The metrics are now really collected (they used to be a log line):
+    // the frame rate comes from the Live2D render loop and the heap from
+    // the browser's memory API, so `adjustPerformance()` decides on data
+    // instead of a comment.
+    const metrics = {
+      fps: 0,
+      memoryMB: 0,
+      timestamp: Date.now(),
+    }
+    if (this.live2dManager && typeof this.live2dManager.getCurrentFPS === 'function') {
+      const fps = Number(this.live2dManager.getCurrentFPS())
+      metrics.fps = Number.isFinite(fps) ? fps : 0
+    }
+    const perf = typeof performance !== 'undefined' ? performance : null
+    if (perf && perf.memory && perf.memory.usedJSHeapSize) {
+      metrics.memoryMB = Math.round(perf.memory.usedJSHeapSize / (1024 * 1024))
+    }
+    this.performanceMetrics = metrics
+    console.log('[HardwareDetection] performance metrics:', metrics)
+    return metrics
   }
 
   stopMonitoring() {

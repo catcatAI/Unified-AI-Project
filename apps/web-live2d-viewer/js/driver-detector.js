@@ -276,33 +276,33 @@ class DriverDetector {
   async checkForUpdates() {
     console.log('[DriverDetector] Checking for driver updates...')
 
+    // A browser cannot query the OS package manager, so the old
+    // implementation invented `apt list --upgradable` command strings that
+    // could never run here. The honest report is: here is the driver we
+    // detected, here is why an update check is not possible from the
+    // browser, and here is where to look.
     const updates = {
-      gpu: null,
-      audio: null,
-      input: null,
-      network: null,
-    }
-
-    // In a real implementation, this would check:
-    // - NVIDIA website for GPU updates
-    // - AMD website for GPU updates
-    // - System package manager for driver packages
-
-    // For now, provide check commands
-    updates.gpu = {
-      available: false,
-      checkCommand: 'apt list --upgradable 2>/dev/null | grep -E "nvidia|mesa|xf86-video"',
-      updateCommand: 'sudo apt update && sudo apt upgrade',
-    }
-
-    updates.audio = {
-      available: false,
-      checkCommand: 'apt list --upgradable 2>/dev/null | grep -E "alsa|pulseaudio"',
-      updateCommand: 'sudo apt update && sudo apt upgrade',
+      gpu: this._updateEntry('gpu', 'The NVIDIA/AMD vendor site or your OS package manager'),
+      audio: this._updateEntry('audio', 'Your OS sound package manager'),
+      input: this._updateEntry('input', 'Your OS input device manager'),
+      network: this._updateEntry('network', 'Your OS network manager'),
     }
 
     this.driverStatus.updates = updates
     return updates
+  }
+
+  _updateEntry(kind, whereToCheck) {
+    const detected = this.driverStatus[kind] || {}
+    return {
+      available: false,
+      reason: 'A browser cannot query the OS package manager',
+      detected: {
+        name: detected.name || null,
+        version: detected.version || null,
+      },
+      whereToCheck,
+    }
   }
 
   /**

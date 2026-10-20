@@ -13,7 +13,11 @@ end
 -- Default matches the Python bridge's own usage docs (localhost:30003).
 local BRIDGE_URL = minetest.settings:get("agent_poller_bridge_url") or "http://localhost:30003"
 local TARGET_PLAYER_NAME = "AngelaBot"
-local POLL_INTERVAL = 2.0
+-- Poll cadence (seconds). The default is 2.0 (a light load on the bridge);
+-- a world that wants a faster reaction can lower it via minetest.conf:
+--   agent_poller_poll_interval = 0.2
+-- The value is clamped to a sane minimum so a typo cannot hammer the bridge.
+local POLL_INTERVAL = math.max(0.05, minetest.settings:get("agent_poller_poll_interval") or 2.0)
 local last_poll = 0
 -- Test-only item grants. Default OFF: enable with
 -- `agent_poller_allow_give = true` in minetest.conf for manual verification.
@@ -490,6 +494,58 @@ local function execute_commands(actions, player)
                             .. player:get_player_name()
                     )
                 end
+            end
+        elseif action.type == "use" then
+            -- 使用（吃東西）：指向目標節點再右鍵使用。
+            -- 目標可來自 action.pos（指定座標）或 action.node（面前那種節點）。
+            local target = nil
+            local t = action.pos
+            if t and t.x and t.y and t.z then
+                target = vector.round(vector.new(t.x, t.y, t.z))
+            elseif action.node then
+                local eye = player:get_pos()
+                eye.y = eye.y + 1.6
+                local looked = minetest.get_node_or_nil(
+                    vector.add(eye, vector.new(0, 0, 1))
+                )
+                if looked and looked.name == action.node then
+                    target = vector.round(looked.pos)
+                end
+            end
+            if target then
+                face_toward(player, target)
+                local eye = player:get_pos()
+                eye.y = eye.y + 1.6
+                if vector.distance(eye, target) <= 4.0 then
+                    local node = minetest.get_node(target)
+                    if node.name ~= "air" and node.name ~= "ignore" then
+                        minetest.item_use_node(player, node, target, nil, 1, nil)
+                        minetest.log(
+                            "action",
+                            "[agent_poller] used " .. node.name .. " at "
+                                .. minetest.pos_to_string(target, 1)
+                                .. " for " .. player:get_player_name()
+                        )
+                    else
+                        minetest.log(
+                            "action",
+                            "[agent_poller] use failed (nothing to use) for "
+                                .. player:get_player_name()
+                        )
+                    end
+                else
+                    minetest.log(
+                        "action",
+                        "[agent_poller] use failed (too far) for "
+                            .. player:get_player_name()
+                    )
+                end
+            else
+                minetest.log(
+                    "action",
+                    "[agent_poller] use failed (no target) for "
+                        .. player:get_player_name()
+                )
             end
         elseif action.type == "scan" then
             -- Node survey for intent grounding ("that tree" -> coordinates).

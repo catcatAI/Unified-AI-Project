@@ -222,6 +222,34 @@ def _place_expand(_params: Dict[str, Any], _state: Any = None) -> List[Action]:
     return [{"type": "place"}]
 
 
+def _eat_target(params: Dict[str, Any]) -> bool:
+    """Does the eat request carry a target (a position or a node name)?"""
+    params = params or {}
+    if _xyz(params):
+        return True
+    node = str(params.get("node") or "").strip()
+    return bool(node)
+
+
+def _use_expand(params: Dict[str, Any], _state: Any = None) -> List[Action]:
+    """Use (eat) the node in front of the bot.
+
+    The poller needs a target: either an explicit position or the node name
+    it is looking at. Without a target there is nothing to use, so the
+    behaviour expands to nothing rather than to a random action.
+    """
+    action: Dict[str, Any] = {"type": "use"}
+    pos = _xyz(params)
+    if pos:
+        action["pos"] = pos
+    else:
+        node = str(params.get("node") or "").strip()
+        if not node:
+            return []
+        action["node"] = NODE_ALIASES.get(node, node)
+    return [action]
+
+
 def _scan_expand(_params: Dict[str, Any], _state: Any = None) -> List[Action]:
     import math
 
@@ -288,6 +316,23 @@ _register(
         params_schema={},
         preconditions=_needs_placeable,
         expand=_place_expand,
+    )
+)
+
+_register(
+    Behavior(
+        behavior_id="eat",
+        description="使用（吃）面前的節點：指向食物並右鍵使用。",
+        params_schema={
+            "node": {
+                "type": "str",
+                "default": "",
+                "desc": "要使用的節點名（留空＝使用眼前的節點）",
+            },
+            "pos": {"type": "list", "default": [], "desc": "目標座標 [x, y, z]"},
+        },
+        preconditions=_no_preconditions,
+        expand=_use_expand,
     )
 )
 
@@ -556,6 +601,13 @@ def skill_to_behavior(
         return _skill_to_turn(params)
     if skill == "craft":
         return _skill_to_craft(params, craftable)
-    # place/build/eat: 沒有無目的的動詞。定向放置走 place_one/place_at
-    # （runner/chat/plan），吃東西缺 use 動作（poller 待補），藍圖缺執行器。
+    if skill == "eat":
+        # Only a *directed* eat translates: without a target (the node in
+        # front or a position) there is nothing to use, and the rule is the
+        # same as craft's — no undirected verbs.
+        if _eat_target(params):
+            return "eat", dict(params)
+        return "", {}
+    # place/build: 沒有無目的的動詞。定向放置走 place_one/place_at
+    # （runner/chat/plan），藍圖缺執行器。
     return "", {}
