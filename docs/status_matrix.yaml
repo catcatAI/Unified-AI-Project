@@ -318,7 +318,7 @@ features:
       （`align_from_feedback`／`align_phrase` 只移動概念原型，不記題目）→ 合成
       （關係圖＋極值，語意與 `ai.symbolic_reasoner` 同義）。實測（`python
       scripts/probe_neural_bridge.py`）：控制組（老師詞彙 12 題）中間層 12/12
-      vs 老師 5/12（老師的文章實體抽取缺陷）；留出集（老師詞彙解不了的改述
+      ＝老師 12/12（不迴歸；老師的冠詞實體抽取缺陷已於同期修好）；留出集（老師詞彙解不了的改述
       20 題，開發期未看過、未對齊）中間層 16/20（對齊後 17/20）vs 老師 2/20；
       對齊回饋讓開發組 3/5 → 5/5。留出集 3 題未答為編碼器接觸失敗
       （sweltering/compact/thicker），非迴歸。`scripts/probe_reasoning_unseen.py`

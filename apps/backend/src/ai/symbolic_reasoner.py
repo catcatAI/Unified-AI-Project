@@ -178,7 +178,8 @@ def _extract_pairs_en(facts_text: str) -> List[Tuple[str, str, str]]:
     """ "X is taller than Y" / "X taller than Y" (multi-letter entities)."""
     pairs: List[Tuple[str, str, str]] = []
     for m in re.finditer(
-        r"\b([A-Za-z]+)\b\s+(?:is\s+)?(\w+?)\s+than\s+\b([A-Za-z]+)\b", facts_text
+        r"\b([A-Za-z]+)\b\s+(?:is\s+)?(\w+?)\s+than\s+(?:the\s+|a\s+|an\s+)?\b([A-Za-z]+)\b",
+        facts_text,
     ):
         pairs.append((m.group(1).upper(), m.group(3).upper(), m.group(2).lower()))
     return pairs
@@ -200,7 +201,8 @@ def _extract_pairs_negation(facts_text: str) -> List[Tuple[str, str, str]]:
     """Negation "A is not as short as B" (lesser-comp => A > B, greater => B > A)."""
     pairs: List[Tuple[str, str, str]] = []
     for m in re.finditer(
-        r"\b([A-Za-z一-鿿]+)\b\s+(?:is\s+)?not\s+as\s+(\w+)\s+as\s+\b([A-Za-z一-鿿]+)\b",
+        r"\b([A-Za-z一-鿿]+)\b\s+(?:is\s+)?not\s+as\s+(\w+)\s+as\s+"
+        r"(?:the\s+|a\s+|an\s+)?\b([A-Za-z一-鿿]+)\b",
         facts_text,
     ):
         subj, comp, obj = m.group(1).upper(), m.group(2).lower(), m.group(3).upper()

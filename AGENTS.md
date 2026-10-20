@@ -919,7 +919,7 @@ collected — 0 errors**).
 > （`_GREATER`/`_LESSER`/`_EXTRA_*`＋其「比較詞→最高級」對照表），
 > `tests/ai/test_neural_bridge.py` 有血緣測試守住。實測（`python
 > scripts/probe_neural_bridge.py`）：控制組（老師詞彙 12 題）中間層 12/12 vs
-> 老師 5/12（老師冠詞實體抽取缺陷）；**留出集**（老師解不了的改述 20
+> ＝老師 12/12（不迴歸；老師的冠詞實體抽取缺陷同期修好）；**留出集**（老師解不了的改述 20
 > 題，開發期未看過、未對齊）中間層 16/20（對齊後 17/20）vs 老師 2/20；
 > 對齊回饋讓開發組 3/5 → 5/5。留出集 3
 > 題未答＝編碼器接觸失敗（sweltering/compact/thicker），如實記錄。

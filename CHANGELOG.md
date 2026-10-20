@@ -26,7 +26,7 @@ and this project adheres to
   `ai.symbolic_reasoner` 同義。概念原型的種子**只取老師自己的詞彙**
   （`_GREATER`/`_LESSER`/`_EXTRA_*` 與其「比較詞→最高級」對照表），測試會守住這條血緣。
   量測（`python scripts/probe_neural_bridge.py`）：控制組（老師詞彙 12
-  題）中間層 12/12 vs 老師 5/12（老師在冠詞實體上有抽取缺陷）；**留出集**
+  題）中間層 12/12＝老師 12/12（不迴歸）；**留出集**
   （老師詞彙解不了的改述 20 題，開發期未看過、未參與對齊）中間層 16/20（對齊後
   17/20）vs 老師 2/20；對齊回饋讓開發組 3/5 → 5/5。留出集 3
   題未答是編碼器的接觸失敗（sweltering／compact／thicker），已如實記錄。
@@ -36,6 +36,13 @@ and this project adheres to
   接在 `try_reasoning`（老師）之後——老師先答、橋接補老師看不到的改述，
   GARDEN／ED3N 引擎經同一個 router 因此一併受益；橋接對非比較問句會
   abstain（「Who is the tallest person in the room?」→ None，不亂答）。
+
+- **確定性老師的冠詞實體抽取缺陷修好**（2026-10-21）：
+  `ai/symbolic_reasoner` 的 `_extract_pairs_en`／`_extract_pairs_negation` 把
+  對象前的 the/a/an 當成實體——「The cat is older than the dog, the dog older
+  than the mouse, who youngest?」的物件變成 THE（而不是 dog／mouse），答案因此
+  是「THE is the youngest」。修好後為「MOUSE is the youngest」，老師在自己的
+  詞彙控制組由 5/12 回到 12/12（中間層的量測同步更新）。
 
 - **補完批次（收尾）**（2026-10-20）：把專案自己記錄的未完項逐一收掉——
   ① 測試數量單一權威機制
