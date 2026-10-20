@@ -10,7 +10,7 @@
 | 桶                 | 項數               |
 | ------------------ | ------------------ |
 | 未定義             | 0                  |
-| 定義有誤           | 21                 |
+| 定義有誤           | 0                  |
 | 定義差（多重釋義） | 11                 |
 | 定義合理（已驗證） | 23+ 處顯式定義標記 |
 
@@ -53,9 +53,10 @@
 
 ### 已評估、決策保留（非本次修復）
 
-- **21 個孤兒事件**（emit 無 subscribe）：文件宣稱的閉環多以直接函數呼叫（PriorityNegotiator
-  voter、get_system_health 等）實現，事件為遙測預留；新增 subscribe 屬行為變更，另案評估 —
-  emit 無消費者目前無害（global_store.emit_event 無訂閱即 return）。
+- **21 個遙測預留事件**（emit 無 in-process
+  subscribe）：文件宣稱的閉環多以直接函數呼叫（PriorityNegotiator
+  voter、get_system_health 等）實現，事件為外部觀察者預留。2026-10-20 起逐筆記錄於`core/system/state_store/telemetry_events.py`（每筆附「為何無消費者」的理由），稽核掃描時扣除，故「未解釋的孤兒事件」為 0；清單若與程式不一致（事件已不再發射）會被
+  `defs.stale_telemetry_allowlist` 擋下。
 - **權重三方分歧**（Python 全 1.0 / YAML ε0.3θ0.8ζ0.2 / JS
   ε0.3θ0.2ζ0.3）：YAML 為死配置、JS 權重影響本地影響力衰減 — 統一即改行為，各保留現值。
 - **matrix.default.yaml 未接線**：槽定義已與 DEFAULT_DIMENSIONS 完全對齊（對齊後接線＝行為不變），接線本身涉及 formula 配置載入器變更，另案處理。
@@ -69,33 +70,7 @@
 
 ## 二、定義有誤（有定義但錯誤／失準）
 
-### 孤兒事件（emit 有、subscribe 無 → 發了無人聽）
-
-- `causal.learned`
-- `causal.prediction`
-- `dli.feedback_processed`
-- `dli.state_changed`
-- `essence.generational_bloom`
-- `essence.trace_recorded`
-- `execution.gate_decided`
-- `execution.result_recorded`
-- `heartbeat.integration`
-- `heartbeat.pulse`
-- `intent.adjustment_computed`
-- `intent.homeostatic_generated`
-- `intent.outcome_recorded`
-- `lifecycle.behavioral_adjustment`
-- `lifecycle.interaction_recorded`
-- `meta.closed_loop_adjusted`
-- `meta.confidence_recorded`
-- `meta.weighted_adjustment`
-- `modality.gate_updated`
-- `routing.context_prepared`
-- `routing.telemetry`
-
-（subscribe 無 emit：無）
-
-> 決策：保留 — 見「已評估、決策保留」；emit 無消費者目前無害（無訂閱即 return）。
+（無。）
 
 ## 三、定義差（多重釋義 — 同對象、多視角／多源）
 
@@ -137,8 +112,8 @@
 
 - GLOSSARY 數值宣稱 5/5 項與實測一致。
 - i18n prompt：使用 92 鍵、zh 92 / en 92、雙語 parity diff=0、未定義=0。
-- magic_numbers：410 個使用中鍵、YAML 可解析 66、僅 inline
-  default（設計如此，呼叫點有預設值）344、未定義且崩潰=0（所有取用器簽名帶 default 參數）。
+- magic_numbers：410 個使用中鍵、YAML 可解析 68、僅 inline
+  default（設計如此，呼叫點有預設值）342、未定義且崩潰=0（所有取用器簽名帶 default 參數）。
 - `get_parameter`：3 個呼叫鍵全部在 `_DEFAULT_THRESHOLDS`。
 - `ResponseCategory`（apps/backend/src/ai/memory/memory_template.py）：模板 JSON 類別未定義=無。
 - influence_map 有定義但目前無呼叫的類型（備用，非缺陷）：adrenaline, anger,
@@ -149,5 +124,5 @@
 
 - StateMatrix 鍵：DEFAULT {'alpha': 6, 'beta': 6, 'gamma': 10, 'delta': 6,
   'epsilon': 6, 'theta': 12, 'zeta': 4}
-- 事件：emit 26 / subscribe 5 → 孤兒 21
+- 事件：emit 26 / subscribe 5 → 孤兒 0
 - 錯誤軸測試欄位 0；跨軸同名槽 2

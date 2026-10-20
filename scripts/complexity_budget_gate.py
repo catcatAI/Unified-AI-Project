@@ -63,9 +63,19 @@ def count_c901() -> tuple[int, str]:
         )
         cfg = f.name
     proc = subprocess.run(
-        [sys.executable, "-m", "flake8", "--config", cfg,
-         "apps/backend/src", "tests/", "--select=C901"],
-        cwd=REPO_ROOT, capture_output=True, text=True,
+        [
+            sys.executable,
+            "-m",
+            "flake8",
+            "--config",
+            cfg,
+            "apps/backend/src",
+            "tests/",
+            "--select=C901",
+        ],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
     )
     Path(cfg).unlink(missing_ok=True)
     out = proc.stdout
@@ -103,8 +113,10 @@ def main() -> int:
         if args.allow_lower:
             print(f"⚠️  C901 {count} < 預算 {budget}（允許下降）— 建議下調預算至 {count}")
             return 0
-        print(f"❌ C901 {count} < 預算 {budget}：棘輪只能轉緊，請下調 "
-              f"scripts/complexity_budget.txt 至 {count}")
+        print(
+            f"❌ C901 {count} < 預算 {budget}：棘輪只能轉緊，請下調 "
+            f"scripts/complexity_budget.txt 至 {count}"
+        )
         return 1
     print(f"✅ C901 複雜度預算鎖定（{count} = {budget}）")
     return 0

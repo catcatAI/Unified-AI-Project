@@ -66,6 +66,13 @@ and this project adheres to
 
 ### Fixed
 
+- **21 個「孤兒事件」變成有名字的遙測清單**（2026-10-20）：事件稽核原本只
+  報「emit 26 / subscribe 5 → 孤兒 21」，讀者無從知道這 21 個是遺漏還是有意
+  為之。現在逐筆記錄於 `core/system/state_store/telemetry_events.py`（每筆附
+  「為何沒有 in-process 消費者」的理由），稽核掃描時扣除 → **未解釋的孤兒事件
+  為 0**；清單與程式不一致（事件已不再發射）會被新的
+  `defs.stale_telemetry_allowlist` 擋下，清單不能悄悄腐爛。定義稽核報告的
+  「定義有誤」桶由 21 降為 0。
 - **驗證登記簿從 2/10 變 8/10 verified**（2026-10-20）：六個條目原本標
   「unverified（需要 GUI／顯示器）」，但前端其實已有 node harness——不需顯示器就能
   驗證：桌面版與 web viewer 確實載入 app.js 且 AngelaApp 可 new；主動發話的氣泡

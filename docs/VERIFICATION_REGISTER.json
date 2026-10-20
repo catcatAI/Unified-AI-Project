@@ -26,7 +26,9 @@
       ],
       "status": "verified",
       "added": "2026-09-26",
-      "note": "2026-10-20：接線鏈以靜態契約測試驗證（原本整項標 unverified，連可驗證的部分也被環境限制擋住）。"
+      "note": "2026-10-20：接線鏈以靜態契約測試驗證（原本整項標 unverified，連可驗證的部分也被環境限制擋住）。",
+      "verified_how": "pytest tests/frontend/test_frontend_claims.py（preload→IPC→main.js 呼叫鏈已驗證）；OS 登入項本身仍需桌面工作階段才能觀察",
+      "why_unverified": "OS 登入項本身仍需桌面工作階段才能觀察（本項驗證的是接線鏈）。"
     },
     {
       "id": "frontend-angela-app-loads",
@@ -39,7 +41,9 @@
       ],
       "status": "verified",
       "added": "2026-09-26",
-      "note": "2026-10-20：以 node 行為測試驗證（不需 GUI）——原本列為「無顯示器所以驗不了」的項目，其實前端已有 node harness。"
+      "note": "2026-10-20：以 node 行為測試驗證（不需 GUI）——原本列為「無顯示器所以驗不了」的項目，其實前端已有 node harness。",
+      "verified_how": "pytest tests/frontend/test_frontend_claims.py（node 行為測試：兩個頁面都載入 app.js，AngelaApp 類存在且可 new，initialize/_handleAngelaAction 齊備）",
+      "why_unverified": "（本項已驗證）"
     },
     {
       "id": "frontend-proactive-bubbles",
@@ -51,7 +55,9 @@
       ],
       "status": "verified",
       "added": "2026-09-26",
-      "note": "2026-10-20：以 node 行為測試驗證（不需 GUI）。"
+      "note": "2026-10-20：以 node 行為測試驗證（不需 GUI）。",
+      "verified_how": "pytest tests/frontend/test_frontend_claims.py（node 行為測試：_handleAngelaAction 會把訊息送進 addDialogueMessage；greet 另觸發 Live2D 動作；未知 action 不觸發動作）",
+      "why_unverified": "（本項已驗證）"
     },
     {
       "id": "webviewer-hardware-enhancement",
@@ -64,7 +70,9 @@
       ],
       "status": "verified",
       "added": "2026-09-26",
-      "note": "2026-10-20：以 node 行為測試驗證（不需 GUI）；同時修正 patch 的回傳值與 docstring 不一致（以前回 detector，現在回 true＝已套用）。"
+      "note": "2026-10-20：以 node 行為測試驗證（不需 GUI）；同時修正 patch 的回傳值與 docstring 不一致（以前回 detector，現在回 true＝已套用）。",
+      "verified_how": "pytest tests/frontend/test_frontend_claims.py（node 行為測試：偵測器缺 detect()/_assessCapabilities() 時如實跳過並警告；相容時回 true）",
+      "why_unverified": "（本項已驗證）"
     },
     {
       "id": "cli-hsp-sync-init",
@@ -96,7 +104,9 @@
       ],
       "status": "verified",
       "added": "2026-09-26",
-      "note": "2026-10-20：接線鏈以 node 行為測試驗證（原本整項標 unverified，連可驗證的部分也被環境限制擋住）；桌面版的「實際畫面反應」仍需 Electron。"
+      "note": "2026-10-20：接線鏈以 node 行為測試驗證（原本整項標 unverified，連可驗證的部分也被環境限制擋住）；桌面版的「實際畫面反應」仍需 Electron。",
+      "verified_how": "pytest tests/frontend/test_frontend_claims.py（node 行為測試：真的走設定頁（DOM → collectSettings → applySettingsToApplication），逐項確認 20 個設定各自抵達擁有它的子系統）；另有靜態守門 tests/frontend/test_shared_js_behaviour.py",
+      "why_unverified": "桌面版的實際畫面反應仍需 Electron 工作階段。"
     },
     {
       "id": "settings-remaining-need-product-decision",
@@ -122,7 +132,9 @@
       ],
       "status": "verified",
       "added": "2026-09-26",
-      "note": "2026-10-20：主張本身就是「清單已記錄且被測試強制」，因此可驗證；complexity 路由的實作仍是待產品決策項（見 settings-remaining-need-product-decision）。"
+      "note": "2026-10-20：主張本身就是「清單已記錄且被測試強制」，因此可驗證；complexity 路由的實作仍是待產品決策項（見 settings-remaining-need-product-decision）。",
+      "verified_how": "pytest tests/test_config_coverage.py（清單逐條存在且帶原因；新增死設定會讓這個測試失敗；routing.policy 是「已記錄的設計決策」，其 YAML 註解說明為何尚未實作）",
+      "why_unverified": "complexity 路由的實作仍待產品決策（另一條目）。"
     },
     {
       "id": "ai-name-config-mismatch",

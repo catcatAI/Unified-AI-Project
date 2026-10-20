@@ -63,17 +63,13 @@ TOLERANCE = 0.15
 
 
 def _run(cmd: list[str]) -> str:
-    proc = subprocess.run(
-        cmd, cwd=str(ROOT), capture_output=True, text=True, check=False
-    )
+    proc = subprocess.run(cmd, cwd=str(ROOT), capture_output=True, text=True, check=False)
     return (proc.stdout or "") + (proc.stderr or "")
 
 
 def collect(scope: str) -> int:
     """Number of collected tests in *scope* (0 when collection fails)."""
-    out = _run(
-        [sys.executable, "-m", "pytest", *SCOPES[scope], "--collect-only", "-q"]
-    )
+    out = _run([sys.executable, "-m", "pytest", *SCOPES[scope], "--collect-only", "-q"])
     match = re.search(r"(\d+)\s+tests? collected", out)
     if not match:
         return 0
@@ -91,9 +87,7 @@ def run_suite(scope: str) -> tuple[int, int, int]:
     out = _run([sys.executable, "-m", "pytest", *SCOPES[scope], "-q", "--timeout=180"])
     # The "failed" part is optional: a green run prints
     # "8623 passed, 107 skipped, 2 warnings in 313.54s" with no "failed" at all.
-    summary = re.findall(
-        r"([\d,]+) passed[^\n]*?([\d,]+) skipped(?:[^\n]*?([\d,]+) failed)?", out
-    )
+    summary = re.findall(r"([\d,]+) passed[^\n]*?([\d,]+) skipped(?:[^\n]*?([\d,]+) failed)?", out)
     if not summary:
         return (0, 0, 0)
     passed, skipped, failed = summary[-1]
@@ -151,7 +145,7 @@ def sync_docs(
         f"    evidence: {passed:,} passed, {skipped:,} skipped, 0 failed"
         f"（{today} 測試數量同步批次全 testpaths 實測：tests/＋apps/backend/tests/＋"
         f"apps/game-rpg/tests＋scripts）\n"
-        f"    last_verified: \"{today}\"",
+        f'    last_verified: "{today}"',
     ):
         changed.append("docs/status_matrix.yaml")
 
@@ -172,9 +166,7 @@ def update_baseline(counts: dict[str, int]) -> None:
     path = Path(__file__).resolve()
     text = path.read_text(encoding="utf-8")
     for scope, value in counts.items():
-        text = re.sub(
-            rf'("{scope}": )\d+', rf"\g<1>{value}", text, count=1
-        )
+        text = re.sub(rf'("{scope}": )\d+', rf"\g<1>{value}", text, count=1)
     path.write_text(text, encoding="utf-8")
 
 
@@ -182,9 +174,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--measure", action="store_true", help="measure and print")
     parser.add_argument("--update", action="store_true", help="measure and sync")
-    parser.add_argument(
-        "--scope", default="ci", choices=sorted(SCOPES), help="scope to measure"
-    )
+    parser.add_argument("--scope", default="ci", choices=sorted(SCOPES), help="scope to measure")
     args = parser.parse_args()
 
     if args.update:
@@ -193,9 +183,7 @@ def main() -> int:
             print("❌ collection failed — refusing to write a bogus baseline")
             return 2
         passed, skipped, failed = run_suite("full")
-        changed = sync_docs(
-            counts["tests"], counts["ci"], counts["full"], passed, skipped
-        )
+        changed = sync_docs(counts["tests"], counts["ci"], counts["full"], passed, skipped)
         update_baseline(counts)
         # The generated status matrix must follow the YAML it is generated
         # from — otherwise its freshness test fails and the numbers disagree

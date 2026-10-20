@@ -56,8 +56,10 @@ def main() -> int:
                 for code, n in codes.most_common():
                     print(f"  [{code}] {n}")
             return 0
-        print(f"❌ type:ignore {count} < 預算 {budget}：請下調 "
-              f"scripts/type_ignore_budget.txt 至 {count}")
+        print(
+            f"❌ type:ignore {count} < 預算 {budget}：請下調 "
+            f"scripts/type_ignore_budget.txt 至 {count}"
+        )
         return 1
     print(f"✅ type:ignore 壓制預算鎖定（{count} = {budget}）")
     if args.top:

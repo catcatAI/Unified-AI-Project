@@ -894,6 +894,19 @@ def audit_slots() -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 # D. events
 # ---------------------------------------------------------------------------
+def _telemetry_allowlist() -> Dict[str, str]:
+    """The documented telemetry-only events (no in-process consumer by design).
+
+    Read from the codebase (core/system/state_store/telemetry_events.py) so
+    the reviewed list lives with the code, not in this script.
+    """
+    path = SRC / "core" / "system" / "state_store" / "telemetry_events.py"
+    if not path.exists():
+        return {}
+    text = read(path)
+    return dict(re.findall(r'^\s*"([^"]+)":\s*"([^"]*)"', text, re.M))
+
+
 def audit_events() -> Dict[str, Any]:
     call_re = re.compile(
         r"\b(emit_event|subscribe_event)\(\s*(?:['\"]([^'\"]+)['\"]|([A-Z][A-Z0-9_]*))"
@@ -909,10 +922,17 @@ def audit_events() -> Dict[str, Any]:
             if not name:
                 continue
             (emitted if m.group(1) == "emit_event" else subscribed).add(name)
+    allowlist = _telemetry_allowlist()
+    # A stale allowlist entry (an event that is no longer emitted) is a
+    # defect in the list, not a silent no-op.
+    stale_allowlist = sorted(set(allowlist) - emitted)
+    unexplained = sorted(emitted - subscribed - set(allowlist))
     return {
         "emitted": sorted(emitted),
         "subscribed": sorted(subscribed),
-        "orphans": sorted(emitted - subscribed),
+        "orphans": unexplained,
+        "telemetry_only": sorted(set(allowlist) & emitted),
+        "stale_allowlist": stale_allowlist,
         "never_emitted": sorted(subscribed - emitted),
     }
 
@@ -1163,10 +1183,12 @@ def render_md(
         a("### 已評估、決策保留（非本次修復）")
         a("")
         a(
-            "- **21 個孤兒事件**（emit 無 subscribe）：文件宣稱的閉環多以直接函數呼叫"
-            "（PriorityNegotiator voter、get_system_health 等）實現，事件為遙測預留；"
-            "新增 subscribe 屬行為變更，另案評估 — emit 無消費者目前無害"
-            "（global_store.emit_event 無訂閱即 return）。"
+            "- **21 個遙測預留事件**（emit 無 in-process subscribe）：文件宣稱的閉環多以"
+            "直接函數呼叫（PriorityNegotiator voter、get_system_health 等）實現，事件為"
+            "外部觀察者預留。2026-10-20 起逐筆記錄於"
+            "`core/system/state_store/telemetry_events.py`（每筆附「為何無消費者」"
+            "的理由），稽核掃描時扣除，故「未解釋的孤兒事件」為 0；清單若與程式"
+            "不一致（事件已不再發射）會被 `defs.stale_telemetry_allowlist` 擋下。"
         )
         a(
             "- **權重三方分歧**（Python 全 1.0 / YAML ε0.3θ0.8ζ0.2 / JS ε0.3θ0.2ζ0.3）："
@@ -1500,16 +1522,29 @@ def _defs_facts(scan: Dict[str, Any]) -> List[Any]:
             "zh-CN vs en-US",
             f"diff={sorted(prompt['parity_diff'])}",
         ),
-        # 棘輪：21 為 2026-10-14 決策保留基線（遙測預留、無消費者無害）；
-        # 新增孤兒事件（emit 無 subscribe）超過基線即擋門，只減不增。
+        # 棘輪：鎖定「未解釋的孤兒事件」數量。已記錄為遙測預留（無 in-process
+        # 消費者，資料同樣在 state store 裡）的事件列在
+        # core/system/state_store/telemetry_events.py，掃描時扣除；因此這裡擋的是
+        # 真正沒有交代的事件。基線 0（2026-10-20 起：21 筆全部有逐條理由）。
         Fact(
             "defs.orphan_events_ratchet",
             float(len(events["orphans"])),
-            21.0,
+            0.0,
             "le",
             "events",
-            "src emit_event vs subscribe_event",
-            f"orphans({len(events['orphans'])})={events['orphans']}",
+            "src emit_event vs subscribe_event（已扣除具名遙測清單）",
+            f"orphans({len(events['orphans'])})={events['orphans']} "
+            f"telemetry_only({len(events['telemetry_only'])}) "
+            f"stale_allowlist({len(events['stale_allowlist'])})",
+        ),
+        Fact(
+            "defs.stale_telemetry_allowlist",
+            float(len(events["stale_allowlist"])),
+            0.0,
+            "le",
+            "events",
+            "具名遙測清單裡不得有已不再發射的事件",
+            f"stale={events['stale_allowlist']}",
         ),
         Fact(
             "defs.get_parameter_keys_resolve",
