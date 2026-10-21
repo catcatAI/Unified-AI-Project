@@ -212,7 +212,7 @@ features:
     claim: 全倉綠
     status: verified
     verify_command: pytest
-    evidence: 8,793 passed, 112 skipped, 0 failed（2026-10-21 測試數量同步批次全 testpaths 實測：tests/＋apps/backend/tests/＋apps/game-rpg/tests＋scripts）
+    evidence: 8,801 passed, 112 skipped, 0 failed（2026-10-21 測試數量同步批次全 testpaths 實測：tests/＋apps/backend/tests/＋apps/game-rpg/tests＋scripts）
     last_verified: "2026-10-21"
 
   - id: mypy-debt
@@ -388,6 +388,13 @@ features:
       全滅）**。結論誠實：**純本地基模目前還不能算「會說人話」**——帶邊界/例外的
       題一題都答不來（多數是誠實棄權），多重事實也會記錯。門禁把「人話標準通過
       率」「標準集題數（必須 ≥1000）」「帶邊界條件題的通過率」一起納入裁決。
+      **推理層補上一級**：`ai/reasoning/claims.py` ＋
+      `configs/standard/reasoning/claims.yaml`——**斷言推理**（「X 這句話對嗎？」
+      要帶條件與例外＝「最正確」那一級，斷言庫是知識資產、庫外誠實棄權；知識庫
+      不得回答斷言題，原本會回「答案是 100。」這種假答案）；**多重事實組合**
+      （回憶層會把問題拆成子句並一次回答多個事實）。標準集新增 `claim` 類 48 題
+      （斷言庫覆蓋的題＝量機制），與 `state` 類 324 題（刻意不重疊＝量知識缺口）
+      分開，避免自己教自己。
     last_verified: "2026-10-21"
 
   - id: msba-pipeline

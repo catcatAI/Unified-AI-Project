@@ -133,6 +133,17 @@ _NAME_QUESTION = re.compile(
 )
 
 
+# The separators of a combined question ("我叫什麼名字、還有我住哪裡？").
+_CLAUSE_SPLIT = re.compile(r"[、,，]|還有|以及|而且|跟|和(?![和])")
+
+
+def _recall_clauses(question: str) -> List[str]:
+    """The question's clauses (a combined question asks several facts)."""
+    parts = [part.strip() for part in _CLAUSE_SPLIT.split(question or "")]
+    clauses = [part for part in parts if len(part) >= 2]
+    return clauses or [question or ""]
+
+
 def _overlap(query_words: set, statement: str) -> int:
     """How many of the query's content words appear in the statement."""
     statement_words = set(_recall_keywords(statement))
@@ -346,37 +357,54 @@ class MemoryIntegration:
         scored.sort(key=lambda item: -item[1])
         statements = [st for st, _score in scored]
 
-        # 1. A fact the user stated about themselves ("我叫小明") — but only
-        # when the question actually asks for a name. Otherwise every
-        # "我剛才說…" got the same name answer (7/44 turns: the QA machine).
-        asks_for_name = bool(_NAME_QUESTION.search(user_message or ""))
-        for statement in statements:
-            name = _statement_name(statement)
-            if name and asks_for_name:
-                text = f"你叫{name}。" if language == "zh" else f"Your name is {name}."
-                return ChatResponse(
-                    text=text,
-                    backend="memory-recall",
-                    model="conversation-recall",
-                    confidence=0.85,
-                    hit_score=0.85,
-                    hit_source="memory",
-                    route="MEMORY",
-                    metadata={"memory_hit": True, "recall": "name"},
+        # A combined question asks several facts ("我剛才說我叫什麼名字、還有我
+        # 住哪裡？") — the answer must carry *all* of them, not just the first.
+        clauses = _recall_clauses(user_message)
+        answers: List[str] = []
+        for clause in clauses:
+            clause_words = set(_recall_keywords(clause))
+            best_statement = None
+            best_score = 0
+            for statement in statements:
+                score = _overlap(clause_words, statement)
+                if score > best_score:
+                    best_statement, best_score = statement, score
+            if best_statement is None:
+                continue
+            name = _statement_name(best_statement)
+            if name and _NAME_QUESTION.search(clause):
+                answers.append(f"你叫{name}" if language == "zh" else f"your name is {name}")
+            else:
+                answers.append(
+                    f"「{best_statement[:120]}」"
+                    if language == "zh"
+                    else f'"{best_statement[:120]}"'
                 )
+        if not answers:
+            return None
 
-        # 2. Otherwise quote what the user actually said.
-        quoted = statements[0][:120]
-        text = f"你剛才說過：「{quoted}」" if language == "zh" else f'You said earlier: "{quoted}"'
+        if len(answers) == 1:
+            # A single fact: the name gets its own sentence, a quote is
+            # introduced ("你剛才說過：…").
+            only = answers[0]
+            if language == "zh":
+                text = only if only.startswith("你叫") else f"你剛才說過：{only}"
+            else:
+                text = only if only.startswith("your name") else f"You said earlier: {only}"
+            confidence = 0.85 if only.startswith("你叫") or only.startswith("your name") else 0.65
+        else:
+            joined = "、".join(answers) if language == "zh" else ", ".join(answers)
+            text = f"你剛才說過：{joined}" if language == "zh" else f"You said earlier: {joined}"
+            confidence = 0.75
         return ChatResponse(
             text=text,
             backend="memory-recall",
             model="conversation-recall",
-            confidence=0.65,
-            hit_score=0.65,
+            confidence=confidence,
+            hit_score=confidence,
             hit_source="memory",
             route="MEMORY",
-            metadata={"memory_hit": True, "recall": "quote"},
+            metadata={"memory_hit": True, "recall": "multi" if len(answers) > 1 else "single"},
         )
 
     async def start_precompute(self) -> None:

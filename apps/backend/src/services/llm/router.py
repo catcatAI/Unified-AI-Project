@@ -2229,6 +2229,19 @@ class AngelaLLMService:
         try:
             from ai.knowledge_base import format_knowledge_answer, route_knowledge
 
+            # A claim question ("X 這句話對嗎？") is not a fact lookup: the
+            # knowledge store would answer "答案是 100" and hide the
+            # condition and the exception — a *false* answer. The claim
+            # route (ai/reasoning/claims.py) answers it properly, or the
+            # honest refusal does.
+            try:
+                from ai.reasoning.claims import is_claim_question
+
+                if is_claim_question(user_message):
+                    return None
+            except Exception:
+                pass
+
             answer = route_knowledge(user_message)
             if answer:
                 response_time = (time.time() - start_time) * 1000
@@ -3462,6 +3475,7 @@ class AngelaLLMService:
             self._fb_deterministic_reasoning,
             self._fb_greeting_template,
             self._fb_emotional_support,
+            self._fb_claim_reasoning,
             self._fb_honest_refusal,
             self._fb_neuro_blender,
         ):
@@ -3662,6 +3676,38 @@ class AngelaLLMService:
         if scored and scored[0][0] > 0:
             return scored[0][1]
         return random.choice([c for _, c in scored])
+
+    async def _fb_claim_reasoning(
+        self, user_message: str, context: Dict[str, Any], looks_like_question: bool
+    ) -> Optional[LLMResponse]:
+        """Tier 0.6: an assertion with its condition and its exception.
+
+        "X 這句話對嗎？" is a *claim* question: the honest answer states the
+        fact **with its condition** and **names the exception** (the
+        "most correct" shape). The claim library is the knowledge asset
+        (ai/reasoning/claims.yaml); a claim it does not know is left to the
+        honest refusal.
+        """
+        try:
+            from ai.reasoning.claims import answer_claim_question
+
+            text = answer_claim_question(user_message)
+        except Exception as exc:
+            logger.debug("claim reasoning failed: %s", exc)
+            return None
+        if not text:
+            return None
+        started = time.time()
+        response_time = (time.time() - started) * 1000
+        self._update_stats(response_time)
+        return LLMResponse(
+            text=text,
+            backend="claim-reasoning",
+            model="claim-library",
+            confidence=0.8,
+            response_time_ms=response_time,
+            metadata={"fallback": True, "tier": "claim"},
+        )
 
     async def _fb_honest_refusal(
         self, user_message: str, context: Dict[str, Any], looks_like_question: bool

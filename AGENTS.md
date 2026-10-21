@@ -928,6 +928,13 @@ collected — 0 errors**).
 > `ai.arithmetic/deterministic_router.py` 的 `try_neural_bridge()` 接在
 > `try_reasoning`（老師）之後，老師先答、橋接補老師看不到的改述；GARDEN／ED3N
 > 引擎經同一 router 一併受益；橋接對非比較問句 abstain（不亂答）。
+> **2026-10-21 續修（推理層補一級）**：新增
+> `apps/backend/src/ai/reasoning/claims.py` ＋
+> `apps/backend/configs/standard/reasoning/claims.yaml`——**斷言推理**：「X 這句話
+> 對嗎？」帶著**條件**與**例外**回答（「最正確」那一級）；知識庫不得回答斷言題
+> （原本回「答案是 100。」這種假答案，把條件藏掉）。**多重事實組合**：回憶層會
+> 拆子句並一次回答多個事實。標準集新增 `claim` 類（量機制）與 `state` 類（量知識
+> 缺口）刻意分開。
 > **2026-10-21 續修（人話標準 + 千題標準集）**：
 > `apps/backend/src/ai/response/human_speech.py` 定義**可裁決的「人話標準」**（六條
 > 規則，含「有邊界條件時要指出例外」＝「最正確」與「近似正確」的差別）與

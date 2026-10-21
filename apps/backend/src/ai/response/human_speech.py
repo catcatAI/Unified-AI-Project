@@ -160,7 +160,7 @@ def classify_state(item: StandardItem, response: str) -> str:
         return ABSTAIN
     if _DEGENERATE.search(text):
         return FALSE if item.kind == "state" else PARROT
-    if item.kind == "state":
+    if item.kind in ("state", "claim"):
         return _classify_state_answer(item, text)
     if item.kind == "qa":
         return _classify_qa_answer(item, text)
@@ -701,6 +701,38 @@ def _dialogue_items() -> List[StandardItem]:
     return items
 
 
+def build_claim_holdout() -> List[StandardItem]:
+    """The questions about the claim library — the *mechanism* measurement.
+
+    The claim library is the knowledge asset (ai/reasoning/claims.yaml ✓);
+    these questions ask whether the boundary-aware answer comes out. The
+    standard set's `state` items are about *other* topics on purpose: they
+    measure the knowledge gap, not the mechanism.
+    """
+    try:
+        from ai.reasoning.claims import load_claims
+    except Exception:
+        return []
+    items: List[StandardItem] = []
+    for claim in load_claims():
+        for phrasing in (
+            "{statement}，這句話對嗎？",
+            "那麼，{statement}這是對的嗎？",
+            "有人說：{statement}同意嗎？",
+        ):
+            items.append(
+                StandardItem(
+                    kind="claim",
+                    message=phrasing.format(statement=claim.statement),
+                    truth=f"{claim.condition}，{claim.statement}",
+                    exception=claim.exception,
+                    irrelevant=claim.irrelevant,
+                    tags=["claim", "boundary"],
+                )
+            )
+    return items
+
+
 def build_standard_set() -> List[StandardItem]:
     """The standard set: >= 1000 items, dialogue included."""
     items: List[StandardItem] = []
@@ -754,7 +786,9 @@ def build_standard_set() -> List[StandardItem]:
                 tags=["multi_fact", "combined"],
             )
         )
-    # 3. The ordinary questions.
+    # 3. The claim hold-out (the mechanism: the seeded claims).
+    items.extend(build_claim_holdout())
+    # 4. The ordinary questions.
     items.extend(_qa_items())
     # 4. The dialogue turns.
     items.extend(_dialogue_items())

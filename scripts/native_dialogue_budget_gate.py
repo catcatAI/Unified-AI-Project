@@ -61,6 +61,7 @@ CHECKS: Tuple[Tuple[str, str, str], ...] = (
     ("min", "human_speech_pass_rate", "standard_set.pass_rate"),
     ("min", "state_pass_rate", "standard_set.by_kind.state.passed_ratio"),
     ("min", "multi_pass_rate", "standard_set.by_kind.multi.passed_ratio"),
+    ("min", "claim_pass_rate", "standard_set.by_kind.claim.passed_ratio"),
 )
 
 

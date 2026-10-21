@@ -1,0 +1,124 @@
+# 帶條件與例外的斷言庫（ai.reasoning.claims 的知識資產）
+#
+# 每條斷言要能同時給出：事實（連同條件）、例外、以及一個「完全不符合」的
+# 例子。答案的形式是「在<條件>下<事實>；但<例外>」——這是「最正確」與
+# 「近似正確」的差別。
+#
+# **與量測的關係**：這裡的主題刻意不與標準集（ai/response/human_speech.py 的
+# state 類）重疊——標準集那 324 題量的是**知識缺口**（沒被教過就答不出來，
+# 誠實棄權是正確行為），這裡的斷言加上 `claim_holdout` 題目量的是**機制**
+# （斷言庫有的東西能不能帶著條件與例外答出來）。
+
+claims:
+  - id: alcohol_boiling
+    statement: "酒精的沸點約 78°C"
+    condition: "在標準大氣壓下"
+    exception: "高海拔低氣壓時會更低，加入鹽類則會升高"
+    irrelevant: "這杯酒的溫度是 78°C"
+    # 「沸點」太泛（水的沸點也會命中），只留專屬詞。
+    keywords: ["酒精", "乙醇", "酒精沸點", "酒沸點", "酒精的沸點"]
+
+  - id: blood_alcohol_limit
+    statement: "一般駕駛的血液酒精濃度上限是 0.15%"
+    condition: "在一般道路駕駛汽車時"
+    exception: "機車與大客車是 0.03%，喝到 0.03% 以上就屬嚴重違規"
+    irrelevant: "這杯飲料的酒精濃度是 0.15%"
+    keywords: ["酒精濃度", "酒測", "酒駕", "血液酒精"]
+
+  - id: infant_jaundice
+    statement: "新生兒黃疸的指數在出生後第 3 到 5 天最高"
+    condition: "以足月嬰兒的一般情況來看"
+    exception: "早產兒的高峰較晚，未照光治療時消退也較慢"
+    irrelevant: "這張黃疸照片的顏色比較深"
+    keywords: ["黃疸", "新生兒黃疸", "膽紅素"]
+
+  - id: milk_shelf_life
+    statement: "鮮奶的冷藏保存期限通常是 7 到 10 天"
+    condition: "以未開封、全程 4°C 以下冷藏來看"
+    exception: "開封後大約 3 到 5 天，室溫放太久會提早變質"
+    irrelevant: "這盒牛奶是 200 毫升"
+    keywords: ["牛奶", "鮮奶", "奶保存", "牛奶期限"]
+
+  - id: sunscreen_shelf_life
+    statement: "防曬乳的效期是三年"
+    condition: "以未開封、正規販售的產品來看"
+    exception: "開封後建議一年內用完， 高溫存放會加速劣化"
+    irrelevant: "這條防曬乳是 100 毫升"
+    keywords: ["防曬", "防曬乳", "防晒", "效期"]
+
+  - id: planets_count
+    statement: "太陽系有八顆行星"
+    condition: "以 2006 年國際天文聯合會的行星定義來看"
+    exception: "冥王星因為無法清除軌道附近的小天體而被降級為矮行星"
+    irrelevant: "這張照片是銀河系"
+    keywords: ["行星", "太陽系", "幾顆行星"]
+
+  - id: ocean_surface
+    statement: "地球表面約有 71% 被水覆蓋"
+    condition: "以整個地球表面積的平均值來算"
+    exception: "不同測量方式會讓數字有幾個百分點的差異"
+    irrelevant: "這杯水有 300 毫升"
+    keywords: ["地球表面", "海洋覆蓋", "水覆蓋", "71%"]
+
+  - id: water_hardness_boiling
+    statement: "煮沸可以降低水的硬度"
+    condition: "指的是以碳酸氫鈣為主要成分的硬水"
+    exception: "以硫酸鹽為主的硬水煮沸後硬度幾乎不變"
+    irrelevant: "這台熱水器的容量是 1.5 公升"
+    keywords: ["硬度", "硬水", "煮沸", "水硬度"]
+
+  - id: book_classification
+    statement: "圖書館的藏書使用杜威十進位分類法"
+    condition: "以美國的公共圖書館分類慣例來看"
+    exception: "各國有各自的國家分類法，中文圖書館多用中國圖書分類法"
+    irrelevant: "這本書有 300 頁"
+    keywords: ["杜威", "分類法", "圖書分類", "十進位分類"]
+
+  - id: library_loan_period
+    statement: "圖書館的一般圖書借閱期限是一到四週"
+    condition: "以一般公共圖書館的規則為準"
+    exception: "期刊與參考書的借期通常只有一週甚至更短"
+    irrelevant: "這間圖書館有 300 個座位"
+    keywords: ["借書", "借閱期限", "圖書館借", "借期"]
+
+  - id: medicine_expiry
+    statement: "藥品的保存期限標示在包裝上"
+    condition: "以未開封、依指示保存的狀態為準"
+    exception: "開封後的期限通常比包裝上的短得多"
+    irrelevant: "這盒藥有 20 顆"
+    keywords: ["藥品", "保存期限", "有效期", "藥效期"]
+
+  - id: wine_aging
+    statement: "多數紅酒的適飲期是出廠後三到五年"
+    condition: "以沒有特別標示年份的日常紅酒來看"
+    exception: "好的年份酒可以存放數十年"
+    irrelevant: "這瓶紅酒是 750 毫升"
+    keywords: ["紅酒", "適飲期", "年份酒", "酒年份"]
+
+  - id: waste_sorting_local
+    statement: "垃圾分類的細則由各地方政府規定"
+    condition: "以一般家戶垃圾的分類為準"
+    exception: "不同縣市對紙類與塑膠的認定不同"
+    irrelevant: "這台垃圾車的載重是 3 噸"
+    keywords: ["垃圾分類", "垃圾", "分類規定", "資源回收"]
+
+  - id: driving_speed_default
+    statement: "沒有標誌時的市區速限是 50 公里"
+    condition: "以一般小型車在沒有速限標誌的道路為準"
+    exception: "有標誌的路口依標誌，隧道與快速道路另訂"
+    irrelevant: "這輛車的排氣量是 2000  cc"
+    keywords: ["速限", "市區速限", "限速", "公里速限"]
+
+  - id: typhoon_eye
+    statement: "颱風眼是風速最低的區域"
+    condition: "以成熟的颱風結構來看"
+    exception: "眼牆反而是風速最強的地方"
+    irrelevant: "這張颱風照片的雲層很厚"
+    keywords: ["颱風眼", "颱風", "眼牆", "風眼"]
+
+  - id: high_altitude_boiling
+    statement: "水的沸點隨海拔升高而降低"
+    condition: "以海拔每升高 300 公尺沸點約降 1°C 來估算"
+    exception: "加入溶質會把沸點拉回甚至拉高"
+    irrelevant: "這座山的海拔是 3000 公尺"
+    keywords: ["沸點海拔", "海拔沸點", "高山沸點", "沸點降低", "海拔", "高山", "沸點降低"]
