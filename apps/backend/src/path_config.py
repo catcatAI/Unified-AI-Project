@@ -4,6 +4,7 @@
 """
 
 import logging
+import os
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -11,8 +12,11 @@ logger = logging.getLogger(__name__)
 # 项目根目录
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 
-# 数据目录
-DATA_DIR = PROJECT_ROOT / "data"
+# 数据目录（ANGELA_DATA_DIR 可覆寫——量測／沙箱腳本需要隔離自己的資料，
+# 不該寫進使用者真正的記憶庫；core/config_validator.py 早已宣告這個變數，
+# 但先前沒有任何實作者）
+_env_data_dir = os.environ.get("ANGELA_DATA_DIR", "").strip()
+DATA_DIR = Path(_env_data_dir).expanduser() if _env_data_dir else PROJECT_ROOT / "data"
 
 # 训练目录
 TRAINING_DIR = PROJECT_ROOT / "training"

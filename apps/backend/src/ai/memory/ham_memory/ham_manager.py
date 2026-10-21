@@ -154,9 +154,16 @@ class HAMMemoryManager:
         core_storage_filename: Optional[str] = None,
     ):
         if memory_file is None:
-            # Default to data/memory/ham_memory.json relative to project root
-            project_root = self._find_project_root()
-            memory_file = os.path.join(project_root, "data", "memory", "ham_memory.json")
+            # Default to <data dir>/memory/ham_memory.json. The data dir is
+            # overridable (ANGELA_DATA_DIR) so a sandboxed run (a probe, a
+            # test) never writes into the user's real memory.
+            try:
+                from path_config import DATA_DIR
+
+                memory_file = os.path.join(str(DATA_DIR), "memory", "ham_memory.json")
+            except Exception:
+                project_root = self._find_project_root()
+                memory_file = os.path.join(project_root, "data", "memory", "ham_memory.json")
         self.memory_file = Path(memory_file)
         self.auto_save = auto_save
         self._data: Dict[str, Any] = {"templates": [], "conversations": [], "metadata": {}}

@@ -6,8 +6,10 @@
 
 from __future__ import annotations
 
+import importlib
 import importlib.util
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -296,6 +298,50 @@ def test_the_native_only_service_refuses_external_backends() -> None:
 
     with pytest.raises(probe.NativeOnlyError):
         probe.assert_native_only(Fake())
+
+
+def test_the_probe_is_sandboxed(monkeypatch) -> None:
+    """The probe must not write into the user's real memory."""
+    probe = _load("probe_native_dialogue")
+    assert probe.SANDBOX_DATA_DIR != REPO_ROOT / "data"
+    monkeypatch.delenv("ANGELA_DATA_DIR", raising=False)
+    probe.isolate_data_dir()
+    assert os.environ["ANGELA_DATA_DIR"] == str(probe.SANDBOX_DATA_DIR)
+
+
+def test_importing_the_probe_does_not_change_the_environment(monkeypatch) -> None:
+    """A module import must not leak the sandbox into the process."""
+    monkeypatch.delenv("ANGELA_DATA_DIR", raising=False)
+    probe = _load("probe_native_dialogue")
+    assert "ANGELA_DATA_DIR" not in os.environ
+
+
+def test_the_data_dir_env_override_is_real() -> None:
+    """ANGELA_DATA_DIR is documented (core/config_validator.py) — it must work.
+
+    Checked in a subprocess: reloading the shared module would leak the
+    override into the other tests of the session.
+    """
+    import os
+    import subprocess
+
+    env = dict(os.environ)
+    env["ANGELA_DATA_DIR"] = "/tmp/angela-probe-data"
+    env["PYTHONPATH"] = str(REPO_ROOT / "apps" / "backend" / "src")
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "import path_config; print(path_config.DATA_DIR)",
+        ],
+        cwd=str(REPO_ROOT),
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip() == "/tmp/angela-probe-data"
 
 
 def test_the_probe_only_allows_the_projects_own_backends() -> None:

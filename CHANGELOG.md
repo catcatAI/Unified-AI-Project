@@ -41,6 +41,12 @@ and this project adheres to
   deterministic-reasoning 與 comparison_bridge 兩級，ED3N／GARDEN 也接了橋接）。
   但**兩輪 20 次對話的演進是 +0.000**（開 `ANGELA_LEGACY_ED3N=1` 也一樣）——
   純本地基模目前**不會**因對話而變得像人，剩下的是情緒與上下文題的罐頭模板。
+  診斷（實測）：**學習機制本身沒問題**——GARDEN 教 1 組就能記住（1/1…5/5 全中，
+  未教過的題目不會亂答）；問題在**路由**：聊天路徑的罐頭模板（template_match）
+  排在學習路徑前面，把情緒題的模板句先答掉了，學到的關聯永遠沒有機會浮出來。
+  另外量測發現探針會把對話寫進**真實的記憶庫**（副作用）→ 已讓
+  `ANGELA_DATA_DIR`（`core/config_validator.py` 早已宣告卻從未實作）真正生效，
+  探針改用沙箱資料目錄，並清掉先前寫進真實記憶的 64 筆探針條目。
 
 - **中間層：神經 ↔ 確定性老師的橋接**（2026-10-21）：新增
   `apps/backend/src/ai/reasoning/neural_bridge.py`——使用者要求的「先接觸、再依反饋與神經網路對齊」的中間層。三段式：①

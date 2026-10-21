@@ -44,7 +44,11 @@ def test_directory_hierarchy() -> None:
     assert str(CHECKPOINTS_DIR).startswith(str(TRAINING_DIR))
     assert str(CONFIGS_DIR).startswith(str(TRAINING_DIR))
 
-    assert str(DATA_DIR).startswith(str(PROJECT_ROOT))
+    # ANGELA_DATA_DIR (documented in core/config_validator.py, previously
+    # declared but never implemented) may point the data dir elsewhere — a
+    # sandboxed probe must not write into the user's real data.
+    if not os.environ.get("ANGELA_DATA_DIR", "").strip():
+        assert str(DATA_DIR).startswith(str(PROJECT_ROOT))
 
 
 def test_get_data_path() -> None:

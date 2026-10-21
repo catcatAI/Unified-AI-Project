@@ -3512,7 +3512,7 @@ class AngelaLLMService:
             ("comparison_bridge", "neural-bridge"),
         ):
             try:
-                from ai.arithmetic.deterministic_router import try_reasoning, try_neural_bridge
+                from ai.arithmetic.deterministic_router import try_neural_bridge, try_reasoning
 
                 fn = try_reasoning if route == "reasoning" else try_neural_bridge
                 result = fn(user_message)

@@ -49,6 +49,21 @@ from typing import Dict, List, Optional, Sequence, Tuple
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "apps" / "backend" / "src"))
 
+# The probe is a sandbox: its conversations must not land in the user's real
+# memory (HAM／vector store). ANGELA_DATA_DIR redirects the data dir
+# (path_config.DATA_DIR) — it is set in main(), *before* any backend module is
+# imported (importing this module must not change the process environment).
+SANDBOX_DATA_DIR = Path(
+    os.environ.get("ANGELA_PROBE_DATA_DIR") or (REPO_ROOT / "data" / "probe_native_dialogue")
+)
+
+
+def isolate_data_dir() -> Path:
+    """Point the data dir at the sandbox (call before the backend imports)."""
+    os.environ["ANGELA_DATA_DIR"] = str(SANDBOX_DATA_DIR)
+    return SANDBOX_DATA_DIR
+
+
 # --------------------------------------------------------------------------- #
 # The agent's script: what the agent asks, and where the answer comes from
 # --------------------------------------------------------------------------- #
@@ -447,6 +462,9 @@ async def main() -> int:
         ),
     )
     args = parser.parse_args()
+
+    # The sandbox must be set before the backend modules are imported.
+    isolate_data_dir()
 
     # The learning switch must be set before the service is initialised.
     if args.learning == "on":
