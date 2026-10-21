@@ -89,6 +89,44 @@ def _recall_keywords(message: str) -> List[str]:
     return keywords
 
 
+# A statement that tells Angela a fact ("我住在台北"). The native path has
+# no way to *acknowledge* it — without this the answer is a canned greeting
+# (the QA-machine shape: 16 of 68 turns answered the same greeting).
+_TEACHING_VERBS = (
+    "我叫",
+    "我住在",
+    "我搬到",
+    "我在",
+    "我喜歡",
+    "我最愛",
+    "我的名字",
+    "我的貓",
+    "我的狗",
+    "我的生日",
+    "我的手機",
+    "我的電話",
+    "我的暱稱",
+    "我上班",
+    "我最近在學",
+    "我養了",
+    "我下週",
+    "我明天",
+    "我負責",
+)
+# The feelings are not facts: they get the empathetic template, not "記住囉".
+_EMOTION_WORDS = ("累", "難過", "傷心", "開心", "焦慮", "孤單", "壓力", "生氣", "害怕", "累死")
+
+
+def _is_teaching_statement(message: str) -> bool:
+    """True when the user tells Angela a fact about themselves."""
+    text = (message or "").strip()
+    if not text or text.endswith(("?", "？")):
+        return False
+    if any(word in text for word in _EMOTION_WORDS):
+        return False
+    return any(text.startswith(verb) for verb in _TEACHING_VERBS)
+
+
 # The questions that ask for a name (the name recall must not answer others).
 _NAME_QUESTION = re.compile(
     r"什麼名字|甚麼名字|名字|姓名|叫什麼|叫什么|我叫|my name|what.*name|called me", re.IGNORECASE
@@ -214,6 +252,30 @@ class MemoryIntegration:
             logger.warning("Memory retrieval error: %s", e, exc_info=True)
             return None
 
+    async def try_teaching_ack(self, user_message: str) -> Optional["LLMResponse"]:
+        """Acknowledge a fact the user just told us.
+
+        Without this the native path answers every statement with the same
+        greeting (the QA-machine shape). The acknowledgment quotes the user's
+        own words, so it is honest and it is not a canned line.
+        """
+        if not _is_teaching_statement(user_message):
+            return None
+        from core.interfaces.protocols import ChatResponse
+
+        fact = (user_message or "").strip()
+        text = f"記住囉！{fact}。"
+        return ChatResponse(
+            text=text,
+            backend="memory-teaching",
+            model="teaching-ack",
+            confidence=0.7,
+            hit_score=0.7,
+            hit_source="memory",
+            route="MEMORY",
+            metadata={"memory_hit": True, "teaching": True},
+        )
+
     async def try_conversation_recall(
         self, user_message: str, context: Dict[str, Any]
     ) -> Optional["LLMResponse"]:
@@ -273,9 +335,16 @@ class MemoryIntegration:
             language = "zh"
 
         # The statement that actually matches the question ("我住哪裡" → the
-        # one about 住, not the one about 名字).
+        # one about 住, not the one about 名字). A statement with *no* shared
+        # content word is not an answer: quoting it would be a wrong answer
+        # dressed as a memory.
         query_words = set(_recall_keywords(user_message))
-        statements.sort(key=lambda st: -_overlap(query_words, st))
+        scored = [(st, _overlap(query_words, st)) for st in statements]
+        scored = [(st, score) for st, score in scored if score > 0]
+        if not scored:
+            return None
+        scored.sort(key=lambda item: -item[1])
+        statements = [st for st, _score in scored]
 
         # 1. A fact the user stated about themselves ("我叫小明") — but only
         # when the question actually asks for a name. Otherwise every

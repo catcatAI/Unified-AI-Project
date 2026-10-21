@@ -19,6 +19,7 @@ happened). This module is the single owner:
 
 import inspect
 import logging
+import re
 import threading
 import time
 from dataclasses import dataclass
@@ -588,6 +589,38 @@ class GateExecutionOwner:
         context["last_action_result"] = None
         return GateOutcome(action=OUTCOME_NONE, plan=plan, decision=decision)
 
+    def _bypass_question(
+        self,
+        user_message: str,
+        context: Dict[str, Any],
+        plan: Any,
+        decision: Any,
+    ) -> Optional[GateOutcome]:
+        """A question is not an operation: it must not be confirmed or run.
+
+        The task handler is the trap: "我剛才說我在哪裡工作？" resolves to
+        task_mgr (the word 工作) and then *creates a task* out of the
+        question (live: the answer was "已執行：task_mgr。"). Asking about
+        something is not ordering something.
+        """
+        if str(getattr(decision, "handler", "") or "") != "task_mgr":
+            return None
+        text = (user_message or "").strip()
+        if not text:
+            return None
+        is_question = text.endswith(("?", "？")) or bool(
+            re.search(
+                r"什麼|甚麼|哪裡|哪裏|哪個|哪個|誰|為什麼|怎麼|嗎\b|是不是|有沒有|"
+                r"what|who|where|which|when|why|how|is it|are there",
+                text,
+                re.IGNORECASE,
+            )
+        )
+        if not is_question:
+            return None
+        context["last_action_result"] = None
+        return GateOutcome(action=OUTCOME_NONE, plan=plan, decision=decision)
+
     async def _route_auto_execute(
         self,
         user_message: str,
@@ -666,6 +699,10 @@ class GateExecutionOwner:
             plan, decision = self.plan_and_decide(user_message, context, model_bus)
 
             bypass = self._bypass_code_write(user_message, context, plan, decision)
+            if bypass is not None:
+                return bypass
+
+            bypass = self._bypass_question(user_message, context, plan, decision)
             if bypass is not None:
                 return bypass
 

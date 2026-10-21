@@ -115,6 +115,11 @@ def clock_query_kind(text: str) -> Optional[str]:
     not match (時間管理 etc.).
     """
     t = (text or "").strip()
+    # A *recall* question is not a clock question: "我剛才說我幾點開會？" asks
+    # for something the user said earlier, not for the time now. The clock
+    # answering "現在19點27分" is the "chicken-and-duck" shape.
+    if re.search(r"(剛才|剛剛|之前|先前|說過|提過|講過|我說過|what did i say)", t, re.IGNORECASE):
+        return None
     wants_time = bool(re.search(r"(幾點|几点|几点了|幾點了)", t))
     wants_date = bool(re.search(r"(今天.*(幾號|几号|星期|日期|幾月|几月)|今天是)", t))
     if wants_time and wants_date:
@@ -2745,6 +2750,15 @@ class AngelaLLMService:
             model_bus_result = await self._try_model_bus_match(user_message, context)
             if model_bus_result is not None:
                 return model_bus_result
+        # A statement that teaches a fact gets an acknowledgment (before the
+        # templates: the canned greeting was the QA-machine shape).
+        try:
+            teaching_ack = await self.memory_integration.try_teaching_ack(user_message)
+        except Exception as exc:
+            logger.debug("teaching acknowledgment skipped: %s", exc)
+            teaching_ack = None
+        if teaching_ack is not None:
+            return teaching_ack
         # The conversation (the freshest source) before the long-term taught
         # facts: the taught facts are older and can be about something else
         # ("我喜歡用 Python" vs the "我喜歡喝拿鐵" said a minute ago).

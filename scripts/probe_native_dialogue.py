@@ -518,7 +518,10 @@ def score_turn(
         classes.append("empty")
     if abstained:
         classes.append("abstain")
-    if echo_ratio >= 0.6 and not answered:
+    # The teaching acknowledgment ("記住囉！我住在台北。") *quotes* the user
+    # on purpose — that is the answer, not parroting.
+    deliberate_quote = backend == "memory-teaching"
+    if echo_ratio >= 0.6 and not answered and not deliberate_quote:
         # A correct answer that repeats the question's wording (the math
         # verifier does: "What is 2+2 = 4.0") is not parroting.
         classes.append("echo")
