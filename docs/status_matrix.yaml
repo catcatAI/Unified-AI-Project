@@ -350,7 +350,16 @@ features:
       「不知道」，現在由老師與中間層接手（router 的 fallback 鏈加了
       deterministic-reasoning 與 comparison_bridge 兩級）；**但兩輪 20 次對話
       的演進是 +0.000**（開 `ANGELA_LEGACY_ED3N=1` 也一樣），剩下的是情緒與
-      上下文題的罐頭模板。人味分數 0.800、鸚鵡/亂碼/QA 機器 0%、雞同鴨講 10%。
+      上下文題的罐頭模板。**2026-10-21 修掉三個真缺陷後**：人味分數 0.800 →
+      0.840、答對 50% → 60%、雞同鴨講 10% → 0%、QA 機器 10% → 0%——原生路徑
+      現在**會記得使用者說過的話**（新增對話回憶層：`_recall_user_fact` 只在
+      問句時回舊事實，陳述句不再被舊事實蓋掉；新增 `MemoryIntegration
+      .try_conversation_recall` 讓「我剛才說我叫什麼名字？」→「你叫小明。」）、
+      **不再用罐頭句蓋掉情緒**（reflex 預設的子字串比對改成「整句就是那句問候」
+      才觸發，「我今天很累」不再拿到「今天是个好日子！」；情緒偵測的正則 `\b`
+      前綴讓中文分支永遠不匹配，已修；疲累模板補上「累」等關鍵字）、
+      **不再碎念**（NeuroBlender 原本每個 role 各取 2 個片段、最多 6 句，現在
+      每 role 1 個、總數上限 3 句）。
       **預算門禁可中斷**（每回合前查預算，超了乾淨收束並輸出 partial），
       門檻在 `scripts/native_dialogue_budget.txt`；這是**臨時門禁**，拆除理由
       寫在 `scripts/open_gates.json`，由 `scripts/check_open_gates.py` 驗證——

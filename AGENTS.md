@@ -928,6 +928,14 @@ collected — 0 errors**).
 > `ai.arithmetic/deterministic_router.py` 的 `try_neural_bridge()` 接在
 > `try_reasoning`（老師）之後，老師先答、橋接補老師看不到的改述；GARDEN／ED3N
 > 引擎經同一 router 一併受益；橋接對非比較問句 abstain（不亂答）。
+> **2026-10-21 續修（純本地路徑的三個真缺陷）**：原生路徑的人味分數
+> 0.800 → **0.840**、答對 50% → **60%**、雞同鴨講 10% → **0%**、QA 機器 10%
+> → **0%**：① 原生路徑**不會用記憶**（使用者的話存了卻查不到）→ 新增對話回憶層
+> （`try_conversation_recall`：「我剛才說我叫什麼名字？」→「你叫小明。」）；②
+> 陳述句被當查詢、被不相關的舊事實蓋掉 → `_recall_user_fact` 只在問句時回舊事實；
+> ③ 罐頭句蓋掉情緒（「我今天很累」→「今天是个好日子！」）→ reflex 預設改成「整句
+> 就是那句問候」才觸發；情緒偵測正則的 `\b` 前綴讓中文分支永不匹配（已修）；
+> 疲累模板缺「累」（已補）；NeuroBlender 黏 6 句碎念（已限 3 句）。
 > **8,415 passed / 107 skipped / 0 failed**（`pytest tests/
 > apps/backend/tests/`）。
 

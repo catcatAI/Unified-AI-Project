@@ -46,6 +46,13 @@ def _np_as_float32(arr) -> "np.ndarray":
     return np.asarray(arr, dtype=np.float32)
 
 
+# How much may surround a reflex preset and still be that greeting
+# ("你好呀" → "你好" + 1 char, "講個笑話" → "笑話" + a 2-char prefix).
+# Beyond that the message is a sentence, not a greeting.
+_REFLEX_MAX_PREFIX = 2
+_REFLEX_MAX_SUFFIX = 1
+
+
 class UnifiedEngine:
     """Single engine: deterministic routing first, then the fixed-size
     statistical core. model_bytes is constant across training."""
@@ -266,8 +273,17 @@ class UnifiedEngine:
         for pattern, response in REFLEX_PRESETS.items():
             if len(pattern) < 2:
                 continue
-            # Quick substring check first
-            if pattern not in normalized:
+            # The message must *be* the greeting (plus a short particle):
+            # "講個笑話" hits "笑話", "你好呀" hits "你好" — but "我今天很累"
+            # must NOT hit "今天". A keyword inside a sentence is not a
+            # greeting: that substring match was the QA-machine shape (a
+            # canned line that ignores what the user actually said).
+            idx = normalized.find(pattern)
+            if idx < 0:
+                continue
+            if idx > _REFLEX_MAX_PREFIX:
+                continue
+            if len(normalized) - idx - len(pattern) > _REFLEX_MAX_SUFFIX:
                 continue
             # Word-boundary check — CJK chars don't use spaces, so
             # only enforce boundary for ASCII/Latin patterns.

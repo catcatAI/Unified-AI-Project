@@ -2696,6 +2696,11 @@ class AngelaLLMService:
         pipeline proceeds exactly as before.
         """
         try:
+            if not self._looks_like_question(user_message):
+                # A statement is a *teaching* turn, not a query: answering
+                # "我叫小明" with a remembered fact (the cat, the fox…) is
+                # worse than acknowledging the statement.
+                return None
             entries = list(context.get("retrieved_context") or [])
             entries.extend(await self._query_taught_facts(user_message))
             facts = self._filter_taught_facts(entries)
@@ -3575,8 +3580,12 @@ class AngelaLLMService:
 
         bio_state = context.get("bio_state") or {}
         dominant = str(bio_state.get("dominant_emotion", "")).lower()
+        # NB: the English alternatives carry the word boundary; the Chinese
+        # ones must NOT ("\b" between two CJK characters is no boundary, so
+        # the whole Chinese half of the pattern was unreachable).
         feels = _re.search(
-            r"\b(i feel|i'm feeling|i am feeling|我覺得|我好|很難過|難過|傷心)",
+            r"\b(i feel|i'm feeling|i am feeling|tired|exhausted|stressed|anxious|lonely)\b"
+            r"|我覺得|我好|很難過|難過|傷心|好累|很累|疲累|疲憊|疲倦|壓力好大|焦慮|孤單",
             user_message,
             _re.IGNORECASE,
         )

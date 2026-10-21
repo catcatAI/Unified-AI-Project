@@ -84,20 +84,34 @@ AGENT_SCRIPT: List[Tuple[str, Optional[str]]] = [
     ("The first exceeds second, second exceeds third, which is on top?", "bridge"),
     ("我今天很累", None),
     ("謝謝你", None),
-    ("我叫小明", None),
+    ("我叫小明", "not_contains"),
     ("我剛才說我叫什麼名字？", "memory"),
 ]
 
 # The teacher's phrasing of the bridge question (the oracle for it).
 BRIDGE_ORACLE_QUESTION = "The first is higher than second, second higher than third, which is top?"
 
+# A glued-together answer (several unrelated template fragments in one
+# breath) — the "ramble" shape.
+_SENTENCE_END = re.compile(r"[。！？!?…~]|\.\s")
+
+
+def _is_ramble(text: str) -> bool:
+    """True when the answer glues several fragments together.
+
+    Three sentences is a reply; four or more is a ramble (it reads
+    machine-made at the first glance).
+    """
+    return len(_SENTENCE_END.findall(text or "")) >= 4
+
+
 # The artefacts that mean the answer came out broken.
 _ARTIFACT = re.compile(r"=(?:false|true|None|nan)\b|\bNone\b|\bnan\b|\{\{|\}\}", re.IGNORECASE)
 # The honest abstentions: "I don't have enough knowledge" / "我還沒有足夠的知識".
 # An abstention is *not* an answer — it must never count as "correct".
 _ABSTAIN = re.compile(
-    r"don't have enough knowledge|can't complete this task"
-    r"|還沒有足夠的知識|目前還做不到|無法回答這個問題",
+    r"don't have enough knowledge|can't complete this task|no language model is available"
+    r"|還沒有足夠的知識|目前還做不到|目前做不到|無法回答這個問題|沒有可用的語言模型",
     re.IGNORECASE,
 )
 _WORD = re.compile(r"[A-Za-z0-9_']+|[一-鿿]")
@@ -128,6 +142,82 @@ def _longest_common_run(query: str, response: str) -> int:
 
 def _normalized(text: str) -> str:
     return " ".join(_words(text))
+
+
+# The social turns: a canned answer is *appropriate* for them.
+_SOCIAL_TURN = re.compile(
+    r"你好|您好|早安|晚安|謝謝|谢谢|再見|再见|哈囉|hello|hi\b|thanks|thank you|bye|goodbye|morning",
+    re.IGNORECASE,
+)
+# The canned answers the project serves from its presets/templates.
+_CANNED_ANSWERS: Optional[set] = None
+
+
+def _canned_answers() -> set:
+    """The preset/template answers of the project (the QA-machine shapes)."""
+    global _CANNED_ANSWERS
+    if _CANNED_ANSWERS is not None:
+        return _CANNED_ANSWERS
+    answers = set()
+    try:
+        from ai.data_eng.presets import REFLEX_PRESETS
+
+        for value in REFLEX_PRESETS.values():
+            answers.add(_normalized(str(value)))
+    except Exception:
+        pass
+    try:
+        from ai.memory.template_library import get_template_library
+
+        library = get_template_library()
+        for template in getattr(library, "_templates", {}).values():
+            content = getattr(template, "content", None)
+            if content:
+                answers.add(_normalized(str(content)))
+    except Exception:
+        pass
+    _CANNED_ANSWERS = {a for a in answers if a}
+    return _CANNED_ANSWERS
+
+
+def _canned_mismatch(question: str, text: str) -> bool:
+    """True when a canned answer ignored what the user actually said.
+
+    A *context-matched* template (an emotional template whose keywords are
+    in the user's words) is a legitimate answer. A canned line that was
+    triggered by a keyword inside the sentence ("我今天很累" → "今天") is the
+    QA-machine shape.
+    """
+    normalized = _normalized(text)
+    if normalized not in _canned_answers():
+        return False
+    user_chars = set(_words(question))
+    try:
+        from ai.memory.template_library import get_template_library
+
+        library = get_template_library()
+        for template in getattr(library, "_templates", {}).values():
+            if _normalized(str(getattr(template, "content", ""))) != normalized:
+                continue
+            keywords = set()
+            for kw in getattr(template, "keywords", []) or []:
+                keywords.update(_words(str(kw)))
+            if keywords & user_chars:
+                return False  # the template matched the user's own words
+            return True
+    except Exception:
+        pass
+    # The reflex presets: the key must be the whole message.
+    try:
+        from ai.data_eng.presets import REFLEX_PRESETS
+
+        normalized_q = _normalized(question)
+        for key, value in REFLEX_PRESETS.items():
+            if _normalized(str(value)) == normalized and _normalized(str(key)) != normalized_q:
+                return True
+    except Exception:
+        pass
+    return False
 
 
 def _similar(left: str, right: str) -> float:
@@ -277,6 +367,10 @@ def oracle_entity(answer: Optional[str]) -> str:
 # --------------------------------------------------------------------------- #
 # The scoring
 # --------------------------------------------------------------------------- #
+# What a statement turn must NOT bring back (a stale remembered fact).
+_FORBIDDEN_IN_STATEMENT = ("小花", "貓", "鮪魚", "fox")
+
+
 def score_turn(
     index: int,
     question: str,
@@ -331,10 +425,21 @@ def score_turn(
         classes.append("echo")
     if has_artifact:
         classes.append("artifact")
+    if text and _is_ramble(text):
+        classes.append("ramble")
     if duplicate_of is not None:
+        classes.append("qa_machine")
+    elif text and not _SOCIAL_TURN.search(question) and _canned_mismatch(question, text):
+        # A canned answer to a substantive turn, and the canned line did not
+        # match what the user said: the QA-machine shape.
         classes.append("qa_machine")
     if text and not answered and expected and not abstained:
         classes.append("offtopic")
+    if expected == "not_contains":
+        # A statement turn must not drag an unrelated remembered fact back in.
+        if any(word in text for word in _FORBIDDEN_IN_STATEMENT):
+            classes.append("stale_fact")
+        answered = True  # the turn has no positive oracle
     if answered:
         classes.append("correct")
 
@@ -345,7 +450,7 @@ def score_turn(
         score += 0.4
     if "echo" not in classes:
         score += 0.2
-    if text and "artifact" not in classes and not abstained:
+    if text and "artifact" not in classes and not abstained and "ramble" not in classes:
         score += 0.2
     if "qa_machine" not in classes:
         score += 0.2
@@ -526,6 +631,8 @@ async def main() -> int:
                     "offtopic",
                     "abstain",
                     "empty",
+                    "ramble",
+                    "stale_fact",
                 )
             },
         },
@@ -542,6 +649,8 @@ async def main() -> int:
                     "offtopic",
                     "abstain",
                     "empty",
+                    "ramble",
+                    "stale_fact",
                 )
             },
         },
@@ -563,7 +672,9 @@ async def main() -> int:
         print(
             f"  {label}: 答對 {rates['correct']:.0%}｜鸚鵡 {rates['echo']:.0%}｜"
             f"亂碼 {rates['artifact']:.0%}｜QA 機器 {rates['qa_machine']:.0%}｜"
-            f"雞同鴨講 {rates['offtopic']:.0%}｜棄權 {rates['abstain']:.0%}｜空白 {rates['empty']:.0%}"
+            f"雞同鴨講 {rates['offtopic']:.0%}｜棄權 {rates['abstain']:.0%}｜"
+            f"碎念 {rates['ramble']:.0%}｜舊事實 {rates['stale_fact']:.0%}｜"
+            f"空白 {rates['empty']:.0%}"
         )
     print(
         f"  交談資料：{data_pairs} 組對話／{data_chars} 字元　" f"耗時 {result['elapsed_sec']:.1f}s"

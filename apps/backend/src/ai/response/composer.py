@@ -963,7 +963,7 @@ class NeuroBlender:
         empathy_valence: float = 0.0,
         user_name: str = "朋友",
         curiosity_threshold: float = 0.7,
-        top_k_per_role: int = 2,
+        top_k_per_role: int = 1,
     ) -> ComposedResponse:
         """
         合成回复。
@@ -1066,12 +1066,18 @@ class NeuroBlender:
         return get_config("standard/behavior/behavior") or {}
 
     def _compute_top_k_count(self, alpha_energy: float, _bio_thresh: Dict[str, Any]) -> int:
-        """Compute top k count."""
+        """Compute top k count.
+
+        A reply is at most a couple of sentences: gluing six unrelated
+        fragments together is the "ramble" shape (it reads machine-made at
+        the first glance), so the energy only decides between a short and a
+        slightly longer reply.
+        """
         if alpha_energy < _bio_thresh.get("composer_energy_fragment_low", 0.2):
             return 2
         elif alpha_energy < _bio_thresh.get("composer_energy_fragment_medium", 0.4):
-            return 4
-        return 6
+            return 3
+        return 3
 
     def _group_by_role(
         self, scored: List[Tuple[NeuroFragment, float]]
@@ -1111,9 +1117,17 @@ class NeuroBlender:
         return selected
 
     def _select_normal(
-        self, by_role: Dict[str, List[Tuple[NeuroFragment, float]]], top_k_per_role: int
+        self,
+        by_role: Dict[str, List[Tuple[NeuroFragment, float]]],
+        top_k_per_role: int,
+        top_k_total: int = 3,
     ) -> List[NeuroFragment]:
-        """正常路線：每 role 取前 top_k_per_role 個 unique fragment。"""
+        """正常路線：每 role 取前 top_k_per_role 個 unique fragment。
+
+        The total cap applies here too: one fragment per role across five
+        roles is a five-sentence ramble, which reads machine-made at the
+        first glance.
+        """
         selected: List[NeuroFragment] = []
         seen_contents: set = set()
         for role, items in by_role.items():
@@ -1122,6 +1136,8 @@ class NeuroBlender:
                 self._add_if_unique(frag, seen_contents, selected)
                 if len([f for f in selected if f.structural_type == role]) >= top_k_per_role:
                     break
+        if len(selected) > top_k_total:
+            selected = selected[:top_k_total]
         return selected
 
     def _select_top_fragments(
@@ -1135,7 +1151,7 @@ class NeuroBlender:
         """Select top fragments."""
         if alpha_energy < _bio_thresh.get("composer_energy_greeting", 0.3):
             return self._select_low_energy(by_role, top_k_total)
-        return self._select_normal(by_role, top_k_per_role)
+        return self._select_normal(by_role, top_k_per_role, top_k_total)
 
     def _extract_beta_curiosity(self, state_dict: Dict[str, Any]) -> float:
         """Extract beta curiosity."""

@@ -10,7 +10,8 @@ ANGELA-MATRIX: L3 [β] [A] [L0-L11]
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any, Dict, Optional
+import re
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 if TYPE_CHECKING:
     from services.llm.router import AngelaLLMService, LLMResponse
@@ -58,6 +59,45 @@ def is_memory_enhanced():
     if _MEMORY_ENHANCED is None:
         _load_memory_modules()
     return _MEMORY_ENHANCED
+
+
+# --------------------------------------------------------------------------- #
+# The conversation recall (the native path has no LLM to read the context)
+# --------------------------------------------------------------------------- #
+# A question that asks "what did I just say / what is my name" must be
+# answered from what the user actually said — not from a greeting template.
+_RECALL_QUESTION = re.compile(
+    r"剛才|剛剛|之前|先前|說過|提過|講過|記得|我說過|什麼名字|叫什麼"
+    r"|remember|what did i say|earlier|my name|said before|call me",
+    re.IGNORECASE,
+)
+# The self-statements the recall understands (name / identity).
+_ZH_NAME_STATEMENT = re.compile(r"(?:我叫|我的名字(?:是|叫))\s*([^\s，。！？、,.!?]{1,16})")
+_EN_NAME_STATEMENT = re.compile(
+    r"(?:my name is|i am called|call me)\s+([A-Za-z][A-Za-z'\- ]{0,30})", re.IGNORECASE
+)
+
+
+def _recall_keywords(message: str) -> List[str]:
+    """The content words of a recall question (CJK 2-grams + English words)."""
+    keywords = [w.lower() for w in re.findall(r"[A-Za-z]{3,}", message or "")]
+    cjk = re.findall(r"[\u4e00-\u9fff]{2,}", message or "")
+    for run in cjk:
+        for size in (2, 3):
+            for i in range(len(run) - size + 1):
+                keywords.append(run[i : i + size])
+    return keywords
+
+
+def _statement_name(statement: str) -> Optional[str]:
+    """The name in a self-statement ("我叫小明" → "小明")."""
+    match = _ZH_NAME_STATEMENT.search(statement or "")
+    if match:
+        return match.group(1).strip()
+    match = _EN_NAME_STATEMENT.search(statement or "")
+    if match:
+        return match.group(1).strip()
+    return None
 
 
 class MemoryIntegration:
@@ -130,6 +170,10 @@ class MemoryIntegration:
                 min_score=0.5,
             )
 
+            recall = await self.try_conversation_recall(user_message, context)
+            if recall is not None:
+                return recall
+
             if results and len(results) > 0:
                 best_template, score = results[0]
 
@@ -157,6 +201,85 @@ class MemoryIntegration:
         except Exception as e:
             logger.warning("Memory retrieval error: %s", e, exc_info=True)
             return None
+
+    async def try_conversation_recall(
+        self, user_message: str, context: Dict[str, Any]
+    ) -> Optional["LLMResponse"]:
+        """Answer "what did I just say" from the stored conversations.
+
+        The native path (no LLM) has no way to read the retrieved context, so
+        a recall question used to fall through to a greeting template — the
+        "chicken-and-duck" shape. This is the extractive answer: the user's
+        own words, or the fact stated in them.
+        """
+        if not _RECALL_QUESTION.search(user_message or ""):
+            return None
+        manager = getattr(self._svc, "memory_manager", None)
+        if manager is None:
+            return None
+
+        from core.interfaces.protocols import ChatResponse
+
+        try:
+            memories = await manager.query_core_memory(
+                keywords=_recall_keywords(user_message),
+                data_type_filter="conversation",
+                limit=8,
+            )
+        except Exception as exc:
+            logger.debug("conversation recall query failed: %s", exc)
+            return None
+        if not memories:
+            return None
+
+        statements: List[str] = []
+        for memory in memories:
+            content = getattr(memory, "content", None)
+            if isinstance(content, dict):
+                user_text = str(content.get("user") or "")
+            else:
+                user_text = str(content or "")
+            if user_text:
+                statements.append(user_text)
+        if not statements:
+            return None
+
+        try:
+            from core.prompt_manager import detect_response_language
+
+            language = detect_response_language(user_message)
+        except Exception:
+            language = "zh"
+
+        # 1. A fact the user stated about themselves ("我叫小明").
+        for statement in statements:
+            name = _statement_name(statement)
+            if name:
+                text = f"你叫{name}。" if language == "zh" else f"Your name is {name}."
+                return ChatResponse(
+                    text=text,
+                    backend="memory-recall",
+                    model="conversation-recall",
+                    confidence=0.85,
+                    hit_score=0.85,
+                    hit_source="memory",
+                    route="MEMORY",
+                    metadata={"memory_hit": True, "recall": "name"},
+                )
+
+        # 2. Otherwise quote what the user actually said.
+        quoted = statements[0][:120]
+        text = f"你剛才說過：「{quoted}」" if language == "zh" else f'You said earlier: "{quoted}"'
+        return ChatResponse(
+            text=text,
+            backend="memory-recall",
+            model="conversation-recall",
+            confidence=0.65,
+            hit_score=0.65,
+            hit_source="memory",
+            route="MEMORY",
+            metadata={"memory_hit": True, "recall": "quote"},
+        )
 
     async def start_precompute(self) -> None:
         """Start the precompute service."""
