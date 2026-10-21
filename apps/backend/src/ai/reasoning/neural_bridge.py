@@ -354,6 +354,28 @@ class RelationMatcher:
         direction = self.classify_direction(word, threshold=0.0)
         return direction is not None and direction[1] >= threshold
 
+    def is_relation_phrase(self, phrase: str, score: float) -> bool:
+        """True when the phrase can be a comparison word.
+
+        The encoder puts *every* short word near the concept centroids
+        ("many", "km", "how" all match the size concept at ~0.7), so a fuzzy
+        match on a short word is noise, not a comparison. A short phrase is
+        only accepted when it is one of the teacher's own words (an exact
+        seed match), or when it is a Chinese glyph.
+        """
+        text = (phrase or "").strip()
+        if not text:
+            return False
+        if len(text) == 1 and not text.isascii():
+            return True  # a Chinese comparator glyph
+        if score >= 0.95:
+            return True  # an exact teacher word
+        if len(text) >= 5:
+            return True
+        # A four-letter word is only a comparison when it is not a function
+        # word ("aged" is, "many" is not).
+        return len(text) == 4 and text.lower() not in _STOPWORDS
+
     def classify_dimension(
         self, phrase: str, threshold: float = 0.40
     ) -> Optional[Tuple[str, float]]:
@@ -540,6 +562,19 @@ _QUESTION_WORDS = (
     "anybody",
     "everyone",
     "everybody",
+    "how",
+    "many",
+    "much",
+    "when",
+    "where",
+    "why",
+    "tell",
+    "explain",
+    "please",
+    "give",
+    "calculate",
+    "compute",
+    "convert",
     "is",
     "are",
     "was",
@@ -555,6 +590,18 @@ _QUESTION_WORDS = (
 # The comparative markers: they sit between the entity and the comparative
 # ("A is more valuable than B"), so they never belong to an entity.
 _COMPARATIVE_MARKERS = ("more", "less", "most", "least", "much", "far", "way")
+# The English function words: they can never be a comparison word, and the
+# encoder puts every one of them near the concept centroids ("many" matches
+# the size concept at 0.77). This is a *structural* list, not a comparison
+# vocabulary.
+_STOPWORDS = frozenset("""
+    how many much when where why what which who whom whose there here this
+    that these those it its they them their he she his her you your we our
+    i me my one two three four five six seven eight nine ten
+    very more most less least some any all both each every other another
+    same such own just only also too can could will would shall should may
+    might must do does did done have has had get got give given
+    """.split())
 _NEGATIONS = ("not", "n't", "never", "no")
 # The Chinese question words that can precede the subject ("若甲比乙高").
 _CN_QUESTION_WORDS = ("若", "誰", "哪", "何", "請", "那", "在")
@@ -819,6 +866,8 @@ class NeuralBridge:
             match = self.matcher.classify(phrase, kind="relation")
             if match is None:
                 continue
+            if not self.matcher.is_relation_phrase(phrase, match[1]):
+                continue
             if self.matcher.is_superlative_word(phrase):
                 # The question's own superlative is not a comparison.
                 continue
@@ -856,6 +905,8 @@ class NeuralBridge:
                     continue
                 match = self.matcher.classify(phrase, kind="relation")
                 if match is None:
+                    continue
+                if not self.matcher.is_relation_phrase(phrase, match[1]):
                     continue
                 if self.matcher.is_superlative_word(phrase):
                     # The question's own superlative is not a comparison.

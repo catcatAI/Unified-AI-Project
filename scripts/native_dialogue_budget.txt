@@ -1,0 +1,23 @@
+# 純本地對話的預算（scripts/native_dialogue_budget_gate.py 裁決）
+#
+# 格式：key = value（# 為註解）。數字是「門檻」：min 的項目必須 ≥，
+# max 的項目必須 ≤。門檻只會變緊——實測優於門檻時門禁會要求你調緊它。
+#
+# 基準（2026-10-21 實測，純本地基模、20 回合／兩輪）：
+#   人味分數 0.800、演進 +0.000、鸚鵡 0%、亂碼 0%、QA 機器 0%、雞同鴨講 10%、
+#   棄權 0%、空白 0%
+# 門檻留了餘裕（CI 機器與冷開機可能略有差異），但不放寬到失去意義。
+
+# 執行預算：量測本身的上限（超了就是失控，不是品質問題）
+max_turns = 40
+max_seconds = 300
+
+# 品質門檻（第 2 輪＝測試輪）
+human_score = 0.70
+progress = 0.00
+echo_rate = 0.10
+artifact_rate = 0.05
+qa_machine_rate = 0.15
+offtopic_rate = 0.20
+abstain_rate = 0.20
+empty_rate = 0.10

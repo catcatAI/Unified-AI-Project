@@ -1,0 +1,22 @@
+{
+  "schema": "open-gates/1",
+  "purpose": "臨時門禁登記簿：只收『將來必須拆掉』的門禁。每條都必須寫清楚正當、正確的拆除理由；沒有理由或理由不成立者，一律不得進入本登記簿（scripts/check_open_gates.py 會拒收）。永久門禁（mypy／複雜度／type-ignore 等）不屬於本登記簿——它們直接住在 CI 設定裡。",
+  "rules": [
+    "removal_criterion 必須是可驗證的條件（含門檻數字、指令或日期），不得是『之後／視情況／待定』這類模糊字眼。",
+    "why_temporary 必須說明這道門禁守的是哪個『會被修好』的缺陷；缺陷不存在就沒有門禁存在的理由。",
+    "script／budget 指向的檔案必須存在，且 script 必須真的接在 CI 上（否則登記項是假的）。",
+    "門禁被拆掉時：刪掉 script／budget、把本條從登記簿移除，並在 CHANGELOG 記一筆『已拆除』。"
+  ],
+  "gates": [
+    {
+      "id": "native-dialogue-budget",
+      "script": "scripts/native_dialogue_budget_gate.py",
+      "budget": "scripts/native_dialogue_budget.txt",
+      "opened": "2026-10-21",
+      "owner": "project",
+      "why_temporary": "這道門禁守的是一個『會被修好』的缺陷：純本地基模（不接任何外部 LLM）的對話品質還會說罐頭話、還會答不出上下文問題（2026-10-21 實測：兩輪 20 次對話的人味分數停在 0.80、演進 +0.000、雞同鴨講 10%）。缺陷修好（人味分數與演進指標達到門檻）之後，這道門禁就沒有守的東西了。",
+      "removal_criterion": "當 scripts/probe_native_dialogue.py 的連續三次實測都滿足：pass2.human_score ≥ 0.90 且 progress ≥ +0.05 且 offtopic 率 ≤ 0.05（用 `python scripts/probe_native_dialogue.py --json /tmp/nd.json` 驗），就刪除 scripts/native_dialogue_budget_gate.py 與 scripts/native_dialogue_budget.txt、移除本條登記，並在 CHANGELOG 記錄『已拆除』。在那之前門禁必須留在 CI 上。",
+      "ci_step": "python scripts/native_dialogue_budget_gate.py"
+    }
+  ]
+}

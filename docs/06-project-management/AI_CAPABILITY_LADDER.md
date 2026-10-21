@@ -51,11 +51,24 @@
 | L2-1 對話一致性   | `python scripts/benchmark_dialogue_coherence.py`                                       | 人設 ≥80% / 指代 ≥70% | 5/5 = **100%**                                             | ✅                                             |
 | L2-2 記憶命中     | `python scripts/benchmark_memory_hit.py`                                               | top-5 ≥60%            | 60/100 = **60%**（框架模擬；真實向量召回待 HAM 460K 接入） | ⚠️ 剛好達標                                    |
 | L2-3 純神經推理   | `python scripts/probe_reasoning_unseen.py`                                             | ≥50%                  | 確定性 100/100、純神經 **0%**、純神經＋中間層 87/100       | ❌ 未達（純神經仍 0%；中間層不等於純神經）      |
+| L2-7 純本地對話品質 | `python scripts/native_dialogue_budget_gate.py`                                       | 人味 ≥0.70 且演進不退步 | 人味 **0.800**、演進 **+0.000**、雞同鴨講 10%、鸚鵡/亂碼/QA 機器 0% | ⚠️ 臨時門禁（缺陷修好即拆，見 `scripts/open_gates.json`） |
 | L3-1 無 RAG 知識  | `python scripts/run_benchmarks.py --backend native --suite knowledge_mc --gate-native` | ≥90%                  | **97.5%**                                                  | ✅                                             |
 | L3-2 工具呼叫     | `pytest tests/services/test_handlers.py`                                               | 100%                  | **60 passed**                                              | ✅                                             |
 | 整體回歸          | `pytest tests/ apps/backend/tests/ apps/game-rpg/tests/`                               | 0 failed              | **8,688 passed / 112 skipped / 0 failed**                  | ✅                                             |
 
 > **誠實說明**：L2-3（純神經推理）仍是 0%——確定性引擎答對題目不等於神經會做題（`INTELLIGENCE_ASSESSMENT §4.1`）。這一格沒有投影，量測就是 0。中間層（`ai/reasoning/neural_bridge.py`）是**第三條路**，不是純神經路徑的替代品：它用多語編碼器把未見改述「接觸」到老師的概念原型，再用老師回饋對齊原型，最後合成關係圖。
+>
+> **純本地基模（L2-7，2026-10-21）**：`python scripts/probe_native_dialogue.py` 在
+> **不接任何外部基模**（雲端金鑰、本地 ollama/llama.cpp 全部不註冊，只留專案
+> 自己的引擎）的情況下與 Angela 對話兩輪，並把每個回應分類為
+> `correct`／`echo`（鸚鵡捲舌）／`artifact`（亂碼）／`qa_machine`（罐頭答案）／
+> `offtopic`（雞同鴨講）／`abstain`／`empty`。實測：確定性題（數學、知識、
+> 比較）**全部答對**（比較題由老師與中間層接手），但**兩輪 20 次對話的演進是
+> +0.000**——開啟聊天時學習（`ANGELA_LEGACY_ED3N=1`）也一樣是 +0.000。誠實結論：
+> **純本地基模目前不會因對話而變得像人**，剩下的差距集中在情緒與上下文題
+> （仍是罐頭模板、不記得使用者名字）。門禁是**臨時**的：它守的是這個會被修好的
+> 缺陷，拆除理由寫在 `scripts/open_gates.json`，由 `scripts/check_open_gates.py`
+> 驗證（沒有正當、可驗證的拆除理由者不得入簿）。
 >
 > 中間層的獨立量測（`python scripts/probe_neural_bridge.py`，2026-10-21）：老師詞彙解不了的改述**留出集** 20 題（開發期未看過、未參與對齊）——老師 2/20、中間層 16/20（對齊後 17/20）；老師詞彙控制組 12 題——老師 12/12、中間層 12/12（不迴歸）。留出集 3 題未答是編碼器的接觸失敗（sweltering／compact／thicker），不是迴歸。
 

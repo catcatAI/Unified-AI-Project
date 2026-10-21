@@ -931,6 +931,21 @@ collected — 0 errors**).
 > **8,415 passed / 107 skipped / 0 failed**（`pytest tests/
 > apps/backend/tests/`）。
 
+> ✅ **NOTE (Updated 2026-10-21, 純本地對話 + 門禁登記簿)**: **純本地基模的對話
+> 量測**完成。新增 `scripts/probe_native_dialogue.py`（不註冊任何外部後端：雲端
+> 金鑰與本地 ollama/llama.cpp 都不啟用，只留專案自己的引擎，啟動時斷言）＋
+> `scripts/native_dialogue_budget_gate.py`（預算門禁，**可中斷**：每回合前查預算，
+> 超了乾淨收束輸出 partial；門檻只會變緊）＋`scripts/open_gates.json` 與
+> `scripts/check_open_gates.py`（**未拆門禁登記簿**：只收臨時門禁，每條要有正當、
+> 可驗證的拆除理由——模糊字眼／缺欄位／檔案不存在／沒接 CI 一律拒收，永久門禁
+> 不得入簿）＋`scripts/check_default_config.py`（**提交的配置必須等於預設**）。
+> 實測：確定性題全答對（比較題在對話路徑原本被丟成「不知道」，現由老師與中間層
+> 接手）；但**兩輪 20 次對話的演進是 +0.000**（開 `ANGELA_LEGACY_ED3N=1` 也一樣）
+> ——純本地基模目前**不會**因對話而變得像人，剩下的是情緒／上下文題的罐頭模板。
+> 同時修掉**非預設配置被提交**的問題：`llm.user.yaml`（執行期狀態）已移出版本
+> 控制並進 .gitignore（本機檔案保留），事實門新增 `config.committed_config_is_default`、
+> `gates.open_gates_wellformed`、`gates.open_gates_count`（INFO，不會被忘記）。
+
 ### JavaScript/TypeScript
 
 ```bash
@@ -1137,6 +1152,9 @@ tests/
 | Lint all                           | `pnpm lint`                           |
 | Run all tests                      | `pnpm test`                           |
 | Single check (facts + definitions) | `python3 scripts/check_fact_gates.py` |
+| Config hygiene gate (the committed config must equal the default) | `python3 scripts/check_default_config.py` |
+| Open-gates registry (a temporary gate needs a legitimate removal reason) | `python3 scripts/check_open_gates.py` |
+| Native-only dialogue measurement / budget gate | `python3 scripts/probe_native_dialogue.py` / `python3 scripts/native_dialogue_budget_gate.py` |
 
 > 🔎 **單一檢查入口**：所有「非編譯器」檢查集中在
-> `scripts/check_fact_gates.py`（九域：edge/audit/chat/cluster/config/version/docs/modules/definitions）——一個工具跑一次＝全部檢查都被檢視，避免多工具「不打開就被掠過」。定義稽核 MD 報告：`python3 scripts/check_fact_gates.py --write-definitions-audit`。
+> `scripts/check_fact_gates.py`（十一域：edge/audit/chat/cluster/config/version/docs/modules/definitions/gates/hygiene）——一個工具跑一次＝全部檢查都被檢視，避免多工具「不打開就被掠過」。定義稽核 MD 報告：`python3 scripts/check_fact_gates.py --write-definitions-audit`。

@@ -372,6 +372,22 @@ def _try_reasoning(text: str) -> Optional[str]:
         return None
 
 
+def _try_neural_bridge(text: str) -> Optional[str]:
+    """The intermediate layer: the neural contact with the teacher's concepts.
+
+    Runs after the teacher, so the teacher's own answers keep priority; the
+    bridge only covers the paraphrases the teacher's fixed vocabulary cannot
+    see ("X exceeds Y").
+    """
+    try:
+        from ai.arithmetic.deterministic_router import try_neural_bridge
+
+        return try_neural_bridge(text)
+    except Exception as e:
+        logger.debug("GARDEN: neural bridge failed for %r: %s", text, e)
+        return None
+
+
 def _try_chain_reasoning(text: str) -> Optional[str]:
     """Resolve relational chain via relational_chain resolver."""
     try:
@@ -1210,6 +1226,14 @@ class GARDENEngine:
         chain_result = self._try_chain_reasoning(text)
         if chain_result is not None:
             return _reconstruct_with_template(text, chain_result, "text")
+
+        # Stage 1.6c: The intermediate layer. The teacher cannot see this
+        # wording ("X exceeds Y"); the bridge contacts the teacher's concepts
+        # semantically. It runs *after* the learned template recall and the
+        # offline chain resolver, so a learned comparison reversal still wins.
+        bridge_result = _try_neural_bridge(text)
+        if bridge_result is not None:
+            return _reconstruct_with_template(text, bridge_result, "reasoning")
         return None
 
     def _merge_rescue_targets(

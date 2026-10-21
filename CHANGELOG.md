@@ -15,6 +15,33 @@ and this project adheres to
 
 ### Added
 
+- **純本地基模的對話演進量測 + 預算門禁 + 未拆門禁登記簿**（2026-10-21）：
+  ① `scripts/probe_native_dialogue.py`——在**不註冊任何外部後端**（雲端金鑰、
+  本地 ollama/llama.cpp 全部不啟用，只留專案自己的引擎，服務啟動時直接斷言）
+  的情況下與 Angela 對話兩輪，把每個回應分類為 correct／echo（鸚鵡捲舌）／
+  artifact（亂碼）／qa_machine（罐頭答案）／offtopic（雞同鴨講）／abstain／
+  empty，並量出**兩輪之間的演進**。**預算可中斷**：每回合前查預算（回合數／
+  牆鐘），超了乾淨收束並輸出 partial 結果，隨時可查。
+  ② `scripts/native_dialogue_budget_gate.py` + `scripts/native_dialogue_budget.txt`
+  ——門檻只會變緊（實測優於門檻就要求調緊），超標 exit 1 並印出每一項的
+  實際值／門檻值／來源。
+  ③ `scripts/open_gates.json` + `scripts/check_open_gates.py`——**未拆門禁登記簿**：
+  只收「將來必須拆掉」的臨時門禁，每條必須寫出**正當、可驗證的拆除理由**
+  （模糊字眼「之後／視情況／待定」、缺欄位、檔案不存在、沒接 CI 一律拒收；
+  永久門禁不得入簿）。事實門新增 `gates.open_gates_wellformed`（must_pass）與
+  `gates.open_gates_count`（INFO，讓它不會被忘記）。
+  ④ `scripts/check_default_config.py`——**提交的配置必須等於預設**：
+  `*.user.yaml` 是執行期狀態（Desktop Settings 會寫它，像 .env），提交上去
+  等於把某台機器的部署（`deployment.mode: local+llm`）shipping 給所有人。
+  實測發現 `llm.user.yaml` 確實被提交且帶著非預設 mode——已移出版本控制並進
+  .gitignore（本機檔案保留），門禁 + 事實 `config.committed_config_is_default`
+  守著。
+  **實測結果（誠實）**：確定性題（數學／知識／比較）全答對；比較題在對話路徑
+  原本會被丟成「不知道」，現在由老師與中間層接手（router 的 fallback 鏈加了
+  deterministic-reasoning 與 comparison_bridge 兩級，ED3N／GARDEN 也接了橋接）。
+  但**兩輪 20 次對話的演進是 +0.000**（開 `ANGELA_LEGACY_ED3N=1` 也一樣）——
+  純本地基模目前**不會**因對話而變得像人，剩下的是情緒與上下文題的罐頭模板。
+
 - **中間層：神經 ↔ 確定性老師的橋接**（2026-10-21）：新增
   `apps/backend/src/ai/reasoning/neural_bridge.py`——使用者要求的「先接觸、再依反饋與神經網路對齊」的中間層。三段式：①
   **接觸**：以 `ai.unified_engine.semantic_qa` 的 ONNX

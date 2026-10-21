@@ -3428,6 +3428,7 @@ class AngelaLLMService:
         for tier in (
             self._fb_model_bus,
             self._fb_pipeline_math,
+            self._fb_deterministic_reasoning,
             self._fb_greeting_template,
             self._fb_emotional_support,
             self._fb_honest_refusal,
@@ -3493,6 +3494,40 @@ class AngelaLLMService:
                 )
         except Exception as exc:
             logger.debug(f"Word-problem fallback unavailable: {exc}")
+        return None
+
+    async def _fb_deterministic_reasoning(
+        self, user_message: str, context: Dict[str, Any], looks_like_question: bool
+    ) -> Optional[LLMResponse]:
+        """Tier 0.2: the deterministic teacher, then the intermediate layer.
+
+        The teacher answers the comparison chains it knows ("A is taller than
+        B"); the intermediate layer (ai.reasoning.neural_bridge) answers the
+        paraphrases the teacher's fixed vocabulary cannot see ("X exceeds Y").
+        Both are exact, so they beat an honest "don't know" — and they are
+        what makes the project answerable with its own models only.
+        """
+        for route, backend in (
+            ("reasoning", "deterministic-reasoning"),
+            ("comparison_bridge", "neural-bridge"),
+        ):
+            try:
+                from ai.arithmetic.deterministic_router import try_reasoning, try_neural_bridge
+
+                fn = try_reasoning if route == "reasoning" else try_neural_bridge
+                result = fn(user_message)
+            except Exception as exc:
+                logger.debug("fallback %s failed: %s", route, exc)
+                continue
+            if not result:
+                continue
+            return LLMResponse(
+                text=str(result),
+                backend=backend,
+                model=backend,
+                confidence=0.95,
+                metadata={"route": route},
+            )
         return None
 
     async def _fb_greeting_template(

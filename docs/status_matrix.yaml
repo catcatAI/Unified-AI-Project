@@ -212,7 +212,7 @@ features:
     claim: 全倉綠
     status: verified
     verify_command: pytest
-    evidence: 8,755 passed, 112 skipped, 0 failed（2026-10-21 測試數量同步批次全 testpaths 實測：tests/＋apps/backend/tests/＋apps/game-rpg/tests＋scripts）
+    evidence: 8,775 passed, 112 skipped, 0 failed（2026-10-21 測試數量同步批次全 testpaths 實測：tests/＋apps/backend/tests/＋apps/game-rpg/tests＋scripts）
     last_verified: "2026-10-21"
 
   - id: mypy-debt
@@ -328,6 +328,38 @@ features:
       `try_reasoning`（老師）之後，老師先答、橋接補老師看不到的改述；GARDEN／
       ED3N 引擎經同一個 router 因此一併受益。橋接對非比較問句會 abstain
       （「Who is the tallest person in the room?」→ None，不亂答）。
+    last_verified: "2026-10-21"
+
+  - id: native-only-dialogue
+    domain: 純本地基模對話品質（不接任何外部 LLM）
+    claim: 只留專案自己的基模時，量得到對話品質（鸚鵡捲舌／亂碼／QA 機器／雞同鴨講）與兩輪之間的演進
+    status: verified
+    implementation:
+      - scripts/probe_native_dialogue.py
+      - scripts/native_dialogue_budget_gate.py
+      - scripts/open_gates.json
+      - scripts/check_open_gates.py
+      - scripts/check_default_config.py
+    tests: [tests/tools/test_native_dialogue_gates.py]
+    verify_command: pytest tests/tools/test_native_dialogue_gates.py
+    evidence: >-
+      20 tests passed（2026-10-21 實測）。量測在**不註冊任何外部後端**下跑
+      （雲端金鑰與本地 ollama/llama.cpp 全部不啟用，只留 unified／ED3N／GARDEN，
+      服務啟動時直接斷言）。實測（`python scripts/probe_native_dialogue.py`）：
+      確定性題（數學／知識／比較）全答對——比較題在對話路徑原本會被丟成
+      「不知道」，現在由老師與中間層接手（router 的 fallback 鏈加了
+      deterministic-reasoning 與 comparison_bridge 兩級）；**但兩輪 20 次對話
+      的演進是 +0.000**（開 `ANGELA_LEGACY_ED3N=1` 也一樣），剩下的是情緒與
+      上下文題的罐頭模板。人味分數 0.800、鸚鵡/亂碼/QA 機器 0%、雞同鴨講 10%。
+      **預算門禁可中斷**（每回合前查預算，超了乾淨收束並輸出 partial），
+      門檻在 `scripts/native_dialogue_budget.txt`；這是**臨時門禁**，拆除理由
+      寫在 `scripts/open_gates.json`，由 `scripts/check_open_gates.py` 驗證——
+      沒有正當、可驗證的拆除理由者不得入簿（模糊字眼／缺欄位／檔案不存在／
+      沒接 CI 一律拒收），事實門另立 `gates.open_gates_wellformed` 與
+      `gates.open_gates_count`（後者記 INFO，讓它不會被忘記）。
+      另修：提交的設定必須等於預設——`*.user.yaml`（執行期狀態）已移出版本控制
+      並進 .gitignore，門禁 `scripts/check_default_config.py` +
+      事實 `config.committed_config_is_default` 守著。
     last_verified: "2026-10-21"
 
   - id: msba-pipeline

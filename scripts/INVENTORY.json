@@ -172,6 +172,11 @@
       "referenced": true,
       "purpose": "Reconstruct original checkpoint from saved weights + JSON metadata."
     },
+    "check_default_config.py": {
+      "category": "diagnostics",
+      "referenced": true,
+      "purpose": "設定衛生門禁 — 提交的配置必須等於預設。"
+    },
     "check_dict.py": {
       "category": "diagnostics",
       "referenced": false,
@@ -196,6 +201,11 @@
       "category": "diagnostics",
       "referenced": true,
       "purpose": "check last memories（無說明：原始碼未附 docstring）"
+    },
+    "check_open_gates.py": {
+      "category": "diagnostics",
+      "referenced": true,
+      "purpose": "未拆門禁登記簿的驗證器 — 沒有正當、正確的拆除理由，一律拒收。"
     },
     "check_quality.py": {
       "category": "diagnostics",
@@ -582,6 +592,11 @@
       "referenced": true,
       "purpose": "mypy 棘輪門（R74）：鎖定型別債上限，只能下降不能上升。"
     },
+    "native_dialogue_budget_gate.py": {
+      "category": "tool",
+      "referenced": true,
+      "purpose": "純本地對話的預算門禁 — 可中斷、可檢查的演進守門人。"
+    },
     "next_phase_10000.py": {
       "category": "experimental",
       "referenced": false,
@@ -661,6 +676,11 @@
       "category": "probe",
       "referenced": true,
       "purpose": "L2-4 多模態接地 — 硬件規格自適應（<50MB, <3s, 分批+sleep）"
+    },
+    "probe_native_dialogue.py": {
+      "category": "probe",
+      "referenced": true,
+      "purpose": "純本地基模的對話演進量測 — 鸚鵡捲舌 / 雞同鴨講 / QA 機器 的偵測與演進追蹤。"
     },
     "probe_neural_bridge.py": {
       "category": "probe",

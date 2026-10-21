@@ -323,6 +323,23 @@ class ED3NEngine:
             )
             return None
 
+    def _try_neural_bridge(self, text: str) -> Optional[str]:
+        """The intermediate layer: the neural contact with the teacher's concepts.
+
+        Runs after the teacher (``_try_reasoning``), so the teacher's own
+        answers keep priority; the bridge only covers the paraphrases the
+        teacher's fixed vocabulary cannot see ("X exceeds Y").
+        """
+        try:
+            from ai.arithmetic.deterministic_router import try_neural_bridge
+
+            return try_neural_bridge(text)
+        except Exception as e:
+            logger.warning(
+                "Neural bridge routing via deterministic router failed: %s", e, exc_info=True
+            )
+            return None
+
     def _perform_encode(self, input_text: str) -> Tuple[List[str], bool]:
         _cache_key = (input_text.lower().strip(), self.dictionary._index_version)
         cache_hit = _cache_key in self.dictionary._encode_cache
@@ -602,6 +619,11 @@ class ED3NEngine:
         t0 = time.perf_counter()
         result = self._try_reasoning(input_text)
         stages["reasoning"] = (time.perf_counter() - t0) * 1000
+        if result is None:
+            # The teacher cannot see this wording — the intermediate layer can.
+            t1 = time.perf_counter()
+            result = self._try_neural_bridge(input_text)
+            stages["neural_bridge"] = (time.perf_counter() - t1) * 1000
         if result is not None:
             return self._telemetry_return(
                 query_id,

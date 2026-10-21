@@ -13,7 +13,7 @@ scripts/gen_definitions_audit.py 併入）。
 
 退出碼：0 全綠；1 任一 must_pass 失敗（BLOCKED，附 verdict 向量定位）。
 
-覆蓋九域（與測試共享黃金值，見 tests/*/test_*contract*.py 與
+覆蓋十一域（與測試共享黃金值，見 tests/*/test_*contract*.py 與
 tests/core/test_fact_interpreter.py）：
   edge        硬體/edge_card 包絡三 verdict（重算，不信任轉錄數字）
   audit       卡架構審計：歷史宣稱 corrections 記 INFO（審計抓稻草人是它的
@@ -27,6 +27,11 @@ tests/core/test_fact_interpreter.py）：
               tests/test_documented_paths.py 的同一套解析規則）
   modules     模組系統現實：scanner 對缺目錄必須安全（must_pass）；
               目錄存在與否、發現模組數記 INFO（休眠是事實，不是失敗）
+  gates       未拆門禁登記簿：每條臨時門禁都必須帶正當、可驗證的拆除理由
+              （模糊字眼／缺欄位／檔案不存在／沒接 CI 一律拒收）；登記筆數
+              記 INFO，讓它不會被忘記
+  hygiene     提交的配置必須等於預設（user 層是執行期狀態，不該被提交；
+              evolved 層不得打開雲端部署）
   definitions 定義稽核（四桶：未定義／定義有誤／定義差／定義合理）：
               i18n prompt 鍵、magic_numbers 鍵、StateMatrix 槽（Python
               DEFAULT_DIMENSIONS / matrix.default.yaml / JS 鏡像三源對齊）、
@@ -345,6 +350,109 @@ def _docs_facts():
             "refs",
             "active docs",
             f"resolved={resolved}",
+            measured_at=MEASURED_AT,
+        ),
+    ]
+
+
+def _gates_facts():
+    """未拆門禁登記簿：每條都要有正當、可驗證的拆除理由。
+
+    臨時門禁（將來必須拆掉的）登記在 scripts/open_gates.json；永久門禁
+    直接住在 CI 設定裡，不進登記簿。規則由 scripts/check_open_gates.py
+    執行（模糊字眼、缺欄位、檔案不存在、沒接 CI 一律拒收）。
+    """
+    import importlib.util
+
+    from core.facts import Fact
+
+    spec = importlib.util.spec_from_file_location(
+        "open_gates_guard", REPO / "scripts" / "check_open_gates.py"
+    )
+    assert spec and spec.loader
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+
+    try:
+        registry = mod._load()
+    except SystemExit as exc:
+        return [
+            Fact(
+                "gates.open_gates_wellformed",
+                1.0,
+                0.0,
+                "le",
+                "violations",
+                "open gates registry",
+                f"the registry is unreadable: {exc}",
+                measured_at=MEASURED_AT,
+            )
+        ]
+
+    gates = registry.get("gates") or []
+    ci_text = (
+        (REPO / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+        if (REPO / ".github" / "workflows" / "ci.yml").is_file()
+        else ""
+    )
+    problems = []
+    for entry in gates:
+        problems.extend(mod.check_entry(entry, ci_text))
+
+    return [
+        Fact(
+            "gates.open_gates_wellformed",
+            float(len(problems)),
+            0.0,
+            "le",
+            "violations",
+            "open gates registry",
+            f"violations={len(problems)}" + (f": {problems[0]}" if problems else ""),
+            measured_at=MEASURED_AT,
+        ),
+        Fact(
+            "gates.open_gates_count",
+            float(len(gates)),
+            0.0,
+            "ge",
+            "temporary gates",
+            "open gates registry",
+            f"temporary gates waiting for removal: {[g.get('id') for g in gates]}",
+            must_pass=False,
+            measured_at=MEASURED_AT,
+        ),
+    ]
+
+
+def _config_hygiene_facts():
+    """提交的配置必須等於預設（user 層是執行期狀態，不該被提交）。"""
+    import importlib.util
+
+    from core.facts import Fact
+
+    spec = importlib.util.spec_from_file_location(
+        "default_config_guard", REPO / "scripts" / "check_default_config.py"
+    )
+    assert spec and spec.loader
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+
+    tracked = mod._tracked_files()
+    user_layers = mod._check_user_layers(tracked)
+    key_violations = mod._check_key_literals(tracked)
+    mode_violations = mod._check_deployment_mode()
+    total = len(user_layers) + len(key_violations) + len(mode_violations)
+    detail = (user_layers + key_violations + mode_violations)[:1]
+
+    return [
+        Fact(
+            "config.committed_config_is_default",
+            float(total),
+            0.0,
+            "le",
+            "violations",
+            "committed configuration",
+            f"violations={total}" + (f": {detail[0]}" if detail else ""),
             measured_at=MEASURED_AT,
         ),
     ]
@@ -1668,7 +1776,14 @@ def main(argv: Optional[List[str]] = None) -> int:
     chain_facts = _chat_facts() + _cluster_facts()
     defs_scan = scan_definitions()
     defs_facts = _defs_facts(defs_scan)
-    hygiene_facts = _config_facts() + _version_facts() + _docs_facts() + _modules_facts()
+    hygiene_facts = (
+        _config_facts()
+        + _version_facts()
+        + _docs_facts()
+        + _modules_facts()
+        + _config_hygiene_facts()
+        + _gates_facts()
+    )
     merged = merge_reports(
         adjudicate(edge_facts),
         audit_report,

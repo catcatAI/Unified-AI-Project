@@ -48,6 +48,13 @@ dist/
 .idea/
 *.swp
 *~
+# The "user" config layer is runtime state, exactly like .env: the Desktop
+# Settings API writes it (tiered_loader.write_user_config → *.user.yaml).
+# Committing it ships a non-default deployment (e.g. deployment.mode=local+llm
+# turns the cloud providers back on for everybody).
+# scripts/check_default_config.py enforces that the committed config == default.
+apps/backend/configs/**/*.user.yaml
+
 # Data & Cache
 data/
 !data/README.md

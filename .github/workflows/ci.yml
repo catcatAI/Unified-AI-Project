@@ -159,6 +159,19 @@ jobs:
           # 裡（7500-8400），專案成長到 8,700 後門自己變紅，與測試無關。
           python scripts/check_test_count.py --scope ci
           python scripts/check_test_count.py --measure
+      - name: Config hygiene gate (the committed config must equal the default)
+        run: |
+          # 「把配置改了、脫離預設、還提交了」是錯的行為，不是風格問題：
+          # 設定分三層，*.user.yaml 是執行期狀態（Desktop Settings 會寫它），
+          # 提交上去等於把某台機器的部署（mode=local+llm）shipping 給所有人。
+          python scripts/check_default_config.py
+      - name: Native-only dialogue budget gate (no external LLM)
+        run: |
+          # 臨時門禁：守的是「純本地基模的對話品質」這個會被修好的缺陷。
+          # 拆除理由寫在 scripts/open_gates.json（由 check_open_gates.py 驗證：
+          # 沒有正當、可驗證的拆除理由者不得入簿）。
+          python scripts/native_dialogue_budget_gate.py --allow-lower
+          python scripts/check_open_gates.py
 
   map-budget:
     runs-on: ubuntu-latest
