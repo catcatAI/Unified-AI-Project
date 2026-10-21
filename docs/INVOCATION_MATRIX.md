@@ -99,7 +99,7 @@ python -m pytest tests/services/test_handlers.py \
                  tests/security/ -q               # → 全 passed
 
 # 4. 全倉回歸
-python -m pytest tests/ -q --timeout=120          # → 8,118 collected, 0 failed
+python -m pytest tests/ -q --timeout=120          # → 8,133 collected, 0 failed
 
 # 5. Lint
 python -m flake8 apps/backend/src scripts/run_luanti_agent.py  # 既有基準為準

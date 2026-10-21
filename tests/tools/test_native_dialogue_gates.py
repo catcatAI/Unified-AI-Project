@@ -191,37 +191,62 @@ def probe():
 
 def test_the_probe_scores_every_class(probe) -> None:
     """A canned answer, an echo, an artefact and a correct answer are distinct."""
+    from ai.response.human_speech import StandardItem
     from services.visual_verdict import (  # noqa: F401  (the import proves the dependency)
         repetition_score,
     )
 
-    correct = probe.score_turn(0, "What is 2+2?", "What is 2+2 = 4.0", "math", 0.1, "4.0", [])
+    correct = probe.score_turn(
+        0,
+        StandardItem(kind="qa", message="What is 2+2?", expected="4"),
+        "What is 2+2 = 4.0",
+        "math",
+        0.1,
+        "4.0",
+        [],
+    )
     assert "correct" in correct.classes
 
     echo = probe.score_turn(
         0,
-        "Who is taller, Alice or Bob?",
+        StandardItem(kind="qa", message="Who is taller, Alice or Bob?", expected="Bob"),
         "Who is taller, Alice or Bob=false",
         "unified",
         0.1,
-        None,
+        "Bob",
         [],
     )
     assert "echo" in echo.classes or "artifact" in echo.classes
 
     artifact = probe.score_turn(
-        0, "Tell me something.", "the answer is =false", "unified", 0.1, None, []
+        0,
+        StandardItem(kind="dialogue", message="Tell me something."),
+        "the answer is =false",
+        "unified",
+        0.1,
+        None,
+        [],
     )
     assert "artifact" in artifact.classes
 
-    empty = probe.score_turn(0, "Tell me something.", "", "unified", 0.1, None, [])
+    empty = probe.score_turn(
+        0,
+        StandardItem(kind="dialogue", message="Tell me something."),
+        "",
+        "unified",
+        0.1,
+        None,
+        [],
+    )
     assert "empty" in empty.classes
 
 
 def test_an_abstention_is_not_counted_as_correct(probe) -> None:
+    from ai.response.human_speech import StandardItem
+
     turn = probe.score_turn(
         0,
-        "A is taller than B, who is taller?",
+        StandardItem(kind="qa", message="A is taller than B, who is taller?", expected="A"),
         "agent, I don't have enough knowledge to answer this correctly yet.",
         "unified",
         0.1,
@@ -233,9 +258,25 @@ def test_an_abstention_is_not_counted_as_correct(probe) -> None:
 
 
 def test_a_repeated_answer_is_a_qa_machine(probe) -> None:
-    first = probe.score_turn(0, "How are you?", "今天是个好日子！", "template", 0.1, None, [])
+    from ai.response.human_speech import StandardItem
+
+    first = probe.score_turn(
+        0,
+        StandardItem(kind="dialogue", message="How are you?"),
+        "今天是个好日子！",
+        "template",
+        0.1,
+        None,
+        [],
+    )
     second = probe.score_turn(
-        1, "What is the weather?", "今天是个好日子！", "template", 0.1, None, [first]
+        1,
+        StandardItem(kind="dialogue", message="What is the weather?"),
+        "今天是个好日子！",
+        "template",
+        0.1,
+        None,
+        [first],
     )
     assert "qa_machine" in second.classes
 

@@ -50,6 +50,13 @@ from typing import Dict, List, Optional, Sequence, Tuple
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "apps" / "backend" / "src"))
 
+from ai.response.human_speech import (  # noqa: E402
+    MULTI_FACT_SCENARIOS,
+    StandardItem,
+    build_standard_set,
+    judge,
+)
+
 # The probe is a sandbox: its conversations must not land in the user's real
 # memory (HAM／vector store). ANGELA_DATA_DIR redirects the data dir
 # (path_config.DATA_DIR) — it is set in main(), *before* any backend module is
@@ -60,8 +67,15 @@ SANDBOX_DATA_DIR = Path(
 
 
 def isolate_data_dir() -> Path:
-    """Point the data dir at the sandbox (call before the backend imports)."""
+    """Point the data dir at the sandbox (call before the backend imports).
+
+    The vector store has its own knob (VECTOR_STORE_PATH ✓) — without it the
+    probe would write the taught facts into the user's real store (the
+    taught-fact recall then answered from *older* sessions, which looks like
+    a capability that is not there).
+    """
     os.environ["ANGELA_DATA_DIR"] = str(SANDBOX_DATA_DIR)
+    os.environ["VECTOR_STORE_PATH"] = str(SANDBOX_DATA_DIR / "vector_store")
     return SANDBOX_DATA_DIR
 
 
@@ -150,29 +164,32 @@ CLASSES = (
 SMALL_SAMPLE_TURNS = 20
 
 
-def _build_units() -> List[List[Tuple[str, Optional[str]]]]:
+def _build_units() -> List[List[StandardItem]]:
     """The sample as *units* (a unit is a whole teach→ask pair or a question).
 
     The units matter for the small sample: a systematic sample of the units
     keeps the pairs intact, so the small sample's learning effect is
     measurable (a sample of turns would break the pairs and report 0).
     """
-    units: List[List[Tuple[str, Optional[str]]]] = []
-    for teaching, question, expected in LEARNING_BATTERY:
-        units.append(
-            [
-                (question, ("memory", expected)),  # 冷：還沒被教過
-                (teaching, "not_contains"),  # 教：使用者自報
-                (question, ("memory", expected)),  # 熱：教完再問
-            ]
-        )
-    for question, oracle in QUALITY_QUESTIONS:
-        units.append([(question, oracle)])
+    units: List[List[StandardItem]] = []
+    for scenario in MULTI_FACT_SCENARIOS:
+        for fact, question, expected in scenario["facts"]:  # type: ignore[index]
+            units.append(
+                [
+                    StandardItem(kind="multi", message=question, expected=expected, tags=["cold"]),
+                    StandardItem(kind="multi", message=fact, expected=expected, tags=["teach"]),
+                    StandardItem(kind="multi", message=question, expected=expected, tags=["warm"]),
+                ]
+            )
+    for item in build_standard_set():
+        if item.kind in ("multi", "fact", "recall", "combined"):
+            # The learning battery already carries the cold/teach/warm units.
+            continue
+        units.append([item])
     return units
 
 
-AGENT_UNITS: List[List[Tuple[str, Optional[str]]]] = _build_units()
-AGENT_SCRIPT: List[Tuple[str, Optional[str]]] = [turn for unit in AGENT_UNITS for turn in unit]
+AGENT_UNITS: List[List[StandardItem]] = _build_units()
 
 # The teacher's phrasing of the bridge question (the oracle for it).
 BRIDGE_ORACLE_QUESTION = "The first is higher than second, second higher than third, which is top?"
@@ -328,6 +345,9 @@ class Turn:
     answered: bool
     human_score: float
     classes: List[str] = field(default_factory=list)
+    kind: str = ""
+    state: str = ""
+    passed: bool = False
 
 
 @dataclass
@@ -467,13 +487,15 @@ _FORBIDDEN_IN_STATEMENT = ("小花", "貓", "鮪魚", "fox")
 
 def score_turn(
     index: int,
-    question: str,
+    item: StandardItem,
     response: str,
     backend: str,
     seconds: float,
     expected: Optional[str],
     previous: Sequence[Turn],
 ) -> Turn:
+    """Classify one answer (the shape classes + the human-speech rubric)."""
+    question = item.message
     """Classify one answer and score its human-likeness."""
     from services.visual_verdict import repetition_score
 
@@ -545,6 +567,9 @@ def score_turn(
     if answered:
         classes.append("correct")
 
+    # The human-speech rubric (the six criteria + the answer state).
+    verdict = judge(item, text)
+
     # The human-likeness score: the components that make an answer read like a
     # person answered it (each worth 0.2; correctness is worth 0.4).
     score = 0.0
@@ -570,6 +595,9 @@ def score_turn(
         answered=answered,
         human_score=round(score, 3),
         classes=classes,
+        kind=item.kind,
+        state=str(verdict["state"]),
+        passed=bool(verdict["passed"]),
     )
 
 
@@ -578,7 +606,7 @@ def score_turn(
 # --------------------------------------------------------------------------- #
 async def run_conversation(
     service,
-    script: Sequence[Tuple[str, Optional[str]]],
+    units: Sequence[Sequence[StandardItem]],
     budget: Budget,
     label: str,
 ) -> List[Turn]:
@@ -595,46 +623,57 @@ async def run_conversation(
     history: List[Dict[str, str]] = []
     session_id = f"probe-native-{label}"
     try:
-        for question, oracle_kind in script:
-            if budget.exhausted():
-                print(f"  ⏹ {label}: 預算用盡（{budget.reason()}）→ 中斷")
+        stopped = False
+        for unit in units:
+            if stopped:
                 break
-            expected = oracle_answer(oracle_kind, question) if oracle_kind else None
-            started = time.time()
-            try:
-                result = await _handle_chat_request(
-                    user_message=question,
-                    user_name="agent",
-                    history=list(history),
-                    session_id=session_id,
-                    origin="probe",
+            for item in unit:
+                if budget.exhausted():
+                    print(f"  ⏹ {label}: 預算用盡（{budget.reason()}）→ 中斷")
+                    stopped = True
+                    break
+                question = item.message
+                oracle_kind = item.oracle
+                expected = (
+                    item.expected
+                    if item.expected
+                    else (oracle_answer(oracle_kind, question) if oracle_kind else None)
                 )
-                text = (result or {}).get("response") or (result or {}).get("text") or ""
-                backend = (result or {}).get("backend") or ""
-            except Exception as exc:
-                text = ""
-                backend = f"error:{type(exc).__name__}"
-            elapsed = time.time() - started
+                started = time.time()
+                try:
+                    result = await _handle_chat_request(
+                        user_message=question,
+                        user_name="agent",
+                        history=list(history),
+                        session_id=session_id,
+                        origin="probe",
+                    )
+                    text = (result or {}).get("response") or (result or {}).get("text") or ""
+                    backend = (result or {}).get("backend") or ""
+                except Exception as exc:
+                    text = ""
+                    backend = f"error:{type(exc).__name__}"
+                elapsed = time.time() - started
 
-            turn = score_turn(
-                index=len(turns),
-                question=question,
-                response=text,
-                backend=str(backend),
-                seconds=elapsed,
-                expected=expected,
-                previous=turns,
-            )
-            turns.append(turn)
-            budget.used_turns += 1
-            budget.used_seconds += elapsed
-            budget.used_chars += len(text)
-            history.append({"role": "user", "content": question})
-            history.append({"role": "assistant", "content": text})
-            print(
-                f"    [{label}] {turn.index:02d} {question[:24]:26} → {text[:44]!r} "
-                f"({','.join(turn.classes) or 'ok'})"
-            )
+                turn = score_turn(
+                    index=len(turns),
+                    item=item,
+                    response=text,
+                    backend=str(backend),
+                    seconds=elapsed,
+                    expected=expected,
+                    previous=turns,
+                )
+                turns.append(turn)
+                budget.used_turns += 1
+                budget.used_seconds += elapsed
+                budget.used_chars += len(text)
+                history.append({"role": "user", "content": question})
+                history.append({"role": "assistant", "content": text})
+                print(
+                    f"    [{label}] {turn.index:04d} {question[:22]:24} → {text[:40]!r} "
+                    f"[{turn.state}]" + ("" if turn.passed else " ❌")
+                )
     finally:
         router_mod._llm_service = previous_service
     return turns
@@ -675,7 +714,11 @@ def _sample_validity(turns: Sequence[Turn]) -> Dict[str, object]:
     problems: List[str] = []
     if total < 30:
         problems.append(f"the sample is too small ({total} turns < 30)")
-    if distinct_ratio < 0.30:
+    # A 1000+ item set repeats the same questions, so the distinct-output
+    # ratio is naturally lower; what matters is that there are enough
+    # *different* answers to tell the shapes apart.
+    min_ratio = 0.15 if total >= 200 else 0.30
+    if distinct_ratio < min_ratio or distinct < 50:
         problems.append(
             f"the outputs are nearly constant ({distinct} distinct / {total} turns) — "
             "parroting and learning cannot be told apart"
@@ -783,18 +826,26 @@ def _learning_delta(turns: Sequence[Turn]) -> float:
     A question asked twice in one pass (cold → warm) is the experiment: the
     delta is what the conversation actually taught the AI — that is the
     "要多少交談資料才學會" number.
+
+    Only the *multi-fact* pairs count: the state questions repeat six times
+    with the same answer, and averaging them in would dilute the effect to
+    zero (the repetition is not learning).
     """
     seen: Dict[str, List[float]] = {}
     for turn in turns:
+        if turn.kind != "multi":
+            continue
         seen.setdefault(turn.question, []).append(turn.human_score)
     deltas = [scores[-1] - scores[0] for scores in seen.values() if len(scores) > 1]
     return round(sum(deltas) / len(deltas), 4) if deltas else 0.0
 
 
 def _learning_deltas(turns: Sequence[Turn]) -> List[float]:
-    """The cold→warm delta of every repeated question (the per-pair detail)."""
+    """The cold→warm delta of every repeated multi-fact question."""
     seen: Dict[str, List[float]] = {}
     for turn in turns:
+        if turn.kind != "multi":
+            continue
         seen.setdefault(turn.question, []).append(turn.human_score)
     return [scores[-1] - scores[0] for scores in seen.values() if len(scores) > 1]
 
@@ -854,15 +905,25 @@ async def main() -> int:
         max_turns=args.max_turns, max_seconds=args.max_seconds, max_chars=args.max_chars
     )
 
-    print("  第 1 輪（學習）")
-    first = await run_conversation(service, AGENT_SCRIPT, budget, "learn")
-    print("  第 2 輪（測試：同一批題目）")
-    second = await run_conversation(service, AGENT_SCRIPT, budget, "test")
+    print(f"  第 1 輪（標準集：{sum(len(u) for u in AGENT_UNITS)} 回合）")
+    first = await run_conversation(service, AGENT_UNITS, budget, "learn")
+    # The second pass repeats only the learning battery (the stability check):
+    # the standard set does not need to run twice.
+    battery_units = [u for u in AGENT_UNITS if any(i.kind == "multi" for i in u)]
+    print(f"  第 2 輪（穩定度：重跑學習組 {sum(len(u) for u in battery_units)} 回合）")
+    second = await run_conversation(service, battery_units, budget, "test")
 
     all_turns = first + second
     first_score = _mean([t.human_score for t in first])
     second_score = _mean([t.human_score for t in second])
-    stability = round(second_score - first_score, 4)
+    # The stability: the same question answered again (matched by the question).
+    first_by_question = {t.question: t.human_score for t in first}
+    repeats = [
+        t.human_score - first_by_question[t.question]
+        for t in second
+        if t.question in first_by_question
+    ]
+    stability = round(_mean(repeats), 4)
     progress = _learning_delta(first)
 
     # The learning data volume: the conversation pairs the run produced.
@@ -921,6 +982,27 @@ async def main() -> int:
         },
         "progress": progress,
         "stability": stability,
+        "standard_set": {
+            "size": sum(len(u) for u in AGENT_UNITS),
+            "pass_rate": round(sum(1 for t in first if t.passed) / max(len(first), 1), 4),
+            "passed": sum(1 for t in first if t.passed),
+            "states": {
+                state: sum(1 for t in first if t.state == state)
+                for state in sorted({t.state for t in first})
+            },
+            "by_kind": {
+                kind: {
+                    "total": sum(1 for t in first if t.kind == kind),
+                    "passed": sum(1 for t in first if t.kind == kind and t.passed),
+                    "passed_ratio": round(
+                        sum(1 for t in first if t.kind == kind and t.passed)
+                        / max(sum(1 for t in first if t.kind == kind), 1),
+                        4,
+                    ),
+                }
+                for kind in sorted({t.kind for t in first})
+            },
+        },
         "validity": _sample_validity(all_turns),
         "learning_deltas": _learning_deltas(first),
         "small_sample": _subset_metrics(_systematic_sample(second, SMALL_SAMPLE_TURNS), "small"),

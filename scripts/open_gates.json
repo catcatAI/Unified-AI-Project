@@ -14,9 +14,9 @@
       "budget": "scripts/native_dialogue_budget.txt",
       "opened": "2026-10-21",
       "owner": "project",
-      "why_temporary": "這道門禁守的是一個『會被修好』的缺陷：純本地基模（不接任何外部 LLM）的對話品質還會說罐頭話、還會答不出上下文問題（2026-10-21 實測：兩輪 20 次對話的人味分數停在 0.80、演進 +0.000、雞同鴨講 10%）。缺陷修好（人味分數與演進指標達到門檻）之後，這道門禁就沒有守的東西了。",
-      "removal_criterion": "當 scripts/probe_native_dialogue.py 的連續三次實測都滿足：pass2.human_score ≥ 0.90 且 progress ≥ +0.05 且 offtopic 率 ≤ 0.05（用 `python scripts/probe_native_dialogue.py --json /tmp/nd.json` 驗），就刪除 scripts/native_dialogue_budget_gate.py 與 scripts/native_dialogue_budget.txt、移除本條登記，並在 CHANGELOG 記錄『已拆除』。在那之前門禁必須留在 CI 上。",
-      "ci_step": "python scripts/native_dialogue_budget_gate.py"
+      "why_temporary": "這道門禁守的是一個『會被修好』的缺陷：純本地基模（不接任何外部 LLM）的對話品質還沒有通過人話標準——2026-10-21 實測（標準集 1054 回合）人話標準通過率只有 56.5%，其中帶邊界條件的 324 題**一題都答不來**（0/324，多半是誠實棄權），多重事實也會記錯（53%）。缺陷修好（邊界題能答、多重事實能組合）之後，這道門禁就沒有守的東西了。",
+      "removal_criterion": "當 scripts/probe_native_dialogue.py 的連續三次實測都滿足：standard_set.pass_rate ≥ 0.90 且 standard_set.by_kind.state.passed_ratio ≥ 0.50 且 standard_set.by_kind.multi.passed_ratio ≥ 0.80 且 progress ≥ +0.60（用 `python scripts/probe_native_dialogue.py --json /tmp/nd.json` 驗，標準集必須 ≥1000 題），就刪除 scripts/native_dialogue_budget_gate.py 與 scripts/native_dialogue_budget.txt、移除本條登記，並在 CHANGELOG 記錄『已拆除』。在那之前門禁必須留在 CI 上。",
+      "ci_step": "python scripts/native_dialogue_budget_gate.py --allow-lower"
     }
   ]
 }

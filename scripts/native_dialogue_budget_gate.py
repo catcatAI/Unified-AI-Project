@@ -43,16 +43,24 @@ REGISTRY = REPO_ROOT / "scripts" / "open_gates.json"
 #   ("min", key) → the value must be ≥ the threshold
 #   ("max", key) → the value must be ≤ the threshold
 CHECKS: Tuple[Tuple[str, str, str], ...] = (
-    ("min", "human_score", "pass2.human_score"),
+    ("min", "human_score", "pass1.human_score"),
     ("min", "progress", "progress"),
-    ("max", "echo_rate", "pass2.rates.echo"),
-    ("max", "artifact_rate", "pass2.rates.artifact"),
-    ("max", "qa_machine_rate", "pass2.rates.qa_machine"),
-    ("max", "offtopic_rate", "pass2.rates.offtopic"),
-    ("max", "abstain_rate", "pass2.rates.abstain"),
-    ("max", "empty_rate", "pass2.rates.empty"),
-    ("max", "ramble_rate", "pass2.rates.ramble"),
-    ("max", "stale_fact_rate", "pass2.rates.stale_fact"),
+    ("max", "echo_rate", "pass1.rates.echo"),
+    ("max", "artifact_rate", "pass1.rates.artifact"),
+    ("max", "qa_machine_rate", "pass1.rates.qa_machine"),
+    ("max", "offtopic_rate", "pass1.rates.offtopic"),
+    ("max", "abstain_rate", "pass1.rates.abstain"),
+    ("max", "empty_rate", "pass1.rates.empty"),
+    ("max", "ramble_rate", "pass1.rates.ramble"),
+    ("max", "stale_fact_rate", "pass1.rates.stale_fact"),
+    # The human-speech standard (the rubric in ai/response/human_speech.py)
+    # and the standard set's size — a mean over fewer than 1000 items cannot
+    # prove "can speak human language" (the sample may be constrained by the
+    # Q&A behaviour itself, or be too simple).
+    ("min", "standard_size", "standard_set.size"),
+    ("min", "human_speech_pass_rate", "standard_set.pass_rate"),
+    ("min", "state_pass_rate", "standard_set.by_kind.state.passed_ratio"),
+    ("min", "multi_pass_rate", "standard_set.by_kind.multi.passed_ratio"),
 )
 
 
@@ -212,6 +220,12 @@ def main() -> int:
     if report.get("progress") is not None:
         print(
             f"  學習效應（冷→熱）：{report.get('progress'):+}　穩定度（兩輪差）：{report.get('stability')}"
+        )
+    standard = report.get("standard_set") or {}
+    if standard:
+        print(
+            f"  標準集 {standard.get('size', 0)} 回合｜人話標準通過 {standard.get('passed', 0)}"
+            f"（{standard.get('pass_rate', 0):.1%}）"
         )
     validity = report.get("validity") or {}
     consistency = report.get("consistency") or {}
