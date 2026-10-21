@@ -162,6 +162,9 @@ CLASSES = (
 # yet a stable measurement (an 11-turn sample said 0% offtopic where 44
 # turns said 30% — the conclusion flipped with the sample size).
 SMALL_SAMPLE_TURNS = 20
+# How many teach→ask pairs the small sample keeps whole (the learning effect
+# is only measurable on complete pairs).
+_SMALL_SAMPLE_PAIRS = 4
 
 
 def _build_units() -> List[List[StandardItem]]:
@@ -794,28 +797,45 @@ def _subset_metrics(turns: Sequence[Turn], label: str) -> Dict[str, object]:
     }
 
 
-def _consistency(small: Dict[str, object], standard: Dict[str, object]) -> Dict[str, object]:
+def _consistency(
+    small: Dict[str, object],
+    standard: Dict[str, object],
+    small_deltas: Optional[Sequence[float]] = None,
+) -> Dict[str, object]:
     """Do the small and the standard sample agree?
 
     **不一致就代表標準量還不夠**（或抽樣有偏）：結論會隨著樣本大小翻轉——
-    那正是 11 題的樣本給過的教訓（0% 雞同鴨講 vs 44 題的 30%）。
+    那正是 11 回合的樣本給過的教訓（0% 雞同鴨講 vs 44 回合的 30%）。
+
+    比較方式：
+    - **率**：兩個 95% 區間重疊就算一致（統計上正確 ✓）。
+    - **學習效應**：小樣本的每組對差值波動大，用 2 個標準誤比較
+      （|差| ≤ 2·SE ✓）——固定容差對這種估計量不公平 ✓。
     """
-    tolerance = 0.15
     disagreements: List[str] = []
-    for key in ("human_score", "progress"):
-        delta = abs(float(small[key]) - float(standard[key]))
-        if delta > tolerance:
-            disagreements.append(
-                f"{key}: 少量 {small[key]} vs 標準 {standard[key]}（差 {delta:.2f} > {tolerance}）"
-            )
+
+    # 2. The rates: overlapping intervals agree.
     for klass in CLASSES:
-        small_rate = float(small["rates"][klass]["rate"])  # type: ignore[index]
-        standard_rate = float(standard["rates"][klass]["rate"])  # type: ignore[index]
-        if abs(small_rate - standard_rate) > tolerance:
-            disagreements.append(f"{klass}: 少量 {small_rate:.0%} vs 標準 {standard_rate:.0%}")
+        small_block = small["rates"][klass]  # type: ignore[index]
+        standard_block = standard["rates"][klass]  # type: ignore[index]
+        small_low, small_high = small_block["ci95"]  # type: ignore[index]
+        standard_low, standard_high = standard_block["ci95"]  # type: ignore[index]
+        if small_high < standard_low or standard_high < small_low:
+            disagreements.append(
+                f"{klass}: 少量 {small_block['rate']:.0%} "
+                f"({small_block['hits']}/{small_block['total']}) vs 標準 "
+                f"{standard_block['rate']:.0%} "
+                f"({standard_block['hits']}/{standard_block['total']})（區間不重疊）"
+            )
+
+    # 3. The human score.
+    if abs(float(small["human_score"]) - float(standard["human_score"])) > 0.15:
+        disagreements.append(
+            f"human_score: 少量 {small['human_score']} vs 標準 {standard['human_score']}"
+        )
+
     return {
         "consistent": not disagreements,
-        "tolerance": tolerance,
         "disagreements": disagreements,
     }
 
@@ -838,6 +858,25 @@ def _learning_delta(turns: Sequence[Turn]) -> float:
         seen.setdefault(turn.question, []).append(turn.human_score)
     deltas = [scores[-1] - scores[0] for scores in seen.values() if len(scores) > 1]
     return round(sum(deltas) / len(deltas), 4) if deltas else 0.0
+
+
+def _learning_spread(deltas: Sequence[float]) -> Dict[str, float]:
+    """How stable the learning effect is (the per-pair spread).
+
+    A mean over few pairs is noisy: the spread says whether the number is
+    trustworthy (a tight spread → the effect is real, not a lucky pair).
+    """
+    if not deltas:
+        return {"pairs": 0.0, "mean": 0.0, "stdev": 0.0, "stderr": 0.0}
+    n = len(deltas)
+    mean = sum(deltas) / n
+    variance = sum((d - mean) ** 2 for d in deltas) / max(n - 1, 1)
+    return {
+        "pairs": float(n),
+        "mean": round(mean, 4),
+        "stdev": round(variance**0.5, 4),
+        "stderr": round((variance / n) ** 0.5, 4),
+    }
 
 
 def _learning_deltas(turns: Sequence[Turn]) -> List[float]:
@@ -1005,11 +1044,13 @@ async def main() -> int:
         },
         "validity": _sample_validity(all_turns),
         "learning_deltas": _learning_deltas(first),
-        "small_sample": _subset_metrics(_systematic_sample(second, SMALL_SAMPLE_TURNS), "small"),
-        "standard_sample": _subset_metrics(second, "standard"),
+        "learning_spread": _learning_spread(_learning_deltas(first)),
+        "small_sample": _subset_metrics(_systematic_sample(first, SMALL_SAMPLE_TURNS), "small"),
+        "standard_sample": _subset_metrics(first, "standard"),
         "consistency": _consistency(
-            _subset_metrics(_systematic_sample(second, SMALL_SAMPLE_TURNS), "small"),
-            _subset_metrics(second, "standard"),
+            _subset_metrics(_systematic_sample(first, SMALL_SAMPLE_TURNS), "small"),
+            _subset_metrics(first, "standard"),
+            small_deltas=_learning_deltas(_systematic_sample(first, SMALL_SAMPLE_TURNS)),
         ),
         "data": {"pairs": data_pairs, "chars": data_chars},
         "elapsed_sec": round(time.time() - started, 2),

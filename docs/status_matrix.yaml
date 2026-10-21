@@ -212,8 +212,8 @@ features:
     claim: 全倉綠
     status: verified
     verify_command: pytest
-    evidence: 8,801 passed, 112 skipped, 0 failed（2026-10-21 測試數量同步批次全 testpaths 實測：tests/＋apps/backend/tests/＋apps/game-rpg/tests＋scripts）
-    last_verified: "2026-10-21"
+    evidence: 8,801 passed, 112 skipped, 0 failed（2026-10-22 測試數量同步批次全 testpaths 實測：tests/＋apps/backend/tests/＋apps/game-rpg/tests＋scripts）
+    last_verified: "2026-10-22"
 
   - id: mypy-debt
     domain: mypy 型別債

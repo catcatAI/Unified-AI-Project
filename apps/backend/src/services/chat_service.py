@@ -260,16 +260,24 @@ class ChatService:
         except Exception as e:
             logger.warning("TrainingCoordinator not available: %s", e, exc_info=True)
 
-    async def _init_legacy_garden(self) -> None:
-        """Init legacy GARDEN engine (ANGELA_LEGACY_ED3N=1)."""
-        if os.environ.get("ANGELA_LEGACY_ED3N") != "1":
-            return
+    async def _init_garden_learner(self) -> None:
+        """Init the GARDEN engine — the *structure learner*.
+
+        The GARDEN is no longer the answering engine (the unified engine is,
+        and the LLM is the best of all), but it is still the only component
+        that can learn **how to phrase** an answer: it learns the structure
+        of an exchange ("我今天好累" → "辛苦啦！…") and recalls it later.
+
+        That is the difference between a canned reply and a *personal* one,
+        and it is what lets the project speak without an LLM: the agent
+        answers in the way it was taught.
+        """
         try:
             from ai.garden.garden_engine import GARDENEngine
 
             self._garden_engine = GARDENEngine(compatibility_mode=True)
             self._garden_engine.load_presets()
-            logger.info("GARDEN engine initialized for continuous learning")
+            logger.info("GARDEN structure learner initialized")
         except Exception as e:
             logger.warning("GARDEN engine init skipped: %s", e)
 
@@ -386,7 +394,7 @@ class ChatService:
 
         await self._init_legacy_ed3n()
         await self._init_training_coordinator()
-        await self._init_legacy_garden()
+        await self._init_garden_learner()
         await self._init_ed3n_learning_integration()
         await self._init_vector_store()
         await self._init_ham_memory()

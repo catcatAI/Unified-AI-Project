@@ -144,6 +144,53 @@ def _recall_clauses(question: str) -> List[str]:
     return clauses or [question or ""]
 
 
+def _embed(text: str):
+    """The project's own multilingual embedding (None when unavailable)."""
+    try:
+        import numpy as np
+        from ai.unified_engine.semantic_qa import _features
+
+        vector = np.asarray(_features(text or ""), dtype=np.float32)
+        norm = float(np.linalg.norm(vector))
+        return vector / norm if norm else None
+    except Exception:
+        return None
+
+
+def _semantic_match(clause: str, statements: List[str], query_words: set) -> Optional[str]:
+    """The statement the question is about.
+
+    The keyword overlap alone is too brittle ("我幾歲" vs "我今年三十五歲" share
+    nothing), so the project's own multilingual encoder does the matching; the
+    keyword overlap only breaks the ties (and is the fallback when the encoder
+    is unavailable).
+    """
+    if not statements:
+        return None
+    overlaps = [_overlap(query_words, statement) for statement in statements]
+    vector = _embed(clause)
+    if vector is None:
+        best = max(range(len(statements)), key=lambda i: overlaps[i])
+        return statements[best] if overlaps[best] > 0 else None
+    import numpy as np
+
+    scores = []
+    for index, statement in enumerate(statements):
+        other = _embed(statement)
+        similarity = float(vector @ other) if other is not None else 0.0
+        # A shared content word is a strong hint; the encoder carries the rest.
+        scores.append(similarity + (0.25 if overlaps[index] > 0 else 0.0))
+    best_index = max(range(len(scores)), key=lambda i: scores[i])
+    best_statement = statements[best_index]
+    other_vector = _embed(best_statement)
+    best_similarity = float(vector @ other_vector) if other_vector is not None else 0.0
+    if best_similarity < 0.30:
+        # Nothing close enough — a wrong answer dressed as a memory is worse
+        # than an honest "I don't know".
+        return None
+    return best_statement
+
+
 def _overlap(query_words: set, statement: str) -> int:
     """How many of the query's content words appear in the statement."""
     statement_words = set(_recall_keywords(statement))
@@ -263,6 +310,50 @@ class MemoryIntegration:
             logger.warning("Memory retrieval error: %s", e, exc_info=True)
             return None
 
+    async def _recall_candidates(self, question: str, manager: Any) -> List[str]:
+        """The conversation statements worth answering from.
+
+        The vector store's semantic search is the primary source: a keyword
+        filter cannot match "我幾歲" to "我今年三十五歲" (no shared content
+        word), so the recall used to miss the fact it was asked about. The
+        HAM's keyword query is the fallback.
+        """
+        candidates: List[str] = []
+        try:
+            from ai.memory.vector_store import get_vector_store
+
+            store = get_vector_store()
+            if store is not None:
+                results = await store.semantic_search(question, 12)
+                documents = (results.get("documents") or [[]])[0]
+                for document in documents:
+                    text = str(document or "")
+                    if not text:
+                        continue
+                    user_part = text.split("\n", 1)[0]
+                    if user_part.lower().startswith("user:"):
+                        user_part = user_part.split(":", 1)[1].strip()
+                    if user_part:
+                        candidates.append(user_part)
+        except Exception as exc:
+            logger.debug("vector recall query failed: %s", exc)
+        if not candidates:
+            try:
+                memories = await manager.query_core_memory(
+                    keywords=_recall_keywords(question),
+                    data_type_filter="conversation",
+                    limit=8,
+                )
+                for memory in memories:
+                    content = getattr(memory, "content", None)
+                    if isinstance(content, dict):
+                        candidates.append(str(content.get("user") or ""))
+                    else:
+                        candidates.append(str(content or ""))
+            except Exception as exc:
+                logger.debug("conversation recall query failed: %s", exc)
+        return [c for c in candidates if c]
+
     async def try_teaching_ack(self, user_message: str) -> Optional["LLMResponse"]:
         """Acknowledge a fact the user just told us.
 
@@ -305,26 +396,9 @@ class MemoryIntegration:
 
         from core.interfaces.protocols import ChatResponse
 
-        try:
-            memories = await manager.query_core_memory(
-                keywords=_recall_keywords(user_message),
-                data_type_filter="conversation",
-                limit=8,
-            )
-        except Exception as exc:
-            logger.debug("conversation recall query failed: %s", exc)
-            return None
-        if not memories:
-            return None
-
         statements: List[str] = []
         normalized_query = " ".join(re.findall(r"\w+", user_message or ""))
-        for memory in memories:
-            content = getattr(memory, "content", None)
-            if isinstance(content, dict):
-                user_text = str(content.get("user") or "")
-            else:
-                user_text = str(content or "")
+        for user_text in await self._recall_candidates(user_message, manager):
             if not user_text:
                 continue
             # The question itself is in the conversation history: quoting it
@@ -363,12 +437,7 @@ class MemoryIntegration:
         answers: List[str] = []
         for clause in clauses:
             clause_words = set(_recall_keywords(clause))
-            best_statement = None
-            best_score = 0
-            for statement in statements:
-                score = _overlap(clause_words, statement)
-                if score > best_score:
-                    best_statement, best_score = statement, score
+            best_statement = _semantic_match(clause, statements, clause_words)
             if best_statement is None:
                 continue
             name = _statement_name(best_statement)

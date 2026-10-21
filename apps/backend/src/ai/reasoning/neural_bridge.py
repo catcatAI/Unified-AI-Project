@@ -26,7 +26,7 @@ from __future__ import annotations
 import logging
 import re
 from functools import lru_cache
-from typing import Dict, List, Optional, Sequence, Set, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Set, Tuple
 
 import numpy as np
 
@@ -93,6 +93,12 @@ DIMENSION_SEEDS = _dimension_seed_map()
 
 # The superlative direction of the question ("top" / "lowest"). These are the
 # aggregation words; the dimension is matched separately.
+# How much weaker the question's dimension may be than the overall best
+# before the best match wins instead.
+_DIMENSION_MARGIN = 0.15
+# How many aligned phrases a concept may accumulate.
+_MAX_ALIGNED_SEEDS = 64
+
 # The superlative words of the teacher: its own "comparator → superlative"
 # table, grouped per dimension. The direction of a question is matched
 # against the superlatives of the dimension the question names, so "the
@@ -190,13 +196,39 @@ def _unit(vec: np.ndarray) -> np.ndarray:
     return vec / norm
 
 
+_QUESTION = re.compile(
+    r"[?？]\s*$"
+    r"|\b(yes or no|yes/no)\b|是嗎|對嗎"
+    r"|^\s*(what|who|whom|which|whose|when|where|why|how|is|are|was|were|do|does|did|"
+    r"can|could|should|would|will)\b"
+    r"|^(誰|哪|什麼|甚麼|怎麼|為什麼|為何|是不是|有沒有|幾點|哪個)",
+    re.IGNORECASE,
+)
+
+
+def _looks_like_question(text: str) -> bool:
+    """True when the message asks something.
+
+    The bridge answers *questions* ("who is the tallest?"). Without this
+    guard any statement could be read as a comparison ("寫Unity腳本" became
+    "寫 is the tallest").
+    """
+    return bool(_QUESTION.search((text or "").strip()))
+
+
 def _phrase_windows(phrase: str) -> List[str]:
-    """The phrase and its tail windows ("who is the coolest" -> ... "coolest")."""
+    """The tail windows of a phrase ("who is the coolest" -> "coolest").
+
+    Only the *tail* is used: the superlative is the last word, and the whole
+    phrase carries the question's filler ("is the ..."), which lands the
+    match on the wrong concept ("is the heaviest" matched the size
+    dimension because "is the" resembles "taller").
+    """
     words = (phrase or "").split()
-    windows = [phrase] if phrase else []
+    if not words:
+        return []
+    windows = [words[-1]]
     if len(words) > 1:
-        windows.append(words[-1])
-    if len(words) > 2:
         windows.append(" ".join(words[-2:]))
     return windows
 
@@ -273,7 +305,13 @@ class RelationMatcher:
 
     # -- matching --------------------------------------------------------- #
     def _score(self, vec: np.ndarray, kind: str, key: str) -> float:
-        """The similarity of *vec* to a concept (the best seed or the centroid)."""
+        """The similarity of *vec* to a concept.
+
+        The **best seed word** discriminates; the centroid (the mean of the
+        seeds) is a hub that many unrelated words sit near — "outweighs"
+        matched the size centroid instead of the weight seeds. The centroid
+        therefore only breaks the ties.
+        """
         best = 0.0
         for seed in self._seeds.get(kind, {}).get(key, ()):
             sim = _similarity(vec, seed)
@@ -281,9 +319,7 @@ class RelationMatcher:
                 best = sim
         proto = self._prototypes.get(kind, {}).get(key)
         if proto is not None:
-            sim = _similarity(vec, proto)
-            if sim > best:
-                best = sim
+            best += 0.02 * _similarity(vec, proto)
         return best
 
     def _best(self, vec: np.ndarray, kind: str, threshold: float) -> Optional[Tuple[str, float]]:
@@ -322,6 +358,26 @@ class RelationMatcher:
         if best is None or best[1] < threshold:
             return None
         return best
+
+    def classify_all(
+        self, phrase: str, kind: str = "relation"
+    ) -> List[Tuple[Tuple[str, str], float]]:
+        """Every concept with its score (the caller may re-rank by dimension)."""
+        if not phrase or not phrase.strip():
+            return []
+        vec = _unit(_encode(phrase))
+        if vec.size == 0:
+            return []
+        scored: List[Tuple[Any, float]] = []
+        for key in self._seeds.get(kind, {}):
+            sim = self._score(vec, kind, key)
+            if kind == "relation":
+                dimension, direction = key.split("|", 1)
+                scored.append(((dimension, direction), sim))
+            else:
+                scored.append((key, sim))
+        scored.sort(key=lambda item: -item[1])
+        return scored
 
     def classify(
         self, phrase: str, kind: str = "relation", threshold: float = 0.45
@@ -431,21 +487,41 @@ class RelationMatcher:
         return scores
 
     def classify_aggregation(
-        self, phrase: str, threshold: float = 0.40
+        self, phrase: str, threshold: float = 0.65
     ) -> Optional[Tuple[Optional[str], str, float]]:
         """The aggregation for *phrase*: (dimension or None, direction, sim).
 
         ``None`` for the dimension means "any dimension" (the question asks
         for the top of the chain without naming a dimension).
+
+        The threshold is deliberately high: a question must *ask* for a
+        superlative (the teacher's own superlative words score ≈1.0). At 0.40
+        any sentence matched something ("寫Unity Editor腳本只輸出代碼" was
+        read as a comparison).
         """
         if not phrase or not phrase.strip():
             return None
-        dim_match = self.classify_dimension(phrase)
-        dir_match = self.classify_direction(phrase, dimension=dim_match[0] if dim_match else None)
-        if dim_match is None and dir_match is None:
+        dir_match = self.classify_direction(phrase)
+        # The dimension comes from the *specific* superlative ("the heaviest"
+        # belongs to the weight dimension): the per-dimension direction seeds
+        # are more precise than the dimension prototypes, where "heaviest" sits
+        # nearer to "taller" than to "heavier".
+        dimension: Optional[str] = None
+        dim_sim = 0.0
+        if dir_match is not None:
+            for key, score in self.classify_all(phrase, kind="direction"):
+                if not isinstance(key, str) or "|" not in key:
+                    continue
+                dim_name, dim_direction = key.split("|", 1)
+                if dim_direction == dir_match[0] and score > dim_sim:
+                    dimension = dim_name
+                    dim_sim = score
+        if dimension is None:
+            dim_match = self.classify_dimension(phrase)
+            dimension = dim_match[0] if dim_match else None
+            dim_sim = dim_match[1] if dim_match else 0.0
+        if dimension is None and dir_match is None:
             return None
-        dimension: Optional[str] = dim_match[0] if dim_match else None
-        dim_sim = dim_match[1] if dim_match else 0.0
         any_sim = 0.0
         if self._any_prototype is not None:
             for window in _phrase_windows(phrase):
@@ -488,6 +564,12 @@ class RelationMatcher:
         before = _similarity(vec, proto)
         updated = _unit(proto * (1.0 - self._alignment_rate) + vec * self._alignment_rate)
         self._prototypes[table][key] = updated
+        # The aligned phrase joins the concept's own seeds — the concept now
+        # *contains* the word it was taught (the score is the best seed, so
+        # without this the alignment would barely move anything).
+        seeds = self._seeds.get(table, {}).get(key)
+        if seeds is not None and len(seeds) < _MAX_ALIGNED_SEEDS:
+            seeds.append(vec)
         return _similarity(vec, updated) - before
 
     def align_direction(self, phrase: str, direction: str) -> float:
@@ -775,12 +857,20 @@ class NeuralBridge:
         self.matcher = matcher or RelationMatcher()
 
     # -- the relations ----------------------------------------------------- #
-    def find_relations(self, text: str) -> List[Tuple[str, Tuple[str, str], str]]:
+    def find_relations(
+        self, text: str, dimension: Optional[str] = None
+    ) -> List[Tuple[str, Tuple[str, str], str]]:
         """The (subject, concept, object) relations of *text*.
 
         The concept is (dimension, direction). The English relation word is
         found by the matcher, not by a vocabulary: that is the generalisation
         the teacher cannot do.
+
+        ``dimension`` is the dimension the *question* asks about ("who is the
+        heaviest?" → weight). The encoder alone cannot place "outweighs"
+        (it sits near "less" and "heavier" alike), but the question already
+        says which dimension the chain is about — so the relation is read in
+        that dimension.
         """
         relations: List[Tuple[str, Tuple[str, str], str]] = []
         seen: Set[Tuple[str, str, str]] = set()
@@ -790,7 +880,7 @@ class NeuralBridge:
             if phrase == "greater":  # the symbolic "A > B" form
                 concept = (ANY_DIMENSION, GREATER)
             else:
-                match = self.matcher.classify(phrase, kind="relation")
+                match = self._classify_relation(phrase, dimension)
                 if match is None:
                     continue
                 concept = match[0]
@@ -801,11 +891,11 @@ class NeuralBridge:
             relations.append((subject, concept, obj))
 
         # 2. The English shape: the matcher finds the relation word.
-        for subject, phrase, obj, negated in self._english_relations(text):
-            match = self.matcher.classify(phrase, kind="relation")
+        for subject, phrase, obj, negated in self._english_relations(text, dimension):
+            match = self._classify_relation(phrase, dimension)
             if match is None:
                 continue
-            dimension, direction = match[0]
+            concept_dimension, direction = match[0]
             if negated:
                 # "A is not as short as B" — the negation flips the relation.
                 direction = LESSER if direction == GREATER else GREATER
@@ -813,17 +903,41 @@ class NeuralBridge:
             if key in seen:
                 continue
             seen.add(key)
-            relations.append((subject, (dimension, direction), obj))
+            relations.append((subject, (concept_dimension, direction), obj))
         return relations
 
-    def _english_relations(self, text: str) -> List[Tuple[str, str, str, bool]]:
+    def _classify_relation(
+        self, phrase: str, dimension: Optional[str]
+    ) -> Optional[Tuple[Tuple[str, str], float]]:
+        """The relation concept, read in the dimension the question asks about.
+
+        The question's dimension is a *hint*, not a command: it only wins when
+        it is not much weaker than the overall best (otherwise "the box is
+        bigger than the bag ... who coldest?" would read "bigger" as a
+        temperature and answer nonsense).
+        """
+        scored = self.matcher.classify_all(phrase, kind="relation")
+        if not scored:
+            return None
+        concept, score = scored[0]
+        if dimension:
+            for candidate, candidate_score in scored:
+                if candidate[0] == dimension:
+                    if candidate_score >= score - _DIMENSION_MARGIN:
+                        return candidate, candidate_score
+                    break
+        return concept, score
+
+    def _english_relations(
+        self, text: str, dimension: Optional[str] = None
+    ) -> List[Tuple[str, str, str, bool]]:
         """The English relation spans (subject, phrase, object, negated)."""
         spans: List[Tuple[str, str, str, bool]] = []
         for clause in _CLAUSE_SPLIT.split(text or ""):
             tokens = _tokens(clause)
             if len(tokens) < 3:
                 continue
-            best = self._than_anchored(tokens) or self._window_scan(tokens)
+            best = self._than_anchored(tokens, dimension) or self._window_scan(tokens, dimension)
             if best is None:
                 continue
             _score, lo, hi, phrase = best
@@ -841,7 +955,9 @@ class NeuralBridge:
             self.matcher.is_superlative_word(word) for entity in entities for word in entity.split()
         )
 
-    def _than_anchored(self, tokens: List[str]) -> Optional[Tuple[float, int, int, str]]:
+    def _than_anchored(
+        self, tokens: List[str], dimension: Optional[str] = None
+    ) -> Optional[Tuple[float, int, int, str]]:
         """The relation of the "X <comparative> than Y" shape.
 
         The comparative marker ("than") anchors the phrase: the words right
@@ -863,7 +979,7 @@ class NeuralBridge:
                 continue
             if not _is_relation_window(tokens, lo, hi):
                 continue
-            match = self.matcher.classify(phrase, kind="relation")
+            match = self._classify_relation(phrase, dimension)
             if match is None:
                 continue
             if not self.matcher.is_relation_phrase(phrase, match[1]):
@@ -886,7 +1002,9 @@ class NeuralBridge:
             return None
         return best
 
-    def _window_scan(self, tokens: List[str]) -> Optional[Tuple[float, int, int, str]]:
+    def _window_scan(
+        self, tokens: List[str], dimension: Optional[str] = None
+    ) -> Optional[Tuple[float, int, int, str]]:
         """The relation of a shape without a comparative marker.
 
         "A outranks B", "A beats B": the relation word is found by the
@@ -903,7 +1021,7 @@ class NeuralBridge:
                     continue
                 if not _is_relation_window(tokens, lo, hi):
                     continue
-                match = self.matcher.classify(phrase, kind="relation")
+                match = self._classify_relation(phrase, dimension)
                 if match is None:
                     continue
                 if not self.matcher.is_relation_phrase(phrase, match[1]):
@@ -1065,11 +1183,8 @@ class NeuralBridge:
         """The (entity, direction, dimension) of the question, or None."""
         if not question or not question.strip():
             return None
-        relations = self.find_relations(question)
-        if not relations:
-            return None
-
-        # 1. 接觸 — which entity does the question ask for?
+        # 1. 接觸 — which entity does the question ask for? (The question's
+        # dimension also constrains how the relation words are read.)
         agg_phrase = extract_aggregation_span(question)
         if agg_phrase is None:
             return None
@@ -1077,6 +1192,14 @@ class NeuralBridge:
         if agg is None:
             return None
         dimension, direction, agg_score = agg
+
+        if not _looks_like_question(question):
+            # A statement is not a comparison question.
+            return None
+
+        relations = self.find_relations(question, dimension=dimension)
+        if not relations:
+            return None
 
         # A yes/no question is answered by reachability in the chain.
         if re.search(r"\b(yes or no|yes/no)\b|是嗎|對嗎", question, re.IGNORECASE):

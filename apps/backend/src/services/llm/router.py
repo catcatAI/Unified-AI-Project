@@ -3060,6 +3060,7 @@ class AngelaLLMService:
             return None
         match_result = matcher.match(user_message, context)
         match_score = match_result.score
+        match_result = self._avoid_repeating(match_result, context)
         tmpl_cfg = _get_llm_config("template_match", {})
         composed_thresh = tmpl_cfg.get("composed", 0.8)
         hybrid_thresh = tmpl_cfg.get("hybrid", 0.5)
@@ -3087,6 +3088,56 @@ class AngelaLLMService:
                 "compose": "hybrid",
             }
         return None
+
+    def _avoid_repeating(self, match_result: Any, context: Dict[str, Any]) -> Any:
+        """Do not answer with the same line twice in a row.
+
+        A human does not repeat the same sentence; the canned-answer shape
+        ("你今天過得如何？嗯…讓我想一下喔。") is the single most machine-like
+        thing the native path does. When the matched template is one the
+        conversation just used, another template of the same category is
+        chosen instead.
+        """
+        try:
+            history = (context or {}).get("history") or []
+            recent = {
+                str(entry.get("content") or "").strip()
+                for entry in history[-6:]
+                if isinstance(entry, dict) and entry.get("role") == "assistant"
+            }
+            recent.discard("")
+            if not recent:
+                return match_result
+            content = str(getattr(match_result, "template_content", "") or "").strip()
+            if not content or content not in recent:
+                return match_result
+            template_id = getattr(match_result, "template_id", None)
+            templates = getattr(self.template_matcher, "templates", {}) or {}
+            template = templates.get(template_id) if template_id else None
+            category = getattr(template, "category", None)
+            alternatives = [
+                candidate
+                for candidate in templates.values()
+                if str(getattr(candidate, "content", "")).strip() not in recent
+                and (category is None or getattr(candidate, "category", None) == category)
+            ]
+            if not alternatives:
+                return match_result
+            chosen = alternatives[0]
+            try:
+                return match_result.__class__(
+                    score=match_result.score,
+                    level=match_result.level,
+                    template_id=chosen.id,
+                    template_content=chosen.content,
+                    match_time_ms=match_result.match_time_ms,
+                    metadata=dict(getattr(match_result, "metadata", {}) or {}),
+                )
+            except Exception:
+                return match_result
+        except Exception as exc:
+            logger.debug("anti-repeat template selection skipped: %s", exc)
+            return match_result
 
     async def _try_template_match(
         self, user_message: str, context: Dict[str, Any], start_time: float
@@ -3199,6 +3250,17 @@ class AngelaLLMService:
         content = str(selection.get("content") or "")
         if not content:
             return None
+
+        # Do not repeat the line the conversation just used: a human does not
+        # answer the same thing twice in a row, and the canned-answer shape is
+        # the most machine-like thing the native path does.
+        recent = self._recent_answers(context)
+        if content.strip() in recent:
+            alternative = self._alternative_template(selection, recent)
+            if alternative:
+                selection = dict(selection)
+                selection["content"] = alternative
+                content = alternative
 
         if self._llm_backend_available():
             context["template_example"] = {
@@ -3641,7 +3703,7 @@ class AngelaLLMService:
             if not templates:
                 templates = library.get_by_category(ResponseCategory.SUPPORT)
             if templates:
-                text = self._pick_support_template(templates, user_message).replace(
+                text = self._pick_support_template(templates, user_message, context).replace(
                     "{user_name}", context.get("user_name", "朋友")
                 )
                 return LLMResponse(
@@ -3655,10 +3717,12 @@ class AngelaLLMService:
             logger.warning(f"Support template fallback failed: {exc}")
         return None
 
-    @staticmethod
-    def _pick_support_template(templates: Any, user_message: str) -> str:
+    def _pick_support_template(
+        self, templates: Any, user_message: str, context: Optional[Dict[str, Any]] = None
+    ) -> str:
         """keyword-relevant pick instead of blind random: match template
-        content against the user's own words first."""
+        content against the user's own words first — and never repeat the
+        line the conversation just used (a human does not)."""
         import re as _re2
 
         # Traditional→Simplified for cross-script template matching
@@ -3666,6 +3730,7 @@ class AngelaLLMService:
         normalized_msg = to_simplified(user_message).lower()
         # CJK: single-char granularity (难 vs 别难过 share 难+过)
         user_words = set(_re2.findall(r"[\u4e00-\u9fff]|[A-Za-z]{3,}", normalized_msg))
+        recent = self._recent_answers(context)
         scored = []
         for t in templates:
             c = str(getattr(t, "content", ""))
@@ -3673,9 +3738,47 @@ class AngelaLLMService:
             overlap = len(user_words & tw)
             scored.append((overlap, c))
         scored.sort(key=lambda x: -x[0])
-        if scored and scored[0][0] > 0:
-            return scored[0][1]
-        return random.choice([c for _, c in scored])
+        fresh = [(score, c) for score, c in scored if c.strip() not in recent]
+        if not fresh:
+            fresh = scored
+        if fresh and fresh[0][0] > 0:
+            return fresh[0][1]
+        return random.choice([c for _, c in fresh])
+
+    def _alternative_template(self, selection: Dict[str, Any], recent: set) -> str:
+        """Another template of the same category that the conversation has not used."""
+        try:
+            from ai.memory.template_library import get_template_library
+
+            library = get_template_library()
+            template_id = selection.get("template_id")
+            template = None
+            if template_id:
+                template = getattr(library, "_templates", {}).get(template_id)
+            category = getattr(template, "category", None)
+            for candidate in getattr(library, "_templates", {}).values():
+                content = str(getattr(candidate, "content", "") or "").strip()
+                if not content or content in recent:
+                    continue
+                if category is not None and getattr(candidate, "category", None) != category:
+                    continue
+                return content
+        except Exception as exc:
+            logger.debug("alternative template lookup skipped: %s", exc)
+        return ""
+
+    @staticmethod
+    def _recent_answers(context: Optional[Dict[str, Any]]) -> set:
+        """The answers the conversation just used (the anti-repeat memory)."""
+        try:
+            history = (context or {}).get("history") or []
+            return {
+                str(entry.get("content") or "").strip()
+                for entry in history[-6:]
+                if isinstance(entry, dict) and entry.get("role") == "assistant"
+            } - {""}
+        except Exception:
+            return set()
 
     async def _fb_claim_reasoning(
         self, user_message: str, context: Dict[str, Any], looks_like_question: bool

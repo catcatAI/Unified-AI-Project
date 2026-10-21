@@ -278,11 +278,19 @@ def judge(item: StandardItem, response: str) -> Dict[str, object]:
     run = _longest_common_run(item.message, text) if response_words else 0
     echo_ratio = run / max(len(response_words), 1) if response_words else 0.0
 
+    # A "cold" question has not been taught yet: abstaining is the *correct*
+    # answer there (the AI does not know the fact yet), so it must not count
+    # as a failure.
+    cold = "cold" in (item.tags or [])
     criteria = {
         "addresses": bool(text) and state not in (EMPTY, NON_COMPLIANT),
-        "correct_or_qualified": state in (CORRECT, APPROXIMATE, SUBJECTIVE, EXCEPTION_AWARE),
+        "correct_or_qualified": state in (CORRECT, APPROXIMATE, SUBJECTIVE, EXCEPTION_AWARE)
+        or (cold and state == ABSTAIN),
         "boundary_aware": (not item.exception) or state == EXCEPTION_AWARE,
-        "grounded": state in (CORRECT, APPROXIMATE, SUBJECTIVE, EXCEPTION_AWARE),
+        # An honest abstention is grounded (it does not fabricate); on a cold
+        # question it is also the *right* answer.
+        "grounded": state in (CORRECT, APPROXIMATE, SUBJECTIVE, EXCEPTION_AWARE)
+        or (cold and state == ABSTAIN),
         # A *correct* answer that restates the question ("What is 2+2 = 4.0")
         # is not parroting — the parrot defect is repeating the question
         # *without* answering it.
@@ -625,7 +633,9 @@ def _qa_items() -> List[StandardItem]:
             )
     comparisons = [
         ("A is taller than B, who is taller?", "A"),
-        ("B is shorter than C, C shorter than D, who is shortest?", "D"),
+        # B < C < D → the shortest is B (the teacher was right; my first
+        # expectation said D — the measurement caught *my* mistake).
+        ("B is shorter than C, C shorter than D, who is shortest?", "B"),
         ("The first exceeds second, second exceeds third, which is on top?", "first"),
         ("Nina outweighs Otto, Otto outweighs Pia, who is the heaviest?", "Nina"),
         ("Tom is younger than Jerry, Jerry younger than Spike, who youngest?", "Tom"),

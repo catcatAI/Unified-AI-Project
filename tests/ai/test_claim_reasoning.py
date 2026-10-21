@@ -8,7 +8,37 @@
 
 from __future__ import annotations
 
+import os
+import tempfile
 from typing import Any, Dict, List
+
+import pytest
+
+# The recall reads the vector store (its path is resolved when the store is
+# created) — the test must not touch the user's real memory.
+_SANDBOX = tempfile.mkdtemp(prefix="angela-claim-test-")
+os.environ["ANGELA_DATA_DIR"] = _SANDBOX
+os.environ["VECTOR_STORE_PATH"] = os.path.join(_SANDBOX, "vector_store")
+
+
+@pytest.fixture(autouse=True)
+def _isolate_vector_store():
+    """The vector store is a process-wide singleton — point it at the sandbox.
+
+    Its default path is resolved at *import* time, so setting the env var in
+    the test is not enough: the store instance itself has to be replaced.
+    """
+    from ai.memory import vector_store
+
+    previous = vector_store._VECTOR_STORE_SINGLETON
+    vector_store._VECTOR_STORE_SINGLETON = vector_store.VectorMemoryStore(
+        persist_directory=os.path.join(_SANDBOX, "vector_store")
+    )
+    try:
+        yield
+    finally:
+        vector_store._VECTOR_STORE_SINGLETON = previous
+
 
 from ai.reasoning.claims import (
     answer_claim_question,

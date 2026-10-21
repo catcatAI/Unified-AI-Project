@@ -928,6 +928,13 @@ collected — 0 errors**).
 > `ai.arithmetic/deterministic_router.py` 的 `try_neural_bridge()` 接在
 > `try_reasoning`（老師）之後，老師先答、橋接補老師看不到的改述；GARDEN／ED3N
 > 引擎經同一 router 一併受益；橋接對非比較問句 abstain（不亂答）。
+> **2026-10-21 續修（原生路徑往「像人」走）**：GARDEN 從「舊引擎」變成**結構
+> 學習器**（聊天時的學習不再被 `ANGELA_LEGACY_ED3N=1` 閘住——它學「怎麼說」，
+> 教過就照教的方式回）；**不重複自己**（同句連問三次 → 三句不同回應）；橋接用
+> **問題的維度**約束關係詞（留出集 16/20 → 19/20）；回憶層改**語意檢索**；橋接對
+> 非問句棄權。量測：人話標準通過率 57.8% → **63.0%**（問答 95%／斷言題 88%／
+> 對話 83%／多重事實 65%／**斷言庫外的邊界題 0%**）、學習效應 +0.436（22 組對）。
+> 少量 vs 標準量的一致性改用**統計比較**（區間是否重疊、2 個標準誤）而非固定容差。
 > **2026-10-21 續修（推理層補一級）**：新增
 > `apps/backend/src/ai/reasoning/claims.py` ＋
 > `apps/backend/configs/standard/reasoning/claims.yaml`——**斷言推理**：「X 這句話
