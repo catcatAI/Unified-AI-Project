@@ -919,3 +919,38 @@ def test_chat_service_record_served_turn_delegation():
     assert r.n == 1
     ChatService(llm_service=None).record_served_turn()  # no-op, no raise
     ChatService(llm_service=object()).record_served_turn()  # 無方法 → no-op
+
+
+@pytest.mark.asyncio
+async def test_anti_repeat_has_a_repetitive_work_exception():
+    """重複性工作／高確定性請求：同一個答案兩次是對的，不是罐頭。
+
+    寫程式、算式、定義、查詢——答案本來就被決定了，所以「不重複自己」的
+    規則不能套在它們身上。
+    """
+    from services.llm.router import AngelaLLMService
+
+    service = _recall_service()
+    assert service._is_repetitive_request("幫我寫一支排序的程式", {}) is True
+    assert service._is_repetitive_request("幫我算 17*23", {}) is True
+    assert service._is_repetitive_request("write me a python sort function", {}) is True
+    # 情緒／閒聊：重複就會很明顯是機器
+    assert service._is_repetitive_request("我今天好累", {}) is False
+    assert service._is_repetitive_request("謝謝你陪我聊", {}) is False
+
+
+@pytest.mark.asyncio
+async def test_a_repetitive_request_may_repeat_its_answer():
+    """同一個確定性請求連問兩次 → 同一個答案（不算 QA 機器）。"""
+    from services.llm.router import AngelaLLMService
+
+    service = _recall_service()
+    history = {
+        "history": [
+            {"role": "user", "content": "幫我寫一支排序的程式"},
+            {"role": "assistant", "content": "def sort(xs): return sorted(xs)"},
+        ]
+    }
+    assert service._is_repetitive_request("幫我寫一支排序的程式", history) is True
+    # 情緒回合仍然要避免重複
+    assert service._is_repetitive_request("我今天好累", history) is False

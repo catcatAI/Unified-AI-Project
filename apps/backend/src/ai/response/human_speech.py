@@ -660,8 +660,30 @@ def _qa_items() -> List[StandardItem]:
 
 def _dialogue_items() -> List[StandardItem]:
     """The conversation turns (the dialogue has to be in the standard set)."""
-    greetings = ["你好", "哈囉", "早安", "午安", "晚安", "Hello", "Hi there", "Good morning"]
-    thanks = ["謝謝你", "謝謝", "Thanks", "Thank you so much", "多謝"]
+    # The dialogue turns are *varied*: a real conversation does not ask the
+    # same sentence six times, and repeating it made the "canned answer"
+    # rate meaningless.
+    greetings = [
+        "你好",
+        "哈囉",
+        "早安",
+        "午安",
+        "晚安",
+        "Hello",
+        "Hi there",
+        "Good morning",
+        "嗨，你今天還好嗎？",
+        "有人在嗎？",
+    ]
+    thanks = [
+        "謝謝你",
+        "謝謝",
+        "Thanks",
+        "Thank you so much",
+        "多謝",
+        "謝謝你陪我聊這麼久",
+        "真的謝謝你幫我想辦法",
+    ]
     feelings = [
         "我今天很累",
         "我有點難過",
@@ -669,30 +691,36 @@ def _dialogue_items() -> List[StandardItem]:
         "我最近有點焦慮",
         "我感到孤單",
         "我今天壓力好大",
+        "昨晚沒睡好",
+        "我被罵了，有點難受",
         "I'm so tired today",
         "I feel a bit sad",
         "I am really happy today",
+        "I am so anxious about the deadline",
     ]
     small_talk = [
         "今天天氣不錯",
         "我剛剛吃完午餐",
         "這週工作好忙",
         "我最近在看一部影集",
+        "我剛跑了三公里",
+        "我買了一杯拿鐵",
         "I had a good lunch",
         "This week is so busy",
+        "I just finished a book",
     ]
     items: List[StandardItem] = []
     for message in greetings:
-        for _ in range(4):
+        for _ in range(2):
             items.append(StandardItem(kind="dialogue", message=message, tags=["greeting"]))
     for message in thanks:
-        for _ in range(4):
+        for _ in range(2):
             items.append(StandardItem(kind="dialogue", message=message, tags=["thanks"]))
     for message in feelings:
-        for _ in range(6):
+        for _ in range(2):
             items.append(StandardItem(kind="dialogue", message=message, tags=["feeling"]))
     for message in small_talk:
-        for _ in range(6):
+        for _ in range(2):
             items.append(StandardItem(kind="dialogue", message=message, tags=["small_talk"]))
     # The teaching turns: the fact plus the question that must recall it.
     for scenario in MULTI_FACT_SCENARIOS:

@@ -346,7 +346,9 @@ def _pick_relevant_template(templates, message: str):
     best_len = 0
     for template in templates or []:
         for keyword in getattr(template, "keywords", []) or []:
-            keyword_lower = str(keyword).lower().strip()
+            # The keywords live in Simplified; the user may write Traditional
+            # (「我感到孤單」 vs the keyword 「孤独」), so both sides are folded.
+            keyword_lower = to_simplified(str(keyword)).lower().strip()
             if len(keyword_lower) < 2 or len(keyword_lower) <= best_len:
                 continue
             index = folded.find(keyword_lower)
@@ -3254,7 +3256,14 @@ class AngelaLLMService:
         # Do not repeat the line the conversation just used: a human does not
         # answer the same thing twice in a row, and the canned-answer shape is
         # the most machine-like thing the native path does.
-        recent = self._recent_answers(context)
+        #
+        # **例外**：重複性工作、高確定性的請求（寫程式、算式、定義、查詢）
+        # 本來就該給一樣的答案——那不是罐頭，是確定性。這種請求走的是確定性
+        # 路線（數學／知識／工具），本來就不受模板選擇影響；這裡再擋一次是
+        # 為了「要求可重複」的語意。
+        recent = set()
+        if not self._is_repetitive_request(user_message, context):
+            recent = self._recent_answers(context)
         if content.strip() in recent:
             alternative = self._alternative_template(selection, recent)
             if alternative:
@@ -3745,6 +3754,30 @@ class AngelaLLMService:
             return fresh[0][1]
         return random.choice([c for _, c in fresh])
 
+    def _is_repetitive_request(
+        self, user_message: str, context: Optional[Dict[str, Any]] = None
+    ) -> bool:
+        """True when the same answer twice is the *right* answer.
+
+        Writing code, computing, defining, looking up: the answer is
+        determined, so repeating it is correct — that is determinism, not a
+        canned line. The variety rule applies to the *feeling* answers.
+        """
+        try:
+            if self._is_factual_query(user_message, context or {}):
+                return True
+        except Exception:
+            pass
+        text = (user_message or "").lower()
+        return bool(
+            re.search(
+                r"寫|做|產生|生成|幫我|再寫|再給|重新|一樣的|同樣的|"
+                r"write|generate|code|same|again|repeat|compute|calculate",
+                text,
+                re.IGNORECASE,
+            )
+        )
+
     def _alternative_template(self, selection: Dict[str, Any], recent: set) -> str:
         """Another template of the same category that the conversation has not used."""
         try:
@@ -3774,7 +3807,7 @@ class AngelaLLMService:
             history = (context or {}).get("history") or []
             return {
                 str(entry.get("content") or "").strip()
-                for entry in history[-6:]
+                for entry in history[-20:]
                 if isinstance(entry, dict) and entry.get("role") == "assistant"
             } - {""}
         except Exception:

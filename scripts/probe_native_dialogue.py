@@ -523,7 +523,6 @@ def score_turn(
         if _normalized(turn.response) and _similar(turn.response, text) >= 0.8:
             duplicate_of = turn.index
             break
-
     answered = False
     if expected:
         want = oracle_entity(expected) if " " in str(expected) else str(expected).strip()
@@ -539,6 +538,11 @@ def score_turn(
             answered = _normalized(expected) in _normalized(text)
 
     abstained = bool(text) and bool(_ABSTAIN.search(text))
+    # A duplicate answer is only the QA-machine shape when it is a *canned*
+    # line: the honest abstention ("I don't know") and the deterministic
+    # answers (the same claim asked in another wording) are supposed to be
+    # identical every time.
+    canned_duplicate = duplicate_of is not None and not answered and not abstained
     if not text:
         classes.append("empty")
     if abstained:
@@ -554,7 +558,7 @@ def score_turn(
         classes.append("artifact")
     if text and _is_ramble(text):
         classes.append("ramble")
-    if duplicate_of is not None:
+    if canned_duplicate:
         classes.append("qa_machine")
     elif text and not _SOCIAL_TURN.search(question) and _canned_mismatch(question, text):
         # A canned answer to a substantive turn, and the canned line did not

@@ -127,16 +127,20 @@
     "category": "emotional",
     "content": "辛苦啦！快休息一下，喝杯水吧~",
     "keywords": [
-      "疲惫",
-      "疲憊",
-      "辛苦",
-      "累死",
-      "累",
+      "倦",
       "好累",
       "很累",
+      "沒睡好",
+      "没睡好",
+      "熬夜",
       "疲",
-      "倦",
-      "疲累"
+      "疲惫",
+      "疲憊",
+      "疲累",
+      "睡不好",
+      "累",
+      "累死",
+      "辛苦"
     ],
     "metadata": {
       "predefined": true,
@@ -784,6 +788,205 @@
     "metadata": {
       "predefined": true,
       "variant": "understand"
+    }
+  },
+  {
+    "id": "comfort_tired_2",
+    "category": "emotional",
+    "content": "聽起來你今天真的撐很久了，先讓肩膀放鬆一下，好嗎？",
+    "keywords": [
+      "累",
+      "好累",
+      "很累",
+      "疲",
+      "倦",
+      "疲累",
+      "疲憊",
+      "沒力"
+    ],
+    "metadata": {
+      "predefined": true
+    }
+  },
+  {
+    "id": "comfort_tired_3",
+    "category": "emotional",
+    "content": "要不要先把手上的事放下五分鐘，喝口熱的再說？",
+    "keywords": [
+      "累",
+      "好累",
+      "很累",
+      "疲",
+      "倦"
+    ],
+    "metadata": {
+      "predefined": true
+    }
+  },
+  {
+    "id": "comfort_sad_2",
+    "category": "emotional",
+    "content": "眼淚有時候是身體在替你喊累，不用急著把它收回去。",
+    "keywords": [
+      "難過",
+      "难过",
+      "傷心",
+      "伤心",
+      "低落",
+      "心情差",
+      "想哭"
+    ],
+    "metadata": {
+      "predefined": true
+    }
+  },
+  {
+    "id": "comfort_sad_3",
+    "category": "emotional",
+    "content": "我在這裡，想說多少就說多少，我不會打斷你。",
+    "keywords": [
+      "難過",
+      "难过",
+      "傷心",
+      "伤心",
+      "心情糟"
+    ],
+    "metadata": {
+      "predefined": true
+    }
+  },
+  {
+    "id": "comfort_worried_2",
+    "category": "emotional",
+    "content": "先把最壞的結果寫下來看看，通常它沒有心裡那麼大。",
+    "keywords": [
+      "不安",
+      "失眠",
+      "害怕",
+      "怕",
+      "担心",
+      "擔心",
+      "沒睡好",
+      "没睡好",
+      "焦慮",
+      "焦虑",
+      "睡不好",
+      "睡不著"
+    ],
+    "metadata": {
+      "predefined": true
+    }
+  },
+  {
+    "id": "comfort_worried_3",
+    "category": "emotional",
+    "content": "深呼吸三次：吸四秒、停四秒、吐六秒，我們一起數。",
+    "keywords": [
+      "擔心",
+      "担心",
+      "焦慮",
+      "焦虑",
+      "睡不著",
+      "失眠"
+    ],
+    "metadata": {
+      "predefined": true
+    }
+  },
+  {
+    "id": "comfort_frustrated_2",
+    "category": "emotional",
+    "content": "換我聽你說一遍吧，你已經忍很久了。",
+    "keywords": [
+      "煩躁",
+      "烦躁",
+      "生氣",
+      "生气",
+      "不爽",
+      "火大",
+      "氣死"
+    ],
+    "metadata": {
+      "predefined": true
+    }
+  },
+  {
+    "id": "comfort_lonely_2",
+    "category": "emotional",
+    "content": "一個人扛著不容易，今天願意跟我說一句話嗎？",
+    "keywords": [
+      "孤單",
+      "孤独",
+      "一個人",
+      "沒人",
+      "寂寞"
+    ],
+    "metadata": {
+      "predefined": true
+    }
+  },
+  {
+    "id": "comfort_lonely_3",
+    "category": "emotional",
+    "content": "我在這裡，雖然我不太會安慰人，但我會一直聽。",
+    "keywords": [
+      "孤單",
+      "孤独",
+      "寂寞",
+      "沒人懂"
+    ],
+    "metadata": {
+      "predefined": true
+    }
+  },
+  {
+    "id": "comfort_joy_2",
+    "category": "emotional",
+    "content": "聽你這麼說我整個狀態都亮起來了，繼續保持！",
+    "keywords": [
+      "開心",
+      "开心",
+      "高興",
+      "高兴",
+      "快樂",
+      "愉快",
+      "心情好",
+      "好消息"
+    ],
+    "metadata": {
+      "predefined": true
+    }
+  },
+  {
+    "id": "comfort_joy_3",
+    "category": "emotional",
+    "content": "真好，這種好事值得記下來——要不要講給我聽更多？",
+    "keywords": [
+      "開心",
+      "开心",
+      "高興",
+      "高兴",
+      "有趣",
+      "好棒"
+    ],
+    "metadata": {
+      "predefined": true
+    }
+  },
+  {
+    "id": "comfort_overwhelmed",
+    "category": "emotional",
+    "content": "事情多到爆的時候，先挑一件最小的做就好，剩下的交給明天的你。",
+    "keywords": [
+      "壓力",
+      "压力",
+      "太多",
+      "做不完",
+      "喘不過氣",
+      "爆炸"
+    ],
+    "metadata": {
+      "predefined": true
     }
   }
 ]

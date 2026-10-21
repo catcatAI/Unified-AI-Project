@@ -55,9 +55,9 @@ SCOPES = {
 # Tolerance is proportional so the alarm keeps meaning "mass loss or
 # duplication" instead of "someone added a test file again".
 BASELINE = {
-    "tests": 8141,
-    "ci": 8904,
-    "full": 8904,
+    "tests": 8143,
+    "ci": 8906,
+    "full": 8906,
 }
 TOLERANCE = 0.15
 
