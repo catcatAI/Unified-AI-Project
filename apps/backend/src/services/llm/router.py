@@ -2745,6 +2745,18 @@ class AngelaLLMService:
             model_bus_result = await self._try_model_bus_match(user_message, context)
             if model_bus_result is not None:
                 return model_bus_result
+        # The conversation (the freshest source) before the long-term taught
+        # facts: the taught facts are older and can be about something else
+        # ("我喜歡用 Python" vs the "我喜歡喝拿鐵" said a minute ago).
+        try:
+            conversation_recall = await self.memory_integration.try_conversation_recall(
+                user_message, context
+            )
+        except Exception as exc:
+            logger.debug("conversation recall skipped: %s", exc)
+            conversation_recall = None
+        if conversation_recall is not None:
+            return conversation_recall
         return await self._recall_user_fact(user_message, context, start_time)
 
     def _template_layers_enabled(self, user_message: str) -> bool:

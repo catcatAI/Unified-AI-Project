@@ -51,11 +51,33 @@ def _save_tasks(tasks: List[Dict[str, Any]]) -> None:
     _TASKS_FILE.write_text(json.dumps(tasks, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def _is_question(text: str) -> bool:
+    """True when the text asks something instead of ordering something."""
+    import re
+
+    stripped = (text or "").strip()
+    if not stripped:
+        return True
+    if stripped.endswith(("?", "？")):
+        return True
+    return bool(
+        re.search(
+            r"什麼|哪|誰|為什麼|怎麼|幾點|嗎\?|是不是|有沒有|what|who|where|when|why|how",
+            stripped,
+            re.IGNORECASE,
+        )
+    )
+
+
 class TaskManagerHandler:
     """Manages tasks: create, list, complete, delete, update."""
 
     async def handle(self, text: str, intent: str = "task") -> str:
         action, payload = self._parse(text)
+        if action == "none":
+            # A question is not a task command: "我剛才說我在哪裡工作？" must
+            # not create a task. An empty answer lets the router fall through.
+            return ""
         if action == "plan":
             return await asyncio.to_thread(self._plan, payload)
         if action == "create":
@@ -112,6 +134,10 @@ class TaskManagerHandler:
         # If query mentions tasks but no specific action → show task list
         if any_keyword(text, ("任務", "task", "待辦", "todo")):
             return "list", {}
+        # A question is not a command: creating a task out of a question is
+        # the worst possible answer (it also loses the user's words).
+        if _is_question(text):
+            return "none", {}
         return "create", {"title": text}
 
     def _plan(self, payload: Dict[str, Any]) -> str:

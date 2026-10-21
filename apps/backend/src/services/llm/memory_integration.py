@@ -89,6 +89,18 @@ def _recall_keywords(message: str) -> List[str]:
     return keywords
 
 
+# The questions that ask for a name (the name recall must not answer others).
+_NAME_QUESTION = re.compile(
+    r"什麼名字|甚麼名字|名字|姓名|叫什麼|叫什么|我叫|my name|what.*name|called me", re.IGNORECASE
+)
+
+
+def _overlap(query_words: set, statement: str) -> int:
+    """How many of the query's content words appear in the statement."""
+    statement_words = set(_recall_keywords(statement))
+    return len(query_words & statement_words)
+
+
 def _statement_name(statement: str) -> Optional[str]:
     """The name in a self-statement ("我叫小明" → "小明")."""
     match = _ZH_NAME_STATEMENT.search(statement or "")
@@ -233,14 +245,23 @@ class MemoryIntegration:
             return None
 
         statements: List[str] = []
+        normalized_query = " ".join(re.findall(r"\w+", user_message or ""))
         for memory in memories:
             content = getattr(memory, "content", None)
             if isinstance(content, dict):
                 user_text = str(content.get("user") or "")
             else:
                 user_text = str(content or "")
-            if user_text:
-                statements.append(user_text)
+            if not user_text:
+                continue
+            # The question itself is in the conversation history: quoting it
+            # back is the parroting shape, not a memory.
+            if " ".join(re.findall(r"\w+", user_text)) == normalized_query:
+                continue
+            # A question the user asked is not a statement they made.
+            if user_text.rstrip().endswith(("?", "？")):
+                continue
+            statements.append(user_text)
         if not statements:
             return None
 
@@ -251,10 +272,18 @@ class MemoryIntegration:
         except Exception:
             language = "zh"
 
-        # 1. A fact the user stated about themselves ("我叫小明").
+        # The statement that actually matches the question ("我住哪裡" → the
+        # one about 住, not the one about 名字).
+        query_words = set(_recall_keywords(user_message))
+        statements.sort(key=lambda st: -_overlap(query_words, st))
+
+        # 1. A fact the user stated about themselves ("我叫小明") — but only
+        # when the question actually asks for a name. Otherwise every
+        # "我剛才說…" got the same name answer (7/44 turns: the QA machine).
+        asks_for_name = bool(_NAME_QUESTION.search(user_message or ""))
         for statement in statements:
             name = _statement_name(statement)
-            if name:
+            if name and asks_for_name:
                 text = f"你叫{name}。" if language == "zh" else f"Your name is {name}."
                 return ChatResponse(
                     text=text,

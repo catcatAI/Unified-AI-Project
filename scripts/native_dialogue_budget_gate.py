@@ -3,7 +3,8 @@
 
 **它守什麼**：`scripts/probe_native_dialogue.py` 量到的「純本地基模（不接任何
 外部 LLM）」對話品質——人味分數、鸚鵡捲舌率、亂碼率、QA 機器率、雞同鴨講率，
-以及**兩輪之間有沒有演進**。
+以及**學習效應**（同一個問題「教之前 → 教之後」的分數差，也就是「多少交談
+資料才學會」那個數字）與**穩定度**（兩輪之間的差）。
 
 **預算**：`scripts/native_dialogue_budget.txt`（key = value）定義回合上限、
 牆鐘上限與各項門檻。門禁的行為與 `scripts/mypy_budget_gate.py` 同一型：
@@ -50,6 +51,8 @@ CHECKS: Tuple[Tuple[str, str, str], ...] = (
     ("max", "offtopic_rate", "pass2.rates.offtopic"),
     ("max", "abstain_rate", "pass2.rates.abstain"),
     ("max", "empty_rate", "pass2.rates.empty"),
+    ("max", "ramble_rate", "pass2.rates.ramble"),
+    ("max", "stale_fact_rate", "pass2.rates.stale_fact"),
 )
 
 
@@ -69,7 +72,11 @@ def load_budget() -> Dict[str, float]:
 
 
 def dig(report: dict, path: str) -> float:
-    """Read a dotted path out of the report (missing → 0.0)."""
+    """Read a dotted path out of the report (missing → 0.0).
+
+    A rate is stored as a dict ({"rate":…, "hits":…, "total":…, "ci95":…}) —
+    the gate reads the rate itself.
+    """
     current: object = report
     for part in path.split("."):
         if not isinstance(current, dict):
@@ -77,6 +84,8 @@ def dig(report: dict, path: str) -> float:
         current = current.get(part)
         if current is None:
             return 0.0
+    if isinstance(current, dict):
+        current = current.get("rate", 0.0)
     try:
         return float(current)
     except (TypeError, ValueError):
@@ -161,6 +170,18 @@ def main() -> int:
             f"the run used {used_budget.get('used_seconds')}s (the budget is {max_seconds:.0f}s)"
         )
 
+    # The measurement itself must be valid and stable: a sample that cannot
+    # tell the shapes apart (or whose conclusion flips with the sample size)
+    # is not a measurement — the gate must not pass on it.
+    validity = report.get("validity") or {}
+    if not validity.get("valid", False):
+        for problem in validity.get("problems", []) or ["the sample is not valid"]:
+            violations.append(f"sample validity: {problem}")
+    consistency = report.get("consistency") or {}
+    if not consistency.get("consistent", False):
+        for item in consistency.get("disagreements", []) or ["the small and the standard disagree"]:
+            violations.append(f"sample consistency: {item}")
+
     for direction, key, path in CHECKS:
         threshold = budget.get(key)
         if threshold is None:
@@ -189,7 +210,21 @@ def main() -> int:
             f"  {mark} {check['key']}: {check['actual']}（門檻 {check['threshold']}，來源 {check['path']}）"
         )
     if report.get("progress") is not None:
-        print(f"  演進（兩輪差）：{report.get('progress'):+}")
+        print(
+            f"  學習效應（冷→熱）：{report.get('progress'):+}　穩定度（兩輪差）：{report.get('stability')}"
+        )
+    validity = report.get("validity") or {}
+    consistency = report.get("consistency") or {}
+    print(
+        f"  樣本有效性：{'✅' if validity.get('valid') else '❌'}"
+        f"（回合 {validity.get('turns', 0)}、不同輸出 {validity.get('distinct_responses', 0)} 種、"
+        f"教→問 {validity.get('learning_pairs', 0)} 組）"
+    )
+    print(
+        f"  少量 vs 標準量一致性：{'✅' if consistency.get('consistent') else '❌'}"
+        f"（少量 n={((report.get('small_sample') or {}).get('turns', 0))}、"
+        f"標準 n={((report.get('standard_sample') or {}).get('turns', 0))}）"
+    )
 
     reason = removal_reason()
     if reason:

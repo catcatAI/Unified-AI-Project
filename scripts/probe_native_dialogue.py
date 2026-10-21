@@ -40,6 +40,7 @@ import copy
 import json
 import os
 import re
+import shutil
 import sys
 import time
 from dataclasses import dataclass, field
@@ -75,8 +76,16 @@ def isolate_data_dir() -> Path:
 #               rephrased) — the bridge must reach the same entity
 #   None      → no oracle (the emotional/context turns): judged by the other
 #               components only
-AGENT_SCRIPT: List[Tuple[str, Optional[str]]] = [
-    ("你好，��們今天聊聊？", None),
+# --------------------------------------------------------------------------- #
+# The sample: a battery, not a handful of questions
+# --------------------------------------------------------------------------- #
+# **為什麼要這麼多題**：樣本太少時，鸚鵡捲舌（輸出恆等於輸入）與學習（輸出
+# 隨對話改變）在量測上分不開——兩者看起來都是「一致��輸出」。所以探針必須同時
+# 具備三件事：① 夠多的回合（各類缺陷率有意義）；② 足夠多組「教→問」對
+# （學習效應是平均值，不是單一問答的巧合）；③ **有效性檢查**：輸出若全是一樣
+# 的，這次量測就分不出形狀，必須自己說出來（見 _sample_validity）。
+QUALITY_QUESTIONS: List[Tuple[str, Optional[str]]] = [
+    ("你好，我們今天聊聊？", None),
     ("What is 2+2?", "math"),
     ("幫我算 17*23", "math"),
     ("Tell me about the sky's color.", "kb"),
@@ -84,9 +93,86 @@ AGENT_SCRIPT: List[Tuple[str, Optional[str]]] = [
     ("The first exceeds second, second exceeds third, which is on top?", "bridge"),
     ("我今天很累", None),
     ("謝謝你", None),
-    ("我叫小明", "not_contains"),
-    ("我剛才說我叫什麼名字？", "memory"),
+    ("What is 12 * 12?", "math"),
+    ("How many days in a week?", "kb"),
+    ("B is shorter than C, C shorter than D, who is shortest?", "teacher"),
+    ("The cat sits on the mat. What does the cat sit on?", "kb"),
+    ("我最近有點焦慮", None),
+    ("晚安", None),
+    ("What is 100 - 58?", "math"),
+    ("Who is taller, Anna or Ben?", "teacher"),
+    ("Nina outweighs Otto, Otto outweighs Pia, who is the heaviest?", "bridge"),
+    ("Tell me about the color of grass.", "kb"),
+    ("我昨天加班到很晚", None),
+    ("謝謝你陪我聊", None),
 ]
+
+# The learning battery: each entry is (the teaching turn, the question, the
+# expected answer). The question is asked BEFORE the teaching (cold) and
+# AFTER it (warm) — the difference is the learning effect.
+LEARNING_BATTERY: List[Tuple[str, str, str]] = [
+    ("我叫小明", "我剛才說我叫什麼名字？", "小明"),
+    ("我住在台北", "我剛才說我住哪裡？", "台北"),
+    ("我的貓叫小花", "我剛才說我的貓叫什麼？", "小花"),
+    ("我喜歡喝拿鐵", "我剛才說我喜歡喝什麼？", "拿鐵"),
+    ("我今天用紅色背包", "我剛才說我今天用什麼顏色的背包？", "紅色"),
+    ("我在圖書館工作", "我剛才說我在哪裡工作？", "圖書館"),
+    ("我養了一隻叫豆豆的狗", "我剛才說我的狗叫什麼？", "豆豆"),
+    ("我下午三點開會", "我剛才說我幾點開會？", "三點"),
+    ("我最愛吃的口味是芒果", "我剛才說我最愛吃什麼口味？", "芒果"),
+    ("我的生日是九月十號", "我剛才說我的生日是哪天？", "九月十號"),
+    ("我上班搭捷運", "我剛才說我上班怎麼去？", "捷運"),
+    ("我最近在學鋼琴", "我剛才說我最近在學什麼？", "鋼琴"),
+    ("我的手機是藍色的", "我剛才說我的手機是什麼顏色？", "藍色"),
+    ("我喜歡的球類是籃球", "我剛才說我喜歡哪種球類？", "籃球"),
+    ("我家的狗叫旺財", "我剛才說我家的狗叫什麼？", "旺財"),
+    ("我下週要去墾丁", "我剛才說我下週要去哪裡？", "墾丁"),
+]
+
+
+# The classes the probe scores.
+CLASSES = (
+    "correct",
+    "echo",
+    "artifact",
+    "qa_machine",
+    "offtopic",
+    "abstain",
+    "empty",
+    "ramble",
+    "stale_fact",
+)
+
+# The small sample: the first N turns of a pass. The standard sample is the
+# whole pass. Both are measured; if they disagree, the standard size is not
+# yet a stable measurement (an 11-turn sample said 0% offtopic where 44
+# turns said 30% — the conclusion flipped with the sample size).
+SMALL_SAMPLE_TURNS = 20
+
+
+def _build_units() -> List[List[Tuple[str, Optional[str]]]]:
+    """The sample as *units* (a unit is a whole teach→ask pair or a question).
+
+    The units matter for the small sample: a systematic sample of the units
+    keeps the pairs intact, so the small sample's learning effect is
+    measurable (a sample of turns would break the pairs and report 0).
+    """
+    units: List[List[Tuple[str, Optional[str]]]] = []
+    for teaching, question, expected in LEARNING_BATTERY:
+        units.append(
+            [
+                (question, ("memory", expected)),  # 冷：還沒被教過
+                (teaching, "not_contains"),  # 教：使用者自報
+                (question, ("memory", expected)),  # 熱：教完再問
+            ]
+        )
+    for question, oracle in QUALITY_QUESTIONS:
+        units.append([(question, oracle)])
+    return units
+
+
+AGENT_UNITS: List[List[Tuple[str, Optional[str]]]] = _build_units()
+AGENT_SCRIPT: List[Tuple[str, Optional[str]]] = [turn for unit in AGENT_UNITS for turn in unit]
 
 # The teacher's phrasing of the bridge question (the oracle for it).
 BRIDGE_ORACLE_QUESTION = "The first is higher than second, second higher than third, which is top?"
@@ -329,8 +415,16 @@ def assert_native_only(service) -> List[str]:
 # --------------------------------------------------------------------------- #
 # The oracles (the project's own deterministic answers)
 # --------------------------------------------------------------------------- #
-def oracle_answer(kind: str, question: str) -> Optional[str]:
-    """The expected answer, taken from the project's own engines."""
+def oracle_answer(kind, question: str) -> Optional[str]:
+    """The expected answer, taken from the project's own engines.
+
+    ``kind`` may be a plain kind ("math"/"kb"/"teacher"/"bridge") or a tuple
+    ("memory", expected_value) for the learning battery.
+    """
+    if isinstance(kind, tuple):
+        kind, expected = kind[0], kind[1]
+        if kind == "memory":
+            return str(expected)
     try:
         if kind == "math":
             from services.math_verifier import evaluate_math
@@ -396,6 +490,11 @@ def score_turn(
     has_artifact = bool(_ARTIFACT.search(text))
     duplicate_of: Optional[int] = None
     for turn in previous:
+        if turn.question == question:
+            # The same question asked twice may legitimately get the same
+            # answer; the QA-machine shape is one answer for *different*
+            # questions.
+            continue
         if _normalized(turn.response) and _similar(turn.response, text) >= 0.8:
             duplicate_of = turn.index
             break
@@ -498,8 +597,6 @@ async def run_conversation(
                 print(f"  ⏹ {label}: 預算用盡（{budget.reason()}）→ 中斷")
                 break
             expected = oracle_answer(oracle_kind, question) if oracle_kind else None
-            if oracle_kind == "memory":
-                expected = "小明"
             started = time.time()
             try:
                 result = await _handle_chat_request(
@@ -544,6 +641,161 @@ def _mean(values: Sequence[float]) -> float:
     return round(sum(values) / len(values), 4) if values else 0.0
 
 
+def _wilson(successes: int, total: int, z: float = 1.96) -> Tuple[float, float]:
+    """The Wilson score interval of a rate (0/10 is NOT "0%")."""
+    if total <= 0:
+        return (0.0, 0.0)
+    phat = successes / total
+    denominator = 1 + z * z / total
+    center = (phat + z * z / (2 * total)) / denominator
+    margin = z * ((phat * (1 - phat) / total + z * z / (4 * total * total)) ** 0.5) / denominator
+    return (round(max(0.0, center - margin), 4), round(min(1.0, center + margin), 4))
+
+
+def _sample_validity(turns: Sequence[Turn]) -> Dict[str, object]:
+    """Is this sample able to tell the shapes apart?
+
+    **樣本太少或輸出全一樣時，量測是無效的**：鸚鵡捲舌（輸出恆等於輸入）
+    與學習（輸出隨對話改變）在統計上分不開——兩者都是「一致的輸出」。所以量測
+    工具自己必須先回答三個問題：① 回合數夠嗎？② 不同輸出有幾種？③ 有沒有
+    任何一個回合的輸出跟別人不同（不變的樣本＝分不出形狀）？
+    """
+    total = len(turns)
+    responses = [_normalized(t.response) for t in turns if t.response]
+    distinct = len(set(responses))
+    distinct_ratio = round(distinct / max(total, 1), 4)
+    learning_pairs = 0
+    seen: Dict[str, int] = {}
+    for turn in turns:
+        seen[turn.question] = seen.get(turn.question, 0) + 1
+    learning_pairs = sum(1 for count in seen.values() if count > 1)
+    problems: List[str] = []
+    if total < 30:
+        problems.append(f"the sample is too small ({total} turns < 30)")
+    if distinct_ratio < 0.30:
+        problems.append(
+            f"the outputs are nearly constant ({distinct} distinct / {total} turns) — "
+            "parroting and learning cannot be told apart"
+        )
+    if learning_pairs < 5:
+        problems.append(
+            f"too few teach→ask pairs ({learning_pairs} < 5) to measure the learning effect"
+        )
+    return {
+        "turns": total,
+        "distinct_responses": distinct,
+        "distinct_ratio": distinct_ratio,
+        "learning_pairs": learning_pairs,
+        "valid": not problems,
+        "problems": problems,
+    }
+
+
+def _rate_with_interval(turns: Sequence[Turn], klass: str) -> Dict[str, object]:
+    """The rate of a class + its Wilson interval (never a bare percentage)."""
+    total = len(turns)
+    hits = sum(1 for t in turns if klass in t.classes)
+    low, high = _wilson(hits, total)
+    return {
+        "rate": round(hits / total, 4) if total else 0.0,
+        "hits": hits,
+        "total": total,
+        "ci95": [low, high],
+    }
+
+
+def _systematic_sample(turns: Sequence[Turn], size: int) -> List[Turn]:
+    """A representative subsample of the *units* (the pairs stay intact).
+
+    A *prefix* would be biased (the learning pairs come first, so the prefix
+    would be all learning questions) and a sample of *turns* would break the
+    teach→ask pairs (the learning effect would read 0). Both would make the
+    small sample "disagree" with the standard one for the wrong reason.
+    """
+    if size <= 0 or len(turns) <= size:
+        return list(turns)
+    # The unit boundaries come from the script (the teaching turn sits
+    # *between* the cold and the warm ask, so adjacency does not define a
+    # unit).
+    ranges = _script_unit_ranges()
+    keep = max(1, round(len(ranges) * size / len(turns)))
+    step = len(ranges) / keep
+    picked_indexes = set()
+    for i in range(keep):
+        start, end = ranges[min(len(ranges) - 1, int(i * step))]
+        picked_indexes.update(range(start, end))
+    return [turn for turn in turns if turn.index in picked_indexes]
+
+
+def _script_unit_ranges() -> List[Tuple[int, int]]:
+    """The (start, end) script index range of every unit."""
+    ranges: List[Tuple[int, int]] = []
+    cursor = 0
+    for unit in AGENT_UNITS:
+        ranges.append((cursor, cursor + len(unit)))
+        cursor += len(unit)
+    return ranges
+
+
+def _subset_metrics(turns: Sequence[Turn], label: str) -> Dict[str, object]:
+    """The metrics of a subset of the turns (the small / the standard sample)."""
+    return {
+        "label": label,
+        "turns": len(turns),
+        "human_score": _mean([t.human_score for t in turns]),
+        "progress": _learning_delta(turns),
+        "rates": {k: _rate_with_interval(turns, k) for k in CLASSES},
+    }
+
+
+def _consistency(small: Dict[str, object], standard: Dict[str, object]) -> Dict[str, object]:
+    """Do the small and the standard sample agree?
+
+    **不一致就代表標準量還不夠**（或抽樣有偏）：結論會隨著樣本大小翻轉——
+    那正是 11 題的樣本給過的教訓（0% 雞同鴨講 vs 44 題的 30%）。
+    """
+    tolerance = 0.15
+    disagreements: List[str] = []
+    for key in ("human_score", "progress"):
+        delta = abs(float(small[key]) - float(standard[key]))
+        if delta > tolerance:
+            disagreements.append(
+                f"{key}: 少量 {small[key]} vs 標準 {standard[key]}（差 {delta:.2f} > {tolerance}）"
+            )
+    for klass in CLASSES:
+        small_rate = float(small["rates"][klass]["rate"])  # type: ignore[index]
+        standard_rate = float(standard["rates"][klass]["rate"])  # type: ignore[index]
+        if abs(small_rate - standard_rate) > tolerance:
+            disagreements.append(f"{klass}: 少量 {small_rate:.0%} vs 標準 {standard_rate:.0%}")
+    return {
+        "consistent": not disagreements,
+        "tolerance": tolerance,
+        "disagreements": disagreements,
+    }
+
+
+def _learning_delta(turns: Sequence[Turn]) -> float:
+    """The learning effect: the same question, before and after the teaching.
+
+    A question asked twice in one pass (cold → warm) is the experiment: the
+    delta is what the conversation actually taught the AI — that is the
+    "要多少交談資料才學會" number.
+    """
+    seen: Dict[str, List[float]] = {}
+    for turn in turns:
+        seen.setdefault(turn.question, []).append(turn.human_score)
+    deltas = [scores[-1] - scores[0] for scores in seen.values() if len(scores) > 1]
+    return round(sum(deltas) / len(deltas), 4) if deltas else 0.0
+
+
+def _learning_deltas(turns: Sequence[Turn]) -> List[float]:
+    """The cold→warm delta of every repeated question (the per-pair detail)."""
+    seen: Dict[str, List[float]] = {}
+    for turn in turns:
+        seen.setdefault(turn.question, []).append(turn.human_score)
+    return [scores[-1] - scores[0] for scores in seen.values() if len(scores) > 1]
+
+
 def _rate(turns: Sequence[Turn], klass: str) -> float:
     if not turns:
         return 0.0
@@ -552,8 +804,13 @@ def _rate(turns: Sequence[Turn], klass: str) -> float:
 
 async def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--max-turns", type=int, default=40, help="the turn budget (both passes)")
-    parser.add_argument("--max-seconds", type=float, default=240.0, help="the wall-clock budget")
+    parser.add_argument(
+        "--max-turns",
+        type=int,
+        default=200,
+        help="the turn budget (both passes; the standard sample is 136)",
+    )
+    parser.add_argument("--max-seconds", type=float, default=600.0, help="the wall-clock budget")
     parser.add_argument("--max-chars", type=int, default=0, help="the response-character budget")
     parser.add_argument("--json", dest="json_path", help="write the result as JSON")
     parser.add_argument(
@@ -568,8 +825,12 @@ async def main() -> int:
     )
     args = parser.parse_args()
 
-    # The sandbox must be set before the backend modules are imported.
+    # The sandbox must be set before the backend modules are imported, and it
+    # must start EMPTY: a sandbox that keeps the previous run's memory would
+    # make the "cold" question warm (the measurement would not reproduce).
     isolate_data_dir()
+    if SANDBOX_DATA_DIR.exists():
+        shutil.rmtree(SANDBOX_DATA_DIR, ignore_errors=True)
 
     # The learning switch must be set before the service is initialised.
     if args.learning == "on":
@@ -598,7 +859,8 @@ async def main() -> int:
     all_turns = first + second
     first_score = _mean([t.human_score for t in first])
     second_score = _mean([t.human_score for t in second])
-    progress = round(second_score - first_score, 4)
+    stability = round(second_score - first_score, 4)
+    progress = _learning_delta(first)
 
     # The learning data volume: the conversation pairs the run produced.
     data_pairs = len(all_turns)
@@ -622,7 +884,7 @@ async def main() -> int:
             "turns": len(first),
             "human_score": first_score,
             "rates": {
-                k: _rate(first, k)
+                k: _rate_with_interval(first, k)
                 for k in (
                     "correct",
                     "echo",
@@ -640,7 +902,7 @@ async def main() -> int:
             "turns": len(second),
             "human_score": second_score,
             "rates": {
-                k: _rate(second, k)
+                k: _rate_with_interval(second, k)
                 for k in (
                     "correct",
                     "echo",
@@ -655,6 +917,15 @@ async def main() -> int:
             },
         },
         "progress": progress,
+        "stability": stability,
+        "validity": _sample_validity(all_turns),
+        "learning_deltas": _learning_deltas(first),
+        "small_sample": _subset_metrics(_systematic_sample(second, SMALL_SAMPLE_TURNS), "small"),
+        "standard_sample": _subset_metrics(second, "standard"),
+        "consistency": _consistency(
+            _subset_metrics(_systematic_sample(second, SMALL_SAMPLE_TURNS), "small"),
+            _subset_metrics(second, "standard"),
+        ),
         "data": {"pairs": data_pairs, "chars": data_chars},
         "elapsed_sec": round(time.time() - started, 2),
         "turn_details": [t.__dict__ for t in all_turns],
@@ -665,17 +936,50 @@ async def main() -> int:
         f"  回合數：{len(all_turns)}（預算 {budget.max_turns} 回合／{budget.max_seconds:.0f} 秒）"
     )
     print(
-        f"  第 1 輪人味分數：{first_score:.3f}　第 2 輪：{second_score:.3f}　演進：{progress:+.3f}"
+        f"  第 1 輪人味分數：{first_score:.3f}　第 2 輪：{second_score:.3f}　"
+        f"學習效應（冷→熱）：{progress:+.3f}　穩定度（兩輪差）：{stability:+.3f}"
     )
     for label, block in (("第 1 輪", result["pass1"]), ("第 2 輪", result["pass2"])):
         rates = block["rates"]
         print(
-            f"  {label}: 答對 {rates['correct']:.0%}｜鸚鵡 {rates['echo']:.0%}｜"
-            f"亂碼 {rates['artifact']:.0%}｜QA 機器 {rates['qa_machine']:.0%}｜"
-            f"雞同鴨講 {rates['offtopic']:.0%}｜棄權 {rates['abstain']:.0%}｜"
-            f"碎念 {rates['ramble']:.0%}｜舊事實 {rates['stale_fact']:.0%}｜"
-            f"空白 {rates['empty']:.0%}"
+            f"  {label}（n={block['turns']}）: 答對 {rates['correct']['rate']:.0%}"
+            f"｜鸚鵡 {rates['echo']['rate']:.0%}｜"
+            f"亂碼 {rates['artifact']['rate']:.0%}｜QA 機器 {rates['qa_machine']['rate']:.0%}｜"
+            f"雞同鴨講 {rates['offtopic']['rate']:.0%}｜棄權 {rates['abstain']['rate']:.0%}｜"
+            f"碎念 {rates['ramble']['rate']:.0%}｜舊事實 {rates['stale_fact']['rate']:.0%}｜"
+            f"空白 {rates['empty']['rate']:.0%}"
         )
+        # 誠實：0/12 不是「0%」——把區間一起印出來。
+        worst = rates["echo"]
+        print(
+            f"    95% 區間（以鸚鵡捲舌為例）：{worst['hits']}/{worst['total']} → "
+            f"{worst['ci95'][0]:.0%}–{worst['ci95'][1]:.0%}"
+        )
+    small = result["small_sample"]
+    standard = result["standard_sample"]
+    consistency = result["consistency"]
+    print(
+        f"  少量（n={small['turns']}）vs 標準（n={standard['turns']}）: "
+        f"人味 {small['human_score']:.3f} vs {standard['human_score']:.3f}｜"
+        f"學習效應 {small['progress']:+.3f} vs {standard['progress']:+.3f}"
+    )
+    if consistency["consistent"]:
+        print("  一致性：✅ 少量與標準量的結論一致（標準量可用）")
+    else:
+        print("  一致性：❌ 少量與標準量不一致 → **標準量需要重調整**（結論會隨樣本大小翻轉）：")
+        for item in consistency["disagreements"]:
+            print(f"    - {item}")
+
+    validity = result["validity"]
+    if validity["valid"]:
+        print(
+            f"  樣本有效性：✅ 回合 {validity['turns']}、不同輸出 {validity['distinct_responses']} 種"
+            f"（{validity['distinct_ratio']:.0%}）、教→問 {validity['learning_pairs']} 組"
+        )
+    else:
+        print("  樣本有效性：❌ 這次量測分不出形狀，數字不可信：")
+        for problem in validity["problems"]:
+            print(f"    - {problem}")
     print(
         f"  交談資料：{data_pairs} 組對話／{data_chars} 字元　" f"耗時 {result['elapsed_sec']:.1f}s"
     )

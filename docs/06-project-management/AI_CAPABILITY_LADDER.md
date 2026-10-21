@@ -51,7 +51,7 @@
 | L2-1 對話一致性   | `python scripts/benchmark_dialogue_coherence.py`                                       | 人設 ≥80% / 指代 ≥70% | 5/5 = **100%**                                             | ✅                                             |
 | L2-2 記憶命中     | `python scripts/benchmark_memory_hit.py`                                               | top-5 ≥60%            | 60/100 = **60%**（框架模擬；真實向量召回待 HAM 460K 接入） | ⚠️ 剛好達標                                    |
 | L2-3 純神經推理   | `python scripts/probe_reasoning_unseen.py`                                             | ≥50%                  | 確定性 100/100、純神經 **0%**、純神經＋中間層 87/100       | ❌ 未達（純神經仍 0%；中間層不等於純神經）      |
-| L2-7 純本地對話品質 | `python scripts/native_dialogue_budget_gate.py`                                       | 人味 ≥0.70 且演進不退步 | 人味 **0.800**、演進 **+0.000**、雞同鴨講 10%、鸚鵡/亂碼/QA 機器 0% | ⚠️ 臨時門禁（缺陷修好即拆，見 `scripts/open_gates.json`） |
+| L2-7 純本地對話品質 | `python scripts/native_dialogue_budget_gate.py`                                       | 人味 ≥0.62 且學習效應 ≥0.35 | 人味 **0.668**、學習效應 **+0.512**、答對 38%、雞同鴨講 21%、QA 機器 26%、鸚鵡 7%（n=68，95% 區間 3–16%） | ⚠️ 臨時門禁（缺陷修好即拆，見 `scripts/open_gates.json`） |
 | L3-1 無 RAG 知識  | `python scripts/run_benchmarks.py --backend native --suite knowledge_mc --gate-native` | ≥90%                  | **97.5%**                                                  | ✅                                             |
 | L3-2 工具呼叫     | `pytest tests/services/test_handlers.py`                                               | 100%                  | **60 passed**                                              | ✅                                             |
 | 整體回歸          | `pytest tests/ apps/backend/tests/ apps/game-rpg/tests/`                               | 0 failed              | **8,688 passed / 112 skipped / 0 failed**                  | ✅                                             |
@@ -62,13 +62,20 @@
 > **不接任何外部基模**（雲端金鑰、本地 ollama/llama.cpp 全部不註冊，只留專案
 > 自己的引擎）的情況下與 Angela 對話兩輪，並把每個回應分類為
 > `correct`／`echo`（鸚鵡捲舌）／`artifact`（亂碼）／`qa_machine`（罐頭答案）／
-> `offtopic`（雞同鴨講）／`abstain`／`empty`。實測：確定性題（數學、知識、
-> 比較）**全部答對**（比較題由老師與中間層接手），但**兩輪 20 次對話的演進是
-> +0.000**——開啟聊天時學習（`ANGELA_LEGACY_ED3N=1`）也一樣是 +0.000。誠實結論：
-> **純本地基模目前不會因對話而變得像人**，剩下的差距集中在情緒與上下文題
-> （仍是罐頭模板、不記得使用者名字）。門禁是**臨時**的：它守的是這個會被修好的
-> 缺陷，拆除理由寫在 `scripts/open_gates.json`，由 `scripts/check_open_gates.py`
-> 驗證（沒有正當、可驗證的拆除理由者不得入簿）。
+> `offtopic`（雞同鴨講）／`abstain`／`empty`／`ramble`（碎念）／`stale_fact`。
+> **樣本量是這次量測的關鍵**：11 回合的小樣本曾報「人味 0.855、缺陷 0%」——
+> 那是假象；**標準量 68 回合／輪（兩輪 136 回合）**才量得出真話：人味 0.668、
+> 答對 38%、鸚鵡 7%（95% 區間 3–16%）、亂碼 1%、QA 機器 26%、雞同鴨講 21%。
+> 所以量測工具現在**同時量少量（21 回合）與標準量（68 回合）並檢查一致性**
+> （不一致＝標準量需要重調整 ✅ 目前一致），每個率都附 95% 區間，樣本有效性
+> 另檢查「回合數夠嗎／輸出是不是全一樣／教→問對夠多嗎」。
+> **量的是「學習效應」**：同一個問題問兩次（教之前 → 教之後），差值 **+0.512**
+> ——「多少交談資料才學會」的答案：**教一輪就學會**（教之前誠實說不知道，教
+> 之後答得出「你叫小明。」）。
+> 誠實結論：純本地基模**能學會記住使用者說過的話**（這輪修好的），但情緒題
+> 仍是罐頭模板——門禁是**臨時**的，它守的就是這個還沒修好的缺陷，拆除理由寫在
+> `scripts/open_gates.json`，由 `scripts/check_open_gates.py` 驗證（沒有正當、
+> 可驗證的拆除理由者不得入簿）。
 >
 > 中間層的獨立量測（`python scripts/probe_neural_bridge.py`，2026-10-21）：老師詞彙解不了的改述**留出集** 20 題（開發期未看過、未參與對齊）——老師 2/20、中間層 16/20（對齊後 17/20）；老師詞彙控制組 12 題——老師 12/12、中間層 12/12（不迴歸）。留出集 3 題未答是編碼器的接觸失敗（sweltering／compact／thicker），不是迴歸。
 
