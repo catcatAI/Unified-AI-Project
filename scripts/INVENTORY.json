@@ -142,6 +142,11 @@
       "referenced": false,
       "purpose": "Angela Clay Figurine — procedural modeling build script."
     },
+    "build_paraphrase_benchmark.py": {
+      "category": "operations",
+      "referenced": true,
+      "purpose": "Build the paraphrase benchmark (`benchmarks/data/paraphrase_v1.json`)."
+    },
     "build_vocab_from_saved.py": {
       "category": "operations",
       "referenced": false,
@@ -196,6 +201,11 @@
       "category": "diagnostics",
       "referenced": false,
       "purpose": "check final（無說明：原始碼未附 docstring）"
+    },
+    "check_intelligence_definition.py": {
+      "category": "diagnostics",
+      "referenced": true,
+      "purpose": "智能定義的門禁 — 一個定義，一個數字，一個地方。"
     },
     "check_last_memories.py": {
       "category": "diagnostics",
@@ -669,7 +679,7 @@
     },
     "probe_intelligence_sources.py": {
       "category": "probe",
-      "referenced": false,
+      "referenced": true,
       "purpose": "跑偏稽核：回答到底來自哪一層？對話有沒有改變「回答用的那個模型」？"
     },
     "probe_local_small_model.py": {
@@ -691,6 +701,11 @@
       "category": "probe",
       "referenced": true,
       "purpose": "中間層（神經橋接）量測 — 接觸 / 對齊 / 合成"
+    },
+    "probe_paraphrase.py": {
+      "category": "probe",
+      "referenced": true,
+      "purpose": "改述泛化量測 — 中間層（接觸→對齊→合成）在凍結基準上的表現。"
     },
     "probe_reasoning_unseen.py": {
       "category": "probe",
@@ -716,6 +731,11 @@
       "category": "experimental",
       "referenced": false,
       "purpose": "Rebuild vocabulary with 50 visual words and test recognition."
+    },
+    "report_intelligence.py": {
+      "category": "analysis",
+      "referenced": true,
+      "purpose": "智能報告 — 單一數字，取代散落各處的三個互斥分數。"
     },
     "rescale_checkpoint.py": {
       "category": "experimental",
