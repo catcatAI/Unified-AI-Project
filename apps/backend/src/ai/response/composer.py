@@ -16,6 +16,7 @@ Response Composer - 响应片段组合系统
 # =============================================================================
 
 import logging
+import re
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -964,6 +965,7 @@ class NeuroBlender:
         user_name: str = "朋友",
         curiosity_threshold: float = 0.7,
         top_k_per_role: int = 1,
+        user_message: str = "",
     ) -> ComposedResponse:
         """
         合成回复。
@@ -996,7 +998,7 @@ class NeuroBlender:
                 confidence=0.0,
             )
 
-        scored = self._score_fragments(target, all_frags)
+        scored = self._score_fragments(target, all_frags, user_message=user_message)
 
         # ---- Energy-aware fragment count ----
         alpha_energy = self._extract_alpha_energy(state_dict)
@@ -1006,6 +1008,15 @@ class NeuroBlender:
 
         # 3. Group by structural_type and pick top-K per role
         by_role = self._group_by_role(scored)
+        # A greeting fragment only fits when the user *greeted*: otherwise a
+        # reply about feelings starts with "早安～今天天氣真好呢！" — the
+        # most obviously canned opening there is.
+        if not re.search(
+            r"你好|哈囉|嗨|早安|午安|晚安|hello|hi\b|good morning|greetings",
+            user_message or "",
+            re.IGNORECASE,
+        ):
+            by_role.pop("greeting", None)
         selected = self._select_top_fragments(
             by_role, alpha_energy, _bio_thresh, top_k_total, top_k_per_role
         )
@@ -1039,14 +1050,32 @@ class NeuroBlender:
         )
 
     def _score_fragments(
-        self, target: List[float], all_frags: List[NeuroFragment]
+        self,
+        target: List[float],
+        all_frags: List[NeuroFragment],
+        user_message: str = "",
     ) -> List[Tuple[NeuroFragment, float]]:
-        """Score fragments."""
+        """Score fragments.
+
+        The state vector says *how* Angela feels; the user's own words say
+        *what* the reply should be about. Without the second term the
+        blender only knows the mood, so it answers a tired user with a
+        generic line about something else entirely.
+        """
+        user_chars = set(re.findall(r"[\u4e00-\u9fff]", user_message or ""))
+        user_words = {w.lower() for w in re.findall(r"[A-Za-z]{3,}", user_message or "")}
         scored = []
         for frag in all_frags:
             sim = self._cosine_similarity(target, frag.state_vector())
             if frag.fragment_id.startswith("ng_"):
                 sim = min(1.0, sim + 0.15)
+            relevance = 0.0
+            if user_chars or user_words:
+                frag_chars = set(re.findall(r"[\u4e00-\u9fff]", frag.content or ""))
+                frag_words = {w.lower() for w in re.findall(r"[A-Za-z]{3,}", frag.content or "")}
+                overlap = len(user_chars & frag_chars) + len(user_words & frag_words)
+                relevance = min(1.0, overlap / 3.0)
+                sim = min(1.0, sim + 0.25 * relevance)
             scored.append((frag, sim))
         return scored
 
@@ -1382,6 +1411,7 @@ class ResponseComposer:
         intent_vec: Optional[Dict[str, float]] = None,
         empathy_valence: float = 0.0,
         user_name: str = "朋友",
+        user_message: str = "",
     ) -> ComposedResponse:
         """使用 NeuroBlender 合成响应"""
         return self.neuro_blender.synthesize(
@@ -1389,4 +1419,5 @@ class ResponseComposer:
             intent_vec=intent_vec,
             empathy_valence=empathy_valence,
             user_name=user_name,
+            user_message=user_message,
         )

@@ -3547,8 +3547,8 @@ class AngelaLLMService:
             self._fb_greeting_template,
             self._fb_emotional_support,
             self._fb_claim_reasoning,
-            self._fb_honest_refusal,
             self._fb_neuro_blender,
+            self._fb_honest_refusal,
         ):
             result = await tier(user_message, context, looks_like_question)
             if result is not None:
@@ -3984,14 +3984,54 @@ class AngelaLLMService:
     async def _fb_neuro_blender(
         self, user_message: str, context: Dict[str, Any], looks_like_question: bool
     ) -> Optional[LLMResponse]:
-        """Tier 2: NeuroBlender (smalltalk only — never for negative emotion)."""
+        """Tier 2: NeuroBlender (smalltalk only — never for negative emotion).
+
+        The composed reply must be **about what the user said**: a generic
+        composition that shares nothing with the message is worse than the
+        honest "I don't know", so the relevance bar decides which of the two
+        the user gets.
+        """
         try:
+            if self._is_factual_query(user_message, context or {}):
+                # A factual question ("量子糾纏是什麼？") is not small talk:
+                # the composed line would be a generic non-answer, so the
+                # honest refusal is the better answer.
+                return None
             result = await self._try_neuro_blender(user_message, context)
             if result:
+                if not self._reply_is_relevant(user_message, result.text):
+                    logger.debug("NeuroBlender reply was not relevant; staying honest")
+                    return None
                 return result
         except Exception as e:
-            logger.warning(f"NeuroBlender fallback failed: {e}", exc_info=True)
+            logger.warning("NeuroBlender fallback failed: %s", e, exc_info=True)
         return None
+
+    @staticmethod
+    def _reply_is_relevant(user_message: str, reply: str) -> bool:
+        """True when the reply shares content with what the user said.
+
+        Chinese: the shared characters (the function words do not count).
+        English: the shared words of three letters or more.
+        """
+        import re as _rel_re
+
+        message = (user_message or "").strip()
+        text = (reply or "").strip()
+        if not text:
+            return False
+
+        def bigrams(value: str) -> set:
+            chars = [c for c in _rel_re.findall(r"[\u4e00-\u9fff]", value)]
+            return {"".join(chars[i : i + 2]) for i in range(len(chars) - 1)}
+
+        # A single shared character is noise ("量子糾纏是什麼？" vs a generic
+        # line can share one character); a shared two-character word is real.
+        if bigrams(message) & bigrams(text):
+            return True
+        msg_words = {w.lower() for w in _rel_re.findall(r"[A-Za-z]{3,}", message)}
+        reply_words = {w.lower() for w in _rel_re.findall(r"[A-Za-z]{3,}", text)}
+        return bool(msg_words & reply_words)
 
     async def _fb_pure_template(
         self, user_message: str, context: Dict[str, Any], looks_like_question: bool
@@ -4166,6 +4206,7 @@ class AngelaLLMService:
             intent_vec=intent_vec,
             empathy_valence=empathy_valence,
             user_name=user_name,
+            user_message=user_message,
         )
 
         return LLMResponse(

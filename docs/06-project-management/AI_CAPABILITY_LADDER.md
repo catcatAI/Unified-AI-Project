@@ -51,7 +51,7 @@
 | L2-1 對話一致性   | `python scripts/benchmark_dialogue_coherence.py`                                       | 人設 ≥80% / 指代 ≥70% | 5/5 = **100%**                                             | ✅                                             |
 | L2-2 記憶命中     | `python scripts/benchmark_memory_hit.py`                                               | top-5 ≥60%            | 60/100 = **60%**（框架模擬；真實向量召回待 HAM 460K 接入） | ⚠️ 剛好達標                                    |
 | L2-3 純神經推理   | `python scripts/probe_reasoning_unseen.py`                                             | ≥50%                  | 確定性 100/100、純神經 **0%**、純神經＋中間層 87/100       | ❌ 未達（純神經仍 0%；中間層不等於純神經）      |
-| L2-7 純本地對話品質 | `python scripts/native_dialogue_budget_gate.py`                                       | 人味 ≥0.58 且學習效應 ≥0.30 且標準集 ≥1000 題 | **標準集 1036 回合：人話標準通過 61.0%**（問答 95%／斷言題 88%／對話 75%／多重事實 65%／**斷言庫外的邊界題 0%**）、學習效應 **+0.373**、QA 機器 13% | ❌ **尚不能算「會說人話」**（臨時門禁，見 `scripts/open_gates.json`） |
+| L2-7 純本地對話品質 | `python scripts/native_dialogue_budget_gate.py`                                       | 人味 ≥0.64 且學習效應 ≥0.30 且標準集 ≥1000 題 | **標準集 1096 回合：人話標準通過 62.6%**（問答 95%／斷言題 89%／對話 75%／多重事實 65%／**斷言庫外的邊界題 0%**）、學習效應 **+0.373**、QA 機器 18% | ❌ **尚不能算「會說人話」**（臨時門禁，見 `scripts/open_gates.json`） |
 | L3-1 無 RAG 知識  | `python scripts/run_benchmarks.py --backend native --suite knowledge_mc --gate-native` | ≥90%                  | **97.5%**                                                  | ✅                                             |
 | L3-2 工具呼叫     | `pytest tests/services/test_handlers.py`                                               | 100%                  | **60 passed**                                              | ✅                                             |
 | 整體回歸          | `pytest tests/ apps/backend/tests/ apps/game-rpg/tests/`                               | 0 failed              | **8,688 passed / 112 skipped / 0 failed**                  | ✅                                             |
@@ -76,7 +76,7 @@
 > 人話標準（六條規則）與 **≥1000 題的標準集**——`state`（帶邊界條件的題 324
 > 題：水的沸點、紅燈右轉、最小權限…）、`multi`（多重事實 72 回合）、`qa`（492
 > 題）、`dialogue`（166 回合，**對話實例也在標準集裡**）。實測（1102 回合）：
-> **人話標準通過率 61.0%**，逐類：問答 95%、斷言題 88%、對話 75%、多重事實 65%、
+> **人話標準通過率 62.6%**，逐類：問答 95%、斷言題 89%、對話 75%、多重事實 65%、
 > **斷言庫外的邊界題 0%（0/324 全滅）**。誠實結論：**純本地基模目前還不能算
 > 「會說人話」**——它答得出事實、答得出剛才說過的話、答得出有被教過的斷言，但遇到
 > 沒被教過的「這句話對嗎？該有例外嗎？」就一題都答不來（誠實棄權是正確行為，

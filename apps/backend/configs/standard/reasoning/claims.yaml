@@ -122,3 +122,144 @@ claims:
     exception: "加入溶質會把沸點拉回甚至拉高"
     irrelevant: "這座山的海拔是 3000 公尺"
     keywords: ["沸點海拔", "海拔沸點", "高山沸點", "沸點降低", "海拔", "高山", "沸點降低"]
+
+  - id: standard_atmosphere
+    statement: "標準大氣壓是 1013.25 百帕（1 atm）"
+    condition: "以海平面高度、0°C 的水銀柱高度換算"
+    exception: "海拔每升高 300 公尺大氣壓大約下降 1%，天氣系統也會讓它起伏"
+    irrelevant: "這間房間的窗戶有 1013 個平方公尺"
+    keywords: ["大氣壓", "氣壓", "百帕", "hPa", "atm", "1 atm"]
+
+  - id: water_density
+    statement: "水的密度約是每立方公分 1 公克"
+    condition: "以 4°C 的純水來看"
+    exception: "水在 0°C 以下結冰時體積膨脹、密度反而變小，所以冰會浮在水面上"
+    irrelevant: "這個游泳池有 1000 立方公尺的水"
+    keywords: ["水的密度", "密度", "一公克", "立方公分", "冰浮"]
+
+  - id: ice_floats
+    statement: "冰會浮在水面��"
+    condition: "以一般條件下的純水與冰來看"
+    exception: "溶入鹽類或氣體後水的密度會變，浮沉行為也會跟著改變"
+    irrelevant: "這艘船的吃水線標在船身"
+    keywords: ["冰浮", "浮在水", "結冰", "冰會浮"]
+
+  - id: rainbow_refraction
+    statement: "彩虹是陽光在水滴中折射、反射再折射形成的"
+    condition: "以太陽位於觀察者後方、水滴在前方時的情況來看"
+    exception: "光源不是太陽（例如手電筒）時也能看到，只是不叫彩虹"
+    irrelevant: "這條彩虹色的裙子是染色羊毛做的"
+    keywords: ["彩虹", "折射", "反射", "水滴"]
+
+  - id: sea_salinity
+    statement: "海水的平均鹽度約是 3.5%"
+    condition: "以全球海表面的平均值來看"
+    exception: "紅海與死海遠高於此，波羅的海與雨林 rivers 附近則明顯低於此"
+    irrelevant: "這杯沙拉醬的鹽度是 3.5%"
+    keywords: ["海水", "鹽度", "鹹", "百分之三點五"]
+
+  - id: seasons_tilt
+    statement: "四季的成因是地軸傾斜約 23.5 度"
+    condition: "以地球公轉加上地軸傾斜來看"
+    exception: "離赤道越遠季節差異越大，赤道附近幾乎沒有四季"
+    irrelevant: "這間辦公室的空調有 23.5 度"
+    keywords: ["四季", "季節", "地軸", "傾斜", "傾角", "23.5"]
+
+  - id: ohm_law
+    statement: "同一電阻下，通過的電流與電壓成正比"
+    condition: "以電阻值不隨電壓改變的金屬導體來看"
+    exception: "燈絲、白熾燈絲這類非線性元件的電阻會隨溫度上升而變大"
+    irrelevant: "這條皮帶的長度是 23.5 公分"
+    keywords: ["歐姆", "電壓", "電流", "電阻", "成正比"]
+
+  - id: newton_third
+    statement: "作用力與反作用力大小相等、方向相反"
+    condition: "以同一個交互作用的兩個物體來看"
+    exception: "兩者受力不同所以加速度不同——重的物體不會被推得比較快"
+    irrelevant: "這兩台車的重量相差 23.5 公斤"
+    keywords: ["作用力", "反作用力", "牛頓第三", "大小相等"]
+
+  - id: humidity_feels_hot
+    statement: "濕度高時體感溫度會比較高"
+    condition: "以相同氣溫下、汗液不易蒸發的情況來看"
+    exception: "有風時汗液蒸發加快，體感反而較涼爽"
+    irrelevant: "這杯茶的濕度是 23.5%"
+    keywords: ["濕度", "體感", "悶", "潮濕"]
+
+  - id: caffeine_half_life
+    statement: "咖啡因在成人體內的半衰期約 5 小時"
+    condition: "以一般健康成人的代謝來看"
+    exception: "懷孕、服用某些藥物或肝功能差時會明顯延長"
+    irrelevant: "這杯咖啡的容量是 23.5 毫升"
+    keywords: ["咖啡因", "半衰期", "代謝"]
+
+  - id: cloud_formation
+    statement: "雲是水蒸氣遇冷凝結成的小水滴或冰晶"
+    condition: "以空氣冷卻到露點以下的情況來看"
+    exception: "極乾的空氣即使降溫也不易成雲，霧則多發生在近地面"
+    irrelevant: "這朵雲的影子有 23.5 公尺"
+    keywords: ["雲", "凝結", "水蒸氣", "露點", "霧"]
+
+  - id: earth_moon_distance
+    statement: "地球到月球的平均距離約 38.4 萬公里"
+    condition: "以平均距離來看"
+    exception: "月球軌道有偏心率，近點約 36.3 萬公里、遠點約 40.6 萬公里"
+    irrelevant: "這段跑道長 400 公尺"
+    keywords: ["月球", "月亮", "地月", "38.4", "距離"]
+
+  - id: heat_transfer_modes
+    statement: "熱的傳遞方式有傳導、對流與輻射三種"
+    condition: "以一般物理分類來看"
+    exception: "同一個過程常同時包含三者，例如燒開的水既有對流也有傳導"
+    irrelevant: "這台暖氣的傳熱效率是 23.5%"
+    keywords: ["熱傳遞", "傳導", "對流", "輻射"]
+
+  - id: evaporation_cools
+    statement: "蒸發會使剩下的液體變涼"
+    condition: "以表面有液體、可以持續蒸發的情況來看"
+    exception: "濕度接近飽和時蒸發幾乎停止，風大或加熱則會加速"
+    irrelevant: "這瓶水蒸發掉了 23.5 毫升"
+    keywords: ["蒸發", "變涼", "蒸發冷卻"]
+
+  - id: vitamin_d_source
+    statement: "維生素 D 的主要來源是陽光照射後的皮膚合成"
+    condition: "以一般飲食與日照條件來看"
+    exception: "防曬、膚色深、緯度高或室內生活都會減少合成量，需要飲食補充"
+    irrelevant: "這瓶維生素 D 有 23.5 顆"
+    keywords: ["維生素D", "維生素 D", "日照", "皮膚合成"]
+
+  - id: sleep_teenagers
+    statement: "青少年每天需要約 8 到 10 小時的睡眠"
+    condition: "以一般健康青少年的建議量來看"
+    exception: "基因疾病（如嗜睡症）或長期缺眠需要醫療評估，個體差異也很大"
+    irrelevant: "這間寢室的窗簾有 23.5 公尺"
+    keywords: ["青少年", "睡眠", "8到10", "八到十"]
+
+  - id: braking_distance
+    statement: "煞停距離會隨車速的平方增加"
+    condition: "以路面乾燥、煞車系統正常的情況來看"
+    exception: "雨雪路面會讓輪胎抓地力下降，實際煞停距離更長"
+    irrelevant: "這條路的限速是 60 公里"
+    keywords: ["煞停距離", "煞車距離", "車速", "平方"]
+
+  - id: daylight_varies_latitude
+    statement: "緯度越高，白天的長度變化越大"
+    condition: "以同一個日期在各地比較來看"
+    exception: "接近赤道的地方全年白晝長度幾乎不變"
+    irrelevant: "這間房的窗簾長 23.5 公尺"
+    keywords: ["白晝", "日照時間", "緯度", "晝長"]
+
+  - id: sound_needs_medium
+    statement: "聲音的傳播需要介質"
+    condition: "以一般聲學現象來看"
+    exception: "真空中聲音無法傳播，但光與電磁波不需要介質"
+    irrelevant: "這個音樂播放器的音量是 23.5 分貝"
+    keywords: ["聲音", "介質", "真空", "傳播"]
+
+  - id: boiling_coffee
+    statement: "咖啡因為含溶質而比純水沸點略高"
+    condition: "以常見濃度的咖啡來看"
+    exception: "高海拔同樣會讓沸點下降，兩者的影響會互相抵銷一部分"
+    irrelevant: "這杯咖啡的容量是 23.5 毫升"
+    # 「沸點」太泛（水的沸點也會命中）→ 只留專屬詞。
+    keywords: ["咖啡", "咖啡的沸點", "咖啡沸點"]
