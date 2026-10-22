@@ -3,7 +3,7 @@
     "facts": 0.2,
     "math": 0.8,
     "tools": 0.0,
-    "paraphrase": 0.0,
+    "paraphrase": 0.3571,
     "dialogue": 0.7568666666666667,
     "boundary": 0.8889
   },
@@ -75,6 +75,10 @@
       "verdict": "fail"
     }
   },
+  "diagnostics": {
+    "改述（教過詞、新句子）": 1.0,
+    "改述（沒教過的詞，開發診斷）": 0.5
+  },
   "sources": {
     "deterministic": 405,
     "neural": 249,
@@ -100,17 +104,17 @@
     "problems": []
   },
   "result": {
-    "score": 4.41,
+    "score": 5.0,
     "status": "measured",
     "band": "L2 本地可用",
     "band_summary": "多輪對話不跑題，記憶／推理／多模態能串起來當助手用",
     "attained_level": "L0",
     "level_missing": [
-      "paraphrase 0.0/10 < 7.0/10"
+      "paraphrase 3.6/10 < 7.0/10"
     ],
     "failed_dimensions": [
       "facts 2.0/10 < 4.5/10",
-      "paraphrase 0.0/10 < 7.0/10",
+      "paraphrase 3.6/10 < 7.0/10",
       "tools 0.0/10 < 5.4/10"
     ],
     "counted": [
@@ -124,7 +128,7 @@
       ],
       [
         "paraphrase",
-        0.0
+        0.3571
       ],
       [
         "dialogue",

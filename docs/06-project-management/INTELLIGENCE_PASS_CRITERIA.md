@@ -26,14 +26,20 @@
 | --- | --- | --- | --- | --- | --- |
 | **facts** 事實與知識 | MMLU（Hendrycks et al., 2020, [arXiv:2009.03300](https://arxiv.org/abs/2009.03300)） | 4 選項隨機 25%；非專家 34.5%；**專家 89.8%** | R1：25% + 20pp = **45%**（R2 = 44.9%，取大） | 20.0% | ❌ FAIL |
 | **math** 数理與邏輯 | GSM8K（Cobbe et al., 2021, [arXiv:2110.14168](https://arxiv.org/abs/2110.14168)；GPT-4 TR 2023 Table 2） | 已發表強基線 **87.3%**（Chinchilla+SFT+ORM-RL）；GPT-4 92.0% ※含污染註記 | R3：0.7 × 87.3% = **61.1%** | 80.0% | ✅ PASS |
-| **paraphrase** 改述泛化（L1 關鍵） | PAWS（Zhang et al., 2019, [N19-1131](https://aclanthology.org/N19-1131/)） | 二元隨機 50%；**人類一致度 92.0%**（QQP）／94.7%（Wiki）；訓練後模型 85% | R1：50% + 20pp = **70%**（R2 = 46%，取大） | 0.0% | ❌ FAIL |
+| **paraphrase** 改述泛化（L1 關鍵） | PAWS（Zhang et al., 2019, [N19-1131](https://aclanthology.org/N19-1131/)） | 二元隨機 50%；**人類一致度 92.0%**（QQP）／94.7%（Wiki）；訓練後模型 85% | R1：50% + 20pp = **70%**（R2 = 46%，取大） | 35.7% | ❌ FAIL |
 | **dialogue** 對話與記憶（L2 關鍵） | LoCoMo（Maharana et al., ACL 2024, [2024.acl-long.747](https://aclanthology.org/2024.acl-long.747/)） | **人類 87.9**（長對話 QA F1）；最佳 LLM 51.6 | R2：0.5 × 87.9% = **44.0%**（高於隨機地板 20%） | 75.7% | ✅ PASS |
 | **boundary** 推理與例外 | FOLIO（Han et al., EMNLP 2024, [2024.emnlp-main.1229](https://aclanthology.org/2024.emnlp-main.1229/)） | 三值隨機 33.3%；非專家 61.8%；**專家 96.0%**；GPT-4 64.2%（CoT 68.9%） | R1：33.3% + 20pp = **53.3%**（R2 = 48.0%，取大） | 88.9% | ✅ PASS |
 | **tools** 工具與行動 | BFCL V4（Patil et al., ICML 2025, [leaderboard](https://gorilla.cs.berkeley.edu/leaderboard)，2026-10-22） | Overall **SOTA 77.5%**（Claude Opus 4.5）；中位數約 45% | R3：0.7 × 77.5% = **54.2%** | 0.0% | ❌ FAIL |
 
 實測值來源：`scripts/report_intelligence.py`（快照
-`intelligence_report.json`）。**4.41/10 平均落在 L2 帶，但達成的階梯是 L0**
-——L1 的關鍵度量（改述泛化）是 0%，距離 70% 的及格線很遠。
+`intelligence_report.json`）。**5.00/10 平均落在 L2 帶，但達成的階梯是 L0**
+——L1 的關鍵度量（改述泛化）是 35.7%，仍低於 70% 的及格線。
+
+改述那一格的數字是「**從未教過的關係詞**」上的系統正確率
+（`scripts/probe_paraphrase.py` 的 `heldout_final` 切分）。同一支探測另外量了兩格，
+刻意不當分數：**教過的詞、新句子 = 100%**（這是詞彙回想＋組合，不是泛化），
+**沒教過的詞、開發診斷 = 50%**（用來決定要補哪些一般同義詞，偏樂觀）。
+三者一起看才誠實——只報 100% 就是拿回想冒充泛化。
 
 ## 三、協定等價性（必須說清楚，否則就是另一種自欺）
 
@@ -44,7 +50,7 @@
 | --- | --- | --- |
 | facts | `analogous` | 同為 4 選項知識題；內部 40 題、主題不同 |
 | math | `analogous` | 同為小學～競賽級套用題；內部 40 題 |
-| paraphrase | `analogous` | PAWS 是「成對改述判定」；內部是「改述問答正確率」——同為看穿改述，計分不同 |
+| paraphrase | `analogous` | PAWS 是「成對改述判定」；內部是「改述問答正確率」——同為看穿改述，計分不同。且內部測試的關係詞是**教學留出集**（課程從未出現），所以量到的是編碼器類推，不是背題 |
 | dialogue | `analogous` | LoCoMo 是長對話 QA F1；內部是多輪人話標準通過率 |
 | boundary | `analogous` | FOLIO 是三值一階邏輯；內部是「事實＋條件＋例外」斷言題 |
 | tools | `analogous` | BFCL 是 API 工具呼叫；內部是沙箱執行＋路由選擇 |

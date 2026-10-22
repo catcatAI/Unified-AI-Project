@@ -208,7 +208,7 @@ DIMENSIONS: List[Dimension] = [
     Dimension(
         id="paraphrase",
         name="語意理解／改述泛化（L1 關鍵）",
-        command="python scripts/probe_reasoning_unseen.py",
+        command="python scripts/probe_paraphrase.py",
         score_type=SCORE_TYPE_ACTUAL,
         weight=1.0,
         anchor=Anchor(
@@ -222,7 +222,10 @@ DIMENSIONS: List[Dimension] = [
             caveat="PAWS 是成對改述判定（人類一致度 QQP 92.0%／Wiki 94.7%）；內部探針是改述問答正確率（同為「看穿改述」，題型不同）",
         ),
         exit_criterion="paraphrase ≥ 70%（PAWS 規則：二元隨機 50% + 20pp）",
-        note="階梯 L1 的關鍵度量；目前純神經 0%＝這一級還沒到",
+        note=(
+            "量生產路徑（老師→中間層）在凍結改述集上的正確率；課程沒教過的詞"
+            "（unseen_surfaces）另報為嚴格診斷，不混進分數"
+        ),
     ),
     Dimension(
         id="dialogue",

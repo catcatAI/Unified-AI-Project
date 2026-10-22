@@ -15,6 +15,22 @@ and this project adheres to
 
 ### Added
 
+- **改述泛化（L1 關鍵維度）有了凍結基準與可量測的教學**（2026-10-23）：
+  `benchmarks/data/paraphrase_v1.json`（`scripts/build_paraphrase_benchmark.py`
+  產生，`--check` 驗證）四個切分——開發集（教過的詞 × 沒教過的維度 72 題）、
+  開發診斷（沒教過的詞 56 題）、套用確認集（教過的詞、新句子 126 題）、
+  **最終留出（從未教過、也沒調參的 4 個詞 56 題）**。新增課程
+  `configs/standard/reasoning/paraphrase_curriculum.yaml`（26 句，把同義詞的
+  極性類別教寬）＋`ai/reasoning/paraphrase_curriculum.py`；生產路徑
+  `get_neural_bridge()` 套課程，raw 保留對照。中間層修正：`ANY_DIMENSION`
+  概念可由第一句建立、被動語態（尾隨 `by`）納入關係詞、`not as X as` 的推翻
+  方向。實測：教過的詞＋新句子 100%（回想，不當分數）；**最終留出 21% → 36%**
+  （維度分數）、開發診斷 21% → 50%、學習效應 +39%。改述仍 FAIL（36% < 70%），
+  總分 4.41 → **5.00/10**，達成階梯仍 L0。新增門禁
+  `benchmarks.paraphrase_benchmark_wellformed`（基準等於產生器、held-out 詞
+  不得進課程、教過的詞必須在課程、評測句子不得在課程）＋12 條資料合約測試；
+  `scripts/probe_paraphrase.py` 三個切分四條路徑一起印，避免「只報 100%」。
+
 - **智能的及格線改由公開基準推導（不再自己訂）**（2026-10-22）：「門檻自己訂」
   等於自問自答——先把線調到剛好能過，再宣稱達標。改法：
   ① `ai/meta/intelligence.py` 新增 `Anchor`（benchmark／source／url／protocol／

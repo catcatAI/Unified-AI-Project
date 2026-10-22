@@ -56,10 +56,10 @@
 | L3-2 工具呼叫     | `pytest tests/services/test_handlers.py`                                               | 100%                  | **60 passed**                                              | ✅                                             |
 | 整體回歸          | `pytest tests/ apps/backend/tests/ apps/game-rpg/tests/`                               | 0 failed              | **8,688 passed / 112 skipped / 0 failed**                  | ✅                                             |
 
-> **統一總分（2026-10-22 實測）**：`python scripts/report_intelligence.py` →
-> **4.41/10（平均，落在 L2 帶）**，但**達成的階梯是 L0**（L1 的關鍵度量
-> 改述泛化 0%）。六個維度對**外部推導的及格線**是 3 過 3 不過：facts 20% <
-> 45%（MMLU 規則）、paraphrase 0% < 70%（PAWS 規則）、tools 0% < 54%
+> **統一總分（2026-10-23 實測）**：`python scripts/report_intelligence.py` →
+> **5.00/10（平均，落在 L2 帶）**，但**達成的階梯是 L0**（L1 的關鍵度量
+> 改述泛化 35.7%）。六個維度對**外部推導的及格線**是 3 過 3 不過：facts 20% <
+> 45%（MMLU 規則）、paraphrase 36% < 70%（PAWS 規則）、tools 0% < 54%
 > （BFCL 規則）；math／dialogue／boundary 過。及格線不是我訂的，是從公開基準
 > 算的（`INTELLIGENCE_PASS_CRITERIA.md`）。
 > 這是本文件 L0–L3 之外唯一該引用的「智能總分」——下面這張表的每一列是

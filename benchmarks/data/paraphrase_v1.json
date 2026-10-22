@@ -1,0 +1,3135 @@
+{
+  "name": "paraphrase_v1",
+  "description": "改述泛化：同一個比較鏈用不同的說法敘述，問最高級。heldout_dimensions 是開發集（修 parser 時看過，偏樂觀）；unseen_surfaces 是開發用嚴格診斷（課程沒教那些詞，但用來決定要補哪些同義詞）；test 是教過的詞在新句子上的套用確認集；heldout_final 是從未教過、也沒用來調參的詞，這一格才是分數。",
+  "provenance": {
+    "generated_by": "scripts/build_paraphrase_benchmark.py",
+    "curriculum": "apps/backend/configs/standard/reasoning/paraphrase_curriculum.yaml",
+    "taught_dimensions": [
+      "size",
+      "age",
+      "temperature"
+    ],
+    "heldout_dimensions": [
+      "speed",
+      "weight",
+      "strength",
+      "wealth"
+    ],
+    "seeds": {
+      "heldout_dimensions": 11,
+      "unseen_surfaces": 23,
+      "test": 37,
+      "heldout_final": 53
+    }
+  },
+  "splits": {
+    "heldout_dimensions": [
+      {
+        "id": "strength-037",
+        "q": "the oak is stronger than Iris, Iris is stronger than Hugo, who ends up being the weakest?",
+        "expected": "Hugo",
+        "dimension": "strength",
+        "surface": "{A} is {g} than {B}",
+        "surface_kind": "inflected",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "strength-036",
+        "q": "Quinn is stronger than Bob, Bob is stronger than Dan, who is the strongest?",
+        "expected": "Quinn",
+        "dimension": "strength",
+        "surface": "{A} is {g} than {B}",
+        "surface_kind": "inflected",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "weight-021",
+        "q": "Rosa is lighter than Bob, the brick is lighter than Rosa, which one is the lightest?",
+        "expected": "the brick",
+        "dimension": "weight",
+        "surface": "{A} is {l} than {B}",
+        "surface_kind": "inflected",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "weight-018",
+        "q": "the pearl is heavier than the truck, the truck is heavier than Iris, which one is the heaviest?",
+        "expected": "the pearl",
+        "dimension": "weight",
+        "surface": "{A} is {g} than {B}",
+        "surface_kind": "inflected",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "speed-001",
+        "q": "the oak is faster than the feather, the feather is faster than the birch, who is the slowest?",
+        "expected": "the birch",
+        "dimension": "speed",
+        "surface": "{A} is {g} than {B}",
+        "surface_kind": "inflected",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "weight-020",
+        "q": "Hugo is lighter than Eve, the ruby is lighter than Hugo, who is the heaviest?",
+        "expected": "Eve",
+        "dimension": "weight",
+        "surface": "{A} is {l} than {B}",
+        "surface_kind": "inflected",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "wealth-059",
+        "q": "Hugo exceeds the ruby, the ruby exceeds Dan, which one is the poorest?",
+        "expected": "Dan",
+        "dimension": "wealth",
+        "surface": "{A} exceeds {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "weight-025",
+        "q": "Iris surpasses the feather, the feather surpasses the brick, who ends up being the lightest?",
+        "expected": "the brick",
+        "dimension": "weight",
+        "surface": "{A} surpasses {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "weight-026",
+        "q": "Alice is superior to Gina, Gina is superior to Finn, which one is the heaviest?",
+        "expected": "Alice",
+        "dimension": "weight",
+        "surface": "{A} is superior to {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "wealth-057",
+        "q": "the stone is poorer than Rosa, the pine is poorer than the stone, who is the poorest?",
+        "expected": "the pine",
+        "dimension": "wealth",
+        "surface": "{A} is {l} than {B}",
+        "surface_kind": "inflected",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "speed-008",
+        "q": "the pearl is superior to Rosa, Rosa is superior to Nina, which one is the fastest?",
+        "expected": "the pearl",
+        "dimension": "speed",
+        "surface": "{A} is superior to {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "wealth-066",
+        "q": "Sam is exceeded by Eve, Otto is exceeded by Sam, who is the richest?",
+        "expected": "Eve",
+        "dimension": "wealth",
+        "surface": "{A} is exceeded by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "strength-038",
+        "q": "Quinn is weaker than Iris, the stone is weaker than Quinn, who ends up being the strongest?",
+        "expected": "Iris",
+        "dimension": "strength",
+        "surface": "{A} is {l} than {B}",
+        "surface_kind": "inflected",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "speed-010",
+        "q": "Alice dominates the truck, the truck dominates Carol, which one is the quickest?",
+        "expected": "Alice",
+        "dimension": "speed",
+        "surface": "{A} dominates {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "wealth-055",
+        "q": "Carol is richer than the van, the van is richer than Dan, which one is the poorest?",
+        "expected": "Dan",
+        "dimension": "wealth",
+        "surface": "{A} is {g} than {B}",
+        "surface_kind": "inflected",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "weight-027",
+        "q": "Bob is superior to Eve, Eve is superior to Gina, which one is the lightest?",
+        "expected": "Gina",
+        "dimension": "weight",
+        "surface": "{A} is superior to {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "weight-033",
+        "q": "Hugo is inferior to Jack, the stone is inferior to Hugo, who ends up being the lightest?",
+        "expected": "the stone",
+        "dimension": "weight",
+        "surface": "{A} is inferior to {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "wealth-070",
+        "q": "the stone is outclassed by the ruby, the sedan is outclassed by the stone, which one is the richest?",
+        "expected": "the ruby",
+        "dimension": "wealth",
+        "surface": "{A} is outclassed by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "strength-046",
+        "q": "the birch dominates Bob, Bob dominates Alice, which one is the strongest?",
+        "expected": "the birch",
+        "dimension": "strength",
+        "surface": "{A} dominates {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "speed-013",
+        "q": "Carol is exceeded by Alice, the birch is exceeded by Carol, who is the slowest?",
+        "expected": "the birch",
+        "dimension": "speed",
+        "surface": "{A} is exceeded by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "wealth-071",
+        "q": "the stone is outclassed by Carol, Bob is outclassed by the stone, which one is the poorest?",
+        "expected": "Bob",
+        "dimension": "wealth",
+        "surface": "{A} is outclassed by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "wealth-061",
+        "q": "the truck surpasses the sedan, the sedan surpasses Gina, who ends up being the poorest?",
+        "expected": "Gina",
+        "dimension": "wealth",
+        "surface": "{A} surpasses {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "weight-029",
+        "q": "Pia dominates Carol, Carol dominates Gina, who ends up being the lightest?",
+        "expected": "Gina",
+        "dimension": "weight",
+        "surface": "{A} dominates {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "strength-042",
+        "q": "Iris surpasses Quinn, Quinn surpasses Rosa, who is the strongest?",
+        "expected": "Iris",
+        "dimension": "strength",
+        "surface": "{A} surpasses {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "speed-005",
+        "q": "the sedan exceeds Pia, Pia exceeds Rosa, who ends up being the slowest?",
+        "expected": "Rosa",
+        "dimension": "speed",
+        "surface": "{A} exceeds {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "wealth-064",
+        "q": "Gina dominates the van, the van dominates Quinn, who is the richest?",
+        "expected": "Gina",
+        "dimension": "wealth",
+        "surface": "{A} dominates {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "weight-019",
+        "q": "Jack is heavier than Nina, Nina is heavier than Alice, which one is the lightest?",
+        "expected": "Alice",
+        "dimension": "weight",
+        "surface": "{A} is {g} than {B}",
+        "surface_kind": "inflected",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "strength-052",
+        "q": "Quinn is outclassed by the feather, the brick is outclassed by Quinn, who is the strongest?",
+        "expected": "the feather",
+        "dimension": "strength",
+        "surface": "{A} is outclassed by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "strength-047",
+        "q": "the ruby dominates Jack, Jack dominates Bob, who is the weakest?",
+        "expected": "Bob",
+        "dimension": "strength",
+        "surface": "{A} dominates {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "weight-031",
+        "q": "the birch is exceeded by Eve, Sam is exceeded by the birch, who ends up being the lightest?",
+        "expected": "Sam",
+        "dimension": "weight",
+        "surface": "{A} is exceeded by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "weight-032",
+        "q": "Pia is inferior to the feather, Finn is inferior to Pia, who ends up being the heaviest?",
+        "expected": "the feather",
+        "dimension": "weight",
+        "surface": "{A} is inferior to {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "weight-022",
+        "q": "the truck exceeds the pine, the pine exceeds Gina, which one is the heaviest?",
+        "expected": "the truck",
+        "dimension": "weight",
+        "surface": "{A} exceeds {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "wealth-060",
+        "q": "Iris surpasses Alice, Alice surpasses Otto, which one is the richest?",
+        "expected": "Iris",
+        "dimension": "wealth",
+        "surface": "{A} surpasses {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "speed-014",
+        "q": "the feather is inferior to Dan, Jack is inferior to the feather, which one is the fastest?",
+        "expected": "Dan",
+        "dimension": "speed",
+        "surface": "{A} is inferior to {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "wealth-069",
+        "q": "the oak is inferior to the van, Sam is inferior to the oak, who ends up being the poorest?",
+        "expected": "Sam",
+        "dimension": "wealth",
+        "surface": "{A} is inferior to {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "wealth-068",
+        "q": "Iris is inferior to Sam, Gina is inferior to Iris, which one is the richest?",
+        "expected": "Sam",
+        "dimension": "wealth",
+        "surface": "{A} is inferior to {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "wealth-065",
+        "q": "Pia dominates Hugo, Hugo dominates the birch, which one is the poorest?",
+        "expected": "the birch",
+        "dimension": "wealth",
+        "surface": "{A} dominates {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "strength-048",
+        "q": "Carol is exceeded by Sam, the sapphire is exceeded by Carol, which one is the strongest?",
+        "expected": "Sam",
+        "dimension": "strength",
+        "surface": "{A} is exceeded by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "speed-000",
+        "q": "Rosa is faster than the feather, the feather is faster than the pine, which one is the quickest?",
+        "expected": "Rosa",
+        "dimension": "speed",
+        "surface": "{A} is {g} than {B}",
+        "surface_kind": "inflected",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "speed-011",
+        "q": "Quinn dominates the pine, the pine dominates the stone, who is the slowest?",
+        "expected": "the stone",
+        "dimension": "speed",
+        "surface": "{A} dominates {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "speed-016",
+        "q": "Bob is outclassed by Gina, Sam is outclassed by Bob, which one is the quickest?",
+        "expected": "Gina",
+        "dimension": "speed",
+        "surface": "{A} is outclassed by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "weight-030",
+        "q": "the sedan is exceeded by Alice, Otto is exceeded by the sedan, which one is the heaviest?",
+        "expected": "Alice",
+        "dimension": "weight",
+        "surface": "{A} is exceeded by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "strength-044",
+        "q": "Carol is superior to Otto, Otto is superior to Eve, which one is the strongest?",
+        "expected": "Carol",
+        "dimension": "strength",
+        "surface": "{A} is superior to {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "speed-012",
+        "q": "the pearl is exceeded by Nina, Hugo is exceeded by the pearl, who ends up being the quickest?",
+        "expected": "Nina",
+        "dimension": "speed",
+        "surface": "{A} is exceeded by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "strength-043",
+        "q": "Bob surpasses Finn, Finn surpasses Jack, which one is the weakest?",
+        "expected": "Jack",
+        "dimension": "strength",
+        "surface": "{A} surpasses {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "speed-004",
+        "q": "the pine exceeds the brick, the brick exceeds the ruby, who ends up being the fastest?",
+        "expected": "the pine",
+        "dimension": "speed",
+        "surface": "{A} exceeds {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "weight-023",
+        "q": "the sapphire exceeds the pearl, the pearl exceeds Eve, which one is the lightest?",
+        "expected": "Eve",
+        "dimension": "weight",
+        "surface": "{A} exceeds {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "wealth-056",
+        "q": "Nina is poorer than the sapphire, Pia is poorer than Nina, who ends up being the richest?",
+        "expected": "the sapphire",
+        "dimension": "wealth",
+        "surface": "{A} is {l} than {B}",
+        "surface_kind": "inflected",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "strength-041",
+        "q": "Iris exceeds Gina, Gina exceeds the sapphire, who is the weakest?",
+        "expected": "the sapphire",
+        "dimension": "strength",
+        "surface": "{A} exceeds {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "weight-034",
+        "q": "Gina is outclassed by the sapphire, Finn is outclassed by Gina, who ends up being the heaviest?",
+        "expected": "the sapphire",
+        "dimension": "weight",
+        "surface": "{A} is outclassed by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "wealth-054",
+        "q": "Pia is richer than the birch, the birch is richer than Alice, who ends up being the richest?",
+        "expected": "Pia",
+        "dimension": "wealth",
+        "surface": "{A} is {g} than {B}",
+        "surface_kind": "inflected",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "speed-006",
+        "q": "the sedan surpasses Alice, Alice surpasses the stone, who ends up being the fastest?",
+        "expected": "the sedan",
+        "dimension": "speed",
+        "surface": "{A} surpasses {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "weight-028",
+        "q": "Alice dominates the pearl, the pearl dominates the sedan, which one is the heaviest?",
+        "expected": "Alice",
+        "dimension": "weight",
+        "surface": "{A} dominates {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "speed-007",
+        "q": "Bob surpasses Gina, Gina surpasses Hugo, who ends up being the slowest?",
+        "expected": "Hugo",
+        "dimension": "speed",
+        "surface": "{A} surpasses {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "strength-040",
+        "q": "Eve exceeds Hugo, Hugo exceeds Sam, who ends up being the strongest?",
+        "expected": "Eve",
+        "dimension": "strength",
+        "surface": "{A} exceeds {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "wealth-063",
+        "q": "Hugo is superior to Nina, Nina is superior to Pia, who ends up being the poorest?",
+        "expected": "Pia",
+        "dimension": "wealth",
+        "surface": "{A} is superior to {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "strength-050",
+        "q": "Bob is inferior to the sapphire, the ruby is inferior to Bob, who is the strongest?",
+        "expected": "the sapphire",
+        "dimension": "strength",
+        "surface": "{A} is inferior to {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "speed-009",
+        "q": "the oak is superior to Hugo, Hugo is superior to the van, which one is the slowest?",
+        "expected": "the van",
+        "dimension": "speed",
+        "surface": "{A} is superior to {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "wealth-062",
+        "q": "the pearl is superior to Nina, Nina is superior to the truck, which one is the richest?",
+        "expected": "the pearl",
+        "dimension": "wealth",
+        "surface": "{A} is superior to {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "speed-015",
+        "q": "the feather is inferior to Alice, the truck is inferior to the feather, who is the slowest?",
+        "expected": "the truck",
+        "dimension": "speed",
+        "surface": "{A} is inferior to {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "wealth-067",
+        "q": "the stone is exceeded by Iris, Finn is exceeded by the stone, who is the poorest?",
+        "expected": "Finn",
+        "dimension": "wealth",
+        "surface": "{A} is exceeded by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "strength-053",
+        "q": "Alice is outclassed by the birch, the sedan is outclassed by Alice, who ends up being the weakest?",
+        "expected": "the sedan",
+        "dimension": "strength",
+        "surface": "{A} is outclassed by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "strength-049",
+        "q": "Carol is exceeded by Eve, Rosa is exceeded by Carol, who ends up being the weakest?",
+        "expected": "Rosa",
+        "dimension": "strength",
+        "surface": "{A} is exceeded by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "speed-003",
+        "q": "Rosa is slower than Dan, Jack is slower than Rosa, who is the slowest?",
+        "expected": "Jack",
+        "dimension": "speed",
+        "surface": "{A} is {l} than {B}",
+        "surface_kind": "inflected",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "weight-024",
+        "q": "Dan surpasses Pia, Pia surpasses Quinn, who is the heaviest?",
+        "expected": "Dan",
+        "dimension": "weight",
+        "surface": "{A} surpasses {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "wealth-058",
+        "q": "Jack exceeds the sedan, the sedan exceeds Carol, which one is the richest?",
+        "expected": "Jack",
+        "dimension": "wealth",
+        "surface": "{A} exceeds {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "strength-051",
+        "q": "Carol is inferior to Otto, the truck is inferior to Carol, which one is the weakest?",
+        "expected": "the truck",
+        "dimension": "strength",
+        "surface": "{A} is inferior to {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "speed-017",
+        "q": "Carol is outclassed by Quinn, the birch is outclassed by Carol, who ends up being the slowest?",
+        "expected": "the birch",
+        "dimension": "speed",
+        "surface": "{A} is outclassed by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "speed-002",
+        "q": "the oak is slower than the brick, Sam is slower than the oak, who ends up being the fastest?",
+        "expected": "the brick",
+        "dimension": "speed",
+        "surface": "{A} is {l} than {B}",
+        "surface_kind": "inflected",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "strength-039",
+        "q": "the oak is weaker than Jack, Finn is weaker than the oak, who ends up being the weakest?",
+        "expected": "Finn",
+        "dimension": "strength",
+        "surface": "{A} is {l} than {B}",
+        "surface_kind": "inflected",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "strength-045",
+        "q": "the truck is superior to the sapphire, the sapphire is superior to the ruby, who ends up being the weakest?",
+        "expected": "the ruby",
+        "dimension": "strength",
+        "surface": "{A} is superior to {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "weight-035",
+        "q": "Pia is outclassed by the truck, Sam is outclassed by Pia, who ends up being the lightest?",
+        "expected": "Sam",
+        "dimension": "weight",
+        "surface": "{A} is outclassed by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      }
+    ],
+    "unseen_surfaces": [
+      {
+        "id": "wealth-053",
+        "q": "Rosa lags behind the sedan, Dan lags behind Rosa, which one is the poorest?",
+        "expected": "Dan",
+        "dimension": "wealth",
+        "surface": "{A} lags behind {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "speed-031",
+        "q": "the ruby is beneath the sedan, the brick is beneath the ruby, which one is the slowest?",
+        "expected": "the brick",
+        "dimension": "speed",
+        "surface": "{A} is beneath {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "weight-035",
+        "q": "the stone has the edge over Jack, Jack has the edge over Dan, who is the lightest?",
+        "expected": "Dan",
+        "dimension": "weight",
+        "surface": "{A} has the edge over {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "age-014",
+        "q": "the birch is beneath Bob, Iris is beneath the birch, who ends up being the oldest?",
+        "expected": "Bob",
+        "dimension": "age",
+        "surface": "{A} is beneath {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "temperature-016",
+        "q": "Jack outpaces the pine, the pine outpaces the pearl, which one is the hottest?",
+        "expected": "Jack",
+        "dimension": "temperature",
+        "surface": "{A} outpaces {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "age-013",
+        "q": "Dan lags behind the birch, Carol lags behind Dan, who is the youngest?",
+        "expected": "Carol",
+        "dimension": "age",
+        "surface": "{A} lags behind {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "strength-042",
+        "q": "Carol has the edge over Quinn, Quinn has the edge over the ruby, which one is the strongest?",
+        "expected": "Carol",
+        "dimension": "strength",
+        "surface": "{A} has the edge over {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "temperature-020",
+        "q": "Finn lags behind Pia, Rosa lags behind Finn, who is the hottest?",
+        "expected": "Pia",
+        "dimension": "temperature",
+        "surface": "{A} lags behind {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "speed-027",
+        "q": "Gina has the edge over Carol, Carol has the edge over Dan, who ends up being the slowest?",
+        "expected": "Dan",
+        "dimension": "speed",
+        "surface": "{A} has the edge over {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "weight-038",
+        "q": "the pine is beneath Hugo, Sam is beneath the pine, which one is the heaviest?",
+        "expected": "Hugo",
+        "dimension": "weight",
+        "surface": "{A} is beneath {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "size-006",
+        "q": "the pearl is beneath Otto, Bob is beneath the pearl, who is the tallest?",
+        "expected": "Otto",
+        "dimension": "size",
+        "surface": "{A} is beneath {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "wealth-050",
+        "q": "the pearl has the edge over the pine, the pine has the edge over Iris, who ends up being the richest?",
+        "expected": "the pearl",
+        "dimension": "wealth",
+        "surface": "{A} has the edge over {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "temperature-021",
+        "q": "Quinn lags behind the van, Pia lags behind Quinn, who is the coldest?",
+        "expected": "Pia",
+        "dimension": "temperature",
+        "surface": "{A} lags behind {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "wealth-048",
+        "q": "the brick outpaces Jack, Jack outpaces Iris, which one is the richest?",
+        "expected": "the brick",
+        "dimension": "wealth",
+        "surface": "{A} outpaces {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "wealth-054",
+        "q": "the feather is beneath Alice, Bob is beneath the feather, which one is the richest?",
+        "expected": "Alice",
+        "dimension": "wealth",
+        "surface": "{A} is beneath {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "weight-034",
+        "q": "the pearl has the edge over the feather, the feather has the edge over the pine, who ends up being the heaviest?",
+        "expected": "the pearl",
+        "dimension": "weight",
+        "surface": "{A} has the edge over {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "size-004",
+        "q": "Carol lags behind Dan, the ruby lags behind Carol, which one is the highest?",
+        "expected": "Dan",
+        "dimension": "size",
+        "surface": "{A} lags behind {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "size-000",
+        "q": "the pearl outpaces Jack, Jack outpaces the stone, who is the tallest?",
+        "expected": "the pearl",
+        "dimension": "size",
+        "surface": "{A} outpaces {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "weight-037",
+        "q": "the truck lags behind Finn, Carol lags behind the truck, which one is the lightest?",
+        "expected": "Carol",
+        "dimension": "weight",
+        "surface": "{A} lags behind {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "size-003",
+        "q": "Alice has the edge over Hugo, Hugo has the edge over the sedan, which one is the shortest?",
+        "expected": "the sedan",
+        "dimension": "size",
+        "surface": "{A} has the edge over {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "speed-024",
+        "q": "the sapphire outpaces Carol, Carol outpaces Otto, who is the quickest?",
+        "expected": "the sapphire",
+        "dimension": "speed",
+        "surface": "{A} outpaces {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "temperature-019",
+        "q": "Nina has the edge over the pine, the pine has the edge over Eve, who ends up being the coldest?",
+        "expected": "Eve",
+        "dimension": "temperature",
+        "surface": "{A} has the edge over {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "speed-030",
+        "q": "Nina is beneath the pearl, the truck is beneath Nina, which one is the fastest?",
+        "expected": "the pearl",
+        "dimension": "speed",
+        "surface": "{A} is beneath {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "weight-033",
+        "q": "the pine outpaces Jack, Jack outpaces Quinn, which one is the lightest?",
+        "expected": "Quinn",
+        "dimension": "weight",
+        "surface": "{A} outpaces {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "strength-041",
+        "q": "Finn outpaces the van, the van outpaces Rosa, who ends up being the weakest?",
+        "expected": "Rosa",
+        "dimension": "strength",
+        "surface": "{A} outpaces {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "speed-028",
+        "q": "the pine lags behind the ruby, the stone lags behind the pine, who is the quickest?",
+        "expected": "the ruby",
+        "dimension": "speed",
+        "surface": "{A} lags behind {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "temperature-022",
+        "q": "Hugo is beneath the brick, the truck is beneath Hugo, who is the hottest?",
+        "expected": "the brick",
+        "dimension": "temperature",
+        "surface": "{A} is beneath {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "age-015",
+        "q": "the birch is beneath the stone, Nina is beneath the birch, who is the youngest?",
+        "expected": "Nina",
+        "dimension": "age",
+        "surface": "{A} is beneath {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "strength-047",
+        "q": "the truck is beneath Jack, Nina is beneath the truck, which one is the weakest?",
+        "expected": "Nina",
+        "dimension": "strength",
+        "surface": "{A} is beneath {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "strength-040",
+        "q": "the sapphire outpaces the feather, the feather outpaces Pia, who is the strongest?",
+        "expected": "the sapphire",
+        "dimension": "strength",
+        "surface": "{A} outpaces {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "speed-029",
+        "q": "Quinn lags behind Dan, Finn lags behind Quinn, who is the slowest?",
+        "expected": "Finn",
+        "dimension": "speed",
+        "surface": "{A} lags behind {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "strength-043",
+        "q": "the sedan has the edge over the ruby, the ruby has the edge over the pine, who ends up being the weakest?",
+        "expected": "the pine",
+        "dimension": "strength",
+        "surface": "{A} has the edge over {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "age-008",
+        "q": "the sapphire outpaces Otto, Otto outpaces the birch, which one is the oldest?",
+        "expected": "the sapphire",
+        "dimension": "age",
+        "surface": "{A} outpaces {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "size-001",
+        "q": "the birch outpaces Jack, Jack outpaces Quinn, which one is the bottom?",
+        "expected": "Quinn",
+        "dimension": "size",
+        "surface": "{A} outpaces {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "strength-044",
+        "q": "the pine lags behind the oak, Jack lags behind the pine, which one is the strongest?",
+        "expected": "the oak",
+        "dimension": "strength",
+        "surface": "{A} lags behind {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "size-007",
+        "q": "Otto is beneath the birch, the truck is beneath Otto, who is the shortest?",
+        "expected": "the truck",
+        "dimension": "size",
+        "surface": "{A} is beneath {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "wealth-055",
+        "q": "the pearl is beneath Hugo, the birch is beneath the pearl, who ends up being the poorest?",
+        "expected": "the birch",
+        "dimension": "wealth",
+        "surface": "{A} is beneath {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "age-010",
+        "q": "Finn has the edge over the ruby, the ruby has the edge over Sam, who ends up being the oldest?",
+        "expected": "Finn",
+        "dimension": "age",
+        "surface": "{A} has the edge over {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "strength-045",
+        "q": "Bob lags behind Hugo, the feather lags behind Bob, which one is the weakest?",
+        "expected": "the feather",
+        "dimension": "strength",
+        "surface": "{A} lags behind {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "temperature-018",
+        "q": "the ruby has the edge over the brick, the brick has the edge over the stone, which one is the hottest?",
+        "expected": "the ruby",
+        "dimension": "temperature",
+        "surface": "{A} has the edge over {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "wealth-049",
+        "q": "Pia outpaces Bob, Bob outpaces Quinn, who ends up being the poorest?",
+        "expected": "Quinn",
+        "dimension": "wealth",
+        "surface": "{A} outpaces {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "strength-046",
+        "q": "Alice is beneath the pearl, the truck is beneath Alice, which one is the strongest?",
+        "expected": "the pearl",
+        "dimension": "strength",
+        "surface": "{A} is beneath {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "speed-025",
+        "q": "Sam outpaces Gina, Gina outpaces Bob, who is the slowest?",
+        "expected": "Bob",
+        "dimension": "speed",
+        "surface": "{A} outpaces {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "weight-032",
+        "q": "the ruby outpaces the stone, the stone outpaces the van, who ends up being the heaviest?",
+        "expected": "the ruby",
+        "dimension": "weight",
+        "surface": "{A} outpaces {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "age-011",
+        "q": "the truck has the edge over the van, the van has the edge over Finn, who is the youngest?",
+        "expected": "Finn",
+        "dimension": "age",
+        "surface": "{A} has the edge over {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "wealth-052",
+        "q": "Eve lags behind the feather, the oak lags behind Eve, which one is the richest?",
+        "expected": "the feather",
+        "dimension": "wealth",
+        "surface": "{A} lags behind {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "weight-039",
+        "q": "Nina is beneath Alice, Pia is beneath Nina, who is the lightest?",
+        "expected": "Pia",
+        "dimension": "weight",
+        "surface": "{A} is beneath {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "age-009",
+        "q": "the truck outpaces Nina, Nina outpaces the birch, who is the youngest?",
+        "expected": "the birch",
+        "dimension": "age",
+        "surface": "{A} outpaces {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "weight-036",
+        "q": "the pine lags behind Nina, the sapphire lags behind the pine, which one is the heaviest?",
+        "expected": "Nina",
+        "dimension": "weight",
+        "surface": "{A} lags behind {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "temperature-023",
+        "q": "the sapphire is beneath the brick, Bob is beneath the sapphire, who ends up being the coldest?",
+        "expected": "Bob",
+        "dimension": "temperature",
+        "surface": "{A} is beneath {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "age-012",
+        "q": "Nina lags behind the pine, the truck lags behind Nina, who ends up being the oldest?",
+        "expected": "the pine",
+        "dimension": "age",
+        "surface": "{A} lags behind {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "temperature-017",
+        "q": "Iris outpaces Eve, Eve outpaces Dan, who ends up being the coldest?",
+        "expected": "Dan",
+        "dimension": "temperature",
+        "surface": "{A} outpaces {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "size-005",
+        "q": "the oak lags behind Alice, the van lags behind the oak, who ends up being the bottom?",
+        "expected": "the van",
+        "dimension": "size",
+        "surface": "{A} lags behind {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "wealth-051",
+        "q": "the ruby has the edge over Carol, Carol has the edge over Pia, who is the poorest?",
+        "expected": "Pia",
+        "dimension": "wealth",
+        "surface": "{A} has the edge over {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "speed-026",
+        "q": "Rosa has the edge over the pine, the pine has the edge over Gina, which one is the quickest?",
+        "expected": "Rosa",
+        "dimension": "speed",
+        "surface": "{A} has the edge over {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "size-002",
+        "q": "Eve has the edge over the sapphire, the sapphire has the edge over Gina, which one is the highest?",
+        "expected": "Eve",
+        "dimension": "size",
+        "surface": "{A} has the edge over {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      }
+    ],
+    "test": [
+      {
+        "id": "wealth-114",
+        "q": "Finn surpasses the van, the van surpasses the pearl, who ends up being the richest?",
+        "expected": "Finn",
+        "dimension": "wealth",
+        "surface": "{A} surpasses {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "speed-058",
+        "q": "the sapphire exceeds Iris, Iris exceeds the pine, who is the fastest?",
+        "expected": "the sapphire",
+        "dimension": "speed",
+        "surface": "{A} exceeds {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "age-018",
+        "q": "the van is older than Hugo, Hugo is older than Carol, which one is the oldest?",
+        "expected": "the van",
+        "dimension": "age",
+        "surface": "{A} is {g} than {B}",
+        "surface_kind": "inflected",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "wealth-113",
+        "q": "Hugo exceeds the oak, the oak exceeds Rosa, who ends up being the poorest?",
+        "expected": "Rosa",
+        "dimension": "wealth",
+        "surface": "{A} exceeds {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "strength-098",
+        "q": "the oak is superior to Otto, Otto is superior to the sapphire, who ends up being the strongest?",
+        "expected": "the oak",
+        "dimension": "strength",
+        "surface": "{A} is superior to {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "speed-069",
+        "q": "the feather is inferior to Hugo, Dan is inferior to the feather, who is the slowest?",
+        "expected": "Dan",
+        "dimension": "speed",
+        "surface": "{A} is inferior to {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "age-031",
+        "q": "the feather is exceeded by the sapphire, Jack is exceeded by the feather, who ends up being the youngest?",
+        "expected": "Jack",
+        "dimension": "age",
+        "surface": "{A} is exceeded by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "speed-059",
+        "q": "Sam exceeds the brick, the brick exceeds Jack, which one is the slowest?",
+        "expected": "Jack",
+        "dimension": "speed",
+        "surface": "{A} exceeds {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "strength-106",
+        "q": "Bob is outclassed by Jack, Rosa is outclassed by Bob, who ends up being the strongest?",
+        "expected": "Jack",
+        "dimension": "strength",
+        "surface": "{A} is outclassed by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "strength-104",
+        "q": "Pia is inferior to the pearl, the sapphire is inferior to Pia, which one is the strongest?",
+        "expected": "the pearl",
+        "dimension": "strength",
+        "surface": "{A} is inferior to {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "wealth-125",
+        "q": "the ruby is outclassed by Eve, the pearl is outclassed by the ruby, which one is the poorest?",
+        "expected": "the pearl",
+        "dimension": "wealth",
+        "surface": "{A} is outclassed by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "wealth-123",
+        "q": "Nina is inferior to the feather, Quinn is inferior to Nina, who is the poorest?",
+        "expected": "Quinn",
+        "dimension": "wealth",
+        "surface": "{A} is inferior to {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "age-034",
+        "q": "the feather is outclassed by Gina, the van is outclassed by the feather, which one is the oldest?",
+        "expected": "Gina",
+        "dimension": "age",
+        "surface": "{A} is outclassed by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "weight-079",
+        "q": "Carol surpasses the van, the van surpasses Eve, which one is the lightest?",
+        "expected": "Eve",
+        "dimension": "weight",
+        "surface": "{A} surpasses {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "weight-084",
+        "q": "Eve is exceeded by Jack, Rosa is exceeded by Eve, which one is the heaviest?",
+        "expected": "Jack",
+        "dimension": "weight",
+        "surface": "{A} is exceeded by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "wealth-115",
+        "q": "Hugo surpasses Pia, Pia surpasses the pearl, who ends up being the poorest?",
+        "expected": "the pearl",
+        "dimension": "wealth",
+        "surface": "{A} surpasses {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "speed-057",
+        "q": "the oak is slower than Bob, the van is slower than the oak, who is the slowest?",
+        "expected": "the van",
+        "dimension": "speed",
+        "surface": "{A} is {l} than {B}",
+        "surface_kind": "inflected",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "age-029",
+        "q": "the birch dominates the ruby, the ruby dominates Sam, which one is the youngest?",
+        "expected": "Sam",
+        "dimension": "age",
+        "surface": "{A} dominates {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "weight-088",
+        "q": "Finn is outclassed by Pia, Dan is outclassed by Finn, who is the heaviest?",
+        "expected": "Pia",
+        "dimension": "weight",
+        "surface": "{A} is outclassed by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "speed-067",
+        "q": "Quinn is exceeded by the feather, the van is exceeded by Quinn, which one is the slowest?",
+        "expected": "the van",
+        "dimension": "speed",
+        "surface": "{A} is exceeded by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "age-020",
+        "q": "the birch is younger than Carol, Finn is younger than the birch, who ends up being the oldest?",
+        "expected": "Carol",
+        "dimension": "age",
+        "surface": "{A} is {l} than {B}",
+        "surface_kind": "inflected",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "size-008",
+        "q": "the brick is superior to the oak, the oak is superior to the sedan, who is the top?",
+        "expected": "the brick",
+        "dimension": "size",
+        "surface": "{A} is superior to {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "strength-095",
+        "q": "Quinn exceeds the stone, the stone exceeds Jack, which one is the weakest?",
+        "expected": "Jack",
+        "dimension": "strength",
+        "surface": "{A} exceeds {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "temperature-044",
+        "q": "Dan is superior to Otto, Otto is superior to the pine, who is the hottest?",
+        "expected": "Dan",
+        "dimension": "temperature",
+        "surface": "{A} is superior to {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "wealth-110",
+        "q": "the brick is poorer than Jack, Nina is poorer than the brick, who ends up being the richest?",
+        "expected": "Jack",
+        "dimension": "wealth",
+        "surface": "{A} is {l} than {B}",
+        "surface_kind": "inflected",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "age-026",
+        "q": "Hugo is superior to the pearl, the pearl is superior to Finn, which one is the oldest?",
+        "expected": "Hugo",
+        "dimension": "age",
+        "surface": "{A} is superior to {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "age-030",
+        "q": "Bob is exceeded by the sedan, the feather is exceeded by Bob, who ends up being the oldest?",
+        "expected": "the sedan",
+        "dimension": "age",
+        "surface": "{A} is exceeded by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "temperature-036",
+        "q": "the sedan is hotter than the pine, the pine is hotter than Finn, who ends up being the hottest?",
+        "expected": "the sedan",
+        "dimension": "temperature",
+        "surface": "{A} is {g} than {B}",
+        "surface_kind": "inflected",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "speed-061",
+        "q": "the sedan surpasses the oak, the oak surpasses the birch, who ends up being the slowest?",
+        "expected": "the birch",
+        "dimension": "speed",
+        "surface": "{A} surpasses {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "speed-071",
+        "q": "Iris is outclassed by the birch, Hugo is outclassed by Iris, who is the slowest?",
+        "expected": "Hugo",
+        "dimension": "speed",
+        "surface": "{A} is outclassed by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "weight-087",
+        "q": "Pia is inferior to the pine, Sam is inferior to Pia, who ends up being the lightest?",
+        "expected": "Sam",
+        "dimension": "weight",
+        "surface": "{A} is inferior to {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "wealth-121",
+        "q": "the van is exceeded by Jack, Dan is exceeded by the van, which one is the poorest?",
+        "expected": "Dan",
+        "dimension": "wealth",
+        "surface": "{A} is exceeded by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "size-007",
+        "q": "Otto surpasses the van, the van surpasses the ruby, who ends up being the shortest?",
+        "expected": "the ruby",
+        "dimension": "size",
+        "surface": "{A} surpasses {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "size-013",
+        "q": "the ruby is exceeded by Jack, Hugo is exceeded by the ruby, who ends up being the bottom?",
+        "expected": "Hugo",
+        "dimension": "size",
+        "surface": "{A} is exceeded by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "weight-083",
+        "q": "Hugo dominates Gina, Gina dominates Sam, who ends up being the lightest?",
+        "expected": "Sam",
+        "dimension": "weight",
+        "surface": "{A} dominates {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "size-015",
+        "q": "Sam is inferior to Gina, Eve is inferior to Sam, who is the bottom?",
+        "expected": "Eve",
+        "dimension": "size",
+        "surface": "{A} is inferior to {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "weight-077",
+        "q": "the pearl exceeds the truck, the truck exceeds Gina, who ends up being the lightest?",
+        "expected": "Gina",
+        "dimension": "weight",
+        "surface": "{A} exceeds {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "wealth-119",
+        "q": "Gina dominates Otto, Otto dominates Eve, which one is the poorest?",
+        "expected": "Eve",
+        "dimension": "wealth",
+        "surface": "{A} dominates {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "size-003",
+        "q": "Rosa is shorter than the truck, the sedan is shorter than Rosa, which one is the bottom?",
+        "expected": "the sedan",
+        "dimension": "size",
+        "surface": "{A} is {l} than {B}",
+        "surface_kind": "inflected",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "age-028",
+        "q": "Bob dominates Gina, Gina dominates the stone, who is the oldest?",
+        "expected": "Bob",
+        "dimension": "age",
+        "surface": "{A} dominates {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "age-019",
+        "q": "Nina is older than Otto, Otto is older than Alice, who is the youngest?",
+        "expected": "Alice",
+        "dimension": "age",
+        "surface": "{A} is {g} than {B}",
+        "surface_kind": "inflected",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "speed-055",
+        "q": "the sapphire is faster than Eve, Eve is faster than the van, who ends up being the slowest?",
+        "expected": "the van",
+        "dimension": "speed",
+        "surface": "{A} is {g} than {B}",
+        "surface_kind": "inflected",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "temperature-038",
+        "q": "Bob is colder than Eve, the sapphire is colder than Bob, who ends up being the hottest?",
+        "expected": "Eve",
+        "dimension": "temperature",
+        "surface": "{A} is {l} than {B}",
+        "surface_kind": "inflected",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "wealth-112",
+        "q": "Bob exceeds the stone, the stone exceeds Eve, who is the richest?",
+        "expected": "Bob",
+        "dimension": "wealth",
+        "surface": "{A} exceeds {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "strength-101",
+        "q": "Rosa dominates Nina, Nina dominates Jack, who is the weakest?",
+        "expected": "Jack",
+        "dimension": "strength",
+        "surface": "{A} dominates {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "size-002",
+        "q": "Otto is shorter than the van, Rosa is shorter than Otto, who ends up being the tallest?",
+        "expected": "the van",
+        "dimension": "size",
+        "surface": "{A} is {l} than {B}",
+        "surface_kind": "inflected",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "size-004",
+        "q": "the sapphire exceeds Quinn, Quinn exceeds Rosa, who is the tallest?",
+        "expected": "the sapphire",
+        "dimension": "size",
+        "surface": "{A} exceeds {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "temperature-046",
+        "q": "the truck dominates the pine, the pine dominates Carol, which one is the hottest?",
+        "expected": "the truck",
+        "dimension": "temperature",
+        "surface": "{A} dominates {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "weight-072",
+        "q": "the stone is heavier than the brick, the brick is heavier than the feather, which one is the heaviest?",
+        "expected": "the stone",
+        "dimension": "weight",
+        "surface": "{A} is {g} than {B}",
+        "surface_kind": "inflected",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "temperature-052",
+        "q": "Otto is outclassed by Rosa, Hugo is outclassed by Otto, who is the hottest?",
+        "expected": "Rosa",
+        "dimension": "temperature",
+        "surface": "{A} is outclassed by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "strength-107",
+        "q": "the truck is outclassed by Hugo, the oak is outclassed by the truck, who ends up being the weakest?",
+        "expected": "the oak",
+        "dimension": "strength",
+        "surface": "{A} is outclassed by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "age-021",
+        "q": "the oak is younger than the stone, Jack is younger than the oak, which one is the youngest?",
+        "expected": "Jack",
+        "dimension": "age",
+        "surface": "{A} is {l} than {B}",
+        "surface_kind": "inflected",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "wealth-120",
+        "q": "the sedan is exceeded by Otto, Pia is exceeded by the sedan, which one is the richest?",
+        "expected": "Otto",
+        "dimension": "wealth",
+        "surface": "{A} is exceeded by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "size-001",
+        "q": "the stone is taller than the sapphire, the sapphire is taller than the van, who ends up being the shortest?",
+        "expected": "the van",
+        "dimension": "size",
+        "surface": "{A} is {g} than {B}",
+        "surface_kind": "inflected",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "size-006",
+        "q": "the van surpasses the ruby, the ruby surpasses Quinn, who ends up being the top?",
+        "expected": "the van",
+        "dimension": "size",
+        "surface": "{A} surpasses {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "strength-103",
+        "q": "the truck is exceeded by the brick, Alice is exceeded by the truck, which one is the weakest?",
+        "expected": "Alice",
+        "dimension": "strength",
+        "surface": "{A} is exceeded by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "age-023",
+        "q": "Gina exceeds Dan, Dan exceeds the ruby, who is the youngest?",
+        "expected": "the ruby",
+        "dimension": "age",
+        "surface": "{A} exceeds {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "temperature-039",
+        "q": "the sedan is colder than Rosa, the birch is colder than the sedan, who is the coldest?",
+        "expected": "the birch",
+        "dimension": "temperature",
+        "surface": "{A} is {l} than {B}",
+        "surface_kind": "inflected",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "age-027",
+        "q": "Nina is superior to Carol, Carol is superior to Gina, who is the youngest?",
+        "expected": "Gina",
+        "dimension": "age",
+        "surface": "{A} is superior to {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "wealth-108",
+        "q": "Otto is richer than Carol, Carol is richer than Pia, who is the richest?",
+        "expected": "Otto",
+        "dimension": "wealth",
+        "surface": "{A} is {g} than {B}",
+        "surface_kind": "inflected",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "speed-056",
+        "q": "Bob is slower than the pearl, Carol is slower than Bob, who is the fastest?",
+        "expected": "the pearl",
+        "dimension": "speed",
+        "surface": "{A} is {l} than {B}",
+        "surface_kind": "inflected",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "temperature-050",
+        "q": "the pine is inferior to the stone, the brick is inferior to the pine, who ends up being the hottest?",
+        "expected": "the stone",
+        "dimension": "temperature",
+        "surface": "{A} is inferior to {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "age-024",
+        "q": "the birch surpasses the oak, the oak surpasses the pine, who ends up being the oldest?",
+        "expected": "the birch",
+        "dimension": "age",
+        "surface": "{A} surpasses {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "temperature-043",
+        "q": "Iris surpasses Sam, Sam surpasses Hugo, who is the coldest?",
+        "expected": "Hugo",
+        "dimension": "temperature",
+        "surface": "{A} surpasses {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "speed-054",
+        "q": "Iris is faster than the ruby, the ruby is faster than Sam, which one is the fastest?",
+        "expected": "Iris",
+        "dimension": "speed",
+        "surface": "{A} is {g} than {B}",
+        "surface_kind": "inflected",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "strength-097",
+        "q": "Iris surpasses Quinn, Quinn surpasses the oak, who ends up being the weakest?",
+        "expected": "the oak",
+        "dimension": "strength",
+        "surface": "{A} surpasses {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "temperature-053",
+        "q": "Eve is outclassed by the brick, the birch is outclassed by Eve, who ends up being the coldest?",
+        "expected": "the birch",
+        "dimension": "temperature",
+        "surface": "{A} is outclassed by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "temperature-051",
+        "q": "Eve is inferior to Carol, Hugo is inferior to Eve, which one is the coldest?",
+        "expected": "Hugo",
+        "dimension": "temperature",
+        "surface": "{A} is inferior to {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "strength-093",
+        "q": "the stone is weaker than the oak, the birch is weaker than the stone, who is the weakest?",
+        "expected": "the birch",
+        "dimension": "strength",
+        "surface": "{A} is {l} than {B}",
+        "surface_kind": "inflected",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "wealth-117",
+        "q": "Sam is superior to Quinn, Quinn is superior to Nina, who is the poorest?",
+        "expected": "Nina",
+        "dimension": "wealth",
+        "surface": "{A} is superior to {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "speed-060",
+        "q": "Sam surpasses the stone, the stone surpasses the sedan, which one is the quickest?",
+        "expected": "Sam",
+        "dimension": "speed",
+        "surface": "{A} surpasses {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "size-016",
+        "q": "the van is outclassed by the sedan, Bob is outclassed by the van, which one is the highest?",
+        "expected": "the sedan",
+        "dimension": "size",
+        "surface": "{A} is outclassed by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "temperature-040",
+        "q": "the sapphire exceeds Finn, Finn exceeds Eve, who ends up being the hottest?",
+        "expected": "the sapphire",
+        "dimension": "temperature",
+        "surface": "{A} exceeds {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "temperature-048",
+        "q": "the stone is exceeded by Quinn, Sam is exceeded by the stone, which one is the hottest?",
+        "expected": "Quinn",
+        "dimension": "temperature",
+        "surface": "{A} is exceeded by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "wealth-116",
+        "q": "Gina is superior to Quinn, Quinn is superior to the birch, which one is the richest?",
+        "expected": "Gina",
+        "dimension": "wealth",
+        "surface": "{A} is superior to {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "speed-068",
+        "q": "Dan is inferior to Jack, Pia is inferior to Dan, who ends up being the fastest?",
+        "expected": "Jack",
+        "dimension": "speed",
+        "surface": "{A} is inferior to {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "weight-074",
+        "q": "the brick is lighter than the sapphire, the van is lighter than the brick, who is the heaviest?",
+        "expected": "the sapphire",
+        "dimension": "weight",
+        "surface": "{A} is {l} than {B}",
+        "surface_kind": "inflected",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "weight-082",
+        "q": "the oak dominates the sapphire, the sapphire dominates Finn, who ends up being the heaviest?",
+        "expected": "the oak",
+        "dimension": "weight",
+        "surface": "{A} dominates {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "weight-080",
+        "q": "the brick is superior to the pearl, the pearl is superior to the ruby, who ends up being the heaviest?",
+        "expected": "the brick",
+        "dimension": "weight",
+        "surface": "{A} is superior to {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "weight-089",
+        "q": "the sapphire is outclassed by Bob, the feather is outclassed by the sapphire, who is the lightest?",
+        "expected": "the feather",
+        "dimension": "weight",
+        "surface": "{A} is outclassed by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "speed-064",
+        "q": "the oak dominates Quinn, Quinn dominates Carol, who is the quickest?",
+        "expected": "the oak",
+        "dimension": "speed",
+        "surface": "{A} dominates {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "speed-070",
+        "q": "the stone is outclassed by the feather, the van is outclassed by the stone, who is the fastest?",
+        "expected": "the feather",
+        "dimension": "speed",
+        "surface": "{A} is outclassed by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "size-005",
+        "q": "Carol exceeds Quinn, Quinn exceeds the pine, which one is the bottom?",
+        "expected": "the pine",
+        "dimension": "size",
+        "surface": "{A} exceeds {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "wealth-109",
+        "q": "Eve is richer than Quinn, Quinn is richer than the stone, which one is the poorest?",
+        "expected": "the stone",
+        "dimension": "wealth",
+        "surface": "{A} is {g} than {B}",
+        "surface_kind": "inflected",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "size-010",
+        "q": "Carol dominates the ruby, the ruby dominates the birch, who is the tallest?",
+        "expected": "Carol",
+        "dimension": "size",
+        "surface": "{A} dominates {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "weight-076",
+        "q": "Otto exceeds Rosa, Rosa exceeds the sedan, who ends up being the heaviest?",
+        "expected": "Otto",
+        "dimension": "weight",
+        "surface": "{A} exceeds {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "temperature-037",
+        "q": "Jack is hotter than the van, the van is hotter than Nina, who is the coldest?",
+        "expected": "Nina",
+        "dimension": "temperature",
+        "surface": "{A} is {g} than {B}",
+        "surface_kind": "inflected",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "age-033",
+        "q": "Rosa is inferior to the birch, Hugo is inferior to Rosa, which one is the youngest?",
+        "expected": "Hugo",
+        "dimension": "age",
+        "surface": "{A} is inferior to {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "weight-085",
+        "q": "the van is exceeded by Alice, Finn is exceeded by the van, which one is the lightest?",
+        "expected": "Finn",
+        "dimension": "weight",
+        "surface": "{A} is exceeded by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "temperature-045",
+        "q": "Nina is superior to the van, the van is superior to Sam, who ends up being the coldest?",
+        "expected": "Sam",
+        "dimension": "temperature",
+        "surface": "{A} is superior to {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "strength-094",
+        "q": "Carol exceeds Hugo, Hugo exceeds the ruby, who is the strongest?",
+        "expected": "Carol",
+        "dimension": "strength",
+        "surface": "{A} exceeds {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "weight-086",
+        "q": "Jack is inferior to Rosa, Finn is inferior to Jack, who is the heaviest?",
+        "expected": "Rosa",
+        "dimension": "weight",
+        "surface": "{A} is inferior to {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "strength-091",
+        "q": "the brick is stronger than Hugo, Hugo is stronger than Dan, which one is the weakest?",
+        "expected": "Dan",
+        "dimension": "strength",
+        "surface": "{A} is {g} than {B}",
+        "surface_kind": "inflected",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "weight-073",
+        "q": "Otto is heavier than Bob, Bob is heavier than the van, who ends up being the lightest?",
+        "expected": "the van",
+        "dimension": "weight",
+        "surface": "{A} is {g} than {B}",
+        "surface_kind": "inflected",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "wealth-118",
+        "q": "the pine dominates the sedan, the sedan dominates the van, who ends up being the richest?",
+        "expected": "the pine",
+        "dimension": "wealth",
+        "surface": "{A} dominates {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "size-011",
+        "q": "Nina dominates Otto, Otto dominates the oak, who is the shortest?",
+        "expected": "the oak",
+        "dimension": "size",
+        "surface": "{A} dominates {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "speed-062",
+        "q": "the birch is superior to the brick, the brick is superior to the ruby, who ends up being the fastest?",
+        "expected": "the birch",
+        "dimension": "speed",
+        "surface": "{A} is superior to {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "temperature-042",
+        "q": "Nina surpasses the stone, the stone surpasses Carol, who is the hottest?",
+        "expected": "Nina",
+        "dimension": "temperature",
+        "surface": "{A} surpasses {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "strength-102",
+        "q": "the stone is exceeded by Dan, Alice is exceeded by the stone, who ends up being the strongest?",
+        "expected": "Dan",
+        "dimension": "strength",
+        "surface": "{A} is exceeded by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "weight-075",
+        "q": "the brick is lighter than Finn, Nina is lighter than the brick, which one is the lightest?",
+        "expected": "Nina",
+        "dimension": "weight",
+        "surface": "{A} is {l} than {B}",
+        "surface_kind": "inflected",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "strength-096",
+        "q": "the pearl surpasses the sedan, the sedan surpasses Otto, which one is the strongest?",
+        "expected": "the pearl",
+        "dimension": "strength",
+        "surface": "{A} surpasses {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "weight-078",
+        "q": "Quinn surpasses the pearl, the pearl surpasses Otto, who ends up being the heaviest?",
+        "expected": "Quinn",
+        "dimension": "weight",
+        "surface": "{A} surpasses {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "size-000",
+        "q": "the truck is taller than the sedan, the sedan is taller than Carol, who ends up being the top?",
+        "expected": "the truck",
+        "dimension": "size",
+        "surface": "{A} is {g} than {B}",
+        "surface_kind": "inflected",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "strength-090",
+        "q": "the ruby is stronger than Nina, Nina is stronger than the pearl, who ends up being the strongest?",
+        "expected": "the ruby",
+        "dimension": "strength",
+        "surface": "{A} is {g} than {B}",
+        "surface_kind": "inflected",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "size-017",
+        "q": "the pine is outclassed by Dan, the van is outclassed by the pine, who is the bottom?",
+        "expected": "the van",
+        "dimension": "size",
+        "surface": "{A} is outclassed by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "wealth-124",
+        "q": "the sapphire is outclassed by the feather, the sedan is outclassed by the sapphire, who is the richest?",
+        "expected": "the feather",
+        "dimension": "wealth",
+        "surface": "{A} is outclassed by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "strength-099",
+        "q": "Sam is superior to Iris, Iris is superior to Quinn, who is the weakest?",
+        "expected": "Quinn",
+        "dimension": "strength",
+        "surface": "{A} is superior to {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "speed-065",
+        "q": "Quinn dominates the feather, the feather dominates the van, which one is the slowest?",
+        "expected": "the van",
+        "dimension": "speed",
+        "surface": "{A} dominates {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "age-032",
+        "q": "the birch is inferior to Iris, the oak is inferior to the birch, who is the oldest?",
+        "expected": "Iris",
+        "dimension": "age",
+        "surface": "{A} is inferior to {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "temperature-047",
+        "q": "Pia dominates Hugo, Hugo dominates the birch, who ends up being the coldest?",
+        "expected": "the birch",
+        "dimension": "temperature",
+        "surface": "{A} dominates {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "age-035",
+        "q": "Otto is outclassed by the feather, Sam is outclassed by Otto, who is the youngest?",
+        "expected": "Sam",
+        "dimension": "age",
+        "surface": "{A} is outclassed by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "strength-100",
+        "q": "Finn dominates the sapphire, the sapphire dominates the stone, who is the strongest?",
+        "expected": "Finn",
+        "dimension": "strength",
+        "surface": "{A} dominates {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "size-014",
+        "q": "Bob is inferior to the sedan, Jack is inferior to Bob, which one is the top?",
+        "expected": "the sedan",
+        "dimension": "size",
+        "surface": "{A} is inferior to {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "wealth-111",
+        "q": "Quinn is poorer than the brick, the sapphire is poorer than Quinn, who ends up being the poorest?",
+        "expected": "the sapphire",
+        "dimension": "wealth",
+        "surface": "{A} is {l} than {B}",
+        "surface_kind": "inflected",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "size-009",
+        "q": "Quinn is superior to Carol, Carol is superior to Alice, who is the bottom?",
+        "expected": "Alice",
+        "dimension": "size",
+        "surface": "{A} is superior to {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "strength-105",
+        "q": "Alice is inferior to the sedan, Finn is inferior to Alice, who ends up being the weakest?",
+        "expected": "Finn",
+        "dimension": "strength",
+        "surface": "{A} is inferior to {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "wealth-122",
+        "q": "Gina is inferior to the van, Rosa is inferior to Gina, which one is the richest?",
+        "expected": "the van",
+        "dimension": "wealth",
+        "surface": "{A} is inferior to {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "weight-081",
+        "q": "Finn is superior to the birch, the birch is superior to the van, who is the lightest?",
+        "expected": "the van",
+        "dimension": "weight",
+        "surface": "{A} is superior to {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "temperature-049",
+        "q": "the oak is exceeded by the stone, the birch is exceeded by the oak, who is the coldest?",
+        "expected": "the birch",
+        "dimension": "temperature",
+        "surface": "{A} is exceeded by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "strength-092",
+        "q": "the sedan is weaker than Nina, Sam is weaker than the sedan, which one is the strongest?",
+        "expected": "Nina",
+        "dimension": "strength",
+        "surface": "{A} is {l} than {B}",
+        "surface_kind": "inflected",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "age-022",
+        "q": "the birch exceeds Finn, Finn exceeds the pine, which one is the oldest?",
+        "expected": "the birch",
+        "dimension": "age",
+        "surface": "{A} exceeds {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "temperature-041",
+        "q": "the truck exceeds Gina, Gina exceeds Finn, who is the coldest?",
+        "expected": "Finn",
+        "dimension": "temperature",
+        "surface": "{A} exceeds {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "age-025",
+        "q": "Otto surpasses Iris, Iris surpasses Carol, who ends up being the youngest?",
+        "expected": "Carol",
+        "dimension": "age",
+        "surface": "{A} surpasses {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "speed-066",
+        "q": "Eve is exceeded by Jack, Rosa is exceeded by Eve, who is the fastest?",
+        "expected": "Jack",
+        "dimension": "speed",
+        "surface": "{A} is exceeded by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "speed-063",
+        "q": "Nina is superior to Sam, Sam is superior to the feather, which one is the slowest?",
+        "expected": "the feather",
+        "dimension": "speed",
+        "surface": "{A} is superior to {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "size-012",
+        "q": "Alice is exceeded by the sapphire, Gina is exceeded by Alice, who ends up being the top?",
+        "expected": "the sapphire",
+        "dimension": "size",
+        "surface": "{A} is exceeded by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      }
+    ],
+    "heldout_final": [
+      {
+        "id": "weight-035",
+        "q": "Bob runs rings around Hugo, Hugo runs rings around Iris, which one is the lightest?",
+        "expected": "Iris",
+        "dimension": "weight",
+        "surface": "{A} runs rings around {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "age-014",
+        "q": "Nina is beaten by the pine, Iris is beaten by Nina, who is the oldest?",
+        "expected": "the pine",
+        "dimension": "age",
+        "surface": "{A} is beaten by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "age-015",
+        "q": "Quinn is beaten by Pia, Eve is beaten by Quinn, who is the youngest?",
+        "expected": "Eve",
+        "dimension": "age",
+        "surface": "{A} is beaten by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "speed-026",
+        "q": "the feather runs rings around Alice, Alice runs rings around Hugo, who ends up being the fastest?",
+        "expected": "the feather",
+        "dimension": "speed",
+        "surface": "{A} runs rings around {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "weight-032",
+        "q": "Quinn outshines the pearl, the pearl outshines the feather, who is the heaviest?",
+        "expected": "Quinn",
+        "dimension": "weight",
+        "surface": "{A} outshines {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "wealth-050",
+        "q": "Rosa runs rings around Quinn, Quinn runs rings around Eve, who ends up being the richest?",
+        "expected": "Rosa",
+        "dimension": "wealth",
+        "surface": "{A} runs rings around {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "speed-031",
+        "q": "Bob is beaten by Carol, the van is beaten by Bob, who ends up being the slowest?",
+        "expected": "the van",
+        "dimension": "speed",
+        "surface": "{A} is beaten by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "wealth-055",
+        "q": "Jack is beaten by the feather, Pia is beaten by Jack, which one is the poorest?",
+        "expected": "Pia",
+        "dimension": "wealth",
+        "surface": "{A} is beaten by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "wealth-048",
+        "q": "Jack outshines Eve, Eve outshines Gina, which one is the richest?",
+        "expected": "Jack",
+        "dimension": "wealth",
+        "surface": "{A} outshines {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "age-013",
+        "q": "Bob is dwarfed by the stone, the pearl is dwarfed by Bob, which one is the youngest?",
+        "expected": "the pearl",
+        "dimension": "age",
+        "surface": "{A} is dwarfed by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "temperature-018",
+        "q": "Finn runs rings around Sam, Sam runs rings around Gina, who ends up being the hottest?",
+        "expected": "Finn",
+        "dimension": "temperature",
+        "surface": "{A} runs rings around {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "weight-038",
+        "q": "the stone is beaten by the van, Bob is beaten by the stone, who is the heaviest?",
+        "expected": "the van",
+        "dimension": "weight",
+        "surface": "{A} is beaten by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "weight-034",
+        "q": "the truck runs rings around the feather, the feather runs rings around Gina, who ends up being the heaviest?",
+        "expected": "the truck",
+        "dimension": "weight",
+        "surface": "{A} runs rings around {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "strength-044",
+        "q": "Iris is dwarfed by Pia, Jack is dwarfed by Iris, who is the strongest?",
+        "expected": "Pia",
+        "dimension": "strength",
+        "surface": "{A} is dwarfed by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "strength-043",
+        "q": "Quinn runs rings around the pine, the pine runs rings around Gina, who ends up being the weakest?",
+        "expected": "Gina",
+        "dimension": "strength",
+        "surface": "{A} runs rings around {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "strength-045",
+        "q": "the pine is dwarfed by the pearl, Pia is dwarfed by the pine, which one is the weakest?",
+        "expected": "Pia",
+        "dimension": "strength",
+        "surface": "{A} is dwarfed by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "temperature-016",
+        "q": "the pine outshines Nina, Nina outshines the van, which one is the hottest?",
+        "expected": "the pine",
+        "dimension": "temperature",
+        "surface": "{A} outshines {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "weight-039",
+        "q": "the pearl is beaten by the pine, the stone is beaten by the pearl, who ends up being the lightest?",
+        "expected": "the stone",
+        "dimension": "weight",
+        "surface": "{A} is beaten by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "speed-028",
+        "q": "Gina is dwarfed by Iris, the ruby is dwarfed by Gina, which one is the quickest?",
+        "expected": "Iris",
+        "dimension": "speed",
+        "surface": "{A} is dwarfed by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "age-010",
+        "q": "the pearl runs rings around Bob, Bob runs rings around Rosa, who ends up being the oldest?",
+        "expected": "the pearl",
+        "dimension": "age",
+        "surface": "{A} runs rings around {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "size-002",
+        "q": "the sapphire runs rings around Alice, Alice runs rings around the feather, who is the tallest?",
+        "expected": "the sapphire",
+        "dimension": "size",
+        "surface": "{A} runs rings around {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "wealth-049",
+        "q": "Rosa outshines Otto, Otto outshines the stone, who ends up being the poorest?",
+        "expected": "the stone",
+        "dimension": "wealth",
+        "surface": "{A} outshines {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "temperature-021",
+        "q": "the stone is dwarfed by Hugo, Rosa is dwarfed by the stone, who ends up being the coldest?",
+        "expected": "Rosa",
+        "dimension": "temperature",
+        "surface": "{A} is dwarfed by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "temperature-020",
+        "q": "Carol is dwarfed by Pia, Jack is dwarfed by Carol, who is the hottest?",
+        "expected": "Pia",
+        "dimension": "temperature",
+        "surface": "{A} is dwarfed by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "weight-036",
+        "q": "the sedan is dwarfed by the oak, Nina is dwarfed by the sedan, who is the heaviest?",
+        "expected": "the oak",
+        "dimension": "weight",
+        "surface": "{A} is dwarfed by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "size-000",
+        "q": "the sedan outshines the feather, the feather outshines Gina, which one is the top?",
+        "expected": "the sedan",
+        "dimension": "size",
+        "surface": "{A} outshines {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "size-005",
+        "q": "Hugo is dwarfed by Gina, Eve is dwarfed by Hugo, who is the bottom?",
+        "expected": "Eve",
+        "dimension": "size",
+        "surface": "{A} is dwarfed by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "speed-030",
+        "q": "the stone is beaten by Finn, the pine is beaten by the stone, who ends up being the quickest?",
+        "expected": "Finn",
+        "dimension": "speed",
+        "surface": "{A} is beaten by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "age-009",
+        "q": "Pia outshines Rosa, Rosa outshines Hugo, who ends up being the youngest?",
+        "expected": "Hugo",
+        "dimension": "age",
+        "surface": "{A} outshines {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "strength-042",
+        "q": "the truck runs rings around the brick, the brick runs rings around Alice, who ends up being the strongest?",
+        "expected": "the truck",
+        "dimension": "strength",
+        "surface": "{A} runs rings around {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "strength-041",
+        "q": "Otto outshines the oak, the oak outshines Dan, which one is the weakest?",
+        "expected": "Dan",
+        "dimension": "strength",
+        "surface": "{A} outshines {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "temperature-022",
+        "q": "Hugo is beaten by Jack, Gina is beaten by Hugo, who ends up being the hottest?",
+        "expected": "Jack",
+        "dimension": "temperature",
+        "surface": "{A} is beaten by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "age-011",
+        "q": "Hugo runs rings around Otto, Otto runs rings around the birch, who is the youngest?",
+        "expected": "the birch",
+        "dimension": "age",
+        "surface": "{A} runs rings around {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "temperature-017",
+        "q": "Sam outshines Hugo, Hugo outshines the oak, which one is the coldest?",
+        "expected": "the oak",
+        "dimension": "temperature",
+        "surface": "{A} outshines {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "speed-024",
+        "q": "the pine outshines Nina, Nina outshines Eve, who is the quickest?",
+        "expected": "the pine",
+        "dimension": "speed",
+        "surface": "{A} outshines {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "speed-029",
+        "q": "the feather is dwarfed by the brick, the truck is dwarfed by the feather, which one is the slowest?",
+        "expected": "the truck",
+        "dimension": "speed",
+        "surface": "{A} is dwarfed by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "size-004",
+        "q": "Bob is dwarfed by Finn, Otto is dwarfed by Bob, who is the highest?",
+        "expected": "Finn",
+        "dimension": "size",
+        "surface": "{A} is dwarfed by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "size-007",
+        "q": "Pia is beaten by the truck, Bob is beaten by Pia, which one is the bottom?",
+        "expected": "Bob",
+        "dimension": "size",
+        "surface": "{A} is beaten by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "age-012",
+        "q": "Bob is dwarfed by Carol, the pearl is dwarfed by Bob, who ends up being the oldest?",
+        "expected": "Carol",
+        "dimension": "age",
+        "surface": "{A} is dwarfed by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "age-008",
+        "q": "Eve outshines Carol, Carol outshines the brick, who ends up being the oldest?",
+        "expected": "Eve",
+        "dimension": "age",
+        "surface": "{A} outshines {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "weight-037",
+        "q": "Carol is dwarfed by Iris, the feather is dwarfed by Carol, which one is the lightest?",
+        "expected": "the feather",
+        "dimension": "weight",
+        "surface": "{A} is dwarfed by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "speed-025",
+        "q": "Rosa outshines Nina, Nina outshines the sapphire, which one is the slowest?",
+        "expected": "the sapphire",
+        "dimension": "speed",
+        "surface": "{A} outshines {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "temperature-019",
+        "q": "Dan runs rings around the sapphire, the sapphire runs rings around the van, which one is the coldest?",
+        "expected": "the van",
+        "dimension": "temperature",
+        "surface": "{A} runs rings around {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "speed-027",
+        "q": "the sapphire runs rings around the van, the van runs rings around the pine, which one is the slowest?",
+        "expected": "the pine",
+        "dimension": "speed",
+        "surface": "{A} runs rings around {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "strength-046",
+        "q": "Dan is beaten by Sam, the sedan is beaten by Dan, which one is the strongest?",
+        "expected": "Sam",
+        "dimension": "strength",
+        "surface": "{A} is beaten by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "size-001",
+        "q": "the ruby outshines Sam, Sam outshines the oak, which one is the bottom?",
+        "expected": "the oak",
+        "dimension": "size",
+        "surface": "{A} outshines {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "temperature-023",
+        "q": "Quinn is beaten by Sam, Hugo is beaten by Quinn, who is the coldest?",
+        "expected": "Hugo",
+        "dimension": "temperature",
+        "surface": "{A} is beaten by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "weight-033",
+        "q": "the pine outshines Rosa, Rosa outshines Sam, who is the lightest?",
+        "expected": "Sam",
+        "dimension": "weight",
+        "surface": "{A} outshines {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "wealth-054",
+        "q": "Nina is beaten by Carol, Finn is beaten by Nina, who ends up being the richest?",
+        "expected": "Carol",
+        "dimension": "wealth",
+        "surface": "{A} is beaten by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "size-003",
+        "q": "Otto runs rings around the sapphire, the sapphire runs rings around Eve, which one is the shortest?",
+        "expected": "Eve",
+        "dimension": "size",
+        "surface": "{A} runs rings around {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "strength-047",
+        "q": "Quinn is beaten by the ruby, the brick is beaten by Quinn, who is the weakest?",
+        "expected": "the brick",
+        "dimension": "strength",
+        "surface": "{A} is beaten by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "wealth-052",
+        "q": "the oak is dwarfed by Otto, the ruby is dwarfed by the oak, which one is the richest?",
+        "expected": "Otto",
+        "dimension": "wealth",
+        "surface": "{A} is dwarfed by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "wealth-053",
+        "q": "Finn is dwarfed by Eve, the van is dwarfed by Finn, which one is the poorest?",
+        "expected": "the van",
+        "dimension": "wealth",
+        "surface": "{A} is dwarfed by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "least"
+      },
+      {
+        "id": "wealth-051",
+        "q": "the sedan runs rings around the van, the van runs rings around Sam, who is the poorest?",
+        "expected": "Sam",
+        "dimension": "wealth",
+        "surface": "{A} runs rings around {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "least"
+      },
+      {
+        "id": "size-006",
+        "q": "the pearl is beaten by the oak, the van is beaten by the pearl, which one is the top?",
+        "expected": "the oak",
+        "dimension": "size",
+        "surface": "{A} is beaten by {B}",
+        "surface_kind": "lexical",
+        "direction": "lesser",
+        "question_direction": "greatest"
+      },
+      {
+        "id": "strength-040",
+        "q": "the truck outshines Sam, Sam outshines the sapphire, who ends up being the strongest?",
+        "expected": "the truck",
+        "dimension": "strength",
+        "surface": "{A} outshines {B}",
+        "surface_kind": "lexical",
+        "direction": "greater",
+        "question_direction": "greatest"
+      }
+    ]
+  }
+}

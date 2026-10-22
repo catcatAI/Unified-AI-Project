@@ -1,0 +1,59 @@
+# The paraphrase curriculum — the sentences the middle layer is taught from.
+#
+# This is *training data*, not a test set. Every entry teaches one relation
+# phrase the deterministic teacher does not know, and says which concept it
+# belongs to. Nothing here is a question-and-answer pair: the aligned object
+# is the *concept* (dimension + direction), never the sentence, so the layer
+# generalises to new entities, new dimensions and new phrasings.
+#
+# `dimension: "*"` means the phrase carries only a direction ("exceeds"); the
+# dimension comes from the question ("... who is the oldest?").
+#
+# The eval set is `benchmarks/data/paraphrase_v1.json`. It never appears here
+# (the probe checks that), so teaching cannot leak the answers.
+#
+# Fields: phrase, dimension, direction ("greater" | "lesser").
+version: 1
+description: "改述課程：把老師詞彙沒有的比較詞，一句一句對齊到概念原型（不是記題目）。"
+entries:
+  # --- the "X is <comparative> than Y" shape, taught in three dimensions ---
+  - { phrase: "is taller than", dimension: size, direction: greater }
+  - { phrase: "is shorter than", dimension: size, direction: lesser }
+  - { phrase: "is older than", dimension: age, direction: greater }
+  - { phrase: "is younger than", dimension: age, direction: lesser }
+  - { phrase: "is hotter than", dimension: temperature, direction: greater }
+  - { phrase: "is colder than", dimension: temperature, direction: lesser }
+
+  # --- dimension-neutral relations: the direction is in the word, the
+  #     dimension is in the question ---
+  - { phrase: "exceeds", dimension: "*", direction: greater }
+  - { phrase: "surpasses", dimension: "*", direction: greater }
+  - { phrase: "dominates", dimension: "*", direction: greater }
+  - { phrase: "is superior to", dimension: "*", direction: greater }
+  - { phrase: "is exceeded by", dimension: "*", direction: lesser }
+  - { phrase: "is inferior to", dimension: "*", direction: lesser }
+  - { phrase: "is outclassed by", dimension: "*", direction: lesser }
+
+  # --- broaden the polarity class (general English comparative verbs).
+  #     These are ordinary synonyms a learner would meet; they are not the
+  #     benchmark's held-out words (the probe asserts that). Teaching the
+  #     *class* is what lets the layer place words it was never taught.
+  - { phrase: "outstrips", dimension: "*", direction: greater }
+  - { phrase: "outdoes", dimension: "*", direction: greater }
+  - { phrase: "eclipses", dimension: "*", direction: greater }
+  - { phrase: "tops", dimension: "*", direction: greater }
+  - { phrase: "overpowers", dimension: "*", direction: greater }
+  - { phrase: "outweighs", dimension: "*", direction: greater }
+  - { phrase: "trails", dimension: "*", direction: lesser }
+  - { phrase: "falls short of", dimension: "*", direction: lesser }
+  - { phrase: "is below", dimension: "*", direction: lesser }
+  - { phrase: "is under", dimension: "*", direction: lesser }
+  - { phrase: "is outmatched by", dimension: "*", direction: lesser }
+  - { phrase: "is overshadowed by", dimension: "*", direction: lesser }
+  - { phrase: "is surpassed by", dimension: "*", direction: lesser }
+
+# The "not as <adjective> as" shape is *structural*, not lexical: the base
+# adjective already carries its pole ("tall" is the greater side) and the
+# negation flips it. Teaching the whole phrase would align it to the wrong
+# direction (the flip happens after the match), so the curriculum leaves it
+# to the parser.

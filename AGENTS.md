@@ -1026,6 +1026,24 @@ collected — 0 errors**).
 > （`analogous`），及格線是**可比性下限**，不是「在 MMLU 上拿 45%」。
 > 32 條定義合約測試全過；`check_intelligence_definition` 0 violations。
 
+> ✅ **NOTE (Updated 2026-10-23, 改述泛化)**: **§X #269**: 改述（L1 關鍵維度）
+> 有了**凍結基準**與**可量測的教學**，但沒有作弊。`benchmarks/data/
+> paraphrase_v1.json`（`scripts/build_paraphrase_benchmark.py`，`--check` 可驗）
+> 四個切分：`heldout_dimensions`（教過的詞 × 沒教過的維度，開發集）、
+> `unseen_surfaces`（沒教過的詞，開發診斷）、`test`（教過的詞、新句子，126 題）、
+> **`heldout_final`（從未教過、也沒調參的 4 個詞，56 題）＝分數**。
+> 課程 `configs/standard/reasoning/paraphrase_curriculum.yaml` 26 句
+> （把同義詞的**極性類別**教寬，不是記題目）；`get_neural_bridge()` 在生產路徑
+> 套課程，raw 保留給對照。中間層另修：`ANY_DIMENSION` 概念可由第一句建立、
+> 被動語態（尾隨 by）納入關係詞、`not as X as` 的推翻方向。
+> **實測**：教過的詞＋新句子 **100%**（126/126，這是回想＋組合，不當分數）；
+> 沒教過的詞：未教 21% → 教過 **36%**（`heldout_final`，即維度分數）；
+> 開發診斷 21% → 50%；學習效應（開發集）+39%。**改述仍 FAIL**（36% < 70%）。
+> 誠實維護：最終留出首輪若被事後補進課程，就不算留出——新增
+> `benchmarks.paraphrase_benchmark_wellformed` 門禁（基準＝產生器、held-out 詞
+> 不在課程、教過的詞在課程、評測句子不在課程）＋12 條資料合約測試。
+> 總分 4.41 → **5.00/10**（平均落 L2 帶，**達成階梯仍 L0**）。
+
 > ✅ **NOTE (Updated 2026-10-21, 純本地對話 + 門禁登記簿)**: **純本地基模的對話
 > 量測**完成。新增 `scripts/probe_native_dialogue.py`（不註冊任何外部後端：雲端
 > 金鑰與本地 ollama/llama.cpp 都不啟用，只留專案自己的引擎，啟動時斷言）＋
@@ -1252,6 +1270,7 @@ tests/
 | Native-only dialogue measurement / budget gate | `python3 scripts/probe_native_dialogue.py` / `python3 scripts/native_dialogue_budget_gate.py` |
 | Unified intelligence score (the only one) | `python3 scripts/report_intelligence.py` |
 | Unified intelligence definition gate | `python3 scripts/check_intelligence_definition.py` |
+| Paraphrase generalisation probe (frozen splits + learning effect) | `python3 scripts/probe_paraphrase.py` |
 | Where the pass lines come from (external benchmarks, never self-set) | `docs/06-project-management/INTELLIGENCE_PASS_CRITERIA.md` |
 
 > 🔎 **單一檢查入口**：所有「非編譯器」檢查集中在

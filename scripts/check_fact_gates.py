@@ -458,6 +458,80 @@ def _intelligence_facts():
     ]
 
 
+def _paraphrase_facts():
+    """改述基準與課程不得互相污染（否則「泛化」就只是背單字）。
+
+    檢查：提交的基準等於產生器輸出、held-out 切分的關係詞不在課程裡、
+    教過的詞確實在課程裡、沒有任何評測句子出現在課程裡。
+    """
+    import importlib.util
+    import json
+    import re
+
+    from core.facts import Fact
+
+    spec = importlib.util.spec_from_file_location(
+        "paraphrase_bench_builder", REPO / "scripts" / "build_paraphrase_benchmark.py"
+    )
+    assert spec and spec.loader
+    builder = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(builder)
+
+    problems: List[str] = []
+    benchmark = REPO / "benchmarks" / "data" / "paraphrase_v1.json"
+    curriculum = (
+        REPO
+        / "apps"
+        / "backend"
+        / "configs"
+        / "standard"
+        / "reasoning"
+        / "paraphrase_curriculum.yaml"
+    )
+    try:
+        committed = benchmark.read_text(encoding="utf-8")
+        generated = json.dumps(builder.build(), ensure_ascii=False, indent=2) + "\n"
+        if committed != generated:
+            problems.append("the committed benchmark does not match the generator")
+        payload = json.loads(committed)
+        text = curriculum.read_text(encoding="utf-8")
+        lowered = text.lower()
+        splits = payload.get("splits") or {}
+        for name in ("unseen_surfaces", "heldout_final"):
+            for item in splits.get(name) or []:
+                surface = (item.get("surface") or "").replace("{A}", "").replace("{B}", "")
+                for word in re.split(r"[^A-Za-z']+", surface.lower()):
+                    if word and word not in {"a", "an", "the", "is", "by", "to", "over"}:
+                        if word in lowered:
+                            problems.append(f"{name}: held-out word {word!r} is in the curriculum")
+        for name in ("heldout_dimensions", "test"):
+            for item in splits.get(name) or []:
+                if item.get("surface_kind") != "lexical":
+                    continue
+                surface = (item.get("surface") or "").replace("{A}", "").replace("{B}", "").strip()
+                if surface and surface not in text:
+                    problems.append(f"{name}: taught surface {surface!r} is missing")
+        for name, items in splits.items():
+            for item in items:
+                if item.get("q") and item["q"] in text:
+                    problems.append(f"{name}: an eval sentence is in the curriculum")
+    except (OSError, json.JSONDecodeError, ValueError) as exc:  # pragma: no cover
+        problems.append(f"paraphrase benchmark unreadable: {exc}")
+
+    return [
+        Fact(
+            "benchmarks.paraphrase_benchmark_wellformed",
+            float(len(problems)),
+            0.0,
+            "le",
+            "violations",
+            "paraphrase benchmark / curriculum separation",
+            f"violations={len(problems)}" + (f": {problems[0]}" if problems else ""),
+            measured_at=MEASURED_AT,
+        ),
+    ]
+
+
 def _config_hygiene_facts():
     """提交的配置必須等於預設（user 層是執行期狀態，不該被提交）。"""
     import importlib.util
@@ -1818,6 +1892,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         + _config_hygiene_facts()
         + _gates_facts()
         + _intelligence_facts()
+        + _paraphrase_facts()
     )
     merged = merge_reports(
         adjudicate(edge_facts),

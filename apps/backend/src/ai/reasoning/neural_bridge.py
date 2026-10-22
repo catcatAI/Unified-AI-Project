@@ -260,6 +260,8 @@ class RelationMatcher:
         self._seeds: Dict[str, Dict[str, List[np.ndarray]]] = {}
         # kind -> key -> the seed words
         self._seed_map: Dict[str, Dict[str, List[str]]] = {}
+        # kind -> key -> the phrases the feedback has taught (persisted)
+        self._aligned: Dict[str, Dict[str, List[str]]] = {}
         self.seed()
 
     # -- seeding ---------------------------------------------------------- #
@@ -543,6 +545,29 @@ class RelationMatcher:
         return (dimension, direction, score)
 
     # -- alignment (the feedback step) ------------------------------------ #
+    def aligned_phrases(self) -> Dict[str, Dict[str, List[str]]]:
+        """The phrases the feedback has taught, per concept (for persistence)."""
+        return {
+            kind: {key: list(words) for key, words in table.items()}
+            for kind, table in self._aligned.items()
+        }
+
+    def load_aligned_phrases(self, table: Dict[str, Dict[str, List[str]]]) -> int:
+        """Replay saved feedback (the learned state survives a restart)."""
+        count = 0
+        for kind, concepts in (table or {}).items():
+            for key, phrases in concepts.items():
+                if kind == "relation" and "|" in key:
+                    dimension, direction = key.split("|", 1)
+                    for phrase in phrases:
+                        self.align(phrase, (dimension, direction), kind="relation")
+                        count += 1
+                elif kind == "direction":
+                    for phrase in phrases:
+                        self.align_direction(phrase, key)
+                        count += 1
+        return count
+
     def align(self, phrase: str, concept: Tuple[str, str], kind: str = "relation") -> float:
         """Move the concept's prototype toward *phrase* (one feedback step).
 
@@ -555,12 +580,21 @@ class RelationMatcher:
             return 0.0
         table = "relation" if kind == "relation" else "dimension"
         key = f"{concept[0]}|{concept[1]}" if table == "relation" else str(concept)
-        proto = self._prototypes.get(table, {}).get(key)
-        if proto is None:
-            return 0.0
         vec = _unit(_encode(phrase))
         if vec.size == 0:
             return 0.0
+        proto = self._prototypes.get(table, {}).get(key)
+        if proto is None:
+            if table == "relation" and concept[0] == ANY_DIMENSION:
+                # A generic relation word ("exceeds") has no dimension of its
+                # own: the question supplies it. The concept is created by its
+                # first teaching example instead of refusing to learn it.
+                self._seeds.setdefault(table, {})[key] = []
+                self._seed_map.setdefault(table, {})[key] = []
+                self._prototypes.setdefault(table, {})[key] = vec
+                proto = vec
+            else:
+                return 0.0
         before = _similarity(vec, proto)
         updated = _unit(proto * (1.0 - self._alignment_rate) + vec * self._alignment_rate)
         self._prototypes[table][key] = updated
@@ -570,6 +604,7 @@ class RelationMatcher:
         seeds = self._seeds.get(table, {}).get(key)
         if seeds is not None and len(seeds) < _MAX_ALIGNED_SEEDS:
             seeds.append(vec)
+            self._aligned.setdefault(table, {}).setdefault(key, []).append(phrase)
         return _similarity(vec, updated) - before
 
     def align_direction(self, phrase: str, direction: str) -> float:
@@ -583,6 +618,7 @@ class RelationMatcher:
         before = _similarity(vec, proto)
         updated = _unit(proto * (1.0 - self._alignment_rate) + vec * self._alignment_rate)
         self._prototypes["direction"][direction] = updated
+        self._aligned.setdefault("direction", {}).setdefault(direction, []).append(phrase)
         return _similarity(vec, updated) - before
 
     def stats(self) -> Dict[str, int]:
@@ -745,7 +781,9 @@ _ARTICLES = ("the", "a", "an")
 # relation word ("A outranks B"), a preposition means the phrase is part of
 # a noun phrase ("the smartest student in the class").
 # ("to" is not here: "superior to X" is a comparison, not a noun phrase.)
-_PREPOSITIONS = ("in", "at", "on", "by", "with", "from", "of", "for", "into")
+# "by" is not here: "A is exceeded by B" is a passive comparison, the
+# preposition belongs to the relation, not to a noun phrase.
+_PREPOSITIONS = ("in", "at", "on", "with", "from", "of", "for", "into")
 
 
 def _trim_entity(words: List[str]) -> str:
@@ -920,6 +958,10 @@ class NeuralBridge:
         if not scored:
             return None
         concept, score = scored[0]
+        if concept[0] == ANY_DIMENSION:
+            # The word carries the direction, the question carries the
+            # dimension ("X exceeds Y ... who is the oldest?").
+            return ((dimension or ANY_DIMENSION, concept[1]), score)
         if dimension:
             for candidate, candidate_score in scored:
                 if candidate[0] == dimension:
@@ -937,7 +979,11 @@ class NeuralBridge:
             tokens = _tokens(clause)
             if len(tokens) < 3:
                 continue
-            best = self._than_anchored(tokens, dimension) or self._window_scan(tokens, dimension)
+            best = (
+                self._than_anchored(tokens, dimension)
+                or self._as_anchored(tokens, dimension)
+                or self._window_scan(tokens, dimension)
+            )
             if best is None:
                 continue
             _score, lo, hi, phrase = best
@@ -1002,6 +1048,50 @@ class NeuralBridge:
             return None
         return best
 
+    def _as_anchored(
+        self, tokens: List[str], dimension: Optional[str] = None
+    ) -> Optional[Tuple[float, int, int, str]]:
+        """The relation of the "not as <adjective> as" shape.
+
+        This shape has no "than", so the adjective sits between two "as"
+        markers. The adjective is the *base* form ("old", not "older"), so it
+        is read in the dimension the question names; the negation (handled by
+        the caller) flips the direction. Without a negation or a comparative
+        marker the shape is an equality, not a comparison.
+        """
+        markers = [i for i, token in enumerate(tokens) if token.lower() == "as"]
+        if len(markers) < 2:
+            return None
+        best: Optional[Tuple[float, int, int, str]] = None
+        for first, second in zip(markers, markers[1:]):
+            lo, hi, phrase = _trim(tokens, first + 1, second)
+            if not phrase or hi <= lo:
+                continue
+            negated = any(w.lower() in _NEGATIONS for w in tokens[:first])
+            comparative = any(w.lower() in _COMPARATIVE_MARKERS for w in tokens[lo:hi])
+            if not negated and not comparative:
+                # "A is as tall as B" states equality, not a chain link.
+                continue
+            match = self._classify_relation(phrase, dimension)
+            if match is None:
+                continue
+            concept, score = match
+            if dimension and concept[0] != dimension:
+                # The base adjective has no direction of its own; it is only
+                # readable in the dimension the question asks about.
+                continue
+            if not phrase.isascii() and len(phrase) == 1:
+                continue
+            if best is None or score > best[0]:
+                subject = _entity_before(tokens, first)
+                obj = _entity_after(tokens, second + 1)
+                if not subject or not obj:
+                    continue
+                if self._has_superlative_entity(subject, obj):
+                    continue
+                best = (score, lo, hi, phrase)
+        return best
+
     def _window_scan(
         self, tokens: List[str], dimension: Optional[str] = None
     ) -> Optional[Tuple[float, int, int, str]]:
@@ -1029,6 +1119,17 @@ class NeuralBridge:
                 if self.matcher.is_superlative_word(phrase):
                     # The question's own superlative is not a comparison.
                     continue
+                if hi < len(tokens) and tokens[hi].lower() == "by":
+                    # Passive voice: "A is exceeded by B". The bare verb
+                    # ("exceeded") sits between its active and passive
+                    # meanings; the "by" disambiguates it and belongs to the
+                    # relation, so the phrase keeps it.
+                    passive = f"{phrase} by"
+                    passive_match = self._classify_relation(passive, dimension)
+                    if passive_match is not None and passive_match[1] > match[1]:
+                        match = passive_match
+                        phrase = passive
+                        hi += 1
                 if best is None or match[1] > best[0]:
                     # A relation word always has an entity on both sides:
                     # the subject before it and the object after it.
@@ -1279,10 +1380,23 @@ _BRIDGE: Optional[NeuralBridge] = None
 
 
 def get_neural_bridge() -> NeuralBridge:
-    """The process-wide bridge (the aligned prototypes must persist)."""
+    """The process-wide bridge, taught from the committed curriculum.
+
+    ``NeuralBridge()`` stays raw on purpose: the probes need the *untaught*
+    layer to measure what teaching adds. The production singleton is the
+    taught one, so the measured number and the shipped behaviour are the
+    same thing.
+    """
     global _BRIDGE
     if _BRIDGE is None:
-        _BRIDGE = NeuralBridge()
+        bridge = NeuralBridge()
+        try:
+            from ai.reasoning.paraphrase_curriculum import apply_curriculum
+
+            apply_curriculum(bridge)
+        except Exception:  # a missing/invalid curriculum must not break answering
+            logger.warning("paraphrase curriculum not applied", exc_info=True)
+        _BRIDGE = bridge
     return _BRIDGE
 
 

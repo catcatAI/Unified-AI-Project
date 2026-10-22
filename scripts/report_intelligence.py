@@ -22,7 +22,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
 import subprocess
 import sys
 from pathlib import Path
@@ -112,9 +111,9 @@ def main() -> int:
 
     from ai.meta.intelligence import (
         DIMENSIONS,
-        Integrity,
         LADDER_NAMESPACES,
         MIN_NEURAL_SHARE,
+        Integrity,
         composite,
     )
 
@@ -154,24 +153,27 @@ def main() -> int:
     if tools is not None:
         scores["tools"] = tools / 100.0
 
-    # 2. The pure-neural reasoning probe (L1's key metric).
-    unseen_path = REPORT_DIR / "reasoning_unseen.json"
-    if not args.from_cache:
-        result = subprocess.run(
-            [sys.executable, "scripts/probe_reasoning_unseen.py"],
-            cwd=str(REPO_ROOT),
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        REPORT_DIR.mkdir(parents=True, exist_ok=True)
-        unseen_path.write_text(
-            json.dumps({"stdout": result.stdout}, ensure_ascii=False), encoding="utf-8"
-        )
-    unseen = _load(unseen_path) or {}
-    neural = re.search(r"純神經 semantic_qa[^:]*:\s*(\d+)/100", unseen.get("stdout", ""))
-    if neural:
-        scores["paraphrase"] = int(neural.group(1)) / 100.0
+    # 2. The paraphrase probe (L1's key metric): the production path on a
+    #    frozen benchmark of unseen phrasings, plus the strict diagnostic.
+    if args.from_cache:
+        paraphrase = _load(REPORT_DIR / "paraphrase.json")
+    else:
+        paraphrase = _load(_run([sys.executable, "scripts/probe_paraphrase.py"], "paraphrase"))
+    diagnostics: Dict[str, float] = {}
+    if paraphrase:
+        value = paraphrase.get("score")
+        if isinstance(value, (int, float)):
+            scores["paraphrase"] = float(value)
+        applied = paraphrase.get("application")
+        if isinstance(applied, (int, float)):
+            diagnostics["改述（教過詞、新句子）"] = float(applied)
+        dev_ood = ((paraphrase.get("splits") or {}).get("unseen_surfaces") or {}).get("system")
+        if isinstance(dev_ood, (int, float)):
+            diagnostics["改述（沒教過的詞，開發診斷）"] = float(dev_ood)
+        probe_integrity = paraphrase.get("integrity") or {}
+        if probe_integrity.get("problems"):
+            integrity.non_vacuous = False
+            integrity.problems.extend(probe_integrity.get("problems") or [])
 
     # 3. The native dialogue probe (dialogue / boundary + the source share).
     if args.from_cache:
@@ -261,6 +263,11 @@ def main() -> int:
                 "學到的模型確實承擔了一部分回答"
             )
         print(f"  → {source_verdict}")
+    if diagnostics:
+        print("\n診斷（不計入總分，但必須跟分數一起看）")
+        for label, value in diagnostics.items():
+            print(f"  {label:36} {value:.0%}")
+
     if gaps:
         print("\n知識缺口（不計入總分——是覆蓋率，不是能力）")
         for name, rate in gaps.items():
@@ -310,6 +317,7 @@ def main() -> int:
     payload = {
         "scores": scores,
         "thresholds": thresholds,
+        "diagnostics": diagnostics,
         "sources": sources,
         "source_verdict": source_verdict,
         "gaps": gaps,
