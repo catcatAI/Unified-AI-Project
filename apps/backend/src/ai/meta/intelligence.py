@@ -24,6 +24,19 @@
 
 **智能總分** = 六個能力維度的平均（0–10），**前提是誠實度全過**；來源分布
 另外報告（不乘進總分——能力分本來就來自分層的量測）。
+
+**及格線從外部基準算出來，不是自己定**（避免自問自答）。每條線都掛一個公開
+基準與一條統一規則：
+
+| 規則 | 內容 |
+| --- | --- |
+| R1 隨機地板 | 及格 ≥ **隨機基線 + 20 個百分點**（MMLU 論文用「比隨機高近 20pp」描述 GPT-3 的顯著進步） |
+| R2 人類相對 | 及格 ≥ **0.5 × 人類上限**（該基準若有公布） |
+| R3 無人類基線 | 及格 = **0.7 × 已發表強基線／SOTA** |
+
+及格線 = 對該題型適用的規則取**大者**。完整推導與引用見
+`docs/06-project-management/INTELLIGENCE_PASS_CRITERIA.md`；
+`check_intelligence_definition.py` 會重算，任何人手改門檻都会被擋下。
 """
 
 from __future__ import annotations
@@ -56,6 +69,74 @@ SCORE_TYPES: Tuple[str, ...] = (
 
 
 # --------------------------------------------------------------------------- #
+# The external anchors (the pass lines are derived, never hand-written)
+# --------------------------------------------------------------------------- #
+CHANCE_MARGIN = 0.20
+HUMAN_FRACTION = 0.50
+BASELINE_FRACTION = 0.70
+
+
+@dataclass(frozen=True)
+class Anchor:
+    """A published benchmark the pass line is derived from.
+
+    ``protocol`` says how close our internal measurement is to that benchmark:
+    ``same`` = the actual benchmark, ``analogous`` = the same task family on
+    our own items (the number is comparable in kind, not in items).
+    """
+
+    benchmark: str
+    source: str
+    url: str
+    protocol: str
+    #: Chance level of the benchmark (0 when free-form).
+    chance: float = 0.0
+    #: Published human ceiling (experts), if any.
+    human_expert: Optional[float] = None
+    #: Published non-expert human baseline, if any.
+    human_nonexpert: Optional[float] = None
+    #: Published strong baseline / SOTA, used when no human ceiling exists.
+    published_baseline: Optional[float] = None
+    #: One-line note about caveats (e.g. contamination).
+    caveat: str = ""
+
+
+def pass_line(anchor: Anchor) -> Tuple[float, str]:
+    """Derive the pass line from the external anchors (never hand-written).
+
+    Returns ``(value, derivation)`` where the derivation names the rule and the
+    numbers it used, so a reader can recompute it.
+    """
+    candidates: List[Tuple[float, str]] = []
+    if anchor.chance:
+        candidates.append(
+            (
+                anchor.chance + CHANCE_MARGIN,
+                f"R1 隨機 {anchor.chance:.1%} + {CHANCE_MARGIN:.0%}pp = "
+                f"{(anchor.chance + CHANCE_MARGIN):.1%}",
+            )
+        )
+    if anchor.human_expert is not None:
+        candidates.append(
+            (
+                HUMAN_FRACTION * anchor.human_expert,
+                f"R2 {HUMAN_FRACTION:.0%} × 人類上限 {anchor.human_expert:.1%} = "
+                f"{(HUMAN_FRACTION * anchor.human_expert):.1%}",
+            )
+        )
+    if candidates:
+        value, derivation = max(candidates, key=lambda item: item[0])
+        return round(value, 4), derivation
+    if anchor.published_baseline is not None:
+        return (
+            round(BASELINE_FRACTION * anchor.published_baseline, 4),
+            f"R3 {BASELINE_FRACTION:.0%} × 已發表基線 {anchor.published_baseline:.1%} = "
+            f"{(BASELINE_FRACTION * anchor.published_baseline):.1%}",
+        )
+    raise ValueError(f"{anchor.benchmark}: no chance, human ceiling or baseline to derive from")
+
+
+# --------------------------------------------------------------------------- #
 # The capability dimensions
 # --------------------------------------------------------------------------- #
 @dataclass(frozen=True)
@@ -70,12 +151,21 @@ class Dimension:
     score_type: str
     #: The dimension's share of the composite (0 = not measured yet).
     weight: float = 0.0
-    #: The floor the dimension must reach to count as "measured".
-    threshold: float = 0.0
+    #: The external benchmark the pass line is derived from.
+    anchor: Optional[Anchor] = None
     #: What the dimension must show to be complete.
     exit_criterion: str = ""
     #: Why the dimension is hard / what its current blocker is.
     note: str = ""
+
+    @property
+    def threshold(self) -> float:
+        """The pass line — **derived from the external anchor**, never hand-written."""
+        return pass_line(self.anchor)[0] if self.anchor else 0.0
+
+    @property
+    def threshold_derivation(self) -> str:
+        return pass_line(self.anchor)[1] if self.anchor else "（未掛外部基準）"
 
 
 DIMENSIONS: List[Dimension] = [
@@ -85,8 +175,17 @@ DIMENSIONS: List[Dimension] = [
         command="python scripts/run_benchmarks.py --backend native --suite knowledge,knowledge_mc --gate-native",
         score_type=SCORE_TYPE_VERIFIED,
         weight=1.0,
-        threshold=0.25,
-        exit_criterion="native knowledge ≥25% 且 knowledge_mc ≥90%（不含 RAG）",
+        anchor=Anchor(
+            benchmark="MMLU",
+            source="Hendrycks et al., 2020, arXiv:2009.03300",
+            url="https://arxiv.org/abs/2009.03300",
+            protocol="analogous",
+            chance=0.25,
+            human_expert=0.898,
+            human_nonexpert=0.345,
+            caveat="MMLU 為 4 選項；內部 knowledge 為自由作答、knowledge_mc 為 4 選項（協定相近但題目不重合）",
+        ),
+        exit_criterion="facts ≥ 45%（MMLU 規則：隨機 25% + 20pp）",
         note="確定性知識庫＋SNN 語意層；跨 AI 可比分數另計（不計入本表）",
     ),
     Dimension(
@@ -95,8 +194,15 @@ DIMENSIONS: List[Dimension] = [
         command="python scripts/run_benchmarks.py --backend native --suite math --gate-native",
         score_type=SCORE_TYPE_VERIFIED,
         weight=1.0,
-        threshold=0.75,
-        exit_criterion="native math ≥75%（確定性引擎）",
+        anchor=Anchor(
+            benchmark="GSM8K",
+            source="Cobbe et al., 2021（arXiv:2110.14168）；GPT-4 TR 2023 Table 2",
+            url="https://arxiv.org/abs/2110.14168",
+            protocol="analogous",
+            published_baseline=0.873,
+            caveat="87.3% 為 Chinchilla+SFT+ORM-RL 微調後 SOTA；GPT-4 92.0% 含訓練集污染註記 → 不採信為上限",
+        ),
+        exit_criterion="math ≥ 61%（無人類基線 → 0.7 × 已發表強基線 87.3%）",
         note="確定性引擎的正確率；不是神經的泛化",
     ),
     Dimension(
@@ -105,8 +211,17 @@ DIMENSIONS: List[Dimension] = [
         command="python scripts/probe_reasoning_unseen.py",
         score_type=SCORE_TYPE_ACTUAL,
         weight=1.0,
-        threshold=0.40,
-        exit_criterion="純神經（SNN-only）改述／CJK 召回 ≥40%；橋接可補足但要分開報",
+        anchor=Anchor(
+            benchmark="PAWS",
+            source="Zhang et al., 2019, NAACL（aclanthology.org/N19-1131）",
+            url="https://aclanthology.org/N19-1131/",
+            protocol="analogous",
+            chance=0.50,
+            human_expert=0.920,
+            published_baseline=0.85,
+            caveat="PAWS 是成對改述判定（人類一致度 QQP 92.0%／Wiki 94.7%）；內部探針是改述問答正確率（同為「看穿改述」，題型不同）",
+        ),
+        exit_criterion="paraphrase ≥ 70%（PAWS 規則：二元隨機 50% + 20pp）",
         note="階梯 L1 的關鍵度量；目前純神經 0%＝這一級還沒到",
     ),
     Dimension(
@@ -115,8 +230,15 @@ DIMENSIONS: List[Dimension] = [
         command="python scripts/probe_native_dialogue.py",
         score_type=SCORE_TYPE_ACTUAL,
         weight=1.0,
-        threshold=0.60,
-        exit_criterion="純本地對話：人話標準 ≥60% 且學習效應 ≥0.20 且神經層佔比 ≥20%",
+        anchor=Anchor(
+            benchmark="LoCoMo",
+            source="Maharana et al., ACL 2024（aclanthology.org/2024.acl-long.747）",
+            url="https://aclanthology.org/2024.acl-long.747/",
+            protocol="analogous",
+            human_expert=0.879,
+            caveat="LoCoMo 人類 87.9 為長對話 QA 的 F1；內部是人話標準通過率（同為多輪對話能力，計分方式不同）",
+        ),
+        exit_criterion="dialogue ≥ 44%（LoCoMo 規則：0.5 × 人類 87.9%＝44.0%，高於隨機地板 20%）",
         note="只留專案自己的基模（不接雲端金鑰／本地 LLM）",
     ),
     Dimension(
@@ -125,8 +247,17 @@ DIMENSIONS: List[Dimension] = [
         command="python scripts/probe_native_dialogue.py",
         score_type=SCORE_TYPE_ACTUAL,
         weight=1.0,
-        threshold=0.30,
-        exit_criterion="帶邊界條件的題（斷言）通過率 ≥30%：要帶條件＋例外，不只是近似",
+        anchor=Anchor(
+            benchmark="FOLIO",
+            source="Han et al., EMNLP 2024（aclanthology.org/2024.emnlp-main.1229）",
+            url="https://aclanthology.org/2024.emnlp-main.1229/",
+            protocol="analogous",
+            chance=1.0 / 3.0,
+            human_expert=0.9598,
+            human_nonexpert=0.6182,
+            caveat="FOLIO 為三值（真／假／未知）一階邏輯推理；內部是「事實＋條件＋例外」的斷言題（同為例外推理）",
+        ),
+        exit_criterion="boundary ≥ 53%（FOLIO 規則：隨機 33.3% + 20pp）",
         note="題庫覆蓋率＝知識缺口；機制（斷言推理）另計",
     ),
     Dimension(
@@ -135,9 +266,16 @@ DIMENSIONS: List[Dimension] = [
         command="python scripts/run_benchmarks.py --backend native --suite code,routing --gate-native",
         score_type=SCORE_TYPE_VERIFIED,
         weight=1.0,
-        threshold=0.85,
-        exit_criterion="native code＋routing 皆 ≥85%（工具選擇與執行）",
-        note="code＝沙箱執行程式、routing＝工具/路徑選擇；取兩者最弱者",
+        anchor=Anchor(
+            benchmark="BFCL V4",
+            source="Patil et al., ICML 2025（gorilla.cs.berkeley.edu/leaderboard，2026-10-22）",
+            url="https://gorilla.cs.berkeley.edu/leaderboard",
+            protocol="analogous",
+            published_baseline=0.775,
+            caveat="BFCL Overall SOTA 77.5%（Claude Opus 4.5, 2026-10-22）；內部為 code（沙箱執行）與 routing（工具/路徑選擇）兩套小型測試",
+        ),
+        exit_criterion="tools ≥ 54%（無人類基線 → 0.7 × SOTA 77.5%）",
+        note="取 code 與 routing 的最弱者（工具要選對也要執行對）",
     ),
 ]
 

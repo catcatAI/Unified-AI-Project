@@ -15,6 +15,28 @@ and this project adheres to
 
 ### Added
 
+- **智能的及格線改由公開基準推導（不再自己訂）**（2026-10-22）：「門檻自己訂」
+  等於自問自答——先把線調到剛好能過，再宣稱達標。改法：
+  ① `ai/meta/intelligence.py` 新增 `Anchor`（benchmark／source／url／protocol／
+  chance／human_expert／published_baseline）與 `pass_line()`，三條統一規則
+  **R1 隨機 + 20 個百分點**（MMLU 論文用此描述 GPT-3 的顯著進步）、
+  **R2 0.5 × 人類上限**、**R3 0.7 × 已發表強基線**，取大者；
+  `Dimension.threshold` 由手填欄位改成**由 anchor 算出的 property**，手改不可能
+  通過門禁。
+  ② 六維度各掛一個外部基準：facts←MMLU（隨機 25%、專家 89.8%）、math←GSM8K
+  （強基線 87.3%）、paraphrase←PAWS（隨機 50%、人類一致度 92.0%）、
+  dialogue←LoCoMo（人類 87.9）、boundary←FOLIO（隨機 33.3%、專家 96.0%）、
+  tools←BFCL V4（SOTA 77.5%）。新及格線 45／61.1／70／44／53.3／54.2%，
+  實測 **3 過 3 不過**（facts 20%、paraphrase 0%、tools 0% 未達）——比原本
+  自訂的 25／75／40／60／30／85% 誠實得多。
+  ③ 新文件 `docs/06-project-management/INTELLIGENCE_PASS_CRITERIA.md`：逐條列
+  引用、推導、本專案現值與判定，並明寫**協定等價性警告**——內部量測是「同題型、
+  自己出題」（`protocol="analogous"`），及格線是**可比性下限**，不是「在 MMLU
+  上拿 45%」。
+  ④ 門禁加嚴：每個維度必須有 anchor＋引用 URL＋推導，`protocol` 只能是
+  `same`／`analogous`，且文件裡的及格線必須等於 `pass_line()` 重算值（文件與
+  程式不得漂移）。定義合約測試 25→32 條。
+
 - **統一智能定義：一個定義、一個數字、一個地方**（2026-10-22）：專案原本有
   **十一套**自稱 intelligence 的評分系統（能力階梯、`INTELLIGENCE_ASSESSMENT`
   的 ×10 公式、`AI_SUBSTRATE_ASSESSMENT` 的 4.3/10 加權、人話 rubric、

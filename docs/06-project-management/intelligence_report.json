@@ -7,6 +7,74 @@
     "dialogue": 0.7568666666666667,
     "boundary": 0.8889
   },
+  "thresholds": {
+    "facts": {
+      "pass_line": 0.45,
+      "derivation": "R1 隨機 25.0% + 20%pp = 45.0%",
+      "anchor": {
+        "benchmark": "MMLU",
+        "source": "Hendrycks et al., 2020, arXiv:2009.03300",
+        "url": "https://arxiv.org/abs/2009.03300",
+        "protocol": "analogous"
+      },
+      "verdict": "fail"
+    },
+    "math": {
+      "pass_line": 0.6111,
+      "derivation": "R3 70% × 已發表基線 87.3% = 61.1%",
+      "anchor": {
+        "benchmark": "GSM8K",
+        "source": "Cobbe et al., 2021（arXiv:2110.14168）；GPT-4 TR 2023 Table 2",
+        "url": "https://arxiv.org/abs/2110.14168",
+        "protocol": "analogous"
+      },
+      "verdict": "pass"
+    },
+    "paraphrase": {
+      "pass_line": 0.7,
+      "derivation": "R1 隨機 50.0% + 20%pp = 70.0%",
+      "anchor": {
+        "benchmark": "PAWS",
+        "source": "Zhang et al., 2019, NAACL（aclanthology.org/N19-1131）",
+        "url": "https://aclanthology.org/N19-1131/",
+        "protocol": "analogous"
+      },
+      "verdict": "fail"
+    },
+    "dialogue": {
+      "pass_line": 0.4395,
+      "derivation": "R2 50% × 人類上限 87.9% = 44.0%",
+      "anchor": {
+        "benchmark": "LoCoMo",
+        "source": "Maharana et al., ACL 2024（aclanthology.org/2024.acl-long.747）",
+        "url": "https://aclanthology.org/2024.acl-long.747/",
+        "protocol": "analogous"
+      },
+      "verdict": "pass"
+    },
+    "boundary": {
+      "pass_line": 0.5333,
+      "derivation": "R1 隨機 33.3% + 20%pp = 53.3%",
+      "anchor": {
+        "benchmark": "FOLIO",
+        "source": "Han et al., EMNLP 2024（aclanthology.org/2024.emnlp-main.1229）",
+        "url": "https://aclanthology.org/2024.emnlp-main.1229/",
+        "protocol": "analogous"
+      },
+      "verdict": "pass"
+    },
+    "tools": {
+      "pass_line": 0.5425,
+      "derivation": "R3 70% × 已發表基線 77.5% = 54.2%",
+      "anchor": {
+        "benchmark": "BFCL V4",
+        "source": "Patil et al., ICML 2025（gorilla.cs.berkeley.edu/leaderboard，2026-10-22）",
+        "url": "https://gorilla.cs.berkeley.edu/leaderboard",
+        "protocol": "analogous"
+      },
+      "verdict": "fail"
+    }
+  },
   "sources": {
     "deterministic": 405,
     "neural": 249,
@@ -38,12 +106,12 @@
     "band_summary": "多輪對話不跑題，記憶／推理／多模態能串起來當助手用",
     "attained_level": "L0",
     "level_missing": [
-      "paraphrase 0.0/10 < 4.0/10"
+      "paraphrase 0.0/10 < 7.0/10"
     ],
     "failed_dimensions": [
-      "facts 2.0/10 < 2.5/10",
-      "paraphrase 0.0/10 < 4.0/10",
-      "tools 0.0/10 < 8.5/10"
+      "facts 2.0/10 < 4.5/10",
+      "paraphrase 0.0/10 < 7.0/10",
+      "tools 0.0/10 < 5.4/10"
     ],
     "counted": [
       [

@@ -229,13 +229,20 @@ def main() -> int:
     result = composite(scores, integrity)
 
     print("\n能力維度（六型分數型別；只有驗證／實際計入）")
+    print("  （及格線由外部基準算出，見 docs/06-project-management/INTELLIGENCE_PASS_CRITERIA.md）")
     for dimension in DIMENSIONS:
         value = scores.get(dimension.id)
-        shown = f"{value * 10:.1f}/10" if value is not None else "未量"
+        threshold = dimension.threshold
+        if value is None:
+            verdict = "未量"
+        else:
+            verdict = "PASS" if value >= threshold else "FAIL"
+        shown = f"{value * 10:.1f}/10" if value is not None else "  未量"
         print(
-            f"  {dimension.id:10} {dimension.name:24} {shown:>8}  [{dimension.score_type}]"
-            f"  門檻 {dimension.threshold * 10:.0f}/10"
+            f"  {dimension.id:10} {dimension.name:22} {shown:>8}  及格 {threshold:.0%}"
+            f"  [{dimension.score_type}]  {verdict}"
         )
+        print(f"             ↳ {dimension.threshold_derivation}")
     source_verdict = ""
     if sources:
         total = sum(sources.values()) or 1
@@ -275,8 +282,34 @@ def main() -> int:
     for namespace, meaning in LADDER_NAMESPACES.items():
         print(f"  {namespace:20} {meaning}")
 
+    # The pass lines travel with the snapshot, so a reader can recompute them
+    # without opening the code (and can see they are derived, not hand-written).
+    thresholds = {
+        dimension.id: {
+            "pass_line": dimension.threshold,
+            "derivation": dimension.threshold_derivation,
+            "anchor": (
+                {
+                    "benchmark": dimension.anchor.benchmark,
+                    "source": dimension.anchor.source,
+                    "url": dimension.anchor.url,
+                    "protocol": dimension.anchor.protocol,
+                }
+                if dimension.anchor
+                else None
+            ),
+            "verdict": (
+                "unmeasured"
+                if scores.get(dimension.id) is None
+                else ("pass" if scores[dimension.id] >= dimension.threshold else "fail")
+            ),
+        }
+        for dimension in DIMENSIONS
+    }
+
     payload = {
         "scores": scores,
+        "thresholds": thresholds,
         "sources": sources,
         "source_verdict": source_verdict,
         "gaps": gaps,

@@ -1007,6 +1007,25 @@ collected — 0 errors**).
 > 讓量測失效（現對齊預算檔 1300，且截斷會讓有效性判失敗）；報告改讀
 > 預算檔的上限、bench 的 `--out` 是目錄（取最新檔）而非檔案。
 
+> ✅ **NOTE (Updated 2026-10-22, 及格線外接)**: **§X #268**: 智能的及格線改成
+> **由公開基準推導**，因為「門檻自己訂」＝自問自答（先把線調到剛好能過，再宣稱
+> 達標）。`ai/meta/intelligence.py` 新增 `Anchor`（benchmark／source／url／
+> protocol／chance／human_expert／published_baseline）與 `pass_line()`；三條
+> 統一規則：**R1 隨機 +20 個百分點**（MMLU 論文用此描述 GPT-3 的顯著進步）、
+> **R2 0.5 × 人類上限**、**R3 0.7 × 已發表強基線**（無人類基線時）；取大者。
+> 六維度各掛一個外部基準：facts←MMLU、math←GSM8K、paraphrase←PAWS、
+> dialogue←LoCoMo、boundary←FOLIO、tools←BFCL V4。`Dimension.threshold` 改成
+> **property**（由 `pass_line` 算出，手改不可能通過門禁）；門禁新增「必須有
+> anchor＋URL＋推導」「protocol 只能是 same/analogous」「文件裡的及格線必須等於
+> 重算值」。新及格線：45／61／70／44／53／54%，實測 3 過 3 不過
+> （facts 20%、paraphrase 0%、tools 0% 未達）——**這比原本自訂的
+> 25／75／40／60／30／85% 誠實得多**（原本 math／dialogue 過得太寬、
+> facts／boundary 被低估）。總分 4.41/10 不變（門檻不影響平均），達成階梯仍
+> L0。新文件 `docs/06-project-management/INTELLIGENCE_PASS_CRITERIA.md`
+> 逐條列引用與**協定等價性警告**：內部量測是「同題型、自己出題」
+> （`analogous`），及格線是**可比性下限**，不是「在 MMLU 上拿 45%」。
+> 32 條定義合約測試全過；`check_intelligence_definition` 0 violations。
+
 > ✅ **NOTE (Updated 2026-10-21, 純本地對話 + 門禁登記簿)**: **純本地基模的對話
 > 量測**完成。新增 `scripts/probe_native_dialogue.py`（不註冊任何外部後端：雲端
 > 金鑰與本地 ollama/llama.cpp 都不啟用，只留專案自己的引擎，啟動時斷言）＋
@@ -1233,6 +1252,7 @@ tests/
 | Native-only dialogue measurement / budget gate | `python3 scripts/probe_native_dialogue.py` / `python3 scripts/native_dialogue_budget_gate.py` |
 | Unified intelligence score (the only one) | `python3 scripts/report_intelligence.py` |
 | Unified intelligence definition gate | `python3 scripts/check_intelligence_definition.py` |
+| Where the pass lines come from (external benchmarks, never self-set) | `docs/06-project-management/INTELLIGENCE_PASS_CRITERIA.md` |
 
 > 🔎 **單一檢查入口**：所有「非編譯器」檢查集中在
 > `scripts/check_fact_gates.py`（十一域：edge/audit/chat/cluster/config/version/docs/modules/definitions/gates/hygiene）——一個工具跑一次＝全部檢查都被檢視，避免多工具「不打開就被掠過」。定義稽核 MD 報告：`python3 scripts/check_fact_gates.py --write-definitions-audit`。

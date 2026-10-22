@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
 from pathlib import Path
 
@@ -140,7 +141,7 @@ def test_the_average_band_and_the_attained_level_are_different_things(definition
 
 def test_attained_level_reaches_l2_when_the_key_dimensions_pass(definition) -> None:
     level, missing = definition.attained_level(
-        {"paraphrase": 0.5, "dialogue": 0.7, "boundary": 0.4}
+        {"paraphrase": 0.75, "dialogue": 0.75, "boundary": 0.60}
     )
     assert level == "L2"
     # ``missing`` belongs to the first level NOT reached (here L3: facts/math/tools).
@@ -148,7 +149,7 @@ def test_attained_level_reaches_l2_when_the_key_dimensions_pass(definition) -> N
 
 
 def test_attained_level_stops_at_the_first_unmet_requirement(definition) -> None:
-    level, missing = definition.attained_level({"paraphrase": 0.5, "dialogue": 0.1})
+    level, missing = definition.attained_level({"paraphrase": 0.75, "dialogue": 0.1})
     assert level == "L1"
     assert any("dialogue" in item for item in missing)
 
@@ -157,6 +158,75 @@ def test_failed_dimensions_are_reported_not_hidden(definition) -> None:
     result = definition.composite({"math": 0.8, "facts": 0.01}, definition.Integrity())
     assert result["status"] == "measured"
     assert any(item.startswith("facts") for item in result["failed_dimensions"])
+
+
+# --------------------------------------------------------------------------- #
+# The pass lines come from external benchmarks (never hand-written)
+# --------------------------------------------------------------------------- #
+def test_every_dimension_has_an_external_anchor(definition) -> None:
+    for dimension in definition.DIMENSIONS:
+        assert dimension.anchor is not None, f"{dimension.id}: no external anchor"
+        assert dimension.anchor.benchmark
+        assert dimension.anchor.source
+        assert dimension.anchor.url.startswith("http")
+        assert dimension.anchor.protocol in ("same", "analogous")
+
+
+def test_the_pass_line_is_derived_not_typed(definition) -> None:
+    """A hand-written threshold is the self-referential failure mode."""
+    for dimension in definition.DIMENSIONS:
+        expected, derivation = definition.pass_line(dimension.anchor)
+        assert dimension.threshold == expected
+        assert derivation.startswith("R")
+
+
+def test_the_mmlu_rule_is_chance_plus_20_points(definition) -> None:
+    facts = definition.DIMENSION_BY_ID["facts"]
+    assert facts.threshold == pytest.approx(0.45, abs=1e-6)
+
+
+def test_the_folio_rule_is_chance_plus_20_points(definition) -> None:
+    boundary = definition.DIMENSION_BY_ID["boundary"]
+    assert boundary.threshold == pytest.approx(1.0 / 3.0 + 0.20, abs=1e-4)
+
+
+def test_a_human_relative_rule_uses_half_the_human_ceiling(definition) -> None:
+    dialogue = definition.DIMENSION_BY_ID["dialogue"]
+    # LoCoMo human 87.9% → 0.5 × 0.879 = 44.0% (above the 20% chance floor).
+    assert dialogue.threshold == pytest.approx(0.4395, abs=1e-4)
+
+
+def test_a_baseline_relative_rule_uses_seventy_percent(definition) -> None:
+    tools = definition.DIMENSION_BY_ID["tools"]
+    assert tools.threshold == pytest.approx(0.7 * 0.775, abs=1e-4)
+
+
+def test_a_dimension_without_anchors_cannot_have_a_pass_line(definition) -> None:
+    bare = definition.Dimension(
+        id="bare",
+        name="bare",
+        command="python scripts/report_intelligence.py",
+        score_type=definition.SCORE_TYPE_VERIFIED,
+        weight=1.0,
+    )
+    assert bare.threshold == 0.0
+    assert bare.threshold_derivation.startswith("（未掛")
+
+
+def test_the_committed_report_carries_the_derived_pass_lines(definition) -> None:
+    """The snapshot must show where each pass line came from (no silent drift)."""
+    repo_root = Path(__file__).resolve().parents[2]
+    report_path = repo_root / "docs" / "06-project-management" / "intelligence_report.json"
+    if not report_path.is_file():
+        pytest.skip("the measurement snapshot has not been generated yet")
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+    thresholds = payload.get("thresholds")
+    assert thresholds, "the report does not carry the pass lines"
+    for dimension in definition.DIMENSIONS:
+        entry = thresholds[dimension.id]
+        assert entry["pass_line"] == pytest.approx(dimension.threshold, abs=1e-9)
+        assert entry["anchor"]["benchmark"] == dimension.anchor.benchmark
+        assert entry["anchor"]["url"].startswith("http")
 
 
 # --------------------------------------------------------------------------- #

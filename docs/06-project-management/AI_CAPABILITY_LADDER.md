@@ -58,7 +58,10 @@
 
 > **統一總分（2026-10-22 實測）**：`python scripts/report_intelligence.py` →
 > **4.41/10（平均，落在 L2 帶）**，但**達成的階梯是 L0**（L1 的關鍵度量
-> 改述泛化 0/10）；未達門檻的維度：facts 2.0、paraphrase 0.0、tools 0.0。
+> 改述泛化 0%）。六個維度對**外部推導的及格線**是 3 過 3 不過：facts 20% <
+> 45%（MMLU 規則）、paraphrase 0% < 70%（PAWS 規則）、tools 0% < 54%
+> （BFCL 規則）；math／dialogue／boundary 過。及格線不是我訂的，是從公開基準
+> 算的（`INTELLIGENCE_PASS_CRITERIA.md`）。
 > 這是本文件 L0–L3 之外唯一該引用的「智能總分」——下面這張表的每一列是
 > **各閘的實測**，不是總分的成分（統一定義的六個維度見
 > `INTELLIGENCE_ASSESSMENT.md §0`）。

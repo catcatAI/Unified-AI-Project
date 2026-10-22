@@ -38,6 +38,7 @@ REPO = Path(__file__).resolve().parents[1]
 DEFINITION = REPO / "apps" / "backend" / "src" / "ai" / "meta" / "intelligence.py"
 REPORT = REPO / "docs" / "06-project-management" / "intelligence_report.json"
 CANONICAL_DOC = REPO / "docs" / "06-project-management" / "INTELLIGENCE_ASSESSMENT.md"
+PASS_CRITERIA_DOC = REPO / "docs" / "06-project-management" / "INTELLIGENCE_PASS_CRITERIA.md"
 
 EXPECTED_NAMESPACES = {"L0..L3", "Q0..Q4", "X0..X11", "R1..R3", "claimed..production"}
 
@@ -84,6 +85,41 @@ def check() -> List[str]:
             problems.append(f"{dimension.id}: the command has no script path")
         elif not (REPO / script).is_file():
             problems.append(f"{dimension.id}: the measurement script is missing: {script}")
+
+        # The pass line must come from an external anchor — a hand-written
+        # threshold would make the whole thing self-referential.
+        anchor = dimension.anchor
+        if anchor is None:
+            problems.append(
+                f"{dimension.id}: no external anchor — a pass line without a "
+                "published benchmark is self-referential"
+            )
+            continue
+        if not anchor.benchmark or not anchor.source:
+            problems.append(f"{dimension.id}: the anchor has no benchmark/source")
+        if not anchor.url.startswith("http"):
+            problems.append(f"{dimension.id}: the anchor citation has no URL")
+        if anchor.protocol not in ("same", "analogous"):
+            problems.append(
+                f"{dimension.id}: protocol {anchor.protocol!r} is unknown " "(same | analogous)"
+            )
+        if anchor.chance == 0 and anchor.human_expert is None and anchor.published_baseline is None:
+            problems.append(
+                f"{dimension.id}: the anchor has no chance/human/baseline value "
+                "to derive the pass line from"
+            )
+        try:
+            value, derivation = definition.pass_line(anchor)
+        except ValueError as exc:
+            problems.append(f"{dimension.id}: {exc}")
+            continue
+        if abs(dimension.threshold - value) > 1e-9:
+            problems.append(
+                f"{dimension.id}: the threshold {dimension.threshold} does not match "
+                f"pass_line() = {value} (the threshold must be derived, not typed)"
+            )
+        if not derivation:
+            problems.append(f"{dimension.id}: the derivation is empty")
     if counted == 0:
         problems.append("no dimension carries a verified/actual score (only readiness scores)")
 
@@ -172,6 +208,28 @@ def check() -> List[str]:
             )
         if "統一定義" not in text:
             problems.append("the canonical document has no 統一定義 section")
+
+    # 5. The pass-criteria document must agree with the computed thresholds.
+    if not PASS_CRITERIA_DOC.is_file():
+        problems.append(
+            f"the pass-criteria document is missing: {PASS_CRITERIA_DOC.relative_to(REPO)}"
+        )
+    else:
+        criteria = PASS_CRITERIA_DOC.read_text(encoding="utf-8")
+        for dimension in definition.DIMENSIONS:
+            if dimension.anchor is None:
+                continue
+            if dimension.anchor.benchmark not in criteria:
+                problems.append(
+                    f"{dimension.id}: the pass-criteria document does not name "
+                    f"its benchmark {dimension.anchor.benchmark!r}"
+                )
+            forms = {f"{dimension.threshold:.0%}", f"{dimension.threshold:.1%}"}
+            if not any(form in criteria for form in forms):
+                problems.append(
+                    f"{dimension.id}: the pass-criteria document is stale — it does not "
+                    f"contain the derived pass line {sorted(forms)}"
+                )
 
     return problems
 
