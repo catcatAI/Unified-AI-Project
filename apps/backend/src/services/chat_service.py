@@ -757,6 +757,87 @@ class ChatService:
         except Exception as e:
             logger.warning("Multimodal decode output failed (non-critical): %s", e, exc_info=True)
 
+    def _answering_engine(self):
+        """The engine that answers in native-only mode (the `unified` backend).
+
+        The chat-time learning used to target the ED3N／GARDEN engines, which
+        are **not** the model that answers (the unified engine is) — so the
+        dialogue taught a model nobody listened to, and "learning" was
+        disconnected from the answers. This is the model the learning has to
+        reach.
+        """
+        try:
+            llm = getattr(self, "_llm_service", None)
+            if llm is None:
+                from services.llm import router as _router
+
+                llm = getattr(_router, "_llm_service", None)
+            if llm is None:
+                return None
+            backends = getattr(llm, "backends", {}) or {}
+            for backend in backends.values():
+                engine = getattr(backend, "_engine", None)
+                if engine is not None and hasattr(engine, "core"):
+                    return engine
+        except Exception as exc:
+            logger.debug("answering engine lookup failed: %s", exc)
+        return None
+
+    def _teach_answering_model(
+        self, user_message: str, response_text: str, response: Any = None
+    ) -> None:
+        """Teach the answering model from one exchange.
+
+        The unified engine holds the neural retrieval layer (the SLS gradient
+        SemanticQA) and the statistical core — both are in the answering
+        path, so a taught pair is retrievable **by the same engine that
+        answers**. The pairs accumulate (the SLS layer retrains from the whole
+        set), bounded so a long conversation cannot grow without limit.
+
+        **不教罐頭句**：把 AI 自己剛講的固定句當成「教材」，模型學到的只是那
+        句話（自我石化 ✗），不是對話裡學到的東西。只有真正有內容的回答
+        （事實、檢索結果）才值得教。
+        """
+        text = (response_text or "").strip()
+        if not text:
+            return
+        backend = str(getattr(response, "backend", "") or "").lower()
+        route = str(getattr(response, "route", "") or "").lower()
+        if "template" in backend or "reflex" in backend or "local-fallback" in backend:
+            # A canned line: teaching it back is fossilization.
+            return
+        if backend.startswith("memory") or "recall" in backend:
+            # A quote from the memory: teaching the quotes teaches the
+            # retrieval, and a wrong quote compounds (the next answer is
+            # learned from the wrong one).
+            return
+        engine = self._answering_engine()
+        if engine is None:
+            return
+        try:
+            qa = getattr(engine, "semantic_qa", None)
+            if qa is None:
+                from ai.unified_engine.semantic_qa import SemanticQA
+
+                qa = SemanticQA()
+                engine.semantic_qa = qa
+            pairs = getattr(engine, "_taught_pairs", None)
+            if not isinstance(pairs, list):
+                pairs = []
+                engine._taught_pairs = pairs
+            pairs.append((user_message, text))
+            if len(pairs) > 200:
+                del pairs[:-200]
+            # The SLS layer is **not** retrained here: its projection pairs the
+            # wrong questions ("豆腐…" ↔ "大卡…"), so the taught pairs are
+            # recalled by the encoder instead (the same contact the neural
+            # bridge uses) and the SLS keeps its trained facts.
+            core = getattr(engine, "core", None)
+            if core is not None and hasattr(core, "learn_batch"):
+                core.learn_batch([f"{user_message}\n{text}"])
+        except Exception as exc:
+            logger.debug("teaching the answering model failed: %s", exc)
+
     async def _process_learning(self, user_message: str, response, merged_context: dict) -> None:
         """統一經中層 LearningCoordinator 觸發學習（§5.5.2）。
 
@@ -789,6 +870,15 @@ class ChatService:
         except Exception as exc:
             logger.debug("Backbone unavailable, using inline learning trigger: %s", exc)
             backbone = None
+        # The model that answers must learn from the exchange (the neural
+        # retrieval + the statistical core), not only the legacy engines.
+        try:
+            response_text = str(getattr(response, "text", "") or "")
+            if response_text and _should_garden_learn(user_message, response):
+                self._teach_answering_model(user_message, response_text, response)
+        except Exception as exc:
+            logger.debug("answering-model teaching skipped: %s", exc)
+
         if backbone is not None:
             await backbone.trigger_learning(user_message, response, merged_context)
             return

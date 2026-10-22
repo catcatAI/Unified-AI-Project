@@ -212,7 +212,7 @@ features:
     claim: 全倉綠
     status: verified
     verify_command: pytest
-    evidence: 8,803 passed, 112 skipped, 0 failed（2026-10-22 測試數量同步批次全 testpaths 實測：tests/＋apps/backend/tests/＋apps/game-rpg/tests＋scripts）
+    evidence: 8,802 passed, 112 skipped, 0 failed（2026-10-22 測試數量同步批次全 testpaths 實測：tests/＋apps/backend/tests/＋apps/game-rpg/tests＋scripts）
     last_verified: "2026-10-22"
 
   - id: mypy-debt
@@ -383,7 +383,7 @@ features:
       規則：回答了問題／斷言正確或已標示條件／**有邊界條件時要指出例外**／內容
       有根據／不是回聲／不是亂碼）與 **≥1000 題的標準集**（`state` 帶邊界條件的題
       324 題、`multi` 多重事實 72 回合、`qa` 492 題、`dialogue` 166 回合——對話實例
-      也在裡面）。實測（純本地基模、標準集 1096 回合）：**人話標準通過率 62.6%**
+      也在裡面）。實測（純本地基模、標準集 1096 回合）：**人話標準通過率 62.1%**
       ——逐類：問答 95%、斷言題 89%（斷言庫 36 條）、對話 75%、多重事實 65%、
       **帶邊界條件的題 0%（0/324 全滅）**、QA 機器 18%、學習效應 +0.373。結論誠實：**純本地基模目前
       還不能算「會說人話」**——帶邊界/例外的題一題都答不來（多數是誠實棄權），

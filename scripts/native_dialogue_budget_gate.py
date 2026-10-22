@@ -62,6 +62,10 @@ CHECKS: Tuple[Tuple[str, str, str], ...] = (
     ("min", "state_pass_rate", "standard_set.by_kind.state.passed_ratio"),
     ("min", "multi_pass_rate", "standard_set.by_kind.multi.passed_ratio"),
     ("min", "claim_pass_rate", "standard_set.by_kind.claim.passed_ratio"),
+    # The first-class "is this intelligence or copied templates?" metric:
+    # the share of the answers produced by a *learned* model (the neural
+    # retrieval / the statistical core / the neural bridge).
+    ("min", "neural_share", "neural_share"),
 )
 
 

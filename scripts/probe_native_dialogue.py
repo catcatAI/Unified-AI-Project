@@ -52,6 +52,7 @@ sys.path.insert(0, str(REPO_ROOT / "apps" / "backend" / "src"))
 
 from ai.response.human_speech import (  # noqa: E402
     MULTI_FACT_SCENARIOS,
+    classify_source,
     StandardItem,
     build_standard_set,
     judge,
@@ -351,6 +352,7 @@ class Turn:
     kind: str = ""
     state: str = ""
     passed: bool = False
+    source: str = ""
 
 
 @dataclass
@@ -496,6 +498,7 @@ def score_turn(
     seconds: float,
     expected: Optional[str],
     previous: Sequence[Turn],
+    route: str = "",
 ) -> Turn:
     """Classify one answer (the shape classes + the human-speech rubric)."""
     question = item.message
@@ -605,6 +608,7 @@ def score_turn(
         kind=item.kind,
         state=str(verdict["state"]),
         passed=bool(verdict["passed"]),
+        source=classify_source(backend, route),
     )
 
 
@@ -1025,6 +1029,13 @@ async def main() -> int:
         },
         "progress": progress,
         "stability": stability,
+        "sources": {
+            source: sum(1 for t in first if t.source == source)
+            for source in sorted({t.source for t in first})
+        },
+        "neural_share": round(
+            sum(1 for t in first if t.source == "neural") / max(len(first), 1), 4
+        ),
         "standard_set": {
             "size": sum(len(u) for u in AGENT_UNITS),
             "pass_rate": round(sum(1 for t in first if t.passed) / max(len(first), 1), 4),
@@ -1100,6 +1111,12 @@ async def main() -> int:
         for item in consistency["disagreements"]:
             print(f"    - {item}")
 
+    sources = result.get("sources", {})
+    print(
+        "  回答來源："
+        + "｜".join(f"{k} {v}" for k, v in sources.items())
+        + f"　→ 神經層佔比 {result.get('neural_share', 0):.0%}"
+    )
     validity = result["validity"]
     if validity["valid"]:
         print(

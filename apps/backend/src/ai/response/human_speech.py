@@ -125,6 +125,55 @@ def is_ramble(text: str) -> bool:
     return len(_SENTENCE_END.findall(text or "")) >= 4
 
 
+# The answer sources — the *first-class* metric of "is this intelligence or
+# is it a copied template?". A template answer reads fine but it is not
+# learning; the neural share is the number that says whether the project
+# learned anything.
+SOURCE_TEMPLATE = "template"
+SOURCE_NEURAL = "neural"
+SOURCE_DETERMINISTIC = "deterministic"
+SOURCE_RETRIEVAL = "retrieval"
+SOURCE_OTHER = "other"
+
+# The neural layer: the unified engine (its neural retrieval + its statistical
+# core), the neuro blender, and the **neural bridge** — the bridge is the
+# encoder contacting the teacher's concepts, i.e. exactly the ladder's L1
+# ("能把未見過的問法對上已知概念"), so it counts as neural, not as a lookup.
+_NEURAL_BACKENDS = (
+    "unified",
+    "semantic",
+    "neuro-blender",
+    "neuro",
+    "snn",
+    "ed3n",
+    "garden",
+    "neural-bridge",
+)
+_TEMPLATE_BACKENDS = ("composed-template", "template", "local-fallback", "reflex")
+_DETERMINISTIC_BACKENDS = (
+    "deterministic-math",
+    "deterministic-reasoning",
+    "knowledge",
+    "math",
+    "claim-reasoning",
+    "memory-teaching",
+)
+
+
+def classify_source(backend: str, route: str = "") -> str:
+    """Which layer produced the answer."""
+    name = f"{backend or ''}|{route or ''}".lower()
+    if any(key in name for key in _TEMPLATE_BACKENDS):
+        return SOURCE_TEMPLATE
+    if any(key in name for key in _NEURAL_BACKENDS):
+        return SOURCE_NEURAL
+    if any(key in name for key in _DETERMINISTIC_BACKENDS):
+        return SOURCE_DETERMINISTIC
+    if "memory" in name:
+        return SOURCE_RETRIEVAL
+    return SOURCE_OTHER
+
+
 @dataclass
 class StandardItem:
     """One item of the standard set.

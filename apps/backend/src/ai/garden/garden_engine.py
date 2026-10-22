@@ -1019,6 +1019,13 @@ class GARDENEngine:
         if pair is None:
             return None
         in_tpl, out_tpl, in_vars, out_vars = pair
+        if not in_vars or not out_vars:
+            # A skeleton without slots is the *literal* sentence (Chinese has
+            # no whitespace tokens, so the whole question looks like one
+            # token). Learning that is not structure learning — it is the
+            # engine memorising the user's sentences and serving them back.
+            logger.debug("GARDEN: skipping a slot-less structure (nothing structural to learn)")
+            return None
 
         # slot_map: output-slot index -> input-slot index.  For the reversal
         # "Alice is taller than Bob -> Bob is shorter than Alice" this is

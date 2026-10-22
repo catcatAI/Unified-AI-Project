@@ -510,6 +510,14 @@ def MEMORY_ENHANCED():
     return is_memory_enhanced()
 
 
+# The similarity a neural retrieval must reach before it answers (the
+# trained facts and the taught pairs are both here).
+# The taught questions score ≈1.0; an unrelated question sits around
+# 0.7–0.8. The gate is set high on purpose: a wrong answer from the
+# neural layer is worse than a canned line.
+_NEURAL_RETRIEVAL_MIN_SIM = 0.95
+
+
 class AngelaLLMService:
     """
     Angela 的 LLM 服務 - 核心大腦
@@ -2760,7 +2768,16 @@ class AngelaLLMService:
     async def _tm_short_circuit_pre(
         self, user_message: str, context: Dict[str, Any], start_time: float
     ) -> Optional[LLMResponse]:
-        """Model Bus + user-fact recall short-circuit layers (None → continue)."""
+        """The neural retrieval first, then the Model Bus + the fact recall.
+
+        **為什麼神經層要排在模板前面**：模板是 L0（確定性＋反射＋字典，階梯
+        定義裡「會回罐頭」）；而 unified engine 的語意檢索層（SLS 梯度）與
+        統計核心是 L1／L2 的東西——它會**從對話裡學到的**。讓罐頭模板先答，
+        等於讓「被教過的話」永遠沒有機會浮出來，學習就只是裝飾。
+        """
+        neural = self._try_neural_retrieval(user_message, context)
+        if neural is not None:
+            return neural
         if hasattr(self, "model_bus") and self.model_bus:
             model_bus_result = await self._try_model_bus_match(user_message, context)
             if model_bus_result is not None:
@@ -3456,13 +3473,17 @@ class AngelaLLMService:
         )
         llm_response = await self._generate_with_llm(user_message, context)
 
-        if not llm_response.error:
-            _comp = composed_response.text.rstrip()
-            _llm = llm_response.text.lstrip()
+        _comp = composed_response.text.rstrip()
+        _llm = (llm_response.text or "").strip()
+        # Only append a *substantive* second half: an empty answer, the echo
+        # of the question, or a fragment would turn a good reply into noise
+        # ("the question + a stray clause").
+        _is_echo = bool(_llm) and _llm == (user_message or "").strip()
+        if not llm_response.error and _llm and not _is_echo and len(_llm) >= 4:
             _sep = "\n" if len(_comp) > 20 else " "
             hybrid_text = f"{_comp}{_sep}{_llm}"
         else:
-            hybrid_text = composed_response.text
+            hybrid_text = _comp
 
         response_time = (time.time() - start_time) * 1000
         self.stats["hybrid_responses"] += 1
@@ -3753,6 +3774,85 @@ class AngelaLLMService:
         if fresh and fresh[0][0] > 0:
             return fresh[0][1]
         return random.choice([c for _, c in fresh])
+
+    def _try_neural_retrieval(
+        self, user_message: str, context: Dict[str, Any]
+    ) -> Optional[LLMResponse]:
+        """The answering engine's own neural retrieval (the taught/trained facts).
+
+        This is the layer that makes the dialogue *learning* instead of
+        copying: a pair taught in this conversation is retrievable here.
+        """
+        try:
+            engine = None
+            for backend in (getattr(self, "backends", {}) or {}).values():
+                candidate = getattr(backend, "_engine", None)
+                if candidate is not None and hasattr(candidate, "core"):
+                    engine = candidate
+                    break
+            if engine is None:
+                return None
+            # Only the pairs **taught in this conversation** are trusted
+            # here. The checkpoint's trained facts are matched by the SLS
+            # projection, whose similarity is not trustworthy (it paired
+            # "自來水的硬度" with the calorie claim) — a wrong answer is
+            # worse than a canned line, so those stay in the engine's own
+            # path where the gate belongs.
+            pairs = getattr(engine, "_taught_pairs", None) or []
+            if not pairs:
+                return None
+            similarity, answer = self._closest_taught_pair(user_message, pairs)
+            if answer is None or similarity < _NEURAL_RETRIEVAL_MIN_SIM:
+                return None
+            return ChatResponse(
+                text=str(answer),
+                backend="semantic-qa",
+                model="unified-semantic-qa",
+                tokens_used=0,
+                confidence=float(similarity),
+                hit_score=float(similarity),
+                hit_source="neural",
+                route="NEURAL",
+                metadata={"neural": True, "similarity": float(similarity)},
+            )
+        except Exception as exc:
+            logger.debug("neural retrieval skipped: %s", exc)
+            return None
+
+    @staticmethod
+    def _closest_taught_pair(message: str, pairs: List[Any]) -> Tuple[float, Optional[str]]:
+        """The taught pair closest to the message (the encoder's cosine).
+
+        The same *contact* the neural bridge uses: the encoder puts the
+        message and the taught question in the same space, so a taught
+        exchange can be recalled by meaning, not by keyword.
+        """
+        try:
+            import numpy as np
+
+            from ai.unified_engine.semantic_qa import _features
+
+            query = np.asarray(_features(message or ""), dtype=np.float32)
+            query_norm = float(np.linalg.norm(query)) or 1.0
+            best_score = 0.0
+            best_answer: Optional[str] = None
+            for pair in pairs:
+                try:
+                    question, answer = pair[0], pair[1]
+                except (TypeError, IndexError):
+                    continue
+                vector = np.asarray(_features(str(question)), dtype=np.float32)
+                norm = float(np.linalg.norm(vector)) or 1.0
+                if vector.shape != query.shape:
+                    continue
+                score = float(query @ vector) / (query_norm * norm)
+                if score > best_score:
+                    best_score = score
+                    best_answer = str(answer)
+            return best_score, best_answer
+        except Exception as exc:
+            logger.debug("taught-pair lookup failed: %s", exc)
+            return 0.0, None
 
     def _is_repetitive_request(
         self, user_message: str, context: Optional[Dict[str, Any]] = None

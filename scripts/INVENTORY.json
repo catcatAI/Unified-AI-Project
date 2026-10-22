@@ -667,6 +667,11 @@
       "referenced": true,
       "purpose": "L1-2 深鏈研究 — propagation_hops 3 vs 6 對比（輕量，CPU-only, <2s）"
     },
+    "probe_intelligence_sources.py": {
+      "category": "probe",
+      "referenced": false,
+      "purpose": "跑偏稽核：回答到底來自哪一層？對話有沒有改變「回答用的那個模型」？"
+    },
     "probe_local_small_model.py": {
       "category": "probe",
       "referenced": true,
