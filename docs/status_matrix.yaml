@@ -412,6 +412,19 @@ features:
     evidence: chat_routes Step 2.75 排程、Step 10 消費（50ms 預算）注入 LLM context；Layer 0 接真實 MathVerifier/ED3N 字典（R77 修復死 import）；198 tests（2026-10-20 實測）；A/B 對照已啟用（2026-10-20：`MSBAPipeline.compare()` 對照無語意區塊的前區塊路徑，結果記入 routing 狀態；旗標 `msba_ab_testing`）
     last_verified: "2026-09-22"
 
+  - id: unified-intelligence-definition
+    domain: 統一智能定義
+    claim: 全專案只有一個智能總分（能力 × 來源 × 誠實度），其餘分數各有命名空間，不再並存互相矛盾的口徑
+    status: verified
+    implementation:
+      - apps/backend/src/ai/meta/intelligence.py
+      - scripts/report_intelligence.py
+      - scripts/check_intelligence_definition.py
+    tests: [tests/ai/test_intelligence_definition.py]
+    verify_command: python scripts/check_intelligence_definition.py
+    evidence: 2026-10-22 建立；六維度只有驗證/實際分計入、誠實度是門（無效→未定義）、五套階梯各有命名空間；唯一總分寫入 docs/06-project-management/intelligence_report.json；事實門 intelligence.definition_wellformed 接進 check_fact_gates.py
+    last_verified: "2026-10-22"
+
 # -----------------------------------------------------------------------------
 # Chat Pipeline（主對話管線的階段構成；路徑由工具核對存在性與被引用）
 # -----------------------------------------------------------------------------

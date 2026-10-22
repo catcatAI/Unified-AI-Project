@@ -9,6 +9,13 @@
 
 # Angela AI Framework Overview
 
+> ⚠️ **口徑（2026-10-22）**：本文件出現的「綜合 6.0/10」是**框架/架構加權**
+> 的敘述性總分（含 LLM API 的上限），**不是統一的智能總分**。統一定義見
+> [`INTELLIGENCE_ASSESSMENT.md`](06-project-management/INTELLIGENCE_ASSESSMENT.md)
+> §0（`ai/meta/intelligence.py`）；唯一的智能總分由
+> `scripts/report_intelligence.py` 算出並寫入
+> `intelligence_report.json`。本文件的 6.0/10 保留為「框架就緒度」的歷史口徑。
+>
 > **Framework positioning**: A modular, extensible framework for building
 > digital life systems with hybrid AI (LLM + SNN + biological simulation).
 > **Codebase**: 667 Python files (~96K lines) in `apps/backend/src/` + 136 JS/TS
@@ -422,7 +429,7 @@ class. To add a new stage:
 | Reasoning            |       4/10       |            0.5/10            | CausalReasoningEngine = Pearson correlation only. PlanningEngine = template matching. MathRippleEngine = ripple/state-propagation layer (numeric result delegated to MathVerifier, the single math source of truth).                                                                                                                                                                                                                                                                                        |
 | Autonomy             |       3/10       |            0.5/10            | AutonomousLifeCycle wired but unstable without LLM guidance.                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | Meta-cognition       |       5/10       |             4/10             | MetaController confidence tracking works. NeuroAutoSelector heuristic-based.                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| **Composite**        |    **6.0/10**    | multi-dimensional (see §1.1) | Framework architecture ~95% complete. **ML training is ~5% complete.** Native deterministic engines (math/physics/chemistry 9.5 + knowledge 10 + symbolic reasoning 10) work = real, high-certainty capability; neural SNN's job = **associations** (capability 1.0, §4.1.2), NOT knowledge. No single native "actual" total — dimensions are heterogeneous. ED3N + GARDEN benchmark 20/20 (100%) re-measured 2026-07-16 (all via deterministic engines). See INTELLIGENCE_ASSESSMENT.md §1, §4.1 & §4.1.2. |
+| **Composite**（框架口徑，非智能總分） |    **6.0/10**    | multi-dimensional (see §1.1) | Framework architecture ~95% complete. **ML training is ~5% complete.** Native deterministic engines (math/physics/chemistry 9.5 + knowledge 10 + symbolic reasoning 10) work = real, high-certainty capability; neural SNN's job = **associations** (capability 1.0, §4.1.2), NOT knowledge. No single native "actual" total — dimensions are heterogeneous. ED3N + GARDEN benchmark 20/20 (100%) re-measured 2026-07-16 (all via deterministic engines). See INTELLIGENCE_ASSESSMENT.md §1, §4.1 & §4.1.2. |
 
 **Key insight**: This is an **architectural framework** with production-quality
 structure and academic-prototype ML content. The 190+ AI classes form a complete
@@ -687,7 +694,7 @@ pytest tests/                         # 運行測試
 | 推理     |    4/10    |    0.5/10     |                                                   **10/10** (符號推理確定性)                                                   | `ai/symbolic_reasoner` 確定性符號推理（傳遞/三段論/日曆/數量/質量陷阱）5/5；關係鏈由 CoreNetwork 傳遞閉包。神經推理路徑弱，但結構性推理已被確定性引擎覆蓋。                                                                                                           |
 | 自主性   |    3/10    |    0.5/10     |                                                       **9.0/10** (閉環)                                                        | 4/4 運作閉環（生命週期+代謝心跳+DLI+因果 warm-start），無 LLM 也運作。框架完整、效果明確。                                                                                                                                                                            |
 | 後設認知 |    5/10    |     4/10      |                                                            **4/10**                                                            | MetaController 信心追蹤有效。NeuroAutoSelector 啟發式。                                                                                                                                                                                                               |
-| **綜合** | **6.0/10** |  **<0.5/10**  | 多維度（見 §1.1）：數理化 9.5 / 知識 10 / 符號推理 10 / 自主 9.0；**神經 SNN 本職 = 學關聯**（關聯能力 1.0，§4.1.2），非背知識 | 框架架構 ~95% 完整。**ML 訓練 ~5%。** 原生確定性引擎正確運作 = 真實能力；神經網路專職「關聯性」（A>taller>B），關聯能力 ED3N/GARDEN 皆 1.0。SNN 在知識題單跑低分是設計正確非缺陷。多維評分見 INTELLIGENCE_ASSESSMENT.md §1 & §4.1.2。所有開放域對話智慧來自 LLM API。 |
+| **綜合**（框架口徑，非智能總分） | **6.0/10** |  **<0.5/10**  | 多維度（見 §1.1）：數理化 9.5 / 知識 10 / 符號推理 10 / 自主 9.0；**神經 SNN 本職 = 學關聯**（關聯能力 1.0，§4.1.2），非背知識 | 框架架構 ~95% 完整。**ML 訓練 ~5%。** 原生確定性引擎正確運作 = 真實能力；神經網路專職「關聯性」（A>taller>B），關聯能力 ED3N/GARDEN 皆 1.0。SNN 在知識題單跑低分是設計正確非缺陷。多維評分見 INTELLIGENCE_ASSESSMENT.md §1 & §4.1.2。所有開放域對話智慧來自 LLM API。 |
 
 ### 5.5 學習能力評估
 

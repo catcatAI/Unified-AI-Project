@@ -984,6 +984,29 @@ collected — 0 errors**).
 > **8,415 passed / 107 skipped / 0 failed**（`pytest tests/
 > apps/backend/tests/`）。
 
+> ✅ **NOTE (Updated 2026-10-22, 統一定義)**: **§X #267**: 智能定義統一。盤點
+> 發現專案有**十一套**自稱 intelligence 的評分系統，同一個詞在不同檔案指不同
+> 的量尺（6.0/10 框架口徑、4.3/10 基底加權、0.5/10 純原生、人話 rubric、
+> neural_share、成熟度階級、美術品質階梯…），於是「智能幾分」永遠可以挑一個
+> 對自己有利的數字。新增**唯一**定義
+> `apps/backend/src/ai/meta/intelligence.py`：智能 = **能力 × 來源 × 誠實度**
+> 三軸正交——① 能力六維度（事實／數理／改述泛化／對話記憶／推理例外／工具）
+> 各 0–10，且**只有「驗證／實際」分計入**（架構分、框架分是準備度）；② 來源
+> （神經／模板／確定性／檢索）判斷是智能學習還是複製模板；③ 誠實度是**門**
+> （樣本有效性／少量-標準量一致性／非空轉／預算截斷）——不過就回「未定義」，
+> 不給數字。五套階梯各有命名空間（`L0..L3` 智能｜`Q0..Q4` 美術｜`X0..X11`
+> 經驗｜`R1..R3` 回應來源｜`claimed..production` 工程成熟度），L0 不再指五種
+> 東西。新增 `scripts/report_intelligence.py`（唯一總分→
+> `docs/06-project-management/intelligence_report.json`）＋
+> `scripts/check_intelligence_definition.py`＋事實門
+> `intelligence.definition_wellformed`；四份互相衝突的文件（
+> `INTELLIGENCE_ASSESSMENT` §0／`FRAMEWORK_OVERVIEW`／`MASTER_TASK_MAP`／
+> `AI_SUBSTRATE_ASSESSMENT`）加註口徑並指向統一定義，`AI_CAPABILITY_LADDER`
+> 補「20/20 是冒煙測試、不可與 1096 題標準集比較」。順手修掉兩個量測缺陷：
+> `probe_native_dialogue.py` 預設 `--max-turns 200` 會**截斷**標準集（1096 題）
+> 讓量測失效（現對齊預算檔 1300，且截斷會讓有效性判失敗）；報告改讀
+> 預算檔的上限、bench 的 `--out` 是目錄（取最新檔）而非檔案。
+
 > ✅ **NOTE (Updated 2026-10-21, 純本地對話 + 門禁登記簿)**: **純本地基模的對話
 > 量測**完成。新增 `scripts/probe_native_dialogue.py`（不註冊任何外部後端：雲端
 > 金鑰與本地 ollama/llama.cpp 都不啟用，只留專案自己的引擎，啟動時斷言）＋
@@ -1208,6 +1231,8 @@ tests/
 | Config hygiene gate (the committed config must equal the default) | `python3 scripts/check_default_config.py` |
 | Open-gates registry (a temporary gate needs a legitimate removal reason) | `python3 scripts/check_open_gates.py` |
 | Native-only dialogue measurement / budget gate | `python3 scripts/probe_native_dialogue.py` / `python3 scripts/native_dialogue_budget_gate.py` |
+| Unified intelligence score (the only one) | `python3 scripts/report_intelligence.py` |
+| Unified intelligence definition gate | `python3 scripts/check_intelligence_definition.py` |
 
 > 🔎 **單一檢查入口**：所有「非編譯器」檢查集中在
 > `scripts/check_fact_gates.py`（十一域：edge/audit/chat/cluster/config/version/docs/modules/definitions/gates/hygiene）——一個工具跑一次＝全部檢查都被檢視，避免多工具「不打開就被掠過」。定義稽核 MD 報告：`python3 scripts/check_fact_gates.py --write-definitions-audit`。

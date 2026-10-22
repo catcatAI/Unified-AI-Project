@@ -15,6 +15,43 @@ and this project adheres to
 
 ### Added
 
+- **統一智能定義：一個定義、一個數字、一個地方**（2026-10-22）：專案原本有
+  **十一套**自稱 intelligence 的評分系統（能力階梯、`INTELLIGENCE_ASSESSMENT`
+  的 ×10 公式、`AI_SUBSTRATE_ASSESSMENT` 的 4.3/10 加權、人話 rubric、
+  neural_share、成熟度階級、美術品質階梯…），同一個詞在不同檔案指不同的量尺，
+  於是「智能幾分」永遠可以挑一個對自己有利的數字。
+  ① `apps/backend/src/ai/meta/intelligence.py`——**唯一**定義：智能 =
+  **能力 × 來源 × 誠實度**。能力六維度（事實／數理／改述泛化／對話記憶／
+  推理例外／工具）各 0–10，每個標註六型分數型別，且**只有「驗證／實際」分
+  計入**（架構分、框架分是準備度）；來源（神經／模板／確定性／檢索）判斷是
+  智能學習還是複製模板；誠實度是**門**（樣本有效性／少量-標準量一致性／非空轉／
+  預算截斷）——任一不過，總分是「未定義」，不給數字。
+  ② 五套階梯各給命名空間，L0 不再同時指五種東西：`L0..L3` 智能（唯一）、
+  `Q0..Q4` 美術品質、`X0..X11` 經驗、`R1..R3` 回應來源、`claimed..production`
+  工程成熟度。
+  ③ `scripts/report_intelligence.py`——唯一總分，寫入
+  `docs/06-project-management/intelligence_report.json`（可提交的量測快照）；
+  `scripts/check_intelligence_definition.py` + 事實門
+  `intelligence.definition_wellformed` 守著（維度指令必須存在、分數型別合法、
+  階梯不撞名、已量測報告的階梯必須與 `band_for()` 一致、權威文件必須引用定義）。
+  ④ 四份互相衝突的文件加註口徑並指向統一定義：
+  `INTELLIGENCE_ASSESSMENT.md` 新增 §0（含「不是智能的東西」清單）、
+  `FRAMEWORK_OVERVIEW.md` 的 6.0/10 標為**框架口徑**、`MASTER_TASK_MAP.md` 的
+  「True intelligence score」標為 2026-06 歷史口徑、`AI_SUBSTRATE_ASSESSMENT`
+  的 4.3/10 標為**基底準備度加權**；`AI_CAPABILITY_LADDER.md` 補上「20/20 是
+  20 題冒煙測試，不可與 1096 題標準集比較」。
+  ⑤ 順手修掉兩個量測缺陷：`probe_native_dialogue.py` 的預設 `--max-turns 200`
+  會**截斷** 1096 題標準集而讓量測失效（現對齊預算檔 1300／1200，且被截斷時
+  有效性直接判失敗並寫出原因）；`report_intelligence.py` 讀 bench 的 `--out`
+  目錄取最新檔（原本當成檔案）。
+  ⑥ **平均帶 ≠ 達成的階梯**：`composite()` 同時回報 `attained_level`（要「達到」
+  某階，該階關鍵維度必須全部過門檻）與 `failed_dimensions`。實測 4.41/10 平均
+  落在 L2 帶，但**達成的階梯是 L0**（L1 的關鍵度量改述泛化 0/10）——只看平均
+  就宣布 L2，等於用平均值掩蓋缺口。
+  ⑦ 測試：`tests/ai/test_intelligence_definition.py`（25，含「準備度分不得
+  計入」「誠實度不過→未定義」「平均帶與達成階梯分離」「階梯邊界」「只有一個
+  智能階梯」「門禁在現況全綠」）。
+
 - **純本地基模的對話演進量測 + 預算門禁 + 未拆門禁登記簿**（2026-10-21）：
   ① `scripts/probe_native_dialogue.py`——在**不註冊任何外部後端**（雲端金鑰、
   本地 ollama/llama.cpp 全部不啟用，只留專案自己的引擎，服務啟動時直接斷言）

@@ -1,0 +1,77 @@
+{
+  "scores": {
+    "facts": 0.2,
+    "math": 0.8,
+    "tools": 0.0,
+    "paraphrase": 0.0,
+    "dialogue": 0.7568666666666667,
+    "boundary": 0.8889
+  },
+  "sources": {
+    "deterministic": 405,
+    "neural": 249,
+    "other": 10,
+    "retrieval": 13,
+    "template": 419
+  },
+  "source_verdict": "神經層佔比 23% ≥ 20%：學到的模型確實承擔了一部分回答",
+  "gaps": {
+    "知識缺口（標準集 state 類）": 0.0
+  },
+  "bench_suites": {
+    "math": 80.0,
+    "knowledge": 20.0,
+    "knowledge_mc": 75.0,
+    "code": 0.0,
+    "routing": 100.0
+  },
+  "integrity": {
+    "sample_valid": true,
+    "consistent": true,
+    "non_vacuous": true,
+    "problems": []
+  },
+  "result": {
+    "score": 4.41,
+    "status": "measured",
+    "band": "L2 本地可用",
+    "band_summary": "多輪對話不跑題，記憶／推理／多模態能串起來當助手用",
+    "attained_level": "L0",
+    "level_missing": [
+      "paraphrase 0.0/10 < 4.0/10"
+    ],
+    "failed_dimensions": [
+      "facts 2.0/10 < 2.5/10",
+      "paraphrase 0.0/10 < 4.0/10",
+      "tools 0.0/10 < 8.5/10"
+    ],
+    "counted": [
+      [
+        "facts",
+        0.2
+      ],
+      [
+        "math",
+        0.8
+      ],
+      [
+        "paraphrase",
+        0.0
+      ],
+      [
+        "dialogue",
+        0.7569
+      ],
+      [
+        "boundary",
+        0.8889
+      ],
+      [
+        "tools",
+        0.0
+      ]
+    ],
+    "skipped": [],
+    "integrity": "量測有效（樣本有效性 ✅／少量-標準量一致性 ✅／非空轉 ✅）"
+  }
+}

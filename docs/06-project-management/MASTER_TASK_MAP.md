@@ -3670,8 +3670,13 @@ the LLM API calls.** The native engines (ED3N, GARDEN, VisualDecoder, etc.) are
 academic prototypes — interesting architecture, no production value without
 extensive training.
 
-**True intelligence score**: 6.0/10 with LLM (API), **0.5/10 without** (native
-engines alone). Architecture is ~85% complete, training is ~5% complete.
+**True intelligence score**（2026-06 的歷史口徑，**非統一定義**）: 6.0/10 with LLM
+(API), **0.5/10 without** (native engines alone). Architecture is ~85% complete,
+training is ~5% complete.
+
+> ⚠️ 2026-10-22：這段是**框架/架構混合口徑**的歷史敘述，不是統一的智能總分。
+> 統一定義見 [`INTELLIGENCE_ASSESSMENT.md`](INTELLIGENCE_ASSESSMENT.md) §0
+> （`ai/meta/intelligence.py`）；唯一總分由 `scripts/report_intelligence.py` 產生。
 
 **▶ See separate improvement roadmap**:
 [`IMPROVEMENT_ROADMAP.md`](IMPROVEMENT_ROADMAP.md) — detailed plan

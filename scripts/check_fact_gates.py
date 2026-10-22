@@ -424,6 +424,40 @@ def _gates_facts():
     ]
 
 
+def _intelligence_facts():
+    """智能定義：一個定義、一個數字、一個地方。
+
+    專案原本有十一套自稱 intelligence 的評分系統，同一個詞在不同檔案裡指
+    不同的量尺。規則由 scripts/check_intelligence_definition.py 執行（維度
+    的指令必須存在、分數型別必須是六型、階梯命名空間不得撞名、已量測的
+    報告其階梯必須與 band_for() 一致、權威文件必須引用統一定義）。
+    """
+    import importlib.util
+
+    from core.facts import Fact
+
+    spec = importlib.util.spec_from_file_location(
+        "intelligence_definition_guard", REPO / "scripts" / "check_intelligence_definition.py"
+    )
+    assert spec and spec.loader
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+
+    problems = mod.check()
+    return [
+        Fact(
+            "intelligence.definition_wellformed",
+            float(len(problems)),
+            0.0,
+            "le",
+            "violations",
+            "unified intelligence definition",
+            f"violations={len(problems)}" + (f": {problems[0]}" if problems else ""),
+            measured_at=MEASURED_AT,
+        ),
+    ]
+
+
 def _config_hygiene_facts():
     """提交的配置必須等於預設（user 層是執行期狀態，不該被提交）。"""
     import importlib.util
@@ -1783,6 +1817,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         + _modules_facts()
         + _config_hygiene_facts()
         + _gates_facts()
+        + _intelligence_facts()
     )
     merged = merge_reports(
         adjudicate(edge_facts),

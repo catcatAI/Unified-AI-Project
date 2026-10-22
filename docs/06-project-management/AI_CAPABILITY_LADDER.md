@@ -45,7 +45,7 @@
 
 | 閘                | 指令                                                                                   | 門檻                  | 實測                                                       | 狀態                                           |
 | ----------------- | -------------------------------------------------------------------------------------- | --------------------- | ---------------------------------------------------------- | ---------------------------------------------- |
-| L0 確定性引擎     | `python scripts/benchmark_ed3n_garden.py --engine both`                                | 20/20                 | 20/20                                                      | ✅                                             |
+| L0 確定性引擎     | `python scripts/benchmark_ed3n_garden.py --engine both`                                | 20/20（冒煙）         | 20/20                                                      | ✅                                             |
 | L1-4 hold-out gap | `python scripts/validate_holdout_gap.py --gate`（已入 CI）                             | gap < 15%             | train 0.250 / holdout 0.330 → gap **0.080**                | ✅                                             |
 | L1-5 字典品質     | `python scripts/audit_dictionary_quality.py`                                           | dup < 5%              | avg dup **0.86%**                                          | ✅                                             |
 | L2-1 對話一致性   | `python scripts/benchmark_dialogue_coherence.py`                                       | 人設 ≥80% / 指代 ≥70% | 5/5 = **100%**                                             | ✅                                             |
@@ -55,6 +55,19 @@
 | L3-1 無 RAG 知識  | `python scripts/run_benchmarks.py --backend native --suite knowledge_mc --gate-native` | ≥90%                  | **97.5%**                                                  | ✅                                             |
 | L3-2 工具呼叫     | `pytest tests/services/test_handlers.py`                                               | 100%                  | **60 passed**                                              | ✅                                             |
 | 整體回歸          | `pytest tests/ apps/backend/tests/ apps/game-rpg/tests/`                               | 0 failed              | **8,688 passed / 112 skipped / 0 failed**                  | ✅                                             |
+
+> **統一總分（2026-10-22 實測）**：`python scripts/report_intelligence.py` →
+> **4.41/10（平均，落在 L2 帶）**，但**達成的階梯是 L0**（L1 的關鍵度量
+> 改述泛化 0/10）；未達門檻的維度：facts 2.0、paraphrase 0.0、tools 0.0。
+> 這是本文件 L0–L3 之外唯一該引用的「智能總分」——下面這張表的每一列是
+> **各閘的實測**，不是總分的成分（統一定義的六個維度見
+> `INTELLIGENCE_ASSESSMENT.md §0`）。
+
+> **尺度警告（2026-10-22）**：`benchmark_ed3n_garden.py` 的 **20/20 是冒煙測試**
+> ——四類各 5 題、全部由確定性引擎作答。它證明「管線沒斷」，**不能拿來跟
+> 1096 題標準集的人話通過率（62.1%）比較**，也不是能力分。統一定義見
+> `INTELLIGENCE_ASSESSMENT.md §0`；本文件的 L0–L3 是唯一的智能階梯，
+> 其餘階梯（美術 Q0–Q4、經驗 X0–X11、回應來源 R1–R3、工程成熟度）各有命名空間。
 
 > **誠實說明**：L2-3（純神經推理）仍是 0%——確定性引擎答對題目不等於神經會做題（`INTELLIGENCE_ASSESSMENT §4.1`）。這一格沒有投影，量測就是 0。中間層（`ai/reasoning/neural_bridge.py`）是**第三條路**，不是純神經路徑的替代品：它用多語編碼器把未見改述「接觸」到老師的概念原型，再用老師回饋對齊原型，最後合成關係圖。
 >

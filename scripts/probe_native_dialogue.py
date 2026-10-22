@@ -705,7 +705,7 @@ def _wilson(successes: int, total: int, z: float = 1.96) -> Tuple[float, float]:
     return (round(max(0.0, center - margin), 4), round(min(1.0, center + margin), 4))
 
 
-def _sample_validity(turns: Sequence[Turn]) -> Dict[str, object]:
+def _sample_validity(turns: Sequence[Turn], truncated: bool = False) -> Dict[str, object]:
     """Is this sample able to tell the shapes apart?
 
     **樣本太少或輸出全一樣時，量測是無效的**：鸚鵡捲舌（輸出恆等於輸入）
@@ -725,6 +725,11 @@ def _sample_validity(turns: Sequence[Turn]) -> Dict[str, object]:
     problems: List[str] = []
     if total < 30:
         problems.append(f"the sample is too small ({total} turns < 30)")
+    if truncated:
+        problems.append(
+            "the standard set was truncated by the budget — a cut sample "
+            "cannot be compared with the committed baseline"
+        )
     # A 1000+ item set repeats the same questions, so the distinct-output
     # ratio is naturally lower; what matters is that there are enough
     # *different* answers to tell the shapes apart.
@@ -908,10 +913,15 @@ async def main() -> int:
     parser.add_argument(
         "--max-turns",
         type=int,
-        default=200,
-        help="the turn budget (both passes; the standard sample is 136)",
+        default=1300,
+        help=(
+            "the turn budget (both passes). The default matches the committed "
+            "budget (scripts/native_dialogue_budget.txt): a smaller budget "
+            "truncates the 1000+ item standard set, and a truncated sample "
+            "cannot tell parroting from learning → the report says so."
+        ),
     )
-    parser.add_argument("--max-seconds", type=float, default=600.0, help="the wall-clock budget")
+    parser.add_argument("--max-seconds", type=float, default=1200.0, help="the wall-clock budget")
     parser.add_argument("--max-chars", type=int, default=0, help="the response-character budget")
     parser.add_argument("--json", dest="json_path", help="write the result as JSON")
     parser.add_argument(
@@ -1038,6 +1048,8 @@ async def main() -> int:
         ),
         "standard_set": {
             "size": sum(len(u) for u in AGENT_UNITS),
+            "measured": len(first),
+            "truncated": len(first) < sum(len(u) for u in AGENT_UNITS),
             "pass_rate": round(sum(1 for t in first if t.passed) / max(len(first), 1), 4),
             "passed": sum(1 for t in first if t.passed),
             "states": {
@@ -1057,7 +1069,9 @@ async def main() -> int:
                 for kind in sorted({t.kind for t in first})
             },
         },
-        "validity": _sample_validity(all_turns),
+        "validity": _sample_validity(
+            all_turns, truncated=len(first) < sum(len(u) for u in AGENT_UNITS)
+        ),
         "learning_deltas": _learning_deltas(first),
         "learning_spread": _learning_spread(_learning_deltas(first)),
         "small_sample": _subset_metrics(_systematic_sample(first, SMALL_SAMPLE_TURNS), "small"),
