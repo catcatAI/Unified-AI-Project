@@ -73,7 +73,7 @@ def exact_match(
     picks = pairs if len(pairs) <= sample else random.Random(seed).sample(pairs, sample)
     hits = 0
     for prompt, answer in picks:
-        got = model.generate(prompt, max_new=min(96, len(answer) + 16))
+        got = model.generate(prompt, max_new=min(model.config.max_len, len(answer) + 8))
         if got.strip() == answer.strip():
             hits += 1
     return {"n": len(picks), "exact": hits / max(1, len(picks))}

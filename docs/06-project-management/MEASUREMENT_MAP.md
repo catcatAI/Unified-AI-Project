@@ -49,8 +49,8 @@
 這個字**不**等於核心：`semantic-qa`／`neural-bridge`／`unified` 是 encoder 或
 統計檢索，屬表現層（舊的 `neural_share` 是歷史欄名，意思是「非模板」，不是核心）。
 
-**對照組（LLM）**：`probe_core_control.py` 用同一批凍結題目、同一條評分跑四個
-生產者（表現層／GARDEN／ED3N／LLM），回答「哪些是智能問題」：
+**對照組（LLM）**：`probe_core_control.py` 用同一批凍結題目、同一條評分跑五個
+生產者（表現層／GARDEN／ED3N／TOK-SNN／LLM），回答「哪些是智能問題」：
 
 | 現象 | 意義 |
 | --- | --- |

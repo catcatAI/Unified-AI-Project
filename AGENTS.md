@@ -1176,11 +1176,11 @@ collected — 0 errors**).
 > 這不是扣分，是把「桶子有沒有裝水」和「木片有沒有對齊」分開量。
 >
 > **對照組**：`scripts/probe_core_control.py` 用同一批凍結題目、同一條評分跑
-> 表現層／GARDEN／ED3N／LLM（Qwen2.5-1.5B），回答「哪些是智能問題」——LLM
-> 也不會＝能力或量測問題；LLM 會而 SNN 不會＝SNN 缺口；表現層會而 LLM 不會＝
-> 表層假象。實測：math 表現層 80%／GARDEN 0%／ED3N 0%／LLM 60%（12 題只有
-> 表層會、24 題 SNN 缺口）、knowledge 47/0/0/67、code 0/0/0/0、routing
-> 100/0/0/0（表現層任務）。核心邊界只有一處：
+> 表現層／GARDEN／ED3N／TOK-SNN／LLM（Qwen2.5-1.5B），回答「哪些是智能問題」
+> ——LLM 也不會＝能力或量測問題；LLM 會而 SNN 不會＝SNN 缺口；表現層會而 LLM
+> 不會＝表層假象。實測：math 表現層 80%／GARDEN 0%／ED3N 0%／TOK-SNN 0%／
+> LLM 60%（12 題只有表層會、24 題 SNN 缺口）、knowledge 47/0/0/0/67、code
+> 0/0/0/0/0、routing 100/0/0/0/0（表現層任務）。核心邊界只有一處：
 > `ai/meta/intelligence.py::is_core_backend()`；`neural` 這個字不等於核心
 > （`semantic-qa`／`neural-bridge`／`unified` 是 encoder／統計檢索，屬表現層）。
 >
@@ -1196,10 +1196,11 @@ collected — 0 errors**).
 >
 > **表徵／目標已換掉並實測**（`ai/ed3n/token_snn.py`＋`scripts/train_token_snn.py`）：
 > 字元詞表 → LIF（surrogate gradient）→ next-token head，只在答案 token 上算
-> 交叉熵。架構可學（複製任務 5/5、loss 0.034），但規模不足：算術 held-out
-> （`arithmetic_test.csv`）20 epochs 後 **0/500 exact**、核心凍結題 **0%**
-> （loss 2.49／2.51，未收斂）。因此對外核心分仍是 **0.00/10**；跨過外部及格線
-> 需要 ≥10⁸ 參數＋GPU surrogate BPTT，或從 LLM 蒸餾。
+> 交叉熵。架構可學（複製任務 5/5、loss 0.005），但規模不足（~0.1M 參數）：
+> 算術 held-out（`arithmetic_test.csv`）20 epochs 後 **0/500 exact**、核心凍結題
+> **0%**（loss 2.49，未收斂；teacher-forced 字元 38.5%）。因此對外核心分仍是
+> **0.00/10**；跨過外部及格線需要 ≥10⁸ 參數＋GPU surrogate BPTT，或從 LLM
+> 蒸餾。
 
 > ✅ **NOTE (Updated 2026-10-23, 改述中間層)**: **§X #274**: 改述泛化從 35.7%
 > → **50%**（外部及格線 70%，仍 FAIL）。編碼器換成

@@ -8,12 +8,14 @@ layer (routing, templates, memory, retrieval, rules), which can answer
 correctly with zero thinking — which is how a template score gets mistaken for
 intelligence.
 
-This probe runs the **same frozen items** through three producers and scores
+This probe runs the **same frozen items** through the producers and scores
 them with the **same** rule:
 
   performance  NativeBackend (the production path: lookup / rules / templates)
-  core:sn n    GARDEN (the project's SNN-family core)
-  core:llm     a local instruct model (control group)
+  garden       GARDEN (association engine)
+  ed3n         ED3N trained checkpoint (decoder read directly, no reflex)
+  tok          token-level spiking decoder (surrogate gradient, next token)
+  llm          a local instruct model (control group)
 
 The LLM is the control: it is a neural model of known ability, so it separates
 
@@ -23,8 +25,8 @@ The LLM is the control: it is a neural model of known ability, so it separates
   * a **performance trick** — the performance layer passes, the core does not
     (correct answer, no thinking).
 
-Only the two ``core`` columns count as intelligence. The performance column is
-reported for comparison and is never added to it.
+Only the ``core`` columns (garden/ed3n/tok/llm) count as intelligence. The
+performance column is reported for comparison and is never added to it.
 
 Usage:
     python scripts/probe_core_control.py                       # all suites
