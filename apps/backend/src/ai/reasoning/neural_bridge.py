@@ -24,6 +24,7 @@ Nothing here memorises questions: the alignment step only moves prototypes.
 from __future__ import annotations
 
 import logging
+import os
 import re
 from functools import lru_cache
 from typing import Any, Dict, List, Optional, Sequence, Set, Tuple
@@ -98,6 +99,14 @@ DIMENSION_SEEDS = _dimension_seed_map()
 _DIMENSION_MARGIN = 0.15
 # How many aligned phrases a concept may accumulate.
 _MAX_ALIGNED_SEEDS = 64
+# An aligned phrase counts for its concept only when the input *is* that
+# phrase (or an almost exact inflection). Aligned seeds must not attract
+# unrelated phrases: with the plain "best seed" score, teaching ten synonyms
+# of "lesser" raised that class for idioms that merely shared a syllable, and
+# the taught layer scored *worse* than the untaught one (100% → 50% on the
+# unseen-paraphrase split). Teaching may recognise its own words; it must not
+# degrade the generalisation it is meant to help.
+_ALIGNED_RECOGNITION = 0.95
 
 # The superlative words of the teacher: its own "comparator → superlative"
 # table, grouped per dimension. The direction of a question is matched
@@ -177,9 +186,53 @@ AGGREGATION_ANY_SEEDS: List[str] = [
 # --------------------------------------------------------------------------- #
 # The encoder
 # --------------------------------------------------------------------------- #
+_SENTENCE_ENCODER: Any = None
+_SENTENCE_ENCODER_FAILED = False
+
+
+def _sentence_encoder() -> Any:
+    """The multilingual sentence encoder (lazy, offline, CPU).
+
+    The shipped ONNX model is small; a real paraphrase-trained encoder places
+    idioms ("a cut above", "towers over") nearer their concept than the
+    character-feature model does. This is a *capability* change, not a test
+    tweak: it is the same encoder for every phrase, and the teacher's
+    prototypes are rebuilt from it. Falls back to the ONNX model when the
+    dependency or the weights are unavailable, so a base install still works.
+    """
+    global _SENTENCE_ENCODER, _SENTENCE_ENCODER_FAILED
+    if _SENTENCE_ENCODER is not None or _SENTENCE_ENCODER_FAILED:
+        return _SENTENCE_ENCODER
+    if os.environ.get("ANGELA_PARAPHRASE_ENCODER", "sentence-transformer").lower() in {
+        "onnx",
+        "off",
+        "0",
+    }:
+        _SENTENCE_ENCODER_FAILED = True
+        return None
+    try:
+        from sentence_transformers import SentenceTransformer
+
+        _SENTENCE_ENCODER = SentenceTransformer(
+            "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+            device="cpu",
+        )
+    except Exception:  # pragma: no cover - depends on the install
+        logger.debug("sentence-transformer unavailable; using the ONNX encoder", exc_info=True)
+        _SENTENCE_ENCODER_FAILED = True
+        _SENTENCE_ENCODER = None
+    return _SENTENCE_ENCODER
+
+
 @lru_cache(maxsize=8192)
 def _encode_cached(text: str) -> np.ndarray:
-    """The sentence embedding (the shipped multilingual ONNX encoder)."""
+    """The sentence embedding (the multilingual encoder, ONNX as fallback)."""
+    encoder = _sentence_encoder()
+    if encoder is not None:
+        return np.asarray(
+            encoder.encode(text, normalize_embeddings=True, show_progress_bar=False),
+            dtype=np.float32,
+        )
     from ai.unified_engine.semantic_qa import _features
 
     return np.asarray(_features(text), dtype=np.float32)
@@ -258,6 +311,9 @@ class RelationMatcher:
         self._prototypes: Dict[str, Dict[str, np.ndarray]] = {}
         # kind -> key -> the seed vectors
         self._seeds: Dict[str, Dict[str, List[np.ndarray]]] = {}
+        # kind -> key -> how many of those seeds are the teacher's (the rest
+        # are phrases the feedback aligned; they recognise only themselves)
+        self._teacher_seed_count: Dict[str, Dict[str, int]] = {}
         # kind -> key -> the seed words
         self._seed_map: Dict[str, Dict[str, List[str]]] = {}
         # kind -> key -> the phrases the feedback has taught (persisted)
@@ -269,6 +325,7 @@ class RelationMatcher:
         """(Re)build the prototypes from the teacher's vocabulary."""
         self._prototypes = {}
         self._seeds = {}
+        self._teacher_seed_count = {}
         self._seed_map = {}
         self._register(self._concept_map(), "relation")
         self._register(self._dimension_map(), "dimension")
@@ -302,6 +359,7 @@ class RelationMatcher:
             if not vectors:
                 continue
             self._seeds.setdefault(kind, {})[key] = vectors
+            self._teacher_seed_count.setdefault(kind, {})[key] = len(vectors)
             self._seed_map.setdefault(kind, {})[key] = list(words)
             self._prototypes.setdefault(kind, {})[key] = _unit(np.mean(vectors, axis=0))
 
@@ -314,11 +372,20 @@ class RelationMatcher:
         matched the size centroid instead of the weight seeds. The centroid
         therefore only breaks the ties.
         """
+        seeds = self._seeds.get(kind, {}).get(key, ())
+        count = self._teacher_seed_count.get(kind, {}).get(key, len(seeds))
         best = 0.0
-        for seed in self._seeds.get(kind, {}).get(key, ()):
+        for seed in seeds[:count]:
             sim = _similarity(vec, seed)
             if sim > best:
                 best = sim
+        aligned_best = 0.0
+        for seed in seeds[count:]:
+            sim = _similarity(vec, seed)
+            if sim > aligned_best:
+                aligned_best = sim
+        if aligned_best >= _ALIGNED_RECOGNITION:
+            best = max(best, aligned_best)
         proto = self._prototypes.get(kind, {}).get(key)
         if proto is not None:
             best += 0.02 * _similarity(vec, proto)
@@ -411,6 +478,28 @@ class RelationMatcher:
             return False
         direction = self.classify_direction(word, threshold=0.0)
         return direction is not None and direction[1] >= threshold
+
+    def is_aligned(self, phrase: str) -> bool:
+        """True when the feedback step has taught this exact phrase."""
+        text = (phrase or "").strip().lower()
+        if not text:
+            return False
+        return any(
+            text == word.lower()
+            for words in (self._aligned.get("relation") or {}).values()
+            for word in words
+        )
+
+    def is_known_relation(self, phrase: str) -> bool:
+        """True when *phrase* is one of the teacher's own relation words."""
+        text = (phrase or "").strip().lower()
+        if not text:
+            return False
+        return any(
+            text == word.lower()
+            for words in self._concept_map().values()
+            for word in words
+        )
 
     def is_relation_phrase(self, phrase: str, score: float) -> bool:
         """True when the phrase can be a comparison word.
@@ -590,6 +679,7 @@ class RelationMatcher:
                 # own: the question supplies it. The concept is created by its
                 # first teaching example instead of refusing to learn it.
                 self._seeds.setdefault(table, {})[key] = []
+                self._teacher_seed_count.setdefault(table, {})[key] = 0
                 self._seed_map.setdefault(table, {})[key] = []
                 self._prototypes.setdefault(table, {})[key] = vec
                 proto = vec
@@ -763,17 +853,22 @@ def _is_relation_window(tokens: Sequence[str], lo: int, hi: int) -> bool:
     shape word and not a single letter (the entities of a comparison are
     often single letters: "A", "X", "Q").
     """
-    for word in tokens[lo:hi]:
+    window = list(tokens[lo:hi])
+    content = [word for word in window if not _is_shape_word(word)]
+    if not content:
+        return False
+    for word in window:
         if _is_entity_token(word):
-            return False
-        if len(word) < 3:
-            return False
-        if _is_shape_word(word):
             return False
         if not word.isascii():
             # The Chinese shape is handled by its own pattern.
             return False
-    return True
+    if len(window) == 1:
+        # A two-letter word can never be the whole relation ("in", "of").
+        return len(window[0]) >= 3
+    # Inside a multi-word relation a short function word is fine ("pales in
+    # comparison", "left behind by"): the window is the phrase, not a token.
+    return any(len(word) >= 3 for word in content)
 
 
 _ARTICLES = ("the", "a", "an")
@@ -929,11 +1024,31 @@ class NeuralBridge:
             relations.append((subject, concept, obj))
 
         # 2. The English shape: the matcher finds the relation word.
-        for subject, phrase, obj, negated in self._english_relations(text, dimension):
+        for subject, phrase, obj, negated, passive in self._english_relations(text, dimension):
             match = self._classify_relation(phrase, dimension)
             if match is None:
                 continue
             concept_dimension, direction = match[0]
+            bare_phrase = phrase[:-3].strip() if phrase.lower().endswith(" by") else phrase
+            if (
+                passive
+                and len(bare_phrase.split()) <= 1
+                and not (
+                    self.matcher.is_known_relation(bare_phrase)
+                    or self.matcher.is_aligned(phrase)
+                    or self.matcher.is_aligned(bare_phrase)
+                )
+            ):
+                # Passive voice inverts the comparison: "A is beaten by B"
+                # means A < B, although the participle ("beaten") sits in the
+                # encoder near its active sense. The inversion is grammar,
+                # not a second similarity guess. A phrase the teacher has
+                # aligned ("is exceeded by", "is outclassed by") is exempt:
+                # its passive meaning was taught directly. A phrasal passive
+                # ("is left behind by") is *not* inverted: its particle
+                # already carries the relation ("behind"), and the encoder
+                # reads the whole phrase.
+                direction = LESSER if direction == GREATER else GREATER
             if negated:
                 # "A is not as short as B" — the negation flips the relation.
                 direction = LESSER if direction == GREATER else GREATER
@@ -962,19 +1077,40 @@ class NeuralBridge:
             # The word carries the direction, the question carries the
             # dimension ("X exceeds Y ... who is the oldest?").
             return ((dimension or ANY_DIMENSION, concept[1]), score)
+        if not self.matcher.is_known_relation(phrase):
+            # An unseen relation word ("beaten", "outshines") does not carry
+            # a dimension: its nearest concept is a guess, and using that
+            # guess as the chain's dimension made the layer abstain on a
+            # question about another dimension. Only the direction is
+            # inferred; the dimension comes from the question.
+            return ((dimension or ANY_DIMENSION, concept[1]), score)
         if dimension:
             for candidate, candidate_score in scored:
                 if candidate[0] == dimension:
-                    if candidate_score >= score - _DIMENSION_MARGIN:
+                    if candidate_score > score:
+                        # The hinted dimension is also the best match.
                         return candidate, candidate_score
+                    if candidate_score >= score - _DIMENSION_MARGIN:
+                        # A dimension hint may *label* the relation, never
+                        # invert its polarity: "outshines" read in the
+                        # weight dimension scored (weight, lesser) below its
+                        # overall (strength, greater) — the hint relabelled
+                        # the edge and flipped the chain.
+                        return (dimension, concept[1]), score
                     break
         return concept, score
 
     def _english_relations(
         self, text: str, dimension: Optional[str] = None
-    ) -> List[Tuple[str, str, str, bool]]:
-        """The English relation spans (subject, phrase, object, negated)."""
-        spans: List[Tuple[str, str, str, bool]] = []
+    ) -> List[Tuple[str, str, str, bool, bool]]:
+        """The English relation spans (subject, phrase, object, negated, passive).
+
+        ``passive`` is structural: the token right after the relation span is
+        "by". The phrase itself may or may not have absorbed the "by" (the
+        encoder sometimes scores the bare participle higher), so the flag is
+        read from the tokens, not from the phrase.
+        """
+        spans: List[Tuple[str, str, str, bool, bool]] = []
         for clause in _CLAUSE_SPLIT.split(text or ""):
             tokens = _tokens(clause)
             if len(tokens) < 3:
@@ -992,7 +1128,8 @@ class NeuralBridge:
             if not subject or not obj:
                 continue
             negated = any(w.lower() in _NEGATIONS for w in tokens[:lo])
-            spans.append((subject, phrase, obj, negated))
+            passive = hi < len(tokens) and tokens[hi].lower() == "by"
+            spans.append((subject, phrase, obj, negated, passive))
         return spans
 
     def _has_superlative_entity(self, *entities: str) -> bool:
@@ -1120,17 +1257,31 @@ class NeuralBridge:
                     # The question's own superlative is not a comparison.
                     continue
                 if hi < len(tokens) and tokens[hi].lower() == "by":
-                    # Passive voice: "A is exceeded by B". The bare verb
-                    # ("exceeded") sits between its active and passive
-                    # meanings; the "by" disambiguates it and belongs to the
-                    # relation, so the phrase keeps it.
+                    # Passive voice: "A is exceeded by B". "by" belongs to the
+                    # relation, and the passive *inverts* it: "A is exceeded
+                    # by B" means A < B, while "A exceeds B" means A > B. The
+                    # encoder reads the bare participle in its active sense
+                    # (it scored "beaten by" as greater), so the inversion is
+                    # grammatical, not a second similarity guess.
                     passive = f"{phrase} by"
                     passive_match = self._classify_relation(passive, dimension)
                     if passive_match is not None and passive_match[1] > match[1]:
                         match = passive_match
                         phrase = passive
                         hi += 1
-                if best is None or match[1] > best[0]:
+                # Prefer the *longest* classifying window: "towers over" is
+                # the relation, "over" is its fragment — picking the fragment
+                # left the verb in the subject ("Quinn towers") and the chain
+                # unbuildable. The score breaks ties between equal lengths.
+                # Prefer the longest window, then the *earliest* start, then
+                # the score. The score alone preferred the fragment "over"
+                # (0.74) over the relation "towers over" (0.58) and left the
+                # verb in the subject ("Quinn towers").
+                if best is None or (
+                    hi - lo,
+                    -(lo),
+                    match[1],
+                ) > (best[2] - best[1], -(best[1]), best[0]):
                     # A relation word always has an entity on both sides:
                     # the subject before it and the object after it.
                     subject = _entity_before(tokens, lo)
@@ -1141,9 +1292,14 @@ class NeuralBridge:
                         # "the tallest person" is not a comparison.
                         continue
                     if hi < len(tokens) and tokens[hi].lower() in _PREPOSITIONS:
-                        # "the smartest student in the class": the phrase
-                        # belongs to a noun phrase, not to a comparison.
-                        continue
+                        # "the smartest student in the class": a superlative
+                        # noun phrase is not a comparison. The test is the
+                        # superlative, not the preposition — "ahead of" is a
+                        # relation whose own tail *is* a preposition.
+                        if self.matcher.is_superlative_word(phrase) or any(
+                            self.matcher.is_superlative_word(word) for word in phrase.split()
+                        ):
+                            continue
                     best = (match[1], lo, hi, phrase)
         return best
 

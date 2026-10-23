@@ -25,6 +25,7 @@ from __future__ import annotations
 import argparse
 import json
 import random
+import re
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
@@ -70,15 +71,65 @@ UNSEEN_SURFACES: List[Tuple[str, str]] = [
     ("{A} has the edge over {B}", "greater"),
     ("{A} lags behind {B}", "lesser"),
     ("{A} is beneath {B}", "lesser"),
-]
-# The final holdout: words that appear in no curriculum entry and were not
-# used while tuning. This split is the dimension's score.
-FINAL_SURFACES: List[Tuple[str, str]] = [
+    # Rotated out of ``heldout_final`` on 2026-10-23: the first four were
+    # used to design the passive-inversion and "an unseen word carries no
+    # dimension" rules; the second four were used to find the window/subject
+    # segmentation bug. They are development surfaces now, not a holdout.
     ("{A} outshines {B}", "greater"),
     ("{A} runs rings around {B}", "greater"),
     ("{A} is dwarfed by {B}", "lesser"),
     ("{A} is beaten by {B}", "lesser"),
+    ("{A} towers over {B}", "greater"),
+    ("{A} is a cut above {B}", "greater"),
+    ("{A} is left behind by {B}", "lesser"),
+    ("{A} pales in comparison to {B}", "lesser"),
+    # Third rotation: these four found the "ahead of" preposition guard.
+    ("{A} outperforms {B}", "greater"),
+    ("{A} is far ahead of {B}", "greater"),
+    ("{A} is bested by {B}", "lesser"),
+    ("{A} is outdone by {B}", "lesser"),
 ]
+# The final holdout: words that appear in no curriculum entry and were not
+# used while tuning. This split is the dimension's score.
+# Authored after the 2026-10-23 rules were fixed, and run once. They are not
+# in the curriculum and were not used to tune anything.
+FINAL_SURFACES: List[Tuple[str, str]] = [
+    ("{A} outranks {B}", "greater"),
+    ("{A} is well ahead of {B}", "greater"),
+    ("{A} is outshone by {B}", "lesser"),
+    ("{A} is a step behind {B}", "lesser"),
+]
+
+#: Function words that may appear in a held-out surface without teaching it.
+#: Content words (the verbs and particles that carry the relation) are not
+#: here: those are what the split holds out.
+FUNCTION_WORDS = frozenset(
+    """
+    a an the is are was were be been being am
+    by to of in on at with from into over under above below behind ahead
+    for as than and or not its it
+    """.split()
+)
+
+
+def heldout_word_leaks(curriculum_text: str, payload: Dict[str, Any]) -> List[str]:
+    """The content words of the held-out splits that appear in the curriculum.
+
+    Word-boundary matching, not substring: "in" is inside "training", and a
+    substring test would report a leak for every function word.
+    """
+    lowered = (curriculum_text or "").lower()
+    problems: List[str] = []
+    for name in ("unseen_surfaces", "heldout_final"):
+        for item in (payload.get("splits") or {}).get(name) or []:
+            surface = (item.get("surface") or "").replace("{A}", "").replace("{B}", "")
+            for word in re.split(r"[^A-Za-z']+", surface.lower()):
+                if not word or word in FUNCTION_WORDS:
+                    continue
+                if re.search(rf"\b{re.escape(word)}\b", lowered):
+                    problems.append(f"{name}: held-out word {word!r} is in the curriculum")
+    return problems
+
 
 ENTITIES = [
     "Alice",
@@ -174,13 +225,17 @@ def _build(
 
 def build() -> Dict[str, Any]:
     return {
-        "name": "paraphrase_v1",
+        "name": "paraphrase_v2",
         "description": (
             "改述泛化：同一個比較鏈用不同的說法敘述，問最高級。heldout_dimensions "
             "是開發集（修 parser 時看過，偏樂觀）；unseen_surfaces 是開發用嚴格"
             "診斷（課程沒教那些詞，但用來決定要補哪些同義詞）；test 是教過的詞在"
             "新句子上的套用確認集；heldout_final 是從未教過、也沒用來調參的詞，"
-            "這一格才是分數。"
+            "這一格才是分數。2026-10-23 換過兩次：第一批（outshines／is dwarfed "
+            "by…）用來設計被動反轉與「未見詞不帶維度」兩條規則，第二批（towers "
+            "over／is a cut above…）用來找出關係窗與主詞切分的 bug；兩批都已降級"
+            "為開發集；第三批（outperforms／is far ahead of…）找出「ahead of」"
+            "的介系詞守門 bug。現在這批是機制凍結後才寫、只跑一次。"
         ),
         "provenance": {
             "generated_by": "scripts/build_paraphrase_benchmark.py",

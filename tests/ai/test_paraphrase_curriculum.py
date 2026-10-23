@@ -101,15 +101,18 @@ def test_taught_lexical_surfaces_are_in_the_curriculum() -> None:
 
 
 def test_held_out_words_are_not_in_the_curriculum() -> None:
-    text = CURRICULUM_PATH.read_text(encoding="utf-8").lower()
-    for name in HELD_OUT_SPLITS:
-        for item in _payload()["splits"][name]:
-            if item["surface_kind"] != "lexical":
-                continue
-            for word in _words(_surface_text(item)):
-                if word in {"a", "an", "the", "is", "by", "to", "over", "of", "behind", "around"}:
-                    continue
-                assert word not in text, f"held-out word {word!r} leaked into the curriculum"
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "paraphrase_builder", REPO_ROOT / "scripts" / "build_paraphrase_benchmark.py"
+    )
+    assert spec and spec.loader
+    builder = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(builder)
+    problems = builder.heldout_word_leaks(
+        CURRICULUM_PATH.read_text(encoding="utf-8"), _payload()
+    )
+    assert not problems, problems
 
 
 @pytest.mark.parametrize("name", list(TAUGHT_SPLITS) + list(HELD_OUT_SPLITS))
