@@ -465,18 +465,12 @@ class UnifiedEngine:
             and (a.endswith((".", "!", "?", "。", "！")))
         ):
             return a
-        q = question.strip().rstrip("？?").strip()
-        lowq = q.lower()
-        if lowq.startswith(("what is", "what's", "which city is")):
-            return f"{q}: {a}."
-        if lowq.startswith(("who ",)):
-            return f"{q} — {a}."
-        if lowq.startswith(("how many", "how much", "how fast", "how long")):
-            return f"{q} — {a}."
-        # zh questions read as "問句: 片段." (F9); give them a full Q→A line.
-        if any("一" <= ch <= "鿿" for ch in q[:8]):
-            return f"{q}？{a}。"
-        return f"{q}: {a}." if len(q) < 60 else f"{a}."
+        # Do not repeat the question back: a reply that begins with the user's
+        # own sentence is a surface echo, and the input may not appear in the
+        # answer at all (MEASUREMENT_MAP: the surface may not pose as content).
+        if any("一" <= ch <= "鿿" for ch in a):
+            return a if a.endswith(("。", "！", "？")) else f"{a}。"
+        return a if a.endswith((".", "!", "?")) else f"{a}."
 
     def _remember_turn(self, question: str, answer: str) -> None:
         self._turns.append((question, answer))

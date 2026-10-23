@@ -63,6 +63,9 @@ class ItemResult:
     answer: str = ""
     latency_ms: float = 0.0
     error: str = ""
+    # Same item under the old "any keyword" rule. Reported so the gap between
+    # "sounds related" and "is correct" stays visible (it was 2 items wide).
+    loose_passed: Optional[bool] = None
 
 
 @dataclass
@@ -78,11 +81,27 @@ class SuiteResult:
     errors: int = 0
     latency_ms_sum: float = 0.0
     details: List[ItemResult] = field(default_factory=list)
+    loose_passed: int = 0
+    # "Not passed" is not one thing: a confident wrong sentence and an honest
+    # "I don't know" score the same but are not the same quality. Correctness
+    # work must be able to see the wrong ones.
+    wrong: int = 0
+    abstained: int = 0
 
     @property
     def accuracy(self) -> float:
         denom = self.total - self.skipped - self.errors
         return (self.passed / denom * 100) if denom else 0.0
+
+    @property
+    def wrong_rate(self) -> float:
+        denom = self.total - self.skipped - self.errors
+        return (self.wrong / denom * 100) if denom else 0.0
+
+    @property
+    def loose_accuracy(self) -> float:
+        denom = self.total - self.skipped - self.errors
+        return (self.loose_passed / denom * 100) if denom else 0.0
 
     @property
     def comparable(self) -> bool:
@@ -239,9 +258,23 @@ class NativeBackend:
             return decision.results[decision.selected_model].text if decision.results else ""
 
         if item.suite in ("knowledge", "knowledge_mc"):
-            decision = await bus.route(item.q, "auto")
-            if decision.results and decision.selected_model:
-                return decision.results[decision.selected_model].text
+            # The chat path answers factual questions from the knowledge
+            # layer (curated store, then the offline general layer) before
+            # any generation. Measure that path, not the SNN fallback: the
+            # bus does not do fact lookup and returns unrelated text.
+            try:
+                from ai.knowledge_base import route_knowledge
+
+                kb = route_knowledge(item.q)
+                if kb and str(kb).strip() and str(kb).strip().lower() != "none":
+                    return str(kb)
+            except Exception:
+                pass
+            # The knowledge layer abstained. Do NOT fall back to the SNN bus:
+            # that is not the production path for facts (it generates
+            # unrelated text) and it made the benchmark measure a pipeline no
+            # user sees. The production chat path answers "I don't know"
+            # here, so the honest measurement is an abstention.
             return ""
 
         if item.suite == "code":
@@ -261,23 +294,14 @@ class NativeBackend:
 
 
 class NativeMaxBackend(NativeBackend):
-    """原生堆疊全開＋專業路由：知識題先走專案的知識管線
-    （ai.knowledge_base.route_knowledge——主服務知識查詢的實際路徑），
-    無結果才退回 ModelBus。這是架構層的專業分工，不涉及任何地面真值。"""
+    """Historical alias for ``native`` (kept so old commands keep working).
+
+    Knowledge questions now take the production knowledge path in
+    ``NativeBackend`` itself (the two backends used to differ only there),
+    so ``native-max`` and ``native`` are the same stack.
+    """
 
     name = "native-max"
-
-    async def answer(self, item: BenchItem) -> str:
-        if item.suite in ("knowledge", "knowledge_mc"):
-            try:
-                from ai.knowledge_base import route_knowledge
-
-                kb = route_knowledge(item.q)
-                if kb and str(kb).strip() and str(kb).strip().lower() != "none":
-                    return str(kb)
-            except Exception:
-                pass
-        return await super().answer(item)
 
 
 def _api_error_message(data: Any) -> str:
@@ -450,8 +474,64 @@ def _norm(text: str) -> str:
     return re.sub(r"\s+", " ", text.lower().strip())
 
 
-def score_item(item: BenchItem, answer: str) -> Tuple[bool, bool]:
+# Scoring rule for free-text knowledge answers.
+#   strict (default): the authored gold answer must be present AND every authored
+#                     key concept must be present. A sentence that merely shares
+#                     one keyword ("Organ failure" for a question about organs)
+#                     is wrong, not "close".
+#   loose:            the pre-2026-10-23 rule — ANY keyword counts as correct.
+#                     Kept only so the inflation is measurable, never for gates.
+SCORING_MODE = "strict"
+
+_NUMBER_WORDS = {
+    "zero": "0", "one": "1", "two": "2", "three": "3", "four": "4",
+    "five": "5", "six": "6", "seven": "7", "eight": "8", "nine": "9",
+    "ten": "10", "eleven": "11", "twelve": "12", "thirteen": "13",
+    "fourteen": "14", "fifteen": "15", "sixteen": "16", "seventeen": "17",
+    "eighteen": "18", "nineteen": "19", "twenty": "20",
+}
+
+
+# Unit labels carry no answer content: "100 degrees" and "100" are the same
+# answer, and the question already states the unit. Kept general (not per item).
+_ABSTAIN_MARKERS = (
+    "i don't know",
+    "i do not know",
+    "not sure",
+    "no answer",
+    "unable to answer",
+    "不知道",
+    "無法回答",
+    "无法回答",
+)
+
+
+def _looks_abstained(text: str) -> bool:
+    low = _norm(text).strip()
+    return not low or any(m in low for m in _ABSTAIN_MARKERS)
+
+
+_ANSWER_UNITS = {
+    "degree", "degrees", "celsius", "fahrenheit", "kelvin",
+    "meter", "meters", "metre", "metres", "kilometer", "kilometers",
+    "kilometre", "kilometres", "centimeter", "centimeters", "centimetre",
+    "centimetres", "mile", "miles", "kilogram", "kilograms", "gram", "grams",
+    "pound", "pounds", "second", "seconds", "minute", "minutes", "hour",
+    "hours", "percent", "per", "cent",
+}
+
+
+def _canon(text: str) -> str:
+    """Lowercase + number words to digits, so 'eight' and '8' compare equal."""
+    out = _norm(text).replace("&", " and ")
+    for word, digit in _NUMBER_WORDS.items():
+        out = re.sub(rf"\b{word}\b", digit, out)
+    return out
+
+
+def score_item(item: BenchItem, answer: str, mode: Optional[str] = None) -> Tuple[bool, bool]:
     """回傳 (passed, skipped)。跳過僅用於資料集未覆蓋的後端限制。"""
+    mode = mode or SCORING_MODE
     if answer is None:
         answer = ""
     text = str(answer)
@@ -465,11 +545,23 @@ def score_item(item: BenchItem, answer: str) -> Tuple[bool, bool]:
         return False, False
 
     if item.metric == "keyword-overlap":
-        # gate 語意：任一關鍵詞命中即對（寬鬆但對所有後端一致，保證可比性）
-        low = _norm(text)
+        low = _canon(text)
+        if mode == "loose":
+            # The old rule: any single keyword counts. Not correctness.
+            if item.gate:
+                return any(_canon(g) in low for g in item.gate), False
+            return bool(low.strip()), False
+        gold = " ".join(
+            w for w in _canon(str(item.ground_truth or "")).split()
+            if w not in _ANSWER_UNITS
+        )
+        if gold and gold not in low:
+            words = [w for w in re.findall(r"[a-z0-9]+", gold) if len(w) >= 2]
+            if not words or not all(word in low for word in words):
+                return False, False
         if item.gate:
-            return any(_norm(g) in low for g in item.gate), False
-        return bool(text.strip()), False
+            return all(_canon(g) in low for g in item.gate), False
+        return bool(low.strip()), False
 
     if item.metric == "sandbox-exec":
         return _score_code(item, text)
@@ -557,7 +649,16 @@ async def run_suite(
         last_call = time.monotonic()
         elapsed = (time.perf_counter() - t0) * 1000
         passed, skipped = score_item(item, answer)
+        loose = None
+        if item.metric == "keyword-overlap" and SCORING_MODE == "strict":
+            loose = score_item(item, answer, mode="loose")[0]
         result.total += 1
+        result.loose_passed += int(bool(loose))
+        if not passed and not skipped:
+            if _looks_abstained(str(answer)):
+                result.abstained += 1
+            else:
+                result.wrong += 1
         result.skipped += int(skipped)
         result.passed += int(passed)
         result.latency_ms_sum += elapsed
@@ -568,6 +669,7 @@ async def run_suite(
                 skipped=skipped,
                 answer=str(answer)[:160],
                 latency_ms=elapsed,
+                loose_passed=loose,
             )
         )
     return result
@@ -620,10 +722,14 @@ def save_results(all_results: List[SuiteResult], out_path: Path) -> None:
                 "suite": r.suite,
                 "total": r.total,
                 "passed": r.passed,
+                "wrong": r.wrong,
+                "abstained": r.abstained,
                 "skipped": r.skipped,
                 "errors": r.errors,
                 "comparable": r.comparable,
+                "scoring": SCORING_MODE,
                 "accuracy": round(r.accuracy, 2) if r.comparable else None,
+                "loose_accuracy": round(r.loose_accuracy, 2) if r.comparable else None,
                 "avg_latency_ms": round(r.avg_latency_ms, 1),
                 "details": [
                     {
@@ -631,6 +737,7 @@ def save_results(all_results: List[SuiteResult], out_path: Path) -> None:
                         "passed": d.passed,
                         "skipped": d.skipped,
                         "answer": d.answer,
+                        "loose_passed": d.loose_passed,
                         "latency_ms": round(d.latency_ms, 1),
                         "error": d.error,
                     }
@@ -706,6 +813,15 @@ def update_anchor(
 def check_gate(results: List[SuiteResult], anchor: Optional[Dict[str, List[str]]] = None) -> int:
     """回傳 0（全過）或 2（套件低於地板 LOST_CORRECT 錨題本次答錯）。"""
     anchor = anchor or {}
+    # An anchor built under a different answer rule is not a capability baseline:
+    # switching rules must never silently "recover" or "lose" items.
+    anchor_scoring = anchor.get("_scoring")
+    if anchor_scoring and anchor_scoring != SCORING_MODE:
+        print(
+            f"ANCHOR-SCORING MISMATCH: anchor={anchor_scoring} run={SCORING_MODE} "
+            "(rebuild the anchor under the current rule before trusting LOST_CORRECT)",
+            file=sys.stderr,
+        )
     failed = []
     lost = []
     for r in results:
@@ -756,6 +872,16 @@ def main() -> int:
             "have a per-minute request limit (Gemini 2.5 Flash: 15 RPM → use 4.2)"
         ),
     )
+    parser.add_argument(
+        "--scoring",
+        choices=("strict", "loose"),
+        default="strict",
+        help=(
+            "free-text knowledge scoring: strict = authored gold answer + all key "
+            "concepts (correctness); loose = any keyword (legacy, for comparing "
+            "inflation only)"
+        ),
+    )
     parser.add_argument("--out", default=str(REPO_ROOT / "benchmarks" / "results"))
     parser.add_argument(
         "--gate-native",
@@ -764,6 +890,8 @@ def main() -> int:
     )
     parser.add_argument("--list-suites", action="store_true")
     args = parser.parse_args()
+    global SCORING_MODE
+    SCORING_MODE = args.scoring
 
     items = load_dataset(Path(args.dataset))
     anchor = load_anchor()
@@ -806,7 +934,14 @@ def main() -> int:
         for r in results:
             print(
                 f"  {r.suite:10s} {r.passed}/{r.total} ({r.accuracy:.1f}%)"
-                f"  skip={r.skipped}  avg={r.avg_latency_ms:.0f}ms",
+                f"  skip={r.skipped}  avg={r.avg_latency_ms:.0f}ms"
+                f"  correct={r.passed} wrong={r.wrong} abstain={r.abstained}"
+                f"  scoring={SCORING_MODE}"
+                + (
+                    f"  loose={r.loose_accuracy:.1f}%"
+                    if r.loose_accuracy and abs(r.loose_accuracy - r.accuracy) > 1e-9
+                    else ""
+                ),
                 flush=True,
             )
         all_results.extend(results)
@@ -819,18 +954,21 @@ def main() -> int:
     if added:
         print(f"anchor: +{added} 曾對題目併入 {ANCHOR_PATH.relative_to(REPO_ROOT)}")
 
-    if args.gate_native:
-        rc = check_gate(all_results, anchor)
-        if rc == 0:
-            print("gate: OK (native floors met)")
-        return rc
-
+    # Persist BEFORE the gate: a gate run is a measurement too, and returning
+    # early used to leave the newest results file stale (the CI floors were
+    # checked against a file the gate run itself never wrote).
     out_dir = Path(args.out)
     out_dir.mkdir(parents=True, exist_ok=True)
     stamp = time.strftime("%Y%m%d-%H%M%S")
     out_file = out_dir / f"bench_{stamp}.json"
     save_results(all_results, out_file)
     print(f"\nresults saved: {out_file}")
+
+    if args.gate_native:
+        rc = check_gate(all_results, anchor)
+        if rc == 0:
+            print("gate: OK (native floors met)")
+        return rc
     return 0
 
 

@@ -294,8 +294,18 @@ def _collect_benchmarks(root: Any) -> Dict[str, Any]:
     files = sorted(_glob.glob(str(root / "benchmarks" / "results" / "bench_*.json")))
     if not files:
         raise _CollectorError("benchmarks/results/bench_*.json 不存在")
+    # Prefer the newest run that carries the native/echo/naive baselines: a
+    # partial run (one backend, one suite) is not a comparable artifact, and
+    # picking it by timestamp alone made the "baselines are below the floor"
+    # contract depend on whatever ran last.
     latest = files[-1]
     data = _read_json(latest)
+    for candidate in reversed(files):
+        payload = _read_json(candidate)
+        backends = {str(r.get("backend", "")) for r in payload.get("results", [])}
+        if {"native", "echo", "naive"} <= backends:
+            latest, data = candidate, payload
+            break
     floors = _load_gate_native(root)
     suites: List[Dict[str, Any]] = []
     for r in data.get("results", []):

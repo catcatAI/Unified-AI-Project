@@ -505,7 +505,7 @@ class ChatService:
                         "emotion": merged_context.get("emotion", "neutral"),
                         "emotion_intensity": merged_context.get("emotion_intensity", 0.5),
                         "backend": "knowledge_pipeline",
-                        "route": "local_data",
+                        "route": "knowledge",
                         "hit_score": local_answer.get("confidence", 0.9),
                         "hit_source": local_answer.get("source", "local"),
                     }

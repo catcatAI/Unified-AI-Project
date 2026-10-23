@@ -527,6 +527,51 @@ def _validate_and_truncate_input(
     return user_message
 
 
+def _try_taught_facts(
+    user_message: str,
+    session_id: str,
+    schema_version: str = "2.0",
+    truncation_message: str = "",
+) -> Optional[Dict[str, Any]]:
+    """Answer from facts the user taught in conversation — *memory*, not knowledge.
+
+    Layer contract (docs/06-project-management/LAYER_SEPARATION.md): a user's
+    statement is a record attributable to that user, not a verified fact, so the
+    reply must say so ("你教過我") and is labelled ``source=memory``. It also
+    never runs through ``route_knowledge``: memory must not be scored as
+    knowledge. Runs after the teaching step and before recall/LLM so a
+    correction applies to the next question immediately.
+    """
+    try:
+        from ai.memory.taught_facts import get_taught_facts
+
+        answer = get_taught_facts().lookup(user_message)
+    except Exception as exc:  # pragma: no cover - optional store
+        logger.debug("taught-facts lookup unavailable: %s", exc)
+        return None
+    if not answer:
+        return None
+    attributed = f"你教過我：{answer}"
+    result = {
+        "response_text": attributed,
+        "response": attributed,
+        "source": "memory",
+        "backend": "dialogue-memory",
+        "model": "memory",
+        "schema_version": schema_version,
+        "truncation_message": truncation_message,
+        "emotion": "calm",
+        "emotion_confidence": 0.7,
+        "emotion_intensity": 0.4,
+        "session_id": session_id,
+    }
+    try:
+        _set_latest_response(session_id, result)
+    except Exception:  # pragma: no cover - diagnostics only
+        logger.debug("latest-response cache unavailable", exc_info=True)
+    return result
+
+
 async def _try_math_verification(
     user_message: str,
     user_name: str,
@@ -1834,11 +1879,22 @@ def _format_chat_response(
     # dictionary translation served as backend unknown). Read dict keys too.
     if isinstance(llm_response, dict):
         _backend = llm_response.get("backend") or "unknown"
+        # A dict's keys are not attributes: reading only getattr() here made
+        # every dict-returning producer lose its declared route and fall through
+        # to "llm" (a knowledge lookup was reported as an LLM reply).
+        _declared_route = llm_response.get("route")
+        _metadata = llm_response.get("metadata") or {}
     else:
         _backend = getattr(llm_response, "backend", None) or "unknown"
+        _declared_route = getattr(llm_response, "route", None)
+        _metadata = getattr(llm_response, "metadata", {}) or {}
     _route_map = {
         "knowledge": "knowledge",
         "knowledge_base": "knowledge",
+        "knowledge_pipeline": "knowledge",
+        "dialogue-memory": "memory",
+        "composed-template": "template",
+        "deterministic-math": "computed",
         "model_bus": "model_bus",
         "ed3n": "ed3n",
         "garden": "garden",
@@ -1852,14 +1908,11 @@ def _format_chat_response(
         "llamacpp": "llm",
         "error": "error",
     }
-    _derived_route = _route_map.get(_backend)
+    _derived_route = (
+        _declared_route or _metadata.get("route") or _route_map.get(_backend)
+    )
     if _derived_route is None:
-        _explicit_route = getattr(llm_response, "route", None)
-        _derived_route = (
-            _explicit_route
-            if _explicit_route
-            else ("fallback" if getattr(llm_response, "metadata", {}).get("fallback") else "llm")
-        )
+        _derived_route = "fallback" if _metadata.get("fallback") else "unknown"
     return {
         "response_text": response_text,
         "response": response_text,
@@ -2001,6 +2054,23 @@ async def _run_chat_pipeline(
     _raw_input_len = len(user_message)
     user_message = _validate_input_or_400(user_message, chat_cfg)
     _was_truncated = _raw_input_len > max_len
+
+    # Step 1b: dialogue teaching — a user statement becomes a taught fact (or
+    # a relation alias: "首府和首都指的是同一件事"). This is the only training
+    # signal that layer gets, and it runs before answering so a correction
+    # applies to the very next question.
+    try:
+        from ai.memory.taught_facts import get_taught_facts
+
+        get_taught_facts().learn_from_turn(user_message)
+    except Exception:  # pragma: no cover - teaching must never break chat
+        logger.debug("taught-facts learning failed", exc_info=True)
+
+    # Step 1c: answer from what the user just taught. Freshest state wins over
+    # recall/LLM, so "不是 A，是 B" is reflected in the very next question.
+    taught_shortcircuit = _try_taught_facts(user_message, session_id, schema_ver, trunc_msg)
+    if taught_shortcircuit is not None:
+        return taught_shortcircuit
 
     # Step 2: Initialize context + best-effort priming (EDA / dispatch / MSBA)
     context = _prime_chat_context(user_message, user_name, origin, extra_context, history)

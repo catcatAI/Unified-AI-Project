@@ -10,6 +10,7 @@ Angela LLM Service - Angela 的智能對話引擎
 這個服務不是讓模型直接與用戶對話，
 而是讓 Angela 作為中介，調用模型來產生回應。
 """
+# LAYER: surface
 
 import asyncio
 import hashlib

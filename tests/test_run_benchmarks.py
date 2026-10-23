@@ -92,10 +92,69 @@ class TestScoring:
         ok, _ = tool.score_item(item, "oxygen")
         assert not ok
 
+    def test_keyword_related_is_not_correct(self):
+        """只沾到一個關鍵詞的句子不算答對（舊規則 any() 會放行）。"""
+        item = self._item(
+            metric="keyword-overlap",
+            ground_truth="organ",
+            gate=["organ", "pumps", "blood"],
+        )
+        ok, _ = tool.score_item(item, "Organ failure is a condition of the human body.")
+        assert not ok
+
+    def test_keyword_partial_concepts_is_not_correct(self):
+        item = self._item(
+            metric="keyword-overlap", ground_truth="carbon dioxide", gate=["carbon", "dioxide"]
+        )
+        ok, _ = tool.score_item(item, "Carbon is an element.")
+        assert not ok
+
+    def test_keyword_loose_mode_is_the_legacy_rule(self):
+        item = self._item(
+            metric="keyword-overlap",
+            ground_truth="organ",
+            gate=["organ", "pumps", "blood"],
+        )
+        assert tool.score_item(item, "Organ failure.", mode="loose")[0]
+        assert not tool.score_item(item, "Organ failure.", mode="strict")[0]
+
+    def test_keyword_gold_phrase_required(self):
+        item = self._item(
+            metric="keyword-overlap", ground_truth="carbon dioxide", gate=["carbon", "dioxide"]
+        )
+        ok, _ = tool.score_item(item, "Plants take in carbon and release dioxide.")
+        assert ok
+
+    def test_keyword_unit_label_not_required(self):
+        """'100 degrees' 與 '100' 是同一答案，單位已在問句裡。"""
+        item = self._item(
+            metric="keyword-overlap", ground_truth="100 degrees", gate=["100"]
+        )
+        assert tool.score_item(item, "100")[0]
+        assert tool.score_item(item, "100 degrees Celsius")[0]
+        assert not tool.score_item(item, "90 degrees Celsius")[0]
+
+    def test_keyword_number_word(self):
+        item = self._item(metric="keyword-overlap", ground_truth="8", gate=["8", "eight"])
+        assert tool.score_item(item, "eight")[0]
+        assert not tool.score_item(item, "six")[0]
+
     def test_exact_match(self):
         item = self._item(metric="exact-match", ground_truth="math")
         assert tool.score_item(item, "MATH")[0]
         assert not tool.score_item(item, "maths")[0]
+
+    def test_ampersand_and_and_are_the_same_word(self):
+        """'Energy & Climate' 與 'Energy and Climate' 是同一個答案。"""
+        item = self._item(
+            metric="keyword-overlap",
+            ground_truth="Department of Energy and Climate Change",
+            gate=["department", "energy", "climate"],
+        )
+        ok, _ = tool.score_item(
+            item, "The Department of Energy & Climate Change (DECC) was a department."
+        )
+        assert ok
 
 
 # ---------------------------------------------------------------- backends
@@ -144,6 +203,34 @@ class TestBackends:
         answer = await backend.answer(item)
         ok, _ = tool.score_item(item, answer)
         assert ok
+
+    @pytest.mark.asyncio
+    async def test_native_knowledge_abstains_instead_of_asking_the_bus(self, monkeypatch):
+        """知識層沒有答案時，benchmark 必須量到生產路徑的誠實棄權。
+
+        以前它會退到 SNN bus 生成一段無關文字——那不是使用者會看到的回覆，
+        而且讓「答錯」看起來像知識層的錯。
+        """
+        import ai.knowledge_base as kb_module
+
+        monkeypatch.setattr(kb_module, "route_knowledge", lambda _q: None)
+        backend = tool.NativeBackend()
+        backend._ensure()
+
+        class _ExplodingBus:
+            async def route(self, *a, **kw):  # pragma: no cover - must not run
+                raise AssertionError("knowledge suite must not fall back to the bus")
+
+        monkeypatch.setattr(tool.NativeBackend, "_bus", _ExplodingBus())
+        item = tool.BenchItem(
+            id="t",
+            q="What gas do plants absorb from the air for photosynthesis?",
+            suite="knowledge",
+            metric="keyword-overlap",
+            ground_truth="carbon dioxide",
+            gate=["carbon", "dioxide"],
+        )
+        assert await backend.answer(item) == ""
 
     @pytest.mark.asyncio
     async def test_native_bus_injects_query_type_resolver(self):

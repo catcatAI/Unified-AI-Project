@@ -1,5 +1,6 @@
 # =============================================================================
 # ANGELA-MATRIX: [L2] [γ] [B] [L4]
+# LAYER: knowledge
 # =============================================================================
 """Deterministic knowledge base for native (non-LLM) inference engines.
 
@@ -16,8 +17,11 @@ fallback string.
 
 from __future__ import annotations
 
+import logging
 import re
 from typing import Dict, List, Optional, Tuple
+
+logger = logging.getLogger(__name__)
 
 # subject -> attribute -> value
 _KNOWLEDGE: Dict[str, Dict[str, str]] = {
@@ -321,7 +325,7 @@ _ATTRIBUTE_RULES: Tuple[Tuple[Tuple[str, ...], str], ...] = (
     (("painter", "畫家", "画家"), "painter"),
     (("discoverer", "發現者", "发现者"), "discoverer"),
     (("shape",), "shape"),
-    (("inventor", "發明", "发明"), "inventor"),
+    (("inventor", "invented", "invent", "發明", "发明"), "inventor"),
     (("year",), "year"),
     (("longest", "最長", "最长"), "longest"),
     (("highest", "tallest", "最高"), "highest"),
@@ -438,6 +442,47 @@ def _match_specific_attr(t: str, attrs: Dict[str, str]) -> Tuple[bool, Optional[
     return False, None
 
 
+# Attribute cues: the question must ask about the attribute before the
+# generic attribute ("color") may be used as the answer. Without this, any
+# question that merely mentions a known subject inherits its colour
+# ("How many continents are there on Earth?" -> "blue").
+_ATTR_CUES: Dict[str, Tuple[str, ...]] = {
+    "color": ("color", "colour", "顏色", "颜色", "色彩", "藍的", "紅的", "綠的", "黃的"),
+    "known_as": (
+        "known as",
+        "nickname",
+        "called",
+        "被稱為",
+        "被称为",
+        "叫做",
+        "又叫",
+        "稱為",
+    ),
+    "sound": ("sound", "says", "say", "叫聲", "叫声", "聲音", "声音", "怎麼叫", "怎么叫"),
+    "type": ("type", "kind", "what is", "什麼是", "是甚麼", "是什么", "屬於", "属于"),
+    "sides": ("sides", "邊", "边", "條邊", "条边"),
+}
+
+
+# Definition cues: the stored "answer" blurb explains *what the subject is*.
+# It may only answer a definition question ("What is photosynthesis?"), never
+# a question that merely mentions the subject ("What gas do plants absorb for
+# photosynthesis?" -> the paragraph, not the gas).
+_DEFINITION_CUES: Tuple[str, ...] = (
+    "what is",
+    "what are",
+    "what's",
+    "define",
+    "meaning of",
+    "explain",
+    "什麼是",
+    "是甚麼",
+    "什么是",
+    "是什麼",
+    "是啥",
+)
+
+
 def _rk_subject_attrs(t: str) -> Optional[str]:
     """5) subject attribute lookup with deferred answer fallback.
 
@@ -461,22 +506,20 @@ def _rk_subject_attrs(t: str) -> Optional[str]:
             if (
                 _answer_fallback is None
                 and "answer" in attrs
-                and any(
-                    k in t for k in ("who", "what", "when", "where", "which", "how", "誰", "什麼")
-                )
+                and any(cue in t for cue in _DEFINITION_CUES)
             ):
                 _answer_fallback = attrs["answer"]
             # prim covers only legacy attrs; `days` is excluded (day-questions
             # have a specific branch + section 4).
-            prim = (
-                attrs.get("color")
-                or attrs.get("known_as")
-                or attrs.get("sound")
-                or attrs.get("type")
-                or attrs.get("sides")
-            )
-            if prim:
-                return prim
+            #
+            # Only answer with the generic attribute the question is *about*:
+            # "How many continents are there on Earth?" must not be answered
+            # with Earth's colour ("blue"). A question that names none of the
+            # attribute cues falls through (to the general layer / refusal)
+            # instead of being handed a confident non-answer.
+            for attr, cues in _ATTR_CUES.items():
+                if attr in attrs and any(cue in t for cue in cues):
+                    return attrs[attr]
     if _answer_fallback is not None:
         return _answer_fallback
     return None
@@ -580,6 +623,18 @@ def route_knowledge(text: str) -> Optional[str]:
         result = matcher(t)
         if result is not None:
             return result
+
+    # The long tail: an offline encyclopedia (public corpus, extractive).
+    # The curated store above stays authoritative for what it knows; this
+    # layer only answers questions it can ground in a retrieved sentence.
+    try:
+        from ai.knowledge.wiki_facts import route_general_knowledge
+
+        general = route_general_knowledge(text)
+        if general:
+            return general
+    except Exception:  # pragma: no cover - optional data/index
+        logger.debug("general knowledge layer unavailable", exc_info=True)
 
     return None
 

@@ -1,5 +1,13 @@
 {
-  "native/knowledge": ["know-002", "know-005", "know-009", "know-013"],
+  "native/knowledge": [
+    "know-002",
+    "know-003",
+    "know-005",
+    "know-006",
+    "know-008",
+    "know-009",
+    "know-013"
+  ],
   "native/knowledge_mc": [
     "mc-001",
     "mc-002",
@@ -26,6 +34,7 @@
     "mc-023",
     "mc-024",
     "mc-025",
+    "mc-026",
     "mc-027",
     "mc-028",
     "mc-029",
@@ -86,5 +95,6 @@
     "route-008",
     "route-009",
     "route-010"
-  ]
+  ],
+  "_scoring": "strict"
 }

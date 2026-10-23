@@ -272,6 +272,35 @@ class TestLightCollectorsRealRepo:
         assert native["math"]["state"] in ("pass", "margin", "below", "no-floor")
         assert any(s["state"] == "below" for s in res["suites"]), "echo/naive 基準套件應低於地板"
 
+    def test_benchmark_collector_prefers_a_comparable_run(self, tmp_path: Path) -> None:
+        """部分跑（單一 backend／suite）不是可比 artifact，不能因為它最新就選它。"""
+        results = tmp_path / "benchmarks" / "results"
+        results.mkdir(parents=True)
+        (tmp_path / "scripts").mkdir()
+        (tmp_path / "scripts" / "run_benchmarks.py").write_text(
+            'GATE_NATIVE = {"math": 75.0}\n', encoding="utf-8"
+        )
+        full = {
+            "generated_at": "2026-01-01T00:00:00",
+            "results": [
+                {"backend": b, "suite": "math", "accuracy": 10.0, "total": 1, "passed": 0}
+                for b in ("native", "echo", "naive")
+            ],
+        }
+        partial = {
+            "generated_at": "2026-01-02T00:00:00",
+            "results": [
+                {"backend": "native", "suite": "knowledge", "accuracy": 46.7, "total": 15, "passed": 7}
+            ],
+        }
+        (results / "bench_20260101-000000.json").write_text(json.dumps(full), encoding="utf-8")
+        (results / "bench_20260102-000000.json").write_text(json.dumps(partial), encoding="utf-8")
+
+        collected = ur._collect_benchmarks(tmp_path)
+
+        assert collected["file"] == "bench_20260101-000000.json"
+        assert {s["backend"] for s in collected["suites"]} == {"native", "echo", "naive"}
+
     def test_repo_stats(self) -> None:
         res = ur._collect_repo_stats(ur._repo_root())
         assert res["py_files"] > 100

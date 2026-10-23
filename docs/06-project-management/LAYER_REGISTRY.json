@@ -1,0 +1,92 @@
+{
+  "version": 1,
+  "doc": "docs/06-project-management/LAYER_SEPARATION.md",
+  "note": "One entry per claim. The layer is decided by what carries the capability, and the gate (scripts/check_layer_separation.py) rejects a claim whose module marker, path or evidence contradicts it.",
+  "claims": [
+    {
+      "id": "dialogue_taught_facts",
+      "claim": "A fact taught in conversation is recalled: same wording, a taught relation synonym, an English question, a correction, and 12 unrelated turns later.",
+      "layer": "memory",
+      "implemented_in": "apps/backend/src/ai/memory/taught_facts.py",
+      "evidence": {
+        "probe": "scripts/probe_dialogue_teaching.py",
+        "method": "Invented entities (absent from every corpus); cold -> teach -> same wording -> English -> unseen wording -> correction -> retention -> composition; per-turn answer source recorded.",
+        "source_deleted": false
+      },
+      "result": {
+        "status": "pass",
+        "value": "recall 7/7 on every stage; cold 7/7 abstain; answers attributed with source=memory",
+        "measured_at": "2026-10-23"
+      },
+      "must_not_be_used_as": ["knowledge", "learning", "intelligence"]
+    },
+    {
+      "id": "neural_fact_learning",
+      "claim": "The native engine (GARDEN) learns a fact from dialogue, i.e. the capability survives deletion of the text.",
+      "layer": "learning",
+      "implemented_in": "apps/backend/src/ai/garden/garden_engine.py",
+      "evidence": {
+        "probe": "scripts/probe_neural_learning.py",
+        "method": "Teach 3 invented facts through the production learner (learn_from_interaction); ask; keep only the SNN checkpoint; ask again. No pipeline, router or memory layer involved.",
+        "source_deleted": true
+      },
+      "result": {
+        "status": "fail",
+        "value": "cold 0%, taught 0%, after source deletion 0%; the objects are kept verbatim in dictionary.json and the learned pair is (statement -> canned reply)",
+        "measured_at": "2026-10-23"
+      },
+      "must_not_be_used_as": ["knowledge"]
+    },
+    {
+      "id": "curated_knowledge",
+      "claim": "Curated factual recall of public propositions, with a source.",
+      "layer": "knowledge",
+      "implemented_in": "apps/backend/src/ai/knowledge_base.py",
+      "evidence": {
+        "probe": "scripts/run_benchmarks.py",
+        "method": "Native bench: knowledge (15 items, keyword match) and knowledge_mc (40 items).",
+        "source_deleted": false
+      },
+      "result": {
+        "status": "pass",
+        "value": "knowledge 46.7% (7/15), knowledge_mc 95% (38/40)",
+        "measured_at": "2026-10-23"
+      },
+      "must_not_be_used_as": ["learning"]
+    },
+    {
+      "id": "offline_wiki_knowledge",
+      "claim": "Extractive answers from an offline public corpus (Simple English Wikipedia, FTS5).",
+      "layer": "knowledge",
+      "implemented_in": "apps/backend/src/ai/knowledge/wiki_facts.py",
+      "evidence": {
+        "probe": "scripts/run_benchmarks.py",
+        "method": "Same knowledge suite; the reader abstains when the answer sentence does not share two content words with the question and contain the asked type.",
+        "source_deleted": false
+      },
+      "result": {
+        "status": "pass",
+        "value": "7/15 answers contain the correct keyword; abstains on the rest",
+        "measured_at": "2026-10-23"
+      },
+      "must_not_be_used_as": ["learning"]
+    },
+    {
+      "id": "routing_surface",
+      "claim": "Chooses a destination and a surface form; it is not a source of facts or of capability.",
+      "layer": "surface",
+      "implemented_in": "apps/backend/src/services/llm/router.py",
+      "evidence": {
+        "probe": "scripts/probe_native_dialogue.py",
+        "method": "Per-turn source distribution only; the probe never treats a route as a correctness claim.",
+        "source_deleted": false
+      },
+      "result": {
+        "status": "n/a",
+        "value": "recorded so routing/templates can never be presented as knowledge or learning",
+        "measured_at": "2026-10-23"
+      },
+      "must_not_be_used_as": ["knowledge", "learning", "intelligence"]
+    }
+  ]
+}

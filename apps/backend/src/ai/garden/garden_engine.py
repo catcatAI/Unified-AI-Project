@@ -1,5 +1,6 @@
 # =============================================================================
 # ANGELA-MATRIX: [L3] [γδ] [B] [L2]
+# LAYER: learning
 # =============================================================================
 """
 GARDEN GARDENEngine — Unified reasoning engine for the GARDEN-1G model tier.
